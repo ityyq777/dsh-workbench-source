@@ -1,9 +1,9 @@
 {
-  "name": "wb-addon-sites",
+  "name": "dsh-workbench-sites",
   "version": "1.0.3",
   "private": true,
   "type": "module",
-  "description": "站点子插件：站点、目录树、链接与标签",
+  "description": "个人工作台站点插件：目录树、链接与标签",
   "main": "lib/index.js",
   "wb": {
     "addon": {
@@ -11,7 +11,7 @@
       "title": "站点",
       "description": "站点收藏：目录树、链接与标签",
       "version": "1.0.3",
-      "minShell": "0.1.0",
+      "minShell": "0.2.0",
       "tables": [
         "site",
         "site_node",
@@ -42,5 +42,29 @@
       ],
       "client": "lib/client.js"
     }
-  }
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-workbench": "file:../../shell-dist"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "dsh-workbench"
+      ]
+    }
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "package.json"
+  ]
 }

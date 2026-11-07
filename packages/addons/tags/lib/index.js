@@ -1,20 +1,33 @@
 /**
- * 标签子插件（宿主侧）。
- *
+ * 标签业务插件（DSH 原生插件）。
  * 所有业务逻辑都在本地 SQLite 完成；云端只负责备份。
- * migrations 故意留空：ensureSchema 需要先检测 v2 旧表（is_deleted/update_time）
- * 再建平台列（deleted_at/updated_at），不能交给宿主先跑 migrations。
  */
 
 import { ensureSchema } from "./db.js";
 import { registerTagActions } from "./tags.js";
 
-export const migrations = [];
+export const inject = ["workbench"];
 
 export function setup(api) {
   ensureSchema(api.db, api.log);
   registerTagActions(api);
-  api.log("tags addon ready", api.addon.version);
+  api.log("tags domain ready", api.addon.version);
 }
 
-export default { migrations: migrations, setup: setup };
+export function apply(ctx) {
+  const host = ctx.workbench;
+  if (!host) throw new Error("dsh-workbench 未加载：缺少 workbench 服务");
+  ctx.effect(
+    () =>
+      host.registerDomain({
+        id: "wb-addon-tags",
+        title: "标签",
+        description: "创建与管理标签，为站点等业务提供标签归类",
+        version: "1.0.0",
+        tables: ["tag", "tag_mapping"],
+        views: [{ id: "tags", title: { zh: "标签", en: "Tags" } }],
+        setup,
+      }),
+    "tags-domain",
+  );
+}

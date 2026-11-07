@@ -4,12 +4,12 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "build": "pnpm -r --filter @wb/core --filter wb-cloud --filter dsh-workbench build",
+    "build": "pnpm -r --filter @wb/core --filter @wb/sdk --filter wb-cloud --filter dsh-workbench build",
     "cloud": "node packages/cloud/lib/server.js",
     "dev:cloud": "node --watch packages/cloud/lib/server.js",
-    "pack:addon": "node scripts/pack-addon.mjs --dir packages/addons/tasks",
-    "publish:addon": "node scripts/publish-addon.mjs --dir packages/addons/tasks",
     "dist:shell": "node scripts/dist-shell.mjs",
+    "test:native": "node scripts/test-native.mjs",
+    "test:clients": "node scripts/test-clients.mjs",
     "test:tags": "node scripts/test-tags.mjs",
     "test:sites": "node scripts/test-sites.mjs",
     "test:e2e": "node scripts/e2e.mjs"

@@ -1,13 +1,14 @@
 {
   "name": "dsh-workbench",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@wb/core": "workspace:*"
+    "@wb/core": "workspace:*",
+    "@wb/sdk": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.6.0",

@@ -62,7 +62,7 @@ async function readBody(req: IncomingMessage): Promise<Buffer> {
 }
 
 /** 与 packages/shell 的 SHELL_VERSION 保持一致：决定 catalog 兼容过滤。 */
-const SHELL_VERSION = "0.1.0";
+const SHELL_VERSION = "0.2.0";
 const PUBLISH_TOKEN = argVal("--publish-token", process.env.WB_PUBLISH_TOKEN ?? "");
 
 async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promise<void> {

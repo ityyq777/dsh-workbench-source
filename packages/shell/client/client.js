@@ -1,5 +1,5 @@
 // dsh-workbench 客户端：宿主壳 + 子插件动态视图容器。
-// 子插件浏览器代码由 /workbench/api/addons/<id>/client.js 提供，运行时注册到 window.__WB_HOST__。
+// 业务插件（任务/标签/站点）由 DSH 作为独立客户端插件加载，启动时注册到 window.__WB_HOST__。
 (function () {
   window.__ModuleLoader__ = window.__ModuleLoader__ || { modules: {}, load: function (m) { this.modules[m.id] = m.factory; } };
   window.__ModuleLoader__.load({
@@ -13,10 +13,10 @@
 
       var LOCALE = {
         zh: {
-          nav: "个人工作台", title: "个人工作台", tagline: "离线优先 · 子插件按需安装",
+          nav: "个人工作台", title: "个人工作台", tagline: "离线优先 · 业务插件由 DSH 安装",
           tab_account: "账号与同步", tab_addons: "子插件",
           back_home: "返回首页", open: "打开", manage: "工作台管理",
-          home_hint: "点开卡片进入子插件；账号与插件在下方管理",
+          home_hint: "点开卡片进入业务插件；安装与卸载在 DSH 插件管理里",
           account_desc: "登录云端账号，备份与同步数据",
           addons_desc: "安装、升级或卸载子插件",
           no_views: "该子插件没有注册界面", addon_loading: "正在加载子插件界面…", addon_unavailable: "子插件界面不可用",
@@ -24,7 +24,7 @@
           addons_installed: "已安装的子插件", addons_cloud: "云端目录",
           install: "安装", upgrade: "升级", installed: "已安装", uninstall: "卸载",
           confirm_uninstall: "确认卸载", installing: "正在安装…", refresh: "刷新目录",
-          no_installed: "还没有安装子插件——去云端目录装一个「任务记录」试试",
+          no_installed: "还没有安装业务插件——在 DSH 插件管理里安装任务记录、标签或站点",
           no_catalog: "云端目录为空或不可达", catalog_loading: "正在读取云端目录…",
           cached_notice: "云端不可达，显示上次缓存的目录", install_failed: "安装失败",
           uninstall_failed: "卸载失败", load_failed: "客户端加载失败", data_kept: "卸载只删代码，数据保留；重装后数据仍在",
@@ -35,10 +35,10 @@
           sync_now: "立即同步", sync_pushed: "推送", sync_pulled: "拉取", device_name: "本设备",
         },
         en: {
-          nav: "Workbench", title: "Personal Workbench", tagline: "Offline-first · installable addons",
+          nav: "Workbench", title: "Personal Workbench", tagline: "Offline-first · addons installed by DSH",
           tab_account: "Account & Sync", tab_addons: "Addons",
           back_home: "Back to home", open: "Open", manage: "Manage",
-          home_hint: "Open a card to enter an addon; manage account and addons below",
+          home_hint: "Open a card to enter a domain; install or remove plugins in DSH",
           account_desc: "Sign in to back up and sync your data",
           addons_desc: "Install, update or uninstall addons",
           no_views: "This addon has no UI", addon_loading: "Loading addon UI…", addon_unavailable: "Addon UI unavailable",
@@ -46,7 +46,7 @@
           addons_installed: "Installed addons", addons_cloud: "Cloud catalog",
           install: "Install", upgrade: "Update", installed: "Installed", uninstall: "Uninstall",
           confirm_uninstall: "Confirm uninstall", installing: "Installing…", refresh: "Refresh catalog",
-          no_installed: "No addons yet — install Tasks from the cloud catalog",
+          no_installed: "No domains yet — install Tasks, Tags or Sites from DSH plugins",
           no_catalog: "Catalog is empty or unreachable", catalog_loading: "Loading catalog…",
           cached_notice: "Cloud unreachable — showing the cached catalog", install_failed: "Install failed",
           uninstall_failed: "Uninstall failed", load_failed: "client failed to load", data_kept: "Uninstall removes code only; data is kept and reappears after reinstall",
@@ -132,7 +132,6 @@
       var addonState = { addons: [], loaded: false, shellVersion: "" };
       var storeListeners = new Set();
       var stream = null;
-      var loads = new Map();        // "id@version" -> Promise
       var lastAddonError = null;
 
       function notifyStore() {
@@ -146,7 +145,7 @@
         if (cached) return cached;
         var api = {
           call: function (action, args) {
-            return fetch("/workbench/api/addons/" + encodeURIComponent(id) + "/actions/" + encodeURIComponent(action), {
+            return fetch("/workbench/api/domains/" + encodeURIComponent(id) + "/actions/" + encodeURIComponent(action), {
               method: "POST",
               headers: { "content-type": "application/json" },
               body: JSON.stringify(args || {}),
@@ -166,64 +165,27 @@
         registry.set(mod.id, mod);
         notifyStore();
       }
-      function loadScript(url, key) {
-        if (loads.has(key)) return loads.get(key);
-        var p = new Promise(function (resolve) {
-          var s = document.createElement("script");
-          s.src = url;
-          s.async = true;
-          s.onload = function () { resolve({ ok: true }); };
-          s.onerror = function () {
-            s.remove();
-            // 某些宿主 CSP 会拦 <script>，退回动态 import（同源模块）
-            import(url).then(function () { resolve({ ok: true }); })
-              .catch(function (e) { resolve({ ok: false, error: String((e && e.message) || e) }); });
-          };
-          document.head.appendChild(s);
-        });
-        loads.set(key, p);
-        return p;
-      }
-      function loadClients() {
-        addonState.addons.forEach(function (a) {
-          if (!a || !a.enabled || !a.client) return;
-          var key = a.id + "@" + (a.version || "0");
-          if (loads.has(key)) return;
-          var url = a.client + (a.client.indexOf("?") >= 0 ? "&" : "?") + "v=" + encodeURIComponent(key);
-          loadScript(url, key).then(function (r) {
-            if (!r.ok) {
-              lastAddonError = a.id + ": " + (r.error || "load error");
-              console.warn("[dsh-workbench] 子插件客户端加载失败", a.id, r.error);
-            } else {
-              lastAddonError = null;
-            }
-            notifyStore();
-          });
-        });
-      }
       function setAddons(list) {
         addonState.addons = Array.isArray(list) ? list : [];
         addonState.loaded = true;
         var alive = {};
         addonState.addons.forEach(function (a) { alive[a.id] = a; });
         registry.forEach(function (_m, id) { if (!alive[id]) registry.delete(id); });
-        loads.forEach(function (_p, key) { if (!alive[key.split("@")[0]]) loads.delete(key); });
-        loadClients();
         notifyStore();
       }
       function refreshAddons() {
-        return fetch("/workbench/api/addons")
+        return fetch("/workbench/api/domains")
           .then(function (r) { return r.json(); })
-          .then(function (j) { if (j && j.addons) { addonState.shellVersion = j.shellVersion || addonState.shellVersion; setAddons(j.addons); } return j; })
-          .catch(function (e) { console.warn("[dsh-workbench] 读取已装子插件失败", e); return null; });
+          .then(function (j) { if (j && j.domains) { addonState.shellVersion = j.shellVersion || addonState.shellVersion; setAddons(j.domains); } return j; })
+          .catch(function (e) { console.warn("[dsh-workbench] 读取业务插件失败", e); return null; });
       }
       function ensureStream() {
         if (stream) return;
         stream = new EventSource("/workbench/api/events");
-        stream.addEventListener("addons-changed", function (e) {
+        stream.addEventListener("domains-changed", function (e) {
           try { setAddons(JSON.parse(e.data)); } catch (err) { console.warn(err); }
         });
-        stream.addEventListener("addon-event", function (e) {
+        stream.addEventListener("domain-event", function (e) {
           try { broadcast(JSON.parse(e.data)); } catch (err) { console.warn(err); }
         });
       }
@@ -305,119 +267,6 @@
             jsx.jsx("button", { className: "wb-btn ghost", onClick: function () { api.post("/account/logout").then(refresh); }, children: t("logout") }),
           ] }),
           msg ? jsx.jsx("div", { className: "wb-msg", style: { marginTop: 8 }, children: msg }) : null,
-        ] });
-      }
-
-      function AddonsTab(props) {
-        var t = props.t;
-        var api = useApi();
-        var store = useAddonStore();
-        var installed = store.addons || [];
-        var cs = react.useState(null); var catalog = cs[0]; var setCatalog = cs[1];
-        var ls = react.useState(true); var loading = ls[0]; var setLoading = ls[1];
-        var ms = react.useState(""); var msg = ms[0]; var setMsg = ms[1];
-        var bs = react.useState(""); var busy = bs[0]; var setBusy = bs[1];
-        var ks = react.useState(""); var confirmId = ks[0]; var setConfirmId = ks[1];
-
-        function loadCatalog() {
-          setLoading(true);
-          api.get("/addons/catalog").then(function (r) {
-            setCatalog(r);
-            setLoading(false);
-          }).catch(function (e) {
-            setCatalog({ ok: false, error: String((e && e.message) || e) });
-            setLoading(false);
-          });
-        }
-        react.useEffect(function () { loadCatalog(); }, [api]);
-
-        function install(id) {
-          if (busy) return;
-          setBusy(id); setMsg(""); setConfirmId("");
-          api.post("/addons/" + encodeURIComponent(id) + "/install").then(function (r) {
-            setBusy("");
-            if (!r.ok) { setMsg(t("install_failed") + ": " + (r.error || "")); return; }
-            refreshAddons();
-            loadCatalog();
-          }).catch(function (e) { setBusy(""); setMsg(t("install_failed") + ": " + String((e && e.message) || e)); });
-        }
-        function uninstall(id) {
-          if (busy) return;
-          if (confirmId !== id) { setConfirmId(id); setMsg(""); return; }
-          setBusy(id); setConfirmId("");
-          api.del("/addons/" + encodeURIComponent(id)).then(function (r) {
-            setBusy("");
-            if (!r.ok) { setMsg(t("uninstall_failed") + ": " + (r.error || "")); return; }
-            refreshAddons();
-          }).catch(function (e) { setBusy(""); setMsg(t("uninstall_failed") + ": " + String((e && e.message) || e)); });
-        }
-
-        var installedMap = {};
-        installed.forEach(function (a) { installedMap[a.id] = a; });
-
-        return jsx.jsxs("div", { className: "wb-stack", children: [
-          jsx.jsxs("div", { className: "wb-sec", children: [
-            jsx.jsx("h3", { children: t("addons_installed") }),
-            jsx.jsx("span", { className: "wb-hint", children: installed.length + " / " + t("shell_version") + " " + (store.shellVersion || "") }),
-          ] }),
-          installed.length === 0
-            ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg wb-empty-cta", children: t("no_installed") }) })
-            : jsx.jsx("div", { children: installed.map(function (a) {
-                return jsx.jsxs("div", { className: "wb-addon", children: [
-                  jsx.jsxs("div", { className: "wb-addon-main", children: [
-                    jsx.jsxs("div", { className: "wb-addon-title", children: [
-                      a.title || a.id,
-                      jsx.jsx("span", { className: "wb-badge", children: "v" + a.version }),
-                      a.source && a.source.kind ? jsx.jsx("span", { className: "wb-badge", children: a.source.kind === "cloud" ? t("source_cloud") : t("source_local") }) : null,
-                    ] }),
-                    jsx.jsx("div", { className: "wb-addon-meta", children: a.id }),
-                    a.description ? jsx.jsx("div", { className: "wb-addon-desc", children: a.description }) : null,
-                    a.error ? jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + a.error }) : null,
-                  ] }),
-                  jsx.jsxs("div", { className: "wb-actions", children: [
-                    jsx.jsx("button", {
-                      className: "wb-btn danger",
-                      disabled: !!busy,
-                      onClick: function () { uninstall(a.id); },
-                      children: busy === a.id ? t("installing") : (confirmId === a.id ? t("confirm_uninstall") : t("uninstall")),
-                    }),
-                  ] }),
-                ] }, a.id);
-              }) }),
-          jsx.jsx("div", { className: "wb-sec", style: { marginTop: 8 }, children: [
-            jsx.jsx("h3", { children: t("addons_cloud") }),
-            jsx.jsx("button", { className: "wb-btn ghost", onClick: loadCatalog, disabled: loading, children: loading ? "…" : t("refresh") }),
-          ] }),
-          msg ? jsx.jsx("div", { className: "wb-err", children: msg }) : null,
-          catalog && catalog.cached ? jsx.jsx("div", { className: "wb-hint", children: t("cached_notice") }) : null,
-          !catalog || loading
-            ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg", children: t("catalog_loading") }) })
-            : (!catalog.addons || catalog.addons.length === 0)
-              ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg", children: catalog.error || t("no_catalog") }) })
-              : jsx.jsx("div", { children: catalog.addons.map(function (a) {
-                  var have = installedMap[a.id];
-                  var target = a.compatible_version || a.latest;
-                  var canInstall = !!target;
-                  var needInstall = !have;
-                  var needUpgrade = have && target && have.version !== target;
-                  return jsx.jsxs("div", { className: "wb-addon", children: [
-                    jsx.jsxs("div", { className: "wb-addon-main", children: [
-                      jsx.jsxs("div", { className: "wb-addon-title", children: [
-                        a.title || a.id,
-                        jsx.jsx("span", { className: "wb-badge", children: "v" + (target || "?") }),
-                        have ? jsx.jsx("span", { className: "wb-badge", children: t("installed") + " v" + have.version }) : null,
-                      ] }),
-                      a.description ? jsx.jsx("div", { className: "wb-addon-desc", children: a.description }) : null,
-                      jsx.jsx("div", { className: "wb-addon-meta", children: [a.id, a.author ? " · " + a.author : "", a.latest ? " · " + t("latest") + " v" + a.latest : ""].join("") }),
-                    ] }),
-                    jsx.jsxs("div", { className: "wb-actions", children: [
-                      needInstall ? jsx.jsx("button", { className: "wb-btn", disabled: !canInstall || !!busy, onClick: function () { install(a.id); }, children: busy === a.id ? t("installing") : t("install") }) : null,
-                      needUpgrade ? jsx.jsx("button", { className: "wb-btn", disabled: !!busy, onClick: function () { install(a.id); }, children: busy === a.id ? t("installing") : t("upgrade") }) : null,
-                      !needInstall && !needUpgrade ? jsx.jsx("span", { className: "wb-hint", children: t("installed") }) : null,
-                    ] }),
-                  ] }, a.id);
-                }) }),
-          jsx.jsx("div", { className: "wb-hint", children: t("data_kept") }),
         ] });
       }
 
@@ -508,11 +357,6 @@
             jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_account"), t("account_desc")), jsx.jsx(AccountTab, { t: t })] }),
           ] });
         }
-        if (route === "addons") {
-          return jsx.jsxs("div", { className: "wb-root", children: [
-            jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_addons"), t("addons_desc")), jsx.jsx(AddonsTab, { t: t })] }),
-          ] });
-        }
         if (currentAddon) {
           var canRender = activeView && typeof activeView.component === "function";
           var addonTitle = pickTitle(activeView && activeView.title, lang) || currentAddon.title || currentAddon.id;
@@ -536,12 +380,9 @@
                   ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + currentAddon.error }) })
                   : canRender
                     ? jsx.jsx(activeView.component, { api: apiFor(currentAddon.id), lang: lang, addonId: currentAddon.id, t: t })
-                    : !viewList.length && !currentAddon.client
+                    : !viewList.length
                       ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg", children: t("no_views") }) })
-                      : jsx.jsx("div", { className: "wb-card", children: jsx.jsxs("div", { className: "wb-page-loading", children: [
-                          jsx.jsx("div", { className: "wb-msg", style: { padding: "4px 0" }, children: lastAddonError ? t("addon_unavailable") + " · " + lastAddonError : t("addon_loading") }),
-                          lastAddonError && currentAddon.client ? jsx.jsx("button", { className: "wb-btn ghost", onClick: function () { location.reload(); }, children: t("refresh") }) : null,
-                        ] }) }),
+                      : jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-page-loading", children: jsx.jsx("div", { className: "wb-msg", style: { padding: "4px 0" }, children: lastAddonError ? t("addon_unavailable") + " · " + lastAddonError : t("addon_loading") }) }) }),
               ] }),
             ] }),
           ] });
@@ -559,7 +400,6 @@
             ] }),
             jsx.jsxs("div", { className: "wb-home-grid manage", children: [
               systemCard("account", "☁", t("tab_account"), t("account_desc")),
-              systemCard("addons", "▦", t("tab_addons"), t("addons_desc")),
             ] }),
           ] }),
         ] });

@@ -1,17 +1,26 @@
 /**
  * dsh-workbench：个人工作台 DSH 宿主插件。
+ *
+ * 只负责平台能力：本地 SQLite、账号/同步、HTTP 桥、SSE、Workbench 工具、
+ * 业务域注册中心。任务/标签/站点是独立的 DSH 插件，通过 ctx.workbench
+ * 注册自己的 action 与视图，宿主不 import 它们。
+ *
  * 契约要点（已验证）：named export name/inject/apply；绝不 default export
  * （cordis-plugin-loader unwrapExports 优先取 exports.default，裸函数会丢具名 inject）。
- *
- * 本版把「任务记录」彻底改成子插件：壳只提供数据库、同步、SSE、addon 生命周期。
  */
 import { homedir } from "node:os";
 import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { openDb } from "@wb/core";
 import type { DatabaseSync } from "node:sqlite";
+import type {
+  DomainActionDef,
+  DomainDef,
+  DomainPublicInfo,
+  DomainSetupApi,
+  WorkbenchHost,
+} from "@wb/sdk";
 import { runSyncRound, type CloudClient } from "./sync.js";
-import { AddonManager } from "./addons.js";
 
 export const name = "dsh-workbench";
 export const inject = ["webServer", "tools", "connection"];
@@ -20,8 +29,11 @@ export const inject = ["webServer", "tools", "connection"];
 const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
-/** 壳 API 版本：子插件 manifest.minShell 与云端兼容过滤都用它。 */
-const SHELL_VERSION = "0.1.0";
+/** 宿主 API 版本：业务插件用它做兼容判断。 */
+export const SHELL_VERSION = "0.2.0";
+
+const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
+const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
 
 interface WbState {
   db: DatabaseSync;
@@ -29,7 +41,13 @@ interface WbState {
   cloudUrl: string;
 }
 
-/** 读登录凭据（demo：明文 JSON 于 0600 文件；生产 keychain）。 */
+interface RegisteredDomain {
+  def: DomainDef;
+  actions: Map<string, DomainActionDef>;
+  error: string | null;
+  dispose: (() => void) | null;
+}
+
 function loadCreds(): WbState["creds"] {
   try {
     return JSON.parse(readFileSync(join(WB_HOME, "cloud-creds.json"), "utf8"));
@@ -53,9 +71,141 @@ type Subscriber = (event: string, data: unknown) => void;
 export function apply(ctx: any): void {
   const state: WbState = { db: openDb(join(WB_HOME, "workbench.db")), creds: loadCreds(), cloudUrl: CLOUD_DEFAULT };
   const subscribers = new Set<Subscriber>();
+  const domains = new Map<string, RegisteredDomain>();
+
   const emit = (event: string, data: unknown) => {
-    for (const s of subscribers) s(event, data);
+    for (const s of subscribers) {
+      try {
+        s(event, data);
+      } catch {
+        /* 单个订阅者断开不影响其他订阅者 */
+      }
+    }
   };
+  const log = (...args: unknown[]) => console.warn("[dsh-workbench]", ...args);
+
+  function publicInfo(rec: RegisteredDomain): DomainPublicInfo {
+    return {
+      id: rec.def.id,
+      title: rec.def.title,
+      description: rec.def.description,
+      version: rec.def.version,
+      enabled: rec.error === null,
+      error: rec.error,
+      tables: rec.def.tables ?? [],
+      views: rec.def.views ?? [],
+    };
+  }
+
+  function registerAction(rec: RegisteredDomain, action: string, def: DomainActionDef): void {
+    if (!ACTION_RE.test(action)) {
+      throw new Error("非法 action 名（应形如 tasks.list）：" + action);
+    }
+    rec.actions.set(action, def);
+  }
+
+  function registerDomain(def: DomainDef): () => void {
+    if (!def || !DOMAIN_ID_RE.test(String(def.id || ""))) {
+      log("registerDomain 非法 id", def && def.id);
+      return () => {};
+    }
+    if (domains.has(def.id)) {
+      log("业务域已注册，忽略重复注册", def.id);
+      return () => {};
+    }
+    const rec: RegisteredDomain = { def, actions: new Map(), error: null, dispose: null };
+    domains.set(def.id, rec);
+
+    const setupApi: DomainSetupApi = {
+      addon: { id: def.id, version: def.version, dir: "" },
+      db: state.db,
+      shellVersion: SHELL_VERSION,
+      hasDomain: (id: string) => domains.has(id),
+      hasAddon: (id: string) => domains.has(id),
+      action: (name: string, actionDef: DomainActionDef) => registerAction(rec, name, actionDef),
+      tool: (name: string, actionDef: DomainActionDef) => registerAction(rec, name, actionDef),
+      emit: (event: string, data?: unknown) => emit("domain-event", { domainId: def.id, event, data: data ?? null }),
+      log: (...args: unknown[]) => log("[" + def.id + "]", ...args),
+    };
+
+    try {
+      const result = def.setup?.(setupApi);
+      if (result && typeof (result as Promise<unknown>).then === "function") {
+        void (result as Promise<void | (() => void)>)
+          .then((dispose) => {
+            if (typeof dispose === "function") rec.dispose = dispose;
+            emit("domains-changed", listDomains());
+          })
+          .catch((e) => {
+            rec.error = String((e && (e as Error).message) || e);
+            log("业务域异步初始化失败", def.id, e);
+            emit("domains-changed", listDomains());
+          });
+      } else if (typeof result === "function") {
+        rec.dispose = result;
+      }
+    } catch (e) {
+      rec.error = String((e && (e as Error).message) || e);
+      log("业务域初始化失败", def.id, e);
+    }
+
+    emit("domains-changed", listDomains());
+    return () => {
+      const live = domains.get(def.id);
+      if (live !== rec) return;
+      try {
+        rec.dispose?.();
+      } catch (e) {
+        log("业务域清理失败", def.id, e);
+      }
+      domains.delete(def.id);
+      emit("domains-changed", listDomains());
+    };
+  }
+
+  function listDomains(): DomainPublicInfo[] {
+    return [...domains.values()].map(publicInfo);
+  }
+
+  function actionNames() {
+    const out: { name: string; domainId: string; description?: string }[] = [];
+    for (const rec of domains.values()) {
+      for (const [action, def] of rec.actions) {
+        out.push({ name: action, domainId: rec.def.id, description: def.description });
+      }
+    }
+    return out;
+  }
+
+  async function invoke(action: string, args: Record<string, unknown>, origin: "ui" | "agent" | "sync") {
+    for (const rec of domains.values()) {
+      const def = rec.actions.get(action);
+      if (!def) continue;
+      const result = await def.execute(args, {
+        origin,
+        emit: (event, data) => emit("domain-event", { domainId: rec.def.id, event, data: data ?? null }),
+      });
+      return {
+        result,
+        text: def.render ? def.render(result) : JSON.stringify(result),
+        domainId: rec.def.id,
+      };
+    }
+    throw new Error("没有业务插件注册 action：" + action);
+  }
+
+  const host: WorkbenchHost = {
+    db: state.db,
+    shellVersion: SHELL_VERSION,
+    registerDomain,
+    hasDomain: (id: string) => domains.has(id),
+    listDomains,
+    invoke,
+    actionNames,
+    emit,
+    log,
+  };
+  ctx.provide?.("workbench", host);
 
   /** 云端 fetch 封装（带 access token；401 时尝试 refresh 一次）。 */
   async function cloudFetch(path: string, init?: RequestInit & { json?: unknown }, retry = true): Promise<any> {
@@ -91,21 +241,6 @@ export function apply(ctx: any): void {
     return res.json();
   }
 
-  const manager = new AddonManager({
-    home: WB_HOME,
-    db: state.db,
-    shellVersion: SHELL_VERSION,
-    cloudUrl: state.cloudUrl,
-    cloudFetch: (path, init) => cloudFetch(path, init),
-    emit,
-    logger: (...args: unknown[]) => console.warn("[dsh-workbench]", ...args),
-  });
-
-  void manager
-    .init()
-    .then(() => emit("addons-changed", manager.list()))
-    .catch((e) => console.warn("[dsh-workbench] addon init failed:", e));
-
   // ── HTTP：/workbench/api/*（同域 cookie 之外的连接门由 host connection.requestRejection 兜底）──
   ctx.effect?.(
     () =>
@@ -139,7 +274,6 @@ export function apply(ctx: any): void {
 
             try {
               if (p === "/events" && m === "GET") {
-                // SSE：addon 事件 / 安装态 / 同步状态推送给 UI
                 res.writeHead(200, {
                   "content-type": "text/event-stream",
                   "cache-control": "no-cache",
@@ -152,56 +286,21 @@ export function apply(ctx: any): void {
                 return;
               }
 
-              if (p === "/addons" && m === "GET") {
-                return send(200, { ok: true, addons: manager.list(), shellVersion: SHELL_VERSION });
-              }
-              if (p === "/addons/catalog" && m === "GET") {
-                return send(200, await manager.catalog());
-              }
-              // 兼容旧 UI/脚本
-              if (p === "/catalog" && m === "GET") {
-                return send(200, await manager.catalog());
+              if (p === "/domains" && m === "GET") {
+                return send(200, { ok: true, domains: listDomains(), shellVersion: SHELL_VERSION });
               }
 
-              const clientM = /^\/addons\/([^/]+)\/client\.js$/.exec(p);
-              if (clientM && m === "GET") {
-                const id = decodeURIComponent(clientM[1]);
-                const file = manager.clientPath(id);
-                if (!file) return send(404, { ok: false, error: "addon 没有客户端模块" });
-                const code = readFileSync(file);
-                res.writeHead(200, {
-                  "content-type": "text/javascript; charset=utf-8",
-                  "cache-control": "no-store",
-                });
-                res.end(code);
-                return;
-              }
-
-              const installM = /^\/addons\/([^/]+)\/install$/.exec(p);
-              if (installM && m === "POST") {
-                const id = decodeURIComponent(installM[1]);
-                const addon = await manager.install(id);
-                return send(200, { ok: true, addon });
-              }
-
-              const actionM = /^\/addons\/([^/]+)\/actions\/([^/]+)$/.exec(p);
+              const actionM = /^\/domains\/([^/]+)\/actions\/([^/]+)$/.exec(p);
               if (actionM && m === "POST") {
                 const id = decodeURIComponent(actionM[1]);
                 const action = decodeURIComponent(actionM[2]);
-                const owner = manager.actionNames().find((a) => a.name === action);
-                if (!owner || owner.addonId !== id) {
-                  return send(404, { ok: false, error: "子插件未注册该 action：" + action });
+                const owner = actionNames().find((a) => a.name === action);
+                if (!owner || owner.domainId !== id) {
+                  return send(404, { ok: false, error: "业务插件未注册该 action：" + action });
                 }
                 const body = await bodyOf();
-                const r = await manager.invoke(action, body, "ui");
+                const r = await invoke(action, body, "ui");
                 return send(200, { ok: true, result: r.result, text: r.text });
-              }
-
-              const delM = /^\/addons\/([^/]+)$/.exec(p);
-              if (delM && m === "DELETE") {
-                const id = decodeURIComponent(delM[1]);
-                const r = await manager.uninstall(id);
-                return send(200, { ok: true, ...r });
               }
 
               if (p === "/sync/now" && m === "POST") {
@@ -256,31 +355,36 @@ export function apply(ctx: any): void {
     "workbench-http",
   );
 
-  // ── Agent 工具：Workbench（单工具多 action，action 由已装 addon 动态提供）──
+  // ── Agent 工具：Workbench（单工具多 action，action 由已注册业务域动态提供）──
   ctx.tools?.register({
     name: "Workbench",
     timeoutMs: 60_000,
     description:
-      "个人工作台。action 由已安装子插件提供（任务记录示例：tasks.list/tasks.create/tasks.update/tasks.complete/tasks.delete/tasks.stats），" +
-      "另有 addons.list / addons.install / addons.uninstall 管理子插件（安装=云端下载代码，卸载=本地删代码但保留数据）。",
+      "个人工作台。action 由已安装业务插件提供（任务 tasks.* / 标签 tags.* / 站点 sites.* / 站点目录 siteNodes.*）。" +
+      "安装或卸载业务插件请使用 DSH 的插件管理，不在本工具里做。",
     parameters: {
       type: "object",
       properties: {
         action: {
           type: "string",
-          description: "action 名，如 tasks.list / tasks.create / addons.install / addons.uninstall",
+          description: "action 名，如 tasks.list / tasks.create / tags.create / sites.list",
         },
-        addon_id: { type: "string", description: "子插件 id（addons.install/addons.uninstall）" },
-        id: { type: "string", description: "记录 id（tasks.update/complete/delete）" },
+        id: { type: "string", description: "记录 id" },
         title: { type: "string" },
+        name: { type: "string" },
         note: { type: "string" },
-        status: { type: "string", enum: ["open", "done"] },
-        priority: { type: "number", description: "1 高 2 中 3 低" },
-        due_at: { type: ["number", "null"], description: "到期毫秒时间戳" },
+        description: { type: "string" },
+        status: { type: "string" },
+        priority: { type: "number" },
+        due_at: { type: ["number", "null"] },
         tags: { type: "array", items: { type: "string" } },
+        tagIds: { type: "array", items: { type: "string" } },
+        dirIds: { type: "array", items: { type: "string" } },
+        parentId: { type: "string" },
         limit: { type: "number" },
       },
       required: ["action"],
+      additionalProperties: true,
     },
     output: {
       schema: { type: "object", properties: { text: { type: "string" } } },
@@ -289,34 +393,12 @@ export function apply(ctx: any): void {
     execute: async (args: any) => {
       const raw = String(args.action || "");
       try {
-        if (raw === "addons.list") {
-          const rows = manager.list();
-          if (!rows.length) return { text: "（尚未安装任何子插件）" };
-          return {
-            text: rows
-              .map((a: any) => "- " + a.id + "@" + a.version + "：" + a.title + (a.error ? "（异常：" + a.error + "）" : ""))
-              .join("\n"),
-          };
-        }
-        if (raw === "addons.install") {
-          const id = String(args.addon_id || args.id || "");
-          if (!id) return { text: "错误：addons.install 需要 addon_id" };
-          const addon: any = await manager.install(id);
-          return { text: "已安装 " + id + "@" + addon.version + (addon.error ? "（加载有误：" + addon.error + "）" : "") };
-        }
-        if (raw === "addons.uninstall") {
-          const id = String(args.addon_id || args.id || "");
-          if (!id) return { text: "错误：addons.uninstall 需要 addon_id" };
-          await manager.uninstall(id);
-          return { text: "已卸载 " + id + "（本地数据保留，重装后仍在）" };
-        }
-
-        // 兼容旧工具调用：无命名空间的 list/create/... 先映射到 tasks.*
-        const name = raw.indexOf(".") >= 0 ? raw : "tasks." + raw;
+        if (!raw) return { text: "错误：缺少 action" };
+        // 兼容旧工具调用：无命名空间的 list/create/... 映射到 tasks.*
+        const action = raw.indexOf(".") >= 0 ? raw : "tasks." + raw;
         const payload: Record<string, unknown> = { ...args };
         delete payload.action;
-        delete payload.addon_id;
-        const r = await manager.invoke(name, payload, "agent");
+        const r = await invoke(action, payload, "agent");
         return { text: r.text };
       } catch (e) {
         return { text: "错误：" + String((e && (e as Error).message) || e) };
@@ -346,7 +428,14 @@ export function apply(ctx: any): void {
   ctx.effect?.(
     () => () => {
       if (timer) clearInterval(timer);
-      manager.dispose();
+      for (const rec of domains.values()) {
+        try {
+          rec.dispose?.();
+        } catch {
+          /* ignore */
+        }
+      }
+      domains.clear();
     },
     "wb-sync-loop",
   );

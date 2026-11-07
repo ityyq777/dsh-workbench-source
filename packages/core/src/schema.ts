@@ -37,5 +37,15 @@ CREATE TABLE IF NOT EXISTS sync_state (
 );
 `;
 
-/** 参与同步的表清单（协议级；addon manifest 的 tables 是声明与校验，不改变白名单）。 */
-export const SYNCED_TABLES = new Set(["tasks", "habits"]);
+/** 参与同步的表清单（协议级；业务域 tables 用于声明与文档，最终白名单由宿主汇总）。 */
+export const SYNCED_TABLES = new Set([
+  "tasks",
+  "habits",
+  "task",
+  "task_node",
+  "tag",
+  "tag_mapping",
+  "site",
+  "site_node",
+  "site_node_mapping",
+]);

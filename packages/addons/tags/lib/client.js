@@ -1,12 +1,16 @@
 // wb-addon-tags 浏览器侧：标签搜索 / 创建 / 删除 / 分页。
 // 通过 window.__WB_HOST__ 注册，不打包 React。
 (function () {
+  window.__ModuleLoader__ = window.__ModuleLoader__ || { modules: {}, load: function (m) { this.modules[m.id] = m.factory; } };
+  window.__ModuleLoader__.load({
+    id: "dsh-workbench-tags",
+    factory: function (require) {
   "use strict";
 
   var host = window.__WB_HOST__;
   if (!host) {
     console.error("[wb-addon-tags] 宿主桥 window.__WB_HOST__ 不存在，视图未注册");
-    return;
+    return { name: "dsh-workbench-tags", inject: [], apply: function () {} };
   }
   var React = host.react;
   var h = host.h;
@@ -391,5 +395,8 @@
       title: { zh: "标签", en: "Tags" },
       component: TagsView,
     }],
+  });
+      return { name: "dsh-workbench-tags", inject: [], apply: function () {} };
+    },
   });
 })();

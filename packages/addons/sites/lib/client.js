@@ -1,15 +1,19 @@
 /* 站点子插件：浏览器侧视图。通过 window.__WB_HOST__ 注入 React，不打包。 */
 (function () {
+  window.__ModuleLoader__ = window.__ModuleLoader__ || { modules: {}, load: function (m) { this.modules[m.id] = m.factory; } };
+  window.__ModuleLoader__.load({
+    id: "dsh-workbench-sites",
+    factory: function (require) {
   var host = window.__WB_HOST__;
   if (!host) {
     console.error("[wb-addon-sites] 缺少 window.__WB_HOST__，无法注册站点视图");
-    return;
+    return { name: "dsh-workbench-sites", inject: [], apply: function () {} };
   }
   var React = host.react || host.React;
   var h = host.h || (React && React.createElement);
   if (!React || !h) {
     console.error("[wb-addon-sites] 宿主未提供 React");
-    return;
+    return { name: "dsh-workbench-sites", inject: [], apply: function () {} };
   }
   var useState = React.useState;
   var useEffect = React.useEffect;
@@ -1200,5 +1204,8 @@
     views: [
       { id: "sites", title: { zh: "站点", en: "Sites" }, component: SitesView },
     ],
+  });
+      return { name: "dsh-workbench-sites", inject: [], apply: function () {} };
+    },
   });
 })();
