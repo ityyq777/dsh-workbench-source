@@ -7,3 +7,4 @@ lib
 packages/shell-dist
 
 _archive/**
+dist/

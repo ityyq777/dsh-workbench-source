@@ -1,0 +1,130 @@
+# 仓库约定
+
+执行一类任务后自动执行 git commit；配置了 remote 时再 push。
+
+## 插件市场发布与维护
+
+个人工作台由四个 DSH 原生插件组成，发布链路与市场维护都按本节执行。
+
+### 包与命名
+
+| 用途 | npm 包名 | 源码目录 |
+| --- | --- | --- |
+| 宿主 | `dsh-workbench-host` | `packages/shell-dist` |
+| 任务 | `dsh-workbench-tasks` | `packages/addons/tasks` |
+| 标签 | `dsh-workbench-tags` | `packages/addons/tags` |
+| 站点 | `dsh-workbench-sites` | `packages/addons/sites` |
+
+- 源码内宿主仍叫 `dsh-workbench`；npm 上该名字已被无关项目占用，对外发布名必须是
+  `dsh-workbench-host`。不要在源码里直接改名，统一由 `scripts/stage-release.mjs` 改写。
+- 业务包通过 `dependencies` 依赖 `dsh-workbench-host`，安装任意业务插件会自动带宿主。
+- 对外发布仓库：`https://github.com/ityyq777/dsh-workbench`（发布镜像，不是源码仓库）。
+- 市场列表仓库：`https://github.com/awesome-dsh-plugin/awesome-dsh-plugin`；
+  市场页面是 dshmarket.com。
+
+### 版本升级
+
+发布前同步修改：
+
+1. 对应 `packages/addons/<name>/package.json` 的 `version` 与 `wb.addon.version`；
+2. 对应 `packages/addons/<name>/lib/client.js` 里 `registerAddon` 的 `version`；
+3. 宿主版本改 `packages/shell/package.json`，业务包依赖范围按需调整；
+4. 文档中的版本引用（docs/04、docs/09、docs/10、docs/11 等）。
+
+### 本地校验
+
+```sh
+pnpm build
+node scripts/dist-shell.mjs
+pnpm test:native
+pnpm test:clients
+pnpm test:tags
+pnpm test:sites
+pnpm test:e2e
+```
+
+涉及界面或安装链路的改动，还要重启一个临时 profile 实例做真实加载验证，不要重启
+正在使用的 3080 主实例。
+
+### 生成发布树
+
+```sh
+pnpm stage:release
+```
+
+输出在 `dist/release/`：
+
+- `packages/host`、`packages/tasks`、`packages/tags`、`packages/sites`；
+- 四份 `marketplace/*.yml` 草稿；
+- 根 README、LICENSE。
+
+检查 `package.json` 的 name/dependencies/files/dsh.client.inject，确认宿主 id、patch name、
+业务包依赖都已改写为 `dsh-workbench-host`。
+
+### npm 发布
+
+- 必须用官方 registry：`https://registry.npmjs.org`；本机默认 npmmirror，不要用默认值发布。
+- 首次需要：`npm login --registry=https://registry.npmjs.org`。
+- 发布顺序固定：host → tasks → tags → sites；业务包依赖宿主。
+- 先 dry-run：
+
+```sh
+pnpm publish:npm
+```
+
+- 正式发布：
+
+```sh
+pnpm publish:npm -- --publish
+# 有 2FA 时
+pnpm publish:npm -- --publish --otp=123456
+```
+
+- 已存在的同名版本会被脚本跳过，不要为了重发而改版本号以外的元数据。
+- 账号处于安全管控时不得尝试绕过；等限制解除后再发布。
+
+### 更新 GitHub 发布镜像
+
+发布镜像只放 `dist/release` 的产物，不直接编辑：
+
+1. `pnpm stage:release`；
+2. 把 `dist/release` 同步到发布仓库工作区，提交（例如 `release: workbench plugins 0.2.0`）；
+3. 推送到 `ityyq777/dsh-workbench` 的 `main`；
+4. 确认市场要求的 topic 存在：`dsh-plugin`（以及 `deepseek-harness` 等）；
+5. 确认 `packages/<name>/package.json` 可通过 raw.githubusercontent.com 读取。
+
+GitHub token 放在 `~/.dsh/workbench/github-token`（0600），只在推送时读取；
+不得写入仓库、日志或对话。git 推送时不要把 token 持久化进 remote URL 或 git config。
+
+### 插件市场收录与维护
+
+- 一插件一个文件：`data/plugins/<owner>__<repo>.yml`；README 由脚本生成，不要手改 README。
+- 本仓库是 monorepo：`url` 指向 `/tree/main/packages/<sub>`，`name` 用
+  `ityyq777/dsh-workbench#<sub>`，文件名用
+  `ityyq777__dsh-workbench--packages-<sub>.yml`。
+- 必填字段：`url`、`name`、`category`、`description.en`；中文描述可选。
+- 每个 PR 最多 3 个 entry，四个插件拆两个 PR：
+  1. host + tasks + tags
+  2. sites
+- 收录硬条件：
+  - 仓库 `package.json` 声明 `dsh.bundle`；
+  - 仓库创建满 1 天（CI 会自动重跑放行）；
+  - 仓库带 `dsh-plugin` topic；
+  - 真实可用代码，不是纯聚合包。
+- 版本升级不需要改市场 YAML；市场读取仓库中的 package.json 与 npm 版本。
+- 新增插件时才需要新增 YAML 并提 PR；发布前先跑市场仓库的
+  `scripts/check-submission.mjs`。
+
+### 发布完成检查
+
+- npm 四个版本可查询：`npm view <pkg> version --registry=https://registry.npmjs.org`；
+- 全新临时 profile 用 npm 包名安装 tasks，确认宿主被自动解析；
+- 首页出现对应卡片，视图可打开；
+- 市场页面能搜到插件；
+- 记录发布版本与日期到 `docs/14-发布与插件市场.md`。
+
+### 安全
+
+- GitHub token、npm token 只存本机私有文件，权限 0600；
+- 不打印、不提交、不写进文档；
+- token 一旦出现在对话、日志或提交中，发布完成后立即轮换。
