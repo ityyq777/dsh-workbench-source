@@ -433,6 +433,10 @@ export class AddonManager {
       addon: { id: addonId, version: manifest.version, dir },
       db: this.opts.db,
       shellVersion: this.opts.shellVersion,
+      hasAddon: (id: string): boolean => {
+        const rec = this.loaded.get(id);
+        return !!rec && rec.enabled;
+      },
       action(name: string, def: AddonActionDef): void {
         if (!ACTION_RE.test(name)) throw new Error("action 名非法：" + name);
         if (!def || typeof def.execute !== "function") throw new Error("action 需要 execute 函数：" + name);

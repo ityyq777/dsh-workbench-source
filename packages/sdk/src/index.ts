@@ -56,6 +56,8 @@ export interface AddonHostApi {
   /** 宿主打开的 SQLite（node:sqlite DatabaseSync），事务由 addon 自己组织 */
   readonly db: any;
   readonly shellVersion: string;
+  /** 某个子插件是否已安装且启用（用于跨子插件能力探测） */
+  hasAddon(id: string): boolean;
   /** 注册一个 action（同名再注册会覆盖，热重载友好） */
   action(name: string, def: AddonActionDef): void;
   /** 同 action；保留旧称便于迁移 */

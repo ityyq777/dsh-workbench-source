@@ -181,11 +181,36 @@ try {
   assert.ok(viaHttp.ok && viaHttp.result.records.some((t) => t.title === "e2e 任务"));
   console.log("· action 调用 ok（工具 + HTTP 两条路）");
 
-  // 第二个子插件：标签。验证多插件并存、独立 action、client.js、卸载保留数据
+  // 第二个子插件：站点（先不装标签，验证能力探测）
+  const sitesInst = await (await fetch(base + "/addons/wb-addon-sites/install", { method: "POST" })).json();
+  assert.ok(sitesInst.ok, "站点安装失败: " + JSON.stringify(sitesInst));
+  const withSites = await (await fetch(base + "/addons")).json();
+  assert.equal(withSites.addons.length, 2, "站点与任务未并存");
+  const sitesEntry = withSites.addons.find((a) => a.id === "wb-addon-sites");
+  assert.ok(sitesEntry, "已装列表缺站点子插件");
+  assert.equal(sitesEntry.version, sitesPkg.version);
+  const siteClientRes = await fetch(base + sitesEntry.client.replace("/workbench/api", ""));
+  assert.equal(siteClientRes.status, 200);
+  const capsBeforeTags = await (await fetch(base + "/addons/wb-addon-sites/actions/sites.capabilities", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).json();
+  assert.ok(capsBeforeTags.ok, "能力探测失败: " + JSON.stringify(capsBeforeTags));
+  assert.equal(capsBeforeTags.result.tags, false, "标签未安装时 capability 应为 false");
+  const nodeCreated = await (await fetch(base + "/addons/wb-addon-sites/actions/siteNodes.create", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ parentId: 0, name: "e2e 目录" }) })).json();
+  assert.ok(nodeCreated.ok, "目录创建失败: " + JSON.stringify(nodeCreated));
+  const nodeId = nodeCreated.result.node.id;
+  assert.ok(nodeId, "目录创建缺 id");
+  const siteCreated = await (await fetch(base + "/addons/wb-addon-sites/actions/sites.create", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ siteName: "e2e 站点", description: "端到端站点", dirIds: [nodeId], tagIds: ["ignored-when-tags-off"], siteLinks: [{ description: "官网", link: "https://example.com", isDefault: true }] }) })).json();
+  assert.ok(siteCreated.ok, "站点创建失败: " + JSON.stringify(siteCreated));
+  assert.equal(siteCreated.result.site.siteName, "e2e 站点");
+  assert.equal(siteCreated.result.site.tags.length, 0, "标签未安装时不应写入标签");
+  const siteViaToolBeforeTags = await tool.execute({ action: "sites.list" });
+  assert.ok(siteViaToolBeforeTags.text.includes("e2e 站点"), "工具读不到刚创建的站点: " + siteViaToolBeforeTags.text);
+  console.log("· 站点安装 + 能力探测 ok（标签未装时 tags=false）");
+
+  // 第三个子插件：标签。安装后站点能力恢复，再给站点补标签
   const tagsInst = await (await fetch(base + "/addons/wb-addon-tags/install", { method: "POST" })).json();
   assert.ok(tagsInst.ok, "标签安装失败: " + JSON.stringify(tagsInst));
   const withTags = await (await fetch(base + "/addons")).json();
-  assert.equal(withTags.addons.length, 2, "两个子插件未并存");
+  assert.equal(withTags.addons.length, 3, "三个子插件未并存");
   const tagsEntry = withTags.addons.find((a) => a.id === "wb-addon-tags");
   assert.ok(tagsEntry, "已装列表缺标签子插件");
   assert.equal(tagsEntry.version, tagsPkg.version);
@@ -201,30 +226,16 @@ try {
   assert.match(tagDup.text, /错误/);
   const tagViaHttp = await (await fetch(base + "/addons/wb-addon-tags/actions/tags.list", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).json();
   assert.ok(tagViaHttp.ok && tagViaHttp.result.records.some((t) => t.name === "e2e 标签"));
-  console.log("· 标签安装 + action ok（工具 + HTTP 两条路）");
-
-  // 第三个子插件：站点。验证目录树 action、站点创建、标签/目录关联、卸载保留数据
-  const sitesInst = await (await fetch(base + "/addons/wb-addon-sites/install", { method: "POST" })).json();
-  assert.ok(sitesInst.ok, "站点安装失败: " + JSON.stringify(sitesInst));
-  const withSites = await (await fetch(base + "/addons")).json();
-  assert.equal(withSites.addons.length, 3, "三个子插件未并存");
-  const sitesEntry = withSites.addons.find((a) => a.id === "wb-addon-sites");
-  assert.ok(sitesEntry, "已装列表缺站点子插件");
-  assert.equal(sitesEntry.version, sitesPkg.version);
-  const siteClientRes = await fetch(base + sitesEntry.client.replace("/workbench/api", ""));
-  assert.equal(siteClientRes.status, 200);
-  const nodeCreated = await (await fetch(base + "/addons/wb-addon-sites/actions/siteNodes.create", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ parentId: 0, name: "e2e 目录" }) })).json();
-  assert.ok(nodeCreated.ok, "目录创建失败: " + JSON.stringify(nodeCreated));
-  const nodeId = nodeCreated.result.node.id;
-  assert.ok(nodeId, "目录创建缺 id");
+  const capsAfterTags = await (await fetch(base + "/addons/wb-addon-sites/actions/sites.capabilities", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).json();
+  assert.ok(capsAfterTags.ok);
+  assert.equal(capsAfterTags.result.tags, true, "标签安装后 capability 应为 true");
   const tagId = tagViaHttp.result.records.find((t) => t.name === "e2e 标签").id;
-  const siteCreated = await (await fetch(base + "/addons/wb-addon-sites/actions/sites.create", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ siteName: "e2e 站点", description: "端到端站点", dirIds: [nodeId], tagIds: [tagId], siteLinks: [{ description: "官网", link: "https://example.com", isDefault: true }] }) })).json();
-  assert.ok(siteCreated.ok, "站点创建失败: " + JSON.stringify(siteCreated));
-  assert.equal(siteCreated.result.site.siteName, "e2e 站点");
-  assert.equal(siteCreated.result.site.tags.length, 1);
+  const siteUpdated = await (await fetch(base + "/addons/wb-addon-sites/actions/sites.update", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: siteCreated.result.site.id, tagIds: [tagId] }) })).json();
+  assert.ok(siteUpdated.ok, "站点补标签失败: " + JSON.stringify(siteUpdated));
+  assert.equal(siteUpdated.result.site.tags.length, 1);
   const siteViaTool = await tool.execute({ action: "sites.list" });
   assert.ok(siteViaTool.text.includes("e2e 站点"), "工具读不到刚创建的站点: " + siteViaTool.text);
-  console.log("· 站点安装 + 目录/站点 action ok（工具 + HTTP 两条路）");
+  console.log("· 标签安装 + 站点标签关联恢复 ok（工具 + HTTP 两条路）");
 
   const sitesUn = await (await fetch(base + "/addons/wb-addon-sites", { method: "DELETE" })).json();
   assert.ok(sitesUn.ok);

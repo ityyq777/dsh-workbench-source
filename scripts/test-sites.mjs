@@ -18,6 +18,7 @@ db.prepare("INSERT INTO tag(id,name,created_at,updated_at,deleted_at,rev) VALUES
 
 const events = [];
 const defs = {};
+let tagAddon = true;
 const api = {
   db,
   addon: { id: "wb-addon-sites", version: "1.0.0", dir },
@@ -26,6 +27,7 @@ const api = {
   emit: function (event, data) { events.push({ event, data }); },
   action: function (name, def) { defs[name] = def; },
   tool: function () {},
+  hasAddon: function (id) { return id === "wb-addon-tags" && tagAddon; },
 };
 const mod = await import("../packages/addons/sites/lib/index.js");
 mod.setup(api);
@@ -120,6 +122,23 @@ r = call("siteTags.search", { text: "工" });
 assert(r.total === 1 && r.records[0].name === "工作", "siteTags.search");
 r = call("siteTags.byIds", { ids: ["tag-work", "tag-life"] });
 assert(r.records.length === 2, "siteTags.byIds");
+
+// 标签子插件卸载后：能力关闭、列表不再返回标签、表单传入的 tagIds 被忽略
+r = call("sites.capabilities");
+assert(r.tags === true, "capabilities.tags true when tags addon installed");
+tagAddon = false;
+r = call("sites.capabilities");
+assert(r.tags === false, "capabilities.tags false when tags addon uninstalled");
+r = call("sites.create", { siteName: "无标签站点", dirIds: [lifeId], tagIds: ["tag-work"] });
+const noTagSiteId = r.site.id;
+assert(r.site.tags.length === 0, "create ignores tagIds when tags addon uninstalled");
+assert(call("sites.get", { id: noTagSiteId }).tags.length === 0, "get hides tags when tags addon uninstalled");
+assert(db.prepare("SELECT COUNT(*) AS n FROM tag_mapping WHERE item_id=? AND deleted_at IS NULL").get(noTagSiteId).n === 0, "no tag mapping written");
+r = call("siteTags.search", { text: "工" });
+assert(r.total === 0, "siteTags.search empty when tags addon uninstalled");
+tagAddon = true;
+r = call("sites.capabilities");
+assert(r.tags === true, "capabilities.tags back after tags addon enabled");
 
 // 校验
 let err = null;

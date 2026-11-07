@@ -1,6 +1,6 @@
 {
   "name": "wb-addon-sites",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "type": "module",
   "description": "站点子插件：站点、目录树、链接与标签",
@@ -10,7 +10,7 @@
       "id": "wb-addon-sites",
       "title": "站点",
       "description": "站点收藏：目录树、链接与标签",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "minShell": "0.1.0",
       "tables": [
         "site",
@@ -21,6 +21,7 @@
         "sites"
       ],
       "toolActions": [
+        "sites.capabilities",
         "sites.list",
         "sites.get",
         "sites.create",

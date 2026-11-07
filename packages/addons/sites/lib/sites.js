@@ -86,8 +86,15 @@ function tagRow(row) {
   };
 }
 
-function siteTagsOf(db, siteId) {
-  if (!hasTagDomain(db)) return [];
+function tagsOn(api, db) {
+  if (!hasTagDomain(db)) return false;
+  if (api && typeof api.hasAddon === "function") return api.hasAddon("wb-addon-tags") === true;
+  // 旧壳没有 hasAddon 时退回表探测；客户端还会用 host.addons 再判一次。
+  return true;
+}
+
+function siteTagsOf(db, siteId, tagsAvailable) {
+  if (!tagsAvailable || !hasTagDomain(db)) return [];
   return db.prepare(
     "SELECT t.* FROM tag_mapping m JOIN tag t ON t.id=m.tag_id " +
       "WHERE m.item_type='site' AND m.item_id=? AND m.deleted_at IS NULL AND t.deleted_at IS NULL " +
@@ -114,9 +121,9 @@ function siteDirsOf(db, siteId) {
   return out;
 }
 
-function enrichSite(db, row) {
+function enrichSite(db, row, tagsAvailable) {
   const site = rowSite(row);
-  site.tags = siteTagsOf(db, site.id);
+  site.tags = siteTagsOf(db, site.id, tagsAvailable);
   site.tagIds = site.tags.map(function (t) { return t.id; });
   site.dirs = siteDirsOf(db, site.id);
   return site;
@@ -133,7 +140,7 @@ function resolveSort(args) {
   return col + " " + dir + ", s.id ASC";
 }
 
-function listSites(db, args) {
+function listSites(db, args, tagsAvailable) {
   const pageNumber = clampPageNumber(args.pageNumber !== undefined ? args.pageNumber : args.current);
   const pageSize = clampPageSize(args.pageSize !== undefined ? args.pageSize : args.size, PAGE_SIZE_DEFAULT, PAGE_SIZE_MAX);
   const nodeId = idOf(args.nodeId !== undefined ? args.nodeId : args.dirId);
@@ -158,7 +165,7 @@ function listSites(db, args) {
   }
 
   if (tagIds.length) {
-    if (!hasTagDomain(db)) {
+    if (!tagsAvailable || !hasTagDomain(db)) {
       const info = pageInfo(0, pageNumber, pageSize);
       return Object.assign({ records: [] }, info);
     }
@@ -180,14 +187,14 @@ function listSites(db, args) {
     "SELECT s.* FROM " + SITE_TABLE + " s" + whereSql + " ORDER BY " + resolveSort(args) + " LIMIT ? OFFSET ?",
   );
   const rows = rowsStmt.all(...params.concat([pageSize, (info.current - 1) * pageSize]));
-  return Object.assign({ records: rows.map(function (r) { return enrichSite(db, r); }) }, info);
+  return Object.assign({ records: rows.map(function (r) { return enrichSite(db, r, tagsAvailable); }) }, info);
 }
 
-function getSite(db, args) {
+function getSite(db, args, tagsAvailable) {
   const id = idOf(args.id !== undefined ? args.id : args.siteId);
   if (!id) return null;
   const row = db.prepare("SELECT * FROM " + SITE_TABLE + " WHERE id=? AND deleted_at IS NULL").get(id);
-  return row ? enrichSite(db, row) : null;
+  return row ? enrichSite(db, row, tagsAvailable) : null;
 }
 
 function validateSiteName(value) {
@@ -215,9 +222,8 @@ function normalizeDirIds(db, value) {
   return nodes;
 }
 
-function validateTagIds(db, tagIds) {
-  if (!tagIds.length) return [];
-  if (!hasTagDomain(db)) throw new Error("未安装标签子插件，无法关联标签");
+function validateTagIds(db, tagIds, tagsAvailable) {
+  if (!tagIds.length || !tagsAvailable) return [];
   const rows = [];
   for (const id of tagIds) {
     const row = db.prepare("SELECT * FROM tag WHERE id=? AND deleted_at IS NULL").get(id);
@@ -270,11 +276,8 @@ function replaceDirMappings(db, siteId, nodes, ts, origin) {
   }
 }
 
-function replaceTagMappings(db, siteId, tags, ts, origin) {
-  if (!hasTagDomain(db)) {
-    if (tags.length) throw new Error("未安装标签子插件，无法关联标签");
-    return;
-  }
+function replaceTagMappings(db, siteId, tags, ts, origin, tagsAvailable) {
+  if (!tagsAvailable || !hasTagDomain(db)) return;
   const current = db.prepare(
     "SELECT * FROM tag_mapping WHERE item_type='site' AND item_id=? AND deleted_at IS NULL",
   ).all(String(siteId));
@@ -313,12 +316,12 @@ function replaceTagMappings(db, siteId, tags, ts, origin) {
   }
 }
 
-function createSite(db, args, origin, api) {
+function createSite(db, args, origin, api, tagsAvailable) {
   const siteName = validateSiteName(args.siteName !== undefined ? args.siteName : args.name);
   const description = validateDescription(args.description);
   const links = normalizeLinks(args.siteLinks !== undefined ? args.siteLinks : args.links);
   const nodes = normalizeDirIds(db, args.dirIds !== undefined ? args.dirIds : args.dirIds);
-  const tags = validateTagIds(db, normalizeTagIds(args.tagIds));
+  const tags = validateTagIds(db, normalizeTagIds(args.tagIds), tagsAvailable);
   const bindable = args.bindable === 0 || args.bindable === "0" || args.bindable === false ? 0 : 1;
   const ts = now();
   const id = newId();
@@ -339,13 +342,13 @@ function createSite(db, args, origin, api) {
     ).run(id, row.site_name, row.description, row.bindable, row.site_link, ts, ts, null, 1);
     logChange(db, SITE_TABLE, id, "create", row, origin, ts);
     replaceDirMappings(db, id, nodes, ts, origin);
-    replaceTagMappings(db, id, tags, ts, origin);
+    replaceTagMappings(db, id, tags, ts, origin, tagsAvailable);
   });
   api.emit("sites-changed", { id: id, op: "create" });
-  return { site: enrichSite(db, db.prepare("SELECT * FROM " + SITE_TABLE + " WHERE id=?").get(id)) };
+  return { site: enrichSite(db, db.prepare("SELECT * FROM " + SITE_TABLE + " WHERE id=?").get(id), tagsAvailable) };
 }
 
-function updateSite(db, args, origin, api) {
+function updateSite(db, args, origin, api, tagsAvailable) {
   const id = idOf(args.id !== undefined ? args.id : args.siteId);
   const existing = db.prepare("SELECT * FROM " + SITE_TABLE + " WHERE id=? AND deleted_at IS NULL").get(id);
   if (!existing) throw new Error("站点不存在：" + (id || "(空)"));
@@ -355,7 +358,7 @@ function updateSite(db, args, origin, api) {
     ? normalizeLinks(args.siteLinks !== undefined ? args.siteLinks : args.links)
     : parseLinks(existing.site_link);
   const nodes = args.dirIds !== undefined && args.dirIds !== null ? normalizeDirIds(db, args.dirIds) : null;
-  const tags = args.tagIds !== undefined && args.tagIds !== null ? validateTagIds(db, normalizeTagIds(args.tagIds)) : null;
+  const tags = args.tagIds !== undefined && args.tagIds !== null && tagsAvailable ? validateTagIds(db, normalizeTagIds(args.tagIds), tagsAvailable) : null;
   const bindable = args.bindable === undefined
     ? Number(existing.bindable) === 0 ? 0 : 1
     : (args.bindable === 0 || args.bindable === "0" || args.bindable === false ? 0 : 1);
@@ -373,10 +376,10 @@ function updateSite(db, args, origin, api) {
       rev: Number(existing.rev) + 1,
     }), origin, ts);
     if (nodes) replaceDirMappings(db, id, nodes, ts, origin);
-    if (tags) replaceTagMappings(db, id, tags, ts, origin);
+    if (tags) replaceTagMappings(db, id, tags, ts, origin, tagsAvailable);
   });
   api.emit("sites-changed", { id: id, op: "update" });
-  return { site: enrichSite(db, db.prepare("SELECT * FROM " + SITE_TABLE + " WHERE id=?").get(id)) };
+  return { site: enrichSite(db, db.prepare("SELECT * FROM " + SITE_TABLE + " WHERE id=?").get(id), tagsAvailable) };
 }
 
 function deleteSite(db, args, origin, api) {
@@ -412,11 +415,11 @@ function deleteSite(db, args, origin, api) {
   return { ok: true, deleted: true, removedNodeMappings: removedNodeMappings, removedTagMappings: removedTagMappings };
 }
 
-function searchTags(db, args) {
+function searchTags(db, args, tagsAvailable) {
   const pageNumber = clampPageNumber(args.pageNumber !== undefined ? args.pageNumber : args.current);
   const pageSize = clampPageSize(args.pageSize !== undefined ? args.pageSize : args.size, TAG_SEARCH_SIZE_DEFAULT, TAG_SEARCH_SIZE_MAX);
   const text = String(args.text || "").trim();
-  if (!hasTagDomain(db)) {
+  if (!tagsAvailable || !hasTagDomain(db)) {
     return Object.assign({ records: [], text: text }, pageInfo(0, pageNumber, pageSize));
   }
   const where = ["deleted_at IS NULL"];
@@ -435,9 +438,9 @@ function searchTags(db, args) {
   return Object.assign({ records: rows.map(tagRow), text: text }, info);
 }
 
-function tagsByIds(db, args) {
+function tagsByIds(db, args, tagsAvailable) {
   const ids = normalizeTagIds(args.ids !== undefined ? args.ids : args.tagIds).slice(0, 500);
-  if (!ids.length || !hasTagDomain(db)) return { records: [] };
+  if (!ids.length || !tagsAvailable || !hasTagDomain(db)) return { records: [] };
   const sql = "SELECT * FROM tag WHERE deleted_at IS NULL AND id IN (" + ids.map(function () { return "?"; }).join(",") + ") ORDER BY updated_at DESC, id ASC";
   return { records: db.prepare(sql).all(...ids).map(tagRow) };
 }
@@ -458,6 +461,14 @@ function renderSite(r) {
 export function registerSiteActions(api) {
   const db = api.db;
   const action = api.action;
+  const tagsAvailable = function () { return tagsOn(api, db); };
+
+  action("sites.capabilities", {
+    description: "站点子插件能力：标签是否可用（依赖标签子插件已安装且启用）",
+    input: { type: "object", properties: {} },
+    execute: function () { return { tags: tagsAvailable() }; },
+    render: function (r) { return r && r.tags ? "标签能力：可用" : "标签能力：不可用（标签子插件未安装）"; },
+  });
 
   action("sites.list", {
     description: "分页查询站点；可按目录子树、标签、标题/描述关键字过滤",
@@ -473,14 +484,14 @@ export function registerSiteActions(api) {
         sortOrder: { type: "string" },
       },
     },
-    execute: function (args) { return listSites(db, args || {}); },
+    execute: function (args) { return listSites(db, args || {}, tagsAvailable()); },
     render: renderList,
   });
 
   action("sites.get", {
     description: "按 id 取单个站点（含目录路径与标签）",
     input: { type: "object", properties: { id: { type: ["string", "number"] } } },
-    execute: function (args) { return getSite(db, args || {}); },
+    execute: function (args) { return getSite(db, args || {}, tagsAvailable()); },
     render: function (r) { return r ? renderSite({ site: r }) : "站点不存在"; },
   });
 
@@ -498,7 +509,7 @@ export function registerSiteActions(api) {
       },
       required: ["siteName", "dirIds"],
     },
-    execute: function (args, ctx) { return createSite(db, args || {}, ctx.origin, api); },
+    execute: function (args, ctx) { return createSite(db, args || {}, ctx.origin, api, tagsAvailable()); },
     render: renderSite,
   });
 
@@ -517,7 +528,7 @@ export function registerSiteActions(api) {
       },
       required: ["id"],
     },
-    execute: function (args, ctx) { return updateSite(db, args || {}, ctx.origin, api); },
+    execute: function (args, ctx) { return updateSite(db, args || {}, ctx.origin, api, tagsAvailable()); },
     render: renderSite,
   });
 
@@ -536,7 +547,7 @@ export function registerSiteActions(api) {
     input: { type: "object", properties: {} },
     execute: function () {
       const total = Number(db.prepare("SELECT COUNT(*) AS n FROM site WHERE deleted_at IS NULL").get().n || 0);
-      const tagged = hasTagDomain(db)
+      const tagged = tagsAvailable() && hasTagDomain(db)
         ? Number(db.prepare("SELECT COUNT(DISTINCT item_id) AS n FROM tag_mapping WHERE item_type='site' AND deleted_at IS NULL").get().n || 0)
         : 0;
       const nodes = Number(db.prepare("SELECT COUNT(*) AS n FROM site_node WHERE deleted_at IS NULL").get().n || 0);
@@ -555,14 +566,14 @@ export function registerSiteActions(api) {
         pageSize: { type: "number" },
       },
     },
-    execute: function (args) { return searchTags(db, args || {}); },
+    execute: function (args) { return searchTags(db, args || {}, tagsAvailable()); },
     render: function (r) { return (r.records || []).map(function (t) { return t.name; }).join("、") || "无匹配标签"; },
   });
 
   action("siteTags.byIds", {
     description: "按 id 批量取标签（供站点列表拼装标签）",
     input: { type: "object", properties: { ids: { type: "array", items: { type: ["string", "number"] } } } },
-    execute: function (args) { return tagsByIds(db, args || {}); },
+    execute: function (args) { return tagsByIds(db, args || {}, tagsAvailable()); },
     render: function (r) { return (r.records || []).map(function (t) { return t.name; }).join("、") || "无标签"; },
   });
 }

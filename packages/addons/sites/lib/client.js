@@ -182,6 +182,13 @@
     return value;
   }
 
+  // 站点依赖标签子插件：以宿主已安装/启用列表为准；旧宿主没有列表时返回 true，交给后端 capabilities 判断。
+  function hostHasAddon(id) {
+    var list = host.addons;
+    if (!Array.isArray(list)) return true;
+    return list.some(function (a) { return a && a.id === id && a.enabled !== false; });
+  }
+
   var cssText = [
     ".wbs-root{--wbs-line:color-mix(in srgb, var(--dsw-alias-label-primary,#1f2328) 13%, transparent);--wbs-soft:color-mix(in srgb, var(--dsw-alias-label-primary,#1f2328) 4.5%, transparent);--wbs-accent:var(--dsw-alias-accent,#0a8f7d);--wbs-muted:color-mix(in srgb, var(--dsw-alias-label-primary,#1f2328) 58%, transparent);display:flex;flex-direction:column;min-height:560px;color:var(--dsw-alias-label-primary,#1f2328);font-size:13px}",
     ".wbs-grow{flex:1;min-width:0}",
@@ -336,6 +343,8 @@
     var mode = props.mode;
     var site = props.site;
     var current = props.current || { id: "0", path: [] };
+    var tagOn = !!props.tagOn;
+    var maxStep = tagOn ? 2 : 1;
     var [step, setStep] = useState(0);
     var [name, setName] = useState(site ? site.siteName : "");
     var [desc, setDesc] = useState(site ? site.description : "");
@@ -372,6 +381,10 @@
     }, []);
 
     useEffect(function () {
+      if (!tagOn) {
+        setTagResults([]);
+        return;
+      }
       var alive = true;
       var timer = setTimeout(function () {
         callApi(api, "siteTags.search", { text: tagQuery, pageSize: 50 }).then(function (r) {
@@ -381,7 +394,7 @@
         });
       }, 220);
       return function () { alive = false; clearTimeout(timer); };
-    }, [tagQuery]);
+    }, [tagQuery, tagOn]);
 
     var flatDirs = useMemo(function () { return flattenTree(dirTree, 0); }, [dirTree]);
 
@@ -434,6 +447,7 @@
     }
 
     function next() {
+      if (step >= maxStep) return;
       if (!validate(step + 1)) return;
       setStep(step + 1);
     }
@@ -452,8 +466,8 @@
         description: String(desc || "").trim(),
         siteLinks: siteLinks,
         dirIds: dirIds,
-        tagIds: tags.map(function (t) { return t.id; }),
       };
+      if (tagOn) payload.tagIds = tags.map(function (t) { return t.id; });
       var p;
       if (mode === "edit" && site) {
         p = callApi(api, "sites.update", Object.assign({ id: site.id }, payload));
@@ -469,7 +483,9 @@
       });
     }
 
-    var steps = [text(lang, "step1"), text(lang, "step2"), text(lang, "step3")];
+    var steps = tagOn
+      ? [text(lang, "step1"), text(lang, "step2"), text(lang, "step3")]
+      : [text(lang, "step1"), text(lang, "step2")];
     var title = mode === "edit" ? text(lang, "editTitle") : text(lang, "createTitle");
 
     return h(Modal, { onClose: saving ? null : props.onClose },
@@ -546,7 +562,7 @@
         h("div", { className: "wbs-note", style: { marginTop: 8 } }, "站点可同时挂在多个目录下；列表会按目录子树过滤。"),
       ) : null,
 
-      step === 2 ? h("div", null,
+      tagOn && step === 2 ? h("div", null,
         h("div", { className: "wbs-label" }, text(lang, "chooseTags")),
         tags.length ? h("div", { className: "wbs-chips" }, tags.map(function (t) {
           return h("span", { className: "wbs-chip", key: t.id }, t.name,
@@ -576,7 +592,7 @@
         h("div", { className: "wbs-formerr" }, error || ""),
         step > 0 ? h("button", { type: "button", className: "wbs-btn", disabled: saving, onClick: function () { setStep(step - 1); } }, text(lang, "back")) : null,
         h("button", { type: "button", className: "wbs-btn", disabled: saving, onClick: props.onClose }, text(lang, "cancel")),
-        step < 2
+        step < maxStep
           ? h("button", { type: "button", className: "wbs-btn primary", onClick: next }, text(lang, "nextStep"))
           : h("button", { type: "button", className: "wbs-btn primary", disabled: saving, onClick: save }, saving ? text(lang, "saving") : text(lang, "save")),
       ),
@@ -684,6 +700,8 @@
     var [tagFilter, setTagFilter] = useState([]);
     var [allTags, setAllTags] = useState([]);
     var [tagMenu, setTagMenu] = useState(false);
+    var [tagOn, setTagOn] = useState(false);
+    var tagOnRef = useRef(false);
     var [sortCol, setSortCol] = useState("update_time");
     var [sortOrder, setSortOrder] = useState("desc");
     var [loading, setLoading] = useState(false);
@@ -736,6 +754,7 @@
     }
 
     function loadAllTags() {
+      if (!tagOnRef.current) return Promise.resolve([]);
       return callApi(api, "siteTags.search", { pageSize: 100 }).then(function (r) {
         setAllTags(r.records || []);
       }).catch(function () {});
@@ -743,7 +762,20 @@
 
     useEffect(function () {
       refreshTree();
-      loadAllTags();
+      callApi(api, "sites.capabilities").then(function (r) {
+        var on = !!(r && r.tags) && hostHasAddon("wb-addon-tags");
+        tagOnRef.current = on;
+        setTagOn(on);
+        if (!on) {
+          setTagFilter([]);
+          setTagMenu(false);
+        } else {
+          loadAllTags();
+        }
+      }).catch(function () {
+        tagOnRef.current = false;
+        setTagOn(false);
+      });
     }, []);
 
     useEffect(function () {
@@ -960,6 +992,8 @@
     }
 
     var pages = Math.max(1, Math.ceil(total / pageSize));
+    var tagsVisible = tagOn && hostHasAddon("wb-addon-tags");
+    var colCount = tagsVisible ? 6 : 5;
 
     return h("div", { className: "wbs-root" },
       h("div", { className: "wbs-head" },
@@ -1013,7 +1047,7 @@
               h("button", { title: "搜索", onClick: function () { setTextQuery(searchInput.trim()); setPage(1); } }, "⌕"),
               searchInput ? h("button", { title: "清空", onClick: function () { setSearchInput(""); setTextQuery(""); setPage(1); } }, "×") : null,
             ),
-            h("div", { className: "wbs-tagfilter" },
+            tagsVisible ? h("div", { className: "wbs-tagfilter" },
               h("button", {
                 className: "wbs-btn",
                 onClick: function () { setTagMenu(!tagMenu); },
@@ -1041,7 +1075,7 @@
                   );
                 }) : h("div", { className: "wbs-note", style: { padding: 6 } }, "暂无标签"),
               ) : null,
-            ),
+            ) : null,
             h("div", { className: "wbs-grow" }),
             selectedIds.length ? h("button", { className: "wbs-btn danger", onClick: deleteSelected }, text(lang, "deleteSelected") + " (" + selectedIds.length + ")") : null,
           ),
@@ -1051,7 +1085,7 @@
               h("colgroup", null,
                 h("col", { style: { width: 34 } }),
                 h("col", null),
-                h("col", { style: { width: 150 } }),
+                tagsVisible ? h("col", { style: { width: 150 } }) : null,
                 h("col", { style: { width: 112 } }),
                 h("col", { style: { width: 112 } }),
                 h("col", { style: { width: 190 } }),
@@ -1060,15 +1094,15 @@
                 h("tr", null,
                   h("th", null, h("input", { type: "checkbox", checked: allSelected, onChange: toggleAll, "aria-label": "全选" })),
                   h("th", null, text(lang, "siteCol")),
-                  h("th", null, text(lang, "tagCol")),
+                  tagsVisible ? h("th", null, text(lang, "tagCol")) : null,
                   h("th", { className: "wbs-th-sort", onClick: function () { sortBy("create_time"); } }, text(lang, "createTime") + arrow("create_time")),
                   h("th", { className: "wbs-th-sort", onClick: function () { sortBy("update_time"); } }, text(lang, "updateTime") + arrow("update_time")),
                   h("th", null, text(lang, "actions")),
                 ),
               ),
               h("tbody", null,
-                loading ? h("tr", null, h("td", { colSpan: 6 }, h("div", { className: "wbs-loading" }, text(lang, "loading")))) : null,
-                !loading && !sites.length ? h("tr", null, h("td", { colSpan: 6 },
+                loading ? h("tr", null, h("td", { colSpan: colCount }, h("div", { className: "wbs-loading" }, text(lang, "loading")))) : null,
+                !loading && !sites.length ? h("tr", null, h("td", { colSpan: colCount },
                   h("div", { className: "wbs-empty" },
                     h("b", null, text(lang, "empty")),
                     h("span", null, text(lang, "emptyHint")),
@@ -1082,9 +1116,9 @@
                       s.description ? h("div", { className: "wbs-site-desc" }, s.description) : h("div", { className: "wbs-site-desc wbs-muted" }, text(lang, "noDesc")),
                       s.defaultLink ? h("a", { className: "wbs-site-link", href: s.defaultLink, target: "_blank", rel: "noreferrer noopener" }, s.defaultLink) : h("div", { className: "wbs-site-desc wbs-muted" }, text(lang, "noLink")),
                     ),
-                    h("td", null, s.tags && s.tags.length ? s.tags.map(function (t) {
+                    tagsVisible ? h("td", null, s.tags && s.tags.length ? s.tags.map(function (t) {
                       return h("span", { className: "wbs-chip", key: t.id }, t.name);
-                    }) : h("span", { className: "wbs-muted" }, "—")),
+                    }) : h("span", { className: "wbs-muted" }, "—")) : null,
                     h("td", { className: "wbs-muted" }, s.createTime || "—"),
                     h("td", { className: "wbs-muted" }, s.updateTime || "—"),
                     h("td", null,
@@ -1112,7 +1146,7 @@
                     })) : h("div", { className: "wbs-muted" }, "未关联目录"));
                   return h(React.Fragment, { key: s.id + ":detail" },
                     row,
-                    h("tr", { className: "wbs-expand" }, h("td", { colSpan: 6 }, detail)),
+                    h("tr", { className: "wbs-expand" }, h("td", { colSpan: colCount }, detail)),
                   );
                 }) : null,
               ),
@@ -1136,6 +1170,7 @@
         mode: editing.mode,
         site: editing.site,
         current: current,
+        tagOn: tagsVisible,
         onClose: function () { setEditing(null); },
         onSaved: onSaved,
       }) : null,
@@ -1161,7 +1196,7 @@
 
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.0.2",
+    version: "1.0.3",
     views: [
       { id: "sites", title: { zh: "站点", en: "Sites" }, component: SitesView },
     ],
