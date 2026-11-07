@@ -30,8 +30,28 @@ export function apply(ctx) {
   // 2. 建立域注册中心，ctx.provide("workbench", host)
   // 3. ctx.webServer.register({ kind:'prefix', path:'/workbench/api', handler })
   // 4. ctx.tools.register({ name:'Workbench', ... })
-  // 5. 30s 同步循环；ctx.effect 清理 timer 与所有域 dispose
+  // 5. SyncEngine（protocol v2）+ 30s 定时器；ctx.effect 清理 timer 与所有域 dispose
 }
+```
+
+宿主启动与业务插件接入的时序：
+
+```mermaid
+sequenceDiagram
+  participant DSH as DSH 进程
+  participant H as dsh-workbench
+  participant T as dsh-workbench-tasks
+  participant DB as SQLite
+  DSH->>H: apply(ctx)
+  H->>DB: openDb + 平台表
+  H->>H: provide("workbench", host)
+  H->>H: webServer / tools / SSE
+  DSH->>T: apply(ctx)
+  T->>H: registerDomain(def)
+  H->>T: setup(api)
+  T->>DB: ensureSchema(api.db)
+  T->>H: api.action("tasks.list", ...)
+  H-->>DSH: 域就绪
 ```
 
 要求：`connection` 在宿主 profile 中始终存在，因此放进 inject；若未来面向缺失该服务的
@@ -92,6 +112,17 @@ ctx.effect(() => ctx.workbench.registerDomain({
 - 宿主客户端先挂载 `window.__WB_HOST__ = { react, jsx, h, addons, registerAddon, ... }`；
   业务插件的 `dsh.client.inject: ["dsh-workbench"]` 保证加载顺序，业务 factory 内直接读取该桥。
 - 客户端与宿主通信用**同源 fetch**（`/workbench/api/*`）与 SSE（`/workbench/api/events`）。
+
+```mermaid
+flowchart LR
+  A["DSH client loader"] -->|"dsh.client.inject 先加载"| B["dsh-workbench/client.js"]
+  B --> C["window.__WB_HOST__<br/>react / jsx / h / registerAddon"]
+  A -->|"后加载"| D["tasks/tags/sites client.js"]
+  D -->|"registerAddon(view)"| C
+  B --> E["首页卡片 + 沉浸式全页"]
+  D --> F["业务视图"]
+  F -->|"api.call / subscribe"| G["/workbench/api/* + SSE"]
+```
 
 ## 安装接入
 

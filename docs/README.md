@@ -1,7 +1,8 @@
 # 个人工作台（Personal Workbench）— 方案总览
 
-> 状态：v0.3。四个 DSH 原生插件已实现并真实加载验证；业务数据本地 SQLite，
-> 登录后与自建云端同步。本文档集基于本机 DSH 与已装插件源码的实测调查。
+> 状态：v0.5。四个 DSH 原生插件已实现并真实加载验证；业务数据本地 SQLite，
+> 登录后按 protocol v2 与自建云端同步（树表整表覆盖 + 行级 LWW）。本文档集基于
+> 本机 DSH 与已装插件源码的实测调查。
 
 ## 一句话定位
 
@@ -10,22 +11,18 @@ agent 工具、账号与同步、客户端页面框架；任务、标签、站�
 各自向宿主注册数据、action 与视图。安装任意业务插件都会连带安装宿主；
 安装/卸载由 DSH 自己管理，没有自建插件市场。
 
-```
-┌──────────────────────────── DSH ─────────────────────────────┐
-│  profile: dsh-workbench(host) + tasks / tags / sites          │
-│                                                               │
-│  dsh-workbench ── ctx.provide("workbench")                    │
-│    ├── workbench.db (WAL)   ├── /workbench/api/*  (HTTP/SSE)   │
-│    ├── Workbench 工具       ├── 首页卡片 + 沉浸式全页           │
-│    └── 域注册中心 ← tasks / tags / sites                       │
-│                                                               │
-│  浏览器：DSH 客户端模块加载器 → client.js → __WB_HOST__        │
-└───────────────────────────┬───────────────────────────────────┘
-                            │ 仅登录后：账号/设备/数据同步
-                ┌───────────▼───────────────────────┐
-                │  Workbench Cloud（自托管）         │
-                │  账号 / 设备 / push / pull         │
-                └───────────────────────────────────┘
+```mermaid
+flowchart TB
+  subgraph DSH["DSH profile"]
+    H["dsh-workbench（宿主）<br/>workbench.db · HTTP/SSE · tools"]
+    T["tasks"] --> H
+    G["tags"] --> H
+    S["sites"] --> H
+    B["浏览器：ModuleLoader → client.js → __WB_HOST__"]
+    B --> H
+  end
+  C["Workbench Cloud（自托管）<br/>账号 / 设备 / protocol v2 同步"]
+  H -.->|"仅登录后"| C
 ```
 
 ## 快速运行
@@ -93,6 +90,6 @@ node packages/cloud/lib/server.js --port 8791 --data ~/.dsh/workbench/cloud
 | D1 | 主体形态 | 宿主 `dsh-workbench` + 三个独立业务插件 `dsh-workbench-tasks/tags/sites` | 业务可独立安装/卸载；装业务插件自动带宿主 |
 | D2 | 本地权威存储 | 直接 `node:sqlite` + WAL，不走 storageDomain JSON | 需要行级变更日志、索引与事务 |
 | D3 | 插件协议 | DSH 原生包 + `ctx.workbench.registerDomain`；客户端 ModuleLoader + `__WB_HOST__` | 复用 DSH 安装/激活/依赖解析；宿主只做运行时聚合 |
-| D4 | 同步模型 | 离线优先 + `sync_change_log` + 行级 LWW | 行级冲突面可控；树表后续补整树快照 |
+| D4 | 同步模型 | 离线优先 + `sync_change_log`；A 类行级 LWW，B 类树表 reconcile + 整表 full | 行级冲突面可控；树表保证 sort/path 自洽 |
 | D5 | 云端 | Node + `node:http` + `node:sqlite`，只做账号/设备/数据同步 | 与插件分发解耦；旧 catalog 仅兼容保留 |
 | D6 | 代码库 | `~/code/dsh-workbench` pnpm monorepo | 宿主、业务插件、SDK、云端同仓联调 |
