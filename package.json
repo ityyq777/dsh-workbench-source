@@ -11,6 +11,7 @@
     "publish:addon": "node scripts/publish-addon.mjs --dir packages/addons/tasks",
     "dist:shell": "node scripts/dist-shell.mjs",
     "test:tags": "node scripts/test-tags.mjs",
+    "test:sites": "node scripts/test-sites.mjs",
     "test:e2e": "node scripts/e2e.mjs"
   }
 }

@@ -1,0 +1,45 @@
+{
+  "name": "wb-addon-sites",
+  "version": "1.0.2",
+  "private": true,
+  "type": "module",
+  "description": "站点子插件：站点、目录树、链接与标签",
+  "main": "lib/index.js",
+  "wb": {
+    "addon": {
+      "id": "wb-addon-sites",
+      "title": "站点",
+      "description": "站点收藏：目录树、链接与标签",
+      "version": "1.0.2",
+      "minShell": "0.1.0",
+      "tables": [
+        "site",
+        "site_node",
+        "site_node_mapping"
+      ],
+      "views": [
+        "sites"
+      ],
+      "toolActions": [
+        "sites.list",
+        "sites.get",
+        "sites.create",
+        "sites.update",
+        "sites.delete",
+        "sites.stats",
+        "siteTags.search",
+        "siteTags.byIds",
+        "siteNodes.tree",
+        "siteNodes.children",
+        "siteNodes.multipleChildren",
+        "siteNodes.pathChildren",
+        "siteNodes.path",
+        "siteNodes.create",
+        "siteNodes.rename",
+        "siteNodes.move",
+        "siteNodes.delete"
+      ],
+      "client": "lib/client.js"
+    }
+  }
+}

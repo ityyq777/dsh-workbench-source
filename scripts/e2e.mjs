@@ -22,6 +22,8 @@ const tasksDir = join(root, "packages/addons/tasks");
 const tasksPkg = JSON.parse(readFileSync(join(tasksDir, "package.json"), "utf8"));
 const tagsDir = join(root, "packages/addons/tags");
 const tagsPkg = JSON.parse(readFileSync(join(tagsDir, "package.json"), "utf8"));
+const sitesDir = join(root, "packages/addons/sites");
+const sitesPkg = JSON.parse(readFileSync(join(sitesDir, "package.json"), "utf8"));
 const baseVersion = tasksPkg.version;
 const upgradeVersion = (() => {
   const p = baseVersion.split(".");
@@ -72,6 +74,11 @@ function smokeClients() {
   window.__WB_HOST__.registerAddon({ id: "smoke", views: [{ id: "v", component: function () { return null; } }] });
 
   const host = { react: React, jsx: jsx, h: React.createElement, registerAddon(m) { calls.push(m); } };
+  const documentStub = {
+    getElementById() { return null; },
+    createElement() { return { id: "", textContent: "", setAttribute() {}, appendChild() {} }; },
+    head: { appendChild() {} },
+  };
   vm.runInNewContext(readFileSync(join(root, "packages/addons/tasks/lib/client.js"), "utf8"), { window: { __WB_HOST__: host }, console });
   assert.equal(calls.length, 1, "任务子插件未注册视图");
   assert.equal(calls[0].id, "wb-addon-tasks");
@@ -80,7 +87,11 @@ function smokeClients() {
   assert.equal(calls.length, 2, "标签子插件未注册视图");
   assert.equal(calls[1].id, "wb-addon-tags");
   assert.equal(calls[1].views[0].id, "tags");
-  console.log("· 客户端 smoke ok（壳 factory + 任务/标签子插件注册）");
+  vm.runInNewContext(readFileSync(join(root, "packages/addons/sites/lib/client.js"), "utf8"), { window: { __WB_HOST__: host }, console, document: documentStub });
+  assert.equal(calls.length, 3, "站点子插件未注册视图");
+  assert.equal(calls[2].id, "wb-addon-sites");
+  assert.equal(calls[2].views[0].id, "sites");
+  console.log("· 客户端 smoke ok（壳 factory + 任务/标签/站点子插件注册）");
 }
 
 const port = await freePort();
@@ -108,7 +119,13 @@ try {
     { encoding: "utf8" },
   );
   assert.ok(JSON.parse(pubTags).ok);
-  console.log("· 云端发布 ok（任务 + 标签）");
+  const pubSites = execFileSync(
+    process.execPath,
+    [join(root, "scripts/publish-addon.mjs"), "--dir", sitesDir, "--server", "http://127.0.0.1:" + port, "--token", "test-token"],
+    { encoding: "utf8" },
+  );
+  assert.ok(JSON.parse(pubSites).ok);
+  console.log("· 云端发布 ok（任务 + 标签 + 站点）");
 
   const detail = await (await fetch("http://127.0.0.1:" + port + "/v1/catalog/addons/wb-addon-tasks?shell=0.1.0")).json();
   assert.ok(detail.addon.versions[0].tarball, "catalog 详情缺 tarball");
@@ -116,7 +133,10 @@ try {
   const tagDetail = await (await fetch("http://127.0.0.1:" + port + "/v1/catalog/addons/wb-addon-tags?shell=0.1.0")).json();
   assert.ok(tagDetail.addon.versions[0].tarball, "标签 catalog 详情缺 tarball");
   assert.equal(tagDetail.addon.compatible_version, tagsPkg.version);
-  console.log("· catalog 详情含 tarball + compatible_version（任务 + 标签）");
+  const siteDetail = await (await fetch("http://127.0.0.1:" + port + "/v1/catalog/addons/wb-addon-sites?shell=0.1.0")).json();
+  assert.ok(siteDetail.addon.versions[0].tarball, "站点 catalog 详情缺 tarball");
+  assert.equal(siteDetail.addon.compatible_version, sitesPkg.version);
+  console.log("· catalog 详情含 tarball + compatible_version（任务 + 标签 + 站点）");
 
   process.env.WB_HOME = home;
   process.env.WB_CLOUD_URL = "http://127.0.0.1:" + port;
@@ -182,6 +202,41 @@ try {
   const tagViaHttp = await (await fetch(base + "/addons/wb-addon-tags/actions/tags.list", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).json();
   assert.ok(tagViaHttp.ok && tagViaHttp.result.records.some((t) => t.name === "e2e 标签"));
   console.log("· 标签安装 + action ok（工具 + HTTP 两条路）");
+
+  // 第三个子插件：站点。验证目录树 action、站点创建、标签/目录关联、卸载保留数据
+  const sitesInst = await (await fetch(base + "/addons/wb-addon-sites/install", { method: "POST" })).json();
+  assert.ok(sitesInst.ok, "站点安装失败: " + JSON.stringify(sitesInst));
+  const withSites = await (await fetch(base + "/addons")).json();
+  assert.equal(withSites.addons.length, 3, "三个子插件未并存");
+  const sitesEntry = withSites.addons.find((a) => a.id === "wb-addon-sites");
+  assert.ok(sitesEntry, "已装列表缺站点子插件");
+  assert.equal(sitesEntry.version, sitesPkg.version);
+  const siteClientRes = await fetch(base + sitesEntry.client.replace("/workbench/api", ""));
+  assert.equal(siteClientRes.status, 200);
+  const nodeCreated = await (await fetch(base + "/addons/wb-addon-sites/actions/siteNodes.create", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ parentId: 0, name: "e2e 目录" }) })).json();
+  assert.ok(nodeCreated.ok, "目录创建失败: " + JSON.stringify(nodeCreated));
+  const nodeId = nodeCreated.result.node.id;
+  assert.ok(nodeId, "目录创建缺 id");
+  const tagId = tagViaHttp.result.records.find((t) => t.name === "e2e 标签").id;
+  const siteCreated = await (await fetch(base + "/addons/wb-addon-sites/actions/sites.create", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ siteName: "e2e 站点", description: "端到端站点", dirIds: [nodeId], tagIds: [tagId], siteLinks: [{ description: "官网", link: "https://example.com", isDefault: true }] }) })).json();
+  assert.ok(siteCreated.ok, "站点创建失败: " + JSON.stringify(siteCreated));
+  assert.equal(siteCreated.result.site.siteName, "e2e 站点");
+  assert.equal(siteCreated.result.site.tags.length, 1);
+  const siteViaTool = await tool.execute({ action: "sites.list" });
+  assert.ok(siteViaTool.text.includes("e2e 站点"), "工具读不到刚创建的站点: " + siteViaTool.text);
+  console.log("· 站点安装 + 目录/站点 action ok（工具 + HTTP 两条路）");
+
+  const sitesUn = await (await fetch(base + "/addons/wb-addon-sites", { method: "DELETE" })).json();
+  assert.ok(sitesUn.ok);
+  const afterSitesUn = await (await fetch(base + "/addons")).json();
+  assert.equal(afterSitesUn.addons.length, 2);
+  const sitesFailed = await tool.execute({ action: "sites.list" });
+  assert.match(sitesFailed.text, /错误/);
+  const rawSites = new DatabaseSync(join(home, "workbench.db"));
+  const siteRows = rawSites.prepare("SELECT site_name FROM site WHERE deleted_at IS NULL").all();
+  rawSites.close();
+  assert.ok(siteRows.some((r) => r.site_name === "e2e 站点"), "卸载站点后数据丢了");
+  console.log("· 站点卸载 ok：代码移除、站点数据保留");
 
   const tagUn = await (await fetch(base + "/addons/wb-addon-tags", { method: "DELETE" })).json();
   assert.ok(tagUn.ok);
