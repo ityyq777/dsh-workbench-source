@@ -15,6 +15,12 @@
         zh: {
           nav: "个人工作台", title: "个人工作台", tagline: "离线优先 · 子插件按需安装",
           tab_account: "账号与同步", tab_addons: "子插件",
+          back_home: "返回首页", open: "打开", manage: "工作台管理",
+          home_hint: "点开卡片进入子插件；账号与插件在下方管理",
+          account_desc: "登录云端账号，备份与同步数据",
+          addons_desc: "安装、升级或卸载子插件",
+          no_views: "该子插件没有注册界面", addon_loading: "正在加载子插件界面…", addon_unavailable: "子插件界面不可用",
+          views: "个视图",
           addons_installed: "已安装的子插件", addons_cloud: "云端目录",
           install: "安装", upgrade: "升级", installed: "已安装", uninstall: "卸载",
           confirm_uninstall: "确认卸载", installing: "正在安装…", refresh: "刷新目录",
@@ -31,6 +37,12 @@
         en: {
           nav: "Workbench", title: "Personal Workbench", tagline: "Offline-first · installable addons",
           tab_account: "Account & Sync", tab_addons: "Addons",
+          back_home: "Back to home", open: "Open", manage: "Manage",
+          home_hint: "Open a card to enter an addon; manage account and addons below",
+          account_desc: "Sign in to back up and sync your data",
+          addons_desc: "Install, update or uninstall addons",
+          no_views: "This addon has no UI", addon_loading: "Loading addon UI…", addon_unavailable: "Addon UI unavailable",
+          views: "views",
           addons_installed: "Installed addons", addons_cloud: "Cloud catalog",
           install: "Install", upgrade: "Update", installed: "Installed", uninstall: "Uninstall",
           confirm_uninstall: "Confirm uninstall", installing: "Installing…", refresh: "Refresh catalog",
@@ -81,6 +93,30 @@
         ".wb-msg{font-size:12.5px;opacity:.55;padding:20px 0;text-align:center;line-height:1.6}",
         ".wb-empty-cta{padding:26px 14px}",
         ".wb-stack{display:flex;flex-direction:column;gap:10px}",
+        ".wb-home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));gap:12px}",
+        ".wb-home-card{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--wb-surface);border:1px solid var(--wb-line);border-radius:14px;padding:16px 16px 14px;color:inherit;font:inherit;cursor:pointer;transition:transform .12s ease,border-color .12s ease,background .12s ease}",
+        ".wb-home-card:hover{border-color:var(--dsw-alias-accent,#11a89b);transform:translateY(-1px)}",
+        ".wb-home-card:focus-visible{outline:2px solid var(--dsw-alias-accent,#11a89b);outline-offset:2px}",
+        ".wb-home-top{display:flex;align-items:center;justify-content:space-between;gap:8px}",
+        ".wb-home-icon{width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;background:color-mix(in oklab,var(--dsw-alias-accent,#11a89b) 14%,transparent);color:var(--dsw-alias-accent,#11a89b);font-size:16px;font-weight:650;flex:none}",
+        ".wb-home-title{font-size:14px;font-weight:650;margin-top:4px;line-height:1.4}",
+        ".wb-home-desc{font-size:12px;opacity:.62;line-height:1.55;min-height:34px}",
+        ".wb-home-foot{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--dsw-alias-accent,#11a89b);margin-top:2px;opacity:.9}",
+        ".wb-home-arrow{font-size:14px;transition:transform .12s ease}",
+        ".wb-home-card:hover .wb-home-arrow{transform:translateX(2px)}",
+        ".wb-home-card.dim{opacity:.72}",
+        ".wb-home-grid.manage{margin-top:2px}",
+        ".wb-wide{max-width:1280px}",
+        ".wb-page-head{display:flex;flex-direction:column;gap:8px;padding-bottom:2px}",
+        ".wb-page-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
+        ".wb-back{border:1px solid var(--wb-line);background:transparent;color:inherit;border-radius:8px;padding:6px 11px;cursor:pointer;font:inherit;font-size:12px;opacity:.75;display:inline-flex;align-items:center;gap:5px}",
+        ".wb-back:hover{opacity:1;border-color:var(--dsw-alias-accent,#11a89b)}",
+        ".wb-page-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+        ".wb-page-title h2{margin:0;font-size:19px;font-weight:650;letter-spacing:.2px}",
+        ".wb-page-desc{font-size:12px;opacity:.6;line-height:1.5}",
+        ".wb-page-tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--wb-line)}",
+        ".wb-page-loading{display:flex;flex-direction:column;gap:8px;align-items:flex-start}",
+        "@media (max-width:760px){.wb-root{padding:16px}.wb-home-grid{grid-template-columns:1fr}.wb-page-title h2{font-size:17px}}",
       ].join("\n");
 
       // ── 子插件宿主桥（必须在任何 addon client.js 之前就位）──
@@ -382,7 +418,7 @@
       function WorkbenchPage(props) {
         var t = props.t;
         var store = useAddonStore();
-        var ts = react.useState(null); var tab = ts[0]; var setTab = ts[1];
+        var rs = react.useState("home"); var route = rs[0]; var setRoute = rs[1];
         var lang = currentLang();
         react.useEffect(function () {
           if (document.getElementById("wb-css")) return;
@@ -393,37 +429,126 @@
           document.head.appendChild(s);
         }, []);
 
-        var views = [];
-        (store.addons || []).forEach(function (a) {
-          if (!a.enabled) return;
+        var addons = (store.addons || []).filter(function (a) { return a && a.enabled; });
+        var currentAddon = null;
+        if (route.indexOf("addon:") === 0) {
+          var parts = route.split(":");
+          var wanted = parts[1] || "";
+          addons.forEach(function (a) { if (a.id === wanted) currentAddon = a; });
+        }
+        var mod = currentAddon ? registry.get(currentAddon.id) : null;
+        var clientViews = mod && Array.isArray(mod.views) ? mod.views : [];
+        var manifestViews = currentAddon && Array.isArray(currentAddon.views) ? currentAddon.views : [];
+        var viewList = clientViews.length ? clientViews : manifestViews;
+        var wantedView = route.indexOf("addon:") === 0 ? (route.split(":")[2] || "") : "";
+        var activeView = null;
+        viewList.forEach(function (v) { if (v.id === wantedView) activeView = v; });
+        if (!activeView && viewList.length) activeView = viewList[0];
+
+        function go(next) { setRoute(next); }
+        function cardIcon(title) { return String(title || "?").slice(0, 1); }
+        function openAddon(a) {
           var m = registry.get(a.id);
-          if (!m) return;
-          (m.views || []).forEach(function (v) {
-            views.push({ key: a.id + ":" + v.id, title: v.title, component: v.component, addon: a });
-          });
-        });
-        var known = tab === "account" || tab === "addons" || views.some(function (v) { return v.key === tab; });
-        var active = known ? tab : (views.length ? views[0].key : "addons");
-        var current = null;
-        views.forEach(function (v) { if (v.key === active) current = v; });
+          var v = (m && m.views && m.views[0]) || (a.views && a.views[0]) || null;
+          go("addon:" + a.id + ":" + (v && v.id ? v.id : ""));
+        }
+        function pageHead(title, desc) {
+          return jsx.jsxs("div", { className: "wb-page-head", children: [
+            jsx.jsx("div", { className: "wb-page-top", children: [
+              jsx.jsx("button", { className: "wb-back", onClick: function () { go("home"); }, children: "← " + t("back_home") }),
+            ] }),
+            jsx.jsxs("div", { className: "wb-page-title", children: [
+              jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(title) }),
+              jsx.jsx("h2", { children: title }),
+            ] }),
+            desc ? jsx.jsx("div", { className: "wb-page-desc", children: desc }) : null,
+          ] });
+        }
+        function addonCard(a) {
+          var m = registry.get(a.id);
+          var v = (m && m.views && m.views[0]) || (a.views && a.views[0]) || null;
+          var title = pickTitle(v && v.title, lang) || a.title || a.id;
+          var count = (m && m.views ? m.views.length : (a.views ? a.views.length : 0));
+          return jsx.jsxs("button", { type: "button", className: "wb-home-card" + (a.error ? " dim" : ""), onClick: function () { openAddon(a); }, children: [
+            jsx.jsxs("div", { className: "wb-home-top", children: [
+              jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(a.title || title) }),
+              jsx.jsx("span", { className: "wb-badge", children: "v" + (a.version || "?") }),
+            ] }),
+            jsx.jsx("div", { className: "wb-home-title", children: title }),
+            jsx.jsx("div", { className: "wb-home-desc", children: a.description || (count > 1 ? count + " " + t("views") : "") }),
+            a.error ? jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + a.error }) : null,
+            jsx.jsxs("div", { className: "wb-home-foot", children: [
+              jsx.jsx("span", { children: a.error ? t("addon_unavailable") : t("open") }),
+              jsx.jsx("span", { className: "wb-home-arrow", children: "→" }),
+            ] }),
+          ] }, a.id);
+        }
+        function systemCard(key, icon, title, desc) {
+          return jsx.jsxs("button", { type: "button", className: "wb-home-card", onClick: function () { go(key); }, children: [
+            jsx.jsxs("div", { className: "wb-home-top", children: [
+              jsx.jsx("span", { className: "wb-home-icon", children: icon }),
+            ] }),
+            jsx.jsx("div", { className: "wb-home-title", children: title }),
+            jsx.jsx("div", { className: "wb-home-desc", children: desc }),
+            jsx.jsxs("div", { className: "wb-home-foot", children: [
+              jsx.jsx("span", { children: t("open") }),
+              jsx.jsx("span", { className: "wb-home-arrow", children: "→" }),
+            ] }),
+          ] }, key);
+        }
+
+        if (route === "account") {
+          return jsx.jsxs("div", { className: "wb-root", children: [
+            jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_account"), t("account_desc")), jsx.jsx(AccountTab, { t: t })] }),
+          ] });
+        }
+        if (route === "addons") {
+          return jsx.jsxs("div", { className: "wb-root", children: [
+            jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_addons"), t("addons_desc")), jsx.jsx(AddonsTab, { t: t })] }),
+          ] });
+        }
+        if (currentAddon) {
+          var canRender = activeView && typeof activeView.component === "function";
+          return jsx.jsxs("div", { className: "wb-root", children: [
+            jsx.jsxs("div", { className: "wb-inner wb-wide", children: [
+              jsx.jsxs("div", { className: "wb-page-head", children: [
+                jsx.jsx("div", { className: "wb-page-top", children: [
+                  jsx.jsx("button", { className: "wb-back", onClick: function () { go("home"); }, children: "← " + t("back_home") }),
+                  jsx.jsx("span", { className: "wb-badge", children: "v" + (currentAddon.version || "?") }),
+                ] }),
+              ] }),
+              viewList.length > 1 ? jsx.jsx("div", { className: "wb-page-tabs", children: viewList.map(function (v) {
+                var on = activeView && v.id === activeView.id;
+                return jsx.jsx("button", { className: "wb-tab" + (on ? " on" : ""), onClick: function () { go("addon:" + currentAddon.id + ":" + v.id); }, children: pickTitle(v.title, lang) || v.id }, v.id);
+              }) }) : null,
+              currentAddon.error
+                ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + currentAddon.error }) })
+                : canRender
+                  ? jsx.jsx(activeView.component, { api: apiFor(currentAddon.id), lang: lang, addonId: currentAddon.id, t: t })
+                  : !viewList.length && !currentAddon.client
+                    ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg", children: t("no_views") }) })
+                    : jsx.jsx("div", { className: "wb-card", children: jsx.jsxs("div", { className: "wb-page-loading", children: [
+                        jsx.jsx("div", { className: "wb-msg", style: { padding: "4px 0" }, children: lastAddonError ? t("addon_unavailable") + " · " + lastAddonError : t("addon_loading") }),
+                        lastAddonError && currentAddon.client ? jsx.jsx("button", { className: "wb-btn ghost", onClick: function () { location.reload(); }, children: t("refresh") }) : null,
+                      ] }) }),
+            ] }),
+          ] });
+        }
 
         return jsx.jsxs("div", { className: "wb-root", children: [
           jsx.jsxs("div", { className: "wb-inner", children: [
             jsx.jsx("div", { className: "wb-hero", children: jsx.jsxs("div", { children: [jsx.jsx("h2", { children: t("title") }), jsx.jsx("span", { className: "wb-tag", children: t("tagline") })] }) }),
-            jsx.jsxs("div", { className: "wb-tabs", children: [
-              views.map(function (v) {
-                return jsx.jsx("button", { className: "wb-tab" + (active === v.key ? " on" : ""), onClick: function () { setTab(v.key); }, children: pickTitle(v.title, lang) }, v.key);
-              }),
-              jsx.jsx("button", { className: "wb-tab" + (active === "account" ? " on" : ""), onClick: function () { setTab("account"); }, children: t("tab_account") }, "account"),
-              jsx.jsx("button", { className: "wb-tab" + (active === "addons" ? " on" : ""), onClick: function () { setTab("addons"); }, children: t("tab_addons") }, "addons"),
+            addons.length
+              ? jsx.jsx("div", { className: "wb-home-grid", children: addons.map(addonCard) })
+              : jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg wb-empty-cta", children: t("no_installed") }) }),
+            jsx.jsxs("div", { className: "wb-sec", children: [
+              jsx.jsx("h3", { children: t("manage") }),
+              jsx.jsx("span", { className: "wb-hint", children: t("home_hint") }),
             ] }),
-            active === "account"
-              ? jsx.jsx(AccountTab, { t: t })
-              : active === "addons"
-                ? jsx.jsx(AddonsTab, { t: t })
-                : current
-                  ? jsx.jsx(current.component, { api: apiFor(current.addon.id), lang: lang, addonId: current.addon.id, t: t })
-                  : jsx.jsx(AddonsTab, { t: t }),
+            jsx.jsxs("div", { className: "wb-home-grid manage", children: [
+              systemCard("account", "☁", t("tab_account"), t("account_desc")),
+              systemCard("addons", "▦", t("tab_addons"), t("addons_desc")),
+            ] }),
           ] }),
         ] });
       }

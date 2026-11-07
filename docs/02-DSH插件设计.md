@@ -57,9 +57,10 @@ schema 片段，壳合并成一份 parameters JSONSchema。
 
 ## client 半边
 
-- 通过 `slots.inject("settings.plugins.tab", ...)` 注册「个人工作台」tab（主页面）；
-  通过 `sidebar.right.pane.tab` 提供快速面板（今日任务速览）；
-  `shell.overlay` 留给命令面板式快捷操作。UI 细节见 [03](./03-UI设计.md)。
+- 通过 `slots.inject("sidebar.panellist", ...)` + `main` 注册左侧导航与工作台主页面，
+  同时通过 `settings.plugins.tab` 在设置里打开同一页面；主页是卡片网格，点卡片进入
+  子插件全页。`sidebar.right.pane.tab` 快速面板与 `shell.overlay` 命令浮层为后续项。
+  UI 细节见 [03](./03-UI设计.md)。
 - client 与 host 通信用**同源 fetch**（`/workbench/api/*`）——这是 dsh-prompt
   注释里明确记录的低风险路线（ctx.remote 在第三方 profile 内无先例）。
 
