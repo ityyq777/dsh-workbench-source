@@ -102,10 +102,13 @@
     ".wbt-input,.wbt-select,.wbt-textarea{border:1px solid var(--wbt-line);background:transparent;color:inherit;border-radius:8px;padding:7px 10px;font-size:13px;outline:none;min-width:0}",
     ".wbt-input:focus,.wbt-select:focus,.wbt-textarea:focus{border-color:var(--wbt-accent)}",
     ".wbt-search{width:220px;max-width:46vw}",
-    ".wbt-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--wbt-line);padding-bottom:6px}",
-    ".wbt-tab{border:none;background:transparent;color:inherit;opacity:.65;border-radius:7px;padding:6px 10px;cursor:pointer;font-size:12.5px}",
+    ".wbt-body{display:flex;gap:14px;align-items:flex-start;min-height:0;flex:1}",
+    ".wbt-nav{display:flex;flex-direction:column;gap:2px;flex:0 0 138px;width:138px;padding:3px 0;border-right:1px solid var(--wbt-line)}",
+    ".wbt-content{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}",
+    ".wbt-nav-sep{height:1px;background:var(--wbt-line);margin:5px 9px;opacity:.7}",
+    ".wbt-tab{display:flex;align-items:center;text-align:left;width:100%;border:none;background:transparent;color:inherit;opacity:.62;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12.5px;line-height:1.35;transition:background .12s ease,color .12s ease,opacity .12s ease}",
     ".wbt-tab:hover{opacity:1;background:color-mix(in oklab,currentColor 7%,transparent)}",
-    ".wbt-tab.on{opacity:1;font-weight:650;background:color-mix(in oklab,var(--wbt-accent) 15%,transparent);color:var(--wbt-accent)}",
+    ".wbt-tab.on{opacity:1;font-weight:650;background:color-mix(in oklab,var(--wbt-accent) 15%,transparent);color:var(--wbt-accent);box-shadow:inset 2px 0 0 var(--wbt-accent)}",
     ".wbt-filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12px;opacity:.85}",
     ".wbt-check{display:inline-flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap}",
     ".wbt-check input{accent-color:var(--wbt-accent)}",
@@ -189,12 +192,14 @@
     ".wbt-pill{font-size:11px;padding:2px 7px;border-radius:999px;background:color-mix(in oklab,var(--wbt-accent) 12%,transparent);color:var(--wbt-accent)}",
     ".wbt-hint{font-size:11.5px;opacity:.55;line-height:1.5}",
     ".wbt-danger{color:#e5484d}",
+    "@media (max-width:760px){.wbt-body{flex-direction:column;gap:8px}.wbt-nav{flex-direction:row;width:100%;flex:0 0 auto;overflow-x:auto;border-right:none;border-bottom:1px solid var(--wbt-line);padding:0 0 6px}.wbt-tab{width:auto;white-space:nowrap;padding:6px 9px}.wbt-tab.on{box-shadow:inset 0 -2px 0 var(--wbt-accent)}.wbt-nav-sep{width:1px;height:18px;flex:none;margin:auto 4px}}",
     "@media (max-width:640px){.wbt-form{grid-template-columns:1fr}.wbt-drawer{width:94vw}.wbt-search{width:100%}.wbt-top h2{font-size:15px}.wbt-item{padding:9px}.wbt-ops{width:100%;justify-content:flex-end}}",
   ].join("\n");
 
   function injectCss() {
     if (typeof document === "undefined") return;
-    if (document.getElementById("wb-addon-tasks-v2-css")) return;
+    var old = document.getElementById("wb-addon-tasks-v2-css");
+    if (old) { old.textContent = CSS; return; }
     var s = document.createElement("style");
     s.id = "wb-addon-tasks-v2-css";
     s.setAttribute("data-wb-addon", "wb-addon-tasks");
@@ -986,23 +991,32 @@
           setCreateState({ source: "0", originTask: null, defaultTableId: target.tableId || (firstTable && firstTable.id) });
         } }, "＋ " + t.newTask)
       ),
-      h("div", { className: "wbt-tabs" }, TABS.map(function (x) {
-        return h("button", { key: x.id, className: "wbt-tab" + (tab === x.id ? " on" : ""), onClick: function () { setTab(x.id); setPageNumber(1); } }, t === COPY.zh ? x.zh : x.en);
-      })),
-      h("div", { className: "wbt-row" },
-        h(PathCrumbs, { path: currentPath, onPick: pickPath }),
-        h("div", { className: "wbt-grow" }),
-        h("button", { className: "wbt-btn ghost", onClick: function () { setView(view === "list" ? "card" : "list"); } }, view === "list" ? "▦ " + t.card : "☷ " + t.list)
+      h("div", { className: "wbt-body" },
+        h("nav", { className: "wbt-nav" }, TABS.map(function (x, i) {
+          var btn = h("button", {
+            key: x.id, className: "wbt-tab" + (tab === x.id ? " on" : ""),
+            onClick: function () { setTab(x.id); setPageNumber(1); },
+          }, t === COPY.zh ? x.zh : x.en);
+          if (i !== 5) return btn;
+          return [h("div", { key: "nav-sep", className: "wbt-nav-sep" }), btn];
+        })),
+        h("div", { className: "wbt-content" },
+          h("div", { className: "wbt-row" },
+            h(PathCrumbs, { path: currentPath, onPick: pickPath }),
+            h("div", { className: "wbt-grow" }),
+            h("button", { className: "wbt-btn ghost", onClick: function () { setView(view === "list" ? "card" : "list"); } }, view === "list" ? "▦ " + t.card : "☷ " + t.list)
+          ),
+          filterBar,
+          listBody,
+          pageable ? h("div", { className: "wbt-pager" },
+            h("button", { className: "wbt-btn ghost", disabled: pageNumber <= 1, onClick: function () { setPageNumber(Math.max(1, pageNumber - 1)); } }, "‹"),
+            h("span", null, t.page + " " + pageNumber + " / " + totalPages),
+            h("select", { className: "wbt-select", value: pageSize, onChange: function (e) { setPageSize(Number(e.target.value)); setPageNumber(1); } },
+              [6, 12, 24].map(function (n) { return h("option", { key: n, value: n }, n + " / " + t.page); })),
+            h("button", { className: "wbt-btn ghost", disabled: pageNumber >= totalPages, onClick: function () { setPageNumber(Math.min(totalPages, pageNumber + 1)); } }, "›")
+          ) : null
+        )
       ),
-      filterBar,
-      listBody,
-      pageable ? h("div", { className: "wbt-pager" },
-        h("button", { className: "wbt-btn ghost", disabled: pageNumber <= 1, onClick: function () { setPageNumber(Math.max(1, pageNumber - 1)); } }, "‹"),
-        h("span", null, t.page + " " + pageNumber + " / " + totalPages),
-        h("select", { className: "wbt-select", value: pageSize, onChange: function (e) { setPageSize(Number(e.target.value)); setPageNumber(1); } },
-          [6, 12, 24].map(function (n) { return h("option", { key: n, value: n }, n + " / " + t.page); })),
-        h("button", { className: "wbt-btn ghost", disabled: pageNumber >= totalPages, onClick: function () { setPageNumber(Math.min(totalPages, pageNumber + 1)); } }, "›")
-      ) : null,
       selectionMode && selectedIds.size ? h("div", { className: "wbt-selbar" },
         h("b", null, t.selected + " " + selectedIds.size),
         h("button", { className: "wbt-btn", onClick: openSelected }, t.selectedTasks),
@@ -1055,7 +1069,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.0.1",
+    version: "2.0.2",
     views: [{
       id: "tasks",
       title: { zh: "任务记录", en: "Tasks" },

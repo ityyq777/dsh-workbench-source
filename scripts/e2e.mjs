@@ -17,6 +17,14 @@ const tmp = mkdtempSync(join(tmpdir(), "wb-e2e-"));
 const home = join(tmp, "home");
 mkdirSync(home, { recursive: true });
 const cloudData = join(tmp, "cloud");
+const tasksDir = join(root, "packages/addons/tasks");
+const tasksPkg = JSON.parse(readFileSync(join(tasksDir, "package.json"), "utf8"));
+const baseVersion = tasksPkg.version;
+const upgradeVersion = (() => {
+  const p = baseVersion.split(".");
+  p[2] = String(Number(p[2]) + 1);
+  return p.join(".");
+})();
 
 async function freePort() {
   const s = createNetServer();
@@ -91,7 +99,7 @@ try {
 
   const detail = await (await fetch("http://127.0.0.1:" + port + "/v1/catalog/addons/wb-addon-tasks?shell=0.1.0")).json();
   assert.ok(detail.addon.versions[0].tarball, "catalog 详情缺 tarball");
-  assert.equal(detail.addon.compatible_version, "2.0.1");
+  assert.equal(detail.addon.compatible_version, baseVersion);
   console.log("· catalog 详情含 tarball + compatible_version");
 
   process.env.WB_HOME = home;
@@ -123,7 +131,7 @@ try {
   assert.ok(inst.ok, "安装失败: " + JSON.stringify(inst));
   const after = await (await fetch(base + "/addons")).json();
   assert.equal(after.addons.length, 1);
-  assert.equal(after.addons[0].version, "2.0.1");
+  assert.equal(after.addons[0].version, baseVersion);
   assert.match(after.addons[0].client, /\/client\.js$/);
   const clientRes = await fetch(base + after.addons[0].client.replace("/workbench/api", ""));
   assert.equal(clientRes.status, 200);
@@ -156,22 +164,22 @@ try {
   assert.ok(again.text.includes("e2e 任务"), "重装后数据没回来: " + again.text);
   console.log("· 重装 ok：数据仍在");
 
-  // 升级：发布 2.0.2，安装后旧版本目录消失、数据保留
+  // 升级：发布本地的下一个补丁版本，安装后旧版本目录消失、数据保留
   const upDir = join(tmp, "upgrade-tasks");
   cpSync(join(root, "packages/addons/tasks"), upDir, { recursive: true });
   const upPkgPath = join(upDir, "package.json");
   const upPkg = JSON.parse(readFileSync(upPkgPath, "utf8"));
-  upPkg.version = "2.0.2";
-  upPkg.wb.addon.version = "2.0.2";
+  upPkg.version = upgradeVersion;
+  upPkg.wb.addon.version = upgradeVersion;
   writeFileSync(upPkgPath, JSON.stringify(upPkg, null, 2) + "\n");
   execFileSync(process.execPath, [join(root, "scripts/publish-addon.mjs"), "--dir", upDir, "--server", "http://127.0.0.1:" + port, "--token", "test-token"], { encoding: "utf8" });
   const upInst = await (await fetch(base + "/addons/wb-addon-tasks/install", { method: "POST" })).json();
   assert.ok(upInst.ok, "升级失败: " + JSON.stringify(upInst));
   const upgraded = await (await fetch(base + "/addons")).json();
-  assert.equal(upgraded.addons[0].version, "2.0.2");
+  assert.equal(upgraded.addons[0].version, upgradeVersion);
   const afterUpgrade = await tool.execute({ action: "tasks.list" });
   assert.ok(afterUpgrade.text.includes("e2e 任务"), "升级后数据丢了");
-  console.log("· 升级 ok：2.0.1 → 2.0.2，数据保留");
+  console.log("· 升级 ok：" + baseVersion + " → " + upgradeVersion + "，数据保留");
 
   // 坏包：入口文件缺失，应安装为 disabled 而不是拖垮壳
   const badDir = join(tmp, "broken-addon");
