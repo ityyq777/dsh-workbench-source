@@ -44,7 +44,10 @@ export function apply(ctx) {
 {
   "name": "Workbench",
   "description": "个人工作台数据操作：任务记录/习惯打卡等 addon 提供的实体。写操作只经本地权威库。",
-  "parameters": { "action": "list_addons | query | create | update | complete | stats", "...": "各 action 的参数对象" }
+  "parameters": {
+    "action": "list_addons | query | create | update | complete | stats",
+    "...": "各 action 的参数对象",
+  },
 }
 ```
 
