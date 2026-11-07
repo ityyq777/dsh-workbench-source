@@ -92,6 +92,7 @@
     ".wbt-root{--wbt-line:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wbt-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));--wbt-bg:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));--wbt-accent:var(--dsw-alias-accent,#11a89b);display:flex;flex-direction:column;gap:10px;min-height:0;color:inherit;font-size:13px}",
     ".wbt-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}",
     ".wbt-top h2{margin:0;font-size:16px;font-weight:680;letter-spacing:.2px}",
+    ".wbt-pathrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 0 2px}",
     ".wbt-grow{flex:1;min-width:0}",
     ".wbt-btn{border:1px solid var(--wbt-line);background:var(--wbt-surface);color:inherit;border-radius:8px;padding:6px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;line-height:1.3}",
     ".wbt-btn:hover{border-color:var(--wbt-accent)}",
@@ -126,8 +127,9 @@
     ".wbt-desc{font-size:12px;opacity:.62;line-height:1.5;word-break:break-word;white-space:pre-wrap}",
     ".wbt-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:11.5px;opacity:.6}",
     ".wbt-meta b{font-weight:600;opacity:.85}",
-    ".wbt-path{display:flex;gap:3px;flex-wrap:wrap;font-size:11px;opacity:.55}",
-    ".wbt-path button{border:none;background:none;color:inherit;padding:0;cursor:pointer;font-size:11px}",
+    ".wbt-path{display:flex;gap:4px;flex-wrap:wrap;align-items:center;font-size:12px;opacity:.72}",
+    ".wbt-path button{border:none;background:none;color:inherit;padding:2px 3px;border-radius:5px;cursor:pointer;font-size:12px}",
+    ".wbt-path button:hover{background:color-mix(in oklab,currentColor 8%,transparent)}",
     ".wbt-path button:hover{text-decoration:underline}",
     ".wbt-prio{font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:999px;border:1px solid currentColor;opacity:.85;flex:none;font-variant-numeric:tabular-nums}",
     ".wbt-prio.high{color:#e5484d}.wbt-prio.mid{color:#f76b15}.wbt-prio.low{color:#8a93a2}",
@@ -192,7 +194,7 @@
     ".wbt-pill{font-size:11px;padding:2px 7px;border-radius:999px;background:color-mix(in oklab,var(--wbt-accent) 12%,transparent);color:var(--wbt-accent)}",
     ".wbt-hint{font-size:11.5px;opacity:.55;line-height:1.5}",
     ".wbt-danger{color:#e5484d}",
-    "@media (max-width:760px){.wbt-body{flex-direction:column;gap:8px}.wbt-nav{flex-direction:row;width:100%;flex:0 0 auto;overflow-x:auto;border-right:none;border-bottom:1px solid var(--wbt-line);padding:0 0 6px}.wbt-tab{width:auto;white-space:nowrap;padding:6px 9px}.wbt-tab.on{box-shadow:inset 0 -2px 0 var(--wbt-accent)}.wbt-nav-sep{width:1px;height:18px;flex:none;margin:auto 4px}}",
+    "@media (max-width:760px){.wbt-body{flex-direction:column;gap:8px}.wbt-nav{flex-direction:row;width:100%;flex:0 0 auto;overflow-x:auto;border-right:none;border-bottom:1px solid var(--wbt-line);padding:0 0 6px}.wbt-tab{width:auto;white-space:nowrap;padding:6px 9px}.wbt-tab.on{box-shadow:inset 0 -2px 0 var(--wbt-accent)}.wbt-nav-sep{width:1px;height:18px;flex:none;margin:auto 4px}.wbt-pathrow .wbt-search{flex:1 1 160px;max-width:none}}",
     "@media (max-width:640px){.wbt-form{grid-template-columns:1fr}.wbt-drawer{width:94vw}.wbt-search{width:100%}.wbt-top h2{font-size:15px}.wbt-item{padding:9px}.wbt-ops{width:100%;justify-content:flex-end}}",
   ].join("\n");
 
@@ -977,6 +979,11 @@
         h("h2", null, t.title),
         h("button", { className: "wbt-btn", onClick: function () { setDrawer(true); refreshTree(); } }, "▤ " + t.tree),
         h("div", { className: "wbt-grow" }),
+        h("button", { className: "wbt-btn ghost", onClick: function () { setView(view === "list" ? "card" : "list"); } }, view === "list" ? "▦ " + t.card : "☷ " + t.list)
+      ),
+      h("div", { className: "wbt-pathrow" },
+        h(PathCrumbs, { path: currentPath, onPick: pickPath }),
+        h("div", { className: "wbt-grow" }),
         h("input", {
           className: "wbt-input wbt-search", placeholder: t.search, value: searchDraft,
           onChange: function (e) { setSearchDraft(e.target.value); },
@@ -1001,11 +1008,6 @@
           return [h("div", { key: "nav-sep", className: "wbt-nav-sep" }), btn];
         })),
         h("div", { className: "wbt-content" },
-          h("div", { className: "wbt-row" },
-            h(PathCrumbs, { path: currentPath, onPick: pickPath }),
-            h("div", { className: "wbt-grow" }),
-            h("button", { className: "wbt-btn ghost", onClick: function () { setView(view === "list" ? "card" : "list"); } }, view === "list" ? "▦ " + t.card : "☷ " + t.list)
-          ),
           filterBar,
           listBody,
           pageable ? h("div", { className: "wbt-pager" },
@@ -1069,7 +1071,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.0.2",
+    version: "2.0.3",
     views: [{
       id: "tasks",
       title: { zh: "任务记录", en: "Tasks" },
