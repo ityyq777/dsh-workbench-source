@@ -1,0 +1,11 @@
+{
+  "name": "dsh-workbench-monorepo",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r --filter @wb/core --filter wb-cloud --filter dsh-workbench build",
+    "cloud": "node packages/cloud/lib/server.js",
+    "dev:cloud": "node --watch packages/cloud/lib/server.js"
+  }
+}
