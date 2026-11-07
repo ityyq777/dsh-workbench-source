@@ -1,6 +1,19 @@
 # 个人工作台（Personal Workbench）— 方案总览
 
-> 状态：构思稿 v0.1。本文档集基于对本机 DSH 安装包与已装社区插件源码的实测调查。
+> 状态：构思稿 v0.1（M0–M3 demo 已实现并装入 web profile 实测通过；本文档集基于对本机 DSH 安装包与已装社区插件源码的实测调查）。
+>
+> ## Demo 运行方式
+>
+> ```bash
+> # 云端（demo 用 SQLite + 本机进程）
+> node packages/cloud/lib/server.js --port 8791 --data /tmp/wbcloud --publish-token demo-publish
+> # 插件构建与安装（把 @wb/core 内联成自包含包）
+> pnpm build && node scripts/dist-shell.mjs
+> dsh plugin --profile web add file:$PWD/packages/shell-dist
+> # 重启 dsh web 后生效；插件注册 Workbench agent 工具与 /workbench/api 前缀
+> ```
+>
+> 实现与设计文档的偏差（v0.2 收敛项）：云端用 node:http 而非 Fastify；子插件发布走 JSON+base64 而非 multipart；插件分发先以 shell-dist 单包内联 @wb/core，正式版再拆 npm 依赖。
 
 ## 一句话定位
 
