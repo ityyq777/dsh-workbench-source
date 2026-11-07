@@ -47,15 +47,20 @@ export function publishVersion(
   meta: VersionMeta & { addon_id: string; title: string; description?: string; author?: string },
 ): void {
   const ts = monoNow();
+  const prev = db.prepare("SELECT latest FROM catalog_addons WHERE id=?").get(meta.addon_id) as
+    | { latest: string }
+    | undefined;
+  // latest 只前进不后退：补发旧版本不应把列表打回旧版
+  const latest = !prev || semverGt(meta.version, prev.latest) ? meta.version : prev.latest;
   db.prepare(
-    "INSERT INTO catalog_addons(id,title,description,author,latest,created_at,updated_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title, description=excluded.description, author=excluded.author, updated_at=excluded.updated_at",
-  ).run(meta.addon_id, meta.title ?? meta.addon_id, meta.description ?? "", meta.author ?? "", meta.version, ts, ts);
+    "INSERT INTO catalog_addons(id,title,description,author,latest,created_at,updated_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title, description=excluded.description, author=excluded.author, latest=excluded.latest, updated_at=excluded.updated_at",
+  ).run(meta.addon_id, meta.title ?? meta.addon_id, meta.description ?? "", meta.author ?? "", latest, ts, ts);
   db.prepare(
     "INSERT INTO catalog_versions(addon_id,version,min_shell,tables,views,tool_actions,file_size,sha256,published_at) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(addon_id,version) DO UPDATE SET file_size=excluded.file_size, sha256=excluded.sha256",
   ).run(
     meta.addon_id,
     meta.version,
-    meta.min_shell ?? "1.0.0",
+    meta.min_shell ?? "0.1.0",
     JSON.stringify(meta.tables ?? []),
     JSON.stringify(meta.views ?? []),
     JSON.stringify(meta.tool_actions ?? []),
@@ -104,12 +109,18 @@ export function addonDetail(db: DatabaseSync, id: string, shellVersion: string |
       string,
       unknown
     >[]
-  ).filter((v) => {
-    if (yanked.includes(v.version as string)) return false;
-    if (shellVersion && semverGt(v.min_shell as string, shellVersion)) return false;
-    return true;
-  });
-  return { ...a, yanked, versions };
+  )
+    .filter((v) => {
+      if (yanked.includes(v.version as string)) return false;
+      if (shellVersion && semverGt(v.min_shell as string, shellVersion)) return false;
+      return true;
+    })
+    .map((v) => ({
+      ...v,
+      // 下载地址随详情下发：客户端不需要自己拼 /dl 规则
+      tarball: "/dl/" + encodeURIComponent(id) + "@" + encodeURIComponent(String(v.version)) + ".tgz",
+    }));
+  return { ...a, yanked, compatible_version: latestCompatible(db, id, shellVersion, yanked), versions };
 }
 
 /** yank 一个版本。 */

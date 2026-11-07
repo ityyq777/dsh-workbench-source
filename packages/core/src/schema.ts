@@ -1,39 +1,14 @@
 /**
- * 工作台本地库 schema（05 文档落地版）。
- * 每个实体表统一 rev/updated_at/deleted_at 三列 —— 同步的前提。
- * demo 阶段 node:sqlite（Node>=22.5），无原生编译依赖。
+ * 工作台本地库 schema（平台级表）。
+ *
+ * 业务表（tasks/habits/...）不在这里：它们由子插件的 migrations 创建/演进，
+ * 壳本身不感知任何具体业务。这样「任务记录」才能真正装/卸。
  */
 export const SCHEMA_SQL = `
 PRAGMA journal_mode=WAL;
 
 CREATE TABLE IF NOT EXISTS meta (
   k TEXT PRIMARY KEY, v TEXT NOT NULL
-);
-
--- 任务记录 addon 的表
-CREATE TABLE IF NOT EXISTS tasks (
-  id TEXT PRIMARY KEY,
-  title TEXT NOT NULL,
-  note TEXT NOT NULL DEFAULT '',
-  status TEXT NOT NULL DEFAULT 'open',
-  priority INTEGER NOT NULL DEFAULT 2,
-  due_at INTEGER,
-  tags TEXT NOT NULL DEFAULT '[]',
-  rev INTEGER NOT NULL DEFAULT 1,
-  updated_at INTEGER NOT NULL,
-  deleted_at INTEGER
-);
-CREATE INDEX IF NOT EXISTS idx_tasks_open ON tasks(due_at)
-  WHERE deleted_at IS NULL AND status='open';
-
-CREATE TABLE IF NOT EXISTS habits (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  cadence TEXT NOT NULL DEFAULT 'daily',
-  checkins TEXT NOT NULL DEFAULT '{}',
-  rev INTEGER NOT NULL DEFAULT 1,
-  updated_at INTEGER NOT NULL,
-  deleted_at INTEGER
 );
 
 -- 通用变更日志：写事务内追加；未推送尾部即待同步队列
@@ -62,5 +37,5 @@ CREATE TABLE IF NOT EXISTS sync_state (
 );
 `;
 
-/** 参与同步的表清单（core 权威定义；addon manifest 声明只是校验用） */
+/** 参与同步的表清单（协议级；addon manifest 的 tables 是声明与校验，不改变白名单）。 */
 export const SYNCED_TABLES = new Set(["tasks", "habits"]);

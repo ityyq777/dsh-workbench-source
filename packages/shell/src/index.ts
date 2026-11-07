@@ -2,13 +2,16 @@
  * dsh-workbench：个人工作台 DSH 宿主插件。
  * 契约要点（已验证）：named export name/inject/apply；绝不 default export
  * （cordis-plugin-loader unwrapExports 优先取 exports.default，裸函数会丢具名 inject）。
+ *
+ * 本版把「任务记录」彻底改成子插件：壳只提供数据库、同步、SSE、addon 生命周期。
  */
 import { homedir } from "node:os";
 import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { openDb, createTask, updateTask, deleteTask, listTasks, taskStats } from "@wb/core";
+import { openDb } from "@wb/core";
 import type { DatabaseSync } from "node:sqlite";
 import { runSyncRound, type CloudClient } from "./sync.js";
+import { AddonManager } from "./addons.js";
 
 export const name = "dsh-workbench";
 export const inject = ["webServer", "tools", "connection"];
@@ -16,6 +19,9 @@ export const inject = ["webServer", "tools", "connection"];
 /** 本地库与云端配置路径（05 文档约定目录）。 */
 const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
+
+/** 壳 API 版本：子插件 manifest.minShell 与云端兼容过滤都用它。 */
+const SHELL_VERSION = "0.1.0";
 
 interface WbState {
   db: DatabaseSync;
@@ -57,7 +63,7 @@ export function apply(ctx: any): void {
       "content-type": "application/json",
       ...(init?.headers as Record<string, string>),
     };
-    if (state.creds) headers.authorization = `Bearer ${state.creds.accessToken}`;
+    if (state.creds) headers.authorization = "Bearer " + state.creds.accessToken;
     const res = await fetch(state.cloudUrl + path, {
       ...init,
       headers,
@@ -84,6 +90,21 @@ export function apply(ctx: any): void {
     }
     return res.json();
   }
+
+  const manager = new AddonManager({
+    home: WB_HOME,
+    db: state.db,
+    shellVersion: SHELL_VERSION,
+    cloudUrl: state.cloudUrl,
+    cloudFetch: (path, init) => cloudFetch(path, init),
+    emit,
+    logger: (...args: unknown[]) => console.warn("[dsh-workbench]", ...args),
+  });
+
+  void manager
+    .init()
+    .then(() => emit("addons-changed", manager.list()))
+    .catch((e) => console.warn("[dsh-workbench] addon init failed:", e));
 
   // ── HTTP：/workbench/api/*（同域 cookie 之外的连接门由 host connection.requestRejection 兜底）──
   ctx.effect?.(
@@ -116,87 +137,118 @@ export function apply(ctx: any): void {
               res.end(JSON.stringify(obj));
             };
 
-            if (p === "/events" && m === "GET") {
-              // SSE：任务变更 / 同步状态推送给 UI
-              res.writeHead(200, {
-                "content-type": "text/event-stream",
-                "cache-control": "no-cache",
-                connection: "keep-alive",
-              });
-              const sub: Subscriber = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
-              subscribers.add(sub);
-              req.on?.("close", () => subscribers.delete(sub));
-              return;
-            }
-            if (p === "/tasks" && m === "GET") {
-              return send(200, {
-                ok: true,
-                tasks: listTasks(state.db, { status: url.searchParams.get("status") ?? undefined }),
-                stats: taskStats(state.db),
-              });
-            }
-            if (p === "/tasks" && m === "POST") {
-              const b = await bodyOf();
-              const id = createTask(state.db, b, "ui");
-              emit("tasks-changed", { id });
-              return send(200, { ok: true, id });
-            }
-            const taskM = /^\/tasks\/([\w-]+)$/.exec(p);
-            if (taskM && m === "PATCH") {
-              const ok = updateTask(state.db, taskM[1], await bodyOf(), "ui");
-              if (ok) emit("tasks-changed", { id: taskM[1] });
-              return send(ok ? 200 : 404, { ok });
-            }
-            if (taskM && m === "DELETE") {
-              const ok = deleteTask(state.db, taskM[1], "ui");
-              if (ok) emit("tasks-changed", { id: taskM[1] });
-              return send(ok ? 200 : 404, { ok });
-            }
-            if (p === "/sync/now" && m === "POST") {
-              if (!state.creds) return send(400, { ok: false, error: "not logged in" });
-              const client: CloudClient = {
-                push: (changes) => cloudFetch("/v1/sync/push", { method: "POST", json: { changes } }),
-                pull: (cursor) => cloudFetch(`/v1/sync/pull?cursor=\${cursor}`),
-              };
-              const r = await runSyncRound(state.db, client, state.creds.deviceId);
-              emit("sync-done", r);
-              return send(200, { ok: true, ...r });
-            }
-            if (p === "/account" && m === "GET") {
-              if (!state.creds) return send(200, { ok: true, logged_in: false });
-              const me = await cloudFetch("/v1/me");
-              return send(200, { ok: true, logged_in: true, user: me.user, devices: me.devices });
-            }
-            if (p === "/account/login" && m === "POST") {
-              const b = await bodyOf();
-              const deviceId = state.creds?.deviceId ?? "shell-" + Math.random().toString(36).slice(2, 10);
-              const r = await cloudFetch(b.signup ? "/v1/auth/signup" : "/v1/auth/login", {
-                method: "POST",
-                json: { email: b.email, password: b.password, device_id: deviceId, device_name: "DSH Web" },
-              });
-              if (r.ok) {
-                state.creds = {
-                  accessToken: r.accessToken,
-                  refreshToken: r.refreshToken,
-                  userId: r.userId,
-                  deviceId: r.deviceId,
-                };
-                saveCreds(state.creds);
-                emit("account-changed", { logged_in: true });
+            try {
+              if (p === "/events" && m === "GET") {
+                // SSE：addon 事件 / 安装态 / 同步状态推送给 UI
+                res.writeHead(200, {
+                  "content-type": "text/event-stream",
+                  "cache-control": "no-cache",
+                  connection: "keep-alive",
+                });
+                const sub: Subscriber = (event, data) =>
+                  res.write("event: " + event + "\ndata: " + JSON.stringify(data) + "\n\n");
+                subscribers.add(sub);
+                req.on?.("close", () => subscribers.delete(sub));
+                return;
               }
-              return send(r.ok ? 200 : 401, r);
+
+              if (p === "/addons" && m === "GET") {
+                return send(200, { ok: true, addons: manager.list(), shellVersion: SHELL_VERSION });
+              }
+              if (p === "/addons/catalog" && m === "GET") {
+                return send(200, await manager.catalog());
+              }
+              // 兼容旧 UI/脚本
+              if (p === "/catalog" && m === "GET") {
+                return send(200, await manager.catalog());
+              }
+
+              const clientM = /^\/addons\/([^/]+)\/client\.js$/.exec(p);
+              if (clientM && m === "GET") {
+                const id = decodeURIComponent(clientM[1]);
+                const file = manager.clientPath(id);
+                if (!file) return send(404, { ok: false, error: "addon 没有客户端模块" });
+                const code = readFileSync(file);
+                res.writeHead(200, {
+                  "content-type": "text/javascript; charset=utf-8",
+                  "cache-control": "no-store",
+                });
+                res.end(code);
+                return;
+              }
+
+              const installM = /^\/addons\/([^/]+)\/install$/.exec(p);
+              if (installM && m === "POST") {
+                const id = decodeURIComponent(installM[1]);
+                const addon = await manager.install(id);
+                return send(200, { ok: true, addon });
+              }
+
+              const actionM = /^\/addons\/([^/]+)\/actions\/([^/]+)$/.exec(p);
+              if (actionM && m === "POST") {
+                const id = decodeURIComponent(actionM[1]);
+                const action = decodeURIComponent(actionM[2]);
+                const owner = manager.actionNames().find((a) => a.name === action);
+                if (!owner || owner.addonId !== id) {
+                  return send(404, { ok: false, error: "子插件未注册该 action：" + action });
+                }
+                const body = await bodyOf();
+                const r = await manager.invoke(action, body, "ui");
+                return send(200, { ok: true, result: r.result, text: r.text });
+              }
+
+              const delM = /^\/addons\/([^/]+)$/.exec(p);
+              if (delM && m === "DELETE") {
+                const id = decodeURIComponent(delM[1]);
+                const r = await manager.uninstall(id);
+                return send(200, { ok: true, ...r });
+              }
+
+              if (p === "/sync/now" && m === "POST") {
+                if (!state.creds) return send(400, { ok: false, error: "not logged in" });
+                const client: CloudClient = {
+                  push: (changes) => cloudFetch("/v1/sync/push", { method: "POST", json: { changes } }),
+                  pull: (cursor) => cloudFetch("/v1/sync/pull?cursor=" + cursor),
+                };
+                const r = await runSyncRound(state.db, client, state.creds.deviceId);
+                emit("sync-done", r);
+                return send(200, { ok: true, ...r });
+              }
+              if (p === "/account" && m === "GET") {
+                if (!state.creds) return send(200, { ok: true, logged_in: false });
+                const me = await cloudFetch("/v1/me");
+                return send(200, { ok: true, logged_in: true, user: me.user, devices: me.devices });
+              }
+              if (p === "/account/login" && m === "POST") {
+                const b = await bodyOf();
+                const deviceId = state.creds?.deviceId ?? "shell-" + Math.random().toString(36).slice(2, 10);
+                const r = await cloudFetch(b.signup ? "/v1/auth/signup" : "/v1/auth/login", {
+                  method: "POST",
+                  json: { email: b.email, password: b.password, device_id: deviceId, device_name: "DSH Web" },
+                });
+                if (r.ok) {
+                  state.creds = {
+                    accessToken: r.accessToken,
+                    refreshToken: r.refreshToken,
+                    userId: r.userId,
+                    deviceId: r.deviceId,
+                  };
+                  saveCreds(state.creds);
+                  emit("account-changed", { logged_in: true });
+                }
+                return send(r.ok ? 200 : 401, r);
+              }
+              if (p === "/account/logout" && m === "POST") {
+                state.creds = null;
+                saveCreds(null);
+                emit("account-changed", { logged_in: false });
+                return send(200, { ok: true });
+              }
+
+              return send(404, { ok: false, error: "no route " + m + " " + p });
+            } catch (e) {
+              return send(500, { ok: false, error: String((e && (e as Error).message) || e) });
             }
-            if (p === "/account/logout" && m === "POST") {
-              state.creds = null;
-              saveCreds(null);
-              emit("account-changed", { logged_in: false });
-              return send(200, { ok: true });
-            }
-            if (p === "/catalog" && m === "GET") {
-              const r = await cloudFetch("/v1/catalog/addons");
-              return send(200, r);
-            }
-            return send(404, { ok: false, error: `no route ${m} ${p}` });
           },
         },
         "workbench-http",
@@ -204,22 +256,27 @@ export function apply(ctx: any): void {
     "workbench-http",
   );
 
-  // ── Agent 工具：Workbench（单工具多 action，仿 DatabaseManager）──
+  // ── Agent 工具：Workbench（单工具多 action，action 由已装 addon 动态提供）──
   ctx.tools?.register({
     name: "Workbench",
-    timeoutMs: 30_000,
+    timeoutMs: 60_000,
     description:
-      "个人工作台数据操作（当前为内置任务记录 addon）。action：list/create/update/complete/delete/stats。所有写入进入同步队列，离线可用。",
+      "个人工作台。action 由已安装子插件提供（任务记录示例：tasks.list/tasks.create/tasks.update/tasks.complete/tasks.delete/tasks.stats），" +
+      "另有 addons.list / addons.install / addons.uninstall 管理子插件（安装=云端下载代码，卸载=本地删代码但保留数据）。",
     parameters: {
       type: "object",
       properties: {
-        action: { enum: ["list", "create", "update", "complete", "delete", "stats"], description: "操作类型" },
-        id: { type: "string", description: "任务 id（update/complete/delete）" },
-        title: { type: "string", description: "标题（create）" },
+        action: {
+          type: "string",
+          description: "action 名，如 tasks.list / tasks.create / addons.install / addons.uninstall",
+        },
+        addon_id: { type: "string", description: "子插件 id（addons.install/addons.uninstall）" },
+        id: { type: "string", description: "记录 id（tasks.update/complete/delete）" },
+        title: { type: "string" },
         note: { type: "string" },
-        status: { type: "string", enum: ["open", "doing", "done"] },
+        status: { type: "string", enum: ["open", "done"] },
         priority: { type: "number", description: "1 高 2 中 3 低" },
-        due_at: { type: "number", description: "到期毫秒时间戳" },
+        due_at: { type: ["number", "null"], description: "到期毫秒时间戳" },
         tags: { type: "array", items: { type: "string" } },
         limit: { type: "number" },
       },
@@ -230,54 +287,39 @@ export function apply(ctx: any): void {
       render: (_a: unknown, v: { text: string }) => [{ type: "text" as const, text: v.text }],
     },
     execute: async (args: any) => {
-      const db = state.db;
-      switch (args.action) {
-        case "list": {
-          const rows = listTasks(db, { status: args.status, limit: args.limit });
+      const raw = String(args.action || "");
+      try {
+        if (raw === "addons.list") {
+          const rows = manager.list();
+          if (!rows.length) return { text: "（尚未安装任何子插件）" };
           return {
-            text:
-              rows
-                .map(
-                  (t) =>
-                    `${t.id.slice(0, 8)} [P${t.priority}][${t.status}] ${t.title}${t.due_at ? ` due ${new Date(t.due_at).toLocaleDateString("zh-CN")}` : ""} ${JSON.parse(t.tags).join(",")}`,
-                )
-                .join("\n") || "（空）",
+            text: rows
+              .map((a: any) => "- " + a.id + "@" + a.version + "：" + a.title + (a.error ? "（异常：" + a.error + "）" : ""))
+              .join("\n"),
           };
         }
-        case "create": {
-          if (!args.title) return { text: "错误：create 需要 title" };
-          const id = createTask(
-            db,
-            { title: args.title, note: args.note, priority: args.priority, due_at: args.due_at, tags: args.tags },
-            "agent",
-          );
-          emit("tasks-changed", { id });
-          return { text: `已创建任务 ${id.slice(0, 8)}：${args.title}` };
+        if (raw === "addons.install") {
+          const id = String(args.addon_id || args.id || "");
+          if (!id) return { text: "错误：addons.install 需要 addon_id" };
+          const addon: any = await manager.install(id);
+          return { text: "已安装 " + id + "@" + addon.version + (addon.error ? "（加载有误：" + addon.error + "）" : "") };
         }
-        case "update": {
-          const patch: Record<string, unknown> = {};
-          for (const k of ["title", "note", "status", "priority", "due_at", "tags"])
-            if (args[k] !== undefined) patch[k] = args[k];
-          const ok = updateTask(db, String(args.id), patch, "agent");
-          if (ok) emit("tasks-changed", { id: args.id });
-          return { text: ok ? `已更新 ${String(args.id).slice(0, 8)}` : "未找到任务" };
+        if (raw === "addons.uninstall") {
+          const id = String(args.addon_id || args.id || "");
+          if (!id) return { text: "错误：addons.uninstall 需要 addon_id" };
+          await manager.uninstall(id);
+          return { text: "已卸载 " + id + "（本地数据保留，重装后仍在）" };
         }
-        case "complete": {
-          const ok = updateTask(db, String(args.id), { status: "done" }, "agent");
-          if (ok) emit("tasks-changed", { id: args.id });
-          return { text: ok ? `已完成 ${String(args.id).slice(0, 8)}` : "未找到任务" };
-        }
-        case "delete": {
-          const ok = deleteTask(db, String(args.id), "agent");
-          if (ok) emit("tasks-changed", { id: args.id });
-          return { text: ok ? `已删除 ${String(args.id).slice(0, 8)}` : "未找到任务" };
-        }
-        case "stats": {
-          const s = taskStats(db);
-          return { text: `进行中 ${s.open} · 已完成 ${s.done} · 逾期 ${s.overdue} · 今日到期 ${s.today}` };
-        }
-        default:
-          return { text: "未知 action" };
+
+        // 兼容旧工具调用：无命名空间的 list/create/... 先映射到 tasks.*
+        const name = raw.indexOf(".") >= 0 ? raw : "tasks." + raw;
+        const payload: Record<string, unknown> = { ...args };
+        delete payload.action;
+        delete payload.addon_id;
+        const r = await manager.invoke(name, payload, "agent");
+        return { text: r.text };
+      } catch (e) {
+        return { text: "错误：" + String((e && (e as Error).message) || e) };
       }
     },
   });
@@ -291,7 +333,7 @@ export function apply(ctx: any): void {
       try {
         const client: CloudClient = {
           push: (changes) => cloudFetch("/v1/sync/push", { method: "POST", json: { changes } }),
-          pull: (cursor) => cloudFetch(`/v1/sync/pull?cursor=\${cursor}`),
+          pull: (cursor) => cloudFetch("/v1/sync/pull?cursor=" + cursor),
         };
         const r = await runSyncRound(state.db, client, state.creds.deviceId);
         if (r.pushed || r.pulled) emit("sync-done", r);
@@ -304,6 +346,7 @@ export function apply(ctx: any): void {
   ctx.effect?.(
     () => () => {
       if (timer) clearInterval(timer);
+      manager.dispose();
     },
     "wb-sync-loop",
   );

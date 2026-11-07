@@ -1,4 +1,9 @@
+# core/shell/cloud 的 lib 是构建产物；addon 的 lib 是签入的运行源码
 node_modules
 lib
+!packages/addons/*/lib
+!packages/addons/*/lib/**
 *.tgz
 packages/shell-dist
+
+_archive/**

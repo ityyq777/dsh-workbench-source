@@ -1,16 +1,23 @@
 {
   "name": "wb-addon-tasks",
-  "version": "1.0.0",
+  "version": "2.0.1",
+  "description": "工作台任务记录子插件：任务树、优先级、截止日、时间线与重启",
   "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib",
+    "package.json"
+  ],
   "wb": {
     "addon": {
       "id": "wb-addon-tasks",
       "title": "任务记录",
-      "description": "个人任务清单：优先级、截止日、标签",
-      "version": "1.0.0",
-      "minShell": "1.0.0",
+      "description": "任务树 + 9 个视图：紧急/工作/生活/学习/开发/已开启/已关闭/已完成/总览",
+      "version": "2.0.1",
+      "minShell": "0.1.0",
       "tables": [
-        "tasks"
+        "task",
+        "task_node"
       ],
       "views": [
         "tasks"
@@ -18,9 +25,26 @@
       "toolActions": [
         "tasks.list",
         "tasks.create",
+        "tasks.update",
+        "tasks.selected",
+        "tasks.timeline",
+        "tasks.restart",
+        "tasks.timelineRefactor",
+        "tasks.migrate",
+        "tasks.sweepShutdown",
+        "tasks.stats",
+        "tasks.delete",
         "tasks.complete",
-        "tasks.stats"
-      ]
+        "taskNodes.tree",
+        "taskNodes.children",
+        "taskNodes.multipleChildren",
+        "taskNodes.path",
+        "taskNodes.create",
+        "taskNodes.rename",
+        "taskNodes.move",
+        "taskNodes.delete"
+      ],
+      "client": "lib/client.js"
     }
   }
 }

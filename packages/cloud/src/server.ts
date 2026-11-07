@@ -49,19 +49,20 @@ async function bodyJson(req: IncomingMessage): Promise<any> {
   }
 }
 
-/** 读请求体（≤4MB）。 */
+/** 读请求体（≤16MB；publish 的 base64 tarball 需要余量）。 */
 async function readBody(req: IncomingMessage): Promise<Buffer> {
   const chunks: Buffer[] = [];
   let n = 0;
   for await (const c of req) {
     n += (c as Buffer).length;
-    if (n > 4 * 1024 * 1024) throw new Error("body too large");
+    if (n > 16 * 1024 * 1024) throw new Error("body too large");
     chunks.push(c as Buffer);
   }
   return Buffer.concat(chunks);
 }
 
-const SHELL_VERSION = "1.0.0";
+/** 与 packages/shell 的 SHELL_VERSION 保持一致：决定 catalog 兼容过滤。 */
+const SHELL_VERSION = "0.1.0";
 const PUBLISH_TOKEN = argVal("--publish-token", process.env.WB_PUBLISH_TOKEN ?? "");
 
 async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promise<void> {
@@ -122,8 +123,9 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
     const f = join(DATA_DIR, "dl", `${dl[1]}@${dl[2]}.tgz`);
     if (!existsSync(f)) return json(res, 404, { ok: false, error: "no such package" });
     recordDownload(db, dl[1], dl[2]);
-    res.writeHead(200, { "content-type": "application/gzip" });
-    res.end(readFileSync(f));
+    const buf = readFileSync(f);
+    res.writeHead(200, { "content-type": "application/gzip", "content-length": String(buf.length) });
+    res.end(buf);
     return;
   }
 
@@ -132,16 +134,40 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
     if (req.headers["x-publish-token"] !== PUBLISH_TOKEN)
       return json(res, 403, { ok: false, error: "publish token required" });
     const raw = await readBody(req);
-    const boundary = String(req.headers["content-type"] ?? "");
-    const metaMatch = /name="meta"\r?\n\r?\n/.exec(boundary);
-    void metaMatch;
     // demo 协议：body = JSON {meta:{...}, tgzBase64:"..."} —— 避免手写 multipart
-    const b = JSON.parse(raw.toString());
-    const buf = Buffer.from(String(b.tgzBase64), "base64");
-    const file = join(DATA_DIR, "dl", `${b.meta.addon_id}@${b.meta.version}.tgz`);
+    let b: any;
+    try {
+      b = JSON.parse(raw.toString());
+    } catch {
+      return json(res, 400, { ok: false, error: "invalid JSON body" });
+    }
+    const meta = b && b.meta ? b.meta : {};
+    const id = String(meta.addon_id ?? "");
+    const version = String(meta.version ?? "");
+    const minShell = String(meta.min_shell ?? "0.1.0");
+    // 发布即写入 dl/<id>@<ver>.tgz 路径：id/version 必须先过白名单，防路径穿越
+    if (!/^[a-z][a-z0-9_-]*$/i.test(id)) return json(res, 400, { ok: false, error: "invalid addon_id" });
+    if (!/^\d+\.\d+\.\d+$/.test(version)) return json(res, 400, { ok: false, error: "invalid version" });
+    if (!/^\d+\.\d+\.\d+$/.test(minShell)) return json(res, 400, { ok: false, error: "invalid min_shell" });
+    let buf: Buffer;
+    try {
+      buf = Buffer.from(String(b.tgzBase64 ?? ""), "base64");
+    } catch {
+      return json(res, 400, { ok: false, error: "invalid tgzBase64" });
+    }
+    if (buf.length === 0) return json(res, 400, { ok: false, error: "empty tarball" });
+    if (buf.length > 12 * 1024 * 1024) return json(res, 413, { ok: false, error: "tarball too large" });
+    const file = join(DATA_DIR, "dl", id + "@" + version + ".tgz");
     writeFileSync(file, buf);
-    publishVersion(db, { ...b.meta, file_size: buf.length, sha256: sha256Of(buf) });
-    return json(res, 200, { ok: true, sha256: sha256Of(buf) });
+    publishVersion(db, {
+      ...meta,
+      addon_id: id,
+      version,
+      min_shell: minShell,
+      file_size: buf.length,
+      sha256: sha256Of(buf),
+    });
+    return json(res, 200, { ok: true, sha256: sha256Of(buf), tarball: "/dl/" + id + "@" + version + ".tgz" });
   }
   const yankM = /^\/v1\/catalog\/addons\/([\w.-]+)\/yank$/.exec(p);
   if (yankM && m === "POST") {
