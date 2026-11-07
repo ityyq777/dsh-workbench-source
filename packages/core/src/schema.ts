@@ -1,7 +1,7 @@
 /**
  * 工作台本地库 schema（平台级表）。
  *
- * 业务表（tasks/habits/...）不在这里：它们由子插件的 migrations 创建/演进，
+ * 业务表（task / tag / site 等）不在这里：它们由子插件的 migrations 创建/演进，
  * 壳本身不感知任何具体业务。这样「任务记录」才能真正装/卸。
  */
 export const SCHEMA_SQL = `
@@ -56,16 +56,3 @@ CREATE TABLE IF NOT EXISTS sync_state (
   k TEXT PRIMARY KEY, v TEXT NOT NULL
 );
 `;
-
-/** 旧 v1 协议的表白名单（只给云端 v1 兼容路径用；v2 由 DomainDef.sync/tables 声明）。 */
-export const SYNCED_TABLES = new Set([
-  "tasks",
-  "habits",
-  "task",
-  "task_node",
-  "tag",
-  "tag_mapping",
-  "site",
-  "site_node",
-  "site_node_mapping",
-]);

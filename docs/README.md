@@ -54,7 +54,7 @@ node packages/cloud/lib/server.js --port 8791 --data ~/.dsh/workbench/cloud
 | [03-UI设计](./03-UI设计.md) | 卡片首页、沉浸式全页、slot 用法、样式规范 |
 | [04-插件体系](./04-子插件体系.md) | 四个原生包、域注册、客户端模块、安装/卸载、跨插件依赖 |
 | [05-本地存储设计](./05-本地存储设计.md) | SQLite schema、迁移策略、目录布局 |
-| [06-云端设计](./06-云端设计.md) | 账号、设备、同步 API、旧 catalog 的定位 |
+| [06-云端设计](./06-云端设计.md) | 账号、设备、protocol v2 同步 API |
 | [07-同步与登录设计](./07-同步与登录设计.md) | 离线优先、变更日志、冲突处理、设备管理 |
 | [08-路线图与里程碑](./08-路线图与里程碑.md) | M0~M4 分期交付与验收标准 |
 | [09-任务模块迁移方案](./09-任务模块迁移方案.md) | 任务/任务树 1:1 迁移、路径枚举、action 契约与验收 |
@@ -91,5 +91,5 @@ node packages/cloud/lib/server.js --port 8791 --data ~/.dsh/workbench/cloud
 | D2 | 本地权威存储 | 直接 `node:sqlite` + WAL，不走 storageDomain JSON | 需要行级变更日志、索引与事务 |
 | D3 | 插件协议 | DSH 原生包 + `ctx.workbench.registerDomain`；客户端 ModuleLoader + `__WB_HOST__` | 复用 DSH 安装/激活/依赖解析；宿主只做运行时聚合 |
 | D4 | 同步模型 | 离线优先 + `sync_change_log`；A 类行级 LWW，B 类树表 reconcile + 整表 full | 行级冲突面可控；树表保证 sort/path 自洽 |
-| D5 | 云端 | Node + `node:http` + `node:sqlite`，只做账号/设备/数据同步 | 与插件分发解耦；旧 catalog 仅兼容保留 |
+| D5 | 云端 | Node + `node:http` + `node:sqlite`，只做账号/设备/数据同步 | 与插件分发完全解耦 |
 | D6 | 代码库 | `~/code/dsh-workbench` pnpm monorepo | 宿主、业务插件、SDK、云端同仓联调 |

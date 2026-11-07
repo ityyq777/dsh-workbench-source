@@ -89,37 +89,6 @@ CREATE TABLE IF NOT EXISTS sync_table_state (
   PRIMARY KEY (user_id, table_name)
 );
 
--- 目录即服务（04 文档）：版本元数据 + 兼容性判定在服务端
-CREATE TABLE IF NOT EXISTS catalog_addons (
-  id TEXT PRIMARY KEY,
-  title TEXT NOT NULL,
-  description TEXT NOT NULL DEFAULT '',
-  author TEXT NOT NULL DEFAULT '',
-  latest TEXT NOT NULL,
-  yanked TEXT NOT NULL DEFAULT '[]',
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS catalog_versions (
-  addon_id TEXT NOT NULL,
-  version TEXT NOT NULL,
-  min_shell TEXT NOT NULL DEFAULT '1.0.0',
-  tables TEXT NOT NULL DEFAULT '[]',
-  views TEXT NOT NULL DEFAULT '[]',
-  tool_actions TEXT NOT NULL DEFAULT '[]',
-  file_size INTEGER NOT NULL DEFAULT 0,
-  sha256 TEXT NOT NULL DEFAULT '',
-  published_at INTEGER NOT NULL,
-  PRIMARY KEY(addon_id, version)
-);
-
-CREATE TABLE IF NOT EXISTS download_stats (
-  addon_id TEXT NOT NULL,
-  version TEXT NOT NULL,
-  count INTEGER NOT NULL DEFAULT 0,
-  PRIMARY KEY(addon_id, version)
-);
 `;
 
 function hasColumn(db: DatabaseSync, table: string, column: string): boolean {
