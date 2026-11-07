@@ -38,6 +38,27 @@ export interface DomainActionDef<I = Record<string, unknown>, O = unknown> {
   render?(result: O): string;
 }
 
+/**
+ * 数据导出/导入上下文。
+ * 宿主只负责压缩包与路由；业务插件用 version/schemaVersion 自己做兼容校验。
+ */
+export interface DomainDataContext {
+  readonly shellVersion: string;
+  /** 备份包格式版本（manifest.formatVersion） */
+  readonly formatVersion: number;
+  /** 导出时间（ISO 8601），导入时为备份文件里的时间 */
+  readonly exportedAt: string;
+}
+
+/** 单个业务插件的导入结果；导入失败不应抛到宿主之外。 */
+export interface DomainImportReport {
+  ok: boolean;
+  imported?: number;
+  skipped?: number;
+  failed?: number;
+  message?: string;
+}
+
 /** 业务插件在 setup 期间拿到的宿主 API（兼容旧 addon 的 setup 形态）。 */
 export interface DomainSetupApi {
   readonly addon: { id: string; version: string; dir: string };
@@ -70,6 +91,10 @@ export interface DomainDef {
   views?: DomainViewDecl[];
   /** 业务插件自己的建表/注册逻辑；宿主调用并保存返回值作为清理函数 */
   setup?(api: DomainSetupApi): void | (() => void) | Promise<void | (() => void)>;
+  /** 导出本插件的业务数据；返回可 JSON 序列化的对象，由宿主写入压缩包。 */
+  exportData?(ctx: DomainDataContext): unknown | Promise<unknown>;
+  /** 导入本插件负责的数据；raw 是压缩包里的原始文本，插件自行 JSON.parse/校验。 */
+  importData?(raw: string, ctx: DomainDataContext): DomainImportReport | Promise<DomainImportReport>;
 }
 
 /** 宿主服务：ctx.workbench */
@@ -102,6 +127,8 @@ export interface DomainPublicInfo {
   error: string | null;
   tables: string[];
   views: DomainViewDecl[];
+  /** 是否实现数据导出/导入，客户端据此启用备份选项 */
+  backup: { export: boolean; import: boolean };
 }
 
 /** 浏览器侧宿主桥（宿主注入到 window.__WB_HOST__）。 */

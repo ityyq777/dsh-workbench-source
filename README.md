@@ -4,7 +4,7 @@
 
 | 包 | 作用 |
 | --- | --- |
-| `dsh-workbench-host` | 共享宿主：本地 SQLite、业务域注册、HTTP/SSE、`Workbench` agent 工具、账号与数据同步、卡片首页 |
+| `dsh-workbench-host` | 共享宿主：本地 SQLite、业务域注册、HTTP/SSE、`Workbench` agent 工具、账号与数据同步、按模块导出/导入、卡片首页 |
 | `dsh-workbench-tasks` | 任务与任务树（9 个视图、时间线、重启、批量归并/迁表） |
 | `dsh-workbench-tags` | 标签管理，供站点等业务归类 |
 | `dsh-workbench-sites` | 站点收藏：目录树、多链接、标签与筛选 |
@@ -39,7 +39,8 @@ dsh plugin --profile web add dsh-workbench-sites
 - 业务数据默认只在本机 SQLite；
 - 登录云端账号后才按行同步，冲突按 LWW 处理；
 - 不包含遥测，不上传插件清单或使用记录；
-- `Workbench` 工具与 UI 共享同一份本地权威数据库。
+- `Workbench` 工具与 UI 共享同一份本地权威数据库；
+- 数据备份按模块导出为 zip，导入只合并不删除，格式版本不兼容时拒绝。
 
 ## 开发
 

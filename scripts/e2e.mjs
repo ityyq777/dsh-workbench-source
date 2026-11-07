@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 端到端测试入口：按顺序运行原生插件、客户端模块、标签、站点测试。
+ * 端到端测试入口：按顺序运行原生插件、客户端模块、标签、站点、备份测试。
  *
  * 运行前先构建：pnpm build && node scripts/dist-shell.mjs
  * 运行：node scripts/e2e.mjs
@@ -14,6 +14,7 @@ const tests = [
   "scripts/test-clients.mjs",
   "scripts/test-tags.mjs",
   "scripts/test-sites.mjs",
+  "scripts/test-backup.mjs",
 ];
 
 for (const test of tests) {

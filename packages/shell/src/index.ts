@@ -21,6 +21,12 @@ import type {
   WorkbenchHost,
 } from "@wb/sdk";
 import { runSyncRound, type CloudClient } from "./sync.js";
+import {
+  BackupError,
+  createBackup,
+  importBackup,
+  type BackupDomain,
+} from "./backup.js";
 
 export const name = "dsh-workbench";
 export const inject = ["webServer", "tools", "connection"];
@@ -30,7 +36,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.2.0";
+export const SHELL_VERSION = "0.3.0";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -94,6 +100,10 @@ export function apply(ctx: any): void {
       error: rec.error,
       tables: rec.def.tables ?? [],
       views: rec.def.views ?? [],
+      backup: {
+        export: typeof rec.def.exportData === "function",
+        import: typeof rec.def.importData === "function",
+      },
     };
   }
 
@@ -165,6 +175,10 @@ export function apply(ctx: any): void {
 
   function listDomains(): DomainPublicInfo[] {
     return [...domains.values()].map(publicInfo);
+  }
+
+  function backupDomains(): BackupDomain[] {
+    return [...domains.values()].map((rec) => ({ def: rec.def, enabled: rec.error === null, error: rec.error }));
   }
 
   function actionNames() {
@@ -267,6 +281,17 @@ export function apply(ctx: any): void {
                 return {};
               }
             };
+            const rawBodyOf = async (maxBytes = 64 * 1024 * 1024) => {
+              const chunks: Buffer[] = [];
+              let total = 0;
+              for await (const c of req) {
+                const buf = c as Buffer;
+                total += buf.length;
+                if (total > maxBytes) throw new Error("请求体超过上限（" + Math.round(maxBytes / 1024 / 1024) + "MB）");
+                chunks.push(buf);
+              }
+              return Buffer.concat(chunks);
+            };
             const send = (code: number, obj: unknown) => {
               res.writeHead(code, { "content-type": "application/json" });
               res.end(JSON.stringify(obj));
@@ -288,6 +313,41 @@ export function apply(ctx: any): void {
 
               if (p === "/domains" && m === "GET") {
                 return send(200, { ok: true, domains: listDomains(), shellVersion: SHELL_VERSION });
+              }
+
+              if (p === "/backup/export" && m === "GET") {
+                try {
+                  const raw = url.searchParams.get("modules");
+                  const ids = raw && raw !== "all" ? raw.split(",").map((x) => x.trim()).filter(Boolean) : null;
+                  const backup = await createBackup({ domains: backupDomains(), shellVersion: SHELL_VERSION, moduleIds: ids });
+                  res.writeHead(200, {
+                    "content-type": "application/zip",
+                    "content-disposition": "attachment; filename=\"" + backup.filename + "\"",
+                    "content-length": backup.buffer.length,
+                    "cache-control": "no-store",
+                  });
+                  res.end(backup.buffer);
+                  return;
+                } catch (e) {
+                  return send(500, { ok: false, error: String((e && (e as Error).message) || e) });
+                }
+              }
+
+              if (p === "/backup/import" && m === "POST") {
+                try {
+                  const buf = await rawBodyOf();
+                  const result = await importBackup({ buffer: buf, domains: backupDomains() });
+                  emit("backup-imported", { summary: result.summary, exportedAt: result.exportedAt });
+                  return send(200, result);
+                } catch (e) {
+                  const err = e as BackupError;
+                  const code = err && err.code ? err.code : "invalid";
+                  return send(code === "incompatible" ? 422 : 400, {
+                    ok: false,
+                    code,
+                    error: String((e && (e as Error).message) || e),
+                  });
+                }
               }
 
               const actionM = /^\/domains\/([^/]+)\/actions\/([^/]+)$/.exec(p);
