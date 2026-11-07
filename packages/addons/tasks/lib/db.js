@@ -752,6 +752,12 @@ function migrateCurrentTasks(db, report) {
   report.defaultTableId = db.prepare("SELECT id FROM task_node WHERE type='1' AND deleted_at IS NULL LIMIT 1").get().id;
 }
 
+function ensureTaskColumns(db) {
+  if (!tableExists(db, "task") || !hasColumn(db, "task", "created_at")) return;
+  if (!hasColumn(db, "task", "sort")) db.exec("ALTER TABLE task ADD COLUMN sort INTEGER NOT NULL DEFAULT 0");
+  if (!hasColumn(db, "task", "dedupe_key")) db.exec("ALTER TABLE task ADD COLUMN dedupe_key TEXT");
+}
+
 export function ensureSchema(db, log) {
   if (!tableExists(db, "meta")) {
     db.exec("CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT NOT NULL);");
@@ -781,6 +787,7 @@ export function ensureSchema(db, log) {
       if (hasNode && columnsOf(db, "task_node").indexOf("parent_id") < 0) {
         throw new Error("task 是新表，但 task_node 仍是旧 MPTT 表，拒绝混合迁移");
       }
+      ensureTaskColumns(db);
       createSchema(db);
       seedDefaultTree(db);
       report.tasks = db.prepare("SELECT COUNT(*) AS n FROM task").get().n;
@@ -796,11 +803,10 @@ export function ensureSchema(db, log) {
     report.source = "fresh";
   }
 
+  // 旧库补列：必须在 createSchema 前完成，否则建 idx_task_sort 会报 no such column。
+  ensureTaskColumns(db);
   createSchema(db);
-  // 旧库补列：SQLite 的 CREATE TABLE IF NOT EXISTS 不会新增列。
   if (hasColumn(db, "task", "created_at")) {
-    if (!hasColumn(db, "task", "sort")) db.exec("ALTER TABLE task ADD COLUMN sort INTEGER NOT NULL DEFAULT 0");
-    if (!hasColumn(db, "task", "dedupe_key")) db.exec("ALTER TABLE task ADD COLUMN dedupe_key TEXT");
     try {
       db.exec("CREATE INDEX IF NOT EXISTS idx_task_sort ON task(sort)");
       db.exec("CREATE INDEX IF NOT EXISTS idx_task_dedupe ON task(dedupe_key) WHERE dedupe_key IS NOT NULL");

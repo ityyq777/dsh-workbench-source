@@ -6,6 +6,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 
 const home = mkdtempSync(join(tmpdir(), "wb-native-"));
 process.env.WB_HOME = home;
@@ -227,6 +228,30 @@ try {
   const node = await call("siteNodes.create", { parentId: "0", name: "native 目录" });
   const site = await call("sites.create", { siteName: "native 站点", dirIds: [node.result.node.id], siteLinks: [] });
   assert(site.result.site.id, "site not created");
+
+  // ── 14. 旧版 task 表升级：先补 sort/dedupe_key，再建索引 ──
+  const legacy = new DatabaseSync(":memory:");
+  legacy.exec(
+    "CREATE TABLE task (id TEXT PRIMARY KEY,title TEXT NOT NULL,description TEXT NOT NULL DEFAULT ''," +
+      "status TEXT NOT NULL DEFAULT '0',type TEXT NOT NULL DEFAULT '0',priority INTEGER NOT NULL DEFAULT 0," +
+      "difficulty REAL,table_id TEXT NOT NULL,timeline_key TEXT,restart_key TEXT,publish_date TEXT NOT NULL," +
+      "target_date TEXT NOT NULL,done_date TEXT,shutdown_date TEXT,created_at INTEGER NOT NULL," +
+      "updated_at INTEGER NOT NULL,deleted_at INTEGER,rev INTEGER NOT NULL DEFAULT 1);",
+  );
+  legacy.exec(
+    "CREATE TABLE task_node (id TEXT PRIMARY KEY,name TEXT NOT NULL,type TEXT NOT NULL," +
+      "parent_id TEXT NOT NULL DEFAULT '0',path TEXT NOT NULL,sort INTEGER NOT NULL DEFAULT 0," +
+      "depth INTEGER NOT NULL DEFAULT 0,created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL," +
+      "deleted_at INTEGER,rev INTEGER NOT NULL DEFAULT 1);",
+  );
+  const { ensureSchema: ensureTaskSchema } = await import("../packages/addons/tasks/lib/db.js");
+  ensureTaskSchema(legacy, null);
+  const legacyCols = legacy.prepare("PRAGMA table_info(task)").all().map((c) => c.name);
+  assert(legacyCols.includes("sort") && legacyCols.includes("dedupe_key"), "旧 task 表未补 sort/dedupe_key");
+  assert(legacy.prepare("SELECT 1 AS x FROM task_dep LIMIT 1").get() === undefined, "旧库升级未创建 task_dep");
+  const legacyIndexes = legacy.prepare("PRAGMA index_list(task)").all().map((r) => r.name);
+  assert(legacyIndexes.includes("idx_task_sort") && legacyIndexes.includes("idx_task_dedupe"), "旧 task 表索引未补建");
+  legacy.close();
 
   console.log("NATIVE TEST PASS", { domains: domains.length, actions: names.length, home });
 } finally {
