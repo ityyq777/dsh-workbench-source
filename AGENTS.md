@@ -88,8 +88,11 @@ pnpm publish:npm -- --publish --otp=123456
 发布镜像只放 `dist/release` 的产物，不直接编辑：
 
 1. `pnpm stage:release`；
-2. 把 `dist/release` 同步到发布仓库工作区，提交（例如 `release: workbench plugins 0.2.0`）；
-3. 推送到 `ityyq777/dsh-workbench` 的 `main`；
+2. `pnpm publish:github`（dry-run，列出差异），确认后 `pnpm publish:github -- --publish`；
+   脚本在 `~/.dsh/workbench/release-mirror` 里同步、提交（默认
+   `release: workbench plugins <host 版本>`）并推送；
+3. 源码仓库与镜像历史无关，**不要在源码目录里 `git push` 到镜像**（源码仓库不配置
+   该 remote）；
 4. 确认市场要求的 topic 存在：`dsh-plugin`（以及 `deepseek-harness` 等）；
 5. 确认 `packages/<name>/package.json` 可通过 raw.githubusercontent.com 读取。
 
