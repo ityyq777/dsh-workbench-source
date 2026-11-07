@@ -63,8 +63,14 @@ export function exportTagsData(api) {
   return { schemaVersion: SCHEMA_VERSION, tags, mappings };
 }
 
-export function importTagsData(api, raw) {
+function policyOf(options) {
+  const p = options && options.policy;
+  return p === "skip" || p === "overwrite" ? p : "newest";
+}
+
+export function importTagsData(api, raw, options) {
   const db = api.db;
+  const policy = policyOf(options);
   let data;
   try {
     data = JSON.parse(String(raw || "{}"));
@@ -81,23 +87,30 @@ export function importTagsData(api, raw) {
   const tagUpsert = db.prepare(
     "INSERT INTO tag(id,name,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?) " +
       "ON CONFLICT(id) DO UPDATE SET name=excluded.name,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
-      "WHERE excluded.updated_at > tag.updated_at",
+      "WHERE ? = 1 OR excluded.updated_at > tag.updated_at",
   );
   const mappingUpsert = db.prepare(
     "INSERT INTO tag_mapping(id,tag_id,item_id,item_type,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?,?) " +
       "ON CONFLICT(id) DO UPDATE SET tag_id=excluded.tag_id,item_id=excluded.item_id,item_type=excluded.item_type,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
-      "WHERE excluded.updated_at > tag_mapping.updated_at",
+      "WHERE ? = 1 OR excluded.updated_at > tag_mapping.updated_at",
   );
 
   let imported = 0;
   let skipped = 0;
   let failed = 0;
   const errors = [];
+  const tagExists = db.prepare("SELECT 1 FROM tag WHERE id = ?");
+  const mappingExists = db.prepare("SELECT 1 FROM tag_mapping WHERE id = ?");
+  const force = policy === "overwrite" ? 1 : 0;
 
   for (const row of data.tags) {
     try {
       const values = tagValues(row);
-      const result = tagUpsert.run(...values);
+      if (policy === "skip" && tagExists.get(values[0])) {
+        skipped += 1;
+        continue;
+      }
+      const result = tagUpsert.run(...values, force);
       if (result.changes > 0) {
         imported += 1;
         logChange(db, TAG_TABLE, values[0], "upsert", row, "import", values[3]);
@@ -116,7 +129,11 @@ export function importTagsData(api, raw) {
         continue;
       }
       const values = mappingValues(row);
-      const result = mappingUpsert.run(...values);
+      if (policy === "skip" && mappingExists.get(values[0])) {
+        skipped += 1;
+        continue;
+      }
+      const result = mappingUpsert.run(...values, force);
       if (result.changes > 0) {
         imported += 1;
         logChange(db, MAPPING_TABLE, values[0], "upsert", row, "import", values[5]);

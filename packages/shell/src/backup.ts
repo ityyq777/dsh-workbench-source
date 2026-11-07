@@ -3,7 +3,7 @@
  * 各业务插件自己负责数据格式、解析与校验；宿主不解释 modules/<id>.json。
  */
 import { createHash } from "node:crypto";
-import type { DomainDataContext, DomainDef, DomainImportReport } from "@wb/sdk";
+import type { DomainDataContext, DomainDef, DomainImportPolicy, DomainImportReport } from "@wb/sdk";
 import { zipCreate, zipRead } from "./zip.js";
 
 export const BACKUP_FORMAT_VERSION = 1;
@@ -51,6 +51,12 @@ export interface BackupModuleResult {
   imported?: number;
   skipped?: number;
   failed?: number;
+  /** 本次导入实际使用的重复 ID 策略 */
+  policy?: DomainImportPolicy;
+}
+
+export function normalizeImportPolicy(value: unknown): DomainImportPolicy {
+  return value === "skip" || value === "overwrite" || value === "newest" ? value : "newest";
 }
 
 export interface BackupImportResult {
@@ -181,6 +187,8 @@ export async function createBackup(opts: {
 export async function importBackup(opts: {
   buffer: Buffer;
   domains: BackupDomain[];
+  /** module id -> 策略；缺省 newest */
+  policies?: Record<string, unknown>;
 }): Promise<BackupImportResult> {
   let files: Map<string, Buffer>;
   try {
@@ -204,11 +212,13 @@ export async function importBackup(opts: {
   const results: BackupModuleResult[] = [];
   const seen = new Set<string>();
   for (const item of manifest.modules) {
+    const policy = normalizeImportPolicy(opts.policies ? opts.policies[item.id] : undefined);
     const base: BackupModuleResult = {
       id: item.id,
       title: item.title,
       moduleVersion: item.version,
       status: "failed",
+      policy,
     };
     if (seen.has(item.id)) {
       results.push({ ...base, status: "skipped", message: "模块清单重复，已跳过" });
@@ -235,7 +245,7 @@ export async function importBackup(opts: {
     }
     let report: DomainImportReport;
     try {
-      report = await rec.def.importData(data.toString("utf8"), ctx);
+      report = await rec.def.importData(data.toString("utf8"), ctx, { policy });
     } catch (e) {
       results.push({ ...base, status: "failed", message: String((e && (e as Error).message) || e) });
       continue;

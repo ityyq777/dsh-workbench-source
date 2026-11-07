@@ -50,6 +50,14 @@ export interface DomainDataContext {
   readonly exportedAt: string;
 }
 
+/** 重复 ID 时的导入策略：最新优先（默认）/ 跳过本地已存在 / 强制覆盖。 */
+export type DomainImportPolicy = "newest" | "skip" | "overwrite";
+
+export interface DomainImportOptions {
+  /** 由宿主按模块传入；缺省按 newest 处理 */
+  policy?: DomainImportPolicy;
+}
+
 /** 单个业务插件的导入结果；导入失败不应抛到宿主之外。 */
 export interface DomainImportReport {
   ok: boolean;
@@ -94,7 +102,7 @@ export interface DomainDef {
   /** 导出本插件的业务数据；返回可 JSON 序列化的对象，由宿主写入压缩包。 */
   exportData?(ctx: DomainDataContext): unknown | Promise<unknown>;
   /** 导入本插件负责的数据；raw 是压缩包里的原始文本，插件自行 JSON.parse/校验。 */
-  importData?(raw: string, ctx: DomainDataContext): DomainImportReport | Promise<DomainImportReport>;
+  importData?(raw: string, ctx: DomainDataContext, options?: DomainImportOptions): DomainImportReport | Promise<DomainImportReport>;
 }
 
 /** 宿主服务：ctx.workbench */

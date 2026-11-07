@@ -86,8 +86,14 @@ export function exportTasksData(api) {
   return { schemaVersion: SCHEMA_VERSION, tasks, taskNodes: nodes };
 }
 
-export function importTasksData(api, raw) {
+function policyOf(options) {
+  const p = options && options.policy;
+  return p === "skip" || p === "overwrite" ? p : "newest";
+}
+
+export function importTasksData(api, raw, options) {
   const db = api.db;
+  const policy = policyOf(options);
   let data;
   try {
     data = JSON.parse(String(raw || "{}"));
@@ -105,24 +111,31 @@ export function importTasksData(api, raw) {
     "INSERT INTO task(id,title,description,status,type,priority,difficulty,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,created_at,updated_at,deleted_at,rev) " +
       "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) " +
       "ON CONFLICT(id) DO UPDATE SET title=excluded.title,description=excluded.description,status=excluded.status,type=excluded.type,priority=excluded.priority,difficulty=excluded.difficulty,table_id=excluded.table_id,timeline_key=excluded.timeline_key,restart_key=excluded.restart_key,publish_date=excluded.publish_date,target_date=excluded.target_date,done_date=excluded.done_date,shutdown_date=excluded.shutdown_date,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
-      "WHERE excluded.updated_at > task.updated_at",
+      "WHERE ? = 1 OR excluded.updated_at > task.updated_at",
   );
   const nodeUpsert = db.prepare(
     "INSERT INTO task_node(id,name,type,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev) " +
       "VALUES(?,?,?,?,?,?,?,?,?,?,?) " +
       "ON CONFLICT(id) DO UPDATE SET name=excluded.name,type=excluded.type,parent_id=excluded.parent_id,path=excluded.path,sort=excluded.sort,depth=excluded.depth,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
-      "WHERE excluded.updated_at > task_node.updated_at",
+      "WHERE ? = 1 OR excluded.updated_at > task_node.updated_at",
   );
 
   let imported = 0;
   let skipped = 0;
   let failed = 0;
   const errors = [];
+  const taskExists = db.prepare("SELECT 1 FROM task WHERE id = ?");
+  const nodeExists = db.prepare("SELECT 1 FROM task_node WHERE id = ?");
+  const force = policy === "overwrite" ? 1 : 0;
 
   for (const row of data.tasks) {
     try {
       const values = taskValues(row);
-      const result = taskUpsert.run(...values);
+      if (policy === "skip" && taskExists.get(values[0])) {
+        skipped += 1;
+        continue;
+      }
+      const result = taskUpsert.run(...values, force);
       if (result.changes > 0) {
         imported += 1;
         logChange(db, TASK_TABLE, values[0], "upsert", row, "import", values[15]);
@@ -137,7 +150,11 @@ export function importTasksData(api, raw) {
   for (const row of data.taskNodes) {
     try {
       const values = nodeValues(row);
-      const result = nodeUpsert.run(...values);
+      if (policy === "skip" && nodeExists.get(values[0])) {
+        skipped += 1;
+        continue;
+      }
+      const result = nodeUpsert.run(...values, force);
       if (result.changes > 0) {
         imported += 1;
         logChange(db, NODE_TABLE, values[0], "upsert", row, "import", values[8]);

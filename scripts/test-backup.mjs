@@ -45,11 +45,11 @@ function makeRes() {
   };
 }
 
-async function call(method, path, body) {
+async function call(method, path, body, headers) {
   const req = {
     method,
     url: path,
-    headers: {},
+    headers: headers || {},
     async *[Symbol.asyncIterator]() {
       if (body) yield body;
     },
@@ -133,6 +133,53 @@ try {
   const restoredList = await host.invoke("tasks.list", {}, "agent");
   if (!restoredList.result.records.some((t) => t.id === taskId)) throw new Error("task was not restored");
   console.log("restore ok:", taskId);
+
+  const dbFile = join(home, "workbench.db");
+  function setLocalTask(title, updatedAt) {
+    const d = new DatabaseSync(dbFile);
+    d.prepare("UPDATE task SET title = ?, updated_at = ? WHERE id = ?").run(title, updatedAt, taskId);
+    d.close();
+  }
+  function localTask() {
+    const d = new DatabaseSync(dbFile);
+    const row = d.prepare("SELECT title, updated_at FROM task WHERE id = ?").get(taskId);
+    d.close();
+    return row;
+  }
+  function policyResult(report, id) {
+    const r = report && (report.results || []).find((x) => x.id === id);
+    return r ? r.policy : null;
+  }
+  function importWithPolicy(policy) {
+    const headers = policy ? { "x-wb-backup-policy": JSON.stringify({ "wb-addon-tasks": policy }) } : {};
+    return call("POST", "/workbench/api/backup/import", exported.body, headers);
+  }
+
+  // overwrite：本地行更新，仍必须被较旧的备份行覆盖
+  setLocalTask("本地较新标题", Date.now() + 600000);
+  let policyRes = await importWithPolicy("overwrite");
+  let policyReport = parseJson(policyRes);
+  if (!policyReport || policyReport.ok !== true) throw new Error("overwrite import failed: " + JSON.stringify(policyReport));
+  if (localTask().title !== "备份验收任务") throw new Error("overwrite did not replace newer local row");
+  if (policyResult(policyReport, "wb-addon-tasks") !== "overwrite") throw new Error("overwrite policy not echoed");
+  console.log("policy overwrite ok");
+
+  // skip：本地行更旧也必须保留
+  setLocalTask("本地保留标题", 1);
+  policyRes = await importWithPolicy("skip");
+  policyReport = parseJson(policyRes);
+  if (!policyReport || policyReport.ok !== true) throw new Error("skip import failed: " + JSON.stringify(policyReport));
+  if (localTask().title !== "本地保留标题") throw new Error("skip replaced local row");
+  if (policyResult(policyReport, "wb-addon-tasks") !== "skip") throw new Error("skip policy not echoed");
+  console.log("policy skip ok");
+
+  // newest（默认）：备份行较新时覆盖本地较旧行
+  policyRes = await importWithPolicy(null);
+  policyReport = parseJson(policyRes);
+  if (!policyReport || policyReport.ok !== true) throw new Error("newest import failed: " + JSON.stringify(policyReport));
+  if (localTask().title !== "备份验收任务") throw new Error("newest did not apply newer backup row");
+  if (policyResult(policyReport, "wb-addon-tasks") !== "newest") throw new Error("newest policy not defaulted");
+  console.log("policy newest ok");
 
   const tamperedFiles = [];
   for (const [name, data] of files) {

@@ -25,6 +25,7 @@ import {
   BackupError,
   createBackup,
   importBackup,
+  normalizeImportPolicy,
   type BackupDomain,
 } from "./backup.js";
 
@@ -36,7 +37,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.3.0";
+export const SHELL_VERSION = "0.3.1";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -336,7 +337,19 @@ export function apply(ctx: any): void {
               if (p === "/backup/import" && m === "POST") {
                 try {
                   const buf = await rawBodyOf();
-                  const result = await importBackup({ buffer: buf, domains: backupDomains() });
+                  const policies: Record<string, string> = {};
+                  const rawPolicy = (req.headers as any)?.["x-wb-backup-policy"];
+                  if (typeof rawPolicy === "string" && rawPolicy) {
+                    try {
+                      const parsed = JSON.parse(rawPolicy);
+                      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                        for (const key of Object.keys(parsed)) policies[key] = normalizeImportPolicy(parsed[key]);
+                      }
+                    } catch {
+                      // 策略头损坏时按默认 newest 处理，不阻断备份导入
+                    }
+                  }
+                  const result = await importBackup({ buffer: buf, domains: backupDomains(), policies });
                   emit("backup-imported", { summary: result.summary, exportedAt: result.exportedAt });
                   return send(200, result);
                 } catch (e) {

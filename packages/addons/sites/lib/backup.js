@@ -113,8 +113,14 @@ export function exportSitesData(api) {
   };
 }
 
-export function importSitesData(api, raw) {
+function policyOf(options) {
+  const p = options && options.policy;
+  return p === "skip" || p === "overwrite" ? p : "newest";
+}
+
+export function importSitesData(api, raw, options) {
   const db = api.db;
+  const policy = policyOf(options);
   let data;
   try {
     data = JSON.parse(String(raw || "{}"));
@@ -131,24 +137,24 @@ export function importSitesData(api, raw) {
   const siteUpsert = db.prepare(
     "INSERT INTO site(id,site_name,description,bindable,site_link,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?,?,?) " +
       "ON CONFLICT(id) DO UPDATE SET site_name=excluded.site_name,description=excluded.description,bindable=excluded.bindable,site_link=excluded.site_link,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
-      "WHERE excluded.updated_at > site.updated_at",
+      "WHERE ? = 1 OR excluded.updated_at > site.updated_at",
   );
   const nodeUpsert = db.prepare(
     "INSERT INTO site_node(id,name,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?,?,?,?) " +
       "ON CONFLICT(id) DO UPDATE SET name=excluded.name,parent_id=excluded.parent_id,path=excluded.path,sort=excluded.sort,depth=excluded.depth,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
-      "WHERE excluded.updated_at > site_node.updated_at",
+      "WHERE ? = 1 OR excluded.updated_at > site_node.updated_at",
   );
   const nodeMappingUpsert = db.prepare(
     "INSERT INTO site_node_mapping(id,site_id,node_id,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?) " +
       "ON CONFLICT(id) DO UPDATE SET site_id=excluded.site_id,node_id=excluded.node_id,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
-      "WHERE excluded.updated_at > site_node_mapping.updated_at",
+      "WHERE ? = 1 OR excluded.updated_at > site_node_mapping.updated_at",
   );
   const hasTagMapping = tableExists(db, TAG_MAPPING_TABLE);
   const tagMappingUpsert = hasTagMapping
     ? db.prepare(
         "INSERT INTO tag_mapping(id,tag_id,item_id,item_type,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?,?) " +
           "ON CONFLICT(id) DO UPDATE SET tag_id=excluded.tag_id,item_id=excluded.item_id,item_type=excluded.item_type,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
-          "WHERE excluded.updated_at > tag_mapping.updated_at",
+          "WHERE ? = 1 OR excluded.updated_at > tag_mapping.updated_at",
       )
     : null;
 
@@ -156,13 +162,24 @@ export function importSitesData(api, raw) {
   let skipped = 0;
   let failed = 0;
   const errors = [];
+  const exists = {
+    [SITE_TABLE]: db.prepare("SELECT 1 FROM site WHERE id = ?"),
+    [NODE_TABLE]: db.prepare("SELECT 1 FROM site_node WHERE id = ?"),
+    [NODE_MAPPING_TABLE]: db.prepare("SELECT 1 FROM site_node_mapping WHERE id = ?"),
+  };
+  if (hasTagMapping) exists[TAG_MAPPING_TABLE] = db.prepare("SELECT 1 FROM tag_mapping WHERE id = ?");
+  const force = policy === "overwrite" ? 1 : 0;
 
   function apply(stmt, table, values, tsIndex, row) {
     if (!stmt) {
       skipped += 1;
       return;
     }
-    const result = stmt.run(...values);
+    if (policy === "skip" && exists[table] && exists[table].get(values[0])) {
+      skipped += 1;
+      return;
+    }
+    const result = stmt.run(...values, force);
     if (result.changes > 0) {
       imported += 1;
       logChange(db, table, values[0], "upsert", row, "import", values[tsIndex]);

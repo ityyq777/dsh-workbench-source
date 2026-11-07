@@ -29,6 +29,8 @@
           backup_export_failed: "导出失败", backup_import_failed: "导入失败",
           backup_no_import: "未实现导入", backup_no_export: "未实现导出",
           backup_refresh: "重新读取模块", backup_cap_export: "可导出", backup_cap_import: "可导入",
+          backup_dup_policy: "重复 ID 时", backup_dup_newest: "以时间最新为主", backup_dup_skip: "保留本地（跳过）",
+          backup_dup_overwrite: "用备份覆盖", backup_dup_hint: "导入时对同 ID 记录的处理方式", backup_policy: "策略",
           back_home: "返回首页", open: "打开", manage: "工作台管理",
           home_hint: "点开卡片进入业务插件；安装与卸载在 DSH 插件管理里",
           account_desc: "登录云端账号，备份与同步数据",
@@ -65,6 +67,8 @@
           backup_export_failed: "Export failed", backup_import_failed: "Import failed",
           backup_no_import: "Import not implemented", backup_no_export: "Export not implemented",
           backup_refresh: "Reload modules", backup_cap_export: "export", backup_cap_import: "import",
+          backup_dup_policy: "On duplicate ID", backup_dup_newest: "Keep newest by time", backup_dup_skip: "Keep local (skip)",
+          backup_dup_overwrite: "Overwrite with backup", backup_dup_hint: "How to handle rows with the same ID on import", backup_policy: "Policy",
           back_home: "Back to home", open: "Open", manage: "Manage",
           home_hint: "Open a card to enter a domain; install or remove plugins in DSH",
           account_desc: "Sign in to back up and sync your data",
@@ -152,14 +156,22 @@
         ".wb-immersive-main{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:18px 24px 24px}",
         "@media (max-width:760px){.wb-root{padding:16px}.wb-home-grid{grid-template-columns:1fr}.wb-page-title h2{font-size:17px}.wb-immersive{padding:var(--dsh-frame-top-clearance,0px) 0 0}.wb-immersive-bar{padding:8px 14px}.wb-immersive-main{padding:14px 16px 20px}.wb-immersive-title span:not(.wb-home-icon):not(.wb-badge){display:none}}",
         ".wb-backup{display:flex;flex-direction:column;gap:14px}",
+        ".wb-backup-item{display:flex;flex-direction:column}",
         ".wb-backup-row{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border:1px solid var(--wb-line);border-radius:10px;background:var(--wb-surface)}",
+        ".wb-backup-row.open{border-radius:10px 10px 0 0}",
+        ".wb-backup-row-main{display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0;cursor:pointer}",
         ".wb-backup-row input{margin-top:3px;accent-color:var(--dsw-alias-accent,#11a89b)}",
+        ".wb-backup-gear{flex:none;width:28px;height:28px;border-radius:8px;border:1px solid transparent;background:transparent;color:inherit;opacity:.5;cursor:pointer;font-size:14px;line-height:1;display:inline-flex;align-items:center;justify-content:center;padding:0;margin-top:-3px}",
+        ".wb-backup-gear:hover,.wb-backup-gear.active{opacity:1;border-color:var(--wb-line);background:color-mix(in oklab,var(--dsw-alias-accent,#11a89b) 10%,transparent)}",
+        ".wb-backup-config{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 13px 11px;border:1px solid var(--wb-line);border-top:none;border-radius:0 0 10px 10px;margin-top:-1px;background:color-mix(in oklab,var(--dsw-alias-accent,#11a89b) 5%,var(--wb-surface))}",
+        ".wb-backup-config-label{font-size:12px;font-weight:600;opacity:.8}",
+        ".wb-backup-config .wb-select{padding:6px 9px;font-size:12px;background:var(--wb-surface)}",
         ".wb-backup-main{min-width:0;display:flex;flex-direction:column;gap:2px}",
         ".wb-backup-name{font-weight:600;font-size:13px}",
         ".wb-backup-meta{font-size:11.5px;opacity:.52;line-height:1.5}",
         ".wb-backup-table-list{display:flex;flex-direction:column;gap:1px}",
         ".wb-backup-table{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;line-height:1.8;opacity:.62;white-space:nowrap}",
-        ".wb-backup-result-row{padding:10px 0;border-top:1px solid var(--wb-line)}",
+        ".wb-backup-result-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--wb-line)}",
         ".wb-backup-result-row:first-of-type{border-top:0;padding-top:0}",
         ".wb-backup-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
         ".wb-backup-note{font-size:12px;opacity:.6;line-height:1.55}",
@@ -332,6 +344,8 @@
         var st3 = react.useState(""); var msg = st3[0]; var setMsg = st3[1];
         var st4 = react.useState(null); var report = st4[0]; var setReport = st4[1];
         var st5 = react.useState(null); var exported = st5[0]; var setExported = st5[1];
+        var st6 = react.useState({}); var policies = st6[0]; var setPolicies = st6[1];
+        var st7 = react.useState({}); var openConfig = st7[0]; var setOpenConfig = st7[1];
         var fileRef = react.useRef(null);
 
         react.useEffect(function () {
@@ -360,6 +374,18 @@
           var next = {};
           exportable.forEach(function (a) { next[a.id] = flag; });
           setSelected(next);
+        }
+        function policyOf(id) { return policies[id] || "newest"; }
+        function policyLabel(policy) {
+          if (policy === "skip") return t("backup_dup_skip");
+          if (policy === "overwrite") return t("backup_dup_overwrite");
+          return t("backup_dup_newest");
+        }
+        function setPolicy(id, value) {
+          setPolicies(function (prev) { var next = Object.assign({}, prev); next[id] = value; return next; });
+        }
+        function toggleConfig(id) {
+          setOpenConfig(function (prev) { var next = Object.assign({}, prev); next[id] = !next[id]; return next; });
         }
         function statusLabel(status) {
           if (status === "ok") return t("backup_ok");
@@ -396,7 +422,15 @@
               a.remove();
               setTimeout(function () { URL.revokeObjectURL(href); }, 1500);
               setMsg(t("backup_download_started"));
-              setExported(chosen.map(function (a) { return { id: a.id, title: a.title || a.id, version: a.version, tables: a.tables || [] }; }));
+              var rows = [];
+              chosen.forEach(function (a) {
+                var tables = a.tables || [];
+                if (!tables.length) rows.push({ id: a.id + ":*", table: "—", module: a.title || a.id, version: a.version });
+                tables.forEach(function (table) {
+                  rows.push({ id: a.id + ":" + table, table: table, module: a.title || a.id, version: a.version });
+                });
+              });
+              setExported(rows);
             });
           }).catch(function (e) {
             setMsg(t("backup_export_failed") + ": " + String((e && e.message) || e));
@@ -409,7 +443,9 @@
           setBusy("import");
           setMsg("");
           setReport(null);
-          fetch("/workbench/api/backup/import", { method: "POST", headers: { "content-type": "application/zip" }, body: file })
+          var policyMap = {};
+          exportable.forEach(function (a) { policyMap[a.id] = policyOf(a.id); });
+          fetch("/workbench/api/backup/import", { method: "POST", headers: { "content-type": "application/zip", "x-wb-backup-policy": JSON.stringify(policyMap) }, body: file })
             .then(function (r) {
               if (r.status === 422) {
                 return r.json().catch(function () { return {}; }).then(function () {
@@ -448,13 +484,41 @@
             ] }),
             exportable.length
               ? jsx.jsx("div", { className: "wb-stack", style: { marginTop: 10 }, children: exportable.map(function (a) {
-                  return jsx.jsxs("label", { className: "wb-backup-row", children: [
-                    jsx.jsx("input", { type: "checkbox", checked: !!selected[a.id], onChange: function () { toggle(a.id); } }),
-                    jsx.jsxs("span", { className: "wb-backup-main", children: [
-                      jsx.jsxs("span", { className: "wb-backup-name", children: [a.title || a.id, jsx.jsx("span", { className: "wb-badge", children: "v" + (a.version || "?") })] }),
-                      jsx.jsx("span", { className: "wb-backup-meta", children: moduleCaps(a) }),
-                      a.description ? jsx.jsx("span", { className: "wb-backup-meta", children: a.description }) : null,
+                  var open = !!openConfig[a.id];
+                  return jsx.jsxs(react.Fragment, { children: [
+                    jsx.jsxs("div", { className: "wb-backup-row" + (open ? " open" : ""), children: [
+                      jsx.jsxs("label", { className: "wb-backup-row-main", children: [
+                        jsx.jsx("input", { type: "checkbox", checked: !!selected[a.id], onChange: function () { toggle(a.id); } }),
+                        jsx.jsxs("span", { className: "wb-backup-main", children: [
+                          jsx.jsxs("span", { className: "wb-backup-name", children: [a.title || a.id, jsx.jsx("span", { className: "wb-badge", children: "v" + (a.version || "?") })] }),
+                          jsx.jsx("span", { className: "wb-backup-meta", children: moduleCaps(a) }),
+                          a.description ? jsx.jsx("span", { className: "wb-backup-meta", children: a.description }) : null,
+                        ] }),
+                      ] }),
+                      jsx.jsx("button", {
+                        type: "button",
+                        className: "wb-backup-gear" + (open ? " active" : ""),
+                        title: t("backup_dup_policy"),
+                        "aria-label": t("backup_dup_policy"),
+                        "aria-expanded": open,
+                        onClick: function () { toggleConfig(a.id); },
+                        children: "⚙",
+                      }),
                     ] }),
+                    open ? jsx.jsxs("div", { className: "wb-backup-config", children: [
+                      jsx.jsx("span", { className: "wb-backup-config-label", children: t("backup_dup_policy") }),
+                      jsx.jsx("select", {
+                        className: "wb-select",
+                        value: policyOf(a.id),
+                        onChange: function (e) { setPolicy(a.id, e.target.value); },
+                        children: [
+                          jsx.jsx("option", { value: "newest", children: t("backup_dup_newest") }),
+                          jsx.jsx("option", { value: "skip", children: t("backup_dup_skip") }),
+                          jsx.jsx("option", { value: "overwrite", children: t("backup_dup_overwrite") }),
+                        ],
+                      }),
+                      jsx.jsx("span", { className: "wb-backup-note", children: t("backup_dup_hint") }),
+                    ] }) : null,
                   ] }, a.id);
                 }) })
               : jsx.jsx("div", { className: "wb-msg", children: t("backup_no_modules") }),
@@ -473,12 +537,8 @@
             ] }),
             jsx.jsx("div", { className: "wb-stack", children: exported.map(function (a) {
               return jsx.jsxs("div", { className: "wb-backup-result-row", children: [
-                jsx.jsxs("div", { className: "wb-backup-name", children: [a.title, jsx.jsx("span", { className: "wb-badge", children: "v" + (a.version || "?") })] }),
-                a.tables.length
-                  ? jsx.jsx("div", { className: "wb-backup-table-list", children: a.tables.map(function (table) {
-                      return jsx.jsx("span", { className: "wb-backup-table", children: "- " + table }, table);
-                    }) })
-                  : jsx.jsx("div", { className: "wb-backup-meta", children: "—" }),
+                jsx.jsx("span", { className: "wb-backup-table", children: a.table }),
+                jsx.jsxs("span", { className: "wb-backup-meta", children: [a.module, jsx.jsx("span", { className: "wb-badge", children: "v" + (a.version || "?") })] }),
               ] }, a.id);
             }) }),
           ] }) : null,
@@ -503,6 +563,7 @@
                 jsx.jsxs("tr", { children: [
                   jsx.jsx("th", { children: t("backup_detail") }),
                   jsx.jsx("th", { children: t("backup_status") }),
+                  jsx.jsx("th", { children: t("backup_policy") }),
                   jsx.jsx("th", { children: t("backup_imported") }),
                   jsx.jsx("th", { children: t("backup_skipped") }),
                   jsx.jsx("th", { children: t("backup_failed") }),
@@ -515,6 +576,7 @@
                     r.message ? jsx.jsx("div", { className: "wb-backup-meta", children: r.message }) : null,
                   ] }),
                   jsx.jsx("td", { children: jsx.jsx("span", { className: "wb-backup-status " + r.status, children: statusLabel(r.status) }) }),
+                  jsx.jsx("td", { className: "wb-backup-meta", children: policyLabel(r.policy) }),
                   jsx.jsx("td", { className: "num", children: r.imported || 0 }),
                   jsx.jsx("td", { className: "num", children: r.skipped || 0 }),
                   jsx.jsx("td", { className: "num", children: r.failed || 0 }),
