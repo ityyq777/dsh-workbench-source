@@ -1,0 +1,26 @@
+{
+  "name": "wb-addon-tasks",
+  "version": "1.0.0",
+  "type": "module",
+  "wb": {
+    "addon": {
+      "id": "wb-addon-tasks",
+      "title": "任务记录",
+      "description": "个人任务清单：优先级、截止日、标签",
+      "version": "1.0.0",
+      "minShell": "1.0.0",
+      "tables": [
+        "tasks"
+      ],
+      "views": [
+        "tasks"
+      ],
+      "toolActions": [
+        "tasks.list",
+        "tasks.create",
+        "tasks.complete",
+        "tasks.stats"
+      ]
+    }
+  }
+}
