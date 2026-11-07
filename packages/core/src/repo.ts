@@ -19,17 +19,34 @@ export interface TaskRow {
 }
 
 /** 追加变更日志（在调用方的事务内执行；origin=sync 时跳过）。 */
-function logChange(db: DatabaseSync, tableName: string, rowId: string, op: "upsert" | "delete", payload: string | null, origin: WriteOrigin, ts: number): void {
+function logChange(
+  db: DatabaseSync,
+  tableName: string,
+  rowId: string,
+  op: "upsert" | "delete",
+  payload: string | null,
+  origin: WriteOrigin,
+  ts: number,
+): void {
   if (origin === "sync") {
     return;
   }
-  db.prepare(
-    "INSERT INTO sync_change_log(table_name,row_id,op,payload,origin,updated_at) VALUES(?,?,?,?,?,?)",
-  ).run(tableName, rowId, op, payload, origin, ts);
+  db.prepare("INSERT INTO sync_change_log(table_name,row_id,op,payload,origin,updated_at) VALUES(?,?,?,?,?,?)").run(
+    tableName,
+    rowId,
+    op,
+    payload,
+    origin,
+    ts,
+  );
 }
 
 /** 创建任务。返回新行 id。 */
-export function createTask(db: DatabaseSync, input: { title: string; note?: string; priority?: number; due_at?: number | null; tags?: string[] }, origin: WriteOrigin = "ui"): string {
+export function createTask(
+  db: DatabaseSync,
+  input: { title: string; note?: string; priority?: number; due_at?: number | null; tags?: string[] },
+  origin: WriteOrigin = "ui",
+): string {
   const id = uuidv7();
   const ts = monoNow();
   const row = {
@@ -52,7 +69,12 @@ export function createTask(db: DatabaseSync, input: { title: string; note?: stri
 }
 
 /** 更新任务字段（rev 自增）。partial 中出现的键才写入。 */
-export function updateTask(db: DatabaseSync, id: string, patch: Partial<Pick<TaskRow, "title" | "note" | "status" | "priority" | "due_at">> & { tags?: string[] }, origin: WriteOrigin = "ui"): boolean {
+export function updateTask(
+  db: DatabaseSync,
+  id: string,
+  patch: Partial<Pick<TaskRow, "title" | "note" | "status" | "priority" | "due_at">> & { tags?: string[] },
+  origin: WriteOrigin = "ui",
+): boolean {
   const cur = db.prepare("SELECT * FROM tasks WHERE id=? AND deleted_at IS NULL").get(id) as TaskRow | undefined;
   if (!cur) {
     return false;
@@ -69,9 +91,17 @@ export function updateTask(db: DatabaseSync, id: string, patch: Partial<Pick<Tas
     rev: cur.rev + 1,
     updated_at: ts,
   };
-  db.prepare(
-    "UPDATE tasks SET title=?,note=?,status=?,priority=?,due_at=?,tags=?,rev=?,updated_at=? WHERE id=?",
-  ).run(next.title, next.note, next.status, next.priority, next.due_at, next.tags, next.rev, next.updated_at, id);
+  db.prepare("UPDATE tasks SET title=?,note=?,status=?,priority=?,due_at=?,tags=?,rev=?,updated_at=? WHERE id=?").run(
+    next.title,
+    next.note,
+    next.status,
+    next.priority,
+    next.due_at,
+    next.tags,
+    next.rev,
+    next.updated_at,
+    id,
+  );
   logChange(db, "tasks", id, "upsert", JSON.stringify(next), origin, ts);
   return true;
 }
@@ -89,7 +119,10 @@ export function deleteTask(db: DatabaseSync, id: string, origin: WriteOrigin = "
 }
 
 /** 列表查询（默认不含墓碑）。 */
-export function listTasks(db: DatabaseSync, opts: { status?: string; includeDeleted?: boolean; limit?: number } = {}): TaskRow[] {
+export function listTasks(
+  db: DatabaseSync,
+  opts: { status?: string; includeDeleted?: boolean; limit?: number } = {},
+): TaskRow[] {
   const conds: string[] = [];
   const args: (string | number)[] = [];
   if (!opts.includeDeleted) {
@@ -101,19 +134,28 @@ export function listTasks(db: DatabaseSync, opts: { status?: string; includeDele
   }
   const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
   args.push(opts.limit ?? 200);
-  return db.prepare(`SELECT * FROM tasks ${where} ORDER BY priority ASC, due_at IS NULL, due_at ASC, updated_at DESC LIMIT ?`).all(...args) as unknown as TaskRow[];
+  return db
+    .prepare(`SELECT * FROM tasks ${where} ORDER BY priority ASC, due_at IS NULL, due_at ASC, updated_at DESC LIMIT ?`)
+    .all(...args) as unknown as TaskRow[];
 }
 
 /** 统计摘要（Workbench tool stats / UI 概览共用）。 */
 export function taskStats(db: DatabaseSync): { open: number; done: number; overdue: number; today: number } {
-  const row = db.prepare(
-    `SELECT
+  const row = db
+    .prepare(
+      `SELECT
       SUM(CASE WHEN deleted_at IS NULL AND status='open' THEN 1 ELSE 0 END) AS open,
       SUM(CASE WHEN deleted_at IS NULL AND status='done' THEN 1 ELSE 0 END) AS done,
       SUM(CASE WHEN deleted_at IS NULL AND status='open' AND due_at IS NOT NULL AND due_at < ? THEN 1 ELSE 0 END) AS overdue,
       SUM(CASE WHEN deleted_at IS NULL AND status='open' AND due_at IS NOT NULL AND due_at BETWEEN ? AND ? THEN 1 ELSE 0 END) AS today
      FROM tasks`,
-  ).get(Date.now(), Date.now() - 86400000, Date.now() + 86400000) as { open: number | null; done: number | null; overdue: number | null; today: number | null };
+    )
+    .get(Date.now(), Date.now() - 86400000, Date.now() + 86400000) as {
+    open: number | null;
+    done: number | null;
+    overdue: number | null;
+    today: number | null;
+  };
   return { open: row.open ?? 0, done: row.done ?? 0, overdue: row.overdue ?? 0, today: row.today ?? 0 };
 }
 
@@ -122,8 +164,15 @@ export function taskStats(db: DatabaseSync): { open: number; done: number; overd
  * 相等则比 device tiebreak 略过（同刻冲突罕见，demo 以本地为准）。
  * 输方（双方都活跃且内容不同）写 conflict_shadow 供 UI 展示。
  */
-export function applyRemoteUpsert(db: DatabaseSync, tableName: string, remote: Record<string, unknown>, serverUpdatedAt: number): void {
-  const cur = db.prepare(`SELECT * FROM ${tableName} WHERE id=?`).get(remote.id as string) as (TaskRow & Record<string, unknown>) | undefined;
+export function applyRemoteUpsert(
+  db: DatabaseSync,
+  tableName: string,
+  remote: Record<string, unknown>,
+  serverUpdatedAt: number,
+): void {
+  const cur = db.prepare(`SELECT * FROM ${tableName} WHERE id=?`).get(remote.id as string) as
+    | (TaskRow & Record<string, unknown>)
+    | undefined;
   if (cur && (cur.deleted_at === null || cur.deleted_at === undefined)) {
     if ((cur.updated_at as number) > serverUpdatedAt) {
       // 本地更新：保留本地，但把服务端版本留档冲突表（绝不静默丢弃）
@@ -141,7 +190,9 @@ export function applyRemoteUpsert(db: DatabaseSync, tableName: string, remote: R
   // 通用整行替换：先删后插保证列集合与服务端一致（demo 表结构稳定）
   db.prepare(`DELETE FROM ${tableName} WHERE id=?`).run(remote.id as string);
   const placeholders = cols.map(() => "?").join(",");
-  db.prepare(`INSERT INTO ${tableName} (${cols.join(",")}) VALUES(${placeholders})`).run(...cols.map((c) => remote[c] as never));
+  db.prepare(`INSERT INTO ${tableName} (${cols.join(",")}) VALUES(${placeholders})`).run(
+    ...cols.map((c) => remote[c] as never),
+  );
   void existing;
 }
 
@@ -153,10 +204,20 @@ export function applyRemoteDelete(db: DatabaseSync, tableName: string, rowId: st
 }
 
 /** 读取待推送的变更尾部（seq > afterSeq），按 seq 升序。 */
-export function pendingChanges(db: DatabaseSync, afterSeq: number, limit = 200): { seq: number; table_name: string; row_id: string; op: string; payload: string | null; origin: string; updated_at: number }[] {
-  return db.prepare(
-    "SELECT * FROM sync_change_log WHERE seq>? ORDER BY seq ASC LIMIT ?",
-  ).all(afterSeq, limit) as never;
+export function pendingChanges(
+  db: DatabaseSync,
+  afterSeq: number,
+  limit = 200,
+): {
+  seq: number;
+  table_name: string;
+  row_id: string;
+  op: string;
+  payload: string | null;
+  origin: string;
+  updated_at: number;
+}[] {
+  return db.prepare("SELECT * FROM sync_change_log WHERE seq>? ORDER BY seq ASC LIMIT ?").all(afterSeq, limit) as never;
 }
 
 /** 记录已同步水位。 */

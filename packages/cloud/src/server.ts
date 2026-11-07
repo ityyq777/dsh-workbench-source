@@ -9,7 +9,15 @@ import { join } from "node:path";
 import { openCloudDb } from "./store.js";
 import { hashPassword, verifyPassword, issueSession, parseAccessToken, rotateRefresh, revokeDevice } from "./auth.js";
 import { pushChanges, pullChanges } from "./sync.js";
-import { listAddons, addonDetail, publishVersion, yankVersion, catalogChanges, recordDownload, sha256Of } from "./catalog.js";
+import {
+  listAddons,
+  addonDetail,
+  publishVersion,
+  yankVersion,
+  catalogChanges,
+  recordDownload,
+  sha256Of,
+} from "./catalog.js";
 import { uuidv7, monoNow } from "@wb/core";
 
 const argv = process.argv.slice(2);
@@ -64,16 +72,25 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
   if (p === "/v1/auth/signup" && m === "POST") {
     const b = await bodyJson(req);
     if (!b.email || !b.password) return json(res, 400, { ok: false, error: "email/password required" });
-    if (db.prepare("SELECT 1 FROM users WHERE email=?").get(b.email)) return json(res, 409, { ok: false, error: "email exists" });
+    if (db.prepare("SELECT 1 FROM users WHERE email=?").get(b.email))
+      return json(res, 409, { ok: false, error: "email exists" });
     const id = uuidv7();
-    db.prepare("INSERT INTO users(id,email,pass_hash,created_at) VALUES(?,?,?,?)").run(id, b.email, await hashPassword(b.password), monoNow());
+    db.prepare("INSERT INTO users(id,email,pass_hash,created_at) VALUES(?,?,?,?)").run(
+      id,
+      b.email,
+      await hashPassword(b.password),
+      monoNow(),
+    );
     const s = await issueSession(db, id, String(b.device_id ?? uuidv7()), b.device_name);
     return json(res, 200, { ok: true, ...s });
   }
   if (p === "/v1/auth/login" && m === "POST") {
     const b = await bodyJson(req);
-    const u = db.prepare("SELECT * FROM users WHERE email=?").get(b.email) as { id: string; pass_hash: string } | undefined;
-    if (!u || !(await verifyPassword(String(b.password), u.pass_hash))) return json(res, 401, { ok: false, error: "bad credentials" });
+    const u = db.prepare("SELECT * FROM users WHERE email=?").get(b.email) as
+      | { id: string; pass_hash: string }
+      | undefined;
+    if (!u || !(await verifyPassword(String(b.password), u.pass_hash)))
+      return json(res, 401, { ok: false, error: "bad credentials" });
     const s = await issueSession(db, u.id, String(b.device_id ?? uuidv7()), b.device_name);
     return json(res, 200, { ok: true, ...s });
   }
@@ -94,7 +111,11 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
   }
   if (p === "/v1/catalog/changes" && m === "GET") {
     const since = Number(url.searchParams.get("since") ?? 0);
-    return json(res, 200, { ok: true, changes: catalogChanges(db, since, url.searchParams.get("shell") ?? SHELL_VERSION), at: Date.now() });
+    return json(res, 200, {
+      ok: true,
+      changes: catalogChanges(db, since, url.searchParams.get("shell") ?? SHELL_VERSION),
+      at: Date.now(),
+    });
   }
   const dl = /^\/dl\/([\w.-]+)@([\w.-]+)\.tgz$/.exec(p);
   if (dl && m === "GET") {
@@ -108,7 +129,8 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
 
   // ── 发布（demo：简单 token 门；生产走 CI + API key）──
   if (p === "/v1/publish" && m === "POST") {
-    if (req.headers["x-publish-token"] !== PUBLISH_TOKEN) return json(res, 403, { ok: false, error: "publish token required" });
+    if (req.headers["x-publish-token"] !== PUBLISH_TOKEN)
+      return json(res, 403, { ok: false, error: "publish token required" });
     const raw = await readBody(req);
     const boundary = String(req.headers["content-type"] ?? "");
     const metaMatch = /name="meta"\r?\n\r?\n/.exec(boundary);
@@ -123,7 +145,8 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
   }
   const yankM = /^\/v1\/catalog\/addons\/([\w.-]+)\/yank$/.exec(p);
   if (yankM && m === "POST") {
-    if (req.headers["x-publish-token"] !== PUBLISH_TOKEN) return json(res, 403, { ok: false, error: "publish token required" });
+    if (req.headers["x-publish-token"] !== PUBLISH_TOKEN)
+      return json(res, 403, { ok: false, error: "publish token required" });
     const b = await bodyJson(req);
     return yankVersion(db, yankM[1], String(b.version)) ? json(res, 200, { ok: true }) : json(res, 404, { ok: false });
   }
@@ -133,7 +156,10 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
   if (!auth) return json(res, 401, { ok: false, error: "unauthorized" });
 
   if (p === "/v1/me" && m === "GET") {
-    const u = db.prepare("SELECT id,email,created_at FROM users WHERE id=?").get(auth.userId) as Record<string, unknown>;
+    const u = db.prepare("SELECT id,email,created_at FROM users WHERE id=?").get(auth.userId) as Record<
+      string,
+      unknown
+    >;
     const devices = db.prepare("SELECT id,name,last_cursor FROM devices WHERE user_id=?").all(auth.userId);
     return json(res, 200, { ok: true, user: u, devices });
   }
@@ -145,7 +171,11 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
   if (p === "/v1/sync/push" && m === "POST") {
     const b = await bodyJson(req);
     const r = pushChanges(db, auth.userId, auth.deviceId, Array.isArray(b.changes) ? b.changes : []);
-    db.prepare("UPDATE devices SET last_cursor=? WHERE user_id=? AND id=?").run(Math.max(r.accepted_up_to, 0), auth.userId, auth.deviceId);
+    db.prepare("UPDATE devices SET last_cursor=? WHERE user_id=? AND id=?").run(
+      Math.max(r.accepted_up_to, 0),
+      auth.userId,
+      auth.deviceId,
+    );
     return json(res, 200, { ok: true, ...r, cursor: serverCursor(auth.userId) });
   }
   if (p === "/v1/sync/pull" && m === "GET") {
@@ -157,7 +187,9 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
 }
 
 function serverCursor(userId: string): number {
-  const row = db.prepare("SELECT MAX(server_seq) m FROM change_log WHERE user_id=?").get(userId) as { m: number | null };
+  const row = db.prepare("SELECT MAX(server_seq) m FROM change_log WHERE user_id=?").get(userId) as {
+    m: number | null;
+  };
   return row.m ?? 0;
 }
 

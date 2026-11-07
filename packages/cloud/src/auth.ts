@@ -4,7 +4,12 @@ import type { DatabaseSync } from "node:sqlite";
 import { uuidv7, monoNow } from "@wb/core";
 
 const scryptOpts = (N: number, r: number, p: number) => ({ N, r, p, maxmem: 64 * 1024 * 1024 });
-async function scrypt(password: string, salt: Buffer, keylen: number, opts: { N: number; r: number; p: number; maxmem: number }): Promise<Buffer> {
+async function scrypt(
+  password: string,
+  salt: Buffer,
+  keylen: number,
+  opts: { N: number; r: number; p: number; maxmem: number },
+): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     _scrypt(password, salt, keylen, opts, (err, dk) => (err ? reject(err) : resolve(dk)));
   });
@@ -17,7 +22,9 @@ void promisify;
  */
 export async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16);
-  const N = 16384, r = 8, p = 1;
+  const N = 16384,
+    r = 8,
+    p = 1;
   const hash = await scrypt(password, salt, 32, scryptOpts(N, r, p));
   return ["scrypt", N, r, p, salt.toString("hex"), hash.toString("hex")].join("_");
 }
@@ -28,7 +35,12 @@ export async function verifyPassword(password: string, stored: string): Promise<
     const sep = stored.includes("$") ? "$" : "_";
     const [tag, N, r, p, saltHex, hashHex] = stored.split(sep);
     if (tag !== "scrypt") return false;
-    const hash = await scrypt(password, Buffer.from(saltHex, "hex"), 32, { N: Number(N), r: Number(r), p: Number(p), maxmem: 64 * 1024 * 1024 });
+    const hash = await scrypt(password, Buffer.from(saltHex, "hex"), 32, {
+      N: Number(N),
+      r: Number(r),
+      p: Number(p),
+      maxmem: 64 * 1024 * 1024,
+    });
     return timingSafeEqual(hash, Buffer.from(hashHex, "hex"));
   } catch {
     return false;
@@ -48,23 +60,36 @@ export interface Session {
 }
 
 /** 签发 access(15min)+refresh(90d)；refresh 落库可吊销。 */
-export async function issueSession(db: DatabaseSync, userId: string, deviceId: string, deviceName?: string): Promise<Session> {
+export async function issueSession(
+  db: DatabaseSync,
+  userId: string,
+  deviceId: string,
+  deviceName?: string,
+): Promise<Session> {
   const accessToken = randomBytes(24).toString("base64url");
   const refreshToken = randomBytes(32).toString("base64url");
   const now = Date.now();
-  db.prepare(
-    "INSERT INTO refresh_tokens(token_hash,user_id,device_id,expires_at) VALUES(?,?,?,?)",
-  ).run(hashToken(refreshToken), userId, deviceId, now + 90 * 86400_000);
+  db.prepare("INSERT INTO refresh_tokens(token_hash,user_id,device_id,expires_at) VALUES(?,?,?,?)").run(
+    hashToken(refreshToken),
+    userId,
+    deviceId,
+    now + 90 * 86400_000,
+  );
   db.prepare(
     "INSERT INTO devices(id,user_id,name,last_cursor) VALUES(?,?,?,0) ON CONFLICT(id,user_id) DO UPDATE SET name=COALESCE(excluded.name, devices.name)",
   ).run(deviceId, userId, deviceName ?? null);
   // access token 自描述：userId.deviceId.随机串（HMAC 留待生产；demo 校验查 refresh 存在性即可）
-  void now; void monoNow; void uuidv7;
+  void now;
+  void monoNow;
+  void uuidv7;
   return { accessToken: `${userId}.${deviceId}.${accessToken}`, refreshToken, userId, deviceId };
 }
 
 /** 解析 access token → {userId, deviceId}（无效返回 null）。 */
-export function parseAccessToken(db: DatabaseSync, authHeader: string | undefined): { userId: string; deviceId: string } | null {
+export function parseAccessToken(
+  db: DatabaseSync,
+  authHeader: string | undefined,
+): { userId: string; deviceId: string } | null {
   if (!authHeader?.startsWith("Bearer ")) return null;
   const parts = authHeader.slice(7).split(".");
   if (parts.length !== 3) return null;
@@ -77,7 +102,9 @@ export function parseAccessToken(db: DatabaseSync, authHeader: string | undefine
 /** refresh 旋转 + 重用检测（07）：已旋转的旧 token 再出现 → 吊销该设备链。 */
 export function rotateRefresh(db: DatabaseSync, refreshToken: string): Session | null {
   const h = hashToken(refreshToken);
-  const row = db.prepare("SELECT * FROM refresh_tokens WHERE token_hash=?").get(h) as { token_hash: string; user_id: string; device_id: string; expires_at: number; replaced_by: string | null } | undefined;
+  const row = db.prepare("SELECT * FROM refresh_tokens WHERE token_hash=?").get(h) as
+    | { token_hash: string; user_id: string; device_id: string; expires_at: number; replaced_by: string | null }
+    | undefined;
   if (!row || row.expires_at < Date.now()) return null;
   if (row.replaced_by) {
     // 重用攻击：整条链失效
@@ -93,9 +120,12 @@ export function rotateRefresh(db: DatabaseSync, refreshToken: string): Session |
 export function issueSessionSync(db: DatabaseSync, userId: string, deviceId: string): Session {
   const accessToken = `${userId}.${deviceId}.${randomBytes(24).toString("base64url")}`;
   const refreshToken = randomBytes(32).toString("base64url");
-  db.prepare(
-    "INSERT INTO refresh_tokens(token_hash,user_id,device_id,expires_at) VALUES(?,?,?,?)",
-  ).run(hashToken(refreshToken), userId, deviceId, Date.now() + 90 * 86400_000);
+  db.prepare("INSERT INTO refresh_tokens(token_hash,user_id,device_id,expires_at) VALUES(?,?,?,?)").run(
+    hashToken(refreshToken),
+    userId,
+    deviceId,
+    Date.now() + 90 * 86400_000,
+  );
   db.prepare("INSERT OR IGNORE INTO devices(id,user_id,name,last_cursor) VALUES(?,?,?,0)").run(deviceId, userId, null);
   return { accessToken, refreshToken, userId, deviceId };
 }
