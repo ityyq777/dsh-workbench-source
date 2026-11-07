@@ -8,7 +8,17 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { openCloudDb } from "./store.js";
 import { hashPassword, verifyPassword, issueSession, parseAccessToken, rotateRefresh, revokeDevice } from "./auth.js";
-import { pushChanges, pullChanges } from "./sync.js";
+import {
+  pushChanges,
+  pullChanges,
+  pushChangesV2,
+  pullChangesV2,
+  openSyncSession,
+  snapshotTable,
+  fullTable,
+  closeSyncSession,
+  SyncError,
+} from "./sync.js";
 import {
   listAddons,
   addonDetail,
@@ -194,8 +204,29 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
     revokeDevice(db, auth.userId, devM[1]);
     return json(res, 200, { ok: true });
   }
+  // ── 同步 protocol v2 ──
+  if (p === "/v1/sync/open" && m === "POST") {
+    const b = await bodyJson(req);
+    const deviceId = String(b.device_id ?? auth.deviceId);
+    return json(res, 200, {
+      ok: true,
+      ...openSyncSession(db, auth.userId, deviceId, b.protocol),
+    });
+  }
   if (p === "/v1/sync/push" && m === "POST") {
     const b = await bodyJson(req);
+    if (b.session_id) {
+      return json(res, 200, {
+        ...pushChangesV2(
+          db,
+          auth.userId,
+          auth.deviceId,
+          String(b.client_epoch ?? ""),
+          String(b.session_id),
+          b.changes,
+        ),
+      });
+    }
     const r = pushChanges(db, auth.userId, auth.deviceId, Array.isArray(b.changes) ? b.changes : []);
     db.prepare("UPDATE devices SET last_cursor=? WHERE user_id=? AND id=?").run(
       Math.max(r.accepted_up_to, 0),
@@ -208,6 +239,52 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
     const cursor = Number(url.searchParams.get("cursor") ?? 0);
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 500), 2000);
     return json(res, 200, { ok: true, ...pullChanges(db, auth.userId, cursor, limit) });
+  }
+  if (p === "/v1/sync/pull" && m === "POST") {
+    const b = await bodyJson(req);
+    return json(res, 200, {
+      ...pullChangesV2(
+        db,
+        auth.userId,
+        auth.deviceId,
+        String(b.session_id ?? ""),
+        b.cursors,
+        b.limit,
+      ),
+    });
+  }
+  if (p === "/v1/sync/snapshot" && m === "POST") {
+    const b = await bodyJson(req);
+    return json(res, 200, {
+      ...snapshotTable(db, auth.userId, auth.deviceId, String(b.session_id ?? ""), b.table),
+    });
+  }
+  if (p === "/v1/sync/full" && m === "POST") {
+    const b = await bodyJson(req);
+    return json(res, 200, {
+      ...fullTable(
+        db,
+        auth.userId,
+        auth.deviceId,
+        String(b.session_id ?? ""),
+        b.table,
+        b.base_version,
+        b.rows,
+      ),
+    });
+  }
+  if (p === "/v1/sync/close" && m === "POST") {
+    const b = await bodyJson(req);
+    return json(res, 200, {
+      ...closeSyncSession(
+        db,
+        auth.userId,
+        auth.deviceId,
+        b.session_id,
+        b.success,
+        b.cursors,
+      ),
+    });
   }
   return json(res, 404, { ok: false, error: `no route ${m} ${p}` });
 }
@@ -224,6 +301,10 @@ const server = createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
     await route(req, res, url);
   } catch (err) {
+    if (err instanceof SyncError) {
+      json(res, err.status, { ok: false, code: err.code, error: err.message, ...err.extra });
+      return;
+    }
     json(res, 500, { ok: false, error: String((err as Error).message) });
   }
 });

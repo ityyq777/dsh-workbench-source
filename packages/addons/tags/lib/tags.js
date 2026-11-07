@@ -79,15 +79,9 @@ function createTag(db, args, origin, api) {
   const name = String(args && args.name !== undefined && args.name !== null ? args.name : "").trim();
   if (!name) throw new Error("标签名称不能为空");
   if (name.length > MAX_NAME) throw new Error("标签名称不能超过 " + MAX_NAME + " 个字符");
-  if (getTagByName(db, name)) throw new Error("标签已存在");
   const ts = now();
   const id = newId();
-  try {
-    db.prepare("INSERT INTO tag(id,name,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,NULL,1)").run(id, name, ts, ts);
-  } catch (e) {
-    if (String((e && e.message) || e).indexOf("UNIQUE") >= 0) throw new Error("标签已存在");
-    throw e;
-  }
+  db.prepare("INSERT INTO tag(id,name,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,NULL,1)").run(id, name, ts, ts);
   const row = getTag(db, id);
   logChange(db, TAG_TABLE, id, "upsert", rowTag(row), origin, ts);
   api.emit("tags-changed", { id: id, op: "create", name: name });
@@ -105,9 +99,11 @@ function deleteTag(db, args, origin, api) {
     db.prepare("UPDATE tag SET deleted_at=?, updated_at=?, rev=rev+1 WHERE id=?").run(ts, ts, id);
     db.prepare("UPDATE tag_mapping SET deleted_at=?, updated_at=?, rev=rev+1 WHERE tag_id=? AND deleted_at IS NULL").run(ts, ts, id);
     for (const m of mappings) {
-      logChange(db, MAPPING_TABLE, String(m.id), "delete", null, origin, ts);
+      const tomb = Object.assign({}, m, { deleted_at: ts, updated_at: ts, rev: Number(m.rev) + 1 });
+      logChange(db, MAPPING_TABLE, String(m.id), "delete", tomb, origin, ts);
     }
-    logChange(db, TAG_TABLE, id, "delete", null, origin, ts);
+    const tomb = Object.assign({}, row, { deleted_at: ts, updated_at: ts, rev: Number(row.rev) + 1 });
+    logChange(db, TAG_TABLE, id, "delete", tomb, origin, ts);
   });
   api.emit("tags-changed", { id: id, op: "delete", name: String(row.name || "") });
   return { id: id, deleted: true, missing: false, removedMappings: mappings.length };

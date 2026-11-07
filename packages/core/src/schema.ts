@@ -22,22 +22,42 @@ CREATE TABLE IF NOT EXISTS sync_change_log (
   updated_at INTEGER NOT NULL
 );
 
--- 冲突展示（LWW 输方的服务端版本留档，绝不静默吞数据）
+-- 冲突展示（LWW 输方的版本留档，绝不静默吞数据）
 CREATE TABLE IF NOT EXISTS conflict_shadow (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   table_name TEXT NOT NULL,
   row_id TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'pull',
+  resolution TEXT NOT NULL DEFAULT 'server',
   local_payload TEXT,
   server_payload TEXT,
+  server_updated_at INTEGER,
+  local_updated_at INTEGER,
   resolved_at INTEGER NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_conflict_resolved ON conflict_shadow(resolved_at);
 
+-- 单行/单表连续失败的死信；不阻塞其他表同步
+CREATE TABLE IF NOT EXISTS sync_dead_letter (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  table_name TEXT NOT NULL,
+  row_id TEXT NOT NULL,
+  op TEXT NOT NULL,
+  payload TEXT,
+  error TEXT NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 1,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_dead_letter_table ON sync_dead_letter(table_name, row_id);
+
+-- 同步水位/账号绑定/时钟/最后状态。v 用 TEXT 存储，兼容旧库的 INTEGER 亲和性。
 CREATE TABLE IF NOT EXISTS sync_state (
-  k TEXT PRIMARY KEY, v INTEGER NOT NULL
+  k TEXT PRIMARY KEY, v TEXT NOT NULL
 );
 `;
 
-/** 参与同步的表清单（协议级；业务域 tables 用于声明与文档，最终白名单由宿主汇总）。 */
+/** 旧 v1 协议的表白名单（只给云端 v1 兼容路径用；v2 由 DomainDef.sync/tables 声明）。 */
 export const SYNCED_TABLES = new Set([
   "tasks",
   "habits",

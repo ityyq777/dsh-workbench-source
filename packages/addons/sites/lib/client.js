@@ -1200,7 +1200,7 @@
 
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.2.1",
+    version: "1.3.0",
     views: [
       { id: "sites", title: { zh: "站点", en: "Sites" }, component: SitesView },
     ],

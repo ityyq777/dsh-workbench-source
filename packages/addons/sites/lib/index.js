@@ -3,8 +3,9 @@
  * 业务全部本地；云端只备份数据。标签能力通过 host.hasDomain 探测。
  */
 
-import { ensureSchema } from "./db.js";
+import { bindClock, ensureSchema } from "./db.js";
 import { exportSitesData, importSitesData } from "./backup.js";
+import { siteSync } from "./sync.js";
 import { registerSiteTreeActions } from "./tree.js";
 import { registerSiteActions } from "./sites.js";
 
@@ -18,6 +19,7 @@ function requireApi() {
 
 export function setup(api) {
   domainApi = api;
+  if (typeof api.now === "function") bindClock(api.now);
   ensureSchema(api.db, api.log);
   registerSiteTreeActions(api);
   registerSiteActions(api);
@@ -33,8 +35,9 @@ export function apply(ctx) {
         id: "wb-addon-sites",
         title: "站点",
         description: "站点收藏：目录树、链接与标签",
-        version: "1.2.1",
+        version: "1.3.0",
         tables: ["site", "site_node", "site_node_mapping", "tag_mapping"],
+        sync: siteSync,
         views: [{ id: "sites", title: { zh: "站点", en: "Sites" } }],
         setup,
         exportData: () => exportSitesData(requireApi()),

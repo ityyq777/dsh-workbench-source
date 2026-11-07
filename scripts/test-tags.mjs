@@ -41,9 +41,8 @@ r = call("tags.search", { text: "工" });
 assert(r.total === 1 && r.records[0].name === "工作", "search zh");
 r = call("tags.list", { text: "work" });
 assert(r.total === 0, "search no match");
-let dup = null;
-try { call("tags.create", { name: "工作" }); } catch (e) { dup = e; }
-assert(dup && dup.message.indexOf("已存在") >= 0, "duplicate rejected");
+let dup = call("tags.create", { name: "工作" });
+assert(dup.id && dup.id !== firstId, "duplicate name allowed");
 let blank = null;
 try { call("tags.create", { name: "   " }); } catch (e) { blank = e; }
 assert(blank, "blank rejected");
@@ -61,7 +60,7 @@ assert(logRows.length >= 4, "change log rows");
 r = call("tags.create", { name: "工作" });
 assert(r.tag.name === "工作", "recreate same name after soft delete");
 r = call("tags.list", {});
-assert(r.total === 2, "list after recreate");
+assert(r.total === 3, "list after recreate");
 r = call("tags.byIds", { ids: [r.records[0].id] });
 assert(r.records.length === 1, "byIds");
 

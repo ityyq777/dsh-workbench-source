@@ -5,8 +5,9 @@
  * 宿主由 dsh-workbench 提供，通过 ctx.workbench.registerDomain 注册。
  */
 
-import { ensureSchema } from "./db.js";
+import { bindClock, ensureSchema } from "./db.js";
 import { exportTasksData, importTasksData } from "./backup.js";
+import { taskSync } from "./sync.js";
 import { registerTaskActions } from "./tasks.js";
 import { registerTreeActions } from "./tree.js";
 
@@ -21,6 +22,7 @@ function requireApi() {
 /** 旧 addon 形态的初始化函数，单测/兼容直接调用。 */
 export function setup(api) {
   domainApi = api;
+  if (typeof api.now === "function") bindClock(api.now);
   ensureSchema(api.db, api.log);
   registerTaskActions(api);
   registerTreeActions(api);
@@ -36,8 +38,9 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务记录",
         description: "任务树 + 9 个视图：紧急/工作/生活/学习/开发/已开启/已关闭/已完成/总览",
-        version: "2.3.0",
-        tables: ["task", "task_node"],
+        version: "2.4.0",
+        tables: ["task", "task_dep", "task_node"],
+        sync: taskSync,
         views: [{ id: "tasks", title: { zh: "任务记录", en: "Tasks" } }],
         setup,
         exportData: () => exportTasksData(requireApi()),

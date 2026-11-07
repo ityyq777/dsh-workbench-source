@@ -49,6 +49,11 @@
           login: "登录", signup: "注册", email: "邮箱", password: "密码", logout: "退出登录",
           logged_in_as: "已登录", not_logged_in: "未登录——数据仅存本机 SQLite",
           sync_now: "立即同步", sync_pushed: "推送", sync_pulled: "拉取", device_name: "本设备",
+          sync_status: "同步状态", sync_last: "上次同步", sync_never: "尚未同步", sync_conflicts: "冲突",
+          sync_failed_tables: "失败的表", sync_clock: "时钟偏移", sync_no_conflicts: "没有待处理的冲突",
+          sync_conflict_hint: "同一行在本地和云端都被修改，选择保留哪个版本",
+          sync_keep_local: "保留本地", sync_keep_server: "采用云端", sync_dismiss: "忽略",
+          sync_resolve_failed: "冲突处理失败", sync_ok: "同步完成", sync_partial: "部分表同步失败",
         },
         en: {
           nav: "Workbench", title: "Personal Workbench", tagline: "Offline-first · addons installed by DSH",
@@ -87,6 +92,11 @@
           login: "Login", signup: "Sign up", email: "Email", password: "Password", logout: "Log out",
           logged_in_as: "Signed in", not_logged_in: "Not signed in — data stays local",
           sync_now: "Sync now", sync_pushed: "pushed", sync_pulled: "pulled", device_name: "This device",
+          sync_status: "Sync status", sync_last: "Last sync", sync_never: "Never synced", sync_conflicts: "Conflicts",
+          sync_failed_tables: "Failed tables", sync_clock: "Clock offset", sync_no_conflicts: "No pending conflicts",
+          sync_conflict_hint: "The same row changed locally and remotely; choose which version to keep",
+          sync_keep_local: "Keep local", sync_keep_server: "Use remote", sync_dismiss: "Dismiss",
+          sync_resolve_failed: "Failed to resolve conflict", sync_ok: "Sync complete", sync_partial: "Some tables failed",
         },
       };
 
@@ -186,6 +196,13 @@
         ".wb-backup-status.failed{color:#e5484d}",
         ".wb-backup-status.skipped{opacity:.55}",
         ".wb-backup-file{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}",
+        ".wb-sync-status{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;opacity:.7;margin-top:10px;line-height:1.6}",
+        ".wb-sync-status b{font-weight:600;opacity:.9}",
+        ".wb-conflict{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;padding:9px 0;border-top:1px solid var(--wb-line);font-size:12px}",
+        ".wb-conflict:first-of-type{border-top:0;padding-top:0}",
+        ".wb-conflict-main{min-width:0;display:flex;flex-direction:column;gap:2px}",
+        ".wb-conflict-meta{font-size:11px;opacity:.55;word-break:break-word}",
+        ".wb-conflict-actions{display:flex;gap:6px;flex:none}",
       ].join("\n");
 
       // ── 子插件宿主桥（必须在任何 addon client.js 之前就位）──
@@ -301,12 +318,37 @@
         var st2 = react.useState({ email: "", password: "", signup: false }); var form = st2[0]; var setForm = st2[1];
         var st3 = react.useState(""); var msg = st3[0]; var setMsg = st3[1];
         var st4 = react.useState(false); var syncing = st4[0]; var setSyncing = st4[1];
-        function refresh() { api.get("/account").then(function (r) { setMe(r); }); }
+        var st5 = react.useState(null); var syncStatus = st5[0]; var setSyncStatus = st5[1];
+        var st6 = react.useState([]); var conflicts = st6[0]; var setConflicts = st6[1];
+        function refreshSync() {
+          api.get("/sync/status").then(function (r) { if (r && r.ok) setSyncStatus(r); });
+          api.get("/sync/conflicts?limit=20").then(function (r) { setConflicts(r && Array.isArray(r.conflicts) ? r.conflicts : []); });
+        }
+        function refresh() {
+          api.get("/account").then(function (r) {
+            setMe(r);
+            if (r && r.logged_in) refreshSync();
+          });
+        }
         react.useEffect(function () { refresh(); }, []);
+        react.useEffect(function () {
+          if (!me || !me.logged_in) return undefined;
+          var es = new EventSource("/workbench/api/events");
+          function onSync() { refreshSync(); }
+          es.addEventListener("sync-done", onSync);
+          es.addEventListener("sync-status", onSync);
+          return function () { es.close(); };
+        }, [me && me.logged_in]);
         function submit() {
           api.post("/account/login", { email: form.email, password: form.password, signup: form.signup }).then(function (r) {
             setMsg(r.ok ? "" : (r.error || "failed"));
             refresh();
+          });
+        }
+        function resolve(id, action) {
+          api.post("/sync/conflicts/" + id + "/resolve", { action: action }).then(function (r) {
+            if (!r || !r.ok) setMsg(t("sync_resolve_failed"));
+            refreshSync();
           });
         }
         if (!me) return jsx.jsx("div", { className: "wb-card", children: jsx.jsx("span", { className: "wb-msg", children: "…" }) });
@@ -323,13 +365,52 @@
             msg ? jsx.jsx("div", { className: "wb-err", style: { marginTop: 8 }, children: msg }) : null,
           ] });
         }
-        return jsx.jsxs("div", { className: "wb-card", children: [
-          jsx.jsxs("div", { children: [t("logged_in_as"), " ", me.user ? me.user.email : "", " (", t("device_name"), ")"] }),
-          jsx.jsxs("div", { className: "wb-form", style: { marginTop: 10 }, children: [
-            jsx.jsx("button", { className: "wb-btn", disabled: syncing, onClick: function () { setSyncing(true); api.post("/sync/now").then(function (r) { setSyncing(false); setMsg(r.ok ? t("sync_pushed") + " " + r.pushed + " · " + t("sync_pulled") + " " + r.pulled : (r.error || "fail")); }); }, children: syncing ? "…" : t("sync_now") }),
-            jsx.jsx("button", { className: "wb-btn ghost", onClick: function () { api.post("/account/logout").then(refresh); }, children: t("logout") }),
+        var failed = syncStatus && Array.isArray(syncStatus.failed_tables) ? syncStatus.failed_tables : [];
+        return jsx.jsxs("div", { className: "wb-stack", children: [
+          jsx.jsxs("div", { className: "wb-card", children: [
+            jsx.jsxs("div", { children: [t("logged_in_as"), " ", me.user ? me.user.email : "", " (", t("device_name"), ")"] }),
+            jsx.jsxs("div", { className: "wb-form", style: { marginTop: 10 }, children: [
+              jsx.jsx("button", { className: "wb-btn", disabled: syncing, onClick: function () {
+                setSyncing(true);
+                api.post("/sync/now").then(function (r) {
+                  setSyncing(false);
+                  if (r && r.ok && Array.isArray(r.failed_tables) && r.failed_tables.length) {
+                    setMsg(t("sync_partial") + ": " + r.failed_tables.join(", "));
+                  } else {
+                    setMsg(r && r.ok ? t("sync_ok") + " · " + t("sync_pushed") + " " + r.pushed + " · " + t("sync_pulled") + " " + r.pulled : (r && r.error || "fail"));
+                  }
+                  refreshSync();
+                });
+              }, children: syncing ? "…" : t("sync_now") }),
+              jsx.jsx("button", { className: "wb-btn ghost", onClick: function () { api.post("/account/logout").then(refresh); }, children: t("logout") }),
+            ] }),
+            msg ? jsx.jsx("div", { className: "wb-msg", style: { marginTop: 8 }, children: msg }) : null,
+            syncStatus ? jsx.jsxs("div", { className: "wb-sync-status", children: [
+              jsx.jsxs("span", { children: [t("sync_last"), ": ", jsx.jsx("b", { children: syncStatus.last_sync_at ? new Date(syncStatus.last_sync_at).toLocaleString() : t("sync_never") })] }),
+              jsx.jsxs("span", { children: [t("sync_conflicts"), ": ", jsx.jsx("b", { children: syncStatus.conflicts || 0 })] }),
+              failed.length ? jsx.jsxs("span", { children: [t("sync_failed_tables"), ": ", jsx.jsx("b", { children: failed.join(", ") })] }) : null,
+              syncStatus.clock_offset ? jsx.jsxs("span", { children: [t("sync_clock"), ": ", jsx.jsx("b", { children: syncStatus.clock_offset + "ms" })] }) : null,
+            ] }) : null,
           ] }),
-          msg ? jsx.jsx("div", { className: "wb-msg", style: { marginTop: 8 }, children: msg }) : null,
+          jsx.jsxs("div", { className: "wb-card", children: [
+            jsx.jsxs("div", { className: "wb-sec", children: [
+              jsx.jsx("h3", { children: t("sync_conflicts") + " (" + conflicts.length + ")" }),
+              jsx.jsx("span", { className: "wb-hint", children: t("sync_conflict_hint") }),
+            ] }),
+            conflicts.length ? conflicts.map(function (c) {
+              return jsx.jsxs("div", { className: "wb-conflict", children: [
+                jsx.jsxs("div", { className: "wb-conflict-main", children: [
+                  jsx.jsx("div", { children: (c.table_name || "") + " · " + (c.row_id || "") }),
+                  jsx.jsx("div", { className: "wb-conflict-meta", children: (c.kind || "") + (c.server_updated_at ? " · " + new Date(c.server_updated_at).toLocaleString() : "") }),
+                ] }),
+                jsx.jsxs("div", { className: "wb-conflict-actions", children: [
+                  jsx.jsx("button", { className: "wb-btn ghost", onClick: function () { resolve(c.id, "keep_local"); }, children: t("sync_keep_local") }),
+                  jsx.jsx("button", { className: "wb-btn ghost", onClick: function () { resolve(c.id, "keep_server"); }, children: t("sync_keep_server") }),
+                  jsx.jsx("button", { className: "wb-btn ghost", onClick: function () { resolve(c.id, "dismiss"); }, children: t("sync_dismiss") }),
+                ] }),
+              ] }, c.id);
+            }) : jsx.jsx("div", { className: "wb-msg", children: t("sync_no_conflicts") }),
+          ] }),
         ] });
       }
 

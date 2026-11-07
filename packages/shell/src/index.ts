@@ -11,7 +11,8 @@
 import { homedir } from "node:os";
 import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { openDb } from "@wb/core";
+import { randomUUID } from "node:crypto";
+import { getSyncStateText, openDb, setSyncStateText } from "@wb/core";
 import type { DatabaseSync } from "node:sqlite";
 import type {
   DomainActionDef,
@@ -20,7 +21,15 @@ import type {
   DomainSetupApi,
   WorkbenchHost,
 } from "@wb/sdk";
-import { runSyncRound, type CloudClient } from "./sync.js";
+import {
+  listConflicts,
+  resolveConflict,
+  SyncClock,
+  SyncEngine,
+  SyncHttpError,
+  type SyncDomain,
+  type SyncTransport,
+} from "./sync.js";
 import {
   BackupError,
   createBackup,
@@ -37,7 +46,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.4.0";
+export const SHELL_VERSION = "0.5.0";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -79,6 +88,7 @@ export function apply(ctx: any): void {
   const state: WbState = { db: openDb(join(WB_HOME, "workbench.db")), creds: loadCreds(), cloudUrl: CLOUD_DEFAULT };
   const subscribers = new Set<Subscriber>();
   const domains = new Map<string, RegisteredDomain>();
+  const clock = new SyncClock();
 
   const emit = (event: string, data: unknown) => {
     for (const s of subscribers) {
@@ -101,6 +111,11 @@ export function apply(ctx: any): void {
       error: rec.error,
       tables: rec.def.tables ?? [],
       views: rec.def.views ?? [],
+      sync: {
+        tables:
+          rec.def.sync?.tables?.map((t) => ({ name: t.name, mode: t.mode })) ??
+          (rec.def.tables ?? []).map((name) => ({ name, mode: "row" as const })),
+      },
       backup: {
         export: typeof rec.def.exportData === "function",
         import: typeof rec.def.importData === "function",
@@ -136,6 +151,10 @@ export function apply(ctx: any): void {
       action: (name: string, actionDef: DomainActionDef) => registerAction(rec, name, actionDef),
       tool: (name: string, actionDef: DomainActionDef) => registerAction(rec, name, actionDef),
       emit: (event: string, data?: unknown) => emit("domain-event", { domainId: def.id, event, data: data ?? null }),
+      now: () => clock.now(),
+      markSyncDirty: (table?: string) => {
+        if (table) setSyncStateText(state.db, "dirty:" + def.id + ":" + table, String(clock.now()));
+      },
       log: (...args: unknown[]) => log("[" + def.id + "]", ...args),
     };
 
@@ -402,6 +421,71 @@ export function apply(ctx: any): void {
     return res.json();
   }
 
+  /** 把 /v1/sync/* 的错误响应转成可判别的 SyncHttpError。 */
+  async function syncCall(path: string, json: Record<string, unknown>): Promise<any> {
+    const r = await cloudFetch(path, { method: "POST", json });
+    if (r && r.ok === false) {
+      const code = String(r.code ?? "sync_error");
+      const status =
+        code === "version_conflict" || code === "sync_locked" || code.startsWith("session_") ? 409 : Number(r.status) || 400;
+      throw new SyncHttpError(status, code, String(r.error ?? code), r);
+    }
+    return r;
+  }
+
+  const syncTransport: SyncTransport = {
+    open: (protocol, deviceId) => syncCall("/v1/sync/open", { protocol, device_id: deviceId }),
+    push: (body) => syncCall("/v1/sync/push", body),
+    pull: (body) => syncCall("/v1/sync/pull", body),
+    snapshot: (body) => syncCall("/v1/sync/snapshot", body),
+    full: (body) => syncCall("/v1/sync/full", body),
+    close: (body) => syncCall("/v1/sync/close", body),
+  };
+
+  function syncDomains(): SyncDomain[] {
+    return [...domains.values()].map((rec) => ({
+      id: rec.def.id,
+      tables: rec.def.tables,
+      sync: rec.def.sync,
+    }));
+  }
+
+  function ensureSyncIdentity(): { userId: string; deviceId: string; epoch: string } {
+    if (!state.creds) throw new Error("not logged in");
+    const bound = getSyncStateText(state.db, "account_user_id");
+    if (!bound) setSyncStateText(state.db, "account_user_id", state.creds.userId);
+    let epoch = getSyncStateText(state.db, "sync_epoch");
+    if (!epoch) {
+      epoch = randomUUID();
+      setSyncStateText(state.db, "sync_epoch", epoch);
+    }
+    return { userId: state.creds.userId, deviceId: state.creds.deviceId, epoch };
+  }
+
+  let syncBusy = false;
+
+  async function runSync(): Promise<Record<string, unknown>> {
+    if (syncBusy) return { ok: false, error: "sync already running", skipped: true };
+    syncBusy = true;
+    try {
+      const identity = ensureSyncIdentity();
+      const engine = new SyncEngine({
+        db: state.db,
+        domains: syncDomains(),
+        transport: syncTransport,
+        clock,
+        userId: identity.userId,
+        deviceId: identity.deviceId,
+        epoch: identity.epoch,
+        onEvent: emit,
+      });
+      const report = await engine.run();
+      return report as unknown as Record<string, unknown>;
+    } finally {
+      syncBusy = false;
+    }
+  }
+
   // ── HTTP：/workbench/api/*（同域 cookie 之外的连接门由 host connection.requestRejection 兜底）──
   ctx.effect?.(
     () =>
@@ -524,13 +608,40 @@ export function apply(ctx: any): void {
 
               if (p === "/sync/now" && m === "POST") {
                 if (!state.creds) return send(400, { ok: false, error: "not logged in" });
-                const client: CloudClient = {
-                  push: (changes) => cloudFetch("/v1/sync/push", { method: "POST", json: { changes } }),
-                  pull: (cursor) => cloudFetch("/v1/sync/pull?cursor=" + cursor),
-                };
-                const r = await runSyncRound(state.db, client, state.creds.deviceId);
-                emit("sync-done", r);
+                const r = await runSync();
                 return send(200, { ok: true, ...r });
+              }
+              if (p === "/sync/status" && m === "GET") {
+                const identity = state.creds ? ensureSyncIdentity() : null;
+                const engine = new SyncEngine({
+                  db: state.db,
+                  domains: syncDomains(),
+                  transport: syncTransport,
+                  clock,
+                  userId: identity?.userId ?? "",
+                  deviceId: identity?.deviceId ?? "",
+                  epoch: identity?.epoch ?? "",
+                  onEvent: emit,
+                });
+                return send(200, {
+                  ok: true,
+                  logged_in: Boolean(state.creds),
+                  ...engine.status(),
+                });
+              }
+              if (p === "/sync/conflicts" && m === "GET") {
+                const limit = Number(url.searchParams.get("limit") ?? "100");
+                return send(200, { ok: true, conflicts: listConflicts(state.db, limit) });
+              }
+              const conflictM = /^\/sync\/conflicts\/(\d+)\/resolve$/.exec(p);
+              if (conflictM && m === "POST") {
+                const body = await bodyOf();
+                const action = String(body.action ?? "");
+                if (action !== "keep_local" && action !== "keep_server" && action !== "dismiss") {
+                  return send(400, { ok: false, error: "action 必须是 keep_local/keep_server/dismiss" });
+                }
+                const ok = resolveConflict(state.db, Number(conflictM[1]), action, clock.now());
+                return send(ok ? 200 : 404, { ok });
               }
               if (p === "/account" && m === "GET") {
                 if (!state.creds) return send(200, { ok: true, logged_in: false });
@@ -553,6 +664,7 @@ export function apply(ctx: any): void {
                   };
                   saveCreds(state.creds);
                   emit("account-changed", { logged_in: true });
+                  void runSync().catch((e) => log("登录后首轮同步失败", e));
                 }
                 return send(r.ok ? 200 : 401, r);
               }
@@ -651,22 +763,13 @@ export function apply(ctx: any): void {
     },
   });
 
-  // ── 后台同步循环：30s 周期 + 登录后立即一轮（07 文档）──
+  // ── 后台同步循环：30s 周期；登录后立即一轮；离线静默 ──
   let timer: ReturnType<typeof setInterval> | undefined;
   const startLoop = () => {
     if (timer) clearInterval(timer);
-    timer = setInterval(async () => {
+    timer = setInterval(() => {
       if (!state.creds) return;
-      try {
-        const client: CloudClient = {
-          push: (changes) => cloudFetch("/v1/sync/push", { method: "POST", json: { changes } }),
-          pull: (cursor) => cloudFetch("/v1/sync/pull?cursor=" + cursor),
-        };
-        const r = await runSyncRound(state.db, client, state.creds.deviceId);
-        if (r.pushed || r.pulled) emit("sync-done", r);
-      } catch {
-        /* 离线静默（指数退避在 demo 省略） */
-      }
+      void runSync().catch((e) => log("后台同步失败", String((e && (e as Error).message) || e)));
     }, 30_000);
   };
   startLoop();

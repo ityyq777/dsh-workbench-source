@@ -14,6 +14,7 @@ const tests = [
   "scripts/test-clients.mjs",
   "scripts/test-tags.mjs",
   "scripts/test-sites.mjs",
+  "scripts/test-sync.mjs",
   "scripts/test-backup.mjs",
 ];
 

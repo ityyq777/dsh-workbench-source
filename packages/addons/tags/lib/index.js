@@ -3,8 +3,9 @@
  * 所有业务逻辑都在本地 SQLite 完成；云端只负责备份。
  */
 
-import { ensureSchema } from "./db.js";
+import { bindClock, ensureSchema } from "./db.js";
 import { exportTagsData, importTagsData } from "./backup.js";
+import { tagSync } from "./sync.js";
 import { registerTagActions } from "./tags.js";
 
 export const inject = ["workbench"];
@@ -17,6 +18,7 @@ function requireApi() {
 
 export function setup(api) {
   domainApi = api;
+  if (typeof api.now === "function") bindClock(api.now);
   ensureSchema(api.db, api.log);
   registerTagActions(api);
   api.log("tags domain ready", api.addon.version);
@@ -31,8 +33,9 @@ export function apply(ctx) {
         id: "wb-addon-tags",
         title: "标签",
         description: "创建与管理标签，为站点等业务提供标签归类",
-        version: "1.2.0",
+        version: "1.3.0",
         tables: ["tag", "tag_mapping"],
+        sync: tagSync,
         views: [{ id: "tags", title: { zh: "标签", en: "Tags" } }],
         setup,
         exportData: () => exportTagsData(requireApi()),

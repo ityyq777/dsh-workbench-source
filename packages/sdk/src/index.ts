@@ -69,12 +69,52 @@ export interface DomainImportReport {
   message?: string;
 }
 
+/** 一行同步数据：业务表的完整行；updated_at 毫秒时间戳。 */
+export interface SyncRow {
+  id: string;
+  updated_at: number;
+  created_at?: number;
+  deleted_at?: number | null;
+  rev?: number;
+  [key: string]: unknown;
+}
+
+export type SyncMode = "row" | "tree";
+
+/** 树表 reconcile：拿远端快照与本地行，返回要整表覆盖的最终行。 */
+export interface SyncReconcileResult {
+  rows: SyncRow[];
+  /** 需要按行补推的脏表（可选，例如 reconcile 顺带修复了 A 类行） */
+  dirtyRowTables?: string[];
+}
+
+export interface DomainSyncTable {
+  name: string;
+  mode: SyncMode;
+  /**
+   * 仅树表需要：把远端快照合并进本地数据，返回最终整表。
+   * second 参数是本地当前行，便于保留本地新节点/修复孤儿。
+   */
+  reconcile?(remoteRows: SyncRow[], localRows: SyncRow[]): SyncReconcileResult | Promise<SyncReconcileResult>;
+  /** 唯一键组合；冲突时用于 lww-tombstone 处理（可选） */
+  uniqueKeys?: string[][];
+  uniquePolicy?: "lww" | "lww-tombstone";
+}
+
+export interface DomainSyncDef {
+  tables: DomainSyncTable[];
+}
+
 /** 业务插件在 setup 期间拿到的宿主 API（兼容旧 addon 的 setup 形态）。 */
 export interface DomainSetupApi {
   readonly addon: { id: string; version: string; dir: string };
   /** 宿主打开的 SQLite（node:sqlite DatabaseSync），事务由业务插件自己组织 */
   readonly db: any;
   readonly shellVersion: string;
+  /** 本地写入时钟：已做服务端时钟校准并保证单调递增 */
+  now(): number;
+  /** 手动标记某张表为脏（可选；一般由 change log 自动判定） */
+  markSyncDirty?(table?: string): void;
   /** 某个业务域是否已注册（用于跨插件能力探测，如站点检测标签） */
   hasDomain(id: string): boolean;
   /** 旧名兼容 */
@@ -95,8 +135,10 @@ export interface DomainDef {
   title: string;
   description?: string;
   version: string;
-  /** 声明贡献的同步表（宿主汇总后用于备份；建表仍由业务插件负责） */
+  /** 声明贡献的表（备份与文档用；建表仍由业务插件负责） */
   tables?: string[];
+  /** 同步声明：mode=row 行级 LWW；mode=tree 必须实现 reconcile，整表覆盖 */
+  sync?: DomainSyncDef;
   /** UI 视图贡献点：客户端模块注册同名 view 后出现在工作台首页 */
   views?: DomainViewDecl[];
   /** 业务插件自己的建表/注册逻辑；宿主调用并保存返回值作为清理函数 */
@@ -139,6 +181,8 @@ export interface DomainPublicInfo {
   views: DomainViewDecl[];
   /** 是否实现数据导出/导入，客户端据此启用备份选项 */
   backup: { export: boolean; import: boolean };
+  /** 同步参与方式（给 UI/诊断用） */
+  sync: { tables: { name: string; mode: SyncMode }[] };
 }
 
 /** 浏览器侧宿主桥（宿主注入到 window.__WB_HOST__）。 */
