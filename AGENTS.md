@@ -18,6 +18,7 @@
 - 源码内宿主仍叫 `dsh-workbench`；npm 上该名字已被无关项目占用，对外发布名必须是
   `dsh-workbench-host`。不要在源码里直接改名，统一由 `scripts/stage-release.mjs` 改写。
 - 业务包通过 `dependencies` 依赖 `dsh-workbench-host`，安装任意业务插件会自动带宿主。
+- 源码仓库：`https://github.com/ityyq777/dsh-workbench-source`（origin，唯一开发入口）。
 - 对外发布仓库：`https://github.com/ityyq777/dsh-workbench`（发布镜像，不是源码仓库）。
 - 市场列表仓库：`https://github.com/awesome-dsh-plugin/awesome-dsh-plugin`；
   市场页面是 dshmarket.com。
@@ -91,8 +92,8 @@ pnpm publish:npm -- --publish --otp=123456
 2. `pnpm publish:github`（dry-run，列出差异），确认后 `pnpm publish:github -- --publish`；
    脚本在 `~/.dsh/workbench/release-mirror` 里同步、提交（默认
    `release: workbench plugins <host 版本>`）并推送；
-3. 源码仓库与镜像历史无关，**不要在源码目录里 `git push` 到镜像**（源码仓库不配置
-   该 remote）；
+3. 源码仓库与镜像历史无关，**不要在源码目录里 `git push` 到镜像**（源码仓库只配置
+   自己的 origin，不配置镜像 remote）；
 4. 确认市场要求的 topic 存在：`dsh-plugin`（以及 `deepseek-harness` 等）；
 5. 确认 `packages/<name>/package.json` 可通过 raw.githubusercontent.com 读取。
 
