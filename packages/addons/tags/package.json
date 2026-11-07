@@ -1,0 +1,35 @@
+{
+  "name": "wb-addon-tags",
+  "version": "1.0.0",
+  "description": "工作台标签子插件：标签的创建、搜索、删除与站点标签映射基础表",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib",
+    "package.json"
+  ],
+  "wb": {
+    "addon": {
+      "id": "wb-addon-tags",
+      "title": "标签",
+      "description": "创建与管理标签，为站点等业务提供标签归类",
+      "version": "1.0.0",
+      "minShell": "0.1.0",
+      "tables": [
+        "tag",
+        "tag_mapping"
+      ],
+      "views": [
+        "tags"
+      ],
+      "toolActions": [
+        "tags.list",
+        "tags.search",
+        "tags.create",
+        "tags.delete",
+        "tags.byIds"
+      ],
+      "client": "lib/client.js"
+    }
+  }
+}

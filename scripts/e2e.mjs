@@ -11,6 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import vm from "node:vm";
+import { DatabaseSync } from "node:sqlite";
 
 const root = join(import.meta.dirname, "..");
 const tmp = mkdtempSync(join(tmpdir(), "wb-e2e-"));
@@ -19,6 +20,8 @@ mkdirSync(home, { recursive: true });
 const cloudData = join(tmp, "cloud");
 const tasksDir = join(root, "packages/addons/tasks");
 const tasksPkg = JSON.parse(readFileSync(join(tasksDir, "package.json"), "utf8"));
+const tagsDir = join(root, "packages/addons/tags");
+const tagsPkg = JSON.parse(readFileSync(join(tagsDir, "package.json"), "utf8"));
 const baseVersion = tasksPkg.version;
 const upgradeVersion = (() => {
   const p = baseVersion.split(".");
@@ -68,12 +71,16 @@ function smokeClients() {
   assert.ok(window.__WB_HOST__, "__WB_HOST__ 未安装");
   window.__WB_HOST__.registerAddon({ id: "smoke", views: [{ id: "v", component: function () { return null; } }] });
 
-  const host = { react: React, jsx: jsx, registerAddon(m) { calls.push(m); } };
+  const host = { react: React, jsx: jsx, h: React.createElement, registerAddon(m) { calls.push(m); } };
   vm.runInNewContext(readFileSync(join(root, "packages/addons/tasks/lib/client.js"), "utf8"), { window: { __WB_HOST__: host }, console });
   assert.equal(calls.length, 1, "任务子插件未注册视图");
   assert.equal(calls[0].id, "wb-addon-tasks");
   assert.equal(calls[0].views[0].id, "tasks");
-  console.log("· 客户端 smoke ok（壳 factory + 子插件注册）");
+  vm.runInNewContext(readFileSync(join(root, "packages/addons/tags/lib/client.js"), "utf8"), { window: { __WB_HOST__: host }, console });
+  assert.equal(calls.length, 2, "标签子插件未注册视图");
+  assert.equal(calls[1].id, "wb-addon-tags");
+  assert.equal(calls[1].views[0].id, "tags");
+  console.log("· 客户端 smoke ok（壳 factory + 任务/标签子插件注册）");
 }
 
 const port = await freePort();
@@ -95,12 +102,21 @@ try {
     { encoding: "utf8" },
   );
   assert.ok(JSON.parse(pub).ok);
-  console.log("· 云端发布 ok");
+  const pubTags = execFileSync(
+    process.execPath,
+    [join(root, "scripts/publish-addon.mjs"), "--dir", tagsDir, "--server", "http://127.0.0.1:" + port, "--token", "test-token"],
+    { encoding: "utf8" },
+  );
+  assert.ok(JSON.parse(pubTags).ok);
+  console.log("· 云端发布 ok（任务 + 标签）");
 
   const detail = await (await fetch("http://127.0.0.1:" + port + "/v1/catalog/addons/wb-addon-tasks?shell=0.1.0")).json();
   assert.ok(detail.addon.versions[0].tarball, "catalog 详情缺 tarball");
   assert.equal(detail.addon.compatible_version, baseVersion);
-  console.log("· catalog 详情含 tarball + compatible_version");
+  const tagDetail = await (await fetch("http://127.0.0.1:" + port + "/v1/catalog/addons/wb-addon-tags?shell=0.1.0")).json();
+  assert.ok(tagDetail.addon.versions[0].tarball, "标签 catalog 详情缺 tarball");
+  assert.equal(tagDetail.addon.compatible_version, tagsPkg.version);
+  console.log("· catalog 详情含 tarball + compatible_version（任务 + 标签）");
 
   process.env.WB_HOME = home;
   process.env.WB_CLOUD_URL = "http://127.0.0.1:" + port;
@@ -145,13 +161,46 @@ try {
   assert.ok(viaHttp.ok && viaHttp.result.records.some((t) => t.title === "e2e 任务"));
   console.log("· action 调用 ok（工具 + HTTP 两条路）");
 
+  // 第二个子插件：标签。验证多插件并存、独立 action、client.js、卸载保留数据
+  const tagsInst = await (await fetch(base + "/addons/wb-addon-tags/install", { method: "POST" })).json();
+  assert.ok(tagsInst.ok, "标签安装失败: " + JSON.stringify(tagsInst));
+  const withTags = await (await fetch(base + "/addons")).json();
+  assert.equal(withTags.addons.length, 2, "两个子插件未并存");
+  const tagsEntry = withTags.addons.find((a) => a.id === "wb-addon-tags");
+  assert.ok(tagsEntry, "已装列表缺标签子插件");
+  assert.equal(tagsEntry.version, tagsPkg.version);
+  const tagClientRes = await fetch(base + tagsEntry.client.replace("/workbench/api", ""));
+  assert.equal(tagClientRes.status, 200);
+  const tagCreated = await tool.execute({ action: "tags.create", name: "e2e 标签" });
+  assert.match(tagCreated.text, /已创建/);
+  const tagListed = await tool.execute({ action: "tags.list" });
+  assert.ok(tagListed.text.includes("e2e 标签"), "工具读不到刚创建的标签: " + tagListed.text);
+  const tagSearched = await tool.execute({ action: "tags.search", text: "e2e" });
+  assert.ok(tagSearched.text.includes("e2e 标签"), "标签搜索失败: " + tagSearched.text);
+  const tagDup = await tool.execute({ action: "tags.create", name: "e2e 标签" });
+  assert.match(tagDup.text, /错误/);
+  const tagViaHttp = await (await fetch(base + "/addons/wb-addon-tags/actions/tags.list", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).json();
+  assert.ok(tagViaHttp.ok && tagViaHttp.result.records.some((t) => t.name === "e2e 标签"));
+  console.log("· 标签安装 + action ok（工具 + HTTP 两条路）");
+
+  const tagUn = await (await fetch(base + "/addons/wb-addon-tags", { method: "DELETE" })).json();
+  assert.ok(tagUn.ok);
+  const afterTagUn = await (await fetch(base + "/addons")).json();
+  assert.equal(afterTagUn.addons.length, 1);
+  const tagFailed = await tool.execute({ action: "tags.list" });
+  assert.match(tagFailed.text, /错误/);
+  const rawTags = new DatabaseSync(join(home, "workbench.db"));
+  const tagRows = rawTags.prepare("SELECT name FROM tag WHERE deleted_at IS NULL").all();
+  rawTags.close();
+  assert.ok(tagRows.some((r) => r.name === "e2e 标签"), "卸载标签后数据丢了");
+  console.log("· 标签卸载 ok：代码移除、标签数据保留");
+
   const un = await (await fetch(base + "/addons/wb-addon-tasks", { method: "DELETE" })).json();
   assert.ok(un.ok);
   const gone = await (await fetch(base + "/addons")).json();
   assert.equal(gone.addons.length, 0);
   const failed = await tool.execute({ action: "tasks.list" });
   assert.match(failed.text, /错误/);
-  const { DatabaseSync } = await import("node:sqlite");
   const raw = new DatabaseSync(join(home, "workbench.db"));
   const rows = raw.prepare("SELECT title FROM task WHERE deleted_at IS NULL").all();
   raw.close();
