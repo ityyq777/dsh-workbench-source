@@ -36,7 +36,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务记录",
         description: "任务树 + 9 个视图：紧急/工作/生活/学习/开发/已开启/已关闭/已完成/总览",
-        version: "2.2.0",
+        version: "2.3.0",
         tables: ["task", "task_node"],
         views: [{ id: "tasks", title: { zh: "任务记录", en: "Tasks" } }],
         setup,

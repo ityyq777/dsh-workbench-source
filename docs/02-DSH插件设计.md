@@ -45,8 +45,8 @@ export function apply(ctx) {
 ctx.effect(() => ctx.workbench.registerDomain({
   id: "wb-addon-tasks",
   title: "任务记录",
-  version: "2.2.0",
-  tables: ["task", "task_node"],
+  version: "2.3.0",
+  tables: ["task", "task_node", "task_dep"],
   views: [{ id: "tasks", title: { zh: "任务记录", en: "Tasks" } }],
   setup(api) {
     api.action("tasks.list", { description, input, execute });
@@ -66,11 +66,20 @@ ctx.effect(() => ctx.workbench.registerDomain({
 ```jsonc
 {
   "name": "Workbench",
-  "description": "个人工作台数据操作；action 由已加载的业务插件提供",
-  "parameters": { "action": "tasks.list", "...": "additionalProperties: true" }
+  "description": "个人工作台数据操作；先用 actions.list / actions.help 查看 action 与真实字段",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string" },
+      "args": { "type": "object", "additionalProperties": true }
+    },
+    "required": ["action"]
+  }
 }
 ```
 
+- 0.4.0 起入参统一放进 `args`，旧顶层字段若不在目标 action schema 里会被剔除并告警；
+  `actions.list` / `actions.help` 提供自描述。
 - 带点号的 action 原样分发；不带点号的旧名（如 `list`、`create`）映射到 `tasks.*` 保持兼容。
 - `addons.*` 时代的安装/卸载 action 已删除；插件安装交给 DSH。
 - 删除/清空类危险 action 若将来加入，沿用 challengeId 确认模式。

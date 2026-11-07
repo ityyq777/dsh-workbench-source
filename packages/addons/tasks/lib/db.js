@@ -23,6 +23,8 @@ export const TASK_DDL = [
     "target_date TEXT NOT NULL," +
     "done_date TEXT," +
     "shutdown_date TEXT," +
+    "sort INTEGER NOT NULL DEFAULT 0," +
+    "dedupe_key TEXT," +
     "created_at INTEGER NOT NULL," +
     "updated_at INTEGER NOT NULL," +
     "deleted_at INTEGER," +
@@ -34,6 +36,23 @@ export const TASK_DDL = [
   "CREATE INDEX IF NOT EXISTS idx_task_timeline ON task(timeline_key);",
   "CREATE INDEX IF NOT EXISTS idx_task_restart ON task(restart_key);",
   "CREATE INDEX IF NOT EXISTS idx_task_open ON task(status, target_date) WHERE deleted_at IS NULL;",
+  "CREATE INDEX IF NOT EXISTS idx_task_sort ON task(sort);",
+  "CREATE INDEX IF NOT EXISTS idx_task_dedupe ON task(dedupe_key) WHERE dedupe_key IS NOT NULL;",
+];
+
+export const DEP_DDL = [
+  "CREATE TABLE IF NOT EXISTS task_dep (" +
+    "id TEXT PRIMARY KEY," +
+    "task_id TEXT NOT NULL," +
+    "depends_on_id TEXT NOT NULL," +
+    "created_at INTEGER NOT NULL," +
+    "updated_at INTEGER NOT NULL," +
+    "deleted_at INTEGER," +
+    "rev INTEGER NOT NULL DEFAULT 1" +
+    ");",
+  "CREATE INDEX IF NOT EXISTS idx_task_dep_task ON task_dep(task_id) WHERE deleted_at IS NULL;",
+  "CREATE INDEX IF NOT EXISTS idx_task_dep_on ON task_dep(depends_on_id) WHERE deleted_at IS NULL;",
+  "CREATE UNIQUE INDEX IF NOT EXISTS uk_task_dep ON task_dep(task_id, depends_on_id) WHERE deleted_at IS NULL;",
 ];
 
 export const NODE_DDL = [
@@ -217,6 +236,8 @@ export function rowTask(row) {
     targetDate: row.target_date || null,
     doneDate: row.done_date || null,
     shutdownDate: row.shutdown_date || null,
+    sort: Number(row.sort || 0),
+    dedupeKey: row.dedupe_key === null || row.dedupe_key === undefined ? null : String(row.dedupe_key),
     path: [],
   };
 }
@@ -325,6 +346,7 @@ export function insertNode(db, row) {
 export function createSchema(db) {
   for (const sql of TASK_DDL) db.exec(sql);
   for (const sql of NODE_DDL) db.exec(sql);
+  for (const sql of DEP_DDL) db.exec(sql);
 }
 
 export function seedDefaultTree(db) {
@@ -759,6 +781,17 @@ export function ensureSchema(db, log) {
   }
 
   createSchema(db);
+  // 旧库补列：SQLite 的 CREATE TABLE IF NOT EXISTS 不会新增列。
+  if (hasColumn(db, "task", "created_at")) {
+    if (!hasColumn(db, "task", "sort")) db.exec("ALTER TABLE task ADD COLUMN sort INTEGER NOT NULL DEFAULT 0");
+    if (!hasColumn(db, "task", "dedupe_key")) db.exec("ALTER TABLE task ADD COLUMN dedupe_key TEXT");
+    try {
+      db.exec("CREATE INDEX IF NOT EXISTS idx_task_sort ON task(sort)");
+      db.exec("CREATE INDEX IF NOT EXISTS idx_task_dedupe ON task(dedupe_key) WHERE dedupe_key IS NOT NULL");
+    } catch (e) {
+      if (log) log("[tasks] 索引补建失败：" + String((e && e.message) || e));
+    }
+  }
   seedDefaultTree(db);
   metaSet(db, "task_schema_version", "2");
   metaSet(db, "task_migration_report", JSON.stringify(report));

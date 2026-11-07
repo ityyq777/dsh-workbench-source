@@ -148,7 +148,80 @@ try {
   assert(sweepDry.result.items.some((t) => t.id === overdue.result.id), "sweepShutdown dryRun 清单缺少到期任务");
   assert((await call("tasks.get", { id: overdue.result.id })).result.task.status === "0", "sweepShutdown dryRun 改了状态");
 
-  // ── 8. 其他域未受宿主改动影响 ──
+  // ── 8. 标签关联（tags.link/unlink/itemsOf）与任务标签 ──
+  const tagA = await call("tags.create", { name: "P6" });
+  const tagB = await call("tags.create", { name: "本周" });
+  const linkRes = await call("tags.link", { tagIds: [tagA.result.id, tagB.result.id], itemIds: [id, p9.result.id], itemType: "task" });
+  assert(linkRes.result.linked === 4, "tags.link 关联数量不对：" + linkRes.result.linked);
+  const linkAgain = await call("tags.link", { tagIds: [tagA.result.id], itemIds: [id], itemType: "task" });
+  assert(linkAgain.result.linked === 0 && linkAgain.result.skipped === 1, "tags.link 未跳过已存在映射");
+  const itemsOf = await call("tags.itemsOf", { itemType: "task", itemIds: [id] });
+  assert(itemsOf.result.items.length === 1 && itemsOf.result.items[0].tags.length === 2, "tags.itemsOf 未返回两个标签");
+  const tagged = await call("tasks.get", { id });
+  assert(tagged.result.task.tags && tagged.result.task.tags.length === 2, "tasks.get 未聚合标签");
+  const byTag = await call("tasks.list", { tagIds: [tagA.result.id], tab: 8 });
+  assert(byTag.result.records.length >= 2, "tasks.list tagIds 过滤漏了任务");
+  const unlinkRes = await call("tags.unlink", { tagIds: [tagA.result.id], itemIds: [id], itemType: "task" });
+  assert(unlinkRes.result.unlinked === 1, "tags.unlink 数量不对");
+  const itemsOf2 = await call("tags.itemsOf", { itemType: "task", itemIds: [id] });
+  assert(itemsOf2.result.items[0].tags.length === 1, "tags.unlink 未解除关联");
+
+  // ── 9. dedupeKey 幂等创建 ──
+  const d1 = await call("tasks.create", { title: "幂等任务", dedupeKey: "native-dedupe-1", tagIds: [tagB.result.id] });
+  assert(d1.result.deduped === false && d1.result.task.tags.length === 1, "create 时 tagIds 未生效");
+  const d2 = await call("tasks.create", { title: "幂等任务副本", dedupeKey: "native-dedupe-1" });
+  assert(d2.result.deduped === true && d2.result.id === d1.result.id, "dedupeKey 未命中已有任务");
+
+  // ── 10. 任务依赖 ──
+  const up = await call("tasks.create", { title: "上游任务" });
+  const down = await call("tasks.create", { title: "下游任务" });
+  const linkedDep = await call("tasks.link", { id: down.result.id, dependsOnId: up.result.id });
+  assert(linkedDep.result.linked === true, "tasks.link 未建立依赖");
+  const depView = await call("tasks.depends", { id: down.result.id });
+  assert(depView.result.dependsOn.length === 1 && depView.result.blocked === true, "tasks.depends 未显示阻塞");
+  const depAgain = await call("tasks.link", { id: down.result.id, dependsOnId: up.result.id });
+  assert(depAgain.result.linked === false && depAgain.result.existing === true, "重复 link 未返回 existing");
+  let cycleErr = null;
+  try { await call("tasks.link", { id: up.result.id, dependsOnId: down.result.id }); } catch (e) { cycleErr = e; }
+  assert(cycleErr && String(cycleErr.message).includes("循环"), "未拒绝循环依赖");
+  const unlinked = await call("tasks.unlink", { id: down.result.id, dependsOnId: up.result.id });
+  assert(unlinked.result.unlinked === true, "tasks.unlink 未删除依赖");
+  const depAfter = await call("tasks.depends", { id: down.result.id });
+  assert(depAfter.result.dependsOn.length === 0 && depAfter.result.blocked === false, "unlink 后仍显示依赖");
+
+  // ── 11. 手动排序 ──
+  const ra = await call("tasks.create", { title: "排序A" });
+  const rb = await call("tasks.create", { title: "排序B" });
+  const reorderDry = await call("tasks.reorder", { ids: [rb.result.id, ra.result.id], dryRun: true });
+  assert(reorderDry.result.wouldUpdate === 2 && (await call("tasks.get", { id: rb.result.id })).result.task.sort === 0, "reorder dryRun 污染了 sort");
+  const reorderReal = await call("tasks.reorder", { ids: [rb.result.id, ra.result.id], step: 100 });
+  assert(reorderReal.result.updated === 2, "reorder 未更新");
+  assert((await call("tasks.get", { id: rb.result.id })).result.task.sort === 0, "reorder 首位 sort 不对");
+  assert((await call("tasks.get", { id: ra.result.id })).result.task.sort === 100, "reorder 次位 sort 不对");
+  const manual = await call("tasks.list", { tab: 8, sort: "manual", pageSize: 200 });
+  const sortedIds = manual.result.records.map((t) => t.id);
+  assert(sortedIds.indexOf(rb.result.id) < sortedIds.indexOf(ra.result.id), "sort=manual 顺序不对");
+
+  // ── 12. 历史 / 变更日志 / 导出 / 分组统计 ──
+  const hist = await call("tasks.history", { id, limit: 20 });
+  assert(hist.result.count >= 1 && hist.result.entries.some((e) => e.op === "create"), "tasks.history 缺少 create 记录");
+  const change = await call("tasks.changelog", { limit: 5 });
+  assert(change.result.count >= 1 && change.result.count <= 5, "tasks.changelog 条数不对");
+  const expJson = await call("tasks.export", { ids: [id], format: "json" });
+  const parsed = JSON.parse(expJson.result.content);
+  assert(parsed.count === 1 && parsed.tasks[0].id === id, "tasks.export json 内容不对");
+  const expCsv = await call("tasks.export", { ids: [id], format: "csv" });
+  assert(expCsv.result.content.startsWith("id,title,"), "tasks.export csv 表头不对");
+  const expMd = await call("tasks.export", { ids: [id], format: "markdown" });
+  assert(expMd.result.content.includes("| id | 标题 |"), "tasks.export markdown 表头不对");
+  const grouped = await call("tasks.stats", { groupBy: "status" });
+  assert(grouped.result.groupBy === "status" && grouped.result.groups.length >= 1, "stats groupBy 未返回分组");
+  const sum = grouped.result.groups.reduce((n, g) => n + g.count, 0);
+  assert(sum >= 1, "stats groupBy 计数为空");
+  const groupedType = await call("tasks.stats", { groupBy: "type" });
+  assert(groupedType.result.groups.length >= 1, "stats groupBy=type 失败");
+
+  // ── 13. 其他域未受宿主改动影响 ──
   const tag = await call("tags.create", { name: "native 标签" });
   assert(tag.result.id, "tag not created");
   const node = await call("siteNodes.create", { parentId: "0", name: "native 目录" });

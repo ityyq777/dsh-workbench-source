@@ -31,7 +31,7 @@ export function apply(ctx) {
         id: "wb-addon-tags",
         title: "标签",
         description: "创建与管理标签，为站点等业务提供标签归类",
-        version: "1.1.1",
+        version: "1.2.0",
         tables: ["tag", "tag_mapping"],
         views: [{ id: "tags", title: { zh: "标签", en: "Tags" } }],
         setup,
