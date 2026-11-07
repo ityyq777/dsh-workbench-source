@@ -116,7 +116,13 @@
         ".wb-page-desc{font-size:12px;opacity:.6;line-height:1.5}",
         ".wb-page-tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--wb-line)}",
         ".wb-page-loading{display:flex;flex-direction:column;gap:8px;align-items:flex-start}",
-        "@media (max-width:760px){.wb-root{padding:16px}.wb-home-grid{grid-template-columns:1fr}.wb-page-title h2{font-size:17px}}",
+        ".wb-grow{flex:1;min-width:0}",
+        ".wb-immersive{position:fixed;inset:0;z-index:700;height:100vh;box-sizing:border-box;padding:var(--dsh-frame-top-clearance,0px) 0 0;background:linear-gradient(var(--dsw-alias-bg-layer-1,#faf7ea),var(--dsw-alias-bg-layer-1,#faf7ea)),linear-gradient(var(--dsw-alias-bg-layer-2,#f7f3df),var(--dsw-alias-bg-layer-2,#f7f3df)),linear-gradient(var(--dsw-alias-bg-layer-3,#f0e8d8),var(--dsw-alias-bg-layer-3,#f0e8d8));overflow:hidden}",
+        ".wb-immersive-bar{display:flex;align-items:center;gap:10px;padding:9px 22px;border-bottom:1px solid var(--wb-line);flex:none;background:transparent}",
+        ".wb-immersive-title{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;opacity:.85}",
+        ".wb-immersive-title .wb-home-icon{width:24px;height:24px;border-radius:7px;font-size:12px}",
+        ".wb-immersive-main{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:18px 24px 24px}",
+        "@media (max-width:760px){.wb-root{padding:16px}.wb-home-grid{grid-template-columns:1fr}.wb-page-title h2{font-size:17px}.wb-immersive{padding:var(--dsh-frame-top-clearance,0px) 0 0}.wb-immersive-bar{padding:8px 14px}.wb-immersive-main{padding:14px 16px 20px}.wb-immersive-title span:not(.wb-home-icon):not(.wb-badge){display:none}}",
       ].join("\n");
 
       // ── 子插件宿主桥（必须在任何 addon client.js 之前就位）──
@@ -509,28 +515,34 @@
         }
         if (currentAddon) {
           var canRender = activeView && typeof activeView.component === "function";
-          return jsx.jsxs("div", { className: "wb-root", children: [
-            jsx.jsxs("div", { className: "wb-inner wb-wide", children: [
-              jsx.jsxs("div", { className: "wb-page-head", children: [
-                jsx.jsx("div", { className: "wb-page-top", children: [
-                  jsx.jsx("button", { className: "wb-back", onClick: function () { go("home"); }, children: "← " + t("back_home") }),
-                  jsx.jsx("span", { className: "wb-badge", children: "v" + (currentAddon.version || "?") }),
-                ] }),
+          var addonTitle = pickTitle(activeView && activeView.title, lang) || currentAddon.title || currentAddon.id;
+          return jsx.jsxs("div", { className: "wb-root wb-immersive", children: [
+            jsx.jsxs("div", { className: "wb-immersive-bar", children: [
+              jsx.jsx("button", { className: "wb-back", onClick: function () { go("home"); }, children: "← " + t("back_home") }),
+              jsx.jsx("div", { className: "wb-grow" }),
+              jsx.jsxs("div", { className: "wb-immersive-title", children: [
+                jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(addonTitle) }),
+                jsx.jsx("span", { children: addonTitle }),
+                jsx.jsx("span", { className: "wb-badge", children: "v" + (currentAddon.version || "?") }),
               ] }),
-              viewList.length > 1 ? jsx.jsx("div", { className: "wb-page-tabs", children: viewList.map(function (v) {
-                var on = activeView && v.id === activeView.id;
-                return jsx.jsx("button", { className: "wb-tab" + (on ? " on" : ""), onClick: function () { go("addon:" + currentAddon.id + ":" + v.id); }, children: pickTitle(v.title, lang) || v.id }, v.id);
-              }) }) : null,
-              currentAddon.error
-                ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + currentAddon.error }) })
-                : canRender
-                  ? jsx.jsx(activeView.component, { api: apiFor(currentAddon.id), lang: lang, addonId: currentAddon.id, t: t })
-                  : !viewList.length && !currentAddon.client
-                    ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg", children: t("no_views") }) })
-                    : jsx.jsx("div", { className: "wb-card", children: jsx.jsxs("div", { className: "wb-page-loading", children: [
-                        jsx.jsx("div", { className: "wb-msg", style: { padding: "4px 0" }, children: lastAddonError ? t("addon_unavailable") + " · " + lastAddonError : t("addon_loading") }),
-                        lastAddonError && currentAddon.client ? jsx.jsx("button", { className: "wb-btn ghost", onClick: function () { location.reload(); }, children: t("refresh") }) : null,
-                      ] }) }),
+            ] }),
+            jsx.jsxs("div", { className: "wb-immersive-main", children: [
+              jsx.jsxs("div", { className: "wb-inner wb-wide", children: [
+                viewList.length > 1 ? jsx.jsx("div", { className: "wb-page-tabs", children: viewList.map(function (v) {
+                  var on = activeView && v.id === activeView.id;
+                  return jsx.jsx("button", { className: "wb-tab" + (on ? " on" : ""), onClick: function () { go("addon:" + currentAddon.id + ":" + v.id); }, children: pickTitle(v.title, lang) || v.id }, v.id);
+                }) }) : null,
+                currentAddon.error
+                  ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + currentAddon.error }) })
+                  : canRender
+                    ? jsx.jsx(activeView.component, { api: apiFor(currentAddon.id), lang: lang, addonId: currentAddon.id, t: t })
+                    : !viewList.length && !currentAddon.client
+                      ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg", children: t("no_views") }) })
+                      : jsx.jsx("div", { className: "wb-card", children: jsx.jsxs("div", { className: "wb-page-loading", children: [
+                          jsx.jsx("div", { className: "wb-msg", style: { padding: "4px 0" }, children: lastAddonError ? t("addon_unavailable") + " · " + lastAddonError : t("addon_loading") }),
+                          lastAddonError && currentAddon.client ? jsx.jsx("button", { className: "wb-btn ghost", onClick: function () { location.reload(); }, children: t("refresh") }) : null,
+                        ] }) }),
+              ] }),
             ] }),
           ] });
         }
