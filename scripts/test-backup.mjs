@@ -84,6 +84,10 @@ try {
 
   const created = await host.invoke("tasks.create", { title: "备份验收任务", priority: 7 }, "agent");
   const taskId = created.result.id;
+  const created2 = await host.invoke("tasks.create", { title: "备份依赖任务", priority: 3 }, "agent");
+  const task2Id = created2.result.id;
+  await host.invoke("tasks.link", { id: taskId, dependsOnId: task2Id }, "agent");
+  await host.invoke("tasks.reorder", { ids: [task2Id, taskId] }, "agent");
   const tag = await host.invoke("tags.create", { name: "备份验收标签" }, "agent");
   const node = await host.invoke("siteNodes.create", { parentId: "0", name: "备份验收目录" }, "agent");
   const site = await host.invoke("sites.create", {
@@ -108,6 +112,16 @@ try {
   }
   console.log("export ok:", manifest.modules.map((m) => m.id + "@" + m.version).join(", "));
 
+  const taskBackup = JSON.parse(files.get("modules/wb-addon-tasks.json").toString("utf8"));
+  if (!Array.isArray(taskBackup.taskDeps) || !taskBackup.taskDeps.some((d) => d.task_id === taskId && d.depends_on_id === task2Id)) {
+    throw new Error("task_dep missing from task backup");
+  }
+  const exportedTaskRow = taskBackup.tasks.find((t) => t.id === taskId);
+  if (!exportedTaskRow || typeof exportedTaskRow.sort !== "number") throw new Error("task.sort missing from backup");
+  const exportedTask2Row = taskBackup.tasks.find((t) => t.id === task2Id);
+  if (!(exportedTask2Row.sort < exportedTaskRow.sort)) throw new Error("task.sort order not preserved in backup");
+  console.log("task backup extras ok: taskDeps + sort");
+
   const onlyTasks = await call("GET", "/workbench/api/backup/export?modules=wb-addon-tasks");
   if (onlyTasks.status !== 200) throw new Error("selected export failed");
   const onlyFiles = zip.zipRead(onlyTasks.body);
@@ -124,7 +138,7 @@ try {
   console.log("import ok:", report.summary);
 
   const db = new DatabaseSync(join(home, "workbench.db"));
-  db.exec("DELETE FROM task");
+  db.exec("DELETE FROM task; DELETE FROM task_dep;");
   db.close();
   const empty = await host.invoke("tasks.list", {}, "agent");
   if (empty.result.records.some((t) => t.id === taskId)) throw new Error("task should be gone after delete");
@@ -132,7 +146,13 @@ try {
   if (restored.status !== 200) throw new Error("restore import failed");
   const restoredList = await host.invoke("tasks.list", {}, "agent");
   if (!restoredList.result.records.some((t) => t.id === taskId)) throw new Error("task was not restored");
-  console.log("restore ok:", taskId);
+  const checkDb = new DatabaseSync(join(home, "workbench.db"));
+  const depRow = checkDb.prepare("SELECT 1 FROM task_dep WHERE task_id = ? AND depends_on_id = ? AND deleted_at IS NULL").get(taskId, task2Id);
+  const sortRow = checkDb.prepare("SELECT sort FROM task WHERE id = ?").get(taskId);
+  checkDb.close();
+  if (!depRow) throw new Error("task_dep was not restored");
+  if (sortRow.sort !== exportedTaskRow.sort) throw new Error("task.sort was not restored");
+  console.log("restore ok:", taskId, "dep + sort");
 
   const dbFile = join(home, "workbench.db");
   function setLocalTask(title, updatedAt) {
