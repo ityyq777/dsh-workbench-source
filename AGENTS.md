@@ -28,7 +28,8 @@
 发布前同步修改：
 
 1. 对应 `packages/addons/<name>/package.json` 的 `version` 与 `wb.addon.version`；
-2. 对应 `packages/addons/<name>/lib/client.js` 里 `registerAddon` 的 `version`；
+2. 对应 `packages/addons/<name>/client/client.src.cjs` 里 `registerAddon` 的 `version`
+   （`lib/client.js` 是 `pnpm build:clients` 的产物，不要直接改）；
 3. 宿主版本改 `packages/shell/package.json`，业务包依赖范围按需调整；
 4. 文档中的版本引用（docs/04、docs/09、docs/10、docs/11 等）。
 

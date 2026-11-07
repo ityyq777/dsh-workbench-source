@@ -12,6 +12,9 @@ function reactStub() {
     useState: (v) => [typeof v === "function" ? v() : v, () => {}],
     useEffect: () => {}, useMemo: (fn) => fn(), useCallback: (fn) => fn,
     useRef: (v) => ({ current: v }), Fragment: "Fragment",
+    forwardRef: (render) => render,
+    createContext: (v) => ({ Provider: (p) => p, Consumer: () => null, _currentValue: v }),
+    useContext: () => ({}), useId: () => "id",
   };
 }
 const react = reactStub();

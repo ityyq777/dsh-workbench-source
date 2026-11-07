@@ -4,7 +4,8 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "build": "pnpm -r --filter @wb/core --filter @wb/sdk --filter wb-cloud --filter dsh-workbench build",
+    "build": "pnpm -r --filter @wb/core --filter @wb/sdk --filter wb-cloud --filter dsh-workbench build && node scripts/build-addon-clients.mjs",
+    "build:clients": "node scripts/build-addon-clients.mjs",
     "cloud": "node packages/cloud/lib/server.js",
     "dev:cloud": "node --watch packages/cloud/lib/server.js",
     "dist:shell": "node scripts/dist-shell.mjs",
@@ -18,5 +19,9 @@
     "stage:release": "node scripts/stage-release.mjs",
     "publish:npm": "node scripts/publish-npm.mjs",
     "publish:github": "node scripts/publish-github.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "lucide-react": "^1.70.0"
   }
 }

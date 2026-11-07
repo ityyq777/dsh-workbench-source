@@ -2,7 +2,7 @@
 
 ## 身份与打包
 
-- npm 包名：`dsh-workbench`，当前版本 0.5.0。
+- npm 包名：`dsh-workbench`，版本以 package.json 为准。
 - 可安装产物由 `node scripts/dist-shell.mjs` 生成到 `packages/shell-dist`，
   该目录是一个自包含包：宿主 lib、内联后的 core、客户端 bundle、cordis patch。
 - 目录形态：
@@ -65,7 +65,7 @@ sequenceDiagram
 ctx.effect(() => ctx.workbench.registerDomain({
   id: "wb-addon-tasks",
   title: "任务记录",
-  version: "2.4.0",
+  version: "<版本>",
   tables: ["task", "task_node", "task_dep"],
   views: [{ id: "tasks", title: { zh: "任务记录", en: "Tasks" } }],
   setup(api) {
@@ -98,7 +98,7 @@ ctx.effect(() => ctx.workbench.registerDomain({
 }
 ```
 
-- 0.4.0 起入参统一放进 `args`，旧顶层字段若不在目标 action schema 里会被剔除并告警；
+- 入参统一放进 `args`，旧顶层字段若不在目标 action schema 里会被剔除并告警；
   `actions.list` / `actions.help` 提供自描述。
 - 带点号的 action 原样分发；不带点号的旧名（如 `list`、`create`）映射到 `tasks.*` 保持兼容。
 - `addons.*` 时代的安装/卸载 action 已删除；插件安装交给 DSH。
@@ -138,7 +138,7 @@ dsh plugin --profile web add file:$PWD/packages/shell-dist
 
 ## 版本兼容策略
 
-- 宿主导出 `SHELL_VERSION`（当前 0.5.0），业务 manifest 的 `wb.addon.minShell` 与
+- 宿主导出 `SHELL_VERSION`，业务 manifest 的 `wb.addon.minShell` 与
   `DomainSetupApi.shellVersion` 都基于它做兼容判断。
 - 宿主对可选服务只做**特性探测**（`ctx.get(name, true)`、`typeof ctx.tools?.register`），
   缺失时降级而不是拒绝启动。
