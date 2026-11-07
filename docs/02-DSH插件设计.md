@@ -2,7 +2,7 @@
 
 ## 身份与打包
 
-- npm 包名：`dsh-workbench`，当前版本 0.3.1。
+- npm 包名：`dsh-workbench`，当前版本 0.4.0。
 - 可安装产物由 `node scripts/dist-shell.mjs` 生成到 `packages/shell-dist`，
   该目录是一个自包含包：宿主 lib、内联后的 core、客户端 bundle、cordis patch。
 - 目录形态：
@@ -45,7 +45,7 @@ export function apply(ctx) {
 ctx.effect(() => ctx.workbench.registerDomain({
   id: "wb-addon-tasks",
   title: "任务记录",
-  version: "2.1.1",
+  version: "2.2.0",
   tables: ["task", "task_node"],
   views: [{ id: "tasks", title: { zh: "任务记录", en: "Tasks" } }],
   setup(api) {
@@ -98,7 +98,7 @@ dsh plugin --profile web add file:$PWD/packages/shell-dist
 
 ## 版本兼容策略
 
-- 宿主导出 `SHELL_VERSION`（当前 0.3.1），业务 manifest 的 `wb.addon.minShell` 与
+- 宿主导出 `SHELL_VERSION`（当前 0.4.0），业务 manifest 的 `wb.addon.minShell` 与
   `DomainSetupApi.shellVersion` 都基于它做兼容判断。
 - 宿主对可选服务只做**特性探测**（`ctx.get(name, true)`、`typeof ctx.tools?.register`），
   缺失时降级而不是拒绝启动。

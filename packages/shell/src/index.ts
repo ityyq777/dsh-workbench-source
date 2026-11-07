@@ -37,7 +37,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.3.1";
+export const SHELL_VERSION = "0.4.0";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -182,6 +182,142 @@ export function apply(ctx: any): void {
     return [...domains.values()].map((rec) => ({ def: rec.def, enabled: rec.error === null, error: rec.error }));
   }
 
+  /** 宿主内置的元 action 归属域（不参与备份，也不是业务插件）。 */
+  const META_DOMAIN = "wb-shell";
+
+  /** 旧版 Workbench 顶层 schema 里的“通用字段”，多数 action 并不接受。 */
+  const TRAP_FIELDS = ["due_at", "note", "tags", "tagIds", "dirIds", "parentId", "deadline", "start_at", "assignee", "limit"];
+
+  function findActionDef(name: string): { def: DomainActionDef; domainId: string } | null {
+    for (const rec of domains.values()) {
+      const def = rec.actions.get(name);
+      if (def) return { def, domainId: rec.def.id };
+    }
+    return null;
+  }
+
+  function actionParams(def: DomainActionDef): { props: Record<string, any>; required: string[] } {
+    const input = (def.input ?? {}) as any;
+    const props: Record<string, any> =
+      input && typeof input === "object" && input.properties && typeof input.properties === "object"
+        ? (input.properties as Record<string, any>)
+        : {};
+    const required = input && Array.isArray(input.required) ? (input.required as string[]) : [];
+    return { props, required: required.filter((key) => Object.prototype.hasOwnProperty.call(props, key)) };
+  }
+
+  function actionEntry(name: string, domainId: string, def: DomainActionDef) {
+    const { props, required } = actionParams(def);
+    return {
+      name,
+      domain: domainId,
+      description: def.description ?? "",
+      required,
+      params: Object.keys(props),
+      input: def.input ?? { type: "object", properties: {} },
+    };
+  }
+
+  /** actions.list：把已注册 action 的“真实入参”暴露给 agent，避免按顶层通用 schema 猜字段。 */
+  function listActionsMeta(args: Record<string, unknown>) {
+    const raw = args.domain === undefined || args.domain === null ? "" : String(args.domain).trim();
+    const matchDomain = (domainId: string) => !raw || domainId === raw || domainId === "wb-addon-" + raw;
+    const matchAction = (name: string, domainId: string) =>
+      !raw || matchDomain(domainId) || name === raw || name.split(".")[0] === raw;
+    const all: ReturnType<typeof actionEntry>[] = [];
+    for (const rec of domains.values()) {
+      for (const [name, def] of rec.actions) {
+        if (matchAction(name, rec.def.id)) all.push(actionEntry(name, rec.def.id, def));
+      }
+    }
+    const ids = new Set(all.map((a) => a.domain));
+    const domainsOut = [...domains.values()]
+      .filter((rec) => ids.has(rec.def.id))
+      .map((rec) => {
+        const info = publicInfo(rec);
+        return {
+          id: info.id,
+          title: info.title,
+          version: info.version,
+          enabled: info.enabled,
+          error: info.error,
+          actionCount: rec.actions.size,
+        };
+      });
+    const detail = args.detail === true;
+    return {
+      shellVersion: SHELL_VERSION,
+      domains: domainsOut,
+      actions: detail
+        ? all
+        : all.map((a) => ({ name: a.name, domain: a.domain, description: a.description, required: a.required, params: a.params })),
+    };
+  }
+
+  function renderActionList(meta: any): string {
+    const lines = ["工作台 " + meta.shellVersion + " · " + meta.domains.length + " 个域 · " + meta.actions.length + " 个 action"];
+    for (const d of meta.domains) {
+      lines.push("", "[" + d.id + "] " + d.title + " v" + d.version + (d.enabled ? "" : "（未启用：" + d.error + "）"));
+      for (const a of meta.actions) {
+        if (a.domain !== d.id) continue;
+        lines.push("  " + a.name + (a.description ? " — " + a.description : ""));
+        const params: string[] = a.params ?? [];
+        lines.push(
+          "    参数：" +
+            (params.length
+              ? params.map((p) => (a.required.indexOf(p) >= 0 ? p : p + "?")).join(", ")
+              : "无（直接调用即可）"),
+        );
+      }
+    }
+    lines.push("", '查看完整 JSON Schema 与示例：Workbench({ action: "actions.help", args: { action: "<name>" } })');
+    return lines.join("\n");
+  }
+
+  /** actions.help：单个 action 的完整 schema + 参数说明 + 示例。 */
+  function helpActionMeta(args: Record<string, unknown>) {
+    const name = String(args.action ?? args.name ?? "").trim();
+    if (!name) throw new Error("缺少 action；先用 actions.list 查看可用 action");
+    const found = findActionDef(name);
+    if (!found) throw new Error("没有该 action：" + name + "；先用 actions.list 查看可用 action");
+    const entry = actionEntry(name, found.domainId, found.def);
+    const { props } = actionParams(found.def);
+    const params = Object.keys(props).map((key) => ({
+      name: key,
+      type: Array.isArray(props[key]?.type) ? (props[key].type as string[]).join("|") : (props[key]?.type ?? "any"),
+      required: entry.required.indexOf(key) >= 0,
+      description: props[key]?.description ?? "",
+      enum: props[key]?.enum,
+    }));
+    return {
+      name,
+      domain: entry.domain,
+      description: entry.description,
+      input: entry.input,
+      params,
+      examples: (found.def as any).examples ?? [],
+    };
+  }
+
+  function renderActionHelp(help: any): string {
+    const lines = [help.name + " · " + help.domain, help.description || "（无描述）", "", "参数："];
+    if (!help.params.length) lines.push("  无");
+    for (const p of help.params) {
+      lines.push(
+        "  " + p.name + (p.required ? "*" : "") + " (" + p.type + ")" + (p.description ? " — " + p.description : "") +
+          (Array.isArray(p.enum) ? "；可选值：" + p.enum.join(" / ") : ""),
+      );
+    }
+    lines.push("", "JSON Schema：", JSON.stringify(help.input, null, 2));
+    if (help.examples.length) {
+      lines.push("", "示例：");
+      for (const ex of help.examples) {
+        lines.push("  Workbench(" + JSON.stringify({ action: help.name, args: ex }) + ")");
+      }
+    }
+    return lines.join("\n");
+  }
+
   function actionNames() {
     const out: { name: string; domainId: string; description?: string }[] = [];
     for (const rec of domains.values()) {
@@ -189,10 +325,20 @@ export function apply(ctx: any): void {
         out.push({ name: action, domainId: rec.def.id, description: def.description });
       }
     }
+    out.push({ name: "actions.list", domainId: META_DOMAIN, description: "列出已安装业务域的 action、参数与必填项" });
+    out.push({ name: "actions.help", domainId: META_DOMAIN, description: "查看单个 action 的完整 JSON Schema、参数说明与示例" });
     return out;
   }
 
   async function invoke(action: string, args: Record<string, unknown>, origin: "ui" | "agent" | "sync") {
+    if (action === "actions.list") {
+      const result = listActionsMeta(args);
+      return { result, text: renderActionList(result), domainId: META_DOMAIN };
+    }
+    if (action === "actions.help") {
+      const result = helpActionMeta(args);
+      return { result, text: renderActionHelp(result), domainId: META_DOMAIN };
+    }
     for (const rec of domains.values()) {
       const def = rec.actions.get(action);
       if (!def) continue;
@@ -433,30 +579,25 @@ export function apply(ctx: any): void {
     name: "Workbench",
     timeoutMs: 60_000,
     description:
-      "个人工作台。action 由已安装业务插件提供（任务 tasks.* / 标签 tags.* / 站点 sites.* / 站点目录 siteNodes.*）。" +
+      "个人工作台。action 由已安装业务插件提供（tasks.* / taskNodes.* / tags.* / sites.* / siteTags.* / siteNodes.*），" +
+      "宿主另提供 actions.list / actions.help 用于自举：先 actions.list 看有哪些 action，再 actions.help 看真实字段。" +
+      "入参统一放进 args；不要再按旧版顶层字段（due_at / tags / parentId 等）猜参数。" +
       "安装或卸载业务插件请使用 DSH 的插件管理，不在本工具里做。",
     parameters: {
       type: "object",
       properties: {
         action: {
           type: "string",
-          description: "action 名，如 tasks.list / tasks.create / tags.create / sites.list",
+          description: "action 名，如 actions.list / tasks.list / tasks.create / tags.create / sites.list",
         },
-        id: { type: "string", description: "记录 id" },
-        title: { type: "string" },
-        name: { type: "string" },
-        note: { type: "string" },
-        description: { type: "string" },
-        status: { type: "string" },
-        priority: { type: "number" },
-        due_at: { type: ["number", "null"] },
-        tags: { type: "array", items: { type: "string" } },
-        tagIds: { type: "array", items: { type: "string" } },
-        dirIds: { type: "array", items: { type: "string" } },
-        parentId: { type: "string" },
-        limit: { type: "number" },
+        args: {
+          type: "object",
+          description: "该 action 的入参对象；字段名与类型以 actions.help 的返回为准",
+          additionalProperties: true,
+        },
       },
       required: ["action"],
+      // 兼容旧调用：未放进 args 的顶层字段仍会被采纳（但会按 action 的真实 schema 校验并提示被忽略项）
       additionalProperties: true,
     },
     output: {
@@ -466,13 +607,44 @@ export function apply(ctx: any): void {
     execute: async (args: any) => {
       const raw = String(args.action || "");
       try {
-        if (!raw) return { text: "错误：缺少 action" };
+        if (!raw) return { text: "错误：缺少 action（先调用 actions.list）" };
         // 兼容旧工具调用：无命名空间的 list/create/... 映射到 tasks.*
         const action = raw.indexOf(".") >= 0 ? raw : "tasks." + raw;
-        const payload: Record<string, unknown> = { ...args };
-        delete payload.action;
+        const flat: Record<string, unknown> = { ...args };
+        delete flat.action;
+        const nested = flat.args;
+        delete flat.args;
+
+        const payload: Record<string, unknown> = {};
+        if (nested && typeof nested === "object" && !Array.isArray(nested)) {
+          Object.assign(payload, nested as Record<string, unknown>);
+        }
+        for (const [key, value] of Object.entries(flat)) {
+          if (Object.prototype.hasOwnProperty.call(payload, key) && JSON.stringify(payload[key]) !== JSON.stringify(value)) {
+            return { text: "错误：参数 " + key + " 同时出现在 args 和顶层且值不同，请只传一处" };
+          }
+          payload[key] = value;
+        }
+
+        // 旧版 Workbench schema 里有一批“看起来通用、实际没人接”的字段：若该 action 的
+        // 真实 schema 不声明它们，就明确提示已忽略，而不是静默丢参。
+        const known = new Set<string>();
+        const found = findActionDef(action);
+        if (found) for (const key of Object.keys(actionParams(found.def).props)) known.add(key);
+        const ignored: string[] = [];
+        for (const key of TRAP_FIELDS) {
+          if (Object.prototype.hasOwnProperty.call(payload, key) && !known.has(key)) {
+            ignored.push(key + "=" + JSON.stringify(payload[key]));
+            delete payload[key];
+          }
+        }
+
         const r = await invoke(action, payload, "agent");
-        return { text: r.text };
+        const warning = ignored.length
+          ? "⚠ " + action + " 不接受这些参数，已忽略：\n  " + ignored.join("\n  ") +
+            "\n（真实字段名以 actions.help 为准）\n\n"
+          : "";
+        return { text: warning + r.text };
       } catch (e) {
         return { text: "错误：" + String((e && (e as Error).message) || e) };
       }

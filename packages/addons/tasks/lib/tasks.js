@@ -180,7 +180,7 @@ function checkRequiredDates(row) {
   if (row.shutdown_date && row.shutdown_date < row.publish_date) throw new Error("shutdownDate 不能早于 publishDate");
 }
 
-function createTask(db, args, origin, api) {
+function createTask(db, args, origin, api, opts) {
   const title = String(args.title === undefined || args.title === null ? "" : args.title).trim();
   if (!title) throw new Error("title 不能为空");
   const table = args.tableId === undefined || args.tableId === null || args.tableId === ""
@@ -259,7 +259,7 @@ function createTask(db, args, origin, api) {
   };
   checkRequiredDates(row);
 
-  tx(db, function () {
+  const body = function () {
     if (source === "2") {
       const active = db.prepare(
         "SELECT * FROM task WHERE restart_key=? AND status='0' AND deleted_at IS NULL",
@@ -281,7 +281,10 @@ function createTask(db, args, origin, api) {
     }
     insertTaskRow(db, row);
     writeChange(db, row, "create", origin, api, ts);
-  });
+  };
+  // skipTx 供 bulkCreate 在外层事务里复用；单条创建仍自己开事务。
+  if (opts && opts.skipTx) body();
+  else tx(db, body);
 
   return { id: id, task: outOne(db, row) };
 }
@@ -346,6 +349,229 @@ function updateTask(db, args, origin, api) {
   return { task: outOne(db, next) };
 }
 
+/** bulk* 系列允许直接写的字段（与 tasks.update 的自由字段一致）。 */
+const PATCH_FIELDS = [
+  "title", "description", "status", "type", "priority", "difficulty",
+  "publishDate", "targetDate", "doneDate", "shutdownDate", "tableId",
+];
+
+const DIFF_COLUMNS = [
+  ["title", "title"], ["description", "description"], ["status", "status"], ["type", "type"],
+  ["priority", "priority"], ["difficulty", "difficulty"], ["tableId", "table_id"],
+  ["publishDate", "publish_date"], ["targetDate", "target_date"],
+  ["doneDate", "done_date"], ["shutdownDate", "shutdown_date"],
+];
+
+function idList(argsIds) {
+  const ids = Array.isArray(argsIds) ? argsIds.map(function (x) { return idOf(x); }).filter(Boolean) : [];
+  const seen = new Set();
+  const out = [];
+  for (const id of ids) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
+}
+
+function patchOf(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("patch 必须是对象");
+  const patch = {};
+  for (const key of Object.keys(raw)) {
+    if (PATCH_FIELDS.indexOf(key) >= 0) patch[key] = raw[key];
+  }
+  const unknown = Object.keys(raw).filter(function (k) { return PATCH_FIELDS.indexOf(k) < 0; });
+  if (unknown.length) throw new Error("patch 含不支持的字段：" + unknown.join(", ") + "（可用：" + PATCH_FIELDS.join(", ") + "）");
+  if (!Object.keys(patch).length) throw new Error("patch 不能为空");
+  return patch;
+}
+
+function diffRow(before, after) {
+  const out = {};
+  for (const pair of DIFF_COLUMNS) {
+    const a = before[pair[1]];
+    const b = after[pair[1]];
+    if (String(a === undefined ? null : a) !== String(b === undefined ? null : b)) {
+      out[pair[0]] = { from: a === undefined ? null : a, to: b === undefined ? null : b };
+    }
+  }
+  return out;
+}
+
+/**
+ * 按 patch 生成下一版任务行（不落库）。
+ * 不复用 updateTask：它的 type 参数是“更新模式”，与任务字段 type 冲突。
+ */
+function applyPatchRow(db, cur, patch, ts) {
+  const next = Object.assign({}, cur);
+  if ("title" in patch) {
+    const title = String(patch.title === null || patch.title === undefined ? "" : patch.title).trim();
+    if (!title) throw new Error("title 不能为空");
+    next.title = title;
+  }
+  if ("description" in patch) next.description = String(patch.description === null || patch.description === undefined ? "" : patch.description);
+  if ("status" in patch) next.status = asCode(patch.status, STATUS_NAMES, STATUSES, "status");
+  if ("type" in patch) next.type = asCode(patch.type, TYPE_NAMES, TASK_TYPES, "type") || String(cur.type);
+  if ("priority" in patch) next.priority = clampPriority(patch.priority, Number(cur.priority));
+  if ("difficulty" in patch) next.difficulty = clampDifficulty(patch.difficulty, null);
+  if ("tableId" in patch) next.table_id = String(requireTable(db, patch.tableId).id);
+  if ("publishDate" in patch) next.publish_date = dateArg(patch.publishDate, "publishDate") || String(cur.publish_date);
+  if ("targetDate" in patch) next.target_date = dateArg(patch.targetDate, "targetDate") || String(cur.target_date);
+  if ("doneDate" in patch) next.done_date = dateArg(patch.doneDate, "doneDate");
+  if ("shutdownDate" in patch) next.shutdown_date = dateArg(patch.shutdownDate, "shutdownDate");
+  if (next.status === "2" && !next.done_date) next.done_date = todayStr();
+  if (next.status === "2" && (next.difficulty === null || next.difficulty === undefined)) next.difficulty = 0;
+  if (next.status === "1" && !next.shutdown_date) next.shutdown_date = todayStr();
+  checkRequiredDates(next);
+  next.updated_at = ts;
+  next.rev = Number(cur.rev) + 1;
+  return next;
+}
+
+function bulkUpdate(db, args, origin, api) {
+  const ids = idList(args.ids);
+  if (!ids.length) throw new Error("ids 不能为空");
+  const patch = patchOf(args.patch);
+  const dryRun = args.dryRun === true;
+  const skipMissing = args.skipMissing === true;
+  const ts = now();
+  const changes = [];
+  const missing = [];
+  const plan = function () {
+    for (const id of ids) {
+      const cur = getTask(db, id);
+      if (!cur) {
+        if (skipMissing) {
+          missing.push(id);
+          continue;
+        }
+        throw new Error("任务不存在：" + id + "（可用 skipMissing:true 忽略）");
+      }
+      const next = applyPatchRow(db, cur, patch, ts);
+      changes.push({ id: id, changes: diffRow(cur, next) });
+      if (!dryRun) {
+        saveTaskRow(db, next);
+        writeChange(db, next, "update", origin, api, ts);
+      }
+    }
+  };
+  if (dryRun) plan();
+  else tx(db, plan);
+  return {
+    dryRun: dryRun,
+    updated: dryRun ? 0 : changes.length,
+    wouldUpdate: dryRun ? changes.length : undefined,
+    changes: changes,
+    missing: missing,
+  };
+}
+
+function bulkCreate(db, args, origin, api) {
+  const records = Array.isArray(args.records) ? args.records : [];
+  if (!records.length) throw new Error("records 不能为空");
+  const dryRun = args.dryRun === true;
+  if (dryRun) {
+    // 真校验、真 id、但不落库：开事务跑一遍再回滚；用空 emit 避免给 UI 推送假事件。
+    const silentApi = { emit: function () {} };
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      const created = records.map(function (rec) {
+        return createTask(db, rec || {}, origin, silentApi, { skipTx: true });
+      });
+      db.exec("ROLLBACK");
+      return {
+        dryRun: true,
+        created: 0,
+        wouldCreate: created.length,
+        tasks: created.map(function (c) { return c.task; }),
+      };
+    } catch (e) {
+      try {
+        db.exec("ROLLBACK");
+      } catch {
+        /* ignore */
+      }
+      throw e;
+    }
+  }
+  const created = tx(db, function () {
+    return records.map(function (rec) {
+      return createTask(db, rec || {}, origin, api, { skipTx: true });
+    });
+  });
+  return {
+    dryRun: false,
+    created: created.length,
+    tasks: created.map(function (c) { return c.task; }),
+  };
+}
+
+function bulkDelete(db, args, origin, api) {
+  const ids = idList(args.ids);
+  if (!ids.length) throw new Error("ids 不能为空");
+  const dryRun = args.dryRun === true;
+  const skipMissing = args.skipMissing === true;
+  const ts = now();
+  const deleted = [];
+  const missing = [];
+  const items = [];
+  const plan = function () {
+    for (const id of ids) {
+      const cur = getTask(db, id);
+      if (!cur) {
+        if (skipMissing) {
+          missing.push(id);
+          continue;
+        }
+        throw new Error("任务不存在：" + id + "（可用 skipMissing:true 忽略）");
+      }
+      deleted.push(id);
+      items.push({ id: id, title: String(cur.title || "") });
+      if (!dryRun) {
+        const next = Object.assign({}, cur, { deleted_at: ts, updated_at: ts, rev: Number(cur.rev) + 1 });
+        saveTaskRow(db, next);
+        logChange(db, "task", next.id, "delete", null, origin, ts);
+        emitChange(api, next.id, "delete");
+      }
+    }
+  };
+  if (dryRun) plan();
+  else tx(db, plan);
+  return {
+    dryRun: dryRun,
+    deleted: dryRun ? 0 : deleted.length,
+    wouldDelete: dryRun ? deleted.length : undefined,
+    ids: deleted,
+    items: items,
+    missing: missing,
+  };
+}
+
+function renderBulkUpdate(r) {
+  const lines = [r.dryRun ? "预览：将更新 " + r.wouldUpdate + " 条任务（未写库）" : "已更新 " + r.updated + " 条任务"];
+  for (const c of r.changes) {
+    const parts = Object.keys(c.changes).map(function (k) {
+      return k + " " + String(c.changes[k].from) + "→" + String(c.changes[k].to);
+    });
+    lines.push("- " + c.id + (parts.length ? "：" + parts.join("，") : "（无变化）"));
+  }
+  if (r.missing && r.missing.length) lines.push("跳过不存在的 id：" + r.missing.join(", "));
+  return lines.join("\n");
+}
+
+function renderBulkCreate(r) {
+  const lines = [r.dryRun ? "预览：将创建 " + r.wouldCreate + " 条任务（未写库）" : "已创建 " + r.created + " 条任务"];
+  for (const t of r.tasks) lines.push("- " + t.title + "（id=" + t.id + "）");
+  return lines.join("\n");
+}
+
+function renderBulkDelete(r) {
+  const lines = [r.dryRun ? "预览：将删除 " + r.wouldDelete + " 条任务（未写库）" : "已删除 " + r.deleted + " 条任务"];
+  for (const it of r.items) lines.push("- " + it.title + "（id=" + it.id + "）");
+  if (r.missing && r.missing.length) lines.push("跳过不存在的 id：" + r.missing.join(", "));
+  return lines.join("\n");
+}
+
 function listTasks(db, args) {
   const tab = tabCode(args.tab);
   const where = ["t.deleted_at IS NULL"];
@@ -380,6 +606,32 @@ function listTasks(db, args) {
   if (checkedTypes.length === 0) checkedTypes = TASK_TYPES.slice();
   for (const c of checkedTypes) {
     if (TASK_TYPES.indexOf(c) < 0) throw new Error("checkedTypes 取值非法：" + c);
+  }
+
+  // 额外过滤：与 tab/tableId/groupId 条件是 AND 关系。
+  if (args.status !== undefined && args.status !== null && args.status !== "") {
+    where.push("t.status=?");
+    params.push(asCode(args.status, STATUS_NAMES, STATUSES, "status"));
+  }
+  const priorityMin = clampPriority(args.priorityMin, null);
+  if (priorityMin !== null) {
+    where.push("t.priority>=?");
+    params.push(priorityMin);
+  }
+  const priorityMax = clampPriority(args.priorityMax, null);
+  if (priorityMax !== null) {
+    where.push("t.priority<=?");
+    params.push(priorityMax);
+  }
+  const targetFrom = dateArg(args.targetFrom, "targetFrom");
+  if (targetFrom) {
+    where.push("t.target_date>=?");
+    params.push(targetFrom);
+  }
+  const targetTo = dateArg(args.targetTo, "targetTo");
+  if (targetTo) {
+    where.push("t.target_date<=?");
+    params.push(targetTo);
   }
 
   if (tab === 0) {
@@ -417,9 +669,31 @@ function listTasks(db, args) {
     limitSql = " LIMIT 500";
   }
 
-  const order = pageable
-    ? " ORDER BY t.publish_date DESC, t.id DESC"
-    : " ORDER BY t.priority DESC, t.target_date ASC, t.publish_date DESC, t.id ASC";
+  const SORTS = {
+    priority: "t.priority", target: "t.target_date", publish: "t.publish_date",
+    updated: "t.updated_at", created: "t.created_at",
+  };
+  let order = "";
+  if (args.sort !== undefined && args.sort !== null && String(args.sort).trim() !== "") {
+    let key = String(args.sort).trim();
+    let dir = "ASC";
+    if (key.charAt(0) === "-") {
+      dir = "DESC";
+      key = key.slice(1);
+    }
+    const col = SORTS[key];
+    if (!col) throw new Error("sort 取值非法：" + args.sort + "（可用 priority / target / publish / updated / created，前缀 - 表示降序）");
+    if (args.order !== undefined && String(args.order).trim() !== "") {
+      const o = String(args.order).trim().toUpperCase();
+      if (o !== "ASC" && o !== "DESC") throw new Error("order 只能是 asc 或 desc");
+      dir = o;
+    }
+    order = " ORDER BY " + col + " " + dir + ", t.id " + dir;
+  } else {
+    order = pageable
+      ? " ORDER BY t.publish_date DESC, t.id DESC"
+      : " ORDER BY t.priority DESC, t.target_date ASC, t.publish_date DESC, t.id ASC";
+  }
   const base = " FROM task t WHERE " + where.join(" AND ");
   const total = db.prepare("SELECT COUNT(*) AS n" + base).get(...params).n;
   const queryParams = params.slice();
@@ -470,38 +744,50 @@ function timelineRefactor(db, args, origin, api) {
   const key = idOf(args.timelineKey);
   if (!ids.length) throw new Error("ids 不能为空");
   if (!key) throw new Error("timelineKey 不能为空");
+  const dryRun = args.dryRun === true;
   const ts = now();
   const changed = [];
-  tx(db, function () {
+  const plan = function () {
     for (const id of ids) {
       const cur = getTask(db, id);
       if (!cur) throw new Error("任务不存在：" + id);
+      changed.push(id);
+      if (dryRun) continue;
       const next = Object.assign({}, cur, { timeline_key: key, updated_at: ts, rev: Number(cur.rev) + 1 });
       saveTaskRow(db, next);
       writeChange(db, next, "update", origin, api, ts);
-      changed.push(id);
     }
-  });
-  return { updated: changed.length, ids: changed };
+  };
+  if (dryRun) plan();
+  else tx(db, plan);
+  return dryRun
+    ? { dryRun: true, updated: 0, wouldUpdate: changed.length, ids: changed, timelineKey: key }
+    : { updated: changed.length, ids: changed, timelineKey: key };
 }
 
 function migrateTasks(db, args, origin, api) {
   const ids = Array.isArray(args.ids) ? args.ids.map(String) : [];
   if (!ids.length) throw new Error("ids 不能为空");
   const table = requireTable(db, args.tableId);
+  const dryRun = args.dryRun === true;
   const ts = now();
   const changed = [];
-  tx(db, function () {
+  const plan = function () {
     for (const id of ids) {
       const cur = getTask(db, id);
       if (!cur) throw new Error("任务不存在：" + id);
+      changed.push(id);
+      if (dryRun) continue;
       const next = Object.assign({}, cur, { table_id: String(table.id), updated_at: ts, rev: Number(cur.rev) + 1 });
       saveTaskRow(db, next);
       writeChange(db, next, "update", origin, api, ts);
-      changed.push(id);
     }
-  });
-  return { updated: changed.length, ids: changed, tableId: String(table.id) };
+  };
+  if (dryRun) plan();
+  else tx(db, plan);
+  return dryRun
+    ? { dryRun: true, updated: 0, wouldUpdate: changed.length, ids: changed, tableId: String(table.id) }
+    : { updated: changed.length, ids: changed, tableId: String(table.id) };
 }
 
 function sweepShutdown(db, args, origin, api) {
@@ -509,8 +795,13 @@ function sweepShutdown(db, args, origin, api) {
   const rows = db.prepare(
     "SELECT * FROM task WHERE status='0' AND target_date<=? AND deleted_at IS NULL",
   ).all(day);
+  const dryRun = args.dryRun === true;
   const ts = now();
   const ids = [];
+  const items = rows.map(function (cur) {
+    return { id: String(cur.id), title: String(cur.title || ""), targetDate: cur.target_date || null };
+  });
+  if (dryRun) return { dryRun: true, updated: 0, wouldUpdate: rows.length, ids: rows.map(function (r) { return String(r.id); }), items: items, date: day };
   tx(db, function () {
     for (const cur of rows) {
       const next = Object.assign({}, cur, { status: "1", shutdown_date: day, updated_at: ts, rev: Number(cur.rev) + 1 });
@@ -519,7 +810,7 @@ function sweepShutdown(db, args, origin, api) {
       ids.push(String(cur.id));
     }
   });
-  return { updated: ids.length, ids: ids, date: day };
+  return { updated: ids.length, ids: ids, items: items, date: day };
 }
 
 function stats(db) {
@@ -585,60 +876,111 @@ export function registerTaskActions(api) {
   const db = api.db;
   const action = api.action;
 
+  function getTaskAction(args) {
+    const id = idOf(args.id || args.taskId);
+    if (!id) throw new Error("缺少 id");
+    const cur = getTask(db, id);
+    if (!cur) throw new Error("任务不存在：" + id);
+    return { task: outOne(db, cur) };
+  }
+
+  const PATCH_SCHEMA = {
+    type: "object",
+    description: "要写入的字段；未列出的字段会被拒绝",
+    properties: {
+      title: { type: "string" },
+      description: { type: "string" },
+      status: { type: ["string", "number"], description: "0/ACTIVE、1/SHUTDOWN、2/DONE、3/RESTARTED；也接受 open/done" },
+      type: { type: ["string", "number"], description: "任务类型 0 工作 / 1 生活 / 2 学习 / 3 开发" },
+      priority: { type: "number", description: "0..10" },
+      difficulty: { type: ["number", "null"], description: "0..5" },
+      publishDate: { type: "string", description: "YYYY-MM-DD" },
+      targetDate: { type: "string", description: "YYYY-MM-DD" },
+      doneDate: { type: ["string", "null"], description: "YYYY-MM-DD" },
+      shutdownDate: { type: ["string", "null"], description: "YYYY-MM-DD" },
+      tableId: { type: ["string", "number"], description: "目标任务表 id" },
+    },
+    additionalProperties: false,
+  };
+
   action("tasks.list", {
-    description: "按 tab/任务表/任务组/标题筛选任务，返回分页结果与任务树路径",
+    description: "按 tab/任务表/任务组/标题/状态/优先级/目标日期筛选任务；sort 支持 priority/target/publish/updated/created（前缀 - 降序）",
     input: {
       type: "object",
       properties: {
-        tab: { type: ["number", "string"] },
-        titleKey: { type: "string" },
-        tableId: { type: ["string", "number", "null"] },
-        groupId: { type: ["string", "number", "null"] },
-        pageNumber: { type: "number" },
-        pageSize: { type: "number" },
-        filterRestarted: { type: "boolean" },
-        checkedTypes: { type: "array", items: { type: "string" } },
+        tab: { type: ["number", "string"], description: "0 紧急 / 1 工作 / 2 生活 / 3 学习 / 4 开发 / 5 已关闭 / 6 进行中 / 7 已完成 / 8 总览（默认 0）" },
+        titleKey: { type: "string", description: "标题模糊匹配" },
+        tableId: { type: ["string", "number", "null"], description: "只看某个任务表" },
+        groupId: { type: ["string", "number", "null"], description: "只看某个任务组下的所有任务表" },
+        pageNumber: { type: "number", description: "tab 5..8 分页页码，从 1 开始" },
+        pageSize: { type: "number", description: "tab 5..8 每页条数（默认 12，最大 200）" },
+        filterRestarted: { type: "boolean", description: "已关闭 tab 默认 true：true 看 SHUTDOWN，false 看 RESTARTED" },
+        checkedTypes: { type: "array", items: { type: "string" }, description: "任务类型过滤（0..3）" },
+        status: { type: ["string", "number"], description: "直接按状态过滤（与 tab 条件 AND）" },
+        priorityMin: { type: "number", description: "最低优先级（含）" },
+        priorityMax: { type: "number", description: "最高优先级（含）" },
+        targetFrom: { type: "string", description: "targetDate >= 该日期" },
+        targetTo: { type: "string", description: "targetDate <= 该日期" },
+        sort: { type: "string", description: "priority / target / publish / updated / created；前缀 - 表示降序" },
+        order: { type: "string", enum: ["asc", "desc"], description: "配合 sort 指定方向" },
       },
     },
+    examples: [{ tab: 8, priorityMin: 6, sort: "-priority", pageSize: 50 }],
     execute: function (args) { return listTasks(db, args || {}); },
     render: renderList,
   });
 
+  action("tasks.get", {
+    description: "按 id 取单个任务（含任务树路径）",
+    input: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "任务 id" },
+        taskId: { type: ["string", "number"], description: "id 的别名" },
+      },
+    },
+    examples: [{ id: "1001" }],
+    execute: function (args) { return getTaskAction(args || {}); },
+    render: function (r) { return "任务：" + r.task.title + "（id=" + r.task.id + "，status=" + r.task.status + "，P" + r.task.priority + "）"; },
+  });
+
   action("tasks.create", {
-    description: "创建任务；source=0 普通任务，1 时间线任务，2 重启任务",
+    description: "创建任务；source=0 普通任务，1 时间线任务，2 重启任务。date 字段均为 YYYY-MM-DD",
     input: {
       type: "object",
       required: ["title"],
       properties: {
         title: { type: "string" },
         description: { type: "string" },
-        tableId: { type: ["string", "number"] },
-        type: { type: ["string", "number"] },
-        status: { type: ["string", "number"] },
-        priority: { type: "number" },
-        difficulty: { type: ["number", "null"] },
-        publishDate: { type: "string" },
-        targetDate: { type: "string" },
+        tableId: { type: ["string", "number"], description: "任务表 id，缺省用默认任务表" },
+        type: { type: ["string", "number"], description: "0 工作 / 1 生活 / 2 学习 / 3 开发" },
+        status: { type: ["string", "number"], description: "0/1/2（不能直接创建 RESTARTED）" },
+        priority: { type: "number", description: "0..10" },
+        difficulty: { type: ["number", "null"], description: "0..5" },
+        publishDate: { type: "string", description: "YYYY-MM-DD，缺省今天" },
+        targetDate: { type: "string", description: "YYYY-MM-DD，缺省同 publishDate" },
         doneDate: { type: "string" },
         shutdownDate: { type: "string" },
-        source: { type: ["string", "number"] },
-        timelineKey: { type: ["string", "number"] },
-        restartKey: { type: ["string", "number"] },
+        source: { type: ["string", "number"], description: "0 普通 / 1 时间线 / 2 重启" },
+        timelineKey: { type: ["string", "number"], description: "source=1 必填" },
+        restartKey: { type: ["string", "number"], description: "source=2 必填：原任务 id" },
+        originTaskId: { type: ["string", "number"], description: "restartKey 的别名" },
       },
     },
+    examples: [{ title: "整理发布清单", priority: 7, targetDate: "2026-11-10" }],
     execute: function (args, ctx) { return createTask(db, args || {}, ctx.origin, api); },
     render: function (r) { return "已创建任务：" + r.task.title + "（id=" + r.id + "）"; },
   });
 
   action("tasks.update", {
-    description: "按 type 更新任务单字段，也支持直接传字段；type=0 状态、1 优先级、2 标题、3 描述",
+    description: "更新单个任务。两种用法：①type 作为更新模式（0 状态/1 优先级/2 标题/3 描述）；②省略 type 直接传字段。批量请用 tasks.bulkUpdate",
     input: {
       type: "object",
       required: ["id"],
       properties: {
         id: { type: "string" },
         taskId: { type: ["string", "number"] },
-        type: { type: ["string", "number"] },
+        type: { type: ["string", "number"], description: "更新模式 0/1/2/3（不是任务类型；要改任务类型请省略 type 传字段或改完再更新）" },
         status: { type: ["string", "number"] },
         date: { type: "string" },
         priority: { type: "number" },
@@ -652,8 +994,66 @@ export function registerTaskActions(api) {
         tableId: { type: ["string", "number"] },
       },
     },
+    examples: [{ id: "1001", status: "done" }],
     execute: function (args, ctx) { return updateTask(db, args || {}, ctx.origin, api); },
     render: function (r) { return "已更新任务：" + r.task.title + "（id=" + r.task.id + "）"; },
+  });
+
+  action("tasks.bulkUpdate", {
+    description: "按 id 批量更新任务（同一 patch）；dryRun:true 只返回将变更的预览，不写库",
+    input: {
+      type: "object",
+      required: ["ids", "patch"],
+      properties: {
+        ids: { type: "array", items: { type: "string" }, description: "任务 id 列表" },
+        patch: PATCH_SCHEMA,
+        dryRun: { type: "boolean", description: "true 时只预览，不写库、不发事件" },
+        skipMissing: { type: "boolean", description: "true 时忽略不存在的 id（默认报错）" },
+      },
+    },
+    examples: [
+      { ids: ["1001", "1002"], patch: { status: "done", priority: 6 }, dryRun: true },
+      { ids: ["1001", "1002"], patch: { targetDate: "2026-11-15" } },
+    ],
+    execute: function (args, ctx) { return bulkUpdate(db, args || {}, ctx.origin, api); },
+    render: renderBulkUpdate,
+  });
+
+  action("tasks.bulkCreate", {
+    description: "一次创建多条任务（单事务，全成或全不成）；dryRun:true 只校验预览，不写库",
+    input: {
+      type: "object",
+      required: ["records"],
+      properties: {
+        records: {
+          type: "array",
+          description: "每条字段同 tasks.create",
+          items: { type: "object", additionalProperties: true },
+        },
+        dryRun: { type: "boolean", description: "true 时只校验预览，不写库、不发事件" },
+      },
+    },
+    examples: [
+      { records: [{ title: "任务 A", priority: 6 }, { title: "任务 B", targetDate: "2026-11-12" }], dryRun: true },
+    ],
+    execute: function (args, ctx) { return bulkCreate(db, args || {}, ctx.origin, api); },
+    render: renderBulkCreate,
+  });
+
+  action("tasks.bulkDelete", {
+    description: "按 id 批量软删除任务（保留同步墓碑）；dryRun:true 只返回将删除的清单",
+    input: {
+      type: "object",
+      properties: {
+        ids: { type: "array", items: { type: "string" }, description: "任务 id 列表" },
+        dryRun: { type: "boolean", description: "true 时只预览，不写库" },
+        skipMissing: { type: "boolean", description: "true 时忽略不存在的 id（默认报错）" },
+      },
+      required: ["ids"],
+    },
+    examples: [{ ids: ["1001", "1002"], dryRun: true }],
+    execute: function (args, ctx) { return bulkDelete(db, args || {}, ctx.origin, api); },
+    render: renderBulkDelete,
   });
 
   action("tasks.selected", {
@@ -678,35 +1078,67 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.timelineRefactor", {
-    description: "把一批任务归并到同一条时间线",
-    input: { type: "object", properties: { ids: { type: "array", items: { type: "string" } }, timelineKey: { type: ["string", "number"] } } },
+    description: "把一批任务归并到同一条时间线；dryRun:true 只返回将影响的 id",
+    input: {
+      type: "object",
+      properties: {
+        ids: { type: "array", items: { type: "string" } },
+        timelineKey: { type: ["string", "number"] },
+        dryRun: { type: "boolean" },
+      },
+    },
     execute: function (args, ctx) { return timelineRefactor(db, args || {}, ctx.origin, api); },
-    render: function (r) { return "已归并 " + r.updated + " 条任务到时间线 " + r.timelineKey; },
+    render: function (r) {
+      return r.dryRun ? "预览：将归并 " + r.wouldUpdate + " 条任务到时间线 " + r.timelineKey : "已归并 " + r.updated + " 条任务到时间线 " + r.timelineKey;
+    },
   });
 
   action("tasks.migrate", {
-    description: "把一批任务迁移到另一个任务表",
-    input: { type: "object", properties: { ids: { type: "array", items: { type: "string" } }, tableId: { type: ["string", "number"] } } },
+    description: "把一批任务迁移到另一个任务表；dryRun:true 只返回将影响的 id",
+    input: {
+      type: "object",
+      properties: {
+        ids: { type: "array", items: { type: "string" } },
+        tableId: { type: ["string", "number"] },
+        dryRun: { type: "boolean" },
+      },
+    },
     execute: function (args, ctx) { return migrateTasks(db, args || {}, ctx.origin, api); },
-    render: function (r) { return "已迁移 " + r.updated + " 条任务到任务表 " + r.tableId; },
+    render: function (r) {
+      return r.dryRun ? "预览：将迁移 " + r.wouldUpdate + " 条任务到任务表 " + r.tableId : "已迁移 " + r.updated + " 条任务到任务表 " + r.tableId;
+    },
   });
 
   action("tasks.sweepShutdown", {
-    description: "把 targetDate 已过的 ACTIVE 任务批量关闭（默认今天）",
-    input: { type: "object", properties: { date: { type: "string" } } },
+    description: "把 targetDate 已过的 ACTIVE 任务批量关闭（默认今天）；dryRun:true 先看会影响哪些任务",
+    input: {
+      type: "object",
+      properties: {
+        date: { type: "string", description: "截止日期 YYYY-MM-DD，默认今天" },
+        dryRun: { type: "boolean", description: "true 时只返回将关闭的任务清单" },
+      },
+    },
+    examples: [{ dryRun: true }, { date: "2026-11-07" }],
     execute: function (args, ctx) { return sweepShutdown(db, args || {}, ctx.origin, api); },
-    render: function (r) { return "已关闭 " + r.updated + " 条到期任务（" + r.date + "）"; },
+    render: function (r) {
+      if (r.dryRun) {
+        const lines = ["预览：将关闭 " + r.wouldUpdate + " 条到期任务（" + r.date + "）"];
+        for (const it of r.items) lines.push("- " + it.title + "（target " + it.targetDate + "，id=" + it.id + "）");
+        return lines.join("\n");
+      }
+      return "已关闭 " + r.updated + " 条到期任务（" + r.date + "）";
+    },
   });
 
   action("tasks.stats", {
-    description: "任务统计",
+    description: "任务统计：进行中 / 已关闭 / 已完成 / 已重启 / 逾期 / 今天到期",
     input: { type: "object", properties: {} },
     execute: function () { return stats(db); },
     render: function (s) { return "进行中 " + s.active + " / 已关闭 " + s.shutdown + " / 已完成 " + s.done + " / 已重启 " + s.restarted + " / 逾期 " + s.overdue; },
   });
 
   action("tasks.delete", {
-    description: "软删除单个任务（保留同步墓碑）",
+    description: "软删除单个任务（保留同步墓碑）；批量请用 tasks.bulkDelete",
     input: { type: "object", properties: { id: { type: "string" } } },
     execute: function (args, ctx) { return removeTask(db, args || {}, ctx.origin, api); },
     render: function (r) { return "已删除任务：" + r.id; },

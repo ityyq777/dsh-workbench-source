@@ -36,6 +36,8 @@ export interface DomainActionDef<I = Record<string, unknown>, O = unknown> {
   execute(args: I, ctx: DomainActionContext): O | Promise<O>;
   /** 给 agent 看的文本渲染；缺省 JSON.stringify */
   render?(result: O): string;
+  /** 可选调用示例；actions.help 会原样返回，便于 agent 自举 */
+  examples?: Record<string, unknown>[];
 }
 
 /**
