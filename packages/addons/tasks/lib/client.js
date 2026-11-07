@@ -133,7 +133,7 @@
     ".wbt-path button:hover{text-decoration:underline}",
     ".wbt-prio{font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:999px;border:1px solid currentColor;opacity:.85;flex:none;font-variant-numeric:tabular-nums}",
     ".wbt-prio.high{color:#e5484d}.wbt-prio.mid{color:#f76b15}.wbt-prio.low{color:#8a93a2}",
-    ".wbt-type{width:23px;height:23px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--wbt-line);flex:none;font-size:12px;opacity:.8}",
+    ".wbt-type{min-width:23px;height:23px;padding:0 6px;box-sizing:border-box;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--wbt-line);flex:none;font-size:10.5px;font-weight:600;line-height:1;white-space:nowrap;opacity:.8}",
     ".wbt-badge{font-size:10.5px;padding:1px 6px;border-radius:999px;border:1px solid var(--wbt-line);opacity:.72;white-space:nowrap}",
     ".wbt-badge.active{color:var(--wbt-accent);border-color:color-mix(in oklab,var(--wbt-accent) 45%,transparent)}",
     ".wbt-badge.done{color:#2f9e44;border-color:color-mix(in oklab,#2f9e44 45%,transparent)}",
@@ -297,6 +297,7 @@
     var task = props.task;
     var st = statusInfo(task.status);
     var ti = typeInfo(task.type);
+    var typeName = props.lang === "en" ? ti.en : ti.zh;
     var isActive = String(task.status) === "0";
     var titleState = React.useState(null);
     var editingTitle = titleState[0], setEditingTitle = titleState[1];
@@ -392,7 +393,7 @@
 
     return h("div", { className: cx("wbt-item", props.card && "wbt-card", String(task.status) === "2" && "done") },
       props.selectionMode ? h("input", { type: "checkbox", className: "wbt-check", checked: !!props.checked, onChange: function () { props.onCheck(task.id); } }) : null,
-      h("div", { className: "wbt-type", title: ti.zh }, ti.icon),
+      h("div", { className: "wbt-type", title: typeName, "aria-label": typeName }, typeName),
       h("div", { className: "wbt-main" },
         h("div", { className: "wbt-line1" },
           h("span", { className: "wbt-prio " + pClass(task.priority), children: "P" + task.priority }),
@@ -964,7 +965,7 @@
           ? h("div", { className: "wbt-empty" }, t.empty)
           : h("div", { className: view === "card" ? "wbt-grid" : "wbt-list" }, data.records.map(function (task) {
               return h(TaskItem, {
-                key: task.id, task: task, t: t, card: view === "card",
+                key: task.id, task: task, t: t, lang: props.lang, card: view === "card",
                 selectionMode: selectionMode, checked: selectedIds.has(String(task.id)),
                 onCheck: toggleSelect, update: update, toast: say,
                 onDone: function (x) { setDoneTask(x); },
@@ -1071,7 +1072,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.0.3",
+    version: "2.0.5",
     views: [{
       id: "tasks",
       title: { zh: "任务记录", en: "Tasks" },
