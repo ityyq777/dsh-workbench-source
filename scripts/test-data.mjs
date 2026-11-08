@@ -114,6 +114,20 @@ assert(onlyPct.total === 1, "% 应按字面量匹配（不能当通配符），�
 const noUnderscore = tasks.call("tasks.dataQuery", { table: "task", search: "_", pageSize: 200 });
 assert(noUnderscore.total === 0, "_ 应按字面量匹配，实际 " + noUnderscore.total);
 
+// 3.1 逐列筛选：按列包含匹配，与 search/sort 叠加
+const byTitle = tasks.call("tasks.dataQuery", { table: "task", filters: { title: "分页测试" }, pageSize: 200 });
+assert(byTitle.total === 12 && byTitle.rows.every(function (r) { return r.title.indexOf("分页测试") >= 0; }), "列筛选 title 未生效，实际 " + byTitle.total);
+assert(byTitle.filters.length === 1 && byTitle.filters[0].column === "title", "列筛选未回显");
+const byTwo = tasks.call("tasks.dataQuery", { table: "task", filters: { title: "分页测试", id: ids[0] }, pageSize: 200 });
+assert(byTwo.total === 1 && byTwo.rows[0].id === ids[0], "多列筛选应为 AND，实际 " + byTwo.total);
+const emptyFilter = tasks.call("tasks.dataQuery", { table: "task", filters: { title: "  " }, pageSize: 200 });
+assert(emptyFilter.total === p1.total, "空字符串筛选应被忽略");
+const filteredSorted = tasks.call("tasks.dataQuery", { table: "task", filters: { title: "分页测试" }, sort: "title", order: "asc", pageSize: 200 });
+const fTitles = filteredSorted.rows.map(function (r) { return r.title; });
+assert(fTitles.every(function (t, i) { return i === 0 || fTitles[i - 1] <= t; }), "列筛选与排序叠加无效");
+mustThrow(() => tasks.call("tasks.dataQuery", { table: "task", filters: { "title; DROP TABLE task": "x" } }), "未知筛选列", "非法筛选列必须报错");
+mustThrow(() => tasks.call("tasks.dataQuery", { table: "task", filters: ["title"] }), "filters 需要是", "filters 传数组必须报错");
+
 // 4. 软删除与 includeDeleted
 const before = tasks.call("tasks.dataTables").tables.find(function (t) { return t.name === "task"; });
 tasks.call("tasks.delete", { id: plain });

@@ -41,6 +41,7 @@ const SYSTEM_COLUMNS = new Set(["rev", "created_at", "updated_at", "deleted_at"]
 const PAGE_SIZES = [10, 25, 50, 100, 200];
 const BOOL_COLUMNS = new Set(["bindable", "deleted"]);
 const MAX_SEARCH = 100;
+const MAX_FILTERS = 20;
 
 function labelOf(name) {
   const hit = COLUMN_LABELS[name];
@@ -68,6 +69,25 @@ function pickPageSize(input) {
 
 function likeEscape(text) {
   return String(text).slice(0, MAX_SEARCH).replace(/[\\%_]/g, function (m) { return "\\" + m; });
+}
+
+/** 逐列值筛选：{列名: 值}；列名必须是真实列，值按包含匹配（CAST 成文本 LIKE）。 */
+function normalizeFilters(raw, names) {
+  if (raw === undefined || raw === null) return [];
+  if (typeof raw !== "object" || Array.isArray(raw)) throw new Error("filters 需要是 {列名: 值} 对象");
+  const keys = Object.keys(raw);
+  if (keys.length > MAX_FILTERS) throw new Error("列筛选最多 " + MAX_FILTERS + " 列");
+  const out = [];
+  for (const key of keys) {
+    const column = String(key);
+    if (names.indexOf(column) < 0) throw new Error("未知筛选列：" + column);
+    const value = raw[key];
+    if (value === undefined || value === null) continue;
+    const text = String(value).trim().slice(0, MAX_SEARCH);
+    if (!text) continue;
+    out.push({ column: column, value: text });
+  }
+  return out;
 }
 
 function toPlain(row) {
@@ -150,7 +170,7 @@ export function registerDataActions(api) {
         domain: DOMAIN, table: table.name, columns: [], rows: [],
         page: 1, pageSize: pickPageSize(args.pageSize), pages: 1, total: 0,
         sort: "id", order: "desc", includeDeleted: !!args.includeDeleted,
-        search: "", queryMs: 0,
+        search: "", filters: [], queryMs: 0,
         warnings: [{ code: "table_missing", message: "数据表不存在：" + table.name }],
       };
     }
@@ -165,6 +185,7 @@ export function registerDataActions(api) {
     const pageSize = pickPageSize(args.pageSize);
     const includeDeleted = !!args.includeDeleted;
     const search = typeof args.search === "string" ? args.search.trim().slice(0, MAX_SEARCH) : "";
+    const filters = normalizeFilters(args.filters, names);
 
     const where = [];
     const params = [];
@@ -176,6 +197,10 @@ export function registerDataActions(api) {
         const hit = "%" + likeEscape(search) + "%";
         for (let i = 0; i < textCols.length; i++) params.push(hit);
       }
+    }
+    for (let i = 0; i < filters.length; i++) {
+      where.push("CAST(" + filters[i].column + " AS TEXT) LIKE ? ESCAPE '\\'");
+      params.push("%" + likeEscape(filters[i].value) + "%");
     }
     const whereSql = where.length ? " WHERE " + where.join(" AND ") : "";
     const started = (typeof performance !== "undefined" && performance.now ? performance.now() : Date.now());
@@ -210,6 +235,7 @@ export function registerDataActions(api) {
       order,
       includeDeleted,
       search,
+      filters,
       queryMs: Math.max(0, Math.round(ended - started)),
     };
   }
@@ -227,7 +253,7 @@ export function registerDataActions(api) {
   });
 
   api.action("sites.dataQuery", {
-    description: "只读分页查询站点插件的数据表：白名单表名/排序列，支持关键字过滤与包含已删除行",
+    description: "只读分页查询站点插件的数据表：白名单表名/排序列，支持关键字过滤、逐列值筛选与包含已删除行",
     input: {
       type: "object",
       required: ["table"],
@@ -238,16 +264,26 @@ export function registerDataActions(api) {
         sort: { type: "string", description: "排序列名，必须是该表真实列；默认 created_at（无则 id）" },
         order: { type: "string", enum: ["asc", "desc"], description: "排序方向，默认 desc" },
         search: { type: "string", description: "关键字，匹配所有 TEXT 列的包含关系，最长 100 字" },
+        filters: {
+          type: "object",
+          description: "逐列值筛选：{列名: 值}，按包含匹配（列值转文本后 LIKE），与其他条件 AND；列名必须是该表真实列，最多 20 列",
+          additionalProperties: { type: "string" },
+        },
         includeDeleted: { type: "boolean", description: "是否包含已软删除的行，默认 false" },
       },
     },
     examples: [
       { table: "task", page: 1, pageSize: 50, sort: "created_at", order: "desc" },
       { table: "task", search: "发布", includeDeleted: true },
+      { table: "task", filters: { id: "01" } },
     ],
     execute: function (args) { return queryPayload(args || {}); },
     render: function (r) {
-      return r.table + " 第 " + r.page + "/" + r.pages + " 页，共 " + r.total + " 行";
+      var line = r.table + " 第 " + r.page + "/" + r.pages + " 页，共 " + r.total + " 行";
+      if (r.filters && r.filters.length) {
+        line += "；列筛选：" + r.filters.map(function (f) { return f.column + " 含 \"" + f.value + "\""; }).join(" · ");
+      }
+      return line;
     },
   });
 }

@@ -1569,7 +1569,9 @@ var require_data = __commonJS({
         json: "JSON",
         queryTime: "{n} ms",
         sortAsc: "\u5347\u5E8F",
-        sortDesc: "\u964D\u5E8F"
+        sortDesc: "\u964D\u5E8F",
+        filterCol: "\u7B5B\u9009\u2026",
+        filterClear: "\u6E05\u9664\u7B5B\u9009"
       },
       en: {
         title: "Data",
@@ -1607,7 +1609,9 @@ var require_data = __commonJS({
         json: "JSON",
         queryTime: "{n} ms",
         sortAsc: "ascending",
-        sortDesc: "descending"
+        sortDesc: "descending",
+        filterCol: "Filter\u2026",
+        filterClear: "Clear filter"
       }
     };
     var CSS = [
@@ -1686,7 +1690,15 @@ var require_data = __commonJS({
       "." + P + "-drawerfoot{display:flex;gap:8px;justify-content:flex-end}",
       "." + P + "-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
       "@media (max-width:900px){." + P + "{grid-template-columns:minmax(0,1fr)}." + P + "-side{position:static;flex-direction:row;flex-wrap:wrap;gap:6px;padding:6px}." + P + "-sidetitle{display:none}." + P + "-stab{padding:6px 10px;flex:none}." + P + "-sidecount{display:none}." + P + "-tablewrap{max-height:calc(100vh - 260px)}}",
-      "@media (prefers-reduced-motion:reduce){." + P + "-track,." + P + "-track::after,." + P + "-sk,." + P + "-drawer{transition:none;animation:none}}"
+      "@media (prefers-reduced-motion:reduce){." + P + "-track,." + P + "-track::after,." + P + "-sk,." + P + "-drawer{transition:none;animation:none}}",
+      "." + P + "-frow th{padding:0 8px 6px;border-bottom:1px solid var(--cfg-line)}",
+      "." + P + "-fcell{position:relative;display:block;min-width:96px}",
+      "." + P + "-finput{width:100%;box-sizing:border-box;border:1px solid transparent;border-radius:6px;background:color-mix(in oklab,currentColor 4%,transparent);color:inherit;font:inherit;font-size:11.5px;padding:3px 18px 3px 6px;min-width:0}",
+      "." + P + "-finput:hover{background:color-mix(in oklab,currentColor 7%,transparent)}",
+      "." + P + "-finput:focus{outline:none;border-color:var(--dsw-alias-brand-primary,currentColor);background:var(--cfg-surface)}",
+      "." + P + "-fclear{position:absolute;right:2px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--cfg-muted);cursor:pointer;font-size:13px;line-height:1;padding:2px 4px;border-radius:4px}",
+      "." + P + "-fclear:hover{color:inherit;background:var(--cfg-hover)}",
+      "." + P + "-emptycell{padding:22px 12px;text-align:center;color:var(--cfg-muted)}"
     ].join("\n").split("wbt").join(PREFIX);
     function injectCss() {
       if (typeof document === "undefined") return;
@@ -1757,6 +1769,10 @@ var require_data = __commonJS({
       var searchDraft = searchDraftS[0], setSearchDraft = searchDraftS[1];
       var searchS = React2.useState("");
       var search = searchS[0], setSearch = searchS[1];
+      var filterDraftS = React2.useState({});
+      var filterDraft = filterDraftS[0], setFilterDraft = filterDraftS[1];
+      var filtersS = React2.useState({});
+      var filters = filtersS[0], setFilters = filtersS[1];
       var includeDeletedS = React2.useState(null);
       var includeDeletedRaw = includeDeletedS[0], setIncludeDeleted = includeDeletedS[1];
       var showSystemS = React2.useState(null);
@@ -1765,6 +1781,7 @@ var require_data = __commonJS({
       var drawer = drawerS[0], setDrawer = drawerS[1];
       var toastS = React2.useState("");
       var toast = toastS[0], setToast = toastS[1];
+      var filtersKey = JSON.stringify(filters);
       var reqRef = React2.useRef(0);
       var toastTimer = React2.useRef(null);
       var cfgSize = Number(cfg["data.pageSize"]) || 50;
@@ -1807,6 +1824,8 @@ var require_data = __commonJS({
         setOrder("desc");
         setSearch("");
         setSearchDraft("");
+        setFilterDraft({});
+        setFilters({});
       }, [active]);
       React2.useEffect(function() {
         if (searchDraft === search) return void 0;
@@ -1819,12 +1838,23 @@ var require_data = __commonJS({
         };
       }, [searchDraft]);
       React2.useEffect(function() {
+        if (JSON.stringify(filterDraft) === JSON.stringify(filters)) return void 0;
+        var timer = setTimeout(function() {
+          setFilters(filterDraft);
+          setPage(1);
+        }, 280);
+        return function() {
+          clearTimeout(timer);
+        };
+      }, [filterDraft]);
+      React2.useEffect(function() {
         if (!active || !cfgWrap.ready) return void 0;
         var req = ++reqRef.current;
         setLoadingRows(true);
         var args = { table: active, page, pageSize: size, order, includeDeleted };
         if (sort) args.sort = sort;
         if (search) args.search = search;
+        if (Object.keys(filters).length) args.filters = filters;
         Promise.resolve(api.call(DOMAIN + ".dataQuery", args)).then(function(r) {
           if (req !== reqRef.current) return;
           if (r && r.ok === false) throw new Error(r && r.error || t.queryFail);
@@ -1840,7 +1870,7 @@ var require_data = __commonJS({
           if (req === reqRef.current) setLoadingRows(false);
         });
         return void 0;
-      }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready]);
+      }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey]);
       React2.useEffect(function() {
         if (!drawer) return void 0;
         function onKey(e) {
@@ -1943,6 +1973,52 @@ var require_data = __commonJS({
           }
         }, content);
       }
+      function activeFilterCount() {
+        var n = 0;
+        for (var k in filters) if (Object.prototype.hasOwnProperty.call(filters, k)) n++;
+        return n;
+      }
+      function filterCell(col) {
+        var val = filterDraft[col.name] === void 0 ? "" : filterDraft[col.name];
+        return h2(
+          "th",
+          { key: col.name, scope: "col", className: P + "-fth" },
+          h2(
+            "span",
+            { className: P + "-fcell" },
+            h2("input", {
+              className: P + "-finput",
+              type: "search",
+              value: val,
+              placeholder: t.filterCol,
+              "aria-label": t.filterCol + " " + colLabel(col),
+              title: colLabel(col) + " \xB7 " + t.filterCol,
+              onChange: function(e) {
+                var v = e.target.value;
+                setFilterDraft(function(prev) {
+                  var next = Object.assign({}, prev);
+                  if (v) next[col.name] = v;
+                  else delete next[col.name];
+                  return next;
+                });
+              }
+            }),
+            val ? h2("button", {
+              type: "button",
+              className: P + "-fclear",
+              title: t.filterClear,
+              "aria-label": t.filterClear + " " + colLabel(col),
+              onClick: function() {
+                setFilterDraft(function(prev) {
+                  var next = Object.assign({}, prev);
+                  delete next[col.name];
+                  return next;
+                });
+              }
+            }, "\xD7") : null
+          )
+        );
+      }
       function renderRows() {
         if (loadingRows && !data) {
           return h2(
@@ -1962,42 +2038,52 @@ var require_data = __commonJS({
             h2("button", { type: "button", className: P + "-btn", onClick: loadTables }, t.retry)
           );
         }
-        if (!data || !data.rows || !data.rows.length) {
-          return h2("div", { className: P + "-empty" }, search ? t.noRows : t.empty);
-        }
+        if (!data) return h2("div", { className: P + "-empty" }, t.empty);
         var cols = visibleColumns();
+        var rows = data.rows || [];
+        var narrowing = !!search || activeFilterCount() > 0;
         return h2(
           "div",
           { className: P + "-tablewrap" },
           h2(
             "table",
             { className: P + "-table" },
-            h2("thead", null, h2(
-              "tr",
+            h2(
+              "thead",
               null,
-              h2("th", { className: P + "-rownum", scope: "col" }, "#"),
-              cols.map(function(col) {
-                return h2(
-                  "th",
-                  { key: col.name, scope: "col", "aria-sort": ariaSort(col.name) },
-                  h2(
-                    "button",
-                    {
-                      type: "button",
-                      className: P + "-thbtn",
-                      title: colLabel(col) + " \xB7 " + col.type,
-                      onClick: function() {
-                        toggleSort(col.name);
-                      }
-                    },
-                    h2("span", null, colLabel(col)),
-                    h2("span", { className: P + "-coltype" }, String(col.type || "").toLowerCase()),
-                    sort === col.name ? h2("span", { className: P + "-sortmark", "aria-hidden": "true" }, order === "asc" ? "\u25B2" : "\u25BC") : null
-                  )
-                );
-              })
-            )),
-            h2("tbody", null, data.rows.map(function(row, idx) {
+              h2(
+                "tr",
+                null,
+                h2("th", { className: P + "-rownum", scope: "col" }, "#"),
+                cols.map(function(col) {
+                  return h2(
+                    "th",
+                    { key: col.name, scope: "col", "aria-sort": ariaSort(col.name) },
+                    h2(
+                      "button",
+                      {
+                        type: "button",
+                        className: P + "-thbtn",
+                        title: colLabel(col) + " \xB7 " + col.type,
+                        onClick: function() {
+                          toggleSort(col.name);
+                        }
+                      },
+                      h2("span", null, colLabel(col)),
+                      h2("span", { className: P + "-coltype" }, String(col.type || "").toLowerCase()),
+                      sort === col.name ? h2("span", { className: P + "-sortmark", "aria-hidden": "true" }, order === "asc" ? "\u25B2" : "\u25BC") : null
+                    )
+                  );
+                })
+              ),
+              h2(
+                "tr",
+                { className: P + "-frow" },
+                h2("th", { className: P + "-rownum", scope: "col" }, ""),
+                cols.map(filterCell)
+              )
+            ),
+            h2("tbody", null, rows.length ? rows.map(function(row, idx) {
               row.__i = idx;
               var deleted = row.deleted_at !== null && row.deleted_at !== void 0;
               return h2(
@@ -2012,7 +2098,7 @@ var require_data = __commonJS({
                   return cell;
                 })
               );
-            }))
+            }) : h2("tr", null, h2("td", { className: P + "-emptycell", colSpan: cols.length + 1 }, narrowing ? t.noRows : t.empty)))
           )
         );
       }
@@ -5420,7 +5506,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.9.4",
+    version: "2.9.5",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },
