@@ -13,7 +13,7 @@
 
       var LOCALE = {
         zh: {
-          nav: "个人工作台", title: "个人工作台", tagline: "离线优先 · 业务插件由 DSH 安装",
+          nav: "工作台", title: "工作台", tagline: "离线优先 · 业务插件由 DSH 安装",
           tab_account: "账号与同步", tab_addons: "子插件", tab_backup: "数据备份",
           backup_desc: "按模块导出或导入本地数据；导入只合并，不删除已有数据",
           backup_modules: "选择要导出的模块", backup_export_result: "导出结果", backup_select_all: "全选", backup_clear: "清空",
@@ -67,7 +67,7 @@
           record_busy: "切换中", record_error: "切换失败", record_failed_short: "记录失败",
         },
         en: {
-          nav: "Workbench", title: "Personal Workbench", tagline: "Offline-first · addons installed by DSH",
+          nav: "Workbench", title: "Workbench", tagline: "Offline-first · addons installed by DSH",
           tab_account: "Account & Sync", tab_addons: "Addons", tab_backup: "Data backup",
           backup_desc: "Export or import local data per module; import merges and never deletes existing rows",
           backup_modules: "Modules to export", backup_export_result: "Export result", backup_select_all: "Select all", backup_clear: "Clear",
