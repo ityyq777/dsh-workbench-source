@@ -526,37 +526,64 @@ var require_config = __commonJS({
       }
     };
     var CSS = [
-      ".__P__-cfg{display:flex;flex-direction:column;gap:14px;font-size:13px;color:inherit;min-height:0}",
-      ".__P__-cfg-head h2{margin:0;font-size:16px;font-weight:680}",
-      ".__P__-cfg-note{font-size:12px;opacity:.58;margin-top:4px;line-height:1.6}",
-      ".__P__-cfg-group{border:1px solid var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));border-radius:12px;overflow:hidden}",
-      ".__P__-cfg-gtitle{padding:9px 14px;font-size:12px;font-weight:650;letter-spacing:.3px;opacity:.72;background:color-mix(in oklab,currentColor 3%,transparent);border-bottom:1px solid var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 12%,transparent))}",
-      ".__P__-cfg-row{display:flex;gap:16px;align-items:center;padding:11px 14px;border-top:1px solid color-mix(in oklab,currentColor 8%,transparent)}",
-      ".__P__-cfg-row:first-of-type{border-top:none}",
-      ".__P__-cfg-label{flex:1;min-width:0}",
-      ".__P__-cfg-name{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600}",
-      ".__P__-cfg-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;opacity:.45}",
-      ".__P__-cfg-hint{font-size:11.5px;opacity:.58;line-height:1.5;margin-top:3px}",
-      ".__P__-cfg-control{display:flex;align-items:center;gap:8px;flex:none;max-width:46%}",
-      ".__P__-cfg-select,.__P__-cfg-input{border:1px solid var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 18%,transparent));background:transparent;color:inherit;border-radius:8px;padding:6px 9px;font-size:12.5px;outline:none;min-width:120px;max-width:100%}",
-      ".__P__-cfg-select:focus,.__P__-cfg-input:focus{border-color:var(--dsw-alias-brand-primary,#11a89b)}",
-      ".__P__-cfg-switch{display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:12.5px}",
-      ".__P__-cfg-switch input{width:16px;height:16px;accent-color:var(--dsw-alias-brand-primary,#11a89b);cursor:pointer}",
-      ".__P__-cfg-multi{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:flex-end;max-width:420px}",
-      ".__P__-cfg-multi label{display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;white-space:nowrap}",
-      ".__P__-cfg-multi input{width:14px;height:14px;accent-color:var(--dsw-alias-brand-primary,#11a89b)}",
-      ".__P__-cfg-chip{font-size:10.5px;padding:1px 7px;border-radius:999px;background:color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 14%,transparent);color:var(--dsw-alias-brand-primary,#11a89b);font-weight:600}",
-      ".__P__-cfg-btn{border:1px solid var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 18%,transparent));background:transparent;color:inherit;border-radius:8px;padding:5px 9px;font-size:11.5px;cursor:pointer;white-space:nowrap}",
-      ".__P__-cfg-btn:hover{border-color:var(--dsw-alias-brand-primary,#11a89b)}",
-      ".__P__-cfg-btn:disabled{opacity:.5;cursor:not-allowed}",
-      ".__P__-cfg-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;opacity:.72}",
+      ".__P__-cfg{--cfg-line:var(--wb-line,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent)));--cfg-surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));--cfg-muted:var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 62%,transparent));--cfg-faint:var(--dsw-alias-label-tertiary,color-mix(in oklab,currentColor 42%,transparent));--cfg-hover:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent));display:flex;flex-direction:column;gap:16px;width:100%;max-width:980px;margin:0 auto;min-width:0;padding-bottom:6px;color:inherit;font-size:13.5px}",
+      ".__P__-cfg-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}",
+      ".__P__-cfg-headmain{min-width:0}",
+      ".__P__-cfg-head h2{margin:0;font-size:17px;font-weight:660;letter-spacing:.1px}",
+      ".__P__-cfg-note{font-size:12px;color:var(--cfg-muted);margin-top:5px;line-height:1.6}",
+      ".__P__-cfg-status{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border:1px solid var(--cfg-line);border-radius:999px;background:var(--cfg-surface);font-size:11.5px;color:var(--cfg-muted);max-width:100%;line-height:1.4}",
+      ".__P__-cfg-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--dsw-alias-state-success-primary,currentColor);flex:none}",
+      ".__P__-cfg-status.err{color:var(--dsw-alias-state-error-primary,inherit);border-color:color-mix(in oklab,var(--dsw-alias-state-error-primary,currentColor) 35%,var(--cfg-line))}",
+      ".__P__-cfg-status.err::before{background:var(--dsw-alias-state-error-primary,currentColor)}",
+      ".__P__-cfg-group{border:1px solid var(--cfg-line);border-radius:14px;background:var(--cfg-surface);overflow:hidden;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
+      ".__P__-cfg-gtitle{display:flex;align-items:center;gap:8px;padding:12px 18px;background:color-mix(in oklab,currentColor 3%,transparent);border-bottom:1px solid var(--cfg-line);font-size:12.5px;font-weight:660;letter-spacing:.1px}",
+      ".__P__-cfg-gcount{margin-left:auto;font-size:11px;font-weight:500;color:var(--cfg-muted);font-variant-numeric:tabular-nums}",
+      ".__P__-cfg-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(200px,300px);gap:28px;align-items:center;padding:15px 18px;border-top:1px solid color-mix(in oklab,currentColor 7%,transparent);transition:background .12s ease}",
+      ".__P__-cfg-gtitle+.__P__-cfg-row{border-top:none}",
+      ".__P__-cfg-row:hover{background:var(--cfg-hover)}",
+      ".__P__-cfg-label{min-width:0}",
+      ".__P__-cfg-name{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;line-height:1.4;flex-wrap:wrap}",
+      ".__P__-cfg-hint{font-size:12px;color:var(--cfg-muted);line-height:1.55;margin-top:4px}",
+      ".__P__-cfg-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--cfg-muted);margin-top:5px;letter-spacing:.2px;word-break:break-all}",
+      ".__P__-cfg-control{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0;flex-wrap:wrap}",
+      ".__P__-cfg-select,.__P__-cfg-input{border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:9px;padding:7px 11px;font:inherit;font-size:13px;line-height:1.4;outline:none;min-width:132px;max-width:100%;transition:border-color .15s ease,box-shadow .15s ease}",
+      ".__P__-cfg-select:hover,.__P__-cfg-input:hover{border-color:color-mix(in oklab,currentColor 28%,var(--cfg-line))}",
+      ".__P__-cfg-select:focus,.__P__-cfg-input:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
+      ".__P__-cfg-select{min-width:152px;padding-right:10px}",
+      ".__P__-cfg-input{width:132px}",
+      ".__P__-cfg-switch{position:relative;display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-size:12.5px;color:var(--cfg-muted);user-select:none}",
+      ".__P__-cfg-switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}",
+      ".__P__-cfg-track{position:relative;width:38px;height:22px;border-radius:999px;background:color-mix(in oklab,currentColor 18%,transparent);transition:background .16s ease;flex:none}",
+      ".__P__-cfg-track::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--dsw-alias-label-primary,currentColor);transition:transform .16s ease,background .16s ease}",
+      ".__P__-cfg-switch input:checked+.__P__-cfg-track{background:var(--dsw-alias-brand-primary,currentColor)}",
+      ".__P__-cfg-switch input:checked+.__P__-cfg-track::after{transform:translateX(16px);background:var(--dsw-alias-label-primary-inverted,var(--dsw-alias-bg-base))}",
+      ".__P__-cfg-switch input:focus-visible+.__P__-cfg-track{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
+      ".__P__-cfg-multi{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:100%}",
+      ".__P__-cfg-multi label{position:relative;display:inline-flex;align-items:center;padding:5px 11px;border:1px solid var(--cfg-line);border-radius:999px;font-size:12px;color:var(--cfg-muted);cursor:pointer;line-height:1.4;transition:color .12s ease,border-color .12s ease,background .12s ease}",
+      ".__P__-cfg-multi label:hover{background:var(--cfg-hover);color:var(--dsw-alias-label-primary,inherit)}",
+      ".__P__-cfg-multi input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}",
+      ".__P__-cfg-multi label:has(input:checked){color:var(--dsw-alias-label-primary,inherit);border-color:color-mix(in oklab,currentColor 40%,var(--cfg-line));background:color-mix(in oklab,currentColor 7%,transparent);font-weight:600}",
+      ".__P__-cfg-multi input:focus-visible+span{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px;border-radius:4px}",
+      ".__P__-cfg-chip{font-size:10.5px;line-height:1.5;padding:1px 7px;border-radius:999px;background:color-mix(in oklab,currentColor 8%,transparent);color:var(--cfg-muted);font-weight:600;white-space:nowrap}",
+      ".__P__-cfg-btn{display:inline-flex;align-items:center;gap:4px;border:1px solid transparent;background:transparent;color:var(--cfg-muted);border-radius:8px;padding:5px 9px;font:inherit;font-size:11.5px;cursor:pointer;white-space:nowrap;transition:background .12s ease,color .12s ease,border-color .12s ease}",
+      ".__P__-cfg-btn:hover{background:var(--cfg-hover);color:var(--dsw-alias-label-primary,inherit)}",
+      ".__P__-cfg-btn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
+      ".__P__-cfg-btn:disabled{opacity:.45;cursor:not-allowed}",
+      ".__P__-cfg-btn-outline{border-color:var(--cfg-line);color:var(--dsw-alias-label-primary,inherit)}",
+      ".__P__-cfg-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:2px 2px 0;min-height:32px}",
+      ".__P__-cfg-changed{font-size:12px;color:var(--cfg-muted)}",
       ".__P__-cfg-grow{flex:1}",
-      ".__P__-cfg-loading,.__P__-cfg-empty{border:1px dashed var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));border-radius:12px;padding:34px 16px;text-align:center;font-size:12.5px;opacity:.6}",
-      ".__P__-cfg-error{border:1px solid color-mix(in oklab,#e5484d 42%,transparent);border-radius:10px;padding:10px 13px;color:#e5484d;font-size:12.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}",
-      ".__P__-cfg-status{font-size:11.5px;opacity:.62;min-height:16px}",
-      ".__P__-cfg-status.err{color:#e5484d;opacity:1}",
-      "@media (max-width:760px){.__P__-cfg-row{flex-direction:column;align-items:stretch;gap:8px}.__P__-cfg-control{max-width:none;justify-content:flex-start}.__P__-cfg-multi{justify-content:flex-start}}"
-    ].join("\n");
+      ".__P__-cfg-loading{display:flex;flex-direction:column;gap:10px;padding:6px 2px}",
+      ".__P__-cfg-sk{height:14px;border-radius:7px;background:var(--dsw-alias-bg-skeleton,color-mix(in oklab,currentColor 6%,transparent));animation:__P__-cfg-pulse 1.4s ease-in-out infinite}",
+      ".__P__-cfg-sk:nth-child(3){width:72%}",
+      ".__P__-cfg-sk:nth-child(4){width:48%}",
+      "@keyframes __P__-cfg-pulse{0%,100%{opacity:.65}50%{opacity:1}}",
+      ".__P__-cfg-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
+      ".__P__-cfg-empty{border:1px dashed var(--cfg-line);border-radius:14px;padding:40px 16px;text-align:center;font-size:12.5px;color:var(--cfg-muted)}",
+      ".__P__-cfg-error{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid color-mix(in oklab,var(--dsw-alias-state-error-primary,currentColor) 32%,var(--cfg-line));border-radius:10px;padding:10px 13px;color:var(--dsw-alias-state-error-primary,inherit);font-size:12.5px;line-height:1.5}",
+      "@media (max-width:820px){.__P__-cfg-row{grid-template-columns:1fr;gap:10px;padding:13px 16px}.__P__-cfg-control{justify-content:flex-start}.__P__-cfg-multi{justify-content:flex-start}.__P__-cfg-gtitle{padding:11px 16px}}",
+      "@media (prefers-reduced-motion:reduce){.__P__-cfg-track,.__P__-cfg-track::after,.__P__-cfg-sk{animation:none;transition:none}}"
+    ].join("\n").split("__P__").join(PREFIX);
     function injectCss() {
       if (typeof document === "undefined") return;
       var old = document.getElementById("wb-addon-" + DOMAIN + "-config-css");
@@ -755,7 +782,8 @@ var require_config = __commonJS({
                 save(item.id, e.target.checked);
               }
             }),
-            h2("span", null, value === true ? t.on : t.off)
+            h2("span", { className: PREFIX + "-cfg-track", "aria-hidden": "true" }),
+            h2("span", { className: PREFIX + "-cfg-switchstate" }, value === true ? t.on : t.off)
           );
         }
         if (item.type === "enum") {
@@ -835,7 +863,14 @@ var require_config = __commonJS({
         });
       }
       var body = [];
-      if (loading && !state) body.push(h2("div", { key: "loading", className: PREFIX + "-cfg-loading" }, t.loading));
+      if (loading && !state) body.push(h2(
+        "div",
+        { key: "loading", className: PREFIX + "-cfg-loading", "aria-busy": "true" },
+        h2("span", { className: PREFIX + "-cfg-sr" }, t.loading),
+        h2("div", { className: PREFIX + "-cfg-sk" }),
+        h2("div", { className: PREFIX + "-cfg-sk" }),
+        h2("div", { className: PREFIX + "-cfg-sk" })
+      ));
       if (!loading && err && !state) {
         body.push(h2(
           "div",
@@ -860,7 +895,12 @@ var require_config = __commonJS({
           body.push(h2(
             "section",
             { key: "g-" + g.id, className: PREFIX + "-cfg-group" },
-            h2("div", { className: PREFIX + "-cfg-gtitle" }, lang === "en" ? g.en : g.zh),
+            h2(
+              "div",
+              { className: PREFIX + "-cfg-gtitle" },
+              h2("span", null, lang === "en" ? g.en : g.zh),
+              h2("span", { className: PREFIX + "-cfg-gcount" }, list.length + (lang === "en" ? " items" : " \u9879"))
+            ),
             list.map(function(item) {
               var overridden = state.overrides && state.overrides[item.id] !== void 0;
               var isSaving = savingId === item.id;
@@ -877,8 +917,8 @@ var require_config = __commonJS({
                     overridden ? h2("span", { className: PREFIX + "-cfg-chip" }, t.modified) : null,
                     isSaving ? h2("span", { className: PREFIX + "-cfg-chip" }, t.saving) : null
                   ),
-                  h2("div", { className: PREFIX + "-cfg-id" }, item.id),
-                  h2("div", { className: PREFIX + "-cfg-hint" }, lang === "en" ? item.hintEn : item.hintZh)
+                  (lang === "en" ? item.hintEn : item.hintZh) ? h2("div", { className: PREFIX + "-cfg-hint" }, lang === "en" ? item.hintEn : item.hintZh) : null,
+                  h2("div", { className: PREFIX + "-cfg-id" }, item.id)
                 ),
                 h2(
                   "div",
@@ -903,9 +943,13 @@ var require_config = __commonJS({
         body.push(h2(
           "div",
           { key: "foot", className: PREFIX + "-cfg-foot" },
-          h2("span", { className: PREFIX + "-cfg-note" }, t.note),
+          h2(
+            "span",
+            { className: PREFIX + "-cfg-changed" },
+            anyOverride ? Object.keys(state.overrides || {}).length + (lang === "en" ? " changed" : " \u9879\u5DF2\u4FEE\u6539") : lang === "en" ? "All preferences are at their defaults" : "\u5168\u90E8\u914D\u7F6E\u5747\u4E3A\u9ED8\u8BA4\u503C"
+          ),
           h2("span", { className: PREFIX + "-cfg-grow" }),
-          anyOverride ? h2("button", { type: "button", className: PREFIX + "-cfg-btn", disabled: busy, onClick: resetAll }, busy ? t.resetting : t.resetAll) : null
+          anyOverride ? h2("button", { type: "button", className: PREFIX + "-cfg-btn " + PREFIX + "-cfg-btn-outline", disabled: busy, onClick: resetAll }, busy ? t.resetting : t.resetAll) : null
         ));
         var warn = (state.warnings || []).filter(function(w) {
           return w && w.message;
@@ -920,17 +964,19 @@ var require_config = __commonJS({
           ));
         }
       }
-      if (notice.text) {
-        body.push(h2("div", { key: "notice", className: PREFIX + "-cfg-status" + (notice.error ? " err" : "") }, notice.text));
-      }
       return h2(
         "div",
         { className: PREFIX + "-cfg" },
         h2(
           "div",
           { className: PREFIX + "-cfg-head" },
-          h2("h2", null, t.title),
-          h2("div", { className: PREFIX + "-cfg-note" }, t.note)
+          h2(
+            "div",
+            { className: PREFIX + "-cfg-headmain" },
+            h2("h2", null, t.title),
+            h2("div", { className: PREFIX + "-cfg-note" }, t.note)
+          ),
+          notice.text ? h2("div", { key: "notice", className: PREFIX + "-cfg-status" + (notice.error ? " err" : ""), role: "status" }, notice.text) : null
         ),
         body
       );
