@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbench-sites",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "private": true,
   "type": "module",
   "description": "个人工作台站点插件：目录树、链接与标签",
@@ -10,7 +10,7 @@
       "id": "wb-addon-sites",
       "title": "站点",
       "description": "站点收藏：目录树、链接与标签",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "minShell": "0.5.0",
       "tables": [
         "site",

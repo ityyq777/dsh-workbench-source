@@ -38,7 +38,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录两个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选，附统计报表",
-        version: "2.6.1",
+        version: "2.6.2",
         tables: ["task", "task_dep", "task_node"],
         sync: taskSync,
         views: [

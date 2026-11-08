@@ -35,7 +35,7 @@ export function apply(ctx) {
         id: "wb-addon-sites",
         title: "站点",
         description: "站点收藏：目录树、链接与标签",
-        version: "1.4.0",
+        version: "1.4.1",
         tables: ["site", "site_node", "site_node_mapping", "tag_mapping"],
         sync: siteSync,
         views: [

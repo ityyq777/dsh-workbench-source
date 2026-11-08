@@ -150,7 +150,7 @@ function TasksStatsView(props) {
       children.push(h(ch.Card, { key: "status", span: 4, title: t.status, note: t.statusNote },
         h(ch.Donut, {
           data: (b.status || []).map(function (s, i) {
-            return { key: s.key, label: s.label, count: s.count, color: i === 1 ? "var(--dsw-alias-text-tertiary,#8f959e)" : ch.colors[i] };
+            return { key: s.key, label: s.label, count: s.count, color: i === 1 ? "var(--dsw-alias-label-tertiary,#8f959e)" : ch.colors[i] };
           }),
           total: totals.total, lang: lang, centerLabel: t.total,
           aria: (b.status || []).map(function (s) { return s.label + " " + s.count; }).join("，"),
@@ -164,7 +164,7 @@ function TasksStatsView(props) {
           keys: [
             { key: "open", label: t.open, color: ch.colors[0] },
             { key: "done", label: t.done, color: ch.colors[1] },
-            { key: "shutdown", label: t.shutdown, color: "var(--dsw-alias-text-tertiary,#8f959e)" },
+            { key: "shutdown", label: t.shutdown, color: "var(--dsw-alias-label-tertiary,#8f959e)" },
             { key: "restarted", label: t.restarted, color: ch.colors[2] },
           ],
           lang: lang,
