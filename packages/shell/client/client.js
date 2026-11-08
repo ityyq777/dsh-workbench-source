@@ -209,8 +209,8 @@
         ".wb-conflict-main{min-width:0;display:flex;flex-direction:column;gap:2px}",
         ".wb-conflict-meta{font-size:11px;opacity:.55;word-break:break-word}",
         ".wb-conflict-actions{display:flex;gap:6px;flex:none}",
-        ".wb-record-pill{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid var(--wb-line);border-radius:999px;background:transparent;color:inherit;cursor:pointer;font:inherit;font-size:12px;line-height:1;opacity:.55;white-space:nowrap;transition:opacity .15s ease,border-color .15s ease,background .15s ease}",
-        ".wb-record-pill:hover{opacity:.9;border-color:color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 35%,var(--wb-line))}",
+        ".wb-record-pill{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid var(--wb-line,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent)));border-radius:999px;background:color-mix(in oklab,currentColor 3%,transparent);color:inherit;cursor:pointer;font:inherit;font-size:12px;line-height:1;opacity:.62;white-space:nowrap;transition:opacity .15s ease,border-color .15s ease,background .15s ease}",
+        ".wb-record-pill:hover{opacity:.95;border-color:color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 35%,var(--wb-line,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent))))}",
         ".wb-record-pill.on{opacity:1;border-color:color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 45%,transparent);background:color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 10%,transparent)}",
         ".wb-record-pill:disabled{opacity:.4;cursor:default}",
         ".wb-record-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.5;flex:none}",
@@ -694,19 +694,22 @@
         ] });
       }
 
+      function ensureCss() {
+        if (typeof document === "undefined") return;
+        if (document.getElementById("wb-css")) return;
+        var s = document.createElement("style");
+        s.id = "wb-css";
+        s.setAttribute("data-plugin-css", NS);
+        s.textContent = CSS;
+        document.head.appendChild(s);
+      }
+
       function WorkbenchPage(props) {
         var t = props.t;
         var store = useAddonStore();
         var rs = react.useState("home"); var route = rs[0]; var setRoute = rs[1];
         var lang = currentLang();
-        react.useEffect(function () {
-          if (document.getElementById("wb-css")) return;
-          var s = document.createElement("style");
-          s.id = "wb-css";
-          s.setAttribute("data-plugin-css", NS);
-          s.textContent = CSS;
-          document.head.appendChild(s);
-        }, []);
+        react.useEffect(function () { ensureCss(); }, []);
 
         var addons = (store.addons || []).filter(function (a) { return a && a.enabled; });
         var currentAddon = null;
@@ -893,6 +896,7 @@
         inject: ["slots", "locale", "theme"],
         apply: function (ctx) {
           try {
+            ensureCss();
             var PanellistIcon = function () {
               return h("svg", { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round" },
                 h("rect", { x: 3, y: 3, width: 7, height: 7, rx: 1 }),
