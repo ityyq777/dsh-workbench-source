@@ -23,8 +23,12 @@ var h = React.createElement;
       addGroup: "新建组", addTable: "新建表", rename: "重命名", del: "删除",
       deleteConfirm: "确定删除这个节点及其子树？子树中的任务会被软删除。",
       root: "全部任务组", manager: "管理模式", filterRestarted: "过滤已重启",
+      treeSearch: "搜索任务组 / 任务表", treeHint: "点任务表筛选任务；管理模式可拖拽排序、改名或删除",
+      groups: "个任务组", tables: "张任务表", treeNoMatch: "没有匹配的节点",
       types: "任务类型", publish: "发布", target: "计划完成", done: "实际完成",
       shutdown: "关闭时间", priority: "优先级", difficulty: "难度", desc: "描述",
+      review: "感受", reviewHint: "写下完成时的感受（可选）",
+      reviewPlaceholder: "例如：思路很顺 / 卡在接口调试 / 比预想轻松", reviewAdd: "记录感受",
       status: "状态", type: "类型", publishDate: "发布日期", targetDate: "计划完成日期",
       doneDate: "完成日期", shutdownDate: "关闭日期", table: "任务表", titleField: "标题",
       timeline: "时间线", restart: "重启", complete: "完成", shutdownOp: "关闭",
@@ -48,8 +52,12 @@ var h = React.createElement;
       addGroup: "New group", addTable: "New table", rename: "Rename", del: "Delete",
       deleteConfirm: "Delete this node and its subtree? Tasks under it will be soft-deleted.",
       root: "All tasks", manager: "Manage", filterRestarted: "Hide restarted",
+      treeSearch: "Search groups / tables", treeHint: "Pick a table to filter tasks; Manage mode allows drag, rename and delete",
+      groups: "groups", tables: "tables", treeNoMatch: "No matching node",
       types: "Types", publish: "Published", target: "Target", done: "Done",
       shutdown: "Closed", priority: "Priority", difficulty: "Difficulty", desc: "Description",
+      review: "Feeling", reviewHint: "How did it feel to finish? (optional)",
+      reviewPlaceholder: "e.g. smooth, stuck on the API, easier than expected", reviewAdd: "Add feeling",
       status: "Status", type: "Type", publishDate: "Publish date", targetDate: "Target date",
       doneDate: "Done date", shutdownDate: "Close date", table: "Task table", titleField: "Title",
       timeline: "Timeline", restart: "Restart", complete: "Complete", shutdownOp: "Close",
@@ -106,6 +114,16 @@ var h = React.createElement;
     "select": require("lucide-react/icons/square-check-big").default,
     "left": require("lucide-react/icons/chevron-left").default,
     "right": require("lucide-react/icons/chevron-right").default,
+    "folder": require("lucide-react/icons/folder").default,
+    "folderOpen": require("lucide-react/icons/folder-open").default,
+    "table": require("lucide-react/icons/table-2").default,
+    "house": require("lucide-react/icons/house").default,
+    "folderPlus": require("lucide-react/icons/folder-plus").default,
+    "filePlus": require("lucide-react/icons/file-plus").default,
+    "pencil": require("lucide-react/icons/pencil").default,
+    "trash": require("lucide-react/icons/trash-2").default,
+    "close": require("lucide-react/icons/x").default,
+    "down": require("lucide-react/icons/chevron-down").default,
   };
   // 统一的小尺寸图标调用方式，保持各视图里的 Icon({ name, size }) 不变。
   function Icon(props) {
@@ -128,6 +146,8 @@ var h = React.createElement;
     ".wbt-btn:disabled{opacity:.5;cursor:not-allowed}",
     ".wbt-input,.wbt-select,.wbt-textarea{border:1px solid var(--wbt-line);background:transparent;color:inherit;border-radius:8px;padding:7px 10px;font-size:13px;outline:none;min-width:0}",
     ".wbt-input:focus,.wbt-select:focus,.wbt-textarea:focus{border-color:var(--wbt-accent)}",
+    ".wbt-input:focus-visible,.wbt-select:focus-visible,.wbt-textarea:focus-visible{outline:none !important;border-color:var(--wbt-accent) !important;box-shadow:0 0 0 3px color-mix(in oklab,var(--wbt-accent) 18%,transparent) !important}",
+    ".wbt-btn:focus-visible,.wbt-icon:focus-visible,.wbt-tw:focus-visible,.wbt-tool:focus-visible,.wbt-tab:focus-visible,.wbt-tacts button:focus-visible,.wbt-addbtn:focus-visible,.wbt-search-clear:focus-visible{outline:2px solid color-mix(in oklab,var(--wbt-accent) 55%,transparent);outline-offset:1px}",
     ".wbt-search{width:220px;max-width:46vw}",
     ".wbt-body{display:flex;gap:14px;align-items:flex-start;min-height:0;flex:1}",
     ".wbt-nav{display:flex;flex-direction:column;gap:2px;flex:0 0 138px;width:138px;padding:3px 0;border-right:1px solid var(--wbt-line)}",
@@ -146,8 +166,8 @@ var h = React.createElement;
     ".wbt-list{display:flex;flex-direction:column;gap:7px;min-height:0}",
     ".wbt-item{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--wbt-line);border-radius:12px;background:var(--wbt-surface);padding:11px 13px;min-height:0;transition:border-color .14s ease,box-shadow .14s ease}",
     ".wbt-item:hover{border-color:color-mix(in oklab,var(--wbt-accent) 30%,var(--wbt-line));box-shadow:0 2px 10px rgba(20,30,40,.05)}",
-    ".wbt-item.done{opacity:.62}",
-    ".wbt-item.done .wbt-title{text-decoration:line-through}",
+    ".wbt-item.closed{opacity:.62}",
+    ".wbt-item.closed .wbt-title{text-decoration:line-through}",
     ".wbt-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}",
     ".wbt-line1{display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap}",
     ".wbt-title{font-weight:620;font-size:14px;line-height:1.38;letter-spacing:.1px;word-break:break-word}",
@@ -158,7 +178,14 @@ var h = React.createElement;
     ".wbt-add-desc{border:none;background:none;color:inherit;font:inherit;font-size:12px;line-height:1;opacity:.3;padding:2px 4px;border-radius:5px;cursor:pointer;flex:none}",
     ".wbt-add-desc:hover{opacity:.85;background:color-mix(in oklab,currentColor 7%,transparent)}",
     ".wbt-path{display:flex;gap:3px;flex-wrap:wrap;align-items:center;font-size:11.5px;opacity:.58}",
-    ".wbt-foot .wbt-path{margin-left:2px}",
+    ".wbt-taskpath{display:flex;align-items:center;gap:6px;margin-top:3px;min-width:0}",
+    ".wbt-taskpath .wbt-path{flex:1 1 auto;flex-wrap:nowrap;overflow:hidden;min-width:0;gap:0;opacity:.52;-webkit-mask-image:linear-gradient(90deg,#000 91%,transparent);mask-image:linear-gradient(90deg,#000 91%,transparent)}",
+    ".wbt-taskpath .wbt-path button{white-space:nowrap}",
+    ".wbt-taskpath .wbt-path .sep{margin:0 1px;opacity:.4}",
+    ".wbt-review{margin-top:5px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-width:80ch;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,var(--wbt-accent) 42%,transparent);background:color-mix(in oklab,var(--wbt-accent) 6%,transparent)}",
+    ".wbt-review-label{font-size:11px;letter-spacing:.04em;opacity:.72;margin-right:5px;font-weight:560}",
+    ".wbt-review-add{margin-top:2px;align-self:flex-start;border:none;background:none;color:inherit;font:inherit;font-size:11.5px;padding:2px 3px;border-radius:5px;cursor:pointer;opacity:.42}",
+    ".wbt-review-add:hover{opacity:.9;background:color-mix(in oklab,currentColor 7%,transparent)}",
     ".wbt-path button{border:none;background:none;color:inherit;padding:2px 3px;border-radius:5px;cursor:pointer;font-size:11.5px}",
     ".wbt-path button:hover{background:color-mix(in oklab,currentColor 8%,transparent);text-decoration:underline}",
     ".wbt-prio{font-size:10px;font-weight:650;padding:2px 6px;border-radius:999px;border:none;background:color-mix(in oklab,currentColor 12%,transparent);opacity:.92;flex:none;font-variant-numeric:tabular-nums}",
@@ -186,24 +213,49 @@ var h = React.createElement;
     ".wbt-empty{border:1px dashed var(--wbt-line);border-radius:11px;padding:34px 12px;text-align:center;opacity:.5;font-size:12.5px}",
     ".wbt-err{font-size:12.5px;color:var(--dsw-alias-state-error-primary,#e5484d);line-height:1.5}",
     ".wbt-pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;font-size:12px;opacity:.8;flex-wrap:wrap}",
-    ".wbt-drawer-mask{position:fixed;inset:0;background:rgba(0,0,0,.22);z-index:800;display:flex}",
-    ".wbt-drawer{width:440px;max-width:92vw;height:100%;background:var(--wbt-bg);border-right:1px solid var(--wbt-line);display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.22)}",
-    ".wbt-drawer-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--wbt-line)}",
-    ".wbt-drawer-body{flex:1;overflow:auto;padding:8px 10px 20px}",
-    ".wbt-drawer-foot{padding:9px 13px;border-top:1px solid var(--wbt-line);font-size:11.5px;opacity:.55}",
-    ".wbt-tree-row{display:flex;align-items:center;gap:3px;border-radius:7px;padding:2px 3px;min-height:29px}",
-    ".wbt-tree-row:hover{background:color-mix(in oklab,currentColor 7%,transparent)}",
-    ".wbt-tree-row.sel{background:color-mix(in oklab,var(--wbt-accent) 14%,transparent)}",
+    ".wbt-drawer-mask{position:fixed;inset:0;z-index:800;display:flex;background:rgba(26,20,12,.26);animation:wbt-fade .16s ease}",
+    ".wbt-drawer{width:392px;max-width:94vw;height:100%;display:flex;flex-direction:column;background-color:var(--wbt-bg);background-image:linear-gradient(var(--wbt-bg),var(--wbt-bg)),linear-gradient(var(--wbt-bg),var(--wbt-bg)),linear-gradient(var(--wbt-bg),var(--wbt-bg));-webkit-backdrop-filter:blur(30px) saturate(1.4);backdrop-filter:blur(30px) saturate(1.4);border-right:1px solid var(--wbt-line);box-shadow:0 24px 70px rgba(26,20,12,.3);animation:wbt-slide .18s ease}",
+    ".wbt-drawer-head{display:flex;align-items:center;gap:8px;padding:14px 16px 10px}",
+    ".wbt-drawer-head>.wbt-svg{opacity:.7}",
+    ".wbt-drawer-title{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0}",
+    ".wbt-drawer-title b{font-size:14px;font-weight:650;letter-spacing:.2px}",
+    ".wbt-drawer-meta{font-size:11px;opacity:.5;white-space:nowrap;font-variant-numeric:tabular-nums}",
+    ".wbt-tool{border:1px solid var(--wbt-line);background:color-mix(in oklab,currentColor 3%,transparent);color:inherit;font:inherit;font-size:11.5px;line-height:1;padding:5px 9px;border-radius:7px;cursor:pointer;opacity:.7;white-space:nowrap;flex:none}",
+    ".wbt-tool:hover{opacity:.9;background:color-mix(in oklab,currentColor 7%,transparent)}",
+    ".wbt-tool.on{opacity:1;border-color:color-mix(in oklab,var(--wbt-accent) 48%,transparent);background:color-mix(in oklab,var(--wbt-accent) 14%,transparent);color:var(--wbt-accent);font-weight:600}",
+    ".wbt-drawer-search{padding:0 14px 8px;display:flex;align-items:center;gap:6px}",
+    ".wbt-search-clear{flex:none;width:26px;height:26px;border:none;background:color-mix(in oklab,currentColor 6%,transparent);color:inherit;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;opacity:.6;padding:0}",
+    ".wbt-search-clear:hover{opacity:1;background:color-mix(in oklab,currentColor 11%,transparent)}",
+    ".wbt-drawer-search .wbt-input{width:100%;box-sizing:border-box;padding:6px 9px;font-size:12.5px;border-radius:8px;background:color-mix(in oklab,currentColor 4%,transparent)}",
+    ".wbt-drawer-body{flex:1;overflow:auto;padding:2px 8px 18px}",
+    ".wbt-drawer-foot{display:flex;flex-direction:column;gap:7px;padding:10px 14px 12px;border-top:1px solid var(--wbt-line)}",
+    ".wbt-drawer-acts{display:flex;gap:6px}",
+    ".wbt-addbtn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--wbt-line);background:color-mix(in oklab,currentColor 3%,transparent);color:inherit;font:inherit;font-size:11.5px;line-height:1;padding:7px 11px;border-radius:8px;cursor:pointer;opacity:.78;transition:opacity .12s ease,background .12s ease,border-color .12s ease,color .12s ease}",
+    ".wbt-addbtn:hover{opacity:1;border-color:color-mix(in oklab,var(--wbt-accent) 42%,transparent);color:var(--wbt-accent);background:color-mix(in oklab,var(--wbt-accent) 10%,transparent)}",
+    ".wbt-drawer-hint{font-size:10.5px;opacity:.45;line-height:1.55}",
+    ".wbt-tree-row{display:flex;align-items:center;gap:1px;border-radius:8px;padding:0 4px 0 2px;height:30px;position:relative}",
+    ".wbt-tree-row:hover{background:color-mix(in oklab,currentColor 6%,transparent)}",
+    ".wbt-tree-row.sel{background:color-mix(in oklab,var(--wbt-accent) 13%,transparent)}",
+    ".wbt-tree-row.sel::before{content:\"\";position:absolute;left:-4px;top:7px;bottom:7px;width:2.5px;border-radius:2px;background:var(--wbt-accent)}",
+    ".wbt-tree-row.sel .nm{color:var(--wbt-accent);font-weight:620}",
     ".wbt-tree-row.drop{outline:1px dashed var(--wbt-accent);outline-offset:-1px}",
-    ".wbt-tw{width:18px;height:22px;border:none;background:none;color:inherit;cursor:pointer;opacity:.6;flex:none;font-size:10px}",
-    ".wbt-tn{flex:1;min-width:0;display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12.5px;padding:2px 0}",
+    ".wbt-tw{width:16px;height:30px;border:none;background:none;color:inherit;cursor:pointer;opacity:.45;flex:none;display:inline-flex;align-items:center;justify-content:center;padding:0}",
+    ".wbt-tw:hover{opacity:.9}",
+    ".wbt-tw.void{visibility:hidden;cursor:default}",
+    ".wbt-ti{display:inline-flex;align-items:center;justify-content:center;width:16px;flex:none;opacity:.55}",
+    ".wbt-tree-row.sel .wbt-ti{opacity:.95}",
+    ".wbt-tn{flex:1;min-width:0;height:100%;display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12.5px}",
     ".wbt-tn .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-    ".wbt-tacts{display:flex;gap:1px;opacity:0;flex:none}",
-    ".wbt-tree-row:hover .wbt-tacts{opacity:.9}",
-    ".wbt-tacts button{border:none;background:none;color:inherit;cursor:pointer;font-size:10.5px;padding:2px 3px;border-radius:4px;opacity:.7}",
-    ".wbt-tacts button:hover{background:color-mix(in oklab,currentColor 10%,transparent);opacity:1}",
+    ".wbt-tcnt{font-size:10px;opacity:.38;font-variant-numeric:tabular-nums;flex:none}",
+    ".wbt-tacts{display:flex;gap:0;opacity:0;flex:none;transition:opacity .12s ease}",
+    ".wbt-tree-row:hover .wbt-tacts{opacity:1}",
+    ".wbt-tacts button{border:none;background:none;color:inherit;cursor:pointer;width:23px;height:23px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;opacity:.5;padding:0}",
+    ".wbt-tacts button:hover{background:color-mix(in oklab,currentColor 11%,transparent);opacity:.95}",
+    ".wbt-tacts button.wbt-danger:hover{color:var(--dsw-alias-state-error-primary,#e5484d);background:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 12%,transparent)}",
+    "@keyframes wbt-fade{from{opacity:0}to{opacity:1}}",
+    "@keyframes wbt-slide{from{transform:translateX(-14px);opacity:.5}to{transform:none;opacity:1}}",
     ".wbt-modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}",
-    ".wbt-modal{width:560px;max-width:96vw;max-height:90vh;overflow:auto;background:var(--wbt-bg);border:1px solid var(--wbt-line);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.3);padding:15px 17px;display:flex;flex-direction:column;gap:11px}",
+    ".wbt-modal{width:560px;max-width:96vw;max-height:90vh;overflow:auto;background-color:var(--wbt-bg);background-image:linear-gradient(var(--wbt-bg),var(--wbt-bg)),linear-gradient(var(--wbt-bg),var(--wbt-bg)),linear-gradient(var(--wbt-bg),var(--wbt-bg));-webkit-backdrop-filter:blur(30px) saturate(1.4);backdrop-filter:blur(30px) saturate(1.4);border:1px solid var(--wbt-line);border-radius:14px;box-shadow:0 20px 60px rgba(26,20,12,.3);padding:15px 17px;display:flex;flex-direction:column;gap:11px}",
     ".wbt-modal.wide{width:820px}",
     ".wbt-modal-head{display:flex;align-items:center;gap:8px}",
     ".wbt-modal-head h3{margin:0;font-size:14.5px;font-weight:650;flex:1}",
@@ -220,7 +272,7 @@ var h = React.createElement;
     ".wbt-tl-body{padding:0 0 10px;min-width:0;flex:1}",
     ".wbt-tl-title{font-weight:600;font-size:12.5px}",
     ".wbt-tl-meta{font-size:11px;opacity:.58;display:flex;gap:7px;flex-wrap:wrap;margin-top:2px}",
-    ".wbt-selbar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:900;display:flex;gap:8px;align-items:center;background:var(--wbt-bg);border:1px solid var(--wbt-line);box-shadow:0 10px 34px rgba(0,0,0,.24);border-radius:12px;padding:8px 11px;max-width:94vw;flex-wrap:wrap}",
+    ".wbt-selbar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:900;display:flex;gap:8px;align-items:center;background-color:var(--wbt-bg);background-image:linear-gradient(var(--wbt-bg),var(--wbt-bg)),linear-gradient(var(--wbt-bg),var(--wbt-bg)),linear-gradient(var(--wbt-bg),var(--wbt-bg));-webkit-backdrop-filter:blur(30px) saturate(1.4);backdrop-filter:blur(30px) saturate(1.4);border:1px solid var(--wbt-line);box-shadow:0 10px 34px rgba(26,20,12,.24);border-radius:12px;padding:8px 11px;max-width:94vw;flex-wrap:wrap}",
     ".wbt-toast{position:fixed;left:50%;bottom:70px;transform:translateX(-50%);z-index:1100;background:var(--dsw-alias-toast-bg,#1f2328);color:var(--dsw-alias-toast-label,#fff);border-radius:9px;padding:8px 14px;font-size:12.5px;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:90vw;text-align:center}",
     ".wbt-stars{color:var(--dsw-alias-state-warn-primary,#f59f00);font-size:11px;letter-spacing:.5px;white-space:nowrap}",
     ".wbt-sum{display:flex;gap:5px;flex-wrap:wrap;font-size:11px;opacity:.55}",
@@ -275,6 +327,15 @@ var h = React.createElement;
       var n = nodes[i];
       arr.push({ id: String(n.id), name: n.name, type: String(n.type), depth: depth || 0 });
       if (n.children && n.children.length) treeFlat(n.children, (depth || 0) + 1, arr);
+    }
+    return arr;
+  }
+  function treeWalk(nodes, depth, out) {
+    var arr = out || [];
+    for (var i = 0; i < (nodes || []).length; i++) {
+      var n = nodes[i];
+      arr.push({ node: n, depth: depth || 0 });
+      if (n.children && n.children.length) treeWalk(n.children, (depth || 0) + 1, arr);
     }
     return arr;
   }
@@ -341,8 +402,11 @@ var h = React.createElement;
     var editingTitle = titleState[0], setEditingTitle = titleState[1];
     var descState = React.useState(null);
     var editingDesc = descState[0], setEditingDesc = descState[1];
+    var revState = React.useState(null);
+    var editingReview = revState[0], setEditingReview = revState[1];
     var titleRef = React.useRef(null);
     var descRef = React.useRef(null);
+    var revRef = React.useRef(null);
 
     React.useEffect(function () {
       if (editingTitle !== null && titleRef.current) titleRef.current.focus();
@@ -350,6 +414,9 @@ var h = React.createElement;
     React.useEffect(function () {
       if (editingDesc !== null && descRef.current) descRef.current.focus();
     }, [editingDesc]);
+    React.useEffect(function () {
+      if (editingReview !== null && revRef.current) revRef.current.focus();
+    }, [editingReview]);
 
     function beginTitle() {
       if (!isActive) return;
@@ -377,7 +444,18 @@ var h = React.createElement;
       }
       setEditingDesc(null);
     }
+    function beginReview() {
+      setEditingReview(String(task.review || ""));
+    }
+    function saveReview() {
+      if (editingReview === null) return;
+      if (String(editingReview) !== String(task.review || "")) {
+        props.update(task, { type: "REVIEW", review: String(editingReview) });
+      }
+      setEditingReview(null);
+    }
 
+    var isDone = String(task.status) === "2";
     var countdown = String(task.status) === "0" ? daysBetween(task.targetDate) : null;
     var meta = [];
     meta.push(h("span", { key: "kind", className: "wbt-kind t" + String(task.type || "0"), title: typeName, children: typeName }));
@@ -434,7 +512,25 @@ var h = React.createElement;
       ? h("button", { key: "add-desc", className: "wbt-add-desc", title: t.desc, onClick: beginDesc }, "＋")
       : null;
 
-    return h("div", { className: cx("wbt-item", props.card && "wbt-card", String(task.status) === "2" && "done") },
+    var reviewNode = editingReview !== null
+      ? h("textarea", {
+          ref: revRef, className: "wbt-textarea", rows: 2, placeholder: t.reviewPlaceholder,
+          value: editingReview,
+          onChange: function (e) { setEditingReview(e.target.value); },
+          onKeyDown: function (e) {
+            if (e.key === "Escape") setEditingReview(null);
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveReview(); }
+          },
+          onBlur: saveReview,
+        })
+      : (task.review ? h("div", { className: "wbt-review", title: isDone ? "双击编辑" + t.review : "", onDoubleClick: isDone ? beginReview : null },
+          h("span", { className: "wbt-review-label" }, t.review), task.review) : null);
+
+    var addReview = isDone && !task.review && editingReview === null
+      ? h("button", { key: "add-review", className: "wbt-review-add", onClick: beginReview }, "＋ " + t.reviewAdd)
+      : null;
+
+    return h("div", { className: cx("wbt-item", props.card && "wbt-card", String(task.status) === "1" && "closed") },
       props.selectionMode ? h("input", { type: "checkbox", className: "wbt-check", checked: !!props.checked, onChange: function () { props.onCheck(task.id); } }) : null,
       h("div", { className: "wbt-main" },
         h("div", { className: "wbt-line1" },
@@ -444,10 +540,10 @@ var h = React.createElement;
           addDesc
         ),
         descNode,
-        h("div", { className: "wbt-foot" },
-          meta.length ? h("div", { className: "wbt-meta", key: "meta" }, meta) : null,
-          h(PathCrumbs, { key: "path", path: task.path, t: t, onPick: props.onPathPick })
-        )
+        reviewNode,
+        addReview,
+        h("div", { className: "wbt-foot" }, meta.length ? h("div", { className: "wbt-meta", key: "meta" }, meta) : null),
+        task.path && task.path.length ? h("div", { className: "wbt-taskpath" }, h(PathCrumbs, { key: "path", path: task.path, t: t, onPick: props.onPathPick })) : null
       ),
       h("div", { className: "wbt-ops" }, ops)
     );
@@ -462,8 +558,9 @@ var h = React.createElement;
     var selected = props.selectedTable === String(node.id) || (!props.selectedTable && props.selectedGroup === String(node.id));
     var isTable = String(node.type) === "1";
     var isRoot = String(node.parent) === "0" || String(node.parentId) === "0";
-    var pad = 4 + (props.depth || 0) * 13;
+    var pad = 3 + (props.depth || 0) * 15;
     var editing = props.edit && String(props.edit.id) === String(node.id);
+    var kids = node.children ? node.children.length : 0;
 
     function toggle(e) {
       e.stopPropagation();
@@ -471,6 +568,9 @@ var h = React.createElement;
     }
     function select() {
       props.onSelect(node);
+    }
+    function stop(fn) {
+      return function (e) { e.stopPropagation(); fn(); };
     }
     function drop(e) {
       e.preventDefault();
@@ -489,11 +589,13 @@ var h = React.createElement;
         onDragOver: function (e) { e.preventDefault(); props.onDragOver(node.id); },
         onDrop: drop,
       },
-        h("button", { className: "wbt-tw", onClick: toggle, style: { visibility: isTable ? "hidden" : "visible" } }, isExpanded ? "▾" : "▸"),
+        isTable || !hasKids
+          ? h("span", { className: "wbt-tw void" })
+          : h("button", { className: "wbt-tw", "aria-label": node.name, "aria-expanded": !!isExpanded, onClick: toggle }, h(Icon, { name: isExpanded ? "down" : "right", size: 12 })),
+        h("span", { className: "wbt-ti" }, h(Icon, { name: isRoot ? "house" : isTable ? "table" : isExpanded ? "folderOpen" : "folder", size: 13 })),
         h("div", { className: "wbt-tn", onClick: select, title: node.name },
-          h("span", { style: { opacity: .65, fontSize: "10px" }, children: isRoot ? "◆" : isTable ? "▤" : "▸" }),
           editing ? h("input", {
-            className: "wbt-input", style: { padding: "2px 5px", fontSize: "12px", width: "130px" },
+            className: "wbt-input", style: { padding: "2px 6px", fontSize: "12px", width: "150px" },
             value: props.editName,
             autoFocus: true,
             onClick: function (e) { e.stopPropagation(); },
@@ -503,13 +605,14 @@ var h = React.createElement;
               if (e.key === "Escape") props.onCancelEdit();
             },
             onBlur: function () { props.onRename(node.id, props.editName); },
-          }) : h("span", { className: "nm" }, node.name)
+          }) : h("span", { className: "nm" }, node.name),
+          !isTable && hasKids && !editing ? h("span", { className: "wbt-tcnt" }, kids) : null
         ),
         h("div", { className: "wbt-tacts" },
-          !isTable ? h("button", { title: t.addGroup, onClick: function (e) { e.stopPropagation(); props.onAdd(node.id, "0"); } }, "＋组") : null,
-          !isTable ? h("button", { title: t.addTable, onClick: function (e) { e.stopPropagation(); props.onAdd(node.id, "1"); } }, "＋表") : null,
-          !isRoot ? h("button", { title: t.rename, onClick: function (e) { e.stopPropagation(); props.onEdit(node); } }, "✎") : null,
-          props.manager && !isRoot ? h("button", { title: t.del, className: "wbt-danger", onClick: function (e) { e.stopPropagation(); props.onDelete(node); } }, "×") : null
+          !isTable ? h("button", { title: t.addGroup, "aria-label": t.addGroup, onClick: stop(function () { props.onAdd(node.id, "0"); }) }, h(Icon, { name: "folderPlus", size: 12 })) : null,
+          !isTable ? h("button", { title: t.addTable, "aria-label": t.addTable, onClick: stop(function () { props.onAdd(node.id, "1"); }) }, h(Icon, { name: "filePlus", size: 12 })) : null,
+          !isRoot ? h("button", { title: t.rename, "aria-label": t.rename, onClick: stop(function () { props.onEdit(node); }) }, h(Icon, { name: "pencil", size: 12 })) : null,
+          props.manager && !isRoot ? h("button", { title: t.del, "aria-label": t.del, className: "wbt-danger", onClick: stop(function () { props.onDelete(node); }) }, h(Icon, { name: "trash", size: 12 })) : null
         )
       ),
       isExpanded && hasKids ? h("div", null, node.children.map(function (kid) {
@@ -653,10 +756,12 @@ var h = React.createElement;
     var t = props.t;
     var s = React.useState(1);
     var value = s[0], setValue = s[1];
+    var rs = React.useState("");
+    var review = rs[0], setReview = rs[1];
     var busy = React.useState(false);
     var isBusy = busy[0], setBusy = busy[1];
     return h("div", { className: "wbt-modal-mask", onMouseDown: function (e) { if (e.target === e.currentTarget) props.onClose(); } },
-      h("div", { className: "wbt-modal", style: { width: "380px" } },
+      h("div", { className: "wbt-modal", style: { width: "420px" } },
         h("div", { className: "wbt-modal-head" }, h("h3", null, t.complete + " · " + props.task.title), h("button", { className: "wbt-icon", onClick: props.onClose }, "×")),
         h("div", { className: "wbt-hint" }, t.difficultyHint),
         h("div", { className: "wbt-row" },
@@ -664,12 +769,16 @@ var h = React.createElement;
           h("input", { type: "range", min: 0.5, max: 5, step: 0.5, value: value, onChange: function (e) { setValue(Number(e.target.value)); }, style: { flex: 1 } }),
           h("b", null, value.toFixed(1))
         ),
+        h("label", { className: "wbt-field", style: { marginTop: "12px" } },
+          h("span", null, t.review + " · " + t.reviewHint),
+          h("textarea", { className: "wbt-textarea", rows: 3, placeholder: t.reviewPlaceholder, value: review, onChange: function (e) { setReview(e.target.value); } })
+        ),
         h("div", { className: "wbt-modal-foot" },
           h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
           h("button", { className: "wbt-btn primary", disabled: isBusy, onClick: function () {
             if (!value || value <= 0) return;
             setBusy(true);
-            props.api.call("tasks.update", { id: props.task.id, type: "STATUS", status: "2", date: today(), difficulty: value }).then(function (r) {
+            props.api.call("tasks.update", { id: props.task.id, type: "STATUS", status: "2", date: today(), difficulty: value, review: String(review || "") }).then(function (r) {
               setBusy(false);
               if (r && r.ok) props.onDone();
               else props.onError((r && r.error) || "update failed");
@@ -750,6 +859,8 @@ var h = React.createElement;
     var view = viewS[0], setView = viewS[1];
     var searchS = React.useState("");
     var searchDraft = searchS[0], setSearchDraft = searchS[1];
+    var tqS = React.useState("");
+    var treeQuery = tqS[0], setTreeQuery = tqS[1];
     var titleS = React.useState("");
     var titleKey = titleS[0], setTitleKey = titleS[1];
     var filterS = React.useState(true);
@@ -804,6 +915,15 @@ var h = React.createElement;
       var id = setTimeout(function () { setToast(""); }, 3200);
       return function () { clearTimeout(id); };
     }, [toast]);
+
+    var treeSearchRef = React.useRef(null);
+    React.useEffect(function () {
+      if (!drawer) return;
+      var id = setTimeout(function () { if (treeSearchRef.current) treeSearchRef.current.focus(); }, 40);
+      function onKey(e) { if (e.key === "Escape") setDrawer(false); }
+      window.addEventListener("keydown", onKey);
+      return function () { clearTimeout(id); window.removeEventListener("keydown", onKey); };
+    }, [drawer]);
 
     var refreshTree = React.useCallback(function () {
       return api.call("taskNodes.tree").then(function (r) {
@@ -986,9 +1106,43 @@ var h = React.createElement;
       onMove: moveNode,
     };
 
-    var treeBody = tree.length ? tree.map(function (n) {
-      return h(TreeNode, Object.assign({}, treeProps, { key: n.id, node: n, depth: 0 }));
-    }) : h("div", { className: "wbt-empty" }, t.emptyTree);
+    function flatTreeRow(item) {
+      var node = item.node;
+      var isTable = String(node.type) === "1";
+      var selected = String(target.tableId || "") === String(node.id) || (!target.tableId && String(target.groupId || "") === String(node.id));
+      return h("div", {
+        key: node.id, className: cx("wbt-tree-row", selected && "sel"),
+        style: { paddingLeft: (3 + item.depth * 15) + "px" },
+      },
+        h("span", { className: "wbt-tw void" }),
+        h("span", { className: "wbt-ti" }, h(Icon, { name: isTable ? "table" : "folder", size: 13 })),
+        h("div", { className: "wbt-tn", onClick: function () { pickNode(node); }, title: node.name },
+          h("span", { className: "nm" }, node.name),
+          !isTable && node.children && node.children.length ? h("span", { className: "wbt-tcnt" }, node.children.length) : null
+        )
+      );
+    }
+
+    var flatNodes = treeWalk(tree);
+    var rootId = tree.length ? String(tree[0].id) : "";
+    var nodeById = {};
+    flatNodes.forEach(function (x) { nodeById[String(x.node.id)] = x.node; });
+    var curNode = nodeById[String(target.tableId || target.groupId || "")] || null;
+    var footGroupId = curNode
+      ? (String(curNode.type) === "1" ? String(curNode.parent || curNode.parentId || rootId) : String(curNode.id))
+      : rootId;
+    var groupCount = 0;
+    var tableCount = 0;
+    flatNodes.forEach(function (x) { if (String(x.node.type) === "1") tableCount++; else groupCount++; });
+    var tq = treeQuery.trim().toLowerCase();
+    var treeHits = tq ? flatNodes.filter(function (x) { return String(x.node.name || "").toLowerCase().indexOf(tq) >= 0; }) : [];
+    var treeBody = !tree.length
+      ? h("div", { className: "wbt-empty" }, t.emptyTree)
+      : tq
+        ? (treeHits.length ? treeHits.map(flatTreeRow) : h("div", { className: "wbt-empty" }, t.treeNoMatch))
+        : tree.map(function (n) {
+            return h(TreeNode, Object.assign({}, treeProps, { key: n.id, node: n, depth: 0 }));
+          });
 
     var filterBar = h("div", { className: "wbt-filters" },
       pageable ? h("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
@@ -1071,16 +1225,40 @@ var h = React.createElement;
         h("button", { className: "wbt-btn ghost", onClick: clearSelection }, t.clear)
       ) : null,
       drawer ? h("div", { className: "wbt-drawer-mask", onMouseDown: function (e) { if (e.target === e.currentTarget) setDrawer(false); } },
-        h("div", { className: "wbt-drawer" },
+        h("div", { className: "wbt-drawer", role: "dialog", "aria-label": t.tree },
           h("div", { className: "wbt-drawer-head" },
-            h("b", { style: { flex: 1 } }, t.tree),
-            h("label", { className: "wbt-check", title: t.manager },
-              h("input", { type: "checkbox", checked: manager, onChange: function (e) { setManager(e.target.checked); } }),
-              t.manager),
-            h("button", { className: "wbt-icon", onClick: function () { setDrawer(false); } }, "×")
+            h(Icon, { name: "tree", size: 15 }),
+            h("div", { className: "wbt-drawer-title" },
+              h("b", null, t.tree),
+              h("span", { className: "wbt-drawer-meta" }, groupCount + " " + t.groups + " · " + tableCount + " " + t.tables)
+            ),
+            h("button", {
+              className: "wbt-tool" + (manager ? " on" : ""),
+              onClick: function () { setManager(!manager); },
+            }, t.manager),
+            h("button", { className: "wbt-icon", title: t.close, "aria-label": t.close, onClick: function () { setDrawer(false); } }, h(Icon, { name: "close", size: 15 }))
+          ),
+          h("div", { className: "wbt-drawer-search" },
+            h("input", {
+              className: "wbt-input", ref: treeSearchRef, placeholder: t.treeSearch, value: treeQuery,
+              onChange: function (e) { setTreeQuery(e.target.value); },
+              onKeyDown: function (e) { if (e.key === "Escape") { e.stopPropagation(); setTreeQuery(""); setDrawer(false); } },
+            }),
+            treeQuery ? h("button", {
+              className: "wbt-search-clear", title: t.clear, "aria-label": t.clear,
+              onClick: function () { setTreeQuery(""); if (treeSearchRef.current) treeSearchRef.current.focus(); },
+            }, h(Icon, { name: "close", size: 13 })) : null
           ),
           h("div", { className: "wbt-drawer-body" }, treeBody),
-          h("div", { className: "wbt-drawer-foot" }, "点击任务表筛选任务；管理模式可拖拽、删除节点")
+          h("div", { className: "wbt-drawer-foot" },
+            h("div", { className: "wbt-drawer-acts" },
+              h("button", { className: "wbt-addbtn", title: t.addGroup, onClick: function () { if (footGroupId) addNode(footGroupId, "0"); } },
+                h(Icon, { name: "folderPlus", size: 13 }), t.addGroup),
+              h("button", { className: "wbt-addbtn", title: t.addTable, onClick: function () { if (footGroupId) addNode(footGroupId, "1"); } },
+                h(Icon, { name: "filePlus", size: 13 }), t.addTable)
+            ),
+            h("div", { className: "wbt-drawer-hint" }, t.treeHint)
+          )
         )
       ) : null,
       createState ? h(CreateModal, {

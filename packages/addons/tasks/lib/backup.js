@@ -46,6 +46,7 @@ function taskValues(row) {
     asText(row.type, "0"),
     asInt(row.priority, 0),
     asNumOrNull(row.difficulty),
+    asText(row.review),
     asText(row.table_id),
     asTextOrNull(row.timeline_key),
     asTextOrNull(row.restart_key),
@@ -129,9 +130,9 @@ export function importTasksData(api, raw, options) {
   }
 
   const taskUpsert = db.prepare(
-    "INSERT INTO task(id,title,description,status,type,priority,difficulty,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,sort,dedupe_key,created_at,updated_at,deleted_at,rev) " +
-      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) " +
-      "ON CONFLICT(id) DO UPDATE SET title=excluded.title,description=excluded.description,status=excluded.status,type=excluded.type,priority=excluded.priority,difficulty=excluded.difficulty,table_id=excluded.table_id,timeline_key=excluded.timeline_key,restart_key=excluded.restart_key,publish_date=excluded.publish_date,target_date=excluded.target_date,done_date=excluded.done_date,shutdown_date=excluded.shutdown_date,sort=excluded.sort,dedupe_key=excluded.dedupe_key,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
+    "INSERT INTO task(id,title,description,status,type,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,sort,dedupe_key,created_at,updated_at,deleted_at,rev) " +
+      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) " +
+      "ON CONFLICT(id) DO UPDATE SET title=excluded.title,description=excluded.description,status=excluded.status,type=excluded.type,priority=excluded.priority,difficulty=excluded.difficulty,review=excluded.review,table_id=excluded.table_id,timeline_key=excluded.timeline_key,restart_key=excluded.restart_key,publish_date=excluded.publish_date,target_date=excluded.target_date,done_date=excluded.done_date,shutdown_date=excluded.shutdown_date,sort=excluded.sort,dedupe_key=excluded.dedupe_key,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
       "WHERE ? = 1 OR excluded.updated_at > task.updated_at",
   );
   const depUpsert = db.prepare(
@@ -166,7 +167,7 @@ export function importTasksData(api, raw, options) {
       const result = taskUpsert.run(...values, force);
       if (result.changes > 0) {
         imported += 1;
-        logChange(db, TASK_TABLE, values[0], "upsert", row, "import", values[17]);
+        logChange(db, TASK_TABLE, values[0], "upsert", row, "import", values[18]);
       } else {
         skipped += 1;
       }

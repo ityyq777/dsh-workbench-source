@@ -25,7 +25,7 @@ import { statsReport, renderStats } from "./stats.js";
 const STATUSES = ["0", "1", "2", "3"];
 const TASK_TYPES = ["0", "1", "2", "3"];
 const SOURCES = { TASK_TABLE: "0", TASK_TIMELINE: "1", TASK_RESTART: "2" };
-const PUT_TYPES = { STATUS: "0", PRIORITY: "1", TITLE: "2", DESCRIPTION: "3" };
+const PUT_TYPES = { STATUS: "0", PRIORITY: "1", TITLE: "2", DESCRIPTION: "3", REVIEW: "4" };
 const TABS = {
   EMERGENCY: 0, WORK: 1, LIFE: 2, STUDY: 3, DEV: 4,
   SHUTDOWN: 5, ACTIVE: 6, DONE: 7, OVERVIEW: 8,
@@ -53,7 +53,7 @@ function putTypeCode(value) {
   if (value === undefined || value === null || value === "") return null;
   if (PUT_TYPES[String(value)] !== undefined) return PUT_TYPES[String(value)];
   const s = String(value);
-  if (["0", "1", "2", "3"].indexOf(s) < 0) throw new Error("type 取值非法：" + value);
+  if (["0", "1", "2", "3", "4"].indexOf(s) < 0) throw new Error("type 取值非法：" + value);
   return s;
 }
 
@@ -114,8 +114,8 @@ function requireTable(db, tableId) {
 
 function insertTaskRow(db, row) {
   db.prepare(
-    "INSERT INTO task(id,title,description,status,type,priority,difficulty,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,sort,dedupe_key,created_at,updated_at,deleted_at,rev) " +
-      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    "INSERT INTO task(id,title,description,status,type,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,sort,dedupe_key,created_at,updated_at,deleted_at,rev) " +
+      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
   ).run(
     String(row.id),
     String(row.title),
@@ -124,6 +124,7 @@ function insertTaskRow(db, row) {
     String(row.type),
     Number(row.priority || 0),
     row.difficulty === undefined ? null : row.difficulty,
+    String(row.review || ""),
     String(row.table_id),
     row.timeline_key === undefined ? null : row.timeline_key,
     row.restart_key === undefined ? null : row.restart_key,
@@ -142,7 +143,7 @@ function insertTaskRow(db, row) {
 
 function saveTaskRow(db, row) {
   db.prepare(
-    "UPDATE task SET title=?,description=?,status=?,type=?,priority=?,difficulty=?,table_id=?,timeline_key=?,restart_key=?,publish_date=?,target_date=?,done_date=?,shutdown_date=?,sort=?,dedupe_key=?,updated_at=?,deleted_at=?,rev=? WHERE id=?",
+    "UPDATE task SET title=?,description=?,status=?,type=?,priority=?,difficulty=?,review=?,table_id=?,timeline_key=?,restart_key=?,publish_date=?,target_date=?,done_date=?,shutdown_date=?,sort=?,dedupe_key=?,updated_at=?,deleted_at=?,rev=? WHERE id=?",
   ).run(
     String(row.title),
     String(row.description || ""),
@@ -150,6 +151,7 @@ function saveTaskRow(db, row) {
     String(row.type),
     Number(row.priority || 0),
     row.difficulty === undefined ? null : row.difficulty,
+    String(row.review || ""),
     String(row.table_id),
     row.timeline_key === undefined ? null : row.timeline_key,
     row.restart_key === undefined ? null : row.restart_key,
@@ -454,6 +456,7 @@ function createTask(db, args, origin, api, opts) {
     type,
     priority,
     difficulty,
+    review: String(args.review === undefined || args.review === null ? "" : args.review),
     table_id: String(table.id),
     timeline_key: timelineKey || null,
     restart_key: restartKey || null,
@@ -518,6 +521,7 @@ function updateTask(db, args, origin, api) {
     if (next.status === "2") {
       next.done_date = date || todayStr();
       next.difficulty = clampDifficulty(args.difficulty, cur.difficulty === null ? 0 : Number(cur.difficulty));
+      if (args.review !== undefined) next.review = String(args.review === null ? "" : args.review);
       if (next.done_date < String(cur.publish_date)) throw new Error("doneDate 不能早于 publishDate");
     } else if (next.status === "1") {
       next.shutdown_date = date || todayStr();
@@ -531,6 +535,8 @@ function updateTask(db, args, origin, api) {
     next.title = title;
   } else if (type === "3") {
     next.description = String(args.description === undefined || args.description === null ? "" : args.description);
+  } else if (type === "4") {
+    next.review = String(args.review === undefined || args.review === null ? "" : args.review);
   } else {
     if (args.title !== undefined) {
       const title = String(args.title === null ? "" : args.title).trim();
@@ -538,6 +544,7 @@ function updateTask(db, args, origin, api) {
       next.title = title;
     }
     if (args.description !== undefined) next.description = String(args.description === null ? "" : args.description);
+    if (args.review !== undefined) next.review = String(args.review === null ? "" : args.review);
     if (args.status !== undefined) next.status = asCode(args.status, STATUS_NAMES, STATUSES, "status");
     if (args.priority !== undefined) next.priority = clampPriority(args.priority, Number(cur.priority));
     if (args.type !== undefined && args.type !== null) next.type = asCode(args.type, TYPE_NAMES, TASK_TYPES, "type");
@@ -576,13 +583,13 @@ function updateTask(db, args, origin, api) {
 
 /** bulk* 系列允许直接写的字段（与 tasks.update 的自由字段一致）。 */
 const PATCH_FIELDS = [
-  "title", "description", "status", "type", "priority", "difficulty",
+  "title", "description", "status", "type", "priority", "difficulty", "review",
   "publishDate", "targetDate", "doneDate", "shutdownDate", "tableId", "sort", "tagIds",
 ];
 
 const DIFF_COLUMNS = [
   ["title", "title"], ["description", "description"], ["status", "status"], ["type", "type"],
-  ["priority", "priority"], ["difficulty", "difficulty"], ["tableId", "table_id"],
+  ["priority", "priority"], ["difficulty", "difficulty"], ["review", "review"], ["tableId", "table_id"],
   ["publishDate", "publish_date"], ["targetDate", "target_date"],
   ["doneDate", "done_date"], ["shutdownDate", "shutdown_date"], ["sort", "sort"],
 ];
@@ -639,6 +646,7 @@ function applyPatchRow(db, cur, patch, ts) {
   if ("type" in patch) next.type = asCode(patch.type, TYPE_NAMES, TASK_TYPES, "type") || String(cur.type);
   if ("priority" in patch) next.priority = clampPriority(patch.priority, Number(cur.priority));
   if ("difficulty" in patch) next.difficulty = clampDifficulty(patch.difficulty, null);
+  if ("review" in patch) next.review = String(patch.review === null || patch.review === undefined ? "" : patch.review);
   if ("tableId" in patch) next.table_id = String(requireTable(db, patch.tableId).id);
   if ("publishDate" in patch) next.publish_date = dateArg(patch.publishDate, "publishDate") || String(cur.publish_date);
   if ("targetDate" in patch) next.target_date = dateArg(patch.targetDate, "targetDate") || String(cur.target_date);

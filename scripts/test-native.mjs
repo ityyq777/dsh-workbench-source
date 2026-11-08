@@ -147,6 +147,14 @@ try {
   assert(updateReal.result.updated === 2, "bulkUpdate real 数量不对");
   const afterUpdate = await call("tasks.get", { id });
   assert(afterUpdate.result.task.status === "2" && afterUpdate.result.task.priority === 7, "bulkUpdate 未写入");
+
+  // ── 5.1 完成感受：STATUS 带 review、REVIEW 单独更新、patch 写入 ──
+  const doneWithReview = await call("tasks.update", { id: p9.result.id, type: "STATUS", status: "2", difficulty: 3.5, review: "顺利完成" });
+  assert(doneWithReview.result.task.review === "顺利完成", "tasks.update STATUS 未写入 review");
+  const reviewEdit = await call("tasks.update", { id: p9.result.id, type: "REVIEW", review: "后来补充：卡在调试" });
+  assert(reviewEdit.result.task.review === "后来补充：卡在调试", "tasks.update REVIEW 未更新 review");
+  const reviewPatch = await call("tasks.bulkUpdate", { ids: [p9.result.id], patch: { review: "patch 感受" } });
+  assert(reviewPatch.result.updated === 1 && (await call("tasks.get", { id: p9.result.id })).result.task.review === "patch 感受", "bulkUpdate patch 未写入 review");
   let bulkErr = null;
   try { await call("tasks.bulkUpdate", { ids: ["no-such"], patch: { priority: 1 } }); } catch (e) { bulkErr = e; }
   assert(bulkErr, "bulkUpdate 对不存在 id 未报错");
@@ -299,6 +307,7 @@ try {
   ensureTaskSchema(legacy, null);
   const legacyCols = legacy.prepare("PRAGMA table_info(task)").all().map((c) => c.name);
   assert(legacyCols.includes("sort") && legacyCols.includes("dedupe_key"), "旧 task 表未补 sort/dedupe_key");
+  assert(legacyCols.includes("review"), "旧 task 表未补 review");
   assert(legacy.prepare("SELECT 1 AS x FROM task_dep LIMIT 1").get() === undefined, "旧库升级未创建 task_dep");
   const legacyIndexes = legacy.prepare("PRAGMA index_list(task)").all().map((r) => r.name);
   assert(legacyIndexes.includes("idx_task_sort") && legacyIndexes.includes("idx_task_dedupe"), "旧 task 表索引未补建");

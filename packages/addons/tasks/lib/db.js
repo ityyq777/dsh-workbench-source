@@ -16,6 +16,7 @@ export const TASK_DDL = [
     "type TEXT NOT NULL DEFAULT '0'," +
     "priority INTEGER NOT NULL DEFAULT 0," +
     "difficulty REAL," +
+    "review TEXT NOT NULL DEFAULT ''," +
     "table_id TEXT NOT NULL," +
     "timeline_key TEXT," +
     "restart_key TEXT," +
@@ -247,6 +248,7 @@ export function rowTask(row) {
     type: String(row.type || "0"),
     priority: Number(row.priority || 0),
     difficulty: row.difficulty === null || row.difficulty === undefined ? null : Number(row.difficulty),
+    review: String(row.review || ""),
     tableId: String(row.table_id || ""),
     timelineKey: row.timeline_key === null || row.timeline_key === undefined ? null : String(row.timeline_key),
     restartKey: row.restart_key === null || row.restart_key === undefined ? null : String(row.restart_key),
@@ -758,6 +760,7 @@ function ensureTaskColumns(db) {
   if (!tableExists(db, "task") || !hasColumn(db, "task", "created_at")) return;
   if (!hasColumn(db, "task", "sort")) db.exec("ALTER TABLE task ADD COLUMN sort INTEGER NOT NULL DEFAULT 0");
   if (!hasColumn(db, "task", "dedupe_key")) db.exec("ALTER TABLE task ADD COLUMN dedupe_key TEXT");
+  if (!hasColumn(db, "task", "review")) db.exec("ALTER TABLE task ADD COLUMN review TEXT NOT NULL DEFAULT ''");
 }
 
 export function ensureSchema(db, log) {
