@@ -39,7 +39,7 @@ export function apply(ctx) {
         id: "wb-addon-sites",
         title: "站点",
         description: "站点收藏：目录树、链接与标签；含统计/记录/配置/数据四个视图",
-        version: "1.7.2",
+        version: "1.7.3",
         tables: ["site", "site_node", "site_node_mapping", "tag_mapping"],
         sync: siteSync,
         views: [
@@ -84,6 +84,19 @@ export function apply(ctx) {
                 },
               ],
             },
+          ],
+          fields: [
+            { name: "siteName", type: "string", description: "站点标题（必填，新建站点时不能为空）" },
+            { name: "description", type: "string", description: "站点说明/备注，可空" },
+            { name: "siteLinks", type: "array", description: "链接列表，元素是 url 字符串；缺省表示还没有链接；健康度检查以这些 url 为准" },
+            { name: "dirIds", type: "string[]", description: "所属站点目录 id 列表；写入时整体替换该站点的目录映射，传空数组等于移出所有目录" },
+            { name: "nodeId / dirId", type: "string|number", description: "查询时按目录子树过滤；0 或省略表示全部目录" },
+            { name: "tagIds", type: "string[]", description: "站点标签 id 列表；写入时整体替换，查询时命中任一即可" },
+            { name: "bindable", type: "0|1", description: "是否允许被绑定/展示（缺省取插件配置 form.defaultBindable）；0 表示只在列表里留着但不参与绑定" },
+            { name: "text / titleKey", type: "string", description: "关键词，匹配站点标题与描述" },
+            { name: "pageNumber / pageSize", type: "number", description: "分页，页码从 1 开始；pageSize 有上限（默认 12，最大 200）" },
+            { name: "sortColumn / sortOrder", type: "string", description: "排序列：site_name / create_time / update_time（缺省 update_time）；方向 asc|desc（缺省 desc）。未知列名会回落到 update_time" },
+            { name: "range / from / to", type: "7d|30d|90d|365d|all / YYYY-MM-DD", description: "仅统计类 action：range 缺省 30d；from+to 是闭区间 [from,to]，两端都含" },
           ],
           notFor: ["不要用它记录本地页面或未验证的链接"],
           notes: [

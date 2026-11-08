@@ -1324,6 +1324,21 @@ function renderArray(rows) {
   return renderList({ records: list, total: list.length });
 }
 
+const SORT_NOTES = {
+  priority: "优先级降序：数值越大越紧急",
+  "-priority": "优先级降序：数值越大越紧急",
+  target: "目标日期升序：越早越前",
+  "-target": "目标日期降序：越晚越前",
+  publish: "发布日期升序",
+  "-publish": "发布日期降序",
+  updated: "更新时间升序",
+  "-updated": "更新时间降序（最近改动的在前）",
+  created: "创建时间升序",
+  "-created": "创建时间降序（最新的在前）",
+  manual: "手动排序值升序",
+  "-manual": "手动排序值降序",
+};
+
 function renderList(result) {
   const lines = [];
   const f = result.filter;
@@ -1339,7 +1354,7 @@ function renderList(result) {
     if (f.priorityMax !== undefined) parts.push("P<=" + f.priorityMax);
     if (f.targetFrom) parts.push("target>=" + f.targetFrom);
     if (f.targetTo) parts.push("target<=" + f.targetTo);
-    if (f.sort) parts.push("排序=" + f.sort);
+    if (f.sort) parts.push("排序=" + f.sort + (SORT_NOTES[f.sort] ? "（" + SORT_NOTES[f.sort] + "）" : ""));
     if (f.filterRestarted === false) parts.push("含已重启");
     if (f.pageable) parts.push("第 " + f.pageNumber + "/" + f.totalPages + " 页，每页 " + f.pageSize);
     lines.push("筛选：" + parts.join(" · "));
@@ -1374,8 +1389,8 @@ export function registerTaskActions(api) {
       title: { type: "string" },
       description: { type: "string" },
       review: { type: "string", description: "完成后的感受/复盘（自由文本）" },
-      status: { type: ["string", "number"], description: "0/ACTIVE、1/SHUTDOWN、2/DONE、3/RESTARTED；也接受 open/done；改成 DONE 时 priority 自动清零" },
-      priority: { type: "number", description: "0..10；patch 改成 DONE 时写入值被清零" },
+      status: { type: ["string", "number"], description: "0=进行中(ACTIVE，也接受 open)、1=已关闭(SHUTDOWN)、2=已完成(DONE，也接受 done)、3=已重启(RESTARTED，创建时不允许)；改成 2 时 priority 自动清零并补 doneDate" },
+      priority: { type: "number", description: "0..10 整数，数值越大越紧急（>=6 进「紧急」页签，0 表示没有设置）；任务改为 DONE 时写入值会被清零" },
       difficulty: { type: ["number", "null"], description: "0..5" },
       publishDate: { type: "string", description: "YYYY-MM-DD" },
       targetDate: { type: "string", description: "YYYY-MM-DD" },
@@ -1394,7 +1409,7 @@ export function registerTaskActions(api) {
   };
 
   action("tasks.list", {
-    description: "统一检索任务：tab（缺省=总览全量）/任务表/任务组/关键词（标题或描述）/状态/标签/优先级/目标日期，全部 AND；sort 支持 priority/target/publish/updated/created/manual（前缀 - 降序）；返回里带 filter 回显实际生效条件",
+    description: "统一检索任务：tab（缺省=总览 8 全量，不是紧急 0）/任务表/任务组/关键词（标题或描述）/状态/标签/优先级/目标日期，全部 AND；sort 支持 priority/target/publish/updated/created/manual（前缀 - 表示降序，例如 sort=-priority 是数值越大越紧急的在前）；不传 sort 时未分页按 priority 降序、分页时按 publishDate 降序；返回里带 filter 回显实际生效条件与排序",
     input: {
       type: "object",
       properties: {
@@ -1470,7 +1485,7 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.update", {
-    description: "更新单个任务。两种用法：①type 作为更新模式（0 状态/1 优先级/2 标题/3 描述/4 感受）；②省略 type 直接传字段（含 tags 标签名）。批量请用 tasks.bulkUpdate",
+    description: "更新单个任务。两种用法：①type 是「更新模式」而不是任务类型（0 状态 / 1 优先级 / 2 标题 / 3 描述 / 4 感受），只有该模式对应的字段生效，其余参数被忽略；②省略 type 直接传字段（含 tags 标签名，tags/tagIds 为整体替换）。批量请用 tasks.bulkUpdate",
     input: {
       type: "object",
       required: ["id"],
@@ -1505,7 +1520,7 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.bulkUpdate", {
-    description: "按 id 批量更新任务（同一 patch）；dryRun:true 只返回将变更的预览，不写库",
+    description: "按 id 批量更新任务：同一个 patch 原样套用到每个 id；tags/tagIds 是整体替换，会覆盖各任务原有标签，只想加/减标签请用 addTags/addTagIds/removeTags/removeTagIds；dryRun:true 只返回将变更的预览，不写库",
     input: {
       type: "object",
       required: ["ids", "patch"],

@@ -4826,7 +4826,7 @@ var h = React.createElement;
   injectCss();
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.7.2",
+    version: "1.7.3",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },
       { id: "sites", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: SitesView },

@@ -195,6 +195,53 @@ try {
   const nodeData = await call("tasks.dataQuery", { table: "task_node", search: "omega" });
   assert((nodeData.result.rows || []).some((r) => String(r.description || "").includes("omega")), "数据页查询未带出表描述列");
 
+  // ── 4.3 自描述契约：字段字典、方向、默认值必须与实现一致 ──
+  const capTasks = await call("capabilities.get", { domain: "tasks" });
+  const fieldMap = new Map((capTasks.result.capability.fields || []).map((f) => [f.name, f]));
+  assert(fieldMap.size >= 8, "capabilities.get 未返回任务字段字典：" + fieldMap.size);
+  assert(/越大越紧急/.test(fieldMap.get("priority").description), "priority 字段未写明方向（数值越大越紧急）");
+  assert(/0\.\.10/.test(fieldMap.get("priority").type || ""), "priority 字段未写明取值范围：" + fieldMap.get("priority").type);
+  assert(/0=进行中|0=进行中/.test(fieldMap.get("status").description), "status 字段未写明 0 的含义");
+  assert(/缺省/.test(fieldMap.get("tab").description) && /8/.test(fieldMap.get("tab").description), "tab 字段未写明缺省值");
+  assert(/闭区间/.test(fieldMap.get("range / from / to").description), "range/from/to 未写明闭区间语义");
+  assert(capTasks.text.includes("字段字典"), "capabilities.get 文本未渲染字段字典");
+  for (const domain of ["tags", "sites"]) {
+    const capOther = await call("capabilities.get", { domain });
+    assert((capOther.result.capability.fields || []).length >= 4, domain + " 未声明字段字典");
+  }
+
+  const sortField = await call("actions.help", { action: "tasks.list" });
+  assert(/越大越紧急/.test(sortField.text), "tasks.list 描述未写明优先级方向");
+  assert(/缺省=总览/.test(sortField.text), "tasks.list 描述未写明 tab 缺省");
+  const bulkHelp = await call("actions.help", { action: "tasks.bulkUpdate" });
+  assert(/整体替换/.test(bulkHelp.text) && /addTags/.test(bulkHelp.text), "tasks.bulkUpdate 描述未提示整体替换风险");
+  const updHelp = await call("actions.help", { action: "tasks.update" });
+  assert(/更新模式/.test(updHelp.text), "tasks.update 描述未说明 type 是更新模式");
+
+  // 默认 tab=8 与排序方向必须与描述一致
+  const defaultList = await call("tasks.list", {});
+  assert(defaultList.result.filter.tab === 8, "tasks.list 不传 tab 的默认值不是 8：" + defaultList.result.filter.tab);
+  const lowP = await call("tasks.create", { title: "契约排序-低优先", priority: 3 });
+  const highP = await call("tasks.create", { title: "契约排序-高优先", priority: 9 });
+  const descSort = await call("tasks.list", { titleKey: "契约排序", sort: "-priority" });
+  assert(descSort.result.records[0].id === highP.result.id, "sort=-priority 未把数值大的排在前面");
+  assert(/越大越紧急/.test(descSort.text), "排序回显未说明方向：" + descSort.text.split("\n")[0]);
+  const ascSort = await call("tasks.list", { titleKey: "契约排序", sort: "priority" });
+  assert(ascSort.result.records[0].id === lowP.result.id, "sort=priority 升序不对");
+
+  // bulkUpdate 的 tags 整体替换语义（先给两条不同标签，再用同一 patch 覆盖）
+  const cTagA = await call("tags.create", { name: "契约标签A" });
+  const cTagB = await call("tags.create", { name: "契约标签B" });
+  const cTagC = await call("tags.create", { name: "契约标签C" });
+  await call("tasks.update", { id: lowP.result.id, tagIds: [cTagA.result.id] });
+  await call("tasks.update", { id: highP.result.id, tagIds: [cTagB.result.id] });
+  await call("tasks.bulkUpdate", { ids: [lowP.result.id, highP.result.id], patch: { tagIds: [cTagC.result.id] } });
+  const afterBulk = await call("tags.itemsOf", { itemType: "task", itemIds: [lowP.result.id, highP.result.id] });
+  assert(afterBulk.result.items.every((it) => it.tags.length === 1 && it.tags[0].id === String(cTagC.result.id)), "bulkUpdate tagIds 不是整体替换语义：" + JSON.stringify(afterBulk.result.items.map((it) => it.tags.map((x) => x.id))));
+  await call("tasks.bulkUpdate", { ids: [lowP.result.id, highP.result.id], patch: { addTagIds: [cTagA.result.id] } });
+  const afterAdd = await call("tags.itemsOf", { itemType: "task", itemIds: [lowP.result.id, highP.result.id] });
+  assert(afterAdd.result.items.every((it) => it.tags.length === 2 && it.tags.some((x) => x.id === String(cTagA.result.id))), "addTagIds 未保留原有标签：" + JSON.stringify(afterAdd.result.items.map((it) => it.tags.map((x) => x.id))));
+
   // ── 5. bulkUpdate：dryRun 不落库，real 落库 ──
   const updateDry = await call("tasks.bulkUpdate", { ids: [id, p9.result.id], patch: { status: "done", priority: 7 }, dryRun: true });
   assert(updateDry.result.dryRun === true && updateDry.result.wouldUpdate === 2, "bulkUpdate dryRun 预览数量不对");
