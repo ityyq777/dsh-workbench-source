@@ -686,7 +686,8 @@ var h = React.createElement;
       e.stopPropagation();
       var src = props.dragId;
       if (!src || String(src) === String(node.id)) return;
-      var asChild = !isTable && isExpanded;
+      // 任务组（含没有任何子节点的空组）一律接收为子节点；停到任务表上则作为同级插入
+      var asChild = !isTable;
       props.onMove(src, node.id, asChild ? 0 : 2);
     }
     return h("div", null,
@@ -1447,7 +1448,12 @@ var h = React.createElement;
     function moveNode(sourceId, targetId, moveType) {
       setDropId(null); setDragId(null);
       api.call("taskNodes.move", { sourceId: sourceId, targetId: targetId, moveType: moveType }).then(function (r) {
-        if (r && r.ok) { refreshTree(); say(t.updated); }
+        if (r && r.ok) {
+          if (String(moveType) === "0") {
+            var next = new Set(expanded); next.add(String(targetId)); setExpanded(next);
+          }
+          refreshTree(); say(t.updated);
+        }
         else say((r && r.error) || "move failed");
       });
     }
@@ -1727,7 +1733,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.10.0",
+    version: "2.10.1",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },

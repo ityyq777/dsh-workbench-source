@@ -4119,7 +4119,7 @@ var h = React.createElement;
       e.stopPropagation();
       var src = props.dragId;
       if (!src || String(src) === String(node.id)) return;
-      var asChild = !isTable && isExpanded;
+      var asChild = !isTable;
       props.onMove(src, node.id, asChild ? 0 : 2);
     }
     return h2(
@@ -5131,6 +5131,11 @@ var h = React.createElement;
       setDragId(null);
       api.call("taskNodes.move", { sourceId, targetId, moveType }).then(function(r) {
         if (r && r.ok) {
+          if (String(moveType) === "0") {
+            var next = new Set(expanded);
+            next.add(String(targetId));
+            setExpanded(next);
+          }
           refreshTree();
           say(t.updated);
         } else say(r && r.error || "move failed");
@@ -5627,7 +5632,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.10.0",
+    version: "2.10.1",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },
