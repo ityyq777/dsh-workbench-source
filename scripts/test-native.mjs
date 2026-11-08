@@ -139,6 +139,33 @@ try {
   const byTarget = await call("tasks.list", { status: "0", targetFrom: today(-1), targetTo: today(0) });
   assert(byTarget.result.records.some((t) => t.id === id), "targetFrom/targetTo 过滤漏了昨天到期的任务");
 
+  // ── 4.1 检索可用性：默认 tab、筛选回显、关键词搜描述、任意 tab 分页、标签增量 ──
+  const noTab = await call("tasks.list", {});
+  assert(noTab.result.filter.tab === 8 && noTab.result.filter.tabGiven !== true, "未传 tab 时应按总览（8）检索：" + JSON.stringify(noTab.result.filter));
+  assert(noTab.text.startsWith("筛选："), "tasks.list 未回显筛选条件：" + noTab.text.split("\n")[0]);
+  assert(noTab.text.includes("tab=8"), "筛选回显缺少 tab：" + noTab.text.split("\n")[0]);
+  const descTask = await call("tasks.create", { title: "描述检索源", description: "正文里藏着一个独特词 zeta-flag" });
+  const byDesc = await call("tasks.list", { titleKey: "zeta-flag" });
+  assert(byDesc.result.records.length === 1 && byDesc.result.records[0].id === descTask.result.id, "titleKey 未匹配描述：" + JSON.stringify(byDesc.result.records.map((t) => t.title)));
+  const pagedAll = await call("tasks.list", { status: "0", pageNumber: 1, pageSize: 2 });
+  assert(pagedAll.result.filter.pageable === true && pagedAll.result.records.length <= 2, "非 tab5..8 传 pageSize 未分页");
+  assert(pagedAll.result.filter.pageSize === 2, "分页参数未回显");
+  const mergeTask = await call("tasks.create", { title: "标签增量任务" });
+  await call("tasks.update", { id: mergeTask.result.id, addTags: ["增量A"] });
+  await call("tasks.update", { id: mergeTask.result.id, addTags: ["增量B"], removeTags: ["增量A"] });
+  const tagNames = ((await call("tasks.get", { id: mergeTask.result.id })).result.task.tags || []).map((x) => x.name);
+  assert(tagNames.includes("增量B") && !tagNames.includes("增量A"), "addTags/removeTags 增量语义不对：" + JSON.stringify(tagNames));
+  await call("tasks.update", { id: mergeTask.result.id, addTags: ["增量C"] });
+  const keptNames = ((await call("tasks.get", { id: mergeTask.result.id })).result.task.tags || []).map((x) => x.name);
+  assert(keptNames.includes("增量B") && keptNames.includes("增量C"), "addTags 覆盖了原有标签：" + JSON.stringify(keptNames));
+  let mergeErr = null;
+  try { await call("tasks.update", { id: mergeTask.result.id, tags: ["X"], addTags: ["Y"] }); } catch (e) { mergeErr = e; }
+  assert(mergeErr, "整体替换与增量标签同时传入未被拒绝");
+  const bulkMerge = await call("tasks.bulkUpdate", { ids: [mergeTask.result.id, descTask.result.id], patch: { addTags: ["批量增量"] } });
+  assert(bulkMerge.result.updated === 2, "bulkUpdate 增量标签数量不对");
+  const bulkMerged = (await call("tasks.get", { id: descTask.result.id })).result.task.tags.map((x) => x.name);
+  assert(bulkMerged.includes("批量增量"), "bulkUpdate addTags 未生效：" + JSON.stringify(bulkMerged));
+
   // ── 5. bulkUpdate：dryRun 不落库，real 落库 ──
   const updateDry = await call("tasks.bulkUpdate", { ids: [id, p9.result.id], patch: { status: "done", priority: 7 }, dryRun: true });
   assert(updateDry.result.dryRun === true && updateDry.result.wouldUpdate === 2, "bulkUpdate dryRun 预览数量不对");
