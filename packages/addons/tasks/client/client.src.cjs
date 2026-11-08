@@ -24,6 +24,7 @@ var h = React.createElement;
       addGroup: "新建组", addTable: "新建表", rename: "重命名", del: "删除",
       editTitle: "双击编辑标题（任何状态都可改）",
       deleteConfirm: "确定删除这个节点及其子树？子树中的任务会被软删除。",
+      deleteTaskConfirm: "确定删除这条任务吗？删除后不可恢复。",
       root: "全部任务组", manager: "管理模式", filterRestarted: "过滤已重启",
       treeSearch: "搜索任务组 / 任务表", treeHint: "点任务表筛选任务；管理模式可拖拽排序、改名或删除",
       groups: "个任务组", tables: "张任务表", treeNoMatch: "没有匹配的节点",
@@ -56,6 +57,7 @@ var h = React.createElement;
       addGroup: "New group", addTable: "New table", rename: "Rename", del: "Delete",
       editTitle: "Double-click to rename (any status)",
       deleteConfirm: "Delete this node and its subtree? Tasks under it will be soft-deleted.",
+      deleteTaskConfirm: "Delete this task? This cannot be undone.",
       root: "All tasks", manager: "Manage", filterRestarted: "Hide restarted",
       treeSearch: "Search groups / tables", treeHint: "Pick a table to filter tasks; Manage mode allows drag, rename and delete",
       groups: "groups", tables: "tables", treeNoMatch: "No matching node",
@@ -545,6 +547,12 @@ var h = React.createElement;
     }
     ops.push(h("button", { key: "restart", className: "wbt-btn ghost", onClick: function () { props.onRestart(task); } }, h(Icon, { name: "restart", size: 14 }), t.restart));
     ops.push(h("button", { key: "timeline", className: "wbt-btn ghost", onClick: function () { props.onTimeline(task); } }, h(Icon, { name: "timeline", size: 14 }), t.timeline));
+    if (props.onDelete) {
+      ops.push(h("button", {
+        key: "del", className: "wbt-icon wbt-danger", title: t.del, "aria-label": t.del,
+        onClick: function () { props.onDelete(task); },
+      }, h(Icon, { name: "trash", size: 14 })));
+    }
 
     var titleNode = editingTitle !== null
       ? h("input", {
@@ -910,11 +918,12 @@ var h = React.createElement;
   }
 
   var CFG_FALLBACK = {
-    "ui.defaultTab": 0, "ui.listView": "list", "ui.expandDepth": 2,
+    "ui.defaultTab": 0, "ui.listView": "list", "ui.expandDepth": 2, "ui.confirmDelete": true,
     "list.pageSize": 12, "list.sort": "auto", "list.filterRestarted": true,
     "form.defaultPriority": 1, "form.defaultDifficulty": 1, "form.defaultTargetOffset": 0,
     "stats.range": "30d", "stats.top": 10, "stats.showKpi": true,
-    "stats.sections": ["trend", "status", "tags", "priority", "difficulty", "aging", "overdue", "tables", "groups"],
+    "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10,
+    "stats.sections": ["trend", "status", "tags", "priority", "difficulty", "aging", "overdue", "tables", "groups", "recentDone", "recentShutdown"],
   };
 
   function TasksView(props) {
@@ -949,6 +958,7 @@ var h = React.createElement;
     var cfgDepth = Math.floor(Number(cfg["ui.expandDepth"]));
     if (!(cfgDepth >= 0)) cfgDepth = 2;
     var cfgSort = typeof cfg["list.sort"] === "string" ? cfg["list.sort"] : "auto";
+    var cfgConfirm = cfg["ui.confirmDelete"] !== false;
 
     var treeS = React.useState([]);
     var tree = treeS[0], setTree = treeS[1];
@@ -1164,8 +1174,19 @@ var h = React.createElement;
       });
     }
 
+    function deleteTask(task) {
+      if (cfgConfirm && !window.confirm(t.deleteTaskConfirm)) return;
+      api.call("tasks.delete", { id: task.id }).then(function (r) {
+        if (r && r.ok) {
+          refreshList();
+          refreshTagNav();
+          say(t.deleted);
+        } else say((r && r.error) || "delete failed");
+      });
+    }
+
     function deleteNode(node) {
-      if (!window.confirm(t.deleteConfirm)) return;
+      if (cfgConfirm && !window.confirm(t.deleteConfirm)) return;
       api.call("taskNodes.delete", { id: node.id }).then(function (r) {
         if (r && r.ok) {
           refreshTree();
@@ -1292,6 +1313,7 @@ var h = React.createElement;
                 onDone: function (x) { setDoneTask(x); },
                 onRestart: function (x) { setCreateState({ source: "2", originTask: x }); },
                 onTimeline: function (x) { setTimelineTask(x); },
+                onDelete: deleteTask,
                 onPathPick: pickPath,
                 onTagPick: toggleTagId,
               });
@@ -1442,7 +1464,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.7.0",
+    version: "2.8.0",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },

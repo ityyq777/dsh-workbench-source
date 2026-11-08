@@ -1048,6 +1048,14 @@ var require_stats = __commonJS({
         colTarget: "\u8BA1\u5212\u5B8C\u6210",
         colAge: "\u903E\u671F\u5929\u6570",
         colTable: "\u4EFB\u52A1\u8868",
+        recentDone: "\u6700\u8FD1\u5B8C\u6210",
+        recentDoneNote: "\u6309\u5B8C\u6210\u65E5\u671F\u5012\u5E8F",
+        recentShutdown: "\u6700\u8FD1\u5173\u95ED",
+        recentShutdownNote: "\u6309\u5173\u95ED\u65E5\u671F\u5012\u5E8F",
+        colDate: "\u65E5\u671F",
+        colAgo: "\u8DDD\u4ECA\u5929",
+        noRecentDone: "\u8FD8\u6CA1\u6709\u5DF2\u5B8C\u6210\u7684\u4EFB\u52A1",
+        noRecentShutdown: "\u8FD8\u6CA1\u6709\u5DF2\u5173\u95ED\u7684\u4EFB\u52A1",
         noOverdue: "\u6CA1\u6709\u903E\u671F\u4EFB\u52A1",
         noData: "\u8FD8\u6CA1\u6709\u4EFB\u52A1\u3002\u5728\u300C\u8BB0\u5F55\u300D\u91CC\u521B\u5EFA\u540E\uFF0C\u8FD9\u91CC\u4F1A\u81EA\u52A8\u6C47\u603B",
         open: "\u8FDB\u884C\u4E2D",
@@ -1109,6 +1117,14 @@ var require_stats = __commonJS({
         colTarget: "Target",
         colAge: "Days late",
         colTable: "Table",
+        recentDone: "Recently completed",
+        recentDoneNote: "Newest completion first",
+        recentShutdown: "Recently closed",
+        recentShutdownNote: "Newest closure first",
+        colDate: "Date",
+        colAgo: "Days ago",
+        noRecentDone: "No completed tasks yet",
+        noRecentShutdown: "No closed tasks yet",
         noOverdue: "No overdue tasks",
         noData: "No tasks yet. Create one in Tasks and the summary appears here.",
         open: "Active",
@@ -1117,7 +1133,7 @@ var require_stats = __commonJS({
       }
     };
     var RANGES = ["7d", "30d", "90d", "365d", "all"];
-    var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true };
+    var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true, "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10 };
     function TasksStatsView(props) {
       var lang = props.lang === "en" ? "en" : "zh";
       var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -1151,10 +1167,20 @@ var require_stats = __commonJS({
       var loadPair = React2.useState(true);
       var loading = loadPair[0], setLoading = loadPair[1];
       var req = React2.useRef(0);
+      function cfgLimit(key) {
+        var n = Number(cfg[key]);
+        if (!Number.isFinite(n)) return 10;
+        return Math.max(1, Math.min(50, Math.floor(n)));
+      }
       var load = React2.useCallback(function(silent) {
         var id = ++req.current;
         if (!silent) setLoading(true);
-        return Promise.resolve(api.call("tasks.statsReport", { range, top: cfgTop })).then(function(r) {
+        return Promise.resolve(api.call("tasks.statsReport", {
+          range,
+          top: cfgTop,
+          recentDoneLimit: cfgLimit("stats.recentDoneLimit"),
+          recentShutdownLimit: cfgLimit("stats.recentShutdownLimit")
+        })).then(function(r) {
           return r && r.result !== void 0 ? r.result : r;
         }).then(function(d) {
           if (id !== req.current) return;
@@ -1166,7 +1192,7 @@ var require_stats = __commonJS({
         }).then(function() {
           if (id === req.current) setLoading(false);
         });
-      }, [api, range]);
+      }, [api, range, cfgTop, cfg]);
       React2.useEffect(function() {
         load(false);
       }, [load]);
@@ -1333,6 +1359,22 @@ var require_stats = __commonJS({
                 } }
               ]
             })
+          ));
+          var recentCols = [
+            { key: "title", label: t.colTitle },
+            { key: "tableTitle", label: t.colTable },
+            { key: "date", label: t.colDate },
+            { key: "daysAgo", label: t.colAgo, num: true }
+          ];
+          children.push(h2(
+            ch.Card,
+            { key: "recentDone", span: 6, title: t.recentDone, note: t.recentDoneNote },
+            h2(ch.DataTable, { rows: data.lists && data.lists.recentDone || [], lang, empty: t.noRecentDone, columns: recentCols })
+          ));
+          children.push(h2(
+            ch.Card,
+            { key: "recentShutdown", span: 6, title: t.recentShutdown, note: t.recentShutdownNote },
+            h2(ch.DataTable, { rows: data.lists && data.lists.recentShutdown || [], lang, empty: t.noRecentShutdown, columns: recentCols })
           ));
         }
         children.push(h2(ch.Warnings, { key: "warn", items: data.warnings || [] }));
@@ -2334,6 +2376,7 @@ var h = React.createElement;
       del: "\u5220\u9664",
       editTitle: "\u53CC\u51FB\u7F16\u8F91\u6807\u9898\uFF08\u4EFB\u4F55\u72B6\u6001\u90FD\u53EF\u6539\uFF09",
       deleteConfirm: "\u786E\u5B9A\u5220\u9664\u8FD9\u4E2A\u8282\u70B9\u53CA\u5176\u5B50\u6811\uFF1F\u5B50\u6811\u4E2D\u7684\u4EFB\u52A1\u4F1A\u88AB\u8F6F\u5220\u9664\u3002",
+      deleteTaskConfirm: "\u786E\u5B9A\u5220\u9664\u8FD9\u6761\u4EFB\u52A1\u5417\uFF1F\u5220\u9664\u540E\u4E0D\u53EF\u6062\u590D\u3002",
       root: "\u5168\u90E8\u4EFB\u52A1\u7EC4",
       manager: "\u7BA1\u7406\u6A21\u5F0F",
       filterRestarted: "\u8FC7\u6EE4\u5DF2\u91CD\u542F",
@@ -2427,6 +2470,7 @@ var h = React.createElement;
       del: "Delete",
       editTitle: "Double-click to rename (any status)",
       deleteConfirm: "Delete this node and its subtree? Tasks under it will be soft-deleted.",
+      deleteTaskConfirm: "Delete this task? This cannot be undone.",
       root: "All tasks",
       manager: "Manage",
       filterRestarted: "Hide restarted",
@@ -2980,6 +3024,17 @@ var h = React.createElement;
     ops.push(h2("button", { key: "timeline", className: "wbt-btn ghost", onClick: function() {
       props.onTimeline(task);
     } }, h2(Icon2, { name: "timeline", size: 14 }), t.timeline));
+    if (props.onDelete) {
+      ops.push(h2("button", {
+        key: "del",
+        className: "wbt-icon wbt-danger",
+        title: t.del,
+        "aria-label": t.del,
+        onClick: function() {
+          props.onDelete(task);
+        }
+      }, h2(Icon2, { name: "trash", size: 14 })));
+    }
     var titleNode = editingTitle !== null ? h2("input", {
       ref: titleRef,
       className: "wbt-input",
@@ -3512,6 +3567,7 @@ var h = React.createElement;
     "ui.defaultTab": 0,
     "ui.listView": "list",
     "ui.expandDepth": 2,
+    "ui.confirmDelete": true,
     "list.pageSize": 12,
     "list.sort": "auto",
     "list.filterRestarted": true,
@@ -3521,7 +3577,9 @@ var h = React.createElement;
     "stats.range": "30d",
     "stats.top": 10,
     "stats.showKpi": true,
-    "stats.sections": ["trend", "status", "tags", "priority", "difficulty", "aging", "overdue", "tables", "groups"]
+    "stats.recentDoneLimit": 10,
+    "stats.recentShutdownLimit": 10,
+    "stats.sections": ["trend", "status", "tags", "priority", "difficulty", "aging", "overdue", "tables", "groups", "recentDone", "recentShutdown"]
   };
   function TasksView(props) {
     var lang = props.lang === "en" ? "en" : "zh";
@@ -3553,6 +3611,7 @@ var h = React.createElement;
     var cfgDepth = Math.floor(Number(cfg["ui.expandDepth"]));
     if (!(cfgDepth >= 0)) cfgDepth = 2;
     var cfgSort = typeof cfg["list.sort"] === "string" ? cfg["list.sort"] : "auto";
+    var cfgConfirm = cfg["ui.confirmDelete"] !== false;
     var treeS = React2.useState([]);
     var tree = treeS[0], setTree = treeS[1];
     var expS = React2.useState(/* @__PURE__ */ new Set());
@@ -3784,8 +3843,18 @@ var h = React.createElement;
         } else say(r && r.error || "rename failed");
       });
     }
+    function deleteTask(task) {
+      if (cfgConfirm && !window.confirm(t.deleteTaskConfirm)) return;
+      api.call("tasks.delete", { id: task.id }).then(function(r) {
+        if (r && r.ok) {
+          refreshList();
+          refreshTagNav();
+          say(t.deleted);
+        } else say(r && r.error || "delete failed");
+      });
+    }
     function deleteNode(node) {
-      if (!window.confirm(t.deleteConfirm)) return;
+      if (cfgConfirm && !window.confirm(t.deleteConfirm)) return;
       api.call("taskNodes.delete", { id: node.id }).then(function(r) {
         if (r && r.ok) {
           refreshTree();
@@ -3959,6 +4028,7 @@ var h = React.createElement;
         onTimeline: function(x) {
           setTimelineTask(x);
         },
+        onDelete: deleteTask,
         onPathPick: pickPath,
         onTagPick: toggleTagId
       });
@@ -4261,7 +4331,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.7.0",
+    version: "2.8.0",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

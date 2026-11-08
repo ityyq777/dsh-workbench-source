@@ -23,6 +23,8 @@ var COPY = {
     groups: "任务组排行", groupsNote: "一级任务组",
     colName: "名称", colTotal: "总数", colOpen: "进行中", colOverdue: "逾期", colDone: "已完成", colRate: "完成率",
     colTitle: "任务", colTarget: "计划完成", colAge: "逾期天数", colTable: "任务表",
+    recentDone: "最近完成", recentDoneNote: "按完成日期倒序", recentShutdown: "最近关闭", recentShutdownNote: "按关闭日期倒序",
+    colDate: "日期", colAgo: "距今天", noRecentDone: "还没有已完成的任务", noRecentShutdown: "还没有已关闭的任务",
     noOverdue: "没有逾期任务", noData: "还没有任务。在「记录」里创建后，这里会自动汇总",
     open: "进行中", shutdown: "已关闭", restarted: "已重启",
   },
@@ -44,6 +46,8 @@ var COPY = {
     groups: "Task groups", groupsNote: "First-level groups",
     colName: "Name", colTotal: "Total", colOpen: "Active", colOverdue: "Overdue", colDone: "Done", colRate: "Completion",
     colTitle: "Task", colTarget: "Target", colAge: "Days late", colTable: "Table",
+    recentDone: "Recently completed", recentDoneNote: "Newest completion first", recentShutdown: "Recently closed", recentShutdownNote: "Newest closure first",
+    colDate: "Date", colAgo: "Days ago", noRecentDone: "No completed tasks yet", noRecentShutdown: "No closed tasks yet",
     noOverdue: "No overdue tasks", noData: "No tasks yet. Create one in Tasks and the summary appears here.",
     open: "Active", shutdown: "Closed", restarted: "Restarted",
   },
@@ -51,7 +55,7 @@ var COPY = {
 
 var RANGES = ["7d", "30d", "90d", "365d", "all"];
 
-var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true };
+var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true, "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10 };
 
 function TasksStatsView(props) {
   var lang = props.lang === "en" ? "en" : "zh";
@@ -84,10 +88,20 @@ function TasksStatsBody(props) {
   var loading = loadPair[0], setLoading = loadPair[1];
   var req = React.useRef(0);
 
+  function cfgLimit(key) {
+    var n = Number(cfg[key]);
+    if (!Number.isFinite(n)) return 10;
+    return Math.max(1, Math.min(50, Math.floor(n)));
+  }
+
   var load = React.useCallback(function (silent) {
     var id = ++req.current;
     if (!silent) setLoading(true);
-    return Promise.resolve(api.call("tasks.statsReport", { range: range, top: cfgTop }))
+    return Promise.resolve(api.call("tasks.statsReport", {
+      range: range, top: cfgTop,
+      recentDoneLimit: cfgLimit("stats.recentDoneLimit"),
+      recentShutdownLimit: cfgLimit("stats.recentShutdownLimit"),
+    }))
       .then(function (r) { return r && r.result !== undefined ? r.result : r; })
       .then(function (d) {
         if (id !== req.current) return;
@@ -98,7 +112,7 @@ function TasksStatsBody(props) {
         setErr(String((e && e.message) || e || "load failed"));
       })
       .then(function () { if (id === req.current) setLoading(false); });
-  }, [api, range]);
+  }, [api, range, cfgTop, cfg]);
 
   React.useEffect(function () { load(false); }, [load]);
 
@@ -228,6 +242,17 @@ function TasksStatsBody(props) {
             { key: "completion", label: t.colRate, num: true, render: function (r) { return ch.pct(r.completion); } },
           ],
         })));
+
+      var recentCols = [
+        { key: "title", label: t.colTitle },
+        { key: "tableTitle", label: t.colTable },
+        { key: "date", label: t.colDate },
+        { key: "daysAgo", label: t.colAgo, num: true },
+      ];
+      children.push(h(ch.Card, { key: "recentDone", span: 6, title: t.recentDone, note: t.recentDoneNote },
+        h(ch.DataTable, { rows: (data.lists && data.lists.recentDone) || [], lang: lang, empty: t.noRecentDone, columns: recentCols })));
+      children.push(h(ch.Card, { key: "recentShutdown", span: 6, title: t.recentShutdown, note: t.recentShutdownNote },
+        h(ch.DataTable, { rows: (data.lists && data.lists.recentShutdown) || [], lang: lang, empty: t.noRecentShutdown, columns: recentCols })));
     }
     children.push(h(ch.Warnings, { key: "warn", items: data.warnings || [] }));
   }

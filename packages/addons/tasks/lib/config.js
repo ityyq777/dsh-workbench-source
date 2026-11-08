@@ -29,6 +29,8 @@ const SECTIONS = [
   { value: "overdue", zh: "逾期清单", en: "Overdue list" },
   { value: "tables", zh: "任务表排行", en: "Task tables" },
   { value: "groups", zh: "任务组排行", en: "Task groups" },
+  { value: "recentDone", zh: "最近完成", en: "Recently completed" },
+  { value: "recentShutdown", zh: "最近关闭", en: "Recently closed" },
 ];
 
 const ITEMS = [
@@ -144,6 +146,21 @@ const ITEMS = [
     zh: "显示的区块", en: "Visible sections",
     hintZh: "统计页展示哪些区块；KPI 由下一项单独控制", hintEn: "Sections rendered on Stats; KPIs are controlled separately",
     values: SECTIONS,
+  },
+  {
+    id: "stats.recentDoneLimit", group: "stats", type: "int", surface: "ui", apply: "mount", default: 10, min: 1, max: 50,
+    zh: "最近完成条数", en: "Recently completed rows",
+    hintZh: "「最近完成」区块显示多少条（1–50）", hintEn: "Rows in Recently completed (1–50)",
+  },
+  {
+    id: "stats.recentShutdownLimit", group: "stats", type: "int", surface: "ui", apply: "mount", default: 10, min: 1, max: 50,
+    zh: "最近关闭条数", en: "Recently closed rows",
+    hintZh: "「最近关闭」区块显示多少条（1–50）", hintEn: "Rows in Recently closed (1–50)",
+  },
+  {
+    id: "ui.confirmDelete", group: "ui", type: "bool", surface: "ui", apply: "mount", default: true,
+    zh: "删除前确认", en: "Confirm before delete",
+    hintZh: "删除任务或任务单元时弹出确认框", hintEn: "Ask before deleting tasks or task units",
   },
   {
     id: "stats.showKpi", group: "stats", type: "bool", surface: "ui", apply: "mount", default: true,

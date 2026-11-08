@@ -45,7 +45,10 @@ const tasks = await load("../packages/addons/tasks/lib/index.js", "wb-addon-task
 const g0 = tasks.call("tasks.configGet");
 assert(g0.values["list.pageSize"] === 12, "tasks 默认分页应为 12");
 assert(g0.values["ui.defaultTab"] === 0, "tasks 默认页签应为 0");
-assert(g0.items.length >= 15, "tasks 配置项数量不足：" + g0.items.length);
+assert(g0.values["stats.recentDoneLimit"] === 10, "tasks 最近完成默认应为 10");
+assert(g0.values["stats.recentShutdownLimit"] === 10, "tasks 最近关闭默认应为 10");
+assert(g0.values["ui.confirmDelete"] === true, "tasks 删除确认默认应为 true");
+assert(g0.items.length >= 18, "tasks 配置项数量不足：" + g0.items.length);
 assert(Object.keys(g0.overrides).length === 0, "初始不应有覆盖项");
 
 // 2. 未知键与越界都必须整批拒绝
@@ -74,12 +77,32 @@ tasks.call("tasks.configSet", { values: { "stats.weekStartsOn": 0 } });
 assert(tasks.call("tasks.statsReport", { range: "90d" }).range.weekStartsOn === 0, "周起始日未生效");
 tasks.call("tasks.configSet", { values: { "stats.weekStartsOn": 1 } });
 assert(tasks.call("tasks.statsReport", { range: "90d" }).range.weekStartsOn === 1, "周起始日未恢复");
+const rep0 = tasks.call("tasks.statsReport", { range: "90d", recentDoneLimit: 3, recentShutdownLimit: 4 });
+assert(Array.isArray(rep0.lists.recentDone), "缺少最近完成清单");
+assert(Array.isArray(rep0.lists.recentShutdown), "缺少最近关闭清单");
+assert(rep0.lists.recentDone.length <= 3, "最近完成条数未按参数截断");
+assert(rep0.lists.recentShutdown.length <= 4, "最近关闭条数未按参数截断");
+const rep1 = tasks.call("tasks.statsReport", { range: "90d", recentDoneLimit: 999, recentShutdownLimit: -1 });
+assert(rep1.lists.recentDone.length <= 50, "最近完成条数未夹到上限");
 
 // 6. 服务端读取：关掉自动建标签后，未知标签名必须报错
 tasks.call("tasks.configSet", { values: { "form.autoCreateTags": false } });
 mustThrow(() => tasks.call("tasks.create", { title: "配置测试任务", tags: ["绝不存在的标签"] }), "标签不存在", "未知标签应被拒绝");
 const created = tasks.call("tasks.create", { title: "配置测试任务" });
 assert(created.id || (created.task && created.task.id), "普通任务应能创建：" + JSON.stringify(created).slice(0, 200));
+
+// 6.1 最近完成 / 最近关闭清单
+const doneTask = tasks.call("tasks.create", { title: "完成过的任务", publishDate: "2026-01-01" });
+const doneId = String(doneTask.id || (doneTask.task && doneTask.task.id));
+tasks.call("tasks.complete", { id: doneId, date: "2026-01-05", difficulty: 2 });
+const shutTask = tasks.call("tasks.create", { title: "关闭过的任务", publishDate: "2026-01-01" });
+const shutId = String(shutTask.id || (shutTask.task && shutTask.task.id));
+tasks.call("tasks.update", { id: shutId, type: "STATUS", status: "1", date: "2026-01-06" });
+const rep2 = tasks.call("tasks.statsReport", { range: "90d", recentDoneLimit: 10, recentShutdownLimit: 10 });
+assert(rep2.lists.recentDone.some(function (x) { return x.id === doneId; }), "最近完成缺少刚完成的任务");
+assert(rep2.lists.recentShutdown.some(function (x) { return x.id === shutId; }), "最近关闭缺少刚关闭的任务");
+const doneRow = rep2.lists.recentDone.find(function (x) { return x.id === doneId; });
+assert(doneRow.date === "2026-01-05" && doneRow.daysAgo > 0 && doneRow.tableTitle, "最近完成行字段不完整：" + JSON.stringify(doneRow));
 
 // 7. tags：名称上限与沉睡阈值
 assert(tags.call("tags.configGet").items.length >= 10, "tags 配置项不足");

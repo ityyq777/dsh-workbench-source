@@ -1676,7 +1676,7 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.statsReport", {
-    description: "任务统计报表：总量/状态/标签/优先级/难度、趋势、逾期账龄、任务表与任务组排行",
+    description: "任务统计报表：总量/状态/标签/优先级/难度、趋势、逾期账龄、近期完成/关闭清单、任务表与任务组排行",
     input: {
       type: "object",
       properties: {
@@ -1684,6 +1684,8 @@ export function registerTaskActions(api) {
         from: { type: "string", description: "YYYY-MM-DD，与 to 同时提供" },
         to: { type: "string", description: "YYYY-MM-DD，默认今天" },
         top: { type: "number", description: "排行/明细条数，1–20，默认 10" },
+        recentDoneLimit: { type: "number", description: "「最近完成」清单条数，1–50，默认 10" },
+        recentShutdownLimit: { type: "number", description: "「最近关闭」清单条数，1–50，默认 10" },
       },
     },
     examples: [{ range: "30d", top: 10 }, { from: "2026-10-01", to: "2026-10-31" }],

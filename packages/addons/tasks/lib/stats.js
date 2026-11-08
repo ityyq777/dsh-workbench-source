@@ -301,6 +301,46 @@ export function statsReport(db, args, api) {
     };
   });
 
+  function limitOf(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? Math.max(1, Math.min(50, Math.floor(n))) : 10;
+  }
+  const recentDoneLimit = limitOf(args.recentDoneLimit);
+  const recentShutdownLimit = limitOf(args.recentShutdownLimit);
+  const nodeTitle = function (tableId) {
+    const table = nodeMap[String(tableId)];
+    return table ? String(table.name) : "已删除任务表";
+  };
+  const todayStart = startOfDay(new Date());
+  const recentDoneRows = db.prepare(
+    "SELECT id,title,done_date,table_id FROM task WHERE deleted_at IS NULL AND status='2' " +
+      "ORDER BY (done_date IS NULL OR done_date=''), done_date DESC, updated_at DESC, id DESC LIMIT ?",
+  ).all(recentDoneLimit);
+  const recentDone = recentDoneRows.map(function (row) {
+    const day = parseDay(String(row.done_date || ""));
+    return {
+      id: String(row.id),
+      title: String(row.title || ""),
+      date: String(row.done_date || ""),
+      daysAgo: day ? Math.max(0, diffDays(day, todayStart)) : null,
+      tableTitle: nodeTitle(row.table_id),
+    };
+  });
+  const recentShutdownRows = db.prepare(
+    "SELECT id,title,shutdown_date,table_id FROM task WHERE deleted_at IS NULL AND status='1' " +
+      "ORDER BY (shutdown_date IS NULL OR shutdown_date=''), shutdown_date DESC, updated_at DESC, id DESC LIMIT ?",
+  ).all(recentShutdownLimit);
+  const recentShutdown = recentShutdownRows.map(function (row) {
+    const day = parseDay(String(row.shutdown_date || ""));
+    return {
+      id: String(row.id),
+      title: String(row.title || ""),
+      date: String(row.shutdown_date || ""),
+      daysAgo: day ? Math.max(0, diffDays(day, todayStart)) : null,
+      tableTitle: nodeTitle(row.table_id),
+    };
+  });
+
   const agingBins = [
     { key: "1-3", label: "1–3 天", count: 0 },
     { key: "4-7", label: "4–7 天", count: 0 },
@@ -406,7 +446,7 @@ export function statsReport(db, args, api) {
       tables: rank(Object.keys(tableAgg).map(function (k) { return tableAgg[k]; })),
       groups: rank(Object.keys(groupAgg).map(function (k) { return groupAgg[k]; })),
     },
-    lists: { overdue: overdueList },
+    lists: { overdue: overdueList, recentDone: recentDone, recentShutdown: recentShutdown },
     warnings: warnings,
   };
 }
