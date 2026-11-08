@@ -3,7 +3,7 @@
  *
  * 对齐 _archive/sheepone-system/sheepone-tag：
  *  - GET /tag（分页、按 update_time desc）
- *  - POST /tag（name 非空、允许重名）
+ *  - POST /tag（name 非空；名称唯一，同名幂等返回已有 id）
  *  - DELETE /tag?id=（物理删改软删）
  *  - 前端额外依赖 GET /tag/search（旧后端缺失），这里补成本地搜索
  * tag_mapping 预留给后续 site 模块：tag_id × item_id × item_type。
@@ -385,7 +385,7 @@ export function registerTagActions(api) {
   });
 
   action("tags.create", {
-    description: "创建标签；名称为空会报错，允许与已有标签重名（没有唯一约束）",
+    description: "创建标签；名称为空会报错；标签名唯一（uk_tag_name，软删除的不占位），同名再调会幂等返回已有 id（existing=true），不会新建第二条",
     input: {
       type: "object",
       required: ["name"],
@@ -398,7 +398,7 @@ export function registerTagActions(api) {
   });
 
   action("tags.update", {
-    description: "重命名标签；允许重名（不做唯一性校验），关联数据保持不变",
+    description: "重命名标签；新名字被别的存活标签占用时报错并返回占用者 id（软删的同名标签不占位）；关联数据保持不变",
     input: {
       type: "object",
       required: ["id", "name"],
