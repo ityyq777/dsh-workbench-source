@@ -21,6 +21,7 @@ var h = React.createElement;
       all: "全部", empty: "这个视图还没有任务", loading: "加载中…",
       error: "操作失败：", save: "保存", cancel: "取消", create: "创建", close: "关闭",
       addGroup: "新建组", addTable: "新建表", rename: "重命名", del: "删除",
+      editTitle: "双击编辑标题（任何状态都可改）",
       deleteConfirm: "确定删除这个节点及其子树？子树中的任务会被软删除。",
       root: "全部任务组", manager: "管理模式", filterRestarted: "过滤已重启",
       treeSearch: "搜索任务组 / 任务表", treeHint: "点任务表筛选任务；管理模式可拖拽排序、改名或删除",
@@ -52,6 +53,7 @@ var h = React.createElement;
       all: "All", empty: "No tasks in this view", loading: "Loading…",
       error: "Failed: ", save: "Save", cancel: "Cancel", create: "Create", close: "Close",
       addGroup: "New group", addTable: "New table", rename: "Rename", del: "Delete",
+      editTitle: "Double-click to rename (any status)",
       deleteConfirm: "Delete this node and its subtree? Tasks under it will be soft-deleted.",
       root: "All tasks", manager: "Manage", filterRestarted: "Hide restarted",
       treeSearch: "Search groups / tables", treeHint: "Pick a table to filter tasks; Manage mode allows drag, rename and delete",
@@ -469,7 +471,7 @@ var h = React.createElement;
     }, [editingReview]);
 
     function beginTitle() {
-      if (!isActive) return;
+      // 任何状态（进行中/已关闭/已完成/重启）都允许改标题。
       setEditingTitle(String(task.title || ""));
     }
     function saveTitle() {
@@ -549,7 +551,7 @@ var h = React.createElement;
           },
           onBlur: saveTitle,
         })
-      : h("div", { className: "wbt-title", onDoubleClick: beginTitle, title: isActive ? "双击编辑标题" : "" }, task.title);
+      : h("div", { className: "wbt-title", onDoubleClick: beginTitle, title: t.editTitle }, task.title);
 
     var descNode = editingDesc !== null
       ? h("textarea", {
@@ -1378,7 +1380,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.6.2",
+    version: "2.6.3",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },

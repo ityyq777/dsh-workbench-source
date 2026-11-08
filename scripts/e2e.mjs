@@ -13,6 +13,7 @@ const tests = [
   "scripts/test-native.mjs",
   "scripts/test-clients.mjs",
   "scripts/test-tags.mjs",
+  "scripts/test-tags-ui.mjs",
   "scripts/test-sites.mjs",
   "scripts/test-backup.mjs",
 ];

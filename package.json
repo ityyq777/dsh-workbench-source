@@ -12,6 +12,7 @@
     "test:native": "node scripts/test-native.mjs",
     "test:clients": "node scripts/test-clients.mjs",
     "test:tags": "node scripts/test-tags.mjs",
+    "test:tags-ui": "node scripts/test-tags-ui.mjs",
     "test:sites": "node scripts/test-sites.mjs",
     "test:backup": "node scripts/test-backup.mjs",
     "test:e2e": "node scripts/e2e.mjs",

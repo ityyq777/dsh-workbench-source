@@ -1157,6 +1157,55 @@ var init_trash_2 = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/pencil.mjs
+var pencil_exports = {};
+__export(pencil_exports, {
+  __iconData: () => __iconData5,
+  default: () => Pencil
+});
+var __iconData5, Pencil;
+var init_pencil = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/pencil.mjs"() {
+    init_createLucideIcon();
+    __iconData5 = {
+      name: "pencil",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
+            key: "1a8usu"
+          }
+        ],
+        ["path", { d: "m15 5 4 4", key: "1mk7zo" }]
+      ]
+    };
+    __iconData5.node;
+    Pencil = createLucideIcon(__iconData5);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/check.mjs
+var check_exports = {};
+__export(check_exports, {
+  __iconData: () => __iconData6,
+  default: () => Check
+});
+var __iconData6, Check;
+var init_check = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/check.mjs"() {
+    init_createLucideIcon();
+    __iconData6 = {
+      name: "check",
+      size: 24,
+      node: [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]]
+    };
+    __iconData6.node;
+    Check = createLucideIcon(__iconData6);
+  }
+});
+
 // packages/addons/tags/client/client.src.cjs
 var React = require("react");
 var h = React.createElement;
@@ -1175,7 +1224,9 @@ var h = React.createElement;
     "search": (init_search(), __toCommonJS(search_exports)).default,
     "x": (init_x(), __toCommonJS(x_exports)).default,
     "plus": (init_plus(), __toCommonJS(plus_exports)).default,
-    "trash": (init_trash_2(), __toCommonJS(trash_2_exports)).default
+    "trash": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
+    "pencil": (init_pencil(), __toCommonJS(pencil_exports)).default,
+    "check": (init_check(), __toCommonJS(check_exports)).default
   };
   function Icon2(props) {
     var C = ICONS[props.name];
@@ -1216,7 +1267,11 @@ var h = React.createElement;
       deleted: "\u5DF2\u5220\u9664",
       needName: "\u6807\u7B7E\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A",
       tooLong: "\u6807\u7B7E\u540D\u79F0\u4E0D\u80FD\u8D85\u8FC7 64 \u4E2A\u5B57\u7B26",
-      duplicate: "\u6807\u7B7E\u5DF2\u5B58\u5728",
+      rename: "\u91CD\u547D\u540D",
+      renameSave: "\u4FDD\u5B58",
+      renameHint: "\u56DE\u8F66\u4FDD\u5B58\uFF0CEsc \u53D6\u6D88\uFF1B\u5141\u8BB8\u91CD\u540D",
+      renamed: "\u5DF2\u91CD\u547D\u540D",
+      dupAllowed: "\u540C\u540D\u6807\u7B7E\u5DF2\u5B58\u5728\uFF0C\u4ECD\u53EF\u4FDD\u5B58",
       batchHint: "\u5220\u9664\u53EA\u79FB\u9664\u6807\u7B7E\uFF0C\u5173\u8054\u6570\u636E\u4FDD\u7559\u5728\u4E1A\u52A1\u8868\u4E2D"
     },
     en: {
@@ -1252,7 +1307,11 @@ var h = React.createElement;
       deleted: "Deleted",
       needName: "Tag name is required",
       tooLong: "Tag name cannot exceed 64 characters",
-      duplicate: "Tag already exists",
+      rename: "Rename",
+      renameSave: "Save",
+      renameHint: "Enter to save, Esc to cancel; duplicates allowed",
+      renamed: "Renamed",
+      dupAllowed: "A tag with this name exists; saving is still allowed",
       batchHint: "Deleting a tag keeps business data in place"
     }
   };
@@ -1285,6 +1344,7 @@ var h = React.createElement;
     ".wbg-check{width:15px;height:15px;accent-color:var(--wbg-accent);flex:none;cursor:pointer}",
     ".wbg-chip{display:inline-flex;align-items:center;max-width:100%;border-radius:999px;padding:4px 10px;font-size:12.5px;font-weight:600;line-height:1.2;color:var(--tag-color,#333);background:color-mix(in oklab,var(--tag-color,#999) 18%,transparent);border:1px solid color-mix(in oklab,var(--tag-color,#999) 35%,transparent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
     ".wbg-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    ".wbg-rename{width:100%;padding:4px 9px;font-size:12.5px;border-radius:999px}",
     ".wbg-time{font-size:12px;opacity:.55;white-space:nowrap;font-variant-numeric:tabular-nums}",
     ".wbg-ops{display:flex;align-items:center;gap:6px;flex:none}",
     ".wbg-empty,.wbg-loading{border:1px dashed var(--wbg-line);border-radius:10px;padding:38px 16px;text-align:center;font-size:12.5px;opacity:.6}",
@@ -1353,10 +1413,76 @@ var h = React.createElement;
     var confirmAll = confirmAllS[0], setConfirmAll = confirmAllS[1];
     var busyS = React2.useState(false);
     var busy = busyS[0], setBusy = busyS[1];
+    var editIdS = React2.useState("");
+    var editId = editIdS[0], setEditId = editIdS[1];
+    var editNameS = React2.useState("");
+    var editName = editNameS[0], setEditName = editNameS[1];
+    var editRef = React2.useRef(null);
+    var editCancelRef = React2.useRef(false);
+    var renameDoneRef = React2.useRef(false);
     var refreshRef = React2.useRef(null);
     var pageSize = 18;
     function say(msg) {
       setToast(String(msg || ""));
+    }
+    React2.useEffect(function() {
+      if (!editId || !editRef.current) return;
+      editRef.current.focus();
+      editRef.current.select();
+    }, [editId]);
+    function beginRename(row) {
+      setConfirmId("");
+      editCancelRef.current = false;
+      renameDoneRef.current = false;
+      setEditId(String(row.id));
+      setEditName(String(row.name || ""));
+    }
+    function cancelRename() {
+      editCancelRef.current = true;
+      closeRename();
+    }
+    function saveRename() {
+      if (editCancelRef.current) {
+        editCancelRef.current = false;
+        return;
+      }
+      if (renameDoneRef.current) return;
+      var id = editId;
+      if (!id) return;
+      var value = String(editName || "").trim();
+      if (!value) {
+        say(t.needName);
+        return;
+      }
+      if (value.length > 64) {
+        say(t.tooLong);
+        return;
+      }
+      var cur = rows.filter(function(r) {
+        return String(r.id) === String(id);
+      })[0];
+      if (cur && value === String(cur.name || "")) {
+        closeRename();
+        return;
+      }
+      renameDoneRef.current = true;
+      closeRename();
+      api.call("tags.update", { id, name: value }).then(function(r) {
+        renameDoneRef.current = false;
+        if (r && r.ok) {
+          say(t.renamed + "\uFF1A" + value);
+          if (refreshRef.current) refreshRef.current();
+        } else {
+          say(r && r.error || "rename failed");
+        }
+      }).catch(function(e) {
+        renameDoneRef.current = false;
+        say(String(e && e.message || e));
+      });
+    }
+    function closeRename() {
+      setEditId("");
+      setEditName("");
     }
     React2.useEffect(function() {
       if (!toast) return;
@@ -1440,7 +1566,7 @@ var h = React.createElement;
           }, 0);
         } else {
           var msg = r && r.error || "create failed";
-          setFormError(String(msg).indexOf("\u5DF2\u5B58\u5728") >= 0 ? t.duplicate : msg);
+          setFormError(msg);
         }
       }).catch(function(e2) {
         setSaving(false);
@@ -1601,6 +1727,7 @@ var h = React.createElement;
       ),
       loading ? h2("div", { className: "wbg-loading" }, t.loading) : rows.length === 0 ? h2("div", { className: "wbg-empty" }, query ? t.noMatch : t.empty) : h2("div", { className: "wbg-list" }, rows.map(function(row) {
         var color = colorFor(row.id || row.name);
+        var editing = String(editId) === String(row.id);
         return h2(
           "div",
           {
@@ -1617,11 +1744,56 @@ var h = React.createElement;
             },
             "aria-label": row.name
           }),
-          h2("div", { className: "wbg-name" }, h2("span", { className: "wbg-chip" }, row.name)),
+          editing ? h2(
+            "div",
+            { className: "wbg-name" },
+            h2("input", {
+              ref: editRef,
+              type: "text",
+              className: "wbg-input wbg-rename",
+              value: editName,
+              maxLength: 64,
+              "aria-label": t.name,
+              title: t.renameHint,
+              onChange: function(e) {
+                setEditName(e.target.value);
+              },
+              onKeyDown: function(e) {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  saveRename();
+                }
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  cancelRename();
+                }
+              },
+              onBlur: function() {
+                saveRename();
+              }
+            })
+          ) : h2(
+            "div",
+            { className: "wbg-name" },
+            h2("span", {
+              className: "wbg-chip",
+              title: t.renameHint,
+              style: { cursor: "text" },
+              onDoubleClick: function() {
+                beginRename(row);
+              }
+            }, row.name)
+          ),
           h2("div", { className: "wbg-time" }, row.createTime || ""),
           h2(
             "div",
             { className: "wbg-ops" },
+            editing ? [
+              h2("button", { key: "ok", type: "button", className: "wbg-btn primary", onClick: saveRename }, h2(Icon2, { name: "check", size: 13 }), t.renameSave),
+              h2("button", { key: "no", type: "button", className: "wbg-btn ghost", onClick: cancelRename }, t.cancel)
+            ] : h2("button", { type: "button", className: "wbg-btn ghost", title: t.rename, "aria-label": t.rename, onClick: function() {
+              beginRename(row);
+            } }, h2(Icon2, { name: "pencil", size: 13 })),
             confirmId === row.id ? h2("button", { type: "button", className: "wbg-btn danger", disabled: busy, onClick: function() {
               deleteOne(row.id);
             } }, busy ? "\u2026" : t.confirmDel) : h2("button", { type: "button", className: "wbg-btn danger", onClick: function() {
@@ -1661,7 +1833,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.4.1",
+    version: "1.4.2",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },
       { id: "tags", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TagsView }

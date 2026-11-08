@@ -33,7 +33,7 @@ export function apply(ctx) {
         id: "wb-addon-tags",
         title: "标签",
         description: "创建与管理标签，为站点等业务提供标签归类",
-        version: "1.4.1",
+        version: "1.4.2",
         tables: ["tag", "tag_mapping"],
         sync: tagSync,
         views: [
@@ -58,7 +58,7 @@ export function apply(ctx) {
               ],
               primaryAction: "tags.create",
               keyArgs: ["name"],
-              dedupe: "没有内置去重；先用 tags.list / tags.search 查重名，再决定是否创建。",
+              dedupe: "没有内置去重；允许重名，同名标签各算一个，可用 tags.update 重命名。",
               relations: [
                 { kind: "task", via: "tags.link(itemType=task)", description: "给任务批量挂标签。" },
                 { kind: "site", via: "sites.create(tagIds) / sites.update(tagIds)", description: "站点插件存在时，由站点写入自己的标签映射。" },
@@ -67,7 +67,7 @@ export function apply(ctx) {
             },
           ],
           notFor: ["不要用标签代替任务标题或站点描述"],
-          notes: ["标签名最大 64 字符；重名会报错。", "tags.link 的 itemType 默认 task；站点标签由站点插件写入。"],
+          notes: ["标签名最大 64 字符；允许重名，需要区分时用 tags.update 改名。", "tags.link 的 itemType 默认 task；站点标签由站点插件写入。"],
         },
         setup,
         exportData: () => exportTagsData(requireApi()),

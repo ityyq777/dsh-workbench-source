@@ -20,6 +20,8 @@ var h = React.createElement;
     "x": require("lucide-react/icons/x").default,
     "plus": require("lucide-react/icons/plus").default,
     "trash": require("lucide-react/icons/trash-2").default,
+    "pencil": require("lucide-react/icons/pencil").default,
+    "check": require("lucide-react/icons/check").default,
   };
   // 统一的小尺寸图标调用方式，保持各视图里的 Icon({ name, size }) 不变。
   function Icon(props) {
@@ -40,7 +42,8 @@ var h = React.createElement;
       selectAll: "全选", total: "共", items: "个标签", page: "第", pageUnit: "页",
       prev: "上一页", next: "下一页", created: "已创建", deleted: "已删除",
       needName: "标签名称不能为空", tooLong: "标签名称不能超过 64 个字符",
-      duplicate: "标签已存在", batchHint: "删除只移除标签，关联数据保留在业务表中",
+      rename: "重命名", renameSave: "保存", renameHint: "回车保存，Esc 取消；允许重名",
+      renamed: "已重命名", dupAllowed: "同名标签已存在，仍可保存", batchHint: "删除只移除标签，关联数据保留在业务表中",
     },
     en: {
       title: "Tags", hint: "Tags classify sites and other business data; everything stays local.",
@@ -53,7 +56,8 @@ var h = React.createElement;
       selectAll: "Select all", total: "Total", items: "tags", page: "Page", pageUnit: "",
       prev: "Prev", next: "Next", created: "Created", deleted: "Deleted",
       needName: "Tag name is required", tooLong: "Tag name cannot exceed 64 characters",
-      duplicate: "Tag already exists", batchHint: "Deleting a tag keeps business data in place",
+      rename: "Rename", renameSave: "Save", renameHint: "Enter to save, Esc to cancel; duplicates allowed",
+      renamed: "Renamed", dupAllowed: "A tag with this name exists; saving is still allowed", batchHint: "Deleting a tag keeps business data in place",
     },
   };
 
@@ -87,6 +91,7 @@ var h = React.createElement;
     ".wbg-check{width:15px;height:15px;accent-color:var(--wbg-accent);flex:none;cursor:pointer}",
     ".wbg-chip{display:inline-flex;align-items:center;max-width:100%;border-radius:999px;padding:4px 10px;font-size:12.5px;font-weight:600;line-height:1.2;color:var(--tag-color,#333);background:color-mix(in oklab,var(--tag-color,#999) 18%,transparent);border:1px solid color-mix(in oklab,var(--tag-color,#999) 35%,transparent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
     ".wbg-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    ".wbg-rename{width:100%;padding:4px 9px;font-size:12.5px;border-radius:999px}",
     ".wbg-time{font-size:12px;opacity:.55;white-space:nowrap;font-variant-numeric:tabular-nums}",
     ".wbg-ops{display:flex;align-items:center;gap:6px;flex:none}",
     ".wbg-empty,.wbg-loading{border:1px dashed var(--wbg-line);border-radius:10px;padding:38px 16px;text-align:center;font-size:12.5px;opacity:.6}",
@@ -156,10 +161,69 @@ var h = React.createElement;
     var confirmAll = confirmAllS[0], setConfirmAll = confirmAllS[1];
     var busyS = React.useState(false);
     var busy = busyS[0], setBusy = busyS[1];
+    var editIdS = React.useState("");
+    var editId = editIdS[0], setEditId = editIdS[1];
+    var editNameS = React.useState("");
+    var editName = editNameS[0], setEditName = editNameS[1];
+    var editRef = React.useRef(null);
+    var editCancelRef = React.useRef(false);
+    var renameDoneRef = React.useRef(false);
     var refreshRef = React.useRef(null);
     var pageSize = 18;
 
     function say(msg) { setToast(String(msg || "")); }
+
+    React.useEffect(function () {
+      if (!editId || !editRef.current) return;
+      editRef.current.focus();
+      editRef.current.select();
+    }, [editId]);
+
+    function beginRename(row) {
+      setConfirmId("");
+      editCancelRef.current = false;
+      // 上一次保存的请求可能还没回来；重开编辑态时清掉“已提交”标记，否则这次回车会被吞掉。
+      renameDoneRef.current = false;
+      setEditId(String(row.id));
+      setEditName(String(row.name || ""));
+    }
+
+    function cancelRename() {
+      editCancelRef.current = true;
+      closeRename();
+    }
+
+    function saveRename() {
+      if (editCancelRef.current) { editCancelRef.current = false; return; }
+      if (renameDoneRef.current) return;
+      var id = editId;
+      if (!id) return;
+      var value = String(editName || "").trim();
+      if (!value) { say(t.needName); return; }
+      if (value.length > 64) { say(t.tooLong); return; }
+      var cur = rows.filter(function (r) { return String(r.id) === String(id); })[0];
+      if (cur && value === String(cur.name || "")) { closeRename(); return; }
+      // 先关掉编辑态再发请求，避免 blur 与 Enter 重复提交。
+      renameDoneRef.current = true;
+      closeRename();
+      api.call("tags.update", { id: id, name: value }).then(function (r) {
+        renameDoneRef.current = false;
+        if (r && r.ok) {
+          say(t.renamed + "：" + value);
+          if (refreshRef.current) refreshRef.current();
+        } else {
+          say((r && r.error) || "rename failed");
+        }
+      }).catch(function (e) {
+        renameDoneRef.current = false;
+        say(String((e && e.message) || e));
+      });
+    }
+
+    function closeRename() {
+      setEditId("");
+      setEditName("");
+    }
 
     React.useEffect(function () {
       if (!toast) return;
@@ -240,7 +304,7 @@ var h = React.createElement;
           setTimeout(function () { if (refreshRef.current) refreshRef.current(); }, 0);
         } else {
           var msg = (r && r.error) || "create failed";
-          setFormError(String(msg).indexOf("已存在") >= 0 ? t.duplicate : msg);
+          setFormError(msg);
         }
       }).catch(function (e2) {
         setSaving(false);
@@ -363,6 +427,7 @@ var h = React.createElement;
         : rows.length === 0 ? h("div", { className: "wbg-empty" }, query ? t.noMatch : t.empty)
         : h("div", { className: "wbg-list" }, rows.map(function (row) {
           var color = colorFor(row.id || row.name);
+          var editing = String(editId) === String(row.id);
           return h("div", {
             key: row.id, className: "wbg-row", style: { "--tag-color": color },
           },
@@ -370,9 +435,33 @@ var h = React.createElement;
               type: "checkbox", className: "wbg-check", checked: selected.indexOf(row.id) >= 0,
               onChange: function () { toggle(row.id); }, "aria-label": row.name,
             }),
-            h("div", { className: "wbg-name" }, h("span", { className: "wbg-chip" }, row.name)),
+            editing
+              ? h("div", { className: "wbg-name" },
+                  h("input", {
+                    ref: editRef, type: "text", className: "wbg-input wbg-rename", value: editName,
+                    maxLength: 64, "aria-label": t.name, title: t.renameHint,
+                    onChange: function (e) { setEditName(e.target.value); },
+                    onKeyDown: function (e) {
+                      if (e.key === "Enter") { e.preventDefault(); saveRename(); }
+                      if (e.key === "Escape") { e.preventDefault(); cancelRename(); }
+                    },
+                    onBlur: function () { saveRename(); },
+                  })
+                )
+              : h("div", { className: "wbg-name" },
+                  h("span", {
+                    className: "wbg-chip", title: t.renameHint, style: { cursor: "text" },
+                    onDoubleClick: function () { beginRename(row); },
+                  }, row.name)
+                ),
             h("div", { className: "wbg-time" }, row.createTime || ""),
             h("div", { className: "wbg-ops" },
+              editing
+                ? [
+                    h("button", { key: "ok", type: "button", className: "wbg-btn primary", onClick: saveRename }, h(Icon, { name: "check", size: 13 }), t.renameSave),
+                    h("button", { key: "no", type: "button", className: "wbg-btn ghost", onClick: cancelRename }, t.cancel),
+                  ]
+                : h("button", { type: "button", className: "wbg-btn ghost", title: t.rename, "aria-label": t.rename, onClick: function () { beginRename(row); } }, h(Icon, { name: "pencil", size: 13 })),
               confirmId === row.id
                 ? h("button", { type: "button", className: "wbg-btn danger", disabled: busy, onClick: function () { deleteOne(row.id); } }, busy ? "…" : t.confirmDel)
                 : h("button", { type: "button", className: "wbg-btn danger", onClick: function () { setConfirmId(row.id); } }, h(Icon, { name: "trash", size: 13 }), t.del),
@@ -403,7 +492,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.4.1",
+    version: "1.4.2",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TagsStatsView },
       { id: "tags", title: { zh: "记录", en: "Records" }, component: TagsView },

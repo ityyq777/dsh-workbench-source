@@ -1793,6 +1793,7 @@ var h = React.createElement;
       addTable: "\u65B0\u5EFA\u8868",
       rename: "\u91CD\u547D\u540D",
       del: "\u5220\u9664",
+      editTitle: "\u53CC\u51FB\u7F16\u8F91\u6807\u9898\uFF08\u4EFB\u4F55\u72B6\u6001\u90FD\u53EF\u6539\uFF09",
       deleteConfirm: "\u786E\u5B9A\u5220\u9664\u8FD9\u4E2A\u8282\u70B9\u53CA\u5176\u5B50\u6811\uFF1F\u5B50\u6811\u4E2D\u7684\u4EFB\u52A1\u4F1A\u88AB\u8F6F\u5220\u9664\u3002",
       root: "\u5168\u90E8\u4EFB\u52A1\u7EC4",
       manager: "\u7BA1\u7406\u6A21\u5F0F",
@@ -1885,6 +1886,7 @@ var h = React.createElement;
       addTable: "New table",
       rename: "Rename",
       del: "Delete",
+      editTitle: "Double-click to rename (any status)",
       deleteConfirm: "Delete this node and its subtree? Tasks under it will be soft-deleted.",
       root: "All tasks",
       manager: "Manage",
@@ -2346,7 +2348,6 @@ var h = React.createElement;
       if (editingReview !== null && revRef.current) revRef.current.focus();
     }, [editingReview]);
     function beginTitle() {
-      if (!isActive) return;
       setEditingTitle(String(task.title || ""));
     }
     function saveTitle() {
@@ -2451,7 +2452,7 @@ var h = React.createElement;
         if (e.key === "Escape") setEditingTitle(null);
       },
       onBlur: saveTitle
-    }) : h2("div", { className: "wbt-title", onDoubleClick: beginTitle, title: isActive ? "\u53CC\u51FB\u7F16\u8F91\u6807\u9898" : "" }, task.title);
+    }) : h2("div", { className: "wbt-title", onDoubleClick: beginTitle, title: t.editTitle }, task.title);
     var descNode = editingDesc !== null ? h2("textarea", {
       ref: descRef,
       className: "wbt-textarea",
@@ -3654,7 +3655,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.6.2",
+    version: "2.6.3",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView }

@@ -3,7 +3,7 @@
  *
  * 对齐 _archive/sheepone-system/sheepone-tag：
  *  - GET /tag（分页、按 update_time desc）
- *  - POST /tag（name 非空、重名拒绝）
+ *  - POST /tag（name 非空、允许重名）
  *  - DELETE /tag?id=（物理删改软删）
  *  - 前端额外依赖 GET /tag/search（旧后端缺失），这里补成本地搜索
  * tag_mapping 预留给后续 site 模块：tag_id × item_id × item_type。
@@ -87,6 +87,24 @@ function createTag(db, args, origin, api) {
   logChange(db, TAG_TABLE, id, "upsert", rowTag(row), origin, ts);
   api.emit("tags-changed", { id: id, op: "create", name: name });
   return { id: id, tag: rowTag(row) };
+}
+
+/** 重命名标签；名称不唯一，允许与其它标签（含自身以外的同名标签）重名。 */
+function updateTag(db, args, origin, api) {
+  const id = idOf(args && (args.id || args.tagId));
+  if (!id) throw new Error("id 不能为空");
+  const row = getTag(db, id);
+  if (!row) throw new Error("标签不存在：" + id);
+  const name = String(args && args.name !== undefined && args.name !== null ? args.name : "").trim();
+  if (!name) throw new Error("标签名称不能为空");
+  if (name.length > MAX_NAME) throw new Error("标签名称不能超过 " + MAX_NAME + " 个字符");
+  if (name === String(row.name)) return { id: id, tag: rowTag(row), changed: false };
+  const ts = now();
+  db.prepare("UPDATE tag SET name=?, updated_at=?, rev=rev+1 WHERE id=?").run(name, ts, id);
+  const next = getTag(db, id);
+  logChange(db, TAG_TABLE, id, "update", rowTag(next), origin, ts);
+  api.emit("tags-changed", { id: id, op: "update", name: name, prevName: String(row.name || "") });
+  return { id: id, tag: rowTag(next), changed: true };
 }
 
 function deleteTag(db, args, origin, api) {
@@ -337,7 +355,7 @@ export function registerTagActions(api) {
   });
 
   action("tags.create", {
-    description: "创建标签；名称为空或重名会报错",
+    description: "创建标签；名称为空会报错，允许与已有标签重名（没有唯一约束）",
     input: {
       type: "object",
       required: ["name"],
@@ -347,6 +365,25 @@ export function registerTagActions(api) {
       return createTag(api.db, args, ctx.origin, api);
     },
     render: renderOne,
+  });
+
+  action("tags.update", {
+    description: "重命名标签；允许重名（不做唯一性校验），关联数据保持不变",
+    input: {
+      type: "object",
+      required: ["id"],
+      properties: {
+        id: { type: "string", description: "标签 id" },
+        tagId: { type: "string", description: "id 的别名" },
+        name: { type: "string", description: "新名称，最大 64 字符" },
+      },
+    },
+    examples: [{ id: "3", name: "工作台" }],
+    execute: function (args, ctx) { return updateTag(api.db, args || {}, ctx.origin, api); },
+    render: function (r) {
+      if (r && r.changed) return "已重命名标签：" + r.tag.name;
+      return "标签名未变化：" + ((r && r.tag && r.tag.name) || "");
+    },
   });
 
   action("tags.delete", {

@@ -155,6 +155,24 @@ try {
   assert(reviewEdit.result.task.review === "后来补充：卡在调试", "tasks.update REVIEW 未更新 review");
   const reviewPatch = await call("tasks.bulkUpdate", { ids: [p9.result.id], patch: { review: "patch 感受" } });
   assert(reviewPatch.result.updated === 1 && (await call("tasks.get", { id: p9.result.id })).result.task.review === "patch 感受", "bulkUpdate patch 未写入 review");
+
+  // ── 5.2 标题重命名：任何状态都能改 ──
+  const renameDone = await call("tasks.update", { id: p9.result.id, type: "TITLE", title: "已完成也能改名" });
+  assert(renameDone.result.task.title === "已完成也能改名" && renameDone.result.task.status === "2", "done 任务不能重命名");
+  const closed = await call("tasks.create", { title: "待关闭任务", priority: 2 });
+  await call("tasks.update", { id: closed.result.id, type: "STATUS", status: "1" });
+  const renameClosed = await call("tasks.update", { id: closed.result.id, type: "TITLE", title: "已关闭也能改名" });
+  assert(renameClosed.result.task.title === "已关闭也能改名" && renameClosed.result.task.status === "1", "shutdown 任务不能重命名");
+  const restart = await call("tasks.create", { title: "重启链新任务", source: 2, restartKey: closed.result.id });
+  assert((await call("tasks.get", { id: closed.result.id })).result.task.status === "3", "重启后原任务未标记 RESTARTED");
+  const renameRestarted = await call("tasks.update", { id: closed.result.id, type: "TITLE", title: "重启任务也能改名" });
+  assert(renameRestarted.result.task.title === "重启任务也能改名", "restarted 任务不能重命名");
+  assert(restart.result.task.status === "0", "重启产出任务状态不对");
+  const freeRename = await call("tasks.update", { id: id, title: "自由字段改名" });
+  assert(freeRename.result.task.title === "自由字段改名", "省略 type 直接传 title 未生效");
+  let blankTitle = null;
+  try { await call("tasks.update", { id: id, type: "TITLE", title: "  " }); } catch (e) { blankTitle = e; }
+  assert(blankTitle, "空标题未被拒绝");
   let bulkErr = null;
   try { await call("tasks.bulkUpdate", { ids: ["no-such"], patch: { priority: 1 } }); } catch (e) { bulkErr = e; }
   assert(bulkErr, "bulkUpdate 对不存在 id 未报错");

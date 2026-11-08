@@ -43,6 +43,21 @@ r = call("tags.list", { text: "work" });
 assert(r.total === 0, "search no match");
 let dup = call("tags.create", { name: "工作" });
 assert(dup.id && dup.id !== firstId, "duplicate name allowed");
+r = call("tags.update", { id: dup.id, name: "工作台" });
+assert(r.changed && r.tag.name === "工作台", "rename tag");
+r = call("tags.update", { id: dup.id, name: "生活" });
+assert(r.changed && r.tag.name === "生活", "rename to an existing name allowed");
+r = call("tags.update", { id: dup.id, name: "生活" });
+assert(r.changed === false && r.tag.name === "生活", "rename with same name is a no-op");
+let noId = null;
+try { call("tags.update", { name: "x" }); } catch (e) { noId = e; }
+assert(noId, "update without id rejected");
+let missingTag = null;
+try { call("tags.update", { id: "nope", name: "x" }); } catch (e) { missingTag = e; }
+assert(missingTag, "update unknown tag rejected");
+let renameBlank = null;
+try { call("tags.update", { id: dup.id, name: "  " }); } catch (e) { renameBlank = e; }
+assert(renameBlank, "rename to blank rejected");
 let blank = null;
 try { call("tags.create", { name: "   " }); } catch (e) { blank = e; }
 assert(blank, "blank rejected");
