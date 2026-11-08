@@ -120,12 +120,33 @@ var h = React.createElement;
     "close": require("lucide-react/icons/x").default,
     "down": require("lucide-react/icons/chevron-down").default,
     "tag": require("lucide-react/icons/tag").default,
+    "clock": require("lucide-react/icons/clock").default,
   };
   // 统一的小尺寸图标调用方式，保持各视图里的 Icon({ name, size }) 不变。
   function Icon(props) {
     var C = ICONS[props.name];
     if (!C) return null;
     return h(C, { size: props.size || 14, strokeWidth: 2, "aria-hidden": "true", className: "wbt-svg" });
+  }
+
+  // 计划完成倒计时：按秒刷新，超过计划完成时间后转为「逾期 hh:mm:ss」。
+  function Countdown(props) {
+    var s = React.useState(Date.now());
+    var now = s[0];
+    var setNow = s[1];
+    React.useEffect(function () {
+      var id = setInterval(function () { setNow(Date.now()); }, 1000);
+      return function () { clearInterval(id); };
+    }, []);
+    var diff = props.target - now;
+    var over = diff < 0;
+    var total = Math.floor(Math.abs(diff) / 1000);
+    var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    var text = (over ? "逾期 " : "") + pad(Math.floor(total / 3600)) + ":" + pad(Math.floor((total % 3600) / 60)) + ":" + pad(total % 60);
+    return h("span", {
+      className: "wbt-countdown" + (over ? " overdue" : diff < 3600000 ? " soon" : ""),
+      title: over ? "已超过计划完成时间" : "距计划完成",
+    }, h(Icon, { name: "clock", size: 11 }), h("span", { className: "wbt-cd-num" }, text));
   }
 
   var CSS = [
@@ -182,7 +203,8 @@ var h = React.createElement;
     ".wbt-review-label{font-size:11px;letter-spacing:.04em;opacity:.72;margin-right:5px;font-weight:560}",
     ".wbt-review-add{margin-top:2px;align-self:flex-start;border:none;background:none;color:inherit;font:inherit;font-size:11.5px;padding:2px 3px;border-radius:5px;cursor:pointer;opacity:.42}",
     ".wbt-review-add:hover{opacity:.9;background:color-mix(in oklab,currentColor 7%,transparent)}",
-    ".wbt-path button{border:none;background:none;color:inherit;padding:2px 3px;border-radius:5px;cursor:pointer;font-size:11.5px}",
+    ".wbt-path button{border:none;background:none;color:inherit;padding:2px 3px;border-radius:5px;cursor:pointer;font-size:11.5px;display:inline-flex;align-items:center;gap:4px;line-height:1.2}",
+    ".wbt-path button .wbt-svg{opacity:.7;margin-top:-1px}",
     ".wbt-path button:hover{background:color-mix(in oklab,currentColor 8%,transparent);text-decoration:underline}",
     ".wbt-prio{font-size:10px;font-weight:650;padding:2px 6px;border-radius:999px;border:none;background:color-mix(in oklab,currentColor 12%,transparent);opacity:.92;flex:none;font-variant-numeric:tabular-nums}",
     ".wbt-prio.high{color:var(--dsw-alias-state-error-primary,#d93a40)}.wbt-prio.mid{color:var(--dsw-alias-state-warn-primary,#cf6512)}.wbt-prio.low{color:var(--dsw-alias-label-tertiary,#77839a)}",
@@ -293,6 +315,10 @@ var h = React.createElement;
     ".wbt-pill{font-size:11px;padding:2px 7px;border-radius:999px;background:color-mix(in oklab,var(--wbt-accent) 12%,transparent);color:var(--wbt-accent)}",
     ".wbt-hint{font-size:11.5px;opacity:.55;line-height:1.5}",
     ".wbt-danger{color:var(--dsw-alias-state-error-primary,#e5484d)}",
+    ".wbt-countdown{display:inline-flex;align-items:center;gap:3px;margin-left:5px;padding:1px 6px 1px 5px;border-radius:6px;font-size:10.5px;font-weight:600;letter-spacing:.2px;color:var(--dsw-alias-state-error-primary,#e5484d);background:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 9%,transparent);border:1px solid color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 20%,transparent);vertical-align:1px}",
+    ".wbt-countdown .wbt-cd-num{font-variant-numeric:tabular-nums;font-feature-settings:\"tnum\"}",
+    ".wbt-countdown.soon{background:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 14%,transparent);border-color:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 32%,transparent)}",
+    ".wbt-countdown.overdue{color:var(--dsw-alias-label-primary-inverted,#fff);background:var(--dsw-alias-state-error-primary,#e5484d);border-color:transparent}",
     "@media (max-width:760px){.wbt-body{flex-direction:column;gap:8px}.wbt-nav{flex-direction:row;width:100%;flex:0 0 auto;overflow-x:auto;border-right:none;border-bottom:1px solid var(--wbt-line);padding:0 0 6px}.wbt-tab{width:auto;white-space:nowrap;padding:6px 9px}.wbt-tab.on{box-shadow:inset 0 -2px 0 var(--wbt-accent)}.wbt-nav-sep{width:1px;height:18px;flex:none;margin:auto 4px}.wbt-tree-slot{flex:0 0 auto;width:auto;margin-right:0}.wbt-pathrow .wbt-search{flex:1 1 160px;max-width:none}}",
     "@media (max-width:640px){.wbt-form{grid-template-columns:1fr}.wbt-drawer{width:94vw}.wbt-search{width:100%}.wbt-item{padding:9px}.wbt-ops{width:100%;justify-content:flex-end}}",
   ].join("\n");
@@ -391,6 +417,12 @@ var h = React.createElement;
     return out;
   }
 
+  // 路径图标与任务树保持一致：根=屋、组=文件夹、表=表格。
+  function pathIcon(type) {
+    var code = String(type);
+    return code === "1" ? "table" : code === "2" ? "house" : "folder";
+  }
+
   function PathCrumbs(props) {
     var path = props.path || [];
     if (!path.length) return null;
@@ -399,11 +431,12 @@ var h = React.createElement;
         i > 0 ? h("span", { className: "sep", children: "›" }) : null,
         h("button", {
           type: "button",
+          title: p.name || p.id,
           onClick: function (e) {
             e.stopPropagation();
             if (props.onPick) props.onPick(p, i, path);
           },
-        }, p.name || p.id)
+        }, h(Icon, { name: pathIcon(p.type), size: 11 }), h("span", null, p.name || p.id))
       );
     }));
   }
@@ -474,6 +507,7 @@ var h = React.createElement;
 
     var isDone = String(task.status) === "2";
     var countdown = String(task.status) === "0" ? daysBetween(task.targetDate) : null;
+    var cdTarget = String(task.status) === "0" && task.targetDate ? new Date(String(task.targetDate) + "T23:59:59").getTime() : NaN;
     var tagNodes = myTags.map(function (tag) {
       return h("span", {
         key: "tag-" + String(tag.id), className: "wbt-tag", title: tag.name,
@@ -484,7 +518,7 @@ var h = React.createElement;
     if (task.publishDate) meta.push(h("span", { key: "p" }, h("b", null, t.publish), " ", task.publishDate));
     if (String(task.status) === "0" && task.targetDate) {
       meta.push(h("span", { key: "g" }, h("b", null, t.target), " ", task.targetDate,
-        countdown !== null ? h("span", { className: countdown <= 1 ? "wbt-danger" : "", children: "（" + (countdown < 0 ? "已逾期" : "剩 " + countdown + " 天") + "）" }) : null));
+        Number.isFinite(cdTarget) ? h(Countdown, { target: cdTarget }) : null));
     } else if (String(task.status) === "2") {
       if (task.targetDate) meta.push(h("span", { key: "g" }, h("b", null, t.target), " ", task.targetDate));
       if (task.doneDate) meta.push(h("span", { key: "d" }, h("b", null, t.done), " ", task.doneDate));

@@ -1734,6 +1734,29 @@ var init_tag = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/clock.mjs
+var clock_exports = {};
+__export(clock_exports, {
+  __iconData: () => __iconData25,
+  default: () => Clock
+});
+var __iconData25, Clock;
+var init_clock = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/clock.mjs"() {
+    init_createLucideIcon();
+    __iconData25 = {
+      name: "clock",
+      size: 24,
+      node: [
+        ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+        ["path", { d: "M12 6v6l4 2", key: "mmk7yg" }]
+      ]
+    };
+    __iconData25.node;
+    Clock = createLucideIcon(__iconData25);
+  }
+});
+
 // packages/addons/tasks/client/client.src.cjs
 var React = require("react");
 var h = React.createElement;
@@ -1971,12 +1994,37 @@ var h = React.createElement;
     "trash": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
     "close": (init_x(), __toCommonJS(x_exports)).default,
     "down": (init_chevron_down(), __toCommonJS(chevron_down_exports)).default,
-    "tag": (init_tag(), __toCommonJS(tag_exports)).default
+    "tag": (init_tag(), __toCommonJS(tag_exports)).default,
+    "clock": (init_clock(), __toCommonJS(clock_exports)).default
   };
   function Icon2(props) {
     var C = ICONS[props.name];
     if (!C) return null;
     return h2(C, { size: props.size || 14, strokeWidth: 2, "aria-hidden": "true", className: "wbt-svg" });
+  }
+  function Countdown(props) {
+    var s = React2.useState(Date.now());
+    var now = s[0];
+    var setNow = s[1];
+    React2.useEffect(function() {
+      var id = setInterval(function() {
+        setNow(Date.now());
+      }, 1e3);
+      return function() {
+        clearInterval(id);
+      };
+    }, []);
+    var diff = props.target - now;
+    var over = diff < 0;
+    var total = Math.floor(Math.abs(diff) / 1e3);
+    var pad = function(n) {
+      return (n < 10 ? "0" : "") + n;
+    };
+    var text = (over ? "\u903E\u671F " : "") + pad(Math.floor(total / 3600)) + ":" + pad(Math.floor(total % 3600 / 60)) + ":" + pad(total % 60);
+    return h2("span", {
+      className: "wbt-countdown" + (over ? " overdue" : diff < 36e5 ? " soon" : ""),
+      title: over ? "\u5DF2\u8D85\u8FC7\u8BA1\u5212\u5B8C\u6210\u65F6\u95F4" : "\u8DDD\u8BA1\u5212\u5B8C\u6210"
+    }, h2(Icon2, { name: "clock", size: 11 }), h2("span", { className: "wbt-cd-num" }, text));
   }
   var CSS = [
     ".wbt-root{--wbt-line:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wbt-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));--wbt-bg:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));--wbt-accent:var(--dsw-alias-brand-primary,#11a89b);display:flex;flex-direction:column;gap:10px;min-height:0;color:inherit;font-size:13px}",
@@ -2032,7 +2080,8 @@ var h = React.createElement;
     ".wbt-review-label{font-size:11px;letter-spacing:.04em;opacity:.72;margin-right:5px;font-weight:560}",
     ".wbt-review-add{margin-top:2px;align-self:flex-start;border:none;background:none;color:inherit;font:inherit;font-size:11.5px;padding:2px 3px;border-radius:5px;cursor:pointer;opacity:.42}",
     ".wbt-review-add:hover{opacity:.9;background:color-mix(in oklab,currentColor 7%,transparent)}",
-    ".wbt-path button{border:none;background:none;color:inherit;padding:2px 3px;border-radius:5px;cursor:pointer;font-size:11.5px}",
+    ".wbt-path button{border:none;background:none;color:inherit;padding:2px 3px;border-radius:5px;cursor:pointer;font-size:11.5px;display:inline-flex;align-items:center;gap:4px;line-height:1.2}",
+    ".wbt-path button .wbt-svg{opacity:.7;margin-top:-1px}",
     ".wbt-path button:hover{background:color-mix(in oklab,currentColor 8%,transparent);text-decoration:underline}",
     ".wbt-prio{font-size:10px;font-weight:650;padding:2px 6px;border-radius:999px;border:none;background:color-mix(in oklab,currentColor 12%,transparent);opacity:.92;flex:none;font-variant-numeric:tabular-nums}",
     ".wbt-prio.high{color:var(--dsw-alias-state-error-primary,#d93a40)}.wbt-prio.mid{color:var(--dsw-alias-state-warn-primary,#cf6512)}.wbt-prio.low{color:var(--dsw-alias-label-tertiary,#77839a)}",
@@ -2143,6 +2192,10 @@ var h = React.createElement;
     ".wbt-pill{font-size:11px;padding:2px 7px;border-radius:999px;background:color-mix(in oklab,var(--wbt-accent) 12%,transparent);color:var(--wbt-accent)}",
     ".wbt-hint{font-size:11.5px;opacity:.55;line-height:1.5}",
     ".wbt-danger{color:var(--dsw-alias-state-error-primary,#e5484d)}",
+    ".wbt-countdown{display:inline-flex;align-items:center;gap:3px;margin-left:5px;padding:1px 6px 1px 5px;border-radius:6px;font-size:10.5px;font-weight:600;letter-spacing:.2px;color:var(--dsw-alias-state-error-primary,#e5484d);background:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 9%,transparent);border:1px solid color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 20%,transparent);vertical-align:1px}",
+    '.wbt-countdown .wbt-cd-num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}',
+    ".wbt-countdown.soon{background:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 14%,transparent);border-color:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 32%,transparent)}",
+    ".wbt-countdown.overdue{color:var(--dsw-alias-label-primary-inverted,#fff);background:var(--dsw-alias-state-error-primary,#e5484d);border-color:transparent}",
     "@media (max-width:760px){.wbt-body{flex-direction:column;gap:8px}.wbt-nav{flex-direction:row;width:100%;flex:0 0 auto;overflow-x:auto;border-right:none;border-bottom:1px solid var(--wbt-line);padding:0 0 6px}.wbt-tab{width:auto;white-space:nowrap;padding:6px 9px}.wbt-tab.on{box-shadow:inset 0 -2px 0 var(--wbt-accent)}.wbt-nav-sep{width:1px;height:18px;flex:none;margin:auto 4px}.wbt-tree-slot{flex:0 0 auto;width:auto;margin-right:0}.wbt-pathrow .wbt-search{flex:1 1 160px;max-width:none}}",
     "@media (max-width:640px){.wbt-form{grid-template-columns:1fr}.wbt-drawer{width:94vw}.wbt-search{width:100%}.wbt-item{padding:9px}.wbt-ops{width:100%;justify-content:flex-end}}"
   ].join("\n");
@@ -2244,6 +2297,10 @@ var h = React.createElement;
     for (var j = full + (half ? 1 : 0); j < 5; j++) out += "\u2606";
     return out;
   }
+  function pathIcon(type) {
+    var code = String(type);
+    return code === "1" ? "table" : code === "2" ? "house" : "folder";
+  }
   function PathCrumbs(props) {
     var path = props.path || [];
     if (!path.length) return null;
@@ -2254,11 +2311,12 @@ var h = React.createElement;
         i > 0 ? h2("span", { className: "sep", children: "\u203A" }) : null,
         h2("button", {
           type: "button",
+          title: p.name || p.id,
           onClick: function(e) {
             e.stopPropagation();
             if (props.onPick) props.onPick(p, i, path);
           }
-        }, p.name || p.id)
+        }, h2(Icon2, { name: pathIcon(p.type), size: 11 }), h2("span", null, p.name || p.id))
       );
     }));
   }
@@ -2325,6 +2383,7 @@ var h = React.createElement;
     }
     var isDone = String(task.status) === "2";
     var countdown = String(task.status) === "0" ? daysBetween(task.targetDate) : null;
+    var cdTarget = String(task.status) === "0" && task.targetDate ? (/* @__PURE__ */ new Date(String(task.targetDate) + "T23:59:59")).getTime() : NaN;
     var tagNodes = myTags.map(function(tag) {
       return h2("span", {
         key: "tag-" + String(tag.id),
@@ -2345,7 +2404,7 @@ var h = React.createElement;
         h2("b", null, t.target),
         " ",
         task.targetDate,
-        countdown !== null ? h2("span", { className: countdown <= 1 ? "wbt-danger" : "", children: "\uFF08" + (countdown < 0 ? "\u5DF2\u903E\u671F" : "\u5269 " + countdown + " \u5929") + "\uFF09" }) : null
+        Number.isFinite(cdTarget) ? h2(Countdown, { target: cdTarget }) : null
       ));
     } else if (String(task.status) === "2") {
       if (task.targetDate) meta.push(h2("span", { key: "g" }, h2("b", null, t.target), " ", task.targetDate));
