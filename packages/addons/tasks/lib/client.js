@@ -3250,6 +3250,10 @@ var h = React.createElement;
       saved: "\u5DF2\u4FDD\u5B58",
       created: "\u5DF2\u521B\u5EFA",
       updated: "\u5DF2\u66F4\u65B0",
+      edit: "\u7F16\u8F91",
+      editTitle: "\u7F16\u8F91\u4EFB\u52A1",
+      editHintDone: "\u5DF2\u5B8C\u6210\uFF1A\u6807\u9898\u3001\u63CF\u8FF0\u3001\u611F\u53D7\u3001\u96BE\u5EA6\u53EF\u6539\uFF1B\u4F18\u5148\u7EA7\u5728\u5B8C\u6210\u65F6\u5DF2\u6E05\u96F6\u3002",
+      editHintOpen: "\u672A\u5B8C\u6210\uFF1A\u6807\u9898\u3001\u63CF\u8FF0\u3001\u4F18\u5148\u7EA7\u53EF\u6539\uFF1B\u611F\u53D7\u4E0E\u96BE\u5EA6\u8981\u5230\u5B8C\u6210\u65F6\u624D\u586B\u5199\u3002",
       deleted: "\u5DF2\u5220\u9664",
       needTitle: "\u6807\u9898\u4E0D\u80FD\u4E3A\u7A7A",
       needTable: "\u8BF7\u9009\u62E9\u4EFB\u52A1\u8868",
@@ -3344,6 +3348,10 @@ var h = React.createElement;
       saved: "Saved",
       created: "Created",
       updated: "Updated",
+      edit: "Edit",
+      editTitle: "Edit task",
+      editHintDone: "Completed: title, description, feeling and difficulty can change; priority was cleared on completion.",
+      editHintOpen: "Open: title, description and priority can change; feeling and difficulty are filled in when completing.",
       deleted: "Deleted",
       needTitle: "Title is required",
       needTable: "Pick a task table",
@@ -3457,24 +3465,21 @@ var h = React.createElement;
     ".wbt-item:hover{border-color:color-mix(in oklab,var(--wbt-accent) 30%,var(--wbt-line));box-shadow:0 2px 10px rgba(20,30,40,.05)}",
     ".wbt-item.closed{opacity:.62}",
     ".wbt-item.closed .wbt-title{text-decoration:line-through}",
-    ".wbt-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}",
-    ".wbt-line1{display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap}",
+    ".wbt-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}",
+    ".wbt-chead{display:flex;align-items:flex-start;gap:10px;min-width:0}",
+    ".wbt-line1{display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap;flex:1 1 auto}",
     ".wbt-title{font-weight:620;font-size:14px;line-height:1.38;letter-spacing:.1px;word-break:break-word}",
-    ".wbt-desc{margin-top:4px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-width:80ch;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,#5b7fd6 34%,transparent);background:color-mix(in oklab,#5b7fd6 7%,transparent)}",
+    ".wbt-desc{margin-top:4px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,#5b7fd6 34%,transparent);background:color-mix(in oklab,#5b7fd6 7%,transparent)}",
     ".wbt-foot{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;margin-top:1px}",
     ".wbt-meta{display:flex;gap:4px 12px;flex-wrap:wrap;font-size:11.5px;opacity:.64;font-variant-numeric:tabular-nums}",
     ".wbt-meta b{font-weight:560;opacity:.9;margin-right:1px}",
-    ".wbt-add-desc{border:none;background:none;color:inherit;font:inherit;font-size:12px;line-height:1;opacity:.3;padding:2px 4px;border-radius:5px;cursor:pointer;flex:none}",
-    ".wbt-add-desc:hover{opacity:.85;background:color-mix(in oklab,currentColor 7%,transparent)}",
     ".wbt-path{display:flex;gap:3px;flex-wrap:wrap;align-items:center;font-size:11.5px;opacity:.58}",
     ".wbt-taskpath{display:flex;align-items:center;gap:6px;margin-top:3px;min-width:0}",
     ".wbt-taskpath .wbt-path{flex:1 1 auto;flex-wrap:nowrap;overflow:hidden;min-width:0;gap:0;opacity:.52;-webkit-mask-image:linear-gradient(90deg,#000 91%,transparent);mask-image:linear-gradient(90deg,#000 91%,transparent)}",
     ".wbt-taskpath .wbt-path button{white-space:nowrap}",
     ".wbt-taskpath .wbt-path .sep{margin:0 1px;opacity:.4}",
-    ".wbt-review{margin-top:5px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-width:80ch;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,var(--wbt-accent) 42%,transparent);background:color-mix(in oklab,var(--wbt-accent) 6%,transparent)}",
+    ".wbt-review{margin-top:5px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,var(--wbt-accent) 42%,transparent);background:color-mix(in oklab,var(--wbt-accent) 6%,transparent)}",
     ".wbt-review-label{font-size:11px;letter-spacing:.04em;opacity:.72;margin-right:5px;font-weight:560}",
-    ".wbt-review-add{margin-top:2px;align-self:flex-start;border:none;background:none;color:inherit;font:inherit;font-size:11.5px;padding:2px 3px;border-radius:5px;cursor:pointer;opacity:.42}",
-    ".wbt-review-add:hover{opacity:.9;background:color-mix(in oklab,currentColor 7%,transparent)}",
     ".wbt-path button{border:none;background:none;color:inherit;padding:2px 3px;border-radius:5px;cursor:pointer;font-size:11.5px;display:inline-flex;align-items:center;gap:4px;line-height:1.2}",
     ".wbt-path button .wbt-svg{opacity:.7;margin-top:-1px}",
     ".wbt-path button:hover{background:color-mix(in oklab,currentColor 8%,transparent);text-decoration:underline}",
@@ -3512,7 +3517,6 @@ var h = React.createElement;
     ".wbt-ops .wbt-act-close:hover{background:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 10%,transparent)}",
     ".wbt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:9px}",
     ".wbt-card{display:flex;flex-direction:column;gap:6px;min-height:150px}",
-    ".wbt-card .wbt-ops{margin-top:auto}",
     ".wbt-empty{border:1px dashed var(--wbt-line);border-radius:11px;padding:34px 12px;text-align:center;opacity:.5;font-size:12.5px}",
     ".wbt-err{font-size:12.5px;color:var(--dsw-alias-state-error-primary,#e5484d);line-height:1.5}",
     ".wbt-pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;font-size:12px;opacity:.8;flex-wrap:wrap}",
@@ -3814,6 +3818,15 @@ var h = React.createElement;
       if (task.shutdownDate) meta.push(h2("span", { key: "s" }, h2("b", null, t.shutdown), " ", task.shutdownDate));
     }
     var ops = [];
+    ops.push(h2("button", {
+      key: "edit",
+      className: "wbt-icon",
+      title: t.edit,
+      "aria-label": t.edit,
+      onClick: function() {
+        props.onEdit(task);
+      }
+    }, h2(Icon2, { name: "pencil", size: 14 })));
     if (isActive) {
       ops.push(h2("button", { key: "p+", className: "wbt-icon", title: t.priority + " +1", onClick: function() {
         if (task.priority < 10) props.update(task, { type: "PRIORITY", priority: Number(task.priority) + 1 });
@@ -3879,7 +3892,6 @@ var h = React.createElement;
       },
       onBlur: saveDesc
     }) : task.description ? h2("div", { className: "wbt-desc", onDoubleClick: beginDesc }, task.description) : null;
-    var addDesc = !task.description && isActive && editingDesc === null ? h2("button", { key: "add-desc", className: "wbt-add-desc", title: t.desc, onClick: beginDesc }, "\uFF0B") : null;
     var reviewNode = editingReview !== null ? h2("textarea", {
       ref: revRef,
       className: "wbt-textarea",
@@ -3903,7 +3915,6 @@ var h = React.createElement;
       h2("span", { className: "wbt-review-label" }, t.review),
       task.review
     ) : null;
-    var addReview = isDone && !task.review && editingReview === null ? h2("button", { key: "add-review", className: "wbt-review-add", onClick: beginReview }, "\uFF0B " + t.reviewAdd) : null;
     return h2(
       "div",
       { className: cx("wbt-item", props.card && "wbt-card", String(task.status) === "1" && "closed") },
@@ -3915,20 +3926,22 @@ var h = React.createElement;
         { className: "wbt-main" },
         h2(
           "div",
-          { className: "wbt-line1" },
-          h2("span", { className: "wbt-prio " + pClass(task.priority), children: "P" + task.priority }),
-          h2("span", { className: "wbt-badge " + st.cls, children: stName }),
-          titleNode,
-          addDesc
+          { className: "wbt-chead" },
+          h2(
+            "div",
+            { className: "wbt-line1" },
+            h2("span", { className: "wbt-prio " + pClass(task.priority), children: "P" + task.priority }),
+            h2("span", { className: "wbt-badge " + st.cls, children: stName }),
+            titleNode
+          ),
+          h2("div", { className: "wbt-ops" }, ops)
         ),
         descNode,
         reviewNode,
-        addReview,
         tagNodes.length ? h2("div", { className: "wbt-tags", key: "tags" }, tagNodes) : null,
-        h2("div", { className: "wbt-foot" }, meta.length ? h2("div", { className: "wbt-meta", key: "meta" }, meta) : null),
-        task.path && task.path.length ? h2("div", { className: "wbt-taskpath" }, h2(PathCrumbs, { key: "path", path: task.path, t, onPick: props.onPathPick })) : null
-      ),
-      h2("div", { className: "wbt-ops" }, ops)
+        meta.length ? h2("div", { className: "wbt-foot", key: "meta" }, h2("div", { className: "wbt-meta" }, meta)) : null,
+        task.path && task.path.length ? h2("div", { className: "wbt-taskpath", key: "path" }, h2(PathCrumbs, { path: task.path, t, onPick: props.onPathPick })) : null
+      )
     );
   }
   function TreeNode(props) {
@@ -4299,6 +4312,128 @@ var h = React.createElement;
       )
     );
   }
+  function EditModal(props) {
+    var t = props.t;
+    var task = props.task;
+    var done = String(task.status) === "2";
+    var canPriority = !done;
+    var fs = React2.useState({
+      title: String(task.title || ""),
+      description: String(task.description || ""),
+      review: String(task.review || ""),
+      priority: String(task.priority === null || task.priority === void 0 ? 0 : task.priority),
+      difficulty: Number(task.difficulty || 0.5)
+    });
+    var form = fs[0], setForm = fs[1];
+    var bs = React2.useState(false);
+    var isBusy = bs[0], setBusy = bs[1];
+    var es = React2.useState("");
+    var err = es[0], setErr = es[1];
+    function set(k, v) {
+      setForm(function(prev) {
+        var next = Object.assign({}, prev);
+        next[k] = v;
+        return next;
+      });
+    }
+    var titleOk = String(form.title).trim().length > 0;
+    function submit() {
+      if (!titleOk) {
+        setErr(t.needTitle);
+        return;
+      }
+      var patch = { id: task.id, title: String(form.title).trim(), description: String(form.description || "") };
+      if (canPriority) {
+        var p = Math.round(Number(form.priority));
+        if (!Number.isFinite(p)) p = 0;
+        patch.priority = Math.max(0, Math.min(10, p));
+      } else {
+        patch.review = String(form.review || "");
+        patch.difficulty = Math.max(0.5, Math.min(5, Number(form.difficulty) || 0.5));
+      }
+      setBusy(true);
+      setErr("");
+      props.api.call("tasks.update", patch).then(function(r) {
+        setBusy(false);
+        if (r && r.ok) props.onSaved();
+        else setErr(r && r.error || "update failed");
+      }).catch(function(e) {
+        setBusy(false);
+        setErr(String(e && e.message || e));
+      });
+    }
+    var st = statusInfo(task.status);
+    return h2(
+      "div",
+      { className: "wbt-modal-mask", onMouseDown: function(e) {
+        if (e.target === e.currentTarget) props.onClose();
+      } },
+      h2(
+        "div",
+        { className: "wbt-modal" },
+        h2(
+          "div",
+          { className: "wbt-modal-head" },
+          h2("h3", null, t.editTitle),
+          h2("span", { className: "wbt-badge " + st.cls }, props.lang === "en" ? st.en : st.zh),
+          h2("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")
+        ),
+        h2("div", { className: "wbt-hint" }, done ? t.editHintDone : t.editHintOpen),
+        h2(
+          "label",
+          { className: "wbt-field" },
+          h2("span", null, t.titleField + " *"),
+          h2("input", { className: "wbt-input", value: form.title, autoFocus: true, onChange: function(e) {
+            set("title", e.target.value);
+          } })
+        ),
+        h2(
+          "label",
+          { className: "wbt-field" },
+          h2("span", null, t.desc),
+          h2("textarea", { className: "wbt-textarea", rows: 4, value: form.description, onChange: function(e) {
+            set("description", e.target.value);
+          } })
+        ),
+        canPriority ? h2(
+          "label",
+          { className: "wbt-field" },
+          h2("span", null, t.priority + "\uFF080\u201310\uFF09"),
+          h2("input", { className: "wbt-input", type: "number", min: 0, max: 10, step: 1, value: form.priority, onChange: function(e) {
+            set("priority", e.target.value);
+          } })
+        ) : h2(
+          "label",
+          { className: "wbt-field" },
+          h2("span", null, t.review + " \xB7 " + t.reviewHint),
+          h2("textarea", { className: "wbt-textarea", rows: 3, placeholder: t.reviewPlaceholder, value: form.review, onChange: function(e) {
+            set("review", e.target.value);
+          } })
+        ),
+        done ? h2(
+          "div",
+          { className: "wbt-field" },
+          h2("span", null, t.difficulty + "\uFF080\u20135\uFF09"),
+          h2(
+            "div",
+            { className: "wbt-row" },
+            h2("span", { className: "wbt-stars" }, stars(form.difficulty)),
+            h2("input", { type: "range", min: 0.5, max: 5, step: 0.5, value: form.difficulty, style: { flex: 1 }, onChange: function(e) {
+              set("difficulty", Number(e.target.value));
+            } }),
+            h2("b", null, Number(form.difficulty).toFixed(1))
+          )
+        ) : null,
+        err ? h2("div", { className: "wbt-err" }, err) : null,
+        h2(
+          "div",
+          { className: "wbt-modal-foot" },
+          h2("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
+          h2("button", { className: "wbt-btn primary", disabled: isBusy || !titleOk, onClick: submit }, isBusy ? "\u2026" : t.save)
+        )
+      )
+    );
+  }
   function BatchModal(props) {
     var t = props.t;
     var items = props.items || [];
@@ -4479,6 +4614,8 @@ var h = React.createElement;
     var timelineTask = timelineS[0], setTimelineTask = timelineS[1];
     var doneS = React2.useState(null);
     var doneTask = doneS[0], setDoneTask = doneS[1];
+    var editTaskS = React2.useState(null);
+    var editTask = editTaskS[0], setEditTask = editTaskS[1];
     var editS = React2.useState(null);
     var edit = editS[0], setEdit = editS[1];
     var editNameS = React2.useState("");
@@ -4829,6 +4966,9 @@ var h = React.createElement;
         onCheck: toggleSelect,
         update,
         toast: say,
+        onEdit: function(x) {
+          setEditTask(x);
+        },
         onDone: function(x) {
           setDoneTask(x);
         },
@@ -5106,6 +5246,21 @@ var h = React.createElement;
           setCreateState({ source: "1", originTask, defaultTableId: originTask.tableId });
         }
       }) : null,
+      editTask ? h2(EditModal, {
+        key: "edit-" + editTask.id,
+        t,
+        api,
+        task: editTask,
+        lang: props.lang,
+        onClose: function() {
+          setEditTask(null);
+        },
+        onSaved: function() {
+          setEditTask(null);
+          refreshList();
+          say(t.updated);
+        }
+      }) : null,
       doneTask ? h2(DoneModal, {
         key: doneTask.id,
         t,
@@ -5141,7 +5296,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.9.1",
+    version: "2.9.2",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },
