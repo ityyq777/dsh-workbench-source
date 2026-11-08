@@ -1750,7 +1750,7 @@ var h = React.createElement;
   var statsView = require_stats();
   var COPY = {
     zh: {
-      title: "\u8BB0\u5F55",
+      title: "\u4EFB\u52A1",
       search: "\u641C\u7D22\u4EFB\u52A1\u6807\u9898",
       newTask: "\u65B0\u5EFA\u4EFB\u52A1",
       tree: "\u4EFB\u52A1\u6811",
@@ -1842,7 +1842,7 @@ var h = React.createElement;
       needDifficulty: "\u8BF7\u9009\u62E9\u96BE\u5EA6"
     },
     en: {
-      title: "Records",
+      title: "Tasks",
       search: "Search title",
       newTask: "New task",
       tree: "Task tree",
@@ -3595,7 +3595,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.6.0",
+    version: "2.6.1",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView }

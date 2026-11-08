@@ -16,7 +16,7 @@ var h = React.createElement;
 
   var COPY = {
     zh: {
-      title: "记录", search: "搜索任务标题", newTask: "新建任务", tree: "任务树",
+      title: "任务", search: "搜索任务标题", newTask: "新建任务", tree: "任务树",
       select: "筛选", cancelSelect: "退出筛选", list: "列表", card: "卡片",
       all: "全部", empty: "这个视图还没有任务", loading: "加载中…",
       error: "操作失败：", save: "保存", cancel: "取消", create: "创建", close: "关闭",
@@ -47,7 +47,7 @@ var h = React.createElement;
       needDate: "日期不能为空", needBase: "请选择基准任务", needDifficulty: "请选择难度",
     },
     en: {
-      title: "Records", search: "Search title", newTask: "New task", tree: "Task tree",
+      title: "Tasks", search: "Search title", newTask: "New task", tree: "Task tree",
       select: "Select", cancelSelect: "Exit select", list: "List", card: "Cards",
       all: "All", empty: "No tasks in this view", loading: "Loading…",
       error: "Failed: ", save: "Save", cancel: "Cancel", create: "Create", close: "Close",
@@ -1344,7 +1344,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.6.0",
+    version: "2.6.1",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },
