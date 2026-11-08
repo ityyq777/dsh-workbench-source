@@ -1266,6 +1266,7 @@ export function registerTaskActions(api) {
     properties: {
       title: { type: "string" },
       description: { type: "string" },
+      review: { type: "string", description: "完成后的感受/复盘（自由文本）" },
       status: { type: ["string", "number"], description: "0/ACTIVE、1/SHUTDOWN、2/DONE、3/RESTARTED；也接受 open/done" },
       priority: { type: "number", description: "0..10" },
       difficulty: { type: ["number", "null"], description: "0..5" },
@@ -1332,6 +1333,7 @@ export function registerTaskActions(api) {
       properties: {
         title: { type: "string" },
         description: { type: "string" },
+        review: { type: "string", description: "完成后的感受/复盘（自由文本，默认空）" },
         tableId: { type: ["string", "number"], description: "任务表 id，缺省用默认任务表" },
         status: { type: ["string", "number"], description: "0/1/2（不能直接创建 RESTARTED）" },
         priority: { type: "number", description: "0..10" },
@@ -1356,19 +1358,20 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.update", {
-    description: "更新单个任务。两种用法：①type 作为更新模式（0 状态/1 优先级/2 标题/3 描述）；②省略 type 直接传字段（含 tags 标签名）。批量请用 tasks.bulkUpdate",
+    description: "更新单个任务。两种用法：①type 作为更新模式（0 状态/1 优先级/2 标题/3 描述/4 感受）；②省略 type 直接传字段（含 tags 标签名）。批量请用 tasks.bulkUpdate",
     input: {
       type: "object",
       required: ["id"],
       properties: {
         id: { type: "string" },
         taskId: { type: ["string", "number"] },
-        type: { type: ["string", "number"], description: "更新模式 0/1/2/3（不是任务字段；改标签请传 tags 或 tagIds）" },
+        type: { type: ["string", "number"], description: "更新模式 0/1/2/3/4（4=感受；不是任务字段；改标签请传 tags 或 tagIds）" },
         status: { type: ["string", "number"] },
         date: { type: "string" },
         priority: { type: "number" },
         title: { type: "string" },
         description: { type: "string" },
+        review: { type: "string", description: "完成后的感受/复盘（自由文本）；给出时按字段更新，或配合 type=4" },
         difficulty: { type: ["number", "null"] },
         publishDate: { type: "string" },
         targetDate: { type: "string" },
@@ -1674,14 +1677,23 @@ export function registerTaskActions(api) {
 
   action("tasks.delete", {
     description: "软删除单个任务（保留同步墓碑）；批量请用 tasks.bulkDelete",
-    input: { type: "object", properties: { id: { type: "string" } } },
+    input: { type: "object", required: ["id"], properties: { id: { type: "string" }, taskId: { type: ["string", "number"], description: "id 的别名" } } },
     execute: function (args, ctx) { return removeTask(db, args || {}, ctx.origin, api); },
     render: function (r) { return "已删除任务：" + r.id; },
   });
 
   action("tasks.complete", {
     description: "把任务标记为完成（兼容旧 action）",
-    input: { type: "object", properties: { id: { type: "string" }, difficulty: { type: "number" } } },
+    input: {
+      type: "object",
+      required: ["id"],
+      properties: {
+        id: { type: "string" },
+        taskId: { type: ["string", "number"], description: "id 的别名" },
+        date: { type: "string", description: "完成日期 YYYY-MM-DD，缺省今天" },
+        difficulty: { type: "number" },
+      },
+    },
     execute: function (args, ctx) { return completeTask(db, args || {}, ctx.origin, api); },
     render: function (r) { return "已完成任务：" + r.task.title; },
   });

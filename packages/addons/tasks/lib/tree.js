@@ -325,7 +325,7 @@ export function registerTreeActions(api) {
 
   action("taskNodes.children", {
     description: "取某节点的直接子节点；id=0 返回根节点整棵树",
-    input: { type: "object", properties: { id: { type: ["string", "number"] } } },
+    input: { type: "object", properties: { id: { type: ["string", "number"] }, nodeId: { type: ["string", "number"], description: "id 的别名" } } },
     execute: function (args) { return childrenAction(db, args || {}); },
     render: renderTree,
   });
@@ -341,7 +341,7 @@ export function registerTreeActions(api) {
 
   action("taskNodes.path", {
     description: "取根到某节点的路径（含 id/name/type）",
-    input: { type: "object", properties: { id: { type: ["string", "number"] } } },
+    input: { type: "object", properties: { id: { type: ["string", "number"] }, nodeId: { type: ["string", "number"], description: "id 的别名" } } },
     execute: function (args) { return pathAction(db, args || {}); },
     render: function (rows) {
       return (rows || []).map(function (r) { return r.name; }).join(" / ");
@@ -364,7 +364,7 @@ export function registerTreeActions(api) {
 
   action("taskNodes.rename", {
     description: "重命名任务组/任务表",
-    input: { type: "object", properties: { id: { type: ["string", "number"] }, name: { type: "string" } } },
+    input: { type: "object", properties: { id: { type: ["string", "number"] }, nodeId: { type: ["string", "number"], description: "id 的别名" }, name: { type: "string" } } },
     execute: function (args, ctx) { return renameAction(db, args || {}, ctx.origin, api); },
     render: function (r) { return "已重命名为：" + r.node.name; },
   });
@@ -387,7 +387,7 @@ export function registerTreeActions(api) {
 
   action("taskNodes.delete", {
     description: "删除节点及其子树；子树内任务表下的任务会被软删",
-    input: { type: "object", properties: { id: { type: ["string", "number"] } } },
+    input: { type: "object", properties: { id: { type: ["string", "number"] }, nodeId: { type: ["string", "number"], description: "id 的别名" } } },
     execute: function (args, ctx) { return deleteAction(db, args || {}, ctx.origin, api); },
     render: function (r) { return "已删除 " + r.deletedNodes + " 个节点、" + r.deletedTasks + " 条任务"; },
   });

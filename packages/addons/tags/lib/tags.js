@@ -359,7 +359,7 @@ export function registerTagActions(api) {
     input: {
       type: "object",
       required: ["name"],
-      properties: { name: { type: "string", description: "标签名称，最大 64 字符" } },
+      properties: { name: { type: "string", description: "标签名称，默认上限 64 字符（配置可调整）" } },
     },
     execute: function (args, ctx) {
       return createTag(api.db, args, ctx.origin, api);
@@ -371,11 +371,11 @@ export function registerTagActions(api) {
     description: "重命名标签；允许重名（不做唯一性校验），关联数据保持不变",
     input: {
       type: "object",
-      required: ["id"],
+      required: ["id", "name"],
       properties: {
         id: { type: "string", description: "标签 id" },
         tagId: { type: "string", description: "id 的别名" },
-        name: { type: "string", description: "新名称，最大 64 字符" },
+        name: { type: "string", description: "新名称，必填，默认上限 64 字符（配置可调整）" },
       },
     },
     examples: [{ id: "3", name: "工作台" }],

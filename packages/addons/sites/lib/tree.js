@@ -307,7 +307,7 @@ export function registerSiteTreeActions(api) {
 
   action("siteNodes.children", {
     description: "取某目录的直接子目录；id=0 返回根下目录",
-    input: { type: "object", properties: { id: { type: ["string", "number"] } } },
+    input: { type: "object", properties: { id: { type: ["string", "number"] }, nodeId: { type: ["string", "number"], description: "id 的别名" } } },
     execute: function (args) { return childrenAction(db, args || {}); },
     render: renderTree,
   });
@@ -323,7 +323,7 @@ export function registerSiteTreeActions(api) {
 
   action("siteNodes.pathChildren", {
     description: "取根到目标目录沿途各层的直接子目录，返回 [{id,children}]",
-    input: { type: "object", properties: { id: { type: ["string", "number"] } } },
+    input: { type: "object", properties: { id: { type: ["string", "number"] }, nodeId: { type: ["string", "number"], description: "id 的别名" } } },
     execute: function (args) { return pathChildrenAction(db, args || {}); },
     render: function (rows) {
       return (rows || []).map(function (r) { return r.id + ": " + r.children.length + " 个直接子目录"; }).join("\n");
@@ -332,7 +332,7 @@ export function registerSiteTreeActions(api) {
 
   action("siteNodes.path", {
     description: "取根到某目录的路径（含 id/name）",
-    input: { type: "object", properties: { id: { type: ["string", "number"] } } },
+    input: { type: "object", properties: { id: { type: ["string", "number"] }, nodeId: { type: ["string", "number"], description: "id 的别名" } } },
     execute: function (args) {
       const id = idOf(args && (args.id !== undefined ? args.id : args.nodeId));
       const node = nodeById(db, id, false);
@@ -363,7 +363,7 @@ export function registerSiteTreeActions(api) {
 
   action("siteNodes.rename", {
     description: "重命名站点目录",
-    input: { type: "object", properties: { id: { type: ["string", "number"] }, name: { type: "string" } } },
+    input: { type: "object", properties: { id: { type: ["string", "number"] }, nodeId: { type: ["string", "number"], description: "id 的别名" }, name: { type: "string" } } },
     execute: function (args, ctx) { return renameAction(db, args || {}, ctx.origin, api); },
     render: function (r) { return r.unchanged ? "目录名未变化" : "已重命名为：" + r.node.name; },
   });
@@ -386,7 +386,7 @@ export function registerSiteTreeActions(api) {
 
   action("siteNodes.delete", {
     description: "删除目录及其子树；同步清理子树内目录与站点的映射，不删除站点",
-    input: { type: "object", properties: { id: { type: ["string", "number"] } } },
+    input: { type: "object", properties: { id: { type: ["string", "number"] }, nodeId: { type: ["string", "number"], description: "id 的别名" } } },
     execute: function (args, ctx) { return deleteAction(db, args || {}, ctx.origin, api); },
     render: function (r) { return "已删除 " + r.deletedNodes + " 个目录、清理 " + r.removedMappings + " 条目录映射"; },
   });
