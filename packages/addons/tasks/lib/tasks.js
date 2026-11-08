@@ -348,6 +348,8 @@ function createTask(db, args, origin, api, opts) {
     if (!shutdownDate) shutdownDate = todayStr();
     if (shutdownDate < publishDate) throw new Error("shutdownDate 不能早于 publishDate");
   }
+  // 已完成任务不再需要优先级：统一清零，避免完成项继续占用紧急列表与优先级排序。
+  if (status === "2") priority = 0;
   if (targetDate < publishDate) throw new Error("targetDate 不能早于 publishDate");
 
   let timelineKey = idOf(args.timelineKey);
@@ -503,6 +505,8 @@ function updateTask(db, args, origin, api) {
 
   if (next.status === "2" && next.done_date === null) next.done_date = todayStr();
   if (next.status === "2" && (next.difficulty === null || next.difficulty === undefined)) next.difficulty = 0;
+  // 完成任务一律 P0：包括显式传了 priority 的情况，保证「已完成 = 无优先级」的不变量。
+  if (next.status === "2") next.priority = 0;
   if (next.status === "1" && next.shutdown_date === null) next.shutdown_date = todayStr();
   checkRequiredDates(next);
   next.updated_at = ts;
@@ -604,6 +608,7 @@ function applyPatchRow(db, cur, patch, ts) {
   // tagIds 不是 task 列，由 bulkUpdate 在行写入后同步 tag_mapping。
   if (next.status === "2" && !next.done_date) next.done_date = todayStr();
   if (next.status === "2" && (next.difficulty === null || next.difficulty === undefined)) next.difficulty = 0;
+  if (next.status === "2") next.priority = 0;
   if (next.status === "1" && !next.shutdown_date) next.shutdown_date = todayStr();
   checkRequiredDates(next);
   next.updated_at = ts;
@@ -1283,8 +1288,8 @@ export function registerTaskActions(api) {
       title: { type: "string" },
       description: { type: "string" },
       review: { type: "string", description: "完成后的感受/复盘（自由文本）" },
-      status: { type: ["string", "number"], description: "0/ACTIVE、1/SHUTDOWN、2/DONE、3/RESTARTED；也接受 open/done" },
-      priority: { type: "number", description: "0..10" },
+      status: { type: ["string", "number"], description: "0/ACTIVE、1/SHUTDOWN、2/DONE、3/RESTARTED；也接受 open/done；改成 DONE 时 priority 自动清零" },
+      priority: { type: "number", description: "0..10；patch 改成 DONE 时写入值被清零" },
       difficulty: { type: ["number", "null"], description: "0..5" },
       publishDate: { type: "string", description: "YYYY-MM-DD" },
       targetDate: { type: "string", description: "YYYY-MM-DD" },
@@ -1342,7 +1347,7 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.create", {
-    description: "创建任务；source=0 普通任务，1 时间线任务，2 重启任务。date 字段均为 YYYY-MM-DD",
+    description: "创建任务；source=0 普通任务，1 时间线任务，2 重启任务。date 字段均为 YYYY-MM-DD；status=2 时 priority 强制为 0",
     input: {
       type: "object",
       required: ["title"],
@@ -1352,7 +1357,7 @@ export function registerTaskActions(api) {
         review: { type: "string", description: "完成后的感受/复盘（自由文本，默认空）" },
         tableId: { type: ["string", "number"], description: "任务表 id，缺省用默认任务表" },
         status: { type: ["string", "number"], description: "0/1/2（不能直接创建 RESTARTED）" },
-        priority: { type: "number", description: "0..10" },
+        priority: { type: "number", description: "0..10（status=2 已完成时强制为 0）" },
         difficulty: { type: ["number", "null"], description: "0..5" },
         publishDate: { type: "string", description: "YYYY-MM-DD，缺省今天" },
         targetDate: { type: "string", description: "YYYY-MM-DD，缺省同 publishDate" },
@@ -1382,9 +1387,9 @@ export function registerTaskActions(api) {
         id: { type: "string" },
         taskId: { type: ["string", "number"] },
         type: { type: ["string", "number"], description: "更新模式 0/1/2/3/4（4=感受；不是任务字段；改标签请传 tags 或 tagIds）" },
-        status: { type: ["string", "number"] },
+        status: { type: ["string", "number"], description: "0/ACTIVE、1/SHUTDOWN、2/DONE（改成 DONE 时 priority 自动清零）" },
         date: { type: "string" },
-        priority: { type: "number" },
+        priority: { type: "number", description: "0..10；任务已完成（status=2）时写入后仍为 0" },
         title: { type: "string" },
         description: { type: "string" },
         review: { type: "string", description: "完成后的感受/复盘（自由文本）；给出时按字段更新，或配合 type=4" },
@@ -1701,7 +1706,7 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.complete", {
-    description: "把任务标记为完成（兼容旧 action）",
+    description: "把任务标记为完成（兼容旧 action）；完成后 priority 自动清零",
     input: {
       type: "object",
       required: ["id"],

@@ -143,10 +143,23 @@ try {
   const updateDry = await call("tasks.bulkUpdate", { ids: [id, p9.result.id], patch: { status: "done", priority: 7 }, dryRun: true });
   assert(updateDry.result.dryRun === true && updateDry.result.wouldUpdate === 2, "bulkUpdate dryRun 预览数量不对");
   assert((await call("tasks.get", { id })).result.task.status === "0", "bulkUpdate dryRun 污染了数据");
+  assert(updateDry.result.changes.every((c) => c.changes.priority && c.changes.priority.to === 0), "bulkUpdate 改成 DONE 时优先级未清零：" + JSON.stringify(updateDry.result.changes));
   const updateReal = await call("tasks.bulkUpdate", { ids: [id, p9.result.id], patch: { status: "done", priority: 7 } });
   assert(updateReal.result.updated === 2, "bulkUpdate real 数量不对");
   const afterUpdate = await call("tasks.get", { id });
-  assert(afterUpdate.result.task.status === "2" && afterUpdate.result.task.priority === 7, "bulkUpdate 未写入");
+  assert(afterUpdate.result.task.status === "2" && afterUpdate.result.task.priority === 0, "已完成任务优先级应为 0，实际 " + afterUpdate.result.task.priority);
+
+  // ── 5.0 已完成任务优先级自动清零：创建、单条更新、已完成后再加优先级都不例外 ──
+  const doneOnCreate = await call("tasks.create", { title: "直接建成就完成", status: "2", priority: 9 });
+  assert(doneOnCreate.result.task.priority === 0, "创建时就是 DONE 也应清零优先级");
+  const bumpDone = await call("tasks.update", { id: doneOnCreate.result.id, type: "PRIORITY", priority: 8 });
+  assert(bumpDone.result.task.priority === 0, "已完成任务不该能加回优先级");
+  const reopened = await call("tasks.update", { id: doneOnCreate.result.id, type: "STATUS", status: "0" });
+  assert(reopened.result.task.status === "0", "已完成后可以重新激活");
+  const reprioritized = await call("tasks.update", { id: doneOnCreate.result.id, type: "PRIORITY", priority: 6 });
+  assert(reprioritized.result.task.priority === 6, "重新激活后可以设置优先级");
+  const recompleted = await call("tasks.update", { id: doneOnCreate.result.id, type: "STATUS", status: "2" });
+  assert(recompleted.result.task.priority === 0, "再次完成后优先级应清零");
 
   // ── 5.1 完成感受：STATUS 带 review、REVIEW 单独更新、patch 写入 ──
   const doneWithReview = await call("tasks.update", { id: p9.result.id, type: "STATUS", status: "2", difficulty: 3.5, review: "顺利完成" });
@@ -384,6 +397,25 @@ try {
   } finally {
     if (badDispose) badDispose();
     if (fakeDispose) fakeDispose();
+  }
+
+  // ── 15.5 历史数据：ensureSchema 一次性把已完成任务的优先级清零 ──
+  {
+    const { ensureSchema } = await import("../packages/addons/tasks/lib/db.js");
+    const raw = new DatabaseSync(":memory:");
+    ensureSchema(raw, () => {});
+    const stamp = Date.now();
+    raw.prepare(
+      "INSERT INTO task(id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,sort,dedupe_key,created_at,updated_at,deleted_at,rev) " +
+        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    ).run("t-done", "历史已完成任务", "", "2", 8, null, "", "1", null, null, "2026-11-01", "2026-11-02", "2026-11-02", null, 0, null, stamp, stamp, null, 1);
+    // 模拟升级前的库：老数据还没扫过，清掉标记让 ensureSchema 再跑一次迁移。
+    raw.prepare("DELETE FROM meta WHERE k='done_priority_cleared'").run();
+    const migrated = ensureSchema(raw, () => {});
+    assert(migrated.donePriorityCleared === 1, "迁移报告未记录清零条数：" + JSON.stringify(migrated));
+    assert(Number(raw.prepare("SELECT priority FROM task WHERE id='t-done'").get().priority) === 0, "历史已完成任务优先级未清零");
+    assert(raw.prepare("SELECT v FROM meta WHERE k='done_priority_cleared'").get(), "清零标记未写入 meta");
+    raw.close();
   }
 
   // ── 16. 会话记录模式：命令、动态 section、HTTP 状态 ──

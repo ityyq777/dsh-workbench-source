@@ -807,6 +807,46 @@ function ensureTaskColumns(db, report) {
   dropTaskTypeColumn(db, report || {});
 }
 
+/**
+ * 已完成任务不再需要优先级：一次性把历史库里 status=2 的 priority 清零。
+ *
+ * 新写入由 tasks.js 保证（create/update/bulkUpdate 都会把 DONE 的 priority 归一为 0），
+ * 这里只修历史数据。改动走 sync_change_log（origin=migrate），云端能收到这次修正；
+ * meta 标记保证只跑一次，之后用户手动改库也不会被反复覆盖。
+ */
+function clearDonePriorities(db, report) {
+  const KEY = "done_priority_cleared";
+  if (metaGet(db, KEY)) return 0;
+  const rows = db.prepare(
+    "SELECT id, rev FROM task WHERE status='2' AND priority<>0 AND deleted_at IS NULL",
+  ).all();
+  const ts = now();
+  if (!rows.length) {
+    metaSet(db, KEY, String(ts));
+    return 0;
+  }
+  tx(db, function () {
+    const update = db.prepare("UPDATE task SET priority=0, updated_at=?, rev=? WHERE id=?");
+    const load = db.prepare("SELECT * FROM task WHERE id=?");
+    for (const row of rows) {
+      const id = String(row.id);
+      const rev = Number(row.rev || 0) + 1;
+      update.run(ts, rev, id);
+      const full = load.get(id);
+      if (full) {
+        try {
+          logChange(db, "task", id, "update", full, "migrate", ts);
+        } catch (e) {
+          // 独立库（单测/导出）没有 sync_change_log：照常清零，跳过变更日志。
+        }
+      }
+    }
+    metaSet(db, KEY, String(ts));
+  });
+  if (report) report.donePriorityCleared = rows.length;
+  return rows.length;
+}
+
 export function ensureSchema(db, log) {
   if (!tableExists(db, "meta")) {
     db.exec("CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT NOT NULL);");
@@ -865,6 +905,13 @@ export function ensureSchema(db, log) {
     }
   }
   seedDefaultTree(db);
+  if (hasColumn(db, "task", "priority") && hasColumn(db, "task", "status")) {
+    try {
+      clearDonePriorities(db, report);
+    } catch (e) {
+      if (log) log("[tasks] 已完成任务优先级清零失败：" + String((e && e.message) || e));
+    }
+  }
   metaSet(db, "task_schema_version", "2");
   metaSet(db, "task_migration_report", JSON.stringify(report));
   if (log) log("[tasks] migration", report);
