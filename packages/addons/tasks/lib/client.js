@@ -3187,6 +3187,9 @@ var h = React.createElement;
       editTitle: "\u53CC\u51FB\u7F16\u8F91\u6807\u9898\uFF08\u4EFB\u4F55\u72B6\u6001\u90FD\u53EF\u6539\uFF09",
       deleteConfirm: "\u786E\u5B9A\u5220\u9664\u8FD9\u4E2A\u8282\u70B9\u53CA\u5176\u5B50\u6811\uFF1F\u5B50\u6811\u4E2D\u7684\u4EFB\u52A1\u4F1A\u88AB\u8F6F\u5220\u9664\u3002",
       deleteTaskConfirm: "\u786E\u5B9A\u5220\u9664\u8FD9\u6761\u4EFB\u52A1\u5417\uFF1F\u5220\u9664\u540E\u4E0D\u53EF\u6062\u590D\u3002",
+      batchDelete: "\u6279\u91CF\u5220\u9664",
+      batchDeleteConfirm: "\u786E\u5B9A\u5220\u9664\u9009\u4E2D\u7684 {n} \u6761\u4EFB\u52A1\u5417\uFF1F\u5220\u9664\u540E\u4E0D\u53EF\u6062\u590D\u3002",
+      deletePartial: "\u90E8\u5206\u5220\u9664\u5931\u8D25",
       root: "\u5168\u90E8\u4EFB\u52A1\u7EC4",
       manager: "\u7BA1\u7406\u6A21\u5F0F",
       filterRestarted: "\u8FC7\u6EE4\u5DF2\u91CD\u542F",
@@ -3293,6 +3296,9 @@ var h = React.createElement;
       editTitle: "Double-click to rename (any status)",
       deleteConfirm: "Delete this node and its subtree? Tasks under it will be soft-deleted.",
       deleteTaskConfirm: "Delete this task? This cannot be undone.",
+      batchDelete: "Delete",
+      batchDeleteConfirm: "Delete {n} selected tasks? This cannot be undone.",
+      deletePartial: "some deletes failed",
       root: "All tasks",
       manager: "Manage",
       filterRestarted: "Hide restarted",
@@ -3595,6 +3601,8 @@ var h = React.createElement;
     ".wbt-tl-body{padding:0 0 10px;min-width:0;flex:1}",
     ".wbt-tl-title{font-weight:600;font-size:12.5px}",
     ".wbt-tl-meta{font-size:11px;opacity:.58;display:flex;gap:7px;flex-wrap:wrap;margin-top:2px}",
+    ".wbt-selbar .wbt-act-del{color:var(--dsw-alias-state-error-primary,#b4434a);background:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 9%,transparent)}",
+    ".wbt-selbar .wbt-act-del:hover{background:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 16%,transparent)}",
     ".wbt-selbar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:900;display:flex;gap:8px;align-items:center;background-color:var(--wbt-bg);background-image:linear-gradient(var(--wbt-bg),var(--wbt-bg)),linear-gradient(var(--wbt-bg),var(--wbt-bg)),linear-gradient(var(--wbt-bg),var(--wbt-bg));-webkit-backdrop-filter:blur(30px) saturate(1.4);backdrop-filter:blur(30px) saturate(1.4);border:1px solid var(--wbt-line);box-shadow:0 10px 34px rgba(26,20,12,.24);border-radius:12px;padding:8px 11px;max-width:94vw;flex-wrap:wrap}",
     ".wbt-toast{position:fixed;left:50%;bottom:70px;transform:translateX(-50%);z-index:1100;background:var(--dsw-alias-toast-bg,#1f2328);color:var(--dsw-alias-toast-label,#fff);border-radius:9px;padding:8px 14px;font-size:12.5px;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:90vw;text-align:center}",
     ".wbt-stars{color:var(--dsw-alias-state-warn-primary,#f59f00);font-size:11px;letter-spacing:.5px;white-space:nowrap}",
@@ -4893,6 +4901,27 @@ var h = React.createElement;
         } else say(r && r.error || "delete failed");
       });
     }
+    function batchDelete() {
+      var ids = Array.from(selectedIds);
+      if (!ids.length) return;
+      if (cfgConfirm && !window.confirm(t.batchDeleteConfirm.replace("{n}", String(ids.length)))) return;
+      var ok = 0, fail = 0;
+      Promise.all(ids.map(function(id) {
+        return api.call("tasks.delete", { id }).then(function(r) {
+          if (r && r.ok) ok++;
+          else fail++;
+          return r;
+        }).catch(function() {
+          fail++;
+          return null;
+        });
+      })).then(function() {
+        clearSelection();
+        refreshList();
+        refreshTagNav();
+        say(fail ? t.deleted + " " + ok + " \xB7 " + t.deletePartial + " " + fail : t.deleted + " " + ok);
+      });
+    }
     function deleteNode(node) {
       if (cfgConfirm && !window.confirm(t.deleteConfirm)) return;
       api.call("taskNodes.delete", { id: node.id }).then(function(r) {
@@ -5216,6 +5245,7 @@ var h = React.createElement;
           setBatchMode("migrate");
           openSelected();
         } }, t.batchMigrate),
+        h2("button", { className: "wbt-btn wbt-act-del", onClick: batchDelete }, h2(Icon2, { name: "trash", size: 13 }), t.batchDelete),
         h2("button", { className: "wbt-btn ghost", onClick: clearSelection }, t.clear)
       ) : null,
       drawer ? h2(
@@ -5390,7 +5420,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.9.2",
+    version: "2.9.3",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },
