@@ -8,6 +8,9 @@ var COPY = {
   zh: {
     range7: "近 7 天", range30: "近 30 天", range90: "近 90 天", range365: "近 1 年", rangeAll: "全部",
     refresh: "刷新", asOf: "截至", retry: "重试", loadFail: "统计服务未就绪，请升级插件后重试",
+    rangeFrom: "起始日期", rangeTo: "终止日期", rangeClear: "清除自定义范围",
+    rangeCustom: "自定义日期范围", rangeIncomplete: "请选择完整的起始与终止日期",
+    rangeInvalid: "起始日期不能晚于终止日期",
     tags: "标签总数", used: "已使用", mappings: "关联总数", items: "覆盖对象",
     avgPerItem: "平均每对象", newTags: "范围内新增标签", newMappings: "范围内新增关联",
     times: "个", current: "当前", inRange: "范围内", ofTotal: "占总量",
@@ -26,6 +29,9 @@ var COPY = {
   en: {
     range7: "7 days", range30: "30 days", range90: "90 days", range365: "1 year", rangeAll: "All",
     refresh: "Refresh", asOf: "As of", retry: "Retry", loadFail: "Stats service not ready. Upgrade the plugin and retry.",
+    rangeFrom: "Start date", rangeTo: "End date", rangeClear: "Clear custom range",
+    rangeCustom: "Custom date range", rangeIncomplete: "Pick both start and end dates",
+    rangeInvalid: "Start date must not be after end date",
     tags: "Tags", used: "Used", mappings: "Mappings", items: "Objects",
     avgPerItem: "Avg per object", newTags: "New tags", newMappings: "New mappings",
     times: "", current: "Current", inRange: "In range", ofTotal: "of total",
@@ -77,16 +83,34 @@ function TagsStatsBody(props) {
   var loadPair = React.useState(true);
   var loading = loadPair[0], setLoading = loadPair[1];
   var req = React.useRef(0);
+  var customPair = React.useState(null);
+  var custom = customPair[0], setCustom = customPair[1];
+  var todayDay = React.useMemo(function () {
+    var d = new Date();
+    function p(n) { return String(n).padStart(2, "0"); }
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+  }, []);
+  var customFrom = custom && custom.from ? custom.from : "";
+  var customTo = custom && custom.to ? custom.to : "";
+  var customOk = !!(customFrom && customTo && customFrom <= customTo);
+  var customHint = "";
+  if (!customOk && (customFrom || customTo)) {
+    customHint = customFrom && customTo ? t.rangeInvalid : t.rangeIncomplete;
+  }
 
   var load = React.useCallback(function (silent) {
+    // 起止日期只填了一半或顺序颠倒时先不发请求，保留上一份结果，避免闪回预设范围。
+    if ((customFrom || customTo) && !customOk) return Promise.resolve();
     var id = ++req.current;
     if (!silent) setLoading(true);
-    return Promise.resolve(api.call("tags.statsReport", { range: range, top: cfgTop }))
+    var args = { top: cfgTop };
+    if (customOk) { args.from = customFrom; args.to = customTo; } else { args.range = range; }
+    return Promise.resolve(api.call("tags.statsReport", args))
       .then(function (r) { return r && r.result !== undefined ? r.result : r; })
       .then(function (d) { if (id === req.current) { setData(d); setErr(""); } })
       .catch(function (e) { if (id === req.current) setErr(String((e && e.message) || e || "load failed")); })
       .then(function () { if (id === req.current) setLoading(false); });
-  }, [api, range]);
+  }, [api, range, customOk, customFrom, customTo]);
 
   React.useEffect(function () { load(false); }, [load]);
 
@@ -197,7 +221,14 @@ function TagsStatsBody(props) {
 
   return h("div", { className: "wbg-stats" },
     h(ch.RangeSwitch, {
-      options: options, value: range, onChange: setRange, onRefresh: function () { load(false); },
+      options: options, value: customFrom || customTo ? null : range,
+      onChange: function (key) { setCustom(null); setRange(key); },
+      custom: { from: customFrom, to: customTo },
+      onCustomChange: function (next) { setCustom({ from: next.from || "", to: next.to || "" }); },
+      onCustomClear: function () { setCustom(null); },
+      customHint: customHint, today: todayDay,
+      fromLabel: t.rangeFrom, toLabel: t.rangeTo, clearLabel: t.rangeClear, customAria: t.rangeCustom,
+      onRefresh: function () { load(false); },
       loading: loading, generatedAt: data && data.generatedAt, refreshLabel: t.refresh, timeLabel: t.asOf,
     }),
     err && data ? h(ch.ErrorBar, { message: err, onRetry: function () { load(false); }, retryLabel: t.retry }) : null,

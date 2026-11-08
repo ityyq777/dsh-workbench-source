@@ -58,6 +58,14 @@ var require_charts = __commonJS({
         ".@-seg{display:inline-flex;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:9px;overflow:hidden;background:var(--dsw-alias-bg-layer-1,#fff)}",
         ".@-seg button{appearance:none;border:0;background:transparent;color:var(--dsw-alias-label-secondary,#646a73);font-size:12px;padding:6px 10px;cursor:pointer;white-space:nowrap}",
         ".@-seg button.@-on{background:var(--dsw-alias-brand-primary,#4f6ef7);color:var(--dsw-alias-label-primary-inverted,#fff)}",
+        ".@-range{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:9px;padding:2px 6px;background:var(--dsw-alias-bg-layer-1,#fff)}",
+        ".@-range:focus-within{border-color:var(--dsw-alias-brand-primary,#4f6ef7)}",
+        ".@-date{appearance:none;border:0;background:transparent;color:var(--dsw-alias-label-secondary,#646a73);font-family:inherit;font-size:12px;padding:4px 2px;width:116px;outline:none}",
+        ".@-date::-webkit-calendar-picker-indicator{opacity:.55;cursor:pointer}",
+        ".@-dash{color:var(--dsw-alias-label-tertiary,#8f959e);font-size:12px}",
+        ".@-clear{appearance:none;border:0;background:transparent;color:var(--dsw-alias-label-tertiary,#8f959e);font-size:14px;line-height:1;padding:2px 4px;cursor:pointer;border-radius:4px}",
+        ".@-clear:hover{color:var(--dsw-alias-state-error-primary,#d9534f);background:var(--dsw-alias-bg-skeleton,#f2f3f5)}",
+        ".@-hint{font-size:11px;color:var(--dsw-alias-state-error-primary,#d9534f);white-space:nowrap}",
         ".@-ghost{appearance:none;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-secondary,#646a73);border-radius:8px;font-size:12px;padding:6px 10px;cursor:pointer}",
         ".@-ghost:hover{border-color:var(--dsw-alias-brand-primary,#4f6ef7);color:var(--dsw-alias-brand-primary,#4f6ef7)}",
         ".@-muted{color:var(--dsw-alias-label-tertiary,#8f959e);font-size:12px}",
@@ -388,6 +396,15 @@ var require_charts = __commonJS({
         );
       }
       function RangeSwitch(props) {
+        var custom = props.custom || null;
+        var from = custom && custom.from ? custom.from : "";
+        var to = custom && custom.to ? custom.to : "";
+        function setDate(key, value) {
+          if (typeof props.onCustomChange !== "function") return;
+          var next = { from, to };
+          next[key] = value;
+          props.onCustomChange(next);
+        }
         return h2(
           "div",
           { className: prefix + "-stoolbar" },
@@ -396,12 +413,50 @@ var require_charts = __commonJS({
               key: o.key,
               type: "button",
               className: o.key === props.value ? prefix + "-on" : "",
-              "aria-pressed": o.key === props.value,
+              "aria-pressed": !!props.value && o.key === props.value,
               onClick: function() {
                 props.onChange(o.key);
               }
             }, o.label);
           })),
+          h2(
+            "div",
+            { className: prefix + "-range", role: "group", "aria-label": props.customAria || "\u81EA\u5B9A\u4E49\u65E5\u671F\u8303\u56F4" },
+            h2("input", {
+              type: "date",
+              className: prefix + "-date",
+              value: from,
+              max: props.today || void 0,
+              "aria-label": props.fromLabel || "\u8D77\u59CB\u65E5\u671F",
+              title: props.fromLabel || "\u8D77\u59CB\u65E5\u671F",
+              onChange: function(e) {
+                setDate("from", e.target.value);
+              }
+            }),
+            h2("span", { className: prefix + "-dash", "aria-hidden": "true" }, "\u2013"),
+            h2("input", {
+              type: "date",
+              className: prefix + "-date",
+              value: to,
+              min: from || void 0,
+              max: props.today || void 0,
+              "aria-label": props.toLabel || "\u7EC8\u6B62\u65E5\u671F",
+              title: props.toLabel || "\u7EC8\u6B62\u65E5\u671F",
+              onChange: function(e) {
+                setDate("to", e.target.value);
+              }
+            }),
+            from || to ? h2("button", {
+              type: "button",
+              className: prefix + "-clear",
+              "aria-label": props.clearLabel || "\u6E05\u9664\u81EA\u5B9A\u4E49\u8303\u56F4",
+              title: props.clearLabel || "\u6E05\u9664\u81EA\u5B9A\u4E49\u8303\u56F4",
+              onClick: function() {
+                if (props.onCustomClear) props.onCustomClear();
+              }
+            }, "\xD7") : null
+          ),
+          props.customHint ? h2("span", { className: prefix + "-hint", role: "status" }, props.customHint) : null,
           h2("button", { type: "button", className: prefix + "-ghost", disabled: !!props.loading, onClick: props.onRefresh }, props.refreshLabel || "\u5237\u65B0"),
           h2("span", { className: prefix + "-muted" }, props.generatedAt ? (props.timeLabel || "\u622A\u81F3") + " " + timeText(props.generatedAt) : ""),
           props.right ? h2("span", { style: { marginLeft: "auto" } }, props.right) : null
@@ -1003,6 +1058,12 @@ var require_stats = __commonJS({
         asOf: "\u622A\u81F3",
         retry: "\u91CD\u8BD5",
         loadFail: "\u7EDF\u8BA1\u670D\u52A1\u672A\u5C31\u7EEA\uFF0C\u8BF7\u5347\u7EA7\u63D2\u4EF6\u540E\u91CD\u8BD5",
+        rangeFrom: "\u8D77\u59CB\u65E5\u671F",
+        rangeTo: "\u7EC8\u6B62\u65E5\u671F",
+        rangeClear: "\u6E05\u9664\u81EA\u5B9A\u4E49\u8303\u56F4",
+        rangeCustom: "\u81EA\u5B9A\u4E49\u65E5\u671F\u8303\u56F4",
+        rangeIncomplete: "\u8BF7\u9009\u62E9\u5B8C\u6574\u7684\u8D77\u59CB\u4E0E\u7EC8\u6B62\u65E5\u671F",
+        rangeInvalid: "\u8D77\u59CB\u65E5\u671F\u4E0D\u80FD\u665A\u4E8E\u7EC8\u6B62\u65E5\u671F",
         tags: "\u6807\u7B7E\u603B\u6570",
         used: "\u5DF2\u4F7F\u7528",
         mappings: "\u5173\u8054\u603B\u6570",
@@ -1050,6 +1111,12 @@ var require_stats = __commonJS({
         asOf: "As of",
         retry: "Retry",
         loadFail: "Stats service not ready. Upgrade the plugin and retry.",
+        rangeFrom: "Start date",
+        rangeTo: "End date",
+        rangeClear: "Clear custom range",
+        rangeCustom: "Custom date range",
+        rangeIncomplete: "Pick both start and end dates",
+        rangeInvalid: "Start date must not be after end date",
         tags: "Tags",
         used: "Used",
         mappings: "Mappings",
@@ -1123,10 +1190,34 @@ var require_stats = __commonJS({
       var loadPair = React2.useState(true);
       var loading = loadPair[0], setLoading = loadPair[1];
       var req = React2.useRef(0);
+      var customPair = React2.useState(null);
+      var custom = customPair[0], setCustom = customPair[1];
+      var todayDay = React2.useMemo(function() {
+        var d = /* @__PURE__ */ new Date();
+        function p(n) {
+          return String(n).padStart(2, "0");
+        }
+        return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+      }, []);
+      var customFrom = custom && custom.from ? custom.from : "";
+      var customTo = custom && custom.to ? custom.to : "";
+      var customOk = !!(customFrom && customTo && customFrom <= customTo);
+      var customHint = "";
+      if (!customOk && (customFrom || customTo)) {
+        customHint = customFrom && customTo ? t.rangeInvalid : t.rangeIncomplete;
+      }
       var load = React2.useCallback(function(silent) {
+        if ((customFrom || customTo) && !customOk) return Promise.resolve();
         var id = ++req.current;
         if (!silent) setLoading(true);
-        return Promise.resolve(api.call("tags.statsReport", { range, top: cfgTop })).then(function(r) {
+        var args = { top: cfgTop };
+        if (customOk) {
+          args.from = customFrom;
+          args.to = customTo;
+        } else {
+          args.range = range;
+        }
+        return Promise.resolve(api.call("tags.statsReport", args)).then(function(r) {
           return r && r.result !== void 0 ? r.result : r;
         }).then(function(d) {
           if (id === req.current) {
@@ -1138,7 +1229,7 @@ var require_stats = __commonJS({
         }).then(function() {
           if (id === req.current) setLoading(false);
         });
-      }, [api, range]);
+      }, [api, range, customOk, customFrom, customTo]);
       React2.useEffect(function() {
         load(false);
       }, [load]);
@@ -1285,8 +1376,24 @@ var require_stats = __commonJS({
         { className: "wbg-stats" },
         h2(ch.RangeSwitch, {
           options,
-          value: range,
-          onChange: setRange,
+          value: customFrom || customTo ? null : range,
+          onChange: function(key) {
+            setCustom(null);
+            setRange(key);
+          },
+          custom: { from: customFrom, to: customTo },
+          onCustomChange: function(next) {
+            setCustom({ from: next.from || "", to: next.to || "" });
+          },
+          onCustomClear: function() {
+            setCustom(null);
+          },
+          customHint,
+          today: todayDay,
+          fromLabel: t.rangeFrom,
+          toLabel: t.rangeTo,
+          clearLabel: t.rangeClear,
+          customAria: t.rangeCustom,
           onRefresh: function() {
             load(false);
           },
@@ -3102,7 +3209,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.6.0",
+    version: "1.6.1",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },
       { id: "tags", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TagsView },

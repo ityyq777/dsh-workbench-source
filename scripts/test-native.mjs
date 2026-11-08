@@ -302,6 +302,29 @@ try {
   let rangeErr = null;
   try { await call("tasks.statsReport", { range: "2d" }); } catch (e) { rangeErr = e; }
   assert(rangeErr, "tasks.statsReport 未拒绝非法 range");
+  // 自定义起止日期：闭区间 [from, to]，两端都计入
+  const pad2 = (n) => String(n).padStart(2, "0");
+  const dayOf = (d) => d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  const todayD = new Date();
+  const back2D = new Date(todayD.getFullYear(), todayD.getMonth(), todayD.getDate() - 2);
+  const dayFrom = dayOf(back2D);
+  const dayTo = dayOf(todayD);
+  const custom = await call("tasks.statsReport", { from: dayFrom, to: dayTo });
+  assert(custom.result.range.from === dayFrom && custom.result.range.to === dayTo, "tasks.statsReport 未回显自定义 from/to");
+  assert(custom.result.trend.length === 3, "自定义区间应为闭区间：3 天应产生 3 个趋势点");
+  assert(custom.result.trend[0].bucket === dayFrom && custom.result.trend[2].bucket === dayTo, "自定义区间首尾日期不算入区间");
+  const customTag = await call("tags.statsReport", { from: dayFrom, to: dayTo });
+  assert(customTag.result.range.from === dayFrom && customTag.result.range.to === dayTo, "tags.statsReport 未接受 from/to");
+  assert(customTag.result.trend.length === 3, "tags 自定义区间应为闭区间");
+  const customSite = await call("sites.statsReport", { from: dayFrom, to: dayTo });
+  assert(customSite.result.range.from === dayFrom && customSite.result.range.to === dayTo, "sites.statsReport 未接受 from/to");
+  assert(customSite.result.trend.length === 3, "sites 自定义区间应为闭区间");
+  let customOrderErr = null;
+  try { await call("tasks.statsReport", { from: dayTo, to: dayFrom }); } catch (e) { customOrderErr = e; }
+  assert(customOrderErr, "from 晚于 to 应被拒绝");
+  let customHalfErr = null;
+  try { await call("tags.statsReport", { from: dayFrom }); } catch (e) { customHalfErr = e; }
+  assert(customHalfErr, "只提供 from 应被拒绝");
   const tagQuick = await call("tags.stats", {});
   assert(tagQuick.result.tags >= 1 && tagQuick.result.mappings >= 1, "tags.stats 计数器为空");
   const tagReport = await call("tags.statsReport", { range: "30d" });

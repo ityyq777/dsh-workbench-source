@@ -20,6 +20,14 @@ function css(prefix) {
     ".@-seg{display:inline-flex;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:9px;overflow:hidden;background:var(--dsw-alias-bg-layer-1,#fff)}",
     ".@-seg button{appearance:none;border:0;background:transparent;color:var(--dsw-alias-label-secondary,#646a73);font-size:12px;padding:6px 10px;cursor:pointer;white-space:nowrap}",
     ".@-seg button.@-on{background:var(--dsw-alias-brand-primary,#4f6ef7);color:var(--dsw-alias-label-primary-inverted,#fff)}",
+    ".@-range{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:9px;padding:2px 6px;background:var(--dsw-alias-bg-layer-1,#fff)}",
+    ".@-range:focus-within{border-color:var(--dsw-alias-brand-primary,#4f6ef7)}",
+    ".@-date{appearance:none;border:0;background:transparent;color:var(--dsw-alias-label-secondary,#646a73);font-family:inherit;font-size:12px;padding:4px 2px;width:116px;outline:none}",
+    ".@-date::-webkit-calendar-picker-indicator{opacity:.55;cursor:pointer}",
+    ".@-dash{color:var(--dsw-alias-label-tertiary,#8f959e);font-size:12px}",
+    ".@-clear{appearance:none;border:0;background:transparent;color:var(--dsw-alias-label-tertiary,#8f959e);font-size:14px;line-height:1;padding:2px 4px;cursor:pointer;border-radius:4px}",
+    ".@-clear:hover{color:var(--dsw-alias-state-error-primary,#d9534f);background:var(--dsw-alias-bg-skeleton,#f2f3f5)}",
+    ".@-hint{font-size:11px;color:var(--dsw-alias-state-error-primary,#d9534f);white-space:nowrap}",
     ".@-ghost{appearance:none;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-secondary,#646a73);border-radius:8px;font-size:12px;padding:6px 10px;cursor:pointer}",
     ".@-ghost:hover{border-color:var(--dsw-alias-brand-primary,#4f6ef7);color:var(--dsw-alias-brand-primary,#4f6ef7)}",
     ".@-muted{color:var(--dsw-alias-label-tertiary,#8f959e);font-size:12px}",
@@ -289,15 +297,46 @@ function makeCharts(prefix) {
     );
   }
 
+  // 快捷范围 + 手选起止日期：两者互斥，选中预设会清掉自定义区间。
   function RangeSwitch(props) {
+    var custom = props.custom || null;
+    var from = custom && custom.from ? custom.from : "";
+    var to = custom && custom.to ? custom.to : "";
+    function setDate(key, value) {
+      if (typeof props.onCustomChange !== "function") return;
+      var next = { from: from, to: to };
+      next[key] = value;
+      props.onCustomChange(next);
+    }
     return h("div", { className: prefix + "-stoolbar" },
       h("div", { className: prefix + "-seg", role: "group", "aria-label": props.aria || "时间范围" }, (props.options || []).map(function (o) {
         return h("button", {
           key: o.key, type: "button", className: o.key === props.value ? prefix + "-on" : "",
-          "aria-pressed": o.key === props.value,
+          "aria-pressed": !!props.value && o.key === props.value,
           onClick: function () { props.onChange(o.key); },
         }, o.label);
       })),
+      h("div", { className: prefix + "-range", role: "group", "aria-label": props.customAria || "自定义日期范围" },
+        h("input", {
+          type: "date", className: prefix + "-date", value: from,
+          max: props.today || undefined,
+          "aria-label": props.fromLabel || "起始日期", title: props.fromLabel || "起始日期",
+          onChange: function (e) { setDate("from", e.target.value); },
+        }),
+        h("span", { className: prefix + "-dash", "aria-hidden": "true" }, "–"),
+        h("input", {
+          type: "date", className: prefix + "-date", value: to,
+          min: from || undefined, max: props.today || undefined,
+          "aria-label": props.toLabel || "终止日期", title: props.toLabel || "终止日期",
+          onChange: function (e) { setDate("to", e.target.value); },
+        }),
+        (from || to) ? h("button", {
+          type: "button", className: prefix + "-clear", "aria-label": props.clearLabel || "清除自定义范围",
+          title: props.clearLabel || "清除自定义范围",
+          onClick: function () { if (props.onCustomClear) props.onCustomClear(); },
+        }, "×") : null,
+      ),
+      props.customHint ? h("span", { className: prefix + "-hint", role: "status" }, props.customHint) : null,
       h("button", { type: "button", className: prefix + "-ghost", disabled: !!props.loading, onClick: props.onRefresh }, props.refreshLabel || "刷新"),
       h("span", { className: prefix + "-muted" }, props.generatedAt ? (props.timeLabel || "截至") + " " + timeText(props.generatedAt) : ""),
       props.right ? h("span", { style: { marginLeft: "auto" } }, props.right) : null,
