@@ -8,3 +8,7 @@ packages/shell-dist
 
 _archive/**
 dist/
+
+
+.pnpm-store
+.tmp-install-test
