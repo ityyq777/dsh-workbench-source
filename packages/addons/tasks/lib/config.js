@@ -23,7 +23,6 @@ const GROUPS = [
 const SECTIONS = [
   { value: "trend", zh: "新增/完成/到期趋势", en: "Created / done / due trend" },
   { value: "status", zh: "状态构成", en: "Status breakdown" },
-  { value: "tags", zh: "标签 × 状态", en: "Tags × status" },
   { value: "priority", zh: "优先级分布", en: "Priority distribution" },
   { value: "difficulty", zh: "难度分布", en: "Difficulty distribution" },
   { value: "aging", zh: "逾期账龄", en: "Overdue aging" },

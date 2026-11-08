@@ -1,7 +1,6 @@
 // 任务统计报表：只读聚合，不写库、不发事件。
 // 契约见 docs/specs/18-统计报表设计.md §4。
 
-import { tagsAvailable, tagBreakdown } from "./tagging.js";
 import { configValues } from "./config.js";
 
 const STATUS_LABELS = {
@@ -231,55 +230,39 @@ export function statsReport(db, args, api) {
     });
   }
 
-  // 任务不再有「类型」；分组改看标签。多标签任务会出现在多个分组里，总和可能大于任务数。
-  const tagStats = tagBreakdown(db, api);
-  if (!tagsAvailable(db, api)) {
-    warnings.push({ code: "tag_domain_missing", message: "标签域未安装，标签分组不可用" });
-  }
-
   const priorityRows = db.prepare(
     "SELECT priority, COUNT(*) AS n FROM task WHERE deleted_at IS NULL GROUP BY priority",
   ).all();
-  const priorityBins = [
-    { key: "0", label: "未设置", count: 0 },
-    { key: "low", label: "1–3", count: 0 },
-    { key: "mid", label: "4–6", count: 0 },
-    { key: "high", label: "7–8", count: 0 },
-    { key: "urgent", label: "9–10", count: 0 },
-  ];
+  // 单值分桶：0..10 各自一桶，不再合并区间——区间会把「9 和 10」糊在一起，看不出真实分布。
+  const priorityBins = [];
+  for (let p = 0; p <= 10; p += 1) {
+    priorityBins.push({ key: String(p), label: String(p), count: 0 });
+  }
   for (const row of priorityRows) {
-    const p = Number(row.priority);
     const n = Number(row.n || 0);
-    if (p <= 0) priorityBins[0].count += n;
-    else if (p <= 3) priorityBins[1].count += n;
-    else if (p <= 6) priorityBins[2].count += n;
-    else if (p <= 8) priorityBins[3].count += n;
-    else priorityBins[4].count += n;
+    const p = Math.max(0, Math.min(10, Math.round(Number(row.priority) || 0)));
+    priorityBins[p].count += n;
   }
 
   const difficultyRows = db.prepare(
     "SELECT difficulty, COUNT(*) AS n FROM task WHERE deleted_at IS NULL GROUP BY difficulty",
   ).all();
-  const difficultyBins = [
-    { key: "0-1", label: "0–1", count: 0 },
-    { key: "1-2", label: "1–2", count: 0 },
-    { key: "2-3", label: "2–3", count: 0 },
-    { key: "3-4", label: "3–4", count: 0 },
-    { key: "4-5", label: "4–5", count: 0 },
-  ];
+  // 难度是 0.5 步进的单值（0.5–5），同样一值一桶；0/空值单独归到「未设置」。
+  const difficultyBins = [];
+  for (let i = 1; i <= 10; i += 1) {
+    const v = i / 2;
+    difficultyBins.push({ key: String(v), label: String(v), count: 0 });
+  }
   let difficultyUnset = 0;
   for (const row of difficultyRows) {
     const n = Number(row.n || 0);
-    if (row.difficulty === null || row.difficulty === undefined || Number(row.difficulty) <= 0) {
+    const d = Number(row.difficulty);
+    if (row.difficulty === null || row.difficulty === undefined || !(d > 0)) {
       difficultyUnset += n;
       continue;
     }
-    const d = Number(row.difficulty);
-    if (d <= 1) difficultyBins[0].count += n;
-    else if (d <= 2) difficultyBins[1].count += n;
-    else if (d <= 3) difficultyBins[2].count += n;
-    else if (d <= 4) difficultyBins[3].count += n;
-    else difficultyBins[4].count += n;
+    const idx = Math.min(10, Math.max(1, Math.round(d * 2)));
+    difficultyBins[idx - 1].count += n;
   }
   if (difficultyUnset > 0) {
     difficultyBins.push({ key: "unset", label: "未设置", count: difficultyUnset });
@@ -436,7 +419,6 @@ export function statsReport(db, args, api) {
       status: ["0", "1", "2", "3"].map(function (key) {
         return { key: key, label: STATUS_LABELS[key], count: statusCount[key] || 0 };
       }),
-      tags: tagStats.rows,
       priority: priorityBins,
       difficulty: difficultyBins,
     },

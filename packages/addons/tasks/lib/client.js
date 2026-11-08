@@ -1085,12 +1085,10 @@ var require_stats = __commonJS({
         due: "\u5230\u671F",
         status: "\u72B6\u6001\u6784\u6210",
         statusNote: "\u5F53\u524D\u5B58\u91CF",
-        tags: "\u6807\u7B7E \xD7 \u72B6\u6001",
-        tagsNote: "\u5F53\u524D\u5B58\u91CF\uFF1B\u4E00\u4E2A\u4EFB\u52A1\u53EF\u5C5E\u4E8E\u591A\u4E2A\u6807\u7B7E",
         priority: "\u4F18\u5148\u7EA7\u5206\u5E03",
-        priorityNote: "\u5F53\u524D\u5B58\u91CF",
+        priorityNote: "\u5F53\u524D\u5B58\u91CF\uFF1B0\u201310 \u6BCF\u7EA7\u4E00\u6876",
         difficulty: "\u96BE\u5EA6\u5206\u5E03",
-        difficultyNote: "\u5F53\u524D\u5B58\u91CF",
+        difficultyNote: "\u5F53\u524D\u5B58\u91CF\uFF1B0.5\u20135 \u6BCF\u6863\u4E00\u6876",
         aging: "\u903E\u671F\u8D26\u9F84",
         agingNote: "\u5F53\u524D\u903E\u671F\u4EFB\u52A1",
         overdueList: "\u903E\u671F\u6E05\u5355",
@@ -1160,12 +1158,10 @@ var require_stats = __commonJS({
         due: "Due",
         status: "Status",
         statusNote: "Current",
-        tags: "Tags \xD7 status",
-        tagsNote: "Current; a task can carry several tags",
         priority: "Priority",
-        priorityNote: "Current",
+        priorityNote: "Current; one bucket per level 0\u201310",
         difficulty: "Difficulty",
-        difficultyNote: "Current",
+        difficultyNote: "Current; one bucket per 0.5 step",
         aging: "Overdue aging",
         agingNote: "Current overdue",
         overdueList: "Overdue list",
@@ -1372,28 +1368,12 @@ var require_stats = __commonJS({
           ));
           children.push(h2(
             ch.Card,
-            { key: "tags", span: 6, title: t.tags, note: t.tagsNote },
-            h2(ch.StackedRows, {
-              rows: (b.tags || []).map(function(x) {
-                return { key: x.key, label: x.label, total: x.total, parts: { open: x.open, done: x.done, shutdown: x.shutdown, restarted: x.restarted } };
-              }),
-              keys: [
-                { key: "open", label: t.open, color: ch.colors[0] },
-                { key: "done", label: t.done, color: ch.colors[1] },
-                { key: "shutdown", label: t.shutdown, color: "var(--dsw-alias-label-tertiary,#8f959e)" },
-                { key: "restarted", label: t.restarted, color: ch.colors[2] }
-              ],
-              lang
-            })
-          ));
-          children.push(h2(
-            ch.Card,
-            { key: "priority", span: 3, title: t.priority, note: t.priorityNote },
+            { key: "priority", span: 6, title: t.priority, note: t.priorityNote },
             h2(ch.Histogram, { data: b.priority || [], lang, color: ch.colors[0] })
           ));
           children.push(h2(
             ch.Card,
-            { key: "difficulty", span: 3, title: t.difficulty, note: t.difficultyNote },
+            { key: "difficulty", span: 6, title: t.difficulty, note: t.difficultyNote },
             h2(ch.Histogram, { data: b.difficulty || [], lang, color: ch.colors[4] })
           ));
           children.push(h2(
@@ -5022,7 +5002,7 @@ var h = React.createElement;
     "stats.showKpi": true,
     "stats.recentDoneLimit": 10,
     "stats.recentShutdownLimit": 10,
-    "stats.sections": ["trend", "status", "tags", "priority", "difficulty", "aging", "overdue", "tables", "groups", "recentDone", "recentShutdown"]
+    "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "recentDone", "recentShutdown"]
   };
   function TasksView(props) {
     var lang = props.lang === "en" ? "en" : "zh";
@@ -5853,7 +5833,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.10.6",
+    version: "2.10.7",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

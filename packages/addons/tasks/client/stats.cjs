@@ -17,9 +17,8 @@ var COPY = {
     trend: "新增 / 完成 / 到期趋势", trendNote: "按自然日 / 周 / 月分桶",
     created: "新增", done: "完成", due: "到期",
     status: "状态构成", statusNote: "当前存量",
-    tags: "标签 × 状态", tagsNote: "当前存量；一个任务可属于多个标签",
-    priority: "优先级分布", priorityNote: "当前存量",
-    difficulty: "难度分布", difficultyNote: "当前存量",
+    priority: "优先级分布", priorityNote: "当前存量；0–10 每级一桶",
+    difficulty: "难度分布", difficultyNote: "当前存量；0.5–5 每档一桶",
     aging: "逾期账龄", agingNote: "当前逾期任务",
     overdueList: "逾期清单", overdueNote: "按账龄降序",
     tables: "任务表排行", tablesNote: "按进行中 + 逾期权重",
@@ -43,9 +42,8 @@ var COPY = {
     trend: "Created / done / due trend", trendNote: "Bucketed by day / week / month",
     created: "Created", done: "Done", due: "Due",
     status: "Status", statusNote: "Current",
-    tags: "Tags × status", tagsNote: "Current; a task can carry several tags",
-    priority: "Priority", priorityNote: "Current",
-    difficulty: "Difficulty", difficultyNote: "Current",
+    priority: "Priority", priorityNote: "Current; one bucket per level 0–10",
+    difficulty: "Difficulty", difficultyNote: "Current; one bucket per 0.5 step",
     aging: "Overdue aging", agingNote: "Current overdue",
     overdueList: "Overdue list", overdueNote: "Oldest first",
     tables: "Task tables", tablesNote: "Weighted by active + overdue",
@@ -213,22 +211,9 @@ function TasksStatsBody(props) {
           aria: (b.status || []).map(function (s) { return s.label + " " + s.count; }).join("，"),
         })));
 
-      children.push(h(ch.Card, { key: "tags", span: 6, title: t.tags, note: t.tagsNote },
-        h(ch.StackedRows, {
-          rows: (b.tags || []).map(function (x) {
-            return { key: x.key, label: x.label, total: x.total, parts: { open: x.open, done: x.done, shutdown: x.shutdown, restarted: x.restarted } };
-          }),
-          keys: [
-            { key: "open", label: t.open, color: ch.colors[0] },
-            { key: "done", label: t.done, color: ch.colors[1] },
-            { key: "shutdown", label: t.shutdown, color: "var(--dsw-alias-label-tertiary,#8f959e)" },
-            { key: "restarted", label: t.restarted, color: ch.colors[2] },
-          ],
-          lang: lang,
-        })));
-      children.push(h(ch.Card, { key: "priority", span: 3, title: t.priority, note: t.priorityNote },
+      children.push(h(ch.Card, { key: "priority", span: 6, title: t.priority, note: t.priorityNote },
         h(ch.Histogram, { data: b.priority || [], lang: lang, color: ch.colors[0] })));
-      children.push(h(ch.Card, { key: "difficulty", span: 3, title: t.difficulty, note: t.difficultyNote },
+      children.push(h(ch.Card, { key: "difficulty", span: 6, title: t.difficulty, note: t.difficultyNote },
         h(ch.Histogram, { data: b.difficulty || [], lang: lang, color: ch.colors[4] })));
 
       children.push(h(ch.Card, { key: "aging", span: 6, title: t.aging, note: t.agingNote },

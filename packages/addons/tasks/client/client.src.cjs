@@ -1153,7 +1153,7 @@ var h = React.createElement;
     "form.defaultPriority": 1, "form.defaultDifficulty": 1, "form.defaultTargetOffset": 0,
     "stats.range": "30d", "stats.top": 10, "stats.showKpi": true,
     "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10,
-    "stats.sections": ["trend", "status", "tags", "priority", "difficulty", "aging", "overdue", "tables", "groups", "recentDone", "recentShutdown"],
+    "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "recentDone", "recentShutdown"],
   };
 
   function TasksView(props) {
@@ -1747,7 +1747,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.10.6",
+    version: "2.10.7",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },

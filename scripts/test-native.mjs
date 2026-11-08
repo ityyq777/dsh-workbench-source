@@ -468,6 +468,16 @@ try {
   assert(Array.isArray(taskReport.result.trend) && taskReport.result.trend.length >= 1, "tasks.statsReport 缺趋势");
   assert(taskReport.result.breakdowns.status.length >= 1, "tasks.statsReport 缺状态分布");
   assert(taskReport.result.generatedAt, "tasks.statsReport 缺 generatedAt");
+  // 统计页改版：标签 × 状态区块移除；优先级/难度改单值分桶
+  assert(!("tags" in taskReport.result.breakdowns), "tasks.statsReport 仍返回标签 × 状态分组");
+  const pBuckets = taskReport.result.breakdowns.priority;
+  assert(pBuckets.length === 11, "优先级应为 11 个单值桶（0–10）：" + pBuckets.length);
+  assert(pBuckets.map((x) => x.key).join(",") === "0,1,2,3,4,5,6,7,8,9,10", "优先级桶键不是 0–10 单值");
+  const dBuckets = taskReport.result.breakdowns.difficulty.filter((x) => x.key !== "unset");
+  assert(dBuckets.length === 10, "难度应为 10 个单值桶（0.5–5）：" + dBuckets.length);
+  assert(dBuckets[0].key === "0.5" && dBuckets[9].key === "5", "难度桶键不是 0.5 步进");
+  const pSum = pBuckets.reduce((a, x) => a + x.count, 0);
+  assert(pSum === taskReport.result.totals.total, "优先级分桶之和应等于任务总数：" + pSum + "/" + taskReport.result.totals.total);
   const taskAll = await call("tasks.statsReport", { range: "all" });
   assert(taskAll.result.totals.total >= taskReport.result.totals.total, "tasks.statsReport range=all 计数偏小");
   let rangeErr = null;
