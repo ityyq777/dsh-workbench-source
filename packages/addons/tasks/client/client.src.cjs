@@ -19,7 +19,7 @@ var h = React.createElement;
   var COPY = {
     zh: {
       title: "任务", search: "搜索任务标题", newTask: "新建任务", tree: "任务树",
-      select: "筛选", cancelSelect: "退出筛选", list: "列表", card: "卡片",
+      select: "选择", cancelSelect: "退出选择", list: "列表", card: "卡片",
       all: "全部", empty: "这个视图还没有任务", loading: "加载中…",
       error: "操作失败：", save: "保存", cancel: "取消", create: "创建", close: "关闭",
       addGroup: "新建组", addTable: "新建表", rename: "重命名", del: "删除",
@@ -41,6 +41,8 @@ var h = React.createElement;
       selected: "已选", selectedTasks: "选中任务", batchTimeline: "归并时间线",
       batchMigrate: "迁移任务表", refresh: "刷新", clear: "清空",
       chooseBase: "选择基准任务（使用它的时间线）", chooseTable: "选择目标任务表",
+      searchTable: "搜索任务表", noTable: "没有匹配的任务表", baseLabel: "基准任务", targetLabel: "目标任务表",
+      batchCount: "已选", hasTimeline: "有时间线", noTimelineTag: "无时间线", group: "任务组",
       timelineTitle: "任务时间线", newTimeline: "新建时间线任务",
       restartTitle: "重启任务", noTimeline: "这条任务还没有时间线",
       confirm: "确定", difficultyHint: "完成任务前请选择难度（0.5–5）",
@@ -75,6 +77,8 @@ var h = React.createElement;
       timeline: "Timeline", restart: "Restart", complete: "Complete", shutdownOp: "Close",
       selected: "Selected", selectedTasks: "Selected tasks", batchTimeline: "Merge timeline",
       batchMigrate: "Move table", refresh: "Refresh", clear: "Clear",
+      searchTable: "Search tables", noTable: "No matching table", baseLabel: "Base task", targetLabel: "Target table",
+      batchCount: "Selected", hasTimeline: "has timeline", noTimelineTag: "no timeline", group: "Group",
       chooseBase: "Choose a base task (it supplies the timeline)", chooseTable: "Choose target table",
       timelineTitle: "Task timeline", newTimeline: "New timeline task",
       restartTitle: "Restart task", noTimeline: "No timeline for this task",
@@ -321,7 +325,26 @@ var h = React.createElement;
     ".wbt-col{flex:1;min-width:0}",
     ".wbt-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}",
     ".wbt-pill{font-size:11px;padding:2px 7px;border-radius:999px;background:color-mix(in oklab,var(--wbt-accent) 12%,transparent);color:var(--wbt-accent)}",
-    ".wbt-hint{font-size:11.5px;opacity:.55;line-height:1.5}",
+    ".wbt-mhint{font-size:11.5px;opacity:.62;line-height:1.5}",
+    ".wbt-modal.batch{width:min(720px,96vw);gap:9px}",
+    ".wbt-batch{display:flex;flex-direction:column;gap:8px;min-height:0}",
+    ".wbt-batch-body{display:flex;flex-direction:column;gap:1px;border:1px solid var(--wbt-line);border-radius:10px;padding:5px;max-height:min(52vh,420px);overflow:auto;overscroll-behavior:contain}",
+    ".wbt-bpick{display:flex;align-items:flex-start;gap:8px;width:100%;text-align:left;border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-size:12.5px;padding:7px 9px;border-radius:8px;cursor:pointer;min-width:0;line-height:1.45}",
+    ".wbt-bpick:hover{background:color-mix(in oklab,var(--wbt-accent) 8%,transparent)}",
+    ".wbt-bpick.on{background:color-mix(in oklab,var(--wbt-accent) 13%,transparent);border-color:color-mix(in oklab,var(--wbt-accent) 40%,transparent)}",
+    ".wbt-bpick input{margin:3px 0 0;flex:none;accent-color:var(--wbt-accent)}",
+    ".wbt-bpick-ind{flex:none;align-self:stretch}",
+    ".wbt-bpick-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}",
+    ".wbt-bpick-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    ".wbt-bpick.wrap .wbt-bpick-name{white-space:normal;word-break:break-word}",
+    ".wbt-bpick-meta{font-size:11px;opacity:.55;font-variant-numeric:tabular-nums;display:flex;gap:6px;align-items:center;min-width:0}",
+    ".wbt-bpick-meta code{font-family:inherit;opacity:.85;background:color-mix(in oklab,currentColor 8%,transparent);border-radius:4px;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}",
+    ".wbt-bpick-check{flex:none;width:16px;display:inline-flex;justify-content:center;color:var(--wbt-accent);opacity:.95;padding-top:2px}",
+    ".wbt-bgroup{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:560;opacity:.5;padding:7px 9px 2px}",
+    ".wbt-bgroup .wbt-svg{opacity:.7}",
+    ".wbt-batch-sel{display:flex;align-items:center;gap:6px;font-size:11.5px;opacity:.62;min-width:0}",
+    ".wbt-batch-sel b{font-weight:600;opacity:.95;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}",
+    ".wbt-batch-empty{font-size:12px;opacity:.5;text-align:center;padding:22px 8px}",
     ".wbt-danger{color:var(--dsw-alias-state-error-primary,#e5484d)}",
     ".wbt-countdown{display:inline-flex;align-items:center;gap:3px;margin-left:5px;padding:1px 6px 1px 5px;border-radius:6px;font-size:10.5px;font-weight:600;letter-spacing:.2px;color:var(--dsw-alias-state-error-primary,#e5484d);background:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 9%,transparent);border:1px solid color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 20%,transparent);vertical-align:1px}",
     ".wbt-countdown .wbt-cd-num{font-variant-numeric:tabular-nums;font-feature-settings:\"tnum\"}",
@@ -761,7 +784,7 @@ var h = React.createElement;
     return h("div", { className: "wbt-modal-mask", onMouseDown: function (e) { if (e.target === e.currentTarget) props.onClose(); } },
       h("div", { className: "wbt-modal" },
         h("div", { className: "wbt-modal-head" }, h("h3", null, title), h("button", { className: "wbt-icon", onClick: props.onClose }, "×")),
-        source !== "0" && origin ? h("div", { className: "wbt-hint" }, "来源：" + (origin.title || origin.id) + (source === "2" ? " · 重启链 " + (origin.restartKey || origin.id) : " · 时间线 " + (origin.timelineKey || origin.id))) : null,
+        source !== "0" && origin ? h("div", { className: "wbt-mhint" }, "来源：" + (origin.title || origin.id) + (source === "2" ? " · 重启链 " + (origin.restartKey || origin.id) : " · 时间线 " + (origin.timelineKey || origin.id))) : null,
         h("div", { className: "wbt-form" },
           h("label", { className: "wbt-field full" }, h("span", null, t.titleField + " *"), h("input", { className: "wbt-input", value: form.title, onChange: function (e) { set("title", e.target.value); }, autoFocus: true })),
           h("label", { className: "wbt-field full" }, h("span", null, t.desc), h("textarea", { className: "wbt-textarea", rows: 2, value: form.description, onChange: function (e) { set("description", e.target.value); } })),
@@ -805,7 +828,7 @@ var h = React.createElement;
           h("button", { className: "wbt-btn", onClick: function () { props.onCreateTimeline(last); } }, "＋ " + t.newTimeline),
           h("button", { className: "wbt-icon", onClick: props.onClose }, "×")
         ),
-        state.loading ? h("div", { className: "wbt-hint" }, t.loading) : state.error ? h("div", { className: "wbt-err" }, t.error + state.error) : (items.length === 0 ? h("div", { className: "wbt-empty" }, t.noTimeline) : h("div", { className: "wbt-timeline" }, items.map(function (x, i) {
+        state.loading ? h("div", { className: "wbt-mhint" }, t.loading) : state.error ? h("div", { className: "wbt-err" }, t.error + state.error) : (items.length === 0 ? h("div", { className: "wbt-empty" }, t.noTimeline) : h("div", { className: "wbt-timeline" }, items.map(function (x, i) {
           var st = statusInfo(x.status);
           return h("div", { className: "wbt-tl-item", key: x.id },
             h("div", { className: "wbt-tl-rail" }, h("div", { className: "wbt-tl-dot" }), i < items.length - 1 ? h("div", { className: "wbt-tl-line" }) : null),
@@ -840,7 +863,7 @@ var h = React.createElement;
     return h("div", { className: "wbt-modal-mask", onMouseDown: function (e) { if (e.target === e.currentTarget) props.onClose(); } },
       h("div", { className: "wbt-modal", style: { width: "420px" } },
         h("div", { className: "wbt-modal-head" }, h("h3", null, t.complete + " · " + props.task.title), h("button", { className: "wbt-icon", onClick: props.onClose }, "×")),
-        h("div", { className: "wbt-hint" }, t.difficultyHint),
+        h("div", { className: "wbt-mhint" }, t.difficultyHint),
         h("div", { className: "wbt-row" },
           h("span", { className: "wbt-stars", style: { fontSize: "22px" } }, stars(value)),
           h("input", { type: "range", min: 0.5, max: 5, step: 0.5, value: value, onChange: function (e) { setValue(Number(e.target.value)); }, style: { flex: 1 } }),
@@ -917,7 +940,7 @@ var h = React.createElement;
           h("span", { className: "wbt-badge " + st.cls }, props.lang === "en" ? st.en : st.zh),
           h("button", { className: "wbt-icon", onClick: props.onClose }, "×")
         ),
-        h("div", { className: "wbt-hint" }, done ? t.editHintDone : t.editHintOpen),
+        h("div", { className: "wbt-mhint" }, done ? t.editHintDone : t.editHintOpen),
         h("label", { className: "wbt-field" },
           h("span", null, t.titleField + " *"),
           h("input", { className: "wbt-input", value: form.title, autoFocus: true, onChange: function (e) { set("title", e.target.value); } })
@@ -954,26 +977,71 @@ var h = React.createElement;
     var t = props.t;
     var items = props.items || [];
     var mode = props.mode;
+    var nodes = props.nodes || [];
     var s = React.useState(mode === "timeline" ? (items[0] && items[0].id) || "" : (props.tables[0] && props.tables[0].id) || "");
     var value = s[0], setValue = s[1];
+    var qs = React.useState("");
+    var query = qs[0], setQuery = qs[1];
     var busy = React.useState(false);
     var isBusy = busy[0], setBusy = busy[1];
     var err = React.useState("");
     var error = err[0], setError = err[1];
+
+    var kw = query.trim().toLowerCase();
+    var picked = null;
+    var rows = [];
+    if (mode === "timeline") {
+      items.forEach(function (x) {
+        if (String(x.id) === String(value)) picked = x;
+        rows.push(h("label", { key: x.id, className: cx("wbt-bpick wrap", String(value) === String(x.id) && "on") },
+          h("input", { type: "radio", name: "wbt-base", checked: String(value) === String(x.id), onChange: function () { setValue(String(x.id)); } }),
+          h("span", { className: "wbt-bpick-main" },
+            h("span", { className: "wbt-bpick-name" }, x.title),
+            h("span", { className: "wbt-bpick-meta" },
+              h("code", { title: x.timelineKey || "" }, "timeline " + (x.timelineKey || "-")),
+              x.priority !== undefined ? h("span", null, "P" + x.priority) : null
+            )
+          ),
+          h("span", { className: "wbt-bpick-check" }, String(value) === String(x.id) ? h(Icon, { name: "check", size: 13 }) : null)
+        ));
+      });
+    } else {
+      var shown = nodes.filter(function (n) { return !kw || String(n.name).toLowerCase().indexOf(kw) >= 0; });
+      shown.forEach(function (n) {
+        var isTable = n.type === "1";
+        if (isTable && String(n.id) === String(value)) picked = n;
+        var pad = 2 + n.depth * 15;
+        rows.push(h("button", {
+          key: String(n.id), type: "button", title: n.name,
+          className: cx("wbt-bpick", !isTable && "wbt-bgroup", isTable && String(value) === String(n.id) && "on"),
+          style: { paddingLeft: pad + "px", cursor: isTable ? "pointer" : "default" }, disabled: !isTable,
+          onClick: isTable ? function () { setValue(String(n.id)); } : null,
+        },
+          !isTable ? h(Icon, { name: "folder", size: 12 }) : null,
+          h("span", { className: "wbt-bpick-main" }, h("span", { className: "wbt-bpick-name" }, n.name)),
+          isTable ? h("span", { className: "wbt-bpick-check" }, String(value) === String(n.id) ? h(Icon, { name: "check", size: 13 }) : null) : null
+        ));
+      });
+      if (!shown.length) rows.push(h("div", { key: "empty", className: "wbt-batch-empty" }, t.noTable));
+    }
+
     return h("div", { className: "wbt-modal-mask", onMouseDown: function (e) { if (e.target === e.currentTarget) props.onClose(); } },
-      h("div", { className: "wbt-modal" },
-        h("div", { className: "wbt-modal-head" }, h("h3", null, mode === "timeline" ? t.batchTimeline : t.batchMigrate), h("button", { className: "wbt-icon", onClick: props.onClose }, "×")),
-        h("div", { className: "wbt-hint" }, mode === "timeline" ? t.chooseBase : t.chooseTable),
-        mode === "timeline"
-          ? h("div", { className: "wbt-list" }, items.map(function (x) {
-              return h("label", { key: x.id, className: "wbt-check", style: { padding: "6px 2px" } },
-                h("input", { type: "radio", name: "base", checked: String(value) === String(x.id), onChange: function () { setValue(String(x.id)); } }),
-                h("span", null, x.title + "（timeline " + (x.timelineKey || "-") + "）")
-              );
-            }))
-          : h("select", { className: "wbt-select", value: value, onChange: function (e) { setValue(e.target.value); } }, props.tables.map(function (x) {
-              return h("option", { key: x.id, value: x.id }, "　".repeat(x.depth) + x.name);
-            })),
+      h("div", { className: "wbt-modal batch" },
+        h("div", { className: "wbt-modal-head" },
+          h("h3", null, mode === "timeline" ? t.batchTimeline : t.batchMigrate),
+          h("span", { className: "wbt-badge" }, t.batchCount + " " + items.length),
+          h("button", { className: "wbt-icon", onClick: props.onClose }, "×")
+        ),
+        h("div", { className: "wbt-mhint" }, mode === "timeline" ? t.chooseBase : t.chooseTable),
+        mode === "migrate"
+          ? h("input", { className: "wbt-input wbt-bpick-name", placeholder: t.searchTable, value: query, onChange: function (e) { setQuery(e.target.value); }, style: { whiteSpace: "normal" } })
+          : null,
+        h("div", { className: "wbt-batch" }, h("div", { className: "wbt-batch-body" }, rows)),
+        h("div", { className: "wbt-batch-sel" },
+          mode === "timeline"
+            ? h("span", null, t.baseLabel + "：", h("b", null, picked ? picked.title : "-"))
+            : h("span", null, t.targetLabel + "：", h("b", null, picked ? picked.name : "-"))
+        ),
         error ? h("div", { className: "wbt-err" }, error) : null,
         h("div", { className: "wbt-modal-foot" },
           h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
@@ -1547,7 +1615,7 @@ var h = React.createElement;
         onError: function (e) { setDoneTask(null); say(e); },
       }) : null,
       (selectedOpen && batchMode) ? h(BatchModal, {
-        key: batchMode, t: t, api: api, mode: batchMode, items: selectedItems, tables: tables,
+        key: batchMode, t: t, api: api, mode: batchMode, items: selectedItems, tables: tables, nodes: treeFlat(tree),
         onClose: function () { setBatchMode(null); },
         onDone: batchDone,
       }) : null,

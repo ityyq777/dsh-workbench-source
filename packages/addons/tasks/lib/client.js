@@ -3168,8 +3168,8 @@ var h = React.createElement;
       search: "\u641C\u7D22\u4EFB\u52A1\u6807\u9898",
       newTask: "\u65B0\u5EFA\u4EFB\u52A1",
       tree: "\u4EFB\u52A1\u6811",
-      select: "\u7B5B\u9009",
-      cancelSelect: "\u9000\u51FA\u7B5B\u9009",
+      select: "\u9009\u62E9",
+      cancelSelect: "\u9000\u51FA\u9009\u62E9",
       list: "\u5217\u8868",
       card: "\u5361\u7247",
       all: "\u5168\u90E8",
@@ -3232,6 +3232,14 @@ var h = React.createElement;
       clear: "\u6E05\u7A7A",
       chooseBase: "\u9009\u62E9\u57FA\u51C6\u4EFB\u52A1\uFF08\u4F7F\u7528\u5B83\u7684\u65F6\u95F4\u7EBF\uFF09",
       chooseTable: "\u9009\u62E9\u76EE\u6807\u4EFB\u52A1\u8868",
+      searchTable: "\u641C\u7D22\u4EFB\u52A1\u8868",
+      noTable: "\u6CA1\u6709\u5339\u914D\u7684\u4EFB\u52A1\u8868",
+      baseLabel: "\u57FA\u51C6\u4EFB\u52A1",
+      targetLabel: "\u76EE\u6807\u4EFB\u52A1\u8868",
+      batchCount: "\u5DF2\u9009",
+      hasTimeline: "\u6709\u65F6\u95F4\u7EBF",
+      noTimelineTag: "\u65E0\u65F6\u95F4\u7EBF",
+      group: "\u4EFB\u52A1\u7EC4",
       timelineTitle: "\u4EFB\u52A1\u65F6\u95F4\u7EBF",
       newTimeline: "\u65B0\u5EFA\u65F6\u95F4\u7EBF\u4EFB\u52A1",
       restartTitle: "\u91CD\u542F\u4EFB\u52A1",
@@ -3328,6 +3336,14 @@ var h = React.createElement;
       batchMigrate: "Move table",
       refresh: "Refresh",
       clear: "Clear",
+      searchTable: "Search tables",
+      noTable: "No matching table",
+      baseLabel: "Base task",
+      targetLabel: "Target table",
+      batchCount: "Selected",
+      hasTimeline: "has timeline",
+      noTimelineTag: "no timeline",
+      group: "Group",
       chooseBase: "Choose a base task (it supplies the timeline)",
       chooseTable: "Choose target table",
       timelineTitle: "Task timeline",
@@ -3589,7 +3605,26 @@ var h = React.createElement;
     ".wbt-col{flex:1;min-width:0}",
     ".wbt-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}",
     ".wbt-pill{font-size:11px;padding:2px 7px;border-radius:999px;background:color-mix(in oklab,var(--wbt-accent) 12%,transparent);color:var(--wbt-accent)}",
-    ".wbt-hint{font-size:11.5px;opacity:.55;line-height:1.5}",
+    ".wbt-mhint{font-size:11.5px;opacity:.62;line-height:1.5}",
+    ".wbt-modal.batch{width:min(720px,96vw);gap:9px}",
+    ".wbt-batch{display:flex;flex-direction:column;gap:8px;min-height:0}",
+    ".wbt-batch-body{display:flex;flex-direction:column;gap:1px;border:1px solid var(--wbt-line);border-radius:10px;padding:5px;max-height:min(52vh,420px);overflow:auto;overscroll-behavior:contain}",
+    ".wbt-bpick{display:flex;align-items:flex-start;gap:8px;width:100%;text-align:left;border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-size:12.5px;padding:7px 9px;border-radius:8px;cursor:pointer;min-width:0;line-height:1.45}",
+    ".wbt-bpick:hover{background:color-mix(in oklab,var(--wbt-accent) 8%,transparent)}",
+    ".wbt-bpick.on{background:color-mix(in oklab,var(--wbt-accent) 13%,transparent);border-color:color-mix(in oklab,var(--wbt-accent) 40%,transparent)}",
+    ".wbt-bpick input{margin:3px 0 0;flex:none;accent-color:var(--wbt-accent)}",
+    ".wbt-bpick-ind{flex:none;align-self:stretch}",
+    ".wbt-bpick-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}",
+    ".wbt-bpick-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    ".wbt-bpick.wrap .wbt-bpick-name{white-space:normal;word-break:break-word}",
+    ".wbt-bpick-meta{font-size:11px;opacity:.55;font-variant-numeric:tabular-nums;display:flex;gap:6px;align-items:center;min-width:0}",
+    ".wbt-bpick-meta code{font-family:inherit;opacity:.85;background:color-mix(in oklab,currentColor 8%,transparent);border-radius:4px;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}",
+    ".wbt-bpick-check{flex:none;width:16px;display:inline-flex;justify-content:center;color:var(--wbt-accent);opacity:.95;padding-top:2px}",
+    ".wbt-bgroup{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:560;opacity:.5;padding:7px 9px 2px}",
+    ".wbt-bgroup .wbt-svg{opacity:.7}",
+    ".wbt-batch-sel{display:flex;align-items:center;gap:6px;font-size:11.5px;opacity:.62;min-width:0}",
+    ".wbt-batch-sel b{font-weight:600;opacity:.95;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}",
+    ".wbt-batch-empty{font-size:12px;opacity:.5;text-align:center;padding:22px 8px}",
     ".wbt-danger{color:var(--dsw-alias-state-error-primary,#e5484d)}",
     ".wbt-countdown{display:inline-flex;align-items:center;gap:3px;margin-left:5px;padding:1px 6px 1px 5px;border-radius:6px;font-size:10.5px;font-weight:600;letter-spacing:.2px;color:var(--dsw-alias-state-error-primary,#e5484d);background:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 9%,transparent);border:1px solid color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 20%,transparent);vertical-align:1px}",
     '.wbt-countdown .wbt-cd-num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}',
@@ -4141,7 +4176,7 @@ var h = React.createElement;
         "div",
         { className: "wbt-modal" },
         h2("div", { className: "wbt-modal-head" }, h2("h3", null, title), h2("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")),
-        source !== "0" && origin ? h2("div", { className: "wbt-hint" }, "\u6765\u6E90\uFF1A" + (origin.title || origin.id) + (source === "2" ? " \xB7 \u91CD\u542F\u94FE " + (origin.restartKey || origin.id) : " \xB7 \u65F6\u95F4\u7EBF " + (origin.timelineKey || origin.id))) : null,
+        source !== "0" && origin ? h2("div", { className: "wbt-mhint" }, "\u6765\u6E90\uFF1A" + (origin.title || origin.id) + (source === "2" ? " \xB7 \u91CD\u542F\u94FE " + (origin.restartKey || origin.id) : " \xB7 \u65F6\u95F4\u7EBF " + (origin.timelineKey || origin.id))) : null,
         h2(
           "div",
           { className: "wbt-form" },
@@ -4229,7 +4264,7 @@ var h = React.createElement;
           } }, "\uFF0B " + t.newTimeline),
           h2("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")
         ),
-        state.loading ? h2("div", { className: "wbt-hint" }, t.loading) : state.error ? h2("div", { className: "wbt-err" }, t.error + state.error) : items.length === 0 ? h2("div", { className: "wbt-empty" }, t.noTimeline) : h2("div", { className: "wbt-timeline" }, items.map(function(x, i) {
+        state.loading ? h2("div", { className: "wbt-mhint" }, t.loading) : state.error ? h2("div", { className: "wbt-err" }, t.error + state.error) : items.length === 0 ? h2("div", { className: "wbt-empty" }, t.noTimeline) : h2("div", { className: "wbt-timeline" }, items.map(function(x, i) {
           var st = statusInfo(x.status);
           return h2(
             "div",
@@ -4277,7 +4312,7 @@ var h = React.createElement;
         "div",
         { className: "wbt-modal", style: { width: "420px" } },
         h2("div", { className: "wbt-modal-head" }, h2("h3", null, t.complete + " \xB7 " + props.task.title), h2("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")),
-        h2("div", { className: "wbt-hint" }, t.difficultyHint),
+        h2("div", { className: "wbt-mhint" }, t.difficultyHint),
         h2(
           "div",
           { className: "wbt-row" },
@@ -4378,7 +4413,7 @@ var h = React.createElement;
           h2("span", { className: "wbt-badge " + st.cls }, props.lang === "en" ? st.en : st.zh),
           h2("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")
         ),
-        h2("div", { className: "wbt-hint" }, done ? t.editHintDone : t.editHintOpen),
+        h2("div", { className: "wbt-mhint" }, done ? t.editHintDone : t.editHintOpen),
         h2(
           "label",
           { className: "wbt-field" },
@@ -4438,12 +4473,69 @@ var h = React.createElement;
     var t = props.t;
     var items = props.items || [];
     var mode = props.mode;
+    var nodes = props.nodes || [];
     var s = React2.useState(mode === "timeline" ? items[0] && items[0].id || "" : props.tables[0] && props.tables[0].id || "");
     var value = s[0], setValue = s[1];
+    var qs = React2.useState("");
+    var query = qs[0], setQuery = qs[1];
     var busy = React2.useState(false);
     var isBusy = busy[0], setBusy = busy[1];
     var err = React2.useState("");
     var error = err[0], setError = err[1];
+    var kw = query.trim().toLowerCase();
+    var picked = null;
+    var rows = [];
+    if (mode === "timeline") {
+      items.forEach(function(x) {
+        if (String(x.id) === String(value)) picked = x;
+        rows.push(h2(
+          "label",
+          { key: x.id, className: cx("wbt-bpick wrap", String(value) === String(x.id) && "on") },
+          h2("input", { type: "radio", name: "wbt-base", checked: String(value) === String(x.id), onChange: function() {
+            setValue(String(x.id));
+          } }),
+          h2(
+            "span",
+            { className: "wbt-bpick-main" },
+            h2("span", { className: "wbt-bpick-name" }, x.title),
+            h2(
+              "span",
+              { className: "wbt-bpick-meta" },
+              h2("code", { title: x.timelineKey || "" }, "timeline " + (x.timelineKey || "-")),
+              x.priority !== void 0 ? h2("span", null, "P" + x.priority) : null
+            )
+          ),
+          h2("span", { className: "wbt-bpick-check" }, String(value) === String(x.id) ? h2(Icon2, { name: "check", size: 13 }) : null)
+        ));
+      });
+    } else {
+      var shown = nodes.filter(function(n) {
+        return !kw || String(n.name).toLowerCase().indexOf(kw) >= 0;
+      });
+      shown.forEach(function(n) {
+        var isTable = n.type === "1";
+        if (isTable && String(n.id) === String(value)) picked = n;
+        var pad = 2 + n.depth * 15;
+        rows.push(h2(
+          "button",
+          {
+            key: String(n.id),
+            type: "button",
+            title: n.name,
+            className: cx("wbt-bpick", !isTable && "wbt-bgroup", isTable && String(value) === String(n.id) && "on"),
+            style: { paddingLeft: pad + "px", cursor: isTable ? "pointer" : "default" },
+            disabled: !isTable,
+            onClick: isTable ? function() {
+              setValue(String(n.id));
+            } : null
+          },
+          !isTable ? h2(Icon2, { name: "folder", size: 12 }) : null,
+          h2("span", { className: "wbt-bpick-main" }, h2("span", { className: "wbt-bpick-name" }, n.name)),
+          isTable ? h2("span", { className: "wbt-bpick-check" }, String(value) === String(n.id) ? h2(Icon2, { name: "check", size: 13 }) : null) : null
+        ));
+      });
+      if (!shown.length) rows.push(h2("div", { key: "empty", className: "wbt-batch-empty" }, t.noTable));
+    }
     return h2(
       "div",
       { className: "wbt-modal-mask", onMouseDown: function(e) {
@@ -4451,23 +4543,24 @@ var h = React.createElement;
       } },
       h2(
         "div",
-        { className: "wbt-modal" },
-        h2("div", { className: "wbt-modal-head" }, h2("h3", null, mode === "timeline" ? t.batchTimeline : t.batchMigrate), h2("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")),
-        h2("div", { className: "wbt-hint" }, mode === "timeline" ? t.chooseBase : t.chooseTable),
-        mode === "timeline" ? h2("div", { className: "wbt-list" }, items.map(function(x) {
-          return h2(
-            "label",
-            { key: x.id, className: "wbt-check", style: { padding: "6px 2px" } },
-            h2("input", { type: "radio", name: "base", checked: String(value) === String(x.id), onChange: function() {
-              setValue(String(x.id));
-            } }),
-            h2("span", null, x.title + "\uFF08timeline " + (x.timelineKey || "-") + "\uFF09")
-          );
-        })) : h2("select", { className: "wbt-select", value, onChange: function(e) {
-          setValue(e.target.value);
-        } }, props.tables.map(function(x) {
-          return h2("option", { key: x.id, value: x.id }, "\u3000".repeat(x.depth) + x.name);
-        })),
+        { className: "wbt-modal batch" },
+        h2(
+          "div",
+          { className: "wbt-modal-head" },
+          h2("h3", null, mode === "timeline" ? t.batchTimeline : t.batchMigrate),
+          h2("span", { className: "wbt-badge" }, t.batchCount + " " + items.length),
+          h2("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")
+        ),
+        h2("div", { className: "wbt-mhint" }, mode === "timeline" ? t.chooseBase : t.chooseTable),
+        mode === "migrate" ? h2("input", { className: "wbt-input wbt-bpick-name", placeholder: t.searchTable, value: query, onChange: function(e) {
+          setQuery(e.target.value);
+        }, style: { whiteSpace: "normal" } }) : null,
+        h2("div", { className: "wbt-batch" }, h2("div", { className: "wbt-batch-body" }, rows)),
+        h2(
+          "div",
+          { className: "wbt-batch-sel" },
+          mode === "timeline" ? h2("span", null, t.baseLabel + "\uFF1A", h2("b", null, picked ? picked.title : "-")) : h2("span", null, t.targetLabel + "\uFF1A", h2("b", null, picked ? picked.name : "-"))
+        ),
         error ? h2("div", { className: "wbt-err" }, error) : null,
         h2(
           "div",
@@ -5286,6 +5379,7 @@ var h = React.createElement;
         mode: batchMode,
         items: selectedItems,
         tables,
+        nodes: treeFlat(tree),
         onClose: function() {
           setBatchMode(null);
         },
