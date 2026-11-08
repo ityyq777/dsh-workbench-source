@@ -2746,7 +2746,7 @@ var h = React.createElement;
     version: "1.4.0",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },
-      { id: "sites", title: { zh: "\u7AD9\u70B9", en: "Sites" }, component: SitesView }
+      { id: "sites", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: SitesView }
     ]
   });
   module.exports = { name: "dsh-workbench-sites", inject: [], apply: function() {

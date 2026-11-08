@@ -1218,7 +1218,7 @@ var h = React.createElement;
     version: "1.4.0",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.SitesStatsView },
-      { id: "sites", title: { zh: "站点", en: "Sites" }, component: SitesView },
+      { id: "sites", title: { zh: "记录", en: "Records" }, component: SitesView },
     ],
   });
 

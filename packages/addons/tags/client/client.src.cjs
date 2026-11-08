@@ -406,7 +406,7 @@ var h = React.createElement;
     version: "1.4.0",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TagsStatsView },
-      { id: "tags", title: { zh: "标签", en: "Tags" }, component: TagsView },
+      { id: "tags", title: { zh: "记录", en: "Records" }, component: TagsView },
     ],
   });
 

@@ -12,7 +12,7 @@
   "wb": {
     "addon": {
       "id": "wb-addon-tasks",
-      "title": "任务记录",
+      "title": "记录",
       "description": "任务树 + 9 个视图：紧急/工作/生活/学习/开发/已开启/已关闭/已完成/总览，附统计报表",
       "version": "2.5.0",
       "minShell": "0.5.0",

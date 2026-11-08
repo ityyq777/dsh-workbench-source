@@ -37,8 +37,8 @@ export function apply(ctx) {
         tables: ["tag", "tag_mapping"],
         sync: tagSync,
         views: [
-          { id: "tags", title: { zh: "标签", en: "Tags" } },
-          { id: "stats", title: { zh: "标签统计", en: "Tag stats" } },
+          { id: "stats", title: { zh: "统计", en: "Stats" } },
+          { id: "tags", title: { zh: "记录", en: "Records" } },
         ],
         capability: {
           summary: "维护跨业务对象的标签；只做归类，不负责记录任务或站点。",

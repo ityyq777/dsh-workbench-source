@@ -1664,7 +1664,7 @@ var h = React.createElement;
     version: "1.4.0",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },
-      { id: "tags", title: { zh: "\u6807\u7B7E", en: "Tags" }, component: TagsView }
+      { id: "tags", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TagsView }
     ]
   });
   module.exports = { name: "dsh-workbench-tags", inject: [], apply: function() {

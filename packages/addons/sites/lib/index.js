@@ -39,8 +39,8 @@ export function apply(ctx) {
         tables: ["site", "site_node", "site_node_mapping", "tag_mapping"],
         sync: siteSync,
         views: [
-          { id: "sites", title: { zh: "站点", en: "Sites" } },
-          { id: "stats", title: { zh: "站点统计", en: "Site stats" } },
+          { id: "stats", title: { zh: "统计", en: "Stats" } },
+          { id: "sites", title: { zh: "记录", en: "Records" } },
         ],
         capability: {
           summary: "记录值得再次访问的站点（URL + 目录 + 标签），不记录本地开发地址和内网临时页面。",

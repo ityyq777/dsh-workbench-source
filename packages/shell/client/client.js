@@ -178,9 +178,6 @@
         ".wb-home-icon{width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;background:color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 14%,transparent);color:var(--dsw-alias-brand-primary,#11a89b);font-size:16px;font-weight:650;flex:none}",
         ".wb-home-title{font-size:14px;font-weight:650;margin-top:4px;line-height:1.4}",
         ".wb-home-desc{font-size:12px;opacity:.62;line-height:1.55;min-height:34px}",
-        ".wb-home-foot{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--dsw-alias-brand-primary,#11a89b);margin-top:2px;opacity:.9}",
-        ".wb-home-arrow{font-size:14px;transition:transform .12s ease}",
-        ".wb-home-card:hover .wb-home-arrow{transform:translateX(2px)}",
         ".wb-home-card.dim{opacity:.72}",
         ".wb-home-grid.manage{margin-top:2px}",
         ".wb-wide{max-width:1280px}",
@@ -867,10 +864,6 @@
             jsx.jsx("div", { className: "wb-home-title", children: title }),
             jsx.jsx("div", { className: "wb-home-desc", children: a.description || (count > 1 ? count + " " + t("views") : "") }),
             a.error ? jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + a.error }) : null,
-            jsx.jsxs("div", { className: "wb-home-foot", children: [
-              jsx.jsx("span", { children: a.error ? t("addon_unavailable") : t("open") }),
-              jsx.jsx("span", { className: "wb-home-arrow", children: "→" }),
-            ] }),
           ] }, a.id);
         }
         function systemCard(key, icon, title, desc) {
@@ -880,10 +873,6 @@
             ] }),
             jsx.jsx("div", { className: "wb-home-title", children: title }),
             jsx.jsx("div", { className: "wb-home-desc", children: desc }),
-            jsx.jsxs("div", { className: "wb-home-foot", children: [
-              jsx.jsx("span", { children: t("open") }),
-              jsx.jsx("span", { className: "wb-home-arrow", children: "→" }),
-            ] }),
           ] }, key);
         }
 
@@ -899,7 +888,7 @@
         }
         if (currentAddon) {
           var canRender = activeView && typeof activeView.component === "function";
-          var addonTitle = pickTitle(activeView && activeView.title, lang) || currentAddon.title || currentAddon.id;
+          var addonTitle = currentAddon.title || pickTitle(activeView && activeView.title, lang) || currentAddon.id;
           return jsx.jsxs("div", { className: "wb-root wb-immersive", children: [
             jsx.jsxs("div", { className: "wb-immersive-bar", children: [
               jsx.jsx("button", { className: "wb-back", onClick: function () { go("home"); }, children: "← " + t("back_home") }),
