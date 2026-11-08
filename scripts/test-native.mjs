@@ -166,6 +166,35 @@ try {
   const bulkMerged = (await call("tasks.get", { id: descTask.result.id })).result.task.tags.map((x) => x.name);
   assert(bulkMerged.includes("批量增量"), "bulkUpdate addTags 未生效：" + JSON.stringify(bulkMerged));
 
+  // ── 4.2 任务表描述：写入/清空/按描述检索/列表带表信息/备份往返 ──
+  const nodeCreated = await call("taskNodes.create", { parentId: "1", type: "1", name: "描述表A", description: "这张表专做 zeta-table 关键词定位" });
+  const descTableId = nodeCreated.result.node.id;
+  assert(nodeCreated.result.node.description.includes("zeta-table"), "新建表时 description 未保存");
+  const picked = await call("tasks.create", { title: "描述表里的任务", tableId: descTableId });
+  const byTableKey = await call("tasks.list", { tableKey: "zeta-table" });
+  assert(byTableKey.result.records.some((t) => t.id === picked.result.id), "tasks.list tableKey 未按表描述命中任务");
+  assert(byTableKey.result.filter.tableKey === "zeta-table", "tableKey 未回显");
+  const rec = byTableKey.result.records.find((t) => t.id === picked.result.id);
+  assert(rec.tableName === "描述表A" && rec.tableDescription.includes("zeta-table"), "任务记录未带所属表名与描述：" + JSON.stringify([rec.tableName, rec.tableDescription]));
+  const byDescNode = await call("taskNodes.search", { keyword: "zeta-table" });
+  assert(byDescNode.result.nodes.length === 1 && byDescNode.result.nodes[0].id === descTableId, "taskNodes.search 未按描述命中表");
+  assert(Array.isArray(byDescNode.result.nodes[0].tasks) && byDescNode.result.nodes[0].tasks.some((x) => x.id === picked.result.id), "taskNodes.search 未返回命中表下的任务");
+  assert(byDescNode.result.nodes[0].taskCount >= 1, "taskNodes.search 未统计任务数");
+  const byNameNode = await call("taskNodes.search", { keyword: "描述表A" });
+  assert(byNameNode.result.nodes.some((n) => n.id === descTableId), "taskNodes.search 未按名称命中表");
+  const renamed = await call("taskNodes.update", { id: descTableId, name: "描述表B" });
+  assert(renamed.result.node.name === "描述表B" && renamed.result.node.description.includes("zeta-table"), "taskNodes.update 改名时丢了描述");
+  const descOnly = await call("taskNodes.update", { id: descTableId, description: "只改描述 alpha-beta" });
+  assert(descOnly.result.node.description === "只改描述 alpha-beta" && descOnly.result.node.name === "描述表B", "taskNodes.update 只改描述时改了名称");
+  const cleared = await call("taskNodes.update", { id: descTableId, description: "" });
+  assert(cleared.result.node.description === "", "taskNodes.update 传空串未清空描述");
+  const noChange = await call("taskNodes.update", { id: descTableId, name: "描述表B" });
+  assert(noChange.result.changed === false, "taskNodes.update 空更新未返回 changed=false");
+  try { await call("taskNodes.update", { id: descTableId }); assert(false, "taskNodes.update 无字段未报错"); } catch (e) { /* 预期 */ }
+  await call("taskNodes.update", { id: descTableId, description: "备份往返描述 omega" });
+  const nodeData = await call("tasks.dataQuery", { table: "task_node", search: "omega" });
+  assert((nodeData.result.rows || []).some((r) => String(r.description || "").includes("omega")), "数据页查询未带出表描述列");
+
   // ── 5. bulkUpdate：dryRun 不落库，real 落库 ──
   const updateDry = await call("tasks.bulkUpdate", { ids: [id, p9.result.id], patch: { status: "done", priority: 7 }, dryRun: true });
   assert(updateDry.result.dryRun === true && updateDry.result.wouldUpdate === 2, "bulkUpdate dryRun 预览数量不对");

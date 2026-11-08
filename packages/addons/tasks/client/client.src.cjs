@@ -23,6 +23,9 @@ var h = React.createElement;
       all: "全部", empty: "这个视图还没有任务", loading: "加载中…",
       error: "操作失败：", save: "保存", cancel: "取消", create: "创建", close: "关闭",
       addGroup: "新建组", addTable: "新建表", rename: "重命名", del: "删除",
+      editGroup: "编辑任务组", editTable: "编辑任务表", nodeName: "名称", nodeDesc: "描述（可选）",
+      nodeDescPh: "写清这张表是做什么的，以后可按描述关键词检索定位",
+      needName: "名称不能为空", nodeDescSave: "描述已保存",
       editTitle: "双击编辑标题（任何状态都可改）",
       deleteConfirm: "确定删除这个节点及其子树？子树中的任务会被软删除。",
       deleteTaskConfirm: "确定删除这条任务吗？删除后不可恢复。",
@@ -61,6 +64,9 @@ var h = React.createElement;
       all: "All", empty: "No tasks in this view", loading: "Loading…",
       error: "Failed: ", save: "Save", cancel: "Cancel", create: "Create", close: "Close",
       addGroup: "New group", addTable: "New table", rename: "Rename", del: "Delete",
+      editGroup: "Edit group", editTable: "Edit table", nodeName: "Name", nodeDesc: "Description (optional)",
+      nodeDescPh: "Say what this table is for; agents can find it by description keywords",
+      needName: "Name is required", nodeDescSave: "Description saved",
       editTitle: "Double-click to rename (any status)",
       deleteConfirm: "Delete this node and its subtree? Tasks under it will be soft-deleted.",
       deleteTaskConfirm: "Delete this task? This cannot be undone.",
@@ -292,6 +298,8 @@ var h = React.createElement;
     ".wbt-tn{flex:1;min-width:0;height:100%;display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12.5px}",
     ".wbt-tn .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
     ".wbt-tcnt{font-size:10px;opacity:.38;font-variant-numeric:tabular-nums;flex:none}",
+    ".wbt-tdesc{font-size:11px;opacity:.42;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto;max-width:150px}",
+    ".wbt-tabledesc{margin:0 0 8px 2px;padding:6px 10px;border-left:2px solid color-mix(in oklab,var(--wbt-accent) 32%,transparent);border-radius:0 8px 8px 0;background:color-mix(in oklab,var(--wbt-accent) 6%,transparent);font-size:12px;line-height:1.6;opacity:.8;white-space:pre-wrap;max-width:110ch}",
     ".wbt-tacts{display:flex;gap:0;opacity:0;flex:none;transition:opacity .12s ease}",
     ".wbt-tree-row:hover .wbt-tacts{opacity:1}",
     ".wbt-tacts button{border:none;background:none;color:inherit;cursor:pointer;width:23px;height:23px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;opacity:.5;padding:0}",
@@ -694,7 +702,7 @@ var h = React.createElement;
           ? h("span", { className: "wbt-tw void" })
           : h("button", { className: "wbt-tw", "aria-label": node.name, "aria-expanded": !!isExpanded, onClick: toggle }, h(Icon, { name: isExpanded ? "down" : "right", size: 12 })),
         h("span", { className: "wbt-ti" }, h(Icon, { name: isRoot ? "house" : isTable ? "table" : isExpanded ? "folderOpen" : "folder", size: 13 })),
-        h("div", { className: "wbt-tn", onClick: select, title: node.name },
+        h("div", { className: "wbt-tn", onClick: select, title: node.description ? node.name + "\n" + node.description : node.name },
           editing ? h("input", {
             className: "wbt-input", style: { padding: "2px 6px", fontSize: "12px", width: "150px" },
             value: props.editName,
@@ -707,6 +715,7 @@ var h = React.createElement;
             },
             onBlur: function () { props.onRename(node.id, props.editName); },
           }) : h("span", { className: "nm" }, node.name),
+          !editing && node.description ? h("span", { className: "wbt-tdesc" }, String(node.description).replace(/\s+/g, " ")) : null,
           !isTable && hasKids && !editing ? h("span", { className: "wbt-tcnt" }, kids) : null
         ),
         h("div", { className: "wbt-tacts" },
@@ -719,6 +728,61 @@ var h = React.createElement;
       isExpanded && hasKids ? h("div", null, node.children.map(function (kid) {
         return h(TreeNode, Object.assign({}, props, { key: kid.id, node: kid, depth: (props.depth || 0) + 1 }));
       })) : null
+    );
+  }
+
+  function NodeModal(props) {
+    var t = props.t;
+    var node = props.node || null;
+    var editing = !!node;
+    var f = React.useState({
+      name: node ? String(node.name || "") : "",
+      description: node ? String(node.description || "") : "",
+    });
+    var form = f[0], setForm = f[1];
+    var err = React.useState("");
+    var error = err[0], setError = err[1];
+    var busy = React.useState(false);
+    var isBusy = busy[0], setBusy = busy[1];
+
+    function set(k, v) {
+      var next = Object.assign({}, form);
+      next[k] = v;
+      setForm(next);
+    }
+    function submit() {
+      var name = String(form.name || "").trim();
+      if (!name) { setError(t.needName); return; }
+      if (name.length > 20) { setError(t.needName); return; }
+      setBusy(true);
+      setError("");
+      var desc = String(form.description || "");
+      var req = editing
+        ? props.api.call("taskNodes.update", { id: node.id, name: name, description: desc })
+        : props.api.call("taskNodes.create", { parentId: props.parentId, type: props.type, name: name, description: desc });
+      req.then(function (r) {
+        if (!r || !r.ok) { setError((r && r.error) || "failed"); setBusy(false); return; }
+        props.onSaved(editing ? "update" : "create");
+      }).catch(function (e) { setError(String((e && e.message) || e)); setBusy(false); });
+    }
+
+    var isTable = String(node ? node.type : props.type) === "1";
+    var title = editing ? (isTable ? t.editTable : t.editGroup) : (isTable ? t.addTable : t.addGroup);
+    return h("div", { className: "wbt-modal-mask", onMouseDown: function (e) { if (e.target === e.currentTarget) props.onClose(); } },
+      h("div", { className: "wbt-modal" },
+        h("div", { className: "wbt-modal-head" }, h("h3", null, title), h("button", { className: "wbt-icon", onClick: props.onClose }, "×")),
+        h("div", { className: "wbt-form" },
+          h("label", { className: "wbt-field full" }, h("span", null, t.nodeName + " *"),
+            h("input", { className: "wbt-input", value: form.name, maxLength: 20, autoFocus: true, onChange: function (e) { set("name", e.target.value); } })),
+          h("label", { className: "wbt-field full" }, h("span", null, t.nodeDesc),
+            h("textarea", { className: "wbt-textarea", rows: 3, value: form.description, placeholder: t.nodeDescPh, onChange: function (e) { set("description", e.target.value); } }))
+        ),
+        error ? h("div", { className: "wbt-err" }, error) : null,
+        h("div", { className: "wbt-modal-foot" },
+          h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
+          h("button", { className: "wbt-btn primary", disabled: isBusy, onClick: submit }, isBusy ? "…" : (editing ? t.save : t.create))
+        )
+      )
     );
   }
 
@@ -1178,6 +1242,8 @@ var h = React.createElement;
     var editTask = editTaskS[0], setEditTask = editTaskS[1];
     var editS = React.useState(null);
     var edit = editS[0], setEdit = editS[1];
+    var nodeModalS = React.useState(null);
+    var nodeModal = nodeModalS[0], setNodeModal = nodeModalS[1];
     var editNameS = React.useState("");
     var editName = editNameS[0], setEditName = editNameS[1];
     var dragS = React.useState(null);
@@ -1313,13 +1379,17 @@ var h = React.createElement;
     }
 
     function addNode(parentId, type) {
-      api.call("taskNodes.create", { parentId: parentId, type: type }).then(function (r) {
-        if (r && r.ok) {
-          var next = new Set(expanded); next.add(String(parentId)); setExpanded(next);
-          refreshTree();
-          say(t.created);
-        } else say((r && r.error) || "create failed");
-      });
+      setNodeModal({ parentId: parentId, type: type, node: null });
+    }
+
+    function nodeSaved(op) {
+      var cur = nodeModal;
+      setNodeModal(null);
+      if (cur && cur.parentId) {
+        var next = new Set(expanded); next.add(String(cur.parentId)); setExpanded(next);
+      }
+      refreshTree();
+      say(op === "create" ? t.created : t.saved);
     }
 
     function renameNode(id, name) {
@@ -1423,7 +1493,7 @@ var h = React.createElement;
       t: t, expanded: expanded, selectedTable: target.tableId, selectedGroup: target.groupId,
       manager: manager, dragId: dragId, dropId: dropId, edit: edit, editName: editName,
       onToggle: toggleExpanded, onSelect: pickNode, onAdd: addNode,
-      onEdit: function (node) { setEdit({ id: node.id, name: node.name }); setEditName(node.name); },
+      onEdit: function (node) { setNodeModal({ parentId: node.parent || node.parentId, type: node.type, node: node }); },
       onEditName: setEditName, onCancelEdit: function () { setEdit(null); },
       onRename: renameNode, onDelete: deleteNode,
       onDragStart: function (id) { setDragId(String(id)); },
@@ -1441,8 +1511,9 @@ var h = React.createElement;
       },
         h("span", { className: "wbt-tw void" }),
         h("span", { className: "wbt-ti" }, h(Icon, { name: isTable ? "table" : "folder", size: 13 })),
-        h("div", { className: "wbt-tn", onClick: function () { pickNode(node); }, title: node.name },
+        h("div", { className: "wbt-tn", onClick: function () { pickNode(node); }, title: node.description ? node.name + "\n" + node.description : node.name },
           h("span", { className: "nm" }, node.name),
+          node.description ? h("span", { className: "wbt-tdesc" }, String(node.description).replace(/\s+/g, " ")) : null,
           !isTable && node.children && node.children.length ? h("span", { className: "wbt-tcnt" }, node.children.length) : null
         )
       );
@@ -1469,6 +1540,7 @@ var h = React.createElement;
             return h(TreeNode, Object.assign({}, treeProps, { key: n.id, node: n, depth: 0 }));
           });
 
+    var curDesc = curNode ? String(curNode.description || "") : "";
     var filterBar = h("div", { className: "wbt-filters" },
       pageable ? h("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
       (tab === 5 || tab === 8) ? h("label", { className: "wbt-check" },
@@ -1541,6 +1613,7 @@ var h = React.createElement;
         } }, h(Icon, { name: "plus", size: 14 }), t.newTask),
         h("button", { className: "wbt-btn ghost", onClick: function () { setView(view === "list" ? "card" : "list"); } }, h(Icon, { name: view === "list" ? "grid" : "list", size: 13 }), view === "list" ? t.card : t.list)
       ),
+      curDesc ? h("div", { className: "wbt-tabledesc", title: curDesc }, curDesc.length > 220 ? curDesc.slice(0, 220) + "…" : curDesc) : null,
       h("div", { className: "wbt-body" },
         h("nav", { className: "wbt-nav" }, TABS.map(function (x) {
           var btn = h("button", {
@@ -1626,6 +1699,12 @@ var h = React.createElement;
           setCreateState({ source: "1", originTask: originTask, defaultTableId: originTask.tableId });
         },
       }) : null,
+      nodeModal ? h(NodeModal, {
+        key: "node-" + (nodeModal.node ? nodeModal.node.id : "new"),
+        t: t, api: api, node: nodeModal.node, parentId: nodeModal.parentId, type: nodeModal.type,
+        onClose: function () { setNodeModal(null); },
+        onSaved: nodeSaved,
+      }) : null,
       editTask ? h(EditModal, {
         key: "edit-" + editTask.id, t: t, api: api, task: editTask, lang: props.lang,
         onClose: function () { setEditTask(null); },
@@ -1648,7 +1727,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.9.5",
+    version: "2.10.0",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },

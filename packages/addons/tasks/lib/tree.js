@@ -31,6 +31,13 @@ function typeCode(value) {
   throw new Error("节点类型非法：" + value);
 }
 
+function nodeDescription(value) {
+  if (value === undefined || value === null) return "";
+  const text = String(value);
+  if (text.length > 2000) throw new Error("description 不能超过 2000 个字符");
+  return text;
+}
+
 function nodeById(db, id, includeDeleted) {
   const key = idOf(id);
   if (!key) return null;
@@ -113,7 +120,12 @@ function pathAction(db, args) {
     const key = String(cur.id);
     if (seen.has(key)) throw new Error("任务树存在环：" + key);
     seen.add(key);
-    chain.push({ id: key, name: String(cur.name || ""), type: String(cur.type || "0") });
+    chain.push({
+      id: key,
+      name: String(cur.name || ""),
+      type: String(cur.type || "0"),
+      description: String(cur.description || ""),
+    });
     if (String(cur.parent_id) === "0") break;
     cur = db.prepare("SELECT * FROM task_node WHERE id=?").get(String(cur.parent_id));
   }
@@ -131,6 +143,7 @@ function createAction(db, args, origin, api) {
   const name = String(args.name === undefined || args.name === null || args.name === "" ? "未命名" : args.name).trim();
   if (!name) throw new Error("name 不能为空");
   if (name.length > 20) throw new Error("name 不能超过 20 个字符");
+  const description = nodeDescription(args.description);
   const ts = now();
   const id = newId();
   const max = db.prepare("SELECT MAX(sort) AS m FROM task_node WHERE parent_id=? AND deleted_at IS NULL").get(String(parent.id));
@@ -138,6 +151,7 @@ function createAction(db, args, origin, api) {
   const row = {
     id,
     name,
+    description,
     type,
     parent_id: String(parent.id),
     path: String(parent.path || "/" + parent.id + "/") + id + "/",
@@ -300,11 +314,94 @@ function deleteAction(db, args, origin, api) {
   return { ok: true, deletedNodes: rows.length, deletedTasks: taskCount };
 }
 
+/** 按关键词同时匹配节点名称与描述（表描述命中即可定位表）。 */
+function searchNodesAction(db, args) {
+  const keyword = String(args.keyword === undefined || args.keyword === null ? "" : args.keyword).trim();
+  if (!keyword) throw new Error("keyword 不能为空");
+  const limit = Math.min(200, Math.max(1, Number(args.limit) || 20));
+  const withTasks = args.includeTasks !== false;
+  const like = "%" + keyword.replace(/[\\%_]/g, function (c) { return "\\" + c; }) + "%";
+  const rows = db.prepare(
+    "SELECT * FROM task_node WHERE deleted_at IS NULL AND (name LIKE ? ESCAPE '\\' OR description LIKE ? ESCAPE '\\') ORDER BY depth ASC, sort ASC, id ASC LIMIT ?",
+  ).all(like, like, limit);
+  const nodes = rows.map(function (row) {
+    const out = {
+      id: String(row.id),
+      name: String(row.name || ""),
+      type: String(row.type || "0"),
+      description: String(row.description || ""),
+      depth: Number(row.depth || 0),
+      path: pathAction(db, { id: row.id }),
+      taskCount: countTasksUnder(db, row),
+    };
+    if (withTasks && String(row.type) === "1") {
+      out.tasks = db.prepare(
+        "SELECT id, title, status, priority FROM task WHERE table_id=? AND deleted_at IS NULL ORDER BY sort ASC, id ASC LIMIT ?",
+      ).all(String(row.id), limit);
+    }
+    return out;
+  });
+  return { keyword, total: nodes.length, nodes };
+}
+
+/** 某节点子树（含自身）下的任务数。 */
+function countTasksUnder(db, node) {
+  const row = db.prepare(
+    "SELECT COUNT(*) AS n FROM task t JOIN task_node n ON n.id=t.table_id " +
+      "WHERE t.deleted_at IS NULL AND n.deleted_at IS NULL AND n.path LIKE ?",
+  ).get(String(node.path) + "%");
+  return row ? Number(row.n || 0) : 0;
+}
+
+function updateNodeAction(db, args, origin, api) {
+  const id = idOf(args.id !== undefined ? args.id : args.nodeId);
+  const node = nodeById(db, id, false);
+  if (!node) throw new Error("节点不存在：" + (id || "(空)"));
+  const hasName = args.name !== undefined;
+  const hasDesc = args.description !== undefined;
+  if (!hasName && !hasDesc) throw new Error("需要至少提供 name 或 description");
+  const next = Object.assign({}, node);
+  if (hasName) {
+    const name = String(args.name === null ? "" : args.name).trim();
+    if (!name) throw new Error("name 不能为空");
+    if (name.length > 20) throw new Error("name 不能超过 20 个字符");
+    if (name !== String(node.name)) {
+      const dup = db.prepare(
+        "SELECT 1 AS x FROM task_node WHERE parent_id=? AND name=? AND deleted_at IS NULL AND id<>?",
+      ).get(String(node.parent_id), name, id);
+      if (dup) throw new Error("同一父节点下已存在同名节点：" + name);
+      next.name = name;
+    }
+  }
+  if (hasDesc) next.description = nodeDescription(args.description);
+  const nameChanged = String(next.name) !== String(node.name);
+  const descChanged = String(next.description || "") !== String(node.description || "");
+  if (!nameChanged && !descChanged) return { ok: true, changed: false, node: rowNode(node, []) };
+  const ts = now();
+  next.updated_at = ts;
+  next.rev = Number(node.rev) + 1;
+  tx(db, function () {
+    db.prepare("UPDATE task_node SET name=?, description=?, updated_at=?, rev=rev+1 WHERE id=?").run(
+      String(next.name),
+      String(next.description || ""),
+      ts,
+      id,
+    );
+    logChange(db, "task_node", id, "upsert", next, origin, ts);
+  });
+  api.emit("task-nodes-changed", { id: id, op: "update" });
+  return { ok: true, changed: true, node: rowNode(next, []) };
+}
+
 function renderTree(rows) {
   function walk(nodes, depth) {
     const out = [];
     for (const n of nodes) {
-      out.push("  ".repeat(depth) + "- " + n.name + " (" + n.type + ", id=" + n.id + ")");
+      const desc = String(n.description || "").trim();
+      const brief = desc.length > 60 ? desc.slice(0, 60) + "…" : desc;
+      out.push(
+        "  ".repeat(depth) + "- " + n.name + (brief ? "（" + brief + "）" : "") + " (" + n.type + ", id=" + n.id + ")",
+      );
       if (n.children && n.children.length) out.push.apply(out, walk(n.children, depth + 1));
     }
     return out;
@@ -356,6 +453,7 @@ export function registerTreeActions(api) {
         parentId: { type: ["string", "number"] },
         type: { type: ["string", "number"] },
         name: { type: "string" },
+        description: { type: "string", description: "表/组描述，可多行；表描述可用于按关键词定位表，最长 2000 字" },
       },
     },
     execute: function (args, ctx) { return createAction(db, args || {}, ctx.origin, api); },
@@ -367,6 +465,46 @@ export function registerTreeActions(api) {
     input: { type: "object", properties: { id: { type: ["string", "number"] }, nodeId: { type: ["string", "number"], description: "id 的别名" }, name: { type: "string" } } },
     execute: function (args, ctx) { return renameAction(db, args || {}, ctx.origin, api); },
     render: function (r) { return "已重命名为：" + r.node.name; },
+  });
+
+  action("taskNodes.update", {
+    description: "更新任务组/任务表的名称与描述（可只传其一；description 传空串即清空）",
+    input: {
+      type: "object",
+      properties: {
+        id: { type: ["string", "number"] },
+        nodeId: { type: ["string", "number"], description: "id 的别名" },
+        name: { type: "string", description: "新名称，≤20 字；不传则不改" },
+        description: { type: "string", description: "新描述，可多行空串清空；不传则不改，≤2000 字" },
+      },
+    },
+    execute: function (args, ctx) { return updateNodeAction(db, args || {}, ctx.origin, api); },
+    render: function (r) {
+      if (!r) return "";
+      return (r.changed ? "已更新节点：" : "节点无变化：") + r.node.name + (r.node.description ? "（" + String(r.node.description).slice(0, 60) + "）" : "");
+    },
+  });
+
+  action("taskNodes.search", {
+    description: "按关键词同时匹配节点名称与描述，返回命中的表/组（含路径、描述、任务数；表默认附带其下任务）",
+    input: {
+      type: "object",
+      properties: {
+        keyword: { type: "string", description: "关键词，匹配 name 与 description" },
+        limit: { type: "number", description: "最多返回多少个节点，默认 20，最大 200" },
+        includeTasks: { type: "boolean", description: "命中任务表时是否附带其下任务，默认 true" },
+      },
+      required: ["keyword"],
+    },
+    execute: function (args) { return searchNodesAction(db, args || {}); },
+    render: function (r) {
+      if (!r) return "";
+      if (!r.nodes.length) return "未命中任务表/组：" + r.keyword;
+      return r.nodes.map(function (n) {
+        const names = (n.path || []).map(function (p) { return p.name; }).join(" / ");
+        return "- " + n.name + "（" + n.taskCount + " 条任务）" + (n.description ? "：" + String(n.description).slice(0, 80) : "") + "\n  路径：" + names + " · id=" + n.id;
+      }).join("\n");
+    },
   });
 
   action("taskNodes.move", {

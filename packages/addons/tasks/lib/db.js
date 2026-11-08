@@ -61,6 +61,7 @@ export const NODE_DDL = [
   "CREATE TABLE IF NOT EXISTS task_node (" +
     "id TEXT PRIMARY KEY," +
     "name TEXT NOT NULL," +
+    "description TEXT NOT NULL DEFAULT ''," +
     "type TEXT NOT NULL," +
     "parent_id TEXT NOT NULL DEFAULT '0'," +
     "path TEXT NOT NULL," +
@@ -265,6 +266,7 @@ export function rowNode(row, children) {
   return {
     id: String(row.id),
     name: String(row.name || ""),
+    description: String(row.description || ""),
     type: String(row.type || "0"),
     parent: String(row.parent_id || "0"),
     parentId: String(row.parent_id || "0"),
@@ -298,13 +300,13 @@ export function pathForTable(tableId, map) {
     }
     chain.reverse();
     return chain.map(function (n) {
-      return { id: String(n.id), name: String(n.name || ""), type: String(n.type || "0") };
+      return { id: String(n.id), name: String(n.name || ""), type: String(n.type || "0"), description: String(n.description || "") };
     });
   }
   const out = [];
   for (const part of ids) {
     const n = map.get(part);
-    if (n) out.push({ id: String(n.id), name: String(n.name || ""), type: String(n.type || "0") });
+    if (n) out.push({ id: String(n.id), name: String(n.name || ""), type: String(n.type || "0"), description: String(n.description || "") });
   }
   return out;
 }
@@ -312,7 +314,12 @@ export function pathForTable(tableId, map) {
 export function taskOut(row, map) {
   const t = rowTask(row);
   if (!t) return null;
-  t.path = pathForTable(t.tableId, map || new Map());
+  const nodes = map || new Map();
+  t.path = pathForTable(t.tableId, nodes);
+  const table = nodes.get(String(t.tableId));
+  t.tableId = String(t.tableId || "");
+  t.tableName = table ? String(table.name || "") : "";
+  t.tableDescription = table ? String(table.description || "") : "";
   return t;
 }
 
@@ -344,11 +351,12 @@ export function pickFreeId(db, start) {
 
 export function insertNode(db, row) {
   db.prepare(
-    "INSERT INTO task_node(id,name,type,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev) " +
-      "VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+    "INSERT INTO task_node(id,name,description,type,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev) " +
+      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
   ).run(
     String(row.id),
     String(row.name),
+    String(row.description === undefined || row.description === null ? "" : row.description),
     String(row.type),
     String(row.parent_id || "0"),
     String(row.path),
@@ -799,6 +807,14 @@ function dropTaskTypeColumn(db, report) {
   report.droppedTypeColumn = true;
 }
 
+/** 旧库补 task_node.description（表描述）；新库由 NODE_DDL 直接建好。 */
+function ensureNodeColumns(db, report) {
+  if (!tableExists(db, "task_node")) return;
+  if (hasColumn(db, "task_node", "description")) return;
+  db.exec("ALTER TABLE task_node ADD COLUMN description TEXT NOT NULL DEFAULT ''");
+  if (report) report.nodeDescriptionAdded = true;
+}
+
 function ensureTaskColumns(db, report) {
   if (!tableExists(db, "task") || !hasColumn(db, "task", "created_at")) return;
   if (!hasColumn(db, "task", "sort")) db.exec("ALTER TABLE task ADD COLUMN sort INTEGER NOT NULL DEFAULT 0");
@@ -878,6 +894,7 @@ export function ensureSchema(db, log) {
         throw new Error("task 是新表，但 task_node 仍是旧 MPTT 表，拒绝混合迁移");
       }
       ensureTaskColumns(db, report);
+      ensureNodeColumns(db, report);
       createSchema(db);
       seedDefaultTree(db);
       report.tasks = db.prepare("SELECT COUNT(*) AS n FROM task").get().n;
@@ -895,6 +912,7 @@ export function ensureSchema(db, log) {
 
   // 旧库补列/删列：必须在 createSchema 前完成，否则建 idx_task_sort 会报 no such column。
   ensureTaskColumns(db, report);
+  ensureNodeColumns(db, report);
   createSchema(db);
   if (hasColumn(db, "task", "created_at")) {
     try {

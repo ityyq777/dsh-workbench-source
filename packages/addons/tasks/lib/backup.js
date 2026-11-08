@@ -88,6 +88,7 @@ function nodeValues(row) {
   return [
     id,
     asText(row.name, "未命名"),
+    asText(row.description),
     asText(row.type, "0"),
     asText(row.parent_id, "0"),
     asText(row.path),
@@ -142,9 +143,9 @@ export function importTasksData(api, raw, options) {
       "WHERE ? = 1 OR excluded.updated_at > task_dep.updated_at",
   );
   const nodeUpsert = db.prepare(
-    "INSERT INTO task_node(id,name,type,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev) " +
-      "VALUES(?,?,?,?,?,?,?,?,?,?,?) " +
-      "ON CONFLICT(id) DO UPDATE SET name=excluded.name,type=excluded.type,parent_id=excluded.parent_id,path=excluded.path,sort=excluded.sort,depth=excluded.depth,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
+    "INSERT INTO task_node(id,name,description,type,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev) " +
+      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?) " +
+      "ON CONFLICT(id) DO UPDATE SET name=excluded.name,description=excluded.description,type=excluded.type,parent_id=excluded.parent_id,path=excluded.path,sort=excluded.sort,depth=excluded.depth,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
       "WHERE ? = 1 OR excluded.updated_at > task_node.updated_at",
   );
 
@@ -214,7 +215,7 @@ export function importTasksData(api, raw, options) {
       const result = nodeUpsert.run(...values, force);
       if (result.changes > 0) {
         imported += 1;
-        logChange(db, NODE_TABLE, values[0], "upsert", row, "import", values[8]);
+        logChange(db, NODE_TABLE, values[0], "upsert", row, "import", values[9]);
       } else {
         skipped += 1;
       }

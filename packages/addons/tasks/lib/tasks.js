@@ -845,6 +845,15 @@ function listTasks(db, args, api) {
     for (const t of tables) params.push(String(t.id));
   }
 
+  const tableKey = args.tableKey === undefined || args.tableKey === null ? "" : String(args.tableKey).trim();
+  if (tableKey) {
+    const key = tableKey.replace(/[\\%_]/g, "\\$&");
+    where.push(
+      "EXISTS (SELECT 1 FROM task_node n WHERE n.id=t.table_id AND n.deleted_at IS NULL AND (n.name LIKE ? ESCAPE '\\' OR n.description LIKE ? ESCAPE '\\'))",
+    );
+    params.push("%" + key + "%", "%" + key + "%");
+  }
+
   const filterRestarted = args.filterRestarted === undefined ? true : Boolean(args.filterRestarted);
   // 旧前端的 checkedTypes（0..3）仍接受，按旧类型名映射成标签过滤。
   const checkedTypes = Array.isArray(args.checkedTypes) ? args.checkedTypes.map(String) : [];
@@ -984,6 +993,7 @@ function listTasks(db, args, api) {
   };
   if (titleKey) filter.titleKey = titleKey;
   if (tableId && tableId !== "0") filter.tableId = tableId;
+  if (tableKey) filter.tableKey = tableKey;
   if (groupId && groupId !== "0") filter.groupId = groupId;
   if (args.status !== undefined && args.status !== null && args.status !== "") filter.status = String(args.status);
   if (filterTagIds.length) filter.tagIds = filterTagIds.slice();
@@ -1392,6 +1402,7 @@ export function registerTaskActions(api) {
         titleKey: { type: "string", description: "关键词模糊匹配，命中标题或描述" },
         tableId: { type: ["string", "number", "null"], description: "只看某个任务表" },
         groupId: { type: ["string", "number", "null"], description: "只看某个任务组下的所有任务表" },
+        tableKey: { type: "string", description: "按任务表关键词过滤：同时匹配表名与表描述" },
         pageNumber: { type: "number", description: "分页页码，从 1 开始；任意 tab 传了即分页（tab 5..8 默认分页）" },
         pageSize: { type: "number", description: "每页条数（默认 12，最大 200）；任意 tab 传了即分页" },
         filterRestarted: { type: "boolean", description: "已关闭 tab 默认 true：true 看 SHUTDOWN，false 看 RESTARTED" },
