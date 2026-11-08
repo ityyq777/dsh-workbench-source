@@ -38,793 +38,6 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// packages/addons/sites/client/charts.cjs
-var require_charts = __commonJS({
-  "packages/addons/sites/client/charts.cjs"(exports2, module2) {
-    var React2 = require("react");
-    var h2 = React2.createElement;
-    var COLORS = [
-      "var(--dsw-alias-state-business-primary, #4f6ef7)",
-      "var(--dsw-alias-state-success-primary, #2f9e6e)",
-      "var(--dsw-alias-state-warn-primary, #d99100)",
-      "var(--dsw-alias-state-error-primary, #d9534f)",
-      "var(--dsw-alias-state-done-primary, #7c5cff)",
-      "var(--dsw-alias-state-idle-primary, #8f959e)"
-    ];
-    function css(prefix) {
-      return [
-        ".@-stats{display:flex;flex-direction:column;gap:14px;padding:4px 2px 24px;color:var(--dsw-alias-label-primary,#1f2329)}",
-        ".@-stoolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
-        ".@-seg{display:inline-flex;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:9px;overflow:hidden;background:var(--dsw-alias-bg-layer-1,#fff)}",
-        ".@-seg button{appearance:none;border:0;background:transparent;color:var(--dsw-alias-label-secondary,#646a73);font-size:12px;padding:6px 10px;cursor:pointer;white-space:nowrap}",
-        ".@-seg button.@-on{background:var(--dsw-alias-brand-primary,#4f6ef7);color:var(--dsw-alias-label-primary-inverted,#fff)}",
-        ".@-ghost{appearance:none;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-secondary,#646a73);border-radius:8px;font-size:12px;padding:6px 10px;cursor:pointer}",
-        ".@-ghost:hover{border-color:var(--dsw-alias-brand-primary,#4f6ef7);color:var(--dsw-alias-brand-primary,#4f6ef7)}",
-        ".@-muted{color:var(--dsw-alias-label-tertiary,#8f959e);font-size:12px}",
-        ".@-sgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}",
-        ".@-scard{grid-column:span 6;min-width:0;background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:12px;padding:14px 16px}",
-        ".@-span-3{grid-column:span 3}.@-span-4{grid-column:span 4}.@-span-6{grid-column:span 6}.@-span-8{grid-column:span 8}.@-span-12{grid-column:span 12}",
-        ".@-chead{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;flex-wrap:wrap}",
-        ".@-ctitle{font-size:13px;font-weight:600;color:var(--dsw-alias-label-primary,#1f2329)}",
-        ".@-cnote{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
-        ".@-kpis{grid-column:span 12;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}",
-        ".@-kpi{background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:12px;padding:12px 14px;min-width:0}",
-        ".@-kpi-l{font-size:12px;color:var(--dsw-alias-label-tertiary,#8f959e);display:flex;align-items:center;gap:6px}",
-        ".@-kpi-v{font-size:26px;line-height:1.25;font-weight:650;margin-top:4px;font-variant-numeric:tabular-nums}",
-        ".@-kpi-u{font-size:12px;font-weight:400;color:var(--dsw-alias-label-tertiary,#8f959e);margin-left:3px}",
-        ".@-kpi-h{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e);margin-top:3px}",
-        ".@-kpi.@-danger .@-kpi-v{color:var(--dsw-alias-state-error-primary,#d9534f)}",
-        ".@-kpi.@-warn .@-kpi-v{color:var(--dsw-alias-state-warn-primary,#d99100)}",
-        ".@-kpi.@-ok .@-kpi-v{color:var(--dsw-alias-state-success-primary,#2f9e6e)}",
-        ".@-donut{display:flex;align-items:center;gap:16px;flex-wrap:wrap}",
-        ".@-donut svg{flex:0 0 auto}",
-        ".@-legend{display:flex;flex-direction:column;gap:7px;min-width:120px;flex:1}",
-        ".@-leg{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dsw-alias-label-secondary,#646a73)}",
-        ".@-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}",
-        ".@-leg b{margin-left:auto;font-weight:600;color:var(--dsw-alias-label-primary,#1f2329);font-variant-numeric:tabular-nums}",
-        ".@-bars{display:flex;flex-direction:column;gap:9px}",
-        ".@-bar{display:grid;grid-template-columns:minmax(72px,1.2fr) 3fr auto;gap:8px;align-items:center;font-size:12px}",
-        ".@-bar-l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dsw-alias-label-secondary,#646a73)}",
-        ".@-bar-t{display:block;height:8px;border-radius:6px;background:var(--dsw-alias-bg-skeleton,#f2f3f5);overflow:hidden}",
-        ".@-bar-f{display:block;height:100%;border-radius:6px;background:var(--dsw-alias-state-business-primary,#4f6ef7);min-width:2px}",
-        ".@-bar-v{font-variant-numeric:tabular-nums;color:var(--dsw-alias-label-primary,#1f2329);font-weight:600;min-width:34px;text-align:right}",
-        ".@-stack{display:flex;flex-direction:column;gap:10px}",
-        ".@-srow-l{font-size:12px;color:var(--dsw-alias-label-secondary,#646a73);margin-bottom:4px;display:flex}",
-        ".@-srow-l b{margin-left:auto;color:var(--dsw-alias-label-primary,#1f2329);font-variant-numeric:tabular-nums}",
-        ".@-strack{display:flex;height:10px;border-radius:6px;overflow:hidden;background:var(--dsw-alias-bg-skeleton,#f2f3f5)}",
-        ".@-seg-f{height:100%}",
-        ".@-hist{display:flex;align-items:flex-end;gap:8px;height:150px;padding-top:16px}",
-        ".@-hbar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;min-width:0;height:100%}",
-        ".@-hbar-v{font-size:11px;color:var(--dsw-alias-label-secondary,#646a73);font-variant-numeric:tabular-nums}",
-        ".@-hbar-f{width:100%;max-width:44px;border-radius:5px 5px 0 0;background:var(--dsw-alias-state-business-primary,#4f6ef7);min-height:2px}",
-        ".@-hbar-l{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}",
-        ".@-trend{width:100%;height:auto;display:block}",
-        ".@-tlegend{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
-        ".@-table{width:100%;border-collapse:collapse;font-size:12px}",
-        ".@-table th{text-align:left;font-weight:500;color:var(--dsw-alias-label-tertiary,#8f959e);padding:6px 8px;border-bottom:1px solid var(--dsw-alias-border-l2,#e5e6eb);white-space:nowrap}",
-        ".@-table td{padding:7px 8px;border-bottom:1px solid var(--dsw-alias-border-l1,#f2f3f5);color:var(--dsw-alias-label-secondary,#646a73);vertical-align:top}",
-        ".@-table tr:last-child td{border-bottom:0}",
-        ".@-table td.@-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}",
-        ".@-empty{padding:26px 8px;text-align:center;color:var(--dsw-alias-label-tertiary,#8f959e);font-size:12px}",
-        ".@-err{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#d9534f) 8%,transparent);border:1px solid color-mix(in srgb,var(--dsw-alias-state-error-primary,#d9534f) 30%,transparent);color:var(--dsw-alias-state-error-primary,#d9534f);border-radius:10px;padding:10px 12px;font-size:12px}",
-        ".@-warn{grid-column:span 12;border:1px dashed var(--dsw-alias-state-warn-primary,#d99100);border-radius:10px;padding:9px 12px;font-size:12px;color:var(--dsw-alias-state-warn-primary,#d99100);background:color-mix(in srgb,var(--dsw-alias-state-warn-primary,#d99100) 6%,transparent)}",
-        ".@-sk{height:14px;border-radius:6px;background:var(--dsw-alias-bg-skeleton,#f2f3f5);margin:7px 0;animation:@-pulse 1.2s ease-in-out infinite}",
-        "@keyframes @-pulse{0%,100%{opacity:.55}50%{opacity:1}}",
-        "@media (max-width:900px){.@-scard{grid-column:span 12}.@-span-3,.@-span-4,.@-span-6,.@-span-8{grid-column:span 12}.@-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}",
-        "@media (max-width:600px){.@-stats{padding-bottom:16px}.@-hist{height:130px}.@-kpi-v{font-size:22px}}",
-        "@media (prefers-reduced-motion:reduce){.@-sk{animation:none}}"
-      ].join("\n").replace(/@-/g, prefix + "-");
-    }
-    function makeCharts(prefix) {
-      if (typeof document !== "undefined" && !document.getElementById(prefix + "-charts-css")) {
-        var el = document.createElement("style");
-        el.id = prefix + "-charts-css";
-        el.textContent = css(prefix);
-        document.head.appendChild(el);
-      }
-      function num(lang, n) {
-        var v = Number(n);
-        if (!isFinite(v)) return "\u2014";
-        try {
-          return new Intl.NumberFormat(lang === "en" ? "en-US" : "zh-CN").format(v);
-        } catch (e) {
-          return String(v);
-        }
-      }
-      function pct(v, digits) {
-        if (v === null || v === void 0 || !isFinite(Number(v))) return "\u2014";
-        return (Number(v) * 100).toFixed(digits === void 0 ? 1 : digits) + "%";
-      }
-      function timeText(ms) {
-        if (!ms) return "";
-        var d = new Date(Number(ms));
-        function p(n) {
-          return String(n).padStart(2, "0");
-        }
-        return p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
-      }
-      function dateText(ms) {
-        if (!ms) return "\u2014";
-        var d = new Date(Number(ms));
-        function p(n) {
-          return String(n).padStart(2, "0");
-        }
-        return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
-      }
-      function Card(props) {
-        var cls = prefix + "-scard" + (props.span ? " " + prefix + "-span-" + props.span : "");
-        return h2(
-          "section",
-          { className: cls },
-          props.title || props.right ? h2(
-            "div",
-            { className: prefix + "-chead" },
-            h2("span", { className: prefix + "-ctitle" }, props.title),
-            props.note ? h2("span", { className: prefix + "-cnote" }, props.note) : null,
-            props.right ? h2("span", { style: { marginLeft: "auto" } }, props.right) : null
-          ) : null,
-          props.children
-        );
-      }
-      function Kpi(props) {
-        var tone = props.tone ? " " + prefix + "-" + props.tone : "";
-        return h2(
-          "div",
-          { className: prefix + "-kpi" + tone },
-          h2("div", { className: prefix + "-kpi-l" }, props.label),
-          h2(
-            "div",
-            { className: prefix + "-kpi-v" },
-            props.value === null || props.value === void 0 ? "\u2014" : typeof props.value === "number" ? num(props.lang, props.value) : props.value,
-            props.unit ? h2("span", { className: prefix + "-kpi-u" }, props.unit) : null
-          ),
-          props.hint ? h2("div", { className: prefix + "-kpi-h" }, props.hint) : null
-        );
-      }
-      function Donut(props) {
-        var data = (props.data || []).filter(function(d) {
-          return Number(d.count) > 0;
-        });
-        var total = Number(props.total || 0);
-        var size = props.size || 168;
-        var r = size / 2 - 16;
-        var c = 2 * Math.PI * r;
-        var offset = 0;
-        var aria = props.aria || data.map(function(d) {
-          return d.label + " " + d.count;
-        }).join("\uFF0C");
-        return h2(
-          "div",
-          { className: prefix + "-donut" },
-          h2(
-            "svg",
-            { width: size, height: size, viewBox: "0 0 " + size + " " + size, role: "img", "aria-label": aria },
-            h2("circle", { cx: size / 2, cy: size / 2, r, fill: "none", stroke: "var(--dsw-alias-bg-skeleton,#f2f3f5)", strokeWidth: 18 }),
-            total > 0 ? data.map(function(d, i) {
-              var len = Number(d.count) / total * c;
-              var seg = h2("circle", {
-                key: d.key || d.label || i,
-                cx: size / 2,
-                cy: size / 2,
-                r,
-                fill: "none",
-                stroke: d.color || COLORS[i % COLORS.length],
-                strokeWidth: 18,
-                strokeDasharray: len + " " + (c - len),
-                strokeDashoffset: -offset,
-                transform: "rotate(-90 " + size / 2 + " " + size / 2 + ")",
-                strokeLinecap: "butt"
-              }, h2("title", null, d.label + "\uFF1A" + d.count));
-              offset += len;
-              return seg;
-            }) : null,
-            h2("text", { x: size / 2, y: size / 2 - 2, textAnchor: "middle", fill: "var(--dsw-alias-label-primary,#1f2329)", fontSize: 24, fontWeight: 650 }, num(props.lang, total)),
-            h2("text", { x: size / 2, y: size / 2 + 18, textAnchor: "middle", fill: "var(--dsw-alias-label-tertiary,#8f959e)", fontSize: 11 }, props.centerLabel || "")
-          ),
-          h2("div", { className: prefix + "-legend" }, (props.data || []).map(function(d, i) {
-            return h2(
-              "div",
-              { key: d.key || d.label || i, className: prefix + "-leg" },
-              h2("span", { className: prefix + "-dot", style: { background: d.color || COLORS[i % COLORS.length] } }),
-              h2("span", null, d.label),
-              h2("b", null, num(props.lang, d.count))
-            );
-          }))
-        );
-      }
-      function BarList(props) {
-        var data = props.data || [];
-        var max = Number(props.max || 0) || data.reduce(function(m, d) {
-          return Math.max(m, Number(d.value || 0));
-        }, 0) || 1;
-        return h2("div", { className: prefix + "-bars" }, data.map(function(d, i) {
-          var v = Number(d.value || 0);
-          return h2(
-            "div",
-            { key: d.key || d.label || i, className: prefix + "-bar" },
-            h2("span", { className: prefix + "-bar-l", title: d.title || d.label }, d.label),
-            h2("span", { className: prefix + "-bar-t" }, h2("span", { className: prefix + "-bar-f", style: { width: Math.max(2, v / max * 100) + "%", background: d.color || props.color || COLORS[0] } })),
-            h2("span", { className: prefix + "-bar-v" }, props.format ? props.format(v) : num(props.lang, v))
-          );
-        }));
-      }
-      function StackedRows(props) {
-        var rows = props.rows || [];
-        var keys = props.keys || [];
-        return h2("div", { className: prefix + "-stack" }, rows.map(function(row, ri) {
-          var total = Number(row.total || 0) || 1;
-          return h2(
-            "div",
-            { key: row.key || ri },
-            h2("div", { className: prefix + "-srow-l" }, h2("span", null, row.label), h2("b", null, num(props.lang, row.total))),
-            h2("div", { className: prefix + "-strack" }, keys.map(function(k, i) {
-              var v = Number(row.parts && row.parts[k.key] || 0);
-              if (v <= 0) return null;
-              return h2("span", {
-                key: k.key,
-                className: prefix + "-seg-f",
-                title: k.label + " " + v,
-                style: { width: v / total * 100 + "%", background: k.color || COLORS[i % COLORS.length] }
-              });
-            }))
-          );
-        }));
-      }
-      function Trend(props) {
-        var data = props.data || [];
-        var series = props.series || [];
-        var width = 640;
-        var height = props.height || 200;
-        var left = 30, right = 10, top = 12, bottom = 24;
-        var pw = width - left - right, ph = height - top - bottom;
-        var max = 1;
-        data.forEach(function(d) {
-          series.forEach(function(s) {
-            max = Math.max(max, Number(d[s.key] || 0));
-          });
-        });
-        max = Math.ceil(max * 1.15) || 1;
-        function x(i2) {
-          return left + (data.length <= 1 ? pw / 2 : i2 / (data.length - 1) * pw);
-        }
-        function y(v) {
-          return top + ph - Number(v || 0) / max * ph;
-        }
-        var ticks = [];
-        for (var t = 0; t <= 3; t++) ticks.push(Math.round(max / 3 * t));
-        var labelIdx = [];
-        if (data.length) {
-          var step = Math.max(1, Math.floor(data.length / 5));
-          for (var i = 0; i < data.length; i += step) labelIdx.push(i);
-          if (labelIdx[labelIdx.length - 1] !== data.length - 1) labelIdx.push(data.length - 1);
-        }
-        var aria = series.map(function(s) {
-          return s.label + " " + data.reduce(function(n, d) {
-            return n + Number(d[s.key] || 0);
-          }, 0);
-        }).join("\uFF0C");
-        return h2(
-          "div",
-          null,
-          h2(
-            "svg",
-            { className: prefix + "-trend", viewBox: "0 0 " + width + " " + height, role: "img", "aria-label": props.aria || aria },
-            ticks.map(function(v, i2) {
-              return h2(
-                "g",
-                { key: "t" + i2 },
-                h2("line", { x1: left, x2: width - right, y1: y(v), y2: y(v), stroke: "var(--dsw-alias-border-l1,#f2f3f5)", strokeWidth: 1 }),
-                h2("text", { x: left - 5, y: y(v) + 3, textAnchor: "end", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, num(props.lang, v))
-              );
-            }),
-            series.map(function(s, si) {
-              var pts = data.map(function(d, i2) {
-                return x(i2) + "," + y(d[s.key]);
-              }).join(" ");
-              return h2(
-                "g",
-                { key: s.key },
-                h2("polyline", { points: pts, fill: "none", stroke: s.color || COLORS[si % COLORS.length], strokeWidth: 2, strokeLinejoin: "round", strokeLinecap: "round" }),
-                data.map(function(d, i2) {
-                  if (data.length > 40 && i2 % 3 !== 0) return null;
-                  return h2(
-                    "circle",
-                    { key: i2, cx: x(i2), cy: y(d[s.key]), r: 2.4, fill: s.color || COLORS[si % COLORS.length] },
-                    h2("title", null, d.bucket + "\uFF1A" + s.label + " " + (d[s.key] || 0))
-                  );
-                })
-              );
-            }),
-            labelIdx.map(function(i2) {
-              return h2("text", { key: "x" + i2, x: x(i2), y: height - 6, textAnchor: "middle", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, String(data[i2].bucket).slice(5));
-            })
-          ),
-          h2("div", { className: prefix + "-tlegend" }, series.map(function(s, i2) {
-            return h2(
-              "span",
-              { key: s.key, style: { display: "inline-flex", alignItems: "center", gap: 5 } },
-              h2("span", { className: prefix + "-dot", style: { background: s.color || COLORS[i2 % COLORS.length] } }),
-              s.label
-            );
-          }))
-        );
-      }
-      function Histogram(props) {
-        var data = props.data || [];
-        var max = data.reduce(function(m, d) {
-          return Math.max(m, Number(d.count || 0));
-        }, 0) || 1;
-        return h2(
-          "div",
-          { className: prefix + "-hist", role: "img", "aria-label": props.aria || data.map(function(d) {
-            return d.label + " " + d.count;
-          }).join("\uFF0C") },
-          data.map(function(d, i) {
-            return h2(
-              "div",
-              { key: d.key || d.label || i, className: prefix + "-hbar", title: d.label + "\uFF1A" + d.count },
-              h2("span", { className: prefix + "-hbar-v" }, num(props.lang, d.count)),
-              h2("span", { className: prefix + "-hbar-f", style: { height: Math.max(2, Number(d.count || 0) / max * 100) + "%", background: d.color || props.color || COLORS[0] } }),
-              h2("span", { className: prefix + "-hbar-l" }, d.label)
-            );
-          })
-        );
-      }
-      function DataTable(props) {
-        var cols = props.columns || [];
-        var rows = props.rows || [];
-        if (!rows.length) return h2("div", { className: prefix + "-empty" }, props.empty || "\u6682\u65E0\u6570\u636E");
-        return h2(
-          "table",
-          { className: prefix + "-table" },
-          h2("thead", null, h2("tr", null, cols.map(function(c) {
-            return h2("th", { key: c.key, className: c.num ? prefix + "-num" : "" }, c.label);
-          }))),
-          h2("tbody", null, rows.map(function(row, ri) {
-            return h2("tr", { key: row.id || row.key || ri }, cols.map(function(c) {
-              return h2("td", { key: c.key, className: c.num ? prefix + "-num" : "" }, c.render ? c.render(row) : row[c.key]);
-            }));
-          }))
-        );
-      }
-      function RangeSwitch(props) {
-        return h2(
-          "div",
-          { className: prefix + "-stoolbar" },
-          h2("div", { className: prefix + "-seg", role: "group", "aria-label": props.aria || "\u65F6\u95F4\u8303\u56F4" }, (props.options || []).map(function(o) {
-            return h2("button", {
-              key: o.key,
-              type: "button",
-              className: o.key === props.value ? prefix + "-on" : "",
-              "aria-pressed": o.key === props.value,
-              onClick: function() {
-                props.onChange(o.key);
-              }
-            }, o.label);
-          })),
-          h2("button", { type: "button", className: prefix + "-ghost", disabled: !!props.loading, onClick: props.onRefresh }, props.refreshLabel || "\u5237\u65B0"),
-          h2("span", { className: prefix + "-muted" }, props.generatedAt ? (props.timeLabel || "\u622A\u81F3") + " " + timeText(props.generatedAt) : ""),
-          props.right ? h2("span", { style: { marginLeft: "auto" } }, props.right) : null
-        );
-      }
-      function Empty(props) {
-        return h2("div", { className: prefix + "-empty" }, props.text || "\u6682\u65E0\u6570\u636E");
-      }
-      function Skeleton() {
-        return h2(
-          "div",
-          { className: prefix + "-sgrid" },
-          h2("div", { className: prefix + "-kpis" }, [0, 1, 2, 3].map(function(i) {
-            return h2(
-              "div",
-              { key: i, className: prefix + "-kpi" },
-              h2("div", { className: prefix + "-sk", style: { width: "40%" } }),
-              h2("div", { className: prefix + "-sk", style: { width: "65%", height: 26 } })
-            );
-          })),
-          [0, 1].map(function(i) {
-            return h2(
-              "div",
-              { key: "c" + i, className: prefix + "-scard " + prefix + "-span-6" },
-              h2("div", { className: prefix + "-sk", style: { width: "30%" } }),
-              h2("div", { className: prefix + "-sk", style: { height: 120 } })
-            );
-          })
-        );
-      }
-      function ErrorBar(props) {
-        return h2(
-          "div",
-          { className: prefix + "-err", role: "alert" },
-          h2("span", null, props.message),
-          props.onRetry ? h2("button", { type: "button", className: prefix + "-ghost", onClick: props.onRetry }, props.retryLabel || "\u91CD\u8BD5") : null
-        );
-      }
-      function Warnings(props) {
-        var items = props.items || [];
-        if (!items.length) return null;
-        return h2("div", { className: prefix + "-warn", role: "status" }, items.map(function(w) {
-          return w.message;
-        }).join("\uFF1B"));
-      }
-      return {
-        Card,
-        Kpi,
-        Donut,
-        BarList,
-        StackedRows,
-        Trend,
-        Histogram,
-        DataTable,
-        RangeSwitch,
-        Empty,
-        Skeleton,
-        ErrorBar,
-        Warnings,
-        num,
-        pct,
-        timeText,
-        dateText,
-        colors: COLORS
-      };
-    }
-    module2.exports = { makeCharts };
-  }
-});
-
-// packages/addons/sites/client/stats.cjs
-var require_stats = __commonJS({
-  "packages/addons/sites/client/stats.cjs"(exports2, module2) {
-    var React2 = require("react");
-    var h2 = React2.createElement;
-    var charts = require_charts();
-    var COPY = {
-      zh: {
-        range7: "\u8FD1 7 \u5929",
-        range30: "\u8FD1 30 \u5929",
-        range90: "\u8FD1 90 \u5929",
-        range365: "\u8FD1 1 \u5E74",
-        rangeAll: "\u5168\u90E8",
-        refresh: "\u5237\u65B0",
-        asOf: "\u622A\u81F3",
-        retry: "\u91CD\u8BD5",
-        loadFail: "\u7EDF\u8BA1\u670D\u52A1\u672A\u5C31\u7EEA\uFF0C\u8BF7\u5347\u7EA7\u63D2\u4EF6\u540E\u91CD\u8BD5",
-        sites: "\u7AD9\u70B9\u603B\u6570",
-        bindable: "\u53EF\u7ED1\u5B9A",
-        tagged: "\u6709\u6807\u7B7E",
-        coverage: "\u6807\u7B7E\u8986\u76D6\u7387",
-        nodes: "\u76EE\u5F55\u6570",
-        noLink: "\u65E0\u94FE\u63A5",
-        multiLink: "\u591A\u94FE\u63A5",
-        newSites: "\u8303\u56F4\u5185\u65B0\u589E\u7AD9\u70B9",
-        current: "\u5F53\u524D",
-        inRange: "\u8303\u56F4\u5185",
-        ofTotal: "\u5360\u603B\u91CF",
-        links: "\u94FE\u63A5\u5065\u5EB7",
-        linksNote: "\u6309\u7AD9\u70B9\u94FE\u63A5\u6570\u5206\u6876",
-        freshness: "\u66F4\u65B0\u65B0\u9C9C\u5EA6",
-        freshnessNote: "\u8DDD\u6700\u8FD1\u4E00\u6B21\u66F4\u65B0",
-        nodeDist: "\u76EE\u5F55\u5206\u5E03",
-        nodeNote: "\u542B\u5B50\u6811\u7AD9\u70B9\u6570",
-        topTags: "\u6807\u7B7E Top",
-        topTagsNote: "\u6309\u5173\u8054\u7AD9\u70B9\u6570\u6392\u5E8F",
-        trend: "\u65B0\u589E\u7AD9\u70B9 / \u76EE\u5F55\u8D8B\u52BF",
-        trendNote: "\u6309\u81EA\u7136\u65E5 / \u5468 / \u6708\u5206\u6876",
-        siteSeries: "\u65B0\u589E\u7AD9\u70B9",
-        nodeSeries: "\u65B0\u589E\u76EE\u5F55",
-        stale: "\u6700\u4E45\u672A\u66F4\u65B0",
-        staleNote: "\u6309\u672A\u66F4\u65B0\u5929\u6570\u964D\u5E8F",
-        duplicates: "\u91CD\u590D URL",
-        duplicatesNote: "\u5F52\u4E00\u5316\u540E\u8BA1\u6570 > 1",
-        orphans: "\u65E0\u76EE\u5F55\u7AD9\u70B9",
-        orphansNote: "\u7F3A\u5C11\u76EE\u5F55\u6620\u5C04",
-        emptyNodes: "\u7A7A\u76EE\u5F55",
-        emptyNodesNote: "\u542B\u5B50\u6811 0 \u4E2A\u7AD9\u70B9",
-        colName: "\u540D\u79F0",
-        colSubtree: "\u5B50\u6811\u7AD9\u70B9",
-        colShare: "\u5360\u6BD4",
-        colDirect: "\u76F4\u63A5",
-        colDepth: "\u5C42\u7EA7",
-        colUpdated: "\u6700\u8FD1\u66F4\u65B0",
-        colAge: "\u672A\u66F4\u65B0\u5929\u6570",
-        colUrl: "URL",
-        colSites: "\u7AD9\u70B9",
-        noStale: "\u6CA1\u6709\u9648\u65E7\u7AD9\u70B9",
-        noDup: "\u6CA1\u6709\u91CD\u590D URL",
-        noOrphan: "\u6240\u6709\u7AD9\u70B9\u90FD\u5DF2\u5F52\u6863",
-        noEmpty: "\u6CA1\u6709\u7A7A\u76EE\u5F55",
-        noData: "\u8FD8\u6CA1\u6709\u7AD9\u70B9\u3002\u5728\u300C\u7AD9\u70B9\u300D\u9875\u6536\u85CF\u540E\uFF0C\u8FD9\u91CC\u4F1A\u81EA\u52A8\u6C47\u603B",
-        noTagDomain: "\u6807\u7B7E\u63D2\u4EF6\u672A\u542F\u7528\uFF0C\u6807\u7B7E\u76F8\u5173\u533A\u5757\u5DF2\u9690\u85CF"
-      },
-      en: {
-        range7: "7 days",
-        range30: "30 days",
-        range90: "90 days",
-        range365: "1 year",
-        rangeAll: "All",
-        refresh: "Refresh",
-        asOf: "As of",
-        retry: "Retry",
-        loadFail: "Stats service not ready. Upgrade the plugin and retry.",
-        sites: "Sites",
-        bindable: "Bindable",
-        tagged: "Tagged",
-        coverage: "Tag coverage",
-        nodes: "Folders",
-        noLink: "No link",
-        multiLink: "Multi-link",
-        newSites: "New sites",
-        current: "Current",
-        inRange: "In range",
-        ofTotal: "of total",
-        links: "Link health",
-        linksNote: "Sites by link count",
-        freshness: "Freshness",
-        freshnessNote: "Since last update",
-        nodeDist: "Folder distribution",
-        nodeNote: "Sites in subtree",
-        topTags: "Top tags",
-        topTagsNote: "By linked sites",
-        trend: "New sites / folders",
-        trendNote: "Bucketed by day / week / month",
-        siteSeries: "Sites",
-        nodeSeries: "Folders",
-        stale: "Stalest sites",
-        staleNote: "Oldest update first",
-        duplicates: "Duplicate URLs",
-        duplicatesNote: "Normalized count > 1",
-        orphans: "Sites without folder",
-        orphansNote: "Missing folder mapping",
-        emptyNodes: "Empty folders",
-        emptyNodesNote: "0 sites in subtree",
-        colName: "Name",
-        colSubtree: "Sites",
-        colShare: "Share",
-        colDirect: "Direct",
-        colDepth: "Depth",
-        colUpdated: "Updated",
-        colAge: "Days idle",
-        colUrl: "URL",
-        colSites: "Sites",
-        noStale: "No stale sites",
-        noDup: "No duplicate URLs",
-        noOrphan: "All sites are filed",
-        noEmpty: "No empty folders",
-        noData: "No sites yet. Save one on the Sites page and the summary appears here.",
-        noTagDomain: "Tag plugin is not enabled; tag blocks are hidden."
-      }
-    };
-    var RANGES = ["7d", "30d", "90d", "365d", "all"];
-    function SitesStatsView(props) {
-      var lang = props.lang === "en" ? "en" : "zh";
-      var t = COPY[lang];
-      var api = props.api;
-      var ch = React2.useMemo(function() {
-        return charts.makeCharts("wbs");
-      }, []);
-      var rangePair = React2.useState("30d");
-      var range = rangePair[0], setRange = rangePair[1];
-      var dataPair = React2.useState(null);
-      var data = dataPair[0], setData = dataPair[1];
-      var errPair = React2.useState("");
-      var err = errPair[0], setErr = errPair[1];
-      var loadPair = React2.useState(true);
-      var loading = loadPair[0], setLoading = loadPair[1];
-      var req = React2.useRef(0);
-      var load = React2.useCallback(function(silent) {
-        var id = ++req.current;
-        if (!silent) setLoading(true);
-        return Promise.resolve(api.call("sites.statsReport", { range, top: 10 })).then(function(r) {
-          return r && r.result !== void 0 ? r.result : r;
-        }).then(function(d) {
-          if (id === req.current) {
-            setData(d);
-            setErr("");
-          }
-        }).catch(function(e) {
-          if (id === req.current) setErr(String(e && e.message || e || "load failed"));
-        }).then(function() {
-          if (id === req.current) setLoading(false);
-        });
-      }, [api, range]);
-      React2.useEffect(function() {
-        load(false);
-      }, [load]);
-      React2.useEffect(function() {
-        if (!api || typeof api.subscribe !== "function") return void 0;
-        var timer = null;
-        var pending = false;
-        var off = api.subscribe(function(payload) {
-          var ev = payload && payload.event;
-          if (ev !== "sites-changed" && ev !== "site-nodes-changed" && ev !== "tags-changed") return;
-          if (typeof document !== "undefined" && document.visibilityState && document.visibilityState !== "visible") {
-            pending = true;
-            return;
-          }
-          if (timer) clearTimeout(timer);
-          timer = setTimeout(function() {
-            load(true);
-          }, 800);
-        });
-        function onVisible() {
-          if (typeof document !== "undefined" && document.visibilityState === "visible" && pending) {
-            pending = false;
-            load(true);
-          }
-        }
-        if (typeof document !== "undefined") document.addEventListener("visibilitychange", onVisible);
-        return function() {
-          if (timer) clearTimeout(timer);
-          if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
-          if (typeof off === "function") off();
-        };
-      }, [api, load]);
-      var options = RANGES.map(function(key) {
-        return { key, label: t["range" + (key === "all" ? "All" : key.replace("d", ""))] };
-      });
-      var children = [];
-      if (!data && loading) children.push(h2(ch.Skeleton, { key: "sk" }));
-      if (!data && !loading && err) children.push(h2(ch.Card, { key: "err", span: 12 }, h2(ch.Empty, { text: t.loadFail })));
-      if (data && data.totals) {
-        var totals = data.totals;
-        var rates = data.rates || {};
-        var b = data.breakdowns || {};
-        var tagMissing = rates.tagCoverage === null || rates.tagCoverage === void 0;
-        children.push(h2(
-          "div",
-          { key: "kpi", className: "wbs-kpis" },
-          h2(ch.Kpi, { label: t.sites, value: totals.sites, hint: t.current, lang }),
-          h2(ch.Kpi, { label: t.bindable, value: totals.bindable, hint: ch.pct(rates.bindableRatio) + " " + t.ofTotal, lang }),
-          h2(ch.Kpi, { label: t.tagged, value: tagMissing ? "\u2014" : totals.tagged, hint: tagMissing ? t.noTagDomain : ch.pct(rates.tagCoverage) + " " + t.ofTotal, lang }),
-          h2(ch.Kpi, { label: t.coverage, value: tagMissing ? "\u2014" : ch.pct(rates.tagCoverage), hint: t.current, tone: tagMissing ? "" : "ok", lang }),
-          h2(ch.Kpi, { label: t.nodes, value: totals.nodes, hint: t.current, lang }),
-          h2(ch.Kpi, { label: t.noLink, value: totals.noLink, hint: ch.pct(rates.linkCoverage) + " " + t.ofTotal, tone: totals.noLink > 0 ? "warn" : "", lang }),
-          h2(ch.Kpi, { label: t.multiLink, value: totals.multiLink, hint: t.current, lang }),
-          h2(ch.Kpi, { label: t.newSites, value: totals.newSites, hint: t.inRange, lang })
-        ));
-        if (totals.sites === 0 && totals.nodes === 0) {
-          children.push(h2(ch.Card, { key: "empty", span: 12 }, h2(ch.Empty, { text: t.noData })));
-        } else {
-          children.push(h2(
-            ch.Card,
-            { key: "links", span: 4, title: t.links, note: t.linksNote },
-            h2(ch.Donut, {
-              data: (b.links || []).map(function(x, i) {
-                return { key: x.key, label: x.label, count: x.count, color: ch.colors[i] };
-              }),
-              total: totals.sites,
-              lang,
-              centerLabel: t.sites,
-              aria: (b.links || []).map(function(x) {
-                return x.label + " " + x.count;
-              }).join("\uFF0C")
-            })
-          ));
-          children.push(h2(
-            ch.Card,
-            { key: "fresh", span: 4, title: t.freshness, note: t.freshnessNote },
-            h2(ch.Histogram, { data: b.freshness || [], lang, color: ch.colors[2] })
-          ));
-          children.push(h2(
-            ch.Card,
-            { key: "nodes", span: 4, title: t.nodeDist, note: t.nodeNote },
-            h2(ch.BarList, {
-              data: (data.rankings && data.rankings.topNodes || []).map(function(x) {
-                return { key: x.id, label: x.name, value: x.subtree, title: x.name };
-              }),
-              lang,
-              color: ch.colors[0]
-            })
-          ));
-          children.push(h2(
-            ch.Card,
-            { key: "trend", span: 8, title: t.trend, note: t.trendNote },
-            h2(ch.Trend, {
-              data: data.trend || [],
-              lang,
-              series: [
-                { key: "sites", label: t.siteSeries, color: ch.colors[0] },
-                { key: "nodes", label: t.nodeSeries, color: ch.colors[1] }
-              ]
-            })
-          ));
-          children.push(h2(
-            ch.Card,
-            { key: "topTags", span: 4, title: t.topTags, note: t.topTagsNote },
-            tagMissing ? h2(ch.Empty, { text: t.noTagDomain }) : h2(ch.BarList, {
-              data: (data.rankings && data.rankings.topTags || []).map(function(x) {
-                return { key: x.id, label: x.name, value: x.count, title: x.name };
-              }),
-              lang,
-              color: ch.colors[4]
-            })
-          ));
-          children.push(h2(
-            ch.Card,
-            { key: "stale", span: 6, title: t.stale, note: t.staleNote },
-            h2(ch.DataTable, {
-              rows: data.lists && data.lists.stale || [],
-              lang,
-              empty: t.noStale,
-              columns: [
-                { key: "name", label: t.colName },
-                { key: "ageDays", label: t.colAge, num: true },
-                { key: "updatedAt", label: t.colUpdated, render: function(r) {
-                  return ch.dateText(r.updatedAt);
-                } }
-              ]
-            })
-          ));
-          children.push(h2(
-            ch.Card,
-            { key: "dup", span: 6, title: t.duplicates, note: t.duplicatesNote },
-            h2(ch.DataTable, {
-              rows: data.lists && data.lists.duplicates || [],
-              lang,
-              empty: t.noDup,
-              columns: [
-                { key: "url", label: t.colUrl, render: function(r) {
-                  return h2("span", { title: r.url }, String(r.url).slice(0, 46) + (String(r.url).length > 46 ? "\u2026" : ""));
-                } },
-                { key: "sites", label: t.colSites, render: function(r) {
-                  return (r.sites || []).map(function(s) {
-                    return s.name;
-                  }).join("\u3001");
-                } }
-              ]
-            })
-          ));
-          children.push(h2(
-            ch.Card,
-            { key: "orphan", span: 6, title: t.orphans, note: t.orphansNote },
-            h2(ch.DataTable, {
-              rows: data.lists && data.lists.orphanSites || [],
-              lang,
-              empty: t.noOrphan,
-              columns: [{ key: "name", label: t.colName }]
-            })
-          ));
-          children.push(h2(
-            ch.Card,
-            { key: "emptyNodes", span: 6, title: t.emptyNodes, note: t.emptyNodesNote },
-            h2(ch.DataTable, {
-              rows: data.lists && data.lists.emptyNodes || [],
-              lang,
-              empty: t.noEmpty,
-              columns: [
-                { key: "name", label: t.colName },
-                { key: "depth", label: t.colDepth, num: true }
-              ]
-            })
-          ));
-        }
-        children.push(h2(ch.Warnings, { key: "warn", items: data.warnings || [] }));
-      }
-      return h2(
-        "div",
-        { className: "wbs-stats" },
-        h2(ch.RangeSwitch, {
-          options,
-          value: range,
-          onChange: setRange,
-          onRefresh: function() {
-            load(false);
-          },
-          loading,
-          generatedAt: data && data.generatedAt,
-          refreshLabel: t.refresh,
-          timeLabel: t.asOf
-        }),
-        err && data ? h2(ch.ErrorBar, { message: err, onRetry: function() {
-          load(false);
-        }, retryLabel: t.retry }) : null,
-        h2("div", { className: "wbs-sgrid" }, children)
-      );
-    }
-    module2.exports = { SitesStatsView };
-  }
-});
-
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/shared/src/utils/toKebabCase.mjs
 var toKebabCase;
 var init_toKebabCase = __esm({
@@ -1113,40 +326,274 @@ var init_createLucideIcon = __esm({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/x.mjs
-var x_exports = {};
-__export(x_exports, {
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
+var refresh_cw_exports = {};
+__export(refresh_cw_exports, {
   __iconData: () => __iconData,
-  default: () => X
+  default: () => RefreshCw
 });
-var __iconData, X;
-var init_x = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/x.mjs"() {
+var __iconData, RefreshCw;
+var init_refresh_cw = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
     init_createLucideIcon();
     __iconData = {
-      name: "x",
+      name: "refresh-cw",
       size: 24,
       node: [
-        ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
-        ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
+        ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
+        ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
+        ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
+        ["path", { d: "M8 16H3v5", key: "1cv678" }]
       ]
     };
     __iconData.node;
-    X = createLucideIcon(__iconData);
+    RefreshCw = createLucideIcon(__iconData);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/globe.mjs
+var globe_exports = {};
+__export(globe_exports, {
+  __iconData: () => __iconData2,
+  default: () => Globe
+});
+var __iconData2, Globe;
+var init_globe = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/globe.mjs"() {
+    init_createLucideIcon();
+    __iconData2 = {
+      name: "globe",
+      size: 24,
+      node: [
+        ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+        ["path", { d: "M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20", key: "13o1zl" }],
+        ["path", { d: "M2 12h20", key: "9i4pu4" }]
+      ]
+    };
+    __iconData2.node;
+    Globe = createLucideIcon(__iconData2);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/link-2.mjs
+var link_2_exports = {};
+__export(link_2_exports, {
+  __iconData: () => __iconData3,
+  default: () => Link2
+});
+var __iconData3, Link2;
+var init_link_2 = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/link-2.mjs"() {
+    init_createLucideIcon();
+    __iconData3 = {
+      name: "link-2",
+      size: 24,
+      node: [
+        ["path", { d: "M9 17H7A5 5 0 0 1 7 7h2", key: "8i5ue5" }],
+        ["path", { d: "M15 7h2a5 5 0 1 1 0 10h-2", key: "1b9ql8" }],
+        ["line", { x1: "8", x2: "16", y1: "12", y2: "12", key: "1jonct" }]
+      ]
+    };
+    __iconData3.node;
+    Link2 = createLucideIcon(__iconData3);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/tag.mjs
+var tag_exports = {};
+__export(tag_exports, {
+  __iconData: () => __iconData4,
+  default: () => Tag
+});
+var __iconData4, Tag;
+var init_tag = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/tag.mjs"() {
+    init_createLucideIcon();
+    __iconData4 = {
+      name: "tag",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z",
+            key: "vktsd0"
+          }
+        ],
+        ["circle", { cx: "7.5", cy: "7.5", r: ".5", fill: "currentColor", key: "kqv944" }]
+      ]
+    };
+    __iconData4.node;
+    Tag = createLucideIcon(__iconData4);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/chart-pie.mjs
+var __iconData5, ChartPie;
+var init_chart_pie = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/chart-pie.mjs"() {
+    init_createLucideIcon();
+    __iconData5 = {
+      name: "chart-pie",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z",
+            key: "pzmjnu"
+          }
+        ],
+        ["path", { d: "M21.21 15.89A10 10 0 1 1 8 2.83", key: "k2fpak" }]
+      ],
+      aliases: ["pie-chart"]
+    };
+    __iconData5.node;
+    ChartPie = createLucideIcon(__iconData5);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/pie-chart.mjs
+var pie_chart_exports = {};
+__export(pie_chart_exports, {
+  default: () => ChartPie
+});
+var init_pie_chart = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/pie-chart.mjs"() {
+    init_chart_pie();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/folder-tree.mjs
+var folder_tree_exports = {};
+__export(folder_tree_exports, {
+  __iconData: () => __iconData6,
+  default: () => FolderTree
+});
+var __iconData6, FolderTree;
+var init_folder_tree = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/folder-tree.mjs"() {
+    init_createLucideIcon();
+    __iconData6 = {
+      name: "folder-tree",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M20 10a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2.5a1 1 0 0 1-.8-.4l-.9-1.2A1 1 0 0 0 15 3h-2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z",
+            key: "hod4my"
+          }
+        ],
+        [
+          "path",
+          {
+            d: "M20 21a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1h-2.9a1 1 0 0 1-.88-.55l-.42-.85a1 1 0 0 0-.92-.6H13a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z",
+            key: "w4yl2u"
+          }
+        ],
+        ["path", { d: "M3 5a2 2 0 0 0 2 2h3", key: "f2jnh7" }],
+        ["path", { d: "M3 3v13a2 2 0 0 0 2 2h3", key: "k8epm1" }]
+      ]
+    };
+    __iconData6.node;
+    FolderTree = createLucideIcon(__iconData6);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/unlink.mjs
+var unlink_exports = {};
+__export(unlink_exports, {
+  __iconData: () => __iconData7,
+  default: () => Unlink
+});
+var __iconData7, Unlink;
+var init_unlink = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/unlink.mjs"() {
+    init_createLucideIcon();
+    __iconData7 = {
+      name: "unlink",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71",
+            key: "yqzxt4"
+          }
+        ],
+        [
+          "path",
+          {
+            d: "m5.17 11.75-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71",
+            key: "4qinb0"
+          }
+        ],
+        ["line", { x1: "8", x2: "8", y1: "2", y2: "5", key: "1041cp" }],
+        ["line", { x1: "2", x2: "5", y1: "8", y2: "8", key: "14m1p5" }],
+        ["line", { x1: "16", x2: "16", y1: "19", y2: "22", key: "rzdirn" }],
+        ["line", { x1: "19", x2: "22", y1: "16", y2: "16", key: "ox905f" }]
+      ]
+    };
+    __iconData7.node;
+    Unlink = createLucideIcon(__iconData7);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/layers.mjs
+var layers_exports = {};
+__export(layers_exports, {
+  __iconData: () => __iconData8,
+  default: () => Layers
+});
+var __iconData8, Layers;
+var init_layers = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/layers.mjs"() {
+    init_createLucideIcon();
+    __iconData8 = {
+      name: "layers",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z",
+            key: "zw3jo"
+          }
+        ],
+        [
+          "path",
+          {
+            d: "M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12",
+            key: "1wduqc"
+          }
+        ],
+        [
+          "path",
+          {
+            d: "M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17",
+            key: "kqbvx6"
+          }
+        ]
+      ],
+      aliases: ["layers-3"]
+    };
+    __iconData8.node;
+    Layers = createLucideIcon(__iconData8);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/plus.mjs
 var plus_exports = {};
 __export(plus_exports, {
-  __iconData: () => __iconData2,
+  __iconData: () => __iconData9,
   default: () => Plus
 });
-var __iconData2, Plus;
+var __iconData9, Plus;
 var init_plus = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/plus.mjs"() {
     init_createLucideIcon();
-    __iconData2 = {
+    __iconData9 = {
       name: "plus",
       size: 24,
       node: [
@@ -1154,22 +601,871 @@ var init_plus = __esm({
         ["path", { d: "M12 5v14", key: "s699le" }]
       ]
     };
-    __iconData2.node;
-    Plus = createLucideIcon(__iconData2);
+    __iconData9.node;
+    Plus = createLucideIcon(__iconData9);
+  }
+});
+
+// packages/addons/sites/client/charts.cjs
+var require_charts = __commonJS({
+  "packages/addons/sites/client/charts.cjs"(exports2, module2) {
+    var React2 = require("react");
+    var h2 = React2.createElement;
+    var ICONS = {
+      "refresh": (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
+      "globe": (init_globe(), __toCommonJS(globe_exports)).default,
+      "link": (init_link_2(), __toCommonJS(link_2_exports)).default,
+      "tag": (init_tag(), __toCommonJS(tag_exports)).default,
+      "pie": (init_pie_chart(), __toCommonJS(pie_chart_exports)).default,
+      "folder": (init_folder_tree(), __toCommonJS(folder_tree_exports)).default,
+      "unlink": (init_unlink(), __toCommonJS(unlink_exports)).default,
+      "layers": (init_layers(), __toCommonJS(layers_exports)).default,
+      "plus": (init_plus(), __toCommonJS(plus_exports)).default
+    };
+    var COLORS = [
+      "var(--dsw-alias-state-business-primary, #4f6ef7)",
+      "var(--dsw-alias-state-success-primary, #2f9e6e)",
+      "var(--dsw-alias-state-warn-primary, #d99100)",
+      "var(--dsw-alias-state-error-primary, #d9534f)",
+      "var(--dsw-alias-state-done-primary, #7c5cff)",
+      "var(--dsw-alias-state-idle-primary, #8f959e)"
+    ];
+    function css(prefix) {
+      return [
+        ".@-stats{display:flex;flex-direction:column;gap:14px;padding:4px 2px 24px;color:var(--dsw-alias-label-primary,#1f2329)}",
+        ".@-stoolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+        ".@-seg{display:inline-flex;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:9px;overflow:hidden;background:var(--dsw-alias-bg-layer-1,#fff)}",
+        ".@-seg button{appearance:none;border:0;background:transparent;color:var(--dsw-alias-label-secondary,#646a73);font-size:12px;padding:6px 10px;cursor:pointer;white-space:nowrap}",
+        ".@-seg button.@-on{background:var(--dsw-alias-brand-primary,#4f6ef7);color:var(--dsw-alias-label-primary-inverted,#fff)}",
+        ".@-ghost{appearance:none;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-secondary,#646a73);border-radius:8px;font-size:12px;padding:6px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-family:inherit}",
+        ".@-ghost:disabled{opacity:.6;cursor:progress}",
+        ".@-ico{display:block;flex:none}",
+        ".@-kpi-l .@-ico{opacity:.7}",
+        ".@-ghost:hover{border-color:var(--dsw-alias-brand-primary,#4f6ef7);color:var(--dsw-alias-brand-primary,#4f6ef7)}",
+        ".@-muted{color:var(--dsw-alias-label-tertiary,#8f959e);font-size:12px}",
+        ".@-sgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}",
+        ".@-scard{grid-column:span 6;min-width:0;background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:12px;padding:14px 16px}",
+        ".@-span-3{grid-column:span 3}.@-span-4{grid-column:span 4}.@-span-6{grid-column:span 6}.@-span-8{grid-column:span 8}.@-span-12{grid-column:span 12}",
+        ".@-chead{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;flex-wrap:wrap}",
+        ".@-ctitle{font-size:13px;font-weight:600;color:var(--dsw-alias-label-primary,#1f2329)}",
+        ".@-cnote{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
+        ".@-kpis{grid-column:span 12;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}",
+        ".@-kpi{background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:12px;padding:12px 14px;min-width:0}",
+        ".@-kpi-l{font-size:12px;color:var(--dsw-alias-label-tertiary,#8f959e);display:flex;align-items:center;gap:6px}",
+        ".@-kpi-v{font-size:26px;line-height:1.25;font-weight:650;margin-top:4px;font-variant-numeric:tabular-nums}",
+        ".@-kpi-u{font-size:12px;font-weight:400;color:var(--dsw-alias-label-tertiary,#8f959e);margin-left:3px}",
+        ".@-kpi-h{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e);margin-top:3px}",
+        ".@-kpi.@-danger .@-kpi-v{color:var(--dsw-alias-state-error-primary,#d9534f)}",
+        ".@-kpi.@-warn .@-kpi-v{color:var(--dsw-alias-state-warn-primary,#d99100)}",
+        ".@-kpi.@-ok .@-kpi-v{color:var(--dsw-alias-state-success-primary,#2f9e6e)}",
+        ".@-donut{display:flex;align-items:center;gap:16px;flex-wrap:wrap}",
+        ".@-donut svg{flex:0 0 auto}",
+        ".@-legend{display:flex;flex-direction:column;gap:7px;min-width:120px;flex:1}",
+        ".@-leg{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dsw-alias-label-secondary,#646a73)}",
+        ".@-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}",
+        ".@-leg b{margin-left:auto;font-weight:600;color:var(--dsw-alias-label-primary,#1f2329);font-variant-numeric:tabular-nums}",
+        ".@-bars{display:flex;flex-direction:column;gap:9px}",
+        ".@-bar{display:grid;grid-template-columns:minmax(72px,1.2fr) 3fr auto;gap:8px;align-items:center;font-size:12px}",
+        ".@-bar-l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dsw-alias-label-secondary,#646a73)}",
+        ".@-bar-t{display:block;height:8px;border-radius:6px;background:var(--dsw-alias-bg-skeleton,#f2f3f5);overflow:hidden}",
+        ".@-bar-f{display:block;height:100%;border-radius:6px;background:var(--dsw-alias-state-business-primary,#4f6ef7);min-width:2px}",
+        ".@-bar-v{font-variant-numeric:tabular-nums;color:var(--dsw-alias-label-primary,#1f2329);font-weight:600;min-width:34px;text-align:right}",
+        ".@-stack{display:flex;flex-direction:column;gap:10px}",
+        ".@-srow-l{font-size:12px;color:var(--dsw-alias-label-secondary,#646a73);margin-bottom:4px;display:flex}",
+        ".@-srow-l b{margin-left:auto;color:var(--dsw-alias-label-primary,#1f2329);font-variant-numeric:tabular-nums}",
+        ".@-strack{display:flex;height:10px;border-radius:6px;overflow:hidden;background:var(--dsw-alias-bg-skeleton,#f2f3f5)}",
+        ".@-seg-f{height:100%}",
+        ".@-hist{display:flex;align-items:flex-end;gap:8px;height:150px;padding-top:16px}",
+        ".@-hbar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;min-width:0;height:100%}",
+        ".@-hbar-v{font-size:11px;color:var(--dsw-alias-label-secondary,#646a73);font-variant-numeric:tabular-nums}",
+        ".@-hbar-f{width:100%;max-width:44px;border-radius:5px 5px 0 0;background:var(--dsw-alias-state-business-primary,#4f6ef7);min-height:2px}",
+        ".@-hbar-l{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}",
+        ".@-trend{width:100%;height:auto;display:block}",
+        ".@-tlegend{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
+        ".@-table{width:100%;border-collapse:collapse;font-size:12px}",
+        ".@-table th{text-align:left;font-weight:500;color:var(--dsw-alias-label-tertiary,#8f959e);padding:6px 8px;border-bottom:1px solid var(--dsw-alias-border-l2,#e5e6eb);white-space:nowrap}",
+        ".@-table td{padding:7px 8px;border-bottom:1px solid var(--dsw-alias-border-l1,#f2f3f5);color:var(--dsw-alias-label-secondary,#646a73);vertical-align:top}",
+        ".@-table tr:last-child td{border-bottom:0}",
+        ".@-table td.@-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}",
+        ".@-empty{padding:26px 8px;text-align:center;color:var(--dsw-alias-label-tertiary,#8f959e);font-size:12px}",
+        ".@-err{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#d9534f) 8%,transparent);border:1px solid color-mix(in srgb,var(--dsw-alias-state-error-primary,#d9534f) 30%,transparent);color:var(--dsw-alias-state-error-primary,#d9534f);border-radius:10px;padding:10px 12px;font-size:12px}",
+        ".@-warn{grid-column:span 12;border:1px dashed var(--dsw-alias-state-warn-primary,#d99100);border-radius:10px;padding:9px 12px;font-size:12px;color:var(--dsw-alias-state-warn-primary,#d99100);background:color-mix(in srgb,var(--dsw-alias-state-warn-primary,#d99100) 6%,transparent)}",
+        ".@-sk{height:14px;border-radius:6px;background:var(--dsw-alias-bg-skeleton,#f2f3f5);margin:7px 0;animation:@-pulse 1.2s ease-in-out infinite}",
+        "@keyframes @-pulse{0%,100%{opacity:.55}50%{opacity:1}}",
+        "@media (max-width:900px){.@-scard{grid-column:span 12}.@-span-3,.@-span-4,.@-span-6,.@-span-8{grid-column:span 12}.@-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}",
+        "@media (max-width:600px){.@-stats{padding-bottom:16px}.@-hist{height:130px}.@-kpi-v{font-size:22px}}",
+        "@media (prefers-reduced-motion:reduce){.@-sk{animation:none}}"
+      ].join("\n").replace(/@-/g, prefix + "-");
+    }
+    function makeCharts(prefix) {
+      if (typeof document !== "undefined" && !document.getElementById(prefix + "-charts-css")) {
+        var el = document.createElement("style");
+        el.id = prefix + "-charts-css";
+        el.textContent = css(prefix);
+        document.head.appendChild(el);
+      }
+      function ico(name, size) {
+        var C = ICONS[name];
+        if (!C) return null;
+        return h2(C, { size: size || 13, strokeWidth: 2, "aria-hidden": "true", className: prefix + "-ico" });
+      }
+      function num(lang, n) {
+        var v = Number(n);
+        if (!isFinite(v)) return "\u2014";
+        try {
+          return new Intl.NumberFormat(lang === "en" ? "en-US" : "zh-CN").format(v);
+        } catch (e) {
+          return String(v);
+        }
+      }
+      function pct(v, digits) {
+        if (v === null || v === void 0 || !isFinite(Number(v))) return "\u2014";
+        return (Number(v) * 100).toFixed(digits === void 0 ? 1 : digits) + "%";
+      }
+      function timeText(ms) {
+        if (!ms) return "";
+        var d = new Date(Number(ms));
+        function p(n) {
+          return String(n).padStart(2, "0");
+        }
+        return p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+      }
+      function dateText(ms) {
+        if (!ms) return "\u2014";
+        var d = new Date(Number(ms));
+        function p(n) {
+          return String(n).padStart(2, "0");
+        }
+        return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+      }
+      function Card(props) {
+        var cls = prefix + "-scard" + (props.span ? " " + prefix + "-span-" + props.span : "");
+        return h2(
+          "section",
+          { className: cls },
+          props.title || props.right ? h2(
+            "div",
+            { className: prefix + "-chead" },
+            h2("span", { className: prefix + "-ctitle" }, props.title),
+            props.note ? h2("span", { className: prefix + "-cnote" }, props.note) : null,
+            props.right ? h2("span", { style: { marginLeft: "auto" } }, props.right) : null
+          ) : null,
+          props.children
+        );
+      }
+      function Kpi(props) {
+        var tone = props.tone ? " " + prefix + "-" + props.tone : "";
+        return h2(
+          "div",
+          { className: prefix + "-kpi" + tone },
+          h2("div", { className: prefix + "-kpi-l" }, ico(props.icon, 13), props.label),
+          h2(
+            "div",
+            { className: prefix + "-kpi-v" },
+            props.value === null || props.value === void 0 ? "\u2014" : typeof props.value === "number" ? num(props.lang, props.value) : props.value,
+            props.unit ? h2("span", { className: prefix + "-kpi-u" }, props.unit) : null
+          ),
+          props.hint ? h2("div", { className: prefix + "-kpi-h" }, props.hint) : null
+        );
+      }
+      function Donut(props) {
+        var data = (props.data || []).filter(function(d) {
+          return Number(d.count) > 0;
+        });
+        var total = Number(props.total || 0);
+        var size = props.size || 168;
+        var r = size / 2 - 16;
+        var c = 2 * Math.PI * r;
+        var offset = 0;
+        var aria = props.aria || data.map(function(d) {
+          return d.label + " " + d.count;
+        }).join("\uFF0C");
+        return h2(
+          "div",
+          { className: prefix + "-donut" },
+          h2(
+            "svg",
+            { width: size, height: size, viewBox: "0 0 " + size + " " + size, role: "img", "aria-label": aria },
+            h2("circle", { cx: size / 2, cy: size / 2, r, fill: "none", stroke: "var(--dsw-alias-bg-skeleton,#f2f3f5)", strokeWidth: 18 }),
+            total > 0 ? data.map(function(d, i) {
+              var len = Number(d.count) / total * c;
+              var seg = h2("circle", {
+                key: d.key || d.label || i,
+                cx: size / 2,
+                cy: size / 2,
+                r,
+                fill: "none",
+                stroke: d.color || COLORS[i % COLORS.length],
+                strokeWidth: 18,
+                strokeDasharray: len + " " + (c - len),
+                strokeDashoffset: -offset,
+                transform: "rotate(-90 " + size / 2 + " " + size / 2 + ")",
+                strokeLinecap: "butt"
+              }, h2("title", null, d.label + "\uFF1A" + d.count));
+              offset += len;
+              return seg;
+            }) : null,
+            h2("text", { x: size / 2, y: size / 2 - 2, textAnchor: "middle", fill: "var(--dsw-alias-label-primary,#1f2329)", fontSize: 24, fontWeight: 650 }, num(props.lang, total)),
+            h2("text", { x: size / 2, y: size / 2 + 18, textAnchor: "middle", fill: "var(--dsw-alias-label-tertiary,#8f959e)", fontSize: 11 }, props.centerLabel || "")
+          ),
+          h2("div", { className: prefix + "-legend" }, (props.data || []).map(function(d, i) {
+            return h2(
+              "div",
+              { key: d.key || d.label || i, className: prefix + "-leg" },
+              h2("span", { className: prefix + "-dot", style: { background: d.color || COLORS[i % COLORS.length] } }),
+              h2("span", null, d.label),
+              h2("b", null, num(props.lang, d.count))
+            );
+          }))
+        );
+      }
+      function BarList(props) {
+        var data = props.data || [];
+        var max = Number(props.max || 0) || data.reduce(function(m, d) {
+          return Math.max(m, Number(d.value || 0));
+        }, 0) || 1;
+        return h2("div", { className: prefix + "-bars" }, data.map(function(d, i) {
+          var v = Number(d.value || 0);
+          return h2(
+            "div",
+            { key: d.key || d.label || i, className: prefix + "-bar" },
+            h2("span", { className: prefix + "-bar-l", title: d.title || d.label }, d.label),
+            h2("span", { className: prefix + "-bar-t" }, h2("span", { className: prefix + "-bar-f", style: { width: Math.max(2, v / max * 100) + "%", background: d.color || props.color || COLORS[0] } })),
+            h2("span", { className: prefix + "-bar-v" }, props.format ? props.format(v) : num(props.lang, v))
+          );
+        }));
+      }
+      function StackedRows(props) {
+        var rows = props.rows || [];
+        var keys = props.keys || [];
+        return h2("div", { className: prefix + "-stack" }, rows.map(function(row, ri) {
+          var total = Number(row.total || 0) || 1;
+          return h2(
+            "div",
+            { key: row.key || ri },
+            h2("div", { className: prefix + "-srow-l" }, h2("span", null, row.label), h2("b", null, num(props.lang, row.total))),
+            h2("div", { className: prefix + "-strack" }, keys.map(function(k, i) {
+              var v = Number(row.parts && row.parts[k.key] || 0);
+              if (v <= 0) return null;
+              return h2("span", {
+                key: k.key,
+                className: prefix + "-seg-f",
+                title: k.label + " " + v,
+                style: { width: v / total * 100 + "%", background: k.color || COLORS[i % COLORS.length] }
+              });
+            }))
+          );
+        }));
+      }
+      function Trend(props) {
+        var data = props.data || [];
+        var series = props.series || [];
+        var width = 640;
+        var height = props.height || 200;
+        var left = 30, right = 10, top = 12, bottom = 24;
+        var pw = width - left - right, ph = height - top - bottom;
+        var max = 1;
+        data.forEach(function(d) {
+          series.forEach(function(s) {
+            max = Math.max(max, Number(d[s.key] || 0));
+          });
+        });
+        max = Math.ceil(max * 1.15) || 1;
+        function x(i2) {
+          return left + (data.length <= 1 ? pw / 2 : i2 / (data.length - 1) * pw);
+        }
+        function y(v) {
+          return top + ph - Number(v || 0) / max * ph;
+        }
+        var ticks = [];
+        for (var t = 0; t <= 3; t++) ticks.push(Math.round(max / 3 * t));
+        var labelIdx = [];
+        if (data.length) {
+          var step = Math.max(1, Math.floor(data.length / 5));
+          for (var i = 0; i < data.length; i += step) labelIdx.push(i);
+          if (labelIdx[labelIdx.length - 1] !== data.length - 1) labelIdx.push(data.length - 1);
+        }
+        var aria = series.map(function(s) {
+          return s.label + " " + data.reduce(function(n, d) {
+            return n + Number(d[s.key] || 0);
+          }, 0);
+        }).join("\uFF0C");
+        return h2(
+          "div",
+          null,
+          h2(
+            "svg",
+            { className: prefix + "-trend", viewBox: "0 0 " + width + " " + height, role: "img", "aria-label": props.aria || aria },
+            ticks.map(function(v, i2) {
+              return h2(
+                "g",
+                { key: "t" + i2 },
+                h2("line", { x1: left, x2: width - right, y1: y(v), y2: y(v), stroke: "var(--dsw-alias-border-l1,#f2f3f5)", strokeWidth: 1 }),
+                h2("text", { x: left - 5, y: y(v) + 3, textAnchor: "end", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, num(props.lang, v))
+              );
+            }),
+            series.map(function(s, si) {
+              var pts = data.map(function(d, i2) {
+                return x(i2) + "," + y(d[s.key]);
+              }).join(" ");
+              return h2(
+                "g",
+                { key: s.key },
+                h2("polyline", { points: pts, fill: "none", stroke: s.color || COLORS[si % COLORS.length], strokeWidth: 2, strokeLinejoin: "round", strokeLinecap: "round" }),
+                data.map(function(d, i2) {
+                  if (data.length > 40 && i2 % 3 !== 0) return null;
+                  return h2(
+                    "circle",
+                    { key: i2, cx: x(i2), cy: y(d[s.key]), r: 2.4, fill: s.color || COLORS[si % COLORS.length] },
+                    h2("title", null, d.bucket + "\uFF1A" + s.label + " " + (d[s.key] || 0))
+                  );
+                })
+              );
+            }),
+            labelIdx.map(function(i2) {
+              return h2("text", { key: "x" + i2, x: x(i2), y: height - 6, textAnchor: "middle", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, String(data[i2].bucket).slice(5));
+            })
+          ),
+          h2("div", { className: prefix + "-tlegend" }, series.map(function(s, i2) {
+            return h2(
+              "span",
+              { key: s.key, style: { display: "inline-flex", alignItems: "center", gap: 5 } },
+              h2("span", { className: prefix + "-dot", style: { background: s.color || COLORS[i2 % COLORS.length] } }),
+              s.label
+            );
+          }))
+        );
+      }
+      function Histogram(props) {
+        var data = props.data || [];
+        var max = data.reduce(function(m, d) {
+          return Math.max(m, Number(d.count || 0));
+        }, 0) || 1;
+        return h2(
+          "div",
+          { className: prefix + "-hist", role: "img", "aria-label": props.aria || data.map(function(d) {
+            return d.label + " " + d.count;
+          }).join("\uFF0C") },
+          data.map(function(d, i) {
+            return h2(
+              "div",
+              { key: d.key || d.label || i, className: prefix + "-hbar", title: d.label + "\uFF1A" + d.count },
+              h2("span", { className: prefix + "-hbar-v" }, num(props.lang, d.count)),
+              h2("span", { className: prefix + "-hbar-f", style: { height: Math.max(2, Number(d.count || 0) / max * 100) + "%", background: d.color || props.color || COLORS[0] } }),
+              h2("span", { className: prefix + "-hbar-l" }, d.label)
+            );
+          })
+        );
+      }
+      function DataTable(props) {
+        var cols = props.columns || [];
+        var rows = props.rows || [];
+        if (!rows.length) return h2("div", { className: prefix + "-empty" }, props.empty || "\u6682\u65E0\u6570\u636E");
+        return h2(
+          "table",
+          { className: prefix + "-table" },
+          h2("thead", null, h2("tr", null, cols.map(function(c) {
+            return h2("th", { key: c.key, className: c.num ? prefix + "-num" : "" }, c.label);
+          }))),
+          h2("tbody", null, rows.map(function(row, ri) {
+            return h2("tr", { key: row.id || row.key || ri }, cols.map(function(c) {
+              return h2("td", { key: c.key, className: c.num ? prefix + "-num" : "" }, c.render ? c.render(row) : row[c.key]);
+            }));
+          }))
+        );
+      }
+      function RangeSwitch(props) {
+        return h2(
+          "div",
+          { className: prefix + "-stoolbar" },
+          h2("div", { className: prefix + "-seg", role: "group", "aria-label": props.aria || "\u65F6\u95F4\u8303\u56F4" }, (props.options || []).map(function(o) {
+            return h2("button", {
+              key: o.key,
+              type: "button",
+              className: o.key === props.value ? prefix + "-on" : "",
+              "aria-pressed": o.key === props.value,
+              onClick: function() {
+                props.onChange(o.key);
+              }
+            }, o.label);
+          })),
+          h2("button", { type: "button", className: prefix + "-ghost", disabled: !!props.loading, onClick: props.onRefresh }, ico("refresh", 13), props.refreshLabel || "\u5237\u65B0"),
+          h2("span", { className: prefix + "-muted" }, props.generatedAt ? (props.timeLabel || "\u622A\u81F3") + " " + timeText(props.generatedAt) : ""),
+          props.right ? h2("span", { style: { marginLeft: "auto" } }, props.right) : null
+        );
+      }
+      function Empty(props) {
+        return h2("div", { className: prefix + "-empty" }, props.text || "\u6682\u65E0\u6570\u636E");
+      }
+      function Skeleton() {
+        return h2(
+          "div",
+          { className: prefix + "-sgrid" },
+          h2("div", { className: prefix + "-kpis" }, [0, 1, 2, 3].map(function(i) {
+            return h2(
+              "div",
+              { key: i, className: prefix + "-kpi" },
+              h2("div", { className: prefix + "-sk", style: { width: "40%" } }),
+              h2("div", { className: prefix + "-sk", style: { width: "65%", height: 26 } })
+            );
+          })),
+          [0, 1].map(function(i) {
+            return h2(
+              "div",
+              { key: "c" + i, className: prefix + "-scard " + prefix + "-span-6" },
+              h2("div", { className: prefix + "-sk", style: { width: "30%" } }),
+              h2("div", { className: prefix + "-sk", style: { height: 120 } })
+            );
+          })
+        );
+      }
+      function ErrorBar(props) {
+        return h2(
+          "div",
+          { className: prefix + "-err", role: "alert" },
+          h2("span", null, props.message),
+          props.onRetry ? h2("button", { type: "button", className: prefix + "-ghost", onClick: props.onRetry }, props.retryLabel || "\u91CD\u8BD5") : null
+        );
+      }
+      function Warnings(props) {
+        var items = props.items || [];
+        if (!items.length) return null;
+        return h2("div", { className: prefix + "-warn", role: "status" }, items.map(function(w) {
+          return w.message;
+        }).join("\uFF1B"));
+      }
+      return {
+        Card,
+        Kpi,
+        Donut,
+        BarList,
+        StackedRows,
+        Trend,
+        Histogram,
+        DataTable,
+        RangeSwitch,
+        Empty,
+        Skeleton,
+        ErrorBar,
+        Warnings,
+        num,
+        pct,
+        timeText,
+        dateText,
+        colors: COLORS
+      };
+    }
+    module2.exports = { makeCharts };
+  }
+});
+
+// packages/addons/sites/client/stats.cjs
+var require_stats = __commonJS({
+  "packages/addons/sites/client/stats.cjs"(exports2, module2) {
+    var React2 = require("react");
+    var h2 = React2.createElement;
+    var charts = require_charts();
+    var COPY = {
+      zh: {
+        range7: "\u8FD1 7 \u5929",
+        range30: "\u8FD1 30 \u5929",
+        range90: "\u8FD1 90 \u5929",
+        range365: "\u8FD1 1 \u5E74",
+        rangeAll: "\u5168\u90E8",
+        refresh: "\u5237\u65B0",
+        asOf: "\u622A\u81F3",
+        retry: "\u91CD\u8BD5",
+        loadFail: "\u7EDF\u8BA1\u670D\u52A1\u672A\u5C31\u7EEA\uFF0C\u8BF7\u5347\u7EA7\u63D2\u4EF6\u540E\u91CD\u8BD5",
+        sites: "\u7AD9\u70B9\u603B\u6570",
+        bindable: "\u53EF\u7ED1\u5B9A",
+        tagged: "\u6709\u6807\u7B7E",
+        coverage: "\u6807\u7B7E\u8986\u76D6\u7387",
+        nodes: "\u76EE\u5F55\u6570",
+        noLink: "\u65E0\u94FE\u63A5",
+        multiLink: "\u591A\u94FE\u63A5",
+        newSites: "\u8303\u56F4\u5185\u65B0\u589E\u7AD9\u70B9",
+        current: "\u5F53\u524D",
+        inRange: "\u8303\u56F4\u5185",
+        ofTotal: "\u5360\u603B\u91CF",
+        links: "\u94FE\u63A5\u5065\u5EB7",
+        linksNote: "\u6309\u7AD9\u70B9\u94FE\u63A5\u6570\u5206\u6876",
+        freshness: "\u66F4\u65B0\u65B0\u9C9C\u5EA6",
+        freshnessNote: "\u8DDD\u6700\u8FD1\u4E00\u6B21\u66F4\u65B0",
+        nodeDist: "\u76EE\u5F55\u5206\u5E03",
+        nodeNote: "\u542B\u5B50\u6811\u7AD9\u70B9\u6570",
+        topTags: "\u6807\u7B7E Top",
+        topTagsNote: "\u6309\u5173\u8054\u7AD9\u70B9\u6570\u6392\u5E8F",
+        trend: "\u65B0\u589E\u7AD9\u70B9 / \u76EE\u5F55\u8D8B\u52BF",
+        trendNote: "\u6309\u81EA\u7136\u65E5 / \u5468 / \u6708\u5206\u6876",
+        siteSeries: "\u65B0\u589E\u7AD9\u70B9",
+        nodeSeries: "\u65B0\u589E\u76EE\u5F55",
+        stale: "\u6700\u4E45\u672A\u66F4\u65B0",
+        staleNote: "\u6309\u672A\u66F4\u65B0\u5929\u6570\u964D\u5E8F",
+        duplicates: "\u91CD\u590D URL",
+        duplicatesNote: "\u5F52\u4E00\u5316\u540E\u8BA1\u6570 > 1",
+        orphans: "\u65E0\u76EE\u5F55\u7AD9\u70B9",
+        orphansNote: "\u7F3A\u5C11\u76EE\u5F55\u6620\u5C04",
+        emptyNodes: "\u7A7A\u76EE\u5F55",
+        emptyNodesNote: "\u542B\u5B50\u6811 0 \u4E2A\u7AD9\u70B9",
+        colName: "\u540D\u79F0",
+        colSubtree: "\u5B50\u6811\u7AD9\u70B9",
+        colShare: "\u5360\u6BD4",
+        colDirect: "\u76F4\u63A5",
+        colDepth: "\u5C42\u7EA7",
+        colUpdated: "\u6700\u8FD1\u66F4\u65B0",
+        colAge: "\u672A\u66F4\u65B0\u5929\u6570",
+        colUrl: "URL",
+        colSites: "\u7AD9\u70B9",
+        noStale: "\u6CA1\u6709\u9648\u65E7\u7AD9\u70B9",
+        noDup: "\u6CA1\u6709\u91CD\u590D URL",
+        noOrphan: "\u6240\u6709\u7AD9\u70B9\u90FD\u5DF2\u5F52\u6863",
+        noEmpty: "\u6CA1\u6709\u7A7A\u76EE\u5F55",
+        noData: "\u8FD8\u6CA1\u6709\u7AD9\u70B9\u3002\u5728\u300C\u7AD9\u70B9\u300D\u9875\u6536\u85CF\u540E\uFF0C\u8FD9\u91CC\u4F1A\u81EA\u52A8\u6C47\u603B",
+        noTagDomain: "\u6807\u7B7E\u63D2\u4EF6\u672A\u542F\u7528\uFF0C\u6807\u7B7E\u76F8\u5173\u533A\u5757\u5DF2\u9690\u85CF"
+      },
+      en: {
+        range7: "7 days",
+        range30: "30 days",
+        range90: "90 days",
+        range365: "1 year",
+        rangeAll: "All",
+        refresh: "Refresh",
+        asOf: "As of",
+        retry: "Retry",
+        loadFail: "Stats service not ready. Upgrade the plugin and retry.",
+        sites: "Sites",
+        bindable: "Bindable",
+        tagged: "Tagged",
+        coverage: "Tag coverage",
+        nodes: "Folders",
+        noLink: "No link",
+        multiLink: "Multi-link",
+        newSites: "New sites",
+        current: "Current",
+        inRange: "In range",
+        ofTotal: "of total",
+        links: "Link health",
+        linksNote: "Sites by link count",
+        freshness: "Freshness",
+        freshnessNote: "Since last update",
+        nodeDist: "Folder distribution",
+        nodeNote: "Sites in subtree",
+        topTags: "Top tags",
+        topTagsNote: "By linked sites",
+        trend: "New sites / folders",
+        trendNote: "Bucketed by day / week / month",
+        siteSeries: "Sites",
+        nodeSeries: "Folders",
+        stale: "Stalest sites",
+        staleNote: "Oldest update first",
+        duplicates: "Duplicate URLs",
+        duplicatesNote: "Normalized count > 1",
+        orphans: "Sites without folder",
+        orphansNote: "Missing folder mapping",
+        emptyNodes: "Empty folders",
+        emptyNodesNote: "0 sites in subtree",
+        colName: "Name",
+        colSubtree: "Sites",
+        colShare: "Share",
+        colDirect: "Direct",
+        colDepth: "Depth",
+        colUpdated: "Updated",
+        colAge: "Days idle",
+        colUrl: "URL",
+        colSites: "Sites",
+        noStale: "No stale sites",
+        noDup: "No duplicate URLs",
+        noOrphan: "All sites are filed",
+        noEmpty: "No empty folders",
+        noData: "No sites yet. Save one on the Sites page and the summary appears here.",
+        noTagDomain: "Tag plugin is not enabled; tag blocks are hidden."
+      }
+    };
+    var RANGES = ["7d", "30d", "90d", "365d", "all"];
+    function SitesStatsView(props) {
+      var lang = props.lang === "en" ? "en" : "zh";
+      var t = COPY[lang];
+      var api = props.api;
+      var ch = React2.useMemo(function() {
+        return charts.makeCharts("wbs");
+      }, []);
+      var rangePair = React2.useState("30d");
+      var range = rangePair[0], setRange = rangePair[1];
+      var dataPair = React2.useState(null);
+      var data = dataPair[0], setData = dataPair[1];
+      var errPair = React2.useState("");
+      var err = errPair[0], setErr = errPair[1];
+      var loadPair = React2.useState(true);
+      var loading = loadPair[0], setLoading = loadPair[1];
+      var req = React2.useRef(0);
+      var load = React2.useCallback(function(silent) {
+        var id = ++req.current;
+        if (!silent) setLoading(true);
+        return Promise.resolve(api.call("sites.statsReport", { range, top: 10 })).then(function(r) {
+          return r && r.result !== void 0 ? r.result : r;
+        }).then(function(d) {
+          if (id === req.current) {
+            setData(d);
+            setErr("");
+          }
+        }).catch(function(e) {
+          if (id === req.current) setErr(String(e && e.message || e || "load failed"));
+        }).then(function() {
+          if (id === req.current) setLoading(false);
+        });
+      }, [api, range]);
+      React2.useEffect(function() {
+        load(false);
+      }, [load]);
+      React2.useEffect(function() {
+        if (!api || typeof api.subscribe !== "function") return void 0;
+        var timer = null;
+        var pending = false;
+        var off = api.subscribe(function(payload) {
+          var ev = payload && payload.event;
+          if (ev !== "sites-changed" && ev !== "site-nodes-changed" && ev !== "tags-changed") return;
+          if (typeof document !== "undefined" && document.visibilityState && document.visibilityState !== "visible") {
+            pending = true;
+            return;
+          }
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(function() {
+            load(true);
+          }, 800);
+        });
+        function onVisible() {
+          if (typeof document !== "undefined" && document.visibilityState === "visible" && pending) {
+            pending = false;
+            load(true);
+          }
+        }
+        if (typeof document !== "undefined") document.addEventListener("visibilitychange", onVisible);
+        return function() {
+          if (timer) clearTimeout(timer);
+          if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
+          if (typeof off === "function") off();
+        };
+      }, [api, load]);
+      var options = RANGES.map(function(key) {
+        return { key, label: t["range" + (key === "all" ? "All" : key.replace("d", ""))] };
+      });
+      var children = [];
+      if (!data && loading) children.push(h2(ch.Skeleton, { key: "sk" }));
+      if (!data && !loading && err) children.push(h2(ch.Card, { key: "err", span: 12 }, h2(ch.Empty, { text: t.loadFail })));
+      if (data && data.totals) {
+        var totals = data.totals;
+        var rates = data.rates || {};
+        var b = data.breakdowns || {};
+        var tagMissing = rates.tagCoverage === null || rates.tagCoverage === void 0;
+        children.push(h2(
+          "div",
+          { key: "kpi", className: "wbs-kpis" },
+          h2(ch.Kpi, { label: t.sites, icon: "globe", value: totals.sites, hint: t.current, lang }),
+          h2(ch.Kpi, { label: t.bindable, icon: "link", value: totals.bindable, hint: ch.pct(rates.bindableRatio) + " " + t.ofTotal, lang }),
+          h2(ch.Kpi, { label: t.tagged, icon: "tag", value: tagMissing ? "\u2014" : totals.tagged, hint: tagMissing ? t.noTagDomain : ch.pct(rates.tagCoverage) + " " + t.ofTotal, lang }),
+          h2(ch.Kpi, { label: t.coverage, icon: "pie", value: tagMissing ? "\u2014" : ch.pct(rates.tagCoverage), hint: t.current, tone: tagMissing ? "" : "ok", lang }),
+          h2(ch.Kpi, { label: t.nodes, icon: "folder", value: totals.nodes, hint: t.current, lang }),
+          h2(ch.Kpi, { label: t.noLink, icon: "unlink", value: totals.noLink, hint: ch.pct(rates.linkCoverage) + " " + t.ofTotal, tone: totals.noLink > 0 ? "warn" : "", lang }),
+          h2(ch.Kpi, { label: t.multiLink, icon: "layers", value: totals.multiLink, hint: t.current, lang }),
+          h2(ch.Kpi, { label: t.newSites, icon: "plus", value: totals.newSites, hint: t.inRange, lang })
+        ));
+        if (totals.sites === 0 && totals.nodes === 0) {
+          children.push(h2(ch.Card, { key: "empty", span: 12 }, h2(ch.Empty, { text: t.noData })));
+        } else {
+          children.push(h2(
+            ch.Card,
+            { key: "links", span: 4, title: t.links, note: t.linksNote },
+            h2(ch.Donut, {
+              data: (b.links || []).map(function(x, i) {
+                return { key: x.key, label: x.label, count: x.count, color: ch.colors[i] };
+              }),
+              total: totals.sites,
+              lang,
+              centerLabel: t.sites,
+              aria: (b.links || []).map(function(x) {
+                return x.label + " " + x.count;
+              }).join("\uFF0C")
+            })
+          ));
+          children.push(h2(
+            ch.Card,
+            { key: "fresh", span: 4, title: t.freshness, note: t.freshnessNote },
+            h2(ch.Histogram, { data: b.freshness || [], lang, color: ch.colors[2] })
+          ));
+          children.push(h2(
+            ch.Card,
+            { key: "nodes", span: 4, title: t.nodeDist, note: t.nodeNote },
+            h2(ch.BarList, {
+              data: (data.rankings && data.rankings.topNodes || []).map(function(x) {
+                return { key: x.id, label: x.name, value: x.subtree, title: x.name };
+              }),
+              lang,
+              color: ch.colors[0]
+            })
+          ));
+          children.push(h2(
+            ch.Card,
+            { key: "trend", span: 8, title: t.trend, note: t.trendNote },
+            h2(ch.Trend, {
+              data: data.trend || [],
+              lang,
+              series: [
+                { key: "sites", label: t.siteSeries, color: ch.colors[0] },
+                { key: "nodes", label: t.nodeSeries, color: ch.colors[1] }
+              ]
+            })
+          ));
+          children.push(h2(
+            ch.Card,
+            { key: "topTags", span: 4, title: t.topTags, note: t.topTagsNote },
+            tagMissing ? h2(ch.Empty, { text: t.noTagDomain }) : h2(ch.BarList, {
+              data: (data.rankings && data.rankings.topTags || []).map(function(x) {
+                return { key: x.id, label: x.name, value: x.count, title: x.name };
+              }),
+              lang,
+              color: ch.colors[4]
+            })
+          ));
+          children.push(h2(
+            ch.Card,
+            { key: "stale", span: 6, title: t.stale, note: t.staleNote },
+            h2(ch.DataTable, {
+              rows: data.lists && data.lists.stale || [],
+              lang,
+              empty: t.noStale,
+              columns: [
+                { key: "name", label: t.colName },
+                { key: "ageDays", label: t.colAge, num: true },
+                { key: "updatedAt", label: t.colUpdated, render: function(r) {
+                  return ch.dateText(r.updatedAt);
+                } }
+              ]
+            })
+          ));
+          children.push(h2(
+            ch.Card,
+            { key: "dup", span: 6, title: t.duplicates, note: t.duplicatesNote },
+            h2(ch.DataTable, {
+              rows: data.lists && data.lists.duplicates || [],
+              lang,
+              empty: t.noDup,
+              columns: [
+                { key: "url", label: t.colUrl, render: function(r) {
+                  return h2("span", { title: r.url }, String(r.url).slice(0, 46) + (String(r.url).length > 46 ? "\u2026" : ""));
+                } },
+                { key: "sites", label: t.colSites, render: function(r) {
+                  return (r.sites || []).map(function(s) {
+                    return s.name;
+                  }).join("\u3001");
+                } }
+              ]
+            })
+          ));
+          children.push(h2(
+            ch.Card,
+            { key: "orphan", span: 6, title: t.orphans, note: t.orphansNote },
+            h2(ch.DataTable, {
+              rows: data.lists && data.lists.orphanSites || [],
+              lang,
+              empty: t.noOrphan,
+              columns: [{ key: "name", label: t.colName }]
+            })
+          ));
+          children.push(h2(
+            ch.Card,
+            { key: "emptyNodes", span: 6, title: t.emptyNodes, note: t.emptyNodesNote },
+            h2(ch.DataTable, {
+              rows: data.lists && data.lists.emptyNodes || [],
+              lang,
+              empty: t.noEmpty,
+              columns: [
+                { key: "name", label: t.colName },
+                { key: "depth", label: t.colDepth, num: true }
+              ]
+            })
+          ));
+        }
+        children.push(h2(ch.Warnings, { key: "warn", items: data.warnings || [] }));
+      }
+      return h2(
+        "div",
+        { className: "wbs-stats" },
+        h2(ch.RangeSwitch, {
+          options,
+          value: range,
+          onChange: setRange,
+          onRefresh: function() {
+            load(false);
+          },
+          loading,
+          generatedAt: data && data.generatedAt,
+          refreshLabel: t.refresh,
+          timeLabel: t.asOf
+        }),
+        err && data ? h2(ch.ErrorBar, { message: err, onRetry: function() {
+          load(false);
+        }, retryLabel: t.retry }) : null,
+        h2("div", { className: "wbs-sgrid" }, children)
+      );
+    }
+    module2.exports = { SitesStatsView };
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/x.mjs
+var x_exports = {};
+__export(x_exports, {
+  __iconData: () => __iconData10,
+  default: () => X
+});
+var __iconData10, X;
+var init_x = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/x.mjs"() {
+    init_createLucideIcon();
+    __iconData10 = {
+      name: "x",
+      size: 24,
+      node: [
+        ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
+        ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
+      ]
+    };
+    __iconData10.node;
+    X = createLucideIcon(__iconData10);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/check.mjs
+var check_exports = {};
+__export(check_exports, {
+  __iconData: () => __iconData11,
+  default: () => Check
+});
+var __iconData11, Check;
+var init_check = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/check.mjs"() {
+    init_createLucideIcon();
+    __iconData11 = {
+      name: "check",
+      size: 24,
+      node: [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]]
+    };
+    __iconData11.node;
+    Check = createLucideIcon(__iconData11);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/pencil.mjs
 var pencil_exports = {};
 __export(pencil_exports, {
-  __iconData: () => __iconData3,
+  __iconData: () => __iconData12,
   default: () => Pencil
 });
-var __iconData3, Pencil;
+var __iconData12, Pencil;
 var init_pencil = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/pencil.mjs"() {
     init_createLucideIcon();
-    __iconData3 = {
+    __iconData12 = {
       name: "pencil",
       size: 24,
       node: [
@@ -1183,17 +1479,17 @@ var init_pencil = __esm({
         ["path", { d: "m15 5 4 4", key: "1mk7zo" }]
       ]
     };
-    __iconData3.node;
-    Pencil = createLucideIcon(__iconData3);
+    __iconData12.node;
+    Pencil = createLucideIcon(__iconData12);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/trash.mjs
-var __iconData4, Trash;
+var __iconData13, Trash;
 var init_trash = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
     init_createLucideIcon();
-    __iconData4 = {
+    __iconData13 = {
       name: "trash",
       size: 24,
       node: [
@@ -1205,8 +1501,8 @@ var init_trash = __esm({
       ],
       aliases: ["trash-2"]
     };
-    __iconData4.node;
-    Trash = createLucideIcon(__iconData4);
+    __iconData13.node;
+    Trash = createLucideIcon(__iconData13);
   }
 });
 
@@ -1221,17 +1517,73 @@ var init_trash_2 = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/folder.mjs
+var folder_exports = {};
+__export(folder_exports, {
+  __iconData: () => __iconData14,
+  default: () => Folder
+});
+var __iconData14, Folder;
+var init_folder = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/folder.mjs"() {
+    init_createLucideIcon();
+    __iconData14 = {
+      name: "folder",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z",
+            key: "1kt360"
+          }
+        ]
+      ]
+    };
+    __iconData14.node;
+    Folder = createLucideIcon(__iconData14);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/folder-open.mjs
+var folder_open_exports = {};
+__export(folder_open_exports, {
+  __iconData: () => __iconData15,
+  default: () => FolderOpen
+});
+var __iconData15, FolderOpen;
+var init_folder_open = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/folder-open.mjs"() {
+    init_createLucideIcon();
+    __iconData15 = {
+      name: "folder-open",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2",
+            key: "usdka0"
+          }
+        ]
+      ]
+    };
+    __iconData15.node;
+    FolderOpen = createLucideIcon(__iconData15);
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/folder-plus.mjs
 var folder_plus_exports = {};
 __export(folder_plus_exports, {
-  __iconData: () => __iconData5,
+  __iconData: () => __iconData16,
   default: () => FolderPlus
 });
-var __iconData5, FolderPlus;
+var __iconData16, FolderPlus;
 var init_folder_plus = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/folder-plus.mjs"() {
     init_createLucideIcon();
-    __iconData5 = {
+    __iconData16 = {
       name: "folder-plus",
       size: 24,
       node: [
@@ -1246,47 +1598,80 @@ var init_folder_plus = __esm({
         ]
       ]
     };
-    __iconData5.node;
-    FolderPlus = createLucideIcon(__iconData5);
+    __iconData16.node;
+    FolderPlus = createLucideIcon(__iconData16);
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
-var refresh_cw_exports = {};
-__export(refresh_cw_exports, {
-  __iconData: () => __iconData6,
-  default: () => RefreshCw
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/house.mjs
+var house_exports = {};
+__export(house_exports, {
+  __iconData: () => __iconData17,
+  default: () => House
 });
-var __iconData6, RefreshCw;
-var init_refresh_cw = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
+var __iconData17, House;
+var init_house = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/house.mjs"() {
     init_createLucideIcon();
-    __iconData6 = {
-      name: "refresh-cw",
+    __iconData17 = {
+      name: "house",
       size: 24,
       node: [
-        ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
-        ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
-        ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
-        ["path", { d: "M8 16H3v5", key: "1cv678" }]
+        ["path", { d: "M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8", key: "5wwlr5" }],
+        [
+          "path",
+          {
+            d: "M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+            key: "r6nss1"
+          }
+        ]
+      ],
+      aliases: ["home"]
+    };
+    __iconData17.node;
+    House = createLucideIcon(__iconData17);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/star.mjs
+var star_exports = {};
+__export(star_exports, {
+  __iconData: () => __iconData18,
+  default: () => Star
+});
+var __iconData18, Star;
+var init_star = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/star.mjs"() {
+    init_createLucideIcon();
+    __iconData18 = {
+      name: "star",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z",
+            key: "r04s7s"
+          }
+        ]
       ]
     };
-    __iconData6.node;
-    RefreshCw = createLucideIcon(__iconData6);
+    __iconData18.node;
+    Star = createLucideIcon(__iconData18);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/search.mjs
 var search_exports = {};
 __export(search_exports, {
-  __iconData: () => __iconData7,
+  __iconData: () => __iconData19,
   default: () => Search
 });
-var __iconData7, Search;
+var __iconData19, Search;
 var init_search = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/search.mjs"() {
     init_createLucideIcon();
-    __iconData7 = {
+    __iconData19 = {
       name: "search",
       size: 24,
       node: [
@@ -1294,8 +1679,139 @@ var init_search = __esm({
         ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }]
       ]
     };
-    __iconData7.node;
-    Search = createLucideIcon(__iconData7);
+    __iconData19.node;
+    Search = createLucideIcon(__iconData19);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/chevron-left.mjs
+var chevron_left_exports = {};
+__export(chevron_left_exports, {
+  __iconData: () => __iconData20,
+  default: () => ChevronLeft
+});
+var __iconData20, ChevronLeft;
+var init_chevron_left = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/chevron-left.mjs"() {
+    init_createLucideIcon();
+    __iconData20 = {
+      name: "chevron-left",
+      size: 24,
+      node: [["path", { d: "m15 18-6-6 6-6", key: "1wnfg3" }]]
+    };
+    __iconData20.node;
+    ChevronLeft = createLucideIcon(__iconData20);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/chevron-right.mjs
+var chevron_right_exports = {};
+__export(chevron_right_exports, {
+  __iconData: () => __iconData21,
+  default: () => ChevronRight
+});
+var __iconData21, ChevronRight;
+var init_chevron_right = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/chevron-right.mjs"() {
+    init_createLucideIcon();
+    __iconData21 = {
+      name: "chevron-right",
+      size: 24,
+      node: [["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]]
+    };
+    __iconData21.node;
+    ChevronRight = createLucideIcon(__iconData21);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/chevron-down.mjs
+var chevron_down_exports = {};
+__export(chevron_down_exports, {
+  __iconData: () => __iconData22,
+  default: () => ChevronDown
+});
+var __iconData22, ChevronDown;
+var init_chevron_down = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/chevron-down.mjs"() {
+    init_createLucideIcon();
+    __iconData22 = {
+      name: "chevron-down",
+      size: 24,
+      node: [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]]
+    };
+    __iconData22.node;
+    ChevronDown = createLucideIcon(__iconData22);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/arrow-up.mjs
+var arrow_up_exports = {};
+__export(arrow_up_exports, {
+  __iconData: () => __iconData23,
+  default: () => ArrowUp
+});
+var __iconData23, ArrowUp;
+var init_arrow_up = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/arrow-up.mjs"() {
+    init_createLucideIcon();
+    __iconData23 = {
+      name: "arrow-up",
+      size: 24,
+      node: [
+        ["path", { d: "m5 12 7-7 7 7", key: "hav0vg" }],
+        ["path", { d: "M12 19V5", key: "x0mq9r" }]
+      ]
+    };
+    __iconData23.node;
+    ArrowUp = createLucideIcon(__iconData23);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/arrow-down.mjs
+var arrow_down_exports = {};
+__export(arrow_down_exports, {
+  __iconData: () => __iconData24,
+  default: () => ArrowDown
+});
+var __iconData24, ArrowDown;
+var init_arrow_down = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/arrow-down.mjs"() {
+    init_createLucideIcon();
+    __iconData24 = {
+      name: "arrow-down",
+      size: 24,
+      node: [
+        ["path", { d: "M12 5v14", key: "s699le" }],
+        ["path", { d: "m19 12-7 7-7-7", key: "1idqje" }]
+      ]
+    };
+    __iconData24.node;
+    ArrowDown = createLucideIcon(__iconData24);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/arrow-up-down.mjs
+var arrow_up_down_exports = {};
+__export(arrow_up_down_exports, {
+  __iconData: () => __iconData25,
+  default: () => ArrowUpDown
+});
+var __iconData25, ArrowUpDown;
+var init_arrow_up_down = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/arrow-up-down.mjs"() {
+    init_createLucideIcon();
+    __iconData25 = {
+      name: "arrow-up-down",
+      size: 24,
+      node: [
+        ["path", { d: "m21 16-4 4-4-4", key: "f6ql7i" }],
+        ["path", { d: "M17 20V4", key: "1ejh1v" }],
+        ["path", { d: "m3 8 4-4 4 4", key: "11wl7u" }],
+        ["path", { d: "M7 4v16", key: "1glfcx" }]
+      ]
+    };
+    __iconData25.node;
+    ArrowUpDown = createLucideIcon(__iconData25);
   }
 });
 
@@ -1315,16 +1831,35 @@ var h = React.createElement;
   var ICONS = {
     "x": (init_x(), __toCommonJS(x_exports)).default,
     "plus": (init_plus(), __toCommonJS(plus_exports)).default,
+    "check": (init_check(), __toCommonJS(check_exports)).default,
     "edit": (init_pencil(), __toCommonJS(pencil_exports)).default,
     "trash": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
+    "folder": (init_folder(), __toCommonJS(folder_exports)).default,
+    "folder-open": (init_folder_open(), __toCommonJS(folder_open_exports)).default,
     "folder-plus": (init_folder_plus(), __toCommonJS(folder_plus_exports)).default,
+    "folder-tree": (init_folder_tree(), __toCommonJS(folder_tree_exports)).default,
+    "house": (init_house(), __toCommonJS(house_exports)).default,
+    "link": (init_link_2(), __toCommonJS(link_2_exports)).default,
+    "tag": (init_tag(), __toCommonJS(tag_exports)).default,
+    "star": (init_star(), __toCommonJS(star_exports)).default,
+    "search": (init_search(), __toCommonJS(search_exports)).default,
     "refresh": (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
-    "search": (init_search(), __toCommonJS(search_exports)).default
+    "chevron-left": (init_chevron_left(), __toCommonJS(chevron_left_exports)).default,
+    "chevron-right": (init_chevron_right(), __toCommonJS(chevron_right_exports)).default,
+    "chevron-down": (init_chevron_down(), __toCommonJS(chevron_down_exports)).default,
+    "arrow-up": (init_arrow_up(), __toCommonJS(arrow_up_exports)).default,
+    "arrow-down": (init_arrow_down(), __toCommonJS(arrow_down_exports)).default,
+    "arrow-up-down": (init_arrow_up_down(), __toCommonJS(arrow_up_down_exports)).default
   };
   function Icon2(props) {
     var C = ICONS[props.name];
     if (!C) return null;
-    return h2(C, { size: props.size || 14, strokeWidth: 2, "aria-hidden": "true", className: "wbs-svg" });
+    return h2(C, {
+      size: props.size || 14,
+      strokeWidth: props.strokeWidth || 2,
+      "aria-hidden": "true",
+      className: "wbs-svg" + (props.className ? " " + props.className : "")
+    });
   }
   var useState = React2.useState;
   var useEffect = React2.useEffect;
@@ -1340,7 +1875,7 @@ var h = React.createElement;
       rename: "\u91CD\u547D\u540D",
       remove: "\u5220\u9664\u76EE\u5F55",
       search: "\u641C\u7D22\u7AD9\u70B9\u540D\u79F0\u6216\u63CF\u8FF0",
-      newSite: "\uFF0B \u65B0\u5EFA\u7AD9\u70B9",
+      newSite: "\u65B0\u5EFA\u7AD9\u70B9",
       siteCol: "\u7AD9\u70B9 / \u5E73\u53F0",
       tagCol: "\u6807\u7B7E",
       createTime: "\u521B\u5EFA\u65F6\u95F4",
@@ -1375,7 +1910,7 @@ var h = React.createElement;
       linkList: "\u94FE\u63A5",
       linkDesc: "\u63CF\u8FF0",
       linkUrl: "\u7F51\u5740",
-      addLink: "\uFF0B \u6DFB\u52A0\u94FE\u63A5",
+      addLink: "\u6DFB\u52A0\u94FE\u63A5",
       setDefault: "\u8BBE\u4E3A\u9ED8\u8BA4",
       removeLink: "\u79FB\u9664",
       chooseDirs: "\u9009\u62E9\u76EE\u5F55\uFF08\u81F3\u5C11\u4E00\u4E2A\uFF09",
@@ -1416,7 +1951,7 @@ var h = React.createElement;
       rename: "Rename",
       remove: "Delete folder",
       search: "Search site name or description",
-      newSite: "+ New site",
+      newSite: "New site",
       siteCol: "Site",
       tagCol: "Tags",
       createTime: "Created",
@@ -1451,7 +1986,7 @@ var h = React.createElement;
       linkList: "Links",
       linkDesc: "Label",
       linkUrl: "URL",
-      addLink: "+ Add link",
+      addLink: "Add link",
       setDefault: "Default",
       removeLink: "Remove",
       chooseDirs: "Choose at least one folder",
@@ -1505,10 +2040,14 @@ var h = React.createElement;
     ".wbs-root{--wbs-line:var(--dsw-alias-border-l2, color-mix(in srgb, var(--dsw-alias-label-primary,#1f2328) 13%, transparent));--wbs-soft:var(--dsw-alias-interactive-bg-hover, color-mix(in srgb, var(--dsw-alias-label-primary,#1f2328) 4.5%, transparent));--wbs-accent:var(--dsw-alias-brand-primary,#0a8f7d);--wbs-muted:var(--dsw-alias-label-secondary, color-mix(in srgb, var(--dsw-alias-label-primary,#1f2328) 58%, transparent));display:flex;flex-direction:column;min-height:560px;color:var(--dsw-alias-label-primary,#1f2328);font-size:13px}",
     ".wbs-grow{flex:1;min-width:0}",
     ".wbs-head{display:flex;align-items:center;gap:10px;margin:2px 0 14px}",
+    ".wbs-badge{width:27px;height:27px;flex:none;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--wbs-accent) 12%,transparent);color:var(--wbs-accent)}",
     ".wbs-head h2{margin:0;font-size:21px;font-weight:650;letter-spacing:.01em}",
     ".wbs-count{font-size:12px;color:var(--wbs-muted)}",
-    ".wbs-btn{appearance:none;border:1px solid var(--wbs-line);background:transparent;color:inherit;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;line-height:1.35;white-space:nowrap;font-family:inherit}",
+    ".wbs-btn{appearance:none;border:1px solid var(--wbs-line);background:transparent;color:inherit;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;line-height:1.35;white-space:nowrap;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:background .12s ease,border-color .12s ease,color .12s ease}",
     ".wbs-btn:hover{background:var(--wbs-soft)}",
+    ".wbs-btn.on{border-color:color-mix(in srgb,var(--wbs-accent) 45%,transparent);color:var(--wbs-accent);background:color-mix(in srgb,var(--wbs-accent) 8%,transparent)}",
+    ".wbs-btn.icononly{padding:4px;gap:0}",
+    ".wbs-btn:focus-visible,.wbs-mini:focus-visible,.wbs-caret:focus-visible,.wbs-crumb:focus-visible,.wbs-search input:focus-visible,.wbs-th-sort:focus-visible{outline:2px solid color-mix(in srgb,var(--wbs-accent) 55%,transparent);outline-offset:1px}",
     ".wbs-btn.primary{background:var(--wbs-accent);color:var(--dsw-alias-label-primary-inverted,#fff);border-color:transparent}",
     ".wbs-btn.primary:hover{filter:brightness(1.06)}",
     ".wbs-btn.danger{color:var(--dsw-alias-state-error-primary,#bd3b32);border-color:color-mix(in srgb,var(--dsw-alias-state-error-primary,#bd3b32) 34%,transparent)}",
@@ -1518,15 +2057,23 @@ var h = React.createElement;
     ".wbs-body{display:flex;gap:16px;align-items:flex-start;flex:1;min-height:0}",
     ".wbs-tree{width:236px;flex:none;border:1px solid var(--wbs-line);border-radius:12px;background:color-mix(in srgb,var(--dsw-alias-bg-layer-1,#fff) 62%,transparent);padding:8px;max-height:calc(100vh - 220px);overflow:auto}",
     ".wbs-tree-top{display:flex;align-items:center;gap:6px;padding:3px 4px 8px;border-bottom:1px solid var(--wbs-line);margin-bottom:6px}",
-    ".wbs-tree-title{font-size:12px;font-weight:600;color:var(--wbs-muted);flex:1}",
-    ".wbs-node{display:flex;align-items:center;gap:3px;padding:4px 5px;border-radius:7px;cursor:pointer;min-height:27px;box-sizing:border-box}",
+    ".wbs-tree-title{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--wbs-muted);flex:1}",
+    ".wbs-tree-title .wbs-svg{opacity:.75}",
+    ".wbs-node{display:flex;align-items:center;gap:3px;padding:4px 5px;border-radius:7px;cursor:pointer;min-height:27px;box-sizing:border-box;transition:background .12s ease}",
     ".wbs-node:hover{background:var(--wbs-soft)}",
     ".wbs-node.active{background:color-mix(in srgb,var(--wbs-accent) 13%,transparent);color:var(--wbs-accent);font-weight:600}",
-    ".wbs-caret{width:16px;flex:none;text-align:center;font-size:10px;opacity:.65}",
+    ".wbs-caret{width:17px;height:17px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;color:var(--wbs-muted);cursor:pointer;opacity:.8}",
+    ".wbs-caret:hover{background:var(--wbs-soft);color:inherit;opacity:1}",
+    ".wbs-caret.plain{cursor:default;opacity:.7}",
+    ".wbs-caret.plain:hover{background:transparent}",
+    ".wbs-caret .wbs-svg{transition:transform .13s ease}",
+    ".wbs-caret.open .wbs-svg{transform:rotate(90deg)}",
+    ".wbs-node-ico{display:inline-flex;align-items:center;flex:none;color:var(--wbs-muted);margin-right:1px}",
+    ".wbs-node.active .wbs-node-ico{color:inherit}",
     ".wbs-node-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
     ".wbs-node-actions{display:none;align-items:center;gap:1px;flex:none}",
     ".wbs-node:hover .wbs-node-actions{display:flex}",
-    ".wbs-mini{appearance:none;border:0;background:transparent;color:var(--wbs-muted);border-radius:4px;cursor:pointer;font-size:12px;line-height:1;padding:3px 4px;font-family:inherit;display:inline-flex;align-items:center;justify-content:center}",
+    ".wbs-mini{appearance:none;border:0;background:transparent;color:var(--wbs-muted);border-radius:5px;cursor:pointer;font-size:12px;line-height:1;padding:3px 4px;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:4px;transition:background .12s ease,color .12s ease}",
     ".wbs-mini:hover{background:var(--wbs-line);color:inherit}",
     ".wbs-svg{display:block;flex:none}",
     ".wbs-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}",
@@ -1534,7 +2081,7 @@ var h = React.createElement;
     ".wbs-crumb{appearance:none;border:0;background:transparent;color:var(--wbs-muted);padding:3px 4px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:12px}",
     ".wbs-crumb:hover{background:var(--wbs-soft);color:inherit}",
     ".wbs-crumb.cur{color:inherit;font-weight:600}",
-    ".wbs-sep{opacity:.4;font-size:10px}",
+    ".wbs-sep{display:inline-flex;align-items:center;color:var(--wbs-muted);opacity:.45}",
     ".wbs-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
     ".wbs-search{display:flex;align-items:center;gap:6px;border:1px solid var(--wbs-line);border-radius:8px;padding:0 8px;background:color-mix(in srgb,var(--dsw-alias-bg-layer-1,#fff) 58%,transparent);min-width:210px;flex:0 1 300px}",
     ".wbs-search input{border:0;outline:0;background:transparent;color:inherit;font:inherit;padding:7px 0;flex:1;min-width:0}",
@@ -1552,22 +2099,35 @@ var h = React.createElement;
     ".wbs-table tbody tr:hover td{background:color-mix(in srgb,var(--wbs-accent) 3.5%,transparent)}",
     ".wbs-th-sort{cursor:pointer;user-select:none}",
     ".wbs-th-sort:hover{color:inherit}",
+    ".wbs-th-label{display:inline-flex;align-items:center;gap:3px}",
+    ".wbs-sort-ico{opacity:.3}",
+    ".wbs-th-sort:hover .wbs-sort-ico{opacity:.6}",
+    ".wbs-th-sort.on{color:var(--wbs-accent)}",
+    ".wbs-th-sort.on .wbs-sort-ico{opacity:1}",
     ".wbs-site-name{font-weight:600;font-size:13px;word-break:break-word}",
     ".wbs-site-desc{font-size:12px;color:var(--wbs-muted);margin-top:3px;word-break:break-word}",
-    ".wbs-site-link{display:inline-block;margin-top:4px;font-size:11.5px;color:var(--wbs-accent);text-decoration:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top}",
+    ".wbs-site-link{display:inline-flex;align-items:center;gap:4px;margin-top:4px;font-size:11.5px;color:var(--wbs-accent);text-decoration:none;max-width:100%;overflow:hidden;white-space:nowrap;vertical-align:top}",
+    ".wbs-site-link .wbs-svg{opacity:.75}",
+    ".wbs-site-link span{overflow:hidden;text-overflow:ellipsis}",
     ".wbs-site-link:hover{text-decoration:underline}",
     ".wbs-muted{color:var(--wbs-muted)}",
     ".wbs-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--wbs-line);border-radius:999px;padding:2px 7px;font-size:11px;margin:0 4px 3px 0;background:color-mix(in srgb,var(--wbs-accent) 6%,transparent);max-width:100%}",
-    ".wbs-chip button{border:0;background:transparent;color:inherit;cursor:pointer;padding:0;font-size:11px;opacity:.65}",
-    ".wbs-actions{display:flex;gap:4px;flex-wrap:wrap}",
+    ".wbs-chip button{border:0;background:transparent;color:inherit;cursor:pointer;padding:0;display:inline-flex;align-items:center;opacity:.6}",
+    ".wbs-chip button:hover{opacity:1}",
+    ".wbs-actions{display:flex;gap:4px;flex-wrap:nowrap;align-items:center}",
     ".wbs-expand td{background:color-mix(in srgb,var(--dsw-alias-bg-layer-2,#f4f1e4) 52%,transparent);padding:10px 12px}",
     ".wbs-subtable{width:100%;border-collapse:collapse;font-size:12px}",
     ".wbs-subtable th{font-size:10px;color:var(--wbs-muted);text-align:left;padding:3px 6px;border-bottom:1px solid var(--wbs-line)}",
     ".wbs-subtable td{padding:5px 6px;border-bottom:1px solid color-mix(in srgb,var(--wbs-line) 45%,transparent);word-break:break-all}",
     ".wbs-dirpath{line-height:1.7}",
+    ".wbs-dirpath>div{display:flex;align-items:center;gap:5px}",
+    ".wbs-dirpath .wbs-svg{color:var(--wbs-muted);flex:none}",
+    ".wbs-def{display:inline-flex;align-items:center;vertical-align:-2px;margin-right:4px;color:var(--wbs-accent)}",
     ".wbs-empty{text-align:center;padding:52px 12px;color:var(--wbs-muted)}",
+    ".wbs-empty-ico{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;margin-bottom:10px;background:var(--wbs-soft);opacity:.75}",
     ".wbs-empty b{display:block;color:inherit;font-size:14px;margin-bottom:6px}",
     ".wbs-pager{display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:2px 0;font-size:12px;color:var(--wbs-muted);flex-wrap:wrap}",
+    ".wbs-pager-pos{min-width:52px;text-align:center;font-variant-numeric:tabular-nums}",
     ".wbs-pager select{border:1px solid var(--wbs-line);border-radius:6px;background:transparent;color:inherit;font:inherit;padding:4px 6px}",
     ".wbs-loading{padding:24px;text-align:center;color:var(--wbs-muted);font-size:12px}",
     ".wbs-error{padding:10px 12px;border:1px solid color-mix(in srgb,var(--dsw-alias-state-error-primary,#bd3b32) 30%,transparent);background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#bd3b32) 6%,transparent);border-radius:8px;color:var(--dsw-alias-state-error-primary,#a4312a);font-size:12px}",
@@ -1577,6 +2137,9 @@ var h = React.createElement;
     ".wbs-modal{width:min(700px,96vw);max-height:88vh;overflow:auto;background:var(--dsw-alias-bg-layer-1,#fffdf7);border:1px solid var(--wbs-line);border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.24);padding:18px}",
     ".wbs-modal.small{width:min(430px,94vw)}",
     ".wbs-modal-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:650;margin-bottom:4px}",
+    ".wbs-modal-title .wbs-svg{color:var(--wbs-accent);opacity:.85;flex:none}",
+    ".wbs-modal-x{margin-left:auto;color:var(--wbs-muted);flex:none}",
+    ".wbs-modal-x:hover{background:var(--wbs-soft);color:inherit}",
     ".wbs-modal-sub{font-size:12px;color:var(--wbs-muted);margin-bottom:14px;line-height:1.6}",
     ".wbs-steps{display:flex;gap:6px;margin:2px 0 16px;flex-wrap:wrap}",
     ".wbs-step{font-size:11px;color:var(--wbs-muted);padding:4px 8px;border-radius:999px;border:1px solid transparent}",
@@ -1594,7 +2157,7 @@ var h = React.createElement;
     ".wbs-dircheck input{margin:0}",
     ".wbs-tagsearch{display:flex;gap:6px;align-items:center}",
     ".wbs-tagresults{border:1px solid var(--wbs-line);border-radius:9px;max-height:190px;overflow:auto;margin-top:7px;padding:4px}",
-    ".wbs-tagresult{width:100%;text-align:left;border:0;background:transparent;color:inherit;padding:6px;border-radius:6px;cursor:pointer;font:inherit;font-size:12px}",
+    ".wbs-tagresult{width:100%;display:flex;align-items:center;gap:7px;text-align:left;border:0;background:transparent;color:inherit;padding:6px;border-radius:6px;cursor:pointer;font:inherit;font-size:12px}",
     ".wbs-tagresult:hover{background:var(--wbs-soft)}",
     ".wbs-tagresult.on{background:color-mix(in srgb,var(--wbs-accent) 10%,transparent);color:var(--wbs-accent)}",
     ".wbs-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;min-height:10px}",
@@ -1809,7 +2372,13 @@ var h = React.createElement;
     return h2(
       Modal,
       { onClose: saving ? null : props.onClose },
-      h2("div", { className: "wbs-modal-title" }, title),
+      h2(
+        "div",
+        { className: "wbs-modal-title" },
+        h2(Icon2, { name: mode === "edit" ? "edit" : "plus", size: 15 }),
+        title,
+        h2("button", { type: "button", className: "wbs-mini wbs-modal-x", title: text(lang, "cancel"), onClick: props.onClose }, h2(Icon2, { name: "x", size: 15 }))
+      ),
       h2("div", { className: "wbs-steps" }, steps.map(function(s, i) {
         return h2("span", { key: i, className: "wbs-step" + (i === step ? " on" : "") }, i + 1 + " \xB7 " + s);
       })),
@@ -1869,12 +2438,12 @@ var h = React.createElement;
               }),
               text(lang, "default")
             ),
-            h2("button", { type: "button", className: "wbs-mini", onClick: function() {
+            h2("button", { type: "button", className: "wbs-mini", title: text(lang, "removeLink"), onClick: function() {
               removeLink(i);
-            } }, text(lang, "removeLink"))
+            } }, h2(Icon2, { name: "x", size: 13 }))
           );
         }),
-        h2("button", { type: "button", className: "wbs-btn sm", onClick: addLink }, text(lang, "addLink"))
+        h2("button", { type: "button", className: "wbs-btn sm", onClick: addLink }, h2(Icon2, { name: "plus", size: 13 }), text(lang, "addLink"))
       ) : null,
       step === 1 ? h2(
         "div",
@@ -1935,14 +2504,19 @@ var h = React.createElement;
           var on = tags.some(function(x) {
             return x.id === t.id;
           });
-          return h2("button", {
-            key: t.id,
-            type: "button",
-            className: "wbs-tagresult" + (on ? " on" : ""),
-            onClick: function() {
-              toggleTag(t);
-            }
-          }, (on ? "\u2713 " : "\uFF0B ") + t.name);
+          return h2(
+            "button",
+            {
+              key: t.id,
+              type: "button",
+              className: "wbs-tagresult" + (on ? " on" : ""),
+              onClick: function() {
+                toggleTag(t);
+              }
+            },
+            h2(Icon2, { name: on ? "check" : "plus", size: 12 }),
+            h2("span", null, t.name)
+          );
         }) : h2("div", { className: "wbs-note", style: { padding: 6 } }, text(lang, "noTags"))),
         h2("div", { className: "wbs-note", style: { marginTop: 8 } }, "\u6807\u7B7E\u7531\u6807\u7B7E\u5B50\u63D2\u4EF6\u63D0\u4F9B\uFF0C\u53EF\u591A\u9009\u3002")
       ) : null,
@@ -1952,9 +2526,9 @@ var h = React.createElement;
         h2("div", { className: "wbs-formerr" }, error || ""),
         step > 0 ? h2("button", { type: "button", className: "wbs-btn", disabled: saving, onClick: function() {
           setStep(step - 1);
-        } }, text(lang, "back")) : null,
+        } }, h2(Icon2, { name: "chevron-left", size: 13 }), text(lang, "back")) : null,
         h2("button", { type: "button", className: "wbs-btn", disabled: saving, onClick: props.onClose }, text(lang, "cancel")),
-        step < maxStep ? h2("button", { type: "button", className: "wbs-btn primary", onClick: next }, text(lang, "nextStep")) : h2("button", { type: "button", className: "wbs-btn primary", disabled: saving, onClick: save }, saving ? text(lang, "saving") : text(lang, "save"))
+        step < maxStep ? h2("button", { type: "button", className: "wbs-btn primary", onClick: next }, text(lang, "nextStep"), h2(Icon2, { name: "chevron-right", size: 13 })) : h2("button", { type: "button", className: "wbs-btn primary", disabled: saving, onClick: save }, h2(Icon2, { name: "check", size: 13 }), saving ? text(lang, "saving") : text(lang, "save"))
       )
     );
   }
@@ -1989,7 +2563,13 @@ var h = React.createElement;
     return h2(
       Modal,
       { small: true, onClose: saving ? null : props.onClose },
-      h2("div", { className: "wbs-modal-title" }, title),
+      h2(
+        "div",
+        { className: "wbs-modal-title" },
+        h2(Icon2, { name: isDelete ? "trash" : dlg.mode === "rename" ? "edit" : "folder-plus", size: 15 }),
+        title,
+        h2("button", { type: "button", className: "wbs-mini wbs-modal-x", title: text(lang, "cancel"), onClick: props.onClose }, h2(Icon2, { name: "x", size: 15 }))
+      ),
       isDelete ? h2("div", { className: "wbs-modal-sub" }, text(lang, "removeDirText", { name: dlg.name || "" })) : h2(
         "div",
         null,
@@ -2015,6 +2595,7 @@ var h = React.createElement;
         h2(
           "button",
           { className: "wbs-btn primary" + (isDelete ? " danger" : ""), disabled: saving, onClick: submit },
+          h2(Icon2, { name: isDelete ? "trash" : dlg.mode === "rename" ? "check" : "plus", size: 13 }),
           saving ? "\u2026" : isDelete ? text(lang, "confirm") : dlg.mode === "rename" ? text(lang, "save") : text(lang, "create")
         )
       )
@@ -2040,7 +2621,13 @@ var h = React.createElement;
     return h2(
       Modal,
       { small: true, onClose: saving ? null : props.onClose },
-      h2("div", { className: "wbs-modal-title" }, text(lang, "deleteTitle")),
+      h2(
+        "div",
+        { className: "wbs-modal-title" },
+        h2(Icon2, { name: "trash", size: 15 }),
+        text(lang, "deleteTitle"),
+        h2("button", { type: "button", className: "wbs-mini wbs-modal-x", title: text(lang, "cancel"), onClick: props.onClose }, h2(Icon2, { name: "x", size: 15 }))
+      ),
       h2("div", { className: "wbs-modal-sub" }, text(lang, "deleteText", { name: site.siteName })),
       error ? h2("div", { className: "wbs-error" }, error) : null,
       h2(
@@ -2048,7 +2635,7 @@ var h = React.createElement;
         { className: "wbs-formfoot" },
         h2("div", { className: "wbs-grow" }),
         h2("button", { className: "wbs-btn", disabled: saving, onClick: props.onClose }, text(lang, "cancel")),
-        h2("button", { className: "wbs-btn danger", disabled: saving, onClick: submit }, saving ? "\u2026" : text(lang, "confirm"))
+        h2("button", { className: "wbs-btn danger", disabled: saving, onClick: submit }, h2(Icon2, { name: "trash", size: 13 }), saving ? "\u2026" : text(lang, "confirm"))
       )
     );
   }
@@ -2208,6 +2795,26 @@ var h = React.createElement;
         alive = false;
       };
     }, [current.id, tick]);
+    useEffect(function() {
+      if (!tagMenu) return void 0;
+      function onDown(e) {
+        var el = e.target;
+        while (el && el !== document.body) {
+          if (el.classList && el.classList.contains("wbs-tagfilter")) return;
+          el = el.parentNode;
+        }
+        setTagMenu(false);
+      }
+      function onKey(e) {
+        if (e.key === "Escape") setTagMenu(false);
+      }
+      document.addEventListener("mousedown", onDown, true);
+      document.addEventListener("keydown", onKey, true);
+      return function() {
+        document.removeEventListener("mousedown", onDown, true);
+        document.removeEventListener("keydown", onKey, true);
+      };
+    }, [tagMenu]);
     function selectDir(id) {
       if (id === "0") {
         setCurrent({ id: "0", path: [] });
@@ -2276,10 +2883,11 @@ var h = React.createElement;
               onDropNode(e, node);
             }
           },
-          h2("span", { className: "wbs-caret", onClick: function(e) {
+          h2("span", { className: "wbs-caret" + (open ? " open" : ""), onClick: function(e) {
             e.stopPropagation();
             toggleNode(node);
-          } }, open ? "\u25BE" : "\u25B8"),
+          } }, h2(Icon2, { name: "chevron-right", size: 13 })),
+          h2("span", { className: "wbs-node-ico" }, h2(Icon2, { name: open ? "folder-open" : "folder", size: 13 })),
           h2("span", { className: "wbs-node-name", onClick: function() {
             selectDir(String(node.id));
           }, title: node.name }, node.name),
@@ -2412,9 +3020,10 @@ var h = React.createElement;
       }
       setPage(1);
     }
-    function arrow(col) {
-      if (sortCol !== col) return "";
-      return sortOrder === "asc" ? " \u2191" : " \u2193";
+    function sortIcon(col) {
+      var on = sortCol === col;
+      var name = !on ? "arrow-up-down" : sortOrder === "asc" ? "arrow-up" : "arrow-down";
+      return h2(Icon2, { name, size: 12, className: "wbs-sort-ico" });
     }
     var pages = Math.max(1, Math.ceil(total / pageSize));
     var tagsVisible = tagOn && hostHasAddon("wb-addon-tags");
@@ -2425,10 +3034,11 @@ var h = React.createElement;
       h2(
         "div",
         { className: "wbs-head" },
+        h2("span", { className: "wbs-badge" }, h2(Icon2, { name: "folder-tree", size: 15 })),
         h2("h2", null, text(lang, "title")),
         h2("span", { className: "wbs-count" }, text(lang, "total", { n: total })),
         h2("div", { className: "wbs-grow" }),
-        h2("button", { className: "wbs-btn primary", onClick: openCreate }, text(lang, "newSite"))
+        h2("button", { className: "wbs-btn primary", onClick: openCreate }, h2(Icon2, { name: "plus", size: 14 }), text(lang, "newSite"))
       ),
       h2(
         "div",
@@ -2439,7 +3049,7 @@ var h = React.createElement;
           h2(
             "div",
             { className: "wbs-tree-top" },
-            h2("span", { className: "wbs-tree-title" }, text(lang, "directory")),
+            h2("span", { className: "wbs-tree-title" }, h2(Icon2, { name: "folder-tree", size: 13 }), text(lang, "directory")),
             h2("button", { className: "wbs-mini", title: text(lang, "addDir"), onClick: function() {
               setDirDlg({ mode: "create", parentId: "0", name: "" });
             } }, h2(Icon2, { name: "folder-plus", size: 13 })),
@@ -2451,7 +3061,7 @@ var h = React.createElement;
               className: "wbs-node" + (current.id === "0" ? " active" : ""),
               style: { paddingLeft: 4 }
             },
-            h2("span", { className: "wbs-caret" }, "\u25BE"),
+            h2("span", { className: "wbs-caret plain" }, h2(Icon2, { name: "house", size: 13 })),
             h2("span", { className: "wbs-node-name", onClick: function() {
               selectDir("0");
             } }, text(lang, "all")),
@@ -2481,7 +3091,7 @@ var h = React.createElement;
               return h2(
                 React2.Fragment,
                 { key: String(p.id) },
-                h2("span", { className: "wbs-sep" }, "\u203A"),
+                h2("span", { className: "wbs-sep" }, h2(Icon2, { name: "chevron-right", size: 12 })),
                 h2("button", {
                   className: "wbs-crumb" + (i === current.path.length - 1 ? " cur" : ""),
                   onClick: function() {
@@ -2525,11 +3135,11 @@ var h = React.createElement;
               "div",
               { className: "wbs-tagfilter" },
               h2("button", {
-                className: "wbs-btn",
+                className: "wbs-btn" + (tagFilter.length ? " on" : ""),
                 onClick: function() {
                   setTagMenu(!tagMenu);
                 }
-              }, text(lang, "tagFilter") + (tagFilter.length ? " \xB7 " + tagFilter.length : "") + " \u25BE"),
+              }, h2(Icon2, { name: "tag", size: 13 }), text(lang, "tagFilter") + (tagFilter.length ? " \xB7 " + tagFilter.length : ""), h2(Icon2, { name: "chevron-down", size: 12 })),
               tagMenu ? h2(
                 "div",
                 { className: "wbs-tagmenu" },
@@ -2538,10 +3148,10 @@ var h = React.createElement;
                   { className: "wbs-tagmenu-head" },
                   h2("span", null, text(lang, "allTags")),
                   h2("span", { className: "wbs-grow" }),
-                  h2("button", { className: "wbs-mini", onClick: function() {
+                  h2("button", { className: "wbs-mini", title: text(lang, "clear"), onClick: function() {
                     setTagFilter([]);
                     setPage(1);
-                  } }, text(lang, "clear"))
+                  } }, h2(Icon2, { name: "x", size: 12 }), text(lang, "clear"))
                 ),
                 allTags.length ? allTags.map(function(t) {
                   var on = tagFilter.indexOf(t.id) >= 0;
@@ -2566,7 +3176,7 @@ var h = React.createElement;
               ) : null
             ) : null,
             h2("div", { className: "wbs-grow" }),
-            selectedIds.length ? h2("button", { className: "wbs-btn danger", onClick: deleteSelected }, text(lang, "deleteSelected") + " (" + selectedIds.length + ")") : null
+            selectedIds.length ? h2("button", { className: "wbs-btn danger", onClick: deleteSelected }, h2(Icon2, { name: "trash", size: 13 }), text(lang, "deleteSelected") + " (" + selectedIds.length + ")") : null
           ),
           error ? h2("div", { className: "wbs-error" }, error) : null,
           h2(
@@ -2583,7 +3193,7 @@ var h = React.createElement;
                 tagsVisible ? h2("col", { style: { width: 150 } }) : null,
                 h2("col", { style: { width: 112 } }),
                 h2("col", { style: { width: 112 } }),
-                h2("col", { style: { width: 190 } })
+                h2("col", { style: { width: 214 } })
               ),
               h2(
                 "thead",
@@ -2594,12 +3204,12 @@ var h = React.createElement;
                   h2("th", null, h2("input", { type: "checkbox", checked: allSelected, onChange: toggleAll, "aria-label": "\u5168\u9009" })),
                   h2("th", null, text(lang, "siteCol")),
                   tagsVisible ? h2("th", null, text(lang, "tagCol")) : null,
-                  h2("th", { className: "wbs-th-sort", onClick: function() {
+                  h2("th", { className: "wbs-th-sort" + (sortCol === "create_time" ? " on" : ""), onClick: function() {
                     sortBy("create_time");
-                  } }, text(lang, "createTime") + arrow("create_time")),
-                  h2("th", { className: "wbs-th-sort", onClick: function() {
+                  } }, h2("span", { className: "wbs-th-label" }, text(lang, "createTime"), sortIcon("create_time"))),
+                  h2("th", { className: "wbs-th-sort" + (sortCol === "update_time" ? " on" : ""), onClick: function() {
                     sortBy("update_time");
-                  } }, text(lang, "updateTime") + arrow("update_time")),
+                  } }, h2("span", { className: "wbs-th-label" }, text(lang, "updateTime"), sortIcon("update_time"))),
                   h2("th", null, text(lang, "actions"))
                 )
               ),
@@ -2613,6 +3223,7 @@ var h = React.createElement;
                   h2(
                     "div",
                     { className: "wbs-empty" },
+                    h2("span", { className: "wbs-empty-ico" }, h2(Icon2, { name: "folder-open", size: 24 })),
                     h2("b", null, text(lang, "empty")),
                     h2("span", null, text(lang, "emptyHint"))
                   )
@@ -2629,7 +3240,7 @@ var h = React.createElement;
                       null,
                       h2("div", { className: "wbs-site-name" }, s.siteName),
                       s.description ? h2("div", { className: "wbs-site-desc" }, s.description) : h2("div", { className: "wbs-site-desc wbs-muted" }, text(lang, "noDesc")),
-                      s.defaultLink ? h2("a", { className: "wbs-site-link", href: s.defaultLink, target: "_blank", rel: "noreferrer noopener" }, s.defaultLink) : h2("div", { className: "wbs-site-desc wbs-muted" }, text(lang, "noLink"))
+                      s.defaultLink ? h2("a", { className: "wbs-site-link", href: s.defaultLink, target: "_blank", rel: "noreferrer noopener", title: s.defaultLink }, h2(Icon2, { name: "link", size: 11 }), h2("span", null, s.defaultLink)) : h2("div", { className: "wbs-site-desc wbs-muted" }, text(lang, "noLink"))
                     ),
                     tagsVisible ? h2("td", null, s.tags && s.tags.length ? s.tags.map(function(t) {
                       return h2("span", { className: "wbs-chip", key: t.id }, t.name);
@@ -2642,18 +3253,18 @@ var h = React.createElement;
                       h2(
                         "div",
                         { className: "wbs-actions" },
-                        h2("button", { className: "wbs-btn sm", onClick: function() {
+                        h2("button", { className: "wbs-btn sm", title: text(lang, "links"), onClick: function() {
                           setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "links" ? null : { id: s.id, type: "links" });
-                        } }, text(lang, "links") + " " + (s.siteLinks ? s.siteLinks.length : 0)),
-                        h2("button", { className: "wbs-btn sm", onClick: function() {
+                        } }, h2(Icon2, { name: "link", size: 12 }), text(lang, "links") + " " + (s.siteLinks ? s.siteLinks.length : 0)),
+                        h2("button", { className: "wbs-btn sm", title: text(lang, "dirs"), onClick: function() {
                           setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "dirs" ? null : { id: s.id, type: "dirs" });
-                        } }, text(lang, "dirs") + " " + (s.dirs ? s.dirs.length : 0)),
-                        h2("button", { className: "wbs-btn sm", onClick: function() {
+                        } }, h2(Icon2, { name: "folder", size: 12 }), text(lang, "dirs") + " " + (s.dirs ? s.dirs.length : 0)),
+                        h2("button", { className: "wbs-btn sm icononly", title: text(lang, "edit"), onClick: function() {
                           openEdit(s);
-                        } }, text(lang, "edit")),
-                        h2("button", { className: "wbs-btn sm danger", onClick: function() {
+                        } }, h2(Icon2, { name: "edit", size: 13 })),
+                        h2("button", { className: "wbs-btn sm danger icononly", title: text(lang, "del"), onClick: function() {
                           setDeleting(s);
-                        } }, text(lang, "del"))
+                        } }, h2(Icon2, { name: "trash", size: 13 }))
                       )
                     )
                   );
@@ -2666,12 +3277,12 @@ var h = React.createElement;
                       return h2(
                         "tr",
                         { key: i },
-                        h2("td", null, (l.isDefault ? "\u2605 " : "") + (l.description || "\u2014")),
+                        h2("td", null, l.isDefault ? h2("span", { className: "wbs-def", title: text(lang, "default") }, h2(Icon2, { name: "star", size: 11 })) : null, l.description || "\u2014"),
                         h2("td", null, l.link ? h2("a", { href: l.link, target: "_blank", rel: "noreferrer noopener" }, l.link) : "\u2014")
                       );
                     }))
                   ) : h2("div", { className: "wbs-muted" }, text(lang, "noLink")) : s.dirs && s.dirs.length ? h2("div", { className: "wbs-dirpath" }, s.dirs.map(function(d) {
-                    return h2("div", { key: d.id }, "\u{1F4C1} " + (d.path || []).map(function(p) {
+                    return h2("div", { key: d.id }, h2(Icon2, { name: "folder", size: 12 }), (d.path || []).map(function(p) {
                       return p.name;
                     }).join(" / "));
                   })) : h2("div", { className: "wbs-muted" }, "\u672A\u5173\u8054\u76EE\u5F55");
@@ -2688,13 +3299,14 @@ var h = React.createElement;
           h2(
             "div",
             { className: "wbs-pager" },
-            h2("span", null, "\u5171 " + total + " \u6761 \xB7 \u7B2C " + page + " / " + pages + " \u9875"),
-            h2("button", { className: "wbs-btn sm", disabled: page <= 1, onClick: function() {
+            h2("span", null, "\u5171 " + total + " \u6761"),
+            h2("button", { className: "wbs-btn sm icononly", title: text(lang, "prev"), "aria-label": text(lang, "prev"), disabled: page <= 1, onClick: function() {
               setPage(Math.max(1, page - 1));
-            } }, text(lang, "prev")),
-            h2("button", { className: "wbs-btn sm", disabled: page >= pages, onClick: function() {
+            } }, h2(Icon2, { name: "chevron-left", size: 14 })),
+            h2("span", { className: "wbs-pager-pos" }, page + " / " + pages),
+            h2("button", { className: "wbs-btn sm icononly", title: text(lang, "next"), "aria-label": text(lang, "next"), disabled: page >= pages, onClick: function() {
               setPage(Math.min(pages, page + 1));
-            } }, text(lang, "next")),
+            } }, h2(Icon2, { name: "chevron-right", size: 14 })),
             h2("select", {
               value: pageSize,
               onChange: function(e) {
@@ -2743,7 +3355,7 @@ var h = React.createElement;
   injectCss();
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.4.1",
+    version: "1.5.0",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },
       { id: "sites", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: SitesView }

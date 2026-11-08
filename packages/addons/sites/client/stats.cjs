@@ -120,14 +120,14 @@ function SitesStatsView(props) {
     var b = data.breakdowns || {};
     var tagMissing = rates.tagCoverage === null || rates.tagCoverage === undefined;
     children.push(h("div", { key: "kpi", className: "wbs-kpis" },
-      h(ch.Kpi, { label: t.sites, value: totals.sites, hint: t.current, lang: lang }),
-      h(ch.Kpi, { label: t.bindable, value: totals.bindable, hint: ch.pct(rates.bindableRatio) + " " + t.ofTotal, lang: lang }),
-      h(ch.Kpi, { label: t.tagged, value: tagMissing ? "—" : totals.tagged, hint: tagMissing ? t.noTagDomain : ch.pct(rates.tagCoverage) + " " + t.ofTotal, lang: lang }),
-      h(ch.Kpi, { label: t.coverage, value: tagMissing ? "—" : ch.pct(rates.tagCoverage), hint: t.current, tone: tagMissing ? "" : "ok", lang: lang }),
-      h(ch.Kpi, { label: t.nodes, value: totals.nodes, hint: t.current, lang: lang }),
-      h(ch.Kpi, { label: t.noLink, value: totals.noLink, hint: ch.pct(rates.linkCoverage) + " " + t.ofTotal, tone: totals.noLink > 0 ? "warn" : "", lang: lang }),
-      h(ch.Kpi, { label: t.multiLink, value: totals.multiLink, hint: t.current, lang: lang }),
-      h(ch.Kpi, { label: t.newSites, value: totals.newSites, hint: t.inRange, lang: lang }),
+      h(ch.Kpi, { label: t.sites, icon: "globe", value: totals.sites, hint: t.current, lang: lang }),
+      h(ch.Kpi, { label: t.bindable, icon: "link", value: totals.bindable, hint: ch.pct(rates.bindableRatio) + " " + t.ofTotal, lang: lang }),
+      h(ch.Kpi, { label: t.tagged, icon: "tag", value: tagMissing ? "—" : totals.tagged, hint: tagMissing ? t.noTagDomain : ch.pct(rates.tagCoverage) + " " + t.ofTotal, lang: lang }),
+      h(ch.Kpi, { label: t.coverage, icon: "pie", value: tagMissing ? "—" : ch.pct(rates.tagCoverage), hint: t.current, tone: tagMissing ? "" : "ok", lang: lang }),
+      h(ch.Kpi, { label: t.nodes, icon: "folder", value: totals.nodes, hint: t.current, lang: lang }),
+      h(ch.Kpi, { label: t.noLink, icon: "unlink", value: totals.noLink, hint: ch.pct(rates.linkCoverage) + " " + t.ofTotal, tone: totals.noLink > 0 ? "warn" : "", lang: lang }),
+      h(ch.Kpi, { label: t.multiLink, icon: "layers", value: totals.multiLink, hint: t.current, lang: lang }),
+      h(ch.Kpi, { label: t.newSites, icon: "plus", value: totals.newSites, hint: t.inRange, lang: lang }),
     ));
 
     if (totals.sites === 0 && totals.nodes === 0) {

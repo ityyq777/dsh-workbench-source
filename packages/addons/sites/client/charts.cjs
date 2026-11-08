@@ -3,6 +3,19 @@
 var React = require("react");
 var h = React.createElement;
 
+// 统计页图标与列表页同源：lucide-react 按需引入，随 client.js 一起打包。
+var ICONS = {
+  "refresh": require("lucide-react/icons/refresh-cw").default,
+  "globe": require("lucide-react/icons/globe").default,
+  "link": require("lucide-react/icons/link-2").default,
+  "tag": require("lucide-react/icons/tag").default,
+  "pie": require("lucide-react/icons/pie-chart").default,
+  "folder": require("lucide-react/icons/folder-tree").default,
+  "unlink": require("lucide-react/icons/unlink").default,
+  "layers": require("lucide-react/icons/layers").default,
+  "plus": require("lucide-react/icons/plus").default,
+};
+
 // 全部取自 DSH 主题 token（--dsw-alias-*），深浅色主题下自动切换，不要写死色值。
 var COLORS = [
   "var(--dsw-alias-state-business-primary, #4f6ef7)",
@@ -20,7 +33,10 @@ function css(prefix) {
     ".@-seg{display:inline-flex;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:9px;overflow:hidden;background:var(--dsw-alias-bg-layer-1,#fff)}",
     ".@-seg button{appearance:none;border:0;background:transparent;color:var(--dsw-alias-label-secondary,#646a73);font-size:12px;padding:6px 10px;cursor:pointer;white-space:nowrap}",
     ".@-seg button.@-on{background:var(--dsw-alias-brand-primary,#4f6ef7);color:var(--dsw-alias-label-primary-inverted,#fff)}",
-    ".@-ghost{appearance:none;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-secondary,#646a73);border-radius:8px;font-size:12px;padding:6px 10px;cursor:pointer}",
+    ".@-ghost{appearance:none;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-secondary,#646a73);border-radius:8px;font-size:12px;padding:6px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-family:inherit}",
+    ".@-ghost:disabled{opacity:.6;cursor:progress}",
+    ".@-ico{display:block;flex:none}",
+    ".@-kpi-l .@-ico{opacity:.7}",
     ".@-ghost:hover{border-color:var(--dsw-alias-brand-primary,#4f6ef7);color:var(--dsw-alias-brand-primary,#4f6ef7)}",
     ".@-muted{color:var(--dsw-alias-label-tertiary,#8f959e);font-size:12px}",
     ".@-sgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}",
@@ -86,6 +102,12 @@ function makeCharts(prefix) {
     document.head.appendChild(el);
   }
 
+  function ico(name, size) {
+    var C = ICONS[name];
+    if (!C) return null;
+    return h(C, { size: size || 13, strokeWidth: 2, "aria-hidden": "true", className: prefix + "-ico" });
+  }
+
   function num(lang, n) {
     var v = Number(n);
     if (!isFinite(v)) return "—";
@@ -127,7 +149,7 @@ function makeCharts(prefix) {
   function Kpi(props) {
     var tone = props.tone ? " " + prefix + "-" + props.tone : "";
     return h("div", { className: prefix + "-kpi" + tone },
-      h("div", { className: prefix + "-kpi-l" }, props.label),
+      h("div", { className: prefix + "-kpi-l" }, ico(props.icon, 13), props.label),
       h("div", { className: prefix + "-kpi-v" },
         props.value === null || props.value === undefined ? "—" : (typeof props.value === "number" ? num(props.lang, props.value) : props.value),
         props.unit ? h("span", { className: prefix + "-kpi-u" }, props.unit) : null,
@@ -298,7 +320,7 @@ function makeCharts(prefix) {
           onClick: function () { props.onChange(o.key); },
         }, o.label);
       })),
-      h("button", { type: "button", className: prefix + "-ghost", disabled: !!props.loading, onClick: props.onRefresh }, props.refreshLabel || "刷新"),
+      h("button", { type: "button", className: prefix + "-ghost", disabled: !!props.loading, onClick: props.onRefresh }, ico("refresh", 13), props.refreshLabel || "刷新"),
       h("span", { className: prefix + "-muted" }, props.generatedAt ? (props.timeLabel || "截至") + " " + timeText(props.generatedAt) : ""),
       props.right ? h("span", { style: { marginLeft: "auto" } }, props.right) : null,
     );

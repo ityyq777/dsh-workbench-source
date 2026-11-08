@@ -16,17 +16,36 @@ var h = React.createElement;
   var ICONS = {
     "x": require("lucide-react/icons/x").default,
     "plus": require("lucide-react/icons/plus").default,
+    "check": require("lucide-react/icons/check").default,
     "edit": require("lucide-react/icons/pencil").default,
     "trash": require("lucide-react/icons/trash-2").default,
+    "folder": require("lucide-react/icons/folder").default,
+    "folder-open": require("lucide-react/icons/folder-open").default,
     "folder-plus": require("lucide-react/icons/folder-plus").default,
-    "refresh": require("lucide-react/icons/refresh-cw").default,
+    "folder-tree": require("lucide-react/icons/folder-tree").default,
+    "house": require("lucide-react/icons/house").default,
+    "link": require("lucide-react/icons/link-2").default,
+    "tag": require("lucide-react/icons/tag").default,
+    "star": require("lucide-react/icons/star").default,
     "search": require("lucide-react/icons/search").default,
+    "refresh": require("lucide-react/icons/refresh-cw").default,
+    "chevron-left": require("lucide-react/icons/chevron-left").default,
+    "chevron-right": require("lucide-react/icons/chevron-right").default,
+    "chevron-down": require("lucide-react/icons/chevron-down").default,
+    "arrow-up": require("lucide-react/icons/arrow-up").default,
+    "arrow-down": require("lucide-react/icons/arrow-down").default,
+    "arrow-up-down": require("lucide-react/icons/arrow-up-down").default,
   };
   // 统一的小尺寸图标调用方式，保持各视图里的 Icon({ name, size }) 不变。
   function Icon(props) {
     var C = ICONS[props.name];
     if (!C) return null;
-    return h(C, { size: props.size || 14, strokeWidth: 2, "aria-hidden": "true", className: "wbs-svg" });
+    return h(C, {
+      size: props.size || 14,
+      strokeWidth: props.strokeWidth || 2,
+      "aria-hidden": "true",
+      className: "wbs-svg" + (props.className ? " " + props.className : ""),
+    });
   }
 
   var useState = React.useState;
@@ -44,7 +63,7 @@ var h = React.createElement;
       rename: "重命名",
       remove: "删除目录",
       search: "搜索站点名称或描述",
-      newSite: "＋ 新建站点",
+      newSite: "新建站点",
       siteCol: "站点 / 平台",
       tagCol: "标签",
       createTime: "创建时间",
@@ -79,7 +98,7 @@ var h = React.createElement;
       linkList: "链接",
       linkDesc: "描述",
       linkUrl: "网址",
-      addLink: "＋ 添加链接",
+      addLink: "添加链接",
       setDefault: "设为默认",
       removeLink: "移除",
       chooseDirs: "选择目录（至少一个）",
@@ -120,7 +139,7 @@ var h = React.createElement;
       rename: "Rename",
       remove: "Delete folder",
       search: "Search site name or description",
-      newSite: "+ New site",
+      newSite: "New site",
       siteCol: "Site",
       tagCol: "Tags",
       createTime: "Created",
@@ -155,7 +174,7 @@ var h = React.createElement;
       linkList: "Links",
       linkDesc: "Label",
       linkUrl: "URL",
-      addLink: "+ Add link",
+      addLink: "Add link",
       setDefault: "Default",
       removeLink: "Remove",
       chooseDirs: "Choose at least one folder",
@@ -211,10 +230,14 @@ var h = React.createElement;
     ".wbs-root{--wbs-line:var(--dsw-alias-border-l2, color-mix(in srgb, var(--dsw-alias-label-primary,#1f2328) 13%, transparent));--wbs-soft:var(--dsw-alias-interactive-bg-hover, color-mix(in srgb, var(--dsw-alias-label-primary,#1f2328) 4.5%, transparent));--wbs-accent:var(--dsw-alias-brand-primary,#0a8f7d);--wbs-muted:var(--dsw-alias-label-secondary, color-mix(in srgb, var(--dsw-alias-label-primary,#1f2328) 58%, transparent));display:flex;flex-direction:column;min-height:560px;color:var(--dsw-alias-label-primary,#1f2328);font-size:13px}",
     ".wbs-grow{flex:1;min-width:0}",
     ".wbs-head{display:flex;align-items:center;gap:10px;margin:2px 0 14px}",
+    ".wbs-badge{width:27px;height:27px;flex:none;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--wbs-accent) 12%,transparent);color:var(--wbs-accent)}",
     ".wbs-head h2{margin:0;font-size:21px;font-weight:650;letter-spacing:.01em}",
     ".wbs-count{font-size:12px;color:var(--wbs-muted)}",
-    ".wbs-btn{appearance:none;border:1px solid var(--wbs-line);background:transparent;color:inherit;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;line-height:1.35;white-space:nowrap;font-family:inherit}",
+    ".wbs-btn{appearance:none;border:1px solid var(--wbs-line);background:transparent;color:inherit;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;line-height:1.35;white-space:nowrap;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:background .12s ease,border-color .12s ease,color .12s ease}",
     ".wbs-btn:hover{background:var(--wbs-soft)}",
+    ".wbs-btn.on{border-color:color-mix(in srgb,var(--wbs-accent) 45%,transparent);color:var(--wbs-accent);background:color-mix(in srgb,var(--wbs-accent) 8%,transparent)}",
+    ".wbs-btn.icononly{padding:4px;gap:0}",
+    ".wbs-btn:focus-visible,.wbs-mini:focus-visible,.wbs-caret:focus-visible,.wbs-crumb:focus-visible,.wbs-search input:focus-visible,.wbs-th-sort:focus-visible{outline:2px solid color-mix(in srgb,var(--wbs-accent) 55%,transparent);outline-offset:1px}",
     ".wbs-btn.primary{background:var(--wbs-accent);color:var(--dsw-alias-label-primary-inverted,#fff);border-color:transparent}",
     ".wbs-btn.primary:hover{filter:brightness(1.06)}",
     ".wbs-btn.danger{color:var(--dsw-alias-state-error-primary,#bd3b32);border-color:color-mix(in srgb,var(--dsw-alias-state-error-primary,#bd3b32) 34%,transparent)}",
@@ -224,15 +247,23 @@ var h = React.createElement;
     ".wbs-body{display:flex;gap:16px;align-items:flex-start;flex:1;min-height:0}",
     ".wbs-tree{width:236px;flex:none;border:1px solid var(--wbs-line);border-radius:12px;background:color-mix(in srgb,var(--dsw-alias-bg-layer-1,#fff) 62%,transparent);padding:8px;max-height:calc(100vh - 220px);overflow:auto}",
     ".wbs-tree-top{display:flex;align-items:center;gap:6px;padding:3px 4px 8px;border-bottom:1px solid var(--wbs-line);margin-bottom:6px}",
-    ".wbs-tree-title{font-size:12px;font-weight:600;color:var(--wbs-muted);flex:1}",
-    ".wbs-node{display:flex;align-items:center;gap:3px;padding:4px 5px;border-radius:7px;cursor:pointer;min-height:27px;box-sizing:border-box}",
+    ".wbs-tree-title{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--wbs-muted);flex:1}",
+    ".wbs-tree-title .wbs-svg{opacity:.75}",
+    ".wbs-node{display:flex;align-items:center;gap:3px;padding:4px 5px;border-radius:7px;cursor:pointer;min-height:27px;box-sizing:border-box;transition:background .12s ease}",
     ".wbs-node:hover{background:var(--wbs-soft)}",
     ".wbs-node.active{background:color-mix(in srgb,var(--wbs-accent) 13%,transparent);color:var(--wbs-accent);font-weight:600}",
-    ".wbs-caret{width:16px;flex:none;text-align:center;font-size:10px;opacity:.65}",
+    ".wbs-caret{width:17px;height:17px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;color:var(--wbs-muted);cursor:pointer;opacity:.8}",
+    ".wbs-caret:hover{background:var(--wbs-soft);color:inherit;opacity:1}",
+    ".wbs-caret.plain{cursor:default;opacity:.7}",
+    ".wbs-caret.plain:hover{background:transparent}",
+    ".wbs-caret .wbs-svg{transition:transform .13s ease}",
+    ".wbs-caret.open .wbs-svg{transform:rotate(90deg)}",
+    ".wbs-node-ico{display:inline-flex;align-items:center;flex:none;color:var(--wbs-muted);margin-right:1px}",
+    ".wbs-node.active .wbs-node-ico{color:inherit}",
     ".wbs-node-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
     ".wbs-node-actions{display:none;align-items:center;gap:1px;flex:none}",
     ".wbs-node:hover .wbs-node-actions{display:flex}",
-    ".wbs-mini{appearance:none;border:0;background:transparent;color:var(--wbs-muted);border-radius:4px;cursor:pointer;font-size:12px;line-height:1;padding:3px 4px;font-family:inherit;display:inline-flex;align-items:center;justify-content:center}",
+    ".wbs-mini{appearance:none;border:0;background:transparent;color:var(--wbs-muted);border-radius:5px;cursor:pointer;font-size:12px;line-height:1;padding:3px 4px;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:4px;transition:background .12s ease,color .12s ease}",
     ".wbs-mini:hover{background:var(--wbs-line);color:inherit}",
     ".wbs-svg{display:block;flex:none}",
     ".wbs-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}",
@@ -240,7 +271,7 @@ var h = React.createElement;
     ".wbs-crumb{appearance:none;border:0;background:transparent;color:var(--wbs-muted);padding:3px 4px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:12px}",
     ".wbs-crumb:hover{background:var(--wbs-soft);color:inherit}",
     ".wbs-crumb.cur{color:inherit;font-weight:600}",
-    ".wbs-sep{opacity:.4;font-size:10px}",
+    ".wbs-sep{display:inline-flex;align-items:center;color:var(--wbs-muted);opacity:.45}",
     ".wbs-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
     ".wbs-search{display:flex;align-items:center;gap:6px;border:1px solid var(--wbs-line);border-radius:8px;padding:0 8px;background:color-mix(in srgb,var(--dsw-alias-bg-layer-1,#fff) 58%,transparent);min-width:210px;flex:0 1 300px}",
     ".wbs-search input{border:0;outline:0;background:transparent;color:inherit;font:inherit;padding:7px 0;flex:1;min-width:0}",
@@ -258,22 +289,35 @@ var h = React.createElement;
     ".wbs-table tbody tr:hover td{background:color-mix(in srgb,var(--wbs-accent) 3.5%,transparent)}",
     ".wbs-th-sort{cursor:pointer;user-select:none}",
     ".wbs-th-sort:hover{color:inherit}",
+    ".wbs-th-label{display:inline-flex;align-items:center;gap:3px}",
+    ".wbs-sort-ico{opacity:.3}",
+    ".wbs-th-sort:hover .wbs-sort-ico{opacity:.6}",
+    ".wbs-th-sort.on{color:var(--wbs-accent)}",
+    ".wbs-th-sort.on .wbs-sort-ico{opacity:1}",
     ".wbs-site-name{font-weight:600;font-size:13px;word-break:break-word}",
     ".wbs-site-desc{font-size:12px;color:var(--wbs-muted);margin-top:3px;word-break:break-word}",
-    ".wbs-site-link{display:inline-block;margin-top:4px;font-size:11.5px;color:var(--wbs-accent);text-decoration:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top}",
+    ".wbs-site-link{display:inline-flex;align-items:center;gap:4px;margin-top:4px;font-size:11.5px;color:var(--wbs-accent);text-decoration:none;max-width:100%;overflow:hidden;white-space:nowrap;vertical-align:top}",
+    ".wbs-site-link .wbs-svg{opacity:.75}",
+    ".wbs-site-link span{overflow:hidden;text-overflow:ellipsis}",
     ".wbs-site-link:hover{text-decoration:underline}",
     ".wbs-muted{color:var(--wbs-muted)}",
     ".wbs-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--wbs-line);border-radius:999px;padding:2px 7px;font-size:11px;margin:0 4px 3px 0;background:color-mix(in srgb,var(--wbs-accent) 6%,transparent);max-width:100%}",
-    ".wbs-chip button{border:0;background:transparent;color:inherit;cursor:pointer;padding:0;font-size:11px;opacity:.65}",
-    ".wbs-actions{display:flex;gap:4px;flex-wrap:wrap}",
+    ".wbs-chip button{border:0;background:transparent;color:inherit;cursor:pointer;padding:0;display:inline-flex;align-items:center;opacity:.6}",
+    ".wbs-chip button:hover{opacity:1}",
+    ".wbs-actions{display:flex;gap:4px;flex-wrap:nowrap;align-items:center}",
     ".wbs-expand td{background:color-mix(in srgb,var(--dsw-alias-bg-layer-2,#f4f1e4) 52%,transparent);padding:10px 12px}",
     ".wbs-subtable{width:100%;border-collapse:collapse;font-size:12px}",
     ".wbs-subtable th{font-size:10px;color:var(--wbs-muted);text-align:left;padding:3px 6px;border-bottom:1px solid var(--wbs-line)}",
     ".wbs-subtable td{padding:5px 6px;border-bottom:1px solid color-mix(in srgb,var(--wbs-line) 45%,transparent);word-break:break-all}",
     ".wbs-dirpath{line-height:1.7}",
+    ".wbs-dirpath>div{display:flex;align-items:center;gap:5px}",
+    ".wbs-dirpath .wbs-svg{color:var(--wbs-muted);flex:none}",
+    ".wbs-def{display:inline-flex;align-items:center;vertical-align:-2px;margin-right:4px;color:var(--wbs-accent)}",
     ".wbs-empty{text-align:center;padding:52px 12px;color:var(--wbs-muted)}",
+    ".wbs-empty-ico{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;margin-bottom:10px;background:var(--wbs-soft);opacity:.75}",
     ".wbs-empty b{display:block;color:inherit;font-size:14px;margin-bottom:6px}",
     ".wbs-pager{display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:2px 0;font-size:12px;color:var(--wbs-muted);flex-wrap:wrap}",
+    ".wbs-pager-pos{min-width:52px;text-align:center;font-variant-numeric:tabular-nums}",
     ".wbs-pager select{border:1px solid var(--wbs-line);border-radius:6px;background:transparent;color:inherit;font:inherit;padding:4px 6px}",
     ".wbs-loading{padding:24px;text-align:center;color:var(--wbs-muted);font-size:12px}",
     ".wbs-error{padding:10px 12px;border:1px solid color-mix(in srgb,var(--dsw-alias-state-error-primary,#bd3b32) 30%,transparent);background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#bd3b32) 6%,transparent);border-radius:8px;color:var(--dsw-alias-state-error-primary,#a4312a);font-size:12px}",
@@ -283,6 +327,9 @@ var h = React.createElement;
     ".wbs-modal{width:min(700px,96vw);max-height:88vh;overflow:auto;background:var(--dsw-alias-bg-layer-1,#fffdf7);border:1px solid var(--wbs-line);border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.24);padding:18px}",
     ".wbs-modal.small{width:min(430px,94vw)}",
     ".wbs-modal-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:650;margin-bottom:4px}",
+    ".wbs-modal-title .wbs-svg{color:var(--wbs-accent);opacity:.85;flex:none}",
+    ".wbs-modal-x{margin-left:auto;color:var(--wbs-muted);flex:none}",
+    ".wbs-modal-x:hover{background:var(--wbs-soft);color:inherit}",
     ".wbs-modal-sub{font-size:12px;color:var(--wbs-muted);margin-bottom:14px;line-height:1.6}",
     ".wbs-steps{display:flex;gap:6px;margin:2px 0 16px;flex-wrap:wrap}",
     ".wbs-step{font-size:11px;color:var(--wbs-muted);padding:4px 8px;border-radius:999px;border:1px solid transparent}",
@@ -300,7 +347,7 @@ var h = React.createElement;
     ".wbs-dircheck input{margin:0}",
     ".wbs-tagsearch{display:flex;gap:6px;align-items:center}",
     ".wbs-tagresults{border:1px solid var(--wbs-line);border-radius:9px;max-height:190px;overflow:auto;margin-top:7px;padding:4px}",
-    ".wbs-tagresult{width:100%;text-align:left;border:0;background:transparent;color:inherit;padding:6px;border-radius:6px;cursor:pointer;font:inherit;font-size:12px}",
+    ".wbs-tagresult{width:100%;display:flex;align-items:center;gap:7px;text-align:left;border:0;background:transparent;color:inherit;padding:6px;border-radius:6px;cursor:pointer;font:inherit;font-size:12px}",
     ".wbs-tagresult:hover{background:var(--wbs-soft)}",
     ".wbs-tagresult.on{background:color-mix(in srgb,var(--wbs-accent) 10%,transparent);color:var(--wbs-accent)}",
     ".wbs-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;min-height:10px}",
@@ -508,7 +555,11 @@ var h = React.createElement;
     var title = mode === "edit" ? text(lang, "editTitle") : text(lang, "createTitle");
 
     return h(Modal, { onClose: saving ? null : props.onClose },
-      h("div", { className: "wbs-modal-title" }, title),
+      h("div", { className: "wbs-modal-title" },
+        h(Icon, { name: mode === "edit" ? "edit" : "plus", size: 15 }),
+        title,
+        h("button", { type: "button", className: "wbs-mini wbs-modal-x", title: text(lang, "cancel"), onClick: props.onClose }, h(Icon, { name: "x", size: 15 })),
+      ),
       h("div", { className: "wbs-steps" }, steps.map(function (s, i) {
         return h("span", { key: i, className: "wbs-step" + (i === step ? " on" : "") }, (i + 1) + " · " + s);
       })),
@@ -553,10 +604,10 @@ var h = React.createElement;
               }),
               text(lang, "default"),
             ),
-            h("button", { type: "button", className: "wbs-mini", onClick: function () { removeLink(i); } }, text(lang, "removeLink")),
+            h("button", { type: "button", className: "wbs-mini", title: text(lang, "removeLink"), onClick: function () { removeLink(i); } }, h(Icon, { name: "x", size: 13 })),
           );
         }),
-        h("button", { type: "button", className: "wbs-btn sm", onClick: addLink }, text(lang, "addLink")),
+        h("button", { type: "button", className: "wbs-btn sm", onClick: addLink }, h(Icon, { name: "plus", size: 13 }), text(lang, "addLink")),
       ) : null,
 
       step === 1 ? h("div", null,
@@ -602,18 +653,21 @@ var h = React.createElement;
             type: "button",
             className: "wbs-tagresult" + (on ? " on" : ""),
             onClick: function () { toggleTag(t); },
-          }, (on ? "✓ " : "＋ ") + t.name);
+          },
+            h(Icon, { name: on ? "check" : "plus", size: 12 }),
+            h("span", null, t.name),
+          );
         }) : h("div", { className: "wbs-note", style: { padding: 6 } }, text(lang, "noTags"))),
         h("div", { className: "wbs-note", style: { marginTop: 8 } }, "标签由标签子插件提供，可多选。"),
       ) : null,
 
       h("div", { className: "wbs-formfoot" },
         h("div", { className: "wbs-formerr" }, error || ""),
-        step > 0 ? h("button", { type: "button", className: "wbs-btn", disabled: saving, onClick: function () { setStep(step - 1); } }, text(lang, "back")) : null,
+        step > 0 ? h("button", { type: "button", className: "wbs-btn", disabled: saving, onClick: function () { setStep(step - 1); } }, h(Icon, { name: "chevron-left", size: 13 }), text(lang, "back")) : null,
         h("button", { type: "button", className: "wbs-btn", disabled: saving, onClick: props.onClose }, text(lang, "cancel")),
         step < maxStep
-          ? h("button", { type: "button", className: "wbs-btn primary", onClick: next }, text(lang, "nextStep"))
-          : h("button", { type: "button", className: "wbs-btn primary", disabled: saving, onClick: save }, saving ? text(lang, "saving") : text(lang, "save")),
+          ? h("button", { type: "button", className: "wbs-btn primary", onClick: next }, text(lang, "nextStep"), h(Icon, { name: "chevron-right", size: 13 }))
+          : h("button", { type: "button", className: "wbs-btn primary", disabled: saving, onClick: save }, h(Icon, { name: "check", size: 13 }), saving ? text(lang, "saving") : text(lang, "save")),
       ),
     );
   }
@@ -649,7 +703,11 @@ var h = React.createElement;
     }
 
     return h(Modal, { small: true, onClose: saving ? null : props.onClose },
-      h("div", { className: "wbs-modal-title" }, title),
+      h("div", { className: "wbs-modal-title" },
+        h(Icon, { name: isDelete ? "trash" : dlg.mode === "rename" ? "edit" : "folder-plus", size: 15 }),
+        title,
+        h("button", { type: "button", className: "wbs-mini wbs-modal-x", title: text(lang, "cancel"), onClick: props.onClose }, h(Icon, { name: "x", size: 15 })),
+      ),
       isDelete
         ? h("div", { className: "wbs-modal-sub" }, text(lang, "removeDirText", { name: dlg.name || "" }))
         : h("div", null,
@@ -667,6 +725,7 @@ var h = React.createElement;
         h("div", { className: "wbs-formerr" }, error || ""),
         h("button", { className: "wbs-btn", disabled: saving, onClick: props.onClose }, text(lang, "cancel")),
         h("button", { className: "wbs-btn primary" + (isDelete ? " danger" : ""), disabled: saving, onClick: submit },
+          h(Icon, { name: isDelete ? "trash" : dlg.mode === "rename" ? "check" : "plus", size: 13 }),
           saving ? "…" : isDelete ? text(lang, "confirm") : dlg.mode === "rename" ? text(lang, "save") : text(lang, "create")),
       ),
     );
@@ -692,13 +751,17 @@ var h = React.createElement;
     }
 
     return h(Modal, { small: true, onClose: saving ? null : props.onClose },
-      h("div", { className: "wbs-modal-title" }, text(lang, "deleteTitle")),
+      h("div", { className: "wbs-modal-title" },
+        h(Icon, { name: "trash", size: 15 }),
+        text(lang, "deleteTitle"),
+        h("button", { type: "button", className: "wbs-mini wbs-modal-x", title: text(lang, "cancel"), onClick: props.onClose }, h(Icon, { name: "x", size: 15 })),
+      ),
       h("div", { className: "wbs-modal-sub" }, text(lang, "deleteText", { name: site.siteName })),
       error ? h("div", { className: "wbs-error" }, error) : null,
       h("div", { className: "wbs-formfoot" },
         h("div", { className: "wbs-grow" }),
         h("button", { className: "wbs-btn", disabled: saving, onClick: props.onClose }, text(lang, "cancel")),
-        h("button", { className: "wbs-btn danger", disabled: saving, onClick: submit }, saving ? "…" : text(lang, "confirm")),
+        h("button", { className: "wbs-btn danger", disabled: saving, onClick: submit }, h(Icon, { name: "trash", size: 13 }), saving ? "…" : text(lang, "confirm")),
       ),
     );
   }
@@ -851,6 +914,26 @@ var h = React.createElement;
       return function () { alive = false; };
     }, [current.id, tick]);
 
+    // 标签筛选下拉：点空白处、或点开其它弹窗时自动收起，避免浮层留在大弹窗上面。
+    useEffect(function () {
+      if (!tagMenu) return undefined;
+      function onDown(e) {
+        var el = e.target;
+        while (el && el !== document.body) {
+          if (el.classList && el.classList.contains("wbs-tagfilter")) return;
+          el = el.parentNode;
+        }
+        setTagMenu(false);
+      }
+      function onKey(e) { if (e.key === "Escape") setTagMenu(false); }
+      document.addEventListener("mousedown", onDown, true);
+      document.addEventListener("keydown", onKey, true);
+      return function () {
+        document.removeEventListener("mousedown", onDown, true);
+        document.removeEventListener("keydown", onKey, true);
+      };
+    }, [tagMenu]);
+
     function selectDir(id) {
       if (id === "0") {
         setCurrent({ id: "0", path: [] });
@@ -907,7 +990,8 @@ var h = React.createElement;
           onDragOver: function (e) { e.preventDefault(); },
           onDrop: function (e) { onDropNode(e, node); },
         },
-          h("span", { className: "wbs-caret", onClick: function (e) { e.stopPropagation(); toggleNode(node); } }, open ? "▾" : "▸"),
+          h("span", { className: "wbs-caret" + (open ? " open" : ""), onClick: function (e) { e.stopPropagation(); toggleNode(node); } }, h(Icon, { name: "chevron-right", size: 13 })),
+          h("span", { className: "wbs-node-ico" }, h(Icon, { name: open ? "folder-open" : "folder", size: 13 })),
           h("span", { className: "wbs-node-name", onClick: function () { selectDir(String(node.id)); }, title: node.name }, node.name),
           h("span", { className: "wbs-node-actions" },
             h("button", { className: "wbs-mini", title: text(lang, "addChild"), onClick: function (e) { e.stopPropagation(); setDirDlg({ mode: "create", parentId: String(node.id), name: "" }); } }, h(Icon, { name: "plus", size: 13 })),
@@ -1005,9 +1089,10 @@ var h = React.createElement;
       setPage(1);
     }
 
-    function arrow(col) {
-      if (sortCol !== col) return "";
-      return sortOrder === "asc" ? " ↑" : " ↓";
+    function sortIcon(col) {
+      var on = sortCol === col;
+      var name = !on ? "arrow-up-down" : sortOrder === "asc" ? "arrow-up" : "arrow-down";
+      return h(Icon, { name: name, size: 12, className: "wbs-sort-ico" });
     }
 
     var pages = Math.max(1, Math.ceil(total / pageSize));
@@ -1016,15 +1101,16 @@ var h = React.createElement;
 
     return h("div", { className: "wbs-root" },
       h("div", { className: "wbs-head" },
+        h("span", { className: "wbs-badge" }, h(Icon, { name: "folder-tree", size: 15 })),
         h("h2", null, text(lang, "title")),
         h("span", { className: "wbs-count" }, text(lang, "total", { n: total })),
         h("div", { className: "wbs-grow" }),
-        h("button", { className: "wbs-btn primary", onClick: openCreate }, text(lang, "newSite")),
+        h("button", { className: "wbs-btn primary", onClick: openCreate }, h(Icon, { name: "plus", size: 14 }), text(lang, "newSite")),
       ),
       h("div", { className: "wbs-body" },
         h("aside", { className: "wbs-tree" },
           h("div", { className: "wbs-tree-top" },
-            h("span", { className: "wbs-tree-title" }, text(lang, "directory")),
+            h("span", { className: "wbs-tree-title" }, h(Icon, { name: "folder-tree", size: 13 }), text(lang, "directory")),
             h("button", { className: "wbs-mini", title: text(lang, "addDir"), onClick: function () { setDirDlg({ mode: "create", parentId: "0", name: "" }); } }, h(Icon, { name: "folder-plus", size: 13 })),
             h("button", { className: "wbs-mini", title: text(lang, "refresh"), onClick: refreshTree }, h(Icon, { name: "refresh", size: 13 })),
           ),
@@ -1032,7 +1118,7 @@ var h = React.createElement;
             className: "wbs-node" + (current.id === "0" ? " active" : ""),
             style: { paddingLeft: 4 },
           },
-            h("span", { className: "wbs-caret" }, "▾"),
+            h("span", { className: "wbs-caret plain" }, h(Icon, { name: "house", size: 13 })),
             h("span", { className: "wbs-node-name", onClick: function () { selectDir("0"); } }, text(lang, "all")),
             h("span", { className: "wbs-node-actions" },
               h("button", { className: "wbs-mini", title: text(lang, "addDir"), onClick: function (e) { e.stopPropagation(); setDirDlg({ mode: "create", parentId: "0", name: "" }); } }, h(Icon, { name: "folder-plus", size: 13 })),
@@ -1045,7 +1131,7 @@ var h = React.createElement;
             h("button", { className: "wbs-crumb" + (current.id === "0" ? " cur" : ""), onClick: function () { selectDir("0"); } }, text(lang, "all")),
             (current.path || []).map(function (p, i) {
               return h(React.Fragment, { key: String(p.id) },
-                h("span", { className: "wbs-sep" }, "›"),
+                h("span", { className: "wbs-sep" }, h(Icon, { name: "chevron-right", size: 12 })),
                 h("button", {
                   className: "wbs-crumb" + (i === current.path.length - 1 ? " cur" : ""),
                   onClick: function () { setCurrent({ id: String(p.id), path: current.path.slice(0, i + 1) }); setPage(1); },
@@ -1068,14 +1154,14 @@ var h = React.createElement;
             ),
             tagsVisible ? h("div", { className: "wbs-tagfilter" },
               h("button", {
-                className: "wbs-btn",
+                className: "wbs-btn" + (tagFilter.length ? " on" : ""),
                 onClick: function () { setTagMenu(!tagMenu); },
-              }, text(lang, "tagFilter") + (tagFilter.length ? " · " + tagFilter.length : "") + " ▾"),
+              }, h(Icon, { name: "tag", size: 13 }), text(lang, "tagFilter") + (tagFilter.length ? " · " + tagFilter.length : ""), h(Icon, { name: "chevron-down", size: 12 })),
               tagMenu ? h("div", { className: "wbs-tagmenu" },
                 h("div", { className: "wbs-tagmenu-head" },
                   h("span", null, text(lang, "allTags")),
                   h("span", { className: "wbs-grow" }),
-                  h("button", { className: "wbs-mini", onClick: function () { setTagFilter([]); setPage(1); } }, text(lang, "clear")),
+                  h("button", { className: "wbs-mini", title: text(lang, "clear"), onClick: function () { setTagFilter([]); setPage(1); } }, h(Icon, { name: "x", size: 12 }), text(lang, "clear")),
                 ),
                 allTags.length ? allTags.map(function (t) {
                   var on = tagFilter.indexOf(t.id) >= 0;
@@ -1096,7 +1182,7 @@ var h = React.createElement;
               ) : null,
             ) : null,
             h("div", { className: "wbs-grow" }),
-            selectedIds.length ? h("button", { className: "wbs-btn danger", onClick: deleteSelected }, text(lang, "deleteSelected") + " (" + selectedIds.length + ")") : null,
+            selectedIds.length ? h("button", { className: "wbs-btn danger", onClick: deleteSelected }, h(Icon, { name: "trash", size: 13 }), text(lang, "deleteSelected") + " (" + selectedIds.length + ")") : null,
           ),
           error ? h("div", { className: "wbs-error" }, error) : null,
           h("div", { className: "wbs-tablewrap" },
@@ -1107,15 +1193,15 @@ var h = React.createElement;
                 tagsVisible ? h("col", { style: { width: 150 } }) : null,
                 h("col", { style: { width: 112 } }),
                 h("col", { style: { width: 112 } }),
-                h("col", { style: { width: 190 } }),
+                h("col", { style: { width: 214 } }),
               ),
               h("thead", null,
                 h("tr", null,
                   h("th", null, h("input", { type: "checkbox", checked: allSelected, onChange: toggleAll, "aria-label": "全选" })),
                   h("th", null, text(lang, "siteCol")),
                   tagsVisible ? h("th", null, text(lang, "tagCol")) : null,
-                  h("th", { className: "wbs-th-sort", onClick: function () { sortBy("create_time"); } }, text(lang, "createTime") + arrow("create_time")),
-                  h("th", { className: "wbs-th-sort", onClick: function () { sortBy("update_time"); } }, text(lang, "updateTime") + arrow("update_time")),
+                  h("th", { className: "wbs-th-sort" + (sortCol === "create_time" ? " on" : ""), onClick: function () { sortBy("create_time"); } }, h("span", { className: "wbs-th-label" }, text(lang, "createTime"), sortIcon("create_time"))),
+                  h("th", { className: "wbs-th-sort" + (sortCol === "update_time" ? " on" : ""), onClick: function () { sortBy("update_time"); } }, h("span", { className: "wbs-th-label" }, text(lang, "updateTime"), sortIcon("update_time"))),
                   h("th", null, text(lang, "actions")),
                 ),
               ),
@@ -1123,6 +1209,7 @@ var h = React.createElement;
                 loading ? h("tr", null, h("td", { colSpan: colCount }, h("div", { className: "wbs-loading" }, text(lang, "loading")))) : null,
                 !loading && !sites.length ? h("tr", null, h("td", { colSpan: colCount },
                   h("div", { className: "wbs-empty" },
+                    h("span", { className: "wbs-empty-ico" }, h(Icon, { name: "folder-open", size: 24 })),
                     h("b", null, text(lang, "empty")),
                     h("span", null, text(lang, "emptyHint")),
                   ),
@@ -1133,7 +1220,7 @@ var h = React.createElement;
                     h("td", null,
                       h("div", { className: "wbs-site-name" }, s.siteName),
                       s.description ? h("div", { className: "wbs-site-desc" }, s.description) : h("div", { className: "wbs-site-desc wbs-muted" }, text(lang, "noDesc")),
-                      s.defaultLink ? h("a", { className: "wbs-site-link", href: s.defaultLink, target: "_blank", rel: "noreferrer noopener" }, s.defaultLink) : h("div", { className: "wbs-site-desc wbs-muted" }, text(lang, "noLink")),
+                      s.defaultLink ? h("a", { className: "wbs-site-link", href: s.defaultLink, target: "_blank", rel: "noreferrer noopener", title: s.defaultLink }, h(Icon, { name: "link", size: 11 }), h("span", null, s.defaultLink)) : h("div", { className: "wbs-site-desc wbs-muted" }, text(lang, "noLink")),
                     ),
                     tagsVisible ? h("td", null, s.tags && s.tags.length ? s.tags.map(function (t) {
                       return h("span", { className: "wbs-chip", key: t.id }, t.name);
@@ -1142,10 +1229,10 @@ var h = React.createElement;
                     h("td", { className: "wbs-muted" }, s.updateTime || "—"),
                     h("td", null,
                       h("div", { className: "wbs-actions" },
-                        h("button", { className: "wbs-btn sm", onClick: function () { setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "links" ? null : { id: s.id, type: "links" }); } }, text(lang, "links") + " " + (s.siteLinks ? s.siteLinks.length : 0)),
-                        h("button", { className: "wbs-btn sm", onClick: function () { setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "dirs" ? null : { id: s.id, type: "dirs" }); } }, text(lang, "dirs") + " " + (s.dirs ? s.dirs.length : 0)),
-                        h("button", { className: "wbs-btn sm", onClick: function () { openEdit(s); } }, text(lang, "edit")),
-                        h("button", { className: "wbs-btn sm danger", onClick: function () { setDeleting(s); } }, text(lang, "del")),
+                        h("button", { className: "wbs-btn sm", title: text(lang, "links"), onClick: function () { setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "links" ? null : { id: s.id, type: "links" }); } }, h(Icon, { name: "link", size: 12 }), text(lang, "links") + " " + (s.siteLinks ? s.siteLinks.length : 0)),
+                        h("button", { className: "wbs-btn sm", title: text(lang, "dirs"), onClick: function () { setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "dirs" ? null : { id: s.id, type: "dirs" }); } }, h(Icon, { name: "folder", size: 12 }), text(lang, "dirs") + " " + (s.dirs ? s.dirs.length : 0)),
+                        h("button", { className: "wbs-btn sm icononly", title: text(lang, "edit"), onClick: function () { openEdit(s); } }, h(Icon, { name: "edit", size: 13 })),
+                        h("button", { className: "wbs-btn sm danger icononly", title: text(lang, "del"), onClick: function () { setDeleting(s); } }, h(Icon, { name: "trash", size: 13 })),
                       ),
                     ),
                   );
@@ -1155,13 +1242,13 @@ var h = React.createElement;
                       h("thead", null, h("tr", null, h("th", null, "描述"), h("th", null, "网址"))),
                       h("tbody", null, s.siteLinks.map(function (l, i) {
                         return h("tr", { key: i },
-                          h("td", null, (l.isDefault ? "★ " : "") + (l.description || "—")),
+                          h("td", null, l.isDefault ? h("span", { className: "wbs-def", title: text(lang, "default") }, h(Icon, { name: "star", size: 11 })) : null, l.description || "—"),
                           h("td", null, l.link ? h("a", { href: l.link, target: "_blank", rel: "noreferrer noopener" }, l.link) : "—"),
                         );
                       })),
                     ) : h("div", { className: "wbs-muted" }, text(lang, "noLink")))
                     : (s.dirs && s.dirs.length ? h("div", { className: "wbs-dirpath" }, s.dirs.map(function (d) {
-                      return h("div", { key: d.id }, "📁 " + (d.path || []).map(function (p) { return p.name; }).join(" / "));
+                      return h("div", { key: d.id }, h(Icon, { name: "folder", size: 12 }), (d.path || []).map(function (p) { return p.name; }).join(" / "));
                     })) : h("div", { className: "wbs-muted" }, "未关联目录"));
                   return h(React.Fragment, { key: s.id + ":detail" },
                     row,
@@ -1172,9 +1259,10 @@ var h = React.createElement;
             ),
           ),
           h("div", { className: "wbs-pager" },
-            h("span", null, "共 " + total + " 条 · 第 " + page + " / " + pages + " 页"),
-            h("button", { className: "wbs-btn sm", disabled: page <= 1, onClick: function () { setPage(Math.max(1, page - 1)); } }, text(lang, "prev")),
-            h("button", { className: "wbs-btn sm", disabled: page >= pages, onClick: function () { setPage(Math.min(pages, page + 1)); } }, text(lang, "next")),
+            h("span", null, "共 " + total + " 条"),
+            h("button", { className: "wbs-btn sm icononly", title: text(lang, "prev"), "aria-label": text(lang, "prev"), disabled: page <= 1, onClick: function () { setPage(Math.max(1, page - 1)); } }, h(Icon, { name: "chevron-left", size: 14 })),
+            h("span", { className: "wbs-pager-pos" }, page + " / " + pages),
+            h("button", { className: "wbs-btn sm icononly", title: text(lang, "next"), "aria-label": text(lang, "next"), disabled: page >= pages, onClick: function () { setPage(Math.min(pages, page + 1)); } }, h(Icon, { name: "chevron-right", size: 14 })),
             h("select", {
               value: pageSize,
               onChange: function (e) { setPageSize(Number(e.target.value)); setPage(1); },
@@ -1215,7 +1303,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.4.1",
+    version: "1.5.0",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.SitesStatsView },
       { id: "sites", title: { zh: "记录", en: "Records" }, component: SitesView },
