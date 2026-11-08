@@ -33,19 +33,6 @@ importers:
         specifier: file:../../shell-dist
         version: link:../../shell-dist
 
-  packages/cloud:
-    dependencies:
-      '@wb/core':
-        specifier: workspace:*
-        version: link:../core
-    devDependencies:
-      '@types/node':
-        specifier: ^24.0.0
-        version: 24.19.2
-      typescript:
-        specifier: ^5.6.0
-        version: 5.9.3
-
   packages/core:
     devDependencies:
       '@types/node':
