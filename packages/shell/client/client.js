@@ -56,7 +56,7 @@
           sync_resolve_failed: "冲突处理失败", sync_ok: "同步完成", sync_partial: "部分表同步失败",
           record_label: "记录模式", record_on: "记录中", record_off: "记录",
           record_on_title: "本会话记录模式已开启，点击关闭", record_off_title: "开启后把完成的可交付内容记到工作台（仅本会话）",
-          record_busy: "切换中", record_error: "切换失败",
+          record_busy: "切换中", record_error: "切换失败", record_failed_short: "记录失败",
         },
         en: {
           nav: "Workbench", title: "Personal Workbench", tagline: "Offline-first · addons installed by DSH",
@@ -102,7 +102,7 @@
           sync_resolve_failed: "Failed to resolve conflict", sync_ok: "Sync complete", sync_partial: "Some tables failed",
           record_label: "Record mode", record_on: "Recording", record_off: "Record",
           record_on_title: "Record mode is on for this session; click to turn it off", record_off_title: "Record finished deliverables to the workbench (this session only)",
-          record_busy: "Switching", record_error: "Switch failed",
+          record_busy: "Switching", record_error: "Switch failed", record_failed_short: "Failed",
         },
       };
 
@@ -213,6 +213,8 @@
         ".wb-record-pill:hover{opacity:.95;border-color:color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 35%,var(--wb-line,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent))))}",
         ".wb-record-pill.on{opacity:1;border-color:color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 45%,transparent);background:color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 10%,transparent)}",
         ".wb-record-pill:disabled{opacity:.4;cursor:default}",
+        ".wb-record-pill.err{opacity:1;border-color:var(--dsw-alias-state-error-primary,#e5484d);color:var(--dsw-alias-state-error-primary,#e5484d)}",
+        ".wb-record-pill.err .wb-record-dot{background:currentColor;opacity:1}",
         ".wb-record-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.5;flex:none}",
         ".wb-record-pill.on .wb-record-dot{background:var(--dsw-alias-brand-primary,#11a89b);opacity:1;box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 18%,transparent)}",
       ].join("\n");
@@ -870,16 +872,16 @@
               if (!j || !j.ok) throw new Error((j && j.error) || "request failed");
               setRecordMode(sid, !!j.enabled);
             })
-            .catch(function (e) { setErr(String((e && e.message) || e)); })
+            .catch(function (e) { var msg = String((e && e.message) || e); setErr(msg); try { console.warn("[dsh-workbench] record toggle failed:", msg); } catch (_) {} })
             .then(function () { setBusy(false); });
         }
 
         if (!sid) return null;
-        var label = busy ? t("record_busy") : on ? t("record_on") : t("record_off");
+        var label = busy ? t("record_busy") : err ? t("record_failed_short") : on ? t("record_on") : t("record_off");
         var title = err ? t("record_error") + ": " + err : on ? t("record_on_title") : t("record_off_title");
         return h("button", {
           type: "button",
-          className: "wb-record-pill" + (on ? " on" : ""),
+          className: "wb-record-pill" + (on ? " on" : "") + (err ? " err" : ""),
           onClick: toggle,
           disabled: busy,
           title: title,
