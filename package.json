@@ -6,6 +6,8 @@
   "scripts": {
     "build": "pnpm -r --filter @wb/core --filter @wb/sdk --filter dsh-workbench build && node scripts/build-addon-clients.mjs",
     "build:clients": "node scripts/build-addon-clients.mjs",
+    "cloud:update": "git submodule update --remote --merge cloud",
+    "cloud:build": "mvn -f cloud/pom.xml -DskipTests package",
     "dist:shell": "node scripts/dist-shell.mjs",
     "test:native": "node scripts/test-native.mjs",
     "test:clients": "node scripts/test-clients.mjs",

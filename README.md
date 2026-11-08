@@ -26,6 +26,32 @@ DSH 会一并准备宿主。数据保存在 `~/.dsh/workbench/workbench.db`，�
 - 发布镜像供 npm 与 DSH 插件市场读取，包路径为 `packages/<name>`；市场条目指向它。
 - 两个仓库历史独立，源码仓库不要向发布镜像推送源码提交。
 
+## 源码开发
+
+源码仓库通过 `cloud/` submodule 引用独立云端仓库，不需要再单独 clone 一份：
+
+```sh
+git clone --recurse-submodules https://github.com/ityyq777/dsh-workbench-source.git
+cd dsh-workbench-source
+pnpm install
+```
+
+已经 clone 过但没有拉子模块：
+
+```sh
+git submodule update --init --recursive
+```
+
+更新并构建云端 Java 服务：
+
+```sh
+pnpm cloud:update
+pnpm cloud:build
+```
+
+子模块提交指针变化时，宿主仓库要单独提交 `cloud` 的 gitlink；云端代码仍在
+`dsh-workbench-cloud` 仓库提交、推送和部署。
+
 ## 安装
 
 从插件市场或 DSH 设置 → 插件安装；命令行：

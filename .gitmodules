@@ -1,0 +1,4 @@
+[submodule "cloud"]
+	path = cloud
+	url = https://gitee.com/yang7it/dsh-workbench-cloud.git
+	branch = main

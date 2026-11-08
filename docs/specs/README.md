@@ -41,9 +41,9 @@ dsh plugin --profile web add file:$PWD/packages/addons/sites
 # 3. 重启 dsh web 后：设置 → 插件 → 个人工作台
 #    业务插件的安装/卸载同样在 DSH 插件页完成
 
-# 4. 云端（可选，独立 Java 仓库；开发期不打应用镜像）
-git clone https://gitee.com/yang7it/dsh-workbench-cloud.git
-cd dsh-workbench-cloud
+# 4. 云端（可选，宿主仓库的 cloud/ 子模块；开发期不打应用镜像）
+git submodule update --init cloud   # 若 clone 时未加 --recurse-submodules
+cd cloud
 cp .env.example .env && chmod 600 .env   # 填数据库密码与 MinIO AK/SK
 docker compose up -d postgres
 set -a; . ./.env; set +a
