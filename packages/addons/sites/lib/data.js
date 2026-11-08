@@ -160,7 +160,63 @@ export function registerDataActions(api) {
     return { count: live, deletedCount: Math.max(0, total - live) };
   }
 
-  function tablesPayload() {
+  /**
+   * 表结构统计（「表索引」视图）：行数、列数、主键、索引、最近写入。
+   * 只读 PRAGMA 与 COUNT/MAX，不做任何写操作；表缺失时返回零值而不是报错，
+   * 这样单个表迁移失败不会让整页不可用。
+   */
+  function tableStatsOf(table) {
+    const out = { rows: 0, primaryKey: [], indexes: [], lastWrite: null };
+    try {
+      out.rows = Number(db.prepare("SELECT COUNT(*) AS n FROM " + table).get().n) || 0;
+    } catch (e) {
+      /* 表缺失：保持 0 */
+    }
+    let info = [];
+    try {
+      info = db.prepare("PRAGMA table_info(" + table + ")").all();
+    } catch (e) {
+      info = [];
+    }
+    out.columnCount = info.length;
+    out.primaryKey = info
+      .filter(function (c) { return Number(c.pk) > 0; })
+      .sort(function (colA, colB) { return Number(colA.pk) - Number(colB.pk); })
+      .map(function (c) { return c.name; });
+    try {
+      out.indexes = db.prepare("PRAGMA index_list(" + table + ")").all().map(function (ix) {
+        let cols = [];
+        try {
+          cols = db.prepare("PRAGMA index_info(" + JSON.stringify(String(ix.name)) + ")").all().map(function (c) { return c.name; });
+        } catch (e) {
+          cols = [];
+        }
+        return { name: String(ix.name), unique: Number(ix.unique) === 1, origin: String(ix.origin || "c"), columns: cols };
+      });
+    } catch (e) {
+      out.indexes = [];
+    }
+    const stampCols = ["updated_at", "created_at", "publish_date", "done_date", "target_date"];
+    for (let i = 0; i < stampCols.length; i += 1) {
+      const hit = info.filter(function (c) { return c.name === stampCols[i]; })[0];
+      if (!hit) continue;
+      try {
+        const row = db.prepare("SELECT MAX(" + hit.name + ") AS v FROM " + table).get();
+        const v = row && row.v;
+        if (v !== null && v !== undefined && String(v) !== "") {
+          out.lastWrite = { column: hit.name, at: v };
+          break;
+        }
+      } catch (e) {
+        /* 单列统计失败不影响其它信息 */
+      }
+    }
+    return out;
+  }
+
+  function tablesPayload(rawArgs) {
+    const args = rawArgs || {};
+    const withStats = args.stats === true;
     const warnings = [];
     const tables = TABLES.map(function (t) {
       const columns = columnsOf(t.name);
@@ -174,7 +230,9 @@ export function registerDataActions(api) {
           warnings.push({ code: "count_failed", message: t.name + " 行数统计失败：" + String(e && e.message || e) });
         }
       }
-      return { name: t.name, label: { zh: t.zh, en: t.en }, count: counts.count, deletedCount: counts.deletedCount, columns };
+      const row = { name: t.name, label: { zh: t.zh, en: t.en }, count: counts.count, deletedCount: counts.deletedCount, columns };
+      if (withStats && columns.length) row.stats = tableStatsOf(t.name);
+      return row;
     });
     return { domain: DOMAIN, schemaVersion: SCHEMA_VERSION, tables, warnings };
   }
@@ -269,9 +327,14 @@ export function registerDataActions(api) {
 
   api.action("sites.dataTables", {
     description: "列出站点插件负责的数据表、列元信息与行数（只读，供「数据」视图使用）",
-    input: { type: "object", properties: {} },
+    input: {
+      type: "object",
+      properties: {
+        stats: { type: "boolean", description: "true 时附带每表结构统计：行数、列数、主键、索引、最近写入（表索引视图用）" },
+      },
+    },
     examples: [{}],
-    execute: function () { return tablesPayload(); },
+    execute: function (args) { return tablesPayload(args); },
     render: function (r) {
       return r.tables.map(function (t) { return t.name + " " + t.count + " 行"; }).join("、");
     },

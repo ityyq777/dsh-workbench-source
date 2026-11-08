@@ -77,6 +77,25 @@ for (const [name, mod, expected] of [
   }
 }
 
+// 1.1 表索引统计：stats=true 时给出列数/主键/索引/最近写入，且不改变原有字段
+{
+  const withStats = tasks.call("tasks.dataTables", { stats: true });
+  const taskTb = withStats.tables.find(function (t) { return t.name === "task"; });
+  assert(taskTb && taskTb.stats, "dataTables(stats=true) 未返回 stats");
+  const st = taskTb.stats;
+  assert(st.columnCount === pragmaColumns("task").length, "表索引列数不符：" + st.columnCount);
+  assert(JSON.stringify(st.primaryKey) === JSON.stringify(["id"]), "表索引主键不符：" + JSON.stringify(st.primaryKey));
+  assert(Array.isArray(st.indexes) && st.indexes.length >= 1, "表索引未列出索引：" + JSON.stringify(st.indexes));
+  assert(st.indexes.every(function (ix) { return ix.name && Array.isArray(ix.columns) && typeof ix.unique === "boolean"; }), "索引结构不完整");
+  assert(Number.isFinite(st.rows) && st.rows >= 0, "表索引行数异常");
+  const plain = tasks.call("tasks.dataTables").tables.find(function (t) { return t.name === "task"; });
+  assert(plain.stats === undefined, "未传 stats 时不应附带统计（保持响应体轻量）");
+  assert(plain.count === taskTb.count, "带统计时行数与常规清单不一致");
+  const sitesIndex = sites.call("sites.dataTables", { stats: true });
+  const acct = sitesIndex.tables.find(function (t) { return t.name === "site_account"; });
+  assert(acct && acct.stats && acct.stats.indexes.length >= 1, "站点账号表未给出索引信息");
+}
+
 // 2. 造数据：分页 / 搜索 / 排序
 const ids = [];
 for (let i = 1; i <= 12; i++) {

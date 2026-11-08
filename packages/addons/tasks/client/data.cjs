@@ -23,6 +23,13 @@ var CFG_FALLBACK = {
 
 var PAGE_SIZES = [10, 25, 50, 100, 200];
 
+// 「表索引」跨插件汇总：即使某个插件没安装，也只跳过它而不让整页失败。
+var DOMAINS = [
+  { id: "tasks", zh: "任务", en: "Tasks" },
+  { id: "tags", zh: "标签", en: "Tags" },
+  { id: "sites", zh: "站点", en: "Sites" },
+];
+
 var COPY = {
   zh: {
     title: "数据",
@@ -63,6 +70,19 @@ var COPY = {
     sortDesc: "降序",
     filterCol: "筛选…",
     filterClear: "清除筛选",
+    index: "表索引",
+    indexSub: "一屏看清各插件负责的表：行数、列数、主键、索引与最近写入（只读，跨插件汇总）",
+    idxDomain: "域",
+    idxTable: "表",
+    idxRows: "行数",
+    idxCols: "列数",
+    idxKey: "主键",
+    idxIndexes: "索引",
+    idxLastWrite: "最近写入",
+    idxNone: "无",
+    idxEmpty: "没有可统计的表",
+    idxTables: "表",
+    idxAt: "统计时间",
   },
   en: {
     title: "Data",
@@ -103,6 +123,19 @@ var COPY = {
     sortDesc: "descending",
     filterCol: "Filter…",
     filterClear: "Clear filter",
+    index: "Table index",
+    indexSub: "Every table across plugins: rows, columns, primary key, indexes and last write (read-only)",
+    idxDomain: "Domain",
+    idxTable: "Table",
+    idxRows: "Rows",
+    idxCols: "Cols",
+    idxKey: "Primary key",
+    idxIndexes: "Indexes",
+    idxLastWrite: "Last write",
+    idxNone: "—",
+    idxEmpty: "No tables to index",
+    idxTables: "Tables",
+    idxAt: "Generated",
   },
 };
 
@@ -185,6 +218,14 @@ var CSS = [
   "." + P + "-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
   "@media (max-width:900px){." + P + "{grid-template-columns:minmax(0,1fr)}." + P + "-side{position:static;flex-direction:row;flex-wrap:wrap;gap:6px;padding:6px}." + P + "-sidetitle{display:none}." + P + "-stab{padding:6px 10px;flex:none}." + P + "-sidecount{display:none}." + P + "-tablewrap{max-height:calc(100vh - 260px)}}",
   "@media (prefers-reduced-motion:reduce){." + P + "-track,." + P + "-track::after,." + P + "-sk,." + P + "-drawer{transition:none;animation:none}}",
+  "." + P + "-idxsub{font-size:11.5px;color:var(--cfg-muted);line-height:1.55}",
+  "." + P + "-idxsum{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--cfg-muted)}",
+  "." + P + "-idxsum b{font-weight:660;color:var(--dsw-alias-label-primary,inherit);font-variant-numeric:tabular-nums}",
+  "." + P + "-idxname{font-size:12.5px;font-weight:600}",
+  "." + P + "-idxtags{display:flex;flex-wrap:wrap;gap:4px;max-width:280px}",
+  "." + P + "-idxchip{display:inline-block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;line-height:1.6;border-radius:999px;padding:0 7px;background:color-mix(in oklab,currentColor 7%,transparent);color:var(--cfg-muted);white-space:nowrap}",
+  "." + P + "-idxchip.u{background:color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 15%,transparent);color:var(--dsw-alias-brand-primary,inherit)}",
+  "." + P + "-idxnone{color:var(--cfg-faint)}",
   "." + P + "-frow th{padding:0 8px 6px;border-bottom:1px solid var(--cfg-line)}",
   "." + P + "-fcell{position:relative;display:block;min-width:96px}",
   "." + P + "-finput{width:100%;box-sizing:border-box;border:1px solid transparent;border-radius:6px;background:color-mix(in oklab,currentColor 4%,transparent);color:inherit;font:inherit;font-size:11.5px;padding:3px 18px 3px 6px;min-width:0}",
@@ -282,6 +323,10 @@ function DataView(props) {
   var reqRef = React.useRef(0);
   var toastTimer = React.useRef(null);
 
+  var indexS = React.useState(null);
+  var index = indexS[0], setIndex = indexS[1];
+  var indexBusyS = React.useState(false);
+  var indexBusy = indexBusyS[0], setIndexBusy = indexBusyS[1];
   var cfgSize = Number(cfg["data.pageSize"]) || 50;
   var size = pageSize || (PAGE_SIZES.indexOf(cfgSize) >= 0 ? cfgSize : 50);
   var includeDeleted = includeDeletedRaw === null ? cfg["data.includeDeleted"] === true : includeDeletedRaw;
@@ -379,6 +424,93 @@ function DataView(props) {
   var current = null;
   if (tables) {
     for (var i = 0; i < tables.length; i++) if (tables[i].name === active) current = tables[i];
+  }
+
+  /**
+   * 拉取三插件各自的 dataTables(stats=true)，合成一张「表索引」。
+   * 单个插件不可用（未安装/版本过旧）时整块跳过，不影响其它插件。
+   */
+  function loadIndex() {
+    setIndexBusy(true);
+    Promise.all(DOMAINS.map(function (d) {
+      return Promise.resolve(api.call(d.id + ".dataTables", { stats: true }))
+        .then(function (r) { return { domain: d, payload: unwrap(r) || {} }; })
+        .catch(function () { return null; });
+    })).then(function (list) {
+      var rows = [];
+      list.forEach(function (item) {
+        if (!item) return;
+        (item.payload.tables || []).forEach(function (tb) {
+          rows.push({ domain: item.domain, table: tb, stats: tb.stats || null });
+        });
+      });
+      setIndex(rows);
+      setIndexBusy(false);
+    });
+  }
+
+  function toggleIndex() {
+    if (index) { setIndex(null); return; }
+    loadIndex();
+  }
+
+  function domainLabel(d) { return lang === "en" ? d.en : d.zh; }
+
+  function renderIndex() {
+    var rows = index || [];
+    var totalRows = rows.reduce(function (n, r) { return n + (r.stats && Number(r.stats.rows) || 0); }, 0);
+    return h("div", { className: P + "-idx" },
+      h("div", { className: P + "-head" },
+        h("div", { className: P + "-headmain" },
+          h("h2", null, t.index, h("span", { className: P + "-code" }, "index")),
+          h("div", { className: P + "-idxsub" }, t.indexSub)),
+        h("button", {
+          type: "button", className: P + "-btn", "aria-busy": indexBusy ? "true" : "false",
+          onClick: function () { loadIndex(); },
+        }, t.refresh)),
+      h("div", { className: P + "-idxsum" },
+        h("span", null, t.idxTables, " ", h("b", null, String(rows.length))),
+        h("span", null, t.idxRows, " ", h("b", null, String(totalRows)))),
+      indexBusy && !rows.length
+        ? h("div", { className: P + "-empty" }, t.loading)
+        : !rows.length
+          ? h("div", { className: P + "-empty" }, t.idxEmpty)
+          : h("div", { className: P + "-tablewrap" },
+            h("table", { className: P + "-table" },
+              h("thead", null, h("tr", null,
+                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxDomain)),
+                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxTable)),
+                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxRows)),
+                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxCols)),
+                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxKey)),
+                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxIndexes)),
+                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxLastWrite)))),
+              h("tbody", null, rows.map(function (row) {
+                var st = row.stats || {};
+                var pk = (st.primaryKey || []).join(", ");
+                var indexes = st.indexes || [];
+                return h("tr", { className: P + "-tr", key: row.domain.id + "." + row.table.name },
+                  h("td", { className: P + "-cell" }, domainLabel(row.domain)),
+                  h("td", { className: P + "-cell" },
+                    h("div", { className: P + "-idxname" }, tableLabel(row.table)),
+                    h("div", { className: P + "-sidetable" }, row.table.name)),
+                  h("td", { className: P + "-cell num" }, String(st.rows === undefined ? row.table.count : st.rows)),
+                  h("td", { className: P + "-cell num" }, String(st.columnCount || (row.table.columns || []).length)),
+                  h("td", { className: P + "-cell" }, pk
+                    ? h("span", { className: P + "-idxchip u" }, pk)
+                    : h("span", { className: P + "-idxnone" }, t.idxNone)),
+                  h("td", { className: P + "-cell" }, h("div", { className: P + "-idxtags" }, indexes.length
+                    ? indexes.map(function (ix) {
+                      return h("span", {
+                        key: ix.name, title: ix.name + " (" + (ix.columns || []).join(", ") + ")",
+                        className: P + "-idxchip" + (ix.unique ? " u" : ""),
+                      }, (ix.columns || []).join(",") || ix.name);
+                    })
+                    : h("span", { className: P + "-idxnone" }, t.idxNone))),
+                  h("td", { className: P + "-cell mono" }, st.lastWrite
+                    ? timeText(st.lastWrite.at)
+                    : h("span", { className: P + "-idxnone" }, t.idxNone)));
+              })))));
   }
 
   function tableLabel(tb) {
@@ -587,8 +719,17 @@ function DataView(props) {
             h("span", { className: P + "-sidecount" }, String(tb.count))),
           h("span", { className: P + "-sidetable" }, tb.name),
           tb.deletedCount ? h("span", { className: P + "-sidetable" }, tb.deletedCount + " " + t.deleted) : null);
-      })),
+      }),
+      h("button", {
+        type: "button", className: P + "-stab" + (index ? " on" : ""),
+        "aria-pressed": !!index, onClick: toggleIndex,
+      },
+        h("span", { className: P + "-stabname" },
+          h("span", null, t.index),
+          h("span", { className: P + "-sidecount" }, index ? String(index.length) : "")),
+        h("span", { className: P + "-sidetable" }, "index"))),
     h("div", { className: P + "-main" },
+      index ? renderIndex() : [
       h("div", { className: P + "-head" },
         h("div", { className: P + "-headmain" },
           h("h2", null, tableLabel(current), h("span", { className: P + "-code" }, active)),
@@ -620,7 +761,7 @@ function DataView(props) {
             onChange: function (e) { setPageSize(Number(e.target.value)); setPage(1); },
           }, PAGE_SIZES.map(function (n) { return h("option", { key: n, value: n }, String(n)); })))),
       renderRows(),
-      renderFoot()),
+      renderFoot()]),
     drawer ? h("div", null,
       h("div", { className: P + "-mask", onClick: function () { setDrawer(null); } }),
       h("aside", { className: P + "-drawer", role: "dialog", "aria-modal": "true", "aria-label": drawer.column },

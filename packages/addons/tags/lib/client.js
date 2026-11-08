@@ -1428,6 +1428,11 @@ var require_data = __commonJS({
       "data.includeDeleted": false
     };
     var PAGE_SIZES = [10, 25, 50, 100, 200];
+    var DOMAINS = [
+      { id: "tasks", zh: "\u4EFB\u52A1", en: "Tasks" },
+      { id: "tags", zh: "\u6807\u7B7E", en: "Tags" },
+      { id: "sites", zh: "\u7AD9\u70B9", en: "Sites" }
+    ];
     var COPY = {
       zh: {
         title: "\u6570\u636E",
@@ -1467,7 +1472,20 @@ var require_data = __commonJS({
         sortAsc: "\u5347\u5E8F",
         sortDesc: "\u964D\u5E8F",
         filterCol: "\u7B5B\u9009\u2026",
-        filterClear: "\u6E05\u9664\u7B5B\u9009"
+        filterClear: "\u6E05\u9664\u7B5B\u9009",
+        index: "\u8868\u7D22\u5F15",
+        indexSub: "\u4E00\u5C4F\u770B\u6E05\u5404\u63D2\u4EF6\u8D1F\u8D23\u7684\u8868\uFF1A\u884C\u6570\u3001\u5217\u6570\u3001\u4E3B\u952E\u3001\u7D22\u5F15\u4E0E\u6700\u8FD1\u5199\u5165\uFF08\u53EA\u8BFB\uFF0C\u8DE8\u63D2\u4EF6\u6C47\u603B\uFF09",
+        idxDomain: "\u57DF",
+        idxTable: "\u8868",
+        idxRows: "\u884C\u6570",
+        idxCols: "\u5217\u6570",
+        idxKey: "\u4E3B\u952E",
+        idxIndexes: "\u7D22\u5F15",
+        idxLastWrite: "\u6700\u8FD1\u5199\u5165",
+        idxNone: "\u65E0",
+        idxEmpty: "\u6CA1\u6709\u53EF\u7EDF\u8BA1\u7684\u8868",
+        idxTables: "\u8868",
+        idxAt: "\u7EDF\u8BA1\u65F6\u95F4"
       },
       en: {
         title: "Data",
@@ -1507,7 +1525,20 @@ var require_data = __commonJS({
         sortAsc: "ascending",
         sortDesc: "descending",
         filterCol: "Filter\u2026",
-        filterClear: "Clear filter"
+        filterClear: "Clear filter",
+        index: "Table index",
+        indexSub: "Every table across plugins: rows, columns, primary key, indexes and last write (read-only)",
+        idxDomain: "Domain",
+        idxTable: "Table",
+        idxRows: "Rows",
+        idxCols: "Cols",
+        idxKey: "Primary key",
+        idxIndexes: "Indexes",
+        idxLastWrite: "Last write",
+        idxNone: "\u2014",
+        idxEmpty: "No tables to index",
+        idxTables: "Tables",
+        idxAt: "Generated"
       }
     };
     var CSS = [
@@ -1587,6 +1618,14 @@ var require_data = __commonJS({
       "." + P + "-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
       "@media (max-width:900px){." + P + "{grid-template-columns:minmax(0,1fr)}." + P + "-side{position:static;flex-direction:row;flex-wrap:wrap;gap:6px;padding:6px}." + P + "-sidetitle{display:none}." + P + "-stab{padding:6px 10px;flex:none}." + P + "-sidecount{display:none}." + P + "-tablewrap{max-height:calc(100vh - 260px)}}",
       "@media (prefers-reduced-motion:reduce){." + P + "-track,." + P + "-track::after,." + P + "-sk,." + P + "-drawer{transition:none;animation:none}}",
+      "." + P + "-idxsub{font-size:11.5px;color:var(--cfg-muted);line-height:1.55}",
+      "." + P + "-idxsum{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--cfg-muted)}",
+      "." + P + "-idxsum b{font-weight:660;color:var(--dsw-alias-label-primary,inherit);font-variant-numeric:tabular-nums}",
+      "." + P + "-idxname{font-size:12.5px;font-weight:600}",
+      "." + P + "-idxtags{display:flex;flex-wrap:wrap;gap:4px;max-width:280px}",
+      "." + P + "-idxchip{display:inline-block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;line-height:1.6;border-radius:999px;padding:0 7px;background:color-mix(in oklab,currentColor 7%,transparent);color:var(--cfg-muted);white-space:nowrap}",
+      "." + P + "-idxchip.u{background:color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 15%,transparent);color:var(--dsw-alias-brand-primary,inherit)}",
+      "." + P + "-idxnone{color:var(--cfg-faint)}",
       "." + P + "-frow th{padding:0 8px 6px;border-bottom:1px solid var(--cfg-line)}",
       "." + P + "-fcell{position:relative;display:block;min-width:96px}",
       "." + P + "-finput{width:100%;box-sizing:border-box;border:1px solid transparent;border-radius:6px;background:color-mix(in oklab,currentColor 4%,transparent);color:inherit;font:inherit;font-size:11.5px;padding:3px 18px 3px 6px;min-width:0}",
@@ -1680,6 +1719,10 @@ var require_data = __commonJS({
       var filtersKey = JSON.stringify(filters);
       var reqRef = React2.useRef(0);
       var toastTimer = React2.useRef(null);
+      var indexS = React2.useState(null);
+      var index = indexS[0], setIndex = indexS[1];
+      var indexBusyS = React2.useState(false);
+      var indexBusy = indexBusyS[0], setIndexBusy = indexBusyS[1];
       var cfgSize = Number(cfg["data.pageSize"]) || 50;
       var size = pageSize || (PAGE_SIZES.indexOf(cfgSize) >= 0 ? cfgSize : 50);
       var includeDeleted = includeDeletedRaw === null ? cfg["data.includeDeleted"] === true : includeDeletedRaw;
@@ -1780,6 +1823,116 @@ var require_data = __commonJS({
       var current = null;
       if (tables) {
         for (var i = 0; i < tables.length; i++) if (tables[i].name === active) current = tables[i];
+      }
+      function loadIndex() {
+        setIndexBusy(true);
+        Promise.all(DOMAINS.map(function(d) {
+          return Promise.resolve(api.call(d.id + ".dataTables", { stats: true })).then(function(r) {
+            return { domain: d, payload: unwrap(r) || {} };
+          }).catch(function() {
+            return null;
+          });
+        })).then(function(list) {
+          var rows = [];
+          list.forEach(function(item) {
+            if (!item) return;
+            (item.payload.tables || []).forEach(function(tb) {
+              rows.push({ domain: item.domain, table: tb, stats: tb.stats || null });
+            });
+          });
+          setIndex(rows);
+          setIndexBusy(false);
+        });
+      }
+      function toggleIndex() {
+        if (index) {
+          setIndex(null);
+          return;
+        }
+        loadIndex();
+      }
+      function domainLabel(d) {
+        return lang === "en" ? d.en : d.zh;
+      }
+      function renderIndex() {
+        var rows = index || [];
+        var totalRows = rows.reduce(function(n, r) {
+          return n + (r.stats && Number(r.stats.rows) || 0);
+        }, 0);
+        return h2(
+          "div",
+          { className: P + "-idx" },
+          h2(
+            "div",
+            { className: P + "-head" },
+            h2(
+              "div",
+              { className: P + "-headmain" },
+              h2("h2", null, t.index, h2("span", { className: P + "-code" }, "index")),
+              h2("div", { className: P + "-idxsub" }, t.indexSub)
+            ),
+            h2("button", {
+              type: "button",
+              className: P + "-btn",
+              "aria-busy": indexBusy ? "true" : "false",
+              onClick: function() {
+                loadIndex();
+              }
+            }, t.refresh)
+          ),
+          h2(
+            "div",
+            { className: P + "-idxsum" },
+            h2("span", null, t.idxTables, " ", h2("b", null, String(rows.length))),
+            h2("span", null, t.idxRows, " ", h2("b", null, String(totalRows)))
+          ),
+          indexBusy && !rows.length ? h2("div", { className: P + "-empty" }, t.loading) : !rows.length ? h2("div", { className: P + "-empty" }, t.idxEmpty) : h2(
+            "div",
+            { className: P + "-tablewrap" },
+            h2(
+              "table",
+              { className: P + "-table" },
+              h2("thead", null, h2(
+                "tr",
+                null,
+                h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxDomain)),
+                h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxTable)),
+                h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxRows)),
+                h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxCols)),
+                h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxKey)),
+                h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxIndexes)),
+                h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxLastWrite))
+              )),
+              h2("tbody", null, rows.map(function(row) {
+                var st = row.stats || {};
+                var pk = (st.primaryKey || []).join(", ");
+                var indexes = st.indexes || [];
+                return h2(
+                  "tr",
+                  { className: P + "-tr", key: row.domain.id + "." + row.table.name },
+                  h2("td", { className: P + "-cell" }, domainLabel(row.domain)),
+                  h2(
+                    "td",
+                    { className: P + "-cell" },
+                    h2("div", { className: P + "-idxname" }, tableLabel(row.table)),
+                    h2("div", { className: P + "-sidetable" }, row.table.name)
+                  ),
+                  h2("td", { className: P + "-cell num" }, String(st.rows === void 0 ? row.table.count : st.rows)),
+                  h2("td", { className: P + "-cell num" }, String(st.columnCount || (row.table.columns || []).length)),
+                  h2("td", { className: P + "-cell" }, pk ? h2("span", { className: P + "-idxchip u" }, pk) : h2("span", { className: P + "-idxnone" }, t.idxNone)),
+                  h2("td", { className: P + "-cell" }, h2("div", { className: P + "-idxtags" }, indexes.length ? indexes.map(function(ix) {
+                    return h2("span", {
+                      key: ix.name,
+                      title: ix.name + " (" + (ix.columns || []).join(", ") + ")",
+                      className: P + "-idxchip" + (ix.unique ? " u" : "")
+                    }, (ix.columns || []).join(",") || ix.name);
+                  }) : h2("span", { className: P + "-idxnone" }, t.idxNone))),
+                  h2("td", { className: P + "-cell mono" }, st.lastWrite ? timeText(st.lastWrite.at) : h2("span", { className: P + "-idxnone" }, t.idxNone))
+                );
+              }))
+            )
+          )
+        );
       }
       function tableLabel(tb) {
         if (!tb || !tb.label) return "";
@@ -2066,92 +2219,110 @@ var require_data = __commonJS({
               h2("span", { className: P + "-sidetable" }, tb.name),
               tb.deletedCount ? h2("span", { className: P + "-sidetable" }, tb.deletedCount + " " + t.deleted) : null
             );
-          })
+          }),
+          h2(
+            "button",
+            {
+              type: "button",
+              className: P + "-stab" + (index ? " on" : ""),
+              "aria-pressed": !!index,
+              onClick: toggleIndex
+            },
+            h2(
+              "span",
+              { className: P + "-stabname" },
+              h2("span", null, t.index),
+              h2("span", { className: P + "-sidecount" }, index ? String(index.length) : "")
+            ),
+            h2("span", { className: P + "-sidetable" }, "index")
+          )
         ),
         h2(
           "div",
           { className: P + "-main" },
-          h2(
-            "div",
-            { className: P + "-head" },
+          index ? renderIndex() : [
             h2(
               "div",
-              { className: P + "-headmain" },
-              h2("h2", null, tableLabel(current), h2("span", { className: P + "-code" }, active)),
+              { className: P + "-head" },
               h2(
                 "div",
-                { className: P + "-sub" },
-                current ? fmt(t.rowCount, { n: current.count }) : "",
-                current && current.deletedCount ? " \xB7 " + fmt(t.deletedCount, { n: current.deletedCount }) : "",
-                " \xB7 " + t.subtitle
-              )
+                { className: P + "-headmain" },
+                h2("h2", null, tableLabel(current), h2("span", { className: P + "-code" }, active)),
+                h2(
+                  "div",
+                  { className: P + "-sub" },
+                  current ? fmt(t.rowCount, { n: current.count }) : "",
+                  current && current.deletedCount ? " \xB7 " + fmt(t.deletedCount, { n: current.deletedCount }) : "",
+                  " \xB7 " + t.subtitle
+                )
+              ),
+              h2("button", {
+                type: "button",
+                className: P + "-btn",
+                "aria-busy": loadingRows ? "true" : "false",
+                onClick: function() {
+                  loadTables();
+                  setPage(page);
+                  setSort(sort);
+                  setSearch(search);
+                }
+              }, t.refresh)
             ),
-            h2("button", {
-              type: "button",
-              className: P + "-btn",
-              "aria-busy": loadingRows ? "true" : "false",
-              onClick: function() {
-                loadTables();
-                setPage(page);
-                setSort(sort);
-                setSearch(search);
-              }
-            }, t.refresh)
-          ),
-          h2(
-            "div",
-            { className: P + "-toolbar" },
             h2(
               "div",
-              { className: P + "-search" },
-              h2("input", {
-                type: "search",
-                value: searchDraft,
-                placeholder: t.search,
-                "aria-label": t.search,
-                onChange: function(e) {
-                  setSearchDraft(e.target.value);
-                }
-              })
-            ),
-            h2(
-              "label",
-              { className: P + "-switch" },
-              h2("input", { type: "checkbox", checked: includeDeleted, onChange: function(e) {
-                setIncludeDeleted(e.target.checked);
-                setPage(1);
-              } }),
-              h2("span", { className: P + "-track" }),
-              h2("span", null, t.includeDeleted)
-            ),
-            h2(
-              "label",
-              { className: P + "-switch" },
-              h2("input", { type: "checkbox", checked: showSystem, onChange: function(e) {
-                setShowSystem(e.target.checked);
-              } }),
-              h2("span", { className: P + "-track" }),
-              h2("span", null, t.showSystem)
-            ),
-            h2("span", { className: P + "-grow" }),
-            h2(
-              "label",
-              { style: { display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11.5px", color: "var(--cfg-muted)" } },
-              h2("span", null, t.pageSize),
-              h2("select", {
-                className: P + "-select",
-                value: size,
-                onChange: function(e) {
-                  setPageSize(Number(e.target.value));
+              { className: P + "-toolbar" },
+              h2(
+                "div",
+                { className: P + "-search" },
+                h2("input", {
+                  type: "search",
+                  value: searchDraft,
+                  placeholder: t.search,
+                  "aria-label": t.search,
+                  onChange: function(e) {
+                    setSearchDraft(e.target.value);
+                  }
+                })
+              ),
+              h2(
+                "label",
+                { className: P + "-switch" },
+                h2("input", { type: "checkbox", checked: includeDeleted, onChange: function(e) {
+                  setIncludeDeleted(e.target.checked);
                   setPage(1);
-                }
-              }, PAGE_SIZES.map(function(n) {
-                return h2("option", { key: n, value: n }, String(n));
-              }))
-            )
-          ),
-          renderRows(),
-          renderFoot()
+                } }),
+                h2("span", { className: P + "-track" }),
+                h2("span", null, t.includeDeleted)
+              ),
+              h2(
+                "label",
+                { className: P + "-switch" },
+                h2("input", { type: "checkbox", checked: showSystem, onChange: function(e) {
+                  setShowSystem(e.target.checked);
+                } }),
+                h2("span", { className: P + "-track" }),
+                h2("span", null, t.showSystem)
+              ),
+              h2("span", { className: P + "-grow" }),
+              h2(
+                "label",
+                { style: { display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11.5px", color: "var(--cfg-muted)" } },
+                h2("span", null, t.pageSize),
+                h2("select", {
+                  className: P + "-select",
+                  value: size,
+                  onChange: function(e) {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                  }
+                }, PAGE_SIZES.map(function(n) {
+                  return h2("option", { key: n, value: n }, String(n));
+                }))
+              )
+            ),
+            renderRows(),
+            renderFoot()
+          ]
         ),
         drawer ? h2(
           "div",
@@ -3334,7 +3505,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.6.4",
+    version: "1.6.5",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },
       { id: "tags", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TagsView },
