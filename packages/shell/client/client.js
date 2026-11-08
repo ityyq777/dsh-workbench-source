@@ -54,6 +54,9 @@
           sync_conflict_hint: "同一行在本地和云端都被修改，选择保留哪个版本",
           sync_keep_local: "保留本地", sync_keep_server: "采用云端", sync_dismiss: "忽略",
           sync_resolve_failed: "冲突处理失败", sync_ok: "同步完成", sync_partial: "部分表同步失败",
+          record_label: "记录模式", record_on: "记录中", record_off: "记录",
+          record_on_title: "本会话记录模式已开启，点击关闭", record_off_title: "开启后把完成的可交付内容记到工作台（仅本会话）",
+          record_busy: "切换中", record_error: "切换失败",
         },
         en: {
           nav: "Workbench", title: "Personal Workbench", tagline: "Offline-first · addons installed by DSH",
@@ -97,6 +100,9 @@
           sync_conflict_hint: "The same row changed locally and remotely; choose which version to keep",
           sync_keep_local: "Keep local", sync_keep_server: "Use remote", sync_dismiss: "Dismiss",
           sync_resolve_failed: "Failed to resolve conflict", sync_ok: "Sync complete", sync_partial: "Some tables failed",
+          record_label: "Record mode", record_on: "Recording", record_off: "Record",
+          record_on_title: "Record mode is on for this session; click to turn it off", record_off_title: "Record finished deliverables to the workbench (this session only)",
+          record_busy: "Switching", record_error: "Switch failed",
         },
       };
 
@@ -203,6 +209,12 @@
         ".wb-conflict-main{min-width:0;display:flex;flex-direction:column;gap:2px}",
         ".wb-conflict-meta{font-size:11px;opacity:.55;word-break:break-word}",
         ".wb-conflict-actions{display:flex;gap:6px;flex:none}",
+        ".wb-record-pill{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid var(--wb-line);border-radius:999px;background:transparent;color:inherit;cursor:pointer;font:inherit;font-size:12px;line-height:1;opacity:.55;white-space:nowrap;transition:opacity .15s ease,border-color .15s ease,background .15s ease}",
+        ".wb-record-pill:hover{opacity:.9;border-color:color-mix(in oklab,var(--dsw-alias-accent,#11a89b) 35%,var(--wb-line))}",
+        ".wb-record-pill.on{opacity:1;border-color:color-mix(in oklab,var(--dsw-alias-accent,#11a89b) 45%,transparent);background:color-mix(in oklab,var(--dsw-alias-accent,#11a89b) 10%,transparent)}",
+        ".wb-record-pill:disabled{opacity:.4;cursor:default}",
+        ".wb-record-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.5;flex:none}",
+        ".wb-record-pill.on .wb-record-dot{background:var(--dsw-alias-accent,#11a89b);opacity:1;box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-accent,#11a89b) 18%,transparent)}",
       ].join("\n");
 
       // ── 子插件宿主桥（必须在任何 addon client.js 之前就位）──
@@ -211,8 +223,16 @@
       var apiCache = new Map();
       var addonState = { addons: [], loaded: false, shellVersion: "" };
       var storeListeners = new Set();
+      var recordModes = {};         // sessionId -> enabled
+      var recordListeners = new Set();
       var stream = null;
       var lastAddonError = null;
+
+      function setRecordMode(sessionId, enabled) {
+        if (!sessionId) return;
+        recordModes[sessionId] = !!enabled;
+        recordListeners.forEach(function (fn) { try { fn(sessionId, !!enabled); } catch (e) { console.error(e); } });
+      }
 
       function notifyStore() {
         storeListeners.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } });
@@ -267,6 +287,12 @@
         });
         stream.addEventListener("domain-event", function (e) {
           try { broadcast(JSON.parse(e.data)); } catch (err) { console.warn(err); }
+        });
+        stream.addEventListener("record-mode", function (e) {
+          try {
+            var payload = JSON.parse(e.data);
+            if (payload && payload.sessionId) setRecordMode(payload.sessionId, payload.enabled);
+          } catch (err) { console.warn(err); }
         });
       }
       function useAddonStore() {
@@ -809,6 +835,59 @@
         ] });
       }
 
+      var RecordToggle = function (props) {
+        var sid = props && props.sessionId;
+        var st = react.useState(false); var on = st[0]; var setOn = st[1];
+        var bst = react.useState(false); var busy = bst[0]; var setBusy = bst[1];
+        var est = react.useState(""); var err = est[0]; var setErr = est[1];
+        var t = props && props.t;
+
+        react.useEffect(function () {
+          if (!sid) return;
+          var fn = function (changed, value) { if (changed === sid) setOn(!!value); };
+          recordListeners.add(fn);
+          ensureStream();
+          fetch("/workbench/api/record?sessionId=" + encodeURIComponent(sid))
+            .then(function (r) { return r.json(); })
+            .then(function (j) { if (j && j.ok) setRecordMode(sid, !!j.enabled); })
+            .catch(function () { /* 宿主不可达时保持关闭态，不打扰输入 */ });
+          return function () { recordListeners.delete(fn); };
+        }, [sid]);
+
+        function toggle() {
+          if (!sid || busy) return;
+          setBusy(true); setErr("");
+          fetch("/workbench/api/record", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ sessionId: sid, enabled: !on }),
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+              if (!j || !j.ok) throw new Error((j && j.error) || "request failed");
+              setRecordMode(sid, !!j.enabled);
+            })
+            .catch(function (e) { setErr(String((e && e.message) || e)); })
+            .then(function () { setBusy(false); });
+        }
+
+        if (!sid) return null;
+        var label = busy ? t("record_busy") : on ? t("record_on") : t("record_off");
+        var title = err ? t("record_error") + ": " + err : on ? t("record_on_title") : t("record_off_title");
+        return h("button", {
+          type: "button",
+          className: "wb-record-pill" + (on ? " on" : ""),
+          onClick: toggle,
+          disabled: busy,
+          title: title,
+          "aria-label": t("record_label") + ": " + label,
+          "aria-pressed": on ? "true" : "false",
+        },
+          h("span", { className: "wb-record-dot" }),
+          h("span", { className: "wb-record-label", children: label })
+        );
+      };
+
       var exports_ = {
         name: NS,
         inject: ["slots", "locale", "theme"],
@@ -840,6 +919,12 @@
               return ctx.slots.register(
                 { name: "settings.plugins.tab", id: NS, order: 65, label: function () { return t("nav"); }, locale: NS, inject: function () { return { t: t }; } },
                 function () { return h(WorkbenchPage, { t: t }); }
+              );
+            });
+            ctx.slots.inject("conversation.input.left", function () {
+              return ctx.slots.register(
+                { name: "conversation.input.left", id: NS + "-record", order: 40, label: function () { return t("record_label"); } },
+                function (props) { return h(RecordToggle, { sessionId: props && props.sessionId, t: t }); }
               );
             });
           } catch (e) { console.error("[dsh-workbench] apply crashed:", e, e && e.stack); throw e; }

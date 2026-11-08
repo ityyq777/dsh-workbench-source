@@ -55,4 +55,11 @@ CREATE INDEX IF NOT EXISTS idx_dead_letter_table ON sync_dead_letter(table_name,
 CREATE TABLE IF NOT EXISTS sync_state (
   k TEXT PRIMARY KEY, v TEXT NOT NULL
 );
+
+-- 会话级记录模式：只影响本机当前会话，不参与同步/备份。
+CREATE TABLE IF NOT EXISTS session_mode (
+  session_id TEXT PRIMARY KEY,
+  enabled INTEGER NOT NULL DEFAULT 0,
+  updated_at INTEGER NOT NULL
+);
 `;

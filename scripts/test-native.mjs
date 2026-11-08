@@ -14,10 +14,19 @@ const cleanups = [];
 let host = null;
 let toolDef = null;
 
+let webRoute = null;
+let promptSection = null;
+let recordCommand = null;
 const fakeCtx = {
-  webServer: { register: () => () => {} },
+  webServer: { register: (route) => { webRoute = route; return () => {}; } },
   tools: { register: (def) => { toolDef = def; } },
   connection: { requestRejection: () => undefined },
+  systemPrompt: {
+    section: (section) => { promptSection = section; return () => {}; },
+    getSectionOrder: () => 500,
+  },
+  commands: { register: (command) => { recordCommand = command; return () => {}; } },
+  agents: { get: () => undefined },
   provide: (name, value) => { if (name === "workbench") host = value; },
   effect: (fn) => { const d = fn(); if (typeof d === "function") cleanups.push(d); },
 };
@@ -328,6 +337,63 @@ try {
     if (badDispose) badDispose();
     if (fakeDispose) fakeDispose();
   }
+
+  // ── 16. 会话记录模式：命令、动态 section、HTTP 状态 ──
+  assert(recordCommand && recordCommand.name === "record", "未注册 /record 命令");
+  assert(promptSection && promptSection.name === "workbench:record-mode", "未注册记录模式 prompt section");
+  assert(promptSection.order === 510, "记录模式 section 顺序不对：" + promptSection.order);
+
+  const recordSid = "sess-record-native";
+  const recordAgent = { id: recordSid, session: { id: recordSid } };
+  const context = { agent: recordAgent };
+  assert(promptSection.text(context) === "", "记录模式默认不应注入提示");
+  let cmdRes = recordCommand.handler({ agent: recordAgent, rawInput: "", attachments: [] });
+  assert(cmdRes.kind === "success" && cmdRes.text.includes("/record on"), "/record 帮助不完整");
+  cmdRes = recordCommand.handler({ agent: recordAgent, rawInput: "on", attachments: [] });
+  assert(cmdRes.kind === "success" && cmdRes.text.includes("已开启"), "/record on 回执不对");
+  const onText = promptSection.text(context);
+  assert(onText.includes("记录模式") && onText.includes(recordSid), "开启后未注入记录提示");
+  assert(onText.includes("dsh-session:" + recordSid), "记录提示缺少按会话去重键");
+  cmdRes = recordCommand.handler({ agent: recordAgent, rawInput: "status", attachments: [] });
+  assert(cmdRes.text.includes("已开启"), "/record status 未显示已开启");
+  cmdRes = recordCommand.handler({ agent: recordAgent, rawInput: "off", attachments: [] });
+  assert(cmdRes.kind === "success" && cmdRes.text.includes("已关闭"), "/record off 回执不对");
+  assert(promptSection.text(context) === "", "关闭后仍在注入记录提示");
+  assert(promptSection.text({ agent: { id: "other-session", session: { id: "other-session" } } }) === "", "记录模式串到了其他会话");
+  assert(promptSection.text({}) === "", "无 agent 时不应注入记录提示");
+
+  async function api(method, path, body) {
+    let status = 0;
+    let payload = null;
+    const req = {
+      method,
+      url: path,
+      headers: {},
+      async *[Symbol.asyncIterator]() {
+        if (body !== undefined) yield Buffer.from(JSON.stringify(body));
+      },
+    };
+    const res = {
+      writeHead(code) { status = code; },
+      end(text) { payload = JSON.parse(String(text)); },
+    };
+    await webRoute.handler(req, res);
+    return { status, payload };
+  }
+
+  const httpSid = "sess-record-http";
+  let httpRes = await api("GET", "/workbench/api/record?sessionId=" + httpSid);
+  assert(httpRes.status === 200 && httpRes.payload.enabled === false, "GET /record 默认状态不对");
+  httpRes = await api("POST", "/workbench/api/record", { sessionId: httpSid, enabled: true });
+  assert(httpRes.status === 200 && httpRes.payload.enabled === true, "POST /record 未开启");
+  httpRes = await api("GET", "/workbench/api/record?sessionId=" + httpSid);
+  assert(httpRes.payload.enabled === true, "GET /record 未读到开启状态");
+  const httpText = promptSection.text({ agent: { id: httpSid, session: { id: httpSid } } });
+  assert(httpText.includes("记录模式"), "HTTP 开启后未注入记录提示");
+  httpRes = await api("POST", "/workbench/api/record", { sessionId: httpSid, enabled: "yes" });
+  assert(httpRes.status === 400, "POST /record 未拒绝非布尔 enabled");
+  httpRes = await api("POST", "/workbench/api/record", { enabled: true });
+  assert(httpRes.status === 400, "POST /record 未拒绝空 sessionId");
 
   console.log("NATIVE TEST PASS", { domains: domains.length, actions: names.length, home });
 } finally {

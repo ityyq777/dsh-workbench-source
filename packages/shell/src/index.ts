@@ -84,6 +84,61 @@ function saveCreds(creds: WbState["creds"] | null): void {
 /** SSE 订阅者集合（UI 实时刷新）。 */
 type Subscriber = (event: string, data: unknown) => void;
 
+/** 会话记录模式：只影响当前会话，不参与同步/备份。 */
+function sessionModeOf(db: DatabaseSync, sessionId: string): boolean {
+  try {
+    const row = db.prepare("SELECT enabled FROM session_mode WHERE session_id = ?").get(sessionId) as { enabled?: number } | undefined;
+    return !!row && Number(row.enabled) === 1;
+  } catch {
+    return false;
+  }
+}
+
+function setSessionMode(db: DatabaseSync, sessionId: string, enabled: boolean, now: number): void {
+  db.prepare(
+    "INSERT INTO session_mode(session_id, enabled, updated_at) VALUES(?, ?, ?) " +
+      "ON CONFLICT(session_id) DO UPDATE SET enabled = excluded.enabled, updated_at = excluded.updated_at",
+  ).run(sessionId, enabled ? 1 : 0, now);
+}
+
+const RECORD_COMMAND_HELP = [
+  "用法：/record on|off|status",
+  "",
+  "/record on      开启本会话的记录模式",
+  "/record off     关闭本会话的记录模式",
+  "/record status  查看当前状态",
+  "",
+  "记录模式下，我只把完成的可交付内容记成任务、站点或标签；",
+  "不记录聊天、日志、临时笔记、密钥和本地地址。",
+].join("\n");
+
+function recordPrompt(sessionId: string): string {
+  return [
+    "## 个人工作台账：记录模式",
+    "",
+    "本会话已开启记录模式。完成本轮主要任务后，如果产生了可复用的交付物，请顺手记到个人工作台；这只是收尾动作，不能打断或改变主任务。",
+    "",
+    "记录流程：",
+    "1. 先调用 Workbench，action 为 capabilities.list；需要某个域的字段细节时用 capabilities.get，再按需 actions.help。",
+    "2. 只记录同时满足 when 且不满足 notFor 的内容；没有命中就不写，不要为了有记录而凑数。",
+    "3. 用对应 records[].primaryAction 写入，不要猜 action 名。",
+    "4. 写入前查重：任务先 tasks.list（titleKey），站点先 sites.list，标签先 tags.list / tags.search。已存在就复用并补关联，不重复创建。",
+    "5. 只新增，不修改、不删除工作台已有数据。",
+    "6. 多条记录合并成一行回执，例如“已记录：任务 #42、标签 #7”；失败只提示一次，不阻塞主任务。",
+    "7. plan mode 下不要写入。",
+    "",
+    "记录边界：",
+    "- 任务：已完成的可交付项，或明确的下一步；不记纯问答、一次性查询、模糊想法。",
+    "- 站点：以后还会访问的外部站点；排除 localhost、127.0.0.1、内网地址、临时页、搜索结果页。",
+    "- 标签：可复用的主题分类；不记一次性描述、状态词、日期。",
+    "- 不记录聊天内容、日志、临时笔记、token/密钥/密码，以及用户明确拒绝记录的内容。",
+    "- 模式只作用于当前会话，不自动传给子 agent。",
+    "",
+    "去重键：任务用 dsh-session:" + sessionId + ":<稳定 slug>，每个条目一个键，不要整个会话共用一个键。",
+    "当前会话：" + sessionId,
+  ].join("\n");
+}
+
 export function apply(ctx: any): void {
   const state: WbState = { db: openDb(join(WB_HOME, "workbench.db")), creds: loadCreds(), cloudUrl: CLOUD_DEFAULT };
   const subscribers = new Set<Subscriber>();
@@ -613,6 +668,83 @@ export function apply(ctx: any): void {
   };
   ctx.provide?.("workbench", host);
 
+  // ── 会话记录模式：命令开关 + 动态 prompt section + 客户端 HTTP 状态 ──
+  const trackOn = (scope: any, dispose: unknown) => {
+    if (typeof dispose === "function" && typeof scope.effect === "function") scope.effect(() => dispose);
+  };
+  const installService = (deps: string[], fn: (scope: any) => void) => {
+    if (typeof ctx.inject === "function") {
+      try {
+        ctx.inject(deps, fn);
+        return;
+      } catch (e) {
+        log("注入服务失败", deps.join(","), e);
+      }
+    }
+    try {
+      fn(ctx);
+    } catch (e) {
+      log("安装会话记录模式失败", deps.join(","), e);
+    }
+  };
+
+  installService(["systemPrompt"], (scope) => {
+    const sp = scope.systemPrompt;
+    if (!sp || typeof sp.section !== "function") return;
+    let order = 510;
+    try {
+      order = sp.getSectionOrder("PLAN_POLICY") + 10;
+    } catch {
+      /* 老版本没有命名 order 时退回 510 */
+    }
+    const dispose = sp.section({
+      name: "workbench:record-mode",
+      order,
+      text: (context: any) => {
+        const sid = String(context?.agent?.session?.id ?? context?.agent?.id ?? "");
+        return sid && sessionModeOf(state.db, sid) ? recordPrompt(sid) : "";
+      },
+    });
+    trackOn(scope, dispose);
+  });
+
+  installService(["commands"], (scope) => {
+    const commands = scope.commands;
+    if (!commands || typeof commands.register !== "function") return;
+    const dispose = commands.register({
+      name: "record",
+      description: "开启或关闭本会话的个人工作台记录模式",
+      input: { hint: "[on|off|status]" },
+      handler: ({ agent, rawInput }: any) => {
+        const sid = String(agent?.session?.id ?? agent?.id ?? "");
+        if (!sid) return { kind: "error", text: "无法确定当前会话，记录模式没有变化。" };
+        const arg = String(rawInput ?? "").trim().toLowerCase();
+        if (arg === "on" || arg === "off") {
+          const enabled = arg === "on";
+          setSessionMode(state.db, sid, enabled, clock.now());
+          emit("record-mode", { sessionId: sid, enabled });
+          return {
+            kind: "success",
+            text: enabled
+              ? "记录模式已开启（仅本会话）。后续我只把完成的可交付内容记到工作台，不记聊天、日志、密钥和本地地址。"
+              : "记录模式已关闭。之后只有你明确说“记一下”时，我才会写入工作台。",
+          };
+        }
+        if (arg === "status") {
+          const enabled = sessionModeOf(state.db, sid);
+          return {
+            kind: "success",
+            text: enabled
+              ? "记录模式：已开启（仅本会话）。\n只记录完成的可交付项；不记聊天、日志、临时笔记、密钥和本地地址。关闭用 /record off。"
+              : "记录模式：未开启。\n开启用 /record on；开启后我只记录完成的可交付内容。",
+          };
+        }
+        return { kind: "success", text: RECORD_COMMAND_HELP };
+      },
+    });
+    trackOn(scope, dispose);
+  });
+
   /** 云端 fetch 封装（带 access token；401 时尝试 refresh 一次）。 */
   async function cloudFetch(path: string, init?: RequestInit & { json?: unknown }, retry = true): Promise<any> {
     const headers: Record<string, string> = {
@@ -770,6 +902,23 @@ export function apply(ctx: any): void {
 
               if (p === "/domains" && m === "GET") {
                 return send(200, { ok: true, domains: listDomains(), shellVersion: SHELL_VERSION });
+              }
+
+              if (p === "/record" && m === "GET") {
+                const sid = String(url.searchParams.get("sessionId") ?? "").trim();
+                if (!sid) return send(400, { ok: false, error: "缺少 sessionId" });
+                return send(200, { ok: true, sessionId: sid, enabled: sessionModeOf(state.db, sid) });
+              }
+
+              if (p === "/record" && m === "POST") {
+                const body = await bodyOf();
+                const sid = String(body?.sessionId ?? "").trim();
+                if (!sid || sid.length > 200) return send(400, { ok: false, error: "sessionId 不合法" });
+                if (typeof body?.enabled !== "boolean") return send(400, { ok: false, error: "enabled 必须是布尔值" });
+                const enabled = body.enabled === true;
+                setSessionMode(state.db, sid, enabled, clock.now());
+                emit("record-mode", { sessionId: sid, enabled });
+                return send(200, { ok: true, sessionId: sid, enabled });
               }
 
               if (p === "/backup/export" && m === "GET") {
