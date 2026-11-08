@@ -779,6 +779,40 @@ export function apply(ctx: any): void {
     return res.json();
   }
 
+  /** 云端健康检查缓存：首页/账号页共用，避免同步事件风暴时反复探测。 */
+  let cloudHealthCache: { at: number; value: Record<string, unknown> } | null = null;
+
+  /** 轻量探测云端是否可达；结果缓存 10s，失败不抛异常。 */
+  async function cloudHealth(): Promise<Record<string, unknown>> {
+    const now = Date.now();
+    if (cloudHealthCache && now - cloudHealthCache.at < 10_000) return cloudHealthCache.value;
+    const started = now;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3_000);
+    let value: Record<string, unknown>;
+    try {
+      const res = await fetch(state.cloudUrl + "/v1/health", { signal: controller.signal });
+      value = {
+        reachable: res.ok,
+        status: res.status,
+        checked_at: Date.now(),
+        latency_ms: Date.now() - started,
+      };
+    } catch (e) {
+      value = {
+        reachable: false,
+        status: 0,
+        checked_at: Date.now(),
+        latency_ms: Date.now() - started,
+        error: String((e && (e as Error).message) || e),
+      };
+    } finally {
+      clearTimeout(timer);
+    }
+    cloudHealthCache = { at: now, value };
+    return value;
+  }
+
   /** 把 /v1/sync/* 的错误响应转成可判别的 SyncHttpError。 */
   async function syncCall(path: string, json: Record<string, unknown>): Promise<any> {
     const r = await cloudFetch(path, { method: "POST", json });
@@ -998,10 +1032,15 @@ export function apply(ctx: any): void {
                   epoch: identity?.epoch ?? "",
                   onEvent: emit,
                 });
+                const cloud = state.creds
+                  ? await cloudHealth()
+                  : { reachable: null, status: 0, checked_at: 0 };
                 return send(200, {
                   ok: true,
                   logged_in: Boolean(state.creds),
                   ...engine.status(),
+                  running: syncBusy,
+                  cloud,
                 });
               }
               if (p === "/sync/conflicts" && m === "GET") {
@@ -1038,6 +1077,7 @@ export function apply(ctx: any): void {
                     deviceId: r.deviceId,
                   };
                   saveCreds(state.creds);
+                  cloudHealthCache = null;
                   emit("account-changed", { logged_in: true });
                   void runSync().catch((e) => log("登录后首轮同步失败", e));
                 }
@@ -1046,6 +1086,7 @@ export function apply(ctx: any): void {
               if (p === "/account/logout" && m === "POST") {
                 state.creds = null;
                 saveCreds(null);
+                cloudHealthCache = null;
                 emit("account-changed", { logged_in: false });
                 return send(200, { ok: true });
               }

@@ -54,6 +54,14 @@
           sync_conflict_hint: "同一行在本地和云端都被修改，选择保留哪个版本",
           sync_keep_local: "保留本地", sync_keep_server: "采用云端", sync_dismiss: "忽略",
           sync_resolve_failed: "冲突处理失败", sync_ok: "同步完成", sync_partial: "部分表同步失败",
+          cloud_status: "云端连接状态", cloud_checking: "检查云端…", cloud_checking_hint: "正在检查云端连接",
+          cloud_local: "本地模式", cloud_local_hint: "未登录云端；数据只保存在本机，仍可正常使用",
+          cloud_syncing: "正在同步…", cloud_syncing_hint: "正在与云端同步数据",
+          cloud_online: "云端已连接", cloud_online_hint: "账号已连接，数据会自动同步",
+          cloud_offline: "云端连接失败", cloud_offline_hint: "无法连接到云端；本地数据仍可正常使用",
+          cloud_never: "等待首次同步", cloud_never_hint: "已登录云端，正在等待首轮同步",
+          cloud_sync_failed: "同步异常", cloud_sync_failed_hint: "云端可连接，但上次同步未完全成功",
+          cloud_open: "打开账号与同步",
           record_label: "记录模式", record_on: "记录中", record_off: "记录",
           record_on_title: "本会话记录模式已开启，点击关闭", record_off_title: "开启后把完成的可交付内容记到工作台（仅本会话）",
           record_busy: "切换中", record_error: "切换失败", record_failed_short: "记录失败",
@@ -100,6 +108,14 @@
           sync_conflict_hint: "The same row changed locally and remotely; choose which version to keep",
           sync_keep_local: "Keep local", sync_keep_server: "Use remote", sync_dismiss: "Dismiss",
           sync_resolve_failed: "Failed to resolve conflict", sync_ok: "Sync complete", sync_partial: "Some tables failed",
+          cloud_status: "Cloud connection", cloud_checking: "Checking cloud…", cloud_checking_hint: "Checking the cloud connection",
+          cloud_local: "Local only", cloud_local_hint: "Not signed in; data stays on this device",
+          cloud_syncing: "Syncing…", cloud_syncing_hint: "Syncing data with the cloud",
+          cloud_online: "Cloud connected", cloud_online_hint: "Signed in; data syncs automatically",
+          cloud_offline: "Cloud unreachable", cloud_offline_hint: "Cannot reach the cloud; local data still works",
+          cloud_never: "Waiting for first sync", cloud_never_hint: "Signed in; waiting for the first sync",
+          cloud_sync_failed: "Sync issue", cloud_sync_failed_hint: "Cloud is reachable but the last sync did not fully succeed",
+          cloud_open: "Open Account & Sync",
           record_label: "Record mode", record_on: "Recording", record_off: "Record",
           record_on_title: "Record mode is on for this session; click to turn it off", record_off_title: "Record finished deliverables to the workbench (this session only)",
           record_busy: "Switching", record_error: "Switch failed", record_failed_short: "Failed",
@@ -113,6 +129,19 @@
         ".wb-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}",
         ".wb-hero h2{margin:0;font-size:18px;font-weight:650;letter-spacing:.2px}",
         ".wb-tag{font-size:12px;opacity:.62;margin-top:4px;display:block;line-height:1.5}",
+        ".wb-cloud{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:6px 11px;border:1px solid var(--wb-line);border-radius:999px;background:var(--wb-surface);color:inherit;font:inherit;font-size:12px;line-height:1.2;cursor:pointer;white-space:nowrap;transition:border-color .15s ease,background .15s ease}",
+        ".wb-cloud:hover{border-color:var(--dsw-alias-brand-primary,#11a89b)}",
+        ".wb-cloud:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#11a89b);outline-offset:2px}",
+        ".wb-cloud-dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.4;flex:none}",
+        ".wb-cloud.local{opacity:.7}",
+        ".wb-cloud.on .wb-cloud-dot{background:var(--dsw-alias-state-success-primary,#18a058);opacity:1;box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-state-success-primary,#18a058) 16%,transparent)}",
+        ".wb-cloud.off{border-color:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 35%,var(--wb-line));background:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 5%,var(--wb-surface))}",
+        ".wb-cloud.off .wb-cloud-dot{background:var(--dsw-alias-state-error-primary,#e5484d);opacity:1}",
+        ".wb-cloud.warn{border-color:color-mix(in oklab,var(--dsw-alias-state-warn-primary,#d48806) 35%,var(--wb-line))}",
+        ".wb-cloud.warn .wb-cloud-dot{background:var(--dsw-alias-state-warn-primary,#d48806);opacity:1}",
+        ".wb-cloud.syncing .wb-cloud-dot{background:var(--dsw-alias-brand-primary,#11a89b);opacity:1;animation:wb-cloud-pulse 1.2s ease-in-out infinite}",
+        "@keyframes wb-cloud-pulse{0%,100%{box-shadow:0 0 0 0 color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 0%,transparent)}50%{box-shadow:0 0 0 4px color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 18%,transparent)}}",
+        "@media (prefers-reduced-motion:reduce){.wb-cloud.syncing .wb-cloud-dot{animation:none}}",
         ".wb-tabs{display:flex;gap:6px;border-bottom:1px solid var(--wb-line);margin-bottom:2px}",
         ".wb-tab{border:none;background:transparent;color:inherit;opacity:.6;padding:9px 14px;cursor:pointer;font-size:13px;border-bottom:2px solid transparent;margin-bottom:-1px;transition:opacity .15s ease,border-color .15s ease}",
         ".wb-tab:hover{opacity:.9}",
@@ -225,6 +254,7 @@
       var apiCache = new Map();
       var addonState = { addons: [], loaded: false, shellVersion: "" };
       var storeListeners = new Set();
+      var cloudStatusListeners = new Set();
       var recordModes = {};         // sessionId -> enabled
       var recordListeners = new Set();
       var stream = null;
@@ -238,6 +268,9 @@
 
       function notifyStore() {
         storeListeners.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } });
+      }
+      function notifyCloudStatus() {
+        cloudStatusListeners.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } });
       }
       function broadcast(payload) {
         listeners.forEach(function (fn) { try { fn(payload); } catch (e) { console.error(e); } });
@@ -296,6 +329,8 @@
             if (payload && payload.sessionId) setRecordMode(payload.sessionId, payload.enabled);
           } catch (err) { console.warn(err); }
         });
+        stream.addEventListener("sync-done", notifyCloudStatus);
+        stream.addEventListener("account-changed", notifyCloudStatus);
       }
       function useAddonStore() {
         var st = react.useState(0);
@@ -329,6 +364,77 @@
           };
         }, []);
       }
+      function useCloudStatus() {
+        var api = useApi();
+        var st = react.useState(null);
+        var status = st[0]; var setStatus = st[1];
+        react.useEffect(function () {
+          var alive = true;
+          function load() {
+            api.get("/sync/status").then(function (r) {
+              if (alive && r && r.ok) setStatus(r);
+            }).catch(function () { /* 网络异常时保留上一次已知状态 */ });
+          }
+          load();
+          var timer = setInterval(load, 15000);
+          function onVisible() {
+            if (typeof document !== "undefined" && document.visibilityState === "visible") load();
+          }
+          if (typeof document !== "undefined") document.addEventListener("visibilitychange", onVisible);
+          cloudStatusListeners.add(load);
+          return function () {
+            alive = false;
+            clearInterval(timer);
+            if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
+            cloudStatusListeners.delete(load);
+          };
+        }, [api]);
+        return status;
+      }
+
+      function cloudView(status, t) {
+        if (!status) return { kind: "local", label: t("cloud_checking"), hint: t("cloud_checking_hint") };
+        var failed = Array.isArray(status.failed_tables) ? status.failed_tables : [];
+        if (!status.logged_in) return { kind: "local", label: t("cloud_local"), hint: t("cloud_local_hint") };
+        if (status.running) return { kind: "syncing", label: t("cloud_syncing"), hint: t("cloud_syncing_hint") };
+        if (status.cloud && status.cloud.reachable === false) return { kind: "off", label: t("cloud_offline"), hint: t("cloud_offline_hint") };
+        if (!status.last_sync_at) return { kind: "warn", label: t("cloud_never"), hint: t("cloud_never_hint") };
+        if (status.last_sync_ok === false || failed.length) return { kind: "warn", label: t("cloud_sync_failed"), hint: t("cloud_sync_failed_hint") };
+        return { kind: "on", label: t("cloud_online"), hint: t("cloud_online_hint") };
+      }
+
+      function cloudTitle(view, status, t) {
+        var parts = [view.hint];
+        if (status && status.logged_in) {
+          parts.push(t("sync_last") + ": " + (status.last_sync_at ? new Date(status.last_sync_at).toLocaleString() : t("sync_never")));
+          if (status.conflicts) parts.push(t("sync_conflicts") + ": " + status.conflicts);
+          var failed = Array.isArray(status.failed_tables) ? status.failed_tables : [];
+          if (failed.length) parts.push(t("sync_failed_tables") + ": " + failed.join(", "));
+          if (status.last_sync_error) parts.push(status.last_sync_error);
+          if (status.cloud && status.cloud.error) parts.push(status.cloud.error);
+        }
+        return parts.join(" · ");
+      }
+
+      function CloudStatusPill(props) {
+        var t = props.t;
+        var status = useCloudStatus();
+        var view = cloudView(status, t);
+        var title = cloudTitle(view, status, t);
+        return jsx.jsxs("button", {
+          type: "button",
+          className: "wb-cloud " + view.kind,
+          onClick: props.onOpen,
+          title: title,
+          "aria-label": t("cloud_status") + ": " + view.label + " — " + view.hint + " · " + t("cloud_open"),
+          "data-cloud-state": view.kind,
+          children: [
+            jsx.jsx("span", { className: "wb-cloud-dot" }),
+            jsx.jsx("span", { className: "wb-cloud-label", children: view.label }),
+          ],
+        });
+      }
+
       function pickTitle(title, lang) {
         if (!title) return "";
         if (typeof title === "string") return title;
@@ -824,7 +930,10 @@
 
         return jsx.jsxs("div", { className: "wb-root", children: [
           jsx.jsxs("div", { className: "wb-inner", children: [
-            jsx.jsx("div", { className: "wb-hero", children: jsx.jsxs("div", { children: [jsx.jsx("h2", { children: t("title") }), jsx.jsx("span", { className: "wb-tag", children: t("tagline") })] }) }),
+            jsx.jsxs("div", { className: "wb-hero", children: [
+              jsx.jsxs("div", { children: [jsx.jsx("h2", { children: t("title") }), jsx.jsx("span", { className: "wb-tag", children: t("tagline") })] }),
+              jsx.jsx(CloudStatusPill, { t: t, onOpen: function () { go("account"); } }),
+            ] }),
             addons.length
               ? jsx.jsx("div", { className: "wb-home-grid", children: addons.map(addonCard) })
               : jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg wb-empty-cta", children: t("no_installed") }) }),
