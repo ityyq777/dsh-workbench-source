@@ -37,6 +37,11 @@ var h = React.createElement;
     "arrow-up": require("lucide-react/icons/arrow-up").default,
     "arrow-down": require("lucide-react/icons/arrow-down").default,
     "arrow-up-down": require("lucide-react/icons/arrow-up-down").default,
+    "key": require("lucide-react/icons/key-round").default,
+    "lock": require("lucide-react/icons/lock").default,
+    "eye": require("lucide-react/icons/eye").default,
+    "eye-off": require("lucide-react/icons/eye-off").default,
+    "copy": require("lucide-react/icons/copy").default,
   };
   // 统一的小尺寸图标调用方式，保持各视图里的 Icon({ name, size }) 不变。
   function Icon(props) {
@@ -131,6 +136,36 @@ var h = React.createElement;
       saved: "已保存",
       deleted: "已删除",
       moved: "已移动",
+      accounts: "账号",
+      accountsTitle: "站点账号 · {name}",
+      accountsSub: "敏感字段只保存在本机，并在写库前加密；云端同步的是密文。",
+      accountKey: "标识",
+      loginName: "登录名",
+      password: "密码",
+      phone: "手机号",
+      identity: "身份证",
+      remark: "备注",
+      reveal: "显形",
+      copied: "已复制",
+      addAccount: "新增账号",
+      editAccount: "编辑账号",
+      externalPick: "选择要外联的账号",
+      externalAdd: "添加外联",
+      unlink: "解除外联",
+      accountEmpty: "这个站点还没有账号",
+      cancel: "取消",
+      close: "关闭",
+      sensitiveHint: "密码/手机号/身份证写库前加密，仅在界面解锁保险箱后可查看与复制。",
+      vaultNotSet: "账号保险箱尚未设置口令：设置口令后才能填写密码、手机号与身份证。",
+      vaultLocked: "账号保险箱已锁定：输入口令后即可查看与填写敏感字段。",
+      vaultUnlocked: "账号保险箱已解锁，空闲 {min} 分钟自动锁定。",
+      vaultSetup: "设置口令",
+      vaultUnlock: "解锁",
+      vaultLock: "立即锁定",
+      passphrase: "输入口令（至少 8 位）",
+      passphraseAgain: "再输一次口令",
+      passTooShort: "口令至少 8 位",
+      passMismatch: "两次口令不一致",
     },
     en: {
       title: "Sites",
@@ -207,6 +242,36 @@ var h = React.createElement;
       saved: "Saved",
       deleted: "Deleted",
       moved: "Moved",
+      accounts: "Accounts",
+      accountsTitle: "Site accounts · {name}",
+      accountsSub: "Sensitive fields stay on this machine and are encrypted before writing; the cloud only receives ciphertext.",
+      accountKey: "Key",
+      loginName: "Login",
+      password: "Password",
+      phone: "Phone",
+      identity: "ID card",
+      remark: "Remark",
+      reveal: "Reveal",
+      copied: "Copied",
+      addAccount: "New account",
+      editAccount: "Edit account",
+      externalPick: "Pick an account to link",
+      externalAdd: "Add link",
+      unlink: "Unlink",
+      accountEmpty: "No accounts yet",
+      cancel: "Cancel",
+      close: "Close",
+      sensitiveHint: "Password / phone / ID card are encrypted before writing and can only be read after unlocking the vault.",
+      vaultNotSet: "Vault passphrase is not set yet: set one before filling in password, phone or ID card.",
+      vaultLocked: "Vault is locked: unlock to view or edit sensitive fields.",
+      vaultUnlocked: "Vault unlocked; it locks after {min} idle minutes.",
+      vaultSetup: "Set passphrase",
+      vaultUnlock: "Unlock",
+      vaultLock: "Lock now",
+      passphrase: "Passphrase (8+ characters)",
+      passphraseAgain: "Repeat passphrase",
+      passTooShort: "Passphrase must be at least 8 characters",
+      passMismatch: "Passphrases do not match",
     },
   };
 
@@ -303,6 +368,28 @@ var h = React.createElement;
     ".wbs-site-link span{overflow:hidden;text-overflow:ellipsis}",
     ".wbs-site-link:hover{text-decoration:underline}",
     ".wbs-muted{color:var(--wbs-muted)}",
+    ".wbs-vaultbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;border-radius:9px;margin:10px 0;border:1px solid var(--wbs-line);background:color-mix(in oklab,#5b7fd6 7%,transparent)}",
+    ".wbs-vaultbar.locked{background:color-mix(in oklab,#e0a33a 9%,transparent);border-color:color-mix(in oklab,#e0a33a 30%,var(--wbs-line))}",
+    ".wbs-vaultbar.unlocked{background:color-mix(in oklab,#3aa66a 8%,transparent);border-color:color-mix(in oklab,#3aa66a 26%,var(--wbs-line))}",
+    ".wbs-vault-hint{font-size:11.5px;color:var(--wbs-muted);flex:1 1 220px;line-height:1.6}",
+    ".wbs-vault-form{display:flex;gap:6px;align-items:center;flex:0 1 320px}",
+    ".wbs-vault-form .wbs-input{font-size:12px;padding:5px 8px}",
+    ".wbs-accrow{border:1px solid var(--wbs-line);border-radius:10px;padding:8px 10px;margin-bottom:8px;background:color-mix(in srgb,var(--dsw-alias-bg-layer-1,#fff) 40%,transparent)}",
+    ".wbs-accrow-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+    ".wbs-accrow-head b{font-size:13px}",
+    ".wbs-acc-login{font-size:12px;color:var(--wbs-muted)}",
+    ".wbs-accrow-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:4px 12px;margin:6px 0 4px}",
+    ".wbs-accrow-fields > div{display:flex;align-items:center;gap:5px;font-size:11.5px;min-width:0}",
+    ".wbs-accrow-fields i{font-style:normal;color:var(--wbs-muted);flex:0 0 auto}",
+    ".wbs-accrow-fields span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    ".wbs-acc-remark{grid-column:1/-1}",
+    ".wbs-accrow-ext{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px}",
+    ".wbs-acc-extsel{width:auto;flex:1 1 200px;font-size:11.5px;padding:4px 6px}",
+    ".wbs-accdraft{border:1px solid var(--wbs-line);border-radius:10px;padding:10px 12px;margin-top:8px}",
+    ".wbs-accdraft-title{font-size:12.5px;font-weight:600}",
+    ".wbs-acc-empty{padding:18px;text-align:center;font-size:12px;color:var(--wbs-muted)}",
+    ".wbs-mini{border:0;background:transparent;color:var(--wbs-muted);cursor:pointer;padding:1px 3px;border-radius:4px;display:inline-flex;align-items:center}",
+    ".wbs-mini:hover{background:color-mix(in srgb,var(--wbs-accent) 12%,transparent);color:var(--wbs-accent)}",
     ".wbs-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--wbs-line);border-radius:999px;padding:2px 7px;font-size:11px;margin:0 4px 3px 0;background:color-mix(in srgb,var(--wbs-accent) 6%,transparent);max-width:100%}",
     ".wbs-chip button{border:0;background:transparent;color:inherit;cursor:pointer;padding:0;display:inline-flex;align-items:center;opacity:.6}",
     ".wbs-chip button:hover{opacity:1}",
@@ -733,6 +820,238 @@ var h = React.createElement;
     );
   }
 
+  function AccountModal(props) {
+    var api = props.api;
+    var lang = props.lang || "zh";
+    var site = props.site;
+    var [accounts, setAccounts] = useState([]);
+    var [vault, setVault] = useState({});
+    var [loading, setLoading] = useState(true);
+    var [error, setError] = useState("");
+    var [busy, setBusy] = useState(false);
+    var [draft, setDraft] = useState(null);
+    var [pass, setPass] = useState("");
+    var [pass2, setPass2] = useState("");
+    var [cascade, setCascade] = useState([]);
+    var [pickKey, setPickKey] = useState("");
+    var [pendingDelete, setPendingDelete] = useState("");
+    var [shown, setShown] = useState({});
+
+    function reload() {
+      setLoading(true);
+      return Promise.all([
+        callApi(api, "sites.accounts.list", { siteId: site.id }),
+        callApi(api, "sites.vault.status", {}),
+      ]).then(function (out) {
+        setAccounts(out[0].accounts || []);
+        setVault(out[1] || {});
+        setError("");
+      }).catch(function (e) {
+        setError(errText(e));
+      }).finally(function () {
+        setLoading(false);
+      });
+    }
+
+    function loadCascade() {
+      callApi(api, "sites.accounts.cascade", { excludeSiteId: site.id }).then(function (r) {
+        var list = [];
+        (r.groups || []).forEach(function (g) {
+          g.accounts.forEach(function (a) { list.push({ id: a.id, label: g.siteName + " · " + a.accountKey }); });
+        });
+        setCascade(list);
+      }).catch(function () { setCascade([]); });
+    }
+
+    useEffect(function () { reload(); loadCascade(); }, [site.id]);
+
+    function guard(fn) {
+      setBusy(true);
+      setError("");
+      return Promise.resolve().then(fn).catch(function (e) {
+        setError(errText(e));
+      }).finally(function () { setBusy(false); });
+    }
+
+    function submitVault() {
+      if (!pass || pass.length < 8) { setError(text(lang, "passTooShort")); return; }
+      if (!vault.enabled && pass !== pass2) { setError(text(lang, "passMismatch")); return; }
+      guard(function () {
+        var name = vault.enabled ? "sites.vault.unlock" : "sites.vault.setup";
+        var args = vault.enabled ? { passphrase: pass } : { passphrase: pass };
+        return callApi(api, name, args).then(function () { setPass(""); setPass2(""); return reload(); });
+      });
+    }
+
+    function lockVault() {
+      guard(function () { return callApi(api, "sites.vault.lock", {}).then(function () { setShown({}); return reload(); }); });
+    }
+
+    function saveDraft() {
+      var body = {
+        accountKey: draft.accountKey, account: draft.account, remark: draft.remark,
+      };
+      if (draft.password) body.password = draft.password;
+      if (draft.phoneNumber) body.phoneNumber = draft.phoneNumber;
+      if (draft.identityCard) body.identityCard = draft.identityCard;
+      guard(function () {
+        var req = draft.id
+          ? callApi(api, "sites.accounts.update", Object.assign({ id: draft.id }, body))
+          : callApi(api, "sites.accounts.create", Object.assign({ siteId: site.id }, body));
+        return req.then(function () { setDraft(null); props.onChanged && props.onChanged(); return reload(); });
+      });
+    }
+
+    function removeAccount(id) {
+      guard(function () {
+        return callApi(api, "sites.accounts.delete", { id: id }).then(function () {
+          setPendingDelete("");
+          props.onChanged && props.onChanged();
+          return reload();
+        });
+      });
+    }
+
+    function reveal(acc) {
+      guard(function () {
+        return callApi(api, "sites.accounts.reveal", { id: acc.id }).then(function (r) {
+          setShown(function (prev) { var next = Object.assign({}, prev); next[acc.id] = r; return next; });
+        });
+      });
+    }
+
+    function copyText(value) {
+      if (!value) return;
+      try { navigator.clipboard.writeText(value); showToast(text(lang, "copied")); } catch (e) { setError(String(e && e.message || e)); }
+    }
+
+    function linkExternal(acc) {
+      if (!pickKey) return;
+      guard(function () {
+        return callApi(api, "sites.accounts.link", { nativeAccountId: acc.id, externalAccountId: pickKey }).then(function () { setPickKey(""); return reload(); });
+      });
+    }
+
+    function unlink(acc, rel) {
+      guard(function () {
+        return callApi(api, "sites.accounts.unlink", { nativeAccountId: acc.id, externalAccountId: rel.accountId }).then(function () { return reload(); });
+      });
+    }
+
+    function renderVaultBar() {
+      if (!vault.enabled) {
+        return h("div", { className: "wbs-vaultbar" },
+          h("div", { className: "wbs-vault-hint" }, text(lang, "vaultNotSet")),
+          h("div", { className: "wbs-vault-form" },
+            h("input", { className: "wbs-input", type: "password", placeholder: text(lang, "passphrase"), value: pass, onChange: function (e) { setPass(e.target.value); } }),
+            h("input", { className: "wbs-input", type: "password", placeholder: text(lang, "passphraseAgain"), value: pass2, onChange: function (e) { setPass2(e.target.value); } }),
+            h("button", { className: "wbs-btn", disabled: busy, onClick: submitVault }, text(lang, "vaultSetup")),
+          ),
+        );
+      }
+      if (!vault.unlocked) {
+        return h("div", { className: "wbs-vaultbar locked" },
+          h("div", { className: "wbs-vault-hint" }, text(lang, "vaultLocked")),
+          h("div", { className: "wbs-vault-form" },
+            h("input", { className: "wbs-input", type: "password", placeholder: text(lang, "passphrase"), value: pass, onChange: function (e) { setPass(e.target.value); } }),
+            h("button", { className: "wbs-btn", disabled: busy, onClick: submitVault }, text(lang, "vaultUnlock")),
+          ),
+        );
+      }
+      return h("div", { className: "wbs-vaultbar unlocked" },
+        h("div", { className: "wbs-vault-hint" }, text(lang, "vaultUnlocked", { min: vault.idleMinutes || 15 })),
+        h("button", { className: "wbs-btn sm", disabled: busy, onClick: lockVault }, h(Icon, { name: "lock", size: 12 }), text(lang, "vaultLock")),
+      );
+    }
+
+    function renderDraft() {
+      var d = draft;
+      function field(key, label, type, ph) {
+        return h(React.Fragment, null,
+          h("label", { className: "wbs-label" }, label),
+          h("input", {
+            className: "wbs-input", type: type || "text", placeholder: ph || "", value: d[key] || "",
+            onChange: function (e) { var v = e.target.value; setDraft(function (prev) { var next = Object.assign({}, prev); next[key] = v; return next; }); },
+          }),
+        );
+      }
+      return h("div", { className: "wbs-accdraft" },
+        h("div", { className: "wbs-accdraft-title" }, d.id ? text(lang, "editAccount") : text(lang, "addAccount")),
+        field("accountKey", text(lang, "accountKey") + " *", "text", "prod-admin"),
+        field("account", text(lang, "loginName")),
+        field("password", text(lang, "password"), "password"),
+        field("phoneNumber", text(lang, "phone")),
+        field("identityCard", text(lang, "identity")),
+        field("remark", text(lang, "remark")),
+        h("div", { className: "wbs-vault-hint" }, text(lang, "sensitiveHint")),
+        h("div", { className: "wbs-formfoot" },
+          h("div", { className: "wbs-grow" }),
+          h("button", { className: "wbs-btn", disabled: busy, onClick: function () { setDraft(null); } }, text(lang, "cancel")),
+          h("button", { className: "wbs-btn primary", disabled: busy, onClick: saveDraft }, text(lang, "save")),
+        ),
+      );
+    }
+
+    return h(Modal, { onClose: props.onClose },
+      h("div", { className: "wbs-modal-title" },
+        h(Icon, { name: "key", size: 15 }),
+        text(lang, "accountsTitle", { name: site.siteName }),
+        h("button", { type: "button", className: "wbs-mini wbs-modal-x", title: text(lang, "cancel"), onClick: props.onClose }, h(Icon, { name: "x", size: 15 })),
+      ),
+      h("div", { className: "wbs-modal-sub" }, text(lang, "accountsSub")),
+      renderVaultBar(),
+      error ? h("div", { className: "wbs-error" }, error) : null,
+      draft ? renderDraft() : h(React.Fragment, null,
+        loading ? h("div", { className: "wbs-loading" }, text(lang, "loading")) : null,
+        !loading && !accounts.length ? h("div", { className: "wbs-acc-empty" }, text(lang, "accountEmpty")) : null,
+        !loading ? accounts.map(function (acc) {
+          var plain = shown[acc.id] || null;
+          return h("div", { className: "wbs-accrow", key: acc.id },
+            h("div", { className: "wbs-accrow-head" },
+              h("b", null, acc.accountKey || "—"),
+              acc.account ? h("span", { className: "wbs-acc-login" }, acc.account) : null,
+              h("div", { className: "wbs-grow" }),
+              h("button", { className: "wbs-btn sm icononly", title: text(lang, "edit"), onClick: function () { setDraft({ id: acc.id, accountKey: acc.accountKey, account: acc.account, remark: acc.remark, password: "", phoneNumber: "", identityCard: "" }); } }, h(Icon, { name: "edit", size: 12 })),
+              pendingDelete === acc.id
+                ? h(React.Fragment, null,
+                  h("button", { className: "wbs-btn sm danger", disabled: busy, onClick: function () { removeAccount(acc.id); } }, text(lang, "confirm")),
+                  h("button", { className: "wbs-btn sm", onClick: function () { setPendingDelete(""); } }, text(lang, "cancel")),
+                )
+                : h("button", { className: "wbs-btn sm danger icononly", title: text(lang, "del"), onClick: function () { setPendingDelete(acc.id); } }, h(Icon, { name: "trash", size: 12 })),
+            ),
+            h("div", { className: "wbs-accrow-fields" },
+              h("div", null, h("i", null, text(lang, "password")), h("span", null, plain ? (plain.password || "—") : (acc.hasPassword ? "••••••" : "—")),
+                acc.hasPassword ? h("button", { className: "wbs-mini", title: text(lang, "reveal"), onClick: function () { if (plain) { setShown(function (prev) { var next = Object.assign({}, prev); delete next[acc.id]; return next; }); } else { reveal(acc); } } }, h(Icon, { name: plain ? "eye-off" : "eye", size: 11 })) : null,
+                acc.hasPassword ? h("button", { className: "wbs-mini", title: text(lang, "copy"), onClick: function () { if (plain) copyText(plain.password); else reveal(acc); } }, h(Icon, { name: "copy", size: 11 })) : null,
+              ),
+              h("div", null, h("i", null, text(lang, "phone")), h("span", null, plain ? (plain.phoneNumber || "—") : (acc.phoneNumber || "—"))),
+              h("div", null, h("i", null, text(lang, "identity")), h("span", null, plain ? (plain.identityCard || "—") : (acc.identityCard || "—"))),
+              acc.remark ? h("div", { className: "wbs-acc-remark" }, h("i", null, text(lang, "remark")), h("span", null, acc.remark)) : null,
+            ),
+            h("div", { className: "wbs-accrow-ext" },
+              (acc.externals || []).map(function (rel) {
+                return h("span", { className: "wbs-chip", key: rel.relationId },
+                  rel.siteName + " · " + rel.accountKey,
+                  h("button", { className: "wbs-mini", title: text(lang, "unlink"), onClick: function () { unlink(acc, rel); } }, h(Icon, { name: "x", size: 10 })),
+                );
+              }),
+              h("select", { className: "wbs-select wbs-acc-extsel", value: pickKey, onChange: function (e) { setPickKey(e.target.value); } },
+                h("option", { value: "" }, text(lang, "externalPick")),
+                cascade.map(function (o) { return h("option", { key: o.id, value: o.id }, o.label); }),
+              ),
+              h("button", { className: "wbs-btn sm", disabled: !pickKey || busy, onClick: function () { linkExternal(acc); } }, text(lang, "externalAdd")),
+            ),
+          );
+        }) : null,
+        !loading ? h("div", { className: "wbs-formfoot" },
+          h("button", { className: "wbs-btn primary", disabled: busy, onClick: function () { setDraft({ id: "", accountKey: "", account: "", password: "", phoneNumber: "", identityCard: "", remark: "" }); } }, h(Icon, { name: "plus", size: 12 }), text(lang, "addAccount")),
+          h("div", { className: "wbs-grow" }),
+          h("button", { className: "wbs-btn", onClick: props.onClose }, text(lang, "close")),
+        ) : null,
+      ),
+    );
+  }
+
   function DeleteSiteModal(props) {
     var api = props.api;
     var lang = props.lang || "zh";
@@ -818,6 +1137,7 @@ var h = React.createElement;
     var [expandedRow, setExpandedRow] = useState(null);
     var [selected, setSelected] = useState({});
     var [editing, setEditing] = useState(null);
+    var [accSite, setAccSite] = useState(null);
     var [dirDlg, setDirDlg] = useState(null);
     var [deleting, setDeleting] = useState(null);
     var [toast, setToast] = useState(null);
@@ -1265,6 +1585,7 @@ var h = React.createElement;
                       h("div", { className: "wbs-actions" },
                         h("button", { className: "wbs-btn sm", title: text(lang, "links"), onClick: function () { setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "links" ? null : { id: s.id, type: "links" }); } }, h(Icon, { name: "link", size: 12 }), text(lang, "links") + " " + (s.siteLinks ? s.siteLinks.length : 0)),
                         h("button", { className: "wbs-btn sm", title: text(lang, "dirs"), onClick: function () { setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "dirs" ? null : { id: s.id, type: "dirs" }); } }, h(Icon, { name: "folder", size: 12 }), text(lang, "dirs") + " " + (s.dirs ? s.dirs.length : 0)),
+                        h("button", { className: "wbs-btn sm", title: text(lang, "accounts"), onClick: function () { setAccSite(s); } }, h(Icon, { name: "key", size: 12 }), text(lang, "accounts") + " " + (s.accountCount || 0)),
                         h("button", { className: "wbs-btn sm icononly", title: text(lang, "edit"), onClick: function () { openEdit(s); } }, h(Icon, { name: "edit", size: 13 })),
                         h("button", { className: "wbs-btn sm danger icononly", title: text(lang, "del"), onClick: function () { if (cfgConfirm) setDeleting(s); else removeSite(s); } }, h(Icon, { name: "trash", size: 13 })),
                       ),
@@ -1322,6 +1643,13 @@ var h = React.createElement;
         onClose: function () { setDirDlg(null); },
         onDone: onDirDone,
       }) : null,
+      accSite ? h(AccountModal, {
+        api: api,
+        lang: lang,
+        site: accSite,
+        onClose: function () { setAccSite(null); },
+        onChanged: function () { setTick(function (x) { return x + 1; }); },
+      }) : null,
       deleting ? h(DeleteSiteModal, {
         api: api,
         lang: lang,
@@ -1337,7 +1665,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.7.3",
+    version: "1.8.0",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.SitesStatsView },
       { id: "sites", title: { zh: "记录", en: "Records" }, component: SitesView },

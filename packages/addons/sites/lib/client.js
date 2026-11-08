@@ -3249,6 +3249,147 @@ var init_arrow_up_down = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/key-round.mjs
+var key_round_exports = {};
+__export(key_round_exports, {
+  __iconData: () => __iconData26,
+  default: () => KeyRound
+});
+var __iconData26, KeyRound;
+var init_key_round = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/key-round.mjs"() {
+    init_createLucideIcon();
+    __iconData26 = {
+      name: "key-round",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z",
+            key: "1s6t7t"
+          }
+        ],
+        ["circle", { cx: "16.5", cy: "7.5", r: ".5", fill: "currentColor", key: "w0ekpg" }]
+      ]
+    };
+    __iconData26.node;
+    KeyRound = createLucideIcon(__iconData26);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/lock.mjs
+var lock_exports = {};
+__export(lock_exports, {
+  __iconData: () => __iconData27,
+  default: () => Lock
+});
+var __iconData27, Lock;
+var init_lock = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/lock.mjs"() {
+    init_createLucideIcon();
+    __iconData27 = {
+      name: "lock",
+      size: 24,
+      node: [
+        ["rect", { width: "18", height: "11", x: "3", y: "11", rx: "2", ry: "2", key: "1w4ew1" }],
+        ["path", { d: "M7 11V7a5 5 0 0 1 10 0v4", key: "fwvmzm" }]
+      ]
+    };
+    __iconData27.node;
+    Lock = createLucideIcon(__iconData27);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/eye.mjs
+var eye_exports = {};
+__export(eye_exports, {
+  __iconData: () => __iconData28,
+  default: () => Eye
+});
+var __iconData28, Eye;
+var init_eye = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/eye.mjs"() {
+    init_createLucideIcon();
+    __iconData28 = {
+      name: "eye",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
+            key: "1nclc0"
+          }
+        ],
+        ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
+      ]
+    };
+    __iconData28.node;
+    Eye = createLucideIcon(__iconData28);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/eye-off.mjs
+var eye_off_exports = {};
+__export(eye_off_exports, {
+  __iconData: () => __iconData29,
+  default: () => EyeOff
+});
+var __iconData29, EyeOff;
+var init_eye_off = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/eye-off.mjs"() {
+    init_createLucideIcon();
+    __iconData29 = {
+      name: "eye-off",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49",
+            key: "ct8e1f"
+          }
+        ],
+        ["path", { d: "M14.084 14.158a3 3 0 0 1-4.242-4.242", key: "151rxh" }],
+        [
+          "path",
+          {
+            d: "M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143",
+            key: "13bj9a"
+          }
+        ],
+        ["path", { d: "m2 2 20 20", key: "1ooewy" }]
+      ]
+    };
+    __iconData29.node;
+    EyeOff = createLucideIcon(__iconData29);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/copy.mjs
+var copy_exports = {};
+__export(copy_exports, {
+  __iconData: () => __iconData30,
+  default: () => Copy
+});
+var __iconData30, Copy;
+var init_copy = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/copy.mjs"() {
+    init_createLucideIcon();
+    __iconData30 = {
+      name: "copy",
+      size: 24,
+      node: [
+        ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
+        ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
+      ]
+    };
+    __iconData30.node;
+    Copy = createLucideIcon(__iconData30);
+  }
+});
+
 // packages/addons/sites/client/client.src.cjs
 var React = require("react");
 var h = React.createElement;
@@ -3285,7 +3426,12 @@ var h = React.createElement;
     "chevron-down": (init_chevron_down(), __toCommonJS(chevron_down_exports)).default,
     "arrow-up": (init_arrow_up(), __toCommonJS(arrow_up_exports)).default,
     "arrow-down": (init_arrow_down(), __toCommonJS(arrow_down_exports)).default,
-    "arrow-up-down": (init_arrow_up_down(), __toCommonJS(arrow_up_down_exports)).default
+    "arrow-up-down": (init_arrow_up_down(), __toCommonJS(arrow_up_down_exports)).default,
+    "key": (init_key_round(), __toCommonJS(key_round_exports)).default,
+    "lock": (init_lock(), __toCommonJS(lock_exports)).default,
+    "eye": (init_eye(), __toCommonJS(eye_exports)).default,
+    "eye-off": (init_eye_off(), __toCommonJS(eye_off_exports)).default,
+    "copy": (init_copy(), __toCommonJS(copy_exports)).default
   };
   function Icon2(props) {
     var C = ICONS[props.name];
@@ -3376,7 +3522,37 @@ var h = React.createElement;
       loadFail: "\u52A0\u8F7D\u5931\u8D25\uFF1A{msg}",
       saved: "\u5DF2\u4FDD\u5B58",
       deleted: "\u5DF2\u5220\u9664",
-      moved: "\u5DF2\u79FB\u52A8"
+      moved: "\u5DF2\u79FB\u52A8",
+      accounts: "\u8D26\u53F7",
+      accountsTitle: "\u7AD9\u70B9\u8D26\u53F7 \xB7 {name}",
+      accountsSub: "\u654F\u611F\u5B57\u6BB5\u53EA\u4FDD\u5B58\u5728\u672C\u673A\uFF0C\u5E76\u5728\u5199\u5E93\u524D\u52A0\u5BC6\uFF1B\u4E91\u7AEF\u540C\u6B65\u7684\u662F\u5BC6\u6587\u3002",
+      accountKey: "\u6807\u8BC6",
+      loginName: "\u767B\u5F55\u540D",
+      password: "\u5BC6\u7801",
+      phone: "\u624B\u673A\u53F7",
+      identity: "\u8EAB\u4EFD\u8BC1",
+      remark: "\u5907\u6CE8",
+      reveal: "\u663E\u5F62",
+      copied: "\u5DF2\u590D\u5236",
+      addAccount: "\u65B0\u589E\u8D26\u53F7",
+      editAccount: "\u7F16\u8F91\u8D26\u53F7",
+      externalPick: "\u9009\u62E9\u8981\u5916\u8054\u7684\u8D26\u53F7",
+      externalAdd: "\u6DFB\u52A0\u5916\u8054",
+      unlink: "\u89E3\u9664\u5916\u8054",
+      accountEmpty: "\u8FD9\u4E2A\u7AD9\u70B9\u8FD8\u6CA1\u6709\u8D26\u53F7",
+      cancel: "\u53D6\u6D88",
+      close: "\u5173\u95ED",
+      sensitiveHint: "\u5BC6\u7801/\u624B\u673A\u53F7/\u8EAB\u4EFD\u8BC1\u5199\u5E93\u524D\u52A0\u5BC6\uFF0C\u4EC5\u5728\u754C\u9762\u89E3\u9501\u4FDD\u9669\u7BB1\u540E\u53EF\u67E5\u770B\u4E0E\u590D\u5236\u3002",
+      vaultNotSet: "\u8D26\u53F7\u4FDD\u9669\u7BB1\u5C1A\u672A\u8BBE\u7F6E\u53E3\u4EE4\uFF1A\u8BBE\u7F6E\u53E3\u4EE4\u540E\u624D\u80FD\u586B\u5199\u5BC6\u7801\u3001\u624B\u673A\u53F7\u4E0E\u8EAB\u4EFD\u8BC1\u3002",
+      vaultLocked: "\u8D26\u53F7\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A\uFF1A\u8F93\u5165\u53E3\u4EE4\u540E\u5373\u53EF\u67E5\u770B\u4E0E\u586B\u5199\u654F\u611F\u5B57\u6BB5\u3002",
+      vaultUnlocked: "\u8D26\u53F7\u4FDD\u9669\u7BB1\u5DF2\u89E3\u9501\uFF0C\u7A7A\u95F2 {min} \u5206\u949F\u81EA\u52A8\u9501\u5B9A\u3002",
+      vaultSetup: "\u8BBE\u7F6E\u53E3\u4EE4",
+      vaultUnlock: "\u89E3\u9501",
+      vaultLock: "\u7ACB\u5373\u9501\u5B9A",
+      passphrase: "\u8F93\u5165\u53E3\u4EE4\uFF08\u81F3\u5C11 8 \u4F4D\uFF09",
+      passphraseAgain: "\u518D\u8F93\u4E00\u6B21\u53E3\u4EE4",
+      passTooShort: "\u53E3\u4EE4\u81F3\u5C11 8 \u4F4D",
+      passMismatch: "\u4E24\u6B21\u53E3\u4EE4\u4E0D\u4E00\u81F4"
     },
     en: {
       title: "Sites",
@@ -3452,7 +3628,37 @@ var h = React.createElement;
       loadFail: "Load failed: {msg}",
       saved: "Saved",
       deleted: "Deleted",
-      moved: "Moved"
+      moved: "Moved",
+      accounts: "Accounts",
+      accountsTitle: "Site accounts \xB7 {name}",
+      accountsSub: "Sensitive fields stay on this machine and are encrypted before writing; the cloud only receives ciphertext.",
+      accountKey: "Key",
+      loginName: "Login",
+      password: "Password",
+      phone: "Phone",
+      identity: "ID card",
+      remark: "Remark",
+      reveal: "Reveal",
+      copied: "Copied",
+      addAccount: "New account",
+      editAccount: "Edit account",
+      externalPick: "Pick an account to link",
+      externalAdd: "Add link",
+      unlink: "Unlink",
+      accountEmpty: "No accounts yet",
+      cancel: "Cancel",
+      close: "Close",
+      sensitiveHint: "Password / phone / ID card are encrypted before writing and can only be read after unlocking the vault.",
+      vaultNotSet: "Vault passphrase is not set yet: set one before filling in password, phone or ID card.",
+      vaultLocked: "Vault is locked: unlock to view or edit sensitive fields.",
+      vaultUnlocked: "Vault unlocked; it locks after {min} idle minutes.",
+      vaultSetup: "Set passphrase",
+      vaultUnlock: "Unlock",
+      vaultLock: "Lock now",
+      passphrase: "Passphrase (8+ characters)",
+      passphraseAgain: "Repeat passphrase",
+      passTooShort: "Passphrase must be at least 8 characters",
+      passMismatch: "Passphrases do not match"
     }
   };
   function text(lang, key, vars) {
@@ -3547,6 +3753,28 @@ var h = React.createElement;
     ".wbs-site-link span{overflow:hidden;text-overflow:ellipsis}",
     ".wbs-site-link:hover{text-decoration:underline}",
     ".wbs-muted{color:var(--wbs-muted)}",
+    ".wbs-vaultbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;border-radius:9px;margin:10px 0;border:1px solid var(--wbs-line);background:color-mix(in oklab,#5b7fd6 7%,transparent)}",
+    ".wbs-vaultbar.locked{background:color-mix(in oklab,#e0a33a 9%,transparent);border-color:color-mix(in oklab,#e0a33a 30%,var(--wbs-line))}",
+    ".wbs-vaultbar.unlocked{background:color-mix(in oklab,#3aa66a 8%,transparent);border-color:color-mix(in oklab,#3aa66a 26%,var(--wbs-line))}",
+    ".wbs-vault-hint{font-size:11.5px;color:var(--wbs-muted);flex:1 1 220px;line-height:1.6}",
+    ".wbs-vault-form{display:flex;gap:6px;align-items:center;flex:0 1 320px}",
+    ".wbs-vault-form .wbs-input{font-size:12px;padding:5px 8px}",
+    ".wbs-accrow{border:1px solid var(--wbs-line);border-radius:10px;padding:8px 10px;margin-bottom:8px;background:color-mix(in srgb,var(--dsw-alias-bg-layer-1,#fff) 40%,transparent)}",
+    ".wbs-accrow-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+    ".wbs-accrow-head b{font-size:13px}",
+    ".wbs-acc-login{font-size:12px;color:var(--wbs-muted)}",
+    ".wbs-accrow-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:4px 12px;margin:6px 0 4px}",
+    ".wbs-accrow-fields > div{display:flex;align-items:center;gap:5px;font-size:11.5px;min-width:0}",
+    ".wbs-accrow-fields i{font-style:normal;color:var(--wbs-muted);flex:0 0 auto}",
+    ".wbs-accrow-fields span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    ".wbs-acc-remark{grid-column:1/-1}",
+    ".wbs-accrow-ext{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px}",
+    ".wbs-acc-extsel{width:auto;flex:1 1 200px;font-size:11.5px;padding:4px 6px}",
+    ".wbs-accdraft{border:1px solid var(--wbs-line);border-radius:10px;padding:10px 12px;margin-top:8px}",
+    ".wbs-accdraft-title{font-size:12.5px;font-weight:600}",
+    ".wbs-acc-empty{padding:18px;text-align:center;font-size:12px;color:var(--wbs-muted)}",
+    ".wbs-mini{border:0;background:transparent;color:var(--wbs-muted);cursor:pointer;padding:1px 3px;border-radius:4px;display:inline-flex;align-items:center}",
+    ".wbs-mini:hover{background:color-mix(in srgb,var(--wbs-accent) 12%,transparent);color:var(--wbs-accent)}",
     ".wbs-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--wbs-line);border-radius:999px;padding:2px 7px;font-size:11px;margin:0 4px 3px 0;background:color-mix(in srgb,var(--wbs-accent) 6%,transparent);max-width:100%}",
     ".wbs-chip button{border:0;background:transparent;color:inherit;cursor:pointer;padding:0;display:inline-flex;align-items:center;opacity:.6}",
     ".wbs-chip button:hover{opacity:1}",
@@ -4037,6 +4265,353 @@ var h = React.createElement;
       )
     );
   }
+  function AccountModal(props) {
+    var api = props.api;
+    var lang = props.lang || "zh";
+    var site = props.site;
+    var [accounts, setAccounts] = useState([]);
+    var [vault, setVault] = useState({});
+    var [loading, setLoading] = useState(true);
+    var [error, setError] = useState("");
+    var [busy, setBusy] = useState(false);
+    var [draft, setDraft] = useState(null);
+    var [pass, setPass] = useState("");
+    var [pass2, setPass2] = useState("");
+    var [cascade, setCascade] = useState([]);
+    var [pickKey, setPickKey] = useState("");
+    var [pendingDelete, setPendingDelete] = useState("");
+    var [shown, setShown] = useState({});
+    function reload() {
+      setLoading(true);
+      return Promise.all([
+        callApi(api, "sites.accounts.list", { siteId: site.id }),
+        callApi(api, "sites.vault.status", {})
+      ]).then(function(out) {
+        setAccounts(out[0].accounts || []);
+        setVault(out[1] || {});
+        setError("");
+      }).catch(function(e) {
+        setError(errText(e));
+      }).finally(function() {
+        setLoading(false);
+      });
+    }
+    function loadCascade() {
+      callApi(api, "sites.accounts.cascade", { excludeSiteId: site.id }).then(function(r) {
+        var list = [];
+        (r.groups || []).forEach(function(g) {
+          g.accounts.forEach(function(a) {
+            list.push({ id: a.id, label: g.siteName + " \xB7 " + a.accountKey });
+          });
+        });
+        setCascade(list);
+      }).catch(function() {
+        setCascade([]);
+      });
+    }
+    useEffect(function() {
+      reload();
+      loadCascade();
+    }, [site.id]);
+    function guard(fn) {
+      setBusy(true);
+      setError("");
+      return Promise.resolve().then(fn).catch(function(e) {
+        setError(errText(e));
+      }).finally(function() {
+        setBusy(false);
+      });
+    }
+    function submitVault() {
+      if (!pass || pass.length < 8) {
+        setError(text(lang, "passTooShort"));
+        return;
+      }
+      if (!vault.enabled && pass !== pass2) {
+        setError(text(lang, "passMismatch"));
+        return;
+      }
+      guard(function() {
+        var name = vault.enabled ? "sites.vault.unlock" : "sites.vault.setup";
+        var args = vault.enabled ? { passphrase: pass } : { passphrase: pass };
+        return callApi(api, name, args).then(function() {
+          setPass("");
+          setPass2("");
+          return reload();
+        });
+      });
+    }
+    function lockVault() {
+      guard(function() {
+        return callApi(api, "sites.vault.lock", {}).then(function() {
+          setShown({});
+          return reload();
+        });
+      });
+    }
+    function saveDraft() {
+      var body = {
+        accountKey: draft.accountKey,
+        account: draft.account,
+        remark: draft.remark
+      };
+      if (draft.password) body.password = draft.password;
+      if (draft.phoneNumber) body.phoneNumber = draft.phoneNumber;
+      if (draft.identityCard) body.identityCard = draft.identityCard;
+      guard(function() {
+        var req = draft.id ? callApi(api, "sites.accounts.update", Object.assign({ id: draft.id }, body)) : callApi(api, "sites.accounts.create", Object.assign({ siteId: site.id }, body));
+        return req.then(function() {
+          setDraft(null);
+          props.onChanged && props.onChanged();
+          return reload();
+        });
+      });
+    }
+    function removeAccount(id) {
+      guard(function() {
+        return callApi(api, "sites.accounts.delete", { id }).then(function() {
+          setPendingDelete("");
+          props.onChanged && props.onChanged();
+          return reload();
+        });
+      });
+    }
+    function reveal(acc) {
+      guard(function() {
+        return callApi(api, "sites.accounts.reveal", { id: acc.id }).then(function(r) {
+          setShown(function(prev) {
+            var next = Object.assign({}, prev);
+            next[acc.id] = r;
+            return next;
+          });
+        });
+      });
+    }
+    function copyText(value) {
+      if (!value) return;
+      try {
+        navigator.clipboard.writeText(value);
+        showToast(text(lang, "copied"));
+      } catch (e) {
+        setError(String(e && e.message || e));
+      }
+    }
+    function linkExternal(acc) {
+      if (!pickKey) return;
+      guard(function() {
+        return callApi(api, "sites.accounts.link", { nativeAccountId: acc.id, externalAccountId: pickKey }).then(function() {
+          setPickKey("");
+          return reload();
+        });
+      });
+    }
+    function unlink(acc, rel) {
+      guard(function() {
+        return callApi(api, "sites.accounts.unlink", { nativeAccountId: acc.id, externalAccountId: rel.accountId }).then(function() {
+          return reload();
+        });
+      });
+    }
+    function renderVaultBar() {
+      if (!vault.enabled) {
+        return h2(
+          "div",
+          { className: "wbs-vaultbar" },
+          h2("div", { className: "wbs-vault-hint" }, text(lang, "vaultNotSet")),
+          h2(
+            "div",
+            { className: "wbs-vault-form" },
+            h2("input", { className: "wbs-input", type: "password", placeholder: text(lang, "passphrase"), value: pass, onChange: function(e) {
+              setPass(e.target.value);
+            } }),
+            h2("input", { className: "wbs-input", type: "password", placeholder: text(lang, "passphraseAgain"), value: pass2, onChange: function(e) {
+              setPass2(e.target.value);
+            } }),
+            h2("button", { className: "wbs-btn", disabled: busy, onClick: submitVault }, text(lang, "vaultSetup"))
+          )
+        );
+      }
+      if (!vault.unlocked) {
+        return h2(
+          "div",
+          { className: "wbs-vaultbar locked" },
+          h2("div", { className: "wbs-vault-hint" }, text(lang, "vaultLocked")),
+          h2(
+            "div",
+            { className: "wbs-vault-form" },
+            h2("input", { className: "wbs-input", type: "password", placeholder: text(lang, "passphrase"), value: pass, onChange: function(e) {
+              setPass(e.target.value);
+            } }),
+            h2("button", { className: "wbs-btn", disabled: busy, onClick: submitVault }, text(lang, "vaultUnlock"))
+          )
+        );
+      }
+      return h2(
+        "div",
+        { className: "wbs-vaultbar unlocked" },
+        h2("div", { className: "wbs-vault-hint" }, text(lang, "vaultUnlocked", { min: vault.idleMinutes || 15 })),
+        h2("button", { className: "wbs-btn sm", disabled: busy, onClick: lockVault }, h2(Icon2, { name: "lock", size: 12 }), text(lang, "vaultLock"))
+      );
+    }
+    function renderDraft() {
+      var d = draft;
+      function field(key, label, type, ph) {
+        return h2(
+          React2.Fragment,
+          null,
+          h2("label", { className: "wbs-label" }, label),
+          h2("input", {
+            className: "wbs-input",
+            type: type || "text",
+            placeholder: ph || "",
+            value: d[key] || "",
+            onChange: function(e) {
+              var v = e.target.value;
+              setDraft(function(prev) {
+                var next = Object.assign({}, prev);
+                next[key] = v;
+                return next;
+              });
+            }
+          })
+        );
+      }
+      return h2(
+        "div",
+        { className: "wbs-accdraft" },
+        h2("div", { className: "wbs-accdraft-title" }, d.id ? text(lang, "editAccount") : text(lang, "addAccount")),
+        field("accountKey", text(lang, "accountKey") + " *", "text", "prod-admin"),
+        field("account", text(lang, "loginName")),
+        field("password", text(lang, "password"), "password"),
+        field("phoneNumber", text(lang, "phone")),
+        field("identityCard", text(lang, "identity")),
+        field("remark", text(lang, "remark")),
+        h2("div", { className: "wbs-vault-hint" }, text(lang, "sensitiveHint")),
+        h2(
+          "div",
+          { className: "wbs-formfoot" },
+          h2("div", { className: "wbs-grow" }),
+          h2("button", { className: "wbs-btn", disabled: busy, onClick: function() {
+            setDraft(null);
+          } }, text(lang, "cancel")),
+          h2("button", { className: "wbs-btn primary", disabled: busy, onClick: saveDraft }, text(lang, "save"))
+        )
+      );
+    }
+    return h2(
+      Modal,
+      { onClose: props.onClose },
+      h2(
+        "div",
+        { className: "wbs-modal-title" },
+        h2(Icon2, { name: "key", size: 15 }),
+        text(lang, "accountsTitle", { name: site.siteName }),
+        h2("button", { type: "button", className: "wbs-mini wbs-modal-x", title: text(lang, "cancel"), onClick: props.onClose }, h2(Icon2, { name: "x", size: 15 }))
+      ),
+      h2("div", { className: "wbs-modal-sub" }, text(lang, "accountsSub")),
+      renderVaultBar(),
+      error ? h2("div", { className: "wbs-error" }, error) : null,
+      draft ? renderDraft() : h2(
+        React2.Fragment,
+        null,
+        loading ? h2("div", { className: "wbs-loading" }, text(lang, "loading")) : null,
+        !loading && !accounts.length ? h2("div", { className: "wbs-acc-empty" }, text(lang, "accountEmpty")) : null,
+        !loading ? accounts.map(function(acc) {
+          var plain = shown[acc.id] || null;
+          return h2(
+            "div",
+            { className: "wbs-accrow", key: acc.id },
+            h2(
+              "div",
+              { className: "wbs-accrow-head" },
+              h2("b", null, acc.accountKey || "\u2014"),
+              acc.account ? h2("span", { className: "wbs-acc-login" }, acc.account) : null,
+              h2("div", { className: "wbs-grow" }),
+              h2("button", { className: "wbs-btn sm icononly", title: text(lang, "edit"), onClick: function() {
+                setDraft({ id: acc.id, accountKey: acc.accountKey, account: acc.account, remark: acc.remark, password: "", phoneNumber: "", identityCard: "" });
+              } }, h2(Icon2, { name: "edit", size: 12 })),
+              pendingDelete === acc.id ? h2(
+                React2.Fragment,
+                null,
+                h2("button", { className: "wbs-btn sm danger", disabled: busy, onClick: function() {
+                  removeAccount(acc.id);
+                } }, text(lang, "confirm")),
+                h2("button", { className: "wbs-btn sm", onClick: function() {
+                  setPendingDelete("");
+                } }, text(lang, "cancel"))
+              ) : h2("button", { className: "wbs-btn sm danger icononly", title: text(lang, "del"), onClick: function() {
+                setPendingDelete(acc.id);
+              } }, h2(Icon2, { name: "trash", size: 12 }))
+            ),
+            h2(
+              "div",
+              { className: "wbs-accrow-fields" },
+              h2(
+                "div",
+                null,
+                h2("i", null, text(lang, "password")),
+                h2("span", null, plain ? plain.password || "\u2014" : acc.hasPassword ? "\u2022\u2022\u2022\u2022\u2022\u2022" : "\u2014"),
+                acc.hasPassword ? h2("button", { className: "wbs-mini", title: text(lang, "reveal"), onClick: function() {
+                  if (plain) {
+                    setShown(function(prev) {
+                      var next = Object.assign({}, prev);
+                      delete next[acc.id];
+                      return next;
+                    });
+                  } else {
+                    reveal(acc);
+                  }
+                } }, h2(Icon2, { name: plain ? "eye-off" : "eye", size: 11 })) : null,
+                acc.hasPassword ? h2("button", { className: "wbs-mini", title: text(lang, "copy"), onClick: function() {
+                  if (plain) copyText(plain.password);
+                  else reveal(acc);
+                } }, h2(Icon2, { name: "copy", size: 11 })) : null
+              ),
+              h2("div", null, h2("i", null, text(lang, "phone")), h2("span", null, plain ? plain.phoneNumber || "\u2014" : acc.phoneNumber || "\u2014")),
+              h2("div", null, h2("i", null, text(lang, "identity")), h2("span", null, plain ? plain.identityCard || "\u2014" : acc.identityCard || "\u2014")),
+              acc.remark ? h2("div", { className: "wbs-acc-remark" }, h2("i", null, text(lang, "remark")), h2("span", null, acc.remark)) : null
+            ),
+            h2(
+              "div",
+              { className: "wbs-accrow-ext" },
+              (acc.externals || []).map(function(rel) {
+                return h2(
+                  "span",
+                  { className: "wbs-chip", key: rel.relationId },
+                  rel.siteName + " \xB7 " + rel.accountKey,
+                  h2("button", { className: "wbs-mini", title: text(lang, "unlink"), onClick: function() {
+                    unlink(acc, rel);
+                  } }, h2(Icon2, { name: "x", size: 10 }))
+                );
+              }),
+              h2(
+                "select",
+                { className: "wbs-select wbs-acc-extsel", value: pickKey, onChange: function(e) {
+                  setPickKey(e.target.value);
+                } },
+                h2("option", { value: "" }, text(lang, "externalPick")),
+                cascade.map(function(o) {
+                  return h2("option", { key: o.id, value: o.id }, o.label);
+                })
+              ),
+              h2("button", { className: "wbs-btn sm", disabled: !pickKey || busy, onClick: function() {
+                linkExternal(acc);
+              } }, text(lang, "externalAdd"))
+            )
+          );
+        }) : null,
+        !loading ? h2(
+          "div",
+          { className: "wbs-formfoot" },
+          h2("button", { className: "wbs-btn primary", disabled: busy, onClick: function() {
+            setDraft({ id: "", accountKey: "", account: "", password: "", phoneNumber: "", identityCard: "", remark: "" });
+          } }, h2(Icon2, { name: "plus", size: 12 }), text(lang, "addAccount")),
+          h2("div", { className: "wbs-grow" }),
+          h2("button", { className: "wbs-btn", onClick: props.onClose }, text(lang, "close"))
+        ) : null
+      )
+    );
+  }
   function DeleteSiteModal(props) {
     var api = props.api;
     var lang = props.lang || "zh";
@@ -4128,12 +4703,13 @@ var h = React.createElement;
     var [expandedRow, setExpandedRow] = useState(null);
     var [selected, setSelected] = useState({});
     var [editing, setEditing] = useState(null);
+    var [accSite, setAccSite] = useState(null);
     var [dirDlg, setDirDlg] = useState(null);
     var [deleting, setDeleting] = useState(null);
     var [toast, setToast] = useState(null);
     var dragRef = useRef("");
     var tagKey = tagFilter.slice().sort().join(",");
-    function showToast(msg, kind) {
+    function showToast2(msg, kind) {
       setToast({ msg, kind: kind || "" });
     }
     useEffect(function() {
@@ -4161,7 +4737,7 @@ var h = React.createElement;
           setKids(map);
         });
       }).catch(function(e) {
-        showToast(text(lang, "loadFail", { msg: errText(e) }), "err");
+        showToast2(text(lang, "loadFail", { msg: errText(e) }), "err");
       });
     }
     function loadChildren(id) {
@@ -4289,14 +4865,14 @@ var h = React.createElement;
         setCurrent({ id, path: rows });
         setPage(1);
       }).catch(function(e) {
-        showToast(text(lang, "opFail", { msg: errText(e) }), "err");
+        showToast2(text(lang, "opFail", { msg: errText(e) }), "err");
       });
     }
     function toggleNode(node) {
       var open = !!expanded[node.id];
       if (!open && !Object.prototype.hasOwnProperty.call(kidsRef.current, node.id)) {
         loadChildren(node.id).catch(function(e) {
-          showToast(errText(e), "err");
+          showToast2(errText(e), "err");
         });
       }
       setExpanded(function(prev) {
@@ -4314,13 +4890,13 @@ var h = React.createElement;
       if (!sourceId || sourceId === target.id) return;
       var moveType = expanded[target.id] ? 0 : 2;
       callApi(api, "siteNodes.move", { sourceId, targetId: target.id, moveType }).then(function() {
-        showToast(text(lang, "moved"));
+        showToast2(text(lang, "moved"));
         refreshTree();
         setTick(function(x) {
           return x + 1;
         });
       }).catch(function(e2) {
-        showToast(text(lang, "opFail", { msg: errText(e2) }), "err");
+        showToast2(text(lang, "opFail", { msg: errText(e2) }), "err");
       });
     }
     function renderNode(node, depth) {
@@ -4384,7 +4960,7 @@ var h = React.createElement;
     }
     function onSaved() {
       setEditing(null);
-      showToast(text(lang, "saved"));
+      showToast2(text(lang, "saved"));
       setTick(function(x) {
         return x + 1;
       });
@@ -4414,7 +4990,7 @@ var h = React.createElement;
     }
     function onSiteDeleted() {
       setDeleting(null);
-      showToast(text(lang, "deleted"));
+      showToast2(text(lang, "deleted"));
       setTick(function(x) {
         return x + 1;
       });
@@ -4457,7 +5033,7 @@ var h = React.createElement;
       callApi(api, "sites.delete", { id: site.id }).then(function() {
         onSiteDeleted();
       }).catch(function(e) {
-        showToast(text(lang, "opFail", { msg: errText(e) }), "err");
+        showToast2(text(lang, "opFail", { msg: errText(e) }), "err");
       });
     }
     function deleteSelected() {
@@ -4475,9 +5051,9 @@ var h = React.createElement;
           return x + 1;
         });
         refreshTree();
-        showToast(text(lang, "deleted"));
+        showToast2(text(lang, "deleted"));
       }).catch(function(e) {
-        showToast(text(lang, "opFail", { msg: errText(e) }), "err");
+        showToast2(text(lang, "opFail", { msg: errText(e) }), "err");
       });
     }
     function sortBy(col) {
@@ -4729,6 +5305,9 @@ var h = React.createElement;
                         h2("button", { className: "wbs-btn sm", title: text(lang, "dirs"), onClick: function() {
                           setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "dirs" ? null : { id: s.id, type: "dirs" });
                         } }, h2(Icon2, { name: "folder", size: 12 }), text(lang, "dirs") + " " + (s.dirs ? s.dirs.length : 0)),
+                        h2("button", { className: "wbs-btn sm", title: text(lang, "accounts"), onClick: function() {
+                          setAccSite(s);
+                        } }, h2(Icon2, { name: "key", size: 12 }), text(lang, "accounts") + " " + (s.accountCount || 0)),
                         h2("button", { className: "wbs-btn sm icononly", title: text(lang, "edit"), onClick: function() {
                           openEdit(s);
                         } }, h2(Icon2, { name: "edit", size: 13 })),
@@ -4811,6 +5390,19 @@ var h = React.createElement;
         },
         onDone: onDirDone
       }) : null,
+      accSite ? h2(AccountModal, {
+        api,
+        lang,
+        site: accSite,
+        onClose: function() {
+          setAccSite(null);
+        },
+        onChanged: function() {
+          setTick(function(x) {
+            return x + 1;
+          });
+        }
+      }) : null,
       deleting ? h2(DeleteSiteModal, {
         api,
         lang,
@@ -4826,7 +5418,7 @@ var h = React.createElement;
   injectCss();
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.7.3",
+    version: "1.8.0",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },
       { id: "sites", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: SitesView },

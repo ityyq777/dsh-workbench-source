@@ -8,6 +8,8 @@
 
 export const SITE_TABLE = "site";
 export const NODE_TABLE = "site_node";
+import { ACCOUNT_DDL, EXTERNAL_DDL } from "./accounts.js";
+export { ACCOUNT_DDL, EXTERNAL_DDL };
 export const NODE_MAPPING_TABLE = "site_node_mapping";
 
 export const SITE_DDL = [
@@ -317,6 +319,8 @@ export function ensureSchema(db, log) {
   for (const sql of SITE_DDL) db.exec(sql);
   for (const sql of NODE_DDL) db.exec(sql);
   for (const sql of NODE_MAPPING_DDL) db.exec(sql);
+  for (const sql of ACCOUNT_DDL) db.exec(sql);
+  for (const sql of EXTERNAL_DDL) db.exec(sql);
   if (log) log("sites schema ready");
 }
 

@@ -8,6 +8,7 @@ import { exportSitesData, importSitesData } from "./backup.js";
 import { siteSync } from "./sync.js";
 import { registerSiteTreeActions } from "./tree.js";
 import { registerSiteActions } from "./sites.js";
+import { registerAccountActions } from "./accounts.js";
 import { registerConfigActions } from "./config.js";
 import { registerDataActions } from "./data.js";
 
@@ -25,6 +26,7 @@ export function setup(api) {
   ensureSchema(api.db, api.log);
   registerSiteTreeActions(api);
   registerSiteActions(api);
+  registerAccountActions(api);
   registerConfigActions(api);
   registerDataActions(api);
   api.log("sites domain ready");
@@ -39,8 +41,8 @@ export function apply(ctx) {
         id: "wb-addon-sites",
         title: "站点",
         description: "站点收藏：目录树、链接与标签；含统计/记录/配置/数据四个视图",
-        version: "1.7.3",
-        tables: ["site", "site_node", "site_node_mapping", "tag_mapping"],
+        version: "1.8.0",
+        tables: ["site", "site_node", "site_node_mapping", "tag_mapping", "site_account", "site_account_external"],
         sync: siteSync,
         views: [
           { id: "stats", title: { zh: "统计", en: "Stats" } },

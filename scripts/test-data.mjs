@@ -57,7 +57,7 @@ const sites = await load("../packages/addons/sites/lib/index.js", "wb-addon-site
 for (const [name, mod, expected] of [
   ["tasks", tasks, ["task", "task_dep", "task_node"]],
   ["tags", tags, ["tag", "tag_mapping"]],
-  ["sites", sites, ["site", "site_node", "site_node_mapping"]],
+  ["sites", sites, ["site", "site_node", "site_node_mapping", "site_account", "site_account_external"]],
 ]) {
   const payload = mod.call(name + ".dataTables");
   assert(payload.domain === name, name + " domain 不符");

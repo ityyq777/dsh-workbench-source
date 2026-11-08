@@ -23,6 +23,7 @@ import {
   NODE_MAPPING_TABLE,
 } from "./db.js";
 import { statsReport, renderStats } from "./stats.js";
+import { assertNoAccounts, assertBindableUnused } from "./accounts.js";
 import { configValues } from "./config.js";
 
 const PAGE_SIZE_DEFAULT = 16;
@@ -135,11 +136,19 @@ function siteDirsOf(db, siteId) {
   return out;
 }
 
+function countAccountsOf(db, siteId) {
+  const row = db
+    .prepare("SELECT COUNT(*) AS n FROM site_account WHERE site_id=? AND deleted_at IS NULL")
+    .get(String(siteId));
+  return Number(row ? row.n : 0);
+}
+
 function enrichSite(db, row, tagsAvailable) {
   const site = rowSite(row);
   site.tags = siteTagsOf(db, site.id, tagsAvailable);
   site.tagIds = site.tags.map(function (t) { return t.id; });
   site.dirs = siteDirsOf(db, site.id);
+  site.accountCount = countAccountsOf(db, site.id);
   return site;
 }
 
@@ -379,6 +388,7 @@ function updateSite(db, args, origin, api, tagsAvailable) {
   const bindable = args.bindable === undefined
     ? Number(existing.bindable) === 0 ? 0 : 1
     : (args.bindable === 0 || args.bindable === "0" || args.bindable === false ? 0 : 1);
+  if (Number(existing.bindable) === 1 && bindable === 0) assertBindableUnused(db, id);
   const ts = now();
   tx(db, function () {
     db.prepare(
@@ -403,6 +413,7 @@ function deleteSite(db, args, origin, api) {
   const id = idOf(args.id !== undefined ? args.id : args.siteId);
   const existing = db.prepare("SELECT * FROM " + SITE_TABLE + " WHERE id=? AND deleted_at IS NULL").get(id);
   if (!existing) return { ok: true, deleted: false, missing: true };
+  assertNoAccounts(db, id);
   const ts = now();
   let removedNodeMappings = 0;
   let removedTagMappings = 0;

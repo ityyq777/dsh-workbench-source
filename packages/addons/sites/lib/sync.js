@@ -1,6 +1,7 @@
 /**
- * 站点域的同步声明：site / site_node_mapping / tag_mapping 行级，
+ * 站点域的同步声明：site / site_node_mapping / tag_mapping / site_account / site_account_external 行级，
  * site_node 树表整表收敛（虚拟根 0，不落库）。
+ * 账号表的敏感列在写本地库前已加密，同步上行的是密文（见 vault.js / docs/specs/22）。
  */
 
 function stableTs(rows) {
@@ -122,5 +123,8 @@ export const siteSync = {
       uniquePolicy: "lww-tombstone",
     },
     { name: "site_node", mode: "tree", reconcile: reconcileSiteTree },
+    // 二期：账号表同步的是密文（password/phone_number/identity_card 写库前加密），云端无密钥。
+    { name: "site_account", mode: "row" },
+    { name: "site_account_external", mode: "row" },
   ],
 };

@@ -18,6 +18,7 @@ const GROUPS = [
   { id: "form", zh: "新建", en: "Create" },
   { id: "stats", zh: "统计", en: "Statistics" },
   { id: "data", zh: "数据", en: "Data" },
+  { id: "vault", zh: "账号保险箱", en: "Account vault" },
 ];
 
 const SECTIONS = [
@@ -144,6 +145,11 @@ const ITEMS = [
     id: "data.includeDeleted", group: "data", type: "bool", surface: "ui", apply: "mount", default: false,
     zh: "包含已删除行", en: "Include deleted rows",
     hintZh: "默认只显示未软删的行", hintEn: "Deleted rows are hidden by default",
+  },
+  {
+    id: "vault.idleMinutes", group: "vault", type: "int", surface: "ui", apply: "mount", default: 15, min: 1, max: 120,
+    zh: "自动锁定（分钟）", en: "Auto lock (minutes)",
+    hintZh: "账号保险箱解锁后，空闲多少分钟自动锁定并清空内存密钥", hintEn: "Lock the vault and wipe the in-memory key after this many idle minutes",
   },
 ];
 

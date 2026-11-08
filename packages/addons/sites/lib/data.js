@@ -9,6 +9,7 @@
  */
 
 import { DOMAIN } from "./config.js";
+import { maskSecret, maskMiddle } from "./vault.js";
 
 export const SCHEMA_VERSION = 1;
 
@@ -16,6 +17,8 @@ const TABLES = [
   { name: "site", zh: "站点", en: "Sites" },
   { name: "site_node", zh: "站点目录", en: "Site folders" },
   { name: "site_node_mapping", zh: "目录关联", en: "Folder mappings" },
+  { name: "site_account", zh: "站点账号", en: "Site accounts" },
+  { name: "site_account_external", zh: "账号外联", en: "Account links" },
 ];
 
 const COLUMN_LABELS = {
@@ -35,7 +38,29 @@ const COLUMN_LABELS = {
   updated_at: { zh: "更新时间", en: "Updated at" },
   deleted_at: { zh: "删除时间", en: "Deleted at" },
   rev: { zh: "版本号", en: "Rev" },
+  account_key: { zh: "标识", en: "Key" },
+  account: { zh: "登录名", en: "Account" },
+  password: { zh: "密码（掩码）", en: "Password (masked)" },
+  phone_number: { zh: "手机号（掩码）", en: "Phone (masked)" },
+  identity_card: { zh: "身份证（掩码）", en: "ID card (masked)" },
+  remark: { zh: "备注", en: "Remark" },
+  native_account_id: { zh: "引用方账号", en: "Native account" },
+  external_account_id: { zh: "被引用账号", en: "External account" },
 };
+
+/** 数据页永不展示敏感列明文：密码整体掩码，手机/证件中间打码。 */
+const MASKED_COLUMNS = {
+  password: function (v) { return v ? maskSecret() : ""; },
+  phone_number: function (v) { return maskMiddle(v); },
+  identity_card: function (v) { return maskMiddle(v); },
+};
+
+function maskRow(row) {
+  for (const name of Object.keys(MASKED_COLUMNS)) {
+    if (Object.prototype.hasOwnProperty.call(row, name)) row[name] = MASKED_COLUMNS[name](row[name]);
+  }
+  return row;
+}
 
 const SYSTEM_COLUMNS = new Set(["rev", "created_at", "updated_at", "deleted_at"]);
 const PAGE_SIZES = [10, 25, 50, 100, 200];
@@ -216,7 +241,7 @@ export function registerDataActions(api) {
     const stmt = db.prepare(
       "SELECT * FROM " + table.name + whereSql + " ORDER BY " + sort + " " + order.toUpperCase() + " LIMIT ? OFFSET ?",
     );
-    const rows = stmt.all.apply(stmt, params.concat([pageSize, offset])).map(toPlain);
+    const rows = stmt.all.apply(stmt, params.concat([pageSize, offset])).map(toPlain).map(maskRow);
     const ended = (typeof performance !== "undefined" && performance.now ? performance.now() : Date.now());
 
     return {
