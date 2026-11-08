@@ -41,8 +41,14 @@ dsh plugin --profile web add file:$PWD/packages/addons/sites
 # 3. 重启 dsh web 后：设置 → 插件 → 个人工作台
 #    业务插件的安装/卸载同样在 DSH 插件页完成
 
-# 4. 云端（可选）
-node packages/cloud/lib/server.js --port 8791 --data ~/.dsh/workbench/cloud
+# 4. 云端（可选，独立 Java 仓库；开发期不打应用镜像）
+git clone https://gitee.com/yang7it/dsh-workbench-cloud.git
+cd dsh-workbench-cloud
+cp .env.example .env && chmod 600 .env   # 填数据库密码与 MinIO AK/SK
+docker compose up -d postgres
+set -a; . ./.env; set +a
+mvn -DskipTests package
+java -jar target/workbench-cloud.jar
 ```
 
 ## 文档导航
@@ -93,5 +99,5 @@ node packages/cloud/lib/server.js --port 8791 --data ~/.dsh/workbench/cloud
 | D2 | 本地权威存储 | 直接 `node:sqlite` + WAL，不走 storageDomain JSON | 需要行级变更日志、索引与事务 |
 | D3 | 插件协议 | DSH 原生包 + `ctx.workbench.registerDomain`；客户端 ModuleLoader + `__WB_HOST__` | 复用 DSH 安装/激活/依赖解析；宿主只做运行时聚合 |
 | D4 | 同步模型 | 离线优先 + `sync_change_log`；A 类行级 LWW，B 类树表 reconcile + 整表 full | 行级冲突面可控；树表保证 sort/path 自洽 |
-| D5 | 云端 | Node + `node:http` + `node:sqlite`，只做账号/设备/数据同步 | 与插件分发完全解耦 |
-| D6 | 代码库 | `~/code/dsh-workbench` pnpm monorepo | 宿主、业务插件、SDK、云端同仓联调 |
+| D5 | 云端 | Java 21 + Spring Boot 3.4 + PostgreSQL 16 + S3/MinIO，只做账号/设备/数据同步与文件字节 | 与插件分发完全解耦，对象存储可直接换 S3 |
+| D6 | 代码库 | 宿主 pnpm monorepo + 独立 `dsh-workbench-cloud` 仓库 | 云端独立构建/部署；宿主与云端只靠 protocol v2 契约耦合 |
