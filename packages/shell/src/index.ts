@@ -30,6 +30,7 @@ import {
   type SyncDomain,
   type SyncTransport,
 } from "./sync.js";
+import { AuditLog } from "./audit.js";
 import {
   BackupError,
   createBackup,
@@ -46,7 +47,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.5.2";
+export const SHELL_VERSION = "0.5.4";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -155,6 +156,14 @@ export function apply(ctx: any): void {
     }
   };
   const log = (...args: unknown[]) => console.warn("[dsh-workbench]", ...args);
+  // 审计日志：本机行为账本；表初始化与过期清理失败都不应影响宿主启动。
+  const audit = new AuditLog(state.db, () => clock.now());
+  try {
+    audit.ensureSchema();
+    audit.prune();
+  } catch (e) {
+    log("审计日志初始化失败", e);
+  }
 
   function publicInfo(rec: RegisteredDomain): DomainPublicInfo {
     return {
@@ -259,6 +268,130 @@ export function apply(ctx: any): void {
   /** 宿主内置的元 action 归属域（不参与备份，也不是业务插件）。 */
   const META_DOMAIN = "wb-shell";
 
+  /**
+   * 宿主元 action：与业务域共用同一套 schema 发现（actions.list/help）与分发、审计链路，
+   * 但不需要注册成插件域，统一归在 wb-shell 下。
+   */
+  const META_ACTIONS = new Map<string, DomainActionDef>();
+  META_ACTIONS.set("audit.list", {
+    description:
+      "查询本机审计日志：谁在何时通过哪个入口（agent/ui/sync）调了哪个 action、成功与否、耗时与目标。只读 action 默认不记；参数里的密码/token/保险箱值一律脱敏为 ***。",
+    input: {
+      type: "object",
+      properties: {
+        action: { type: "string", description: "精确匹配 action 名，如 tasks.update" },
+        actionPrefix: { type: "string", description: "按 action 前缀过滤，如 tasks. 或 tags." },
+        actor: { type: "string", description: "入口过滤：agent / ui / sync / other" },
+        domain: { type: "string", description: "业务域 id 过滤，如 wb-addon-tasks" },
+        ok: { type: ["boolean", "string", "number"], description: "只看成功（true/1）或只看失败（false/0）" },
+        q: { type: "string", description: "在 action / target / error 中模糊搜索" },
+        target: { type: "string", description: "目标过滤，如 id=01a1… 或任务 id / 标签名" },
+        since: { type: ["number", "string"], description: "起始时间：毫秒时间戳或 YYYY-MM-DD" },
+        until: { type: ["number", "string"], description: "结束时间：毫秒时间戳或 YYYY-MM-DD（含当天）" },
+        page: { type: "number", description: "页码，从 1 开始" },
+        pageSize: { type: "number", description: "每页条数，默认 50，上限 200" },
+      },
+      required: [],
+    },
+    examples: [{ pageSize: 20, ok: "false" }, { actionPrefix: "tasks.", since: "2026-11-01" }],
+    execute: (args: Record<string, unknown>) => audit.list(args as any),
+    render: (result: any) => renderAuditList(result),
+  });
+  META_ACTIONS.set("audit.get", {
+    description: "按 id 查看一条审计记录的完整内容（参数与结果摘要已脱敏、超长已截断）。",
+    input: {
+      type: "object",
+      properties: { id: { type: "number", description: "audit.list 返回的记录 id" } },
+      required: ["id"],
+    },
+    examples: [{ id: 1 }],
+    execute: (args: Record<string, unknown>) => {
+      const id = Number(args.id);
+      if (!Number.isFinite(id) || id <= 0) throw new Error("id 必须是正整数");
+      const record = audit.get(id);
+      if (!record) throw new Error("没有该审计记录：" + id);
+      return record;
+    },
+    render: (result: any) => renderAuditRecord(result),
+  });
+  META_ACTIONS.set("audit.stats", {
+    description: "审计统计：区间内总数、失败数、按 action / 入口 / 天的分布。用于回答「这几天改了什么、失败多不多」。",
+    input: {
+      type: "object",
+      properties: { rangeDays: { type: ["number", "string"], description: "统计最近多少天，默认 30，范围 1..3650" } },
+      required: [],
+    },
+    examples: [{ rangeDays: 7 }],
+    execute: (args: Record<string, unknown>) => audit.stats((args.rangeDays as any) ?? 30),
+    render: (result: any) => renderAuditStats(result),
+  });
+  META_ACTIONS.set("audit.prune", {
+    description: "按保留期清理旧审计（默认 90 天，可用 meta.audit.retentionDays 调整）。删除不可恢复，日常无需调用。",
+    input: {
+      type: "object",
+      properties: { retentionDays: { type: "number", description: "保留天数，1..3650；省略则用当前配置" } },
+      required: [],
+    },
+    examples: [{ retentionDays: 30 }],
+    execute: (args: Record<string, unknown>) => audit.prune(args.retentionDays as any),
+    render: (result: any) => "已清理 " + result.deleted + " 条审计（保留 " + result.retentionDays + " 天，截止 " + new Date(result.cutoff).toISOString() + "）",
+  });
+
+  function renderAuditList(meta: any): string {
+    const lines = [
+      "审计日志 " + meta.total + " 条（返回 " + meta.returned + " 条 · 第 " + meta.page + " 页 · 每页 " + meta.pageSize + "）",
+    ];
+    if (!meta.records.length) lines.push("（没有符合条件的记录）");
+    for (const r of meta.records) {
+      lines.push("");
+      lines.push(
+        "#" + r.id + " " + r.time + " · " + r.actor + " · " + r.action + (r.ok ? "" : " ✗ 失败") +
+          (r.durationMs ? " · " + r.durationMs + "ms" : ""),
+      );
+      if (r.target) lines.push("  目标：" + r.target);
+      if (r.error) lines.push("  错误：" + String(r.error).slice(0, 500));
+      if (r.args) lines.push("  参数：" + String(r.args).slice(0, 300));
+    }
+    return lines.join("\n");
+  }
+
+  function renderAuditRecord(r: any): string {
+    const lines = [
+      "#" + r.id + " " + r.time,
+      "入口：" + r.actor + " · 域：" + (r.domain || "（未知）") + " · " + (r.ok ? "成功" : "失败") + " · " + r.durationMs + "ms",
+      "action：" + r.action,
+    ];
+    if (r.target) lines.push("目标：" + r.target);
+    if (r.error) lines.push("错误：" + r.error);
+    lines.push("", "参数：", r.args ? prettyJson(r.args) : "（无）", "", "结果：", r.result ? prettyJson(r.result) : "（无）");
+    return lines.join("\n");
+  }
+
+  function prettyJson(text: string): string {
+    try {
+      return JSON.stringify(JSON.parse(text), null, 2);
+    } catch {
+      return String(text);
+    }
+  }
+
+  function renderAuditStats(s: any): string {
+    const lines = ["最近 " + s.rangeDays + " 天：共 " + s.total + " 条，失败 " + s.failed + " 条"];
+    if (s.byAction.length) {
+      lines.push("", "按 action：");
+      for (const a of s.byAction) lines.push("  " + a.action + " × " + a.count + (a.failed ? "（失败 " + a.failed + "）" : ""));
+    }
+    if (s.byActor.length) {
+      lines.push("", "按入口：");
+      for (const a of s.byActor) lines.push("  " + a.actor + " × " + a.count);
+    }
+    if (s.byDay.length) {
+      lines.push("", "按天：");
+      for (const d of s.byDay) lines.push("  " + d.day + " × " + d.count + (d.failed ? "（失败 " + d.failed + "）" : ""));
+    }
+    return lines.join("\n");
+  }
+
   /** 旧版 Workbench 顶层 schema 里的“通用字段”，多数 action 并不接受。 */
   const TRAP_FIELDS = ["due_at", "note", "tags", "tagIds", "dirIds", "parentId", "deadline", "start_at", "assignee", "limit"];
 
@@ -286,6 +419,7 @@ export function apply(ctx: any): void {
         records: [] as any[],
         notFor: [] as string[],
         notes: [] as string[],
+        fields: [] as any[],
         source: "fallback" as const,
         warnings: [] as string[],
       };
@@ -328,11 +462,37 @@ export function apply(ctx: any): void {
       });
     }
 
+    // 字段字典：agent 最容易踩的坑是「方向/枚举/默认值」看不见（例如把 priority 当成越小越紧急）。
+    const fields: any[] = [];
+    const fieldNames = new Set<string>();
+    for (const raw of Array.isArray((declared as any).fields) ? (declared as any).fields : []) {
+      if (!raw || typeof raw !== "object") continue;
+      const name = String((raw as any).name ?? "").trim();
+      if (!name) {
+        warnings.push("存在缺少 name 的字段声明，已忽略");
+        continue;
+      }
+      if (fieldNames.has(name)) {
+        warnings.push("字段重复：" + name + "（只保留第一条）");
+        continue;
+      }
+      fieldNames.add(name);
+      fields.push({
+        name,
+        type: String((raw as any).type ?? ""),
+        description: String((raw as any).description ?? ""),
+      });
+    }
+    if (!fields.length) {
+      warnings.push("未声明字段字典（capability.fields）；agent 只能看到字段名，容易误解方向与枚举");
+    }
+
     return {
       summary: String(declared.summary ?? "").trim() || rec.def.description || rec.def.title,
       records,
       notFor: Array.isArray(declared.notFor) ? declared.notFor : [],
       notes: Array.isArray(declared.notes) ? declared.notes : [],
+      fields,
       source: "declared" as const,
       warnings,
     };
@@ -411,6 +571,7 @@ export function apply(ctx: any): void {
         records: cap.records,
         notFor: cap.notFor,
         notes: cap.notes,
+        fields: (cap as any).fields ?? [],
       },
       source: cap.source,
       actions: [...rec.actions].map(([action, def]) => actionEntry(action, rec.def.id, def)),
@@ -468,6 +629,13 @@ export function apply(ctx: any): void {
       lines.push("", "约束：");
       for (const w of cap.notes) lines.push("  - " + w);
     }
+    const capFields = (cap as any).fields ?? [];
+    if (capFields.length) {
+      lines.push("", "字段字典（方向/范围/默认值以此为准）：");
+      for (const f of capFields) {
+        lines.push("  " + f.name + (f.type ? " · " + f.type : "") + (f.description ? " — " + f.description : ""));
+      }
+    }
     lines.push("", "可用 action（" + meta.actions.length + "）：");
     for (const a of meta.actions) lines.push("  " + a.name + (a.description ? " — " + a.description : ""));
     lines.push("", '字段细节：Workbench({ action: "actions.help", args: { action: "<name>" } })');
@@ -479,6 +647,8 @@ export function apply(ctx: any): void {
   }
 
   function findActionDef(name: string): { def: DomainActionDef; domainId: string } | null {
+    const meta = META_ACTIONS.get(name);
+    if (meta) return { def: meta, domainId: META_DOMAIN };
     for (const rec of domains.values()) {
       const def = rec.actions.get(name);
       if (def) return { def, domainId: rec.def.id };
@@ -520,6 +690,9 @@ export function apply(ctx: any): void {
         if (matchAction(name, rec.def.id)) all.push(actionEntry(name, rec.def.id, def));
       }
     }
+    for (const [name, def] of META_ACTIONS) {
+      if (matchAction(name, META_DOMAIN)) all.push(actionEntry(name, META_DOMAIN, def));
+    }
     const ids = new Set(all.map((a) => a.domain));
     const domainsOut = [...domains.values()]
       .filter((rec) => ids.has(rec.def.id))
@@ -534,6 +707,16 @@ export function apply(ctx: any): void {
           actionCount: rec.actions.size,
         };
       });
+    if (ids.has(META_DOMAIN)) {
+      domainsOut.push({
+        id: META_DOMAIN,
+        title: "宿主元 action（能力发现与审计）",
+        version: SHELL_VERSION,
+        enabled: true,
+        error: null,
+        actionCount: 4 + META_ACTIONS.size,
+      });
+    }
     const detail = args.detail === true;
     return {
       shellVersion: SHELL_VERSION,
@@ -615,6 +798,9 @@ export function apply(ctx: any): void {
         out.push({ name: action, domainId: rec.def.id, description: def.description });
       }
     }
+    for (const [name, def] of META_ACTIONS) {
+      out.push({ name, domainId: META_DOMAIN, description: def.description });
+    }
     out.push({ name: "capabilities.list", domainId: META_DOMAIN, description: "列出各业务插件记录什么、首选哪个 action" });
     out.push({ name: "capabilities.get", domainId: META_DOMAIN, description: "查看单个业务插件的完整能力清单与 action 列表" });
     out.push({ name: "actions.list", domainId: META_DOMAIN, description: "列出已安装业务域的 action、参数与必填项" });
@@ -623,6 +809,42 @@ export function apply(ctx: any): void {
   }
 
   async function invoke(action: string, args: Record<string, unknown>, origin: "ui" | "agent" | "sync") {
+    // 审计只在分发外层做一次：成功按实际 domainId 记，失败记下错误后原样抛出。
+    // 能力发现与审计自身不记录，避免自举递归和噪声。
+    const audited = !/^(capabilities|actions|audit)\./.test(action);
+    const started = clock.now();
+    try {
+      const out = await invokeAction(action, args, origin);
+      if (audited) {
+        audit.record({
+          action,
+          domain: out.domainId,
+          actor: origin,
+          ok: true,
+          args,
+          result: out.result,
+          durationMs: clock.now() - started,
+        });
+      }
+      return out;
+    } catch (e) {
+      if (audited) {
+        const target = findActionDef(action);
+        audit.record({
+          action,
+          domain: target ? target.domainId : "",
+          actor: origin,
+          ok: false,
+          error: String((e && (e as Error).message) || e),
+          args,
+          durationMs: clock.now() - started,
+        });
+      }
+      throw e;
+    }
+  }
+
+  async function invokeAction(action: string, args: Record<string, unknown>, origin: "ui" | "agent" | "sync") {
     if (action === "capabilities.list") {
       const result = capabilityListMeta(args);
       return { result, text: renderCapabilityList(result), domainId: META_DOMAIN };
@@ -638,6 +860,18 @@ export function apply(ctx: any): void {
     if (action === "actions.help") {
       const result = helpActionMeta(args);
       return { result, text: renderActionHelp(result), domainId: META_DOMAIN };
+    }
+    const meta = META_ACTIONS.get(action);
+    if (meta) {
+      const result = await meta.execute(args, {
+        origin,
+        emit: (event, data) => emit("domain-event", { domainId: META_DOMAIN, event, data: data ?? null }),
+      });
+      return {
+        result,
+        text: meta.render ? meta.render(result) : JSON.stringify(result),
+        domainId: META_DOMAIN,
+      };
     }
     for (const rec of domains.values()) {
       const def = rec.actions.get(action);
@@ -955,6 +1189,31 @@ export function apply(ctx: any): void {
                 return send(200, { ok: true, sessionId: sid, enabled });
               }
 
+              if (p === "/audit" && m === "GET") {
+                // 审计页数据：列表 + 可选统计。参数与 audit.list 保持一致，便于同一套筛选复用到 UI。
+                try {
+                  const q = url.searchParams;
+                  const pick = (key: string) => (q.get(key) === null ? undefined : String(q.get(key)));
+                  const result = audit.list({
+                    action: pick("action"),
+                    actionPrefix: pick("actionPrefix"),
+                    actor: pick("actor"),
+                    domain: pick("domain"),
+                    ok: pick("ok"),
+                    q: pick("q"),
+                    target: pick("target"),
+                    since: pick("since"),
+                    until: pick("until"),
+                    page: pick("page"),
+                    pageSize: pick("pageSize"),
+                  } as any);
+                  const stats = q.get("stats") === "1" ? audit.stats(pick("rangeDays") ?? 30) : null;
+                  return send(200, { ok: true, shellVersion: SHELL_VERSION, ...result, stats });
+                } catch (e) {
+                  return send(500, { ok: false, error: String((e && (e as Error).message) || e) });
+                }
+              }
+
               if (p === "/backup/export" && m === "GET") {
                 try {
                   const raw = url.searchParams.get("modules");
@@ -1110,6 +1369,7 @@ export function apply(ctx: any): void {
       "个人工作台。action 由已安装业务插件提供（tasks.* / taskNodes.* / tags.* / sites.* / siteTags.* / siteNodes.*），" +
       "宿主另提供 capabilities.list / capabilities.get 查看各插件记录什么、首选哪个 action；" +
       "actions.list / actions.help 用于自举：先 actions.list 看有哪些 action，再 actions.help 看真实字段。" +
+      "审计留痕可直接查 audit.list / audit.get / audit.stats（本机行为账本：谁在何时调了什么、成功与否，参数已脱敏）。" +
       "入参统一放进 args；不要再按旧版顶层字段（due_at / tags / parentId 等）猜参数。" +
       "安装或卸载业务插件请使用 DSH 的插件管理，不在本工具里做。",
     parameters: {

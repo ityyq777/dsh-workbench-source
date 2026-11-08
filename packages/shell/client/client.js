@@ -34,6 +34,18 @@
           back_home: "返回首页", open: "打开", manage: "工作台管理",
           home_hint: "点开卡片进入业务插件；安装与卸载在 DSH 插件管理里",
           account_desc: "登录云端账号，备份与同步数据",
+          tab_audit: "审计日志",
+          audit_desc: "本机行为账本：谁在何时调用了哪个 action、成功与否；密码与 token 等参数已脱敏",
+          audit_filters: "筛选", audit_action_prefix: "action 前缀", audit_actor: "入口", audit_ok: "结果",
+          audit_all: "全部", audit_ok_only: "只看成功", audit_fail_only: "只看失败",
+          audit_q: "关键字", audit_since: "起始日期", audit_until: "结束日期", audit_search: "查询", audit_refresh: "刷新",
+          audit_empty: "没有符合条件的审计记录", audit_load_failed: "读取审计日志失败",
+          audit_time: "时间", audit_action: "action", audit_target: "目标", audit_duration: "耗时",
+          audit_detail: "参数与结果", audit_error: "错误",
+          audit_stats: "近 30 天", audit_total: "共", audit_failed: "失败",
+          audit_prev: "上一页", audit_next: "下一页", audit_page: "页",
+          audit_retention: "默认保留 90 天；可用 audit.prune 调整保留期",
+          audit_reads_hint: "只读 action 默认不记；meta.audit.recordReads=1 时记录",
           addons_desc: "安装、升级或卸载子插件",
           no_views: "该子插件没有注册界面", addon_loading: "正在加载子插件界面…", addon_unavailable: "子插件界面不可用",
           views: "个视图",
@@ -88,6 +100,18 @@
           back_home: "Back to home", open: "Open", manage: "Manage",
           home_hint: "Open a card to enter a domain; install or remove plugins in DSH",
           account_desc: "Sign in to back up and sync your data",
+          tab_audit: "Audit log",
+          audit_desc: "A local ledger of who called which action and how it went; passwords and tokens are redacted",
+          audit_filters: "Filters", audit_action_prefix: "Action prefix", audit_actor: "Actor", audit_ok: "Result",
+          audit_all: "All", audit_ok_only: "Succeeded", audit_fail_only: "Failed",
+          audit_q: "Keyword", audit_since: "Since", audit_until: "Until", audit_search: "Search", audit_refresh: "Refresh",
+          audit_empty: "No audit records match", audit_load_failed: "Failed to load the audit log",
+          audit_time: "Time", audit_action: "Action", audit_target: "Target", audit_duration: "Duration",
+          audit_detail: "Arguments & result", audit_error: "Error",
+          audit_stats: "Last 30 days", audit_total: "total", audit_failed: "failed",
+          audit_prev: "Previous", audit_next: "Next", audit_page: "page",
+          audit_retention: "Retained for 90 days by default; adjust with audit.prune",
+          audit_reads_hint: "Read-only actions are not recorded unless meta.audit.recordReads=1",
           addons_desc: "Install, update or uninstall addons",
           no_views: "This addon has no UI", addon_loading: "Loading addon UI…", addon_unavailable: "Addon UI unavailable",
           views: "views",
@@ -219,6 +243,19 @@
         ".wb-backup-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
         ".wb-backup-note{font-size:12px;opacity:.6;line-height:1.55}",
         ".wb-backup-report{display:flex;flex-direction:column;gap:8px}",
+        ".wb-audit-filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}",
+        ".wb-audit-filters .wb-input{padding:6px 9px;font-size:12px;min-width:120px}",
+        ".wb-audit-table{width:100%;border-collapse:collapse;font-size:12px}",
+        ".wb-audit-table th{text-align:left;font-weight:600;opacity:.6;padding:6px 8px;border-bottom:1px solid var(--wb-line);white-space:nowrap}",
+        ".wb-audit-table td{padding:7px 8px;border-bottom:1px solid var(--wb-line);vertical-align:top}",
+        ".wb-audit-row{cursor:pointer}",
+        ".wb-audit-row:hover td{background:color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 5%,transparent)}",
+        ".wb-audit-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}",
+        ".wb-audit-ok{color:#1a9c6a;font-weight:600}",
+        ".wb-audit-fail{color:#d0483c;font-weight:600}",
+        ".wb-audit-dim{opacity:.55}",
+        ".wb-audit-pre{white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.6;background:color-mix(in oklab,var(--wb-line) 18%,transparent);border-radius:8px;padding:9px 11px;margin:6px 0 4px}",
+        ".wb-audit-pager{display:flex;align-items:center;gap:10px;margin-top:12px}",
         ".wb-backup-table{width:100%;border-collapse:collapse;font-size:12px}",
         ".wb-backup-table th,.wb-backup-table td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--wb-line);vertical-align:top}",
         ".wb-backup-table th{font-weight:600;opacity:.66;font-size:11.5px}",
@@ -278,7 +315,16 @@
         if (cached) return cached;
         var api = {
           call: function (action, args) {
-            return fetch("/workbench/api/domains/" + encodeURIComponent(id) + "/actions/" + encodeURIComponent(action), {
+            // 跨插件调用：action 带域前缀（如 tags.dataTables 由任务域的数据页调用）时路由到目标域，
+            // 否则一律按当前插件域处理，避免把 tags.* 发到 tasks 域的路径上（会 404）。
+            var targetId = id;
+            var name = String(action || "");
+            var dot = name.indexOf(".");
+            if (dot > 0) {
+              var hinted = "wb-addon-" + name.slice(0, dot);
+              if (hinted !== id && registry.has(hinted)) targetId = hinted;
+            }
+            return fetch("/workbench/api/domains/" + encodeURIComponent(targetId) + "/actions/" + encodeURIComponent(action), {
               method: "POST",
               headers: { "content-type": "application/json" },
               body: JSON.stringify(args || {}),
@@ -800,6 +846,143 @@
         ] });
       }
 
+      function AuditTab(props) {
+        var t = props.t;
+        var fst = react.useState({ action: "", actor: "", ok: "", q: "", since: "", until: "" });
+        var filters = fst[0]; var setFilters = fst[1];
+        var pst = react.useState(1); var page = pst[0]; var setPage = pst[1];
+        var zst = react.useState(50); var pageSize = zst[0]; var setPageSize = zst[1];
+        var dst = react.useState(null); var data = dst[0]; var setData = dst[1];
+        var sst = react.useState(null); var stats = sst[0]; var setStats = sst[1];
+        var bst = react.useState(false); var busy = bst[0]; var setBusy = bst[1];
+        var est = react.useState(""); var err = est[0]; var setErr = est[1];
+        var ost = react.useState(null); var openId = ost[0]; var setOpenId = ost[1];
+
+        function query(p, size) {
+          var qs = new URLSearchParams();
+          if (filters.action) qs.set("actionPrefix", filters.action);
+          if (filters.actor) qs.set("actor", filters.actor);
+          if (filters.ok !== "") qs.set("ok", filters.ok);
+          if (filters.q) qs.set("q", filters.q);
+          if (filters.since) qs.set("since", filters.since);
+          if (filters.until) qs.set("until", filters.until);
+          qs.set("page", String(p));
+          qs.set("pageSize", String(size || pageSize));
+          qs.set("stats", "1");
+          qs.set("rangeDays", "30");
+          return qs.toString();
+        }
+        function load(p, size) {
+          setBusy(true);
+          setErr("");
+          fetch("/workbench/api/audit?" + query(p || page, size))
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+              if (!j || j.ok === false) throw new Error((j && j.error) || t("audit_load_failed"));
+              setData(j);
+              setStats(j.stats || null);
+              setPage(j.page || 1);
+            })
+            .catch(function (e) { setErr(String((e && e.message) || e)); })
+            .then(function () { setBusy(false); });
+        }
+        react.useEffect(function () { load(1); }, []);
+
+        function field(key, value) { setFilters(Object.assign({}, filters, { [key]: value })); }
+        function search() { load(1); }
+        function setSize(n) {
+          var size = Math.max(10, Math.min(200, Number(n) || 50));
+          setPageSize(size);
+          load(1, size);
+        }
+        function fmtTime(ms) {
+          try { var d = new Date(Number(ms)); return d.toLocaleString(); } catch (e) { return String(ms); }
+        }
+        function shortJson(text, limit) {
+          if (!text) return "";
+          return String(text).length > (limit || 400) ? String(text).slice(0, limit || 400) + "…" : String(text);
+        }
+
+        var records = (data && data.records) || [];
+        var total = data ? data.total : 0;
+        var totalPages = Math.max(1, Math.ceil(total / pageSize));
+        var statsText = stats
+          ? t("audit_stats") + "：" + totalOf(stats) + " · " + t("audit_failed") + " " + (stats.failed || 0)
+          : "";
+
+        function totalOf(s) { return (t("audit_total") + " " + (s.total || 0)); }
+
+        return jsx.jsxs(react.Fragment, { children: [
+          jsx.jsxs("div", { className: "wb-card", children: [
+            jsx.jsxs("div", { className: "wb-sec", children: [
+              jsx.jsx("h3", { children: t("audit_filters") }),
+              jsx.jsx("span", { className: "wb-hint", children: statsText }),
+            ] }),
+            jsx.jsxs("div", { className: "wb-audit-filters", children: [
+              jsx.jsx("input", { className: "wb-input", placeholder: t("audit_action_prefix"), value: filters.action, onChange: function (e) { field("action", e.target.value); }, onKeyDown: function (e) { if (e.key === "Enter") search(); } }),
+              jsx.jsx("select", { className: "wb-select", value: filters.actor, onChange: function (e) { field("actor", e.target.value); }, children: [
+                jsx.jsx("option", { value: "", children: t("audit_all") + " · " + t("audit_actor") }),
+                jsx.jsx("option", { value: "agent", children: "agent" }),
+                jsx.jsx("option", { value: "ui", children: "ui" }),
+                jsx.jsx("option", { value: "sync", children: "sync" }),
+              ] }),
+              jsx.jsx("select", { className: "wb-select", value: filters.ok, onChange: function (e) { field("ok", e.target.value); }, children: [
+                jsx.jsx("option", { value: "", children: t("audit_all") }),
+                jsx.jsx("option", { value: "true", children: t("audit_ok_only") }),
+                jsx.jsx("option", { value: "false", children: t("audit_fail_only") }),
+              ] }),
+              jsx.jsx("input", { className: "wb-input", placeholder: t("audit_q"), value: filters.q, onChange: function (e) { field("q", e.target.value); }, onKeyDown: function (e) { if (e.key === "Enter") search(); } }),
+              jsx.jsx("input", { className: "wb-input", type: "date", title: t("audit_since"), value: filters.since, onChange: function (e) { field("since", e.target.value); } }),
+              jsx.jsx("input", { className: "wb-input", type: "date", title: t("audit_until"), value: filters.until, onChange: function (e) { field("until", e.target.value); } }),
+              jsx.jsx("button", { className: "wb-btn", disabled: busy, onClick: search, children: busy ? "…" : t("audit_search") }),
+              jsx.jsx("button", { className: "wb-btn ghost", disabled: busy, onClick: function () { load(page); }, children: t("audit_refresh") }),
+            ] }),
+            err ? jsx.jsx("div", { className: "wb-err", style: { marginTop: 10 }, children: err }) : null,
+            jsx.jsx("div", { className: "wb-hint", style: { marginTop: 10 }, children: t("audit_reads_hint") + " · " + t("audit_retention") }),
+          ] }),
+          jsx.jsxs("div", { className: "wb-card", children: [
+            jsx.jsxs("div", { className: "wb-sec", children: [
+              jsx.jsx("h3", { children: t("tab_audit") }),
+              jsx.jsx("span", { className: "wb-hint", children: t("audit_total") + " " + total + " · " + page + " / " + totalPages + " " + t("audit_page") }),
+            ] }),
+            records.length
+              ? jsx.jsx("div", { style: { overflowX: "auto" }, children: jsx.jsxs("table", { className: "wb-audit-table", children: [
+                  jsx.jsx("thead", { children: jsx.jsxs("tr", { children: [
+                    jsx.jsx("th", { children: t("audit_time") }),
+                    jsx.jsx("th", { children: t("audit_actor") }),
+                    jsx.jsx("th", { children: t("audit_action") }),
+                    jsx.jsx("th", { children: t("audit_ok") }),
+                    jsx.jsx("th", { children: t("audit_target") }),
+                    jsx.jsx("th", { children: t("audit_duration") }),
+                  ] }) }),
+                  jsx.jsx("tbody", { children: records.map(function (r) {
+                    var open = openId === r.id;
+                    return jsx.jsxs(react.Fragment, { children: [
+                      jsx.jsxs("tr", { className: "wb-audit-row", onClick: function () { setOpenId(open ? null : r.id); }, children: [
+                        jsx.jsx("td", { className: "wb-audit-mono", children: fmtTime(r.at) }),
+                        jsx.jsx("td", { children: jsx.jsx("span", { className: "wb-badge", children: r.actor }) }),
+                        jsx.jsx("td", { className: "wb-audit-mono", children: r.action }),
+                        jsx.jsx("td", { children: r.ok ? jsx.jsx("span", { className: "wb-audit-ok", children: "✓" }) : jsx.jsx("span", { className: "wb-audit-fail", children: "✗" }) }),
+                        jsx.jsx("td", { className: "wb-audit-mono wb-audit-dim", children: r.target || "—" }),
+                        jsx.jsx("td", { className: "wb-audit-dim", children: (r.durationMs || 0) + " ms" }),
+                      ] }),
+                      open ? jsx.jsx("tr", { children: jsx.jsx("td", { colSpan: 6, children: jsx.jsxs("div", { children: [
+                        r.error ? jsx.jsxs("div", { children: [jsx.jsx("div", { className: "wb-audit-dim", children: t("audit_error") }), jsx.jsx("div", { className: "wb-audit-pre", children: r.error })] }) : null,
+                        jsx.jsxs("div", { children: [jsx.jsx("div", { className: "wb-audit-dim", children: t("audit_detail") + " · id=" + r.id }), jsx.jsx("div", { className: "wb-audit-pre", children: shortJson(r.args, 1200) || "{}" }), r.result ? jsx.jsx("div", { className: "wb-audit-pre", children: shortJson(r.result, 1200) }) : null] }),
+                      ] }) }) }) : null,
+                    ] }, r.id);
+                  }) }),
+                ] }) })
+              : jsx.jsx("div", { className: "wb-msg", children: busy ? "…" : t("audit_empty") }),
+            jsx.jsxs("div", { className: "wb-audit-pager", children: [
+              jsx.jsx("button", { className: "wb-btn ghost", disabled: busy || page <= 1, onClick: function () { load(page - 1); }, children: t("audit_prev") }),
+              jsx.jsx("button", { className: "wb-btn ghost", disabled: busy || page >= totalPages, onClick: function () { load(page + 1); }, children: t("audit_next") }),
+              jsx.jsx("select", { className: "wb-select", value: String(pageSize), onChange: function (e) { setSize(e.target.value); }, children: [20, 50, 100, 200].map(function (n) { return jsx.jsx("option", { value: String(n), children: n + " / " + t("audit_page") }, n); }) }),
+            ] }),
+          ] }),
+        ] });
+      }
+
       function ensureCss() {
         if (typeof document === "undefined") return;
         if (document.getElementById("wb-css")) return;
@@ -882,6 +1065,11 @@
             jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_backup"), t("backup_desc")), jsx.jsx(BackupTab, { t: t, lang: lang, addons: addons })] }),
           ] });
         }
+        if (route === "audit") {
+          return jsx.jsxs("div", { className: "wb-root", children: [
+            jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_audit"), t("audit_desc")), jsx.jsx(AuditTab, { t: t })] }),
+          ] });
+        }
         if (route === "account") {
           return jsx.jsxs("div", { className: "wb-root", children: [
             jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_account"), t("account_desc")), jsx.jsx(AccountTab, { t: t })] }),
@@ -933,6 +1121,7 @@
             ] }),
             jsx.jsxs("div", { className: "wb-home-grid manage", children: [
               systemCard("backup", "⤓", t("tab_backup"), t("backup_desc")),
+              systemCard("audit", "▤", t("tab_audit"), t("audit_desc")),
               systemCard("account", "☁", t("tab_account"), t("account_desc")),
             ] }),
           ] }),

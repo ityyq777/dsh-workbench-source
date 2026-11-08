@@ -20,7 +20,8 @@
     "test:e2e": "node scripts/e2e.mjs",
     "stage:release": "node scripts/stage-release.mjs",
     "publish:npm": "node scripts/publish-npm.mjs",
-    "publish:github": "node scripts/publish-github.mjs"
+    "publish:github": "node scripts/publish-github.mjs",
+    "test:audit": "node scripts/test-audit.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",
