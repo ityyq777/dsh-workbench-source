@@ -510,8 +510,8 @@ var require_stats = __commonJS({
         due: "\u5230\u671F",
         status: "\u72B6\u6001\u6784\u6210",
         statusNote: "\u5F53\u524D\u5B58\u91CF",
-        type: "\u7C7B\u578B \xD7 \u72B6\u6001",
-        typeNote: "\u5F53\u524D\u5B58\u91CF",
+        tags: "\u6807\u7B7E \xD7 \u72B6\u6001",
+        tagsNote: "\u5F53\u524D\u5B58\u91CF\uFF1B\u4E00\u4E2A\u4EFB\u52A1\u53EF\u5C5E\u4E8E\u591A\u4E2A\u6807\u7B7E",
         priority: "\u4F18\u5148\u7EA7\u5206\u5E03",
         priorityNote: "\u5F53\u524D\u5B58\u91CF",
         difficulty: "\u96BE\u5EA6\u5206\u5E03",
@@ -535,7 +535,7 @@ var require_stats = __commonJS({
         colAge: "\u903E\u671F\u5929\u6570",
         colTable: "\u4EFB\u52A1\u8868",
         noOverdue: "\u6CA1\u6709\u903E\u671F\u4EFB\u52A1",
-        noData: "\u8FD8\u6CA1\u6709\u4EFB\u52A1\u3002\u5728\u300C\u4EFB\u52A1\u8BB0\u5F55\u300D\u91CC\u521B\u5EFA\u540E\uFF0C\u8FD9\u91CC\u4F1A\u81EA\u52A8\u6C47\u603B",
+        noData: "\u8FD8\u6CA1\u6709\u4EFB\u52A1\u3002\u5728\u300C\u8BB0\u5F55\u300D\u91CC\u521B\u5EFA\u540E\uFF0C\u8FD9\u91CC\u4F1A\u81EA\u52A8\u6C47\u603B",
         open: "\u8FDB\u884C\u4E2D",
         shutdown: "\u5DF2\u5173\u95ED",
         restarted: "\u5DF2\u91CD\u542F"
@@ -571,8 +571,8 @@ var require_stats = __commonJS({
         due: "Due",
         status: "Status",
         statusNote: "Current",
-        type: "Type \xD7 status",
-        typeNote: "Current",
+        tags: "Tags \xD7 status",
+        tagsNote: "Current; a task can carry several tags",
         priority: "Priority",
         priorityNote: "Current",
         difficulty: "Difficulty",
@@ -724,9 +724,9 @@ var require_stats = __commonJS({
           ));
           children.push(h2(
             ch.Card,
-            { key: "type", span: 6, title: t.type, note: t.typeNote },
+            { key: "tags", span: 6, title: t.tags, note: t.tagsNote },
             h2(ch.StackedRows, {
-              rows: (b.type || []).map(function(x) {
+              rows: (b.tags || []).map(function(x) {
                 return { key: x.key, label: x.label, total: x.total, parts: { open: x.open, done: x.done, shutdown: x.shutdown, restarted: x.restarted } };
               }),
               keys: [
@@ -1705,6 +1705,35 @@ var init_chevron_down = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/tag.mjs
+var tag_exports = {};
+__export(tag_exports, {
+  __iconData: () => __iconData24,
+  default: () => Tag
+});
+var __iconData24, Tag;
+var init_tag = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/tag.mjs"() {
+    init_createLucideIcon();
+    __iconData24 = {
+      name: "tag",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z",
+            key: "vktsd0"
+          }
+        ],
+        ["circle", { cx: "7.5", cy: "7.5", r: ".5", fill: "currentColor", key: "kqv944" }]
+      ]
+    };
+    __iconData24.node;
+    Tag = createLucideIcon(__iconData24);
+  }
+});
+
 // packages/addons/tasks/client/client.src.cjs
 var React = require("react");
 var h = React.createElement;
@@ -1750,7 +1779,13 @@ var h = React.createElement;
       groups: "\u4E2A\u4EFB\u52A1\u7EC4",
       tables: "\u5F20\u4EFB\u52A1\u8868",
       treeNoMatch: "\u6CA1\u6709\u5339\u914D\u7684\u8282\u70B9",
-      types: "\u4EFB\u52A1\u7C7B\u578B",
+      tags: "\u6807\u7B7E",
+      tagsHint: "\u7528\u6807\u7B7E\u5F52\u7C7B\uFF08\u5DE5\u4F5C/\u751F\u6D3B/\u5B66\u4E60/\u5F00\u53D1 \u5DF2\u662F\u6807\u7B7E\uFF09",
+      tagPlaceholder: "\u591A\u4E2A\u6807\u7B7E\u7528\u9017\u53F7\u5206\u9694\uFF0C\u4F8B\u5982\uFF1A\u5DE5\u4F5C, \u5F00\u53D1",
+      tagFilter: "\u6807\u7B7E\u7B5B\u9009",
+      allTags: "\u5168\u90E8\u6807\u7B7E",
+      noTags: "\u6682\u65E0\u6807\u7B7E",
+      untagged: "\u672A\u6253\u6807\u7B7E",
       publish: "\u53D1\u5E03",
       target: "\u8BA1\u5212\u5B8C\u6210",
       done: "\u5B9E\u9645\u5B8C\u6210",
@@ -1763,7 +1798,6 @@ var h = React.createElement;
       reviewPlaceholder: "\u4F8B\u5982\uFF1A\u601D\u8DEF\u5F88\u987A / \u5361\u5728\u63A5\u53E3\u8C03\u8BD5 / \u6BD4\u9884\u60F3\u8F7B\u677E",
       reviewAdd: "\u8BB0\u5F55\u611F\u53D7",
       status: "\u72B6\u6001",
-      type: "\u7C7B\u578B",
       publishDate: "\u53D1\u5E03\u65E5\u671F",
       targetDate: "\u8BA1\u5212\u5B8C\u6210\u65E5\u671F",
       doneDate: "\u5B8C\u6210\u65E5\u671F",
@@ -1837,7 +1871,13 @@ var h = React.createElement;
       groups: "groups",
       tables: "tables",
       treeNoMatch: "No matching node",
-      types: "Types",
+      tags: "Tags",
+      tagsHint: "Group tasks with tags (Work/Life/Study/Dev are tags now)",
+      tagPlaceholder: "Comma separated, e.g. Work, Dev",
+      tagFilter: "Filter by tag",
+      allTags: "All tags",
+      noTags: "No tags",
+      untagged: "Untagged",
       publish: "Published",
       target: "Target",
       done: "Done",
@@ -1850,7 +1890,6 @@ var h = React.createElement;
       reviewPlaceholder: "e.g. smooth, stuck on the API, easier than expected",
       reviewAdd: "Add feeling",
       status: "Status",
-      type: "Type",
       publishDate: "Publish date",
       targetDate: "Target date",
       doneDate: "Done date",
@@ -1897,20 +1936,10 @@ var h = React.createElement;
   };
   var TABS = [
     { id: 0, zh: "\u7D27\u6025\u4EFB\u52A1", en: "Urgent" },
-    { id: 1, zh: "\u5DE5\u4F5C\u4EFB\u52A1", en: "Work" },
-    { id: 2, zh: "\u751F\u6D3B\u4EFB\u52A1", en: "Life" },
-    { id: 3, zh: "\u5B66\u4E60\u4EFB\u52A1", en: "Study" },
-    { id: 4, zh: "\u5F00\u53D1\u4EFB\u52A1", en: "Dev" },
     { id: 5, zh: "\u5DF2\u5173\u95ED", en: "Closed" },
     { id: 6, zh: "\u5DF2\u5F00\u542F", en: "Active" },
     { id: 7, zh: "\u5DF2\u5B8C\u6210", en: "Done" },
     { id: 8, zh: "\u603B\u89C8", en: "Overview" }
-  ];
-  var TYPES = [
-    { id: "0", zh: "\u5DE5\u4F5C", en: "Work", icon: "\u25A3" },
-    { id: "1", zh: "\u751F\u6D3B", en: "Life", icon: "\u2302" },
-    { id: "2", zh: "\u5B66\u4E60", en: "Study", icon: "\u25A4" },
-    { id: "3", zh: "\u5F00\u53D1", en: "Dev", icon: "\u2318" }
   ];
   var STATUS = {
     "0": { zh: "\u5DF2\u5F00\u542F", en: "Active", cls: "active" },
@@ -1941,7 +1970,8 @@ var h = React.createElement;
     "pencil": (init_pencil(), __toCommonJS(pencil_exports)).default,
     "trash": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
     "close": (init_x(), __toCommonJS(x_exports)).default,
-    "down": (init_chevron_down(), __toCommonJS(chevron_down_exports)).default
+    "down": (init_chevron_down(), __toCommonJS(chevron_down_exports)).default,
+    "tag": (init_tag(), __toCommonJS(tag_exports)).default
   };
   function Icon2(props) {
     var C = ICONS[props.name];
@@ -2006,8 +2036,21 @@ var h = React.createElement;
     ".wbt-path button:hover{background:color-mix(in oklab,currentColor 8%,transparent);text-decoration:underline}",
     ".wbt-prio{font-size:10px;font-weight:650;padding:2px 6px;border-radius:999px;border:none;background:color-mix(in oklab,currentColor 12%,transparent);opacity:.92;flex:none;font-variant-numeric:tabular-nums}",
     ".wbt-prio.high{color:var(--dsw-alias-state-error-primary,#d93a40)}.wbt-prio.mid{color:var(--dsw-alias-state-warn-primary,#cf6512)}.wbt-prio.low{color:var(--dsw-alias-label-tertiary,#77839a)}",
-    ".wbt-kind{font-size:11.5px;font-weight:600;line-height:1;opacity:.9;flex:none}",
-    ".wbt-kind.t0{color:var(--dsw-alias-brand-primary,#0f8f84)}.wbt-kind.t1{color:var(--dsw-alias-state-warn-primary,#bf6818)}.wbt-kind.t2{color:var(--dsw-alias-state-business-primary,#2f6fdb)}.wbt-kind.t3{color:#7c4dcc}",
+    ".wbt-tag{font-size:11.5px;line-height:1.5;padding:0 6px;border-radius:999px;background:color-mix(in oklab,var(--wbt-accent) 12%,transparent);color:var(--wbt-accent);cursor:pointer;white-space:nowrap}",
+    ".wbt-tag:hover{background:color-mix(in oklab,var(--wbt-accent) 22%,transparent)}",
+    ".wbt-tags{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:5px}",
+    ".wbt-tagfilter{position:relative;display:flex;align-items:center;gap:5px;min-width:0}",
+    ".wbt-tagfilter .wbt-btn.on{border-color:var(--wbt-accent);color:var(--wbt-accent);background:color-mix(in oklab,var(--wbt-accent) 12%,transparent)}",
+    ".wbt-tagmenu{position:absolute;z-index:60;top:calc(100% + 6px);right:0;width:236px;max-height:320px;overflow:auto;padding:8px;border-radius:10px;border:1px solid var(--wbt-line);box-shadow:0 14px 34px rgba(26,20,12,.2);background-color:var(--wbt-bg);background-image:linear-gradient(var(--wbt-bg),var(--wbt-bg)),linear-gradient(var(--wbt-bg),var(--wbt-bg));-webkit-backdrop-filter:blur(24px) saturate(1.4);backdrop-filter:blur(24px) saturate(1.4)}",
+    ".wbt-tagmenu-head{display:flex;align-items:center;gap:6px;font-size:11px;opacity:.6;padding:2px 4px 7px}",
+    ".wbt-tagopt{display:flex;align-items:center;gap:7px;padding:6px;border-radius:6px;cursor:pointer;font-size:12.5px}",
+    ".wbt-tagopt:hover{background:color-mix(in oklab,currentColor 7%,transparent)}",
+    ".wbt-tagopt input{margin:0;accent-color:var(--wbt-accent)}",
+    ".wbt-mini{appearance:none;border:0;background:transparent;color:inherit;border-radius:4px;cursor:pointer;font-size:11.5px;line-height:1;padding:3px 5px;font-family:inherit;opacity:.7}",
+    ".wbt-mini:hover{background:color-mix(in oklab,currentColor 8%,transparent);opacity:1}",
+    ".wbt-note{font-size:11.5px;opacity:.6;padding:6px}",
+    ".wbt-tagcnt{font-size:10.5px;opacity:.55;font-variant-numeric:tabular-nums;margin-left:auto}",
+    ".wbt-tagnm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
     ".wbt-badge{font-size:10.5px;padding:1px 6px;border-radius:999px;border:none;background:color-mix(in oklab,currentColor 9%,transparent);opacity:.86;white-space:nowrap}",
     '.wbt-badge::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;margin-right:4px;vertical-align:1px;opacity:.8}',
     ".wbt-badge.active{color:var(--dsw-alias-brand-primary,#0b8a7f)}",
@@ -2131,9 +2174,18 @@ var h = React.createElement;
     n.setHours(0, 0, 0, 0);
     return Math.round((d.getTime() - n.getTime()) / 864e5);
   }
-  function typeInfo(id) {
-    for (var i = 0; i < TYPES.length; i++) if (TYPES[i].id === String(id)) return TYPES[i];
-    return TYPES[0];
+  function splitTags(text) {
+    var out = [];
+    String(text || "").split(/[,，]/).forEach(function(x) {
+      var v = String(x).trim();
+      if (v && out.indexOf(v) < 0) out.push(v);
+    });
+    return out;
+  }
+  function tagNames(task) {
+    return (task && task.tags ? task.tags : []).map(function(x) {
+      return String(x.name || "");
+    }).filter(Boolean);
   }
   function statusInfo(id) {
     return STATUS[String(id)] || STATUS["0"];
@@ -2214,8 +2266,8 @@ var h = React.createElement;
     var t = props.t;
     var task = props.task;
     var st = statusInfo(task.status);
-    var ti = typeInfo(task.type);
-    var typeName = props.lang === "en" ? ti.en : ti.zh;
+    var stName = props.lang === "en" ? st.en : st.zh;
+    var myTags = task.tags || [];
     var isActive = String(task.status) === "0";
     var titleState = React2.useState(null);
     var editingTitle = titleState[0], setEditingTitle = titleState[1];
@@ -2273,8 +2325,18 @@ var h = React.createElement;
     }
     var isDone = String(task.status) === "2";
     var countdown = String(task.status) === "0" ? daysBetween(task.targetDate) : null;
+    var tagNodes = myTags.map(function(tag) {
+      return h2("span", {
+        key: "tag-" + String(tag.id),
+        className: "wbt-tag",
+        title: tag.name,
+        onClick: props.onTagPick ? function(e) {
+          e.stopPropagation();
+          props.onTagPick(String(tag.id));
+        } : null
+      }, "#" + tag.name);
+    });
     var meta = [];
-    meta.push(h2("span", { key: "kind", className: "wbt-kind t" + String(task.type || "0"), title: typeName, children: typeName }));
     if (task.publishDate) meta.push(h2("span", { key: "p" }, h2("b", null, t.publish), " ", task.publishDate));
     if (String(task.status) === "0" && task.targetDate) {
       meta.push(h2(
@@ -2386,13 +2448,14 @@ var h = React.createElement;
           "div",
           { className: "wbt-line1" },
           h2("span", { className: "wbt-prio " + pClass(task.priority), children: "P" + task.priority }),
-          h2("span", { className: "wbt-badge " + st.cls, children: st.zh }),
+          h2("span", { className: "wbt-badge " + st.cls, children: stName }),
           titleNode,
           addDesc
         ),
         descNode,
         reviewNode,
         addReview,
+        tagNodes.length ? h2("div", { className: "wbt-tags", key: "tags" }, tagNodes) : null,
         h2("div", { className: "wbt-foot" }, meta.length ? h2("div", { className: "wbt-meta", key: "meta" }, meta) : null),
         task.path && task.path.length ? h2("div", { className: "wbt-taskpath" }, h2(PathCrumbs, { key: "path", path: task.path, t, onPick: props.onPathPick })) : null
       ),
@@ -2507,12 +2570,12 @@ var h = React.createElement;
     var origin = props.originTask || null;
     var tables = allTables(props.tree);
     var first = props.defaultTableId || origin && origin.tableId || tables[0] && tables[0].id || "";
-    var initType = origin ? String(origin.type || "0") : "0";
+    var initTags = origin ? tagNames(origin).join(", ") : "";
     var initTable = origin ? String(origin.tableId || first) : String(first);
     var f = React2.useState({
       title: "",
       description: "",
-      type: initType,
+      tags: initTags,
       status: "0",
       priority: 1,
       difficulty: 1,
@@ -2530,10 +2593,6 @@ var h = React.createElement;
     function set(k, v) {
       var next = Object.assign({}, form);
       next[k] = v;
-      if (k === "type" && source === "0") {
-        var defaults = { "0": 8, "1": 6, "2": 4, "3": 2 };
-        next.priority = defaults[v] !== void 0 ? defaults[v] : 1;
-      }
       setForm(next);
     }
     function submit() {
@@ -2554,7 +2613,7 @@ var h = React.createElement;
       var args = {
         title: String(form.title).trim(),
         description: String(form.description || ""),
-        type: String(form.type),
+        tags: splitTags(form.tags),
         status: source === "2" ? "0" : String(form.status),
         priority: Number(form.priority) || 0,
         tableId: String(form.tableId),
@@ -2603,11 +2662,9 @@ var h = React.createElement;
           h2("label", { className: "wbt-field full" }, h2("span", null, t.desc), h2("textarea", { className: "wbt-textarea", rows: 2, value: form.description, onChange: function(e) {
             set("description", e.target.value);
           } })),
-          h2("label", { className: "wbt-field" }, h2("span", null, t.type), h2("select", { className: "wbt-select", value: form.type, onChange: function(e) {
-            set("type", e.target.value);
-          } }, TYPES.map(function(x) {
-            return h2("option", { key: x.id, value: x.id }, x.zh);
-          }))),
+          h2("label", { className: "wbt-field full" }, h2("span", null, t.tags), h2("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function(e) {
+            set("tags", e.target.value);
+          } })),
           h2("label", { className: "wbt-field" }, h2("span", null, t.status), h2(
             "select",
             { className: "wbt-select", value: source === "2" ? "0" : form.status, disabled: source === "2", onChange: function(e) {
@@ -2863,8 +2920,12 @@ var h = React.createElement;
     var titleKey = titleS[0], setTitleKey = titleS[1];
     var filterS = React2.useState(true);
     var filterRestarted = filterS[0], setFilterRestarted = filterS[1];
-    var typesS = React2.useState(["0", "1", "2", "3"]);
-    var checkedTypes = typesS[0], setCheckedTypes = typesS[1];
+    var tagNavS = React2.useState({ available: false, tags: [], untagged: { total: 0 } });
+    var tagNav = tagNavS[0], setTagNav = tagNavS[1];
+    var filterTagIdsS = React2.useState([]);
+    var filterTagIds = filterTagIdsS[0], setFilterTagIds = filterTagIdsS[1];
+    var tagMenuS = React2.useState(false);
+    var tagMenu = tagMenuS[0], setTagMenu = tagMenuS[1];
     var pageS = React2.useState(1);
     var pageNumber = pageS[0], setPageNumber = pageS[1];
     var sizeS = React2.useState(12);
@@ -2941,6 +3002,12 @@ var h = React.createElement;
         setError(String(e && e.message || e));
       });
     }, [api]);
+    var refreshTagNav = React2.useCallback(function() {
+      return api.call("tasks.tags").then(function(r) {
+        if (r && r.ok) setTagNav(r.result || { available: false, tags: [], untagged: { total: 0 } });
+      }).catch(function() {
+      });
+    }, [api]);
     var refreshPath = React2.useCallback(function(id) {
       if (!id) {
         setCurrentPath([]);
@@ -2961,7 +3028,7 @@ var h = React.createElement;
         pageNumber,
         pageSize,
         filterRestarted,
-        checkedTypes
+        tagIds: filterTagIds
       }).then(function(r) {
         setLoading(false);
         if (r && r.ok) {
@@ -2974,20 +3041,24 @@ var h = React.createElement;
         setLoading(false);
         setError(String(e && e.message || e));
       });
-    }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, checkedTypes]);
-    refreshRef.current = { tree: refreshTree, list: refreshList, path: refreshPath };
+    }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds]);
+    refreshRef.current = { tree: refreshTree, list: refreshList, path: refreshPath, tags: refreshTagNav };
     React2.useEffect(function() {
       injectCss();
       refreshTree();
+      refreshTagNav();
       refreshPath("1");
-    }, [refreshTree, refreshPath]);
+    }, [refreshTree, refreshTagNav, refreshPath]);
     React2.useEffect(function() {
       refreshList();
     }, [refreshList]);
     React2.useEffect(function() {
       var off = api.subscribe(function(p) {
         if (!p) return;
-        if (p.event === "tasks-changed") refreshRef.current.list();
+        if (p.event === "tasks-changed") {
+          refreshRef.current.list();
+          refreshRef.current.tags();
+        }
         if (p.event === "task-nodes-changed") {
           refreshRef.current.tree();
           refreshRef.current.path(target.tableId || target.groupId);
@@ -3073,13 +3144,12 @@ var h = React.createElement;
         } else say(r && r.error || "move failed");
       });
     }
-    function toggleType(id) {
-      var next = checkedTypes.slice();
-      var idx = next.indexOf(id);
+    function toggleTagId(id) {
+      var next = filterTagIds.slice();
+      var idx = next.indexOf(String(id));
       if (idx >= 0) next.splice(idx, 1);
-      else next.push(id);
-      if (!next.length) next = [id];
-      setCheckedTypes(next);
+      else next.push(String(id));
+      setFilterTagIds(next);
       setPageNumber(1);
     }
     function toggleSelect(id) {
@@ -3197,16 +3267,6 @@ var h = React.createElement;
       "div",
       { className: "wbt-filters" },
       pageable ? h2("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
-      tab >= 5 ? h2("span", { className: "wbt-check" }, h2("span", null, t.types + "\uFF1A"), TYPES.map(function(x) {
-        return h2(
-          "label",
-          { key: x.id, className: "wbt-check" },
-          h2("input", { type: "checkbox", checked: checkedTypes.indexOf(x.id) >= 0, onChange: function() {
-            toggleType(x.id);
-          } }),
-          x.zh
-        );
-      })) : null,
       tab === 5 || tab === 8 ? h2(
         "label",
         { className: "wbt-check" },
@@ -3238,7 +3298,8 @@ var h = React.createElement;
         onTimeline: function(x) {
           setTimelineTask(x);
         },
-        onPathPick: pickPath
+        onPathPick: pickPath,
+        onTagPick: toggleTagId
       });
     }));
     return h2(
@@ -3281,6 +3342,43 @@ var h = React.createElement;
             clearSelection();
           } else setSelectionMode(true);
         } }, h2(Icon2, { name: "select", size: 13 }), selectionMode ? t.cancelSelect : t.select),
+        tagNav.available && tagNav.tags.length ? h2(
+          "div",
+          { className: "wbt-tagfilter" },
+          h2("button", {
+            className: "wbt-btn ghost" + (filterTagIds.length ? " on" : ""),
+            "aria-expanded": tagMenu ? "true" : "false",
+            onClick: function() {
+              setTagMenu(!tagMenu);
+            }
+          }, h2(Icon2, { name: "tag", size: 13 }), t.tagFilter + (filterTagIds.length ? " \xB7 " + filterTagIds.length : ""), h2(Icon2, { name: "down", size: 12 })),
+          tagMenu ? h2(
+            "div",
+            { className: "wbt-tagmenu", role: "menu" },
+            h2(
+              "div",
+              { className: "wbt-tagmenu-head" },
+              h2("span", null, t.allTags),
+              h2("span", { className: "wbt-grow" }),
+              h2("button", { className: "wbt-mini", onClick: function() {
+                setFilterTagIds([]);
+                setPageNumber(1);
+              } }, t.clear)
+            ),
+            tagNav.tags.length ? tagNav.tags.map(function(x) {
+              var on = filterTagIds.indexOf(String(x.id)) >= 0;
+              return h2(
+                "label",
+                { key: x.id, className: "wbt-tagopt" },
+                h2("input", { type: "checkbox", checked: on, onChange: function() {
+                  toggleTagId(String(x.id));
+                } }),
+                h2("span", { className: "wbt-tagnm" }, x.name),
+                h2("span", { className: "wbt-tagcnt" }, x.total)
+              );
+            }) : h2("div", { className: "wbt-note" }, t.noTags)
+          ) : null
+        ) : null,
         h2("button", { className: "wbt-btn primary", onClick: function() {
           setCreateState({ source: "0", originTask: null, defaultTableId: target.tableId || firstTable && firstTable.id });
         } }, h2(Icon2, { name: "plus", size: 14 }), t.newTask),
@@ -3291,7 +3389,7 @@ var h = React.createElement;
       h2(
         "div",
         { className: "wbt-body" },
-        h2("nav", { className: "wbt-nav" }, TABS.map(function(x, i) {
+        h2("nav", { className: "wbt-nav" }, TABS.map(function(x) {
           var btn = h2("button", {
             key: x.id,
             className: "wbt-tab" + (tab === x.id ? " on" : ""),
@@ -3300,7 +3398,7 @@ var h = React.createElement;
               setPageNumber(1);
             }
           }, t === COPY.zh ? x.zh : x.en);
-          if (i !== 5) return btn;
+          if (x.id !== 5) return btn;
           return [h2("div", { key: "nav-sep", className: "wbt-nav-sep" }), btn];
         })),
         h2(
@@ -3497,7 +3595,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.5.0",
+    version: "2.6.0",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView }

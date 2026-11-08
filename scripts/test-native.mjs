@@ -113,9 +113,9 @@ try {
   // ── 2. Workbench 工具：args 合并 + 假字段告警 ──
   const viaArgs = await toolDef.execute({ action: "tasks.create", args: { title: "嵌套参数任务", priority: 4 } });
   assert(viaArgs.text.includes("嵌套参数任务"), "args 嵌套参数未生效：" + viaArgs.text);
-  const trap = await toolDef.execute({ action: "tasks.create", args: { title: "假字段任务" }, due_at: 1700000000, tags: ["x"], parentId: "1" });
+  const trap = await toolDef.execute({ action: "tasks.create", args: { title: "假字段任务" }, due_at: 1700000000, assignee: "me", parentId: "1" });
   assert(trap.text.startsWith("⚠"), "假字段未告警：" + trap.text);
-  assert(trap.text.includes("due_at") && trap.text.includes("tags") && trap.text.includes("parentId"), "假字段告警不完整：" + trap.text);
+  assert(trap.text.includes("due_at") && trap.text.includes("assignee") && trap.text.includes("parentId"), "假字段告警不完整：" + trap.text);
   const trapList = await call("tasks.list", { titleKey: "假字段任务" });
   assert(trapList.result.records.length === 1, "假字段任务未创建成功");
   const conflict = await toolDef.execute({ action: "tasks.create", args: { title: "A" }, title: "B" });
@@ -257,8 +257,8 @@ try {
   assert(grouped.result.groupBy === "status" && grouped.result.groups.length >= 1, "stats groupBy 未返回分组");
   const sum = grouped.result.groups.reduce((n, g) => n + g.count, 0);
   assert(sum >= 1, "stats groupBy 计数为空");
-  const groupedType = await call("tasks.stats", { groupBy: "type" });
-  assert(groupedType.result.groups.length >= 1, "stats groupBy=type 失败");
+  const groupedTag = await call("tasks.stats", { groupBy: "tag" });
+  assert(Array.isArray(groupedTag.result.groups) && groupedTag.result.groupBy === "tag", "stats groupBy=tag 失败");
 
   // ── 12b. 统计报表：三个模块的 statsReport ──
   const taskReport = await call("tasks.statsReport", { range: "30d" });

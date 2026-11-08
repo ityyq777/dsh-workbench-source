@@ -13,7 +13,7 @@ var COPY = {
     trend: "新增 / 完成 / 到期趋势", trendNote: "按自然日 / 周 / 月分桶",
     created: "新增", done: "完成", due: "到期",
     status: "状态构成", statusNote: "当前存量",
-    type: "类型 × 状态", typeNote: "当前存量",
+    tags: "标签 × 状态", tagsNote: "当前存量；一个任务可属于多个标签",
     priority: "优先级分布", priorityNote: "当前存量",
     difficulty: "难度分布", difficultyNote: "当前存量",
     aging: "逾期账龄", agingNote: "当前逾期任务",
@@ -22,7 +22,7 @@ var COPY = {
     groups: "任务组排行", groupsNote: "一级任务组",
     colName: "名称", colTotal: "总数", colOpen: "进行中", colOverdue: "逾期", colDone: "已完成", colRate: "完成率",
     colTitle: "任务", colTarget: "计划完成", colAge: "逾期天数", colTable: "任务表",
-    noOverdue: "没有逾期任务", noData: "还没有任务。在「任务记录」里创建后，这里会自动汇总",
+    noOverdue: "没有逾期任务", noData: "还没有任务。在「记录」里创建后，这里会自动汇总",
     open: "进行中", shutdown: "已关闭", restarted: "已重启",
   },
   en: {
@@ -34,7 +34,7 @@ var COPY = {
     trend: "Created / done / due trend", trendNote: "Bucketed by day / week / month",
     created: "Created", done: "Done", due: "Due",
     status: "Status", statusNote: "Current",
-    type: "Type × status", typeNote: "Current",
+    tags: "Tags × status", tagsNote: "Current; a task can carry several tags",
     priority: "Priority", priorityNote: "Current",
     difficulty: "Difficulty", difficultyNote: "Current",
     aging: "Overdue aging", agingNote: "Current overdue",
@@ -156,9 +156,9 @@ function TasksStatsView(props) {
           aria: (b.status || []).map(function (s) { return s.label + " " + s.count; }).join("，"),
         })));
 
-      children.push(h(ch.Card, { key: "type", span: 6, title: t.type, note: t.typeNote },
+      children.push(h(ch.Card, { key: "tags", span: 6, title: t.tags, note: t.tagsNote },
         h(ch.StackedRows, {
-          rows: (b.type || []).map(function (x) {
+          rows: (b.tags || []).map(function (x) {
             return { key: x.key, label: x.label, total: x.total, parts: { open: x.open, done: x.done, shutdown: x.shutdown, restarted: x.restarted } };
           }),
           keys: [

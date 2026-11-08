@@ -7,6 +7,7 @@
  */
 
 import { NODE_TABLE, TASK_TABLE, logChange, tableExists, tx } from "./db.js";
+import { LEGACY_TYPE_TAGS, addTaskTagByName, tagsAvailable } from "./tagging.js";
 
 const SCHEMA_VERSION = 1;
 
@@ -43,7 +44,6 @@ function taskValues(row) {
     title,
     asText(row.description),
     asText(row.status, "0"),
-    asText(row.type, "0"),
     asInt(row.priority, 0),
     asNumOrNull(row.difficulty),
     asText(row.review),
@@ -130,9 +130,9 @@ export function importTasksData(api, raw, options) {
   }
 
   const taskUpsert = db.prepare(
-    "INSERT INTO task(id,title,description,status,type,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,sort,dedupe_key,created_at,updated_at,deleted_at,rev) " +
-      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) " +
-      "ON CONFLICT(id) DO UPDATE SET title=excluded.title,description=excluded.description,status=excluded.status,type=excluded.type,priority=excluded.priority,difficulty=excluded.difficulty,review=excluded.review,table_id=excluded.table_id,timeline_key=excluded.timeline_key,restart_key=excluded.restart_key,publish_date=excluded.publish_date,target_date=excluded.target_date,done_date=excluded.done_date,shutdown_date=excluded.shutdown_date,sort=excluded.sort,dedupe_key=excluded.dedupe_key,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
+    "INSERT INTO task(id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,sort,dedupe_key,created_at,updated_at,deleted_at,rev) " +
+      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) " +
+      "ON CONFLICT(id) DO UPDATE SET title=excluded.title,description=excluded.description,status=excluded.status,priority=excluded.priority,difficulty=excluded.difficulty,review=excluded.review,table_id=excluded.table_id,timeline_key=excluded.timeline_key,restart_key=excluded.restart_key,publish_date=excluded.publish_date,target_date=excluded.target_date,done_date=excluded.done_date,shutdown_date=excluded.shutdown_date,sort=excluded.sort,dedupe_key=excluded.dedupe_key,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
       "WHERE ? = 1 OR excluded.updated_at > task.updated_at",
   );
   const depUpsert = db.prepare(
@@ -167,7 +167,16 @@ export function importTasksData(api, raw, options) {
       const result = taskUpsert.run(...values, force);
       if (result.changes > 0) {
         imported += 1;
-        logChange(db, TASK_TABLE, values[0], "upsert", row, "import", values[18]);
+        logChange(db, TASK_TABLE, values[0], "upsert", row, "import", values[17]);
+        // 旧备份里的 task.type（0..3）没有对应列了，转成同名标签保留语义。
+        const legacyName = LEGACY_TYPE_TAGS[String(row && row.type)];
+        if (legacyName && tagsAvailable(db, api)) {
+          try {
+            addTaskTagByName(db, values[0], legacyName, values[17], "import");
+          } catch (e) {
+            /* 标签恢复失败不影响任务行导入 */
+          }
+        }
       } else {
         skipped += 1;
       }

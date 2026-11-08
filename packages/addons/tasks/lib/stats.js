@@ -1,13 +1,14 @@
 // 任务统计报表：只读聚合，不写库、不发事件。
 // 契约见 docs/specs/18-统计报表设计.md §4。
 
+import { tagsAvailable, tagBreakdown } from "./tagging.js";
+
 const STATUS_LABELS = {
   "0": "进行中",
   "1": "已关闭",
   "2": "已完成",
   "3": "已重启",
 };
-const TYPE_LABELS = { "0": "工作", "1": "生活", "2": "学习", "3": "开发" };
 
 function pad(n) {
   return String(n).padStart(2, "0");
@@ -159,7 +160,7 @@ function fillTrend(trend, range, field, rows) {
   }
 }
 
-export function statsReport(db, args) {
+export function statsReport(db, args, api) {
   const input = args || {};
   const range = resolveRange(db, input);
   const top = Math.max(1, Math.min(20, Number(input.top) || 10));
@@ -225,32 +226,10 @@ export function statsReport(db, args) {
     });
   }
 
-  const typeStatusRows = db.prepare(
-    "SELECT type, status, COUNT(*) AS n FROM task WHERE deleted_at IS NULL GROUP BY type, status",
-  ).all();
-  const typeMap = Object.create(null);
-  let unknownType = 0;
-  for (const row of typeStatusRows) {
-    const key = String(row.type);
-    if (!(key in TYPE_LABELS)) {
-      unknownType += Number(row.n || 0);
-      continue;
-    }
-    if (!typeMap[key]) typeMap[key] = { key: key, label: TYPE_LABELS[key], total: 0, open: 0, done: 0, shutdown: 0, restarted: 0 };
-    const item = typeMap[key];
-    const n = Number(row.n || 0);
-    item.total += n;
-    if (String(row.status) === "0") item.open += n;
-    else if (String(row.status) === "2") item.done += n;
-    else if (String(row.status) === "1") item.shutdown += n;
-    else if (String(row.status) === "3") item.restarted += n;
-  }
-  const typeBreakdown = ["0", "1", "2", "3"].map(function (key) {
-    return typeMap[key] || { key: key, label: TYPE_LABELS[key], total: 0, open: 0, done: 0, shutdown: 0, restarted: 0 };
-  });
-  if (unknownType > 0) {
-    typeBreakdown.push({ key: "other", label: "其他", total: unknownType, open: 0, done: 0, shutdown: 0, restarted: 0 });
-    warnings.push({ code: "type_unknown", message: unknownType + " 个任务的类型不在 0–3 内，已归入「其他」" });
+  // 任务不再有「类型」；分组改看标签。多标签任务会出现在多个分组里，总和可能大于任务数。
+  const tagStats = tagBreakdown(db, api);
+  if (!tagsAvailable(db, api)) {
+    warnings.push({ code: "tag_domain_missing", message: "标签域未安装，标签分组不可用" });
   }
 
   const priorityRows = db.prepare(
@@ -412,7 +391,7 @@ export function statsReport(db, args) {
       status: ["0", "1", "2", "3"].map(function (key) {
         return { key: key, label: STATUS_LABELS[key], count: statusCount[key] || 0 };
       }),
-      type: typeBreakdown,
+      tags: tagStats.rows,
       priority: priorityBins,
       difficulty: difficultyBins,
     },

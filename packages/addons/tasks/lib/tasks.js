@@ -21,16 +21,32 @@ import {
   timeMs,
 } from "./db.js";
 import { statsReport, renderStats } from "./stats.js";
+import {
+  LEGACY_TYPE_TAGS,
+  tagsAvailable,
+  normalizeTagIds,
+  normalizeTagNames,
+  requireTagRows,
+  tagIdsByNames,
+  ensureTagsByNames,
+  replaceTaskTags,
+  attachTags,
+  tagNavStats,
+  tagBreakdown,
+  migrateLegacyTypes,
+} from "./tagging.js";
 
 const STATUSES = ["0", "1", "2", "3"];
-const TASK_TYPES = ["0", "1", "2", "3"];
 const SOURCES = { TASK_TABLE: "0", TASK_TIMELINE: "1", TASK_RESTART: "2" };
 const PUT_TYPES = { STATUS: "0", PRIORITY: "1", TITLE: "2", DESCRIPTION: "3", REVIEW: "4" };
+/**
+ * 列表分页：0 紧急（未完成 + 高优先级）、1..4 是旧「类型」页签，保留为同名
+ * 标签筛选（工作/生活/学习/开发），5..8 是状态页签。
+ */
 const TABS = {
   EMERGENCY: 0, WORK: 1, LIFE: 2, STUDY: 3, DEV: 4,
   SHUTDOWN: 5, ACTIVE: 6, DONE: 7, OVERVIEW: 8,
 };
-const TYPE_NAMES = { WORK: "0", LIFE: "1", STUDY: "2", DEV: "3" };
 const STATUS_NAMES = { ACTIVE: "0", SHUTDOWN: "1", DONE: "2", RESTARTED: "3", open: "0", done: "2" };
 
 function asCode(value, names, allowed, label) {
@@ -114,14 +130,13 @@ function requireTable(db, tableId) {
 
 function insertTaskRow(db, row) {
   db.prepare(
-    "INSERT INTO task(id,title,description,status,type,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,sort,dedupe_key,created_at,updated_at,deleted_at,rev) " +
-      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    "INSERT INTO task(id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,sort,dedupe_key,created_at,updated_at,deleted_at,rev) " +
+      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
   ).run(
     String(row.id),
     String(row.title),
     String(row.description || ""),
     String(row.status),
-    String(row.type),
     Number(row.priority || 0),
     row.difficulty === undefined ? null : row.difficulty,
     String(row.review || ""),
@@ -143,12 +158,11 @@ function insertTaskRow(db, row) {
 
 function saveTaskRow(db, row) {
   db.prepare(
-    "UPDATE task SET title=?,description=?,status=?,type=?,priority=?,difficulty=?,review=?,table_id=?,timeline_key=?,restart_key=?,publish_date=?,target_date=?,done_date=?,shutdown_date=?,sort=?,dedupe_key=?,updated_at=?,deleted_at=?,rev=? WHERE id=?",
+    "UPDATE task SET title=?,description=?,status=?,priority=?,difficulty=?,review=?,table_id=?,timeline_key=?,restart_key=?,publish_date=?,target_date=?,done_date=?,shutdown_date=?,sort=?,dedupe_key=?,updated_at=?,deleted_at=?,rev=? WHERE id=?",
   ).run(
     String(row.title),
     String(row.description || ""),
     String(row.status),
-    String(row.type),
     Number(row.priority || 0),
     row.difficulty === undefined ? null : row.difficulty,
     String(row.review || ""),
@@ -170,102 +184,6 @@ function saveTaskRow(db, row) {
 
 function outOne(db, row) {
   return taskOut(row, nodeMap(db));
-}
-
-const TAG_ITEM_TYPE = "task";
-
-function tagsAvailable(db, api) {
-  return !!api && typeof api.hasDomain === "function" && api.hasDomain("wb-addon-tags") &&
-    tableExists(db, "tag_mapping") && tableExists(db, "tag");
-}
-
-function normalizeTagIds(raw) {
-  let ids = raw;
-  if (typeof ids === "string") ids = ids.split(",");
-  if (!Array.isArray(ids)) return [];
-  const out = [];
-  for (const v of ids) {
-    const id = idOf(v);
-    if (id && out.indexOf(id) < 0) out.push(id);
-  }
-  return out;
-}
-
-function requireTagRows(db, tagIds) {
-  const rows = [];
-  for (const id of tagIds) {
-    const row = db.prepare("SELECT * FROM tag WHERE id=? AND deleted_at IS NULL").get(id);
-    if (!row) throw new Error("标签不存在：" + id);
-    rows.push(row);
-  }
-  return rows;
-}
-
-/** 用 tagIds 全量替换某任务的标签；软删复用旧 mapping，避免每次写都新增历史行。 */
-function replaceTaskTags(db, taskId, tagIds, ts, origin) {
-  const current = db.prepare(
-    "SELECT * FROM tag_mapping WHERE item_type=? AND item_id=? AND deleted_at IS NULL",
-  ).all(TAG_ITEM_TYPE, String(taskId));
-  const byTag = new Map();
-  for (const m of current) byTag.set(String(m.tag_id), m);
-  const wanted = new Set(tagIds.map(String));
-  for (const m of current) {
-    if (wanted.has(String(m.tag_id))) continue;
-    db.prepare("UPDATE tag_mapping SET deleted_at=?, updated_at=?, rev=rev+1 WHERE id=?").run(ts, ts, String(m.id));
-    logChange(db, "tag_mapping", String(m.id), "delete", null, origin, ts);
-  }
-  for (const tagId of tagIds) {
-    if (byTag.has(String(tagId))) continue;
-    const deleted = db.prepare(
-      "SELECT * FROM tag_mapping WHERE item_type=? AND item_id=? AND tag_id=? AND deleted_at IS NOT NULL ORDER BY updated_at DESC LIMIT 1",
-    ).get(TAG_ITEM_TYPE, String(taskId), String(tagId));
-    if (deleted) {
-      db.prepare("UPDATE tag_mapping SET deleted_at=NULL, updated_at=?, rev=rev+1 WHERE id=?").run(ts, String(deleted.id));
-      logChange(db, "tag_mapping", String(deleted.id), "upsert", {
-        id: String(deleted.id), tag_id: String(tagId), item_id: String(taskId), item_type: TAG_ITEM_TYPE,
-        updated_at: ts, deleted_at: null, rev: Number(deleted.rev) + 1,
-      }, origin, ts);
-      continue;
-    }
-    const id = newId();
-    db.prepare(
-      "INSERT INTO tag_mapping(id,tag_id,item_id,item_type,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?,?)",
-    ).run(id, String(tagId), String(taskId), TAG_ITEM_TYPE, ts, ts, null, 1);
-    logChange(db, "tag_mapping", id, "create", {
-      id: id, tag_id: String(tagId), item_id: String(taskId), item_type: TAG_ITEM_TYPE,
-      created_at: ts, updated_at: ts, deleted_at: null, rev: 1,
-    }, origin, ts);
-  }
-}
-
-function tagsForTasks(db, ids) {
-  const map = new Map();
-  if (!ids.length) return map;
-  const marks = ids.map(function () { return "?"; }).join(",");
-  const rows = db.prepare(
-    "SELECT m.item_id AS item_id, t.id AS id, t.name AS name FROM tag_mapping m JOIN tag t ON t.id=m.tag_id " +
-      "WHERE m.item_type=? AND m.deleted_at IS NULL AND t.deleted_at IS NULL AND m.item_id IN (" + marks + ") " +
-      "ORDER BY t.name ASC",
-  ).all(...[TAG_ITEM_TYPE].concat(ids.map(String)));
-  for (const row of rows) {
-    const key = String(row.item_id);
-    if (!map.has(key)) map.set(key, []);
-    map.get(key).push({ id: String(row.id), name: String(row.name || "") });
-  }
-  return map;
-}
-
-/** 给 taskOut 结果补 tags / tagIds；标签域未安装时不动。 */
-function attachTags(db, api, records) {
-  const list = Array.isArray(records) ? records : [records];
-  if (!tagsAvailable(db, api)) return records;
-  const map = tagsForTasks(db, list.map(function (t) { return t.id; }));
-  for (const t of list) {
-    const tags = map.get(String(t.id)) || [];
-    t.tags = tags;
-    t.tagIds = tags.map(function (x) { return x.id; });
-  }
-  return records;
 }
 
 /** 上游依赖（本任务依赖谁）与下游（谁依赖本任务），软删行忽略。 */
@@ -398,7 +316,6 @@ function createTask(db, args, origin, api, opts) {
   if (status === "3") throw new Error("创建任务时不能直接使用 RESTARTED 状态");
   if (source === "2") status = "0";
 
-  const type = asCode(args.type, TYPE_NAMES, TASK_TYPES, "type") || "0";
   const publishDate = dateArg(args.publishDate, "publishDate") || todayStr();
   const targetDate = dateArg(args.targetDate, "targetDate") || publishDate;
   let doneDate = dateArg(args.doneDate, "doneDate");
@@ -433,6 +350,8 @@ function createTask(db, args, origin, api, opts) {
   }
 
   const tagIds = args.tagIds === undefined || args.tagIds === null ? null : normalizeTagIds(args.tagIds);
+  // 允许直接传标签名（如 ["工作","紧急"]），缺失的标签按名补建。
+  const tagNames = normalizeTagNames(args.tags);
   if (tagIds && tagsAvailable(db, api)) {
     requireTagRows(db, tagIds);
   }
@@ -453,7 +372,6 @@ function createTask(db, args, origin, api, opts) {
     title,
     description: String(args.description === undefined || args.description === null ? "" : args.description),
     status,
-    type,
     priority,
     difficulty,
     review: String(args.review === undefined || args.review === null ? "" : args.review),
@@ -494,7 +412,13 @@ function createTask(db, args, origin, api, opts) {
       }
     }
     insertTaskRow(db, row);
-    if (tagIds && tagsAvailable(db, api)) replaceTaskTags(db, id, tagIds, ts, origin);
+    if ((tagIds || tagNames.length) && tagsAvailable(db, api)) {
+      const all = (tagIds || []).slice();
+      for (const tagId of ensureTagsByNames(db, tagNames, ts, origin)) {
+        if (all.indexOf(tagId) < 0) all.push(tagId);
+      }
+      replaceTaskTags(db, id, all, ts, origin);
+    }
     writeChange(db, row, "create", origin, api, ts);
   };
   // skipTx 供 bulkCreate 在外层事务里复用；单条创建仍自己开事务。
@@ -547,7 +471,6 @@ function updateTask(db, args, origin, api) {
     if (args.review !== undefined) next.review = String(args.review === null ? "" : args.review);
     if (args.status !== undefined) next.status = asCode(args.status, STATUS_NAMES, STATUSES, "status");
     if (args.priority !== undefined) next.priority = clampPriority(args.priority, Number(cur.priority));
-    if (args.type !== undefined && args.type !== null) next.type = asCode(args.type, TYPE_NAMES, TASK_TYPES, "type");
     if (args.difficulty !== undefined) next.difficulty = clampDifficulty(args.difficulty, null);
     if (args.publishDate !== undefined) next.publish_date = dateArg(args.publishDate, "publishDate") || String(cur.publish_date);
     if (args.targetDate !== undefined) next.target_date = dateArg(args.targetDate, "targetDate") || String(cur.target_date);
@@ -571,10 +494,17 @@ function updateTask(db, args, origin, api) {
   next.updated_at = ts;
   next.rev = Number(cur.rev) + 1;
   const tagIds = args.tagIds === undefined || args.tagIds === null ? null : normalizeTagIds(args.tagIds);
-  if (tagIds && !tagsAvailable(db, api)) throw new Error("标签域未安装，无法写 tagIds");
+  const tagNames = args.tags === undefined || args.tags === null ? null : normalizeTagNames(args.tags);
+  if ((tagIds || tagNames) && !tagsAvailable(db, api)) throw new Error("标签域未安装，无法写标签");
   if (tagIds) requireTagRows(db, tagIds);
   saveTaskRow(db, next);
-  if (tagIds) replaceTaskTags(db, String(next.id), tagIds, ts, origin);
+  if (tagIds || tagNames) {
+    const all = (tagIds || []).slice();
+    for (const tagId of ensureTagsByNames(db, tagNames || [], ts, origin)) {
+      if (all.indexOf(tagId) < 0) all.push(tagId);
+    }
+    replaceTaskTags(db, String(next.id), all, ts, origin);
+  }
   writeChange(db, next, "update", origin, api, ts);
   const task = outOne(db, next);
   attachTags(db, api, task);
@@ -583,12 +513,12 @@ function updateTask(db, args, origin, api) {
 
 /** bulk* 系列允许直接写的字段（与 tasks.update 的自由字段一致）。 */
 const PATCH_FIELDS = [
-  "title", "description", "status", "type", "priority", "difficulty", "review",
-  "publishDate", "targetDate", "doneDate", "shutdownDate", "tableId", "sort", "tagIds",
+  "title", "description", "status", "priority", "difficulty", "review",
+  "publishDate", "targetDate", "doneDate", "shutdownDate", "tableId", "sort", "tagIds", "tags",
 ];
 
 const DIFF_COLUMNS = [
-  ["title", "title"], ["description", "description"], ["status", "status"], ["type", "type"],
+  ["title", "title"], ["description", "description"], ["status", "status"],
   ["priority", "priority"], ["difficulty", "difficulty"], ["review", "review"], ["tableId", "table_id"],
   ["publishDate", "publish_date"], ["targetDate", "target_date"],
   ["doneDate", "done_date"], ["shutdownDate", "shutdown_date"], ["sort", "sort"],
@@ -643,7 +573,6 @@ function applyPatchRow(db, cur, patch, ts) {
   }
   if ("description" in patch) next.description = String(patch.description === null || patch.description === undefined ? "" : patch.description);
   if ("status" in patch) next.status = asCode(patch.status, STATUS_NAMES, STATUSES, "status");
-  if ("type" in patch) next.type = asCode(patch.type, TYPE_NAMES, TASK_TYPES, "type") || String(cur.type);
   if ("priority" in patch) next.priority = clampPriority(patch.priority, Number(cur.priority));
   if ("difficulty" in patch) next.difficulty = clampDifficulty(patch.difficulty, null);
   if ("review" in patch) next.review = String(patch.review === null || patch.review === undefined ? "" : patch.review);
@@ -672,7 +601,8 @@ function bulkUpdate(db, args, origin, api) {
   if (!ids.length) throw new Error("ids 不能为空");
   const patch = patchOf(args.patch);
   const tagIds = patch.tagIds === undefined ? null : normalizeTagIds(patch.tagIds);
-  if (tagIds && !tagsAvailable(db, api)) throw new Error("标签域未安装，无法写 tagIds");
+  const tagNames = patch.tags === undefined ? null : normalizeTagNames(patch.tags);
+  if ((tagIds || tagNames) && !tagsAvailable(db, api)) throw new Error("标签域未安装，无法写标签");
   if (tagIds) requireTagRows(db, tagIds);
   const dryRun = args.dryRun === true;
   const skipMissing = args.skipMissing === true;
@@ -680,6 +610,15 @@ function bulkUpdate(db, args, origin, api) {
   const changes = [];
   const missing = [];
   const plan = function () {
+    // 标签名只在真正写入时补建；dryRun 只认已存在的同名标签。
+    let desired = tagIds ? tagIds.slice() : null;
+    if (tagNames) {
+      const nameIds = dryRun
+        ? tagIdsByNames(db, tagNames).ids
+        : ensureTagsByNames(db, tagNames, ts, origin);
+      desired = (desired || []).slice();
+      for (const tagId of nameIds) if (desired.indexOf(tagId) < 0) desired.push(tagId);
+    }
     for (const id of ids) {
       const cur = getTask(db, id);
       if (!cur) {
@@ -691,11 +630,11 @@ function bulkUpdate(db, args, origin, api) {
       }
       const next = applyPatchRow(db, cur, patch, ts);
       const diff = diffRow(cur, next);
-      if (tagIds) diff.tagIds = { from: "（原标签）", to: tagIds };
+      if (desired) diff.tagIds = { from: "（原标签）", to: desired };
       changes.push({ id: id, changes: diff });
       if (!dryRun) {
         saveTaskRow(db, next);
-        if (tagIds) replaceTaskTags(db, id, tagIds, ts, origin);
+        if (desired) replaceTaskTags(db, id, desired, ts, origin);
         writeChange(db, next, "update", origin, api, ts);
       }
     }
@@ -818,6 +757,12 @@ function renderBulkDelete(r) {
 }
 
 function listTasks(db, args, api) {
+  // 第一次打开列表时把旧「类型」补成标签；幂等，失败不阻断列表。
+  try {
+    migrateLegacyTypes(db, api, "migrate");
+  } catch (e) {
+    /* ignore */
+  }
   const tab = tabCode(args.tab);
   const where = ["t.deleted_at IS NULL"];
   const params = [];
@@ -847,10 +792,23 @@ function listTasks(db, args, api) {
   }
 
   const filterRestarted = args.filterRestarted === undefined ? true : Boolean(args.filterRestarted);
-  let checkedTypes = Array.isArray(args.checkedTypes) ? args.checkedTypes.map(String) : [];
-  if (checkedTypes.length === 0) checkedTypes = TASK_TYPES.slice();
+  // 旧前端的 checkedTypes（0..3）仍接受，按旧类型名映射成标签过滤。
+  const checkedTypes = Array.isArray(args.checkedTypes) ? args.checkedTypes.map(String) : [];
   for (const c of checkedTypes) {
-    if (TASK_TYPES.indexOf(c) < 0) throw new Error("checkedTypes 取值非法：" + c);
+    if (!(c in LEGACY_TYPE_TAGS)) throw new Error("checkedTypes 取值非法：" + c);
+  }
+  const tagAvailable = tagsAvailable(db, api);
+  let filterTagIds = normalizeTagIds(args.tagIds);
+  const filterTagNames = normalizeTagNames(args.tags);
+  for (const c of checkedTypes) {
+    const name = LEGACY_TYPE_TAGS[c];
+    if (filterTagNames.indexOf(name) < 0) filterTagNames.push(name);
+  }
+  if (filterTagNames.length) {
+    if (!tagAvailable) throw new Error("标签域未安装，无法按标签过滤");
+    const resolved = tagIdsByNames(db, filterTagNames);
+    for (const id of resolved.ids) if (filterTagIds.indexOf(id) < 0) filterTagIds.push(id);
+    if (!resolved.ids.length) where.push("1=0");
   }
 
   // 额外过滤：与 tab/tableId/groupId 条件是 AND 关系。
@@ -878,10 +836,9 @@ function listTasks(db, args, api) {
     where.push("t.target_date<=?");
     params.push(targetTo);
   }
-  const tagIds = normalizeTagIds(args.tagIds);
-  if (tagIds.length) {
-    where.push("EXISTS (SELECT 1 FROM tag_mapping tm WHERE tm.item_type='task' AND tm.item_id=t.id AND tm.deleted_at IS NULL AND tm.tag_id IN (" + tagIds.map(function () { return "?"; }).join(",") + "))");
-    for (const id of tagIds) params.push(id);
+  if (filterTagIds.length) {
+    where.push("EXISTS (SELECT 1 FROM tag_mapping tm WHERE tm.item_type='task' AND tm.item_id=t.id AND tm.deleted_at IS NULL AND tm.tag_id IN (" + filterTagIds.map(function () { return "?"; }).join(",") + "))");
+    for (const id of filterTagIds) params.push(id);
   }
 
   if (tab === 0) {
@@ -889,9 +846,19 @@ function listTasks(db, args, api) {
     where.push("t.status='0'");
     params.push(addDays(todayStr(), 2));
   } else if (tab >= 1 && tab <= 4) {
+    // 旧「类型」页签（兼容旧客户端）：只按同名标签筛；task.type 列已删除，标签域缺失时无结果。
     where.push("t.status='0'");
-    where.push("t.type=?");
-    params.push(String(tab - 1));
+    const legacy = tagAvailable
+      ? db.prepare(
+        "SELECT id FROM tag WHERE name=? AND deleted_at IS NULL ORDER BY created_at ASC LIMIT 1",
+      ).get(LEGACY_TYPE_TAGS[String(tab - 1)])
+      : null;
+    if (legacy) {
+      where.push("EXISTS (SELECT 1 FROM tag_mapping tm WHERE tm.item_type='task' AND tm.item_id=t.id AND tm.deleted_at IS NULL AND tm.tag_id=?)");
+      params.push(String(legacy.id));
+    } else {
+      where.push("1=0");
+    }
   } else if (tab === 5) {
     where.push(filterRestarted ? "t.status='1'" : "t.status='3'");
   } else if (tab === 6) {
@@ -900,11 +867,6 @@ function listTasks(db, args, api) {
     where.push("t.status='2'");
   } else if (tab === 8) {
     if (filterRestarted) where.push("t.status!='3'");
-  }
-
-  if (tab >= 5) {
-    where.push("t.type IN (" + checkedTypes.map(function () { return "?"; }).join(",") + ")");
-    for (const c of checkedTypes) params.push(c);
   }
 
   const pageable = tab > 4 && tab < 9;
@@ -1064,7 +1026,7 @@ function sweepShutdown(db, args, origin, api) {
   return { updated: ids.length, ids: ids, items: items, date: day };
 }
 
-function stats(db, args) {
+function stats(db, args, api) {
   const a = args || {};
   const day = todayStr();
   const row = db.prepare(
@@ -1088,15 +1050,36 @@ function stats(db, args) {
   };
   const groupBy = a.groupBy === undefined || a.groupBy === null || a.groupBy === "" ? null : String(a.groupBy);
   if (!groupBy) return base;
-  const COLS = { type: "t.type", tableId: "t.table_id", status: "t.status", priority: "t.priority" };
+  const COLS = { tableId: "t.table_id", status: "t.status", priority: "t.priority" };
   const col = COLS[groupBy];
-  if (!col) throw new Error("groupBy 只支持 type / tableId / status / priority");
+  const byTag = groupBy === "tag" || groupBy === "tags";
+  if (!col && !byTag) throw new Error("groupBy 只支持 tag / tableId / status / priority");
   const where = ["t.deleted_at IS NULL"];
   const params = [];
   const from = dateArg(a.from, "from");
   const to = dateArg(a.to, "to");
   if (from) { where.push("t.target_date>=?"); params.push(from); }
   if (to) { where.push("t.target_date<=?"); params.push(to); }
+  if (byTag) {
+    if (!tagsAvailable(db, api)) throw new Error("标签域未安装，无法按标签分组");
+    const tagStmt = db.prepare(
+      "SELECT g.id AS k, g.name AS label, COUNT(DISTINCT t.id) AS n FROM task t " +
+        "JOIN tag_mapping m ON m.item_type='task' AND m.item_id=t.id AND m.deleted_at IS NULL " +
+        "JOIN tag g ON g.id=m.tag_id AND g.deleted_at IS NULL WHERE " + where.join(" AND ") +
+        " GROUP BY g.id, g.name ORDER BY n DESC",
+    );
+    const tagRows = tagStmt.all.apply(tagStmt, params);
+    const untaggedStmt = db.prepare(
+      "SELECT COUNT(*) AS n FROM task t WHERE " + where.join(" AND ") +
+        " AND NOT EXISTS (SELECT 1 FROM tag_mapping m WHERE m.item_type='task' AND m.item_id=t.id AND m.deleted_at IS NULL)",
+    );
+    const untagged = Number(untaggedStmt.get.apply(untaggedStmt, params).n || 0);
+    const groups = tagRows.map(function (g) {
+      return { key: String(g.k), label: String(g.label || ""), count: Number(g.n || 0) };
+    });
+    if (untagged > 0) groups.push({ key: "untagged", label: "未打标签", count: untagged });
+    return Object.assign({}, base, { groupBy: "tag", from: from, to: to, groups: groups });
+  }
   const stmt = db.prepare("SELECT " + col + " AS k, COUNT(*) AS n FROM task t WHERE " + where.join(" AND ") + " GROUP BY " + col + " ORDER BY n DESC");
   const rows = stmt.all.apply(stmt, params);
   const map = groupBy === "tableId" ? nodeMap(db) : null;
@@ -1187,7 +1170,7 @@ function exportTasks(db, args, api) {
     return { format: "json", count: records.length, content: JSON.stringify({ exportedAt: now(), count: records.length, tasks: records }, null, 2) };
   }
   if (format === "csv") {
-    const cols = ["id", "title", "status", "type", "priority", "difficulty", "tableId", "publishDate", "targetDate", "doneDate", "shutdownDate", "createdAt", "updatedAt", "tags"];
+    const cols = ["id", "title", "status", "priority", "difficulty", "tableId", "publishDate", "targetDate", "doneDate", "shutdownDate", "createdAt", "updatedAt", "tags"];
     const lines = [cols.join(",")];
     for (const t of records) {
       lines.push(cols.map(function (c) {
@@ -1284,7 +1267,6 @@ export function registerTaskActions(api) {
       title: { type: "string" },
       description: { type: "string" },
       status: { type: ["string", "number"], description: "0/ACTIVE、1/SHUTDOWN、2/DONE、3/RESTARTED；也接受 open/done" },
-      type: { type: ["string", "number"], description: "任务类型 0 工作 / 1 生活 / 2 学习 / 3 开发" },
       priority: { type: "number", description: "0..10" },
       difficulty: { type: ["number", "null"], description: "0..5" },
       publishDate: { type: "string", description: "YYYY-MM-DD" },
@@ -1294,6 +1276,7 @@ export function registerTaskActions(api) {
       tableId: { type: ["string", "number"], description: "目标任务表 id" },
       sort: { type: "number", description: "手动排序值（配合 tasks.reorder）" },
       tagIds: { type: "array", items: { type: "string" }, description: "用这批标签整体替换当前标签（需要标签域）" },
+      tags: { type: "array", items: { type: "string" }, description: "按标签名整体替换；不存在的名字会自动新建（需要标签域）" },
     },
     additionalProperties: false,
   };
@@ -1303,14 +1286,15 @@ export function registerTaskActions(api) {
     input: {
       type: "object",
       properties: {
-        tab: { type: ["number", "string"], description: "0 紧急 / 1 工作 / 2 生活 / 3 学习 / 4 开发 / 5 已关闭 / 6 进行中 / 7 已完成 / 8 总览（默认 0）" },
+        tab: { type: ["number", "string"], description: "0 紧急 / 1..4 旧类型页签（按同名标签筛）/ 5 已关闭 / 6 进行中 / 7 已完成 / 8 总览（默认 0）" },
         titleKey: { type: "string", description: "标题模糊匹配" },
         tableId: { type: ["string", "number", "null"], description: "只看某个任务表" },
         groupId: { type: ["string", "number", "null"], description: "只看某个任务组下的所有任务表" },
         pageNumber: { type: "number", description: "tab 5..8 分页页码，从 1 开始" },
         pageSize: { type: "number", description: "tab 5..8 每页条数（默认 12，最大 200）" },
         filterRestarted: { type: "boolean", description: "已关闭 tab 默认 true：true 看 SHUTDOWN，false 看 RESTARTED" },
-        checkedTypes: { type: "array", items: { type: "string" }, description: "任务类型过滤（0..3）" },
+        checkedTypes: { type: "array", items: { type: "string" }, description: "旧参数：任务类型 0..3，按同名标签过滤（新代码请用 tags）" },
+    tags: { type: "array", items: { type: "string" }, description: "按标签名过滤，命中任一即可" },
         status: { type: ["string", "number"], description: "直接按状态过滤（与 tab 条件 AND）" },
         priorityMin: { type: "number", description: "最低优先级（含）" },
         priorityMax: { type: "number", description: "最高优先级（含）" },
@@ -1349,7 +1333,6 @@ export function registerTaskActions(api) {
         title: { type: "string" },
         description: { type: "string" },
         tableId: { type: ["string", "number"], description: "任务表 id，缺省用默认任务表" },
-        type: { type: ["string", "number"], description: "0 工作 / 1 生活 / 2 学习 / 3 开发" },
         status: { type: ["string", "number"], description: "0/1/2（不能直接创建 RESTARTED）" },
         priority: { type: "number", description: "0..10" },
         difficulty: { type: ["number", "null"], description: "0..5" },
@@ -1362,6 +1345,7 @@ export function registerTaskActions(api) {
         restartKey: { type: ["string", "number"], description: "source=2 必填：原任务 id" },
         originTaskId: { type: ["string", "number"], description: "restartKey 的别名" },
         tagIds: { type: "array", items: { type: "string" }, description: "创建时挂标签（需要标签域）" },
+        tags: { type: "array", items: { type: "string" }, description: "创建时按标签名挂标签，不存在的名字会自动新建" },
         dedupeKey: { type: "string", description: "幂等键：同键未删除任务存在时直接返回已有任务（deduped:true）" },
         sort: { type: "number", description: "手动排序值（默认 0）" },
       },
@@ -1372,14 +1356,14 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.update", {
-    description: "更新单个任务。两种用法：①type 作为更新模式（0 状态/1 优先级/2 标题/3 描述）；②省略 type 直接传字段。批量请用 tasks.bulkUpdate",
+    description: "更新单个任务。两种用法：①type 作为更新模式（0 状态/1 优先级/2 标题/3 描述）；②省略 type 直接传字段（含 tags 标签名）。批量请用 tasks.bulkUpdate",
     input: {
       type: "object",
       required: ["id"],
       properties: {
         id: { type: "string" },
         taskId: { type: ["string", "number"] },
-        type: { type: ["string", "number"], description: "更新模式 0/1/2/3（不是任务类型；要改任务类型请省略 type 传字段或改完再更新）" },
+        type: { type: ["string", "number"], description: "更新模式 0/1/2/3（不是任务字段；改标签请传 tags 或 tagIds）" },
         status: { type: ["string", "number"] },
         date: { type: "string" },
         priority: { type: "number" },
@@ -1393,6 +1377,7 @@ export function registerTaskActions(api) {
         tableId: { type: ["string", "number"] },
         sort: { type: "number" },
         tagIds: { type: "array", items: { type: "string" } },
+        tags: { type: "array", items: { type: "string" }, description: "按标签名整体替换；不存在的名字会自动新建" },
       },
     },
     examples: [{ id: "1001", status: "done" }],
@@ -1633,18 +1618,37 @@ export function registerTaskActions(api) {
     },
   });
 
+  action("tasks.tags", {
+    description: "标签导航数据：每个标签的任务数（按状态拆分），外加「未打标签」计数。标签域未安装时 available=false",
+    input: { type: "object", properties: {} },
+    execute: function () {
+      try {
+        migrateLegacyTypes(db, api, "migrate");
+      } catch (e) {
+        /* ignore */
+      }
+      return tagNavStats(db, api);
+    },
+    render: function (r) {
+      if (!r.available) return "标签域未安装";
+      const parts = r.tags.map(function (t) { return t.name + " " + t.total; });
+      parts.push("未打标签 " + r.untagged.total);
+      return "标签 " + r.tags.length + " 个：" + parts.join("，");
+    },
+  });
+
   action("tasks.stats", {
-    description: "任务统计：默认 7 个计数器；groupBy=type/tableId/status/priority 时额外返回 groups（可按 from/to 限定 targetDate）",
+    description: "任务统计：默认 7 个计数器；groupBy=tag/tableId/status/priority 时额外返回 groups（可按 from/to 限定 targetDate）",
     input: {
       type: "object",
       properties: {
-        groupBy: { type: "string", enum: ["type", "tableId", "status", "priority"] },
+        groupBy: { type: "string", enum: ["tag", "tableId", "status", "priority"] },
         from: { type: "string", description: "targetDate >= 该日期" },
         to: { type: "string", description: "targetDate <= 该日期" },
       },
     },
-    examples: [{ groupBy: "priority" }, { groupBy: "type", from: "2026-11-01", to: "2026-11-30" }],
-    execute: function (args) { return stats(db, args || {}); },
+    examples: [{ groupBy: "priority" }, { groupBy: "tag", from: "2026-11-01", to: "2026-11-30" }],
+    execute: function (args) { return stats(db, args || {}, api); },
     render: function (s) {
       const base = "进行中 " + s.active + " / 已关闭 " + s.shutdown + " / 已完成 " + s.done + " / 已重启 " + s.restarted + " / 逾期 " + s.overdue;
       if (!s.groupBy) return base;
@@ -1653,7 +1657,7 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.statsReport", {
-    description: "任务统计报表：总量/状态/类型/优先级/难度、趋势、逾期账龄、任务表与任务组排行",
+    description: "任务统计报表：总量/状态/标签/优先级/难度、趋势、逾期账龄、任务表与任务组排行",
     input: {
       type: "object",
       properties: {
@@ -1664,7 +1668,7 @@ export function registerTaskActions(api) {
       },
     },
     examples: [{ range: "30d", top: 10 }, { from: "2026-10-01", to: "2026-10-31" }],
-    execute: function (args) { return statsReport(db, args || {}); },
+    execute: function (args) { return statsReport(db, args || {}, api); },
     render: renderStats,
   });
 

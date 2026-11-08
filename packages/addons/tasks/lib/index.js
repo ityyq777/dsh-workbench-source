@@ -37,8 +37,8 @@ export function apply(ctx) {
       host.registerDomain({
         id: "wb-addon-tasks",
         title: "记录",
-        description: "任务树 + 9 个视图：紧急/工作/生活/学习/开发/已开启/已关闭/已完成/总览，附统计报表",
-        version: "2.5.0",
+        description: "任务树 + 统计/记录两个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选，附统计报表",
+        version: "2.6.0",
         tables: ["task", "task_dep", "task_node"],
         sync: taskSync,
         views: [
@@ -62,11 +62,11 @@ export function apply(ctx) {
                 "没有明确标题或完成标准的模糊想法；先描述清楚再记",
               ],
               primaryAction: "tasks.create",
-              keyArgs: ["title", "description", "type", "priority", "targetDate", "tagIds", "dedupeKey"],
+              keyArgs: ["title", "description", "priority", "targetDate", "tags", "tagIds", "dedupeKey"],
               dedupe: "同 dedupeKey 的未删除任务会被复用；自动记录建议使用稳定键，如 dsh-session:<id>。",
               relations: [
                 { kind: "taskNode", via: "tableId", description: "需要归组时先查任务表；缺省使用默认任务表。" },
-                { kind: "tag", via: "tagIds / tags.link", description: "用标签做主题归类；标签需先创建或查询。" },
+                { kind: "tag", via: "tags / tagIds", description: "用标签做主题归类（工作/生活/学习/开发 已是标签）；传标签名会自动建。" },
               ],
               examples: [
                 {
@@ -74,7 +74,7 @@ export function apply(ctx) {
                   args: {
                     title: "整理工作台能力清单",
                     description: "梳理各插件 action 与记录边界",
-                    type: 3,
+                    tags: ["开发"],
                     priority: 6,
                     targetDate: "2026-11-08",
                   },
@@ -86,6 +86,7 @@ export function apply(ctx) {
           notes: [
             "date 字段均为 YYYY-MM-DD；source=1/2 时分别需要 timelineKey / restartKey。",
             "status 0 进行中 / 1 已关闭 / 2 已完成；不要直接创建 RESTARTED（3）。",
+            "任务没有「类型」字段：工作/生活/学习/开发 已迁成同名标签，用 tags 或 tagIds 归类。",
           ],
         },
         setup,

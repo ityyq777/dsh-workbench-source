@@ -13,7 +13,6 @@ export const TASK_DDL = [
     "title TEXT NOT NULL," +
     "description TEXT NOT NULL DEFAULT ''," +
     "status TEXT NOT NULL DEFAULT '0'," +
-    "type TEXT NOT NULL DEFAULT '0'," +
     "priority INTEGER NOT NULL DEFAULT 0," +
     "difficulty REAL," +
     "review TEXT NOT NULL DEFAULT ''," +
@@ -245,7 +244,6 @@ export function rowTask(row) {
     title: String(row.title || ""),
     description: String(row.description || ""),
     status: String(row.status || "0"),
-    type: String(row.type || "0"),
     priority: Number(row.priority || 0),
     difficulty: row.difficulty === null || row.difficulty === undefined ? null : Number(row.difficulty),
     review: String(row.review || ""),
@@ -640,7 +638,7 @@ function buildLegacyPlan(oldNodes, oldTasks, ts, report) {
       title: String(t.title || ""),
       description: String(t.description === undefined || t.description === null ? "" : t.description),
       status,
-      type: validType(t.type),
+      legacyType: validType(t.type),
       priority: clampPriority(t.priority),
       difficulty: clampDifficulty(t.difficulty),
       table_id: tableId,
@@ -681,12 +679,16 @@ function migrateLegacy(db, report) {
     createSchema(db);
     for (const row of plan.rows) insertNode(db, row);
     const ins = db.prepare(
-      "INSERT INTO task(id,title,description,status,type,priority,difficulty,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,created_at,updated_at,deleted_at,rev) " +
-        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      "INSERT INTO task(id,title,description,status,priority,difficulty,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,created_at,updated_at,deleted_at,rev) " +
+        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
     );
+    const legacyTypes = {};
     for (const t of plan.taskRows) {
-      ins.run(t.id, t.title, t.description, t.status, t.type, t.priority, t.difficulty, t.table_id, t.timeline_key, t.restart_key, t.publish_date, t.target_date, t.done_date, t.shutdown_date, t.created_at, t.updated_at, null, t.rev);
+      if (t.legacyType !== undefined && t.legacyType !== null) legacyTypes[String(t.id)] = String(t.legacyType);
+      ins.run(t.id, t.title, t.description, t.status, t.priority, t.difficulty, t.table_id, t.timeline_key, t.restart_key, t.publish_date, t.target_date, t.done_date, t.shutdown_date, t.created_at, t.updated_at, null, t.rev);
     }
+    // type 列已废弃；旧类型的映射留给标签迁移（tagging.migrateLegacyTypes）消费。
+    if (Object.keys(legacyTypes).length) metaSet(db, "legacy_task_types", JSON.stringify(legacyTypes));
   });
   report.source = "legacy_mptt";
   report.nodes = plan.rows.length;
@@ -711,8 +713,8 @@ function migrateCurrentTasks(db, report) {
     const table = db.prepare("SELECT * FROM task_node WHERE type='1' AND deleted_at IS NULL ORDER BY depth ASC, sort ASC LIMIT 1").get();
     const tableId = table ? String(table.id) : "3";
     const ins = db.prepare(
-      "INSERT INTO task(id,title,description,status,type,priority,difficulty,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,created_at,updated_at,deleted_at,rev) " +
-        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      "INSERT INTO task(id,title,description,status,priority,difficulty,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,created_at,updated_at,deleted_at,rev) " +
+        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
     );
     const used = new Set();
     for (const t of old) {
@@ -730,7 +732,6 @@ function migrateCurrentTasks(db, report) {
         String(t.title || ""),
         String(t.note === undefined || t.note === null ? "" : t.note),
         done ? "2" : "0",
-        "0",
         mapOldPriority(t.priority),
         null,
         tableId,
@@ -756,11 +757,54 @@ function migrateCurrentTasks(db, report) {
   report.defaultTableId = db.prepare("SELECT id FROM task_node WHERE type='1' AND deleted_at IS NULL LIMIT 1").get().id;
 }
 
-function ensureTaskColumns(db) {
+/**
+ * 任务「类型」已迁到标签域，task.type 列彻底删除。
+ * 删列前先把仍有效的旧取值记到 meta.legacy_task_types，供标签迁移消费。
+ */
+function dropTaskTypeColumn(db, report) {
+  if (!tableExists(db, "task") || !hasColumn(db, "task", "type")) return;
+  const rows = db.prepare("SELECT id, type FROM task WHERE type IS NOT NULL AND type<>''").all();
+  const legacy = {};
+  for (const row of rows) {
+    const code = String(row.type);
+    if (code === "0" || code === "1" || code === "2" || code === "3") legacy[String(row.id)] = code;
+  }
+  if (Object.keys(legacy).length) {
+    let merged = legacy;
+    const prev = metaGet(db, "legacy_task_types");
+    if (prev) {
+      try {
+        merged = Object.assign({}, JSON.parse(String(prev)), legacy);
+      } catch (e) {
+        merged = legacy;
+      }
+    }
+    metaSet(db, "legacy_task_types", JSON.stringify(merged));
+  }
+  try {
+    db.exec("ALTER TABLE task DROP COLUMN type");
+  } catch (e) {
+    // 老 SQLite 不支持 DROP COLUMN：重建表。
+    const cols = columnsOf(db, "task").filter(function (c) { return c !== "type"; });
+    const tmp = "task_drop_type_tmp";
+    db.exec("DROP TABLE IF EXISTS " + quoteIdent(tmp));
+    db.exec("ALTER TABLE task RENAME TO " + quoteIdent(tmp));
+    dropIndexesFor(db, tmp);
+    createSchema(db);
+    db.exec(
+      "INSERT INTO task(" + cols.join(",") + ") SELECT " + cols.join(",") + " FROM " + quoteIdent(tmp),
+    );
+    db.exec("DROP TABLE " + quoteIdent(tmp));
+  }
+  report.droppedTypeColumn = true;
+}
+
+function ensureTaskColumns(db, report) {
   if (!tableExists(db, "task") || !hasColumn(db, "task", "created_at")) return;
   if (!hasColumn(db, "task", "sort")) db.exec("ALTER TABLE task ADD COLUMN sort INTEGER NOT NULL DEFAULT 0");
   if (!hasColumn(db, "task", "dedupe_key")) db.exec("ALTER TABLE task ADD COLUMN dedupe_key TEXT");
   if (!hasColumn(db, "task", "review")) db.exec("ALTER TABLE task ADD COLUMN review TEXT NOT NULL DEFAULT ''");
+  dropTaskTypeColumn(db, report || {});
 }
 
 export function ensureSchema(db, log) {
@@ -775,6 +819,7 @@ export function ensureSchema(db, log) {
     orphanNodes: 0,
     orphanTasks: 0,
     droppedTags: 0,
+    droppedTypeColumn: false,
   };
 
   const hasTask = tableExists(db, "task");
@@ -792,7 +837,7 @@ export function ensureSchema(db, log) {
       if (hasNode && columnsOf(db, "task_node").indexOf("parent_id") < 0) {
         throw new Error("task 是新表，但 task_node 仍是旧 MPTT 表，拒绝混合迁移");
       }
-      ensureTaskColumns(db);
+      ensureTaskColumns(db, report);
       createSchema(db);
       seedDefaultTree(db);
       report.tasks = db.prepare("SELECT COUNT(*) AS n FROM task").get().n;
@@ -808,8 +853,8 @@ export function ensureSchema(db, log) {
     report.source = "fresh";
   }
 
-  // 旧库补列：必须在 createSchema 前完成，否则建 idx_task_sort 会报 no such column。
-  ensureTaskColumns(db);
+  // 旧库补列/删列：必须在 createSchema 前完成，否则建 idx_task_sort 会报 no such column。
+  ensureTaskColumns(db, report);
   createSchema(db);
   if (hasColumn(db, "task", "created_at")) {
     try {

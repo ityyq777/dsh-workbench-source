@@ -25,11 +25,13 @@ var h = React.createElement;
       root: "全部任务组", manager: "管理模式", filterRestarted: "过滤已重启",
       treeSearch: "搜索任务组 / 任务表", treeHint: "点任务表筛选任务；管理模式可拖拽排序、改名或删除",
       groups: "个任务组", tables: "张任务表", treeNoMatch: "没有匹配的节点",
-      types: "任务类型", publish: "发布", target: "计划完成", done: "实际完成",
+      tags: "标签", tagsHint: "用标签归类（工作/生活/学习/开发 已是标签）", tagPlaceholder: "多个标签用逗号分隔，例如：工作, 开发",
+      tagFilter: "标签筛选", allTags: "全部标签", noTags: "暂无标签",
+      untagged: "未打标签", publish: "发布", target: "计划完成", done: "实际完成",
       shutdown: "关闭时间", priority: "优先级", difficulty: "难度", desc: "描述",
       review: "感受", reviewHint: "写下完成时的感受（可选）",
       reviewPlaceholder: "例如：思路很顺 / 卡在接口调试 / 比预想轻松", reviewAdd: "记录感受",
-      status: "状态", type: "类型", publishDate: "发布日期", targetDate: "计划完成日期",
+      status: "状态", publishDate: "发布日期", targetDate: "计划完成日期",
       doneDate: "完成日期", shutdownDate: "关闭日期", table: "任务表", titleField: "标题",
       timeline: "时间线", restart: "重启", complete: "完成", shutdownOp: "关闭",
       selected: "已选", selectedTasks: "选中任务", batchTimeline: "归并时间线",
@@ -54,11 +56,13 @@ var h = React.createElement;
       root: "All tasks", manager: "Manage", filterRestarted: "Hide restarted",
       treeSearch: "Search groups / tables", treeHint: "Pick a table to filter tasks; Manage mode allows drag, rename and delete",
       groups: "groups", tables: "tables", treeNoMatch: "No matching node",
-      types: "Types", publish: "Published", target: "Target", done: "Done",
+      tags: "Tags", tagsHint: "Group tasks with tags (Work/Life/Study/Dev are tags now)", tagPlaceholder: "Comma separated, e.g. Work, Dev",
+      tagFilter: "Filter by tag", allTags: "All tags", noTags: "No tags",
+      untagged: "Untagged", publish: "Published", target: "Target", done: "Done",
       shutdown: "Closed", priority: "Priority", difficulty: "Difficulty", desc: "Description",
       review: "Feeling", reviewHint: "How did it feel to finish? (optional)",
       reviewPlaceholder: "e.g. smooth, stuck on the API, easier than expected", reviewAdd: "Add feeling",
-      status: "Status", type: "Type", publishDate: "Publish date", targetDate: "Target date",
+      status: "Status", publishDate: "Publish date", targetDate: "Target date",
       doneDate: "Done date", shutdownDate: "Close date", table: "Task table", titleField: "Title",
       timeline: "Timeline", restart: "Restart", complete: "Complete", shutdownOp: "Close",
       selected: "Selected", selectedTasks: "Selected tasks", batchTimeline: "Merge timeline",
@@ -75,22 +79,13 @@ var h = React.createElement;
     },
   };
 
+  // 任务不再有「类型」：工作/生活/学习/开发 已迁成标签，按标签筛选。
   var TABS = [
     { id: 0, zh: "紧急任务", en: "Urgent" },
-    { id: 1, zh: "工作任务", en: "Work" },
-    { id: 2, zh: "生活任务", en: "Life" },
-    { id: 3, zh: "学习任务", en: "Study" },
-    { id: 4, zh: "开发任务", en: "Dev" },
     { id: 5, zh: "已关闭", en: "Closed" },
     { id: 6, zh: "已开启", en: "Active" },
     { id: 7, zh: "已完成", en: "Done" },
     { id: 8, zh: "总览", en: "Overview" },
-  ];
-  var TYPES = [
-    { id: "0", zh: "工作", en: "Work", icon: "▣" },
-    { id: "1", zh: "生活", en: "Life", icon: "⌂" },
-    { id: "2", zh: "学习", en: "Study", icon: "▤" },
-    { id: "3", zh: "开发", en: "Dev", icon: "⌘" },
   ];
   var STATUS = {
     "0": { zh: "已开启", en: "Active", cls: "active" },
@@ -124,6 +119,7 @@ var h = React.createElement;
     "trash": require("lucide-react/icons/trash-2").default,
     "close": require("lucide-react/icons/x").default,
     "down": require("lucide-react/icons/chevron-down").default,
+    "tag": require("lucide-react/icons/tag").default,
   };
   // 统一的小尺寸图标调用方式，保持各视图里的 Icon({ name, size }) 不变。
   function Icon(props) {
@@ -190,8 +186,21 @@ var h = React.createElement;
     ".wbt-path button:hover{background:color-mix(in oklab,currentColor 8%,transparent);text-decoration:underline}",
     ".wbt-prio{font-size:10px;font-weight:650;padding:2px 6px;border-radius:999px;border:none;background:color-mix(in oklab,currentColor 12%,transparent);opacity:.92;flex:none;font-variant-numeric:tabular-nums}",
     ".wbt-prio.high{color:var(--dsw-alias-state-error-primary,#d93a40)}.wbt-prio.mid{color:var(--dsw-alias-state-warn-primary,#cf6512)}.wbt-prio.low{color:var(--dsw-alias-label-tertiary,#77839a)}",
-    ".wbt-kind{font-size:11.5px;font-weight:600;line-height:1;opacity:.9;flex:none}",
-    ".wbt-kind.t0{color:var(--dsw-alias-brand-primary,#0f8f84)}.wbt-kind.t1{color:var(--dsw-alias-state-warn-primary,#bf6818)}.wbt-kind.t2{color:var(--dsw-alias-state-business-primary,#2f6fdb)}.wbt-kind.t3{color:#7c4dcc}",
+    ".wbt-tag{font-size:11.5px;line-height:1.5;padding:0 6px;border-radius:999px;background:color-mix(in oklab,var(--wbt-accent) 12%,transparent);color:var(--wbt-accent);cursor:pointer;white-space:nowrap}",
+    ".wbt-tag:hover{background:color-mix(in oklab,var(--wbt-accent) 22%,transparent)}",
+    ".wbt-tags{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:5px}",
+    ".wbt-tagfilter{position:relative;display:flex;align-items:center;gap:5px;min-width:0}",
+    ".wbt-tagfilter .wbt-btn.on{border-color:var(--wbt-accent);color:var(--wbt-accent);background:color-mix(in oklab,var(--wbt-accent) 12%,transparent)}",
+    ".wbt-tagmenu{position:absolute;z-index:60;top:calc(100% + 6px);right:0;width:236px;max-height:320px;overflow:auto;padding:8px;border-radius:10px;border:1px solid var(--wbt-line);box-shadow:0 14px 34px rgba(26,20,12,.2);background-color:var(--wbt-bg);background-image:linear-gradient(var(--wbt-bg),var(--wbt-bg)),linear-gradient(var(--wbt-bg),var(--wbt-bg));-webkit-backdrop-filter:blur(24px) saturate(1.4);backdrop-filter:blur(24px) saturate(1.4)}",
+    ".wbt-tagmenu-head{display:flex;align-items:center;gap:6px;font-size:11px;opacity:.6;padding:2px 4px 7px}",
+    ".wbt-tagopt{display:flex;align-items:center;gap:7px;padding:6px;border-radius:6px;cursor:pointer;font-size:12.5px}",
+    ".wbt-tagopt:hover{background:color-mix(in oklab,currentColor 7%,transparent)}",
+    ".wbt-tagopt input{margin:0;accent-color:var(--wbt-accent)}",
+    ".wbt-mini{appearance:none;border:0;background:transparent;color:inherit;border-radius:4px;cursor:pointer;font-size:11.5px;line-height:1;padding:3px 5px;font-family:inherit;opacity:.7}",
+    ".wbt-mini:hover{background:color-mix(in oklab,currentColor 8%,transparent);opacity:1}",
+    ".wbt-note{font-size:11.5px;opacity:.6;padding:6px}",
+    ".wbt-tagcnt{font-size:10.5px;opacity:.55;font-variant-numeric:tabular-nums;margin-left:auto}",
+    ".wbt-tagnm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
     ".wbt-badge{font-size:10.5px;padding:1px 6px;border-radius:999px;border:none;background:color-mix(in oklab,currentColor 9%,transparent);opacity:.86;white-space:nowrap}",
     ".wbt-badge::before{content:\"\";display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;margin-right:4px;vertical-align:1px;opacity:.8}",
     ".wbt-badge.active{color:var(--dsw-alias-brand-primary,#0b8a7f)}",
@@ -314,9 +323,17 @@ var h = React.createElement;
     n.setHours(0, 0, 0, 0);
     return Math.round((d.getTime() - n.getTime()) / 86400000);
   }
-  function typeInfo(id) {
-    for (var i = 0; i < TYPES.length; i++) if (TYPES[i].id === String(id)) return TYPES[i];
-    return TYPES[0];
+  /** "工作, 开发" → ["工作","开发"]（去空、去重，保留顺序）。 */
+  function splitTags(text) {
+    var out = [];
+    String(text || "").split(/[,，]/).forEach(function (x) {
+      var v = String(x).trim();
+      if (v && out.indexOf(v) < 0) out.push(v);
+    });
+    return out;
+  }
+  function tagNames(task) {
+    return (task && task.tags ? task.tags : []).map(function (x) { return String(x.name || ""); }).filter(Boolean);
   }
   function statusInfo(id) {
     return STATUS[String(id)] || STATUS["0"];
@@ -395,8 +412,8 @@ var h = React.createElement;
     var t = props.t;
     var task = props.task;
     var st = statusInfo(task.status);
-    var ti = typeInfo(task.type);
-    var typeName = props.lang === "en" ? ti.en : ti.zh;
+    var stName = props.lang === "en" ? st.en : st.zh;
+    var myTags = task.tags || [];
     var isActive = String(task.status) === "0";
     var titleState = React.useState(null);
     var editingTitle = titleState[0], setEditingTitle = titleState[1];
@@ -457,8 +474,13 @@ var h = React.createElement;
 
     var isDone = String(task.status) === "2";
     var countdown = String(task.status) === "0" ? daysBetween(task.targetDate) : null;
+    var tagNodes = myTags.map(function (tag) {
+      return h("span", {
+        key: "tag-" + String(tag.id), className: "wbt-tag", title: tag.name,
+        onClick: props.onTagPick ? function (e) { e.stopPropagation(); props.onTagPick(String(tag.id)); } : null,
+      }, "#" + tag.name);
+    });
     var meta = [];
-    meta.push(h("span", { key: "kind", className: "wbt-kind t" + String(task.type || "0"), title: typeName, children: typeName }));
     if (task.publishDate) meta.push(h("span", { key: "p" }, h("b", null, t.publish), " ", task.publishDate));
     if (String(task.status) === "0" && task.targetDate) {
       meta.push(h("span", { key: "g" }, h("b", null, t.target), " ", task.targetDate,
@@ -535,13 +557,14 @@ var h = React.createElement;
       h("div", { className: "wbt-main" },
         h("div", { className: "wbt-line1" },
           h("span", { className: "wbt-prio " + pClass(task.priority), children: "P" + task.priority }),
-          h("span", { className: "wbt-badge " + st.cls, children: st.zh }),
+          h("span", { className: "wbt-badge " + st.cls, children: stName }),
           titleNode,
           addDesc
         ),
         descNode,
         reviewNode,
         addReview,
+        tagNodes.length ? h("div", { className: "wbt-tags", key: "tags" }, tagNodes) : null,
         h("div", { className: "wbt-foot" }, meta.length ? h("div", { className: "wbt-meta", key: "meta" }, meta) : null),
         task.path && task.path.length ? h("div", { className: "wbt-taskpath" }, h(PathCrumbs, { key: "path", path: task.path, t: t, onPick: props.onPathPick })) : null
       ),
@@ -627,11 +650,11 @@ var h = React.createElement;
     var origin = props.originTask || null;
     var tables = allTables(props.tree);
     var first = props.defaultTableId || (origin && origin.tableId) || (tables[0] && tables[0].id) || "";
-    var initType = origin ? String(origin.type || "0") : "0";
+    var initTags = origin ? tagNames(origin).join(", ") : "";
     var initTable = origin ? String(origin.tableId || first) : String(first);
     var f = React.useState({
       title: "", description: "",
-      type: initType, status: "0", priority: 1, difficulty: 1,
+      tags: initTags, status: "0", priority: 1, difficulty: 1,
       publishDate: today(), targetDate: today(), doneDate: today(), shutdownDate: today(),
       tableId: initTable,
     });
@@ -644,10 +667,6 @@ var h = React.createElement;
     function set(k, v) {
       var next = Object.assign({}, form);
       next[k] = v;
-      if (k === "type" && source === "0") {
-        var defaults = { "0": 8, "1": 6, "2": 4, "3": 2 };
-        next.priority = defaults[v] !== undefined ? defaults[v] : 1;
-      }
       setForm(next);
     }
     function submit() {
@@ -658,7 +677,7 @@ var h = React.createElement;
       var args = {
         title: String(form.title).trim(),
         description: String(form.description || ""),
-        type: String(form.type), status: source === "2" ? "0" : String(form.status),
+        tags: splitTags(form.tags), status: source === "2" ? "0" : String(form.status),
         priority: Number(form.priority) || 0,
         tableId: String(form.tableId),
         publishDate: form.publishDate,
@@ -688,7 +707,7 @@ var h = React.createElement;
         h("div", { className: "wbt-form" },
           h("label", { className: "wbt-field full" }, h("span", null, t.titleField + " *"), h("input", { className: "wbt-input", value: form.title, onChange: function (e) { set("title", e.target.value); }, autoFocus: true })),
           h("label", { className: "wbt-field full" }, h("span", null, t.desc), h("textarea", { className: "wbt-textarea", rows: 2, value: form.description, onChange: function (e) { set("description", e.target.value); } })),
-          h("label", { className: "wbt-field" }, h("span", null, t.type), h("select", { className: "wbt-select", value: form.type, onChange: function (e) { set("type", e.target.value); } }, TYPES.map(function (x) { return h("option", { key: x.id, value: x.id }, x.zh); }))),
+          h("label", { className: "wbt-field full" }, h("span", null, t.tags), h("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function (e) { set("tags", e.target.value); } })),
           h("label", { className: "wbt-field" }, h("span", null, t.status), h("select", { className: "wbt-select", value: source === "2" ? "0" : form.status, disabled: source === "2", onChange: function (e) { set("status", e.target.value); } },
             h("option", { value: "0" }, "已开启"), h("option", { value: "2" }, "已完成"), h("option", { value: "1" }, "已关闭"))),
           h("label", { className: "wbt-field" }, h("span", null, t.priority + "（0–10）"), h("input", { className: "wbt-input", type: "number", min: 0, max: 10, value: form.priority, onChange: function (e) { set("priority", e.target.value); } })),
@@ -865,8 +884,12 @@ var h = React.createElement;
     var titleKey = titleS[0], setTitleKey = titleS[1];
     var filterS = React.useState(true);
     var filterRestarted = filterS[0], setFilterRestarted = filterS[1];
-    var typesS = React.useState(["0", "1", "2", "3"]);
-    var checkedTypes = typesS[0], setCheckedTypes = typesS[1];
+    var tagNavS = React.useState({ available: false, tags: [], untagged: { total: 0 } });
+    var tagNav = tagNavS[0], setTagNav = tagNavS[1];
+    var filterTagIdsS = React.useState([]);
+    var filterTagIds = filterTagIdsS[0], setFilterTagIds = filterTagIdsS[1];
+    var tagMenuS = React.useState(false);
+    var tagMenu = tagMenuS[0], setTagMenu = tagMenuS[1];
     var pageS = React.useState(1);
     var pageNumber = pageS[0], setPageNumber = pageS[1];
     var sizeS = React.useState(12);
@@ -932,6 +955,12 @@ var h = React.createElement;
       }).catch(function (e) { setError(String(e && e.message || e)); });
     }, [api]);
 
+    var refreshTagNav = React.useCallback(function () {
+      return api.call("tasks.tags").then(function (r) {
+        if (r && r.ok) setTagNav(r.result || { available: false, tags: [], untagged: { total: 0 } });
+      }).catch(function () {});
+    }, [api]);
+
     var refreshPath = React.useCallback(function (id) {
       if (!id) { setCurrentPath([]); return Promise.resolve(); }
       return api.call("taskNodes.path", { id: id }).then(function (r) {
@@ -945,7 +974,7 @@ var h = React.createElement;
         tab: tab, titleKey: titleKey,
         tableId: target.tableId, groupId: target.tableId ? null : target.groupId,
         pageNumber: pageNumber, pageSize: pageSize,
-        filterRestarted: filterRestarted, checkedTypes: checkedTypes,
+        filterRestarted: filterRestarted, tagIds: filterTagIds,
       }).then(function (r) {
         setLoading(false);
         if (r && r.ok) {
@@ -955,15 +984,16 @@ var h = React.createElement;
           setError((r && r.error) || "list load failed");
         }
       }).catch(function (e) { setLoading(false); setError(String(e && e.message || e)); });
-    }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, checkedTypes]);
+    }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds]);
 
-    refreshRef.current = { tree: refreshTree, list: refreshList, path: refreshPath };
+    refreshRef.current = { tree: refreshTree, list: refreshList, path: refreshPath, tags: refreshTagNav };
 
     React.useEffect(function () {
       injectCss();
       refreshTree();
+      refreshTagNav();
       refreshPath("1");
-    }, [refreshTree, refreshPath]);
+    }, [refreshTree, refreshTagNav, refreshPath]);
 
     React.useEffect(function () {
       refreshList();
@@ -972,7 +1002,10 @@ var h = React.createElement;
     React.useEffect(function () {
       var off = api.subscribe(function (p) {
         if (!p) return;
-        if (p.event === "tasks-changed") refreshRef.current.list();
+        if (p.event === "tasks-changed") {
+          refreshRef.current.list();
+          refreshRef.current.tags();
+        }
         if (p.event === "task-nodes-changed") {
           refreshRef.current.tree();
           refreshRef.current.path(target.tableId || target.groupId);
@@ -1057,12 +1090,12 @@ var h = React.createElement;
       });
     }
 
-    function toggleType(id) {
-      var next = checkedTypes.slice();
-      var idx = next.indexOf(id);
-      if (idx >= 0) next.splice(idx, 1); else next.push(id);
-      if (!next.length) next = [id];
-      setCheckedTypes(next);
+    /** 标签筛选：与站点模块一致，按标签 id 多选，命中任一。 */
+    function toggleTagId(id) {
+      var next = filterTagIds.slice();
+      var idx = next.indexOf(String(id));
+      if (idx >= 0) next.splice(idx, 1); else next.push(String(id));
+      setFilterTagIds(next);
       setPageNumber(1);
     }
 
@@ -1146,11 +1179,6 @@ var h = React.createElement;
 
     var filterBar = h("div", { className: "wbt-filters" },
       pageable ? h("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
-      tab >= 5 ? h("span", { className: "wbt-check" }, h("span", null, t.types + "："), TYPES.map(function (x) {
-        return h("label", { key: x.id, className: "wbt-check" },
-          h("input", { type: "checkbox", checked: checkedTypes.indexOf(x.id) >= 0, onChange: function () { toggleType(x.id); } }),
-          x.zh);
-      })) : null,
       (tab === 5 || tab === 8) ? h("label", { className: "wbt-check" },
         h("input", { type: "checkbox", checked: filterRestarted, onChange: function (e) { setFilterRestarted(e.target.checked); setPageNumber(1); } }),
         t.filterRestarted) : null
@@ -1171,6 +1199,7 @@ var h = React.createElement;
                 onRestart: function (x) { setCreateState({ source: "2", originTask: x }); },
                 onTimeline: function (x) { setTimelineTask(x); },
                 onPathPick: pickPath,
+                onTagPick: toggleTagId,
               });
             }));
 
@@ -1191,18 +1220,40 @@ var h = React.createElement;
           if (selectionMode) { setSelectionMode(false); clearSelection(); }
           else setSelectionMode(true);
         } }, h(Icon, { name: "select", size: 13 }), selectionMode ? t.cancelSelect : t.select),
+        tagNav.available && tagNav.tags.length ? h("div", { className: "wbt-tagfilter" },
+          h("button", {
+            className: "wbt-btn ghost" + (filterTagIds.length ? " on" : ""),
+            "aria-expanded": tagMenu ? "true" : "false",
+            onClick: function () { setTagMenu(!tagMenu); },
+          }, h(Icon, { name: "tag", size: 13 }), t.tagFilter + (filterTagIds.length ? " · " + filterTagIds.length : ""), h(Icon, { name: "down", size: 12 })),
+          tagMenu ? h("div", { className: "wbt-tagmenu", role: "menu" },
+            h("div", { className: "wbt-tagmenu-head" },
+              h("span", null, t.allTags),
+              h("span", { className: "wbt-grow" }),
+              h("button", { className: "wbt-mini", onClick: function () { setFilterTagIds([]); setPageNumber(1); } }, t.clear)
+            ),
+            tagNav.tags.length ? tagNav.tags.map(function (x) {
+              var on = filterTagIds.indexOf(String(x.id)) >= 0;
+              return h("label", { key: x.id, className: "wbt-tagopt" },
+                h("input", { type: "checkbox", checked: on, onChange: function () { toggleTagId(String(x.id)); } }),
+                h("span", { className: "wbt-tagnm" }, x.name),
+                h("span", { className: "wbt-tagcnt" }, x.total)
+              );
+            }) : h("div", { className: "wbt-note" }, t.noTags)
+          ) : null
+        ) : null,
         h("button", { className: "wbt-btn primary", onClick: function () {
           setCreateState({ source: "0", originTask: null, defaultTableId: target.tableId || (firstTable && firstTable.id) });
         } }, h(Icon, { name: "plus", size: 14 }), t.newTask),
         h("button", { className: "wbt-btn ghost", onClick: function () { setView(view === "list" ? "card" : "list"); } }, h(Icon, { name: view === "list" ? "grid" : "list", size: 13 }), view === "list" ? t.card : t.list)
       ),
       h("div", { className: "wbt-body" },
-        h("nav", { className: "wbt-nav" }, TABS.map(function (x, i) {
+        h("nav", { className: "wbt-nav" }, TABS.map(function (x) {
           var btn = h("button", {
             key: x.id, className: "wbt-tab" + (tab === x.id ? " on" : ""),
             onClick: function () { setTab(x.id); setPageNumber(1); },
           }, t === COPY.zh ? x.zh : x.en);
-          if (i !== 5) return btn;
+          if (x.id !== 5) return btn;
           return [h("div", { key: "nav-sep", className: "wbt-nav-sep" }), btn];
         })),
         h("div", { className: "wbt-content" },
@@ -1293,7 +1344,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.5.0",
+    version: "2.6.0",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },
