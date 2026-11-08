@@ -8,6 +8,7 @@ import { exportTagsData, importTagsData } from "./backup.js";
 import { tagSync } from "./sync.js";
 import { registerTagActions } from "./tags.js";
 import { registerConfigActions } from "./config.js";
+import { registerDataActions } from "./data.js";
 
 export const inject = ["workbench"];
 
@@ -23,6 +24,7 @@ export function setup(api) {
   ensureSchema(api.db, api.log);
   registerTagActions(api);
   registerConfigActions(api);
+  registerDataActions(api);
   api.log("tags domain ready", api.addon.version);
 }
 
@@ -34,14 +36,15 @@ export function apply(ctx) {
       host.registerDomain({
         id: "wb-addon-tags",
         title: "标签",
-        description: "创建与管理标签，为站点等业务提供标签归类；含统计/记录/配置三个视图",
-        version: "1.5.0",
+        description: "创建与管理标签，为站点等业务提供标签归类；含统计/记录/配置/数据四个视图",
+        version: "1.6.0",
         tables: ["tag", "tag_mapping"],
         sync: tagSync,
         views: [
           { id: "stats", title: { zh: "统计", en: "Stats" } },
           { id: "tags", title: { zh: "记录", en: "Records" } },
           { id: "config", title: { zh: "配置", en: "Config" } },
+          { id: "data", title: { zh: "数据", en: "Data" } },
         ],
         capability: {
           summary: "维护跨业务对象的标签；只做归类，不负责记录任务或站点。",

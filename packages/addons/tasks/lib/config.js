@@ -17,6 +17,7 @@ const GROUPS = [
   { id: "list", zh: "列表", en: "List" },
   { id: "form", zh: "新建", en: "Create" },
   { id: "stats", zh: "统计", en: "Statistics" },
+  { id: "data", zh: "数据", en: "Data" },
 ];
 
 const SECTIONS = [
@@ -166,6 +167,28 @@ const ITEMS = [
     id: "stats.showKpi", group: "stats", type: "bool", surface: "ui", apply: "mount", default: true,
     zh: "显示 KPI", en: "Show KPIs",
     hintZh: "统计页顶部那排数字卡片", hintEn: "The KPI row at the top of Stats",
+  },
+  {
+    id: "data.pageSize", group: "data", type: "enum", surface: "ui", apply: "mount", default: 50,
+    zh: "数据页每页条数", en: "Data rows per page",
+    hintZh: "「数据」视图默认每页显示多少行", hintEn: "Default rows per page in the Data view",
+    values: [
+      { value: 10, zh: "10 行", en: "10" },
+      { value: 25, zh: "25 行", en: "25" },
+      { value: 50, zh: "50 行", en: "50" },
+      { value: 100, zh: "100 行", en: "100" },
+      { value: 200, zh: "200 行", en: "200" },
+    ],
+  },
+  {
+    id: "data.showSystemColumns", group: "data", type: "bool", surface: "ui", apply: "mount", default: false,
+    zh: "显示系统列", en: "Show system columns",
+    hintZh: "是否显示 rev / created_at / updated_at / deleted_at", hintEn: "Show rev / created_at / updated_at / deleted_at",
+  },
+  {
+    id: "data.includeDeleted", group: "data", type: "bool", surface: "ui", apply: "mount", default: false,
+    zh: "包含已删除行", en: "Include deleted rows",
+    hintZh: "默认只显示未软删的行", hintEn: "Deleted rows are hidden by default",
   },
 ];
 

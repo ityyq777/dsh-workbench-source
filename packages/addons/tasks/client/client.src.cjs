@@ -14,6 +14,7 @@ var h = React.createElement;
   var h = React.createElement;
   var statsView = require("./stats.cjs");
   var configView = require("./config.cjs");
+  var dataView = require("./data.cjs");
 
   var COPY = {
     zh: {
@@ -1464,11 +1465,12 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.8.0",
+    version: "2.9.0",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },
       { id: "config", title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
+      { id: "data", title: { zh: "数据", en: "Data" }, component: dataView.DataView },
     ],
   });
 
