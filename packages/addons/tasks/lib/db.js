@@ -38,6 +38,8 @@ export const TASK_DDL = [
   "CREATE INDEX IF NOT EXISTS idx_task_open ON task(status, target_date) WHERE deleted_at IS NULL;",
   "CREATE INDEX IF NOT EXISTS idx_task_sort ON task(sort);",
   "CREATE INDEX IF NOT EXISTS idx_task_dedupe ON task(dedupe_key) WHERE dedupe_key IS NOT NULL;",
+  "CREATE INDEX IF NOT EXISTS idx_task_created_at ON task(created_at);",
+  "CREATE INDEX IF NOT EXISTS idx_task_done_date ON task(done_date);",
 ];
 
 export const DEP_DDL = [

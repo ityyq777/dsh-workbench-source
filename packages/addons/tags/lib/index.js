@@ -33,10 +33,13 @@ export function apply(ctx) {
         id: "wb-addon-tags",
         title: "标签",
         description: "创建与管理标签，为站点等业务提供标签归类",
-        version: "1.3.1",
+        version: "1.4.0",
         tables: ["tag", "tag_mapping"],
         sync: tagSync,
-        views: [{ id: "tags", title: { zh: "标签", en: "Tags" } }],
+        views: [
+          { id: "tags", title: { zh: "标签", en: "Tags" } },
+          { id: "stats", title: { zh: "标签统计", en: "Tag stats" } },
+        ],
         capability: {
           summary: "维护跨业务对象的标签；只做归类，不负责记录任务或站点。",
           records: [

@@ -40,6 +40,8 @@ export const TAG_INDEX_DDL = [
   "CREATE INDEX IF NOT EXISTS idx_tag_created_at ON tag(created_at);",
   "CREATE INDEX IF NOT EXISTS idx_tag_mapping_tag ON tag_mapping(tag_id) WHERE deleted_at IS NULL;",
   "CREATE INDEX IF NOT EXISTS idx_tag_mapping_item ON tag_mapping(item_type, item_id) WHERE deleted_at IS NULL;",
+  "CREATE INDEX IF NOT EXISTS idx_tag_mapping_created_at ON tag_mapping(created_at);",
+  "CREATE INDEX IF NOT EXISTS idx_tag_mapping_type_created ON tag_mapping(item_type, created_at);",
   "CREATE UNIQUE INDEX IF NOT EXISTS uk_tag_mapping ON tag_mapping(tag_id, item_id, item_type) WHERE deleted_at IS NULL;",
 ];
 

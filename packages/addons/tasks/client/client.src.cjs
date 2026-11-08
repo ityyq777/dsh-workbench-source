@@ -12,6 +12,7 @@ var h = React.createElement;
   }
   var React = require("react");
   var h = React.createElement;
+  var statsView = require("./stats.cjs");
 
   var COPY = {
     zh: {
@@ -1114,12 +1115,11 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.4.2",
-    views: [{
-      id: "tasks",
-      title: { zh: "任务记录", en: "Tasks" },
-      component: TasksView,
-    }],
+    version: "2.5.0",
+    views: [
+      { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
+      { id: "tasks", title: { zh: "任务记录", en: "Tasks" }, component: TasksView },
+    ],
   });
 
   module.exports = { name: "dsh-workbench-tasks", inject: [], apply: function () {} };

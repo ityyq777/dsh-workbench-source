@@ -73,6 +73,10 @@ try {
     const hit = registered.find((r) => r.id === addonId);
     if (!hit) throw new Error("not registered: " + addonId);
     if (!hit.views.some((v) => v.id === viewId)) throw new Error("view missing: " + viewId);
+    if (!hit.views.some((v) => v.id === "stats")) throw new Error("stats view missing: " + addonId);
+    if (hit.views[0].id !== "stats") throw new Error("stats view must stay first: " + addonId);
+    if (hit.views[1] && hit.views[1].id !== viewId) throw new Error("list view must stay second: " + addonId);
+    if (!hit.views.every((v) => typeof v.component === "function")) throw new Error("bad component: " + addonId);
   }
   if (errors.length) throw new Error("console.error: " + errors.join(" | "));
   console.log("CLIENT TEST PASS", { modules: Object.keys(sandbox.__ModuleLoader__.modules), registered: registered.map((r) => r.id), styles: styles.length });

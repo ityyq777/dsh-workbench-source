@@ -37,11 +37,14 @@ export function apply(ctx) {
       host.registerDomain({
         id: "wb-addon-tasks",
         title: "任务记录",
-        description: "任务树 + 9 个视图：紧急/工作/生活/学习/开发/已开启/已关闭/已完成/总览",
-        version: "2.4.1",
+        description: "任务树 + 9 个视图：紧急/工作/生活/学习/开发/已开启/已关闭/已完成/总览，附统计报表",
+        version: "2.5.0",
         tables: ["task", "task_dep", "task_node"],
         sync: taskSync,
-        views: [{ id: "tasks", title: { zh: "任务记录", en: "Tasks" } }],
+        views: [
+          { id: "tasks", title: { zh: "任务记录", en: "Tasks" } },
+          { id: "stats", title: { zh: "任务统计", en: "Task stats" } },
+        ],
         capability: {
           summary: "记录可执行、可交付的工作项（任务），支持任务树、时间线、重启链与依赖。",
           records: [

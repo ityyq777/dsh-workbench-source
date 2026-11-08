@@ -17,6 +17,13 @@ var __esm = (fn, res, err) => function __init() {
     throw err = [e], e;
   }
 };
+var __commonJS = (cb, mod) => function __require() {
+  try {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  } catch (e) {
+    throw mod = 0, e;
+  }
+};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -30,6 +37,735 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// packages/addons/tags/client/charts.cjs
+var require_charts = __commonJS({
+  "packages/addons/tags/client/charts.cjs"(exports2, module2) {
+    var React2 = require("react");
+    var h2 = React2.createElement;
+    var COLORS = [
+      "var(--dsw-alias-brand-primary, #4f6ef7)",
+      "var(--dsw-alias-state-success, #2f9e6e)",
+      "var(--dsw-alias-state-warning, #d99100)",
+      "var(--dsw-alias-state-danger, #d9534f)",
+      "color-mix(in srgb, var(--dsw-alias-brand-primary, #4f6ef7) 55%, var(--dsw-alias-state-success, #2f9e6e))",
+      "color-mix(in srgb, var(--dsw-alias-brand-primary, #4f6ef7) 55%, var(--dsw-alias-state-danger, #d9534f))"
+    ];
+    function css(prefix) {
+      return [
+        ".@-stats{display:flex;flex-direction:column;gap:14px;padding:4px 2px 24px;color:var(--dsw-alias-text-primary,#1f2329)}",
+        ".@-stoolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+        ".@-seg{display:inline-flex;border:1px solid var(--dsw-alias-border-secondary,#e5e6eb);border-radius:9px;overflow:hidden;background:var(--dsw-alias-bg-primary,#fff)}",
+        ".@-seg button{appearance:none;border:0;background:transparent;color:var(--dsw-alias-text-secondary,#646a73);font-size:12px;padding:6px 10px;cursor:pointer;white-space:nowrap}",
+        ".@-seg button.@-on{background:var(--dsw-alias-brand-primary,#4f6ef7);color:#fff}",
+        ".@-ghost{appearance:none;border:1px solid var(--dsw-alias-border-secondary,#e5e6eb);background:var(--dsw-alias-bg-primary,#fff);color:var(--dsw-alias-text-secondary,#646a73);border-radius:8px;font-size:12px;padding:6px 10px;cursor:pointer}",
+        ".@-ghost:hover{border-color:var(--dsw-alias-brand-primary,#4f6ef7);color:var(--dsw-alias-brand-primary,#4f6ef7)}",
+        ".@-muted{color:var(--dsw-alias-text-tertiary,#8f959e);font-size:12px}",
+        ".@-sgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}",
+        ".@-scard{grid-column:span 6;min-width:0;background:var(--dsw-alias-bg-primary,#fff);border:1px solid var(--dsw-alias-border-secondary,#e5e6eb);border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}",
+        ".@-span-3{grid-column:span 3}.@-span-4{grid-column:span 4}.@-span-6{grid-column:span 6}.@-span-8{grid-column:span 8}.@-span-12{grid-column:span 12}",
+        ".@-chead{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;flex-wrap:wrap}",
+        ".@-ctitle{font-size:13px;font-weight:600;color:var(--dsw-alias-text-primary,#1f2329)}",
+        ".@-cnote{font-size:11px;color:var(--dsw-alias-text-tertiary,#8f959e)}",
+        ".@-kpis{grid-column:span 12;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}",
+        ".@-kpi{background:var(--dsw-alias-bg-primary,#fff);border:1px solid var(--dsw-alias-border-secondary,#e5e6eb);border-radius:12px;padding:12px 14px;min-width:0}",
+        ".@-kpi-l{font-size:12px;color:var(--dsw-alias-text-tertiary,#8f959e);display:flex;align-items:center;gap:6px}",
+        ".@-kpi-v{font-size:26px;line-height:1.25;font-weight:650;margin-top:4px;font-variant-numeric:tabular-nums}",
+        ".@-kpi-u{font-size:12px;font-weight:400;color:var(--dsw-alias-text-tertiary,#8f959e);margin-left:3px}",
+        ".@-kpi-h{font-size:11px;color:var(--dsw-alias-text-tertiary,#8f959e);margin-top:3px}",
+        ".@-kpi.@-danger .@-kpi-v{color:var(--dsw-alias-state-danger,#d9534f)}",
+        ".@-kpi.@-warn .@-kpi-v{color:var(--dsw-alias-state-warning,#d99100)}",
+        ".@-kpi.@-ok .@-kpi-v{color:var(--dsw-alias-state-success,#2f9e6e)}",
+        ".@-donut{display:flex;align-items:center;gap:16px;flex-wrap:wrap}",
+        ".@-donut svg{flex:0 0 auto}",
+        ".@-legend{display:flex;flex-direction:column;gap:7px;min-width:120px;flex:1}",
+        ".@-leg{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dsw-alias-text-secondary,#646a73)}",
+        ".@-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}",
+        ".@-leg b{margin-left:auto;font-weight:600;color:var(--dsw-alias-text-primary,#1f2329);font-variant-numeric:tabular-nums}",
+        ".@-bars{display:flex;flex-direction:column;gap:9px}",
+        ".@-bar{display:grid;grid-template-columns:minmax(72px,1.2fr) 3fr auto;gap:8px;align-items:center;font-size:12px}",
+        ".@-bar-l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dsw-alias-text-secondary,#646a73)}",
+        ".@-bar-t{height:8px;border-radius:6px;background:var(--dsw-alias-bg-tertiary,#f2f3f5);overflow:hidden}",
+        ".@-bar-f{height:100%;border-radius:6px;background:var(--dsw-alias-brand-primary,#4f6ef7);min-width:2px}",
+        ".@-bar-v{font-variant-numeric:tabular-nums;color:var(--dsw-alias-text-primary,#1f2329);font-weight:600;min-width:34px;text-align:right}",
+        ".@-stack{display:flex;flex-direction:column;gap:10px}",
+        ".@-srow-l{font-size:12px;color:var(--dsw-alias-text-secondary,#646a73);margin-bottom:4px;display:flex}",
+        ".@-srow-l b{margin-left:auto;color:var(--dsw-alias-text-primary,#1f2329);font-variant-numeric:tabular-nums}",
+        ".@-strack{display:flex;height:10px;border-radius:6px;overflow:hidden;background:var(--dsw-alias-bg-tertiary,#f2f3f5)}",
+        ".@-seg-f{height:100%}",
+        ".@-hist{display:flex;align-items:flex-end;gap:8px;height:150px;padding-top:16px}",
+        ".@-hbar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;min-width:0;height:100%}",
+        ".@-hbar-v{font-size:11px;color:var(--dsw-alias-text-secondary,#646a73);font-variant-numeric:tabular-nums}",
+        ".@-hbar-f{width:100%;max-width:44px;border-radius:5px 5px 0 0;background:var(--dsw-alias-brand-primary,#4f6ef7);min-height:2px}",
+        ".@-hbar-l{font-size:11px;color:var(--dsw-alias-text-tertiary,#8f959e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}",
+        ".@-trend{width:100%;height:auto;display:block}",
+        ".@-tlegend{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--dsw-alias-text-tertiary,#8f959e)}",
+        ".@-table{width:100%;border-collapse:collapse;font-size:12px}",
+        ".@-table th{text-align:left;font-weight:500;color:var(--dsw-alias-text-tertiary,#8f959e);padding:6px 8px;border-bottom:1px solid var(--dsw-alias-border-secondary,#e5e6eb);white-space:nowrap}",
+        ".@-table td{padding:7px 8px;border-bottom:1px solid var(--dsw-alias-border-tertiary,#f2f3f5);color:var(--dsw-alias-text-secondary,#646a73);vertical-align:top}",
+        ".@-table tr:last-child td{border-bottom:0}",
+        ".@-table td.@-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}",
+        ".@-empty{padding:26px 8px;text-align:center;color:var(--dsw-alias-text-tertiary,#8f959e);font-size:12px}",
+        ".@-err{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--dsw-alias-state-danger,#d9534f) 8%,transparent);border:1px solid color-mix(in srgb,var(--dsw-alias-state-danger,#d9534f) 30%,transparent);color:var(--dsw-alias-state-danger,#d9534f);border-radius:10px;padding:10px 12px;font-size:12px}",
+        ".@-warn{grid-column:span 12;border:1px dashed var(--dsw-alias-state-warning,#d99100);border-radius:10px;padding:9px 12px;font-size:12px;color:var(--dsw-alias-state-warning,#d99100);background:color-mix(in srgb,var(--dsw-alias-state-warning,#d99100) 6%,transparent)}",
+        ".@-sk{height:14px;border-radius:6px;background:var(--dsw-alias-bg-tertiary,#f2f3f5);margin:7px 0;animation:@-pulse 1.2s ease-in-out infinite}",
+        "@keyframes @-pulse{0%,100%{opacity:.55}50%{opacity:1}}",
+        "@media (max-width:900px){.@-scard{grid-column:span 12}.@-span-3,.@-span-4,.@-span-6,.@-span-8{grid-column:span 12}.@-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}",
+        "@media (max-width:600px){.@-stats{padding-bottom:16px}.@-hist{height:130px}.@-kpi-v{font-size:22px}}",
+        "@media (prefers-reduced-motion:reduce){.@-sk{animation:none}}"
+      ].join("\n").replace(/@-/g, prefix + "-");
+    }
+    function makeCharts(prefix) {
+      if (typeof document !== "undefined" && !document.getElementById(prefix + "-charts-css")) {
+        var el = document.createElement("style");
+        el.id = prefix + "-charts-css";
+        el.textContent = css(prefix);
+        document.head.appendChild(el);
+      }
+      function num(lang, n) {
+        var v = Number(n);
+        if (!isFinite(v)) return "\u2014";
+        try {
+          return new Intl.NumberFormat(lang === "en" ? "en-US" : "zh-CN").format(v);
+        } catch (e) {
+          return String(v);
+        }
+      }
+      function pct(v, digits) {
+        if (v === null || v === void 0 || !isFinite(Number(v))) return "\u2014";
+        return (Number(v) * 100).toFixed(digits === void 0 ? 1 : digits) + "%";
+      }
+      function timeText(ms) {
+        if (!ms) return "";
+        var d = new Date(Number(ms));
+        function p(n) {
+          return String(n).padStart(2, "0");
+        }
+        return p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+      }
+      function dateText(ms) {
+        if (!ms) return "\u2014";
+        var d = new Date(Number(ms));
+        function p(n) {
+          return String(n).padStart(2, "0");
+        }
+        return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+      }
+      function Card(props) {
+        var cls = prefix + "-scard" + (props.span ? " " + prefix + "-span-" + props.span : "");
+        return h2(
+          "section",
+          { className: cls },
+          props.title || props.right ? h2(
+            "div",
+            { className: prefix + "-chead" },
+            h2("span", { className: prefix + "-ctitle" }, props.title),
+            props.note ? h2("span", { className: prefix + "-cnote" }, props.note) : null,
+            props.right ? h2("span", { style: { marginLeft: "auto" } }, props.right) : null
+          ) : null,
+          props.children
+        );
+      }
+      function Kpi(props) {
+        var tone = props.tone ? " " + prefix + "-" + props.tone : "";
+        return h2(
+          "div",
+          { className: prefix + "-kpi" + tone },
+          h2("div", { className: prefix + "-kpi-l" }, props.label),
+          h2(
+            "div",
+            { className: prefix + "-kpi-v" },
+            props.value === null || props.value === void 0 ? "\u2014" : typeof props.value === "number" ? num(props.lang, props.value) : props.value,
+            props.unit ? h2("span", { className: prefix + "-kpi-u" }, props.unit) : null
+          ),
+          props.hint ? h2("div", { className: prefix + "-kpi-h" }, props.hint) : null
+        );
+      }
+      function Donut(props) {
+        var data = (props.data || []).filter(function(d) {
+          return Number(d.count) > 0;
+        });
+        var total = Number(props.total || 0);
+        var size = props.size || 168;
+        var r = size / 2 - 16;
+        var c = 2 * Math.PI * r;
+        var offset = 0;
+        var aria = props.aria || data.map(function(d) {
+          return d.label + " " + d.count;
+        }).join("\uFF0C");
+        return h2(
+          "div",
+          { className: prefix + "-donut" },
+          h2(
+            "svg",
+            { width: size, height: size, viewBox: "0 0 " + size + " " + size, role: "img", "aria-label": aria },
+            h2("circle", { cx: size / 2, cy: size / 2, r, fill: "none", stroke: "var(--dsw-alias-bg-tertiary,#f2f3f5)", strokeWidth: 18 }),
+            total > 0 ? data.map(function(d, i) {
+              var len = Number(d.count) / total * c;
+              var seg = h2("circle", {
+                key: d.key || d.label || i,
+                cx: size / 2,
+                cy: size / 2,
+                r,
+                fill: "none",
+                stroke: d.color || COLORS[i % COLORS.length],
+                strokeWidth: 18,
+                strokeDasharray: len + " " + (c - len),
+                strokeDashoffset: -offset,
+                transform: "rotate(-90 " + size / 2 + " " + size / 2 + ")",
+                strokeLinecap: "butt"
+              }, h2("title", null, d.label + "\uFF1A" + d.count));
+              offset += len;
+              return seg;
+            }) : null,
+            h2("text", { x: size / 2, y: size / 2 - 2, textAnchor: "middle", fill: "var(--dsw-alias-text-primary,#1f2329)", fontSize: 24, fontWeight: 650 }, num(props.lang, total)),
+            h2("text", { x: size / 2, y: size / 2 + 18, textAnchor: "middle", fill: "var(--dsw-alias-text-tertiary,#8f959e)", fontSize: 11 }, props.centerLabel || "")
+          ),
+          h2("div", { className: prefix + "-legend" }, (props.data || []).map(function(d, i) {
+            return h2(
+              "div",
+              { key: d.key || d.label || i, className: prefix + "-leg" },
+              h2("span", { className: prefix + "-dot", style: { background: d.color || COLORS[i % COLORS.length] } }),
+              h2("span", null, d.label),
+              h2("b", null, num(props.lang, d.count))
+            );
+          }))
+        );
+      }
+      function BarList(props) {
+        var data = props.data || [];
+        var max = Number(props.max || 0) || data.reduce(function(m, d) {
+          return Math.max(m, Number(d.value || 0));
+        }, 0) || 1;
+        return h2("div", { className: prefix + "-bars" }, data.map(function(d, i) {
+          var v = Number(d.value || 0);
+          return h2(
+            "div",
+            { key: d.key || d.label || i, className: prefix + "-bar" },
+            h2("span", { className: prefix + "-bar-l", title: d.title || d.label }, d.label),
+            h2("span", { className: prefix + "-bar-t" }, h2("span", { className: prefix + "-bar-f", style: { width: Math.max(2, v / max * 100) + "%", background: d.color || props.color || COLORS[0] } })),
+            h2("span", { className: prefix + "-bar-v" }, props.format ? props.format(v) : num(props.lang, v))
+          );
+        }));
+      }
+      function StackedRows(props) {
+        var rows = props.rows || [];
+        var keys = props.keys || [];
+        return h2("div", { className: prefix + "-stack" }, rows.map(function(row, ri) {
+          var total = Number(row.total || 0) || 1;
+          return h2(
+            "div",
+            { key: row.key || ri },
+            h2("div", { className: prefix + "-srow-l" }, h2("span", null, row.label), h2("b", null, num(props.lang, row.total))),
+            h2("div", { className: prefix + "-strack" }, keys.map(function(k, i) {
+              var v = Number(row.parts && row.parts[k.key] || 0);
+              if (v <= 0) return null;
+              return h2("span", {
+                key: k.key,
+                className: prefix + "-seg-f",
+                title: k.label + " " + v,
+                style: { width: v / total * 100 + "%", background: k.color || COLORS[i % COLORS.length] }
+              });
+            }))
+          );
+        }));
+      }
+      function Trend(props) {
+        var data = props.data || [];
+        var series = props.series || [];
+        var width = 640;
+        var height = props.height || 200;
+        var left = 30, right = 10, top = 12, bottom = 24;
+        var pw = width - left - right, ph = height - top - bottom;
+        var max = 1;
+        data.forEach(function(d) {
+          series.forEach(function(s) {
+            max = Math.max(max, Number(d[s.key] || 0));
+          });
+        });
+        max = Math.ceil(max * 1.15) || 1;
+        function x(i2) {
+          return left + (data.length <= 1 ? pw / 2 : i2 / (data.length - 1) * pw);
+        }
+        function y(v) {
+          return top + ph - Number(v || 0) / max * ph;
+        }
+        var ticks = [];
+        for (var t = 0; t <= 3; t++) ticks.push(Math.round(max / 3 * t));
+        var labelIdx = [];
+        if (data.length) {
+          var step = Math.max(1, Math.floor(data.length / 5));
+          for (var i = 0; i < data.length; i += step) labelIdx.push(i);
+          if (labelIdx[labelIdx.length - 1] !== data.length - 1) labelIdx.push(data.length - 1);
+        }
+        var aria = series.map(function(s) {
+          return s.label + " " + data.reduce(function(n, d) {
+            return n + Number(d[s.key] || 0);
+          }, 0);
+        }).join("\uFF0C");
+        return h2(
+          "div",
+          null,
+          h2(
+            "svg",
+            { className: prefix + "-trend", viewBox: "0 0 " + width + " " + height, role: "img", "aria-label": props.aria || aria },
+            ticks.map(function(v, i2) {
+              return h2(
+                "g",
+                { key: "t" + i2 },
+                h2("line", { x1: left, x2: width - right, y1: y(v), y2: y(v), stroke: "var(--dsw-alias-border-tertiary,#f2f3f5)", strokeWidth: 1 }),
+                h2("text", { x: left - 5, y: y(v) + 3, textAnchor: "end", fontSize: 9, fill: "var(--dsw-alias-text-tertiary,#8f959e)" }, num(props.lang, v))
+              );
+            }),
+            series.map(function(s, si) {
+              var pts = data.map(function(d, i2) {
+                return x(i2) + "," + y(d[s.key]);
+              }).join(" ");
+              return h2(
+                "g",
+                { key: s.key },
+                h2("polyline", { points: pts, fill: "none", stroke: s.color || COLORS[si % COLORS.length], strokeWidth: 2, strokeLinejoin: "round", strokeLinecap: "round" }),
+                data.map(function(d, i2) {
+                  if (data.length > 40 && i2 % 3 !== 0) return null;
+                  return h2(
+                    "circle",
+                    { key: i2, cx: x(i2), cy: y(d[s.key]), r: 2.4, fill: s.color || COLORS[si % COLORS.length] },
+                    h2("title", null, d.bucket + "\uFF1A" + s.label + " " + (d[s.key] || 0))
+                  );
+                })
+              );
+            }),
+            labelIdx.map(function(i2) {
+              return h2("text", { key: "x" + i2, x: x(i2), y: height - 6, textAnchor: "middle", fontSize: 9, fill: "var(--dsw-alias-text-tertiary,#8f959e)" }, String(data[i2].bucket).slice(5));
+            })
+          ),
+          h2("div", { className: prefix + "-tlegend" }, series.map(function(s, i2) {
+            return h2(
+              "span",
+              { key: s.key, style: { display: "inline-flex", alignItems: "center", gap: 5 } },
+              h2("span", { className: prefix + "-dot", style: { background: s.color || COLORS[i2 % COLORS.length] } }),
+              s.label
+            );
+          }))
+        );
+      }
+      function Histogram(props) {
+        var data = props.data || [];
+        var max = data.reduce(function(m, d) {
+          return Math.max(m, Number(d.count || 0));
+        }, 0) || 1;
+        return h2(
+          "div",
+          { className: prefix + "-hist", role: "img", "aria-label": props.aria || data.map(function(d) {
+            return d.label + " " + d.count;
+          }).join("\uFF0C") },
+          data.map(function(d, i) {
+            return h2(
+              "div",
+              { key: d.key || d.label || i, className: prefix + "-hbar", title: d.label + "\uFF1A" + d.count },
+              h2("span", { className: prefix + "-hbar-v" }, num(props.lang, d.count)),
+              h2("span", { className: prefix + "-hbar-f", style: { height: Math.max(2, Number(d.count || 0) / max * 100) + "%", background: d.color || props.color || COLORS[0] } }),
+              h2("span", { className: prefix + "-hbar-l" }, d.label)
+            );
+          })
+        );
+      }
+      function DataTable(props) {
+        var cols = props.columns || [];
+        var rows = props.rows || [];
+        if (!rows.length) return h2("div", { className: prefix + "-empty" }, props.empty || "\u6682\u65E0\u6570\u636E");
+        return h2(
+          "table",
+          { className: prefix + "-table" },
+          h2("thead", null, h2("tr", null, cols.map(function(c) {
+            return h2("th", { key: c.key, className: c.num ? prefix + "-num" : "" }, c.label);
+          }))),
+          h2("tbody", null, rows.map(function(row, ri) {
+            return h2("tr", { key: row.id || row.key || ri }, cols.map(function(c) {
+              return h2("td", { key: c.key, className: c.num ? prefix + "-num" : "" }, c.render ? c.render(row) : row[c.key]);
+            }));
+          }))
+        );
+      }
+      function RangeSwitch(props) {
+        return h2(
+          "div",
+          { className: prefix + "-stoolbar" },
+          h2("div", { className: prefix + "-seg", role: "group", "aria-label": props.aria || "\u65F6\u95F4\u8303\u56F4" }, (props.options || []).map(function(o) {
+            return h2("button", {
+              key: o.key,
+              type: "button",
+              className: o.key === props.value ? prefix + "-on" : "",
+              "aria-pressed": o.key === props.value,
+              onClick: function() {
+                props.onChange(o.key);
+              }
+            }, o.label);
+          })),
+          h2("button", { type: "button", className: prefix + "-ghost", disabled: !!props.loading, onClick: props.onRefresh }, props.refreshLabel || "\u5237\u65B0"),
+          h2("span", { className: prefix + "-muted" }, props.generatedAt ? (props.timeLabel || "\u622A\u81F3") + " " + timeText(props.generatedAt) : ""),
+          props.right ? h2("span", { style: { marginLeft: "auto" } }, props.right) : null
+        );
+      }
+      function Empty(props) {
+        return h2("div", { className: prefix + "-empty" }, props.text || "\u6682\u65E0\u6570\u636E");
+      }
+      function Skeleton() {
+        return h2(
+          "div",
+          { className: prefix + "-sgrid" },
+          h2("div", { className: prefix + "-kpis" }, [0, 1, 2, 3].map(function(i) {
+            return h2(
+              "div",
+              { key: i, className: prefix + "-kpi" },
+              h2("div", { className: prefix + "-sk", style: { width: "40%" } }),
+              h2("div", { className: prefix + "-sk", style: { width: "65%", height: 26 } })
+            );
+          })),
+          [0, 1].map(function(i) {
+            return h2(
+              "div",
+              { key: "c" + i, className: prefix + "-scard " + prefix + "-span-6" },
+              h2("div", { className: prefix + "-sk", style: { width: "30%" } }),
+              h2("div", { className: prefix + "-sk", style: { height: 120 } })
+            );
+          })
+        );
+      }
+      function ErrorBar(props) {
+        return h2(
+          "div",
+          { className: prefix + "-err", role: "alert" },
+          h2("span", null, props.message),
+          props.onRetry ? h2("button", { type: "button", className: prefix + "-ghost", onClick: props.onRetry }, props.retryLabel || "\u91CD\u8BD5") : null
+        );
+      }
+      function Warnings(props) {
+        var items = props.items || [];
+        if (!items.length) return null;
+        return h2("div", { className: prefix + "-warn", role: "status" }, items.map(function(w) {
+          return w.message;
+        }).join("\uFF1B"));
+      }
+      return {
+        Card,
+        Kpi,
+        Donut,
+        BarList,
+        StackedRows,
+        Trend,
+        Histogram,
+        DataTable,
+        RangeSwitch,
+        Empty,
+        Skeleton,
+        ErrorBar,
+        Warnings,
+        num,
+        pct,
+        timeText,
+        dateText,
+        colors: COLORS
+      };
+    }
+    module2.exports = { makeCharts };
+  }
+});
+
+// packages/addons/tags/client/stats.cjs
+var require_stats = __commonJS({
+  "packages/addons/tags/client/stats.cjs"(exports2, module2) {
+    var React2 = require("react");
+    var h2 = React2.createElement;
+    var charts = require_charts();
+    var COPY = {
+      zh: {
+        range7: "\u8FD1 7 \u5929",
+        range30: "\u8FD1 30 \u5929",
+        range90: "\u8FD1 90 \u5929",
+        range365: "\u8FD1 1 \u5E74",
+        rangeAll: "\u5168\u90E8",
+        refresh: "\u5237\u65B0",
+        asOf: "\u622A\u81F3",
+        retry: "\u91CD\u8BD5",
+        loadFail: "\u7EDF\u8BA1\u670D\u52A1\u672A\u5C31\u7EEA\uFF0C\u8BF7\u5347\u7EA7\u63D2\u4EF6\u540E\u91CD\u8BD5",
+        tags: "\u6807\u7B7E\u603B\u6570",
+        used: "\u5DF2\u4F7F\u7528",
+        mappings: "\u5173\u8054\u603B\u6570",
+        items: "\u8986\u76D6\u5BF9\u8C61",
+        avgPerItem: "\u5E73\u5747\u6BCF\u5BF9\u8C61",
+        newTags: "\u8303\u56F4\u5185\u65B0\u589E\u6807\u7B7E",
+        newMappings: "\u8303\u56F4\u5185\u65B0\u589E\u5173\u8054",
+        times: "\u4E2A",
+        current: "\u5F53\u524D",
+        inRange: "\u8303\u56F4\u5185",
+        ofTotal: "\u5360\u603B\u91CF",
+        usage: "\u4F7F\u7528\u6B21\u6570\u5206\u5E03",
+        usageNote: "\u6309\u6807\u7B7E\u7684\u5173\u8054\u6761\u6570\u5206\u6876",
+        top: "Top \u6807\u7B7E",
+        topNote: "\u6309\u4F7F\u7528\u6B21\u6570\u6392\u5E8F",
+        types: "\u5173\u8054\u5BF9\u8C61\u7C7B\u578B",
+        typesNote: "\u5F53\u524D\u5173\u8054",
+        trend: "\u65B0\u589E\u6807\u7B7E / \u5173\u8054\u8D8B\u52BF",
+        trendNote: "\u5305\u542B\u540E\u6765\u89E3\u9664\u7684\u5173\u8054\uFF08\u5386\u53F2\u65B0\u589E\uFF09",
+        newTagSeries: "\u65B0\u589E\u6807\u7B7E",
+        newMapSeries: "\u65B0\u589E\u5173\u8054",
+        stale: "\u6C89\u7761\u6807\u7B7E",
+        staleNote: "\u4ECE\u672A\u4F7F\u7528\u6216 90 \u5929\u672A\u4F7F\u7528",
+        recent: "\u6700\u8FD1\u4F7F\u7528",
+        recentNote: "\u6309\u6700\u8FD1\u4F7F\u7528\u65F6\u95F4\u964D\u5E8F",
+        colName: "\u6807\u7B7E",
+        colCount: "\u4F7F\u7528\u6B21\u6570",
+        colLast: "\u6700\u8FD1\u4F7F\u7528",
+        colShare: "\u5360\u6BD4",
+        never: "\u4ECE\u672A\u4F7F\u7528",
+        noStale: "\u6CA1\u6709\u6C89\u7761\u6807\u7B7E",
+        noRecent: "\u8FD8\u6CA1\u6709\u4F7F\u7528\u8BB0\u5F55",
+        noData: "\u8FD8\u6CA1\u6709\u6807\u7B7E\u3002\u5728\u300C\u6807\u7B7E\u300D\u9875\u521B\u5EFA\u540E\uFF0C\u8FD9\u91CC\u4F1A\u81EA\u52A8\u6C47\u603B",
+        typeSite: "\u7AD9\u70B9",
+        typeTask: "\u4EFB\u52A1",
+        typeOther: "\u5176\u4ED6"
+      },
+      en: {
+        range7: "7 days",
+        range30: "30 days",
+        range90: "90 days",
+        range365: "1 year",
+        rangeAll: "All",
+        refresh: "Refresh",
+        asOf: "As of",
+        retry: "Retry",
+        loadFail: "Stats service not ready. Upgrade the plugin and retry.",
+        tags: "Tags",
+        used: "Used",
+        mappings: "Mappings",
+        items: "Objects",
+        avgPerItem: "Avg per object",
+        newTags: "New tags",
+        newMappings: "New mappings",
+        times: "",
+        current: "Current",
+        inRange: "In range",
+        ofTotal: "of total",
+        usage: "Usage distribution",
+        usageNote: "Tags bucketed by mapping count",
+        top: "Top tags",
+        topNote: "Sorted by usage",
+        types: "Object types",
+        typesNote: "Current mappings",
+        trend: "New tags / mappings",
+        trendNote: "Includes mappings later removed",
+        newTagSeries: "Tags",
+        newMapSeries: "Mappings",
+        stale: "Stale tags",
+        staleNote: "Never used or unused for 90 days",
+        recent: "Recently used",
+        recentNote: "Most recent first",
+        colName: "Tag",
+        colCount: "Uses",
+        colLast: "Last used",
+        colShare: "Share",
+        never: "Never",
+        noStale: "No stale tags",
+        noRecent: "No usage yet",
+        noData: "No tags yet. Create one on the Tags page and the summary appears here.",
+        typeSite: "Sites",
+        typeTask: "Tasks",
+        typeOther: "Other"
+      }
+    };
+    var RANGES = ["7d", "30d", "90d", "365d", "all"];
+    function TagsStatsView(props) {
+      var lang = props.lang === "en" ? "en" : "zh";
+      var t = COPY[lang];
+      var api = props.api;
+      var ch = React2.useMemo(function() {
+        return charts.makeCharts("wbg");
+      }, []);
+      var rangePair = React2.useState("30d");
+      var range = rangePair[0], setRange = rangePair[1];
+      var dataPair = React2.useState(null);
+      var data = dataPair[0], setData = dataPair[1];
+      var errPair = React2.useState("");
+      var err = errPair[0], setErr = errPair[1];
+      var loadPair = React2.useState(true);
+      var loading = loadPair[0], setLoading = loadPair[1];
+      var req = React2.useRef(0);
+      var load = React2.useCallback(function(silent) {
+        var id = ++req.current;
+        if (!silent) setLoading(true);
+        return Promise.resolve(api.call("tags.statsReport", { range, top: 10 })).then(function(r) {
+          return r && r.result !== void 0 ? r.result : r;
+        }).then(function(d) {
+          if (id === req.current) {
+            setData(d);
+            setErr("");
+          }
+        }).catch(function(e) {
+          if (id === req.current) setErr(String(e && e.message || e || "load failed"));
+        }).then(function() {
+          if (id === req.current) setLoading(false);
+        });
+      }, [api, range]);
+      React2.useEffect(function() {
+        load(false);
+      }, [load]);
+      React2.useEffect(function() {
+        if (!api || typeof api.subscribe !== "function") return void 0;
+        var timer = null;
+        var pending = false;
+        var off = api.subscribe(function(payload) {
+          var ev = payload && payload.event;
+          if (ev !== "tags-changed" && ev !== "tasks-changed" && ev !== "sites-changed") return;
+          if (typeof document !== "undefined" && document.visibilityState && document.visibilityState !== "visible") {
+            pending = true;
+            return;
+          }
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(function() {
+            load(true);
+          }, 800);
+        });
+        function onVisible() {
+          if (typeof document !== "undefined" && document.visibilityState === "visible" && pending) {
+            pending = false;
+            load(true);
+          }
+        }
+        if (typeof document !== "undefined") document.addEventListener("visibilitychange", onVisible);
+        return function() {
+          if (timer) clearTimeout(timer);
+          if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
+          if (typeof off === "function") off();
+        };
+      }, [api, load]);
+      var options = RANGES.map(function(key) {
+        return { key, label: t["range" + (key === "all" ? "All" : key.replace("d", ""))] };
+      });
+      var children = [];
+      if (!data && loading) children.push(h2(ch.Skeleton, { key: "sk" }));
+      if (!data && !loading && err) children.push(h2(ch.Card, { key: "err", span: 12 }, h2(ch.Empty, { text: t.loadFail })));
+      if (data && data.totals) {
+        var totals = data.totals;
+        var rates = data.rates || {};
+        var b = data.breakdowns || {};
+        children.push(h2(
+          "div",
+          { key: "kpi", className: "wbg-kpis" },
+          h2(ch.Kpi, { label: t.tags, value: totals.tags, hint: t.current, lang }),
+          h2(ch.Kpi, { label: t.used, value: totals.used, hint: ch.pct(rates.usedRatio) + " " + t.ofTotal, tone: "ok", lang }),
+          h2(ch.Kpi, { label: t.mappings, value: totals.mappings, hint: t.current, lang }),
+          h2(ch.Kpi, { label: t.items, value: totals.items, hint: t.current, lang }),
+          h2(ch.Kpi, { label: t.avgPerItem, value: totals.avgPerItem, unit: t.times, hint: t.current, lang }),
+          h2(ch.Kpi, { label: t.newTags, value: totals.newTags, hint: t.inRange, lang }),
+          h2(ch.Kpi, { label: t.newMappings, value: totals.newMappings, hint: t.inRange, lang }),
+          h2(ch.Kpi, { label: t.stale, value: data.lists && data.lists.stale ? data.lists.stale.length : 0, hint: t.current, lang })
+        ));
+        if (totals.tags === 0) {
+          children.push(h2(ch.Card, { key: "empty", span: 12 }, h2(ch.Empty, { text: t.noData })));
+        } else {
+          children.push(h2(
+            ch.Card,
+            { key: "usage", span: 6, title: t.usage, note: t.usageNote },
+            h2(ch.Histogram, { data: b.usage || [], lang, color: ch.colors[0] })
+          ));
+          children.push(h2(
+            ch.Card,
+            { key: "top", span: 6, title: t.top, note: t.topNote },
+            h2(ch.BarList, {
+              data: (data.rankings && data.rankings.topTags || []).map(function(x) {
+                return { key: x.id, label: x.name, value: x.count, title: x.name };
+              }),
+              lang,
+              color: ch.colors[0]
+            })
+          ));
+          children.push(h2(
+            ch.Card,
+            { key: "types", span: 4, title: t.types, note: t.typesNote },
+            h2(ch.Donut, {
+              data: (b.itemTypes || []).map(function(x, i) {
+                return { key: x.key, label: x.label, count: x.mappings, color: ch.colors[i] };
+              }),
+              total: totals.mappings,
+              lang,
+              centerLabel: t.mappings,
+              aria: (b.itemTypes || []).map(function(x) {
+                return x.label + " " + x.mappings;
+              }).join("\uFF0C")
+            })
+          ));
+          children.push(h2(
+            ch.Card,
+            { key: "trend", span: 8, title: t.trend, note: t.trendNote },
+            h2(ch.Trend, {
+              data: data.trend || [],
+              lang,
+              series: [
+                { key: "tags", label: t.newTagSeries, color: ch.colors[0] },
+                { key: "mappings", label: t.newMapSeries, color: ch.colors[1] }
+              ]
+            })
+          ));
+          children.push(h2(
+            ch.Card,
+            { key: "stale", span: 6, title: t.stale, note: t.staleNote },
+            h2(ch.DataTable, {
+              rows: data.lists && data.lists.stale || [],
+              lang,
+              empty: t.noStale,
+              columns: [
+                { key: "name", label: t.colName },
+                { key: "count", label: t.colCount, num: true },
+                { key: "lastUsedAt", label: t.colLast, render: function(r) {
+                  return r.lastUsedAt ? ch.dateText(r.lastUsedAt) : t.never;
+                } }
+              ]
+            })
+          ));
+          children.push(h2(
+            ch.Card,
+            { key: "recent", span: 6, title: t.recent, note: t.recentNote },
+            h2(ch.DataTable, {
+              rows: data.lists && data.lists.recent || [],
+              lang,
+              empty: t.noRecent,
+              columns: [
+                { key: "name", label: t.colName },
+                { key: "count", label: t.colCount, num: true },
+                { key: "lastUsedAt", label: t.colLast, render: function(r) {
+                  return ch.dateText(r.lastUsedAt);
+                } }
+              ]
+            })
+          ));
+        }
+        children.push(h2(ch.Warnings, { key: "warn", items: data.warnings || [] }));
+      }
+      return h2(
+        "div",
+        { className: "wbg-stats" },
+        h2(ch.RangeSwitch, {
+          options,
+          value: range,
+          onChange: setRange,
+          onRefresh: function() {
+            load(false);
+          },
+          loading,
+          generatedAt: data && data.generatedAt,
+          refreshLabel: t.refresh,
+          timeLabel: t.asOf
+        }),
+        err && data ? h2(ch.ErrorBar, { message: err, onRetry: function() {
+          load(false);
+        }, retryLabel: t.retry }) : null,
+        h2("div", { className: "wbg-sgrid" }, children)
+      );
+    }
+    module2.exports = { TagsStatsView };
+  }
+});
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/shared/src/utils/toKebabCase.mjs
 var toKebabCase;
@@ -434,6 +1170,7 @@ var h = React.createElement;
   }
   var React2 = require("react");
   var h2 = React2.createElement;
+  var statsView = require_stats();
   var ICONS = {
     "search": (init_search(), __toCommonJS(search_exports)).default,
     "x": (init_x(), __toCommonJS(x_exports)).default,
@@ -924,12 +1661,11 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.3.2",
-    views: [{
-      id: "tags",
-      title: { zh: "\u6807\u7B7E", en: "Tags" },
-      component: TagsView
-    }]
+    version: "1.4.0",
+    views: [
+      { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },
+      { id: "tags", title: { zh: "\u6807\u7B7E", en: "Tags" }, component: TagsView }
+    ]
   });
   module.exports = { name: "dsh-workbench-tags", inject: [], apply: function() {
   } };

@@ -35,10 +35,13 @@ export function apply(ctx) {
         id: "wb-addon-sites",
         title: "站点",
         description: "站点收藏：目录树、链接与标签",
-        version: "1.3.1",
+        version: "1.4.0",
         tables: ["site", "site_node", "site_node_mapping", "tag_mapping"],
         sync: siteSync,
-        views: [{ id: "sites", title: { zh: "站点", en: "Sites" } }],
+        views: [
+          { id: "sites", title: { zh: "站点", en: "Sites" } },
+          { id: "stats", title: { zh: "站点统计", en: "Site stats" } },
+        ],
         capability: {
           summary: "记录值得再次访问的站点（URL + 目录 + 标签），不记录本地开发地址和内网临时页面。",
           records: [

@@ -252,12 +252,33 @@ try {
   const groupedType = await call("tasks.stats", { groupBy: "type" });
   assert(groupedType.result.groups.length >= 1, "stats groupBy=type 失败");
 
+  // ── 12b. 统计报表：三个模块的 statsReport ──
+  const taskReport = await call("tasks.statsReport", { range: "30d" });
+  assert(taskReport.result.totals.total >= 1, "tasks.statsReport totals.total 为空");
+  assert(Array.isArray(taskReport.result.trend) && taskReport.result.trend.length >= 1, "tasks.statsReport 缺趋势");
+  assert(taskReport.result.breakdowns.status.length >= 1, "tasks.statsReport 缺状态分布");
+  assert(taskReport.result.generatedAt, "tasks.statsReport 缺 generatedAt");
+  const taskAll = await call("tasks.statsReport", { range: "all" });
+  assert(taskAll.result.totals.total >= taskReport.result.totals.total, "tasks.statsReport range=all 计数偏小");
+  let rangeErr = null;
+  try { await call("tasks.statsReport", { range: "2d" }); } catch (e) { rangeErr = e; }
+  assert(rangeErr, "tasks.statsReport 未拒绝非法 range");
+  const tagQuick = await call("tags.stats", {});
+  assert(tagQuick.result.tags >= 1 && tagQuick.result.mappings >= 1, "tags.stats 计数器为空");
+  const tagReport = await call("tags.statsReport", { range: "30d" });
+  assert(tagReport.result.totals.tags >= 1 && tagReport.result.totals.mappings >= 1, "tags.statsReport 总数为空");
+  assert(tagReport.result.breakdowns.itemTypes.some((x) => x.key === "task"), "tags.statsReport 缺任务类型分布");
+  assert(Array.isArray(tagReport.result.rankings.topTags) && tagReport.result.rankings.topTags.length >= 1, "tags.statsReport 缺 Top 标签");
   // ── 13. 其他域未受宿主改动影响 ──
   const tag = await call("tags.create", { name: "native 标签" });
   assert(tag.result.id, "tag not created");
   const node = await call("siteNodes.create", { parentId: "0", name: "native 目录" });
   const site = await call("sites.create", { siteName: "native 站点", dirIds: [node.result.node.id], siteLinks: [] });
   assert(site.result.site.id, "site not created");
+  const siteReport = await call("sites.statsReport", { range: "30d" });
+  assert(siteReport.result.totals.sites >= 1, "sites.statsReport totals.sites 为空");
+  assert(Array.isArray(siteReport.result.lists.duplicates), "sites.statsReport 缺重复 URL 列表");
+  assert(Array.isArray(siteReport.result.breakdowns.freshness), "sites.statsReport 缺新鲜度分布");
 
   // ── 14. 旧版 task 表升级：先补 sort/dedupe_key，再建索引 ──
   const legacy = new DatabaseSync(":memory:");

@@ -20,6 +20,7 @@ import {
   rowTag,
   formatTime,
 } from "./db.js";
+import { quickStats, statsReport, renderStats } from "./stats.js";
 
 const DEFAULT_PAGE_SIZE = 18;
 const MAX_PAGE_SIZE = 200;
@@ -308,6 +309,31 @@ export function registerTagActions(api) {
       return listTags(api.db, args);
     },
     render: renderList,
+  });
+
+  action("tags.stats", {
+    description: "标签轻量计数：标签总数、已用、未用、关联条数、覆盖对象数",
+    input: { type: "object", properties: {} },
+    execute: function () { return quickStats(api.db); },
+    render: function (r) {
+      return "标签 " + r.tags + " 个：已用 " + r.used + "、未用 " + r.unused + "；关联 " + r.mappings + " 条，覆盖 " + r.items + " 个对象。";
+    },
+  });
+
+  action("tags.statsReport", {
+    description: "标签统计报表：使用分布、Top 标签、对象类型、增长趋势、沉睡/最近使用",
+    input: {
+      type: "object",
+      properties: {
+        range: { type: "string", enum: ["7d", "30d", "90d", "365d", "all"], description: "默认 30d" },
+        from: { type: "string", description: "YYYY-MM-DD，与 to 同时提供" },
+        to: { type: "string", description: "YYYY-MM-DD，默认今天" },
+        top: { type: "number", description: "排行/明细条数，1–20，默认 10" },
+      },
+    },
+    examples: [{ range: "30d", top: 10 }],
+    execute: function (args) { return statsReport(api.db, args || {}); },
+    render: renderStats,
   });
 
   action("tags.create", {

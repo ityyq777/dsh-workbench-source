@@ -1,0 +1,182 @@
+// 标签统计视图：一次拉取 tags.statsReport，区块化渲染。
+var React = require("react");
+var h = React.createElement;
+var charts = require("./charts.cjs");
+
+var COPY = {
+  zh: {
+    range7: "近 7 天", range30: "近 30 天", range90: "近 90 天", range365: "近 1 年", rangeAll: "全部",
+    refresh: "刷新", asOf: "截至", retry: "重试", loadFail: "统计服务未就绪，请升级插件后重试",
+    tags: "标签总数", used: "已使用", mappings: "关联总数", items: "覆盖对象",
+    avgPerItem: "平均每对象", newTags: "范围内新增标签", newMappings: "范围内新增关联",
+    times: "个", current: "当前", inRange: "范围内", ofTotal: "占总量",
+    usage: "使用次数分布", usageNote: "按标签的关联条数分桶",
+    top: "Top 标签", topNote: "按使用次数排序",
+    types: "关联对象类型", typesNote: "当前关联",
+    trend: "新增标签 / 关联趋势", trendNote: "包含后来解除的关联（历史新增）",
+    newTagSeries: "新增标签", newMapSeries: "新增关联",
+    stale: "沉睡标签", staleNote: "从未使用或 90 天未使用",
+    recent: "最近使用", recentNote: "按最近使用时间降序",
+    colName: "标签", colCount: "使用次数", colLast: "最近使用", colShare: "占比",
+    never: "从未使用", noStale: "没有沉睡标签", noRecent: "还没有使用记录",
+    noData: "还没有标签。在「标签」页创建后，这里会自动汇总",
+    typeSite: "站点", typeTask: "任务", typeOther: "其他",
+  },
+  en: {
+    range7: "7 days", range30: "30 days", range90: "90 days", range365: "1 year", rangeAll: "All",
+    refresh: "Refresh", asOf: "As of", retry: "Retry", loadFail: "Stats service not ready. Upgrade the plugin and retry.",
+    tags: "Tags", used: "Used", mappings: "Mappings", items: "Objects",
+    avgPerItem: "Avg per object", newTags: "New tags", newMappings: "New mappings",
+    times: "", current: "Current", inRange: "In range", ofTotal: "of total",
+    usage: "Usage distribution", usageNote: "Tags bucketed by mapping count",
+    top: "Top tags", topNote: "Sorted by usage",
+    types: "Object types", typesNote: "Current mappings",
+    trend: "New tags / mappings", trendNote: "Includes mappings later removed",
+    newTagSeries: "Tags", newMapSeries: "Mappings",
+    stale: "Stale tags", staleNote: "Never used or unused for 90 days",
+    recent: "Recently used", recentNote: "Most recent first",
+    colName: "Tag", colCount: "Uses", colLast: "Last used", colShare: "Share",
+    never: "Never", noStale: "No stale tags", noRecent: "No usage yet",
+    noData: "No tags yet. Create one on the Tags page and the summary appears here.",
+    typeSite: "Sites", typeTask: "Tasks", typeOther: "Other",
+  },
+};
+
+var RANGES = ["7d", "30d", "90d", "365d", "all"];
+
+function TagsStatsView(props) {
+  var lang = props.lang === "en" ? "en" : "zh";
+  var t = COPY[lang];
+  var api = props.api;
+  var ch = React.useMemo(function () { return charts.makeCharts("wbg"); }, []);
+  var rangePair = React.useState("30d");
+  var range = rangePair[0], setRange = rangePair[1];
+  var dataPair = React.useState(null);
+  var data = dataPair[0], setData = dataPair[1];
+  var errPair = React.useState("");
+  var err = errPair[0], setErr = errPair[1];
+  var loadPair = React.useState(true);
+  var loading = loadPair[0], setLoading = loadPair[1];
+  var req = React.useRef(0);
+
+  var load = React.useCallback(function (silent) {
+    var id = ++req.current;
+    if (!silent) setLoading(true);
+    return Promise.resolve(api.call("tags.statsReport", { range: range, top: 10 }))
+      .then(function (r) { return r && r.result !== undefined ? r.result : r; })
+      .then(function (d) { if (id === req.current) { setData(d); setErr(""); } })
+      .catch(function (e) { if (id === req.current) setErr(String((e && e.message) || e || "load failed")); })
+      .then(function () { if (id === req.current) setLoading(false); });
+  }, [api, range]);
+
+  React.useEffect(function () { load(false); }, [load]);
+
+  React.useEffect(function () {
+    if (!api || typeof api.subscribe !== "function") return undefined;
+    var timer = null;
+    var pending = false;
+    var off = api.subscribe(function (payload) {
+      var ev = payload && payload.event;
+      if (ev !== "tags-changed" && ev !== "tasks-changed" && ev !== "sites-changed") return;
+      if (typeof document !== "undefined" && document.visibilityState && document.visibilityState !== "visible") {
+        pending = true;
+        return;
+      }
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(function () { load(true); }, 800);
+    });
+    function onVisible() {
+      if (typeof document !== "undefined" && document.visibilityState === "visible" && pending) {
+        pending = false;
+        load(true);
+      }
+    }
+    if (typeof document !== "undefined") document.addEventListener("visibilitychange", onVisible);
+    return function () {
+      if (timer) clearTimeout(timer);
+      if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
+      if (typeof off === "function") off();
+    };
+  }, [api, load]);
+
+  var options = RANGES.map(function (key) {
+    return { key: key, label: t["range" + (key === "all" ? "All" : key.replace("d", ""))] };
+  });
+
+  var children = [];
+  if (!data && loading) children.push(h(ch.Skeleton, { key: "sk" }));
+  if (!data && !loading && err) children.push(h(ch.Card, { key: "err", span: 12 }, h(ch.Empty, { text: t.loadFail })));
+  if (data && data.totals) {
+    var totals = data.totals;
+    var rates = data.rates || {};
+    var b = data.breakdowns || {};
+    children.push(h("div", { key: "kpi", className: "wbg-kpis" },
+      h(ch.Kpi, { label: t.tags, value: totals.tags, hint: t.current, lang: lang }),
+      h(ch.Kpi, { label: t.used, value: totals.used, hint: ch.pct(rates.usedRatio) + " " + t.ofTotal, tone: "ok", lang: lang }),
+      h(ch.Kpi, { label: t.mappings, value: totals.mappings, hint: t.current, lang: lang }),
+      h(ch.Kpi, { label: t.items, value: totals.items, hint: t.current, lang: lang }),
+      h(ch.Kpi, { label: t.avgPerItem, value: totals.avgPerItem, unit: t.times, hint: t.current, lang: lang }),
+      h(ch.Kpi, { label: t.newTags, value: totals.newTags, hint: t.inRange, lang: lang }),
+      h(ch.Kpi, { label: t.newMappings, value: totals.newMappings, hint: t.inRange, lang: lang }),
+      h(ch.Kpi, { label: t.stale, value: (data.lists && data.lists.stale ? data.lists.stale.length : 0), hint: t.current, lang: lang }),
+    ));
+
+    if (totals.tags === 0) {
+      children.push(h(ch.Card, { key: "empty", span: 12 }, h(ch.Empty, { text: t.noData })));
+    } else {
+      children.push(h(ch.Card, { key: "usage", span: 6, title: t.usage, note: t.usageNote },
+        h(ch.Histogram, { data: b.usage || [], lang: lang, color: ch.colors[0] })));
+      children.push(h(ch.Card, { key: "top", span: 6, title: t.top, note: t.topNote },
+        h(ch.BarList, {
+          data: ((data.rankings && data.rankings.topTags) || []).map(function (x) {
+            return { key: x.id, label: x.name, value: x.count, title: x.name };
+          }),
+          lang: lang, color: ch.colors[0],
+        })));
+      children.push(h(ch.Card, { key: "types", span: 4, title: t.types, note: t.typesNote },
+        h(ch.Donut, {
+          data: (b.itemTypes || []).map(function (x, i) { return { key: x.key, label: x.label, count: x.mappings, color: ch.colors[i] }; }),
+          total: totals.mappings, lang: lang, centerLabel: t.mappings,
+          aria: (b.itemTypes || []).map(function (x) { return x.label + " " + x.mappings; }).join("，"),
+        })));
+      children.push(h(ch.Card, { key: "trend", span: 8, title: t.trend, note: t.trendNote },
+        h(ch.Trend, {
+          data: data.trend || [], lang: lang,
+          series: [
+            { key: "tags", label: t.newTagSeries, color: ch.colors[0] },
+            { key: "mappings", label: t.newMapSeries, color: ch.colors[1] },
+          ],
+        })));
+      children.push(h(ch.Card, { key: "stale", span: 6, title: t.stale, note: t.staleNote },
+        h(ch.DataTable, {
+          rows: (data.lists && data.lists.stale) || [], lang: lang, empty: t.noStale,
+          columns: [
+            { key: "name", label: t.colName },
+            { key: "count", label: t.colCount, num: true },
+            { key: "lastUsedAt", label: t.colLast, render: function (r) { return r.lastUsedAt ? ch.dateText(r.lastUsedAt) : t.never; } },
+          ],
+        })));
+      children.push(h(ch.Card, { key: "recent", span: 6, title: t.recent, note: t.recentNote },
+        h(ch.DataTable, {
+          rows: (data.lists && data.lists.recent) || [], lang: lang, empty: t.noRecent,
+          columns: [
+            { key: "name", label: t.colName },
+            { key: "count", label: t.colCount, num: true },
+            { key: "lastUsedAt", label: t.colLast, render: function (r) { return ch.dateText(r.lastUsedAt); } },
+          ],
+        })));
+    }
+    children.push(h(ch.Warnings, { key: "warn", items: data.warnings || [] }));
+  }
+
+  return h("div", { className: "wbg-stats" },
+    h(ch.RangeSwitch, {
+      options: options, value: range, onChange: setRange, onRefresh: function () { load(false); },
+      loading: loading, generatedAt: data && data.generatedAt, refreshLabel: t.refresh, timeLabel: t.asOf,
+    }),
+    err && data ? h(ch.ErrorBar, { message: err, onRetry: function () { load(false); }, retryLabel: t.retry }) : null,
+    h("div", { className: "wbg-sgrid" }, children),
+  );
+}
+
+module.exports = { TagsStatsView: TagsStatsView };

@@ -22,6 +22,7 @@ import {
   SITE_TABLE,
   NODE_MAPPING_TABLE,
 } from "./db.js";
+import { statsReport, renderStats } from "./stats.js";
 
 const PAGE_SIZE_DEFAULT = 16;
 const PAGE_SIZE_MAX = 200;
@@ -554,6 +555,22 @@ export function registerSiteActions(api) {
       return { total: total, tagged: tagged, nodes: nodes };
     },
     render: function (r) { return "站点 " + r.total + " 个，其中 " + r.tagged + " 个有标签；目录 " + r.nodes + " 个"; },
+  });
+
+  action("sites.statsReport", {
+    description: "站点统计报表：总量/链接健康/目录分布/标签 Top/新鲜度/重复 URL/数据质量",
+    input: {
+      type: "object",
+      properties: {
+        range: { type: "string", enum: ["7d", "30d", "90d", "365d", "all"], description: "默认 30d" },
+        from: { type: "string", description: "YYYY-MM-DD，与 to 同时提供" },
+        to: { type: "string", description: "YYYY-MM-DD，默认今天" },
+        top: { type: "number", description: "排行/明细条数，1–20，默认 10" },
+      },
+    },
+    examples: [{ range: "30d", top: 10 }],
+    execute: function (args) { return statsReport(db, args || {}); },
+    render: renderStats,
   });
 
   action("siteTags.search", {

@@ -10,6 +10,7 @@ var h = React.createElement;
   }
   var React = require("react");
   var h = React.createElement;
+  var statsView = require("./stats.cjs");
 
   // 站点插件自带 lucide-react 图标；每个图标按需引入，随 client.js 一起打包。
   var ICONS = {
@@ -1214,8 +1215,9 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.3.2",
+    version: "1.4.0",
     views: [
+      { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.SitesStatsView },
       { id: "sites", title: { zh: "站点", en: "Sites" }, component: SitesView },
     ],
   });

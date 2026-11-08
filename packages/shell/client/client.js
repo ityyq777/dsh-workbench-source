@@ -857,7 +857,7 @@
         function addonCard(a) {
           var m = registry.get(a.id);
           var v = (m && m.views && m.views[0]) || (a.views && a.views[0]) || null;
-          var title = pickTitle(v && v.title, lang) || a.title || a.id;
+          var title = a.title || pickTitle(v && v.title, lang) || a.id;
           var count = (m && m.views ? m.views.length : (a.views ? a.views.length : 0));
           return jsx.jsxs("button", { type: "button", className: "wb-home-card" + (a.error ? " dim" : ""), onClick: function () { openAddon(a); }, children: [
             jsx.jsxs("div", { className: "wb-home-top", children: [

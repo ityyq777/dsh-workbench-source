@@ -20,6 +20,7 @@ import {
   tableExists,
   timeMs,
 } from "./db.js";
+import { statsReport, renderStats } from "./stats.js";
 
 const STATUSES = ["0", "1", "2", "3"];
 const TASK_TYPES = ["0", "1", "2", "3"];
@@ -1625,7 +1626,7 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.stats", {
-    description: "任务统计：默认 6 个计数器；groupBy=type/tableId/status/priority 时额外返回 groups（可按 from/to 限定 targetDate）",
+    description: "任务统计：默认 7 个计数器；groupBy=type/tableId/status/priority 时额外返回 groups（可按 from/to 限定 targetDate）",
     input: {
       type: "object",
       properties: {
@@ -1641,6 +1642,22 @@ export function registerTaskActions(api) {
       if (!s.groupBy) return base;
       return base + "\n" + s.groupBy + " 分布：" + s.groups.map(function (g) { return (g.label || g.key || "-") + "=" + g.count; }).join("，");
     },
+  });
+
+  action("tasks.statsReport", {
+    description: "任务统计报表：总量/状态/类型/优先级/难度、趋势、逾期账龄、任务表与任务组排行",
+    input: {
+      type: "object",
+      properties: {
+        range: { type: "string", enum: ["7d", "30d", "90d", "365d", "all"], description: "默认 30d" },
+        from: { type: "string", description: "YYYY-MM-DD，与 to 同时提供" },
+        to: { type: "string", description: "YYYY-MM-DD，默认今天" },
+        top: { type: "number", description: "排行/明细条数，1–20，默认 10" },
+      },
+    },
+    examples: [{ range: "30d", top: 10 }, { from: "2026-10-01", to: "2026-10-31" }],
+    execute: function (args) { return statsReport(db, args || {}); },
+    render: renderStats,
   });
 
   action("tasks.delete", {
