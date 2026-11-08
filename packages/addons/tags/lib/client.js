@@ -521,7 +521,7 @@ var h = React.createElement;
   };
   var PALETTE = ["#5B8FF9", "#5AD8A6", "#F6BD16", "#E8684A", "#6DC8EC", "#9270CA", "#FF9D4D", "#269A99"];
   var CSS = [
-    ".wbg-root{--wbg-line:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wbg-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));--wbg-accent:var(--dsw-alias-accent,#11a89b);display:flex;flex-direction:column;gap:12px;min-height:0;color:inherit;font-size:13px}",
+    ".wbg-root{--wbg-line:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wbg-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));--wbg-accent:var(--dsw-alias-brand-primary,#11a89b);display:flex;flex-direction:column;gap:12px;min-height:0;color:inherit;font-size:13px}",
     ".wbg-top{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}",
     ".wbg-top h2{margin:0;font-size:16px;font-weight:680;letter-spacing:.2px}",
     ".wbg-sub{font-size:12px;opacity:.58;line-height:1.6;margin-top:3px}",
@@ -533,13 +533,13 @@ var h = React.createElement;
     ".wbg-btn{border:1px solid var(--wbg-line);background:var(--wbg-surface);color:inherit;border-radius:8px;padding:7px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;line-height:1.3;display:inline-flex;align-items:center;gap:5px}",
     ".wbg-svg{display:block;flex:none}",
     ".wbg-btn:hover{border-color:var(--wbg-accent)}",
-    ".wbg-btn.primary{background:var(--wbg-accent);border-color:var(--wbg-accent);color:#fff;font-weight:600}",
+    ".wbg-btn.primary{background:var(--wbg-accent);border-color:var(--wbg-accent);color:var(--dsw-alias-label-primary-inverted,#fff);font-weight:600}",
     ".wbg-btn.ghost{background:transparent}",
-    ".wbg-btn.danger{color:#e5484d;border-color:color-mix(in oklab,#e5484d 45%,transparent)}",
+    ".wbg-btn.danger{color:var(--dsw-alias-state-error-primary,#e5484d);border-color:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 45%,transparent)}",
     ".wbg-btn:disabled{opacity:.5;cursor:not-allowed}",
     ".wbg-create{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1px solid var(--wbg-line);border-radius:10px;padding:10px 12px;background:color-mix(in oklab,var(--wbg-accent) 5%,transparent)}",
     ".wbg-create .wbg-input{flex:1;min-width:200px}",
-    ".wbg-formerr{font-size:12px;color:#e5484d;flex-basis:100%}",
+    ".wbg-formerr{font-size:12px;color:var(--dsw-alias-state-error-primary,#e5484d);flex-basis:100%}",
     ".wbg-listhead{display:flex;align-items:center;gap:8px;font-size:11.5px;opacity:.55;padding:0 4px}",
     ".wbg-listhead .wbg-hname{flex:1;min-width:0}",
     ".wbg-list{display:flex;flex-direction:column;gap:6px;min-height:0}",
@@ -551,12 +551,12 @@ var h = React.createElement;
     ".wbg-time{font-size:12px;opacity:.55;white-space:nowrap;font-variant-numeric:tabular-nums}",
     ".wbg-ops{display:flex;align-items:center;gap:6px;flex:none}",
     ".wbg-empty,.wbg-loading{border:1px dashed var(--wbg-line);border-radius:10px;padding:38px 16px;text-align:center;font-size:12.5px;opacity:.6}",
-    ".wbg-error{border:1px solid color-mix(in oklab,#e5484d 40%,transparent);border-radius:10px;padding:12px 14px;color:#e5484d;font-size:12.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}",
+    ".wbg-error{border:1px solid color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 40%,transparent);border-radius:10px;padding:12px 14px;color:var(--dsw-alias-state-error-primary,#e5484d);font-size:12.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}",
     ".wbg-pager{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;opacity:.72;padding-top:2px}",
     ".wbg-pager .wbg-grow{flex:1}",
     ".wbg-batch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;border:1px solid color-mix(in oklab,var(--wbg-accent) 35%,transparent);background:color-mix(in oklab,var(--wbg-accent) 7%,transparent);border-radius:9px;padding:7px 10px}",
     ".wbg-hint{font-size:11.5px;opacity:.55;line-height:1.5}",
-    ".wbg-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:820;background:rgba(20,20,20,.88);color:#fff;border-radius:9px;padding:9px 14px;font-size:12.5px;box-shadow:0 8px 24px rgba(0,0,0,.18);pointer-events:none}",
+    ".wbg-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:820;background:var(--dsw-alias-toast-bg,rgba(20,20,20,.88));color:var(--dsw-alias-toast-label,#fff);border-radius:9px;padding:9px 14px;font-size:12.5px;box-shadow:0 8px 24px rgba(0,0,0,.18);pointer-events:none}",
     "@media (max-width:760px){.wbg-search{width:100%;max-width:none}.wbg-toolbar .wbg-grow{display:none}.wbg-time{display:none}.wbg-row{padding:9px 10px}.wbg-ops .wbg-btn{padding:6px 8px}}"
   ].join("\n");
   function injectCss() {
