@@ -47,7 +47,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.5.4";
+export const SHELL_VERSION = "0.5.5";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -410,6 +410,24 @@ export function apply(ctx: any): void {
     return null;
   }
 
+  /** 归一化能力依赖：声明了 requires 却没装对应域时，能力清单必须说出来，否则 agent 会照描述传参。 */
+  function normalizeRequires(declared: any, warnings: string[]): { requires: string[]; missing: string[] } {
+    const requires: string[] = [];
+    for (const raw of Array.isArray(declared?.requires) ? declared.requires : []) {
+      const id = String(raw ?? "").trim();
+      if (!id) continue;
+      if (requires.indexOf(id) >= 0) continue;
+      requires.push(id);
+    }
+    const missing = requires.filter((id) => !domains.has(id) && !domains.has("wb-addon-" + id));
+    if (missing.length) {
+      warnings.push(
+        "依赖未安装：" + missing.join("、") + "；相关参数（如 tagIds/tags）会报错，其余功能正常",
+      );
+    }
+    return { requires, missing };
+  }
+
   /** 取业务域的能力清单；未声明时回退到域描述，保留 action 列表供 agent 自行判断。 */
   function capabilityOf(rec: RegisteredDomain) {
     const declared = rec.def.capability;
@@ -420,6 +438,8 @@ export function apply(ctx: any): void {
         notFor: [] as string[],
         notes: [] as string[],
         fields: [] as any[],
+        requires: [] as string[],
+        missingRequires: [] as string[],
         source: "fallback" as const,
         warnings: [] as string[],
       };
@@ -487,12 +507,16 @@ export function apply(ctx: any): void {
       warnings.push("未声明字段字典（capability.fields）；agent 只能看到字段名，容易误解方向与枚举");
     }
 
+    const deps = normalizeRequires(declared, warnings);
+
     return {
       summary: String(declared.summary ?? "").trim() || rec.def.description || rec.def.title,
       records,
       notFor: Array.isArray(declared.notFor) ? declared.notFor : [],
       notes: Array.isArray(declared.notes) ? declared.notes : [],
       fields,
+      requires: deps.requires,
+      missingRequires: deps.missing,
       source: "declared" as const,
       warnings,
     };
@@ -514,6 +538,8 @@ export function apply(ctx: any): void {
         summary: cap.summary,
         source: cap.source,
         actionCount: rec.actions.size,
+        requires: (cap as any).requires ?? [],
+        missingRequires: (cap as any).missingRequires ?? [],
         records: cap.records.map((r: any) => ({
           kind: r.kind,
           title: r.title,
@@ -572,6 +598,8 @@ export function apply(ctx: any): void {
         notFor: cap.notFor,
         notes: cap.notes,
         fields: (cap as any).fields ?? [],
+        requires: (cap as any).requires ?? [],
+        missingRequires: (cap as any).missingRequires ?? [],
       },
       source: cap.source,
       actions: [...rec.actions].map(([action, def]) => actionEntry(action, rec.def.id, def)),
@@ -586,6 +614,15 @@ export function apply(ctx: any): void {
       "[" + d.id + "] " + d.title + " v" + d.version + (d.enabled ? "" : "（未启用：" + d.error + "）"),
       cap.summary,
     ];
+    if (Array.isArray(cap.requires) && cap.requires.length) {
+      const missing: string[] = Array.isArray(cap.missingRequires) ? cap.missingRequires : [];
+      lines.push(
+        "依赖：" +
+          cap.requires
+            .map((id: string) => id + (missing.indexOf(id) >= 0 ? "（未安装）" : ""))
+            .join("、"),
+      );
+    }
     if (meta.source === "fallback") {
       lines.push("", "该域未声明能力清单；以下 action 仍可直接调用。");
     }

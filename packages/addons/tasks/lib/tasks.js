@@ -565,7 +565,7 @@ function updateTask(db, args, origin, api) {
   const wantsTagWrite = args.tagIds !== undefined || args.tags !== undefined
     || args.addTagIds !== undefined || args.addTags !== undefined
     || args.removeTagIds !== undefined || args.removeTags !== undefined;
-  if (wantsTagWrite && !tagsAvailable(db, api)) throw new Error("标签域未安装，无法写标签");
+  if (wantsTagWrite && !tagsAvailable(db, api)) throw new Error("标签域未安装（未安装 dsh-workbench-tags 插件），无法写标签；去掉 tags/tagIds/addTags 等标签参数即可继续");
   const desiredTags = wantsTagWrite ? resolveTagPatch(db, next, args, ts, origin, false) : null;
   saveTaskRow(db, next);
   if (desiredTags) replaceTaskTags(db, String(next.id), desiredTags, ts, origin);
@@ -669,7 +669,7 @@ function bulkUpdate(db, args, origin, api) {
   const wantsTagWrite = patch.tagIds !== undefined || patch.tags !== undefined
     || patch.addTagIds !== undefined || patch.addTags !== undefined
     || patch.removeTagIds !== undefined || patch.removeTags !== undefined;
-  if (wantsTagWrite && !tagsAvailable(db, api)) throw new Error("标签域未安装，无法写标签");
+  if (wantsTagWrite && !tagsAvailable(db, api)) throw new Error("标签域未安装（未安装 dsh-workbench-tags 插件），无法写标签；去掉 tags/tagIds/addTags 等标签参数即可继续");
   const dryRun = args.dryRun === true;
   const skipMissing = args.skipMissing === true;
   const ts = now();
@@ -877,7 +877,7 @@ function listTasks(db, args, api) {
     if (filterTagNames.indexOf(name) < 0) filterTagNames.push(name);
   }
   if (filterTagNames.length) {
-    if (!tagAvailable) throw new Error("标签域未安装，无法按标签过滤");
+    if (!tagAvailable) throw new Error("标签域未安装（未安装 dsh-workbench-tags 插件），无法按标签过滤；去掉 tagIds/tags/checkedTypes 参数即可继续");
     const resolved = tagIdsByNames(db, filterTagNames);
     for (const id of resolved.ids) if (filterTagIds.indexOf(id) < 0) filterTagIds.push(id);
     if (!resolved.ids.length) where.push("1=0");
@@ -909,6 +909,8 @@ function listTasks(db, args, api) {
     params.push(targetTo);
   }
   if (filterTagIds.length) {
+    // 未安装标签插件时 tagIds 分支若直接拼 SQL，会抛 SQLite 底层错误（ERR_SQLITE_ERROR），必须提前说人话。
+    if (!tagAvailable) throw new Error("标签域未安装（未安装 dsh-workbench-tags 插件），无法按标签过滤；去掉 tagIds/tags/checkedTypes 参数即可继续");
     where.push("EXISTS (SELECT 1 FROM tag_mapping tm WHERE tm.item_type='task' AND tm.item_id=t.id AND tm.deleted_at IS NULL AND tm.tag_id IN (" + filterTagIds.map(function () { return "?"; }).join(",") + "))");
     for (const id of filterTagIds) params.push(id);
   }
@@ -1180,7 +1182,7 @@ function stats(db, args, api) {
   if (from) { where.push("t.target_date>=?"); params.push(from); }
   if (to) { where.push("t.target_date<=?"); params.push(to); }
   if (byTag) {
-    if (!tagsAvailable(db, api)) throw new Error("标签域未安装，无法按标签分组");
+    if (!tagsAvailable(db, api)) throw new Error("标签域未安装（未安装 dsh-workbench-tags 插件），无法按标签分组；去掉 groupBy=tag 即可继续");
     const tagStmt = db.prepare(
       "SELECT g.id AS k, g.name AS label, COUNT(DISTINCT t.id) AS n FROM task t " +
         "JOIN tag_mapping m ON m.item_type='task' AND m.item_id=t.id AND m.deleted_at IS NULL " +

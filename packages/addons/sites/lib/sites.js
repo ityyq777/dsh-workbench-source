@@ -189,8 +189,8 @@ function listSites(db, args, tagsAvailable) {
 
   if (tagIds.length) {
     if (!tagsAvailable || !hasTagDomain(db)) {
-      const info = pageInfo(0, pageNumber, pageSize);
-      return Object.assign({ records: [] }, info);
+      // 静默返回空列表会让用户以为「没有站点」，比报错更糟；与任务域保持同一套语义。
+      throw new Error("标签域未安装（未安装 dsh-workbench-tags 插件），无法按标签过滤；去掉 tagIds/tags 参数即可继续");
     }
     where.push("EXISTS (SELECT 1 FROM tag_mapping tm WHERE tm.item_type='site' AND tm.item_id=s.id AND tm.deleted_at IS NULL AND tm.tag_id IN (" + tagIds.map(function () { return "?"; }).join(",") + "))");
     for (const id of tagIds) params.push(id);
@@ -246,7 +246,11 @@ function normalizeDirIds(db, value) {
 }
 
 function validateTagIds(db, tagIds, tagsAvailable) {
-  if (!tagIds.length || !tagsAvailable) return [];
+  if (!tagIds.length) return [];
+  // 传了 tagIds 却没装标签插件时必须报错：静默丢弃会让「写入成功」变成一句谎话。
+  if (!tagsAvailable) {
+    throw new Error("标签域未安装（未安装 dsh-workbench-tags 插件），无法写标签；去掉 tagIds 参数即可继续");
+  }
   const rows = [];
   for (const id of tagIds) {
     const row = db.prepare("SELECT * FROM tag WHERE id=? AND deleted_at IS NULL").get(id);
@@ -384,7 +388,10 @@ function updateSite(db, args, origin, api, tagsAvailable) {
     ? normalizeLinks(args.siteLinks !== undefined ? args.siteLinks : args.links)
     : parseLinks(existing.site_link));
   const nodes = args.dirIds !== undefined && args.dirIds !== null ? normalizeDirIds(db, args.dirIds) : null;
-  const tags = args.tagIds !== undefined && args.tagIds !== null && tagsAvailable ? validateTagIds(db, normalizeTagIds(args.tagIds), tagsAvailable) : null;
+  // 传了 tagIds 就必须过 validateTagIds：标签域缺失时它会抛出可读错误，而不是把参数默默吞掉。
+  const tags = args.tagIds !== undefined && args.tagIds !== null
+    ? validateTagIds(db, normalizeTagIds(args.tagIds), tagsAvailable)
+    : null;
   const bindable = args.bindable === undefined
     ? Number(existing.bindable) === 0 ? 0 : 1
     : (args.bindable === 0 || args.bindable === "0" || args.bindable === false ? 0 : 1);

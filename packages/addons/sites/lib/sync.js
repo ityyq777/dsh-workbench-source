@@ -1,5 +1,5 @@
 /**
- * 站点域的同步声明：site / site_node_mapping / tag_mapping / site_account / site_account_external 行级，
+ * 站点域的同步声明：site / site_node_mapping / site_account / site_account_external 行级（tag_mapping 归标签域），
  * site_node 树表整表收敛（虚拟根 0，不落库）。
  * 账号表的敏感列在写本地库前已加密，同步上行的是密文（见 vault.js / docs/specs/22）。
  */
@@ -116,12 +116,8 @@ export const siteSync = {
       uniqueKeys: [["site_id", "node_id"]],
       uniquePolicy: "lww-tombstone",
     },
-    {
-      name: "tag_mapping",
-      mode: "row",
-      uniqueKeys: [["tag_id", "item_id", "item_type"]],
-      uniquePolicy: "lww-tombstone",
-    },
+    // tag_mapping 归标签域同步（packages/addons/tags/lib/sync.js 整表行级同步，不区分 item_type）：
+    // 站点域重复声明同一张表会让两处手写同一套唯一键/墓碑策略，一处改了另一处没跟上就会分叉。
     { name: "site_node", mode: "tree", reconcile: reconcileSiteTree },
     // 二期：账号表同步的是密文（password/phone_number/identity_card 写库前加密），云端无密钥。
     { name: "site_account", mode: "row" },

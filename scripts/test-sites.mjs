@@ -129,9 +129,17 @@ assert(r.tags === true, "capabilities.tags true when tags addon installed");
 tagAddon = false;
 r = call("sites.capabilities");
 assert(r.tags === false, "capabilities.tags false when tags addon uninstalled");
-r = call("sites.create", { siteName: "无标签站点", dirIds: [lifeId], tagIds: ["tag-work"] });
+// 未装标签插件时传 tagIds 必须报可读错误，而不是静默丢弃（与任务域同一套语义）
+let taglessErr = null;
+try {
+  call("sites.create", { siteName: "无标签站点", dirIds: [lifeId], tagIds: ["tag-work"] });
+} catch (e) {
+  taglessErr = e;
+}
+assert(taglessErr && /标签域未安装/.test(taglessErr.message), "create with tagIds rejected when tags addon uninstalled");
+r = call("sites.create", { siteName: "无标签站点", dirIds: [lifeId] });
 const noTagSiteId = r.site.id;
-assert(r.site.tags.length === 0, "create ignores tagIds when tags addon uninstalled");
+assert(r.site.tags.length === 0, "create without tagIds keeps working when tags addon uninstalled");
 assert(call("sites.get", { id: noTagSiteId }).tags.length === 0, "get hides tags when tags addon uninstalled");
 assert(db.prepare("SELECT COUNT(*) AS n FROM tag_mapping WHERE item_id=? AND deleted_at IS NULL").get(noTagSiteId).n === 0, "no tag mapping written");
 r = call("siteTags.search", { text: "工" });

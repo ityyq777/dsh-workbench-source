@@ -40,8 +40,8 @@ export function apply(ctx) {
       host.registerDomain({
         id: "wb-addon-sites",
         title: "站点",
-        description: "站点收藏：目录树、链接与标签；含统计/记录/配置/数据四个视图",
-        version: "1.8.1",
+        description: "站点收藏：目录树、链接与标签（标签需安装标签插件）；含统计/记录/配置/数据四个视图",
+        version: "1.8.2",
         tables: ["site", "site_node", "site_node_mapping", "tag_mapping", "site_account", "site_account_external"],
         sync: siteSync,
         views: [
@@ -52,6 +52,7 @@ export function apply(ctx) {
         ],
         capability: {
           summary: "记录值得再次访问的站点（URL + 目录 + 标签），不记录本地开发地址和内网临时页面。",
+          requires: ["wb-addon-tags"],
           records: [
             {
               kind: "site",

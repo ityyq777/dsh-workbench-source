@@ -41,8 +41,8 @@ export function apply(ctx) {
       host.registerDomain({
         id: "wb-addon-tasks",
         title: "任务",
-        description: "任务树 + 统计/记录/配置/数据四个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选，附统计报表与只读数据浏览",
-        version: "2.10.5",
+        description: "任务树 + 统计/记录/配置/数据四个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
+        version: "2.10.6",
         tables: ["task", "task_dep", "task_node"],
         sync: taskSync,
         views: [
@@ -53,6 +53,7 @@ export function apply(ctx) {
         ],
         capability: {
           summary: "记录可执行、可交付的工作项（任务），支持任务树、时间线、重启链与依赖。",
+          requires: ["wb-addon-tags"],
           records: [
             {
               kind: "task",
