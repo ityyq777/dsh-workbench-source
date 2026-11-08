@@ -68,6 +68,68 @@ function policyOf(options) {
   return p === "skip" || p === "overwrite" ? p : "newest";
 }
 
+/**
+ * 标签名唯一化后的导入规范化：备份里可能带着「不同 id、同一个名字」的标签。
+ * 以库里已有（否则备份中 created_at 最早）的同名标签为准，把重复标签的映射改挂
+ * 到保留者上、跳过该标签行；否则唯一索引会让整条导入失败。软删行不占名字，原样保留。
+ */
+function canonicalizeTagNames(db, data) {
+  const keep = new Map();
+  if (tableExists(db, TAG_TABLE)) {
+    for (const row of db.prepare("SELECT id,name FROM tag WHERE deleted_at IS NULL ORDER BY created_at ASC, id ASC").all()) {
+      const name = String(row.name);
+      if (!keep.has(name)) keep.set(name, String(row.id));
+    }
+  }
+  const ordered = data.tags.slice().sort(function (a, b) {
+    return Number(a.created_at || 0) - Number(b.created_at || 0) || String(a.id).localeCompare(String(b.id));
+  });
+  const keptRows = [];
+  const remap = new Map();
+  let mergedTags = 0;
+  for (const row of ordered) {
+    const id = asText(row && row.id).trim();
+    const name = asText(row && row.name).trim();
+    const deleted = row.deleted_at !== null && row.deleted_at !== undefined;
+    if (!id || !name || deleted) {
+      keptRows.push(row);
+      continue;
+    }
+    const keeper = keep.get(name);
+    if (keeper && keeper !== id) {
+      remap.set(id, keeper);
+      mergedTags += 1;
+      continue;
+    }
+    keep.set(name, id);
+    keptRows.push(row);
+  }
+
+  const seen = new Set();
+  if (tableExists(db, MAPPING_TABLE)) {
+    for (const m of db.prepare("SELECT tag_id,item_id,item_type FROM tag_mapping WHERE deleted_at IS NULL").all()) {
+      seen.add([String(m.tag_id), String(m.item_id), String(m.item_type)].join("\u0001"));
+    }
+  }
+  const mappings = [];
+  let mergedMappings = 0;
+  for (const row of data.mappings) {
+    const rawTagId = asText(row && row.tag_id).trim();
+    if (remap.has(rawTagId)) row.tag_id = remap.get(rawTagId);
+    const deleted = row.deleted_at !== null && row.deleted_at !== undefined;
+    if (!deleted) {
+      const key = [asText(row.tag_id).trim(), asText(row.item_id).trim(), asText(row.item_type).trim()].join("\u0001");
+      if (seen.has(key)) {
+        mergedMappings += 1;
+        continue;
+      }
+      seen.add(key);
+    }
+    mappings.push(row);
+  }
+  return { tags: keptRows, mappings: mappings, mergedTags: mergedTags, mergedMappings: mergedMappings };
+}
+
 export function importTagsData(api, raw, options) {
   const db = api.db;
   const policy = policyOf(options);
@@ -83,6 +145,8 @@ export function importTagsData(api, raw, options) {
   if (!Array.isArray(data.tags) || !Array.isArray(data.mappings)) {
     return { ok: false, imported: 0, skipped: 0, failed: 0, message: "标签备份结构不完整" };
   }
+  const normalized = canonicalizeTagNames(db, data);
+  data = Object.assign({}, data, { tags: normalized.tags, mappings: normalized.mappings });
 
   const tagUpsert = db.prepare(
     "INSERT INTO tag(id,name,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?) " +
@@ -96,7 +160,8 @@ export function importTagsData(api, raw, options) {
   );
 
   let imported = 0;
-  let skipped = 0;
+  // 重名标签/映射在规范化阶段就被合并掉了，计入 skipped 便于对账。
+  let skipped = normalized.mergedTags + normalized.mergedMappings;
   let failed = 0;
   const errors = [];
   const tagExists = db.prepare("SELECT 1 FROM tag WHERE id = ?");
@@ -152,6 +217,7 @@ export function importTagsData(api, raw, options) {
     imported,
     skipped,
     failed,
+    merged: normalized.mergedTags,
     message: failed ? "部分标签行导入失败：" + errors.join("；") : undefined,
   };
 }

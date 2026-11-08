@@ -3232,6 +3232,31 @@ var init_clock = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
+var refresh_cw_exports = {};
+__export(refresh_cw_exports, {
+  __iconData: () => __iconData26,
+  default: () => RefreshCw
+});
+var __iconData26, RefreshCw;
+var init_refresh_cw = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
+    init_createLucideIcon();
+    __iconData26 = {
+      name: "refresh-cw",
+      size: 24,
+      node: [
+        ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
+        ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
+        ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
+        ["path", { d: "M8 16H3v5", key: "1cv678" }]
+      ]
+    };
+    __iconData26.node;
+    RefreshCw = createLucideIcon(__iconData26);
+  }
+});
+
 // packages/addons/tasks/client/client.src.cjs
 var React = require("react");
 var h = React.createElement;
@@ -3326,6 +3351,7 @@ var h = React.createElement;
       batchMigrate: "\u8FC1\u79FB\u4EFB\u52A1\u8868",
       refresh: "\u5237\u65B0",
       clear: "\u6E05\u7A7A",
+      truncated: "\u5DF2\u622A\u65AD\uFF1A\u53EA\u663E\u793A\u524D",
       chooseBase: "\u9009\u62E9\u57FA\u51C6\u4EFB\u52A1\uFF08\u4F7F\u7528\u5B83\u7684\u65F6\u95F4\u7EBF\uFF09",
       chooseTable: "\u9009\u62E9\u76EE\u6807\u4EFB\u52A1\u8868",
       searchTable: "\u641C\u7D22\u4EFB\u52A1\u8868",
@@ -3442,6 +3468,7 @@ var h = React.createElement;
       batchMigrate: "Move table",
       refresh: "Refresh",
       clear: "Clear",
+      truncated: "Truncated: showing first",
       searchTable: "Search tables",
       noTable: "No matching table",
       baseLabel: "Base task",
@@ -3520,7 +3547,8 @@ var h = React.createElement;
     "close": (init_x(), __toCommonJS(x_exports)).default,
     "down": (init_chevron_down(), __toCommonJS(chevron_down_exports)).default,
     "tag": (init_tag(), __toCommonJS(tag_exports)).default,
-    "clock": (init_clock(), __toCommonJS(clock_exports)).default
+    "clock": (init_clock(), __toCommonJS(clock_exports)).default,
+    "refresh": (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default
   };
   function Icon2(props) {
     var C = ICONS[props.name];
@@ -4553,7 +4581,8 @@ var h = React.createElement;
       description: String(task.description || ""),
       review: String(task.review || ""),
       priority: String(task.priority === null || task.priority === void 0 ? 0 : task.priority),
-      difficulty: Number(task.difficulty || 0.5)
+      difficulty: Number(task.difficulty || 0.5),
+      targetDate: String(task.targetDate || "")
     });
     var form = fs[0], setForm = fs[1];
     var bs = React2.useState(false);
@@ -4578,6 +4607,7 @@ var h = React.createElement;
         var p = Math.round(Number(form.priority));
         if (!Number.isFinite(p)) p = 0;
         patch.priority = Math.max(0, Math.min(10, p));
+        if (String(form.targetDate || "").trim()) patch.targetDate = String(form.targetDate).trim();
       } else {
         patch.review = String(form.review || "");
         patch.difficulty = Math.max(0.5, Math.min(5, Number(form.difficulty) || 0.5));
@@ -4626,6 +4656,14 @@ var h = React.createElement;
             set("description", e.target.value);
           } })
         ),
+        canPriority ? h2(
+          "label",
+          { className: "wbt-field" },
+          h2("span", null, t.targetDate),
+          h2("input", { className: "wbt-input", type: "date", value: form.targetDate, onChange: function(e) {
+            set("targetDate", e.target.value);
+          } })
+        ) : null,
         canPriority ? h2(
           "label",
           { className: "wbt-field" },
@@ -5261,10 +5299,12 @@ var h = React.createElement;
       return h2(TreeNode, Object.assign({}, treeProps, { key: n.id, node: n, depth: 0 }));
     });
     var curDesc = curNode ? String(curNode.description || "") : "";
+    var shownCount = data.returned === void 0 ? (data.records || []).length : data.returned;
     var filterBar = h2(
       "div",
       { className: "wbt-filters" },
       pageable ? h2("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
+      data.truncated ? h2("span", { className: "wbt-hint" }, t.truncated + " " + shownCount + " / " + data.total) : null,
       tab === 5 || tab === 8 ? h2(
         "label",
         { className: "wbt-check" },
@@ -5338,6 +5378,16 @@ var h = React.createElement;
           setTitleKey(searchDraft);
           setPageNumber(1);
         } }, h2(Icon2, { name: "search", size: 14 })),
+        h2("button", {
+          className: "wbt-btn ghost",
+          title: t.refresh,
+          "aria-label": t.refresh,
+          disabled: loading,
+          onClick: function() {
+            refreshList();
+            refreshTagNav();
+          }
+        }, h2(Icon2, { name: "refresh", size: 13 }), t.refresh),
         h2("button", { className: "wbt-btn " + (selectionMode ? "primary" : "ghost"), onClick: function() {
           if (selectionMode) {
             setSelectionMode(false);
@@ -5632,7 +5682,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.10.2",
+    version: "2.10.3",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

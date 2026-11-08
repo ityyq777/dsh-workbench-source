@@ -2640,6 +2640,31 @@ var init_check = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
+var refresh_cw_exports = {};
+__export(refresh_cw_exports, {
+  __iconData: () => __iconData7,
+  default: () => RefreshCw
+});
+var __iconData7, RefreshCw;
+var init_refresh_cw = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
+    init_createLucideIcon();
+    __iconData7 = {
+      name: "refresh-cw",
+      size: 24,
+      node: [
+        ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
+        ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
+        ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
+        ["path", { d: "M8 16H3v5", key: "1cv678" }]
+      ]
+    };
+    __iconData7.node;
+    RefreshCw = createLucideIcon(__iconData7);
+  }
+});
+
 // packages/addons/tags/client/client.src.cjs
 var React = require("react");
 var h = React.createElement;
@@ -2662,7 +2687,8 @@ var h = React.createElement;
     "plus": (init_plus(), __toCommonJS(plus_exports)).default,
     "trash": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
     "pencil": (init_pencil(), __toCommonJS(pencil_exports)).default,
-    "check": (init_check(), __toCommonJS(check_exports)).default
+    "check": (init_check(), __toCommonJS(check_exports)).default,
+    "refresh": (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default
   };
   function Icon2(props) {
     var C = ICONS[props.name];
@@ -2705,9 +2731,10 @@ var h = React.createElement;
       tooLong: "\u6807\u7B7E\u540D\u79F0\u4E0D\u80FD\u8D85\u8FC7 64 \u4E2A\u5B57\u7B26",
       rename: "\u91CD\u547D\u540D",
       renameSave: "\u4FDD\u5B58",
-      renameHint: "\u56DE\u8F66\u4FDD\u5B58\uFF0CEsc \u53D6\u6D88\uFF1B\u5141\u8BB8\u91CD\u540D",
+      renameHint: "\u56DE\u8F66\u4FDD\u5B58\uFF0CEsc \u53D6\u6D88\uFF1B\u540D\u79F0\u4E0D\u80FD\u4E0E\u5176\u5B83\u6807\u7B7E\u91CD\u590D",
       renamed: "\u5DF2\u91CD\u547D\u540D",
-      dupAllowed: "\u540C\u540D\u6807\u7B7E\u5DF2\u5B58\u5728\uFF0C\u4ECD\u53EF\u4FDD\u5B58",
+      dupExisting: "\u6807\u7B7E\u5DF2\u5B58\u5728\uFF0C\u5DF2\u9009\u4E2D",
+      refresh: "\u5237\u65B0",
       batchHint: "\u5220\u9664\u53EA\u79FB\u9664\u6807\u7B7E\uFF0C\u5173\u8054\u6570\u636E\u4FDD\u7559\u5728\u4E1A\u52A1\u8868\u4E2D"
     },
     en: {
@@ -2745,9 +2772,10 @@ var h = React.createElement;
       tooLong: "Tag name cannot exceed 64 characters",
       rename: "Rename",
       renameSave: "Save",
-      renameHint: "Enter to save, Esc to cancel; duplicates allowed",
+      renameHint: "Enter to save, Esc to cancel; the name must be unique",
       renamed: "Renamed",
-      dupAllowed: "A tag with this name exists; saving is still allowed",
+      dupExisting: "Tag already exists; selected",
+      refresh: "Refresh",
       batchHint: "Deleting a tag keeps business data in place"
     }
   };
@@ -3022,7 +3050,8 @@ var h = React.createElement;
           setText("");
           setQuery("");
           setPage(1);
-          say(t.created + "\uFF1A" + value);
+          var existed = r.result && r.result.existing;
+          say((existed ? t.dupExisting : t.created) + "\uFF1A" + value);
           setTimeout(function() {
             if (refreshRef.current) refreshRef.current();
           }, 0);
@@ -3120,6 +3149,16 @@ var h = React.createElement;
           }),
           h2("button", { type: "button", className: "wbg-btn", onClick: applySearch }, h2(Icon2, { name: "search", size: 13 }), t.find),
           text || query ? h2("button", { type: "button", className: "wbg-btn ghost", onClick: clearSearch }, h2(Icon2, { name: "x", size: 13 }), t.clear) : null,
+          h2("button", {
+            type: "button",
+            className: "wbg-btn ghost",
+            title: t.refresh,
+            "aria-label": t.refresh,
+            disabled: loading,
+            onClick: function() {
+              if (refreshRef.current) refreshRef.current();
+            }
+          }, h2(Icon2, { name: "refresh", size: 13 }), t.refresh),
           h2("button", {
             type: "button",
             className: "wbg-btn primary",
@@ -3295,7 +3334,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.6.3",
+    version: "1.6.4",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },
       { id: "tags", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TagsView },

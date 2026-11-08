@@ -306,6 +306,7 @@ function checkRequiredDates(row) {
   if (row.shutdown_date && row.shutdown_date < row.publish_date) throw new Error("shutdownDate 不能早于 publishDate");
 }
 
+// 标题不做唯一性校验：允许与其它任务同名，调用方用 id 区分（与标签名唯一是两条规则）。
 function createTask(db, args, origin, api, opts) {
   const title = String(args.title === undefined || args.title === null ? "" : args.title).trim();
   if (!title) throw new Error("title 不能为空");
@@ -839,7 +840,7 @@ function listTasks(db, args, api) {
     const prefix = String(group.path || "") + "%";
     const tables = db.prepare("SELECT id FROM task_node WHERE type='1' AND deleted_at IS NULL AND path LIKE ?").all(prefix);
     if (!tables.length) {
-      return { records: [], current: 1, size: 0, total: 0, pageable: false };
+      return { records: [], current: 1, size: null, total: 0, returned: 0, truncated: false, pageable: false, pageSize: null };
     }
     where.push("t.table_id IN (" + tables.map(function () { return "?"; }).join(",") + ")");
     for (const t of tables) params.push(String(t.id));
@@ -932,17 +933,26 @@ function listTasks(db, args, api) {
     if (filterRestarted) where.push("t.status!='3'");
   }
 
+  // 分页语义（2026-11-08 明确化）：
+  // - pageSize 夹在 1..200，请求值超出时按上限截断并在 filter.pageSize 回显实际值；
+  // - total 永远是筛选后的真实总数（不受 LIMIT 影响），returned 是本页实际返回条数；
+  // - 未分页时最多返回 MAX_UNPAGED 条，被截断时 truncated=true。
+  const MAX_PAGE_SIZE = 200;
+  const MAX_UNPAGED = 500;
   const wantPaging = args.pageNumber !== undefined || args.pageSize !== undefined;
   const pageable = (tab > 4 && tab < 9) || wantPaging;
   let pageNumber = 1;
   let pageSize = 0;
   let limitSql = "";
+  let pageSizeRequested = null;
   if (pageable) {
     pageNumber = Math.max(1, Math.floor(Number(args.pageNumber) || 1));
-    pageSize = Math.max(1, Math.min(200, Math.floor(Number(args.pageSize) || 12)));
+    const rawSize = Number(args.pageSize);
+    pageSizeRequested = Number.isFinite(rawSize) && rawSize > 0 ? Math.floor(rawSize) : null;
+    pageSize = Math.max(1, Math.min(MAX_PAGE_SIZE, pageSizeRequested || 12));
     limitSql = " LIMIT ? OFFSET ?";
   } else {
-    limitSql = " LIMIT 500";
+    limitSql = " LIMIT " + MAX_UNPAGED;
   }
 
   const SORTS = {
@@ -983,6 +993,8 @@ function listTasks(db, args, api) {
   });
   attachTags(db, api, records);
   const TAB_TITLES = { 0: "紧急", 5: "已关闭", 6: "进行中", 7: "已完成", 8: "总览" };
+  const returned = records.length;
+  const truncated = returned < total;
   const filter = {
     tab: tab,
     tabTitle: TAB_TITLES[tab] || ("类型页签 " + tab),
@@ -990,7 +1002,15 @@ function listTasks(db, args, api) {
     pageSize: pageable ? pageSize : null,
     pageable: pageable,
     totalPages: pageable && pageSize ? Math.max(1, Math.ceil(total / pageSize)) : 1,
+    total: total,
+    returned: returned,
+    truncated: truncated,
   };
+  // 请求的 pageSize 超过上限时明确回显被截断，别让调用方以为按 500 取了 500 条。
+  if (pageable && pageSizeRequested !== null && pageSizeRequested > pageSize) {
+    filter.pageSizeRequested = pageSizeRequested;
+    filter.pageSizeCapped = true;
+  }
   if (titleKey) filter.titleKey = titleKey;
   if (tableId && tableId !== "0") filter.tableId = tableId;
   if (tableKey) filter.tableKey = tableKey;
@@ -1008,9 +1028,12 @@ function listTasks(db, args, api) {
   return {
     records,
     current: pageable ? pageNumber : 1,
-    size: records.length,
-    total: pageable ? total : records.length,
+    size: pageable ? pageSize : returned,
+    total: total,
+    returned: returned,
+    truncated: truncated,
     pageable,
+    pageSize: pageable ? pageSize : null,
     filter,
   };
 }
@@ -1357,9 +1380,13 @@ function renderList(result) {
     if (f.sort) parts.push("排序=" + f.sort + (SORT_NOTES[f.sort] ? "（" + SORT_NOTES[f.sort] + "）" : ""));
     if (f.filterRestarted === false) parts.push("含已重启");
     if (f.pageable) parts.push("第 " + f.pageNumber + "/" + f.totalPages + " 页，每页 " + f.pageSize);
+    if (f.pageSizeCapped) parts.push("pageSize 超过上限 200，已按 200 截断");
     lines.push("筛选：" + parts.join(" · "));
   }
-  lines.push("任务 " + result.records.length + " 条（total " + result.total + "）");
+  const returned = result.returned === undefined ? result.records.length : result.returned;
+  lines.push(
+    "任务 " + returned + " 条（total " + result.total + (result.truncated ? "，已截断：只返回前 " + returned + " 条" : "") + "）",
+  );
   for (const t of result.records) {
     const mark = t.status === "2" ? "[x]" : t.status === "1" ? "[-]" : t.status === "3" ? "[~]" : "[ ]";
     const path = (t.path || []).map(function (p) { return p.name; }).join(" / ");
@@ -1409,7 +1436,7 @@ export function registerTaskActions(api) {
   };
 
   action("tasks.list", {
-    description: "统一检索任务：tab（缺省=总览 8 全量，不是紧急 0）/任务表/任务组/关键词（标题或描述）/状态/标签/优先级/目标日期，全部 AND；sort 支持 priority/target/publish/updated/created/manual（前缀 - 表示降序，例如 sort=-priority 是数值越大越紧急的在前）；不传 sort 时未分页按 priority 降序、分页时按 publishDate 降序；返回里带 filter 回显实际生效条件与排序",
+    description: "统一检索任务：tab（缺省=总览 8 全量，不是紧急 0）/任务表/任务组/关键词（标题或描述）/状态/标签/优先级/目标日期，全部 AND；sort 支持 priority/target/publish/updated/created/manual（前缀 - 表示降序，例如 sort=-priority 是数值越大越紧急的在前）；不传 sort 时未分页按 priority 降序、分页时按 publishDate 降序；返回里带 filter 回显实际生效条件与排序；分页语义：total=筛选后真实总数、returned=本次返回条数、truncated=是否被截断，pageSize 上限 200（超出回显 filter.pageSizeCapped）",
     input: {
       type: "object",
       properties: {
@@ -1458,7 +1485,7 @@ export function registerTaskActions(api) {
       type: "object",
       required: ["title"],
       properties: {
-        title: { type: "string" },
+        title: { type: "string", description: "标题；只 trim + 非空校验，不做重名判重（标题不唯一，用 id 区分）" },
         description: { type: "string" },
         review: { type: "string", description: "完成后的感受/复盘（自由文本，默认空）" },
         tableId: { type: ["string", "number"], description: "任务表 id，缺省用默认任务表" },

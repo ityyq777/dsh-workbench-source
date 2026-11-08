@@ -43,7 +43,7 @@ var h = React.createElement;
       doneDate: "完成日期", shutdownDate: "关闭日期", table: "任务表", titleField: "标题",
       timeline: "时间线", restart: "重启", complete: "完成", shutdownOp: "关闭",
       selected: "已选", selectedTasks: "选中任务", batchTimeline: "归并时间线",
-      batchMigrate: "迁移任务表", refresh: "刷新", clear: "清空",
+      batchMigrate: "迁移任务表", refresh: "刷新", clear: "清空", truncated: "已截断：只显示前",
       chooseBase: "选择基准任务（使用它的时间线）", chooseTable: "选择目标任务表",
       searchTable: "搜索任务表", noTable: "没有匹配的任务表", baseLabel: "基准任务", targetLabel: "目标任务表",
       batchCount: "已选", hasTimeline: "有时间线", noTimelineTag: "无时间线", group: "任务组",
@@ -84,7 +84,7 @@ var h = React.createElement;
       doneDate: "Done date", shutdownDate: "Close date", table: "Task table", titleField: "Title",
       timeline: "Timeline", restart: "Restart", complete: "Complete", shutdownOp: "Close",
       selected: "Selected", selectedTasks: "Selected tasks", batchTimeline: "Merge timeline",
-      batchMigrate: "Move table", refresh: "Refresh", clear: "Clear",
+      batchMigrate: "Move table", refresh: "Refresh", clear: "Clear", truncated: "Truncated: showing first",
       searchTable: "Search tables", noTable: "No matching table", baseLabel: "Base task", targetLabel: "Target table",
       batchCount: "Selected", hasTimeline: "has timeline", noTimelineTag: "no timeline", group: "Group",
       chooseBase: "Choose a base task (it supplies the timeline)", chooseTable: "Choose target table",
@@ -143,6 +143,7 @@ var h = React.createElement;
     "down": require("lucide-react/icons/chevron-down").default,
     "tag": require("lucide-react/icons/tag").default,
     "clock": require("lucide-react/icons/clock").default,
+    "refresh": require("lucide-react/icons/refresh-cw").default,
   };
   // 统一的小尺寸图标调用方式，保持各视图里的 Icon({ name, size }) 不变。
   function Icon(props) {
@@ -972,6 +973,7 @@ var h = React.createElement;
       review: String(task.review || ""),
       priority: String(task.priority === null || task.priority === undefined ? 0 : task.priority),
       difficulty: Number(task.difficulty || 0.5),
+      targetDate: String(task.targetDate || ""),
     });
     var form = fs[0], setForm = fs[1];
     var bs = React.useState(false);
@@ -989,6 +991,8 @@ var h = React.createElement;
         var p = Math.round(Number(form.priority));
         if (!Number.isFinite(p)) p = 0;
         patch.priority = Math.max(0, Math.min(10, p));
+        // 计划完成日期只处理非空值；留空表示不改动（后端空串会回落到原值）。
+        if (String(form.targetDate || "").trim()) patch.targetDate = String(form.targetDate).trim();
       } else {
         patch.review = String(form.review || "");
         patch.difficulty = Math.max(0.5, Math.min(5, Number(form.difficulty) || 0.5));
@@ -1018,6 +1022,10 @@ var h = React.createElement;
           h("span", null, t.desc),
           h("textarea", { className: "wbt-textarea", rows: 4, value: form.description, onChange: function (e) { set("description", e.target.value); } })
         ),
+        canPriority ? h("label", { className: "wbt-field" },
+          h("span", null, t.targetDate),
+          h("input", { className: "wbt-input", type: "date", value: form.targetDate, onChange: function (e) { set("targetDate", e.target.value); } })
+        ) : null,
         canPriority ? h("label", { className: "wbt-field" },
           h("span", null, t.priority + "（0–10）"),
           h("input", { className: "wbt-input", type: "number", min: 0, max: 10, step: 1, value: form.priority, onChange: function (e) { set("priority", e.target.value); } })
@@ -1547,8 +1555,10 @@ var h = React.createElement;
           });
 
     var curDesc = curNode ? String(curNode.description || "") : "";
+    var shownCount = data.returned === undefined ? (data.records || []).length : data.returned;
     var filterBar = h("div", { className: "wbt-filters" },
       pageable ? h("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
+      data.truncated ? h("span", { className: "wbt-hint" }, t.truncated + " " + shownCount + " / " + data.total) : null,
       (tab === 5 || tab === 8) ? h("label", { className: "wbt-check" },
         h("input", { type: "checkbox", checked: filterRestarted, onChange: function (e) { setFilterRestarted(e.target.checked); setPageNumber(1); } }),
         t.filterRestarted) : null
@@ -1588,6 +1598,10 @@ var h = React.createElement;
           onKeyDown: function (e) { if (e.key === "Enter") { setTitleKey(searchDraft); setPageNumber(1); } },
         }),
         h("button", { className: "wbt-btn ghost", title: t.search, "aria-label": t.search, onClick: function () { setTitleKey(searchDraft); setPageNumber(1); } }, h(Icon, { name: "search", size: 14 })),
+        h("button", {
+          className: "wbt-btn ghost", title: t.refresh, "aria-label": t.refresh, disabled: loading,
+          onClick: function () { refreshList(); refreshTagNav(); },
+        }, h(Icon, { name: "refresh", size: 13 }), t.refresh),
         h("button", { className: "wbt-btn " + (selectionMode ? "primary" : "ghost"), onClick: function () {
           if (selectionMode) { setSelectionMode(false); clearSelection(); }
           else setSelectionMode(true);
@@ -1733,7 +1747,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.10.2",
+    version: "2.10.3",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },

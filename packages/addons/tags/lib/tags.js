@@ -83,21 +83,34 @@ function listTags(db, args) {
   };
 }
 
+/**
+ * 新建标签。名称唯一（uk_tag_name 部分唯一索引，软删的不占位）：
+ * 同名标签已存在时幂等返回已有 id，不重复建行、不重复写 change log。
+ */
 function createTag(db, args, origin, api) {
   const name = String(args && args.name !== undefined && args.name !== null ? args.name : "").trim();
   if (!name) throw new Error("标签名称不能为空");
   const limit = maxName(db);
   if (name.length > limit) throw new Error("标签名称不能超过 " + limit + " 个字符");
+  const existing = getTagByName(db, name);
+  if (existing) return { id: String(existing.id), tag: rowTag(existing), existing: true };
   const ts = now();
   const id = newId();
-  db.prepare("INSERT INTO tag(id,name,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,NULL,1)").run(id, name, ts, ts);
+  try {
+    db.prepare("INSERT INTO tag(id,name,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,NULL,1)").run(id, name, ts, ts);
+  } catch (e) {
+    // 并发下同名标签可能刚被别的连接写入：唯一索引冲突时回查，保持幂等语义。
+    const hit = getTagByName(db, name);
+    if (hit) return { id: String(hit.id), tag: rowTag(hit), existing: true };
+    throw e;
+  }
   const row = getTag(db, id);
   logChange(db, TAG_TABLE, id, "upsert", rowTag(row), origin, ts);
   api.emit("tags-changed", { id: id, op: "create", name: name });
   return { id: id, tag: rowTag(row) };
 }
 
-/** 重命名标签；名称不唯一，允许与其它标签（含自身以外的同名标签）重名。 */
+/** 重命名标签；名称唯一，改成其它标签已用的名字时报错（软删的同名标签不算占用）。 */
 function updateTag(db, args, origin, api) {
   const id = idOf(args && (args.id || args.tagId));
   if (!id) throw new Error("id 不能为空");
@@ -108,8 +121,16 @@ function updateTag(db, args, origin, api) {
   const limit = maxName(db);
   if (name.length > limit) throw new Error("标签名称不能超过 " + limit + " 个字符");
   if (name === String(row.name)) return { id: id, tag: rowTag(row), changed: false };
+  const taken = getTagByName(db, name);
+  if (taken && String(taken.id) !== id) throw new Error("标签名称已存在：" + name + "（id=" + String(taken.id) + "）");
   const ts = now();
-  db.prepare("UPDATE tag SET name=?, updated_at=?, rev=rev+1 WHERE id=?").run(name, ts, id);
+  try {
+    db.prepare("UPDATE tag SET name=?, updated_at=?, rev=rev+1 WHERE id=?").run(name, ts, id);
+  } catch (e) {
+    const hit = getTagByName(db, name);
+    if (hit && String(hit.id) !== id) throw new Error("标签名称已存在：" + name + "（id=" + String(hit.id) + "）");
+    throw e;
+  }
   const next = getTag(db, id);
   logChange(db, TAG_TABLE, id, "update", rowTag(next), origin, ts);
   api.emit("tags-changed", { id: id, op: "update", name: name, prevName: String(row.name || "") });

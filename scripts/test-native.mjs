@@ -150,6 +150,18 @@ try {
   const pagedAll = await call("tasks.list", { status: "0", pageNumber: 1, pageSize: 2 });
   assert(pagedAll.result.filter.pageable === true && pagedAll.result.records.length <= 2, "非 tab5..8 传 pageSize 未分页");
   assert(pagedAll.result.filter.pageSize === 2, "分页参数未回显");
+  assert(pagedAll.result.returned === pagedAll.result.records.length, "分页未回显 returned");
+  assert(typeof pagedAll.result.truncated === "boolean", "分页未回显 truncated");
+  const capped = await call("tasks.list", { status: "0", pageNumber: 1, pageSize: 9999 });
+  assert(capped.result.pageSize === 200 && capped.result.filter.pageSizeCapped === true, "pageSize 超上限未按 200 截断并回显");
+  const unpagedAll = await call("tasks.list", { tab: 1, status: "0" });
+  assert(unpagedAll.result.pageSize === null && unpagedAll.result.returned === unpagedAll.result.records.length && unpagedAll.result.truncated === false, "未分页的 pageSize/returned/truncated 不对");
+  // 标题允许重复：同名创建不判重，靠 id 区分
+  const dupTitleA = await call("tasks.create", { title: "同名任务-契约" });
+  const dupTitleB = await call("tasks.create", { title: "同名任务-契约" });
+  assert(dupTitleA.result.id !== dupTitleB.result.id, "同名标题被错误判重");
+  const dupTitleList = await call("tasks.list", { titleKey: "同名任务-契约" });
+  assert(dupTitleList.result.records.length === 2, "同名标题任务应各自存在：" + dupTitleList.result.records.length);
   const mergeTask = await call("tasks.create", { title: "标签增量任务" });
   await call("tasks.update", { id: mergeTask.result.id, addTags: ["增量A"] });
   await call("tasks.update", { id: mergeTask.result.id, addTags: ["增量B"], removeTags: ["增量A"] });

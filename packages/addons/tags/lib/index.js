@@ -37,7 +37,7 @@ export function apply(ctx) {
         id: "wb-addon-tags",
         title: "标签",
         description: "创建与管理标签，为站点等业务提供标签归类；含统计/记录/配置/数据四个视图",
-        version: "1.6.3",
+        version: "1.6.4",
         tables: ["tag", "tag_mapping"],
         sync: tagSync,
         views: [
@@ -64,7 +64,7 @@ export function apply(ctx) {
               ],
               primaryAction: "tags.create",
               keyArgs: ["name"],
-              dedupe: "没有内置去重；允许重名，同名标签各算一个，可用 tags.update 重命名。",
+              dedupe: "标签名唯一（uk_tag_name，软删除的不占位）：同名再调 tags.create 幂等返回已有 id（existing=true），不会新建第二条；tags.update 改名撞名会被拒绝并返回占用者 id。",
               relations: [
                 { kind: "task", via: "tags.link(itemType=task)", description: "给任务批量挂标签。" },
                 { kind: "site", via: "sites.create(tagIds) / sites.update(tagIds)", description: "站点插件存在时，由站点写入自己的标签映射。" },
@@ -73,7 +73,7 @@ export function apply(ctx) {
             },
           ],
           fields: [
-            { name: "name / text", type: "string", description: "标签名。tags.create 用 name；查询用 text 做模糊匹配；允许重名（没有唯一约束），归并同名标签请用 tags.update 逐个改" },
+            { name: "name / text", type: "string", description: "标签名。tags.create 用 name，同名幂等返回已有 id（existing=true）；查询用 text 做模糊匹配；tags.update 改名撞名会被拒绝" },
             { name: "id / tagId", type: "string|number", description: "标签 id；多数 action 两者等价，id 是首选字段" },
             { name: "tagIds", type: "string[]", description: "批量操作的标签 id 列表（tags.link / tags.unlink）" },
             { name: "itemIds", type: "string[]", description: "要挂/解标签的业务对象 id 列表；与 tagIds 做笛卡尔积写入" },
@@ -82,7 +82,7 @@ export function apply(ctx) {
             { name: "range / from / to", type: "7d|30d|90d|365d|all / YYYY-MM-DD", description: "仅统计类 action：range 缺省 30d；from+to 是闭区间 [from,to]，两端都含" },
           ],
           notFor: ["不要用标签代替任务标题或站点描述"],
-          notes: ["标签名最大 64 字符；允许重名，需要区分时用 tags.update 改名。", "tags.link 的 itemType 默认 task；站点标签由站点插件写入。"],
+          notes: ["标签名最大 64 字符且同一时刻唯一（软删的不占位）；存量重名在插件升级时按 created_at 最早者自动合并，映射改挂到保留者。", "备份导入遇到「不同 id、同名」的标签时按名字合并并计入 skipped。", "tags.link 的 itemType 默认 task；站点标签由站点插件写入。"],
         },
         setup,
         exportData: () => exportTagsData(requireApi()),

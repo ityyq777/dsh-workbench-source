@@ -69,24 +69,34 @@ export function tagIdsByNames(db, names) {
   return { ids: ids, missing: missing };
 }
 
-/** 按名字取标签；没有就建。仅用于新建/更新任务时直接传标签名。 */
-export function ensureTagsByNames(db, names, ts, origin) {
-  const ids = [];
-  for (const name of names) {
-    const row = db.prepare("SELECT * FROM tag WHERE name=? AND deleted_at IS NULL ORDER BY created_at ASC LIMIT 1").get(name);
-    if (row) {
-      ids.push(String(row.id));
-      continue;
-    }
-    const id = newId();
+/**
+ * 按名字取标签 id；没有就建。标签名唯一（uk_tag_name），并发撞索引时回查已有 id，
+ * 避免把「另一端刚建好的同名标签」当成失败。
+ */
+export function ensureTagIdByName(db, name, ts, origin) {
+  const sql = "SELECT * FROM tag WHERE name=? AND deleted_at IS NULL ORDER BY created_at ASC LIMIT 1";
+  const hit = db.prepare(sql).get(name);
+  if (hit) return String(hit.id);
+  const id = newId();
+  try {
     db.prepare(
       "INSERT INTO tag(id,name,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?)",
     ).run(id, name, ts, ts, null, 1);
-    logChange(db, "tag", id, "create", {
-      id: id, name: name, created_at: ts, updated_at: ts, deleted_at: null, rev: 1,
-    }, origin, ts);
-    ids.push(id);
+  } catch (e) {
+    const again = db.prepare(sql).get(name);
+    if (again) return String(again.id);
+    throw e;
   }
+  logChange(db, "tag", id, "create", {
+    id: id, name: name, created_at: ts, updated_at: ts, deleted_at: null, rev: 1,
+  }, origin, ts);
+  return id;
+}
+
+/** 按名字取标签；没有就建。仅用于新建/更新任务时直接传标签名。 */
+export function ensureTagsByNames(db, names, ts, origin) {
+  const ids = [];
+  for (const name of names) ids.push(ensureTagIdByName(db, name, ts, origin));
   return ids;
 }
 
@@ -268,17 +278,10 @@ export function migrateLegacyTypes(db, api, origin) {
         return String(legacy[id]) === code;
       });
       if (!taskIds.length) continue;
-      let tag = db.prepare("SELECT * FROM tag WHERE name=? AND deleted_at IS NULL ORDER BY created_at ASC LIMIT 1").get(name);
-      if (!tag) {
-        const tagId = newId();
-        db.prepare("INSERT INTO tag(id,name,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?)")
-          .run(tagId, name, ts, ts, null, 1);
-        logChange(db, "tag", tagId, "create", {
-          id: tagId, name: name, created_at: ts, updated_at: ts, deleted_at: null, rev: 1,
-        }, origin || "migrate", ts);
-        tag = { id: tagId, name: name };
-        tagsCreated += 1;
-      }
+      const existed = db.prepare("SELECT 1 AS ok FROM tag WHERE name=? AND deleted_at IS NULL").get(name);
+      const tagId = ensureTagIdByName(db, name, ts, origin || "migrate");
+      const tag = { id: tagId, name: name };
+      if (!existed) tagsCreated += 1;
       for (const taskId of taskIds) {
         const alive = db.prepare("SELECT 1 AS ok FROM task WHERE id=? AND deleted_at IS NULL").get(String(taskId));
         if (!alive) continue;

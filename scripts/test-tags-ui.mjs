@@ -1,6 +1,6 @@
 /**
  * 在 Node 里用 mini React 渲染 TagsView，验证标签改名的交互链路：
- * 行内改名按钮 → 双击 chip → Enter 保存（只调用一次 tags.update）→ Esc 取消 → 允许重名。
+ * 行内改名按钮 → 双击 chip → Enter 保存（只调用一次 tags.update）→ Esc 取消 → 重名交给后端唯一约束拒绝。
  * 用法：node scripts/test-tags-ui.mjs（需先 pnpm build:clients）
  */
 import { readFileSync } from "node:fs";
@@ -74,6 +74,19 @@ function createReact() {
     },
   };
 
+  // 迷你 React 只渲染一棵元素树；视图现在包了一层 useConfig 外壳，
+  // 这里把函数组件就地展开（hook 槽位按调用顺序稳定即可）。
+  function expand(node) {
+    if (Array.isArray(node)) return node.map(expand);
+    if (node === null || node === undefined || typeof node !== "object") return node;
+    if (typeof node.type === "function") {
+      return expand(node.type(Object.assign({}, node.props)));
+    }
+    const children = (node.children || []).map(expand);
+    if (children.length === (node.children || []).length && children.every((c, i) => c === node.children[i])) return node;
+    return Object.assign({}, node, { children });
+  }
+
   rt.mount = (Component, props) => {
     rt.Component = Component;
     rt.props = props;
@@ -82,7 +95,7 @@ function createReact() {
       rt.dirty = false;
       rt.idx = 0;
       rt.effects = [];
-      rt.tree = Component(props);
+      rt.tree = expand(Component(props));
       // 先把 effect 挂起来，再统一执行变更过的
       const runNow = rt.effects.filter((e) => e.run);
       for (const e of runNow) {
@@ -134,7 +147,8 @@ const mod = load(root + "/packages/addons/tags/lib/client.js", "dsh-workbench-ta
 if (!mod) throw new Error("module missing");
 mod.apply({});
 const addon = sandbox.__registered;
-if (!addon || addon.version !== "1.4.2") throw new Error("bad addon version: " + (addon && addon.version));
+const pkgVersion = JSON.parse(readFileSync(root + "/packages/addons/tags/package.json", "utf8")).version;
+if (!addon || addon.version !== pkgVersion) throw new Error("bad addon version: " + (addon && addon.version) + " != " + pkgVersion);
 const TagsView = addon.views.find((v) => v.id === "tags").component;
 if (typeof TagsView !== "function") throw new Error("TagsView missing");
 
@@ -182,14 +196,24 @@ function check(name, fn) {
 function assert(cond, msg) { if (!cond) throw new Error(msg); }
 
 rt.mount(TagsView, { api, lang: "zh" });
-await tick();
-await tick();
+// 视图外壳先用 configGet 拉配置，ready 后才挂记录列表；多推几轮让 Promise/effect 落地。
+for (let i = 0; i < 10 && byClass(rt.tree, "wbg-row").length === 0; i++) {
+  await tick();
+  rt.rerender();
+  await tick();
+}
 rt.rerender();
 await tick();
 
 check("列表渲染出两行标签", () => {
   const rows = byClass(rt.tree, "wbg-row");
   assert(rows.length === 2, "rows=" + rows.length);
+});
+
+check("工具条有刷新按钮", () => {
+  const btn = findAll(rt.tree, (n) => n.type === "button" && n.props["aria-label"] === "刷新")[0];
+  assert(btn, "refresh button missing");
+  assert(typeof btn.props.onClick === "function", "refresh button without onClick");
 });
 
 check("每行都有「重命名」按钮（aria-label=重命名）", () => {
@@ -205,7 +229,7 @@ check("双击 chip 进入行内编辑", () => {
   const input = byClass(rt.tree, "wbg-rename")[0];
   assert(input, "rename input not rendered");
   assert(input.props.value === "工作", "input value=" + input.props.value);
-  assert(String(input.props.title).includes("允许重名"), "title hint missing");
+  assert(String(input.props.title).includes("不能与其它标签重复"), "title hint missing:" + input.props.title);
 });
 
 check("Enter 只提交一次 tags.update", async () => {
@@ -250,7 +274,7 @@ check("Esc 取消不提交", () => {
   assert(byClass(rt.tree, "wbg-rename").length === 0, "still editing after Esc");
 });
 
-check("改成已存在的名字不被前端拦截（允许重名）", async () => {
+check("改成已存在的名字仍交给后端校验（唯一约束在后端）", async () => {
   const chip = findAll(rt.tree, (n) => n.props && n.props.className === "wbg-chip")[0];
   chip.props.onDoubleClick();
   rt.rerender();

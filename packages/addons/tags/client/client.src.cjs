@@ -24,6 +24,7 @@ var h = React.createElement;
     "trash": require("lucide-react/icons/trash-2").default,
     "pencil": require("lucide-react/icons/pencil").default,
     "check": require("lucide-react/icons/check").default,
+    "refresh": require("lucide-react/icons/refresh-cw").default,
   };
   // 统一的小尺寸图标调用方式，保持各视图里的 Icon({ name, size }) 不变。
   function Icon(props) {
@@ -44,8 +45,8 @@ var h = React.createElement;
       selectAll: "全选", total: "共", items: "个标签", page: "第", pageUnit: "页",
       prev: "上一页", next: "下一页", created: "已创建", deleted: "已删除",
       needName: "标签名称不能为空", tooLong: "标签名称不能超过 64 个字符",
-      rename: "重命名", renameSave: "保存", renameHint: "回车保存，Esc 取消；允许重名",
-      renamed: "已重命名", dupAllowed: "同名标签已存在，仍可保存", batchHint: "删除只移除标签，关联数据保留在业务表中",
+      rename: "重命名", renameSave: "保存", renameHint: "回车保存，Esc 取消；名称不能与其它标签重复",
+      renamed: "已重命名", dupExisting: "标签已存在，已选中", refresh: "刷新", batchHint: "删除只移除标签，关联数据保留在业务表中",
     },
     en: {
       title: "Tags", hint: "Tags classify sites and other business data; everything stays local.",
@@ -58,8 +59,8 @@ var h = React.createElement;
       selectAll: "Select all", total: "Total", items: "tags", page: "Page", pageUnit: "",
       prev: "Prev", next: "Next", created: "Created", deleted: "Deleted",
       needName: "Tag name is required", tooLong: "Tag name cannot exceed 64 characters",
-      rename: "Rename", renameSave: "Save", renameHint: "Enter to save, Esc to cancel; duplicates allowed",
-      renamed: "Renamed", dupAllowed: "A tag with this name exists; saving is still allowed", batchHint: "Deleting a tag keeps business data in place",
+      rename: "Rename", renameSave: "Save", renameHint: "Enter to save, Esc to cancel; the name must be unique",
+      renamed: "Renamed", dupExisting: "Tag already exists; selected", refresh: "Refresh", batchHint: "Deleting a tag keeps business data in place",
     },
   };
 
@@ -325,7 +326,8 @@ var h = React.createElement;
           setText("");
           setQuery("");
           setPage(1);
-          say(t.created + "：" + value);
+          var existed = r.result && r.result.existing;
+          say((existed ? t.dupExisting : t.created) + "：" + value);
           setTimeout(function () { if (refreshRef.current) refreshRef.current(); }, 0);
         } else {
           var msg = (r && r.error) || "create failed";
@@ -407,6 +409,10 @@ var h = React.createElement;
           }),
           h("button", { type: "button", className: "wbg-btn", onClick: applySearch }, h(Icon, { name: "search", size: 13 }), t.find),
           (text || query) ? h("button", { type: "button", className: "wbg-btn ghost", onClick: clearSearch }, h(Icon, { name: "x", size: 13 }), t.clear) : null,
+          h("button", {
+            type: "button", className: "wbg-btn ghost", title: t.refresh, "aria-label": t.refresh,
+            disabled: loading, onClick: function () { if (refreshRef.current) refreshRef.current(); },
+          }, h(Icon, { name: "refresh", size: 13 }), t.refresh),
           h("button", {
             type: "button", className: "wbg-btn primary",
             onClick: function () { setCreating(!creating); setFormError(""); },
@@ -517,7 +523,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.6.3",
+    version: "1.6.4",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TagsStatsView },
       { id: "tags", title: { zh: "记录", en: "Records" }, component: TagsView },

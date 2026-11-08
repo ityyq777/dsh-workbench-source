@@ -34,8 +34,10 @@ export const TAG_TABLE_DDL = [
 ];
 
 export const TAG_INDEX_DDL = [
-  "DROP INDEX IF EXISTS uk_tag_name;",
-  "CREATE INDEX IF NOT EXISTS idx_tag_name ON tag(name) WHERE deleted_at IS NULL;",
+  // 标签名唯一：同一时刻只能有一个未删除的同名标签（软删的不占位）。
+  // 老库里可能残存重名，ensureSchema 会先跑 mergeDuplicateTagNames 合并，再建索引。
+  "DROP INDEX IF EXISTS idx_tag_name;",
+  "CREATE UNIQUE INDEX IF NOT EXISTS uk_tag_name ON tag(name) WHERE deleted_at IS NULL;",
   "CREATE INDEX IF NOT EXISTS idx_tag_updated_at ON tag(updated_at);",
   "CREATE INDEX IF NOT EXISTS idx_tag_created_at ON tag(created_at);",
   "CREATE INDEX IF NOT EXISTS idx_tag_mapping_tag ON tag_mapping(tag_id) WHERE deleted_at IS NULL;",
@@ -219,11 +221,73 @@ function copyV2Rows(db, plan, log) {
   }
 }
 
+/**
+ * 存量重名合并（标签名唯一化的一次性迁移）。
+ *
+ * 标签名唯一之前允许重名，老库里同一名字可能有多条未删除记录。建唯一索引前
+ * 先按名字合并：保留 created_at 最早的一条，其余标签的映射改挂到保留者；同一
+ * 对象在保留者下已有映射时，重复映射按软删处理；最后软删重复标签本身（保留
+ * 墓碑行，同步与审计仍看得到）。只动未删除记录，幂等。
+ */
+export function mergeDuplicateTagNames(db, log) {
+  const logger = typeof log === "function" ? log : function () {};
+  if (!tableExists(db, TAG_TABLE)) return { merged: 0 };
+  const groups = db.prepare(
+    "SELECT name, COUNT(*) AS n FROM tag WHERE deleted_at IS NULL GROUP BY name HAVING COUNT(*) > 1",
+  ).all();
+  if (!groups.length) return { merged: 0 };
+  const ts = now();
+  let merged = 0;
+  const safeLog = function (table, id, op, payload) {
+    // 迁移发生在 setup 早期：sync_change_log 应由宿主建好；缺失时不阻断建索引。
+    try {
+      logChange(db, table, id, op, payload, "migrate", ts);
+    } catch {
+      /* ignore */
+    }
+  };
+  tx(db, function () {
+    for (const group of groups) {
+      const rows = db.prepare(
+        "SELECT * FROM tag WHERE name=? AND deleted_at IS NULL ORDER BY created_at ASC, id ASC",
+      ).all(group.name);
+      const keeper = rows[0];
+      for (const dupe of rows.slice(1)) {
+        const mappings = db.prepare(
+          "SELECT * FROM tag_mapping WHERE tag_id=? AND deleted_at IS NULL",
+        ).all(String(dupe.id));
+        for (const m of mappings) {
+          const hit = db.prepare(
+            "SELECT id FROM tag_mapping WHERE tag_id=? AND item_id=? AND item_type=? AND deleted_at IS NULL",
+          ).get(String(keeper.id), String(m.item_id), String(m.item_type));
+          if (hit) {
+            db.prepare("UPDATE tag_mapping SET deleted_at=?, updated_at=?, rev=rev+1 WHERE id=?").run(ts, ts, String(m.id));
+            safeLog(MAPPING_TABLE, String(m.id), "delete", Object.assign({}, m, { deleted_at: ts, updated_at: ts, rev: Number(m.rev) + 1 }));
+            continue;
+          }
+          db.prepare("UPDATE tag_mapping SET tag_id=?, updated_at=?, rev=rev+1 WHERE id=?").run(String(keeper.id), ts, String(m.id));
+          safeLog(MAPPING_TABLE, String(m.id), "upsert", Object.assign({}, m, { tag_id: String(keeper.id), updated_at: ts, rev: Number(m.rev) + 1 }));
+        }
+        db.prepare("UPDATE tag SET deleted_at=?, updated_at=?, rev=rev+1 WHERE id=?").run(ts, ts, String(dupe.id));
+        safeLog(TAG_TABLE, String(dupe.id), "delete", Object.assign({}, dupe, { deleted_at: ts, updated_at: ts, rev: Number(dupe.rev) + 1 }));
+        merged += 1;
+      }
+    }
+  });
+  if (merged) logger("tag addon: 已合并 " + merged + " 条重名标签（保留 created_at 最早的一条）");
+  return { merged: merged };
+}
+
 export function ensureSchema(db, log) {
   const logger = typeof log === "function" ? log : function () {};
   const plans = migrateV2(db, logger);
   for (const sql of TAG_TABLE_DDL) db.exec(sql);
   for (const plan of plans) copyV2Rows(db, plan, logger);
+  try {
+    mergeDuplicateTagNames(db, logger);
+  } catch (e) {
+    logger("tag addon: 重名标签合并失败（唯一索引可能建不起来）：" + String((e && e.message) || e));
+  }
   for (const sql of TAG_INDEX_DDL) {
     try {
       db.exec(sql);
