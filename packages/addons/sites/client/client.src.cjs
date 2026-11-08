@@ -1214,7 +1214,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.3.1",
+    version: "1.3.2",
     views: [
       { id: "sites", title: { zh: "站点", en: "Sites" }, component: SitesView },
     ],

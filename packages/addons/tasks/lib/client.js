@@ -2182,7 +2182,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.4.1",
+    version: "2.4.2",
     views: [{
       id: "tasks",
       title: { zh: "\u4EFB\u52A1\u8BB0\u5F55", en: "Tasks" },

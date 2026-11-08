@@ -402,7 +402,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.3.1",
+    version: "1.3.2",
     views: [{
       id: "tags",
       title: { zh: "标签", en: "Tags" },
