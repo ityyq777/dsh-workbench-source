@@ -28,6 +28,7 @@ import {
   normalizeTagIds,
   normalizeTagNames,
   requireTagRows,
+  availableTagsText,
   tagIdsByNames,
   ensureTagsByNames,
   replaceTaskTags,
@@ -38,14 +39,21 @@ import {
 } from "./tagging.js";
 
 
-/** form.autoCreateTags 关闭时，未知标签名不再补建，直接报错。 */
+/**
+ * 标签名校验：默认（form.autoCreateTags=true）未知名字会被补建；
+ * 关掉开关后未知名字直接报错，并把可用标签列出来，调用方一次就能改成已存在的名字。
+ */
 function requireKnownTagNames(db, tagNames) {
   if (!tagNames || !tagNames.length) return;
   const values = configValues(db);
   if (values["form.autoCreateTags"] !== false) return;
   const missing = tagIdsByNames(db, tagNames).missing;
   if (missing.length) {
-    throw new Error("标签不存在：" + missing.join("、") + "（form.autoCreateTags 已关闭，不会自动创建）");
+    throw new Error(
+      "标签不存在：" + missing.join("、") + "。" + availableTagsText(db, 20) +
+      "。当前 form.autoCreateTags=false（写入时不自动创建标签）：可改用上面已有的标签名，" +
+      "或在配置页打开「自动创建未知标签」（tasks.configSet key=form.autoCreateTags value=true）",
+    );
   }
 }
 
@@ -1425,9 +1433,9 @@ export function registerTaskActions(api) {
       shutdownDate: { type: ["string", "null"], description: "YYYY-MM-DD" },
       tableId: { type: ["string", "number"], description: "目标任务表 id" },
       sort: { type: "number", description: "手动排序值（配合 tasks.reorder）" },
-      tagIds: { type: "array", items: { type: "string" }, description: "用这批标签整体替换当前标签（需要标签域）" },
-      tags: { type: "array", items: { type: "string" }, description: "按标签名整体替换；不存在的名字会自动新建（需要标签域）" },
-      addTags: { type: "array", items: { type: "string" }, description: "增量添加标签（按名字，不存在会自动新建），保留各任务原有标签" },
+      tagIds: { type: "array", items: { type: "string" }, description: "用这批标签 id 整体替换当前标签（需要标签域）；id 不存在报错并列出可用标签" },
+      tags: { type: "array", items: { type: "string" }, description: "按标签名整体替换；默认自动创建未知名字，form.autoCreateTags=false 时报错并列出可用标签" },
+      addTags: { type: "array", items: { type: "string" }, description: "增量添加标签（按名字，未知名字受 form.autoCreateTags 控制），保留各任务原有标签" },
       removeTags: { type: "array", items: { type: "string" }, description: "增量移除标签（按名字），其余标签保留" },
       addTagIds: { type: "array", items: { type: "string" }, description: "增量添加标签 id" },
       removeTagIds: { type: "array", items: { type: "string" }, description: "增量移除标签 id" },
@@ -1500,8 +1508,8 @@ export function registerTaskActions(api) {
         timelineKey: { type: ["string", "number"], description: "source=1 必填" },
         restartKey: { type: ["string", "number"], description: "source=2 必填：原任务 id" },
         originTaskId: { type: ["string", "number"], description: "restartKey 的别名" },
-        tagIds: { type: "array", items: { type: "string" }, description: "创建时挂标签（需要标签域）" },
-        tags: { type: "array", items: { type: "string" }, description: "创建时按标签名挂标签，不存在的名字会自动新建" },
+        tagIds: { type: "array", items: { type: "string" }, description: "创建时挂标签（需要标签域）；id 必须已存在，否则报错并列出可用标签（不会按 id 自动创建）" },
+        tags: { type: "array", items: { type: "string" }, description: "创建时按标签名挂标签；默认自动创建未知名字，form.autoCreateTags=false 时未知名字报错并列出可用标签" },
         dedupeKey: { type: "string", description: "幂等键：同键未删除任务存在时直接返回已有任务（deduped:true）" },
         sort: { type: "number", description: "手动排序值（默认 0）" },
       },
@@ -1533,12 +1541,12 @@ export function registerTaskActions(api) {
         shutdownDate: { type: "string" },
         tableId: { type: ["string", "number"] },
         sort: { type: "number" },
-        tagIds: { type: "array", items: { type: "string" } },
-        tags: { type: "array", items: { type: "string" }, description: "按标签名整体替换；不存在的名字会自动新建" },
-        addTags: { type: "array", items: { type: "string" }, description: "增量添加标签名（保留原有标签）" },
-        removeTags: { type: "array", items: { type: "string" }, description: "增量移除标签名（保留其他标签）" },
-        addTagIds: { type: "array", items: { type: "string" }, description: "增量添加标签 id" },
-        removeTagIds: { type: "array", items: { type: "string" }, description: "增量移除标签 id" },
+        tagIds: { type: "array", items: { type: "string" }, description: "用这批标签 id 整体替换当前标签；id 不存在报错并列出可用标签" },
+        tags: { type: "array", items: { type: "string" }, description: "按标签名整体替换；默认自动创建未知名字，form.autoCreateTags=false 时报错并列出可用标签" },
+        addTags: { type: "array", items: { type: "string" }, description: "增量添加标签名（保留原有标签）；未知名字同样受 form.autoCreateTags 控制" },
+        removeTags: { type: "array", items: { type: "string" }, description: "增量移除标签名（保留其他标签）；名字不存在时报错" },
+        addTagIds: { type: "array", items: { type: "string" }, description: "增量添加标签 id；id 不存在报错并列出可用标签" },
+        removeTagIds: { type: "array", items: { type: "string" }, description: "增量移除标签 id；id 不存在报错" },
       },
     },
     examples: [{ id: "1001", status: "done" }, { id: "1001", addTags: ["开发"] }],

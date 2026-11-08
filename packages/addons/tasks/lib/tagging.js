@@ -48,12 +48,33 @@ export function normalizeTagNames(raw) {
   return out;
 }
 
+/**
+ * 「可用标签」提示：报错时把候选标签列出来，让调用方一次就能改对，
+ * 而不是只知道「标签不存在」还要再调一次 tasks.tags 才能看到有哪些。
+ */
+export function availableTagsText(db, limit) {
+  const max = Number.isFinite(Number(limit)) ? Math.max(1, Math.min(50, Math.floor(Number(limit)))) : 20;
+  const totalRow = db.prepare("SELECT COUNT(*) AS n FROM tag WHERE deleted_at IS NULL").get();
+  const total = Number((totalRow && totalRow.n) || 0);
+  if (!total) return "当前还没有任何标签（先 tags.create，或打开 form.autoCreateTags 让写入时自动创建）";
+  const rows = db.prepare("SELECT id, name FROM tag WHERE deleted_at IS NULL ORDER BY name ASC LIMIT ?").all(max);
+  const listed = rows.map(function (r) { return String(r.name) + "(" + String(r.id) + ")"; }).join("、");
+  return "可用标签（共 " + total + " 个" + (total > rows.length ? "，只列前 " + rows.length + " 个" : "") + "）：" + listed;
+}
+
 export function requireTagRows(db, tagIds) {
   const rows = [];
+  const missing = [];
   for (const id of tagIds) {
     const row = db.prepare("SELECT * FROM tag WHERE id=? AND deleted_at IS NULL").get(id);
-    if (!row) throw new Error("标签不存在：" + id);
-    rows.push(row);
+    if (!row) missing.push(String(id));
+    else rows.push(row);
+  }
+  if (missing.length) {
+    throw new Error(
+      "标签 id 不存在：" + missing.join("、") + "。" + availableTagsText(db, 20) +
+      "。tagIds / addTagIds 必须是已存在的标签 id，不会按 id 自动创建；按名字挂标签请改用 tags / addTags",
+    );
   }
   return rows;
 }

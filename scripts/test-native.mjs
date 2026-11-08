@@ -254,6 +254,62 @@ try {
   const afterAdd = await call("tags.itemsOf", { itemType: "task", itemIds: [lowP.result.id, highP.result.id] });
   assert(afterAdd.result.items.every((it) => it.tags.length === 2 && it.tags.some((x) => x.id === String(cTagA.result.id))), "addTagIds 未保留原有标签：" + JSON.stringify(afterAdd.result.items.map((it) => it.tags.map((x) => x.id))));
 
+  // ── 4.4 标签写入校验：未知名字按开关自动创建或报错并列出可用标签 ──
+  await call("tasks.configReset", {}); // 回到默认：form.autoCreateTags=true
+  const autoTag = await call("tasks.create", { title: "标签校验-自动建", tags: ["自动建标签X"] });
+  const allTags = await call("tags.list", {});
+  const tagNamesNow = (allTags.result.records || []).map((x) => x.name);
+  assert(tagNamesNow.includes("自动建标签X"), "默认配置下未知标签名未自动创建：" + JSON.stringify(tagNamesNow));
+
+  await call("tasks.configSet", { values: { "form.autoCreateTags": false } });
+  let tvNameErr = null;
+  try {
+    await call("tasks.create", { title: "标签校验-应失败", tags: ["不存在标签Y"] });
+  } catch (e) { tvNameErr = e; }
+  assert(tvNameErr, "form.autoCreateTags=false 时未知标签名未报错");
+  assert(/标签不存在/.test(tvNameErr.message) && /不存在标签Y/.test(tvNameErr.message), "报错未指出缺失的标签名：" + tvNameErr.message);
+  assert(/可用标签/.test(tvNameErr.message) && /自动建标签X/.test(tvNameErr.message), "报错未列出可用标签：" + tvNameErr.message);
+  assert(/form\.autoCreateTags/.test(tvNameErr.message), "报错未提示开关：" + tvNameErr.message);
+
+  // 已存在的名字在开关关闭时仍可写入
+  await call("tasks.create", { title: "标签校验-已存在", tags: ["自动建标签X"] });
+
+  // 按 id 写入：id 不存在必须报错并列出可用标签（即使开关打开，也不会按 id 造标签）
+  let tvIdErr = null;
+  try {
+    await call("tasks.create", { title: "标签校验-坏 id", tagIds: ["not-a-real-tag-id"] });
+  } catch (e) { tvIdErr = e; }
+  assert(tvIdErr && /标签 id 不存在/.test(tvIdErr.message), "未知 tagIds 未报错：" + (tvIdErr && tvIdErr.message));
+  assert(/可用标签/.test(tvIdErr.message), "未知 tagIds 报错未列出可用标签：" + tvIdErr.message);
+
+  // 批量写入口共用同一套校验，且失败时整批回滚
+  const btBefore = (await call("tasks.list", { titleKey: "标签校验-批量" })).result.records.length;
+  let tvBulkErr = null;
+  try {
+    await call("tasks.bulkCreate", { records: [{ title: "标签校验-批量 A", tags: ["自动建标签X"] }, { title: "标签校验-批量 B", tags: ["不存在标签Z"] }] });
+  } catch (e) { tvBulkErr = e; }
+  assert(tvBulkErr && /标签不存在/.test(tvBulkErr.message), "bulkCreate 未校验未知标签名");
+  const btAfter = (await call("tasks.list", { titleKey: "标签校验-批量" })).result.records.length;
+  assert(btAfter === btBefore, "bulkCreate 校验失败后仍写入了部分任务：" + btBefore + " -> " + btAfter);
+
+  const tkForBulk = await call("tasks.create", { title: "标签校验-批量更新" });
+  let tvBuErr = null;
+  try {
+    await call("tasks.bulkUpdate", { ids: [tkForBulk.result.id], patch: { tags: ["不存在标签W"] } });
+  } catch (e) { tvBuErr = e; }
+  assert(tvBuErr && /标签不存在/.test(tvBuErr.message), "bulkUpdate 未校验未知标签名");
+  let tvDryErr = null;
+  try {
+    await call("tasks.bulkUpdate", { ids: [tkForBulk.result.id], patch: { tags: ["不存在标签V"] }, dryRun: true });
+  } catch (e) { tvDryErr = e; }
+  assert(tvDryErr && /标签不存在/.test(tvDryErr.message), "bulkUpdate dryRun 跳过了标签校验");
+
+  // 关掉开关后重新打开，未知名字恢复自动创建
+  await call("tasks.configReset", { ids: ["form.autoCreateTags"] });
+  await call("tasks.create", { title: "标签校验-恢复自动", tags: ["恢复后标签R"] });
+  const tagsAfterReset = (await call("tags.list", {})).result.records.map((x) => x.name);
+  assert(tagsAfterReset.includes("恢复后标签R"), "重置开关后未知标签名未恢复自动创建");
+
   // ── 5. bulkUpdate：dryRun 不落库，real 落库 ──
   const updateDry = await call("tasks.bulkUpdate", { ids: [id, p9.result.id], patch: { status: "done", priority: 7 }, dryRun: true });
   assert(updateDry.result.dryRun === true && updateDry.result.wouldUpdate === 2, "bulkUpdate dryRun 预览数量不对");
@@ -301,9 +357,9 @@ try {
   let blankTitle = null;
   try { await call("tasks.update", { id: id, type: "TITLE", title: "  " }); } catch (e) { blankTitle = e; }
   assert(blankTitle, "空标题未被拒绝");
-  let bulkErr = null;
-  try { await call("tasks.bulkUpdate", { ids: ["no-such"], patch: { priority: 1 } }); } catch (e) { bulkErr = e; }
-  assert(bulkErr, "bulkUpdate 对不存在 id 未报错");
+  let missingIdErr = null;
+  try { await call("tasks.bulkUpdate", { ids: ["no-such"], patch: { priority: 1 } }); } catch (e) { missingIdErr = e; }
+  assert(missingIdErr, "bulkUpdate 对不存在 id 未报错");
   const skipped = await call("tasks.bulkUpdate", { ids: ["no-such", id], patch: { priority: 3 }, skipMissing: true });
   assert(skipped.result.updated === 1 && skipped.result.missing.length === 1, "skipMissing 未生效");
   let patchErr = null;
