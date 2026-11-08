@@ -80,6 +80,27 @@ try {
   try { await call("actions.help", { action: "tasks.nope" }); } catch (e) { helpErr = e; }
   assert(helpErr, "actions.help 对未知 action 未报错");
 
+  // ── 1b. capabilities.list / capabilities.get：插件能力清单 ──
+  const caps = await call("capabilities.list", {});
+  assert(caps.result.domains.length === 3, "capabilities.list 域数量不对：" + caps.result.domains.length);
+  const taskCap = caps.result.domains.find((d) => d.id === "wb-addon-tasks");
+  assert(taskCap && taskCap.records.some((r) => r.kind === "task" && r.primaryAction === "tasks.create"), "任务域缺少 task 能力声明");
+  assert(taskCap.source === "declared" && taskCap.warnings.length === 0, "任务域能力声明未通过校验");
+  assert(caps.text.includes("tasks.create") && caps.text.includes("任务"), "capabilities.list 文本缺少能力入口");
+  const siteOnly = await call("capabilities.list", { kind: "site" });
+  assert(siteOnly.result.domains.length === 1 && siteOnly.result.domains[0].id === "wb-addon-sites", "capabilities.list kind 过滤不对");
+  const noKind = await call("capabilities.list", { kind: "no-such-kind" });
+  assert(noKind.result.domains.length === 0, "capabilities.list 未知 kind 应返回空");
+
+  const capOne = await call("capabilities.get", { domain: "tasks" });
+  assert(capOne.result.domain.id === "wb-addon-tasks", "capabilities.get 域解析不对");
+  assert(capOne.result.capability.records[0].when.length >= 2, "capabilities.get 缺少记录时机");
+  assert(capOne.result.actions.some((a) => a.name === "tasks.create"), "capabilities.get 缺少 action 列表");
+  assert(capOne.text.includes("何时记录") && capOne.text.includes("去重"), "capabilities.get 文本不完整");
+  let capErr = null;
+  try { await call("capabilities.get", { domain: "nope" }); } catch (e) { capErr = e; }
+  assert(capErr, "capabilities.get 对未知域未报错");
+
   // ── 2. Workbench 工具：args 合并 + 假字段告警 ──
   const viaArgs = await toolDef.execute({ action: "tasks.create", args: { title: "嵌套参数任务", priority: 4 } });
   assert(viaArgs.text.includes("嵌套参数任务"), "args 嵌套参数未生效：" + viaArgs.text);
@@ -252,6 +273,61 @@ try {
   const legacyIndexes = legacy.prepare("PRAGMA index_list(task)").all().map((r) => r.name);
   assert(legacyIndexes.includes("idx_task_sort") && legacyIndexes.includes("idx_task_dedupe"), "旧 task 表索引未补建");
   legacy.close();
+
+  // ── 15. 能力清单 fallback 与 primaryAction 校验 ──
+  let fakeDispose = null;
+  let badDispose = null;
+  try {
+    fakeDispose = host.registerDomain({
+      id: "wb-addon-fake",
+      title: "无能力声明域",
+      description: "仅用于 fallback 测试",
+      version: "0.0.1",
+      setup(api) {
+        api.action("fake.create", {
+          description: "假写入",
+          input: { type: "object", properties: { title: { type: "string" } }, required: ["title"] },
+          execute: () => ({ ok: true }),
+        });
+      },
+    });
+    const fallback = await call("capabilities.list", {});
+    const fake = fallback.result.domains.find((d) => d.id === "wb-addon-fake");
+    assert(fake && fake.source === "fallback" && fake.records.length === 0, "未声明 capability 未回退");
+    assert(fallback.text.includes("未声明能力清单"), "fallback 文本缺失");
+    const fakeDetail = await call("capabilities.get", { domain: "fake" });
+    assert(fakeDetail.result.source === "fallback" && fakeDetail.result.actions.some((a) => a.name === "fake.create"), "fallback 域 action 列表缺失");
+
+    badDispose = host.registerDomain({
+      id: "wb-addon-badcap",
+      title: "坏能力域",
+      version: "0.0.1",
+      capability: {
+        summary: "用于校验 primaryAction",
+        records: [
+          {
+            kind: "thing",
+            title: "东西",
+            description: "不存在的写入 action",
+            when: ["测试"],
+            primaryAction: "badcap.create",
+          },
+        ],
+      },
+      setup(api) {
+        api.action("badcap.other", {
+          description: "另一个 action",
+          input: { type: "object", properties: {} },
+          execute: () => ({}),
+        });
+      },
+    });
+    const bad = await call("capabilities.get", { domain: "badcap" });
+    assert(bad.result.warnings.some((w) => w.includes("primaryAction 未注册")), "未校验未注册的 primaryAction");
+  } finally {
+    if (badDispose) badDispose();
+    if (fakeDispose) fakeDispose();
+  }
 
   console.log("NATIVE TEST PASS", { domains: domains.length, actions: names.length, home });
 } finally {

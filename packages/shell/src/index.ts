@@ -207,6 +207,222 @@ export function apply(ctx: any): void {
   /** 旧版 Workbench 顶层 schema 里的“通用字段”，多数 action 并不接受。 */
   const TRAP_FIELDS = ["due_at", "note", "tags", "tagIds", "dirIds", "parentId", "deadline", "start_at", "assignee", "limit"];
 
+  function findDomain(raw: string): RegisteredDomain | null {
+    const key = String(raw ?? "").trim();
+    if (!key) return null;
+    for (const rec of domains.values()) {
+      if (
+        rec.def.id === key ||
+        rec.def.id === "wb-addon-" + key ||
+        rec.def.id.replace(/^wb-addon-/, "") === key
+      ) {
+        return rec;
+      }
+    }
+    return null;
+  }
+
+  /** 取业务域的能力清单；未声明时回退到域描述，保留 action 列表供 agent 自行判断。 */
+  function capabilityOf(rec: RegisteredDomain) {
+    const declared = rec.def.capability;
+    if (!declared) {
+      return {
+        summary: rec.def.description ?? rec.def.title,
+        records: [] as any[],
+        notFor: [] as string[],
+        notes: [] as string[],
+        source: "fallback" as const,
+        warnings: [] as string[],
+      };
+    }
+
+    const warnings: string[] = [];
+    const seen = new Set<string>();
+    const records: any[] = [];
+    for (const raw of Array.isArray(declared.records) ? declared.records : []) {
+      if (!raw || typeof raw !== "object") continue;
+      const kind = String((raw as any).kind ?? "").trim();
+      if (!kind) {
+        warnings.push("存在缺少 kind 的记录声明，已忽略");
+        continue;
+      }
+      if (seen.has(kind)) {
+        warnings.push("记录类型重复：" + kind + "（只保留第一条）");
+        continue;
+      }
+      seen.add(kind);
+      const primaryAction = String((raw as any).primaryAction ?? "").trim();
+      if (!primaryAction) {
+        warnings.push(kind + "：缺少 primaryAction");
+      } else if (!rec.actions.has(primaryAction)) {
+        warnings.push(kind + "：primaryAction 未注册：" + primaryAction);
+      }
+      records.push({
+        kind,
+        title: String((raw as any).title ?? kind),
+        description: String((raw as any).description ?? ""),
+        when: Array.isArray((raw as any).when)
+          ? (raw as any).when.filter((x: unknown) => typeof x === "string" && x.trim())
+          : [],
+        notFor: Array.isArray((raw as any).notFor) ? (raw as any).notFor : [],
+        primaryAction,
+        keyArgs: Array.isArray((raw as any).keyArgs) ? (raw as any).keyArgs : [],
+        dedupe: String((raw as any).dedupe ?? ""),
+        relations: Array.isArray((raw as any).relations) ? (raw as any).relations : [],
+        examples: Array.isArray((raw as any).examples) ? (raw as any).examples : [],
+      });
+    }
+
+    return {
+      summary: String(declared.summary ?? "").trim() || rec.def.description || rec.def.title,
+      records,
+      notFor: Array.isArray(declared.notFor) ? declared.notFor : [],
+      notes: Array.isArray(declared.notes) ? declared.notes : [],
+      source: "declared" as const,
+      warnings,
+    };
+  }
+
+  /** capabilities.list：聚合各插件“记录什么、首选哪个 action”，给 agent 做统一发现。 */
+  function capabilityListMeta(args: Record<string, unknown>) {
+    const kind = args.kind === undefined || args.kind === null ? "" : String(args.kind).trim();
+    const out: any[] = [];
+    for (const rec of domains.values()) {
+      const cap = capabilityOf(rec);
+      if (kind && !cap.records.some((r: any) => r.kind === kind)) continue;
+      out.push({
+        id: rec.def.id,
+        title: rec.def.title,
+        version: rec.def.version,
+        enabled: rec.error === null,
+        error: rec.error,
+        summary: cap.summary,
+        source: cap.source,
+        actionCount: rec.actions.size,
+        records: cap.records.map((r: any) => ({
+          kind: r.kind,
+          title: r.title,
+          description: r.description,
+          primaryAction: r.primaryAction,
+        })),
+        warnings: cap.warnings,
+      });
+    }
+    return { shellVersion: SHELL_VERSION, kind, domains: out };
+  }
+
+  function renderCapabilityList(meta: any): string {
+    const lines = [
+      "工作台 " + meta.shellVersion + " · " + meta.domains.length + " 个域" + (meta.kind ? "（kind=" + meta.kind + "）" : ""),
+    ];
+    for (const d of meta.domains) {
+      lines.push("", "[" + d.id + "] " + d.title + " v" + d.version + (d.enabled ? "" : "（未启用：" + d.error + "）"));
+      lines.push("  " + d.summary);
+      if (!d.records.length) {
+        lines.push("  （未声明能力清单；可用 action 见 actions.list）");
+      } else {
+        for (const r of d.records) {
+          lines.push("  " + r.kind + " → " + r.primaryAction + "：" + r.description);
+        }
+      }
+      for (const w of d.warnings ?? []) lines.push("  ⚠ " + w);
+    }
+    lines.push(
+      "",
+      '查看单个域的完整能力与 action 列表：Workbench({ action: "capabilities.get", args: { domain: "tasks" } })',
+    );
+    return lines.join("\n");
+  }
+
+  /** capabilities.get：单个业务域的完整能力清单 + action 摘要（字段细节仍走 actions.help）。 */
+  function capabilityGetMeta(args: Record<string, unknown>) {
+    const name = String(args.domain ?? args.id ?? "").trim();
+    if (!name) throw new Error("缺少 domain；先用 capabilities.list 查看可用业务域");
+    const rec = findDomain(name);
+    if (!rec) throw new Error("没有该业务域：" + name + "；先用 capabilities.list 查看");
+    const cap = capabilityOf(rec);
+    return {
+      shellVersion: SHELL_VERSION,
+      domain: {
+        id: rec.def.id,
+        title: rec.def.title,
+        description: rec.def.description ?? "",
+        version: rec.def.version,
+        enabled: rec.error === null,
+        error: rec.error,
+      },
+      capability: {
+        summary: cap.summary,
+        records: cap.records,
+        notFor: cap.notFor,
+        notes: cap.notes,
+      },
+      source: cap.source,
+      actions: [...rec.actions].map(([action, def]) => actionEntry(action, rec.def.id, def)),
+      warnings: cap.warnings,
+    };
+  }
+
+  function renderCapability(meta: any): string {
+    const d = meta.domain;
+    const cap = meta.capability;
+    const lines = [
+      "[" + d.id + "] " + d.title + " v" + d.version + (d.enabled ? "" : "（未启用：" + d.error + "）"),
+      cap.summary,
+    ];
+    if (meta.source === "fallback") {
+      lines.push("", "该域未声明能力清单；以下 action 仍可直接调用。");
+    }
+    if (!cap.records.length) {
+      lines.push("", "记录类型：未声明");
+    } else {
+      lines.push("", "记录类型：");
+      for (const r of cap.records) {
+        lines.push("- " + r.kind + " · " + r.title + " → " + r.primaryAction);
+        if (r.description) lines.push("  " + r.description);
+        if (r.when.length) {
+          lines.push("  何时记录：");
+          for (const w of r.when) lines.push("    - " + w);
+        }
+        if (r.notFor.length) {
+          lines.push("  不要记录：");
+          for (const w of r.notFor) lines.push("    - " + w);
+        }
+        if (r.keyArgs.length) lines.push("  常用参数：" + r.keyArgs.join(", "));
+        if (r.dedupe) lines.push("  去重：" + r.dedupe);
+        if (r.relations.length) {
+          lines.push("  关系：");
+          for (const rel of r.relations) {
+            lines.push("    - " + rel.kind + " via " + rel.via + "：" + rel.description);
+          }
+        }
+        if (r.examples.length) {
+          lines.push("  示例：");
+          for (const ex of r.examples) {
+            const example = JSON.stringify({ action: r.primaryAction, args: ex.args ?? ex });
+            lines.push("    Workbench(" + example + ")" + (ex.purpose ? " // " + ex.purpose : ""));
+          }
+        }
+      }
+    }
+    if (cap.notFor.length) {
+      lines.push("", "这个域不适合：");
+      for (const w of cap.notFor) lines.push("  - " + w);
+    }
+    if (cap.notes.length) {
+      lines.push("", "约束：");
+      for (const w of cap.notes) lines.push("  - " + w);
+    }
+    lines.push("", "可用 action（" + meta.actions.length + "）：");
+    for (const a of meta.actions) lines.push("  " + a.name + (a.description ? " — " + a.description : ""));
+    lines.push("", '字段细节：Workbench({ action: "actions.help", args: { action: "<name>" } })');
+    if (meta.warnings.length) {
+      lines.push("", "⚠ 校验提示：");
+      for (const w of meta.warnings) lines.push("  - " + w);
+    }
+    return lines.join("\n");
+  }
+
   function findActionDef(name: string): { def: DomainActionDef; domainId: string } | null {
     for (const rec of domains.values()) {
       const def = rec.actions.get(name);
@@ -344,12 +560,22 @@ export function apply(ctx: any): void {
         out.push({ name: action, domainId: rec.def.id, description: def.description });
       }
     }
+    out.push({ name: "capabilities.list", domainId: META_DOMAIN, description: "列出各业务插件记录什么、首选哪个 action" });
+    out.push({ name: "capabilities.get", domainId: META_DOMAIN, description: "查看单个业务插件的完整能力清单与 action 列表" });
     out.push({ name: "actions.list", domainId: META_DOMAIN, description: "列出已安装业务域的 action、参数与必填项" });
     out.push({ name: "actions.help", domainId: META_DOMAIN, description: "查看单个 action 的完整 JSON Schema、参数说明与示例" });
     return out;
   }
 
   async function invoke(action: string, args: Record<string, unknown>, origin: "ui" | "agent" | "sync") {
+    if (action === "capabilities.list") {
+      const result = capabilityListMeta(args);
+      return { result, text: renderCapabilityList(result), domainId: META_DOMAIN };
+    }
+    if (action === "capabilities.get") {
+      const result = capabilityGetMeta(args);
+      return { result, text: renderCapability(result), domainId: META_DOMAIN };
+    }
     if (action === "actions.list") {
       const result = listActionsMeta(args);
       return { result, text: renderActionList(result), domainId: META_DOMAIN };
@@ -692,7 +918,8 @@ export function apply(ctx: any): void {
     timeoutMs: 60_000,
     description:
       "个人工作台。action 由已安装业务插件提供（tasks.* / taskNodes.* / tags.* / sites.* / siteTags.* / siteNodes.*），" +
-      "宿主另提供 actions.list / actions.help 用于自举：先 actions.list 看有哪些 action，再 actions.help 看真实字段。" +
+      "宿主另提供 capabilities.list / capabilities.get 查看各插件记录什么、首选哪个 action；" +
+      "actions.list / actions.help 用于自举：先 actions.list 看有哪些 action，再 actions.help 看真实字段。" +
       "入参统一放进 args；不要再按旧版顶层字段（due_at / tags / parentId 等）猜参数。" +
       "安装或卸载业务插件请使用 DSH 的插件管理，不在本工具里做。",
     parameters: {
@@ -700,7 +927,7 @@ export function apply(ctx: any): void {
       properties: {
         action: {
           type: "string",
-          description: "action 名，如 actions.list / tasks.list / tasks.create / tags.create / sites.list",
+          description: "action 名，如 capabilities.list / capabilities.get / actions.list / tasks.list / tasks.create / tags.create / sites.list",
         },
         args: {
           type: "object",

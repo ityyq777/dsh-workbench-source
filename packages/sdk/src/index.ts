@@ -128,6 +128,55 @@ export interface DomainSetupApi {
   log(...args: unknown[]): void;
 }
 
+/** 一条记录类型声明：告诉 agent 这个业务域“记录什么、什么时候记、怎么记”。 */
+export interface DomainRecordCapability {
+  /** 记录类型，与业务域实体一致，如 task / site / tag */
+  kind: string;
+  /** 给 agent 看的中文名，如“任务” */
+  title: string;
+  /** 一句话说明这个类型是什么 */
+  description: string;
+  /** 应该记录的时机；一条一句，便于 agent 判断 */
+  when: string[];
+  /** 不应该记录的时机；用于抑制误记 */
+  notFor?: string[];
+  /** 首选写入 action，必须是本域已注册的 action，如 tasks.create */
+  primaryAction: string;
+  /** 该 action 的关键参数名，按推荐填写顺序 */
+  keyArgs?: string[];
+  /** 幂等/去重说明；没有内置去重时明确写出如何查重 */
+  dedupe?: string;
+  /** 与其它记录类型的关系 */
+  relations?: DomainRecordRelation[];
+  /** 可直接套用的调用示例 */
+  examples?: DomainRecordExample[];
+}
+
+/** 记录类型之间的关系（如 task 通过 tagIds 关联 tag）。 */
+export interface DomainRecordRelation {
+  kind: string;
+  via: string;
+  description: string;
+}
+
+/** 可直接套用的调用示例；action 固定为对应记录的 primaryAction。 */
+export interface DomainRecordExample {
+  purpose?: string;
+  args: Record<string, unknown>;
+}
+
+/** 业务域能力清单：插件向 DSH 声明自己负责记录什么。 */
+export interface DomainCapability {
+  /** 一句话说明这个域负责记录什么 */
+  summary: string;
+  /** 该域可记录的对象类型 */
+  records: DomainRecordCapability[];
+  /** 整个域不适合做什么 */
+  notFor?: string[];
+  /** 其它需要 agent 知道的约束（日期格式、状态码、依赖等） */
+  notes?: string[];
+}
+
 /** 业务域定义：DSH 插件 apply() 里交给宿主。 */
 export interface DomainDef {
   /** 稳定 id，如 wb-addon-tasks；用于 DOM / action 归属 / 跨插件探测 */
@@ -141,6 +190,8 @@ export interface DomainDef {
   sync?: DomainSyncDef;
   /** UI 视图贡献点：客户端模块注册同名 view 后出现在工作台首页 */
   views?: DomainViewDecl[];
+  /** 能力清单：声明本域记录什么、首选 action；缺省时宿主回退到 description + action 列表 */
+  capability?: DomainCapability;
   /** 业务插件自己的建表/注册逻辑；宿主调用并保存返回值作为清理函数 */
   setup?(api: DomainSetupApi): void | (() => void) | Promise<void | (() => void)>;
   /** 导出本插件的业务数据；返回可 JSON 序列化的对象，由宿主写入压缩包。 */
