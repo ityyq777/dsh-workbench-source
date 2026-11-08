@@ -13,6 +13,7 @@ var h = React.createElement;
   var React = require("react");
   var h = React.createElement;
   var statsView = require("./stats.cjs");
+  var configView = require("./config.cjs");
 
   // 标签插件自带 lucide-react 图标；每个图标按需引入，随 client.js 一起打包。
   var ICONS = {
@@ -122,7 +123,22 @@ var h = React.createElement;
     return PALETTE[n % PALETTE.length];
   }
 
+  var CFG_FALLBACK = {
+    "list.pageSize": 18, "form.maxNameLength": 64, "ui.confirmDelete": true, "ui.toastDuration": 2600,
+    "stats.range": "30d", "stats.top": 10, "stats.showKpi": true,
+    "stats.sections": ["usage", "top", "types", "trend", "stale", "recent"],
+  };
+
   function TagsView(props) {
+    var lang = props.lang === "en" ? "en" : "zh";
+    var cfg = configView.useConfig(props.api, CFG_FALLBACK);
+    if (!cfg.ready) {
+      return h("div", { style: { padding: "48px", textAlign: "center", fontSize: "12.5px", opacity: .6 } }, lang === "en" ? "Loading…" : "载入中…");
+    }
+    return h(TagsViewBody, Object.assign({}, props, { cfg: cfg.values }));
+  }
+
+  function TagsViewBody(props) {
     var api = props.api;
     var lang = props.lang === "en" ? "en" : "zh";
     var t = COPY[lang];
@@ -169,7 +185,15 @@ var h = React.createElement;
     var editCancelRef = React.useRef(false);
     var renameDoneRef = React.useRef(false);
     var refreshRef = React.useRef(null);
-    var pageSize = 18;
+    var cfg = props.cfg || {};
+    var cfgSize = Math.floor(Number(cfg["list.pageSize"]));
+    if (!(cfgSize > 0)) cfgSize = 18;
+    var pageSize = cfgSize;
+    var cfgMaxName = Math.floor(Number(cfg["form.maxNameLength"]));
+    if (!(cfgMaxName >= 8)) cfgMaxName = 64;
+    var cfgConfirm = cfg["ui.confirmDelete"] !== false;
+    var cfgToast = Math.floor(Number(cfg["ui.toastDuration"]));
+    if (!(cfgToast >= 800)) cfgToast = 2600;
 
     function say(msg) { setToast(String(msg || "")); }
 
@@ -200,7 +224,7 @@ var h = React.createElement;
       if (!id) return;
       var value = String(editName || "").trim();
       if (!value) { say(t.needName); return; }
-      if (value.length > 64) { say(t.tooLong); return; }
+      if (value.length > cfgMaxName) { say(t.tooLong); return; }
       var cur = rows.filter(function (r) { return String(r.id) === String(id); })[0];
       if (cur && value === String(cur.name || "")) { closeRename(); return; }
       // 先关掉编辑态再发请求，避免 blur 与 Enter 重复提交。
@@ -227,9 +251,9 @@ var h = React.createElement;
 
     React.useEffect(function () {
       if (!toast) return;
-      var id = setTimeout(function () { setToast(""); }, 2600);
+      var id = setTimeout(function () { setToast(""); }, cfgToast);
       return function () { clearTimeout(id); };
-    }, [toast]);
+    }, [toast, cfgToast]);
 
     var refreshList = React.useCallback(function () {
       setLoading(true);
@@ -289,7 +313,7 @@ var h = React.createElement;
       if (e && e.preventDefault) e.preventDefault();
       var value = String(name || "").trim();
       if (!value) { setFormError(t.needName); return; }
-      if (value.length > 64) { setFormError(t.tooLong); return; }
+      if (value.length > cfgMaxName) { setFormError(t.tooLong); return; }
       setSaving(true);
       setFormError("");
       api.call("tags.create", { name: value }).then(function (r) {
@@ -401,8 +425,8 @@ var h = React.createElement;
 
       selected.length ? h("div", { className: "wbg-batch" },
         h("span", null, t.selected + " " + selected.length),
-        confirmAll
-          ? h("button", { type: "button", className: "wbg-btn danger", disabled: busy, onClick: deleteSelected }, busy ? "…" : t.confirmBatch)
+        (confirmAll || !cfgConfirm)
+          ? h("button", { type: "button", className: "wbg-btn danger", disabled: busy, onClick: deleteSelected }, busy ? "…" : (cfgConfirm ? t.confirmBatch : t.del))
           : h("button", { type: "button", className: "wbg-btn danger", onClick: function () { setConfirmAll(true); } }, t.del),
         confirmAll ? h("button", { type: "button", className: "wbg-btn ghost", onClick: function () { setConfirmAll(false); } }, t.cancel) : null,
         h("span", { className: "wbg-hint" }, t.batchHint)
@@ -439,7 +463,7 @@ var h = React.createElement;
               ? h("div", { className: "wbg-name" },
                   h("input", {
                     ref: editRef, type: "text", className: "wbg-input wbg-rename", value: editName,
-                    maxLength: 64, "aria-label": t.name, title: t.renameHint,
+                    maxLength: cfgMaxName, "aria-label": t.name, title: t.renameHint,
                     onChange: function (e) { setEditName(e.target.value); },
                     onKeyDown: function (e) {
                       if (e.key === "Enter") { e.preventDefault(); saveRename(); }
@@ -462,8 +486,8 @@ var h = React.createElement;
                     h("button", { key: "no", type: "button", className: "wbg-btn ghost", onClick: cancelRename }, t.cancel),
                   ]
                 : h("button", { type: "button", className: "wbg-btn ghost", title: t.rename, "aria-label": t.rename, onClick: function () { beginRename(row); } }, h(Icon, { name: "pencil", size: 13 })),
-              confirmId === row.id
-                ? h("button", { type: "button", className: "wbg-btn danger", disabled: busy, onClick: function () { deleteOne(row.id); } }, busy ? "…" : t.confirmDel)
+              (confirmId === row.id || !cfgConfirm)
+                ? h("button", { type: "button", className: "wbg-btn danger", disabled: busy, onClick: function () { deleteOne(row.id); } }, busy ? "…" : (cfgConfirm ? t.confirmDel : t.del))
                 : h("button", { type: "button", className: "wbg-btn danger", onClick: function () { setConfirmId(row.id); } }, h(Icon, { name: "trash", size: 13 }), t.del),
               confirmId === row.id
                 ? h("button", { type: "button", className: "wbg-btn ghost", onClick: function () { setConfirmId(""); } }, t.cancel)
@@ -492,10 +516,11 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.4.2",
+    version: "1.5.0",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TagsStatsView },
       { id: "tags", title: { zh: "记录", en: "Records" }, component: TagsView },
+      { id: "config", title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
     ],
   });
 

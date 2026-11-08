@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbench-tags",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "description": "个人工作台标签插件：创建与管理标签，为站点等业务提供标签归类",
   "type": "module",
   "main": "lib/index.js",
@@ -13,8 +13,8 @@
     "addon": {
       "id": "wb-addon-tags",
       "title": "标签",
-      "description": "创建与管理标签，为站点等业务提供标签归类",
-      "version": "1.4.2",
+      "description": "标签 + 统计/记录/配置三个视图：创建与管理标签，为站点等业务提供标签归类",
+      "version": "1.5.0",
       "minShell": "0.5.0",
       "tables": [
         "tag",
@@ -22,7 +22,8 @@
       ],
       "views": [
         "stats",
-        "tags"
+        "tags",
+        "config"
       ],
       "toolActions": [
         "tags.list",
@@ -34,7 +35,11 @@
         "tags.unlink",
         "tags.itemsOf",
         "tags.stats",
-        "tags.statsReport"
+        "tags.statsReport",
+        "tags.configGet",
+        "tags.configSet",
+        "tags.configReset",
+        "tags.configOptions"
       ],
       "client": "lib/client.js"
     }

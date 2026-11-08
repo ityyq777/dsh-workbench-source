@@ -23,11 +23,24 @@ import {
   NODE_MAPPING_TABLE,
 } from "./db.js";
 import { statsReport, renderStats } from "./stats.js";
+import { configValues } from "./config.js";
 
 const PAGE_SIZE_DEFAULT = 16;
 const PAGE_SIZE_MAX = 200;
 const TAG_SEARCH_SIZE_DEFAULT = 10;
 const TAG_SEARCH_SIZE_MAX = 100;
+
+/** 单站点链接数上限：配置可覆盖，读取失败回退 10。 */
+function maxLinks(db) {
+  const n = Number(configValues(db)["form.maxLinks"]);
+  return Number.isInteger(n) && n >= 1 && n <= 50 ? n : 10;
+}
+
+function checkLinkLimit(db, links) {
+  const limit = maxLinks(db);
+  if (links.length > limit) throw new Error("一个站点最多保存 " + limit + " 条链接（form.maxLinks）");
+  return links;
+}
 
 function clampPageNumber(v) {
   const n = Number(v);
@@ -320,10 +333,13 @@ function replaceTagMappings(db, siteId, tags, ts, origin, tagsAvailable) {
 function createSite(db, args, origin, api, tagsAvailable) {
   const siteName = validateSiteName(args.siteName !== undefined ? args.siteName : args.name);
   const description = validateDescription(args.description);
-  const links = normalizeLinks(args.siteLinks !== undefined ? args.siteLinks : args.links);
+  const links = checkLinkLimit(db, normalizeLinks(args.siteLinks !== undefined ? args.siteLinks : args.links));
   const nodes = normalizeDirIds(db, args.dirIds !== undefined ? args.dirIds : args.dirIds);
   const tags = validateTagIds(db, normalizeTagIds(args.tagIds), tagsAvailable);
-  const bindable = args.bindable === 0 || args.bindable === "0" || args.bindable === false ? 0 : 1;
+  const bindableDefault = Number(configValues(db)["form.defaultBindable"]) === 0 ? 0 : 1;
+  const bindable = args.bindable === undefined
+    ? bindableDefault
+    : (args.bindable === 0 || args.bindable === "0" || args.bindable === false ? 0 : 1);
   const ts = now();
   const id = newId();
   const row = {
@@ -355,9 +371,9 @@ function updateSite(db, args, origin, api, tagsAvailable) {
   if (!existing) throw new Error("站点不存在：" + (id || "(空)"));
   const siteName = validateSiteName(args.siteName !== undefined ? args.siteName : existing.site_name);
   const description = validateDescription(args.description !== undefined ? args.description : existing.description);
-  const links = args.siteLinks !== undefined || args.links !== undefined
+  const links = checkLinkLimit(db, args.siteLinks !== undefined || args.links !== undefined
     ? normalizeLinks(args.siteLinks !== undefined ? args.siteLinks : args.links)
-    : parseLinks(existing.site_link);
+    : parseLinks(existing.site_link));
   const nodes = args.dirIds !== undefined && args.dirIds !== null ? normalizeDirIds(db, args.dirIds) : null;
   const tags = args.tagIds !== undefined && args.tagIds !== null && tagsAvailable ? validateTagIds(db, normalizeTagIds(args.tagIds), tagsAvailable) : null;
   const bindable = args.bindable === undefined

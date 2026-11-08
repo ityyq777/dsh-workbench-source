@@ -10,6 +10,7 @@ import { exportTasksData, importTasksData } from "./backup.js";
 import { taskSync } from "./sync.js";
 import { registerTaskActions } from "./tasks.js";
 import { registerTreeActions } from "./tree.js";
+import { registerConfigActions } from "./config.js";
 
 export const inject = ["workbench"];
 
@@ -26,6 +27,7 @@ export function setup(api) {
   ensureSchema(api.db, api.log);
   registerTaskActions(api);
   registerTreeActions(api);
+  registerConfigActions(api);
   api.log("tasks domain ready", api.addon.version);
 }
 
@@ -37,13 +39,14 @@ export function apply(ctx) {
       host.registerDomain({
         id: "wb-addon-tasks",
         title: "任务",
-        description: "任务树 + 统计/记录两个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选，附统计报表",
-        version: "2.6.3",
+        description: "任务树 + 统计/记录/配置三个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选，附统计报表",
+        version: "2.7.0",
         tables: ["task", "task_dep", "task_node"],
         sync: taskSync,
         views: [
           { id: "stats", title: { zh: "统计", en: "Stats" } },
           { id: "tasks", title: { zh: "记录", en: "Records" } },
+          { id: "config", title: { zh: "配置", en: "Config" } },
         ],
         capability: {
           summary: "记录可执行、可交付的工作项（任务），支持任务树、时间线、重启链与依赖。",

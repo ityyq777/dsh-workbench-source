@@ -1,6 +1,7 @@
 // 站点统计报表：只读聚合，不写库、不发事件。
 // 契约见 docs/specs/18-统计报表设计.md §6。
 import { parseLinks } from "./db.js";
+import { configValues } from "./config.js";
 
 function pad(n) {
   return String(n).padStart(2, "0");
@@ -144,11 +145,14 @@ export function statsReport(db, args) {
   let noLink = 0;
   let multiLink = 0;
   let invalidLinks = 0;
+  const cfg = configValues(db);
+  const staleDays = Number(cfg["stats.staleDays"]) || 90;
+  const duplicateLimit = Number(cfg["stats.duplicateLimit"]) || 5;
   const freshnessBins = [
-    { key: "7d", label: "7 天内", count: 0 },
+    { key: "7d", label: "0–7 天", count: 0 },
     { key: "30d", label: "8–30 天", count: 0 },
-    { key: "90d", label: "31–90 天", count: 0 },
-    { key: "90d+", label: ">90 天", count: 0 },
+    { key: "stale", label: "31–" + staleDays + " 天", count: 0 },
+    { key: "stale+", label: ">" + staleDays + " 天", count: 0 },
   ];
   const today = startOfDay(new Date());
   const stale = [];
@@ -164,7 +168,7 @@ export function statsReport(db, args) {
     const age = Math.max(0, diffDays(parseDay(dayStr(new Date(Number(row.updated_at) || 0))), today));
     if (age <= 7) freshnessBins[0].count += 1;
     else if (age <= 30) freshnessBins[1].count += 1;
-    else if (age <= 90) freshnessBins[2].count += 1;
+    else if (age <= staleDays) freshnessBins[2].count += 1;
     else freshnessBins[3].count += 1;
     stale.push({
       id: String(row.id),
@@ -282,7 +286,7 @@ export function statsReport(db, args) {
   const duplicates = Object.keys(urlGroups)
     .filter(function (url) { return urlGroups[url].length > 1; })
     .sort(function (a, b) { return urlGroups[b].length - urlGroups[a].length; })
-    .slice(0, 5)
+    .slice(0, duplicateLimit)
     .map(function (url) {
       return { url: url, sites: urlGroups[url].slice(0, 5) };
     });

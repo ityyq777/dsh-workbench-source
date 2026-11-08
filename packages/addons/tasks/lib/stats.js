@@ -2,6 +2,7 @@
 // 契约见 docs/specs/18-统计报表设计.md §4。
 
 import { tagsAvailable, tagBreakdown } from "./tagging.js";
+import { configValues } from "./config.js";
 
 const STATUS_LABELS = {
   "0": "进行中",
@@ -70,7 +71,9 @@ function resolveRange(db, args) {
   }
   const days = diffDays(from, to) + 1;
   const bucket = days <= 120 ? "day" : days <= 730 ? "week" : "month";
-  return { from: dayStr(from), to: dayStr(to), days: days, bucket: bucket };
+  const cfg = configValues(db);
+  const weekStartsOn = Number(cfg["stats.weekStartsOn"]) === 0 ? 0 : 1;
+  return { from: dayStr(from), to: dayStr(to), days: days, bucket: bucket, weekStartsOn: weekStartsOn };
 }
 
 function bucketKeys(range) {
@@ -81,7 +84,8 @@ function bucketKeys(range) {
   for (let d = from; d <= to; d = addDays(d, 1)) {
     let key;
     if (range.bucket === "week") {
-      const wd = (d.getDay() + 6) % 7;
+      const ws = Number(range.weekStartsOn) === 0 ? 0 : 1;
+      const wd = (d.getDay() - ws + 7) % 7;
       key = dayStr(addDays(d, -wd));
     } else if (range.bucket === "month") {
       key = dayStr(d).slice(0, 7);
@@ -100,7 +104,8 @@ function bucketOf(day, range) {
   const d = parseDay(day);
   if (!d) return "";
   if (range.bucket === "week") {
-    const wd = (d.getDay() + 6) % 7;
+    const ws = Number(range.weekStartsOn) === 0 ? 0 : 1;
+    const wd = (d.getDay() - ws + 7) % 7;
     return dayStr(addDays(d, -wd));
   }
   if (range.bucket === "month") return day.slice(0, 7);

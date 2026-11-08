@@ -2,6 +2,7 @@
 var React = require("react");
 var h = React.createElement;
 var charts = require("./charts.cjs");
+var configView = require("./config.cjs");
 
 var COPY = {
   zh: {
@@ -52,12 +53,30 @@ var COPY = {
 
 var RANGES = ["7d", "30d", "90d", "365d", "all"];
 
+var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true };
+
 function SitesStatsView(props) {
+  var lang = props.lang === "en" ? "en" : "zh";
+  var cfg = configView.useConfig(props.api, CFG_FALLBACK);
+  if (!cfg.ready) {
+    return h("div", { style: { padding: "48px", textAlign: "center", fontSize: "12.5px", opacity: .6 } }, lang === "en" ? "Loading…" : "载入中…");
+  }
+  return h(SitesStatsBody, Object.assign({}, props, { cfg: cfg.values }));
+}
+
+function SitesStatsBody(props) {
   var lang = props.lang === "en" ? "en" : "zh";
   var t = COPY[lang];
   var api = props.api;
+  var cfg = props.cfg || {};
+  var cfgRange = RANGES.indexOf(cfg["stats.range"]) >= 0 ? cfg["stats.range"] : "30d";
+  var cfgTop = Math.floor(Number(cfg["stats.top"]));
+  if (!(cfgTop >= 5)) cfgTop = 10;
+  if (cfgTop > 20) cfgTop = 20;
+  var cfgSections = Array.isArray(cfg["stats.sections"]) ? cfg["stats.sections"] : null;
+  function sectionOn(key) { return !cfgSections || cfgSections.indexOf(key) >= 0; }
   var ch = React.useMemo(function () { return charts.makeCharts("wbs"); }, []);
-  var rangePair = React.useState("30d");
+  var rangePair = React.useState(cfgRange);
   var range = rangePair[0], setRange = rangePair[1];
   var dataPair = React.useState(null);
   var data = dataPair[0], setData = dataPair[1];
@@ -70,7 +89,7 @@ function SitesStatsView(props) {
   var load = React.useCallback(function (silent) {
     var id = ++req.current;
     if (!silent) setLoading(true);
-    return Promise.resolve(api.call("sites.statsReport", { range: range, top: 10 }))
+    return Promise.resolve(api.call("sites.statsReport", { range: range, top: cfgTop }))
       .then(function (r) { return r && r.result !== undefined ? r.result : r; })
       .then(function (d) { if (id === req.current) { setData(d); setErr(""); } })
       .catch(function (e) { if (id === req.current) setErr(String((e && e.message) || e || "load failed")); })
@@ -196,6 +215,13 @@ function SitesStatsView(props) {
     }
     children.push(h(ch.Warnings, { key: "warn", items: data.warnings || [] }));
   }
+
+  children = children.filter(function (node) {
+    var k = node && node.key;
+    if (!k || k === "sk" || k === "err" || k === "warn" || k === "empty") return true;
+    if (k === "kpi") return cfg["stats.showKpi"] !== false;
+    return sectionOn(k);
+  });
 
   return h("div", { className: "wbs-stats" },
     h(ch.RangeSwitch, {

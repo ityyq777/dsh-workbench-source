@@ -472,12 +472,480 @@ var require_charts = __commonJS({
   }
 });
 
+// packages/addons/tags/client/config.cjs
+var require_config = __commonJS({
+  "packages/addons/tags/client/config.cjs"(exports2, module2) {
+    var React2 = require("react");
+    var h2 = React2.createElement;
+    var DOMAIN = "tags";
+    var PREFIX = "wbg";
+    var COPY = {
+      zh: {
+        title: "\u914D\u7F6E",
+        note: "\u8FD9\u4E9B\u504F\u597D\u53EA\u4FDD\u5B58\u5728\u672C\u673A\uFF0C\u4E0D\u53C2\u4E0E\u4E91\u7AEF\u540C\u6B65",
+        loading: "\u8BFB\u53D6\u914D\u7F6E\u4E2D\u2026",
+        loadFail: "\u914D\u7F6E\u670D\u52A1\u672A\u5C31\u7EEA\uFF08\u63D2\u4EF6\u7248\u672C\u8FC7\u65E7\uFF1F\uFF09",
+        retry: "\u91CD\u8BD5",
+        saveFail: "\u4FDD\u5B58\u5931\u8D25\uFF1A",
+        saved: "\u5DF2\u4FDD\u5B58",
+        saving: "\u4FDD\u5B58\u4E2D\u2026",
+        reset: "\u6062\u590D\u9ED8\u8BA4",
+        resetAll: "\u5168\u90E8\u6062\u590D\u9ED8\u8BA4",
+        resetting: "\u6062\u590D\u4E2D\u2026",
+        modified: "\u5DF2\u4FEE\u6539",
+        defaultValue: "\u9ED8\u8BA4",
+        allDefault: "\u5168\u90E8\u4F7F\u7528\u9ED8\u8BA4\u503C",
+        on: "\u5F00",
+        off: "\u5173",
+        empty: "\u6CA1\u6709\u53EF\u914D\u7F6E\u9879",
+        confirmResetAll: "\u786E\u5B9A\u628A\u5168\u90E8\u914D\u7F6E\u6062\u590D\u9ED8\u8BA4\u503C\uFF1F",
+        min: "\u6700\u5C0F",
+        max: "\u6700\u5927"
+      },
+      en: {
+        title: "Config",
+        note: "Preferences stay on this machine; they are not synced to the cloud",
+        loading: "Loading config\u2026",
+        loadFail: "Config service not ready (plugin too old?)",
+        retry: "Retry",
+        saveFail: "Save failed: ",
+        saved: "Saved",
+        saving: "Saving\u2026",
+        reset: "Reset",
+        resetAll: "Reset all",
+        resetting: "Resetting\u2026",
+        modified: "Modified",
+        defaultValue: "Default",
+        allDefault: "All defaults",
+        on: "On",
+        off: "Off",
+        empty: "Nothing to configure",
+        confirmResetAll: "Reset every setting to its default?",
+        min: "Min",
+        max: "Max"
+      }
+    };
+    var CSS = [
+      ".__P__-cfg{display:flex;flex-direction:column;gap:14px;font-size:13px;color:inherit;min-height:0}",
+      ".__P__-cfg-head h2{margin:0;font-size:16px;font-weight:680}",
+      ".__P__-cfg-note{font-size:12px;opacity:.58;margin-top:4px;line-height:1.6}",
+      ".__P__-cfg-group{border:1px solid var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));border-radius:12px;overflow:hidden}",
+      ".__P__-cfg-gtitle{padding:9px 14px;font-size:12px;font-weight:650;letter-spacing:.3px;opacity:.72;background:color-mix(in oklab,currentColor 3%,transparent);border-bottom:1px solid var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 12%,transparent))}",
+      ".__P__-cfg-row{display:flex;gap:16px;align-items:center;padding:11px 14px;border-top:1px solid color-mix(in oklab,currentColor 8%,transparent)}",
+      ".__P__-cfg-row:first-of-type{border-top:none}",
+      ".__P__-cfg-label{flex:1;min-width:0}",
+      ".__P__-cfg-name{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600}",
+      ".__P__-cfg-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;opacity:.45}",
+      ".__P__-cfg-hint{font-size:11.5px;opacity:.58;line-height:1.5;margin-top:3px}",
+      ".__P__-cfg-control{display:flex;align-items:center;gap:8px;flex:none;max-width:46%}",
+      ".__P__-cfg-select,.__P__-cfg-input{border:1px solid var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 18%,transparent));background:transparent;color:inherit;border-radius:8px;padding:6px 9px;font-size:12.5px;outline:none;min-width:120px;max-width:100%}",
+      ".__P__-cfg-select:focus,.__P__-cfg-input:focus{border-color:var(--dsw-alias-brand-primary,#11a89b)}",
+      ".__P__-cfg-switch{display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:12.5px}",
+      ".__P__-cfg-switch input{width:16px;height:16px;accent-color:var(--dsw-alias-brand-primary,#11a89b);cursor:pointer}",
+      ".__P__-cfg-multi{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:flex-end;max-width:420px}",
+      ".__P__-cfg-multi label{display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;white-space:nowrap}",
+      ".__P__-cfg-multi input{width:14px;height:14px;accent-color:var(--dsw-alias-brand-primary,#11a89b)}",
+      ".__P__-cfg-chip{font-size:10.5px;padding:1px 7px;border-radius:999px;background:color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 14%,transparent);color:var(--dsw-alias-brand-primary,#11a89b);font-weight:600}",
+      ".__P__-cfg-btn{border:1px solid var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 18%,transparent));background:transparent;color:inherit;border-radius:8px;padding:5px 9px;font-size:11.5px;cursor:pointer;white-space:nowrap}",
+      ".__P__-cfg-btn:hover{border-color:var(--dsw-alias-brand-primary,#11a89b)}",
+      ".__P__-cfg-btn:disabled{opacity:.5;cursor:not-allowed}",
+      ".__P__-cfg-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;opacity:.72}",
+      ".__P__-cfg-grow{flex:1}",
+      ".__P__-cfg-loading,.__P__-cfg-empty{border:1px dashed var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));border-radius:12px;padding:34px 16px;text-align:center;font-size:12.5px;opacity:.6}",
+      ".__P__-cfg-error{border:1px solid color-mix(in oklab,#e5484d 42%,transparent);border-radius:10px;padding:10px 13px;color:#e5484d;font-size:12.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}",
+      ".__P__-cfg-status{font-size:11.5px;opacity:.62;min-height:16px}",
+      ".__P__-cfg-status.err{color:#e5484d;opacity:1}",
+      "@media (max-width:760px){.__P__-cfg-row{flex-direction:column;align-items:stretch;gap:8px}.__P__-cfg-control{max-width:none;justify-content:flex-start}.__P__-cfg-multi{justify-content:flex-start}}"
+    ].join("\n");
+    function injectCss() {
+      if (typeof document === "undefined") return;
+      var old = document.getElementById("wb-addon-" + DOMAIN + "-config-css");
+      if (old) {
+        old.textContent = CSS;
+        return;
+      }
+      var s = document.createElement("style");
+      s.id = "wb-addon-" + DOMAIN + "-config-css";
+      s.setAttribute("data-wb-addon", "wb-addon-" + DOMAIN);
+      s.textContent = CSS;
+      document.head.appendChild(s);
+    }
+    function unwrap(r) {
+      return r && r.result !== void 0 ? r.result : r;
+    }
+    function optionLabel(opt, lang) {
+      return lang === "en" ? String(opt.en || opt.zh || opt.value) : String(opt.zh || opt.en || opt.value);
+    }
+    function sameValue(a, b) {
+      return JSON.stringify(a) === JSON.stringify(b);
+    }
+    function useConfig(api, fallback) {
+      var fb = fallback || {};
+      var stateS = React2.useState({
+        ready: false,
+        values: Object.assign({}, fb),
+        items: [],
+        groups: [],
+        overrides: {},
+        error: "",
+        state: null
+      });
+      var state = stateS[0], setState = stateS[1];
+      React2.useEffect(function() {
+        var alive = true;
+        Promise.resolve(api.call(DOMAIN + ".configGet")).then(function(r) {
+          if (!alive) return;
+          var body = unwrap(r);
+          if (r && r.ok === false) throw new Error(r && r.error || "load failed");
+          if (!body || !body.values) throw new Error("empty config");
+          setState({
+            ready: true,
+            values: Object.assign({}, fb, body.values),
+            items: body.items || [],
+            groups: body.groups || [],
+            overrides: body.overrides || {},
+            error: "",
+            state: body
+          });
+        }).catch(function(e) {
+          if (!alive) return;
+          setState({
+            ready: true,
+            values: Object.assign({}, fb),
+            items: [],
+            groups: [],
+            overrides: {},
+            error: String(e && e.message || e),
+            state: null
+          });
+        });
+        return function() {
+          alive = false;
+        };
+      }, [api]);
+      return state;
+    }
+    function ConfigView(props) {
+      var api = props.api;
+      var lang = props.lang === "en" ? "en" : "zh";
+      var t = COPY[lang];
+      var loadS = React2.useState(true);
+      var loading = loadS[0], setLoading = loadS[1];
+      var stateS = React2.useState(null);
+      var state = stateS[0], setState = stateS[1];
+      var errS = React2.useState("");
+      var err = errS[0], setErr = errS[1];
+      var noticeS = React2.useState({ id: "", text: "", error: false });
+      var notice = noticeS[0], setNotice = noticeS[1];
+      var savingS = React2.useState("");
+      var savingId = savingS[0], setSavingId = savingS[1];
+      var draftsS = React2.useState({});
+      var drafts = draftsS[0], setDrafts = draftsS[1];
+      var busyS = React2.useState(false);
+      var busy = busyS[0], setBusy = busyS[1];
+      React2.useEffect(function() {
+        injectCss();
+      }, []);
+      var load = React2.useCallback(function() {
+        setLoading(true);
+        return Promise.resolve(api.call(DOMAIN + ".configGet")).then(function(r) {
+          var body2 = unwrap(r);
+          if (r && r.ok === false) throw new Error(r && r.error || "load failed");
+          setState(body2 || null);
+          setErr("");
+          setLoading(false);
+        }).catch(function(e) {
+          setErr(String(e && e.message || e));
+          setLoading(false);
+        });
+      }, [api]);
+      React2.useEffect(function() {
+        load();
+      }, [load]);
+      function setValueLocal(id, value) {
+        setState(function(prev) {
+          if (!prev) return prev;
+          var values = Object.assign({}, prev.values);
+          values[id] = value;
+          var overrides = Object.assign({}, prev.overrides);
+          overrides[id] = value;
+          return Object.assign({}, prev, { values, overrides });
+        });
+      }
+      function save(id, value) {
+        var prevState = state;
+        setSavingId(id);
+        setNotice({ id, text: t.saving, error: false });
+        setValueLocal(id, value);
+        return Promise.resolve(api.call(DOMAIN + ".configSet", { values: (function() {
+          var o = {};
+          o[id] = value;
+          return o;
+        })() })).then(function(r) {
+          var body2 = unwrap(r);
+          if (r && r.ok === false) throw new Error(r && r.error || "save failed");
+          setSavingId("");
+          if (body2 && body2.state) setState(body2.state);
+          setNotice({ id, text: t.saved, error: false });
+        }).catch(function(e) {
+          setSavingId("");
+          if (prevState) setState(prevState);
+          setNotice({ id, text: t.saveFail + String(e && e.message || e), error: true });
+        });
+      }
+      function resetItem(id) {
+        var prevState = state;
+        setBusy(true);
+        setNotice({ id, text: t.resetting, error: false });
+        return Promise.resolve(api.call(DOMAIN + ".configReset", { ids: [id] })).then(function(r) {
+          var body2 = unwrap(r);
+          if (r && r.ok === false) throw new Error(r && r.error || "reset failed");
+          setBusy(false);
+          if (body2 && body2.state) setState(body2.state);
+          setNotice({ id, text: t.defaultValue, error: false });
+        }).catch(function(e) {
+          setBusy(false);
+          if (prevState) setState(prevState);
+          setNotice({ id, text: String(e && e.message || e), error: true });
+        });
+      }
+      function resetAll() {
+        if (typeof window !== "undefined" && window.confirm && !window.confirm(t.confirmResetAll)) return;
+        var prevState = state;
+        setBusy(true);
+        setNotice({ id: "", text: t.resetting, error: false });
+        Promise.resolve(api.call(DOMAIN + ".configReset", {})).then(function(r) {
+          var body2 = unwrap(r);
+          if (r && r.ok === false) throw new Error(r && r.error || "reset failed");
+          setBusy(false);
+          if (body2 && body2.state) setState(body2.state);
+          setNotice({ id: "", text: t.allDefault, error: false });
+        }).catch(function(e) {
+          setBusy(false);
+          if (prevState) setState(prevState);
+          setNotice({ id: "", text: String(e && e.message || e), error: true });
+        });
+      }
+      function commitDraft(item) {
+        var raw = drafts[item.id];
+        if (raw === void 0) return;
+        var next = String(raw).trim();
+        setDrafts(function(prev) {
+          var copy = Object.assign({}, prev);
+          delete copy[item.id];
+          return copy;
+        });
+        if (next === "") return;
+        var value = Number(next);
+        if (!Number.isFinite(value)) return;
+        if (sameValue(value, state.values[item.id])) return;
+        save(item.id, value);
+      }
+      function renderControl(item) {
+        var value = state.values[item.id];
+        var label = lang === "en" ? item.en : item.zh;
+        if (item.type === "bool") {
+          return h2(
+            "label",
+            { className: PREFIX + "-cfg-switch" },
+            h2("input", {
+              type: "checkbox",
+              checked: value === true,
+              onChange: function(e) {
+                save(item.id, e.target.checked);
+              }
+            }),
+            h2("span", null, value === true ? t.on : t.off)
+          );
+        }
+        if (item.type === "enum") {
+          return h2("select", {
+            className: PREFIX + "-cfg-select",
+            value: String(value),
+            onChange: function(e) {
+              var hit = (item.options || []).filter(function(o) {
+                return String(o.value) === e.target.value;
+              })[0];
+              if (hit) save(item.id, hit.value);
+            }
+          }, (item.options || []).map(function(o) {
+            return h2("option", { key: String(o.value), value: String(o.value) }, optionLabel(o, lang));
+          }));
+        }
+        if (item.type === "int") {
+          var draft = drafts[item.id] !== void 0 ? drafts[item.id] : String(value);
+          return h2("input", {
+            className: PREFIX + "-cfg-input",
+            type: "number",
+            value: draft,
+            min: item.min,
+            max: item.max,
+            "aria-label": label,
+            onChange: function(e) {
+              var v = e.target.value;
+              setDrafts(function(prev) {
+                var c = Object.assign({}, prev);
+                c[item.id] = v;
+                return c;
+              });
+            },
+            onBlur: function() {
+              commitDraft(item);
+            },
+            onKeyDown: function(e) {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                commitDraft(item);
+              }
+            }
+          });
+        }
+        if (item.type === "multi") {
+          var picked = Array.isArray(value) ? value : [];
+          return h2("div", { className: PREFIX + "-cfg-multi" }, (item.options || []).map(function(o) {
+            var on = picked.indexOf(o.value) >= 0;
+            return h2(
+              "label",
+              { key: String(o.value) },
+              h2("input", {
+                type: "checkbox",
+                checked: on,
+                onChange: function() {
+                  var next = picked.slice();
+                  if (on) {
+                    if (next.length <= 1) return;
+                    next = next.filter(function(x) {
+                      return x !== o.value;
+                    });
+                  } else next.push(o.value);
+                  save(item.id, next);
+                }
+              }),
+              h2("span", null, optionLabel(o, lang))
+            );
+          }));
+        }
+        return h2("input", {
+          className: PREFIX + "-cfg-input",
+          type: "text",
+          defaultValue: value === void 0 ? "" : String(value),
+          onBlur: function(e) {
+            if (!sameValue(e.target.value, value)) save(item.id, e.target.value);
+          }
+        });
+      }
+      var body = [];
+      if (loading && !state) body.push(h2("div", { key: "loading", className: PREFIX + "-cfg-loading" }, t.loading));
+      if (!loading && err && !state) {
+        body.push(h2(
+          "div",
+          { key: "err", className: PREFIX + "-cfg-error" },
+          h2("span", null, t.loadFail + " " + err),
+          h2("button", { type: "button", className: PREFIX + "-cfg-btn", onClick: load }, t.retry)
+        ));
+      }
+      if (state) {
+        var items = state.items || [];
+        var groups = state.groups || [];
+        var byGroup = {};
+        items.forEach(function(item) {
+          (byGroup[item.group] = byGroup[item.group] || []).push(item);
+        });
+        var order = groups.length ? groups : Object.keys(byGroup).map(function(id) {
+          return { id, zh: id, en: id };
+        });
+        order.forEach(function(g) {
+          var list = byGroup[g.id] || [];
+          if (!list.length) return;
+          body.push(h2(
+            "section",
+            { key: "g-" + g.id, className: PREFIX + "-cfg-group" },
+            h2("div", { className: PREFIX + "-cfg-gtitle" }, lang === "en" ? g.en : g.zh),
+            list.map(function(item) {
+              var overridden = state.overrides && state.overrides[item.id] !== void 0;
+              var isSaving = savingId === item.id;
+              return h2(
+                "div",
+                { key: item.id, className: PREFIX + "-cfg-row" },
+                h2(
+                  "div",
+                  { className: PREFIX + "-cfg-label" },
+                  h2(
+                    "div",
+                    { className: PREFIX + "-cfg-name" },
+                    h2("span", null, lang === "en" ? item.en : item.zh),
+                    overridden ? h2("span", { className: PREFIX + "-cfg-chip" }, t.modified) : null,
+                    isSaving ? h2("span", { className: PREFIX + "-cfg-chip" }, t.saving) : null
+                  ),
+                  h2("div", { className: PREFIX + "-cfg-id" }, item.id),
+                  h2("div", { className: PREFIX + "-cfg-hint" }, lang === "en" ? item.hintEn : item.hintZh)
+                ),
+                h2(
+                  "div",
+                  { className: PREFIX + "-cfg-control" },
+                  renderControl(item),
+                  overridden ? h2("button", {
+                    type: "button",
+                    className: PREFIX + "-cfg-btn",
+                    disabled: busy,
+                    onClick: function() {
+                      resetItem(item.id);
+                    },
+                    title: t.reset
+                  }, t.reset) : null
+                )
+              );
+            })
+          ));
+        });
+        if (!items.length && !loading) body.push(h2("div", { key: "empty", className: PREFIX + "-cfg-empty" }, t.empty));
+        var anyOverride = Object.keys(state.overrides || {}).length > 0;
+        body.push(h2(
+          "div",
+          { key: "foot", className: PREFIX + "-cfg-foot" },
+          h2("span", { className: PREFIX + "-cfg-note" }, t.note),
+          h2("span", { className: PREFIX + "-cfg-grow" }),
+          anyOverride ? h2("button", { type: "button", className: PREFIX + "-cfg-btn", disabled: busy, onClick: resetAll }, busy ? t.resetting : t.resetAll) : null
+        ));
+        var warn = (state.warnings || []).filter(function(w) {
+          return w && w.message;
+        });
+        if (warn.length) {
+          body.push(h2(
+            "div",
+            { key: "warn", className: PREFIX + "-cfg-error" },
+            h2("span", null, warn.map(function(w) {
+              return w.message;
+            }).join("\uFF1B"))
+          ));
+        }
+      }
+      if (notice.text) {
+        body.push(h2("div", { key: "notice", className: PREFIX + "-cfg-status" + (notice.error ? " err" : "") }, notice.text));
+      }
+      return h2(
+        "div",
+        { className: PREFIX + "-cfg" },
+        h2(
+          "div",
+          { className: PREFIX + "-cfg-head" },
+          h2("h2", null, t.title),
+          h2("div", { className: PREFIX + "-cfg-note" }, t.note)
+        ),
+        body
+      );
+    }
+    module2.exports = { ConfigView, useConfig, DOMAIN };
+  }
+});
+
 // packages/addons/tags/client/stats.cjs
 var require_stats = __commonJS({
   "packages/addons/tags/client/stats.cjs"(exports2, module2) {
     var React2 = require("react");
     var h2 = React2.createElement;
     var charts = require_charts();
+    var configView = require_config();
     var COPY = {
       zh: {
         range7: "\u8FD1 7 \u5929",
@@ -575,14 +1043,32 @@ var require_stats = __commonJS({
       }
     };
     var RANGES = ["7d", "30d", "90d", "365d", "all"];
+    var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true };
     function TagsStatsView(props) {
+      var lang = props.lang === "en" ? "en" : "zh";
+      var cfg = configView.useConfig(props.api, CFG_FALLBACK);
+      if (!cfg.ready) {
+        return h2("div", { style: { padding: "48px", textAlign: "center", fontSize: "12.5px", opacity: 0.6 } }, lang === "en" ? "Loading\u2026" : "\u8F7D\u5165\u4E2D\u2026");
+      }
+      return h2(TagsStatsBody, Object.assign({}, props, { cfg: cfg.values }));
+    }
+    function TagsStatsBody(props) {
       var lang = props.lang === "en" ? "en" : "zh";
       var t = COPY[lang];
       var api = props.api;
+      var cfg = props.cfg || {};
+      var cfgRange = RANGES.indexOf(cfg["stats.range"]) >= 0 ? cfg["stats.range"] : "30d";
+      var cfgTop = Math.floor(Number(cfg["stats.top"]));
+      if (!(cfgTop >= 5)) cfgTop = 10;
+      if (cfgTop > 20) cfgTop = 20;
+      var cfgSections = Array.isArray(cfg["stats.sections"]) ? cfg["stats.sections"] : null;
+      function sectionOn(key) {
+        return !cfgSections || cfgSections.indexOf(key) >= 0;
+      }
       var ch = React2.useMemo(function() {
         return charts.makeCharts("wbg");
       }, []);
-      var rangePair = React2.useState("30d");
+      var rangePair = React2.useState(cfgRange);
       var range = rangePair[0], setRange = rangePair[1];
       var dataPair = React2.useState(null);
       var data = dataPair[0], setData = dataPair[1];
@@ -594,7 +1080,7 @@ var require_stats = __commonJS({
       var load = React2.useCallback(function(silent) {
         var id = ++req.current;
         if (!silent) setLoading(true);
-        return Promise.resolve(api.call("tags.statsReport", { range, top: 10 })).then(function(r) {
+        return Promise.resolve(api.call("tags.statsReport", { range, top: cfgTop })).then(function(r) {
           return r && r.result !== void 0 ? r.result : r;
         }).then(function(d) {
           if (id === req.current) {
@@ -742,6 +1228,12 @@ var require_stats = __commonJS({
         }
         children.push(h2(ch.Warnings, { key: "warn", items: data.warnings || [] }));
       }
+      children = children.filter(function(node) {
+        var k = node && node.key;
+        if (!k || k === "sk" || k === "err" || k === "warn" || k === "empty") return true;
+        if (k === "kpi") return cfg["stats.showKpi"] !== false;
+        return sectionOn(k);
+      });
       return h2(
         "div",
         { className: "wbg-stats" },
@@ -1220,6 +1712,7 @@ var h = React.createElement;
   var React2 = require("react");
   var h2 = React2.createElement;
   var statsView = require_stats();
+  var configView = require_config();
   var ICONS = {
     "search": (init_search(), __toCommonJS(search_exports)).default,
     "x": (init_x(), __toCommonJS(x_exports)).default,
@@ -1375,7 +1868,25 @@ var h = React.createElement;
     for (var i = 0; i < s.length; i++) n = n * 31 + s.charCodeAt(i) >>> 0;
     return PALETTE[n % PALETTE.length];
   }
+  var CFG_FALLBACK = {
+    "list.pageSize": 18,
+    "form.maxNameLength": 64,
+    "ui.confirmDelete": true,
+    "ui.toastDuration": 2600,
+    "stats.range": "30d",
+    "stats.top": 10,
+    "stats.showKpi": true,
+    "stats.sections": ["usage", "top", "types", "trend", "stale", "recent"]
+  };
   function TagsView(props) {
+    var lang = props.lang === "en" ? "en" : "zh";
+    var cfg = configView.useConfig(props.api, CFG_FALLBACK);
+    if (!cfg.ready) {
+      return h2("div", { style: { padding: "48px", textAlign: "center", fontSize: "12.5px", opacity: 0.6 } }, lang === "en" ? "Loading\u2026" : "\u8F7D\u5165\u4E2D\u2026");
+    }
+    return h2(TagsViewBody, Object.assign({}, props, { cfg: cfg.values }));
+  }
+  function TagsViewBody(props) {
     var api = props.api;
     var lang = props.lang === "en" ? "en" : "zh";
     var t = COPY[lang];
@@ -1421,7 +1932,15 @@ var h = React.createElement;
     var editCancelRef = React2.useRef(false);
     var renameDoneRef = React2.useRef(false);
     var refreshRef = React2.useRef(null);
-    var pageSize = 18;
+    var cfg = props.cfg || {};
+    var cfgSize = Math.floor(Number(cfg["list.pageSize"]));
+    if (!(cfgSize > 0)) cfgSize = 18;
+    var pageSize = cfgSize;
+    var cfgMaxName = Math.floor(Number(cfg["form.maxNameLength"]));
+    if (!(cfgMaxName >= 8)) cfgMaxName = 64;
+    var cfgConfirm = cfg["ui.confirmDelete"] !== false;
+    var cfgToast = Math.floor(Number(cfg["ui.toastDuration"]));
+    if (!(cfgToast >= 800)) cfgToast = 2600;
     function say(msg) {
       setToast(String(msg || ""));
     }
@@ -1454,7 +1973,7 @@ var h = React.createElement;
         say(t.needName);
         return;
       }
-      if (value.length > 64) {
+      if (value.length > cfgMaxName) {
         say(t.tooLong);
         return;
       }
@@ -1488,11 +2007,11 @@ var h = React.createElement;
       if (!toast) return;
       var id = setTimeout(function() {
         setToast("");
-      }, 2600);
+      }, cfgToast);
       return function() {
         clearTimeout(id);
       };
-    }, [toast]);
+    }, [toast, cfgToast]);
     var refreshList = React2.useCallback(function() {
       setLoading(true);
       return api.call("tags.list", { pageNumber: page, pageSize, text: query }).then(function(r) {
@@ -1546,7 +2065,7 @@ var h = React.createElement;
         setFormError(t.needName);
         return;
       }
-      if (value.length > 64) {
+      if (value.length > cfgMaxName) {
         setFormError(t.tooLong);
         return;
       }
@@ -1694,7 +2213,7 @@ var h = React.createElement;
         "div",
         { className: "wbg-batch" },
         h2("span", null, t.selected + " " + selected.length),
-        confirmAll ? h2("button", { type: "button", className: "wbg-btn danger", disabled: busy, onClick: deleteSelected }, busy ? "\u2026" : t.confirmBatch) : h2("button", { type: "button", className: "wbg-btn danger", onClick: function() {
+        confirmAll || !cfgConfirm ? h2("button", { type: "button", className: "wbg-btn danger", disabled: busy, onClick: deleteSelected }, busy ? "\u2026" : cfgConfirm ? t.confirmBatch : t.del) : h2("button", { type: "button", className: "wbg-btn danger", onClick: function() {
           setConfirmAll(true);
         } }, t.del),
         confirmAll ? h2("button", { type: "button", className: "wbg-btn ghost", onClick: function() {
@@ -1752,7 +2271,7 @@ var h = React.createElement;
               type: "text",
               className: "wbg-input wbg-rename",
               value: editName,
-              maxLength: 64,
+              maxLength: cfgMaxName,
               "aria-label": t.name,
               title: t.renameHint,
               onChange: function(e) {
@@ -1794,9 +2313,9 @@ var h = React.createElement;
             ] : h2("button", { type: "button", className: "wbg-btn ghost", title: t.rename, "aria-label": t.rename, onClick: function() {
               beginRename(row);
             } }, h2(Icon2, { name: "pencil", size: 13 })),
-            confirmId === row.id ? h2("button", { type: "button", className: "wbg-btn danger", disabled: busy, onClick: function() {
+            confirmId === row.id || !cfgConfirm ? h2("button", { type: "button", className: "wbg-btn danger", disabled: busy, onClick: function() {
               deleteOne(row.id);
-            } }, busy ? "\u2026" : t.confirmDel) : h2("button", { type: "button", className: "wbg-btn danger", onClick: function() {
+            } }, busy ? "\u2026" : cfgConfirm ? t.confirmDel : t.del) : h2("button", { type: "button", className: "wbg-btn danger", onClick: function() {
               setConfirmId(row.id);
             } }, h2(Icon2, { name: "trash", size: 13 }), t.del),
             confirmId === row.id ? h2("button", { type: "button", className: "wbg-btn ghost", onClick: function() {
@@ -1833,10 +2352,11 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.4.2",
+    version: "1.5.0",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },
-      { id: "tags", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TagsView }
+      { id: "tags", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TagsView },
+      { id: "config", title: { zh: "\u914D\u7F6E", en: "Config" }, component: configView.ConfigView }
     ]
   });
   module.exports = { name: "dsh-workbench-tags", inject: [], apply: function() {

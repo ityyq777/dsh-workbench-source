@@ -21,6 +21,7 @@ import {
   timeMs,
 } from "./db.js";
 import { statsReport, renderStats } from "./stats.js";
+import { configValues } from "./config.js";
 import {
   LEGACY_TYPE_TAGS,
   tagsAvailable,
@@ -35,6 +36,18 @@ import {
   tagBreakdown,
   migrateLegacyTypes,
 } from "./tagging.js";
+
+
+/** form.autoCreateTags 关闭时，未知标签名不再补建，直接报错。 */
+function requireKnownTagNames(db, tagNames) {
+  if (!tagNames || !tagNames.length) return;
+  const values = configValues(db);
+  if (values["form.autoCreateTags"] !== false) return;
+  const missing = tagIdsByNames(db, tagNames).missing;
+  if (missing.length) {
+    throw new Error("标签不存在：" + missing.join("、") + "（form.autoCreateTags 已关闭，不会自动创建）");
+  }
+}
 
 const STATUSES = ["0", "1", "2", "3"];
 const SOURCES = { TASK_TABLE: "0", TASK_TIMELINE: "1", TASK_RESTART: "2" };
@@ -352,6 +365,7 @@ function createTask(db, args, origin, api, opts) {
   const tagIds = args.tagIds === undefined || args.tagIds === null ? null : normalizeTagIds(args.tagIds);
   // 允许直接传标签名（如 ["工作","紧急"]），缺失的标签按名补建。
   const tagNames = normalizeTagNames(args.tags);
+  requireKnownTagNames(db, tagNames);
   if (tagIds && tagsAvailable(db, api)) {
     requireTagRows(db, tagIds);
   }
@@ -497,6 +511,7 @@ function updateTask(db, args, origin, api) {
   const tagNames = args.tags === undefined || args.tags === null ? null : normalizeTagNames(args.tags);
   if ((tagIds || tagNames) && !tagsAvailable(db, api)) throw new Error("标签域未安装，无法写标签");
   if (tagIds) requireTagRows(db, tagIds);
+  requireKnownTagNames(db, tagNames);
   saveTaskRow(db, next);
   if (tagIds || tagNames) {
     const all = (tagIds || []).slice();
@@ -604,6 +619,7 @@ function bulkUpdate(db, args, origin, api) {
   const tagNames = patch.tags === undefined ? null : normalizeTagNames(patch.tags);
   if ((tagIds || tagNames) && !tagsAvailable(db, api)) throw new Error("标签域未安装，无法写标签");
   if (tagIds) requireTagRows(db, tagIds);
+  requireKnownTagNames(db, tagNames);
   const dryRun = args.dryRun === true;
   const skipMissing = args.skipMissing === true;
   const ts = now();

@@ -21,10 +21,17 @@ import {
   formatTime,
 } from "./db.js";
 import { quickStats, statsReport, renderStats } from "./stats.js";
+import { configValues } from "./config.js";
 
 const DEFAULT_PAGE_SIZE = 18;
 const MAX_PAGE_SIZE = 200;
 const MAX_NAME = 64;
+
+/** 统一取名称上限：配置可覆盖，读取失败回退 64。 */
+function maxName(db) {
+  const n = Number(configValues(db)["form.maxNameLength"]);
+  return Number.isInteger(n) && n >= 8 && n <= 128 ? n : MAX_NAME;
+}
 
 function pageArgs(args) {
   const rawPage = args.pageNumber !== undefined ? args.pageNumber : args.current !== undefined ? args.current : args.page;
@@ -79,7 +86,8 @@ function listTags(db, args) {
 function createTag(db, args, origin, api) {
   const name = String(args && args.name !== undefined && args.name !== null ? args.name : "").trim();
   if (!name) throw new Error("标签名称不能为空");
-  if (name.length > MAX_NAME) throw new Error("标签名称不能超过 " + MAX_NAME + " 个字符");
+  const limit = maxName(db);
+  if (name.length > limit) throw new Error("标签名称不能超过 " + limit + " 个字符");
   const ts = now();
   const id = newId();
   db.prepare("INSERT INTO tag(id,name,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,NULL,1)").run(id, name, ts, ts);
@@ -97,7 +105,8 @@ function updateTag(db, args, origin, api) {
   if (!row) throw new Error("标签不存在：" + id);
   const name = String(args && args.name !== undefined && args.name !== null ? args.name : "").trim();
   if (!name) throw new Error("标签名称不能为空");
-  if (name.length > MAX_NAME) throw new Error("标签名称不能超过 " + MAX_NAME + " 个字符");
+  const limit = maxName(db);
+  if (name.length > limit) throw new Error("标签名称不能超过 " + limit + " 个字符");
   if (name === String(row.name)) return { id: id, tag: rowTag(row), changed: false };
   const ts = now();
   db.prepare("UPDATE tag SET name=?, updated_at=?, rev=rev+1 WHERE id=?").run(name, ts, id);

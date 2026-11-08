@@ -11,6 +11,7 @@ var h = React.createElement;
   var React = require("react");
   var h = React.createElement;
   var statsView = require("./stats.cjs");
+  var configView = require("./config.cjs");
 
   // 站点插件自带 lucide-react 图标；每个图标按需引入，随 client.js 一起打包。
   var ICONS = {
@@ -766,9 +767,33 @@ var h = React.createElement;
     );
   }
 
+  var CFG_FALLBACK = {
+    "list.pageSize": 16, "list.sortColumn": "update_time", "list.sortOrder": "desc",
+    "ui.confirmDelete": true, "ui.toastDuration": 2600,
+    "stats.range": "30d", "stats.top": 10, "stats.showKpi": true,
+    "stats.sections": ["links", "fresh", "nodes", "trend", "topTags", "stale", "dup", "orphan", "emptyNodes"],
+  };
+
   function SitesView(props) {
+    var lang = props.lang === "en" ? "en" : "zh";
+    var cfg = configView.useConfig(props.api, CFG_FALLBACK);
+    if (!cfg.ready) {
+      return h("div", { style: { padding: "48px", textAlign: "center", fontSize: "12.5px", opacity: .6 } }, lang === "en" ? "Loading…" : "载入中…");
+    }
+    return h(SitesViewBody, Object.assign({}, props, { cfg: cfg.values }));
+  }
+
+  function SitesViewBody(props) {
     var api = props.api;
     var lang = props.lang || "zh";
+    var cfg = props.cfg || {};
+    var cfgSize = Math.floor(Number(cfg["list.pageSize"]));
+    if (!(cfgSize > 0)) cfgSize = 16;
+    var cfgSortCol = ["update_time", "create_time", "site_name"].indexOf(cfg["list.sortColumn"]) >= 0 ? cfg["list.sortColumn"] : "update_time";
+    var cfgSortOrder = cfg["list.sortOrder"] === "asc" ? "asc" : "desc";
+    var cfgConfirm = cfg["ui.confirmDelete"] !== false;
+    var cfgToast = Math.floor(Number(cfg["ui.toastDuration"]));
+    if (!(cfgToast >= 800)) cfgToast = 2600;
     var [kids, setKids] = useState({});
     var kidsRef = useRef({});
     var [expanded, setExpanded] = useState({});
@@ -776,7 +801,7 @@ var h = React.createElement;
     var [sites, setSites] = useState([]);
     var [total, setTotal] = useState(0);
     var [page, setPage] = useState(1);
-    var [pageSize, setPageSize] = useState(16);
+    var [pageSize, setPageSize] = useState(cfgSize);
     var [textQuery, setTextQuery] = useState("");
     var [searchInput, setSearchInput] = useState("");
     var [tagFilter, setTagFilter] = useState([]);
@@ -784,8 +809,8 @@ var h = React.createElement;
     var [tagMenu, setTagMenu] = useState(false);
     var [tagOn, setTagOn] = useState(false);
     var tagOnRef = useRef(false);
-    var [sortCol, setSortCol] = useState("update_time");
-    var [sortOrder, setSortOrder] = useState("desc");
+    var [sortCol, setSortCol] = useState(cfgSortCol);
+    var [sortOrder, setSortOrder] = useState(cfgSortOrder);
     var [loading, setLoading] = useState(false);
     var [error, setError] = useState("");
     var [tick, setTick] = useState(0);
@@ -805,9 +830,9 @@ var h = React.createElement;
 
     useEffect(function () {
       if (!toast) return;
-      var timer = setTimeout(function () { setToast(null); }, 2600);
+      var timer = setTimeout(function () { setToast(null); }, cfgToast);
       return function () { clearTimeout(timer); };
-    }, [toast]);
+    }, [toast, cfgToast]);
 
     function refreshTree() {
       return callApi(api, "siteNodes.children", { id: 0 }).then(function (root) {
@@ -1066,9 +1091,17 @@ var h = React.createElement;
       });
     }
 
+    function removeSite(site) {
+      callApi(api, "sites.delete", { id: site.id }).then(function () {
+        onSiteDeleted();
+      }).catch(function (e) {
+        showToast(text(lang, "opFail", { msg: errText(e) }), "err");
+      });
+    }
+
     function deleteSelected() {
       if (!selectedIds.length) return;
-      if (!window.confirm(text(lang, "bulkConfirm", { n: selectedIds.length }))) return;
+      if (cfgConfirm && !window.confirm(text(lang, "bulkConfirm", { n: selectedIds.length }))) return;
       var chain = Promise.resolve();
       selectedIds.forEach(function (id) {
         chain = chain.then(function () { return callApi(api, "sites.delete", { id: id }); });
@@ -1232,7 +1265,7 @@ var h = React.createElement;
                         h("button", { className: "wbs-btn sm", title: text(lang, "links"), onClick: function () { setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "links" ? null : { id: s.id, type: "links" }); } }, h(Icon, { name: "link", size: 12 }), text(lang, "links") + " " + (s.siteLinks ? s.siteLinks.length : 0)),
                         h("button", { className: "wbs-btn sm", title: text(lang, "dirs"), onClick: function () { setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "dirs" ? null : { id: s.id, type: "dirs" }); } }, h(Icon, { name: "folder", size: 12 }), text(lang, "dirs") + " " + (s.dirs ? s.dirs.length : 0)),
                         h("button", { className: "wbs-btn sm icononly", title: text(lang, "edit"), onClick: function () { openEdit(s); } }, h(Icon, { name: "edit", size: 13 })),
-                        h("button", { className: "wbs-btn sm danger icononly", title: text(lang, "del"), onClick: function () { setDeleting(s); } }, h(Icon, { name: "trash", size: 13 })),
+                        h("button", { className: "wbs-btn sm danger icononly", title: text(lang, "del"), onClick: function () { if (cfgConfirm) setDeleting(s); else removeSite(s); } }, h(Icon, { name: "trash", size: 13 })),
                       ),
                     ),
                   );
@@ -1303,10 +1336,11 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.5.0",
+    version: "1.6.0",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.SitesStatsView },
       { id: "sites", title: { zh: "记录", en: "Records" }, component: SitesView },
+      { id: "config", title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
     ],
   });
 

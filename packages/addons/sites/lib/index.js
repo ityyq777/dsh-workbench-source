@@ -8,6 +8,7 @@ import { exportSitesData, importSitesData } from "./backup.js";
 import { siteSync } from "./sync.js";
 import { registerSiteTreeActions } from "./tree.js";
 import { registerSiteActions } from "./sites.js";
+import { registerConfigActions } from "./config.js";
 
 export const inject = ["workbench"];
 
@@ -23,6 +24,7 @@ export function setup(api) {
   ensureSchema(api.db, api.log);
   registerSiteTreeActions(api);
   registerSiteActions(api);
+  registerConfigActions(api);
   api.log("sites domain ready");
 }
 
@@ -34,13 +36,14 @@ export function apply(ctx) {
       host.registerDomain({
         id: "wb-addon-sites",
         title: "站点",
-        description: "站点收藏：目录树、链接与标签",
-        version: "1.5.0",
+        description: "站点收藏：目录树、链接与标签；含统计/记录/配置三个视图",
+        version: "1.6.0",
         tables: ["site", "site_node", "site_node_mapping", "tag_mapping"],
         sync: siteSync,
         views: [
           { id: "stats", title: { zh: "统计", en: "Stats" } },
           { id: "sites", title: { zh: "记录", en: "Records" } },
+          { id: "config", title: { zh: "配置", en: "Config" } },
         ],
         capability: {
           summary: "记录值得再次访问的站点（URL + 目录 + 标签），不记录本地开发地址和内网临时页面。",

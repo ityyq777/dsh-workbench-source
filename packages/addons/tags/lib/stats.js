@@ -33,6 +33,8 @@ function round(n, digits) {
   const f = Math.pow(10, digits === undefined ? 1 : digits);
   return Math.round(n * f) / f;
 }
+import { configValues } from "./config.js";
+
 function hasTable(db, name) {
   return !!db.prepare("SELECT 1 AS x FROM sqlite_master WHERE type='table' AND name=?").get(name);
 }
@@ -235,9 +237,13 @@ export function statsReport(db, args) {
     };
   });
 
-  const staleBefore = Date.now() - 90 * 86400000;
+  const cfg = configValues(db);
+  const staleDays = Number(cfg["stats.staleDays"]) || 90;
+  const staleBefore = Date.now() - staleDays * 86400000;
+  const includeUnused = cfg["stats.staleIncludeUnused"] !== false;
   const stale = tagRows.filter(function (row) {
-    return row.count === 0 || !row.lastUsedAt || row.lastUsedAt < staleBefore;
+    if (row.count === 0) return includeUnused;
+    return !row.lastUsedAt || row.lastUsedAt < staleBefore;
   }).sort(function (a, b) {
     if (a.count === 0 && b.count !== 0) return -1;
     if (b.count === 0 && a.count !== 0) return 1;

@@ -13,6 +13,7 @@ var h = React.createElement;
   var React = require("react");
   var h = React.createElement;
   var statsView = require("./stats.cjs");
+  var configView = require("./config.cjs");
 
   var COPY = {
     zh: {
@@ -338,6 +339,11 @@ var h = React.createElement;
 
   function cx() {
     return Array.prototype.filter.call(arguments, Boolean).join(" ");
+  }
+  function addDays(n) {
+    var d = new Date();
+    d.setDate(d.getDate() + Number(n || 0));
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   }
   function today() {
     var d = new Date();
@@ -688,10 +694,17 @@ var h = React.createElement;
     var first = props.defaultTableId || (origin && origin.tableId) || (tables[0] && tables[0].id) || "";
     var initTags = origin ? tagNames(origin).join(", ") : "";
     var initTable = origin ? String(origin.tableId || first) : String(first);
+    var defaults = props.defaults || {};
+    var initPriority = Math.floor(Number(defaults.priority));
+    if (!(initPriority >= 1)) initPriority = 1;
+    var initDifficulty = Math.floor(Number(defaults.difficulty));
+    if (!(initDifficulty >= 1)) initDifficulty = 1;
+    var initOffset = Math.floor(Number(defaults.targetOffset));
+    if (!(initOffset >= 0)) initOffset = 0;
     var f = React.useState({
       title: "", description: "",
-      tags: initTags, status: "0", priority: 1, difficulty: 1,
-      publishDate: today(), targetDate: today(), doneDate: today(), shutdownDate: today(),
+      tags: initTags, status: "0", priority: initPriority, difficulty: initDifficulty,
+      publishDate: today(), targetDate: addDays(initOffset), doneDate: today(), shutdownDate: today(),
       tableId: initTable,
     });
     var form = f[0], setForm = f[1];
@@ -896,21 +909,59 @@ var h = React.createElement;
     );
   }
 
+  var CFG_FALLBACK = {
+    "ui.defaultTab": 0, "ui.listView": "list", "ui.expandDepth": 2,
+    "list.pageSize": 12, "list.sort": "auto", "list.filterRestarted": true,
+    "form.defaultPriority": 1, "form.defaultDifficulty": 1, "form.defaultTargetOffset": 0,
+    "stats.range": "30d", "stats.top": 10, "stats.showKpi": true,
+    "stats.sections": ["trend", "status", "tags", "priority", "difficulty", "aging", "overdue", "tables", "groups"],
+  };
+
   function TasksView(props) {
+    var lang = props.lang === "en" ? "en" : "zh";
+    var cfg = configView.useConfig(props.api, CFG_FALLBACK);
+    if (!cfg.ready) {
+      return h("div", { style: { padding: "48px", textAlign: "center", fontSize: "12.5px", opacity: .6 } }, lang === "en" ? "Loading…" : "载入中…");
+    }
+    return h(TasksViewBody, Object.assign({}, props, { cfg: cfg.values }));
+  }
+
+  function expandedByDepth(nodes, depth) {
+    var out = new Set();
+    (function walk(list, d) {
+      (list || []).forEach(function (n) {
+        if (d >= depth || !n.children || !n.children.length) return;
+        out.add(String(n.id));
+        walk(n.children, d + 1);
+      });
+    })(nodes, 0);
+    return out;
+  }
+
+  function TasksViewBody(props) {
     var t = COPY[props.lang === "en" ? "en" : "zh"];
     var api = props.api;
+    var cfg = props.cfg || {};
+    var cfgTab = Number(cfg["ui.defaultTab"]);
+    if ([0, 5, 6, 7, 8].indexOf(cfgTab) < 0) cfgTab = 0;
+    var cfgSize = Math.floor(Number(cfg["list.pageSize"]));
+    if (!(cfgSize > 0)) cfgSize = 12;
+    var cfgDepth = Math.floor(Number(cfg["ui.expandDepth"]));
+    if (!(cfgDepth >= 0)) cfgDepth = 2;
+    var cfgSort = typeof cfg["list.sort"] === "string" ? cfg["list.sort"] : "auto";
 
     var treeS = React.useState([]);
     var tree = treeS[0], setTree = treeS[1];
-    var expS = React.useState(new Set(["1", "2"]));
+    var expS = React.useState(new Set());
     var expanded = expS[0], setExpanded = expS[1];
+    var expInitRef = React.useRef(false);
     var targetS = React.useState({ groupId: "1", tableId: null });
     var target = targetS[0], setTarget = targetS[1];
     var pathS = React.useState([]);
     var currentPath = pathS[0], setCurrentPath = pathS[1];
-    var tabS = React.useState(0);
+    var tabS = React.useState(cfgTab);
     var tab = tabS[0], setTab = tabS[1];
-    var viewS = React.useState("list");
+    var viewS = React.useState(cfg["ui.listView"] === "card" ? "card" : "list");
     var view = viewS[0], setView = viewS[1];
     var searchS = React.useState("");
     var searchDraft = searchS[0], setSearchDraft = searchS[1];
@@ -918,7 +969,7 @@ var h = React.createElement;
     var treeQuery = tqS[0], setTreeQuery = tqS[1];
     var titleS = React.useState("");
     var titleKey = titleS[0], setTitleKey = titleS[1];
-    var filterS = React.useState(true);
+    var filterS = React.useState(cfg["list.filterRestarted"] !== false);
     var filterRestarted = filterS[0], setFilterRestarted = filterS[1];
     var tagNavS = React.useState({ available: false, tags: [], untagged: { total: 0 } });
     var tagNav = tagNavS[0], setTagNav = tagNavS[1];
@@ -928,7 +979,7 @@ var h = React.createElement;
     var tagMenu = tagMenuS[0], setTagMenu = tagMenuS[1];
     var pageS = React.useState(1);
     var pageNumber = pageS[0], setPageNumber = pageS[1];
-    var sizeS = React.useState(12);
+    var sizeS = React.useState(cfgSize);
     var pageSize = sizeS[0], setPageSize = sizeS[1];
     var dataS = React.useState({ records: [], total: 0, current: 1, size: 0, pageable: false });
     var data = dataS[0], setData = dataS[1];
@@ -986,8 +1037,14 @@ var h = React.createElement;
 
     var refreshTree = React.useCallback(function () {
       return api.call("taskNodes.tree").then(function (r) {
-        if (r && r.ok) setTree(Array.isArray(r.result) ? r.result : []);
-        else setError((r && r.error) || "tree load failed");
+        if (r && r.ok) {
+          var nodes = Array.isArray(r.result) ? r.result : [];
+          setTree(nodes);
+          if (!expInitRef.current) {
+            expInitRef.current = true;
+            setExpanded(expandedByDepth(nodes, cfgDepth));
+          }
+        } else setError((r && r.error) || "tree load failed");
       }).catch(function (e) { setError(String(e && e.message || e)); });
     }, [api]);
 
@@ -1011,6 +1068,7 @@ var h = React.createElement;
         tableId: target.tableId, groupId: target.tableId ? null : target.groupId,
         pageNumber: pageNumber, pageSize: pageSize,
         filterRestarted: filterRestarted, tagIds: filterTagIds,
+        sort: cfgSort === "auto" ? undefined : cfgSort,
       }).then(function (r) {
         setLoading(false);
         if (r && r.ok) {
@@ -1020,7 +1078,7 @@ var h = React.createElement;
           setError((r && r.error) || "list load failed");
         }
       }).catch(function (e) { setLoading(false); setError(String(e && e.message || e)); });
-    }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds]);
+    }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, cfgSort]);
 
     refreshRef.current = { tree: refreshTree, list: refreshList, path: refreshPath, tags: refreshTagNav };
 
@@ -1352,6 +1410,10 @@ var h = React.createElement;
         key: (createState.source || "0") + "-" + (createState.originTask && createState.originTask.id || ""),
         t: t, api: api, tree: tree, source: createState.source,
         originTask: createState.originTask, defaultTableId: createState.defaultTableId,
+        defaults: {
+          priority: cfg["form.defaultPriority"], difficulty: cfg["form.defaultDifficulty"],
+          targetOffset: cfg["form.defaultTargetOffset"],
+        },
         onClose: function () { setCreateState(null); },
         onCreated: function () { setCreateState(null); refreshList(); refreshTree(); say(t.created); },
       }) : null,
@@ -1380,10 +1442,11 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.6.3",
+    version: "2.7.0",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },
+      { id: "config", title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
     ],
   });
 
