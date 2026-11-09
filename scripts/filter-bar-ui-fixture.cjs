@@ -13,6 +13,7 @@ const api={subscribe:()=>()=>{},call:async(action,args={})=>{
  return {ok:true,result};
 }};
 function App(){const [lang,setLang]=React.useState('zh'),[params,setParams]=React.useState({tableId:'stale'});
+ if(new URLSearchParams(location.search).has('host')) return h('div',{className:'wb-inner wb-wide'},h('div',{className:'wb-page-tabs'},h('button',{id:'language',onClick:()=>setLang(lang==='zh'?'en':'zh')},'Language')),h('div',{'data-view-id':'tasks'},h(addon.views.find(v=>v.id==='tasks').component,{api,lang,viewParams:params})));
  return h(React.Fragment,null,h('button',{id:'language',onClick:()=>setLang(lang==='zh'?'en':'zh')},'Language'),h('main',null,h(addon.views.find(v=>v.id==='tasks').component,{api,lang,viewParams:params})),h(Heatmap,{api,lang,onNavigate:(_,p)=>setParams(p)}));}
 createRoot(document.getElementById('root')).render(h(App));
 window.filterEvidence=()=>{

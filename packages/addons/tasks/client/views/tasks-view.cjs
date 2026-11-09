@@ -26,21 +26,6 @@ module.exports = function createTasksView(deps) {
   function TasksViewBody(props) {
     var t = COPY[props.lang === "en" ? "en" : "zh"];
     var api = props.api;
-    var rootRef = React.useRef(null), pathrowRef = React.useRef(null);
-    React.useEffect(function () {
-      var root = rootRef.current, row = pathrowRef.current;
-      if (!root || !row) return;
-      function measure() { root.style.setProperty("--wbt-pathrow-h", Math.ceil(row.getBoundingClientRect().height) + "px"); }
-      measure();
-      var observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
-      if (observer) observer.observe(row);
-      if (typeof window !== "undefined") window.addEventListener("resize", measure);
-      return function () {
-        if (observer) observer.disconnect();
-        if (typeof window !== "undefined") window.removeEventListener("resize", measure);
-        root.style.removeProperty("--wbt-pathrow-h");
-      };
-    }, []);
     var cfg = props.cfg || {};
     var activityNavigation = filters.navigation(props.viewParams);
     var tableNavigation = !activityNavigation && props.viewParams && props.viewParams.tableId;
@@ -461,8 +446,8 @@ module.exports = function createTasksView(deps) {
               });
             }));
 
-    return h("div", { className: "wbt-root", ref: rootRef },
-      h("div", { className: "wbt-pathrow", ref: pathrowRef },
+    return h("div", { className: "wbt-root" },
+      h("div", { className: "wbt-pathrow" },
         h("div", { className: "wbt-tree-slot" },
           h("button", { className: "wbt-btn", onClick: function () { setDrawer(true); refreshTree(); } }, h(Icon, { name: "tree", size: 13 }), t.tree)
         ),
@@ -486,7 +471,7 @@ module.exports = function createTasksView(deps) {
       h("div", { className: "wbt-body" },
         filterPanel,
         h("div", { className: "wbt-content" },
-          listBody,
+          h("div", { className: "wbt-list-scroll", tabIndex: 0, role: "region", "aria-label": props.lang === "en" ? "Task list" : "任务列表", key: pageNumber + ":" + pageSize }, listBody),
           pageable ? h("div", { className: "wbt-pager" },
             h("button", { className: "wbt-btn ghost", disabled: pageNumber <= 1, onClick: function () { setPageNumber(Math.max(1, pageNumber - 1)); } }, h(Icon, { name: "left", size: 14 })),
             h("span", null, t.page + " " + pageNumber + " / " + totalPages),
