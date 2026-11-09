@@ -17,7 +17,8 @@
  * 用法：node scripts/audit-actions.mjs
  * 退出码：0 全部通过；1 有告警。
  */
-import { mkdtempSync, readFileSync, readdirSync, existsSync } from "node:fs";
+import { mkdtempSync, readFileSync, existsSync } from "node:fs";
+import { readLibSource } from "./source-files.mjs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -108,10 +109,7 @@ function versions(addon) {
 function libSource(addon) {
   const dir = join(ROOT, "packages/addons", addon, "lib");
   if (!existsSync(dir)) return "";
-  return readdirSync(dir)
-    .filter((f) => f.endsWith(".js") && f !== "client.js")
-    .map((f) => read(join(dir, f)))
-    .join("\n");
+  return readLibSource(dir);
 }
 
 /** Array/String 的内建成员，不是 schema 字段。 */

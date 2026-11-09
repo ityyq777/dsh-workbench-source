@@ -12,12 +12,15 @@
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
+import { sourceFiles, resolveLineBudgets } from "./source-files.mjs";
 
-const ROOT = new URL("..", import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const budget = JSON.parse(readFileSync(join(ROOT, "scripts/line-budget.json"), "utf8"));
 const WARN = budget.warn || 600;
 const FAIL = budget.fail || 900;
-const ALLOW = budget.budget || {};
+const layout = JSON.parse(readFileSync(join(ROOT, "scripts/structure-map.json"), "utf8"));
+const {caps: ALLOW, errors: budgetErrors} = resolveLineBudgets(ROOT, budget.budget || {}, layout);
 
 const ROOTS = [
   "packages/addons/*/lib",
@@ -28,13 +31,14 @@ const ROOTS = [
 ];
 
 const SKIP = [
-  /\/lib\/client\.js$/, // 构建产物
+  /^packages\/addons\/[^/]+\/lib\/client\.js$/, // 仅根入口构建产物；嵌套同名文件仍审计
   /^packages\/shell\/client\/client\.js$/, // 宿主客户端构建产物
   /\.d\.ts$/,
 ];
 
 function expand(pattern) {
   const at = pattern.indexOf("*");
+  if (at < 0) return [join(ROOT, pattern)];
   const head = pattern.slice(0, at);
   const tail = pattern.slice(at + 1);
   const base = join(ROOT, head);
@@ -53,26 +57,7 @@ function expand(pattern) {
   return dirs.map((d) => join(base, d, tail.replace(/^\//, "")));
 }
 
-function walk(dir, out) {
-  let names = [];
-  try {
-    names = readdirSync(dir);
-  } catch {
-    return out;
-  }
-  for (const name of names) {
-    const full = join(dir, name);
-    let st;
-    try {
-      st = statSync(full);
-    } catch {
-      continue;
-    }
-    if (st.isDirectory()) walk(full, out);
-    else if (/\.(js|cjs|mjs|ts|tsx)$/.test(name)) out.push(full);
-  }
-  return out;
-}
+function walk(dir, out) { out.push(...sourceFiles(dir)); return out; }
 
 const files = [];
 for (const pattern of ROOTS) for (const dir of expand(pattern)) walk(dir, files);
@@ -96,7 +81,7 @@ const broken = rows.filter((r) => {
 });
 
 if (process.argv.includes("--json")) {
-  console.log(JSON.stringify({ warn: WARN, fail: FAIL, files: rows.length, over, broken }, null, 2));
+  console.log(JSON.stringify({ warn: WARN, fail: FAIL, files: rows.length, over, broken, budgetErrors }, null, 2));
 } else {
   console.log(`手写源行数审计：${rows.length} 个文件（目标 ≤${WARN}，上限 ${FAIL}）`);
   if (!over.length) {
@@ -112,6 +97,8 @@ if (process.argv.includes("--json")) {
   }
 }
 
+for (const error of budgetErrors) console.error(error);
+if (budgetErrors.length) process.exitCode = 1;
 if (broken.length) {
   console.error(`\n行数审计失败：${broken.length} 个文件超出行数预算，请先拆分（或下调预算）再提交。`);
   process.exitCode = 1;

@@ -10,6 +10,8 @@ import { join } from "node:path";
 
 const root = join(import.meta.dirname, "..");
 const tests = [
+  "scripts/test-structure.mjs",
+  "scripts/audit-structure.mjs",
   "scripts/test-native.mjs",
   "scripts/test-task-ownership-backend.mjs",
   "scripts/test-task-ownership-concurrency.mjs",

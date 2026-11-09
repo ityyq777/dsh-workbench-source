@@ -1,0 +1,246 @@
+{
+  "version": 1,
+  "maxFilesPerDirectory": 12,
+  "maxDirectoryDepth": 3,
+  "scopes": {
+    "tasks/lib": {
+      "root": "packages/addons/tasks/lib",
+      "entries": [
+        "index.js",
+        "tasks.js"
+      ],
+      "generated": [
+        "client.js"
+      ],
+      "files": {
+        "index.js": "index.js",
+        "tasks.js": "tasks.js",
+        "client.js": "client.js",
+        "db.js": "db/db.js",
+        "db-core.js": "db/db-core.js",
+        "db-legacy.js": "db/db-legacy.js",
+        "task-model.js": "task/model/task-model.js",
+        "task-priority.js": "task/model/task-priority.js",
+        "task-difficulty.js": "task/model/task-difficulty.js",
+        "task-ownership-path.js": "task/model/task-ownership-path.js",
+        "task-create.js": "task/write/task-create.js",
+        "task-create-schema.js": "task/write/task-create-schema.js",
+        "task-update.js": "task/write/task-update.js",
+        "task-bulk.js": "task/write/task-bulk.js",
+        "task-operations.js": "task/write/task-operations.js",
+        "task-target.js": "task/write/task-target.js",
+        "task-transaction.js": "task/write/task-transaction.js",
+        "task-query.js": "task/read/task-query.js",
+        "task-search-schema.js": "task/read/task-search-schema.js",
+        "task-view.js": "task/read/task-view.js",
+        "task-publish-filter.js": "task/read/task-publish-filter.js",
+        "task-discovery.js": "task/read/task-discovery.js",
+        "tree.js": "tree/tree.js",
+        "task-node-write.js": "tree/task-node-write.js",
+        "timeline-actions.js": "timeline/timeline-actions.js",
+        "timeline-store.js": "timeline/timeline-store.js",
+        "timeline-migration.js": "timeline/timeline-migration.js",
+        "timeline-sync.js": "timeline/timeline-sync.js",
+        "task-timelines.js": "timeline/task-timelines.js",
+        "stats.js": "stats/stats.js",
+        "stats-today.js": "stats/stats-today.js",
+        "activity-calendar.js": "stats/activity-calendar.js",
+        "overview.js": "stats/overview.js",
+        "tagging.js": "tagging/tagging.js",
+        "tag-options.js": "tagging/tag-options.js",
+        "backup.js": "infra/backup.js",
+        "sync.js": "infra/sync.js",
+        "data.js": "infra/data.js",
+        "config.js": "infra/config.js"
+      }
+    },
+    "tasks/client": {
+      "root": "packages/addons/tasks/client",
+      "entries": [
+        "client.src.cjs"
+      ],
+      "generated": [],
+      "files": {
+        "client.src.cjs": "client.src.cjs",
+        "tasks-view.cjs": "views/tasks-view.cjs",
+        "stats.cjs": "views/stats.cjs",
+        "timeline-view.cjs": "views/timeline-view.cjs",
+        "config.cjs": "views/config.cjs",
+        "data.cjs": "views/data.cjs",
+        "styles.cjs": "ui/styles.cjs",
+        "copy.cjs": "ui/copy.cjs",
+        "icons.cjs": "ui/icons.cjs",
+        "body-mode.cjs": "ui/body-mode.cjs",
+        "date-filter.cjs": "ui/date-filter.cjs",
+        "tagfilter.cjs": "ui/tagfilter.cjs",
+        "highlight.cjs": "ui/highlight.cjs",
+        "task-item.cjs": "item/task-item.cjs",
+        "recent-columns.cjs": "item/recent-columns.cjs",
+        "difficulty-field.cjs": "item/difficulty-field.cjs",
+        "create-modal.cjs": "modals/create-modal.cjs",
+        "edit-modal.cjs": "modals/edit-modal.cjs",
+        "batch-modal.cjs": "modals/batch-modal.cjs",
+        "table-picker.cjs": "modals/table-picker.cjs",
+        "ownership-fields.cjs": "modals/ownership-fields.cjs",
+        "ownership.cjs": "modals/ownership.cjs",
+        "task-timeline-modal.cjs": "timeline/task-timeline-modal.cjs",
+        "timeline-add-members.cjs": "timeline/timeline-add-members.cjs",
+        "timeline-controls.cjs": "timeline/timeline-controls.cjs",
+        "timeline-copy.cjs": "timeline/timeline-copy.cjs",
+        "timeline-members.cjs": "timeline/timeline-members.cjs",
+        "timeline-merge.cjs": "timeline/timeline-merge.cjs",
+        "timeline-styles.cjs": "timeline/timeline-styles.cjs",
+        "charts.cjs": "stats/charts.cjs",
+        "heatmap.cjs": "stats/heatmap.cjs",
+        "heatmap-model.cjs": "stats/heatmap-model.cjs",
+        "heatmap-styles.cjs": "stats/heatmap-styles.cjs",
+        "today.cjs": "stats/today.cjs",
+        "activity-filter.cjs": "stats/activity-filter.cjs"
+      }
+    },
+    "sites/lib": {
+      "root": "packages/addons/sites/lib",
+      "entries": [
+        "index.js"
+      ],
+      "generated": [
+        "client.js"
+      ],
+      "files": {
+        "index.js": "index.js",
+        "client.js": "client.js",
+        "db.js": "db/db.js",
+        "accounts-model.js": "domain/accounts-model.js",
+        "accounts.js": "domain/accounts.js",
+        "sites-mappings.js": "domain/sites-mappings.js",
+        "sites.js": "domain/sites.js",
+        "vault.js": "domain/vault.js",
+        "tree.js": "tree/tree.js",
+        "stats.js": "stats/stats.js",
+        "overview.js": "stats/overview.js",
+        "backup.js": "infra/backup.js",
+        "config.js": "infra/config.js",
+        "data.js": "infra/data.js",
+        "sync.js": "infra/sync.js"
+      }
+    },
+    "sites/client": {
+      "root": "packages/addons/sites/client",
+      "entries": [
+        "client.src.cjs"
+      ],
+      "generated": [],
+      "files": {
+        "client.src.cjs": "client.src.cjs",
+        "config.cjs": "views/config.cjs",
+        "data.cjs": "views/data.cjs",
+        "stats.cjs": "views/stats.cjs",
+        "copy.cjs": "ui/copy.cjs",
+        "styles.cjs": "ui/styles.cjs",
+        "tagfilter.cjs": "ui/tagfilter.cjs",
+        "charts.cjs": "stats/charts.cjs"
+      }
+    },
+    "tags/lib": {
+      "root": "packages/addons/tags/lib",
+      "entries": [
+        "index.js"
+      ],
+      "generated": [
+        "client.js"
+      ],
+      "files": {
+        "index.js": "index.js",
+        "client.js": "client.js",
+        "db.js": "db/db.js",
+        "tags.js": "domain/tags.js",
+        "stats.js": "stats/stats.js",
+        "backup.js": "infra/backup.js",
+        "config.js": "infra/config.js",
+        "data.js": "infra/data.js",
+        "sync.js": "infra/sync.js"
+      }
+    },
+    "tags/client": {
+      "root": "packages/addons/tags/client",
+      "entries": [
+        "client.src.cjs"
+      ],
+      "generated": [],
+      "files": {
+        "client.src.cjs": "client.src.cjs",
+        "config.cjs": "views/config.cjs",
+        "data.cjs": "views/data.cjs",
+        "stats.cjs": "views/stats.cjs",
+        "charts.cjs": "stats/charts.cjs",
+        "top-tags.cjs": "stats/top-tags.cjs"
+      }
+    },
+    "storage/lib": {
+      "root": "packages/addons/storage/lib",
+      "entries": [
+        "index.js"
+      ],
+      "generated": [
+        "client.js"
+      ],
+      "files": {
+        "index.js": "index.js",
+        "client.js": "client.js",
+        "db.js": "db/db.js",
+        "storage.js": "domain/storage.js",
+        "deletion.js": "domain/deletion.js",
+        "tags.js": "domain/tags.js",
+        "backup.js": "infra/backup.js",
+        "config.js": "infra/config.js",
+        "data.js": "infra/data.js"
+      }
+    },
+    "storage/client": {
+      "root": "packages/addons/storage/client",
+      "entries": [
+        "client.src.cjs"
+      ],
+      "generated": [],
+      "files": {
+        "client.src.cjs": "client.src.cjs",
+        "config.cjs": "views/config.cjs",
+        "data.cjs": "views/data.cjs",
+        "stats.cjs": "views/stats.cjs",
+        "records.cjs": "views/records.cjs",
+        "config-copy.cjs": "ui/config-copy.cjs",
+        "data-columns.cjs": "ui/data-columns.cjs",
+        "icons.cjs": "ui/icons.cjs",
+        "selection.cjs": "ui/selection.cjs",
+        "styles.cjs": "ui/styles.cjs",
+        "ui.cjs": "ui/ui.cjs",
+        "card.cjs": "item/card.cjs",
+        "editor.cjs": "modals/editor.cjs"
+      }
+    },
+    "shell/src": {
+      "root": "packages/shell/src",
+      "entries": [
+        "index.ts"
+      ],
+      "generated": [],
+      "files": {
+        "index.ts": "index.ts",
+        "actions.ts": "actions/actions.ts",
+        "action-output.ts": "actions/action-output.ts",
+        "capabilities.ts": "actions/capabilities.ts",
+        "task-targets.ts": "actions/task-targets.ts",
+        "sync.ts": "sync/sync.ts",
+        "sync-conflicts.ts": "sync/sync-conflicts.ts",
+        "sync-incoming.ts": "sync/sync-incoming.ts",
+        "sync-types.ts": "sync/sync-types.ts",
+        "sync-values.ts": "sync/sync-values.ts",
+        "audit.ts": "infra/audit.ts",
+        "backup.ts": "infra/backup.ts",
+        "network.ts": "infra/network.ts",
+        "zip.ts": "infra/zip.ts",
+        "host-types.ts": "types/host-types.ts"
+      }
+    }
+  }
+}
