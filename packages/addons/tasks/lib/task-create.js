@@ -1,3 +1,4 @@
+import { timelineIdArg, requireTimeline, activeTimeline, timelineError, setMembership } from "./timeline-store.js";
 import { difficultyMissingNotices, cleanDifficultyReceipt } from "./task-difficulty.js";
 // 与 task-bulk 的循环引用只在调用期取值，顶层不求值。
 import {
@@ -5,44 +6,22 @@ import {
   newId,
   idOf,
   todayStr,
-  addDays,
-  dateText,
-  tx,
-  logChange,
-  taskOut,
-  nodeMap,
-  pathForTable,
-  tableExists,
-  timeMs,
 } from "./db.js";
 // task-query 循环依赖仅在调用期读取 tasks 的函数/常量。
-import { TASK_FILTER_SCHEMA } from "./task-search-schema.js";
-import { listTasks } from "./task-query.js";
-import { statsReport, renderStats } from "./stats.js";
-import { registerTagOptionsAction } from "./tag-options.js";
-import { configValues } from "./config.js";
-import { clampPriority, priorityForStatus, priorityForCreate } from "./task-priority.js";
-import { taskHistory, changelog, csvCell, renderArray, renderList } from "./task-view.js";
-import { idList, patchOf, diffRow, applyPatchRow, bulkUpdate, bulkCreate, bulkDelete, renderBulkUpdate, renderBulkCreate, renderBulkDelete } from "./task-bulk.js";
+import { priorityForCreate } from "./task-priority.js";
 import {
-  LEGACY_TYPE_TAGS,
   tagsAvailable,
   normalizeTagIds,
   normalizeTagNames,
   requireTagRows,
-  availableTagsText,
-  tagIdsByNames,
   ensureTagsByNames,
   replaceTaskTags,
   attachTags,
-  tagNavStats,
-  tagBreakdown,
-  migrateLegacyTypes,
 } from "./tagging.js";
-import { requireKnownTagNames, TAG_DOMAIN_NOTICE, tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, sourceCode, putTypeCode, clampDifficulty, dateArg, getTask, defaultTable, requireTable, insertTaskRow, saveTaskRow, outOne, emitChange, writeChange, checkRequiredDates, currentTaskTagIds, resolveTagPatch, PATCH_FIELDS, DIFF_COLUMNS } from "./task-model.js";
+import { requireKnownTagNames, tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, sourceCode, clampDifficulty, dateArg, getTask, insertTaskRow, saveTaskRow, outOne, writeChange, checkRequiredDates } from "./task-model.js";
 import { taskTransaction } from './task-transaction.js';
 import { validateTargetArgs, resolveTarget, requireOwnedTable } from './task-target.js';
-import { ownershipError, ownershipFields, parseTablePath } from './task-ownership-path.js';
+import { ownershipError, ownershipFields } from './task-ownership-path.js';
 // 标题不做唯一性校验：允许与其它任务同名，调用方用 id 区分（与标签名唯一是两条规则）。
 export function createTask(db, args, origin, api, opts) {
   if (!opts?.skipTx) return taskTransaction(db, api, buffered => createTask(db, args, origin, buffered, {skipTx:true}));
@@ -65,7 +44,6 @@ export function createTask(db, args, origin, api, opts) {
       return withNotices({ id: String(existing.id), task, ...ownershipFields(task), deduped: true, existing: true, createdNodes: [] }, notices);
     }
   }
-  const { table, createdNodes } = resolveTarget(db, args, validated, origin, api);
   const source = sourceCode(args.source);
   let status = asCode(args.status, STATUS_NAMES, STATUSES, "status");
   if (status === null) status = "0";
@@ -94,18 +72,24 @@ export function createTask(db, args, origin, api, opts) {
   // 关闭/完成的任务同样清零（见 priorityForStatus）；开启任务缺省 P1，不再有「P0 开启」。
   if (targetDate < publishDate) throw new Error("targetDate 不能早于 publishDate");
 
-  let timelineKey = idOf(args.timelineKey);
+  let timelineKey = timelineIdArg(args, false);
+  if (source === "0" && timelineKey) throw timelineError("TIMELINE_SOURCE_CONFLICT", "普通任务不接受时间线，请使用 source=1 或 taskTimelines.attach");
   let restartKey = idOf(args.restartKey || args.originTaskId);
   if (source === "1") {
-    if (!timelineKey) throw new Error("时间线任务必须提供 timelineKey");
+    if (!timelineKey) throw timelineError("TIMELINE_ID_REQUIRED", "时间线任务必须提供 timelineId");
+    requireTimeline(db, timelineKey);
   }
   if (source === "2") {
     if (!restartKey) throw new Error("重启任务必须提供 restartKey（原任务 id）");
     const originTask = getTask(db, restartKey);
     if (!originTask) throw new Error("原任务不存在：" + restartKey);
-    if (!timelineKey) timelineKey = idOf(originTask.timeline_key) || restartKey;
+    const inherited = activeTimeline(db,restartKey);
+    if (!inherited) throw timelineError('TIMELINE_REQUIRED_FOR_RESTART','请先手动建立并关联时间线，再重启',{taskId:restartKey,reason:'NO_ACTIVE_MEMBERSHIP',nextActions:['taskTimelines.create','taskTimelines.attach','tasks.create']});
+    if (timelineKey && timelineKey !== inherited.id) throw timelineError('TIMELINE_INHERITANCE_CONFLICT','重启必须继承原任务时间线');
+    timelineKey = inherited.id;
   }
 
+  const { table, createdNodes } = resolveTarget(db, args, validated, origin, api);
   const tagIds = args.tagIds === undefined || args.tagIds === null ? null : normalizeTagIds(args.tagIds);
   // 允许直接传标签名（如 ["工作","紧急"]），缺失的标签按名补建。
   const tagNames = normalizeTagNames(args.tags);
@@ -117,7 +101,7 @@ export function createTask(db, args, origin, api, opts) {
 
   const id = newId();
   if (source === "0") {
-    timelineKey = id;
+    timelineKey = null;
     restartKey = id;
   } else if (source === "1") {
     restartKey = id;
@@ -171,6 +155,7 @@ export function createTask(db, args, origin, api, opts) {
       }
     }
     insertTaskRow(db, row);
+    if (timelineKey) setMembership(db,id,timelineKey,origin,api,{ts,project:false,touched:opts?.touchedTimelines});
     if ((tagIds || tagNames.length) && tagOn) {
       const all = (tagIds || []).slice();
       for (const tagId of ensureTagsByNames(db, tagNames, ts, origin)) {

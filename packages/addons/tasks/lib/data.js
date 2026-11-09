@@ -10,10 +10,12 @@
 
 import { DOMAIN } from "./config.js";
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 const TABLES = [
   { name: "task", zh: "任务", en: "Tasks" },
+  { name: "task_timeline", zh: "任务时间线", en: "Task timelines" },
+  { name: "task_timeline_link", zh: "时间线成员关系", en: "Timeline membership rows" },
   { name: "task_dep", zh: "任务依赖", en: "Task dependencies" },
   { name: "task_node", zh: "任务单元", en: "Task nodes" },
 ];
@@ -27,7 +29,8 @@ const COLUMN_LABELS = {
   difficulty: { zh: "难度", en: "Difficulty" },
   review: { zh: "复盘", en: "Review" },
   table_id: { zh: "任务表 ID", en: "Table ID" },
-  timeline_key: { zh: "时间线键", en: "Timeline key" },
+  timeline_key: { zh: "旧时间线键（兼容）", en: "Legacy timeline key (compatibility)" },
+  timeline_id: { zh: "时间线 ID", en: "Timeline ID" },
   restart_key: { zh: "重启键", en: "Restart key" },
   publish_date: { zh: "发布日期", en: "Published" },
   target_date: { zh: "目标日期", en: "Target date" },

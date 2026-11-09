@@ -11,8 +11,7 @@
 import { homedir } from "node:os";
 import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { randomUUID } from "node:crypto";
-import { getSyncStateText, openDb, setSyncStateText } from "@wb/core";
+import { openDb, setSyncStateText } from "@wb/core";
 import type { DatabaseSync } from "node:sqlite";
 import type {
   DomainActionDef,
@@ -22,20 +21,10 @@ import type {
   WorkbenchHost,
 } from "@wb/sdk";
 import {
-  listConflicts,
-  resolveConflict,
   SyncClock,
-  SyncEngine,
-  SyncHttpError,
-  type SyncDomain,
-  type SyncTransport,
 } from "./sync.js";
 import { AuditLog } from "./audit.js";
 import {
-  BackupError,
-  createBackup,
-  importBackup,
-  normalizeImportPolicy,
   type BackupDomain,
 } from "./backup.js";
 
@@ -51,7 +40,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.6.2";
+export const SHELL_VERSION = "0.6.3";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;

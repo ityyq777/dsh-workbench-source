@@ -17,7 +17,7 @@ const render = (C, props) => { cursor = 0; return C(props); };
 const all = node => node && typeof node === 'object' ? [node, ...node.children.flatMap(all)] : [];
 const find = (node, predicate) => { const hit = all(node).find(predicate); assert.ok(hit, 'expected UI control'); return hit; };
 const sandbox = { window: { __WB_HOST__: { registerAddon() {} } }, module: {}, console,
-  require: name => name === 'react' ? React : ['./icons.cjs', './edit-modal.cjs', './create-modal.cjs', './task-item.cjs', './tasks-view.cjs', './difficulty-field.cjs', './batch-modal.cjs', './timeline-view.cjs'].includes(name) ? require('../packages/addons/tasks/client/' + name.slice(2)) : {},
+  require: name => name === 'react' ? React : ['./icons.cjs', './edit-modal.cjs', './create-modal.cjs', './task-item.cjs', './tasks-view.cjs', './difficulty-field.cjs', './batch-modal.cjs', './timeline-view.cjs', './task-timeline-modal.cjs'].includes(name) ? require('../packages/addons/tasks/client/' + name.slice(2)) : {},
 };
 const source = readFileSync('packages/addons/tasks/client/client.src.cjs', 'utf8');
 runInNewContext(source.replace('  host.registerAddon({', '  window.test = { TaskItem, DoneModal, EditModal }; host.registerAddon({'), sandbox);
@@ -74,15 +74,16 @@ try {
   const tree = (await call('taskNodes.tree', {})).result;
   const flatten = nodes => nodes.flatMap(n => [n, ...flatten(n.children || [])]);
   const tableId = flatten(tree).find(n => String(n.type) === '1').id;
+  await call('taskTimelines.create',{id:'review-fixture'});
   for (const status of ['0', '1', '2', '3']) {
-    const id = (await call('tasks.create', { tableId, title: 'Review ' + status, status: status === '3' ? '0' : status })).result.id;
+    const id = (await call('tasks.create', { tableId, title: 'Review ' + status, source:1, timelineId:'review-fixture', status: status === '3' ? '0' : status })).result.id;
     if (status === '3') await call('tasks.create', { tableId, title: 'Review successor', source: 2, restartKey: id });
     for (const type of ['REVIEW', '4']) for (const review of ['some feeling', '']) {
       await call('tasks.update', { id, type, review });
       const task = await get(id); assert.equal(task.review, review); assert.equal(task.status, status); cases++;
     }
   }
-  const id = (await call('tasks.create', { tableId, title: 'Retain', review: 'preserved' })).result.id;
+  const id = (await call('tasks.create', { tableId, title: 'Retain', review: 'preserved', source:1, timelineId:'review-fixture' })).result.id;
   await call('tasks.update', { id, type: 'STATUS', status: '2', difficulty: 2 });
   assert.equal((await get(id)).review, 'preserved');
   await call('tasks.create', { tableId, title: 'Restarted successor', source: 2, restartKey: id });

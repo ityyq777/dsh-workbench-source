@@ -339,7 +339,7 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
                 if (action !== "keep_local" && action !== "keep_server" && action !== "dismiss") {
                   return send(400, { ok: false, error: "action 必须是 keep_local/keep_server/dismiss" });
                 }
-                const ok = resolveConflict(state.db, Number(conflictM[1]), action, clock.now());
+                const ok = resolveConflict(state.db, Number(conflictM[1]), action, clock.now(), syncDomains());
                 return send(ok ? 200 : 404, { ok });
               }
               if (p === "/account" && m === "GET") {

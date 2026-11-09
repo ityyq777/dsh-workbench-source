@@ -11,7 +11,7 @@ const actions=new Map(), events=[];
 let tagOn=true;
 setup({db,addon:{version:'test'},log(){},hasDomain:()=>tagOn,emit:(...event)=>events.push(event),action:(name,def)=>actions.set(name,def)});
 const call=(name,args={})=>actions.get(name).execute(args,{origin:'agent'});
-const counts=()=>Object.fromEntries(['task_node','task','tag','tag_mapping','sync_change_log'].map(t=>[t,Number(db.prepare('SELECT COUNT(*) AS n FROM '+t).get().n)]));
+const counts=()=>Object.fromEntries(['task_node','task','task_timeline','task_timeline_link','tag','tag_mapping','sync_change_log'].map(t=>[t,Number(db.prepare('SELECT COUNT(*) AS n FROM '+t).get().n)]));
 const snapshot=()=>JSON.stringify({counts:counts(),tasks:db.prepare('SELECT * FROM task ORDER BY id').all(),events});
 const fail=(name,args,code)=>{const before=snapshot();assert.throws(()=>call(name,args),code);assert.equal(snapshot(),before,'failed operation is atomic');};
 const newArgs={title:'Storage implementation',tablePath:['产品','storage'],createMissing:true,pathDescriptions:['产品开发','物品存储模块开发'],tags:['开发'],dedupeKey:'session:one'};
@@ -53,6 +53,8 @@ try {
  const batch=call('tasks.bulkCreate',{records:[{title:'one',tableId,dedupeKey:'batch'},{title:'two',tableId,dedupeKey:'batch'}]});
  assert.equal(batch.created,1);assert.equal(batch.deduped,1);
  const original=call('tasks.create',{title:'Original',tableId}).task;
+ call('taskTimelines.create',{id:'ownership-restart'});
+ call('taskTimelines.attach',{taskId:original.id,timelineId:'ownership-restart'});
  // Failure after the original restart transition, node insert, tag insert and task insert.
  db.exec("CREATE TRIGGER fail_log BEFORE INSERT ON sync_change_log WHEN NEW.table_name='task' AND NEW.op='create' BEGIN SELECT RAISE(ABORT,'injected failure'); END");
  fail('tasks.create',{title:'Restart',tablePath:'原子/重启',createMissing:true,pathDescriptions:['atomic','restart'],source:2,restartKey:original.id,tags:['rollback-tag']},/injected failure/);

@@ -20,7 +20,7 @@ const all = n => n && typeof n === 'object' ? [n, ...n.children.flatMap(all)] : 
 const find = (node, test) => { const result = all(node).find(test); assert.ok(result, 'control exists'); return result; };
 function mount(source = '0', component = Create, response = { ok: true, result: { tablePath: '插件/storage' } }) {
   state = []; deps = []; let closed = 0, saved = 0; const calls = [];
-  const props = { t: copy.zh, source, tree, defaultTableId: 'table', originTask: { id: 'original', tableId: 'table', priority: 4 },
+  const props = { t: copy.zh, source, tree, defaultTableId: 'table', originTask: { id: 'original', tableId: 'table', priority: 4, timelineId: 'line' },
     task: { id: 'original', title: 'Old', status: '0', tableId: 'table', priority: 4 },
     api: { call: async (action, args) => { if (action === "tasks.capabilities") return { ok: true }; calls.push({ action, args }); return response; } },
     onCreated: () => saved++, onSaved: () => saved++, onClose: () => closed++ };

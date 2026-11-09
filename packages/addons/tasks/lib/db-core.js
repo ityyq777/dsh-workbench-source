@@ -4,6 +4,7 @@
  * 只依赖 api.db（node:sqlite DatabaseSync）。不 import 宿主模块。
  */
 
+import { TIMELINE_DDL } from "./timeline-store.js";
 export const TASK_TABLE = "task";
 export const NODE_TABLE = "task_node";
 
@@ -281,6 +282,7 @@ export function nodeMap(db) {
   const rows = db.prepare("SELECT * FROM task_node").all();
   const map = new Map();
   for (const row of rows) map.set(String(row.id), row);
+  map.timelines = new Map(db.prepare('SELECT l.task_id,e.* FROM task_timeline_link l JOIN task_timeline e ON e.id=l.timeline_id JOIN task t ON t.id=l.task_id WHERE l.deleted_at IS NULL AND e.deleted_at IS NULL AND t.deleted_at IS NULL').all().map(r=>[String(r.task_id),r]));
   return map;
 }
 
@@ -316,6 +318,10 @@ export function taskOut(row, map) {
   const t = rowTask(row);
   if (!t) return null;
   const nodes = map || new Map();
+  const timeline = nodes.timelines?.get(String(row.id));
+  t.timelineId = t.timelineKey = timeline?.id ?? null;
+  t.timelineTitle = timeline?.title ?? null;
+  t.timelineDescription = timeline?.description ?? null;
   t.path = pathForTable(t.tableId, nodes);
   const table = nodes.get(String(t.tableId));
   t.tableId = String(t.tableId || "");
@@ -376,6 +382,7 @@ export function createSchema(db) {
   for (const sql of TASK_DDL) db.exec(sql);
   for (const sql of NODE_DDL) db.exec(sql);
   for (const sql of DEP_DDL) db.exec(sql);
+  for (const sql of TIMELINE_DDL) db.exec(sql);
 }
 
 export function seedDefaultTree(db) {

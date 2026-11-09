@@ -83,11 +83,18 @@ export function applyRemoteUpsert(
   }
   const cols = Object.keys(remote);
   // 通用整行替换：先删后插保证列集合与服务端一致（列由业务插件建表，同步方不感知）。
-  db.prepare("DELETE FROM " + tableName + " WHERE id=?").run(rowId);
-  const placeholders = cols.map(() => "?").join(",");
-  db.prepare("INSERT INTO " + tableName + " (" + cols.join(",") + ") VALUES(" + placeholders + ")").run(
-    ...cols.map((c) => remote[c] as never),
-  );
+  db.exec("SAVEPOINT core_remote_row");
+  try {
+    db.prepare("DELETE FROM " + tableName + " WHERE id=?").run(rowId);
+    const placeholders = cols.map(() => "?").join(",");
+    db.prepare("INSERT INTO " + tableName + " (" + cols.join(",") + ") VALUES(" + placeholders + ")").run(
+      ...cols.map((c) => remote[c] as never),
+    );
+    db.exec("RELEASE core_remote_row");
+  } catch (error) {
+    db.exec("ROLLBACK TO core_remote_row; RELEASE core_remote_row");
+    throw error;
+  }
   return true;
 }
 

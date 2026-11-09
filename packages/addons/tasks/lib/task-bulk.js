@@ -8,8 +8,9 @@ import { ownershipFields, renderOwnership } from './task-ownership-path.js';
  * 与 tasks.js 是允许的循环依赖：两边都只在调用期取对方的函数，顶层不做求值。
  */
 
-import { now, idOf, todayStr, tx, logChange, taskOut, nodeMap } from "./db.js";
-import { tagsAvailable, replaceTaskTags, attachTags } from "./tagging.js";
+import { setMembership, touchTimelines } from "./timeline-store.js";
+import { now, idOf, todayStr, logChange, taskOut, nodeMap } from "./db.js";
+import { tagsAvailable, replaceTaskTags } from "./tagging.js";
 import {
   PATCH_FIELDS,
   DIFF_COLUMNS,
@@ -161,7 +162,9 @@ export function bulkCreate(db, args, origin, api) {
   return taskTransaction(db,api,buffered => {
     // 先校验每条目标，保证无目标不受前一条记录的临时写入影响。
     for (const rec of records) validateTargetArgs(db,rec || {},buffered);
-    const results = records.map(rec => createTask(db, rec || {}, origin, buffered, {skipTx:true}));
+    const touchedTimelines = new Set();
+    const results = records.map(rec => createTask(db, rec || {}, origin, buffered, {skipTx:true,touchedTimelines}));
+    touchTimelines(db,touchedTimelines,origin,buffered);
     const actual = results.filter(r=>!r.deduped).length;
     const createdNodes = results.flatMap(r=>r.createdNodes || []);
     return { dryRun, created:dryRun ? 0 : actual, wouldCreate:dryRun ? actual : undefined,
@@ -182,7 +185,8 @@ export function bulkDelete(db, args, origin, api) {
   const deleted = [];
   const missing = [];
   const items = [];
-  const plan = function () {
+  const plan = function (buffered = api) {
+    const touched = new Set();
     for (const id of ids) {
       const cur = getTask(db, id);
       if (!cur) {
@@ -195,15 +199,17 @@ export function bulkDelete(db, args, origin, api) {
       deleted.push(id);
       items.push({ id: id, title: String(cur.title || "") });
       if (!dryRun) {
-        const next = Object.assign({}, cur, { deleted_at: ts, updated_at: ts, rev: Number(cur.rev) + 1 });
+        setMembership(db,id,null,origin,buffered,{ts,project:false,touched});
+        const next = Object.assign({}, cur, { timeline_key:null, deleted_at: ts, updated_at: ts, rev: Number(cur.rev) + 1 });
         saveTaskRow(db, next);
         logChange(db, "task", next.id, "delete", null, origin, ts);
-        emitChange(api, next.id, "delete");
+        emitChange(buffered, next.id, "delete");
       }
     }
+    if (!dryRun) touchTimelines(db,touched,origin,buffered,ts);
   };
   if (dryRun) plan();
-  else tx(db, plan);
+  else taskTransaction(db, api, plan);
   return {
     dryRun: dryRun,
     deleted: dryRun ? 0 : deleted.length,

@@ -554,7 +554,7 @@ module.exports = function createTasksView(deps) {
         onCreated: function (result) { setCreateState(null); refreshList(); refreshTree(); say(require("./ownership.cjs").receipt(result)); },
       }) : null,
       timelineTask ? h(TimelineModal, {
-        key: timelineTask.id, t: t, api: api, task: timelineTask,
+        key: timelineTask.id, t: t, api: api, task: timelineTask, onChanged: refreshList,
         onClose: function () { setTimelineTask(null); },
         onCreateTimeline: function (originTask) {
           setTimelineTask(null);

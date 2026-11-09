@@ -1,13 +1,9 @@
-// Resolve legacy timeline associations without inventing a line for an unlinked task.
+// Association is supplied by the entity projection, never inferred from member count.
 "use strict";
 module.exports = function timelineMembers(api, task) {
-  var key = task.timelineKey == null ? "" : String(task.timelineKey).trim();
-  if (!key) return Promise.resolve([]);
-  return api.call("tasks.timeline", { timelineKey: key }).then(function (response) {
-    if (!response || !response.ok) throw new Error(response && response.error || "load failed");
-    var items = Array.isArray(response.result) ? response.result : [];
-    // Old normal tasks used their own id as a placeholder timeline key.
-    if (items.length === 1 && key === String(task.id) && String(items[0].id) === String(task.id)) return [];
-    return items;
+  if (task.timelineId == null || task.timelineId === "") return Promise.resolve([]);
+  return api.call("tasks.timeline", { timelineId: String(task.timelineId) }).then(function (r) {
+    if (!r || !r.ok) throw new Error(r && r.error || "load failed");
+    return Array.isArray(r.result) ? r.result : r.result.records || [];
   });
 };

@@ -6,6 +6,7 @@
  */
 
 import { ownershipError } from './task-ownership-path.js';
+import { normalizeTimelineTask, normalizeTimelineLink, afterTimelineTask, afterTimelineLink, afterTimelineEntity } from './timeline-sync.js';
 
 // 多设备同名不同 id 不自动合并；阻断同步收敛并交给用户用 id 消歧。
 function checkSiblingConflicts(rows) {
@@ -158,7 +159,9 @@ export function reconcileTaskTree(remoteRows, localRows) {
 
 export const taskSync = {
   tables: [
-    { name: "task", mode: "row" },
+    { name: "task", mode: "row", normalizeIncoming: normalizeTimelineTask, afterApply: afterTimelineTask },
+    { name: "task_timeline", mode: "row", afterApply: afterTimelineEntity },
+    { name: "task_timeline_link", mode: "row", normalizeIncoming: normalizeTimelineLink, afterApply: afterTimelineLink },
     { name: "task_dep", mode: "row" },
     { name: "task_node", mode: "tree", reconcile: reconcileTaskTree },
   ],

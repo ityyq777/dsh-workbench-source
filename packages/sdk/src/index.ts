@@ -88,7 +88,16 @@ export interface SyncReconcileResult {
   dirtyRowTables?: string[];
 }
 
+/** 同步入站钩子：同步执行，与写行处于同一事务；抛错会回滚并由宿主记录死信。 */
+export interface SyncIncomingContext {
+  db: DomainSetupApi["db"];
+  row: SyncRow;
+  local: SyncRow | null;
+}
+
 export interface DomainSyncTable {
+  normalizeIncoming?(context: SyncIncomingContext): SyncRow;
+  afterApply?(context: SyncIncomingContext): void;
   name: string;
   mode: SyncMode;
   /**

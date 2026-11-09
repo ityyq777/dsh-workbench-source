@@ -3100,12 +3100,12 @@ var require_copy = __commonJS({
         timelineTasks: "\u4EFB\u52A1\u6570",
         timelineActivity: "\u6700\u8FD1\u6D3B\u52A8",
         timelineMerge: "\u5408\u5E76",
-        timelineSingletons: "\u5355\u4EFB\u52A1\u65F6\u95F4\u7EBF",
+        timelineSingletons: "\u5305\u542B\u7A7A\u7EBF\u548C\u5355\u4EFB\u52A1\u65F6\u95F4\u7EBF",
         timelineSearch: "\u641C\u7D22\u65F6\u95F4\u7EBF\u6807\u9898",
         timelineSearchButton: "\u641C\u7D22",
         timelineMembers: "\u6210\u5458\u4EFB\u52A1",
         timelineOrder: "\u6309\u53D1\u5E03\u65F6\u95F4\u6B63\u5E8F\u6392\u5217\uFF0C\u70B9\u51FB\u4EFB\u52A1\u6253\u5F00\u8BE6\u60C5",
-        timelineEmpty: "\u6682\u65E0\u5339\u914D\u7684\u5386\u53F2\u65F6\u95F4\u7EBF\u6216\u6210\u5458\uFF1B\u5355\u4EFB\u52A1\u65F6\u95F4\u7EBF\u9ED8\u8BA4\u9690\u85CF\u3002\u65F6\u95F4\u7EBF\u9700\u624B\u52A8\u521B\u5EFA\uFF0C\u672C\u9875\u6682\u672A\u63D0\u4F9B\u521B\u5EFA\u5165\u53E3\u3002",
+        timelineEmpty: "\u6682\u65E0\u5339\u914D\u7684\u65F6\u95F4\u7EBF\uFF0C\u53EF\u70B9\u51FB\u201C\u65B0\u5EFA\u65F6\u95F4\u7EBF\u201D\u624B\u52A8\u5EFA\u7ACB\u3002",
         timelineOpen: "\u5F00\u542F",
         timelineDone: "\u5B8C\u6210",
         timelinePrevious: "\u4E0A\u4E00\u9875",
@@ -3254,12 +3254,12 @@ var require_copy = __commonJS({
         timelineTasks: "Tasks",
         timelineActivity: "Last activity",
         timelineMerge: "Merge",
-        timelineSingletons: "Single-task timelines",
+        timelineSingletons: "Include empty and single-task timelines",
         timelineSearch: "Search timeline title",
         timelineSearchButton: "Search",
         timelineMembers: "Member tasks",
         timelineOrder: "Oldest publication first. Click a task to open details.",
-        timelineEmpty: "No matching historical timelines or members. Single-task timelines are hidden by default. Timelines require manual creation; this page does not yet provide a creation control.",
+        timelineEmpty: "No matching timelines. Use New timeline to create one manually.",
         timelineOpen: "Open",
         timelineDone: "Done",
         timelinePrevious: "Previous page",
@@ -5173,6 +5173,175 @@ var require_task_item = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/timeline-copy.cjs
+var require_timeline_copy = __commonJS({
+  "packages/addons/tasks/client/timeline-copy.cjs"(exports2, module2) {
+    "use strict";
+    var english = {
+      "\u641C\u7D22\u5DF2\u6709\u65F6\u95F4\u7EBF": "Search existing timelines",
+      "\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF": "Choose an existing timeline",
+      "\u4E0D\u5173\u8054\u65F6\u95F4\u7EBF": "No timeline",
+      "\u5DF2\u9009\u65F6\u95F4\u7EBF": "Selected timeline",
+      "\u672A\u547D\u540D\u65F6\u95F4\u7EBF": "Untitled timeline",
+      " \u4E2A\u4EFB\u52A1": " tasks",
+      "\u4E0A\u4E00\u9875": "Previous page",
+      "\u4E0B\u4E00\u9875": "Next page",
+      "\u91CD\u8BD5": "Retry",
+      "\u7F16\u8F91\u65F6\u95F4\u7EBF": "Edit timeline",
+      "\u65B0\u5EFA\u65F6\u95F4\u7EBF": "New timeline",
+      "\u65F6\u95F4\u7EBF\u6807\u9898": "Timeline title",
+      "\u65F6\u95F4\u7EBF\u63CF\u8FF0": "Timeline description",
+      "\u53D6\u6D88": "Cancel",
+      "\u4FDD\u5B58\u4E2D\u2026": "Saving\u2026",
+      "\u4FDD\u5B58\u65F6\u95F4\u7EBF": "Save timeline",
+      "\u4EFB\u52A1\u65F6\u95F4\u7EBF": "Task timeline",
+      "\u52A0\u8F7D\u4E2D\u2026": "Loading\u2026",
+      "\u6682\u65E0\u63CF\u8FF0": "No description",
+      "\u79FB\u51FA\u65F6\u95F4\u7EBF": "Remove from timeline",
+      "\u6DFB\u52A0\u65B0\u4EFB\u52A1": "Add a new task",
+      "\u6682\u65E0\u53EF\u663E\u793A\u6210\u5458": "No visible members",
+      "\u6CA1\u6709\u5173\u8054\u65F6\u95F4\u7EBF": "No associated timeline",
+      "\u5173\u8054\u6240\u9009\u65F6\u95F4\u7EBF": "Associate selected timeline",
+      "\u6DFB\u52A0\u5DF2\u6709\u4EFB\u52A1": "Add existing tasks",
+      "\u9009\u4E2D\u7684\u4EFB\u52A1\u5C06\u5173\u8054\u5230\u6B64\u65F6\u95F4\u7EBF\uFF1B\u539F\u6709\u5173\u8054\u4F1A\u88AB\u66FF\u6362\u3002": "Selected tasks will join this timeline, replacing any existing association.",
+      "\u641C\u7D22\u5DF2\u6709\u4EFB\u52A1": "Search existing tasks",
+      "\u5173\u8054\u4EFB\u52A1 (": "Associate tasks (",
+      "\u590D\u5236 ID": "Copy ID",
+      "\u5220\u9664\u65F6\u95F4\u7EBF": "Delete timeline",
+      "\u5220\u9664\u65F6\u95F4\u7EBF\u5C06\u79FB\u51FA\u5168\u90E8\u6210\u5458\uFF0C\u4FDD\u7559\u4EFB\u52A1\u53CA\u91CD\u542F\u94FE\u3002": "Deleting this timeline detaches all members. Tasks and restart chains are preserved.",
+      "\u53D6\u6D88\u5220\u9664": "Cancel deletion",
+      "\u786E\u8BA4\u5220\u9664\u65F6\u95F4\u7EBF": "Confirm timeline deletion",
+      "\u8BF7\u5148\u624B\u52A8\u5EFA\u7ACB\u5E76\u5173\u8054\u65F6\u95F4\u7EBF\uFF0C\u518D\u91CD\u542F": "Manually create and associate a timeline before restarting",
+      "\u8BF7\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF": "Choose an existing timeline",
+      "\u5411\u5DF2\u6709\u65F6\u95F4\u7EBF\u6DFB\u52A0\u4EFB\u52A1": "Add a task to an existing timeline",
+      " \xB7 \u81EA\u52A8\u7EE7\u627F\u539F\u65F6\u95F4\u7EBF": " \xB7 Inherits the original timeline",
+      "\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF\uFF08\u542B\u7A7A\u7EBF\u548C\u5355\u6210\u5458\u7EBF\uFF09": "Choose an existing timeline (including empty and single-task timelines)"
+    };
+    module2.exports = function(t) {
+      return function(text) {
+        return t && t.timeline === "Timeline" ? english[text] || text : text;
+      };
+    };
+  }
+});
+
+// packages/addons/tasks/client/timeline-controls.cjs
+var require_timeline_controls = __commonJS({
+  "packages/addons/tasks/client/timeline-controls.cjs"(exports2, module2) {
+    "use strict";
+    function result(r) {
+      if (!r || !r.ok) throw Error(r && r.error || "\u8BF7\u6C42\u5931\u8D25");
+      return r.result;
+    }
+    module2.exports = function(React) {
+      var h = React.createElement;
+      function Picker(p) {
+        var tr = require_timeline_copy()(p.t);
+        var ds = React.useState({ records: [], total: 0 }), data = ds[0], setData = ds[1];
+        var ps = React.useState(1), page = ps[0], setPage = ps[1];
+        var qs = React.useState(""), query = qs[0], setQuery = qs[1];
+        var es = React.useState(""), error = es[0], setError = es[1];
+        var bs = React.useState(false), busy = bs[0], setBusy = bs[1];
+        var rs = React.useState(0), retry = rs[0], setRetry = rs[1];
+        React.useEffect(function() {
+          var cancelled = false;
+          setBusy(true);
+          setError("");
+          p.api.call("tasks.timelines", { includeSingletons: true, titleKey: query, pageNumber: page, pageSize: 20 }).then(result).then(function(r) {
+            if (!cancelled) {
+              setData(r);
+              setBusy(false);
+            }
+          }).catch(function(e) {
+            if (!cancelled) {
+              setError(String(e.message || e));
+              setBusy(false);
+            }
+          });
+          return function() {
+            cancelled = true;
+          };
+        }, [p.api, page, query, retry]);
+        return h(
+          "div",
+          { className: "wbt-timeline-picker" },
+          h("label", { className: "wbt-field" }, tr("\u641C\u7D22\u5DF2\u6709\u65F6\u95F4\u7EBF"), h("input", { className: "wbt-input", value: query, onChange: function(e) {
+            setQuery(e.target.value);
+            setPage(1);
+          } })),
+          h(
+            "select",
+            { className: "wbt-select", "aria-label": tr("\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF"), value: p.value || "", disabled: p.disabled || busy, onChange: function(e) {
+              p.onChange(e.target.value);
+            } },
+            h("option", { value: "" }, tr("\u4E0D\u5173\u8054\u65F6\u95F4\u7EBF")),
+            p.value && !data.records.some(function(x) {
+              return (x.timelineId || x.timelineKey) === p.value;
+            }) ? h("option", { value: p.value }, p.title || tr("\u5DF2\u9009\u65F6\u95F4\u7EBF")) : null,
+            data.records.map(function(x) {
+              var id = x.timelineId || x.timelineKey;
+              return h("option", { key: id, value: id }, (x.title || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF")) + " \xB7 " + x.taskCount + tr(" \u4E2A\u4EFB\u52A1"));
+            })
+          ),
+          h(
+            "div",
+            { className: "wbt-timeline-pager" },
+            h("button", { type: "button", className: "wbt-btn", disabled: busy || page <= 1, onClick: function() {
+              setPage(page - 1);
+            } }, tr("\u4E0A\u4E00\u9875")),
+            h("span", null, page + " / " + Math.max(1, Math.ceil(data.total / 20))),
+            h("button", { type: "button", className: "wbt-btn", disabled: busy || page * 20 >= data.total, onClick: function() {
+              setPage(page + 1);
+            } }, tr("\u4E0B\u4E00\u9875"))
+          ),
+          error ? h("div", { role: "alert" }, error, h("button", { type: "button", onClick: function() {
+            setRetry(retry + 1);
+          } }, tr("\u91CD\u8BD5"))) : null
+        );
+      }
+      function Editor(p) {
+        var tr = require_timeline_copy()(p.t);
+        var item = p.item, pending = React.useRef(false);
+        var ts = React.useState(item && item.title || ""), title = ts[0], setTitle = ts[1];
+        var ds = React.useState(item && item.description || ""), description = ds[0], setDescription = ds[1];
+        var bs = React.useState(false), busy = bs[0], setBusy = bs[1];
+        var es = React.useState(""), error = es[0], setError = es[1];
+        function save() {
+          if (pending.current) return;
+          pending.current = true;
+          setBusy(true);
+          setError("");
+          var args = { title, description };
+          if (item) args.timelineId = item.timelineId || item.timelineKey || item.id;
+          p.api.call(item ? "taskTimelines.update" : "taskTimelines.create", args).then(result).then(function(r) {
+            p.onSaved(r.timeline);
+          }).catch(function(e) {
+            pending.current = false;
+            setError(String(e.message || e));
+            setBusy(false);
+          });
+        }
+        return h("div", { className: "wbt-modal-mask", onKeyDown: function(e) {
+          if (e.key === "Escape" && !busy) p.onClose();
+        } }, h(
+          "div",
+          { className: "wbt-modal", role: "dialog", "aria-modal": true, "aria-label": item ? tr("\u7F16\u8F91\u65F6\u95F4\u7EBF") : tr("\u65B0\u5EFA\u65F6\u95F4\u7EBF") },
+          h("div", { className: "wbt-modal-head" }, h("h3", null, item ? tr("\u7F16\u8F91\u65F6\u95F4\u7EBF") : tr("\u65B0\u5EFA\u65F6\u95F4\u7EBF"))),
+          h("label", { className: "wbt-field" }, tr("\u65F6\u95F4\u7EBF\u6807\u9898"), h("input", { className: "wbt-input", autoFocus: true, value: title, placeholder: tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF"), onChange: function(e) {
+            setTitle(e.target.value);
+          } })),
+          h("label", { className: "wbt-field" }, tr("\u65F6\u95F4\u7EBF\u63CF\u8FF0"), h("textarea", { className: "wbt-textarea", value: description, onChange: function(e) {
+            setDescription(e.target.value);
+          } })),
+          error ? h("p", { role: "alert", className: "wbt-err" }, error) : null,
+          h("div", { className: "wbt-modal-foot" }, h("button", { className: "wbt-btn", disabled: busy, onClick: p.onClose }, tr("\u53D6\u6D88")), h("button", { className: "wbt-btn primary", disabled: busy, onClick: save }, busy ? tr("\u4FDD\u5B58\u4E2D\u2026") : tr("\u4FDD\u5B58\u65F6\u95F4\u7EBF")))
+        ));
+      }
+      return { Picker, Editor, result };
+    };
+  }
+});
+
 // packages/addons/tasks/client/difficulty-field.cjs
 var require_difficulty_field = __commonJS({
   "packages/addons/tasks/client/difficulty-field.cjs"(exports2, module2) {
@@ -5557,12 +5726,13 @@ var require_create_modal = __commonJS({
     }
     module2.exports = function createModal(deps) {
       var React = deps.React, h = React.createElement;
+      var TimelinePicker = require_timeline_controls()(React).Picker;
       var difficultyField = require_difficulty_field()(React);
       var ownership = require_ownership(), fields = require_ownership_fields()(React);
       var allTables = deps.allTables, tagNames = deps.tagNames, splitTags = deps.splitTags;
       var today = deps.today, addDays = deps.addDays, hostHasAddon = deps.hostHasAddon;
       function CreateModal(props) {
-        var t = props.t;
+        var t = props.t, tr = require_timeline_copy()(props.t);
         var source = String(props.source || "0");
         var origin = props.originTask || null;
         var tables = ownership.tables(props.tree);
@@ -5575,6 +5745,7 @@ var require_create_modal = __commonJS({
         var f = React.useState({
           title: "",
           description: "",
+          timelineId: source === "1" && origin ? origin.timelineId || "" : "",
           tags: initTags,
           status: "0",
           priority: initPriority,
@@ -5644,6 +5815,14 @@ var require_create_modal = __commonJS({
         }
         function submit() {
           if (priorityError || isBusy || submission.pending) return;
+          if (source === "2" && !(origin && origin.timelineId)) {
+            setError(tr("\u8BF7\u5148\u624B\u52A8\u5EFA\u7ACB\u5E76\u5173\u8054\u65F6\u95F4\u7EBF\uFF0C\u518D\u91CD\u542F"));
+            return;
+          }
+          if (source === "1" && !form.timelineId) {
+            setError(tr("\u8BF7\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF"));
+            return;
+          }
           if (!String(form.title).trim()) {
             setError(t.needTitle);
             return;
@@ -5668,16 +5847,14 @@ var require_create_modal = __commonJS({
             difficulty: Number(form.difficulty) || 0,
             publishDate: form.publishDate,
             targetDate: form.targetDate,
-            source
+            source: source === "2" ? "2" : form.timelineId ? "1" : "0"
           };
           if (form.newPath) Object.assign(args, { tablePath: plan.parts, createMissing: true, pathDescriptions: plan.parts.map(function(_, i) {
             return form.pathDescriptions[i] || "";
           }) });
           else args.tableId = String(form.tableId);
-          if (source !== "0" && origin) {
-            args.timelineKey = String(origin.timelineKey || origin.id);
-            args.restartKey = source === "2" ? String(origin.id) : void 0;
-          }
+          if (source === "2" && origin) args.restartKey = String(origin.id);
+          else if (form.timelineId) args.timelineId = form.timelineId;
           if (args.status === "2") {
             args.doneDate = form.doneDate || today();
           }
@@ -5697,7 +5874,7 @@ var require_create_modal = __commonJS({
             failed(e && e.message || e);
           });
         }
-        var title = source === "2" ? t.restartTitle : source === "1" ? t.newTimeline : t.newTask;
+        var title = source === "2" ? t.restartTitle : source === "1" ? tr("\u5411\u5DF2\u6709\u65F6\u95F4\u7EBF\u6DFB\u52A0\u4EFB\u52A1") : t.newTask;
         return h(
           "div",
           { className: "wbt-modal-mask", onKeyDownCapture: onModalKey, onMouseDown: function(e) {
@@ -5708,7 +5885,11 @@ var require_create_modal = __commonJS({
             { className: "wbt-modal" },
             h("div", { className: "wbt-modal-head" }, h("h3", null, title), h("button", { className: "wbt-icon", disabled: isBusy, onClick: requestClose }, "\xD7")),
             source === "2" ? h("div", { className: "wbt-mhint" }, t.restartPriorityHint) : null,
-            source !== "0" && origin ? h("div", { className: "wbt-mhint" }, "\u6765\u6E90\uFF1A" + (origin.title || origin.id) + (source === "2" ? " \xB7 \u91CD\u542F\u94FE " + (origin.restartKey || origin.id) : " \xB7 \u65F6\u95F4\u7EBF " + (origin.timelineKey || origin.id))) : null,
+            source !== "0" && origin ? h("div", { className: "wbt-mhint" }, "\u6765\u6E90\uFF1A" + (origin.title || origin.id) + (source === "2" ? tr(" \xB7 \u81EA\u52A8\u7EE7\u627F\u539F\u65F6\u95F4\u7EBF") : "")) : null,
+            source === "2" && !(origin && origin.timelineId) ? h("p", { className: "wbt-err", role: "alert" }, tr("\u8BF7\u5148\u624B\u52A8\u5EFA\u7ACB\u5E76\u5173\u8054\u65F6\u95F4\u7EBF\uFF0C\u518D\u91CD\u542F")) : null,
+            source !== "2" ? h(TimelinePicker, { api: props.api, t, value: form.timelineId, onChange: function(value) {
+              set("timelineId", value);
+            }, disabled: isBusy }) : null,
             h(
               "div",
               { className: "wbt-form" },
@@ -5756,7 +5937,7 @@ var require_create_modal = __commonJS({
               "div",
               { className: "wbt-modal-foot" },
               h("button", { className: "wbt-btn ghost", disabled: isBusy, onClick: requestClose }, t.cancel),
-              h("button", { className: "wbt-btn primary", disabled: isBusy || !!priorityError || !targetValid, onClick: submit }, isBusy ? "\u2026" : t.create)
+              h("button", { className: "wbt-btn primary", disabled: isBusy || !!priorityError || !targetValid || source === "2" && !(origin && origin.timelineId), onClick: submit }, isBusy ? "\u2026" : t.create)
             )
           )
         );
@@ -5771,14 +5952,111 @@ var require_timeline_members = __commonJS({
   "packages/addons/tasks/client/timeline-members.cjs"(exports2, module2) {
     "use strict";
     module2.exports = function timelineMembers(api, task) {
-      var key = task.timelineKey == null ? "" : String(task.timelineKey).trim();
-      if (!key) return Promise.resolve([]);
-      return api.call("tasks.timeline", { timelineKey: key }).then(function(response) {
-        if (!response || !response.ok) throw new Error(response && response.error || "load failed");
-        var items = Array.isArray(response.result) ? response.result : [];
-        if (items.length === 1 && key === String(task.id) && String(items[0].id) === String(task.id)) return [];
-        return items;
+      if (task.timelineId == null || task.timelineId === "") return Promise.resolve([]);
+      return api.call("tasks.timeline", { timelineId: String(task.timelineId) }).then(function(r) {
+        if (!r || !r.ok) throw new Error(r && r.error || "load failed");
+        return Array.isArray(r.result) ? r.result : r.result.records || [];
       });
+    };
+  }
+});
+
+// packages/addons/tasks/client/task-timeline-modal.cjs
+var require_task_timeline_modal = __commonJS({
+  "packages/addons/tasks/client/task-timeline-modal.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(React) {
+      var h = React.createElement, controls = require_timeline_controls()(React);
+      return function TaskTimelineModal(p) {
+        var tr = require_timeline_copy()(p.t);
+        var ts = React.useState(p.task), task = ts[0], setTask = ts[1];
+        var ms = React.useState([]), members = ms[0], setMembers = ms[1];
+        var es = React.useState(""), error = es[0], setError = es[1];
+        var bs = React.useState(true), busy = bs[0], setBusy = bs[1];
+        var vs = React.useState(""), value = vs[0], setValue = vs[1];
+        var ns = React.useState(false), creating = ns[0], setCreating = ns[1];
+        var rs = React.useState(0), revision = rs[0], setRevision = rs[1];
+        React.useEffect(function() {
+          var cancelled = false;
+          setBusy(true);
+          setError("");
+          p.api.call("tasks.get", { id: p.task.id }).then(controls.result).then(function(r) {
+            var current = r.task;
+            if (cancelled) return;
+            setTask(current);
+            return require_timeline_members()(p.api, current).then(function(rows) {
+              if (!cancelled) {
+                setMembers(rows);
+                setBusy(false);
+              }
+            });
+          }).catch(function(e) {
+            if (!cancelled) {
+              setError(String(e.message || e));
+              setBusy(false);
+            }
+          });
+          return function() {
+            cancelled = true;
+          };
+        }, [p.api, p.task.id, revision]);
+        function change(action, args) {
+          if (busy) return;
+          setBusy(true);
+          setError("");
+          p.api.call(action, args).then(controls.result).then(function() {
+            setValue("");
+            setRevision(revision + 1);
+            if (p.onChanged) p.onChanged();
+          }).catch(function(e) {
+            setError(String(e.message || e));
+            setBusy(false);
+          });
+        }
+        return h(
+          "div",
+          { className: "wbt-modal-mask" },
+          h(
+            "div",
+            { className: "wbt-modal wide", role: "dialog", "aria-modal": true, "aria-label": tr("\u4EFB\u52A1\u65F6\u95F4\u7EBF") },
+            h("div", { className: "wbt-modal-head" }, h("h3", null, tr("\u4EFB\u52A1\u65F6\u95F4\u7EBF")), h("button", { className: "wbt-icon", onClick: p.onClose }, "\xD7")),
+            error ? h("p", { className: "wbt-err", role: "alert" }, error, h("button", { onClick: function() {
+              setRevision(revision + 1);
+            } }, tr("\u91CD\u8BD5"))) : busy ? h("p", null, tr("\u52A0\u8F7D\u4E2D\u2026")) : task.timelineId ? h(
+              React.Fragment,
+              null,
+              h("h4", { title: task.timelineId }, task.timelineTitle || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF")),
+              h("p", null, task.timelineDescription || tr("\u6682\u65E0\u63CF\u8FF0")),
+              h("button", { className: "wbt-btn", disabled: busy, onClick: function() {
+                change("taskTimelines.detach", { taskId: task.id });
+              } }, tr("\u79FB\u51FA\u65F6\u95F4\u7EBF")),
+              h("button", { className: "wbt-btn", onClick: function() {
+                p.onCreateTimeline(task);
+              } }, tr("\u6DFB\u52A0\u65B0\u4EFB\u52A1")),
+              members.length ? h("ol", { className: "wbt-timeline-members" }, members.map(function(x) {
+                return h("li", { key: x.id }, x.title, " \xB7 ", x.publishDate || "");
+              })) : h("p", null, tr("\u6682\u65E0\u53EF\u663E\u793A\u6210\u5458"))
+            ) : h("p", { className: "wbt-empty" }, tr("\u6CA1\u6709\u5173\u8054\u65F6\u95F4\u7EBF")),
+            h(controls.Picker, { api: p.api, t: p.t, value, onChange: setValue, disabled: busy }),
+            h(
+              "div",
+              { className: "wbt-modal-foot" },
+              h("button", { className: "wbt-btn", disabled: busy, onClick: function() {
+                setCreating(true);
+              } }, tr("\u65B0\u5EFA\u65F6\u95F4\u7EBF")),
+              h("button", { className: "wbt-btn primary", disabled: busy || !value, onClick: function() {
+                change("taskTimelines.attach", { taskId: task.id, timelineId: value });
+              } }, tr("\u5173\u8054\u6240\u9009\u65F6\u95F4\u7EBF"))
+            )
+          ),
+          creating ? h(controls.Editor, { api: p.api, t: p.t, onClose: function() {
+            setCreating(false);
+          }, onSaved: function(line) {
+            setCreating(false);
+            setValue(line.timelineId || line.id || line.timelineKey);
+          } }) : null
+        );
+      };
     };
   }
 });
@@ -5966,9 +6244,10 @@ var require_batch_modal = __commonJS({
   "packages/addons/tasks/client/batch-modal.cjs"(exports2, module2) {
     "use strict";
     module2.exports = function(React, cx, Icon2) {
+      var TimelinePicker = require_timeline_controls()(React).Picker;
       var h = React.createElement, Picker = require_table_picker()(React);
       function BatchModal(props) {
-        var t = props.t;
+        var t = props.t, tr = require_timeline_copy()(props.t);
         var items = props.items || [];
         var mode = props.mode;
         var trigger = React.useRef(typeof document === "undefined" ? null : document.activeElement);
@@ -5977,38 +6256,12 @@ var require_batch_modal = __commonJS({
             if (trigger.current) trigger.current.focus();
           };
         }, []);
-        var s = React.useState(mode === "timeline" ? items[0] && items[0].id || "" : "");
+        var s = React.useState("");
         var value = s[0], setValue = s[1];
         var busy = React.useState(false);
         var isBusy = busy[0], setBusy = busy[1];
         var err = React.useState("");
         var error = err[0], setError = err[1];
-        var picked = null;
-        var rows = [];
-        if (mode === "timeline") {
-          items.forEach(function(x) {
-            if (String(x.id) === String(value)) picked = x;
-            rows.push(h(
-              "label",
-              { key: x.id, className: cx("wbt-bpick wrap", String(value) === String(x.id) && "on") },
-              h("input", { type: "radio", name: "wbt-base", checked: String(value) === String(x.id), onChange: function() {
-                setValue(String(x.id));
-              } }),
-              h(
-                "span",
-                { className: "wbt-bpick-main" },
-                h("span", { className: "wbt-bpick-name" }, x.title),
-                h(
-                  "span",
-                  { className: "wbt-bpick-meta" },
-                  h("code", { title: x.timelineKey || "" }, "timeline " + (x.timelineKey || "-")),
-                  x.priority !== void 0 ? h("span", null, "P" + x.priority) : null
-                )
-              ),
-              h("span", { className: "wbt-bpick-check" }, String(value) === String(x.id) ? h(Icon2, { name: "check", size: 13 }) : null)
-            ));
-          });
-        }
         return h(
           "div",
           { className: "wbt-modal-mask", onMouseDown: function(e) {
@@ -6024,13 +6277,8 @@ var require_batch_modal = __commonJS({
               h("span", { className: "wbt-badge" }, t.batchCount + " " + items.length),
               h("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")
             ),
-            h("div", { className: "wbt-mhint" }, mode === "timeline" ? t.chooseBase : t.chooseTable),
-            mode === "migrate" ? h(Picker, { tree: props.tree, value, onChange: setValue, onClose: props.onClose }) : h(
-              React.Fragment,
-              null,
-              h("div", { className: "wbt-batch" }, h("div", { className: "wbt-batch-body" }, rows)),
-              h("div", { className: "wbt-batch-sel" }, t.baseLabel + "\uFF1A" + (picked ? picked.title : "-"))
-            ),
+            h("div", { className: "wbt-mhint" }, mode === "timeline" ? tr("\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF\uFF08\u542B\u7A7A\u7EBF\u548C\u5355\u6210\u5458\u7EBF\uFF09") : t.chooseTable),
+            mode === "migrate" ? h(Picker, { tree: props.tree, value, onChange: setValue, onClose: props.onClose }) : h(TimelinePicker, { api: props.api, t, value, onChange: setValue, disabled: isBusy }),
             error ? h("div", { className: "wbt-err" }, error) : null,
             h(
               "div",
@@ -6045,16 +6293,9 @@ var require_batch_modal = __commonJS({
                 }
                 setBusy(true);
                 if (mode === "timeline") {
-                  var base = null;
-                  for (var i = 0; i < items.length; i++) if (String(items[i].id) === String(value)) base = items[i];
-                  if (!base || !base.timelineKey) {
-                    setError(t.needBase);
-                    setBusy(false);
-                    return;
-                  }
                   props.api.call("tasks.timelineRefactor", { ids: items.map(function(x) {
                     return x.id;
-                  }), timelineKey: base.timelineKey }).then(function(r) {
+                  }), timelineId: value }).then(function(r) {
                     setBusy(false);
                     if (r && r.ok) props.onDone();
                     else setError(r && r.error || "failed");
@@ -6987,6 +7228,7 @@ var require_tasks_view = __commonJS({
             t,
             api,
             task: timelineTask,
+            onChanged: refreshList,
             onClose: function() {
               setTimelineTask(null);
             },
@@ -7058,6 +7300,69 @@ var require_tasks_view = __commonJS({
         );
       }
       return TasksView;
+    };
+  }
+});
+
+// packages/addons/tasks/client/timeline-add-members.cjs
+var require_timeline_add_members = __commonJS({
+  "packages/addons/tasks/client/timeline-add-members.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(React) {
+      var h = React.createElement, result = require_timeline_controls()(React).result;
+      return function AddMembers(p) {
+        var tr = require_timeline_copy()(p.t);
+        var qs = React.useState(""), query = qs[0], setQuery = qs[1];
+        var ds = React.useState({ records: [], total: 0 }), data = ds[0], setData = ds[1];
+        var ps = React.useState(1), page = ps[0], setPage = ps[1];
+        var ss = React.useState([]), selected = ss[0], setSelected = ss[1];
+        var es = React.useState(""), error = es[0], setError = es[1];
+        var bs = React.useState(false), busy = bs[0], setBusy = bs[1];
+        React.useEffect(function() {
+          var cancelled = false;
+          setError("");
+          p.api.call("tasks.list", { titleKey: query, pageNumber: page, pageSize: 20, filterRestarted: true, tab: 8 }).then(result).then(function(r) {
+            if (!cancelled) setData(r);
+          }).catch(function(e) {
+            if (!cancelled) setError(String(e.message || e));
+          });
+          return function() {
+            cancelled = true;
+          };
+        }, [p.api, query, page]);
+        function submit() {
+          if (busy || !selected.length) return;
+          setBusy(true);
+          p.api.call("tasks.timelineRefactor", { ids: selected, timelineId: p.timelineId }).then(result).then(p.onSaved).catch(function(e) {
+            setError(String(e.message || e));
+            setBusy(false);
+          });
+        }
+        return h("div", { className: "wbt-modal-mask" }, h(
+          "div",
+          { className: "wbt-modal", role: "dialog", "aria-modal": true, "aria-label": tr("\u6DFB\u52A0\u5DF2\u6709\u4EFB\u52A1") },
+          h("h3", null, tr("\u6DFB\u52A0\u5DF2\u6709\u4EFB\u52A1")),
+          h("p", null, tr("\u9009\u4E2D\u7684\u4EFB\u52A1\u5C06\u5173\u8054\u5230\u6B64\u65F6\u95F4\u7EBF\uFF1B\u539F\u6709\u5173\u8054\u4F1A\u88AB\u66FF\u6362\u3002")),
+          h("input", { className: "wbt-input", "aria-label": tr("\u641C\u7D22\u5DF2\u6709\u4EFB\u52A1"), value: query, onChange: function(e) {
+            setQuery(e.target.value);
+            setPage(1);
+          } }),
+          h("div", { style: { maxHeight: "40vh", overflow: "auto" } }, (data.records || []).map(function(x) {
+            return h("label", { key: x.id, className: "wbt-bpick" }, h("input", { type: "checkbox", checked: selected.indexOf(x.id) >= 0, onChange: function(e) {
+              setSelected(e.target.checked ? selected.concat(x.id) : selected.filter(function(id) {
+                return id !== x.id;
+              }));
+            } }), x.title);
+          })),
+          h("div", { className: "wbt-timeline-pager" }, h("button", { disabled: page <= 1, onClick: function() {
+            setPage(page - 1);
+          } }, tr("\u4E0A\u4E00\u9875")), h("span", null, page), h("button", { disabled: page * 20 >= data.total, onClick: function() {
+            setPage(page + 1);
+          } }, tr("\u4E0B\u4E00\u9875"))),
+          error ? h("p", { role: "alert" }, error) : null,
+          h("div", { className: "wbt-modal-foot" }, h("button", { className: "wbt-btn", disabled: busy, onClick: p.onClose }, tr("\u53D6\u6D88")), h("button", { className: "wbt-btn primary", disabled: busy || !selected.length, onClick: submit }, tr("\u5173\u8054\u4EFB\u52A1 (") + selected.length + ")"))
+        ));
+      };
     };
   }
 });
@@ -7172,6 +7477,7 @@ var require_timeline_view = __commonJS({
     "use strict";
     module2.exports = function(deps) {
       var React = deps.React, h = React.createElement, COPY = deps.COPY;
+      var controls = require_timeline_controls()(React), AddMembers = require_timeline_add_members()(React);
       var Merge = require_timeline_merge()(React);
       var CSS = require_timeline_styles();
       function result(r) {
@@ -7196,9 +7502,10 @@ var require_timeline_view = __commonJS({
       }
       function TimelineView(props) {
         var lang = props.lang === "en" ? "en" : "zh", t = COPY[lang], api = props.api;
+        var tr = require_timeline_copy()(t);
         var queryS = React.useState(""), query = queryS[0], setQuery = queryS[1];
         var draftS = React.useState(""), draft = draftS[0], setDraft = draftS[1];
-        var singleS = React.useState(false), single = singleS[0], setSingle = singleS[1];
+        var singleS = React.useState(true), single = singleS[0], setSingle = singleS[1];
         var pageS = React.useState(1), page = pageS[0], setPage = pageS[1];
         var dataS = React.useState({ records: [], total: 0 }), data = dataS[0], setData = dataS[1];
         var busyS = React.useState(true), busy = busyS[0], setBusy = busyS[1];
@@ -7215,7 +7522,12 @@ var require_timeline_view = __commonJS({
         var detailS = React.useState(null), detail = detailS[0], setDetail = detailS[1];
         var treeS = React.useState([]), tree = treeS[0], setTree = treeS[1];
         var listRef = React.useRef(null), mergeButton = React.useRef(null), detailTrigger = React.useRef(null);
+        var createdRef = React.useRef(null);
         var activeKey = active && active.timelineKey;
+        var editorS = React.useState(null), editor = editorS[0], setEditor = editorS[1];
+        var addS = React.useState(false), adding = addS[0], setAdding = addS[1];
+        var deleteS = React.useState(false), deleting = deleteS[0], setDeleting = deleteS[1];
+        var writeS = React.useState(false), writing = writeS[0], setWriting = writeS[1];
         React.useEffect(function() {
           deps.injectCss();
         }, []);
@@ -7233,9 +7545,11 @@ var require_timeline_view = __commonJS({
               return;
             }
             setActive(function(old) {
+              var created = createdRef.current;
+              createdRef.current = null;
               return next.records.find(function(x) {
-                return old && x.timelineKey === old.timelineKey;
-              }) || next.records[0] || null;
+                return (created || old) && x.timelineKey === (created || old).timelineKey;
+              }) || created || next.records[0] || null;
             });
           }).catch(function(e) {
             if (!cancelled) {
@@ -7295,7 +7609,7 @@ var require_timeline_view = __commonJS({
           if (busy) return;
           setActive(item);
           setMemberPage(1);
-          if (toggle) setSelected(function(old) {
+          if (toggle && item.taskCount > 0) setSelected(function(old) {
             return old.some(function(x) {
               return x.timelineKey === item.timelineKey;
             }) ? old.filter(function(x) {
@@ -7338,6 +7652,9 @@ var require_timeline_view = __commonJS({
             "div",
             { className: "wbt-timeline-toolbar" },
             h("h2", null, t.timeline),
+            h("button", { className: "wbt-btn primary", onClick: function() {
+              setEditor({});
+            } }, tr("\u65B0\u5EFA\u65F6\u95F4\u7EBF")),
             h("button", { className: "wbt-btn", onClick: function() {
               setMulti(!multi);
               setSelected([]);
@@ -7385,12 +7702,13 @@ var require_timeline_view = __commonJS({
                     className: "wbt-timeline-option" + (isActive ? " current" : ""),
                     onClick: function() {
                       choose(item, multi);
+                      setDeleting(false);
                     },
                     onKeyDown: function(e) {
                       keyboard(e, i);
                     }
                   },
-                  h("strong", null, multi ? checked ? "\u2611 " : "\u2610 " : isActive ? "\u25B8 " : "", item.title || item.timelineKey),
+                  h("strong", null, multi ? checked ? "\u2611 " : "\u2610 " : isActive ? "\u25B8 " : "", item.title || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF")),
                   h("span", null, t.timelineTasks + " " + item.taskCount + " \xB7 " + t.timelineOpen + " " + item.openCount + " \xB7 " + t.timelineDone + " " + item.doneCount),
                   h("span", null, t.timelineActivity + " " + (item.lastActivityDate || "\u2014"))
                 );
@@ -7401,7 +7719,47 @@ var require_timeline_view = __commonJS({
             h(
               "section",
               { className: "wbt-timeline-right", "aria-label": t.timelineMembers, "aria-busy": memberBusy },
-              h("h3", null, active ? active.title || active.timelineKey : t.timelineMembers),
+              h("h3", null, active ? active.title || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF") : t.timelineMembers),
+              active ? h(
+                "div",
+                null,
+                h("p", null, active.description || tr("\u6682\u65E0\u63CF\u8FF0")),
+                h("code", { title: activeKey }, activeKey),
+                h("button", { className: "wbt-btn", onClick: function() {
+                  navigator.clipboard.writeText(activeKey).catch(function(e) {
+                    setMemberError(String(e));
+                  });
+                } }, tr("\u590D\u5236 ID")),
+                h("button", { className: "wbt-btn", onClick: function() {
+                  setEditor(active);
+                } }, tr("\u7F16\u8F91\u65F6\u95F4\u7EBF")),
+                h("button", { className: "wbt-btn", onClick: function() {
+                  setAdding(true);
+                } }, tr("\u6DFB\u52A0\u5DF2\u6709\u4EFB\u52A1")),
+                h("button", { className: "wbt-btn", onClick: function() {
+                  setDeleting(true);
+                } }, tr("\u5220\u9664\u65F6\u95F4\u7EBF")),
+                deleting ? h(
+                  "div",
+                  { role: "alert" },
+                  tr("\u5220\u9664\u65F6\u95F4\u7EBF\u5C06\u79FB\u51FA\u5168\u90E8\u6210\u5458\uFF0C\u4FDD\u7559\u4EFB\u52A1\u53CA\u91CD\u542F\u94FE\u3002"),
+                  h("button", { className: "wbt-btn", disabled: writing, onClick: function() {
+                    setDeleting(false);
+                  } }, tr("\u53D6\u6D88\u5220\u9664")),
+                  h("button", { className: "wbt-btn", disabled: writing, onClick: function() {
+                    setWriting(true);
+                    api.call("taskTimelines.delete", { timelineId: activeKey }).then(result).then(function() {
+                      setDeleting(false);
+                      setSelected([]);
+                      reload();
+                    }).catch(function(e) {
+                      setMemberError(String(e.message || e));
+                    }).finally(function() {
+                      setWriting(false);
+                    });
+                  } }, tr("\u786E\u8BA4\u5220\u9664\u65F6\u95F4\u7EBF"))
+                ) : null
+              ) : null,
               h("p", null, t.timelineOrder),
               memberError ? h("p", { role: "alert", className: "wbt-err" }, t.error + memberError) : null,
               memberBusy ? h("p", { role: "status" }, t.loading) : h("ol", { className: "wbt-timeline-members", start: (memberPage - 1) * 20 + 1 }, members.records.map(function(task) {
@@ -7415,12 +7773,41 @@ var require_timeline_view = __commonJS({
                   h("time", null, task.publishDate || "\u2014"),
                   h("strong", null, task.title),
                   h("span", { className: "wbt-badge " + st.cls }, st[lang])
-                ));
+                ), h("button", { className: "wbt-btn", disabled: writing, onClick: function() {
+                  setWriting(true);
+                  api.call("taskTimelines.detach", { taskId: task.id }).then(result).then(function() {
+                    createdRef.current = active;
+                    reload();
+                  }).catch(function(e) {
+                    setMemberError(String(e.message || e));
+                  }).finally(function() {
+                    setWriting(false);
+                  });
+                } }, tr("\u79FB\u51FA\u65F6\u95F4\u7EBF")));
               })),
-              !memberBusy && !memberError && !members.records.length ? h("p", { className: "wbt-empty" }, t.timelineEmpty) : null,
+              !memberBusy && !memberError && !members.records.length ? h("p", { className: "wbt-empty" }, active ? tr("\u6682\u65E0\u53EF\u663E\u793A\u6210\u5458") : t.timelineEmpty) : null,
               active ? h(Pager, { t, label: t.timelineMembers, busy: memberBusy, page: memberPage, total: members.total, set: setMemberPage }) : null
             )
           ),
+          editor ? h(controls.Editor, { api, t, item: editor.timelineKey ? editor : null, onClose: function() {
+            setEditor(null);
+          }, onSaved: function(line) {
+            setEditor(null);
+            setSingle(true);
+            setDraft("");
+            setQuery("");
+            setPage(1);
+            createdRef.current = Object.assign({}, line, { timelineKey: line.timelineId || line.timelineKey || line.id });
+            setActive(createdRef.current);
+            reload();
+          } }) : null,
+          adding && active ? h(AddMembers, { api, t, timelineId: activeKey, onClose: function() {
+            setAdding(false);
+          }, onSaved: function() {
+            setAdding(false);
+            createdRef.current = active;
+            reload();
+          } }) : null,
           merge ? h(Merge, { api, t, items: selected, onClose: closeMerge, onMerged: function() {
             closeMerge();
             setSelected([]);
@@ -7828,73 +8215,7 @@ var require_timeline_view = __commonJS({
     );
   }
   var CreateModal = require_create_modal()({ React, allTables, tagNames, splitTags, today, addDays, hostHasAddon });
-  function TimelineModal(props) {
-    var t = props.t;
-    var task = props.task;
-    var s = React.useState({ items: [], loading: true, error: "" });
-    var state = s[0], setState = s[1];
-    React.useEffect(function() {
-      var cancelled = false;
-      setState({ items: [], loading: true, error: "" });
-      require_timeline_members()(props.api, task).then(function(items2) {
-        if (!cancelled) setState({ items: items2, loading: false, error: "" });
-      }).catch(function(e) {
-        if (!cancelled) setState({ items: [], loading: false, error: String(e && e.message || e) });
-      });
-      return function() {
-        cancelled = true;
-      };
-    }, [props.api, task.id, task.timelineKey]);
-    var items = state.items;
-    var last = items.length ? items[items.length - 1] : task;
-    return h(
-      "div",
-      { className: "wbt-modal-mask", onMouseDown: function(e) {
-        if (e.target === e.currentTarget) props.onClose();
-      } },
-      h(
-        "div",
-        { className: "wbt-modal wide" },
-        h(
-          "div",
-          { className: "wbt-modal-head" },
-          h("h3", null, t.timelineTitle),
-          !state.loading && !state.error && items.length ? h("button", { className: "wbt-btn", onClick: function() {
-            props.onCreateTimeline(last);
-          } }, "\uFF0B " + t.newTimeline) : null,
-          h("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")
-        ),
-        state.loading ? h("div", { className: "wbt-mhint" }, t.loading) : state.error ? h("div", { className: "wbt-err" }, t.error + state.error) : items.length === 0 ? h("div", { className: "wbt-empty" }, t.noTimeline) : h("div", { className: "wbt-timeline" }, items.map(function(x, i) {
-          var st = statusInfo(x.status);
-          return h(
-            "div",
-            { className: "wbt-tl-item", key: x.id },
-            h("div", { className: "wbt-tl-rail" }, h("div", { className: "wbt-tl-dot" }), i < items.length - 1 ? h("div", { className: "wbt-tl-line" }) : null),
-            h(
-              "div",
-              { className: "wbt-tl-body" },
-              h(
-                "div",
-                { className: "wbt-row" },
-                h("span", { className: "wbt-badge " + st.cls }, st.zh),
-                h("span", { className: "wbt-tl-title" }, x.title),
-                h("span", { className: "wbt-pill" }, "P" + x.priority)
-              ),
-              h(
-                "div",
-                { className: "wbt-tl-meta" },
-                h("span", null, "\u53D1\u5E03 " + (x.publishDate || "-")),
-                h("span", null, "\u8BA1\u5212 " + (x.targetDate || "-")),
-                x.doneDate ? h("span", null, "\u5B8C\u6210 " + x.doneDate) : null,
-                x.shutdownDate ? h("span", null, "\u5173\u95ED " + x.shutdownDate) : null
-              ),
-              h(PathCrumbs, { path: x.path })
-            )
-          );
-        }))
-      )
-    );
-  }
+  var TimelineModal = require_task_timeline_modal()(React);
   function DoneModal(props) {
     var t = props.t;
     var s = React.useState(Number(props.task.difficulty) || 0);
@@ -7963,7 +8284,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.1.8",
+    version: "3.2.0",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

@@ -1,45 +1,26 @@
+import { setMembership } from "./timeline-store.js";
+import { taskTransaction } from "./task-transaction.js";
 // 与 task-bulk 的循环引用只在调用期取值，顶层不求值。
 import {
   now,
   newId,
   idOf,
   todayStr,
-  addDays,
-  dateText,
   tx,
   logChange,
   taskOut,
   nodeMap,
-  pathForTable,
-  tableExists,
-  timeMs,
 } from "./db.js";
 // task-query 循环依赖仅在调用期读取 tasks 的函数/常量。
-import { TASK_FILTER_SCHEMA } from "./task-search-schema.js";
 import { listTasks } from "./task-query.js";
-import { statsReport, renderStats } from "./stats.js";
 import { todayActivity } from "./stats-today.js";
-import { registerTagOptionsAction } from "./tag-options.js";
-import { configValues } from "./config.js";
-import { clampPriority, priorityForStatus, priorityForCreate } from "./task-priority.js";
-import { taskHistory, changelog, csvCell, renderArray, renderList } from "./task-view.js";
-import { idList, patchOf, diffRow, applyPatchRow, bulkUpdate, bulkCreate, bulkDelete, renderBulkUpdate, renderBulkCreate, renderBulkDelete } from "./task-bulk.js";
+import { csvCell } from "./task-view.js";
+import { idList, bulkUpdate } from "./task-bulk.js";
 import {
-  LEGACY_TYPE_TAGS,
   tagsAvailable,
-  normalizeTagIds,
-  normalizeTagNames,
-  requireTagRows,
-  availableTagsText,
-  tagIdsByNames,
-  ensureTagsByNames,
-  replaceTaskTags,
   attachTags,
-  tagNavStats,
-  tagBreakdown,
-  migrateLegacyTypes,
 } from "./tagging.js";
-import { requireKnownTagNames, TAG_DOMAIN_NOTICE, tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, sourceCode, putTypeCode, clampDifficulty, dateArg, getTask, defaultTable, requireTable, insertTaskRow, saveTaskRow, outOne, emitChange, writeChange, checkRequiredDates, currentTaskTagIds, resolveTagPatch, PATCH_FIELDS, DIFF_COLUMNS } from "./task-model.js";
+import { TAG_DOMAIN_NOTICE, withNotices, dateArg, getTask, saveTaskRow, outOne, emitChange, writeChange } from "./task-model.js";
 import { updateTask } from "./task-update.js";
 /** 上游依赖（本任务依赖谁）与下游（谁依赖本任务），软删行忽略。 */
 export function depRows(db, taskId, direction) {
@@ -251,11 +232,13 @@ export function stats(db, args, api) {
   return Object.assign({}, base, { groupBy: groupBy, from: from, to: to, groups: groups });
 }
 
-export function removeTask(db, args, origin, api) {
+export function removeTask(db, args, origin, api, skipTx = false) {
+  if (!skipTx) return taskTransaction(db,api,buffered=>removeTask(db,args,origin,buffered,true));
   const cur = getTask(db, args.id || args.taskId);
   if (!cur) throw new Error("任务不存在：" + (args.id || args.taskId));
   const ts = now();
-  const next = Object.assign({}, cur, { deleted_at: ts, updated_at: ts, rev: Number(cur.rev) + 1 });
+  setMembership(db,cur.id,null,origin,api,{ts,project:false});
+  const next = Object.assign({}, cur, { timeline_key:null, deleted_at: ts, updated_at: ts, rev: Number(cur.rev) + 1 });
   saveTaskRow(db, next);
   logChange(db, "task", next.id, "delete", null, origin, ts);
   emitChange(api, next.id, "delete");

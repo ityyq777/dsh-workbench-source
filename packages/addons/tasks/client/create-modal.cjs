@@ -16,12 +16,13 @@ function validatePriority(value, source, t) {
 }
 module.exports = function createModal(deps) {
   var React = deps.React, h = React.createElement;
+  var TimelinePicker = require("./timeline-controls.cjs")(React).Picker;
   var difficultyField = require("./difficulty-field.cjs")(React);
   var ownership = require("./ownership.cjs"), fields = require("./ownership-fields.cjs")(React);
   var allTables = deps.allTables, tagNames = deps.tagNames, splitTags = deps.splitTags;
   var today = deps.today, addDays = deps.addDays, hostHasAddon = deps.hostHasAddon;
   function CreateModal(props) {
-    var t = props.t;
+    var t = props.t, tr = require("./timeline-copy.cjs")(props.t);
     var source = String(props.source || "0");
     var origin = props.originTask || null;
     var tables = ownership.tables(props.tree);
@@ -33,7 +34,7 @@ module.exports = function createModal(deps) {
     var initOffset = Math.floor(Number(defaults.targetOffset));
     if (!(initOffset >= 0)) initOffset = 0;
     var f = React.useState({
-      title: "", description: "",
+      title: "", description: "", timelineId: source === "1" && origin ? origin.timelineId || "" : "",
       tags: initTags, status: "0", priority: initPriority, difficulty: initDifficulty,
       publishDate: today(), targetDate: addDays(initOffset), doneDate: today(), shutdownDate: today(),
       tableId: "", newPath: false, tablePath: "", pathDescriptions: [], confirmed: false,
@@ -78,6 +79,8 @@ module.exports = function createModal(deps) {
     }
     function submit() {
       if (priorityError || isBusy || submission.pending) return;
+      if (source === "2" && !(origin && origin.timelineId)) { setError(tr("请先手动建立并关联时间线，再重启")); return; }
+      if (source === "1" && !form.timelineId) { setError(tr("请选择已有时间线")); return; }
       if (!String(form.title).trim()) { setError(t.needTitle); return; }
       if (!targetValid) { setError(form.newPath ? plan.error || "请确认新建路径" : t.needTable); return; }
       if (!form.publishDate || !form.targetDate) { setError(t.needDate); return; }
@@ -90,14 +93,12 @@ module.exports = function createModal(deps) {
         difficulty: Number(form.difficulty) || 0,
         publishDate: form.publishDate,
         targetDate: form.targetDate,
-        source: source,
+        source: source === "2" ? "2" : form.timelineId ? "1" : "0",
       };
       if (form.newPath) Object.assign(args, { tablePath: plan.parts, createMissing: true, pathDescriptions: plan.parts.map(function (_, i) { return form.pathDescriptions[i] || ""; }) });
       else args.tableId = String(form.tableId);
-      if (source !== "0" && origin) {
-        args.timelineKey = String(origin.timelineKey || origin.id);
-        args.restartKey = source === "2" ? String(origin.id) : undefined;
-      }
+      if (source === "2" && origin) args.restartKey = String(origin.id);
+      else if (form.timelineId) args.timelineId = form.timelineId;
       if (args.status === "2") {
         args.doneDate = form.doneDate || today();
       }
@@ -111,12 +112,14 @@ module.exports = function createModal(deps) {
       }).catch(function (e) { failed(e && e.message || e); });
     }
 
-    var title = source === "2" ? t.restartTitle : source === "1" ? t.newTimeline : t.newTask;
+    var title = source === "2" ? t.restartTitle : source === "1" ? tr("向已有时间线添加任务") : t.newTask;
     return h("div", { className: "wbt-modal-mask", onKeyDownCapture: onModalKey, onMouseDown: function (e) { if (e.target === e.currentTarget) requestClose(); } },
       h("div", { className: "wbt-modal" },
         h("div", { className: "wbt-modal-head" }, h("h3", null, title), h("button", { className: "wbt-icon", disabled: isBusy, onClick: requestClose }, "×")),
         source === "2" ? h("div", { className: "wbt-mhint" }, t.restartPriorityHint) : null,
-        source !== "0" && origin ? h("div", { className: "wbt-mhint" }, "来源：" + (origin.title || origin.id) + (source === "2" ? " · 重启链 " + (origin.restartKey || origin.id) : " · 时间线 " + (origin.timelineKey || origin.id))) : null,
+        source !== "0" && origin ? h("div", { className: "wbt-mhint" }, "来源：" + (origin.title || origin.id) + (source === "2" ? tr(" · 自动继承原时间线") : "")) : null,
+        source === "2" && !(origin && origin.timelineId) ? h("p", { className: "wbt-err", role: "alert" }, tr("请先手动建立并关联时间线，再重启")) : null,
+        source !== "2" ? h(TimelinePicker, { api: props.api, t: t, value: form.timelineId, onChange: function (value) { set("timelineId", value); }, disabled: isBusy }) : null,
         h("div", { className: "wbt-form" },
           h("label", { className: "wbt-field full" }, h("span", null, t.titleField + " *"), h("input", { className: "wbt-input", value: form.title, onChange: function (e) { set("title", e.target.value); }, autoFocus: true })),
           h("label", { className: "wbt-field full" }, h("span", null, t.desc), h("textarea", { className: "wbt-textarea", rows: 2, value: form.description, onChange: function (e) { set("description", e.target.value); } })),
@@ -135,7 +138,7 @@ module.exports = function createModal(deps) {
         error ? h("div", { className: "wbt-err" }, error) : null,
         h("div", { className: "wbt-modal-foot" },
           h("button", { className: "wbt-btn ghost", disabled: isBusy, onClick: requestClose }, t.cancel),
-          h("button", { className: "wbt-btn primary", disabled: isBusy || !!priorityError || !targetValid, onClick: submit }, isBusy ? "…" : t.create)
+          h("button", { className: "wbt-btn primary", disabled: isBusy || !!priorityError || !targetValid || (source === "2" && !(origin && origin.timelineId)), onClick: submit }, isBusy ? "…" : t.create)
         )
       )
     );

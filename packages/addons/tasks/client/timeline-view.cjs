@@ -2,6 +2,7 @@
 "use strict";
 module.exports = function (deps) {
   var React = deps.React, h = React.createElement, COPY = deps.COPY;
+  var controls = require("./timeline-controls.cjs")(React), AddMembers = require("./timeline-add-members.cjs")(React);
   var Merge = require("./timeline-merge.cjs")(React);
   var CSS = require("./timeline-styles.cjs");
   function result(r) { if (!r || !r.ok) throw new Error(r && r.error || "Request failed"); return r.result; }
@@ -14,9 +15,10 @@ module.exports = function (deps) {
   }
   function TimelineView(props) {
     var lang = props.lang === "en" ? "en" : "zh", t = COPY[lang], api = props.api;
+    var tr = require("./timeline-copy.cjs")(t);
     var queryS = React.useState(""), query = queryS[0], setQuery = queryS[1];
     var draftS = React.useState(""), draft = draftS[0], setDraft = draftS[1];
-    var singleS = React.useState(false), single = singleS[0], setSingle = singleS[1];
+    var singleS = React.useState(true), single = singleS[0], setSingle = singleS[1];
     var pageS = React.useState(1), page = pageS[0], setPage = pageS[1];
     var dataS = React.useState({ records: [], total: 0 }), data = dataS[0], setData = dataS[1];
     var busyS = React.useState(true), busy = busyS[0], setBusy = busyS[1];
@@ -33,7 +35,12 @@ module.exports = function (deps) {
     var detailS = React.useState(null), detail = detailS[0], setDetail = detailS[1];
     var treeS = React.useState([]), tree = treeS[0], setTree = treeS[1];
     var listRef = React.useRef(null), mergeButton = React.useRef(null), detailTrigger = React.useRef(null);
+    var createdRef = React.useRef(null);
     var activeKey = active && active.timelineKey;
+    var editorS = React.useState(null), editor = editorS[0], setEditor = editorS[1];
+    var addS = React.useState(false), adding = addS[0], setAdding = addS[1];
+    var deleteS = React.useState(false), deleting = deleteS[0], setDeleting = deleteS[1];
+    var writeS = React.useState(false), writing = writeS[0], setWriting = writeS[1];
     React.useEffect(function () { deps.injectCss(); }, []);
     React.useEffect(function () {
       var cancelled = false; setBusy(true); setError("");
@@ -41,7 +48,7 @@ module.exports = function (deps) {
         if (cancelled) return;
         var next = pageData(r); setData(next); setBusy(false);
         if (page > 1 && !next.records.length) { setPage(Math.max(1, Math.ceil(next.total / 20))); return; }
-        setActive(function (old) { return next.records.find(function (x) { return old && x.timelineKey === old.timelineKey; }) || next.records[0] || null; });
+        setActive(function (old) { var created = createdRef.current; createdRef.current = null; return next.records.find(function (x) { return (created || old) && x.timelineKey === (created || old).timelineKey; }) || created || next.records[0] || null; });
       }).catch(function (e) { if (!cancelled) { setBusy(false); setError(String(e.message || e)); } });
       return function () { cancelled = true; };
     }, [api, query, single, page, refresh]);
@@ -65,7 +72,7 @@ module.exports = function (deps) {
     function choose(item, toggle) {
       if (busy) return;
       setActive(item); setMemberPage(1);
-      if (toggle) setSelected(function (old) { return old.some(function (x) { return x.timelineKey === item.timelineKey; }) ? old.filter(function (x) { return x.timelineKey !== item.timelineKey; }) : old.concat(item); });
+      if (toggle && item.taskCount > 0) setSelected(function (old) { return old.some(function (x) { return x.timelineKey === item.timelineKey; }) ? old.filter(function (x) { return x.timelineKey !== item.timelineKey; }) : old.concat(item); });
     }
     function keyboard(e, index) {
       var next = index;
@@ -84,6 +91,7 @@ module.exports = function (deps) {
     return h("div", { className: "wbt-root wbt-timeline-view" }, h("style", null, CSS),
       h("div", { className: "wbt-timeline-toolbar" },
         h("h2", null, t.timeline),
+        h("button", { className: "wbt-btn primary", onClick: function () { setEditor({}); } }, tr("新建时间线")),
         h("button", { className: "wbt-btn", onClick: function () { setMulti(!multi); setSelected([]); }, "aria-pressed": multi }, multi ? t.cancelSelect : t.select),
         multi ? h("button", { ref: mergeButton, className: "wbt-btn", disabled: selected.length < 2 || busy, onClick: function () { setMerge(true); } }, t.timelineMerge + " (" + selected.length + ")") : null,
         h("button", { className: "wbt-btn", disabled: busy, onClick: reload }, t.refresh)),
@@ -97,24 +105,34 @@ module.exports = function (deps) {
           h("div", { ref: listRef, className: "wbt-timeline-list", role: "listbox", "aria-label": t.timeline, "aria-multiselectable": multi, "aria-busy": busy }, data.records.map(function (item, i) {
             var isActive = activeKey === item.timelineKey, checked = selected.some(function (x) { return x.timelineKey === item.timelineKey; });
             return h("div", { key: item.timelineKey, role: "option", tabIndex: isActive || !activeKey && i === 0 ? 0 : -1, "aria-selected": multi ? checked : isActive, "aria-current": isActive ? "true" : undefined,
-              className: "wbt-timeline-option" + (isActive ? " current" : ""), onClick: function () { choose(item, multi); }, onKeyDown: function (e) { keyboard(e, i); } },
-              h("strong", null, multi ? (checked ? "☑ " : "☐ ") : (isActive ? "▸ " : ""), item.title || item.timelineKey),
+              className: "wbt-timeline-option" + (isActive ? " current" : ""), onClick: function () { choose(item, multi); setDeleting(false); }, onKeyDown: function (e) { keyboard(e, i); } },
+              h("strong", null, multi ? (checked ? "☑ " : "☐ ") : (isActive ? "▸ " : ""), item.title || tr("未命名时间线")),
               h("span", null, t.timelineTasks + " " + item.taskCount + " · " + t.timelineOpen + " " + item.openCount + " · " + t.timelineDone + " " + item.doneCount),
               h("span", null, t.timelineActivity + " " + (item.lastActivityDate || "—")));
           })),
           busy ? h("p", { role: "status" }, t.loading) : !error && !data.records.length ? h("p", { className: "wbt-empty" }, t.timelineEmpty) : null,
           h(Pager, { t: t, label: t.timeline, busy: busy, page: page, total: data.total, set: setPage })),
         h("section", { className: "wbt-timeline-right", "aria-label": t.timelineMembers, "aria-busy": memberBusy },
-          h("h3", null, active ? active.title || active.timelineKey : t.timelineMembers),
+          h("h3", null, active ? active.title || tr("未命名时间线") : t.timelineMembers),
+          active ? h("div", null, h("p", null, active.description || tr("暂无描述")),
+            h("code", { title: activeKey }, activeKey), h("button", { className: "wbt-btn", onClick: function () { navigator.clipboard.writeText(activeKey).catch(function (e) { setMemberError(String(e)); }); } }, tr("复制 ID")),
+            h("button", { className: "wbt-btn", onClick: function () { setEditor(active); } }, tr("编辑时间线")),
+            h("button", { className: "wbt-btn", onClick: function () { setAdding(true); } }, tr("添加已有任务")),
+            h("button", { className: "wbt-btn", onClick: function () { setDeleting(true); } }, tr("删除时间线")),
+            deleting ? h("div", { role: "alert" }, tr("删除时间线将移出全部成员，保留任务及重启链。"),
+              h("button", { className: "wbt-btn", disabled: writing, onClick: function () { setDeleting(false); } }, tr("取消删除")),
+              h("button", { className: "wbt-btn", disabled: writing, onClick: function () { setWriting(true); api.call("taskTimelines.delete", { timelineId: activeKey }).then(result).then(function () { setDeleting(false); setSelected([]); reload(); }).catch(function (e) { setMemberError(String(e.message || e)); }).finally(function () { setWriting(false); }); } }, tr("确认删除时间线"))) : null) : null,
           h("p", null, t.timelineOrder),
           memberError ? h("p", { role: "alert", className: "wbt-err" }, t.error + memberError) : null,
           memberBusy ? h("p", { role: "status" }, t.loading) : h("ol", { className: "wbt-timeline-members", start: (memberPage - 1) * 20 + 1 }, members.records.map(function (task) {
             var st = deps.statusInfo(task.status);
             return h("li", { key: task.id }, h("button", { className: "wbt-timeline-member", "aria-label": task.title + " · " + (task.publishDate || "") + " · " + st[lang], onClick: function (e) { detailTrigger.current = e.currentTarget; setDetail(task); } },
-              h("time", null, task.publishDate || "—"), h("strong", null, task.title), h("span", { className: "wbt-badge " + st.cls }, st[lang])));
+              h("time", null, task.publishDate || "—"), h("strong", null, task.title), h("span", { className: "wbt-badge " + st.cls }, st[lang])), h("button", { className: "wbt-btn", disabled: writing, onClick: function () { setWriting(true); api.call("taskTimelines.detach", { taskId: task.id }).then(result).then(function () { createdRef.current = active; reload(); }).catch(function (e) { setMemberError(String(e.message || e)); }).finally(function () { setWriting(false); }); } }, tr("移出时间线")));
           })),
-          !memberBusy && !memberError && !members.records.length ? h("p", { className: "wbt-empty" }, t.timelineEmpty) : null,
+          !memberBusy && !memberError && !members.records.length ? h("p", { className: "wbt-empty" }, active ? tr("暂无可显示成员") : t.timelineEmpty) : null,
           active ? h(Pager, { t: t, label: t.timelineMembers, busy: memberBusy, page: memberPage, total: members.total, set: setMemberPage }) : null)),
+      editor ? h(controls.Editor, { api: api, t: t, item: editor.timelineKey ? editor : null, onClose: function () { setEditor(null); }, onSaved: function (line) { setEditor(null); setSingle(true); setDraft(""); setQuery(""); setPage(1); createdRef.current = Object.assign({}, line, { timelineKey: line.timelineId || line.timelineKey || line.id }); setActive(createdRef.current); reload(); } }) : null,
+      adding && active ? h(AddMembers, { api: api, t: t, timelineId: activeKey, onClose: function () { setAdding(false); }, onSaved: function () { setAdding(false); createdRef.current = active; reload(); } }) : null,
       merge ? h(Merge, { api: api, t: t, items: selected, onClose: closeMerge, onMerged: function () { closeMerge(); setSelected([]); setMulti(false); reload(); } }) : null,
       detail ? h(deps.EditModal, { key: detail.id, api: api, t: t, lang: lang, task: detail, tree: tree, onClose: closeDetail, onSaved: function () { closeDetail(); reload(); } }) : null);
   }

@@ -1,3 +1,4 @@
+import { registerEntityTimelineActions, TIMELINE_ID_SCHEMA, TIMELINE_ID_REQUIRED } from "./timeline-actions.js";
 import { DIFFICULTY_SCHEMA, DIFFICULTY_GUIDANCE } from "./task-difficulty.js";
 import { TODAY_STATS_DESCRIPTION } from "./stats-today.js";
 import { TASK_CREATE_SCHEMA } from './task-create-schema.js';
@@ -11,55 +12,32 @@ import { renderOwnership } from './task-ownership-path.js';
  */
 
 import {
-  now,
-  newId,
   idOf,
-  todayStr,
-  addDays,
-  dateText,
-  tx,
-  logChange,
-  taskOut,
-  nodeMap,
-  pathForTable,
-  tableExists,
-  timeMs,
 } from "./db.js";
 // task-query 循环依赖仅在调用期读取 tasks 的函数/常量。
 import { TASK_FILTER_SCHEMA } from "./task-search-schema.js";
 import { listTasks } from "./task-query.js";
 import { statsReport, renderStats } from "./stats.js";
 import { registerTagOptionsAction } from "./tag-options.js";
-import { configValues } from "./config.js";
-import { clampPriority, priorityForStatus, priorityForCreate } from "./task-priority.js";
-import { taskHistory, changelog, csvCell, renderArray, renderList } from "./task-view.js";
-import { idList, patchOf, diffRow, applyPatchRow, bulkUpdate, bulkCreate, bulkDelete, renderBulkUpdate, renderBulkCreate, renderBulkDelete } from "./task-bulk.js";
+import { taskHistory, changelog, renderArray, renderList } from "./task-view.js";
+import { bulkUpdate, bulkCreate, bulkDelete, renderBulkUpdate, renderBulkCreate, renderBulkDelete } from "./task-bulk.js";
 import {
-  LEGACY_TYPE_TAGS,
-  tagsAvailable,
-  normalizeTagIds,
-  normalizeTagNames,
-  requireTagRows,
-  availableTagsText,
-  tagIdsByNames,
-  ensureTagsByNames,
-  replaceTaskTags,
   attachTags,
   tagNavStats,
-  tagBreakdown,
   migrateLegacyTypes,
 } from "./tagging.js";
-import { requireKnownTagNames, TAG_DOMAIN_NOTICE, tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, sourceCode, putTypeCode, clampDifficulty, dateArg, getTask, defaultTable, requireTable, insertTaskRow, saveTaskRow, outOne, emitChange, writeChange, checkRequiredDates, currentTaskTagIds, resolveTagPatch, PATCH_FIELDS, DIFF_COLUMNS } from "./task-model.js";
+import { getTask, outOne } from "./task-model.js";
 import { createTask } from "./task-create.js";
 import { registerTimelineActions, TIMELINE_PAGE_SCHEMA } from "./task-timelines.js";
 import { updateTask } from "./task-update.js";
-import { depRows, wouldCycle, linkDep, unlinkDep, depView, selectedTasks, timelineTasks, restartTasks, timelineRefactor, migrateTasks, sweepShutdown, stats, removeTask, completeTask, exportTasks, reorderTasks, taskDeps, taskLink, taskUnlink } from "./task-operations.js";
+import { selectedTasks, timelineTasks, restartTasks, timelineRefactor, migrateTasks, sweepShutdown, stats, removeTask, completeTask, exportTasks, reorderTasks, taskDeps, taskLink, taskUnlink } from "./task-operations.js";
 export { tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, clampDifficulty, dateArg, getTask, requireTable, saveTaskRow, emitChange, writeChange, checkRequiredDates, currentTaskTagIds, resolveTagPatch, PATCH_FIELDS, DIFF_COLUMNS } from "./task-model.js";
 export { priorityForStatus } from "./task-priority.js";
 export { createTask } from "./task-create.js";
 export function registerTaskActions(api) {
   registerDiscoveryActions(api);
   registerTimelineActions(api);
+  registerEntityTimelineActions(api);
   const db = api.db;
   const action = api.action;
 
@@ -337,7 +315,7 @@ export function registerTaskActions(api) {
 
   action("tasks.timeline", {
     description: "取某条时间线有效任务，按publishDate/id正序；省略分页参数返回数组，传pageNumber或pageSize返回{records,total,current,size}，默认20条。排除已重启及已删除任务。",
-    input: { type: "object", properties: { timelineKey: { type: ["string", "number"] }, ...TIMELINE_PAGE_SCHEMA } },
+    input: { type: "object", properties: { ...TIMELINE_ID_SCHEMA, ...TIMELINE_PAGE_SCHEMA } },
     execute: function (args) { return timelineTasks(db, args || {}); },
     render: function (r) { return renderArray(Array.isArray(r) ? r : r.records); },
   });
@@ -355,11 +333,11 @@ export function registerTaskActions(api) {
       type: "object",
       properties: {
         ids: { type: "array", items: { type: "string" } },
-        timelineKey: { type: ["string", "number"] },
+        ...TIMELINE_ID_SCHEMA,
         timelineKeys: { type: "array", minItems: 1, items: { type: "string" }, description: "完整选中时间线key，包含目标；与ids互斥，不受list分页上限影响" },
         dryRun: { type: "boolean" },
       },
-      required: ["timelineKey"],
+      anyOf: TIMELINE_ID_REQUIRED,
     },
     execute: function (args, ctx) { return timelineRefactor(db, args || {}, ctx.origin, api); },
     render: function (r) {

@@ -18,6 +18,8 @@ const tests = [
   "scripts/test-task-timelines.mjs",
   "scripts/test-timeline-ui.mjs",
   "scripts/test-timeline-members.mjs",
+  "scripts/test-timeline-entities.mjs",
+  "scripts/test-task-timeline-data-sync.mjs",
   "scripts/test-ownership-host.mjs",
   "scripts/test-tasks-review.mjs",
   "scripts/test-task-difficulty-backend.mjs",

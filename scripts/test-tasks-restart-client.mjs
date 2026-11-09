@@ -16,9 +16,9 @@ const CreateModal = require('../packages/addons/tasks/client/create-modal.cjs')(
 const all = n => n && typeof n === 'object' ? [n, ...n.children.flatMap(all)] : [];
 const find = (tree, test) => { const node = all(tree).find(test); assert.ok(node); return node; };
 let cases = 0;
-function mount(priority, fallback = 1, source = '2', lang = 'zh') {
+function mount(priority, fallback = 1, source = '2', lang = 'zh', timelineId = 'line') {
   state = []; const calls = [];
-  const props = { tree: [{ id: 'table', name: 'Table', type: '1' }], t: copy[lang], source, originTask: { id: 'origin', tableId: 'table', priority }, defaults: { priority: fallback },
+  const props = { tree: [{ id: 'table', name: 'Table', type: '1' }], t: copy[lang], source, originTask: { id: 'origin', tableId: 'table', priority, timelineId }, defaults: { priority: fallback },
     api: { call: async (action, args) => { if (action === "tasks.capabilities") return { ok: true }; calls.push({ action, args }); return { ok: true }; } }, onCreated() {}, onClose() {} };
   const render = () => { cursor = 0; return CreateModal(props); };
   const change = (test, value) => find(render(), test).props.onChange({ target: { value } });
@@ -69,4 +69,15 @@ for (const lang of ['zh', 'en']) for (const source of ['0', '2']) for (const val
   assert.equal(ui.submit(tree).props.disabled, true);
   ui.submit(tree).props.onClick(); await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); assert.equal(ui.calls.length, 0); cases++;
 }
+const unlinked = mount(7, 1, '2', 'zh', null);
+assert.equal(unlinked.submit(unlinked.render()).props.disabled, true);
+unlinked.submit(unlinked.render()).props.onClick();
+await Promise.resolve(); await Promise.resolve();
+assert.equal(unlinked.calls.length, 0, 'unlinked restart must not mutate any backend state');
+assert.ok(all(unlinked.render()).some(n => n.children.includes('请先手动建立并关联时间线，再重启')));
+const linked = mount(7); linked.submit(linked.render()).props.onClick();
+await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+assert.equal(linked.calls[0].args.restartKey, 'origin');
+assert.equal(linked.calls[0].args.timelineId, undefined, 'server inherits relation');
+assert.equal(linked.calls[0].args.timelineKey, undefined, 'no self-id fallback');
 console.log('TASK RESTART CLIENT PASS', { cases, invalidSubmissionBlocked: true, locales: ['zh', 'en'] });

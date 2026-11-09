@@ -56,7 +56,7 @@ const storage = await load("../packages/addons/storage/lib/index.js", "wb-addon-
 
 // 1. 表清单必须是本插件负责的表，且不暴露 meta / sync_*
 for (const [name, mod, expected] of [
-  ["tasks", tasks, ["task", "task_dep", "task_node"]],
+  ["tasks", tasks, ["task", "task_timeline", "task_timeline_link", "task_dep", "task_node"]],
   ["tags", tags, ["tag", "tag_mapping"]],
   ["storage", storage, ["storage"]],
   ["sites", sites, ["site", "site_node", "site_node_mapping", "site_account", "site_account_external"]],

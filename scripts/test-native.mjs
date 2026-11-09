@@ -382,6 +382,8 @@ try {
   await call("tasks.update", { id: closed.result.id, type: "STATUS", status: "1" });
   const renameClosed = await call("tasks.update", { id: closed.result.id, type: "TITLE", title: "已关闭也能改名" });
   assert(renameClosed.result.task.title === "已关闭也能改名" && renameClosed.result.task.status === "1", "shutdown 任务不能重命名");
+  const restartLine = await call("taskTimelines.create", {title: "重启回归"});
+  await call("taskTimelines.attach", {taskId: closed.result.id, timelineId: restartLine.result.timeline.id});
   const restart = await call("tasks.create", { tableId: fixtureTableId, title: "重启链新任务", source: 2, restartKey: closed.result.id });
   assert((await call("tasks.get", { id: closed.result.id })).result.task.status === "3", "重启后原任务未标记 RESTARTED");
   const renameRestarted = await call("tasks.update", { id: closed.result.id, type: "TITLE", title: "重启任务也能改名" });

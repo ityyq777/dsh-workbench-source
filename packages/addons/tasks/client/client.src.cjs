@@ -319,51 +319,7 @@
 
   var CreateModal = require("./create-modal.cjs")({ React: React, allTables: allTables, tagNames: tagNames, splitTags: splitTags, today: today, addDays: addDays, hostHasAddon: hostHasAddon });
 
-  function TimelineModal(props) {
-    var t = props.t;
-    var task = props.task;
-    var s = React.useState({ items: [], loading: true, error: "" });
-    var state = s[0], setState = s[1];
-    React.useEffect(function () {
-      var cancelled = false;
-      setState({ items: [], loading: true, error: "" });
-      require("./timeline-members.cjs")(props.api, task).then(function (items) {
-        if (!cancelled) setState({ items: items, loading: false, error: "" });
-      }).catch(function (e) { if (!cancelled) setState({ items: [], loading: false, error: String(e && e.message || e) }); });
-      return function () { cancelled = true; };
-    }, [props.api, task.id, task.timelineKey]);
-    var items = state.items;
-    var last = items.length ? items[items.length - 1] : task;
-    return h("div", { className: "wbt-modal-mask", onMouseDown: function (e) { if (e.target === e.currentTarget) props.onClose(); } },
-      h("div", { className: "wbt-modal wide" },
-        h("div", { className: "wbt-modal-head" },
-          h("h3", null, t.timelineTitle),
-          !state.loading && !state.error && items.length ? h("button", { className: "wbt-btn", onClick: function () { props.onCreateTimeline(last); } }, "＋ " + t.newTimeline) : null,
-          h("button", { className: "wbt-icon", onClick: props.onClose }, "×")
-        ),
-        state.loading ? h("div", { className: "wbt-mhint" }, t.loading) : state.error ? h("div", { className: "wbt-err" }, t.error + state.error) : (items.length === 0 ? h("div", { className: "wbt-empty" }, t.noTimeline) : h("div", { className: "wbt-timeline" }, items.map(function (x, i) {
-          var st = statusInfo(x.status);
-          return h("div", { className: "wbt-tl-item", key: x.id },
-            h("div", { className: "wbt-tl-rail" }, h("div", { className: "wbt-tl-dot" }), i < items.length - 1 ? h("div", { className: "wbt-tl-line" }) : null),
-            h("div", { className: "wbt-tl-body" },
-              h("div", { className: "wbt-row" },
-                h("span", { className: "wbt-badge " + st.cls }, st.zh),
-                h("span", { className: "wbt-tl-title" }, x.title),
-                h("span", { className: "wbt-pill" }, "P" + x.priority)
-              ),
-              h("div", { className: "wbt-tl-meta" },
-                h("span", null, "发布 " + (x.publishDate || "-")),
-                h("span", null, "计划 " + (x.targetDate || "-")),
-                x.doneDate ? h("span", null, "完成 " + x.doneDate) : null,
-                x.shutdownDate ? h("span", null, "关闭 " + x.shutdownDate) : null
-              ),
-              h(PathCrumbs, { path: x.path })
-            )
-          );
-        })))
-      )
-    );
-  }
+  var TimelineModal = require("./task-timeline-modal.cjs")(React);
 
   function DoneModal(props) {
     var t = props.t;
@@ -417,7 +373,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.1.8",
+    version: "3.2.0",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },

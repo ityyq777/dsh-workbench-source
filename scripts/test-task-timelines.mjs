@@ -15,7 +15,8 @@ const totalChanges=()=>db.prepare('SELECT total_changes() n').get().n;
 try {
   db.exec("INSERT INTO task_node(id,name,type,parent_id,path,created_at,updated_at) VALUES('line-table','Lines','1','1','/1/',0,0)");
   assert.deepEqual(list(),{records:[],total:0,current:1,size:20});
-  const a=create({title:'Alpha %_'}), b=create({title:'Beta'});
+  for(const [id,title] of [['alpha','Alpha %_'],['beta','Beta']]) call('taskTimelines.create',{id,title});
+  const a=create({source:1,timelineId:'alpha',title:'Alpha %_'}), b=create({source:1,timelineId:'beta',title:'Beta'});
   assert.equal(list().total,0,'singletons hidden');
   assert.equal(list({includeSingletons:true}).total,2);
   const a2=create({source:1,timelineKey:a.timelineKey,title:'Later unmatched',publishDate:'2024-01-02',status:2,doneDate:'2024-02-01'});
@@ -26,8 +27,7 @@ try {
   call('tasks.delete',{id:deleted.id});
   let line=list().records[0];
   assert.equal(line.timelineKey,a.timelineKey);
-  const expectedTitle=members(a.timelineKey)[0].title;
-  assert.equal(line.title,expectedTitle,'publishDate/id tie chooses the same first member');
+  assert.equal(line.title,'Alpha %_','entity title is authoritative');
   assert.equal(line.taskCount,4); assert.equal(line.openCount,2); assert.equal(line.doneCount,1);
   assert.equal(line.firstPublishDate,'2024-01-01'); assert.equal(line.lastActivityDate,'2024-03-01','activity includes shutdown but not future target');
   assert(!members(a.timelineKey).some(r=>r.id===retired.id || r.id===deleted.id));
@@ -36,10 +36,10 @@ try {
   assert.equal(list({titleKey:'Later unmatched'}).total,0,'search only representative title');
   assert.equal(list({titleKey:"' OR 1=1 --"}).total,0);
   let queries=0;
-  const wrapped={prepare(sql){queries++;assert.match(sql,/GROUP BY timeline_key/);return db.prepare(sql);}};
+  const wrapped={prepare(sql){queries++;assert.match(sql,/GROUP BY timeline_id/);return db.prepare(sql);}};
   assert.equal(timelines(wrapped,{}).total,1); assert.equal(queries,1,'single SQL, no per-line query');
   const before=totalChanges(); list(); assert.equal(totalChanges(),before,'read only');
-  for(let i=0;i<23;i++) create({title:'Singleton '+i});
+  for(let i=0;i<23;i++) {call('taskTimelines.create',{id:'single-'+i,title:'Singleton '+i});create({source:1,timelineId:'single-'+i,title:'Singleton '+i});}
   const first=list({includeSingletons:true}), second=list({includeSingletons:true,pageNumber:2});
   assert.equal(first.records.length,20); assert.equal(first.total,25); assert.equal(second.total,25); assert.equal(second.records.length,5);
   assert.equal(new Set([...first.records,...second.records].map(r=>r.timelineKey)).size,25,'stable tie-breaker across pages');
@@ -68,11 +68,12 @@ try {
   assert.equal(members(a.timelineKey).length,preview.total); assert.deepEqual(members(b.timelineKey),[]);
   assert.equal(list({titleKey:'Alpha'}).records[0].taskCount,preview.total);
   assert.equal(db.prepare('SELECT timeline_key FROM task WHERE id=?').get(retired.id).timeline_key,a.timelineKey);
-  for(const excluded of [bRetired,bReplacement]) assert.equal(db.prepare('SELECT timeline_key FROM task WHERE id=?').get(excluded.id).timeline_key,b.timelineKey,'retired and deleted source rows are not moved');
+  assert.equal(db.prepare('SELECT timeline_key FROM task WHERE id=?').get(bRetired.id).timeline_key,b.timelineKey,'retired source row is not moved');
+  assert.equal(db.prepare('SELECT timeline_key FROM task WHERE id=?').get(bReplacement.id).timeline_key,null,'deleted source detached');
   const same=call('tasks.timelineRefactor',{timelineKeys:[a.timelineKey],timelineKey:a.timelineKey,dryRun:true}); assert.equal(same.wouldUpdate,0);
   for(const bad of [{timelineKeys:[a.timelineKey,'missing'],timelineKey:a.timelineKey},{timelineKeys:[a.timelineKey],timelineKey:'outside'},{...input,ids:[a.id]}]) assert.throws(()=>call('tasks.timelineRefactor',bad));
   const oldPreview=call('tasks.timelineRefactor',{ids:[a2.id],timelineKey:a.timelineKey,dryRun:true});
-  assert.equal(oldPreview.wouldUpdate,1); assert.deepEqual(oldPreview.ids,[a2.id]);
+  assert.equal(oldPreview.wouldUpdate,0); assert.deepEqual(oldPreview.ids,[a2.id]);
   for(const args of [{pageSize:0},{pageSize:201},{pageNumber:0},{pageNumber:1.5},{includeSingletons:'false'}]) assert.throws(()=>list(args));
   assert.equal(actions.get('tasks.timeline').input.properties.pageSize.default,20);
   assert(actions.get('tasks.timelineRefactor').input.properties.timelineKeys);

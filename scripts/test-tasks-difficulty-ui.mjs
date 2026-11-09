@@ -26,7 +26,7 @@ const Create=require(dir+'create-modal.cjs')({React,allTables:()=>tree,tagNames:
 const Edit=require(dir+'edit-modal.cjs')(React,()=>({}),()=> '');
 let cases=0;
 for(const lang of ['zh','en']) for(const source of ['0','1','2']) for(const status of ['0','2']) {
-  reset();const calls=[];const props={tree,t:copy[lang],source,api:{call:async(action,args)=>{calls.push({action,args});return {ok:true};}},onCreated(){}};
+  reset();const calls=[];const props={tree,t:copy[lang],source,originTask:{id:'origin',timelineId:'line'},api:{call:async(action,args)=>{calls.push({action,args});return {ok:true};}},onCreated(){}};
   const change=(pred,value)=>find(render(Create,props),pred).props.onChange({target:{value}});
   assert.equal(find(render(Create,props),n=>n.props['aria-label']===copy[lang].difficulty).props.value,0);
   assert.ok(text(render(Create,props)).includes(copy[lang].difficultyUnsetHint));

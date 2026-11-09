@@ -6,10 +6,10 @@
  * 所有行（含软删）都会导出，保证删除标记也能随备份恢复。
  */
 
-import { NODE_TABLE, TASK_TABLE, logChange, tableExists, tx } from "./db.js";
+import { logChange, tableExists, tx } from "./db.js";
 import { LEGACY_TYPE_TAGS, addTaskTagByName, tagsAvailable } from "./tagging.js";
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 function asText(value, fallback) {
   if (value === undefined || value === null) return fallback === undefined ? "" : fallback;
@@ -48,7 +48,7 @@ function taskValues(row) {
     asNumOrNull(row.difficulty),
     asText(row.review),
     asText(row.table_id),
-    asTextOrNull(row.timeline_key),
+    row.timeline_key === undefined || row.timeline_key === null ? null : String(row.timeline_key),
     asTextOrNull(row.restart_key),
     asText(row.publish_date),
     asText(row.target_date),
@@ -101,139 +101,174 @@ function nodeValues(row) {
   ];
 }
 
-export function exportTasksData(api) {
-  const db = api.db;
-  const tasks = tableExists(db, TASK_TABLE) ? db.prepare("SELECT * FROM task ORDER BY created_at ASC, id ASC").all() : [];
-  const nodes = tableExists(db, NODE_TABLE) ? db.prepare("SELECT * FROM task_node ORDER BY depth ASC, sort ASC, id ASC").all() : [];
-  const taskDeps = tableExists(db, "task_dep") ? db.prepare("SELECT * FROM task_dep ORDER BY task_id ASC, depends_on_id ASC").all() : [];
-  return { schemaVersion: SCHEMA_VERSION, tasks, taskNodes: nodes, taskDeps };
+const DEFINITIONS = [
+  ["task_node", "taskNodes", "id,name,description,type,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev", nodeValues],
+  ["task_timeline", "taskTimelines", "id,title,description,created_at,updated_at,deleted_at,rev", timelineValues],
+  ["task", "tasks", "id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,sort,dedupe_key,created_at,updated_at,deleted_at,rev", taskValues],
+  ["task_dep", "taskDeps", "id,task_id,depends_on_id,created_at,updated_at,deleted_at,rev", depValues],
+  ["task_timeline_link", "taskTimelineLinks", "id,task_id,timeline_id,created_at,updated_at,deleted_at,rev", linkValues],
+];
+
+function identity(value, field) {
+  if (typeof value !== "string" || !value.length) throw new Error(field + " 必须为非空字符串");
+  return value; // 不 trim、不数值化：001 和 1 是不同实体。
+}
+function stamps(row) {
+  for (const key of ["created_at", "updated_at", "rev"]) {
+    if (!Number.isSafeInteger(row[key]) || (key === "rev" && row[key] < 1)) throw new Error("非法时间线字段：" + key);
+  }
+  if (row.deleted_at != null && !Number.isSafeInteger(row.deleted_at)) throw new Error("非法 deleted_at");
+  return [row.created_at, row.updated_at, row.deleted_at ?? null, row.rev];
+}
+function timelineValues(row) {
+  return [identity(row.id, "task_timeline.id"), asText(row.title), asText(row.description), ...stamps(row)];
+}
+function linkValues(row) {
+  const taskId = identity(row.task_id, "task_timeline_link.task_id");
+  if (identity(row.id, "task_timeline_link.id") !== taskId) throw new Error("TIMELINE_LINK_ID_MISMATCH: link.id 必须等于 task_id");
+  return [taskId, taskId, identity(row.timeline_id, "task_timeline_link.timeline_id"), ...stamps(row)];
 }
 
-function policyOf(options) {
-  const p = options && options.policy;
-  return p === "skip" || p === "overwrite" ? p : "newest";
+export function exportTasksData(api) {
+  return tx(api.db, () => {
+    const timelineMigrationRecords = tableExists(api.db, "meta") ? api.db.prepare("SELECT k,v FROM meta WHERE k LIKE ? ORDER BY k").all("task_timeline_migration:%") : [];
+    const data = { schemaVersion: SCHEMA_VERSION, timelineMigrationVersion: 1, timelineMigrationRecords };
+    for (const [table, key] of DEFINITIONS) {
+      data[key] = tableExists(api.db, table) ? api.db.prepare("SELECT * FROM " + table + " ORDER BY id ASC").all() : [];
+    }
+    return data;
+  });
+}
+
+function prepareBackup(data) {
+  if (!data || ![1, 2].includes(Number(data.schemaVersion))) throw new Error("任务备份版本不兼容：需要 1 或 2");
+  const legacy = Number(data.schemaVersion) === 1;
+  const prepared = [];
+  for (const [table, key, columnText, convert] of DEFINITIONS) {
+    if (legacy && (table === "task_timeline" || table === "task_timeline_link")) continue;
+    const rows = data[key] === undefined && (legacy && key === "taskDeps") ? [] : data[key];
+    if (!Array.isArray(rows)) throw new Error("任务备份结构不完整：" + key);
+    const columns = columnText.split(",");
+    const ids = new Set();
+    const values = rows.map(row => {
+      if (!row || typeof row !== "object" || Array.isArray(row)) throw new Error("非法备份行：" + table);
+      const v = convert(row);
+      if (ids.has(v[0])) throw new Error("备份行 ID 重复：" + table + "/" + v[0]);
+      ids.add(v[0]);
+      return { row: Object.fromEntries(columns.map((col, i) => [col, v[i]])), original: row };
+    });
+    prepared.push({ table, columns, values });
+  }
+  const migrationRecords = legacy ? [] : (data.timelineMigrationRecords ?? []);
+  if (!Array.isArray(migrationRecords) || migrationRecords.some(r => !r || typeof r.k !== "string" || !r.k.startsWith("task_timeline_migration:") || typeof r.v !== "string")) throw new Error("非法时间线迁移记录");
+  return { legacy, prepared, migrationRecords };
+}
+
+function legacyCandidates(tasks) {
+  const groups = new Map();
+  for (const task of tasks) {
+    const key = task.timeline_key;
+    if (key === null || key === undefined || key === "") continue;
+    const list = groups.get(String(key)) || [];
+    list.push(String(task.id)); groups.set(String(key), list);
+  }
+  return [...groups].map(([timelineKey, taskIds]) => ({ timelineKey, taskIds,
+    reason: taskIds.length === 1 && taskIds[0] === timelineKey ? "ambiguousSelfId" : "legacyGrouped",
+    requiresApproval: true }));
+}
+
+// 校验合并后的引用，而非只看输入包；newest/skip 可能保留本地墓碑。
+function validateLinks(db, ids) {
+  for (const id of ids) {
+    const link = db.prepare("SELECT * FROM task_timeline_link WHERE id=?").get(id);
+    if (!link) continue;
+    const task = db.prepare("SELECT * FROM task WHERE id=?").get(link.task_id);
+    const timeline = db.prepare("SELECT * FROM task_timeline WHERE id=?").get(link.timeline_id);
+    if (!task || !timeline) throw new Error("TIMELINE_REFERENCE_NOT_FOUND: " + id + " -> " + link.timeline_id);
+    // 墓碑父行保留完整同步状态；活性由 task/link/entity 三方 join 决定，导入不复活。
+  }
 }
 
 export function importTasksData(api, raw, options) {
   const db = api.db;
-  const policy = policyOf(options);
-  let data;
+  const policy = ["skip", "overwrite"].includes(options?.policy) ? options.policy : "newest";
+  let data, plan;
+  try { data = JSON.parse(String(raw || "{}")); plan = prepareBackup(data); }
+  catch (error) { return { ok: false, imported: 0, skipped: 0, failed: 1, message: error.message, errors: [error.message] }; }
+  const counts = {};
+  let imported = 0, skipped = 0;
   try {
-    data = JSON.parse(String(raw || "{}"));
-  } catch {
-    return { ok: false, imported: 0, skipped: 0, failed: 0, message: "任务备份不是有效 JSON" };
-  }
-  if (!data || Number(data.schemaVersion) !== SCHEMA_VERSION) {
-    return { ok: false, imported: 0, skipped: 0, failed: 0, message: "任务备份版本不兼容：需要 " + SCHEMA_VERSION };
-  }
-  if (!Array.isArray(data.tasks) || !Array.isArray(data.taskNodes)) {
-    return { ok: false, imported: 0, skipped: 0, failed: 0, message: "任务备份结构不完整" };
-  }
-
-  const taskUpsert = db.prepare(
-    "INSERT INTO task(id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,sort,dedupe_key,created_at,updated_at,deleted_at,rev) " +
-      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) " +
-      "ON CONFLICT(id) DO UPDATE SET title=excluded.title,description=excluded.description,status=excluded.status,priority=excluded.priority,difficulty=excluded.difficulty,review=excluded.review,table_id=excluded.table_id,timeline_key=excluded.timeline_key,restart_key=excluded.restart_key,publish_date=excluded.publish_date,target_date=excluded.target_date,done_date=excluded.done_date,shutdown_date=excluded.shutdown_date,sort=excluded.sort,dedupe_key=excluded.dedupe_key,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
-      "WHERE ? = 1 OR excluded.updated_at > task.updated_at",
-  );
-  const depUpsert = db.prepare(
-    "INSERT INTO task_dep(id,task_id,depends_on_id,created_at,updated_at,deleted_at,rev) " +
-      "VALUES(?,?,?,?,?,?,?) " +
-      "ON CONFLICT(id) DO UPDATE SET task_id=excluded.task_id,depends_on_id=excluded.depends_on_id,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
-      "WHERE ? = 1 OR excluded.updated_at > task_dep.updated_at",
-  );
-  const nodeUpsert = db.prepare(
-    "INSERT INTO task_node(id,name,description,type,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev) " +
-      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?) " +
-      "ON CONFLICT(id) DO UPDATE SET name=excluded.name,description=excluded.description,type=excluded.type,parent_id=excluded.parent_id,path=excluded.path,sort=excluded.sort,depth=excluded.depth,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
-      "WHERE ? = 1 OR excluded.updated_at > task_node.updated_at",
-  );
-
-  let imported = 0;
-  let skipped = 0;
-  let failed = 0;
-  const errors = [];
-  const taskExists = db.prepare("SELECT 1 FROM task WHERE id = ?");
-  const nodeExists = db.prepare("SELECT 1 FROM task_node WHERE id = ?");
-  const depExists = db.prepare("SELECT 1 FROM task_dep WHERE id = ?");
-  const force = policy === "overwrite" ? 1 : 0;
-
-  for (const row of data.tasks) {
-    try {
-      const values = taskValues(row);
-      if (policy === "skip" && taskExists.get(values[0])) {
-        skipped += 1;
-        continue;
-      }
-      const result = taskUpsert.run(...values, force);
-      if (result.changes > 0) {
-        imported += 1;
-        logChange(db, TASK_TABLE, values[0], "upsert", row, "import", values[17]);
-        // 旧备份里的 task.type（0..3）没有对应列了，转成同名标签保留语义。
-        const legacyName = LEGACY_TYPE_TAGS[String(row && row.type)];
-        if (legacyName && tagsAvailable(db, api)) {
-          try {
-            addTaskTagByName(db, values[0], legacyName, values[17], "import");
-          } catch (e) {
-            /* 标签恢复失败不影响任务行导入 */
+    tx(db, () => {
+      const changed = [];
+      const affectedTasks = new Set();
+      const affectedTimelines = new Set();
+      for (const { table, columns, values } of plan.prepared) {
+        counts[table] = { imported: 0, skipped: 0 };
+        const select = db.prepare("SELECT * FROM " + table + " WHERE id=?");
+        const upsert = db.prepare("INSERT INTO " + table + " (" + columns.join(",") + ") VALUES(" + columns.map(() => "?").join(",") + ") ON CONFLICT(id) DO UPDATE SET " + columns.slice(1).map(c => c + "=excluded." + c).join(","));
+        for (const { row, original } of values) {
+          const local = select.get(row.id);
+          if (local && (policy === "skip" || (policy === "newest" && local.updated_at >= row.updated_at) || columns.every(c => local[c] === row[c]))) {
+            counts[table].skipped++; skipped++; continue;
           }
+          upsert.run(...columns.map(c => row[c]));
+          if (table === "task" || table === "task_timeline_link") affectedTasks.add(table === "task" ? row.id : row.task_id);
+          if (table === "task_timeline") affectedTimelines.add(row.id);
+          counts[table].imported++; imported++;
+          changed.push({ table, row, original, local, columns });
         }
-      } else {
-        skipped += 1;
       }
-    } catch (e) {
-      failed += 1;
-      if (errors.length < 5) errors.push(String((e && e.message) || e));
-    }
+      for (const id of affectedTimelines) {
+        for (const link of db.prepare("SELECT task_id FROM task_timeline_link WHERE timeline_id=?").all(id)) affectedTasks.add(link.task_id);
+      }
+      validateLinks(db, affectedTasks);
+      // v1 不把 key 翻译为关系；已有新版归属不被旧备份覆盖。v2 同样以最终 link 为准。
+      for (const id of affectedTasks) {
+        const link = db.prepare("SELECT * FROM task_timeline_link WHERE task_id=?").get(id);
+        if (!link) continue;
+        const timeline = db.prepare("SELECT * FROM task_timeline WHERE id=?").get(link.timeline_id);
+        const task = db.prepare("SELECT * FROM task WHERE id=?").get(id);
+        const key = link.deleted_at == null && timeline && timeline.deleted_at == null && task && task.deleted_at == null ? link.timeline_id : null;
+        if (!task || task.timeline_key === key) continue;
+        const taskChange = changed.find(record => record.table === "task" && record.row.id === id);
+        const local = taskChange?.local;
+        const projected = { ...task, timeline_key: key };
+        // overwrite 同一旧包可能临时写回旧 key；最终业务内容相同时恢复本地版本，避免反复 bump。
+        const unchanged = local && Object.keys(projected).filter(c => c !== "updated_at" && c !== "rev").every(c => projected[c] === local[c]);
+        const updated = unchanged ? local.updated_at : Math.max(task.updated_at, local?.updated_at ?? 0, link.updated_at, timeline?.updated_at ?? 0) + 1;
+        const rev = unchanged ? local.rev : Math.max(task.rev, local?.rev ?? 0) + 1;
+        db.prepare("UPDATE task SET timeline_key=?,updated_at=?,rev=? WHERE id=?").run(key, updated, rev, id);
+        if (!taskChange) {
+          const stored = { ...projected, updated_at: updated, rev };
+          logChange(db, "task", id, stored.deleted_at == null ? "upsert" : "delete", stored, "import", updated);
+        }
+      }
+      for (const record of plan.migrationRecords) {
+        const existing = db.prepare("SELECT v FROM meta WHERE k=?").get(record.k);
+        if (existing && existing.v !== record.v) throw new Error("TIMELINE_MIGRATION_RECORD_CONFLICT: " + record.k);
+        if (!existing) db.prepare("INSERT INTO meta(k,v) VALUES(?,?)").run(record.k, record.v);
+      }
+      for (const { table, row, original, local, columns } of changed) {
+        const stored = db.prepare("SELECT * FROM " + table + " WHERE id=?").get(row.id);
+        if (local && columns.every(c => local[c] === stored[c])) {
+          counts[table].imported--; counts[table].skipped++; imported--; skipped++; continue;
+        }
+        logChange(db, table, row.id, stored.deleted_at == null ? "upsert" : "delete", stored, "import", stored.updated_at);
+        if (table === "task") {
+          const legacyName = LEGACY_TYPE_TAGS[String(original.type)];
+          if (legacyName && tagsAvailable(db, api)) addTaskTagByName(db, row.id, legacyName, row.updated_at, "import");
+        }
+      }
+    });
+  } catch (error) {
+    return { ok: false, imported: 0, skipped: 0, failed: 1, rolledBack: true, message: error.message, errors: [error.message] };
   }
-  for (const row of data.taskDeps || []) {
-    try {
-      const values = depValues(row);
-      if (policy === "skip" && depExists.get(values[0])) {
-        skipped += 1;
-        continue;
-      }
-      const result = depUpsert.run(...values, force);
-      if (result.changes > 0) {
-        imported += 1;
-        logChange(db, "task_dep", values[0], "upsert", row, "import", values[4]);
-      } else {
-        skipped += 1;
-      }
-    } catch (e) {
-      failed += 1;
-      if (errors.length < 5) errors.push(String((e && e.message) || e));
-    }
-  }
-  for (const row of data.taskNodes) {
-    try {
-      const values = nodeValues(row);
-      if (policy === "skip" && nodeExists.get(values[0])) {
-        skipped += 1;
-        continue;
-      }
-      const result = nodeUpsert.run(...values, force);
-      if (result.changes > 0) {
-        imported += 1;
-        logChange(db, NODE_TABLE, values[0], "upsert", row, "import", values[9]);
-      } else {
-        skipped += 1;
-      }
-    } catch (e) {
-      failed += 1;
-      if (errors.length < 5) errors.push(String((e && e.message) || e));
-    }
-  }
-
   if (imported > 0) {
-    api.emit("tasks-changed", { source: "import" });
-    api.emit("task-nodes-changed", { source: "import" });
+    api.emit?.("tasks-changed", { source: "import" });
+    api.emit?.("task-nodes-changed", { source: "import" });
+    api.emit?.("task-timelines-changed", { source: "import" });
   }
-  return {
-    ok: failed === 0,
-    imported,
-    skipped,
-    failed,
-    message: failed ? "部分任务行导入失败：" + errors.join("；") : undefined,
-  };
+  return { ok: true, imported, skipped, failed: 0, tables: counts,
+    timelineCandidates: plan.legacy ? legacyCandidates(data.tasks) : [],
+    message: plan.legacy ? "旧字段已保留；历史时间线候选需用户批准，未自动实体化" : "任务备份已原子恢复" };
 }

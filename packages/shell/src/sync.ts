@@ -1,97 +1,12 @@
+import { applyIncoming } from "./sync-incoming.js";
+import { parseObject, stableStringify } from "./sync-values.js";
+import type { SyncDomain, SyncTableBinding, SyncTransport, SyncPullEntry } from "./sync-types.js";
+export * from "./sync-types.js";
+export { listConflicts, resolveConflict } from "./sync-conflicts.js";
 import type { DatabaseSync } from "node:sqlite";
-import type { DomainSyncTable, SyncRow } from "@wb/sdk";
-import {
-  applyRemoteDelete,
-  applyRemoteUpsert,
-  getSyncState,
-  getSyncStateText,
-  recordDeadLetter,
-  writeConflict,
-  setSyncState,
-  setSyncStateText,
-  tableExists,
-} from "@wb/core";
-
-/** 宿主侧同步域的最小视图（不 import 任何业务插件）。 */
-export interface SyncDomain {
-  id: string;
-  tables?: string[];
-  sync?: { tables: DomainSyncTable[] };
-}
-
-export interface SyncTableBinding {
-  domainId: string;
-  table: DomainSyncTable;
-}
-
-export interface SyncOpenResult {
-  session_id: string;
-  server_time: number;
-  expires_at: number;
-  tables: Record<string, { version: number; mode: "row" | "tree" }>;
-}
-
-export interface SyncPushResponse {
-  ok: true;
-  accepted_up_to: number;
-  results: {
-    client_seq: number;
-    table_name: string;
-    row_id: string;
-    status: "accepted" | "conflict" | "duplicate" | "invalid" | "equal";
-    error?: string;
-    current?: Record<string, unknown>;
-  }[];
-  server_time: number;
-}
-
-export interface SyncPullEntry {
-  server_seq: number;
-  device_id: string;
-  client_epoch: string;
-  table_name: string;
-  row_id: string;
-  op: string;
-  payload: Record<string, unknown> | null;
-  updated_at: number;
-}
-
-export interface SyncPullResponse {
-  ok: true;
-  entries: SyncPullEntry[];
-  next_cursors: Record<string, number>;
-  has_more: boolean;
-  min_seq: number;
-  server_time: number;
-}
-
-export interface SyncSnapshotResponse {
-  ok: true;
-  table_name: string;
-  rows: SyncRow[];
-  cursor: number;
-  version: number;
-  mode: "row" | "tree";
-  server_time?: number;
-}
-
-export interface SyncFullResponse {
-  ok: true;
-  table_name: string;
-  version: number;
-  cursor: number;
-  server_time: number;
-}
-
-/** 宿主注入的协议客户端；index.ts 用 cloudFetch 实现。 */
-export interface SyncTransport {
-  open(protocol: number, deviceId: string): Promise<SyncOpenResult>;
-  push(body: Record<string, unknown>): Promise<SyncPushResponse>;
-  pull(body: Record<string, unknown>): Promise<SyncPullResponse>;
-  snapshot(body: Record<string, unknown>): Promise<SyncSnapshotResponse>;
-  full(body: Record<string, unknown>): Promise<SyncFullResponse>;
-  close(body: Record<string, unknown>): Promise<{ ok: true }>;
-}
+import type { SyncRow } from "@wb/sdk";
+import { getSyncState, getSyncStateText, recordDeadLetter, writeConflict,
+  setSyncState, setSyncStateText, tableExists } from "@wb/core";
 
 export class SyncHttpError extends Error {
   status: number;
@@ -131,26 +46,6 @@ const SESSION_LIMIT = 200;
 const PUSH_BATCH = 200;
 const PULL_BATCH = 300;
 const TREE_RETRY = 3;
-
-function stableStringify(value: unknown): string {
-  if (value === null) return "null";
-  if (Array.isArray(value)) return "[" + value.map((v) => stableStringify(v)).join(",") + "]";
-  if (typeof value === "object") {
-    const obj = value as Record<string, unknown>;
-    return "{" + Object.keys(obj).sort().map((k) => JSON.stringify(k) + ":" + stableStringify(obj[k])).join(",") + "}";
-  }
-  return JSON.stringify(value);
-}
-
-function parseObject(raw: unknown): Record<string, unknown> | null {
-  if (typeof raw !== "string" || !raw) return null;
-  try {
-    const v = JSON.parse(raw);
-    return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
-  } catch {
-    return null;
-  }
-}
 
 function keyOf(userId: string, table: string, kind: string): string {
   return kind + ":" + userId + ":" + table;
@@ -298,37 +193,8 @@ export class SyncEngine {
     return row ?? null;
   }
 
-  /**
-   * 应用远端行前处理唯一键冲突（lww-tombstone）：
-   * 本地已有同唯一键但不同 id 的存活行时，按 updated_at 比较，输者软删并补日志。
-   * 返回 false 表示本地版本胜出，调用方不要把远端行写入本地。
-   */
   private applyRemoteRow(table: string, binding: SyncTableBinding, row: SyncRow, serverTs: number): boolean {
-    const keys = binding.table.uniqueKeys;
-    const policy = binding.table.uniquePolicy ?? "lww-tombstone";
-    if (keys?.length && policy === "lww-tombstone" && row.deleted_at === null) {
-      for (const key of keys) {
-        if (!key.length || key.some((c) => row[c] === null || row[c] === undefined)) continue;
-        const where = key.map((c) => c + "=?").join(" AND ");
-        const values = key.map((c) => row[c] as never);
-        const local = this.db
-          .prepare("SELECT * FROM " + table + " WHERE deleted_at IS NULL AND " + where + " AND id<>? ORDER BY updated_at DESC LIMIT 1")
-          .get(...values, String(row.id)) as SyncRow | undefined;
-        if (!local) continue;
-        const localTs = Number(local.updated_at) || 0;
-        const remoteTs = Number(row.updated_at) || serverTs;
-        if (localTs > remoteTs) {
-          writeConflict(this.db, table, String(row.id), "unique", "local", local, row, remoteTs, localTs);
-          return false;
-        }
-        const ts = Math.max(localTs, remoteTs);
-        this.db.prepare("UPDATE " + table + " SET deleted_at=?, updated_at=?, rev=rev+1 WHERE id=?").run(ts, ts, String(local.id));
-        const tomb = this.localRow(table, String(local.id));
-        if (tomb) this.enqueueRepair(table, tomb);
-        writeConflict(this.db, table, String(row.id), "unique", "server", local, row, remoteTs, localTs);
-      }
-    }
-    return applyRemoteUpsert(this.db, table, row, serverTs);
+    return applyIncoming(this.db, binding.table, row, serverTs, tomb => this.enqueueRepair(table, tomb));
   }
 
   /** 把本地 change log 中的条目补成完整行 payload；旧数据 delete payload=null 时从当前行/墓碑补齐。 */
@@ -644,7 +510,10 @@ export class SyncEngine {
 
   private applyEntry(table: string, binding: SyncTableBinding, entry: SyncPullEntry): boolean {
     if (entry.op === "delete") {
-      return applyRemoteDelete(this.db, table, entry.row_id, entry.payload, entry.updated_at);
+      const payload = entry.payload ?? this.localRow(table, entry.row_id);
+      if (!payload) return false;
+      return this.applyRemoteRow(table, binding, { ...payload, id: entry.row_id,
+        updated_at: entry.updated_at, deleted_at: payload.deleted_at ?? entry.updated_at } as SyncRow, entry.updated_at);
     }
     if (entry.payload) {
       return this.applyRemoteRow(table, binding, entry.payload as SyncRow, Number(entry.payload.updated_at) || entry.updated_at);
@@ -722,65 +591,4 @@ export class SyncEngine {
     }
     throw lastError instanceof Error ? lastError : new Error("树表同步失败：" + table);
   }
-}
-
-/** 读取冲突列表（最近优先）。 */
-export function listConflicts(db: DatabaseSync, limit = 100): Record<string, unknown>[] {
-  const n = Math.max(1, Math.min(500, Number(limit) || 100));
-  return db.prepare("SELECT * FROM conflict_shadow ORDER BY id DESC LIMIT ?").all(n) as Record<string, unknown>[];
-}
-
-/**
- * 处理一条冲突：keep_local 把本地版本回写（bump updated_at）并补一条 change log；
- * keep_server 用服务端版本覆盖本地；dismiss 只删除冲突记录。
- */
-export function resolveConflict(
-  db: DatabaseSync,
-  id: number,
-  action: "keep_local" | "keep_server" | "dismiss",
-  now: number,
-): boolean {
-  const row = db.prepare("SELECT * FROM conflict_shadow WHERE id=?").get(id) as
-    | {
-        table_name: string;
-        row_id: string;
-        local_payload: string | null;
-        server_payload: string | null;
-        server_updated_at: number | null;
-      }
-    | undefined;
-  if (!row) return false;
-  if (action === "dismiss") {
-    db.prepare("DELETE FROM conflict_shadow WHERE id=?").run(id);
-    return true;
-  }
-  if (action === "keep_server") {
-    const server = parseObject(row.server_payload);
-    if (server) {
-      const ts = Number(row.server_updated_at) || now;
-      db.prepare("DELETE FROM " + row.table_name + " WHERE id=?").run(row.row_id);
-      const cols = Object.keys(server);
-      db.prepare(
-        "INSERT INTO " + row.table_name + " (" + cols.join(",") + ") VALUES(" + cols.map(() => "?").join(",") + ")",
-      ).run(...cols.map((c) => server[c] as never));
-      void ts;
-    }
-    db.prepare("DELETE FROM conflict_shadow WHERE id=?").run(id);
-    return true;
-  }
-  const local = parseObject(row.local_payload);
-  if (!local) return false;
-  const ts = Math.max(Number(local.updated_at) || 0, Number(row.server_updated_at) || 0) + 1;
-  local.updated_at = ts;
-  local.rev = (Number(local.rev) || 1) + 1;
-  const cols = Object.keys(local);
-  db.prepare("DELETE FROM " + row.table_name + " WHERE id=?").run(row.row_id);
-  db.prepare(
-    "INSERT INTO " + row.table_name + " (" + cols.join(",") + ") VALUES(" + cols.map(() => "?").join(",") + ")",
-  ).run(...cols.map((c) => local[c] as never));
-  db.prepare(
-    "INSERT INTO sync_change_log(table_name,row_id,op,payload,origin,updated_at) VALUES(?,?,?,?,?,?)",
-  ).run(row.table_name, row.row_id, "upsert", stableStringify(local), "conflict-resolve", ts);
-  db.prepare("DELETE FROM conflict_shadow WHERE id=?").run(id);
-  return true;
 }
