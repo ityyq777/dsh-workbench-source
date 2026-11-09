@@ -1,9 +1,9 @@
 /**
- * 标签域解耦契约测试：只装宿主 + 单个业务插件（任务 / 站点）时，
+ * 标签域解耦契约测试：只装宿主 + 单个业务插件（任务 / 站点 / 物品）时，
  * 标签相关参数必须报「标签域未安装」这种可读错误，而不是底层 SQL 错误或静默返回空。
  *
  * 用法：node scripts/test-nodeps.mjs
- * 说明：一个进程里只能装载一次宿主注册中心，所以两种模式各起一个子进程。
+ * 说明：一个进程里只能装载一次宿主注册中心，所以三种模式各起一个子进程。
  */
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -107,6 +107,19 @@ async function runMode() {
     assert(listed.result.records.length >= 1 && !listed.result.notices, "不传标签参数时 tasks.list 应正常返回且无 notice");
     const tables = await call("tasks.dataTables", { stats: true });
     assert(tables.result.tables.some((t) => t.name === "task"), "数据页表清单异常");
+  } else if (mode === "storage") {
+    const caps = await call("storage.capabilities");
+    assert(caps.result.tags === false, "独立物品插件应关闭标签能力");
+    const created = await call("storage.create", { name: "独立物品", stock: "1~2", remark: "备注" });
+    const id = created.result.storage.id;
+    assert(id && created.result.storage.stock === "1~2", "无标签物品创建失败");
+    await expectError("storage.update", { id, tagIds: ["t1"] }, "标签插件");
+    await expectError("storage.list", { tagIds: ["t1"] }, "标签插件");
+    const updated = await call("storage.update", { id, remark: "独立更新" });
+    assert(updated.result.storage.remark === "独立更新", "无标签物品更新失败");
+    assert((await call("storage.list", { text: "独立更新" })).result.total === 1, "无标签物品查询失败");
+    assert((await call("storage.delete", { id })).result.deleted, "无标签物品删除失败");
+    assert((await call("storage.list")).result.total === 0, "软删物品仍出现在列表");
   } else {
     const empty = await call("sites.list", {});
     assert(Array.isArray(empty.result.records), "不传标签时 sites.list 应正常返回");
@@ -145,7 +158,7 @@ if (process.env[MODE_ENV]) {
   await runMode();
 } else {
   let failed = 0;
-  for (const mode of ["tasks", "sites"]) {
+  for (const mode of ["tasks", "sites", "storage"]) {
     const r = spawnSync(process.execPath, [self], {
       env: { ...process.env, [MODE_ENV]: mode },
       encoding: "utf8",
@@ -160,8 +173,8 @@ if (process.env[MODE_ENV]) {
     }
   }
   if (failed) {
-    console.error("NODEPS TEST FAILED (" + failed + "/2)");
+    console.error("NODEPS TEST FAILED (" + failed + "/3)");
     process.exit(1);
   }
-  console.log("NODEPS TEST PASS { modes: 2 }");
+  console.log("NODEPS TEST PASS { modes: 3 }");
 }

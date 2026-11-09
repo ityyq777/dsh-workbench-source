@@ -15,6 +15,7 @@ const tests = [
   "scripts/test-tags.mjs",
   "scripts/test-tags-ui.mjs",
   "scripts/test-sites.mjs",
+  "scripts/test-storage.mjs",
   "scripts/test-backup.mjs",
 ];
 

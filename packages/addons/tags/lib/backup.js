@@ -1,7 +1,7 @@
 /**
  * 标签模块的备份导出/导入。
  *
- * tag 本体归标签模块；tag_mapping 中 item_type='site' 的行归站点模块，
+ * tag 本体归标签模块；tag_mapping 中 site/storage 的行归各业务模块，
  * 这里排除掉，避免同一映射在两个模块的备份里重复出现。
  */
 
@@ -58,7 +58,9 @@ export function exportTagsData(api) {
   const db = api.db;
   const tags = tableExists(db, TAG_TABLE) ? db.prepare("SELECT * FROM tag ORDER BY created_at ASC, id ASC").all() : [];
   const mappings = tableExists(db, MAPPING_TABLE)
-    ? db.prepare("SELECT * FROM tag_mapping WHERE item_type <> 'site' ORDER BY created_at ASC, id ASC").all()
+    ? db
+        .prepare("SELECT * FROM tag_mapping WHERE item_type NOT IN ('site','storage') ORDER BY created_at ASC, id ASC")
+        .all()
     : [];
   return { schemaVersion: SCHEMA_VERSION, tags, mappings };
 }
@@ -76,7 +78,9 @@ function policyOf(options) {
 function canonicalizeTagNames(db, data) {
   const keep = new Map();
   if (tableExists(db, TAG_TABLE)) {
-    for (const row of db.prepare("SELECT id,name FROM tag WHERE deleted_at IS NULL ORDER BY created_at ASC, id ASC").all()) {
+    for (const row of db
+      .prepare("SELECT id,name FROM tag WHERE deleted_at IS NULL ORDER BY created_at ASC, id ASC")
+      .all()) {
       const name = String(row.name);
       if (!keep.has(name)) keep.set(name, String(row.id));
     }
@@ -189,7 +193,7 @@ export function importTagsData(api, raw, options) {
   }
   for (const row of data.mappings) {
     try {
-      if (String(row.item_type) === "site") {
+      if (["site", "storage"].includes(String(row.item_type))) {
         skipped += 1;
         continue;
       }

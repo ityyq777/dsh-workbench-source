@@ -196,6 +196,8 @@ export interface DomainDef {
   setup?(api: DomainSetupApi): void | (() => void) | Promise<void | (() => void)>;
   /** 导出本插件的业务数据；返回可 JSON 序列化的对象，由宿主写入压缩包。 */
   exportData?(ctx: DomainDataContext): unknown | Promise<unknown>;
+  /** 导入排序依赖：备份清单中存在的这些域须先尝试导入；不要求安装，也不保证其导入成功。循环依赖在任何写入前拒绝。 */
+  backupAfter?: string[];
   /** 导入本插件负责的数据；raw 是压缩包里的原始文本，插件自行 JSON.parse/校验。 */
   importData?(raw: string, ctx: DomainDataContext, options?: DomainImportOptions): DomainImportReport | Promise<DomainImportReport>;
 }

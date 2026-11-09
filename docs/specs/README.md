@@ -1,13 +1,13 @@
 # 个人工作台（Personal Workbench）— 方案总览
 
-> 状态：v0.5。四个 DSH 原生插件已实现并真实加载验证；业务数据本地 SQLite，
+> 状态：宿主与 tasks/tags/sites 已落地；新增 storage 原生物品管理插件。业务数据本地 SQLite，
 > 登录后按 protocol v2 与自建云端同步（树表整表覆盖 + 行级 LWW）。本文档集基于
 > 本机 DSH 与已装插件源码的实测调查。
 
 ## 一句话定位
 
 「个人工作台」是 DSH 里的一个 **共享运行时宿主**：它提供本地 SQLite、HTTP/SSE、
-agent 工具、账号与同步、客户端页面框架；任务、标签、站点是三个独立的 DSH 业务插件，
+agent 工具、账号与同步、客户端页面框架；任务、标签、站点、存储是四个独立的 DSH 业务插件，
 各自向宿主注册数据、action 与视图。安装任意业务插件都会连带安装宿主；
 安装/卸载由 DSH 自己管理，没有自建插件市场。
 
@@ -18,6 +18,7 @@ flowchart TB
     T["tasks"] --> H
     G["tags"] --> H
     S["sites"] --> H
+    R["storage"] --> H
     B["浏览器：ModuleLoader → client.js → __WB_HOST__"]
     B --> H
   end
@@ -37,6 +38,7 @@ dsh plugin --profile web add file:$PWD/packages/shell-dist
 dsh plugin --profile web add file:$PWD/packages/addons/tasks
 dsh plugin --profile web add file:$PWD/packages/addons/tags
 dsh plugin --profile web add file:$PWD/packages/addons/sites
+dsh plugin --profile web add file:$PWD/packages/addons/storage
 
 # 3. 重启 dsh web 后：设置 → 插件 → 个人工作台
 #    业务插件的安装/卸载同样在 DSH 插件页完成
@@ -58,7 +60,7 @@ java -jar target/workbench-cloud.jar
 | [01-总体架构](./01-总体架构.md) | 分层结构、包拆分、命名、关键决策 |
 | [02-DSH插件设计](./02-DSH插件设计.md) | 宿主服务、生命周期、manifest、profile 接入 |
 | [03-UI设计](./03-UI设计.md) | 卡片首页、沉浸式全页、slot 用法、样式规范 |
-| [04-插件体系](./04-子插件体系.md) | 四个原生包、域注册、客户端模块、安装/卸载、跨插件依赖 |
+| [04-插件体系](./04-子插件体系.md) | 原生包、域注册、客户端模块、安装/卸载、跨插件依赖 |
 | [05-本地存储设计](./05-本地存储设计.md) | SQLite schema、迁移策略、目录布局 |
 | [06-云端设计](./06-云端设计.md) | 账号、设备、protocol v2 同步 API |
 | [07-同步与登录设计](./07-同步与登录设计.md) | 离线优先、变更日志、冲突处理、设备管理 |
@@ -75,6 +77,8 @@ java -jar target/workbench-cloud.jar
 | [19-业务评审与重构建议](./19-业务评审与重构建议.md) | v0.5 业务模型评审：不合理需求清单、主循环设计、P0/P1/P2 重构路线 |
 | [20-配置表与配置页设计](./20-配置表与配置页设计.md) | 三个业务插件的配置存储（复用 meta 键值、不同步不入备份）、configGet/Set/Reset/Options 契约、配置页与配置项目录 |
 | [21-数据页设计](./21-数据页设计.md) | 三个业务插件的只读表浏览页：表清单、dataTables/dataQuery 契约、分页/排序/搜索/已删除行、列渲染与安全边界 |
+
+| [27-存储模块迁移方案](./27-存储模块迁移方案.md) | storage 物品管理原生插件、元数据边界、标签归属、构建发布与验收 |
 
 ## 已验证的宿主事实（方案地基，非猜测）
 

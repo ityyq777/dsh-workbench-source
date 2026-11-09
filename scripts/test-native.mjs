@@ -57,11 +57,13 @@ try {
   tags.apply({ workbench: host, effect: fakeCtx.effect });
   const sites = await import("../packages/addons/sites/lib/index.js");
   sites.apply({ workbench: host, effect: fakeCtx.effect });
+  const storage = await import("../packages/addons/storage/lib/index.js");
+  storage.apply({ workbench: host, effect: fakeCtx.effect });
 
   const domains = host.listDomains();
   console.log("domains:", domains.map((d) => d.id + "@" + d.version + (d.enabled ? "" : "!" + d.error)).join(", "));
   const names = host.actionNames().map((a) => a.name);
-  for (const n of ["tasks.list", "tasks.create", "tags.list", "sites.list", "siteNodes.children", "actions.list", "actions.help"]) {
+  for (const n of ["tasks.list", "tasks.create", "tags.list", "sites.list", "siteNodes.children", "storage.list", "storage.create", "actions.list", "actions.help"]) {
     assert(names.includes(n), "missing action " + n);
   }
   for (const n of ["tasks.get", "tasks.bulkUpdate", "tasks.bulkCreate", "tasks.bulkDelete"]) {
@@ -91,7 +93,7 @@ try {
 
   // ── 1b. capabilities.list / capabilities.get：插件能力清单 ──
   const caps = await call("capabilities.list", {});
-  assert(caps.result.domains.length === 3, "capabilities.list 域数量不对：" + caps.result.domains.length);
+  assert(caps.result.domains.length === 4, "capabilities.list 域数量不对：" + caps.result.domains.length);
   const taskCap = caps.result.domains.find((d) => d.id === "wb-addon-tasks");
   assert(taskCap && taskCap.records.some((r) => r.kind === "task" && r.primaryAction === "tasks.create"), "任务域缺少 task 能力声明");
   assert(taskCap.source === "declared" && taskCap.warnings.length === 0, "任务域能力声明未通过校验");

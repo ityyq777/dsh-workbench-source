@@ -39,7 +39,7 @@ function hasTable(db, name) {
   return !!db.prepare("SELECT 1 AS x FROM sqlite_master WHERE type='table' AND name=?").get(name);
 }
 
-const TYPE_LABELS = { site: "站点", task: "任务" };
+const TYPE_LABELS = { site: "站点", task: "任务", storage: "物品" };
 
 function resolveRange(db, args) {
   const today = startOfDay(new Date());

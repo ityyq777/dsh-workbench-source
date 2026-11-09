@@ -69,6 +69,9 @@ try {
   if (!host) throw new Error("workbench service not provided");
   if (!handler) throw new Error("workbench HTTP handler not registered");
 
+  // storage 先安装，导出清单不能依赖 tags 已先注册。
+  const storage = await import("../packages/addons/storage/lib/index.js");
+  storage.apply({ workbench: host, effect: fakeCtx.effect });
   const tasks = await import("../packages/addons/tasks/lib/index.js");
   tasks.apply({ workbench: host, effect: fakeCtx.effect });
   const tags = await import("../packages/addons/tags/lib/index.js");
@@ -77,7 +80,7 @@ try {
   sites.apply({ workbench: host, effect: fakeCtx.effect });
 
   const domains = host.listDomains();
-  if (domains.length !== 3) throw new Error("expected 3 domains, got " + domains.length);
+  if (domains.length !== 4) throw new Error("expected 4 domains, got " + domains.length);
   for (const d of domains) {
     if (!d.backup || !d.backup.export || !d.backup.import) throw new Error("missing backup capability: " + d.id);
   }
@@ -97,6 +100,9 @@ try {
     siteLinks: [{ description: "官网", link: "https://example.com", isDefault: true }],
   }, "agent");
 
+  const inventory = await host.invoke("storage.create", { name: "备份验收物品", stock: "1~2", tagIds: [tag.result.id] }, "agent");
+  const inventoryId = inventory.result.storage.id;
+
   const exported = await call("GET", "/workbench/api/backup/export?modules=all");
   if (exported.status !== 200) throw new Error("export failed: " + exported.status + " " + exported.body.toString());
   if (!/application\/zip/.test(String(exported.headers["content-type"]))) throw new Error("export content-type is not zip");
@@ -106,7 +112,7 @@ try {
   if (manifest.kind !== "dsh-workbench-backup") throw new Error("bad manifest kind");
   if (manifest.formatVersion !== 1) throw new Error("bad manifest formatVersion");
   if (manifest.shellVersion !== shell.SHELL_VERSION) throw new Error("bad manifest shellVersion");
-  if (manifest.modules.length !== 3) throw new Error("expected 3 modules, got " + manifest.modules.length);
+  if (manifest.modules.length !== 4) throw new Error("expected 4 modules, got " + manifest.modules.length);
   for (const m of manifest.modules) {
     if (!files.has(m.file)) throw new Error("missing module file " + m.file);
   }
@@ -122,6 +128,13 @@ try {
   if (!(exportedTask2Row.sort < exportedTaskRow.sort)) throw new Error("task.sort order not preserved in backup");
   console.log("task backup extras ok: taskDeps + sort");
 
+  const inventoryBackup = JSON.parse(files.get("modules/wb-addon-storage.json").toString("utf8"));
+  if (!inventoryBackup.storage.some(r => r.id === inventoryId && r.stock === "1~2")) throw new Error("storage record missing from backup");
+  if (!inventoryBackup.tagMappings.some(r => r.item_id === inventoryId && r.item_type === "storage")) throw new Error("storage tags missing from backup");
+  const onlyStorage = await call("GET", "/workbench/api/backup/export?modules=wb-addon-storage");
+  const storageManifest = JSON.parse(zip.zipRead(onlyStorage.body).get("manifest.json").toString("utf8"));
+  if (storageManifest.modules.length !== 1 || storageManifest.modules[0].id !== "wb-addon-storage") throw new Error("storage module selection failed");
+
   const onlyTasks = await call("GET", "/workbench/api/backup/export?modules=wb-addon-tasks");
   if (onlyTasks.status !== 200) throw new Error("selected export failed");
   const onlyFiles = zip.zipRead(onlyTasks.body);
@@ -134,11 +147,11 @@ try {
   const imported = await call("POST", "/workbench/api/backup/import", exported.body);
   if (imported.status !== 200) throw new Error("import failed: " + imported.status + " " + imported.body.toString());
   const report = parseJson(imported);
-  if (!report || !report.ok || report.summary.ok !== 3) throw new Error("import report not ok: " + JSON.stringify(report));
+  if (!report || !report.ok || report.summary.ok !== 4) throw new Error("import report not ok: " + JSON.stringify(report));
   console.log("import ok:", report.summary);
 
   const db = new DatabaseSync(join(home, "workbench.db"));
-  db.exec("DELETE FROM task; DELETE FROM task_dep;");
+  db.exec("DELETE FROM task; DELETE FROM task_dep; DELETE FROM storage; DELETE FROM tag_mapping WHERE item_type = 'storage';");
   db.close();
   const empty = await host.invoke("tasks.list", {}, "agent");
   if (empty.result.records.some((t) => t.id === taskId)) throw new Error("task should be gone after delete");
@@ -153,6 +166,42 @@ try {
   if (!depRow) throw new Error("task_dep was not restored");
   if (sortRow.sort !== exportedTaskRow.sort) throw new Error("task.sort was not restored");
   console.log("restore ok:", taskId, "dep + sort");
+  const restoredInventory = await host.invoke("storage.list", { text: "备份验收物品" }, "agent");
+  if (!restoredInventory.result.records.some(r => r.id === inventoryId && r.stock === "1~2")) throw new Error("storage record was not restored");
+  const restoredDb = new DatabaseSync(join(home, "workbench.db"));
+  const inventoryMappings = restoredDb.prepare("SELECT COUNT(*) AS n FROM tag_mapping WHERE item_type = 'storage' AND item_id = ? AND deleted_at IS NULL").get(inventoryId);
+  restoredDb.close();
+  if (inventoryMappings.n !== 1) throw new Error("storage tag restore must be idempotent across domain backups");
+
+  // manifest 逆序 + 清空标签本体，证明恢复不依赖安装顺序或预存标签。
+  const reversedManifest = { ...manifest, modules: [...manifest.modules].sort((a, b) => Number(b.id === "wb-addon-storage") - Number(a.id === "wb-addon-storage")) };
+  const reversedArchive = zip.zipCreate([...files].map(([name, data]) => ({ name, data: name === "manifest.json" ? Buffer.from(JSON.stringify(reversedManifest)) : data })));
+  const clearInventory = new DatabaseSync(join(home, "workbench.db"));
+  clearInventory.exec("DELETE FROM storage; DELETE FROM tag_mapping; DELETE FROM tag;");
+  clearInventory.close();
+  const reverseRestore = parseJson(await call("POST", "/workbench/api/backup/import", reversedArchive));
+  if (!reverseRestore?.ok || reverseRestore.summary.ok !== 4) throw new Error("reverse empty restore failed: " + JSON.stringify(reverseRestore));
+  const restoredOrder = reverseRestore.results.map(r => r.id);
+  if (restoredOrder.indexOf("wb-addon-tags") > restoredOrder.indexOf("wb-addon-storage")) throw new Error("backup dependency order ignored");
+  const verifyInventory = new DatabaseSync(join(home, "workbench.db"));
+  const restoredLink = verifyInventory.prepare("SELECT COUNT(*) AS n FROM storage s JOIN tag_mapping m ON m.item_id=s.id AND m.item_type='storage' JOIN tag t ON t.id=m.tag_id WHERE s.id=? AND s.deleted_at IS NULL AND m.deleted_at IS NULL AND t.deleted_at IS NULL").get(inventoryId);
+  verifyInventory.close();
+  if (restoredLink.n !== 1) throw new Error("reverse restore lost inventory tag relation");
+  console.log("reverse empty inventory restore ok");
+
+  // 通用依赖：循环必须在所有写入前拒绝；未包含的可选依赖不阻塞。
+  const { importBackup } = await import("../packages/shell/lib/backup.js");
+  const stableOrder = [];
+  const stableDomains = manifest.modules.map(m => ({enabled:true,error:null,def:{id:m.id,title:m.title,version:m.version,backupAfter:m.id === "wb-addon-storage" ? ["wb-addon-tags"] : [],importData:() => {stableOrder.push(m.id);return {ok:true};}}}));
+  await importBackup({buffer: reversedArchive, domains: stableDomains});
+  if (stableOrder.join(",") !== "wb-addon-tasks,wb-addon-tags,wb-addon-storage,wb-addon-sites") throw new Error("dependency sort is not stable: " + stableOrder);
+  let writes = 0;
+  const cycleDomains = manifest.modules.map(m => ({enabled:true,error:null,def:{id:m.id,title:m.title,version:m.version,backupAfter:m.id === "wb-addon-storage" ? ["wb-addon-tags"] : m.id === "wb-addon-tags" ? ["wb-addon-storage"] : [],importData:() => {writes++; return {ok:true};}}}));
+  let cycleRejected = false;
+  try { await importBackup({buffer: reversedArchive, domains: cycleDomains}); } catch (error) { cycleRejected = String(error.message).includes("循环"); }
+  if (!cycleRejected || writes !== 0) throw new Error("dependency cycle must reject before writes");
+  const optional = await importBackup({buffer: onlyStorage.body, domains: [{enabled:true,error:null,def:{id:"wb-addon-storage",title:"storage",version:"1.0.0",backupAfter:["not-in-backup"],importData:() => ({ok:true})}}]});
+  if (!optional.ok) throw new Error("missing optional ordering dependency blocked import");
 
   const dbFile = join(home, "workbench.db");
   function setLocalTask(title, updatedAt) {

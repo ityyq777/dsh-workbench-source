@@ -14,6 +14,7 @@
     "test:tags": "node scripts/test-tags.mjs",
     "test:tags-ui": "node scripts/test-tags-ui.mjs",
     "test:sites": "node scripts/test-sites.mjs",
+    "test:storage": "node scripts/test-storage.mjs",
     "test:config": "node scripts/test-config.mjs",
     "test:data": "node scripts/test-data.mjs",
     "test:nodeps": "node scripts/test-nodeps.mjs",

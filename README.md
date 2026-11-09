@@ -1,6 +1,6 @@
 # 个人工作台 · DSH 插件
 
-个人工作台是 DeepSeek Harness（DSH）的本地优先工作台，由四个可独立安装的插件组成：
+个人工作台是 DeepSeek Harness（DSH）的本地优先工作台，由五个可独立安装的插件组成：
 
 | 包 | 作用 |
 | --- | --- |
@@ -8,8 +8,9 @@
 | `dsh-workbench-tasks` | 任务与任务树（9 个视图、时间线、重启、批量归并/迁表） |
 | `dsh-workbench-tags` | 标签管理，供站点等业务归类 |
 | `dsh-workbench-sites` | 站点收藏：目录树、多链接、标签与筛选 |
+| `dsh-workbench-storage` | 物品管理：名称、品牌、单位、库存文本与标签的本地台账 |
 
-任务、标签、站点都会把 `dsh-workbench-host` 声明为依赖：安装任意业务插件时，
+任务、标签、站点、物品都会把 `dsh-workbench-host` 声明为依赖：安装任意业务插件时，
 DSH 会一并准备宿主。数据保存在 `~/.dsh/workbench/workbench.db`，卸载插件只删代码，
 不删数据。
 
@@ -61,6 +62,8 @@ dsh plugin --profile web add dsh-workbench-host
 dsh plugin --profile web add dsh-workbench-tasks
 dsh plugin --profile web add dsh-workbench-tags
 dsh plugin --profile web add dsh-workbench-sites
+# storage 首次发布前可用本地源码包安装（先 pnpm build）
+dsh plugin --profile web add file:$PWD/packages/addons/storage
 ```
 
 只装需要的业务插件即可。安装/升级/卸载后按 DSH 提示重启或刷新。
@@ -70,7 +73,7 @@ dsh plugin --profile web add dsh-workbench-sites
 - 发布镜像：https://github.com/ityyq777/dsh-workbench
 - 包目录：[`packages/host`](https://github.com/ityyq777/dsh-workbench/tree/main/packages/host)、[`packages/tasks`](https://github.com/ityyq777/dsh-workbench/tree/main/packages/tasks)、[`packages/tags`](https://github.com/ityyq777/dsh-workbench/tree/main/packages/tags)、[`packages/sites`](https://github.com/ityyq777/dsh-workbench/tree/main/packages/sites)
 
-> 发布镜像由源码主仓库的 `scripts/stage-release.mjs` 生成，四个目录分别是可发布的 npm 包。
+> 发布镜像由源码主仓库的 `scripts/stage-release.mjs` 生成，五个目录分别是可发布的 npm 包。
 > 修改代码请回 [源码主仓库](https://github.com/ityyq777/dsh-workbench-source)，不要直接编辑生成出来的文件。
 
 ## 数据与隐私

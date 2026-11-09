@@ -3,10 +3,10 @@
  *
  * 主仓库里宿主包名是内部名 dsh-workbench；npm 上这个名字已被无关项目占用，
  * 因此发布名默认是 dsh-workbench-host（可用 NPM_HOST_NAME 覆盖）。
- * 业务插件仍使用 dsh-workbench-tasks / tags / sites。
+ * 业务插件仍使用 dsh-workbench-tasks / tags / sites / storage。
  *
  * 输出：
- *   dist/release/packages/{host,tasks,tags,sites}  四个可安装包
+ *   dist/release/packages/{host,tasks,tags,sites,storage}  五个可安装包
  *   dist/release/marketplace/*.yml                 插件市场条目草稿
  *   dist/release/README.md / LICENSE
  */
@@ -27,6 +27,7 @@ const pkgDirs = {
   tasks: join(root, "packages", "addons", "tasks"),
   tags: join(root, "packages", "addons", "tags"),
   sites: join(root, "packages", "addons", "sites"),
+  storage: join(root, "packages", "addons", "storage"),
 };
 
 for (const [key, dir] of Object.entries(pkgDirs)) {
@@ -129,11 +130,20 @@ hostPkg.files = ["lib", "client", "cordis.patch.yml", "README.md", "LICENSE"];
 writeJson(join(hostDir, "package.json"), hostPkg);
 rewritePatch(join(hostDir, "cordis.patch.yml"), HOST_NAME);
 rewriteHostClient(join(hostDir, "client", "client.js"), HOST_NAME);
-writeFileSync(join(hostDir, "README.md"), packageReadme(hostPkg, "宿主本身不提供任务/标签/站点视图；安装任一业务插件即可使用。业务插件会自动依赖本包。"));
+writeFileSync(join(hostDir, "README.md"), packageReadme(hostPkg, "宿主本身不提供任务/标签/站点/物品视图；安装任一业务插件即可使用。业务插件会自动依赖本包。"));
 cpSync(join(root, "LICENSE"), join(hostDir, "LICENSE"));
 
 const hostVersion = hostPkg.version;
 const addons = {
+  storage: {
+    dir: "storage",
+    description: "个人工作台物品管理插件：名称、品牌、单位、库存文本与标签",
+    keywords: ["storage", "inventory", "items", "tags"],
+    marketCategory: "tools",
+    marketEn: "Inventory records for DSH: names, brands, units, stock text and tags with local SQLite and optional metadata sync.",
+    marketZh: "DSH 物品管理：记录名称、品牌、单位、库存文本与标签，本地 SQLite 保存，可选元数据同步。",
+    marketExtra: "管理物品库存文本台账，不上传或下载文件字节；卸载插件不删数据。",
+  },
   tasks: {
     dir: "tasks",
     description: "个人工作台任务插件：任务树、优先级、截止日、时间线与重启",
@@ -193,10 +203,11 @@ cpSync(join(root, "README.md"), join(out, "README.md"));
 cpSync(join(root, "LICENSE"), join(out, "LICENSE"));
 
 const marketEntries = [
-  { file: "packages-host", sub: "host", pkg: hostPkg, category: "ui", en: "Shared runtime for the Personal Workbench: local SQLite, domain registration, agent tool, HTTP/SSE and opt-in cloud sync for the Tasks, Tags and Sites plugins.", zh: "个人工作台共享宿主：本地 SQLite、业务域注册、agent 工具、HTTP/SSE，以及任务/标签/站点插件的可选云端同步。" },
+  { file: "packages-host", sub: "host", pkg: hostPkg, category: "ui", en: "Shared runtime for the Personal Workbench: local SQLite, domain registration, agent tool, HTTP/SSE and opt-in cloud sync for the Tasks, Tags, Sites and Storage plugins.", zh: "个人工作台共享宿主：本地 SQLite、业务域注册、agent 工具、HTTP/SSE，以及任务/标签/站点/物品插件的可选云端同步。" },
   { file: "packages-tasks", sub: "tasks", pkg: built.tasks, category: "workflow", en: addons.tasks.marketEn, zh: addons.tasks.marketZh },
   { file: "packages-tags", sub: "tags", pkg: built.tags, category: "tools", en: addons.tags.marketEn, zh: addons.tags.marketZh },
   { file: "packages-sites", sub: "sites", pkg: built.sites, category: "tools", en: addons.sites.marketEn, zh: addons.sites.marketZh },
+  { file: "packages-storage", sub: "storage", pkg: built.storage, category: "tools", en: addons.storage.marketEn, zh: addons.storage.marketZh },
 ];
 for (const e of marketEntries) {
   const name = `${OWNER}/${REPO}#${e.sub}`;

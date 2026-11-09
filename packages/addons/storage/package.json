@@ -1,0 +1,69 @@
+{
+  "name": "dsh-workbench-storage",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "个人工作台物品管理插件",
+  "main": "lib/index.js",
+  "wb": {
+    "addon": {
+      "id": "wb-addon-storage",
+      "title": "物品管理",
+      "description": "物品管理与统计/记录/配置/数据四个视图",
+      "version": "1.0.0",
+      "minShell": "0.5.6",
+      "tables": [
+        "storage",
+        "tag_mapping"
+      ],
+      "views": [
+        "stats",
+        "storage",
+        "config",
+        "data"
+      ],
+      "toolActions": [
+        "storage.capabilities",
+        "storage.list",
+        "storage.get",
+        "storage.create",
+        "storage.update",
+        "storage.delete",
+        "storage.stats",
+        "storageTags.search",
+        "storageTags.byIds",
+        "storage.configGet",
+        "storage.configSet",
+        "storage.configReset",
+        "storage.configOptions",
+        "storage.dataTables",
+        "storage.dataQuery"
+      ],
+      "client": "lib/client.js"
+    }
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-workbench": "file:../../shell-dist"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "dsh-workbench"
+      ]
+    }
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "package.json"
+  ]
+}

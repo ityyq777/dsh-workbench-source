@@ -52,11 +52,13 @@ function snap() {
 const tags = await load("../packages/addons/tags/lib/index.js", "wb-addon-tags");
 const tasks = await load("../packages/addons/tasks/lib/index.js", "wb-addon-tasks", { tags: true });
 const sites = await load("../packages/addons/sites/lib/index.js", "wb-addon-sites", { tags: true });
+const storage = await load("../packages/addons/storage/lib/index.js", "wb-addon-storage", { tags: true });
 
 // 1. 表清单必须是本插件负责的表，且不暴露 meta / sync_*
 for (const [name, mod, expected] of [
   ["tasks", tasks, ["task", "task_dep", "task_node"]],
   ["tags", tags, ["tag", "tag_mapping"]],
+  ["storage", storage, ["storage"]],
   ["sites", sites, ["site", "site_node", "site_node_mapping", "site_account", "site_account_external"]],
 ]) {
   const payload = mod.call(name + ".dataTables");
@@ -183,7 +185,15 @@ assert(nodeRows.rows.some(function (r) { return r.name === "数据页目录"; })
 const mappingRows = sites.call("sites.dataQuery", { table: "site_node_mapping", pageSize: 50 });
 assert(Array.isArray(mappingRows.rows), "目录映射可查询");
 
-// 7. 表索引页只查本插件：三份 data.cjs 不再跨域 fan-out
+const item = storage.call("storage.create", { name: "数据页物品", tagIds: [tg.id] }).storage;
+const storageRows = storage.call("storage.dataQuery", { table: "storage", search: "数据页物品" });
+assert(storageRows.total === 1 && storageRows.rows[0].id === item.id, "物品数据页搜索应命中");
+const tagStats = tags.call("tags.statsReport");
+assert(tagStats.breakdowns.itemTypes.some(r => r.key === "storage" && r.label === "物品" && r.items === 1), "标签统计应识别物品类型");
+assert(!tagStats.warnings.some(w => w.code === "item_type_unknown"), "物品类型不应触发未知类型告警");
+mustThrow(() => storage.call("storage.dataQuery", { table: "meta" }), "表", "物品数据页不得读取宿主表");
+
+// 7. 表索引页只查本插件：data.cjs 不再跨域 fan-out
 for (const plug of ["tasks", "tags", "sites"]) {
   const src = readFileSync(new URL("../packages/addons/" + plug + "/client/data.cjs", import.meta.url), "utf8");
   assert(src.indexOf("ALL_DOMAINS") < 0 && src.indexOf("var DOMAINS = [") < 0, plug + "/data.cjs 仍保留跨插件域列表");

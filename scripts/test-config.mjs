@@ -127,9 +127,19 @@ sites.call("sites.configSet", { values: { "form.defaultBindable": false } });
 const site = sites.call("sites.create", { siteName: "配置站点", dirIds: [cfgDir], links: [{ url: "https://a.example" }] });
 assert(site.site && Number(site.site.bindable) === 0, "默认可绑定配置未生效：" + JSON.stringify(site).slice(0, 200));
 
-// 9. meta 键名规范
+// 9. storage：本地配置隔离、校验与重置
+const storage = await load("../packages/addons/storage/lib/index.js", "wb-addon-storage");
+assert(storage.call("storage.configGet").values["list.pageSize"] === 16, "物品默认分页应为 16");
+storage.call("storage.configSet", { values: { "list.pageSize": 24 } });
+assert(storage.call("storage.configGet").values["list.pageSize"] === 24, "物品配置未保存");
+mustThrow(() => storage.call("storage.configSet", { values: { "list.pageSize": 999 } }), "list.pageSize", "物品越界配置必须拒绝");
+storage.call("storage.configReset", {});
+assert(storage.call("storage.configGet").values["list.pageSize"] === 16, "物品配置重置未恢复默认");
+storage.call("storage.configSet", { values: { "ui.confirmDelete": false } });
+
+// 10. meta 键名规范
 const keys = metaKeys().map((r) => r.k);
-assert(keys.every((k) => /^config\.(tasks|tags|sites)\.[a-z]/.test(k)), "meta 键前缀不规范：" + keys.join(","));
+assert(keys.every((k) => /^config\.(tasks|tags|sites|storage)\.[a-z]/.test(k)), "meta 键前缀不规范：" + keys.join(","));
 assert(keys.length >= 6, "meta 配置键数量异常：" + keys.length);
 
 db.close();

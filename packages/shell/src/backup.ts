@@ -183,7 +183,25 @@ export async function createBackup(opts: {
   return { filename: "dsh-workbench-backup-" + stamp(now) + ".zip", buffer: zipCreate(files), manifest };
 }
 
-/** 解压并逐模块分发导入；单个模块失败不会阻断其他模块。 */
+/** 按已安装域的依赖稳定排序；每轮选择清单中最早的可执行模块。 */
+function orderImports(modules: BackupManifestModule[], byId: Map<string, BackupDomain>): BackupManifestModule[] {
+  const pending = [...modules];
+  const present = new Set(modules.map((item) => item.id));
+  const done = new Set<string>();
+  const ordered: BackupManifestModule[] = [];
+  while (pending.length) {
+    const index = pending.findIndex((item) =>
+      (byId.get(item.id)?.def.backupAfter ?? []).every((id) => !present.has(id) || done.has(id)),
+    );
+    if (index < 0) throw new BackupError("备份模块导入依赖存在循环：" + pending.map((item) => item.id).join(", "));
+    const [item] = pending.splice(index, 1);
+    ordered.push(item);
+    done.add(item.id);
+  }
+  return ordered;
+}
+
+/** 解压并按域声明依赖分发导入；单个模块失败不会阻断其他模块。 */
 export async function importBackup(opts: {
   buffer: Buffer;
   domains: BackupDomain[];
@@ -211,7 +229,7 @@ export async function importBackup(opts: {
 
   const results: BackupModuleResult[] = [];
   const seen = new Set<string>();
-  for (const item of manifest.modules) {
+  for (const item of orderImports(manifest.modules, byId)) {
     const policy = normalizeImportPolicy(opts.policies ? opts.policies[item.id] : undefined);
     const base: BackupModuleResult = {
       id: item.id,

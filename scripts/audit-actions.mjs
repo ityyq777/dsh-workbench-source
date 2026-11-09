@@ -4,7 +4,7 @@
  *
  * DSH 的 agent 主要靠 action 的 input JSON Schema 决定怎么填参数；schema 一旦
  * 落后于实现，agent 就会漏字段、填错值，或者填了以为生效其实实现没读。
- * 本脚本用假的 DSH ctx 无头加载「宿主 + 三个业务插件」，直接读注册出来的
+ * 本脚本用假的 DSH ctx 无头加载「宿主 + 四个业务插件」，直接读注册出来的
  * schema（不是静态解析），再和实现做交叉检查：
  *
  *   1. 版本漂移：package.json / wb.addon.version / client.src.cjs / lib/index.js /
@@ -23,7 +23,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const ADDONS = ["tasks", "tags", "sites"];
+const ADDONS = ["tasks", "tags", "sites", "storage"];
 
 /**
  * 兼容层别名：实现接受，但故意不写进 schema，避免污染 agent 的填参视野。

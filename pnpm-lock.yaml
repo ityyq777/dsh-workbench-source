@@ -21,6 +21,12 @@ importers:
         specifier: file:../../shell-dist
         version: link:../../shell-dist
 
+  packages/addons/storage:
+    dependencies:
+      dsh-workbench:
+        specifier: file:../../shell-dist
+        version: link:../../shell-dist
+
   packages/addons/tags:
     dependencies:
       dsh-workbench:
