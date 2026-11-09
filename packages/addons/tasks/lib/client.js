@@ -2801,7 +2801,6 @@ var require_copy = __commonJS({
         bodyMode: "\u63CF\u8FF0\u4E0E\u611F\u53D7\u663E\u793A\u6A21\u5F0F",
         markdown: "Markdown \u6E32\u67D3",
         plainText: "\u7EAF\u6587\u672C",
-        markdownSource: "Markdown \u6E90\u6587\u672C\uFF08Ctrl/\u2318+Enter \u4FDD\u5B58\uFF09",
         bodyModeLocal: "\u5DF2\u5728\u5F53\u524D\u6D4F\u89C8\u5668\u5207\u6362\uFF0C\u914D\u7F6E\u4FDD\u5B58\u5931\u8D25\uFF1A",
         title: "\u4EFB\u52A1",
         search: "\u641C\u7D22\u6807\u9898 / \u63CF\u8FF0 / \u611F\u53D7",
@@ -2830,7 +2829,7 @@ var require_copy = __commonJS({
         nodeDescPh: "\u5199\u6E05\u8FD9\u5F20\u8868\u662F\u505A\u4EC0\u4E48\u7684\uFF0C\u4EE5\u540E\u53EF\u6309\u63CF\u8FF0\u5173\u952E\u8BCD\u68C0\u7D22\u5B9A\u4F4D",
         needName: "\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A",
         nodeDescSave: "\u63CF\u8FF0\u5DF2\u4FDD\u5B58",
-        editTitle: "\u53CC\u51FB\u7F16\u8F91\u6807\u9898\uFF08\u4EFB\u4F55\u72B6\u6001\u90FD\u53EF\u6539\uFF09",
+        editTitle: "\u7F16\u8F91\u4EFB\u52A1",
         deleteConfirm: "\u786E\u5B9A\u5220\u9664\u8FD9\u4E2A\u8282\u70B9\u53CA\u5176\u5B50\u6811\uFF1F\u5B50\u6811\u4E2D\u7684\u4EFB\u52A1\u4F1A\u88AB\u8F6F\u5220\u9664\u3002",
         deleteTaskConfirm: "\u786E\u5B9A\u5220\u9664\u8FD9\u6761\u4EFB\u52A1\u5417\uFF1F\u5220\u9664\u540E\u4E0D\u53EF\u6062\u590D\u3002",
         batchDelete: "\u6279\u91CF\u5220\u9664",
@@ -2866,7 +2865,6 @@ var require_copy = __commonJS({
         desc: "\u63CF\u8FF0",
         review: "\u611F\u53D7",
         reviewHint: "\u4EFB\u4F55\u72B6\u6001\u90FD\u53EF\u8BB0\u5F55\u611F\u53D7\uFF08\u53EF\u9009\uFF09",
-        editReview: "\u53CC\u51FB\u7F16\u8F91\u611F\u53D7\uFF08\u4EFB\u4F55\u72B6\u6001\uFF09",
         reviewPlaceholder: "\u4F8B\u5982\uFF1A\u601D\u8DEF\u5F88\u987A / \u5361\u5728\u63A5\u53E3\u8C03\u8BD5 / \u6BD4\u9884\u60F3\u8F7B\u677E",
         reviewAdd: "\u8BB0\u5F55\u611F\u53D7",
         status: "\u72B6\u6001",
@@ -2933,7 +2931,6 @@ var require_copy = __commonJS({
         bodyMode: "Description and reflection display mode",
         markdown: "Render Markdown",
         plainText: "Plain text",
-        markdownSource: "Markdown source (Ctrl/\u2318+Enter to save)",
         bodyModeLocal: "Changed in this browser; could not save config:",
         title: "Tasks",
         search: "Search title / description / feeling",
@@ -2962,7 +2959,7 @@ var require_copy = __commonJS({
         nodeDescPh: "Say what this table is for; agents can find it by description keywords",
         needName: "Name is required",
         nodeDescSave: "Description saved",
-        editTitle: "Double-click to rename (any status)",
+        editTitle: "Edit task",
         deleteConfirm: "Delete this node and its subtree? Tasks under it will be soft-deleted.",
         deleteTaskConfirm: "Delete this task? This cannot be undone.",
         batchDelete: "Delete",
@@ -2998,7 +2995,6 @@ var require_copy = __commonJS({
         desc: "Description",
         review: "Reflection",
         reviewHint: "Record a feeling in any status (optional)",
-        editReview: "Double-click to edit feeling (any status)",
         reviewPlaceholder: "e.g. smooth, stuck on the API, easier than expected",
         reviewAdd: "Add feeling",
         status: "Status",
@@ -4154,9 +4150,6 @@ var require_body_styles = __commonJS({
     module2.exports = `
 .wb-body-label{float:left;position:relative;z-index:1;margin:1px 6px 0 0;padding:1px 4px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.06em;line-height:1.6;color:#234783;background:color-mix(in srgb,#5b7fd6 8%,#fff);white-space:nowrap}
 .wb-body-label.wb-review-label{color:#154d43;background:color-mix(in srgb,var(--wbt-accent,#11a89b) 8%,#fff)}
-.wb-body-edit{float:right;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:0;border-radius:4px;background:transparent;color:inherit;cursor:pointer}
-.wb-body-edit:hover{background:color-mix(in srgb,currentColor 10%,transparent)}
-.wb-body-edit:focus-visible{outline:2px solid currentColor;outline-offset:1px}
 .wb-markdown{white-space:normal;min-width:0;overflow-wrap:anywhere}.wb-markdown:after{content:'';display:table;clear:both}
 .wb-markdown p{margin:0 0 6px;white-space:pre-wrap}.wb-markdown>:last-child{margin-bottom:0}
 .wb-markdown h1,.wb-markdown h2,.wb-markdown h3,.wb-markdown h4,.wb-markdown h5,.wb-markdown h6{margin:6px 0;font-weight:650;line-height:1.6}
@@ -4167,7 +4160,6 @@ var require_body_styles = __commonJS({
 .wb-markdown code,.wb-body-text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.wb-markdown code{background:color-mix(in srgb,currentColor 7%,transparent);border-radius:3px;padding:1px 3px}.wb-markdown pre code{padding:0;background:none}
 .wb-markdown a{color:inherit;text-decoration:underline}.wb-markdown hr{border:0;border-top:1px solid currentColor;opacity:.3;clear:both}
 .wb-body-text{white-space:pre-wrap;overflow-wrap:anywhere}.wb-body-text:after{content:'';display:table;clear:both}
-.wb-source-hint{display:block;font-size:11px;margin-bottom:3px}
 .wb-body-modes{display:inline-flex;gap:3px}.wb-body-modes [aria-pressed=true]{font-weight:700;outline:1px solid currentColor}
 .wbt-item.closed:has(.wb-body-label){opacity:1}
 `;
@@ -4494,73 +4486,14 @@ var require_task_item = __commonJS({
       function TaskItem(props) {
         var t = props.t;
         var mode = preference.useMode(React);
-        function stopLabel(e) {
-          e.stopPropagation();
-        }
         function bodyLabel(label, review) {
-          return h("span", { className: "wb-body-label" + (review ? " wb-review-label" : ""), onDoubleClick: stopLabel }, label);
-        }
-        function editButton(label, begin) {
-          return h("button", { type: "button", className: "wb-body-edit", title: t.edit + " " + label, "aria-label": t.edit + " " + label, onClick: begin, onDoubleClick: stopLabel }, h(Icon2, { name: "pencil", size: 12 }));
+          return h("span", { className: "wb-body-label" + (review ? " wb-review-label" : "") }, label);
         }
         var task = props.task;
         var st = statusInfo(task.status);
         var stName = props.lang === "en" ? st.en : st.zh;
         var myTags = task.tags || [];
         var isActive = String(task.status) === "0";
-        var titleState = React.useState(null);
-        var editingTitle = titleState[0], setEditingTitle = titleState[1];
-        var descState = React.useState(null);
-        var editingDesc = descState[0], setEditingDesc = descState[1];
-        var revState = React.useState(null);
-        var editingReview = revState[0], setEditingReview = revState[1];
-        var titleRef = React.useRef(null);
-        var descRef = React.useRef(null);
-        var revRef = React.useRef(null);
-        React.useEffect(function() {
-          if (editingTitle !== null && titleRef.current) titleRef.current.focus();
-        }, [editingTitle]);
-        React.useEffect(function() {
-          if (editingDesc !== null && descRef.current) descRef.current.focus();
-        }, [editingDesc]);
-        React.useEffect(function() {
-          if (editingReview !== null && revRef.current) revRef.current.focus();
-        }, [editingReview]);
-        function beginTitle() {
-          setEditingTitle(String(task.title || ""));
-        }
-        function saveTitle() {
-          if (editingTitle === null) return;
-          var v = String(editingTitle).trim();
-          if (!v) {
-            props.toast(t.needTitle);
-            setEditingTitle(null);
-            return;
-          }
-          if (v !== String(task.title || "")) props.update(task, { type: "TITLE", title: v });
-          setEditingTitle(null);
-        }
-        function beginDesc() {
-          if (!isActive) return;
-          setEditingDesc(String(task.description || ""));
-        }
-        function saveDesc() {
-          if (editingDesc === null) return;
-          if (String(editingDesc) !== String(task.description || "")) {
-            props.update(task, { type: "DESCRIPTION", description: String(editingDesc) });
-          }
-          setEditingDesc(null);
-        }
-        function beginReview() {
-          setEditingReview(String(task.review || ""));
-        }
-        function saveReview() {
-          if (editingReview === null) return;
-          if (String(editingReview) !== String(task.review || "")) {
-            props.update(task, { type: "REVIEW", review: String(editingReview) });
-          }
-          setEditingReview(null);
-        }
         var countdown = String(task.status) === "0" ? daysBetween(task.targetDate) : null;
         var cdTarget = String(task.status) === "0" && task.targetDate ? (/* @__PURE__ */ new Date(String(task.targetDate) + "T23:59:59")).getTime() : NaN;
         var tagNodes = myTags.map(function(tag) {
@@ -4634,69 +4567,9 @@ var require_task_item = __commonJS({
             }
           }, h(Icon2, { name: "trash", size: 14 })));
         }
-        var titleNode = editingTitle !== null ? h("input", {
-          ref: titleRef,
-          className: "wbt-input",
-          style: { fontSize: "13px", padding: "4px 7px" },
-          value: editingTitle,
-          onChange: function(e) {
-            setEditingTitle(e.target.value);
-          },
-          onKeyDown: function(e) {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              saveTitle();
-            }
-            if (e.key === "Escape") setEditingTitle(null);
-          },
-          onBlur: saveTitle
-        }) : h("div", { className: "wbt-title", onDoubleClick: beginTitle, title: t.editTitle }, h(Highlight, { text: task.title, keyword: props.keyword }));
-        var descNode = editingDesc !== null ? h("div", null, h("small", { className: "wb-source-hint" }, t.markdownSource), h("textarea", {
-          ref: descRef,
-          className: "wbt-textarea",
-          rows: 2,
-          value: editingDesc,
-          title: t.markdownSource,
-          "aria-label": t.desc + " \xB7 " + t.markdownSource,
-          placeholder: t.markdownSource,
-          onChange: function(e) {
-            setEditingDesc(e.target.value);
-          },
-          onKeyDown: function(e) {
-            if (e.key === "Escape") setEditingDesc(null);
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              saveDesc();
-            }
-          },
-          onBlur: saveDesc
-        })) : String(task.description || "").trim() ? h("div", { className: "wbt-desc wb-desc", onDoubleClick: beginDesc }, bodyLabel(t.desc), isActive ? editButton(t.desc, beginDesc) : null, h(Body, { text: task.description, mode, keyword: props.keyword })) : null;
-        var reviewNode = editingReview !== null ? h("div", null, h("small", { className: "wb-source-hint" }, t.markdownSource), h("textarea", {
-          ref: revRef,
-          className: "wbt-textarea",
-          rows: 2,
-          placeholder: t.reviewPlaceholder,
-          value: editingReview,
-          title: t.markdownSource,
-          "aria-label": t.review + " \xB7 " + t.markdownSource,
-          onChange: function(e) {
-            setEditingReview(e.target.value);
-          },
-          onKeyDown: function(e) {
-            if (e.key === "Escape") setEditingReview(null);
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              saveReview();
-            }
-          },
-          onBlur: saveReview
-        })) : String(task.review || "").trim() ? h(
-          "div",
-          { className: "wbt-review", title: t.editReview, onDoubleClick: beginReview },
-          bodyLabel(t.review, true),
-          editButton(t.review, beginReview),
-          h(Body, { text: task.review, mode, keyword: props.keyword })
-        ) : null;
+        var titleNode = h("div", { className: "wbt-title" }, h(Highlight, { text: task.title, keyword: props.keyword }));
+        var descNode = String(task.description || "").trim() ? h("div", { className: "wbt-desc wb-desc" }, bodyLabel(t.desc), h(Body, { text: task.description, mode, keyword: props.keyword })) : null;
+        var reviewNode = String(task.review || "").trim() ? h("div", { className: "wbt-review" }, bodyLabel(t.review, true), h(Body, { text: task.review, mode, keyword: props.keyword })) : null;
         var line1 = h(
           "div",
           { className: "wbt-line1" },

@@ -33,6 +33,16 @@ for (const card of [true,false]) for (const lang of ['zh','en']) {
   assert.equal((output.match(/<br\/>/g)||[]).length,2);
   assert.equal((output.match(/<hr\/>/g)||[]).length,2);
   assert.ok(output.includes(lang==='en'?'Reflection':'感受'));
+  assert.ok(!output.includes('<textarea') && !output.includes('wb-body-edit') && !output.includes('wb-source-hint'));
+  assert.ok(!output.includes('Double-click') && !output.includes('双击'));
+}
+const EditModal = require('../packages/addons/tasks/client/edit-modal.cjs')(React,()=>({zh:'开启',en:'Active',cls:'active'}),()=> '');
+for (const lang of ['zh','en']) for (const status of ['0','1','2','3']) {
+  const panel = renderToStaticMarkup(h(EditModal,{lang,t:copy[lang],task:{id:'fixture',title:'Raw <title>',description:'**raw** <script>literal</script>',review:'*raw reflection*',status},tree:[],onClose(){}}));
+  assert.ok(panel.includes('value="Raw &lt;title&gt;"'));
+  assert.ok(panel.includes('**raw** &lt;script&gt;literal&lt;/script&gt;</textarea>'));
+  assert.ok(panel.includes('*raw reflection*</textarea>'));
+  assert.equal((panel.match(/<textarea/g)||[]).length,2);
 }
 const Description = require('../packages/addons/lib/description.cjs').Description;
 const storage=renderToStaticMarkup(h(Description,{text:fixture,lang:'en'}));

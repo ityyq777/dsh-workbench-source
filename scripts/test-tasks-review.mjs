@@ -33,9 +33,12 @@ for (const lang of ['zh', 'en']) for (const status of ['0', '1', '2', '3']) {
     assert.equal(textareas.length, 2); assert.equal(textareas[0].props.value, 'Description'); assert.equal(textareas[1].props.value, 'existing');
     assert.equal(all(tree).some(n => n.props.type === 'range'), status === '2');
     assert.equal(all(tree).some(n => n.props.type === 'number'), status !== '2');
+    find(tree, n => n.type === 'input' && n.props.value === task.title).props.onChange({target:{value:'Raw <title>'}});
+    textareas[0].props.onChange({target:{value:'**raw description** <script>literal</script>'}});
     textareas[1].props.onChange({ target: { value: next } }); tree = render(EditModal, props);
     find(tree, n => n.props.className === 'wbt-btn primary').props.onClick(); await Promise.resolve();
     const patch = calls[0].patch;
+    assert.equal(patch.title, 'Raw <title>'); assert.equal(patch.description, '**raw description** <script>literal</script>');
     assert.equal(Object.hasOwn(patch, 'review'), next !== 'existing');
     if (next !== 'existing') assert.equal(patch.review, next);
     assert.equal(Object.hasOwn(patch, 'difficulty'), status === '2');
@@ -44,12 +47,13 @@ for (const lang of ['zh', 'en']) for (const status of ['0', '1', '2', '3']) {
   for (const card of [false, true]) {
     state = []; const calls = [];
     const props = { task, card, lang, t: copy[lang], update: (_task, patch) => calls.push(patch) };
-    let tree = render(TaskItem, props);
-    find(tree, n => n.props.className === 'wbt-review').props.onDoubleClick();
-    tree = render(TaskItem, props);
-    find(tree, n => n.type === 'textarea').props.onChange({ target: { value: '' } });
-    tree = render(TaskItem, props); find(tree, n => n.type === 'textarea').props.onBlur();
-    assert.equal(calls[0].type, 'REVIEW'); assert.equal(calls[0].review, ''); cases++;
+    const tree = render(TaskItem, props);
+    for (const cls of ['wbt-title', 'wbt-review', 'wbt-desc wb-desc']) {
+      const body = find(tree, n => n.props.className === cls);
+      assert.equal(body.props.onDoubleClick, undefined); assert.equal(body.props.title, undefined);
+      assert.ok(!all(body).some(n => n.type === 'textarea' || n.type === 'button'));
+    }
+    assert.deepEqual(calls, []); cases++;
   }
 }
 state = []; let completed;

@@ -1,4 +1,4 @@
-// 列表与卡片共用任务正文/内联编辑；依赖从入口注入，不引用入口。
+// 列表与卡片共用只读文本；编辑统一通过任务面板，依赖从入口注入。
 "use strict";
 module.exports = function (deps) {
   var React = deps.React, h = React.createElement;
@@ -11,70 +11,12 @@ module.exports = function (deps) {
   function TaskItem(props) {
     var t = props.t;
     var mode = preference.useMode(React);
-    function stopLabel(e) { e.stopPropagation(); }
-    function bodyLabel(label, review) { return h("span", { className: "wb-body-label" + (review ? " wb-review-label" : ""), onDoubleClick: stopLabel }, label); }
-    function editButton(label, begin) { return h("button", { type: "button", className: "wb-body-edit", title: t.edit + " " + label, "aria-label": t.edit + " " + label, onClick: begin, onDoubleClick: stopLabel }, h(Icon, { name: "pencil", size: 12 })); }
+    function bodyLabel(label, review) { return h("span", { className: "wb-body-label" + (review ? " wb-review-label" : "") }, label); }
     var task = props.task;
     var st = statusInfo(task.status);
     var stName = props.lang === "en" ? st.en : st.zh;
     var myTags = task.tags || [];
     var isActive = String(task.status) === "0";
-    var titleState = React.useState(null);
-    var editingTitle = titleState[0], setEditingTitle = titleState[1];
-    var descState = React.useState(null);
-    var editingDesc = descState[0], setEditingDesc = descState[1];
-    var revState = React.useState(null);
-    var editingReview = revState[0], setEditingReview = revState[1];
-    var titleRef = React.useRef(null);
-    var descRef = React.useRef(null);
-    var revRef = React.useRef(null);
-
-    React.useEffect(function () {
-      if (editingTitle !== null && titleRef.current) titleRef.current.focus();
-    }, [editingTitle]);
-    React.useEffect(function () {
-      if (editingDesc !== null && descRef.current) descRef.current.focus();
-    }, [editingDesc]);
-    React.useEffect(function () {
-      if (editingReview !== null && revRef.current) revRef.current.focus();
-    }, [editingReview]);
-
-    function beginTitle() {
-      // 任何状态（进行中/已关闭/已完成/重启）都允许改标题。
-      setEditingTitle(String(task.title || ""));
-    }
-    function saveTitle() {
-      if (editingTitle === null) return;
-      var v = String(editingTitle).trim();
-      if (!v) {
-        props.toast(t.needTitle);
-        setEditingTitle(null);
-        return;
-      }
-      if (v !== String(task.title || "")) props.update(task, { type: "TITLE", title: v });
-      setEditingTitle(null);
-    }
-    function beginDesc() {
-      if (!isActive) return;
-      setEditingDesc(String(task.description || ""));
-    }
-    function saveDesc() {
-      if (editingDesc === null) return;
-      if (String(editingDesc) !== String(task.description || "")) {
-        props.update(task, { type: "DESCRIPTION", description: String(editingDesc) });
-      }
-      setEditingDesc(null);
-    }
-    function beginReview() {
-      setEditingReview(String(task.review || ""));
-    }
-    function saveReview() {
-      if (editingReview === null) return;
-      if (String(editingReview) !== String(task.review || "")) {
-        props.update(task, { type: "REVIEW", review: String(editingReview) });
-      }
-      setEditingReview(null);
-    }
 
     var countdown = String(task.status) === "0" ? daysBetween(task.targetDate) : null;
     var cdTarget = String(task.status) === "0" && task.targetDate ? new Date(String(task.targetDate) + "T23:59:59").getTime() : NaN;
@@ -118,46 +60,10 @@ module.exports = function (deps) {
       }, h(Icon, { name: "trash", size: 14 })));
     }
 
-    var titleNode = editingTitle !== null
-      ? h("input", {
-          ref: titleRef, className: "wbt-input", style: { fontSize: "13px", padding: "4px 7px" },
-          value: editingTitle,
-          onChange: function (e) { setEditingTitle(e.target.value); },
-          onKeyDown: function (e) {
-            if (e.key === "Enter") { e.preventDefault(); saveTitle(); }
-            if (e.key === "Escape") setEditingTitle(null);
-          },
-          onBlur: saveTitle,
-        })
-      : h("div", { className: "wbt-title", onDoubleClick: beginTitle, title: t.editTitle }, h(Highlight, { text: task.title, keyword: props.keyword }));
+    var titleNode = h("div", { className: "wbt-title" }, h(Highlight, { text: task.title, keyword: props.keyword }));
 
-    var descNode = editingDesc !== null
-      ? h("div", null, h("small", { className: "wb-source-hint" }, t.markdownSource), h("textarea", {
-          ref: descRef, className: "wbt-textarea", rows: 2,
-          value: editingDesc, title: t.markdownSource, "aria-label": t.desc + " · " + t.markdownSource, placeholder: t.markdownSource,
-          onChange: function (e) { setEditingDesc(e.target.value); },
-          onKeyDown: function (e) {
-            if (e.key === "Escape") setEditingDesc(null);
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveDesc(); }
-          },
-          onBlur: saveDesc,
-        }))
-      : (String(task.description || "").trim() ? h("div", { className: "wbt-desc wb-desc", onDoubleClick: beginDesc }, bodyLabel(t.desc), isActive ? editButton(t.desc, beginDesc) : null, h(Body, { text: task.description, mode: mode, keyword: props.keyword })) : null);
-
-
-    var reviewNode = editingReview !== null
-      ? h("div", null, h("small", { className: "wb-source-hint" }, t.markdownSource), h("textarea", {
-          ref: revRef, className: "wbt-textarea", rows: 2, placeholder: t.reviewPlaceholder,
-          value: editingReview, title: t.markdownSource, "aria-label": t.review + " · " + t.markdownSource,
-          onChange: function (e) { setEditingReview(e.target.value); },
-          onKeyDown: function (e) {
-            if (e.key === "Escape") setEditingReview(null);
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveReview(); }
-          },
-          onBlur: saveReview,
-        }))
-      : (String(task.review || "").trim() ? h("div", { className: "wbt-review", title: t.editReview, onDoubleClick: beginReview },
-          bodyLabel(t.review, true), editButton(t.review, beginReview), h(Body, { text: task.review, mode: mode, keyword: props.keyword })) : null);
+    var descNode = String(task.description || "").trim() ? h("div", { className: "wbt-desc wb-desc" }, bodyLabel(t.desc), h(Body, { text: task.description, mode: mode, keyword: props.keyword })) : null;
+    var reviewNode = String(task.review || "").trim() ? h("div", { className: "wbt-review" }, bodyLabel(t.review, true), h(Body, { text: task.review, mode: mode, keyword: props.keyword })) : null;
 
 
     // 信息层级：标题 → 标签/时间/路径（元信息区）→ [卡片] 操作按钮 → 描述 → 复核。

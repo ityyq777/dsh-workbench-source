@@ -52,14 +52,11 @@ for (const card of [false, true]) for (const [field, cls, patchType] of [
   const child = node.children.find(n => n && typeof n === 'object' && typeof n.type === 'function');
   const hit = expand(child);
   assert.equal(all(hit).filter(n => n.type === 'mark').length, 1);
-  // Mark has no handlers: a double click bubbles to the same editable field container.
+  // All three text areas and their search highlights are read-only.
   assert.ok(all(hit).every(n => !n.props.onClick && !n.props.onDoubleClick));
-  node.props.onDoubleClick({ target: all(hit)[0] });
-  let editor = all(render()).find(n => n.type === 'textarea' || n.type === 'input');
-  assert.equal(editor.props.value, 'start AbC end');
-  editor.props.onChange({ target: { value: 'edited' } });
-  editor = all(render()).find(n => n.type === 'textarea' || n.type === 'input'); editor.props.onBlur();
-  assert.deepEqual(calls[0], { type: patchType, [field]: 'edited' }); cases++;
+  assert.equal(node.props.onDoubleClick, undefined); assert.equal(node.props.title, undefined);
+  assert.ok(!all(render()).some(n => n.type === 'textarea' || n.type === 'input'));
+  assert.deepEqual(calls, []); cases++;
 }
 const css = readFileSync('packages/addons/tasks/client/styles.cjs', 'utf8');
 const color = name => css.match(new RegExp(name + ':#([0-9a-f]{6})'))[1];

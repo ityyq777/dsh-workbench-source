@@ -3,7 +3,7 @@
 
 module.exports = {
     zh: {
-      bodyMode: "描述与感受显示模式", markdown: "Markdown 渲染", plainText: "纯文本", markdownSource: "Markdown 源文本（Ctrl/⌘+Enter 保存）", bodyModeLocal: "已在当前浏览器切换，配置保存失败：",
+      bodyMode: "描述与感受显示模式", markdown: "Markdown 渲染", plainText: "纯文本", bodyModeLocal: "已在当前浏览器切换，配置保存失败：",
       title: "任务", search: "搜索标题 / 描述 / 感受", newTask: "新建任务", tree: "任务树",
       select: "选择", cancelSelect: "退出选择", list: "列表", card: "卡片",
       all: "全部", empty: "这个视图还没有任务", loading: "加载中…",
@@ -12,7 +12,7 @@ module.exports = {
       editGroup: "编辑任务组", editTable: "编辑任务表", nodeName: "名称", nodeDesc: "描述（可选）",
       nodeDescPh: "写清这张表是做什么的，以后可按描述关键词检索定位",
       needName: "名称不能为空", nodeDescSave: "描述已保存",
-      editTitle: "双击编辑标题（任何状态都可改）",
+      editTitle: "编辑任务",
       deleteConfirm: "确定删除这个节点及其子树？子树中的任务会被软删除。",
       deleteTaskConfirm: "确定删除这条任务吗？删除后不可恢复。",
       batchDelete: "批量删除", batchDeleteConfirm: "确定删除选中的 {n} 条任务吗？删除后不可恢复。", deletePartial: "部分删除失败",
@@ -25,7 +25,7 @@ module.exports = {
       tagSelected: "已选", tagRemove: "移除",
       untagged: "未打标签", publish: "发布", target: "计划完成", done: "实际完成",
       shutdown: "关闭时间", priority: "优先级", difficulty: "难度", desc: "描述",
-      review: "感受", reviewHint: "任何状态都可记录感受（可选）", editReview: "双击编辑感受（任何状态）",
+      review: "感受", reviewHint: "任何状态都可记录感受（可选）",
       reviewPlaceholder: "例如：思路很顺 / 卡在接口调试 / 比预想轻松", reviewAdd: "记录感受",
       status: "状态", publishDate: "发布日期", targetDate: "计划完成日期",
       doneDate: "完成日期", shutdownDate: "关闭日期", table: "任务表", titleField: "标题",
@@ -50,7 +50,7 @@ module.exports = {
       needDate: "日期不能为空", needBase: "请选择基准任务", needDifficulty: "请选择难度",
     },
     en: {
-      bodyMode: "Description and reflection display mode", markdown: "Render Markdown", plainText: "Plain text", markdownSource: "Markdown source (Ctrl/⌘+Enter to save)", bodyModeLocal: "Changed in this browser; could not save config:",
+      bodyMode: "Description and reflection display mode", markdown: "Render Markdown", plainText: "Plain text", bodyModeLocal: "Changed in this browser; could not save config:",
       title: "Tasks", search: "Search title / description / feeling", newTask: "New task", tree: "Task tree",
       select: "Select", cancelSelect: "Exit select", list: "List", card: "Cards",
       all: "All", empty: "No tasks in this view", loading: "Loading…",
@@ -59,7 +59,7 @@ module.exports = {
       editGroup: "Edit group", editTable: "Edit table", nodeName: "Name", nodeDesc: "Description (optional)",
       nodeDescPh: "Say what this table is for; agents can find it by description keywords",
       needName: "Name is required", nodeDescSave: "Description saved",
-      editTitle: "Double-click to rename (any status)",
+      editTitle: "Edit task",
       deleteConfirm: "Delete this node and its subtree? Tasks under it will be soft-deleted.",
       deleteTaskConfirm: "Delete this task? This cannot be undone.",
       batchDelete: "Delete", batchDeleteConfirm: "Delete {n} selected tasks? This cannot be undone.", deletePartial: "some deletes failed",
@@ -72,7 +72,7 @@ module.exports = {
       tagSelected: "Selected", tagRemove: "Remove",
       untagged: "Untagged", publish: "Published", target: "Target", done: "Done",
       shutdown: "Closed", priority: "Priority", difficulty: "Difficulty", desc: "Description",
-      review: "Reflection", reviewHint: "Record a feeling in any status (optional)", editReview: "Double-click to edit feeling (any status)",
+      review: "Reflection", reviewHint: "Record a feeling in any status (optional)",
       reviewPlaceholder: "e.g. smooth, stuck on the API, easier than expected", reviewAdd: "Add feeling",
       status: "Status", publishDate: "Publish date", targetDate: "Target date",
       doneDate: "Done date", shutdownDate: "Close date", table: "Task table", titleField: "Title",

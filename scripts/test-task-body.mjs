@@ -47,13 +47,15 @@ for (const lang of ['zh', 'en']) for (const card of [true, false]) {
   const render = () => { cursor = 0; return Task(props); };
   let tree = render(); const labels = walk(tree).filter(n => n.props.className?.includes('wb-body-label'));
   assert.deepEqual(labels.map(text), lang === 'en' ? ['Description', 'Reflection'] : ['描述', '感受']);
-  let stopped = 0; labels[0].props.onDoubleClick({ stopPropagation() { stopped++; } }); assert.equal(stopped, 1); assert.ok(!walk(render()).some(n => n.type === 'textarea'));
-  walk(tree).find(n => n.props.className === 'wb-body-edit').props.onClick(); tree = render();
-  let editor = walk(tree).find(n => n.type === 'textarea'); assert.equal(editor.props.value, '**description**'); assert.ok(text(tree).includes(copy[lang].markdownSource));
-  editor.props.onKeyDown({ key: 'Escape' }); assert.ok(!walk(render()).some(n => n.type === 'textarea'));
-  walk(render()).filter(n => n.props.className === 'wb-body-edit')[1].props.onClick(); editor = walk(render()).find(n => n.type === 'textarea');
-  assert.equal(editor.props.value, '*reflection*'); editor.props.onChange({ target: { value: '**new**' } }); editor = walk(render()).find(n => n.type === 'textarea'); editor.props.onKeyDown({ key: 'Enter', ctrlKey: true, preventDefault() {} });
-  assert.deepEqual(calls, [{ type: 'REVIEW', review: '**new**' }]);
+  assert.ok(walk(tree).every(n => !n.props.onDoubleClick));
+  for (const cls of ['wbt-title', 'wbt-desc wb-desc', 'wbt-review']) {
+    const body = walk(tree).find(n => n.props.className === cls);
+    assert.equal(body.props.onDoubleClick, undefined); assert.equal(body.props.title, undefined);
+    assert.ok(!walk(body).some(n => n.type === 'button' || n.type === 'textarea'));
+  }
+  assert.ok(!walk(tree).some(n => n.props.className === 'wb-source-hint')); assert.deepEqual(calls, []);
+  let opened; props.onEdit = task => { opened = task; };
+  walk(render()).find(n => n.type === 'button' && n.props['aria-label'] === copy[lang].edit).props.onClick(); assert.equal(opened, props.task);
   props.task.description = '  '; props.task.review = '\n'; assert.equal(walk(render()).filter(n => n.props.className?.includes('wb-body-label')).length, 0);
 }
 const css = require('../packages/addons/lib/body-styles.cjs');
