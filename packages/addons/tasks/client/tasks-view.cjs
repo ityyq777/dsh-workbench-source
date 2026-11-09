@@ -2,6 +2,7 @@
 module.exports = function createTasksView(deps) {
   var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, TABS = deps.TABS, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
   var h = React.createElement;
+  var BodyMode = require("./body-mode.cjs")(React);
   function TasksView(props) {
     var lang = props.lang === "en" ? "en" : "zh";
     var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -430,6 +431,7 @@ module.exports = function createTasksView(deps) {
         ),
         h(PathCrumbs, { path: currentPath, onPick: pickPath }),
         h("div", { className: "wbt-grow" }),
+        h(BodyMode, { api: api, value: cfg["ui.bodyMode"], t: t, toast: say }),
         h("input", {
           className: "wbt-input wbt-search", placeholder: t.search, value: searchDraft,
           onChange: function (e) { setSearchDraft(e.target.value); },

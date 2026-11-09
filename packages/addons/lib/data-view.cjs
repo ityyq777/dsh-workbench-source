@@ -134,7 +134,6 @@ function DataView(props) {
   }, []);
 
   function selectTable(name) {
-    leaveIndex();
     if (name === active) return;
     reqRef.current++;
     setActive(name);
@@ -170,7 +169,7 @@ function DataView(props) {
   }, [filterDraft]);
 
   React.useEffect(function () {
-    if (!active || !cfgWrap.ready) return undefined;
+    if (!active || !cfgWrap.ready || index) return undefined;
     var req = ++reqRef.current;
     setLoadingRows(true);
     var args = { table: active, page: page, pageSize: size, order: order, includeDeleted: includeDeleted };
@@ -193,7 +192,7 @@ function DataView(props) {
       })
       .then(function () { if (req === reqRef.current) setLoadingRows(false); });
     return function () { reqRef.current++; };
-  }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey, refreshS[0]]);
+  }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey, refreshS[0], !!index]);
 
   React.useEffect(function () {
     if (!drawer) return undefined;
@@ -212,9 +211,12 @@ function DataView(props) {
     indexReqRef.current++;
     setIndex(null);
     setIndexBusy(false);
+    setError("");
   }
 
   function loadIndex() {
+    reqRef.current++;
+    setError("");
     var req = ++indexReqRef.current;
     setIndex([]);
     setIndexBusy(true);
@@ -236,64 +238,44 @@ function DataView(props) {
       });
   }
 
-  function toggleIndex() {
-    if (index) { leaveIndex(); return; }
-    loadIndex();
-  }
-
   function renderIndex() {
-    var rows = index || [];
-    var totalRows = rows.reduce(function (n, r) { return n + (r.stats && Number(r.stats.rows) || 0); }, 0);
+    var row = (index || []).filter(function (r) { return r.table.name === active; })[0];
+    var tb = row ? row.table : current;
+    var st = row && row.stats;
+    var indexes = st ? st.indexes || [] : [];
+    var hasExtra = indexes.some(function (ix) { return ix.origin !== "pk"; });
+    var count = st && st.rows !== undefined ? st.rows : tb && tb.count;
     return h("div", { className: P + "-idx" },
       h("div", { className: P + "-head" },
         h("div", { className: P + "-headmain" },
-          h("h2", null, icon("database"), t.index, h("span", { className: P + "-code" }, "index")),
+          h("h2", null, icon("database"), tableLabel(tb), h("span", { className: P + "-code" }, active)),
           h("div", { className: P + "-idxsub" }, t.indexSub)),
         h("button", {
           type: "button", className: P + "-btn", "aria-label": t.refresh, title: t.refresh, "aria-busy": indexBusy ? "true" : "false",
           onClick: function () { loadIndex(); },
         }, icon("refresh"), h("span", { className: P + "-btnlabel" }, t.refresh))),
-      h("div", { className: P + "-idxsum" },
-        h("span", null, t.idxTables, " ", h("b", null, String(rows.length))),
-        h("span", null, t.idxRows, " ", h("b", null, String(totalRows)))),
-      indexBusy && !rows.length
-        ? options.Skeleton ? h(options.Skeleton, { lang: lang, label: t.loading }) : h("div", { className: P + "-empty" }, t.loading)
-        : !rows.length
-          ? h("div", { className: P + "-empty" }, t.idxEmpty)
-          : h("div", { className: P + "-tablewrap" },
-            h("table", { className: P + "-table" },
-              h("thead", null, h("tr", null,
-                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxTable)),
-                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxRows)),
-                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxCols)),
-                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxKey)),
-                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxIndexes)),
-                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxLastWrite)))),
-              h("tbody", null, rows.map(function (row) {
-                var st = row.stats || {};
-                var pk = (st.primaryKey || []).join(", ");
-                var indexes = st.indexes || [];
-                return h("tr", { className: P + "-tr", key: row.table.name },
-                  h("td", { className: P + "-cell" },
-                    h("div", { className: P + "-idxname" }, tableLabel(row.table)),
-                    h("div", { className: P + "-sidetable" }, row.table.name)),
-                  h("td", { className: P + "-cell num" }, String(st.rows === undefined ? row.table.count : st.rows)),
-                  h("td", { className: P + "-cell num" }, String(st.columnCount || (row.table.columns || []).length)),
-                  h("td", { className: P + "-cell" }, pk
-                    ? h("span", { className: P + "-idxchip u" }, pk)
-                    : h("span", { className: P + "-idxnone" }, t.idxNone)),
-                  h("td", { className: P + "-cell" }, h("div", { className: P + "-idxtags" }, indexes.length
-                    ? indexes.map(function (ix) {
-                      return h("span", {
-                        key: ix.name, title: ix.name + " (" + (ix.columns || []).join(", ") + ")",
-                        className: P + "-idxchip" + (ix.unique ? " u" : ""),
-                      }, (ix.columns || []).join(",") || ix.name);
-                    })
-                    : h("span", { className: P + "-idxnone" }, t.idxNone))),
-                  h("td", { className: P + "-cell mono" }, st.lastWrite
-                    ? timeText(st.lastWrite.at)
-                    : h("span", { className: P + "-idxnone" }, t.idxNone)));
-              })))));
+      st ? h("div", { className: P + "-idxsum" },
+        h("span", null, t.idxRows, " ", h("b", null, String(count))),
+        h("span", null, t.idxCols, " ", h("b", null, String(st.columnCount === undefined ? (tb.columns || []).length : st.columnCount))),
+        h("span", null, fmt(t.idxCount, { n: indexes.length }))) : null,
+      indexBusy
+        ? options.Skeleton ? h(options.Skeleton, { lang: lang, label: t.loading }) : h("div", { className: P + "-empty", role: "status", "aria-busy": "true" }, t.loading)
+        : !st ? h("div", { className: P + "-empty" }, t.idxEmpty)
+        : !hasExtra ? h("div", { className: P + "-empty" }, t.idxNoExtra)
+        : h("div", { className: P + "-tablewrap" },
+          h("table", { className: P + "-table " + P + "-idxtable" },
+            h("thead", null, h("tr", null,
+              [t.idxName, t.idxColumns, t.idxType, t.idxSource, t.idxRows].map(function (label) {
+                return h("th", { scope: "col", key: label }, h("span", { className: P + "-thbtn" }, label));
+              }))),
+            h("tbody", null, indexes.map(function (ix) {
+              return h("tr", { className: P + "-tr", key: ix.name },
+                h("td", { className: P + "-cell mono" }, ix.name),
+                h("td", { className: P + "-cell mono" }, (ix.columns || []).join(", ") || t.idxNone),
+                h("td", { className: P + "-cell" }, ix.origin === "pk" ? t.idxKey : ix.unique ? t.idxUnique : t.idxNormal),
+                h("td", { className: P + "-cell" }, /^sqlite_autoindex_/.test(ix.name) ? t.idxAuto : t.idxCreated),
+                h("td", { className: P + "-cell num", title: t.idxRowsHelp }, String(count)));
+            })))));
   }
 
   function tableLabel(tb) {
@@ -508,17 +490,8 @@ function DataView(props) {
           h("span", { className: P + "-stabname" },
             h("span", null, tableLabel(tb)),
             h("span", { className: P + "-sidecount" }, String(tb.count))),
-          h("span", { className: P + "-sidetable" }, tb.name),
-          tb.deletedCount ? h("span", { className: P + "-sidetable" }, tb.deletedCount + " " + t.deleted) : null);
-      }),
-      h("button", {
-        type: "button", className: P + "-stab" + (index ? " on" : ""),
-        "aria-pressed": !!index, onClick: toggleIndex,
-      },
-        h("span", { className: P + "-stabname" },
-          h("span", null, t.index),
-          h("span", { className: P + "-sidecount" }, index ? String(index.length) : "")),
-        h("span", { className: P + "-sidetable" }, "index"))),
+          h("span", { className: P + "-sidetable" }, tb.name));
+      })),
     h("div", { className: P + "-main" },
       h("div", { className: P + "-tabs", role: "tablist", "aria-label": t.title },
         h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !index, onClick: leaveIndex }, icon("list"), lang === "en" ? "Row data" : "行数据"),

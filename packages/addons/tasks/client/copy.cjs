@@ -3,6 +3,7 @@
 
 module.exports = {
     zh: {
+      bodyMode: "描述与感受显示模式", markdown: "Markdown 渲染", plainText: "纯文本", markdownSource: "Markdown 源文本（Ctrl/⌘+Enter 保存）", bodyModeLocal: "已在当前浏览器切换，配置保存失败：",
       title: "任务", search: "搜索标题 / 描述 / 感受", newTask: "新建任务", tree: "任务树",
       select: "选择", cancelSelect: "退出选择", list: "列表", card: "卡片",
       all: "全部", empty: "这个视图还没有任务", loading: "加载中…",
@@ -49,6 +50,7 @@ module.exports = {
       needDate: "日期不能为空", needBase: "请选择基准任务", needDifficulty: "请选择难度",
     },
     en: {
+      bodyMode: "Description and reflection display mode", markdown: "Render Markdown", plainText: "Plain text", markdownSource: "Markdown source (Ctrl/⌘+Enter to save)", bodyModeLocal: "Changed in this browser; could not save config:",
       title: "Tasks", search: "Search title / description / feeling", newTask: "New task", tree: "Task tree",
       select: "Select", cancelSelect: "Exit select", list: "List", card: "Cards",
       all: "All", empty: "No tasks in this view", loading: "Loading…",
@@ -70,7 +72,7 @@ module.exports = {
       tagSelected: "Selected", tagRemove: "Remove",
       untagged: "Untagged", publish: "Published", target: "Target", done: "Done",
       shutdown: "Closed", priority: "Priority", difficulty: "Difficulty", desc: "Description",
-      review: "Feeling", reviewHint: "Record a feeling in any status (optional)", editReview: "Double-click to edit feeling (any status)",
+      review: "Reflection", reviewHint: "Record a feeling in any status (optional)", editReview: "Double-click to edit feeling (any status)",
       reviewPlaceholder: "e.g. smooth, stuck on the API, easier than expected", reviewAdd: "Add feeling",
       status: "Status", publishDate: "Publish date", targetDate: "Target date",
       doneDate: "Done date", shutdownDate: "Close date", table: "Task table", titleField: "Title",

@@ -1,6 +1,8 @@
 /** Shared data browser rendering/interaction regressions. Run after build:clients. */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { build } from "esbuild";
+import { fileURLToPath } from "node:url";
 import { createContext, runInContext } from "node:vm";
 import { createReact } from "./data-ui-harness.mjs";
 const longRemark = "长备注全文".repeat(50);
@@ -18,6 +20,12 @@ async function exercise(domain, prefix, table) {
   let timerId = 0, failRows = false, failIndex = false, deferIndex = false;
   const pendingIndexes = [], pendingTables = [];
   const secondTable = table + "_second";
+  const indexes = [
+    { name: "sqlite_autoindex_" + table + "_1", columns: ["id"], origin: "pk", unique: true },
+    { name: "idx_" + table + "_" + "long_name_".repeat(16), columns: ["name"], origin: "c", unique: false },
+    { name: "uk_dependency", columns: ["task_id", "depends_on_id"], origin: "c", unique: true },
+    { name: "sqlite_autoindex_" + table + "_2", columns: ["name", "stock"], origin: "u", unique: true },
+  ];
   const sandbox = {
     console, URL,
     setTimeout(fn, delay) { const id = ++timerId; timers.set(id, { fn, delay }); return id; },
@@ -33,8 +41,16 @@ async function exercise(domain, prefix, table) {
   };
   sandbox.window = sandbox;
   createContext(sandbox);
-  runInContext(readFileSync(new URL("../packages/addons/" + domain + "/lib/client.js", import.meta.url), "utf8"), sandbox);
-  sandbox.__ModuleLoader__.modules["dsh-workbench-" + domain](name => name === "react" ? rt.React : {});
+  if (process.argv.includes("--source")) {
+    const bundle = await build({ entryPoints: [fileURLToPath(new URL("../packages/addons/" + domain + "/client/client.src.cjs", import.meta.url))],
+      bundle: true, write: false, format: "cjs", platform: "browser", external: ["react"], logLevel: "silent" });
+    sandbox.module = { exports: {} }; sandbox.exports = sandbox.module.exports;
+    sandbox.require = name => name === "react" ? rt.React : {};
+    runInContext(bundle.outputFiles[0].text, sandbox);
+  } else {
+    runInContext(readFileSync(new URL("../packages/addons/" + domain + "/lib/client.js", import.meta.url), "utf8"), sandbox);
+    sandbox.__ModuleLoader__.modules["dsh-workbench-" + domain](name => name === "react" ? rt.React : {});
+  }
   const columns = [
     { name: "id", kind: "id", type: "TEXT" }, { name: "name", kind: "text", type: "TEXT" },
     { name: "stock", kind: "text", type: "TEXT" }, { name: "img_list", kind: "text", type: "TEXT" },
@@ -53,8 +69,9 @@ async function exercise(domain, prefix, table) {
         if (args.stats && deferIndex) return new Promise((resolve, reject) => pendingIndexes.push({ resolve, reject }));
         if (args.stats && failIndex) return { ok: false, error: "index unavailable" };
         return { ok: true, result: { tables: [{ name: table, label: { zh: "表目录项", en: "Table" }, count: 12, deletedCount: 1,
-          columns, stats: { rows: 12, columnCount: columns.length, primaryKey: ["id"], indexes: [] } },
-          { name: secondTable, label: { zh: "第二张表" }, count: 1, columns: [{ name: "other", kind: "text", type: "TEXT" }] }] } };
+          columns, stats: { rows: 12, columnCount: columns.length, primaryKey: ["id"], indexes } },
+          { name: secondTable, label: { zh: "第二张表" }, count: 1, columns: [{ name: "other", kind: "text", type: "TEXT" }],
+            stats: { rows: 1, columnCount: 1, primaryKey: ["a", "b"], indexes: [{ name: "sqlite_autoindex_second_1", columns: ["a", "b"], origin: "pk", unique: true }] } }] } };
       }
       if (action.endsWith("dataQuery")) {
         if (args.table === secondTable) return new Promise((resolve, reject) => pendingTables.push({ resolve, reject }));
@@ -127,13 +144,34 @@ async function exercise(domain, prefix, table) {
   }
   nodes(n => n.props.role === "tab" && text(n) === "表索引")[0].props.onClick(); await settle();
   assert.equal(cls("idx").length, 1); assert(text(rt.tree).includes(table));
+  assert.equal(cls("stab").length, 2, "directory contains real tables only");
+  assert(!text(cls("side")).includes("表索引"));
+  assert.equal(cls("tr").length, 4, "one row per physical index");
+  assert(text(cls("tr")[0]).includes("主键自动"));
+  assert(text(cls("tr")[1]).includes(indexes[1].name));
+  assert(text(cls("tr")[2]).includes("task_id, depends_on_id唯一显式创建12"));
+  assert(text(cls("tr")[3]).includes("name, stock唯一自动12"));
+  assert(text(cls("idxsum")).includes("行数 12列数 6共 4 个索引"));
+  assert(text(cls("idxsub")).includes("不是索引条目数"));
+  assert(styles.some(s => s.textContent.includes("table-layout:fixed") && s.textContent.includes("overflow-wrap:anywhere")));
+  const statsCalls = () => calls.filter(c => c.args.stats).length;
+  const beforeSwitch = statsCalls();
+  cls("stab")[1].props.onClick(); await settle();
+  assert.equal(statsCalls(), beforeSwitch, "switching table uses cached stats");
+  assert.equal(cls("idx").length, 1, "table selection keeps index tab open");
+  assert(text(cls("idx")).includes(secondTable));
+  assert(text(cls("idx")).includes("该表除主键外没有额外索引"));
+  assert.equal(cls("tr").length, 0, "primary-key-only tables do not render an empty table");
+  assert(!text(cls("idx")).includes("uk_dependency"));
+  cls("stab")[0].props.onClick(); await settle();
+  assert.equal(cls("tr").length, 4);
   assert(calls.some(c => c.action === domain + ".dataTables" && c.args.stats === true));
   failIndex = true; button("刷新").props.onClick(); await settle(); assert(text(rt.tree).includes("index unavailable"));
   failIndex = false; button("刷新").props.onClick(); await settle();
   nodes(n => n.props.role === "tab" && text(n) === "行数据")[0].props.onClick(); await settle();
   // A late index success or failure cannot reopen a tab the user already left.
   deferIndex = true;
-  for (const exit of ["tab", "directory"]) {
+  for (const exit of ["tab"]) {
     for (const outcome of ["resolve", "reject"]) {
       nodes(n => n.props.role === "tab" && text(n) === "表索引")[0].props.onClick(); await settle();
       assert.equal(pendingIndexes.length, 1);
@@ -149,6 +187,35 @@ async function exercise(domain, prefix, table) {
       assert(!text(rt.tree).includes("stale index error"));
     }
   }
+  // Switching while stats are pending renders the new active table without another request.
+  nodes(n => n.props.role === "tab" && text(n) === "表索引")[0].props.onClick(); await settle();
+  const pendingSwitchCount = calls.length;
+  cls("stab")[1].props.onClick(); await settle();
+  assert.equal(calls.length, pendingSwitchCount);
+  pendingIndexes.shift().resolve({ ok: true, result: { tables: [
+    { name: table, stats: { rows: 12, indexes } },
+    { name: secondTable, stats: { rows: 1, columnCount: 2, indexes: [indexes[3]] } },
+  ] } });
+  await settle();
+  assert.equal(cls("tr").length, 1, "automatic unique index is an extra index");
+  assert(text(cls("tr")).includes("唯一自动1"));
+  assert(text(cls("idx")).includes(secondTable));
+  // A second refresh supersedes both success and failure of the first request.
+  for (const outcome of ["resolve", "reject"]) {
+    button("刷新").props.onClick(); await settle();
+    button("刷新").props.onClick(); await settle();
+    const [stale, latest] = pendingIndexes.splice(0);
+    latest.resolve({ tables: [{ name: secondTable, stats: { rows: 7, columnCount: 2, indexes: [] } }] });
+    await settle();
+    if (outcome === "resolve") stale.resolve({ tables: [{ name: secondTable, stats: { rows: 99, indexes } }] });
+    else stale.reject(new Error("stale refresh error"));
+    await settle();
+    assert(text(cls("idxsum")).includes("行数 7列数 2共 0 个索引"));
+    assert(text(cls("idx")).includes("该表除主键外没有额外索引"));
+    assert(!text(rt.tree).includes("stale refresh error"));
+  }
+  nodes(n => n.props.role === "tab" && text(n) === "行数据")[0].props.onClick(); await settle();
+  cls("stab")[0].props.onClick(); await settle();
   deferIndex = false;
   failRows = true; button("刷新").props.onClick(); await settle(); assert(text(rt.tree).includes("query unavailable"));
   failRows = false; button("重试").props.onClick(); await settle(); assert(!text(rt.tree).includes("query unavailable"));

@@ -37,7 +37,7 @@ export function apply(ctx) {
         id: "wb-addon-tags",
         title: "标签",
         description: "创建与管理标签，为站点等业务提供标签归类；含统计/记录/配置/数据四个视图",
-        version: "1.6.8",
+        version: "1.6.9",
         tables: ["tag", "tag_mapping"],
         sync: tagSync,
         views: [

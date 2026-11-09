@@ -38,18 +38,223 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// packages/addons/lib/markdown.cjs
+var require_markdown = __commonJS({
+  "packages/addons/lib/markdown.cjs"(exports2, module2) {
+    "use strict";
+    var cache = /* @__PURE__ */ new Map();
+    var cacheChars = 0;
+    function node(tag, children, props) {
+      return { tag, children, props: props || {} };
+    }
+    function inline(text, depth) {
+      if ((depth || 0) > 8) return [text];
+      var out = [], re = /(\\[\\\x60*\[\]#!_>+-]|!?\[[^\[\]\n]+\]\([^\s)\[\]]*\)|\x60[^\x60\n]+\x60|\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g, at = 0, m;
+      while (m = re.exec(text)) {
+        if (m.index > at) out.push(text.slice(at, m.index));
+        var s = m[0], link = /^\[([^\]]+)\]\(([^)]*)\)$/.exec(s);
+        if (s[0] === "\\") out.push(s.slice(1));
+        else if (link && /^(https?:\/\/|mailto:)[^\s\u0000-\u001f\u007f]+$/i.test(link[2]))
+          out.push(node("a", inline(link[1], (depth || 0) + 1), { href: link[2], target: "_blank", rel: "noopener noreferrer nofollow" }));
+        else if (s[0] === "[" || s[0] === "!") out.push(s);
+        else if (s[0] === "`") out.push(node("code", [s.slice(1, -1)]));
+        else if (s.slice(0, 2) === "**") out.push(node("strong", inline(s.slice(2, -2), (depth || 0) + 1)));
+        else out.push(node("em", inline(s.slice(1, -1), (depth || 0) + 1)));
+        at = re.lastIndex;
+      }
+      if (at < text.length) out.push(text.slice(at));
+      return out;
+    }
+    function blocks(lines, depth) {
+      var out = [], i = 0;
+      function listMatch(s) {
+        return /^( *)([-+*]|\d+\.) +(.+)$/.exec(s);
+      }
+      function special(s) {
+        return /^\s*$|^\x60\x60\x60|^#{1,6} +|^> ?|^\s*(?:---+|\*\*\*+|___+)\s*$/.test(s) || listMatch(s);
+      }
+      while (i < lines.length) {
+        var line = lines[i], m;
+        if (!line.trim()) {
+          i++;
+          continue;
+        }
+        if (/^\x60\x60\x60/.test(line)) {
+          var end = i + 1;
+          while (end < lines.length && !/^\x60\x60\x60\s*$/.test(lines[end])) end++;
+          if (end === lines.length) {
+            out.push(node("p", [lines.slice(i).join("\n")]));
+            break;
+          }
+          out.push(node("pre", [node("code", [lines.slice(i + 1, end).join("\n")])]));
+          i = end + 1;
+          continue;
+        }
+        if (m = /^(#{1,6}) +(.+)$/.exec(line)) {
+          out.push(node("h" + m[1].length, inline(m[2])));
+          i++;
+          continue;
+        }
+        if (/^\s*(?:---+|\*\*\*+|___+)\s*$/.test(line)) {
+          out.push(node("hr", []));
+          i++;
+          continue;
+        }
+        if (/^> ?/.test(line) && depth < 2) {
+          var quote = [];
+          while (i < lines.length && /^> ?/.test(lines[i])) quote.push(lines[i++].replace(/^> ?/, ""));
+          out.push(node("blockquote", blocks(quote, depth + 1)));
+          continue;
+        }
+        if ((m = listMatch(line)) && depth < 2) {
+          var base = m[1].length, ordered = /\d/.test(m[2]), items = [], start = parseInt(m[2], 10);
+          while (i < lines.length) {
+            m = listMatch(lines[i]);
+            if (!m || m[1].length !== base || /\d/.test(m[2]) !== ordered) break;
+            var children = inline(m[3]), nested = [];
+            i++;
+            while (i < lines.length && (m = listMatch(lines[i])) && m[1].length > base) nested.push(lines[i++].slice(base + 2));
+            if (nested.length) children = children.concat(blocks(nested, depth + 1));
+            items.push(node("li", children));
+          }
+          out.push(node(ordered ? "ol" : "ul", items, ordered ? { start } : {}));
+          continue;
+        }
+        var paragraph = [line];
+        i++;
+        while (i < lines.length && !special(lines[i])) paragraph.push(lines[i++]);
+        var parts = [];
+        paragraph.forEach(function(s, j) {
+          if (j) parts.push(node("br", []));
+          var children2 = inline(s);
+          for (var k = 0; k < children2.length; k++) parts.push(children2[k]);
+        });
+        out.push(node("p", parts));
+      }
+      return out;
+    }
+    function parse(text, mode) {
+      text = String(text == null ? "" : text);
+      mode = mode === "text" ? "text" : "markdown";
+      var key = mode + ":" + text;
+      if (cache.has(key)) return cache.get(key);
+      var ast = mode === "text" ? [text] : blocks(text.replace(/\r\n?/g, "\n").split("\n"), 0);
+      if (text.length <= 1e5) {
+        while (cache.size >= 100 || cacheChars + key.length > 1e6) {
+          var first = cache.keys().next().value;
+          cacheChars -= first.length;
+          cache.delete(first);
+        }
+        cache.set(key, ast);
+        cacheChars += key.length;
+      }
+      return ast;
+    }
+    function createBody(React, Highlight) {
+      var h2 = React.createElement;
+      return function Body(props) {
+        function render(items, path) {
+          return items.map(function(item, i) {
+            var key = path + "-" + i;
+            if (typeof item === "string") return Highlight ? h2(Highlight, { key, text: item, keyword: props.keyword }) : item;
+            return h2(item.tag, Object.assign({ key }, item.props), render(item.children, key));
+          });
+        }
+        return h2("div", { className: props.mode === "text" ? "wb-body-text" : "wb-markdown" }, render(parse(props.text, props.mode), "md"));
+      };
+    }
+    module2.exports = { parse, createBody };
+  }
+});
+
+// packages/addons/lib/body-mode.cjs
+var require_body_mode = __commonJS({
+  "packages/addons/lib/body-mode.cjs"(exports2, module2) {
+    var KEY = "wb.bodyMode";
+    var EVENT = "wb-body-mode";
+    function normalize(value) {
+      return value === "text" ? "text" : "markdown";
+    }
+    function get() {
+      try {
+        return normalize(window.localStorage.getItem(KEY));
+      } catch (_) {
+        return "markdown";
+      }
+    }
+    function set(value) {
+      value = normalize(value);
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(KEY, value);
+        } catch (_) {
+        }
+        window.dispatchEvent(new CustomEvent(EVENT, { detail: value }));
+      }
+      return value;
+    }
+    function useMode(React) {
+      var state = React.useState(get());
+      React.useEffect(function() {
+        if (typeof window === "undefined") return;
+        function changed(e) {
+          state[1](e.type === EVENT ? normalize(e.detail) : get());
+        }
+        window.addEventListener(EVENT, changed);
+        window.addEventListener("storage", changed);
+        state[1](get());
+        return function() {
+          window.removeEventListener(EVENT, changed);
+          window.removeEventListener("storage", changed);
+        };
+      }, []);
+      return state[0];
+    }
+    module2.exports = { get, set, useMode };
+  }
+});
+
+// packages/addons/lib/body-styles.cjs
+var require_body_styles = __commonJS({
+  "packages/addons/lib/body-styles.cjs"(exports2, module2) {
+    module2.exports = `
+.wb-body-label{float:left;position:relative;z-index:1;margin:1px 6px 0 0;padding:1px 4px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.06em;line-height:1.6;color:#234783;background:color-mix(in srgb,#5b7fd6 8%,#fff);white-space:nowrap}
+.wb-body-label.wb-review-label{color:#154d43;background:color-mix(in srgb,var(--wbt-accent,#11a89b) 8%,#fff)}
+.wb-body-edit{float:right;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:0;border-radius:4px;background:transparent;color:inherit;cursor:pointer}
+.wb-body-edit:hover{background:color-mix(in srgb,currentColor 10%,transparent)}
+.wb-body-edit:focus-visible{outline:2px solid currentColor;outline-offset:1px}
+.wb-markdown{white-space:normal;min-width:0;overflow-wrap:anywhere}.wb-markdown:after{content:'';display:table;clear:both}
+.wb-markdown p{margin:0 0 6px;white-space:pre-wrap}.wb-markdown>:last-child{margin-bottom:0}
+.wb-markdown h1,.wb-markdown h2,.wb-markdown h3,.wb-markdown h4,.wb-markdown h5,.wb-markdown h6{margin:6px 0;font-weight:650;line-height:1.6}
+.wb-markdown>:first-child{margin-top:0}.wb-markdown h1{font-size:16px}.wb-markdown h2{font-size:15px}.wb-markdown h3{font-size:14px}.wb-markdown h4,.wb-markdown h5,.wb-markdown h6{font-size:13px}
+.wb-markdown ul,.wb-markdown ol{margin:4px 0;padding-left:24px;display:flow-root}.wb-markdown li{margin:1px 0}
+.wb-markdown blockquote{border-left:2px solid currentColor;padding-left:9px;margin:4px 0;display:flow-root}
+.wb-markdown pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:8px;border-radius:6px;background:color-mix(in srgb,currentColor 7%,transparent);display:flow-root;margin:5px 0}
+.wb-markdown code,.wb-body-text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.wb-markdown code{background:color-mix(in srgb,currentColor 7%,transparent);border-radius:3px;padding:1px 3px}.wb-markdown pre code{padding:0;background:none}
+.wb-markdown a{color:inherit;text-decoration:underline}.wb-markdown hr{border:0;border-top:1px solid currentColor;opacity:.3;clear:both}
+.wb-body-text{white-space:pre-wrap;overflow-wrap:anywhere}.wb-body-text:after{content:'';display:table;clear:both}
+.wb-source-hint{display:block;font-size:11px;margin-bottom:3px}
+.wb-body-modes{display:inline-flex;gap:3px}.wb-body-modes [aria-pressed=true]{font-weight:700;outline:1px solid currentColor}
+.wbt-item.closed:has(.wb-body-label){opacity:1}
+`;
+  }
+});
+
 // packages/addons/lib/description.cjs
 var require_description = __commonJS({
   "packages/addons/lib/description.cjs"(exports2, module2) {
     var React = require("react");
     var h2 = React.createElement;
-    var css = `
+    var Body = require_markdown().createBody(React);
+    var preference = require_body_mode();
+    var css = require_body_styles() + `
 .wb-desc{margin-top:4px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-width:100%;min-width:0;box-sizing:border-box;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,#5b7fd6 34%,transparent);background:color-mix(in oklab,#5b7fd6 7%,transparent);color:inherit}
 .wb-desc-text{display:block}.wb-desc-clamped{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
 .wb-desc-toggle{display:block;border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-size:12px;min-width:32px;min-height:32px;padding:3px 6px;border-radius:6px;cursor:pointer;white-space:normal}
 .wb-desc-toggle:hover{background:color-mix(in oklab,currentColor 8%,transparent)}.wb-desc-toggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#2563eb);outline-offset:2px}
 `;
     function Description(props) {
+      var mode = preference.useMode(React);
       var text = props.text == null ? "" : String(props.text);
       var expanded = React.useState(false), overflow = React.useState(false), ref = React.useRef(null);
       React.useEffect(function() {
@@ -67,12 +272,19 @@ var require_description = __commonJS({
         return function() {
           if (observer) observer.disconnect();
         };
-      }, [text, expanded[0]]);
+      }, [text, expanded[0], mode]);
       if (!text.trim()) return null;
       return h2(
         "div",
         { className: "wb-desc" },
-        h2("span", { ref, className: "wb-desc-text" + (expanded[0] ? "" : " wb-desc-clamped") }, text),
+        h2(
+          "div",
+          { ref, className: "wb-desc-text" + (expanded[0] ? "" : " wb-desc-clamped") },
+          h2("span", { className: "wb-body-label", onDoubleClick: function(e) {
+            e.stopPropagation();
+          } }, props.lang === "en" ? "Description" : "\u63CF\u8FF0"),
+          h2(Body, { text, mode })
+        ),
         overflow[0] || expanded[0] ? h2("button", {
           type: "button",
           className: "wb-desc-toggle",
@@ -2773,7 +2985,18 @@ var require_data_copy = __commonJS({
         filterCol: "\u7B5B\u9009\u2026",
         filterClear: "\u6E05\u9664\u7B5B\u9009",
         index: "\u8868\u7D22\u5F15",
-        indexSub: "\u672C\u63D2\u4EF6\u8D1F\u8D23\u7684\u8868\uFF08{tables}\uFF09\uFF1A\u884C\u6570\u3001\u5217\u6570\u3001\u4E3B\u952E\u3001\u7D22\u5F15\u4E0E\u6700\u8FD1\u5199\u5165\uFF08\u53EA\u8BFB\uFF09",
+        indexSub: "\u5F53\u524D\u9009\u4E2D\u8868\u7684\u7D22\u5F15\uFF08\u53EA\u8BFB\uFF09\uFF1B\u884C\u6570\u4E3A\u6240\u5C5E\u8868\u603B\u884C\u6570\uFF0C\u4E0D\u662F\u7D22\u5F15\u6761\u76EE\u6570",
+        idxName: "\u7D22\u5F15\u540D",
+        idxColumns: "\u5217",
+        idxType: "\u7C7B\u578B",
+        idxSource: "\u6765\u6E90",
+        idxUnique: "\u552F\u4E00",
+        idxNormal: "\u666E\u901A",
+        idxAuto: "\u81EA\u52A8",
+        idxCreated: "\u663E\u5F0F\u521B\u5EFA",
+        idxCount: "\u5171 {n} \u4E2A\u7D22\u5F15",
+        idxNoExtra: "\u8BE5\u8868\u9664\u4E3B\u952E\u5916\u6CA1\u6709\u989D\u5916\u7D22\u5F15",
+        idxRowsHelp: "\u6240\u5C5E\u8868\u603B\u884C\u6570\uFF08\u542B\u5DF2\u5220\u9664\u884C\uFF09\uFF0C\u4E0D\u662F\u7D22\u5F15\u6761\u76EE\u6570",
         idxTable: "\u8868",
         idxRows: "\u884C\u6570",
         idxCols: "\u5217\u6570",
@@ -2781,7 +3004,7 @@ var require_data_copy = __commonJS({
         idxIndexes: "\u7D22\u5F15",
         idxLastWrite: "\u6700\u8FD1\u5199\u5165",
         idxNone: "\u65E0",
-        idxEmpty: "\u6CA1\u6709\u53EF\u7EDF\u8BA1\u7684\u8868",
+        idxEmpty: "\u5F53\u524D\u8868\u6CA1\u6709\u53EF\u7528\u7684\u7D22\u5F15\u7EDF\u8BA1",
         idxTables: "\u8868",
         idxAt: "\u7EDF\u8BA1\u65F6\u95F4"
       },
@@ -2825,7 +3048,18 @@ var require_data_copy = __commonJS({
         filterCol: "Filter\u2026",
         filterClear: "Clear filter",
         index: "Table index",
-        indexSub: "Tables owned by {domain} ({tables}): rows, columns, primary key, indexes and last write (read-only)",
+        indexSub: "Indexes of the selected table (read-only); rows are the table total, not index entries",
+        idxName: "Index name",
+        idxColumns: "Columns",
+        idxType: "Type",
+        idxSource: "Source",
+        idxUnique: "Unique",
+        idxNormal: "Normal",
+        idxAuto: "Automatic",
+        idxCreated: "Explicit",
+        idxCount: "{n} indexes",
+        idxNoExtra: "This table has no indexes other than its primary key",
+        idxRowsHelp: "Total table rows (including deleted rows), not index entries",
         idxTable: "Table",
         idxRows: "Rows",
         idxCols: "Cols",
@@ -2833,7 +3067,7 @@ var require_data_copy = __commonJS({
         idxIndexes: "Indexes",
         idxLastWrite: "Last write",
         idxNone: "\u2014",
-        idxEmpty: "No tables to index",
+        idxEmpty: "No index statistics available for this table",
         idxTables: "Tables",
         idxAt: "Generated"
       }
@@ -2932,7 +3166,7 @@ var require_data_style = __commonJS({
         "." + P + "-idxsub{font-size:11.5px;color:var(--cfg-muted);line-height:1.55}",
         "." + P + "-idxsum{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--cfg-muted)}",
         "." + P + "-idxsum b{font-weight:660;color:var(--dsw-alias-label-primary,inherit);font-variant-numeric:tabular-nums}",
-        "." + P + "-idxname{font-size:12.5px;font-weight:600}",
+        "." + P + "-idxtable{width:100%;table-layout:fixed}." + P + "-idxtable ." + P + "-cell{white-space:normal;overflow-wrap:anywhere;max-width:none}." + P + "-idxtable th:first-child{width:30%}." + P + "-idxtable th:nth-child(2){width:28%}",
         "." + P + "-idxtags{display:flex;flex-wrap:wrap;gap:4px;max-width:280px}",
         "." + P + "-idxchip{display:inline-block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;line-height:1.6;border-radius:999px;padding:0 7px;background:color-mix(in oklab,currentColor 7%,transparent);color:var(--cfg-muted);white-space:nowrap}",
         "." + P + "-idxchip.u{background:color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 15%,transparent);color:var(--dsw-alias-brand-primary,inherit)}",
@@ -3119,7 +3353,6 @@ var require_data_view = __commonJS({
           };
         }, []);
         function selectTable(name) {
-          leaveIndex();
           if (name === active) return;
           reqRef.current++;
           setActive(name);
@@ -3156,7 +3389,7 @@ var require_data_view = __commonJS({
           };
         }, [filterDraft]);
         React.useEffect(function() {
-          if (!active || !cfgWrap.ready) return void 0;
+          if (!active || !cfgWrap.ready || index) return void 0;
           var req = ++reqRef.current;
           setLoadingRows(true);
           var args = { table: active, page, pageSize: size, order, includeDeleted };
@@ -3180,7 +3413,7 @@ var require_data_view = __commonJS({
           return function() {
             reqRef.current++;
           };
-        }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey, refreshS[0]]);
+        }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey, refreshS[0], !!index]);
         React.useEffect(function() {
           if (!drawer) return void 0;
           function onKey(e) {
@@ -3199,8 +3432,11 @@ var require_data_view = __commonJS({
           indexReqRef.current++;
           setIndex(null);
           setIndexBusy(false);
+          setError("");
         }
         function loadIndex() {
+          reqRef.current++;
+          setError("");
           var req = ++indexReqRef.current;
           setIndex([]);
           setIndexBusy(true);
@@ -3221,18 +3457,17 @@ var require_data_view = __commonJS({
             setIndexBusy(false);
           });
         }
-        function toggleIndex() {
-          if (index) {
-            leaveIndex();
-            return;
-          }
-          loadIndex();
-        }
         function renderIndex() {
-          var rows = index || [];
-          var totalRows = rows.reduce(function(n, r) {
-            return n + (r.stats && Number(r.stats.rows) || 0);
-          }, 0);
+          var row = (index || []).filter(function(r) {
+            return r.table.name === active;
+          })[0];
+          var tb = row ? row.table : current;
+          var st = row && row.stats;
+          var indexes = st ? st.indexes || [] : [];
+          var hasExtra = indexes.some(function(ix) {
+            return ix.origin !== "pk";
+          });
+          var count = st && st.rows !== void 0 ? st.rows : tb && tb.count;
           return h2(
             "div",
             { className: P + "-idx" },
@@ -3242,7 +3477,7 @@ var require_data_view = __commonJS({
               h2(
                 "div",
                 { className: P + "-headmain" },
-                h2("h2", null, icon("database"), t.index, h2("span", { className: P + "-code" }, "index")),
+                h2("h2", null, icon("database"), tableLabel(tb), h2("span", { className: P + "-code" }, active)),
                 h2("div", { className: P + "-idxsub" }, t.indexSub)
               ),
               h2("button", {
@@ -3256,52 +3491,35 @@ var require_data_view = __commonJS({
                 }
               }, icon("refresh"), h2("span", { className: P + "-btnlabel" }, t.refresh))
             ),
-            h2(
+            st ? h2(
               "div",
               { className: P + "-idxsum" },
-              h2("span", null, t.idxTables, " ", h2("b", null, String(rows.length))),
-              h2("span", null, t.idxRows, " ", h2("b", null, String(totalRows)))
-            ),
-            indexBusy && !rows.length ? options.Skeleton ? h2(options.Skeleton, { lang, label: t.loading }) : h2("div", { className: P + "-empty" }, t.loading) : !rows.length ? h2("div", { className: P + "-empty" }, t.idxEmpty) : h2(
+              h2("span", null, t.idxRows, " ", h2("b", null, String(count))),
+              h2("span", null, t.idxCols, " ", h2("b", null, String(st.columnCount === void 0 ? (tb.columns || []).length : st.columnCount))),
+              h2("span", null, fmt(t.idxCount, { n: indexes.length }))
+            ) : null,
+            indexBusy ? options.Skeleton ? h2(options.Skeleton, { lang, label: t.loading }) : h2("div", { className: P + "-empty", role: "status", "aria-busy": "true" }, t.loading) : !st ? h2("div", { className: P + "-empty" }, t.idxEmpty) : !hasExtra ? h2("div", { className: P + "-empty" }, t.idxNoExtra) : h2(
               "div",
               { className: P + "-tablewrap" },
               h2(
                 "table",
-                { className: P + "-table" },
+                { className: P + "-table " + P + "-idxtable" },
                 h2("thead", null, h2(
                   "tr",
                   null,
-                  h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxTable)),
-                  h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxRows)),
-                  h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxCols)),
-                  h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxKey)),
-                  h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxIndexes)),
-                  h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxLastWrite))
+                  [t.idxName, t.idxColumns, t.idxType, t.idxSource, t.idxRows].map(function(label) {
+                    return h2("th", { scope: "col", key: label }, h2("span", { className: P + "-thbtn" }, label));
+                  })
                 )),
-                h2("tbody", null, rows.map(function(row) {
-                  var st = row.stats || {};
-                  var pk = (st.primaryKey || []).join(", ");
-                  var indexes = st.indexes || [];
+                h2("tbody", null, indexes.map(function(ix) {
                   return h2(
                     "tr",
-                    { className: P + "-tr", key: row.table.name },
-                    h2(
-                      "td",
-                      { className: P + "-cell" },
-                      h2("div", { className: P + "-idxname" }, tableLabel(row.table)),
-                      h2("div", { className: P + "-sidetable" }, row.table.name)
-                    ),
-                    h2("td", { className: P + "-cell num" }, String(st.rows === void 0 ? row.table.count : st.rows)),
-                    h2("td", { className: P + "-cell num" }, String(st.columnCount || (row.table.columns || []).length)),
-                    h2("td", { className: P + "-cell" }, pk ? h2("span", { className: P + "-idxchip u" }, pk) : h2("span", { className: P + "-idxnone" }, t.idxNone)),
-                    h2("td", { className: P + "-cell" }, h2("div", { className: P + "-idxtags" }, indexes.length ? indexes.map(function(ix) {
-                      return h2("span", {
-                        key: ix.name,
-                        title: ix.name + " (" + (ix.columns || []).join(", ") + ")",
-                        className: P + "-idxchip" + (ix.unique ? " u" : "")
-                      }, (ix.columns || []).join(",") || ix.name);
-                    }) : h2("span", { className: P + "-idxnone" }, t.idxNone))),
-                    h2("td", { className: P + "-cell mono" }, st.lastWrite ? timeText(st.lastWrite.at) : h2("span", { className: P + "-idxnone" }, t.idxNone))
+                    { className: P + "-tr", key: ix.name },
+                    h2("td", { className: P + "-cell mono" }, ix.name),
+                    h2("td", { className: P + "-cell mono" }, (ix.columns || []).join(", ") || t.idxNone),
+                    h2("td", { className: P + "-cell" }, ix.origin === "pk" ? t.idxKey : ix.unique ? t.idxUnique : t.idxNormal),
+                    h2("td", { className: P + "-cell" }, /^sqlite_autoindex_/.test(ix.name) ? t.idxAuto : t.idxCreated),
+                    h2("td", { className: P + "-cell num", title: t.idxRowsHelp }, String(count))
                   );
                 }))
               )
@@ -3598,26 +3816,9 @@ var require_data_view = __commonJS({
                   h2("span", null, tableLabel(tb)),
                   h2("span", { className: P + "-sidecount" }, String(tb.count))
                 ),
-                h2("span", { className: P + "-sidetable" }, tb.name),
-                tb.deletedCount ? h2("span", { className: P + "-sidetable" }, tb.deletedCount + " " + t.deleted) : null
+                h2("span", { className: P + "-sidetable" }, tb.name)
               );
-            }),
-            h2(
-              "button",
-              {
-                type: "button",
-                className: P + "-stab" + (index ? " on" : ""),
-                "aria-pressed": !!index,
-                onClick: toggleIndex
-              },
-              h2(
-                "span",
-                { className: P + "-stabname" },
-                h2("span", null, t.index),
-                h2("span", { className: P + "-sidecount" }, index ? String(index.length) : "")
-              ),
-              h2("span", { className: P + "-sidetable" }, "index")
-            )
+            })
           ),
           h2(
             "div",
@@ -3865,7 +4066,7 @@ if (host) {
   h = require("react").createElement, Icon2 = require_icons().Icon;
   host.registerAddon({
     id: "wb-addon-storage",
-    version: "1.3.2",
+    version: "1.4.0",
     views: [
       { id: "stats", icon: tabIcon2("chart"), title: { zh: "\u7EDF\u8BA1", en: "Statistics" }, component: require_stats().Stats },
       { id: "storage", icon: tabIcon2("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: require_records().Records },

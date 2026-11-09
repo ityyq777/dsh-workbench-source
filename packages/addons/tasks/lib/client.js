@@ -682,6 +682,53 @@ var require_charts = __commonJS({
   }
 });
 
+// packages/addons/lib/body-mode.cjs
+var require_body_mode = __commonJS({
+  "packages/addons/lib/body-mode.cjs"(exports2, module2) {
+    var KEY = "wb.bodyMode";
+    var EVENT = "wb-body-mode";
+    function normalize(value) {
+      return value === "text" ? "text" : "markdown";
+    }
+    function get() {
+      try {
+        return normalize(window.localStorage.getItem(KEY));
+      } catch (_) {
+        return "markdown";
+      }
+    }
+    function set(value) {
+      value = normalize(value);
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(KEY, value);
+        } catch (_) {
+        }
+        window.dispatchEvent(new CustomEvent(EVENT, { detail: value }));
+      }
+      return value;
+    }
+    function useMode(React) {
+      var state = React.useState(get());
+      React.useEffect(function() {
+        if (typeof window === "undefined") return;
+        function changed(e) {
+          state[1](e.type === EVENT ? normalize(e.detail) : get());
+        }
+        window.addEventListener(EVENT, changed);
+        window.addEventListener("storage", changed);
+        state[1](get());
+        return function() {
+          window.removeEventListener(EVENT, changed);
+          window.removeEventListener("storage", changed);
+        };
+      }, []);
+      return state[0];
+    }
+    module2.exports = { get, set, useMode };
+  }
+});
+
 // packages/addons/tasks/client/config.cjs
 var require_config = __commonJS({
   "packages/addons/tasks/client/config.cjs"(exports2, module2) {
@@ -689,6 +736,7 @@ var require_config = __commonJS({
     var h = React.createElement;
     var DOMAIN = "tasks";
     var PREFIX = "wbt";
+    var bodyMode = require_body_mode();
     var COPY = {
       zh: {
         title: "\u914D\u7F6E",
@@ -880,12 +928,31 @@ var require_config = __commonJS({
       var drafts = draftsS[0], setDrafts = draftsS[1];
       var busyS = React.useState(false);
       var busy = busyS[0], setBusy = busyS[1];
+      var requestLock = React.useRef(false), mounted = React.useRef(true);
+      React.useEffect(function() {
+        mounted.current = true;
+        return function() {
+          mounted.current = false;
+        };
+      }, []);
+      var locked = loading || busy || !!savingId;
+      function acquire() {
+        if (requestLock.current) return false;
+        requestLock.current = true;
+        return true;
+      }
+      function release() {
+        requestLock.current = false;
+      }
       React.useEffect(function() {
         injectCss();
       }, []);
       var load = React.useCallback(function() {
+        if (!acquire()) return;
         setLoading(true);
-        return Promise.resolve(api.call(DOMAIN + ".configGet")).then(function(r) {
+        return Promise.resolve().then(function() {
+          return api.call(DOMAIN + ".configGet");
+        }).then(function(r) {
           var body2 = unwrap(r);
           if (r && r.ok === false) throw new Error(r && r.error || "load failed");
           setState(body2 || null);
@@ -894,7 +961,7 @@ var require_config = __commonJS({
         }).catch(function(e) {
           setErr(String(e && e.message || e));
           setLoading(false);
-        });
+        }).finally(release);
       }, [api]);
       React.useEffect(function() {
         load();
@@ -910,60 +977,80 @@ var require_config = __commonJS({
         });
       }
       function save(id, value) {
+        if (!acquire()) return;
         var prevState = state;
         setSavingId(id);
         setNotice({ id, text: t.saving, error: false });
         setValueLocal(id, value);
-        return Promise.resolve(api.call(DOMAIN + ".configSet", { values: (function() {
-          var o = {};
-          o[id] = value;
-          return o;
-        })() })).then(function(r) {
+        return Promise.resolve().then(function() {
+          return api.call(DOMAIN + ".configSet", { values: (function() {
+            var o = {};
+            o[id] = value;
+            return o;
+          })() });
+        }).then(function(r) {
           var body2 = unwrap(r);
           if (r && r.ok === false) throw new Error(r && r.error || "save failed");
           setSavingId("");
-          if (body2 && body2.state) setState(body2.state);
+          if (body2 && body2.state) {
+            setState(body2.state);
+            if (mounted.current && body2.state.values && body2.state.values["ui.bodyMode"]) bodyMode.set(body2.state.values["ui.bodyMode"]);
+          }
           setNotice({ id, text: t.saved, error: false });
         }).catch(function(e) {
           setSavingId("");
           if (prevState) setState(prevState);
           setNotice({ id, text: t.saveFail + String(e && e.message || e), error: true });
-        });
+        }).finally(release);
       }
       function resetItem(id) {
+        if (!acquire()) return;
         var prevState = state;
         setBusy(true);
         setNotice({ id, text: t.resetting, error: false });
-        return Promise.resolve(api.call(DOMAIN + ".configReset", { ids: [id] })).then(function(r) {
+        return Promise.resolve().then(function() {
+          return api.call(DOMAIN + ".configReset", { ids: [id] });
+        }).then(function(r) {
           var body2 = unwrap(r);
           if (r && r.ok === false) throw new Error(r && r.error || "reset failed");
           setBusy(false);
-          if (body2 && body2.state) setState(body2.state);
+          if (body2 && body2.state) {
+            setState(body2.state);
+            if (mounted.current && body2.state.values && body2.state.values["ui.bodyMode"]) bodyMode.set(body2.state.values["ui.bodyMode"]);
+          }
           setNotice({ id, text: t.defaultValue, error: false });
         }).catch(function(e) {
           setBusy(false);
           if (prevState) setState(prevState);
           setNotice({ id, text: String(e && e.message || e), error: true });
-        });
+        }).finally(release);
       }
       function resetAll() {
+        if (requestLock.current) return;
         if (typeof window !== "undefined" && window.confirm && !window.confirm(t.confirmResetAll)) return;
+        if (!acquire()) return;
         var prevState = state;
         setBusy(true);
         setNotice({ id: "", text: t.resetting, error: false });
-        Promise.resolve(api.call(DOMAIN + ".configReset", {})).then(function(r) {
+        return Promise.resolve().then(function() {
+          return api.call(DOMAIN + ".configReset", {});
+        }).then(function(r) {
           var body2 = unwrap(r);
           if (r && r.ok === false) throw new Error(r && r.error || "reset failed");
           setBusy(false);
-          if (body2 && body2.state) setState(body2.state);
+          if (body2 && body2.state) {
+            setState(body2.state);
+            if (mounted.current && body2.state.values && body2.state.values["ui.bodyMode"]) bodyMode.set(body2.state.values["ui.bodyMode"]);
+          }
           setNotice({ id: "", text: t.allDefault, error: false });
         }).catch(function(e) {
           setBusy(false);
           if (prevState) setState(prevState);
           setNotice({ id: "", text: String(e && e.message || e), error: true });
-        });
+        }).finally(release);
       }
       function commitDraft(item) {
+        if (requestLock.current) return;
         var raw = drafts[item.id];
         if (raw === void 0) return;
         var next = String(raw).trim();
@@ -987,6 +1074,7 @@ var require_config = __commonJS({
             { className: PREFIX + "-cfg-switch" },
             h("input", {
               type: "checkbox",
+              disabled: locked,
               checked: value === true,
               onChange: function(e) {
                 save(item.id, e.target.checked);
@@ -999,6 +1087,7 @@ var require_config = __commonJS({
         if (item.type === "enum") {
           return h("select", {
             className: PREFIX + "-cfg-select",
+            disabled: locked,
             value: String(value),
             onChange: function(e) {
               var hit = (item.options || []).filter(function(o) {
@@ -1014,6 +1103,7 @@ var require_config = __commonJS({
           var draft = drafts[item.id] !== void 0 ? drafts[item.id] : String(value);
           return h("input", {
             className: PREFIX + "-cfg-input",
+            disabled: locked,
             type: "number",
             value: draft,
             min: item.min,
@@ -1047,6 +1137,7 @@ var require_config = __commonJS({
               { key: String(o.value) },
               h("input", {
                 type: "checkbox",
+                disabled: locked,
                 checked: on,
                 onChange: function() {
                   var next = picked.slice();
@@ -1065,6 +1156,7 @@ var require_config = __commonJS({
         }
         return h("input", {
           className: PREFIX + "-cfg-input",
+          disabled: locked,
           type: "text",
           defaultValue: value === void 0 ? "" : String(value),
           onBlur: function(e) {
@@ -1137,7 +1229,7 @@ var require_config = __commonJS({
                   overridden ? h("button", {
                     type: "button",
                     className: PREFIX + "-cfg-btn",
-                    disabled: busy,
+                    disabled: locked,
                     onClick: function() {
                       resetItem(item.id);
                     },
@@ -1159,7 +1251,7 @@ var require_config = __commonJS({
             anyOverride ? Object.keys(state.overrides || {}).length + (lang === "en" ? " changed" : " \u9879\u5DF2\u4FEE\u6539") : lang === "en" ? "All preferences are at their defaults" : "\u5168\u90E8\u914D\u7F6E\u5747\u4E3A\u9ED8\u8BA4\u503C"
           ),
           h("span", { className: PREFIX + "-cfg-grow" }),
-          anyOverride ? h("button", { type: "button", className: PREFIX + "-cfg-btn " + PREFIX + "-cfg-btn-outline", disabled: busy, onClick: resetAll }, busy ? t.resetting : t.resetAll) : null
+          anyOverride ? h("button", { type: "button", className: PREFIX + "-cfg-btn " + PREFIX + "-cfg-btn-outline", disabled: locked, onClick: resetAll }, busy ? t.resetting : t.resetAll) : null
         ));
         var warn = (state.warnings || []).filter(function(w) {
           return w && w.message;
@@ -1701,7 +1793,18 @@ var require_data_copy = __commonJS({
         filterCol: "\u7B5B\u9009\u2026",
         filterClear: "\u6E05\u9664\u7B5B\u9009",
         index: "\u8868\u7D22\u5F15",
-        indexSub: "\u672C\u63D2\u4EF6\u8D1F\u8D23\u7684\u8868\uFF08{tables}\uFF09\uFF1A\u884C\u6570\u3001\u5217\u6570\u3001\u4E3B\u952E\u3001\u7D22\u5F15\u4E0E\u6700\u8FD1\u5199\u5165\uFF08\u53EA\u8BFB\uFF09",
+        indexSub: "\u5F53\u524D\u9009\u4E2D\u8868\u7684\u7D22\u5F15\uFF08\u53EA\u8BFB\uFF09\uFF1B\u884C\u6570\u4E3A\u6240\u5C5E\u8868\u603B\u884C\u6570\uFF0C\u4E0D\u662F\u7D22\u5F15\u6761\u76EE\u6570",
+        idxName: "\u7D22\u5F15\u540D",
+        idxColumns: "\u5217",
+        idxType: "\u7C7B\u578B",
+        idxSource: "\u6765\u6E90",
+        idxUnique: "\u552F\u4E00",
+        idxNormal: "\u666E\u901A",
+        idxAuto: "\u81EA\u52A8",
+        idxCreated: "\u663E\u5F0F\u521B\u5EFA",
+        idxCount: "\u5171 {n} \u4E2A\u7D22\u5F15",
+        idxNoExtra: "\u8BE5\u8868\u9664\u4E3B\u952E\u5916\u6CA1\u6709\u989D\u5916\u7D22\u5F15",
+        idxRowsHelp: "\u6240\u5C5E\u8868\u603B\u884C\u6570\uFF08\u542B\u5DF2\u5220\u9664\u884C\uFF09\uFF0C\u4E0D\u662F\u7D22\u5F15\u6761\u76EE\u6570",
         idxTable: "\u8868",
         idxRows: "\u884C\u6570",
         idxCols: "\u5217\u6570",
@@ -1709,7 +1812,7 @@ var require_data_copy = __commonJS({
         idxIndexes: "\u7D22\u5F15",
         idxLastWrite: "\u6700\u8FD1\u5199\u5165",
         idxNone: "\u65E0",
-        idxEmpty: "\u6CA1\u6709\u53EF\u7EDF\u8BA1\u7684\u8868",
+        idxEmpty: "\u5F53\u524D\u8868\u6CA1\u6709\u53EF\u7528\u7684\u7D22\u5F15\u7EDF\u8BA1",
         idxTables: "\u8868",
         idxAt: "\u7EDF\u8BA1\u65F6\u95F4"
       },
@@ -1753,7 +1856,18 @@ var require_data_copy = __commonJS({
         filterCol: "Filter\u2026",
         filterClear: "Clear filter",
         index: "Table index",
-        indexSub: "Tables owned by {domain} ({tables}): rows, columns, primary key, indexes and last write (read-only)",
+        indexSub: "Indexes of the selected table (read-only); rows are the table total, not index entries",
+        idxName: "Index name",
+        idxColumns: "Columns",
+        idxType: "Type",
+        idxSource: "Source",
+        idxUnique: "Unique",
+        idxNormal: "Normal",
+        idxAuto: "Automatic",
+        idxCreated: "Explicit",
+        idxCount: "{n} indexes",
+        idxNoExtra: "This table has no indexes other than its primary key",
+        idxRowsHelp: "Total table rows (including deleted rows), not index entries",
         idxTable: "Table",
         idxRows: "Rows",
         idxCols: "Cols",
@@ -1761,7 +1875,7 @@ var require_data_copy = __commonJS({
         idxIndexes: "Indexes",
         idxLastWrite: "Last write",
         idxNone: "\u2014",
-        idxEmpty: "No tables to index",
+        idxEmpty: "No index statistics available for this table",
         idxTables: "Tables",
         idxAt: "Generated"
       }
@@ -1870,7 +1984,7 @@ var require_data_style = __commonJS({
         "." + P + "-idxsub{font-size:11.5px;color:var(--cfg-muted);line-height:1.55}",
         "." + P + "-idxsum{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--cfg-muted)}",
         "." + P + "-idxsum b{font-weight:660;color:var(--dsw-alias-label-primary,inherit);font-variant-numeric:tabular-nums}",
-        "." + P + "-idxname{font-size:12.5px;font-weight:600}",
+        "." + P + "-idxtable{width:100%;table-layout:fixed}." + P + "-idxtable ." + P + "-cell{white-space:normal;overflow-wrap:anywhere;max-width:none}." + P + "-idxtable th:first-child{width:30%}." + P + "-idxtable th:nth-child(2){width:28%}",
         "." + P + "-idxtags{display:flex;flex-wrap:wrap;gap:4px;max-width:280px}",
         "." + P + "-idxchip{display:inline-block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;line-height:1.6;border-radius:999px;padding:0 7px;background:color-mix(in oklab,currentColor 7%,transparent);color:var(--cfg-muted);white-space:nowrap}",
         "." + P + "-idxchip.u{background:color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 15%,transparent);color:var(--dsw-alias-brand-primary,inherit)}",
@@ -2057,7 +2171,6 @@ var require_data_view = __commonJS({
           };
         }, []);
         function selectTable(name) {
-          leaveIndex();
           if (name === active) return;
           reqRef.current++;
           setActive(name);
@@ -2094,7 +2207,7 @@ var require_data_view = __commonJS({
           };
         }, [filterDraft]);
         React.useEffect(function() {
-          if (!active || !cfgWrap.ready) return void 0;
+          if (!active || !cfgWrap.ready || index) return void 0;
           var req = ++reqRef.current;
           setLoadingRows(true);
           var args = { table: active, page, pageSize: size, order, includeDeleted };
@@ -2118,7 +2231,7 @@ var require_data_view = __commonJS({
           return function() {
             reqRef.current++;
           };
-        }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey, refreshS[0]]);
+        }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey, refreshS[0], !!index]);
         React.useEffect(function() {
           if (!drawer) return void 0;
           function onKey(e) {
@@ -2137,8 +2250,11 @@ var require_data_view = __commonJS({
           indexReqRef.current++;
           setIndex(null);
           setIndexBusy(false);
+          setError("");
         }
         function loadIndex() {
+          reqRef.current++;
+          setError("");
           var req = ++indexReqRef.current;
           setIndex([]);
           setIndexBusy(true);
@@ -2159,18 +2275,17 @@ var require_data_view = __commonJS({
             setIndexBusy(false);
           });
         }
-        function toggleIndex() {
-          if (index) {
-            leaveIndex();
-            return;
-          }
-          loadIndex();
-        }
         function renderIndex() {
-          var rows = index || [];
-          var totalRows = rows.reduce(function(n, r) {
-            return n + (r.stats && Number(r.stats.rows) || 0);
-          }, 0);
+          var row = (index || []).filter(function(r) {
+            return r.table.name === active;
+          })[0];
+          var tb = row ? row.table : current;
+          var st = row && row.stats;
+          var indexes = st ? st.indexes || [] : [];
+          var hasExtra = indexes.some(function(ix) {
+            return ix.origin !== "pk";
+          });
+          var count = st && st.rows !== void 0 ? st.rows : tb && tb.count;
           return h(
             "div",
             { className: P + "-idx" },
@@ -2180,7 +2295,7 @@ var require_data_view = __commonJS({
               h(
                 "div",
                 { className: P + "-headmain" },
-                h("h2", null, icon("database"), t.index, h("span", { className: P + "-code" }, "index")),
+                h("h2", null, icon("database"), tableLabel(tb), h("span", { className: P + "-code" }, active)),
                 h("div", { className: P + "-idxsub" }, t.indexSub)
               ),
               h("button", {
@@ -2194,52 +2309,35 @@ var require_data_view = __commonJS({
                 }
               }, icon("refresh"), h("span", { className: P + "-btnlabel" }, t.refresh))
             ),
-            h(
+            st ? h(
               "div",
               { className: P + "-idxsum" },
-              h("span", null, t.idxTables, " ", h("b", null, String(rows.length))),
-              h("span", null, t.idxRows, " ", h("b", null, String(totalRows)))
-            ),
-            indexBusy && !rows.length ? options.Skeleton ? h(options.Skeleton, { lang, label: t.loading }) : h("div", { className: P + "-empty" }, t.loading) : !rows.length ? h("div", { className: P + "-empty" }, t.idxEmpty) : h(
+              h("span", null, t.idxRows, " ", h("b", null, String(count))),
+              h("span", null, t.idxCols, " ", h("b", null, String(st.columnCount === void 0 ? (tb.columns || []).length : st.columnCount))),
+              h("span", null, fmt(t.idxCount, { n: indexes.length }))
+            ) : null,
+            indexBusy ? options.Skeleton ? h(options.Skeleton, { lang, label: t.loading }) : h("div", { className: P + "-empty", role: "status", "aria-busy": "true" }, t.loading) : !st ? h("div", { className: P + "-empty" }, t.idxEmpty) : !hasExtra ? h("div", { className: P + "-empty" }, t.idxNoExtra) : h(
               "div",
               { className: P + "-tablewrap" },
               h(
                 "table",
-                { className: P + "-table" },
+                { className: P + "-table " + P + "-idxtable" },
                 h("thead", null, h(
                   "tr",
                   null,
-                  h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxTable)),
-                  h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxRows)),
-                  h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxCols)),
-                  h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxKey)),
-                  h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxIndexes)),
-                  h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxLastWrite))
+                  [t.idxName, t.idxColumns, t.idxType, t.idxSource, t.idxRows].map(function(label) {
+                    return h("th", { scope: "col", key: label }, h("span", { className: P + "-thbtn" }, label));
+                  })
                 )),
-                h("tbody", null, rows.map(function(row) {
-                  var st = row.stats || {};
-                  var pk = (st.primaryKey || []).join(", ");
-                  var indexes = st.indexes || [];
+                h("tbody", null, indexes.map(function(ix) {
                   return h(
                     "tr",
-                    { className: P + "-tr", key: row.table.name },
-                    h(
-                      "td",
-                      { className: P + "-cell" },
-                      h("div", { className: P + "-idxname" }, tableLabel(row.table)),
-                      h("div", { className: P + "-sidetable" }, row.table.name)
-                    ),
-                    h("td", { className: P + "-cell num" }, String(st.rows === void 0 ? row.table.count : st.rows)),
-                    h("td", { className: P + "-cell num" }, String(st.columnCount || (row.table.columns || []).length)),
-                    h("td", { className: P + "-cell" }, pk ? h("span", { className: P + "-idxchip u" }, pk) : h("span", { className: P + "-idxnone" }, t.idxNone)),
-                    h("td", { className: P + "-cell" }, h("div", { className: P + "-idxtags" }, indexes.length ? indexes.map(function(ix) {
-                      return h("span", {
-                        key: ix.name,
-                        title: ix.name + " (" + (ix.columns || []).join(", ") + ")",
-                        className: P + "-idxchip" + (ix.unique ? " u" : "")
-                      }, (ix.columns || []).join(",") || ix.name);
-                    }) : h("span", { className: P + "-idxnone" }, t.idxNone))),
-                    h("td", { className: P + "-cell mono" }, st.lastWrite ? timeText(st.lastWrite.at) : h("span", { className: P + "-idxnone" }, t.idxNone))
+                    { className: P + "-tr", key: ix.name },
+                    h("td", { className: P + "-cell mono" }, ix.name),
+                    h("td", { className: P + "-cell mono" }, (ix.columns || []).join(", ") || t.idxNone),
+                    h("td", { className: P + "-cell" }, ix.origin === "pk" ? t.idxKey : ix.unique ? t.idxUnique : t.idxNormal),
+                    h("td", { className: P + "-cell" }, /^sqlite_autoindex_/.test(ix.name) ? t.idxAuto : t.idxCreated),
+                    h("td", { className: P + "-cell num", title: t.idxRowsHelp }, String(count))
                   );
                 }))
               )
@@ -2536,26 +2634,9 @@ var require_data_view = __commonJS({
                   h("span", null, tableLabel(tb)),
                   h("span", { className: P + "-sidecount" }, String(tb.count))
                 ),
-                h("span", { className: P + "-sidetable" }, tb.name),
-                tb.deletedCount ? h("span", { className: P + "-sidetable" }, tb.deletedCount + " " + t.deleted) : null
+                h("span", { className: P + "-sidetable" }, tb.name)
               );
-            }),
-            h(
-              "button",
-              {
-                type: "button",
-                className: P + "-stab" + (index ? " on" : ""),
-                "aria-pressed": !!index,
-                onClick: toggleIndex
-              },
-              h(
-                "span",
-                { className: P + "-stabname" },
-                h("span", null, t.index),
-                h("span", { className: P + "-sidecount" }, index ? String(index.length) : "")
-              ),
-              h("span", { className: P + "-sidetable" }, "index")
-            )
+            })
           ),
           h(
             "div",
@@ -2717,6 +2798,11 @@ var require_copy = __commonJS({
     "use strict";
     module2.exports = {
       zh: {
+        bodyMode: "\u63CF\u8FF0\u4E0E\u611F\u53D7\u663E\u793A\u6A21\u5F0F",
+        markdown: "Markdown \u6E32\u67D3",
+        plainText: "\u7EAF\u6587\u672C",
+        markdownSource: "Markdown \u6E90\u6587\u672C\uFF08Ctrl/\u2318+Enter \u4FDD\u5B58\uFF09",
+        bodyModeLocal: "\u5DF2\u5728\u5F53\u524D\u6D4F\u89C8\u5668\u5207\u6362\uFF0C\u914D\u7F6E\u4FDD\u5B58\u5931\u8D25\uFF1A",
         title: "\u4EFB\u52A1",
         search: "\u641C\u7D22\u6807\u9898 / \u63CF\u8FF0 / \u611F\u53D7",
         newTask: "\u65B0\u5EFA\u4EFB\u52A1",
@@ -2844,6 +2930,11 @@ var require_copy = __commonJS({
         needDifficulty: "\u8BF7\u9009\u62E9\u96BE\u5EA6"
       },
       en: {
+        bodyMode: "Description and reflection display mode",
+        markdown: "Render Markdown",
+        plainText: "Plain text",
+        markdownSource: "Markdown source (Ctrl/\u2318+Enter to save)",
+        bodyModeLocal: "Changed in this browser; could not save config:",
         title: "Tasks",
         search: "Search title / description / feeling",
         newTask: "New task",
@@ -2905,7 +2996,7 @@ var require_copy = __commonJS({
         priority: "Priority",
         difficulty: "Difficulty",
         desc: "Description",
-        review: "Feeling",
+        review: "Reflection",
         reviewHint: "Record a feeling in any status (optional)",
         editReview: "Double-click to edit feeling (any status)",
         reviewPlaceholder: "e.g. smooth, stuck on the API, easier than expected",
@@ -3926,18 +4017,176 @@ var init_refresh_cw = __esm({
   }
 });
 
+// packages/addons/lib/markdown.cjs
+var require_markdown = __commonJS({
+  "packages/addons/lib/markdown.cjs"(exports2, module2) {
+    "use strict";
+    var cache = /* @__PURE__ */ new Map();
+    var cacheChars = 0;
+    function node(tag, children, props) {
+      return { tag, children, props: props || {} };
+    }
+    function inline(text, depth) {
+      if ((depth || 0) > 8) return [text];
+      var out = [], re = /(\\[\\\x60*\[\]#!_>+-]|!?\[[^\[\]\n]+\]\([^\s)\[\]]*\)|\x60[^\x60\n]+\x60|\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g, at = 0, m;
+      while (m = re.exec(text)) {
+        if (m.index > at) out.push(text.slice(at, m.index));
+        var s = m[0], link = /^\[([^\]]+)\]\(([^)]*)\)$/.exec(s);
+        if (s[0] === "\\") out.push(s.slice(1));
+        else if (link && /^(https?:\/\/|mailto:)[^\s\u0000-\u001f\u007f]+$/i.test(link[2]))
+          out.push(node("a", inline(link[1], (depth || 0) + 1), { href: link[2], target: "_blank", rel: "noopener noreferrer nofollow" }));
+        else if (s[0] === "[" || s[0] === "!") out.push(s);
+        else if (s[0] === "`") out.push(node("code", [s.slice(1, -1)]));
+        else if (s.slice(0, 2) === "**") out.push(node("strong", inline(s.slice(2, -2), (depth || 0) + 1)));
+        else out.push(node("em", inline(s.slice(1, -1), (depth || 0) + 1)));
+        at = re.lastIndex;
+      }
+      if (at < text.length) out.push(text.slice(at));
+      return out;
+    }
+    function blocks(lines, depth) {
+      var out = [], i = 0;
+      function listMatch(s) {
+        return /^( *)([-+*]|\d+\.) +(.+)$/.exec(s);
+      }
+      function special(s) {
+        return /^\s*$|^\x60\x60\x60|^#{1,6} +|^> ?|^\s*(?:---+|\*\*\*+|___+)\s*$/.test(s) || listMatch(s);
+      }
+      while (i < lines.length) {
+        var line = lines[i], m;
+        if (!line.trim()) {
+          i++;
+          continue;
+        }
+        if (/^\x60\x60\x60/.test(line)) {
+          var end = i + 1;
+          while (end < lines.length && !/^\x60\x60\x60\s*$/.test(lines[end])) end++;
+          if (end === lines.length) {
+            out.push(node("p", [lines.slice(i).join("\n")]));
+            break;
+          }
+          out.push(node("pre", [node("code", [lines.slice(i + 1, end).join("\n")])]));
+          i = end + 1;
+          continue;
+        }
+        if (m = /^(#{1,6}) +(.+)$/.exec(line)) {
+          out.push(node("h" + m[1].length, inline(m[2])));
+          i++;
+          continue;
+        }
+        if (/^\s*(?:---+|\*\*\*+|___+)\s*$/.test(line)) {
+          out.push(node("hr", []));
+          i++;
+          continue;
+        }
+        if (/^> ?/.test(line) && depth < 2) {
+          var quote = [];
+          while (i < lines.length && /^> ?/.test(lines[i])) quote.push(lines[i++].replace(/^> ?/, ""));
+          out.push(node("blockquote", blocks(quote, depth + 1)));
+          continue;
+        }
+        if ((m = listMatch(line)) && depth < 2) {
+          var base = m[1].length, ordered = /\d/.test(m[2]), items = [], start = parseInt(m[2], 10);
+          while (i < lines.length) {
+            m = listMatch(lines[i]);
+            if (!m || m[1].length !== base || /\d/.test(m[2]) !== ordered) break;
+            var children = inline(m[3]), nested = [];
+            i++;
+            while (i < lines.length && (m = listMatch(lines[i])) && m[1].length > base) nested.push(lines[i++].slice(base + 2));
+            if (nested.length) children = children.concat(blocks(nested, depth + 1));
+            items.push(node("li", children));
+          }
+          out.push(node(ordered ? "ol" : "ul", items, ordered ? { start } : {}));
+          continue;
+        }
+        var paragraph = [line];
+        i++;
+        while (i < lines.length && !special(lines[i])) paragraph.push(lines[i++]);
+        var parts = [];
+        paragraph.forEach(function(s, j) {
+          if (j) parts.push(node("br", []));
+          var children2 = inline(s);
+          for (var k = 0; k < children2.length; k++) parts.push(children2[k]);
+        });
+        out.push(node("p", parts));
+      }
+      return out;
+    }
+    function parse(text, mode) {
+      text = String(text == null ? "" : text);
+      mode = mode === "text" ? "text" : "markdown";
+      var key = mode + ":" + text;
+      if (cache.has(key)) return cache.get(key);
+      var ast = mode === "text" ? [text] : blocks(text.replace(/\r\n?/g, "\n").split("\n"), 0);
+      if (text.length <= 1e5) {
+        while (cache.size >= 100 || cacheChars + key.length > 1e6) {
+          var first = cache.keys().next().value;
+          cacheChars -= first.length;
+          cache.delete(first);
+        }
+        cache.set(key, ast);
+        cacheChars += key.length;
+      }
+      return ast;
+    }
+    function createBody(React, Highlight) {
+      var h = React.createElement;
+      return function Body(props) {
+        function render(items, path) {
+          return items.map(function(item, i) {
+            var key = path + "-" + i;
+            if (typeof item === "string") return Highlight ? h(Highlight, { key, text: item, keyword: props.keyword }) : item;
+            return h(item.tag, Object.assign({ key }, item.props), render(item.children, key));
+          });
+        }
+        return h("div", { className: props.mode === "text" ? "wb-body-text" : "wb-markdown" }, render(parse(props.text, props.mode), "md"));
+      };
+    }
+    module2.exports = { parse, createBody };
+  }
+});
+
+// packages/addons/lib/body-styles.cjs
+var require_body_styles = __commonJS({
+  "packages/addons/lib/body-styles.cjs"(exports2, module2) {
+    module2.exports = `
+.wb-body-label{float:left;position:relative;z-index:1;margin:1px 6px 0 0;padding:1px 4px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.06em;line-height:1.6;color:#234783;background:color-mix(in srgb,#5b7fd6 8%,#fff);white-space:nowrap}
+.wb-body-label.wb-review-label{color:#154d43;background:color-mix(in srgb,var(--wbt-accent,#11a89b) 8%,#fff)}
+.wb-body-edit{float:right;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:0;border-radius:4px;background:transparent;color:inherit;cursor:pointer}
+.wb-body-edit:hover{background:color-mix(in srgb,currentColor 10%,transparent)}
+.wb-body-edit:focus-visible{outline:2px solid currentColor;outline-offset:1px}
+.wb-markdown{white-space:normal;min-width:0;overflow-wrap:anywhere}.wb-markdown:after{content:'';display:table;clear:both}
+.wb-markdown p{margin:0 0 6px;white-space:pre-wrap}.wb-markdown>:last-child{margin-bottom:0}
+.wb-markdown h1,.wb-markdown h2,.wb-markdown h3,.wb-markdown h4,.wb-markdown h5,.wb-markdown h6{margin:6px 0;font-weight:650;line-height:1.6}
+.wb-markdown>:first-child{margin-top:0}.wb-markdown h1{font-size:16px}.wb-markdown h2{font-size:15px}.wb-markdown h3{font-size:14px}.wb-markdown h4,.wb-markdown h5,.wb-markdown h6{font-size:13px}
+.wb-markdown ul,.wb-markdown ol{margin:4px 0;padding-left:24px;display:flow-root}.wb-markdown li{margin:1px 0}
+.wb-markdown blockquote{border-left:2px solid currentColor;padding-left:9px;margin:4px 0;display:flow-root}
+.wb-markdown pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:8px;border-radius:6px;background:color-mix(in srgb,currentColor 7%,transparent);display:flow-root;margin:5px 0}
+.wb-markdown code,.wb-body-text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.wb-markdown code{background:color-mix(in srgb,currentColor 7%,transparent);border-radius:3px;padding:1px 3px}.wb-markdown pre code{padding:0;background:none}
+.wb-markdown a{color:inherit;text-decoration:underline}.wb-markdown hr{border:0;border-top:1px solid currentColor;opacity:.3;clear:both}
+.wb-body-text{white-space:pre-wrap;overflow-wrap:anywhere}.wb-body-text:after{content:'';display:table;clear:both}
+.wb-source-hint{display:block;font-size:11px;margin-bottom:3px}
+.wb-body-modes{display:inline-flex;gap:3px}.wb-body-modes [aria-pressed=true]{font-weight:700;outline:1px solid currentColor}
+.wbt-item.closed:has(.wb-body-label){opacity:1}
+`;
+  }
+});
+
 // packages/addons/lib/description.cjs
 var require_description = __commonJS({
   "packages/addons/lib/description.cjs"(exports2, module2) {
     var React = require("react");
     var h = React.createElement;
-    var css = `
+    var Body = require_markdown().createBody(React);
+    var preference = require_body_mode();
+    var css = require_body_styles() + `
 .wb-desc{margin-top:4px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-width:100%;min-width:0;box-sizing:border-box;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,#5b7fd6 34%,transparent);background:color-mix(in oklab,#5b7fd6 7%,transparent);color:inherit}
 .wb-desc-text{display:block}.wb-desc-clamped{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
 .wb-desc-toggle{display:block;border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-size:12px;min-width:32px;min-height:32px;padding:3px 6px;border-radius:6px;cursor:pointer;white-space:normal}
 .wb-desc-toggle:hover{background:color-mix(in oklab,currentColor 8%,transparent)}.wb-desc-toggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#2563eb);outline-offset:2px}
 `;
     function Description(props) {
+      var mode = preference.useMode(React);
       var text = props.text == null ? "" : String(props.text);
       var expanded = React.useState(false), overflow = React.useState(false), ref = React.useRef(null);
       React.useEffect(function() {
@@ -3955,12 +4204,19 @@ var require_description = __commonJS({
         return function() {
           if (observer) observer.disconnect();
         };
-      }, [text, expanded[0]]);
+      }, [text, expanded[0], mode]);
       if (!text.trim()) return null;
       return h(
         "div",
         { className: "wb-desc" },
-        h("span", { ref, className: "wb-desc-text" + (expanded[0] ? "" : " wb-desc-clamped") }, text),
+        h(
+          "div",
+          { ref, className: "wb-desc-text" + (expanded[0] ? "" : " wb-desc-clamped") },
+          h("span", { className: "wb-body-label", onDoubleClick: function(e) {
+            e.stopPropagation();
+          } }, props.lang === "en" ? "Description" : "\u63CF\u8FF0"),
+          h(Body, { text, mode })
+        ),
         overflow[0] || expanded[0] ? h("button", {
           type: "button",
           className: "wb-desc-toggle",
@@ -4031,7 +4287,6 @@ var require_styles = __commonJS({
       ".wbt-taskpath .wbt-path button{white-space:nowrap}",
       ".wbt-taskpath .wbt-path .sep{margin:0 1px;opacity:.4}",
       ".wbt-review{margin-top:5px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-width:100%;box-sizing:border-box;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,var(--wbt-accent) 42%,transparent);background:color-mix(in oklab,var(--wbt-accent) 6%,transparent)}",
-      ".wbt-review-label{font-size:11px;letter-spacing:.04em;opacity:.72;margin-right:5px;font-weight:560}",
       ".wbt-path button{border:none;background:none;color:inherit;padding:2px 3px;border-radius:5px;cursor:pointer;font-size:11.5px;display:inline-flex;align-items:center;gap:4px;line-height:1.2;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis}",
       ".wbt-path button .wbt-svg{opacity:.7;margin-top:-1px}",
       ".wbt-path button:hover{background:color-mix(in oklab,currentColor 8%,transparent);text-decoration:underline}",
@@ -4229,11 +4484,23 @@ var require_task_item = __commonJS({
     module2.exports = function(deps) {
       var React = deps.React, h = React.createElement;
       var Highlight = require_highlight()(React);
+      var Body = require_markdown().createBody(React, Highlight);
+      var preference = require_body_mode();
       var statusInfo = deps.statusInfo, stars = deps.stars, pClass = deps.pClass;
       var today = deps.today, daysBetween = deps.daysBetween, cx = deps.cx;
       var Icon2 = deps.Icon, Countdown = deps.Countdown, PathCrumbs = deps.PathCrumbs;
       function TaskItem(props) {
         var t = props.t;
+        var mode = preference.useMode(React);
+        function stopLabel(e) {
+          e.stopPropagation();
+        }
+        function bodyLabel(label, review) {
+          return h("span", { className: "wb-body-label" + (review ? " wb-review-label" : ""), onDoubleClick: stopLabel }, label);
+        }
+        function editButton(label, begin) {
+          return h("button", { type: "button", className: "wb-body-edit", title: t.edit + " " + label, "aria-label": t.edit + " " + label, onClick: begin, onDoubleClick: stopLabel }, h(Icon2, { name: "pencil", size: 12 }));
+        }
         var task = props.task;
         var st = statusInfo(task.status);
         var stName = props.lang === "en" ? st.en : st.zh;
@@ -4382,11 +4649,14 @@ var require_task_item = __commonJS({
           },
           onBlur: saveTitle
         }) : h("div", { className: "wbt-title", onDoubleClick: beginTitle, title: t.editTitle }, h(Highlight, { text: task.title, keyword: props.keyword }));
-        var descNode = editingDesc !== null ? h("textarea", {
+        var descNode = editingDesc !== null ? h("div", null, h("small", { className: "wb-source-hint" }, t.markdownSource), h("textarea", {
           ref: descRef,
           className: "wbt-textarea",
           rows: 2,
           value: editingDesc,
+          title: t.markdownSource,
+          "aria-label": t.desc + " \xB7 " + t.markdownSource,
+          placeholder: t.markdownSource,
           onChange: function(e) {
             setEditingDesc(e.target.value);
           },
@@ -4398,13 +4668,15 @@ var require_task_item = __commonJS({
             }
           },
           onBlur: saveDesc
-        }) : task.description ? h("div", { className: "wbt-desc wb-desc", onDoubleClick: beginDesc }, h(Highlight, { text: task.description, keyword: props.keyword })) : null;
-        var reviewNode = editingReview !== null ? h("textarea", {
+        })) : String(task.description || "").trim() ? h("div", { className: "wbt-desc wb-desc", onDoubleClick: beginDesc }, bodyLabel(t.desc), isActive ? editButton(t.desc, beginDesc) : null, h(Body, { text: task.description, mode, keyword: props.keyword })) : null;
+        var reviewNode = editingReview !== null ? h("div", null, h("small", { className: "wb-source-hint" }, t.markdownSource), h("textarea", {
           ref: revRef,
           className: "wbt-textarea",
           rows: 2,
           placeholder: t.reviewPlaceholder,
           value: editingReview,
+          title: t.markdownSource,
+          "aria-label": t.review + " \xB7 " + t.markdownSource,
           onChange: function(e) {
             setEditingReview(e.target.value);
           },
@@ -4416,11 +4688,12 @@ var require_task_item = __commonJS({
             }
           },
           onBlur: saveReview
-        }) : task.review ? h(
+        })) : String(task.review || "").trim() ? h(
           "div",
           { className: "wbt-review", title: t.editReview, onDoubleClick: beginReview },
-          h("span", { className: "wbt-review-label" }, t.review),
-          h(Highlight, { text: task.review, keyword: props.keyword })
+          bodyLabel(t.review, true),
+          editButton(t.review, beginReview),
+          h(Body, { text: task.review, mode, keyword: props.keyword })
         ) : null;
         var line1 = h(
           "div",
@@ -5020,12 +5293,62 @@ var require_edit_modal = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/body-mode.cjs
+var require_body_mode2 = __commonJS({
+  "packages/addons/tasks/client/body-mode.cjs"(exports2, module2) {
+    module2.exports = function(React) {
+      var h = React.createElement, preference = require_body_mode();
+      return function BodyMode(props) {
+        var mode = preference.useMode(React), pending = React.useState(false), requestLock = React.useRef(false);
+        React.useEffect(function() {
+          if (props.value === "markdown" || props.value === "text") preference.set(props.value);
+        }, [props.value]);
+        function change(value) {
+          if (requestLock.current) return;
+          requestLock.current = true;
+          preference.set(value);
+          pending[1](true);
+          Promise.resolve().then(function() {
+            return props.api.call("tasks.configSet", { values: { "ui.bodyMode": value } });
+          }).then(function(r) {
+            if (r && r.ok === false) throw new Error(r.error || "save failed");
+          }).catch(function(e) {
+            if (props.toast) props.toast(props.t.bodyModeLocal + " " + String(e.message || e));
+          }).finally(function() {
+            requestLock.current = false;
+            pending[1](false);
+          });
+        }
+        return h(
+          "span",
+          { className: "wb-body-modes", role: "group", "aria-label": props.t.bodyMode },
+          ["markdown", "text"].map(function(value) {
+            return h("button", {
+              key: value,
+              type: "button",
+              className: "wbt-btn",
+              disabled: pending[0],
+              title: props.t[value === "text" ? "plainText" : "markdown"],
+              "aria-label": props.t[value === "text" ? "plainText" : "markdown"],
+              "aria-pressed": mode === value,
+              onClick: function() {
+                change(value);
+              }
+            }, value === "text" ? "T" : "M");
+          })
+        );
+      };
+    };
+  }
+});
+
 // packages/addons/tasks/client/tasks-view.cjs
 var require_tasks_view = __commonJS({
   "packages/addons/tasks/client/tasks-view.cjs"(exports2, module2) {
     module2.exports = function createTasksView(deps) {
       var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, TABS = deps.TABS, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon2 = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
       var h = React.createElement;
+      var BodyMode = require_body_mode2()(React);
       function TasksView(props) {
         var lang = props.lang === "en" ? "en" : "zh";
         var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -5530,6 +5853,7 @@ var require_tasks_view = __commonJS({
             ),
             h(PathCrumbs, { path: currentPath, onPick: pickPath }),
             h("div", { className: "wbt-grow" }),
+            h(BodyMode, { api, value: cfg["ui.bodyMode"], t, toast: say }),
             h("input", {
               className: "wbt-input wbt-search",
               placeholder: t.search,
@@ -6521,7 +6845,7 @@ var require_tasks_view = __commonJS({
   var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, TABS, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.0.0",
+    version: "3.1.0",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

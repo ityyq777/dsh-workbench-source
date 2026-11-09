@@ -16,6 +16,7 @@ const Highlight = require('../packages/addons/tasks/client/highlight.cjs')(React
 const all = n => Array.isArray(n) ? n.flatMap(all) : n && typeof n === 'object' ? [n, ...n.children.flatMap(all)] : [];
 const text = n => Array.isArray(n) ? n.map(text).join('') : n && typeof n === 'object' ? text(n.children) : String(n ?? '');
 const find = (n, cls) => { const found = all(n).find(x => x.props.className === cls); assert.ok(found, cls); return found; };
+const expand = n => Array.isArray(n) ? n.map(expand) : n && typeof n === "object" ? typeof n.type === "function" ? expand(n.type(n.props)) : { ...n, children: n.children.map(expand) } : n;
 let cases = 0;
 for (const keyword of ['%', '_', '\\', '.*+?^$' + '{}()|[]', '中文', 'AbC', '<img src=x onerror=alert(1)>']) {
   const source = 'before ' + keyword + ' and ' + keyword.toUpperCase() + ' after';
@@ -49,7 +50,7 @@ for (const card of [false, true]) for (const [field, cls, patchType] of [
   const render = () => { cursor = 0; return TaskItem(props); };
   const node = find(render(), cls);
   const child = node.children.find(n => n && typeof n === 'object' && typeof n.type === 'function');
-  const hit = child.type(child.props);
+  const hit = expand(child);
   assert.equal(all(hit).filter(n => n.type === 'mark').length, 1);
   // Mark has no handlers: a double click bubbles to the same editable field container.
   assert.ok(all(hit).every(n => !n.props.onClick && !n.props.onDoubleClick));
@@ -111,7 +112,7 @@ try {
       const tree = TaskItem({ task: result.records[0], card, keyword: lower, t: copy.zh, update() {} });
       for (const [cls, expectedHits, original] of [['wbt-title', 0, upper], ['wbt-desc wb-desc', 1, lower], ['wbt-review', 0, upper]]) {
         const child = find(tree, cls).children.find(n => n && typeof n.type === 'function');
-        const output = child.type(child.props);
+        const output = expand(child);
         assert.equal(text(output), original);
         assert.equal(all(output).filter(n => n.type === 'mark').length, expectedHits);
       }

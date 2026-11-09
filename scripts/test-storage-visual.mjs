@@ -20,7 +20,13 @@ const React = {
 const styles=[]; let addon;
 const document={head:{appendChild:s=>styles.push(s.textContent)},getElementById:()=>null,
   createElement:()=>({setAttribute(){}}),addEventListener(){},removeEventListener(){},activeElement:null};
-const context={module:{exports:{}},window:{__WB_HOST__:{registerAddon:a=>addon=a}},document,URL,
+// Native EventTarget preserves listener registration, delivery and cleanup semantics.
+const stored = new Map();
+const window = Object.assign(new EventTarget(), {
+  __WB_HOST__: { registerAddon: a => addon = a },
+  localStorage: { getItem: key => stored.get(key) ?? null, setItem: (key, value) => stored.set(key, String(value)) },
+});
+const context={module:{exports:{}},window,document,URL,Event,CustomEvent,
   require:n=>{assert.equal(n,'react');return React;},setTimeout:()=>1,clearTimeout(){},console};
 const production = buildSync({ entryPoints: ['packages/addons/storage/client/client.src.cjs'], bundle: true, write: false,
   metafile: true, format: 'cjs', platform: 'browser', target: ['es2020'], external: ['react'], legalComments: 'none', logLevel: 'silent' });
@@ -37,12 +43,13 @@ function expand(n,path='r') {
   return {...n,children:expand(n.children,path)};
 }
 function render(){let guard=0;do{dirty=false;effects=[];tree=expand(React.createElement(root,props));for(const e of effects)e();}while(dirty&&++guard<30);assert.ok(guard<30);}
+function resetFrames(){for(const frame of frames.values())for(const slot of frame.slots)slot?.cleanup?.();frames.clear();}
 async function settle(){for(let i=0;i<20;i++){await Promise.resolve();if(dirty)render();}}
 function all(n=tree,out=[]){if(Array.isArray(n))n.forEach(v=>all(v,out));else if(n&&typeof n==='object'){out.push(n);all(n.children,out);}return out;}
 function text(n){return Array.isArray(n)?n.map(text).join(''):n&&typeof n==='object'?text(n.children):String(n??'');}
 const cls=c=>all().filter(n=>(n.props.className||'').split(' ').includes(c));
 const calls=[];
-const item={id:'one',name:'Test inventory',stock:'0',brand:'Maker',unit:'box',tags:[{id:'tag',name:'Tag'}],imgList:['https://example.test/a.png','https://example.test/b.png']};
+const item={id:'one',name:'Test inventory',remark:'**Stored body**',stock:'0',brand:'Maker',unit:'box',tags:[{id:'tag',name:'Tag'}],imgList:['https://example.test/a.png','https://example.test/b.png']};
 const api={async call(name,args){calls.push({name,args});const values={};
   const result=name.endsWith('configGet')?{values,items:[{id:'list.pageSize',group:'list',type:'number',zh:'分页',en:'Page size',default:12}],groups:[{id:'list',zh:'列表',en:'List'}],overrides:{}}:
     name.endsWith('capabilities')?{tags:true}:name.endsWith('stats')?{total:1,tagged:1,withImages:1,recent:[item]}:
@@ -52,7 +59,7 @@ const api={async call(name,args){calls.push({name,args});const values={};
   return {ok:true,result};}};
 assert.deepEqual(Array.from(addon.views,v=>v.id),['stats','storage','config','data']);
 for(const v of addon.views){
-  frames.clear();root=v.component;props={api,lang:'en'};render();
+  resetFrames();root=v.component;props={api,lang:'en'};render();
   assert.equal(cls('wbi-skeleton-card').length,3,v.id+' initial loading has three cards');
   await settle();
   const icons=all().filter(n=>n.type==='svg');assert.ok(icons.length>=3,v.id+' has at least three actual SVG icons');
@@ -65,6 +72,16 @@ for(const v of addon.views){
   assert.ok(refresh,v.id+" refresh control"); const before=calls.length; refresh.props.onClick(); await settle();
   assert.ok(calls.length>before,v.id+" refresh invokes real component callback");
   if(v.id==='storage'){
+    assert.equal(cls('wb-markdown').length,1,'storage-only installation defaults to Markdown');
+    assert.ok(all().some(n=>n.type==='strong'&&text(n)==='Stored body'));
+    window.localStorage.setItem('wb.bodyMode','text');
+    window.dispatchEvent(new Event('storage'));render();
+    assert.equal(cls('wb-body-text').length,1,'storage event updates the mounted description');
+    assert.equal(text(cls('wb-body-text')[0]),'**Stored body**');
+    window.localStorage.setItem('wb.bodyMode','markdown');
+    window.dispatchEvent(new CustomEvent('wb-body-mode',{detail:'markdown'}));render();
+    assert.equal(cls('wb-markdown').length,1,'same-window custom event restores Markdown');
+    assert.ok(calls.every(c=>!c.name.startsWith('tasks.')),'storage never calls task config APIs');
     const button=label=>all().find(n=>n.type==='button'&&(text(n)===label||n.props['aria-label']===label));
     const latest=()=>calls.filter(c=>c.name==='storage.list').at(-1).args;
     const stock=cls('wbi-stock')[0].children.flat(Infinity).filter(Boolean);
@@ -85,7 +102,7 @@ for(const v of addon.views){
     button('Edit Test inventory').props.onClick();render();await settle();
     assert.ok(all().some(n=>n.props.role==='dialog'),'edit still opens editor');
   }
-  root=v.icon;frames.clear();render();assert.equal(all().filter(n=>n.type==='svg').length,1,'tab icon renders');
+  root=v.icon;resetFrames();render();assert.equal(all().filter(n=>n.type==='svg').length,1,'tab icon renders');
 }
 assert.ok(calls.some(c=>c.name==='storage.dataTables'),'data adapter calls shared data API');
 const css=styles.join(String.fromCharCode(10));

@@ -5,6 +5,7 @@ var h = React.createElement;
 
 var DOMAIN = "tasks";
 var PREFIX = "wbt";
+var bodyMode = require("../../lib/body-mode.cjs");
 
 var COPY = {
   zh: {
@@ -163,12 +164,19 @@ function ConfigView(props) {
   var drafts = draftsS[0], setDrafts = draftsS[1];
   var busyS = React.useState(false);
   var busy = busyS[0], setBusy = busyS[1];
+  // State disables controls after render; the ref also rejects same-render stale handlers.
+  var requestLock = React.useRef(false), mounted = React.useRef(true);
+  React.useEffect(function () { mounted.current = true; return function () { mounted.current = false; }; }, []);
+  var locked = loading || busy || !!savingId;
+  function acquire() { if (requestLock.current) return false; requestLock.current = true; return true; }
+  function release() { requestLock.current = false; }
 
   React.useEffect(function () { injectCss(); }, []);
 
   var load = React.useCallback(function () {
+    if (!acquire()) return;
     setLoading(true);
-    return Promise.resolve(api.call(DOMAIN + ".configGet"))
+    return Promise.resolve().then(function () { return api.call(DOMAIN + ".configGet"); })
       .then(function (r) {
         var body = unwrap(r);
         if (r && r.ok === false) throw new Error((r && r.error) || "load failed");
@@ -179,7 +187,7 @@ function ConfigView(props) {
       .catch(function (e) {
         setErr(String((e && e.message) || e));
         setLoading(false);
-      });
+      }).finally(release);
   }, [api]);
 
   React.useEffect(function () { load(); }, [load]);
@@ -196,65 +204,70 @@ function ConfigView(props) {
   }
 
   function save(id, value) {
+    if (!acquire()) return;
     var prevState = state;
     setSavingId(id);
     setNotice({ id: id, text: t.saving, error: false });
     setValueLocal(id, value);
-    return Promise.resolve(api.call(DOMAIN + ".configSet", { values: (function () { var o = {}; o[id] = value; return o; })() }))
+    return Promise.resolve().then(function () { return api.call(DOMAIN + ".configSet", { values: (function () { var o = {}; o[id] = value; return o; })() }); })
       .then(function (r) {
         var body = unwrap(r);
         if (r && r.ok === false) throw new Error((r && r.error) || "save failed");
         setSavingId("");
-        if (body && body.state) setState(body.state);
+        if (body && body.state) { setState(body.state); if (mounted.current && body.state.values && body.state.values["ui.bodyMode"]) bodyMode.set(body.state.values["ui.bodyMode"]); }
         setNotice({ id: id, text: t.saved, error: false });
       })
       .catch(function (e) {
         setSavingId("");
         if (prevState) setState(prevState);
         setNotice({ id: id, text: t.saveFail + String((e && e.message) || e), error: true });
-      });
+      }).finally(release);
   }
 
   function resetItem(id) {
+    if (!acquire()) return;
     var prevState = state;
     setBusy(true);
     setNotice({ id: id, text: t.resetting, error: false });
-    return Promise.resolve(api.call(DOMAIN + ".configReset", { ids: [id] }))
+    return Promise.resolve().then(function () { return api.call(DOMAIN + ".configReset", { ids: [id] }); })
       .then(function (r) {
         var body = unwrap(r);
         if (r && r.ok === false) throw new Error((r && r.error) || "reset failed");
         setBusy(false);
-        if (body && body.state) setState(body.state);
+        if (body && body.state) { setState(body.state); if (mounted.current && body.state.values && body.state.values["ui.bodyMode"]) bodyMode.set(body.state.values["ui.bodyMode"]); }
         setNotice({ id: id, text: t.defaultValue, error: false });
       })
       .catch(function (e) {
         setBusy(false);
         if (prevState) setState(prevState);
         setNotice({ id: id, text: String((e && e.message) || e), error: true });
-      });
+      }).finally(release);
   }
 
   function resetAll() {
+    if (requestLock.current) return;
     if (typeof window !== "undefined" && window.confirm && !window.confirm(t.confirmResetAll)) return;
+    if (!acquire()) return;
     var prevState = state;
     setBusy(true);
     setNotice({ id: "", text: t.resetting, error: false });
-    Promise.resolve(api.call(DOMAIN + ".configReset", {}))
+    return Promise.resolve().then(function () { return api.call(DOMAIN + ".configReset", {}); })
       .then(function (r) {
         var body = unwrap(r);
         if (r && r.ok === false) throw new Error((r && r.error) || "reset failed");
         setBusy(false);
-        if (body && body.state) setState(body.state);
+        if (body && body.state) { setState(body.state); if (mounted.current && body.state.values && body.state.values["ui.bodyMode"]) bodyMode.set(body.state.values["ui.bodyMode"]); }
         setNotice({ id: "", text: t.allDefault, error: false });
       })
       .catch(function (e) {
         setBusy(false);
         if (prevState) setState(prevState);
         setNotice({ id: "", text: String((e && e.message) || e), error: true });
-      });
+      }).finally(release);
   }
 
   function commitDraft(item) {
+    if (requestLock.current) return;
     var raw = drafts[item.id];
     if (raw === undefined) return;
     var next = String(raw).trim();
@@ -276,7 +289,7 @@ function ConfigView(props) {
     if (item.type === "bool") {
       return h("label", { className: PREFIX + "-cfg-switch" },
         h("input", {
-          type: "checkbox", checked: value === true,
+          type: "checkbox", disabled: locked, checked: value === true,
           onChange: function (e) { save(item.id, e.target.checked); },
         }),
         h("span", { className: PREFIX + "-cfg-track", "aria-hidden": "true" }),
@@ -285,7 +298,7 @@ function ConfigView(props) {
     }
     if (item.type === "enum") {
       return h("select", {
-        className: PREFIX + "-cfg-select", value: String(value),
+        className: PREFIX + "-cfg-select", disabled: locked, value: String(value),
         onChange: function (e) {
           var hit = (item.options || []).filter(function (o) { return String(o.value) === e.target.value; })[0];
           if (hit) save(item.id, hit.value);
@@ -297,7 +310,7 @@ function ConfigView(props) {
     if (item.type === "int") {
       var draft = drafts[item.id] !== undefined ? drafts[item.id] : String(value);
       return h("input", {
-        className: PREFIX + "-cfg-input", type: "number", value: draft,
+        className: PREFIX + "-cfg-input", disabled: locked, type: "number", value: draft,
         min: item.min, max: item.max, "aria-label": label,
         onChange: function (e) {
           var v = e.target.value;
@@ -313,7 +326,7 @@ function ConfigView(props) {
         var on = picked.indexOf(o.value) >= 0;
         return h("label", { key: String(o.value) },
           h("input", {
-            type: "checkbox", checked: on,
+            type: "checkbox", disabled: locked, checked: on,
             onChange: function () {
               var next = picked.slice();
               if (on) {
@@ -328,7 +341,7 @@ function ConfigView(props) {
       }));
     }
     return h("input", {
-      className: PREFIX + "-cfg-input", type: "text", defaultValue: value === undefined ? "" : String(value),
+      className: PREFIX + "-cfg-input", disabled: locked, type: "text", defaultValue: value === undefined ? "" : String(value),
       onBlur: function (e) { if (!sameValue(e.target.value, value)) save(item.id, e.target.value); },
     });
   }
@@ -376,7 +389,7 @@ function ConfigView(props) {
             h("div", { className: PREFIX + "-cfg-control" },
               renderControl(item),
               overridden ? h("button", {
-                type: "button", className: PREFIX + "-cfg-btn", disabled: busy,
+                type: "button", className: PREFIX + "-cfg-btn", disabled: locked,
                 onClick: function () { resetItem(item.id); }, title: t.reset,
               }, t.reset) : null
             )
@@ -393,7 +406,7 @@ function ConfigView(props) {
           : (lang === "en" ? "All preferences are at their defaults" : "全部配置均为默认值")
       ),
       h("span", { className: PREFIX + "-cfg-grow" }),
-      anyOverride ? h("button", { type: "button", className: PREFIX + "-cfg-btn " + PREFIX + "-cfg-btn-outline", disabled: busy, onClick: resetAll }, busy ? t.resetting : t.resetAll) : null
+      anyOverride ? h("button", { type: "button", className: PREFIX + "-cfg-btn " + PREFIX + "-cfg-btn-outline", disabled: locked, onClick: resetAll }, busy ? t.resetting : t.resetAll) : null
     ));
     var warn = (state.warnings || []).filter(function (w) { return w && w.message; });
     if (warn.length) {

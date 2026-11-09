@@ -35,6 +35,12 @@ const SECTIONS = [
 
 const ITEMS = [
   {
+    id: "ui.bodyMode", group: "ui", type: "enum", surface: "ui", apply: "mount", default: "markdown",
+    zh: "正文显示模式", en: "Body display mode",
+    hintZh: "描述与感受统一使用 Markdown 或纯文本；储物描述同步跟随", hintEn: "Use Markdown or plain text for descriptions and reflections, including storage descriptions",
+    values: [{ value: "markdown", zh: "Markdown", en: "Markdown" }, { value: "text", zh: "纯文本", en: "Plain text" }],
+  },
+  {
     id: "ui.defaultTab", group: "ui", type: "enum", surface: "ui", apply: "mount", default: 0,
     zh: "默认页签", en: "Default tab",
     hintZh: "打开「记录」时默认落在哪个页签", hintEn: "Tab opened by default in Records",

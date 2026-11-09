@@ -53,7 +53,7 @@ module.exports = [
     ".wbt-taskpath .wbt-path button{white-space:nowrap}",
     ".wbt-taskpath .wbt-path .sep{margin:0 1px;opacity:.4}",
     ".wbt-review{margin-top:5px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-width:100%;box-sizing:border-box;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,var(--wbt-accent) 42%,transparent);background:color-mix(in oklab,var(--wbt-accent) 6%,transparent)}",
-    ".wbt-review-label{font-size:11px;letter-spacing:.04em;opacity:.72;margin-right:5px;font-weight:560}",
+
     ".wbt-path button{border:none;background:none;color:inherit;padding:2px 3px;border-radius:5px;cursor:pointer;font-size:11.5px;display:inline-flex;align-items:center;gap:4px;line-height:1.2;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis}",
     ".wbt-path button .wbt-svg{opacity:.7;margin-top:-1px}",
     ".wbt-path button:hover{background:color-mix(in oklab,currentColor 8%,transparent);text-decoration:underline}",

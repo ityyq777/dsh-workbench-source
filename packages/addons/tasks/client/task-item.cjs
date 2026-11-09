@@ -3,11 +3,17 @@
 module.exports = function (deps) {
   var React = deps.React, h = React.createElement;
   var Highlight = require("./highlight.cjs")(React);
+  var Body = require("../../lib/markdown.cjs").createBody(React, Highlight);
+  var preference = require("../../lib/body-mode.cjs");
   var statusInfo = deps.statusInfo, stars = deps.stars, pClass = deps.pClass;
   var today = deps.today, daysBetween = deps.daysBetween, cx = deps.cx;
   var Icon = deps.Icon, Countdown = deps.Countdown, PathCrumbs = deps.PathCrumbs;
   function TaskItem(props) {
     var t = props.t;
+    var mode = preference.useMode(React);
+    function stopLabel(e) { e.stopPropagation(); }
+    function bodyLabel(label, review) { return h("span", { className: "wb-body-label" + (review ? " wb-review-label" : ""), onDoubleClick: stopLabel }, label); }
+    function editButton(label, begin) { return h("button", { type: "button", className: "wb-body-edit", title: t.edit + " " + label, "aria-label": t.edit + " " + label, onClick: begin, onDoubleClick: stopLabel }, h(Icon, { name: "pencil", size: 12 })); }
     var task = props.task;
     var st = statusInfo(task.status);
     var stName = props.lang === "en" ? st.en : st.zh;
@@ -126,32 +132,32 @@ module.exports = function (deps) {
       : h("div", { className: "wbt-title", onDoubleClick: beginTitle, title: t.editTitle }, h(Highlight, { text: task.title, keyword: props.keyword }));
 
     var descNode = editingDesc !== null
-      ? h("textarea", {
+      ? h("div", null, h("small", { className: "wb-source-hint" }, t.markdownSource), h("textarea", {
           ref: descRef, className: "wbt-textarea", rows: 2,
-          value: editingDesc,
+          value: editingDesc, title: t.markdownSource, "aria-label": t.desc + " · " + t.markdownSource, placeholder: t.markdownSource,
           onChange: function (e) { setEditingDesc(e.target.value); },
           onKeyDown: function (e) {
             if (e.key === "Escape") setEditingDesc(null);
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveDesc(); }
           },
           onBlur: saveDesc,
-        })
-      : (task.description ? h("div", { className: "wbt-desc wb-desc", onDoubleClick: beginDesc }, h(Highlight, { text: task.description, keyword: props.keyword })) : null);
+        }))
+      : (String(task.description || "").trim() ? h("div", { className: "wbt-desc wb-desc", onDoubleClick: beginDesc }, bodyLabel(t.desc), isActive ? editButton(t.desc, beginDesc) : null, h(Body, { text: task.description, mode: mode, keyword: props.keyword })) : null);
 
 
     var reviewNode = editingReview !== null
-      ? h("textarea", {
+      ? h("div", null, h("small", { className: "wb-source-hint" }, t.markdownSource), h("textarea", {
           ref: revRef, className: "wbt-textarea", rows: 2, placeholder: t.reviewPlaceholder,
-          value: editingReview,
+          value: editingReview, title: t.markdownSource, "aria-label": t.review + " · " + t.markdownSource,
           onChange: function (e) { setEditingReview(e.target.value); },
           onKeyDown: function (e) {
             if (e.key === "Escape") setEditingReview(null);
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveReview(); }
           },
           onBlur: saveReview,
-        })
-      : (task.review ? h("div", { className: "wbt-review", title: t.editReview, onDoubleClick: beginReview },
-          h("span", { className: "wbt-review-label" }, t.review), h(Highlight, { text: task.review, keyword: props.keyword })) : null);
+        }))
+      : (String(task.review || "").trim() ? h("div", { className: "wbt-review", title: t.editReview, onDoubleClick: beginReview },
+          bodyLabel(t.review, true), editButton(t.review, beginReview), h(Body, { text: task.review, mode: mode, keyword: props.keyword })) : null);
 
 
     // 信息层级：标题 → 标签/时间/路径（元信息区）→ [卡片] 操作按钮 → 描述 → 复核。
