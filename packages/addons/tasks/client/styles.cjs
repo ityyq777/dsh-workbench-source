@@ -12,6 +12,7 @@ module.exports = [
     ".wbt-grow{flex:1;min-width:0}",
     ".wbt-btn{border:1px solid var(--wbt-line);background:var(--wbt-surface);color:inherit;border-radius:var(--wb-radius-sm);padding:6px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;line-height:1.3;display:inline-flex;align-items:center;gap:5px}",
     ".wbt-svg{display:block;flex:none}",
+    ".wbt-publication-filter{min-width:0;max-width:100%}.wbt-publication-filter>.wbt-btn{min-width:0;white-space:normal}.wbt-date-label{min-width:0;overflow-wrap:anywhere}",
     ".wbt-btn:hover{border-color:var(--wbt-accent)}",
     ".wbt-btn.primary{background:var(--wbt-accent);border-color:var(--wbt-accent);color:var(--dsw-alias-label-primary-inverted,#fff);font-weight:600}",
     ".wbt-btn.ghost{background:transparent}",

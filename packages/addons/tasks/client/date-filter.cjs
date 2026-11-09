@@ -1,6 +1,7 @@
 // Publication range UI; API state only receives real calendar dates in ascending order.
 var React = require("react"), h = React.createElement;
 var charts = require("./charts.cjs").makeCharts("wbt-date");
+var Icon = require("./icons.cjs").Icon;
 function validDate(value) {
   if (!value) return true;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -38,7 +39,7 @@ function DateFilter(props) {
   }
   return h("div", {ref:root, className:"wbt-publication-filter", style:{position:"relative",display:"inline-flex",alignItems:"center"}},
     h("button", {type:"button",ref:trigger,className:"wbt-btn " + (value.from || value.to ? "primary" : "ghost"),
-      "aria-expanded":open,"aria-controls":id,title:en ? "Publication time" : "发布时间",onClick:function(){setOpen(!open);}}, label(value,en)),
+      "aria-expanded":open,"aria-controls":id,title:en ? "Publication time" : "发布时间",onClick:function(){setOpen(!open);}}, h(Icon, {name:"calendar"}), h("span", {className:"wbt-date-label"}, label(value,en))),
     value.from || value.to ? h("button", {type:"button",className:"wbt-date-clear","aria-label":en ? "Clear time range" : "清除时间范围",onClick:clear}, "×") : null,
     open ? h("div", {id:id,role:"group","aria-label":en ? "Publication time" : "发布时间",className:"wbt-date-popover"},
       h(charts.DateRangePicker, {custom:value,onCustomChange:change,onCustomClear:clear,
