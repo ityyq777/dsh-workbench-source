@@ -84,6 +84,7 @@
         "highlight.cjs": "ui/highlight.cjs",
         "task-item.cjs": "item/task-item.cjs",
         "recent-columns.cjs": "item/recent-columns.cjs",
+        "ranking-name.cjs": "item/ranking-name.cjs",
         "difficulty-field.cjs": "item/difficulty-field.cjs",
         "create-modal.cjs": "modals/create-modal.cjs",
         "edit-modal.cjs": "modals/edit-modal.cjs",

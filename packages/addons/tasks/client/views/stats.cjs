@@ -4,6 +4,7 @@ var h = React.createElement;
 var charts = require("../stats/charts.cjs");
 var configView = require("./config.cjs");
 var recentColumns = require("../item/recent-columns.cjs");
+var rankingName = require("../item/ranking-name.cjs");
 var Heatmap = require("../stats/heatmap.cjs");
 var Today = require("../stats/today.cjs");
 
@@ -28,6 +29,7 @@ var COPY = {
     groups: "任务组排行", groupsNote: "一级任务组",
     colName: "名称", colTotal: "总数", colOpen: "进行中", colOverdue: "逾期", colDone: "已完成", colRate: "完成率",
     colTitle: "任务", colTarget: "计划完成", colAge: "逾期天数", colTable: "任务表",
+    recentPublish: "最近发布", recentPublishNote: "按发布日期倒序", noRecentPublish: "还没有发布的任务",
     recentDone: "最近完成", recentDoneNote: "按完成日期倒序", recentShutdown: "最近关闭", recentShutdownNote: "按关闭日期倒序",
     colDate: "日期", colAgo: "距今天", noRecentDone: "还没有已完成的任务", noRecentShutdown: "还没有已关闭的任务",
     noOverdue: "没有逾期任务", noData: "还没有任务。在「记录」里创建后，这里会自动汇总",
@@ -53,6 +55,7 @@ var COPY = {
     groups: "Task groups", groupsNote: "First-level groups",
     colName: "Name", colTotal: "Total", colOpen: "Active", colOverdue: "Overdue", colDone: "Done", colRate: "Completion",
     colTitle: "Task", colTarget: "Target", colAge: "Days late", colTable: "Table",
+    recentPublish: "Recently published", recentPublishNote: "Newest publication first", noRecentPublish: "No published tasks yet",
     recentDone: "Recently completed", recentDoneNote: "Newest completion first", recentShutdown: "Recently closed", recentShutdownNote: "Newest closure first",
     colDate: "Date", colAgo: "Days ago", noRecentDone: "No completed tasks yet", noRecentShutdown: "No closed tasks yet",
     noOverdue: "No overdue tasks", noData: "No tasks yet. Create one in Tasks and the summary appears here.",
@@ -67,7 +70,7 @@ function visibleBins(list) {
   return (list || []).filter(function (b) { return !b.hidden; });
 }
 
-var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true, "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10 };
+var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true, "stats.recentPublishLimit": 10, "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10 };
 
 function TasksStatsView(props) {
   var lang = props.lang === "en" ? "en" : "zh";
@@ -127,6 +130,7 @@ function TasksStatsBody(props) {
     if (!silent) setLoading(true);
     var args = {
       top: cfgTop,
+      recentPublishLimit: cfgLimit("stats.recentPublishLimit"),
       recentDoneLimit: cfgLimit("stats.recentDoneLimit"),
       recentShutdownLimit: cfgLimit("stats.recentShutdownLimit"),
     };
@@ -246,7 +250,7 @@ function TasksStatsBody(props) {
         h(ch.DataTable, {
           rows: (data.rankings && data.rankings.tables) || [], lang: lang,
           columns: [
-            { key: "title", label: t.colName },
+            rankingName(t, lang, props.onNavigate, "table"),
             { key: "total", label: t.colTotal, num: true },
             { key: "open", label: t.colOpen, num: true },
             { key: "overdue", label: t.colOverdue, num: true },
@@ -257,7 +261,7 @@ function TasksStatsBody(props) {
         h(ch.DataTable, {
           rows: (data.rankings && data.rankings.groups) || [], lang: lang,
           columns: [
-            { key: "title", label: t.colName },
+            rankingName(t, lang, props.onNavigate, "group"),
             { key: "total", label: t.colTotal, num: true },
             { key: "open", label: t.colOpen, num: true },
             { key: "overdue", label: t.colOverdue, num: true },
@@ -266,9 +270,11 @@ function TasksStatsBody(props) {
         })));
 
       var recentCols = recentColumns(t, lang, props.onNavigate);
-      children.push(h(ch.Card, { key: "recentDone", span: 6, title: t.recentDone, note: t.recentDoneNote },
+      children.push(h(ch.Card, { key: "recentPublish", span: 4, title: t.recentPublish, note: t.recentPublishNote },
+        h(ch.DataTable, { rows: (data.lists && data.lists.recentPublish) || [], lang: lang, empty: t.noRecentPublish, columns: recentCols })));
+      children.push(h(ch.Card, { key: "recentDone", span: 4, title: t.recentDone, note: t.recentDoneNote },
         h(ch.DataTable, { rows: (data.lists && data.lists.recentDone) || [], lang: lang, empty: t.noRecentDone, columns: recentCols })));
-      children.push(h(ch.Card, { key: "recentShutdown", span: 6, title: t.recentShutdown, note: t.recentShutdownNote },
+      children.push(h(ch.Card, { key: "recentShutdown", span: 4, title: t.recentShutdown, note: t.recentShutdownNote },
         h(ch.DataTable, { rows: (data.lists && data.lists.recentShutdown) || [], lang: lang, empty: t.noRecentShutdown, columns: recentCols })));
     }
     children.push(h(ch.Warnings, { key: "warn", items: data.warnings || [] }));

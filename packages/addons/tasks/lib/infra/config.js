@@ -29,6 +29,7 @@ const SECTIONS = [
   { value: "overdue", zh: "逾期清单", en: "Overdue list" },
   { value: "tables", zh: "任务表排行", en: "Task tables" },
   { value: "groups", zh: "任务组排行", en: "Task groups" },
+  { value: "recentPublish", zh: "最近发布", en: "Recently published" },
   { value: "recentDone", zh: "最近完成", en: "Recently completed" },
   { value: "recentShutdown", zh: "最近关闭", en: "Recently closed" },
 ];
@@ -152,6 +153,11 @@ const ITEMS = [
     zh: "显示的区块", en: "Visible sections",
     hintZh: "统计页展示哪些区块；KPI 由下一项单独控制", hintEn: "Sections rendered on Stats; KPIs are controlled separately",
     values: SECTIONS,
+  },
+  {
+    id: "stats.recentPublishLimit", group: "stats", type: "int", surface: "ui", apply: "mount", default: 10, min: 1, max: 50,
+    zh: "最近发布条数", en: "Recently published rows",
+    hintZh: "「最近发布」区块显示多少条（1–50）", hintEn: "Rows in Recently published (1–50)",
   },
   {
     id: "stats.recentDoneLimit", group: "stats", type: "int", surface: "ui", apply: "mount", default: 10, min: 1, max: 50,

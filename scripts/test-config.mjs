@@ -49,6 +49,9 @@ const tasks = await load("../packages/addons/tasks/lib/index.js", "wb-addon-task
 const g0 = tasks.call("tasks.configGet");
 assert(g0.values["list.pageSize"] === 12, "tasks 默认分页应为 12");
 assert(g0.values["ui.defaultTab"] === 0, "tasks 默认页签应为 0");
+assert(g0.values["stats.recentPublishLimit"] === 10, "tasks 最近发布默认应为 10");
+assert(g0.values["stats.sections"].includes("recentPublish"), "最近发布默认可见");
+assert(g0.items.find(x => x.id === "stats.recentPublishLimit").group === "stats", "最近发布配置归属统计分组");
 assert(g0.values["stats.recentDoneLimit"] === 10, "tasks 最近完成默认应为 10");
 assert(g0.values["stats.recentShutdownLimit"] === 10, "tasks 最近关闭默认应为 10");
 assert(g0.values["ui.confirmDelete"] === true, "tasks 删除确认默认应为 true");
@@ -76,6 +79,13 @@ tasks.call("tasks.configReset", { ids: ["list.pageSize"] });
 assert(tasks.call("tasks.configGet").values["list.pageSize"] === 12, "configReset 未恢复默认");
 assert(!("list.pageSize" in tasks.call("tasks.configGet").overrides), "重置后不应再有覆盖项");
 
+// 新发布条数可配置，越界拒绝，重置回默认。
+for (const value of [0,51]) mustThrow(() => tasks.call("tasks.configSet", {values:{"stats.recentPublishLimit":value}}), "stats.recentPublishLimit", "最近发布条数越界应报错");
+tasks.call("tasks.configSet", {values:{"stats.recentPublishLimit":7}});
+assert(tasks.call("tasks.configGet").values["stats.recentPublishLimit"] === 7, "最近发布条数覆盖未生效");
+tasks.call("tasks.configReset", {ids:["stats.recentPublishLimit"]});
+assert(tasks.call("tasks.configGet").values["stats.recentPublishLimit"] === 10, "最近发布条数重置失败");
+
 // 5. 服务端读取：每周起始日影响统计分桶
 tasks.call("tasks.configSet", { values: { "stats.weekStartsOn": 0 } });
 assert(tasks.call("tasks.statsReport", { range: "90d" }).range.weekStartsOn === 0, "周起始日未生效");
@@ -96,6 +106,8 @@ tasks.call("tasks.configSet", { values: { "form.autoCreateTags": false } });
 mustThrow(() => tasks.call("tasks.create", { tableId: fixtureTableId, title: "配置测试任务", tags: ["绝不存在的标签"] }), "标签不存在", "未知标签应被拒绝");
 const created = tasks.call("tasks.create", { tableId: fixtureTableId, title: "配置测试任务" });
 assert(created.id || (created.task && created.task.id), "普通任务应能创建：" + JSON.stringify(created).slice(0, 200));
+const newPublication = tasks.call("tasks.statsReport", {range:"90d"}).lists.recentPublish[0];
+assert(newPublication.id === String(created.id || created.task.id) && newPublication.daysAgo === 0, "新建任务应出现在最近发布首行且距今天为0");
 
 // 6.1 最近完成 / 最近关闭清单
 const doneTask = tasks.call("tasks.create", { tableId: fixtureTableId, title: "完成过的任务", publishDate: "2026-01-01" });

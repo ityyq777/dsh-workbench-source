@@ -40,7 +40,7 @@ const fakeReact = {
 const config = {useConfig: () => ({ready: true, values: {'stats.sections': [], 'stats.showKpi': false}})};
 const charts = {makeCharts: () => new Proxy({colors: [], pct: String}, {get: (o,k) => k in o ? o[k] : String(k)})};
 const mod = {exports: {}};
-runInNewContext(readFileSync('packages/addons/tasks/client/views/stats.cjs', 'utf8'), {module: mod, require: name => name === 'react' ? fakeReact : name === './config.cjs' ? config : name === '../stats/charts.cjs' ? charts : name === '../stats/today.cjs' ? Today : name === '../stats/heatmap.cjs' ? 'Heatmap' : require('../packages/addons/tasks/client/item/recent-columns.cjs')});
+runInNewContext(readFileSync('packages/addons/tasks/client/views/stats.cjs', 'utf8'), {module: mod, require: name => name === 'react' ? fakeReact : name === './config.cjs' ? config : name === '../stats/charts.cjs' ? charts : name === '../stats/today.cjs' ? Today : name === '../stats/heatmap.cjs' ? 'Heatmap' : name === '../item/ranking-name.cjs' ? require('../packages/addons/tasks/client/item/ranking-name.cjs') : require('../packages/addons/tasks/client/item/recent-columns.cjs')});
 const calls = [];
 const api = {call: async (action, args) => {calls.push({action, args}); return {result: {today: snapshot, totals: {total: 0}}};}};
 const outer = mod.exports.TasksStatsView({api, lang: 'zh'});

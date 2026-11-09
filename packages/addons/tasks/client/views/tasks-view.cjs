@@ -29,6 +29,8 @@ module.exports = function createTasksView(deps) {
     var cfg = props.cfg || {};
     var activityNavigation = filters.navigation(props.viewParams);
     var tableNavigation = !activityNavigation && props.viewParams && props.viewParams.tableId;
+    var groupNavigation = !activityNavigation && !tableNavigation && props.viewParams && props.viewParams.groupId;
+    var nodeNavigation = tableNavigation || groupNavigation;
     var cfgTab = Number(cfg["ui.defaultTab"]);
     if ([0, 5, 6, 7, 8].indexOf(cfgTab) < 0) cfgTab = 0;
     var cfgSize = Math.floor(Number(cfg["list.pageSize"]));
@@ -43,19 +45,19 @@ module.exports = function createTasksView(deps) {
     var expS = React.useState(new Set());
     var expanded = expS[0], setExpanded = expS[1];
     var expInitRef = React.useRef(false);
-    var targetS = React.useState(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: "1", tableId: null });
+    var targetS = React.useState(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: groupNavigation ? String(groupNavigation) : "1", tableId: null });
     var target = targetS[0], setTarget = targetS[1];
     var pathS = React.useState([]);
     var currentPath = pathS[0], setCurrentPath = pathS[1];
-    var initialMissing = !activityNavigation && !tableNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
+    var initialMissing = !activityNavigation && !nodeNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
     var missingS = React.useState(initialMissing);
     var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
-    var filterState = React.useState(activityNavigation || filters.fromTab(tableNavigation || initialMissing ? 8 : cfgTab));
+    var filterState = React.useState(activityNavigation || filters.fromTab(nodeNavigation || initialMissing ? 8 : cfgTab));
     var filterValue = filterState[0], setFilterValue = filterState[1];
     var panelState = React.useState(false), panelOpen = panelState[0], setPanelOpen = panelState[1];
     var hintState = React.useState(""), filterHint = hintState[0], setFilterHint = hintState[1];
     var panelId = React.useId();
-    var viewS = React.useState(!tableNavigation && cfg["ui.listView"] === "card" ? "card" : "list");
+    var viewS = React.useState(!nodeNavigation && cfg["ui.listView"] === "card" ? "card" : "list");
     var view = viewS[0], setView = viewS[1];
     var searchS = React.useState("");
     var searchDraft = searchS[0], setSearchDraft = searchS[1];
@@ -113,8 +115,9 @@ module.exports = function createTasksView(deps) {
     var toast = toastS[0], setToast = toastS[1];
     var refreshRef = React.useRef({});
     React.useEffect(function () {
-      if (!activityNavigation) return;
-      setFilterValue(activityNavigation); setTarget({ groupId: "1", tableId: null });
+      if (!activityNavigation && !nodeNavigation) return;
+      setFilterValue(activityNavigation || filters.fromTab(8));
+      setTarget(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: groupNavigation ? String(groupNavigation) : "1", tableId: null });
       setDifficultyMissing(false); setFilterHint("");
       setSearchDraft(""); setTitleKey(""); setFilterTagIds([]); setPageNumber(1);
       setSelectedIds(new Set()); setSelectionMode(false);
@@ -145,10 +148,10 @@ module.exports = function createTasksView(deps) {
             expInitRef.current = true;
             var open = expandedByDepth(nodes, cfgDepth);
             function reveal(list, parents) { (list || []).forEach(function (n) {
-              if (String(n.id) === String(tableNavigation)) parents.forEach(function (id) { open.add(id); });
+              if (String(n.id) === String(nodeNavigation)) parents.forEach(function (id) { open.add(id); });
               reveal(n.children, parents.concat(String(n.id)));
             }); }
-            if (tableNavigation) reveal(nodes, []);
+            if (nodeNavigation) reveal(nodes, []);
             setExpanded(open);
           }
         } else setError((r && r.error) || "tree load failed");
@@ -170,7 +173,7 @@ module.exports = function createTasksView(deps) {
         tableId: target.tableId, groupId: target.tableId ? null : target.groupId,
         pageNumber: pageNumber, pageSize: pageSize,
         tagIds: filterTagIds, difficultyMissing: difficultyMissing,
-        sort: tableNavigation || cfgSort === "auto" ? undefined : cfgSort,
+        sort: nodeNavigation || cfgSort === "auto" ? undefined : cfgSort,
       }, filters.args(filterValue))).then(function (r) {
         setLoading(false);
         if (r && r.ok) {

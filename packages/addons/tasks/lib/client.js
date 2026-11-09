@@ -273,11 +273,11 @@ var require_charts = __commonJS({
         ".@-hbar-l{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}",
         ".@-trend{width:100%;height:auto;display:block}",
         ".@-tlegend{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
-        ".@-table{width:100%;border-collapse:collapse;font-size:12px}",
+        ".@-table-scroll{max-width:100%;overflow-x:auto}.@-table{width:100%;border-collapse:collapse;font-size:12px}",
         ".@-table th{text-align:left;font-weight:500;color:var(--dsw-alias-label-tertiary,#8f959e);padding:6px 8px;border-bottom:1px solid var(--dsw-alias-border-l2,#e5e6eb);white-space:nowrap}",
         ".@-table td{padding:7px 8px;border-bottom:1px solid var(--dsw-alias-border-l1,#f2f3f5);color:var(--dsw-alias-label-secondary,#646a73);vertical-align:top}",
         ".@-table tr:last-child td{border-bottom:0}",
-        ".@-table td.@-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}",
+        ".@-table th.@-num,.@-table td.@-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}",
         ".@-empty{padding:26px 8px;text-align:center;color:var(--dsw-alias-label-tertiary,#8f959e);font-size:12px}",
         ".@-err{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#d9534f) 8%,transparent);border:1px solid color-mix(in srgb,var(--dsw-alias-state-error-primary,#d9534f) 30%,transparent);color:var(--dsw-alias-state-error-primary,#d9534f);border-radius:10px;padding:10px 12px;font-size:12px}",
         ".@-warn{grid-column:span 12;border:1px dashed var(--dsw-alias-state-warn-primary,#d99100);border-radius:10px;padding:9px 12px;font-size:12px;color:var(--dsw-alias-state-warn-primary,#d99100);background:color-mix(in srgb,var(--dsw-alias-state-warn-primary,#d99100) 6%,transparent)}",
@@ -547,7 +547,7 @@ var require_charts = __commonJS({
         var cols = props.columns || [];
         var rows = props.rows || [];
         if (!rows.length) return h("div", { className: prefix + "-empty" }, props.empty || "\u6682\u65E0\u6570\u636E");
-        return h(
+        return h("div", { className: prefix + "-table-scroll", tabIndex: 0, role: "region", "aria-label": props.lang === "en" ? "Data table" : "\u6570\u636E\u8868\u683C" }, h(
           "table",
           { className: prefix + "-table" },
           h("thead", null, h("tr", null, cols.map(function(c) {
@@ -558,7 +558,7 @@ var require_charts = __commonJS({
               return h("td", { key: c.key, className: c.num ? prefix + "-num" : "" }, c.render ? c.render(row) : row[c.key]);
             }));
           }))
-        );
+        ));
       }
       function DateRangePicker(props) {
         var custom = props.custom || null;
@@ -1285,9 +1285,38 @@ var require_recent_columns = __commonJS({
             }
           }, row.tableTitle);
         } },
-        { key: "date", label: t.colDate },
-        { key: "daysAgo", label: t.colAgo, num: true }
+        { key: "date", label: t.colDate, render: function(row) {
+          return row.date || "\u2014";
+        } },
+        { key: "daysAgo", label: t.colAgo, num: true, render: function(row) {
+          return row.daysAgo == null ? "\u2014" : row.daysAgo;
+        } }
       ];
+    };
+  }
+});
+
+// packages/addons/tasks/client/item/ranking-name.cjs
+var require_ranking_name = __commonJS({
+  "packages/addons/tasks/client/item/ranking-name.cjs"(exports2, module2) {
+    var React = require("react");
+    var h = React.createElement;
+    module2.exports = function rankingName(t, lang, onNavigate, kind) {
+      var en = lang === "en", table = kind === "table";
+      return { key: "title", label: t.colName, render: function(row) {
+        if (!row.id || row.id === "__missing__" || row.id === "__ungrouped__") {
+          return h("span", { title: en ? "Deleted task table / unfiled; cannot open" : "\u5DF2\u5220\u9664\u4EFB\u52A1\u8868/\u672A\u5F52\u6863\uFF0C\u65E0\u6CD5\u6253\u5F00" }, row.title);
+        }
+        if (typeof onNavigate !== "function") return row.title;
+        return h("button", {
+          type: "button",
+          className: "wbt-table-link",
+          "aria-label": (en ? table ? "Open task table: " : "Open task group: " : table ? "\u6253\u5F00\u4EFB\u52A1\u8868\uFF1A" : "\u6253\u5F00\u4EFB\u52A1\u7EC4\uFF1A") + row.title,
+          onClick: function() {
+            onNavigate("tasks", table ? { tableId: String(row.id), groupId: row.groupId == null ? null : String(row.groupId), allTableTasks: true } : { groupId: String(row.id), tableId: null });
+          }
+        }, row.title);
+      } };
     };
   }
 });
@@ -1575,6 +1604,7 @@ var require_stats = __commonJS({
     var charts = require_charts();
     var configView = require_config();
     var recentColumns = require_recent_columns();
+    var rankingName = require_ranking_name();
     var Heatmap = require_heatmap();
     var Today = require_today();
     var COPY = {
@@ -1639,6 +1669,9 @@ var require_stats = __commonJS({
         colTarget: "\u8BA1\u5212\u5B8C\u6210",
         colAge: "\u903E\u671F\u5929\u6570",
         colTable: "\u4EFB\u52A1\u8868",
+        recentPublish: "\u6700\u8FD1\u53D1\u5E03",
+        recentPublishNote: "\u6309\u53D1\u5E03\u65E5\u671F\u5012\u5E8F",
+        noRecentPublish: "\u8FD8\u6CA1\u6709\u53D1\u5E03\u7684\u4EFB\u52A1",
         recentDone: "\u6700\u8FD1\u5B8C\u6210",
         recentDoneNote: "\u6309\u5B8C\u6210\u65E5\u671F\u5012\u5E8F",
         recentShutdown: "\u6700\u8FD1\u5173\u95ED",
@@ -1714,6 +1747,9 @@ var require_stats = __commonJS({
         colTarget: "Target",
         colAge: "Days late",
         colTable: "Table",
+        recentPublish: "Recently published",
+        recentPublishNote: "Newest publication first",
+        noRecentPublish: "No published tasks yet",
         recentDone: "Recently completed",
         recentDoneNote: "Newest completion first",
         recentShutdown: "Recently closed",
@@ -1735,7 +1771,7 @@ var require_stats = __commonJS({
         return !b.hidden;
       });
     }
-    var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true, "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10 };
+    var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true, "stats.recentPublishLimit": 10, "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10 };
     function TasksStatsView(props) {
       var lang = props.lang === "en" ? "en" : "zh";
       var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -1796,6 +1832,7 @@ var require_stats = __commonJS({
         if (!silent) setLoading(true);
         var args = {
           top: cfgTop,
+          recentPublishLimit: cfgLimit("stats.recentPublishLimit"),
           recentDoneLimit: cfgLimit("stats.recentDoneLimit"),
           recentShutdownLimit: cfgLimit("stats.recentShutdownLimit")
         };
@@ -1962,7 +1999,7 @@ var require_stats = __commonJS({
               rows: data.rankings && data.rankings.tables || [],
               lang,
               columns: [
-                { key: "title", label: t.colName },
+                rankingName(t, lang, props.onNavigate, "table"),
                 { key: "total", label: t.colTotal, num: true },
                 { key: "open", label: t.colOpen, num: true },
                 { key: "overdue", label: t.colOverdue, num: true },
@@ -1979,7 +2016,7 @@ var require_stats = __commonJS({
               rows: data.rankings && data.rankings.groups || [],
               lang,
               columns: [
-                { key: "title", label: t.colName },
+                rankingName(t, lang, props.onNavigate, "group"),
                 { key: "total", label: t.colTotal, num: true },
                 { key: "open", label: t.colOpen, num: true },
                 { key: "overdue", label: t.colOverdue, num: true },
@@ -1992,12 +2029,17 @@ var require_stats = __commonJS({
           var recentCols = recentColumns(t, lang, props.onNavigate);
           children.push(h(
             ch.Card,
-            { key: "recentDone", span: 6, title: t.recentDone, note: t.recentDoneNote },
+            { key: "recentPublish", span: 4, title: t.recentPublish, note: t.recentPublishNote },
+            h(ch.DataTable, { rows: data.lists && data.lists.recentPublish || [], lang, empty: t.noRecentPublish, columns: recentCols })
+          ));
+          children.push(h(
+            ch.Card,
+            { key: "recentDone", span: 4, title: t.recentDone, note: t.recentDoneNote },
             h(ch.DataTable, { rows: data.lists && data.lists.recentDone || [], lang, empty: t.noRecentDone, columns: recentCols })
           ));
           children.push(h(
             ch.Card,
-            { key: "recentShutdown", span: 6, title: t.recentShutdown, note: t.recentShutdownNote },
+            { key: "recentShutdown", span: 4, title: t.recentShutdown, note: t.recentShutdownNote },
             h(ch.DataTable, { rows: data.lists && data.lists.recentShutdown || [], lang, empty: t.noRecentShutdown, columns: recentCols })
           ));
         }
@@ -6692,6 +6734,8 @@ var require_tasks_view = __commonJS({
         var cfg = props.cfg || {};
         var activityNavigation = filters.navigation(props.viewParams);
         var tableNavigation = !activityNavigation && props.viewParams && props.viewParams.tableId;
+        var groupNavigation = !activityNavigation && !tableNavigation && props.viewParams && props.viewParams.groupId;
+        var nodeNavigation = tableNavigation || groupNavigation;
         var cfgTab = Number(cfg["ui.defaultTab"]);
         if ([0, 5, 6, 7, 8].indexOf(cfgTab) < 0) cfgTab = 0;
         var cfgSize = Math.floor(Number(cfg["list.pageSize"]));
@@ -6705,19 +6749,19 @@ var require_tasks_view = __commonJS({
         var expS = React.useState(/* @__PURE__ */ new Set());
         var expanded = expS[0], setExpanded = expS[1];
         var expInitRef = React.useRef(false);
-        var targetS = React.useState(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: "1", tableId: null });
+        var targetS = React.useState(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: groupNavigation ? String(groupNavigation) : "1", tableId: null });
         var target = targetS[0], setTarget = targetS[1];
         var pathS = React.useState([]);
         var currentPath = pathS[0], setCurrentPath = pathS[1];
-        var initialMissing = !activityNavigation && !tableNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
+        var initialMissing = !activityNavigation && !nodeNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
         var missingS = React.useState(initialMissing);
         var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
-        var filterState = React.useState(activityNavigation || filters.fromTab(tableNavigation || initialMissing ? 8 : cfgTab));
+        var filterState = React.useState(activityNavigation || filters.fromTab(nodeNavigation || initialMissing ? 8 : cfgTab));
         var filterValue = filterState[0], setFilterValue = filterState[1];
         var panelState = React.useState(false), panelOpen = panelState[0], setPanelOpen = panelState[1];
         var hintState = React.useState(""), filterHint = hintState[0], setFilterHint = hintState[1];
         var panelId = React.useId();
-        var viewS = React.useState(!tableNavigation && cfg["ui.listView"] === "card" ? "card" : "list");
+        var viewS = React.useState(!nodeNavigation && cfg["ui.listView"] === "card" ? "card" : "list");
         var view = viewS[0], setView = viewS[1];
         var searchS = React.useState("");
         var searchDraft = searchS[0], setSearchDraft = searchS[1];
@@ -6775,9 +6819,9 @@ var require_tasks_view = __commonJS({
         var toast = toastS[0], setToast = toastS[1];
         var refreshRef = React.useRef({});
         React.useEffect(function() {
-          if (!activityNavigation) return;
-          setFilterValue(activityNavigation);
-          setTarget({ groupId: "1", tableId: null });
+          if (!activityNavigation && !nodeNavigation) return;
+          setFilterValue(activityNavigation || filters.fromTab(8));
+          setTarget(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: groupNavigation ? String(groupNavigation) : "1", tableId: null });
           setDifficultyMissing(false);
           setFilterHint("");
           setSearchDraft("");
@@ -6822,7 +6866,7 @@ var require_tasks_view = __commonJS({
               if (!expInitRef.current) {
                 let reveal2 = function(list, parents) {
                   (list || []).forEach(function(n) {
-                    if (String(n.id) === String(tableNavigation)) parents.forEach(function(id) {
+                    if (String(n.id) === String(nodeNavigation)) parents.forEach(function(id) {
                       open.add(id);
                     });
                     reveal2(n.children, parents.concat(String(n.id)));
@@ -6831,7 +6875,7 @@ var require_tasks_view = __commonJS({
                 var reveal = reveal2;
                 expInitRef.current = true;
                 var open = expandedByDepth(nodes, cfgDepth);
-                if (tableNavigation) reveal2(nodes, []);
+                if (nodeNavigation) reveal2(nodes, []);
                 setExpanded(open);
               }
             } else setError(r && r.error || "tree load failed");
@@ -6864,7 +6908,7 @@ var require_tasks_view = __commonJS({
             pageSize,
             tagIds: filterTagIds,
             difficultyMissing,
-            sort: tableNavigation || cfgSort === "auto" ? void 0 : cfgSort
+            sort: nodeNavigation || cfgSort === "auto" ? void 0 : cfgSort
           }, filters.args(filterValue))).then(function(r) {
             setLoading(false);
             if (r && r.ok) {
@@ -8466,15 +8510,16 @@ var require_timeline_view = __commonJS({
     "stats.range": "30d",
     "stats.top": 10,
     "stats.showKpi": true,
+    "stats.recentPublishLimit": 10,
     "stats.recentDoneLimit": 10,
     "stats.recentShutdownLimit": 10,
-    "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "recentDone", "recentShutdown"]
+    "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "recentPublish", "recentDone", "recentShutdown"]
   };
   var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, TABS, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.4.0",
+    version: "3.4.1",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

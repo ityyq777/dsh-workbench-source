@@ -300,8 +300,9 @@ export function statsReport(db, args, api) {
     const n = Number(value);
     return Number.isFinite(n) ? Math.max(1, Math.min(50, Math.floor(n))) : 10;
   }
-  const recentDoneLimit = limitOf(args.recentDoneLimit);
-  const recentShutdownLimit = limitOf(args.recentShutdownLimit);
+  const recentPublishLimit = limitOf(input.recentPublishLimit);
+  const recentDoneLimit = limitOf(input.recentDoneLimit);
+  const recentShutdownLimit = limitOf(input.recentShutdownLimit);
   const recentTable = function (tableId) {
     const table = nodeMap[String(tableId)];
     return {
@@ -312,6 +313,21 @@ export function statsReport(db, args, api) {
     };
   };
   const todayStart = startOfDay(new Date());
+  const recentPublishRows = db.prepare(
+    "SELECT id,title,publish_date,table_id,difficulty FROM task WHERE deleted_at IS NULL " +
+      "ORDER BY (publish_date IS NULL OR publish_date=''), publish_date DESC, updated_at DESC, id DESC LIMIT ?",
+  ).all(recentPublishLimit);
+  const recentPublish = recentPublishRows.map(function (row) {
+    const day = parseDay(String(row.publish_date || ""));
+    return {
+      id: String(row.id),
+      title: String(row.title || ""),
+      date: String(row.publish_date || ""),
+      daysAgo: day ? Math.max(0, diffDays(day, todayStart)) : null,
+      difficulty: Number(row.difficulty) || 0,
+      ...recentTable(row.table_id),
+    };
+  });
   const recentDoneRows = db.prepare(
     "SELECT id,title,done_date,table_id,difficulty FROM task WHERE deleted_at IS NULL AND status='2' " +
       "ORDER BY (done_date IS NULL OR done_date=''), done_date DESC, updated_at DESC, id DESC LIMIT ?",
@@ -448,7 +464,7 @@ export function statsReport(db, args, api) {
       tables: rank(Object.keys(tableAgg).map(function (k) { return tableAgg[k]; })),
       groups: rank(Object.keys(groupAgg).map(function (k) { return groupAgg[k]; })),
     },
-    lists: { overdue: overdueList, recentDone: recentDone, recentShutdown: recentShutdown },
+    lists: { overdue: overdueList, recentPublish: recentPublish, recentDone: recentDone, recentShutdown: recentShutdown },
     warnings: warnings,
   };
 }

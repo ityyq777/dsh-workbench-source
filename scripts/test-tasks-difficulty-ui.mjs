@@ -54,7 +54,7 @@ for(const status of ['0','1','2','3'])for(const card of [true,false])for(const d
 const config={useConfig:()=>({ready:true,values:{}})};
 const charts={makeCharts:()=>new Proxy({colors:[],pct:n=>String(n)},{get:(o,k)=>k in o?o[k]:String(k)})};
 const mod={exports:{}};
-runInNewContext(readFileSync('packages/addons/tasks/client/views/stats.cjs','utf8'),{module:mod,require:n=>n==='react'?React:n==='./config.cjs'?config:n==='../item/recent-columns.cjs'?require(dir+'item/recent-columns.cjs'):charts});
+runInNewContext(readFileSync('packages/addons/tasks/client/views/stats.cjs','utf8'),{module:mod,require:n=>n==='react'?React:n==='./config.cjs'?config:n==='../item/ranking-name.cjs'?require(dir+'item/ranking-name.cjs'):n==='../item/recent-columns.cjs'?require(dir+'item/recent-columns.cjs'):charts});
 for(const lang of ['zh','en']) {
   reset();let navigation;const props={lang,api:{call:async()=>({result:{totals:{total:5},breakdowns:{difficulty:[{key:'unset',count:2,hidden:true},{key:'3',count:3}]}}})},onNavigate:(...args)=>navigation=args};
   const outer=mod.exports.TasksStatsView(props), Body=outer.type;

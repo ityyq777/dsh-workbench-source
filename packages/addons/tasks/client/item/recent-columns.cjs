@@ -18,7 +18,7 @@ module.exports = function recentColumns(t, lang, onNavigate) {
         onClick: function () { onNavigate("tasks", { tableId: String(row.tableId), groupId: row.groupId == null ? null : String(row.groupId), allTableTasks: true }); }
       }, row.tableTitle);
     } },
-    { key: "date", label: t.colDate },
-    { key: "daysAgo", label: t.colAgo, num: true },
+    { key: "date", label: t.colDate, render: function (row) { return row.date || "—"; } },
+    { key: "daysAgo", label: t.colAgo, num: true, render: function (row) { return row.daysAgo == null ? "—" : row.daysAgo; } },
   ];
 };

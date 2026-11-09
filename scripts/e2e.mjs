@@ -37,6 +37,7 @@ const tests = [
   "scripts/test-task-filter-bar-ui.mjs",
   "scripts/test-task-today-stats-backend.mjs",
   "scripts/test-task-recent-ui.mjs",
+  "scripts/test-task-ranking-ui.mjs",
   "scripts/test-tasks-difficulty-ui.mjs",
   "scripts/test-tasks-search.mjs",
   "scripts/test-tasks-date-ui.mjs",

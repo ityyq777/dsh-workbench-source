@@ -32,7 +32,7 @@ function load(path, dependencies) {
 const charts = load('../packages/addons/tasks/client/stats/charts.cjs', {react:React});
 const view = load('../packages/addons/tasks/client/views/stats.cjs', {
   react:React, '../stats/charts.cjs':charts, './config.cjs':{useConfig:()=>({ready:true,values:{}})},
-  '../item/recent-columns.cjs':()=>[], '../stats/heatmap.cjs':()=>null, '../stats/today.cjs':()=>null,
+  '../item/recent-columns.cjs':()=>[], '../item/ranking-name.cjs':()=>({key:'title'}), '../stats/heatmap.cjs':()=>null, '../stats/today.cjs':()=>null,
 });
 function nodes(node) { return node && typeof node==='object' ? [node,...(node.children||[]).flatMap(nodes)] : []; }
 for (const lang of ['zh','en']) for (const counts of [[0,2,3],[2,0,3],[0,0,0]]) {
