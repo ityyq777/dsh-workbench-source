@@ -57,6 +57,31 @@ function requireKnownTagNames(db, tagNames) {
   }
 }
 
+/**
+ * 标签域（dsh-workbench-tags）是可选能力：没装时任务照常读写，只是忽略标签参数，
+ * 并在回执里带一条 notices，让调用方知道「标签没处理」而不是「任务没写成」。
+ */
+const TAG_DOMAIN_NOTICE = {
+  code: "tag_domain_missing",
+  field: "tags",
+  message: "标签模块没有安装，无法处理标签数据；本次已忽略 tags/tagIds/addTags/removeTags",
+};
+
+function hasTagArgs(source) {
+  return source.tagIds !== undefined || source.tags !== undefined
+    || source.addTagIds !== undefined || source.addTags !== undefined
+    || source.removeTagIds !== undefined || source.removeTags !== undefined;
+}
+
+function tagMissingNotices(source, available) {
+  return available || !hasTagArgs(source) ? [] : [Object.assign({}, TAG_DOMAIN_NOTICE)];
+}
+
+function withNotices(result, notices) {
+  if (notices && notices.length) result.notices = notices;
+  return result;
+}
+
 const STATUSES = ["0", "1", "2", "3"];
 const SOURCES = { TASK_TABLE: "0", TASK_TIMELINE: "1", TASK_RESTART: "2" };
 const PUT_TYPES = { STATUS: "0", PRIORITY: "1", TITLE: "2", DESCRIPTION: "3", REVIEW: "4" };
@@ -344,7 +369,7 @@ function createTask(db, args, origin, api, opts) {
     if (existing) {
       const task = outOne(db, existing);
       attachTags(db, api, task);
-      return { id: String(existing.id), task: task, deduped: true, existing: true };
+      return withNotices({ id: String(existing.id), task: task, deduped: true, existing: true }, tagMissingNotices(args, tagsAvailable(db, api)));
     }
   }
   const source = sourceCode(args.source);
@@ -390,9 +415,10 @@ function createTask(db, args, origin, api, opts) {
   const tagIds = args.tagIds === undefined || args.tagIds === null ? null : normalizeTagIds(args.tagIds);
   // 允许直接传标签名（如 ["工作","紧急"]），缺失的标签按名补建。
   const tagNames = normalizeTagNames(args.tags);
-  requireKnownTagNames(db, tagNames);
-  if (tagIds && tagsAvailable(db, api)) {
-    requireTagRows(db, tagIds);
+  const tagOn = tagsAvailable(db, api);
+  if (tagOn) {
+    requireKnownTagNames(db, tagNames);
+    if (tagIds) requireTagRows(db, tagIds);
   }
 
   const id = newId();
@@ -451,7 +477,7 @@ function createTask(db, args, origin, api, opts) {
       }
     }
     insertTaskRow(db, row);
-    if ((tagIds || tagNames.length) && tagsAvailable(db, api)) {
+    if ((tagIds || tagNames.length) && tagOn) {
       const all = (tagIds || []).slice();
       for (const tagId of ensureTagsByNames(db, tagNames, ts, origin)) {
         if (all.indexOf(tagId) < 0) all.push(tagId);
@@ -466,7 +492,7 @@ function createTask(db, args, origin, api, opts) {
 
   const task = outOne(db, row);
   attachTags(db, api, task);
-  return { id: id, task: task, deduped: false };
+  return withNotices({ id: id, task: task, deduped: false }, tagMissingNotices(args, tagOn));
 }
 
 /** 当前任务挂着的标签 id（未删除）。 */
@@ -580,14 +606,14 @@ function updateTask(db, args, origin, api) {
   const wantsTagWrite = args.tagIds !== undefined || args.tags !== undefined
     || args.addTagIds !== undefined || args.addTags !== undefined
     || args.removeTagIds !== undefined || args.removeTags !== undefined;
-  if (wantsTagWrite && !tagsAvailable(db, api)) throw new Error("标签域未安装（未安装 dsh-workbench-tags 插件），无法写标签；去掉 tags/tagIds/addTags 等标签参数即可继续");
-  const desiredTags = wantsTagWrite ? resolveTagPatch(db, next, args, ts, origin, false) : null;
+  const tagWritable = tagsAvailable(db, api);
+  const desiredTags = wantsTagWrite && tagWritable ? resolveTagPatch(db, next, args, ts, origin, false) : null;
   saveTaskRow(db, next);
   if (desiredTags) replaceTaskTags(db, String(next.id), desiredTags, ts, origin);
   writeChange(db, next, "update", origin, api, ts);
   const task = outOne(db, next);
   attachTags(db, api, task);
-  return { task: task };
+  return withNotices({ task: task }, tagMissingNotices(args, tagWritable));
 }
 
 /** bulk* 系列允许直接写的字段（与 tasks.update 的自由字段一致）。 */
@@ -685,7 +711,7 @@ function bulkUpdate(db, args, origin, api) {
   const wantsTagWrite = patch.tagIds !== undefined || patch.tags !== undefined
     || patch.addTagIds !== undefined || patch.addTags !== undefined
     || patch.removeTagIds !== undefined || patch.removeTags !== undefined;
-  if (wantsTagWrite && !tagsAvailable(db, api)) throw new Error("标签域未安装（未安装 dsh-workbench-tags 插件），无法写标签；去掉 tags/tagIds/addTags 等标签参数即可继续");
+  const tagWritable = tagsAvailable(db, api);
   const dryRun = args.dryRun === true;
   const skipMissing = args.skipMissing === true;
   const ts = now();
@@ -703,7 +729,7 @@ function bulkUpdate(db, args, origin, api) {
       }
       const next = applyPatchRow(db, cur, patch, ts);
       // 标签名只在真正写入时补建；dryRun 只认已存在的同名标签。
-      const desired = wantsTagWrite ? resolveTagPatch(db, cur, patch, ts, origin, dryRun) : null;
+      const desired = wantsTagWrite && tagWritable ? resolveTagPatch(db, cur, patch, ts, origin, dryRun) : null;
       const diff = diffRow(cur, next);
       if (desired) diff.tagIds = { from: currentTaskTagIds(db, id), to: desired };
       changes.push({ id: id, changes: diff });
@@ -716,13 +742,13 @@ function bulkUpdate(db, args, origin, api) {
   };
   if (dryRun) plan();
   else tx(db, plan);
-  return {
+  return withNotices({
     dryRun: dryRun,
     updated: dryRun ? 0 : changes.length,
     wouldUpdate: dryRun ? changes.length : undefined,
     changes: changes,
     missing: missing,
-  };
+  }, tagMissingNotices(patch, tagWritable));
 }
 
 function bulkCreate(db, args, origin, api) {
@@ -864,7 +890,7 @@ function listTasks(db, args, api) {
     const prefix = String(group.path || "") + "%";
     const tables = db.prepare("SELECT id FROM task_node WHERE type='1' AND deleted_at IS NULL AND path LIKE ?").all(prefix);
     if (!tables.length) {
-      return { records: [], current: 1, size: null, total: 0, returned: 0, truncated: false, pageable: false, pageSize: null };
+      return withNotices({ records: [], current: 1, size: null, total: 0, returned: 0, truncated: false, pageable: false, pageSize: null }, listNotices);
     }
     where.push("t.table_id IN (" + tables.map(function () { return "?"; }).join(",") + ")");
     for (const t of tables) params.push(String(t.id));
@@ -892,9 +918,14 @@ function listTasks(db, args, api) {
     const name = LEGACY_TYPE_TAGS[c];
     if (filterTagNames.indexOf(name) < 0) filterTagNames.push(name);
   }
+  const listNotices = [];
   if (filterTagNames.length) {
-    if (!tagAvailable) throw new Error("标签域未安装（未安装 dsh-workbench-tags 插件），无法按标签过滤；去掉 tagIds/tags/checkedTypes 参数即可继续");
-    const resolved = tagIdsByNames(db, filterTagNames);
+    if (!tagAvailable) {
+      // 可选能力缺失：不报错，按「筛不到任何任务」处理，并在回执里说明原因。
+      listNotices.push(Object.assign({}, TAG_DOMAIN_NOTICE));
+      where.push("1=0");
+    }
+    const resolved = tagAvailable ? tagIdsByNames(db, filterTagNames) : { ids: [] };
     for (const id of resolved.ids) if (filterTagIds.indexOf(id) < 0) filterTagIds.push(id);
     if (!resolved.ids.length) where.push("1=0");
   }
@@ -924,9 +955,10 @@ function listTasks(db, args, api) {
     where.push("t.target_date<=?");
     params.push(targetTo);
   }
-  if (filterTagIds.length) {
-    // 未安装标签插件时 tagIds 分支若直接拼 SQL，会抛 SQLite 底层错误（ERR_SQLITE_ERROR），必须提前说人话。
-    if (!tagAvailable) throw new Error("标签域未安装（未安装 dsh-workbench-tags 插件），无法按标签过滤；去掉 tagIds/tags/checkedTypes 参数即可继续");
+  if (filterTagIds.length && !tagAvailable) {
+    if (!listNotices.length) listNotices.push(Object.assign({}, TAG_DOMAIN_NOTICE));
+    where.push("1=0");
+  } else if (filterTagIds.length) {
     where.push("EXISTS (SELECT 1 FROM tag_mapping tm WHERE tm.item_type='task' AND tm.item_id=t.id AND tm.deleted_at IS NULL AND tm.tag_id IN (" + filterTagIds.map(function () { return "?"; }).join(",") + "))");
     for (const id of filterTagIds) params.push(id);
   }
@@ -1051,7 +1083,7 @@ function listTasks(db, args, api) {
   if (args.sort) filter.sort = String(args.sort) + (args.order ? " " + String(args.order) : "");
   if (!filterRestarted && (tab === 5 || tab === 8)) filter.filterRestarted = false;
   if (!tabAll) filter.tabGiven = true;
-  return {
+  return withNotices({
     records,
     current: pageable ? pageNumber : 1,
     size: pageable ? pageSize : returned,
@@ -1061,7 +1093,7 @@ function listTasks(db, args, api) {
     pageable,
     pageSize: pageable ? pageSize : null,
     filter,
-  };
+  }, listNotices);
 }
 
 function selectedTasks(db, args) {
@@ -1198,7 +1230,9 @@ function stats(db, args, api) {
   if (from) { where.push("t.target_date>=?"); params.push(from); }
   if (to) { where.push("t.target_date<=?"); params.push(to); }
   if (byTag) {
-    if (!tagsAvailable(db, api)) throw new Error("标签域未安装（未安装 dsh-workbench-tags 插件），无法按标签分组；去掉 groupBy=tag 即可继续");
+    if (!tagsAvailable(db, api)) {
+      return withNotices(Object.assign({}, base, { groups: [], available: false }), [Object.assign({}, TAG_DOMAIN_NOTICE)]);
+    }
     const tagStmt = db.prepare(
       "SELECT g.id AS k, g.name AS label, COUNT(DISTINCT t.id) AS n FROM task t " +
         "JOIN tag_mapping m ON m.item_type='task' AND m.item_id=t.id AND m.deleted_at IS NULL " +
@@ -1526,8 +1560,8 @@ export function registerTaskActions(api) {
         timelineKey: { type: ["string", "number"], description: "source=1 必填" },
         restartKey: { type: ["string", "number"], description: "source=2 必填：原任务 id" },
         originTaskId: { type: ["string", "number"], description: "restartKey 的别名" },
-        tagIds: { type: "array", items: { type: "string" }, description: "创建时挂标签（需要标签域）；id 必须已存在，否则报错并列出可用标签（不会按 id 自动创建）" },
-        tags: { type: "array", items: { type: "string" }, description: "创建时按标签名挂标签；默认自动创建未知名字，form.autoCreateTags=false 时未知名字报错并列出可用标签" },
+        tagIds: { type: "array", items: { type: "string" }, description: "创建时挂标签（需要标签域；未安装时忽略并在回执 notices 说明）；id 必须已存在，否则报错并列出可用标签" },
+        tags: { type: "array", items: { type: "string" }, description: "创建时按标签名挂标签；默认自动创建未知名字，form.autoCreateTags=false 时未知名字报错并列出可用标签；标签域未安装时忽略并回执 notices" },
         dedupeKey: { type: "string", description: "幂等键：同键未删除任务存在时直接返回已有任务（deduped:true）" },
         sort: { type: "number", description: "手动排序值（默认 0）" },
       },

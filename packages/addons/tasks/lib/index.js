@@ -42,7 +42,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/配置/数据四个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "2.10.8",
+        version: "2.10.9",
         tables: ["task", "task_dep", "task_node"],
         sync: taskSync,
         views: [
@@ -53,7 +53,6 @@ export function apply(ctx) {
         ],
         capability: {
           summary: "记录可执行、可交付的工作项（任务），支持任务树、时间线、重启链与依赖。",
-          requires: ["wb-addon-tags"],
           records: [
             {
               kind: "task",
@@ -120,6 +119,7 @@ export function apply(ctx) {
             "restart_key = 重启链的链首任务 id：普通任务等于自身 id，source=2 的新任务继承原任务；同一 restart_key 的任务按 publishDate 组成一条重启链，用 tasks.restart 读取。",
             "timeline_key = 时间线分组键：普通任务等于自身 id，source=1 显式传入，重启任务继承原任务的时间线；同一 timeline_key 的任务按 publishDate 组成时间线，用 tasks.timeline 读取，tasks.timelineRefactor 可批量归并。",
             "优先级不变量：已开启任务 P1..P10（创建默认 1，显式 0 报错）；关闭/完成/已重启一律 P0，写入 0..10 都会被忽略。旧库启动时自动回填（关闭态清零、开启态 0→1），幂等。",
+            "标签域是可选能力：未安装时不阻断任务读写，写入忽略 tags/tagIds/addTags/removeTags 并在回执带 notices（code=tag_domain_missing）；读侧省略 tags 字段、按标签筛选返回空结果、tasks.tags available=false。",
             "任务标题不唯一：允许同名，用 id 区分；与「标签名唯一」「任务节点名同级唯一」是不同规则。",
             "任务没有「类型」字段：工作/生活/学习/开发 已迁成同名标签，用 tags 或 tagIds 归类。",
             "标签写入规则：tags/addTags 传名字，默认自动创建未知名字（配置 form.autoCreateTags 关掉后改为报错并列出可用标签）；tagIds/addTagIds 传 id，必须已存在，否则报错并列出可用标签；create/update/bulkCreate/bulkUpdate 共用同一套校验。",

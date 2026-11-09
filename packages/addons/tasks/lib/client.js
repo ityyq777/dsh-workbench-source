@@ -3666,6 +3666,13 @@ var h = React.createElement;
       needDifficulty: "Pick a difficulty"
     }
   };
+  function hostHasAddon(id) {
+    var list = host.addons;
+    if (!Array.isArray(list)) return true;
+    return list.some(function(a) {
+      return a && a.id === id && a.enabled !== false;
+    });
+  }
   var TABS = [
     { id: 0, zh: "\u7D27\u6025\u4EFB\u52A1", en: "Urgent" },
     { id: 5, zh: "\u5DF2\u5173\u95ED", en: "Closed" },
@@ -4569,9 +4576,9 @@ var h = React.createElement;
           h2("label", { className: "wbt-field full" }, h2("span", null, t.desc), h2("textarea", { className: "wbt-textarea", rows: 2, value: form.description, onChange: function(e) {
             set("description", e.target.value);
           } })),
-          h2("label", { className: "wbt-field full" }, h2("span", null, t.tags), h2("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function(e) {
+          hostHasAddon("wb-addon-tags") ? h2("label", { className: "wbt-field full" }, h2("span", null, t.tags), h2("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function(e) {
             set("tags", e.target.value);
-          } })),
+          } })) : null,
           h2("label", { className: "wbt-field" }, h2("span", null, t.status), h2(
             "select",
             { className: "wbt-select", value: source === "2" ? "0" : form.status, disabled: source === "2", onChange: function(e) {
@@ -5842,7 +5849,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.10.8",
+    version: "2.10.9",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

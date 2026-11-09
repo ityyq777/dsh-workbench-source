@@ -6,6 +6,9 @@ import { join } from "node:path";
 const dir = mkdtempSync(join(tmpdir(), "wb-config-"));
 const db = new DatabaseSync(join(dir, "config.db"));
 db.exec("CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT NOT NULL)");
+// 标签表存在才算标签域可用（tagsAvailable 同时检查 hasAddon 与表）；本用例要验证标签名校验。
+db.exec("CREATE TABLE IF NOT EXISTS tag (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, deleted_at INTEGER, rev INTEGER NOT NULL DEFAULT 1)");
+db.exec("CREATE TABLE IF NOT EXISTS tag_mapping (id TEXT PRIMARY KEY, tag_id TEXT NOT NULL, item_id TEXT NOT NULL, item_type TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, deleted_at INTEGER, rev INTEGER NOT NULL DEFAULT 1)");
 db.exec("CREATE TABLE IF NOT EXISTS sync_change_log (seq INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT NOT NULL, row_id TEXT NOT NULL, op TEXT NOT NULL, payload TEXT, origin TEXT NOT NULL, updated_at INTEGER NOT NULL)");
 
 const events = [];
@@ -19,6 +22,7 @@ async function load(rel, id, opts) {
     emit: function (event, data) { events.push({ event, data }); },
     action: function (name, def) { defs[name] = def; },
     tool: function () {},
+    hasDomain: function (x) { return !!(opts && opts.tags) && x === "wb-addon-tags"; },
     hasAddon: function (x) { return !!(opts && opts.tags) && x === "wb-addon-tags"; },
   };
   const mod = await import(rel);

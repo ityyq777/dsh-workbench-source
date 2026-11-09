@@ -63,28 +63,48 @@ async function runMode() {
   assert(!domains.includes("wb-addon-tags"), "本测试不应装载标签域");
 
   const cap = await call("capabilities.get", { domain: "wb-addon-" + mode });
-  assert(cap.text.includes("依赖未安装"), mode + " 能力清单未提示依赖未安装");
-  assert(
-    Array.isArray(cap.result.capability.requires) && cap.result.capability.requires.includes("wb-addon-tags"),
-    mode + " 能力未声明 requires",
-  );
-  assert(
-    Array.isArray(cap.result.capability.missingRequires) && cap.result.capability.missingRequires.includes("wb-addon-tags"),
-    mode + " 未计算 missingRequires",
-  );
-  assert(cap.result.warnings.some((w) => String(w).includes("依赖未安装")), mode + " warnings 未包含依赖提示");
+  if (mode === "sites") {
+    // 站点把标签当强依赖：缺域时声明 requires 并在 warnings 里提示。
+    assert(cap.text.includes("依赖未安装"), mode + " 能力清单未提示依赖未安装");
+    assert(
+      Array.isArray(cap.result.capability.requires) && cap.result.capability.requires.includes("wb-addon-tags"),
+      mode + " 能力未声明 requires",
+    );
+    assert(
+      Array.isArray(cap.result.capability.missingRequires) && cap.result.capability.missingRequires.includes("wb-addon-tags"),
+      mode + " 未计算 missingRequires",
+    );
+    assert(cap.result.warnings.some((w) => String(w).includes("依赖未安装")), mode + " warnings 未包含依赖提示");
+  } else {
+    // 任务把标签当可选能力：不声明 requires，缺域也不告警。
+    assert(!cap.result.capability.requires || !cap.result.capability.requires.includes("wb-addon-tags"), "任务不应把标签声明为 requires");
+    assert(!cap.result.warnings.some((w) => String(w).includes("依赖未安装")), "任务缺标签域不应产生依赖告警");
+  }
 
   if (mode === "tasks") {
-    const created = await call("tasks.create", { title: "无标签域任务", priority: 3 });
+    // 任务：标签是可选能力，缺域时写入照常，只跳过标签并回执 notices。
+    const created = await call("tasks.create", { title: "无标签域任务", priority: 3, tags: ["工作"], tagIds: ["t1"] });
     assert(created.result.id, "无标签域时 tasks.create 应当正常");
+    assert((created.result.notices || []).some((n) => n.code === "tag_domain_missing"), "创建回执缺少 tag_domain_missing");
+    assert(!("tags" in created.result.task) && !("tagIds" in created.result.task), "缺域时不应回显 tags 字段");
 
-    await expectError("tasks.list", { tagIds: ["t1"] }, "标签域未安装");
-    await expectError("tasks.list", { tags: ["工作"] }, "标签域未安装");
-    await expectError("tasks.update", { id: created.result.id, tagIds: ["t1"] }, "标签域未安装");
-    await expectError("tasks.stats", { groupBy: "tag" }, "标签域未安装");
+    const updated = await call("tasks.update", { id: created.result.id, title: "无标签域改", addTags: ["x"] });
+    assert(updated.result.task.title === "无标签域改" && (updated.result.notices || []).length === 1, "更新未降级");
+
+    const bulk = await call("tasks.bulkUpdate", { ids: [created.result.id], patch: { priority: 4, tags: ["x"] } });
+    assert(bulk.result.updated === 1 && (bulk.result.notices || []).length === 1, "批量更新未降级");
+
+    const byTags = await call("tasks.list", { tags: ["工作"] });
+    assert(byTags.result.records.length === 0 && (byTags.result.notices || []).length === 1, "按标签筛选未降级为空结果");
+    const byIds = await call("tasks.list", { tagIds: ["t1"] });
+    assert(byIds.result.records.length === 0 && (byIds.result.notices || []).length === 1, "tagIds 过滤未降级");
+
+    const group = await call("tasks.stats", { groupBy: "tag" });
+    assert(group.result.available === false && (group.result.groups || []).length === 0, "groupBy=tag 未降级");
+    assert((await call("tasks.tags", {})).result.available === false, "tasks.tags 应 available=false");
 
     const listed = await call("tasks.list", {});
-    assert(listed.result.records.length >= 1, "不传标签参数时 tasks.list 应正常返回");
+    assert(listed.result.records.length >= 1 && !listed.result.notices, "不传标签参数时 tasks.list 应正常返回且无 notice");
     const tables = await call("tasks.dataTables", { stats: true });
     assert(tables.result.tables.some((t) => t.name === "task"), "数据页表清单异常");
   } else {

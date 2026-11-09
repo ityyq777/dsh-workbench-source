@@ -102,6 +102,13 @@ var h = React.createElement;
     },
   };
 
+  // 标签是可选子插件：以宿主已安装/启用列表为准；旧宿主没有列表时返回 true，交给后端降级。
+  function hostHasAddon(id) {
+    var list = host.addons;
+    if (!Array.isArray(list)) return true;
+    return list.some(function (a) { return a && a.id === id && a.enabled !== false; });
+  }
+
   // 任务不再有「类型」：工作/生活/学习/开发 已迁成标签，按标签筛选。
   var TABS = [
     { id: 0, zh: "紧急任务", en: "Urgent" },
@@ -863,7 +870,7 @@ var h = React.createElement;
         h("div", { className: "wbt-form" },
           h("label", { className: "wbt-field full" }, h("span", null, t.titleField + " *"), h("input", { className: "wbt-input", value: form.title, onChange: function (e) { set("title", e.target.value); }, autoFocus: true })),
           h("label", { className: "wbt-field full" }, h("span", null, t.desc), h("textarea", { className: "wbt-textarea", rows: 2, value: form.description, onChange: function (e) { set("description", e.target.value); } })),
-          h("label", { className: "wbt-field full" }, h("span", null, t.tags), h("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function (e) { set("tags", e.target.value); } })),
+          hostHasAddon("wb-addon-tags") ? h("label", { className: "wbt-field full" }, h("span", null, t.tags), h("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function (e) { set("tags", e.target.value); } })) : null,
           h("label", { className: "wbt-field" }, h("span", null, t.status), h("select", { className: "wbt-select", value: source === "2" ? "0" : form.status, disabled: source === "2", onChange: function (e) { set("status", e.target.value); } },
             h("option", { value: "0" }, "已开启"), h("option", { value: "2" }, "已完成"), h("option", { value: "1" }, "已关闭"))),
           h("label", { className: "wbt-field" }, h("span", null, t.priority + "（1–10）"), h("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, disabled: form.status !== "0", value: form.priority, onChange: function (e) { set("priority", e.target.value); } })),
@@ -1753,7 +1760,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.10.8",
+    version: "2.10.9",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },

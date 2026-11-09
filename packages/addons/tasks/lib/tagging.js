@@ -181,6 +181,12 @@ export function attachTags(db, api, records) {
   const available = tagsAvailable(db, api);
   const map = available ? tagsForTasks(db, list.map(function (t) { return t.id; })) : new Map();
   for (const t of list) {
+    if (!available) {
+      // 标签域未安装：省略 tags/tagIds，别让调用方以为「这个任务真的没有标签」。
+      delete t.tags;
+      delete t.tagIds;
+      continue;
+    }
     const tags = map.get(String(t.id)) || [];
     t.tags = tags;
     t.tagIds = tags.map(function (x) { return x.id; });
