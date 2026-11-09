@@ -1,5 +1,6 @@
 // Source-level UI integration: stable per-component hook frames, deterministic timers and API.
 import assert from "node:assert/strict";
+import { loadLucideReact } from "./storage-visual-test-runtime.mjs";
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { runInNewContext } from "node:vm";
@@ -15,7 +16,7 @@ const React={
 const document={activeElement:null,addEventListener:(n,f)=>listeners.add(f),removeEventListener:(n,f)=>listeners.delete(f)};
 function load(file){file=resolve(file);if(cache.has(file))return cache.get(file).exports;const module={exports:{}};cache.set(file,module);runInNewContext(readFileSync(file,'utf8'),{module,URL,document,
   setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),
-  require:n=>n==='react'?React:load(resolve(dirname(file),n))},{filename:file});return module.exports;}
+  require:n=>n==='react'?React:n==='lucide-react'?loadLucideReact(React):load(resolve(dirname(file),n))},{filename:file});return module.exports;}
 const {Records}=load('packages/addons/storage/client/records.cjs');
 let seen;
 function expand(n,path='root'){

@@ -8,14 +8,16 @@ if (host) {
     style.textContent = require("./styles.cjs");
     document.head.appendChild(style);
   }
+  var h = require("react").createElement, Icon = require("./icons.cjs").Icon;
+  function tabIcon(name) { return function StorageTabIcon() { return h(Icon, { name: name, size: 14 }); }; }
   host.registerAddon({
     id: "wb-addon-storage",
-    version: "1.2.0",
+    version: "1.3.0",
     views: [
-      { id: "stats", title: { zh: "统计", en: "Statistics" }, component: require("./stats.cjs").Stats },
-      { id: "storage", title: { zh: "记录", en: "Records" }, component: require("./records.cjs").Records },
-      { id: "config", title: { zh: "配置", en: "Config" }, component: require("./config.cjs").ConfigView },
-      { id: "data", title: { zh: "数据", en: "Data" }, component: require("./data.cjs").DataView },
+      { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Statistics" }, component: require("./stats.cjs").Stats },
+      { id: "storage", icon: tabIcon("list"), title: { zh: "记录", en: "Records" }, component: require("./records.cjs").Records },
+      { id: "config", icon: tabIcon("settings"), title: { zh: "配置", en: "Config" }, component: require("./config.cjs").ConfigView },
+      { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: require("./data.cjs").DataView },
     ],
   });
 } else console.error("[wb-addon-storage] Missing workbench host");

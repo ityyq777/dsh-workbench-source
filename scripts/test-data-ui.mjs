@@ -76,7 +76,15 @@ async function exercise(domain, prefix, table) {
   const filter = name => nodes(n => n.type === "input" && n.props["aria-label"] === "筛选… " + name)[0];
   const view = sandbox.addon.views.find(v => v.id === "data").component;
   rt.mount(view, { api, lang: "zh" });
-  assert(text(rt.tree).includes("载入中"));
+  function assertLoading() {
+    const busy = nodes(n => n.props["aria-busy"] === true || n.props["aria-busy"] === "true");
+    assert(busy.some(n => (String(n.props["aria-label"] || "") + text(n)).includes("载入中")), domain + " exposes an accessible loading name and busy state");
+    if (domain === "storage") {
+      assert(busy.some(n => n.props.role === "status" && String(n.props["aria-label"]).includes("载入中")));
+      assert.equal(nodes(n => (n.props.className || "").split(" ").includes("wbi-skeleton-card")).length, 3);
+    }
+  }
+  assertLoading();
   await settle();
   assert.equal(cls("side").length, 1); assert.equal(nodes(n => n.props.role === "tab").length, 2);
   assert.equal(cls("tr").length, 10); assert.equal(filter("deleted_at"), undefined);
@@ -147,6 +155,7 @@ async function exercise(domain, prefix, table) {
   filter("name").props.onChange({ target: { value: "物品0" } }); await debounce();
   cls("thbtn").find(n => text(n).startsWith("name")).props.onClick(); await settle();
   cls("stab")[1].props.onClick(); await settle();
+  assertLoading();
   assert.equal(filter("name"), undefined, "old column filters must disappear while B is loading");
   assert.equal(cls("tr").length, 0, "A rows must not appear beneath B's title");
   assert(button("下一页 ›").props.disabled && button("‹ 上一页").props.disabled);

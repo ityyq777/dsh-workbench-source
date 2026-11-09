@@ -2,11 +2,11 @@
 "use strict";
 
 module.exports = [
-    ".wbt-root{--wbt-line:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wbt-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));--wbt-bg:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));--wbt-accent:var(--dsw-alias-brand-primary,#11a89b);display:flex;flex-direction:column;gap:10px;min-height:0;color:inherit;font-size:13px}",
+    ".wbt-root{--wbt-line:var(--wb-border);--wbt-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));--wbt-bg:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));--wbt-accent:var(--dsw-alias-brand-primary,#11a89b);display:flex;flex-direction:column;gap:10px;min-height:0;color:inherit;font-size:13px}",
     ".wbt-pathrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 0 2px}",
     ".wbt-tree-slot{flex:0 0 138px;width:138px;margin-right:6px;display:flex;align-items:center}",
     ".wbt-grow{flex:1;min-width:0}",
-    ".wbt-btn{border:1px solid var(--wbt-line);background:var(--wbt-surface);color:inherit;border-radius:8px;padding:6px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;line-height:1.3;display:inline-flex;align-items:center;gap:5px}",
+    ".wbt-btn{border:1px solid var(--wbt-line);background:var(--wbt-surface);color:inherit;border-radius:var(--wb-radius-sm);padding:6px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;line-height:1.3;display:inline-flex;align-items:center;gap:5px}",
     ".wbt-svg{display:block;flex:none}",
     ".wbt-btn:hover{border-color:var(--wbt-accent)}",
     ".wbt-btn.primary{background:var(--wbt-accent);border-color:var(--wbt-accent);color:var(--dsw-alias-label-primary-inverted,#fff);font-weight:600}",
@@ -33,7 +33,7 @@ module.exports = [
     ".wbt-crumb button:hover{background:color-mix(in oklab,currentColor 9%,transparent)}",
     ".wbt-crumb .sep{opacity:.35}",
     ".wbt-list{display:flex;flex-direction:column;gap:7px;min-height:0}",
-    ".wbt-item{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--wbt-line);border-radius:12px;background:var(--wbt-surface);padding:11px 13px;min-width:0;max-width:100%;box-sizing:border-box;min-height:0;overflow:hidden;overflow-wrap:anywhere;transition:border-color .14s ease,box-shadow .14s ease}",
+    ".wbt-item{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card);background:var(--wbt-surface);padding:var(--wb-space-md);min-width:0;max-width:100%;box-sizing:border-box;min-height:0;overflow:hidden;overflow-wrap:anywhere;transition:border-color .14s ease,box-shadow .14s ease}",
     ".wbt-item:hover{border-color:color-mix(in oklab,var(--wbt-accent) 30%,var(--wbt-line));box-shadow:0 2px 10px rgba(20,30,40,.05)}",
     ".wbt-item.closed{opacity:.62}",
     ".wbt-item.closed .wbt-title{text-decoration:line-through}",
@@ -41,7 +41,7 @@ module.exports = [
     ".wbt-chead{display:flex;align-items:flex-start;gap:10px;min-width:0}",
     ".wbt-line1{display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap;flex:1 1 auto}",
     ".wbt-title{font-weight:620;font-size:14px;line-height:1.38;letter-spacing:.1px;word-break:break-word;overflow-wrap:anywhere;max-width:100%}",
-    require("../../lib/description.cjs").css,
+    require("../../lib/description.cjs").css + require("../../lib/visual-tokens.cjs"),
     ".wbt-foot{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;margin-top:1px}",
     ".wbt-meta{display:flex;gap:4px 12px;flex-wrap:wrap;font-size:11.5px;opacity:.64;min-width:0;max-width:100%;font-variant-numeric:tabular-nums}",
     ".wbt-meta b{font-weight:560;opacity:.9;margin-right:1px}",

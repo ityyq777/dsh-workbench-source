@@ -36,12 +36,12 @@ function Stats(props) {
     h(
       "div",
       { className: "wbi-row" },
-      h("h2", null, tr(lang, "统计", "Statistics")),
+      h("h2", null, h(ui.Icon, { name: "chart", size: 16 }), tr(lang, "统计", "Statistics")),
       h("span", { className: "wbi-grow" }),
       h(
         ui.Button,
         {
-          disabled: busy[0],
+          icon: "refresh", disabled: busy[0],
           onClick: function () {
             tick[1](tick[0] + 1);
           },
@@ -50,7 +50,7 @@ function Stats(props) {
       ),
     ),
     h(ui.ErrorBox, { error: error[0] }),
-    busy[0] ? h("p", { role: "status" }, tr(lang, "读取中…", "Loading…")) : null,
+    busy[0] ? h(ui.Skeleton, { lang: lang }) : null,
     s
       ? h(
           React.Fragment,
@@ -66,7 +66,7 @@ function Stats(props) {
               return h(
                 "div",
                 { className: "wbi-card", key: k[0] },
-                h("span", { className: "wbi-muted" }, tr(lang, k[1], k[2])),
+                h("span", { className: "wbi-muted wbi-inline" }, h(ui.Icon, { name: k[0] === "total" ? "stock" : k[0] === "tagged" ? "tag" : "image" }), tr(lang, k[1], k[2])),
                 h("strong", null, s[k[0]] === null ? "—" : s[k[0]]),
               );
             }),
@@ -83,7 +83,7 @@ function Stats(props) {
           h(
             "div",
             { className: "wbi-card" },
-            h("h3", null, tr(lang, "最近更新", "Recently updated")),
+            h("h3", null, h(ui.Icon, { name: "clock" }), tr(lang, "最近更新", "Recently updated")),
             (s.recent || []).map(function (item) {
               return h(
                 "div",
@@ -96,7 +96,8 @@ function Stats(props) {
             !s.total
               ? h(
                   "span",
-                  { className: "wbi-muted" },
+                  { className: "wbi-empty" },
+                  h(ui.Icon, { name: "empty", size: 48 }),
                   tr(lang, "还没有物品，前往记录页添加", "No items yet. Add one in Records."),
                 )
               : null,

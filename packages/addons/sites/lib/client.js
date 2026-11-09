@@ -1,4 +1,4 @@
-// 由 scripts/build-addon-clients.mjs 生成；请修改 client/client.src.cjs 后重新构建。
+// 由 scripts/build-addon-clients.mjs 生成；请修改对应 client/client.src.cjs 后重新构建。
 window.__ModuleLoader__ = window.__ModuleLoader__ || { modules: {}, load: function (m) { this.modules[m.id] = m.factory; } };
 window.__ModuleLoader__.load({
   id: "dsh-workbench-sites",
@@ -2328,6 +2328,16 @@ var require_data_copy = __commonJS({
   }
 });
 
+// packages/addons/lib/visual-tokens.cjs
+var require_visual_tokens = __commonJS({
+  "packages/addons/lib/visual-tokens.cjs"(exports2, module2) {
+    module2.exports = `
+:where(.wbt-root,.wbi-root,.wbi-cfg,.wbt-data,.wbs-data,.wbg-data,.wbi-data,.wb-desc){--wb-radius-sm:8px;--wb-radius-card:12px;--wb-space-sm:8px;--wb-space-md:14px;--wb-border:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wb-description-bg:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 7%,transparent);--wb-description-line:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 34%,transparent);--wb-motion:140ms}
+.wb-desc{background:var(--wb-description-bg);border-left-color:var(--wb-description-line);border-radius:0 var(--wb-radius-sm) var(--wb-radius-sm) 0}
+`;
+  }
+});
+
 // packages/addons/lib/data-style.cjs
 var require_data_style = __commonJS({
   "packages/addons/lib/data-style.cjs"(exports2, module2) {
@@ -2335,8 +2345,12 @@ var require_data_style = __commonJS({
     module2.exports = function(DOMAIN, PREFIX) {
       var P = PREFIX + "-data";
       var CSS = [
-        "." + P + "{--cfg-line:var(--wb-line,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent)));--cfg-surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));--cfg-muted:var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 62%,transparent));--cfg-faint:var(--dsw-alias-label-tertiary,color-mix(in oklab,currentColor 42%,transparent));--cfg-hover:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent));display:grid;grid-template-columns:216px minmax(0,1fr);gap:16px;width:100%;min-width:0;color:inherit;font-size:13px;align-items:start}",
-        "." + P + "-side{position:sticky;top:12px;display:flex;flex-direction:column;gap:3px;border:1px solid var(--cfg-line);border-radius:14px;background:var(--cfg-surface);padding:8px;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
+        require_visual_tokens(),
+        "." + P + "-search:has(.wbi-svg) input{padding-left:30px}." + P + "-search>.wbi-svg{position:absolute;left:10px;top:50%;transform:translateY(-50%)}",
+        "." + P + "-btn{transition:background var(--wb-motion),border-color var(--wb-motion)}",
+        "@media(max-width:480px){." + P + "-head>." + P + "-btn:has(.wbi-svg){width:32px;height:32px;padding:0;justify-content:center}." + P + "-head>." + P + "-btn:has(.wbi-svg) ." + P + "-btnlabel{display:none}}",
+        "." + P + "{--cfg-line:var(--wb-border);--cfg-surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));--cfg-muted:var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 62%,transparent));--cfg-faint:var(--dsw-alias-label-tertiary,color-mix(in oklab,currentColor 42%,transparent));--cfg-hover:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent));display:grid;grid-template-columns:216px minmax(0,1fr);gap:16px;width:100%;min-width:0;color:inherit;font-size:13px;align-items:start}",
+        "." + P + "-side{position:sticky;top:12px;display:flex;flex-direction:column;gap:3px;border:1px solid var(--cfg-line);border-radius:var(--wb-radius-card);background:var(--cfg-surface);padding:8px;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
         "." + P + "-sidetitle{display:flex;align-items:center;justify-content:space-between;padding:6px 10px 8px;font-size:11px;font-weight:660;letter-spacing:.6px;text-transform:uppercase;color:var(--cfg-faint)}",
         "." + P + "-stab{display:flex;flex-direction:column;gap:3px;align-items:stretch;border:1px solid transparent;background:transparent;border-radius:9px;padding:8px 10px;font:inherit;color:inherit;text-align:left;cursor:pointer;position:relative;transition:background .12s ease,border-color .12s ease}",
         "." + P + "-stab:hover{background:var(--cfg-hover)}",
@@ -2347,7 +2361,7 @@ var require_data_style = __commonJS({
         "." + P + "-stabname span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
         "." + P + "-sidetable{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;color:var(--cfg-muted);margin-top:3px;letter-spacing:.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
         "." + P + "-sidecount{margin-left:auto;font-size:10.5px;font-variant-numeric:tabular-nums;color:var(--cfg-muted);background:color-mix(in oklab,currentColor 8%,transparent);border-radius:999px;padding:1px 7px;flex:none}",
-        "." + P + "-main{display:flex;flex-direction:column;gap:10px;min-width:0;border:1px solid var(--cfg-line);border-radius:14px;background:var(--cfg-surface);padding:14px 16px 12px;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
+        "." + P + "-main{display:flex;flex-direction:column;gap:10px;min-width:0;border:1px solid var(--cfg-line);border-radius:var(--wb-radius-card);background:var(--cfg-surface);padding:14px 16px 12px;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
         "." + P + "-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}",
         "." + P + "-headmain{min-width:0;flex:1}",
         "." + P + "-head h2{margin:0;font-size:16px;font-weight:660;letter-spacing:.1px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
@@ -2410,7 +2424,7 @@ var require_data_style = __commonJS({
         "." + P + "-drawerfoot{display:flex;gap:8px;justify-content:flex-end}",
         "." + P + "-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
         "@media (max-width:900px){." + P + "{grid-template-columns:minmax(0,1fr)}." + P + "-side{position:static;flex-direction:row;flex-wrap:wrap;gap:6px;padding:6px}." + P + "-sidetitle{display:none}." + P + "-stab{padding:6px 10px;flex:none}." + P + "-sidecount{display:none}." + P + "-tablewrap{max-height:calc(100vh - 260px)}}",
-        "@media (prefers-reduced-motion:reduce){." + P + "-track,." + P + "-track::after,." + P + "-sk,." + P + "-drawer{transition:none;animation:none}}",
+        "@media (prefers-reduced-motion:reduce){." + P + " *,." + P + "-track,." + P + "-track::after,." + P + "-sk,." + P + "-drawer{transition:none;animation:none}}",
         "." + P + "-idxsub{font-size:11.5px;color:var(--cfg-muted);line-height:1.55}",
         "." + P + "-idxsum{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--cfg-muted)}",
         "." + P + "-idxsum b{font-weight:660;color:var(--dsw-alias-label-primary,inherit);font-variant-numeric:tabular-nums}",
@@ -2462,6 +2476,9 @@ var require_data_view = __commonJS({
     var COPY = require_data_copy();
     module2.exports = function createDataView(options) {
       var DOMAIN = options.domain;
+      function icon(name) {
+        return options.Icon ? h2(options.Icon, { name }) : null;
+      }
       var P = options.prefix + "-data";
       var configView = { useConfig: options.useConfig };
       var columnHooks = options.columns || {};
@@ -2717,17 +2734,19 @@ var require_data_view = __commonJS({
               h2(
                 "div",
                 { className: P + "-headmain" },
-                h2("h2", null, t.index, h2("span", { className: P + "-code" }, "index")),
+                h2("h2", null, icon("database"), t.index, h2("span", { className: P + "-code" }, "index")),
                 h2("div", { className: P + "-idxsub" }, t.indexSub)
               ),
               h2("button", {
                 type: "button",
                 className: P + "-btn",
+                "aria-label": t.refresh,
+                title: t.refresh,
                 "aria-busy": indexBusy ? "true" : "false",
                 onClick: function() {
                   loadIndex();
                 }
-              }, t.refresh)
+              }, icon("refresh"), h2("span", { className: P + "-btnlabel" }, t.refresh))
             ),
             h2(
               "div",
@@ -2735,7 +2754,7 @@ var require_data_view = __commonJS({
               h2("span", null, t.idxTables, " ", h2("b", null, String(rows.length))),
               h2("span", null, t.idxRows, " ", h2("b", null, String(totalRows)))
             ),
-            indexBusy && !rows.length ? h2("div", { className: P + "-empty" }, t.loading) : !rows.length ? h2("div", { className: P + "-empty" }, t.idxEmpty) : h2(
+            indexBusy && !rows.length ? options.Skeleton ? h2(options.Skeleton, { lang, label: t.loading }) : h2("div", { className: P + "-empty" }, t.loading) : !rows.length ? h2("div", { className: P + "-empty" }, t.idxEmpty) : h2(
               "div",
               { className: P + "-tablewrap" },
               h2(
@@ -2922,6 +2941,7 @@ var require_data_view = __commonJS({
           );
         }
         function renderRows() {
+          if (loadingRows && !data && options.Skeleton) return h2(options.Skeleton, { lang, label: t.loading });
           if (loadingRows && !data) {
             return h2(
               "div",
@@ -3035,6 +3055,7 @@ var require_data_view = __commonJS({
             h2("span", null, fmt(t.queryTime, { n: data ? data.queryMs : 0 }))
           );
         }
+        if (!tables && loadingTables && options.Skeleton) return h2(options.Skeleton, { lang, label: t.loading });
         if (!tables && loadingTables) {
           return h2("div", { className: P + "-skwrap", "aria-busy": "true" }, h2("span", { className: P + "-sr" }, t.loading), [0, 1, 2, 3].map(function(i2) {
             return h2("div", { key: i2, className: P + "-sk" });
@@ -3050,7 +3071,7 @@ var require_data_view = __commonJS({
           h2(
             "div",
             { className: P + "-side" },
-            h2("div", { className: P + "-sidetitle" }, h2("span", null, t.tables), h2("span", null, String(tables.length))),
+            h2("div", { className: P + "-sidetitle" }, h2("span", null, icon("table"), t.tables), h2("span", null, String(tables.length))),
             tables.map(function(tb) {
               return h2(
                 "button",
@@ -3096,8 +3117,8 @@ var require_data_view = __commonJS({
             h2(
               "div",
               { className: P + "-tabs", role: "tablist", "aria-label": t.title },
-              h2("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !index, onClick: leaveIndex }, lang === "en" ? "Row data" : "\u884C\u6570\u636E"),
-              h2("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !!index, onClick: loadIndex }, t.index)
+              h2("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !index, onClick: leaveIndex }, icon("list"), lang === "en" ? "Row data" : "\u884C\u6570\u636E"),
+              h2("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !!index, onClick: loadIndex }, icon("database"), t.index)
             ),
             index && error ? h2("div", { className: P + "-err", role: "alert" }, error) : null,
             index ? renderIndex() : [
@@ -3107,7 +3128,7 @@ var require_data_view = __commonJS({
                 h2(
                   "div",
                   { className: P + "-headmain" },
-                  h2("h2", null, tableLabel(current), h2("span", { className: P + "-code" }, active)),
+                  h2("h2", null, icon("database"), tableLabel(current), h2("span", { className: P + "-code" }, active)),
                   h2(
                     "div",
                     { className: P + "-sub" },
@@ -3119,9 +3140,11 @@ var require_data_view = __commonJS({
                 h2("button", {
                   type: "button",
                   className: P + "-btn",
+                  "aria-label": t.refresh,
+                  title: t.refresh,
                   "aria-busy": loadingRows ? "true" : "false",
                   onClick: refresh
-                }, t.refresh)
+                }, icon("refresh"), h2("span", { className: P + "-btnlabel" }, t.refresh))
               ),
               h2(
                 "div",
@@ -3129,6 +3152,7 @@ var require_data_view = __commonJS({
                 h2(
                   "div",
                   { className: P + "-search" },
+                  icon("search"),
                   h2("input", {
                     type: "search",
                     value: searchDraft,

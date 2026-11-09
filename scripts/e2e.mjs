@@ -12,7 +12,12 @@ const root = join(import.meta.dirname, "..");
 const tests = [
   "scripts/test-native.mjs",
   "scripts/test-tasks-review.mjs",
+  "scripts/test-tasks-restart.mjs",
+  "scripts/test-tasks-restart-client.mjs",
+  "scripts/test-storage-visual.mjs",
   "scripts/test-clients.mjs",
+  "packages/shell/client/view-tabs.test.mjs",
+  ["packages/shell/client/view-tabs.test.mjs", "--bundle"],
   "scripts/test-data.mjs",
   "scripts/test-data-ui.mjs",
   "scripts/test-tags.mjs",
@@ -29,7 +34,8 @@ const tests = [
 
 for (const test of tests) {
   console.log("\n=== " + test + " ===");
-  const result = spawnSync(process.execPath, [join(root, test)], {
+  const [file, ...args] = Array.isArray(test) ? test : [test];
+  const result = spawnSync(process.execPath, [join(root, file), ...args], {
     cwd: root,
     stdio: "inherit",
     env: { ...process.env },

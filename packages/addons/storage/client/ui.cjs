@@ -1,5 +1,5 @@
 var React = require("react");
-var h = React.createElement;
+var h = React.createElement, Icon = require("./icons.cjs").Icon;
 function call(api, name, args) {
   return api.call(name, args || {}).then(function (r) {
     if (!r || r.ok !== true) throw new Error((r && r.error) || "请求失败");
@@ -10,7 +10,22 @@ function tr(lang, zh, en) {
   return lang === "en" ? en : zh;
 }
 function Button(props) {
-  return h("button", Object.assign({ type: "button", className: "wbi-btn" }, props), props.children);
+  var attrs = Object.assign({ type: "button", className: "wbi-btn" }, props);
+  delete attrs.icon; delete attrs.iconOnly;
+  if (props.icon) {
+    attrs["aria-label"] = props["aria-label"] || props.children;
+    attrs.title = props.title || attrs["aria-label"];
+    attrs.className += props.iconOnly ? " wbi-icon-only" : " wbi-icon-text";
+  }
+  return h("button", attrs, props.icon ? h(Icon, { name: props.icon }) : null,
+    props.iconOnly ? null : props.icon ? h("span", { className: "wbi-btn-label" }, props.children) : props.children);
+}
+function Skeleton(props) {
+  var label = props.label || tr(props.lang, "读取中…", "Loading…");
+  return h("div", { className: "wbi-root wbi-grid wbi-skeleton", role: "status", "aria-label": label, "aria-busy": true },
+    h("span", { className: "wbi-sr" }, label),
+    [0,1,2].map(function (i) { return h("div", { key: i, className: "wbi-card wbi-skeleton-card", "aria-hidden": true },
+      h("div", { className: "wbi-sk" }), h("div", { className: "wbi-sk" }), h("div", { className: "wbi-sk" })); }));
 }
 function ErrorBox(props) {
   return props.error
@@ -85,10 +100,10 @@ function Modal(props) {
         { className: "wbi-row" },
         h("h2", null, props.title),
         h("span", { className: "wbi-grow" }),
-        h(Button, { onClick: props.onClose, disabled: !props.onClose, "aria-label": "关闭 / Close" }, "×"),
+        h(Button, { icon: "close", iconOnly: true, onClick: props.onClose, disabled: !props.onClose, "aria-label": "关闭 / Close" }, "×"),
       ),
       props.children,
     ),
   );
 }
-module.exports = { h: h, call: call, tr: tr, Button: Button, ErrorBox: ErrorBox, Modal: Modal, safeImage: safeImage };
+module.exports = { Icon: Icon, Skeleton: Skeleton, h: h, call: call, tr: tr, Button: Button, ErrorBox: ErrorBox, Modal: Modal, safeImage: safeImage };

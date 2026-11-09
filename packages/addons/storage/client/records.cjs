@@ -135,15 +135,15 @@ function Records(props) {
     h(
       "div",
       { className: "wbi-row" },
-      h("h2", null, tr(lang, "储物", "Storage")),
+      h("h2", null, h(ui.Icon, { name: "box", size: 16 }), tr(lang, "储物", "Storage")),
       h("span", { className: "wbi-muted" }, tr(lang, "记录物品、库存与存放备注", "Track items, stock and notes")),
       h("span", { className: "wbi-grow" }),
-      h(ui.Button, { className: "wbi-btn wbi-btn-sm", disabled: busy[0] || !!bulk[0],
+      h(ui.Button, { icon: "check", className: "wbi-btn wbi-btn-sm", disabled: busy[0] || !!bulk[0],
         onClick: selected.mode ? selected.exit : selected.enter }, selected.mode ? tr(lang,"取消选择","Cancel selection") : tr(lang,"选择","Select")),
       h(
         ui.Button,
         {
-          className: "wbi-btn wbi-primary",
+          icon: "plus", className: "wbi-btn wbi-primary",
           disabled: selected.mode || busy[0],
           onClick: function () {
             editing[1]({});
@@ -187,6 +187,7 @@ function Records(props) {
       h(
         ui.Button,
         {
+          icon: "sort",
           onClick: function () {
             order[1](order[0] === "desc" ? "asc" : "desc");
             page[1](1);
@@ -194,7 +195,7 @@ function Records(props) {
         },
         order[0] === "desc" ? tr(lang, "降序 ↓", "Descending ↓") : tr(lang, "升序 ↑", "Ascending ↑"),
       ),
-      h(ui.Button, { onClick: refresh, disabled: loading[0] }, tr(lang, "刷新", "Refresh")),
+      h(ui.Button, { icon: "refresh", onClick: refresh, disabled: loading[0] }, tr(lang, "刷新", "Refresh")),
     ),
     tag[0]
       ? h(
@@ -218,11 +219,12 @@ function Records(props) {
       "Current page only. Search, filters, sorting, paging or refresh clear selection. Shift-click selects a range; Esc exits.")) : null,
     notice[0] ? h("p", { role: "status" }, notice[0]) : null,
     h(ui.ErrorBox, { error: error[0] }),
-    loading[0] ? h("p", { role: "status", className: "wbi-muted" }, tr(lang, "读取中…", "Loading…")) : null,
+    loading[0] ? h(ui.Skeleton, { lang: lang }) : null,
     !loading[0] && !error[0] && data && !data.records.length
       ? h(
           "div",
           { className: "wbi-empty" },
+          h(ui.Icon, { name: "empty", size: 48 }),
           text[0] || tag[0]
             ? tr(lang, "没有匹配的物品，试试其他搜索条件", "No matching items. Try another filter.")
             : tr(lang, "还没有物品，点击“新增物品”开始记录", "No items yet. Add your first item."),

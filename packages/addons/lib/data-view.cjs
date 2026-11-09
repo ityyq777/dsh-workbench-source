@@ -5,6 +5,7 @@ var h = React.createElement;
 var COPY = require("./data-copy.cjs");
 module.exports = function createDataView(options) {
 var DOMAIN = options.domain;
+function icon(name) { return options.Icon ? h(options.Icon, { name: name }) : null; }
 var P = options.prefix + "-data";
 var configView = { useConfig: options.useConfig };
 var columnHooks = options.columns || {};
@@ -246,17 +247,17 @@ function DataView(props) {
     return h("div", { className: P + "-idx" },
       h("div", { className: P + "-head" },
         h("div", { className: P + "-headmain" },
-          h("h2", null, t.index, h("span", { className: P + "-code" }, "index")),
+          h("h2", null, icon("database"), t.index, h("span", { className: P + "-code" }, "index")),
           h("div", { className: P + "-idxsub" }, t.indexSub)),
         h("button", {
-          type: "button", className: P + "-btn", "aria-busy": indexBusy ? "true" : "false",
+          type: "button", className: P + "-btn", "aria-label": t.refresh, title: t.refresh, "aria-busy": indexBusy ? "true" : "false",
           onClick: function () { loadIndex(); },
-        }, t.refresh)),
+        }, icon("refresh"), h("span", { className: P + "-btnlabel" }, t.refresh))),
       h("div", { className: P + "-idxsum" },
         h("span", null, t.idxTables, " ", h("b", null, String(rows.length))),
         h("span", null, t.idxRows, " ", h("b", null, String(totalRows)))),
       indexBusy && !rows.length
-        ? h("div", { className: P + "-empty" }, t.loading)
+        ? options.Skeleton ? h(options.Skeleton, { lang: lang, label: t.loading }) : h("div", { className: P + "-empty" }, t.loading)
         : !rows.length
           ? h("div", { className: P + "-empty" }, t.idxEmpty)
           : h("div", { className: P + "-tablewrap" },
@@ -423,6 +424,7 @@ function DataView(props) {
   }
 
   function renderRows() {
+    if (loadingRows && !data && options.Skeleton) return h(options.Skeleton, { lang: lang, label: t.loading });
     if (loadingRows && !data) {
       return h("div", { className: P + "-skwrap", "aria-busy": "true" },
         h("span", { className: P + "-sr" }, t.loading),
@@ -486,6 +488,7 @@ function DataView(props) {
       h("span", null, fmt(t.queryTime, { n: data ? data.queryMs : 0 })));
   }
 
+  if (!tables && loadingTables && options.Skeleton) return h(options.Skeleton, { lang: lang, label: t.loading });
   if (!tables && loadingTables) {
     return h("div", { className: P + "-skwrap", "aria-busy": "true" }, h("span", { className: P + "-sr" }, t.loading), [0, 1, 2, 3].map(function (i) { return h("div", { key: i, className: P + "-sk" }); }));
   }
@@ -496,7 +499,7 @@ function DataView(props) {
 
   return h("div", { className: P },
     h("div", { className: P + "-side" },
-      h("div", { className: P + "-sidetitle" }, h("span", null, t.tables), h("span", null, String(tables.length))),
+      h("div", { className: P + "-sidetitle" }, h("span", null, icon("table"), t.tables), h("span", null, String(tables.length))),
       tables.map(function (tb) {
         return h("button", {
           key: tb.name, type: "button", className: P + "-stab" + (tb.name === active ? " on" : ""),
@@ -518,23 +521,23 @@ function DataView(props) {
         h("span", { className: P + "-sidetable" }, "index"))),
     h("div", { className: P + "-main" },
       h("div", { className: P + "-tabs", role: "tablist", "aria-label": t.title },
-        h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !index, onClick: leaveIndex }, lang === "en" ? "Row data" : "行数据"),
-        h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !!index, onClick: loadIndex }, t.index)),
+        h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !index, onClick: leaveIndex }, icon("list"), lang === "en" ? "Row data" : "行数据"),
+        h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !!index, onClick: loadIndex }, icon("database"), t.index)),
       index && error ? h("div", { className: P + "-err", role: "alert" }, error) : null,
       index ? renderIndex() : [
       h("div", { className: P + "-head" },
         h("div", { className: P + "-headmain" },
-          h("h2", null, tableLabel(current), h("span", { className: P + "-code" }, active)),
+          h("h2", null, icon("database"), tableLabel(current), h("span", { className: P + "-code" }, active)),
           h("div", { className: P + "-sub" },
             current ? fmt(t.rowCount, { n: current.count }) : "",
             current && current.deletedCount ? " · " + fmt(t.deletedCount, { n: current.deletedCount }) : "",
             " · " + t.subtitle)),
         h("button", {
-          type: "button", className: P + "-btn", "aria-busy": loadingRows ? "true" : "false",
+          type: "button", className: P + "-btn", "aria-label": t.refresh, title: t.refresh, "aria-busy": loadingRows ? "true" : "false",
           onClick: refresh,
-        }, t.refresh)),
+        }, icon("refresh"), h("span", { className: P + "-btnlabel" }, t.refresh))),
       h("div", { className: P + "-toolbar" },
-        h("div", { className: P + "-search" },
+        h("div", { className: P + "-search" }, icon("search"),
           h("input", {
             type: "search", value: searchDraft, placeholder: t.search, "aria-label": t.search,
             onChange: function (e) { setSearchDraft(e.target.value); },

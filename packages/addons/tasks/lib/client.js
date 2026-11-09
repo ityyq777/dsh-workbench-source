@@ -1,4 +1,4 @@
-// 由 scripts/build-addon-clients.mjs 生成；请修改 client/client.src.cjs 后重新构建。
+// 由 scripts/build-addon-clients.mjs 生成；请修改对应 client/client.src.cjs 后重新构建。
 window.__ModuleLoader__ = window.__ModuleLoader__ || { modules: {}, load: function (m) { this.modules[m.id] = m.factory; } };
 window.__ModuleLoader__.load({
   id: "dsh-workbench-tasks",
@@ -1770,6 +1770,16 @@ var require_data_copy = __commonJS({
   }
 });
 
+// packages/addons/lib/visual-tokens.cjs
+var require_visual_tokens = __commonJS({
+  "packages/addons/lib/visual-tokens.cjs"(exports2, module2) {
+    module2.exports = `
+:where(.wbt-root,.wbi-root,.wbi-cfg,.wbt-data,.wbs-data,.wbg-data,.wbi-data,.wb-desc){--wb-radius-sm:8px;--wb-radius-card:12px;--wb-space-sm:8px;--wb-space-md:14px;--wb-border:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wb-description-bg:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 7%,transparent);--wb-description-line:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 34%,transparent);--wb-motion:140ms}
+.wb-desc{background:var(--wb-description-bg);border-left-color:var(--wb-description-line);border-radius:0 var(--wb-radius-sm) var(--wb-radius-sm) 0}
+`;
+  }
+});
+
 // packages/addons/lib/data-style.cjs
 var require_data_style = __commonJS({
   "packages/addons/lib/data-style.cjs"(exports2, module2) {
@@ -1777,8 +1787,12 @@ var require_data_style = __commonJS({
     module2.exports = function(DOMAIN, PREFIX) {
       var P = PREFIX + "-data";
       var CSS = [
-        "." + P + "{--cfg-line:var(--wb-line,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent)));--cfg-surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));--cfg-muted:var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 62%,transparent));--cfg-faint:var(--dsw-alias-label-tertiary,color-mix(in oklab,currentColor 42%,transparent));--cfg-hover:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent));display:grid;grid-template-columns:216px minmax(0,1fr);gap:16px;width:100%;min-width:0;color:inherit;font-size:13px;align-items:start}",
-        "." + P + "-side{position:sticky;top:12px;display:flex;flex-direction:column;gap:3px;border:1px solid var(--cfg-line);border-radius:14px;background:var(--cfg-surface);padding:8px;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
+        require_visual_tokens(),
+        "." + P + "-search:has(.wbi-svg) input{padding-left:30px}." + P + "-search>.wbi-svg{position:absolute;left:10px;top:50%;transform:translateY(-50%)}",
+        "." + P + "-btn{transition:background var(--wb-motion),border-color var(--wb-motion)}",
+        "@media(max-width:480px){." + P + "-head>." + P + "-btn:has(.wbi-svg){width:32px;height:32px;padding:0;justify-content:center}." + P + "-head>." + P + "-btn:has(.wbi-svg) ." + P + "-btnlabel{display:none}}",
+        "." + P + "{--cfg-line:var(--wb-border);--cfg-surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));--cfg-muted:var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 62%,transparent));--cfg-faint:var(--dsw-alias-label-tertiary,color-mix(in oklab,currentColor 42%,transparent));--cfg-hover:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent));display:grid;grid-template-columns:216px minmax(0,1fr);gap:16px;width:100%;min-width:0;color:inherit;font-size:13px;align-items:start}",
+        "." + P + "-side{position:sticky;top:12px;display:flex;flex-direction:column;gap:3px;border:1px solid var(--cfg-line);border-radius:var(--wb-radius-card);background:var(--cfg-surface);padding:8px;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
         "." + P + "-sidetitle{display:flex;align-items:center;justify-content:space-between;padding:6px 10px 8px;font-size:11px;font-weight:660;letter-spacing:.6px;text-transform:uppercase;color:var(--cfg-faint)}",
         "." + P + "-stab{display:flex;flex-direction:column;gap:3px;align-items:stretch;border:1px solid transparent;background:transparent;border-radius:9px;padding:8px 10px;font:inherit;color:inherit;text-align:left;cursor:pointer;position:relative;transition:background .12s ease,border-color .12s ease}",
         "." + P + "-stab:hover{background:var(--cfg-hover)}",
@@ -1789,7 +1803,7 @@ var require_data_style = __commonJS({
         "." + P + "-stabname span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
         "." + P + "-sidetable{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;color:var(--cfg-muted);margin-top:3px;letter-spacing:.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
         "." + P + "-sidecount{margin-left:auto;font-size:10.5px;font-variant-numeric:tabular-nums;color:var(--cfg-muted);background:color-mix(in oklab,currentColor 8%,transparent);border-radius:999px;padding:1px 7px;flex:none}",
-        "." + P + "-main{display:flex;flex-direction:column;gap:10px;min-width:0;border:1px solid var(--cfg-line);border-radius:14px;background:var(--cfg-surface);padding:14px 16px 12px;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
+        "." + P + "-main{display:flex;flex-direction:column;gap:10px;min-width:0;border:1px solid var(--cfg-line);border-radius:var(--wb-radius-card);background:var(--cfg-surface);padding:14px 16px 12px;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
         "." + P + "-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}",
         "." + P + "-headmain{min-width:0;flex:1}",
         "." + P + "-head h2{margin:0;font-size:16px;font-weight:660;letter-spacing:.1px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
@@ -1852,7 +1866,7 @@ var require_data_style = __commonJS({
         "." + P + "-drawerfoot{display:flex;gap:8px;justify-content:flex-end}",
         "." + P + "-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
         "@media (max-width:900px){." + P + "{grid-template-columns:minmax(0,1fr)}." + P + "-side{position:static;flex-direction:row;flex-wrap:wrap;gap:6px;padding:6px}." + P + "-sidetitle{display:none}." + P + "-stab{padding:6px 10px;flex:none}." + P + "-sidecount{display:none}." + P + "-tablewrap{max-height:calc(100vh - 260px)}}",
-        "@media (prefers-reduced-motion:reduce){." + P + "-track,." + P + "-track::after,." + P + "-sk,." + P + "-drawer{transition:none;animation:none}}",
+        "@media (prefers-reduced-motion:reduce){." + P + " *,." + P + "-track,." + P + "-track::after,." + P + "-sk,." + P + "-drawer{transition:none;animation:none}}",
         "." + P + "-idxsub{font-size:11.5px;color:var(--cfg-muted);line-height:1.55}",
         "." + P + "-idxsum{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--cfg-muted)}",
         "." + P + "-idxsum b{font-weight:660;color:var(--dsw-alias-label-primary,inherit);font-variant-numeric:tabular-nums}",
@@ -1904,6 +1918,9 @@ var require_data_view = __commonJS({
     var COPY = require_data_copy();
     module2.exports = function createDataView(options) {
       var DOMAIN = options.domain;
+      function icon(name) {
+        return options.Icon ? h(options.Icon, { name }) : null;
+      }
       var P = options.prefix + "-data";
       var configView = { useConfig: options.useConfig };
       var columnHooks = options.columns || {};
@@ -2159,17 +2176,19 @@ var require_data_view = __commonJS({
               h(
                 "div",
                 { className: P + "-headmain" },
-                h("h2", null, t.index, h("span", { className: P + "-code" }, "index")),
+                h("h2", null, icon("database"), t.index, h("span", { className: P + "-code" }, "index")),
                 h("div", { className: P + "-idxsub" }, t.indexSub)
               ),
               h("button", {
                 type: "button",
                 className: P + "-btn",
+                "aria-label": t.refresh,
+                title: t.refresh,
                 "aria-busy": indexBusy ? "true" : "false",
                 onClick: function() {
                   loadIndex();
                 }
-              }, t.refresh)
+              }, icon("refresh"), h("span", { className: P + "-btnlabel" }, t.refresh))
             ),
             h(
               "div",
@@ -2177,7 +2196,7 @@ var require_data_view = __commonJS({
               h("span", null, t.idxTables, " ", h("b", null, String(rows.length))),
               h("span", null, t.idxRows, " ", h("b", null, String(totalRows)))
             ),
-            indexBusy && !rows.length ? h("div", { className: P + "-empty" }, t.loading) : !rows.length ? h("div", { className: P + "-empty" }, t.idxEmpty) : h(
+            indexBusy && !rows.length ? options.Skeleton ? h(options.Skeleton, { lang, label: t.loading }) : h("div", { className: P + "-empty" }, t.loading) : !rows.length ? h("div", { className: P + "-empty" }, t.idxEmpty) : h(
               "div",
               { className: P + "-tablewrap" },
               h(
@@ -2364,6 +2383,7 @@ var require_data_view = __commonJS({
           );
         }
         function renderRows() {
+          if (loadingRows && !data && options.Skeleton) return h(options.Skeleton, { lang, label: t.loading });
           if (loadingRows && !data) {
             return h(
               "div",
@@ -2477,6 +2497,7 @@ var require_data_view = __commonJS({
             h("span", null, fmt(t.queryTime, { n: data ? data.queryMs : 0 }))
           );
         }
+        if (!tables && loadingTables && options.Skeleton) return h(options.Skeleton, { lang, label: t.loading });
         if (!tables && loadingTables) {
           return h("div", { className: P + "-skwrap", "aria-busy": "true" }, h("span", { className: P + "-sr" }, t.loading), [0, 1, 2, 3].map(function(i2) {
             return h("div", { key: i2, className: P + "-sk" });
@@ -2492,7 +2513,7 @@ var require_data_view = __commonJS({
           h(
             "div",
             { className: P + "-side" },
-            h("div", { className: P + "-sidetitle" }, h("span", null, t.tables), h("span", null, String(tables.length))),
+            h("div", { className: P + "-sidetitle" }, h("span", null, icon("table"), t.tables), h("span", null, String(tables.length))),
             tables.map(function(tb) {
               return h(
                 "button",
@@ -2538,8 +2559,8 @@ var require_data_view = __commonJS({
             h(
               "div",
               { className: P + "-tabs", role: "tablist", "aria-label": t.title },
-              h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !index, onClick: leaveIndex }, lang === "en" ? "Row data" : "\u884C\u6570\u636E"),
-              h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !!index, onClick: loadIndex }, t.index)
+              h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !index, onClick: leaveIndex }, icon("list"), lang === "en" ? "Row data" : "\u884C\u6570\u636E"),
+              h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !!index, onClick: loadIndex }, icon("database"), t.index)
             ),
             index && error ? h("div", { className: P + "-err", role: "alert" }, error) : null,
             index ? renderIndex() : [
@@ -2549,7 +2570,7 @@ var require_data_view = __commonJS({
                 h(
                   "div",
                   { className: P + "-headmain" },
-                  h("h2", null, tableLabel(current), h("span", { className: P + "-code" }, active)),
+                  h("h2", null, icon("database"), tableLabel(current), h("span", { className: P + "-code" }, active)),
                   h(
                     "div",
                     { className: P + "-sub" },
@@ -2561,9 +2582,11 @@ var require_data_view = __commonJS({
                 h("button", {
                   type: "button",
                   className: P + "-btn",
+                  "aria-label": t.refresh,
+                  title: t.refresh,
                   "aria-busy": loadingRows ? "true" : "false",
                   onClick: refresh
-                }, t.refresh)
+                }, icon("refresh"), h("span", { className: P + "-btnlabel" }, t.refresh))
               ),
               h(
                 "div",
@@ -2571,6 +2594,7 @@ var require_data_view = __commonJS({
                 h(
                   "div",
                   { className: P + "-search" },
+                  icon("search"),
                   h("input", {
                     type: "search",
                     value: searchDraft,
@@ -2787,6 +2811,9 @@ var require_copy = __commonJS({
         newTimeline: "\u65B0\u5EFA\u65F6\u95F4\u7EBF\u4EFB\u52A1",
         restartTitle: "\u91CD\u542F\u4EFB\u52A1",
         noTimeline: "\u8FD9\u6761\u4EFB\u52A1\u8FD8\u6CA1\u6709\u65F6\u95F4\u7EBF",
+        restartPriorityHint: "\u91CD\u542F\u4EFB\u52A1\u9700\u8981\u4F18\u5148\u7EA7 1\u201310\uFF0C0 \u4EC5\u7528\u4E8E\u5DF2\u5B8C\u6210/\u5DF2\u5173\u95ED",
+        restartPriorityError: "\u91CD\u542F\u4EFB\u52A1\u7684\u4F18\u5148\u7EA7\u5FC5\u987B\u586B\u5199 1\u201310\uFF1B0 \u4EC5\u7528\u4E8E\u5DF2\u5B8C\u6210/\u5DF2\u5173\u95ED",
+        activePriorityError: "\u5DF2\u5F00\u542F\u4EFB\u52A1\u7684\u4F18\u5148\u7EA7\u5FC5\u987B\u586B\u5199 1\u201310\uFF1B0 \u4EC5\u7528\u4E8E\u5DF2\u5B8C\u6210/\u5DF2\u5173\u95ED",
         confirm: "\u786E\u5B9A",
         difficultyHint: "\u5B8C\u6210\u4EFB\u52A1\u524D\u8BF7\u9009\u62E9\u96BE\u5EA6\uFF080.5\u20135\uFF09",
         emptyTree: "\u4EFB\u52A1\u6811\u8FD8\u6CA1\u6709\u6570\u636E",
@@ -2911,6 +2938,9 @@ var require_copy = __commonJS({
         newTimeline: "New timeline task",
         restartTitle: "Restart task",
         noTimeline: "No timeline for this task",
+        restartPriorityHint: "Restarted tasks require priority 1\u201310; 0 is only for completed or closed tasks.",
+        restartPriorityError: "Enter a priority from 1 to 10 to restart; 0 is only for completed or closed tasks.",
+        activePriorityError: "Active tasks require a priority from 1 to 10; 0 is only for completed or closed tasks.",
         confirm: "OK",
         difficultyHint: "Pick a difficulty (0.5\u20135) before completing",
         emptyTree: "Task tree is empty",
@@ -3946,11 +3976,11 @@ var require_styles = __commonJS({
   "packages/addons/tasks/client/styles.cjs"(exports2, module2) {
     "use strict";
     module2.exports = [
-      ".wbt-root{--wbt-line:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wbt-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));--wbt-bg:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));--wbt-accent:var(--dsw-alias-brand-primary,#11a89b);display:flex;flex-direction:column;gap:10px;min-height:0;color:inherit;font-size:13px}",
+      ".wbt-root{--wbt-line:var(--wb-border);--wbt-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));--wbt-bg:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));--wbt-accent:var(--dsw-alias-brand-primary,#11a89b);display:flex;flex-direction:column;gap:10px;min-height:0;color:inherit;font-size:13px}",
       ".wbt-pathrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 0 2px}",
       ".wbt-tree-slot{flex:0 0 138px;width:138px;margin-right:6px;display:flex;align-items:center}",
       ".wbt-grow{flex:1;min-width:0}",
-      ".wbt-btn{border:1px solid var(--wbt-line);background:var(--wbt-surface);color:inherit;border-radius:8px;padding:6px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;line-height:1.3;display:inline-flex;align-items:center;gap:5px}",
+      ".wbt-btn{border:1px solid var(--wbt-line);background:var(--wbt-surface);color:inherit;border-radius:var(--wb-radius-sm);padding:6px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;line-height:1.3;display:inline-flex;align-items:center;gap:5px}",
       ".wbt-svg{display:block;flex:none}",
       ".wbt-btn:hover{border-color:var(--wbt-accent)}",
       ".wbt-btn.primary{background:var(--wbt-accent);border-color:var(--wbt-accent);color:var(--dsw-alias-label-primary-inverted,#fff);font-weight:600}",
@@ -3977,7 +4007,7 @@ var require_styles = __commonJS({
       ".wbt-crumb button:hover{background:color-mix(in oklab,currentColor 9%,transparent)}",
       ".wbt-crumb .sep{opacity:.35}",
       ".wbt-list{display:flex;flex-direction:column;gap:7px;min-height:0}",
-      ".wbt-item{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--wbt-line);border-radius:12px;background:var(--wbt-surface);padding:11px 13px;min-width:0;max-width:100%;box-sizing:border-box;min-height:0;overflow:hidden;overflow-wrap:anywhere;transition:border-color .14s ease,box-shadow .14s ease}",
+      ".wbt-item{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card);background:var(--wbt-surface);padding:var(--wb-space-md);min-width:0;max-width:100%;box-sizing:border-box;min-height:0;overflow:hidden;overflow-wrap:anywhere;transition:border-color .14s ease,box-shadow .14s ease}",
       ".wbt-item:hover{border-color:color-mix(in oklab,var(--wbt-accent) 30%,var(--wbt-line));box-shadow:0 2px 10px rgba(20,30,40,.05)}",
       ".wbt-item.closed{opacity:.62}",
       ".wbt-item.closed .wbt-title{text-decoration:line-through}",
@@ -3985,7 +4015,7 @@ var require_styles = __commonJS({
       ".wbt-chead{display:flex;align-items:flex-start;gap:10px;min-width:0}",
       ".wbt-line1{display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap;flex:1 1 auto}",
       ".wbt-title{font-weight:620;font-size:14px;line-height:1.38;letter-spacing:.1px;word-break:break-word;overflow-wrap:anywhere;max-width:100%}",
-      require_description().css,
+      require_description().css + require_visual_tokens(),
       ".wbt-foot{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;margin-top:1px}",
       ".wbt-meta{display:flex;gap:4px 12px;flex-wrap:wrap;font-size:11.5px;opacity:.64;min-width:0;max-width:100%;font-variant-numeric:tabular-nums}",
       ".wbt-meta b{font-weight:560;opacity:.9;margin-right:1px}",
@@ -4155,6 +4185,187 @@ var require_styles = __commonJS({
       "@media (max-width:420px){.wbt-grid{grid-template-columns:1fr}}",
       "@media (max-width:640px){.wbt-form{grid-template-columns:1fr}.wbt-drawer{width:94vw}.wbt-search{width:100%}.wbt-item{padding:9px}.wbt-ops{width:100%;justify-content:flex-end}}"
     ].join("\n");
+  }
+});
+
+// packages/addons/tasks/client/create-modal.cjs
+var require_create_modal = __commonJS({
+  "packages/addons/tasks/client/create-modal.cjs"(exports2, module2) {
+    function initialPriority(source, origin, fallback) {
+      var original = Number(origin && origin.priority);
+      if (source === "2" && Number.isInteger(original) && original >= 1 && original <= 10) return original;
+      var n = Number(fallback);
+      return Number.isFinite(n) ? Math.min(10, Math.max(1, Math.floor(n))) : 1;
+    }
+    function clampInputPriority(value) {
+      if (String(value).trim() === "" || Number(value) === 0 || !Number.isFinite(Number(value))) return value;
+      return Math.min(10, Math.max(1, Math.floor(Number(value))));
+    }
+    function validatePriority(value, source, t) {
+      var n = Number(value);
+      return String(value).trim() !== "" && Number.isInteger(n) && n >= 1 && n <= 10 ? "" : source === "2" ? t.restartPriorityError : t.activePriorityError;
+    }
+    module2.exports = function createModal(deps) {
+      var React = deps.React, h = React.createElement;
+      var allTables = deps.allTables, tagNames = deps.tagNames, splitTags = deps.splitTags;
+      var today = deps.today, addDays = deps.addDays, hostHasAddon = deps.hostHasAddon;
+      function CreateModal(props) {
+        var t = props.t;
+        var source = String(props.source || "0");
+        var origin = props.originTask || null;
+        var tables = allTables(props.tree);
+        var first = props.defaultTableId || origin && origin.tableId || tables[0] && tables[0].id || "";
+        var initTags = origin ? tagNames(origin).join(", ") : "";
+        var initTable = origin ? String(origin.tableId || first) : String(first);
+        var defaults = props.defaults || {};
+        var initPriority = initialPriority(source, origin, defaults.priority);
+        var initDifficulty = Math.floor(Number(defaults.difficulty));
+        if (!(initDifficulty >= 1)) initDifficulty = 1;
+        var initOffset = Math.floor(Number(defaults.targetOffset));
+        if (!(initOffset >= 0)) initOffset = 0;
+        var f = React.useState({
+          title: "",
+          description: "",
+          tags: initTags,
+          status: "0",
+          priority: initPriority,
+          difficulty: initDifficulty,
+          publishDate: today(),
+          targetDate: addDays(initOffset),
+          doneDate: today(),
+          shutdownDate: today(),
+          tableId: initTable
+        });
+        var form = f[0], setForm = f[1];
+        var busy = React.useState(false);
+        var isBusy = busy[0], setBusy = busy[1];
+        var err = React.useState("");
+        var error = err[0], setError = err[1];
+        var active = source === "2" || form.status === "0";
+        var priorityError = active ? validatePriority(form.priority, source, t) : "";
+        function set(k, v) {
+          var next = Object.assign({}, form);
+          next[k] = k === "priority" ? clampInputPriority(v) : v;
+          setForm(next);
+        }
+        function submit() {
+          if (priorityError || isBusy) return;
+          if (!String(form.title).trim()) {
+            setError(t.needTitle);
+            return;
+          }
+          if (!form.tableId) {
+            setError(t.needTable);
+            return;
+          }
+          if (!form.publishDate || !form.targetDate) {
+            setError(t.needDate);
+            return;
+          }
+          setBusy(true);
+          setError("");
+          var args = {
+            title: String(form.title).trim(),
+            description: String(form.description || ""),
+            tags: splitTags(form.tags),
+            status: source === "2" ? "0" : String(form.status),
+            priority: active ? Number(form.priority) : 0,
+            tableId: String(form.tableId),
+            publishDate: form.publishDate,
+            targetDate: form.targetDate,
+            source
+          };
+          if (source !== "0" && origin) {
+            args.timelineKey = String(origin.timelineKey || origin.id);
+            args.restartKey = source === "2" ? String(origin.id) : void 0;
+          }
+          if (args.status === "2") {
+            args.doneDate = form.doneDate || today();
+            args.difficulty = Number(form.difficulty) || 0;
+          }
+          if (args.status === "1") args.shutdownDate = form.shutdownDate || today();
+          props.api.call("tasks.create", args).then(function(r) {
+            if (!r || !r.ok) {
+              setError(r && r.error || "create failed");
+              setBusy(false);
+              return;
+            }
+            props.onCreated();
+          }).catch(function(e) {
+            setError(String(e && e.message || e));
+            setBusy(false);
+          });
+        }
+        var title = source === "2" ? t.restartTitle : source === "1" ? t.newTimeline : t.newTask;
+        return h(
+          "div",
+          { className: "wbt-modal-mask", onMouseDown: function(e) {
+            if (e.target === e.currentTarget) props.onClose();
+          } },
+          h(
+            "div",
+            { className: "wbt-modal" },
+            h("div", { className: "wbt-modal-head" }, h("h3", null, title), h("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")),
+            source === "2" ? h("div", { className: "wbt-mhint" }, t.restartPriorityHint) : null,
+            source !== "0" && origin ? h("div", { className: "wbt-mhint" }, "\u6765\u6E90\uFF1A" + (origin.title || origin.id) + (source === "2" ? " \xB7 \u91CD\u542F\u94FE " + (origin.restartKey || origin.id) : " \xB7 \u65F6\u95F4\u7EBF " + (origin.timelineKey || origin.id))) : null,
+            h(
+              "div",
+              { className: "wbt-form" },
+              h("label", { className: "wbt-field full" }, h("span", null, t.titleField + " *"), h("input", { className: "wbt-input", value: form.title, onChange: function(e) {
+                set("title", e.target.value);
+              }, autoFocus: true })),
+              h("label", { className: "wbt-field full" }, h("span", null, t.desc), h("textarea", { className: "wbt-textarea", rows: 2, value: form.description, onChange: function(e) {
+                set("description", e.target.value);
+              } })),
+              hostHasAddon("wb-addon-tags") ? h("label", { className: "wbt-field full" }, h("span", null, t.tags), h("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function(e) {
+                set("tags", e.target.value);
+              } })) : null,
+              h("label", { className: "wbt-field" }, h("span", null, t.status), h(
+                "select",
+                { className: "wbt-select", value: source === "2" ? "0" : form.status, disabled: source === "2", onChange: function(e) {
+                  set("status", e.target.value);
+                } },
+                h("option", { value: "0" }, "\u5DF2\u5F00\u542F"),
+                h("option", { value: "2" }, "\u5DF2\u5B8C\u6210"),
+                h("option", { value: "1" }, "\u5DF2\u5173\u95ED")
+              )),
+              h("label", { className: "wbt-field" }, h("span", null, t.priority + "\uFF081\u201310\uFF09"), h("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, disabled: !active, "aria-invalid": !!priorityError, "aria-describedby": priorityError ? "wbt-create-priority-error" : void 0, value: form.priority, onChange: function(e) {
+                set("priority", e.target.value);
+              } })),
+              h("label", { className: "wbt-field" }, h("span", null, t.table + " *"), h("select", { className: "wbt-select", value: form.tableId, onChange: function(e) {
+                set("tableId", e.target.value);
+              } }, tables.map(function(x) {
+                return h("option", { key: x.id, value: x.id }, "\u3000".repeat(x.depth) + x.name);
+              }))),
+              h("label", { className: "wbt-field" }, h("span", null, t.publishDate), h("input", { className: "wbt-input", type: "date", value: form.publishDate, onChange: function(e) {
+                set("publishDate", e.target.value);
+              } })),
+              h("label", { className: "wbt-field" }, h("span", null, t.targetDate), h("input", { className: "wbt-input", type: "date", value: form.targetDate, onChange: function(e) {
+                set("targetDate", e.target.value);
+              } })),
+              source !== "2" && form.status === "2" ? h("label", { className: "wbt-field" }, h("span", null, t.doneDate), h("input", { className: "wbt-input", type: "date", value: form.doneDate, onChange: function(e) {
+                set("doneDate", e.target.value);
+              } })) : null,
+              source !== "2" && form.status === "2" ? h("label", { className: "wbt-field" }, h("span", null, t.difficulty + "\uFF080\u20135\uFF09"), h("input", { className: "wbt-input", type: "number", min: 0, max: 5, step: 0.5, value: form.difficulty, onChange: function(e) {
+                set("difficulty", e.target.value);
+              } })) : null,
+              source !== "2" && form.status === "1" ? h("label", { className: "wbt-field" }, h("span", null, t.shutdownDate), h("input", { className: "wbt-input", type: "date", value: form.shutdownDate, onChange: function(e) {
+                set("shutdownDate", e.target.value);
+              } })) : null
+            ),
+            priorityError ? h("div", { id: "wbt-create-priority-error", className: "wbt-err", role: "alert" }, priorityError) : null,
+            error ? h("div", { className: "wbt-err" }, error) : null,
+            h(
+              "div",
+              { className: "wbt-modal-foot" },
+              h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
+              h("button", { className: "wbt-btn primary", disabled: isBusy || !!priorityError, onClick: submit }, isBusy ? "\u2026" : t.create)
+            )
+          )
+        );
+      }
+      return CreateModal;
+    };
   }
 });
 
@@ -4931,157 +5142,7 @@ var require_edit_modal = __commonJS({
       )
     );
   }
-  function CreateModal(props) {
-    var t = props.t;
-    var source = props.source || "0";
-    var origin = props.originTask || null;
-    var tables = allTables(props.tree);
-    var first = props.defaultTableId || origin && origin.tableId || tables[0] && tables[0].id || "";
-    var initTags = origin ? tagNames(origin).join(", ") : "";
-    var initTable = origin ? String(origin.tableId || first) : String(first);
-    var defaults = props.defaults || {};
-    var initPriority = Math.max(1, Math.floor(Number(defaults.priority)) || 1);
-    if (!(initPriority >= 1)) initPriority = 1;
-    var initDifficulty = Math.floor(Number(defaults.difficulty));
-    if (!(initDifficulty >= 1)) initDifficulty = 1;
-    var initOffset = Math.floor(Number(defaults.targetOffset));
-    if (!(initOffset >= 0)) initOffset = 0;
-    var f = React.useState({
-      title: "",
-      description: "",
-      tags: initTags,
-      status: "0",
-      priority: initPriority,
-      difficulty: initDifficulty,
-      publishDate: today(),
-      targetDate: addDays(initOffset),
-      doneDate: today(),
-      shutdownDate: today(),
-      tableId: initTable
-    });
-    var form = f[0], setForm = f[1];
-    var busy = React.useState(false);
-    var isBusy = busy[0], setBusy = busy[1];
-    var err = React.useState("");
-    var error = err[0], setError = err[1];
-    function set(k, v) {
-      var next = Object.assign({}, form);
-      next[k] = v;
-      setForm(next);
-    }
-    function submit() {
-      if (!String(form.title).trim()) {
-        setError(t.needTitle);
-        return;
-      }
-      if (!form.tableId) {
-        setError(t.needTable);
-        return;
-      }
-      if (!form.publishDate || !form.targetDate) {
-        setError(t.needDate);
-        return;
-      }
-      setBusy(true);
-      setError("");
-      var args = {
-        title: String(form.title).trim(),
-        description: String(form.description || ""),
-        tags: splitTags(form.tags),
-        status: source === "2" ? "0" : String(form.status),
-        priority: Number(form.priority) || 0,
-        tableId: String(form.tableId),
-        publishDate: form.publishDate,
-        targetDate: form.targetDate,
-        source
-      };
-      if (source !== "0" && origin) {
-        args.timelineKey = String(origin.timelineKey || origin.id);
-        args.restartKey = source === "2" ? String(origin.id) : void 0;
-      }
-      if (args.status === "2") {
-        args.doneDate = form.doneDate || today();
-        args.difficulty = Number(form.difficulty) || 0;
-      }
-      if (args.status === "1") args.shutdownDate = form.shutdownDate || today();
-      props.api.call("tasks.create", args).then(function(r) {
-        if (!r || !r.ok) {
-          setError(r && r.error || "create failed");
-          setBusy(false);
-          return;
-        }
-        props.onCreated();
-      }).catch(function(e) {
-        setError(String(e && e.message || e));
-        setBusy(false);
-      });
-    }
-    var title = source === "2" ? t.restartTitle : source === "1" ? t.newTimeline : t.newTask;
-    return h(
-      "div",
-      { className: "wbt-modal-mask", onMouseDown: function(e) {
-        if (e.target === e.currentTarget) props.onClose();
-      } },
-      h(
-        "div",
-        { className: "wbt-modal" },
-        h("div", { className: "wbt-modal-head" }, h("h3", null, title), h("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")),
-        source !== "0" && origin ? h("div", { className: "wbt-mhint" }, "\u6765\u6E90\uFF1A" + (origin.title || origin.id) + (source === "2" ? " \xB7 \u91CD\u542F\u94FE " + (origin.restartKey || origin.id) : " \xB7 \u65F6\u95F4\u7EBF " + (origin.timelineKey || origin.id))) : null,
-        h(
-          "div",
-          { className: "wbt-form" },
-          h("label", { className: "wbt-field full" }, h("span", null, t.titleField + " *"), h("input", { className: "wbt-input", value: form.title, onChange: function(e) {
-            set("title", e.target.value);
-          }, autoFocus: true })),
-          h("label", { className: "wbt-field full" }, h("span", null, t.desc), h("textarea", { className: "wbt-textarea", rows: 2, value: form.description, onChange: function(e) {
-            set("description", e.target.value);
-          } })),
-          hostHasAddon("wb-addon-tags") ? h("label", { className: "wbt-field full" }, h("span", null, t.tags), h("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function(e) {
-            set("tags", e.target.value);
-          } })) : null,
-          h("label", { className: "wbt-field" }, h("span", null, t.status), h(
-            "select",
-            { className: "wbt-select", value: source === "2" ? "0" : form.status, disabled: source === "2", onChange: function(e) {
-              set("status", e.target.value);
-            } },
-            h("option", { value: "0" }, "\u5DF2\u5F00\u542F"),
-            h("option", { value: "2" }, "\u5DF2\u5B8C\u6210"),
-            h("option", { value: "1" }, "\u5DF2\u5173\u95ED")
-          )),
-          h("label", { className: "wbt-field" }, h("span", null, t.priority + "\uFF081\u201310\uFF09"), h("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, disabled: form.status !== "0", value: form.priority, onChange: function(e) {
-            set("priority", e.target.value);
-          } })),
-          h("label", { className: "wbt-field" }, h("span", null, t.table + " *"), h("select", { className: "wbt-select", value: form.tableId, onChange: function(e) {
-            set("tableId", e.target.value);
-          } }, tables.map(function(x) {
-            return h("option", { key: x.id, value: x.id }, "\u3000".repeat(x.depth) + x.name);
-          }))),
-          h("label", { className: "wbt-field" }, h("span", null, t.publishDate), h("input", { className: "wbt-input", type: "date", value: form.publishDate, onChange: function(e) {
-            set("publishDate", e.target.value);
-          } })),
-          h("label", { className: "wbt-field" }, h("span", null, t.targetDate), h("input", { className: "wbt-input", type: "date", value: form.targetDate, onChange: function(e) {
-            set("targetDate", e.target.value);
-          } })),
-          source !== "2" && form.status === "2" ? h("label", { className: "wbt-field" }, h("span", null, t.doneDate), h("input", { className: "wbt-input", type: "date", value: form.doneDate, onChange: function(e) {
-            set("doneDate", e.target.value);
-          } })) : null,
-          source !== "2" && form.status === "2" ? h("label", { className: "wbt-field" }, h("span", null, t.difficulty + "\uFF080\u20135\uFF09"), h("input", { className: "wbt-input", type: "number", min: 0, max: 5, step: 0.5, value: form.difficulty, onChange: function(e) {
-            set("difficulty", e.target.value);
-          } })) : null,
-          source !== "2" && form.status === "1" ? h("label", { className: "wbt-field" }, h("span", null, t.shutdownDate), h("input", { className: "wbt-input", type: "date", value: form.shutdownDate, onChange: function(e) {
-            set("shutdownDate", e.target.value);
-          } })) : null
-        ),
-        error ? h("div", { className: "wbt-err" }, error) : null,
-        h(
-          "div",
-          { className: "wbt-modal-foot" },
-          h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
-          h("button", { className: "wbt-btn primary", disabled: isBusy, onClick: submit }, isBusy ? "\u2026" : t.create)
-        )
-      )
-    );
-  }
+  var CreateModal = require_create_modal()({ React, allTables, tagNames, splitTags, today, addDays, hostHasAddon });
   function TimelineModal(props) {
     var t = props.t;
     var task = props.task;
@@ -6148,7 +6209,7 @@ var require_edit_modal = __commonJS({
   }
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.11.0",
+    version: "2.11.1",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

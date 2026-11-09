@@ -257,7 +257,8 @@ apply({
   effect: (fn) => fn(),
 });
 assert.equal(domain.id, "wb-addon-storage");
-assert.equal(domain.version, "1.2.0");
+assert.equal(domain.version, "1.3.0");
+assert.equal(domain.views.find((v) => v.id === "stats").title.zh, "统计");
 assert.deepEqual(domain.tables, ["storage"]);
 assert.deepEqual(domain.capability.requires, []);
 for (const def of Object.values(defs)) for (const key of def.input.required || []) assert.ok(def.input.properties[key]);

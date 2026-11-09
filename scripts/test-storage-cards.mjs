@@ -1,5 +1,6 @@
 // Source-level rendering and interaction tests; no generated bundles are overwritten.
 import assert from "node:assert/strict";
+import { loadLucideReact } from "./storage-visual-test-runtime.mjs";
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { runInNewContext } from "node:vm";
@@ -31,7 +32,7 @@ function load(file) {
   cache.set(file, module);
   runInNewContext(readFileSync(file, "utf8"), {
     module, exports: module.exports, URL,
-    require: name => name === "react" ? react : load(resolve(dirname(file), name)),
+    require: name => name === "react" ? react : name === "lucide-react" ? loadLucideReact(react) : load(resolve(dirname(file), name)),
   }, { filename: file });
   return module.exports;
 }

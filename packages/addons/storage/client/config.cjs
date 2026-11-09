@@ -1,7 +1,7 @@
 // storage 配置页与配置读取辅助。构建：node scripts/build-addon-clients.mjs
 // 配置存在本机 meta 表，不参与云端同步，也不进入备份。
 var React = require("react");
-var h = React.createElement;
+var h = React.createElement, ui = require("./ui.cjs");
 
 var DOMAIN = "storage";
 var PREFIX = "wbi";
@@ -410,14 +410,7 @@ function ConfigView(props) {
   var body = [];
   if (loading && !state)
     body.push(
-      h(
-        "div",
-        { key: "loading", className: PREFIX + "-cfg-loading", "aria-busy": "true" },
-        h("span", { className: PREFIX + "-cfg-sr" }, t.loading),
-        h("div", { className: PREFIX + "-cfg-sk" }),
-        h("div", { className: PREFIX + "-cfg-sk" }),
-        h("div", { className: PREFIX + "-cfg-sk" }),
-      ),
+      h(ui.Skeleton, { key: "loading", lang: lang }),
     );
   if (!loading && err && !state) {
     body.push(
@@ -451,6 +444,7 @@ function ConfigView(props) {
           h(
             "div",
             { className: PREFIX + "-cfg-gtitle" },
+            h(ui.Icon, { name: g.id === "list" ? "list" : "settings" }),
             h("span", null, lang === "en" ? g.en : g.zh),
             h("span", { className: PREFIX + "-cfg-gcount" }, list.length + (lang === "en" ? " items" : " 项")),
           ),
@@ -481,9 +475,9 @@ function ConfigView(props) {
                 renderControl(item),
                 overridden
                   ? h(
-                      "button",
+                      ui.Button,
                       {
-                        type: "button",
+                        icon: "reset", type: "button",
                         className: PREFIX + "-cfg-btn",
                         disabled: busy,
                         onClick: function () {
@@ -518,9 +512,9 @@ function ConfigView(props) {
         h("span", { className: PREFIX + "-cfg-grow" }),
         anyOverride
           ? h(
-              "button",
+              ui.Button,
               {
-                type: "button",
+                icon: "reset", type: "button",
                 className: PREFIX + "-cfg-btn " + PREFIX + "-cfg-btn-outline",
                 disabled: busy,
                 onClick: resetAll,
@@ -554,16 +548,17 @@ function ConfigView(props) {
 
   return h(
     "div",
-    { className: PREFIX + "-cfg" },
+    { className: "wbi-root " + PREFIX + "-cfg" },
     h(
       "div",
       { className: PREFIX + "-cfg-head" },
       h(
         "div",
         { className: PREFIX + "-cfg-headmain" },
-        h("h2", null, t.title),
-        h("div", { className: PREFIX + "-cfg-note" }, t.note),
+        h("h2", null, h(ui.Icon, { name: "settings", size: 16 }), t.title),
+        h("div", { className: PREFIX + "-cfg-note" }, h(ui.Icon, { name: "database", size: 11 }), t.note),
       ),
+      h(ui.Button, { icon: "refresh", onClick: load, disabled: loading || busy }, ui.tr(lang, "刷新", "Refresh")),
       notice.text
         ? h(
             "div",
