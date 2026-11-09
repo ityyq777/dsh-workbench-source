@@ -4,7 +4,7 @@
   "fail": 900,
   "budget": {
     "packages/addons/tasks/lib/tasks.js": 1604,
-    "packages/addons/tasks/client/client.src.cjs": 1774,
+    "packages/addons/tasks/client/client.src.cjs": 1561,
     "packages/addons/sites/client/client.src.cjs": 1680,
     "packages/addons/sites/client/data.cjs": 768,
     "packages/addons/tags/client/data.cjs": 768,
