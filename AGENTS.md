@@ -1,6 +1,6 @@
 # 仓库约定
 
-执行一类任务后自动执行 git commit；配置了 remote 时再 push。
+执行一类任务后自动执行 git commit；默认只进行commit不进行push，等待用户明确指定后再push。
 
 commit 信息使用中文：提交标题与正文均用中文说明改动及原因；代码标识符、包名和必要的技术术语可保留原文。
 
@@ -159,11 +159,11 @@ DESKTOP_DSH="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/b
 
 ### 包与命名
 
-| 用途 | npm 包名 | 源码目录 |
-| --- | --- | --- |
-| 宿主 | `dsh-workbench-host` | `packages/shell-dist` |
+| 用途 | npm 包名                | 源码目录                  |
+| ---- | ----------------------- | ------------------------- |
+| 宿主 | `dsh-workbench-host`  | `packages/shell-dist`   |
 | 任务 | `dsh-workbench-tasks` | `packages/addons/tasks` |
-| 标签 | `dsh-workbench-tags` | `packages/addons/tags` |
+| 标签 | `dsh-workbench-tags`  | `packages/addons/tags`  |
 | 站点 | `dsh-workbench-sites` | `packages/addons/sites` |
 
 - 源码内宿主仍叫 `dsh-workbench`；npm 上该名字已被无关项目占用，对外发布名必须是
