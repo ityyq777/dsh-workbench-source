@@ -10,7 +10,7 @@
 
 import { DOMAIN } from "./config.js";
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 const TABLES = [
   { name: "task", zh: "任务", en: "Tasks" },

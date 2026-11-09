@@ -29,6 +29,7 @@ export function ensureSchema(db, log) {
     orphanTasks: 0,
     droppedTags: 0,
     droppedTypeColumn: false,
+    droppedSortColumn: false,
   };
 
   const hasTask = tableExists(db, "task");
@@ -63,13 +64,12 @@ export function ensureSchema(db, log) {
     report.source = "fresh";
   }
 
-  // 旧库补列/删列：必须在 createSchema 前完成，否则建 idx_task_sort 会报 no such column。
+  // 旧库补列/删列必须先完成，再补建当前 schema 的索引。
   ensureTaskColumns(db, report);
   ensureNodeColumns(db, report);
   createSchema(db);
   if (hasColumn(db, "task", "created_at")) {
     try {
-      db.exec("CREATE INDEX IF NOT EXISTS idx_task_sort ON task(sort)");
       db.exec("CREATE INDEX IF NOT EXISTS idx_task_dedupe ON task(dedupe_key) WHERE dedupe_key IS NOT NULL");
     } catch (e) {
       if (log) log("[tasks] 索引补建失败：" + String((e && e.message) || e));
@@ -83,7 +83,7 @@ export function ensureSchema(db, log) {
       if (log) log("[tasks] 优先级回填失败：" + String((e && e.message) || e));
     }
   }
-  metaSet(db, "task_schema_version", "2");
+  metaSet(db, "task_schema_version", "3");
   metaSet(db, "task_migration_report", JSON.stringify(report));
   if (log) log("[tasks] migration", report);
   return report;

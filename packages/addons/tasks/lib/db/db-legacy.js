@@ -3,7 +3,7 @@
  *
  * 从 db.js 拆出，纯结构调整，行为不变（2026-11-09）。
  */
-import { now, newId, idOf, todayStr, dateText, timeMs, tableExists, columnsOf, hasColumn, metaGet, metaSet, tx, logChange, insertNode, createSchema, seedDefaultTree } from "./db-core.js";
+import { quoteIdent, dropIndexesFor, now, newId, idOf, todayStr, dateText, timeMs, tableExists, columnsOf, hasColumn, metaGet, metaSet, tx, logChange, insertNode, createSchema, seedDefaultTree } from "./db-core.js";
 
 function legacyName(base, ts) {
   const d = new Date(ts);
@@ -388,9 +388,25 @@ export function ensureNodeColumns(db, report) {
   if (report) report.nodeDescriptionAdded = true;
 }
 
+/** 原子删除任务手动排序；失败时恢复索引与列，保留所有任务数据。 */
+function dropTaskSortColumn(db, report) {
+  if (!hasColumn(db, "task", "sort")) return;
+  db.exec("SAVEPOINT task_drop_sort");
+  try {
+    db.exec("DROP INDEX IF EXISTS idx_task_sort");
+    db.exec("ALTER TABLE task DROP COLUMN sort");
+    db.exec("RELEASE task_drop_sort");
+  } catch (error) {
+    db.exec("ROLLBACK TO task_drop_sort");
+    db.exec("RELEASE task_drop_sort");
+    throw new Error("任务排序列迁移失败，原数据与索引已保留：" + error.message, { cause: error });
+  }
+  report.droppedSortColumn = true;
+}
+
 export function ensureTaskColumns(db, report) {
   if (!tableExists(db, "task") || !hasColumn(db, "task", "created_at")) return;
-  if (!hasColumn(db, "task", "sort")) db.exec("ALTER TABLE task ADD COLUMN sort INTEGER NOT NULL DEFAULT 0");
+  dropTaskSortColumn(db, report || {});
   if (!hasColumn(db, "task", "dedupe_key")) db.exec("ALTER TABLE task ADD COLUMN dedupe_key TEXT");
   if (!hasColumn(db, "task", "review")) db.exec("ALTER TABLE task ADD COLUMN review TEXT NOT NULL DEFAULT ''");
   dropTaskTypeColumn(db, report || {});

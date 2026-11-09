@@ -188,7 +188,7 @@ export function listTasks(db, args, api) {
 
   const SORTS = {
     priority: "t.priority", target: "t.target_date", publish: "t.publish_date",
-    updated: "t.updated_at", created: "t.created_at", manual: "t.sort",
+    updated: "t.updated_at", created: "t.created_at",
   };
   let order = "";
   if (args.sort !== undefined && args.sort !== null && String(args.sort).trim() !== "") {
@@ -199,7 +199,7 @@ export function listTasks(db, args, api) {
       key = key.slice(1);
     }
     const col = SORTS[key];
-    if (!col) throw new Error("sort 取值非法：" + args.sort + "（可用 priority / target / publish / updated / created / manual，前缀 - 表示降序）");
+    if (!col) throw new Error("sort 取值非法：" + args.sort + "（可用 priority / target / publish / updated / created，前缀 - 表示降序）");
     if (args.order !== undefined && String(args.order).trim() !== "") {
       const o = String(args.order).trim().toUpperCase();
       if (o !== "ASC" && o !== "DESC") throw new Error("order 只能是 asc 或 desc");

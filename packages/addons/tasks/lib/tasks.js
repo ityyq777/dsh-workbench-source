@@ -30,7 +30,7 @@ import { getTask, outOne } from "./task/model/task-model.js";
 import { createTask } from "./task/write/task-create.js";
 import { registerTimelineActions, TIMELINE_PAGE_SCHEMA } from "./timeline/task-timelines.js";
 import { updateTask } from "./task/write/task-update.js";
-import { selectedTasks, timelineTasks, restartTasks, timelineRefactor, migrateTasks, sweepShutdown, stats, removeTask, completeTask, exportTasks, reorderTasks, taskDeps, taskLink, taskUnlink } from "./task/write/task-operations.js";
+import { selectedTasks, timelineTasks, restartTasks, timelineRefactor, migrateTasks, sweepShutdown, stats, removeTask, completeTask, exportTasks, taskDeps, taskLink, taskUnlink } from "./task/write/task-operations.js";
 export { tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, clampDifficulty, dateArg, getTask, requireTable, saveTaskRow, emitChange, writeChange, checkRequiredDates, currentTaskTagIds, resolveTagPatch, PATCH_FIELDS, DIFF_COLUMNS } from "./task/model/task-model.js";
 export { priorityForStatus } from "./task/model/task-priority.js";
 export { createTask } from "./task/write/task-create.js";
@@ -66,7 +66,6 @@ export function registerTaskActions(api) {
       doneDate: { type: ["string", "null"], description: "YYYY-MM-DD" },
       shutdownDate: { type: ["string", "null"], description: "YYYY-MM-DD" },
       tableId: { type: ["string", "number"], description: "目标任务表 id" },
-      sort: { type: "number", description: "手动排序值（配合 tasks.reorder）" },
       tagIds: { type: "array", items: { type: "string" }, description: "用这批标签 id 整体替换当前标签（需要标签域）；id 不存在报错并列出可用标签" },
       tags: { type: "array", items: { type: "string" }, description: "按标签名整体替换；默认自动创建未知名字，form.autoCreateTags=false 时报错并列出可用标签" },
       addTags: { type: "array", items: { type: "string" }, description: "增量添加标签（按名字，未知名字受 form.autoCreateTags 控制），保留各任务原有标签" },
@@ -78,7 +77,7 @@ export function registerTaskActions(api) {
   };
 
   action("tasks.list", {
-    description: "统一检索任务：tab（缺省=总览 8 全量，不是紧急 0）/任务表/任务组/关键词（标题、描述、感受）/状态/标签/优先级/目标日期，全部 AND；sort 支持 priority/target/publish/updated/created/manual（前缀 - 表示降序，例如 sort=-priority 是数值越大越紧急的在前）；不传 sort 时未分页按 priority 降序、分页时按 publishDate 降序；返回里带 filter 回显实际生效条件与排序；分页语义：total=筛选后真实总数、returned=本次返回条数、truncated=是否被截断，pageSize 上限 200（超出回显 filter.pageSizeCapped）",
+    description: "统一检索任务：tab（缺省=总览 8 全量，不是紧急 0）/任务表/任务组/关键词（标题、描述、感受）/状态/标签/优先级/目标日期，全部 AND；sort 支持 priority/target/publish/updated/created（前缀 - 表示降序，例如 sort=-priority 是数值越大越紧急的在前）；不传 sort 时未分页按 priority 降序、分页时按 publishDate 降序；返回里带 filter 回显实际生效条件与排序；分页语义：total=筛选后真实总数、returned=本次返回条数、truncated=是否被截断，pageSize 上限 200（超出回显 filter.pageSizeCapped）",
     input: {
       type: "object",
       properties: {
@@ -135,7 +134,6 @@ export function registerTaskActions(api) {
         doneDate: { type: "string" },
         shutdownDate: { type: "string" },
         tableId: { type: ["string", "number"] },
-        sort: { type: "number" },
         tagIds: { type: "array", items: { type: "string" }, description: "用这批标签 id 整体替换当前标签；id 不存在报错并列出可用标签" },
         tags: { type: "array", items: { type: "string" }, description: "按标签名整体替换；默认自动创建未知名字，form.autoCreateTags=false 时报错并列出可用标签" },
         addTags: { type: "array", items: { type: "string" }, description: "增量添加标签名（保留原有标签）；未知名字同样受 form.autoCreateTags 控制" },
@@ -249,23 +247,6 @@ export function registerTaskActions(api) {
     examples: [{ format: "csv", tab: 8 }, { format: "markdown", ids: ["1001", "1002"] }],
     execute: function (args) { return exportTasks(db, args || {}, api); },
     render: function (r) { return "已导出 " + r.count + " 条任务（" + r.format + "）"; },
-  });
-
-  action("tasks.reorder", {
-    description: "按给定 id 顺序重排 sort（默认步长 100）；配合 tasks.list 的 sort=manual 使用；支持 dryRun",
-    input: {
-      type: "object",
-      required: ["ids"],
-      properties: {
-        ids: { type: "array", items: { type: "string" }, description: "期望的排序，从前往后" },
-        step: { type: "number", description: "相邻间隔，默认 100" },
-        base: { type: "number", description: "起始值，默认 0" },
-        dryRun: { type: "boolean" },
-      },
-    },
-    examples: [{ ids: ["1001", "1002"], step: 100, dryRun: true }],
-    execute: function (args, ctx) { return reorderTasks(db, args || {}, ctx.origin, api); },
-    render: function (r) { return r.dryRun ? "预览：将重排 " + r.wouldUpdate + " 条任务" : "已重排 " + r.updated + " 条任务"; },
   });
 
   action("tasks.depends", {

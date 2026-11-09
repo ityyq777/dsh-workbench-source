@@ -319,7 +319,7 @@ function searchNodesAction(db, args) {
     };
     if (withTasks && String(row.type) === "1") {
       out.tasks = db.prepare(
-        "SELECT id, title, status, priority FROM task WHERE table_id=? AND deleted_at IS NULL ORDER BY sort ASC, id ASC LIMIT ?",
+        "SELECT id, title, status, priority FROM task WHERE table_id=? AND deleted_at IS NULL ORDER BY publish_date DESC, id DESC LIMIT ?",
       ).all(String(row.id), limit);
     }
     return out;

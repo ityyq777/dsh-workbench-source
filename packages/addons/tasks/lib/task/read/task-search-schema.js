@@ -19,6 +19,6 @@ export const TASK_FILTER_SCHEMA = {
   targetFrom: { type: "string", description: "targetDate >= 该日期" },
   targetTo: { type: "string", description: "targetDate <= 该日期" },
   tagIds: { type: "array", items: { type: "string" }, description: "任一标签命中（AND 到其他条件）" },
-  sort: { type: "string", description: "priority / target / publish / updated / created / manual；前缀 - 表示降序" },
+  sort: { type: "string", description: "priority / target / publish / updated / created；前缀 - 表示降序" },
   order: { type: "string", enum: ["asc", "desc"], description: "配合 sort 指定方向" },
 };

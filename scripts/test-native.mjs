@@ -467,18 +467,15 @@ try {
   const depAfter = await call("tasks.depends", { id: down.result.id });
   assert(depAfter.result.dependsOn.length === 0 && depAfter.result.blocked === false, "unlink 后仍显示依赖");
 
-  // ── 11. 手动排序 ──
-  const ra = await call("tasks.create", { tableId: fixtureTableId, title: "排序A" });
-  const rb = await call("tasks.create", { tableId: fixtureTableId, title: "排序B" });
-  const reorderDry = await call("tasks.reorder", { ids: [rb.result.id, ra.result.id], dryRun: true });
-  assert(reorderDry.result.wouldUpdate === 2 && (await call("tasks.get", { id: rb.result.id })).result.task.sort === 0, "reorder dryRun 污染了 sort");
-  const reorderReal = await call("tasks.reorder", { ids: [rb.result.id, ra.result.id], step: 100 });
-  assert(reorderReal.result.updated === 2, "reorder 未更新");
-  assert((await call("tasks.get", { id: rb.result.id })).result.task.sort === 0, "reorder 首位 sort 不对");
-  assert((await call("tasks.get", { id: ra.result.id })).result.task.sort === 100, "reorder 次位 sort 不对");
-  const manual = await call("tasks.list", { tab: 8, sort: "manual", pageSize: 200 });
-  const sortedIds = manual.result.records.map((t) => t.id);
-  assert(sortedIds.indexOf(rb.result.id) < sortedIds.indexOf(ra.result.id), "sort=manual 顺序不对");
+  // ── 11. 任务手动排序接口已移除（数据库迁移另见 test-task-sort-removal.mjs） ──
+  assert(!names.includes("tasks.reorder"), "tasks.reorder 仍被注册");
+  assert(!("sort" in (await call("tasks.get", { id })).result.task), "任务输出仍暴露 sort");
+  assert(!createdMeta.params.includes("sort"), "tasks.create schema 仍暴露 sort");
+  for (const sort of ["manual", "-manual"]) {
+    let error = null;
+    try { await call("tasks.list", { sort }); } catch (e) { error = e; }
+    assert(error && /sort/.test(error.message), "tasks.list 未拒绝已移除的 " + sort);
+  }
 
   // ── 12. 历史 / 变更日志 / 导出 / 分组统计 ──
   const hist = await call("tasks.history", { id, limit: 20 });
@@ -564,31 +561,6 @@ try {
   assert(Array.isArray(siteReport.result.lists.duplicates), "sites.statsReport 缺重复 URL 列表");
   assert(Array.isArray(siteReport.result.breakdowns.freshness), "sites.statsReport 缺新鲜度分布");
 
-  // ── 14. 旧版 task 表升级：先补 sort/dedupe_key，再建索引 ──
-  const legacy = new DatabaseSync(":memory:");
-  legacy.exec(
-    "CREATE TABLE task (id TEXT PRIMARY KEY,title TEXT NOT NULL,description TEXT NOT NULL DEFAULT ''," +
-      "status TEXT NOT NULL DEFAULT '0',type TEXT NOT NULL DEFAULT '0',priority INTEGER NOT NULL DEFAULT 0," +
-      "difficulty REAL,table_id TEXT NOT NULL,timeline_key TEXT,restart_key TEXT,publish_date TEXT NOT NULL," +
-      "target_date TEXT NOT NULL,done_date TEXT,shutdown_date TEXT,created_at INTEGER NOT NULL," +
-      "updated_at INTEGER NOT NULL,deleted_at INTEGER,rev INTEGER NOT NULL DEFAULT 1);",
-  );
-  legacy.exec(
-    "CREATE TABLE task_node (id TEXT PRIMARY KEY,name TEXT NOT NULL,type TEXT NOT NULL," +
-      "parent_id TEXT NOT NULL DEFAULT '0',path TEXT NOT NULL,sort INTEGER NOT NULL DEFAULT 0," +
-      "depth INTEGER NOT NULL DEFAULT 0,created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL," +
-      "deleted_at INTEGER,rev INTEGER NOT NULL DEFAULT 1);",
-  );
-  const { ensureSchema: ensureTaskSchema } = await import("../packages/addons/tasks/lib/db/db.js");
-  ensureTaskSchema(legacy, null);
-  const legacyCols = legacy.prepare("PRAGMA table_info(task)").all().map((c) => c.name);
-  assert(legacyCols.includes("sort") && legacyCols.includes("dedupe_key"), "旧 task 表未补 sort/dedupe_key");
-  assert(legacyCols.includes("review"), "旧 task 表未补 review");
-  assert(legacy.prepare("SELECT 1 AS x FROM task_dep LIMIT 1").get() === undefined, "旧库升级未创建 task_dep");
-  const legacyIndexes = legacy.prepare("PRAGMA index_list(task)").all().map((r) => r.name);
-  assert(legacyIndexes.includes("idx_task_sort") && legacyIndexes.includes("idx_task_dedupe"), "旧 task 表索引未补建");
-  legacy.close();
-
   // ── 15. 能力清单 fallback 与 primaryAction 校验 ──
   let fakeDispose = null;
   let badDispose = null;
@@ -651,9 +623,9 @@ try {
     ensureSchema(raw, () => {});
     const stamp = Date.now();
     raw.prepare(
-      "INSERT INTO task(id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,sort,dedupe_key,created_at,updated_at,deleted_at,rev) " +
-        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-    ).run("t-done", "历史已完成任务", "", "2", 8, null, "", "1", null, null, "2026-11-01", "2026-11-02", "2026-11-02", null, 0, null, stamp, stamp, null, 1);
+      "INSERT INTO task(id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,dedupe_key,created_at,updated_at,deleted_at,rev) " +
+        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    ).run("t-done", "历史已完成任务", "", "2", 8, null, "", "1", null, null, "2026-11-01", "2026-11-02", "2026-11-02", null, null, stamp, stamp, null, 1);
     const migrated = ensureSchema(raw, () => {});
     assert(migrated.prioritiesCleared >= 1, "迁移报告未记录清零条数：" + JSON.stringify(migrated));
     assert(Number(raw.prepare("SELECT priority FROM task WHERE id='t-done'").get().priority) === 0, "历史已完成任务优先级未清零");

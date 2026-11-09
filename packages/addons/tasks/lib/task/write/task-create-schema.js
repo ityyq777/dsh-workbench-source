@@ -27,6 +27,5 @@ export const TASK_CREATE_SCHEMA = {
         tagIds: { type: "array", items: { type: "string" }, description: "创建时挂标签（需要标签域；未安装时忽略并在回执 notices 说明）；id 必须已存在，否则报错并列出可用标签" },
         tags: { type: "array", items: { type: "string" }, description: "创建时按标签名挂标签；默认自动创建未知名字，form.autoCreateTags=false 时未知名字报错并列出可用标签；标签域未安装时忽略并回执 notices" },
         dedupeKey: { type: "string", description: "幂等键：同键未删除任务存在时直接返回已有任务（deduped:true）" },
-        sort: { type: "number", description: "手动排序值（默认 0）" },
       },
     };

@@ -59,8 +59,6 @@ export const SORT_NOTES = {
   "-updated": "更新时间降序（最近改动的在前）",
   created: "创建时间升序",
   "-created": "创建时间降序（最新的在前）",
-  manual: "手动排序值升序",
-  "-manual": "手动排序值降序",
 };
 
 export function renderList(result) {

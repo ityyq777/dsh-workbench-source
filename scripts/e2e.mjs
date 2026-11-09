@@ -13,6 +13,7 @@ const tests = [
   "scripts/test-structure.mjs",
   "scripts/audit-structure.mjs",
   "scripts/test-native.mjs",
+  "scripts/test-task-sort-removal.mjs",
   "scripts/test-task-ownership-backend.mjs",
   "scripts/test-task-ownership-concurrency.mjs",
   "scripts/test-task-ownership-ui.mjs",

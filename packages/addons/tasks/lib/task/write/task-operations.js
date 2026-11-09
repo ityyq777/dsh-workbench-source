@@ -15,7 +15,7 @@ import {
 import { listTasks } from "../read/task-query.js";
 import { todayActivity } from "../../stats/stats-today.js";
 import { csvCell } from "../read/task-view.js";
-import { idList, bulkUpdate } from "./task-bulk.js";
+import { bulkUpdate } from "./task-bulk.js";
 import {
   tagsAvailable,
   attachTags,
@@ -289,32 +289,6 @@ export function exportTasks(db, args, api) {
     lines.push("| " + t.id + " | " + String(t.title).replace(/\|/g, "\\|") + " | " + t.status + " | " + t.priority + " | " + (t.targetDate || "") + " | " + (t.tags || []).map(function (g) { return g.name; }).join(", ") + " |");
   }
   return { ...feedback, format: "markdown", count: records.length, content: lines.join("\n") };
-}
-
-export function reorderTasks(db, args, origin, api) {
-  const ids = idList(args.ids);
-  if (!ids.length) throw new Error("ids 不能为空");
-  const step = Number(args.step) || 100;
-  const base = args.base === undefined ? 0 : Number(args.base);
-  const dryRun = args.dryRun === true;
-  const ts = now();
-  const plan = ids.map(function (id, i) { return { id: id, sort: Math.round(base + i * step) }; });
-  const items = [];
-  for (const p of plan) {
-    const cur = getTask(db, p.id);
-    if (!cur) throw new Error("任务不存在：" + p.id);
-    items.push({ id: String(cur.id), title: String(cur.title || ""), sort: p.sort });
-  }
-  if (dryRun) return { dryRun: true, updated: 0, wouldUpdate: items.length, items: items };
-  tx(db, function () {
-    for (const it of items) {
-      const cur = getTask(db, it.id);
-      const next = Object.assign({}, cur, { sort: it.sort, updated_at: ts, rev: Number(cur.rev) + 1 });
-      saveTaskRow(db, next);
-      writeChange(db, next, "update", origin, api, ts);
-    }
-  });
-  return { dryRun: false, updated: items.length, items: items };
 }
 
 export function taskDeps(db, args) {

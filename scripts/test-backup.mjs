@@ -6,6 +6,7 @@
  *  - 导入恢复被硬删的数据
  *  - 备份格式版本不兼容返回 422
  */
+import { createHash } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -92,7 +93,6 @@ try {
   const created2 = await host.invoke("tasks.create", { tableId: fixtureTableId, title: "备份依赖任务", priority: 3 }, "agent");
   const task2Id = created2.result.id;
   await host.invoke("tasks.link", { id: taskId, dependsOnId: task2Id }, "agent");
-  await host.invoke("tasks.reorder", { ids: [task2Id, taskId] }, "agent");
   const tag = await host.invoke("tags.create", { name: "备份验收标签" }, "agent");
   const node = await host.invoke("siteNodes.create", { parentId: "0", name: "备份验收目录" }, "agent");
   const site = await host.invoke("sites.create", {
@@ -125,10 +125,10 @@ try {
     throw new Error("task_dep missing from task backup");
   }
   const exportedTaskRow = taskBackup.tasks.find((t) => t.id === taskId);
-  if (!exportedTaskRow || typeof exportedTaskRow.sort !== "number") throw new Error("task.sort missing from backup");
-  const exportedTask2Row = taskBackup.tasks.find((t) => t.id === task2Id);
-  if (!(exportedTask2Row.sort < exportedTaskRow.sort)) throw new Error("task.sort order not preserved in backup");
-  console.log("task backup extras ok: taskDeps + sort");
+  if (!exportedTaskRow || taskBackup.tasks.some((t) => "sort" in t)) throw new Error("task.sort must not be exported");
+  const exportedNode = taskBackup.taskNodes.find((n) => n.id === fixtureTableId);
+  if (!exportedNode || typeof exportedNode.sort !== "number") throw new Error("task_node.sort missing from backup");
+  console.log("task backup extras ok: taskDeps + node sort, no task sort");
 
   const inventoryBackup = JSON.parse(files.get("modules/wb-addon-storage.json").toString("utf8"));
   if (!inventoryBackup.storage.some(r => r.id === inventoryId && r.stock === "1~2")) throw new Error("storage record missing from backup");
@@ -163,11 +163,37 @@ try {
   if (!restoredList.result.records.some((t) => t.id === taskId)) throw new Error("task was not restored");
   const checkDb = new DatabaseSync(join(home, "workbench.db"));
   const depRow = checkDb.prepare("SELECT 1 FROM task_dep WHERE task_id = ? AND depends_on_id = ? AND deleted_at IS NULL").get(taskId, task2Id);
-  const sortRow = checkDb.prepare("SELECT sort FROM task WHERE id = ?").get(taskId);
+  const restoredColumns = checkDb.prepare("PRAGMA table_info(task)").all();
+  const restoredNode = checkDb.prepare("SELECT sort FROM task_node WHERE id = ?").get(fixtureTableId);
   checkDb.close();
   if (!depRow) throw new Error("task_dep was not restored");
-  if (sortRow.sort !== exportedTaskRow.sort) throw new Error("task.sort was not restored");
-  console.log("restore ok:", taskId, "dep + sort");
+  if (restoredColumns.some((c) => c.name === "sort")) throw new Error("restore recreated task.sort");
+  if (restoredNode.sort !== exportedNode.sort) throw new Error("task_node.sort was not restored");
+  console.log("restore ok:", taskId, "dep + node sort");
+
+  // 旧 schema 1/2 备份携带 task.sort：恢复忽略旧字段，但保留任务与目录排序。
+  for (const schemaVersion of [1, 2]) {
+    const legacyTaskBackup = { ...taskBackup, schemaVersion, tasks: taskBackup.tasks.map((t, i) => ({ ...t, sort: 900 - i * 100 })) };
+    const legacyData = Buffer.from(JSON.stringify(legacyTaskBackup));
+    const legacyManifest = { ...manifest, modules: manifest.modules.map((m) => m.id === "wb-addon-tasks"
+      ? { ...m, size: legacyData.length, sha256: createHash("sha256").update(legacyData).digest("hex") } : m) };
+    const legacyArchive = zip.zipCreate([...files].map(([name, data]) => ({
+      name, data: name === "modules/wb-addon-tasks.json" ? legacyData : name === "manifest.json" ? Buffer.from(JSON.stringify(legacyManifest)) : data,
+    })));
+    const clearTasks = new DatabaseSync(join(home, "workbench.db"));
+    clearTasks.exec("DELETE FROM task; DELETE FROM task_dep;");
+    clearTasks.close();
+    const legacyReport = parseJson(await call("POST", "/workbench/api/backup/import", legacyArchive));
+    if (!legacyReport?.ok) throw new Error("legacy task backup restore failed: " + JSON.stringify(legacyReport));
+    const restoredTask = (await host.invoke("tasks.get", { id: taskId }, "agent")).result.task;
+    if (restoredTask.title !== exportedTaskRow.title || "sort" in restoredTask) throw new Error("legacy sort leaked into restored task");
+    const verifyLegacy = new DatabaseSync(join(home, "workbench.db"));
+    if (verifyLegacy.prepare("PRAGMA table_info(task)").all().some((c) => c.name === "sort")) throw new Error("legacy backup recreated task.sort");
+    if (!verifyLegacy.prepare("SELECT 1 FROM task_dep WHERE task_id=? AND depends_on_id=?").get(taskId, task2Id)) throw new Error("legacy backup lost dependency");
+    if (verifyLegacy.prepare("SELECT sort FROM task_node WHERE id=?").get(fixtureTableId).sort !== exportedNode.sort) throw new Error("legacy backup changed node order");
+    verifyLegacy.close();
+  }
+  console.log("legacy task backup schema 1/2 restore ok");
   const restoredInventory = await host.invoke("storage.list", { text: "备份验收物品" }, "agent");
   if (!restoredInventory.result.records.some(r => r.id === inventoryId && r.stock === "1~2")) throw new Error("storage record was not restored");
   const restoredDb = new DatabaseSync(join(home, "workbench.db"));

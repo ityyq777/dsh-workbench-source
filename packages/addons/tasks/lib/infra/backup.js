@@ -9,7 +9,7 @@
 import { logChange, tableExists, tx } from "../db/db.js";
 import { LEGACY_TYPE_TAGS, addTaskTagByName, tagsAvailable } from "../tagging/tagging.js";
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 function asText(value, fallback) {
   if (value === undefined || value === null) return fallback === undefined ? "" : fallback;
@@ -54,7 +54,6 @@ function taskValues(row) {
     asText(row.target_date),
     asTextOrNull(row.done_date),
     asTextOrNull(row.shutdown_date),
-    asInt(row.sort, 0),
     asTextOrNull(row.dedupe_key),
     asInt(row.created_at, updated),
     updated,
@@ -104,7 +103,7 @@ function nodeValues(row) {
 const DEFINITIONS = [
   ["task_node", "taskNodes", "id,name,description,type,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev", nodeValues],
   ["task_timeline", "taskTimelines", "id,title,description,created_at,updated_at,deleted_at,rev", timelineValues],
-  ["task", "tasks", "id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,sort,dedupe_key,created_at,updated_at,deleted_at,rev", taskValues],
+  ["task", "tasks", "id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,dedupe_key,created_at,updated_at,deleted_at,rev", taskValues],
   ["task_dep", "taskDeps", "id,task_id,depends_on_id,created_at,updated_at,deleted_at,rev", depValues],
   ["task_timeline_link", "taskTimelineLinks", "id,task_id,timeline_id,created_at,updated_at,deleted_at,rev", linkValues],
 ];
@@ -141,7 +140,7 @@ export function exportTasksData(api) {
 }
 
 function prepareBackup(data) {
-  if (!data || ![1, 2].includes(Number(data.schemaVersion))) throw new Error("任务备份版本不兼容：需要 1 或 2");
+  if (!data || ![1, 2, 3].includes(Number(data.schemaVersion))) throw new Error("任务备份版本不兼容：需要 1、2 或 3");
   const legacy = Number(data.schemaVersion) === 1;
   const prepared = [];
   for (const [table, key, columnText, convert] of DEFINITIONS) {

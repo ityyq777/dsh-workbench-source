@@ -125,7 +125,6 @@ export function createTask(db, args, origin, api, opts) {
     target_date: targetDate,
     done_date: doneDate,
     shutdown_date: shutdownDate,
-    sort: Number.isFinite(Number(args.sort)) ? Math.round(Number(args.sort)) : 0,
     dedupe_key: dedupeKey,
     created_at: ts,
     updated_at: ts,

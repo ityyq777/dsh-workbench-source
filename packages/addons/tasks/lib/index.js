@@ -47,7 +47,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/时间线/配置/数据五个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "3.2.0",
+        version: "3.3.0",
         tables: ["task", "task_dep", "task_node", "task_timeline", "task_timeline_link"],
         sync: taskSync,
         views: [
@@ -106,7 +106,7 @@ export function apply(ctx) {
             { name: "status", type: "0|1|2|3", description: "0=进行中 ACTIVE、1=已关闭 SHUTDOWN、2=已完成 DONE、3=已重启 RESTARTED（创建时不允许 3）；也接受 open/done。别按“0=未开始”理解：0 是在办" },
             { name: "priority", type: "1..10（关闭/完成为 0）", description: "数值越大越紧急，不是越小越急；已开启任务必须 P1..P10（显式传 0 会报错，缺省 P1）；已关闭/已完成/已重启一律 P0，传值被忽略；>=6 进紧急页签（tab=0）；参数优先级 min/max 同样是数值越大越急" },
             { name: "difficulty", type: "0..5", description: DIFFICULTY_GUIDANCE },
-            { name: "sort", type: "string", description: "priority / target（targetDate）/ publish（publishDate）/ updated / created / manual（sort 列）；前缀 - 表示降序，例如 sort=-priority 才是最紧急在前；不传时未分页按 priority 降序，分页（tab 5..8 或传 pageNumber/pageSize）按 publishDate 降序" },
+            { name: "sort", type: "string", description: "priority / target（targetDate）/ publish（publishDate）/ updated / created；前缀 - 表示降序，例如 sort=-priority 才是最紧急在前；不传时未分页按 priority 降序，分页（tab 5..8 或传 pageNumber/pageSize）按 publishDate 降序" },
             { name: "order", type: "asc|desc", description: "显式指定排序方向，覆盖 sort 前缀" },
             { name: "targetDate", type: "YYYY-MM-DD", description: "目标日期（截止）；缺省表示未定；targetFrom/targetTo 按它过滤，target<今天且未完成即视为逾期" },
             { name: "publishDate", type: "YYYY-MM-DD", description: "发布日期，缺省为创建当天" },

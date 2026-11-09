@@ -90,11 +90,6 @@ export function applyPatchRow(db, cur, patch, ts) {
   if ("targetDate" in patch) next.target_date = dateArg(patch.targetDate, "targetDate") || String(cur.target_date);
   if ("doneDate" in patch) next.done_date = dateArg(patch.doneDate, "doneDate");
   if ("shutdownDate" in patch) next.shutdown_date = dateArg(patch.shutdownDate, "shutdownDate");
-  if ("sort" in patch) {
-    const sort = Number(patch.sort);
-    if (!Number.isFinite(sort)) throw new Error("sort 必须是数字");
-    next.sort = Math.round(sort);
-  }
   // tagIds 不是 task 列，由 bulkUpdate 在行写入后同步 tag_mapping。
   if (next.status === "2" && !next.done_date) next.done_date = todayStr();
   if (next.status === "2" && (next.difficulty === null || next.difficulty === undefined)) next.difficulty = 0;

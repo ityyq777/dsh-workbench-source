@@ -24,7 +24,6 @@ export const TASK_DDL = [
     "target_date TEXT NOT NULL," +
     "done_date TEXT," +
     "shutdown_date TEXT," +
-    "sort INTEGER NOT NULL DEFAULT 0," +
     "dedupe_key TEXT," +
     "created_at INTEGER NOT NULL," +
     "updated_at INTEGER NOT NULL," +
@@ -37,7 +36,6 @@ export const TASK_DDL = [
   "CREATE INDEX IF NOT EXISTS idx_task_timeline ON task(timeline_key);",
   "CREATE INDEX IF NOT EXISTS idx_task_restart ON task(restart_key);",
   "CREATE INDEX IF NOT EXISTS idx_task_open ON task(status, target_date) WHERE deleted_at IS NULL;",
-  "CREATE INDEX IF NOT EXISTS idx_task_sort ON task(sort);",
   "CREATE INDEX IF NOT EXISTS idx_task_dedupe ON task(dedupe_key) WHERE dedupe_key IS NOT NULL;",
   "CREATE INDEX IF NOT EXISTS idx_task_created_at ON task(created_at);",
   "CREATE INDEX IF NOT EXISTS idx_task_done_date ON task(done_date);",
@@ -167,11 +165,11 @@ export function tableExists(db, name) {
   }
 }
 
-function quoteIdent(name) {
+export function quoteIdent(name) {
   return '"' + String(name).replace(/"/g, '""') + '"';
 }
 
-function dropIndexesFor(db, table) {
+export function dropIndexesFor(db, table) {
   const rows = db.prepare("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name=? AND name NOT LIKE 'sqlite_%'").all(String(table));
   for (const row of rows) {
     db.exec("DROP INDEX IF EXISTS " + quoteIdent(row.name));
@@ -256,7 +254,6 @@ export function rowTask(row) {
     targetDate: row.target_date || null,
     doneDate: row.done_date || null,
     shutdownDate: row.shutdown_date || null,
-    sort: Number(row.sort || 0),
     dedupeKey: row.dedupe_key === null || row.dedupe_key === undefined ? null : String(row.dedupe_key),
     path: [],
   };

@@ -65,11 +65,6 @@ export function updateTask(db, args, origin, api, opts) {
       const table = requireTable(db, args.tableId);
       next.table_id = String(table.id);
     }
-    if (args.sort !== undefined) {
-      const sort = Number(args.sort);
-      if (!Number.isFinite(sort)) throw new Error("sort 必须是数字");
-      next.sort = Math.round(sort);
-    }
   }
 
   if (next.status === "2" && next.done_date === null) next.done_date = todayStr();

@@ -8,6 +8,8 @@ function projectTask(db, id) {
 }
 export function normalizeTimelineTask({db,row,local}) {
   const result = {...row};
+  // 旧客户端仍可能发送已删除的任务手动排序列。
+  delete result.sort;
   const hasTimelineKey = Object.hasOwn(row, "timeline_key");
   if (!hasTimelineKey && local) result.timeline_key = local.timeline_key;
   // Derived fields are not persisted as task columns. Never use them to create membership.

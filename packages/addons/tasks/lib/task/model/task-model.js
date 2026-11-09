@@ -126,8 +126,8 @@ export function requireTable(db, tableId) {
 
 export function insertTaskRow(db, row) {
   db.prepare(
-    "INSERT INTO task(id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,sort,dedupe_key,created_at,updated_at,deleted_at,rev) " +
-      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    "INSERT INTO task(id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,dedupe_key,created_at,updated_at,deleted_at,rev) " +
+      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
   ).run(
     String(row.id),
     String(row.title),
@@ -143,7 +143,6 @@ export function insertTaskRow(db, row) {
     String(row.target_date),
     row.done_date === undefined ? null : row.done_date,
     row.shutdown_date === undefined ? null : row.shutdown_date,
-    Number(row.sort || 0),
     row.dedupe_key === undefined ? null : row.dedupe_key,
     Number(row.created_at),
     Number(row.updated_at),
@@ -154,7 +153,7 @@ export function insertTaskRow(db, row) {
 
 export function saveTaskRow(db, row) {
   db.prepare(
-    "UPDATE task SET title=?,description=?,status=?,priority=?,difficulty=?,review=?,table_id=?,timeline_key=?,restart_key=?,publish_date=?,target_date=?,done_date=?,shutdown_date=?,sort=?,dedupe_key=?,updated_at=?,deleted_at=?,rev=? WHERE id=?",
+    "UPDATE task SET title=?,description=?,status=?,priority=?,difficulty=?,review=?,table_id=?,timeline_key=?,restart_key=?,publish_date=?,target_date=?,done_date=?,shutdown_date=?,dedupe_key=?,updated_at=?,deleted_at=?,rev=? WHERE id=?",
   ).run(
     String(row.title),
     String(row.description || ""),
@@ -169,7 +168,6 @@ export function saveTaskRow(db, row) {
     String(row.target_date),
     row.done_date === undefined ? null : row.done_date,
     row.shutdown_date === undefined ? null : row.shutdown_date,
-    Number(row.sort || 0),
     row.dedupe_key === undefined ? null : row.dedupe_key,
     Number(row.updated_at),
     row.deleted_at === undefined ? null : row.deleted_at,
@@ -243,7 +241,7 @@ export function resolveTagPatch(db, cur, source, ts, origin, dryRun) {
 /** bulk* 系列允许直接写的字段（与 tasks.update 的自由字段一致）。 */
 export const PATCH_FIELDS = [
   "title", "description", "status", "priority", "difficulty", "review",
-  "publishDate", "targetDate", "doneDate", "shutdownDate", "tableId", "sort", "tagIds", "tags",
+  "publishDate", "targetDate", "doneDate", "shutdownDate", "tableId", "tagIds", "tags",
   "addTagIds", "addTags", "removeTagIds", "removeTags",
 ];
 
@@ -251,5 +249,5 @@ export const DIFF_COLUMNS = [
   ["title", "title"], ["description", "description"], ["status", "status"],
   ["priority", "priority"], ["difficulty", "difficulty"], ["review", "review"], ["tableId", "table_id"],
   ["publishDate", "publish_date"], ["targetDate", "target_date"],
-  ["doneDate", "done_date"], ["shutdownDate", "shutdown_date"], ["sort", "sort"],
+  ["doneDate", "done_date"], ["shutdownDate", "shutdown_date"],
 ];
