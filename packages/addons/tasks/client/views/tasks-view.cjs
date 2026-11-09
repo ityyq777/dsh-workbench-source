@@ -543,6 +543,12 @@ module.exports = function createTasksView(deps) {
       timelineTask ? h(TimelineModal, {
         key: timelineTask.id, t: t, api: api, task: timelineTask, onChanged: refreshList,
         onClose: function () { setTimelineTask(null); },
+        onOpen: function (member) {
+          api.call("tasks.get", { id: member.id }).then(function (r) {
+            if (!r || !r.ok) throw Error(r && r.error || t.fail);
+            setTimelineTask(null); setEditTask(r.result.task);
+          }).catch(function (err) { say(String(err.message || err)); });
+        },
         onCreateTimeline: function (originTask) {
           setTimelineTask(null);
           setCreateState({ source: "1", originTask: originTask, defaultTableId: originTask.tableId });

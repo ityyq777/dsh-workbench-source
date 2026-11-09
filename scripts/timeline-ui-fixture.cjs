@@ -4,10 +4,10 @@ const h = React.createElement, copy = require('../packages/addons/tasks/client/u
 let addon;
 window.__WB_HOST__ = {registerAddon(value){addon=value},addons:[]};
 require('../packages/addons/tasks/client/client.src.cjs');
-const TaskTimeline = require('../packages/addons/tasks/client/timeline/task-timeline-modal.cjs')(React);
+const TaskTimeline = require('../packages/addons/tasks/client/timeline/task-timeline-modal.cjs')(React, id=>({zh:({'0':'已开启','1':'已关闭','2':'已完成','3':'已重启'})[id],en:({'0':'Open','1':'Closed','2':'Done','3':'Restarted'})[id],cls:'s'+id}));
 const Create = require('../packages/addons/tasks/client/modals/create-modal.cjs')({React, tagNames:()=>[], splitTags:()=>[], today:()=> '2026-11-09', addDays:()=> '2026-11-09', hostHasAddon:()=>false});
 const tree=[{id:'table-1',type:'1',name:'Fixture table'}], calls=[];
-let lines=[],tasks=[],nextId=0,mode='timeline',language='zh',target='ordinary',dark=false;
+let lines=[],tasks=[],nextId=0,mode=new URLSearchParams(location.search).has('modal')?'task':'timeline',language=new URLSearchParams(location.search).get('lang')||'zh',target=new URLSearchParams(location.search).has('modal')?'task-0-0':'ordinary',dark=new URLSearchParams(location.search).has('dark');
 function reset(){
  nextId=0;lines=Array.from({length:25},(_,i)=>({id:'line-'+i,timelineId:'line-'+i,timelineKey:'line-'+i,title:'Timeline '+String(i).padStart(2,'0'),description:'Description '+i}));
  tasks=lines.flatMap((line,i)=>Array.from({length:i===24?1:i===0?45:3},(_,j)=>({id:'task-'+i+'-'+j,timelineId:line.id,title:line.title+' / Task '+String(j).padStart(2,'0'),status:j%2?'2':'0',priority:3,publishDate:'2026-10-'+String(j%28+1).padStart(2,'0'),targetDate:'2026-11-09',description:'Fixture description',tableId:'table-1'})));
@@ -35,11 +35,11 @@ const api={async call(action,args){
  throw Error('Unexpected fixture action: '+action);
 }};
 const root=createRoot(document.getElementById('root'));
-function render(){const t=copy[language],task=projected(tasks.find(x=>x.id===target));document.documentElement.dataset.theme=dark?'dark':'light';root.render(h(React.Fragment,null,
+function render(){const t=copy[language],task=projected(tasks.find(x=>x.id===target));document.documentElement.dataset.theme=dark?'dark':'light';root.render(h('div',{className:'wbt-root'},h('style',null,require('../packages/addons/tasks/client/ui/styles.cjs')),
  h('nav',{id:'view-tabs'},addon.views.map(v=>h('span',{key:v.id},v.title[language]))),
  h('nav',{id:'fixture-tools'},h('button',{onClick:()=>show('task','ordinary')},'Fixture ordinary'),h('button',{onClick:()=>show('restart','ordinary')},'Fixture restart'),h('button',{onClick:()=>show('timeline')},'Fixture timelines')),
  mode==='timeline'?h(addon.views.find(x=>x.id==='timeline').component,{key:'timeline-'+language,api,lang:language}):
- mode==='task'?h(TaskTimeline,{key:'task-'+target,api,t,task,onClose:()=>show('timeline'),onChanged:()=>{},onCreateTimeline:()=>{}}):
+ mode==='task'?h(TaskTimeline,{key:'task-'+target,api,t,task,onClose:()=>show('timeline'),onChanged:()=>{},onOpen:task=>{window.openedMember=task.id},onCreateTimeline:()=>{}}):
  h(Create,{key:'restart-'+target,api,t,source:'2',originTask:task,tree,onClose:()=>show('timeline'),onCreated:()=>show('timeline')})))}
 function show(next,id){mode=next;if(id)target=id;render()}
 window.fixture={calls,get tasks(){return tasks},get lines(){return lines},show,setLanguage(lang){language=lang;render()},setDark(value){dark=value;render()}};
@@ -54,14 +54,14 @@ async function fill(selector,value){const node=document.querySelector(selector);
 window.runTimelineTests=async()=>{
  let checks=0;const ok=(v,m)=>{check(v,m);checks++};
  await wait(()=>options().length===20&&document.querySelectorAll('.wbt-timeline-member').length===20);
- ok(addon.version==='3.2.0','client version');ok(calls[0].args.includeSingletons===true,'empty and singleton default');
+ ok(addon.version==='3.4.1','client version');ok(calls[0].args.includeSingletons===true,'empty and singleton default');
  const list=document.querySelector('[role=listbox]');list.scrollTop=200;const scroll=list.scrollTop;options()[5].click();await pause();ok(document.querySelector('[role=listbox]')===list&&list.scrollTop===scroll,'stable list');
  options()[5].focus();options()[5].dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}));await pause();ok(document.activeElement===options()[6],'keyboard selection');
  options()[0].click();await wait(()=>document.querySelectorAll('.wbt-timeline-member').length===20);document.querySelector('.wbt-timeline-right [aria-label="下一页"]').click();await wait(()=>document.querySelector('.wbt-timeline-right nav').textContent.includes('2 / 3'));ok(calls.at(-1).args.pageNumber===2,'member pagination');
  await click('选择');options()[0].click();options()[1].click();await pause();await click('合并 (2)');await fill('[role=dialog] select','line-1');await click('预览合并');await wait(()=>buttons().some(x=>x.textContent==='确认合并'));ok(tasks.filter(x=>x.timelineId==='line-1').length===3,'preview read only');await click('确认合并');await wait(()=>!document.querySelector('[role=dialog]'));ok(tasks.filter(x=>x.timelineId==='line-1').length===48,'whole-line merge past page');
  await click('新建时间线');await fill('[role=dialog] input','Manual empty');await fill('[role=dialog] textarea','Independent description');await click('保存时间线');await wait(()=>!document.querySelector('[role=dialog]')&&document.querySelector('.wbt-timeline-right h3').textContent==='Manual empty');
  const line=lines.find(x=>x.title==='Manual empty');ok(!!line,'manual create');ok(tasks.every(x=>x.timelineId!==line.id),'create never attaches');ok(document.querySelector('.wbt-timeline-right').textContent.includes('暂无可显示成员'),'empty entity detail');
- await click('添加已有任务');await fill('[aria-label="搜索已有任务"]','Ordinary task');await wait(()=>document.querySelectorAll('[role=dialog] input[type=checkbox]').length===1);document.querySelector('[role=dialog] input[type=checkbox]').click();await pause();await click('关联任务 (1)');await wait(()=>!document.querySelector('[role=dialog]')&&document.querySelectorAll('.wbt-timeline-member').length===1);ok(tasks.find(x=>x.id==='ordinary').timelineId===line.id&&document.querySelector('.wbt-timeline-right h3').textContent==='Manual empty','top-level attach preserves out-of-page entity');await click('移出时间线');await wait(()=>document.querySelector('.wbt-timeline-right').textContent.includes('暂无可显示成员'));ok(tasks.find(x=>x.id==='ordinary').timelineId===null,'top-level detach preserves empty entity');
+ await click('添加已有任务');await fill('[aria-label="搜索已有任务"]','Ordinary task');await wait(()=>document.querySelectorAll('[role=dialog] input[type=checkbox]').length===1);document.querySelector('[role=dialog] input[type=checkbox]').click();await pause();await click('关联任务 (1)');await wait(()=>!document.querySelector('[role=dialog]')&&document.querySelectorAll('.wbt-timeline-member').length===1);ok(tasks.find(x=>x.id==='ordinary').timelineId===line.id&&document.querySelector('.wbt-timeline-right h3').textContent==='Manual empty','top-level attach preserves out-of-page entity');document.querySelector('.wbt-timeline-right .wbt-timeline-remove').click();await pause();await wait(()=>document.querySelector('.wbt-timeline-right').textContent.includes('暂无可显示成员'));ok(tasks.find(x=>x.id==='ordinary').timelineId===null,'top-level detach preserves empty entity');
  await click('编辑时间线');await fill('[role=dialog] input','Renamed line');await fill('[role=dialog] textarea','Edited description');await click('保存时间线');await wait(()=>!document.querySelector('[role=dialog]'));ok(line.title==='Renamed line'&&line.description==='Edited description','entity metadata');
  show('task','ordinary');await wait(()=>document.body.textContent.includes('没有关联时间线'));ok(!tasks.find(x=>x.id==='ordinary').timelineId,'ordinary task unlinked');
  // Picker lists both empty and singleton entities across pages, without requesting filtered aggregation.
@@ -74,7 +74,7 @@ window.runTimelineTests=async()=>{
  await click('选择目标任务表');
  const tableOption=Array.from(document.querySelectorAll('[role=option]')).find(x=>x.textContent.includes('Fixture table'));check(tableOption,'table option');tableOption.click();await pause();
  await click('创建');await wait(()=>mode==='timeline');const restarted=tasks.find(x=>x.title==='Restarted task');ok(restarted.timelineId===line.id,'restart inherits entity');ok(tasks.find(x=>x.id==='ordinary').status==='3','old task restarted');const createCall=calls.findLast(x=>x.action==='tasks.create');ok(createCall.args.restartKey==='ordinary'&&!('timelineId'in createCall.args)&&!('timelineKey'in createCall.args),'restart does not choose another line');
- show('task',restarted.id);await wait(()=>document.querySelector('h4'));await click('移出时间线');await wait(()=>document.body.textContent.includes('没有关联时间线'));ok(restarted.timelineId===null,'detach');
+ show('task',restarted.id);await wait(()=>document.querySelector('h4'));await click('移出当前任务');await click('确认移出');await wait(()=>document.body.textContent.includes('没有关联时间线'));ok(restarted.timelineId===null,'detach');
  const count=tasks.length,writes=calls.filter(x=>x.action==='tasks.create').length;show('restart',restarted.id);await pause();ok(document.body.textContent.includes('请先手动建立并关联时间线，再重启'),'unlinked restart guidance');ok(button('创建').disabled,'unlinked restart disabled');button('创建').click();await pause();ok(tasks.length===count&&calls.filter(x=>x.action==='tasks.create').length===writes,'unlinked restart zero writes');
  show('task','self');await wait(()=>document.querySelector('h4'));ok(document.querySelector('h4').textContent==='Self single'&&document.body.textContent.includes('Self singleton task'),'self-id singleton visible');
  show('timeline');await wait(()=>options().length===20);await fill('input[aria-label="搜索时间线标题"]','Renamed line');await click('搜索');await wait(()=>options().length===1&&document.querySelector('.wbt-timeline-right h3').textContent==='Renamed line');
@@ -82,4 +82,29 @@ window.runTimelineTests=async()=>{
  window.fixture.setLanguage('en');await wait(()=>buttons().some(x=>x.textContent==='New timeline'));ok(document.body.textContent.includes('Include empty and single-task timelines'),'English labels');await click('New timeline');ok(document.querySelector('[role=dialog]').textContent.includes('Timeline title'),'English editor');await click('Cancel');
  window.fixture.setDark(true);await pause();ok(getComputedStyle(document.querySelector('.wbt-timeline-view')).color.replaceAll(' ','')==='rgb(229,231,235)','dark foreground');
  return {passed:true,checks,requests:calls.length,tasksPreserved:tasks.length,noProductionDatabase:true,noScreenshots:true};
+};
+
+// Dedicated direct-entry regression: never visit the timeline tab before this test.
+window.runTimelineModalTests=async()=>{
+ let checks=0;const ok=(v,m)=>{check(v,m);checks++};
+ await wait(()=>document.querySelectorAll('.wbt-timeline-member').length===20);
+ const dialog=document.querySelector('.wbt-timeline-modal');
+ ok(!document.querySelector('.wbt-timeline-view'),'direct modal entry without timeline tab');
+ ok(getComputedStyle(document.querySelector('.wbt-timeline-members')).listStyleType==='none','shared styles available on first entry');
+ ok(dialog.getAttribute('aria-modal')==='true'&&document.activeElement===dialog,'initial focus and dialog semantics');
+ ok(!!dialog.querySelector('[aria-label="关闭"]'),'named close control');
+ ok(document.querySelectorAll('.wbt-timeline-remove').length===20,'every visible member has remove control');
+ document.querySelector('.wbt-timeline-member').click();await pause();ok(!!window.openedMember,'member opens detail callback');
+ const count=calls.filter(x=>x.action==='taskTimelines.detach').length;
+ await click('移出当前任务');ok(calls.filter(x=>x.action==='taskTimelines.detach').length===count,'remove requires confirmation');
+ await click('取消');ok(calls.filter(x=>x.action==='taskTimelines.detach').length===count,'cancel performs no write');
+ await click('移出当前任务');await click('确认移出');await wait(()=>document.body.textContent.includes('没有关联时间线'));
+ ok(calls.filter(x=>x.action==='taskTimelines.detach').length===count+1,'confirmed removal once');
+ const attach=button('关联所选时间线');ok(attach.disabled&&!!attach.title,'disabled association explains why');
+ ok(!!document.querySelector('.wbt-timeline-empty button'),'empty state includes create action');
+ const enabled=Array.from(dialog.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),summary')).filter(x=>x.getClientRects().length);
+ const last=enabled.at(-1),first=enabled[0];last.focus();last.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',bubbles:true,cancelable:true}));ok(document.activeElement===first,'Tab wraps focus');
+ first.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',shiftKey:true,bubbles:true,cancelable:true}));ok(document.activeElement===last,'Shift Tab wraps focus');
+ dialog.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));await wait(()=>!document.querySelector('.wbt-timeline-modal'));ok(true,'Escape closes');
+ return {passed:true,checks,noProductionWrites:true};
 };

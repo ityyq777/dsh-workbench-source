@@ -97,6 +97,8 @@
         "timeline-controls.cjs": "timeline/timeline-controls.cjs",
         "timeline-copy.cjs": "timeline/timeline-copy.cjs",
         "timeline-members.cjs": "timeline/timeline-members.cjs",
+        "timeline-member-rows.cjs": "timeline/timeline-member-rows.cjs",
+        "timeline-title.cjs": "timeline/timeline-title.cjs",
         "timeline-merge.cjs": "timeline/timeline-merge.cjs",
         "timeline-styles.cjs": "timeline/timeline-styles.cjs",
         "charts.cjs": "stats/charts.cjs",

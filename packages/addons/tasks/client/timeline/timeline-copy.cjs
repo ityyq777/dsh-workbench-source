@@ -1,6 +1,18 @@
 // Entity-management labels shared by all timeline controls.
 "use strict";
 var english = {
+  "关闭": "Close",
+  "成员": "Members",
+  "移出当前任务": "Remove current task",
+  "确认移出任务？": "Remove this task from the timeline?",
+  "仅解除关联，任务仍保留。": "Only the association is removed. The task is kept.",
+  "确认移出": "Confirm removal",
+  "展开描述": "Expand description",
+  "收起描述": "Collapse description",
+  "按发布时间正序排列": "Oldest publication first",
+  "新建时间线或选择已有时间线，将相关任务集中查看。": "Create or choose a timeline to view related tasks together.",
+  "其他时间线": "Other timelines",
+  "请选择已有时间线；无匹配时可新建": "Choose a timeline, or create one if there is no match",
   "搜索已有时间线": "Search existing timelines",
   "选择已有时间线": "Choose an existing timeline",
   "不关联时间线": "No timeline",

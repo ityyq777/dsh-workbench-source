@@ -5,6 +5,8 @@ module.exports = function (deps) {
   var controls = require("../timeline/timeline-controls.cjs")(React), AddMembers = require("../timeline/timeline-add-members.cjs")(React);
   var Merge = require("../timeline/timeline-merge.cjs")(React);
   var CSS = require("../timeline/timeline-styles.cjs");
+  var MemberRows = require("../timeline/timeline-member-rows.cjs")(React, deps.statusInfo);
+  var splitTitle = require("../timeline/timeline-title.cjs");
   function result(r) { if (!r || !r.ok) throw new Error(r && r.error || "Request failed"); return r.result; }
   function pageData(r) { return { records: r.records || [], total: Number(r.total) || 0 }; }
   function Pager(p) {
@@ -37,6 +39,7 @@ module.exports = function (deps) {
     var listRef = React.useRef(null), mergeButton = React.useRef(null), detailTrigger = React.useRef(null);
     var createdRef = React.useRef(null);
     var activeKey = active && active.timelineKey;
+    var heading = splitTitle(active && active.title);
     var editorS = React.useState(null), editor = editorS[0], setEditor = editorS[1];
     var addS = React.useState(false), adding = addS[0], setAdding = addS[1];
     var deleteS = React.useState(false), deleting = deleteS[0], setDeleting = deleteS[1];
@@ -75,6 +78,7 @@ module.exports = function (deps) {
       if (toggle && item.taskCount > 0) setSelected(function (old) { return old.some(function (x) { return x.timelineKey === item.timelineKey; }) ? old.filter(function (x) { return x.timelineKey !== item.timelineKey; }) : old.concat(item); });
     }
     function keyboard(e, index) {
+      if (e.target.type === "checkbox") return;
       var next = index;
       if (e.key === "ArrowDown") next = Math.min(data.records.length - 1, index + 1);
       else if (e.key === "ArrowUp") next = Math.max(0, index - 1);
@@ -106,31 +110,30 @@ module.exports = function (deps) {
             var isActive = activeKey === item.timelineKey, checked = selected.some(function (x) { return x.timelineKey === item.timelineKey; });
             return h("div", { key: item.timelineKey, role: "option", tabIndex: isActive || !activeKey && i === 0 ? 0 : -1, "aria-selected": multi ? checked : isActive, "aria-current": isActive ? "true" : undefined,
               className: "wbt-timeline-option" + (isActive ? " current" : ""), onClick: function () { choose(item, multi); setDeleting(false); }, onKeyDown: function (e) { keyboard(e, i); } },
-              h("strong", null, multi ? (checked ? "☑ " : "☐ ") : (isActive ? "▸ " : ""), item.title || tr("未命名时间线")),
-              h("span", null, t.timelineTasks + " " + item.taskCount + " · " + t.timelineOpen + " " + item.openCount + " · " + t.timelineDone + " " + item.doneCount),
-              h("span", null, t.timelineActivity + " " + (item.lastActivityDate || "—")));
+              h("div", { className: "wbt-timeline-option-title" }, multi ? h("input", { type: "checkbox", checked: checked, disabled: busy || !item.taskCount, "aria-label": item.title || tr("未命名时间线"), onClick: function (e) { e.stopPropagation(); }, onChange: function () { choose(item, true); } }) : null, h("strong", null, item.title || tr("未命名时间线"))),
+              h("span", null, t.timelineTasks + " " + item.taskCount + " · " + t.timelineOpen + " " + item.openCount + " · " + t.timelineDone + " " + item.doneCount + " · " + t.timelineActivity + " " + (item.lastActivityDate || "—")));
           })),
           busy ? h("p", { role: "status" }, t.loading) : !error && !data.records.length ? h("p", { className: "wbt-empty" }, t.timelineEmpty) : null,
           h(Pager, { t: t, label: t.timeline, busy: busy, page: page, total: data.total, set: setPage })),
         h("section", { className: "wbt-timeline-right", "aria-label": t.timelineMembers, "aria-busy": memberBusy },
-          h("h3", null, active ? active.title || tr("未命名时间线") : t.timelineMembers),
-          active ? h("div", null, h("p", null, active.description || tr("暂无描述")),
-            h("code", { title: activeKey }, activeKey), h("button", { className: "wbt-btn", onClick: function () { navigator.clipboard.writeText(activeKey).catch(function (e) { setMemberError(String(e)); }); } }, tr("复制 ID")),
-            h("button", { className: "wbt-btn", onClick: function () { setEditor(active); } }, tr("编辑时间线")),
+          heading.eyebrow ? h("div", { className: "wbt-timeline-eyebrow" }, heading.eyebrow) : null,
+           h("h3", null, active ? heading.title || tr("未命名时间线") : t.timelineMembers),
+          active ? h("div", { className: "wbt-timeline-summary" }, h("div", { className: "wbt-desc wbt-timeline-desc" }, active.description || tr("暂无描述")),
+             h("div", { className: "wbt-timeline-actions" },
+            h("button", { className: "wbt-btn primary", onClick: function () { setEditor(active); } }, tr("编辑时间线")),
             h("button", { className: "wbt-btn", onClick: function () { setAdding(true); } }, tr("添加已有任务")),
-            h("button", { className: "wbt-btn", onClick: function () { setDeleting(true); } }, tr("删除时间线")),
-            deleting ? h("div", { role: "alert" }, tr("删除时间线将移出全部成员，保留任务及重启链。"),
+            h("button", { className: "wbt-timeline-id", title: tr("复制 ID") + " · " + activeKey, "aria-label": tr("复制 ID"), onClick: function () { navigator.clipboard.writeText(activeKey).catch(function (e) { setMemberError(String(e)); }); } }, h("code", null, activeKey), h("span", { "aria-hidden": true }, "⧉")),
+             h("button", { className: "wbt-btn wbt-act-del", onClick: function () { setDeleting(true); } }, tr("删除时间线"))),
+            deleting ? h("div", { role: "alert", className: "wbt-timeline-confirm" }, tr("删除时间线将移出全部成员，保留任务及重启链。"),
               h("button", { className: "wbt-btn", disabled: writing, onClick: function () { setDeleting(false); } }, tr("取消删除")),
               h("button", { className: "wbt-btn", disabled: writing, onClick: function () { setWriting(true); api.call("taskTimelines.delete", { timelineId: activeKey }).then(result).then(function () { setDeleting(false); setSelected([]); reload(); }).catch(function (e) { setMemberError(String(e.message || e)); }).finally(function () { setWriting(false); }); } }, tr("确认删除时间线"))) : null) : null,
-          h("p", null, t.timelineOrder),
+
           memberError ? h("p", { role: "alert", className: "wbt-err" }, t.error + memberError) : null,
-          memberBusy ? h("p", { role: "status" }, t.loading) : h("ol", { className: "wbt-timeline-members", start: (memberPage - 1) * 20 + 1 }, members.records.map(function (task) {
-            var st = deps.statusInfo(task.status);
-            return h("li", { key: task.id }, h("button", { className: "wbt-timeline-member", "aria-label": task.title + " · " + (task.publishDate || "") + " · " + st[lang], onClick: function (e) { detailTrigger.current = e.currentTarget; setDetail(task); } },
-              h("time", null, task.publishDate || "—"), h("strong", null, task.title), h("span", { className: "wbt-badge " + st.cls }, st[lang])), h("button", { className: "wbt-btn", disabled: writing, onClick: function () { setWriting(true); api.call("taskTimelines.detach", { taskId: task.id }).then(result).then(function () { createdRef.current = active; reload(); }).catch(function (e) { setMemberError(String(e.message || e)); }).finally(function () { setWriting(false); }); } }, tr("移出时间线")));
-          })),
-          !memberBusy && !memberError && !members.records.length ? h("p", { className: "wbt-empty" }, active ? tr("暂无可显示成员") : t.timelineEmpty) : null,
-          active ? h(Pager, { t: t, label: t.timelineMembers, busy: memberBusy, page: memberPage, total: members.total, set: setMemberPage }) : null)),
+          memberBusy ? h("p", { role: "status" }, t.loading) : h(MemberRows, { rows: members.records, lang: lang, disabled: writing,
+             onOpen: function (task, e) { detailTrigger.current = e.currentTarget; setDetail(task); },
+             onRemove: function (task) { setWriting(true); api.call("taskTimelines.detach", { taskId: task.id }).then(result).then(function () { createdRef.current = active; reload(); }).catch(function (e) { setMemberError(String(e.message || e)); }).finally(function () { setWriting(false); }); } }),
+           !memberBusy && !memberError && !members.records.length ? h("p", { className: "wbt-empty" }, active ? tr("暂无可显示成员") : t.timelineEmpty) : null,
+          active ? h("div", { className: "wbt-timeline-member-footer" }, h("span", null, t.timelineOrder), h(Pager, { t: t, label: t.timelineMembers, busy: memberBusy, page: memberPage, total: members.total, set: setMemberPage })) : null)),
       editor ? h(controls.Editor, { api: api, t: t, item: editor.timelineKey ? editor : null, onClose: function () { setEditor(null); }, onSaved: function (line) { setEditor(null); setSingle(true); setDraft(""); setQuery(""); setPage(1); createdRef.current = Object.assign({}, line, { timelineKey: line.timelineId || line.timelineKey || line.id }); setActive(createdRef.current); reload(); } }) : null,
       adding && active ? h(AddMembers, { api: api, t: t, timelineId: activeKey, onClose: function () { setAdding(false); }, onSaved: function () { setAdding(false); createdRef.current = active; reload(); } }) : null,
       merge ? h(Merge, { api: api, t: t, items: selected, onClose: closeMerge, onMerged: function () { closeMerge(); setSelected([]); setMulti(false); reload(); } }) : null,

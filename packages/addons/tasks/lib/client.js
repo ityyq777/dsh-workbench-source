@@ -5275,6 +5275,18 @@ var require_timeline_copy = __commonJS({
   "packages/addons/tasks/client/timeline/timeline-copy.cjs"(exports2, module2) {
     "use strict";
     var english = {
+      "\u5173\u95ED": "Close",
+      "\u6210\u5458": "Members",
+      "\u79FB\u51FA\u5F53\u524D\u4EFB\u52A1": "Remove current task",
+      "\u786E\u8BA4\u79FB\u51FA\u4EFB\u52A1\uFF1F": "Remove this task from the timeline?",
+      "\u4EC5\u89E3\u9664\u5173\u8054\uFF0C\u4EFB\u52A1\u4ECD\u4FDD\u7559\u3002": "Only the association is removed. The task is kept.",
+      "\u786E\u8BA4\u79FB\u51FA": "Confirm removal",
+      "\u5C55\u5F00\u63CF\u8FF0": "Expand description",
+      "\u6536\u8D77\u63CF\u8FF0": "Collapse description",
+      "\u6309\u53D1\u5E03\u65F6\u95F4\u6B63\u5E8F\u6392\u5217": "Oldest publication first",
+      "\u65B0\u5EFA\u65F6\u95F4\u7EBF\u6216\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF\uFF0C\u5C06\u76F8\u5173\u4EFB\u52A1\u96C6\u4E2D\u67E5\u770B\u3002": "Create or choose a timeline to view related tasks together.",
+      "\u5176\u4ED6\u65F6\u95F4\u7EBF": "Other timelines",
+      "\u8BF7\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF\uFF1B\u65E0\u5339\u914D\u65F6\u53EF\u65B0\u5EFA": "Choose a timeline, or create one if there is no match",
       "\u641C\u7D22\u5DF2\u6709\u65F6\u95F4\u7EBF": "Search existing timelines",
       "\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF": "Choose an existing timeline",
       "\u4E0D\u5173\u8054\u65F6\u95F4\u7EBF": "No timeline",
@@ -5369,7 +5381,10 @@ var require_timeline_controls = __commonJS({
           h(
             "select",
             { className: "wbt-select", "aria-label": tr("\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF"), value: p.value || "", disabled: p.disabled || busy, onChange: function(e) {
-              p.onChange(e.target.value);
+              var row = data.records.find(function(x) {
+                return (x.timelineId || x.timelineKey) === e.target.value;
+              });
+              p.onChange(e.target.value, row && row.title || "");
             } },
             h("option", { value: "" }, tr("\u4E0D\u5173\u8054\u65F6\u95F4\u7EBF")),
             p.value && !data.records.some(function(x) {
@@ -6048,6 +6063,78 @@ var require_create_modal = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/timeline/timeline-member-rows.cjs
+var require_timeline_member_rows = __commonJS({
+  "packages/addons/tasks/client/timeline/timeline-member-rows.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function createMemberRows(React, statusInfo) {
+      var h = React.createElement;
+      return function MemberRows(props) {
+        var lang = props.lang === "en" ? "en" : "zh";
+        return h("ol", { className: "wbt-timeline-members" }, (props.rows || []).map(function(task) {
+          var status = statusInfo(task.status), title = task.title || (lang === "en" ? "Untitled task" : "\u672A\u547D\u540D\u4EFB\u52A1");
+          var remove = lang === "en" ? "Remove from timeline: " + title : "\u4ECE\u65F6\u95F4\u7EBF\u79FB\u51FA\uFF1A" + title;
+          return h(
+            "li",
+            { key: task.id, className: "wbt-timeline-member-row" },
+            h("time", { className: "wbt-timeline-date", dateTime: task.publishDate || void 0 }, task.publishDate || "\u2014"),
+            h("span", { className: "wbt-timeline-node", "aria-hidden": true }),
+            h("button", { type: "button", className: "wbt-timeline-member", title, "aria-label": title + " \xB7 " + (task.publishDate || "") + " \xB7 " + status[lang], onClick: function(event) {
+              if (props.onOpen) props.onOpen(task, event);
+            } }, title),
+            h("span", { className: "wbt-badge " + status.cls }, status[lang]),
+            props.onRemove ? h("button", { type: "button", className: "wbt-timeline-remove", disabled: props.disabled, title: remove, "aria-label": remove, onClick: function(event) {
+              props.onRemove(task, event);
+            } }, h("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, "aria-hidden": true }, h("path", { d: "M5 12h14" }))) : null
+          );
+        }));
+      };
+    };
+  }
+});
+
+// packages/addons/tasks/client/timeline/timeline-title.cjs
+var require_timeline_title = __commonJS({
+  "packages/addons/tasks/client/timeline/timeline-title.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function splitTitle(value) {
+      var text = String(value || "").trim(), at = Math.max(text.lastIndexOf("|"), text.lastIndexOf("\uFF5C"));
+      return at > 0 && text.slice(at + 1).trim() ? { eyebrow: text.slice(0, at).trim(), title: text.slice(at + 1).trim() } : { eyebrow: "", title: text };
+    };
+  }
+});
+
+// packages/addons/tasks/client/timeline/timeline-styles.cjs
+var require_timeline_styles = __commonJS({
+  "packages/addons/tasks/client/timeline/timeline-styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = [
+      ".wbt-timeline-view{padding:0;color:inherit;box-sizing:border-box;overflow:auto}",
+      ".wbt-timeline-toolbar,.wbt-timeline-search,.wbt-timeline-pager,.wbt-timeline-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+      ".wbt-timeline-toolbar h2{font-size:18px;margin:0 auto 0 0}.wbt-timeline-toolbar{margin-bottom:12px}",
+      ".wbt-timeline-columns{display:grid;grid-template-columns:minmax(240px,32%) minmax(0,1fr);gap:12px;align-items:start}",
+      ".wbt-timeline-left,.wbt-timeline-right{min-width:0;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);padding:12px}",
+      ".wbt-timeline-single{display:flex;align-items:center;gap:8px;margin:12px 0;font-size:13px}.wbt-timeline-search input{min-width:0;flex:1}",
+      ".wbt-timeline-list{max-height:840px;overflow:auto;overscroll-behavior:contain}.wbt-timeline-view .wbt-timeline-option{position:relative;box-sizing:border-box;min-height:56px;padding:10px 12px;border:0;border-bottom:1px solid var(--wbt-line);border-radius:var(--wb-radius-sm,6px);display:flex;flex-direction:column;gap:4px;cursor:pointer;color:inherit;background:transparent;background-image:none}",
+      ".wbt-timeline-option-title{display:flex;gap:8px;align-items:center;min-width:0}.wbt-timeline-option-title strong{font-size:13px;font-weight:560;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}.wbt-timeline-option>span{font-size:11.5px;opacity:.6;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}",
+      ".wbt-timeline-view .wbt-timeline-option.current{box-shadow:inset 3px 0 var(--wbt-accent),inset 0 0 0 1px var(--wbt-line);background:color-mix(in oklab,var(--wbt-accent) 8%,transparent);background-image:none}.wbt-timeline-view .wbt-timeline-option:hover{background:color-mix(in oklab,var(--wbt-accent) 12%,transparent)}",
+      ".wbt-timeline-option:focus-visible,.wbt-timeline-view button:focus-visible,.wbt-timeline-modal button:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:2px}.wbt-timeline-option input[type=checkbox],.wbt-timeline-single input{appearance:auto;width:15px;height:15px;flex:none;accent-color:var(--wbt-accent)}",
+      ".wbt-timeline-pager{justify-content:space-between;font-size:12px;margin-top:12px}.wbt-timeline-right h3,.wbt-timeline-summary h4{font-size:15px;font-weight:600;margin:0 0 8px;overflow-wrap:anywhere}.wbt-timeline-eyebrow{font-size:11.5px;opacity:.55;margin-bottom:4px;overflow-wrap:anywhere}",
+      ".wbt-timeline-summary{min-width:0}.wbt-timeline-desc{max-height:64px;overflow:hidden;margin:0 0 8px;white-space:pre-wrap;overflow-wrap:anywhere}.wbt-timeline-actions{margin:8px 0}.wbt-timeline-actions>.wbt-act-del{margin-left:auto}",
+      // Scoped reset defeats ordinary host button surfaces without touching unrelated task controls.
+      ":is(.wbt-timeline-view,.wbt-timeline-modal) button:is(.wbt-timeline-member,.wbt-timeline-remove,.wbt-timeline-id){appearance:none;background:transparent;background-image:none;color:inherit;border:0;box-shadow:none;border-radius:var(--wb-radius-sm,6px);font:inherit;cursor:pointer;min-width:0;min-height:0;width:auto;margin:0}",
+      ":is(.wbt-timeline-view,.wbt-timeline-modal) .wbt-timeline-id{display:inline-flex;align-items:center;gap:4px;padding:4px;max-width:180px}.wbt-timeline-id code{font-size:11.5px;opacity:.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ":is(.wbt-timeline-view,.wbt-timeline-modal) .wbt-act-del{color:var(--dsw-alias-state-error-primary,var(--wbt-accent));background:transparent;border-color:var(--wbt-line)}",
+      '.wbt-timeline-members{list-style:none;padding:0;margin:8px 0;min-width:0}.wbt-timeline-member-row{display:grid;grid-template-columns:92px 14px minmax(0,1fr) auto 28px;gap:8px;align-items:center;min-height:40px;position:relative;padding:0;margin:0}.wbt-timeline-date{font-size:11.5px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;opacity:.7}.wbt-timeline-node{align-self:stretch;position:relative}.wbt-timeline-node:before{content:"";position:absolute;width:1px;left:50%;top:0;bottom:0;background:var(--wbt-line)}.wbt-timeline-node:after{content:"";position:absolute;width:6px;height:6px;left:calc(50% - 2.5px);top:calc(50% - 3px);border-radius:50%;background:var(--wbt-accent)}',
+      ":is(.wbt-timeline-view,.wbt-timeline-modal) button.wbt-timeline-member{padding:8px 0;text-align:left;font-size:13px;line-height:1.5;overflow-wrap:anywhere;white-space:normal}:is(.wbt-timeline-view,.wbt-timeline-modal) button.wbt-timeline-member:hover{text-decoration:underline;text-underline-offset:3px}:is(.wbt-timeline-view,.wbt-timeline-modal) button.wbt-timeline-remove{display:flex;justify-content:center;align-items:center;width:28px;height:28px;padding:4px;opacity:.35}:is(.wbt-timeline-view,.wbt-timeline-modal) button.wbt-timeline-remove:is(:hover,:focus-visible){opacity:.9;background:var(--wbt-surface)}.wbt-timeline-member-row>.wbt-badge{white-space:nowrap;margin:0}.wbt-timeline-remove:disabled{cursor:default}",
+      ".wbt-timeline-member-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;border-top:1px solid var(--wbt-line);padding-top:8px}.wbt-timeline-member-footer>span{font-size:11.5px;opacity:.65}.wbt-timeline-member-footer .wbt-timeline-pager{margin:0}",
+      ".wbt-modal.wide.wbt-timeline-modal{display:flex;flex-direction:column;max-height:90vh;overflow:hidden}.wbt-timeline-modal-body{min-height:0;overflow:auto;flex:1;padding:12px}.wbt-timeline-member-section{min-width:0;margin-top:12px}.wbt-timeline-member-scroll{max-height:40vh;overflow:auto;overscroll-behavior:contain}.wbt-timeline-other{border-top:1px solid var(--wbt-line);padding-top:12px;margin-top:12px}.wbt-timeline-other>summary{cursor:pointer}.wbt-timeline-confirm{padding:12px;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);margin:8px 0;line-height:1.6;background:var(--wbt-surface)}.wbt-timeline-confirm .wbt-btn{margin:8px 8px 0 0}",
+      ".wbt-timeline-desc.expanded{max-height:none}.wbt-timeline-selected{min-width:0;overflow-wrap:anywhere;flex:1}.wbt-timeline-modal .wbt-empty{padding:12px;margin:8px 0;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);background:var(--wbt-surface);line-height:1.6}",
+      "@media(max-width:720px){.wbt-timeline-columns{grid-template-columns:1fr}.wbt-timeline-list{max-height:320px}.wbt-timeline-toolbar{flex-wrap:wrap}.wbt-timeline-member-row{grid-template-columns:76px 8px minmax(0,1fr) auto 28px;gap:4px}.wbt-timeline-left,.wbt-timeline-right{padding:12px}.wbt-timeline-date{font-size:10.5px}.wbt-timeline-member-row>.wbt-badge{font-size:10.5px;padding:2px 4px}.wbt-timeline-actions>.wbt-act-del{margin-left:0}.wbt-timeline-id{max-width:140px}}"
+    ].join("\n");
+  }
+});
+
 // packages/addons/tasks/client/timeline/timeline-members.cjs
 var require_timeline_members = __commonJS({
   "packages/addons/tasks/client/timeline/timeline-members.cjs"(exports2, module2) {
@@ -6066,17 +6153,32 @@ var require_timeline_members = __commonJS({
 var require_task_timeline_modal = __commonJS({
   "packages/addons/tasks/client/timeline/task-timeline-modal.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = function(React) {
+    module2.exports = function(React, statusInfo) {
       var h = React.createElement, controls = require_timeline_controls()(React);
+      var MemberRows = require_timeline_member_rows()(React, statusInfo);
+      var splitTitle = require_timeline_title();
+      var CSS = require_timeline_styles();
       return function TaskTimelineModal(p) {
-        var tr = require_timeline_copy()(p.t);
+        var tr = require_timeline_copy()(p.t), lang = p.t && p.t.timeline === "Timeline" ? "en" : "zh";
         var ts = React.useState(p.task), task = ts[0], setTask = ts[1];
         var ms = React.useState([]), members = ms[0], setMembers = ms[1];
         var es = React.useState(""), error = es[0], setError = es[1];
         var bs = React.useState(true), busy = bs[0], setBusy = bs[1];
         var vs = React.useState(""), value = vs[0], setValue = vs[1];
+        var ls = React.useState(""), selectedTitle = ls[0], setSelectedTitle = ls[1];
         var ns = React.useState(false), creating = ns[0], setCreating = ns[1];
         var rs = React.useState(0), revision = rs[0], setRevision = rs[1];
+        var ds = React.useState(false), expanded = ds[0], setExpanded = ds[1];
+        var cs = React.useState(null), removing = cs[0], setRemoving = cs[1];
+        var ps = React.useState(1), page = ps[0], setPage = ps[1];
+        var dialog = React.useRef(null), pending = React.useRef(false);
+        React.useEffect(function() {
+          var previous = typeof document !== "undefined" ? document.activeElement : null;
+          if (dialog.current) dialog.current.focus();
+          return function() {
+            if (previous && previous.isConnected && previous.focus) previous.focus();
+          };
+        }, []);
         React.useEffect(function() {
           var cancelled = false;
           setBusy(true);
@@ -6088,6 +6190,9 @@ var require_task_timeline_modal = __commonJS({
             return require_timeline_members()(p.api, current).then(function(rows) {
               if (!cancelled) {
                 setMembers(rows);
+                setPage(function(n) {
+                  return Math.min(n, Math.max(1, Math.ceil(rows.length / 20)));
+                });
                 setBusy(false);
               }
             });
@@ -6102,59 +6207,155 @@ var require_task_timeline_modal = __commonJS({
           };
         }, [p.api, p.task.id, revision]);
         function change(action, args) {
-          if (busy) return;
+          if (busy || pending.current) return;
+          pending.current = true;
           setBusy(true);
           setError("");
           p.api.call(action, args).then(controls.result).then(function() {
+            pending.current = false;
             setValue("");
-            setRevision(revision + 1);
+            setSelectedTitle("");
+            setRemoving(null);
+            setRevision(function(n) {
+              return n + 1;
+            });
             if (p.onChanged) p.onChanged();
           }).catch(function(e) {
+            pending.current = false;
             setError(String(e.message || e));
             setBusy(false);
           });
         }
+        function onKeyDown(e) {
+          if (e.key === "Escape") {
+            if (creating) return;
+            e.stopPropagation();
+            if (removing) setRemoving(null);
+            else p.onClose();
+          }
+          if (e.key !== "Tab" || !dialog.current) return;
+          var dialogs = dialog.current.parentElement.querySelectorAll('[role="dialog"]');
+          var activeDialog = creating ? dialogs[dialogs.length - 1] : dialog.current;
+          var nodes = Array.from(activeDialog.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),summary,[tabindex="0"]')).filter(function(node) {
+            return node.getClientRects().length > 0;
+          });
+          var first = nodes[0], last = nodes[nodes.length - 1];
+          if (!first) {
+            e.preventDefault();
+            dialog.current.focus();
+          } else if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog.current)) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+        var title = splitTitle(task.timelineTitle || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF"));
+        var pages = Math.max(1, Math.ceil(members.length / 20));
+        var newButton = h("button", { type: "button", className: "wbt-btn", disabled: busy, onClick: function() {
+          setCreating(true);
+        } }, tr("\u65B0\u5EFA\u65F6\u95F4\u7EBF"));
         return h(
           "div",
-          { className: "wbt-modal-mask" },
+          { className: "wbt-modal-mask", onKeyDown },
+          h("style", null, CSS),
           h(
             "div",
-            { className: "wbt-modal wide", role: "dialog", "aria-modal": true, "aria-label": tr("\u4EFB\u52A1\u65F6\u95F4\u7EBF") },
-            h("div", { className: "wbt-modal-head" }, h("h3", null, tr("\u4EFB\u52A1\u65F6\u95F4\u7EBF")), h("button", { className: "wbt-icon", onClick: p.onClose }, "\xD7")),
-            error ? h("p", { className: "wbt-err", role: "alert" }, error, h("button", { onClick: function() {
-              setRevision(revision + 1);
-            } }, tr("\u91CD\u8BD5"))) : busy ? h("p", null, tr("\u52A0\u8F7D\u4E2D\u2026")) : task.timelineId ? h(
-              React.Fragment,
-              null,
-              h("h4", { title: task.timelineId }, task.timelineTitle || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF")),
-              h("p", null, task.timelineDescription || tr("\u6682\u65E0\u63CF\u8FF0")),
-              h("button", { className: "wbt-btn", disabled: busy, onClick: function() {
-                change("taskTimelines.detach", { taskId: task.id });
-              } }, tr("\u79FB\u51FA\u65F6\u95F4\u7EBF")),
-              h("button", { className: "wbt-btn", onClick: function() {
-                p.onCreateTimeline(task);
-              } }, tr("\u6DFB\u52A0\u65B0\u4EFB\u52A1")),
-              members.length ? h("ol", { className: "wbt-timeline-members" }, members.map(function(x) {
-                return h("li", { key: x.id }, x.title, " \xB7 ", x.publishDate || "");
-              })) : h("p", null, tr("\u6682\u65E0\u53EF\u663E\u793A\u6210\u5458"))
-            ) : h("p", { className: "wbt-empty" }, tr("\u6CA1\u6709\u5173\u8054\u65F6\u95F4\u7EBF")),
-            h(controls.Picker, { api: p.api, t: p.t, value, onChange: setValue, disabled: busy }),
+            { ref: dialog, tabIndex: -1, className: "wbt-modal wide wbt-timeline-modal", role: "dialog", "aria-modal": true, "aria-label": tr("\u4EFB\u52A1\u65F6\u95F4\u7EBF") },
+            h("div", { className: "wbt-modal-head" }, h("h3", null, tr("\u4EFB\u52A1\u65F6\u95F4\u7EBF")), h("button", { type: "button", className: "wbt-icon", "aria-label": tr("\u5173\u95ED"), onClick: p.onClose }, "\xD7")),
             h(
               "div",
-              { className: "wbt-modal-foot" },
-              h("button", { className: "wbt-btn", disabled: busy, onClick: function() {
-                setCreating(true);
-              } }, tr("\u65B0\u5EFA\u65F6\u95F4\u7EBF")),
-              h("button", { className: "wbt-btn primary", disabled: busy || !value, onClick: function() {
+              { className: "wbt-timeline-modal-body", "aria-busy": busy },
+              error ? h("p", { className: "wbt-err", role: "alert" }, error, h("button", { type: "button", className: "wbt-btn", onClick: function() {
+                setRevision(revision + 1);
+              } }, tr("\u91CD\u8BD5"))) : null,
+              busy ? h("p", { role: "status" }, tr("\u52A0\u8F7D\u4E2D\u2026")) : null,
+              task.timelineId ? h(
+                React.Fragment,
+                null,
+                h(
+                  "header",
+                  { className: "wbt-timeline-summary" },
+                  title.eyebrow ? h("div", { className: "wbt-timeline-eyebrow" }, title.eyebrow) : null,
+                  h("h4", null, title.title),
+                  h("div", { className: "wbt-desc wbt-timeline-desc" + (expanded ? " expanded" : "") }, task.timelineDescription || tr("\u6682\u65E0\u63CF\u8FF0")),
+                  task.timelineDescription ? h("button", { type: "button", className: "wbt-btn ghost", "aria-expanded": expanded, onClick: function() {
+                    setExpanded(!expanded);
+                  } }, tr(expanded ? "\u6536\u8D77\u63CF\u8FF0" : "\u5C55\u5F00\u63CF\u8FF0")) : null
+                ),
+                h(
+                  "section",
+                  { className: "wbt-timeline-member-section", "aria-label": tr("\u6210\u5458") },
+                  h(
+                    "div",
+                    { className: "wbt-timeline-actions" },
+                    h("strong", null, tr("\u6210\u5458"), " ", members.length),
+                    h("button", { type: "button", className: "wbt-btn ghost", disabled: busy, onClick: function() {
+                      setRemoving(task);
+                    } }, tr("\u79FB\u51FA\u5F53\u524D\u4EFB\u52A1")),
+                    h("button", { type: "button", className: "wbt-btn", disabled: busy, onClick: function() {
+                      p.onCreateTimeline(task);
+                    } }, tr("\u6DFB\u52A0\u65B0\u4EFB\u52A1"))
+                  ),
+                  removing ? h(
+                    "div",
+                    { className: "wbt-timeline-confirm", role: "alert" },
+                    h("p", null, tr("\u786E\u8BA4\u79FB\u51FA\u4EFB\u52A1\uFF1F"), " ", removing.title, " \xB7 ", tr("\u4EC5\u89E3\u9664\u5173\u8054\uFF0C\u4EFB\u52A1\u4ECD\u4FDD\u7559\u3002")),
+                    h(
+                      "div",
+                      { className: "wbt-timeline-actions" },
+                      h("button", { type: "button", className: "wbt-btn", disabled: busy, onClick: function() {
+                        setRemoving(null);
+                      } }, tr("\u53D6\u6D88")),
+                      h("button", { type: "button", className: "wbt-btn wbt-act-del", disabled: busy, onClick: function() {
+                        change("taskTimelines.detach", { taskId: removing.id });
+                      } }, tr("\u786E\u8BA4\u79FB\u51FA"))
+                    )
+                  ) : null,
+                  h("div", { className: "wbt-timeline-member-scroll" }, members.length ? h(MemberRows, { rows: members.slice((page - 1) * 20, page * 20), lang, disabled: busy, onOpen: p.onOpen, onRemove: setRemoving }) : h("p", { className: "wbt-empty" }, tr("\u6682\u65E0\u53EF\u663E\u793A\u6210\u5458"))),
+                  h(
+                    "div",
+                    { className: "wbt-timeline-pager" },
+                    h("span", null, tr("\u6309\u53D1\u5E03\u65F6\u95F4\u6B63\u5E8F\u6392\u5217")),
+                    h("button", { type: "button", className: "wbt-btn", disabled: busy || page <= 1, onClick: function() {
+                      setPage(page - 1);
+                    } }, tr("\u4E0A\u4E00\u9875")),
+                    h("span", null, page + " / " + pages),
+                    h("button", { type: "button", className: "wbt-btn", disabled: busy || page >= pages, onClick: function() {
+                      setPage(page + 1);
+                    } }, tr("\u4E0B\u4E00\u9875"))
+                  )
+                )
+              ) : h("div", { className: "wbt-timeline-empty" }, h("strong", null, tr("\u6CA1\u6709\u5173\u8054\u65F6\u95F4\u7EBF")), h("p", null, tr("\u65B0\u5EFA\u65F6\u95F4\u7EBF\u6216\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF\uFF0C\u5C06\u76F8\u5173\u4EFB\u52A1\u96C6\u4E2D\u67E5\u770B\u3002")), newButton),
+              h(
+                "details",
+                { className: "wbt-timeline-other", open: !task.timelineId || void 0 },
+                h("summary", null, tr("\u5176\u4ED6\u65F6\u95F4\u7EBF")),
+                h(controls.Picker, { api: p.api, t: p.t, value, title: selectedTitle, onChange: function(id, label) {
+                  setValue(id);
+                  setSelectedTitle(label || "");
+                }, disabled: busy })
+              )
+            ),
+            h(
+              "div",
+              { className: "wbt-modal-foot wbt-timeline-actions" },
+              h("span", { className: "wbt-timeline-selected", role: "status" }, value ? tr("\u5DF2\u9009\u65F6\u95F4\u7EBF") + "\uFF1A" + (selectedTitle || value) : tr("\u8BF7\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF")),
+              newButton,
+              h("button", { type: "button", className: "wbt-btn primary", disabled: busy || !value, title: busy ? tr("\u52A0\u8F7D\u4E2D\u2026") : !value ? tr("\u8BF7\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF\uFF1B\u65E0\u5339\u914D\u65F6\u53EF\u65B0\u5EFA") : selectedTitle, onClick: function() {
                 change("taskTimelines.attach", { taskId: task.id, timelineId: value });
               } }, tr("\u5173\u8054\u6240\u9009\u65F6\u95F4\u7EBF"))
             )
           ),
           creating ? h(controls.Editor, { api: p.api, t: p.t, onClose: function() {
             setCreating(false);
+            if (dialog.current) dialog.current.focus();
           }, onSaved: function(line) {
             setCreating(false);
             setValue(line.timelineId || line.id || line.timelineKey);
+            setSelectedTitle(line.title || "");
+            if (dialog.current) dialog.current.focus();
           } }) : null
         );
       };
@@ -7464,6 +7665,15 @@ var require_tasks_view = __commonJS({
             onClose: function() {
               setTimelineTask(null);
             },
+            onOpen: function(member) {
+              api.call("tasks.get", { id: member.id }).then(function(r) {
+                if (!r || !r.ok) throw Error(r && r.error || t.fail);
+                setTimelineTask(null);
+                setEditTask(r.result.task);
+              }).catch(function(err) {
+                say(String(err.message || err));
+              });
+            },
             onCreateTimeline: function(originTask) {
               setTimelineTask(null);
               setCreateState({ source: "1", originTask, defaultTableId: originTask.tableId });
@@ -7679,30 +7889,6 @@ var require_timeline_merge = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/timeline/timeline-styles.cjs
-var require_timeline_styles = __commonJS({
-  "packages/addons/tasks/client/timeline/timeline-styles.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = [
-      ".wbt-timeline-view{padding:20px;color:inherit;height:100%;box-sizing:border-box;overflow:auto}",
-      ".wbt-timeline-toolbar,.wbt-timeline-search,.wbt-timeline-pager{display:flex;align-items:center;gap:10px}",
-      ".wbt-timeline-toolbar{margin-bottom:16px}.wbt-timeline-toolbar h2{font-size:18px;margin:0 auto 0 0}",
-      ".wbt-timeline-columns{display:grid;grid-template-columns:minmax(260px,34%) minmax(0,1fr);gap:20px}",
-      ".wbt-timeline-left,.wbt-timeline-right{min-width:0;border:1px solid var(--wbt-line,rgba(128,128,128,.3));border-radius:10px;padding:14px}",
-      ".wbt-timeline-single{display:flex;align-items:center;gap:8px;margin:14px 0;font-size:13px}",
-      ".wbt-timeline-search input{min-width:0;flex:1}.wbt-timeline-list{height:48vh;min-height:220px;overflow:auto;overscroll-behavior:contain}",
-      ".wbt-timeline-option{padding:12px 10px;border:2px solid transparent;border-bottom:2px solid var(--wbt-line,rgba(128,128,128,.3));cursor:pointer;border-radius:6px;display:flex;flex-direction:column;gap:7px;overflow-wrap:anywhere}",
-      ".wbt-timeline-option span{font-size:12px;opacity:.8}.wbt-timeline-option.current{border:2px solid var(--wbt-accent,#6366f1);background:rgba(99,102,241,.08)}",
-      ".wbt-timeline-option:focus-visible,.wbt-timeline-member:focus-visible{outline:3px solid var(--wbt-accent,#6366f1);outline-offset:-3px}",
-      ".wbt-timeline-pager{justify-content:space-between;margin-top:14px;font-size:12px}.wbt-timeline-right h3{margin-top:0;overflow-wrap:anywhere}.wbt-timeline-right>p{font-size:13px;opacity:.8}",
-      ".wbt-timeline-members{padding-left:24px;margin:0;max-height:58vh;overflow:auto}.wbt-timeline-members li{padding:0 0 12px 6px}",
-      ".wbt-timeline-member{display:flex;width:100%;flex-wrap:wrap;align-items:center;gap:10px;text-align:left;padding:12px;border:1px solid var(--wbt-line,rgba(128,128,128,.3));border-radius:8px;color:inherit;background:transparent;cursor:pointer}",
-      ".wbt-timeline-member strong{flex:1;min-width:100px;overflow-wrap:anywhere}.wbt-timeline-member time{font-size:12px;opacity:.8}",
-      "@media(max-width:720px){.wbt-timeline-columns{grid-template-columns:1fr}.wbt-timeline-list{height:260px}.wbt-timeline-toolbar{flex-wrap:wrap}}"
-    ].join("\n");
-  }
-});
-
 // packages/addons/tasks/client/views/timeline-view.cjs
 var require_timeline_view = __commonJS({
   "packages/addons/tasks/client/views/timeline-view.cjs"(exports2, module2) {
@@ -7712,6 +7898,8 @@ var require_timeline_view = __commonJS({
       var controls = require_timeline_controls()(React), AddMembers = require_timeline_add_members()(React);
       var Merge = require_timeline_merge()(React);
       var CSS = require_timeline_styles();
+      var MemberRows = require_timeline_member_rows()(React, deps.statusInfo);
+      var splitTitle = require_timeline_title();
       function result(r) {
         if (!r || !r.ok) throw new Error(r && r.error || "Request failed");
         return r.result;
@@ -7756,6 +7944,7 @@ var require_timeline_view = __commonJS({
         var listRef = React.useRef(null), mergeButton = React.useRef(null), detailTrigger = React.useRef(null);
         var createdRef = React.useRef(null);
         var activeKey = active && active.timelineKey;
+        var heading = splitTitle(active && active.title);
         var editorS = React.useState(null), editor = editorS[0], setEditor = editorS[1];
         var addS = React.useState(false), adding = addS[0], setAdding = addS[1];
         var deleteS = React.useState(false), deleting = deleteS[0], setDeleting = deleteS[1];
@@ -7850,6 +8039,7 @@ var require_timeline_view = __commonJS({
           });
         }
         function keyboard(e, index) {
+          if (e.target.type === "checkbox") return;
           var next = index;
           if (e.key === "ArrowDown") next = Math.min(data.records.length - 1, index + 1);
           else if (e.key === "ArrowUp") next = Math.max(0, index - 1);
@@ -7940,9 +8130,12 @@ var require_timeline_view = __commonJS({
                       keyboard(e, i);
                     }
                   },
-                  h("strong", null, multi ? checked ? "\u2611 " : "\u2610 " : isActive ? "\u25B8 " : "", item.title || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF")),
-                  h("span", null, t.timelineTasks + " " + item.taskCount + " \xB7 " + t.timelineOpen + " " + item.openCount + " \xB7 " + t.timelineDone + " " + item.doneCount),
-                  h("span", null, t.timelineActivity + " " + (item.lastActivityDate || "\u2014"))
+                  h("div", { className: "wbt-timeline-option-title" }, multi ? h("input", { type: "checkbox", checked, disabled: busy || !item.taskCount, "aria-label": item.title || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF"), onClick: function(e) {
+                    e.stopPropagation();
+                  }, onChange: function() {
+                    choose(item, true);
+                  } }) : null, h("strong", null, item.title || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF"))),
+                  h("span", null, t.timelineTasks + " " + item.taskCount + " \xB7 " + t.timelineOpen + " " + item.openCount + " \xB7 " + t.timelineDone + " " + item.doneCount + " \xB7 " + t.timelineActivity + " " + (item.lastActivityDate || "\u2014"))
                 );
               })),
               busy ? h("p", { role: "status" }, t.loading) : !error && !data.records.length ? h("p", { className: "wbt-empty" }, t.timelineEmpty) : null,
@@ -7951,29 +8144,33 @@ var require_timeline_view = __commonJS({
             h(
               "section",
               { className: "wbt-timeline-right", "aria-label": t.timelineMembers, "aria-busy": memberBusy },
-              h("h3", null, active ? active.title || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF") : t.timelineMembers),
+              heading.eyebrow ? h("div", { className: "wbt-timeline-eyebrow" }, heading.eyebrow) : null,
+              h("h3", null, active ? heading.title || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF") : t.timelineMembers),
               active ? h(
                 "div",
-                null,
-                h("p", null, active.description || tr("\u6682\u65E0\u63CF\u8FF0")),
-                h("code", { title: activeKey }, activeKey),
-                h("button", { className: "wbt-btn", onClick: function() {
-                  navigator.clipboard.writeText(activeKey).catch(function(e) {
-                    setMemberError(String(e));
-                  });
-                } }, tr("\u590D\u5236 ID")),
-                h("button", { className: "wbt-btn", onClick: function() {
-                  setEditor(active);
-                } }, tr("\u7F16\u8F91\u65F6\u95F4\u7EBF")),
-                h("button", { className: "wbt-btn", onClick: function() {
-                  setAdding(true);
-                } }, tr("\u6DFB\u52A0\u5DF2\u6709\u4EFB\u52A1")),
-                h("button", { className: "wbt-btn", onClick: function() {
-                  setDeleting(true);
-                } }, tr("\u5220\u9664\u65F6\u95F4\u7EBF")),
+                { className: "wbt-timeline-summary" },
+                h("div", { className: "wbt-desc wbt-timeline-desc" }, active.description || tr("\u6682\u65E0\u63CF\u8FF0")),
+                h(
+                  "div",
+                  { className: "wbt-timeline-actions" },
+                  h("button", { className: "wbt-btn primary", onClick: function() {
+                    setEditor(active);
+                  } }, tr("\u7F16\u8F91\u65F6\u95F4\u7EBF")),
+                  h("button", { className: "wbt-btn", onClick: function() {
+                    setAdding(true);
+                  } }, tr("\u6DFB\u52A0\u5DF2\u6709\u4EFB\u52A1")),
+                  h("button", { className: "wbt-timeline-id", title: tr("\u590D\u5236 ID") + " \xB7 " + activeKey, "aria-label": tr("\u590D\u5236 ID"), onClick: function() {
+                    navigator.clipboard.writeText(activeKey).catch(function(e) {
+                      setMemberError(String(e));
+                    });
+                  } }, h("code", null, activeKey), h("span", { "aria-hidden": true }, "\u29C9")),
+                  h("button", { className: "wbt-btn wbt-act-del", onClick: function() {
+                    setDeleting(true);
+                  } }, tr("\u5220\u9664\u65F6\u95F4\u7EBF"))
+                ),
                 deleting ? h(
                   "div",
-                  { role: "alert" },
+                  { role: "alert", className: "wbt-timeline-confirm" },
                   tr("\u5220\u9664\u65F6\u95F4\u7EBF\u5C06\u79FB\u51FA\u5168\u90E8\u6210\u5458\uFF0C\u4FDD\u7559\u4EFB\u52A1\u53CA\u91CD\u542F\u94FE\u3002"),
                   h("button", { className: "wbt-btn", disabled: writing, onClick: function() {
                     setDeleting(false);
@@ -7992,20 +8189,16 @@ var require_timeline_view = __commonJS({
                   } }, tr("\u786E\u8BA4\u5220\u9664\u65F6\u95F4\u7EBF"))
                 ) : null
               ) : null,
-              h("p", null, t.timelineOrder),
               memberError ? h("p", { role: "alert", className: "wbt-err" }, t.error + memberError) : null,
-              memberBusy ? h("p", { role: "status" }, t.loading) : h("ol", { className: "wbt-timeline-members", start: (memberPage - 1) * 20 + 1 }, members.records.map(function(task) {
-                var st = deps.statusInfo(task.status);
-                return h("li", { key: task.id }, h(
-                  "button",
-                  { className: "wbt-timeline-member", "aria-label": task.title + " \xB7 " + (task.publishDate || "") + " \xB7 " + st[lang], onClick: function(e) {
-                    detailTrigger.current = e.currentTarget;
-                    setDetail(task);
-                  } },
-                  h("time", null, task.publishDate || "\u2014"),
-                  h("strong", null, task.title),
-                  h("span", { className: "wbt-badge " + st.cls }, st[lang])
-                ), h("button", { className: "wbt-btn", disabled: writing, onClick: function() {
+              memberBusy ? h("p", { role: "status" }, t.loading) : h(MemberRows, {
+                rows: members.records,
+                lang,
+                disabled: writing,
+                onOpen: function(task, e) {
+                  detailTrigger.current = e.currentTarget;
+                  setDetail(task);
+                },
+                onRemove: function(task) {
                   setWriting(true);
                   api.call("taskTimelines.detach", { taskId: task.id }).then(result).then(function() {
                     createdRef.current = active;
@@ -8015,10 +8208,10 @@ var require_timeline_view = __commonJS({
                   }).finally(function() {
                     setWriting(false);
                   });
-                } }, tr("\u79FB\u51FA\u65F6\u95F4\u7EBF")));
-              })),
+                }
+              }),
               !memberBusy && !memberError && !members.records.length ? h("p", { className: "wbt-empty" }, active ? tr("\u6682\u65E0\u53EF\u663E\u793A\u6210\u5458") : t.timelineEmpty) : null,
-              active ? h(Pager, { t, label: t.timelineMembers, busy: memberBusy, page: memberPage, total: members.total, set: setMemberPage }) : null
+              active ? h("div", { className: "wbt-timeline-member-footer" }, h("span", null, t.timelineOrder), h(Pager, { t, label: t.timelineMembers, busy: memberBusy, page: memberPage, total: members.total, set: setMemberPage })) : null
             )
           ),
           editor ? h(controls.Editor, { api, t, item: editor.timelineKey ? editor : null, onClose: function() {
@@ -8449,7 +8642,7 @@ var require_timeline_view = __commonJS({
     );
   }
   var CreateModal = require_create_modal()({ React, allTables, tagNames, splitTags, today, addDays, hostHasAddon });
-  var TimelineModal = require_task_timeline_modal()(React);
+  var TimelineModal = require_task_timeline_modal()(React, statusInfo);
   function DoneModal(props) {
     var t = props.t;
     var s = React.useState(Number(props.task.difficulty) || 0);

@@ -20,7 +20,7 @@ module.exports = function (React) {
     }, [p.api, page, query, retry]);
     return h("div", { className: "wbt-timeline-picker" },
       h("label", { className: "wbt-field" }, tr("搜索已有时间线"), h("input", { className: "wbt-input", value: query, onChange: function (e) { setQuery(e.target.value); setPage(1); } })),
-      h("select", { className: "wbt-select", "aria-label": tr("选择已有时间线"), value: p.value || "", disabled: p.disabled || busy, onChange: function (e) { p.onChange(e.target.value); } },
+      h("select", { className: "wbt-select", "aria-label": tr("选择已有时间线"), value: p.value || "", disabled: p.disabled || busy, onChange: function (e) { var row = data.records.find(function (x) { return (x.timelineId || x.timelineKey) === e.target.value; }); p.onChange(e.target.value, row && row.title || ""); } },
         h("option", { value: "" }, tr("不关联时间线")),
         p.value && !data.records.some(function (x) { return (x.timelineId || x.timelineKey) === p.value; }) ? h("option", { value: p.value }, p.title || tr("已选时间线")) : null,
         data.records.map(function (x) { var id = x.timelineId || x.timelineKey; return h("option", { key: id, value: id }, (x.title || tr("未命名时间线")) + " · " + x.taskCount + tr(" 个任务")); })),

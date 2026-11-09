@@ -320,7 +320,7 @@
 
   var CreateModal = require("./modals/create-modal.cjs")({ React: React, allTables: allTables, tagNames: tagNames, splitTags: splitTags, today: today, addDays: addDays, hostHasAddon: hostHasAddon });
 
-  var TimelineModal = require("./timeline/task-timeline-modal.cjs")(React);
+  var TimelineModal = require("./timeline/task-timeline-modal.cjs")(React, statusInfo);
 
   function DoneModal(props) {
     var t = props.t;
