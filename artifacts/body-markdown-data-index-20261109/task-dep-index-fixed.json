@@ -1,0 +1,40 @@
+{
+  "count": 5,
+  "items": [
+    {
+      "columns": null,
+      "name": null,
+      "rows": null,
+      "source": null,
+      "type": null
+    },
+    {
+      "columns": "task_id, depends_on_id",
+      "name": "uk_task_dep",
+      "rows": "0",
+      "source": "显式创建",
+      "type": "唯一"
+    },
+    {
+      "columns": "depends_on_id",
+      "name": "idx_task_dep_on",
+      "rows": "0",
+      "source": "显式创建",
+      "type": "普通"
+    },
+    {
+      "columns": "task_id",
+      "name": "idx_task_dep_task",
+      "rows": "0",
+      "source": "显式创建",
+      "type": "普通"
+    },
+    {
+      "columns": "id",
+      "name": "sqlite_autoindex_task_dep_1",
+      "rows": "0",
+      "source": "自动",
+      "type": "主键"
+    }
+  ]
+}

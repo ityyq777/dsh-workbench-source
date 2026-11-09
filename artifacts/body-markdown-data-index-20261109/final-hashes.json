@@ -1,0 +1,65 @@
+[
+  {
+    "name": "dsh-workbench",
+    "file": "package.json",
+    "source": "84ce101edc93a43047f34062baee8ba3a7fed6671953193b9f44dd16819e42c8",
+    "installed": "84ce101edc93a43047f34062baee8ba3a7fed6671953193b9f44dd16819e42c8",
+    "equal": true
+  },
+  {
+    "name": "dsh-workbench-tasks",
+    "file": "package.json",
+    "source": "b7525748abe59cc25362ca69116c750a1b3963755429fd21775e361b8424c227",
+    "installed": "b7525748abe59cc25362ca69116c750a1b3963755429fd21775e361b8424c227",
+    "equal": true
+  },
+  {
+    "name": "dsh-workbench-tasks",
+    "file": "lib/client.js",
+    "source": "2ef4d90cf03ec73de17e11b5e920a0a2503d4b6c1abd1182cfe2dc19dc72d136",
+    "installed": "2ef4d90cf03ec73de17e11b5e920a0a2503d4b6c1abd1182cfe2dc19dc72d136",
+    "equal": true
+  },
+  {
+    "name": "dsh-workbench-tags",
+    "file": "package.json",
+    "source": "0286bcf3183cddfe8851255e882b08477221334f40bc964c344d9581d5716e66",
+    "installed": "0286bcf3183cddfe8851255e882b08477221334f40bc964c344d9581d5716e66",
+    "equal": true
+  },
+  {
+    "name": "dsh-workbench-tags",
+    "file": "lib/client.js",
+    "source": "a2f8c7532df72aec8cf7db864ef7eead8f1d2aeff4d85239f92a00d944015b11",
+    "installed": "a2f8c7532df72aec8cf7db864ef7eead8f1d2aeff4d85239f92a00d944015b11",
+    "equal": true
+  },
+  {
+    "name": "dsh-workbench-sites",
+    "file": "package.json",
+    "source": "fa1491320d3c5f505d9a960af3f2ece15560739544dc07553c4734346012a792",
+    "installed": "fa1491320d3c5f505d9a960af3f2ece15560739544dc07553c4734346012a792",
+    "equal": true
+  },
+  {
+    "name": "dsh-workbench-sites",
+    "file": "lib/client.js",
+    "source": "6c7d1f4ee6455d2ca6745e2ee1a30fdcc4f29202864137169ccc8af30cd8349b",
+    "installed": "6c7d1f4ee6455d2ca6745e2ee1a30fdcc4f29202864137169ccc8af30cd8349b",
+    "equal": true
+  },
+  {
+    "name": "dsh-workbench-storage",
+    "file": "package.json",
+    "source": "a814a0bfe6b8f1c857acd817c8f436458c372a963dccd815b06f925e5b49eff5",
+    "installed": "a814a0bfe6b8f1c857acd817c8f436458c372a963dccd815b06f925e5b49eff5",
+    "equal": true
+  },
+  {
+    "name": "dsh-workbench-storage",
+    "file": "lib/client.js",
+    "source": "82cfc2f0b16c5a7e8cc81d04e6a4bcf6baede137da6b1acc059b2d6af8c240f6",
+    "installed": "82cfc2f0b16c5a7e8cc81d04e6a4bcf6baede137da6b1acc059b2d6af8c240f6",
+    "equal": true
+  }
+]

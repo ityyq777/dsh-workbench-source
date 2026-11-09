@@ -1,0 +1,26 @@
+[
+  {
+    "name": "tasks",
+    "version": "3.1.0",
+    "source": "5670ce1a169b8aeef52eb64b625720f9383267ab7b55f391acd58c9bf5dc8387",
+    "installed": "5670ce1a169b8aeef52eb64b625720f9383267ab7b55f391acd58c9bf5dc8387"
+  },
+  {
+    "name": "tags",
+    "version": "1.6.9",
+    "source": "e512467032cb14f7320547865f48a8946d65d8f13dd4718ea7b1c03036460ec0",
+    "installed": "e512467032cb14f7320547865f48a8946d65d8f13dd4718ea7b1c03036460ec0"
+  },
+  {
+    "name": "sites",
+    "version": "1.9.2",
+    "source": "a14039fb8b9dbc956d7c31ea292ffee7f7ecfb55a28691a1ed9c4b84ddcd987e",
+    "installed": "a14039fb8b9dbc956d7c31ea292ffee7f7ecfb55a28691a1ed9c4b84ddcd987e"
+  },
+  {
+    "name": "storage",
+    "version": "1.4.0",
+    "source": "a866b023506b028b904cb636ae28873c9c9fbf30f56ef3346671f1624d5364b4",
+    "installed": "a866b023506b028b904cb636ae28873c9c9fbf30f56ef3346671f1624d5364b4"
+  }
+]

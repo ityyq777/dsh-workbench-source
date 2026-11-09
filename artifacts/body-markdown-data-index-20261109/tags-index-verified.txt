@@ -1,0 +1,62 @@
+新会话
+⌥
+⌘
+N
+插件
+自动化任务
+工作台
+更多
+工作区
+dsh-workbench
+datagrand-ifas-dev
+新会话
+更新中邮webapi镜像
+3小时
+# billion-context session handoff -
+8分钟
+datagrand-kms
+person-dsh
+dsh-workspace-team
+xxxx
+datarand-demo
+今天的心情由睡眠决定！
+← 返回首页
+标
+标签
+v1.6.9
+统计
+记录
+配置
+数据
+表
+2
+标签
+0
+tag
+标签关联
+0
+tag_mapping
+行数据
+表索引
+标签
+tag
+当前选中表的索引（只读）；行数为所属表总行数，不是索引条目数
+刷新
+行数 0
+列数 6
+共 4 个索引
+索引名
+
+列
+
+类型
+
+来源
+
+行数
+
+idx_tag_created_at	created_at	普通	显式创建	0
+idx_tag_updated_at	updated_at	普通	显式创建	0
+uk_tag_name	name	唯一	显式创建	0
+sqlite_autoindex_tag_1	id	主键	自动	0
+click
