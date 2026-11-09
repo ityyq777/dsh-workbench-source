@@ -9,7 +9,6 @@
     "packages/addons/sites/client/data.cjs": 768,
     "packages/addons/tags/client/data.cjs": 768,
     "packages/addons/tasks/client/data.cjs": 768,
-    "packages/addons/sites/lib/accounts.js": 669,
     "packages/addons/sites/lib/sites.js": 631
   }
 }
