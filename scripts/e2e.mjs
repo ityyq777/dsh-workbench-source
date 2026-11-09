@@ -16,6 +16,8 @@ const tests = [
   "scripts/test-task-ownership-ui.mjs",
   "scripts/test-ownership-host.mjs",
   "scripts/test-tasks-review.mjs",
+  "scripts/test-task-difficulty-backend.mjs",
+  "scripts/test-tasks-difficulty-ui.mjs",
   "scripts/test-tasks-search.mjs",
   "scripts/test-task-body.mjs",
   "scripts/test-task-body-react.mjs",

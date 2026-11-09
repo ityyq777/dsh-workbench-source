@@ -45,11 +45,13 @@ module.exports = function (deps) {
     } else if (String(task.status) === "2") {
       if (task.targetDate) meta.push(h("span", { key: "g" }, h("b", null, t.target), " ", task.targetDate));
       if (task.doneDate) meta.push(h("span", { key: "d" }, h("b", null, t.done), " ", task.doneDate));
-      meta.push(h("span", { key: "s", className: "wbt-stars", children: stars(task.difficulty) + " " + Number(task.difficulty || 0).toFixed(1) }));
+
     } else {
       if (task.targetDate) meta.push(h("span", { key: "g" }, h("b", null, t.target), " ", task.targetDate));
       if (task.shutdownDate) meta.push(h("span", { key: "s" }, h("b", null, t.shutdown), " ", task.shutdownDate));
     }
+
+    if (Number(task.difficulty) > 0) meta.push(h("span", { key: "difficulty", className: "wbt-stars", "aria-label": t.difficulty + " " + task.difficulty + " / 5", children: stars(task.difficulty) + " " + Number(task.difficulty).toFixed(1) }));
 
     var ops = [];
     ops.push(h("button", {

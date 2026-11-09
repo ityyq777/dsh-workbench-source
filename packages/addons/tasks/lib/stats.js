@@ -276,8 +276,8 @@ export function statsReport(db, args, api) {
     const idx = Math.min(10, Math.max(1, Math.round(d * 2)));
     difficultyBins[idx - 1].count += n;
   }
-  // 「未设置」不是难度，图表不画；保留在数据里（hidden）供导出与口径核对。
-  difficultyBins.push({ key: "unset", label: "未设置", count: difficultyUnset, hidden: true });
+  // 未填写必须可见，便于从统计巡检并补齐难度。
+  difficultyBins.push({ key: "unset", label: "未设置", count: difficultyUnset });
 
   const overdueRows = db.prepare(
     "SELECT id,title,target_date,table_id FROM task WHERE deleted_at IS NULL AND status='0' " +

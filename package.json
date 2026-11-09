@@ -15,6 +15,7 @@
     "test:ownership-ui": "node scripts/test-task-ownership-ui.mjs",
     "test:ownership-host": "node scripts/test-ownership-host.mjs",
     "test:tasks-review": "node scripts/test-tasks-review.mjs",
+    "test:task-difficulty": "node scripts/test-task-difficulty-backend.mjs && node scripts/test-tasks-difficulty-ui.mjs",
     "test:tasks-search": "node scripts/test-tasks-search.mjs",
     "test:task-body": "node scripts/test-task-body.mjs",
     "test:task-body-react": "node scripts/test-task-body-react.mjs",

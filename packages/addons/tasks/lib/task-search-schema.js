@@ -9,6 +9,7 @@ export const TASK_FILTER_SCHEMA = {
   checkedTypes: { type: "array", items: { type: "string" }, description: "旧参数：任务类型 0..3，按同名标签过滤（新代码请用 tags）" },
   tags: { type: "array", items: { type: "string" }, description: "按标签名过滤，命中任一即可" },
   status: { type: ["string", "number"], description: "直接按状态过滤（与 tab 条件 AND）" },
+  difficultyMissing: { type: "boolean", description: "true 只看未填难度（NULL 或 0）；false/缺省不筛难度，与其他条件 AND，可配合 tasks.bulkUpdate 补齐" },
   priorityMin: { type: "number", description: "最低优先级（含）" },
   priorityMax: { type: "number", description: "最高优先级（含）" },
   targetFrom: { type: "string", description: "targetDate >= 该日期" },

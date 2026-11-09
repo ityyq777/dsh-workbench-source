@@ -1,0 +1,85 @@
+/** Difficulty contract regression: isolated temporary WB_HOME; never writes production. */
+import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { DIFFICULTY_GUIDANCE } from '../packages/addons/tasks/lib/task-difficulty.js';
+const home = mkdtempSync(join(tmpdir(), 'wb-difficulty-'));
+process.env.WB_HOME = home;
+const cleanups = []; let host;
+try {
+  (await import('../packages/shell/lib/index.js')).apply({ provide: (_name, value) => { host = value; }, effect: fn => { const c = fn(); if (typeof c === 'function') cleanups.push(c); }, tools: { register() {} }, webServer: { register() {} }, systemPrompt: { section() {}, getSectionOrder: () => 500 }, commands: { register() {} }, agents: { get() {} }, connection: { requestRejection() {} } });
+  (await import('../packages/addons/tasks/lib/index.js')).apply({ workbench: host, effect: fn => { const c = fn(); if (typeof c === 'function') cleanups.push(c); } });
+  const invoke = async (action, args = {}) => { const r = await host.invoke(action, args, 'agent'); assert.ok(!r.isError && r.result !== undefined, JSON.stringify(r)); return r; };
+  const call = async (action, args) => (await invoke(action, args)).result;
+  const tableId = (await call('taskNodes.create', { parentId: '1', type: '1', name: '难度回归任务表' })).node.id;
+  const create = args => call('tasks.create', { tableId, title: 'difficulty fixture', ...args });
+  const notice = { code: 'difficulty_missing', field: 'difficulty', message: '建议填写 1–5 难度；0 会被统计为未设置' };
+  const absentReceipt = await invoke('tasks.create', { tableId, title: 'missing', description: 'has context', dedupeKey: 'missing' });
+  const absent = absentReceipt.result;
+  assert.deepEqual(absent.notices, [notice]);
+  assert.ok(JSON.stringify(absentReceipt).includes(notice.message));
+  assert.ok(absentReceipt.text.includes('difficulty_missing'), 'agent text includes soft guidance');
+  assert.ok(!Object.hasOwn(absent.task, 'difficulty'));
+  const zero = await create({ difficulty: 0, description: 'explicit unset' });
+  assert.equal(zero.task.difficulty, 0); assert.deepEqual(zero.notices, [notice]);
+  const nullTask = await create({ difficulty: null, description: 'null unset' });
+  assert.ok(!Object.hasOwn(nullTask.task, 'difficulty')); assert.deepEqual(nullTask.notices, [notice]);
+  const bare = await create({}); assert.ok(!bare.notices); assert.ok(!Object.hasOwn(bare.task, 'difficulty'));
+  const tags = await create({ tags: ['开发'] });
+  assert.ok(tags.notices.some(n => n.code === 'tag_domain_missing'));
+  assert.ok(tags.notices.some(n => n.code === 'difficulty_missing'));
+  const set = await create({ difficulty: 3, description: 'estimated', dedupeKey: 'estimated' });
+  assert.equal(set.task.status, '0'); assert.equal(set.task.difficulty, 3); assert.ok(!set.notices);
+  const half = await create({ difficulty: 0.5, description: 'legacy half' }); assert.equal(half.task.difficulty, 0.5); assert.ok(!half.notices);
+  const done = await create({ status: 'done', description: 'legacy completed without score' }); assert.equal(done.task.status, '2'); assert.deepEqual(done.notices, [notice]);
+  const replay = await create({ dedupeKey: 'estimated', description: 'replay' }); assert.ok(replay.deduped); assert.ok(!replay.notices);
+  const missingReplay = await create({ dedupeKey: 'missing', description: 'replay' }); assert.deepEqual(missingReplay.notices, [notice]);
+  const missing = await call('tasks.list', { tableId, difficultyMissing: true, pageSize: 2 });
+  assert.equal(missing.total, 6); assert.equal(missing.returned, 2); assert.equal(missing.filter.difficultyMissing, true);
+  assert.ok(missing.records.every(t => t.difficulty == null || t.difficulty === 0));
+  assert.equal((await call('tasks.list', { tableId, difficultyMissing: false })).total, 8);
+  assert.equal((await call('tasks.list', { tableId, difficultyMissing: true, status: 'done' })).total, 1);
+  const exported = await call('tasks.export', { tableId, difficultyMissing: true }); assert.equal(exported.count, 6);
+  const report = await call('tasks.statsReport', {});
+  const unset = report.breakdowns.difficulty.find(b => b.key === 'unset'); assert.equal(unset.count, 6); assert.ok(!unset.hidden);
+  assert.equal(report.breakdowns.difficulty.find(b => b.key === '3').count, 1);
+  assert.equal(report.breakdowns.difficulty.find(b => b.key === '0.5').count, 1);
+  await call('tasks.update', { id: absent.id, difficulty: 2.5 });
+  assert.equal((await call('tasks.get', { id: absent.id })).task.difficulty, 2.5);
+  const dry = await call('tasks.bulkUpdate', { ids: [zero.id, nullTask.id], patch: { difficulty: 4 }, dryRun: true }); assert.equal(dry.wouldUpdate, 2);
+  assert.equal((await call('tasks.list', { tableId, difficultyMissing: true })).total, 5);
+  await call('tasks.bulkUpdate', { ids: [zero.id, nullTask.id], patch: { difficulty: 4 } });
+  assert.equal((await call('tasks.list', { tableId, difficultyMissing: true })).total, 3);
+  await call('tasks.update', { id: absent.id, difficulty: null }); assert.equal((await call('tasks.list', { tableId, difficultyMissing: true })).total, 4);
+  const bulkCreate = await call('tasks.bulkCreate', { records: [{ tableId, title: 'bulk missing', description: 'context' }, { tableId, title: 'bulk estimated', difficulty: 1.5 }] });
+  assert.deepEqual(bulkCreate.results[0].notices, [notice]); assert.ok(!Object.hasOwn(bulkCreate.results[0].task, 'difficulty'));
+  assert.equal(bulkCreate.results[1].task.difficulty, 1.5); assert.ok(!bulkCreate.results[1].notices);
+  await call('tasks.delete', { id: bulkCreate.results[0].id });
+  assert.equal((await call('tasks.list', { tableId, difficultyMissing: true })).total, 4, 'deleted unset tasks stay excluded');
+  const restarted = await create({ title: 'restarted unset fixture' });
+  await call('tasks.update', { id: restarted.id, status: '3' });
+  assert.equal((await call('tasks.get', { id: restarted.id })).task.status, '3');
+  const afterRestart = await call('tasks.statsReport', {});
+  const restartedUnset = afterRestart.breakdowns.difficulty.find(b => b.key === 'unset');
+  assert.equal(restartedUnset.count, 5, 'statistics include unset restarted tasks');
+  const allUnset = await call('tasks.list', { tab: 8, filterRestarted: false, difficultyMissing: true });
+  assert.equal(allUnset.total, restartedUnset.count, 'statistics drilldown and list share the same scope');
+  assert.ok(allUnset.records.some(t => t.id === restarted.id));
+  assert.equal((await call('tasks.list', { tab: 8, difficultyMissing: true })).total, restartedUnset.count - 1, 'default overview still excludes restarted');
+  const caps = await call('tasks.capabilities'); assert.ok(caps.guidance.includes(DIFFICULTY_GUIDANCE));
+  // Capture the registered contracts directly, independent of host help formatting.
+  const definitions = new Map();
+  (await import('../packages/addons/tasks/lib/tasks.js')).registerTaskActions({ db: {}, action: (name, def) => definitions.set(name, def) });
+  for (const name of ['tasks.create', 'tasks.update']) {
+    const def = definitions.get(name); assert.equal(def.input.properties.difficulty.description, DIFFICULTY_GUIDANCE);
+    assert.ok(!def.input.required.includes('difficulty')); assert.ok(def.examples.every(e => e.difficulty > 0));
+  }
+  const bulk = definitions.get('tasks.bulkUpdate'); assert.equal(bulk.input.properties.patch.properties.difficulty.description, DIFFICULTY_GUIDANCE); assert.ok(bulk.examples.every(e => e.patch.difficulty > 0));
+  for (const name of ['tasks.list', 'tasks.export']) assert.equal(definitions.get(name).input.properties.difficultyMissing.type, 'boolean');
+  console.log('TASK DIFFICULTY BACKEND PASS: notices/text, optional receipts, active updates, legacy halves, null/0 filter, export, stats, dry-run, bulk, contracts');
+} finally {
+  for (const cleanup of cleanups.reverse()) cleanup();
+  assert.ok(resolve(home).startsWith(resolve(tmpdir()) + '/wb-difficulty-'));
+  rmSync(home, { recursive: true, force: true });
+}

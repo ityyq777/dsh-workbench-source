@@ -45,7 +45,10 @@ module.exports = function createTasksView(deps) {
     var target = targetS[0], setTarget = targetS[1];
     var pathS = React.useState([]);
     var currentPath = pathS[0], setCurrentPath = pathS[1];
-    var tabS = React.useState(cfgTab);
+    var initialMissing = !!(props.viewParams && props.viewParams.difficultyMissing === true);
+    var missingS = React.useState(initialMissing);
+    var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
+    var tabS = React.useState(initialMissing ? 8 : cfgTab);
     var tab = tabS[0], setTab = tabS[1];
     var viewS = React.useState(cfg["ui.listView"] === "card" ? "card" : "list");
     var view = viewS[0], setView = viewS[1];
@@ -55,7 +58,7 @@ module.exports = function createTasksView(deps) {
     var treeQuery = tqS[0], setTreeQuery = tqS[1];
     var titleS = React.useState("");
     var titleKey = titleS[0], setTitleKey = titleS[1];
-    var filterS = React.useState(cfg["list.filterRestarted"] !== false);
+    var filterS = React.useState(initialMissing ? false : cfg["list.filterRestarted"] !== false);
     var filterRestarted = filterS[0], setFilterRestarted = filterS[1];
     var tagReloadS = React.useState(0);
     var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
@@ -150,7 +153,7 @@ module.exports = function createTasksView(deps) {
         tab: tab, titleKey: titleKey,
         tableId: target.tableId, groupId: target.tableId ? null : target.groupId,
         pageNumber: pageNumber, pageSize: pageSize,
-        filterRestarted: filterRestarted, tagIds: filterTagIds,
+        filterRestarted: filterRestarted, tagIds: filterTagIds, difficultyMissing: difficultyMissing,
         sort: cfgSort === "auto" ? undefined : cfgSort,
       }).then(function (r) {
         setLoading(false);
@@ -161,7 +164,7 @@ module.exports = function createTasksView(deps) {
           setError((r && r.error) || "list load failed");
         }
       }).catch(function (e) { setLoading(false); setError(String(e && e.message || e)); });
-    }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, cfgSort]);
+    }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, difficultyMissing, cfgSort]);
 
     refreshRef.current = { tree: refreshTree, list: refreshList, path: refreshPath, tags: refreshTagNav };
 
@@ -395,6 +398,8 @@ module.exports = function createTasksView(deps) {
     var curDesc = curNode ? String(curNode.description || "") : "";
     var shownCount = data.returned === undefined ? (data.records || []).length : data.returned;
     var filterBar = h("div", { className: "wbt-filters" },
+      h("label", { className: "wbt-check" },
+        h("input", { type: "checkbox", checked: difficultyMissing, onChange: function (e) { setDifficultyMissing(e.target.checked); setPageNumber(1); } }), t.difficultyMissing),
       pageable ? h("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
       data.truncated ? h("span", { className: "wbt-hint" }, t.truncated + " " + shownCount + " / " + data.total) : null,
       (tab === 5 || tab === 8) ? h("label", { className: "wbt-check" },

@@ -1,9 +1,11 @@
+import { DIFFICULTY_GUIDANCE } from "./task-difficulty.js";
 import { createHash } from 'node:crypto';
 import { nodeMap } from './db.js';
 import { tagsAvailable } from './tagging.js';
 import { ownershipError, pathFromMap } from './task-ownership-path.js';
 
 export const GUIDANCE = [
+  DIFFICULTY_GUIDANCE,
   '已有具体开发、修复、设计任务：先核对职责、完整路径与描述，显式 domain→tableId 映射优先，选择后带 tableId 创建。',
   '已确认的新子模块：先核对组/表形态，无合适表且获授权才用 tablePath + createMissing:true + pathDescriptions；不要每条任务新建表。',
   '一次性问答、临时查询不建任务；物品登记走 storage.create，开发 storage 功能才走 tasks。',

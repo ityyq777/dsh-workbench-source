@@ -17,7 +17,7 @@ const render = (C, props) => { cursor = 0; return C(props); };
 const all = node => node && typeof node === 'object' ? [node, ...node.children.flatMap(all)] : [];
 const find = (node, predicate) => { const hit = all(node).find(predicate); assert.ok(hit, 'expected UI control'); return hit; };
 const sandbox = { window: { __WB_HOST__: { registerAddon() {} } }, module: {}, console,
-  require: name => name === 'react' ? React : ['./edit-modal.cjs', './create-modal.cjs', './task-item.cjs', './tasks-view.cjs'].includes(name) ? require('../packages/addons/tasks/client/' + name.slice(2)) : {},
+  require: name => name === 'react' ? React : ['./edit-modal.cjs', './create-modal.cjs', './task-item.cjs', './tasks-view.cjs', './difficulty-field.cjs'].includes(name) ? require('../packages/addons/tasks/client/' + name.slice(2)) : {},
 };
 const source = readFileSync('packages/addons/tasks/client/client.src.cjs', 'utf8');
 runInNewContext(source.replace('  host.registerAddon({', '  window.test = { TaskItem, DoneModal, EditModal }; host.registerAddon({'), sandbox);
@@ -31,8 +31,8 @@ for (const lang of ['zh', 'en']) for (const status of ['0', '1', '2', '3']) {
     let tree = render(EditModal, props);
     const textareas = all(tree).filter(n => n.type === 'textarea');
     assert.equal(textareas.length, 2); assert.equal(textareas[0].props.value, 'Description'); assert.equal(textareas[1].props.value, 'existing');
-    assert.equal(all(tree).some(n => n.props.type === 'range'), status === '2');
-    assert.equal(all(tree).some(n => n.props.type === 'number'), status !== '2');
+    assert.equal(find(tree, n => n.props['aria-label'] === copy[lang].difficulty).props.value, 2);
+    assert.equal(all(tree).some(n => n.props.type === 'number' && n.props.max === 10), status !== '2');
     find(tree, n => n.type === 'input' && n.props.value === task.title).props.onChange({target:{value:'Raw <title>'}});
     textareas[0].props.onChange({target:{value:'**raw description** <script>literal</script>'}});
     textareas[1].props.onChange({ target: { value: next } }); tree = render(EditModal, props);
@@ -41,7 +41,7 @@ for (const lang of ['zh', 'en']) for (const status of ['0', '1', '2', '3']) {
     assert.equal(patch.title, 'Raw <title>'); assert.equal(patch.description, '**raw description** <script>literal</script>');
     assert.equal(Object.hasOwn(patch, 'review'), next !== 'existing');
     if (next !== 'existing') assert.equal(patch.review, next);
-    assert.equal(Object.hasOwn(patch, 'difficulty'), status === '2');
+    assert.equal(patch.difficulty, 2);
     assert.equal(Object.hasOwn(patch, 'priority'), status !== '2'); cases++;
   }
   for (const card of [false, true]) {

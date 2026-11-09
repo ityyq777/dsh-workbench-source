@@ -106,9 +106,9 @@ const ITEMS = [
     hintZh: "新建任务表单里的初始优先级", hintEn: "Initial priority in the create form",
   },
   {
-    id: "form.defaultDifficulty", group: "form", type: "int", surface: "ui", apply: "mount", default: 1, min: 0, max: 5,
+    id: "form.defaultDifficulty", group: "form", type: "int", surface: "ui", apply: "mount", default: 0, min: 0, max: 5,
     zh: "默认难度", en: "Default difficulty",
-    hintZh: "新建任务表单里的初始难度", hintEn: "Initial difficulty in the create form",
+    hintZh: "兼容旧配置；新建任务默认未设置（0），请按实际改动填写", hintEn: "Legacy setting; new tasks start unset (0), assess the actual change",
   },
   {
     id: "form.defaultTargetOffset", group: "form", type: "int", surface: "ui", apply: "mount", default: 0, min: -365, max: 365,

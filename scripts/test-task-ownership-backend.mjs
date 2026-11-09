@@ -41,7 +41,7 @@ try {
  assert.match(actions.get('tasks.create').render(created),new RegExp('产品 / storage'));
  const stable=snapshot();
  const deduped=call('tasks.create',{...newArgs,tablePath:'未创建/另表',pathDescriptions:['new','table']});
- assert.equal(deduped.deduped,true);assert.equal(deduped.tableId,tableId);assert.equal(deduped.notices[0].code,'DEDUPE_TARGET_MISMATCH');assert.equal(snapshot(),stable);
+ assert.equal(deduped.deduped,true);assert.equal(deduped.tableId,tableId);assert.ok(deduped.notices.some(n=>n.code==='DEDUPE_TARGET_MISMATCH'));assert.equal(snapshot(),stable);
  fail('tasks.create',{title:'Same key missing target',dedupeKey:newArgs.dedupeKey},/TABLE_REQUIRED/);
  fail('tasks.create',{...newArgs,tableId},/TARGET_CONFLICT/);
  fail('tasks.bulkCreate',{records:[{title:'First',tablePath:'批量/表',createMissing:true,pathDescriptions:['a','b'],tags:['batch-tag']},{title:'Second'}]},/TABLE_REQUIRED/);

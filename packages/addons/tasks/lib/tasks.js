@@ -1,3 +1,4 @@
+import { DIFFICULTY_SCHEMA, DIFFICULTY_GUIDANCE } from "./task-difficulty.js";
 import { TASK_CREATE_SCHEMA } from './task-create-schema.js';
 import { registerDiscoveryActions, GUIDANCE } from './task-discovery.js';
 import { renderOwnership } from './task-ownership-path.js';
@@ -78,7 +79,7 @@ export function registerTaskActions(api) {
       review: { type: "string", description: "完成后的感受/复盘（自由文本）" },
       status: { type: ["string", "number"], description: "0=进行中(ACTIVE，也接受 open)、1=已关闭(SHUTDOWN)、2=已完成(DONE，也接受 done)、3=已重启(RESTARTED，创建时不允许)；改成 2 时 priority 自动清零并补 doneDate" },
       priority: { type: "number", description: "1..10 整数，数值越大越紧急（>=6 进「紧急」页签）；已开启任务传 0 会报错；任务改为 SHUTDOWN/DONE 时写入值被忽略并清零" },
-      difficulty: { type: ["number", "null"], description: "0..5" },
+      difficulty: DIFFICULTY_SCHEMA,
       publishDate: { type: "string", description: "YYYY-MM-DD" },
       targetDate: { type: "string", description: "YYYY-MM-DD" },
       doneDate: { type: ["string", "null"], description: "YYYY-MM-DD" },
@@ -127,13 +128,13 @@ export function registerTaskActions(api) {
   action("tasks.create", {
     description: "创建任务必须显式 tableId 或 tablePath（恰好一个），无目标报 TABLE_REQUIRED 且零写入。先 tasks.capabilities/resolveTable 核对职责、完整路径与描述；拿不准询问用户；仅获授权才createMissing+pathDescriptions。source=0 普通任务，1 时间线任务，2 重启任务。date 字段均为 YYYY-MM-DD；重启需优先级 >0（1–10，缺省 1）；关闭/完成自动清零" + GUIDANCE.join(" "),
     input: TASK_CREATE_SCHEMA,
-    examples: [{ title: "整理发布清单", tableId: "已核对的任务表id", priority: 7, targetDate: "2026-11-10" }],
+    examples: [{ title: "整理发布清单", tableId: "已核对的任务表id", priority: 7, difficulty: 2, targetDate: "2026-11-10" }],
     execute: function (args, ctx) { return createTask(db, args || {}, ctx.origin, api); },
     render: renderOwnership,
   });
 
   action("tasks.update", {
-    description: "更新单个任务。两种用法：①type 是「更新模式」而不是任务类型（0 状态 / 1 优先级 / 2 标题 / 3 描述 / 4 感受），只有该模式对应的字段生效，其余参数被忽略；②省略 type 直接传字段（含 tags 标签名，tags/tagIds 为整体替换）。批量请用 tasks.bulkUpdate",
+    description: "更新单个任务。两种用法：①type 是「更新模式」而不是任务类型（0 状态 / 1 优先级 / 2 标题 / 3 描述 / 4 感受），只有该模式对应的字段生效，其余参数被忽略；②省略 type 直接传字段（含 tags 标签名，tags/tagIds 为整体替换）。批量请用 tasks.bulkUpdate。" + DIFFICULTY_GUIDANCE,
     input: {
       type: "object",
       required: ["id"],
@@ -147,7 +148,7 @@ export function registerTaskActions(api) {
         title: { type: "string" },
         description: { type: "string" },
         review: { type: "string", description: "完成后的感受/复盘（自由文本）；给出时按字段更新，或配合 type=4" },
-        difficulty: { type: ["number", "null"] },
+        difficulty: DIFFICULTY_SCHEMA,
         publishDate: { type: "string" },
         targetDate: { type: "string" },
         doneDate: { type: "string" },
@@ -162,7 +163,7 @@ export function registerTaskActions(api) {
         removeTagIds: { type: "array", items: { type: "string" }, description: "增量移除标签 id；id 不存在报错" },
       },
     },
-    examples: [{ id: "1001", status: "done" }, { id: "1001", addTags: ["开发"] }],
+    examples: [{ id: "1001", status: "done", difficulty: 3 }, { id: "1001", addTags: ["开发"], difficulty: 2 }],
     execute: function (args, ctx) { return updateTask(db, args || {}, ctx.origin, api); },
     render: r => renderOwnership(r,"已更新"),
   });
@@ -180,8 +181,8 @@ export function registerTaskActions(api) {
       },
     },
     examples: [
-      { ids: ["1001", "1002"], patch: { status: "done", priority: 6 }, dryRun: true },
-      { ids: ["1001", "1002"], patch: { targetDate: "2026-11-15" } },
+      { ids: ["1001", "1002"], patch: { status: "done", priority: 6, difficulty: 3 }, dryRun: true },
+      { ids: ["1001", "1002"], patch: { targetDate: "2026-11-15", difficulty: 2 } },
     ],
     execute: function (args, ctx) { return bulkUpdate(db, args || {}, ctx.origin, api); },
     render: renderBulkUpdate,
@@ -202,7 +203,7 @@ export function registerTaskActions(api) {
       },
     },
     examples: [
-      { records: [{ title: "任务 A", tableId:"已核对的任务表id", priority: 6 }, { title: "任务 B", tableId:"已核对的任务表id", targetDate: "2026-11-12" }], dryRun: true },
+      { records: [{ title: "任务 A", tableId:"已核对的任务表id", priority: 6, difficulty: 2 }, { title: "任务 B", tableId:"已核对的任务表id", difficulty: 3, targetDate: "2026-11-12" }], dryRun: true },
     ],
     execute: function (args, ctx) { return bulkCreate(db, args || {}, ctx.origin, api); },
     render: renderBulkCreate,
@@ -465,7 +466,7 @@ export function registerTaskActions(api) {
         id: { type: "string" },
         taskId: { type: ["string", "number"], description: "id 的别名" },
         date: { type: "string", description: "完成日期 YYYY-MM-DD，缺省今天" },
-        difficulty: { type: "number" },
+        difficulty: DIFFICULTY_SCHEMA,
       },
     },
     execute: function (args, ctx) { return completeTask(db, args || {}, ctx.origin, api); },

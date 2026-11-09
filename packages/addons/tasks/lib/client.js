@@ -1278,7 +1278,9 @@ var require_stats = __commonJS({
         priority: "\u4F18\u5148\u7EA7\u5206\u5E03",
         priorityNote: "\u5F53\u524D\u5B58\u91CF\uFF1B\u4E0D\u542B\u5DF2\u5173\u95ED/\u5DF2\u5B8C\u6210",
         difficulty: "\u96BE\u5EA6\u5206\u5E03",
-        difficultyNote: "\u5F53\u524D\u5B58\u91CF\uFF1B\u4E0D\u542B\u672A\u8BBE\u7F6E",
+        difficultyNote: "\u5F53\u524D\u5B58\u91CF\uFF1B\u5305\u542B\u672A\u8BBE\u7F6E",
+        difficultyMissing: "\u672A\u586B\u96BE\u5EA6 {n} \u6761",
+        difficultyMissingLink: "\u67E5\u770B\u5E76\u8865\u9F50\u96BE\u5EA6",
         aging: "\u903E\u671F\u8D26\u9F84",
         agingNote: "\u5F53\u524D\u903E\u671F\u4EFB\u52A1",
         overdueList: "\u903E\u671F\u6E05\u5355",
@@ -1351,7 +1353,9 @@ var require_stats = __commonJS({
         priority: "Priority",
         priorityNote: "Current; excludes closed/completed",
         difficulty: "Difficulty",
-        difficultyNote: "Current; excludes unset",
+        difficultyNote: "Current; includes unset",
+        difficultyMissing: "{n} tasks without difficulty",
+        difficultyMissingLink: "Review missing difficulty",
         aging: "Overdue aging",
         agingNote: "Current overdue",
         overdueList: "Overdue list",
@@ -1566,10 +1570,24 @@ var require_stats = __commonJS({
             { key: "priority", span: 6, title: t.priority, note: t.priorityNote },
             h(ch.Histogram, { data: visibleBins(b.priority), lang, color: ch.colors[0] })
           ));
+          var missingBin = (b.difficulty || []).find(function(bin) {
+            return bin.key === "unset";
+          });
           children.push(h(
             ch.Card,
             { key: "difficulty", span: 6, title: t.difficulty, note: t.difficultyNote },
-            h(ch.Histogram, { data: visibleBins(b.difficulty), lang, color: ch.colors[4] })
+            h(ch.Histogram, { data: (b.difficulty || []).map(function(bin) {
+              return bin.key === "unset" ? Object.assign({}, bin, { label: lang === "en" ? "Unset" : "\u672A\u8BBE\u7F6E" }) : bin;
+            }), lang, color: ch.colors[4] }),
+            h(
+              "p",
+              null,
+              t.difficultyMissing.replace("{n}", String(missingBin ? missingBin.count : 0)),
+              " ",
+              typeof props.onNavigate === "function" ? h("button", { type: "button", className: "wbt-btn ghost", onClick: function() {
+                props.onNavigate("tasks", { difficultyMissing: true });
+              } }, t.difficultyMissingLink) : null
+            )
           ));
           children.push(h(
             ch.Card,
@@ -2818,6 +2836,11 @@ var require_copy = __commonJS({
         priority: "\u4F18\u5148\u7EA7",
         difficulty: "\u96BE\u5EA6",
         desc: "\u63CF\u8FF0",
+        difficultyUnset: "\u672A\u8BBE\u7F6E",
+        difficultyMissing: "\u4EC5\u672A\u586B\u96BE\u5EA6",
+        difficultyUnsetHint: "\u4E0D\u586B=\u672A\u8BBE\u7F6E\uFF080\uFF09\uFF0C\u4E0D\u662F\u6700\u7B80\u5355\uFF1B\u5EFA\u8BAE\u586B\u5199 1\u20135",
+        difficultyGuideTitle: "\u5982\u4F55\u5224\u65AD\u96BE\u5EA6",
+        difficultyGuide: "1\uFF1A\u6587\u6848/\u6837\u5F0F\u7B49\u5355\u70B9\u5C0F\u6539\uFF1B2\uFF1A\u5355\u6A21\u5757\u5185\u5C40\u90E8\u529F\u80FD\uFF1B3\uFF1A\u8DE8 2\u20133 \u4E2A\u6A21\u5757\u6216\u6570\u636E\u8BFB\u53D6\u53D8\u66F4\uFF1B4\uFF1A\u5B58\u50A8\u3001\u8FC1\u79FB\u3001\u540C\u6B65\u6216\u6784\u5EFA\u94FE\u8DEF\uFF1B5\uFF1A\u8DE8\u8FDB\u7A0B\u67B6\u6784\u91CD\u6784\u6216\u591A\u9636\u6BB5\u9A8C\u8BC1\u3002\u7ED3\u5408\u6539\u52A8\u6587\u4EF6\u6570\u3001\u662F\u5426\u6D89\u53CA\u6570\u636E\u8FC1\u79FB\u548C\u6D4B\u8BD5\u9762\u5224\u65AD\u3002",
         review: "\u611F\u53D7",
         reviewHint: "\u4EFB\u4F55\u72B6\u6001\u90FD\u53EF\u8BB0\u5F55\u611F\u53D7\uFF08\u53EF\u9009\uFF09",
         reviewPlaceholder: "\u4F8B\u5982\uFF1A\u601D\u8DEF\u5F88\u987A / \u5361\u5728\u63A5\u53E3\u8C03\u8BD5 / \u6BD4\u9884\u60F3\u8F7B\u677E",
@@ -2858,7 +2881,7 @@ var require_copy = __commonJS({
         restartPriorityError: "\u91CD\u542F\u4EFB\u52A1\u7684\u4F18\u5148\u7EA7\u5FC5\u987B\u586B\u5199 1\u201310\uFF1B0 \u4EC5\u7528\u4E8E\u5DF2\u5B8C\u6210/\u5DF2\u5173\u95ED",
         activePriorityError: "\u5DF2\u5F00\u542F\u4EFB\u52A1\u7684\u4F18\u5148\u7EA7\u5FC5\u987B\u586B\u5199 1\u201310\uFF1B0 \u4EC5\u7528\u4E8E\u5DF2\u5B8C\u6210/\u5DF2\u5173\u95ED",
         confirm: "\u786E\u5B9A",
-        difficultyHint: "\u5B8C\u6210\u4EFB\u52A1\u524D\u8BF7\u9009\u62E9\u96BE\u5EA6\uFF080.5\u20135\uFF09",
+        difficultyHint: "\u5EFA\u8BAE\u5B8C\u6210\u524D\u586B\u5199 1\u20135 \u96BE\u5EA6\uFF1B0 \u4F1A\u7EDF\u8BA1\u4E3A\u672A\u8BBE\u7F6E",
         emptyTree: "\u4EFB\u52A1\u6811\u8FD8\u6CA1\u6709\u6570\u636E",
         appear: "\u663E\u793A",
         hide: "\u9690\u85CF",
@@ -2874,7 +2897,7 @@ var require_copy = __commonJS({
         edit: "\u7F16\u8F91",
         editTitle: "\u7F16\u8F91\u4EFB\u52A1",
         editHintDone: "\u5DF2\u5B8C\u6210\uFF1A\u6807\u9898\u3001\u63CF\u8FF0\u3001\u611F\u53D7\u3001\u96BE\u5EA6\u53EF\u6539\uFF1B\u4F18\u5148\u7EA7\u5728\u5B8C\u6210\u65F6\u5DF2\u6E05\u96F6\u3002",
-        editHintOpen: "\u672A\u5B8C\u6210\uFF1A\u6807\u9898\u3001\u63CF\u8FF0\u3001\u4F18\u5148\u7EA7\u3001\u611F\u53D7\u53EF\u6539\uFF1B\u96BE\u5EA6\u4EC5\u5B8C\u6210\u540E\u53EF\u6539\u3002",
+        editHintOpen: "\u672A\u5B8C\u6210\uFF1A\u6807\u9898\u3001\u63CF\u8FF0\u3001\u4F18\u5148\u7EA7\u3001\u611F\u53D7\u548C\u96BE\u5EA6\u53EF\u6539\u3002",
         deleted: "\u5DF2\u5220\u9664",
         needTitle: "\u6807\u9898\u4E0D\u80FD\u4E3A\u7A7A",
         needTable: "\u8BF7\u9009\u62E9\u4EFB\u52A1\u8868",
@@ -2949,6 +2972,11 @@ var require_copy = __commonJS({
         priority: "Priority",
         difficulty: "Difficulty",
         desc: "Description",
+        difficultyUnset: "Unset",
+        difficultyMissing: "Missing difficulty only",
+        difficultyUnsetHint: "Blank = unset (0), not easiest; choose 1\u20135",
+        difficultyGuideTitle: "How to rate difficulty",
+        difficultyGuide: "1: a small copy/style change; 2: a local feature in one module; 3: 2\u20133 modules or data-reading changes; 4: storage, migrations, sync or build pipelines; 5: cross-process architecture changes or multi-stage validation. Consider changed file count, data migrations and test scope.",
         review: "Reflection",
         reviewHint: "Record a feeling in any status (optional)",
         reviewPlaceholder: "e.g. smooth, stuck on the API, easier than expected",
@@ -2989,7 +3017,7 @@ var require_copy = __commonJS({
         restartPriorityError: "Enter a priority from 1 to 10 to restart; 0 is only for completed or closed tasks.",
         activePriorityError: "Active tasks require a priority from 1 to 10; 0 is only for completed or closed tasks.",
         confirm: "OK",
-        difficultyHint: "Pick a difficulty (0.5\u20135) before completing",
+        difficultyHint: "Set difficulty 1\u20135 before completing; 0 is counted as unset",
         emptyTree: "Task tree is empty",
         appear: "Show",
         hide: "Hide",
@@ -3005,7 +3033,7 @@ var require_copy = __commonJS({
         edit: "Edit",
         editTitle: "Edit task",
         editHintDone: "Completed: title, description, feeling and difficulty can change; priority was cleared on completion.",
-        editHintOpen: "Not completed: title, description, priority and feeling can change; difficulty is editable only after completion.",
+        editHintOpen: "Not completed: title, description, priority, feeling and difficulty can change.",
         deleted: "Deleted",
         needTitle: "Title is required",
         needTable: "Pick a task table",
@@ -4620,11 +4648,11 @@ var require_task_item = __commonJS({
         } else if (String(task.status) === "2") {
           if (task.targetDate) meta.push(h("span", { key: "g" }, h("b", null, t.target), " ", task.targetDate));
           if (task.doneDate) meta.push(h("span", { key: "d" }, h("b", null, t.done), " ", task.doneDate));
-          meta.push(h("span", { key: "s", className: "wbt-stars", children: stars(task.difficulty) + " " + Number(task.difficulty || 0).toFixed(1) }));
         } else {
           if (task.targetDate) meta.push(h("span", { key: "g" }, h("b", null, t.target), " ", task.targetDate));
           if (task.shutdownDate) meta.push(h("span", { key: "s" }, h("b", null, t.shutdown), " ", task.shutdownDate));
         }
+        if (Number(task.difficulty) > 0) meta.push(h("span", { key: "difficulty", className: "wbt-stars", "aria-label": t.difficulty + " " + task.difficulty + " / 5", children: stars(task.difficulty) + " " + Number(task.difficulty).toFixed(1) }));
         var ops = [];
         ops.push(h("button", {
           key: "edit",
@@ -4699,6 +4727,49 @@ var require_task_item = __commonJS({
         );
       }
       return TaskItem;
+    };
+  }
+});
+
+// packages/addons/tasks/client/difficulty-field.cjs
+var require_difficulty_field = __commonJS({
+  "packages/addons/tasks/client/difficulty-field.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(React) {
+      var h = React.createElement;
+      return function difficultyField(t, value, onChange, id) {
+        var n = Number(value) || 0, full = Math.floor(n), half = n - full >= 0.5;
+        var stars = "\u2605".repeat(full) + (half ? "\u2BEA" : "") + "\u2606".repeat(Math.max(0, 5 - full - (half ? 1 : 0)));
+        return h(
+          "div",
+          { className: "wbt-field full" },
+          h("label", { htmlFor: id }, t.difficulty + " (0\u20135)"),
+          h(
+            "div",
+            { className: "wbt-row" },
+            h("input", {
+              id,
+              className: "wbt-input",
+              type: "number",
+              min: 0,
+              max: 5,
+              step: 0.5,
+              "aria-label": t.difficulty,
+              "aria-describedby": id + "-hint",
+              placeholder: t.difficultyUnsetHint,
+              value,
+              onChange: function(e) {
+                var raw = e.target.value;
+                onChange(raw === "" ? "" : Math.max(0, Math.min(5, Number(raw) || 0)));
+              }
+            }),
+            h("span", { className: "wbt-stars", "aria-hidden": true }, n > 0 ? stars : t.difficultyUnset),
+            h("b", null, n.toFixed(1))
+          ),
+          h("small", { id: id + "-hint" }, t.difficultyUnsetHint),
+          h("details", null, h("summary", null, t.difficultyGuideTitle), h("p", null, t.difficultyGuide))
+        );
+      };
     };
   }
 });
@@ -4872,6 +4943,7 @@ var require_create_modal = __commonJS({
     }
     module2.exports = function createModal(deps) {
       var React = deps.React, h = React.createElement;
+      var difficultyField = require_difficulty_field()(React);
       var ownership = require_ownership(), fields = require_ownership_fields()(React);
       var allTables = deps.allTables, tagNames = deps.tagNames, splitTags = deps.splitTags;
       var today = deps.today, addDays = deps.addDays, hostHasAddon = deps.hostHasAddon;
@@ -4883,8 +4955,7 @@ var require_create_modal = __commonJS({
         var initTags = origin ? tagNames(origin).join(", ") : "";
         var defaults = props.defaults || {};
         var initPriority = initialPriority(source, origin, defaults.priority);
-        var initDifficulty = Math.floor(Number(defaults.difficulty));
-        if (!(initDifficulty >= 1)) initDifficulty = 1;
+        var initDifficulty = Math.max(0, Math.min(5, Number(defaults.difficulty) || 0));
         var initOffset = Math.floor(Number(defaults.targetOffset));
         if (!(initOffset >= 0)) initOffset = 0;
         var f = React.useState({
@@ -4980,6 +5051,7 @@ var require_create_modal = __commonJS({
             tags: splitTags(form.tags),
             status: source === "2" ? "0" : String(form.status),
             priority: active ? Number(form.priority) : 0,
+            difficulty: Number(form.difficulty) || 0,
             publishDate: form.publishDate,
             targetDate: form.targetDate,
             source
@@ -4994,7 +5066,6 @@ var require_create_modal = __commonJS({
           }
           if (args.status === "2") {
             args.doneDate = form.doneDate || today();
-            args.difficulty = Number(form.difficulty) || 0;
           }
           if (args.status === "1") args.shutdownDate = form.shutdownDate || today();
           props.api.call("tasks.capabilities", { limit: 1 }).then(function(cap) {
@@ -5058,9 +5129,9 @@ var require_create_modal = __commonJS({
               source !== "2" && form.status === "2" ? h("label", { className: "wbt-field" }, h("span", null, t.doneDate), h("input", { className: "wbt-input", type: "date", value: form.doneDate, onChange: function(e) {
                 set("doneDate", e.target.value);
               } })) : null,
-              source !== "2" && form.status === "2" ? h("label", { className: "wbt-field" }, h("span", null, t.difficulty + "\uFF080\u20135\uFF09"), h("input", { className: "wbt-input", type: "number", min: 0, max: 5, step: 0.5, value: form.difficulty, onChange: function(e) {
-                set("difficulty", e.target.value);
-              } })) : null,
+              difficultyField(t, form.difficulty, function(value) {
+                set("difficulty", value);
+              }, "wbt-create-difficulty"),
               source !== "2" && form.status === "1" ? h("label", { className: "wbt-field" }, h("span", null, t.shutdownDate), h("input", { className: "wbt-input", type: "date", value: form.shutdownDate, onChange: function(e) {
                 set("shutdownDate", e.target.value);
               } })) : null
@@ -5087,6 +5158,7 @@ var require_edit_modal = __commonJS({
     "use strict";
     module2.exports = function createEditModal(React, statusInfo, stars) {
       var h = React.createElement;
+      var difficultyField = require_difficulty_field()(React);
       var ownership = require_ownership(), fields = require_ownership_fields()(React);
       function EditModal(props) {
         var t = props.t;
@@ -5099,7 +5171,7 @@ var require_edit_modal = __commonJS({
           description: String(task.description || ""),
           review: String(task.review || ""),
           priority: String(task.priority === null || task.priority === void 0 ? 0 : task.priority),
-          difficulty: Number(task.difficulty || 0.5),
+          difficulty: Number(task.difficulty || 0),
           targetDate: String(task.targetDate || "")
         });
         var form = fs[0], setForm = fs[1];
@@ -5164,9 +5236,8 @@ var require_edit_modal = __commonJS({
             if (!Number.isFinite(p)) p = 0;
             patch.priority = Math.max(1, Math.min(10, p));
             if (String(form.targetDate || "").trim()) patch.targetDate = String(form.targetDate).trim();
-          } else {
-            patch.difficulty = Math.max(0.5, Math.min(5, Number(form.difficulty) || 0.5));
           }
+          patch.difficulty = Math.max(0, Math.min(5, Number(form.difficulty) || 0));
           if (String(form.review) !== String(task.review || "")) patch.review = String(form.review);
           submission.pending = true;
           setBusy(true);
@@ -5238,20 +5309,9 @@ var require_edit_modal = __commonJS({
                 set("priority", e.target.value);
               } })
             ) : null,
-            done ? h(
-              "div",
-              { className: "wbt-field" },
-              h("span", null, t.difficulty + "\uFF080\u20135\uFF09"),
-              h(
-                "div",
-                { className: "wbt-row" },
-                h("span", { className: "wbt-stars" }, stars(form.difficulty)),
-                h("input", { type: "range", min: 0.5, max: 5, step: 0.5, value: form.difficulty, style: { flex: 1 }, onChange: function(e) {
-                  set("difficulty", Number(e.target.value));
-                } }),
-                h("b", null, Number(form.difficulty).toFixed(1))
-              )
-            ) : null,
+            difficultyField(t, form.difficulty, function(value) {
+              set("difficulty", value);
+            }, "wbt-edit-difficulty"),
             err ? h("div", { className: "wbt-err" }, err) : null,
             h(
               "div",
@@ -5313,7 +5373,10 @@ var require_tasks_view = __commonJS({
         var target = targetS[0], setTarget = targetS[1];
         var pathS = React.useState([]);
         var currentPath = pathS[0], setCurrentPath = pathS[1];
-        var tabS = React.useState(cfgTab);
+        var initialMissing = !!(props.viewParams && props.viewParams.difficultyMissing === true);
+        var missingS = React.useState(initialMissing);
+        var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
+        var tabS = React.useState(initialMissing ? 8 : cfgTab);
         var tab = tabS[0], setTab = tabS[1];
         var viewS = React.useState(cfg["ui.listView"] === "card" ? "card" : "list");
         var view = viewS[0], setView = viewS[1];
@@ -5323,7 +5386,7 @@ var require_tasks_view = __commonJS({
         var treeQuery = tqS[0], setTreeQuery = tqS[1];
         var titleS = React.useState("");
         var titleKey = titleS[0], setTitleKey = titleS[1];
-        var filterS = React.useState(cfg["list.filterRestarted"] !== false);
+        var filterS = React.useState(initialMissing ? false : cfg["list.filterRestarted"] !== false);
         var filterRestarted = filterS[0], setFilterRestarted = filterS[1];
         var tagReloadS = React.useState(0);
         var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
@@ -5441,6 +5504,7 @@ var require_tasks_view = __commonJS({
             pageSize,
             filterRestarted,
             tagIds: filterTagIds,
+            difficultyMissing,
             sort: cfgSort === "auto" ? void 0 : cfgSort
           }).then(function(r) {
             setLoading(false);
@@ -5454,7 +5518,7 @@ var require_tasks_view = __commonJS({
             setLoading(false);
             setError(String(e && e.message || e));
           });
-        }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, cfgSort]);
+        }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, difficultyMissing, cfgSort]);
         refreshRef.current = { tree: refreshTree, list: refreshList, path: refreshPath, tags: refreshTagNav };
         React.useEffect(function() {
           injectCss();
@@ -5719,6 +5783,15 @@ var require_tasks_view = __commonJS({
         var filterBar = h(
           "div",
           { className: "wbt-filters" },
+          h(
+            "label",
+            { className: "wbt-check" },
+            h("input", { type: "checkbox", checked: difficultyMissing, onChange: function(e) {
+              setDifficultyMissing(e.target.checked);
+              setPageNumber(1);
+            } }),
+            t.difficultyMissing
+          ),
           pageable ? h("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
           data.truncated ? h("span", { className: "wbt-hint" }, t.truncated + " " + shownCount + " / " + data.total) : null,
           tab === 5 || tab === 8 ? h(
@@ -6567,7 +6640,7 @@ var require_tasks_view = __commonJS({
   }
   function DoneModal(props) {
     var t = props.t;
-    var s = React.useState(1);
+    var s = React.useState(Number(props.task.difficulty) || 0);
     var value = s[0], setValue = s[1];
     var rs = React.useState(String(props.task.review || ""));
     var review = rs[0], setReview = rs[1];
@@ -6583,15 +6656,7 @@ var require_tasks_view = __commonJS({
         { className: "wbt-modal", style: { width: "420px" } },
         h("div", { className: "wbt-modal-head" }, h("h3", null, t.complete + " \xB7 " + props.task.title), h("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")),
         h("div", { className: "wbt-mhint" }, t.difficultyHint),
-        h(
-          "div",
-          { className: "wbt-row" },
-          h("span", { className: "wbt-stars", style: { fontSize: "22px" } }, stars(value)),
-          h("input", { type: "range", min: 0.5, max: 5, step: 0.5, value, onChange: function(e) {
-            setValue(Number(e.target.value));
-          }, style: { flex: 1 } }),
-          h("b", null, value.toFixed(1))
-        ),
+        require_difficulty_field()(React)(t, value, setValue, "wbt-done-difficulty"),
         h(
           "label",
           { className: "wbt-field", style: { marginTop: "12px" } },
@@ -6605,9 +6670,9 @@ var require_tasks_view = __commonJS({
           { className: "wbt-modal-foot" },
           h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
           h("button", { className: "wbt-btn primary", disabled: isBusy, onClick: function() {
-            if (!value || value <= 0) return;
+            var difficulty = Number(value) || 0;
             setBusy(true);
-            props.api.call("tasks.update", { id: props.task.id, type: "STATUS", status: "2", date: today(), difficulty: value, review: String(review || "") }).then(function(r) {
+            props.api.call("tasks.update", { id: props.task.id, type: "STATUS", status: "2", date: today(), difficulty, review: String(review || "") }).then(function(r) {
               setBusy(false);
               if (r && r.ok) props.onDone();
               else props.onError(r && r.error || "update failed");
@@ -6759,7 +6824,7 @@ var require_tasks_view = __commonJS({
     "list.sort": "auto",
     "list.filterRestarted": true,
     "form.defaultPriority": 1,
-    "form.defaultDifficulty": 1,
+    "form.defaultDifficulty": 0,
     "form.defaultTargetOffset": 0,
     "stats.range": "30d",
     "stats.top": 10,
@@ -6771,7 +6836,7 @@ var require_tasks_view = __commonJS({
   var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, TABS, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.1.1",
+    version: "3.1.2",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

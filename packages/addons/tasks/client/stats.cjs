@@ -18,7 +18,7 @@ var COPY = {
     created: "新增", done: "完成", due: "到期",
     status: "状态构成", statusNote: "当前存量",
     priority: "优先级分布", priorityNote: "当前存量；不含已关闭/已完成",
-    difficulty: "难度分布", difficultyNote: "当前存量；不含未设置",
+    difficulty: "难度分布", difficultyNote: "当前存量；包含未设置", difficultyMissing: "未填难度 {n} 条", difficultyMissingLink: "查看并补齐难度",
     aging: "逾期账龄", agingNote: "当前逾期任务",
     overdueList: "逾期清单", overdueNote: "按账龄降序",
     tables: "任务表排行", tablesNote: "按进行中 + 逾期权重",
@@ -43,7 +43,7 @@ var COPY = {
     created: "Created", done: "Done", due: "Due",
     status: "Status", statusNote: "Current",
     priority: "Priority", priorityNote: "Current; excludes closed/completed",
-    difficulty: "Difficulty", difficultyNote: "Current; excludes unset",
+    difficulty: "Difficulty", difficultyNote: "Current; includes unset", difficultyMissing: "{n} tasks without difficulty", difficultyMissingLink: "Review missing difficulty",
     aging: "Overdue aging", agingNote: "Current overdue",
     overdueList: "Overdue list", overdueNote: "Oldest first",
     tables: "Task tables", tablesNote: "Weighted by active + overdue",
@@ -59,7 +59,7 @@ var COPY = {
 
 var RANGES = ["7d", "30d", "90d", "365d", "all"];
 
-// 图表只画真实分布：优先级 0（已关闭/已完成）与难度「未设置」由后端标 hidden，数据仍保留供导出。
+// 优先级 0（已关闭/已完成）不画；难度未设置保留并提供补齐入口。
 function visibleBins(list) {
   return (list || []).filter(function (b) { return !b.hidden; });
 }
@@ -218,8 +218,11 @@ function TasksStatsBody(props) {
 
       children.push(h(ch.Card, { key: "priority", span: 6, title: t.priority, note: t.priorityNote },
         h(ch.Histogram, { data: visibleBins(b.priority), lang: lang, color: ch.colors[0] })));
+      var missingBin = (b.difficulty || []).find(function (bin) { return bin.key === "unset"; });
       children.push(h(ch.Card, { key: "difficulty", span: 6, title: t.difficulty, note: t.difficultyNote },
-        h(ch.Histogram, { data: visibleBins(b.difficulty), lang: lang, color: ch.colors[4] })));
+        h(ch.Histogram, { data: (b.difficulty || []).map(function (bin) { return bin.key === "unset" ? Object.assign({}, bin, { label: lang === "en" ? "Unset" : "未设置" }) : bin; }), lang: lang, color: ch.colors[4] }),
+        h("p", null, t.difficultyMissing.replace("{n}", String(missingBin ? missingBin.count : 0)), " ",
+          typeof props.onNavigate === "function" ? h("button", { type: "button", className: "wbt-btn ghost", onClick: function () { props.onNavigate("tasks", { difficultyMissing: true }); } }, t.difficultyMissingLink) : null)));
 
       children.push(h(ch.Card, { key: "aging", span: 6, title: t.aging, note: t.agingNote },
         h(ch.Histogram, { data: data.aging || [], lang: lang, color: ch.colors[2] })));

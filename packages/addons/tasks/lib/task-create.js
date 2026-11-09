@@ -1,3 +1,4 @@
+import { difficultyMissingNotices, cleanDifficultyReceipt } from "./task-difficulty.js";
 // 与 task-bulk 的循环引用只在调用期取值，顶层不求值。
 import {
   now,
@@ -58,7 +59,8 @@ export function createTask(db, args, origin, api, opts) {
       const task = outOne(db, existing);
       attachTags(db, api, task);
       const same = validated.hasId ? String(args.tableId) === task.tableId : JSON.stringify(validated.parts) === JSON.stringify(task.pathSegments.slice(1).map(n=>n.name));
-      const notices = tagMissingNotices(args, tagsAvailable(db, api));
+      const notices = [...tagMissingNotices(args, tagsAvailable(db, api)), ...difficultyMissingNotices(args, task.difficulty)];
+      cleanDifficultyReceipt(task);
       if (!same) notices.push({code:'DEDUPE_TARGET_MISMATCH',message:'返回已有任务实际归属，未移动任务或创建请求路径节点；纠正请调用 tasks.update(' + JSON.stringify({id:task.id,tableId:'目标表id'}) + ')'});
       return withNotices({ id: String(existing.id), task, ...ownershipFields(task), deduped: true, existing: true, createdNodes: [] }, notices);
     }
@@ -183,5 +185,5 @@ export function createTask(db, args, origin, api, opts) {
 
   const task = outOne(db, row);
   attachTags(db, api, task);
-  return withNotices({ id: id, task: task, ...ownershipFields(task), createdNodes, deduped: false }, tagMissingNotices(args, tagOn));
+  return withNotices({ id: id, task: cleanDifficultyReceipt(task), ...ownershipFields(task), createdNodes, deduped: false }, [...tagMissingNotices(args, tagOn), ...difficultyMissingNotices(args, difficulty)]);
 }

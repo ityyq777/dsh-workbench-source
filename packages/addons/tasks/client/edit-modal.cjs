@@ -2,9 +2,10 @@
 "use strict";
 module.exports = function createEditModal(React, statusInfo, stars) {
   var h = React.createElement;
+  var difficultyField = require("./difficulty-field.cjs")(React);
   var ownership = require("./ownership.cjs"), fields = require("./ownership-fields.cjs")(React);
   // 任务编辑弹窗：按状态收敛可编辑字段。
-  // 未完成（0/1/3）：标题、描述、优先级、感受；难度仅完成可改。
+  // 所有状态均可编辑难度；0/null 表示未设置。
   // 已完成（2）：标题、描述、感受、难度；优先级完成即清零，不再可改。
   function EditModal(props) {
     var t = props.t;
@@ -17,7 +18,7 @@ module.exports = function createEditModal(React, statusInfo, stars) {
       description: String(task.description || ""),
       review: String(task.review || ""),
       priority: String(task.priority === null || task.priority === undefined ? 0 : task.priority),
-      difficulty: Number(task.difficulty || 0.5),
+      difficulty: Number(task.difficulty || 0),
       targetDate: String(task.targetDate || ""),
     });
     var form = fs[0], setForm = fs[1];
@@ -61,9 +62,8 @@ module.exports = function createEditModal(React, statusInfo, stars) {
         patch.priority = Math.max(1, Math.min(10, p));
         // 计划完成日期只处理非空值；留空表示不改动（后端空串会回落到原值）。
         if (String(form.targetDate || "").trim()) patch.targetDate = String(form.targetDate).trim();
-      } else {
-        patch.difficulty = Math.max(0.5, Math.min(5, Number(form.difficulty) || 0.5));
       }
+      patch.difficulty = Math.max(0, Math.min(5, Number(form.difficulty) || 0));
       if (String(form.review) !== String(task.review || "")) patch.review = String(form.review);
       submission.pending = true; setBusy(true);
       setErr("");
@@ -104,14 +104,7 @@ module.exports = function createEditModal(React, statusInfo, stars) {
           h("span", null, t.priority + "（1–10）"),
           h("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, value: form.priority, onChange: function (e) { set("priority", e.target.value); } })
         ) : null,
-        done ? h("div", { className: "wbt-field" },
-          h("span", null, t.difficulty + "（0–5）"),
-          h("div", { className: "wbt-row" },
-            h("span", { className: "wbt-stars" }, stars(form.difficulty)),
-            h("input", { type: "range", min: 0.5, max: 5, step: 0.5, value: form.difficulty, style: { flex: 1 }, onChange: function (e) { set("difficulty", Number(e.target.value)); } }),
-            h("b", null, Number(form.difficulty).toFixed(1))
-          )
-        ) : null,
+        difficultyField(t, form.difficulty, function (value) { set("difficulty", value); }, "wbt-edit-difficulty"),
         err ? h("div", { className: "wbt-err" }, err) : null,
         h("div", { className: "wbt-modal-foot" },
           h("button", { className: "wbt-btn ghost", disabled: isBusy, onClick: requestClose }, t.cancel),

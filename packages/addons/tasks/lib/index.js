@@ -5,6 +5,7 @@
  * 宿主由 dsh-workbench 提供，通过 ctx.workbench.registerDomain 注册。
  */
 
+import { DIFFICULTY_GUIDANCE } from "./task-difficulty.js";
 import { bindClock, ensureSchema } from "./db.js";
 import { exportTasksData, importTasksData } from "./backup.js";
 import { taskSync } from "./sync.js";
@@ -44,7 +45,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/配置/数据四个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "3.1.1",
+        version: "3.1.2",
         tables: ["task", "task_dep", "task_node"],
         sync: taskSync,
         views: [
@@ -70,7 +71,7 @@ export function apply(ctx) {
                 "没有明确标题或完成标准的模糊想法；先描述清楚再记",
               ],
               primaryAction: "tasks.create",
-              keyArgs: ["tableId", "tablePath", "createMissing", "pathDescriptions", "title", "description", "priority", "targetDate", "tags", "tagIds", "dedupeKey"],
+              keyArgs: ["tableId", "tablePath", "createMissing", "pathDescriptions", "title", "description", "priority", "difficulty", "targetDate", "tags", "tagIds", "dedupeKey"],
               dedupe: "同 dedupeKey 的未删除任务会被复用；自动记录建议使用稳定键，如 dsh-session:<id>。",
               relations: [
                 { kind: "taskNode", via: "tableId", description: "先调用 taskNodes.overview 查看全文描述、类型、路径与子树计数，再用 tasks.create 的 tableId 选表；group/root_group 只能装子节点，table 才能直接放任务。创建必须显式tableId或tablePath且互斥；无默认表。优先tasks.capabilities/resolveTable核对职责；新路径授权后用createMissing+pathDescriptions。" },
@@ -85,6 +86,7 @@ export function apply(ctx) {
                     description: "梳理各插件 action 与记录边界",
                     tags: ["开发"],
                     priority: 6,
+                    difficulty: 3,
                     targetDate: "2026-11-08",
                   },
                 },
@@ -95,7 +97,7 @@ export function apply(ctx) {
             { name: "tab", type: "number | \"all\"", description: "列表页签：0=紧急（status=0 且 priority>=6 或 targetDate<=今天+2）、1..4=旧类型页签（按同名标签筛，已弃用）、5=已关闭（默认 SHUTDOWN=1，filterRestarted=false 时看 RESTARTED=3）、6=进行中(0)、7=已完成(2)、8=总览（排除已重启）；缺省或传 all 等于 8" },
             { name: "status", type: "0|1|2|3", description: "0=进行中 ACTIVE、1=已关闭 SHUTDOWN、2=已完成 DONE、3=已重启 RESTARTED（创建时不允许 3）；也接受 open/done。别按“0=未开始”理解：0 是在办" },
             { name: "priority", type: "1..10（关闭/完成为 0）", description: "数值越大越紧急，不是越小越急；已开启任务必须 P1..P10（显式传 0 会报错，缺省 P1）；已关闭/已完成/已重启一律 P0，传值被忽略；>=6 进紧急页签（tab=0）；参数优先级 min/max 同样是数值越大越急" },
-            { name: "difficulty", type: "0..5", description: "完成难度，数值越大越难；留给完成时填写" },
+            { name: "difficulty", type: "0..5", description: DIFFICULTY_GUIDANCE },
             { name: "sort", type: "string", description: "priority / target（targetDate）/ publish（publishDate）/ updated / created / manual（sort 列）；前缀 - 表示降序，例如 sort=-priority 才是最紧急在前；不传时未分页按 priority 降序，分页（tab 5..8 或传 pageNumber/pageSize）按 publishDate 降序" },
             { name: "order", type: "asc|desc", description: "显式指定排序方向，覆盖 sort 前缀" },
             { name: "targetDate", type: "YYYY-MM-DD", description: "目标日期（截止）；缺省表示未定；targetFrom/targetTo 按它过滤，target<今天且未完成即视为逾期" },

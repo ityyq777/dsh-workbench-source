@@ -56,7 +56,7 @@ for (const cancel of [true, false]) {
   assert.equal(ui.calls.length, 0, 'preview and confirmation never write nodes');
   if (cancel) { find(ui.render(), n => n.props.className === 'wbt-btn ghost').props.onClick(); assert.equal(ui.closed(), 1); assert.equal(ui.calls.length, 0); }
   else { ui.submit().props.onClick(); await new Promise(resolve => setImmediate(resolve)); assert.deepEqual(ui.calls[0], { action: 'tasks.create', args: {
-    title: 'Create path', description: '', tags: [], status: '0', priority: 1, publishDate: '2026-11-09', targetDate: '2026-11-09', source: '0',
+    title: 'Create path', description: '', tags: [], status: '0', priority: 1, difficulty: 0, publishDate: '2026-11-09', targetDate: '2026-11-09', source: '0',
     tablePath: ['插件', '新组', '新表'], createMissing: true, pathDescriptions: ['', '新组的职责', '新表的职责'],
   } }); }
   cases++;

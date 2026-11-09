@@ -1,3 +1,4 @@
+import { DIFFICULTY_SCHEMA } from "./task-difficulty.js";
 /** 单条与批量创建共用的完整参数契约。 */
 export const TASK_CREATE_SCHEMA = {
       type: "object",
@@ -13,7 +14,7 @@ export const TASK_CREATE_SCHEMA = {
         pathDescriptions: {type:'array',items:{type:'string'},description:'仅createMissing=true可用，长度与路径段相同；每个新节点职责描述必须非空且最多2000字符，已有节点不覆盖'},
         status: { type: ["string", "number"], description: "0=进行中/1=已关闭/2=已完成（不能直接创建 RESTARTED）；source=2 固定为 0；关闭/完成时优先级自动清零，不必手工传 0" },
         priority: { type: "number", description: "1..10（重启需优先级 >0，source=2 缺省 1，显式 0 报错；普通开启同样缺省 1；关闭/完成自动清零，不必手工传 0）" },
-        difficulty: { type: ["number", "null"], description: "0..5" },
+        difficulty: DIFFICULTY_SCHEMA,
         publishDate: { type: "string", description: "YYYY-MM-DD，缺省今天" },
         targetDate: { type: "string", description: "YYYY-MM-DD，缺省同 publishDate" },
         doneDate: { type: "string" },

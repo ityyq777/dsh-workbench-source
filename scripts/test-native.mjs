@@ -514,7 +514,7 @@ try {
   assert(dBuckets.length === 10, "难度应为 10 个单值桶（0.5–5）：" + dBuckets.length);
   assert(dBuckets[0].key === "0.5" && dBuckets[9].key === "5", "难度桶键不是 0.5 步进");
   const dUnset = taskReport.result.breakdowns.difficulty.find((x) => x.key === "unset");
-  assert(dUnset && dUnset.hidden === true, "难度「未设置」桶应保留并标 hidden");
+  assert(dUnset && !dUnset.hidden, "难度「未设置」桶应保留且可见");
   const pSum = pBuckets.reduce((a, x) => a + x.count, 0);
   assert(pSum === taskReport.result.totals.total, "优先级分桶之和应等于任务总数：" + pSum + "/" + taskReport.result.totals.total);
   const taskAll = await call("tasks.statsReport", { range: "all" });

@@ -401,7 +401,7 @@
 
   function DoneModal(props) {
     var t = props.t;
-    var s = React.useState(1);
+    var s = React.useState(Number(props.task.difficulty) || 0);
     var value = s[0], setValue = s[1];
     var rs = React.useState(String(props.task.review || ""));
     var review = rs[0], setReview = rs[1];
@@ -411,11 +411,7 @@
       h("div", { className: "wbt-modal", style: { width: "420px" } },
         h("div", { className: "wbt-modal-head" }, h("h3", null, t.complete + " · " + props.task.title), h("button", { className: "wbt-icon", onClick: props.onClose }, "×")),
         h("div", { className: "wbt-mhint" }, t.difficultyHint),
-        h("div", { className: "wbt-row" },
-          h("span", { className: "wbt-stars", style: { fontSize: "22px" } }, stars(value)),
-          h("input", { type: "range", min: 0.5, max: 5, step: 0.5, value: value, onChange: function (e) { setValue(Number(e.target.value)); }, style: { flex: 1 } }),
-          h("b", null, value.toFixed(1))
-        ),
+        require("./difficulty-field.cjs")(React)(t, value, setValue, "wbt-done-difficulty"),
         h("label", { className: "wbt-field", style: { marginTop: "12px" } },
           h("span", null, t.review + " · " + t.reviewHint),
           h("textarea", { className: "wbt-textarea", rows: 3, placeholder: t.reviewPlaceholder, value: review, onChange: function (e) { setReview(e.target.value); } })
@@ -423,9 +419,9 @@
         h("div", { className: "wbt-modal-foot" },
           h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
           h("button", { className: "wbt-btn primary", disabled: isBusy, onClick: function () {
-            if (!value || value <= 0) return;
+            var difficulty = Number(value) || 0;
             setBusy(true);
-            props.api.call("tasks.update", { id: props.task.id, type: "STATUS", status: "2", date: today(), difficulty: value, review: String(review || "") }).then(function (r) {
+            props.api.call("tasks.update", { id: props.task.id, type: "STATUS", status: "2", date: today(), difficulty: difficulty, review: String(review || "") }).then(function (r) {
               setBusy(false);
               if (r && r.ok) props.onDone();
               else props.onError((r && r.error) || "update failed");
@@ -538,7 +534,7 @@
   var CFG_FALLBACK = {
     "ui.defaultTab": 0, "ui.listView": "list", "ui.expandDepth": 2, "ui.confirmDelete": true,
     "list.pageSize": 12, "list.sort": "auto", "list.filterRestarted": true,
-    "form.defaultPriority": 1, "form.defaultDifficulty": 1, "form.defaultTargetOffset": 0,
+    "form.defaultPriority": 1, "form.defaultDifficulty": 0, "form.defaultTargetOffset": 0,
     "stats.range": "30d", "stats.top": 10, "stats.showKpi": true,
     "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10,
     "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "recentDone", "recentShutdown"],
@@ -548,7 +544,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.1.1",
+    version: "3.1.2",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },

@@ -74,6 +74,7 @@ export function renderList(result) {
     if (f.status !== undefined) parts.push("状态=" + f.status);
     if (f.tags && f.tags.length) parts.push("标签名=" + f.tags.join(","));
     if (f.tagIds && f.tagIds.length) parts.push("标签 id=" + f.tagIds.join(","));
+    if (f.difficultyMissing) parts.push("难度未设置（NULL/0）");
     if (f.priorityMin !== undefined) parts.push("P>=" + f.priorityMin);
     if (f.priorityMax !== undefined) parts.push("P<=" + f.priorityMax);
     if (f.targetFrom) parts.push("target>=" + f.targetFrom);

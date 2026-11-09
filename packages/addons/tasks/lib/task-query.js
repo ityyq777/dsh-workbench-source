@@ -98,6 +98,8 @@ export function listTasks(db, args, api) {
     where.push("t.status=?");
     params.push(asCode(args.status, STATUS_NAMES, STATUSES, "status"));
   }
+  const difficultyMissing = args.difficultyMissing === true;
+  if (difficultyMissing) where.push("(t.difficulty IS NULL OR t.difficulty=0)");
   const priorityMin = clampPriority(args.priorityMin, null);
   if (priorityMin !== null) {
     where.push("t.priority>=?");
@@ -239,6 +241,7 @@ export function listTasks(db, args, api) {
   if (args.status !== undefined && args.status !== null && args.status !== "") filter.status = String(args.status);
   if (filterTagIds.length) filter.tagIds = filterTagIds.slice();
   if (filterTagNames.length) filter.tags = filterTagNames.slice();
+  if (difficultyMissing) filter.difficultyMissing = true;
   if (priorityMin !== null) filter.priorityMin = priorityMin;
   if (priorityMax !== null) filter.priorityMax = priorityMax;
   if (targetFrom) filter.targetFrom = targetFrom;

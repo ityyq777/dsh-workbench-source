@@ -16,6 +16,7 @@ function validatePriority(value, source, t) {
 }
 module.exports = function createModal(deps) {
   var React = deps.React, h = React.createElement;
+  var difficultyField = require("./difficulty-field.cjs")(React);
   var ownership = require("./ownership.cjs"), fields = require("./ownership-fields.cjs")(React);
   var allTables = deps.allTables, tagNames = deps.tagNames, splitTags = deps.splitTags;
   var today = deps.today, addDays = deps.addDays, hostHasAddon = deps.hostHasAddon;
@@ -28,8 +29,7 @@ module.exports = function createModal(deps) {
     // 每次打开都重新确认，来源任务及树选择仅作建议。
     var defaults = props.defaults || {};
     var initPriority = initialPriority(source, origin, defaults.priority);
-    var initDifficulty = Math.floor(Number(defaults.difficulty));
-    if (!(initDifficulty >= 1)) initDifficulty = 1;
+    var initDifficulty = Math.max(0, Math.min(5, Number(defaults.difficulty) || 0));
     var initOffset = Math.floor(Number(defaults.targetOffset));
     if (!(initOffset >= 0)) initOffset = 0;
     var f = React.useState({
@@ -87,6 +87,7 @@ module.exports = function createModal(deps) {
         description: String(form.description || ""),
         tags: splitTags(form.tags), status: source === "2" ? "0" : String(form.status),
         priority: active ? Number(form.priority) : 0,
+        difficulty: Number(form.difficulty) || 0,
         publishDate: form.publishDate,
         targetDate: form.targetDate,
         source: source,
@@ -99,7 +100,6 @@ module.exports = function createModal(deps) {
       }
       if (args.status === "2") {
         args.doneDate = form.doneDate || today();
-        args.difficulty = Number(form.difficulty) || 0;
       }
       if (args.status === "1") args.shutdownDate = form.shutdownDate || today();
       props.api.call("tasks.capabilities", { limit: 1 }).then(function (cap) {
@@ -128,7 +128,7 @@ module.exports = function createModal(deps) {
           h("label", { className: "wbt-field" }, h("span", null, t.publishDate), h("input", { className: "wbt-input", type: "date", value: form.publishDate, onChange: function (e) { set("publishDate", e.target.value); } })),
           h("label", { className: "wbt-field" }, h("span", null, t.targetDate), h("input", { className: "wbt-input", type: "date", value: form.targetDate, onChange: function (e) { set("targetDate", e.target.value); } })),
           (source !== "2" && form.status === "2") ? h("label", { className: "wbt-field" }, h("span", null, t.doneDate), h("input", { className: "wbt-input", type: "date", value: form.doneDate, onChange: function (e) { set("doneDate", e.target.value); } })) : null,
-          (source !== "2" && form.status === "2") ? h("label", { className: "wbt-field" }, h("span", null, t.difficulty + "（0–5）"), h("input", { className: "wbt-input", type: "number", min: 0, max: 5, step: 0.5, value: form.difficulty, onChange: function (e) { set("difficulty", e.target.value); } })) : null,
+          difficultyField(t, form.difficulty, function (value) { set("difficulty", value); }, "wbt-create-difficulty"),
           (source !== "2" && form.status === "1") ? h("label", { className: "wbt-field" }, h("span", null, t.shutdownDate), h("input", { className: "wbt-input", type: "date", value: form.shutdownDate, onChange: function (e) { set("shutdownDate", e.target.value); } })) : null
         ),
         priorityError ? h("div", { id: "wbt-create-priority-error", className: "wbt-err", role: "alert" }, priorityError) : null,
