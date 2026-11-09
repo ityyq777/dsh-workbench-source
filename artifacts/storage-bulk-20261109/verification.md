@@ -25,4 +25,4 @@
 - 并行构建期间，未重装的临时页面统计名称和组件状态发生变化，存在热更新干扰。父agent暂停构建后完整重装重启继续，通过项以稳定实例为准；不推断全部历史回退的原因。
 - 未在此轮真实浏览器单独注入事务失败、skipped目标不存在、忙碌时Esc、Shift区间选择、英文文案和窄屏；对应自动测试由父agent负责，不冒称已做。
 - HTTP原始证据：[results.json](/tmp/dsh-storage-bulk-20261109/results.json)。
-- 初始job bash-b6d00f732cda4952已kill/collect。最终job bash-240e27f6e8484af3按父agent后续tasks验收要求暂保留，后续总收尾必须kill/collect。
+- 初始job bash-b6d00f732cda4952已kill/collect。最终job bash-240e27f6e8484af3曾留供后续tasks验收；后续开始时已不在任务注册表，60059无监听，无法补收退出记录。后续新建的任务验收进程已kill/collect，临时标签页已关闭，详见[任务验收清理记录](../tasks-feeling-20261109/verification.md)。
