@@ -46,13 +46,14 @@ export function apply(ctx) {
       host.registerDomain({
         id: "wb-addon-tasks",
         title: "任务",
-        description: "任务树 + 统计/记录/配置/数据四个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "3.1.7",
+        description: "任务树 + 统计/记录/时间线/配置/数据五个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
+        version: "3.1.8",
         tables: ["task", "task_dep", "task_node"],
         sync: taskSync,
         views: [
           { id: "stats", title: { zh: "统计", en: "Stats" } },
           { id: "tasks", title: { zh: "记录", en: "Records" } },
+          { id: "timeline", title: { zh: "时间线", en: "Timeline" } },
           { id: "config", title: { zh: "配置", en: "Config" } },
           { id: "data", title: { zh: "数据", en: "Data" } },
         ],
@@ -96,6 +97,8 @@ export function apply(ctx) {
             },
           ],
           fields: [
+            { name: "includeSingletons / timelineKeys", type: "boolean / string[]", description: "tasks.timelines默认20条且只显示多任务线；timelineKeys用于timelineRefactor整线合并，与ids互斥，目标必须在所选keys中；dryRun返回wouldUpdate及total完整计数，无list上限。" },
+            { name: "lastActivityDate", type: "YYYY-MM-DD", description: "时间线有效成员发布/完成/关闭日及创建/修改本地日最大值；不含计划targetDate，排除已重启和已删除成员；openCount仅status0，doneCount仅status2。" },
             { name: "publishFrom / publishTo", type: "YYYY-MM-DD", description: "list/非ids export 发布日闭区间，两端独立可选，空串不筛；真实日期校验，按 publish_date 前10位与其他条件 AND；反序交换后在 filter 回显并返回 publish_range_swapped notice" },
             { name: "year", type: "integer 1900..9999", description: "tasks.activityCalendar 必填年份：独立年度稀疏日历，publish/done/shutdown 三类事件计数及 totals/max（含 total）" },
             { name: "activityDate / activityType", type: "YYYY-MM-DD / publish|done|shutdown", description: "list/非ids export 活动日筛选；type 缺省 done，有 type 必须有日期。单类事件，与既有条件 AND；与日历同口径，完整日点击需 tab=all、filterRestarted=false" },

@@ -51,6 +51,7 @@ import {
 } from "./tagging.js";
 import { requireKnownTagNames, TAG_DOMAIN_NOTICE, tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, sourceCode, putTypeCode, clampDifficulty, dateArg, getTask, defaultTable, requireTable, insertTaskRow, saveTaskRow, outOne, emitChange, writeChange, checkRequiredDates, currentTaskTagIds, resolveTagPatch, PATCH_FIELDS, DIFF_COLUMNS } from "./task-model.js";
 import { createTask } from "./task-create.js";
+import { registerTimelineActions, TIMELINE_PAGE_SCHEMA } from "./task-timelines.js";
 import { updateTask } from "./task-update.js";
 import { depRows, wouldCycle, linkDep, unlinkDep, depView, selectedTasks, timelineTasks, restartTasks, timelineRefactor, migrateTasks, sweepShutdown, stats, removeTask, completeTask, exportTasks, reorderTasks, taskDeps, taskLink, taskUnlink } from "./task-operations.js";
 export { tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, clampDifficulty, dateArg, getTask, requireTable, saveTaskRow, emitChange, writeChange, checkRequiredDates, currentTaskTagIds, resolveTagPatch, PATCH_FIELDS, DIFF_COLUMNS } from "./task-model.js";
@@ -58,6 +59,7 @@ export { priorityForStatus } from "./task-priority.js";
 export { createTask } from "./task-create.js";
 export function registerTaskActions(api) {
   registerDiscoveryActions(api);
+  registerTimelineActions(api);
   const db = api.db;
   const action = api.action;
 
@@ -334,10 +336,10 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.timeline", {
-    description: "取某条时间线上的任务",
-    input: { type: "object", properties: { timelineKey: { type: ["string", "number"] } } },
+    description: "取某条时间线有效任务，按publishDate/id正序；省略分页参数返回数组，传pageNumber或pageSize返回{records,total,current,size}，默认20条。排除已重启及已删除任务。",
+    input: { type: "object", properties: { timelineKey: { type: ["string", "number"] }, ...TIMELINE_PAGE_SCHEMA } },
     execute: function (args) { return timelineTasks(db, args || {}); },
-    render: renderArray,
+    render: function (r) { return renderArray(Array.isArray(r) ? r : r.records); },
   });
 
   action("tasks.restart", {
@@ -348,14 +350,16 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.timelineRefactor", {
-    description: "把一批任务归并到同一条时间线；dryRun:true 只返回将影响的 id",
+    description: "把ids指定任务或timelineKeys指定整条时间线归并到timelineKey，ids和timelineKeys互斥。整线模式排除已重启/删除成员，目标必须属于选中keys；无成员key报错。dryRun不写入，返回wouldUpdate真实迁移数；整线回执total/selectedCount含目标已有成员，不返回全量ids，执行返回updated。ids模式兼容原回执。",
     input: {
       type: "object",
       properties: {
         ids: { type: "array", items: { type: "string" } },
         timelineKey: { type: ["string", "number"] },
+        timelineKeys: { type: "array", minItems: 1, items: { type: "string" }, description: "完整选中时间线key，包含目标；与ids互斥，不受list分页上限影响" },
         dryRun: { type: "boolean" },
       },
+      required: ["timelineKey"],
     },
     execute: function (args, ctx) { return timelineRefactor(db, args || {}, ctx.origin, api); },
     render: function (r) {

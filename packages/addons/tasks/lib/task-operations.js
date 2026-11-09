@@ -140,13 +140,7 @@ export function selectedTasks(db, args) {
   return rows.map(function (r) { return taskOut(r, map); });
 }
 
-export function timelineTasks(db, args) {
-  const key = idOf(args.timelineKey);
-  if (!key) return [];
-  const rows = db.prepare("SELECT * FROM task WHERE timeline_key=? AND status!='3' AND deleted_at IS NULL ORDER BY publish_date ASC, id ASC").all(key);
-  const map = nodeMap(db);
-  return rows.map(function (r) { return taskOut(r, map); });
-}
+export { timelineTasks, timelineRefactor } from "./task-timelines.js";
 
 export function restartTasks(db, args) {
   const key = idOf(args.restartKey);
@@ -156,31 +150,6 @@ export function restartTasks(db, args) {
   return rows.map(function (r) { return taskOut(r, map); });
 }
 
-export function timelineRefactor(db, args, origin, api) {
-  const ids = Array.isArray(args.ids) ? args.ids.map(String) : [];
-  const key = idOf(args.timelineKey);
-  if (!ids.length) throw new Error("ids 不能为空");
-  if (!key) throw new Error("timelineKey 不能为空");
-  const dryRun = args.dryRun === true;
-  const ts = now();
-  const changed = [];
-  const plan = function () {
-    for (const id of ids) {
-      const cur = getTask(db, id);
-      if (!cur) throw new Error("任务不存在：" + id);
-      changed.push(id);
-      if (dryRun) continue;
-      const next = Object.assign({}, cur, { timeline_key: key, updated_at: ts, rev: Number(cur.rev) + 1 });
-      saveTaskRow(db, next);
-      writeChange(db, next, "update", origin, api, ts);
-    }
-  };
-  if (dryRun) plan();
-  else tx(db, plan);
-  return dryRun
-    ? { dryRun: true, updated: 0, wouldUpdate: changed.length, ids: changed, timelineKey: key }
-    : { updated: changed.length, ids: changed, timelineKey: key };
-}
 
 export function migrateTasks(db, args, origin, api) {
   const result = bulkUpdate(db,{ids:args.ids,patch:{tableId:args.tableId},dryRun:args.dryRun},origin,api);

@@ -325,18 +325,20 @@
     var s = React.useState({ items: [], loading: true, error: "" });
     var state = s[0], setState = s[1];
     React.useEffect(function () {
-      props.api.call("tasks.timeline", { timelineKey: task.timelineKey }).then(function (r) {
-        if (r && r.ok) setState({ items: Array.isArray(r.result) ? r.result : [], loading: false, error: "" });
-        else setState({ items: [], loading: false, error: (r && r.error) || "load failed" });
-      }).catch(function (e) { setState({ items: [], loading: false, error: String(e && e.message || e) }); });
-    }, [task.timelineKey]);
+      var cancelled = false;
+      setState({ items: [], loading: true, error: "" });
+      require("./timeline-members.cjs")(props.api, task).then(function (items) {
+        if (!cancelled) setState({ items: items, loading: false, error: "" });
+      }).catch(function (e) { if (!cancelled) setState({ items: [], loading: false, error: String(e && e.message || e) }); });
+      return function () { cancelled = true; };
+    }, [props.api, task.id, task.timelineKey]);
     var items = state.items;
     var last = items.length ? items[items.length - 1] : task;
     return h("div", { className: "wbt-modal-mask", onMouseDown: function (e) { if (e.target === e.currentTarget) props.onClose(); } },
       h("div", { className: "wbt-modal wide" },
         h("div", { className: "wbt-modal-head" },
           h("h3", null, t.timelineTitle),
-          h("button", { className: "wbt-btn", onClick: function () { props.onCreateTimeline(last); } }, "＋ " + t.newTimeline),
+          !state.loading && !state.error && items.length ? h("button", { className: "wbt-btn", onClick: function () { props.onCreateTimeline(last); } }, "＋ " + t.newTimeline) : null,
           h("button", { className: "wbt-icon", onClick: props.onClose }, "×")
         ),
         state.loading ? h("div", { className: "wbt-mhint" }, t.loading) : state.error ? h("div", { className: "wbt-err" }, t.error + state.error) : (items.length === 0 ? h("div", { className: "wbt-empty" }, t.noTimeline) : h("div", { className: "wbt-timeline" }, items.map(function (x, i) {
@@ -411,12 +413,15 @@
 
   var TasksView = require("./tasks-view.cjs")({ React: React, configView: configView, CFG_FALLBACK: CFG_FALLBACK, COPY: COPY, TABS: TABS, injectCss: injectCss, allTables: allTables, findFirstTable: findFirstTable, treeWalk: treeWalk, treeFlat: treeFlat, cx: cx, Icon: Icon, TaskItem: TaskItem, PathCrumbs: PathCrumbs, TagFilter: TagFilter, TreeNode: TreeNode, CreateModal: CreateModal, TimelineModal: TimelineModal, NodeModal: NodeModal, EditModal: EditModal, DoneModal: DoneModal, BatchModal: BatchModal });
 
+  var TimelineView = require("./timeline-view.cjs")({ React: React, COPY: COPY, injectCss: injectCss, statusInfo: statusInfo, EditModal: EditModal });
+
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.1.7",
+    version: "3.1.8",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },
+      { id: "timeline", title: { zh: "时间线", en: "Timeline" }, component: TimelineView },
       { id: "config", title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
       { id: "data", title: { zh: "数据", en: "Data" }, component: dataView.DataView },
     ],

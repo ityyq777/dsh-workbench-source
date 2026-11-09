@@ -4,6 +4,7 @@
 var bodyCopy = require("../../lib/body-copy.cjs");
 module.exports = {
     zh: {
+      timelineTasks: "任务数", timelineActivity: "最近活动", timelineMerge: "合并", timelineSingletons: "单任务时间线", timelineSearch: "搜索时间线标题", timelineSearchButton: "搜索", timelineMembers: "成员任务", timelineOrder: "按发布时间正序排列，点击任务打开详情", timelineEmpty: "暂无匹配的历史时间线或成员；单任务时间线默认隐藏。时间线需手动创建，本页暂未提供创建入口。", timelineOpen: "开启", timelineDone: "完成", timelinePrevious: "上一页", timelineNext: "下一页", timelineTarget: "合并到时间线", timelineMergeHint: "选中时间线的全部有效任务将归并到目标时间线，包含当前页外的任务，排除已重启和已删除任务。请先预览再确认。", timelinePreview: "预览合并", timelinePreviewCount: "将移动 {n} 条任务到目标时间线。", timelineConfirm: "确认合并",
       bodyModeToggle: bodyCopy.zh.bodyModeToggle,
       bodyMode: "描述与感受显示模式", markdown: "Markdown 渲染", plainText: "纯文本", bodyModeLocal: "已在当前浏览器切换，配置保存失败：",
       title: "任务", search: "搜索标题 / 描述 / 感受", newTask: "新建任务", tree: "任务树",
@@ -40,7 +41,7 @@ module.exports = {
       searchTable: "搜索任务表", noTable: "没有匹配的任务表", baseLabel: "基准任务", targetLabel: "目标任务表",
       batchCount: "已选", hasTimeline: "有时间线", noTimelineTag: "无时间线", group: "任务组",
       timelineTitle: "任务时间线", newTimeline: "新建时间线任务",
-      restartTitle: "重启任务", noTimeline: "这条任务还没有时间线",
+      restartTitle: "重启任务", noTimeline: "没有关联时间线",
       restartPriorityHint: "重启任务需要优先级 1–10，0 仅用于已完成/已关闭",
       restartPriorityError: "重启任务的优先级必须填写 1–10；0 仅用于已完成/已关闭",
       activePriorityError: "已开启任务的优先级必须填写 1–10；0 仅用于已完成/已关闭",
@@ -54,6 +55,7 @@ module.exports = {
       needDate: "日期不能为空", needBase: "请选择基准任务", needDifficulty: "请选择难度",
     },
     en: {
+      timelineTasks: "Tasks", timelineActivity: "Last activity", timelineMerge: "Merge", timelineSingletons: "Single-task timelines", timelineSearch: "Search timeline title", timelineSearchButton: "Search", timelineMembers: "Member tasks", timelineOrder: "Oldest publication first. Click a task to open details.", timelineEmpty: "No matching historical timelines or members. Single-task timelines are hidden by default. Timelines require manual creation; this page does not yet provide a creation control.", timelineOpen: "Open", timelineDone: "Done", timelinePrevious: "Previous page", timelineNext: "Next page", timelineTarget: "Merge into timeline", timelineMergeHint: "Merge all valid tasks in the selected timelines, including tasks beyond the current page and excluding restarted and deleted tasks. Preview before confirming.", timelinePreview: "Preview merge", timelinePreviewCount: "{n} tasks will move into the target timeline.", timelineConfirm: "Confirm merge",
       bodyModeToggle: bodyCopy.en.bodyModeToggle,
       bodyMode: "Description and reflection display mode", markdown: "Render Markdown", plainText: "Plain text", bodyModeLocal: "Changed in this browser; could not save config:",
       title: "Tasks", search: "Search title / description / feeling", newTask: "New task", tree: "Task tree",
@@ -90,7 +92,7 @@ module.exports = {
       batchCount: "Selected", hasTimeline: "has timeline", noTimelineTag: "no timeline", group: "Group",
       chooseBase: "Choose a base task (it supplies the timeline)", chooseTable: "Choose target table",
       timelineTitle: "Task timeline", newTimeline: "New timeline task",
-      restartTitle: "Restart task", noTimeline: "No timeline for this task",
+      restartTitle: "Restart task", noTimeline: "No associated timeline",
       restartPriorityHint: "Restarted tasks require priority 1–10; 0 is only for completed or closed tasks.",
       restartPriorityError: "Enter a priority from 1 to 10 to restart; 0 is only for completed or closed tasks.",
       activePriorityError: "Active tasks require a priority from 1 to 10; 0 is only for completed or closed tasks.",
