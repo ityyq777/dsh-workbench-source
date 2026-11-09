@@ -3802,6 +3802,12 @@ var h = React.createElement;
     ".wbt-tag{font-size:11.5px;line-height:1.5;padding:0 6px;border-radius:999px;background:color-mix(in oklab,var(--wbt-accent) 12%,transparent);color:var(--wbt-accent);cursor:pointer;white-space:nowrap}",
     ".wbt-tag:hover{background:color-mix(in oklab,var(--wbt-accent) 22%,transparent)}",
     ".wbt-tags{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:5px;min-width:0;max-width:100%}",
+    ".wbt-metazone{display:flex;flex-direction:column;gap:4px;min-width:0;max-width:100%;margin-top:5px}",
+    ".wbt-metazone > *{margin-top:0}",
+    ".wbt-metazone + .wbt-desc{margin-top:7px}",
+    ".wbt-ops-block{width:100%;min-width:0;justify-content:flex-start;flex-wrap:wrap;padding-top:2px;margin-top:2px}",
+    ".wbt-card .wbt-chead{row-gap:0}",
+    ".wbt-card .wbt-metazone .wbt-meta{row-gap:2px}",
     ".wbt-tagfilter{position:relative;display:flex;align-items:center;gap:5px;min-width:0}",
     ".wbt-tagfilter .wbt-btn.on{border-color:var(--wbt-accent);color:var(--wbt-accent);background:color-mix(in oklab,var(--wbt-accent) 12%,transparent)}",
     ".wbt-tagmenu{position:absolute;z-index:60;top:calc(100% + 6px);right:0;width:236px;max-height:320px;overflow:auto;padding:8px;border-radius:10px;border:1px solid var(--wbt-line);box-shadow:0 14px 34px rgba(26,20,12,.2);background-color:var(--wbt-bg);background-image:linear-gradient(var(--wbt-bg),var(--wbt-bg)),linear-gradient(var(--wbt-bg),var(--wbt-bg));-webkit-backdrop-filter:blur(24px) saturate(1.4);backdrop-filter:blur(24px) saturate(1.4)}",
@@ -4254,6 +4260,18 @@ var h = React.createElement;
       h2("span", { className: "wbt-review-label" }, t.review),
       task.review
     ) : null;
+    var line1 = h2(
+      "div",
+      { className: "wbt-line1" },
+      String(task.status) === "0" ? h2("span", { className: "wbt-prio " + pClass(task.priority), children: "P" + task.priority }) : h2("span", { className: "wbt-prio low", title: t.priority + " 0", children: "\u2014" }),
+      h2("span", { className: "wbt-badge " + st.cls, children: stName }),
+      titleNode
+    );
+    var opsNode = h2("div", { className: cx("wbt-ops", props.card && "wbt-ops-block"), key: "ops" }, ops);
+    var tagBlock = tagNodes.length ? h2("div", { className: "wbt-tags", key: "tags" }, tagNodes) : null;
+    var metaBlock = meta.length ? h2("div", { className: "wbt-foot", key: "meta" }, h2("div", { className: "wbt-meta" }, meta)) : null;
+    var pathBlock = task.path && task.path.length ? h2("div", { className: "wbt-taskpath", key: "path" }, h2(PathCrumbs, { path: task.path, t, onPick: props.onPathPick })) : null;
+    var metaZone = tagBlock || metaBlock || pathBlock ? h2("div", { className: "wbt-metazone", key: "metazone" }, tagBlock, metaBlock, pathBlock) : null;
     return h2(
       "div",
       { className: cx("wbt-item", props.card && "wbt-card", String(task.status) === "1" && "closed") },
@@ -4263,23 +4281,11 @@ var h = React.createElement;
       h2(
         "div",
         { className: "wbt-main" },
-        h2(
-          "div",
-          { className: "wbt-chead" },
-          h2(
-            "div",
-            { className: "wbt-line1" },
-            String(task.status) === "0" ? h2("span", { className: "wbt-prio " + pClass(task.priority), children: "P" + task.priority }) : h2("span", { className: "wbt-prio low", title: t.priority + " 0", children: "\u2014" }),
-            h2("span", { className: "wbt-badge " + st.cls, children: stName }),
-            titleNode
-          ),
-          h2("div", { className: "wbt-ops" }, ops)
-        ),
+        h2("div", { className: "wbt-chead" }, line1, props.card ? null : opsNode),
+        metaZone,
+        props.card ? opsNode : null,
         descNode,
-        reviewNode,
-        tagNodes.length ? h2("div", { className: "wbt-tags", key: "tags" }, tagNodes) : null,
-        meta.length ? h2("div", { className: "wbt-foot", key: "meta" }, h2("div", { className: "wbt-meta" }, meta)) : null,
-        task.path && task.path.length ? h2("div", { className: "wbt-taskpath", key: "path" }, h2(PathCrumbs, { path: task.path, t, onPick: props.onPathPick })) : null
+        reviewNode
       )
     );
   }
