@@ -1,5 +1,6 @@
 // 归属选择的纯数据规则；不执行任何写操作。
 "use strict";
+var limits = require('../../shared/tree/limits.cjs');
 function tables(nodes, parents) {
   var out = [], prefix = parents || [];
   (nodes || []).forEach(function (n) {
@@ -12,7 +13,7 @@ function tables(nodes, parents) {
 }
 function preview(tree, path, descriptions) {
   var parts = String(path || "").split("/").map(function (s) { return s.trim(); });
-  if (!path || path.length > 2048 || parts.length > 32 || parts.some(function (s) { return !s || s === "." || s === ".." || s.length > 20; })) return { error: "请输入相对于根的有效路径；每段 1–20 字，最多 32 段，不含首尾斜杠。", nodes: [] };
+  if (!path || path.length > limits.PATH_LEN_MAX || parts.length > limits.PATH_MAX || parts.some(function (s) { return !s || s === "." || s === ".." || s.length > limits.NAME_MAX; })) return { error: "请输入相对于根的有效路径；每段 1–" + limits.NAME_MAX + " 字符，最多 " + limits.PATH_MAX + " 段、总长 " + limits.PATH_LEN_MAX + " 字符，不含首尾斜杠。", nodes: [] };
   var roots = (tree || []).filter(function (n) { return String(n.type) === "2" && !n.deletedAt && !n.deleted_at; });
   if (roots.length !== 1) return { error: "任务树缺少唯一有效根，请刷新或修复任务树后重试。", nodes: [] };
   var level = roots[0].children || [], nodes = [], error = "";

@@ -36,6 +36,17 @@ try {
   assert.deepEqual(auditStructure({root,scopes:['tasks/client']}).issues,[]);
   put('packages/addons/tasks/client/views/view.cjs',"require('../../lib/db/core.js');");assert(auditStructure({root,scopes:['tasks/client']}).issues.some(i=>i.code==='CLIENT_BACKEND'));
   assert.deepEqual(importsOf('x.ts',"import x = require('./x'); export * from './y'; import('./z');"),['./x','./y','./z']);
+  // Neutral constants are available to both layers; shared cannot bridge into either layer.
+  const shared='packages/addons/tasks/shared/tree/limits.cjs';
+  put(shared,'module.exports={NAME_MAX:40};');
+  put('packages/addons/tasks/client/views/view.cjs',"require('../../shared/tree/limits.cjs');");
+  put(base+'/task/model/task.js',"import '../../../shared/tree/limits.cjs';");
+  assert.deepEqual(auditStructure({root,scopes:['tasks/lib','tasks/client','tasks/shared']}).issues,[]);
+  for(const dependency of ['react','node:fs','../../lib/db/core.js','../../client/views/view.cjs']) {
+    put(shared,'require('+JSON.stringify(dependency)+');');
+    assert(auditStructure({root,scopes:['tasks/shared']}).issues.some(i=>i.code==='SHARED_DEPENDENCY'));
+  }
+  put(shared,'module.exports={NAME_MAX:40};');
   // Recursive source inventory sees nested CJS and excludes only the exact generated entry.
   put(base+'/timeline/helper.cjs','module.exports={nestedSentinel:true};');put(base+'/timeline/client.js','export const handwrittenSentinel=true;');
   const source=readLibSource(join(root,base));assert(source.includes('nestedSentinel'));assert(source.includes('handwrittenSentinel'));assert(!source.includes("require('react')"));

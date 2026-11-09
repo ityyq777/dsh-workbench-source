@@ -1,5 +1,5 @@
-/** 发布日范围独立于目标日期及活动日；只比较存储值的日期部分。 */
-function publishDay(value, field) {
+/** 三组事件日期范围共用真实日期校验；只比较存储值的日期部分。 */
+function rangeDay(value, field) {
   if (value === undefined || value === null || value === "") return null;
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throw new Error(field + " 必须是合法的 YYYY-MM-DD 日期");
@@ -13,13 +13,19 @@ function publishDay(value, field) {
   return value;
 }
 
-export function publishFilter(from, to) {
-  let publishFrom = publishDay(from, "publishFrom"), publishTo = publishDay(to, "publishTo");
+export function dateRangeFilter(from, to, kind) {
+  const fromKey = kind + "From", toKey = kind + "To";
+  let start = rangeDay(from, fromKey), end = rangeDay(to, toKey);
   const notices = [];
-  if (publishFrom && publishTo && publishFrom > publishTo) {
-    [publishFrom, publishTo] = [publishTo, publishFrom];
-    notices.push({ code: "publish_range_swapped", field: "publishFrom/publishTo",
-      message: "发布日期起始晚于终止，已交换", publishFrom, publishTo });
+  if (start && end && start > end) {
+    [start, end] = [end, start];
+    const label = { publish: "发布", done: "完成", shutdown: "关闭" }[kind];
+    notices.push({ code: kind + "_range_swapped", field: fromKey + "/" + toKey,
+      message: label + "日期起始晚于终止，已交换", [fromKey]: start, [toKey]: end });
   }
-  return { publishFrom, publishTo, notices };
+  return { [fromKey]: start, [toKey]: end, notices };
+}
+
+export function publishFilter(from, to) {
+  return dateRangeFilter(from, to, "publish");
 }

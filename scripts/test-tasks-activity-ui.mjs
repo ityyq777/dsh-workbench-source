@@ -24,7 +24,7 @@ const css=require(dir+'stats/heatmap-styles.cjs');assert.ok(!css.includes('.wbt-
 assert.ok(css.includes('gap:4px'));assert.ok(css.includes('padding-inline-start:12px'));
 let state=[],cursor=0,effects=[];
 const memo=(fn,deps)=>{const i=cursor++,old=state[i];if(!old||deps.some((v,j)=>v!==old.deps[j]))state[i]={value:fn(),deps};return state[i].value;};
-const React={createElement:(type,props,...children)=>({type,props:props||{},children:children.flat(Infinity).filter(x=>x!=null)}),useState:v=>{const i=cursor++;if(!(i in state))state[i]=v;return [state[i],v=>state[i]=typeof v==='function'?v(state[i]):v];},useRef:v=>{const i=cursor++;return state[i]||={current:v};},useMemo:memo,useCallback:(fn,deps)=>memo(()=>fn,deps),useEffect:(fn,deps)=>memo(()=>{effects.push(fn);},deps)};
+const React={createElement:(type,props,...children)=>({type,props:props||{},children:children.flat(Infinity).filter(x=>x!=null)}),useState:v=>{const i=cursor++;if(!(i in state))state[i]=v;return [state[i],v=>state[i]=typeof v==='function'?v(state[i]):v];},useId:()=>"filter-test",useRef:v=>{const i=cursor++;return state[i]||={current:v};},useMemo:memo,useCallback:(fn,deps)=>memo(()=>fn,deps),useEffect:(fn,deps)=>memo(()=>{effects.push(fn);},deps)};
 const reset=()=>{state=[];cursor=0;effects=[];},render=(C,p)=>{cursor=0;return C(p);};
 const flush=async()=>{const jobs=effects;effects=[];jobs.forEach(fn=>fn());for(let i=0;i<15;i++)await Promise.resolve();};
 const walk=n=>n&&typeof n==='object'?[n,...n.children.flatMap(walk)]:[];
@@ -55,12 +55,12 @@ for(const lang of ['zh','en']){
  fail=true;find(v,n=>n.props['aria-label']===model.COPY[lang].next).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].error));
  find(v,n=>n.type==='button'&&text(n)===model.COPY[lang].retry).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].empty.shutdown));assert.equal(calls.length,4);
 }
-const noop=()=>null,copy=require(dir+'ui/copy.cjs'),filter=require(dir+'stats/activity-filter.cjs');
+const noop=()=>null,copy=require(dir+'ui/copy.cjs');
 const View=require(dir+'views/tasks-view.cjs')({React,configView:{useConfig:()=>({ready:true,values:{'list.filterRestarted':true,'ui.defaultTab':0}})},COPY:copy,TABS:[],allTables:()=>[],treeWalk:()=>[],treeFlat:()=>[],cx:(...s)=>s.join(' '),injectCss:noop,Icon:noop,PathCrumbs:noop,TagFilter:noop});
 for(const activityType of model.TYPES){
  reset();const calls=[],p={lang:'en',viewParams:{activityDate:date,activityType,tableId:'stale',difficultyMissing:true},api:{subscribe:()=>noop,call:async(action,args)=>{calls.push({action,args});return {ok:true,result:action==='tasks.list'?{records:[],total:0}:[]};}}};
  const outer=View(p),Body=outer.type;render(Body,outer.props);await flush();render(Body,outer.props);await flush();let args=calls.filter(c=>c.action==='tasks.list').at(-1).args;
- assert.equal(args.activityDate,date);assert.equal(args.activityType,activityType);assert.equal(args.tab,8);assert.equal(args.filterRestarted,false);assert.equal(args.tableId,null);assert.equal(args.difficultyMissing,false);assert.equal(args.titleKey,'');assert.deepEqual(args.tagIds,[]);
- find(render(Body,outer.props),n=>n.type===filter.ActivityFilter).props.onClear();render(Body,outer.props);await flush();args=calls.filter(c=>c.action==='tasks.list').at(-1).args;assert.ok(!('activityDate' in args));assert.ok(!('activityType' in args));
+ assert.equal(args[activityType+'From'],date);assert.equal(args[activityType+'To'],date);assert.deepEqual(args.statuses,activityType==='done'?[2]:activityType==='shutdown'?[1]:[]);assert.equal(args.urgent,false);assert.equal(args.filterRestarted,undefined);assert.equal(args.tableId,null);assert.equal(args.difficultyMissing,false);assert.equal(args.titleKey,'');assert.deepEqual(args.tagIds,[]);
+ find(render(Body,outer.props),n=>n.props.kind===activityType&&n.props.value).props.onChange({from:'',to:''});render(Body,outer.props);await flush();args=calls.filter(c=>c.action==='tasks.list').at(-1).args;assert.ok(!('activityDate' in args));assert.ok(!('activityType' in args));
 }
 console.log('TASK ACTIVITY UI PASS: 501 years, leap/54-week geometry, 3 single types, zh/en, cache/retry/empty, accessible future cells, list drilldown and clear');

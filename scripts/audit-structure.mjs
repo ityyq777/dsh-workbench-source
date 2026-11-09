@@ -63,6 +63,7 @@ export function auditStructure({root=ROOT,scopes,layout=LAYOUT}={}) {
       const path=slash(target||resolve(dirname(file),specifier));
       if(backend&&(/^(react|react-dom)(\/|$)/.test(specifier)||path.includes('/client/'))) issue('BACKEND_CLIENT',file,'后端禁止依赖 '+specifier);
       if(client&&(/\/packages\/addons\/[^/]+\/lib\//.test(path)||/\/packages\/shell\/(src|lib)\//.test(path))) issue('CLIENT_BACKEND',file,'客户端禁止导入后端 '+specifier);
+      if(scope.endsWith('/shared')&&(!target||!target.startsWith(base+sep))) issue('SHARED_DEPENDENCY',file,'中立共享层只能依赖同层模块：'+specifier);
       if(specifier.startsWith('.')&&!target) issue('MISSING_IMPORT',file,'本地依赖不存在：'+specifier);
     }
     if(!slash(relative(base,file)).startsWith('db/')) continue;

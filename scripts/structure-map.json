@@ -3,6 +3,12 @@
   "maxFilesPerDirectory": 12,
   "maxDirectoryDepth": 3,
   "scopes": {
+    "tasks/shared": {
+      "root": "packages/addons/tasks/shared",
+      "entries": [],
+      "generated": [],
+      "files": { "limits.cjs": "tree/limits.cjs" }
+    },
     "tasks/lib": {
       "root": "packages/addons/tasks/lib",
       "entries": [
@@ -63,6 +69,8 @@
       "files": {
         "client.src.cjs": "client.src.cjs",
         "tasks-view.cjs": "views/tasks-view.cjs",
+        "task-filter-model.cjs": "views/task-filter-model.cjs",
+        "task-filter-panel.cjs": "views/task-filter-panel.cjs",
         "stats.cjs": "views/stats.cjs",
         "timeline-view.cjs": "views/timeline-view.cjs",
         "config.cjs": "views/config.cjs",

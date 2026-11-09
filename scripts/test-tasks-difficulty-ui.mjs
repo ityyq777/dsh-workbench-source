@@ -12,7 +12,7 @@ const memo=(fn,deps)=>{const i=cursor++,old=state[i];if(!old||deps.some((v,j)=>v
 const React={
   createElement:(type,props,...children)=>({type,key:props?.key,props:props||{},children:children.flat(Infinity).filter(x=>x!=null)}),
   useState:v=>{const i=cursor++;if(!(i in state))state[i]=v;return [state[i],v=>state[i]=typeof v==='function'?v(state[i]):v];},
-  useRef:v=>{const i=cursor++;return state[i] ||= {current:v};}, useMemo:memo,
+  useId:()=>"filter-test",useRef:v=>{const i=cursor++;return state[i] ||= {current:v};}, useMemo:memo,
   useCallback:(fn,deps)=>memo(()=>fn,deps), useEffect:(fn,deps)=>memo(()=>{effects.push(fn);},deps),
 };
 const walk=n=>n&&typeof n==='object'?[n,...n.children.flatMap(walk)]:[];
@@ -68,7 +68,7 @@ const noop=()=>null;
 const View=require(dir+'views/tasks-view.cjs')({React,configView:config,COPY:copy,TABS:[],allTables:()=>[],treeWalk:()=>[],treeFlat:()=>[],cx:(...s)=>s.join(' '),injectCss:noop,Icon:noop,PathCrumbs:noop,TagFilter:noop});
 reset();const calls=[];const props={lang:'en',viewParams:{difficultyMissing:true},api:{subscribe:()=>noop,call:async(action,args)=>{calls.push({action,args});return {ok:true,result:action==='tasks.list'?{records:[],total:0}:[]};}}};
 const outer=View(props), Body=outer.type;render(Body,outer.props);await flush();
-let list=calls.find(c=>c.action==='tasks.list');assert.equal(list.args.tab,8);assert.equal(list.args.difficultyMissing,true);assert.equal(list.args.filterRestarted,false);
+let list=calls.find(c=>c.action==='tasks.list');assert.deepEqual(list.args.statuses,[]);assert.equal(list.args.urgent,false);assert.equal(list.args.difficultyMissing,true);assert.equal(list.args.filterRestarted,undefined);
 let rendered=render(Body,outer.props);const filter=find(rendered,n=>n.type==='label'&&text(n).includes(copy.en.difficultyMissing));find(filter,n=>n.type==='input').props.onChange({target:{checked:false}});
 render(Body,outer.props);await flush();list=calls.filter(c=>c.action==='tasks.list').at(-1);assert.equal(list.args.difficultyMissing,false);assert.equal(list.args.pageNumber,1);
 console.log('TASK DIFFICULTY UI PASS',{cases,filterNavigation:true,realReact:RealReact.version});

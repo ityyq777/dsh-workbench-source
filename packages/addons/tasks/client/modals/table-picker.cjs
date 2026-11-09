@@ -51,7 +51,7 @@ module.exports = function (React) {
         "aria-activedescendant": current ? optionId(current) : undefined, className: "wbt-batch-body" },
         shown.map(function (n) {
           var table = n.type === "1", selected = n.id === String(props.value);
-          return h("div", { key: n.id, id: table ? optionId(n) : undefined, role: table ? "option" : "presentation",
+          return h("div", { key: n.id, title: n.path, id: table ? optionId(n) : undefined, role: table ? "option" : "presentation",
             "aria-label": table ? n.name + "，" + n.groupPath : undefined, "aria-selected": table ? selected : undefined,
             className: "wbt-bpick" + (!table ? " wbt-bgroup" : "") + (selected ? " on" : "") + (table && current && current.id === n.id ? " keyboard" : ""),
             style: { paddingLeft: 2 + n.depth * 15 + "px", cursor: table ? "pointer" : "default" },

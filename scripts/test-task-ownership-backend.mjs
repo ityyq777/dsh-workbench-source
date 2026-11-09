@@ -24,7 +24,7 @@ try {
  for(const source of [1,2]) fail('tasks.create',{title:'Missing timeline/restart target',source},/TABLE_REQUIRED/);
  fail('tasks.create',{title:'Options',tableId:'1',createMissing:true},/INVALID_TARGET_OPTIONS/);
  fail('tasks.create',{title:'Options',tablePath:'a',pathDescriptions:['x']},/INVALID_TARGET_OPTIONS/);
- for(const path of ['/a','a/','a//b','a/../b',[],['x'.repeat(21)],Array(33).fill('a')]) fail('tasks.create',{title:'Bad path',tablePath:path,createMissing:true},/INVALID_PATH/);
+ for(const path of ['/a','a/','a//b','a/../b',[],['x'.repeat(41)],Array(33).fill('a')]) fail('tasks.create',{title:'Bad path',tablePath:path,createMissing:true},/INVALID_PATH/);
  fail('tasks.create',{title:'Missing',tablePath:'missing'},/PATH_NOT_FOUND/);
  fail('tasks.create',{title:'Descriptions',tablePath:['new','leaf'],createMissing:true,pathDescriptions:['good','']},/INVALID_TARGET_OPTIONS/);
  fail('tasks.create',{...newArgs,tagIds:['nonexistent']},/标签/);

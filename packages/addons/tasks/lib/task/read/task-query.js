@@ -1,7 +1,7 @@
 /** 列表查询。与 tasks.js 的循环依赖只在函数调用期读取，顶层不求值。 */
 import { idOf, addDays, todayStr, nodeMap, taskOut } from "../../db/db.js";
 import { asCode, STATUS_NAMES, STATUSES, requireTable, dateArg, withNotices, tagMissingNotices } from "../../tasks.js";
-import { publishFilter } from "./task-publish-filter.js";
+import { dateRangeFilter } from "./task-publish-filter.js";
 import { activityFilter } from "../../stats/activity-calendar.js";
 import { clampPriority } from "../model/task-priority.js";
 import { LEGACY_TYPE_TAGS, tagsAvailable, normalizeTagIds, normalizeTagNames, tagIdsByNames, attachTags, migrateLegacyTypes } from "../../tagging/tagging.js";
@@ -24,7 +24,19 @@ function tabCode(value) {
 
 export function listTasks(db, args, api) {
   const activity = activityFilter(args.activityDate, args.activityType);
-  const { publishFrom, publishTo, notices: publishNotices } = publishFilter(args.publishFrom, args.publishTo);
+  const ranges = [
+    dateRangeFilter(args.publishFrom, args.publishTo, "publish"),
+    dateRangeFilter(args.doneFrom, args.doneTo, "done"),
+    dateRangeFilter(args.shutdownFrom, args.shutdownTo, "shutdown"),
+  ];
+  const multiStatus = args.statuses !== undefined || args.urgent !== undefined;
+  if (args.statuses !== undefined && (!Array.isArray(args.statuses) ||
+      args.statuses.some(s => !Number.isInteger(s) || s < 0 || s > 3))) {
+    throw new Error("statuses 必须是 0/1/2/3 整数数组");
+  }
+  if (args.urgent !== undefined && typeof args.urgent !== "boolean") throw new Error("urgent 必须是布尔值");
+  const statuses = [...new Set(args.statuses || [])];
+  const urgent = args.urgent === true;
   // 第一次打开列表时把旧「类型」补成标签；幂等，失败不阻断列表。
   try {
     migrateLegacyTypes(db, api, "migrate");
@@ -34,12 +46,16 @@ export function listTasks(db, args, api) {
   const rawTab = args.tab;
   const tabAll = rawTab === undefined || rawTab === null || String(rawTab).trim() === ""
     || /^(all|\*)$/i.test(String(rawTab).trim());
-  const tab = tabAll ? 8 : tabCode(rawTab);
+  const tab = multiStatus || tabAll ? 8 : tabCode(rawTab);
   const where = ["t.deleted_at IS NULL"];
   const params = [];
-  const listNotices = publishNotices.slice();
-  if (publishFrom) { where.push("substr(t.publish_date,1,10)>=?"); params.push(publishFrom); }
-  if (publishTo) { where.push("substr(t.publish_date,1,10)<=?"); params.push(publishTo); }
+  const listNotices = ranges.flatMap(range => range.notices);
+  for (const [index, kind] of ["publish", "done", "shutdown"].entries()) {
+    const from = ranges[index][kind + "From"], to = ranges[index][kind + "To"];
+    if ((from || to) && kind !== "publish") where.push(kind === "done" ? "t.status='2'" : "t.status='1'");
+    if (from) { where.push("substr(t." + kind + "_date,1,10)>=?"); params.push(from); }
+    if (to) { where.push("substr(t." + kind + "_date,1,10)<=?"); params.push(to); }
+  }
   if (activity) { where.push(activity.sql); params.push(...activity.params); }
 
   const titleKey = args.titleKey === undefined || args.titleKey === null ? "" : String(args.titleKey).trim();
@@ -136,7 +152,18 @@ export function listTasks(db, args, api) {
     for (const id of filterTagIds) params.push(id);
   }
 
-  if (tab === 0) {
+  if (multiStatus) {
+    const alternatives = [];
+    if (statuses.length) {
+      alternatives.push("t.status IN (" + statuses.map(() => "?").join(",") + ")");
+      params.push(...statuses.map(String));
+    }
+    if (urgent) {
+      alternatives.push("(t.status='0' AND (t.priority>=6 OR t.target_date<=?))");
+      params.push(addDays(todayStr(), 2));
+    }
+    if (alternatives.length) where.push("(" + alternatives.join(" OR ") + ")");
+  } else if (tab === 0) {
     where.push("(t.priority >= 6 OR t.target_date <= ?)");
     where.push("t.status='0'");
     params.push(addDays(todayStr(), 2));
@@ -253,13 +280,15 @@ export function listTasks(db, args, api) {
   if (difficultyMissing) filter.difficultyMissing = true;
   if (priorityMin !== null) filter.priorityMin = priorityMin;
   if (priorityMax !== null) filter.priorityMax = priorityMax;
-  if (publishFrom) filter.publishFrom = publishFrom;
-  if (publishTo) filter.publishTo = publishTo;
+  for (const range of ranges) for (const [key, value] of Object.entries(range)) {
+    if (key !== "notices" && value) filter[key] = value;
+  }
+  if (multiStatus) { filter.statuses = statuses; filter.urgent = urgent; }
   if (targetFrom) filter.targetFrom = targetFrom;
   if (targetTo) filter.targetTo = targetTo;
   if (args.sort) filter.sort = String(args.sort) + (args.order ? " " + String(args.order) : "");
-  if (!filterRestarted && (tab === 5 || tab === 8)) filter.filterRestarted = false;
-  if (!tabAll) filter.tabGiven = true;
+  if (!multiStatus && !filterRestarted && (tab === 5 || tab === 8)) filter.filterRestarted = false;
+  if (!multiStatus && !tabAll) filter.tabGiven = true;
   return withNotices({
     records,
     current: pageable ? pageNumber : 1,

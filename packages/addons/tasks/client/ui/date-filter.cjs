@@ -19,6 +19,8 @@ function label(value, en) {
 }
 function DateFilter(props) {
   var en = props.lang === "en", value = props.value;
+  var names = en ? {publish:"Publication",done:"Completion",shutdown:"Closure"} : {publish:"发布",done:"完成",shutdown:"关闭"};
+  var name = names[props.kind] || names.publish, title = name + (en ? " time" : "时间");
   var openS = React.useState(false), open = openS[0], setOpen = openS[1];
   var hintS = React.useState(""), hint = hintS[0], setHint = hintS[1];
   var root = React.useRef(null), trigger = React.useRef(null), id = React.useId();
@@ -39,12 +41,12 @@ function DateFilter(props) {
   }
   return h("div", {ref:root, className:"wbt-publication-filter", style:{position:"relative",display:"inline-flex",alignItems:"center"}},
     h("button", {type:"button",ref:trigger,className:"wbt-btn " + (value.from || value.to ? "primary" : "ghost"),
-      "aria-expanded":open,"aria-controls":id,title:en ? "Publication time" : "发布时间",onClick:function(){setOpen(!open);}}, h(Icon, {name:"calendar"}), h("span", {className:"wbt-date-label"}, label(value,en))),
+      disabled:props.disabled,"aria-label":title,"aria-expanded":open && !props.disabled,"aria-controls":id,title:title,onClick:function(){setOpen(!open);}}, h(Icon, {name:"calendar"}), h("span", {className:"wbt-date-label"}, label(value,en))),
     value.from || value.to ? h("button", {type:"button",className:"wbt-date-clear","aria-label":en ? "Clear time range" : "清除时间范围",onClick:clear}, "×") : null,
-    open ? h("div", {id:id,role:"group","aria-label":en ? "Publication time" : "发布时间",className:"wbt-date-popover"},
+    open && !props.disabled ? h("div", {id:id,role:"group","aria-label":title,className:"wbt-date-popover"},
       h(charts.DateRangePicker, {custom:value,onCustomChange:change,onCustomClear:clear,
         onInvalidInput:function(){setHint(en ? "Enter a valid date" : "请输入有效日期");},
-        fromLabel:en ? "Publication start date" : "发布起始日期",toLabel:en ? "Publication end date" : "发布终止日期",
-        customAria:en ? "Publication date range" : "发布时间范围",clearLabel:en ? "Clear time range" : "清除时间范围",customHint:hint})) : null);
+        fromLabel:name + (en ? " start date" : "起始日期"),toLabel:name + (en ? " end date" : "终止日期"),
+        customAria:name + (en ? " date range" : "时间范围"),clearLabel:en ? "Clear time range" : "清除时间范围",customHint:hint})) : null);
 }
 module.exports = {DateFilter:DateFilter,normalize:normalize,label:label,validDate:validDate};

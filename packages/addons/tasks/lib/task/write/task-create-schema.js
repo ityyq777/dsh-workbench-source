@@ -1,3 +1,5 @@
+import limits from '../../../shared/tree/limits.cjs';
+const { NAME_MAX, PATH_MAX, PATH_LEN_MAX } = limits;
 import { DIFFICULTY_SCHEMA } from "../model/task-difficulty.js";
 /** 单条与批量创建共用的完整参数契约。 */
 export const TASK_CREATE_SCHEMA = {
@@ -9,7 +11,7 @@ export const TASK_CREATE_SCHEMA = {
         description: { type: "string" },
         review: { type: "string", description: "完成后的感受/复盘（自由文本，默认空）" },
         tableId: { type: ["string", "number"], description: "目标存活任务表 id；与 tablePath 恰选一个，无默认表" },
-        tablePath: { type: ['string','array'], items: {type:'string'}, description: '从逻辑根下一层起的精确名称路径；斜杠分隔字符串或字符串数组（名称含斜杠必须用数组）；禁止空段/点段，最多32段、每段20字符、总长2048' },
+        tablePath: { type: ['string','array'], maxLength: PATH_LEN_MAX, maxItems: PATH_MAX, items: {type:'string', maxLength: NAME_MAX}, description: `从逻辑根下一层起的精确名称路径；斜杠分隔字符串或字符串数组（名称含斜杠必须用数组）；禁止空段/点段，最多${PATH_MAX}段、每段${NAME_MAX}字符、总长${PATH_LEN_MAX}（JS length）` },
         createMissing: {type:'boolean',description:'仅tablePath可用；true时事务内建缺失组/表，默认false，不自动推断授权'},
         pathDescriptions: {type:'array',items:{type:'string'},description:'仅createMissing=true可用，长度与路径段相同；每个新节点职责描述必须非空且最多2000字符，已有节点不覆盖'},
         status: { type: ["string", "number"], description: "0=进行中/1=已关闭/2=已完成（不能直接创建 RESTARTED）；source=2 固定为 0；关闭/完成时优先级自动清零，不必手工传 0" },

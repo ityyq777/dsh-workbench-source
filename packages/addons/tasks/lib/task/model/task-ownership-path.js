@@ -1,12 +1,14 @@
 /** 归属路径：从邻接链派生展示信息；不修改历史 ID path。 */
+import limits from '../../../shared/tree/limits.cjs';
+const { NAME_MAX, PATH_MAX, PATH_LEN_MAX } = limits;
 import { ownershipError } from "../../db/ownership-path.js";
 export { ownershipError, pathFromMap } from "../../db/ownership-path.js";
 export function parseTablePath(value) {
   if (typeof value !== 'string' && !Array.isArray(value)) throw ownershipError('INVALID_PATH', 'tablePath 必须为字符串或字符串数组');
   const raw = Array.isArray(value) ? value : value.split('/');
-  if (!raw.length || raw.length > 32 || raw.some(s => typeof s !== 'string') || raw.join('/').length > 2048) throw ownershipError('INVALID_PATH', '路径最多 32 段、总长 2048 字符，且必须是字符串段');
+  if (!raw.length || raw.length > PATH_MAX || raw.some(s => typeof s !== 'string') || raw.join('/').length > PATH_LEN_MAX) throw ownershipError('INVALID_PATH', `路径最多 ${PATH_MAX} 段、总长 ${PATH_LEN_MAX} 字符，且必须是字符串段`);
   const parts = raw.map(s => s.trim());
-  if (parts.some(s => !s || s === '.' || s === '..' || s.length > 20)) throw ownershipError('INVALID_PATH', '禁止空段、点段、首尾斜杠；每段最多 20 字符');
+  if (parts.some(s => !s || s === '.' || s === '..' || s.length > NAME_MAX)) throw ownershipError('INVALID_PATH', `禁止空段、点段、首尾斜杠；每段最多 ${NAME_MAX} 字符`);
   return parts;
 }
 export function ownershipFields(task) {

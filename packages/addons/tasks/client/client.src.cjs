@@ -8,6 +8,7 @@
     module.exports = { name: "dsh-workbench-tasks", inject: [], apply: function () {} };
     return;
   }
+  var limits = require('../shared/tree/limits.cjs');
   var React = require("react");
   var h = React.createElement;
   var TagFilter = require("./ui/tagfilter.cjs");
@@ -236,7 +237,7 @@
         h("div", { className: "wbt-tn", onClick: select, title: node.description ? node.name + "\n" + node.description : node.name },
           editing ? h("input", {
             className: "wbt-input", style: { padding: "2px 6px", fontSize: "12px", width: "150px" },
-            value: props.editName,
+            value: props.editName, maxLength: limits.NAME_MAX,
             autoFocus: true,
             onClick: function (e) { e.stopPropagation(); },
             onChange: function (e) { props.onEditName(e.target.value); },
@@ -284,7 +285,7 @@
     function submit() {
       var name = String(form.name || "").trim();
       if (!name) { setError(t.needName); return; }
-      if (name.length > 20) { setError(t.needName); return; }
+      if (name.length > limits.NAME_MAX) { setError(t === COPY.en ? "Name cannot exceed " + limits.NAME_MAX + " characters" : "名称不能超过 " + limits.NAME_MAX + " 个字符"); return; }
       setBusy(true);
       setError("");
       var desc = String(form.description || "");
@@ -304,11 +305,11 @@
         h("div", { className: "wbt-modal-head" }, h("h3", null, title), h("button", { className: "wbt-icon", onClick: props.onClose }, "×")),
         h("div", { className: "wbt-form" },
           h("label", { className: "wbt-field full" }, h("span", null, t.nodeName + " *"),
-            h("input", { className: "wbt-input", value: form.name, maxLength: 20, autoFocus: true, onChange: function (e) { set("name", e.target.value); } })),
+            h("input", { className: "wbt-input", "aria-label": t.nodeName, value: form.name, maxLength: limits.NAME_MAX, autoFocus: true, onChange: function (e) { set("name", e.target.value); } })),
           h("label", { className: "wbt-field full" }, h("span", null, t.nodeDesc),
             h("textarea", { className: "wbt-textarea", rows: 3, value: form.description, placeholder: t.nodeDescPh, onChange: function (e) { set("description", e.target.value); } }))
         ),
-        error ? h("div", { className: "wbt-err" }, error) : null,
+        error ? h("div", { className: "wbt-err", role: "alert" }, error) : null,
         h("div", { className: "wbt-modal-foot" },
           h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
           h("button", { className: "wbt-btn primary", disabled: isBusy, onClick: submit }, isBusy ? "…" : (editing ? t.save : t.create))
@@ -373,7 +374,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.3.0",
+    version: "3.4.0",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },

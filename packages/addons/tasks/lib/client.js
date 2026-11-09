@@ -38,6 +38,14 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// packages/addons/tasks/shared/tree/limits.cjs
+var require_limits = __commonJS({
+  "packages/addons/tasks/shared/tree/limits.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = Object.freeze({ NAME_MAX: 40, PATH_MAX: 32, PATH_LEN_MAX: 2048 });
+  }
+});
+
 // packages/addons/tasks/client/ui/tagfilter.cjs
 var require_tagfilter = __commonJS({
   "packages/addons/tasks/client/ui/tagfilter.cjs"(exports2, module2) {
@@ -4776,6 +4784,7 @@ var require_styles = __commonJS({
   "packages/addons/tasks/client/ui/styles.cjs"(exports2, module2) {
     "use strict";
     module2.exports = [
+      ".wbt-crumb{min-width:0;max-width:100%}.wbt-crumb button{min-width:0;max-width:100%;overflow-wrap:anywhere}.wbt-path button span{min-width:0;overflow:hidden;text-overflow:ellipsis;overflow-wrap:anywhere}.wbt-modal{box-sizing:border-box}.wbt-field>span,.wbt-ownership-preview{overflow-wrap:anywhere}.wbt-tn .wbt-input{max-width:100%;box-sizing:border-box}.wbt-table-picker .wbt-bpick{box-sizing:border-box}",
       ".wbt-date-popover{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:280px;max-width:calc(100vw - 40px);padding:12px;border-radius:10px;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);background:var(--wbt-bg);box-shadow:0 8px 24px color-mix(in srgb,currentColor 12%,transparent)}.wbt-date-clear{border:0;background:transparent;color:inherit;padding:5px;cursor:pointer;border-radius:4px}.wbt-date-clear:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:1px}",
       ".wbt-body-section{margin-top:5px}.wbt-body-section .wbt-desc,.wbt-body-section .wbt-review{margin-top:0}",
       ".wbt-root{--wbt-hit-bg:#ffe4e6;--wbt-hit-fg:#881337}.wbt-root mark.wbt-hit{background:var(--wbt-hit-bg);color:var(--wbt-hit-fg);border-radius:2px;padding:0;font:inherit;box-decoration-break:clone;-webkit-box-decoration-break:clone}",
@@ -4798,6 +4807,9 @@ var require_styles = __commonJS({
       ".wbt-btn:focus-visible,.wbt-icon:focus-visible,.wbt-tw:focus-visible,.wbt-tool:focus-visible,.wbt-tab:focus-visible,.wbt-tacts button:focus-visible,.wbt-addbtn:focus-visible,.wbt-search-clear:focus-visible{outline:2px solid color-mix(in oklab,var(--wbt-accent) 55%,transparent);outline-offset:1px}",
       ".wbt-search{width:220px;max-width:46vw}",
       ".wbt-body{display:flex;gap:14px;align-items:flex-start;min-height:0;flex:1}",
+      ".wbt-filter-panel{position:sticky;top:12px;align-self:flex-start;flex:0 0 248px;width:248px;min-width:0;max-height:calc(100vh - 32px);overflow-y:auto;overscroll-behavior:contain;border:1px solid var(--wbt-line);border-radius:10px;background:var(--wbt-bg);box-sizing:border-box;padding:12px}",
+      ".wbt-filter-content{display:flex;flex-direction:column;gap:12px}.wbt-filter-toggle{display:none}.wbt-filter-group{display:flex;flex-direction:column;gap:8px;min-width:0;margin:0;padding:10px 0;border:0;border-bottom:1px solid var(--wbt-line)}.wbt-filter-group legend{font-weight:600;padding:0}.wbt-filter-search{display:flex;gap:4px}.wbt-filter-search input{width:100%;min-width:0}.wbt-filter-panel .wbt-check{white-space:normal}.wbt-filter-panel .wbt-tagmenu{position:static;width:100%;box-sizing:border-box;max-height:240px}.wbt-filter-panel .wbt-tagfilter{flex-wrap:wrap}.wbt-filter-panel input:disabled{opacity:.45;cursor:not-allowed}.wbt-filter-panel .wbt-mhint{margin:0;line-height:1.6}.wbt-filter-panel .wbt-field input{width:100%;box-sizing:border-box}",
+      ".wbt-filter-panel .wbt-publication-filter{flex-wrap:wrap;gap:4px;width:100%}.wbt-filter-panel .wbt-date-popover{position:static;min-width:0;width:100%;max-width:100%;box-sizing:border-box}.wbt-filter-panel .wbt-date-popover input{min-width:0;max-width:100%;box-sizing:border-box}",
       ".wbt-nav{display:flex;flex-direction:column;gap:2px;flex:0 0 138px;width:138px;padding:3px 0;border-right:1px solid var(--wbt-line)}",
       ".wbt-content{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}",
       ".wbt-nav-sep{height:1px;background:var(--wbt-line);margin:5px 9px;opacity:.7}",
@@ -4987,6 +4999,7 @@ var require_styles = __commonJS({
       ".wbt-countdown.soon{background:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 14%,transparent);border-color:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 32%,transparent)}",
       ".wbt-countdown.overdue{color:var(--dsw-alias-label-primary-inverted,#fff);background:var(--dsw-alias-state-error-primary,#e5484d);border-color:transparent}",
       "@media (max-width:760px){.wbt-body{flex-direction:column;gap:8px}.wbt-nav{flex-direction:row;width:100%;flex:0 0 auto;overflow-x:auto;border-right:none;border-bottom:1px solid var(--wbt-line);padding:0 0 6px}.wbt-tab{width:auto;white-space:nowrap;padding:6px 9px}.wbt-tab.on{box-shadow:inset 0 -2px 0 var(--wbt-accent)}.wbt-nav-sep{width:1px;height:18px;flex:none;margin:auto 4px}.wbt-tree-slot{flex:0 0 auto;width:auto;margin-right:0}.wbt-pathrow .wbt-search{flex:1 1 160px;max-width:none}}",
+      "@media (max-width:760px){.wbt-filter-panel{width:100%;flex:0 0 auto;z-index:20;padding:8px;top:8px;max-height:calc(100vh - 24px)}.wbt-filter-toggle{display:inline-flex}.wbt-filter-heading{display:none}.wbt-filter-panel:not(.expanded) .wbt-filter-content{display:none}.wbt-filter-panel.expanded .wbt-filter-content{padding-top:10px}.wbt-content{width:100%;box-sizing:border-box}}",
       "@media (max-width:420px){.wbt-grid{grid-template-columns:1fr}}",
       "@media (max-width:640px){.wbt-form{grid-template-columns:1fr}.wbt-drawer{width:94vw}.wbt-search{width:100%}.wbt-item{padding:9px}.wbt-ops{width:100%;justify-content:flex-end}}"
     ].join("\n");
@@ -5395,6 +5408,7 @@ var require_difficulty_field = __commonJS({
 var require_ownership = __commonJS({
   "packages/addons/tasks/client/modals/ownership.cjs"(exports2, module2) {
     "use strict";
+    var limits = require_limits();
     function tables(nodes, parents) {
       var out = [], prefix = parents || [];
       (nodes || []).forEach(function(n) {
@@ -5409,9 +5423,9 @@ var require_ownership = __commonJS({
       var parts = String(path || "").split("/").map(function(s) {
         return s.trim();
       });
-      if (!path || path.length > 2048 || parts.length > 32 || parts.some(function(s) {
-        return !s || s === "." || s === ".." || s.length > 20;
-      })) return { error: "\u8BF7\u8F93\u5165\u76F8\u5BF9\u4E8E\u6839\u7684\u6709\u6548\u8DEF\u5F84\uFF1B\u6BCF\u6BB5 1\u201320 \u5B57\uFF0C\u6700\u591A 32 \u6BB5\uFF0C\u4E0D\u542B\u9996\u5C3E\u659C\u6760\u3002", nodes: [] };
+      if (!path || path.length > limits.PATH_LEN_MAX || parts.length > limits.PATH_MAX || parts.some(function(s) {
+        return !s || s === "." || s === ".." || s.length > limits.NAME_MAX;
+      })) return { error: "\u8BF7\u8F93\u5165\u76F8\u5BF9\u4E8E\u6839\u7684\u6709\u6548\u8DEF\u5F84\uFF1B\u6BCF\u6BB5 1\u2013" + limits.NAME_MAX + " \u5B57\u7B26\uFF0C\u6700\u591A " + limits.PATH_MAX + " \u6BB5\u3001\u603B\u957F " + limits.PATH_LEN_MAX + " \u5B57\u7B26\uFF0C\u4E0D\u542B\u9996\u5C3E\u659C\u6760\u3002", nodes: [] };
       var roots = (tree || []).filter(function(n) {
         return String(n.type) === "2" && !n.deletedAt && !n.deleted_at;
       });
@@ -5562,6 +5576,7 @@ var require_table_picker = __commonJS({
                 "div",
                 {
                   key: n.id,
+                  title: n.path,
                   id: table ? optionId(n) : void 0,
                   role: table ? "option" : "presentation",
                   "aria-label": table ? n.name + "\uFF0C" + n.groupPath : void 0,
@@ -5604,6 +5619,7 @@ var require_table_picker = __commonJS({
 var require_ownership_fields = __commonJS({
   "packages/addons/tasks/client/modals/ownership-fields.cjs"(exports2, module2) {
     "use strict";
+    var limits = require_limits();
     var ownership = require_ownership();
     module2.exports = function(React) {
       var h = React.createElement;
@@ -5669,20 +5685,21 @@ var require_ownership_fields = __commonJS({
           form.newPath ? h(
             "div",
             null,
-            h("label", null, "\u65B0\u8DEF\u5F84\uFF08\u76F8\u5BF9\u4E8E\u6839\uFF1B\u4EE5 / \u5206\u9694\uFF09", h("input", {
+            h("label", { className: "wbt-field full" }, "\u65B0\u8DEF\u5F84\uFF08\u76F8\u5BF9\u4E8E\u6839\uFF1B\u4EE5 / \u5206\u9694\uFF09", h("input", {
               className: "wbt-input",
               "aria-label": "\u65B0\u8DEF\u5F84",
               value: form.tablePath,
+              maxLength: limits.PATH_LEN_MAX,
               onChange: function(e) {
                 props.setMany({ tablePath: e.target.value, pathDescriptions: [], confirmed: false });
               }
             })),
-            h("div", { className: "wbt-mhint" }, "\u9884\u89C8\uFF1A" + (plan.path || "\u8BF7\u8F93\u5165\u8DEF\u5F84") + "\u3002\u5DF2\u6709\u8282\u70B9\u4F1A\u590D\u7528\uFF0C\u63D0\u4EA4\u524D\u4E0D\u4F1A\u5199\u5165\u3002"),
+            h("div", { className: "wbt-mhint wbt-ownership-preview", title: plan.path }, "\u9884\u89C8\uFF1A" + (plan.path || "\u8BF7\u8F93\u5165\u8DEF\u5F84") + "\u3002\u5DF2\u6709\u8282\u70B9\u4F1A\u590D\u7528\uFF0C\u63D0\u4EA4\u524D\u4E0D\u4F1A\u5199\u5165\u3002"),
             plan.nodes.map(function(node, i) {
               return h(
                 "label",
                 { key: i, className: "wbt-field full" },
-                h("span", null, (node.existing ? "\u590D\u7528" : "\u65B0\u5EFA") + (node.type === "1" ? "\u8868\uFF1A" : "\u7EC4\uFF1A") + node.name),
+                h("span", { title: node.name }, (node.existing ? "\u590D\u7528" : "\u65B0\u5EFA") + (node.type === "1" ? "\u8868\uFF1A" : "\u7EC4\uFF1A") + node.name),
                 !node.existing ? h("textarea", {
                   className: "wbt-textarea",
                   "aria-label": "\u8282\u70B9\u804C\u8D23 " + (i + 1),
@@ -6325,26 +6342,6 @@ var require_batch_modal = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/stats/activity-filter.cjs
-var require_activity_filter = __commonJS({
-  "packages/addons/tasks/client/stats/activity-filter.cjs"(exports2, module2) {
-    var React = require("react");
-    var h = React.createElement;
-    var model = require_heatmap_model();
-    function ActivityFilter(props) {
-      if (!props.value) return null;
-      var t = model.COPY[props.lang === "en" ? "en" : "zh"];
-      return h(
-        "span",
-        { className: "wbt-row", "data-activity-filter": true },
-        h("span", null, t.filter + " \xB7 " + props.value.activityDate + " \xB7 " + t[props.value.activityType]),
-        h("button", { type: "button", className: "wbt-btn ghost", onClick: props.onClear }, t.clear)
-      );
-    }
-    module2.exports = { ActivityFilter, params: model.activityParams };
-  }
-});
-
 // packages/addons/tasks/client/ui/date-filter.cjs
 var require_date_filter = __commonJS({
   "packages/addons/tasks/client/ui/date-filter.cjs"(exports2, module2) {
@@ -6369,6 +6366,8 @@ var require_date_filter = __commonJS({
     }
     function DateFilter(props) {
       var en = props.lang === "en", value = props.value;
+      var names = en ? { publish: "Publication", done: "Completion", shutdown: "Closure" } : { publish: "\u53D1\u5E03", done: "\u5B8C\u6210", shutdown: "\u5173\u95ED" };
+      var name = names[props.kind] || names.publish, title = name + (en ? " time" : "\u65F6\u95F4");
       var openS = React.useState(false), open = openS[0], setOpen = openS[1];
       var hintS = React.useState(""), hint = hintS[0], setHint = hintS[1];
       var root = React.useRef(null), trigger = React.useRef(null), id = React.useId();
@@ -6414,17 +6413,19 @@ var require_date_filter = __commonJS({
           type: "button",
           ref: trigger,
           className: "wbt-btn " + (value.from || value.to ? "primary" : "ghost"),
-          "aria-expanded": open,
+          disabled: props.disabled,
+          "aria-label": title,
+          "aria-expanded": open && !props.disabled,
           "aria-controls": id,
-          title: en ? "Publication time" : "\u53D1\u5E03\u65F6\u95F4",
+          title,
           onClick: function() {
             setOpen(!open);
           }
         }, h(Icon2, { name: "calendar" }), h("span", { className: "wbt-date-label" }, label(value, en))),
         value.from || value.to ? h("button", { type: "button", className: "wbt-date-clear", "aria-label": en ? "Clear time range" : "\u6E05\u9664\u65F6\u95F4\u8303\u56F4", onClick: clear }, "\xD7") : null,
-        open ? h(
+        open && !props.disabled ? h(
           "div",
-          { id, role: "group", "aria-label": en ? "Publication time" : "\u53D1\u5E03\u65F6\u95F4", className: "wbt-date-popover" },
+          { id, role: "group", "aria-label": title, className: "wbt-date-popover" },
           h(charts.DateRangePicker, {
             custom: value,
             onCustomChange: change,
@@ -6432,9 +6433,9 @@ var require_date_filter = __commonJS({
             onInvalidInput: function() {
               setHint(en ? "Enter a valid date" : "\u8BF7\u8F93\u5165\u6709\u6548\u65E5\u671F");
             },
-            fromLabel: en ? "Publication start date" : "\u53D1\u5E03\u8D77\u59CB\u65E5\u671F",
-            toLabel: en ? "Publication end date" : "\u53D1\u5E03\u7EC8\u6B62\u65E5\u671F",
-            customAria: en ? "Publication date range" : "\u53D1\u5E03\u65F6\u95F4\u8303\u56F4",
+            fromLabel: name + (en ? " start date" : "\u8D77\u59CB\u65E5\u671F"),
+            toLabel: name + (en ? " end date" : "\u7EC8\u6B62\u65E5\u671F"),
+            customAria: name + (en ? " date range" : "\u65F6\u95F4\u8303\u56F4"),
             clearLabel: en ? "Clear time range" : "\u6E05\u9664\u65F6\u95F4\u8303\u56F4",
             customHint: hint
           })
@@ -6445,12 +6446,153 @@ var require_date_filter = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/views/task-filter-model.cjs
+var require_task_filter_model = __commonJS({
+  "packages/addons/tasks/client/views/task-filter-model.cjs"(exports2, module2) {
+    var date = require_date_filter();
+    var groups = ["publish", "done", "shutdown"];
+    function all(value) {
+      return !value.statuses.length && !value.urgent;
+    }
+    function empty() {
+      return { statuses: [], urgent: false, publish: { from: "", to: "" }, done: { from: "", to: "" }, shutdown: { from: "", to: "" } };
+    }
+    function fromTab(tab) {
+      var value = empty(), status = { 5: "1", 6: "0", 7: "2" }[tab];
+      if (status) value.statuses = [status];
+      value.urgent = Number(tab) === 0;
+      return value;
+    }
+    function includes(value, status) {
+      return all(value) || value.statuses.indexOf(status) >= 0;
+    }
+    function toggle(value, key) {
+      var next = Object.assign({}, value, { statuses: value.statuses.slice() });
+      if (key === "all") {
+        next.statuses = [];
+        next.urgent = false;
+      } else if (key === "urgent") next.urgent = !value.urgent;
+      else {
+        var index = next.statuses.indexOf(key);
+        if (index >= 0) next.statuses.splice(index, 1);
+        else next.statuses.push(key);
+      }
+      if (!includes(next, "2")) next.done = { from: "", to: "" };
+      if (!includes(next, "1")) next.shutdown = { from: "", to: "" };
+      return next;
+    }
+    function enable(value, key) {
+      var status = key === "done" ? "2" : "1";
+      return Object.assign({}, value, { statuses: all(value) ? [status] : Array.from(new Set(value.statuses.concat(status))) });
+    }
+    function range(value, key, input) {
+      var normalized = date.normalize(input);
+      if (!normalized) return null;
+      var next = value;
+      if (key !== "publish" && (normalized.from || normalized.to)) next = enable(value, key);
+      next = Object.assign({}, next);
+      next[key] = { from: normalized.from, to: normalized.to };
+      return { value: next, swapped: normalized.swapped, autoSelected: all(value) && key !== "publish" && !!(normalized.from || normalized.to) };
+    }
+    function args(value) {
+      var out = { statuses: value.statuses.map(Number), urgent: value.urgent };
+      groups.forEach(function(key) {
+        out[key + "From"] = value[key].from || void 0;
+        out[key + "To"] = value[key].to || void 0;
+      });
+      return out;
+    }
+    function navigation(params) {
+      if (!params) return null;
+      if (params.activityDate && date.validDate(params.activityDate)) {
+        var type = groups.indexOf(params.activityType) >= 0 ? params.activityType : "done";
+        return range(empty(), type, { from: params.activityDate, to: params.activityDate }).value;
+      }
+      if (params.filterRoot !== true) return null;
+      var value = empty();
+      groups.forEach(function(key) {
+        var result = range(value, key, { from: params[key + "From"] || "", to: params[key + "To"] || "" });
+        if (result) value = result.value;
+      });
+      return value;
+    }
+    module2.exports = { groups, all, empty, fromTab, includes, toggle, enable, range, args, navigation };
+  }
+});
+
+// packages/addons/tasks/client/views/task-filter-panel.cjs
+var require_task_filter_panel = __commonJS({
+  "packages/addons/tasks/client/views/task-filter-panel.cjs"(exports2, module2) {
+    var model = require_task_filter_model();
+    var DateFilter = require_date_filter().DateFilter;
+    module2.exports = function renderFilterPanel(React, p) {
+      var h = React.createElement, en = p.lang === "en", value = p.value;
+      var title = en ? "Filters" : "\u7B5B\u9009";
+      var labels = en ? { publish: "Publication range", done: "Completion range", shutdown: "Closure range" } : { publish: "\u53D1\u5E03\u65F6\u95F4\u8303\u56F4", done: "\u5B8C\u6210\u65F6\u95F4\u8303\u56F4", shutdown: "\u5173\u95ED\u65F6\u95F4\u8303\u56F4" };
+      var options = [["all", en ? "All" : "\u5168\u90E8"], ["urgent", en ? "Urgent tasks" : "\u7D27\u6025\u4EFB\u52A1"], ["0", en ? "Opened" : "\u5DF2\u5F00\u542F"], ["2", en ? "Completed" : "\u5DF2\u5B8C\u6210"], ["1", en ? "Closed" : "\u5DF2\u5173\u95ED"], ["3", en ? "Restarted" : "\u5DF2\u91CD\u542F"]];
+      function change(next) {
+        p.onChange(next);
+      }
+      function setRange(key, input) {
+        var result = model.range(value, key, input);
+        if (!result) {
+          p.onHint(en ? "Enter a valid date" : "\u8BF7\u8F93\u5165\u6709\u6548\u65E5\u671F");
+          return;
+        }
+        var hints = [];
+        if (result.swapped) hints.push(en ? "Start was after end; dates swapped" : "\u8D77\u59CB\u665A\u4E8E\u7EC8\u6B62\uFF0C\u5DF2\u4EA4\u6362");
+        if (result.autoSelected) hints.push(en ? "Corresponding status selected automatically" : "\u5DF2\u81EA\u52A8\u52FE\u9009\u5BF9\u5E94\u72B6\u6001");
+        p.onHint(hints.join(" \xB7 "));
+        change(result.value);
+      }
+      return h(
+        "aside",
+        { className: "wbt-filter-panel" + (p.open ? " expanded" : ""), "aria-label": title },
+        h("button", { type: "button", className: "wbt-btn wbt-filter-toggle", "aria-expanded": p.open, "aria-controls": p.id, onClick: p.onToggle }, title),
+        h(
+          "div",
+          { className: "wbt-filter-content", id: p.id },
+          h("strong", { className: "wbt-filter-heading" }, title),
+          h("fieldset", { className: "wbt-filter-group" }, h("legend", null, en ? "Status (match any)" : "\u72B6\u6001\uFF08\u6EE1\u8DB3\u4EFB\u4E00\uFF09"), options.map(function(option) {
+            var key = option[0], checked = key === "all" ? model.all(value) : key === "urgent" ? value.urgent : value.statuses.indexOf(key) >= 0;
+            return h("label", { key, className: "wbt-check" }, h("input", { type: "checkbox", checked, "data-status": key, onChange: function() {
+              change(model.toggle(value, key));
+              p.onHint("");
+            } }), option[1]);
+          })),
+          p.search,
+          h("div", { className: "wbt-filter-group" }, p.tags, p.missing),
+          h("p", { className: "wbt-mhint" }, en ? "Date ranges are inclusive and combined with AND." : "\u4E09\u7EC4\u65E5\u671F\u4E3A\u95ED\u533A\u95F4\uFF0C\u7EC4\u95F4\u540C\u65F6\u6EE1\u8DB3\uFF08AND\uFF09\u3002"),
+          model.groups.map(function(key) {
+            var enabled = key === "publish" || model.includes(value, key === "done" ? "2" : "1");
+            var stateName = key === "done" ? en ? "Completed" : "\u5DF2\u5B8C\u6210" : en ? "Closed" : "\u5DF2\u5173\u95ED";
+            return h(
+              "section",
+              { key, className: "wbt-filter-group", "aria-label": labels[key] },
+              h("strong", null, labels[key]),
+              h(DateFilter, { lang: p.lang, kind: key, value: value[key], disabled: !enabled, onChange: function(next) {
+                setRange(key, next);
+              } }),
+              !enabled ? h("div", { className: "wbt-mhint" }, en ? "Select the corresponding status to enable this range." : "\u8BF7\u52FE\u9009\u5BF9\u5E94\u72B6\u6001\u540E\u4F7F\u7528\u6B64\u8303\u56F4\u3002", h("button", { type: "button", className: "wbt-btn ghost", onClick: function() {
+                change(model.enable(value, key));
+                p.onHint(en ? "Status enabled" : "\u5DF2\u542F\u7528\u5BF9\u5E94\u72B6\u6001");
+              } }, (en ? "Enable " : "\u542F\u7528") + stateName)) : null
+            );
+          }),
+          (value.done.from || value.done.to) && (value.shutdown.from || value.shutdown.to) ? h("div", { className: "wbt-mhint", role: "status" }, en ? "Completion and closure ranges require different statuses; their intersection is empty." : "\u5B8C\u6210\u4E0E\u5173\u95ED\u8303\u56F4\u8981\u6C42\u4E0D\u540C\u72B6\u6001\uFF0C\u540C\u65F6\u586B\u5199\u65F6\u4EA4\u96C6\u4E3A\u7A7A\u3002") : null,
+          p.hint ? h("div", { className: "wbt-mhint", role: "status" }, p.hint) : null
+        )
+      );
+    };
+  }
+});
+
 // packages/addons/tasks/client/views/tasks-view.cjs
 var require_tasks_view = __commonJS({
   "packages/addons/tasks/client/views/tasks-view.cjs"(exports2, module2) {
     module2.exports = function createTasksView(deps) {
-      var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, TABS = deps.TABS, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon2 = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
-      var h = React.createElement, activityFilter = require_activity_filter(), DateFilter = require_date_filter().DateFilter;
+      var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon2 = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
+      var h = React.createElement, filters = require_task_filter_model(), renderFilters = require_task_filter_panel();
       function TasksView(props) {
         var lang = props.lang === "en" ? "en" : "zh";
         var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -6474,8 +6616,7 @@ var require_tasks_view = __commonJS({
         var t = COPY[props.lang === "en" ? "en" : "zh"];
         var api = props.api;
         var cfg = props.cfg || {};
-        var activityNavigation = activityFilter.params(props.viewParams);
-        var activityS = React.useState(activityNavigation), activity = activityS[0], setActivity = activityS[1];
+        var activityNavigation = filters.navigation(props.viewParams);
         var tableNavigation = !activityNavigation && props.viewParams && props.viewParams.tableId;
         var cfgTab = Number(cfg["ui.defaultTab"]);
         if ([0, 5, 6, 7, 8].indexOf(cfgTab) < 0) cfgTab = 0;
@@ -6497,8 +6638,11 @@ var require_tasks_view = __commonJS({
         var initialMissing = !activityNavigation && !tableNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
         var missingS = React.useState(initialMissing);
         var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
-        var tabS = React.useState(activityNavigation || tableNavigation || initialMissing ? 8 : cfgTab);
-        var tab = tabS[0], setTab = tabS[1];
+        var filterState = React.useState(activityNavigation || filters.fromTab(tableNavigation || initialMissing ? 8 : cfgTab));
+        var filterValue = filterState[0], setFilterValue = filterState[1];
+        var panelState = React.useState(false), panelOpen = panelState[0], setPanelOpen = panelState[1];
+        var hintState = React.useState(""), filterHint = hintState[0], setFilterHint = hintState[1];
+        var panelId = React.useId();
         var viewS = React.useState(!tableNavigation && cfg["ui.listView"] === "card" ? "card" : "list");
         var view = viewS[0], setView = viewS[1];
         var searchS = React.useState("");
@@ -6507,13 +6651,10 @@ var require_tasks_view = __commonJS({
         var treeQuery = tqS[0], setTreeQuery = tqS[1];
         var titleS = React.useState("");
         var titleKey = titleS[0], setTitleKey = titleS[1];
-        var filterS = React.useState(activityNavigation || tableNavigation || initialMissing ? false : cfg["list.filterRestarted"] !== false);
-        var filterRestarted = filterS[0], setFilterRestarted = filterS[1];
         var tagReloadS = React.useState(0);
         var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
         var filterTagIdsS = React.useState([]);
         var filterTagIds = filterTagIdsS[0], setFilterTagIds = filterTagIdsS[1];
-        var datesS = React.useState({ from: "", to: "" }), dates = datesS[0], setDates = datesS[1];
         var pageS = React.useState(1);
         var pageNumber = pageS[0], setPageNumber = pageS[1];
         var sizeS = React.useState(cfgSize);
@@ -6561,19 +6702,17 @@ var require_tasks_view = __commonJS({
         var refreshRef = React.useRef({});
         React.useEffect(function() {
           if (!activityNavigation) return;
-          setActivity(activityNavigation);
+          setFilterValue(activityNavigation);
           setTarget({ groupId: "1", tableId: null });
-          setTab(8);
-          setFilterRestarted(false);
           setDifficultyMissing(false);
+          setFilterHint("");
           setSearchDraft("");
           setTitleKey("");
           setFilterTagIds([]);
-          setDates({ from: "", to: "" });
           setPageNumber(1);
           setSelectedIds(/* @__PURE__ */ new Set());
           setSelectionMode(false);
-        }, [props.viewParams && props.viewParams.activityDate, props.viewParams && props.viewParams.activityType]);
+        }, [JSON.stringify(props.viewParams || {})]);
         function say(msg) {
           setToast(String(msg || ""));
         }
@@ -6644,19 +6783,15 @@ var require_tasks_view = __commonJS({
         var refreshList = React.useCallback(function() {
           setLoading(true);
           return api.call("tasks.list", Object.assign({
-            tab,
             titleKey,
-            publishFrom: dates.from || void 0,
-            publishTo: dates.to || void 0,
             tableId: target.tableId,
             groupId: target.tableId ? null : target.groupId,
             pageNumber,
             pageSize,
-            filterRestarted,
             tagIds: filterTagIds,
             difficultyMissing,
             sort: tableNavigation || cfgSort === "auto" ? void 0 : cfgSort
-          }, activity || {})).then(function(r) {
+          }, filters.args(filterValue))).then(function(r) {
             setLoading(false);
             if (r && r.ok) {
               setData(r.result || { records: [], total: 0, current: 1, size: 0, pageable: false });
@@ -6668,7 +6803,7 @@ var require_tasks_view = __commonJS({
             setLoading(false);
             setError(String(e && e.message || e));
           });
-        }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, difficultyMissing, cfgSort, activity, dates.from, dates.to]);
+        }, [api, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterTagIds, difficultyMissing, cfgSort, filterValue]);
         refreshRef.current = { tree: refreshTree, list: refreshList, path: refreshPath, tags: refreshTagNav };
         React.useEffect(function() {
           injectCss();
@@ -6851,7 +6986,7 @@ var require_tasks_view = __commonJS({
           say(t.updated);
         }
         var tables = allTables(tree);
-        var pageable = tab > 4 && tab < 9;
+        var pageable = true;
         var totalPages = pageable && data.total ? Math.ceil(data.total / pageSize) : 1;
         var treeProps = {
           t,
@@ -6929,33 +7064,52 @@ var require_tasks_view = __commonJS({
           return h(TreeNode, Object.assign({}, treeProps, { key: n.id, node: n, depth: 0 }));
         });
         var curDesc = curNode ? String(curNode.description || "") : "";
-        var filterBar = h(
-          "div",
-          { className: "wbt-filters" },
-          h(activityFilter.ActivityFilter, { value: activity, lang: props.lang, onClear: function() {
-            setActivity(null);
+        var filterPanel = renderFilters(React, {
+          lang: props.lang,
+          value: filterValue,
+          open: panelOpen,
+          id: panelId,
+          hint: filterHint,
+          onHint: setFilterHint,
+          onToggle: function() {
+            setPanelOpen(!panelOpen);
+          },
+          onChange: function(next) {
+            setFilterValue(next);
             setPageNumber(1);
-          } }),
-          pageable ? h("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
-          h(
-            "label",
-            { className: "wbt-check" },
-            h("input", { type: "checkbox", checked: difficultyMissing, onChange: function(e) {
+          },
+          search: h(
+            "form",
+            { className: "wbt-filter-search", onSubmit: function(e) {
+              e.preventDefault();
+              setTitleKey(searchDraft);
+              setPageNumber(1);
+            } },
+            h("input", { className: "wbt-input", placeholder: t.search, "aria-label": t.search, value: searchDraft, onChange: function(e) {
+              setSearchDraft(e.target.value);
+            } }),
+            h("button", { type: "submit", className: "wbt-btn ghost", "aria-label": t.search }, h(Icon2, { name: "search", size: 14 }))
+          ),
+          tags: h(TagFilter, {
+            api,
+            t,
+            Icon: Icon2,
+            ids: filterTagIds,
+            reloadKey: tagReload,
+            onChange: function(next) {
+              setFilterTagIds(next);
+              setPageNumber(1);
+            }
+          }),
+          missing: h("label", { className: "wbt-check" }, h("input", {
+            type: "checkbox",
+            checked: difficultyMissing,
+            onChange: function(e) {
               setDifficultyMissing(e.target.checked);
               setPageNumber(1);
-            } }),
-            t.difficultyMissing
-          ),
-          tab === 5 || tab === 8 ? h(
-            "label",
-            { className: "wbt-check" },
-            h("input", { type: "checkbox", checked: filterRestarted, onChange: function(e) {
-              setFilterRestarted(e.target.checked);
-              setPageNumber(1);
-            } }),
-            t.filterRestarted
-          ) : null
-        );
+            }
+          }), t.difficultyMissing)
+        });
         var listBody = loading ? h("div", { className: "wbt-empty" }, t.loading) : error ? h("div", { className: "wbt-err" }, t.error + error) : data.records.length === 0 ? h("div", { className: "wbt-empty" }, t.empty) : h("div", { className: view === "card" ? "wbt-grid" : "wbt-list" }, data.records.map(function(task) {
           return h(TaskItem, {
             key: task.id,
@@ -7003,24 +7157,6 @@ var require_tasks_view = __commonJS({
             ),
             h(PathCrumbs, { path: currentPath, onPick: pickPath }),
             h("div", { className: "wbt-grow" }),
-            h("input", {
-              className: "wbt-input wbt-search",
-              placeholder: t.search,
-              value: searchDraft,
-              onChange: function(e) {
-                setSearchDraft(e.target.value);
-              },
-              onKeyDown: function(e) {
-                if (e.key === "Enter") {
-                  setTitleKey(searchDraft);
-                  setPageNumber(1);
-                }
-              }
-            }),
-            h("button", { className: "wbt-btn ghost", title: t.search, "aria-label": t.search, onClick: function() {
-              setTitleKey(searchDraft);
-              setPageNumber(1);
-            } }, h(Icon2, { name: "search", size: 14 })),
             h("button", {
               className: "wbt-btn ghost",
               title: t.refresh,
@@ -7037,21 +7173,6 @@ var require_tasks_view = __commonJS({
                 clearSelection();
               } else setSelectionMode(true);
             } }, h(Icon2, { name: "select", size: 13 }), selectionMode ? t.cancelSelect : t.select),
-            h(DateFilter, { value: dates, lang: props.lang, onChange: function(next) {
-              setDates(next);
-              setPageNumber(1);
-            } }),
-            h(TagFilter, {
-              api,
-              t,
-              Icon: Icon2,
-              ids: filterTagIds,
-              reloadKey: tagReload,
-              onChange: function(next) {
-                setFilterTagIds(next);
-                setPageNumber(1);
-              }
-            }),
             h("button", { className: "wbt-btn primary", onClick: function() {
               setCreateState({ source: "0", originTask: null, defaultTableId: target.tableId });
             } }, h(Icon2, { name: "plus", size: 14 }), t.newTask),
@@ -7063,22 +7184,11 @@ var require_tasks_view = __commonJS({
           h(
             "div",
             { className: "wbt-body" },
-            h("nav", { className: "wbt-nav" }, TABS.map(function(x) {
-              var btn = h("button", {
-                key: x.id,
-                className: "wbt-tab" + (tab === x.id ? " on" : ""),
-                onClick: function() {
-                  setTab(x.id);
-                  setPageNumber(1);
-                }
-              }, t === COPY.zh ? x.zh : x.en);
-              if (x.id !== 5) return btn;
-              return [h("div", { key: "nav-sep", className: "wbt-nav-sep" }), btn];
-            })),
+            filterPanel,
             h(
               "div",
               { className: "wbt-content" },
-              filterBar,
+              h("span", { className: "wbt-sum", role: "status" }, t.total + " " + data.total + " " + t.items),
               listBody,
               pageable ? h(
                 "div",
@@ -7839,6 +7949,7 @@ var require_timeline_view = __commonJS({
     } };
     return;
   }
+  var limits = require_limits();
   var React = require("react");
   var h = React.createElement;
   var TagFilter = require_tagfilter();
@@ -8090,6 +8201,7 @@ var require_timeline_view = __commonJS({
             className: "wbt-input",
             style: { padding: "2px 6px", fontSize: "12px", width: "150px" },
             value: props.editName,
+            maxLength: limits.NAME_MAX,
             autoFocus: true,
             onClick: function(e) {
               e.stopPropagation();
@@ -8157,8 +8269,8 @@ var require_timeline_view = __commonJS({
         setError(t.needName);
         return;
       }
-      if (name.length > 20) {
-        setError(t.needName);
+      if (name.length > limits.NAME_MAX) {
+        setError(t === COPY.en ? "Name cannot exceed " + limits.NAME_MAX + " characters" : "\u540D\u79F0\u4E0D\u80FD\u8D85\u8FC7 " + limits.NAME_MAX + " \u4E2A\u5B57\u7B26");
         return;
       }
       setBusy(true);
@@ -8195,7 +8307,7 @@ var require_timeline_view = __commonJS({
             "label",
             { className: "wbt-field full" },
             h("span", null, t.nodeName + " *"),
-            h("input", { className: "wbt-input", value: form.name, maxLength: 20, autoFocus: true, onChange: function(e) {
+            h("input", { className: "wbt-input", "aria-label": t.nodeName, value: form.name, maxLength: limits.NAME_MAX, autoFocus: true, onChange: function(e) {
               set("name", e.target.value);
             } })
           ),
@@ -8208,7 +8320,7 @@ var require_timeline_view = __commonJS({
             } })
           )
         ),
-        error ? h("div", { className: "wbt-err" }, error) : null,
+        error ? h("div", { className: "wbt-err", role: "alert" }, error) : null,
         h(
           "div",
           { className: "wbt-modal-foot" },
@@ -8288,7 +8400,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.3.0",
+    version: "3.4.0",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

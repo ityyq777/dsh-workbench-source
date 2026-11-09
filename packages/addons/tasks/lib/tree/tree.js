@@ -1,3 +1,5 @@
+import limits from '../../shared/tree/limits.cjs';
+const { NAME_MAX } = limits;
 import { taskTransaction } from '../task/write/task-transaction.js';
 import { insertOwnedNode, validateNodePlacement } from './task-node-write.js';
 import { pathFromMap } from '../task/model/task-ownership-path.js';
@@ -151,7 +153,7 @@ function renameAction(db, args, origin, api, inside = false) {
   if (!node) throw new Error("节点不存在：" + (id || "(空)"));
   const name = String(args.name === undefined || args.name === null ? "" : args.name).trim();
   if (!name) throw new Error("name 不能为空");
-  if (name.length > 20) throw new Error("name 不能超过 20 个字符");
+  if (name.length > NAME_MAX) throw new Error(`name 不能超过 ${NAME_MAX} 个字符`);
   if (name === String(node.name)) throw new Error("新名称与旧名称相同");
   pathFromMap(node.id,nodeMap(db));
   if (String(node.parent_id) !== '0') validateNodePlacement(db,node.parent_id,name,node.id);
@@ -350,7 +352,7 @@ function updateNodeAction(db, args, origin, api, inside = false) {
   if (hasName) {
     const name = String(args.name === null ? "" : args.name).trim();
     if (!name) throw new Error("name 不能为空");
-    if (name.length > 20) throw new Error("name 不能超过 20 个字符");
+    if (name.length > NAME_MAX) throw new Error(`name 不能超过 ${NAME_MAX} 个字符`);
     if (name !== String(node.name)) {
       if (String(node.parent_id) !== '0') validateNodePlacement(db,node.parent_id,name,node.id);
       next.name = name;
@@ -435,7 +437,7 @@ export function registerTreeActions(api) {
       properties: {
         parentId: { type: ["string", "number"] },
         type: { type: ["string", "number"] },
-        name: { type: "string" },
+        name: { type: "string", maxLength: NAME_MAX, description: `名称最多 ${NAME_MAX} 个字符（JS length）` },
         description: { type: "string", description: "表/组描述，可多行；表描述可用于按关键词定位表，最长 2000 字" },
       },
     },
@@ -445,7 +447,7 @@ export function registerTreeActions(api) {
 
   action("taskNodes.rename", {
     description: "重命名任务组/任务表",
-    input: { type: "object", properties: { id: { type: ["string", "number"] }, nodeId: { type: ["string", "number"], description: "id 的别名" }, name: { type: "string" } } },
+    input: { type: "object", properties: { id: { type: ["string", "number"] }, nodeId: { type: ["string", "number"], description: "id 的别名" }, name: { type: "string", maxLength: NAME_MAX, description: `名称最多 ${NAME_MAX} 个字符（JS length）` } } },
     execute: function (args, ctx) { return renameAction(db, args || {}, ctx.origin, api); },
     render: function (r) { return "已重命名为：" + r.node.name; },
   });
@@ -457,7 +459,7 @@ export function registerTreeActions(api) {
       properties: {
         id: { type: ["string", "number"] },
         nodeId: { type: ["string", "number"], description: "id 的别名" },
-        name: { type: "string", description: "新名称，≤20 字；不传则不改" },
+        name: { type: "string", maxLength: NAME_MAX, description: `新名称，最多 ${NAME_MAX} 个字符（JS length）；不传则不改` },
         description: { type: "string", description: "新描述，可多行空串清空；不传则不改，≤2000 字" },
       },
     },

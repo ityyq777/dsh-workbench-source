@@ -1,7 +1,7 @@
 // 任务列表与树导航视图；依赖由入口注入，无循环依赖。
 module.exports = function createTasksView(deps) {
-  var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, TABS = deps.TABS, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
-  var h = React.createElement, activityFilter = require("../stats/activity-filter.cjs"), DateFilter = require("../ui/date-filter.cjs").DateFilter;
+  var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
+  var h = React.createElement, filters = require("./task-filter-model.cjs"), renderFilters = require("./task-filter-panel.cjs");
   function TasksView(props) {
     var lang = props.lang === "en" ? "en" : "zh";
     var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -27,8 +27,7 @@ module.exports = function createTasksView(deps) {
     var t = COPY[props.lang === "en" ? "en" : "zh"];
     var api = props.api;
     var cfg = props.cfg || {};
-    var activityNavigation = activityFilter.params(props.viewParams);
-    var activityS = React.useState(activityNavigation), activity = activityS[0], setActivity = activityS[1];
+    var activityNavigation = filters.navigation(props.viewParams);
     var tableNavigation = !activityNavigation && props.viewParams && props.viewParams.tableId;
     var cfgTab = Number(cfg["ui.defaultTab"]);
     if ([0, 5, 6, 7, 8].indexOf(cfgTab) < 0) cfgTab = 0;
@@ -51,8 +50,11 @@ module.exports = function createTasksView(deps) {
     var initialMissing = !activityNavigation && !tableNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
     var missingS = React.useState(initialMissing);
     var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
-    var tabS = React.useState(activityNavigation || tableNavigation || initialMissing ? 8 : cfgTab);
-    var tab = tabS[0], setTab = tabS[1];
+    var filterState = React.useState(activityNavigation || filters.fromTab(tableNavigation || initialMissing ? 8 : cfgTab));
+    var filterValue = filterState[0], setFilterValue = filterState[1];
+    var panelState = React.useState(false), panelOpen = panelState[0], setPanelOpen = panelState[1];
+    var hintState = React.useState(""), filterHint = hintState[0], setFilterHint = hintState[1];
+    var panelId = React.useId();
     var viewS = React.useState(!tableNavigation && cfg["ui.listView"] === "card" ? "card" : "list");
     var view = viewS[0], setView = viewS[1];
     var searchS = React.useState("");
@@ -61,13 +63,10 @@ module.exports = function createTasksView(deps) {
     var treeQuery = tqS[0], setTreeQuery = tqS[1];
     var titleS = React.useState("");
     var titleKey = titleS[0], setTitleKey = titleS[1];
-    var filterS = React.useState(activityNavigation || tableNavigation || initialMissing ? false : cfg["list.filterRestarted"] !== false);
-    var filterRestarted = filterS[0], setFilterRestarted = filterS[1];
     var tagReloadS = React.useState(0);
     var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
     var filterTagIdsS = React.useState([]);
     var filterTagIds = filterTagIdsS[0], setFilterTagIds = filterTagIdsS[1];
-    var datesS = React.useState({from:"",to:""}), dates = datesS[0], setDates = datesS[1];
     var pageS = React.useState(1);
     var pageNumber = pageS[0], setPageNumber = pageS[1];
     var sizeS = React.useState(cfgSize);
@@ -115,11 +114,11 @@ module.exports = function createTasksView(deps) {
     var refreshRef = React.useRef({});
     React.useEffect(function () {
       if (!activityNavigation) return;
-      setActivity(activityNavigation); setTarget({ groupId: "1", tableId: null });
-      setTab(8); setFilterRestarted(false); setDifficultyMissing(false);
-      setSearchDraft(""); setTitleKey(""); setFilterTagIds([]); setDates({from:"",to:""}); setPageNumber(1);
+      setFilterValue(activityNavigation); setTarget({ groupId: "1", tableId: null });
+      setDifficultyMissing(false); setFilterHint("");
+      setSearchDraft(""); setTitleKey(""); setFilterTagIds([]); setPageNumber(1);
       setSelectedIds(new Set()); setSelectionMode(false);
-    }, [props.viewParams && props.viewParams.activityDate, props.viewParams && props.viewParams.activityType]);
+    }, [JSON.stringify(props.viewParams || {})]);
 
     function say(msg) { setToast(String(msg || "")); }
     React.useEffect(function () {
@@ -167,12 +166,12 @@ module.exports = function createTasksView(deps) {
     var refreshList = React.useCallback(function () {
       setLoading(true);
       return api.call("tasks.list", Object.assign({
-        tab: tab, titleKey: titleKey, publishFrom: dates.from || undefined, publishTo: dates.to || undefined,
+        titleKey: titleKey,
         tableId: target.tableId, groupId: target.tableId ? null : target.groupId,
         pageNumber: pageNumber, pageSize: pageSize,
-        filterRestarted: filterRestarted, tagIds: filterTagIds, difficultyMissing: difficultyMissing,
+        tagIds: filterTagIds, difficultyMissing: difficultyMissing,
         sort: tableNavigation || cfgSort === "auto" ? undefined : cfgSort,
-      }, activity || {})).then(function (r) {
+      }, filters.args(filterValue))).then(function (r) {
         setLoading(false);
         if (r && r.ok) {
           setData(r.result || { records: [], total: 0, current: 1, size: 0, pageable: false });
@@ -181,7 +180,7 @@ module.exports = function createTasksView(deps) {
           setError((r && r.error) || "list load failed");
         }
       }).catch(function (e) { setLoading(false); setError(String(e && e.message || e)); });
-    }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, difficultyMissing, cfgSort, activity, dates.from, dates.to]);
+    }, [api, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterTagIds, difficultyMissing, cfgSort, filterValue]);
 
     refreshRef.current = { tree: refreshTree, list: refreshList, path: refreshPath, tags: refreshTagNav };
 
@@ -358,7 +357,7 @@ module.exports = function createTasksView(deps) {
     }
 
     var tables = allTables(tree);
-    var pageable = tab > 4 && tab < 9;
+    var pageable = true;
     var totalPages = pageable && data.total ? Math.ceil(data.total / pageSize) : 1;
 
     var treeProps = {
@@ -413,15 +412,18 @@ module.exports = function createTasksView(deps) {
           });
 
     var curDesc = curNode ? String(curNode.description || "") : "";
-    var filterBar = h("div", { className: "wbt-filters" },
-      h(activityFilter.ActivityFilter, { value: activity, lang: props.lang, onClear: function () { setActivity(null); setPageNumber(1); } }),
-      pageable ? h("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
-      h("label", { className: "wbt-check" },
-        h("input", { type: "checkbox", checked: difficultyMissing, onChange: function (e) { setDifficultyMissing(e.target.checked); setPageNumber(1); } }), t.difficultyMissing),
-      (tab === 5 || tab === 8) ? h("label", { className: "wbt-check" },
-        h("input", { type: "checkbox", checked: filterRestarted, onChange: function (e) { setFilterRestarted(e.target.checked); setPageNumber(1); } }),
-        t.filterRestarted) : null
-    );
+    var filterPanel = renderFilters(React, {
+      lang: props.lang, value: filterValue, open: panelOpen, id: panelId, hint: filterHint, onHint: setFilterHint,
+      onToggle: function () { setPanelOpen(!panelOpen); },
+      onChange: function (next) { setFilterValue(next); setPageNumber(1); },
+      search: h("form", { className: "wbt-filter-search", onSubmit: function (e) { e.preventDefault(); setTitleKey(searchDraft); setPageNumber(1); } },
+        h("input", { className: "wbt-input", placeholder: t.search, "aria-label": t.search, value: searchDraft, onChange: function (e) { setSearchDraft(e.target.value); } }),
+        h("button", { type: "submit", className: "wbt-btn ghost", "aria-label": t.search }, h(Icon, { name: "search", size: 14 }))),
+      tags: h(TagFilter, { api: api, t: t, Icon: Icon, ids: filterTagIds, reloadKey: tagReload,
+        onChange: function (next) { setFilterTagIds(next); setPageNumber(1); } }),
+      missing: h("label", { className: "wbt-check" }, h("input", { type: "checkbox", checked: difficultyMissing,
+        onChange: function (e) { setDifficultyMissing(e.target.checked); setPageNumber(1); } }), t.difficultyMissing),
+    });
 
     var listBody = loading
       ? h("div", { className: "wbt-empty" }, t.loading)
@@ -451,12 +453,6 @@ module.exports = function createTasksView(deps) {
         ),
         h(PathCrumbs, { path: currentPath, onPick: pickPath }),
         h("div", { className: "wbt-grow" }),
-        h("input", {
-          className: "wbt-input wbt-search", placeholder: t.search, value: searchDraft,
-          onChange: function (e) { setSearchDraft(e.target.value); },
-          onKeyDown: function (e) { if (e.key === "Enter") { setTitleKey(searchDraft); setPageNumber(1); } },
-        }),
-        h("button", { className: "wbt-btn ghost", title: t.search, "aria-label": t.search, onClick: function () { setTitleKey(searchDraft); setPageNumber(1); } }, h(Icon, { name: "search", size: 14 })),
         h("button", {
           className: "wbt-btn ghost", title: t.refresh, "aria-label": t.refresh, disabled: loading,
           onClick: function () { refreshList(); refreshTagNav(); },
@@ -465,9 +461,6 @@ module.exports = function createTasksView(deps) {
           if (selectionMode) { setSelectionMode(false); clearSelection(); }
           else setSelectionMode(true);
         } }, h(Icon, { name: "select", size: 13 }), selectionMode ? t.cancelSelect : t.select),
-        h(DateFilter, {value:dates,lang:props.lang,onChange:function(next){setDates(next);setPageNumber(1);}}),
-        h(TagFilter, { api: api, t: t, Icon: Icon, ids: filterTagIds, reloadKey: tagReload,
-          onChange: function (next) { setFilterTagIds(next); setPageNumber(1); } }),
         h("button", { className: "wbt-btn primary", onClick: function () {
           setCreateState({ source: "0", originTask: null, defaultTableId: target.tableId });
         } }, h(Icon, { name: "plus", size: 14 }), t.newTask),
@@ -475,16 +468,9 @@ module.exports = function createTasksView(deps) {
       ),
       curDesc ? h("div", { className: "wbt-tabledesc", title: curDesc }, curDesc.length > 220 ? curDesc.slice(0, 220) + "…" : curDesc) : null,
       h("div", { className: "wbt-body" },
-        h("nav", { className: "wbt-nav" }, TABS.map(function (x) {
-          var btn = h("button", {
-            key: x.id, className: "wbt-tab" + (tab === x.id ? " on" : ""),
-            onClick: function () { setTab(x.id); setPageNumber(1); },
-          }, t === COPY.zh ? x.zh : x.en);
-          if (x.id !== 5) return btn;
-          return [h("div", { key: "nav-sep", className: "wbt-nav-sep" }), btn];
-        })),
+        filterPanel,
         h("div", { className: "wbt-content" },
-          filterBar,
+          h("span", { className: "wbt-sum", role: "status" }, t.total + " " + data.total + " " + t.items),
           listBody,
           pageable ? h("div", { className: "wbt-pager" },
             h("button", { className: "wbt-btn ghost", disabled: pageNumber <= 1, onClick: function () { setPageNumber(Math.max(1, pageNumber - 1)); } }, h(Icon, { name: "left", size: 14 })),

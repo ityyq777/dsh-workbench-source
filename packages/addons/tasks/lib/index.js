@@ -47,7 +47,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/时间线/配置/数据五个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "3.3.0",
+        version: "3.4.0",
         tables: ["task", "task_dep", "task_node", "task_timeline", "task_timeline_link"],
         sync: taskSync,
         views: [
@@ -99,7 +99,8 @@ export function apply(ctx) {
           fields: [
             { name: "includeSingletons / timelineKeys", type: "boolean / string[]", description: "tasks.timelines默认20条且只显示多任务线；timelineKeys用于timelineRefactor整线合并，与ids互斥，目标必须在所选keys中；dryRun返回wouldUpdate及total完整计数，无list上限。" },
             { name: "lastActivityDate", type: "YYYY-MM-DD", description: "时间线有效成员发布/完成/关闭日及创建/修改本地日最大值；不含计划targetDate，排除已重启和已删除成员；openCount仅status0，doneCount仅status2。" },
-            { name: "publishFrom / publishTo", type: "YYYY-MM-DD", description: "list/非ids export 发布日闭区间，两端独立可选，空串不筛；真实日期校验，按 publish_date 前10位与其他条件 AND；反序交换后在 filter 回显并返回 publish_range_swapped notice" },
+            { name: "statuses / urgent", type: "integer[] / boolean", description: "list/非ids export：任一参数出现即接管旧tab和filterRestarted；statuses为0/1/2/3，状态与紧急取OR，再与其他筛选AND。紧急为开启且(priority>=6或targetDate<=今天+2)。空数组且urgent=false为全部，包含已重启；缺少另一参数时默认[]/false。" },
+            { name: "publishFrom / publishTo / doneFrom / doneTo / shutdownFrom / shutdownTo", type: "YYYY-MM-DD", description: "list/非ids export 三组闭区间，两端独立可选，空串不筛，真实日期校验；日期前10位与其他条件AND。完成范围要求状态2，关闭范围要求状态1，同时非空则交集为空。反序交换后filter回显并返回publish_range_swapped/done_range_swapped/shutdown_range_swapped notice。" },
             { name: "year", type: "integer 1900..9999", description: "tasks.activityCalendar 必填年份：独立年度稀疏日历，publish/done/shutdown 三类事件计数及 totals/max（含 total）" },
             { name: "activityDate / activityType", type: "YYYY-MM-DD / publish|done|shutdown", description: "list/非ids export 活动日筛选；type 缺省 done，有 type 必须有日期。单类事件，与既有条件 AND；与日历同口径，完整日点击需 tab=all、filterRestarted=false" },
             { name: "tab", type: "number | \"all\"", description: "列表页签：0=紧急（status=0 且 priority>=6 或 targetDate<=今天+2）、1..4=旧类型页签（按同名标签筛，已弃用）、5=已关闭（默认 SHUTDOWN=1，filterRestarted=false 时看 RESTARTED=3）、6=进行中(0)、7=已完成(2)、8=总览（排除已重启）；缺省或传 all 等于 8" },
