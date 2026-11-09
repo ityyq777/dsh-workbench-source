@@ -112,19 +112,21 @@ try {
   try { await call("capabilities.get", { domain: "nope" }); } catch (e) { capErr = e; }
   assert(capErr, "capabilities.get 对未知域未报错");
 
+  const fixtureTableId = (await call("taskNodes.create", { parentId: "1", type: "1", name: "原生回归任务表" })).result.node.id;
+
   // ── 2. Workbench 工具：args 合并 + 假字段告警 ──
-  const viaArgs = await toolDef.execute({ action: "tasks.create", args: { title: "嵌套参数任务", priority: 4 } });
+  const viaArgs = await toolDef.execute({ action: "tasks.create", args: { tableId: fixtureTableId, title: "嵌套参数任务", priority: 4 } });
   assert(viaArgs.text.includes("嵌套参数任务"), "args 嵌套参数未生效：" + viaArgs.text);
-  const trap = await toolDef.execute({ action: "tasks.create", args: { title: "假字段任务" }, due_at: 1700000000, assignee: "me", parentId: "1" });
+  const trap = await toolDef.execute({ action: "tasks.create", args: { tableId: fixtureTableId, title: "假字段任务" }, due_at: 1700000000, assignee: "me", parentId: "1" });
   assert(trap.text.startsWith("⚠"), "假字段未告警：" + trap.text);
   assert(trap.text.includes("due_at") && trap.text.includes("assignee") && trap.text.includes("parentId"), "假字段告警不完整：" + trap.text);
   const trapList = await call("tasks.list", { titleKey: "假字段任务" });
   assert(trapList.result.records.length === 1, "假字段任务未创建成功");
-  const conflict = await toolDef.execute({ action: "tasks.create", args: { title: "A" }, title: "B" });
+  const conflict = await toolDef.execute({ action: "tasks.create", args: { tableId: fixtureTableId, title: "A" }, title: "B" });
   assert(conflict.text.includes("错误"), "args 与顶层冲突未报错");
 
   // ── 3. 基础 CRUD ──
-  const created = await call("tasks.create", { title: "native 测试任务", priority: 5, publishDate: today(-2), targetDate: today(-1) });
+  const created = await call("tasks.create", { tableId: fixtureTableId, title: "native 测试任务", priority: 5, publishDate: today(-2), targetDate: today(-1) });
   const id = created.result.id;
   const list = await call("tasks.list", {});
   assert(list.result.records.some((t) => t.id === id), "task not listed");
@@ -135,7 +137,7 @@ try {
   assert(getErr, "tasks.get 对不存在 id 未报错");
 
   // ── 4. list 过滤与排序 ──
-  const p9 = await call("tasks.create", { title: "P9 任务", priority: 9, targetDate: today(3) });
+  const p9 = await call("tasks.create", { tableId: fixtureTableId, title: "P9 任务", priority: 9, targetDate: today(3) });
   const filtered = await call("tasks.list", { status: "0", priorityMin: 8, sort: "-priority" });
   assert(filtered.result.records.length === 1 && filtered.result.records[0].id === p9.result.id, "priorityMin 过滤不对：" + JSON.stringify(filtered.result.records.map((t) => t.title)));
   const byTarget = await call("tasks.list", { status: "0", targetFrom: today(-1), targetTo: today(0) });
@@ -146,7 +148,7 @@ try {
   assert(noTab.result.filter.tab === 8 && noTab.result.filter.tabGiven !== true, "未传 tab 时应按总览（8）检索：" + JSON.stringify(noTab.result.filter));
   assert(noTab.text.startsWith("筛选："), "tasks.list 未回显筛选条件：" + noTab.text.split("\n")[0]);
   assert(noTab.text.includes("tab=8"), "筛选回显缺少 tab：" + noTab.text.split("\n")[0]);
-  const descTask = await call("tasks.create", { title: "描述检索源", description: "正文里藏着一个独特词 zeta-flag" });
+  const descTask = await call("tasks.create", { tableId: fixtureTableId, title: "描述检索源", description: "正文里藏着一个独特词 zeta-flag" });
   const byDesc = await call("tasks.list", { titleKey: "zeta-flag" });
   assert(byDesc.result.records.length === 1 && byDesc.result.records[0].id === descTask.result.id, "titleKey 未匹配描述：" + JSON.stringify(byDesc.result.records.map((t) => t.title)));
   const pagedAll = await call("tasks.list", { status: "0", pageNumber: 1, pageSize: 2 });
@@ -159,12 +161,12 @@ try {
   const unpagedAll = await call("tasks.list", { tab: 1, status: "0" });
   assert(unpagedAll.result.pageSize === null && unpagedAll.result.returned === unpagedAll.result.records.length && unpagedAll.result.truncated === false, "未分页的 pageSize/returned/truncated 不对");
   // 标题允许重复：同名创建不判重，靠 id 区分
-  const dupTitleA = await call("tasks.create", { title: "同名任务-契约" });
-  const dupTitleB = await call("tasks.create", { title: "同名任务-契约" });
+  const dupTitleA = await call("tasks.create", { tableId: fixtureTableId, title: "同名任务-契约" });
+  const dupTitleB = await call("tasks.create", { tableId: fixtureTableId, title: "同名任务-契约" });
   assert(dupTitleA.result.id !== dupTitleB.result.id, "同名标题被错误判重");
   const dupTitleList = await call("tasks.list", { titleKey: "同名任务-契约" });
   assert(dupTitleList.result.records.length === 2, "同名标题任务应各自存在：" + dupTitleList.result.records.length);
-  const mergeTask = await call("tasks.create", { title: "标签增量任务" });
+  const mergeTask = await call("tasks.create", { tableId: fixtureTableId, title: "标签增量任务" });
   await call("tasks.update", { id: mergeTask.result.id, addTags: ["增量A"] });
   await call("tasks.update", { id: mergeTask.result.id, addTags: ["增量B"], removeTags: ["增量A"] });
   const tagNames = ((await call("tasks.get", { id: mergeTask.result.id })).result.task.tags || []).map((x) => x.name);
@@ -236,8 +238,8 @@ try {
   // 默认 tab=8 与排序方向必须与描述一致
   const defaultList = await call("tasks.list", {});
   assert(defaultList.result.filter.tab === 8, "tasks.list 不传 tab 的默认值不是 8：" + defaultList.result.filter.tab);
-  const lowP = await call("tasks.create", { title: "契约排序-低优先", priority: 3 });
-  const highP = await call("tasks.create", { title: "契约排序-高优先", priority: 9 });
+  const lowP = await call("tasks.create", { tableId: fixtureTableId, title: "契约排序-低优先", priority: 3 });
+  const highP = await call("tasks.create", { tableId: fixtureTableId, title: "契约排序-高优先", priority: 9 });
   const descSort = await call("tasks.list", { titleKey: "契约排序", sort: "-priority" });
   assert(descSort.result.records[0].id === highP.result.id, "sort=-priority 未把数值大的排在前面");
   assert(/越大越紧急/.test(descSort.text), "排序回显未说明方向：" + descSort.text.split("\n")[0]);
@@ -259,7 +261,7 @@ try {
 
   // ── 4.4 标签写入校验：未知名字按开关自动创建或报错并列出可用标签 ──
   await call("tasks.configReset", {}); // 回到默认：form.autoCreateTags=true
-  const autoTag = await call("tasks.create", { title: "标签校验-自动建", tags: ["自动建标签X"] });
+  const autoTag = await call("tasks.create", { tableId: fixtureTableId, title: "标签校验-自动建", tags: ["自动建标签X"] });
   const allTags = await call("tags.list", {});
   const tagNamesNow = (allTags.result.records || []).map((x) => x.name);
   assert(tagNamesNow.includes("自动建标签X"), "默认配置下未知标签名未自动创建：" + JSON.stringify(tagNamesNow));
@@ -267,7 +269,7 @@ try {
   await call("tasks.configSet", { values: { "form.autoCreateTags": false } });
   let tvNameErr = null;
   try {
-    await call("tasks.create", { title: "标签校验-应失败", tags: ["不存在标签Y"] });
+    await call("tasks.create", { tableId: fixtureTableId, title: "标签校验-应失败", tags: ["不存在标签Y"] });
   } catch (e) { tvNameErr = e; }
   assert(tvNameErr, "form.autoCreateTags=false 时未知标签名未报错");
   assert(/标签不存在/.test(tvNameErr.message) && /不存在标签Y/.test(tvNameErr.message), "报错未指出缺失的标签名：" + tvNameErr.message);
@@ -275,12 +277,12 @@ try {
   assert(/form\.autoCreateTags/.test(tvNameErr.message), "报错未提示开关：" + tvNameErr.message);
 
   // 已存在的名字在开关关闭时仍可写入
-  await call("tasks.create", { title: "标签校验-已存在", tags: ["自动建标签X"] });
+  await call("tasks.create", { tableId: fixtureTableId, title: "标签校验-已存在", tags: ["自动建标签X"] });
 
   // 按 id 写入：id 不存在必须报错并列出可用标签（即使开关打开，也不会按 id 造标签）
   let tvIdErr = null;
   try {
-    await call("tasks.create", { title: "标签校验-坏 id", tagIds: ["not-a-real-tag-id"] });
+    await call("tasks.create", { tableId: fixtureTableId, title: "标签校验-坏 id", tagIds: ["not-a-real-tag-id"] });
   } catch (e) { tvIdErr = e; }
   assert(tvIdErr && /标签 id 不存在/.test(tvIdErr.message), "未知 tagIds 未报错：" + (tvIdErr && tvIdErr.message));
   assert(/可用标签/.test(tvIdErr.message), "未知 tagIds 报错未列出可用标签：" + tvIdErr.message);
@@ -289,13 +291,13 @@ try {
   const btBefore = (await call("tasks.list", { titleKey: "标签校验-批量" })).result.records.length;
   let tvBulkErr = null;
   try {
-    await call("tasks.bulkCreate", { records: [{ title: "标签校验-批量 A", tags: ["自动建标签X"] }, { title: "标签校验-批量 B", tags: ["不存在标签Z"] }] });
+    await call("tasks.bulkCreate", { records: [{ tableId: fixtureTableId, title: "标签校验-批量 A", tags: ["自动建标签X"] }, { tableId: fixtureTableId, title: "标签校验-批量 B", tags: ["不存在标签Z"] }] });
   } catch (e) { tvBulkErr = e; }
   assert(tvBulkErr && /标签不存在/.test(tvBulkErr.message), "bulkCreate 未校验未知标签名");
   const btAfter = (await call("tasks.list", { titleKey: "标签校验-批量" })).result.records.length;
   assert(btAfter === btBefore, "bulkCreate 校验失败后仍写入了部分任务：" + btBefore + " -> " + btAfter);
 
-  const tkForBulk = await call("tasks.create", { title: "标签校验-批量更新" });
+  const tkForBulk = await call("tasks.create", { tableId: fixtureTableId, title: "标签校验-批量更新" });
   let tvBuErr = null;
   try {
     await call("tasks.bulkUpdate", { ids: [tkForBulk.result.id], patch: { tags: ["不存在标签W"] } });
@@ -309,7 +311,7 @@ try {
 
   // 关掉开关后重新打开，未知名字恢复自动创建
   await call("tasks.configReset", { ids: ["form.autoCreateTags"] });
-  await call("tasks.create", { title: "标签校验-恢复自动", tags: ["恢复后标签R"] });
+  await call("tasks.create", { tableId: fixtureTableId, title: "标签校验-恢复自动", tags: ["恢复后标签R"] });
   const tagsAfterReset = (await call("tags.list", {})).result.records.map((x) => x.name);
   assert(tagsAfterReset.includes("恢复后标签R"), "重置开关后未知标签名未恢复自动创建");
 
@@ -324,7 +326,7 @@ try {
   assert(afterUpdate.result.task.status === "2" && afterUpdate.result.task.priority === 0, "已完成任务优先级应为 0，实际 " + afterUpdate.result.task.priority);
 
   // ── 5.0 已完成任务优先级自动清零：创建、单条更新、已完成后再加优先级都不例外 ──
-  const doneOnCreate = await call("tasks.create", { title: "直接建成就完成", status: "2", priority: 9 });
+  const doneOnCreate = await call("tasks.create", { tableId: fixtureTableId, title: "直接建成就完成", status: "2", priority: 9 });
   assert(doneOnCreate.result.task.priority === 0, "创建时就是 DONE 也应清零优先级");
   const bumpDone = await call("tasks.update", { id: doneOnCreate.result.id, type: "PRIORITY", priority: 8 });
   assert(bumpDone.result.task.priority === 0, "已完成任务不该能加回优先级");
@@ -336,19 +338,19 @@ try {
   assert(recompleted.result.task.priority === 0, "再次完成后优先级应清零");
 
   // ── 5.0b 优先级不变量：开启必须 P1..P10，关闭/重启一律 P0，存量幂等回填 ──
-  const defaultPrio = await call("tasks.create", { title: "优先级缺省" });
+  const defaultPrio = await call("tasks.create", { tableId: fixtureTableId, title: "优先级缺省" });
   assert(defaultPrio.result.task.priority === 1, "已开启任务缺省优先级应为 1，实际 " + defaultPrio.result.task.priority);
   let openZeroErr = null;
-  try { await call("tasks.create", { title: "优先级 0 非法", priority: 0 }); } catch (e) { openZeroErr = e; }
+  try { await call("tasks.create", { tableId: fixtureTableId, title: "优先级 0 非法", priority: 0 }); } catch (e) { openZeroErr = e; }
   assert(openZeroErr && /1\.\.10|1–10|优先级/.test(openZeroErr.message), "创建已开启任务传 priority=0 应报错");
-  const closedPrio = await call("tasks.create", { title: "创建即关闭", status: "1", priority: 9 });
+  const closedPrio = await call("tasks.create", { tableId: fixtureTableId, title: "创建即关闭", status: "1", priority: 9 });
   assert(closedPrio.result.task.priority === 0, "创建即关闭的任务优先级应为 0");
   const closedBump = await call("tasks.update", { id: closedPrio.result.id, type: "PRIORITY", priority: 5 });
   assert(closedBump.result.task.priority === 0, "关闭任务加优先级应被忽略");
   let updZeroErr = null;
   try { await call("tasks.update", { id: defaultPrio.result.id, type: "PRIORITY", priority: 0 }); } catch (e) { updZeroErr = e; }
   assert(updZeroErr, "开启任务更新为 P0 应报错");
-  const sweepTarget = await call("tasks.create", { title: "到期自动关闭", priority: 8 });
+  const sweepTarget = await call("tasks.create", { tableId: fixtureTableId, title: "到期自动关闭", priority: 8 });
   host.db.prepare("UPDATE task SET target_date='2000-01-01' WHERE id=?").run(sweepTarget.result.id);
   const swept = await call("tasks.sweepShutdown", { date: "2000-01-02" });
   assert(swept.result.ids.includes(sweepTarget.result.id), "sweepShutdown 未关闭到期任务");
@@ -376,11 +378,11 @@ try {
   // ── 5.2 标题重命名：任何状态都能改 ──
   const renameDone = await call("tasks.update", { id: p9.result.id, type: "TITLE", title: "已完成也能改名" });
   assert(renameDone.result.task.title === "已完成也能改名" && renameDone.result.task.status === "2", "done 任务不能重命名");
-  const closed = await call("tasks.create", { title: "待关闭任务", priority: 2 });
+  const closed = await call("tasks.create", { tableId: fixtureTableId, title: "待关闭任务", priority: 2 });
   await call("tasks.update", { id: closed.result.id, type: "STATUS", status: "1" });
   const renameClosed = await call("tasks.update", { id: closed.result.id, type: "TITLE", title: "已关闭也能改名" });
   assert(renameClosed.result.task.title === "已关闭也能改名" && renameClosed.result.task.status === "1", "shutdown 任务不能重命名");
-  const restart = await call("tasks.create", { title: "重启链新任务", source: 2, restartKey: closed.result.id });
+  const restart = await call("tasks.create", { tableId: fixtureTableId, title: "重启链新任务", source: 2, restartKey: closed.result.id });
   assert((await call("tasks.get", { id: closed.result.id })).result.task.status === "3", "重启后原任务未标记 RESTARTED");
   const renameRestarted = await call("tasks.update", { id: closed.result.id, type: "TITLE", title: "重启任务也能改名" });
   assert(renameRestarted.result.task.title === "重启任务也能改名", "restarted 任务不能重命名");
@@ -400,10 +402,10 @@ try {
   assert(patchErr, "bulkUpdate 未拒绝未知 patch 字段");
 
   // ── 6. bulkCreate / bulkDelete ──
-  const createDry = await call("tasks.bulkCreate", { records: [{ title: "预览A" }, { title: "预览B" }], dryRun: true });
+  const createDry = await call("tasks.bulkCreate", { records: [{ tableId: fixtureTableId, title: "预览A" }, { tableId: fixtureTableId, title: "预览B" }], dryRun: true });
   assert(createDry.result.dryRun === true && createDry.result.wouldCreate === 2, "bulkCreate dryRun 数量不对");
   assert((await call("tasks.list", { titleKey: "预览A" })).result.records.length === 0, "bulkCreate dryRun 污染了数据");
-  const createReal = await call("tasks.bulkCreate", { records: [{ title: "批量A" }, { title: "批量B" }] });
+  const createReal = await call("tasks.bulkCreate", { records: [{ tableId: fixtureTableId, title: "批量A" }, { tableId: fixtureTableId, title: "批量B" }] });
   assert(createReal.result.created === 2, "bulkCreate real 数量不对");
   const idsBulk = createReal.result.tasks.map((t) => t.id);
   const deleteDry = await call("tasks.bulkDelete", { ids: idsBulk, dryRun: true });
@@ -416,7 +418,7 @@ try {
   assert(goneErr, "bulkDelete 未软删除任务");
 
   // ── 7. sweepShutdown dryRun ──
-  const overdue = await call("tasks.create", { title: "逾期任务", priority: 1, publishDate: today(-3), targetDate: today(-2) });
+  const overdue = await call("tasks.create", { tableId: fixtureTableId, title: "逾期任务", priority: 1, publishDate: today(-3), targetDate: today(-2) });
   const sweepDry = await call("tasks.sweepShutdown", { dryRun: true });
   assert(sweepDry.result.dryRun === true && sweepDry.result.wouldUpdate >= 1, "sweepShutdown dryRun 未命中到期任务");
   assert(sweepDry.result.items.some((t) => t.id === overdue.result.id), "sweepShutdown dryRun 清单缺少到期任务");
@@ -441,14 +443,14 @@ try {
   assert(itemsOf2.result.items[0].tags.length === 1, "tags.unlink 未解除关联");
 
   // ── 9. dedupeKey 幂等创建 ──
-  const d1 = await call("tasks.create", { title: "幂等任务", dedupeKey: "native-dedupe-1", tagIds: [tagB.result.id] });
+  const d1 = await call("tasks.create", { tableId: fixtureTableId, title: "幂等任务", dedupeKey: "native-dedupe-1", tagIds: [tagB.result.id] });
   assert(d1.result.deduped === false && d1.result.task.tags.length === 1, "create 时 tagIds 未生效");
-  const d2 = await call("tasks.create", { title: "幂等任务副本", dedupeKey: "native-dedupe-1" });
+  const d2 = await call("tasks.create", { tableId: fixtureTableId, title: "幂等任务副本", dedupeKey: "native-dedupe-1" });
   assert(d2.result.deduped === true && d2.result.id === d1.result.id, "dedupeKey 未命中已有任务");
 
   // ── 10. 任务依赖 ──
-  const up = await call("tasks.create", { title: "上游任务" });
-  const down = await call("tasks.create", { title: "下游任务" });
+  const up = await call("tasks.create", { tableId: fixtureTableId, title: "上游任务" });
+  const down = await call("tasks.create", { tableId: fixtureTableId, title: "下游任务" });
   const linkedDep = await call("tasks.link", { id: down.result.id, dependsOnId: up.result.id });
   assert(linkedDep.result.linked === true, "tasks.link 未建立依赖");
   const depView = await call("tasks.depends", { id: down.result.id });
@@ -464,8 +466,8 @@ try {
   assert(depAfter.result.dependsOn.length === 0 && depAfter.result.blocked === false, "unlink 后仍显示依赖");
 
   // ── 11. 手动排序 ──
-  const ra = await call("tasks.create", { title: "排序A" });
-  const rb = await call("tasks.create", { title: "排序B" });
+  const ra = await call("tasks.create", { tableId: fixtureTableId, title: "排序A" });
+  const rb = await call("tasks.create", { tableId: fixtureTableId, title: "排序B" });
   const reorderDry = await call("tasks.reorder", { ids: [rb.result.id, ra.result.id], dryRun: true });
   assert(reorderDry.result.wouldUpdate === 2 && (await call("tasks.get", { id: rb.result.id })).result.task.sort === 0, "reorder dryRun 污染了 sort");
   const reorderReal = await call("tasks.reorder", { ids: [rb.result.id, ra.result.id], step: 100 });

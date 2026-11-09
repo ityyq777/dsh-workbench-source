@@ -85,9 +85,11 @@ try {
     if (!d.backup || !d.backup.export || !d.backup.import) throw new Error("missing backup capability: " + d.id);
   }
 
-  const created = await host.invoke("tasks.create", { title: "备份验收任务", priority: 7 }, "agent");
+  const fixtureTableId = (await host.invoke("taskNodes.create", { parentId: "1", type: "1", name: "备份回归任务表" }, "agent")).result.node.id;
+
+  const created = await host.invoke("tasks.create", { tableId: fixtureTableId, title: "备份验收任务", priority: 7 }, "agent");
   const taskId = created.result.id;
-  const created2 = await host.invoke("tasks.create", { title: "备份依赖任务", priority: 3 }, "agent");
+  const created2 = await host.invoke("tasks.create", { tableId: fixtureTableId, title: "备份依赖任务", priority: 3 }, "agent");
   const task2Id = created2.result.id;
   await host.invoke("tasks.link", { id: taskId, dependsOnId: task2Id }, "agent");
   await host.invoke("tasks.reorder", { ids: [task2Id, taskId] }, "agent");

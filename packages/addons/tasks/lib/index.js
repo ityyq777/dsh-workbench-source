@@ -44,7 +44,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/配置/数据四个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "2.12.0",
+        version: "3.0.0",
         tables: ["task", "task_dep", "task_node"],
         sync: taskSync,
         views: [
@@ -70,16 +70,17 @@ export function apply(ctx) {
                 "没有明确标题或完成标准的模糊想法；先描述清楚再记",
               ],
               primaryAction: "tasks.create",
-              keyArgs: ["title", "description", "priority", "targetDate", "tags", "tagIds", "dedupeKey"],
+              keyArgs: ["tableId", "tablePath", "createMissing", "pathDescriptions", "title", "description", "priority", "targetDate", "tags", "tagIds", "dedupeKey"],
               dedupe: "同 dedupeKey 的未删除任务会被复用；自动记录建议使用稳定键，如 dsh-session:<id>。",
               relations: [
-                { kind: "taskNode", via: "tableId", description: "先调用 taskNodes.overview 查看全文描述、类型、路径与子树计数，再用 tasks.create 的 tableId 选表；group/root_group 只能装子节点，table 才能直接放任务。缺省使用默认任务表。" },
+                { kind: "taskNode", via: "tableId", description: "先调用 taskNodes.overview 查看全文描述、类型、路径与子树计数，再用 tasks.create 的 tableId 选表；group/root_group 只能装子节点，table 才能直接放任务。创建必须显式tableId或tablePath且互斥；无默认表。优先tasks.capabilities/resolveTable核对职责；新路径授权后用createMissing+pathDescriptions。" },
                 { kind: "tag", via: "tags / tagIds", description: "用标签做主题归类（工作/生活/学习/开发 已是标签）；传标签名会自动建。" },
               ],
               examples: [
                 {
                   purpose: "记录一次已完成的工作项",
                   args: {
+                    tableId: "已核对的任务表id",
                     title: "整理工作台能力清单",
                     description: "梳理各插件 action 与记录边界",
                     tags: ["开发"],
@@ -116,6 +117,7 @@ export function apply(ctx) {
           ],
           notFor: ["不要用它保存聊天记录、日志或临时笔记"],
           notes: [
+            "已有开发/修复/设计任务核对完整路径和职责后选择；确认新子模块形态、无合适表且获授权才建路径，不每条新建。一次性问答不建任务；物品登记走storage.create，开发storage功能才走tasks。多候选询问用户，绝不按热度/首项自动选择。",
             "先 taskNodes.overview 再 tasks.create，不要凭感觉选表；overview 默认描述全文，maxDescriptionLength 可选，count 为未删除任务的子树总数（所有状态）。",
             "date 字段均为 YYYY-MM-DD；source=1/2 时分别需要 timelineKey / restartKey。",
             "状态机：0 进行中 → 1 已关闭（补 shutdownDate）/ 2 已完成（补 doneDate）；1 或 2 可回到 0 继续办理（优先级自动回落到 1）。3 已重启不在创建时使用：重启老任务时先把它置 3，再建 source=2 的新任务。",

@@ -43,7 +43,7 @@ export function apply(ctx) {
         id: "wb-addon-sites",
         title: "站点",
         description: "站点收藏：目录树、链接与标签（标签需安装标签插件）；含统计/记录/配置/数据四个视图",
-        version: "1.9.0",
+        version: "1.9.1",
         tables: ["site", "site_node", "site_node_mapping", "tag_mapping", "site_account", "site_account_external"],
         sync: siteSync,
         views: [
@@ -53,6 +53,7 @@ export function apply(ctx) {
           { id: "data", title: { zh: "数据", en: "Data" } },
         ],
         capability: {
+          taskOwnership: { boundary: "站点收藏记录使用 sites.create；开发、修复站点插件的工作项使用 tasks.create。", query: "sites" },
           summary: "记录值得再次访问的站点（URL + 目录 + 标签），不记录本地开发地址和内网临时页面。",
           requires: ["wb-addon-tags"],
           records: [

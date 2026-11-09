@@ -11,6 +11,10 @@ import { join } from "node:path";
 const root = join(import.meta.dirname, "..");
 const tests = [
   "scripts/test-native.mjs",
+  "scripts/test-task-ownership-backend.mjs",
+  "scripts/test-task-ownership-concurrency.mjs",
+  "scripts/test-task-ownership-ui.mjs",
+  "scripts/test-ownership-host.mjs",
   "scripts/test-tasks-review.mjs",
   "scripts/test-tasks-search.mjs",
   "scripts/test-tasks-restart.mjs",

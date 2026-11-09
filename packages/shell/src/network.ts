@@ -1,3 +1,4 @@
+import { actionErrorText } from "./action-output.js";
 import { randomUUID } from "node:crypto";
 import { getSyncStateText, setSyncStateText } from "@wb/core";
 import { SyncEngine, SyncHttpError, listConflicts, resolveConflict, type SyncTransport, type SyncDomain } from "./sync.js";
@@ -377,7 +378,7 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
 
               return send(404, { ok: false, error: "no route " + m + " " + p });
             } catch (e) {
-              return send(500, { ok: false, error: String((e && (e as Error).message) || e) });
+              return send(500, { ok: false, error: actionErrorText(e) });
             }
           },
         },

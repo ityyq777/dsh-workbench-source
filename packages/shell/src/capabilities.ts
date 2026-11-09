@@ -1,5 +1,6 @@
+import { renderTaskTarget } from "./task-targets.js";
 import type { RegisteredDomain } from "./host-types.js";
-export function createCapabilities({ domains, SHELL_VERSION, actionEntry }: any) {
+export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTargets }: any) {
   function findDomain(raw: string): RegisteredDomain | null {
     const key = String(raw ?? "").trim();
     if (!key) return null;
@@ -128,7 +129,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry }: any)
   }
 
   /** capabilities.list：聚合各插件“记录什么、首选哪个 action”，给 agent 做统一发现。 */
-  function capabilityListMeta(args: Record<string, unknown>) {
+  async function capabilityListMeta(args: Record<string, unknown>) {
     const kind = args.kind === undefined || args.kind === null ? "" : String(args.kind).trim();
     const out: any[] = [];
     for (const rec of domains.values()) {
@@ -151,6 +152,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry }: any)
           description: r.description,
           primaryAction: r.primaryAction,
         })),
+        taskOwnership: await taskTargets.get(rec),
         warnings: cap.warnings,
       });
     }
@@ -164,6 +166,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry }: any)
     for (const d of meta.domains) {
       lines.push("", "[" + d.id + "] " + d.title + " v" + d.version + (d.enabled ? "" : "（未启用：" + d.error + "）"));
       lines.push("  " + d.summary);
+      if (d.taskOwnership) lines.push(renderTaskTarget(d.taskOwnership));
       if (!d.records.length) {
         lines.push("  （未声明能力清单；可用 action 见 actions.list）");
       } else {
@@ -181,7 +184,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry }: any)
   }
 
   /** capabilities.get：单个业务域的完整能力清单 + action 摘要（字段细节仍走 actions.help）。 */
-  function capabilityGetMeta(args: Record<string, unknown>) {
+  async function capabilityGetMeta(args: Record<string, unknown>) {
     const name = String(args.domain ?? args.id ?? "").trim();
     if (!name) throw new Error("缺少 domain；先用 capabilities.list 查看可用业务域");
     const rec = findDomain(name);
@@ -199,6 +202,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry }: any)
       },
       capability: {
         summary: cap.summary,
+        taskOwnership: await taskTargets.get(rec),
         records: cap.records,
         notFor: cap.notFor,
         notes: cap.notes,
@@ -219,6 +223,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry }: any)
       "[" + d.id + "] " + d.title + " v" + d.version + (d.enabled ? "" : "（未启用：" + d.error + "）"),
       cap.summary,
     ];
+    if (cap.taskOwnership) lines.push(renderTaskTarget(cap.taskOwnership));
     if (Array.isArray(cap.requires) && cap.requires.length) {
       const missing: string[] = Array.isArray(cap.missingRequires) ? cap.missingRequires : [];
       lines.push(

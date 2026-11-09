@@ -1,3 +1,6 @@
+import { TASK_CREATE_SCHEMA } from './task-create-schema.js';
+import { registerDiscoveryActions, GUIDANCE } from './task-discovery.js';
+import { renderOwnership } from './task-ownership-path.js';
 /**
  * 任务 action：纯本地读写。所有方法都不做网络请求。
  *
@@ -52,6 +55,7 @@ export { tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, clampDi
 export { priorityForStatus } from "./task-priority.js";
 export { createTask } from "./task-create.js";
 export function registerTaskActions(api) {
+  registerDiscoveryActions(api);
   const db = api.db;
   const action = api.action;
 
@@ -121,35 +125,11 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.create", {
-    description: "创建任务；source=0 普通任务，1 时间线任务，2 重启任务。date 字段均为 YYYY-MM-DD；重启需优先级 >0（1–10，缺省 1）；关闭/完成自动清零",
-    input: {
-      type: "object",
-      required: ["title"],
-      properties: {
-        title: { type: "string", description: "标题；只 trim + 非空校验，不做重名判重（标题不唯一，用 id 区分）" },
-        description: { type: "string" },
-        review: { type: "string", description: "完成后的感受/复盘（自由文本，默认空）" },
-        tableId: { type: ["string", "number"], description: "任务表 id，缺省用默认任务表" },
-        status: { type: ["string", "number"], description: "0=进行中/1=已关闭/2=已完成（不能直接创建 RESTARTED）；source=2 固定为 0；关闭/完成时优先级自动清零，不必手工传 0" },
-        priority: { type: "number", description: "1..10（重启需优先级 >0，source=2 缺省 1，显式 0 报错；普通开启同样缺省 1；关闭/完成自动清零，不必手工传 0）" },
-        difficulty: { type: ["number", "null"], description: "0..5" },
-        publishDate: { type: "string", description: "YYYY-MM-DD，缺省今天" },
-        targetDate: { type: "string", description: "YYYY-MM-DD，缺省同 publishDate" },
-        doneDate: { type: "string" },
-        shutdownDate: { type: "string" },
-        source: { type: ["string", "number"], description: "0 普通 / 1 时间线 / 2 重启（固定开启状态，priority 必须 1–10，缺省 1，不能传 0）" },
-        timelineKey: { type: ["string", "number"], description: "source=1 必填" },
-        restartKey: { type: ["string", "number"], description: "source=2 必填：原任务 id" },
-        originTaskId: { type: ["string", "number"], description: "restartKey 的别名" },
-        tagIds: { type: "array", items: { type: "string" }, description: "创建时挂标签（需要标签域；未安装时忽略并在回执 notices 说明）；id 必须已存在，否则报错并列出可用标签" },
-        tags: { type: "array", items: { type: "string" }, description: "创建时按标签名挂标签；默认自动创建未知名字，form.autoCreateTags=false 时未知名字报错并列出可用标签；标签域未安装时忽略并回执 notices" },
-        dedupeKey: { type: "string", description: "幂等键：同键未删除任务存在时直接返回已有任务（deduped:true）" },
-        sort: { type: "number", description: "手动排序值（默认 0）" },
-      },
-    },
-    examples: [{ title: "整理发布清单", priority: 7, targetDate: "2026-11-10" }],
+    description: "创建任务必须显式 tableId 或 tablePath（恰好一个），无目标报 TABLE_REQUIRED 且零写入。先 tasks.capabilities/resolveTable 核对职责、完整路径与描述；拿不准询问用户；仅获授权才createMissing+pathDescriptions。source=0 普通任务，1 时间线任务，2 重启任务。date 字段均为 YYYY-MM-DD；重启需优先级 >0（1–10，缺省 1）；关闭/完成自动清零" + GUIDANCE.join(" "),
+    input: TASK_CREATE_SCHEMA,
+    examples: [{ title: "整理发布清单", tableId: "已核对的任务表id", priority: 7, targetDate: "2026-11-10" }],
     execute: function (args, ctx) { return createTask(db, args || {}, ctx.origin, api); },
-    render: function (r) { return "已创建任务：" + r.task.title + "（id=" + r.id + "）"; },
+    render: renderOwnership,
   });
 
   action("tasks.update", {
@@ -184,7 +164,7 @@ export function registerTaskActions(api) {
     },
     examples: [{ id: "1001", status: "done" }, { id: "1001", addTags: ["开发"] }],
     execute: function (args, ctx) { return updateTask(db, args || {}, ctx.origin, api); },
-    render: function (r) { return "已更新任务：" + r.task.title + "（id=" + r.task.id + "）"; },
+    render: r => renderOwnership(r,"已更新"),
   });
 
   action("tasks.bulkUpdate", {
@@ -208,7 +188,7 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.bulkCreate", {
-    description: "一次创建多条任务（单事务，全成或全不成）；dryRun:true 只校验预览，不写库",
+    description: "一次创建多条任务，每条必须显式tableId或tablePath（恰好一个）；发现、选择、新路径授权规则与tasks.create完全相同；单事务含新节点、标签、日志、重启，全成或全不成。dryRun:true真校验后回滚，返回wouldCreateNodes及temporaryIds；created仅统计非deduped新任务" + GUIDANCE.join(" "),
     input: {
       type: "object",
       required: ["records"],
@@ -216,13 +196,13 @@ export function registerTaskActions(api) {
         records: {
           type: "array",
           description: "每条字段同 tasks.create",
-          items: { type: "object", additionalProperties: true },
+          items: TASK_CREATE_SCHEMA,
         },
         dryRun: { type: "boolean", description: "true 时只校验预览，不写库、不发事件" },
       },
     },
     examples: [
-      { records: [{ title: "任务 A", priority: 6 }, { title: "任务 B", targetDate: "2026-11-12" }], dryRun: true },
+      { records: [{ title: "任务 A", tableId:"已核对的任务表id", priority: 6 }, { title: "任务 B", tableId:"已核对的任务表id", targetDate: "2026-11-12" }], dryRun: true },
     ],
     execute: function (args, ctx) { return bulkCreate(db, args || {}, ctx.origin, api); },
     render: renderBulkCreate,
@@ -392,9 +372,7 @@ export function registerTaskActions(api) {
       },
     },
     execute: function (args, ctx) { return migrateTasks(db, args || {}, ctx.origin, api); },
-    render: function (r) {
-      return r.dryRun ? "预览：将迁移 " + r.wouldUpdate + " 条任务到任务表 " + r.tableId : "已迁移 " + r.updated + " 条任务到任务表 " + r.tableId;
-    },
+    render: renderBulkUpdate,
   });
 
   action("tasks.sweepShutdown", {

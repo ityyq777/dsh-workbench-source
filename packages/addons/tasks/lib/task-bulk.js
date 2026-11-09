@@ -1,3 +1,6 @@
+import { taskTransaction } from './task-transaction.js';
+import { validateTargetArgs } from './task-target.js';
+import { ownershipFields, renderOwnership } from './task-ownership-path.js';
 /**
  * 批量写入：bulkUpdate / bulkCreate / bulkDelete。
  *
@@ -103,7 +106,8 @@ export function applyPatchRow(db, cur, patch, ts) {
   return next;
 }
 
-export function bulkUpdate(db, args, origin, api) {
+export function bulkUpdate(db, args, origin, api, opts) {
+  if (!opts?.skipTx) return taskTransaction(db, api, buffered => bulkUpdate(db,args,origin,buffered,{skipTx:true}), args.dryRun === true);
   const ids = idList(args.ids);
   if (!ids.length) throw new Error("ids 不能为空");
   const patch = patchOf(args.patch);
@@ -131,7 +135,8 @@ export function bulkUpdate(db, args, origin, api) {
       const desired = wantsTagWrite && tagWritable ? resolveTagPatch(db, cur, patch, ts, origin, dryRun) : null;
       const diff = diffRow(cur, next);
       if (desired) diff.tagIds = { from: currentTaskTagIds(db, id), to: desired };
-      changes.push({ id: id, changes: diff });
+      const task = taskOut(next,nodeMap(db));
+      changes.push({ id: id, changes: diff, task, ...ownershipFields(task) });
       if (!dryRun) {
         saveTaskRow(db, next);
         if (desired) replaceTaskTags(db, id, desired, ts, origin);
@@ -139,8 +144,7 @@ export function bulkUpdate(db, args, origin, api) {
       }
     }
   };
-  if (dryRun) plan();
-  else tx(db, plan);
+  plan();
   return withNotices({
     dryRun: dryRun,
     updated: dryRun ? 0 : changes.length,
@@ -154,40 +158,19 @@ export function bulkCreate(db, args, origin, api) {
   const records = Array.isArray(args.records) ? args.records : [];
   if (!records.length) throw new Error("records 不能为空");
   const dryRun = args.dryRun === true;
-  if (dryRun) {
-    // 真校验、真 id、但不落库：开事务跑一遍再回滚；用空 emit 避免给 UI 推送假事件。
-    const silentApi = { emit: function () {} };
-    db.exec("BEGIN IMMEDIATE");
-    try {
-      const created = records.map(function (rec) {
-        return createTask(db, rec || {}, origin, silentApi, { skipTx: true });
-      });
-      db.exec("ROLLBACK");
-      return {
-        dryRun: true,
-        created: 0,
-        wouldCreate: created.length,
-        tasks: created.map(function (c) { return c.task; }),
-      };
-    } catch (e) {
-      try {
-        db.exec("ROLLBACK");
-      } catch {
-        /* ignore */
-      }
-      throw e;
-    }
-  }
-  const created = tx(db, function () {
-    return records.map(function (rec) {
-      return createTask(db, rec || {}, origin, api, { skipTx: true });
-    });
-  });
-  return {
-    dryRun: false,
-    created: created.length,
-    tasks: created.map(function (c) { return c.task; }),
-  };
+  return taskTransaction(db,api,buffered => {
+    // 先校验每条目标，保证无目标不受前一条记录的临时写入影响。
+    for (const rec of records) validateTargetArgs(db,rec || {},buffered);
+    const results = records.map(rec => createTask(db, rec || {}, origin, buffered, {skipTx:true}));
+    const actual = results.filter(r=>!r.deduped).length;
+    const createdNodes = results.flatMap(r=>r.createdNodes || []);
+    return { dryRun, created:dryRun ? 0 : actual, wouldCreate:dryRun ? actual : undefined,
+      deduped: results.length-actual, results, tasks:results.map(r=>r.task),
+      createdNodes:dryRun ? [] : createdNodes, wouldCreateNodes:dryRun ? createdNodes.map(n=>({...n,temporary:true})) : undefined,
+      temporaryIds:dryRun ? [...createdNodes.map(n=>n.id),...results.filter(r=>!r.deduped).map(r=>r.id)] : undefined,
+      notices:results.flatMap(r=>r.notices || []),
+    };
+  },dryRun);
 }
 
 export function bulkDelete(db, args, origin, api) {
@@ -237,7 +220,7 @@ export function renderBulkUpdate(r) {
     const parts = Object.keys(c.changes).map(function (k) {
       return k + " " + String(c.changes[k].from) + "→" + String(c.changes[k].to);
     });
-    lines.push("- " + c.id + (parts.length ? "：" + parts.join("，") : "（无变化）"));
+    lines.push("- " + renderOwnership({task:c.task,dryRun:r.dryRun}, "已更新") + (parts.length ? "：" + parts.join("，") : "（无变化）"));
   }
   if (r.missing && r.missing.length) lines.push("跳过不存在的 id：" + r.missing.join(", "));
   return lines.join("\n");
@@ -245,7 +228,7 @@ export function renderBulkUpdate(r) {
 
 export function renderBulkCreate(r) {
   const lines = [r.dryRun ? "预览：将创建 " + r.wouldCreate + " 条任务（未写库）" : "已创建 " + r.created + " 条任务"];
-  for (const t of r.tasks) lines.push("- " + t.title + "（id=" + t.id + "）");
+  for (const result of r.results || r.tasks.map(task=>({task}))) lines.push("- " + renderOwnership({...result,dryRun:r.dryRun}));
   return lines.join("\n");
 }
 

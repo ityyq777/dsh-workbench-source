@@ -166,7 +166,16 @@ export interface DomainRecordExample {
 }
 
 /** 业务域能力清单：插件向 DSH 声明自己负责记录什么。 */
+export interface DomainTaskOwnership {
+  /** 本域业务记录与开发工作项的职责边界，不包含任何环境特定表 id。 */
+  boundary: string;
+  /** 未配置时的确定性候选检索词；不是自动路由规则。 */
+  query: string;
+}
+
 export interface DomainCapability {
+  /** 宿主通过 capabilities.setTaskTarget 显式配置开发工作项归属，读取时校验实际表。 */
+  taskOwnership?: DomainTaskOwnership;
   /** 一句话说明这个域负责记录什么 */
   summary: string;
   /** 该域可记录的对象类型 */

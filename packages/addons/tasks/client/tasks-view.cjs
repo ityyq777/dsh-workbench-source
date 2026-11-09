@@ -338,7 +338,6 @@ module.exports = function createTasksView(deps) {
     }
 
     var tables = allTables(tree);
-    var firstTable = findFirstTable(tree);
     var pageable = tab > 4 && tab < 9;
     var totalPages = pageable && data.total ? Math.ceil(data.total / pageSize) : 1;
 
@@ -448,7 +447,7 @@ module.exports = function createTasksView(deps) {
         h(TagFilter, { api: api, t: t, Icon: Icon, ids: filterTagIds, reloadKey: tagReload,
           onChange: function (next) { setFilterTagIds(next); setPageNumber(1); } }),
         h("button", { className: "wbt-btn primary", onClick: function () {
-          setCreateState({ source: "0", originTask: null, defaultTableId: target.tableId || (firstTable && firstTable.id) });
+          setCreateState({ source: "0", originTask: null, defaultTableId: target.tableId });
         } }, h(Icon, { name: "plus", size: 14 }), t.newTask),
         h("button", { className: "wbt-btn ghost", onClick: function () { setView(view === "list" ? "card" : "list"); } }, h(Icon, { name: view === "list" ? "grid" : "list", size: 13 }), view === "list" ? t.card : t.list)
       ),
@@ -528,7 +527,7 @@ module.exports = function createTasksView(deps) {
           targetOffset: cfg["form.defaultTargetOffset"],
         },
         onClose: function () { setCreateState(null); },
-        onCreated: function () { setCreateState(null); refreshList(); refreshTree(); say(t.created); },
+        onCreated: function (result) { setCreateState(null); refreshList(); refreshTree(); say(require("./ownership.cjs").receipt(result)); },
       }) : null,
       timelineTask ? h(TimelineModal, {
         key: timelineTask.id, t: t, api: api, task: timelineTask,
@@ -545,9 +544,9 @@ module.exports = function createTasksView(deps) {
         onSaved: nodeSaved,
       }) : null,
       editTask ? h(EditModal, {
-        key: "edit-" + editTask.id, t: t, api: api, task: editTask, lang: props.lang,
+        key: "edit-" + editTask.id, t: t, api: api, task: editTask, lang: props.lang, tree: tree,
         onClose: function () { setEditTask(null); },
-        onSaved: function () { setEditTask(null); refreshList(); say(t.updated); },
+        onSaved: function (result) { setEditTask(null); refreshList(); say(require("./ownership.cjs").receipt(result)); },
       }) : null,
       doneTask ? h(DoneModal, {
         key: doneTask.id, t: t, api: api, task: doneTask,

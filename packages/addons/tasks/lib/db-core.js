@@ -311,6 +311,7 @@ export function pathForTable(tableId, map) {
   return out;
 }
 
+import { pathFromMap } from './task-ownership-path.js';
 export function taskOut(row, map) {
   const t = rowTask(row);
   if (!t) return null;
@@ -320,6 +321,8 @@ export function taskOut(row, map) {
   t.tableId = String(t.tableId || "");
   t.tableName = table ? String(table.name || "") : "";
   t.tableDescription = table ? String(table.description || "") : "";
+  try { const derived = pathFromMap(t.tableId, nodes); t.tablePath = derived.tablePath; t.pathSegments = derived.pathSegments; }
+  catch (error) { t.tablePath = null; t.pathSegments = []; t.ownershipDiagnostic = { code:error.code, message:error.message }; }
   return t;
 }
 

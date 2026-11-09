@@ -132,7 +132,8 @@ function argsKeys(src) {
   // 只跟直接别名：`const input = args || {}`；不跟 `const row = input` 这类二次引用，
   // 否则会把数据库行对象的字段误判成 schema 字段。
   const alias = new Set(["args"]);
-  for (const m of src.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*args\b/g)) alias.add(m[1]);
+  // 属性值（如 const query = args.query）不是 args 对象别名。
+  for (const m of src.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*args\b(?!\s*(?:\.|\?\.|\[))/g)) alias.add(m[1]);
   for (const v of alias) {
     const esc = v.replace(/\$/g, "\\$");
     for (const m of src.matchAll(new RegExp("\\b" + esc + "\\s*(?:\\?\\.)?\\.\\s*([A-Za-z_$][\\w$]*)", "g"))) {

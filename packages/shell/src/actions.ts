@@ -1,6 +1,8 @@
 import type { DomainActionDef } from "@wb/sdk";
+import { actionErrorText, schemaChoices } from "./action-output.js";
+import { createTaskTargets } from "./task-targets.js";
 import { createCapabilities } from "./capabilities.js";
-export function createActions({ domains, SHELL_VERSION, publicInfo, audit, clock, emit }: any) {
+export function createActions({ domains, SHELL_VERSION, publicInfo, audit, clock, emit, db }: any) {
   /** 宿主内置的元 action 归属域（不参与备份，也不是业务插件）。 */
   const META_DOMAIN = "wb-shell";
 
@@ -130,7 +132,9 @@ export function createActions({ domains, SHELL_VERSION, publicInfo, audit, clock
 
   /** 旧版 Workbench 顶层 schema 里的“通用字段”，多数 action 并不接受。 */
   const TRAP_FIELDS = ["due_at", "note", "tags", "tagIds", "dirIds", "parentId", "deadline", "start_at", "assignee", "limit"];
-const { capabilityListMeta, renderCapabilityList, capabilityGetMeta, renderCapability } = createCapabilities({ domains, SHELL_VERSION, actionEntry });
+const taskTargets = createTaskTargets(db, domains, invoke);
+META_ACTIONS.set("capabilities.setTaskTarget", taskTargets.setAction);
+const { capabilityListMeta, renderCapabilityList, capabilityGetMeta, renderCapability } = createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTargets });
   function findActionDef(name: string): { def: DomainActionDef; domainId: string } | null {
     const meta = META_ACTIONS.get(name);
     if (meta) return { def: meta, domainId: META_DOMAIN };
@@ -266,6 +270,7 @@ const { capabilityListMeta, renderCapabilityList, capabilityGetMeta, renderCapab
           (Array.isArray(p.enum) ? "；可选值：" + p.enum.join(" / ") : ""),
       );
     }
+    lines.push(...schemaChoices(help.input));
     lines.push("", "JSON Schema：", JSON.stringify(help.input, null, 2));
     if (help.examples.length) {
       lines.push("", "示例：");
@@ -331,11 +336,11 @@ const { capabilityListMeta, renderCapabilityList, capabilityGetMeta, renderCapab
 
   async function invokeAction(action: string, args: Record<string, unknown>, origin: "ui" | "agent" | "sync") {
     if (action === "capabilities.list") {
-      const result = capabilityListMeta(args);
+      const result = await capabilityListMeta(args);
       return { result, text: renderCapabilityList(result), domainId: META_DOMAIN };
     }
     if (action === "capabilities.get") {
-      const result = capabilityGetMeta(args);
+      const result = await capabilityGetMeta(args);
       return { result, text: renderCapability(result), domainId: META_DOMAIN };
     }
     if (action === "actions.list") {
@@ -380,7 +385,8 @@ function installTool(ctx: any) {
     timeoutMs: 60_000,
     description:
       "个人工作台。action 由已安装业务插件提供（tasks.* / taskNodes.* / tags.* / sites.* / siteTags.* / siteNodes.*），" +
-      "宿主另提供 capabilities.list / capabilities.get 查看各插件记录什么、首选哪个 action；" +
+      "宿主另提供 capabilities.list / capabilities.get 查看各插件记录什么、任务归属显式配置及首选 action；capabilities.setTaskTarget 配置 domain→tableId。" +
+      "物品用 storage.create，开发工作用 tasks.create；创建任务前用 tasks.capabilities / tasks.resolveTable 明确目标，不能默认第一张表。" +
       "actions.list / actions.help 用于自举：先 actions.list 看有哪些 action，再 actions.help 看真实字段。" +
       "审计留痕可直接查 audit.list / audit.get / audit.stats（本机行为账本：谁在何时调了什么、成功与否，参数已脱敏）。" +
       "入参统一放进 args；不要再按旧版顶层字段（due_at / tags / parentId 等）猜参数。" +
@@ -448,7 +454,7 @@ function installTool(ctx: any) {
           : "";
         return { text: warning + r.text };
       } catch (e) {
-        return { text: "错误：" + String((e && (e as Error).message) || e) };
+        return { text: "错误：" + actionErrorText(e) };
       }
     },
   });

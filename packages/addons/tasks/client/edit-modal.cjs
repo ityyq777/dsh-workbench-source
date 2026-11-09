@@ -2,6 +2,7 @@
 "use strict";
 module.exports = function createEditModal(React, statusInfo, stars) {
   var h = React.createElement;
+  var ownership = require("./ownership.cjs"), fields = require("./ownership-fields.cjs")(React);
   // 任务编辑弹窗：按状态收敛可编辑字段。
   // 未完成（0/1/3）：标题、描述、优先级、感受；难度仅完成可改。
   // 已完成（2）：标题、描述、感受、难度；优先级完成即清零，不再可改。
@@ -11,6 +12,7 @@ module.exports = function createEditModal(React, statusInfo, stars) {
     var done = String(task.status) === "2";
     var canPriority = !done;
     var fs = React.useState({
+      tableId: "",
       title: String(task.title || ""),
       description: String(task.description || ""),
       review: String(task.review || ""),
@@ -23,13 +25,35 @@ module.exports = function createEditModal(React, statusInfo, stars) {
     var isBusy = bs[0], setBusy = bs[1];
     var es = React.useState("");
     var err = es[0], setErr = es[1];
+    var submission = React.useState({ pending: false })[0];
+    function requestClose() { if (!submission.pending) props.onClose(); }
+    function onModalKey(e) {
+      if (e.key !== "Escape") return;
+      e.preventDefault(); e.stopPropagation(); requestClose();
+    }
+    function failed(message) {
+      var text = String(message || "update failed");
+      if (/TABLE_NOT_FOUND|TARGET_NOT_TABLE|TREE_CORRUPT/.test(text)) set("tableId", "");
+      submission.pending = false; setBusy(false); setErr(text);
+    }
+    React.useEffect(function () {
+      if (form.tableId && !ownership.tables(props.tree).some(function (x) { return x.id === form.tableId; })) {
+        setForm(function (prev) { return Object.assign({}, prev, { tableId: "" }); });
+        setErr("所选目标已失效，已清空；请重新选择纠正目标。");
+      }
+    }, [props.tree, form.tableId]);
     function set(k, v) {
       setForm(function (prev) { var next = Object.assign({}, prev); next[k] = v; return next; });
     }
     var titleOk = String(form.title).trim().length > 0;
     function submit() {
+      if (isBusy || submission.pending) return;
       if (!titleOk) { setErr(t.needTitle); return; }
       var patch = { id: task.id, title: String(form.title).trim(), description: String(form.description || "") };
+      if (form.tableId) {
+        if (!ownership.tables(props.tree).some(function (x) { return x.id === form.tableId; })) { setErr("目标已失效，请重新选择"); return; }
+        patch.tableId = form.tableId;
+      }
       if (canPriority) {
         var p = Math.round(Number(form.priority));
         if (!isFinite(p)) p = 1;
@@ -41,23 +65,25 @@ module.exports = function createEditModal(React, statusInfo, stars) {
         patch.difficulty = Math.max(0.5, Math.min(5, Number(form.difficulty) || 0.5));
       }
       if (String(form.review) !== String(task.review || "")) patch.review = String(form.review);
-      setBusy(true);
+      submission.pending = true; setBusy(true);
       setErr("");
       props.api.call("tasks.update", patch).then(function (r) {
         setBusy(false);
-        if (r && r.ok) props.onSaved();
-        else setErr((r && r.error) || "update failed");
-      }).catch(function (e) { setBusy(false); setErr(String((e && e.message) || e)); });
+        if (r && r.ok) props.onSaved(r.result);
+        else failed(r && r.error);
+      }).catch(function (e) { failed((e && e.message) || e); });
     }
     var st = statusInfo(task.status);
-    return h("div", { className: "wbt-modal-mask", onMouseDown: function (e) { if (e.target === e.currentTarget) props.onClose(); } },
+    return h("div", { className: "wbt-modal-mask", onKeyDownCapture: onModalKey, onMouseDown: function (e) { if (e.target === e.currentTarget) requestClose(); } },
       h("div", { className: "wbt-modal" },
         h("div", { className: "wbt-modal-head" },
           h("h3", null, t.editTitle),
           h("span", { className: "wbt-badge " + st.cls }, props.lang === "en" ? st.en : st.zh),
-          h("button", { className: "wbt-icon", onClick: props.onClose }, "×")
+          h("button", { className: "wbt-icon", disabled: isBusy, onClick: requestClose }, "×")
         ),
         h("div", { className: "wbt-mhint" }, done ? t.editHintDone : t.editHintOpen),
+        h("div", { className: "wbt-mhint" }, "当前归属：" + ownership.receipt(task)),
+        fields({ edit: true, form: form, set: set, tree: props.tree }),
         h("label", { className: "wbt-field" },
           h("span", null, t.titleField + " *"),
           h("input", { className: "wbt-input", value: form.title, autoFocus: true, onChange: function (e) { set("title", e.target.value); } })
@@ -88,7 +114,7 @@ module.exports = function createEditModal(React, statusInfo, stars) {
         ) : null,
         err ? h("div", { className: "wbt-err" }, err) : null,
         h("div", { className: "wbt-modal-foot" },
-          h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
+          h("button", { className: "wbt-btn ghost", disabled: isBusy, onClick: requestClose }, t.cancel),
           h("button", { className: "wbt-btn primary", disabled: isBusy || !titleOk, onClick: submit }, isBusy ? "…" : t.save)
         )
       )

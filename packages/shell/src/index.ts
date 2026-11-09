@@ -51,7 +51,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.5.7";
+export const SHELL_VERSION = "0.6.0";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -114,10 +114,10 @@ function recordPrompt(sessionId: string): string {
     "记录流程：",
     "1. 先调用 Workbench，action 为 capabilities.list；需要某个域的字段细节时用 capabilities.get，再按需 actions.help。",
     "2. 只记录同时满足 when 且不满足 notFor 的内容；没有命中就不写，不要为了有记录而凑数。",
-    "3. 用对应 records[].primaryAction 写入，不要猜 action 名。",
+    "3. 用对应 records[].primaryAction 写入，不要猜 action 名。任务创建前先 tasks.capabilities / tasks.resolveTable，明确选择 tableId 或 tablePath；capabilities.get 中的有效显式映射优先，不按第一项自动选。",
     "4. 写入前查重：任务先 tasks.list（titleKey），站点先 sites.list，标签先 tags.list / tags.search。已存在就复用并补关联，不重复创建。",
     "5. 只新增，不修改、不删除工作台已有数据。",
-    "6. 多条记录合并成一行回执，例如“已记录：任务 #42、标签 #7”；失败只提示一次，不阻塞主任务。",
+    "6. 任务回执必须保留完整目录路径、表名和任务 id，并提示可纠正归属；多条可简洁合并，但不能省略归属。失败只提示一次，不得当成成功，不阻塞主任务。",
     "7. plan mode 下不要写入。",
     "",
     "记录边界：",
@@ -258,7 +258,7 @@ export function apply(ctx: any): void {
   }
 
 
-  const { invoke, actionNames, installTool } = createActions({ domains, SHELL_VERSION, publicInfo, audit, clock, emit });
+  const { invoke, actionNames, installTool } = createActions({ domains, SHELL_VERSION, publicInfo, audit, clock, emit, db: state.db });
 
   const host: WorkbenchHost = {
     db: state.db,

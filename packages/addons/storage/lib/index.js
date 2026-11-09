@@ -23,7 +23,7 @@ export function apply(ctx) {
         id: "wb-addon-storage",
         title: "储物",
         description: "储物：记录物品名称、品牌、单位、库存文本、图片URL、备注与可选标签",
-        version: "1.3.1",
+        version: "1.3.2",
         tables: ["storage"],
         sync: storageSync,
         backupAfter: ["wb-addon-tags"],
@@ -34,6 +34,7 @@ export function apply(ctx) {
           { id: "data", title: { zh: "数据", en: "Data" } },
         ],
         capability: {
+          taskOwnership: { boundary: "物品登记使用 storage.create；开发、修复 storage 功能的工作项使用 tasks.create，不把物品记成任务。", query: "storage" },
           summary: "记录储物条目，库存可为 1~2 等文本；图片只保存HTTP(S) URL，不上传。标签为可选能力。",
           requires: [],
           records: [

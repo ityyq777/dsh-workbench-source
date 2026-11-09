@@ -39,24 +39,31 @@ import {
   migrateLegacyTypes,
 } from "./tagging.js";
 import { requireKnownTagNames, TAG_DOMAIN_NOTICE, tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, sourceCode, putTypeCode, clampDifficulty, dateArg, getTask, defaultTable, requireTable, insertTaskRow, saveTaskRow, outOne, emitChange, writeChange, checkRequiredDates, currentTaskTagIds, resolveTagPatch, PATCH_FIELDS, DIFF_COLUMNS } from "./task-model.js";
+import { taskTransaction } from './task-transaction.js';
+import { validateTargetArgs, resolveTarget, requireOwnedTable } from './task-target.js';
+import { ownershipError, ownershipFields, parseTablePath } from './task-ownership-path.js';
 // 标题不做唯一性校验：允许与其它任务同名，调用方用 id 区分（与标签名唯一是两条规则）。
 export function createTask(db, args, origin, api, opts) {
+  if (!opts?.skipTx) return taskTransaction(db, api, buffered => createTask(db, args, origin, buffered, {skipTx:true}));
+  const validated = validateTargetArgs(db, args, api);
   const title = String(args.title === undefined || args.title === null ? "" : args.title).trim();
   if (!title) throw new Error("title 不能为空");
-  const table = args.tableId === undefined || args.tableId === null || args.tableId === ""
-    ? defaultTable(db)
-    : requireTable(db, args.tableId);
   const dedupeKey = String(args.dedupeKey === undefined || args.dedupeKey === null ? "" : args.dedupeKey).trim() || null;
   if (dedupeKey) {
-    const existing = db.prepare(
-      "SELECT * FROM task WHERE dedupe_key=? AND deleted_at IS NULL ORDER BY created_at ASC LIMIT 1",
-    ).get(dedupeKey);
+    const matches = db.prepare("SELECT * FROM task WHERE dedupe_key=? AND deleted_at IS NULL ORDER BY created_at ASC").all(dedupeKey);
+    if (matches.length > 1) throw ownershipError('DEDUPE_AMBIGUOUS', '幂等键对应多个存活任务：' + dedupeKey);
+    const existing = matches[0];
     if (existing) {
+      requireOwnedTable(db, existing.table_id);
       const task = outOne(db, existing);
       attachTags(db, api, task);
-      return withNotices({ id: String(existing.id), task: task, deduped: true, existing: true }, tagMissingNotices(args, tagsAvailable(db, api)));
+      const same = validated.hasId ? String(args.tableId) === task.tableId : JSON.stringify(validated.parts) === JSON.stringify(task.pathSegments.slice(1).map(n=>n.name));
+      const notices = tagMissingNotices(args, tagsAvailable(db, api));
+      if (!same) notices.push({code:'DEDUPE_TARGET_MISMATCH',message:'返回已有任务实际归属，未移动任务或创建请求路径节点；纠正请调用 tasks.update(' + JSON.stringify({id:task.id,tableId:'目标表id'}) + ')'});
+      return withNotices({ id: String(existing.id), task, ...ownershipFields(task), deduped: true, existing: true, createdNodes: [] }, notices);
     }
   }
+  const { table, createdNodes } = resolveTarget(db, args, validated, origin, api);
   const source = sourceCode(args.source);
   let status = asCode(args.status, STATUS_NAMES, STATUSES, "status");
   if (status === null) status = "0";
@@ -172,10 +179,9 @@ export function createTask(db, args, origin, api, opts) {
     writeChange(db, row, "create", origin, api, ts);
   };
   // skipTx 供 bulkCreate 在外层事务里复用；单条创建仍自己开事务。
-  if (opts && opts.skipTx) body();
-  else tx(db, body);
+  body();
 
   const task = outOne(db, row);
   attachTags(db, api, task);
-  return withNotices({ id: id, task: task, deduped: false }, tagMissingNotices(args, tagOn));
+  return withNotices({ id: id, task: task, ...ownershipFields(task), createdNodes, deduped: false }, tagMissingNotices(args, tagOn));
 }

@@ -98,14 +98,16 @@ for (const [name, mod, expected] of [
   assert(acct && acct.stats && acct.stats.indexes.length >= 1, "站点账号表未给出索引信息");
 }
 
+const fixtureTableId = tasks.call("taskNodes.create", { parentId: "1", type: "1", name: "数据回归任务表" }).node.id;
+
 // 2. 造数据：分页 / 搜索 / 排序
 const ids = [];
 for (let i = 1; i <= 12; i++) {
-  const r = tasks.call("tasks.create", { title: "分页测试 " + (i < 10 ? "0" + i : String(i)) });
+  const r = tasks.call("tasks.create", { tableId: fixtureTableId, title: "分页测试 " + (i < 10 ? "0" + i : String(i)) });
   ids.push(r.id);
 }
-const hit = tasks.call("tasks.create", { title: "进度 100% 达成" }).id;
-const plain = tasks.call("tasks.create", { title: "普通任务" }).id;
+const hit = tasks.call("tasks.create", { tableId: fixtureTableId, title: "进度 100% 达成" }).id;
+const plain = tasks.call("tasks.create", { tableId: fixtureTableId, title: "普通任务" }).id;
 
 const p1 = tasks.call("tasks.dataQuery", { table: "task", page: 1, pageSize: 10 });
 assert(p1.rows.length === 10, "每页 10 行");

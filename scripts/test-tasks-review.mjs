@@ -67,18 +67,21 @@ try {
   (await import('../packages/addons/tasks/lib/index.js')).apply({ workbench: host, effect: fn => { const cleanup = fn(); if (typeof cleanup === 'function') cleanups.push(cleanup); } });
   const call = (action, args) => host.invoke(action, args, 'agent');
   const get = async id => (await call('tasks.get', { id })).result.task;
+  const tree = (await call('taskNodes.tree', {})).result;
+  const flatten = nodes => nodes.flatMap(n => [n, ...flatten(n.children || [])]);
+  const tableId = flatten(tree).find(n => String(n.type) === '1').id;
   for (const status of ['0', '1', '2', '3']) {
-    const id = (await call('tasks.create', { title: 'Review ' + status, status: status === '3' ? '0' : status })).result.id;
-    if (status === '3') await call('tasks.create', { title: 'Review successor', source: 2, restartKey: id });
+    const id = (await call('tasks.create', { tableId, title: 'Review ' + status, status: status === '3' ? '0' : status })).result.id;
+    if (status === '3') await call('tasks.create', { tableId, title: 'Review successor', source: 2, restartKey: id });
     for (const type of ['REVIEW', '4']) for (const review of ['some feeling', '']) {
       await call('tasks.update', { id, type, review });
       const task = await get(id); assert.equal(task.review, review); assert.equal(task.status, status); cases++;
     }
   }
-  const id = (await call('tasks.create', { title: 'Retain', review: 'preserved' })).result.id;
+  const id = (await call('tasks.create', { tableId, title: 'Retain', review: 'preserved' })).result.id;
   await call('tasks.update', { id, type: 'STATUS', status: '2', difficulty: 2 });
   assert.equal((await get(id)).review, 'preserved');
-  await call('tasks.create', { title: 'Restarted successor', source: 2, restartKey: id });
+  await call('tasks.create', { tableId, title: 'Restarted successor', source: 2, restartKey: id });
   assert.equal((await get(id)).status, '2'); assert.equal((await get(id)).review, 'preserved');
   await call('tasks.update', { id, type: 'STATUS', status: '0' });
   assert.equal((await get(id)).review, 'preserved');

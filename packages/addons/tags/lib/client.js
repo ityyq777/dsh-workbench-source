@@ -3601,7 +3601,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.6.7",
+    version: "1.6.8",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },
       { id: "tags", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TagsView },

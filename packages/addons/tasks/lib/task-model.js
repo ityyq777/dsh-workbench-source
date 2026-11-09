@@ -141,13 +141,9 @@ export function defaultTable(db) {
   return row;
 }
 
+import { requireOwnedTable } from './task-target.js';
 export function requireTable(db, tableId) {
-  const key = idOf(tableId);
-  if (!key) throw new Error("tableId 不能为空");
-  const row = db.prepare("SELECT * FROM task_node WHERE id=? AND deleted_at IS NULL").get(key);
-  if (!row) throw new Error("任务表不存在：" + key);
-  if (String(row.type) !== "1") throw new Error("目标节点不是任务表：" + key);
-  return row;
+  return requireOwnedTable(db, tableId);
 }
 
 export function insertTaskRow(db, row) {

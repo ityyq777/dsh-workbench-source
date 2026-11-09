@@ -39,7 +39,10 @@ import {
   migrateLegacyTypes,
 } from "./tagging.js";
 import { requireKnownTagNames, TAG_DOMAIN_NOTICE, tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, sourceCode, putTypeCode, clampDifficulty, dateArg, getTask, defaultTable, requireTable, insertTaskRow, saveTaskRow, outOne, emitChange, writeChange, checkRequiredDates, currentTaskTagIds, resolveTagPatch, PATCH_FIELDS, DIFF_COLUMNS } from "./task-model.js";
-export function updateTask(db, args, origin, api) {
+import { taskTransaction } from './task-transaction.js';
+import { ownershipFields } from './task-ownership-path.js';
+export function updateTask(db, args, origin, api, opts) {
+  if (!opts?.skipTx) return taskTransaction(db, api, buffered => updateTask(db,args,origin,buffered,{skipTx:true}));
   const id = idOf(args.id || args.taskId);
   const cur = getTask(db, id);
   if (!cur) throw new Error("任务不存在：" + (id || "(空)"));
@@ -115,5 +118,5 @@ export function updateTask(db, args, origin, api) {
   writeChange(db, next, "update", origin, api, ts);
   const task = outOne(db, next);
   attachTags(db, api, task);
-  return withNotices({ task: task }, tagMissingNotices(args, tagWritable));
+  return withNotices({ task: task, ...ownershipFields(task) }, tagMissingNotices(args, tagWritable));
 }

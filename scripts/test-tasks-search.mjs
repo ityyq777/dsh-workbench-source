@@ -66,7 +66,7 @@ const lum = hex => hex.match(/../g).map(x => parseInt(x, 16) / 255).map(x => x <
 const contrast = (lum(color('--wbt-hit-bg')) + .05) / (lum(color('--wbt-hit-fg')) + .05);
 assert.ok(contrast >= 4.5);
 assert.ok(css.includes('.wbt-root .wbt-item.closed:has(mark.wbt-hit){opacity:1}'));
-const entry = readFileSync('packages/addons/tasks/client/client.src.cjs', 'utf8');
+const entry = readFileSync('packages/addons/tasks/client/tasks-view.cjs', 'utf8');
 assert.ok(entry.includes('keyword: titleKey.trim()'), 'highlight follows submitted search, not draft');
 const home = mkdtempSync(join(tmpdir(), 'wb-search-')); process.env.WB_HOME = home;
 const cleanups = []; let host;
@@ -74,9 +74,10 @@ try {
   (await import('../packages/shell/lib/index.js')).apply({ provide: (_name, value) => { host = value; }, effect: fn => { const c = fn(); if (typeof c === 'function') cleanups.push(c); }, tools: { register() {} }, webServer: { register() {} }, systemPrompt: { section() {}, getSectionOrder: () => 500 }, commands: { register() {} }, agents: { get() {} }, connection: { requestRejection() {} } });
   (await import('../packages/addons/tasks/lib/index.js')).apply({ workbench: host, effect: fn => { const c = fn(); if (typeof c === 'function') cleanups.push(c); } });
   const call = async (action, args) => { const r = await host.invoke(action, args, 'agent'); assert.ok(!r.isError && r.result !== undefined, JSON.stringify(r)); return r.result; };
+  const fixtureTableId = (await call('taskNodes.create', { parentId: '1', type: '1', name: '检索回归任务表' })).node.id;
   const ids = [];
-  for (const field of ['title', 'description', 'review']) ids.push((await call('tasks.create', { title: 'plain', [field]: 'UniqueNeedle', priority: 6 })).id);
-  await call('tasks.create', { title: 'decoy' });
+  for (const field of ['title', 'description', 'review']) ids.push((await call('tasks.create', { tableId: fixtureTableId, title: 'plain', [field]: 'UniqueNeedle', priority: 6 })).id);
+  await call('tasks.create', { tableId: fixtureTableId, title: 'decoy' });
   for (const pageNumber of [1, 2, 3]) {
     const page = await call('tasks.list', { titleKey: 'uniqueneedle', pageSize: 1, pageNumber });
     assert.equal(page.total, 3); assert.equal(page.returned, 1); assert.ok(ids.includes(page.records[0].id));
@@ -87,22 +88,22 @@ try {
   const data = await call('tasks.dataQuery', { table: 'task', search: 'uniqueneedle' }); assert.equal(data.total, 3);
   const byId = await call('tasks.dataQuery', { table: 'task', search: ids[0] }); assert.equal(byId.total, 1, 'all TEXT column search remains supported');
   for (const keyword of ['%', '_', '\\', '.*+?^$' + '{}()|[]', '中文', '<script>alert(1)</script>']) {
-    const id = (await call('tasks.create', { title: 'literal fixture', review: keyword })).id;
+    const id = (await call('tasks.create', { tableId: fixtureTableId, title: 'literal fixture', review: keyword })).id;
     const result = await call('tasks.list', { titleKey: keyword }); assert.equal(result.total, 1); assert.equal(result.records[0].id, id);
     assert.equal((await call('tasks.export', { titleKey: keyword })).count, 1);
     assert.equal((await call('tasks.dataQuery', { table: 'task', search: keyword })).total, 1); cases++;
   }
   assert.equal((await call('tasks.list', { titleKey: '   ' })).total, 10);
   assert.equal((await call('tasks.list', { titleKey: 'absent' })).total, 0);
-  for (let i = 0; i < 13; i++) await call('tasks.create', { title: 'cap fixture', review: 'CapNeedle', priority: 6 });
+  for (let i = 0; i < 13; i++) await call('tasks.create', { tableId: fixtureTableId, title: 'cap fixture', review: 'CapNeedle', priority: 6 });
   const capped = await call('tasks.list', { titleKey: 'capneedle' });
   assert.equal(capped.total, 13); assert.equal(capped.returned, 12); assert.equal(capped.truncated, true);
   assert.equal((await call('tasks.export', { titleKey: 'capneedle' })).count, 12);
   assert.equal((await call('tasks.export', { titleKey: 'capneedle', tab: 0 })).count, 13);
   assert.equal((await call('tasks.export', { titleKey: 'capneedle', priorityMin: 7 })).count, 0);
   for (const [upper, lower] of [['É', 'é'], ['Σ', 'σ']]) {
-    const id = (await call('tasks.create', { title: upper, description: lower, review: upper })).id;
-    await call('tasks.create', { title: upper, description: upper, review: upper });
+    const id = (await call('tasks.create', { tableId: fixtureTableId, title: upper, description: lower, review: upper })).id;
+    await call('tasks.create', { tableId: fixtureTableId, title: upper, description: upper, review: upper });
     const result = await call('tasks.list', { titleKey: lower });
     assert.equal(result.total, 1); assert.equal(result.records[0].id, id);
     for (const card of [false, true]) {

@@ -89,17 +89,19 @@ assert(rep0.lists.recentShutdown.length <= 4, "最近关闭条数未按参数截
 const rep1 = tasks.call("tasks.statsReport", { range: "90d", recentDoneLimit: 999, recentShutdownLimit: -1 });
 assert(rep1.lists.recentDone.length <= 50, "最近完成条数未夹到上限");
 
+const fixtureTableId = tasks.call("taskNodes.create", { parentId: "1", type: "1", name: "配置回归任务表" }).node.id;
+
 // 6. 服务端读取：关掉自动建标签后，未知标签名必须报错
 tasks.call("tasks.configSet", { values: { "form.autoCreateTags": false } });
-mustThrow(() => tasks.call("tasks.create", { title: "配置测试任务", tags: ["绝不存在的标签"] }), "标签不存在", "未知标签应被拒绝");
-const created = tasks.call("tasks.create", { title: "配置测试任务" });
+mustThrow(() => tasks.call("tasks.create", { tableId: fixtureTableId, title: "配置测试任务", tags: ["绝不存在的标签"] }), "标签不存在", "未知标签应被拒绝");
+const created = tasks.call("tasks.create", { tableId: fixtureTableId, title: "配置测试任务" });
 assert(created.id || (created.task && created.task.id), "普通任务应能创建：" + JSON.stringify(created).slice(0, 200));
 
 // 6.1 最近完成 / 最近关闭清单
-const doneTask = tasks.call("tasks.create", { title: "完成过的任务", publishDate: "2026-01-01" });
+const doneTask = tasks.call("tasks.create", { tableId: fixtureTableId, title: "完成过的任务", publishDate: "2026-01-01" });
 const doneId = String(doneTask.id || (doneTask.task && doneTask.task.id));
 tasks.call("tasks.complete", { id: doneId, date: "2026-01-05", difficulty: 2 });
-const shutTask = tasks.call("tasks.create", { title: "关闭过的任务", publishDate: "2026-01-01" });
+const shutTask = tasks.call("tasks.create", { tableId: fixtureTableId, title: "关闭过的任务", publishDate: "2026-01-01" });
 const shutId = String(shutTask.id || (shutTask.task && shutTask.task.id));
 tasks.call("tasks.update", { id: shutId, type: "STATUS", status: "1", date: "2026-01-06" });
 const rep2 = tasks.call("tasks.statsReport", { range: "90d", recentDoneLimit: 10, recentShutdownLimit: 10 });

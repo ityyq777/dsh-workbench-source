@@ -1,3 +1,7 @@
+import { taskTransaction } from './task-transaction.js';
+import { insertOwnedNode, validateNodePlacement } from './task-node-write.js';
+import { pathFromMap } from './task-ownership-path.js';
+import { nodeMap } from './db.js';
 /**
  * 任务树 action：邻接表 + 路径枚举 + sort + depth。
  *
@@ -134,43 +138,18 @@ function pathAction(db, args) {
 }
 
 function createAction(db, args, origin, api) {
-  const parentId = idOf(args.parentId !== undefined ? args.parentId : args.parent);
-  const parent = nodeById(db, parentId, false);
-  if (!parent) throw new Error("父节点不存在：" + (parentId || "(空)"));
-  if (String(parent.type) === "1") throw new Error("任务表下面不能再建节点");
-  const type = typeCode(args.type);
-  if (type === "2") throw new Error("不能创建第二个根节点");
-  const name = String(args.name === undefined || args.name === null || args.name === "" ? "未命名" : args.name).trim();
-  if (!name) throw new Error("name 不能为空");
-  if (name.length > 20) throw new Error("name 不能超过 20 个字符");
-  const description = nodeDescription(args.description);
-  const ts = now();
-  const id = newId();
-  const max = db.prepare("SELECT MAX(sort) AS m FROM task_node WHERE parent_id=? AND deleted_at IS NULL").get(String(parent.id));
-  const sort = max && max.m !== null ? Number(max.m) + 1 : 0;
-  const row = {
-    id,
-    name,
-    description,
-    type,
-    parent_id: String(parent.id),
-    path: String(parent.path || "/" + parent.id + "/") + id + "/",
-    sort,
-    depth: Number(parent.depth) + 1,
-    created_at: ts,
-    updated_at: ts,
-    deleted_at: null,
-    rev: 1,
-  };
-  tx(db, function () {
-    insertNode(db, row);
-    logChange(db, "task_node", id, "create", row, origin, ts);
+  return taskTransaction(db,api,buffered => {
+    const parentId = idOf(args.parentId !== undefined ? args.parentId : args.parent);
+    const name = String(args.name === undefined || args.name === null || args.name === "" ? "未命名" : args.name).trim();
+    const row = insertOwnedNode(db,parentId,name,typeCode(args.type),nodeDescription(args.description),origin);
+    buffered.emit('task-nodes-changed',{id:row.id,parentId,op:'create'});
+    return {node:rowNode(row,[])};
   });
-  api.emit("task-nodes-changed", { id: id, parentId: String(parent.id), op: "create" });
-  return { node: rowNode(row, []) };
 }
 
-function renameAction(db, args, origin, api) {
+function renameAction(db, args, origin, api, inside = false) {
+  if (!inside) return taskTransaction(db,api,buffered => renameAction(db,args,origin,buffered,true));
+  const write = (_db,body) => body();
   const id = idOf(args.id !== undefined ? args.id : args.nodeId);
   const node = nodeById(db, id, false);
   if (!node) throw new Error("节点不存在：" + (id || "(空)"));
@@ -178,8 +157,10 @@ function renameAction(db, args, origin, api) {
   if (!name) throw new Error("name 不能为空");
   if (name.length > 20) throw new Error("name 不能超过 20 个字符");
   if (name === String(node.name)) throw new Error("新名称与旧名称相同");
+  pathFromMap(node.id,nodeMap(db));
+  if (String(node.parent_id) !== '0') validateNodePlacement(db,node.parent_id,name,node.id);
   const ts = now();
-  tx(db, function () {
+  write(db, function () {
     db.prepare("UPDATE task_node SET name=?, updated_at=?, rev=rev+1 WHERE id=?").run(name, ts, id);
     logChange(db, "task_node", id, "upsert", Object.assign({}, node, { name: name, updated_at: ts, rev: Number(node.rev) + 1 }), origin, ts);
   });
@@ -202,7 +183,9 @@ function resort(db, parentId, ts, origin) {
   }
 }
 
-function moveAction(db, args, origin, api) {
+function moveAction(db, args, origin, api, inside = false) {
+  if (!inside) return taskTransaction(db,api,buffered => moveAction(db,args,origin,buffered,true));
+  const write = (_db,body) => body();
   const sourceId = idOf(args.sourceId !== undefined ? args.sourceId : args.nodeToMoveId);
   const targetId = idOf(args.targetId !== undefined ? args.targetId : args.newParentId);
   const moveType = Number(args.moveType === undefined ? 0 : args.moveType);
@@ -220,6 +203,10 @@ function moveAction(db, args, origin, api) {
   if (!newParent) throw new Error("目标父节点不存在");
   if (String(newParent.type) === "1") throw new Error("任务表下面不能再挂节点");
 
+  const sourceChain = pathFromMap(source.id,nodeMap(db));
+  const parentChain = pathFromMap(newParent.id,nodeMap(db));
+  if (parentChain.pathSegments.some(n=>n.id === String(source.id))) throw new Error('不能移动到自己的子树中');
+  validateNodePlacement(db,newParent.id,source.name,source.id);
   const oldParentId = String(source.parent_id);
   const siblings = db.prepare(
     "SELECT * FROM task_node WHERE parent_id=? AND deleted_at IS NULL AND id<>? ORDER BY sort ASC, id ASC",
@@ -237,7 +224,7 @@ function moveAction(db, args, origin, api) {
   const ts = now();
   const subtree = subtreeRows(db, source);
 
-  tx(db, function () {
+  write(db, function () {
     for (const row of subtree) {
       const nextPath = String(row.id) === String(source.id)
         ? newPath
@@ -353,10 +340,13 @@ function countTasksUnder(db, node) {
   return row ? Number(row.n || 0) : 0;
 }
 
-function updateNodeAction(db, args, origin, api) {
+function updateNodeAction(db, args, origin, api, inside = false) {
+  if (!inside) return taskTransaction(db,api,buffered => updateNodeAction(db,args,origin,buffered,true));
+  const write = (_db,body) => body();
   const id = idOf(args.id !== undefined ? args.id : args.nodeId);
   const node = nodeById(db, id, false);
   if (!node) throw new Error("节点不存在：" + (id || "(空)"));
+  pathFromMap(node.id,nodeMap(db));
   const hasName = args.name !== undefined;
   const hasDesc = args.description !== undefined;
   if (!hasName && !hasDesc) throw new Error("需要至少提供 name 或 description");
@@ -366,10 +356,7 @@ function updateNodeAction(db, args, origin, api) {
     if (!name) throw new Error("name 不能为空");
     if (name.length > 20) throw new Error("name 不能超过 20 个字符");
     if (name !== String(node.name)) {
-      const dup = db.prepare(
-        "SELECT 1 AS x FROM task_node WHERE parent_id=? AND name=? AND deleted_at IS NULL AND id<>?",
-      ).get(String(node.parent_id), name, id);
-      if (dup) throw new Error("同一父节点下已存在同名节点：" + name);
+      if (String(node.parent_id) !== '0') validateNodePlacement(db,node.parent_id,name,node.id);
       next.name = name;
     }
   }
@@ -380,7 +367,7 @@ function updateNodeAction(db, args, origin, api) {
   const ts = now();
   next.updated_at = ts;
   next.rev = Number(node.rev) + 1;
-  tx(db, function () {
+  write(db, function () {
     db.prepare("UPDATE task_node SET name=?, description=?, updated_at=?, rev=rev+1 WHERE id=?").run(
       String(next.name),
       String(next.description || ""),

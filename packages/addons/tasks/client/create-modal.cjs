@@ -16,16 +16,16 @@ function validatePriority(value, source, t) {
 }
 module.exports = function createModal(deps) {
   var React = deps.React, h = React.createElement;
+  var ownership = require("./ownership.cjs"), fields = require("./ownership-fields.cjs")(React);
   var allTables = deps.allTables, tagNames = deps.tagNames, splitTags = deps.splitTags;
   var today = deps.today, addDays = deps.addDays, hostHasAddon = deps.hostHasAddon;
   function CreateModal(props) {
     var t = props.t;
     var source = String(props.source || "0");
     var origin = props.originTask || null;
-    var tables = allTables(props.tree);
-    var first = props.defaultTableId || (origin && origin.tableId) || (tables[0] && tables[0].id) || "";
+    var tables = ownership.tables(props.tree);
     var initTags = origin ? tagNames(origin).join(", ") : "";
-    var initTable = origin ? String(origin.tableId || first) : String(first);
+    // 每次打开都重新确认，来源任务及树选择仅作建议。
     var defaults = props.defaults || {};
     var initPriority = initialPriority(source, origin, defaults.priority);
     var initDifficulty = Math.floor(Number(defaults.difficulty));
@@ -36,37 +36,63 @@ module.exports = function createModal(deps) {
       title: "", description: "",
       tags: initTags, status: "0", priority: initPriority, difficulty: initDifficulty,
       publishDate: today(), targetDate: addDays(initOffset), doneDate: today(), shutdownDate: today(),
-      tableId: initTable,
+      tableId: "", newPath: false, tablePath: "", pathDescriptions: [], confirmed: false,
     });
     var form = f[0], setForm = f[1];
     var busy = React.useState(false);
     var isBusy = busy[0], setBusy = busy[1];
     var err = React.useState("");
     var error = err[0], setError = err[1];
+    var submission = React.useState({ pending: false })[0];
+    function requestClose() { if (!submission.pending) props.onClose(); }
+    function onModalKey(e) {
+      if (e.key !== "Escape") return;
+      e.preventDefault(); e.stopPropagation(); requestClose();
+    }
     var active = source === "2" || form.status === "0";
     var priorityError = active ? validatePriority(form.priority, source, t) : "";
 
+    var plan = ownership.preview(props.tree, form.tablePath, form.pathDescriptions);
+    var targetValid = form.newPath ? !plan.error && form.confirmed : tables.some(function (x) { return x.id === form.tableId; });
+    React.useEffect(function () {
+      if (form.tableId && !tables.some(function (x) { return x.id === form.tableId; })) {
+        setForm(function (prev) { return Object.assign({}, prev, { tableId: "" }); });
+        setError("目标任务表已失效，请重新选择；已填写内容已保留。");
+      }
+    }, [props.tree, form.tableId]);
+    function setMany(patch) { setForm(function (prev) { return Object.assign({}, prev, patch); }); }
     function set(k, v) {
       var next = Object.assign({}, form);
       next[k] = k === "priority" ? clampInputPriority(v) : v;
       setForm(next);
     }
+    function failed(message) {
+      var text = String(message || "create failed");
+      if (/TABLE_NOT_FOUND|TARGET_NOT_TABLE|TREE_CORRUPT/.test(text)) setMany({ tableId: "" });
+      setError(text); submission.pending = false; setBusy(false);
+    }
+    function capabilityError(message) {
+      var reason = String(message || "归属能力检查失败");
+      var upgrade = /unknown.*action|action.*not.*found|未注册|不存在.*action|未知.*action/i.test(reason);
+      return new Error((upgrade ? "归属能力不可用，请完整升级任务插件与宿主并重启；已保留表单。" : "归属能力检查失败，已保留表单：") + reason);
+    }
     function submit() {
-      if (priorityError || isBusy) return;
+      if (priorityError || isBusy || submission.pending) return;
       if (!String(form.title).trim()) { setError(t.needTitle); return; }
-      if (!form.tableId) { setError(t.needTable); return; }
+      if (!targetValid) { setError(form.newPath ? plan.error || "请确认新建路径" : t.needTable); return; }
       if (!form.publishDate || !form.targetDate) { setError(t.needDate); return; }
-      setBusy(true); setError("");
+      submission.pending = true; setBusy(true); setError("");
       var args = {
         title: String(form.title).trim(),
         description: String(form.description || ""),
         tags: splitTags(form.tags), status: source === "2" ? "0" : String(form.status),
         priority: active ? Number(form.priority) : 0,
-        tableId: String(form.tableId),
         publishDate: form.publishDate,
         targetDate: form.targetDate,
         source: source,
       };
+      if (form.newPath) Object.assign(args, { tablePath: plan.parts, createMissing: true, pathDescriptions: plan.parts.map(function (_, i) { return form.pathDescriptions[i] || ""; }) });
+      else args.tableId = String(form.tableId);
       if (source !== "0" && origin) {
         args.timelineKey = String(origin.timelineKey || origin.id);
         args.restartKey = source === "2" ? String(origin.id) : undefined;
@@ -76,16 +102,19 @@ module.exports = function createModal(deps) {
         args.difficulty = Number(form.difficulty) || 0;
       }
       if (args.status === "1") args.shutdownDate = form.shutdownDate || today();
-      props.api.call("tasks.create", args).then(function (r) {
-        if (!r || !r.ok) { setError((r && r.error) || "create failed"); setBusy(false); return; }
-        props.onCreated();
-      }).catch(function (e) { setError(String(e && e.message || e)); setBusy(false); });
+      props.api.call("tasks.capabilities", { limit: 1 }).then(function (cap) {
+        if (!cap || !cap.ok) throw capabilityError(cap && cap.error);
+        return props.api.call("tasks.create", args);
+      }, function (e) { throw capabilityError(e && e.message || e); }).then(function (r) {
+        if (!r || !r.ok) { failed(r && r.error); return; }
+        props.onCreated(r.result);
+      }).catch(function (e) { failed(e && e.message || e); });
     }
 
     var title = source === "2" ? t.restartTitle : source === "1" ? t.newTimeline : t.newTask;
-    return h("div", { className: "wbt-modal-mask", onMouseDown: function (e) { if (e.target === e.currentTarget) props.onClose(); } },
+    return h("div", { className: "wbt-modal-mask", onKeyDownCapture: onModalKey, onMouseDown: function (e) { if (e.target === e.currentTarget) requestClose(); } },
       h("div", { className: "wbt-modal" },
-        h("div", { className: "wbt-modal-head" }, h("h3", null, title), h("button", { className: "wbt-icon", onClick: props.onClose }, "×")),
+        h("div", { className: "wbt-modal-head" }, h("h3", null, title), h("button", { className: "wbt-icon", disabled: isBusy, onClick: requestClose }, "×")),
         source === "2" ? h("div", { className: "wbt-mhint" }, t.restartPriorityHint) : null,
         source !== "0" && origin ? h("div", { className: "wbt-mhint" }, "来源：" + (origin.title || origin.id) + (source === "2" ? " · 重启链 " + (origin.restartKey || origin.id) : " · 时间线 " + (origin.timelineKey || origin.id))) : null,
         h("div", { className: "wbt-form" },
@@ -95,7 +124,7 @@ module.exports = function createModal(deps) {
           h("label", { className: "wbt-field" }, h("span", null, t.status), h("select", { className: "wbt-select", value: source === "2" ? "0" : form.status, disabled: source === "2", onChange: function (e) { set("status", e.target.value); } },
             h("option", { value: "0" }, "已开启"), h("option", { value: "2" }, "已完成"), h("option", { value: "1" }, "已关闭"))),
           h("label", { className: "wbt-field" }, h("span", null, t.priority + "（1–10）"), h("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, disabled: !active, "aria-invalid": !!priorityError, "aria-describedby": priorityError ? "wbt-create-priority-error" : undefined, value: form.priority, onChange: function (e) { set("priority", e.target.value); } })),
-          h("label", { className: "wbt-field" }, h("span", null, t.table + " *"), h("select", { className: "wbt-select", value: form.tableId, onChange: function (e) { set("tableId", e.target.value); } }, tables.map(function (x) { return h("option", { key: x.id, value: x.id }, "　".repeat(x.depth) + x.name); }))),
+          fields({ form: form, set: set, setMany: setMany, tree: props.tree, recommended: props.defaultTableId || (origin && origin.tableId) }),
           h("label", { className: "wbt-field" }, h("span", null, t.publishDate), h("input", { className: "wbt-input", type: "date", value: form.publishDate, onChange: function (e) { set("publishDate", e.target.value); } })),
           h("label", { className: "wbt-field" }, h("span", null, t.targetDate), h("input", { className: "wbt-input", type: "date", value: form.targetDate, onChange: function (e) { set("targetDate", e.target.value); } })),
           (source !== "2" && form.status === "2") ? h("label", { className: "wbt-field" }, h("span", null, t.doneDate), h("input", { className: "wbt-input", type: "date", value: form.doneDate, onChange: function (e) { set("doneDate", e.target.value); } })) : null,
@@ -105,8 +134,8 @@ module.exports = function createModal(deps) {
         priorityError ? h("div", { id: "wbt-create-priority-error", className: "wbt-err", role: "alert" }, priorityError) : null,
         error ? h("div", { className: "wbt-err" }, error) : null,
         h("div", { className: "wbt-modal-foot" },
-          h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
-          h("button", { className: "wbt-btn primary", disabled: isBusy || !!priorityError, onClick: submit }, isBusy ? "…" : t.create)
+          h("button", { className: "wbt-btn ghost", disabled: isBusy, onClick: requestClose }, t.cancel),
+          h("button", { className: "wbt-btn primary", disabled: isBusy || !!priorityError || !targetValid, onClick: submit }, isBusy ? "…" : t.create)
         )
       )
     );

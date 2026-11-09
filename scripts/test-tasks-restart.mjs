@@ -15,18 +15,20 @@ try {
   const call = (action, args) => host.invoke(action, args, 'agent');
   const get = async id => (await call('tasks.get', { id })).result.task;
 
-  const original = (await call('tasks.create', { title: 'P7 original', priority: 7 })).result.task;
-  const inherited = (await call('tasks.create', { title: 'P7 restart', source: 2, restartKey: original.id, priority: original.priority })).result.task;
+  const fixtureTableId = (await call('taskNodes.create', { parentId: '1', type: '1', name: '重启回归任务表' })).result.node.id;
+
+  const original = (await call('tasks.create', { tableId: fixtureTableId, title: 'P7 original', priority: 7 })).result.task;
+  const inherited = (await call('tasks.create', { tableId: fixtureTableId, title: 'P7 restart', source: 2, restartKey: original.id, priority: original.priority })).result.task;
   assert.equal(inherited.priority, 7); assert.equal(inherited.status, '0');
-  const defaulted = (await call('tasks.create', { title: 'Default restart', source: 2, restartKey: inherited.id })).result.task;
+  const defaulted = (await call('tasks.create', { tableId: fixtureTableId, title: 'Default restart', source: 2, restartKey: inherited.id })).result.task;
   assert.equal(defaulted.priority, 1);
-  await assert.rejects(() => call('tasks.create', { title: 'Invalid restart', source: 2, restartKey: defaulted.id, priority: 0 }), /重启任务.*1–10.*已完成.*已关闭/);
+  await assert.rejects(() => call('tasks.create', { tableId: fixtureTableId, title: 'Invalid restart', source: 2, restartKey: defaulted.id, priority: 0 }), /重启任务.*1–10.*已完成.*已关闭/);
   assert.equal((await get(defaulted.id)).status, '0', 'rejected create has no transition side effect');
   for (const status of ['1', '2']) {
-    const active = (await call('tasks.create', { title: 'Transition ' + status, priority: 7 })).result.task;
+    const active = (await call('tasks.create', { tableId: fixtureTableId, title: 'Transition ' + status, priority: 7 })).result.task;
     const changed = await call('tasks.update', { id: active.id, type: 'STATUS', status });
     assert.ok(changed.result); assert.equal((await get(active.id)).priority, 0);
-    const restarted = (await call('tasks.create', { title: 'Restart zero origin', source: 2, restartKey: active.id })).result.task;
+    const restarted = (await call('tasks.create', { tableId: fixtureTableId, title: 'Restart zero origin', source: 2, restartKey: active.id })).result.task;
     assert.equal(restarted.priority, 1); assert.equal(restarted.status, '0');
   }
   const help = await call('actions.help', { action: 'tasks.create' });

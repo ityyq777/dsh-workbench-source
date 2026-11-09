@@ -37,7 +37,7 @@ export function apply(ctx) {
         id: "wb-addon-tags",
         title: "标签",
         description: "创建与管理标签，为站点等业务提供标签归类；含统计/记录/配置/数据四个视图",
-        version: "1.6.7",
+        version: "1.6.8",
         tables: ["tag", "tag_mapping"],
         sync: tagSync,
         views: [
@@ -47,6 +47,7 @@ export function apply(ctx) {
           { id: "data", title: { zh: "数据", en: "Data" } },
         ],
         capability: {
+          taskOwnership: { boundary: "标签归类记录使用 tags.create；开发、修复标签插件的工作项使用 tasks.create。", query: "tags" },
           summary: "维护跨业务对象的标签；只做归类，不负责记录任务或站点。",
           records: [
             {

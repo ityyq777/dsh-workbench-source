@@ -5,6 +5,24 @@
  * 不写数据库；宿主拿到 rows 后整表替换并 full push。
  */
 
+import { ownershipError } from './task-ownership-path.js';
+
+// 多设备同名不同 id 不自动合并；阻断同步收敛并交给用户用 id 消歧。
+function checkSiblingConflicts(rows) {
+  const names = new Map();
+  for (const row of rows) {
+    const key = JSON.stringify([String(row.parent_id || '0'),String(row.name)]);
+    if (!names.has(key)) names.set(key, []);
+    names.get(key).push(row);
+  }
+  for (const group of names.values()) if (group.length > 1) {
+    throw ownershipError('PATH_AMBIGUOUS', '同步发现同级同名节点，未自动合并或改名，请先确认节点归属', {
+      candidates:group.map(row=>({id:String(row.id),type:String(row.type),path:String(row.path || ''),name:String(row.name)})),
+      nextActions:['使用 taskNodes.overview 检查冲突 id，明确确认后通过 taskNodes.rename 或 taskNodes.move 消歧，再重试同步'],
+    });
+  }
+}
+
 function stableTs(rows) {
   let max = 0;
   for (const row of rows) max = Math.max(max, Number(row.updated_at) || 0);
@@ -27,6 +45,7 @@ export function reconcileTaskTree(remoteRows, localRows) {
   const all = mergeRows(remoteRows, localRows);
   const baseTs = stableTs(all);
   const live = all.filter((row) => row.deleted_at === null || row.deleted_at === undefined);
+  checkSiblingConflicts(live);
   if (!live.length) return { rows: all.sort((a, b) => String(a.id).localeCompare(String(b.id))), dirtyRowTables: [] };
 
   const byId = new Map(live.map((row) => [String(row.id), Object.assign({}, row)]));
@@ -128,6 +147,8 @@ export function reconcileTaskTree(remoteRows, localRows) {
     }
   }
 
+  // 挂根/断环会改变同级关系：返回替换行之前再次验证，不能等下一轮同步才发现碰撞。
+  checkSiblingConflicts(ordered);
   const tombstones = all.filter((row) => row.deleted_at !== null && row.deleted_at !== undefined);
   return {
     rows: [...ordered, ...tombstones].sort((a, b) => String(a.id).localeCompare(String(b.id))),

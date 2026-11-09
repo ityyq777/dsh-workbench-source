@@ -82,8 +82,9 @@ async function runMode() {
   }
 
   if (mode === "tasks") {
+    const fixtureTableId = (await call("taskNodes.create", { parentId: "1", type: "1", name: "无标签域回归任务表" })).result.node.id;
     // 任务：标签是可选能力，缺域时写入照常，只跳过标签并回执 notices。
-    const created = await call("tasks.create", { title: "无标签域任务", priority: 3, tags: ["工作"], tagIds: ["t1"] });
+    const created = await call("tasks.create", { tableId: fixtureTableId, title: "无标签域任务", priority: 3, tags: ["工作"], tagIds: ["t1"] });
     assert(created.result.id, "无标签域时 tasks.create 应当正常");
     assert((created.result.notices || []).some((n) => n.code === "tag_domain_missing"), "创建回执缺少 tag_domain_missing");
     assert(!("tags" in created.result.task) && !("tagIds" in created.result.task), "缺域时不应回显 tags 字段");

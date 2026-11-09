@@ -182,28 +182,8 @@ export function timelineRefactor(db, args, origin, api) {
 }
 
 export function migrateTasks(db, args, origin, api) {
-  const ids = Array.isArray(args.ids) ? args.ids.map(String) : [];
-  if (!ids.length) throw new Error("ids 不能为空");
-  const table = requireTable(db, args.tableId);
-  const dryRun = args.dryRun === true;
-  const ts = now();
-  const changed = [];
-  const plan = function () {
-    for (const id of ids) {
-      const cur = getTask(db, id);
-      if (!cur) throw new Error("任务不存在：" + id);
-      changed.push(id);
-      if (dryRun) continue;
-      const next = Object.assign({}, cur, { table_id: String(table.id), updated_at: ts, rev: Number(cur.rev) + 1 });
-      saveTaskRow(db, next);
-      writeChange(db, next, "update", origin, api, ts);
-    }
-  };
-  if (dryRun) plan();
-  else tx(db, plan);
-  return dryRun
-    ? { dryRun: true, updated: 0, wouldUpdate: changed.length, ids: changed, tableId: String(table.id) }
-    : { updated: changed.length, ids: changed, tableId: String(table.id) };
+  const result = bulkUpdate(db,{ids:args.ids,patch:{tableId:args.tableId},dryRun:args.dryRun},origin,api);
+  return {...result, ids:result.changes.map(c=>c.id), tableId:String(args.tableId), tasks:result.changes.map(c=>c.task)};
 }
 
 export function sweepShutdown(db, args, origin, api) {

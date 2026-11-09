@@ -4456,6 +4456,156 @@ var require_task_item = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/ownership.cjs
+var require_ownership = __commonJS({
+  "packages/addons/tasks/client/ownership.cjs"(exports2, module2) {
+    "use strict";
+    function tables(nodes, parents) {
+      var out = [], prefix = parents || [];
+      (nodes || []).forEach(function(n) {
+        if (n.deletedAt || n.deleted_at) return;
+        var path = prefix.concat(String(n.name || ""));
+        if (String(n.type) === "1") out.push({ id: String(n.id), name: n.name, path: path.join(" / "), description: n.description || "" });
+        else out = out.concat(tables(n.children, path));
+      });
+      return out;
+    }
+    function preview(tree, path, descriptions) {
+      var parts = String(path || "").split("/").map(function(s) {
+        return s.trim();
+      });
+      if (!path || path.length > 2048 || parts.length > 32 || parts.some(function(s) {
+        return !s || s === "." || s === ".." || s.length > 20;
+      })) return { error: "\u8BF7\u8F93\u5165\u76F8\u5BF9\u4E8E\u6839\u7684\u6709\u6548\u8DEF\u5F84\uFF1B\u6BCF\u6BB5 1\u201320 \u5B57\uFF0C\u6700\u591A 32 \u6BB5\uFF0C\u4E0D\u542B\u9996\u5C3E\u659C\u6760\u3002", nodes: [] };
+      var roots = (tree || []).filter(function(n) {
+        return String(n.type) === "2" && !n.deletedAt && !n.deleted_at;
+      });
+      if (roots.length !== 1) return { error: "\u4EFB\u52A1\u6811\u7F3A\u5C11\u552F\u4E00\u6709\u6548\u6839\uFF0C\u8BF7\u5237\u65B0\u6216\u4FEE\u590D\u4EFB\u52A1\u6811\u540E\u91CD\u8BD5\u3002", nodes: [] };
+      var level = roots[0].children || [], nodes = [], error = "";
+      parts.forEach(function(name, i) {
+        var matches = level.filter(function(n) {
+          return n.name === name && !n.deletedAt && !n.deleted_at;
+        });
+        var type = i === parts.length - 1 ? "1" : "0", existing = matches[0];
+        if (matches.length > 1) error = "\u540C\u7EA7\u540D\u79F0\u5B58\u5728\u6B67\u4E49\uFF0C\u8BF7\u9009\u62E9\u5DF2\u6709\u4EFB\u52A1\u8868\u6216\u4FEE\u6B63\u8DEF\u5F84\u3002";
+        if (existing && String(existing.type) !== type) error = "\u8DEF\u5F84\u7C7B\u578B\u51B2\u7A81\uFF1A\u4E2D\u95F4\u8282\u70B9\u5FC5\u987B\u4E3A\u7EC4\uFF0C\u672B\u6BB5\u5FC5\u987B\u4E3A\u8868\uFF0C\u4E0D\u80FD\u5728\u8868\u4E0B\u5EFA\u8282\u70B9\u3002";
+        if (!existing && !String(descriptions[i] || "").trim()) error = error || "\u8BF7\u586B\u5199\u6BCF\u4E2A\u65B0\u8282\u70B9\u7684\u804C\u8D23\u63CF\u8FF0\u3002";
+        if (String(descriptions[i] || "").length > 2e3) error = "\u804C\u8D23\u63CF\u8FF0\u6700\u591A 2000 \u5B57\u3002";
+        nodes.push({ name, type, existing: !!existing });
+        level = existing ? existing.children || [] : [];
+      });
+      return { parts, nodes, error, path: (roots[0] ? roots[0].name + " / " : "") + parts.join(" / ") };
+    }
+    function receipt(result) {
+      var task = result && (result.task || result) || {};
+      var path = task.pathSegments;
+      var text = Array.isArray(path) ? path.map(function(p) {
+        return p.name || p;
+      }).join(" / ") : "";
+      if (!text) text = Array.isArray(task.tablePath) ? task.tablePath.join(" / ") : task.tablePath || task.tableName || "";
+      return (task.deduped || result && result.deduped ? "\u5DF2\u5B58\u5728" : "\u5DF2\u4FDD\u5B58") + (text ? " \xB7 \u5DF2\u653E\u5165 " + text : "") + "\uFF1B\u53EF\u5728\u7F16\u8F91\u4E2D\u7EA0\u6B63\u5F52\u5C5E";
+    }
+    module2.exports = { tables, preview, receipt };
+  }
+});
+
+// packages/addons/tasks/client/ownership-fields.cjs
+var require_ownership_fields = __commonJS({
+  "packages/addons/tasks/client/ownership-fields.cjs"(exports2, module2) {
+    "use strict";
+    var ownership = require_ownership();
+    module2.exports = function(React) {
+      var h = React.createElement;
+      return function fields(props) {
+        var form = props.form, set = props.set, tables = ownership.tables(props.tree);
+        var chosen = tables.find(function(x) {
+          return x.id === form.tableId;
+        });
+        var recommended = tables.find(function(x) {
+          return x.id === String(props.recommended || "");
+        });
+        var plan = ownership.preview(props.tree, form.tablePath, form.pathDescriptions || []);
+        return h(
+          "div",
+          { className: "wbt-field full" },
+          h(
+            "label",
+            null,
+            h("span", null, props.edit ? "\u7EA0\u6B63\u5F52\u5C5E\uFF08\u53EF\u9009\uFF09" : "\u76EE\u6807\u4EFB\u52A1\u8868 *"),
+            h(
+              "select",
+              {
+                className: "wbt-select",
+                "aria-label": "\u76EE\u6807\u4EFB\u52A1\u8868",
+                value: form.tableId,
+                disabled: !!form.newPath,
+                onChange: function(e) {
+                  set("tableId", e.target.value);
+                }
+              },
+              h("option", { value: "" }, props.edit ? "\u4FDD\u7559\u5F53\u524D\u5F52\u5C5E" : "\u8BF7\u9009\u62E9\u76EE\u6807\u4EFB\u52A1\u8868"),
+              tables.map(function(x) {
+                return h("option", { key: x.id, value: x.id }, x.path + " \u2014 " + (x.description || "\u6682\u65E0\u804C\u8D23\u63CF\u8FF0"));
+              })
+            )
+          ),
+          chosen ? h("div", { className: "wbt-mhint" }, chosen.path + "\uFF1A" + (chosen.description || "\u6682\u65E0\u804C\u8D23\u63CF\u8FF0")) : null,
+          recommended && !props.edit ? h("div", { className: "wbt-mhint" }, "\u5F53\u524D\u4E0A\u4E0B\u6587\u5EFA\u8BAE\uFF1A" + recommended.path + "\u3002\u4EC5\u4F9B\u53C2\u8003\uFF0C\u8BF7\u81EA\u884C\u9009\u62E9\u3002") : null,
+          !props.edit ? h("label", { className: "wbt-check" }, h("input", {
+            type: "checkbox",
+            "aria-label": "\u6CA1\u6709\u5408\u9002\u7684\u8868\uFF1F\u65B0\u5EFA\u8282\u70B9",
+            checked: !!form.newPath,
+            onChange: function(e) {
+              props.setMany({ newPath: e.target.checked, tableId: "", confirmed: false });
+            }
+          }), "\u6CA1\u6709\u5408\u9002\u7684\u8868\uFF1F\u65B0\u5EFA\u8282\u70B9") : null,
+          form.newPath ? h(
+            "div",
+            null,
+            h("label", null, "\u65B0\u8DEF\u5F84\uFF08\u76F8\u5BF9\u4E8E\u6839\uFF1B\u4EE5 / \u5206\u9694\uFF09", h("input", {
+              className: "wbt-input",
+              "aria-label": "\u65B0\u8DEF\u5F84",
+              value: form.tablePath,
+              onChange: function(e) {
+                props.setMany({ tablePath: e.target.value, pathDescriptions: [], confirmed: false });
+              }
+            })),
+            h("div", { className: "wbt-mhint" }, "\u9884\u89C8\uFF1A" + (plan.path || "\u8BF7\u8F93\u5165\u8DEF\u5F84") + "\u3002\u5DF2\u6709\u8282\u70B9\u4F1A\u590D\u7528\uFF0C\u63D0\u4EA4\u524D\u4E0D\u4F1A\u5199\u5165\u3002"),
+            plan.nodes.map(function(node, i) {
+              return h(
+                "label",
+                { key: i, className: "wbt-field full" },
+                h("span", null, (node.existing ? "\u590D\u7528" : "\u65B0\u5EFA") + (node.type === "1" ? "\u8868\uFF1A" : "\u7EC4\uFF1A") + node.name),
+                !node.existing ? h("textarea", {
+                  className: "wbt-textarea",
+                  "aria-label": "\u8282\u70B9\u804C\u8D23 " + (i + 1),
+                  maxLength: 2e3,
+                  value: form.pathDescriptions[i] || "",
+                  onChange: function(e) {
+                    var values = form.pathDescriptions.slice();
+                    values[i] = e.target.value;
+                    props.setMany({ pathDescriptions: values, confirmed: false });
+                  }
+                }) : null
+              );
+            }),
+            plan.error ? h("div", { className: "wbt-err", role: "alert" }, plan.error) : null,
+            h("label", { className: "wbt-check" }, h("input", {
+              type: "checkbox",
+              "aria-label": "\u786E\u8BA4\u65B0\u5EFA\u8DEF\u5F84",
+              checked: !!form.confirmed,
+              disabled: !!plan.error,
+              onChange: function(e) {
+                set("confirmed", e.target.checked);
+              }
+            }), "\u786E\u8BA4\u4EE5\u4E0A\u8DEF\u5F84\u4E0E\u804C\u8D23\uFF0C\u968F\u4EFB\u52A1\u4E00\u8D77\u63D0\u4EA4")
+          ) : null
+        );
+      };
+    };
+  }
+});
+
 // packages/addons/tasks/client/create-modal.cjs
 var require_create_modal = __commonJS({
   "packages/addons/tasks/client/create-modal.cjs"(exports2, module2) {
@@ -4475,16 +4625,15 @@ var require_create_modal = __commonJS({
     }
     module2.exports = function createModal(deps) {
       var React = deps.React, h = React.createElement;
+      var ownership = require_ownership(), fields = require_ownership_fields()(React);
       var allTables = deps.allTables, tagNames = deps.tagNames, splitTags = deps.splitTags;
       var today = deps.today, addDays = deps.addDays, hostHasAddon = deps.hostHasAddon;
       function CreateModal(props) {
         var t = props.t;
         var source = String(props.source || "0");
         var origin = props.originTask || null;
-        var tables = allTables(props.tree);
-        var first = props.defaultTableId || origin && origin.tableId || tables[0] && tables[0].id || "";
+        var tables = ownership.tables(props.tree);
         var initTags = origin ? tagNames(origin).join(", ") : "";
-        var initTable = origin ? String(origin.tableId || first) : String(first);
         var defaults = props.defaults || {};
         var initPriority = initialPriority(source, origin, defaults.priority);
         var initDifficulty = Math.floor(Number(defaults.difficulty));
@@ -4502,34 +4651,80 @@ var require_create_modal = __commonJS({
           targetDate: addDays(initOffset),
           doneDate: today(),
           shutdownDate: today(),
-          tableId: initTable
+          tableId: "",
+          newPath: false,
+          tablePath: "",
+          pathDescriptions: [],
+          confirmed: false
         });
         var form = f[0], setForm = f[1];
         var busy = React.useState(false);
         var isBusy = busy[0], setBusy = busy[1];
         var err = React.useState("");
         var error = err[0], setError = err[1];
+        var submission = React.useState({ pending: false })[0];
+        function requestClose() {
+          if (!submission.pending) props.onClose();
+        }
+        function onModalKey(e) {
+          if (e.key !== "Escape") return;
+          e.preventDefault();
+          e.stopPropagation();
+          requestClose();
+        }
         var active = source === "2" || form.status === "0";
         var priorityError = active ? validatePriority(form.priority, source, t) : "";
+        var plan = ownership.preview(props.tree, form.tablePath, form.pathDescriptions);
+        var targetValid = form.newPath ? !plan.error && form.confirmed : tables.some(function(x) {
+          return x.id === form.tableId;
+        });
+        React.useEffect(function() {
+          if (form.tableId && !tables.some(function(x) {
+            return x.id === form.tableId;
+          })) {
+            setForm(function(prev) {
+              return Object.assign({}, prev, { tableId: "" });
+            });
+            setError("\u76EE\u6807\u4EFB\u52A1\u8868\u5DF2\u5931\u6548\uFF0C\u8BF7\u91CD\u65B0\u9009\u62E9\uFF1B\u5DF2\u586B\u5199\u5185\u5BB9\u5DF2\u4FDD\u7559\u3002");
+          }
+        }, [props.tree, form.tableId]);
+        function setMany(patch) {
+          setForm(function(prev) {
+            return Object.assign({}, prev, patch);
+          });
+        }
         function set(k, v) {
           var next = Object.assign({}, form);
           next[k] = k === "priority" ? clampInputPriority(v) : v;
           setForm(next);
         }
+        function failed(message) {
+          var text = String(message || "create failed");
+          if (/TABLE_NOT_FOUND|TARGET_NOT_TABLE|TREE_CORRUPT/.test(text)) setMany({ tableId: "" });
+          setError(text);
+          submission.pending = false;
+          setBusy(false);
+        }
+        function capabilityError(message) {
+          var reason = String(message || "\u5F52\u5C5E\u80FD\u529B\u68C0\u67E5\u5931\u8D25");
+          var upgrade = /unknown.*action|action.*not.*found|未注册|不存在.*action|未知.*action/i.test(reason);
+          return new Error((upgrade ? "\u5F52\u5C5E\u80FD\u529B\u4E0D\u53EF\u7528\uFF0C\u8BF7\u5B8C\u6574\u5347\u7EA7\u4EFB\u52A1\u63D2\u4EF6\u4E0E\u5BBF\u4E3B\u5E76\u91CD\u542F\uFF1B\u5DF2\u4FDD\u7559\u8868\u5355\u3002" : "\u5F52\u5C5E\u80FD\u529B\u68C0\u67E5\u5931\u8D25\uFF0C\u5DF2\u4FDD\u7559\u8868\u5355\uFF1A") + reason);
+        }
         function submit() {
-          if (priorityError || isBusy) return;
+          if (priorityError || isBusy || submission.pending) return;
           if (!String(form.title).trim()) {
             setError(t.needTitle);
             return;
           }
-          if (!form.tableId) {
-            setError(t.needTable);
+          if (!targetValid) {
+            setError(form.newPath ? plan.error || "\u8BF7\u786E\u8BA4\u65B0\u5EFA\u8DEF\u5F84" : t.needTable);
             return;
           }
           if (!form.publishDate || !form.targetDate) {
             setError(t.needDate);
             return;
           }
+          submission.pending = true;
           setBusy(true);
           setError("");
           var args = {
@@ -4538,11 +4733,14 @@ var require_create_modal = __commonJS({
             tags: splitTags(form.tags),
             status: source === "2" ? "0" : String(form.status),
             priority: active ? Number(form.priority) : 0,
-            tableId: String(form.tableId),
             publishDate: form.publishDate,
             targetDate: form.targetDate,
             source
           };
+          if (form.newPath) Object.assign(args, { tablePath: plan.parts, createMissing: true, pathDescriptions: plan.parts.map(function(_, i) {
+            return form.pathDescriptions[i] || "";
+          }) });
+          else args.tableId = String(form.tableId);
           if (source !== "0" && origin) {
             args.timelineKey = String(origin.timelineKey || origin.id);
             args.restartKey = source === "2" ? String(origin.id) : void 0;
@@ -4552,28 +4750,31 @@ var require_create_modal = __commonJS({
             args.difficulty = Number(form.difficulty) || 0;
           }
           if (args.status === "1") args.shutdownDate = form.shutdownDate || today();
-          props.api.call("tasks.create", args).then(function(r) {
+          props.api.call("tasks.capabilities", { limit: 1 }).then(function(cap) {
+            if (!cap || !cap.ok) throw capabilityError(cap && cap.error);
+            return props.api.call("tasks.create", args);
+          }, function(e) {
+            throw capabilityError(e && e.message || e);
+          }).then(function(r) {
             if (!r || !r.ok) {
-              setError(r && r.error || "create failed");
-              setBusy(false);
+              failed(r && r.error);
               return;
             }
-            props.onCreated();
+            props.onCreated(r.result);
           }).catch(function(e) {
-            setError(String(e && e.message || e));
-            setBusy(false);
+            failed(e && e.message || e);
           });
         }
         var title = source === "2" ? t.restartTitle : source === "1" ? t.newTimeline : t.newTask;
         return h(
           "div",
-          { className: "wbt-modal-mask", onMouseDown: function(e) {
-            if (e.target === e.currentTarget) props.onClose();
+          { className: "wbt-modal-mask", onKeyDownCapture: onModalKey, onMouseDown: function(e) {
+            if (e.target === e.currentTarget) requestClose();
           } },
           h(
             "div",
             { className: "wbt-modal" },
-            h("div", { className: "wbt-modal-head" }, h("h3", null, title), h("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")),
+            h("div", { className: "wbt-modal-head" }, h("h3", null, title), h("button", { className: "wbt-icon", disabled: isBusy, onClick: requestClose }, "\xD7")),
             source === "2" ? h("div", { className: "wbt-mhint" }, t.restartPriorityHint) : null,
             source !== "0" && origin ? h("div", { className: "wbt-mhint" }, "\u6765\u6E90\uFF1A" + (origin.title || origin.id) + (source === "2" ? " \xB7 \u91CD\u542F\u94FE " + (origin.restartKey || origin.id) : " \xB7 \u65F6\u95F4\u7EBF " + (origin.timelineKey || origin.id))) : null,
             h(
@@ -4600,11 +4801,7 @@ var require_create_modal = __commonJS({
               h("label", { className: "wbt-field" }, h("span", null, t.priority + "\uFF081\u201310\uFF09"), h("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, disabled: !active, "aria-invalid": !!priorityError, "aria-describedby": priorityError ? "wbt-create-priority-error" : void 0, value: form.priority, onChange: function(e) {
                 set("priority", e.target.value);
               } })),
-              h("label", { className: "wbt-field" }, h("span", null, t.table + " *"), h("select", { className: "wbt-select", value: form.tableId, onChange: function(e) {
-                set("tableId", e.target.value);
-              } }, tables.map(function(x) {
-                return h("option", { key: x.id, value: x.id }, "\u3000".repeat(x.depth) + x.name);
-              }))),
+              fields({ form, set, setMany, tree: props.tree, recommended: props.defaultTableId || origin && origin.tableId }),
               h("label", { className: "wbt-field" }, h("span", null, t.publishDate), h("input", { className: "wbt-input", type: "date", value: form.publishDate, onChange: function(e) {
                 set("publishDate", e.target.value);
               } })),
@@ -4626,8 +4823,8 @@ var require_create_modal = __commonJS({
             h(
               "div",
               { className: "wbt-modal-foot" },
-              h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
-              h("button", { className: "wbt-btn primary", disabled: isBusy || !!priorityError, onClick: submit }, isBusy ? "\u2026" : t.create)
+              h("button", { className: "wbt-btn ghost", disabled: isBusy, onClick: requestClose }, t.cancel),
+              h("button", { className: "wbt-btn primary", disabled: isBusy || !!priorityError || !targetValid, onClick: submit }, isBusy ? "\u2026" : t.create)
             )
           )
         );
@@ -4643,12 +4840,14 @@ var require_edit_modal = __commonJS({
     "use strict";
     module2.exports = function createEditModal(React, statusInfo, stars) {
       var h = React.createElement;
+      var ownership = require_ownership(), fields = require_ownership_fields()(React);
       function EditModal(props) {
         var t = props.t;
         var task = props.task;
         var done = String(task.status) === "2";
         var canPriority = !done;
         var fs = React.useState({
+          tableId: "",
           title: String(task.title || ""),
           description: String(task.description || ""),
           review: String(task.review || ""),
@@ -4661,6 +4860,33 @@ var require_edit_modal = __commonJS({
         var isBusy = bs[0], setBusy = bs[1];
         var es = React.useState("");
         var err = es[0], setErr = es[1];
+        var submission = React.useState({ pending: false })[0];
+        function requestClose() {
+          if (!submission.pending) props.onClose();
+        }
+        function onModalKey(e) {
+          if (e.key !== "Escape") return;
+          e.preventDefault();
+          e.stopPropagation();
+          requestClose();
+        }
+        function failed(message) {
+          var text = String(message || "update failed");
+          if (/TABLE_NOT_FOUND|TARGET_NOT_TABLE|TREE_CORRUPT/.test(text)) set("tableId", "");
+          submission.pending = false;
+          setBusy(false);
+          setErr(text);
+        }
+        React.useEffect(function() {
+          if (form.tableId && !ownership.tables(props.tree).some(function(x) {
+            return x.id === form.tableId;
+          })) {
+            setForm(function(prev) {
+              return Object.assign({}, prev, { tableId: "" });
+            });
+            setErr("\u6240\u9009\u76EE\u6807\u5DF2\u5931\u6548\uFF0C\u5DF2\u6E05\u7A7A\uFF1B\u8BF7\u91CD\u65B0\u9009\u62E9\u7EA0\u6B63\u76EE\u6807\u3002");
+          }
+        }, [props.tree, form.tableId]);
         function set(k, v) {
           setForm(function(prev) {
             var next = Object.assign({}, prev);
@@ -4670,11 +4896,21 @@ var require_edit_modal = __commonJS({
         }
         var titleOk = String(form.title).trim().length > 0;
         function submit() {
+          if (isBusy || submission.pending) return;
           if (!titleOk) {
             setErr(t.needTitle);
             return;
           }
           var patch = { id: task.id, title: String(form.title).trim(), description: String(form.description || "") };
+          if (form.tableId) {
+            if (!ownership.tables(props.tree).some(function(x) {
+              return x.id === form.tableId;
+            })) {
+              setErr("\u76EE\u6807\u5DF2\u5931\u6548\uFF0C\u8BF7\u91CD\u65B0\u9009\u62E9");
+              return;
+            }
+            patch.tableId = form.tableId;
+          }
           if (canPriority) {
             var p = Math.round(Number(form.priority));
             if (!isFinite(p)) p = 1;
@@ -4685,22 +4921,22 @@ var require_edit_modal = __commonJS({
             patch.difficulty = Math.max(0.5, Math.min(5, Number(form.difficulty) || 0.5));
           }
           if (String(form.review) !== String(task.review || "")) patch.review = String(form.review);
+          submission.pending = true;
           setBusy(true);
           setErr("");
           props.api.call("tasks.update", patch).then(function(r) {
             setBusy(false);
-            if (r && r.ok) props.onSaved();
-            else setErr(r && r.error || "update failed");
+            if (r && r.ok) props.onSaved(r.result);
+            else failed(r && r.error);
           }).catch(function(e) {
-            setBusy(false);
-            setErr(String(e && e.message || e));
+            failed(e && e.message || e);
           });
         }
         var st = statusInfo(task.status);
         return h(
           "div",
-          { className: "wbt-modal-mask", onMouseDown: function(e) {
-            if (e.target === e.currentTarget) props.onClose();
+          { className: "wbt-modal-mask", onKeyDownCapture: onModalKey, onMouseDown: function(e) {
+            if (e.target === e.currentTarget) requestClose();
           } },
           h(
             "div",
@@ -4710,9 +4946,11 @@ var require_edit_modal = __commonJS({
               { className: "wbt-modal-head" },
               h("h3", null, t.editTitle),
               h("span", { className: "wbt-badge " + st.cls }, props.lang === "en" ? st.en : st.zh),
-              h("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")
+              h("button", { className: "wbt-icon", disabled: isBusy, onClick: requestClose }, "\xD7")
             ),
             h("div", { className: "wbt-mhint" }, done ? t.editHintDone : t.editHintOpen),
+            h("div", { className: "wbt-mhint" }, "\u5F53\u524D\u5F52\u5C5E\uFF1A" + ownership.receipt(task)),
+            fields({ edit: true, form, set, tree: props.tree }),
             h(
               "label",
               { className: "wbt-field" },
@@ -4771,13 +5009,823 @@ var require_edit_modal = __commonJS({
             h(
               "div",
               { className: "wbt-modal-foot" },
-              h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
+              h("button", { className: "wbt-btn ghost", disabled: isBusy, onClick: requestClose }, t.cancel),
               h("button", { className: "wbt-btn primary", disabled: isBusy || !titleOk, onClick: submit }, isBusy ? "\u2026" : t.save)
             )
           )
         );
       }
       return EditModal;
+    };
+  }
+});
+
+// packages/addons/tasks/client/tasks-view.cjs
+var require_tasks_view = __commonJS({
+  "packages/addons/tasks/client/tasks-view.cjs"(exports2, module2) {
+    module2.exports = function createTasksView(deps) {
+      var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, TABS = deps.TABS, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon2 = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
+      var h = React.createElement;
+      function TasksView(props) {
+        var lang = props.lang === "en" ? "en" : "zh";
+        var cfg = configView.useConfig(props.api, CFG_FALLBACK);
+        if (!cfg.ready) {
+          return h("div", { style: { padding: "48px", textAlign: "center", fontSize: "12.5px", opacity: 0.6 } }, lang === "en" ? "Loading\u2026" : "\u8F7D\u5165\u4E2D\u2026");
+        }
+        return h(TasksViewBody, Object.assign({}, props, { cfg: cfg.values }));
+      }
+      function expandedByDepth(nodes, depth) {
+        var out = /* @__PURE__ */ new Set();
+        (function walk(list, d) {
+          (list || []).forEach(function(n) {
+            if (d >= depth || !n.children || !n.children.length) return;
+            out.add(String(n.id));
+            walk(n.children, d + 1);
+          });
+        })(nodes, 0);
+        return out;
+      }
+      function TasksViewBody(props) {
+        var t = COPY[props.lang === "en" ? "en" : "zh"];
+        var api = props.api;
+        var cfg = props.cfg || {};
+        var cfgTab = Number(cfg["ui.defaultTab"]);
+        if ([0, 5, 6, 7, 8].indexOf(cfgTab) < 0) cfgTab = 0;
+        var cfgSize = Math.floor(Number(cfg["list.pageSize"]));
+        if (!(cfgSize > 0)) cfgSize = 12;
+        var cfgDepth = Math.floor(Number(cfg["ui.expandDepth"]));
+        if (!(cfgDepth >= 0)) cfgDepth = 2;
+        var cfgSort = typeof cfg["list.sort"] === "string" ? cfg["list.sort"] : "auto";
+        var cfgConfirm = cfg["ui.confirmDelete"] !== false;
+        var treeS = React.useState([]);
+        var tree = treeS[0], setTree = treeS[1];
+        var expS = React.useState(/* @__PURE__ */ new Set());
+        var expanded = expS[0], setExpanded = expS[1];
+        var expInitRef = React.useRef(false);
+        var targetS = React.useState({ groupId: "1", tableId: null });
+        var target = targetS[0], setTarget = targetS[1];
+        var pathS = React.useState([]);
+        var currentPath = pathS[0], setCurrentPath = pathS[1];
+        var tabS = React.useState(cfgTab);
+        var tab = tabS[0], setTab = tabS[1];
+        var viewS = React.useState(cfg["ui.listView"] === "card" ? "card" : "list");
+        var view = viewS[0], setView = viewS[1];
+        var searchS = React.useState("");
+        var searchDraft = searchS[0], setSearchDraft = searchS[1];
+        var tqS = React.useState("");
+        var treeQuery = tqS[0], setTreeQuery = tqS[1];
+        var titleS = React.useState("");
+        var titleKey = titleS[0], setTitleKey = titleS[1];
+        var filterS = React.useState(cfg["list.filterRestarted"] !== false);
+        var filterRestarted = filterS[0], setFilterRestarted = filterS[1];
+        var tagReloadS = React.useState(0);
+        var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
+        var filterTagIdsS = React.useState([]);
+        var filterTagIds = filterTagIdsS[0], setFilterTagIds = filterTagIdsS[1];
+        var pageS = React.useState(1);
+        var pageNumber = pageS[0], setPageNumber = pageS[1];
+        var sizeS = React.useState(cfgSize);
+        var pageSize = sizeS[0], setPageSize = sizeS[1];
+        var dataS = React.useState({ records: [], total: 0, current: 1, size: 0, pageable: false });
+        var data = dataS[0], setData = dataS[1];
+        var loadingS = React.useState(true);
+        var loading = loadingS[0], setLoading = loadingS[1];
+        var errorS = React.useState("");
+        var error = errorS[0], setError = errorS[1];
+        var drawerS = React.useState(false);
+        var drawer = drawerS[0], setDrawer = drawerS[1];
+        var managerS = React.useState(false);
+        var manager = managerS[0], setManager = managerS[1];
+        var selModeS = React.useState(false);
+        var selectionMode = selModeS[0], setSelectionMode = selModeS[1];
+        var selS = React.useState(/* @__PURE__ */ new Set());
+        var selectedIds = selS[0], setSelectedIds = selS[1];
+        var selItemsS = React.useState([]);
+        var selectedItems = selItemsS[0], setSelectedItems = selItemsS[1];
+        var selOpenS = React.useState(false);
+        var selectedOpen = selOpenS[0], setSelectedOpen = selOpenS[1];
+        var batchS = React.useState(null);
+        var batchMode = batchS[0], setBatchMode = batchS[1];
+        var createS = React.useState(null);
+        var createState = createS[0], setCreateState = createS[1];
+        var timelineS = React.useState(null);
+        var timelineTask = timelineS[0], setTimelineTask = timelineS[1];
+        var doneS = React.useState(null);
+        var doneTask = doneS[0], setDoneTask = doneS[1];
+        var editTaskS = React.useState(null);
+        var editTask = editTaskS[0], setEditTask = editTaskS[1];
+        var editS = React.useState(null);
+        var edit = editS[0], setEdit = editS[1];
+        var nodeModalS = React.useState(null);
+        var nodeModal = nodeModalS[0], setNodeModal = nodeModalS[1];
+        var editNameS = React.useState("");
+        var editName = editNameS[0], setEditName = editNameS[1];
+        var dragS = React.useState(null);
+        var dragId = dragS[0], setDragId = dragS[1];
+        var dropS = React.useState(null);
+        var dropId = dropS[0], setDropId = dropS[1];
+        var toastS = React.useState("");
+        var toast = toastS[0], setToast = toastS[1];
+        var refreshRef = React.useRef({});
+        function say(msg) {
+          setToast(String(msg || ""));
+        }
+        React.useEffect(function() {
+          if (!toast) return;
+          var id = setTimeout(function() {
+            setToast("");
+          }, 3200);
+          return function() {
+            clearTimeout(id);
+          };
+        }, [toast]);
+        var treeSearchRef = React.useRef(null);
+        React.useEffect(function() {
+          if (!drawer) return;
+          var id = setTimeout(function() {
+            if (treeSearchRef.current) treeSearchRef.current.focus();
+          }, 40);
+          function onKey(e) {
+            if (e.key === "Escape") setDrawer(false);
+          }
+          window.addEventListener("keydown", onKey);
+          return function() {
+            clearTimeout(id);
+            window.removeEventListener("keydown", onKey);
+          };
+        }, [drawer]);
+        var refreshTree = React.useCallback(function() {
+          return api.call("taskNodes.tree").then(function(r) {
+            if (r && r.ok) {
+              var nodes = Array.isArray(r.result) ? r.result : [];
+              setTree(nodes);
+              if (!expInitRef.current) {
+                expInitRef.current = true;
+                setExpanded(expandedByDepth(nodes, cfgDepth));
+              }
+            } else setError(r && r.error || "tree load failed");
+          }).catch(function(e) {
+            setError(String(e && e.message || e));
+          });
+        }, [api]);
+        var refreshTagNav = React.useCallback(function() {
+          setTagReload(function(n) {
+            return n + 1;
+          });
+        }, []);
+        var refreshPath = React.useCallback(function(id) {
+          if (!id) {
+            setCurrentPath([]);
+            return Promise.resolve();
+          }
+          return api.call("taskNodes.path", { id }).then(function(r) {
+            if (r && r.ok) setCurrentPath(Array.isArray(r.result) ? r.result : []);
+          }).catch(function() {
+          });
+        }, [api]);
+        var refreshList = React.useCallback(function() {
+          setLoading(true);
+          return api.call("tasks.list", {
+            tab,
+            titleKey,
+            tableId: target.tableId,
+            groupId: target.tableId ? null : target.groupId,
+            pageNumber,
+            pageSize,
+            filterRestarted,
+            tagIds: filterTagIds,
+            sort: cfgSort === "auto" ? void 0 : cfgSort
+          }).then(function(r) {
+            setLoading(false);
+            if (r && r.ok) {
+              setData(r.result || { records: [], total: 0, current: 1, size: 0, pageable: false });
+              setError("");
+            } else {
+              setError(r && r.error || "list load failed");
+            }
+          }).catch(function(e) {
+            setLoading(false);
+            setError(String(e && e.message || e));
+          });
+        }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, cfgSort]);
+        refreshRef.current = { tree: refreshTree, list: refreshList, path: refreshPath, tags: refreshTagNav };
+        React.useEffect(function() {
+          injectCss();
+          refreshTree();
+          refreshTagNav();
+          refreshPath("1");
+        }, [refreshTree, refreshTagNav, refreshPath]);
+        React.useEffect(function() {
+          refreshList();
+        }, [refreshList]);
+        React.useEffect(function() {
+          var off = api.subscribe(function(p) {
+            if (!p) return;
+            if (p.event === "tasks-changed") {
+              refreshRef.current.list();
+              refreshRef.current.tags();
+            }
+            if (p.event === "task-nodes-changed") {
+              refreshRef.current.tree();
+              refreshRef.current.path(target.tableId || target.groupId);
+            }
+          });
+          return off;
+        }, [api, target.tableId, target.groupId]);
+        React.useEffect(function() {
+          refreshPath(target.tableId || target.groupId);
+        }, [target.tableId, target.groupId, refreshPath]);
+        function update(task, patch) {
+          var args = Object.assign({ id: task.id }, patch);
+          api.call("tasks.update", args).then(function(r) {
+            if (r && r.ok) refreshList();
+            else say(r && r.error || "update failed");
+          });
+        }
+        function pickNode(node) {
+          if (String(node.type) === "1") setTarget({ groupId: String(node.parent || node.parentId || ""), tableId: String(node.id) });
+          else setTarget({ groupId: String(node.id), tableId: null });
+          setPageNumber(1);
+          setDrawer(false);
+        }
+        function pickPath(p, i, path) {
+          if (String(p.type) === "1") {
+            var parent = i > 0 ? path[i - 1] : null;
+            setTarget({ groupId: parent ? String(parent.id) : "", tableId: String(p.id) });
+          } else {
+            setTarget({ groupId: String(p.id), tableId: null });
+          }
+          setPageNumber(1);
+        }
+        function toggleExpanded(id) {
+          var next = new Set(expanded);
+          if (next.has(String(id))) next.delete(String(id));
+          else next.add(String(id));
+          setExpanded(next);
+        }
+        function addNode(parentId, type) {
+          setNodeModal({ parentId, type, node: null });
+        }
+        function nodeSaved(op) {
+          var cur = nodeModal;
+          setNodeModal(null);
+          if (cur && cur.parentId) {
+            var next = new Set(expanded);
+            next.add(String(cur.parentId));
+            setExpanded(next);
+          }
+          refreshTree();
+          say(op === "create" ? t.created : t.saved);
+        }
+        function renameNode(id, name) {
+          if (!edit || String(edit.id) !== String(id)) return;
+          var v = String(name || "").trim();
+          if (!v || v === String(edit.name || "")) {
+            setEdit(null);
+            return;
+          }
+          api.call("taskNodes.rename", { id, name: v }).then(function(r) {
+            setEdit(null);
+            if (r && r.ok) {
+              refreshTree();
+              say(t.saved);
+            } else say(r && r.error || "rename failed");
+          });
+        }
+        function deleteTask(task) {
+          if (cfgConfirm && !window.confirm(t.deleteTaskConfirm)) return;
+          api.call("tasks.delete", { id: task.id }).then(function(r) {
+            if (r && r.ok) {
+              refreshList();
+              refreshTagNav();
+              say(t.deleted);
+            } else say(r && r.error || "delete failed");
+          });
+        }
+        function batchDelete() {
+          var ids = Array.from(selectedIds);
+          if (!ids.length) return;
+          if (cfgConfirm && !window.confirm(t.batchDeleteConfirm.replace("{n}", String(ids.length)))) return;
+          var ok = 0, fail = 0;
+          Promise.all(ids.map(function(id) {
+            return api.call("tasks.delete", { id }).then(function(r) {
+              if (r && r.ok) ok++;
+              else fail++;
+              return r;
+            }).catch(function() {
+              fail++;
+              return null;
+            });
+          })).then(function() {
+            clearSelection();
+            refreshList();
+            refreshTagNav();
+            say(fail ? t.deleted + " " + ok + " \xB7 " + t.deletePartial + " " + fail : t.deleted + " " + ok);
+          });
+        }
+        function deleteNode(node) {
+          if (cfgConfirm && !window.confirm(t.deleteConfirm)) return;
+          api.call("taskNodes.delete", { id: node.id }).then(function(r) {
+            if (r && r.ok) {
+              refreshTree();
+              setTarget({ groupId: "1", tableId: null });
+              setPageNumber(1);
+              say(t.deleted);
+            } else say(r && r.error || "delete failed");
+          });
+        }
+        function moveNode(sourceId, targetId, moveType) {
+          setDropId(null);
+          setDragId(null);
+          api.call("taskNodes.move", { sourceId, targetId, moveType }).then(function(r) {
+            if (r && r.ok) {
+              if (String(moveType) === "0") {
+                var next = new Set(expanded);
+                next.add(String(targetId));
+                setExpanded(next);
+              }
+              refreshTree();
+              say(t.updated);
+            } else say(r && r.error || "move failed");
+          });
+        }
+        function toggleTagId(id) {
+          var next = filterTagIds.slice();
+          var idx = next.indexOf(String(id));
+          if (idx >= 0) next.splice(idx, 1);
+          else next.push(String(id));
+          setFilterTagIds(next);
+          setPageNumber(1);
+        }
+        function toggleSelect(id) {
+          var next = new Set(selectedIds);
+          if (next.has(String(id))) next.delete(String(id));
+          else next.add(String(id));
+          setSelectedIds(next);
+        }
+        function openSelected() {
+          var ids = Array.from(selectedIds);
+          if (!ids.length) {
+            say("\u8BF7\u5148\u52FE\u9009\u4EFB\u52A1");
+            return;
+          }
+          api.call("tasks.selected", { ids }).then(function(r) {
+            if (r && r.ok) {
+              setSelectedItems(Array.isArray(r.result) ? r.result : []);
+              setSelectedOpen(true);
+            } else say(r && r.error || "load failed");
+          });
+        }
+        function clearSelection() {
+          setSelectedIds(/* @__PURE__ */ new Set());
+          setSelectedItems([]);
+          setSelectedOpen(false);
+          setBatchMode(null);
+        }
+        function batchDone() {
+          setBatchMode(null);
+          setSelectedOpen(false);
+          clearSelection();
+          refreshList();
+          say(t.updated);
+        }
+        var tables = allTables(tree);
+        var pageable = tab > 4 && tab < 9;
+        var totalPages = pageable && data.total ? Math.ceil(data.total / pageSize) : 1;
+        var treeProps = {
+          t,
+          expanded,
+          selectedTable: target.tableId,
+          selectedGroup: target.groupId,
+          manager,
+          dragId,
+          dropId,
+          edit,
+          editName,
+          onToggle: toggleExpanded,
+          onSelect: pickNode,
+          onAdd: addNode,
+          onEdit: function(node) {
+            setNodeModal({ parentId: node.parent || node.parentId, type: node.type, node });
+          },
+          onEditName: setEditName,
+          onCancelEdit: function() {
+            setEdit(null);
+          },
+          onRename: renameNode,
+          onDelete: deleteNode,
+          onDragStart: function(id) {
+            setDragId(String(id));
+          },
+          onDragOver: function(id) {
+            setDropId(String(id));
+          },
+          onMove: moveNode
+        };
+        function flatTreeRow(item) {
+          var node = item.node;
+          var isTable = String(node.type) === "1";
+          var selected = String(target.tableId || "") === String(node.id) || !target.tableId && String(target.groupId || "") === String(node.id);
+          return h(
+            "div",
+            {
+              key: node.id,
+              className: cx("wbt-tree-row", selected && "sel"),
+              style: { paddingLeft: 3 + item.depth * 15 + "px" }
+            },
+            h("span", { className: "wbt-tw void" }),
+            h("span", { className: "wbt-ti" }, h(Icon2, { name: isTable ? "table" : "folder", size: 13 })),
+            h(
+              "div",
+              { className: "wbt-tn", onClick: function() {
+                pickNode(node);
+              }, title: node.description ? node.name + "\n" + node.description : node.name },
+              h("span", { className: "nm" }, node.name),
+              node.description ? h("span", { className: "wbt-tdesc" }, String(node.description).replace(/\s+/g, " ")) : null,
+              !isTable && node.children && node.children.length ? h("span", { className: "wbt-tcnt" }, node.children.length) : null
+            )
+          );
+        }
+        var flatNodes = treeWalk(tree);
+        var rootId = tree.length ? String(tree[0].id) : "";
+        var nodeById = {};
+        flatNodes.forEach(function(x) {
+          nodeById[String(x.node.id)] = x.node;
+        });
+        var curNode = nodeById[String(target.tableId || target.groupId || "")] || null;
+        var footGroupId = curNode ? String(curNode.type) === "1" ? String(curNode.parent || curNode.parentId || rootId) : String(curNode.id) : rootId;
+        var groupCount = 0;
+        var tableCount = 0;
+        flatNodes.forEach(function(x) {
+          if (String(x.node.type) === "1") tableCount++;
+          else groupCount++;
+        });
+        var tq = treeQuery.trim().toLowerCase();
+        var treeHits = tq ? flatNodes.filter(function(x) {
+          return String(x.node.name || "").toLowerCase().indexOf(tq) >= 0;
+        }) : [];
+        var treeBody = !tree.length ? h("div", { className: "wbt-empty" }, t.emptyTree) : tq ? treeHits.length ? treeHits.map(flatTreeRow) : h("div", { className: "wbt-empty" }, t.treeNoMatch) : tree.map(function(n) {
+          return h(TreeNode, Object.assign({}, treeProps, { key: n.id, node: n, depth: 0 }));
+        });
+        var curDesc = curNode ? String(curNode.description || "") : "";
+        var shownCount = data.returned === void 0 ? (data.records || []).length : data.returned;
+        var filterBar = h(
+          "div",
+          { className: "wbt-filters" },
+          pageable ? h("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
+          data.truncated ? h("span", { className: "wbt-hint" }, t.truncated + " " + shownCount + " / " + data.total) : null,
+          tab === 5 || tab === 8 ? h(
+            "label",
+            { className: "wbt-check" },
+            h("input", { type: "checkbox", checked: filterRestarted, onChange: function(e) {
+              setFilterRestarted(e.target.checked);
+              setPageNumber(1);
+            } }),
+            t.filterRestarted
+          ) : null
+        );
+        var listBody = loading ? h("div", { className: "wbt-empty" }, t.loading) : error ? h("div", { className: "wbt-err" }, t.error + error) : data.records.length === 0 ? h("div", { className: "wbt-empty" }, t.empty) : h("div", { className: view === "card" ? "wbt-grid" : "wbt-list" }, data.records.map(function(task) {
+          return h(TaskItem, {
+            key: task.id,
+            task,
+            t,
+            lang: props.lang,
+            card: view === "card",
+            keyword: titleKey.trim(),
+            selectionMode,
+            checked: selectedIds.has(String(task.id)),
+            onCheck: toggleSelect,
+            update,
+            toast: say,
+            onEdit: function(x) {
+              setEditTask(x);
+            },
+            onDone: function(x) {
+              setDoneTask(x);
+            },
+            onRestart: function(x) {
+              setCreateState({ source: "2", originTask: x });
+            },
+            onTimeline: function(x) {
+              setTimelineTask(x);
+            },
+            onDelete: deleteTask,
+            onPathPick: pickPath,
+            onTagPick: toggleTagId
+          });
+        }));
+        return h(
+          "div",
+          { className: "wbt-root" },
+          h(
+            "div",
+            { className: "wbt-pathrow" },
+            h(
+              "div",
+              { className: "wbt-tree-slot" },
+              h("button", { className: "wbt-btn", onClick: function() {
+                setDrawer(true);
+                refreshTree();
+              } }, h(Icon2, { name: "tree", size: 13 }), t.tree)
+            ),
+            h(PathCrumbs, { path: currentPath, onPick: pickPath }),
+            h("div", { className: "wbt-grow" }),
+            h("input", {
+              className: "wbt-input wbt-search",
+              placeholder: t.search,
+              value: searchDraft,
+              onChange: function(e) {
+                setSearchDraft(e.target.value);
+              },
+              onKeyDown: function(e) {
+                if (e.key === "Enter") {
+                  setTitleKey(searchDraft);
+                  setPageNumber(1);
+                }
+              }
+            }),
+            h("button", { className: "wbt-btn ghost", title: t.search, "aria-label": t.search, onClick: function() {
+              setTitleKey(searchDraft);
+              setPageNumber(1);
+            } }, h(Icon2, { name: "search", size: 14 })),
+            h("button", {
+              className: "wbt-btn ghost",
+              title: t.refresh,
+              "aria-label": t.refresh,
+              disabled: loading,
+              onClick: function() {
+                refreshList();
+                refreshTagNav();
+              }
+            }, h(Icon2, { name: "refresh", size: 13 }), t.refresh),
+            h("button", { className: "wbt-btn " + (selectionMode ? "primary" : "ghost"), onClick: function() {
+              if (selectionMode) {
+                setSelectionMode(false);
+                clearSelection();
+              } else setSelectionMode(true);
+            } }, h(Icon2, { name: "select", size: 13 }), selectionMode ? t.cancelSelect : t.select),
+            h(TagFilter, {
+              api,
+              t,
+              Icon: Icon2,
+              ids: filterTagIds,
+              reloadKey: tagReload,
+              onChange: function(next) {
+                setFilterTagIds(next);
+                setPageNumber(1);
+              }
+            }),
+            h("button", { className: "wbt-btn primary", onClick: function() {
+              setCreateState({ source: "0", originTask: null, defaultTableId: target.tableId });
+            } }, h(Icon2, { name: "plus", size: 14 }), t.newTask),
+            h("button", { className: "wbt-btn ghost", onClick: function() {
+              setView(view === "list" ? "card" : "list");
+            } }, h(Icon2, { name: view === "list" ? "grid" : "list", size: 13 }), view === "list" ? t.card : t.list)
+          ),
+          curDesc ? h("div", { className: "wbt-tabledesc", title: curDesc }, curDesc.length > 220 ? curDesc.slice(0, 220) + "\u2026" : curDesc) : null,
+          h(
+            "div",
+            { className: "wbt-body" },
+            h("nav", { className: "wbt-nav" }, TABS.map(function(x) {
+              var btn = h("button", {
+                key: x.id,
+                className: "wbt-tab" + (tab === x.id ? " on" : ""),
+                onClick: function() {
+                  setTab(x.id);
+                  setPageNumber(1);
+                }
+              }, t === COPY.zh ? x.zh : x.en);
+              if (x.id !== 5) return btn;
+              return [h("div", { key: "nav-sep", className: "wbt-nav-sep" }), btn];
+            })),
+            h(
+              "div",
+              { className: "wbt-content" },
+              filterBar,
+              listBody,
+              pageable ? h(
+                "div",
+                { className: "wbt-pager" },
+                h("button", { className: "wbt-btn ghost", disabled: pageNumber <= 1, onClick: function() {
+                  setPageNumber(Math.max(1, pageNumber - 1));
+                } }, h(Icon2, { name: "left", size: 14 })),
+                h("span", null, t.page + " " + pageNumber + " / " + totalPages),
+                h(
+                  "select",
+                  { className: "wbt-select", value: pageSize, onChange: function(e) {
+                    setPageSize(Number(e.target.value));
+                    setPageNumber(1);
+                  } },
+                  [6, 12, 24].map(function(n) {
+                    return h("option", { key: n, value: n }, n + " / " + t.page);
+                  })
+                ),
+                h("button", { className: "wbt-btn ghost", disabled: pageNumber >= totalPages, onClick: function() {
+                  setPageNumber(Math.min(totalPages, pageNumber + 1));
+                } }, h(Icon2, { name: "right", size: 14 }))
+              ) : null
+            )
+          ),
+          selectionMode && selectedIds.size ? h(
+            "div",
+            { className: "wbt-selbar" },
+            h("b", null, t.selected + " " + selectedIds.size),
+            h("button", { className: "wbt-btn", onClick: openSelected }, t.selectedTasks),
+            h("button", { className: "wbt-btn", onClick: function() {
+              setBatchMode("timeline");
+              openSelected();
+            } }, t.batchTimeline),
+            h("button", { className: "wbt-btn", onClick: function() {
+              setBatchMode("migrate");
+              openSelected();
+            } }, t.batchMigrate),
+            h("button", { className: "wbt-btn wbt-act-del", onClick: batchDelete }, h(Icon2, { name: "trash", size: 13 }), t.batchDelete),
+            h("button", { className: "wbt-btn ghost", onClick: clearSelection }, t.clear)
+          ) : null,
+          drawer ? h(
+            "div",
+            { className: "wbt-drawer-mask", onMouseDown: function(e) {
+              if (e.target === e.currentTarget) setDrawer(false);
+            } },
+            h(
+              "div",
+              { className: "wbt-drawer", role: "dialog", "aria-label": t.tree },
+              h(
+                "div",
+                { className: "wbt-drawer-head" },
+                h(Icon2, { name: "tree", size: 15 }),
+                h(
+                  "div",
+                  { className: "wbt-drawer-title" },
+                  h("b", null, t.tree),
+                  h("span", { className: "wbt-drawer-meta" }, groupCount + " " + t.groups + " \xB7 " + tableCount + " " + t.tables)
+                ),
+                h("button", {
+                  className: "wbt-tool" + (manager ? " on" : ""),
+                  onClick: function() {
+                    setManager(!manager);
+                  }
+                }, t.manager),
+                h("button", { className: "wbt-icon", title: t.close, "aria-label": t.close, onClick: function() {
+                  setDrawer(false);
+                } }, h(Icon2, { name: "close", size: 15 }))
+              ),
+              h(
+                "div",
+                { className: "wbt-drawer-search" },
+                h("input", {
+                  className: "wbt-input",
+                  ref: treeSearchRef,
+                  placeholder: t.treeSearch,
+                  value: treeQuery,
+                  onChange: function(e) {
+                    setTreeQuery(e.target.value);
+                  },
+                  onKeyDown: function(e) {
+                    if (e.key === "Escape") {
+                      e.stopPropagation();
+                      setTreeQuery("");
+                      setDrawer(false);
+                    }
+                  }
+                }),
+                treeQuery ? h("button", {
+                  className: "wbt-search-clear",
+                  title: t.clear,
+                  "aria-label": t.clear,
+                  onClick: function() {
+                    setTreeQuery("");
+                    if (treeSearchRef.current) treeSearchRef.current.focus();
+                  }
+                }, h(Icon2, { name: "close", size: 13 })) : null
+              ),
+              h("div", { className: "wbt-drawer-body" }, treeBody),
+              h(
+                "div",
+                { className: "wbt-drawer-foot" },
+                h(
+                  "div",
+                  { className: "wbt-drawer-acts" },
+                  h(
+                    "button",
+                    { className: "wbt-addbtn", title: t.addGroup, onClick: function() {
+                      if (footGroupId) addNode(footGroupId, "0");
+                    } },
+                    h(Icon2, { name: "folderPlus", size: 13 }),
+                    t.addGroup
+                  ),
+                  h(
+                    "button",
+                    { className: "wbt-addbtn", title: t.addTable, onClick: function() {
+                      if (footGroupId) addNode(footGroupId, "1");
+                    } },
+                    h(Icon2, { name: "filePlus", size: 13 }),
+                    t.addTable
+                  )
+                ),
+                h("div", { className: "wbt-drawer-hint" }, t.treeHint)
+              )
+            )
+          ) : null,
+          createState ? h(CreateModal, {
+            key: (createState.source || "0") + "-" + (createState.originTask && createState.originTask.id || ""),
+            t,
+            api,
+            tree,
+            source: createState.source,
+            originTask: createState.originTask,
+            defaultTableId: createState.defaultTableId,
+            defaults: {
+              priority: cfg["form.defaultPriority"],
+              difficulty: cfg["form.defaultDifficulty"],
+              targetOffset: cfg["form.defaultTargetOffset"]
+            },
+            onClose: function() {
+              setCreateState(null);
+            },
+            onCreated: function(result) {
+              setCreateState(null);
+              refreshList();
+              refreshTree();
+              say(require_ownership().receipt(result));
+            }
+          }) : null,
+          timelineTask ? h(TimelineModal, {
+            key: timelineTask.id,
+            t,
+            api,
+            task: timelineTask,
+            onClose: function() {
+              setTimelineTask(null);
+            },
+            onCreateTimeline: function(originTask) {
+              setTimelineTask(null);
+              setCreateState({ source: "1", originTask, defaultTableId: originTask.tableId });
+            }
+          }) : null,
+          nodeModal ? h(NodeModal, {
+            key: "node-" + (nodeModal.node ? nodeModal.node.id : "new"),
+            t,
+            api,
+            node: nodeModal.node,
+            parentId: nodeModal.parentId,
+            type: nodeModal.type,
+            onClose: function() {
+              setNodeModal(null);
+            },
+            onSaved: nodeSaved
+          }) : null,
+          editTask ? h(EditModal, {
+            key: "edit-" + editTask.id,
+            t,
+            api,
+            task: editTask,
+            lang: props.lang,
+            tree,
+            onClose: function() {
+              setEditTask(null);
+            },
+            onSaved: function(result) {
+              setEditTask(null);
+              refreshList();
+              say(require_ownership().receipt(result));
+            }
+          }) : null,
+          doneTask ? h(DoneModal, {
+            key: doneTask.id,
+            t,
+            api,
+            task: doneTask,
+            onClose: function() {
+              setDoneTask(null);
+            },
+            onDone: function() {
+              setDoneTask(null);
+              refreshList();
+              say(t.doneSuccess);
+            },
+            onError: function(e) {
+              setDoneTask(null);
+              say(e);
+            }
+          }) : null,
+          selectedOpen && batchMode ? h(BatchModal, {
+            key: batchMode,
+            t,
+            api,
+            mode: batchMode,
+            items: selectedItems,
+            tables,
+            nodes: treeFlat(tree),
+            onClose: function() {
+              setBatchMode(null);
+            },
+            onDone: batchDone
+          }) : null,
+          toast ? h("div", { className: "wbt-toast" }, toast) : null
+        );
+      }
+      return TasksView;
     };
   }
 });
@@ -5470,808 +6518,10 @@ var require_edit_modal = __commonJS({
     "stats.recentShutdownLimit": 10,
     "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "recentDone", "recentShutdown"]
   };
-  function TasksView(props) {
-    var lang = props.lang === "en" ? "en" : "zh";
-    var cfg = configView.useConfig(props.api, CFG_FALLBACK);
-    if (!cfg.ready) {
-      return h("div", { style: { padding: "48px", textAlign: "center", fontSize: "12.5px", opacity: 0.6 } }, lang === "en" ? "Loading\u2026" : "\u8F7D\u5165\u4E2D\u2026");
-    }
-    return h(TasksViewBody, Object.assign({}, props, { cfg: cfg.values }));
-  }
-  function expandedByDepth(nodes, depth) {
-    var out = /* @__PURE__ */ new Set();
-    (function walk(list, d) {
-      (list || []).forEach(function(n) {
-        if (d >= depth || !n.children || !n.children.length) return;
-        out.add(String(n.id));
-        walk(n.children, d + 1);
-      });
-    })(nodes, 0);
-    return out;
-  }
-  function TasksViewBody(props) {
-    var t = COPY[props.lang === "en" ? "en" : "zh"];
-    var api = props.api;
-    var cfg = props.cfg || {};
-    var cfgTab = Number(cfg["ui.defaultTab"]);
-    if ([0, 5, 6, 7, 8].indexOf(cfgTab) < 0) cfgTab = 0;
-    var cfgSize = Math.floor(Number(cfg["list.pageSize"]));
-    if (!(cfgSize > 0)) cfgSize = 12;
-    var cfgDepth = Math.floor(Number(cfg["ui.expandDepth"]));
-    if (!(cfgDepth >= 0)) cfgDepth = 2;
-    var cfgSort = typeof cfg["list.sort"] === "string" ? cfg["list.sort"] : "auto";
-    var cfgConfirm = cfg["ui.confirmDelete"] !== false;
-    var treeS = React.useState([]);
-    var tree = treeS[0], setTree = treeS[1];
-    var expS = React.useState(/* @__PURE__ */ new Set());
-    var expanded = expS[0], setExpanded = expS[1];
-    var expInitRef = React.useRef(false);
-    var targetS = React.useState({ groupId: "1", tableId: null });
-    var target = targetS[0], setTarget = targetS[1];
-    var pathS = React.useState([]);
-    var currentPath = pathS[0], setCurrentPath = pathS[1];
-    var tabS = React.useState(cfgTab);
-    var tab = tabS[0], setTab = tabS[1];
-    var viewS = React.useState(cfg["ui.listView"] === "card" ? "card" : "list");
-    var view = viewS[0], setView = viewS[1];
-    var searchS = React.useState("");
-    var searchDraft = searchS[0], setSearchDraft = searchS[1];
-    var tqS = React.useState("");
-    var treeQuery = tqS[0], setTreeQuery = tqS[1];
-    var titleS = React.useState("");
-    var titleKey = titleS[0], setTitleKey = titleS[1];
-    var filterS = React.useState(cfg["list.filterRestarted"] !== false);
-    var filterRestarted = filterS[0], setFilterRestarted = filterS[1];
-    var tagReloadS = React.useState(0);
-    var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
-    var filterTagIdsS = React.useState([]);
-    var filterTagIds = filterTagIdsS[0], setFilterTagIds = filterTagIdsS[1];
-    var pageS = React.useState(1);
-    var pageNumber = pageS[0], setPageNumber = pageS[1];
-    var sizeS = React.useState(cfgSize);
-    var pageSize = sizeS[0], setPageSize = sizeS[1];
-    var dataS = React.useState({ records: [], total: 0, current: 1, size: 0, pageable: false });
-    var data = dataS[0], setData = dataS[1];
-    var loadingS = React.useState(true);
-    var loading = loadingS[0], setLoading = loadingS[1];
-    var errorS = React.useState("");
-    var error = errorS[0], setError = errorS[1];
-    var drawerS = React.useState(false);
-    var drawer = drawerS[0], setDrawer = drawerS[1];
-    var managerS = React.useState(false);
-    var manager = managerS[0], setManager = managerS[1];
-    var selModeS = React.useState(false);
-    var selectionMode = selModeS[0], setSelectionMode = selModeS[1];
-    var selS = React.useState(/* @__PURE__ */ new Set());
-    var selectedIds = selS[0], setSelectedIds = selS[1];
-    var selItemsS = React.useState([]);
-    var selectedItems = selItemsS[0], setSelectedItems = selItemsS[1];
-    var selOpenS = React.useState(false);
-    var selectedOpen = selOpenS[0], setSelectedOpen = selOpenS[1];
-    var batchS = React.useState(null);
-    var batchMode = batchS[0], setBatchMode = batchS[1];
-    var createS = React.useState(null);
-    var createState = createS[0], setCreateState = createS[1];
-    var timelineS = React.useState(null);
-    var timelineTask = timelineS[0], setTimelineTask = timelineS[1];
-    var doneS = React.useState(null);
-    var doneTask = doneS[0], setDoneTask = doneS[1];
-    var editTaskS = React.useState(null);
-    var editTask = editTaskS[0], setEditTask = editTaskS[1];
-    var editS = React.useState(null);
-    var edit = editS[0], setEdit = editS[1];
-    var nodeModalS = React.useState(null);
-    var nodeModal = nodeModalS[0], setNodeModal = nodeModalS[1];
-    var editNameS = React.useState("");
-    var editName = editNameS[0], setEditName = editNameS[1];
-    var dragS = React.useState(null);
-    var dragId = dragS[0], setDragId = dragS[1];
-    var dropS = React.useState(null);
-    var dropId = dropS[0], setDropId = dropS[1];
-    var toastS = React.useState("");
-    var toast = toastS[0], setToast = toastS[1];
-    var refreshRef = React.useRef({});
-    function say(msg) {
-      setToast(String(msg || ""));
-    }
-    React.useEffect(function() {
-      if (!toast) return;
-      var id = setTimeout(function() {
-        setToast("");
-      }, 3200);
-      return function() {
-        clearTimeout(id);
-      };
-    }, [toast]);
-    var treeSearchRef = React.useRef(null);
-    React.useEffect(function() {
-      if (!drawer) return;
-      var id = setTimeout(function() {
-        if (treeSearchRef.current) treeSearchRef.current.focus();
-      }, 40);
-      function onKey(e) {
-        if (e.key === "Escape") setDrawer(false);
-      }
-      window.addEventListener("keydown", onKey);
-      return function() {
-        clearTimeout(id);
-        window.removeEventListener("keydown", onKey);
-      };
-    }, [drawer]);
-    var refreshTree = React.useCallback(function() {
-      return api.call("taskNodes.tree").then(function(r) {
-        if (r && r.ok) {
-          var nodes = Array.isArray(r.result) ? r.result : [];
-          setTree(nodes);
-          if (!expInitRef.current) {
-            expInitRef.current = true;
-            setExpanded(expandedByDepth(nodes, cfgDepth));
-          }
-        } else setError(r && r.error || "tree load failed");
-      }).catch(function(e) {
-        setError(String(e && e.message || e));
-      });
-    }, [api]);
-    var refreshTagNav = React.useCallback(function() {
-      setTagReload(function(n) {
-        return n + 1;
-      });
-    }, []);
-    var refreshPath = React.useCallback(function(id) {
-      if (!id) {
-        setCurrentPath([]);
-        return Promise.resolve();
-      }
-      return api.call("taskNodes.path", { id }).then(function(r) {
-        if (r && r.ok) setCurrentPath(Array.isArray(r.result) ? r.result : []);
-      }).catch(function() {
-      });
-    }, [api]);
-    var refreshList = React.useCallback(function() {
-      setLoading(true);
-      return api.call("tasks.list", {
-        tab,
-        titleKey,
-        tableId: target.tableId,
-        groupId: target.tableId ? null : target.groupId,
-        pageNumber,
-        pageSize,
-        filterRestarted,
-        tagIds: filterTagIds,
-        sort: cfgSort === "auto" ? void 0 : cfgSort
-      }).then(function(r) {
-        setLoading(false);
-        if (r && r.ok) {
-          setData(r.result || { records: [], total: 0, current: 1, size: 0, pageable: false });
-          setError("");
-        } else {
-          setError(r && r.error || "list load failed");
-        }
-      }).catch(function(e) {
-        setLoading(false);
-        setError(String(e && e.message || e));
-      });
-    }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, cfgSort]);
-    refreshRef.current = { tree: refreshTree, list: refreshList, path: refreshPath, tags: refreshTagNav };
-    React.useEffect(function() {
-      injectCss();
-      refreshTree();
-      refreshTagNav();
-      refreshPath("1");
-    }, [refreshTree, refreshTagNav, refreshPath]);
-    React.useEffect(function() {
-      refreshList();
-    }, [refreshList]);
-    React.useEffect(function() {
-      var off = api.subscribe(function(p) {
-        if (!p) return;
-        if (p.event === "tasks-changed") {
-          refreshRef.current.list();
-          refreshRef.current.tags();
-        }
-        if (p.event === "task-nodes-changed") {
-          refreshRef.current.tree();
-          refreshRef.current.path(target.tableId || target.groupId);
-        }
-      });
-      return off;
-    }, [api, target.tableId, target.groupId]);
-    React.useEffect(function() {
-      refreshPath(target.tableId || target.groupId);
-    }, [target.tableId, target.groupId, refreshPath]);
-    function update(task, patch) {
-      var args = Object.assign({ id: task.id }, patch);
-      api.call("tasks.update", args).then(function(r) {
-        if (r && r.ok) refreshList();
-        else say(r && r.error || "update failed");
-      });
-    }
-    function pickNode(node) {
-      if (String(node.type) === "1") setTarget({ groupId: String(node.parent || node.parentId || ""), tableId: String(node.id) });
-      else setTarget({ groupId: String(node.id), tableId: null });
-      setPageNumber(1);
-      setDrawer(false);
-    }
-    function pickPath(p, i, path) {
-      if (String(p.type) === "1") {
-        var parent = i > 0 ? path[i - 1] : null;
-        setTarget({ groupId: parent ? String(parent.id) : "", tableId: String(p.id) });
-      } else {
-        setTarget({ groupId: String(p.id), tableId: null });
-      }
-      setPageNumber(1);
-    }
-    function toggleExpanded(id) {
-      var next = new Set(expanded);
-      if (next.has(String(id))) next.delete(String(id));
-      else next.add(String(id));
-      setExpanded(next);
-    }
-    function addNode(parentId, type) {
-      setNodeModal({ parentId, type, node: null });
-    }
-    function nodeSaved(op) {
-      var cur = nodeModal;
-      setNodeModal(null);
-      if (cur && cur.parentId) {
-        var next = new Set(expanded);
-        next.add(String(cur.parentId));
-        setExpanded(next);
-      }
-      refreshTree();
-      say(op === "create" ? t.created : t.saved);
-    }
-    function renameNode(id, name) {
-      if (!edit || String(edit.id) !== String(id)) return;
-      var v = String(name || "").trim();
-      if (!v || v === String(edit.name || "")) {
-        setEdit(null);
-        return;
-      }
-      api.call("taskNodes.rename", { id, name: v }).then(function(r) {
-        setEdit(null);
-        if (r && r.ok) {
-          refreshTree();
-          say(t.saved);
-        } else say(r && r.error || "rename failed");
-      });
-    }
-    function deleteTask(task) {
-      if (cfgConfirm && !window.confirm(t.deleteTaskConfirm)) return;
-      api.call("tasks.delete", { id: task.id }).then(function(r) {
-        if (r && r.ok) {
-          refreshList();
-          refreshTagNav();
-          say(t.deleted);
-        } else say(r && r.error || "delete failed");
-      });
-    }
-    function batchDelete() {
-      var ids = Array.from(selectedIds);
-      if (!ids.length) return;
-      if (cfgConfirm && !window.confirm(t.batchDeleteConfirm.replace("{n}", String(ids.length)))) return;
-      var ok = 0, fail = 0;
-      Promise.all(ids.map(function(id) {
-        return api.call("tasks.delete", { id }).then(function(r) {
-          if (r && r.ok) ok++;
-          else fail++;
-          return r;
-        }).catch(function() {
-          fail++;
-          return null;
-        });
-      })).then(function() {
-        clearSelection();
-        refreshList();
-        refreshTagNav();
-        say(fail ? t.deleted + " " + ok + " \xB7 " + t.deletePartial + " " + fail : t.deleted + " " + ok);
-      });
-    }
-    function deleteNode(node) {
-      if (cfgConfirm && !window.confirm(t.deleteConfirm)) return;
-      api.call("taskNodes.delete", { id: node.id }).then(function(r) {
-        if (r && r.ok) {
-          refreshTree();
-          setTarget({ groupId: "1", tableId: null });
-          setPageNumber(1);
-          say(t.deleted);
-        } else say(r && r.error || "delete failed");
-      });
-    }
-    function moveNode(sourceId, targetId, moveType) {
-      setDropId(null);
-      setDragId(null);
-      api.call("taskNodes.move", { sourceId, targetId, moveType }).then(function(r) {
-        if (r && r.ok) {
-          if (String(moveType) === "0") {
-            var next = new Set(expanded);
-            next.add(String(targetId));
-            setExpanded(next);
-          }
-          refreshTree();
-          say(t.updated);
-        } else say(r && r.error || "move failed");
-      });
-    }
-    function toggleTagId(id) {
-      var next = filterTagIds.slice();
-      var idx = next.indexOf(String(id));
-      if (idx >= 0) next.splice(idx, 1);
-      else next.push(String(id));
-      setFilterTagIds(next);
-      setPageNumber(1);
-    }
-    function toggleSelect(id) {
-      var next = new Set(selectedIds);
-      if (next.has(String(id))) next.delete(String(id));
-      else next.add(String(id));
-      setSelectedIds(next);
-    }
-    function openSelected() {
-      var ids = Array.from(selectedIds);
-      if (!ids.length) {
-        say("\u8BF7\u5148\u52FE\u9009\u4EFB\u52A1");
-        return;
-      }
-      api.call("tasks.selected", { ids }).then(function(r) {
-        if (r && r.ok) {
-          setSelectedItems(Array.isArray(r.result) ? r.result : []);
-          setSelectedOpen(true);
-        } else say(r && r.error || "load failed");
-      });
-    }
-    function clearSelection() {
-      setSelectedIds(/* @__PURE__ */ new Set());
-      setSelectedItems([]);
-      setSelectedOpen(false);
-      setBatchMode(null);
-    }
-    function batchDone() {
-      setBatchMode(null);
-      setSelectedOpen(false);
-      clearSelection();
-      refreshList();
-      say(t.updated);
-    }
-    var tables = allTables(tree);
-    var firstTable = findFirstTable(tree);
-    var pageable = tab > 4 && tab < 9;
-    var totalPages = pageable && data.total ? Math.ceil(data.total / pageSize) : 1;
-    var treeProps = {
-      t,
-      expanded,
-      selectedTable: target.tableId,
-      selectedGroup: target.groupId,
-      manager,
-      dragId,
-      dropId,
-      edit,
-      editName,
-      onToggle: toggleExpanded,
-      onSelect: pickNode,
-      onAdd: addNode,
-      onEdit: function(node) {
-        setNodeModal({ parentId: node.parent || node.parentId, type: node.type, node });
-      },
-      onEditName: setEditName,
-      onCancelEdit: function() {
-        setEdit(null);
-      },
-      onRename: renameNode,
-      onDelete: deleteNode,
-      onDragStart: function(id) {
-        setDragId(String(id));
-      },
-      onDragOver: function(id) {
-        setDropId(String(id));
-      },
-      onMove: moveNode
-    };
-    function flatTreeRow(item) {
-      var node = item.node;
-      var isTable = String(node.type) === "1";
-      var selected = String(target.tableId || "") === String(node.id) || !target.tableId && String(target.groupId || "") === String(node.id);
-      return h(
-        "div",
-        {
-          key: node.id,
-          className: cx("wbt-tree-row", selected && "sel"),
-          style: { paddingLeft: 3 + item.depth * 15 + "px" }
-        },
-        h("span", { className: "wbt-tw void" }),
-        h("span", { className: "wbt-ti" }, h(Icon2, { name: isTable ? "table" : "folder", size: 13 })),
-        h(
-          "div",
-          { className: "wbt-tn", onClick: function() {
-            pickNode(node);
-          }, title: node.description ? node.name + "\n" + node.description : node.name },
-          h("span", { className: "nm" }, node.name),
-          node.description ? h("span", { className: "wbt-tdesc" }, String(node.description).replace(/\s+/g, " ")) : null,
-          !isTable && node.children && node.children.length ? h("span", { className: "wbt-tcnt" }, node.children.length) : null
-        )
-      );
-    }
-    var flatNodes = treeWalk(tree);
-    var rootId = tree.length ? String(tree[0].id) : "";
-    var nodeById = {};
-    flatNodes.forEach(function(x) {
-      nodeById[String(x.node.id)] = x.node;
-    });
-    var curNode = nodeById[String(target.tableId || target.groupId || "")] || null;
-    var footGroupId = curNode ? String(curNode.type) === "1" ? String(curNode.parent || curNode.parentId || rootId) : String(curNode.id) : rootId;
-    var groupCount = 0;
-    var tableCount = 0;
-    flatNodes.forEach(function(x) {
-      if (String(x.node.type) === "1") tableCount++;
-      else groupCount++;
-    });
-    var tq = treeQuery.trim().toLowerCase();
-    var treeHits = tq ? flatNodes.filter(function(x) {
-      return String(x.node.name || "").toLowerCase().indexOf(tq) >= 0;
-    }) : [];
-    var treeBody = !tree.length ? h("div", { className: "wbt-empty" }, t.emptyTree) : tq ? treeHits.length ? treeHits.map(flatTreeRow) : h("div", { className: "wbt-empty" }, t.treeNoMatch) : tree.map(function(n) {
-      return h(TreeNode, Object.assign({}, treeProps, { key: n.id, node: n, depth: 0 }));
-    });
-    var curDesc = curNode ? String(curNode.description || "") : "";
-    var shownCount = data.returned === void 0 ? (data.records || []).length : data.returned;
-    var filterBar = h(
-      "div",
-      { className: "wbt-filters" },
-      pageable ? h("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
-      data.truncated ? h("span", { className: "wbt-hint" }, t.truncated + " " + shownCount + " / " + data.total) : null,
-      tab === 5 || tab === 8 ? h(
-        "label",
-        { className: "wbt-check" },
-        h("input", { type: "checkbox", checked: filterRestarted, onChange: function(e) {
-          setFilterRestarted(e.target.checked);
-          setPageNumber(1);
-        } }),
-        t.filterRestarted
-      ) : null
-    );
-    var listBody = loading ? h("div", { className: "wbt-empty" }, t.loading) : error ? h("div", { className: "wbt-err" }, t.error + error) : data.records.length === 0 ? h("div", { className: "wbt-empty" }, t.empty) : h("div", { className: view === "card" ? "wbt-grid" : "wbt-list" }, data.records.map(function(task) {
-      return h(TaskItem, {
-        key: task.id,
-        task,
-        t,
-        lang: props.lang,
-        card: view === "card",
-        keyword: titleKey.trim(),
-        selectionMode,
-        checked: selectedIds.has(String(task.id)),
-        onCheck: toggleSelect,
-        update,
-        toast: say,
-        onEdit: function(x) {
-          setEditTask(x);
-        },
-        onDone: function(x) {
-          setDoneTask(x);
-        },
-        onRestart: function(x) {
-          setCreateState({ source: "2", originTask: x });
-        },
-        onTimeline: function(x) {
-          setTimelineTask(x);
-        },
-        onDelete: deleteTask,
-        onPathPick: pickPath,
-        onTagPick: toggleTagId
-      });
-    }));
-    return h(
-      "div",
-      { className: "wbt-root" },
-      h(
-        "div",
-        { className: "wbt-pathrow" },
-        h(
-          "div",
-          { className: "wbt-tree-slot" },
-          h("button", { className: "wbt-btn", onClick: function() {
-            setDrawer(true);
-            refreshTree();
-          } }, h(Icon2, { name: "tree", size: 13 }), t.tree)
-        ),
-        h(PathCrumbs, { path: currentPath, onPick: pickPath }),
-        h("div", { className: "wbt-grow" }),
-        h("input", {
-          className: "wbt-input wbt-search",
-          placeholder: t.search,
-          value: searchDraft,
-          onChange: function(e) {
-            setSearchDraft(e.target.value);
-          },
-          onKeyDown: function(e) {
-            if (e.key === "Enter") {
-              setTitleKey(searchDraft);
-              setPageNumber(1);
-            }
-          }
-        }),
-        h("button", { className: "wbt-btn ghost", title: t.search, "aria-label": t.search, onClick: function() {
-          setTitleKey(searchDraft);
-          setPageNumber(1);
-        } }, h(Icon2, { name: "search", size: 14 })),
-        h("button", {
-          className: "wbt-btn ghost",
-          title: t.refresh,
-          "aria-label": t.refresh,
-          disabled: loading,
-          onClick: function() {
-            refreshList();
-            refreshTagNav();
-          }
-        }, h(Icon2, { name: "refresh", size: 13 }), t.refresh),
-        h("button", { className: "wbt-btn " + (selectionMode ? "primary" : "ghost"), onClick: function() {
-          if (selectionMode) {
-            setSelectionMode(false);
-            clearSelection();
-          } else setSelectionMode(true);
-        } }, h(Icon2, { name: "select", size: 13 }), selectionMode ? t.cancelSelect : t.select),
-        h(TagFilter, {
-          api,
-          t,
-          Icon: Icon2,
-          ids: filterTagIds,
-          reloadKey: tagReload,
-          onChange: function(next) {
-            setFilterTagIds(next);
-            setPageNumber(1);
-          }
-        }),
-        h("button", { className: "wbt-btn primary", onClick: function() {
-          setCreateState({ source: "0", originTask: null, defaultTableId: target.tableId || firstTable && firstTable.id });
-        } }, h(Icon2, { name: "plus", size: 14 }), t.newTask),
-        h("button", { className: "wbt-btn ghost", onClick: function() {
-          setView(view === "list" ? "card" : "list");
-        } }, h(Icon2, { name: view === "list" ? "grid" : "list", size: 13 }), view === "list" ? t.card : t.list)
-      ),
-      curDesc ? h("div", { className: "wbt-tabledesc", title: curDesc }, curDesc.length > 220 ? curDesc.slice(0, 220) + "\u2026" : curDesc) : null,
-      h(
-        "div",
-        { className: "wbt-body" },
-        h("nav", { className: "wbt-nav" }, TABS.map(function(x) {
-          var btn = h("button", {
-            key: x.id,
-            className: "wbt-tab" + (tab === x.id ? " on" : ""),
-            onClick: function() {
-              setTab(x.id);
-              setPageNumber(1);
-            }
-          }, t === COPY.zh ? x.zh : x.en);
-          if (x.id !== 5) return btn;
-          return [h("div", { key: "nav-sep", className: "wbt-nav-sep" }), btn];
-        })),
-        h(
-          "div",
-          { className: "wbt-content" },
-          filterBar,
-          listBody,
-          pageable ? h(
-            "div",
-            { className: "wbt-pager" },
-            h("button", { className: "wbt-btn ghost", disabled: pageNumber <= 1, onClick: function() {
-              setPageNumber(Math.max(1, pageNumber - 1));
-            } }, h(Icon2, { name: "left", size: 14 })),
-            h("span", null, t.page + " " + pageNumber + " / " + totalPages),
-            h(
-              "select",
-              { className: "wbt-select", value: pageSize, onChange: function(e) {
-                setPageSize(Number(e.target.value));
-                setPageNumber(1);
-              } },
-              [6, 12, 24].map(function(n) {
-                return h("option", { key: n, value: n }, n + " / " + t.page);
-              })
-            ),
-            h("button", { className: "wbt-btn ghost", disabled: pageNumber >= totalPages, onClick: function() {
-              setPageNumber(Math.min(totalPages, pageNumber + 1));
-            } }, h(Icon2, { name: "right", size: 14 }))
-          ) : null
-        )
-      ),
-      selectionMode && selectedIds.size ? h(
-        "div",
-        { className: "wbt-selbar" },
-        h("b", null, t.selected + " " + selectedIds.size),
-        h("button", { className: "wbt-btn", onClick: openSelected }, t.selectedTasks),
-        h("button", { className: "wbt-btn", onClick: function() {
-          setBatchMode("timeline");
-          openSelected();
-        } }, t.batchTimeline),
-        h("button", { className: "wbt-btn", onClick: function() {
-          setBatchMode("migrate");
-          openSelected();
-        } }, t.batchMigrate),
-        h("button", { className: "wbt-btn wbt-act-del", onClick: batchDelete }, h(Icon2, { name: "trash", size: 13 }), t.batchDelete),
-        h("button", { className: "wbt-btn ghost", onClick: clearSelection }, t.clear)
-      ) : null,
-      drawer ? h(
-        "div",
-        { className: "wbt-drawer-mask", onMouseDown: function(e) {
-          if (e.target === e.currentTarget) setDrawer(false);
-        } },
-        h(
-          "div",
-          { className: "wbt-drawer", role: "dialog", "aria-label": t.tree },
-          h(
-            "div",
-            { className: "wbt-drawer-head" },
-            h(Icon2, { name: "tree", size: 15 }),
-            h(
-              "div",
-              { className: "wbt-drawer-title" },
-              h("b", null, t.tree),
-              h("span", { className: "wbt-drawer-meta" }, groupCount + " " + t.groups + " \xB7 " + tableCount + " " + t.tables)
-            ),
-            h("button", {
-              className: "wbt-tool" + (manager ? " on" : ""),
-              onClick: function() {
-                setManager(!manager);
-              }
-            }, t.manager),
-            h("button", { className: "wbt-icon", title: t.close, "aria-label": t.close, onClick: function() {
-              setDrawer(false);
-            } }, h(Icon2, { name: "close", size: 15 }))
-          ),
-          h(
-            "div",
-            { className: "wbt-drawer-search" },
-            h("input", {
-              className: "wbt-input",
-              ref: treeSearchRef,
-              placeholder: t.treeSearch,
-              value: treeQuery,
-              onChange: function(e) {
-                setTreeQuery(e.target.value);
-              },
-              onKeyDown: function(e) {
-                if (e.key === "Escape") {
-                  e.stopPropagation();
-                  setTreeQuery("");
-                  setDrawer(false);
-                }
-              }
-            }),
-            treeQuery ? h("button", {
-              className: "wbt-search-clear",
-              title: t.clear,
-              "aria-label": t.clear,
-              onClick: function() {
-                setTreeQuery("");
-                if (treeSearchRef.current) treeSearchRef.current.focus();
-              }
-            }, h(Icon2, { name: "close", size: 13 })) : null
-          ),
-          h("div", { className: "wbt-drawer-body" }, treeBody),
-          h(
-            "div",
-            { className: "wbt-drawer-foot" },
-            h(
-              "div",
-              { className: "wbt-drawer-acts" },
-              h(
-                "button",
-                { className: "wbt-addbtn", title: t.addGroup, onClick: function() {
-                  if (footGroupId) addNode(footGroupId, "0");
-                } },
-                h(Icon2, { name: "folderPlus", size: 13 }),
-                t.addGroup
-              ),
-              h(
-                "button",
-                { className: "wbt-addbtn", title: t.addTable, onClick: function() {
-                  if (footGroupId) addNode(footGroupId, "1");
-                } },
-                h(Icon2, { name: "filePlus", size: 13 }),
-                t.addTable
-              )
-            ),
-            h("div", { className: "wbt-drawer-hint" }, t.treeHint)
-          )
-        )
-      ) : null,
-      createState ? h(CreateModal, {
-        key: (createState.source || "0") + "-" + (createState.originTask && createState.originTask.id || ""),
-        t,
-        api,
-        tree,
-        source: createState.source,
-        originTask: createState.originTask,
-        defaultTableId: createState.defaultTableId,
-        defaults: {
-          priority: cfg["form.defaultPriority"],
-          difficulty: cfg["form.defaultDifficulty"],
-          targetOffset: cfg["form.defaultTargetOffset"]
-        },
-        onClose: function() {
-          setCreateState(null);
-        },
-        onCreated: function() {
-          setCreateState(null);
-          refreshList();
-          refreshTree();
-          say(t.created);
-        }
-      }) : null,
-      timelineTask ? h(TimelineModal, {
-        key: timelineTask.id,
-        t,
-        api,
-        task: timelineTask,
-        onClose: function() {
-          setTimelineTask(null);
-        },
-        onCreateTimeline: function(originTask) {
-          setTimelineTask(null);
-          setCreateState({ source: "1", originTask, defaultTableId: originTask.tableId });
-        }
-      }) : null,
-      nodeModal ? h(NodeModal, {
-        key: "node-" + (nodeModal.node ? nodeModal.node.id : "new"),
-        t,
-        api,
-        node: nodeModal.node,
-        parentId: nodeModal.parentId,
-        type: nodeModal.type,
-        onClose: function() {
-          setNodeModal(null);
-        },
-        onSaved: nodeSaved
-      }) : null,
-      editTask ? h(EditModal, {
-        key: "edit-" + editTask.id,
-        t,
-        api,
-        task: editTask,
-        lang: props.lang,
-        onClose: function() {
-          setEditTask(null);
-        },
-        onSaved: function() {
-          setEditTask(null);
-          refreshList();
-          say(t.updated);
-        }
-      }) : null,
-      doneTask ? h(DoneModal, {
-        key: doneTask.id,
-        t,
-        api,
-        task: doneTask,
-        onClose: function() {
-          setDoneTask(null);
-        },
-        onDone: function() {
-          setDoneTask(null);
-          refreshList();
-          say(t.doneSuccess);
-        },
-        onError: function(e) {
-          setDoneTask(null);
-          say(e);
-        }
-      }) : null,
-      selectedOpen && batchMode ? h(BatchModal, {
-        key: batchMode,
-        t,
-        api,
-        mode: batchMode,
-        items: selectedItems,
-        tables,
-        nodes: treeFlat(tree),
-        onClose: function() {
-          setBatchMode(null);
-        },
-        onDone: batchDone
-      }) : null,
-      toast ? h("div", { className: "wbt-toast" }, toast) : null
-    );
-  }
+  var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, TABS, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.12.0",
+    version: "3.0.0",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },
