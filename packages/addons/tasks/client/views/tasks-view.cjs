@@ -26,6 +26,21 @@ module.exports = function createTasksView(deps) {
   function TasksViewBody(props) {
     var t = COPY[props.lang === "en" ? "en" : "zh"];
     var api = props.api;
+    var rootRef = React.useRef(null), pathrowRef = React.useRef(null);
+    React.useEffect(function () {
+      var root = rootRef.current, row = pathrowRef.current;
+      if (!root || !row) return;
+      function measure() { root.style.setProperty("--wbt-pathrow-h", Math.ceil(row.getBoundingClientRect().height) + "px"); }
+      measure();
+      var observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
+      if (observer) observer.observe(row);
+      if (typeof window !== "undefined") window.addEventListener("resize", measure);
+      return function () {
+        if (observer) observer.disconnect();
+        if (typeof window !== "undefined") window.removeEventListener("resize", measure);
+        root.style.removeProperty("--wbt-pathrow-h");
+      };
+    }, []);
     var cfg = props.cfg || {};
     var activityNavigation = filters.navigation(props.viewParams);
     var tableNavigation = !activityNavigation && props.viewParams && props.viewParams.tableId;
@@ -446,8 +461,8 @@ module.exports = function createTasksView(deps) {
               });
             }));
 
-    return h("div", { className: "wbt-root" },
-      h("div", { className: "wbt-pathrow" },
+    return h("div", { className: "wbt-root", ref: rootRef },
+      h("div", { className: "wbt-pathrow", ref: pathrowRef },
         h("div", { className: "wbt-tree-slot" },
           h("button", { className: "wbt-btn", onClick: function () { setDrawer(true); refreshTree(); } }, h(Icon, { name: "tree", size: 13 }), t.tree)
         ),

@@ -4821,7 +4821,7 @@ var require_styles = __commonJS({
       ".wbt-root{--wbt-hit-bg:#ffe4e6;--wbt-hit-fg:#881337}.wbt-root mark.wbt-hit{background:var(--wbt-hit-bg);color:var(--wbt-hit-fg);border-radius:2px;padding:0;font:inherit;box-decoration-break:clone;-webkit-box-decoration-break:clone}",
       ".wbt-root .wbt-item.closed:has(mark.wbt-hit){opacity:1}",
       ".wbt-root{--wbt-line:var(--wb-border);--wbt-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));--wbt-bg:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));--wbt-accent:var(--dsw-alias-brand-primary,#11a89b);display:flex;flex-direction:column;gap:10px;min-height:0;color:inherit;font-size:13px}",
-      ".wbt-pathrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 0 2px}",
+      ".wbt-pathrow{position:sticky;top:0;z-index:30;background:var(--wbt-bg);box-shadow:0 1px 0 var(--wbt-line);display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 0 2px}",
       ".wbt-tree-slot{flex:0 0 auto;display:flex;align-items:center}",
       ".wbt-grow{flex:1;min-width:0}",
       ".wbt-btn{border:1px solid var(--wbt-line);background:var(--wbt-surface);color:inherit;border-radius:var(--wb-radius-sm);padding:6px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;line-height:1.3;display:inline-flex;align-items:center;gap:5px}",
@@ -4838,7 +4838,7 @@ var require_styles = __commonJS({
       ".wbt-btn:focus-visible,.wbt-icon:focus-visible,.wbt-tw:focus-visible,.wbt-tool:focus-visible,.wbt-tab:focus-visible,.wbt-tacts button:focus-visible,.wbt-addbtn:focus-visible,.wbt-search-clear:focus-visible{outline:2px solid color-mix(in oklab,var(--wbt-accent) 55%,transparent);outline-offset:1px}",
       ".wbt-search{width:220px;max-width:46vw}",
       ".wbt-body{display:flex;gap:14px;align-items:flex-start;min-height:0;flex:1}",
-      ".wbt-filter-panel{position:sticky;top:12px;align-self:flex-start;flex:0 0 248px;width:248px;min-width:0;max-height:calc(100vh - 32px);overflow-y:auto;overscroll-behavior:contain;border:1px solid var(--wbt-line);border-radius:10px;background:var(--wbt-bg);box-sizing:border-box;padding:12px}",
+      ".wbt-filter-panel{position:sticky;top:calc(var(--wbt-pathrow-h,52px) + 8px);align-self:flex-start;flex:0 0 248px;width:248px;min-width:0;max-height:calc(100vh - var(--wbt-pathrow-h,52px) - 24px);overflow-y:auto;overscroll-behavior:contain;border:1px solid var(--wbt-line);border-radius:10px;background:var(--wbt-bg);box-sizing:border-box;padding:12px}",
       ".wbt-filter-content{display:flex;flex-direction:column;gap:12px}.wbt-filter-toggle{display:none}.wbt-filter-group{display:flex;flex-direction:column;gap:8px;min-width:0;margin:0;padding:10px 0;border:0;border-bottom:1px solid var(--wbt-line)}.wbt-filter-group legend{font-weight:600;padding:0}.wbt-filter-search{display:flex;gap:4px}.wbt-filter-search input{width:100%;min-width:0}.wbt-filter-panel .wbt-check{white-space:normal}.wbt-filter-panel .wbt-tagmenu{position:static;width:100%;box-sizing:border-box;max-height:240px}.wbt-filter-panel .wbt-tagfilter{flex-wrap:wrap}.wbt-filter-panel input:disabled{opacity:.45;cursor:not-allowed}.wbt-filter-panel .wbt-mhint{margin:0;line-height:1.6}.wbt-filter-panel .wbt-field input{width:100%;box-sizing:border-box}",
       ".wbt-status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 8px}.wbt-status-grid .wbt-check{min-width:0;overflow-wrap:anywhere}.wbt-pathrow>.wbt-sum{flex:none;white-space:nowrap}",
       ".wbt-publication-filter{width:100%}.wbt-range-entry{display:flex;gap:4px;align-items:center}.wbt-range-trigger{width:100%;min-width:0;text-align:left;white-space:normal}.wbt-range-trigger span{min-width:0;overflow-wrap:anywhere}.wbt-range-calendar{margin-top:8px;padding:6px;border:1px solid var(--wbt-line);border-radius:8px;background:var(--wbt-bg)}.wbt-range-month{display:flex;gap:4px;align-items:center;margin-bottom:8px}.wbt-range-month input{width:100%;min-width:0;padding:4px;border:1px solid var(--wbt-line);border-radius:4px;background:var(--wbt-bg);color:inherit}.wbt-range-month .wbt-btn{padding:4px 7px}.wbt-range-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;margin:8px 0}.wbt-range-weekday{text-align:center;font-size:11px;opacity:.7}.wbt-range-day{min-width:0;padding:6px 0;border:0;border-radius:4px;background:transparent;color:inherit;font:inherit;cursor:pointer}.wbt-range-day.between{background:color-mix(in srgb,var(--wbt-accent) 18%,transparent)}.wbt-range-day:hover{box-shadow:inset 0 0 0 1px var(--wbt-accent)}.wbt-range-day.selected{background:var(--wbt-accent);color:#fff}.wbt-range-day:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:1px}.wbt-range-actions{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}",
@@ -5031,7 +5031,7 @@ var require_styles = __commonJS({
       ".wbt-countdown.soon{background:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 14%,transparent);border-color:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 32%,transparent)}",
       ".wbt-countdown.overdue{color:var(--dsw-alias-label-primary-inverted,#fff);background:var(--dsw-alias-state-error-primary,#e5484d);border-color:transparent}",
       "@media (max-width:760px){.wbt-body{flex-direction:column;gap:8px}.wbt-nav{flex-direction:row;width:100%;flex:0 0 auto;overflow-x:auto;border-right:none;border-bottom:1px solid var(--wbt-line);padding:0 0 6px}.wbt-tab{width:auto;white-space:nowrap;padding:6px 9px}.wbt-tab.on{box-shadow:inset 0 -2px 0 var(--wbt-accent)}.wbt-nav-sep{width:1px;height:18px;flex:none;margin:auto 4px}.wbt-tree-slot{flex:0 0 auto;width:auto;margin-right:0}.wbt-pathrow .wbt-search{flex:1 1 160px;max-width:none}}",
-      "@media (max-width:760px){.wbt-filter-panel{width:100%;flex:0 0 auto;z-index:20;padding:8px;top:8px;max-height:calc(100vh - 24px)}.wbt-filter-toggle{display:inline-flex}.wbt-filter-panel:not(.expanded) .wbt-filter-content{display:none}.wbt-filter-panel.expanded .wbt-filter-content{padding-top:10px}.wbt-content{width:100%;box-sizing:border-box}}",
+      "@media (max-width:760px){.wbt-filter-panel{width:100%;flex:0 0 auto;z-index:20;padding:8px;top:calc(var(--wbt-pathrow-h,52px) + 8px);max-height:calc(100vh - var(--wbt-pathrow-h,52px) - 24px)}.wbt-filter-toggle{display:inline-flex}.wbt-filter-panel:not(.expanded) .wbt-filter-content{display:none}.wbt-filter-panel.expanded .wbt-filter-content{padding-top:10px}.wbt-content{width:100%;box-sizing:border-box}}",
       "@media (max-width:420px){.wbt-grid{grid-template-columns:1fr}}",
       "@media (max-width:640px){.wbt-form{grid-template-columns:1fr}.wbt-drawer{width:94vw}.wbt-search{width:100%}.wbt-item{padding:9px}.wbt-ops{width:100%;justify-content:flex-end}}"
     ].join("\n");
@@ -6630,7 +6630,7 @@ var require_task_filter_panel = __commonJS({
         h(
           "div",
           { className: "wbt-filter-content", id: p.id },
-          h("fieldset", { className: "wbt-filter-group wbt-status-grid" }, h("legend", null, en ? "Status (match any)" : "\u72B6\u6001\uFF08\u6EE1\u8DB3\u4EFB\u4E00\uFF09"), options.map(function(option) {
+          h("fieldset", { className: "wbt-filter-group wbt-status-grid" }, h("legend", null, en ? "Status (match any)" : "\u72B6\u6001"), options.map(function(option) {
             var key = option[0], checked = key === "all" ? model.all(value) : key === "urgent" ? value.urgent : value.statuses.indexOf(key) >= 0;
             return h("label", { key, className: "wbt-check" }, h("input", { type: "checkbox", checked, "data-status": key, onChange: function() {
               change(model.toggle(value, key));
@@ -6685,6 +6685,23 @@ var require_tasks_view = __commonJS({
       function TasksViewBody(props) {
         var t = COPY[props.lang === "en" ? "en" : "zh"];
         var api = props.api;
+        var rootRef = React.useRef(null), pathrowRef = React.useRef(null);
+        React.useEffect(function() {
+          var root = rootRef.current, row = pathrowRef.current;
+          if (!root || !row) return;
+          function measure() {
+            root.style.setProperty("--wbt-pathrow-h", Math.ceil(row.getBoundingClientRect().height) + "px");
+          }
+          measure();
+          var observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
+          if (observer) observer.observe(row);
+          if (typeof window !== "undefined") window.addEventListener("resize", measure);
+          return function() {
+            if (observer) observer.disconnect();
+            if (typeof window !== "undefined") window.removeEventListener("resize", measure);
+            root.style.removeProperty("--wbt-pathrow-h");
+          };
+        }, []);
         var cfg = props.cfg || {};
         var activityNavigation = filters.navigation(props.viewParams);
         var tableNavigation = !activityNavigation && props.viewParams && props.viewParams.tableId;
@@ -7213,10 +7230,10 @@ var require_tasks_view = __commonJS({
         }));
         return h(
           "div",
-          { className: "wbt-root" },
+          { className: "wbt-root", ref: rootRef },
           h(
             "div",
-            { className: "wbt-pathrow" },
+            { className: "wbt-pathrow", ref: pathrowRef },
             h(
               "div",
               { className: "wbt-tree-slot" },
