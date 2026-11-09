@@ -14,6 +14,14 @@ for(let y=1900;y<=2400;y++){
 assert.equal(model.calendar(2012).weeks,54);
 assert.deepEqual([1,2,3,4,6,7,99].map(model.level),[1,2,2,3,3,4,4]);
 assert.deepEqual(model.TYPES,['done','publish','shutdown']);
+assert.deepEqual(model.LEVELS.map(v=>v.label),['1','2–3','4–6','7+']);
+for(const [index,entry] of model.LEVELS.entries()){
+ assert.equal(model.level(entry.min),index+1);
+ if(entry.max!==null)assert.equal(model.level(entry.max),index+1);
+ for(const type of model.TYPES)assert.equal(model.background({[type]:entry.min},type),`var(--hm-${type}-${index+1})`);
+}
+const css=require(dir+'heatmap-styles.cjs');assert.ok(!css.includes('.wbt-hm-levels'));
+assert.ok(css.includes('gap:4px'));assert.ok(css.includes('padding-inline-start:12px'));
 let state=[],cursor=0,effects=[];
 const memo=(fn,deps)=>{const i=cursor++,old=state[i];if(!old||deps.some((v,j)=>v!==old.deps[j]))state[i]={value:fn(),deps};return state[i].value;};
 const React={createElement:(type,props,...children)=>({type,props:props||{},children:children.flat(Infinity).filter(x=>x!=null)}),useState:v=>{const i=cursor++;if(!(i in state))state[i]=v;return [state[i],v=>state[i]=typeof v==='function'?v(state[i]):v];},useRef:v=>{const i=cursor++;return state[i]||={current:v};},useMemo:memo,useCallback:(fn,deps)=>memo(()=>fn,deps),useEffect:(fn,deps)=>memo(()=>{effects.push(fn);},deps)};
@@ -31,7 +39,14 @@ for(const lang of ['zh','en']){
  const day=()=>find(render(Heatmap,p),n=>n.props['data-date']===date);
  assert.equal(day().props.title,date+' · '+model.COPY[lang].done+' 2');
  assert.equal(day().props.style.background,'var(--hm-done-2)');
- for(const type of model.TYPES){find(render(Heatmap,p),n=>n.props.role==='tab'&&text(n)===model.COPY[lang][type]).props.onClick();await flush();v=render(Heatmap,p);assert.equal(calls.length,1);day().props.onClick();assert.equal(navigation[0],'tasks');assert.equal(navigation[1].activityType,type);assert.equal(navigation[1].activityDate,date);}
+ for(const type of model.TYPES){find(render(Heatmap,p),n=>n.props.role==='tab'&&text(n)===model.COPY[lang][type]).props.onClick();await flush();v=render(Heatmap,p);assert.equal(calls.length,1);day().props.onClick();assert.equal(navigation[0],'tasks');assert.equal(navigation[1].activityType,type);assert.equal(navigation[1].activityDate,date);
+  const legend=find(v,n=>n.props.className==='wbt-hm-intensity');
+  assert.equal(legend.props.role,'img');assert.equal(legend.props['aria-label'],model.legendLabel(lang));
+  assert.ok(text(legend).startsWith(model.COPY[lang].dailyCount));
+  const items=walk(legend).filter(n=>n.props.className==='wbt-hm-intensity-item');assert.equal(items.length,4);
+  items.forEach((item,index)=>{assert.equal(text(item),model.LEVELS[index].label);const swatch=find(item,n=>n.props.className==='wbt-hm-swatch');assert.equal(swatch.props['aria-hidden'],true);assert.equal(swatch.props.style.background,`var(--hm-${type}-${index+1})`);});
+  const tabs=find(v,n=>n.props.role==='tablist');assert.equal(tabs.children.length,3);assert.ok(!walk(tabs).includes(legend));
+ }
  assert.equal(walk(v).filter(n=>n.props.role==='tab').length,3);
  const future=walk(v).find(n=>n.props['data-date']>model.localDay(new Date()));
  if(future){navigation=null;assert.equal(future.props['aria-disabled'],true);assert.equal(future.props.disabled,undefined);future.props.onClick();assert.equal(navigation,null);}

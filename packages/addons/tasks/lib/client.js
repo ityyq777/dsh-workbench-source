@@ -1286,9 +1286,10 @@ var require_recent_columns = __commonJS({
 var require_heatmap_model = __commonJS({
   "packages/addons/tasks/client/heatmap-model.cjs"(exports2, module2) {
     var TYPES = ["done", "publish", "shutdown"];
+    var LEVELS = [{ min: 1, max: 1, label: "1" }, { min: 2, max: 3, label: "2\u20133" }, { min: 4, max: 6, label: "4\u20136" }, { min: 7, max: null, label: "7+" }];
     var COPY = {
-      zh: { title: "\u5E74\u5EA6\u6D3B\u52A8", previous: "\u4E0A\u4E00\u5E74", next: "\u4E0B\u4E00\u5E74", done: "\u5B8C\u6210", publish: "\u53D1\u5E03", shutdown: "\u5173\u95ED", empty: { done: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5B8C\u6210\u8BB0\u5F55", publish: "\u672C\u5E74\u5EA6\u6CA1\u6709\u53D1\u5E03\u8BB0\u5F55", shutdown: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5173\u95ED\u8BB0\u5F55" }, loading: "\u6B63\u5728\u52A0\u8F7D\u5E74\u5EA6\u6D3B\u52A8", error: "\u5E74\u5EA6\u6D3B\u52A8\u52A0\u8F7D\u5931\u8D25", retry: "\u91CD\u8BD5", future: "\u672A\u6765\u65E5\u671F", none: "\u65E0\u6D3B\u52A8", clear: "\u6E05\u9664\u6D3B\u52A8\u7B5B\u9009", filter: "\u6D3B\u52A8\u7B5B\u9009", total: "\u6D3B\u52A8\u603B\u6570", levels: "\u6BCF\u65E5\u6B21\u6570\uFF1A1 / 2\u20133 / 4\u20136 / 7+", weekdays: ["\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D", "\u65E5"] },
-      en: { title: "Annual task activity", previous: "Previous year", next: "Next year", done: "Done", publish: "Published", shutdown: "Closed", empty: { done: "No completed tasks this year", publish: "No published tasks this year", shutdown: "No closed tasks this year" }, loading: "Loading annual activity", error: "Could not load annual activity", retry: "Retry", future: "Future date", none: "No activity", clear: "Clear activity filter", filter: "Activity filter", total: "Total events", levels: "Daily count: 1 / 2\u20133 / 4\u20136 / 7+", weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] }
+      zh: { title: "\u5E74\u5EA6\u6D3B\u52A8", previous: "\u4E0A\u4E00\u5E74", next: "\u4E0B\u4E00\u5E74", done: "\u5B8C\u6210", publish: "\u53D1\u5E03", shutdown: "\u5173\u95ED", empty: { done: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5B8C\u6210\u8BB0\u5F55", publish: "\u672C\u5E74\u5EA6\u6CA1\u6709\u53D1\u5E03\u8BB0\u5F55", shutdown: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5173\u95ED\u8BB0\u5F55" }, loading: "\u6B63\u5728\u52A0\u8F7D\u5E74\u5EA6\u6D3B\u52A8", error: "\u5E74\u5EA6\u6D3B\u52A8\u52A0\u8F7D\u5931\u8D25", retry: "\u91CD\u8BD5", future: "\u672A\u6765\u65E5\u671F", none: "\u65E0\u6D3B\u52A8", clear: "\u6E05\u9664\u6D3B\u52A8\u7B5B\u9009", filter: "\u6D3B\u52A8\u7B5B\u9009", total: "\u6D3B\u52A8\u603B\u6570", dailyCount: "\u6BCF\u65E5\u6B21\u6570", weekdays: ["\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D", "\u65E5"] },
+      en: { title: "Annual task activity", previous: "Previous year", next: "Next year", done: "Done", publish: "Published", shutdown: "Closed", empty: { done: "No completed tasks this year", publish: "No published tasks this year", shutdown: "No closed tasks this year" }, loading: "Loading annual activity", error: "Could not load annual activity", retry: "Retry", future: "Future date", none: "No activity", clear: "Clear activity filter", filter: "Activity filter", total: "Total events", dailyCount: "Daily count", weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] }
     };
     function localDay(d) {
       return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
@@ -1302,7 +1303,15 @@ var require_heatmap_model = __commonJS({
       }) };
     }
     function level(n) {
-      return n >= 7 ? 4 : n >= 4 ? 3 : n >= 2 ? 2 : 1;
+      return LEVELS.reduce(function(value, entry, index) {
+        return n >= entry.min ? index + 1 : value;
+      }, 1);
+    }
+    function legendLabel(lang) {
+      return COPY[lang].dailyCount + (lang === "en" ? ": " : "\uFF1A") + LEVELS.map(function(entry) {
+        if (lang === "en") return entry.max === null ? entry.min + " or more events" : entry.min === entry.max ? entry.min + " event" : entry.min + " to " + entry.max + " events";
+        return entry.max === null ? entry.min + " \u6B21\u4EE5\u4E0A" : entry.min === entry.max ? entry.min + " \u6B21" : entry.min + " \u5230 " + entry.max + " \u6B21";
+      }).join(lang === "en" ? "; " : "\uFF1B");
     }
     function count(day, type) {
       return Number(day[type]) || 0;
@@ -1317,14 +1326,14 @@ var require_heatmap_model = __commonJS({
       if (!params || !/^\d{4}-\d{2}-\d{2}$/.test(params.activityDate || "")) return null;
       return { activityDate: params.activityDate, activityType: TYPES.indexOf(params.activityType) >= 0 ? params.activityType : "done" };
     }
-    module2.exports = { TYPES, COPY, localDay, calendar, level, count, background, label, activityParams };
+    module2.exports = { TYPES, LEVELS, COPY, legendLabel, localDay, calendar, level, count, background, label, activityParams };
   }
 });
 
 // packages/addons/tasks/client/heatmap-styles.cjs
 var require_heatmap_styles = __commonJS({
   "packages/addons/tasks/client/heatmap-styles.cjs"(exports2, module2) {
-    module2.exports = ".wbt-heatmap{--hm-empty:#e9ecef;--hm-done-1:#d3f0d7;--hm-done-2:#91d69c;--hm-done-3:#51b566;--hm-done-4:#2f9e44;--hm-publish-1:#d5e7f8;--hm-publish-2:#96bee6;--hm-publish-3:#568fc7;--hm-publish-4:#2b6cb0;--hm-shutdown-1:#fbdada;--hm-shutdown-2:#f1a0a0;--hm-shutdown-3:#df6262;--hm-shutdown-4:#c92a2a;min-width:0;max-width:100%;border:1px solid color-mix(in srgb,currentColor 15%,transparent);border-radius:12px;padding:16px;margin-bottom:16px;color:inherit;font-size:12px;box-sizing:border-box}.wbt-hm-head,.wbt-hm-legend{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.wbt-hm-head{justify-content:space-between;margin-bottom:16px}.wbt-hm-head h3{margin:0;font-size:14px}.wbt-hm-years{display:flex;align-items:center;gap:12px;font-variant-numeric:tabular-nums}.wbt-heatmap button{font:inherit;color:inherit}.wbt-hm-control{border:1px solid color-mix(in srgb,currentColor 20%,transparent);background:transparent;border-radius:5px;cursor:pointer;padding:4px 8px}.wbt-hm-control[role=tab]{border:0;outline:none;box-shadow:none}.wbt-hm-control[role=tab]:hover{background:color-mix(in srgb,currentColor 6%,transparent)}.wbt-hm-control[aria-selected=true]{font-weight:700;background:color-mix(in srgb,currentColor 10%,transparent)}.wbt-hm-control[role=tab]:focus-visible{outline:2px solid #568fc7;outline-offset:2px}.wbt-hm-scroll{overflow-x:auto;padding:3px;max-width:100%}.wbt-hm-layout{display:flex;gap:8px;min-width:max-content}.wbt-hm-weekdays{display:grid;grid-template-rows:repeat(7,12px);gap:3px;padding-top:22px;font-size:10px;line-height:12px;opacity:.65}.wbt-hm-body{flex:1;min-width:0}.wbt-hm-months{display:grid;grid-template-columns:repeat(var(--hm-weeks),12px);column-gap:3px;height:22px;font-size:10px}.wbt-hm-months span{white-space:nowrap}.wbt-hm-grid{display:grid;grid-template-columns:repeat(var(--hm-weeks),12px);grid-template-rows:repeat(7,12px);gap:3px}.wbt-hm-day{border:0;border-radius:2px;width:12px;height:12px;padding:0;cursor:pointer}.wbt-hm-day[aria-disabled=true]{cursor:default}.wbt-hm-day{outline:none}.wbt-hm-day:focus-visible{outline:2px solid #568fc7;outline-offset:1px}.wbt-hm-day:hover{filter:brightness(.92)}.wbt-hm-future{opacity:.4}.wbt-hm-legend{margin-top:14px}.wbt-hm-swatch{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:5px}.wbt-hm-levels{opacity:.7;font-size:11px}.wbt-hm-summary{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.wbt-hm-state{padding:28px 8px;text-align:center}.wbt-hm-skeleton{height:102px;border-radius:3px;background:repeating-linear-gradient(90deg,var(--hm-empty) 0 12px,transparent 12px 15px);opacity:.55}.dark .wbt-heatmap,[data-theme=dark] .wbt-heatmap,:root[style*='color-scheme:dark'] .wbt-heatmap,:root[style*='color-scheme: dark'] .wbt-heatmap,[data-color-scheme=dark] .wbt-heatmap{--hm-empty:#303740;--hm-done-1:#21452b;--hm-done-2:#2f7440;--hm-done-3:#46a75c;--hm-done-4:#72d38a;--hm-publish-1:#223e5c;--hm-publish-2:#326496;--hm-publish-3:#508ecb;--hm-publish-4:#85baf0;--hm-shutdown-1:#58292b;--hm-shutdown-2:#914146;--hm-shutdown-3:#c95c63;--hm-shutdown-4:#f58e93;}@media(prefers-color-scheme:dark){:root:not([data-theme=light]):not([data-color-scheme=light]):not([style*='color-scheme:light']):not([style*='color-scheme: light']) .wbt-heatmap{--hm-empty:#303740;--hm-done-1:#21452b;--hm-done-2:#2f7440;--hm-done-3:#46a75c;--hm-done-4:#72d38a;--hm-publish-1:#223e5c;--hm-publish-2:#326496;--hm-publish-3:#508ecb;--hm-publish-4:#85baf0;--hm-shutdown-1:#58292b;--hm-shutdown-2:#914146;--hm-shutdown-3:#c95c63;--hm-shutdown-4:#f58e93;}}@media(min-width:1200px){.wbt-hm-layout{min-width:0}.wbt-hm-months,.wbt-hm-grid{grid-template-columns:repeat(var(--hm-weeks),minmax(12px,1fr))}.wbt-hm-day{width:12px}}@media(prefers-reduced-motion:reduce){.wbt-heatmap *{animation:none!important;transition:none!important}}";
+    module2.exports = ".wbt-heatmap{--hm-empty:#e9ecef;--hm-done-1:#d3f0d7;--hm-done-2:#91d69c;--hm-done-3:#51b566;--hm-done-4:#2f9e44;--hm-publish-1:#d5e7f8;--hm-publish-2:#96bee6;--hm-publish-3:#568fc7;--hm-publish-4:#2b6cb0;--hm-shutdown-1:#fbdada;--hm-shutdown-2:#f1a0a0;--hm-shutdown-3:#df6262;--hm-shutdown-4:#c92a2a;min-width:0;max-width:100%;border:1px solid color-mix(in srgb,currentColor 15%,transparent);border-radius:12px;padding:16px;margin-bottom:16px;color:inherit;font-size:12px;box-sizing:border-box}.wbt-hm-head,.wbt-hm-legend{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.wbt-hm-head{justify-content:space-between;margin-bottom:16px}.wbt-hm-head h3{margin:0;font-size:14px}.wbt-hm-years{display:flex;align-items:center;gap:12px;font-variant-numeric:tabular-nums}.wbt-heatmap button{font:inherit;color:inherit}.wbt-hm-control{border:1px solid color-mix(in srgb,currentColor 20%,transparent);background:transparent;border-radius:5px;cursor:pointer;padding:4px 8px}.wbt-hm-control[role=tab]{border:0;outline:none;box-shadow:none}.wbt-hm-control[role=tab]:hover{background:color-mix(in srgb,currentColor 6%,transparent)}.wbt-hm-control[aria-selected=true]{font-weight:700;background:color-mix(in srgb,currentColor 10%,transparent)}.wbt-hm-control[role=tab]:focus-visible{outline:2px solid #568fc7;outline-offset:2px}.wbt-hm-scroll{overflow-x:auto;padding:3px;max-width:100%}.wbt-hm-layout{display:flex;gap:8px;min-width:max-content}.wbt-hm-weekdays{display:grid;grid-template-rows:repeat(7,12px);gap:3px;padding-top:22px;font-size:10px;line-height:12px;opacity:.65}.wbt-hm-body{flex:1;min-width:0}.wbt-hm-months{display:grid;grid-template-columns:repeat(var(--hm-weeks),12px);column-gap:3px;height:22px;font-size:10px}.wbt-hm-months span{white-space:nowrap}.wbt-hm-grid{display:grid;grid-template-columns:repeat(var(--hm-weeks),12px);grid-template-rows:repeat(7,12px);gap:3px}.wbt-hm-day{border:0;border-radius:2px;width:12px;height:12px;padding:0;cursor:pointer}.wbt-hm-day[aria-disabled=true]{cursor:default}.wbt-hm-day{outline:none}.wbt-hm-day:focus-visible{outline:2px solid #568fc7;outline-offset:1px}.wbt-hm-day:hover{filter:brightness(.92)}.wbt-hm-future{opacity:.4}.wbt-hm-legend{margin-top:14px}.wbt-hm-swatch{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:5px}.wbt-hm-types{display:flex;align-items:center;gap:10px}.wbt-hm-intensity{display:flex;align-items:center;flex-wrap:wrap;gap:10px;border-inline-start:1px solid color-mix(in srgb,currentColor 20%,transparent);padding-inline-start:12px;font-size:11px}.wbt-hm-intensity-label{color:color-mix(in srgb,currentColor 70%,transparent)}.wbt-hm-intensity-item{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}.wbt-hm-intensity-item .wbt-hm-swatch{flex:none;margin:0}.wbt-hm-summary{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.wbt-hm-state{padding:28px 8px;text-align:center}.wbt-hm-skeleton{height:102px;border-radius:3px;background:repeating-linear-gradient(90deg,var(--hm-empty) 0 12px,transparent 12px 15px);opacity:.55}.dark .wbt-heatmap,[data-theme=dark] .wbt-heatmap,:root[style*='color-scheme:dark'] .wbt-heatmap,:root[style*='color-scheme: dark'] .wbt-heatmap,[data-color-scheme=dark] .wbt-heatmap{--hm-empty:#303740;--hm-done-1:#21452b;--hm-done-2:#2f7440;--hm-done-3:#46a75c;--hm-done-4:#72d38a;--hm-publish-1:#223e5c;--hm-publish-2:#326496;--hm-publish-3:#508ecb;--hm-publish-4:#85baf0;--hm-shutdown-1:#58292b;--hm-shutdown-2:#914146;--hm-shutdown-3:#c95c63;--hm-shutdown-4:#f58e93;}@media(prefers-color-scheme:dark){:root:not([data-theme=light]):not([data-color-scheme=light]):not([style*='color-scheme:light']):not([style*='color-scheme: light']) .wbt-heatmap{--hm-empty:#303740;--hm-done-1:#21452b;--hm-done-2:#2f7440;--hm-done-3:#46a75c;--hm-done-4:#72d38a;--hm-publish-1:#223e5c;--hm-publish-2:#326496;--hm-publish-3:#508ecb;--hm-publish-4:#85baf0;--hm-shutdown-1:#58292b;--hm-shutdown-2:#914146;--hm-shutdown-3:#c95c63;--hm-shutdown-4:#f58e93;}}@media(min-width:1200px){.wbt-hm-layout{min-width:0}.wbt-hm-months,.wbt-hm-grid{grid-template-columns:repeat(var(--hm-weeks),minmax(12px,1fr))}.wbt-hm-day{width:12px}}@media(prefers-reduced-motion:reduce){.wbt-heatmap *{animation:none!important;transition:none!important}}";
   }
 });
 
@@ -1468,12 +1477,30 @@ var require_heatmap = __commonJS({
           } }, "\u203A")
         )),
         content,
-        h("div", { className: "wbt-hm-legend", role: "tablist", "aria-label": t.title }, model.TYPES.map(function(k) {
-          return h("button", { key: k, type: "button", className: "wbt-hm-control", role: "tab", "aria-selected": type === k, onClick: function() {
-            setType(k);
-            setTip("");
-          } }, h("span", { className: "wbt-hm-swatch", style: { background: "var(--hm-" + k + "-4)" }, "aria-hidden": true }), t[k]);
-        }), ready && h("span", { className: "wbt-hm-summary", "aria-live": "polite" }, tip || t.total + " \xB7 " + total), h("span", { className: "wbt-hm-levels" }, t.levels))
+        h(
+          "div",
+          { className: "wbt-hm-legend" },
+          h("div", { className: "wbt-hm-types", role: "tablist", "aria-label": t.title }, model.TYPES.map(function(k) {
+            return h("button", { key: k, type: "button", className: "wbt-hm-control", role: "tab", "aria-selected": type === k, onClick: function() {
+              setType(k);
+              setTip("");
+            } }, h("span", { className: "wbt-hm-swatch", style: { background: "var(--hm-" + k + "-4)" }, "aria-hidden": true }), t[k]);
+          })),
+          ready && h("span", { className: "wbt-hm-summary", "aria-live": "polite" }, tip || t.total + " \xB7 " + total),
+          h(
+            "div",
+            { className: "wbt-hm-intensity", role: "img", "aria-label": model.legendLabel(lang) },
+            h("span", { className: "wbt-hm-intensity-label", "aria-hidden": true }, t.dailyCount),
+            model.LEVELS.map(function(entry, index) {
+              return h(
+                "span",
+                { key: entry.label, className: "wbt-hm-intensity-item", "aria-hidden": true },
+                h("span", { className: "wbt-hm-swatch", style: { background: "var(--hm-" + type + "-" + (index + 1) + ")" }, "aria-hidden": true }),
+                entry.label
+              );
+            })
+          )
+        )
       );
     }
     module2.exports = Heatmap;
