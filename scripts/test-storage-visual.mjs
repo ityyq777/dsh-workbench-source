@@ -22,7 +22,14 @@ const document={head:{appendChild:s=>styles.push(s.textContent)},getElementById:
   createElement:()=>({setAttribute(){}}),addEventListener(){},removeEventListener(){},activeElement:null};
 const context={module:{exports:{}},window:{__WB_HOST__:{registerAddon:a=>addon=a}},document,URL,
   require:n=>{assert.equal(n,'react');return React;},setTimeout:()=>1,clearTimeout(){},console};
-runInNewContext(bundle('packages/addons/storage/client/client.src.cjs'), context);
+const production = buildSync({ entryPoints: ['packages/addons/storage/client/client.src.cjs'], bundle: true, write: false,
+  metafile: true, format: 'cjs', platform: 'browser', target: ['es2020'], external: ['react'], legalComments: 'none', logLevel: 'silent' });
+const productionBytes = production.outputFiles[0].contents.length;
+assert.ok(productionBytes < 250_000, 'storage entry must stay below 250KB unminified; got ' + productionBytes);
+const iconInputs = Object.keys(production.metafile.inputs).filter(p => p.includes('/lucide-react/') && p.includes('/icons/'));
+assert.ok(iconInputs.length > 0 && iconInputs.length <= 30, 'bundle only the selected glyphs and aliases, got ' + iconInputs.length);
+runInNewContext(production.outputFiles[0].text, context);
+console.log('Storage memory bundle:', productionBytes, 'bytes;', iconInputs.length, 'icon modules');
 function expand(n,path='r') {
   if(Array.isArray(n))return n.map((v,i)=>expand(v,path+'/'+(v?.props?.key??i)));
   if(!n||typeof n!=='object')return n;
