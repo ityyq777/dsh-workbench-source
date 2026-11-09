@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 构建业务插件的浏览器客户端：把 lucide-react 图标打进各自的 lib/client.js。
+// 构建宿主和业务插件客户端：将源模块与 lucide-react 图标打进各自单文件。
 // 源码在 client/client.src.cjs（CommonJS 风格，require("react") 由 DSH 模块加载器提供），
 // 产物 lib/client.js 是包在 window.__ModuleLoader__.load({ factory }) 里的单文件。
 import { build } from "esbuild";
@@ -16,7 +16,7 @@ function wrapper(id) {
   return {
     banner: {
       js: [
-        "// 由 scripts/build-addon-clients.mjs 生成；请修改 client/client.src.cjs 后重新构建。",
+        "// 由 scripts/build-addon-clients.mjs 生成；请修改对应 client/client.src.cjs 后重新构建。",
         "window.__ModuleLoader__ = window.__ModuleLoader__ || { modules: {}, load: function (m) { this.modules[m.id] = m.factory; } };",
         "window.__ModuleLoader__.load({",
         '  id: ' + JSON.stringify(id) + ",",
@@ -32,6 +32,15 @@ function wrapper(id) {
 }
 
 const results = [];
+const shellDir = join(ROOT, "packages/shell");
+await build({
+  entryPoints: [join(shellDir, "client/client.src.cjs")],
+  outfile: join(shellDir, "client/client.js"),
+  bundle: true, format: "cjs", platform: "browser", target: ["es2020"],
+  external: ["react"], legalComments: "none", logLevel: "warning",
+  ...wrapper("dsh-workbench"),
+});
+results.push({ package: "dsh-workbench", version: require(join(shellDir, "package.json")).version });
 for (const name of ADDONS) {
   const dir = join(ROOT, "packages/addons", name);
   const pkg = require(join(dir, "package.json"));

@@ -29,6 +29,7 @@ const ROOTS = [
 
 const SKIP = [
   /\/lib\/client\.js$/, // 构建产物
+  /^packages\/shell\/client\/client\.js$/, // 宿主客户端构建产物
   /\.d\.ts$/,
 ];
 
@@ -77,6 +78,7 @@ const files = [];
 for (const pattern of ROOTS) for (const dir of expand(pattern)) walk(dir, files);
 // 跨插件共享客户端源码不在 */client 目录内，同样受手写源预算约束。
 walk(join(ROOT, "packages/addons/lib"), files);
+walk(join(ROOT, "packages/shell/client"), files);
 
 const rows = [];
 for (const file of files) {

@@ -261,5 +261,7 @@ export interface WbClientModule {
     id: string;
     title: string | DomainViewTitle;
     component: any;
+    /** 可选函数组件；宿主传 size=14、strokeWidth=2、aria-hidden=true。非函数忽略；lucide forwardRef 请包函数。 */
+    icon?: any;
   }[];
 }
