@@ -1,0 +1,51 @@
+[
+  {
+    "q": "highlightprobe",
+    "result": {
+      "ok": true,
+      "value": "{\"marks\":[\"HighlightProbe\",\"HighlightProbe\",\"HighlightProbe\"],\"titles\":[\"搜索验收 review-only\",\"搜索验收 description-only\",\"HighlightProbe title-only\"]}"
+    }
+  },
+  {
+    "q": "HIGHLIGHTPROBE",
+    "result": {
+      "ok": true,
+      "value": "{\"marks\":[\"HighlightProbe\",\"HighlightProbe\",\"HighlightProbe\"],\"titles\":[\"搜索验收 review-only\",\"搜索验收 description-only\",\"HighlightProbe title-only\"]}"
+    }
+  },
+  {
+    "q": "%",
+    "result": {
+      "ok": true,
+      "value": "{\"marks\":[\"%\"],\"titles\":[\"字面搜索 百分号 % literal\"]}"
+    }
+  },
+  {
+    "q": "_",
+    "result": {
+      "ok": true,
+      "value": "{\"marks\":[\"_\"],\"titles\":[\"字面搜索 下划线 _ literal\"]}"
+    }
+  },
+  {
+    "q": "\\",
+    "result": {
+      "ok": true,
+      "value": "{\"marks\":[\"\\\\\"],\"titles\":[\"字面搜索 反斜线 \\\\ literal\"]}"
+    }
+  },
+  {
+    "q": "不存在验收词",
+    "result": {
+      "ok": true,
+      "value": "{\"marks\":[],\"titles\":[]}"
+    }
+  },
+  {
+    "q": "HighlightProbe",
+    "result": {
+      "ok": true,
+      "value": "{\"marks\":[\"HighlightProbe\",\"HighlightProbe\",\"HighlightProbe\"],\"titles\":[\"搜索验收 review-only\",\"搜索验收 description-only\",\"HighlightProbe title-only\"]}"
+    }
+  }
+]
