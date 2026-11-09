@@ -33,12 +33,13 @@ export function listTasks(db, args, api) {
   const tab = tabAll ? 8 : tabCode(rawTab);
   const where = ["t.deleted_at IS NULL"];
   const params = [];
+  const listNotices = [];
 
   const titleKey = args.titleKey === undefined || args.titleKey === null ? "" : String(args.titleKey).trim();
   if (titleKey) {
     const key = titleKey.replace(/[\\%_]/g, "\\$&");
-    where.push("(t.title LIKE ? ESCAPE '\\' OR t.description LIKE ? ESCAPE '\\')");
-    params.push("%" + key + "%", "%" + key + "%");
+    where.push("(t.title LIKE ? ESCAPE '\\' OR t.description LIKE ? ESCAPE '\\' OR t.review LIKE ? ESCAPE '\\')");
+    params.push("%" + key + "%", "%" + key + "%", "%" + key + "%");
   }
 
   const tableId = idOf(args.tableId);
@@ -81,7 +82,6 @@ export function listTasks(db, args, api) {
     const name = LEGACY_TYPE_TAGS[c];
     if (filterTagNames.indexOf(name) < 0) filterTagNames.push(name);
   }
-  const listNotices = [];
   if (filterTagNames.length) {
     if (!tagAvailable) {
       // 可选能力缺失：不报错，按「筛不到任何任务」处理，并在回执里说明原因。

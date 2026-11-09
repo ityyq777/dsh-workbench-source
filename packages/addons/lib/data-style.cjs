@@ -106,6 +106,17 @@ var CSS = [
   "." + P + "-gallery{display:flex;flex-direction:column;gap:12px;overflow:auto;flex:1}",
   "." + P + "-gallery img{width:100%;height:auto;object-fit:contain;border-radius:8px}",
 ].join("\n");
+// Keep other domains unchanged; inventory consumes the common light-button contract.
+if (DOMAIN === "storage") {
+  var buttons = "." + P + " :is(button)";
+  CSS += buttons + "{border:none;background:var(--wb-btn-bg);min-height:var(--wb-btn-size-sm);min-width:var(--wb-btn-size-sm)}" +
+    buttons + ":enabled:hover{background:var(--wb-btn-hover-bg)}" +
+    buttons + ":enabled:active{background:var(--wb-btn-active-bg)}" +
+    buttons + ":disabled{background:var(--wb-btn-bg);color:var(--cfg-muted)}" +
+    buttons + ":focus-visible{outline:var(--wb-btn-focus);outline-offset:var(--wb-btn-focus-offset)}" +
+    "." + P + "-fcell:has(button) input{padding-right:34px}";
+}
+
 
 function injectCss() {
   if (typeof document === "undefined") return;

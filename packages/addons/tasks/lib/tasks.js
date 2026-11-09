@@ -21,6 +21,7 @@ import {
   timeMs,
 } from "./db.js";
 // task-query 循环依赖仅在调用期读取 tasks 的函数/常量。
+import { TASK_FILTER_SCHEMA } from "./task-search-schema.js";
 import { listTasks } from "./task-query.js";
 import { statsReport, renderStats } from "./stats.js";
 import { registerTagOptionsAction } from "./tag-options.js";
@@ -908,28 +909,13 @@ export function registerTaskActions(api) {
   };
 
   action("tasks.list", {
-    description: "统一检索任务：tab（缺省=总览 8 全量，不是紧急 0）/任务表/任务组/关键词（标题或描述）/状态/标签/优先级/目标日期，全部 AND；sort 支持 priority/target/publish/updated/created/manual（前缀 - 表示降序，例如 sort=-priority 是数值越大越紧急的在前）；不传 sort 时未分页按 priority 降序、分页时按 publishDate 降序；返回里带 filter 回显实际生效条件与排序；分页语义：total=筛选后真实总数、returned=本次返回条数、truncated=是否被截断，pageSize 上限 200（超出回显 filter.pageSizeCapped）",
+    description: "统一检索任务：tab（缺省=总览 8 全量，不是紧急 0）/任务表/任务组/关键词（标题、描述、感受）/状态/标签/优先级/目标日期，全部 AND；sort 支持 priority/target/publish/updated/created/manual（前缀 - 表示降序，例如 sort=-priority 是数值越大越紧急的在前）；不传 sort 时未分页按 priority 降序、分页时按 publishDate 降序；返回里带 filter 回显实际生效条件与排序；分页语义：total=筛选后真实总数、returned=本次返回条数、truncated=是否被截断，pageSize 上限 200（超出回显 filter.pageSizeCapped）",
     input: {
       type: "object",
       properties: {
-        tab: { type: ["number", "string"], description: "0 紧急 / 1..4 旧类型页签（按同名标签筛）/ 5 已关闭 / 6 进行中 / 7 已完成 / 8 总览；缺省或传 all 等于 8（全量，不再只看紧急）" },
-        titleKey: { type: "string", description: "关键词模糊匹配，命中标题或描述" },
-        tableId: { type: ["string", "number", "null"], description: "只看某个任务表" },
-        groupId: { type: ["string", "number", "null"], description: "只看某个任务组下的所有任务表" },
-        tableKey: { type: "string", description: "按任务表关键词过滤：同时匹配表名与表描述" },
+        ...TASK_FILTER_SCHEMA,
         pageNumber: { type: "number", description: "分页页码，从 1 开始；任意 tab 传了即分页（tab 5..8 默认分页）" },
         pageSize: { type: "number", description: "每页条数（默认 12，最大 200）；任意 tab 传了即分页" },
-        filterRestarted: { type: "boolean", description: "已关闭 tab 默认 true：true 看 SHUTDOWN，false 看 RESTARTED" },
-        checkedTypes: { type: "array", items: { type: "string" }, description: "旧参数：任务类型 0..3，按同名标签过滤（新代码请用 tags）" },
-        tags: { type: "array", items: { type: "string" }, description: "按标签名过滤，命中任一即可" },
-        status: { type: ["string", "number"], description: "直接按状态过滤（与 tab 条件 AND）" },
-        priorityMin: { type: "number", description: "最低优先级（含）" },
-        priorityMax: { type: "number", description: "最高优先级（含）" },
-        targetFrom: { type: "string", description: "targetDate >= 该日期" },
-        targetTo: { type: "string", description: "targetDate <= 该日期" },
-        tagIds: { type: "array", items: { type: "string" }, description: "任一标签命中（AND 到其他条件）" },
-        sort: { type: "string", description: "priority / target / publish / updated / created / manual；前缀 - 表示降序" },
-        order: { type: "string", enum: ["asc", "desc"], description: "配合 sort 指定方向" },
       },
     },
     examples: [{ tab: 8, priorityMin: 6, sort: "-priority", pageSize: 50 }, { tagIds: ["3"], status: "open" }],
@@ -1106,15 +1092,13 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.export", {
-    description: "导出任务：format=json|csv|markdown；可按 ids 或复用 tasks.list 的过滤条件",
+    description: "导出任务：format=json|csv|markdown；非空 ids 优先，否则复用 tasks.list 的过滤条件（含标题、描述、感受关键词）。保持列表默认限制：tab 5..8 默认12条，其它最多500条；不接受分页参数",
     input: {
       type: "object",
       properties: {
         format: { type: "string", enum: ["json", "csv", "markdown"], description: "默认 json" },
         ids: { type: "array", items: { type: "string" } },
-        tab: { type: ["number", "string"] },
-        status: { type: ["string", "number"] },
-        tagIds: { type: "array", items: { type: "string" } },
+        ...TASK_FILTER_SCHEMA,
       },
     },
     examples: [{ format: "csv", tab: 8 }, { format: "markdown", ids: ["1001", "1002"] }],

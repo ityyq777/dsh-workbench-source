@@ -1,0 +1,19 @@
+/** Shared list/export filtering contract; paging remains list-only. */
+export const TASK_FILTER_SCHEMA = {
+  tab: { type: ["number", "string"], description: "0 紧急 / 1..4 旧类型页签（按同名标签筛）/ 5 已关闭 / 6 进行中 / 7 已完成 / 8 总览；缺省或传 all 等于 8（全量，不再只看紧急）" },
+  titleKey: { type: "string", description: "关键词字面包含匹配，同时搜索标题、描述、感受（OR）；%/_/反斜杠按普通字符，ASCII 大小写不敏感" },
+  tableId: { type: ["string", "number", "null"], description: "只看某个任务表" },
+  groupId: { type: ["string", "number", "null"], description: "只看某个任务组下的所有任务表" },
+  tableKey: { type: "string", description: "按任务表关键词过滤：同时匹配表名与表描述" },
+  filterRestarted: { type: "boolean", description: "已关闭 tab 默认 true：true 看 SHUTDOWN，false 看 RESTARTED" },
+  checkedTypes: { type: "array", items: { type: "string" }, description: "旧参数：任务类型 0..3，按同名标签过滤（新代码请用 tags）" },
+  tags: { type: "array", items: { type: "string" }, description: "按标签名过滤，命中任一即可" },
+  status: { type: ["string", "number"], description: "直接按状态过滤（与 tab 条件 AND）" },
+  priorityMin: { type: "number", description: "最低优先级（含）" },
+  priorityMax: { type: "number", description: "最高优先级（含）" },
+  targetFrom: { type: "string", description: "targetDate >= 该日期" },
+  targetTo: { type: "string", description: "targetDate <= 该日期" },
+  tagIds: { type: "array", items: { type: "string" }, description: "任一标签命中（AND 到其他条件）" },
+  sort: { type: "string", description: "priority / target / publish / updated / created / manual；前缀 - 表示降序" },
+  order: { type: "string", enum: ["asc", "desc"], description: "配合 sort 指定方向" },
+};

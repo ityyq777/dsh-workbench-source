@@ -16,7 +16,7 @@ const React={
 const document={activeElement:null,addEventListener:(n,f)=>listeners.add(f),removeEventListener:(n,f)=>listeners.delete(f)};
 function load(file){file=resolve(file);if(cache.has(file))return cache.get(file).exports;const module={exports:{}};cache.set(file,module);runInNewContext(readFileSync(file,'utf8'),{module,URL,document,
   setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),
-  require:n=>n==='react'?React:n==='lucide-react'?loadLucideReact(React):load(resolve(dirname(file),n))},{filename:file});return module.exports;}
+  require:n=>n==='react'?React:n.startsWith('lucide-react/icons/')?loadLucideReact(React,n):load(resolve(dirname(file),n))},{filename:file});return module.exports;}
 const {Records}=load('packages/addons/storage/client/records.cjs');
 let seen;
 function expand(n,path='root'){

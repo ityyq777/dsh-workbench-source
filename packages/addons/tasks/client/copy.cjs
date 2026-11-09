@@ -3,7 +3,7 @@
 
 module.exports = {
     zh: {
-      title: "任务", search: "搜索任务标题", newTask: "新建任务", tree: "任务树",
+      title: "任务", search: "搜索标题 / 描述 / 感受", newTask: "新建任务", tree: "任务树",
       select: "选择", cancelSelect: "退出选择", list: "列表", card: "卡片",
       all: "全部", empty: "这个视图还没有任务", loading: "加载中…",
       error: "操作失败：", save: "保存", cancel: "取消", create: "创建", close: "关闭",
@@ -49,7 +49,7 @@ module.exports = {
       needDate: "日期不能为空", needBase: "请选择基准任务", needDifficulty: "请选择难度",
     },
     en: {
-      title: "Tasks", search: "Search title", newTask: "New task", tree: "Task tree",
+      title: "Tasks", search: "Search title / description / feeling", newTask: "New task", tree: "Task tree",
       select: "Select", cancelSelect: "Exit select", list: "List", card: "Cards",
       all: "All", empty: "No tasks in this view", loading: "Loading…",
       error: "Failed: ", save: "Save", cancel: "Cancel", create: "Create", close: "Close",

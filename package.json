@@ -11,6 +11,7 @@
     "dist:shell": "node scripts/dist-shell.mjs",
     "test:native": "node scripts/test-native.mjs",
     "test:tasks-review": "node scripts/test-tasks-review.mjs",
+    "test:tasks-search": "node scripts/test-tasks-search.mjs",
     "test:tasks-restart": "node scripts/test-tasks-restart.mjs",
     "test:tasks-restart-client": "node scripts/test-tasks-restart-client.mjs",
     "test:storage-visual": "node scripts/test-storage-visual.mjs",

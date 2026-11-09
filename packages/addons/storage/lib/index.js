@@ -23,7 +23,7 @@ export function apply(ctx) {
         id: "wb-addon-storage",
         title: "储物",
         description: "储物：记录物品名称、品牌、单位、库存文本、图片URL、备注与可选标签",
-        version: "1.3.0",
+        version: "1.3.1",
         tables: ["storage"],
         sync: storageSync,
         backupAfter: ["wb-addon-tags"],

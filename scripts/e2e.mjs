@@ -12,6 +12,7 @@ const root = join(import.meta.dirname, "..");
 const tests = [
   "scripts/test-native.mjs",
   "scripts/test-tasks-review.mjs",
+  "scripts/test-tasks-search.mjs",
   "scripts/test-tasks-restart.mjs",
   "scripts/test-tasks-restart-client.mjs",
   "scripts/test-storage-visual.mjs",

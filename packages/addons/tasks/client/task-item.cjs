@@ -2,6 +2,7 @@
 "use strict";
 module.exports = function (deps) {
   var React = deps.React, h = React.createElement;
+  var Highlight = require("./highlight.cjs")(React);
   var statusInfo = deps.statusInfo, stars = deps.stars, pClass = deps.pClass;
   var today = deps.today, daysBetween = deps.daysBetween, cx = deps.cx;
   var Icon = deps.Icon, Countdown = deps.Countdown, PathCrumbs = deps.PathCrumbs;
@@ -122,7 +123,7 @@ module.exports = function (deps) {
           },
           onBlur: saveTitle,
         })
-      : h("div", { className: "wbt-title", onDoubleClick: beginTitle, title: t.editTitle }, task.title);
+      : h("div", { className: "wbt-title", onDoubleClick: beginTitle, title: t.editTitle }, h(Highlight, { text: task.title, keyword: props.keyword }));
 
     var descNode = editingDesc !== null
       ? h("textarea", {
@@ -135,7 +136,7 @@ module.exports = function (deps) {
           },
           onBlur: saveDesc,
         })
-      : (task.description ? h("div", { className: "wbt-desc wb-desc", onDoubleClick: beginDesc }, task.description) : null);
+      : (task.description ? h("div", { className: "wbt-desc wb-desc", onDoubleClick: beginDesc }, h(Highlight, { text: task.description, keyword: props.keyword })) : null);
 
 
     var reviewNode = editingReview !== null
@@ -150,7 +151,7 @@ module.exports = function (deps) {
           onBlur: saveReview,
         })
       : (task.review ? h("div", { className: "wbt-review", title: t.editReview, onDoubleClick: beginReview },
-          h("span", { className: "wbt-review-label" }, t.review), task.review) : null);
+          h("span", { className: "wbt-review-label" }, t.review), h(Highlight, { text: task.review, keyword: props.keyword })) : null);
 
 
     // 信息层级：标题 → 标签/时间/路径（元信息区）→ [卡片] 操作按钮 → 描述 → 复核。

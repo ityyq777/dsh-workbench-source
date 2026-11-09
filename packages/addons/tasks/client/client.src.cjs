@@ -16,7 +16,6 @@
   var dataView = require("./data.cjs");
 
   var COPY = require("./copy.cjs");
-
   // 标签是可选子插件：以宿主已安装/启用列表为准；旧宿主没有列表时返回 true，交给后端降级。
   function hostHasAddon(id) {
     var list = host.addons;
@@ -952,7 +951,7 @@
           ? h("div", { className: "wbt-empty" }, t.empty)
           : h("div", { className: view === "card" ? "wbt-grid" : "wbt-list" }, data.records.map(function (task) {
               return h(TaskItem, {
-                key: task.id, task: task, t: t, lang: props.lang, card: view === "card",
+                key: task.id, task: task, t: t, lang: props.lang, card: view === "card", keyword: titleKey.trim(),
                 selectionMode: selectionMode, checked: selectedIds.has(String(task.id)),
                 onCheck: toggleSelect, update: update, toast: say,
                 onEdit: function (x) { setEditTask(x); },
@@ -1107,7 +1106,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.11.1",
+    version: "2.12.0",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },

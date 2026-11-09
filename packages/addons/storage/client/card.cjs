@@ -4,6 +4,7 @@ function StorageCard(props) {
   var item = props.item, lang = props.lang, gallery = React.useState(false);
   var images = (item.imgList || []).filter(ui.safeImage), tags = item.tags || [];
   var shown = gallery[0] ? images : images.slice(0, 1);
+  var hasStock = item.stock != null && item.stock !== "";
   var meta = [item.brand && tr(lang, "品牌：", "Brand: ") + item.brand,
     item.unit && tr(lang, "单位：", "Unit: ") + item.unit].filter(Boolean);
   return h("article", {
@@ -19,9 +20,9 @@ function StorageCard(props) {
       onClick: function (e) { e.stopPropagation(); props.onCheck(item.id, e.shiftKey); },
       onChange: function () {} }) : null,
     h("div", { className: "wbi-cardhead" }, h("h3", null, item.name),
-      h("span", { className: "wbi-stock" }, item.stock == null || item.stock === "" ? "—" : item.stock,
-        h(ui.Icon, { name: "stock", size: 16 }),
-        item.unit ? h("small", { className: "wbi-muted" }, " " + item.unit) : null)),
+      h("span", { className: "wbi-stock" }, h(ui.Icon, { name: "stock", size: 16 }),
+        h("span", null, hasStock ? item.stock : "—"),
+        hasStock && item.unit ? h("small", { className: "wbi-muted" }, item.unit) : null)),
     tags.length ? h("div", { className: "wbi-tags" }, tags.map(function (t) {
       return h(ui.Button, { icon: "tag", key: t.id, className: "wbi-btn wbi-chip", disabled: !props.caps,
         title: tr(lang, "按此标签筛选", "Filter by this tag"),

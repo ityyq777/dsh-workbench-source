@@ -1774,7 +1774,7 @@ var require_data_copy = __commonJS({
 var require_visual_tokens = __commonJS({
   "packages/addons/lib/visual-tokens.cjs"(exports2, module2) {
     module2.exports = `
-:where(.wbt-root,.wbi-root,.wbi-cfg,.wbt-data,.wbs-data,.wbg-data,.wbi-data,.wb-desc){--wb-radius-sm:8px;--wb-radius-card:12px;--wb-space-sm:8px;--wb-space-md:14px;--wb-border:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wb-description-bg:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 7%,transparent);--wb-description-line:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 34%,transparent);--wb-motion:140ms}
+:where(.wbt-root,.wbi-root,.wbi-cfg,.wbt-data,.wbs-data,.wbg-data,.wbi-data,.wb-desc){--wb-radius-sm:8px;--wb-radius-card:12px;--wb-space-sm:8px;--wb-space-md:14px;--wb-border:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wb-description-bg:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 7%,transparent);--wb-description-line:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 34%,transparent);--wb-motion:140ms;--wb-btn-bg:transparent;--wb-btn-hover-bg:color-mix(in oklab,currentColor 6%,transparent);--wb-btn-active-bg:color-mix(in oklab,currentColor 11%,transparent);--wb-btn-primary-bg:var(--dsw-alias-brand-primary,#2563eb);--wb-btn-primary-fg:var(--dsw-alias-label-primary-inverted,#fff);--wb-btn-danger-fg:var(--dsw-alias-state-error-primary,#b91c1c);--wb-btn-size-sm:32px;--wb-btn-focus:2px solid var(--dsw-alias-brand-primary,#2563eb);--wb-btn-focus-offset:2px}
 .wb-desc{background:var(--wb-description-bg);border-left-color:var(--wb-description-line);border-radius:0 var(--wb-radius-sm) var(--wb-radius-sm) 0}
 `;
   }
@@ -1891,6 +1891,10 @@ var require_data_style = __commonJS({
         "." + P + "-gallery{display:flex;flex-direction:column;gap:12px;overflow:auto;flex:1}",
         "." + P + "-gallery img{width:100%;height:auto;object-fit:contain;border-radius:8px}"
       ].join("\n");
+      if (DOMAIN === "storage") {
+        var buttons = "." + P + " :is(button)";
+        CSS += buttons + "{border:none;background:var(--wb-btn-bg);min-height:var(--wb-btn-size-sm);min-width:var(--wb-btn-size-sm)}" + buttons + ":enabled:hover{background:var(--wb-btn-hover-bg)}" + buttons + ":enabled:active{background:var(--wb-btn-active-bg)}" + buttons + ":disabled{background:var(--wb-btn-bg);color:var(--cfg-muted)}" + buttons + ":focus-visible{outline:var(--wb-btn-focus);outline-offset:var(--wb-btn-focus-offset)}." + P + "-fcell:has(button) input{padding-right:34px}";
+      }
       function injectCss() {
         if (typeof document === "undefined") return;
         var old = document.getElementById("wb-addon-" + DOMAIN + "-data-css");
@@ -2714,7 +2718,7 @@ var require_copy = __commonJS({
     module2.exports = {
       zh: {
         title: "\u4EFB\u52A1",
-        search: "\u641C\u7D22\u4EFB\u52A1\u6807\u9898",
+        search: "\u641C\u7D22\u6807\u9898 / \u63CF\u8FF0 / \u611F\u53D7",
         newTask: "\u65B0\u5EFA\u4EFB\u52A1",
         tree: "\u4EFB\u52A1\u6811",
         select: "\u9009\u62E9",
@@ -2841,7 +2845,7 @@ var require_copy = __commonJS({
       },
       en: {
         title: "Tasks",
-        search: "Search title",
+        search: "Search title / description / feeling",
         newTask: "New task",
         tree: "Task tree",
         select: "Select",
@@ -3976,6 +3980,8 @@ var require_styles = __commonJS({
   "packages/addons/tasks/client/styles.cjs"(exports2, module2) {
     "use strict";
     module2.exports = [
+      ".wbt-root{--wbt-hit-bg:#ffe4e6;--wbt-hit-fg:#881337}.wbt-root mark.wbt-hit{background:var(--wbt-hit-bg);color:var(--wbt-hit-fg);border-radius:2px;padding:0;font:inherit;box-decoration-break:clone;-webkit-box-decoration-break:clone}",
+      ".wbt-root .wbt-item.closed:has(mark.wbt-hit){opacity:1}",
       ".wbt-root{--wbt-line:var(--wb-border);--wbt-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));--wbt-bg:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));--wbt-accent:var(--dsw-alias-brand-primary,#11a89b);display:flex;flex-direction:column;gap:10px;min-height:0;color:inherit;font-size:13px}",
       ".wbt-pathrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 0 2px}",
       ".wbt-tree-slot{flex:0 0 138px;width:138px;margin-right:6px;display:flex;align-items:center}",
@@ -4185,6 +4191,268 @@ var require_styles = __commonJS({
       "@media (max-width:420px){.wbt-grid{grid-template-columns:1fr}}",
       "@media (max-width:640px){.wbt-form{grid-template-columns:1fr}.wbt-drawer{width:94vw}.wbt-search{width:100%}.wbt-item{padding:9px}.wbt-ops{width:100%;justify-content:flex-end}}"
     ].join("\n");
+  }
+});
+
+// packages/addons/tasks/client/highlight.cjs
+var require_highlight = __commonJS({
+  "packages/addons/tasks/client/highlight.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(React) {
+      var h = React.createElement;
+      return function Highlight(props) {
+        var text = props.text == null ? "" : String(props.text);
+        var keyword = props.keyword == null ? "" : String(props.keyword);
+        if (!keyword) return text;
+        var pattern = keyword.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&");
+        pattern = pattern.replace(/[a-zA-Z]/g, function(letter) {
+          return "[" + letter.toLowerCase() + letter.toUpperCase() + "]";
+        });
+        var matcher = new RegExp(pattern, "g"), match, end = 0, parts = [];
+        while (match = matcher.exec(text)) {
+          if (match.index > end) parts.push(text.slice(end, match.index));
+          parts.push(h("mark", { className: "wbt-hit", key: match.index }, match[0]));
+          end = match.index + match[0].length;
+        }
+        if (!parts.length) return text;
+        if (end < text.length) parts.push(text.slice(end));
+        return parts;
+      };
+    };
+  }
+});
+
+// packages/addons/tasks/client/task-item.cjs
+var require_task_item = __commonJS({
+  "packages/addons/tasks/client/task-item.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(deps) {
+      var React = deps.React, h = React.createElement;
+      var Highlight = require_highlight()(React);
+      var statusInfo = deps.statusInfo, stars = deps.stars, pClass = deps.pClass;
+      var today = deps.today, daysBetween = deps.daysBetween, cx = deps.cx;
+      var Icon2 = deps.Icon, Countdown = deps.Countdown, PathCrumbs = deps.PathCrumbs;
+      function TaskItem(props) {
+        var t = props.t;
+        var task = props.task;
+        var st = statusInfo(task.status);
+        var stName = props.lang === "en" ? st.en : st.zh;
+        var myTags = task.tags || [];
+        var isActive = String(task.status) === "0";
+        var titleState = React.useState(null);
+        var editingTitle = titleState[0], setEditingTitle = titleState[1];
+        var descState = React.useState(null);
+        var editingDesc = descState[0], setEditingDesc = descState[1];
+        var revState = React.useState(null);
+        var editingReview = revState[0], setEditingReview = revState[1];
+        var titleRef = React.useRef(null);
+        var descRef = React.useRef(null);
+        var revRef = React.useRef(null);
+        React.useEffect(function() {
+          if (editingTitle !== null && titleRef.current) titleRef.current.focus();
+        }, [editingTitle]);
+        React.useEffect(function() {
+          if (editingDesc !== null && descRef.current) descRef.current.focus();
+        }, [editingDesc]);
+        React.useEffect(function() {
+          if (editingReview !== null && revRef.current) revRef.current.focus();
+        }, [editingReview]);
+        function beginTitle() {
+          setEditingTitle(String(task.title || ""));
+        }
+        function saveTitle() {
+          if (editingTitle === null) return;
+          var v = String(editingTitle).trim();
+          if (!v) {
+            props.toast(t.needTitle);
+            setEditingTitle(null);
+            return;
+          }
+          if (v !== String(task.title || "")) props.update(task, { type: "TITLE", title: v });
+          setEditingTitle(null);
+        }
+        function beginDesc() {
+          if (!isActive) return;
+          setEditingDesc(String(task.description || ""));
+        }
+        function saveDesc() {
+          if (editingDesc === null) return;
+          if (String(editingDesc) !== String(task.description || "")) {
+            props.update(task, { type: "DESCRIPTION", description: String(editingDesc) });
+          }
+          setEditingDesc(null);
+        }
+        function beginReview() {
+          setEditingReview(String(task.review || ""));
+        }
+        function saveReview() {
+          if (editingReview === null) return;
+          if (String(editingReview) !== String(task.review || "")) {
+            props.update(task, { type: "REVIEW", review: String(editingReview) });
+          }
+          setEditingReview(null);
+        }
+        var countdown = String(task.status) === "0" ? daysBetween(task.targetDate) : null;
+        var cdTarget = String(task.status) === "0" && task.targetDate ? (/* @__PURE__ */ new Date(String(task.targetDate) + "T23:59:59")).getTime() : NaN;
+        var tagNodes = myTags.map(function(tag) {
+          return h("span", {
+            key: "tag-" + String(tag.id),
+            className: "wbt-tag",
+            title: tag.name,
+            onClick: props.onTagPick ? function(e) {
+              e.stopPropagation();
+              props.onTagPick(String(tag.id));
+            } : null
+          }, "#" + tag.name);
+        });
+        var meta = [];
+        if (task.publishDate) meta.push(h("span", { key: "p" }, h("b", null, t.publish), " ", task.publishDate));
+        if (String(task.status) === "0" && task.targetDate) {
+          meta.push(h(
+            "span",
+            { key: "g" },
+            h("b", null, t.target),
+            " ",
+            task.targetDate,
+            Number.isFinite(cdTarget) ? h(Countdown, { target: cdTarget }) : null
+          ));
+        } else if (String(task.status) === "2") {
+          if (task.targetDate) meta.push(h("span", { key: "g" }, h("b", null, t.target), " ", task.targetDate));
+          if (task.doneDate) meta.push(h("span", { key: "d" }, h("b", null, t.done), " ", task.doneDate));
+          meta.push(h("span", { key: "s", className: "wbt-stars", children: stars(task.difficulty) + " " + Number(task.difficulty || 0).toFixed(1) }));
+        } else {
+          if (task.targetDate) meta.push(h("span", { key: "g" }, h("b", null, t.target), " ", task.targetDate));
+          if (task.shutdownDate) meta.push(h("span", { key: "s" }, h("b", null, t.shutdown), " ", task.shutdownDate));
+        }
+        var ops = [];
+        ops.push(h("button", {
+          key: "edit",
+          className: "wbt-icon",
+          title: t.edit,
+          "aria-label": t.edit,
+          onClick: function() {
+            props.onEdit(task);
+          }
+        }, h(Icon2, { name: "pencil", size: 14 })));
+        if (isActive) {
+          ops.push(h("button", { key: "p+", className: "wbt-icon", title: t.priority + " +1", onClick: function() {
+            if (Number(task.priority) < 10) props.update(task, { type: "PRIORITY", priority: Math.max(1, Number(task.priority) + 1) });
+          } }, h(Icon2, { name: "plus", size: 14 })));
+          ops.push(h("button", { key: "p-", className: "wbt-icon", title: t.priority + " -1", onClick: function() {
+            if (Number(task.priority) > 1) props.update(task, { type: "PRIORITY", priority: Number(task.priority) - 1 });
+          } }, h(Icon2, { name: "minus", size: 14 })));
+          ops.push(h("button", { key: "done", className: "wbt-btn wbt-act-done", onClick: function() {
+            props.onDone(task);
+          } }, h(Icon2, { name: "check", size: 14 }), t.complete));
+          ops.push(h("button", { key: "shut", className: "wbt-btn wbt-act-close", onClick: function() {
+            props.update(task, { type: "STATUS", status: "1", date: today() });
+          } }, h(Icon2, { name: "stop", size: 14 }), t.shutdownOp));
+        }
+        ops.push(h("button", { key: "restart", className: "wbt-btn ghost", onClick: function() {
+          props.onRestart(task);
+        } }, h(Icon2, { name: "restart", size: 14 }), t.restart));
+        ops.push(h("button", { key: "timeline", className: "wbt-btn ghost", onClick: function() {
+          props.onTimeline(task);
+        } }, h(Icon2, { name: "timeline", size: 14 }), t.timeline));
+        if (props.onDelete) {
+          ops.push(h("button", {
+            key: "del",
+            className: "wbt-icon wbt-danger",
+            title: t.del,
+            "aria-label": t.del,
+            onClick: function() {
+              props.onDelete(task);
+            }
+          }, h(Icon2, { name: "trash", size: 14 })));
+        }
+        var titleNode = editingTitle !== null ? h("input", {
+          ref: titleRef,
+          className: "wbt-input",
+          style: { fontSize: "13px", padding: "4px 7px" },
+          value: editingTitle,
+          onChange: function(e) {
+            setEditingTitle(e.target.value);
+          },
+          onKeyDown: function(e) {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              saveTitle();
+            }
+            if (e.key === "Escape") setEditingTitle(null);
+          },
+          onBlur: saveTitle
+        }) : h("div", { className: "wbt-title", onDoubleClick: beginTitle, title: t.editTitle }, h(Highlight, { text: task.title, keyword: props.keyword }));
+        var descNode = editingDesc !== null ? h("textarea", {
+          ref: descRef,
+          className: "wbt-textarea",
+          rows: 2,
+          value: editingDesc,
+          onChange: function(e) {
+            setEditingDesc(e.target.value);
+          },
+          onKeyDown: function(e) {
+            if (e.key === "Escape") setEditingDesc(null);
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              saveDesc();
+            }
+          },
+          onBlur: saveDesc
+        }) : task.description ? h("div", { className: "wbt-desc wb-desc", onDoubleClick: beginDesc }, h(Highlight, { text: task.description, keyword: props.keyword })) : null;
+        var reviewNode = editingReview !== null ? h("textarea", {
+          ref: revRef,
+          className: "wbt-textarea",
+          rows: 2,
+          placeholder: t.reviewPlaceholder,
+          value: editingReview,
+          onChange: function(e) {
+            setEditingReview(e.target.value);
+          },
+          onKeyDown: function(e) {
+            if (e.key === "Escape") setEditingReview(null);
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              saveReview();
+            }
+          },
+          onBlur: saveReview
+        }) : task.review ? h(
+          "div",
+          { className: "wbt-review", title: t.editReview, onDoubleClick: beginReview },
+          h("span", { className: "wbt-review-label" }, t.review),
+          h(Highlight, { text: task.review, keyword: props.keyword })
+        ) : null;
+        var line1 = h(
+          "div",
+          { className: "wbt-line1" },
+          String(task.status) === "0" ? h("span", { className: "wbt-prio " + pClass(task.priority), children: "P" + task.priority }) : h("span", { className: "wbt-prio low", title: t.priority + " 0", children: "\u2014" }),
+          h("span", { className: "wbt-badge " + st.cls, children: stName }),
+          titleNode
+        );
+        var opsNode = h("div", { className: cx("wbt-ops", props.card && "wbt-ops-block"), key: "ops" }, ops);
+        var tagBlock = tagNodes.length ? h("div", { className: "wbt-tags", key: "tags" }, tagNodes) : null;
+        var metaBlock = meta.length ? h("div", { className: "wbt-foot", key: "meta" }, h("div", { className: "wbt-meta" }, meta)) : null;
+        var pathBlock = task.path && task.path.length ? h("div", { className: "wbt-taskpath", key: "path" }, h(PathCrumbs, { path: task.path, t, onPick: props.onPathPick })) : null;
+        var metaZone = tagBlock || metaBlock || pathBlock ? h("div", { className: "wbt-metazone", key: "metazone" }, tagBlock, metaBlock, pathBlock) : null;
+        return h(
+          "div",
+          { className: cx("wbt-item", props.card && "wbt-card", String(task.status) === "1" && "closed") },
+          props.selectionMode ? h("input", { type: "checkbox", className: "wbt-check", checked: !!props.checked, onChange: function() {
+            props.onCheck(task.id);
+          } }) : null,
+          h(
+            "div",
+            { className: "wbt-main" },
+            h("div", { className: "wbt-chead" }, line1, props.card ? null : opsNode),
+            metaZone,
+            props.card ? opsNode : null,
+            descNode,
+            reviewNode
+          )
+        );
+      }
+      return TaskItem;
+    };
   }
 });
 
@@ -4735,225 +5003,18 @@ var require_edit_modal = __commonJS({
       );
     }));
   }
-  function TaskItem(props) {
-    var t = props.t;
-    var task = props.task;
-    var st = statusInfo(task.status);
-    var stName = props.lang === "en" ? st.en : st.zh;
-    var myTags = task.tags || [];
-    var isActive = String(task.status) === "0";
-    var titleState = React.useState(null);
-    var editingTitle = titleState[0], setEditingTitle = titleState[1];
-    var descState = React.useState(null);
-    var editingDesc = descState[0], setEditingDesc = descState[1];
-    var revState = React.useState(null);
-    var editingReview = revState[0], setEditingReview = revState[1];
-    var titleRef = React.useRef(null);
-    var descRef = React.useRef(null);
-    var revRef = React.useRef(null);
-    React.useEffect(function() {
-      if (editingTitle !== null && titleRef.current) titleRef.current.focus();
-    }, [editingTitle]);
-    React.useEffect(function() {
-      if (editingDesc !== null && descRef.current) descRef.current.focus();
-    }, [editingDesc]);
-    React.useEffect(function() {
-      if (editingReview !== null && revRef.current) revRef.current.focus();
-    }, [editingReview]);
-    function beginTitle() {
-      setEditingTitle(String(task.title || ""));
-    }
-    function saveTitle() {
-      if (editingTitle === null) return;
-      var v = String(editingTitle).trim();
-      if (!v) {
-        props.toast(t.needTitle);
-        setEditingTitle(null);
-        return;
-      }
-      if (v !== String(task.title || "")) props.update(task, { type: "TITLE", title: v });
-      setEditingTitle(null);
-    }
-    function beginDesc() {
-      if (!isActive) return;
-      setEditingDesc(String(task.description || ""));
-    }
-    function saveDesc() {
-      if (editingDesc === null) return;
-      if (String(editingDesc) !== String(task.description || "")) {
-        props.update(task, { type: "DESCRIPTION", description: String(editingDesc) });
-      }
-      setEditingDesc(null);
-    }
-    function beginReview() {
-      setEditingReview(String(task.review || ""));
-    }
-    function saveReview() {
-      if (editingReview === null) return;
-      if (String(editingReview) !== String(task.review || "")) {
-        props.update(task, { type: "REVIEW", review: String(editingReview) });
-      }
-      setEditingReview(null);
-    }
-    var countdown = String(task.status) === "0" ? daysBetween(task.targetDate) : null;
-    var cdTarget = String(task.status) === "0" && task.targetDate ? (/* @__PURE__ */ new Date(String(task.targetDate) + "T23:59:59")).getTime() : NaN;
-    var tagNodes = myTags.map(function(tag) {
-      return h("span", {
-        key: "tag-" + String(tag.id),
-        className: "wbt-tag",
-        title: tag.name,
-        onClick: props.onTagPick ? function(e) {
-          e.stopPropagation();
-          props.onTagPick(String(tag.id));
-        } : null
-      }, "#" + tag.name);
-    });
-    var meta = [];
-    if (task.publishDate) meta.push(h("span", { key: "p" }, h("b", null, t.publish), " ", task.publishDate));
-    if (String(task.status) === "0" && task.targetDate) {
-      meta.push(h(
-        "span",
-        { key: "g" },
-        h("b", null, t.target),
-        " ",
-        task.targetDate,
-        Number.isFinite(cdTarget) ? h(Countdown, { target: cdTarget }) : null
-      ));
-    } else if (String(task.status) === "2") {
-      if (task.targetDate) meta.push(h("span", { key: "g" }, h("b", null, t.target), " ", task.targetDate));
-      if (task.doneDate) meta.push(h("span", { key: "d" }, h("b", null, t.done), " ", task.doneDate));
-      meta.push(h("span", { key: "s", className: "wbt-stars", children: stars(task.difficulty) + " " + Number(task.difficulty || 0).toFixed(1) }));
-    } else {
-      if (task.targetDate) meta.push(h("span", { key: "g" }, h("b", null, t.target), " ", task.targetDate));
-      if (task.shutdownDate) meta.push(h("span", { key: "s" }, h("b", null, t.shutdown), " ", task.shutdownDate));
-    }
-    var ops = [];
-    ops.push(h("button", {
-      key: "edit",
-      className: "wbt-icon",
-      title: t.edit,
-      "aria-label": t.edit,
-      onClick: function() {
-        props.onEdit(task);
-      }
-    }, h(Icon2, { name: "pencil", size: 14 })));
-    if (isActive) {
-      ops.push(h("button", { key: "p+", className: "wbt-icon", title: t.priority + " +1", onClick: function() {
-        if (Number(task.priority) < 10) props.update(task, { type: "PRIORITY", priority: Math.max(1, Number(task.priority) + 1) });
-      } }, h(Icon2, { name: "plus", size: 14 })));
-      ops.push(h("button", { key: "p-", className: "wbt-icon", title: t.priority + " -1", onClick: function() {
-        if (Number(task.priority) > 1) props.update(task, { type: "PRIORITY", priority: Number(task.priority) - 1 });
-      } }, h(Icon2, { name: "minus", size: 14 })));
-      ops.push(h("button", { key: "done", className: "wbt-btn wbt-act-done", onClick: function() {
-        props.onDone(task);
-      } }, h(Icon2, { name: "check", size: 14 }), t.complete));
-      ops.push(h("button", { key: "shut", className: "wbt-btn wbt-act-close", onClick: function() {
-        props.update(task, { type: "STATUS", status: "1", date: today() });
-      } }, h(Icon2, { name: "stop", size: 14 }), t.shutdownOp));
-    }
-    ops.push(h("button", { key: "restart", className: "wbt-btn ghost", onClick: function() {
-      props.onRestart(task);
-    } }, h(Icon2, { name: "restart", size: 14 }), t.restart));
-    ops.push(h("button", { key: "timeline", className: "wbt-btn ghost", onClick: function() {
-      props.onTimeline(task);
-    } }, h(Icon2, { name: "timeline", size: 14 }), t.timeline));
-    if (props.onDelete) {
-      ops.push(h("button", {
-        key: "del",
-        className: "wbt-icon wbt-danger",
-        title: t.del,
-        "aria-label": t.del,
-        onClick: function() {
-          props.onDelete(task);
-        }
-      }, h(Icon2, { name: "trash", size: 14 })));
-    }
-    var titleNode = editingTitle !== null ? h("input", {
-      ref: titleRef,
-      className: "wbt-input",
-      style: { fontSize: "13px", padding: "4px 7px" },
-      value: editingTitle,
-      onChange: function(e) {
-        setEditingTitle(e.target.value);
-      },
-      onKeyDown: function(e) {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          saveTitle();
-        }
-        if (e.key === "Escape") setEditingTitle(null);
-      },
-      onBlur: saveTitle
-    }) : h("div", { className: "wbt-title", onDoubleClick: beginTitle, title: t.editTitle }, task.title);
-    var descNode = editingDesc !== null ? h("textarea", {
-      ref: descRef,
-      className: "wbt-textarea",
-      rows: 2,
-      value: editingDesc,
-      onChange: function(e) {
-        setEditingDesc(e.target.value);
-      },
-      onKeyDown: function(e) {
-        if (e.key === "Escape") setEditingDesc(null);
-        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-          e.preventDefault();
-          saveDesc();
-        }
-      },
-      onBlur: saveDesc
-    }) : task.description ? h("div", { className: "wbt-desc wb-desc", onDoubleClick: beginDesc }, task.description) : null;
-    var reviewNode = editingReview !== null ? h("textarea", {
-      ref: revRef,
-      className: "wbt-textarea",
-      rows: 2,
-      placeholder: t.reviewPlaceholder,
-      value: editingReview,
-      onChange: function(e) {
-        setEditingReview(e.target.value);
-      },
-      onKeyDown: function(e) {
-        if (e.key === "Escape") setEditingReview(null);
-        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-          e.preventDefault();
-          saveReview();
-        }
-      },
-      onBlur: saveReview
-    }) : task.review ? h(
-      "div",
-      { className: "wbt-review", title: t.editReview, onDoubleClick: beginReview },
-      h("span", { className: "wbt-review-label" }, t.review),
-      task.review
-    ) : null;
-    var line1 = h(
-      "div",
-      { className: "wbt-line1" },
-      String(task.status) === "0" ? h("span", { className: "wbt-prio " + pClass(task.priority), children: "P" + task.priority }) : h("span", { className: "wbt-prio low", title: t.priority + " 0", children: "\u2014" }),
-      h("span", { className: "wbt-badge " + st.cls, children: stName }),
-      titleNode
-    );
-    var opsNode = h("div", { className: cx("wbt-ops", props.card && "wbt-ops-block"), key: "ops" }, ops);
-    var tagBlock = tagNodes.length ? h("div", { className: "wbt-tags", key: "tags" }, tagNodes) : null;
-    var metaBlock = meta.length ? h("div", { className: "wbt-foot", key: "meta" }, h("div", { className: "wbt-meta" }, meta)) : null;
-    var pathBlock = task.path && task.path.length ? h("div", { className: "wbt-taskpath", key: "path" }, h(PathCrumbs, { path: task.path, t, onPick: props.onPathPick })) : null;
-    var metaZone = tagBlock || metaBlock || pathBlock ? h("div", { className: "wbt-metazone", key: "metazone" }, tagBlock, metaBlock, pathBlock) : null;
-    return h(
-      "div",
-      { className: cx("wbt-item", props.card && "wbt-card", String(task.status) === "1" && "closed") },
-      props.selectionMode ? h("input", { type: "checkbox", className: "wbt-check", checked: !!props.checked, onChange: function() {
-        props.onCheck(task.id);
-      } }) : null,
-      h(
-        "div",
-        { className: "wbt-main" },
-        h("div", { className: "wbt-chead" }, line1, props.card ? null : opsNode),
-        metaZone,
-        props.card ? opsNode : null,
-        descNode,
-        reviewNode
-      )
-    );
-  }
+  var TaskItem = require_task_item()({
+    React,
+    statusInfo,
+    stars,
+    pClass,
+    today,
+    daysBetween,
+    cx,
+    Icon: Icon2,
+    Countdown,
+    PathCrumbs
+  });
   function TreeNode(props) {
     var node = props.node;
     var t = props.t;
@@ -5875,6 +5936,7 @@ var require_edit_modal = __commonJS({
         t,
         lang: props.lang,
         card: view === "card",
+        keyword: titleKey.trim(),
         selectionMode,
         checked: selectedIds.has(String(task.id)),
         onCheck: toggleSelect,
@@ -6209,7 +6271,7 @@ var require_edit_modal = __commonJS({
   }
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.11.1",
+    version: "2.12.0",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

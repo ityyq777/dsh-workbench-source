@@ -32,7 +32,7 @@ function load(file) {
   cache.set(file, module);
   runInNewContext(readFileSync(file, "utf8"), {
     module, exports: module.exports, URL,
-    require: name => name === "react" ? react : name === "lucide-react" ? loadLucideReact(react) : load(resolve(dirname(file), name)),
+    require: name => name === "react" ? react : name.startsWith("lucide-react/icons/") ? loadLucideReact(react, name) : load(resolve(dirname(file), name)),
   }, { filename: file });
   return module.exports;
 }
@@ -56,13 +56,33 @@ function nodes(node, predicate) { const found = []; walk(node, n => { if (predic
 const cls = (node, name) => nodes(node, n => (n.props.className || "").split(" ").includes(name));
 const { StorageCard } = load("packages/addons/storage/client/records.cjs");
 const { Description } = load("packages/addons/lib/description.cjs");
+function actual(node) {
+  if (!node || typeof node !== "object") return node;
+  if (typeof node.type === "function") return actual(node.type({ ...node.props, children: node.children }));
+  return { ...node, children: node.children.map(actual) };
+}
 const calls = [];
 const base = { item: { id: "empty", name: "No metadata", stock: 0 }, lang: "en", caps: true,
   date: value => value, onEdit: v => calls.push(["edit", v.id]), onDelete: v => calls.push(["delete", v.id]),
   onTag: v => calls.push(["tag", v.id]), onPreview: v => calls.push(["preview", v.url]) };
 let card = renderer(StorageCard, base).render();
 for (const name of ["wbi-tags", "wbi-metazone", "wbi-images"]) assert.equal(cls(card, name).length, 0, name + " must not leave an empty block");
-assert.equal(cls(card, "wbi-stock")[0].children[0], 0, "zero stock remains visible");
+assert.equal(cls(card, "wbi-stock")[0].children[1].children[0], 0, "zero stock remains visible");
+for (const stock of [null, undefined, ""]) {
+  const missing = cls(renderer(StorageCard, { ...base, item: { ...base.item, stock, unit: "box" } }).render(), "wbi-stock")[0];
+  assert.equal(missing.children.length, 2, "missing stock has icon and dash, no unit");
+  assert.equal(missing.children[1].children[0], "—");
+}
+for (const stock of [null, undefined, "", 0, "0", 5, "12"]) {
+  const children = actual(cls(renderer(StorageCard, { ...base, item: { ...base.item, stock, unit: "盒" } }).render(), "wbi-stock")[0]).children;
+  assert.equal(children[0].type, "svg");
+  assert.match(children[0].props.className, /lucide-package(?:\s|$)/);
+  assert.ok(nodes(children[0], n => n.type === "path").length > 0, "real package geometry renders first");
+  const missing = stock == null || stock === "";
+  assert.equal(children[1].children[0], missing ? "—" : stock);
+  assert.equal(children.length, missing ? 2 : 3);
+  if (!missing) assert.equal(children[2].children[0], "盒", "unit is last without manual separator spaces");
+}
 assert.equal(card.children.at(-1).props.className, "wbi-actions");
 for (const button of cls(card, "wbi-actions")[0].children) button.props.onClick();
 assert.deepEqual(calls, [["edit", "empty"], ["delete", "empty"]]);
