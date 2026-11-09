@@ -4,7 +4,7 @@
  * 只依赖 api.db（node:sqlite DatabaseSync）。不 import 宿主模块。
  */
 
-import { TIMELINE_DDL } from "./timeline-store.js";
+import { TIMELINE_DDL } from "./timeline-schema.js";
 export const TASK_TABLE = "task";
 export const NODE_TABLE = "task_node";
 
@@ -313,7 +313,7 @@ export function pathForTable(tableId, map) {
   return out;
 }
 
-import { pathFromMap } from './task-ownership-path.js';
+import { pathFromMap } from './ownership-path.js';
 export function taskOut(row, map) {
   const t = rowTask(row);
   if (!t) return null;

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { metaSet } from './db.js';
-import { taskTransaction } from './task-transaction.js';
+import { metaSet } from '../db/db.js';
+import { taskTransaction } from '../task/write/task-transaction.js';
 import { timelineError, timelineChange } from './timeline-store.js';
 // The same pure classifier drives preview and apply. No startup backfill.
 export function classifyTimelineHistory(rows) {

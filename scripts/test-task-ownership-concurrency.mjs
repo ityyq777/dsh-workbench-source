@@ -6,7 +6,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { setup } from '../packages/addons/tasks/lib/index.js';
-import { createTask } from '../packages/addons/tasks/lib/task-create.js';
+import { createTask } from '../packages/addons/tasks/lib/task/write/task-create.js';
 const apiFor=db=>({db,addon:{version:'test'},log(){},hasDomain:()=>false,emit(){},action(){}});
 if (!isMainThread) {
  const db=new DatabaseSync(workerData.file);

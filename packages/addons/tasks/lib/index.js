@@ -5,16 +5,16 @@
  * 宿主由 dsh-workbench 提供，通过 ctx.workbench.registerDomain 注册。
  */
 
-import { registerActivityCalendarAction } from "./activity-calendar.js";
-import { DIFFICULTY_GUIDANCE } from "./task-difficulty.js";
-import { bindClock, ensureSchema } from "./db.js";
-import { exportTasksData, importTasksData } from "./backup.js";
-import { taskSync } from "./sync.js";
+import { registerActivityCalendarAction } from "./stats/activity-calendar.js";
+import { DIFFICULTY_GUIDANCE } from "./task/model/task-difficulty.js";
+import { bindClock, ensureSchema } from "./db/db.js";
+import { exportTasksData, importTasksData } from "./infra/backup.js";
+import { taskSync } from "./infra/sync.js";
 import { registerTaskActions } from "./tasks.js";
-import { registerTreeActions } from "./tree.js";
-import { registerOverviewAction } from "./overview.js";
-import { registerConfigActions } from "./config.js";
-import { registerDataActions } from "./data.js";
+import { registerTreeActions } from "./tree/tree.js";
+import { registerOverviewAction } from "./stats/overview.js";
+import { registerConfigActions } from "./infra/config.js";
+import { registerDataActions } from "./infra/data.js";
 
 export const inject = ["workbench"];
 

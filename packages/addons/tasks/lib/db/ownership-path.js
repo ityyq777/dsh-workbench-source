@@ -1,4 +1,4 @@
-/** 归属路径：从邻接链派生展示信息；不修改历史 ID path。 */
+/** 归属路径校验和邻接链派生；纯函数，不依赖任务业务模块。 */
 export function ownershipError(code, message, details = {}) {
   const candidateTables = (details.candidateTables || []).slice(0,5);
   const nextActions = details.nextActions || ['tasks.capabilities({limit:50})', 'tasks.resolveTable({query:"任务主题"})', '确认后使用 tablePath + createMissing:true + pathDescriptions；拿不准就问用户'];
@@ -30,21 +30,4 @@ export function pathFromMap(id, map) {
   const pathSegments = chain.map(n => ({ id: String(n.id), name: String(n.name), type: String(n.type), description: String(n.description || '') }));
   const names = pathSegments.slice(1).map(n => n.name);
   return { path: pathSegments.map(n => n.name).join(' / '), tablePath: names.some(n => n.includes('/')) ? names : names.join('/'), pathSegments };
-}
-export function parseTablePath(value) {
-  if (typeof value !== 'string' && !Array.isArray(value)) throw ownershipError('INVALID_PATH', 'tablePath 必须为字符串或字符串数组');
-  const raw = Array.isArray(value) ? value : value.split('/');
-  if (!raw.length || raw.length > 32 || raw.some(s => typeof s !== 'string') || raw.join('/').length > 2048) throw ownershipError('INVALID_PATH', '路径最多 32 段、总长 2048 字符，且必须是字符串段');
-  const parts = raw.map(s => s.trim());
-  if (parts.some(s => !s || s === '.' || s === '..' || s.length > 20)) throw ownershipError('INVALID_PATH', '禁止空段、点段、首尾斜杠；每段最多 20 字符');
-  return parts;
-}
-export function ownershipFields(task) {
-  return { tableId: task.tableId, tablePath: task.tablePath, pathSegments: task.pathSegments, tableDescription: task.tableDescription };
-}
-export function renderOwnership(result, verb = '已创建') {
-  const task = result.task;
-  const path = (task.pathSegments || []).map(n => n.name).join(' / ');
-  if (result.dryRun) return '预览（未写入）：' + task.title + ' → ' + path + (result.deduped ? '（复用已有任务）' : '（新建记录及节点 ID 为临时值）');
-  return (result.deduped ? '任务已存在' : verb + '任务') + '：' + task.title + '（id=' + task.id + '）。已放入 ' + path + ' 表；若不属于，请告诉我目标表或新节点名。纠正：tasks.update({id:' + JSON.stringify(task.id) + ',tableId:"目标表id"})' + (result.notices?.length ? '\n' + result.notices.map(n => n.code + '：' + n.message).join('；') : '');
 }

@@ -1,6 +1,6 @@
 /** 节点无事务助手：调用者必须持有最外层 BEGIN IMMEDIATE，事件由调用者提交后发送。 */
-import { nodeMap, newId, now, insertNode, logChange } from './db.js';
-import { ownershipError, pathFromMap } from './task-ownership-path.js';
+import { nodeMap, newId, now, insertNode, logChange } from '../db/db.js';
+import { ownershipError, pathFromMap } from '../task/model/task-ownership-path.js';
 export function validateNodePlacement(db, parentId, name, excludeId = '') {
   const map = nodeMap(db), parent = map.get(String(parentId));
   if (!parent || parent.deleted_at != null) throw ownershipError('TREE_CORRUPT', '父节点不存在或已删除：' + parentId);

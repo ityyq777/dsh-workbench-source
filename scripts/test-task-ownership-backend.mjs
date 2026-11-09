@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { setup } from '../packages/addons/tasks/lib/index.js';
-import { reconcileTaskTree } from '../packages/addons/tasks/lib/sync.js';
+import { reconcileTaskTree } from '../packages/addons/tasks/lib/infra/sync.js';
 import { TAG_TABLE_DDL, TAG_INDEX_DDL } from '../packages/addons/tags/lib/db.js';
 const db = new DatabaseSync(':memory:');
 db.exec('CREATE TABLE sync_change_log(id INTEGER PRIMARY KEY,table_name TEXT,row_id TEXT,op TEXT,payload TEXT,origin TEXT,updated_at INTEGER)');

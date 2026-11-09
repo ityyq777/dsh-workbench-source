@@ -1,7 +1,7 @@
-import { nodeMap } from './db.js';
-import { ownershipError, parseTablePath, pathFromMap } from './task-ownership-path.js';
-import { resolveTable, tableCatalog } from './task-discovery.js';
-import { insertOwnedNode } from './task-node-write.js';
+import { nodeMap } from '../../db/db.js';
+import { ownershipError, parseTablePath, pathFromMap } from '../model/task-ownership-path.js';
+import { resolveTable, tableCatalog } from '../read/task-discovery.js';
+import { insertOwnedNode } from '../../tree/task-node-write.js';
 
 export function validateTargetArgs(db, args, api) {
   const hasId = args.tableId !== undefined && args.tableId !== null && String(args.tableId).trim() !== '';

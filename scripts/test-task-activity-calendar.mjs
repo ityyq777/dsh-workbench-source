@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { setup } from '../packages/addons/tasks/lib/index.js';
-import { activityCalendar } from '../packages/addons/tasks/lib/activity-calendar.js';
+import { activityCalendar } from '../packages/addons/tasks/lib/stats/activity-calendar.js';
 const db = new DatabaseSync(':memory:'), actions = new Map();
 setup({db, addon:{version:'test'}, log(){}, hasDomain:()=>false, action:(name,def)=>actions.set(name,def)});
 const call=(name,args={})=>actions.get(name).execute(args,{origin:'agent'});

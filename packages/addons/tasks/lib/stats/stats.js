@@ -1,7 +1,7 @@
 // 任务统计报表：只读聚合，不写库、不发事件。
 // 契约见 docs/specs/18-统计报表设计.md §4。
 
-import { configValues } from "./config.js";
+import { configValues } from "../infra/config.js";
 import { todayActivity } from "./stats-today.js";
 
 const STATUS_LABELS = {

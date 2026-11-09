@@ -1,10 +1,10 @@
 /** 列表查询。与 tasks.js 的循环依赖只在函数调用期读取，顶层不求值。 */
-import { idOf, addDays, todayStr, nodeMap, taskOut } from "./db.js";
-import { asCode, STATUS_NAMES, STATUSES, requireTable, dateArg, withNotices, tagMissingNotices } from "./tasks.js";
+import { idOf, addDays, todayStr, nodeMap, taskOut } from "../../db/db.js";
+import { asCode, STATUS_NAMES, STATUSES, requireTable, dateArg, withNotices, tagMissingNotices } from "../../tasks.js";
 import { publishFilter } from "./task-publish-filter.js";
-import { activityFilter } from "./activity-calendar.js";
-import { clampPriority } from "./task-priority.js";
-import { LEGACY_TYPE_TAGS, tagsAvailable, normalizeTagIds, normalizeTagNames, tagIdsByNames, attachTags, migrateLegacyTypes } from "./tagging.js";
+import { activityFilter } from "../../stats/activity-calendar.js";
+import { clampPriority } from "../model/task-priority.js";
+import { LEGACY_TYPE_TAGS, tagsAvailable, normalizeTagIds, normalizeTagNames, tagIdsByNames, attachTags, migrateLegacyTypes } from "../../tagging/tagging.js";
 
 /**
  * 列表分页：0 紧急（未完成 + 高优先级）、1..4 是旧「类型」页签，保留为同名

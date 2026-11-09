@@ -1,4 +1,4 @@
-import { DIFFICULTY_SCHEMA } from "./task-difficulty.js";
+import { DIFFICULTY_SCHEMA } from "../model/task-difficulty.js";
 /** 单条与批量创建共用的完整参数契约。 */
 export const TASK_CREATE_SCHEMA = {
       type: "object",

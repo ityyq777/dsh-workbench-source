@@ -1,8 +1,8 @@
-import { DIFFICULTY_GUIDANCE } from "./task-difficulty.js";
+import { DIFFICULTY_GUIDANCE } from "../model/task-difficulty.js";
 import { createHash } from 'node:crypto';
-import { nodeMap } from './db.js';
-import { tagsAvailable } from './tagging.js';
-import { ownershipError, pathFromMap } from './task-ownership-path.js';
+import { nodeMap } from '../../db/db.js';
+import { tagsAvailable } from '../../tagging/tagging.js';
+import { ownershipError, pathFromMap } from '../model/task-ownership-path.js';
 
 export const GUIDANCE = [
   DIFFICULTY_GUIDANCE,

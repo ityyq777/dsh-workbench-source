@@ -1,9 +1,9 @@
-import { registerEntityTimelineActions, TIMELINE_ID_SCHEMA, TIMELINE_ID_REQUIRED } from "./timeline-actions.js";
-import { DIFFICULTY_SCHEMA, DIFFICULTY_GUIDANCE } from "./task-difficulty.js";
-import { TODAY_STATS_DESCRIPTION } from "./stats-today.js";
-import { TASK_CREATE_SCHEMA } from './task-create-schema.js';
-import { registerDiscoveryActions, GUIDANCE } from './task-discovery.js';
-import { renderOwnership } from './task-ownership-path.js';
+import { registerEntityTimelineActions, TIMELINE_ID_SCHEMA, TIMELINE_ID_REQUIRED } from "./timeline/timeline-actions.js";
+import { DIFFICULTY_SCHEMA, DIFFICULTY_GUIDANCE } from "./task/model/task-difficulty.js";
+import { TODAY_STATS_DESCRIPTION } from "./stats/stats-today.js";
+import { TASK_CREATE_SCHEMA } from './task/write/task-create-schema.js';
+import { registerDiscoveryActions, GUIDANCE } from './task/read/task-discovery.js';
+import { renderOwnership } from './task/model/task-ownership-path.js';
 /**
  * 任务 action：纯本地读写。所有方法都不做网络请求。
  *
@@ -13,27 +13,27 @@ import { renderOwnership } from './task-ownership-path.js';
 
 import {
   idOf,
-} from "./db.js";
+} from "./db/db.js";
 // task-query 循环依赖仅在调用期读取 tasks 的函数/常量。
-import { TASK_FILTER_SCHEMA } from "./task-search-schema.js";
-import { listTasks } from "./task-query.js";
-import { statsReport, renderStats } from "./stats.js";
-import { registerTagOptionsAction } from "./tag-options.js";
-import { taskHistory, changelog, renderArray, renderList } from "./task-view.js";
-import { bulkUpdate, bulkCreate, bulkDelete, renderBulkUpdate, renderBulkCreate, renderBulkDelete } from "./task-bulk.js";
+import { TASK_FILTER_SCHEMA } from "./task/read/task-search-schema.js";
+import { listTasks } from "./task/read/task-query.js";
+import { statsReport, renderStats } from "./stats/stats.js";
+import { registerTagOptionsAction } from "./tagging/tag-options.js";
+import { taskHistory, changelog, renderArray, renderList } from "./task/read/task-view.js";
+import { bulkUpdate, bulkCreate, bulkDelete, renderBulkUpdate, renderBulkCreate, renderBulkDelete } from "./task/write/task-bulk.js";
 import {
   attachTags,
   tagNavStats,
   migrateLegacyTypes,
-} from "./tagging.js";
-import { getTask, outOne } from "./task-model.js";
-import { createTask } from "./task-create.js";
-import { registerTimelineActions, TIMELINE_PAGE_SCHEMA } from "./task-timelines.js";
-import { updateTask } from "./task-update.js";
-import { selectedTasks, timelineTasks, restartTasks, timelineRefactor, migrateTasks, sweepShutdown, stats, removeTask, completeTask, exportTasks, reorderTasks, taskDeps, taskLink, taskUnlink } from "./task-operations.js";
-export { tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, clampDifficulty, dateArg, getTask, requireTable, saveTaskRow, emitChange, writeChange, checkRequiredDates, currentTaskTagIds, resolveTagPatch, PATCH_FIELDS, DIFF_COLUMNS } from "./task-model.js";
-export { priorityForStatus } from "./task-priority.js";
-export { createTask } from "./task-create.js";
+} from "./tagging/tagging.js";
+import { getTask, outOne } from "./task/model/task-model.js";
+import { createTask } from "./task/write/task-create.js";
+import { registerTimelineActions, TIMELINE_PAGE_SCHEMA } from "./timeline/task-timelines.js";
+import { updateTask } from "./task/write/task-update.js";
+import { selectedTasks, timelineTasks, restartTasks, timelineRefactor, migrateTasks, sweepShutdown, stats, removeTask, completeTask, exportTasks, reorderTasks, taskDeps, taskLink, taskUnlink } from "./task/write/task-operations.js";
+export { tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, clampDifficulty, dateArg, getTask, requireTable, saveTaskRow, emitChange, writeChange, checkRequiredDates, currentTaskTagIds, resolveTagPatch, PATCH_FIELDS, DIFF_COLUMNS } from "./task/model/task-model.js";
+export { priorityForStatus } from "./task/model/task-priority.js";
+export { createTask } from "./task/write/task-create.js";
 export function registerTaskActions(api) {
   registerDiscoveryActions(api);
   registerTimelineActions(api);

@@ -6,8 +6,8 @@
  * 所有行（含软删）都会导出，保证删除标记也能随备份恢复。
  */
 
-import { logChange, tableExists, tx } from "./db.js";
-import { LEGACY_TYPE_TAGS, addTaskTagByName, tagsAvailable } from "./tagging.js";
+import { logChange, tableExists, tx } from "../db/db.js";
+import { LEGACY_TYPE_TAGS, addTaskTagByName, tagsAvailable } from "../tagging/tagging.js";
 
 const SCHEMA_VERSION = 2;
 

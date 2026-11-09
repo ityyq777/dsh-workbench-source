@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { setup } from '../packages/addons/tasks/lib/index.js';
-import { timelines } from '../packages/addons/tasks/lib/task-timelines.js';
+import { timelines } from '../packages/addons/tasks/lib/timeline/task-timelines.js';
 const db = new DatabaseSync(':memory:'), actions = new Map(), events = [];
 db.exec('CREATE TABLE sync_change_log(table_name TEXT,row_id TEXT,op TEXT,payload TEXT,origin TEXT,updated_at INTEGER)');
 const stamp = Date.parse('2024-01-03T12:00:00Z');

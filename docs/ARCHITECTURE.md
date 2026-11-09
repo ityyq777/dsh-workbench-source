@@ -218,10 +218,19 @@
 |[zip.ts](../packages/shell/src/zip.ts)|`packages/shell/src/infra/zip.ts`|
 |[host-types.ts](../packages/shell/src/host-types.ts)|`packages/shell/src/types/host-types.ts`|
 
+## 迁移时新增的基础叶模块
+
+下列是从原文件抽出的代码，不改变现有文件的迁移映射：
+
+|新增目标|职责|依赖约束|
+|---|---|---|
+|`packages/addons/tasks/lib/db/timeline-schema.js`|原样保存 TIMELINE_DDL，由建表代码和时间线存储引用|不得引用领域层|
+|`packages/addons/tasks/lib/db/ownership-path.js`|ownershipError 与 pathFromMap 纯函数，原任务模型模块 re-export 保持原 API|不得引用领域层，不执行数据库写入|
+
 ## 迁移前置与顺序
 
 1. 先提交本基建与当前实体任务的完整基线；保存动作 schema、DB schema、测试清单。默认结构审计在旧扁平目录上失败是预期，不能添加永久忽略。
-2. tasks/lib：仅作路径搬迁和 import 重写。唯一预先允许的职责抽取是将 timeline-store.js 中 TIMELINE_DDL 原值移入新增 db/timeline-schema.js，db-core 与 timeline-store 引用该叶模块；不得改变DDL。task-transaction.js 留 task/write，保留其错误转换逻辑。db-legacy 若依赖上层，逐条核对后将真正的数据库工具归入db，不能加审计白名单。
+2. tasks/lib：仅作路径搬迁和 import 重写。允许两项最小职责抽取以消除数据库层反向依赖：将 timeline-store.js 中 TIMELINE_DDL 原值移入 db/timeline-schema.js，db-core 与 timeline-store 引用该叶模块；将 ownershipError/pathFromMap 纯函数移入 db/ownership-path.js，原 task/model/task-ownership-path.js re-export 保留 API。两模块均为数据库基础叶模块，不依赖 task/timeline/stats；不得改变 DDL、路径计算或错误语义。task-transaction.js 留 task/write，保留其错误转换逻辑。db-legacy 若依赖上层，逐条核对后将真正的数据库工具归入db，不能加审计白名单。
 3. 依次 tasks/client、sites、tags、storage、shell；每域单独提交可回滚；保留原文件名、对外入口、action/schema和数据格式。shell 迁移 src 后 tsc 生成 lib，不能直接移动编译产物。shell-dist 只重建。
 4. 重写源码/测试（包括VM require白名单）、打包脚本和现行文档中的精确路径；历史归档不伪造当时行号。对应行数预算仅转移路径，不抬高上限。
 

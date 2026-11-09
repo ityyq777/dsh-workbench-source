@@ -75,7 +75,7 @@ try {
   for (const invalid of [-1, 1.5, null, "60", Infinity]) assert.throws(() => t.call("taskNodes.overview", { maxDescriptionLength: invalid }), /maxDescriptionLength/);
   assert.deepEqual([t.call("taskNodes.tree"), t.call("taskNodes.children", { id: "g" }), t.call("taskNodes.path", { id: "a" })], before);
   for (let i = 0; i < 150; i++) node.run("many" + i, "表" + i, "", "1", "g", "/r/g/many" + i + "/", i + 2, 2, 1, null);
-  const { overview } = await import("../packages/addons/tasks/lib/overview.js");
+  const { overview } = await import("../packages/addons/tasks/lib/stats/overview.js");
   const many = assertQueries(t.db, db => overview(db));
   assert.equal(many.total, 154);
   assert.equal(flatten(many.nodes).length, 154);
@@ -160,7 +160,7 @@ import { setup as setupSites } from "./packages/addons/sites/lib/index.js";
 import { setup as setupTasks } from "./packages/addons/tasks/lib/index.js";
 import { importSitesData } from "./packages/addons/sites/lib/backup.js";
 import { overview as sitesOverview, renderOverview as sitesRender } from "./packages/addons/sites/lib/overview.js";
-import { overview as tasksOverview, renderOverview as tasksRender } from "./packages/addons/tasks/lib/overview.js";
+import { overview as tasksOverview, renderOverview as tasksRender } from "./packages/addons/tasks/lib/stats/overview.js";
 for (const domain of ["sites", "tasks"]) {
   const db = new DatabaseSync(":memory:");
   db.exec("CREATE TABLE sync_change_log (seq INTEGER PRIMARY KEY, table_name TEXT, row_id TEXT, op TEXT, payload TEXT, origin TEXT, updated_at INTEGER)");

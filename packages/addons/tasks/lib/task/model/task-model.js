@@ -1,43 +1,21 @@
 // 模型助手；与 task-bulk 的循环引用只在调用期取值，顶层不求值。
 import {
-  now,
-  newId,
   idOf,
-  todayStr,
-  addDays,
   dateText,
-  tx,
   logChange,
   taskOut,
   nodeMap,
-  pathForTable,
-  tableExists,
-  timeMs,
-} from "./db.js";
+} from "../../db/db.js";
 // task-query 循环依赖仅在调用期读取 tasks 的函数/常量。
-import { TASK_FILTER_SCHEMA } from "./task-search-schema.js";
-import { listTasks } from "./task-query.js";
-import { statsReport, renderStats } from "./stats.js";
-import { registerTagOptionsAction } from "./tag-options.js";
-import { configValues } from "./config.js";
-import { clampPriority, priorityForStatus, priorityForCreate } from "./task-priority.js";
-import { taskHistory, changelog, csvCell, renderArray, renderList } from "./task-view.js";
-import { idList, patchOf, diffRow, applyPatchRow, bulkUpdate, bulkCreate, bulkDelete, renderBulkUpdate, renderBulkCreate, renderBulkDelete } from "./task-bulk.js";
+import { configValues } from "../../infra/config.js";
 import {
-  LEGACY_TYPE_TAGS,
-  tagsAvailable,
   normalizeTagIds,
   normalizeTagNames,
   requireTagRows,
   availableTagsText,
   tagIdsByNames,
   ensureTagsByNames,
-  replaceTaskTags,
-  attachTags,
-  tagNavStats,
-  tagBreakdown,
-  migrateLegacyTypes,
-} from "./tagging.js";
+} from "../../tagging/tagging.js";
 /**
  * 标签名校验：默认（form.autoCreateTags=true）未知名字会被补建；
  * 关掉开关后未知名字直接报错，并把可用标签列出来，调用方一次就能改成已存在的名字。
@@ -141,7 +119,7 @@ export function defaultTable(db) {
   return row;
 }
 
-import { requireOwnedTable } from './task-target.js';
+import { requireOwnedTable } from '../write/task-target.js';
 export function requireTable(db, tableId) {
   return requireOwnedTable(db, tableId);
 }

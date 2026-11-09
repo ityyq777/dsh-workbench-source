@@ -359,7 +359,7 @@ try {
   // 存量回填：直接写脏数据，再跑一次 ensureSchema
   host.db.prepare("UPDATE task SET priority=7 WHERE id=?").run(defaultPrio.result.id);
   host.db.prepare("UPDATE task SET status='2', priority=4 WHERE id=?").run(sweepTarget.result.id);
-  const tasksDbMod = await import("../packages/addons/tasks/lib/db.js");
+  const tasksDbMod = await import("../packages/addons/tasks/lib/db/db.js");
   tasksDbMod.ensureSchema(host.db, () => {});
   assert((await call("tasks.get", { id: defaultPrio.result.id })).result.task.priority === 7, "开启任务的合法优先级不应被回填改动");
   assert((await call("tasks.get", { id: sweepTarget.result.id })).result.task.priority === 0, "回填未把已完成任务优先级清零");
@@ -579,7 +579,7 @@ try {
       "depth INTEGER NOT NULL DEFAULT 0,created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL," +
       "deleted_at INTEGER,rev INTEGER NOT NULL DEFAULT 1);",
   );
-  const { ensureSchema: ensureTaskSchema } = await import("../packages/addons/tasks/lib/db.js");
+  const { ensureSchema: ensureTaskSchema } = await import("../packages/addons/tasks/lib/db/db.js");
   ensureTaskSchema(legacy, null);
   const legacyCols = legacy.prepare("PRAGMA table_info(task)").all().map((c) => c.name);
   assert(legacyCols.includes("sort") && legacyCols.includes("dedupe_key"), "旧 task 表未补 sort/dedupe_key");
@@ -646,7 +646,7 @@ try {
 
   // ── 15.5 历史数据：ensureSchema 一次性把已完成任务的优先级清零 ──
   {
-    const { ensureSchema } = await import("../packages/addons/tasks/lib/db.js");
+    const { ensureSchema } = await import("../packages/addons/tasks/lib/db/db.js");
     const raw = new DatabaseSync(":memory:");
     ensureSchema(raw, () => {});
     const stamp = Date.now();

@@ -2,7 +2,7 @@
  * 任务 action 的文本渲染与历史查询：不碰写入路径，方便单独阅读与测试。
  */
 
-import { idOf } from "./db.js";
+import { idOf } from "../../db/db.js";
 
 export function taskHistory(db, args) {
   const id = idOf(args.id || args.taskId);

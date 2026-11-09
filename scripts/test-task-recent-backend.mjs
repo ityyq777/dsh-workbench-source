@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
-import { ensureSchema } from '../packages/addons/tasks/lib/db.js';
-import { statsReport } from '../packages/addons/tasks/lib/stats.js';
+import { ensureSchema } from '../packages/addons/tasks/lib/db/db.js';
+import { statsReport } from '../packages/addons/tasks/lib/stats/stats.js';
 const db = new DatabaseSync(':memory:');
 try {
   ensureSchema(db, () => {});

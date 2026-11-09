@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { DIFFICULTY_GUIDANCE } from '../packages/addons/tasks/lib/task-difficulty.js';
+import { DIFFICULTY_GUIDANCE } from '../packages/addons/tasks/lib/task/model/task-difficulty.js';
 const home = mkdtempSync(join(tmpdir(), 'wb-difficulty-'));
 process.env.WB_HOME = home;
 const cleanups = []; let host;

@@ -1,6 +1,6 @@
 import { taskTransaction } from './task-transaction.js';
 import { validateTargetArgs } from './task-target.js';
-import { ownershipFields, renderOwnership } from './task-ownership-path.js';
+import { ownershipFields, renderOwnership } from '../model/task-ownership-path.js';
 /**
  * 批量写入：bulkUpdate / bulkCreate / bulkDelete。
  *
@@ -8,9 +8,9 @@ import { ownershipFields, renderOwnership } from './task-ownership-path.js';
  * 与 tasks.js 是允许的循环依赖：两边都只在调用期取对方的函数，顶层不做求值。
  */
 
-import { setMembership, touchTimelines } from "./timeline-store.js";
-import { now, idOf, todayStr, logChange, taskOut, nodeMap } from "./db.js";
-import { tagsAvailable, replaceTaskTags } from "./tagging.js";
+import { setMembership, touchTimelines } from "../../timeline/timeline-store.js";
+import { now, idOf, todayStr, logChange, taskOut, nodeMap } from "../../db/db.js";
+import { tagsAvailable, replaceTaskTags } from "../../tagging/tagging.js";
 import {
   PATCH_FIELDS,
   DIFF_COLUMNS,
@@ -31,7 +31,7 @@ import {
   tagMissingNotices,
   createTask,
   emitChange,
-} from "./tasks.js";
+} from "../../tasks.js";
 
 export function idList(argsIds) {
   const ids = Array.isArray(argsIds) ? argsIds.map(function (x) { return idOf(x); }).filter(Boolean) : [];

@@ -9,7 +9,7 @@
  * 标签，否则老任务会集体变成未打标签。迁移用 meta 标记，只跑一次。
  */
 
-import { idOf, newId, logChange, tableExists, metaGet, metaSet, tx } from "./db.js";
+import { idOf, newId, logChange, tableExists, metaGet, metaSet, tx } from "../db/db.js";
 
 export const TAG_ITEM_TYPE = "task";
 

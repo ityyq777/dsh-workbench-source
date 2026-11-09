@@ -3,7 +3,7 @@
  *
  * 从 db.js 拆出，纯结构调整，行为不变（2026-11-09）。
  */
-import { NODE_DDL, now, newId, idOf, todayStr, dateText, timeMs, tableExists, columnsOf, hasColumn, metaGet, metaSet, tx, logChange, insertNode, createSchema, seedDefaultTree } from "./db-core.js";
+import { now, newId, idOf, todayStr, dateText, timeMs, tableExists, columnsOf, hasColumn, metaGet, metaSet, tx, logChange, insertNode, createSchema, seedDefaultTree } from "./db-core.js";
 
 function legacyName(base, ts) {
   const d = new Date(ts);

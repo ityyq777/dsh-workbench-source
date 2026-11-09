@@ -1,7 +1,7 @@
-import { taskTransaction } from './task-transaction.js';
+import { taskTransaction } from '../task/write/task-transaction.js';
 import { insertOwnedNode, validateNodePlacement } from './task-node-write.js';
-import { pathFromMap } from './task-ownership-path.js';
-import { nodeMap } from './db.js';
+import { pathFromMap } from '../task/model/task-ownership-path.js';
+import { nodeMap } from '../db/db.js';
 /**
  * 任务树 action：邻接表 + 路径枚举 + sort + depth。
  *
@@ -11,17 +11,13 @@ import { nodeMap } from './db.js';
 
 import {
   now,
-  newId,
   idOf,
-  todayStr,
   tx,
   logChange,
   rowNode,
   childrenOf,
   treeRoot,
-  pickFreeId,
-  insertNode,
-} from "./db.js";
+} from "../db/db.js";
 
 const NODE_TYPES = { GROUP: "0", TABLE: "1", ROOT_GROUP: "2" };
 const TYPE_NAMES = { 组: "0", 任务组: "0", 表: "1", 任务表: "1" };

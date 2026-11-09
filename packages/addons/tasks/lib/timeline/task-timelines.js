@@ -1,8 +1,8 @@
 // Timeline reads and whole-line merges. No dependency on action registration.
 import { timelineIdArg, requireTimeline, activeTimeline, setMembership, touchTimelines } from "./timeline-store.js";
-import { idOf, nodeMap, taskOut, now } from "./db.js";
-import { taskTransaction } from "./task-transaction.js";
-import { getTask } from "./task-model.js";
+import { idOf, nodeMap, taskOut, now } from "../db/db.js";
+import { taskTransaction } from "../task/write/task-transaction.js";
+import { getTask } from "../task/model/task-model.js";
 
 const LIVE = "t.deleted_at IS NULL AND t.status!='3' AND l.deleted_at IS NULL AND e.deleted_at IS NULL";
 const MEMBERS = "task t JOIN task_timeline_link l ON l.task_id=t.id JOIN task_timeline e ON e.id=l.timeline_id";

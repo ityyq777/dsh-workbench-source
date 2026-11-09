@@ -2,10 +2,10 @@
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { SCHEMA_SQL } from '../packages/core/lib/schema.js';
-import { createSchema } from '../packages/addons/tasks/lib/db-core.js';
-import { exportTasksData, importTasksData } from '../packages/addons/tasks/lib/backup.js';
-import { taskSync } from '../packages/addons/tasks/lib/sync.js';
-import { activeTimeline } from '../packages/addons/tasks/lib/timeline-store.js';
+import { createSchema } from '../packages/addons/tasks/lib/db/db-core.js';
+import { exportTasksData, importTasksData } from '../packages/addons/tasks/lib/infra/backup.js';
+import { taskSync } from '../packages/addons/tasks/lib/infra/sync.js';
+import { activeTimeline } from '../packages/addons/tasks/lib/timeline/timeline-store.js';
 import { applyIncoming } from '../packages/shell/lib/sync-incoming.js';
 import { resolveConflict } from '../packages/shell/lib/sync-conflicts.js';
 import { SyncEngine, SyncClock } from '../packages/shell/lib/sync.js';

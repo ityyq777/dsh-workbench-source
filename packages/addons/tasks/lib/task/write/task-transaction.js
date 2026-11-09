@@ -1,4 +1,4 @@
-import { ownershipError } from './task-ownership-path.js';
+import { ownershipError } from '../model/task-ownership-path.js';
 /** 事务期间只收集事件；成功 COMMIT 后通知，失败/dryRun 不发送。 */
 export function taskTransaction(db, api, body, dryRun = false) {
   const events = [], buffered = Object.create(api);

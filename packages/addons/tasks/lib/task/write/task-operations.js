@@ -1,4 +1,4 @@
-import { setMembership } from "./timeline-store.js";
+import { setMembership } from "../../timeline/timeline-store.js";
 import { taskTransaction } from "./task-transaction.js";
 // 与 task-bulk 的循环引用只在调用期取值，顶层不求值。
 import {
@@ -10,17 +10,17 @@ import {
   logChange,
   taskOut,
   nodeMap,
-} from "./db.js";
+} from "../../db/db.js";
 // task-query 循环依赖仅在调用期读取 tasks 的函数/常量。
-import { listTasks } from "./task-query.js";
-import { todayActivity } from "./stats-today.js";
-import { csvCell } from "./task-view.js";
+import { listTasks } from "../read/task-query.js";
+import { todayActivity } from "../../stats/stats-today.js";
+import { csvCell } from "../read/task-view.js";
 import { idList, bulkUpdate } from "./task-bulk.js";
 import {
   tagsAvailable,
   attachTags,
-} from "./tagging.js";
-import { TAG_DOMAIN_NOTICE, withNotices, dateArg, getTask, saveTaskRow, outOne, emitChange, writeChange } from "./task-model.js";
+} from "../../tagging/tagging.js";
+import { TAG_DOMAIN_NOTICE, withNotices, dateArg, getTask, saveTaskRow, outOne, emitChange, writeChange } from "../model/task-model.js";
 import { updateTask } from "./task-update.js";
 /** 上游依赖（本任务依赖谁）与下游（谁依赖本任务），软删行忽略。 */
 export function depRows(db, taskId, direction) {
@@ -121,7 +121,7 @@ export function selectedTasks(db, args) {
   return rows.map(function (r) { return taskOut(r, map); });
 }
 
-export { timelineTasks, timelineRefactor } from "./task-timelines.js";
+export { timelineTasks, timelineRefactor } from "../../timeline/task-timelines.js";
 
 export function restartTasks(db, args) {
   const key = idOf(args.restartKey);

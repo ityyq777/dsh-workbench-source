@@ -5,8 +5,8 @@
  * 不写数据库；宿主拿到 rows 后整表替换并 full push。
  */
 
-import { ownershipError } from './task-ownership-path.js';
-import { normalizeTimelineTask, normalizeTimelineLink, afterTimelineTask, afterTimelineLink, afterTimelineEntity } from './timeline-sync.js';
+import { ownershipError } from '../task/model/task-ownership-path.js';
+import { normalizeTimelineTask, normalizeTimelineLink, afterTimelineTask, afterTimelineLink, afterTimelineEntity } from '../timeline/timeline-sync.js';
 
 // 多设备同名不同 id 不自动合并；阻断同步收敛并交给用户用 id 消歧。
 function checkSiblingConflicts(rows) {

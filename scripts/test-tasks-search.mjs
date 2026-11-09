@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
-import { TASK_FILTER_SCHEMA } from '../packages/addons/tasks/lib/task-search-schema.js';
+import { TASK_FILTER_SCHEMA } from '../packages/addons/tasks/lib/task/read/task-search-schema.js';
 const require = createRequire(import.meta.url);
 let state = [], cursor = 0;
 const React = {

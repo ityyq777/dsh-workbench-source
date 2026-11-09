@@ -1,7 +1,7 @@
 /** Daily activity contract: in-memory SQLite only; no live workbench writes. */
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
-import { ensureSchema, todayStr } from '../packages/addons/tasks/lib/db.js';
+import { ensureSchema, todayStr } from '../packages/addons/tasks/lib/db/db.js';
 import { registerTaskActions } from '../packages/addons/tasks/lib/tasks.js';
 
 const db = new DatabaseSync(':memory:');

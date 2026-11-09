@@ -1,46 +1,19 @@
 // 与 task-bulk 的循环引用只在调用期取值，顶层不求值。
 import {
   now,
-  newId,
   idOf,
   todayStr,
-  addDays,
-  dateText,
-  tx,
-  logChange,
-  taskOut,
-  nodeMap,
-  pathForTable,
-  tableExists,
-  timeMs,
-} from "./db.js";
+} from "../../db/db.js";
 // task-query 循环依赖仅在调用期读取 tasks 的函数/常量。
-import { TASK_FILTER_SCHEMA } from "./task-search-schema.js";
-import { listTasks } from "./task-query.js";
-import { statsReport, renderStats } from "./stats.js";
-import { registerTagOptionsAction } from "./tag-options.js";
-import { configValues } from "./config.js";
-import { clampPriority, priorityForStatus, priorityForCreate } from "./task-priority.js";
-import { taskHistory, changelog, csvCell, renderArray, renderList } from "./task-view.js";
-import { idList, patchOf, diffRow, applyPatchRow, bulkUpdate, bulkCreate, bulkDelete, renderBulkUpdate, renderBulkCreate, renderBulkDelete } from "./task-bulk.js";
+import { priorityForStatus } from "../model/task-priority.js";
 import {
-  LEGACY_TYPE_TAGS,
   tagsAvailable,
-  normalizeTagIds,
-  normalizeTagNames,
-  requireTagRows,
-  availableTagsText,
-  tagIdsByNames,
-  ensureTagsByNames,
   replaceTaskTags,
   attachTags,
-  tagNavStats,
-  tagBreakdown,
-  migrateLegacyTypes,
-} from "./tagging.js";
-import { requireKnownTagNames, TAG_DOMAIN_NOTICE, tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, sourceCode, putTypeCode, clampDifficulty, dateArg, getTask, defaultTable, requireTable, insertTaskRow, saveTaskRow, outOne, emitChange, writeChange, checkRequiredDates, currentTaskTagIds, resolveTagPatch, PATCH_FIELDS, DIFF_COLUMNS } from "./task-model.js";
+} from "../../tagging/tagging.js";
+import { tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, putTypeCode, clampDifficulty, dateArg, getTask, requireTable, saveTaskRow, outOne, writeChange, checkRequiredDates, resolveTagPatch } from "../model/task-model.js";
 import { taskTransaction } from './task-transaction.js';
-import { ownershipFields } from './task-ownership-path.js';
+import { ownershipFields } from '../model/task-ownership-path.js';
 export function updateTask(db, args, origin, api, opts) {
   if (!opts?.skipTx) return taskTransaction(db, api, buffered => updateTask(db,args,origin,buffered,{skipTx:true}));
   const id = idOf(args.id || args.taskId);

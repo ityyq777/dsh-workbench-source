@@ -1,14 +1,14 @@
-import { timelineIdArg, requireTimeline, activeTimeline, timelineError, setMembership } from "./timeline-store.js";
-import { difficultyMissingNotices, cleanDifficultyReceipt } from "./task-difficulty.js";
+import { timelineIdArg, requireTimeline, activeTimeline, timelineError, setMembership } from "../../timeline/timeline-store.js";
+import { difficultyMissingNotices, cleanDifficultyReceipt } from "../model/task-difficulty.js";
 // 与 task-bulk 的循环引用只在调用期取值，顶层不求值。
 import {
   now,
   newId,
   idOf,
   todayStr,
-} from "./db.js";
+} from "../../db/db.js";
 // task-query 循环依赖仅在调用期读取 tasks 的函数/常量。
-import { priorityForCreate } from "./task-priority.js";
+import { priorityForCreate } from "../model/task-priority.js";
 import {
   tagsAvailable,
   normalizeTagIds,
@@ -17,11 +17,11 @@ import {
   ensureTagsByNames,
   replaceTaskTags,
   attachTags,
-} from "./tagging.js";
-import { requireKnownTagNames, tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, sourceCode, clampDifficulty, dateArg, getTask, insertTaskRow, saveTaskRow, outOne, writeChange, checkRequiredDates } from "./task-model.js";
+} from "../../tagging/tagging.js";
+import { requireKnownTagNames, tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, sourceCode, clampDifficulty, dateArg, getTask, insertTaskRow, saveTaskRow, outOne, writeChange, checkRequiredDates } from "../model/task-model.js";
 import { taskTransaction } from './task-transaction.js';
 import { validateTargetArgs, resolveTarget, requireOwnedTable } from './task-target.js';
-import { ownershipError, ownershipFields } from './task-ownership-path.js';
+import { ownershipError, ownershipFields } from '../model/task-ownership-path.js';
 // 标题不做唯一性校验：允许与其它任务同名，调用方用 id 区分（与标签名唯一是两条规则）。
 export function createTask(db, args, origin, api, opts) {
   if (!opts?.skipTx) return taskTransaction(db, api, buffered => createTask(db, args, origin, buffered, {skipTx:true}));
