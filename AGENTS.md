@@ -47,6 +47,7 @@
 ```sh
 pnpm build:clients              # lib/client.js 是产物，版本号要跟 client.src.cjs 一致
 node scripts/audit-actions.mjs  # schema ↔ 实现 ↔ 版本号 ↔ 文档 四向核对，必须零问题
+node scripts/audit-lines.mjs    # 手写源行数：>600 告警、>900 阻断（生成物不计）
 pnpm test:native && pnpm test:tags && pnpm test:sites
 ```
 
@@ -72,6 +73,22 @@ pnpm test:native && pnpm test:tags && pnpm test:sites
 `tags.update` 根本没注册进去——重启 DSH 也没用，必须重新打包安装该插件。
 改完插件的正确姿势：`pnpm build` → 重新安装到 profile → 重启 DSH → 用
 `capabilities.list` 核对版本号与 `actionCount`。
+
+### 单文件规模
+
+手写源（`packages/**/src/**`、`packages/addons/*/lib/*.js`、`packages/addons/*/client/*.src.cjs`）
+单文件目标 ≤ 600 行；`scripts/audit-lines.mjs` 在 > 600 时告警、> 900 时失败。
+超限不是「凑巧长」，通常是职责混在一起：读写、迁移、渲染、注册动作挤在同一个文件里。
+
+拆分原则：
+
+- 纯结构调整、行为不变，一次拆一个文件、一个提交，便于回滚；
+- 拆完立刻跑该插件相关测试（任务：`test:native test:data test:nodeps test:config`），
+  再跑一遍 `audit-actions.mjs` 确认导出面没变；
+- 保留旧文件的导出面（`export * from "./xxx.js"`），调用方不需要跟着改；
+- 生成物（`lib/client.js`、`shell-dist/**`）不参与行数统计，也不要手改。
+
+待拆清单与建议切法见 `docs/specs/26-大文件拆分清单.md`。
 
 ### 文档同步
 

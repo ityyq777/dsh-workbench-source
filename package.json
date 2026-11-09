@@ -22,7 +22,8 @@
     "stage:release": "node scripts/stage-release.mjs",
     "publish:npm": "node scripts/publish-npm.mjs",
     "publish:github": "node scripts/publish-github.mjs",
-    "test:audit": "node scripts/test-audit.mjs"
+    "test:audit": "node scripts/test-audit.mjs",
+    "audit:lines": "node scripts/audit-lines.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",

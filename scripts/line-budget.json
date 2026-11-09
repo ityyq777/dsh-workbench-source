@@ -1,0 +1,15 @@
+{
+  "_comment": "手写源行数预算（2026-11-09 冻结现状）。低于上限不算通过，只是允许它别再长；拆小后请同步下调本文件的上限，目标是全部删掉。",
+  "warn": 600,
+  "fail": 900,
+  "budget": {
+    "packages/addons/tasks/lib/tasks.js": 1921,
+    "packages/addons/tasks/client/client.src.cjs": 1774,
+    "packages/addons/sites/client/client.src.cjs": 1680,
+    "packages/addons/sites/client/data.cjs": 788,
+    "packages/addons/tags/client/data.cjs": 788,
+    "packages/addons/tasks/client/data.cjs": 788,
+    "packages/addons/sites/lib/accounts.js": 669,
+    "packages/addons/sites/lib/sites.js": 631
+  }
+}
