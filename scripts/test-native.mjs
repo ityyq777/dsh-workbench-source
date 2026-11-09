@@ -212,7 +212,8 @@ try {
   const fieldMap = new Map((capTasks.result.capability.fields || []).map((f) => [f.name, f]));
   assert(fieldMap.size >= 8, "capabilities.get 未返回任务字段字典：" + fieldMap.size);
   assert(/越大越紧急/.test(fieldMap.get("priority").description), "priority 字段未写明方向（数值越大越紧急）");
-  assert(/0\.\.10/.test(fieldMap.get("priority").type || ""), "priority 字段未写明取值范围：" + fieldMap.get("priority").type);
+  assert(/1\.\.10/.test(fieldMap.get("priority").type || ""), "priority 字段未写明关闭状态取值范围：" + fieldMap.get("priority").type);
+  assert(/0/.test(fieldMap.get("priority").type || ""), "priority 字段未说明关闭/完成为 0：" + fieldMap.get("priority").type);
   assert(/0=进行中|0=进行中/.test(fieldMap.get("status").description), "status 字段未写明 0 的含义");
   assert(/缺省/.test(fieldMap.get("tab").description) && /8/.test(fieldMap.get("tab").description), "tab 字段未写明缺省值");
   assert(/闭区间/.test(fieldMap.get("range / from / to").description), "range/from/to 未写明闭区间语义");
@@ -331,6 +332,36 @@ try {
   assert(reprioritized.result.task.priority === 6, "重新激活后可以设置优先级");
   const recompleted = await call("tasks.update", { id: doneOnCreate.result.id, type: "STATUS", status: "2" });
   assert(recompleted.result.task.priority === 0, "再次完成后优先级应清零");
+
+  // ── 5.0b 优先级不变量：开启必须 P1..P10，关闭/重启一律 P0，存量幂等回填 ──
+  const defaultPrio = await call("tasks.create", { title: "优先级缺省" });
+  assert(defaultPrio.result.task.priority === 1, "已开启任务缺省优先级应为 1，实际 " + defaultPrio.result.task.priority);
+  let openZeroErr = null;
+  try { await call("tasks.create", { title: "优先级 0 非法", priority: 0 }); } catch (e) { openZeroErr = e; }
+  assert(openZeroErr && /1\.\.10|1–10|优先级/.test(openZeroErr.message), "创建已开启任务传 priority=0 应报错");
+  const closedPrio = await call("tasks.create", { title: "创建即关闭", status: "1", priority: 9 });
+  assert(closedPrio.result.task.priority === 0, "创建即关闭的任务优先级应为 0");
+  const closedBump = await call("tasks.update", { id: closedPrio.result.id, type: "PRIORITY", priority: 5 });
+  assert(closedBump.result.task.priority === 0, "关闭任务加优先级应被忽略");
+  let updZeroErr = null;
+  try { await call("tasks.update", { id: defaultPrio.result.id, type: "PRIORITY", priority: 0 }); } catch (e) { updZeroErr = e; }
+  assert(updZeroErr, "开启任务更新为 P0 应报错");
+  const sweepTarget = await call("tasks.create", { title: "到期自动关闭", priority: 8 });
+  host.db.prepare("UPDATE task SET target_date='2000-01-01' WHERE id=?").run(sweepTarget.result.id);
+  const swept = await call("tasks.sweepShutdown", { date: "2000-01-02" });
+  assert(swept.result.ids.includes(sweepTarget.result.id), "sweepShutdown 未关闭到期任务");
+  const sweptRow = (await call("tasks.get", { id: sweepTarget.result.id })).result.task;
+  assert(sweptRow.status === "1" && sweptRow.priority === 0, "sweepShutdown 关闭后优先级应清零");
+  // 存量回填：直接写脏数据，再跑一次 ensureSchema
+  host.db.prepare("UPDATE task SET priority=7 WHERE id=?").run(defaultPrio.result.id);
+  host.db.prepare("UPDATE task SET status='2', priority=4 WHERE id=?").run(sweepTarget.result.id);
+  const tasksDbMod = await import("../packages/addons/tasks/lib/db.js");
+  tasksDbMod.ensureSchema(host.db, () => {});
+  assert((await call("tasks.get", { id: defaultPrio.result.id })).result.task.priority === 7, "开启任务的合法优先级不应被回填改动");
+  assert((await call("tasks.get", { id: sweepTarget.result.id })).result.task.priority === 0, "回填未把已完成任务优先级清零");
+  host.db.prepare("UPDATE task SET priority=0 WHERE id=?").run(defaultPrio.result.id);
+  tasksDbMod.ensureSchema(host.db, () => {});
+  assert((await call("tasks.get", { id: defaultPrio.result.id })).result.task.priority === 1, "回填未把开启任务的 P0 抬到 P1");
 
   // ── 5.1 完成感受：STATUS 带 review、REVIEW 单独更新、patch 写入 ──
   const doneWithReview = await call("tasks.update", { id: p9.result.id, type: "STATUS", status: "2", difficulty: 3.5, review: "顺利完成" });
@@ -617,12 +648,11 @@ try {
       "INSERT INTO task(id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,sort,dedupe_key,created_at,updated_at,deleted_at,rev) " +
         "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
     ).run("t-done", "历史已完成任务", "", "2", 8, null, "", "1", null, null, "2026-11-01", "2026-11-02", "2026-11-02", null, 0, null, stamp, stamp, null, 1);
-    // 模拟升级前的库：老数据还没扫过，清掉标记让 ensureSchema 再跑一次迁移。
-    raw.prepare("DELETE FROM meta WHERE k='done_priority_cleared'").run();
     const migrated = ensureSchema(raw, () => {});
-    assert(migrated.donePriorityCleared === 1, "迁移报告未记录清零条数：" + JSON.stringify(migrated));
+    assert(migrated.prioritiesCleared >= 1, "迁移报告未记录清零条数：" + JSON.stringify(migrated));
     assert(Number(raw.prepare("SELECT priority FROM task WHERE id='t-done'").get().priority) === 0, "历史已完成任务优先级未清零");
-    assert(raw.prepare("SELECT v FROM meta WHERE k='done_priority_cleared'").get(), "清零标记未写入 meta");
+    const again = ensureSchema(raw, () => {});
+    assert(again.prioritiesCleared === 0 && again.prioritiesRaised === 0, "优先级回填不幂等：" + JSON.stringify(again));
     raw.close();
   }
 

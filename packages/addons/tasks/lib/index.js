@@ -42,7 +42,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/配置/数据四个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "2.10.7",
+        version: "2.10.8",
         tables: ["task", "task_dep", "task_node"],
         sync: taskSync,
         views: [
@@ -92,7 +92,7 @@ export function apply(ctx) {
           fields: [
             { name: "tab", type: "number | \"all\"", description: "列表页签：0=紧急（status=0 且 priority>=6 或 targetDate<=今天+2）、1..4=旧类型页签（按同名标签筛，已弃用）、5=已关闭（默认 SHUTDOWN=1，filterRestarted=false 时看 RESTARTED=3）、6=进行中(0)、7=已完成(2)、8=总览（排除已重启）；缺省或传 all 等于 8" },
             { name: "status", type: "0|1|2|3", description: "0=进行中 ACTIVE、1=已关闭 SHUTDOWN、2=已完成 DONE、3=已重启 RESTARTED（创建时不允许 3）；也接受 open/done。别按“0=未开始”理解：0 是在办" },
-            { name: "priority", type: "0..10", description: "数值越大越紧急，不是越小越急；0=未设置、不占紧急页签；>=6 进紧急页签（tab=0）；参数优先级 min/max 同样是数值越大越急；任务改为已完成时自动清零" },
+            { name: "priority", type: "1..10（关闭/完成为 0）", description: "数值越大越紧急，不是越小越急；已开启任务必须 P1..P10（显式传 0 会报错，缺省 P1）；已关闭/已完成/已重启一律 P0，传值被忽略；>=6 进紧急页签（tab=0）；参数优先级 min/max 同样是数值越大越急" },
             { name: "difficulty", type: "0..5", description: "完成难度，数值越大越难；留给完成时填写" },
             { name: "sort", type: "string", description: "priority / target（targetDate）/ publish（publishDate）/ updated / created / manual（sort 列）；前缀 - 表示降序，例如 sort=-priority 才是最紧急在前；不传时未分页按 priority 降序，分页（tab 5..8 或传 pageNumber/pageSize）按 publishDate 降序" },
             { name: "order", type: "asc|desc", description: "显式指定排序方向，覆盖 sort 前缀" },
@@ -116,9 +116,10 @@ export function apply(ctx) {
           notFor: ["不要用它保存聊天记录、日志或临时笔记"],
           notes: [
             "date 字段均为 YYYY-MM-DD；source=1/2 时分别需要 timelineKey / restartKey。",
-            "状态机：0 进行中 → 1 已关闭（补 shutdownDate）/ 2 已完成（priority 清零、补 doneDate）；1 或 2 可回到 0 继续办理。3 已重启不在创建时使用：重启老任务时先把它置 3，再建 source=2 的新任务。",
+            "状态机：0 进行中 → 1 已关闭（补 shutdownDate）/ 2 已完成（补 doneDate）；1 或 2 可回到 0 继续办理（优先级自动回落到 1）。3 已重启不在创建时使用：重启老任务时先把它置 3，再建 source=2 的新任务。",
             "restart_key = 重启链的链首任务 id：普通任务等于自身 id，source=2 的新任务继承原任务；同一 restart_key 的任务按 publishDate 组成一条重启链，用 tasks.restart 读取。",
             "timeline_key = 时间线分组键：普通任务等于自身 id，source=1 显式传入，重启任务继承原任务的时间线；同一 timeline_key 的任务按 publishDate 组成时间线，用 tasks.timeline 读取，tasks.timelineRefactor 可批量归并。",
+            "优先级不变量：已开启任务 P1..P10（创建默认 1，显式 0 报错）；关闭/完成/已重启一律 P0，写入 0..10 都会被忽略。旧库启动时自动回填（关闭态清零、开启态 0→1），幂等。",
             "任务标题不唯一：允许同名，用 id 区分；与「标签名唯一」「任务节点名同级唯一」是不同规则。",
             "任务没有「类型」字段：工作/生活/学习/开发 已迁成同名标签，用 tags 或 tagIds 归类。",
             "标签写入规则：tags/addTags 传名字，默认自动创建未知名字（配置 form.autoCreateTags 关掉后改为报错并列出可用标签）；tagIds/addTagIds 传 id，必须已存在，否则报错并列出可用标签；create/update/bulkCreate/bulkUpdate 共用同一套校验。",

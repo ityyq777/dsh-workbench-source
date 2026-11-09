@@ -586,8 +586,8 @@ var h = React.createElement;
       onClick: function () { props.onEdit(task); },
     }, h(Icon, { name: "pencil", size: 14 })));
     if (isActive) {
-      ops.push(h("button", { key: "p+", className: "wbt-icon", title: t.priority + " +1", onClick: function () { if (task.priority < 10) props.update(task, { type: "PRIORITY", priority: Number(task.priority) + 1 }); } }, h(Icon, { name: "plus", size: 14 })));
-      ops.push(h("button", { key: "p-", className: "wbt-icon", title: t.priority + " -1", onClick: function () { if (task.priority > 0) props.update(task, { type: "PRIORITY", priority: Number(task.priority) - 1 }); } }, h(Icon, { name: "minus", size: 14 })));
+      ops.push(h("button", { key: "p+", className: "wbt-icon", title: t.priority + " +1", onClick: function () { if (Number(task.priority) < 10) props.update(task, { type: "PRIORITY", priority: Math.max(1, Number(task.priority) + 1) }); } }, h(Icon, { name: "plus", size: 14 })));
+      ops.push(h("button", { key: "p-", className: "wbt-icon", title: t.priority + " -1", onClick: function () { if (Number(task.priority) > 1) props.update(task, { type: "PRIORITY", priority: Number(task.priority) - 1 }); } }, h(Icon, { name: "minus", size: 14 })));
       ops.push(h("button", { key: "done", className: "wbt-btn wbt-act-done", onClick: function () { props.onDone(task); } }, h(Icon, { name: "check", size: 14 }), t.complete));
       ops.push(h("button", { key: "shut", className: "wbt-btn wbt-act-close", onClick: function () { props.update(task, { type: "STATUS", status: "1", date: today() }); } }, h(Icon, { name: "stop", size: 14 }), t.shutdownOp));
     }
@@ -647,7 +647,9 @@ var h = React.createElement;
       h("div", { className: "wbt-main" },
         h("div", { className: "wbt-chead" },
           h("div", { className: "wbt-line1" },
-            h("span", { className: "wbt-prio " + pClass(task.priority), children: "P" + task.priority }),
+            String(task.status) === "0"
+              ? h("span", { className: "wbt-prio " + pClass(task.priority), children: "P" + task.priority })
+              : h("span", { className: "wbt-prio low", title: t.priority + " 0", children: "—" }),
             h("span", { className: "wbt-badge " + st.cls, children: stName }),
             titleNode
           ),
@@ -800,7 +802,7 @@ var h = React.createElement;
     var initTags = origin ? tagNames(origin).join(", ") : "";
     var initTable = origin ? String(origin.tableId || first) : String(first);
     var defaults = props.defaults || {};
-    var initPriority = Math.floor(Number(defaults.priority));
+    var initPriority = Math.max(1, Math.floor(Number(defaults.priority)) || 1);
     if (!(initPriority >= 1)) initPriority = 1;
     var initDifficulty = Math.floor(Number(defaults.difficulty));
     if (!(initDifficulty >= 1)) initDifficulty = 1;
@@ -864,7 +866,7 @@ var h = React.createElement;
           h("label", { className: "wbt-field full" }, h("span", null, t.tags), h("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function (e) { set("tags", e.target.value); } })),
           h("label", { className: "wbt-field" }, h("span", null, t.status), h("select", { className: "wbt-select", value: source === "2" ? "0" : form.status, disabled: source === "2", onChange: function (e) { set("status", e.target.value); } },
             h("option", { value: "0" }, "已开启"), h("option", { value: "2" }, "已完成"), h("option", { value: "1" }, "已关闭"))),
-          h("label", { className: "wbt-field" }, h("span", null, t.priority + "（0–10）"), h("input", { className: "wbt-input", type: "number", min: 0, max: 10, value: form.priority, onChange: function (e) { set("priority", e.target.value); } })),
+          h("label", { className: "wbt-field" }, h("span", null, t.priority + "（1–10）"), h("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, disabled: form.status !== "0", value: form.priority, onChange: function (e) { set("priority", e.target.value); } })),
           h("label", { className: "wbt-field" }, h("span", null, t.table + " *"), h("select", { className: "wbt-select", value: form.tableId, onChange: function (e) { set("tableId", e.target.value); } }, tables.map(function (x) { return h("option", { key: x.id, value: x.id }, "　".repeat(x.depth) + x.name); }))),
           h("label", { className: "wbt-field" }, h("span", null, t.publishDate), h("input", { className: "wbt-input", type: "date", value: form.publishDate, onChange: function (e) { set("publishDate", e.target.value); } })),
           h("label", { className: "wbt-field" }, h("span", null, t.targetDate), h("input", { className: "wbt-input", type: "date", value: form.targetDate, onChange: function (e) { set("targetDate", e.target.value); } })),
@@ -992,8 +994,9 @@ var h = React.createElement;
       var patch = { id: task.id, title: String(form.title).trim(), description: String(form.description || "") };
       if (canPriority) {
         var p = Math.round(Number(form.priority));
+        if (!isFinite(p)) p = 1;
         if (!Number.isFinite(p)) p = 0;
-        patch.priority = Math.max(0, Math.min(10, p));
+        patch.priority = Math.max(1, Math.min(10, p));
         // 计划完成日期只处理非空值；留空表示不改动（后端空串会回落到原值）。
         if (String(form.targetDate || "").trim()) patch.targetDate = String(form.targetDate).trim();
       } else {
@@ -1030,8 +1033,8 @@ var h = React.createElement;
           h("input", { className: "wbt-input", type: "date", value: form.targetDate, onChange: function (e) { set("targetDate", e.target.value); } })
         ) : null,
         canPriority ? h("label", { className: "wbt-field" },
-          h("span", null, t.priority + "（0–10）"),
-          h("input", { className: "wbt-input", type: "number", min: 0, max: 10, step: 1, value: form.priority, onChange: function (e) { set("priority", e.target.value); } })
+          h("span", null, t.priority + "（1–10）"),
+          h("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, value: form.priority, onChange: function (e) { set("priority", e.target.value); } })
         ) : h("label", { className: "wbt-field" },
           h("span", null, t.review + " · " + t.reviewHint),
           h("textarea", { className: "wbt-textarea", rows: 3, placeholder: t.reviewPlaceholder, value: form.review, onChange: function (e) { set("review", e.target.value); } })
@@ -1750,7 +1753,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.10.7",
+    version: "2.10.8",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },

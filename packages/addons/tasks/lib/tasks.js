@@ -111,6 +111,21 @@ function clampPriority(value, fallback) {
   return v;
 }
 
+/**
+ * 优先级状态机（唯一入口）：
+ * - 已开启（status=0）：P1..P10，显式传 0 是错误（0 只表示「没有优先级」）；
+ * - 已关闭/已完成/已重启：一律 P0，写入什么都被忽略；
+ * - 开启但历史值为 0（旧数据）且本次没有显式传值：回落到 P1。
+ */
+function priorityForStatus(status, requested, fallback) {
+  if (status !== "0") return 0;
+  if (requested !== undefined && requested !== null && requested !== "" && Number(requested) === 0) {
+    throw new Error("已开启任务的优先级必须在 1..10（0 仅用于已完成/已关闭）");
+  }
+  const p = clampPriority(requested, fallback);
+  return p > 0 ? p : 1;
+}
+
 function clampDifficulty(value, fallback) {
   if (value === undefined || value === null || value === "") return fallback;
   const n = Number(value);
@@ -343,7 +358,7 @@ function createTask(db, args, origin, api, opts) {
   let doneDate = dateArg(args.doneDate, "doneDate");
   let shutdownDate = dateArg(args.shutdownDate, "shutdownDate");
   let difficulty = clampDifficulty(args.difficulty, null);
-  let priority = clampPriority(args.priority, 0);
+  let priority = priorityForStatus(status, args.priority, 1);
 
   if (status === "0") {
     if (difficulty !== null) {
@@ -357,8 +372,7 @@ function createTask(db, args, origin, api, opts) {
     if (!shutdownDate) shutdownDate = todayStr();
     if (shutdownDate < publishDate) throw new Error("shutdownDate 不能早于 publishDate");
   }
-  // 已完成任务不再需要优先级：统一清零，避免完成项继续占用紧急列表与优先级排序。
-  if (status === "2") priority = 0;
+  // 关闭/完成的任务同样清零（见 priorityForStatus）；开启任务缺省 P1，不再有「P0 开启」。
   if (targetDate < publishDate) throw new Error("targetDate 不能早于 publishDate");
 
   let timelineKey = idOf(args.timelineKey);
@@ -423,7 +437,7 @@ function createTask(db, args, origin, api, opts) {
       ).all(restartKey);
       const shutdownTs = now();
       for (const old of active) {
-        const next = Object.assign({}, old, { status: "1", shutdown_date: todayStr(), updated_at: shutdownTs, rev: Number(old.rev) + 1 });
+        const next = Object.assign({}, old, { status: "1", priority: 0, shutdown_date: todayStr(), updated_at: shutdownTs, rev: Number(old.rev) + 1 });
         saveTaskRow(db, next);
         writeChange(db, next, "update", origin, api, shutdownTs);
       }
@@ -431,7 +445,7 @@ function createTask(db, args, origin, api, opts) {
         "SELECT * FROM task WHERE restart_key=? AND status='1' AND deleted_at IS NULL",
       ).all(restartKey);
       for (const old of shutdown) {
-        const next = Object.assign({}, old, { status: "3", updated_at: shutdownTs, rev: Number(old.rev) + 1 });
+        const next = Object.assign({}, old, { status: "3", priority: 0, updated_at: shutdownTs, rev: Number(old.rev) + 1 });
         saveTaskRow(db, next);
         writeChange(db, next, "update", origin, api, shutdownTs);
       }
@@ -519,7 +533,7 @@ function updateTask(db, args, origin, api) {
       if (next.shutdown_date < String(cur.publish_date)) throw new Error("shutdownDate 不能早于 publishDate");
     }
   } else if (type === "1") {
-    next.priority = clampPriority(args.priority, Number(cur.priority));
+    next.priority = priorityForStatus(next.status, args.priority, Number(cur.priority) || 1);
   } else if (type === "2") {
     const title = String(args.title === undefined || args.title === null ? "" : args.title).trim();
     if (!title) throw new Error("title 不能为空");
@@ -537,7 +551,7 @@ function updateTask(db, args, origin, api) {
     if (args.description !== undefined) next.description = String(args.description === null ? "" : args.description);
     if (args.review !== undefined) next.review = String(args.review === null ? "" : args.review);
     if (args.status !== undefined) next.status = asCode(args.status, STATUS_NAMES, STATUSES, "status");
-    if (args.priority !== undefined) next.priority = clampPriority(args.priority, Number(cur.priority));
+    if (args.priority !== undefined) next.priority = priorityForStatus(next.status, args.priority, Number(cur.priority) || 1);
     if (args.difficulty !== undefined) next.difficulty = clampDifficulty(args.difficulty, null);
     if (args.publishDate !== undefined) next.publish_date = dateArg(args.publishDate, "publishDate") || String(cur.publish_date);
     if (args.targetDate !== undefined) next.target_date = dateArg(args.targetDate, "targetDate") || String(cur.target_date);
@@ -556,8 +570,9 @@ function updateTask(db, args, origin, api) {
 
   if (next.status === "2" && next.done_date === null) next.done_date = todayStr();
   if (next.status === "2" && (next.difficulty === null || next.difficulty === undefined)) next.difficulty = 0;
-  // 完成任务一律 P0：包括显式传了 priority 的情况，保证「已完成 = 无优先级」的不变量。
-  if (next.status === "2") next.priority = 0;
+  // 优先级不变量兜底：非开启状态一律 P0；开启状态不允许 P0（历史数据回落到 P1）。
+  if (next.status !== "0") next.priority = 0;
+  else if (!next.priority) next.priority = 1;
   if (next.status === "1" && next.shutdown_date === null) next.shutdown_date = todayStr();
   checkRequiredDates(next);
   next.updated_at = ts;
@@ -638,7 +653,7 @@ function applyPatchRow(db, cur, patch, ts) {
   }
   if ("description" in patch) next.description = String(patch.description === null || patch.description === undefined ? "" : patch.description);
   if ("status" in patch) next.status = asCode(patch.status, STATUS_NAMES, STATUSES, "status");
-  if ("priority" in patch) next.priority = clampPriority(patch.priority, Number(cur.priority));
+  if ("priority" in patch) next.priority = priorityForStatus(next.status, patch.priority, Number(cur.priority) || 1);
   if ("difficulty" in patch) next.difficulty = clampDifficulty(patch.difficulty, null);
   if ("review" in patch) next.review = String(patch.review === null || patch.review === undefined ? "" : patch.review);
   if ("tableId" in patch) next.table_id = String(requireTable(db, patch.tableId).id);
@@ -654,7 +669,8 @@ function applyPatchRow(db, cur, patch, ts) {
   // tagIds 不是 task 列，由 bulkUpdate 在行写入后同步 tag_mapping。
   if (next.status === "2" && !next.done_date) next.done_date = todayStr();
   if (next.status === "2" && (next.difficulty === null || next.difficulty === undefined)) next.difficulty = 0;
-  if (next.status === "2") next.priority = 0;
+  if (next.status !== "0") next.priority = 0;
+  else if (!next.priority) next.priority = 1;
   if (next.status === "1" && !next.shutdown_date) next.shutdown_date = todayStr();
   checkRequiredDates(next);
   next.updated_at = ts;
@@ -1138,7 +1154,7 @@ function sweepShutdown(db, args, origin, api) {
   if (dryRun) return { dryRun: true, updated: 0, wouldUpdate: rows.length, ids: rows.map(function (r) { return String(r.id); }), items: items, date: day };
   tx(db, function () {
     for (const cur of rows) {
-      const next = Object.assign({}, cur, { status: "1", shutdown_date: day, updated_at: ts, rev: Number(cur.rev) + 1 });
+      const next = Object.assign({}, cur, { status: "1", priority: 0, shutdown_date: day, updated_at: ts, rev: Number(cur.rev) + 1 });
       saveTaskRow(db, next);
       writeChange(db, next, "update", origin, api, ts);
       ids.push(String(cur.id));
@@ -1427,7 +1443,7 @@ export function registerTaskActions(api) {
       description: { type: "string" },
       review: { type: "string", description: "完成后的感受/复盘（自由文本）" },
       status: { type: ["string", "number"], description: "0=进行中(ACTIVE，也接受 open)、1=已关闭(SHUTDOWN)、2=已完成(DONE，也接受 done)、3=已重启(RESTARTED，创建时不允许)；改成 2 时 priority 自动清零并补 doneDate" },
-      priority: { type: "number", description: "0..10 整数，数值越大越紧急（>=6 进「紧急」页签，0 表示没有设置）；任务改为 DONE 时写入值会被清零" },
+      priority: { type: "number", description: "1..10 整数，数值越大越紧急（>=6 进「紧急」页签）；已开启任务传 0 会报错；任务改为 SHUTDOWN/DONE 时写入值被忽略并清零" },
       difficulty: { type: ["number", "null"], description: "0..5" },
       publishDate: { type: "string", description: "YYYY-MM-DD" },
       targetDate: { type: "string", description: "YYYY-MM-DD" },
@@ -1500,7 +1516,7 @@ export function registerTaskActions(api) {
         review: { type: "string", description: "完成后的感受/复盘（自由文本，默认空）" },
         tableId: { type: ["string", "number"], description: "任务表 id，缺省用默认任务表" },
         status: { type: ["string", "number"], description: "0/1/2（不能直接创建 RESTARTED）" },
-        priority: { type: "number", description: "0..10（status=2 已完成时强制为 0）" },
+        priority: { type: "number", description: "1..10（缺省 1；status=0 开启时传 0 报错；status=1/2 时强制为 0）" },
         difficulty: { type: ["number", "null"], description: "0..5" },
         publishDate: { type: "string", description: "YYYY-MM-DD，缺省今天" },
         targetDate: { type: "string", description: "YYYY-MM-DD，缺省同 publishDate" },
@@ -1532,7 +1548,7 @@ export function registerTaskActions(api) {
         type: { type: ["string", "number"], description: "更新模式 0/1/2/3/4（4=感受；不是任务字段；改标签请传 tags 或 tagIds）" },
         status: { type: ["string", "number"], description: "0/ACTIVE、1/SHUTDOWN、2/DONE（改成 DONE 时 priority 自动清零）" },
         date: { type: "string" },
-        priority: { type: "number", description: "0..10；任务已完成（status=2）时写入后仍为 0" },
+        priority: { type: "number", description: "1..10；目标状态为 1/2 时写入被忽略（恒为 0）；目标状态为 0 时传 0 报错" },
         title: { type: "string" },
         description: { type: "string" },
         review: { type: "string", description: "完成后的感受/复盘（自由文本）；给出时按字段更新，或配合 type=4" },

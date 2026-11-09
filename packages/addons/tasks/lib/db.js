@@ -830,37 +830,54 @@ function ensureTaskColumns(db, report) {
  * 这里只修历史数据。改动走 sync_change_log（origin=migrate），云端能收到这次修正；
  * meta 标记保证只跑一次，之后用户手动改库也不会被反复覆盖。
  */
-function clearDonePriorities(db, report) {
-  const KEY = "done_priority_cleared";
-  if (metaGet(db, KEY)) return 0;
-  const rows = db.prepare(
-    "SELECT id, rev FROM task WHERE status='2' AND priority<>0 AND deleted_at IS NULL",
-  ).all();
+/**
+ * 优先级不变量回填（幂等，每次启动都跑）：
+ * - 非 ACTIVE（已关闭/已完成/已重启）一律 P0；
+ * - ACTIVE 不允许 P0，历史遗留的 0 值回落到 P1。
+ * 只处理未删除行，避免给墓碑行涨 rev；独立库没有 sync_change_log 时跳过变更日志。
+ */
+function normalizePriorities(db, report) {
   const ts = now();
-  if (!rows.length) {
-    metaSet(db, KEY, String(ts));
-    return 0;
-  }
-  tx(db, function () {
-    const update = db.prepare("UPDATE task SET priority=0, updated_at=?, rev=? WHERE id=?");
-    const load = db.prepare("SELECT * FROM task WHERE id=?");
-    for (const row of rows) {
-      const id = String(row.id);
-      const rev = Number(row.rev || 0) + 1;
-      update.run(ts, rev, id);
-      const full = load.get(id);
-      if (full) {
-        try {
-          logChange(db, "task", id, "update", full, "migrate", ts);
-        } catch (e) {
-          // 独立库（单测/导出）没有 sync_change_log：照常清零，跳过变更日志。
+  let cleared = 0;
+  let raised = 0;
+  try {
+    tx(db, function () {
+      const updateOne = db.prepare("UPDATE task SET priority=?, updated_at=?, rev=? WHERE id=?");
+      const load = db.prepare("SELECT * FROM task WHERE id=?");
+      function apply(rows, value) {
+        for (const row of rows) {
+          const id = String(row.id);
+          const rev = Number(row.rev || 0) + 1;
+          updateOne.run(value, ts, rev, id);
+          const full = load.get(id);
+          if (full) {
+            try {
+              logChange(db, "task", id, "update", full, "migrate", ts);
+            } catch (e) {
+              /* 独立库（单测/导出）没有 sync_change_log：照常回填，跳过变更日志 */
+            }
+          }
         }
+        return rows.length;
       }
-    }
-    metaSet(db, KEY, String(ts));
-  });
-  if (report) report.donePriorityCleared = rows.length;
-  return rows.length;
+      cleared = apply(
+        db.prepare("SELECT id, rev FROM task WHERE status<>'0' AND priority<>0 AND deleted_at IS NULL").all(),
+        0,
+      );
+      raised = apply(
+        db.prepare("SELECT id, rev FROM task WHERE status='0' AND priority=0 AND deleted_at IS NULL").all(),
+        1,
+      );
+    });
+  } catch (e) {
+    if (report) report.prioritiesError = String((e && e.message) || e);
+    return { cleared: 0, raised: 0 };
+  }
+  if (report) {
+    report.prioritiesCleared = cleared;
+    report.prioritiesRaised = raised;
+  }
+  return { cleared, raised };
 }
 
 export function ensureSchema(db, log) {
@@ -925,9 +942,9 @@ export function ensureSchema(db, log) {
   seedDefaultTree(db);
   if (hasColumn(db, "task", "priority") && hasColumn(db, "task", "status")) {
     try {
-      clearDonePriorities(db, report);
+      normalizePriorities(db, report);
     } catch (e) {
-      if (log) log("[tasks] 已完成任务优先级清零失败：" + String((e && e.message) || e));
+      if (log) log("[tasks] 优先级回填失败：" + String((e && e.message) || e));
     }
   }
   metaSet(db, "task_schema_version", "2");
