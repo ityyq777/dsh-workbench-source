@@ -351,7 +351,7 @@
           },
           onBlur: saveDesc,
         })
-      : (task.description ? h("div", { className: "wbt-desc", onDoubleClick: beginDesc }, task.description) : null);
+      : (task.description ? h("div", { className: "wbt-desc wb-desc", onDoubleClick: beginDesc }, task.description) : null);
 
 
     var reviewNode = editingReview !== null
@@ -1460,7 +1460,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.10.10",
+    version: "2.10.11",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },

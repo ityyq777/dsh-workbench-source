@@ -21,27 +21,27 @@ export function apply(ctx) {
     () =>
       host.registerDomain({
         id: "wb-addon-storage",
-        title: "物品管理",
-        description: "物品名称、品牌、单位、库存文本、图片URL、备注与可选标签",
-        version: "1.0.0",
-        tables: ["storage", "tag_mapping"],
+        title: "储物",
+        description: "储物：记录物品名称、品牌、单位、库存文本、图片URL、备注与可选标签",
+        version: "1.1.0",
+        tables: ["storage"],
         sync: storageSync,
         backupAfter: ["wb-addon-tags"],
         views: [
-          { id: "stats", title: { zh: "统计", en: "Stats" } },
+          { id: "stats", title: { zh: "储物概览", en: "Storage overview" } },
           { id: "storage", title: { zh: "记录", en: "Records" } },
           { id: "config", title: { zh: "配置", en: "Config" } },
           { id: "data", title: { zh: "数据", en: "Data" } },
         ],
         capability: {
-          summary: "记录物品管理，库存可为 1~2 等文本；图片只保存HTTP(S) URL，不上传。标签为可选能力。",
+          summary: "记录储物条目，库存可为 1~2 等文本；图片只保存HTTP(S) URL，不上传。标签为可选能力。",
           requires: [],
           records: [
             {
               kind: "storage",
-              title: "物品管理",
-              description: "物品与当前库存文本",
-              when: ["用户记录物品管理"],
+              title: "储物",
+              description: "储物条目：物品与当前库存文本",
+              when: ["用户记录储物条目"],
               notFor: ["库存流水、自动扣减、文件上传"],
               primaryAction: "storage.create",
               keyArgs: ["name", "brand", "unit", "stock", "imgList", "remark", "tagIds"],

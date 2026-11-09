@@ -3,6 +3,9 @@ node_modules
 lib
 !packages/addons/*/lib
 !packages/addons/*/lib/**
+# 四插件共享的手写客户端源码
+!packages/addons/lib/
+!packages/addons/lib/**
 *.tgz
 packages/shell-dist
 

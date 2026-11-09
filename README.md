@@ -8,9 +8,9 @@
 | `dsh-workbench-tasks` | 任务与任务树（9 个视图、时间线、重启、批量归并/迁表） |
 | `dsh-workbench-tags` | 标签管理，供站点等业务归类 |
 | `dsh-workbench-sites` | 站点收藏：目录树、多链接、标签与筛选 |
-| `dsh-workbench-storage` | 物品管理：名称、品牌、单位、库存文本与标签的本地台账 |
+| `dsh-workbench-storage` | 储物：名称、品牌、单位、库存文本与标签的本地台账 |
 
-任务、标签、站点、物品都会把 `dsh-workbench-host` 声明为依赖：安装任意业务插件时，
+任务、标签、站点、储物都会把 `dsh-workbench-host` 声明为依赖：安装任意业务插件时，
 DSH 会一并准备宿主。数据保存在 `~/.dsh/workbench/workbench.db`，卸载插件只删代码，
 不删数据。
 

@@ -3,6 +3,43 @@ var React = require("react"),
   Editor = require("./editor.cjs").Editor;
 var h = ui.h,
   tr = ui.tr;
+var Description = require("../../lib/description.cjs").Description;
+function StorageCard(props) {
+  var item = props.item, lang = props.lang, gallery = React.useState(false);
+  var images = (item.imgList || []).filter(ui.safeImage), tags = item.tags || [];
+  var shown = gallery[0] ? images : images.slice(0, 1);
+  var meta = [item.brand && tr(lang, "品牌：", "Brand: ") + item.brand,
+    item.unit && tr(lang, "单位：", "Unit: ") + item.unit].filter(Boolean);
+  return h("article", { className: "wbi-card" },
+    h("div", { className: "wbi-cardhead" }, h("h3", null, item.name),
+      h("span", { className: "wbi-stock" }, item.stock == null || item.stock === "" ? "—" : item.stock,
+        item.unit ? h("small", { className: "wbi-muted" }, " " + item.unit) : null)),
+    tags.length ? h("div", { className: "wbi-tags" }, tags.map(function (t) {
+      return h(ui.Button, { key: t.id, className: "wbi-btn wbi-chip", disabled: !props.caps,
+        title: tr(lang, "按此标签筛选", "Filter by this tag"),
+        onClick: function () { props.onTag(t); } }, t.name);
+    })) : null,
+    meta.length || item.createTime || item.updateTime ? h("div", { className: "wbi-metazone" },
+      meta.length ? h("div", { className: "wbi-muted" }, meta.join(" · ")) : null,
+      item.createTime || item.updateTime ? h("div", { className: "wbi-meta" },
+        item.createTime ? h("span", null, tr(lang, "创建 ", "Created ") + props.date(item.createTime)) : null,
+        item.updateTime ? h("span", null, tr(lang, "更新 ", "Updated ") + props.date(item.updateTime)) : null) : null) : null,
+    h(Description, { text: item.remark, lang: lang }),
+    images.length ? h("div", { className: "wbi-images" }, shown.map(function (url, i) {
+      return h("button", { key: i, type: "button", className: "wbi-image",
+        "aria-label": tr(lang, "预览图片 ", "Preview image ") + (i + 1),
+        onClick: function () { props.onPreview({ url: url, name: item.name }); } },
+        h("img", { src: url, alt: item.name + " " + (i + 1), loading: "lazy", referrerPolicy: "no-referrer" }));
+    }), images.length > 1 ? h(ui.Button, { className: "wbi-btn wbi-btn-sm wbi-ghost wbi-more",
+      "aria-expanded": gallery[0], "aria-label": tr(lang, "展开或收起物品图片", "Expand or collapse item images"),
+      onClick: function () { gallery[1](!gallery[0]); }
+    }, gallery[0] ? tr(lang, "收起", "Collapse") : "+" + (images.length - 1)) : null) : null,
+    h("div", { className: "wbi-actions" },
+      h(ui.Button, { className: "wbi-btn wbi-btn-sm wbi-ghost", disabled: props.busy,
+        onClick: function () { props.onEdit(item); } }, tr(lang, "编辑", "Edit")),
+      h(ui.Button, { className: "wbi-btn wbi-btn-sm wbi-ghost wbi-danger", disabled: props.busy,
+        onClick: function () { props.onDelete(item); } }, tr(lang, "删除", "Delete"))));
+}
 function Records(props) {
   var api = props.api,
     lang = props.lang;
@@ -118,7 +155,7 @@ function Records(props) {
     h(
       "div",
       { className: "wbi-row" },
-      h("h2", null, tr(lang, "物品管理", "Inventory")),
+      h("h2", null, tr(lang, "储物", "Storage")),
       h("span", { className: "wbi-muted" }, tr(lang, "记录物品、库存与存放备注", "Track items, stock and notes")),
       h("span", { className: "wbi-grow" }),
       h(
@@ -209,102 +246,12 @@ function Records(props) {
       { className: "wbi-grid", "aria-busy": loading[0] },
       !loading[0] && !error[0] && data
         ? data.records.map(function (item) {
-            return h(
-              "article",
-              { key: item.id, className: "wbi-card" },
-              h(
-                "div",
-                { className: "wbi-row" },
-                h("h3", null, item.name),
-                h("span", { className: "wbi-grow" }),
-                h(
-                  "span",
-                  { className: "wbi-stock" },
-                  item.stock || "—",
-                  item.unit ? h("small", { className: "wbi-muted" }, " " + item.unit) : null,
-                ),
-              ),
-              h("div", { className: "wbi-muted" }, tr(lang, "品牌：", "Brand: ") + (item.brand || "—")),
-              item.remark ? h("p", null, item.remark) : null,
-              h(
-                "div",
-                { className: "wbi-tags" },
-                (item.tags || []).map(function (t) {
-                  return h(
-                    ui.Button,
-                    {
-                      key: t.id,
-                      className: "wbi-btn wbi-chip",
-                      disabled: !caps[0],
-                      title: tr(lang, "按此标签筛选", "Filter by this tag"),
-                      onClick: function () {
-                        tag[1](t);
-                        page[1](1);
-                      },
-                    },
-                    t.name,
-                  );
-                }),
-              ),
-              h(
-                "div",
-                { className: "wbi-images" },
-                (item.imgList || []).filter(ui.safeImage).map(function (url, i) {
-                  return h(
-                    "button",
-                    {
-                      key: i,
-                      type: "button",
-                      className: "wbi-image",
-                      "aria-label": tr(lang, "预览图片 ", "Preview image ") + (i + 1),
-                      onClick: function () {
-                        preview[1]({ url: url, name: item.name });
-                      },
-                    },
-                    h("img", {
-                      src: url,
-                      alt: item.name + " " + (i + 1),
-                      loading: "lazy",
-                      referrerPolicy: "no-referrer",
-                    }),
-                  );
-                }),
-              ),
-              h(
-                "div",
-                { className: "wbi-muted" },
-                tr(lang, "创建 ", "Created ") + date(item.createTime),
-                h("br"),
-                tr(lang, "更新 ", "Updated ") + date(item.updateTime),
-              ),
-              h(
-                "div",
-                { className: "wbi-row" },
-                h("span", { className: "wbi-grow" }),
-                h(
-                  ui.Button,
-                  {
-                    disabled: busy[0],
-                    onClick: function () {
-                      editing[1](item);
-                    },
-                  },
-                  tr(lang, "编辑", "Edit"),
-                ),
-                h(
-                  ui.Button,
-                  {
-                    className: "wbi-btn wbi-danger",
-                    disabled: busy[0],
-                    onClick: function () {
-                      if (confirmDelete[0]) deleting[1](item);
-                      else remove(item);
-                    },
-                  },
-                  tr(lang, "删除", "Delete"),
-                ),
-              ),
-            );
+            return h(StorageCard, {
+              key: item.id, item: item, lang: lang, caps: caps[0], busy: busy[0], date: date,
+              onTag: function (t) { tag[1](t); page[1](1); },
+              onPreview: preview[1], onEdit: editing[1],
+              onDelete: function (v) { if (confirmDelete[0]) deleting[1](v); else remove(v); }
+            });
           })
         : null,
     ),
@@ -442,4 +389,4 @@ function Records(props) {
       : null,
   );
 }
-module.exports = { Records: Records };
+module.exports = { Records: Records, StorageCard: StorageCard };

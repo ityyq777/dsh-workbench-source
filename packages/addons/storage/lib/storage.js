@@ -127,7 +127,7 @@ export function registerStorageActions(api) {
       execute: (args = {}, ctx = {}) => execute(args, ctx),
       render: (r) => JSON.stringify(r),
     });
-  action("storage.capabilities", "探测可选标签插件；物品管理独立可用", {}, [], () => ({ tags: tagsOn(api) }));
+  action("storage.capabilities", "探测可选标签插件；储物独立可用", {}, [], () => ({ tags: tagsOn(api) }));
   action(
     "storage.list",
     "分页查询物品，关键词匹配名称/品牌/备注，标签命中任一",

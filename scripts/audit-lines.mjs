@@ -75,6 +75,8 @@ function walk(dir, out) {
 
 const files = [];
 for (const pattern of ROOTS) for (const dir of expand(pattern)) walk(dir, files);
+// 跨插件共享客户端源码不在 */client 目录内，同样受手写源预算约束。
+walk(join(ROOT, "packages/addons/lib"), files);
 
 const rows = [];
 for (const file of files) {

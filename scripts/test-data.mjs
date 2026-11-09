@@ -193,17 +193,21 @@ assert(tagStats.breakdowns.itemTypes.some(r => r.key === "storage" && r.label ==
 assert(!tagStats.warnings.some(w => w.code === "item_type_unknown"), "物品类型不应触发未知类型告警");
 mustThrow(() => storage.call("storage.dataQuery", { table: "meta" }), "表", "物品数据页不得读取宿主表");
 
-// 7. 表索引页只查本插件：data.cjs 不再跨域 fan-out
-for (const plug of ["tasks", "tags", "sites"]) {
-  const src = readFileSync(new URL("../packages/addons/" + plug + "/client/data.cjs", import.meta.url), "utf8");
-  assert(src.indexOf("ALL_DOMAINS") < 0 && src.indexOf("var DOMAINS = [") < 0, plug + "/data.cjs 仍保留跨插件域列表");
-  assert(src.indexOf('d.id + ".dataTables"') < 0, plug + "/data.cjs 仍在按域循环调用 dataTables");
-  assert(src.indexOf('api.call(DOMAIN + ".dataTables"') >= 0, plug + "/data.cjs 应只调用本域 dataTables");
-  const idxCalls = src.split('api.call(DOMAIN + ".dataTables"').length - 1;
-  assert(idxCalls === 2, plug + "/data.cjs 的 dataTables 调用次数应为 2（表目录 + 索引页），实际 " + idxCalls);
-  assert(src.indexOf("domainLabel") < 0, plug + "/data.cjs 仍保留域列渲染");
-  assert(src.indexOf("idxDomain") < 0, plug + "/data.cjs 仍保留「域」列文案");
-}
+// 7. storage 表归属与列筛选：声明、数据页及索引都只暴露物品表。
+const storageManifest = JSON.parse(readFileSync(new URL("../packages/addons/storage/package.json", import.meta.url), "utf8"));
+assert(JSON.stringify(storageManifest.wb.addon.tables) === JSON.stringify(["storage"]), "storage 元数据不应宣称拥有标签映射");
+const inventoryIndex = storage.call("storage.dataTables", { stats: true });
+assert(inventoryIndex.tables.length === 1 && inventoryIndex.tables[0].name === "storage" && inventoryIndex.tables[0].stats, "物品索引只能列本域表");
+mustThrow(() => storage.call("storage.dataQuery", { table: "tag_mapping" }), "表", "物品数据页不能跨域查询标签映射");
+for (let i = 0; i < 11; i++) storage.call("storage.create", { name: "筛选物品" + i, stock: i % 2 ? "半瓶" : "1~2", remark: "完整长备注" });
+const nameFiltered = storage.call("storage.dataQuery", { table: "storage", filters: { name: "筛选物品" }, pageSize: 10, page: 2 });
+assert(nameFiltered.total === 11 && nameFiltered.rows.length === 1, "名称列筛选末页应有1条");
+const textStock = storage.call("storage.dataQuery", { table: "storage", filters: { stock: "半瓶" } });
+assert(textStock.total === 5 && textStock.rows.every(r => r.stock === "半瓶"), "库存按自由文本逐列筛选");
+assert(storage.call("storage.dataQuery", { table: "storage", filters: { name: "不存在的值" } }).total === 0, "列筛选空态");
+storage.call("storage.delete", { id: item.id });
+assert(storage.call("storage.dataQuery", { table: "storage", filters: { id: item.id } }).total === 0, "默认隐藏软删物品");
+assert(storage.call("storage.dataQuery", { table: "storage", filters: { id: item.id }, includeDeleted: true }).total === 1, "含已删开关应显示软删物品");
 
 rmSync(dir, { recursive: true, force: true });
 console.log("DATA TEST PASS " + JSON.stringify({ tables: 8, events: events.length, deletionChecked: true }));

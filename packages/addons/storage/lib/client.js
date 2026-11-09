@@ -14,15 +14,70 @@ var __commonJS = (cb, mod) => function __require() {
   }
 };
 
+// packages/addons/lib/description.cjs
+var require_description = __commonJS({
+  "packages/addons/lib/description.cjs"(exports2, module2) {
+    var React = require("react");
+    var h = React.createElement;
+    var css = `
+.wb-desc{margin-top:4px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-width:100%;min-width:0;box-sizing:border-box;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,#5b7fd6 34%,transparent);background:color-mix(in oklab,#5b7fd6 7%,transparent);color:inherit}
+.wb-desc-text{display:block}.wb-desc-clamped{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.wb-desc-toggle{display:block;border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-size:12px;min-width:32px;min-height:32px;padding:3px 6px;border-radius:6px;cursor:pointer;white-space:normal}
+.wb-desc-toggle:hover{background:color-mix(in oklab,currentColor 8%,transparent)}.wb-desc-toggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#2563eb);outline-offset:2px}
+`;
+    function Description(props) {
+      var text = props.text == null ? "" : String(props.text);
+      var expanded = React.useState(false), overflow = React.useState(false), ref = React.useRef(null);
+      React.useEffect(function() {
+        expanded[1](false);
+      }, [text]);
+      React.useEffect(function() {
+        var node = ref.current;
+        if (!node) return;
+        function measure() {
+          if (!expanded[0]) overflow[1](node.scrollHeight > node.clientHeight + 1);
+        }
+        measure();
+        var observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
+        if (observer) observer.observe(node);
+        return function() {
+          if (observer) observer.disconnect();
+        };
+      }, [text, expanded[0]]);
+      if (!text.trim()) return null;
+      return h(
+        "div",
+        { className: "wb-desc" },
+        h("span", { ref, className: "wb-desc-text" + (expanded[0] ? "" : " wb-desc-clamped") }, text),
+        overflow[0] || expanded[0] ? h("button", {
+          type: "button",
+          className: "wb-desc-toggle",
+          "aria-expanded": expanded[0],
+          onClick: function() {
+            expanded[1](!expanded[0]);
+          }
+        }, props.lang === "en" ? expanded[0] ? "Collapse" : "Expand" : expanded[0] ? "\u6536\u8D77" : "\u5C55\u5F00") : null
+      );
+    }
+    module2.exports = { css, Description };
+  }
+});
+
 // packages/addons/storage/client/styles.cjs
 var require_styles = __commonJS({
   "packages/addons/storage/client/styles.cjs"(exports2, module2) {
-    module2.exports = `
-.wbi-root{--line:var(--wb-line,var(--dsw-alias-border-l2,#d9dfe6));--surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,#fff));--muted:var(--dsw-alias-label-secondary,#64748b);--accent:var(--dsw-alias-brand-primary,#2563eb);font-size:13px;color:inherit;min-width:0}
-.wbi-root *{box-sizing:border-box}.wbi-root h2{font-size:18px;margin:0}.wbi-root h3{font-size:15px;margin:0}.wbi-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.wbi-grow{flex:1}.wbi-muted{color:var(--muted);font-size:12px}.wbi-root input,.wbi-root textarea,.wbi-root select{background:var(--surface);color:inherit;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;max-width:100%}.wbi-root textarea{resize:vertical;min-height:80px}.wbi-root :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.wbi-btn{border:1px solid var(--line);background:var(--surface);color:inherit;border-radius:8px;padding:7px 12px;cursor:pointer;font:inherit}.wbi-btn:hover{border-color:var(--accent)}.wbi-btn:disabled{opacity:.45;cursor:default}.wbi-primary{background:var(--accent);color:#fff;border-color:var(--accent)}.wbi-danger{color:var(--dsw-alias-state-error-primary,#b91c1c)}.wbi-toolbar{margin:18px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.wbi-toolbar input[type=search]{min-width:220px;flex:1}.wbi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}.wbi-card{padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--surface);min-width:0;display:flex;flex-direction:column;gap:12px}.wbi-card h3{overflow-wrap:anywhere}.wbi-stock{font-size:20px;font-weight:650}.wbi-card p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.wbi-tags{display:flex;gap:6px;flex-wrap:wrap}.wbi-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:20px;background:color-mix(in srgb,var(--accent) 9%,transparent);font-size:12px}.wbi-images{display:flex;gap:8px;overflow:auto}.wbi-image{border:1px solid var(--line);border-radius:8px;overflow:hidden;padding:0;background:transparent;flex-shrink:0;cursor:pointer}.wbi-image img{display:block;width:76px;height:68px;object-fit:cover}.wbi-empty{padding:50px 20px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}.wbi-error{padding:12px;margin:10px 0;border:1px solid #ef4444;border-radius:8px;color:var(--dsw-alias-state-error-primary,#b91c1c)}.wbi-pager{margin:20px 0;display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
-.wbi-mask{position:fixed;inset:0;background:#0007;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px}.wbi-modal{background:var(--surface);color:inherit;border-radius:14px;padding:22px;width:640px;max-width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 70px #0004}.wbi-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}.wbi-field{display:flex;flex-direction:column;gap:6px;min-width:0}.wbi-wide{grid-column:1/-1}.wbi-formfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}.wbi-tagoptions{display:flex;gap:8px;flex-wrap:wrap;max-height:160px;overflow:auto;margin-top:8px}.wbi-tagoptions label{display:flex;gap:5px;align-items:center}.wbi-preview{display:block;max-width:100%;max-height:65vh;margin:16px auto;object-fit:contain}.wbi-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin:18px 0}.wbi-kpis strong{display:block;font-size:28px;margin-top:8px}.wbi-tablewrap{overflow:auto;margin-top:16px}.wbi-table{width:100%;border-collapse:collapse}.wbi-table td,.wbi-table th{padding:10px;border-bottom:1px solid var(--line);text-align:left;max-width:300px;overflow-wrap:anywhere}.wbi-table th{white-space:nowrap}.wbi-table td{white-space:pre-wrap}.wbi-bar{height:7px;border-radius:4px;background:var(--accent);margin:8px 0 12px}.wbi-notice{padding:10px 0;color:var(--muted)}
-@media(max-width:600px){.wbi-grid,.wbi-form{grid-template-columns:1fr}.wbi-wide{grid-column:auto}.wbi-mask{padding:8px}.wbi-modal{padding:16px}.wbi-toolbar input[type=search]{min-width:0;width:100%}}
+    module2.exports = require_description().css + `
+.wbi-root{--line:var(--wb-line,var(--dsw-alias-border-l2,#d9dfe6));--surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,#fff));--muted:var(--dsw-alias-label-secondary,#64748b);--accent:var(--dsw-alias-brand-primary,#2563eb);font-size:13px;color:inherit;min-width:0;container-type:inline-size;container-name:storage}
+.wbi-root *{box-sizing:border-box}.wbi-root h2{font-size:18px;margin:0}.wbi-root h3{font-size:15px;margin:0}.wbi-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.wbi-grow{flex:1;min-width:0}.wbi-muted{color:var(--muted);font-size:12px}.wbi-root input,.wbi-root textarea,.wbi-root select{background:var(--surface);color:inherit;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;max-width:100%}.wbi-root textarea{resize:vertical;min-height:80px}.wbi-root :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wbi-btn{border:1px solid var(--line);background:var(--surface);color:inherit;border-radius:8px;padding:7px 12px;cursor:pointer;font:inherit}.wbi-btn:hover{border-color:var(--accent)}.wbi-btn:disabled{opacity:.45;cursor:default}.wbi-primary{background:var(--accent);color:#fff;border-color:var(--accent)}.wbi-danger{color:var(--dsw-alias-state-error-primary,#b91c1c)}.wbi-toolbar{margin:18px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.wbi-toolbar input[type=search]{min-width:220px;flex:1}.wbi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:14px}.wbi-card{padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);min-width:0;height:100%;display:flex;flex-direction:column;gap:8px;transition:transform .14s ease,border-color .14s ease}.wbi-card h3{font-size:14px;font-weight:650;line-height:1.4;overflow-wrap:anywhere;min-width:0;flex:1}.wbi-stock{font-size:18px;font-weight:650;overflow-wrap:anywhere;max-width:100%;font-variant-numeric:tabular-nums}.wbi-card p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.wbi-tags{display:flex;gap:6px;flex-wrap:wrap}.wbi-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:20px;background:color-mix(in srgb,var(--accent) 9%,transparent);font-size:12px}.wbi-images{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-width:0}.wbi-image{border:1px solid var(--line);border-radius:8px;overflow:hidden;padding:0;background:transparent;flex-shrink:0;cursor:pointer}.wbi-image img{display:block;width:80px;aspect-ratio:4/3;height:auto;object-fit:cover}.wbi-empty{padding:50px 20px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}.wbi-error{padding:12px;margin:10px 0;border:1px solid #ef4444;border-radius:8px;color:var(--dsw-alias-state-error-primary,#b91c1c)}.wbi-pager{margin:20px 0;display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.wbi-mask{position:fixed;inset:0;background:#0007;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px}.wbi-modal{background:var(--surface);color:inherit;border-radius:14px;padding:22px;width:640px;max-width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 70px #0004}.wbi-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}.wbi-field{display:flex;flex-direction:column;gap:6px;min-width:0}.wbi-wide{grid-column:1/-1}.wbi-formfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}.wbi-tagoptions{display:flex;gap:8px;flex-wrap:wrap;max-height:160px;overflow:auto;margin-top:8px}.wbi-tagoptions label{display:flex;gap:5px;align-items:center}.wbi-preview{display:block;max-width:100%;max-height:65vh;margin:16px auto;object-fit:contain}.wbi-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin:18px 0}.wbi-kpis strong{display:block;font-size:28px;margin-top:8px}.wbi-bar{height:7px;border-radius:4px;background:var(--accent);margin:8px 0 12px}.wbi-notice{padding:10px 0;color:var(--muted)}
+@media(max-width:600px){.wbi-form{grid-template-columns:1fr}.wbi-wide{grid-column:auto}.wbi-mask{padding:8px}.wbi-modal{padding:16px}.wbi-toolbar input[type=search]{min-width:0;width:100%}}
+
+.wbi-cardhead{display:flex;align-items:baseline;gap:8px;min-width:0;flex-wrap:wrap}.wbi-metazone{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}.wbi-meta{display:flex;gap:2px 10px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.wbi-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px;margin-top:auto;padding-top:6px;min-width:0}.wbi-btn-sm{padding:3px 9px;font-size:12px;min-height:32px;min-width:32px}.wbi-ghost{background:transparent;border-color:transparent}.wbi-ghost.wbi-danger{color:inherit}.wbi-ghost.wbi-danger:hover{color:var(--dsw-alias-state-error-primary,#b91c1c);border-color:currentColor}.wbi-chip{min-height:32px;max-width:100%;overflow-wrap:anywhere;text-align:left}.wbi-stock small{font-weight:400}.wbi-more{font-variant-numeric:tabular-nums}
+.wbi-card:hover,.wbi-card:focus-within{border-color:color-mix(in oklab,var(--accent) 40%,var(--line))}.wbi-card:hover{transform:translateY(-2px)}.wbi-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@container storage (min-width:1280px){.wbi-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.wbi-card{transition:none}.wbi-card:hover{transform:none}}
 `;
   }
 });
@@ -152,7 +207,7 @@ var require_stats = __commonJS({
         h(
           "div",
           { className: "wbi-row" },
-          h("h2", null, tr(lang, "\u7269\u54C1\u6982\u89C8", "Inventory overview")),
+          h("h2", null, tr(lang, "\u50A8\u7269\u6982\u89C8", "Storage overview")),
           h("span", { className: "wbi-grow" }),
           h(
             ui.Button,
@@ -428,6 +483,94 @@ var require_records = __commonJS({
     var Editor = require_editor().Editor;
     var h = ui.h;
     var tr = ui.tr;
+    var Description = require_description().Description;
+    function StorageCard(props) {
+      var item = props.item, lang = props.lang, gallery = React.useState(false);
+      var images = (item.imgList || []).filter(ui.safeImage), tags = item.tags || [];
+      var shown = gallery[0] ? images : images.slice(0, 1);
+      var meta = [
+        item.brand && tr(lang, "\u54C1\u724C\uFF1A", "Brand: ") + item.brand,
+        item.unit && tr(lang, "\u5355\u4F4D\uFF1A", "Unit: ") + item.unit
+      ].filter(Boolean);
+      return h(
+        "article",
+        { className: "wbi-card" },
+        h(
+          "div",
+          { className: "wbi-cardhead" },
+          h("h3", null, item.name),
+          h(
+            "span",
+            { className: "wbi-stock" },
+            item.stock == null || item.stock === "" ? "\u2014" : item.stock,
+            item.unit ? h("small", { className: "wbi-muted" }, " " + item.unit) : null
+          )
+        ),
+        tags.length ? h("div", { className: "wbi-tags" }, tags.map(function(t) {
+          return h(ui.Button, {
+            key: t.id,
+            className: "wbi-btn wbi-chip",
+            disabled: !props.caps,
+            title: tr(lang, "\u6309\u6B64\u6807\u7B7E\u7B5B\u9009", "Filter by this tag"),
+            onClick: function() {
+              props.onTag(t);
+            }
+          }, t.name);
+        })) : null,
+        meta.length || item.createTime || item.updateTime ? h(
+          "div",
+          { className: "wbi-metazone" },
+          meta.length ? h("div", { className: "wbi-muted" }, meta.join(" \xB7 ")) : null,
+          item.createTime || item.updateTime ? h(
+            "div",
+            { className: "wbi-meta" },
+            item.createTime ? h("span", null, tr(lang, "\u521B\u5EFA ", "Created ") + props.date(item.createTime)) : null,
+            item.updateTime ? h("span", null, tr(lang, "\u66F4\u65B0 ", "Updated ") + props.date(item.updateTime)) : null
+          ) : null
+        ) : null,
+        h(Description, { text: item.remark, lang }),
+        images.length ? h("div", { className: "wbi-images" }, shown.map(function(url, i) {
+          return h(
+            "button",
+            {
+              key: i,
+              type: "button",
+              className: "wbi-image",
+              "aria-label": tr(lang, "\u9884\u89C8\u56FE\u7247 ", "Preview image ") + (i + 1),
+              onClick: function() {
+                props.onPreview({ url, name: item.name });
+              }
+            },
+            h("img", { src: url, alt: item.name + " " + (i + 1), loading: "lazy", referrerPolicy: "no-referrer" })
+          );
+        }), images.length > 1 ? h(ui.Button, {
+          className: "wbi-btn wbi-btn-sm wbi-ghost wbi-more",
+          "aria-expanded": gallery[0],
+          "aria-label": tr(lang, "\u5C55\u5F00\u6216\u6536\u8D77\u7269\u54C1\u56FE\u7247", "Expand or collapse item images"),
+          onClick: function() {
+            gallery[1](!gallery[0]);
+          }
+        }, gallery[0] ? tr(lang, "\u6536\u8D77", "Collapse") : "+" + (images.length - 1)) : null) : null,
+        h(
+          "div",
+          { className: "wbi-actions" },
+          h(ui.Button, {
+            className: "wbi-btn wbi-btn-sm wbi-ghost",
+            disabled: props.busy,
+            onClick: function() {
+              props.onEdit(item);
+            }
+          }, tr(lang, "\u7F16\u8F91", "Edit")),
+          h(ui.Button, {
+            className: "wbi-btn wbi-btn-sm wbi-ghost wbi-danger",
+            disabled: props.busy,
+            onClick: function() {
+              props.onDelete(item);
+            }
+          }, tr(lang, "\u5220\u9664", "Delete"))
+        )
+      );
+    }
     function Records(props) {
       var api = props.api, lang = props.lang;
       var items = React.useState(null), error = React.useState(null), loading = React.useState(true), query = React.useState(""), text = React.useState(""), page = React.useState(1), size = React.useState(12), sort = React.useState("update_time"), order = React.useState("desc"), tick = React.useState(0), editing = React.useState(null), deleting = React.useState(null), preview = React.useState(null), busy = React.useState(false), caps = React.useState(false), ready = React.useState(false), confirmDelete = React.useState(true), tag = React.useState(null);
@@ -515,7 +658,7 @@ var require_records = __commonJS({
         h(
           "div",
           { className: "wbi-row" },
-          h("h2", null, tr(lang, "\u7269\u54C1\u7BA1\u7406", "Inventory")),
+          h("h2", null, tr(lang, "\u50A8\u7269", "Storage")),
           h("span", { className: "wbi-muted" }, tr(lang, "\u8BB0\u5F55\u7269\u54C1\u3001\u5E93\u5B58\u4E0E\u5B58\u653E\u5907\u6CE8", "Track items, stock and notes")),
           h("span", { className: "wbi-grow" }),
           h(
@@ -599,102 +742,24 @@ var require_records = __commonJS({
           "div",
           { className: "wbi-grid", "aria-busy": loading[0] },
           !loading[0] && !error[0] && data ? data.records.map(function(item) {
-            return h(
-              "article",
-              { key: item.id, className: "wbi-card" },
-              h(
-                "div",
-                { className: "wbi-row" },
-                h("h3", null, item.name),
-                h("span", { className: "wbi-grow" }),
-                h(
-                  "span",
-                  { className: "wbi-stock" },
-                  item.stock || "\u2014",
-                  item.unit ? h("small", { className: "wbi-muted" }, " " + item.unit) : null
-                )
-              ),
-              h("div", { className: "wbi-muted" }, tr(lang, "\u54C1\u724C\uFF1A", "Brand: ") + (item.brand || "\u2014")),
-              item.remark ? h("p", null, item.remark) : null,
-              h(
-                "div",
-                { className: "wbi-tags" },
-                (item.tags || []).map(function(t) {
-                  return h(
-                    ui.Button,
-                    {
-                      key: t.id,
-                      className: "wbi-btn wbi-chip",
-                      disabled: !caps[0],
-                      title: tr(lang, "\u6309\u6B64\u6807\u7B7E\u7B5B\u9009", "Filter by this tag"),
-                      onClick: function() {
-                        tag[1](t);
-                        page[1](1);
-                      }
-                    },
-                    t.name
-                  );
-                })
-              ),
-              h(
-                "div",
-                { className: "wbi-images" },
-                (item.imgList || []).filter(ui.safeImage).map(function(url, i) {
-                  return h(
-                    "button",
-                    {
-                      key: i,
-                      type: "button",
-                      className: "wbi-image",
-                      "aria-label": tr(lang, "\u9884\u89C8\u56FE\u7247 ", "Preview image ") + (i + 1),
-                      onClick: function() {
-                        preview[1]({ url, name: item.name });
-                      }
-                    },
-                    h("img", {
-                      src: url,
-                      alt: item.name + " " + (i + 1),
-                      loading: "lazy",
-                      referrerPolicy: "no-referrer"
-                    })
-                  );
-                })
-              ),
-              h(
-                "div",
-                { className: "wbi-muted" },
-                tr(lang, "\u521B\u5EFA ", "Created ") + date(item.createTime),
-                h("br"),
-                tr(lang, "\u66F4\u65B0 ", "Updated ") + date(item.updateTime)
-              ),
-              h(
-                "div",
-                { className: "wbi-row" },
-                h("span", { className: "wbi-grow" }),
-                h(
-                  ui.Button,
-                  {
-                    disabled: busy[0],
-                    onClick: function() {
-                      editing[1](item);
-                    }
-                  },
-                  tr(lang, "\u7F16\u8F91", "Edit")
-                ),
-                h(
-                  ui.Button,
-                  {
-                    className: "wbi-btn wbi-danger",
-                    disabled: busy[0],
-                    onClick: function() {
-                      if (confirmDelete[0]) deleting[1](item);
-                      else remove(item);
-                    }
-                  },
-                  tr(lang, "\u5220\u9664", "Delete")
-                )
-              )
-            );
+            return h(StorageCard, {
+              key: item.id,
+              item,
+              lang,
+              caps: caps[0],
+              busy: busy[0],
+              date,
+              onTag: function(t) {
+                tag[1](t);
+                page[1](1);
+              },
+              onPreview: preview[1],
+              onEdit: editing[1],
+              onDelete: function(v) {
+                if (confirmDelete[0]) deleting[1](v);
+                else remove(v);
+              }
+            });
           }) : null
         ),
         data ? h(
@@ -817,7 +882,7 @@ var require_records = __commonJS({
         ) : null
       );
     }
-    module2.exports = { Records };
+    module2.exports = { Records, StorageCard };
   }
 });
 
@@ -1395,188 +1460,1101 @@ var require_config = __commonJS({
   }
 });
 
-// packages/addons/storage/client/data.cjs
-var require_data = __commonJS({
-  "packages/addons/storage/client/data.cjs"(exports2, module2) {
+// packages/addons/lib/data-copy.cjs
+var require_data_copy = __commonJS({
+  "packages/addons/lib/data-copy.cjs"(exports2, module2) {
+    "use strict";
+    var COPY = {
+      zh: {
+        title: "\u6570\u636E",
+        subtitle: "\u53EA\u8BFB\u6D4F\u89C8\u672C\u63D2\u4EF6\u8D1F\u8D23\u7684\u8868\uFF1B\u7CFB\u7EDF\u5217\u4E0E\u5DF2\u5220\u9664\u884C\u9ED8\u8BA4\u9690\u85CF",
+        tables: "\u8868",
+        rows: "\u884C",
+        deleted: "\u5DF2\u5220\u9664",
+        rowCount: "\u5171 {n} \u884C",
+        deletedCount: "\u5176\u4E2D {n} \u884C\u5DF2\u5220\u9664",
+        search: "\u641C\u7D22\u6240\u6709\u6587\u672C\u5217\u2026",
+        pageSize: "\u6BCF\u9875",
+        includeDeleted: "\u542B\u5DF2\u5220\u9664",
+        showSystem: "\u7CFB\u7EDF\u5217",
+        refresh: "\u5237\u65B0",
+        loading: "\u8F7D\u5165\u4E2D\u2026",
+        empty: "\u8FD9\u5F20\u8868\u8FD8\u6CA1\u6709\u6570\u636E",
+        emptyTable: "\u6CA1\u6709\u53EF\u5C55\u793A\u7684\u8868",
+        loadFail: "\u6570\u636E\u670D\u52A1\u4E0D\u53EF\u7528\uFF08\u63D2\u4EF6\u7248\u672C\u8FC7\u65E7\uFF1F\uFF09",
+        retry: "\u91CD\u8BD5",
+        queryFail: "\u67E5\u8BE2\u5931\u8D25\uFF1A",
+        noRows: "\u6CA1\u6709\u5339\u914D\u7684\u884C",
+        prev: "\u4E0A\u4E00\u9875",
+        next: "\u4E0B\u4E00\u9875",
+        pageInfo: "\u7B2C {page} / {pages} \u9875",
+        jump: "\u8DF3\u8F6C",
+        total: "\u5171 {n} \u884C",
+        copied: "\u5DF2\u590D\u5236",
+        copy: "\u590D\u5236",
+        close: "\u5173\u95ED",
+        drawerTitle: "{column} \xB7 \u7B2C {row} \u884C",
+        nullText: "NULL",
+        emptyText: "\u7A7A",
+        yes: "\u662F",
+        no: "\u5426",
+        json: "JSON",
+        queryTime: "{n} ms",
+        sortAsc: "\u5347\u5E8F",
+        sortDesc: "\u964D\u5E8F",
+        filterCol: "\u7B5B\u9009\u2026",
+        filterClear: "\u6E05\u9664\u7B5B\u9009",
+        index: "\u8868\u7D22\u5F15",
+        indexSub: "\u672C\u63D2\u4EF6\u8D1F\u8D23\u7684\u8868\uFF08{tables}\uFF09\uFF1A\u884C\u6570\u3001\u5217\u6570\u3001\u4E3B\u952E\u3001\u7D22\u5F15\u4E0E\u6700\u8FD1\u5199\u5165\uFF08\u53EA\u8BFB\uFF09",
+        idxTable: "\u8868",
+        idxRows: "\u884C\u6570",
+        idxCols: "\u5217\u6570",
+        idxKey: "\u4E3B\u952E",
+        idxIndexes: "\u7D22\u5F15",
+        idxLastWrite: "\u6700\u8FD1\u5199\u5165",
+        idxNone: "\u65E0",
+        idxEmpty: "\u6CA1\u6709\u53EF\u7EDF\u8BA1\u7684\u8868",
+        idxTables: "\u8868",
+        idxAt: "\u7EDF\u8BA1\u65F6\u95F4"
+      },
+      en: {
+        title: "Data",
+        subtitle: "Read-only view of this plugin's tables; system and deleted rows are hidden by default",
+        tables: "Tables",
+        rows: "rows",
+        deleted: "deleted",
+        rowCount: "{n} rows",
+        deletedCount: "{n} deleted",
+        search: "Search all text columns\u2026",
+        pageSize: "Rows",
+        includeDeleted: "Deleted",
+        showSystem: "System",
+        refresh: "Refresh",
+        loading: "Loading\u2026",
+        empty: "This table has no rows yet",
+        emptyTable: "No tables to show",
+        loadFail: "Data service unavailable (plugin too old?)",
+        retry: "Retry",
+        queryFail: "Query failed: ",
+        noRows: "No matching rows",
+        prev: "Previous",
+        next: "Next",
+        pageInfo: "Page {page} / {pages}",
+        jump: "Jump",
+        total: "{n} rows",
+        copied: "Copied",
+        copy: "Copy",
+        close: "Close",
+        drawerTitle: "{column} \xB7 row {row}",
+        nullText: "NULL",
+        emptyText: "empty",
+        yes: "Yes",
+        no: "No",
+        json: "JSON",
+        queryTime: "{n} ms",
+        sortAsc: "ascending",
+        sortDesc: "descending",
+        filterCol: "Filter\u2026",
+        filterClear: "Clear filter",
+        index: "Table index",
+        indexSub: "Tables owned by {domain} ({tables}): rows, columns, primary key, indexes and last write (read-only)",
+        idxTable: "Table",
+        idxRows: "Rows",
+        idxCols: "Cols",
+        idxKey: "Primary key",
+        idxIndexes: "Indexes",
+        idxLastWrite: "Last write",
+        idxNone: "\u2014",
+        idxEmpty: "No tables to index",
+        idxTables: "Tables",
+        idxAt: "Generated"
+      }
+    };
+    module2.exports = COPY;
+  }
+});
+
+// packages/addons/lib/data-style.cjs
+var require_data_style = __commonJS({
+  "packages/addons/lib/data-style.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(DOMAIN, PREFIX) {
+      var P = PREFIX + "-data";
+      var CSS = [
+        "." + P + "{--cfg-line:var(--wb-line,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent)));--cfg-surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));--cfg-muted:var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 62%,transparent));--cfg-faint:var(--dsw-alias-label-tertiary,color-mix(in oklab,currentColor 42%,transparent));--cfg-hover:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent));display:grid;grid-template-columns:216px minmax(0,1fr);gap:16px;width:100%;min-width:0;color:inherit;font-size:13px;align-items:start}",
+        "." + P + "-side{position:sticky;top:12px;display:flex;flex-direction:column;gap:3px;border:1px solid var(--cfg-line);border-radius:14px;background:var(--cfg-surface);padding:8px;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
+        "." + P + "-sidetitle{display:flex;align-items:center;justify-content:space-between;padding:6px 10px 8px;font-size:11px;font-weight:660;letter-spacing:.6px;text-transform:uppercase;color:var(--cfg-faint)}",
+        "." + P + "-stab{display:flex;flex-direction:column;gap:3px;align-items:stretch;border:1px solid transparent;background:transparent;border-radius:9px;padding:8px 10px;font:inherit;color:inherit;text-align:left;cursor:pointer;position:relative;transition:background .12s ease,border-color .12s ease}",
+        "." + P + "-stab:hover{background:var(--cfg-hover)}",
+        "." + P + "-stab:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
+        "." + P + "-stab.on{background:color-mix(in oklab,currentColor 6%,transparent);border-color:var(--cfg-line)}",
+        "." + P + "-stab.on::before{content:'';position:absolute;left:-1px;top:9px;bottom:9px;width:2px;border-radius:2px;background:var(--dsw-alias-brand-primary,currentColor)}",
+        "." + P + "-stabname{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;line-height:1.4;min-width:0}",
+        "." + P + "-stabname span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+        "." + P + "-sidetable{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;color:var(--cfg-muted);margin-top:3px;letter-spacing:.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+        "." + P + "-sidecount{margin-left:auto;font-size:10.5px;font-variant-numeric:tabular-nums;color:var(--cfg-muted);background:color-mix(in oklab,currentColor 8%,transparent);border-radius:999px;padding:1px 7px;flex:none}",
+        "." + P + "-main{display:flex;flex-direction:column;gap:10px;min-width:0;border:1px solid var(--cfg-line);border-radius:14px;background:var(--cfg-surface);padding:14px 16px 12px;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
+        "." + P + "-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}",
+        "." + P + "-headmain{min-width:0;flex:1}",
+        "." + P + "-head h2{margin:0;font-size:16px;font-weight:660;letter-spacing:.1px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+        "." + P + "-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;font-weight:500;color:var(--cfg-muted);background:color-mix(in oklab,currentColor 6%,transparent);border-radius:6px;padding:2px 6px}",
+        "." + P + "-sub{font-size:11.5px;color:var(--cfg-muted);line-height:1.55;margin-top:4px}",
+        "." + P + "-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:2px 0 4px}",
+        "." + P + "-search{position:relative;flex:1;min-width:180px;max-width:340px}",
+        "." + P + "-search input{width:100%;border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:9px;padding:8px 11px;font:inherit;font-size:12.5px;outline:none;transition:border-color .15s ease,box-shadow .15s ease}",
+        "." + P + "-search input:hover{border-color:color-mix(in oklab,currentColor 28%,var(--cfg-line))}",
+        "." + P + "-search input:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
+        "." + P + "-select{border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:9px;padding:7px 10px;font:inherit;font-size:12px;outline:none}",
+        "." + P + "-select:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
+        "." + P + "-switch{position:relative;display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:var(--cfg-muted);user-select:none;padding:4px 2px}",
+        "." + P + "-switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}",
+        "." + P + "-track{position:relative;width:34px;height:20px;border-radius:999px;background:color-mix(in oklab,currentColor 18%,transparent);transition:background .16s ease;flex:none}",
+        "." + P + "-track::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--dsw-alias-label-primary,currentColor);transition:transform .16s ease,background .16s ease}",
+        "." + P + "-switch input:checked+." + P + "-track{background:var(--dsw-alias-brand-primary,currentColor)}",
+        "." + P + "-switch input:checked+." + P + "-track::after{transform:translateX(14px);background:var(--dsw-alias-label-primary-inverted,var(--dsw-alias-bg-base))}",
+        "." + P + "-switch input:focus-visible+." + P + "-track{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
+        "." + P + "-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--cfg-line);background:transparent;color:var(--cfg-muted);border-radius:8px;padding:6px 10px;font:inherit;font-size:11.5px;cursor:pointer;white-space:nowrap;transition:background .12s ease,color .12s ease}",
+        "." + P + "-btn:hover{background:var(--cfg-hover);color:var(--dsw-alias-label-primary,inherit)}",
+        "." + P + "-btn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
+        "." + P + "-btn:disabled{opacity:.45;cursor:not-allowed}",
+        "." + P + "-btn[aria-busy='true']{opacity:.6}",
+        "." + P + "-tablewrap{overflow:auto;max-height:calc(100vh - 300px);border:1px solid var(--cfg-line);border-radius:11px;background:var(--dsw-alias-bg-base,transparent)}",
+        "." + P + "-table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:12.5px}",
+        "." + P + "-table th{position:sticky;top:0;z-index:2;background:var(--cfg-surface);border-bottom:1px solid var(--cfg-line);padding:0;text-align:left;font-weight:600;white-space:nowrap}",
+        "." + P + "-thbtn{display:flex;align-items:baseline;gap:6px;width:100%;border:0;background:transparent;color:inherit;font:inherit;font-size:11.5px;font-weight:660;letter-spacing:.2px;padding:9px 12px;cursor:pointer;text-align:left;white-space:nowrap}",
+        "." + P + "-thbtn:hover{background:var(--cfg-hover)}",
+        "." + P + "-thbtn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:-2px}",
+        "." + P + "-coltype{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9.5px;font-weight:500;color:var(--cfg-faint);letter-spacing:.3px}",
+        "." + P + "-sortmark{color:var(--dsw-alias-brand-primary,currentColor);font-size:10px}",
+        "." + P + "-rownum{position:sticky;left:0;z-index:1;background:var(--cfg-surface);color:var(--cfg-faint);text-align:right;font-variant-numeric:tabular-nums;font-size:10.5px;padding:0 8px;width:1%;white-space:nowrap;border-right:1px solid color-mix(in oklab,currentColor 7%,transparent)}",
+        "." + P + "-table thead ." + P + "-rownum{z-index:3}",
+        "." + P + "-cell{padding:7px 12px;border-bottom:1px solid color-mix(in oklab,currentColor 6%,transparent);max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default;vertical-align:top}",
+        "." + P + "-table tbody tr:hover ." + P + "-cell{background:var(--cfg-hover)}",
+        "." + P + "-table tbody tr:nth-child(even) ." + P + "-cell,." + P + "-table tbody tr:nth-child(even) ." + P + "-rownum{background:color-mix(in oklab,currentColor 2.5%,transparent)}",
+        "." + P + "-cell.num{text-align:right;font-variant-numeric:tabular-nums}",
+        "." + P + "-cell.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}",
+        "." + P + "-cell.null{color:var(--cfg-faint);font-style:italic}",
+        "." + P + "-cell.json .v{color:var(--dsw-alias-brand-primary,inherit)}",
+        "." + P + "-tr.deleted ." + P + "-cell,." + P + "-tr.deleted ." + P + "-rownum{opacity:.55}",
+        "." + P + "-tr.deleted ." + P + "-cell .v{text-decoration:line-through;text-decoration-color:color-mix(in oklab,currentColor 35%,transparent)}",
+        "." + P + "-delbadge{display:inline-block;margin-left:6px;font-size:9.5px;line-height:1.5;padding:0 5px;border-radius:999px;background:color-mix(in oklab,var(--dsw-alias-state-error-primary,currentColor) 14%,transparent);color:var(--dsw-alias-state-error-primary,inherit);vertical-align:middle}",
+        "." + P + "-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px;font-size:11.5px;color:var(--cfg-muted)}",
+        "." + P + "-grow{flex:1}",
+        "." + P + "-pageinfo{font-variant-numeric:tabular-nums}",
+        "." + P + "-jump{width:56px;border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:7px;padding:4px 7px;font:inherit;font-size:11.5px;text-align:right;outline:none}",
+        "." + P + "-jump:focus{border-color:var(--dsw-alias-brand-primary,currentColor)}",
+        "." + P + "-empty{border:1px dashed var(--cfg-line);border-radius:11px;padding:44px 16px;text-align:center;font-size:12.5px;color:var(--cfg-muted)}",
+        "." + P + "-err{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid color-mix(in oklab,var(--dsw-alias-state-error-primary,currentColor) 32%,var(--cfg-line));border-radius:10px;padding:9px 12px;color:var(--dsw-alias-state-error-primary,inherit);font-size:12px;line-height:1.5}",
+        "." + P + "-skwrap{display:flex;flex-direction:column;gap:1px;padding:2px}",
+        "." + P + "-sk{height:26px;border-radius:4px;background:var(--dsw-alias-bg-skeleton,color-mix(in oklab,currentColor 6%,transparent));animation:" + PREFIX + "-data-pulse 1.4s ease-in-out infinite}",
+        "@keyframes " + PREFIX + "-data-pulse{0%,100%{opacity:.6}50%{opacity:1}}",
+        "." + P + "-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:40;background:var(--dsw-alias-bg-layer-1,var(--cfg-surface));border:1px solid var(--cfg-line);border-radius:999px;padding:7px 14px;font-size:12px;color:var(--dsw-alias-label-primary,inherit);box-shadow:0 6px 24px color-mix(in oklab,currentColor 18%,transparent)}",
+        "." + P + "-mask{position:fixed;inset:0;z-index:30;background:color-mix(in oklab,currentColor 26%,transparent)}",
+        "." + P + "-drawer{position:fixed;top:0;right:0;bottom:0;z-index:31;width:min(520px,92vw);display:flex;flex-direction:column;gap:12px;background:var(--dsw-alias-bg-layer-1,var(--cfg-surface));border-left:1px solid var(--cfg-line);box-shadow:-8px 0 28px color-mix(in oklab,currentColor 16%,transparent);padding:18px 20px}",
+        "." + P + "-drawer h3{margin:0;font-size:14px;font-weight:660;display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+        "." + P + "-drawer pre{margin:0;flex:1;overflow:auto;border:1px solid var(--cfg-line);border-radius:10px;background:var(--dsw-alias-bg-base,transparent);padding:12px 14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.65;white-space:pre-wrap;word-break:break-word}",
+        "." + P + "-drawerfoot{display:flex;gap:8px;justify-content:flex-end}",
+        "." + P + "-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
+        "@media (max-width:900px){." + P + "{grid-template-columns:minmax(0,1fr)}." + P + "-side{position:static;flex-direction:row;flex-wrap:wrap;gap:6px;padding:6px}." + P + "-sidetitle{display:none}." + P + "-stab{padding:6px 10px;flex:none}." + P + "-sidecount{display:none}." + P + "-tablewrap{max-height:calc(100vh - 260px)}}",
+        "@media (prefers-reduced-motion:reduce){." + P + "-track,." + P + "-track::after,." + P + "-sk,." + P + "-drawer{transition:none;animation:none}}",
+        "." + P + "-idxsub{font-size:11.5px;color:var(--cfg-muted);line-height:1.55}",
+        "." + P + "-idxsum{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--cfg-muted)}",
+        "." + P + "-idxsum b{font-weight:660;color:var(--dsw-alias-label-primary,inherit);font-variant-numeric:tabular-nums}",
+        "." + P + "-idxname{font-size:12.5px;font-weight:600}",
+        "." + P + "-idxtags{display:flex;flex-wrap:wrap;gap:4px;max-width:280px}",
+        "." + P + "-idxchip{display:inline-block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;line-height:1.6;border-radius:999px;padding:0 7px;background:color-mix(in oklab,currentColor 7%,transparent);color:var(--cfg-muted);white-space:nowrap}",
+        "." + P + "-idxchip.u{background:color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 15%,transparent);color:var(--dsw-alias-brand-primary,inherit)}",
+        "." + P + "-idxnone{color:var(--cfg-faint)}",
+        "." + P + "-frow th{padding:0 8px 6px;border-bottom:1px solid var(--cfg-line)}",
+        "." + P + "-fcell{position:relative;display:block;min-width:96px}",
+        "." + P + "-finput{width:100%;box-sizing:border-box;border:1px solid transparent;border-radius:6px;background:color-mix(in oklab,currentColor 4%,transparent);color:inherit;font:inherit;font-size:11.5px;padding:3px 18px 3px 6px;min-width:0}",
+        "." + P + "-finput:hover{background:color-mix(in oklab,currentColor 7%,transparent)}",
+        "." + P + "-finput:focus{outline:none;border-color:var(--dsw-alias-brand-primary,currentColor);background:var(--cfg-surface)}",
+        "." + P + "-fclear{position:absolute;right:2px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--cfg-muted);cursor:pointer;font-size:13px;line-height:1;padding:2px 4px;border-radius:4px}",
+        "." + P + "-fclear:hover{color:inherit;background:var(--cfg-hover)}",
+        "." + P + "-emptycell{padding:22px 12px;text-align:center;color:var(--cfg-muted)}",
+        "." + P + " *{box-sizing:border-box}",
+        "." + P + "-tabs{display:flex;gap:6px;border-bottom:1px solid var(--cfg-line);padding-bottom:9px}",
+        "." + P + "-tabs [aria-selected=true]{background:var(--cfg-hover);color:inherit;font-weight:660}",
+        "." + P + "-images{display:flex;gap:5px;align-items:center}",
+        "." + P + "-images img{width:36px;height:36px;object-fit:cover;border-radius:5px}",
+        "." + P + "-gallery{display:flex;flex-direction:column;gap:12px;overflow:auto;flex:1}",
+        "." + P + "-gallery img{width:100%;height:auto;object-fit:contain;border-radius:8px}"
+      ].join("\n");
+      function injectCss() {
+        if (typeof document === "undefined") return;
+        var old = document.getElementById("wb-addon-" + DOMAIN + "-data-css");
+        if (old) {
+          old.textContent = CSS;
+          return;
+        }
+        var style2 = document.createElement("style");
+        style2.id = "wb-addon-" + DOMAIN + "-data-css";
+        style2.setAttribute("data-wb-addon", "wb-addon-" + DOMAIN);
+        style2.textContent = CSS;
+        document.head.appendChild(style2);
+      }
+      return injectCss;
+    };
+  }
+});
+
+// packages/addons/lib/data-view.cjs
+var require_data_view = __commonJS({
+  "packages/addons/lib/data-view.cjs"(exports2, module2) {
+    "use strict";
     var React = require("react");
-    var ui = require_ui();
-    var useConfig = require_config().useConfig;
-    var h = ui.h;
-    var tr = ui.tr;
-    function DataView(props) {
-      var api = props.api, lang = props.lang, config = useConfig(api, { "data.pageSize": 50, "data.includeDeleted": false, "data.showSystemColumns": false });
-      var result = React.useState(null), error = React.useState(null), busy = React.useState(false), page = React.useState(1), search = React.useState(""), query = React.useState(""), deleted = React.useState(null), system = React.useState(null), tick = React.useState(0);
-      React.useEffect(
-        function() {
+    var h = React.createElement;
+    var COPY = require_data_copy();
+    module2.exports = function createDataView(options) {
+      var DOMAIN = options.domain;
+      var P = options.prefix + "-data";
+      var configView = { useConfig: options.useConfig };
+      var columnHooks = options.columns || {};
+      var injectCss = require_data_style()(DOMAIN, options.prefix);
+      var CFG_FALLBACK = {
+        "data.pageSize": 50,
+        "data.showSystemColumns": false,
+        "data.includeDeleted": false
+      };
+      var PAGE_SIZES = [10, 25, 50, 100, 200];
+      function unwrap(r) {
+        return r && r.result !== void 0 ? r.result : r;
+      }
+      function fmt(template, vars) {
+        return String(template).replace(/\{(\w+)\}/g, function(m, key) {
+          return vars[key] === void 0 ? m : String(vars[key]);
+        });
+      }
+      function pad2(n) {
+        return n < 10 ? "0" + n : String(n);
+      }
+      function timeText(ms) {
+        var d = new Date(Number(ms));
+        if (!Number.isFinite(d.getTime())) return String(ms);
+        return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+      }
+      function looksJson(value) {
+        var text = String(value).trim();
+        if (!text || text[0] !== "{" && text[0] !== "[") return false;
+        try {
+          JSON.parse(text);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+      function rawText(value, col) {
+        if (value === null || value === void 0) return "";
+        return String(value);
+      }
+      function DataView(props) {
+        var api = props.api;
+        var lang = props.lang === "en" ? "en" : "zh";
+        var t = Object.assign({}, COPY[lang], { indexSub: fmt(COPY[lang].indexSub, { tables: options.tables.join(" / "), domain: DOMAIN }) });
+        var cfgWrap = configView.useConfig(api, CFG_FALLBACK);
+        var cfg = cfgWrap.values;
+        var tablesS = React.useState(null);
+        var tables = tablesS[0], setTables = tablesS[1];
+        var activeS = React.useState("");
+        var active = activeS[0], setActive = activeS[1];
+        var dataS = React.useState(null);
+        var data = dataS[0], setData = dataS[1];
+        var loadingS = React.useState(false);
+        var loadingRows = loadingS[0], setLoadingRows = loadingS[1];
+        var loadingTablesS = React.useState(true);
+        var loadingTables = loadingTablesS[0], setLoadingTables = loadingTablesS[1];
+        var errorS = React.useState("");
+        var error = errorS[0], setError = errorS[1];
+        var pageS = React.useState(1);
+        var page = pageS[0], setPage = pageS[1];
+        var sizeS = React.useState(0);
+        var pageSize = sizeS[0], setPageSize = sizeS[1];
+        var sortS = React.useState("");
+        var sort = sortS[0], setSort = sortS[1];
+        var orderS = React.useState("desc");
+        var order = orderS[0], setOrder = orderS[1];
+        var searchDraftS = React.useState("");
+        var searchDraft = searchDraftS[0], setSearchDraft = searchDraftS[1];
+        var searchS = React.useState("");
+        var search = searchS[0], setSearch = searchS[1];
+        var filterDraftS = React.useState({});
+        var filterDraft = filterDraftS[0], setFilterDraft = filterDraftS[1];
+        var filtersS = React.useState({});
+        var filters = filtersS[0], setFilters = filtersS[1];
+        var includeDeletedS = React.useState(null);
+        var includeDeletedRaw = includeDeletedS[0], setIncludeDeleted = includeDeletedS[1];
+        var showSystemS = React.useState(null);
+        var showSystemRaw = showSystemS[0], setShowSystem = showSystemS[1];
+        var drawerS = React.useState(null);
+        var drawer = drawerS[0], setDrawer = drawerS[1];
+        var toastS = React.useState("");
+        var toast = toastS[0], setToast = toastS[1];
+        var filtersKey = JSON.stringify(filters);
+        var reqRef = React.useRef(0);
+        var toastTimer = React.useRef(null);
+        var refreshS = React.useState(0);
+        function refresh() {
+          loadTables();
+          refreshS[1](function(n) {
+            return n + 1;
+          });
+        }
+        var indexReqRef = React.useRef(0);
+        var indexS = React.useState(null);
+        var index = indexS[0], setIndex = indexS[1];
+        var indexBusyS = React.useState(false);
+        var indexBusy = indexBusyS[0], setIndexBusy = indexBusyS[1];
+        var cfgSize = Number(cfg["data.pageSize"]) || 50;
+        var size = pageSize || (PAGE_SIZES.indexOf(cfgSize) >= 0 ? cfgSize : 50);
+        var includeDeleted = includeDeletedRaw === null ? cfg["data.includeDeleted"] === true : includeDeletedRaw;
+        var showSystem = showSystemRaw === null ? cfg["data.showSystemColumns"] === true : showSystemRaw;
+        function say(text) {
+          setToast(text);
+          if (toastTimer.current) clearTimeout(toastTimer.current);
+          toastTimer.current = setTimeout(function() {
+            setToast("");
+          }, 1600);
+        }
+        function loadTables() {
+          setLoadingTables(true);
+          Promise.resolve(api.call(DOMAIN + ".dataTables")).then(function(r) {
+            if (r && r.ok === false) throw new Error(r && r.error || t.loadFail);
+            var body = unwrap(r);
+            if (!body || !Array.isArray(body.tables)) throw new Error(t.loadFail);
+            setTables(body.tables);
+            setError("");
+            if (!active && body.tables.length) setActive(body.tables[0].name);
+          }).catch(function(e) {
+            setError(String(e && e.message || e) || t.loadFail);
+          }).then(function() {
+            setLoadingTables(false);
+          });
+        }
+        React.useEffect(function() {
+          injectCss();
+          loadTables();
+          return function() {
+            indexReqRef.current++;
+            if (toastTimer.current) clearTimeout(toastTimer.current);
+          };
+        }, []);
+        function selectTable(name) {
+          leaveIndex();
+          if (name === active) return;
+          reqRef.current++;
+          setActive(name);
+          setData(null);
+          setDrawer(null);
+          setError("");
+          setLoadingRows(true);
+          setPage(1);
+          setSort("");
+          setOrder("desc");
+          setSearch("");
+          setSearchDraft("");
+          setFilterDraft({});
+          setFilters({});
+        }
+        React.useEffect(function() {
+          if (searchDraft === search) return void 0;
           var timer = setTimeout(function() {
-            query[1](search[0]);
-            page[1](1);
-          }, 250);
+            setSearch(searchDraft);
+            setPage(1);
+          }, 280);
           return function() {
             clearTimeout(timer);
           };
-        },
-        [search[0]]
-      );
-      var showDeleted = deleted[0] === null ? !!config.values["data.includeDeleted"] : deleted[0];
-      var showSystem = system[0] === null ? !!config.values["data.showSystemColumns"] : system[0];
-      React.useEffect(
-        function() {
-          if (!config.ready) return;
-          var active = true;
-          busy[1](true);
-          error[1](null);
-          ui.call(api, "storage.dataQuery", {
-            table: "storage",
-            page: page[0],
-            pageSize: config.values["data.pageSize"],
-            search: query[0],
-            includeDeleted: showDeleted
-          }).then(function(r) {
-            if (active) result[1](r);
+        }, [searchDraft]);
+        React.useEffect(function() {
+          if (JSON.stringify(filterDraft) === JSON.stringify(filters)) return void 0;
+          var timer = setTimeout(function() {
+            setFilters(filterDraft);
+            setPage(1);
+          }, 280);
+          return function() {
+            clearTimeout(timer);
+          };
+        }, [filterDraft]);
+        React.useEffect(function() {
+          if (!active || !cfgWrap.ready) return void 0;
+          var req = ++reqRef.current;
+          setLoadingRows(true);
+          var args = { table: active, page, pageSize: size, order, includeDeleted };
+          if (sort) args.sort = sort;
+          if (search) args.search = search;
+          if (Object.keys(filters).length) args.filters = filters;
+          Promise.resolve(api.call(DOMAIN + ".dataQuery", args)).then(function(r) {
+            if (req !== reqRef.current) return;
+            if (r && r.ok === false) throw new Error(r && r.error || t.queryFail);
+            var body = unwrap(r);
+            if (!body) throw new Error(t.queryFail);
+            setData(body);
+            setError("");
+            if (body.page !== page) setPage(body.page);
           }).catch(function(e) {
-            if (active) error[1](e);
-          }).finally(function() {
-            if (active) busy[1](false);
+            if (req !== reqRef.current) return;
+            setError(String(e && e.message || e) || t.queryFail);
+          }).then(function() {
+            if (req === reqRef.current) setLoadingRows(false);
           });
           return function() {
-            active = false;
+            reqRef.current++;
           };
-        },
-        [api, config.ready, config.values["data.pageSize"], page[0], query[0], showDeleted, tick[0]]
-      );
-      var data = result[0], cols = data ? (data.columns || []).filter(function(c) {
-        return showSystem || !c.system;
-      }) : [];
-      return h(
-        "div",
-        { className: "wbi-root" },
-        h("h2", null, tr(lang, "\u7269\u54C1\u6570\u636E", "Inventory data")),
-        h(
-          "p",
-          { className: "wbi-muted" },
-          tr(
-            lang,
-            "\u53EA\u8BFB\u67E5\u770B\u672C\u63D2\u4EF6\u6570\u636E\u3002\u6807\u7B7E\u5173\u8054\u53EF\u5728\u6807\u7B7E\u63D2\u4EF6\u7684\u6570\u636E\u9875\u67E5\u770B\u3002",
-            "Read-only plugin data. Tag links are available in the Tags data view."
-          )
-        ),
-        h(
-          "div",
-          { className: "wbi-toolbar" },
-          h("input", {
-            type: "search",
-            value: search[0],
-            placeholder: tr(lang, "\u641C\u7D22\u6570\u636E", "Search data"),
-            "aria-label": tr(lang, "\u641C\u7D22\u6570\u636E", "Search data"),
-            onChange: function(e) {
-              search[1](e.target.value);
-            }
-          }),
-          h(
-            "label",
-            null,
-            h("input", {
-              type: "checkbox",
-              checked: showDeleted,
-              onChange: function(e) {
-                deleted[1](e.target.checked);
-                page[1](1);
-              }
-            }),
-            tr(lang, "\u5305\u542B\u5DF2\u5220\u9664", "Include deleted")
-          ),
-          h(
-            "label",
-            null,
-            h("input", {
-              type: "checkbox",
-              checked: showSystem,
-              onChange: function(e) {
-                system[1](e.target.checked);
-              }
-            }),
-            tr(lang, "\u7CFB\u7EDF\u5B57\u6BB5", "System columns")
-          ),
-          h(
-            ui.Button,
-            {
-              disabled: busy[0],
-              onClick: function() {
-                tick[1](tick[0] + 1);
-              }
-            },
-            tr(lang, "\u5237\u65B0", "Refresh")
-          )
-        ),
-        h(ui.ErrorBox, { error: error[0] || config.error }),
-        busy[0] ? h("p", { role: "status" }, tr(lang, "\u8BFB\u53D6\u4E2D\u2026", "Loading\u2026")) : null,
-        !busy[0] && !error[0] && data ? h(
-          "div",
-          { className: "wbi-tablewrap" },
-          h(
-            "table",
-            { className: "wbi-table" },
+        }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey, refreshS[0]]);
+        React.useEffect(function() {
+          if (!drawer) return void 0;
+          function onKey(e) {
+            if (e.key === "Escape") setDrawer(null);
+          }
+          document.addEventListener("keydown", onKey);
+          return function() {
+            document.removeEventListener("keydown", onKey);
+          };
+        }, [drawer]);
+        var current = null;
+        if (tables) {
+          for (var i = 0; i < tables.length; i++) if (tables[i].name === active) current = tables[i];
+        }
+        function leaveIndex() {
+          indexReqRef.current++;
+          setIndex(null);
+          setIndexBusy(false);
+        }
+        function loadIndex() {
+          var req = ++indexReqRef.current;
+          setIndex([]);
+          setIndexBusy(true);
+          Promise.resolve(api.call(DOMAIN + ".dataTables", { stats: true })).then(function(r) {
+            if (req !== indexReqRef.current) return;
+            if (r && r.ok === false) throw new Error(r.error || t.loadFail);
+            var payload = unwrap(r) || {};
+            var rows = (payload.tables || []).map(function(tb) {
+              return { table: tb, stats: tb.stats || null };
+            });
+            setIndex(rows);
+            setError("");
+            setIndexBusy(false);
+          }).catch(function(e) {
+            if (req !== indexReqRef.current) return;
+            setError(String(e.message || e));
+            setIndex([]);
+            setIndexBusy(false);
+          });
+        }
+        function toggleIndex() {
+          if (index) {
+            leaveIndex();
+            return;
+          }
+          loadIndex();
+        }
+        function renderIndex() {
+          var rows = index || [];
+          var totalRows = rows.reduce(function(n, r) {
+            return n + (r.stats && Number(r.stats.rows) || 0);
+          }, 0);
+          return h(
+            "div",
+            { className: P + "-idx" },
             h(
-              "thead",
-              null,
+              "div",
+              { className: P + "-head" },
               h(
-                "tr",
-                null,
-                cols.map(function(c) {
-                  return h("th", { key: c.name, scope: "col" }, c.label && (c.label[lang] || c.label.zh) || c.name);
-                })
-              )
+                "div",
+                { className: P + "-headmain" },
+                h("h2", null, t.index, h("span", { className: P + "-code" }, "index")),
+                h("div", { className: P + "-idxsub" }, t.indexSub)
+              ),
+              h("button", {
+                type: "button",
+                className: P + "-btn",
+                "aria-busy": indexBusy ? "true" : "false",
+                onClick: function() {
+                  loadIndex();
+                }
+              }, t.refresh)
             ),
             h(
-              "tbody",
-              null,
-              data.rows.map(function(row, i) {
-                return h(
+              "div",
+              { className: P + "-idxsum" },
+              h("span", null, t.idxTables, " ", h("b", null, String(rows.length))),
+              h("span", null, t.idxRows, " ", h("b", null, String(totalRows)))
+            ),
+            indexBusy && !rows.length ? h("div", { className: P + "-empty" }, t.loading) : !rows.length ? h("div", { className: P + "-empty" }, t.idxEmpty) : h(
+              "div",
+              { className: P + "-tablewrap" },
+              h(
+                "table",
+                { className: P + "-table" },
+                h("thead", null, h(
                   "tr",
-                  { key: row.id || i },
-                  cols.map(function(c) {
-                    var v = row[c.name];
-                    return h(
+                  null,
+                  h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxTable)),
+                  h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxRows)),
+                  h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxCols)),
+                  h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxKey)),
+                  h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxIndexes)),
+                  h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxLastWrite))
+                )),
+                h("tbody", null, rows.map(function(row) {
+                  var st = row.stats || {};
+                  var pk = (st.primaryKey || []).join(", ");
+                  var indexes = st.indexes || [];
+                  return h(
+                    "tr",
+                    { className: P + "-tr", key: row.table.name },
+                    h(
                       "td",
-                      { key: c.name },
-                      v === null || v === void 0 ? "\u2014" : typeof v === "object" ? JSON.stringify(v) : String(v)
+                      { className: P + "-cell" },
+                      h("div", { className: P + "-idxname" }, tableLabel(row.table)),
+                      h("div", { className: P + "-sidetable" }, row.table.name)
+                    ),
+                    h("td", { className: P + "-cell num" }, String(st.rows === void 0 ? row.table.count : st.rows)),
+                    h("td", { className: P + "-cell num" }, String(st.columnCount || (row.table.columns || []).length)),
+                    h("td", { className: P + "-cell" }, pk ? h("span", { className: P + "-idxchip u" }, pk) : h("span", { className: P + "-idxnone" }, t.idxNone)),
+                    h("td", { className: P + "-cell" }, h("div", { className: P + "-idxtags" }, indexes.length ? indexes.map(function(ix) {
+                      return h("span", {
+                        key: ix.name,
+                        title: ix.name + " (" + (ix.columns || []).join(", ") + ")",
+                        className: P + "-idxchip" + (ix.unique ? " u" : "")
+                      }, (ix.columns || []).join(",") || ix.name);
+                    }) : h("span", { className: P + "-idxnone" }, t.idxNone))),
+                    h("td", { className: P + "-cell mono" }, st.lastWrite ? timeText(st.lastWrite.at) : h("span", { className: P + "-idxnone" }, t.idxNone))
+                  );
+                }))
+              )
+            )
+          );
+        }
+        function tableLabel(tb) {
+          if (!tb || !tb.label) return "";
+          return lang === "en" ? tb.label.en || tb.label.zh : tb.label.zh || tb.label.en;
+        }
+        function colLabel(col) {
+          if (!col.label) return col.name;
+          return lang === "en" ? col.label.en || col.label.zh : col.label.zh || col.label.en;
+        }
+        function visibleColumns() {
+          var cols = data && data.columns ? data.columns.map(function(col) {
+            var hook = columnHooks[col.name];
+            return hook && hook.kind ? Object.assign({}, col, { kind: hook.kind, type: hook.type || col.type }) : col;
+          }) : [];
+          return cols.filter(function(c) {
+            return showSystem || !c.system;
+          });
+        }
+        function toggleSort(name) {
+          if (sort !== name) {
+            setSort(name);
+            setOrder("desc");
+            return;
+          }
+          if (order === "desc") {
+            setOrder("asc");
+            return;
+          }
+          setSort("");
+          setOrder("desc");
+        }
+        function ariaSort(name) {
+          if (sort !== name) return "none";
+          return order === "asc" ? "ascending" : "descending";
+        }
+        function copyCell(value) {
+          var text = value === null || value === void 0 ? "" : String(value);
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text);
+            else {
+              var ta = document.createElement("textarea");
+              ta.value = text;
+              ta.style.position = "fixed";
+              ta.style.opacity = "0";
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand("copy");
+              document.body.removeChild(ta);
+            }
+            say(t.copied);
+          } catch (e) {
+          }
+        }
+        function cellText(col, value) {
+          if (value === null || value === void 0) return null;
+          if (col.kind === "bool") return value ? t.yes : t.no;
+          if (col.kind === "timestamp") return timeText(value);
+          return String(value);
+        }
+        function cellClass(col, value) {
+          var cls = P + "-cell";
+          if (value === null || value === void 0) return cls + " null";
+          if (col.kind === "number") return cls + " num";
+          if (col.kind === "id" || col.kind === "path") return cls + " mono";
+          if (col.kind === "text" && looksJson(value)) return cls + " json";
+          return cls;
+        }
+        function cellTitle(col, value) {
+          if (value === null || value === void 0) return t.nullText;
+          if (col.kind === "timestamp") return String(value);
+          if (col.kind === "bool") return value ? "1" : "0";
+          return String(value);
+        }
+        function renderCell(row, col) {
+          var value = row[col.name];
+          var hook = columnHooks[col.name];
+          function openDetail() {
+            setDrawer({ column: colLabel(col), name: col.name, row: (data.page - 1) * data.pageSize + row.__i + 1, value });
+          }
+          var text = cellText(col, value);
+          var content;
+          if (text === null) content = h("span", { className: "v" }, t.nullText);
+          else if (text === "") content = h("span", { className: "v" }, '""');
+          else content = h("span", { className: "v" }, text);
+          if (hook && hook.render) content = hook.render({ value, row, col, lang, prefix: P, openDetail });
+          return h("td", {
+            key: col.name,
+            className: cellClass(col, value),
+            title: cellTitle(col, value),
+            onClick: function() {
+              copyCell(value);
+            },
+            onDoubleClick: openDetail
+          }, content);
+        }
+        function activeFilterCount() {
+          var n = 0;
+          for (var k in filters) if (Object.prototype.hasOwnProperty.call(filters, k)) n++;
+          return n;
+        }
+        function filterCell(col) {
+          var val = filterDraft[col.name] === void 0 ? "" : filterDraft[col.name];
+          return h(
+            "th",
+            { key: col.name, scope: "col", className: P + "-fth" },
+            h(
+              "span",
+              { className: P + "-fcell" },
+              h("input", {
+                className: P + "-finput",
+                type: "search",
+                value: val,
+                placeholder: t.filterCol,
+                "aria-label": t.filterCol + " " + colLabel(col),
+                title: colLabel(col) + " \xB7 " + t.filterCol,
+                onChange: function(e) {
+                  var v = e.target.value;
+                  setFilterDraft(function(prev) {
+                    var next = Object.assign({}, prev);
+                    if (v) next[col.name] = v;
+                    else delete next[col.name];
+                    return next;
+                  });
+                }
+              }),
+              val ? h("button", {
+                type: "button",
+                className: P + "-fclear",
+                title: t.filterClear,
+                "aria-label": t.filterClear + " " + colLabel(col),
+                onClick: function() {
+                  setFilterDraft(function(prev) {
+                    var next = Object.assign({}, prev);
+                    delete next[col.name];
+                    return next;
+                  });
+                }
+              }, "\xD7") : null
+            )
+          );
+        }
+        function renderRows() {
+          if (loadingRows && !data) {
+            return h(
+              "div",
+              { className: P + "-skwrap", "aria-busy": "true" },
+              h("span", { className: P + "-sr" }, t.loading),
+              [0, 1, 2, 3, 4, 5, 6, 7].map(function(i2) {
+                return h("div", { key: i2, className: P + "-sk" });
+              })
+            );
+          }
+          if (error) {
+            return h(
+              "div",
+              { className: P + "-err", role: "alert" },
+              h("span", null, t.queryFail + error),
+              h("button", { type: "button", className: P + "-btn", onClick: refresh }, t.retry)
+            );
+          }
+          if (!data) return h("div", { className: P + "-empty" }, t.empty);
+          var cols = visibleColumns();
+          var rows = data.rows || [];
+          var narrowing = !!search || activeFilterCount() > 0;
+          return h(
+            "div",
+            { className: P + "-tablewrap" },
+            h(
+              "table",
+              { className: P + "-table" },
+              h(
+                "thead",
+                null,
+                h(
+                  "tr",
+                  null,
+                  h("th", { className: P + "-rownum", scope: "col" }, "#"),
+                  cols.map(function(col) {
+                    return h(
+                      "th",
+                      { key: col.name, scope: "col", "aria-sort": ariaSort(col.name) },
+                      h(
+                        "button",
+                        {
+                          type: "button",
+                          className: P + "-thbtn",
+                          title: colLabel(col) + " \xB7 " + col.type,
+                          onClick: function() {
+                            toggleSort(col.name);
+                          }
+                        },
+                        h("span", null, colLabel(col)),
+                        h("span", { className: P + "-coltype" }, String(col.type || "").toLowerCase()),
+                        sort === col.name ? h("span", { className: P + "-sortmark", "aria-hidden": "true" }, order === "asc" ? "\u25B2" : "\u25BC") : null
+                      )
                     );
                   })
+                ),
+                h(
+                  "tr",
+                  { className: P + "-frow" },
+                  h("th", { className: P + "-rownum", scope: "col" }, ""),
+                  cols.map(filterCell)
+                )
+              ),
+              h("tbody", null, rows.length ? rows.map(function(row, idx) {
+                row.__i = idx;
+                var deleted = row.deleted_at !== null && row.deleted_at !== void 0;
+                return h(
+                  "tr",
+                  { key: row.id || idx, className: P + "-tr" + (deleted ? " deleted" : "") },
+                  h("td", { className: P + "-rownum" }, (data.page - 1) * data.pageSize + idx + 1),
+                  cols.map(function(col) {
+                    var cell = renderCell(row, col);
+                    if (deleted && col.name === "id") {
+                      return React.cloneElement(cell, { key: col.name }, cell.props.children, h("span", { className: P + "-delbadge" }, t.deleted));
+                    }
+                    return cell;
+                  })
                 );
-              })
+              }) : h("tr", null, h("td", { className: P + "-emptycell", colSpan: cols.length + 1 }, narrowing ? t.noRows : t.empty)))
+            )
+          );
+        }
+        function renderFoot() {
+          var pages = data ? data.pages : 1;
+          var total = data ? data.total : 0;
+          return h(
+            "div",
+            { className: P + "-foot" },
+            h("span", null, fmt(t.total, { n: total })),
+            h("span", { className: P + "-grow" }),
+            h("button", { type: "button", className: P + "-btn", disabled: !data || page <= 1, onClick: function() {
+              setPage(Math.max(1, page - 1));
+            } }, "\u2039 " + t.prev),
+            h("span", { className: P + "-pageinfo" }, fmt(t.pageInfo, { page: data ? data.page : 1, pages })),
+            h("button", { type: "button", className: P + "-btn", disabled: !data || page >= pages, onClick: function() {
+              setPage(Math.min(pages, page + 1));
+            } }, t.next + " \u203A"),
+            h("input", {
+              className: P + "-jump",
+              type: "number",
+              min: 1,
+              max: pages,
+              "aria-label": t.jump,
+              onKeyDown: function(e) {
+                if (e.key === "Enter") {
+                  var n = Math.floor(Number(e.target.value));
+                  if (n >= 1) setPage(Math.min(pages, n));
+                }
+              }
+            }),
+            h("span", null, fmt(t.queryTime, { n: data ? data.queryMs : 0 }))
+          );
+        }
+        if (!tables && loadingTables) {
+          return h("div", { className: P + "-skwrap", "aria-busy": "true" }, h("span", { className: P + "-sr" }, t.loading), [0, 1, 2, 3].map(function(i2) {
+            return h("div", { key: i2, className: P + "-sk" });
+          }));
+        }
+        if (!tables) {
+          return h("div", { className: P + "-err", role: "alert" }, h("span", null, t.loadFail), h("button", { type: "button", className: P + "-btn", onClick: loadTables }, t.retry));
+        }
+        if (!tables.length) return h("div", { className: P + "-empty" }, t.emptyTable);
+        return h(
+          "div",
+          { className: P },
+          h(
+            "div",
+            { className: P + "-side" },
+            h("div", { className: P + "-sidetitle" }, h("span", null, t.tables), h("span", null, String(tables.length))),
+            tables.map(function(tb) {
+              return h(
+                "button",
+                {
+                  key: tb.name,
+                  type: "button",
+                  className: P + "-stab" + (tb.name === active ? " on" : ""),
+                  "aria-pressed": tb.name === active,
+                  onClick: function() {
+                    selectTable(tb.name);
+                  }
+                },
+                h(
+                  "span",
+                  { className: P + "-stabname" },
+                  h("span", null, tableLabel(tb)),
+                  h("span", { className: P + "-sidecount" }, String(tb.count))
+                ),
+                h("span", { className: P + "-sidetable" }, tb.name),
+                tb.deletedCount ? h("span", { className: P + "-sidetable" }, tb.deletedCount + " " + t.deleted) : null
+              );
+            }),
+            h(
+              "button",
+              {
+                type: "button",
+                className: P + "-stab" + (index ? " on" : ""),
+                "aria-pressed": !!index,
+                onClick: toggleIndex
+              },
+              h(
+                "span",
+                { className: P + "-stabname" },
+                h("span", null, t.index),
+                h("span", { className: P + "-sidecount" }, index ? String(index.length) : "")
+              ),
+              h("span", { className: P + "-sidetable" }, "index")
             )
           ),
-          !data.rows.length ? h("p", { className: "wbi-empty" }, tr(lang, "\u6CA1\u6709\u5339\u914D\u7684\u6570\u636E", "No matching data")) : null
-        ) : null,
-        data ? h(
-          "div",
-          { className: "wbi-pager" },
-          h("span", null, data.total + tr(lang, " \u884C \xB7 ", " rows \xB7 ") + data.page + " / " + data.pages),
           h(
-            ui.Button,
-            {
-              disabled: busy[0] || data.page <= 1,
-              onClick: function() {
-                page[1](data.page - 1);
-              }
-            },
-            tr(lang, "\u4E0A\u4E00\u9875", "Previous")
+            "div",
+            { className: P + "-main" },
+            h(
+              "div",
+              { className: P + "-tabs", role: "tablist", "aria-label": t.title },
+              h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !index, onClick: leaveIndex }, lang === "en" ? "Row data" : "\u884C\u6570\u636E"),
+              h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !!index, onClick: loadIndex }, t.index)
+            ),
+            index && error ? h("div", { className: P + "-err", role: "alert" }, error) : null,
+            index ? renderIndex() : [
+              h(
+                "div",
+                { className: P + "-head" },
+                h(
+                  "div",
+                  { className: P + "-headmain" },
+                  h("h2", null, tableLabel(current), h("span", { className: P + "-code" }, active)),
+                  h(
+                    "div",
+                    { className: P + "-sub" },
+                    current ? fmt(t.rowCount, { n: current.count }) : "",
+                    current && current.deletedCount ? " \xB7 " + fmt(t.deletedCount, { n: current.deletedCount }) : "",
+                    " \xB7 " + t.subtitle
+                  )
+                ),
+                h("button", {
+                  type: "button",
+                  className: P + "-btn",
+                  "aria-busy": loadingRows ? "true" : "false",
+                  onClick: refresh
+                }, t.refresh)
+              ),
+              h(
+                "div",
+                { className: P + "-toolbar" },
+                h(
+                  "div",
+                  { className: P + "-search" },
+                  h("input", {
+                    type: "search",
+                    value: searchDraft,
+                    placeholder: t.search,
+                    "aria-label": t.search,
+                    onChange: function(e) {
+                      setSearchDraft(e.target.value);
+                    }
+                  })
+                ),
+                h(
+                  "label",
+                  { className: P + "-switch" },
+                  h("input", { type: "checkbox", checked: includeDeleted, onChange: function(e) {
+                    setIncludeDeleted(e.target.checked);
+                    setPage(1);
+                  } }),
+                  h("span", { className: P + "-track" }),
+                  h("span", null, t.includeDeleted)
+                ),
+                h(
+                  "label",
+                  { className: P + "-switch" },
+                  h("input", { type: "checkbox", checked: showSystem, onChange: function(e) {
+                    setShowSystem(e.target.checked);
+                  } }),
+                  h("span", { className: P + "-track" }),
+                  h("span", null, t.showSystem)
+                ),
+                h("span", { className: P + "-grow" }),
+                h(
+                  "label",
+                  { style: { display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11.5px", color: "var(--cfg-muted)" } },
+                  h("span", null, t.pageSize),
+                  h("select", {
+                    className: P + "-select",
+                    value: size,
+                    onChange: function(e) {
+                      setPageSize(Number(e.target.value));
+                      setPage(1);
+                    }
+                  }, PAGE_SIZES.map(function(n) {
+                    return h("option", { key: n, value: n }, String(n));
+                  }))
+                )
+              ),
+              renderRows(),
+              renderFoot()
+            ]
           ),
-          h(
-            ui.Button,
+          drawer ? h(
+            "div",
+            null,
+            h("div", { className: P + "-mask", onClick: function() {
+              setDrawer(null);
+            } }),
+            h(
+              "aside",
+              { className: P + "-drawer", role: "dialog", "aria-modal": "true", "aria-label": drawer.column },
+              h("h3", null, fmt(t.drawerTitle, { column: drawer.column, row: drawer.row }), h("span", { className: P + "-code" }, drawer.name)),
+              columnHooks[drawer.name] && columnHooks[drawer.name].detail ? columnHooks[drawer.name].detail({ value: drawer.value, lang, prefix: P }) : h("pre", null, drawerText(drawer.value)),
+              h(
+                "div",
+                { className: P + "-drawerfoot" },
+                h("button", { type: "button", className: P + "-btn", onClick: function() {
+                  copyCell(drawer.value);
+                } }, t.copy),
+                h("button", { type: "button", className: P + "-btn", onClick: function() {
+                  setDrawer(null);
+                } }, t.close)
+              )
+            )
+          ) : null,
+          toast ? h("div", { className: P + "-toast", role: "status" }, toast) : null
+        );
+      }
+      function drawerText(value) {
+        if (value === null || value === void 0) return "NULL";
+        if (typeof value === "string" && looksJson(value)) {
+          try {
+            return JSON.stringify(JSON.parse(value), null, 2);
+          } catch (e) {
+            return value;
+          }
+        }
+        if (typeof value === "object") {
+          try {
+            return JSON.stringify(value, null, 2);
+          } catch (e) {
+            return String(value);
+          }
+        }
+        return String(value);
+      }
+      return { DataView, DOMAIN };
+    };
+  }
+});
+
+// packages/addons/storage/client/data-columns.cjs
+var require_data_columns = __commonJS({
+  "packages/addons/storage/client/data-columns.cjs"(exports2, module2) {
+    "use strict";
+    var h = require("react").createElement;
+    var safeImage = require_ui().safeImage;
+    function images(value) {
+      try {
+        var list = typeof value === "string" ? JSON.parse(value) : value;
+        if (!Array.isArray(list) || !list.length) return [];
+        var urls = list.map(function(url) {
+          return typeof url === "string" ? safeImage(url) : "";
+        });
+        return urls.every(Boolean) ? urls : [];
+      } catch (_) {
+        return [];
+      }
+    }
+    function text(value) {
+      return value == null ? "NULL" : String(value);
+    }
+    function picture(url, index, lang) {
+      return h("img", { key: index, src: url, alt: (lang === "en" ? "Image " : "\u56FE\u7247 ") + (index + 1), loading: "lazy", referrerPolicy: "no-referrer" });
+    }
+    module2.exports = {
+      img_list: {
+        render: function(ctx) {
+          var urls = images(ctx.value);
+          if (!urls.length) return h("span", { className: "v" }, text(ctx.value));
+          return h(
+            "button",
             {
-              disabled: busy[0] || data.page >= data.pages,
-              onClick: function() {
-                page[1](data.page + 1);
+              type: "button",
+              className: ctx.prefix + "-btn " + ctx.prefix + "-images",
+              "aria-label": (ctx.lang === "en" ? "Preview images: " : "\u9884\u89C8\u56FE\u7247\uFF1A") + urls.length,
+              onClick: function(e) {
+                e.stopPropagation();
+                ctx.openDetail();
               }
             },
-            tr(lang, "\u4E0B\u4E00\u9875", "Next")
-          )
-        ) : null
-      );
-    }
-    module2.exports = { DataView };
+            urls.slice(0, 3).map(function(url, i) {
+              return picture(url, i, ctx.lang);
+            }),
+            urls.length > 3 ? h("span", null, "+" + (urls.length - 3)) : null
+          );
+        },
+        detail: function(ctx) {
+          var urls = images(ctx.value);
+          return urls.length ? h("div", { className: ctx.prefix + "-gallery" }, urls.map(function(url, i) {
+            return picture(url, i, ctx.lang);
+          })) : h("pre", null, text(ctx.value));
+        }
+      },
+      stock: {
+        kind: "text",
+        type: "TEXT",
+        render: function(ctx) {
+          return h("span", { className: "v" }, text(ctx.value));
+        }
+      },
+      remark: {
+        render: function(ctx) {
+          var value = text(ctx.value);
+          return h("span", { className: "v", title: value }, value.length > 80 ? value.slice(0, 80) + "\u2026" : value);
+        }
+      }
+    };
+  }
+});
+
+// packages/addons/storage/client/data.cjs
+var require_data = __commonJS({
+  "packages/addons/storage/client/data.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = require_data_view()({
+      domain: "storage",
+      prefix: "wbi",
+      tables: ["storage"],
+      useConfig: require_config().useConfig,
+      columns: require_data_columns()
+    });
   }
 });
 
@@ -1592,9 +2570,9 @@ if (host) {
   }
   host.registerAddon({
     id: "wb-addon-storage",
-    version: "1.0.0",
+    version: "1.1.0",
     views: [
-      { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: require_stats().Stats },
+      { id: "stats", title: { zh: "\u50A8\u7269\u6982\u89C8", en: "Storage overview" }, component: require_stats().Stats },
       { id: "storage", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: require_records().Records },
       { id: "config", title: { zh: "\u914D\u7F6E", en: "Config" }, component: require_config().ConfigView },
       { id: "data", title: { zh: "\u6570\u636E", en: "Data" }, component: require_data().DataView }

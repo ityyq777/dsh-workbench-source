@@ -137,11 +137,11 @@ const hostVersion = hostPkg.version;
 const addons = {
   storage: {
     dir: "storage",
-    description: "个人工作台物品管理插件：名称、品牌、单位、库存文本与标签",
+    description: "个人工作台储物插件：名称、品牌、单位、库存文本与标签",
     keywords: ["storage", "inventory", "items", "tags"],
     marketCategory: "tools",
-    marketEn: "Inventory records for DSH: names, brands, units, stock text and tags with local SQLite and optional metadata sync.",
-    marketZh: "DSH 物品管理：记录名称、品牌、单位、库存文本与标签，本地 SQLite 保存，可选元数据同步。",
+    marketEn: "Storage records for DSH: names, brands, units, stock text and tags with local SQLite and optional metadata sync.",
+    marketZh: "DSH 储物：记录名称、品牌、单位、库存文本与标签，本地 SQLite 保存，可选元数据同步。",
     marketExtra: "管理物品库存文本台账，不上传或下载文件字节；卸载插件不删数据。",
   },
   tasks: {

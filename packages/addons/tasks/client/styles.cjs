@@ -41,7 +41,7 @@ module.exports = [
     ".wbt-chead{display:flex;align-items:flex-start;gap:10px;min-width:0}",
     ".wbt-line1{display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap;flex:1 1 auto}",
     ".wbt-title{font-weight:620;font-size:14px;line-height:1.38;letter-spacing:.1px;word-break:break-word;overflow-wrap:anywhere;max-width:100%}",
-    ".wbt-desc{margin-top:4px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-width:100%;box-sizing:border-box;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,#5b7fd6 34%,transparent);background:color-mix(in oklab,#5b7fd6 7%,transparent)}",
+    require("../../lib/description.cjs").css,
     ".wbt-foot{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;margin-top:1px}",
     ".wbt-meta{display:flex;gap:4px 12px;flex-wrap:wrap;font-size:11.5px;opacity:.64;min-width:0;max-width:100%;font-variant-numeric:tabular-nums}",
     ".wbt-meta b{font-weight:560;opacity:.9;margin-right:1px}",

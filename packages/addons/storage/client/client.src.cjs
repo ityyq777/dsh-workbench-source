@@ -10,9 +10,9 @@ if (host) {
   }
   host.registerAddon({
     id: "wb-addon-storage",
-    version: "1.0.0",
+    version: "1.1.0",
     views: [
-      { id: "stats", title: { zh: "统计", en: "Stats" }, component: require("./stats.cjs").Stats },
+      { id: "stats", title: { zh: "储物概览", en: "Storage overview" }, component: require("./stats.cjs").Stats },
       { id: "storage", title: { zh: "记录", en: "Records" }, component: require("./records.cjs").Records },
       { id: "config", title: { zh: "配置", en: "Config" }, component: require("./config.cjs").ConfigView },
       { id: "data", title: { zh: "数据", en: "Data" }, component: require("./data.cjs").DataView },

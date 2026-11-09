@@ -1,5 +1,5 @@
 /**
- * 物品插件的数据页：只读浏览本插件负责的表。
+ * 储物插件的数据页：只读浏览本插件负责的表。
  *
  * 设计见 docs/specs/21-数据页设计.md。两个 action：
  * - storage.dataTables：表清单 + 列元信息 + 行数；
@@ -12,7 +12,7 @@ import { DOMAIN } from "./config.js";
 
 export const SCHEMA_VERSION = 1;
 
-const TABLES = [{ name: "storage", zh: "物品管理", en: "Storage" }];
+const TABLES = [{ name: "storage", zh: "储物", en: "Storage" }];
 
 const COLUMN_LABELS = {
   id: { zh: "ID", en: "ID" },
