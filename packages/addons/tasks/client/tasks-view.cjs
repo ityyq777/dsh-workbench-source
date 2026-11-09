@@ -1,7 +1,7 @@
 // 任务列表与树导航视图；依赖由入口注入，无循环依赖。
 module.exports = function createTasksView(deps) {
   var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, TABS = deps.TABS, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
-  var h = React.createElement;
+  var h = React.createElement, activityFilter = require("./activity-filter.cjs");
   function TasksView(props) {
     var lang = props.lang === "en" ? "en" : "zh";
     var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -27,7 +27,9 @@ module.exports = function createTasksView(deps) {
     var t = COPY[props.lang === "en" ? "en" : "zh"];
     var api = props.api;
     var cfg = props.cfg || {};
-    var tableNavigation = props.viewParams && props.viewParams.tableId;
+    var activityNavigation = activityFilter.params(props.viewParams);
+    var activityS = React.useState(activityNavigation), activity = activityS[0], setActivity = activityS[1];
+    var tableNavigation = !activityNavigation && props.viewParams && props.viewParams.tableId;
     var cfgTab = Number(cfg["ui.defaultTab"]);
     if ([0, 5, 6, 7, 8].indexOf(cfgTab) < 0) cfgTab = 0;
     var cfgSize = Math.floor(Number(cfg["list.pageSize"]));
@@ -46,10 +48,10 @@ module.exports = function createTasksView(deps) {
     var target = targetS[0], setTarget = targetS[1];
     var pathS = React.useState([]);
     var currentPath = pathS[0], setCurrentPath = pathS[1];
-    var initialMissing = !tableNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
+    var initialMissing = !activityNavigation && !tableNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
     var missingS = React.useState(initialMissing);
     var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
-    var tabS = React.useState(tableNavigation || initialMissing ? 8 : cfgTab);
+    var tabS = React.useState(activityNavigation || tableNavigation || initialMissing ? 8 : cfgTab);
     var tab = tabS[0], setTab = tabS[1];
     var viewS = React.useState(!tableNavigation && cfg["ui.listView"] === "card" ? "card" : "list");
     var view = viewS[0], setView = viewS[1];
@@ -59,7 +61,7 @@ module.exports = function createTasksView(deps) {
     var treeQuery = tqS[0], setTreeQuery = tqS[1];
     var titleS = React.useState("");
     var titleKey = titleS[0], setTitleKey = titleS[1];
-    var filterS = React.useState(tableNavigation || initialMissing ? false : cfg["list.filterRestarted"] !== false);
+    var filterS = React.useState(activityNavigation || tableNavigation || initialMissing ? false : cfg["list.filterRestarted"] !== false);
     var filterRestarted = filterS[0], setFilterRestarted = filterS[1];
     var tagReloadS = React.useState(0);
     var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
@@ -110,6 +112,13 @@ module.exports = function createTasksView(deps) {
     var toastS = React.useState("");
     var toast = toastS[0], setToast = toastS[1];
     var refreshRef = React.useRef({});
+    React.useEffect(function () {
+      if (!activityNavigation) return;
+      setActivity(activityNavigation); setTarget({ groupId: "1", tableId: null });
+      setTab(8); setFilterRestarted(false); setDifficultyMissing(false);
+      setSearchDraft(""); setTitleKey(""); setFilterTagIds([]); setPageNumber(1);
+      setSelectedIds(new Set()); setSelectionMode(false);
+    }, [props.viewParams && props.viewParams.activityDate, props.viewParams && props.viewParams.activityType]);
 
     function say(msg) { setToast(String(msg || "")); }
     React.useEffect(function () {
@@ -156,13 +165,13 @@ module.exports = function createTasksView(deps) {
 
     var refreshList = React.useCallback(function () {
       setLoading(true);
-      return api.call("tasks.list", {
+      return api.call("tasks.list", Object.assign({
         tab: tab, titleKey: titleKey,
         tableId: target.tableId, groupId: target.tableId ? null : target.groupId,
         pageNumber: pageNumber, pageSize: pageSize,
         filterRestarted: filterRestarted, tagIds: filterTagIds, difficultyMissing: difficultyMissing,
         sort: tableNavigation || cfgSort === "auto" ? undefined : cfgSort,
-      }).then(function (r) {
+      }, activity || {})).then(function (r) {
         setLoading(false);
         if (r && r.ok) {
           setData(r.result || { records: [], total: 0, current: 1, size: 0, pageable: false });
@@ -171,7 +180,7 @@ module.exports = function createTasksView(deps) {
           setError((r && r.error) || "list load failed");
         }
       }).catch(function (e) { setLoading(false); setError(String(e && e.message || e)); });
-    }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, difficultyMissing, cfgSort]);
+    }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, difficultyMissing, cfgSort, activity]);
 
     refreshRef.current = { tree: refreshTree, list: refreshList, path: refreshPath, tags: refreshTagNav };
 
@@ -405,6 +414,7 @@ module.exports = function createTasksView(deps) {
     var curDesc = curNode ? String(curNode.description || "") : "";
     var shownCount = data.returned === undefined ? (data.records || []).length : data.returned;
     var filterBar = h("div", { className: "wbt-filters" },
+      h(activityFilter.ActivityFilter, { value: activity, lang: props.lang, onClear: function () { setActivity(null); setPageNumber(1); } }),
       h("label", { className: "wbt-check" },
         h("input", { type: "checkbox", checked: difficultyMissing, onChange: function (e) { setDifficultyMissing(e.target.checked); setPageNumber(1); } }), t.difficultyMissing),
       pageable ? h("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,

@@ -1,6 +1,7 @@
 /** 列表查询。与 tasks.js 的循环依赖只在函数调用期读取，顶层不求值。 */
 import { idOf, addDays, todayStr, nodeMap, taskOut } from "./db.js";
 import { asCode, STATUS_NAMES, STATUSES, requireTable, dateArg, withNotices, tagMissingNotices } from "./tasks.js";
+import { activityFilter } from "./activity-calendar.js";
 import { clampPriority } from "./task-priority.js";
 import { LEGACY_TYPE_TAGS, tagsAvailable, normalizeTagIds, normalizeTagNames, tagIdsByNames, attachTags, migrateLegacyTypes } from "./tagging.js";
 
@@ -21,6 +22,7 @@ function tabCode(value) {
 }
 
 export function listTasks(db, args, api) {
+  const activity = activityFilter(args.activityDate, args.activityType);
   // 第一次打开列表时把旧「类型」补成标签；幂等，失败不阻断列表。
   try {
     migrateLegacyTypes(db, api, "migrate");
@@ -34,6 +36,7 @@ export function listTasks(db, args, api) {
   const where = ["t.deleted_at IS NULL"];
   const params = [];
   const listNotices = [];
+  if (activity) { where.push(activity.sql); params.push(...activity.params); }
 
   const titleKey = args.titleKey === undefined || args.titleKey === null ? "" : String(args.titleKey).trim();
   if (titleKey) {
@@ -234,6 +237,7 @@ export function listTasks(db, args, api) {
     filter.pageSizeRequested = pageSizeRequested;
     filter.pageSizeCapped = true;
   }
+  if (activity) { filter.activityDate = activity.date; filter.activityType = activity.type; }
   if (titleKey) filter.titleKey = titleKey;
   if (tableId && tableId !== "0") filter.tableId = tableId;
   if (tableKey) filter.tableKey = tableKey;

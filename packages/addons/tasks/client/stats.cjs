@@ -4,6 +4,7 @@ var h = React.createElement;
 var charts = require("./charts.cjs");
 var configView = require("./config.cjs");
 var recentColumns = require("./recent-columns.cjs");
+var Heatmap = require("./heatmap.cjs");
 
 var COPY = {
   zh: {
@@ -278,6 +279,7 @@ function TasksStatsBody(props) {
   });
 
   return h("div", { className: "wbt-stats" },
+    h(Heatmap, { api: api, lang: lang, active: props.active, onNavigate: props.onNavigate }),
     h(ch.RangeSwitch, {
       options: options, value: customFrom || customTo ? null : range,
       onChange: function (key) { setCustom(null); setRange(key); },

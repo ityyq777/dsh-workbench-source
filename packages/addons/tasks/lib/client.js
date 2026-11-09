@@ -1270,6 +1270,205 @@ var require_recent_columns = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/heatmap-model.cjs
+var require_heatmap_model = __commonJS({
+  "packages/addons/tasks/client/heatmap-model.cjs"(exports2, module2) {
+    var TYPES = ["done", "publish", "shutdown"];
+    var COPY = {
+      zh: { title: "\u5E74\u5EA6\u4EFB\u52A1\u6D3B\u52A8", previous: "\u4E0A\u4E00\u5E74", next: "\u4E0B\u4E00\u5E74", done: "\u5B8C\u6210", publish: "\u53D1\u5E03", shutdown: "\u5173\u95ED", empty: { done: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5B8C\u6210\u8BB0\u5F55", publish: "\u672C\u5E74\u5EA6\u6CA1\u6709\u53D1\u5E03\u8BB0\u5F55", shutdown: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5173\u95ED\u8BB0\u5F55" }, loading: "\u6B63\u5728\u52A0\u8F7D\u5E74\u5EA6\u6D3B\u52A8", error: "\u5E74\u5EA6\u6D3B\u52A8\u52A0\u8F7D\u5931\u8D25", retry: "\u91CD\u8BD5", future: "\u672A\u6765\u65E5\u671F", none: "\u65E0\u6D3B\u52A8", clear: "\u6E05\u9664\u6D3B\u52A8\u7B5B\u9009", filter: "\u6D3B\u52A8\u7B5B\u9009", total: "\u6D3B\u52A8\u603B\u6570", levels: "\u6BCF\u65E5\u6B21\u6570\uFF1A1 / 2\u20133 / 4\u20136 / 7+", weekdays: ["\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D", "\u65E5"] },
+      en: { title: "Annual task activity", previous: "Previous year", next: "Next year", done: "Done", publish: "Published", shutdown: "Closed", empty: { done: "No completed tasks this year", publish: "No published tasks this year", shutdown: "No closed tasks this year" }, loading: "Loading annual activity", error: "Could not load annual activity", retry: "Retry", future: "Future date", none: "No activity", clear: "Clear activity filter", filter: "Activity filter", total: "Total events", levels: "Daily count: 1 / 2\u20133 / 4\u20136 / 7+", weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] }
+    };
+    function localDay(d) {
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    }
+    function calendar(year) {
+      var start = Date.UTC(year, 0, 1), count2 = (Date.UTC(year + 1, 0, 1) - start) / 864e5;
+      var offset = (new Date(start).getUTCDay() + 6) % 7;
+      return { weeks: Math.ceil((offset + count2) / 7), days: Array.from({ length: count2 }, function(_, i) {
+        var d = new Date(start + i * 864e5);
+        return { date: d.toISOString().slice(0, 10), row: (offset + i) % 7 + 1, column: Math.floor((offset + i) / 7) + 1, month: d.getUTCMonth(), first: d.getUTCDate() === 1 };
+      }) };
+    }
+    function level(n) {
+      return n >= 7 ? 4 : n >= 4 ? 3 : n >= 2 ? 2 : 1;
+    }
+    function count(day, type) {
+      return Number(day[type]) || 0;
+    }
+    function background(day, type) {
+      return count(day, type) ? "var(--hm-" + type + "-" + level(count(day, type)) + ")" : "var(--hm-empty)";
+    }
+    function label(date, day, t, type) {
+      return date + " \xB7 " + t[type] + " " + count(day, type);
+    }
+    function activityParams(params) {
+      if (!params || !/^\d{4}-\d{2}-\d{2}$/.test(params.activityDate || "")) return null;
+      return { activityDate: params.activityDate, activityType: TYPES.indexOf(params.activityType) >= 0 ? params.activityType : "done" };
+    }
+    module2.exports = { TYPES, COPY, localDay, calendar, level, count, background, label, activityParams };
+  }
+});
+
+// packages/addons/tasks/client/heatmap-styles.cjs
+var require_heatmap_styles = __commonJS({
+  "packages/addons/tasks/client/heatmap-styles.cjs"(exports2, module2) {
+    module2.exports = ".wbt-heatmap{--hm-empty:#e9ecef;--hm-done-1:#d3f0d7;--hm-done-2:#91d69c;--hm-done-3:#51b566;--hm-done-4:#2f9e44;--hm-publish-1:#d5e7f8;--hm-publish-2:#96bee6;--hm-publish-3:#568fc7;--hm-publish-4:#2b6cb0;--hm-shutdown-1:#fbdada;--hm-shutdown-2:#f1a0a0;--hm-shutdown-3:#df6262;--hm-shutdown-4:#c92a2a;min-width:0;max-width:100%;border:1px solid color-mix(in srgb,currentColor 15%,transparent);border-radius:12px;padding:16px;margin-bottom:16px;color:inherit;font-size:12px;box-sizing:border-box}.wbt-hm-head,.wbt-hm-legend{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.wbt-hm-head{justify-content:space-between;margin-bottom:16px}.wbt-hm-head h3{margin:0;font-size:14px}.wbt-hm-years{display:flex;align-items:center;gap:12px;font-variant-numeric:tabular-nums}.wbt-heatmap button{font:inherit;color:inherit}.wbt-hm-control{border:1px solid color-mix(in srgb,currentColor 20%,transparent);background:transparent;border-radius:5px;cursor:pointer;padding:4px 8px}.wbt-hm-control[aria-selected=true]{font-weight:700;outline:2px solid currentColor;outline-offset:1px}.wbt-hm-scroll{overflow-x:auto;padding:3px;max-width:100%}.wbt-hm-layout{display:flex;gap:8px;min-width:max-content}.wbt-hm-weekdays{display:grid;grid-template-rows:repeat(7,12px);gap:3px;padding-top:22px;font-size:10px;line-height:12px;opacity:.65}.wbt-hm-body{flex:1;min-width:0}.wbt-hm-months{display:grid;grid-template-columns:repeat(var(--hm-weeks),12px);column-gap:3px;height:22px;font-size:10px}.wbt-hm-months span{white-space:nowrap}.wbt-hm-grid{display:grid;grid-template-columns:repeat(var(--hm-weeks),12px);grid-template-rows:repeat(7,12px);gap:3px}.wbt-hm-day{border:0;border-radius:2px;width:12px;height:12px;padding:0;cursor:pointer}.wbt-hm-day[aria-disabled=true]{cursor:default}.wbt-hm-day:focus-visible{outline:2px solid currentColor;outline-offset:1px}.wbt-hm-day:hover{outline:1px solid currentColor;outline-offset:1px}.wbt-hm-future{opacity:.4}.wbt-hm-legend{margin-top:14px}.wbt-hm-swatch{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:5px}.wbt-hm-levels{opacity:.7;font-size:11px}.wbt-hm-tooltip{min-height:18px;margin-top:10px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.wbt-hm-state{padding:28px 8px;text-align:center}.wbt-hm-skeleton{height:102px;border-radius:3px;background:repeating-linear-gradient(90deg,var(--hm-empty) 0 12px,transparent 12px 15px);opacity:.55}.dark .wbt-heatmap,[data-theme=dark] .wbt-heatmap,:root[style*='color-scheme:dark'] .wbt-heatmap,:root[style*='color-scheme: dark'] .wbt-heatmap,[data-color-scheme=dark] .wbt-heatmap{--hm-empty:#303740;--hm-done-1:#21452b;--hm-done-2:#2f7440;--hm-done-3:#46a75c;--hm-done-4:#72d38a;--hm-publish-1:#223e5c;--hm-publish-2:#326496;--hm-publish-3:#508ecb;--hm-publish-4:#85baf0;--hm-shutdown-1:#58292b;--hm-shutdown-2:#914146;--hm-shutdown-3:#c95c63;--hm-shutdown-4:#f58e93;}@media(prefers-color-scheme:dark){:root:not([data-theme=light]):not([data-color-scheme=light]):not([style*='color-scheme:light']):not([style*='color-scheme: light']) .wbt-heatmap{--hm-empty:#303740;--hm-done-1:#21452b;--hm-done-2:#2f7440;--hm-done-3:#46a75c;--hm-done-4:#72d38a;--hm-publish-1:#223e5c;--hm-publish-2:#326496;--hm-publish-3:#508ecb;--hm-publish-4:#85baf0;--hm-shutdown-1:#58292b;--hm-shutdown-2:#914146;--hm-shutdown-3:#c95c63;--hm-shutdown-4:#f58e93;}}@media(min-width:1200px){.wbt-hm-layout{min-width:0}.wbt-hm-months,.wbt-hm-grid{grid-template-columns:repeat(var(--hm-weeks),minmax(12px,1fr))}.wbt-hm-day{width:12px}}@media(prefers-reduced-motion:reduce){.wbt-heatmap *{animation:none!important;transition:none!important}}";
+  }
+});
+
+// packages/addons/tasks/client/heatmap.cjs
+var require_heatmap = __commonJS({
+  "packages/addons/tasks/client/heatmap.cjs"(exports2, module2) {
+    var React = require("react");
+    var h = React.createElement;
+    var model = require_heatmap_model();
+    var css = require_heatmap_styles();
+    function Heatmap(props) {
+      var lang = props.lang === "en" ? "en" : "zh", t = model.COPY[lang];
+      var yearState = React.useState((/* @__PURE__ */ new Date()).getFullYear()), year = yearState[0], setYear = yearState[1];
+      var typeState = React.useState("done"), type = typeState[0], setType = typeState[1];
+      var resultState = React.useState(null), result = resultState[0], setResult = resultState[1];
+      var errorState = React.useState(false), error = errorState[0], setError = errorState[1];
+      var tipState = React.useState(""), tip = tipState[0], setTip = tipState[1];
+      var refreshState = React.useState(0), refresh = refreshState[0], setRefresh = refreshState[1];
+      var cache = React.useMemo(function() {
+        return /* @__PURE__ */ new Map();
+      }, [props.api]);
+      React.useEffect(function() {
+        if (props.active === false) return;
+        var alive = true;
+        setResult(null);
+        setError(false);
+        setTip("");
+        if (!cache.has(year)) {
+          var request = Promise.resolve().then(function() {
+            return props.api.call("tasks.activityCalendar", { year });
+          }).then(function(r) {
+            if (!r || r.ok === false) throw new Error("calendar unavailable");
+            var data = r.result === void 0 ? r : r.result;
+            if (data.year !== year || !Array.isArray(data.days)) throw new Error("invalid calendar");
+            return data;
+          });
+          cache.set(year, request);
+          request.catch(function() {
+            if (cache.get(year) === request) cache.delete(year);
+          });
+        }
+        cache.get(year).then(function(data) {
+          if (alive) setResult(data);
+        }, function() {
+          if (alive) setError(true);
+        });
+        return function() {
+          alive = false;
+        };
+      }, [props.api, props.active, year, cache, refresh]);
+      React.useEffect(function() {
+        if (!props.api.subscribe) return;
+        return props.api.subscribe(function(p) {
+          if (p && p.event === "tasks-changed") {
+            cache.clear();
+            setRefresh(function(n) {
+              return n + 1;
+            });
+          }
+        });
+      }, [props.api, cache]);
+      var geometry = model.calendar(year), today = model.localDay(/* @__PURE__ */ new Date()), byDate = {};
+      if (result) result.days.forEach(function(d) {
+        byDate[d.date] = d;
+      });
+      var ready = result && result.year === year;
+      var total = ready ? result.days.reduce(function(n, d) {
+        return n + model.count(d, type);
+      }, 0) : 0;
+      var content;
+      if (error) content = h("div", { className: "wbt-hm-state", role: "alert" }, t.error, " \xB7 ", h("button", { className: "wbt-hm-control", onClick: function() {
+        cache.delete(year);
+        setRefresh(function(n) {
+          return n + 1;
+        });
+      } }, t.retry));
+      else if (!ready) content = h("div", { role: "status", "aria-label": t.loading }, h("div", { className: "wbt-hm-skeleton", "aria-hidden": true }), t.loading);
+      else if (!total) content = h("div", { className: "wbt-hm-state", role: "status" }, t.empty[type]);
+      else content = h(
+        React.Fragment,
+        null,
+        h("div", { className: "wbt-hm-scroll" }, h(
+          "div",
+          { className: "wbt-hm-layout", style: { "--hm-weeks": geometry.weeks } },
+          h("div", { className: "wbt-hm-weekdays", "aria-hidden": true }, t.weekdays.map(function(s) {
+            return h("span", { key: s }, s);
+          })),
+          h(
+            "div",
+            { className: "wbt-hm-body" },
+            h("div", { className: "wbt-hm-months", "aria-hidden": true }, geometry.days.filter(function(d) {
+              return d.first;
+            }).map(function(d) {
+              return h("span", { key: d.date, style: { gridColumn: d.column } }, new Date(Date.UTC(year, d.month, 1)).toLocaleString(lang === "en" ? "en-US" : "zh-CN", { month: "short", timeZone: "UTC" }));
+            })),
+            h("div", { className: "wbt-hm-grid" }, geometry.days.map(function(d) {
+              var day = byDate[d.date] || {}, future = d.date > today, enabled = !future && model.count(day, type) > 0;
+              var title = model.label(d.date, day, t, type) + (future ? " \xB7 " + t.future : !model.count(day, type) ? " \xB7 " + t.none : "");
+              return h("button", {
+                key: d.date,
+                type: "button",
+                className: "wbt-hm-day" + (future ? " wbt-hm-future" : ""),
+                "data-date": d.date,
+                title,
+                "aria-label": title,
+                "aria-disabled": !enabled,
+                style: { gridColumn: d.column, gridRow: d.row, background: future ? "var(--hm-empty)" : model.background(day, type) },
+                onMouseEnter: function() {
+                  setTip(title);
+                },
+                onMouseLeave: function() {
+                  setTip("");
+                },
+                onFocus: function() {
+                  setTip(title);
+                },
+                onBlur: function() {
+                  setTip("");
+                },
+                onClick: function() {
+                  if (enabled && props.onNavigate) props.onNavigate("tasks", { activityDate: d.date, activityType: type });
+                }
+              });
+            }))
+          )
+        )),
+        h("div", { className: "wbt-hm-tooltip", "aria-live": "polite" }, tip || t.total + " \xB7 " + total)
+      );
+      return h(
+        "section",
+        { className: "wbt-heatmap", "aria-label": t.title },
+        h("style", null, css),
+        h("div", { className: "wbt-hm-head" }, h("h3", null, t.title), h(
+          "div",
+          { className: "wbt-hm-years" },
+          h("button", { type: "button", className: "wbt-hm-control", "aria-label": t.previous, disabled: year <= 1900, onClick: function() {
+            setYear(year - 1);
+          } }, "\u2039"),
+          h("strong", { "aria-live": "polite" }, year),
+          h("button", { type: "button", className: "wbt-hm-control", "aria-label": t.next, disabled: year >= 9999, onClick: function() {
+            setYear(year + 1);
+          } }, "\u203A")
+        )),
+        content,
+        h("div", { className: "wbt-hm-legend", role: "tablist", "aria-label": t.title }, model.TYPES.map(function(k) {
+          return h("button", { key: k, type: "button", className: "wbt-hm-control", role: "tab", "aria-selected": type === k, onClick: function() {
+            setType(k);
+            setTip("");
+          } }, h("span", { className: "wbt-hm-swatch", style: { background: "var(--hm-" + k + "-4)" }, "aria-hidden": true }), t[k]);
+        }), h("span", { className: "wbt-hm-levels" }, t.levels))
+      );
+    }
+    module2.exports = Heatmap;
+  }
+});
+
 // packages/addons/tasks/client/stats.cjs
 var require_stats = __commonJS({
   "packages/addons/tasks/client/stats.cjs"(exports2, module2) {
@@ -1278,6 +1477,7 @@ var require_stats = __commonJS({
     var charts = require_charts();
     var configView = require_config();
     var recentColumns = require_recent_columns();
+    var Heatmap = require_heatmap();
     var COPY = {
       zh: {
         title: "\u4EFB\u52A1\u7EDF\u8BA1",
@@ -1707,6 +1907,7 @@ var require_stats = __commonJS({
       return h(
         "div",
         { className: "wbt-stats" },
+        h(Heatmap, { api, lang, active: props.active, onNavigate: props.onNavigate }),
         h(ch.RangeSwitch, {
           options,
           value: customFrom || customTo ? null : range,
@@ -5656,12 +5857,32 @@ var require_batch_modal = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/activity-filter.cjs
+var require_activity_filter = __commonJS({
+  "packages/addons/tasks/client/activity-filter.cjs"(exports2, module2) {
+    var React = require("react");
+    var h = React.createElement;
+    var model = require_heatmap_model();
+    function ActivityFilter(props) {
+      if (!props.value) return null;
+      var t = model.COPY[props.lang === "en" ? "en" : "zh"];
+      return h(
+        "span",
+        { className: "wbt-row", "data-activity-filter": true },
+        h("span", null, t.filter + " \xB7 " + props.value.activityDate + " \xB7 " + t[props.value.activityType]),
+        h("button", { type: "button", className: "wbt-btn ghost", onClick: props.onClear }, t.clear)
+      );
+    }
+    module2.exports = { ActivityFilter, params: model.activityParams };
+  }
+});
+
 // packages/addons/tasks/client/tasks-view.cjs
 var require_tasks_view = __commonJS({
   "packages/addons/tasks/client/tasks-view.cjs"(exports2, module2) {
     module2.exports = function createTasksView(deps) {
       var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, TABS = deps.TABS, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon2 = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
-      var h = React.createElement;
+      var h = React.createElement, activityFilter = require_activity_filter();
       function TasksView(props) {
         var lang = props.lang === "en" ? "en" : "zh";
         var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -5685,7 +5906,9 @@ var require_tasks_view = __commonJS({
         var t = COPY[props.lang === "en" ? "en" : "zh"];
         var api = props.api;
         var cfg = props.cfg || {};
-        var tableNavigation = props.viewParams && props.viewParams.tableId;
+        var activityNavigation = activityFilter.params(props.viewParams);
+        var activityS = React.useState(activityNavigation), activity = activityS[0], setActivity = activityS[1];
+        var tableNavigation = !activityNavigation && props.viewParams && props.viewParams.tableId;
         var cfgTab = Number(cfg["ui.defaultTab"]);
         if ([0, 5, 6, 7, 8].indexOf(cfgTab) < 0) cfgTab = 0;
         var cfgSize = Math.floor(Number(cfg["list.pageSize"]));
@@ -5703,10 +5926,10 @@ var require_tasks_view = __commonJS({
         var target = targetS[0], setTarget = targetS[1];
         var pathS = React.useState([]);
         var currentPath = pathS[0], setCurrentPath = pathS[1];
-        var initialMissing = !tableNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
+        var initialMissing = !activityNavigation && !tableNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
         var missingS = React.useState(initialMissing);
         var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
-        var tabS = React.useState(tableNavigation || initialMissing ? 8 : cfgTab);
+        var tabS = React.useState(activityNavigation || tableNavigation || initialMissing ? 8 : cfgTab);
         var tab = tabS[0], setTab = tabS[1];
         var viewS = React.useState(!tableNavigation && cfg["ui.listView"] === "card" ? "card" : "list");
         var view = viewS[0], setView = viewS[1];
@@ -5716,7 +5939,7 @@ var require_tasks_view = __commonJS({
         var treeQuery = tqS[0], setTreeQuery = tqS[1];
         var titleS = React.useState("");
         var titleKey = titleS[0], setTitleKey = titleS[1];
-        var filterS = React.useState(tableNavigation || initialMissing ? false : cfg["list.filterRestarted"] !== false);
+        var filterS = React.useState(activityNavigation || tableNavigation || initialMissing ? false : cfg["list.filterRestarted"] !== false);
         var filterRestarted = filterS[0], setFilterRestarted = filterS[1];
         var tagReloadS = React.useState(0);
         var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
@@ -5767,6 +5990,20 @@ var require_tasks_view = __commonJS({
         var toastS = React.useState("");
         var toast = toastS[0], setToast = toastS[1];
         var refreshRef = React.useRef({});
+        React.useEffect(function() {
+          if (!activityNavigation) return;
+          setActivity(activityNavigation);
+          setTarget({ groupId: "1", tableId: null });
+          setTab(8);
+          setFilterRestarted(false);
+          setDifficultyMissing(false);
+          setSearchDraft("");
+          setTitleKey("");
+          setFilterTagIds([]);
+          setPageNumber(1);
+          setSelectedIds(/* @__PURE__ */ new Set());
+          setSelectionMode(false);
+        }, [props.viewParams && props.viewParams.activityDate, props.viewParams && props.viewParams.activityType]);
         function say(msg) {
           setToast(String(msg || ""));
         }
@@ -5836,7 +6073,7 @@ var require_tasks_view = __commonJS({
         }, [api]);
         var refreshList = React.useCallback(function() {
           setLoading(true);
-          return api.call("tasks.list", {
+          return api.call("tasks.list", Object.assign({
             tab,
             titleKey,
             tableId: target.tableId,
@@ -5847,7 +6084,7 @@ var require_tasks_view = __commonJS({
             tagIds: filterTagIds,
             difficultyMissing,
             sort: tableNavigation || cfgSort === "auto" ? void 0 : cfgSort
-          }).then(function(r) {
+          }, activity || {})).then(function(r) {
             setLoading(false);
             if (r && r.ok) {
               setData(r.result || { records: [], total: 0, current: 1, size: 0, pageable: false });
@@ -5859,7 +6096,7 @@ var require_tasks_view = __commonJS({
             setLoading(false);
             setError(String(e && e.message || e));
           });
-        }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, difficultyMissing, cfgSort]);
+        }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, difficultyMissing, cfgSort, activity]);
         refreshRef.current = { tree: refreshTree, list: refreshList, path: refreshPath, tags: refreshTagNav };
         React.useEffect(function() {
           injectCss();
@@ -6124,6 +6361,10 @@ var require_tasks_view = __commonJS({
         var filterBar = h(
           "div",
           { className: "wbt-filters" },
+          h(activityFilter.ActivityFilter, { value: activity, lang: props.lang, onClear: function() {
+            setActivity(null);
+            setPageNumber(1);
+          } }),
           h(
             "label",
             { className: "wbt-check" },
@@ -7046,7 +7287,7 @@ var require_tasks_view = __commonJS({
   var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, TABS, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.1.4",
+    version: "3.1.5",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

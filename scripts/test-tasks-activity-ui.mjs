@@ -1,0 +1,51 @@
+// Isolated hook/event regressions: no database, bundle output or production writes.
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
+const require=createRequire(import.meta.url), dir='../packages/addons/tasks/client/';
+const model=require(dir+'heatmap-model.cjs');
+for(let y=1900;y<=2400;y++){
+ const g=model.calendar(y),leap=y%4===0&&(y%100!==0||y%400===0);
+ assert.equal(g.days.length,leap?366:365);assert.equal(g.days.at(-1).date,y+'-12-31');
+ assert.equal(new Set(g.days.map(d=>d.column+':'+d.row)).size,g.days.length);
+ for(const d of g.days)assert.equal(d.row,(new Date(d.date+'T00:00:00Z').getUTCDay()+6)%7+1);
+}
+assert.equal(model.calendar(2012).weeks,54);
+assert.deepEqual([1,2,3,4,6,7,99].map(model.level),[1,2,2,3,3,4,4]);
+assert.deepEqual(model.TYPES,['done','publish','shutdown']);
+let state=[],cursor=0,effects=[];
+const memo=(fn,deps)=>{const i=cursor++,old=state[i];if(!old||deps.some((v,j)=>v!==old.deps[j]))state[i]={value:fn(),deps};return state[i].value;};
+const React={createElement:(type,props,...children)=>({type,props:props||{},children:children.flat(Infinity).filter(x=>x!=null)}),useState:v=>{const i=cursor++;if(!(i in state))state[i]=v;return [state[i],v=>state[i]=typeof v==='function'?v(state[i]):v];},useRef:v=>{const i=cursor++;return state[i]||={current:v};},useMemo:memo,useCallback:(fn,deps)=>memo(()=>fn,deps),useEffect:(fn,deps)=>memo(()=>{effects.push(fn);},deps)};
+const reset=()=>{state=[];cursor=0;effects=[];},render=(C,p)=>{cursor=0;return C(p);};
+const flush=async()=>{const jobs=effects;effects=[];jobs.forEach(fn=>fn());for(let i=0;i<15;i++)await Promise.resolve();};
+const walk=n=>n&&typeof n==='object'?[n,...n.children.flatMap(walk)]:[];
+const text=n=>n&&typeof n==='object'?n.children.map(text).join(''):String(n??'');
+const find=(tree,pred)=>{const n=walk(tree).find(pred);assert.ok(n,'control exists');return n;};
+const mod={exports:{}};runInNewContext(readFileSync('packages/addons/tasks/client/heatmap.cjs','utf8'),{module:mod,require:n=>n==='react'?React:require(dir+n.slice(2)),Date,Map});
+const Heatmap=mod.exports,y=new Date().getFullYear(),date=y+'-01-01';
+for(const lang of ['zh','en']){
+ reset();let navigation,fail=false;const calls=[];
+ const p={lang,onNavigate:(...v)=>navigation=v,api:{call:async(action,args)=>{calls.push(args);if(fail){fail=false;return {ok:false};}return {ok:true,result:{year:args.year,days:args.year===y?[{date,done:2,publish:4,shutdown:7}]:[]}};}}};
+ let v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].loading));await flush();v=render(Heatmap,p);
+ const day=()=>find(render(Heatmap,p),n=>n.props['data-date']===date);
+ assert.equal(day().props.title,date+' · '+model.COPY[lang].done+' 2');
+ assert.equal(day().props.style.background,'var(--hm-done-2)');
+ for(const type of model.TYPES){find(render(Heatmap,p),n=>n.props.role==='tab'&&text(n)===model.COPY[lang][type]).props.onClick();await flush();v=render(Heatmap,p);assert.equal(calls.length,1);day().props.onClick();assert.equal(navigation[0],'tasks');assert.equal(navigation[1].activityType,type);assert.equal(navigation[1].activityDate,date);}
+ assert.equal(walk(v).filter(n=>n.props.role==='tab').length,3);
+ const future=walk(v).find(n=>n.props['data-date']>model.localDay(new Date()));
+ if(future){navigation=null;assert.equal(future.props['aria-disabled'],true);assert.equal(future.props.disabled,undefined);future.props.onClick();assert.equal(navigation,null);}
+ find(v,n=>n.props['aria-label']===model.COPY[lang].previous).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].empty.shutdown));
+ find(v,n=>n.props['aria-label']===model.COPY[lang].next).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.equal(calls.length,2);
+ fail=true;find(v,n=>n.props['aria-label']===model.COPY[lang].next).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].error));
+ find(v,n=>n.type==='button'&&text(n)===model.COPY[lang].retry).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].empty.shutdown));assert.equal(calls.length,4);
+}
+const noop=()=>null,copy=require(dir+'copy.cjs'),filter=require(dir+'activity-filter.cjs');
+const View=require(dir+'tasks-view.cjs')({React,configView:{useConfig:()=>({ready:true,values:{'list.filterRestarted':true,'ui.defaultTab':0}})},COPY:copy,TABS:[],allTables:()=>[],treeWalk:()=>[],treeFlat:()=>[],cx:(...s)=>s.join(' '),injectCss:noop,Icon:noop,PathCrumbs:noop,TagFilter:noop});
+for(const activityType of model.TYPES){
+ reset();const calls=[],p={lang:'en',viewParams:{activityDate:date,activityType,tableId:'stale',difficultyMissing:true},api:{subscribe:()=>noop,call:async(action,args)=>{calls.push({action,args});return {ok:true,result:action==='tasks.list'?{records:[],total:0}:[]};}}};
+ const outer=View(p),Body=outer.type;render(Body,outer.props);await flush();render(Body,outer.props);await flush();let args=calls.filter(c=>c.action==='tasks.list').at(-1).args;
+ assert.equal(args.activityDate,date);assert.equal(args.activityType,activityType);assert.equal(args.tab,8);assert.equal(args.filterRestarted,false);assert.equal(args.tableId,null);assert.equal(args.difficultyMissing,false);assert.equal(args.titleKey,'');assert.deepEqual(args.tagIds,[]);
+ find(render(Body,outer.props),n=>n.type===filter.ActivityFilter).props.onClear();render(Body,outer.props);await flush();args=calls.filter(c=>c.action==='tasks.list').at(-1).args;assert.ok(!('activityDate' in args));assert.ok(!('activityType' in args));
+}
+console.log('TASK ACTIVITY UI PASS: 501 years, leap/54-week geometry, 3 single types, zh/en, cache/retry/empty, accessible future cells, list drilldown and clear');

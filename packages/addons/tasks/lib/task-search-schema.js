@@ -1,5 +1,7 @@
 /** Shared list/export filtering contract; paging remains list-only. */
 export const TASK_FILTER_SCHEMA = {
+  activityDate: { type: "string", pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", description: "活动日（合法 YYYY-MM-DD，1900..9999 年），与 tasks.activityCalendar 同口径；选定单一事件类型，与现有筛选 AND。全状态日点击请传 tab=all、filterRestarted=false。非 ids 导出与列表共用。" },
+  activityType: { type: "string", enum: ["publish", "done", "shutdown"], description: "需同时传 activityDate，缺省 done；publish=publish_date，done=status2 且 done_date，shutdown=status1 且 shutdown_date。" },
   tab: { type: ["number", "string"], description: "0 紧急 / 1..4 旧类型页签（按同名标签筛）/ 5 已关闭 / 6 进行中 / 7 已完成 / 8 总览；缺省或传 all 等于 8（全量，不再只看紧急）" },
   titleKey: { type: "string", description: "关键词字面包含匹配，同时搜索标题、描述、感受（OR）；%/_/反斜杠按普通字符，ASCII 大小写不敏感" },
   tableId: { type: ["string", "number", "null"], description: "只看某个任务表" },

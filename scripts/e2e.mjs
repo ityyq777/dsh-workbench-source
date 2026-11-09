@@ -19,6 +19,8 @@ const tests = [
   "scripts/test-tasks-review.mjs",
   "scripts/test-task-difficulty-backend.mjs",
   "scripts/test-task-recent-backend.mjs",
+  "scripts/test-task-activity-calendar.mjs",
+  "scripts/test-tasks-activity-ui.mjs",
   "scripts/test-task-recent-ui.mjs",
   "scripts/test-tasks-difficulty-ui.mjs",
   "scripts/test-tasks-search.mjs",
