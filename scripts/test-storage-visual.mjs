@@ -76,11 +76,19 @@ for(const v of addon.views){
     assert.ok(all().some(n=>n.type==='strong'&&text(n)==='Stored body'));
     window.localStorage.setItem('wb.bodyMode','text');
     window.dispatchEvent(new Event('storage'));render();
-    assert.equal(cls('wb-body-text').length,1,'storage event updates the mounted description');
+    assert.equal(cls('wb-markdown').length,1,'global storage events cannot change a mounted description');
+    const localToggle = () => cls('wb-body-toggle')[0];
+    assert.equal(localToggle().props['aria-pressed'],true);
+    localToggle().props.onClick({stopPropagation(){}});render();
+    assert.equal(cls('wb-body-text').length,1,'local button switches only this description');
     assert.equal(text(cls('wb-body-text')[0]),'**Stored body**');
+    assert.equal(localToggle().props['aria-pressed'],false);
+    assert.ok(all(localToggle()).some(n=>n.type==='svg'&&n.props.className.includes('lucide-pilcrow')));
     window.localStorage.setItem('wb.bodyMode','markdown');
     window.dispatchEvent(new CustomEvent('wb-body-mode',{detail:'markdown'}));render();
-    assert.equal(cls('wb-markdown').length,1,'same-window custom event restores Markdown');
+    assert.equal(cls('wb-body-text').length,1,'same-window global events cannot replace local state');
+    localToggle().props.onClick({stopPropagation(){}});render();
+    assert.equal(cls('wb-markdown').length,1);
     assert.ok(calls.every(c=>!c.name.startsWith('tasks.')),'storage never calls task config APIs');
     const button=label=>all().find(n=>n.type==='button'&&(text(n)===label||n.props['aria-label']===label));
     const latest=()=>calls.filter(c=>c.name==='storage.list').at(-1).args;
@@ -105,6 +113,11 @@ for(const v of addon.views){
   root=v.icon;resetFrames();render();assert.equal(all().filter(n=>n.type==='svg').length,1,'tab icon renders');
 }
 assert.ok(calls.some(c=>c.name==='storage.dataTables'),'data adapter calls shared data API');
+resetFrames(); root=addon.views.find(v=>v.id==='storage').component;
+props={lang:'en',api:{async call(name,args){const response=await api.call(name,args);if(name==='storage.configGet')response.result.values['ui.bodyMode']='text';return response;}}};
+render(); await settle();
+assert.equal(cls('wb-body-text').length,1,'storage config initial value reaches Records → Card → Description');
+assert.equal(cls('wb-markdown').length,0);
 const css=styles.join(String.fromCharCode(10));
 for(const token of ['--wb-radius-card','--wb-space-md','--wb-border','--wb-description-bg','--wb-motion:140ms'])assert.ok(css.includes(token),token);
 assert.ok(css.includes("@container storage (max-width:480px)"));assert.match(css,/wbi-btn-label{display:none/);

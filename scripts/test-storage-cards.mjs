@@ -122,4 +122,24 @@ assert.equal(cls(desc.render(), "wb-desc-clamped").length, 1);
 const short = renderer(Description, { text: "Short" });
 short.render(undefined, { scrollHeight: 20, clientHeight: 20 });
 assert.equal(cls(short.render(), "wb-desc-toggle").length, 0);
+// Each description retains its own mode and never follows sibling/config changes.
+for (const lang of ["en", "zh"]) {
+  const first = renderer(Description, { text: "**first**", lang, bodyMode: "text" });
+  const second = renderer(Description, { text: "**second**", lang });
+  const toggle = tree => nodes(tree, n => n.props.mode && n.props.onChange)[0];
+  const a = first.render(), b = second.render();
+  assert.equal(toggle(a).props.mode, "text"); assert.equal(toggle(b).props.mode, "markdown");
+  assert.notEqual(a.props["aria-labelledby"], b.props["aria-labelledby"]);
+  assert.equal(a.props["aria-labelledby"], cls(a, "wb-body-label")[0].props.id);
+  assert.equal(cls(a, "wb-desc-text")[0].children.length, 1, "label is outside clamped content");
+  assert.equal(nodes(a, n => n.props.onDoubleClick).length, 0);
+  toggle(a).props.onChange("markdown");
+  assert.equal(toggle(first.render()).props.mode, "markdown");
+  toggle(b).props.onChange("text");
+  assert.equal(toggle(first.render({ text: "**first**", lang, bodyMode: "text" })).props.mode, "markdown");
+  assert.equal(toggle(second.render()).props.mode, "text");
+  const remount = renderer(Description, { text: "new", bodyMode: "text" });
+  assert.equal(toggle(remount.render()).props.mode, "text");
+}
+assert.equal(renderer(StorageCard, { ...base, item, bodyMode: "text" }).render().children[3].props.bodyMode, "text");
 console.log("STORAGE CARD TEST PASS: empty fields, hierarchy, safe gallery, callbacks, busy states, measured expand/collapse");

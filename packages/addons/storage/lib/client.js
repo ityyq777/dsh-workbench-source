@@ -169,176 +169,37 @@ var require_markdown = __commonJS({
   }
 });
 
-// packages/addons/lib/body-mode.cjs
-var require_body_mode = __commonJS({
-  "packages/addons/lib/body-mode.cjs"(exports2, module2) {
-    var KEY = "wb.bodyMode";
-    var EVENT = "wb-body-mode";
-    function normalize(value) {
-      return value === "text" ? "text" : "markdown";
-    }
-    function get() {
-      try {
-        return normalize(window.localStorage.getItem(KEY));
-      } catch (_) {
-        return "markdown";
-      }
-    }
-    function set(value) {
-      value = normalize(value);
-      if (typeof window !== "undefined") {
-        try {
-          window.localStorage.setItem(KEY, value);
-        } catch (_) {
-        }
-        window.dispatchEvent(new CustomEvent(EVENT, { detail: value }));
-      }
-      return value;
-    }
-    function useMode(React) {
-      var state = React.useState(get());
-      React.useEffect(function() {
-        if (typeof window === "undefined") return;
-        function changed(e) {
-          state[1](e.type === EVENT ? normalize(e.detail) : get());
-        }
-        window.addEventListener(EVENT, changed);
-        window.addEventListener("storage", changed);
-        state[1](get());
-        return function() {
-          window.removeEventListener(EVENT, changed);
-          window.removeEventListener("storage", changed);
-        };
-      }, []);
-      return state[0];
-    }
-    module2.exports = { get, set, useMode };
-  }
-});
-
-// packages/addons/lib/body-styles.cjs
-var require_body_styles = __commonJS({
-  "packages/addons/lib/body-styles.cjs"(exports2, module2) {
-    module2.exports = `
-.wb-body-label{float:left;position:relative;z-index:1;margin:1px 6px 0 0;padding:1px 4px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.06em;line-height:1.6;color:#234783;background:color-mix(in srgb,#5b7fd6 8%,#fff);white-space:nowrap}
-.wb-body-label.wb-review-label{color:#154d43;background:color-mix(in srgb,var(--wbt-accent,#11a89b) 8%,#fff)}
-.wb-markdown{white-space:normal;min-width:0;overflow-wrap:anywhere}.wb-markdown:after{content:'';display:table;clear:both}
-.wb-markdown p{margin:0 0 6px;white-space:pre-wrap}.wb-markdown>:last-child{margin-bottom:0}
-.wb-markdown h1,.wb-markdown h2,.wb-markdown h3,.wb-markdown h4,.wb-markdown h5,.wb-markdown h6{margin:6px 0;font-weight:650;line-height:1.6}
-.wb-markdown>:first-child{margin-top:0}.wb-markdown h1{font-size:16px}.wb-markdown h2{font-size:15px}.wb-markdown h3{font-size:14px}.wb-markdown h4,.wb-markdown h5,.wb-markdown h6{font-size:13px}
-.wb-markdown ul,.wb-markdown ol{margin:4px 0;padding-left:24px;display:flow-root}.wb-markdown li{margin:1px 0}
-.wb-markdown blockquote{border-left:2px solid currentColor;padding-left:9px;margin:4px 0;display:flow-root}
-.wb-markdown pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:8px;border-radius:6px;background:color-mix(in srgb,currentColor 7%,transparent);display:flow-root;margin:5px 0}
-.wb-markdown code,.wb-body-text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.wb-markdown code{background:color-mix(in srgb,currentColor 7%,transparent);border-radius:3px;padding:1px 3px}.wb-markdown pre code{padding:0;background:none}
-.wb-markdown a{color:inherit;text-decoration:underline}.wb-markdown hr{border:0;border-top:1px solid currentColor;opacity:.3;clear:both}
-.wb-body-text{white-space:pre-wrap;overflow-wrap:anywhere}.wb-body-text:after{content:'';display:table;clear:both}
-.wb-body-modes{display:inline-flex;gap:3px}.wb-body-modes [aria-pressed=true]{font-weight:700;outline:1px solid currentColor}
-.wbt-item.closed:has(.wb-body-label){opacity:1}
-`;
-  }
-});
-
-// packages/addons/lib/description.cjs
-var require_description = __commonJS({
-  "packages/addons/lib/description.cjs"(exports2, module2) {
-    var React = require("react");
-    var h2 = React.createElement;
-    var Body = require_markdown().createBody(React);
-    var preference = require_body_mode();
-    var css = require_body_styles() + `
-.wb-desc{margin-top:4px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-width:100%;min-width:0;box-sizing:border-box;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,#5b7fd6 34%,transparent);background:color-mix(in oklab,#5b7fd6 7%,transparent);color:inherit}
-.wb-desc-text{display:block}.wb-desc-clamped{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
-.wb-desc-toggle{display:block;border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-size:12px;min-width:32px;min-height:32px;padding:3px 6px;border-radius:6px;cursor:pointer;white-space:normal}
-.wb-desc-toggle:hover{background:color-mix(in oklab,currentColor 8%,transparent)}.wb-desc-toggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#2563eb);outline-offset:2px}
-`;
-    function Description(props) {
-      var mode = preference.useMode(React);
-      var text = props.text == null ? "" : String(props.text);
-      var expanded = React.useState(false), overflow = React.useState(false), ref = React.useRef(null);
-      React.useEffect(function() {
-        expanded[1](false);
-      }, [text]);
-      React.useEffect(function() {
-        var node = ref.current;
-        if (!node) return;
-        function measure() {
-          if (!expanded[0]) overflow[1](node.scrollHeight > node.clientHeight + 1);
-        }
-        measure();
-        var observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
-        if (observer) observer.observe(node);
-        return function() {
-          if (observer) observer.disconnect();
-        };
-      }, [text, expanded[0], mode]);
-      if (!text.trim()) return null;
-      return h2(
-        "div",
-        { className: "wb-desc" },
-        h2(
-          "div",
-          { ref, className: "wb-desc-text" + (expanded[0] ? "" : " wb-desc-clamped") },
-          h2("span", { className: "wb-body-label", onDoubleClick: function(e) {
-            e.stopPropagation();
-          } }, props.lang === "en" ? "Description" : "\u63CF\u8FF0"),
-          h2(Body, { text, mode })
-        ),
-        overflow[0] || expanded[0] ? h2("button", {
+// packages/addons/lib/body-toggle.cjs
+var require_body_toggle = __commonJS({
+  "packages/addons/lib/body-toggle.cjs"(exports2, module2) {
+    module2.exports = function(React) {
+      var h2 = React.createElement;
+      return function BodyMode(props) {
+        var plain = props.mode === "text", t = props.t;
+        var label = t.bodyModeToggle.replace("{field}", props.label).replace("{current}", t[plain ? "plainText" : "markdown"]).replace("{target}", t[plain ? "markdown" : "plainText"]);
+        return h2("button", {
           type: "button",
-          className: "wb-desc-toggle",
-          "aria-expanded": expanded[0],
-          onClick: function() {
-            expanded[1](!expanded[0]);
+          className: "wb-body-toggle" + (props.className ? " " + props.className : ""),
+          title: label,
+          "aria-label": label,
+          "aria-pressed": !plain,
+          onClick: function(e) {
+            e.stopPropagation();
+            props.onChange(plain ? "markdown" : "text");
           }
-        }, props.lang === "en" ? expanded[0] ? "Collapse" : "Expand" : expanded[0] ? "\u6536\u8D77" : "\u5C55\u5F00") : null
-      );
-    }
-    module2.exports = { css, Description };
+        }, h2("span", { key: props.mode, className: "wb-body-toggle-icon", "aria-hidden": true }, h2(props.Icon, { name: plain ? "pilcrow" : "code-2", size: 14 })));
+      };
+    };
   }
 });
 
-// packages/addons/lib/visual-tokens.cjs
-var require_visual_tokens = __commonJS({
-  "packages/addons/lib/visual-tokens.cjs"(exports2, module2) {
-    module2.exports = `
-:where(.wbt-root,.wbi-root,.wbi-cfg,.wbt-data,.wbs-data,.wbg-data,.wbi-data,.wb-desc){--wb-radius-sm:8px;--wb-radius-card:12px;--wb-space-sm:8px;--wb-space-md:14px;--wb-border:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wb-description-bg:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 7%,transparent);--wb-description-line:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 34%,transparent);--wb-motion:140ms;--wb-btn-bg:transparent;--wb-btn-hover-bg:color-mix(in oklab,currentColor 6%,transparent);--wb-btn-active-bg:color-mix(in oklab,currentColor 11%,transparent);--wb-btn-primary-bg:var(--dsw-alias-brand-primary,#2563eb);--wb-btn-primary-fg:var(--dsw-alias-label-primary-inverted,#fff);--wb-btn-danger-fg:var(--dsw-alias-state-error-primary,#b91c1c);--wb-btn-size-sm:32px;--wb-btn-focus:2px solid var(--dsw-alias-brand-primary,#2563eb);--wb-btn-focus-offset:2px}
-.wb-desc{background:var(--wb-description-bg);border-left-color:var(--wb-description-line);border-radius:0 var(--wb-radius-sm) var(--wb-radius-sm) 0}
-`;
-  }
-});
-
-// packages/addons/storage/client/styles.cjs
-var require_styles = __commonJS({
-  "packages/addons/storage/client/styles.cjs"(exports2, module2) {
-    module2.exports = require_description().css + require_visual_tokens() + `
-.wbi-root{--line:var(--wb-line,var(--dsw-alias-border-l2,#d9dfe6));--surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,#fff));--muted:var(--dsw-alias-label-secondary,#64748b);--accent:var(--dsw-alias-brand-primary,#2563eb);font-size:13px;color:inherit;min-width:0;container-type:inline-size;container-name:storage}
-.wbi-root *{box-sizing:border-box}.wbi-root h2{font-size:18px;margin:0}.wbi-root h3{font-size:15px;margin:0}.wbi-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.wbi-grow{flex:1;min-width:0}.wbi-muted{color:var(--muted);font-size:12px}.wbi-root input,.wbi-root textarea,.wbi-root select{background:var(--surface);color:inherit;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;max-width:100%}.wbi-root textarea{resize:vertical;min-height:80px}.wbi-root :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.wbi-btn,.wbi-image,.wbi-root .wb-desc-toggle{border:none;background:var(--wb-btn-bg);color:inherit;min-height:var(--wb-btn-size-sm);min-width:var(--wb-btn-size-sm);border-radius:8px;padding:7px 12px;cursor:pointer;font:inherit}
-.wbi-btn:enabled:hover,.wbi-image:enabled:hover,.wbi-root .wb-desc-toggle:enabled:hover{background:var(--wb-btn-hover-bg)}
-.wbi-btn:enabled:active,.wbi-image:enabled:active,.wbi-root .wb-desc-toggle:enabled:active{background:var(--wb-btn-active-bg)}
-.wbi-btn:disabled{opacity:.45;cursor:default}
-.wbi-btn.wbi-primary{background:var(--wb-btn-primary-bg);color:var(--dsw-alias-label-primary-inverted,#fff)}
-.wbi-btn.wbi-primary:enabled:hover{background:color-mix(in oklab,var(--wb-btn-primary-bg) 92%,black)}
-.wbi-btn.wbi-primary:enabled:active{background:color-mix(in oklab,var(--wb-btn-primary-bg) 84%,black)}
-.wbi-btn.wbi-danger:enabled:hover{color:var(--wb-btn-danger-fg)}
-.wbi-btn:focus-visible,.wbi-image:focus-visible,.wbi-root .wb-desc-toggle:focus-visible{outline:var(--wb-btn-focus);outline-offset:var(--wb-btn-focus-offset)}
-.wbi-toolbar{margin:18px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.wbi-toolbar input[type=search]{min-width:220px;flex:1}.wbi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:14px}.wbi-card{padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);min-width:0;height:100%;display:flex;flex-direction:column;gap:8px;transition:transform .14s ease,border-color .14s ease}.wbi-card h3{font-size:14px;font-weight:650;line-height:1.4;overflow-wrap:anywhere;min-width:0;flex:1}.wbi-stock{display:inline-flex;align-items:center;gap:5px;font-size:18px;font-weight:650;overflow-wrap:anywhere;max-width:100%;font-variant-numeric:tabular-nums}.wbi-card p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.wbi-tags{display:flex;gap:6px;flex-wrap:wrap}.wbi-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:20px;font-size:12px}.wbi-images{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-width:0}.wbi-image{border-radius:8px;overflow:hidden;padding:0;background:transparent;flex-shrink:0;cursor:pointer}.wbi-image img{display:block;width:80px;aspect-ratio:4/3;height:auto;object-fit:cover}.wbi-empty{padding:50px 20px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}.wbi-error{padding:12px;margin:10px 0;border:1px solid #ef4444;border-radius:8px;color:var(--dsw-alias-state-error-primary,#b91c1c)}.wbi-pager{margin:20px 0;display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
-.wbi-mask{position:fixed;inset:0;background:#0007;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px}.wbi-modal{background:var(--surface);color:inherit;border-radius:14px;padding:22px;width:640px;max-width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 70px #0004}.wbi-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}.wbi-field{display:flex;flex-direction:column;gap:6px;min-width:0}.wbi-wide{grid-column:1/-1}.wbi-formfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}.wbi-tagoptions{display:flex;gap:8px;flex-wrap:wrap;max-height:160px;overflow:auto;margin-top:8px}.wbi-tagoptions label{display:flex;gap:5px;align-items:center}.wbi-preview{display:block;max-width:100%;max-height:65vh;margin:16px auto;object-fit:contain}.wbi-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin:18px 0}.wbi-kpis strong{display:block;font-size:28px;margin-top:8px}.wbi-bar{height:7px;border-radius:4px;background:var(--accent);margin:8px 0 12px}.wbi-notice{padding:10px 0;color:var(--muted)}
-@media(max-width:600px){.wbi-form{grid-template-columns:1fr}.wbi-wide{grid-column:auto}.wbi-mask{padding:8px}.wbi-modal{padding:16px}.wbi-toolbar input[type=search]{min-width:0;width:100%}}
-
-.wbi-cardhead{display:flex;align-items:baseline;gap:8px;min-width:0;flex-wrap:wrap}.wbi-metazone{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}.wbi-meta{display:flex;gap:2px 10px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
-.wbi-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px;margin-top:auto;padding-top:6px;min-width:0}.wbi-btn-sm{padding:3px 9px;font-size:12px;min-height:var(--wb-btn-size-sm);min-width:var(--wb-btn-size-sm)}.wbi-chip{min-height:32px;max-width:100%;overflow-wrap:anywhere;text-align:left}.wbi-stock small{font-weight:400}.wbi-more{font-variant-numeric:tabular-nums}
-.wbi-card:hover,.wbi-card:focus-within{border-color:color-mix(in oklab,var(--accent) 40%,var(--line))}.wbi-card:hover{transform:translateY(-2px)}.wbi-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.wbi-selectable{cursor:pointer;position:relative;padding-top:42px}.wbi-root input.wbi-check{position:absolute;left:14px;top:14px;margin:0;padding:0;accent-color:var(--accent)}.wbi-card.wbi-selected{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--surface))}.wbi-selbar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:900;display:flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 34px #0004;border-radius:12px;padding:8px 11px;max-width:94vw;flex-wrap:wrap}.wbi-bulk-actions{display:flex;gap:8px}.wbi-root:has(.wbi-selbar){padding-bottom:84px}
-@container storage (min-width:1280px){.wbi-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
-@media(prefers-reduced-motion:reduce){.wbi-card{transition:none}.wbi-card:hover{transform:none}}
-.wbi-root{--line:var(--wb-border)}.wbi-svg{display:inline-block;vertical-align:middle;flex:none}.wbi-root h2,.wbi-root h3,.wbi-inline{display:inline-flex;align-items:center;gap:var(--wb-space-sm)}.wbi-metazone .wbi-inline{margin-right:10px}
-.wbi-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:var(--wb-radius-sm);transition:background var(--wb-motion),color var(--wb-motion)}.wbi-card{border-radius:var(--wb-radius-card);padding:var(--wb-space-md);gap:var(--wb-space-sm)}.wbi-grid{gap:var(--wb-space-md)}.wbi-icon-only{width:32px;height:32px;min-width:32px;padding:0}.wbi-empty .wbi-svg{display:block;margin:0 auto 14px}.wbi-image{position:relative;min-width:80px;min-height:60px}.wbi-image>.wbi-svg{position:absolute;inset:0;margin:auto}.wbi-image img{position:relative}
-.wbi-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.wbi-skeleton{margin:18px 0}.wbi-sk{height:16px;border-radius:var(--wb-radius-sm);background:color-mix(in oklab,currentColor 9%,transparent);animation:wbi-pulse 1.4s ease-in-out infinite}.wbi-sk:nth-child(2){height:48px}.wbi-sk:last-child{width:60%}@keyframes wbi-pulse{50%{opacity:.45}}
-.wbi-cfg-group{border-radius:var(--wb-radius-card)!important}.wbi-cfg{gap:var(--wb-space-md)!important}.wbi-cfg-head h2{display:flex;gap:var(--wb-space-sm);align-items:center}
-@container storage (max-width:480px){.wbi-toolbar{gap:8px}.wbi-toolbar input[type=search]{flex-basis:100%;min-width:0}.wbi-toolbar select{flex:1;min-width:0}.wbi-root>.wbi-row>.wbi-icon-text .wbi-btn-label,.wbi-toolbar>.wbi-icon-text .wbi-btn-label,.wbi-cfg-head>.wbi-icon-text .wbi-btn-label{display:none}.wbi-root>.wbi-row>.wbi-icon-text,.wbi-toolbar>.wbi-icon-text,.wbi-cfg-head>.wbi-icon-text{width:32px;height:32px;padding:0}}
-@media(prefers-reduced-motion:reduce){.wbi-root *,.wbi-root *::after{transition:none!important;animation:none!important}.wbi-card:hover{transform:none}}
-`;
+// packages/addons/lib/body-copy.cjs
+var require_body_copy = __commonJS({
+  "packages/addons/lib/body-copy.cjs"(exports2, module2) {
+    module2.exports = {
+      zh: { desc: "\u63CF\u8FF0", markdown: "Markdown \u6E32\u67D3", plainText: "\u7EAF\u6587\u672C", bodyModeToggle: "{field} \xB7 \u5F53\u524D\uFF1A{current}\uFF1B\u5207\u6362\u4E3A{target}" },
+      en: { desc: "Description", markdown: "Rendered Markdown", plainText: "Plain text", bodyModeToggle: "{field} \xB7 Current: {current}; switch to {target}" }
+    };
   }
 });
 
@@ -630,17 +491,231 @@ var init_createLucideIcon = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-xml.mjs
+var __iconData, CodeXml;
+var init_code_xml = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-xml.mjs"() {
+    init_createLucideIcon();
+    __iconData = {
+      name: "code-xml",
+      size: 24,
+      node: [
+        ["path", { d: "m18 16 4-4-4-4", key: "1inbqp" }],
+        ["path", { d: "m6 8-4 4 4 4", key: "15zrgr" }],
+        ["path", { d: "m14.5 4-5 16", key: "e7oirm" }]
+      ],
+      aliases: ["code-2"]
+    };
+    __iconData.node;
+    CodeXml = createLucideIcon(__iconData);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-2.mjs
+var code_2_exports = {};
+__export(code_2_exports, {
+  default: () => CodeXml
+});
+var init_code_2 = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-2.mjs"() {
+    init_code_xml();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pilcrow.mjs
+var pilcrow_exports = {};
+__export(pilcrow_exports, {
+  __iconData: () => __iconData2,
+  default: () => Pilcrow
+});
+var __iconData2, Pilcrow;
+var init_pilcrow = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pilcrow.mjs"() {
+    init_createLucideIcon();
+    __iconData2 = {
+      name: "pilcrow",
+      size: 24,
+      node: [
+        ["path", { d: "M13 4v16", key: "8vvj80" }],
+        ["path", { d: "M17 4v16", key: "7dpous" }],
+        ["path", { d: "M19 4H9.5a4.5 4.5 0 0 0 0 9H13", key: "sh4n9v" }]
+      ]
+    };
+    __iconData2.node;
+    Pilcrow = createLucideIcon(__iconData2);
+  }
+});
+
+// packages/addons/lib/body-styles.cjs
+var require_body_styles = __commonJS({
+  "packages/addons/lib/body-styles.cjs"(exports2, module2) {
+    module2.exports = `
+.wb-body-label{float:left;position:relative;z-index:1;margin:1px 6px 0 0;padding:1px 4px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.06em;line-height:1.6;color:#234783;background:color-mix(in srgb,#5b7fd6 8%,#fff);white-space:nowrap}
+.wb-body-label.wb-review-label{color:#154d43;background:color-mix(in srgb,var(--wbt-accent,#11a89b) 8%,#fff)}
+.wb-markdown{white-space:normal;min-width:0;overflow-wrap:anywhere}.wb-markdown:after{content:'';display:table;clear:both}
+.wb-markdown p{margin:0 0 6px;white-space:pre-wrap}.wb-markdown>:last-child{margin-bottom:0}
+.wb-markdown h1,.wb-markdown h2,.wb-markdown h3,.wb-markdown h4,.wb-markdown h5,.wb-markdown h6{margin:6px 0;font-weight:650;line-height:1.6}
+.wb-markdown>:first-child{margin-top:0}.wb-markdown h1{font-size:16px}.wb-markdown h2{font-size:15px}.wb-markdown h3{font-size:14px}.wb-markdown h4,.wb-markdown h5,.wb-markdown h6{font-size:13px}
+.wb-markdown ul,.wb-markdown ol{margin:4px 0;padding-left:24px;display:flow-root}.wb-markdown li{margin:1px 0}
+.wb-markdown blockquote{border-left:2px solid currentColor;padding-left:9px;margin:4px 0;display:flow-root}
+.wb-markdown pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:8px;border-radius:6px;background:color-mix(in srgb,currentColor 7%,transparent);display:flow-root;margin:5px 0}
+.wb-markdown code,.wb-body-text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.wb-markdown code{background:color-mix(in srgb,currentColor 7%,transparent);border-radius:3px;padding:1px 3px}.wb-markdown pre code{padding:0;background:none}
+.wb-markdown a{color:inherit;text-decoration:underline}.wb-markdown hr{border:0;border-top:1px solid currentColor;opacity:.3;clear:both}
+.wb-body-text{white-space:pre-wrap;overflow-wrap:anywhere}.wb-body-text:after{content:'';display:table;clear:both}
+.wb-body-section{min-width:0;overflow-anchor:none}
+.wb-body-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;padding-left:12px;min-height:24px}
+.wb-body-heading .wb-body-label{float:none;margin:0;padding:0;border-radius:0;background:none;color:inherit;font-size:11.5px;font-weight:600;letter-spacing:.06em;opacity:.72}
+.wb-body-toggle{display:inline-flex;align-items:center;justify-content:center;flex:none;width:24px;height:24px;border:0;background:transparent;color:inherit;padding:0;border-radius:4px;cursor:pointer;opacity:.7}
+.wb-body-toggle:hover{opacity:1;background:color-mix(in srgb,currentColor 5%,transparent)}
+.wb-body-toggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#2563eb);outline-offset:2px}
+.wb-body-toggle-icon{display:flex;animation:wb-body-icon-in 140ms ease-out}
+@keyframes wb-body-icon-in{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.wb-body-toggle-icon{animation:none}}
+.wbt-item.closed:has(.wb-body-label){opacity:1}
+`;
+  }
+});
+
+// packages/addons/lib/body-id.cjs
+var require_body_id = __commonJS({
+  "packages/addons/lib/body-id.cjs"(exports2, module2) {
+    var nextId = 0;
+    module2.exports = function useBodyId(React) {
+      return typeof React.useId === "function" ? React.useId() : React.useState("wb-body-" + ++nextId)[0];
+    };
+  }
+});
+
+// packages/addons/lib/description.cjs
+var require_description = __commonJS({
+  "packages/addons/lib/description.cjs"(exports2, module2) {
+    var React = require("react");
+    var h2 = React.createElement;
+    var Body = require_markdown().createBody(React);
+    var BodyMode = require_body_toggle()(React);
+    var copy = require_body_copy();
+    var Code = (init_code_2(), __toCommonJS(code_2_exports)).default;
+    var Pilcrow2 = (init_pilcrow(), __toCommonJS(pilcrow_exports)).default;
+    function BodyIcon(props) {
+      return h2(props.name === "pilcrow" ? Pilcrow2 : Code, { size: props.size, "aria-hidden": true, focusable: false });
+    }
+    var css = require_body_styles() + `
+.wb-desc{margin-top:4px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-width:100%;min-width:0;box-sizing:border-box;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,#5b7fd6 34%,transparent);background:color-mix(in oklab,#5b7fd6 7%,transparent);color:inherit}
+.wb-description{margin-top:10px}.wb-description>.wb-desc{margin-top:0}
+.wb-desc-text{display:block}.wb-desc-clamped{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.wb-desc-toggle{display:block;border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-size:12px;min-width:32px;min-height:32px;padding:3px 6px;border-radius:6px;cursor:pointer;white-space:normal}
+.wb-desc-toggle:hover{background:color-mix(in oklab,currentColor 8%,transparent)}.wb-desc-toggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#2563eb);outline-offset:2px}
+`;
+    function Description(props) {
+      var mode = React.useState(props.bodyMode === "text" ? "text" : "markdown");
+      var labelId = require_body_id()(React) + "-desc", t = copy[props.lang === "en" ? "en" : "zh"];
+      var text = props.text == null ? "" : String(props.text);
+      var expanded = React.useState(false), overflow = React.useState(false), ref = React.useRef(null);
+      React.useEffect(function() {
+        expanded[1](false);
+      }, [text]);
+      React.useEffect(function() {
+        var node = ref.current;
+        if (!node) return;
+        function measure() {
+          if (!expanded[0]) overflow[1](node.scrollHeight > node.clientHeight + 1);
+        }
+        measure();
+        var observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
+        if (observer) observer.observe(node);
+        return function() {
+          if (observer) observer.disconnect();
+        };
+      }, [text, expanded[0], mode[0]]);
+      if (!text.trim()) return null;
+      return h2(
+        "section",
+        { className: "wb-body-section wb-description", "aria-labelledby": labelId },
+        h2(
+          "div",
+          { className: "wb-body-heading" },
+          h2("span", { id: labelId, className: "wb-body-label" }, t.desc),
+          h2(BodyMode, { label: t.desc, mode: mode[0], onChange: mode[1], t, Icon: props.Icon || BodyIcon })
+        ),
+        h2(
+          "div",
+          { className: "wb-desc" },
+          h2(
+            "div",
+            { ref, className: "wb-desc-text" + (expanded[0] ? "" : " wb-desc-clamped") },
+            h2(Body, { text, mode: mode[0] })
+          ),
+          overflow[0] || expanded[0] ? h2("button", {
+            type: "button",
+            className: "wb-desc-toggle",
+            "aria-expanded": expanded[0],
+            onClick: function() {
+              expanded[1](!expanded[0]);
+            }
+          }, props.lang === "en" ? expanded[0] ? "Collapse" : "Expand" : expanded[0] ? "\u6536\u8D77" : "\u5C55\u5F00") : null
+        )
+      );
+    }
+    module2.exports = { css, Description };
+  }
+});
+
+// packages/addons/lib/visual-tokens.cjs
+var require_visual_tokens = __commonJS({
+  "packages/addons/lib/visual-tokens.cjs"(exports2, module2) {
+    module2.exports = `
+:where(.wbt-root,.wbi-root,.wbi-cfg,.wbt-data,.wbs-data,.wbg-data,.wbi-data,.wb-desc){--wb-radius-sm:8px;--wb-radius-card:12px;--wb-space-sm:8px;--wb-space-md:14px;--wb-border:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wb-description-bg:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 7%,transparent);--wb-description-line:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 34%,transparent);--wb-motion:140ms;--wb-btn-bg:transparent;--wb-btn-hover-bg:color-mix(in oklab,currentColor 6%,transparent);--wb-btn-active-bg:color-mix(in oklab,currentColor 11%,transparent);--wb-btn-primary-bg:var(--dsw-alias-brand-primary,#2563eb);--wb-btn-primary-fg:var(--dsw-alias-label-primary-inverted,#fff);--wb-btn-danger-fg:var(--dsw-alias-state-error-primary,#b91c1c);--wb-btn-size-sm:32px;--wb-btn-focus:2px solid var(--dsw-alias-brand-primary,#2563eb);--wb-btn-focus-offset:2px}
+.wb-desc{background:var(--wb-description-bg);border-left-color:var(--wb-description-line);border-radius:0 var(--wb-radius-sm) var(--wb-radius-sm) 0}
+`;
+  }
+});
+
+// packages/addons/storage/client/styles.cjs
+var require_styles = __commonJS({
+  "packages/addons/storage/client/styles.cjs"(exports2, module2) {
+    module2.exports = require_description().css + require_visual_tokens() + `
+.wbi-root{--line:var(--wb-line,var(--dsw-alias-border-l2,#d9dfe6));--surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,#fff));--muted:var(--dsw-alias-label-secondary,#64748b);--accent:var(--dsw-alias-brand-primary,#2563eb);font-size:13px;color:inherit;min-width:0;container-type:inline-size;container-name:storage}
+.wbi-root *{box-sizing:border-box}.wbi-root h2{font-size:18px;margin:0}.wbi-root h3{font-size:15px;margin:0}.wbi-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.wbi-grow{flex:1;min-width:0}.wbi-muted{color:var(--muted);font-size:12px}.wbi-root input,.wbi-root textarea,.wbi-root select{background:var(--surface);color:inherit;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;max-width:100%}.wbi-root textarea{resize:vertical;min-height:80px}.wbi-root :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wbi-btn,.wbi-image,.wbi-root .wb-desc-toggle{border:none;background:var(--wb-btn-bg);color:inherit;min-height:var(--wb-btn-size-sm);min-width:var(--wb-btn-size-sm);border-radius:8px;padding:7px 12px;cursor:pointer;font:inherit}
+.wbi-btn:enabled:hover,.wbi-image:enabled:hover,.wbi-root .wb-desc-toggle:enabled:hover{background:var(--wb-btn-hover-bg)}
+.wbi-btn:enabled:active,.wbi-image:enabled:active,.wbi-root .wb-desc-toggle:enabled:active{background:var(--wb-btn-active-bg)}
+.wbi-btn:disabled{opacity:.45;cursor:default}
+.wbi-btn.wbi-primary{background:var(--wb-btn-primary-bg);color:var(--dsw-alias-label-primary-inverted,#fff)}
+.wbi-btn.wbi-primary:enabled:hover{background:color-mix(in oklab,var(--wb-btn-primary-bg) 92%,black)}
+.wbi-btn.wbi-primary:enabled:active{background:color-mix(in oklab,var(--wb-btn-primary-bg) 84%,black)}
+.wbi-btn.wbi-danger:enabled:hover{color:var(--wb-btn-danger-fg)}
+.wbi-btn:focus-visible,.wbi-image:focus-visible,.wbi-root .wb-desc-toggle:focus-visible{outline:var(--wb-btn-focus);outline-offset:var(--wb-btn-focus-offset)}
+.wbi-toolbar{margin:18px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.wbi-toolbar input[type=search]{min-width:220px;flex:1}.wbi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:14px}.wbi-card{padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);min-width:0;height:100%;display:flex;flex-direction:column;gap:8px;transition:transform .14s ease,border-color .14s ease}.wbi-card h3{font-size:14px;font-weight:650;line-height:1.4;overflow-wrap:anywhere;min-width:0;flex:1}.wbi-stock{display:inline-flex;align-items:center;gap:5px;font-size:18px;font-weight:650;overflow-wrap:anywhere;max-width:100%;font-variant-numeric:tabular-nums}.wbi-card p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.wbi-tags{display:flex;gap:6px;flex-wrap:wrap}.wbi-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:20px;font-size:12px}.wbi-images{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-width:0}.wbi-image{border-radius:8px;overflow:hidden;padding:0;background:transparent;flex-shrink:0;cursor:pointer}.wbi-image img{display:block;width:80px;aspect-ratio:4/3;height:auto;object-fit:cover}.wbi-empty{padding:50px 20px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}.wbi-error{padding:12px;margin:10px 0;border:1px solid #ef4444;border-radius:8px;color:var(--dsw-alias-state-error-primary,#b91c1c)}.wbi-pager{margin:20px 0;display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.wbi-mask{position:fixed;inset:0;background:#0007;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px}.wbi-modal{background:var(--surface);color:inherit;border-radius:14px;padding:22px;width:640px;max-width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 70px #0004}.wbi-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}.wbi-field{display:flex;flex-direction:column;gap:6px;min-width:0}.wbi-wide{grid-column:1/-1}.wbi-formfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}.wbi-tagoptions{display:flex;gap:8px;flex-wrap:wrap;max-height:160px;overflow:auto;margin-top:8px}.wbi-tagoptions label{display:flex;gap:5px;align-items:center}.wbi-preview{display:block;max-width:100%;max-height:65vh;margin:16px auto;object-fit:contain}.wbi-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin:18px 0}.wbi-kpis strong{display:block;font-size:28px;margin-top:8px}.wbi-bar{height:7px;border-radius:4px;background:var(--accent);margin:8px 0 12px}.wbi-notice{padding:10px 0;color:var(--muted)}
+@media(max-width:600px){.wbi-form{grid-template-columns:1fr}.wbi-wide{grid-column:auto}.wbi-mask{padding:8px}.wbi-modal{padding:16px}.wbi-toolbar input[type=search]{min-width:0;width:100%}}
+
+.wbi-cardhead{display:flex;align-items:baseline;gap:8px;min-width:0;flex-wrap:wrap}.wbi-metazone{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}.wbi-meta{display:flex;gap:2px 10px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.wbi-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px;margin-top:auto;padding-top:6px;min-width:0}.wbi-btn-sm{padding:3px 9px;font-size:12px;min-height:var(--wb-btn-size-sm);min-width:var(--wb-btn-size-sm)}.wbi-chip{min-height:32px;max-width:100%;overflow-wrap:anywhere;text-align:left}.wbi-stock small{font-weight:400}.wbi-more{font-variant-numeric:tabular-nums}
+.wbi-card:hover,.wbi-card:focus-within{border-color:color-mix(in oklab,var(--accent) 40%,var(--line))}.wbi-card:hover{transform:translateY(-2px)}.wbi-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wbi-selectable{cursor:pointer;position:relative;padding-top:42px}.wbi-root input.wbi-check{position:absolute;left:14px;top:14px;margin:0;padding:0;accent-color:var(--accent)}.wbi-card.wbi-selected{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--surface))}.wbi-selbar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:900;display:flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 34px #0004;border-radius:12px;padding:8px 11px;max-width:94vw;flex-wrap:wrap}.wbi-bulk-actions{display:flex;gap:8px}.wbi-root:has(.wbi-selbar){padding-bottom:84px}
+@container storage (min-width:1280px){.wbi-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.wbi-card{transition:none}.wbi-card:hover{transform:none}}
+.wbi-root{--line:var(--wb-border)}.wbi-svg{display:inline-block;vertical-align:middle;flex:none}.wbi-root h2,.wbi-root h3,.wbi-inline{display:inline-flex;align-items:center;gap:var(--wb-space-sm)}.wbi-metazone .wbi-inline{margin-right:10px}
+.wbi-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:var(--wb-radius-sm);transition:background var(--wb-motion),color var(--wb-motion)}.wbi-card{border-radius:var(--wb-radius-card);padding:var(--wb-space-md);gap:var(--wb-space-sm)}.wbi-grid{gap:var(--wb-space-md)}.wbi-icon-only{width:32px;height:32px;min-width:32px;padding:0}.wbi-empty .wbi-svg{display:block;margin:0 auto 14px}.wbi-image{position:relative;min-width:80px;min-height:60px}.wbi-image>.wbi-svg{position:absolute;inset:0;margin:auto}.wbi-image img{position:relative}
+.wbi-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.wbi-skeleton{margin:18px 0}.wbi-sk{height:16px;border-radius:var(--wb-radius-sm);background:color-mix(in oklab,currentColor 9%,transparent);animation:wbi-pulse 1.4s ease-in-out infinite}.wbi-sk:nth-child(2){height:48px}.wbi-sk:last-child{width:60%}@keyframes wbi-pulse{50%{opacity:.45}}
+.wbi-cfg-group{border-radius:var(--wb-radius-card)!important}.wbi-cfg{gap:var(--wb-space-md)!important}.wbi-cfg-head h2{display:flex;gap:var(--wb-space-sm);align-items:center}
+@container storage (max-width:480px){.wbi-toolbar{gap:8px}.wbi-toolbar input[type=search]{flex-basis:100%;min-width:0}.wbi-toolbar select{flex:1;min-width:0}.wbi-root>.wbi-row>.wbi-icon-text .wbi-btn-label,.wbi-toolbar>.wbi-icon-text .wbi-btn-label,.wbi-cfg-head>.wbi-icon-text .wbi-btn-label{display:none}.wbi-root>.wbi-row>.wbi-icon-text,.wbi-toolbar>.wbi-icon-text,.wbi-cfg-head>.wbi-icon-text{width:32px;height:32px;padding:0}}
+@media(prefers-reduced-motion:reduce){.wbi-root *,.wbi-root *::after{transition:none!important;animation:none!important}.wbi-card:hover{transform:none}}
+`;
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/box.mjs
 var box_exports = {};
 __export(box_exports, {
-  __iconData: () => __iconData,
+  __iconData: () => __iconData3,
   default: () => Box
 });
-var __iconData, Box;
+var __iconData3, Box;
 var init_box = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/box.mjs"() {
     init_createLucideIcon();
-    __iconData = {
+    __iconData3 = {
       name: "box",
       size: 24,
       node: [
@@ -655,22 +730,22 @@ var init_box = __esm({
         ["path", { d: "M12 22V12", key: "d0xqtd" }]
       ]
     };
-    __iconData.node;
-    Box = createLucideIcon(__iconData);
+    __iconData3.node;
+    Box = createLucideIcon(__iconData3);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/plus.mjs
 var plus_exports = {};
 __export(plus_exports, {
-  __iconData: () => __iconData2,
+  __iconData: () => __iconData4,
   default: () => Plus
 });
-var __iconData2, Plus;
+var __iconData4, Plus;
 var init_plus = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/plus.mjs"() {
     init_createLucideIcon();
-    __iconData2 = {
+    __iconData4 = {
       name: "plus",
       size: 24,
       node: [
@@ -678,22 +753,22 @@ var init_plus = __esm({
         ["path", { d: "M12 5v14", key: "s699le" }]
       ]
     };
-    __iconData2.node;
-    Plus = createLucideIcon(__iconData2);
+    __iconData4.node;
+    Plus = createLucideIcon(__iconData4);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/search.mjs
 var search_exports = {};
 __export(search_exports, {
-  __iconData: () => __iconData3,
+  __iconData: () => __iconData5,
   default: () => Search
 });
-var __iconData3, Search;
+var __iconData5, Search;
 var init_search = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/search.mjs"() {
     init_createLucideIcon();
-    __iconData3 = {
+    __iconData5 = {
       name: "search",
       size: 24,
       node: [
@@ -701,22 +776,22 @@ var init_search = __esm({
         ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }]
       ]
     };
-    __iconData3.node;
-    Search = createLucideIcon(__iconData3);
+    __iconData5.node;
+    Search = createLucideIcon(__iconData5);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
 var refresh_cw_exports = {};
 __export(refresh_cw_exports, {
-  __iconData: () => __iconData4,
+  __iconData: () => __iconData6,
   default: () => RefreshCw
 });
-var __iconData4, RefreshCw;
+var __iconData6, RefreshCw;
 var init_refresh_cw = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
     init_createLucideIcon();
-    __iconData4 = {
+    __iconData6 = {
       name: "refresh-cw",
       size: 24,
       node: [
@@ -726,22 +801,22 @@ var init_refresh_cw = __esm({
         ["path", { d: "M8 16H3v5", key: "1cv678" }]
       ]
     };
-    __iconData4.node;
-    RefreshCw = createLucideIcon(__iconData4);
+    __iconData6.node;
+    RefreshCw = createLucideIcon(__iconData6);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs
 var pencil_exports = {};
 __export(pencil_exports, {
-  __iconData: () => __iconData5,
+  __iconData: () => __iconData7,
   default: () => Pencil
 });
-var __iconData5, Pencil;
+var __iconData7, Pencil;
 var init_pencil = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs"() {
     init_createLucideIcon();
-    __iconData5 = {
+    __iconData7 = {
       name: "pencil",
       size: 24,
       node: [
@@ -755,17 +830,17 @@ var init_pencil = __esm({
         ["path", { d: "m15 5 4 4", key: "1mk7zo" }]
       ]
     };
-    __iconData5.node;
-    Pencil = createLucideIcon(__iconData5);
+    __iconData7.node;
+    Pencil = createLucideIcon(__iconData7);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
-var __iconData6, Trash;
+var __iconData8, Trash;
 var init_trash = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
     init_createLucideIcon();
-    __iconData6 = {
+    __iconData8 = {
       name: "trash",
       size: 24,
       node: [
@@ -777,8 +852,8 @@ var init_trash = __esm({
       ],
       aliases: ["trash-2"]
     };
-    __iconData6.node;
-    Trash = createLucideIcon(__iconData6);
+    __iconData8.node;
+    Trash = createLucideIcon(__iconData8);
   }
 });
 
@@ -796,14 +871,14 @@ var init_trash_2 = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/arrow-up-down.mjs
 var arrow_up_down_exports = {};
 __export(arrow_up_down_exports, {
-  __iconData: () => __iconData7,
+  __iconData: () => __iconData9,
   default: () => ArrowUpDown
 });
-var __iconData7, ArrowUpDown;
+var __iconData9, ArrowUpDown;
 var init_arrow_up_down = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/arrow-up-down.mjs"() {
     init_createLucideIcon();
-    __iconData7 = {
+    __iconData9 = {
       name: "arrow-up-down",
       size: 24,
       node: [
@@ -813,22 +888,22 @@ var init_arrow_up_down = __esm({
         ["path", { d: "M7 4v16", key: "1glfcx" }]
       ]
     };
-    __iconData7.node;
-    ArrowUpDown = createLucideIcon(__iconData7);
+    __iconData9.node;
+    ArrowUpDown = createLucideIcon(__iconData9);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/image.mjs
 var image_exports = {};
 __export(image_exports, {
-  __iconData: () => __iconData8,
+  __iconData: () => __iconData10,
   default: () => Image
 });
-var __iconData8, Image;
+var __iconData10, Image;
 var init_image = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/image.mjs"() {
     init_createLucideIcon();
-    __iconData8 = {
+    __iconData10 = {
       name: "image",
       size: 24,
       node: [
@@ -837,22 +912,22 @@ var init_image = __esm({
         ["path", { d: "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21", key: "1xmnt7" }]
       ]
     };
-    __iconData8.node;
-    Image = createLucideIcon(__iconData8);
+    __iconData10.node;
+    Image = createLucideIcon(__iconData10);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/clock.mjs
 var clock_exports = {};
 __export(clock_exports, {
-  __iconData: () => __iconData9,
+  __iconData: () => __iconData11,
   default: () => Clock
 });
-var __iconData9, Clock;
+var __iconData11, Clock;
 var init_clock = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/clock.mjs"() {
     init_createLucideIcon();
-    __iconData9 = {
+    __iconData11 = {
       name: "clock",
       size: 24,
       node: [
@@ -860,22 +935,22 @@ var init_clock = __esm({
         ["path", { d: "M12 6v6l4 2", key: "mmk7yg" }]
       ]
     };
-    __iconData9.node;
-    Clock = createLucideIcon(__iconData9);
+    __iconData11.node;
+    Clock = createLucideIcon(__iconData11);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/tag.mjs
 var tag_exports = {};
 __export(tag_exports, {
-  __iconData: () => __iconData10,
+  __iconData: () => __iconData12,
   default: () => Tag
 });
-var __iconData10, Tag;
+var __iconData12, Tag;
 var init_tag = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/tag.mjs"() {
     init_createLucideIcon();
-    __iconData10 = {
+    __iconData12 = {
       name: "tag",
       size: 24,
       node: [
@@ -889,22 +964,22 @@ var init_tag = __esm({
         ["circle", { cx: "7.5", cy: "7.5", r: ".5", fill: "currentColor", key: "kqv944" }]
       ]
     };
-    __iconData10.node;
-    Tag = createLucideIcon(__iconData10);
+    __iconData12.node;
+    Tag = createLucideIcon(__iconData12);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/package.mjs
 var package_exports = {};
 __export(package_exports, {
-  __iconData: () => __iconData11,
+  __iconData: () => __iconData13,
   default: () => Package
 });
-var __iconData11, Package;
+var __iconData13, Package;
 var init_package = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/package.mjs"() {
     init_createLucideIcon();
-    __iconData11 = {
+    __iconData13 = {
       name: "package",
       size: 24,
       node: [
@@ -920,22 +995,22 @@ var init_package = __esm({
         ["path", { d: "m7.5 4.27 9 5.15", key: "1c824w" }]
       ]
     };
-    __iconData11.node;
-    Package = createLucideIcon(__iconData11);
+    __iconData13.node;
+    Package = createLucideIcon(__iconData13);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chart-column.mjs
 var chart_column_exports = {};
 __export(chart_column_exports, {
-  __iconData: () => __iconData12,
+  __iconData: () => __iconData14,
   default: () => ChartColumn
 });
-var __iconData12, ChartColumn;
+var __iconData14, ChartColumn;
 var init_chart_column = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chart-column.mjs"() {
     init_createLucideIcon();
-    __iconData12 = {
+    __iconData14 = {
       name: "chart-column",
       size: 24,
       node: [
@@ -946,22 +1021,22 @@ var init_chart_column = __esm({
       ],
       aliases: ["bar-chart-3"]
     };
-    __iconData12.node;
-    ChartColumn = createLucideIcon(__iconData12);
+    __iconData14.node;
+    ChartColumn = createLucideIcon(__iconData14);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs
 var list_exports = {};
 __export(list_exports, {
-  __iconData: () => __iconData13,
+  __iconData: () => __iconData15,
   default: () => List
 });
-var __iconData13, List;
+var __iconData15, List;
 var init_list = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs"() {
     init_createLucideIcon();
-    __iconData13 = {
+    __iconData15 = {
       name: "list",
       size: 24,
       node: [
@@ -973,22 +1048,22 @@ var init_list = __esm({
         ["path", { d: "M8 19h13", key: "m83p4d" }]
       ]
     };
-    __iconData13.node;
-    List = createLucideIcon(__iconData13);
+    __iconData15.node;
+    List = createLucideIcon(__iconData15);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/settings.mjs
 var settings_exports = {};
 __export(settings_exports, {
-  __iconData: () => __iconData14,
+  __iconData: () => __iconData16,
   default: () => Settings
 });
-var __iconData14, Settings;
+var __iconData16, Settings;
 var init_settings = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/settings.mjs"() {
     init_createLucideIcon();
-    __iconData14 = {
+    __iconData16 = {
       name: "settings",
       size: 24,
       node: [
@@ -1002,22 +1077,22 @@ var init_settings = __esm({
         ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
       ]
     };
-    __iconData14.node;
-    Settings = createLucideIcon(__iconData14);
+    __iconData16.node;
+    Settings = createLucideIcon(__iconData16);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs
 var database_exports = {};
 __export(database_exports, {
-  __iconData: () => __iconData15,
+  __iconData: () => __iconData17,
   default: () => Database
 });
-var __iconData15, Database;
+var __iconData17, Database;
 var init_database = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs"() {
     init_createLucideIcon();
-    __iconData15 = {
+    __iconData17 = {
       name: "database",
       size: 24,
       node: [
@@ -1026,22 +1101,22 @@ var init_database = __esm({
         ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
       ]
     };
-    __iconData15.node;
-    Database = createLucideIcon(__iconData15);
+    __iconData17.node;
+    Database = createLucideIcon(__iconData17);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/download.mjs
 var download_exports = {};
 __export(download_exports, {
-  __iconData: () => __iconData16,
+  __iconData: () => __iconData18,
   default: () => Download
 });
-var __iconData16, Download;
+var __iconData18, Download;
 var init_download = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/download.mjs"() {
     init_createLucideIcon();
-    __iconData16 = {
+    __iconData18 = {
       name: "download",
       size: 24,
       node: [
@@ -1050,22 +1125,22 @@ var init_download = __esm({
         ["path", { d: "m7 10 5 5 5-5", key: "brsn70" }]
       ]
     };
-    __iconData16.node;
-    Download = createLucideIcon(__iconData16);
+    __iconData18.node;
+    Download = createLucideIcon(__iconData18);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/package-open.mjs
 var package_open_exports = {};
 __export(package_open_exports, {
-  __iconData: () => __iconData17,
+  __iconData: () => __iconData19,
   default: () => PackageOpen
 });
-var __iconData17, PackageOpen;
+var __iconData19, PackageOpen;
 var init_package_open = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/package-open.mjs"() {
     init_createLucideIcon();
-    __iconData17 = {
+    __iconData19 = {
       name: "package-open",
       size: 24,
       node: [
@@ -1093,22 +1168,22 @@ var init_package_open = __esm({
         ]
       ]
     };
-    __iconData17.node;
-    PackageOpen = createLucideIcon(__iconData17);
+    __iconData19.node;
+    PackageOpen = createLucideIcon(__iconData19);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/factory.mjs
 var factory_exports = {};
 __export(factory_exports, {
-  __iconData: () => __iconData18,
+  __iconData: () => __iconData20,
   default: () => Factory
 });
-var __iconData18, Factory;
+var __iconData20, Factory;
 var init_factory = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/factory.mjs"() {
     init_createLucideIcon();
-    __iconData18 = {
+    __iconData20 = {
       name: "factory",
       size: 24,
       node: [
@@ -1124,22 +1199,22 @@ var init_factory = __esm({
         ["path", { d: "M8 16h.01", key: "18s6g9" }]
       ]
     };
-    __iconData18.node;
-    Factory = createLucideIcon(__iconData18);
+    __iconData20.node;
+    Factory = createLucideIcon(__iconData20);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/ruler.mjs
 var ruler_exports = {};
 __export(ruler_exports, {
-  __iconData: () => __iconData19,
+  __iconData: () => __iconData21,
   default: () => Ruler
 });
-var __iconData19, Ruler;
+var __iconData21, Ruler;
 var init_ruler = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/ruler.mjs"() {
     init_createLucideIcon();
-    __iconData19 = {
+    __iconData21 = {
       name: "ruler",
       size: 24,
       node: [
@@ -1156,17 +1231,17 @@ var init_ruler = __esm({
         ["path", { d: "m17.5 15.5 2-2", key: "wo5hmg" }]
       ]
     };
-    __iconData19.node;
-    Ruler = createLucideIcon(__iconData19);
+    __iconData21.node;
+    Ruler = createLucideIcon(__iconData21);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/square-check-big.mjs
-var __iconData20, SquareCheckBig;
+var __iconData22, SquareCheckBig;
 var init_square_check_big = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/square-check-big.mjs"() {
     init_createLucideIcon();
-    __iconData20 = {
+    __iconData22 = {
       name: "square-check-big",
       size: 24,
       node: [
@@ -1178,8 +1253,8 @@ var init_square_check_big = __esm({
       ],
       aliases: ["check-square"]
     };
-    __iconData20.node;
-    SquareCheckBig = createLucideIcon(__iconData20);
+    __iconData22.node;
+    SquareCheckBig = createLucideIcon(__iconData22);
   }
 });
 
@@ -1197,14 +1272,14 @@ var init_check_square = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs
 var x_exports = {};
 __export(x_exports, {
-  __iconData: () => __iconData21,
+  __iconData: () => __iconData23,
   default: () => X
 });
-var __iconData21, X;
+var __iconData23, X;
 var init_x = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs"() {
     init_createLucideIcon();
-    __iconData21 = {
+    __iconData23 = {
       name: "x",
       size: 24,
       node: [
@@ -1212,22 +1287,22 @@ var init_x = __esm({
         ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
       ]
     };
-    __iconData21.node;
-    X = createLucideIcon(__iconData21);
+    __iconData23.node;
+    X = createLucideIcon(__iconData23);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/table.mjs
 var table_exports = {};
 __export(table_exports, {
-  __iconData: () => __iconData22,
+  __iconData: () => __iconData24,
   default: () => Table
 });
-var __iconData22, Table;
+var __iconData24, Table;
 var init_table = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/table.mjs"() {
     init_createLucideIcon();
-    __iconData22 = {
+    __iconData24 = {
       name: "table",
       size: 24,
       node: [
@@ -1237,22 +1312,22 @@ var init_table = __esm({
         ["path", { d: "M3 15h18", key: "5xshup" }]
       ]
     };
-    __iconData22.node;
-    Table = createLucideIcon(__iconData22);
+    __iconData24.node;
+    Table = createLucideIcon(__iconData24);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/rotate-ccw.mjs
 var rotate_ccw_exports = {};
 __export(rotate_ccw_exports, {
-  __iconData: () => __iconData23,
+  __iconData: () => __iconData25,
   default: () => RotateCcw
 });
-var __iconData23, RotateCcw;
+var __iconData25, RotateCcw;
 var init_rotate_ccw = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/rotate-ccw.mjs"() {
     init_createLucideIcon();
-    __iconData23 = {
+    __iconData25 = {
       name: "rotate-ccw",
       size: 24,
       node: [
@@ -1260,8 +1335,8 @@ var init_rotate_ccw = __esm({
         ["path", { d: "M3 3v5h5", key: "1xhq8a" }]
       ]
     };
-    __iconData23.node;
-    RotateCcw = createLucideIcon(__iconData23);
+    __iconData25.node;
+    RotateCcw = createLucideIcon(__iconData25);
   }
 });
 
@@ -1820,7 +1895,7 @@ var require_card = __commonJS({
             item.updateTime ? h2("span", null, tr(lang, "\u66F4\u65B0 ", "Updated ") + props.date(item.updateTime)) : null
           ) : null
         ) : null,
-        h2(Description, { text: item.remark, lang }),
+        h2(Description, { text: item.remark, lang, bodyMode: props.bodyMode }),
         images.length ? h2("div", { className: "wbi-images" }, shown.map(function(url, i) {
           return h2(
             "button",
@@ -1988,7 +2063,7 @@ var require_records = __commonJS({
     var selection = require_selection();
     function Records(props) {
       var api = props.api, lang = props.lang;
-      var items = React.useState(null), error = React.useState(null), loading = React.useState(true), query = React.useState(""), text = React.useState(""), page = React.useState(1), size = React.useState(12), sort = React.useState("update_time"), order = React.useState("desc"), tick = React.useState(0), editing = React.useState(null), deleting = React.useState(null), preview = React.useState(null), busy = React.useState(false), caps = React.useState(false), ready = React.useState(false), confirmDelete = React.useState(true), tag = React.useState(null), bulk = React.useState(null), bulkError = React.useState(null), notice = React.useState(""), pending = React.useRef(false);
+      var items = React.useState(null), error = React.useState(null), loading = React.useState(true), query = React.useState(""), text = React.useState(""), page = React.useState(1), size = React.useState(12), sort = React.useState("update_time"), order = React.useState("desc"), tick = React.useState(0), editing = React.useState(null), deleting = React.useState(null), preview = React.useState(null), busy = React.useState(false), caps = React.useState(false), ready = React.useState(false), confirmDelete = React.useState(true), tag = React.useState(null), bulk = React.useState(null), bulkError = React.useState(null), notice = React.useState(""), pending = React.useRef(false), bodyMode = React.useState("markdown");
       var scope = JSON.stringify([query[0], text[0], page[0], size[0], sort[0], order[0], tag[0] && tag[0].id, tick[0]]);
       var rows = items[0] && items[0].scope === scope ? items[0].records : [];
       var selected = selection.useSelection(scope, rows, busy[0] || !!bulk[0]);
@@ -2020,6 +2095,7 @@ var require_records = __commonJS({
             order[1](v["list.sortOrder"] || "desc");
             confirmDelete[1](v["ui.confirmDelete"] !== false);
             caps[1](!!r[1].tags);
+            bodyMode[1](v["ui.bodyMode"] === "text" ? "text" : "markdown");
           }).catch(function(e) {
             if (active) error[1](e);
           }).finally(function() {
@@ -2197,6 +2273,7 @@ var require_records = __commonJS({
               key: item.id,
               item,
               lang,
+              bodyMode: bodyMode[0],
               caps: caps[0],
               busy: busy[0] || !!bulk[0],
               date,
@@ -4064,7 +4141,7 @@ if (host) {
   h = require("react").createElement, Icon2 = require_icons().Icon;
   host.registerAddon({
     id: "wb-addon-storage",
-    version: "1.4.0",
+    version: "1.4.1",
     views: [
       { id: "stats", icon: tabIcon2("chart"), title: { zh: "\u7EDF\u8BA1", en: "Statistics" }, component: require_stats().Stats },
       { id: "storage", icon: tabIcon2("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: require_records().Records },

@@ -5,7 +5,6 @@ var h = React.createElement;
 
 var DOMAIN = "tasks";
 var PREFIX = "wbt";
-var bodyMode = require("../../lib/body-mode.cjs");
 
 var COPY = {
   zh: {
@@ -214,7 +213,7 @@ function ConfigView(props) {
         var body = unwrap(r);
         if (r && r.ok === false) throw new Error((r && r.error) || "save failed");
         setSavingId("");
-        if (body && body.state) { setState(body.state); if (mounted.current && body.state.values && body.state.values["ui.bodyMode"]) bodyMode.set(body.state.values["ui.bodyMode"]); }
+        if (mounted.current && body && body.state) setState(body.state);
         setNotice({ id: id, text: t.saved, error: false });
       })
       .catch(function (e) {
@@ -234,7 +233,7 @@ function ConfigView(props) {
         var body = unwrap(r);
         if (r && r.ok === false) throw new Error((r && r.error) || "reset failed");
         setBusy(false);
-        if (body && body.state) { setState(body.state); if (mounted.current && body.state.values && body.state.values["ui.bodyMode"]) bodyMode.set(body.state.values["ui.bodyMode"]); }
+        if (mounted.current && body && body.state) setState(body.state);
         setNotice({ id: id, text: t.defaultValue, error: false });
       })
       .catch(function (e) {
@@ -256,7 +255,7 @@ function ConfigView(props) {
         var body = unwrap(r);
         if (r && r.ok === false) throw new Error((r && r.error) || "reset failed");
         setBusy(false);
-        if (body && body.state) { setState(body.state); if (mounted.current && body.state.values && body.state.values["ui.bodyMode"]) bodyMode.set(body.state.values["ui.bodyMode"]); }
+        if (mounted.current && body && body.state) setState(body.state);
         setNotice({ id: "", text: t.allDefault, error: false });
       })
       .catch(function (e) {

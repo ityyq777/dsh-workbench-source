@@ -1,15 +1,19 @@
 // Shared body treatment: inherit primary text rather than the metadata's muted color.
 var React = require("react"), h = React.createElement;
 var Body = require("./markdown.cjs").createBody(React);
-var preference = require("./body-mode.cjs");
+var BodyMode = require("./body-toggle.cjs")(React), copy = require("./body-copy.cjs");
+var Code = require("lucide-react/icons/code-2").default, Pilcrow = require("lucide-react/icons/pilcrow").default;
+function BodyIcon(props) { return h(props.name === "pilcrow" ? Pilcrow : Code, { size: props.size, "aria-hidden": true, focusable: false }); }
 var css = require("./body-styles.cjs") + `
 .wb-desc{margin-top:4px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-width:100%;min-width:0;box-sizing:border-box;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,#5b7fd6 34%,transparent);background:color-mix(in oklab,#5b7fd6 7%,transparent);color:inherit}
+.wb-description{margin-top:10px}.wb-description>.wb-desc{margin-top:0}
 .wb-desc-text{display:block}.wb-desc-clamped{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
 .wb-desc-toggle{display:block;border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-size:12px;min-width:32px;min-height:32px;padding:3px 6px;border-radius:6px;cursor:pointer;white-space:normal}
 .wb-desc-toggle:hover{background:color-mix(in oklab,currentColor 8%,transparent)}.wb-desc-toggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#2563eb);outline-offset:2px}
 `;
 function Description(props) {
-  var mode = preference.useMode(React);
+  var mode = React.useState(props.bodyMode === "text" ? "text" : "markdown");
+  var labelId = require("./body-id.cjs")(React) + "-desc", t = copy[props.lang === "en" ? "en" : "zh"];
   var text = props.text == null ? "" : String(props.text);
   var expanded = React.useState(false), overflow = React.useState(false), ref = React.useRef(null);
   React.useEffect(function () {
@@ -26,15 +30,18 @@ function Description(props) {
     var observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
     if (observer) observer.observe(node);
     return function () { if (observer) observer.disconnect(); };
-  }, [text, expanded[0], mode]);
+  }, [text, expanded[0], mode[0]]);
   if (!text.trim()) return null;
-  return h("div", { className: "wb-desc" },
+  return h("section", { className: "wb-body-section wb-description", "aria-labelledby": labelId },
+    h("div", { className: "wb-body-heading" },
+      h("span", { id: labelId, className: "wb-body-label" }, t.desc),
+      h(BodyMode, { label: t.desc, mode: mode[0], onChange: mode[1], t: t, Icon: props.Icon || BodyIcon })),
+    h("div", { className: "wb-desc" },
     h("div", { ref: ref, className: "wb-desc-text" + (expanded[0] ? "" : " wb-desc-clamped") },
-      h("span", { className: "wb-body-label", onDoubleClick: function (e) { e.stopPropagation(); } }, props.lang === "en" ? "Description" : "描述"),
-      h(Body, { text: text, mode: mode })),
+      h(Body, { text: text, mode: mode[0] })),
     overflow[0] || expanded[0] ? h("button", {
       type: "button", className: "wb-desc-toggle", "aria-expanded": expanded[0],
       onClick: function () { expanded[1](!expanded[0]); }
-    }, props.lang === "en" ? (expanded[0] ? "Collapse" : "Expand") : (expanded[0] ? "收起" : "展开")) : null);
+    }, props.lang === "en" ? (expanded[0] ? "Collapse" : "Expand") : (expanded[0] ? "收起" : "展开")) : null));
 }
 module.exports = { css: css, Description: Description };

@@ -4,14 +4,25 @@ module.exports = function (deps) {
   var React = deps.React, h = React.createElement;
   var Highlight = require("./highlight.cjs")(React);
   var Body = require("../../lib/markdown.cjs").createBody(React, Highlight);
-  var preference = require("../../lib/body-mode.cjs");
+  var BodyMode = require("./body-mode.cjs")(React);
   var statusInfo = deps.statusInfo, stars = deps.stars, pClass = deps.pClass;
   var today = deps.today, daysBetween = deps.daysBetween, cx = deps.cx;
   var Icon = deps.Icon, Countdown = deps.Countdown, PathCrumbs = deps.PathCrumbs;
   function TaskItem(props) {
     var t = props.t;
-    var mode = preference.useMode(React);
-    function bodyLabel(label, review) { return h("span", { className: "wb-body-label" + (review ? " wb-review-label" : "") }, label); }
+    var initialMode = props.bodyMode === "text" ? "text" : "markdown";
+    var descMode = React.useState(initialMode), reviewMode = React.useState(initialMode);
+    var bodyId = require("../../lib/body-id.cjs")(React);
+    function bodySection(label, text, state, review) {
+      var labelId = bodyId + (review ? "-review" : "-desc");
+      if (!String(text || "").trim()) return null;
+      return h("section", { className: "wbt-body-section wb-body-section", "aria-labelledby": labelId },
+        h("div", { className: "wbt-body-heading wb-body-heading" },
+          h("span", { id: labelId, className: "wb-body-label" + (review ? " wb-review-label" : "") }, label),
+          h(BodyMode, { className: "wbt-body-toggle", label: label, mode: state[0], onChange: state[1], t: t, Icon: Icon })),
+        h("div", { className: review ? "wbt-review" : "wbt-desc wb-desc" },
+          h(Body, { text: text, mode: state[0], keyword: props.keyword })));
+    }
     var task = props.task;
     var st = statusInfo(task.status);
     var stName = props.lang === "en" ? st.en : st.zh;
@@ -62,8 +73,8 @@ module.exports = function (deps) {
 
     var titleNode = h("div", { className: "wbt-title" }, h(Highlight, { text: task.title, keyword: props.keyword }));
 
-    var descNode = String(task.description || "").trim() ? h("div", { className: "wbt-desc wb-desc" }, bodyLabel(t.desc), h(Body, { text: task.description, mode: mode, keyword: props.keyword })) : null;
-    var reviewNode = String(task.review || "").trim() ? h("div", { className: "wbt-review" }, bodyLabel(t.review, true), h(Body, { text: task.review, mode: mode, keyword: props.keyword })) : null;
+    var descNode = bodySection(t.desc, task.description, descMode, false);
+    var reviewNode = bodySection(t.review, task.review, reviewMode, true);
 
 
     // 信息层级：标题 → 标签/时间/路径（元信息区）→ [卡片] 操作按钮 → 描述 → 复核。

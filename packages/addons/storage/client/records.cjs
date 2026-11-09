@@ -27,7 +27,7 @@ function Records(props) {
     confirmDelete = React.useState(true),
     tag = React.useState(null),
     bulk = React.useState(null), bulkError = React.useState(null), notice = React.useState(""),
-    pending = React.useRef(false);
+    pending = React.useRef(false), bodyMode = React.useState("markdown");
   var scope = JSON.stringify([query[0], text[0], page[0], size[0], sort[0], order[0], tag[0] && tag[0].id, tick[0]]);
   var rows = items[0] && items[0].scope === scope ? items[0].records : [];
   var selected = selection.useSelection(scope, rows, busy[0] || !!bulk[0]);
@@ -53,6 +53,7 @@ function Records(props) {
           order[1](v["list.sortOrder"] || "desc");
           confirmDelete[1](v["ui.confirmDelete"] !== false);
           caps[1](!!r[1].tags);
+          bodyMode[1](v["ui.bodyMode"] === "text" ? "text" : "markdown");
         })
         .catch(function (e) {
           if (active) error[1](e);
@@ -236,7 +237,7 @@ function Records(props) {
       !loading[0] && !error[0] && data
         ? rows.map(function (item) {
             return h(StorageCard, {
-              key: item.id, item: item, lang: lang, caps: caps[0], busy: busy[0] || !!bulk[0], date: date,
+              key: item.id, item: item, lang: lang, bodyMode: bodyMode[0], caps: caps[0], busy: busy[0] || !!bulk[0], date: date,
               selectionMode: selected.mode, checked: selected.ids.includes(item.id), onCheck: selected.toggle,
               onTag: function (t) { tag[1](t); page[1](1); },
               onPreview: preview[1], onEdit: editing[1],

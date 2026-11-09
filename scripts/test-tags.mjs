@@ -144,6 +144,46 @@ assert(cols.indexOf("updated_at") >= 0 && cols.indexOf("deleted_at") >= 0, "v2 t
 const map2 = db2.prepare("SELECT * FROM tag_mapping").get();
 assert(map2 && map2.tag_id === "old1", "v2 mapping copied");
 
+// 独立 Top 100 限额：真实 SQLite 聚合，不改变沉睡/最近使用条数。
+const statsDb = new DatabaseSync(":memory:");
+const statsDefs = {};
+mod.setup({ ...api, db: statsDb, action: (name, def) => { statsDefs[name] = def; } });
+const report = (args = {}) => statsDefs["tags.statsReport"].execute(args);
+assert(report({ topTagsLimit: 100 }).rankings.topTags.length === 0, "empty Top 100");
+const stamp = Date.now() - 100 * 86400000;
+const insertTag = statsDb.prepare("INSERT INTO tag(id,name,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,NULL,1)");
+const insertMap = statsDb.prepare("INSERT INTO tag_mapping(id,tag_id,item_id,item_type,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,'task',?,?,NULL,1)");
+for (let i = 0; i < 105; i++) {
+  const id = "rank-" + String(i).padStart(3, "0");
+  insertTag.run(id, "排行" + i, stamp, stamp);
+  for (let n = 0; n < i; n++) insertMap.run(id + "-" + n, id, "item-" + n, stamp, stamp);
+}
+const hundred = report({ top: 5, topTagsLimit: 100 });
+assert(hundred.rankings.topTags.length === 100, "Top 100 must return 100, not 20");
+assert(hundred.rankings.topTags[0].count === 104 && hundred.rankings.topTags[99].count === 5, "Top 100 descending count and cutoff");
+assert(hundred.lists.stale.length === 5 && hundred.lists.recent.length === 5, "independent limit preserves top=5 lists");
+const legacy = report({ top: 999 });
+assert(legacy.rankings.topTags.length === 100 && legacy.lists.stale.length === 20 && legacy.lists.recent.length === 10, "legacy limits preserved");
+assert(report().rankings.topTags.length === 100, "Top tags default 100");
+for (const [value, expected] of [[999, 105], [-1, 1], [0, 1], [2.9, 2], ["bad", 100]]) {
+  assert(report({ topTagsLimit: value }).rankings.topTags.length === expected, "limit normalization " + value);
+}
+statsDb.prepare("UPDATE tag SET deleted_at=? WHERE id='rank-104'").run(Date.now());
+assert(report({ topTagsLimit: 100 }).rankings.topTags[0].count === 103, "deleted tags excluded");
+assert(statsDefs["tags.statsReport"].input.properties.topTagsLimit, "new limit declared in schema");
+// 超过 200 条后确认上限与并列 id 顺序。
+for (let i = 105; i < 215; i++) {
+  const id = "rank-" + String(i).padStart(3, "0");
+  insertTag.run(id, "排行" + i, stamp, stamp);
+}
+const capped = report({ top: 100, topTagsLimit: 999 });
+assert(capped.rankings.topTags.length === 200, "API upper bound 200");
+assert(capped.lists.stale.length === 20 && capped.lists.recent.length === 10, "top=100 preserves lists caps");
+const tied = capped.rankings.topTags.filter((row) => row.count === 0).map((row) => row.id);
+assert(tied.join() === tied.slice().sort().join(), "ties ordered by id ascending");
+assert(report({ top: 5 }).rankings.topTags.length === 100, "Top default independent of top");
+statsDb.close();
+
 console.log("TAGS TEST PASS", { events: events.length, tables: tables.length });
 db.close();
 db2.close();

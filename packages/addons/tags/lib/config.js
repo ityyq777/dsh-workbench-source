@@ -22,7 +22,7 @@ const GROUPS = [
 
 const SECTIONS = [
   { value: "usage", zh: "使用分布", en: "Usage distribution" },
-  { value: "top", zh: "Top 标签", en: "Top tags" },
+  { value: "top", zh: "Top 100 标签", en: "Top 100 tags" },
   { value: "types", zh: "对象类型", en: "Object types" },
   { value: "trend", zh: "使用趋势", en: "Usage trend" },
   { value: "stale", zh: "沉睡标签", en: "Dormant tags" },
@@ -70,9 +70,9 @@ const ITEMS = [
     ],
   },
   {
-    id: "stats.top", group: "stats", type: "int", surface: "ui", apply: "mount", default: 10, min: 5, max: 20,
+    id: "stats.top", group: "stats", type: "int", surface: "ui", apply: "mount", default: 10, min: 5, max: 100,
     zh: "榜单条数", en: "Ranking size",
-    hintZh: "排行/清单最多显示多少条（5–20）", hintEn: "Rows shown in rankings and lists (5–20)",
+    hintZh: "清单条数（5–100），沉睡最多 20、最近使用最多 10；Top 100 标签独立显示", hintEn: "List size (5–100), dormant up to 20, recent up to 10; Top 100 tags is independent",
   },
   {
     id: "stats.staleDays", group: "stats", type: "int", surface: "api", apply: "api", default: 90, min: 7, max: 3650,

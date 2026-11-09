@@ -84,7 +84,8 @@ assert.equal(call("storage.get", { id: first.id }).name, "电池");
 assert.equal(call("storage.get", { id: first.id }).tags.length, 2);
 db.exec("DROP TRIGGER reject_log");
 const state = call("storage.configGet");
-assert.equal(state.items.length, 7);
+assert.equal(state.items.length, 8);
+assert.equal(state.values["ui.bodyMode"], "markdown");
 call("storage.configSet", {
   values: {
     "list.pageSize": 24,
@@ -94,12 +95,16 @@ call("storage.configSet", {
     "data.includeDeleted": true,
     "data.showSystemColumns": true,
     "ui.confirmDelete": false,
+    "ui.bodyMode": "text",
   },
 });
 assert.equal(call("storage.list").size, 24);
+assert.equal(call("storage.configGet").values["ui.bodyMode"], "text");
+assert.throws(() => call("storage.configSet", { values: { "ui.bodyMode": "html" } }), /非法/);
 assert.throws(() => call("storage.configSet", { values: { "list.pageSize": 16, unknown: true } }), /未知/);
 assert.equal(call("storage.configGet").values["list.pageSize"], 24);
 call("storage.configReset");
+assert.equal(call("storage.configGet").values["ui.bodyMode"], "markdown");
 assert.equal(call("storage.configOptions").domain, "storage");
 assert.equal(call("storage.dataTables", { stats: true }).tables[0].stats.rows, 21);
 assert.equal(call("storage.dataQuery", { table: "storage", filters: { stock: "1~2" } }).total, 1);
@@ -257,7 +262,7 @@ apply({
   effect: (fn) => fn(),
 });
 assert.equal(domain.id, "wb-addon-storage");
-assert.equal(domain.version, "1.4.0");
+assert.equal(domain.version, "1.4.1");
 assert.equal(domain.views.find((v) => v.id === "stats").title.zh, "统计");
 assert.deepEqual(domain.tables, ["storage"]);
 assert.deepEqual(domain.capability.requires, []);

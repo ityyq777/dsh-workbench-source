@@ -34,7 +34,7 @@ function StorageCard(props) {
       item.createTime || item.updateTime ? h("div", { className: "wbi-meta" },
         item.createTime ? h("span", null, tr(lang, "创建 ", "Created ") + props.date(item.createTime)) : null,
         item.updateTime ? h("span", null, tr(lang, "更新 ", "Updated ") + props.date(item.updateTime)) : null) : null) : null,
-    h(Description, { text: item.remark, lang: lang }),
+    h(Description, { text: item.remark, lang: lang, bodyMode: props.bodyMode }),
     images.length ? h("div", { className: "wbi-images" }, shown.map(function (url, i) {
       return h("button", { key: i, type: "button", className: "wbi-image",
         "aria-label": tr(lang, "预览图片 ", "Preview image ") + (i + 1),

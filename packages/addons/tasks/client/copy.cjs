@@ -1,8 +1,10 @@
 // 任务视图的中英文案。改文案只动这里，别在组件里散落字符串。
 "use strict";
 
+var bodyCopy = require("../../lib/body-copy.cjs");
 module.exports = {
     zh: {
+      bodyModeToggle: bodyCopy.zh.bodyModeToggle,
       bodyMode: "描述与感受显示模式", markdown: "Markdown 渲染", plainText: "纯文本", bodyModeLocal: "已在当前浏览器切换，配置保存失败：",
       title: "任务", search: "搜索标题 / 描述 / 感受", newTask: "新建任务", tree: "任务树",
       select: "选择", cancelSelect: "退出选择", list: "列表", card: "卡片",
@@ -50,6 +52,7 @@ module.exports = {
       needDate: "日期不能为空", needBase: "请选择基准任务", needDifficulty: "请选择难度",
     },
     en: {
+      bodyModeToggle: bodyCopy.en.bodyModeToggle,
       bodyMode: "Description and reflection display mode", markdown: "Render Markdown", plainText: "Plain text", bodyModeLocal: "Changed in this browser; could not save config:",
       title: "Tasks", search: "Search title / description / feeling", newTask: "New task", tree: "Task tree",
       select: "Select", cancelSelect: "Exit select", list: "List", card: "Cards",

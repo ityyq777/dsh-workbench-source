@@ -3,6 +3,7 @@ var React = require("react");
 var h = React.createElement;
 var charts = require("./charts.cjs");
 var configView = require("./config.cjs");
+var TopTags = require("./top-tags.cjs").TopTags;
 
 var COPY = {
   zh: {
@@ -15,7 +16,6 @@ var COPY = {
     avgPerItem: "平均每对象", newTags: "范围内新增标签", newMappings: "范围内新增关联",
     times: "个", current: "当前", inRange: "范围内", ofTotal: "占总量",
     usage: "使用次数分布", usageNote: "按标签的关联条数分桶",
-    top: "Top 标签", topNote: "按使用次数排序",
     types: "关联对象类型", typesNote: "当前关联",
     trend: "新增标签 / 关联趋势", trendNote: "包含后来解除的关联（历史新增）",
     newTagSeries: "新增标签", newMapSeries: "新增关联",
@@ -36,7 +36,6 @@ var COPY = {
     avgPerItem: "Avg per object", newTags: "New tags", newMappings: "New mappings",
     times: "", current: "Current", inRange: "In range", ofTotal: "of total",
     usage: "Usage distribution", usageNote: "Tags bucketed by mapping count",
-    top: "Top tags", topNote: "Sorted by usage",
     types: "Object types", typesNote: "Current mappings",
     trend: "New tags / mappings", trendNote: "Includes mappings later removed",
     newTagSeries: "Tags", newMapSeries: "Mappings",
@@ -70,7 +69,7 @@ function TagsStatsBody(props) {
   var cfgRange = RANGES.indexOf(cfg["stats.range"]) >= 0 ? cfg["stats.range"] : "30d";
   var cfgTop = Math.floor(Number(cfg["stats.top"]));
   if (!(cfgTop >= 5)) cfgTop = 10;
-  if (cfgTop > 20) cfgTop = 20;
+  if (cfgTop > 100) cfgTop = 100;
   var cfgSections = Array.isArray(cfg["stats.sections"]) ? cfg["stats.sections"] : null;
   function sectionOn(key) { return !cfgSections || cfgSections.indexOf(key) >= 0; }
   var ch = React.useMemo(function () { return charts.makeCharts("wbg"); }, []);
@@ -103,14 +102,14 @@ function TagsStatsBody(props) {
     if ((customFrom || customTo) && !customOk) return Promise.resolve();
     var id = ++req.current;
     if (!silent) setLoading(true);
-    var args = { top: cfgTop };
+    var args = { top: cfgTop, topTagsLimit: 100 };
     if (customOk) { args.from = customFrom; args.to = customTo; } else { args.range = range; }
     return Promise.resolve(api.call("tags.statsReport", args))
       .then(function (r) { return r && r.result !== undefined ? r.result : r; })
       .then(function (d) { if (id === req.current) { setData(d); setErr(""); } })
       .catch(function (e) { if (id === req.current) setErr(String((e && e.message) || e || "load failed")); })
       .then(function () { if (id === req.current) setLoading(false); });
-  }, [api, range, customOk, customFrom, customTo]);
+  }, [api, range, customOk, customFrom, customTo, cfgTop]);
 
   React.useEffect(function () { load(false); }, [load]);
 
@@ -169,13 +168,10 @@ function TagsStatsBody(props) {
     } else {
       children.push(h(ch.Card, { key: "usage", span: 6, title: t.usage, note: t.usageNote },
         h(ch.Histogram, { data: b.usage || [], lang: lang, color: ch.colors[0] })));
-      children.push(h(ch.Card, { key: "top", span: 6, title: t.top, note: t.topNote },
-        h(ch.BarList, {
-          data: ((data.rankings && data.rankings.topTags) || []).map(function (x) {
-            return { key: x.id, label: x.name, value: x.count, title: x.name };
-          }),
-          lang: lang, color: ch.colors[0],
-        })));
+      children.push(h(TopTags, {
+        key: "top", rows: ((data.rankings && data.rankings.topTags) || []).slice(0, 100), total: totals.tags, lang: lang,
+        onSelect: function (row) { if (props.onNavigate) props.onNavigate("tags", { text: row.name }); },
+      }));
       children.push(h(ch.Card, { key: "types", span: 4, title: t.types, note: t.typesNote },
         h(ch.Donut, {
           data: (b.itemTypes || []).map(function (x, i) { return { key: x.key, label: x.label, count: x.mappings, color: ch.colors[i] }; }),
@@ -232,7 +228,12 @@ function TagsStatsBody(props) {
       loading: loading, generatedAt: data && data.generatedAt, refreshLabel: t.refresh, timeLabel: t.asOf,
     }),
     err && data ? h(ch.ErrorBar, { message: err, onRetry: function () { load(false); }, retryLabel: t.retry }) : null,
-    h("div", { className: "wbg-sgrid" }, children),
+    h("div", { className: "wbg-sgrid" }, children.filter(function (node) { return node.key === "kpi"; })),
+    h("div", { className: "wbg-stats-columns" },
+      children.some(function (node) { return node.key === "top"; })
+        ? h("div", { className: "wbg-top-column" }, children.filter(function (node) { return node.key === "top"; })) : null,
+      h("div", { className: "wbg-sgrid wbg-stats-main" }, children.filter(function (node) { return node.key !== "top" && node.key !== "kpi"; })),
+    ),
   );
 }
 

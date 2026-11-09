@@ -70,6 +70,18 @@ var require_charts = __commonJS({
         ".@-ghost:hover{border-color:var(--dsw-alias-brand-primary,#4f6ef7);color:var(--dsw-alias-brand-primary,#4f6ef7)}",
         ".@-muted{color:var(--dsw-alias-label-tertiary,#8f959e);font-size:12px}",
         ".@-sgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}",
+        ".@-stats-columns{display:flex;gap:12px;align-items:flex-start}",
+        ".@-top-column{flex:0 0 32%;min-width:0}.@-stats-main{flex:1;min-width:0}",
+        ".@-top-scroll{max-height:min(64vh,720px);overflow-y:auto;overscroll-behavior:contain}",
+        ".@-top-head,.@-top-row{display:grid;grid-template-columns:28px minmax(0,1fr) 44px;gap:6px;align-items:center;height:28px;box-sizing:border-box;font-size:12px;text-align:left}",
+        ".@-top-head{position:sticky;top:0;z-index:1;background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-tertiary,#8f959e);border-bottom:1px solid var(--dsw-alias-border-l2,#e5e6eb)}",
+        ".@-top-row{appearance:none;width:100%;padding:0;border:0;background:transparent;color:inherit;cursor:pointer;font-family:inherit}",
+        ".@-top-row:hover{background:var(--dsw-alias-bg-skeleton,#f2f3f5)}.@-top-row:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:-2px}",
+        ".@-top-name{position:relative;min-width:0;height:24px;line-height:24px}.@-top-label{position:relative;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+        ".@-top-fill{position:absolute;left:0;top:3px;bottom:3px;border-radius:3px;background:color-mix(in srgb,var(--dsw-alias-brand-primary,#4f6ef7) 14%,transparent)}",
+        ".@-top-rank{color:var(--dsw-alias-label-tertiary,#8f959e);font-variant-numeric:tabular-nums}.@-top-count{text-align:right;font-variant-numeric:tabular-nums}",
+        ".@-stats-main>.@-span-6:first-child{grid-column:span 12}",
+        "@media(max-width:900px){.@-stats-columns{flex-direction:column}.@-top-column,.@-stats-main{width:100%;flex:auto}}",
         ".@-scard{grid-column:span 6;min-width:0;background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:12px;padding:14px 16px}",
         ".@-span-3{grid-column:span 3}.@-span-4{grid-column:span 4}.@-span-6{grid-column:span 6}.@-span-8{grid-column:span 8}.@-span-12{grid-column:span 12}",
         ".@-chead{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;flex-wrap:wrap}",
@@ -1040,6 +1052,87 @@ var require_config = __commonJS({
   }
 });
 
+// packages/addons/tags/client/top-tags.cjs
+var require_top_tags = __commonJS({
+  "packages/addons/tags/client/top-tags.cjs"(exports2, module2) {
+    var React2 = require("react");
+    var h2 = React2.createElement;
+    function TopTags(props) {
+      var rows = props.rows || [];
+      var en = props.lang === "en";
+      var activePair = React2.useState(0);
+      var active = Math.min(activePair[0], Math.max(0, rows.length - 1));
+      var setActive = activePair[1];
+      var max = rows.reduce(function(n, row) {
+        return Math.max(n, Number(row.count) || 0);
+      }, 0);
+      function move(event, index) {
+        var next = index;
+        if (event.key === "ArrowDown") next = Math.min(rows.length - 1, index + 1);
+        else if (event.key === "ArrowUp") next = Math.max(0, index - 1);
+        else if (event.key === "Home") next = 0;
+        else if (event.key === "End") next = rows.length - 1;
+        else return;
+        event.preventDefault();
+        setActive(next);
+        var buttons = event.currentTarget.parentElement.querySelectorAll("button");
+        if (buttons[next]) buttons[next].focus();
+      }
+      return h2(
+        "section",
+        { className: "wbg-scard wbg-top-card", "aria-label": en ? "Top 100 tags" : "Top 100 \u6807\u7B7E" },
+        h2(
+          "div",
+          { className: "wbg-chead" },
+          h2("span", { className: "wbg-ctitle" }, en ? "Top 100 tags" : "Top 100 \u6807\u7B7E"),
+          h2("span", { className: "wbg-cnote" }, en ? props.total + " tags total" : "\u5171 " + props.total + " \u4E2A\u6807\u7B7E")
+        ),
+        h2(
+          "div",
+          { className: "wbg-top-scroll" },
+          h2(
+            "div",
+            { className: "wbg-top-head", "aria-hidden": true },
+            h2("span", null, "#"),
+            h2("span", null, en ? "Tag" : "\u6807\u7B7E"),
+            h2("span", null, en ? "Uses" : "\u6B21\u6570")
+          ),
+          h2("div", { className: "wbg-top-rows" }, rows.map(function(row, index) {
+            return h2(
+              "button",
+              {
+                key: row.id,
+                type: "button",
+                className: "wbg-top-row",
+                tabIndex: index === active ? 0 : -1,
+                "aria-label": en ? "Rank " + (index + 1) + ", " + row.name + ", " + row.count + " uses" : "\u7B2C" + (index + 1) + "\u540D\uFF0C" + row.name + "\uFF0C" + row.count + "\u6B21",
+                onFocus: function() {
+                  setActive(index);
+                },
+                onKeyDown: function(event) {
+                  move(event, index);
+                },
+                onClick: function() {
+                  if (props.onSelect) props.onSelect(row);
+                }
+              },
+              h2("span", { className: "wbg-top-rank" }, index + 1),
+              h2(
+                "span",
+                { className: "wbg-top-name", title: row.name },
+                h2("span", { className: "wbg-top-fill", "aria-hidden": true, style: { width: (max > 0 ? Math.max(0, Number(row.count) / max) * (rows.length === 1 ? 50 : 90) : 0) + "%" } }),
+                h2("span", { className: "wbg-top-label" }, row.name)
+              ),
+              h2("span", { className: "wbg-top-count" }, row.count)
+            );
+          }))
+        )
+      );
+    }
+    module2.exports = { TopTags };
+  }
+});
+
 // packages/addons/tags/client/stats.cjs
 var require_stats = __commonJS({
   "packages/addons/tags/client/stats.cjs"(exports2, module2) {
@@ -1047,6 +1140,7 @@ var require_stats = __commonJS({
     var h2 = React2.createElement;
     var charts = require_charts();
     var configView = require_config();
+    var TopTags = require_top_tags().TopTags;
     var COPY = {
       zh: {
         range7: "\u8FD1 7 \u5929",
@@ -1077,8 +1171,6 @@ var require_stats = __commonJS({
         ofTotal: "\u5360\u603B\u91CF",
         usage: "\u4F7F\u7528\u6B21\u6570\u5206\u5E03",
         usageNote: "\u6309\u6807\u7B7E\u7684\u5173\u8054\u6761\u6570\u5206\u6876",
-        top: "Top \u6807\u7B7E",
-        topNote: "\u6309\u4F7F\u7528\u6B21\u6570\u6392\u5E8F",
         types: "\u5173\u8054\u5BF9\u8C61\u7C7B\u578B",
         typesNote: "\u5F53\u524D\u5173\u8054",
         trend: "\u65B0\u589E\u6807\u7B7E / \u5173\u8054\u8D8B\u52BF",
@@ -1130,8 +1222,6 @@ var require_stats = __commonJS({
         ofTotal: "of total",
         usage: "Usage distribution",
         usageNote: "Tags bucketed by mapping count",
-        top: "Top tags",
-        topNote: "Sorted by usage",
         types: "Object types",
         typesNote: "Current mappings",
         trend: "New tags / mappings",
@@ -1173,7 +1263,7 @@ var require_stats = __commonJS({
       var cfgRange = RANGES.indexOf(cfg["stats.range"]) >= 0 ? cfg["stats.range"] : "30d";
       var cfgTop = Math.floor(Number(cfg["stats.top"]));
       if (!(cfgTop >= 5)) cfgTop = 10;
-      if (cfgTop > 20) cfgTop = 20;
+      if (cfgTop > 100) cfgTop = 100;
       var cfgSections = Array.isArray(cfg["stats.sections"]) ? cfg["stats.sections"] : null;
       function sectionOn(key) {
         return !cfgSections || cfgSections.indexOf(key) >= 0;
@@ -1210,7 +1300,7 @@ var require_stats = __commonJS({
         if ((customFrom || customTo) && !customOk) return Promise.resolve();
         var id = ++req.current;
         if (!silent) setLoading(true);
-        var args = { top: cfgTop };
+        var args = { top: cfgTop, topTagsLimit: 100 };
         if (customOk) {
           args.from = customFrom;
           args.to = customTo;
@@ -1229,7 +1319,7 @@ var require_stats = __commonJS({
         }).then(function() {
           if (id === req.current) setLoading(false);
         });
-      }, [api, range, customOk, customFrom, customTo]);
+      }, [api, range, customOk, customFrom, customTo, cfgTop]);
       React2.useEffect(function() {
         load(false);
       }, [load]);
@@ -1292,17 +1382,15 @@ var require_stats = __commonJS({
             { key: "usage", span: 6, title: t.usage, note: t.usageNote },
             h2(ch.Histogram, { data: b.usage || [], lang, color: ch.colors[0] })
           ));
-          children.push(h2(
-            ch.Card,
-            { key: "top", span: 6, title: t.top, note: t.topNote },
-            h2(ch.BarList, {
-              data: (data.rankings && data.rankings.topTags || []).map(function(x) {
-                return { key: x.id, label: x.name, value: x.count, title: x.name };
-              }),
-              lang,
-              color: ch.colors[0]
-            })
-          ));
+          children.push(h2(TopTags, {
+            key: "top",
+            rows: (data.rankings && data.rankings.topTags || []).slice(0, 100),
+            total: totals.tags,
+            lang,
+            onSelect: function(row) {
+              if (props.onNavigate) props.onNavigate("tags", { text: row.name });
+            }
+          }));
           children.push(h2(
             ch.Card,
             { key: "types", span: 4, title: t.types, note: t.typesNote },
@@ -1405,7 +1493,21 @@ var require_stats = __commonJS({
         err && data ? h2(ch.ErrorBar, { message: err, onRetry: function() {
           load(false);
         }, retryLabel: t.retry }) : null,
-        h2("div", { className: "wbg-sgrid" }, children)
+        h2("div", { className: "wbg-sgrid" }, children.filter(function(node) {
+          return node.key === "kpi";
+        })),
+        h2(
+          "div",
+          { className: "wbg-stats-columns" },
+          children.some(function(node) {
+            return node.key === "top";
+          }) ? h2("div", { className: "wbg-top-column" }, children.filter(function(node) {
+            return node.key === "top";
+          })) : null,
+          h2("div", { className: "wbg-sgrid wbg-stats-main" }, children.filter(function(node) {
+            return node.key !== "top" && node.key !== "kpi";
+          }))
+        )
       );
     }
     module2.exports = { TagsStatsView };
@@ -3125,9 +3227,10 @@ var h = React.createElement;
     var pages = pagesS[0], setPages = pagesS[1];
     var pageS = React2.useState(1);
     var page = pageS[0], setPage = pageS[1];
-    var textS = React2.useState("");
+    var initialText = String(props.viewParams && props.viewParams.text || "");
+    var textS = React2.useState(initialText);
     var text = textS[0], setText = textS[1];
-    var queryS = React2.useState("");
+    var queryS = React2.useState(initialText);
     var query = queryS[0], setQuery = queryS[1];
     var loadingS = React2.useState(true);
     var loading = loadingS[0], setLoading = loadingS[1];
@@ -3590,7 +3693,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.6.9",
+    version: "1.6.10",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },
       { id: "tags", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TagsView },

@@ -34,8 +34,8 @@ const staleSelect=select(tree), staleReset=buttons(tree).find(n=>n.props.title),
 staleSelect.props.onChange({target:{value:'text'}});staleSelect.props.onChange({target:{value:'markdown'}});staleReset.props.onClick();staleResetAll.props.onClick();
 await settle();assert.equal(queue.length,1,'only first request reaches server; no later response can overtake it');
 assert.equal(queue[0].args.values['ui.bodyMode'],'text');tree=render();assert.equal(select(tree).props.disabled,true);assert.ok(buttons(tree).every(n=>n.props.disabled));
-await complete();tree=render();assert.equal(server,'text');assert.equal(select(tree).props.value,'text');assert.equal(pref.get(),'text');assert.equal(select(tree).props.disabled,false);
-// Once unlocked, a later choice persists and becomes the global value.
+await complete();tree=render();assert.equal(server,'text');assert.equal(select(tree).props.value,'text');assert.equal(pref.get(),'markdown', 'config saves do not broadcast a global mode');assert.equal(select(tree).props.disabled,false);
+// Once unlocked, a later choice persists only as the next mount default.
 select(tree).props.onChange({target:{value:'markdown'}});await settle();await complete();tree=render();assert.equal(server,'markdown');assert.equal(pref.get(),'markdown');
 select(tree).props.onChange({target:{value:'text'}});await settle();await complete();tree=render();
 const beforeReset=select(tree);buttons(tree).find(n=>n.props.title).props.onClick();beforeReset.props.onChange({target:{value:'text'}});buttons(tree).find(n=>!n.props.title).props.onClick();
@@ -44,15 +44,11 @@ await complete();tree=render();assert.equal(server,'markdown');assert.equal(pref
 buttons(tree).find(n=>!n.props.title).props.onClick();beforeReset.props.onChange({target:{value:'text'}});await settle();assert.equal(queue.length,1);assert.equal(queue[0].args.ids,undefined);await complete();tree=render();
 // Failed writes release the lock and restore the last confirmed value.
 select(tree).props.onChange({target:{value:'text'}});await settle();queue.shift().reject(new Error('offline'));await settle();tree=render();assert.equal(select(tree).props.disabled,false);assert.equal(select(tree).props.value,'markdown');assert.equal(pref.get(),'markdown');assert.ok(text(tree).includes('offline'));
-select(tree).props.onChange({target:{value:'text'}});await settle();await complete();tree=render();assert.equal(server,'text');assert.equal(pref.get(),'text');
+select(tree).props.onChange({target:{value:'text'}});await settle();await complete();tree=render();assert.equal(server,'text');assert.equal(pref.get(),'markdown', 'config saves do not broadcast a global mode');
 // Synchronous API failure also releases the lock.
 const originalCall=api.call;api.call=()=>{throw new Error('sync failure');};select(tree).props.onChange({target:{value:'markdown'}});await settle();tree=render();assert.equal(select(tree).props.disabled,false);assert.ok(text(tree).includes('sync failure'));api.call=originalCall;
 // An unmounted view may finish its server write but must not broadcast over a new view.
 select(tree).props.onChange({target:{value:'markdown'}});await settle();cleanups.forEach(fn=>fn());pref.set('text');await complete();assert.equal(pref.get(),'text','unmounted response cannot replace current global preference');
-// Toolbar has the same synchronous guard, including two old handlers in one render.
-slots=[];effects=[];const Control=require('../packages/addons/tasks/client/body-mode.cjs')(React);cursor=0;
-const ctl=Control({api,t:require('../packages/addons/tasks/client/copy.cjs').en});effects.forEach(fn=>fn());effects=[];
-const toggles=walk(ctl).filter(n=>n.type==='button');toggles[0].props.onClick();toggles[1].props.onClick();await settle();assert.equal(queue.length,1);assert.equal(queue[0].args.values['ui.bodyMode'],'markdown');await complete();
-cursor=0;let toolbar=Control({api:{call(){throw new Error('sync toolbar');}},t:require('../packages/addons/tasks/client/copy.cjs').en});walk(toolbar).filter(n=>n.type==='button')[1].props.onClick();await settle();cursor=0;toolbar=Control({api,t:require('../packages/addons/tasks/client/copy.cjs').en});assert.ok(walk(toolbar).filter(n=>n.type==='button').every(n=>!n.props.disabled),'toolbar unlocks after synchronous API exception');
+// Per-block toggles do not write config; their independence is covered by test-task-body.mjs.
 delete globalThis.window;
-console.log('TASK CONFIG UI PASS: delayed writes, stale toggle/reset handlers, disabled controls, persistence ordering, failure recovery, toolbar guard');
+console.log('TASK CONFIG UI PASS: delayed writes, stale toggle/reset handlers, disabled controls, persistence ordering, failure recovery');

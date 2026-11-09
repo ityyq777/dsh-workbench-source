@@ -47,4 +47,12 @@ for (const lang of ['zh','en']) for (const status of ['0','1','2','3']) {
 const Description = require('../packages/addons/lib/description.cjs').Description;
 const storage=renderToStaticMarkup(h(Description,{text:fixture,lang:'en'}));
 assert.ok(storage.includes('<br/>')&&storage.includes('<hr/>'));assert.ok(storage.includes('Description'));
+const repeated = renderToStaticMarkup(h(React.Fragment, null, ...[0,1].map(i => h(Task, { key:i, lang:'en', t:copy.en, task:{id:'same',title:'Same',description:'Body',review:'Review',status:'0',tags:[]}, update(){} })), h(Description,{text:'Storage',lang:'en'})));
+const ids = [...repeated.matchAll(/ id="([^"]+)"/g)].map(m=>m[1]);
+const refs = [...repeated.matchAll(/aria-labelledby="([^"]+)"/g)].map(m=>m[1]);
+assert.equal(ids.length,5); assert.equal(new Set(ids).size,5); assert.deepEqual(refs,ids);
+assert.ok(storage.includes('lucide-code'));
+assert.ok(storage.includes('aria-pressed="true"'));
+const storageText=renderToStaticMarkup(h(Description,{text:'**raw**',bodyMode:'text',lang:'en'}));
+assert.ok(storageText.includes('lucide-pilcrow')); assert.ok(storageText.includes('aria-pressed="false"')); assert.ok(storageText.includes('**raw**'));
 console.log('TASK BODY REAL REACT PASS', {version:React.version,voidElements:['br','hr'],taskCards:4,storage:true,escaping:true,highlight:true});

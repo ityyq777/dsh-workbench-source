@@ -40,6 +40,8 @@
 
   // 任务插件自带 lucide-react 图标；每个图标按需引入，随 client.js 一起打包。
   var ICONS = {
+    "code-2": require("lucide-react/icons/code-xml").default,
+    "pilcrow": require("lucide-react/icons/pilcrow").default,
     "plus": require("lucide-react/icons/plus").default,
     "minus": require("lucide-react/icons/minus").default,
     "check": require("lucide-react/icons/check").default,
@@ -546,7 +548,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.1.0",
+    version: "3.1.1",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },

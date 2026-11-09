@@ -32,7 +32,7 @@ function createReact() {
   }
 
   const React = {
-    createElement: (type, props, ...children) => ({ type, props: props || {}, children }),
+    createElement: (type, props, ...children) => ({ type, key: props?.key, props: { ...props, children }, children }),
     Fragment: "Fragment",
     forwardRef: (fn) => fn,
     createContext: (v) => ({ Provider: (p) => p, Consumer: () => null, _currentValue: v }),
@@ -119,6 +119,7 @@ const React = rt.React;
 const styles = [];
 const document = {
   documentElement: { lang: "zh" },
+  addEventListener() {}, removeEventListener() {},
   head: { appendChild: (el) => styles.push(el) },
   getElementById: () => null,
   createElement: () => ({ setAttribute() {}, appendChild() {}, textContent: "" }),
@@ -301,6 +302,71 @@ check("空名被拦下且提示", () => {
   assert(after === before, "空名被提交");
   const toast = byClass(rt.tree, "wbg-toast")[0];
   assert(toast && String(toast.children[0]).includes("不能为空"), "toast=" + (toast && toast.children));
+});
+
+// 同一客户端 bundle 验证统计页固定请求 100、只保留左列榜单以及区块开关。
+const StatsView = addon.views.find((v) => v.id === "stats").component;
+const navigations = [];
+async function mountStats(sections, count = 100, lang = "zh") {
+  await tick();
+  for (const slot of rt.hooks) if (typeof slot?.cleanup === "function") slot.cleanup();
+  rt.hooks = [];
+  const statsApi = {
+    subscribe() { return () => {}; },
+    call(action, params) {
+      calls.push({ action, params });
+      if (action === "tags.configGet") return Promise.resolve({ result: { values: { "stats.top": 5, "stats.sections": sections } } });
+      return Promise.resolve({ result: {
+        totals: { tags: count, mappings: count }, rates: {}, breakdowns: {},
+        rankings: { topTags: Array.from({ length: count }, (_, i) => ({ id: "t" + i, name: "标签" + i, count: count - i })) },
+        lists: { stale: [], recent: [] }, trend: [], warnings: [],
+      } });
+    },
+  };
+  rt.mount(StatsView, { api: statsApi, lang, onNavigate: (view, params) => navigations.push({ view, params }) });
+  for (let i = 0; i < 8; i++) { await tick(); rt.rerender(); }
+}
+await mountStats(["top", "usage", "types", "trend", "stale", "recent"]);
+check("Top 100 左列独立请求且渲染全部100项", () => {
+  const request = calls.filter((c) => c.action === "tags.statsReport").at(-1);
+  assert(request.params.top === 5 && request.params.topTagsLimit === 100, "ranking request changed other list limits");
+  const column = byClass(rt.tree, "wbg-top-column");
+  assert(column.length === 1 && byClass(column[0], "wbg-top-row").length === 100, "left column missing rows");
+  assert(byClass(rt.tree, "wbg-top-row").length === 100, "old ranking duplicated");
+  assert(JSON.stringify(column[0]).includes("Top 100 标签"), "Chinese title missing");
+});
+check("排行单tabstop、可访问名称和点击跳转", () => {
+  const rows = byClass(rt.tree, "wbg-top-row");
+  assert(rows.filter((r) => r.props.tabIndex === 0).length === 1, "too many tabstops");
+  assert(rows[0].props["aria-label"] === "第1名，标签0，100次", "accessible label");
+  assert(byClass(rt.tree, "wbg-top-name")[0].props.title === "标签0", "name tooltip");
+  rows[0].props.onClick();
+  assert(navigations.at(-1).view === "tags" && navigations.at(-1).params.text === "标签0", "navigation filter");
+  let focused = -1;
+  rows[0].props.onKeyDown({ key: "End", preventDefault() {}, currentTarget: { parentElement: { querySelectorAll: () => rows.map((_, i) => ({ focus() { focused = i; } })) } } });
+  rt.rerender();
+  assert(focused === 99 && byClass(rt.tree, "wbg-top-row")[99].props.tabIndex === 0, "End key roving focus");
+});
+await mountStats(["top"], 1);
+check("单个标签横条不铺满", () => assert(byClass(rt.tree, "wbg-top-fill")[0].props.style.width === "50%", "single tag full bar"));
+await mountStats(["usage"]);
+check("关闭top区块不留空白左列", () => assert(byClass(rt.tree, "wbg-top-column").length === 0, "top still visible"));
+await mountStats(["top"], 3, "en");
+check("不足100项与英文标题", () => {
+  assert(byClass(rt.tree, "wbg-top-row").length === 3, "short list padded or hidden");
+  assert(JSON.stringify(rt.tree).includes("Top 100 tags"), "English title missing");
+});
+await mountStats(["top"], 0);
+check("空库不显示空排行", () => assert(byClass(rt.tree, "wbg-top-column").length === 0, "empty ranking"));
+
+for (const slot of rt.hooks) if (typeof slot?.cleanup === "function") slot.cleanup();
+rt.hooks = [];
+rt.mount(TagsView, { api, lang: "zh", viewParams: navigations[0].params });
+for (let i = 0; i < 8; i++) { await tick(); rt.rerender(); }
+check("跳转参数复用标签搜索请求", () => {
+  const request = calls.filter((c) => c.action === "tags.list").at(-1);
+  assert(request.params.text === "标签0", "tag filter did not reach list API");
+  assert(byClass(rt.tree, "wbg-search")[0].props.value === "标签0", "search input did not reflect filter");
 });
 
 const fail = results.filter((r) => r[0] === "FAIL");

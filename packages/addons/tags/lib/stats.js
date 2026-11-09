@@ -120,7 +120,11 @@ export function quickStats(db) {
 export function statsReport(db, args) {
   const input = args || {};
   const range = resolveRange(db, input);
-  const top = Math.max(1, Math.min(20, Number(input.top) || 10));
+  const top = Math.max(1, Math.min(100, Math.floor(Number(input.top) || 10)));
+  const listTop = Math.min(top, 20);
+  const requestedTopTags = Number(input.topTagsLimit);
+  const topTagsLimit = input.topTagsLimit == null || !Number.isFinite(requestedTopTags)
+    ? 100 : Math.max(1, Math.min(200, Math.floor(requestedTopTags)));
   const warnings = [];
 
   if (!hasTable(db, "tag") || !hasTable(db, "tag_mapping")) {
@@ -225,9 +229,9 @@ export function statsReport(db, args) {
   }
 
   const sortedByCount = tagRows.slice().sort(function (a, b) {
-    return b.count - a.count || (b.lastUsedAt || 0) - (a.lastUsedAt || 0);
+    return b.count - a.count || (b.lastUsedAt || 0) - (a.lastUsedAt || 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   });
-  const topTags = sortedByCount.slice(0, top).map(function (row) {
+  const topTags = sortedByCount.slice(0, topTagsLimit).map(function (row) {
     return {
       id: row.id,
       name: row.name,
@@ -248,7 +252,7 @@ export function statsReport(db, args) {
     if (a.count === 0 && b.count !== 0) return -1;
     if (b.count === 0 && a.count !== 0) return 1;
     return (a.lastUsedAt || 0) - (b.lastUsedAt || 0);
-  }).slice(0, top).map(function (row) {
+  }).slice(0, listTop).map(function (row) {
     return { id: row.id, name: row.name, count: row.count, lastUsedAt: row.lastUsedAt };
   });
 

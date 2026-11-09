@@ -154,9 +154,10 @@ var h = React.createElement;
     var pages = pagesS[0], setPages = pagesS[1];
     var pageS = React.useState(1);
     var page = pageS[0], setPage = pageS[1];
-    var textS = React.useState("");
+    var initialText = String((props.viewParams && props.viewParams.text) || "");
+    var textS = React.useState(initialText);
     var text = textS[0], setText = textS[1];
-    var queryS = React.useState("");
+    var queryS = React.useState(initialText);
     var query = queryS[0], setQuery = queryS[1];
     var loadingS = React.useState(true);
     var loading = loadingS[0], setLoading = loadingS[1];
@@ -524,7 +525,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.6.9",
+    version: "1.6.10",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TagsStatsView },
       { id: "tags", title: { zh: "记录", en: "Records" }, component: TagsView },

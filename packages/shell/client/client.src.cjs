@@ -235,6 +235,7 @@ function WorkbenchPage(props) {
   var t = props.t;
   var store = useAddonStore();
   var rs = react.useState("home"); var route = rs[0]; var setRoute = rs[1];
+  var navigation = react.useState({}); var viewParams = navigation[0];
   var lang = currentLang();
   react.useEffect(function () { ensureCss(); }, []);
 
@@ -254,7 +255,12 @@ function WorkbenchPage(props) {
   viewList.forEach(function (v) { if (v.id === wantedView) activeView = v; });
   if (!activeView && viewList.length) activeView = viewList[0];
 
-  function go(next) { setRoute(next); }
+  function go(next, params) { navigation[1](params || {}); setRoute(next); }
+  function navigateView(viewId, params) {
+    if (currentAddon && viewList.some(function (v) { return v.id === viewId; })) {
+      go("addon:" + currentAddon.id + ":" + viewId, params);
+    }
+  }
   function cardIcon(title) { return String(title || "?").slice(0, 1); }
   function openAddon(a) {
     var m = registry.get(a.id);
@@ -332,7 +338,7 @@ function WorkbenchPage(props) {
           currentAddon.error
             ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + currentAddon.error }) })
             : canRender
-              ? jsx.jsx(activeView.component, { api: apiFor(currentAddon.id), lang: lang, addonId: currentAddon.id, t: t })
+              ? jsx.jsx(activeView.component, { api: apiFor(currentAddon.id), lang: lang, addonId: currentAddon.id, t: t, viewParams: viewParams, onNavigate: navigateView })
               : !viewList.length
                 ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg", children: t("no_views") }) })
                 : jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-page-loading", children: jsx.jsx("div", { className: "wb-msg", style: { padding: "4px 0" }, children: lastAddonError ? t("addon_unavailable") + " · " + lastAddonError : t("addon_loading") }) }) }),

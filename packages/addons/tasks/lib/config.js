@@ -37,7 +37,7 @@ const ITEMS = [
   {
     id: "ui.bodyMode", group: "ui", type: "enum", surface: "ui", apply: "mount", default: "markdown",
     zh: "正文显示模式", en: "Body display mode",
-    hintZh: "描述与感受统一使用 Markdown 或纯文本；储物描述同步跟随", hintEn: "Use Markdown or plain text for descriptions and reflections, including storage descriptions",
+    hintZh: "任务正文初始模式；每块可独立临时切换，默认 Markdown；储物描述仍跟随此配置", hintEn: "Initial task body mode (Markdown by default); each block can toggle independently. Storage descriptions follow this setting",
     values: [{ value: "markdown", zh: "Markdown", en: "Markdown" }, { value: "text", zh: "纯文本", en: "Plain text" }],
   },
   {

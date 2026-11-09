@@ -682,53 +682,6 @@ var require_charts = __commonJS({
   }
 });
 
-// packages/addons/lib/body-mode.cjs
-var require_body_mode = __commonJS({
-  "packages/addons/lib/body-mode.cjs"(exports2, module2) {
-    var KEY = "wb.bodyMode";
-    var EVENT = "wb-body-mode";
-    function normalize(value) {
-      return value === "text" ? "text" : "markdown";
-    }
-    function get() {
-      try {
-        return normalize(window.localStorage.getItem(KEY));
-      } catch (_) {
-        return "markdown";
-      }
-    }
-    function set(value) {
-      value = normalize(value);
-      if (typeof window !== "undefined") {
-        try {
-          window.localStorage.setItem(KEY, value);
-        } catch (_) {
-        }
-        window.dispatchEvent(new CustomEvent(EVENT, { detail: value }));
-      }
-      return value;
-    }
-    function useMode(React) {
-      var state = React.useState(get());
-      React.useEffect(function() {
-        if (typeof window === "undefined") return;
-        function changed(e) {
-          state[1](e.type === EVENT ? normalize(e.detail) : get());
-        }
-        window.addEventListener(EVENT, changed);
-        window.addEventListener("storage", changed);
-        state[1](get());
-        return function() {
-          window.removeEventListener(EVENT, changed);
-          window.removeEventListener("storage", changed);
-        };
-      }, []);
-      return state[0];
-    }
-    module2.exports = { get, set, useMode };
-  }
-});
-
 // packages/addons/tasks/client/config.cjs
 var require_config = __commonJS({
   "packages/addons/tasks/client/config.cjs"(exports2, module2) {
@@ -736,7 +689,6 @@ var require_config = __commonJS({
     var h = React.createElement;
     var DOMAIN = "tasks";
     var PREFIX = "wbt";
-    var bodyMode = require_body_mode();
     var COPY = {
       zh: {
         title: "\u914D\u7F6E",
@@ -992,10 +944,7 @@ var require_config = __commonJS({
           var body2 = unwrap(r);
           if (r && r.ok === false) throw new Error(r && r.error || "save failed");
           setSavingId("");
-          if (body2 && body2.state) {
-            setState(body2.state);
-            if (mounted.current && body2.state.values && body2.state.values["ui.bodyMode"]) bodyMode.set(body2.state.values["ui.bodyMode"]);
-          }
+          if (mounted.current && body2 && body2.state) setState(body2.state);
           setNotice({ id, text: t.saved, error: false });
         }).catch(function(e) {
           setSavingId("");
@@ -1014,10 +963,7 @@ var require_config = __commonJS({
           var body2 = unwrap(r);
           if (r && r.ok === false) throw new Error(r && r.error || "reset failed");
           setBusy(false);
-          if (body2 && body2.state) {
-            setState(body2.state);
-            if (mounted.current && body2.state.values && body2.state.values["ui.bodyMode"]) bodyMode.set(body2.state.values["ui.bodyMode"]);
-          }
+          if (mounted.current && body2 && body2.state) setState(body2.state);
           setNotice({ id, text: t.defaultValue, error: false });
         }).catch(function(e) {
           setBusy(false);
@@ -1038,10 +984,7 @@ var require_config = __commonJS({
           var body2 = unwrap(r);
           if (r && r.ok === false) throw new Error(r && r.error || "reset failed");
           setBusy(false);
-          if (body2 && body2.state) {
-            setState(body2.state);
-            if (mounted.current && body2.state.values && body2.state.values["ui.bodyMode"]) bodyMode.set(body2.state.values["ui.bodyMode"]);
-          }
+          if (mounted.current && body2 && body2.state) setState(body2.state);
           setNotice({ id: "", text: t.allDefault, error: false });
         }).catch(function(e) {
           setBusy(false);
@@ -2792,12 +2735,24 @@ var require_data = __commonJS({
   }
 });
 
+// packages/addons/lib/body-copy.cjs
+var require_body_copy = __commonJS({
+  "packages/addons/lib/body-copy.cjs"(exports2, module2) {
+    module2.exports = {
+      zh: { desc: "\u63CF\u8FF0", markdown: "Markdown \u6E32\u67D3", plainText: "\u7EAF\u6587\u672C", bodyModeToggle: "{field} \xB7 \u5F53\u524D\uFF1A{current}\uFF1B\u5207\u6362\u4E3A{target}" },
+      en: { desc: "Description", markdown: "Rendered Markdown", plainText: "Plain text", bodyModeToggle: "{field} \xB7 Current: {current}; switch to {target}" }
+    };
+  }
+});
+
 // packages/addons/tasks/client/copy.cjs
 var require_copy = __commonJS({
   "packages/addons/tasks/client/copy.cjs"(exports2, module2) {
     "use strict";
+    var bodyCopy = require_body_copy();
     module2.exports = {
       zh: {
+        bodyModeToggle: bodyCopy.zh.bodyModeToggle,
         bodyMode: "\u63CF\u8FF0\u4E0E\u611F\u53D7\u663E\u793A\u6A21\u5F0F",
         markdown: "Markdown \u6E32\u67D3",
         plainText: "\u7EAF\u6587\u672C",
@@ -2928,6 +2883,7 @@ var require_copy = __commonJS({
         needDifficulty: "\u8BF7\u9009\u62E9\u96BE\u5EA6"
       },
       en: {
+        bodyModeToggle: bodyCopy.en.bodyModeToggle,
         bodyMode: "Description and reflection display mode",
         markdown: "Render Markdown",
         plainText: "Plain text",
@@ -3349,17 +3305,66 @@ var init_createLucideIcon = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-xml.mjs
+var code_xml_exports = {};
+__export(code_xml_exports, {
+  __iconData: () => __iconData,
+  default: () => CodeXml
+});
+var __iconData, CodeXml;
+var init_code_xml = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-xml.mjs"() {
+    init_createLucideIcon();
+    __iconData = {
+      name: "code-xml",
+      size: 24,
+      node: [
+        ["path", { d: "m18 16 4-4-4-4", key: "1inbqp" }],
+        ["path", { d: "m6 8-4 4 4 4", key: "15zrgr" }],
+        ["path", { d: "m14.5 4-5 16", key: "e7oirm" }]
+      ],
+      aliases: ["code-2"]
+    };
+    __iconData.node;
+    CodeXml = createLucideIcon(__iconData);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pilcrow.mjs
+var pilcrow_exports = {};
+__export(pilcrow_exports, {
+  __iconData: () => __iconData2,
+  default: () => Pilcrow
+});
+var __iconData2, Pilcrow;
+var init_pilcrow = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pilcrow.mjs"() {
+    init_createLucideIcon();
+    __iconData2 = {
+      name: "pilcrow",
+      size: 24,
+      node: [
+        ["path", { d: "M13 4v16", key: "8vvj80" }],
+        ["path", { d: "M17 4v16", key: "7dpous" }],
+        ["path", { d: "M19 4H9.5a4.5 4.5 0 0 0 0 9H13", key: "sh4n9v" }]
+      ]
+    };
+    __iconData2.node;
+    Pilcrow = createLucideIcon(__iconData2);
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/plus.mjs
 var plus_exports = {};
 __export(plus_exports, {
-  __iconData: () => __iconData,
+  __iconData: () => __iconData3,
   default: () => Plus
 });
-var __iconData, Plus;
+var __iconData3, Plus;
 var init_plus = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/plus.mjs"() {
     init_createLucideIcon();
-    __iconData = {
+    __iconData3 = {
       name: "plus",
       size: 24,
       node: [
@@ -3367,82 +3372,82 @@ var init_plus = __esm({
         ["path", { d: "M12 5v14", key: "s699le" }]
       ]
     };
-    __iconData.node;
-    Plus = createLucideIcon(__iconData);
+    __iconData3.node;
+    Plus = createLucideIcon(__iconData3);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/minus.mjs
 var minus_exports = {};
 __export(minus_exports, {
-  __iconData: () => __iconData2,
+  __iconData: () => __iconData4,
   default: () => Minus
 });
-var __iconData2, Minus;
+var __iconData4, Minus;
 var init_minus = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/minus.mjs"() {
     init_createLucideIcon();
-    __iconData2 = {
+    __iconData4 = {
       name: "minus",
       size: 24,
       node: [["path", { d: "M5 12h14", key: "1ays0h" }]]
     };
-    __iconData2.node;
-    Minus = createLucideIcon(__iconData2);
+    __iconData4.node;
+    Minus = createLucideIcon(__iconData4);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/check.mjs
 var check_exports = {};
 __export(check_exports, {
-  __iconData: () => __iconData3,
+  __iconData: () => __iconData5,
   default: () => Check
 });
-var __iconData3, Check;
+var __iconData5, Check;
 var init_check = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/check.mjs"() {
     init_createLucideIcon();
-    __iconData3 = {
+    __iconData5 = {
       name: "check",
       size: 24,
       node: [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]]
     };
-    __iconData3.node;
-    Check = createLucideIcon(__iconData3);
+    __iconData5.node;
+    Check = createLucideIcon(__iconData5);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/square.mjs
 var square_exports = {};
 __export(square_exports, {
-  __iconData: () => __iconData4,
+  __iconData: () => __iconData6,
   default: () => Square
 });
-var __iconData4, Square;
+var __iconData6, Square;
 var init_square = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/square.mjs"() {
     init_createLucideIcon();
-    __iconData4 = {
+    __iconData6 = {
       name: "square",
       size: 24,
       node: [["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", key: "afitv7" }]]
     };
-    __iconData4.node;
-    Square = createLucideIcon(__iconData4);
+    __iconData6.node;
+    Square = createLucideIcon(__iconData6);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/rotate-ccw.mjs
 var rotate_ccw_exports = {};
 __export(rotate_ccw_exports, {
-  __iconData: () => __iconData5,
+  __iconData: () => __iconData7,
   default: () => RotateCcw
 });
-var __iconData5, RotateCcw;
+var __iconData7, RotateCcw;
 var init_rotate_ccw = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/rotate-ccw.mjs"() {
     init_createLucideIcon();
-    __iconData5 = {
+    __iconData7 = {
       name: "rotate-ccw",
       size: 24,
       node: [
@@ -3450,22 +3455,22 @@ var init_rotate_ccw = __esm({
         ["path", { d: "M3 3v5h5", key: "1xhq8a" }]
       ]
     };
-    __iconData5.node;
-    RotateCcw = createLucideIcon(__iconData5);
+    __iconData7.node;
+    RotateCcw = createLucideIcon(__iconData7);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list-tree.mjs
 var list_tree_exports = {};
 __export(list_tree_exports, {
-  __iconData: () => __iconData6,
+  __iconData: () => __iconData8,
   default: () => ListTree
 });
-var __iconData6, ListTree;
+var __iconData8, ListTree;
 var init_list_tree = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list-tree.mjs"() {
     init_createLucideIcon();
-    __iconData6 = {
+    __iconData8 = {
       name: "list-tree",
       size: 24,
       node: [
@@ -3476,22 +3481,22 @@ var init_list_tree = __esm({
         ["path", { d: "M3 5v12a2 2 0 0 0 2 2h3", key: "x1gjn2" }]
       ]
     };
-    __iconData6.node;
-    ListTree = createLucideIcon(__iconData6);
+    __iconData8.node;
+    ListTree = createLucideIcon(__iconData8);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder-tree.mjs
 var folder_tree_exports = {};
 __export(folder_tree_exports, {
-  __iconData: () => __iconData7,
+  __iconData: () => __iconData9,
   default: () => FolderTree
 });
-var __iconData7, FolderTree;
+var __iconData9, FolderTree;
 var init_folder_tree = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder-tree.mjs"() {
     init_createLucideIcon();
-    __iconData7 = {
+    __iconData9 = {
       name: "folder-tree",
       size: 24,
       node: [
@@ -3513,22 +3518,22 @@ var init_folder_tree = __esm({
         ["path", { d: "M3 3v13a2 2 0 0 0 2 2h3", key: "k8epm1" }]
       ]
     };
-    __iconData7.node;
-    FolderTree = createLucideIcon(__iconData7);
+    __iconData9.node;
+    FolderTree = createLucideIcon(__iconData9);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/search.mjs
 var search_exports = {};
 __export(search_exports, {
-  __iconData: () => __iconData8,
+  __iconData: () => __iconData10,
   default: () => Search
 });
-var __iconData8, Search;
+var __iconData10, Search;
 var init_search = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/search.mjs"() {
     init_createLucideIcon();
-    __iconData8 = {
+    __iconData10 = {
       name: "search",
       size: 24,
       node: [
@@ -3536,22 +3541,22 @@ var init_search = __esm({
         ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }]
       ]
     };
-    __iconData8.node;
-    Search = createLucideIcon(__iconData8);
+    __iconData10.node;
+    Search = createLucideIcon(__iconData10);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/layout-grid.mjs
 var layout_grid_exports = {};
 __export(layout_grid_exports, {
-  __iconData: () => __iconData9,
+  __iconData: () => __iconData11,
   default: () => LayoutGrid
 });
-var __iconData9, LayoutGrid;
+var __iconData11, LayoutGrid;
 var init_layout_grid = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/layout-grid.mjs"() {
     init_createLucideIcon();
-    __iconData9 = {
+    __iconData11 = {
       name: "layout-grid",
       size: 24,
       node: [
@@ -3561,22 +3566,22 @@ var init_layout_grid = __esm({
         ["rect", { width: "7", height: "7", x: "3", y: "14", rx: "1", key: "1bb6yr" }]
       ]
     };
-    __iconData9.node;
-    LayoutGrid = createLucideIcon(__iconData9);
+    __iconData11.node;
+    LayoutGrid = createLucideIcon(__iconData11);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs
 var list_exports = {};
 __export(list_exports, {
-  __iconData: () => __iconData10,
+  __iconData: () => __iconData12,
   default: () => List
 });
-var __iconData10, List;
+var __iconData12, List;
 var init_list = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs"() {
     init_createLucideIcon();
-    __iconData10 = {
+    __iconData12 = {
       name: "list",
       size: 24,
       node: [
@@ -3588,22 +3593,22 @@ var init_list = __esm({
         ["path", { d: "M8 19h13", key: "m83p4d" }]
       ]
     };
-    __iconData10.node;
-    List = createLucideIcon(__iconData10);
+    __iconData12.node;
+    List = createLucideIcon(__iconData12);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/square-check-big.mjs
 var square_check_big_exports = {};
 __export(square_check_big_exports, {
-  __iconData: () => __iconData11,
+  __iconData: () => __iconData13,
   default: () => SquareCheckBig
 });
-var __iconData11, SquareCheckBig;
+var __iconData13, SquareCheckBig;
 var init_square_check_big = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/square-check-big.mjs"() {
     init_createLucideIcon();
-    __iconData11 = {
+    __iconData13 = {
       name: "square-check-big",
       size: 24,
       node: [
@@ -3615,62 +3620,62 @@ var init_square_check_big = __esm({
       ],
       aliases: ["check-square"]
     };
-    __iconData11.node;
-    SquareCheckBig = createLucideIcon(__iconData11);
+    __iconData13.node;
+    SquareCheckBig = createLucideIcon(__iconData13);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-left.mjs
 var chevron_left_exports = {};
 __export(chevron_left_exports, {
-  __iconData: () => __iconData12,
+  __iconData: () => __iconData14,
   default: () => ChevronLeft
 });
-var __iconData12, ChevronLeft;
+var __iconData14, ChevronLeft;
 var init_chevron_left = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-left.mjs"() {
     init_createLucideIcon();
-    __iconData12 = {
+    __iconData14 = {
       name: "chevron-left",
       size: 24,
       node: [["path", { d: "m15 18-6-6 6-6", key: "1wnfg3" }]]
     };
-    __iconData12.node;
-    ChevronLeft = createLucideIcon(__iconData12);
+    __iconData14.node;
+    ChevronLeft = createLucideIcon(__iconData14);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-right.mjs
 var chevron_right_exports = {};
 __export(chevron_right_exports, {
-  __iconData: () => __iconData13,
+  __iconData: () => __iconData15,
   default: () => ChevronRight
 });
-var __iconData13, ChevronRight;
+var __iconData15, ChevronRight;
 var init_chevron_right = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-right.mjs"() {
     init_createLucideIcon();
-    __iconData13 = {
+    __iconData15 = {
       name: "chevron-right",
       size: 24,
       node: [["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]]
     };
-    __iconData13.node;
-    ChevronRight = createLucideIcon(__iconData13);
+    __iconData15.node;
+    ChevronRight = createLucideIcon(__iconData15);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder.mjs
 var folder_exports = {};
 __export(folder_exports, {
-  __iconData: () => __iconData14,
+  __iconData: () => __iconData16,
   default: () => Folder
 });
-var __iconData14, Folder;
+var __iconData16, Folder;
 var init_folder = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder.mjs"() {
     init_createLucideIcon();
-    __iconData14 = {
+    __iconData16 = {
       name: "folder",
       size: 24,
       node: [
@@ -3683,22 +3688,22 @@ var init_folder = __esm({
         ]
       ]
     };
-    __iconData14.node;
-    Folder = createLucideIcon(__iconData14);
+    __iconData16.node;
+    Folder = createLucideIcon(__iconData16);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder-open.mjs
 var folder_open_exports = {};
 __export(folder_open_exports, {
-  __iconData: () => __iconData15,
+  __iconData: () => __iconData17,
   default: () => FolderOpen
 });
-var __iconData15, FolderOpen;
+var __iconData17, FolderOpen;
 var init_folder_open = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder-open.mjs"() {
     init_createLucideIcon();
-    __iconData15 = {
+    __iconData17 = {
       name: "folder-open",
       size: 24,
       node: [
@@ -3711,22 +3716,22 @@ var init_folder_open = __esm({
         ]
       ]
     };
-    __iconData15.node;
-    FolderOpen = createLucideIcon(__iconData15);
+    __iconData17.node;
+    FolderOpen = createLucideIcon(__iconData17);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/table-2.mjs
 var table_2_exports = {};
 __export(table_2_exports, {
-  __iconData: () => __iconData16,
+  __iconData: () => __iconData18,
   default: () => Table2
 });
-var __iconData16, Table2;
+var __iconData18, Table2;
 var init_table_2 = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/table-2.mjs"() {
     init_createLucideIcon();
-    __iconData16 = {
+    __iconData18 = {
       name: "table-2",
       size: 24,
       node: [
@@ -3735,22 +3740,22 @@ var init_table_2 = __esm({
         ["rect", { x: "3", y: "3", width: "18", height: "18", rx: "2", key: "h1oib" }]
       ]
     };
-    __iconData16.node;
-    Table2 = createLucideIcon(__iconData16);
+    __iconData18.node;
+    Table2 = createLucideIcon(__iconData18);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/house.mjs
 var house_exports = {};
 __export(house_exports, {
-  __iconData: () => __iconData17,
+  __iconData: () => __iconData19,
   default: () => House
 });
-var __iconData17, House;
+var __iconData19, House;
 var init_house = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/house.mjs"() {
     init_createLucideIcon();
-    __iconData17 = {
+    __iconData19 = {
       name: "house",
       size: 24,
       node: [
@@ -3765,22 +3770,22 @@ var init_house = __esm({
       ],
       aliases: ["home"]
     };
-    __iconData17.node;
-    House = createLucideIcon(__iconData17);
+    __iconData19.node;
+    House = createLucideIcon(__iconData19);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder-plus.mjs
 var folder_plus_exports = {};
 __export(folder_plus_exports, {
-  __iconData: () => __iconData18,
+  __iconData: () => __iconData20,
   default: () => FolderPlus
 });
-var __iconData18, FolderPlus;
+var __iconData20, FolderPlus;
 var init_folder_plus = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder-plus.mjs"() {
     init_createLucideIcon();
-    __iconData18 = {
+    __iconData20 = {
       name: "folder-plus",
       size: 24,
       node: [
@@ -3795,22 +3800,22 @@ var init_folder_plus = __esm({
         ]
       ]
     };
-    __iconData18.node;
-    FolderPlus = createLucideIcon(__iconData18);
+    __iconData20.node;
+    FolderPlus = createLucideIcon(__iconData20);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/file-plus.mjs
 var file_plus_exports = {};
 __export(file_plus_exports, {
-  __iconData: () => __iconData19,
+  __iconData: () => __iconData21,
   default: () => FilePlus
 });
-var __iconData19, FilePlus;
+var __iconData21, FilePlus;
 var init_file_plus = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/file-plus.mjs"() {
     init_createLucideIcon();
-    __iconData19 = {
+    __iconData21 = {
       name: "file-plus",
       size: 24,
       node: [
@@ -3826,22 +3831,22 @@ var init_file_plus = __esm({
         ["path", { d: "M12 18v-6", key: "17g6i2" }]
       ]
     };
-    __iconData19.node;
-    FilePlus = createLucideIcon(__iconData19);
+    __iconData21.node;
+    FilePlus = createLucideIcon(__iconData21);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs
 var pencil_exports = {};
 __export(pencil_exports, {
-  __iconData: () => __iconData20,
+  __iconData: () => __iconData22,
   default: () => Pencil
 });
-var __iconData20, Pencil;
+var __iconData22, Pencil;
 var init_pencil = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs"() {
     init_createLucideIcon();
-    __iconData20 = {
+    __iconData22 = {
       name: "pencil",
       size: 24,
       node: [
@@ -3855,17 +3860,17 @@ var init_pencil = __esm({
         ["path", { d: "m15 5 4 4", key: "1mk7zo" }]
       ]
     };
-    __iconData20.node;
-    Pencil = createLucideIcon(__iconData20);
+    __iconData22.node;
+    Pencil = createLucideIcon(__iconData22);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
-var __iconData21, Trash;
+var __iconData23, Trash;
 var init_trash = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
     init_createLucideIcon();
-    __iconData21 = {
+    __iconData23 = {
       name: "trash",
       size: 24,
       node: [
@@ -3877,8 +3882,8 @@ var init_trash = __esm({
       ],
       aliases: ["trash-2"]
     };
-    __iconData21.node;
-    Trash = createLucideIcon(__iconData21);
+    __iconData23.node;
+    Trash = createLucideIcon(__iconData23);
   }
 });
 
@@ -3896,14 +3901,14 @@ var init_trash_2 = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs
 var x_exports = {};
 __export(x_exports, {
-  __iconData: () => __iconData22,
+  __iconData: () => __iconData24,
   default: () => X
 });
-var __iconData22, X;
+var __iconData24, X;
 var init_x = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs"() {
     init_createLucideIcon();
-    __iconData22 = {
+    __iconData24 = {
       name: "x",
       size: 24,
       node: [
@@ -3911,42 +3916,42 @@ var init_x = __esm({
         ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
       ]
     };
-    __iconData22.node;
-    X = createLucideIcon(__iconData22);
+    __iconData24.node;
+    X = createLucideIcon(__iconData24);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-down.mjs
 var chevron_down_exports = {};
 __export(chevron_down_exports, {
-  __iconData: () => __iconData23,
+  __iconData: () => __iconData25,
   default: () => ChevronDown
 });
-var __iconData23, ChevronDown;
+var __iconData25, ChevronDown;
 var init_chevron_down = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-down.mjs"() {
     init_createLucideIcon();
-    __iconData23 = {
+    __iconData25 = {
       name: "chevron-down",
       size: 24,
       node: [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]]
     };
-    __iconData23.node;
-    ChevronDown = createLucideIcon(__iconData23);
+    __iconData25.node;
+    ChevronDown = createLucideIcon(__iconData25);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/tag.mjs
 var tag_exports = {};
 __export(tag_exports, {
-  __iconData: () => __iconData24,
+  __iconData: () => __iconData26,
   default: () => Tag
 });
-var __iconData24, Tag;
+var __iconData26, Tag;
 var init_tag = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/tag.mjs"() {
     init_createLucideIcon();
-    __iconData24 = {
+    __iconData26 = {
       name: "tag",
       size: 24,
       node: [
@@ -3960,22 +3965,22 @@ var init_tag = __esm({
         ["circle", { cx: "7.5", cy: "7.5", r: ".5", fill: "currentColor", key: "kqv944" }]
       ]
     };
-    __iconData24.node;
-    Tag = createLucideIcon(__iconData24);
+    __iconData26.node;
+    Tag = createLucideIcon(__iconData26);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/clock.mjs
 var clock_exports = {};
 __export(clock_exports, {
-  __iconData: () => __iconData25,
+  __iconData: () => __iconData27,
   default: () => Clock
 });
-var __iconData25, Clock;
+var __iconData27, Clock;
 var init_clock = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/clock.mjs"() {
     init_createLucideIcon();
-    __iconData25 = {
+    __iconData27 = {
       name: "clock",
       size: 24,
       node: [
@@ -3983,22 +3988,22 @@ var init_clock = __esm({
         ["path", { d: "M12 6v6l4 2", key: "mmk7yg" }]
       ]
     };
-    __iconData25.node;
-    Clock = createLucideIcon(__iconData25);
+    __iconData27.node;
+    Clock = createLucideIcon(__iconData27);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
 var refresh_cw_exports = {};
 __export(refresh_cw_exports, {
-  __iconData: () => __iconData26,
+  __iconData: () => __iconData28,
   default: () => RefreshCw
 });
-var __iconData26, RefreshCw;
+var __iconData28, RefreshCw;
 var init_refresh_cw = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
     init_createLucideIcon();
-    __iconData26 = {
+    __iconData28 = {
       name: "refresh-cw",
       size: 24,
       node: [
@@ -4008,8 +4013,8 @@ var init_refresh_cw = __esm({
         ["path", { d: "M8 16H3v5", key: "1cv678" }]
       ]
     };
-    __iconData26.node;
-    RefreshCw = createLucideIcon(__iconData26);
+    __iconData28.node;
+    RefreshCw = createLucideIcon(__iconData28);
   }
 });
 
@@ -4144,6 +4149,41 @@ var require_markdown = __commonJS({
   }
 });
 
+// packages/addons/lib/body-toggle.cjs
+var require_body_toggle = __commonJS({
+  "packages/addons/lib/body-toggle.cjs"(exports2, module2) {
+    module2.exports = function(React) {
+      var h = React.createElement;
+      return function BodyMode(props) {
+        var plain = props.mode === "text", t = props.t;
+        var label = t.bodyModeToggle.replace("{field}", props.label).replace("{current}", t[plain ? "plainText" : "markdown"]).replace("{target}", t[plain ? "markdown" : "plainText"]);
+        return h("button", {
+          type: "button",
+          className: "wb-body-toggle" + (props.className ? " " + props.className : ""),
+          title: label,
+          "aria-label": label,
+          "aria-pressed": !plain,
+          onClick: function(e) {
+            e.stopPropagation();
+            props.onChange(plain ? "markdown" : "text");
+          }
+        }, h("span", { key: props.mode, className: "wb-body-toggle-icon", "aria-hidden": true }, h(props.Icon, { name: plain ? "pilcrow" : "code-2", size: 14 })));
+      };
+    };
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-2.mjs
+var code_2_exports = {};
+__export(code_2_exports, {
+  default: () => CodeXml
+});
+var init_code_2 = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-2.mjs"() {
+    init_code_xml();
+  }
+});
+
 // packages/addons/lib/body-styles.cjs
 var require_body_styles = __commonJS({
   "packages/addons/lib/body-styles.cjs"(exports2, module2) {
@@ -4160,9 +4200,27 @@ var require_body_styles = __commonJS({
 .wb-markdown code,.wb-body-text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.wb-markdown code{background:color-mix(in srgb,currentColor 7%,transparent);border-radius:3px;padding:1px 3px}.wb-markdown pre code{padding:0;background:none}
 .wb-markdown a{color:inherit;text-decoration:underline}.wb-markdown hr{border:0;border-top:1px solid currentColor;opacity:.3;clear:both}
 .wb-body-text{white-space:pre-wrap;overflow-wrap:anywhere}.wb-body-text:after{content:'';display:table;clear:both}
-.wb-body-modes{display:inline-flex;gap:3px}.wb-body-modes [aria-pressed=true]{font-weight:700;outline:1px solid currentColor}
+.wb-body-section{min-width:0;overflow-anchor:none}
+.wb-body-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;padding-left:12px;min-height:24px}
+.wb-body-heading .wb-body-label{float:none;margin:0;padding:0;border-radius:0;background:none;color:inherit;font-size:11.5px;font-weight:600;letter-spacing:.06em;opacity:.72}
+.wb-body-toggle{display:inline-flex;align-items:center;justify-content:center;flex:none;width:24px;height:24px;border:0;background:transparent;color:inherit;padding:0;border-radius:4px;cursor:pointer;opacity:.7}
+.wb-body-toggle:hover{opacity:1;background:color-mix(in srgb,currentColor 5%,transparent)}
+.wb-body-toggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#2563eb);outline-offset:2px}
+.wb-body-toggle-icon{display:flex;animation:wb-body-icon-in 140ms ease-out}
+@keyframes wb-body-icon-in{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.wb-body-toggle-icon{animation:none}}
 .wbt-item.closed:has(.wb-body-label){opacity:1}
 `;
+  }
+});
+
+// packages/addons/lib/body-id.cjs
+var require_body_id = __commonJS({
+  "packages/addons/lib/body-id.cjs"(exports2, module2) {
+    var nextId = 0;
+    module2.exports = function useBodyId(React) {
+      return typeof React.useId === "function" ? React.useId() : React.useState("wb-body-" + ++nextId)[0];
+    };
   }
 });
 
@@ -4172,15 +4230,23 @@ var require_description = __commonJS({
     var React = require("react");
     var h = React.createElement;
     var Body = require_markdown().createBody(React);
-    var preference = require_body_mode();
+    var BodyMode = require_body_toggle()(React);
+    var copy = require_body_copy();
+    var Code = (init_code_2(), __toCommonJS(code_2_exports)).default;
+    var Pilcrow2 = (init_pilcrow(), __toCommonJS(pilcrow_exports)).default;
+    function BodyIcon(props) {
+      return h(props.name === "pilcrow" ? Pilcrow2 : Code, { size: props.size, "aria-hidden": true, focusable: false });
+    }
     var css = require_body_styles() + `
 .wb-desc{margin-top:4px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-width:100%;min-width:0;box-sizing:border-box;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,#5b7fd6 34%,transparent);background:color-mix(in oklab,#5b7fd6 7%,transparent);color:inherit}
+.wb-description{margin-top:10px}.wb-description>.wb-desc{margin-top:0}
 .wb-desc-text{display:block}.wb-desc-clamped{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
 .wb-desc-toggle{display:block;border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-size:12px;min-width:32px;min-height:32px;padding:3px 6px;border-radius:6px;cursor:pointer;white-space:normal}
 .wb-desc-toggle:hover{background:color-mix(in oklab,currentColor 8%,transparent)}.wb-desc-toggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#2563eb);outline-offset:2px}
 `;
     function Description(props) {
-      var mode = preference.useMode(React);
+      var mode = React.useState(props.bodyMode === "text" ? "text" : "markdown");
+      var labelId = require_body_id()(React) + "-desc", t = copy[props.lang === "en" ? "en" : "zh"];
       var text = props.text == null ? "" : String(props.text);
       var expanded = React.useState(false), overflow = React.useState(false), ref = React.useRef(null);
       React.useEffect(function() {
@@ -4198,27 +4264,34 @@ var require_description = __commonJS({
         return function() {
           if (observer) observer.disconnect();
         };
-      }, [text, expanded[0], mode]);
+      }, [text, expanded[0], mode[0]]);
       if (!text.trim()) return null;
       return h(
-        "div",
-        { className: "wb-desc" },
+        "section",
+        { className: "wb-body-section wb-description", "aria-labelledby": labelId },
         h(
           "div",
-          { ref, className: "wb-desc-text" + (expanded[0] ? "" : " wb-desc-clamped") },
-          h("span", { className: "wb-body-label", onDoubleClick: function(e) {
-            e.stopPropagation();
-          } }, props.lang === "en" ? "Description" : "\u63CF\u8FF0"),
-          h(Body, { text, mode })
+          { className: "wb-body-heading" },
+          h("span", { id: labelId, className: "wb-body-label" }, t.desc),
+          h(BodyMode, { label: t.desc, mode: mode[0], onChange: mode[1], t, Icon: props.Icon || BodyIcon })
         ),
-        overflow[0] || expanded[0] ? h("button", {
-          type: "button",
-          className: "wb-desc-toggle",
-          "aria-expanded": expanded[0],
-          onClick: function() {
-            expanded[1](!expanded[0]);
-          }
-        }, props.lang === "en" ? expanded[0] ? "Collapse" : "Expand" : expanded[0] ? "\u6536\u8D77" : "\u5C55\u5F00") : null
+        h(
+          "div",
+          { className: "wb-desc" },
+          h(
+            "div",
+            { ref, className: "wb-desc-text" + (expanded[0] ? "" : " wb-desc-clamped") },
+            h(Body, { text, mode: mode[0] })
+          ),
+          overflow[0] || expanded[0] ? h("button", {
+            type: "button",
+            className: "wb-desc-toggle",
+            "aria-expanded": expanded[0],
+            onClick: function() {
+              expanded[1](!expanded[0]);
+            }
+          }, props.lang === "en" ? expanded[0] ? "Collapse" : "Expand" : expanded[0] ? "\u6536\u8D77" : "\u5C55\u5F00") : null
+        )
       );
     }
     module2.exports = { css, Description };
@@ -4230,6 +4303,7 @@ var require_styles = __commonJS({
   "packages/addons/tasks/client/styles.cjs"(exports2, module2) {
     "use strict";
     module2.exports = [
+      ".wbt-body-section{margin-top:5px}.wbt-body-section .wbt-desc,.wbt-body-section .wbt-review{margin-top:0}",
       ".wbt-root{--wbt-hit-bg:#ffe4e6;--wbt-hit-fg:#881337}.wbt-root mark.wbt-hit{background:var(--wbt-hit-bg);color:var(--wbt-hit-fg);border-radius:2px;padding:0;font:inherit;box-decoration-break:clone;-webkit-box-decoration-break:clone}",
       ".wbt-root .wbt-item.closed:has(mark.wbt-hit){opacity:1}",
       ".wbt-root{--wbt-line:var(--wb-border);--wbt-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));--wbt-bg:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));--wbt-accent:var(--dsw-alias-brand-primary,#11a89b);display:flex;flex-direction:column;gap:10px;min-height:0;color:inherit;font-size:13px}",
@@ -4471,6 +4545,13 @@ var require_highlight = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/body-mode.cjs
+var require_body_mode = __commonJS({
+  "packages/addons/tasks/client/body-mode.cjs"(exports2, module2) {
+    module2.exports = require_body_toggle();
+  }
+});
+
 // packages/addons/tasks/client/task-item.cjs
 var require_task_item = __commonJS({
   "packages/addons/tasks/client/task-item.cjs"(exports2, module2) {
@@ -4479,15 +4560,33 @@ var require_task_item = __commonJS({
       var React = deps.React, h = React.createElement;
       var Highlight = require_highlight()(React);
       var Body = require_markdown().createBody(React, Highlight);
-      var preference = require_body_mode();
+      var BodyMode = require_body_mode()(React);
       var statusInfo = deps.statusInfo, stars = deps.stars, pClass = deps.pClass;
       var today = deps.today, daysBetween = deps.daysBetween, cx = deps.cx;
       var Icon2 = deps.Icon, Countdown = deps.Countdown, PathCrumbs = deps.PathCrumbs;
       function TaskItem(props) {
         var t = props.t;
-        var mode = preference.useMode(React);
-        function bodyLabel(label, review) {
-          return h("span", { className: "wb-body-label" + (review ? " wb-review-label" : "") }, label);
+        var initialMode = props.bodyMode === "text" ? "text" : "markdown";
+        var descMode = React.useState(initialMode), reviewMode = React.useState(initialMode);
+        var bodyId = require_body_id()(React);
+        function bodySection(label, text, state, review) {
+          var labelId = bodyId + (review ? "-review" : "-desc");
+          if (!String(text || "").trim()) return null;
+          return h(
+            "section",
+            { className: "wbt-body-section wb-body-section", "aria-labelledby": labelId },
+            h(
+              "div",
+              { className: "wbt-body-heading wb-body-heading" },
+              h("span", { id: labelId, className: "wb-body-label" + (review ? " wb-review-label" : "") }, label),
+              h(BodyMode, { className: "wbt-body-toggle", label, mode: state[0], onChange: state[1], t, Icon: Icon2 })
+            ),
+            h(
+              "div",
+              { className: review ? "wbt-review" : "wbt-desc wb-desc" },
+              h(Body, { text, mode: state[0], keyword: props.keyword })
+            )
+          );
         }
         var task = props.task;
         var st = statusInfo(task.status);
@@ -4568,8 +4667,8 @@ var require_task_item = __commonJS({
           }, h(Icon2, { name: "trash", size: 14 })));
         }
         var titleNode = h("div", { className: "wbt-title" }, h(Highlight, { text: task.title, keyword: props.keyword }));
-        var descNode = String(task.description || "").trim() ? h("div", { className: "wbt-desc wb-desc" }, bodyLabel(t.desc), h(Body, { text: task.description, mode, keyword: props.keyword })) : null;
-        var reviewNode = String(task.review || "").trim() ? h("div", { className: "wbt-review" }, bodyLabel(t.review, true), h(Body, { text: task.review, mode, keyword: props.keyword })) : null;
+        var descNode = bodySection(t.desc, task.description, descMode, false);
+        var reviewNode = bodySection(t.review, task.review, reviewMode, true);
         var line1 = h(
           "div",
           { className: "wbt-line1" },
@@ -5168,62 +5267,12 @@ var require_edit_modal = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/body-mode.cjs
-var require_body_mode2 = __commonJS({
-  "packages/addons/tasks/client/body-mode.cjs"(exports2, module2) {
-    module2.exports = function(React) {
-      var h = React.createElement, preference = require_body_mode();
-      return function BodyMode(props) {
-        var mode = preference.useMode(React), pending = React.useState(false), requestLock = React.useRef(false);
-        React.useEffect(function() {
-          if (props.value === "markdown" || props.value === "text") preference.set(props.value);
-        }, [props.value]);
-        function change(value) {
-          if (requestLock.current) return;
-          requestLock.current = true;
-          preference.set(value);
-          pending[1](true);
-          Promise.resolve().then(function() {
-            return props.api.call("tasks.configSet", { values: { "ui.bodyMode": value } });
-          }).then(function(r) {
-            if (r && r.ok === false) throw new Error(r.error || "save failed");
-          }).catch(function(e) {
-            if (props.toast) props.toast(props.t.bodyModeLocal + " " + String(e.message || e));
-          }).finally(function() {
-            requestLock.current = false;
-            pending[1](false);
-          });
-        }
-        return h(
-          "span",
-          { className: "wb-body-modes", role: "group", "aria-label": props.t.bodyMode },
-          ["markdown", "text"].map(function(value) {
-            return h("button", {
-              key: value,
-              type: "button",
-              className: "wbt-btn",
-              disabled: pending[0],
-              title: props.t[value === "text" ? "plainText" : "markdown"],
-              "aria-label": props.t[value === "text" ? "plainText" : "markdown"],
-              "aria-pressed": mode === value,
-              onClick: function() {
-                change(value);
-              }
-            }, value === "text" ? "T" : "M");
-          })
-        );
-      };
-    };
-  }
-});
-
 // packages/addons/tasks/client/tasks-view.cjs
 var require_tasks_view = __commonJS({
   "packages/addons/tasks/client/tasks-view.cjs"(exports2, module2) {
     module2.exports = function createTasksView(deps) {
       var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, TABS = deps.TABS, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon2 = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
       var h = React.createElement;
-      var BodyMode = require_body_mode2()(React);
       function TasksView(props) {
         var lang = props.lang === "en" ? "en" : "zh";
         var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -5690,6 +5739,7 @@ var require_tasks_view = __commonJS({
             lang: props.lang,
             card: view === "card",
             keyword: titleKey.trim(),
+            bodyMode: cfg["ui.bodyMode"],
             selectionMode,
             checked: selectedIds.has(String(task.id)),
             onCheck: toggleSelect,
@@ -5728,7 +5778,6 @@ var require_tasks_view = __commonJS({
             ),
             h(PathCrumbs, { path: currentPath, onPick: pickPath }),
             h("div", { className: "wbt-grow" }),
-            h(BodyMode, { api, value: cfg["ui.bodyMode"], t, toast: say }),
             h("input", {
               className: "wbt-input wbt-search",
               placeholder: t.search,
@@ -6067,6 +6116,8 @@ var require_tasks_view = __commonJS({
     "3": { zh: "\u5DF2\u91CD\u542F", en: "Restarted", cls: "restarted" }
   };
   var ICONS = {
+    "code-2": (init_code_xml(), __toCommonJS(code_xml_exports)).default,
+    "pilcrow": (init_pilcrow(), __toCommonJS(pilcrow_exports)).default,
     "plus": (init_plus(), __toCommonJS(plus_exports)).default,
     "minus": (init_minus(), __toCommonJS(minus_exports)).default,
     "check": (init_check(), __toCommonJS(check_exports)).default,
@@ -6720,7 +6771,7 @@ var require_tasks_view = __commonJS({
   var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, TABS, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.1.0",
+    version: "3.1.1",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

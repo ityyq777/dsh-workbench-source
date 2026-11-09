@@ -46,6 +46,9 @@ const ITEMS = [
     en: "Sort order",
     values: ["asc", "desc"].map(option),
   },
+  { id: "ui.bodyMode", group: "ui", type: "enum", default: "markdown", zh: "正文初始显示模式", en: "Initial body display mode",
+    hintZh: "新挂载的描述使用此模式，每个正文块可独立切换。", hintEn: "Initial mode for newly mounted descriptions; each block can switch independently.",
+    values: [{ value: "markdown", zh: "Markdown 渲染", en: "Rendered Markdown" }, { value: "text", zh: "纯文本", en: "Plain text" }] },
   { id: "ui.confirmDelete", group: "ui", type: "bool", default: true, zh: "删除前确认", en: "Confirm deletion" },
   {
     id: "data.pageSize",

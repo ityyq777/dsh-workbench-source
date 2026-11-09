@@ -1476,6 +1476,8 @@ function WorkbenchPage(props) {
   var rs = react.useState("home");
   var route = rs[0];
   var setRoute = rs[1];
+  var navigation = react.useState({});
+  var viewParams = navigation[0];
   var lang = currentLang();
   react.useEffect(function() {
     ensureCss();
@@ -1501,8 +1503,16 @@ function WorkbenchPage(props) {
     if (v.id === wantedView) activeView = v;
   });
   if (!activeView && viewList.length) activeView = viewList[0];
-  function go(next) {
+  function go(next, params) {
+    navigation[1](params || {});
     setRoute(next);
+  }
+  function navigateView(viewId, params) {
+    if (currentAddon && viewList.some(function(v) {
+      return v.id === viewId;
+    })) {
+      go("addon:" + currentAddon.id + ":" + viewId, params);
+    }
   }
   function cardIcon(title) {
     return String(title || "?").slice(0, 1);
@@ -1587,7 +1597,7 @@ function WorkbenchPage(props) {
       jsx.jsxs("div", { className: "wb-immersive-main", children: [
         jsx.jsxs("div", { className: "wb-inner wb-wide", children: [
           jsx.jsx(ViewTabs, { views: viewList, activeView, addonId: currentAddon.id, lang, go }),
-          currentAddon.error ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + currentAddon.error }) }) : canRender ? jsx.jsx(activeView.component, { api: apiFor(currentAddon.id), lang, addonId: currentAddon.id, t }) : !viewList.length ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg", children: t("no_views") }) }) : jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-page-loading", children: jsx.jsx("div", { className: "wb-msg", style: { padding: "4px 0" }, children: lastAddonError ? t("addon_unavailable") + " \xB7 " + lastAddonError : t("addon_loading") }) }) })
+          currentAddon.error ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + currentAddon.error }) }) : canRender ? jsx.jsx(activeView.component, { api: apiFor(currentAddon.id), lang, addonId: currentAddon.id, t, viewParams, onNavigate: navigateView }) : !viewList.length ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg", children: t("no_views") }) }) : jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-page-loading", children: jsx.jsx("div", { className: "wb-msg", style: { padding: "4px 0" }, children: lastAddonError ? t("addon_unavailable") + " \xB7 " + lastAddonError : t("addon_loading") }) }) })
         ] })
       ] })
     ] });
