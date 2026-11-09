@@ -18,6 +18,7 @@ const tests = [
   "scripts/test-tasks-review.mjs",
   "scripts/test-tasks-search.mjs",
   "scripts/test-task-body.mjs",
+  "scripts/test-task-body-react.mjs",
   "scripts/test-task-config-ui.mjs",
   "scripts/test-markdown-performance.mjs",
   "scripts/test-tasks-restart.mjs",

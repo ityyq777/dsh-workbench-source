@@ -17,6 +17,7 @@
     "test:tasks-review": "node scripts/test-tasks-review.mjs",
     "test:tasks-search": "node scripts/test-tasks-search.mjs",
     "test:task-body": "node scripts/test-task-body.mjs",
+    "test:task-body-react": "node scripts/test-task-body-react.mjs",
     "test:task-config-ui": "node scripts/test-task-config-ui.mjs",
     "test:markdown-performance": "node scripts/test-markdown-performance.mjs",
     "test:tasks-restart": "node scripts/test-tasks-restart.mjs",
@@ -47,6 +48,8 @@
   },
   "devDependencies": {
     "esbuild": "^0.28.2",
-    "lucide-react": "^1.70.0"
+    "lucide-react": "^1.70.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
   }
 }

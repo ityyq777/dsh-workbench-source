@@ -81,7 +81,10 @@ function createBody(React, Highlight) {
     function render(items, path) { return items.map(function (item, i) {
       var key = path + '-' + i;
       if (typeof item === 'string') return Highlight ? h(Highlight, { key: key, text: item, keyword: props.keyword }) : item;
-      return h(item.tag, Object.assign({ key: key }, item.props), render(item.children, key));
+      var attrs = Object.assign({ key: key }, item.props);
+      // React rejects children on void elements, including an empty array.
+      if (item.tag === "br" || item.tag === "hr") return h(item.tag, attrs);
+      return h(item.tag, attrs, render(item.children, key));
     }); }
     return h('div', { className: props.mode === 'text' ? 'wb-body-text' : 'wb-markdown' }, render(parse(props.text, props.mode), 'md'));
   };
