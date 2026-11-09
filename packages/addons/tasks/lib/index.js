@@ -44,7 +44,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/配置/数据四个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "2.11.0",
+        version: "2.11.1",
         tables: ["task", "task_dep", "task_node"],
         sync: taskSync,
         views: [
@@ -112,7 +112,7 @@ export function apply(ctx) {
             { name: "review", type: "string", description: "完成后的感受/复盘自由文本，通常随完成一起写入" },
             { name: "range / from / to", type: "7d|30d|90d|365d|all / YYYY-MM-DD", description: "仅统计类 action：range 是快捷区间（缺省 30d），from+to 手动区间是闭区间 [from,to]，两端都含；同时传时以 from/to 为准" },
             { name: "dedupeKey", type: "string", description: "去重键：同键的未删除任务会被复用而不是新建，自动记录建议用 dsh-session:<id>" },
-            { name: "source / timelineKey / restartKey", type: "0|1|2 / string", description: "来源：0=普通任务 1=时间线任务 2=重启任务；source=1 需要 timelineKey，source=2 需要 restartKey" },
+            { name: "source / timelineKey / restartKey", type: "0|1|2 / string", description: "来源：0=普通任务 1=时间线任务 2=重启任务；source=1 需要 timelineKey，source=2 需要 restartKey，固定开启状态；重启需优先级 >0（1–10），缺省 1，显式 0 报错" },
           ],
           notFor: ["不要用它保存聊天记录、日志或临时笔记"],
           notes: [
@@ -121,7 +121,7 @@ export function apply(ctx) {
             "状态机：0 进行中 → 1 已关闭（补 shutdownDate）/ 2 已完成（补 doneDate）；1 或 2 可回到 0 继续办理（优先级自动回落到 1）。3 已重启不在创建时使用：重启老任务时先把它置 3，再建 source=2 的新任务。",
             "restart_key = 重启链的链首任务 id：普通任务等于自身 id，source=2 的新任务继承原任务；同一 restart_key 的任务按 publishDate 组成一条重启链，用 tasks.restart 读取。",
             "timeline_key = 时间线分组键：普通任务等于自身 id，source=1 显式传入，重启任务继承原任务的时间线；同一 timeline_key 的任务按 publishDate 组成时间线，用 tasks.timeline 读取，tasks.timelineRefactor 可批量归并。",
-            "优先级不变量：已开启任务 P1..P10（创建默认 1，显式 0 报错）；关闭/完成/已重启一律 P0，写入 0..10 都会被忽略。旧库启动时自动回填（关闭态清零、开启态 0→1），幂等。",
+            "优先级不变量：已开启任务 P1..P10（创建默认 1，显式 0 报错）；重启需优先级 >0（source=2 缺省 1，显式 0 报错）；UI 重启继承原任务有效优先级，原值为 0 则回落配置默认并限制到 1–10；改成已完成/已关闭自动清零，不必手工传 0；关闭/完成/已重启一律 P0，写入 0..10 都会被忽略。旧库启动时自动回填（关闭态清零、开启态 0→1），幂等。",
             "标签域是可选能力：未安装时不阻断任务读写，写入忽略 tags/tagIds/addTags/removeTags 并在回执带 notices（code=tag_domain_missing）；读侧省略 tags 字段、按标签筛选返回空结果、tasks.tags available=false。",
             "任务标题不唯一：允许同名，用 id 区分；与「标签名唯一」「任务节点名同级唯一」是不同规则。",
             "任务没有「类型」字段：工作/生活/学习/开发 已迁成同名标签，用 tags 或 tagIds 归类。",

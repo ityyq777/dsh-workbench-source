@@ -23,6 +23,7 @@ import {
 import { statsReport, renderStats } from "./stats.js";
 import { registerTagOptionsAction } from "./tag-options.js";
 import { configValues } from "./config.js";
+import { clampPriority, priorityForStatus, priorityForCreate } from "./task-priority.js";
 import { taskHistory, changelog, csvCell, renderArray, renderList } from "./task-view.js";
 import { idList, patchOf, diffRow, applyPatchRow, bulkUpdate, bulkCreate, bulkDelete, renderBulkUpdate, renderBulkCreate, renderBulkDelete } from "./task-bulk.js";
 import {
@@ -130,29 +131,7 @@ function tabCode(value) {
   return Math.floor(n);
 }
 
-function clampPriority(value, fallback) {
-  if (value === undefined || value === null || value === "") return fallback;
-  const n = Number(value);
-  if (!Number.isFinite(n)) throw new Error("priority 必须是数字");
-  const v = Math.round(n);
-  if (v < 0 || v > 10) throw new Error("priority 必须在 0..10");
-  return v;
-}
-
-/**
- * 优先级状态机（唯一入口）：
- * - 已开启（status=0）：P1..P10，显式传 0 是错误（0 只表示「没有优先级」）；
- * - 已关闭/已完成/已重启：一律 P0，写入什么都被忽略；
- * - 开启但历史值为 0（旧数据）且本次没有显式传值：回落到 P1。
- */
-export function priorityForStatus(status, requested, fallback) {
-  if (status !== "0") return 0;
-  if (requested !== undefined && requested !== null && requested !== "" && Number(requested) === 0) {
-    throw new Error("已开启任务的优先级必须在 1..10（0 仅用于已完成/已关闭）");
-  }
-  const p = clampPriority(requested, fallback);
-  return p > 0 ? p : 1;
-}
+export { priorityForStatus } from "./task-priority.js";
 
 export function clampDifficulty(value, fallback) {
   if (value === undefined || value === null || value === "") return fallback;
@@ -386,7 +365,7 @@ export function createTask(db, args, origin, api, opts) {
   let doneDate = dateArg(args.doneDate, "doneDate");
   let shutdownDate = dateArg(args.shutdownDate, "shutdownDate");
   let difficulty = clampDifficulty(args.difficulty, null);
-  let priority = priorityForStatus(status, args.priority, 1);
+  let priority = priorityForCreate(status, args.priority, source);
 
   if (status === "0") {
     if (difficulty !== null) {
@@ -1226,7 +1205,7 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.create", {
-    description: "创建任务；source=0 普通任务，1 时间线任务，2 重启任务。date 字段均为 YYYY-MM-DD；status=2 时 priority 强制为 0",
+    description: "创建任务；source=0 普通任务，1 时间线任务，2 重启任务。date 字段均为 YYYY-MM-DD；重启需优先级 >0（1–10，缺省 1）；关闭/完成自动清零",
     input: {
       type: "object",
       required: ["title"],
@@ -1235,14 +1214,14 @@ export function registerTaskActions(api) {
         description: { type: "string" },
         review: { type: "string", description: "完成后的感受/复盘（自由文本，默认空）" },
         tableId: { type: ["string", "number"], description: "任务表 id，缺省用默认任务表" },
-        status: { type: ["string", "number"], description: "0/1/2（不能直接创建 RESTARTED）" },
-        priority: { type: "number", description: "1..10（缺省 1；status=0 开启时传 0 报错；status=1/2 时强制为 0）" },
+        status: { type: ["string", "number"], description: "0=进行中/1=已关闭/2=已完成（不能直接创建 RESTARTED）；source=2 固定为 0；关闭/完成时优先级自动清零，不必手工传 0" },
+        priority: { type: "number", description: "1..10（重启需优先级 >0，source=2 缺省 1，显式 0 报错；普通开启同样缺省 1；关闭/完成自动清零，不必手工传 0）" },
         difficulty: { type: ["number", "null"], description: "0..5" },
         publishDate: { type: "string", description: "YYYY-MM-DD，缺省今天" },
         targetDate: { type: "string", description: "YYYY-MM-DD，缺省同 publishDate" },
         doneDate: { type: "string" },
         shutdownDate: { type: "string" },
-        source: { type: ["string", "number"], description: "0 普通 / 1 时间线 / 2 重启" },
+        source: { type: ["string", "number"], description: "0 普通 / 1 时间线 / 2 重启（固定开启状态，priority 必须 1–10，缺省 1，不能传 0）" },
         timelineKey: { type: ["string", "number"], description: "source=1 必填" },
         restartKey: { type: ["string", "number"], description: "source=2 必填：原任务 id" },
         originTaskId: { type: ["string", "number"], description: "restartKey 的别名" },
