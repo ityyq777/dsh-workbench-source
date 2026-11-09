@@ -1428,11 +1428,6 @@ var require_data = __commonJS({
       "data.includeDeleted": false
     };
     var PAGE_SIZES = [10, 25, 50, 100, 200];
-    var DOMAINS = [
-      { id: "tasks", zh: "\u4EFB\u52A1", en: "Tasks" },
-      { id: "tags", zh: "\u6807\u7B7E", en: "Tags" },
-      { id: "sites", zh: "\u7AD9\u70B9", en: "Sites" }
-    ];
     var COPY = {
       zh: {
         title: "\u6570\u636E",
@@ -1474,8 +1469,7 @@ var require_data = __commonJS({
         filterCol: "\u7B5B\u9009\u2026",
         filterClear: "\u6E05\u9664\u7B5B\u9009",
         index: "\u8868\u7D22\u5F15",
-        indexSub: "\u4E00\u5C4F\u770B\u6E05\u5404\u63D2\u4EF6\u8D1F\u8D23\u7684\u8868\uFF1A\u884C\u6570\u3001\u5217\u6570\u3001\u4E3B\u952E\u3001\u7D22\u5F15\u4E0E\u6700\u8FD1\u5199\u5165\uFF08\u53EA\u8BFB\uFF0C\u8DE8\u63D2\u4EF6\u6C47\u603B\uFF09",
-        idxDomain: "\u57DF",
+        indexSub: "\u672C\u63D2\u4EF6\u8D1F\u8D23\u7684\u8868\uFF08tag / tag_mapping\uFF09\uFF1A\u884C\u6570\u3001\u5217\u6570\u3001\u4E3B\u952E\u3001\u7D22\u5F15\u4E0E\u6700\u8FD1\u5199\u5165\uFF08\u53EA\u8BFB\uFF09",
         idxTable: "\u8868",
         idxRows: "\u884C\u6570",
         idxCols: "\u5217\u6570",
@@ -1527,8 +1521,7 @@ var require_data = __commonJS({
         filterCol: "Filter\u2026",
         filterClear: "Clear filter",
         index: "Table index",
-        indexSub: "Every table across plugins: rows, columns, primary key, indexes and last write (read-only)",
-        idxDomain: "Domain",
+        indexSub: "Tables owned by Tags (tag / tag_mapping): rows, columns, primary key, indexes and last write (read-only)",
         idxTable: "Table",
         idxRows: "Rows",
         idxCols: "Cols",
@@ -1826,21 +1819,15 @@ var require_data = __commonJS({
       }
       function loadIndex() {
         setIndexBusy(true);
-        Promise.all(DOMAINS.map(function(d) {
-          return Promise.resolve(api.call(d.id + ".dataTables", { stats: true })).then(function(r) {
-            return { domain: d, payload: unwrap(r) || {} };
-          }).catch(function() {
-            return null;
-          });
-        })).then(function(list) {
-          var rows = [];
-          list.forEach(function(item) {
-            if (!item) return;
-            (item.payload.tables || []).forEach(function(tb) {
-              rows.push({ domain: item.domain, table: tb, stats: tb.stats || null });
-            });
+        Promise.resolve(api.call(DOMAIN + ".dataTables", { stats: true })).then(function(r) {
+          var payload = unwrap(r) || {};
+          var rows = (payload.tables || []).map(function(tb) {
+            return { table: tb, stats: tb.stats || null };
           });
           setIndex(rows);
+          setIndexBusy(false);
+        }).catch(function() {
+          setIndex([]);
           setIndexBusy(false);
         });
       }
@@ -1850,9 +1837,6 @@ var require_data = __commonJS({
           return;
         }
         loadIndex();
-      }
-      function domainLabel(d) {
-        return lang === "en" ? d.en : d.zh;
       }
       function renderIndex() {
         var rows = index || [];
@@ -1895,7 +1879,6 @@ var require_data = __commonJS({
               h2("thead", null, h2(
                 "tr",
                 null,
-                h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxDomain)),
                 h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxTable)),
                 h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxRows)),
                 h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxCols)),
@@ -1909,8 +1892,7 @@ var require_data = __commonJS({
                 var indexes = st.indexes || [];
                 return h2(
                   "tr",
-                  { className: P + "-tr", key: row.domain.id + "." + row.table.name },
-                  h2("td", { className: P + "-cell" }, domainLabel(row.domain)),
+                  { className: P + "-tr", key: row.table.name },
                   h2(
                     "td",
                     { className: P + "-cell" },
@@ -2844,8 +2826,9 @@ var h = React.createElement;
   var host = window.__WB_HOST__;
   if (!host) {
     console.error("[wb-addon-tags] \u5BBF\u4E3B\u6865 window.__WB_HOST__ \u4E0D\u5B58\u5728\uFF0C\u89C6\u56FE\u672A\u6CE8\u518C");
-    return { name: "dsh-workbench-tags", inject: [], apply: function() {
+    module.exports = { name: "dsh-workbench-tags", inject: [], apply: function() {
     } };
+    return;
   }
   var React2 = require("react");
   var h2 = React2.createElement;

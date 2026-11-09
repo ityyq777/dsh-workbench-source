@@ -23,13 +23,6 @@ var CFG_FALLBACK = {
 
 var PAGE_SIZES = [10, 25, 50, 100, 200];
 
-// 「表索引」跨插件汇总：即使某个插件没安装，也只跳过它而不让整页失败。
-var DOMAINS = [
-  { id: "tasks", zh: "任务", en: "Tasks" },
-  { id: "tags", zh: "标签", en: "Tags" },
-  { id: "sites", zh: "站点", en: "Sites" },
-];
-
 var COPY = {
   zh: {
     title: "数据",
@@ -71,8 +64,7 @@ var COPY = {
     filterCol: "筛选…",
     filterClear: "清除筛选",
     index: "表索引",
-    indexSub: "一屏看清各插件负责的表：行数、列数、主键、索引与最近写入（只读，跨插件汇总）",
-    idxDomain: "域",
+    indexSub: "本插件负责的表（task / task_dep / task_node）：行数、列数、主键、索引与最近写入（只读）",
     idxTable: "表",
     idxRows: "行数",
     idxCols: "列数",
@@ -124,8 +116,7 @@ var COPY = {
     filterCol: "Filter…",
     filterClear: "Clear filter",
     index: "Table index",
-    indexSub: "Every table across plugins: rows, columns, primary key, indexes and last write (read-only)",
-    idxDomain: "Domain",
+    indexSub: "Tables owned by Tasks (task / task_dep / task_node): rows, columns, primary key, indexes and last write (read-only)",
     idxTable: "Table",
     idxRows: "Rows",
     idxCols: "Cols",
@@ -426,35 +417,26 @@ function DataView(props) {
     for (var i = 0; i < tables.length; i++) if (tables[i].name === active) current = tables[i];
   }
 
-  /**
-   * 拉取三插件各自的 dataTables(stats=true)，合成一张「表索引」。
-   * 单个插件不可用（未安装/版本过旧）时整块跳过，不影响其它插件。
-   */
+  /** 只拉本插件自己的 dataTables(stats=true)，索引页与左侧目录同口径。 */
   function loadIndex() {
     setIndexBusy(true);
-    Promise.all(DOMAINS.map(function (d) {
-      return Promise.resolve(api.call(d.id + ".dataTables", { stats: true }))
-        .then(function (r) { return { domain: d, payload: unwrap(r) || {} }; })
-        .catch(function () { return null; });
-    })).then(function (list) {
-      var rows = [];
-      list.forEach(function (item) {
-        if (!item) return;
-        (item.payload.tables || []).forEach(function (tb) {
-          rows.push({ domain: item.domain, table: tb, stats: tb.stats || null });
-        });
+    Promise.resolve(api.call(DOMAIN + ".dataTables", { stats: true }))
+      .then(function (r) {
+        var payload = unwrap(r) || {};
+        var rows = (payload.tables || []).map(function (tb) { return { table: tb, stats: tb.stats || null }; });
+        setIndex(rows);
+        setIndexBusy(false);
+      })
+      .catch(function () {
+        setIndex([]);
+        setIndexBusy(false);
       });
-      setIndex(rows);
-      setIndexBusy(false);
-    });
   }
 
   function toggleIndex() {
     if (index) { setIndex(null); return; }
     loadIndex();
   }
-
-  function domainLabel(d) { return lang === "en" ? d.en : d.zh; }
 
   function renderIndex() {
     var rows = index || [];
@@ -478,7 +460,6 @@ function DataView(props) {
           : h("div", { className: P + "-tablewrap" },
             h("table", { className: P + "-table" },
               h("thead", null, h("tr", null,
-                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxDomain)),
                 h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxTable)),
                 h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxRows)),
                 h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxCols)),
@@ -489,8 +470,7 @@ function DataView(props) {
                 var st = row.stats || {};
                 var pk = (st.primaryKey || []).join(", ");
                 var indexes = st.indexes || [];
-                return h("tr", { className: P + "-tr", key: row.domain.id + "." + row.table.name },
-                  h("td", { className: P + "-cell" }, domainLabel(row.domain)),
+                return h("tr", { className: P + "-tr", key: row.table.name },
                   h("td", { className: P + "-cell" },
                     h("div", { className: P + "-idxname" }, tableLabel(row.table)),
                     h("div", { className: P + "-sidetable" }, row.table.name)),

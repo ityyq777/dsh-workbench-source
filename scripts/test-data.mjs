@@ -1,5 +1,5 @@
 import { DatabaseSync } from "node:sqlite";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -182,6 +182,18 @@ const nodeRows = sites.call("sites.dataQuery", { table: "site_node", pageSize: 5
 assert(nodeRows.rows.some(function (r) { return r.name === "数据页目录"; }), "目录表应包含新建目录");
 const mappingRows = sites.call("sites.dataQuery", { table: "site_node_mapping", pageSize: 50 });
 assert(Array.isArray(mappingRows.rows), "目录映射可查询");
+
+// 7. 表索引页只查本插件：三份 data.cjs 不再跨域 fan-out
+for (const plug of ["tasks", "tags", "sites"]) {
+  const src = readFileSync(new URL("../packages/addons/" + plug + "/client/data.cjs", import.meta.url), "utf8");
+  assert(src.indexOf("ALL_DOMAINS") < 0 && src.indexOf("var DOMAINS = [") < 0, plug + "/data.cjs 仍保留跨插件域列表");
+  assert(src.indexOf('d.id + ".dataTables"') < 0, plug + "/data.cjs 仍在按域循环调用 dataTables");
+  assert(src.indexOf('api.call(DOMAIN + ".dataTables"') >= 0, plug + "/data.cjs 应只调用本域 dataTables");
+  const idxCalls = src.split('api.call(DOMAIN + ".dataTables"').length - 1;
+  assert(idxCalls === 2, plug + "/data.cjs 的 dataTables 调用次数应为 2（表目录 + 索引页），实际 " + idxCalls);
+  assert(src.indexOf("domainLabel") < 0, plug + "/data.cjs 仍保留域列渲染");
+  assert(src.indexOf("idxDomain") < 0, plug + "/data.cjs 仍保留「域」列文案");
+}
 
 rmSync(dir, { recursive: true, force: true });
 console.log("DATA TEST PASS " + JSON.stringify({ tables: 8, events: events.length, deletionChecked: true }));
