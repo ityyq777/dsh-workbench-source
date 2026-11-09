@@ -104,13 +104,24 @@ pnpm test:native && pnpm test:tags && pnpm test:sites
 单文件目标 ≤ 600 行；`scripts/audit-lines.mjs` 在 > 600 时告警、> 900 时失败。
 超限不是「凑巧长」，通常是职责混在一起：读写、迁移、渲染、注册动作挤在同一个文件里。
 
-拆分原则：
+**超过 600 行就要拆，不是「以后有空再说」**。文件一旦越线，再加功能时必须先在同一个
+提交里把它拆开；`scripts/line-budget.json` 里的冻结额度是「只许降、不许升」的上限，
+不是目标——往冻结文件里新增行数会直接被 `audit-lines.mjs` 判失败。
 
-- 纯结构调整、行为不变，一次拆一个文件、一个提交，便于回滚；
-- 拆完立刻跑该插件相关测试（任务：`test:native test:data test:nodeps test:config`），
-  再跑一遍 `audit-actions.mjs` 确认导出面没变；
-- 保留旧文件的导出面（`export * from "./xxx.js"`），调用方不需要跟着改；
-- 生成物（`lib/client.js`、`shell-dist/**`）不参与行数统计，也不要手改。
+拆分红线：
+
+1. 新增功能不要写进已经超限的文件，先抽出新模块再落地；
+2. 碰一个超限文件时，优先顺手拆一刀（读/写分离、渲染与注册分离、schema 与迁移分离），
+   拆完把 `line-budget.json` 的上限下调到新行数；文件回到 600 以内就删除该条目；
+3. 一次只拆一个文件、一个提交，便于回滚；
+4. 拆完立刻跑该插件相关测试（任务：`test:native test:data test:nodeps test:config`；
+   站点：`test:sites test:data`），再跑 `audit-actions.mjs` 确认导出面没变；
+5. 循环依赖只允许「两边都只在调用期取函数、顶层不求值」这一种形态，并在文件头注释写明；
+6. 保留旧文件的导出面（`export * from "./xxx.js"`），调用方不需要跟着改；
+7. 生成物（`lib/client.js`、`shell-dist/**`）不参与行数统计，也不要手改。
+
+常见切法：lib 按「纯函数/模型层 ↔ action 注册」分，client 按「样式、文案、子视图」分，
+三份同源文件（三份 `client/data.cjs`）优先抽公共组件而不是各拆各的。
 
 待拆清单与建议切法见 `docs/specs/26-大文件拆分清单.md`。
 
