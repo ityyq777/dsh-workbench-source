@@ -27,6 +27,7 @@ module.exports = function createTasksView(deps) {
     var t = COPY[props.lang === "en" ? "en" : "zh"];
     var api = props.api;
     var cfg = props.cfg || {};
+    var tableNavigation = props.viewParams && props.viewParams.tableId;
     var cfgTab = Number(cfg["ui.defaultTab"]);
     if ([0, 5, 6, 7, 8].indexOf(cfgTab) < 0) cfgTab = 0;
     var cfgSize = Math.floor(Number(cfg["list.pageSize"]));
@@ -41,16 +42,16 @@ module.exports = function createTasksView(deps) {
     var expS = React.useState(new Set());
     var expanded = expS[0], setExpanded = expS[1];
     var expInitRef = React.useRef(false);
-    var targetS = React.useState({ groupId: "1", tableId: null });
+    var targetS = React.useState(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: "1", tableId: null });
     var target = targetS[0], setTarget = targetS[1];
     var pathS = React.useState([]);
     var currentPath = pathS[0], setCurrentPath = pathS[1];
-    var initialMissing = !!(props.viewParams && props.viewParams.difficultyMissing === true);
+    var initialMissing = !tableNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
     var missingS = React.useState(initialMissing);
     var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
-    var tabS = React.useState(initialMissing ? 8 : cfgTab);
+    var tabS = React.useState(tableNavigation || initialMissing ? 8 : cfgTab);
     var tab = tabS[0], setTab = tabS[1];
-    var viewS = React.useState(cfg["ui.listView"] === "card" ? "card" : "list");
+    var viewS = React.useState(!tableNavigation && cfg["ui.listView"] === "card" ? "card" : "list");
     var view = viewS[0], setView = viewS[1];
     var searchS = React.useState("");
     var searchDraft = searchS[0], setSearchDraft = searchS[1];
@@ -58,7 +59,7 @@ module.exports = function createTasksView(deps) {
     var treeQuery = tqS[0], setTreeQuery = tqS[1];
     var titleS = React.useState("");
     var titleKey = titleS[0], setTitleKey = titleS[1];
-    var filterS = React.useState(initialMissing ? false : cfg["list.filterRestarted"] !== false);
+    var filterS = React.useState(tableNavigation || initialMissing ? false : cfg["list.filterRestarted"] !== false);
     var filterRestarted = filterS[0], setFilterRestarted = filterS[1];
     var tagReloadS = React.useState(0);
     var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
@@ -133,7 +134,13 @@ module.exports = function createTasksView(deps) {
           setTree(nodes);
           if (!expInitRef.current) {
             expInitRef.current = true;
-            setExpanded(expandedByDepth(nodes, cfgDepth));
+            var open = expandedByDepth(nodes, cfgDepth);
+            function reveal(list, parents) { (list || []).forEach(function (n) {
+              if (String(n.id) === String(tableNavigation)) parents.forEach(function (id) { open.add(id); });
+              reveal(n.children, parents.concat(String(n.id)));
+            }); }
+            if (tableNavigation) reveal(nodes, []);
+            setExpanded(open);
           }
         } else setError((r && r.error) || "tree load failed");
       }).catch(function (e) { setError(String(e && e.message || e)); });
@@ -154,7 +161,7 @@ module.exports = function createTasksView(deps) {
         tableId: target.tableId, groupId: target.tableId ? null : target.groupId,
         pageNumber: pageNumber, pageSize: pageSize,
         filterRestarted: filterRestarted, tagIds: filterTagIds, difficultyMissing: difficultyMissing,
-        sort: cfgSort === "auto" ? undefined : cfgSort,
+        sort: tableNavigation || cfgSort === "auto" ? undefined : cfgSort,
       }).then(function (r) {
         setLoading(false);
         if (r && r.ok) {

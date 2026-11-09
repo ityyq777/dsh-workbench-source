@@ -208,6 +208,7 @@ var require_charts = __commonJS({
     ];
     function css(prefix) {
       return [
+        ".@-table-link{border:0;padding:0;background:none;font:inherit;color:var(--dsw-alias-brand-primary,#4f6ef7);text-align:left;cursor:pointer}.@-table-link:hover{text-decoration:underline}.@-table-link:focus-visible{outline:2px solid currentColor;outline-offset:3px}.@-recent-difficulty{white-space:nowrap}.@-recent-reason{opacity:.65}",
         ".@-stats{display:flex;flex-direction:column;gap:14px;padding:4px 2px 24px;color:var(--dsw-alias-label-primary,#1f2329)}",
         ".@-stoolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
         ".@-seg{display:inline-flex;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:9px;overflow:hidden;background:var(--dsw-alias-bg-layer-1,#fff)}",
@@ -1230,6 +1231,45 @@ var require_config = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/recent-columns.cjs
+var require_recent_columns = __commonJS({
+  "packages/addons/tasks/client/recent-columns.cjs"(exports2, module2) {
+    var React = require("react");
+    var h = React.createElement;
+    module2.exports = function recentColumns(t, lang, onNavigate) {
+      var en = lang === "en";
+      return [
+        { key: "title", label: t.colTitle },
+        { key: "difficulty", label: en ? "Difficulty" : "\u96BE\u5EA6", render: function(row) {
+          var n = Number(row.difficulty);
+          if (!(n > 0)) return "\u2014";
+          var bounded = Math.min(5, n), full = Math.floor(bounded), half = bounded - full >= 0.5;
+          return h(
+            "span",
+            { className: "wbt-recent-difficulty", "aria-label": (en ? "Difficulty: " : "\u96BE\u5EA6\uFF1A") + n },
+            h("span", { "aria-hidden": true }, "\u2605".repeat(full) + (half ? "\u2BEA" : "") + "\u2606".repeat(5 - full - (half ? 1 : 0))),
+            " " + n
+          );
+        } },
+        { key: "tableTitle", label: t.colTable, render: function(row) {
+          if (row.tableDeleted || !row.tableId) return h("span", { title: en ? "Task table deleted; cannot open" : "\u4EFB\u52A1\u8868\u5DF2\u5220\u9664\uFF0C\u65E0\u6CD5\u6253\u5F00" }, row.tableTitle || (en ? "Deleted task table" : "\u5DF2\u5220\u9664\u4EFB\u52A1\u8868"));
+          if (typeof onNavigate !== "function") return row.tableTitle;
+          return h("button", {
+            type: "button",
+            className: "wbt-table-link",
+            "aria-label": (en ? "Open task table: " : "\u6253\u5F00\u4EFB\u52A1\u8868\uFF1A") + row.tableTitle,
+            onClick: function() {
+              onNavigate("tasks", { tableId: String(row.tableId), groupId: row.groupId == null ? null : String(row.groupId), allTableTasks: true });
+            }
+          }, row.tableTitle);
+        } },
+        { key: "date", label: t.colDate },
+        { key: "daysAgo", label: t.colAgo, num: true }
+      ];
+    };
+  }
+});
+
 // packages/addons/tasks/client/stats.cjs
 var require_stats = __commonJS({
   "packages/addons/tasks/client/stats.cjs"(exports2, module2) {
@@ -1237,6 +1277,7 @@ var require_stats = __commonJS({
     var h = React.createElement;
     var charts = require_charts();
     var configView = require_config();
+    var recentColumns = require_recent_columns();
     var COPY = {
       zh: {
         title: "\u4EFB\u52A1\u7EDF\u8BA1",
@@ -1479,10 +1520,10 @@ var require_stats = __commonJS({
         });
       }, [api, range, customOk, customFrom, customTo, cfgTop, cfg]);
       React.useEffect(function() {
-        load(false);
-      }, [load]);
+        if (props.active !== false) load(true);
+      }, [load, props.active]);
       React.useEffect(function() {
-        if (!api || typeof api.subscribe !== "function") return void 0;
+        if (props.active === false || !api || typeof api.subscribe !== "function") return void 0;
         var timer = null;
         var pending = false;
         var off = api.subscribe(function(payload) {
@@ -1509,7 +1550,7 @@ var require_stats = __commonJS({
           if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
           if (typeof off === "function") off();
         };
-      }, [api, load]);
+      }, [api, load, props.active]);
       var options = RANGES.map(function(key) {
         return { key, label: t["range" + (key === "all" ? "All" : key.replace("d", ""))] };
       });
@@ -1643,12 +1684,7 @@ var require_stats = __commonJS({
               ]
             })
           ));
-          var recentCols = [
-            { key: "title", label: t.colTitle },
-            { key: "tableTitle", label: t.colTable },
-            { key: "date", label: t.colDate },
-            { key: "daysAgo", label: t.colAgo, num: true }
-          ];
+          var recentCols = recentColumns(t, lang, props.onNavigate);
           children.push(h(
             ch.Card,
             { key: "recentDone", span: 6, title: t.recentDone, note: t.recentDoneNote },
@@ -5356,6 +5392,7 @@ var require_tasks_view = __commonJS({
         var t = COPY[props.lang === "en" ? "en" : "zh"];
         var api = props.api;
         var cfg = props.cfg || {};
+        var tableNavigation = props.viewParams && props.viewParams.tableId;
         var cfgTab = Number(cfg["ui.defaultTab"]);
         if ([0, 5, 6, 7, 8].indexOf(cfgTab) < 0) cfgTab = 0;
         var cfgSize = Math.floor(Number(cfg["list.pageSize"]));
@@ -5369,16 +5406,16 @@ var require_tasks_view = __commonJS({
         var expS = React.useState(/* @__PURE__ */ new Set());
         var expanded = expS[0], setExpanded = expS[1];
         var expInitRef = React.useRef(false);
-        var targetS = React.useState({ groupId: "1", tableId: null });
+        var targetS = React.useState(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: "1", tableId: null });
         var target = targetS[0], setTarget = targetS[1];
         var pathS = React.useState([]);
         var currentPath = pathS[0], setCurrentPath = pathS[1];
-        var initialMissing = !!(props.viewParams && props.viewParams.difficultyMissing === true);
+        var initialMissing = !tableNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
         var missingS = React.useState(initialMissing);
         var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
-        var tabS = React.useState(initialMissing ? 8 : cfgTab);
+        var tabS = React.useState(tableNavigation || initialMissing ? 8 : cfgTab);
         var tab = tabS[0], setTab = tabS[1];
-        var viewS = React.useState(cfg["ui.listView"] === "card" ? "card" : "list");
+        var viewS = React.useState(!tableNavigation && cfg["ui.listView"] === "card" ? "card" : "list");
         var view = viewS[0], setView = viewS[1];
         var searchS = React.useState("");
         var searchDraft = searchS[0], setSearchDraft = searchS[1];
@@ -5386,7 +5423,7 @@ var require_tasks_view = __commonJS({
         var treeQuery = tqS[0], setTreeQuery = tqS[1];
         var titleS = React.useState("");
         var titleKey = titleS[0], setTitleKey = titleS[1];
-        var filterS = React.useState(initialMissing ? false : cfg["list.filterRestarted"] !== false);
+        var filterS = React.useState(tableNavigation || initialMissing ? false : cfg["list.filterRestarted"] !== false);
         var filterRestarted = filterS[0], setFilterRestarted = filterS[1];
         var tagReloadS = React.useState(0);
         var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
@@ -5470,8 +5507,19 @@ var require_tasks_view = __commonJS({
               var nodes = Array.isArray(r.result) ? r.result : [];
               setTree(nodes);
               if (!expInitRef.current) {
+                let reveal2 = function(list, parents) {
+                  (list || []).forEach(function(n) {
+                    if (String(n.id) === String(tableNavigation)) parents.forEach(function(id) {
+                      open.add(id);
+                    });
+                    reveal2(n.children, parents.concat(String(n.id)));
+                  });
+                };
+                var reveal = reveal2;
                 expInitRef.current = true;
-                setExpanded(expandedByDepth(nodes, cfgDepth));
+                var open = expandedByDepth(nodes, cfgDepth);
+                if (tableNavigation) reveal2(nodes, []);
+                setExpanded(open);
               }
             } else setError(r && r.error || "tree load failed");
           }).catch(function(e) {
@@ -5505,7 +5553,7 @@ var require_tasks_view = __commonJS({
             filterRestarted,
             tagIds: filterTagIds,
             difficultyMissing,
-            sort: cfgSort === "auto" ? void 0 : cfgSort
+            sort: tableNavigation || cfgSort === "auto" ? void 0 : cfgSort
           }).then(function(r) {
             setLoading(false);
             if (r && r.ok) {
@@ -6836,9 +6884,9 @@ var require_tasks_view = __commonJS({
   var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, TABS, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.1.2",
+    version: "3.1.3",
     views: [
-      { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
+      { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },
       { id: "config", title: { zh: "\u914D\u7F6E", en: "Config" }, component: configView.ConfigView },
       { id: "data", title: { zh: "\u6570\u636E", en: "Data" }, component: dataView.DataView }

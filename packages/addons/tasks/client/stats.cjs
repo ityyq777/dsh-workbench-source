@@ -3,6 +3,7 @@ var React = require("react");
 var h = React.createElement;
 var charts = require("./charts.cjs");
 var configView = require("./config.cjs");
+var recentColumns = require("./recent-columns.cjs");
 
 var COPY = {
   zh: {
@@ -141,10 +142,10 @@ function TasksStatsBody(props) {
       .then(function () { if (id === req.current) setLoading(false); });
   }, [api, range, customOk, customFrom, customTo, cfgTop, cfg]);
 
-  React.useEffect(function () { load(false); }, [load]);
+  React.useEffect(function () { if (props.active !== false) load(true); }, [load, props.active]);
 
   React.useEffect(function () {
-    if (!api || typeof api.subscribe !== "function") return undefined;
+    if (props.active === false || !api || typeof api.subscribe !== "function") return undefined;
     var timer = null;
     var pending = false;
     var off = api.subscribe(function (payload) {
@@ -169,7 +170,7 @@ function TasksStatsBody(props) {
       if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
       if (typeof off === "function") off();
     };
-  }, [api, load]);
+  }, [api, load, props.active]);
 
   var options = RANGES.map(function (key) {
     return { key: key, label: t["range" + (key === "all" ? "All" : key.replace("d", ""))] };
@@ -260,12 +261,7 @@ function TasksStatsBody(props) {
           ],
         })));
 
-      var recentCols = [
-        { key: "title", label: t.colTitle },
-        { key: "tableTitle", label: t.colTable },
-        { key: "date", label: t.colDate },
-        { key: "daysAgo", label: t.colAgo, num: true },
-      ];
+      var recentCols = recentColumns(t, lang, props.onNavigate);
       children.push(h(ch.Card, { key: "recentDone", span: 6, title: t.recentDone, note: t.recentDoneNote },
         h(ch.DataTable, { rows: (data.lists && data.lists.recentDone) || [], lang: lang, empty: t.noRecentDone, columns: recentCols })));
       children.push(h(ch.Card, { key: "recentShutdown", span: 6, title: t.recentShutdown, note: t.recentShutdownNote },

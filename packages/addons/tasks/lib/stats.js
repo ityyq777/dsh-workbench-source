@@ -301,13 +301,18 @@ export function statsReport(db, args, api) {
   }
   const recentDoneLimit = limitOf(args.recentDoneLimit);
   const recentShutdownLimit = limitOf(args.recentShutdownLimit);
-  const nodeTitle = function (tableId) {
+  const recentTable = function (tableId) {
     const table = nodeMap[String(tableId)];
-    return table ? String(table.name) : "已删除任务表";
+    return {
+      tableId: table ? String(table.id) : null,
+      groupId: table ? String(table.parent_id || "1") : null,
+      tableTitle: table ? String(table.name) : "已删除任务表",
+      tableDeleted: !table,
+    };
   };
   const todayStart = startOfDay(new Date());
   const recentDoneRows = db.prepare(
-    "SELECT id,title,done_date,table_id FROM task WHERE deleted_at IS NULL AND status='2' " +
+    "SELECT id,title,done_date,table_id,difficulty FROM task WHERE deleted_at IS NULL AND status='2' " +
       "ORDER BY (done_date IS NULL OR done_date=''), done_date DESC, updated_at DESC, id DESC LIMIT ?",
   ).all(recentDoneLimit);
   const recentDone = recentDoneRows.map(function (row) {
@@ -317,11 +322,12 @@ export function statsReport(db, args, api) {
       title: String(row.title || ""),
       date: String(row.done_date || ""),
       daysAgo: day ? Math.max(0, diffDays(day, todayStart)) : null,
-      tableTitle: nodeTitle(row.table_id),
+      difficulty: Number(row.difficulty) || 0,
+      ...recentTable(row.table_id),
     };
   });
   const recentShutdownRows = db.prepare(
-    "SELECT id,title,shutdown_date,table_id FROM task WHERE deleted_at IS NULL AND status='1' " +
+    "SELECT id,title,shutdown_date,table_id,difficulty FROM task WHERE deleted_at IS NULL AND status='1' " +
       "ORDER BY (shutdown_date IS NULL OR shutdown_date=''), shutdown_date DESC, updated_at DESC, id DESC LIMIT ?",
   ).all(recentShutdownLimit);
   const recentShutdown = recentShutdownRows.map(function (row) {
@@ -331,7 +337,8 @@ export function statsReport(db, args, api) {
       title: String(row.title || ""),
       date: String(row.shutdown_date || ""),
       daysAgo: day ? Math.max(0, diffDays(day, todayStart)) : null,
-      tableTitle: nodeTitle(row.table_id),
+      difficulty: Number(row.difficulty) || 0,
+      ...recentTable(row.table_id),
     };
   });
 

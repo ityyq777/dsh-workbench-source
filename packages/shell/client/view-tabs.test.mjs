@@ -12,6 +12,13 @@ function setup(lang) {
   const { React } = rt;
   // Network lifecycle belongs to native tests; this test exercises real registered UI trees.
   React.useEffect = () => {};
+  React.useLayoutEffect = () => {};
+  // This flat hook harness cannot reconcile sibling component hook ownership.
+  // Outlet lifecycle has dedicated recent-ui tests; icon tests need only its active child.
+  const createElement = React.createElement;
+  React.createElement = (type, props, ...children) => props?.view && props?.viewProps
+    ? createElement(props.view.component, props.viewProps)
+    : createElement(type, props, ...children);
   const jsx = (type, props, key) => React.createElement(type, { ...props, key },
     ...[].concat(props?.children ?? []));
   const sandbox = createContext({ console, Map, Set, URLSearchParams,

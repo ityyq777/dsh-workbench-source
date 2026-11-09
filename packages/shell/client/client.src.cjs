@@ -220,6 +220,7 @@ var AccountTab = systemTabs.AccountTab;
 var BackupTab = systemTabs.BackupTab;
 var AuditTab = systemTabs.AuditTab;
 var ViewTabs = require("./view-tabs.cjs")(react, pickTitle);
+var ViewOutlet = require("./view-outlet.cjs");
 
 function ensureCss() {
   if (typeof document === "undefined") return;
@@ -338,7 +339,7 @@ function WorkbenchPage(props) {
           currentAddon.error
             ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + currentAddon.error }) })
             : canRender
-              ? jsx.jsx(activeView.component, { api: apiFor(currentAddon.id), lang: lang, addonId: currentAddon.id, t: t, viewParams: viewParams, onNavigate: navigateView })
+              ? jsx.jsx(ViewOutlet, { view: activeView, viewProps: { api: apiFor(currentAddon.id), lang: lang, addonId: currentAddon.id, t: t, viewParams: viewParams, onNavigate: navigateView } }, currentAddon.id)
               : !viewList.length
                 ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg", children: t("no_views") }) })
                 : jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-page-loading", children: jsx.jsx("div", { className: "wb-msg", style: { padding: "4px 0" }, children: lastAddonError ? t("addon_unavailable") + " · " + lastAddonError : t("addon_loading") }) }) }),

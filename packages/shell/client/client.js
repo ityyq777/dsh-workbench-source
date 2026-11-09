@@ -1177,6 +1177,59 @@ var require_view_tabs = __commonJS({
   }
 });
 
+// packages/shell/client/view-outlet.cjs
+var require_view_outlet = __commonJS({
+  "packages/shell/client/view-outlet.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h2 = React.createElement;
+    function Slot(props) {
+      var root = React.useRef(null), scroll = React.useRef([]);
+      React.useLayoutEffect(function() {
+        if (!props.active) return;
+        var positions = scroll.current.slice();
+        function restore() {
+          positions.forEach(function(p) {
+            p.node.scrollTop = p.top;
+            p.node.scrollLeft = p.left;
+          });
+        }
+        restore();
+        var frame = typeof requestAnimationFrame === "function" ? requestAnimationFrame(restore) : null;
+        function remember() {
+          var positions2 = [], node = root.current;
+          while (node) {
+            positions2.push({ node, top: node.scrollTop, left: node.scrollLeft });
+            node = node.parentElement;
+          }
+          scroll.current = positions2;
+        }
+        document.addEventListener("scroll", remember, true);
+        return function() {
+          if (frame !== null) cancelAnimationFrame(frame);
+          document.removeEventListener("scroll", remember, true);
+        };
+      }, [props.active]);
+      return h2(
+        "div",
+        { ref: root, hidden: !props.active, "data-view-id": props.view.id },
+        h2(props.view.component, Object.assign({}, props.viewProps, { active: props.active }))
+      );
+    }
+    module2.exports = function ViewOutlet2(props) {
+      var kept = React.useRef({});
+      if (props.view.keepAlive) kept.current[props.view.id] = props;
+      var entries = Object.keys(kept.current).map(function(id) {
+        return kept.current[id];
+      });
+      if (!props.view.keepAlive) entries.push(props);
+      return h2(React.Fragment, null, entries.map(function(entry) {
+        return h2(Slot, { key: entry.view.id, view: entry.view, viewProps: entry.viewProps, active: entry.view.id === props.view.id });
+      }));
+    };
+  }
+});
+
 // packages/shell/client/client.src.cjs
 var react = require("react");
 var jsx = require("react/jsx-runtime");
@@ -1461,6 +1514,7 @@ var AccountTab = systemTabs.AccountTab;
 var BackupTab = systemTabs.BackupTab;
 var AuditTab = systemTabs.AuditTab;
 var ViewTabs = require_view_tabs()(react, pickTitle);
+var ViewOutlet = require_view_outlet();
 function ensureCss() {
   if (typeof document === "undefined") return;
   if (document.getElementById("wb-css")) return;
@@ -1597,7 +1651,7 @@ function WorkbenchPage(props) {
       jsx.jsxs("div", { className: "wb-immersive-main", children: [
         jsx.jsxs("div", { className: "wb-inner wb-wide", children: [
           jsx.jsx(ViewTabs, { views: viewList, activeView, addonId: currentAddon.id, lang, go }),
-          currentAddon.error ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + currentAddon.error }) }) : canRender ? jsx.jsx(activeView.component, { api: apiFor(currentAddon.id), lang, addonId: currentAddon.id, t, viewParams, onNavigate: navigateView }) : !viewList.length ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg", children: t("no_views") }) }) : jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-page-loading", children: jsx.jsx("div", { className: "wb-msg", style: { padding: "4px 0" }, children: lastAddonError ? t("addon_unavailable") + " \xB7 " + lastAddonError : t("addon_loading") }) }) })
+          currentAddon.error ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + currentAddon.error }) }) : canRender ? jsx.jsx(ViewOutlet, { view: activeView, viewProps: { api: apiFor(currentAddon.id), lang, addonId: currentAddon.id, t, viewParams, onNavigate: navigateView } }, currentAddon.id) : !viewList.length ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg", children: t("no_views") }) }) : jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-page-loading", children: jsx.jsx("div", { className: "wb-msg", style: { padding: "4px 0" }, children: lastAddonError ? t("addon_unavailable") + " \xB7 " + lastAddonError : t("addon_loading") }) }) })
         ] })
       ] })
     ] });
