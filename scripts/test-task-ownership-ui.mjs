@@ -25,7 +25,11 @@ function mount(source = '0', component = Create, response = { ok: true, result: 
     api: { call: async (action, args) => { if (action === "tasks.capabilities") return { ok: true }; calls.push({ action, args }); return response; } },
     onCreated: () => saved++, onSaved: () => saved++, onClose: () => closed++ };
   const render = () => { cursor = 0; effects = []; const out = component(props); effects.forEach(fn => fn()); return out; };
-  const byLabel = label => find(render(), n => n.props['aria-label'] === label);
+  const byLabel = label => {
+    const node = render();
+    if (label === '目标任务表') { const selection = find(node, n => typeof n.type === 'function' && n.props.form && n.props.set); return { props: { value: selection.props.form.tableId, onChange: e => selection.props.set('tableId', e.target.value) } }; }
+    return find(node, n => n.props['aria-label'] === label);
+  };
   const change = (label, value, checked) => byLabel(label).props.onChange({ target: { value, checked } });
   const submit = () => find(render(), n => n.props.className === 'wbt-btn primary');
   const title = value => find(render(), n => n.props.autoFocus).props.onChange({ target: { value } });
@@ -36,7 +40,7 @@ for (const source of ['0', '1', '2']) {
   const ui = mount(source); ui.title('Keep my title');
   assert.equal(ui.byLabel('目标任务表').props.value, ''); assert.equal(ui.submit().props.disabled, true);
   ui.submit().props.onClick(); assert.equal(ui.calls.length, 0);
-  assert.ok(JSON.stringify(ui.render()).includes('任务根 / 插件 / storage — 存储插件开发职责'));
+  assert.equal(ownership.tables(ui.props.tree)[0].path, '任务根 / 插件 / storage');
   ui.change('目标任务表', 'table'); assert.equal(ui.submit().props.disabled, false);
   ui.submit().props.onClick(); await new Promise(resolve => setImmediate(resolve));
   assert.equal(ui.calls[0].args.tableId, 'table'); assert.equal(ui.calls[0].args.tablePath, undefined);

@@ -189,6 +189,7 @@ module.exports = [
     ".wbt-pill{font-size:11px;padding:2px 7px;border-radius:999px;background:color-mix(in oklab,var(--wbt-accent) 12%,transparent);color:var(--wbt-accent)}",
     ".wbt-mhint{font-size:11.5px;opacity:.62;line-height:1.5}",
     ".wbt-modal.batch{width:min(720px,96vw);gap:9px}",
+    ".wbt-table-picker{display:flex;flex-direction:column;gap:8px;min-width:0}.wbt-picker-detail{white-space:pre-wrap;overflow-wrap:anywhere;min-width:0;line-height:1.6;font-size:12px}.wbt-bpick.keyboard{outline:1px solid var(--wbt-accent);outline-offset:-2px}",
     ".wbt-batch{display:flex;flex-direction:column;gap:8px;min-height:0}",
     ".wbt-batch-body{display:flex;flex-direction:column;gap:1px;border:1px solid var(--wbt-line);border-radius:10px;padding:5px;max-height:min(52vh,420px);overflow:auto;overscroll-behavior:contain}",
     ".wbt-bpick{display:flex;align-items:flex-start;gap:8px;width:100%;text-align:left;border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-size:12.5px;padding:7px 9px;border-radius:8px;cursor:pointer;min-width:0;line-height:1.45}",

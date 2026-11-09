@@ -30,7 +30,8 @@ for(const lang of ['zh','en']) for(const source of ['0','1','2']) for(const stat
   const change=(pred,value)=>find(render(Create,props),pred).props.onChange({target:{value}});
   assert.equal(find(render(Create,props),n=>n.props['aria-label']===copy[lang].difficulty).props.value,0);
   assert.ok(text(render(Create,props)).includes(copy[lang].difficultyUnsetHint));
-  change(n=>n.props.autoFocus,'Task');change(n=>n.props['aria-label']==='目标任务表','table');
+  change(n=>n.props.autoFocus,'Task');
+  find(render(Create,props),n=>typeof n.type==='function'&&n.props.form&&n.props.set).props.set('tableId','table');
   if(source!=='2')change(n=>n.type==='select'&&n.props.value==='0',status);
   change(n=>n.props['aria-label']===copy[lang].difficulty,3);
   find(render(Create,props),n=>n.props.className==='wbt-btn primary').props.onClick();await flush();

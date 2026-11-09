@@ -3,19 +3,26 @@
 var ownership = require("./ownership.cjs");
 module.exports = function (React) {
   var h = React.createElement;
+  var Picker = require("./table-picker.cjs")(React);
+  function Selection(props) {
+    var state = React.useState(false), open = state[0], setOpen = state[1], trigger = React.useRef(null);
+    var chosen = ownership.tables(props.tree).find(function (x) { return x.id === props.form.tableId; });
+    function close() { setOpen(false); if (trigger.current) trigger.current.focus(); }
+    return h("div", null,
+      h("div", { className: "wbt-picker-detail" }, props.edit ? "当前归属：" + props.current : "目标任务表 *"),
+      h("button", { ref: trigger, type: "button", className: "wbt-btn", disabled: !!props.form.newPath, "aria-expanded": open,
+        onClick: function () { setOpen(!open); } }, props.edit ? "更换任务表" : "选择目标任务表"),
+      open && !props.form.newPath ? h(Picker, { tree: props.tree, value: props.form.tableId, recommended: props.recommended,
+        onChange: function (id) { props.set("tableId", props.edit && id === String(props.currentId) ? "" : id); }, onClose: close }) : null,
+      chosen ? h("div", { className: "wbt-picker-detail", role: "status" }, (props.edit ? "将移动到：" : "已选择：") + chosen.path,
+        props.edit ? h("button", { type: "button", className: "wbt-btn ghost", onClick: function () { props.set("tableId", ""); close(); } }, "撤销，保留原位") : null) :
+        h("div", { className: "wbt-mhint" }, props.edit ? "未更换，保留当前归属。" : props.form.newPath ? "请确认新建路径。" : "请先选择目标任务表，再确认提交。"));
+  }
   return function fields(props) {
-    var form = props.form, set = props.set, tables = ownership.tables(props.tree);
-    var chosen = tables.find(function (x) { return x.id === form.tableId; });
-    var recommended = tables.find(function (x) { return x.id === String(props.recommended || ""); });
+    var form = props.form, set = props.set;
     var plan = ownership.preview(props.tree, form.tablePath, form.pathDescriptions || []);
     return h("div", { className: "wbt-field full" },
-      h("label", null, h("span", null, props.edit ? "纠正归属（可选）" : "目标任务表 *"),
-        h("select", { className: "wbt-select", "aria-label": "目标任务表", value: form.tableId, disabled: !!form.newPath,
-          onChange: function (e) { set("tableId", e.target.value); } },
-          h("option", { value: "" }, props.edit ? "保留当前归属" : "请选择目标任务表"),
-          tables.map(function (x) { return h("option", { key: x.id, value: x.id }, x.path + " — " + (x.description || "暂无职责描述")); }))),
-      chosen ? h("div", { className: "wbt-mhint" }, chosen.path + "：" + (chosen.description || "暂无职责描述")) : null,
-      recommended && !props.edit ? h("div", { className: "wbt-mhint" }, "当前上下文建议：" + recommended.path + "。仅供参考，请自行选择。") : null,
+      h(Selection, { form: form, set: set, tree: props.tree, recommended: props.recommended, edit: props.edit, current: props.current, currentId: props.currentId }),
       !props.edit ? h("label", { className: "wbt-check" }, h("input", { type: "checkbox", "aria-label": "没有合适的表？新建节点", checked: !!form.newPath,
         onChange: function (e) { props.setMany({ newPath: e.target.checked, tableId: "", confirmed: false }); } }), "没有合适的表？新建节点") : null,
       form.newPath ? h("div", null,

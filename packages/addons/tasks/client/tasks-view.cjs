@@ -567,7 +567,7 @@ module.exports = function createTasksView(deps) {
         onError: function (e) { setDoneTask(null); say(e); },
       }) : null,
       (selectedOpen && batchMode) ? h(BatchModal, {
-        key: batchMode, t: t, api: api, mode: batchMode, items: selectedItems, tables: tables, nodes: treeFlat(tree),
+        key: batchMode, t: t, api: api, mode: batchMode, items: selectedItems, tables: tables, tree: tree,
         onClose: function () { setBatchMode(null); },
         onDone: batchDone,
       }) : null,

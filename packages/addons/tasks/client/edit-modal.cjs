@@ -29,7 +29,7 @@ module.exports = function createEditModal(React, statusInfo, stars) {
     var submission = React.useState({ pending: false })[0];
     function requestClose() { if (!submission.pending) props.onClose(); }
     function onModalKey(e) {
-      if (e.key !== "Escape") return;
+      if (e.key !== "Escape" || (e.target && e.target.closest && e.target.closest(".wbt-table-picker"))) return;
       e.preventDefault(); e.stopPropagation(); requestClose();
     }
     function failed(message) {
@@ -51,7 +51,7 @@ module.exports = function createEditModal(React, statusInfo, stars) {
       if (isBusy || submission.pending) return;
       if (!titleOk) { setErr(t.needTitle); return; }
       var patch = { id: task.id, title: String(form.title).trim(), description: String(form.description || "") };
-      if (form.tableId) {
+      if (form.tableId && form.tableId !== String(task.tableId || "")) {
         if (!ownership.tables(props.tree).some(function (x) { return x.id === form.tableId; })) { setErr("目标已失效，请重新选择"); return; }
         patch.tableId = form.tableId;
       }
@@ -82,8 +82,7 @@ module.exports = function createEditModal(React, statusInfo, stars) {
           h("button", { className: "wbt-icon", disabled: isBusy, onClick: requestClose }, "×")
         ),
         h("div", { className: "wbt-mhint" }, done ? t.editHintDone : t.editHintOpen),
-        h("div", { className: "wbt-mhint" }, "当前归属：" + ownership.receipt(task)),
-        fields({ edit: true, form: form, set: set, tree: props.tree }),
+        fields({ edit: true, form: form, set: set, tree: props.tree, currentId: task.tableId, current: (ownership.tables(props.tree).find(function (x) { return x.id === String(task.tableId); }) || {}).path || (Array.isArray(task.pathSegments) ? task.pathSegments.map(function (x) { return x.name || x; }).join(" / ") : task.tablePath || task.tableName || "原任务表已不可用") }),
         h("label", { className: "wbt-field" },
           h("span", null, t.titleField + " *"),
           h("input", { className: "wbt-input", value: form.title, autoFocus: true, onChange: function (e) { set("title", e.target.value); } })

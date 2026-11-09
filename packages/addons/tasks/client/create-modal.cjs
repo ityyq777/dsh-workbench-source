@@ -46,7 +46,7 @@ module.exports = function createModal(deps) {
     var submission = React.useState({ pending: false })[0];
     function requestClose() { if (!submission.pending) props.onClose(); }
     function onModalKey(e) {
-      if (e.key !== "Escape") return;
+      if (e.key !== "Escape" || (e.target && e.target.closest && e.target.closest(".wbt-table-picker"))) return;
       e.preventDefault(); e.stopPropagation(); requestClose();
     }
     var active = source === "2" || form.status === "0";

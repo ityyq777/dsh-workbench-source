@@ -4551,6 +4551,7 @@ var require_styles = __commonJS({
       ".wbt-pill{font-size:11px;padding:2px 7px;border-radius:999px;background:color-mix(in oklab,var(--wbt-accent) 12%,transparent);color:var(--wbt-accent)}",
       ".wbt-mhint{font-size:11.5px;opacity:.62;line-height:1.5}",
       ".wbt-modal.batch{width:min(720px,96vw);gap:9px}",
+      ".wbt-table-picker{display:flex;flex-direction:column;gap:8px;min-width:0}.wbt-picker-detail{white-space:pre-wrap;overflow-wrap:anywhere;min-width:0;line-height:1.6;font-size:12px}.wbt-bpick.keyboard{outline:1px solid var(--wbt-accent);outline-offset:-2px}",
       ".wbt-batch{display:flex;flex-direction:column;gap:8px;min-height:0}",
       ".wbt-batch-body{display:flex;flex-direction:column;gap:1px;border:1px solid var(--wbt-line);border-radius:10px;padding:5px;max-height:min(52vh,420px);overflow:auto;overscroll-behavior:contain}",
       ".wbt-bpick{display:flex;align-items:flex-start;gap:8px;width:100%;text-align:left;border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-size:12.5px;padding:7px 9px;border-radius:8px;cursor:pointer;min-width:0;line-height:1.45}",
@@ -4863,6 +4864,162 @@ var require_ownership = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/table-picker.cjs
+var require_table_picker = __commonJS({
+  "packages/addons/tasks/client/table-picker.cjs"(exports2, module2) {
+    "use strict";
+    function rows(tree, parents, out) {
+      var result = out || [], prefix = parents || [];
+      (tree || []).forEach(function(n) {
+        if (n.deletedAt || n.deleted_at) return;
+        var path = prefix.concat(String(n.name || ""));
+        result.push({
+          id: String(n.id),
+          name: String(n.name || ""),
+          type: String(n.type),
+          depth: prefix.length,
+          path: path.join(" / "),
+          groupPath: prefix.join(" / "),
+          description: n.description || ""
+        });
+        if (String(n.type) !== "1") rows(n.children, path, result);
+      });
+      return result;
+    }
+    function visible(tree, query, recommended) {
+      var keyword = String(query || "").trim().toLowerCase();
+      var all = rows(tree), rec = all.find(function(n) {
+        return n.type === "1" && n.id === String(recommended);
+      });
+      var shown = all.filter(function(n) {
+        return !keyword || n.path.toLowerCase().indexOf(keyword) >= 0;
+      });
+      if (rec && shown.indexOf(rec) >= 0) shown = [rec].concat(shown.filter(function(n) {
+        return n !== rec;
+      }));
+      return shown;
+    }
+    module2.exports = function(React) {
+      var h = React.createElement;
+      return function TablePicker(props) {
+        var qs = React.useState(""), query = qs[0], setQuery = qs[1];
+        var activeState = React.useState(""), active = activeState[0], setActive = activeState[1];
+        var input = React.useRef(null), list = React.useRef(null), uid = React.useId();
+        var shown = visible(props.tree, query, props.recommended), options = shown.filter(function(n) {
+          return n.type === "1";
+        });
+        var picked = rows(props.tree).find(function(n) {
+          return n.type === "1" && n.id === String(props.value);
+        });
+        var current = options.find(function(n) {
+          return n.id === active;
+        }) || options.find(function(n) {
+          return n.id === String(props.value);
+        }) || options[0];
+        function optionId(n) {
+          return uid + "-table-" + n.id;
+        }
+        React.useEffect(function() {
+          if (input.current) input.current.focus();
+        }, []);
+        React.useEffect(function() {
+          if (!list.current || !current) return;
+          var node = list.current.ownerDocument.getElementById(optionId(current));
+          if (node && node.scrollIntoView) node.scrollIntoView({ block: "nearest" });
+        }, [current && current.id, query]);
+        function key(e) {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            if (props.onClose) props.onClose();
+            return;
+          }
+          if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            e.preventDefault();
+            e.stopPropagation();
+            var at = options.indexOf(current), delta = e.key === "ArrowDown" ? 1 : -1;
+            if (options.length) setActive(options[(at + delta + options.length) % options.length].id);
+          }
+          if (e.key === "Enter" && current) {
+            e.preventDefault();
+            e.stopPropagation();
+            props.onChange(current.id);
+          }
+        }
+        return h(
+          "div",
+          { className: "wbt-table-picker", onKeyDown: key },
+          h("input", {
+            ref: input,
+            className: "wbt-input",
+            "aria-label": "\u641C\u7D22\u4EFB\u52A1\u8868\u540D\u79F0\u6216\u5B8C\u6574\u8DEF\u5F84",
+            placeholder: "\u641C\u7D22\u4EFB\u52A1\u8868\u540D\u79F0\u6216\u5B8C\u6574\u8DEF\u5F84",
+            value: query,
+            role: "combobox",
+            "aria-expanded": true,
+            "aria-controls": uid,
+            "aria-autocomplete": "list",
+            "aria-activedescendant": current ? optionId(current) : void 0,
+            onChange: function(e) {
+              setQuery(e.target.value);
+              setActive("");
+            }
+          }),
+          h("div", { className: "wbt-batch" }, h(
+            "div",
+            {
+              ref: list,
+              id: uid,
+              role: "listbox",
+              "aria-label": "\u76EE\u6807\u4EFB\u52A1\u8868",
+              tabIndex: 0,
+              "aria-activedescendant": current ? optionId(current) : void 0,
+              className: "wbt-batch-body"
+            },
+            shown.map(function(n) {
+              var table = n.type === "1", selected = n.id === String(props.value);
+              return h(
+                "div",
+                {
+                  key: n.id,
+                  id: table ? optionId(n) : void 0,
+                  role: table ? "option" : "presentation",
+                  "aria-label": table ? n.name + "\uFF0C" + n.groupPath : void 0,
+                  "aria-selected": table ? selected : void 0,
+                  className: "wbt-bpick" + (!table ? " wbt-bgroup" : "") + (selected ? " on" : "") + (table && current && current.id === n.id ? " keyboard" : ""),
+                  style: { paddingLeft: 2 + n.depth * 15 + "px", cursor: table ? "pointer" : "default" },
+                  onClick: table ? function() {
+                    setActive(n.id);
+                    props.onChange(n.id);
+                  } : void 0
+                },
+                !table ? h("span", { "aria-hidden": true }, "\u25B8") : null,
+                h(
+                  "span",
+                  { className: "wbt-bpick-main" },
+                  h("span", { className: "wbt-bpick-name" }, n.name),
+                  table && n.id === String(props.recommended) ? h("span", { className: "wbt-mhint" }, "\u5F53\u524D\u4E0A\u4E0B\u6587\u5EFA\u8BAE") : null
+                ),
+                table ? h("span", { className: "wbt-bpick-check", "aria-hidden": true }, selected ? "\u2713" : "") : null
+              );
+            }),
+            !shown.length ? h("div", { className: "wbt-batch-empty" }, "\u6CA1\u6709\u5339\u914D\u7684\u4EFB\u52A1\u8868") : null
+          )),
+          h("div", { className: "wbt-picker-detail", role: "status" }, picked ? h(
+            React.Fragment,
+            null,
+            h("div", null, "\u76EE\u6807\u4EFB\u52A1\u8868\uFF1A" + picked.path),
+            h("div", null, "\u804C\u8D23\uFF1A" + (picked.description || "\u6682\u65E0\u804C\u8D23\u63CF\u8FF0"))
+          ) : "\u8BF7\u5148\u9009\u62E9\u76EE\u6807\u4EFB\u52A1\u8868\uFF0C\u518D\u786E\u8BA4\u63D0\u4EA4\u3002"),
+          props.onClose ? h("button", { type: "button", className: "wbt-btn ghost", onClick: props.onClose }, "\u6536\u8D77\u9009\u62E9\u5668") : null
+        );
+      };
+    };
+    module2.exports.rows = rows;
+    module2.exports.visible = visible;
+  }
+});
+
 // packages/addons/tasks/client/ownership-fields.cjs
 var require_ownership_fields = __commonJS({
   "packages/addons/tasks/client/ownership-fields.cjs"(exports2, module2) {
@@ -4870,41 +5027,57 @@ var require_ownership_fields = __commonJS({
     var ownership = require_ownership();
     module2.exports = function(React) {
       var h = React.createElement;
+      var Picker = require_table_picker()(React);
+      function Selection(props) {
+        var state = React.useState(false), open = state[0], setOpen = state[1], trigger = React.useRef(null);
+        var chosen = ownership.tables(props.tree).find(function(x) {
+          return x.id === props.form.tableId;
+        });
+        function close() {
+          setOpen(false);
+          if (trigger.current) trigger.current.focus();
+        }
+        return h(
+          "div",
+          null,
+          h("div", { className: "wbt-picker-detail" }, props.edit ? "\u5F53\u524D\u5F52\u5C5E\uFF1A" + props.current : "\u76EE\u6807\u4EFB\u52A1\u8868 *"),
+          h("button", {
+            ref: trigger,
+            type: "button",
+            className: "wbt-btn",
+            disabled: !!props.form.newPath,
+            "aria-expanded": open,
+            onClick: function() {
+              setOpen(!open);
+            }
+          }, props.edit ? "\u66F4\u6362\u4EFB\u52A1\u8868" : "\u9009\u62E9\u76EE\u6807\u4EFB\u52A1\u8868"),
+          open && !props.form.newPath ? h(Picker, {
+            tree: props.tree,
+            value: props.form.tableId,
+            recommended: props.recommended,
+            onChange: function(id) {
+              props.set("tableId", props.edit && id === String(props.currentId) ? "" : id);
+            },
+            onClose: close
+          }) : null,
+          chosen ? h(
+            "div",
+            { className: "wbt-picker-detail", role: "status" },
+            (props.edit ? "\u5C06\u79FB\u52A8\u5230\uFF1A" : "\u5DF2\u9009\u62E9\uFF1A") + chosen.path,
+            props.edit ? h("button", { type: "button", className: "wbt-btn ghost", onClick: function() {
+              props.set("tableId", "");
+              close();
+            } }, "\u64A4\u9500\uFF0C\u4FDD\u7559\u539F\u4F4D") : null
+          ) : h("div", { className: "wbt-mhint" }, props.edit ? "\u672A\u66F4\u6362\uFF0C\u4FDD\u7559\u5F53\u524D\u5F52\u5C5E\u3002" : props.form.newPath ? "\u8BF7\u786E\u8BA4\u65B0\u5EFA\u8DEF\u5F84\u3002" : "\u8BF7\u5148\u9009\u62E9\u76EE\u6807\u4EFB\u52A1\u8868\uFF0C\u518D\u786E\u8BA4\u63D0\u4EA4\u3002")
+        );
+      }
       return function fields(props) {
-        var form = props.form, set = props.set, tables = ownership.tables(props.tree);
-        var chosen = tables.find(function(x) {
-          return x.id === form.tableId;
-        });
-        var recommended = tables.find(function(x) {
-          return x.id === String(props.recommended || "");
-        });
+        var form = props.form, set = props.set;
         var plan = ownership.preview(props.tree, form.tablePath, form.pathDescriptions || []);
         return h(
           "div",
           { className: "wbt-field full" },
-          h(
-            "label",
-            null,
-            h("span", null, props.edit ? "\u7EA0\u6B63\u5F52\u5C5E\uFF08\u53EF\u9009\uFF09" : "\u76EE\u6807\u4EFB\u52A1\u8868 *"),
-            h(
-              "select",
-              {
-                className: "wbt-select",
-                "aria-label": "\u76EE\u6807\u4EFB\u52A1\u8868",
-                value: form.tableId,
-                disabled: !!form.newPath,
-                onChange: function(e) {
-                  set("tableId", e.target.value);
-                }
-              },
-              h("option", { value: "" }, props.edit ? "\u4FDD\u7559\u5F53\u524D\u5F52\u5C5E" : "\u8BF7\u9009\u62E9\u76EE\u6807\u4EFB\u52A1\u8868"),
-              tables.map(function(x) {
-                return h("option", { key: x.id, value: x.id }, x.path + " \u2014 " + (x.description || "\u6682\u65E0\u804C\u8D23\u63CF\u8FF0"));
-              })
-            )
-          ),
-          chosen ? h("div", { className: "wbt-mhint" }, chosen.path + "\uFF1A" + (chosen.description || "\u6682\u65E0\u804C\u8D23\u63CF\u8FF0")) : null,
-          recommended && !props.edit ? h("div", { className: "wbt-mhint" }, "\u5F53\u524D\u4E0A\u4E0B\u6587\u5EFA\u8BAE\uFF1A" + recommended.path + "\u3002\u4EC5\u4F9B\u53C2\u8003\uFF0C\u8BF7\u81EA\u884C\u9009\u62E9\u3002") : null,
+          h(Selection, { form, set, tree: props.tree, recommended: props.recommended, edit: props.edit, current: props.current, currentId: props.currentId }),
           !props.edit ? h("label", { className: "wbt-check" }, h("input", {
             type: "checkbox",
             "aria-label": "\u6CA1\u6709\u5408\u9002\u7684\u8868\uFF1F\u65B0\u5EFA\u8282\u70B9",
@@ -5021,7 +5194,7 @@ var require_create_modal = __commonJS({
           if (!submission.pending) props.onClose();
         }
         function onModalKey(e) {
-          if (e.key !== "Escape") return;
+          if (e.key !== "Escape" || e.target && e.target.closest && e.target.closest(".wbt-table-picker")) return;
           e.preventDefault();
           e.stopPropagation();
           requestClose();
@@ -5220,7 +5393,7 @@ var require_edit_modal = __commonJS({
           if (!submission.pending) props.onClose();
         }
         function onModalKey(e) {
-          if (e.key !== "Escape") return;
+          if (e.key !== "Escape" || e.target && e.target.closest && e.target.closest(".wbt-table-picker")) return;
           e.preventDefault();
           e.stopPropagation();
           requestClose();
@@ -5257,7 +5430,7 @@ var require_edit_modal = __commonJS({
             return;
           }
           var patch = { id: task.id, title: String(form.title).trim(), description: String(form.description || "") };
-          if (form.tableId) {
+          if (form.tableId && form.tableId !== String(task.tableId || "")) {
             if (!ownership.tables(props.tree).some(function(x) {
               return x.id === form.tableId;
             })) {
@@ -5303,8 +5476,11 @@ var require_edit_modal = __commonJS({
               h("button", { className: "wbt-icon", disabled: isBusy, onClick: requestClose }, "\xD7")
             ),
             h("div", { className: "wbt-mhint" }, done ? t.editHintDone : t.editHintOpen),
-            h("div", { className: "wbt-mhint" }, "\u5F53\u524D\u5F52\u5C5E\uFF1A" + ownership.receipt(task)),
-            fields({ edit: true, form, set, tree: props.tree }),
+            fields({ edit: true, form, set, tree: props.tree, currentId: task.tableId, current: (ownership.tables(props.tree).find(function(x) {
+              return x.id === String(task.tableId);
+            }) || {}).path || (Array.isArray(task.pathSegments) ? task.pathSegments.map(function(x) {
+              return x.name || x;
+            }).join(" / ") : task.tablePath || task.tableName || "\u539F\u4EFB\u52A1\u8868\u5DF2\u4E0D\u53EF\u7528") }),
             h(
               "label",
               { className: "wbt-field" },
@@ -5359,6 +5535,123 @@ var require_edit_modal = __commonJS({
         );
       }
       return EditModal;
+    };
+  }
+});
+
+// packages/addons/tasks/client/batch-modal.cjs
+var require_batch_modal = __commonJS({
+  "packages/addons/tasks/client/batch-modal.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(React, cx, Icon2) {
+      var h = React.createElement, Picker = require_table_picker()(React);
+      function BatchModal(props) {
+        var t = props.t;
+        var items = props.items || [];
+        var mode = props.mode;
+        var trigger = React.useRef(typeof document === "undefined" ? null : document.activeElement);
+        React.useEffect(function() {
+          return function() {
+            if (trigger.current) trigger.current.focus();
+          };
+        }, []);
+        var s = React.useState(mode === "timeline" ? items[0] && items[0].id || "" : "");
+        var value = s[0], setValue = s[1];
+        var busy = React.useState(false);
+        var isBusy = busy[0], setBusy = busy[1];
+        var err = React.useState("");
+        var error = err[0], setError = err[1];
+        var picked = null;
+        var rows = [];
+        if (mode === "timeline") {
+          items.forEach(function(x) {
+            if (String(x.id) === String(value)) picked = x;
+            rows.push(h(
+              "label",
+              { key: x.id, className: cx("wbt-bpick wrap", String(value) === String(x.id) && "on") },
+              h("input", { type: "radio", name: "wbt-base", checked: String(value) === String(x.id), onChange: function() {
+                setValue(String(x.id));
+              } }),
+              h(
+                "span",
+                { className: "wbt-bpick-main" },
+                h("span", { className: "wbt-bpick-name" }, x.title),
+                h(
+                  "span",
+                  { className: "wbt-bpick-meta" },
+                  h("code", { title: x.timelineKey || "" }, "timeline " + (x.timelineKey || "-")),
+                  x.priority !== void 0 ? h("span", null, "P" + x.priority) : null
+                )
+              ),
+              h("span", { className: "wbt-bpick-check" }, String(value) === String(x.id) ? h(Icon2, { name: "check", size: 13 }) : null)
+            ));
+          });
+        }
+        return h(
+          "div",
+          { className: "wbt-modal-mask", onMouseDown: function(e) {
+            if (e.target === e.currentTarget) props.onClose();
+          } },
+          h(
+            "div",
+            { className: "wbt-modal batch" },
+            h(
+              "div",
+              { className: "wbt-modal-head" },
+              h("h3", null, mode === "timeline" ? t.batchTimeline : t.batchMigrate),
+              h("span", { className: "wbt-badge" }, t.batchCount + " " + items.length),
+              h("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")
+            ),
+            h("div", { className: "wbt-mhint" }, mode === "timeline" ? t.chooseBase : t.chooseTable),
+            mode === "migrate" ? h(Picker, { tree: props.tree, value, onChange: setValue, onClose: props.onClose }) : h(
+              React.Fragment,
+              null,
+              h("div", { className: "wbt-batch" }, h("div", { className: "wbt-batch-body" }, rows)),
+              h("div", { className: "wbt-batch-sel" }, t.baseLabel + "\uFF1A" + (picked ? picked.title : "-"))
+            ),
+            error ? h("div", { className: "wbt-err" }, error) : null,
+            h(
+              "div",
+              { className: "wbt-modal-foot" },
+              h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
+              h("button", { className: "wbt-btn primary", disabled: isBusy || !value || mode === "migrate" && !require_ownership().tables(props.tree).some(function(n) {
+                return n.id === value;
+              }), onClick: function() {
+                if (!value) {
+                  setError(mode === "timeline" ? t.needBase : t.needTable);
+                  return;
+                }
+                setBusy(true);
+                if (mode === "timeline") {
+                  var base = null;
+                  for (var i = 0; i < items.length; i++) if (String(items[i].id) === String(value)) base = items[i];
+                  if (!base || !base.timelineKey) {
+                    setError(t.needBase);
+                    setBusy(false);
+                    return;
+                  }
+                  props.api.call("tasks.timelineRefactor", { ids: items.map(function(x) {
+                    return x.id;
+                  }), timelineKey: base.timelineKey }).then(function(r) {
+                    setBusy(false);
+                    if (r && r.ok) props.onDone();
+                    else setError(r && r.error || "failed");
+                  });
+                } else {
+                  props.api.call("tasks.migrate", { ids: items.map(function(x) {
+                    return x.id;
+                  }), tableId: value }).then(function(r) {
+                    setBusy(false);
+                    if (r && r.ok) props.onDone();
+                    else setError(r && r.error || "failed");
+                  });
+                }
+              } }, isBusy ? "\u2026" : t.confirm)
+            )
+          )
+        );
+      }
+      return BatchModal;
     };
   }
 });
@@ -6185,7 +6478,7 @@ var require_tasks_view = __commonJS({
             mode: batchMode,
             items: selectedItems,
             tables,
-            nodes: treeFlat(tree),
+            tree,
             onClose: function() {
               setBatchMode(null);
             },
@@ -6731,138 +7024,7 @@ var require_tasks_view = __commonJS({
     );
   }
   var EditModal = require_edit_modal()(React, statusInfo, stars);
-  function BatchModal(props) {
-    var t = props.t;
-    var items = props.items || [];
-    var mode = props.mode;
-    var nodes = props.nodes || [];
-    var s = React.useState(mode === "timeline" ? items[0] && items[0].id || "" : props.tables[0] && props.tables[0].id || "");
-    var value = s[0], setValue = s[1];
-    var qs = React.useState("");
-    var query = qs[0], setQuery = qs[1];
-    var busy = React.useState(false);
-    var isBusy = busy[0], setBusy = busy[1];
-    var err = React.useState("");
-    var error = err[0], setError = err[1];
-    var kw = query.trim().toLowerCase();
-    var picked = null;
-    var rows = [];
-    if (mode === "timeline") {
-      items.forEach(function(x) {
-        if (String(x.id) === String(value)) picked = x;
-        rows.push(h(
-          "label",
-          { key: x.id, className: cx("wbt-bpick wrap", String(value) === String(x.id) && "on") },
-          h("input", { type: "radio", name: "wbt-base", checked: String(value) === String(x.id), onChange: function() {
-            setValue(String(x.id));
-          } }),
-          h(
-            "span",
-            { className: "wbt-bpick-main" },
-            h("span", { className: "wbt-bpick-name" }, x.title),
-            h(
-              "span",
-              { className: "wbt-bpick-meta" },
-              h("code", { title: x.timelineKey || "" }, "timeline " + (x.timelineKey || "-")),
-              x.priority !== void 0 ? h("span", null, "P" + x.priority) : null
-            )
-          ),
-          h("span", { className: "wbt-bpick-check" }, String(value) === String(x.id) ? h(Icon2, { name: "check", size: 13 }) : null)
-        ));
-      });
-    } else {
-      var shown = nodes.filter(function(n) {
-        return !kw || String(n.name).toLowerCase().indexOf(kw) >= 0;
-      });
-      shown.forEach(function(n) {
-        var isTable = n.type === "1";
-        if (isTable && String(n.id) === String(value)) picked = n;
-        var pad = 2 + n.depth * 15;
-        rows.push(h(
-          "button",
-          {
-            key: String(n.id),
-            type: "button",
-            title: n.name,
-            className: cx("wbt-bpick", !isTable && "wbt-bgroup", isTable && String(value) === String(n.id) && "on"),
-            style: { paddingLeft: pad + "px", cursor: isTable ? "pointer" : "default" },
-            disabled: !isTable,
-            onClick: isTable ? function() {
-              setValue(String(n.id));
-            } : null
-          },
-          !isTable ? h(Icon2, { name: "folder", size: 12 }) : null,
-          h("span", { className: "wbt-bpick-main" }, h("span", { className: "wbt-bpick-name" }, n.name)),
-          isTable ? h("span", { className: "wbt-bpick-check" }, String(value) === String(n.id) ? h(Icon2, { name: "check", size: 13 }) : null) : null
-        ));
-      });
-      if (!shown.length) rows.push(h("div", { key: "empty", className: "wbt-batch-empty" }, t.noTable));
-    }
-    return h(
-      "div",
-      { className: "wbt-modal-mask", onMouseDown: function(e) {
-        if (e.target === e.currentTarget) props.onClose();
-      } },
-      h(
-        "div",
-        { className: "wbt-modal batch" },
-        h(
-          "div",
-          { className: "wbt-modal-head" },
-          h("h3", null, mode === "timeline" ? t.batchTimeline : t.batchMigrate),
-          h("span", { className: "wbt-badge" }, t.batchCount + " " + items.length),
-          h("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")
-        ),
-        h("div", { className: "wbt-mhint" }, mode === "timeline" ? t.chooseBase : t.chooseTable),
-        mode === "migrate" ? h("input", { className: "wbt-input wbt-bpick-name", placeholder: t.searchTable, value: query, onChange: function(e) {
-          setQuery(e.target.value);
-        }, style: { whiteSpace: "normal" } }) : null,
-        h("div", { className: "wbt-batch" }, h("div", { className: "wbt-batch-body" }, rows)),
-        h(
-          "div",
-          { className: "wbt-batch-sel" },
-          mode === "timeline" ? h("span", null, t.baseLabel + "\uFF1A", h("b", null, picked ? picked.title : "-")) : h("span", null, t.targetLabel + "\uFF1A", h("b", null, picked ? picked.name : "-"))
-        ),
-        error ? h("div", { className: "wbt-err" }, error) : null,
-        h(
-          "div",
-          { className: "wbt-modal-foot" },
-          h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
-          h("button", { className: "wbt-btn primary", disabled: isBusy, onClick: function() {
-            if (!value) {
-              setError(mode === "timeline" ? t.needBase : t.needTable);
-              return;
-            }
-            setBusy(true);
-            if (mode === "timeline") {
-              var base = null;
-              for (var i = 0; i < items.length; i++) if (String(items[i].id) === String(value)) base = items[i];
-              if (!base || !base.timelineKey) {
-                setError(t.needBase);
-                setBusy(false);
-                return;
-              }
-              props.api.call("tasks.timelineRefactor", { ids: items.map(function(x) {
-                return x.id;
-              }), timelineKey: base.timelineKey }).then(function(r) {
-                setBusy(false);
-                if (r && r.ok) props.onDone();
-                else setError(r && r.error || "failed");
-              });
-            } else {
-              props.api.call("tasks.migrate", { ids: items.map(function(x) {
-                return x.id;
-              }), tableId: value }).then(function(r) {
-                setBusy(false);
-                if (r && r.ok) props.onDone();
-                else setError(r && r.error || "failed");
-              });
-            }
-          } }, isBusy ? "\u2026" : t.confirm)
-        )
-      )
-    );
-  }
+  var BatchModal = require_batch_modal()(React, cx, Icon2);
   var CFG_FALLBACK = {
     "ui.defaultTab": 0,
     "ui.listView": "list",
@@ -6884,7 +7046,7 @@ var require_tasks_view = __commonJS({
   var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, TABS, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.1.3",
+    version: "3.1.4",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

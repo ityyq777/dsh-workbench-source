@@ -25,7 +25,7 @@ function mount(priority, fallback = 1, source = '2', lang = 'zh') {
   const priorityInput = tree => find(tree, n => n.props.type === 'number' && n.props.max === 10);
   const submit = tree => find(tree, n => n.props.className === 'wbt-btn primary');
   change(n => n.type === 'input' && n.props.autoFocus, 'Restart');
-  change(n => n.props['aria-label'] === '目标任务表', 'table');
+  find(render(), n => typeof n.type === 'function' && n.props.form && n.props.set).props.set('tableId', 'table');
   return { calls, render, change, priorityInput, submit };
 }
 for (const [original, fallback, expected] of [[7, 1, 7], [0, 1, 1], [0, 6, 6], [0, 0, 1], [0, 99, 10], [0, 'bad', 1]]) {

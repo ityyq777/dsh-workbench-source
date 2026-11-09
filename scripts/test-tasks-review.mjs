@@ -17,7 +17,7 @@ const render = (C, props) => { cursor = 0; return C(props); };
 const all = node => node && typeof node === 'object' ? [node, ...node.children.flatMap(all)] : [];
 const find = (node, predicate) => { const hit = all(node).find(predicate); assert.ok(hit, 'expected UI control'); return hit; };
 const sandbox = { window: { __WB_HOST__: { registerAddon() {} } }, module: {}, console,
-  require: name => name === 'react' ? React : ['./edit-modal.cjs', './create-modal.cjs', './task-item.cjs', './tasks-view.cjs', './difficulty-field.cjs'].includes(name) ? require('../packages/addons/tasks/client/' + name.slice(2)) : {},
+  require: name => name === 'react' ? React : ['./edit-modal.cjs', './create-modal.cjs', './task-item.cjs', './tasks-view.cjs', './difficulty-field.cjs', './batch-modal.cjs'].includes(name) ? require('../packages/addons/tasks/client/' + name.slice(2)) : {},
 };
 const source = readFileSync('packages/addons/tasks/client/client.src.cjs', 'utf8');
 runInNewContext(source.replace('  host.registerAddon({', '  window.test = { TaskItem, DoneModal, EditModal }; host.registerAddon({'), sandbox);
