@@ -147,7 +147,7 @@ assert.match(rule('.wbi-stock'),/display:inline-flex;align-items:center;gap:5px/
 assert.equal(rule('.wbi-stock .wbi-svg'),'','stock spacing must not treat its icon as a separator');
 assert.doesNotMatch(rule('.wbi-btn'),/border:1px solid/);
 // Run the established gallery/selection regression scenarios against real bundled lucide.
-const lucideCode=bundle('packages/addons/storage/client/icons.cjs');
+const lucideCode=bundle('packages/addons/storage/client/ui/icons.cjs');
 const iconModule={exports:{}};runInNewContext(lucideCode,{module:iconModule,require:()=>React});
 for(const [name,size,expected] of [["box",48,14],["box",99,14],["empty",48,48],["tag",11,11]]){
   root=iconModule.exports.Icon;props={name,size};frames.clear();render();

@@ -7,7 +7,7 @@
  * 只有 configSet 会抛错（带 id 与原因）。
  */
 
-import { tableExists, tx } from "./db.js";
+import { tableExists, tx } from "../db/db.js";
 
 export const DOMAIN = "storage";
 export const SCHEMA_VERSION = 1;

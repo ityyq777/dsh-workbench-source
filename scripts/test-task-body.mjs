@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { performance } from 'node:perf_hooks';
 import { DatabaseSync } from 'node:sqlite';
 import { registerConfigActions } from '../packages/addons/tasks/lib/infra/config.js';
-import { registerConfigActions as registerStorageConfig } from '../packages/addons/storage/lib/config.js';
+import { registerConfigActions as registerStorageConfig } from '../packages/addons/storage/lib/infra/config.js';
 const require = createRequire(import.meta.url);
 const { parse, createBody } = require('../packages/addons/lib/markdown.cjs');
 const tick = String.fromCharCode(96), fence = tick.repeat(3);

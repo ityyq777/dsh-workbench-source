@@ -1,4 +1,4 @@
-import { fieldsOf, tableExists, tx, logChange } from "./db.js";
+import { fieldsOf, tableExists, tx, logChange } from "../db/db.js";
 export const SCHEMA_VERSION = 1;
 export function exportStorageData(api) {
   const db = api.db;

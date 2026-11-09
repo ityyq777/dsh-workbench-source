@@ -1,4 +1,4 @@
-import { now, tx, logChange } from "./db.js";
+import { now, tx, logChange } from "../db/db.js";
 import { replaceTags } from "./tags.js";
 
 // Caller owns the transaction. Tags unavailable: preserve mappings, as storage.delete does.

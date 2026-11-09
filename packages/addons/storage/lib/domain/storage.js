@@ -1,6 +1,6 @@
-import { now, newId, tx, logChange, tagsOn, idsOf, fieldsOf, rowStorage, pageInfo, sizeOf } from "./db.js";
+import { now, newId, tx, logChange, tagsOn, idsOf, fieldsOf, rowStorage, pageInfo, sizeOf } from "../db/db.js";
 import { validateTags, replaceTags, searchTags, tagsByIds } from "./tags.js";
-import { configValues } from "./config.js";
+import { configValues } from "../infra/config.js";
 import { deleteRow, bulkDelete } from "./deletion.js";
 const SORT = { name: "name", brand: "brand", stock: "stock", create_time: "created_at", update_time: "updated_at" };
 function requireId(id) {

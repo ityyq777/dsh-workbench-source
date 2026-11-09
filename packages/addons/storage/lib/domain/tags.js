@@ -1,4 +1,4 @@
-import { idsOf, tagsOn, now, newId, logChange, pageInfo, sizeOf } from "./db.js";
+import { idsOf, tagsOn, now, newId, logChange, pageInfo, sizeOf } from "../db/db.js";
 export function validateTags(api, value) {
   const ids = idsOf(value);
   if (!tagsOn(api)) {

@@ -1,12 +1,12 @@
 // storage 配置页与配置读取辅助。构建：node scripts/build-addon-clients.mjs
 // 配置存在本机 meta 表，不参与云端同步，也不进入备份。
 var React = require("react");
-var h = React.createElement, ui = require("./ui.cjs");
+var h = React.createElement, ui = require("../ui/ui.cjs");
 
 var DOMAIN = "storage";
 var PREFIX = "wbi";
 
-var COPY = require("./config-copy.cjs");
+var COPY = require("../ui/config-copy.cjs");
 
 var CSS = [
   ".__P__-cfg{--cfg-line:var(--wb-line,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent)));--cfg-surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));--cfg-muted:var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 62%,transparent));--cfg-faint:var(--dsw-alias-label-tertiary,color-mix(in oklab,currentColor 42%,transparent));--cfg-hover:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent));display:flex;flex-direction:column;gap:16px;width:100%;min-width:0;padding-bottom:6px;color:inherit;font-size:13.5px}",

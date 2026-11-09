@@ -1,10 +1,10 @@
 var React = require("react"),
-  ui = require("./ui.cjs"),
-  Editor = require("./editor.cjs").Editor;
+  ui = require("../ui/ui.cjs"),
+  Editor = require("../modals/editor.cjs").Editor;
 var h = ui.h,
   tr = ui.tr;
-var StorageCard = require("./card.cjs").StorageCard;
-var selection = require("./selection.cjs");
+var StorageCard = require("../item/card.cjs").StorageCard;
+var selection = require("../ui/selection.cjs");
 function Records(props) {
   var api = props.api,
     lang = props.lang;

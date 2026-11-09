@@ -1,5 +1,5 @@
 var React = require("react"),
-  ui = require("./ui.cjs"),
+  ui = require("../ui/ui.cjs"),
   h = ui.h,
   tr = ui.tr;
 function Stats(props) {

@@ -54,7 +54,7 @@ function walk(node, visit) {
 }
 function nodes(node, predicate) { const found = []; walk(node, n => { if (predicate(n)) found.push(n); }); return found; }
 const cls = (node, name) => nodes(node, n => (n.props.className || "").split(" ").includes(name));
-const { StorageCard } = load("packages/addons/storage/client/records.cjs");
+const { StorageCard } = load("packages/addons/storage/client/views/records.cjs");
 const { Description } = load("packages/addons/lib/description.cjs");
 function actual(node) {
   if (!node || typeof node !== "object") return node;

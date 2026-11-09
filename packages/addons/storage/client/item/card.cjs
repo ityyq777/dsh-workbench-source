@@ -1,5 +1,5 @@
-var React = require("react"), ui = require("./ui.cjs"), h = ui.h, tr = ui.tr;
-var Description = require("../../lib/description.cjs").Description;
+var React = require("react"), ui = require("../ui/ui.cjs"), h = ui.h, tr = ui.tr;
+var Description = require("../../../lib/description.cjs").Description;
 function StorageCard(props) {
   var item = props.item, lang = props.lang, gallery = React.useState(false);
   var images = (item.imgList || []).filter(ui.safeImage), tags = item.tags || [];

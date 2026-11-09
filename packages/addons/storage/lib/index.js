@@ -1,8 +1,8 @@
-import { bindClock, ensureSchema } from "./db.js";
-import { registerStorageActions } from "./storage.js";
-import { registerConfigActions } from "./config.js";
-import { registerDataActions } from "./data.js";
-import { exportStorageData, importStorageData } from "./backup.js";
+import { bindClock, ensureSchema } from "./db/db.js";
+import { registerStorageActions } from "./domain/storage.js";
+import { registerConfigActions } from "./infra/config.js";
+import { registerDataActions } from "./infra/data.js";
+import { exportStorageData, importStorageData } from "./infra/backup.js";
 export const inject = ["workbench"];
 export const storageSync = { tables: [{ name: "storage", mode: "row" }] };
 export function setup(api) {

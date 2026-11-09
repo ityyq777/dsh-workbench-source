@@ -1,5 +1,5 @@
 var React = require("react"),
-  ui = require("./ui.cjs");
+  ui = require("../ui/ui.cjs");
 var h = ui.h,
   tr = ui.tr;
 function Editor(props) {

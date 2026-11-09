@@ -670,9 +670,9 @@ var require_visual_tokens = __commonJS({
   }
 });
 
-// packages/addons/storage/client/styles.cjs
+// packages/addons/storage/client/ui/styles.cjs
 var require_styles = __commonJS({
-  "packages/addons/storage/client/styles.cjs"(exports2, module2) {
+  "packages/addons/storage/client/ui/styles.cjs"(exports2, module2) {
     module2.exports = require_description().css + require_visual_tokens() + `
 .wbi-root{--line:var(--wb-line,var(--dsw-alias-border-l2,#d9dfe6));--surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,#fff));--muted:var(--dsw-alias-label-secondary,#64748b);--accent:var(--dsw-alias-brand-primary,#2563eb);font-size:13px;color:inherit;min-width:0;container-type:inline-size;container-name:storage}
 .wbi-root *{box-sizing:border-box}.wbi-root h2{font-size:18px;margin:0}.wbi-root h3{font-size:15px;margin:0}.wbi-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.wbi-grow{flex:1;min-width:0}.wbi-muted{color:var(--muted);font-size:12px}.wbi-root input,.wbi-root textarea,.wbi-root select{background:var(--surface);color:inherit;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;max-width:100%}.wbi-root textarea{resize:vertical;min-height:80px}.wbi-root :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -1340,9 +1340,9 @@ var init_rotate_ccw = __esm({
   }
 });
 
-// packages/addons/storage/client/icons.cjs
+// packages/addons/storage/client/ui/icons.cjs
 var require_icons = __commonJS({
-  "packages/addons/storage/client/icons.cjs"(exports2, module2) {
+  "packages/addons/storage/client/ui/icons.cjs"(exports2, module2) {
     var React = require("react");
     var ICONS = {
       box: (init_box(), __toCommonJS(box_exports)).default,
@@ -1383,9 +1383,9 @@ var require_icons = __commonJS({
   }
 });
 
-// packages/addons/storage/client/ui.cjs
+// packages/addons/storage/client/ui/ui.cjs
 var require_ui = __commonJS({
-  "packages/addons/storage/client/ui.cjs"(exports2, module2) {
+  "packages/addons/storage/client/ui/ui.cjs"(exports2, module2) {
     var React = require("react");
     var h2 = React.createElement;
     var Icon3 = require_icons().Icon;
@@ -1510,9 +1510,9 @@ var require_ui = __commonJS({
   }
 });
 
-// packages/addons/storage/client/stats.cjs
+// packages/addons/storage/client/views/stats.cjs
 var require_stats = __commonJS({
-  "packages/addons/storage/client/stats.cjs"(exports2, module2) {
+  "packages/addons/storage/client/views/stats.cjs"(exports2, module2) {
     var React = require("react");
     var ui = require_ui();
     var h2 = ui.h;
@@ -1615,9 +1615,9 @@ var require_stats = __commonJS({
   }
 });
 
-// packages/addons/storage/client/editor.cjs
+// packages/addons/storage/client/modals/editor.cjs
 var require_editor = __commonJS({
-  "packages/addons/storage/client/editor.cjs"(exports2, module2) {
+  "packages/addons/storage/client/modals/editor.cjs"(exports2, module2) {
     var React = require("react");
     var ui = require_ui();
     var h2 = ui.h;
@@ -1814,9 +1814,9 @@ var require_editor = __commonJS({
   }
 });
 
-// packages/addons/storage/client/card.cjs
+// packages/addons/storage/client/item/card.cjs
 var require_card = __commonJS({
-  "packages/addons/storage/client/card.cjs"(exports2, module2) {
+  "packages/addons/storage/client/item/card.cjs"(exports2, module2) {
     var React = require("react");
     var ui = require_ui();
     var h2 = ui.h;
@@ -1950,9 +1950,9 @@ var require_card = __commonJS({
   }
 });
 
-// packages/addons/storage/client/selection.cjs
+// packages/addons/storage/client/ui/selection.cjs
 var require_selection = __commonJS({
-  "packages/addons/storage/client/selection.cjs"(exports2, module2) {
+  "packages/addons/storage/client/ui/selection.cjs"(exports2, module2) {
     var React = require("react");
     var ui = require_ui();
     var h2 = ui.h;
@@ -2051,9 +2051,9 @@ var require_selection = __commonJS({
   }
 });
 
-// packages/addons/storage/client/records.cjs
+// packages/addons/storage/client/views/records.cjs
 var require_records = __commonJS({
-  "packages/addons/storage/client/records.cjs"(exports2, module2) {
+  "packages/addons/storage/client/views/records.cjs"(exports2, module2) {
     var React = require("react");
     var ui = require_ui();
     var Editor = require_editor().Editor;
@@ -2443,9 +2443,9 @@ var require_records = __commonJS({
   }
 });
 
-// packages/addons/storage/client/config-copy.cjs
+// packages/addons/storage/client/ui/config-copy.cjs
 var require_config_copy = __commonJS({
-  "packages/addons/storage/client/config-copy.cjs"(exports2, module2) {
+  "packages/addons/storage/client/ui/config-copy.cjs"(exports2, module2) {
     var COPY = {
       zh: {
         title: "\u914D\u7F6E",
@@ -2496,9 +2496,9 @@ var require_config_copy = __commonJS({
   }
 });
 
-// packages/addons/storage/client/config.cjs
+// packages/addons/storage/client/views/config.cjs
 var require_config = __commonJS({
-  "packages/addons/storage/client/config.cjs"(exports2, module2) {
+  "packages/addons/storage/client/views/config.cjs"(exports2, module2) {
     var React = require("react");
     var h2 = React.createElement;
     var ui = require_ui();
@@ -4036,9 +4036,9 @@ var require_data_view = __commonJS({
   }
 });
 
-// packages/addons/storage/client/data-columns.cjs
+// packages/addons/storage/client/ui/data-columns.cjs
 var require_data_columns = __commonJS({
-  "packages/addons/storage/client/data-columns.cjs"(exports2, module2) {
+  "packages/addons/storage/client/ui/data-columns.cjs"(exports2, module2) {
     "use strict";
     var h2 = require("react").createElement;
     var safeImage = require_ui().safeImage;
@@ -4106,9 +4106,9 @@ var require_data_columns = __commonJS({
   }
 });
 
-// packages/addons/storage/client/data.cjs
+// packages/addons/storage/client/views/data.cjs
 var require_data = __commonJS({
-  "packages/addons/storage/client/data.cjs"(exports2, module2) {
+  "packages/addons/storage/client/views/data.cjs"(exports2, module2) {
     "use strict";
     module2.exports = require_data_view()({
       domain: "storage",
