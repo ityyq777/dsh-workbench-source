@@ -46,26 +46,32 @@ find(draw(),n=>n.type==='input'&&n.props.placeholder===copy.en.search).props.onC
 find(draw(),n=>n.type==='form').props.onSubmit({preventDefault(){}});
 find(draw(),n=>n.props.ids&&n.props.onChange).props.onChange(['tag-a']);
 status('0').props.onChange();draw();await flush();
-assert.equal(status('all').props.checked,false);assert.equal(date('done','From').props.disabled,true);assert.equal(date('shutdown','From').props.disabled,true);
-find(draw(),n=>n.type==='button'&&text(n)==='Enable Completed').props.onClick();draw();await flush();assert.deepEqual(list().statuses,[0,2]);assert.equal(date('done','From').props.disabled,false);
+assert.equal(status('all').props.checked,false);assert.ok(!date('done','From').props.disabled);assert.ok(!date('shutdown','From').props.disabled);
+await change('done','From','2026-11-01');assert.deepEqual(list().statuses,[0,2]);assert.ok(text(draw()).includes('selected automatically'));assert.ok(!date('done','From').props.disabled);
 status('urgent').props.onChange();status('3').props.onChange();draw();await flush();assert.deepEqual(list().statuses,[0,2,3]);assert.equal(list().urgent,true);
 assert.equal(list().publishFrom,'2026-11-09');assert.equal(list().titleKey,'needle');assert.deepEqual(list().tagIds,['tag-a']);
 await change('done','To','2026-11-09');assert.equal(list().doneTo,'2026-11-09');
-status('2').props.onChange();draw();await flush();assert.equal(list().doneTo,undefined);assert.equal(date('done','To').props.disabled,true);
+status('2').props.onChange();draw();await flush();assert.equal(list().doneTo,undefined);assert.ok(!date('done','To').props.disabled);
 status('all').props.onChange();draw();await flush();assert.deepEqual(list().statuses,[]);assert.equal(list().urgent,false);
 await change('done','From','2026-11-08');assert.deepEqual(list().statuses,[2]);assert.ok(text(draw()).includes('selected automatically'));
-status('2').props.onChange();draw();await flush();assert.equal(status('all').props.checked,true);
+status('2').props.onChange();draw();await flush();assert.equal(status('all').props.checked,true);assert.equal(list().doneFrom,undefined);assert.equal(list().doneTo,undefined);
 find(draw(),n=>n.props['aria-label']===copy.en.refresh).props.onClick();await flush();assert.equal(list().publishTo,'2026-11-12');
 outer.props.viewParams={activityDate:'2026-11-09',activityType:'done'};draw();await flush();draw();await flush();assert.equal(list().publishFrom,undefined);assert.equal(list().publishTo,undefined);assert.equal(list().doneFrom,'2026-11-09');assert.equal(list().doneTo,'2026-11-09');assert.deepEqual(list().statuses,[2]);
 reset();const tableOuter=View({...props,viewParams:{tableId:'table-a',groupId:'1'}});render(tableOuter.type,tableOuter.props);await flush();assert.equal(list().tableId,'table-a');assert.equal(list().publishFrom,undefined);assert.equal(list().publishTo,undefined);
 for(const lang of ['zh','en']) {
- reset();let changed=[];let p={lang,value:{from:'',to:''},onChange:v=>changed.push(v)};
- let tree=render(dates.DateFilter,p);find(tree,n=>n.props['aria-expanded']===false).props.onClick();tree=render(dates.DateFilter,p);
- const picker=()=>find(render(dates.DateFilter,p),n=>n.props.onCustomChange);
- picker().props.onInvalidInput();assert.equal(changed.length,0);assert.ok(picker().props.customHint);
- picker().props.onCustomChange({from:'2026-02-30',to:''});assert.equal(changed.length,0);assert.ok(picker().props.customHint);
- picker().props.onCustomChange({from:'2026-11-09',to:'2026-11-01'});assert.equal(changed.at(-1).from,'2026-11-01');assert.ok(picker().props.customHint.includes(lang==='en'?'swapped':'已交换'));
- picker().props.onCustomClear();assert.equal(changed.at(-1).from,'');
+ reset();const changed=[];const p={lang,value:{from:'2026-11-01',to:'2026-11-09'},onChange:v=>changed.push(v)};
+ const drawDate=()=>render(dates.DateFilter,p);
+ const trigger=()=>find(drawDate(),n=>n.props['aria-expanded']!==undefined);
+ assert.equal(trigger().props['aria-expanded'],false);assert.ok(!walk(drawDate()).some(n=>n.props.type==='date'));
+ trigger().props.onClick();assert.equal(trigger().props['aria-expanded'],true);
+ const day=d=>find(drawDate(),n=>n.props['data-day']===d);
+ day('2026-11-09').props.onClick();assert.equal(changed.length,0);
+ day('2026-11-01').props.onClick();assert.equal(changed.at(-1).from,'2026-11-01');assert.equal(changed.at(-1).to,'2026-11-09');assert.equal(changed.at(-1).swapped,true);assert.equal(trigger().props['aria-expanded'],false);
+ trigger().props.onClick();day('2026-11-05').props.onClick();day('2026-11-05').props.onClick();assert.equal(changed.at(-1).from,changed.at(-1).to);
+ trigger().props.onClick();day('2026-11-08').props.onClick();find(drawDate(),n=>n.type==='button'&&text(n)===(lang==='en'?'From this date':'仅起始日期')).props.onClick();assert.equal(changed.at(-1).to,'');
+ trigger().props.onClick();find(drawDate(),n=>n.props['aria-label']===(lang==='en'?'Next month':'下个月')).props.onClick();assert.ok(day('2026-12-01'));
+ day('2026-12-01').props.onKeyDown({key:'ArrowLeft',preventDefault(){}});assert.ok(day('2026-11-30'));
+ find(drawDate(),n=>n.props['aria-label']===(lang==='en'?'Clear time range':'清除时间范围')).props.onClick();assert.equal(changed.at(-1).from,'');assert.equal(changed.at(-1).to,'');
 }
 const ch=require(dir+'stats/charts.cjs').makeCharts('test-date');
 for(const C of [ch.DateRangePicker,ch.RangeSwitch]) {

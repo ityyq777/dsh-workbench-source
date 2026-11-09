@@ -15,9 +15,9 @@ function toggle(value, key) {
   if (key === "all") { next.statuses = []; next.urgent = false; }
   else if (key === "urgent") next.urgent = !value.urgent;
   else { var index = next.statuses.indexOf(key); if (index >= 0) next.statuses.splice(index, 1); else next.statuses.push(key); }
-  // A disabled range is cleared, never silently retained as an invisible predicate.
-  if (!includes(next,"2")) next.done = {from:"",to:""};
-  if (!includes(next,"1")) next.shutdown = {from:"",to:""};
+  // Explicitly deselecting a status clears its range, including the last selected status.
+  if ((key === "2" && value.statuses.indexOf("2") >= 0) || !includes(next,"2")) next.done = {from:"",to:""};
+  if ((key === "1" && value.statuses.indexOf("1") >= 0) || !includes(next,"1")) next.shutdown = {from:"",to:""};
   return next;
 }
 function enable(value, key) {
@@ -30,7 +30,7 @@ function range(value, key, input) {
   var next = value;
   if (key !== "publish" && (normalized.from || normalized.to)) next = enable(value,key);
   next = Object.assign({},next); next[key] = {from:normalized.from,to:normalized.to};
-  return {value:next,swapped:normalized.swapped,autoSelected:all(value) && key !== "publish" && !!(normalized.from || normalized.to)};
+  return {value:next,swapped:normalized.swapped,autoSelected:key !== "publish" && value.statuses.indexOf(key === "done" ? "2" : "1") < 0 && !!(normalized.from || normalized.to)};
 }
 function args(value) {
   var out = {statuses:value.statuses.map(Number),urgent:value.urgent};

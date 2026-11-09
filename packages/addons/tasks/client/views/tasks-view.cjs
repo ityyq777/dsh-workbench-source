@@ -451,6 +451,7 @@ module.exports = function createTasksView(deps) {
         h("div", { className: "wbt-tree-slot" },
           h("button", { className: "wbt-btn", onClick: function () { setDrawer(true); refreshTree(); } }, h(Icon, { name: "tree", size: 13 }), t.tree)
         ),
+        h("span", { className: "wbt-sum", role: "status", "aria-live": "polite" }, t.total + " " + data.total + " " + t.items),
         h(PathCrumbs, { path: currentPath, onPick: pickPath }),
         h("div", { className: "wbt-grow" }),
         h("button", {
@@ -470,7 +471,6 @@ module.exports = function createTasksView(deps) {
       h("div", { className: "wbt-body" },
         filterPanel,
         h("div", { className: "wbt-content" },
-          h("span", { className: "wbt-sum", role: "status" }, t.total + " " + data.total + " " + t.items),
           listBody,
           pageable ? h("div", { className: "wbt-pager" },
             h("button", { className: "wbt-btn ghost", disabled: pageNumber <= 1, onClick: function () { setPageNumber(Math.max(1, pageNumber - 1)); } }, h(Icon, { name: "left", size: 14 })),
