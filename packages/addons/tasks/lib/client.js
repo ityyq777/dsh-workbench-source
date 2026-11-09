@@ -1489,7 +1489,7 @@ var require_today = __commonJS({
       zh: { title: "\u4ECA\u65E5", published: "\u4ECA\u65E5\u53D1\u5E03", done: "\u4ECA\u65E5\u5B8C\u6210", shutdown: "\u4ECA\u65E5\u5173\u95ED", average: "\u5E73\u5747\u96BE\u5EA6", sample: "\u6837\u672C\u6570", noSample: "\u65E0\u6837\u672C", clock: "\u4EE5\u670D\u52A1\u7AEF\u5F53\u524D\u65F6\u95F4\u4E3A\u51C6" },
       en: { title: "Today", published: "Published today", done: "Completed today", shutdown: "Closed today", average: "Avg difficulty", sample: "samples", noSample: "No samples", clock: "Based on the server's current time" }
     };
-    var css = ".wbt-today h3{margin:0;font-size:14px}.wbt-today-date{display:block;margin:4px 0 12px;font-size:12px;color:var(--dsw-alias-label-tertiary,#8f959e)}";
+    var css = ".wbt-today{margin:12px 0}";
     function Today(props) {
       var data = props.today;
       if (!data || typeof data !== "object") return null;
@@ -1509,10 +1509,8 @@ var require_today = __commonJS({
       });
       return h(
         "section",
-        { className: "wbt-today", "aria-label": t.title, title: t.clock },
+        { className: "wbt-today", "aria-label": t.title, "aria-description": data.date, title: t.clock },
         h("style", null, css),
-        h("h3", null, t.title),
-        h("time", { className: "wbt-today-date", dateTime: data.date }, data.date),
         h("div", { className: "wbt-kpis" }, metrics.map(function(metric) {
           return h(
             "div",

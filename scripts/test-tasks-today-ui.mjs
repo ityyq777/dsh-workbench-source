@@ -16,7 +16,11 @@ for (const lang of ['zh', 'en']) {
   assert.ok(html.includes(lang === 'zh' ? '今日关闭0条' : 'Closed today: 0 tasks'));
   assert.ok(html.includes('>3.0<span'));
   assert.ok(html.includes('>±2</span>'));
-  assert.ok(html.includes('dateTime="2000-01-02"'));
+  assert.ok(html.includes('aria-description="2000-01-02"'));
+  assert.ok(html.includes('aria-label="' + (lang === 'zh' ? '今日' : 'Today') + '"'));
+  assert.doesNotMatch(html, /<h3|<time|wbt-today-date|wbt-today h3/);
+  assert.equal((html.match(/class="wbt-kpi"/g) || []).length, 4);
+  assert.doesNotMatch(html.replace(/<style>.*?style>/g, '').replace(/<[^>]+>/g, ''), /2000-01-02/);
   assert.ok(html.includes(lang === 'zh' ? '以服务端当前时间为准' : 'Based on the server'));
   const empty = markup({...snapshot, avgSample: 0, avgDifficultyDone: null}, lang);
   assert.ok(empty.includes('>—<span'));

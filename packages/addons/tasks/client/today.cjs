@@ -1,10 +1,11 @@
 // Today uses the server's local date and snapshot; never derive it from range or browser time.
 var React = require("react"), h = React.createElement;
+// title labels the accessible section; clock retains the server-time tooltip.
 var COPY = {
   zh: { title: "今日", published: "今日发布", done: "今日完成", shutdown: "今日关闭", average: "平均难度", sample: "样本数", noSample: "无样本", clock: "以服务端当前时间为准" },
   en: { title: "Today", published: "Published today", done: "Completed today", shutdown: "Closed today", average: "Avg difficulty", sample: "samples", noSample: "No samples", clock: "Based on the server's current time" },
 };
-var css = ".wbt-today h3{margin:0;font-size:14px}.wbt-today-date{display:block;margin:4px 0 12px;font-size:12px;color:var(--dsw-alias-label-tertiary,#8f959e)}";
+var css = ".wbt-today{margin:12px 0}";
 function Today(props) {
   var data = props.today;
   // An older server has no daily snapshot: omit the card rather than invent zero activity.
@@ -18,9 +19,8 @@ function Today(props) {
   });
   metrics.push({ key: "average", label: t.average, value: average,
     aria: t.average + (lang === "zh" ? "" : ": ") + average + ", " + (sample ? t.sample + " " + sample : t.noSample), sample: sample });
-  return h("section", { className: "wbt-today", "aria-label": t.title, title: t.clock },
-    h("style", null, css), h("h3", null, t.title),
-    h("time", { className: "wbt-today-date", dateTime: data.date }, data.date),
+  return h("section", { className: "wbt-today", "aria-label": t.title, "aria-description": data.date, title: t.clock },
+    h("style", null, css),
     h("div", { className: "wbt-kpis" }, metrics.map(function (metric) {
       return h("div", { key: metric.key, className: "wbt-kpi", role: "group", "aria-label": metric.aria },
         h("div", { className: "wbt-kpi-l", "aria-hidden": true }, metric.label),
