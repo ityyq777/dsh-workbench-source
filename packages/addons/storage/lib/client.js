@@ -76,6 +76,7 @@ var require_styles = __commonJS({
 .wbi-cardhead{display:flex;align-items:baseline;gap:8px;min-width:0;flex-wrap:wrap}.wbi-metazone{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}.wbi-meta{display:flex;gap:2px 10px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .wbi-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px;margin-top:auto;padding-top:6px;min-width:0}.wbi-btn-sm{padding:3px 9px;font-size:12px;min-height:32px;min-width:32px}.wbi-ghost{background:transparent;border-color:transparent}.wbi-ghost.wbi-danger{color:inherit}.wbi-ghost.wbi-danger:hover{color:var(--dsw-alias-state-error-primary,#b91c1c);border-color:currentColor}.wbi-chip{min-height:32px;max-width:100%;overflow-wrap:anywhere;text-align:left}.wbi-stock small{font-weight:400}.wbi-more{font-variant-numeric:tabular-nums}
 .wbi-card:hover,.wbi-card:focus-within{border-color:color-mix(in oklab,var(--accent) 40%,var(--line))}.wbi-card:hover{transform:translateY(-2px)}.wbi-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wbi-selectable{cursor:pointer;position:relative;padding-top:42px}.wbi-root input.wbi-check{position:absolute;left:14px;top:14px;margin:0;padding:0;accent-color:var(--accent)}.wbi-card.wbi-selected{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--surface))}.wbi-selbar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:900;display:flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 34px #0004;border-radius:12px;padding:8px 11px;max-width:94vw;flex-wrap:wrap}.wbi-bulk-actions{display:flex;gap:8px}.wbi-root:has(.wbi-selbar){padding-bottom:84px}.wbi-selbar .wbi-danger{background:color-mix(in srgb,currentColor 9%,var(--surface))}
 @container storage (min-width:1280px){.wbi-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){.wbi-card{transition:none}.wbi-card:hover{transform:none}}
 `;
@@ -120,7 +121,12 @@ var require_ui = __commonJS({
         };
       }, []);
       function key(e) {
-        if (e.key === "Escape" && props.onClose) props.onClose();
+        if (e.key === "Escape") {
+          e.preventDefault();
+          e.stopPropagation();
+          if (props.onClose) props.onClose();
+          return;
+        }
         if (e.key !== "Tab") return;
         var els = ref.current.querySelectorAll(
           "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]"
@@ -207,7 +213,7 @@ var require_stats = __commonJS({
         h(
           "div",
           { className: "wbi-row" },
-          h("h2", null, tr(lang, "\u50A8\u7269\u6982\u89C8", "Storage overview")),
+          h("h2", null, tr(lang, "\u7EDF\u8BA1", "Statistics")),
           h("span", { className: "wbi-grow" }),
           h(
             ui.Button,
@@ -475,12 +481,11 @@ var require_editor = __commonJS({
   }
 });
 
-// packages/addons/storage/client/records.cjs
-var require_records = __commonJS({
-  "packages/addons/storage/client/records.cjs"(exports2, module2) {
+// packages/addons/storage/client/card.cjs
+var require_card = __commonJS({
+  "packages/addons/storage/client/card.cjs"(exports2, module2) {
     var React = require("react");
     var ui = require_ui();
-    var Editor = require_editor().Editor;
     var h = ui.h;
     var tr = ui.tr;
     var Description = require_description().Description;
@@ -494,7 +499,28 @@ var require_records = __commonJS({
       ].filter(Boolean);
       return h(
         "article",
-        { className: "wbi-card" },
+        {
+          className: "wbi-card" + (props.selectionMode ? " wbi-selectable" : "") + (props.checked ? " wbi-selected" : ""),
+          onClickCapture: props.selectionMode ? function(e) {
+            if (e.target.type === "checkbox") return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (!props.busy) props.onCheck(item.id, e.shiftKey);
+          } : void 0
+        },
+        props.selectionMode ? h("input", {
+          type: "checkbox",
+          className: "wbi-check",
+          checked: !!props.checked,
+          disabled: props.busy,
+          "aria-label": tr(lang, "\u9009\u62E9 ", "Select ") + item.name,
+          onClick: function(e) {
+            e.stopPropagation();
+            props.onCheck(item.id, e.shiftKey);
+          },
+          onChange: function() {
+          }
+        }) : null,
         h(
           "div",
           { className: "wbi-cardhead" },
@@ -551,7 +577,7 @@ var require_records = __commonJS({
             gallery[1](!gallery[0]);
           }
         }, gallery[0] ? tr(lang, "\u6536\u8D77", "Collapse") : "+" + (images.length - 1)) : null) : null,
-        h(
+        !props.selectionMode ? h(
           "div",
           { className: "wbi-actions" },
           h(ui.Button, {
@@ -568,12 +594,147 @@ var require_records = __commonJS({
               props.onDelete(item);
             }
           }, tr(lang, "\u5220\u9664", "Delete"))
+        ) : null
+      );
+    }
+    module2.exports = { StorageCard };
+  }
+});
+
+// packages/addons/storage/client/selection.cjs
+var require_selection = __commonJS({
+  "packages/addons/storage/client/selection.cjs"(exports2, module2) {
+    var React = require("react");
+    var ui = require_ui();
+    var h = ui.h;
+    var tr = ui.tr;
+    function useSelection(scope, rows, blocked) {
+      var mode = React.useState(false), state = React.useState({ scope, ids: [] }), anchor = React.useRef(null);
+      var ids = state[0].scope === scope ? state[0].ids : [];
+      function set(next) {
+        state[1]({ scope, ids: next });
+      }
+      function exit() {
+        mode[1](false);
+        set([]);
+        anchor.current = null;
+      }
+      React.useEffect(function() {
+        set([]);
+        anchor.current = null;
+      }, [scope]);
+      React.useEffect(function() {
+        function key(e) {
+          if (e.key === "Escape" && !e.defaultPrevented && !blocked) exit();
+        }
+        document.addEventListener("keydown", key);
+        return function() {
+          document.removeEventListener("keydown", key);
+        };
+      }, [scope, blocked]);
+      return {
+        mode: mode[0],
+        ids,
+        exit,
+        enter: function() {
+          set([]);
+          anchor.current = null;
+          mode[1](true);
+        },
+        all: function() {
+          if (!blocked) set(rows.map(function(r) {
+            return r.id;
+          }));
+        },
+        toggle: function(id, shift) {
+          if (blocked) return;
+          var next = new Set(ids), add = !next.has(id), range = [id];
+          if (shift && anchor.current && anchor.current.scope === scope) {
+            var a = rows.findIndex(function(r) {
+              return r.id === anchor.current.id;
+            });
+            var b = rows.findIndex(function(r) {
+              return r.id === id;
+            });
+            if (a >= 0 && b >= 0) range = rows.slice(Math.min(a, b), Math.max(a, b) + 1).map(function(r) {
+              return r.id;
+            });
+          }
+          range.forEach(function(v) {
+            if (add) next.add(v);
+            else next.delete(v);
+          });
+          anchor.current = { scope, id };
+          set(Array.from(next));
+        }
+      };
+    }
+    function SelectionBar(p) {
+      return h(
+        "div",
+        { className: "wbi-selbar", role: "toolbar", "aria-label": tr(p.lang, "\u6279\u91CF\u64CD\u4F5C", "Bulk actions") },
+        h("span", { role: "status" }, tr(p.lang, "\u5DF2\u9009 ", "Selected ") + p.selection.ids.length),
+        h(ui.Button, { className: "wbi-btn wbi-btn-sm", disabled: p.busy || p.loading, onClick: p.selection.all }, tr(p.lang, "\u5168\u9009\u672C\u9875", "Select page")),
+        h(ui.Button, { className: "wbi-btn wbi-btn-sm", disabled: p.busy, onClick: p.selection.exit }, tr(p.lang, "\u9000\u51FA", "Exit")),
+        h("div", { className: "wbi-bulk-actions" }, p.children)
+      );
+    }
+    function DeleteConfirmation(p) {
+      return h(
+        ui.Modal,
+        { title: tr(p.lang, "\u6279\u91CF\u5220\u9664\u7269\u54C1", "Delete selected items"), onClose: p.busy ? null : p.onClose },
+        h(ui.ErrorBox, { error: p.error }),
+        h("p", null, tr(p.lang, "\u5C06\u8F6F\u5220\u9664\u4EE5\u4E0B\u7269\u54C1\u3002\u5171 ", "Soft-delete these items. Total: ") + p.items.length + tr(p.lang, " \u6761", " items")),
+        h("ul", null, p.items.slice(0, 10).map(function(item) {
+          return h("li", { key: item.id }, item.name);
+        })),
+        p.items.length > 10 ? h("p", null, tr(p.lang, "\u4EC5\u5C55\u793A\u524D 10 \u6761", "Showing first 10 items")) : null,
+        h("p", { className: "wbi-muted" }, tr(p.lang, "\u6807\u7B7E\u53EF\u7528\u65F6\u540C\u65F6\u79FB\u9664\u5173\u8054\uFF0C\u4E0D\u53EF\u7528\u65F6\u4FDD\u7559\u3002", "Tag links are removed when tags are available, otherwise preserved.")),
+        h(
+          "div",
+          { className: "wbi-formfoot" },
+          h(ui.Button, { className: "wbi-btn wbi-btn-sm", disabled: p.busy, onClick: p.onClose }, tr(p.lang, "\u53D6\u6D88", "Cancel")),
+          h(ui.Button, { className: "wbi-btn wbi-btn-sm wbi-danger", disabled: p.busy, onClick: p.onConfirm }, p.busy ? tr(p.lang, "\u5220\u9664\u4E2D\u2026", "Deleting\u2026") : tr(p.lang, "\u786E\u8BA4\u5220\u9664", "Confirm delete"))
         )
       );
     }
+    module2.exports = { useSelection, SelectionBar, DeleteConfirmation };
+  }
+});
+
+// packages/addons/storage/client/records.cjs
+var require_records = __commonJS({
+  "packages/addons/storage/client/records.cjs"(exports2, module2) {
+    var React = require("react");
+    var ui = require_ui();
+    var Editor = require_editor().Editor;
+    var h = ui.h;
+    var tr = ui.tr;
+    var StorageCard = require_card().StorageCard;
+    var selection = require_selection();
     function Records(props) {
       var api = props.api, lang = props.lang;
-      var items = React.useState(null), error = React.useState(null), loading = React.useState(true), query = React.useState(""), text = React.useState(""), page = React.useState(1), size = React.useState(12), sort = React.useState("update_time"), order = React.useState("desc"), tick = React.useState(0), editing = React.useState(null), deleting = React.useState(null), preview = React.useState(null), busy = React.useState(false), caps = React.useState(false), ready = React.useState(false), confirmDelete = React.useState(true), tag = React.useState(null);
+      var items = React.useState(null), error = React.useState(null), loading = React.useState(true), query = React.useState(""), text = React.useState(""), page = React.useState(1), size = React.useState(12), sort = React.useState("update_time"), order = React.useState("desc"), tick = React.useState(0), editing = React.useState(null), deleting = React.useState(null), preview = React.useState(null), busy = React.useState(false), caps = React.useState(false), ready = React.useState(false), confirmDelete = React.useState(true), tag = React.useState(null), bulk = React.useState(null), bulkError = React.useState(null), notice = React.useState(""), pending = React.useRef(false);
+      var scope = JSON.stringify([query[0], text[0], page[0], size[0], sort[0], order[0], tag[0] && tag[0].id, tick[0]]);
+      var rows = items[0] && items[0].scope === scope ? items[0].records : [];
+      var selected = selection.useSelection(scope, rows, busy[0] || !!bulk[0]);
+      function deleteSelected() {
+        if (pending.current || !bulk[0] || !bulk[0].length) return;
+        pending.current = true;
+        busy[1](true);
+        bulkError[1](null);
+        ui.call(api, "storage.bulkDelete", { ids: bulk[0].map(function(r) {
+          return r.id;
+        }) }).then(function(r) {
+          bulk[1](null);
+          selected.exit();
+          notice[1](tr(lang, "\u5DF2\u5220\u9664 ", "Deleted ") + r.deleted + tr(lang, " \u6761\uFF0C\u8DF3\u8FC7 ", " items; skipped ") + r.skipped);
+          refresh();
+        }).catch(bulkError[1]).finally(function() {
+          pending.current = false;
+          busy[1](false);
+        });
+      }
       React.useEffect(
         function() {
           var active = true;
@@ -610,7 +771,7 @@ var require_records = __commonJS({
       );
       React.useEffect(
         function() {
-          if (!ready[0]) return;
+          if (!ready[0] || query[0] !== text[0]) return;
           var active = true;
           loading[1](true);
           error[1](null);
@@ -622,7 +783,7 @@ var require_records = __commonJS({
               page[1](Math.max(1, r.pages || 1));
               return;
             }
-            items[1](r);
+            items[1](Object.assign({}, r, { scope }));
           }).catch(function(e) {
             if (active) error[1](e);
           }).finally(function() {
@@ -632,7 +793,7 @@ var require_records = __commonJS({
             active = false;
           };
         },
-        [api, ready[0], text[0], page[0], size[0], sort[0], order[0], tick[0], tag[0]]
+        [api, ready[0], scope]
       );
       function refresh() {
         tick[1](function(n) {
@@ -661,10 +822,16 @@ var require_records = __commonJS({
           h("h2", null, tr(lang, "\u50A8\u7269", "Storage")),
           h("span", { className: "wbi-muted" }, tr(lang, "\u8BB0\u5F55\u7269\u54C1\u3001\u5E93\u5B58\u4E0E\u5B58\u653E\u5907\u6CE8", "Track items, stock and notes")),
           h("span", { className: "wbi-grow" }),
+          h(ui.Button, {
+            className: "wbi-btn wbi-btn-sm",
+            disabled: busy[0] || !!bulk[0],
+            onClick: selected.mode ? selected.exit : selected.enter
+          }, selected.mode ? tr(lang, "\u53D6\u6D88\u9009\u62E9", "Cancel selection") : tr(lang, "\u9009\u62E9", "Select")),
           h(
             ui.Button,
             {
               className: "wbi-btn wbi-primary",
+              disabled: selected.mode || busy[0],
               onClick: function() {
                 editing[1]({});
               }
@@ -731,6 +898,12 @@ var require_records = __commonJS({
             tr(lang, "\u6E05\u9664\u6807\u7B7E\u7B5B\u9009", "Clear tag filter")
           )
         ) : null,
+        selected.mode ? h("p", { className: "wbi-muted" }, tr(
+          lang,
+          "\u4EC5\u9009\u62E9\u5F53\u524D\u9875\uFF1B\u641C\u7D22\u3001\u7B5B\u9009\u3001\u6392\u5E8F\u3001\u7FFB\u9875\u6216\u5237\u65B0\u4F1A\u6E05\u7A7A\u9009\u62E9\u3002Shift+\u70B9\u51FB\u8FDE\u9009\uFF0CEsc\u9000\u51FA\u3002",
+          "Current page only. Search, filters, sorting, paging or refresh clear selection. Shift-click selects a range; Esc exits."
+        )) : null,
+        notice[0] ? h("p", { role: "status" }, notice[0]) : null,
         h(ui.ErrorBox, { error: error[0] }),
         loading[0] ? h("p", { role: "status", className: "wbi-muted" }, tr(lang, "\u8BFB\u53D6\u4E2D\u2026", "Loading\u2026")) : null,
         !loading[0] && !error[0] && data && !data.records.length ? h(
@@ -741,14 +914,17 @@ var require_records = __commonJS({
         h(
           "div",
           { className: "wbi-grid", "aria-busy": loading[0] },
-          !loading[0] && !error[0] && data ? data.records.map(function(item) {
+          !loading[0] && !error[0] && data ? rows.map(function(item) {
             return h(StorageCard, {
               key: item.id,
               item,
               lang,
               caps: caps[0],
-              busy: busy[0],
+              busy: busy[0] || !!bulk[0],
               date,
+              selectionMode: selected.mode,
+              checked: selected.ids.includes(item.id),
+              onCheck: selected.toggle,
               onTag: function(t) {
                 tag[1](t);
                 page[1](1);
@@ -807,6 +983,32 @@ var require_records = __commonJS({
             })
           )
         ) : null,
+        selected.mode ? h(
+          selection.SelectionBar,
+          { selection: selected, lang, busy: busy[0] || !!bulk[0], loading: loading[0] },
+          h(ui.Button, {
+            className: "wbi-btn wbi-btn-sm wbi-danger",
+            disabled: !selected.ids.length || loading[0] || busy[0] || !!bulk[0],
+            onClick: function() {
+              bulkError[1](null);
+              bulk[1](rows.filter(function(r) {
+                return selected.ids.includes(r.id);
+              }).map(function(r) {
+                return { id: r.id, name: r.name };
+              }));
+            }
+          }, tr(lang, "\u5220\u9664", "Delete"))
+        ) : null,
+        bulk[0] ? h(selection.DeleteConfirmation, {
+          items: bulk[0],
+          lang,
+          busy: busy[0],
+          error: bulkError[0],
+          onClose: function() {
+            bulk[1](null);
+          },
+          onConfirm: deleteSelected
+        }) : null,
         editing[0] ? h(Editor, {
           api,
           lang,
@@ -2570,9 +2772,9 @@ if (host) {
   }
   host.registerAddon({
     id: "wb-addon-storage",
-    version: "1.1.0",
+    version: "1.2.0",
     views: [
-      { id: "stats", title: { zh: "\u50A8\u7269\u6982\u89C8", en: "Storage overview" }, component: require_stats().Stats },
+      { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Statistics" }, component: require_stats().Stats },
       { id: "storage", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: require_records().Records },
       { id: "config", title: { zh: "\u914D\u7F6E", en: "Config" }, component: require_config().ConfigView },
       { id: "data", title: { zh: "\u6570\u636E", en: "Data" }, component: require_data().DataView }

@@ -3,43 +3,8 @@ var React = require("react"),
   Editor = require("./editor.cjs").Editor;
 var h = ui.h,
   tr = ui.tr;
-var Description = require("../../lib/description.cjs").Description;
-function StorageCard(props) {
-  var item = props.item, lang = props.lang, gallery = React.useState(false);
-  var images = (item.imgList || []).filter(ui.safeImage), tags = item.tags || [];
-  var shown = gallery[0] ? images : images.slice(0, 1);
-  var meta = [item.brand && tr(lang, "品牌：", "Brand: ") + item.brand,
-    item.unit && tr(lang, "单位：", "Unit: ") + item.unit].filter(Boolean);
-  return h("article", { className: "wbi-card" },
-    h("div", { className: "wbi-cardhead" }, h("h3", null, item.name),
-      h("span", { className: "wbi-stock" }, item.stock == null || item.stock === "" ? "—" : item.stock,
-        item.unit ? h("small", { className: "wbi-muted" }, " " + item.unit) : null)),
-    tags.length ? h("div", { className: "wbi-tags" }, tags.map(function (t) {
-      return h(ui.Button, { key: t.id, className: "wbi-btn wbi-chip", disabled: !props.caps,
-        title: tr(lang, "按此标签筛选", "Filter by this tag"),
-        onClick: function () { props.onTag(t); } }, t.name);
-    })) : null,
-    meta.length || item.createTime || item.updateTime ? h("div", { className: "wbi-metazone" },
-      meta.length ? h("div", { className: "wbi-muted" }, meta.join(" · ")) : null,
-      item.createTime || item.updateTime ? h("div", { className: "wbi-meta" },
-        item.createTime ? h("span", null, tr(lang, "创建 ", "Created ") + props.date(item.createTime)) : null,
-        item.updateTime ? h("span", null, tr(lang, "更新 ", "Updated ") + props.date(item.updateTime)) : null) : null) : null,
-    h(Description, { text: item.remark, lang: lang }),
-    images.length ? h("div", { className: "wbi-images" }, shown.map(function (url, i) {
-      return h("button", { key: i, type: "button", className: "wbi-image",
-        "aria-label": tr(lang, "预览图片 ", "Preview image ") + (i + 1),
-        onClick: function () { props.onPreview({ url: url, name: item.name }); } },
-        h("img", { src: url, alt: item.name + " " + (i + 1), loading: "lazy", referrerPolicy: "no-referrer" }));
-    }), images.length > 1 ? h(ui.Button, { className: "wbi-btn wbi-btn-sm wbi-ghost wbi-more",
-      "aria-expanded": gallery[0], "aria-label": tr(lang, "展开或收起物品图片", "Expand or collapse item images"),
-      onClick: function () { gallery[1](!gallery[0]); }
-    }, gallery[0] ? tr(lang, "收起", "Collapse") : "+" + (images.length - 1)) : null) : null,
-    h("div", { className: "wbi-actions" },
-      h(ui.Button, { className: "wbi-btn wbi-btn-sm wbi-ghost", disabled: props.busy,
-        onClick: function () { props.onEdit(item); } }, tr(lang, "编辑", "Edit")),
-      h(ui.Button, { className: "wbi-btn wbi-btn-sm wbi-ghost wbi-danger", disabled: props.busy,
-        onClick: function () { props.onDelete(item); } }, tr(lang, "删除", "Delete"))));
-}
+var StorageCard = require("./card.cjs").StorageCard;
+var selection = require("./selection.cjs");
 function Records(props) {
   var api = props.api,
     lang = props.lang;
@@ -60,7 +25,22 @@ function Records(props) {
     caps = React.useState(false),
     ready = React.useState(false),
     confirmDelete = React.useState(true),
-    tag = React.useState(null);
+    tag = React.useState(null),
+    bulk = React.useState(null), bulkError = React.useState(null), notice = React.useState(""),
+    pending = React.useRef(false);
+  var scope = JSON.stringify([query[0], text[0], page[0], size[0], sort[0], order[0], tag[0] && tag[0].id, tick[0]]);
+  var rows = items[0] && items[0].scope === scope ? items[0].records : [];
+  var selected = selection.useSelection(scope, rows, busy[0] || !!bulk[0]);
+  function deleteSelected() {
+    if (pending.current || !bulk[0] || !bulk[0].length) return;
+    pending.current = true; busy[1](true); bulkError[1](null);
+    ui.call(api, "storage.bulkDelete", { ids: bulk[0].map(function (r) { return r.id; }) })
+      .then(function (r) {
+        bulk[1](null); selected.exit();
+        notice[1](tr(lang,"已删除 ","Deleted ") + r.deleted + tr(lang," 条，跳过 "," items; skipped ") + r.skipped);
+        refresh();
+      }).catch(bulkError[1]).finally(function () { pending.current = false; busy[1](false); });
+  }
   React.useEffect(
     function () {
       var active = true;
@@ -100,7 +80,7 @@ function Records(props) {
   );
   React.useEffect(
     function () {
-      if (!ready[0]) return;
+      if (!ready[0] || query[0] !== text[0]) return;
       var active = true;
       loading[1](true);
       error[1](null);
@@ -113,7 +93,7 @@ function Records(props) {
             page[1](Math.max(1, r.pages || 1));
             return;
           }
-          items[1](r);
+          items[1](Object.assign({}, r, { scope: scope }));
         })
         .catch(function (e) {
           if (active) error[1](e);
@@ -125,7 +105,7 @@ function Records(props) {
         active = false;
       };
     },
-    [api, ready[0], text[0], page[0], size[0], sort[0], order[0], tick[0], tag[0]],
+    [api, ready[0], scope],
   );
   function refresh() {
     tick[1](function (n) {
@@ -158,10 +138,13 @@ function Records(props) {
       h("h2", null, tr(lang, "储物", "Storage")),
       h("span", { className: "wbi-muted" }, tr(lang, "记录物品、库存与存放备注", "Track items, stock and notes")),
       h("span", { className: "wbi-grow" }),
+      h(ui.Button, { className: "wbi-btn wbi-btn-sm", disabled: busy[0] || !!bulk[0],
+        onClick: selected.mode ? selected.exit : selected.enter }, selected.mode ? tr(lang,"取消选择","Cancel selection") : tr(lang,"选择","Select")),
       h(
         ui.Button,
         {
           className: "wbi-btn wbi-primary",
+          disabled: selected.mode || busy[0],
           onClick: function () {
             editing[1]({});
           },
@@ -230,6 +213,10 @@ function Records(props) {
           ),
         )
       : null,
+    selected.mode ? h("p", { className: "wbi-muted" }, tr(lang,
+      "仅选择当前页；搜索、筛选、排序、翻页或刷新会清空选择。Shift+点击连选，Esc退出。",
+      "Current page only. Search, filters, sorting, paging or refresh clear selection. Shift-click selects a range; Esc exits.")) : null,
+    notice[0] ? h("p", { role: "status" }, notice[0]) : null,
     h(ui.ErrorBox, { error: error[0] }),
     loading[0] ? h("p", { role: "status", className: "wbi-muted" }, tr(lang, "读取中…", "Loading…")) : null,
     !loading[0] && !error[0] && data && !data.records.length
@@ -245,9 +232,10 @@ function Records(props) {
       "div",
       { className: "wbi-grid", "aria-busy": loading[0] },
       !loading[0] && !error[0] && data
-        ? data.records.map(function (item) {
+        ? rows.map(function (item) {
             return h(StorageCard, {
-              key: item.id, item: item, lang: lang, caps: caps[0], busy: busy[0], date: date,
+              key: item.id, item: item, lang: lang, caps: caps[0], busy: busy[0] || !!bulk[0], date: date,
+              selectionMode: selected.mode, checked: selected.ids.includes(item.id), onCheck: selected.toggle,
               onTag: function (t) { tag[1](t); page[1](1); },
               onPreview: preview[1], onEdit: editing[1],
               onDelete: function (v) { if (confirmDelete[0]) deleting[1](v); else remove(v); }
@@ -304,6 +292,14 @@ function Records(props) {
           ),
         )
       : null,
+    selected.mode ? h(selection.SelectionBar, { selection: selected, lang: lang, busy: busy[0] || !!bulk[0], loading: loading[0] },
+      h(ui.Button, { className: "wbi-btn wbi-btn-sm wbi-danger", disabled: !selected.ids.length || loading[0] || busy[0] || !!bulk[0],
+        onClick: function () {
+          bulkError[1](null);
+          bulk[1](rows.filter(function (r) { return selected.ids.includes(r.id); }).map(function(r) { return { id: r.id, name: r.name }; }));
+        } }, tr(lang,"删除","Delete"))) : null,
+    bulk[0] ? h(selection.DeleteConfirmation, { items: bulk[0], lang: lang, busy: busy[0], error: bulkError[0],
+      onClose: function () { bulk[1](null); }, onConfirm: deleteSelected }) : null,
     editing[0]
       ? h(Editor, {
           api: api,

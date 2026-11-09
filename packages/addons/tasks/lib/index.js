@@ -10,6 +10,7 @@ import { exportTasksData, importTasksData } from "./backup.js";
 import { taskSync } from "./sync.js";
 import { registerTaskActions } from "./tasks.js";
 import { registerTreeActions } from "./tree.js";
+import { registerOverviewAction } from "./overview.js";
 import { registerConfigActions } from "./config.js";
 import { registerDataActions } from "./data.js";
 
@@ -28,6 +29,7 @@ export function setup(api) {
   ensureSchema(api.db, api.log);
   registerTaskActions(api);
   registerTreeActions(api);
+  registerOverviewAction(api);
   registerConfigActions(api);
   registerDataActions(api);
   api.log("tasks domain ready", api.addon.version);
@@ -42,7 +44,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/配置/数据四个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "2.10.11",
+        version: "2.11.0",
         tables: ["task", "task_dep", "task_node"],
         sync: taskSync,
         views: [
@@ -71,7 +73,7 @@ export function apply(ctx) {
               keyArgs: ["title", "description", "priority", "targetDate", "tags", "tagIds", "dedupeKey"],
               dedupe: "同 dedupeKey 的未删除任务会被复用；自动记录建议使用稳定键，如 dsh-session:<id>。",
               relations: [
-                { kind: "taskNode", via: "tableId", description: "需要归组时先查任务表；缺省使用默认任务表。" },
+                { kind: "taskNode", via: "tableId", description: "先调用 taskNodes.overview 查看全文描述、类型、路径与子树计数，再用 tasks.create 的 tableId 选表；group/root_group 只能装子节点，table 才能直接放任务。缺省使用默认任务表。" },
                 { kind: "tag", via: "tags / tagIds", description: "用标签做主题归类（工作/生活/学习/开发 已是标签）；传标签名会自动建。" },
               ],
               examples: [
@@ -114,6 +116,7 @@ export function apply(ctx) {
           ],
           notFor: ["不要用它保存聊天记录、日志或临时笔记"],
           notes: [
+            "先 taskNodes.overview 再 tasks.create，不要凭感觉选表；overview 默认描述全文，maxDescriptionLength 可选，count 为未删除任务的子树总数（所有状态）。",
             "date 字段均为 YYYY-MM-DD；source=1/2 时分别需要 timelineKey / restartKey。",
             "状态机：0 进行中 → 1 已关闭（补 shutdownDate）/ 2 已完成（补 doneDate）；1 或 2 可回到 0 继续办理（优先级自动回落到 1）。3 已重启不在创建时使用：重启老任务时先把它置 3，再建 source=2 的新任务。",
             "restart_key = 重启链的链首任务 id：普通任务等于自身 id，source=2 的新任务继承原任务；同一 restart_key 的任务按 publishDate 组成一条重启链，用 tasks.restart 读取。",

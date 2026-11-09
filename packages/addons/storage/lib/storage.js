@@ -1,6 +1,7 @@
 import { now, newId, tx, logChange, tagsOn, idsOf, fieldsOf, rowStorage, pageInfo, sizeOf } from "./db.js";
 import { validateTags, replaceTags, searchTags, tagsByIds } from "./tags.js";
 import { configValues } from "./config.js";
+import { deleteRow, bulkDelete } from "./deletion.js";
 const SORT = { name: "name", brand: "brand", stock: "stock", create_time: "created_at", update_time: "updated_at" };
 function requireId(id) {
   if (id === undefined || id === null || !String(id).trim()) throw new Error("id 必填");
@@ -72,13 +73,8 @@ function remove(api, args, origin) {
   const id = requireId(args.id),
     db = api.db;
   const result = tx(db, () => {
-    if (!db.prepare("SELECT 1 FROM storage WHERE id=? AND deleted_at IS NULL").get(id))
-      return { ok: true, deleted: false, removedTagMappings: 0 };
-    const ts = now();
-    db.prepare("UPDATE storage SET deleted_at=?,updated_at=?,rev=rev+1 WHERE id=?").run(ts, ts, id);
-    const removedTagMappings = replaceTags(api, id, [], origin, ts);
-    logChange(db, "storage", id, "delete", origin, ts);
-    return { ok: true, deleted: true, removedTagMappings };
+    const row = deleteRow(api, id, origin, now());
+    return { ok: true, deleted: !!row, removedTagMappings: row ? row.removedTagMappings : 0 };
   });
   if (result.deleted) api.emit("storage-changed", { id, op: "delete" });
   return result;
@@ -160,6 +156,13 @@ export function registerStorageActions(api) {
     { id: idSchema },
     ["id"],
     (args, ctx) => remove(api, args, ctx.origin),
+  );
+  action(
+    "storage.bulkDelete",
+    "单事务批量软删物品及标签可用时的映射，逐行写同步墓碑；失败整体回滚。去重后不存在或已删计 skipped；返回 {deleted,skipped,ids}，ids 为实际删除的 id。标签不可用保留映射",
+    { ids: { type: "array", maxItems: 500, items: idSchema, description: "必填，最多500项；非空字符串或有限数值 id，转字符串并去首尾空格后去重；空数组为无操作" } },
+    ["ids"],
+    (args, ctx) => bulkDelete(api, args, ctx.origin),
   );
   action("storage.stats", "物品数、标签覆盖、图片覆盖、品牌数、单位数与最近更新", {}, [], () => stats(api));
   action(

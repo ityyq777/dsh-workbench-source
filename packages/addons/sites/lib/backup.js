@@ -51,6 +51,7 @@ function nodeValues(row) {
   return [
     id,
     asText(row.name, "未命名"),
+    asText(row.description),
     asText(row.parent_id, "0"),
     asText(row.path),
     asInt(row.sort, 0),
@@ -140,8 +141,8 @@ export function importSitesData(api, raw, options) {
       "WHERE ? = 1 OR excluded.updated_at > site.updated_at",
   );
   const nodeUpsert = db.prepare(
-    "INSERT INTO site_node(id,name,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?,?,?,?) " +
-      "ON CONFLICT(id) DO UPDATE SET name=excluded.name,parent_id=excluded.parent_id,path=excluded.path,sort=excluded.sort,depth=excluded.depth,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
+    "INSERT INTO site_node(id,name,description,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?,?,?,?,?) " +
+      "ON CONFLICT(id) DO UPDATE SET name=excluded.name,description=excluded.description,parent_id=excluded.parent_id,path=excluded.path,sort=excluded.sort,depth=excluded.depth,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
       "WHERE ? = 1 OR excluded.updated_at > site_node.updated_at",
   );
   const nodeMappingUpsert = db.prepare(
@@ -198,7 +199,7 @@ export function importSitesData(api, raw, options) {
   }
   for (const row of data.nodes) {
     try {
-      apply(nodeUpsert, NODE_TABLE, nodeValues(row), 7, row);
+      apply(nodeUpsert, NODE_TABLE, nodeValues(row), 8, Object.assign({}, row, { description: asText(row.description) }));
     } catch (e) {
       failed += 1;
       if (errors.length < 5) errors.push(String((e && e.message) || e));

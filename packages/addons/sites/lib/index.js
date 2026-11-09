@@ -7,6 +7,7 @@ import { bindClock, ensureSchema } from "./db.js";
 import { exportSitesData, importSitesData } from "./backup.js";
 import { siteSync } from "./sync.js";
 import { registerSiteTreeActions } from "./tree.js";
+import { registerOverviewAction } from "./overview.js";
 import { registerSiteActions } from "./sites.js";
 import { registerAccountActions } from "./accounts.js";
 import { registerConfigActions } from "./config.js";
@@ -25,6 +26,7 @@ export function setup(api) {
   if (typeof api.now === "function") bindClock(api.now);
   ensureSchema(api.db, api.log);
   registerSiteTreeActions(api);
+  registerOverviewAction(api);
   registerSiteActions(api);
   registerAccountActions(api);
   registerConfigActions(api);
@@ -41,7 +43,7 @@ export function apply(ctx) {
         id: "wb-addon-sites",
         title: "站点",
         description: "站点收藏：目录树、链接与标签（标签需安装标签插件）；含统计/记录/配置/数据四个视图",
-        version: "1.8.3",
+        version: "1.9.0",
         tables: ["site", "site_node", "site_node_mapping", "tag_mapping", "site_account", "site_account_external"],
         sync: siteSync,
         views: [
@@ -73,7 +75,7 @@ export function apply(ctx) {
               dedupe: "没有 dedupeKey；先用 sites.list 按标题/URL 查重，再决定创建。",
               relations: [
                 { kind: "tag", via: "tagIds / sites.update", description: "用标签做主题归类；标签需先存在。" },
-                { kind: "siteNode", via: "dirIds", description: "站点必须归入至少一个目录；先查目录树拿 id。" },
+                { kind: "siteNode", via: "dirIds", description: "先 siteNodes.overview 再 sites.create 选 dirIds，不要凭感觉选目录；各层 folder 均可直接放站点，count 为子树去重站点数。overview 默认返回目录全文描述，可用 maxDescriptionLength 精简。" },
               ],
               examples: [
                 {

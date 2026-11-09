@@ -33,6 +33,7 @@ export const NODE_DDL = [
   "CREATE TABLE IF NOT EXISTS site_node (" +
     "id TEXT PRIMARY KEY," +
     "name TEXT NOT NULL," +
+    "description TEXT NOT NULL DEFAULT ''," +
     "parent_id TEXT NOT NULL DEFAULT '0'," +
     "path TEXT NOT NULL," +
     "sort INTEGER NOT NULL DEFAULT 0," +
@@ -249,6 +250,7 @@ export function rowNode(row, children) {
   return {
     id: String(row.id),
     name: String(row.name || ""),
+    description: row.description == null ? "" : String(row.description),
     parent: String(row.parent_id || "0"),
     parentId: String(row.parent_id || "0"),
     path: String(row.path || ""),
@@ -283,11 +285,12 @@ export function subtreeIds(db, node) {
 
 export function insertNode(db, row) {
   db.prepare(
-    "INSERT INTO site_node(id,name,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev) " +
-      "VALUES(?,?,?,?,?,?,?,?,?,?)",
+    "INSERT INTO site_node(id,name,description,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev) " +
+      "VALUES(?,?,?,?,?,?,?,?,?,?,?)",
   ).run(
     String(row.id),
     String(row.name),
+    row.description == null ? "" : String(row.description),
     String(row.parent_id || "0"),
     String(row.path),
     Number(row.sort || 0),
@@ -318,6 +321,10 @@ export function ensureSchema(db, log) {
   }
   for (const sql of SITE_DDL) db.exec(sql);
   for (const sql of NODE_DDL) db.exec(sql);
+  // ALTER preserves every existing live/deleted row, timestamps, revisions and extra columns.
+  if (!columnsOf(db, NODE_TABLE).includes("description")) {
+    db.exec("ALTER TABLE site_node ADD COLUMN description TEXT NOT NULL DEFAULT ''");
+  }
   for (const sql of NODE_MAPPING_DDL) db.exec(sql);
   for (const sql of ACCOUNT_DDL) db.exec(sql);
   for (const sql of EXTERNAL_DDL) db.exec(sql);

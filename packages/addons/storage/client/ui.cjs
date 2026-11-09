@@ -35,7 +35,13 @@ function Modal(props) {
     };
   }, []);
   function key(e) {
-    if (e.key === "Escape" && props.onClose) props.onClose();
+    if (e.key === "Escape") {
+      // Consume before closing: React may flush and replace document listeners immediately.
+      e.preventDefault();
+      e.stopPropagation();
+      if (props.onClose) props.onClose();
+      return;
+    }
     if (e.key !== "Tab") return;
     var els = ref.current.querySelectorAll(
       "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]",

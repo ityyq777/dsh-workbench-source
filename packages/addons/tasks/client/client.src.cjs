@@ -284,7 +284,6 @@
       setEditingReview(null);
     }
 
-    var isDone = String(task.status) === "2";
     var countdown = String(task.status) === "0" ? daysBetween(task.targetDate) : null;
     var cdTarget = String(task.status) === "0" && task.targetDate ? new Date(String(task.targetDate) + "T23:59:59").getTime() : NaN;
     var tagNodes = myTags.map(function (tag) {
@@ -365,7 +364,7 @@
           },
           onBlur: saveReview,
         })
-      : (task.review ? h("div", { className: "wbt-review", title: isDone ? "双击编辑" + t.review : "", onDoubleClick: isDone ? beginReview : null },
+      : (task.review ? h("div", { className: "wbt-review", title: t.editReview, onDoubleClick: beginReview },
           h("span", { className: "wbt-review-label" }, t.review), task.review) : null);
 
 
@@ -665,7 +664,7 @@
     var t = props.t;
     var s = React.useState(1);
     var value = s[0], setValue = s[1];
-    var rs = React.useState("");
+    var rs = React.useState(String(props.task.review || ""));
     var review = rs[0], setReview = rs[1];
     var busy = React.useState(false);
     var isBusy = busy[0], setBusy = busy[1];
@@ -698,97 +697,7 @@
     );
   }
 
-  // 任务编辑弹窗：按状态收敛可编辑字段。
-  // 未完成（0/1/3）：标题、描述、优先级；感受与难度只在完成时填写。
-  // 已完成（2）：标题、描述、感受、难度；优先级完成即清零，不再可改。
-  function EditModal(props) {
-    var t = props.t;
-    var task = props.task;
-    var done = String(task.status) === "2";
-    var canPriority = !done;
-    var fs = React.useState({
-      title: String(task.title || ""),
-      description: String(task.description || ""),
-      review: String(task.review || ""),
-      priority: String(task.priority === null || task.priority === undefined ? 0 : task.priority),
-      difficulty: Number(task.difficulty || 0.5),
-      targetDate: String(task.targetDate || ""),
-    });
-    var form = fs[0], setForm = fs[1];
-    var bs = React.useState(false);
-    var isBusy = bs[0], setBusy = bs[1];
-    var es = React.useState("");
-    var err = es[0], setErr = es[1];
-    function set(k, v) {
-      setForm(function (prev) { var next = Object.assign({}, prev); next[k] = v; return next; });
-    }
-    var titleOk = String(form.title).trim().length > 0;
-    function submit() {
-      if (!titleOk) { setErr(t.needTitle); return; }
-      var patch = { id: task.id, title: String(form.title).trim(), description: String(form.description || "") };
-      if (canPriority) {
-        var p = Math.round(Number(form.priority));
-        if (!isFinite(p)) p = 1;
-        if (!Number.isFinite(p)) p = 0;
-        patch.priority = Math.max(1, Math.min(10, p));
-        // 计划完成日期只处理非空值；留空表示不改动（后端空串会回落到原值）。
-        if (String(form.targetDate || "").trim()) patch.targetDate = String(form.targetDate).trim();
-      } else {
-        patch.review = String(form.review || "");
-        patch.difficulty = Math.max(0.5, Math.min(5, Number(form.difficulty) || 0.5));
-      }
-      setBusy(true);
-      setErr("");
-      props.api.call("tasks.update", patch).then(function (r) {
-        setBusy(false);
-        if (r && r.ok) props.onSaved();
-        else setErr((r && r.error) || "update failed");
-      }).catch(function (e) { setBusy(false); setErr(String((e && e.message) || e)); });
-    }
-    var st = statusInfo(task.status);
-    return h("div", { className: "wbt-modal-mask", onMouseDown: function (e) { if (e.target === e.currentTarget) props.onClose(); } },
-      h("div", { className: "wbt-modal" },
-        h("div", { className: "wbt-modal-head" },
-          h("h3", null, t.editTitle),
-          h("span", { className: "wbt-badge " + st.cls }, props.lang === "en" ? st.en : st.zh),
-          h("button", { className: "wbt-icon", onClick: props.onClose }, "×")
-        ),
-        h("div", { className: "wbt-mhint" }, done ? t.editHintDone : t.editHintOpen),
-        h("label", { className: "wbt-field" },
-          h("span", null, t.titleField + " *"),
-          h("input", { className: "wbt-input", value: form.title, autoFocus: true, onChange: function (e) { set("title", e.target.value); } })
-        ),
-        h("label", { className: "wbt-field" },
-          h("span", null, t.desc),
-          h("textarea", { className: "wbt-textarea", rows: 4, value: form.description, onChange: function (e) { set("description", e.target.value); } })
-        ),
-        canPriority ? h("label", { className: "wbt-field" },
-          h("span", null, t.targetDate),
-          h("input", { className: "wbt-input", type: "date", value: form.targetDate, onChange: function (e) { set("targetDate", e.target.value); } })
-        ) : null,
-        canPriority ? h("label", { className: "wbt-field" },
-          h("span", null, t.priority + "（1–10）"),
-          h("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, value: form.priority, onChange: function (e) { set("priority", e.target.value); } })
-        ) : h("label", { className: "wbt-field" },
-          h("span", null, t.review + " · " + t.reviewHint),
-          h("textarea", { className: "wbt-textarea", rows: 3, placeholder: t.reviewPlaceholder, value: form.review, onChange: function (e) { set("review", e.target.value); } })
-        ),
-        done ? h("div", { className: "wbt-field" },
-          h("span", null, t.difficulty + "（0–5）"),
-          h("div", { className: "wbt-row" },
-            h("span", { className: "wbt-stars" }, stars(form.difficulty)),
-            h("input", { type: "range", min: 0.5, max: 5, step: 0.5, value: form.difficulty, style: { flex: 1 }, onChange: function (e) { set("difficulty", Number(e.target.value)); } }),
-            h("b", null, Number(form.difficulty).toFixed(1))
-          )
-        ) : null,
-        err ? h("div", { className: "wbt-err" }, err) : null,
-        h("div", { className: "wbt-modal-foot" },
-          h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
-          h("button", { className: "wbt-btn primary", disabled: isBusy || !titleOk, onClick: submit }, isBusy ? "…" : t.save)
-        )
-      )
-    );
-  }
+  var EditModal = require("./edit-modal.cjs")(React, statusInfo, stars);
 
   function BatchModal(props) {
     var t = props.t;
@@ -1460,7 +1369,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.10.11",
+    version: "2.11.0",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },

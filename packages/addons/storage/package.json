@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbench-storage",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "description": "个人工作台储物插件",
@@ -10,7 +10,7 @@
       "id": "wb-addon-storage",
       "title": "储物",
       "description": "储物：统计/记录/配置/数据四个视图",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "minShell": "0.5.6",
       "tables": [
         "storage"
@@ -28,6 +28,7 @@
         "storage.create",
         "storage.update",
         "storage.delete",
+        "storage.bulkDelete",
         "storage.stats",
         "storageTags.search",
         "storageTags.byIds",

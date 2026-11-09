@@ -417,10 +417,13 @@ export function registerSiteActions(api) {
   const tagsAvailable = function () { return tagsOn(api, db); };
 
   action("sites.capabilities", {
-    description: "站点子插件能力：标签是否可用（依赖标签子插件已安装且启用）",
+    description: "站点子插件能力：tags 表示标签是否可用；overviewAction 与 placementGuidance 引导先看目录概览再创建站点。",
     input: { type: "object", properties: {} },
-    execute: function () { return { tags: tagsAvailable() }; },
-    render: function (r) { return r && r.tags ? "标签能力：可用" : "标签能力：不可用（标签子插件未安装）"; },
+    execute: function () { return {
+      tags: tagsAvailable(), overviewAction: "siteNodes.overview",
+      placementGuidance: "先 siteNodes.overview 再 sites.create 选 dirIds，不要凭感觉选目录；各层 folder 均可放站点，count 是子树去重数，description 默认返回目录全文描述。",
+    }; },
+    render: function (r) { return (r && r.tags ? "标签能力：可用" : "标签能力：不可用（标签子插件未安装）") + "\n概览：" + r.overviewAction + "\n" + r.placementGuidance; },
   });
 
   action("sites.list", {

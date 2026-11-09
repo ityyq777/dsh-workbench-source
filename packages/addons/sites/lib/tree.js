@@ -114,6 +114,7 @@ function createAction(db, args, origin, api) {
   const row = {
     id: id,
     name: name,
+    description: args.description == null ? "" : String(args.description),
     parent_id: parent ? String(parent.id) : "0",
     path: parent ? String(parent.path) + id + "/" : "/" + id + "/",
     sort: sort,
@@ -136,12 +137,14 @@ function renameAction(db, args, origin, api) {
   const node = nodeById(db, id, false);
   if (!node) throw new Error("目录不存在：" + (id || "(空)"));
   const name = nameOf(args.name);
-  if (name === String(node.name)) return { node: rowNode(node, []), unchanged: true };
+  const description = args.description === undefined ? String(node.description || "") : args.description === null ? "" : String(args.description);
+  if (name === String(node.name) && description === String(node.description || "")) return { node: rowNode(node, []), unchanged: true };
   const ts = now();
   tx(db, function () {
-    db.prepare("UPDATE site_node SET name=?, updated_at=?, rev=rev+1 WHERE id=?").run(name, ts, id);
+    db.prepare("UPDATE site_node SET name=?, description=?, updated_at=?, rev=rev+1 WHERE id=?").run(name, description, ts, id);
     logChange(db, "site_node", id, "upsert", Object.assign({}, node, {
       name: name,
+      description: description,
       updated_at: ts,
       rev: Number(node.rev) + 1,
     }), origin, ts);
@@ -149,6 +152,7 @@ function renameAction(db, args, origin, api) {
   api.emit("site-nodes-changed", { id: id, op: "rename" });
   return { node: rowNode(Object.assign({}, node, {
     name: name,
+    description: description,
     updated_at: ts,
     rev: Number(node.rev) + 1,
   }), []) };
@@ -286,7 +290,7 @@ function renderTree(rows) {
   function walk(nodes, depth) {
     const out = [];
     for (const n of nodes) {
-      out.push("  ".repeat(depth) + "- " + n.name + " (id=" + n.id + ")");
+      out.push("  ".repeat(depth) + "- " + n.name + " (id=" + n.id + ")" + "\n" + "  ".repeat(depth + 1) + "描述：" + n.description);
       if (n.children && n.children.length) out.push.apply(out, walk(n.children, depth + 1));
     }
     return out;
@@ -355,17 +359,18 @@ export function registerSiteTreeActions(api) {
         parentId: { type: ["string", "number"] },
         parent: { type: ["string", "number"] },
         name: { type: "string" },
+        description: { type: "string", description: "目录描述全文；省略默认空串" },
       },
     },
     execute: function (args, ctx) { return createAction(db, args || {}, ctx.origin, api); },
-    render: function (r) { return "已新建目录：" + r.node.name + "（id=" + r.node.id + "）"; },
+    render: function (r) { return "已新建目录：" + r.node.name + "（id=" + r.node.id + "）\n描述：" + r.node.description; },
   });
 
   action("siteNodes.rename", {
-    description: "重命名站点目录",
-    input: { type: "object", properties: { id: { type: ["string", "number"] }, nodeId: { type: ["string", "number"], description: "id 的别名" }, name: { type: "string" } } },
+    description: "重命名站点目录并可更新描述；name 省略仍改为未命名，description 省略保留、空串清空",
+    input: { type: "object", properties: { id: { type: ["string", "number"] }, nodeId: { type: ["string", "number"], description: "id 的别名" }, name: { type: "string" }, description: { type: "string", description: "目录描述全文；省略保留，空串清空" } } },
     execute: function (args, ctx) { return renameAction(db, args || {}, ctx.origin, api); },
-    render: function (r) { return r.unchanged ? "目录名未变化" : "已重命名为：" + r.node.name; },
+    render: function (r) { return (r.unchanged ? "目录名和描述未变化：" : "已更新目录：") + r.node.name + "\n描述：" + r.node.description; },
   });
 
   action("siteNodes.move", {

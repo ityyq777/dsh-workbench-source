@@ -36,7 +36,7 @@ function Stats(props) {
     h(
       "div",
       { className: "wbi-row" },
-      h("h2", null, tr(lang, "储物概览", "Storage overview")),
+      h("h2", null, tr(lang, "统计", "Statistics")),
       h("span", { className: "wbi-grow" }),
       h(
         ui.Button,

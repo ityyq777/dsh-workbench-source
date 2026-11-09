@@ -5780,7 +5780,7 @@ var TagFilter = require_tagfilter();
   injectCss();
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.8.3",
+    version: "1.9.0",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },
       { id: "sites", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: SitesView },
