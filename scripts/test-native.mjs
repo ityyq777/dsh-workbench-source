@@ -713,6 +713,46 @@ try {
   httpRes = await api("POST", "/workbench/api/record", { enabled: true });
   assert(httpRes.status === 400, "POST /record 未拒绝空 sessionId");
 
+  // ── 5.0c 标签下拉按需分页：搜索转义、稳定排序、越界与上限 ──
+  host.db.prepare("DELETE FROM tag_mapping").run();
+  host.db.prepare("DELETE FROM tag").run();
+  const tagIns = host.db.prepare("INSERT INTO tag(id,name,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,NULL,1)");
+  const nowMs = Date.now();
+  for (let i = 1; i <= 500; i++) tagIns.run("opt-" + i, "标签" + String(i).padStart(4, "0"), nowMs, nowMs);
+  tagIns.run("opt-pct", "50%_off", nowMs, nowMs);
+  tagIns.run("opt-us", "a_b", nowMs, nowMs);
+  tagIns.run("opt-bs", "back\\slash", nowMs, nowMs);
+  const optTotal = 503;
+  const p1 = (await call("tasks.tagOptions", { pageSize: 20 })).result;
+  assert(p1.available === true && p1.tags.length === 20, "tagOptions 第 1 页应为 20 条");
+  assert(p1.total === optTotal, "tagOptions total 不对：" + p1.total);
+  assert(p1.pageNumber === 1 && p1.pageSize === 20 && p1.hasMore === true, "tagOptions 分页字段不对");
+  assert(p1.untagged && typeof p1.untagged.total === "number", "tagOptions 缺少 untagged");
+  const p2 = (await call("tasks.tagOptions", { pageSize: 20, pageNumber: 2 })).result;
+  assert(p2.tags.length === 20 && p2.tags[0].id !== p1.tags[0].id, "第 2 页不应与第 1 页重复");
+  const overlap = p2.tags.filter((x) => p1.tags.some((y) => y.id === x.id));
+  assert(overlap.length === 0, "分页出现重复标签");
+  const optCapped = (await call("tasks.tagOptions", { pageSize: 9999 })).result;
+  assert(optCapped.pageSize === 100, "pageSize 应夹到 100，实际 " + optCapped.pageSize);
+  const beyond = (await call("tasks.tagOptions", { pageNumber: 999, pageSize: 20 })).result;
+  assert(beyond.tags.length === 0 && beyond.hasMore === false && beyond.total === optTotal, "越界页应空但 total 保持");
+  const zh = (await call("tasks.tagOptions", { text: "标签01", pageSize: 5 })).result;
+  assert(zh.total === 100 && zh.tags.every((x) => x.name.indexOf("标签01") >= 0), "中文子串搜索不对：" + zh.total);
+  const pct = (await call("tasks.tagOptions", { text: "%" })).result;
+  assert(pct.total === 1 && pct.tags[0].name === "50%_off", "% 应按字面匹配，实际 " + pct.total);
+  const und = (await call("tasks.tagOptions", { text: "_" })).result;
+  assert(und.total === 2 && und.tags.map(function (x) { return x.name; }).sort().join(",") === "50%_off,a_b", "_ 应按字面匹配，实际 " + und.total);
+  const bsl = (await call("tasks.tagOptions", { text: "\\" })).result;
+  assert(bsl.total === 1 && bsl.tags[0].name === "back\\slash", "反斜杠应按字面匹配，实际 " + bsl.total);
+  const padded = (await call("tasks.tagOptions", { text: "  标签0002  " })).result;
+  assert(padded.total === 1, "搜索词应 trim");
+  const optAll = (await call("tasks.tagOptions", {})).result;
+  assert(optAll.total === optTotal && optAll.tags.length === 20, "空文本应返回第 1 页全量计数");
+  const sortedNames = optAll.tags.slice(0, 3).map((x) => x.name);
+  assert(sortedNames.join(",") === sortedNames.slice().sort().join(","), "同 total 时应按名称升序：" + sortedNames.join(","));
+  host.db.prepare("DELETE FROM tag WHERE id LIKE 'opt-%'").run();
+
+
   console.log("NATIVE TEST PASS", { domains: domains.length, actions: names.length, home });
 } finally {
   for (const fn of cleanups.reverse()) { try { fn(); } catch {} }

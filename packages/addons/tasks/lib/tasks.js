@@ -21,6 +21,7 @@ import {
   timeMs,
 } from "./db.js";
 import { statsReport, renderStats } from "./stats.js";
+import { registerTagOptionsAction } from "./tag-options.js";
 import { configValues } from "./config.js";
 import {
   LEGACY_TYPE_TAGS,
@@ -1843,11 +1844,6 @@ export function registerTaskActions(api) {
     description: "标签导航数据：每个标签的任务数（按状态拆分），外加「未打标签」计数。标签域未安装时 available=false",
     input: { type: "object", properties: {} },
     execute: function () {
-      try {
-        migrateLegacyTypes(db, api, "migrate");
-      } catch (e) {
-        /* ignore */
-      }
       return tagNavStats(db, api);
     },
     render: function (r) {
@@ -1857,6 +1853,8 @@ export function registerTaskActions(api) {
       return "标签 " + r.tags.length + " 个：" + parts.join("，");
     },
   });
+
+  registerTagOptionsAction(action, db, api, migrateLegacyTypes);
 
   action("tasks.stats", {
     description: "任务统计：默认 7 个计数器；groupBy=tag/tableId/status/priority 时额外返回 groups（可按 from/to 限定 targetDate）",

@@ -213,7 +213,7 @@ export function addTaskTagByName(db, taskId, name, ts, origin) {
   return true;
 }
 
-const STATUS_FIELDS = [
+export const STATUS_FIELDS = [
   ["total", null],
   ["open", "0"],
   ["shutdown", "1"],
@@ -221,7 +221,7 @@ const STATUS_FIELDS = [
   ["restarted", "3"],
 ];
 
-function countsOf(row) {
+export function countsOf(row) {
   const out = { total: 0, open: 0, shutdown: 0, done: 0, restarted: 0 };
   for (const pair of STATUS_FIELDS) out[pair[0]] = Number((row && row[pair[0]]) || 0);
   return out;

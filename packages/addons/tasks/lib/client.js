@@ -38,11 +38,166 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// packages/addons/tasks/client/tagfilter.cjs
+var require_tagfilter = __commonJS({
+  "packages/addons/tasks/client/tagfilter.cjs"(exports2, module2) {
+    var React = require("react");
+    var h = React.createElement;
+    module2.exports = function TagFilter(props) {
+      var api = props.api;
+      var t = props.t;
+      var Icon2 = props.Icon;
+      var ids = props.ids || [];
+      var onChange = props.onChange;
+      var availS = React.useState(true);
+      var available = availS[0], setAvailable = availS[1];
+      var openS = React.useState(false);
+      var open = openS[0], setOpen = openS[1];
+      var queryS = React.useState("");
+      var query = queryS[0], setQuery = queryS[1];
+      var optsS = React.useState({ tags: [], total: 0, pageNumber: 0, hasMore: false });
+      var opts = optsS[0], setOpts = optsS[1];
+      var loadingS = React.useState(false);
+      var loading = loadingS[0], setLoading = loadingS[1];
+      var namesS = React.useState({});
+      var names = namesS[0], setNames = namesS[1];
+      var load = React.useCallback(function(text, pageNumber, append) {
+        setLoading(true);
+        return api.call("tasks.tagOptions", { text: text || "", pageNumber, pageSize: 20 }).then(function(r) {
+          setLoading(false);
+          if (!r || !r.ok) return;
+          var out = r.result || {};
+          setOpts(function(prev) {
+            var tags = append ? (prev.tags || []).concat(out.tags || []) : out.tags || [];
+            return { tags, total: out.total || 0, pageNumber: out.pageNumber || pageNumber, hasMore: !!out.hasMore };
+          });
+          setNames(function(prev) {
+            var next = Object.assign({}, prev);
+            (out.tags || []).forEach(function(x) {
+              next[String(x.id)] = x.name;
+            });
+            return next;
+          });
+        }).catch(function() {
+          setLoading(false);
+        });
+      }, [api]);
+      React.useEffect(function() {
+        if (!open) return;
+        var timer = setTimeout(function() {
+          load(query, 1, false);
+        }, query ? 200 : 0);
+        return function() {
+          clearTimeout(timer);
+        };
+      }, [open, query, load, props.reloadKey]);
+      React.useEffect(function() {
+        api.call("tasks.tagOptions", { pageSize: 1 }).then(function(r) {
+          if (r && r.ok) setAvailable(!!(r.result && r.result.available));
+        }).catch(function() {
+        });
+      }, [api]);
+      function toggle(id) {
+        var key = String(id);
+        var next = ids.slice();
+        var idx = next.indexOf(key);
+        if (idx >= 0) next.splice(idx, 1);
+        else next.push(key);
+        onChange(next);
+      }
+      if (!available) return null;
+      return h(
+        "div",
+        { className: "wbt-tagfilter" },
+        h("button", {
+          className: "wbt-btn ghost" + (ids.length ? " on" : ""),
+          "aria-expanded": open ? "true" : "false",
+          onClick: function() {
+            setOpen(!open);
+          }
+        }, h(Icon2, { name: "tag", size: 13 }), t.tagFilter + (ids.length ? " \xB7 " + ids.length : ""), h(Icon2, { name: "down", size: 12 })),
+        open ? h(
+          "div",
+          { className: "wbt-tagmenu", role: "menu" },
+          h(
+            "div",
+            { className: "wbt-tagsearch" },
+            h("input", {
+              className: "wbt-input",
+              autoFocus: true,
+              placeholder: t.tagSearchPlaceholder,
+              value: query,
+              onChange: function(e) {
+                setQuery(e.target.value);
+              },
+              onKeyDown: function(e) {
+                if (e.key === "Escape") {
+                  e.stopPropagation();
+                  setOpen(false);
+                }
+              }
+            })
+          ),
+          ids.length ? h(
+            "div",
+            { className: "wbt-tagsel" },
+            h("div", { className: "wbt-tagmenu-head" }, h("span", null, t.tagSelected + " " + ids.length), h("span", { className: "wbt-grow" })),
+            h("div", { className: "wbt-tagsel-list" }, ids.map(function(id) {
+              return h(
+                "button",
+                { key: id, className: "wbt-tagselitem", title: t.tagRemove, onClick: function() {
+                  toggle(id);
+                } },
+                h("span", { className: "wbt-tagnm" }, names[String(id)] || "#" + id),
+                h("span", { className: "wbt-tagx" }, "\xD7")
+              );
+            }))
+          ) : null,
+          h(
+            "div",
+            { className: "wbt-tagmenu-head" },
+            h("span", null, t.allTags + (opts.total ? " \xB7 " + opts.total : "")),
+            h("span", { className: "wbt-grow" }),
+            h("button", { className: "wbt-mini", onClick: function() {
+              onChange([]);
+              setQuery("");
+            } }, t.clear)
+          ),
+          h(
+            "div",
+            {
+              className: "wbt-taglist",
+              onScroll: function(e) {
+                var el = e.currentTarget;
+                if (!opts.hasMore || loading) return;
+                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 24) load(query, (opts.pageNumber || 1) + 1, true);
+              }
+            },
+            opts.tags.length ? opts.tags.map(function(x) {
+              var on = ids.indexOf(String(x.id)) >= 0;
+              return h(
+                "label",
+                { key: x.id, className: "wbt-tagopt" },
+                h("input", { type: "checkbox", checked: on, onChange: function() {
+                  toggle(x.id);
+                } }),
+                h("span", { className: "wbt-tagnm" }, x.name),
+                h("span", { className: "wbt-tagcnt" }, x.total)
+              );
+            }) : h("div", { className: "wbt-note" }, loading ? t.loadingMore : query ? t.tagNoMatch : t.noTags),
+            opts.tags.length ? h("div", { className: "wbt-tagmore" }, loading ? t.loadingMore : opts.hasMore ? "" : t.noMore) : null
+          )
+        ) : null
+      );
+    };
+  }
+});
+
 // packages/addons/tasks/client/charts.cjs
 var require_charts = __commonJS({
   "packages/addons/tasks/client/charts.cjs"(exports2, module2) {
-    var React2 = require("react");
-    var h2 = React2.createElement;
+    var React = require("react");
+    var h = React.createElement;
     var COLORS = [
       "var(--dsw-alias-state-business-primary, #4f6ef7)",
       "var(--dsw-alias-state-success-primary, #2f9e6e)",
@@ -161,32 +316,32 @@ var require_charts = __commonJS({
       }
       function Card(props) {
         var cls = prefix + "-scard" + (props.span ? " " + prefix + "-span-" + props.span : "");
-        return h2(
+        return h(
           "section",
           { className: cls },
-          props.title || props.right ? h2(
+          props.title || props.right ? h(
             "div",
             { className: prefix + "-chead" },
-            h2("span", { className: prefix + "-ctitle" }, props.title),
-            props.note ? h2("span", { className: prefix + "-cnote" }, props.note) : null,
-            props.right ? h2("span", { style: { marginLeft: "auto" } }, props.right) : null
+            h("span", { className: prefix + "-ctitle" }, props.title),
+            props.note ? h("span", { className: prefix + "-cnote" }, props.note) : null,
+            props.right ? h("span", { style: { marginLeft: "auto" } }, props.right) : null
           ) : null,
           props.children
         );
       }
       function Kpi(props) {
         var tone = props.tone ? " " + prefix + "-" + props.tone : "";
-        return h2(
+        return h(
           "div",
           { className: prefix + "-kpi" + tone },
-          h2("div", { className: prefix + "-kpi-l" }, props.label),
-          h2(
+          h("div", { className: prefix + "-kpi-l" }, props.label),
+          h(
             "div",
             { className: prefix + "-kpi-v" },
             props.value === null || props.value === void 0 ? "\u2014" : typeof props.value === "number" ? num(props.lang, props.value) : props.value,
-            props.unit ? h2("span", { className: prefix + "-kpi-u" }, props.unit) : null
+            props.unit ? h("span", { className: prefix + "-kpi-u" }, props.unit) : null
           ),
-          props.hint ? h2("div", { className: prefix + "-kpi-h" }, props.hint) : null
+          props.hint ? h("div", { className: prefix + "-kpi-h" }, props.hint) : null
         );
       }
       function Donut(props) {
@@ -201,16 +356,16 @@ var require_charts = __commonJS({
         var aria = props.aria || data.map(function(d) {
           return d.label + " " + d.count;
         }).join("\uFF0C");
-        return h2(
+        return h(
           "div",
           { className: prefix + "-donut" },
-          h2(
+          h(
             "svg",
             { width: size, height: size, viewBox: "0 0 " + size + " " + size, role: "img", "aria-label": aria },
-            h2("circle", { cx: size / 2, cy: size / 2, r, fill: "none", stroke: "var(--dsw-alias-bg-skeleton,#f2f3f5)", strokeWidth: 18 }),
+            h("circle", { cx: size / 2, cy: size / 2, r, fill: "none", stroke: "var(--dsw-alias-bg-skeleton,#f2f3f5)", strokeWidth: 18 }),
             total > 0 ? data.map(function(d, i) {
               var len = Number(d.count) / total * c;
-              var seg = h2("circle", {
+              var seg = h("circle", {
                 key: d.key || d.label || i,
                 cx: size / 2,
                 cy: size / 2,
@@ -222,20 +377,20 @@ var require_charts = __commonJS({
                 strokeDashoffset: -offset,
                 transform: "rotate(-90 " + size / 2 + " " + size / 2 + ")",
                 strokeLinecap: "butt"
-              }, h2("title", null, d.label + "\uFF1A" + d.count));
+              }, h("title", null, d.label + "\uFF1A" + d.count));
               offset += len;
               return seg;
             }) : null,
-            h2("text", { x: size / 2, y: size / 2 - 2, textAnchor: "middle", fill: "var(--dsw-alias-label-primary,#1f2329)", fontSize: 24, fontWeight: 650 }, num(props.lang, total)),
-            h2("text", { x: size / 2, y: size / 2 + 18, textAnchor: "middle", fill: "var(--dsw-alias-label-tertiary,#8f959e)", fontSize: 11 }, props.centerLabel || "")
+            h("text", { x: size / 2, y: size / 2 - 2, textAnchor: "middle", fill: "var(--dsw-alias-label-primary,#1f2329)", fontSize: 24, fontWeight: 650 }, num(props.lang, total)),
+            h("text", { x: size / 2, y: size / 2 + 18, textAnchor: "middle", fill: "var(--dsw-alias-label-tertiary,#8f959e)", fontSize: 11 }, props.centerLabel || "")
           ),
-          h2("div", { className: prefix + "-legend" }, (props.data || []).map(function(d, i) {
-            return h2(
+          h("div", { className: prefix + "-legend" }, (props.data || []).map(function(d, i) {
+            return h(
               "div",
               { key: d.key || d.label || i, className: prefix + "-leg" },
-              h2("span", { className: prefix + "-dot", style: { background: d.color || COLORS[i % COLORS.length] } }),
-              h2("span", null, d.label),
-              h2("b", null, num(props.lang, d.count))
+              h("span", { className: prefix + "-dot", style: { background: d.color || COLORS[i % COLORS.length] } }),
+              h("span", null, d.label),
+              h("b", null, num(props.lang, d.count))
             );
           }))
         );
@@ -245,30 +400,30 @@ var require_charts = __commonJS({
         var max = Number(props.max || 0) || data.reduce(function(m, d) {
           return Math.max(m, Number(d.value || 0));
         }, 0) || 1;
-        return h2("div", { className: prefix + "-bars" }, data.map(function(d, i) {
+        return h("div", { className: prefix + "-bars" }, data.map(function(d, i) {
           var v = Number(d.value || 0);
-          return h2(
+          return h(
             "div",
             { key: d.key || d.label || i, className: prefix + "-bar" },
-            h2("span", { className: prefix + "-bar-l", title: d.title || d.label }, d.label),
-            h2("span", { className: prefix + "-bar-t" }, h2("span", { className: prefix + "-bar-f", style: { width: Math.max(2, v / max * 100) + "%", background: d.color || props.color || COLORS[0] } })),
-            h2("span", { className: prefix + "-bar-v" }, props.format ? props.format(v) : num(props.lang, v))
+            h("span", { className: prefix + "-bar-l", title: d.title || d.label }, d.label),
+            h("span", { className: prefix + "-bar-t" }, h("span", { className: prefix + "-bar-f", style: { width: Math.max(2, v / max * 100) + "%", background: d.color || props.color || COLORS[0] } })),
+            h("span", { className: prefix + "-bar-v" }, props.format ? props.format(v) : num(props.lang, v))
           );
         }));
       }
       function StackedRows(props) {
         var rows = props.rows || [];
         var keys = props.keys || [];
-        return h2("div", { className: prefix + "-stack" }, rows.map(function(row, ri) {
+        return h("div", { className: prefix + "-stack" }, rows.map(function(row, ri) {
           var total = Number(row.total || 0) || 1;
-          return h2(
+          return h(
             "div",
             { key: row.key || ri },
-            h2("div", { className: prefix + "-srow-l" }, h2("span", null, row.label), h2("b", null, num(props.lang, row.total))),
-            h2("div", { className: prefix + "-strack" }, keys.map(function(k, i) {
+            h("div", { className: prefix + "-srow-l" }, h("span", null, row.label), h("b", null, num(props.lang, row.total))),
+            h("div", { className: prefix + "-strack" }, keys.map(function(k, i) {
               var v = Number(row.parts && row.parts[k.key] || 0);
               if (v <= 0) return null;
-              return h2("span", {
+              return h("span", {
                 key: k.key,
                 className: prefix + "-seg-f",
                 title: k.label + " " + v,
@@ -311,47 +466,47 @@ var require_charts = __commonJS({
             return n + Number(d[s.key] || 0);
           }, 0);
         }).join("\uFF0C");
-        return h2(
+        return h(
           "div",
           null,
-          h2(
+          h(
             "svg",
             { className: prefix + "-trend", viewBox: "0 0 " + width + " " + height, role: "img", "aria-label": props.aria || aria },
             ticks.map(function(v, i2) {
-              return h2(
+              return h(
                 "g",
                 { key: "t" + i2 },
-                h2("line", { x1: left, x2: width - right, y1: y(v), y2: y(v), stroke: "var(--dsw-alias-border-l1,#f2f3f5)", strokeWidth: 1 }),
-                h2("text", { x: left - 5, y: y(v) + 3, textAnchor: "end", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, num(props.lang, v))
+                h("line", { x1: left, x2: width - right, y1: y(v), y2: y(v), stroke: "var(--dsw-alias-border-l1,#f2f3f5)", strokeWidth: 1 }),
+                h("text", { x: left - 5, y: y(v) + 3, textAnchor: "end", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, num(props.lang, v))
               );
             }),
             series.map(function(s, si) {
               var pts = data.map(function(d, i2) {
                 return x(i2) + "," + y(d[s.key]);
               }).join(" ");
-              return h2(
+              return h(
                 "g",
                 { key: s.key },
-                h2("polyline", { points: pts, fill: "none", stroke: s.color || COLORS[si % COLORS.length], strokeWidth: 2, strokeLinejoin: "round", strokeLinecap: "round" }),
+                h("polyline", { points: pts, fill: "none", stroke: s.color || COLORS[si % COLORS.length], strokeWidth: 2, strokeLinejoin: "round", strokeLinecap: "round" }),
                 data.map(function(d, i2) {
                   if (data.length > 40 && i2 % 3 !== 0) return null;
-                  return h2(
+                  return h(
                     "circle",
                     { key: i2, cx: x(i2), cy: y(d[s.key]), r: 2.4, fill: s.color || COLORS[si % COLORS.length] },
-                    h2("title", null, d.bucket + "\uFF1A" + s.label + " " + (d[s.key] || 0))
+                    h("title", null, d.bucket + "\uFF1A" + s.label + " " + (d[s.key] || 0))
                   );
                 })
               );
             }),
             labelIdx.map(function(i2) {
-              return h2("text", { key: "x" + i2, x: x(i2), y: height - 6, textAnchor: "middle", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, String(data[i2].bucket).slice(5));
+              return h("text", { key: "x" + i2, x: x(i2), y: height - 6, textAnchor: "middle", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, String(data[i2].bucket).slice(5));
             })
           ),
-          h2("div", { className: prefix + "-tlegend" }, series.map(function(s, i2) {
-            return h2(
+          h("div", { className: prefix + "-tlegend" }, series.map(function(s, i2) {
+            return h(
               "span",
               { key: s.key, style: { display: "inline-flex", alignItems: "center", gap: 5 } },
-              h2("span", { className: prefix + "-dot", style: { background: s.color || COLORS[i2 % COLORS.length] } }),
+              h("span", { className: prefix + "-dot", style: { background: s.color || COLORS[i2 % COLORS.length] } }),
               s.label
             );
           }))
@@ -362,18 +517,18 @@ var require_charts = __commonJS({
         var max = data.reduce(function(m, d) {
           return Math.max(m, Number(d.count || 0));
         }, 0) || 1;
-        return h2(
+        return h(
           "div",
           { className: prefix + "-hist", role: "img", "aria-label": props.aria || data.map(function(d) {
             return d.label + " " + d.count;
           }).join("\uFF0C") },
           data.map(function(d, i) {
-            return h2(
+            return h(
               "div",
               { key: d.key || d.label || i, className: prefix + "-hbar", title: d.label + "\uFF1A" + d.count },
-              h2("span", { className: prefix + "-hbar-v" }, num(props.lang, d.count)),
-              h2("span", { className: prefix + "-hbar-f", style: { height: Math.max(2, Number(d.count || 0) / max * 100) + "%", background: d.color || props.color || COLORS[0] } }),
-              h2("span", { className: prefix + "-hbar-l" }, d.label)
+              h("span", { className: prefix + "-hbar-v" }, num(props.lang, d.count)),
+              h("span", { className: prefix + "-hbar-f", style: { height: Math.max(2, Number(d.count || 0) / max * 100) + "%", background: d.color || props.color || COLORS[0] } }),
+              h("span", { className: prefix + "-hbar-l" }, d.label)
             );
           })
         );
@@ -381,16 +536,16 @@ var require_charts = __commonJS({
       function DataTable(props) {
         var cols = props.columns || [];
         var rows = props.rows || [];
-        if (!rows.length) return h2("div", { className: prefix + "-empty" }, props.empty || "\u6682\u65E0\u6570\u636E");
-        return h2(
+        if (!rows.length) return h("div", { className: prefix + "-empty" }, props.empty || "\u6682\u65E0\u6570\u636E");
+        return h(
           "table",
           { className: prefix + "-table" },
-          h2("thead", null, h2("tr", null, cols.map(function(c) {
-            return h2("th", { key: c.key, className: c.num ? prefix + "-num" : "" }, c.label);
+          h("thead", null, h("tr", null, cols.map(function(c) {
+            return h("th", { key: c.key, className: c.num ? prefix + "-num" : "" }, c.label);
           }))),
-          h2("tbody", null, rows.map(function(row, ri) {
-            return h2("tr", { key: row.id || row.key || ri }, cols.map(function(c) {
-              return h2("td", { key: c.key, className: c.num ? prefix + "-num" : "" }, c.render ? c.render(row) : row[c.key]);
+          h("tbody", null, rows.map(function(row, ri) {
+            return h("tr", { key: row.id || row.key || ri }, cols.map(function(c) {
+              return h("td", { key: c.key, className: c.num ? prefix + "-num" : "" }, c.render ? c.render(row) : row[c.key]);
             }));
           }))
         );
@@ -405,11 +560,11 @@ var require_charts = __commonJS({
           next[key] = value;
           props.onCustomChange(next);
         }
-        return h2(
+        return h(
           "div",
           { className: prefix + "-stoolbar" },
-          h2("div", { className: prefix + "-seg", role: "group", "aria-label": props.aria || "\u65F6\u95F4\u8303\u56F4" }, (props.options || []).map(function(o) {
-            return h2("button", {
+          h("div", { className: prefix + "-seg", role: "group", "aria-label": props.aria || "\u65F6\u95F4\u8303\u56F4" }, (props.options || []).map(function(o) {
+            return h("button", {
               key: o.key,
               type: "button",
               className: o.key === props.value ? prefix + "-on" : "",
@@ -419,10 +574,10 @@ var require_charts = __commonJS({
               }
             }, o.label);
           })),
-          h2(
+          h(
             "div",
             { className: prefix + "-range", role: "group", "aria-label": props.customAria || "\u81EA\u5B9A\u4E49\u65E5\u671F\u8303\u56F4" },
-            h2("input", {
+            h("input", {
               type: "date",
               className: prefix + "-date",
               value: from,
@@ -433,8 +588,8 @@ var require_charts = __commonJS({
                 setDate("from", e.target.value);
               }
             }),
-            h2("span", { className: prefix + "-dash", "aria-hidden": "true" }, "\u2013"),
-            h2("input", {
+            h("span", { className: prefix + "-dash", "aria-hidden": "true" }, "\u2013"),
+            h("input", {
               type: "date",
               className: prefix + "-date",
               value: to,
@@ -446,7 +601,7 @@ var require_charts = __commonJS({
                 setDate("to", e.target.value);
               }
             }),
-            from || to ? h2("button", {
+            from || to ? h("button", {
               type: "button",
               className: prefix + "-clear",
               "aria-label": props.clearLabel || "\u6E05\u9664\u81EA\u5B9A\u4E49\u8303\u56F4",
@@ -456,49 +611,49 @@ var require_charts = __commonJS({
               }
             }, "\xD7") : null
           ),
-          props.customHint ? h2("span", { className: prefix + "-hint", role: "status" }, props.customHint) : null,
-          h2("button", { type: "button", className: prefix + "-ghost", disabled: !!props.loading, onClick: props.onRefresh }, props.refreshLabel || "\u5237\u65B0"),
-          h2("span", { className: prefix + "-muted" }, props.generatedAt ? (props.timeLabel || "\u622A\u81F3") + " " + timeText(props.generatedAt) : ""),
-          props.right ? h2("span", { style: { marginLeft: "auto" } }, props.right) : null
+          props.customHint ? h("span", { className: prefix + "-hint", role: "status" }, props.customHint) : null,
+          h("button", { type: "button", className: prefix + "-ghost", disabled: !!props.loading, onClick: props.onRefresh }, props.refreshLabel || "\u5237\u65B0"),
+          h("span", { className: prefix + "-muted" }, props.generatedAt ? (props.timeLabel || "\u622A\u81F3") + " " + timeText(props.generatedAt) : ""),
+          props.right ? h("span", { style: { marginLeft: "auto" } }, props.right) : null
         );
       }
       function Empty(props) {
-        return h2("div", { className: prefix + "-empty" }, props.text || "\u6682\u65E0\u6570\u636E");
+        return h("div", { className: prefix + "-empty" }, props.text || "\u6682\u65E0\u6570\u636E");
       }
       function Skeleton() {
-        return h2(
+        return h(
           "div",
           { className: prefix + "-sgrid" },
-          h2("div", { className: prefix + "-kpis" }, [0, 1, 2, 3].map(function(i) {
-            return h2(
+          h("div", { className: prefix + "-kpis" }, [0, 1, 2, 3].map(function(i) {
+            return h(
               "div",
               { key: i, className: prefix + "-kpi" },
-              h2("div", { className: prefix + "-sk", style: { width: "40%" } }),
-              h2("div", { className: prefix + "-sk", style: { width: "65%", height: 26 } })
+              h("div", { className: prefix + "-sk", style: { width: "40%" } }),
+              h("div", { className: prefix + "-sk", style: { width: "65%", height: 26 } })
             );
           })),
           [0, 1].map(function(i) {
-            return h2(
+            return h(
               "div",
               { key: "c" + i, className: prefix + "-scard " + prefix + "-span-6" },
-              h2("div", { className: prefix + "-sk", style: { width: "30%" } }),
-              h2("div", { className: prefix + "-sk", style: { height: 120 } })
+              h("div", { className: prefix + "-sk", style: { width: "30%" } }),
+              h("div", { className: prefix + "-sk", style: { height: 120 } })
             );
           })
         );
       }
       function ErrorBar(props) {
-        return h2(
+        return h(
           "div",
           { className: prefix + "-err", role: "alert" },
-          h2("span", null, props.message),
-          props.onRetry ? h2("button", { type: "button", className: prefix + "-ghost", onClick: props.onRetry }, props.retryLabel || "\u91CD\u8BD5") : null
+          h("span", null, props.message),
+          props.onRetry ? h("button", { type: "button", className: prefix + "-ghost", onClick: props.onRetry }, props.retryLabel || "\u91CD\u8BD5") : null
         );
       }
       function Warnings(props) {
         var items = props.items || [];
         if (!items.length) return null;
-        return h2("div", { className: prefix + "-warn", role: "status" }, items.map(function(w) {
+        return h("div", { className: prefix + "-warn", role: "status" }, items.map(function(w) {
           return w.message;
         }).join("\uFF1B"));
       }
@@ -530,8 +685,8 @@ var require_charts = __commonJS({
 // packages/addons/tasks/client/config.cjs
 var require_config = __commonJS({
   "packages/addons/tasks/client/config.cjs"(exports2, module2) {
-    var React2 = require("react");
-    var h2 = React2.createElement;
+    var React = require("react");
+    var h = React.createElement;
     var DOMAIN = "tasks";
     var PREFIX = "wbt";
     var COPY = {
@@ -663,7 +818,7 @@ var require_config = __commonJS({
     }
     function useConfig(api, fallback) {
       var fb = fallback || {};
-      var stateS = React2.useState({
+      var stateS = React.useState({
         ready: false,
         values: Object.assign({}, fb),
         items: [],
@@ -673,7 +828,7 @@ var require_config = __commonJS({
         state: null
       });
       var state = stateS[0], setState = stateS[1];
-      React2.useEffect(function() {
+      React.useEffect(function() {
         var alive = true;
         Promise.resolve(api.call(DOMAIN + ".configGet")).then(function(r) {
           if (!alive) return;
@@ -711,24 +866,24 @@ var require_config = __commonJS({
       var api = props.api;
       var lang = props.lang === "en" ? "en" : "zh";
       var t = COPY[lang];
-      var loadS = React2.useState(true);
+      var loadS = React.useState(true);
       var loading = loadS[0], setLoading = loadS[1];
-      var stateS = React2.useState(null);
+      var stateS = React.useState(null);
       var state = stateS[0], setState = stateS[1];
-      var errS = React2.useState("");
+      var errS = React.useState("");
       var err = errS[0], setErr = errS[1];
-      var noticeS = React2.useState({ id: "", text: "", error: false });
+      var noticeS = React.useState({ id: "", text: "", error: false });
       var notice = noticeS[0], setNotice = noticeS[1];
-      var savingS = React2.useState("");
+      var savingS = React.useState("");
       var savingId = savingS[0], setSavingId = savingS[1];
-      var draftsS = React2.useState({});
+      var draftsS = React.useState({});
       var drafts = draftsS[0], setDrafts = draftsS[1];
-      var busyS = React2.useState(false);
+      var busyS = React.useState(false);
       var busy = busyS[0], setBusy = busyS[1];
-      React2.useEffect(function() {
+      React.useEffect(function() {
         injectCss();
       }, []);
-      var load = React2.useCallback(function() {
+      var load = React.useCallback(function() {
         setLoading(true);
         return Promise.resolve(api.call(DOMAIN + ".configGet")).then(function(r) {
           var body2 = unwrap(r);
@@ -741,7 +896,7 @@ var require_config = __commonJS({
           setLoading(false);
         });
       }, [api]);
-      React2.useEffect(function() {
+      React.useEffect(function() {
         load();
       }, [load]);
       function setValueLocal(id, value) {
@@ -827,22 +982,22 @@ var require_config = __commonJS({
         var value = state.values[item.id];
         var label = lang === "en" ? item.en : item.zh;
         if (item.type === "bool") {
-          return h2(
+          return h(
             "label",
             { className: PREFIX + "-cfg-switch" },
-            h2("input", {
+            h("input", {
               type: "checkbox",
               checked: value === true,
               onChange: function(e) {
                 save(item.id, e.target.checked);
               }
             }),
-            h2("span", { className: PREFIX + "-cfg-track", "aria-hidden": "true" }),
-            h2("span", { className: PREFIX + "-cfg-switchstate" }, value === true ? t.on : t.off)
+            h("span", { className: PREFIX + "-cfg-track", "aria-hidden": "true" }),
+            h("span", { className: PREFIX + "-cfg-switchstate" }, value === true ? t.on : t.off)
           );
         }
         if (item.type === "enum") {
-          return h2("select", {
+          return h("select", {
             className: PREFIX + "-cfg-select",
             value: String(value),
             onChange: function(e) {
@@ -852,12 +1007,12 @@ var require_config = __commonJS({
               if (hit) save(item.id, hit.value);
             }
           }, (item.options || []).map(function(o) {
-            return h2("option", { key: String(o.value), value: String(o.value) }, optionLabel(o, lang));
+            return h("option", { key: String(o.value), value: String(o.value) }, optionLabel(o, lang));
           }));
         }
         if (item.type === "int") {
           var draft = drafts[item.id] !== void 0 ? drafts[item.id] : String(value);
-          return h2("input", {
+          return h("input", {
             className: PREFIX + "-cfg-input",
             type: "number",
             value: draft,
@@ -885,12 +1040,12 @@ var require_config = __commonJS({
         }
         if (item.type === "multi") {
           var picked = Array.isArray(value) ? value : [];
-          return h2("div", { className: PREFIX + "-cfg-multi" }, (item.options || []).map(function(o) {
+          return h("div", { className: PREFIX + "-cfg-multi" }, (item.options || []).map(function(o) {
             var on = picked.indexOf(o.value) >= 0;
-            return h2(
+            return h(
               "label",
               { key: String(o.value) },
-              h2("input", {
+              h("input", {
                 type: "checkbox",
                 checked: on,
                 onChange: function() {
@@ -904,11 +1059,11 @@ var require_config = __commonJS({
                   save(item.id, next);
                 }
               }),
-              h2("span", null, optionLabel(o, lang))
+              h("span", null, optionLabel(o, lang))
             );
           }));
         }
-        return h2("input", {
+        return h("input", {
           className: PREFIX + "-cfg-input",
           type: "text",
           defaultValue: value === void 0 ? "" : String(value),
@@ -918,20 +1073,20 @@ var require_config = __commonJS({
         });
       }
       var body = [];
-      if (loading && !state) body.push(h2(
+      if (loading && !state) body.push(h(
         "div",
         { key: "loading", className: PREFIX + "-cfg-loading", "aria-busy": "true" },
-        h2("span", { className: PREFIX + "-cfg-sr" }, t.loading),
-        h2("div", { className: PREFIX + "-cfg-sk" }),
-        h2("div", { className: PREFIX + "-cfg-sk" }),
-        h2("div", { className: PREFIX + "-cfg-sk" })
+        h("span", { className: PREFIX + "-cfg-sr" }, t.loading),
+        h("div", { className: PREFIX + "-cfg-sk" }),
+        h("div", { className: PREFIX + "-cfg-sk" }),
+        h("div", { className: PREFIX + "-cfg-sk" })
       ));
       if (!loading && err && !state) {
-        body.push(h2(
+        body.push(h(
           "div",
           { key: "err", className: PREFIX + "-cfg-error" },
-          h2("span", null, t.loadFail + " " + err),
-          h2("button", { type: "button", className: PREFIX + "-cfg-btn", onClick: load }, t.retry)
+          h("span", null, t.loadFail + " " + err),
+          h("button", { type: "button", className: PREFIX + "-cfg-btn", onClick: load }, t.retry)
         ));
       }
       if (state) {
@@ -947,39 +1102,39 @@ var require_config = __commonJS({
         order.forEach(function(g) {
           var list = byGroup[g.id] || [];
           if (!list.length) return;
-          body.push(h2(
+          body.push(h(
             "section",
             { key: "g-" + g.id, className: PREFIX + "-cfg-group" },
-            h2(
+            h(
               "div",
               { className: PREFIX + "-cfg-gtitle" },
-              h2("span", null, lang === "en" ? g.en : g.zh),
-              h2("span", { className: PREFIX + "-cfg-gcount" }, list.length + (lang === "en" ? " items" : " \u9879"))
+              h("span", null, lang === "en" ? g.en : g.zh),
+              h("span", { className: PREFIX + "-cfg-gcount" }, list.length + (lang === "en" ? " items" : " \u9879"))
             ),
             list.map(function(item) {
               var overridden = state.overrides && state.overrides[item.id] !== void 0;
               var isSaving = savingId === item.id;
-              return h2(
+              return h(
                 "div",
                 { key: item.id, className: PREFIX + "-cfg-row" },
-                h2(
+                h(
                   "div",
                   { className: PREFIX + "-cfg-label" },
-                  h2(
+                  h(
                     "div",
                     { className: PREFIX + "-cfg-name" },
-                    h2("span", null, lang === "en" ? item.en : item.zh),
-                    overridden ? h2("span", { className: PREFIX + "-cfg-chip" }, t.modified) : null,
-                    isSaving ? h2("span", { className: PREFIX + "-cfg-chip" }, t.saving) : null
+                    h("span", null, lang === "en" ? item.en : item.zh),
+                    overridden ? h("span", { className: PREFIX + "-cfg-chip" }, t.modified) : null,
+                    isSaving ? h("span", { className: PREFIX + "-cfg-chip" }, t.saving) : null
                   ),
-                  (lang === "en" ? item.hintEn : item.hintZh) ? h2("div", { className: PREFIX + "-cfg-hint" }, lang === "en" ? item.hintEn : item.hintZh) : null,
-                  h2("div", { className: PREFIX + "-cfg-id" }, item.id)
+                  (lang === "en" ? item.hintEn : item.hintZh) ? h("div", { className: PREFIX + "-cfg-hint" }, lang === "en" ? item.hintEn : item.hintZh) : null,
+                  h("div", { className: PREFIX + "-cfg-id" }, item.id)
                 ),
-                h2(
+                h(
                   "div",
                   { className: PREFIX + "-cfg-control" },
                   renderControl(item),
-                  overridden ? h2("button", {
+                  overridden ? h("button", {
                     type: "button",
                     className: PREFIX + "-cfg-btn",
                     disabled: busy,
@@ -993,45 +1148,45 @@ var require_config = __commonJS({
             })
           ));
         });
-        if (!items.length && !loading) body.push(h2("div", { key: "empty", className: PREFIX + "-cfg-empty" }, t.empty));
+        if (!items.length && !loading) body.push(h("div", { key: "empty", className: PREFIX + "-cfg-empty" }, t.empty));
         var anyOverride = Object.keys(state.overrides || {}).length > 0;
-        body.push(h2(
+        body.push(h(
           "div",
           { key: "foot", className: PREFIX + "-cfg-foot" },
-          h2(
+          h(
             "span",
             { className: PREFIX + "-cfg-changed" },
             anyOverride ? Object.keys(state.overrides || {}).length + (lang === "en" ? " changed" : " \u9879\u5DF2\u4FEE\u6539") : lang === "en" ? "All preferences are at their defaults" : "\u5168\u90E8\u914D\u7F6E\u5747\u4E3A\u9ED8\u8BA4\u503C"
           ),
-          h2("span", { className: PREFIX + "-cfg-grow" }),
-          anyOverride ? h2("button", { type: "button", className: PREFIX + "-cfg-btn " + PREFIX + "-cfg-btn-outline", disabled: busy, onClick: resetAll }, busy ? t.resetting : t.resetAll) : null
+          h("span", { className: PREFIX + "-cfg-grow" }),
+          anyOverride ? h("button", { type: "button", className: PREFIX + "-cfg-btn " + PREFIX + "-cfg-btn-outline", disabled: busy, onClick: resetAll }, busy ? t.resetting : t.resetAll) : null
         ));
         var warn = (state.warnings || []).filter(function(w) {
           return w && w.message;
         });
         if (warn.length) {
-          body.push(h2(
+          body.push(h(
             "div",
             { key: "warn", className: PREFIX + "-cfg-error" },
-            h2("span", null, warn.map(function(w) {
+            h("span", null, warn.map(function(w) {
               return w.message;
             }).join("\uFF1B"))
           ));
         }
       }
-      return h2(
+      return h(
         "div",
         { className: PREFIX + "-cfg" },
-        h2(
+        h(
           "div",
           { className: PREFIX + "-cfg-head" },
-          h2(
+          h(
             "div",
             { className: PREFIX + "-cfg-headmain" },
-            h2("h2", null, t.title),
-            h2("div", { className: PREFIX + "-cfg-note" }, t.note)
+            h("h2", null, t.title),
+            h("div", { className: PREFIX + "-cfg-note" }, t.note)
           ),
-          notice.text ? h2("div", { key: "notice", className: PREFIX + "-cfg-status" + (notice.error ? " err" : ""), role: "status" }, notice.text) : null
+          notice.text ? h("div", { key: "notice", className: PREFIX + "-cfg-status" + (notice.error ? " err" : ""), role: "status" }, notice.text) : null
         ),
         body
       );
@@ -1043,8 +1198,8 @@ var require_config = __commonJS({
 // packages/addons/tasks/client/stats.cjs
 var require_stats = __commonJS({
   "packages/addons/tasks/client/stats.cjs"(exports2, module2) {
-    var React2 = require("react");
-    var h2 = React2.createElement;
+    var React = require("react");
+    var h = React.createElement;
     var charts = require_charts();
     var configView = require_config();
     var COPY = {
@@ -1206,9 +1361,9 @@ var require_stats = __commonJS({
       var lang = props.lang === "en" ? "en" : "zh";
       var cfg = configView.useConfig(props.api, CFG_FALLBACK);
       if (!cfg.ready) {
-        return h2("div", { style: { padding: "48px", textAlign: "center", fontSize: "12.5px", opacity: 0.6 } }, lang === "en" ? "Loading\u2026" : "\u8F7D\u5165\u4E2D\u2026");
+        return h("div", { style: { padding: "48px", textAlign: "center", fontSize: "12.5px", opacity: 0.6 } }, lang === "en" ? "Loading\u2026" : "\u8F7D\u5165\u4E2D\u2026");
       }
-      return h2(TasksStatsBody, Object.assign({}, props, { cfg: cfg.values }));
+      return h(TasksStatsBody, Object.assign({}, props, { cfg: cfg.values }));
     }
     function TasksStatsBody(props) {
       var lang = props.lang === "en" ? "en" : "zh";
@@ -1223,21 +1378,21 @@ var require_stats = __commonJS({
       function sectionOn(key) {
         return !cfgSections || cfgSections.indexOf(key) >= 0;
       }
-      var ch = React2.useMemo(function() {
+      var ch = React.useMemo(function() {
         return charts.makeCharts("wbt");
       }, []);
-      var rangePair = React2.useState(cfgRange);
+      var rangePair = React.useState(cfgRange);
       var range = rangePair[0], setRange = rangePair[1];
-      var dataPair = React2.useState(null);
+      var dataPair = React.useState(null);
       var data = dataPair[0], setData = dataPair[1];
-      var errPair = React2.useState("");
+      var errPair = React.useState("");
       var err = errPair[0], setErr = errPair[1];
-      var loadPair = React2.useState(true);
+      var loadPair = React.useState(true);
       var loading = loadPair[0], setLoading = loadPair[1];
-      var req = React2.useRef(0);
-      var customPair = React2.useState(null);
+      var req = React.useRef(0);
+      var customPair = React.useState(null);
       var custom = customPair[0], setCustom = customPair[1];
-      var todayDay = React2.useMemo(function() {
+      var todayDay = React.useMemo(function() {
         var d = /* @__PURE__ */ new Date();
         function p(n) {
           return String(n).padStart(2, "0");
@@ -1256,7 +1411,7 @@ var require_stats = __commonJS({
         if (!Number.isFinite(n)) return 10;
         return Math.max(1, Math.min(50, Math.floor(n)));
       }
-      var load = React2.useCallback(function(silent) {
+      var load = React.useCallback(function(silent) {
         if ((customFrom || customTo) && !customOk) return Promise.resolve();
         var id = ++req.current;
         if (!silent) setLoading(true);
@@ -1284,10 +1439,10 @@ var require_stats = __commonJS({
           if (id === req.current) setLoading(false);
         });
       }, [api, range, customOk, customFrom, customTo, cfgTop, cfg]);
-      React2.useEffect(function() {
+      React.useEffect(function() {
         load(false);
       }, [load]);
-      React2.useEffect(function() {
+      React.useEffect(function() {
         if (!api || typeof api.subscribe !== "function") return void 0;
         var timer = null;
         var pending = false;
@@ -1320,33 +1475,33 @@ var require_stats = __commonJS({
         return { key, label: t["range" + (key === "all" ? "All" : key.replace("d", ""))] };
       });
       var children = [];
-      if (!data && loading) children.push(h2(ch.Skeleton, { key: "sk" }));
+      if (!data && loading) children.push(h(ch.Skeleton, { key: "sk" }));
       if (!data && !loading && err) {
-        children.push(h2(ch.Card, { key: "err", span: 12 }, h2(ch.Empty, { text: t.loadFail })));
+        children.push(h(ch.Card, { key: "err", span: 12 }, h(ch.Empty, { text: t.loadFail })));
       }
       if (data) {
         var totals = data.totals || {};
         var rates = data.rates || {};
         var b = data.breakdowns || {};
-        children.push(h2(
+        children.push(h(
           "div",
           { key: "kpi", className: "wbt-kpis" },
-          h2(ch.Kpi, { label: t.total, value: totals.total, hint: t.current, lang }),
-          h2(ch.Kpi, { label: t.active, value: totals.active, hint: t.ofTotal + " " + ch.pct(totals.total ? totals.active / totals.total : 0), lang }),
-          h2(ch.Kpi, { label: t.overdue, value: totals.overdue, hint: t.ofActive + " " + ch.pct(rates.overdue), tone: totals.overdue > 0 ? "danger" : "", lang }),
-          h2(ch.Kpi, { label: t.completion, value: ch.pct(rates.completion), hint: totals.done + " / " + totals.total, tone: "ok", lang }),
-          h2(ch.Kpi, { label: t.dueToday, value: totals.dueToday, hint: t.current, tone: totals.dueToday > 0 ? "warn" : "", lang }),
-          h2(ch.Kpi, { label: t.dueNext7, value: totals.dueNext7, hint: t.current, lang }),
-          h2(ch.Kpi, { label: t.newInRange, value: totals.newInRange, hint: t.inRange, lang }),
-          h2(ch.Kpi, { label: t.avgCycle, value: rates.avgCycleDays === null || rates.avgCycleDays === void 0 ? "\u2014" : rates.avgCycleDays, unit: t.days, hint: t.inRange, lang })
+          h(ch.Kpi, { label: t.total, value: totals.total, hint: t.current, lang }),
+          h(ch.Kpi, { label: t.active, value: totals.active, hint: t.ofTotal + " " + ch.pct(totals.total ? totals.active / totals.total : 0), lang }),
+          h(ch.Kpi, { label: t.overdue, value: totals.overdue, hint: t.ofActive + " " + ch.pct(rates.overdue), tone: totals.overdue > 0 ? "danger" : "", lang }),
+          h(ch.Kpi, { label: t.completion, value: ch.pct(rates.completion), hint: totals.done + " / " + totals.total, tone: "ok", lang }),
+          h(ch.Kpi, { label: t.dueToday, value: totals.dueToday, hint: t.current, tone: totals.dueToday > 0 ? "warn" : "", lang }),
+          h(ch.Kpi, { label: t.dueNext7, value: totals.dueNext7, hint: t.current, lang }),
+          h(ch.Kpi, { label: t.newInRange, value: totals.newInRange, hint: t.inRange, lang }),
+          h(ch.Kpi, { label: t.avgCycle, value: rates.avgCycleDays === null || rates.avgCycleDays === void 0 ? "\u2014" : rates.avgCycleDays, unit: t.days, hint: t.inRange, lang })
         ));
         if (totals.total === 0) {
-          children.push(h2(ch.Card, { key: "empty", span: 12 }, h2(ch.Empty, { text: t.noData })));
+          children.push(h(ch.Card, { key: "empty", span: 12 }, h(ch.Empty, { text: t.noData })));
         } else {
-          children.push(h2(
+          children.push(h(
             ch.Card,
             { key: "trend", span: 8, title: t.trend, note: t.trendNote },
-            h2(ch.Trend, {
+            h(ch.Trend, {
               data: data.trend || [],
               lang,
               series: [
@@ -1356,10 +1511,10 @@ var require_stats = __commonJS({
               ]
             })
           ));
-          children.push(h2(
+          children.push(h(
             ch.Card,
             { key: "status", span: 4, title: t.status, note: t.statusNote },
-            h2(ch.Donut, {
+            h(ch.Donut, {
               data: (b.status || []).map(function(s, i) {
                 return { key: s.key, label: s.label, count: s.count, color: i === 1 ? "var(--dsw-alias-label-tertiary,#8f959e)" : ch.colors[i] };
               }),
@@ -1371,25 +1526,25 @@ var require_stats = __commonJS({
               }).join("\uFF0C")
             })
           ));
-          children.push(h2(
+          children.push(h(
             ch.Card,
             { key: "priority", span: 6, title: t.priority, note: t.priorityNote },
-            h2(ch.Histogram, { data: visibleBins(b.priority), lang, color: ch.colors[0] })
+            h(ch.Histogram, { data: visibleBins(b.priority), lang, color: ch.colors[0] })
           ));
-          children.push(h2(
+          children.push(h(
             ch.Card,
             { key: "difficulty", span: 6, title: t.difficulty, note: t.difficultyNote },
-            h2(ch.Histogram, { data: visibleBins(b.difficulty), lang, color: ch.colors[4] })
+            h(ch.Histogram, { data: visibleBins(b.difficulty), lang, color: ch.colors[4] })
           ));
-          children.push(h2(
+          children.push(h(
             ch.Card,
             { key: "aging", span: 6, title: t.aging, note: t.agingNote },
-            h2(ch.Histogram, { data: data.aging || [], lang, color: ch.colors[2] })
+            h(ch.Histogram, { data: data.aging || [], lang, color: ch.colors[2] })
           ));
-          children.push(h2(
+          children.push(h(
             ch.Card,
             { key: "overdue", span: 6, title: t.overdueList, note: t.overdueNote },
-            h2(ch.DataTable, {
+            h(ch.DataTable, {
               rows: data.lists && data.lists.overdue || [],
               lang,
               empty: t.noOverdue,
@@ -1401,10 +1556,10 @@ var require_stats = __commonJS({
               ]
             })
           ));
-          children.push(h2(
+          children.push(h(
             ch.Card,
             { key: "tables", span: 6, title: t.tables, note: t.tablesNote },
-            h2(ch.DataTable, {
+            h(ch.DataTable, {
               rows: data.rankings && data.rankings.tables || [],
               lang,
               columns: [
@@ -1418,10 +1573,10 @@ var require_stats = __commonJS({
               ]
             })
           ));
-          children.push(h2(
+          children.push(h(
             ch.Card,
             { key: "groups", span: 6, title: t.groups, note: t.groupsNote },
-            h2(ch.DataTable, {
+            h(ch.DataTable, {
               rows: data.rankings && data.rankings.groups || [],
               lang,
               columns: [
@@ -1441,18 +1596,18 @@ var require_stats = __commonJS({
             { key: "date", label: t.colDate },
             { key: "daysAgo", label: t.colAgo, num: true }
           ];
-          children.push(h2(
+          children.push(h(
             ch.Card,
             { key: "recentDone", span: 6, title: t.recentDone, note: t.recentDoneNote },
-            h2(ch.DataTable, { rows: data.lists && data.lists.recentDone || [], lang, empty: t.noRecentDone, columns: recentCols })
+            h(ch.DataTable, { rows: data.lists && data.lists.recentDone || [], lang, empty: t.noRecentDone, columns: recentCols })
           ));
-          children.push(h2(
+          children.push(h(
             ch.Card,
             { key: "recentShutdown", span: 6, title: t.recentShutdown, note: t.recentShutdownNote },
-            h2(ch.DataTable, { rows: data.lists && data.lists.recentShutdown || [], lang, empty: t.noRecentShutdown, columns: recentCols })
+            h(ch.DataTable, { rows: data.lists && data.lists.recentShutdown || [], lang, empty: t.noRecentShutdown, columns: recentCols })
           ));
         }
-        children.push(h2(ch.Warnings, { key: "warn", items: data.warnings || [] }));
+        children.push(h(ch.Warnings, { key: "warn", items: data.warnings || [] }));
       }
       children = children.filter(function(node) {
         var k = node && node.key;
@@ -1460,10 +1615,10 @@ var require_stats = __commonJS({
         if (k === "kpi") return cfg["stats.showKpi"] !== false;
         return sectionOn(k);
       });
-      return h2(
+      return h(
         "div",
         { className: "wbt-stats" },
-        h2(ch.RangeSwitch, {
+        h(ch.RangeSwitch, {
           options,
           value: customFrom || customTo ? null : range,
           onChange: function(key) {
@@ -1491,10 +1646,10 @@ var require_stats = __commonJS({
           refreshLabel: t.refresh,
           timeLabel: t.asOf
         }),
-        err && data ? h2(ch.ErrorBar, { message: err, onRetry: function() {
+        err && data ? h(ch.ErrorBar, { message: err, onRetry: function() {
           load(false);
         }, retryLabel: t.retry }) : null,
-        h2("div", { className: "wbt-sgrid" }, children)
+        h("div", { className: "wbt-sgrid" }, children)
       );
     }
     module2.exports = { TasksStatsView };
@@ -1505,8 +1660,8 @@ var require_stats = __commonJS({
 var require_data = __commonJS({
   "packages/addons/tasks/client/data.cjs"(exports2, module2) {
     "use strict";
-    var React2 = require("react");
-    var h2 = React2.createElement;
+    var React = require("react");
+    var h = React.createElement;
     var configView = require_config();
     var DOMAIN = "tasks";
     var PREFIX = "wbt";
@@ -1769,48 +1924,48 @@ var require_data = __commonJS({
       var t = COPY[lang];
       var cfgWrap = configView.useConfig(api, CFG_FALLBACK);
       var cfg = cfgWrap.values;
-      var tablesS = React2.useState(null);
+      var tablesS = React.useState(null);
       var tables = tablesS[0], setTables = tablesS[1];
-      var activeS = React2.useState("");
+      var activeS = React.useState("");
       var active = activeS[0], setActive = activeS[1];
-      var dataS = React2.useState(null);
+      var dataS = React.useState(null);
       var data = dataS[0], setData = dataS[1];
-      var loadingS = React2.useState(false);
+      var loadingS = React.useState(false);
       var loadingRows = loadingS[0], setLoadingRows = loadingS[1];
-      var loadingTablesS = React2.useState(true);
+      var loadingTablesS = React.useState(true);
       var loadingTables = loadingTablesS[0], setLoadingTables = loadingTablesS[1];
-      var errorS = React2.useState("");
+      var errorS = React.useState("");
       var error = errorS[0], setError = errorS[1];
-      var pageS = React2.useState(1);
+      var pageS = React.useState(1);
       var page = pageS[0], setPage = pageS[1];
-      var sizeS = React2.useState(0);
+      var sizeS = React.useState(0);
       var pageSize = sizeS[0], setPageSize = sizeS[1];
-      var sortS = React2.useState("");
+      var sortS = React.useState("");
       var sort = sortS[0], setSort = sortS[1];
-      var orderS = React2.useState("desc");
+      var orderS = React.useState("desc");
       var order = orderS[0], setOrder = orderS[1];
-      var searchDraftS = React2.useState("");
+      var searchDraftS = React.useState("");
       var searchDraft = searchDraftS[0], setSearchDraft = searchDraftS[1];
-      var searchS = React2.useState("");
+      var searchS = React.useState("");
       var search = searchS[0], setSearch = searchS[1];
-      var filterDraftS = React2.useState({});
+      var filterDraftS = React.useState({});
       var filterDraft = filterDraftS[0], setFilterDraft = filterDraftS[1];
-      var filtersS = React2.useState({});
+      var filtersS = React.useState({});
       var filters = filtersS[0], setFilters = filtersS[1];
-      var includeDeletedS = React2.useState(null);
+      var includeDeletedS = React.useState(null);
       var includeDeletedRaw = includeDeletedS[0], setIncludeDeleted = includeDeletedS[1];
-      var showSystemS = React2.useState(null);
+      var showSystemS = React.useState(null);
       var showSystemRaw = showSystemS[0], setShowSystem = showSystemS[1];
-      var drawerS = React2.useState(null);
+      var drawerS = React.useState(null);
       var drawer = drawerS[0], setDrawer = drawerS[1];
-      var toastS = React2.useState("");
+      var toastS = React.useState("");
       var toast = toastS[0], setToast = toastS[1];
       var filtersKey = JSON.stringify(filters);
-      var reqRef = React2.useRef(0);
-      var toastTimer = React2.useRef(null);
-      var indexS = React2.useState(null);
+      var reqRef = React.useRef(0);
+      var toastTimer = React.useRef(null);
+      var indexS = React.useState(null);
       var index = indexS[0], setIndex = indexS[1];
-      var indexBusyS = React2.useState(false);
+      var indexBusyS = React.useState(false);
       var indexBusy = indexBusyS[0], setIndexBusy = indexBusyS[1];
       var cfgSize = Number(cfg["data.pageSize"]) || 50;
       var size = pageSize || (PAGE_SIZES.indexOf(cfgSize) >= 0 ? cfgSize : 50);
@@ -1838,14 +1993,14 @@ var require_data = __commonJS({
           setLoadingTables(false);
         });
       }
-      React2.useEffect(function() {
+      React.useEffect(function() {
         injectCss();
         loadTables();
         return function() {
           if (toastTimer.current) clearTimeout(toastTimer.current);
         };
       }, []);
-      React2.useEffect(function() {
+      React.useEffect(function() {
         if (!active) return;
         setPage(1);
         setSort("");
@@ -1855,7 +2010,7 @@ var require_data = __commonJS({
         setFilterDraft({});
         setFilters({});
       }, [active]);
-      React2.useEffect(function() {
+      React.useEffect(function() {
         if (searchDraft === search) return void 0;
         var timer = setTimeout(function() {
           setSearch(searchDraft);
@@ -1865,7 +2020,7 @@ var require_data = __commonJS({
           clearTimeout(timer);
         };
       }, [searchDraft]);
-      React2.useEffect(function() {
+      React.useEffect(function() {
         if (JSON.stringify(filterDraft) === JSON.stringify(filters)) return void 0;
         var timer = setTimeout(function() {
           setFilters(filterDraft);
@@ -1875,7 +2030,7 @@ var require_data = __commonJS({
           clearTimeout(timer);
         };
       }, [filterDraft]);
-      React2.useEffect(function() {
+      React.useEffect(function() {
         if (!active || !cfgWrap.ready) return void 0;
         var req = ++reqRef.current;
         setLoadingRows(true);
@@ -1899,7 +2054,7 @@ var require_data = __commonJS({
         });
         return void 0;
       }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey]);
-      React2.useEffect(function() {
+      React.useEffect(function() {
         if (!drawer) return void 0;
         function onKey(e) {
           if (e.key === "Escape") setDrawer(null);
@@ -1948,19 +2103,19 @@ var require_data = __commonJS({
         var totalRows = rows.reduce(function(n, r) {
           return n + (r.stats && Number(r.stats.rows) || 0);
         }, 0);
-        return h2(
+        return h(
           "div",
           { className: P + "-idx" },
-          h2(
+          h(
             "div",
             { className: P + "-head" },
-            h2(
+            h(
               "div",
               { className: P + "-headmain" },
-              h2("h2", null, t.index, h2("span", { className: P + "-code" }, "index")),
-              h2("div", { className: P + "-idxsub" }, t.indexSub)
+              h("h2", null, t.index, h("span", { className: P + "-code" }, "index")),
+              h("div", { className: P + "-idxsub" }, t.indexSub)
             ),
-            h2("button", {
+            h("button", {
               type: "button",
               className: P + "-btn",
               "aria-busy": indexBusy ? "true" : "false",
@@ -1969,54 +2124,54 @@ var require_data = __commonJS({
               }
             }, t.refresh)
           ),
-          h2(
+          h(
             "div",
             { className: P + "-idxsum" },
-            h2("span", null, t.idxTables, " ", h2("b", null, String(rows.length))),
-            h2("span", null, t.idxRows, " ", h2("b", null, String(totalRows)))
+            h("span", null, t.idxTables, " ", h("b", null, String(rows.length))),
+            h("span", null, t.idxRows, " ", h("b", null, String(totalRows)))
           ),
-          indexBusy && !rows.length ? h2("div", { className: P + "-empty" }, t.loading) : !rows.length ? h2("div", { className: P + "-empty" }, t.idxEmpty) : h2(
+          indexBusy && !rows.length ? h("div", { className: P + "-empty" }, t.loading) : !rows.length ? h("div", { className: P + "-empty" }, t.idxEmpty) : h(
             "div",
             { className: P + "-tablewrap" },
-            h2(
+            h(
               "table",
               { className: P + "-table" },
-              h2("thead", null, h2(
+              h("thead", null, h(
                 "tr",
                 null,
-                h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxDomain)),
-                h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxTable)),
-                h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxRows)),
-                h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxCols)),
-                h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxKey)),
-                h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxIndexes)),
-                h2("th", { scope: "col" }, h2("span", { className: P + "-thbtn" }, t.idxLastWrite))
+                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxDomain)),
+                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxTable)),
+                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxRows)),
+                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxCols)),
+                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxKey)),
+                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxIndexes)),
+                h("th", { scope: "col" }, h("span", { className: P + "-thbtn" }, t.idxLastWrite))
               )),
-              h2("tbody", null, rows.map(function(row) {
+              h("tbody", null, rows.map(function(row) {
                 var st = row.stats || {};
                 var pk = (st.primaryKey || []).join(", ");
                 var indexes = st.indexes || [];
-                return h2(
+                return h(
                   "tr",
                   { className: P + "-tr", key: row.domain.id + "." + row.table.name },
-                  h2("td", { className: P + "-cell" }, domainLabel(row.domain)),
-                  h2(
+                  h("td", { className: P + "-cell" }, domainLabel(row.domain)),
+                  h(
                     "td",
                     { className: P + "-cell" },
-                    h2("div", { className: P + "-idxname" }, tableLabel(row.table)),
-                    h2("div", { className: P + "-sidetable" }, row.table.name)
+                    h("div", { className: P + "-idxname" }, tableLabel(row.table)),
+                    h("div", { className: P + "-sidetable" }, row.table.name)
                   ),
-                  h2("td", { className: P + "-cell num" }, String(st.rows === void 0 ? row.table.count : st.rows)),
-                  h2("td", { className: P + "-cell num" }, String(st.columnCount || (row.table.columns || []).length)),
-                  h2("td", { className: P + "-cell" }, pk ? h2("span", { className: P + "-idxchip u" }, pk) : h2("span", { className: P + "-idxnone" }, t.idxNone)),
-                  h2("td", { className: P + "-cell" }, h2("div", { className: P + "-idxtags" }, indexes.length ? indexes.map(function(ix) {
-                    return h2("span", {
+                  h("td", { className: P + "-cell num" }, String(st.rows === void 0 ? row.table.count : st.rows)),
+                  h("td", { className: P + "-cell num" }, String(st.columnCount || (row.table.columns || []).length)),
+                  h("td", { className: P + "-cell" }, pk ? h("span", { className: P + "-idxchip u" }, pk) : h("span", { className: P + "-idxnone" }, t.idxNone)),
+                  h("td", { className: P + "-cell" }, h("div", { className: P + "-idxtags" }, indexes.length ? indexes.map(function(ix) {
+                    return h("span", {
                       key: ix.name,
                       title: ix.name + " (" + (ix.columns || []).join(", ") + ")",
                       className: P + "-idxchip" + (ix.unique ? " u" : "")
                     }, (ix.columns || []).join(",") || ix.name);
-                  }) : h2("span", { className: P + "-idxnone" }, t.idxNone))),
-                  h2("td", { className: P + "-cell mono" }, st.lastWrite ? timeText(st.lastWrite.at) : h2("span", { className: P + "-idxnone" }, t.idxNone))
+                  }) : h("span", { className: P + "-idxnone" }, t.idxNone))),
+                  h("td", { className: P + "-cell mono" }, st.lastWrite ? timeText(st.lastWrite.at) : h("span", { className: P + "-idxnone" }, t.idxNone))
                 );
               }))
             )
@@ -2096,10 +2251,10 @@ var require_data = __commonJS({
         var value = row[col.name];
         var text = cellText(col, value);
         var content;
-        if (text === null) content = h2("span", { className: "v" }, t.nullText);
-        else if (text === "") content = h2("span", { className: "v" }, '""');
-        else content = h2("span", { className: "v" }, text);
-        return h2("td", {
+        if (text === null) content = h("span", { className: "v" }, t.nullText);
+        else if (text === "") content = h("span", { className: "v" }, '""');
+        else content = h("span", { className: "v" }, text);
+        return h("td", {
           key: col.name,
           className: cellClass(col, value),
           title: cellTitle(col, value),
@@ -2118,13 +2273,13 @@ var require_data = __commonJS({
       }
       function filterCell(col) {
         var val = filterDraft[col.name] === void 0 ? "" : filterDraft[col.name];
-        return h2(
+        return h(
           "th",
           { key: col.name, scope: "col", className: P + "-fth" },
-          h2(
+          h(
             "span",
             { className: P + "-fcell" },
-            h2("input", {
+            h("input", {
               className: P + "-finput",
               type: "search",
               value: val,
@@ -2141,7 +2296,7 @@ var require_data = __commonJS({
                 });
               }
             }),
-            val ? h2("button", {
+            val ? h("button", {
               type: "button",
               className: P + "-fclear",
               title: t.filterClear,
@@ -2159,45 +2314,45 @@ var require_data = __commonJS({
       }
       function renderRows() {
         if (loadingRows && !data) {
-          return h2(
+          return h(
             "div",
             { className: P + "-skwrap", "aria-busy": "true" },
-            h2("span", { className: P + "-sr" }, t.loading),
+            h("span", { className: P + "-sr" }, t.loading),
             [0, 1, 2, 3, 4, 5, 6, 7].map(function(i2) {
-              return h2("div", { key: i2, className: P + "-sk" });
+              return h("div", { key: i2, className: P + "-sk" });
             })
           );
         }
         if (error) {
-          return h2(
+          return h(
             "div",
             { className: P + "-err", role: "alert" },
-            h2("span", null, t.queryFail + error),
-            h2("button", { type: "button", className: P + "-btn", onClick: loadTables }, t.retry)
+            h("span", null, t.queryFail + error),
+            h("button", { type: "button", className: P + "-btn", onClick: loadTables }, t.retry)
           );
         }
-        if (!data) return h2("div", { className: P + "-empty" }, t.empty);
+        if (!data) return h("div", { className: P + "-empty" }, t.empty);
         var cols = visibleColumns();
         var rows = data.rows || [];
         var narrowing = !!search || activeFilterCount() > 0;
-        return h2(
+        return h(
           "div",
           { className: P + "-tablewrap" },
-          h2(
+          h(
             "table",
             { className: P + "-table" },
-            h2(
+            h(
               "thead",
               null,
-              h2(
+              h(
                 "tr",
                 null,
-                h2("th", { className: P + "-rownum", scope: "col" }, "#"),
+                h("th", { className: P + "-rownum", scope: "col" }, "#"),
                 cols.map(function(col) {
-                  return h2(
+                  return h(
                     "th",
                     { key: col.name, scope: "col", "aria-sort": ariaSort(col.name) },
-                    h2(
+                    h(
                       "button",
                       {
                         type: "button",
@@ -2207,55 +2362,55 @@ var require_data = __commonJS({
                           toggleSort(col.name);
                         }
                       },
-                      h2("span", null, colLabel(col)),
-                      h2("span", { className: P + "-coltype" }, String(col.type || "").toLowerCase()),
-                      sort === col.name ? h2("span", { className: P + "-sortmark", "aria-hidden": "true" }, order === "asc" ? "\u25B2" : "\u25BC") : null
+                      h("span", null, colLabel(col)),
+                      h("span", { className: P + "-coltype" }, String(col.type || "").toLowerCase()),
+                      sort === col.name ? h("span", { className: P + "-sortmark", "aria-hidden": "true" }, order === "asc" ? "\u25B2" : "\u25BC") : null
                     )
                   );
                 })
               ),
-              h2(
+              h(
                 "tr",
                 { className: P + "-frow" },
-                h2("th", { className: P + "-rownum", scope: "col" }, ""),
+                h("th", { className: P + "-rownum", scope: "col" }, ""),
                 cols.map(filterCell)
               )
             ),
-            h2("tbody", null, rows.length ? rows.map(function(row, idx) {
+            h("tbody", null, rows.length ? rows.map(function(row, idx) {
               row.__i = idx;
               var deleted = row.deleted_at !== null && row.deleted_at !== void 0;
-              return h2(
+              return h(
                 "tr",
                 { key: row.id || idx, className: P + "-tr" + (deleted ? " deleted" : "") },
-                h2("td", { className: P + "-rownum" }, (data.page - 1) * data.pageSize + idx + 1),
+                h("td", { className: P + "-rownum" }, (data.page - 1) * data.pageSize + idx + 1),
                 cols.map(function(col) {
                   var cell = renderCell(row, col);
                   if (deleted && col.name === "id") {
-                    return React2.cloneElement(cell, { key: col.name }, cell.props.children, h2("span", { className: P + "-delbadge" }, t.deleted));
+                    return React.cloneElement(cell, { key: col.name }, cell.props.children, h("span", { className: P + "-delbadge" }, t.deleted));
                   }
                   return cell;
                 })
               );
-            }) : h2("tr", null, h2("td", { className: P + "-emptycell", colSpan: cols.length + 1 }, narrowing ? t.noRows : t.empty)))
+            }) : h("tr", null, h("td", { className: P + "-emptycell", colSpan: cols.length + 1 }, narrowing ? t.noRows : t.empty)))
           )
         );
       }
       function renderFoot() {
         var pages = data ? data.pages : 1;
         var total = data ? data.total : 0;
-        return h2(
+        return h(
           "div",
           { className: P + "-foot" },
-          h2("span", null, fmt(t.total, { n: total })),
-          h2("span", { className: P + "-grow" }),
-          h2("button", { type: "button", className: P + "-btn", disabled: !data || page <= 1, onClick: function() {
+          h("span", null, fmt(t.total, { n: total })),
+          h("span", { className: P + "-grow" }),
+          h("button", { type: "button", className: P + "-btn", disabled: !data || page <= 1, onClick: function() {
             setPage(Math.max(1, page - 1));
           } }, "\u2039 " + t.prev),
-          h2("span", { className: P + "-pageinfo" }, fmt(t.pageInfo, { page: data ? data.page : 1, pages })),
-          h2("button", { type: "button", className: P + "-btn", disabled: !data || page >= pages, onClick: function() {
+          h("span", { className: P + "-pageinfo" }, fmt(t.pageInfo, { page: data ? data.page : 1, pages })),
+          h("button", { type: "button", className: P + "-btn", disabled: !data || page >= pages, onClick: function() {
             setPage(Math.min(pages, page + 1));
           } }, t.next + " \u203A"),
-          h2("input", {
+          h("input", {
             className: P + "-jump",
             type: "number",
             min: 1,
@@ -2268,27 +2423,27 @@ var require_data = __commonJS({
               }
             }
           }),
-          h2("span", null, fmt(t.queryTime, { n: data ? data.queryMs : 0 }))
+          h("span", null, fmt(t.queryTime, { n: data ? data.queryMs : 0 }))
         );
       }
       if (!tables && loadingTables) {
-        return h2("div", { className: P + "-skwrap", "aria-busy": "true" }, h2("span", { className: P + "-sr" }, t.loading), [0, 1, 2, 3].map(function(i2) {
-          return h2("div", { key: i2, className: P + "-sk" });
+        return h("div", { className: P + "-skwrap", "aria-busy": "true" }, h("span", { className: P + "-sr" }, t.loading), [0, 1, 2, 3].map(function(i2) {
+          return h("div", { key: i2, className: P + "-sk" });
         }));
       }
       if (!tables) {
-        return h2("div", { className: P + "-err", role: "alert" }, h2("span", null, t.loadFail), h2("button", { type: "button", className: P + "-btn", onClick: loadTables }, t.retry));
+        return h("div", { className: P + "-err", role: "alert" }, h("span", null, t.loadFail), h("button", { type: "button", className: P + "-btn", onClick: loadTables }, t.retry));
       }
-      if (!tables.length) return h2("div", { className: P + "-empty" }, t.emptyTable);
-      return h2(
+      if (!tables.length) return h("div", { className: P + "-empty" }, t.emptyTable);
+      return h(
         "div",
         { className: P },
-        h2(
+        h(
           "div",
           { className: P + "-side" },
-          h2("div", { className: P + "-sidetitle" }, h2("span", null, t.tables), h2("span", null, String(tables.length))),
+          h("div", { className: P + "-sidetitle" }, h("span", null, t.tables), h("span", null, String(tables.length))),
           tables.map(function(tb) {
-            return h2(
+            return h(
               "button",
               {
                 key: tb.name,
@@ -2299,17 +2454,17 @@ var require_data = __commonJS({
                   setActive(tb.name);
                 }
               },
-              h2(
+              h(
                 "span",
                 { className: P + "-stabname" },
-                h2("span", null, tableLabel(tb)),
-                h2("span", { className: P + "-sidecount" }, String(tb.count))
+                h("span", null, tableLabel(tb)),
+                h("span", { className: P + "-sidecount" }, String(tb.count))
               ),
-              h2("span", { className: P + "-sidetable" }, tb.name),
-              tb.deletedCount ? h2("span", { className: P + "-sidetable" }, tb.deletedCount + " " + t.deleted) : null
+              h("span", { className: P + "-sidetable" }, tb.name),
+              tb.deletedCount ? h("span", { className: P + "-sidetable" }, tb.deletedCount + " " + t.deleted) : null
             );
           }),
-          h2(
+          h(
             "button",
             {
               type: "button",
@@ -2317,27 +2472,27 @@ var require_data = __commonJS({
               "aria-pressed": !!index,
               onClick: toggleIndex
             },
-            h2(
+            h(
               "span",
               { className: P + "-stabname" },
-              h2("span", null, t.index),
-              h2("span", { className: P + "-sidecount" }, index ? String(index.length) : "")
+              h("span", null, t.index),
+              h("span", { className: P + "-sidecount" }, index ? String(index.length) : "")
             ),
-            h2("span", { className: P + "-sidetable" }, "index")
+            h("span", { className: P + "-sidetable" }, "index")
           )
         ),
-        h2(
+        h(
           "div",
           { className: P + "-main" },
           index ? renderIndex() : [
-            h2(
+            h(
               "div",
               { className: P + "-head" },
-              h2(
+              h(
                 "div",
                 { className: P + "-headmain" },
-                h2("h2", null, tableLabel(current), h2("span", { className: P + "-code" }, active)),
-                h2(
+                h("h2", null, tableLabel(current), h("span", { className: P + "-code" }, active)),
+                h(
                   "div",
                   { className: P + "-sub" },
                   current ? fmt(t.rowCount, { n: current.count }) : "",
@@ -2345,7 +2500,7 @@ var require_data = __commonJS({
                   " \xB7 " + t.subtitle
                 )
               ),
-              h2("button", {
+              h("button", {
                 type: "button",
                 className: P + "-btn",
                 "aria-busy": loadingRows ? "true" : "false",
@@ -2357,13 +2512,13 @@ var require_data = __commonJS({
                 }
               }, t.refresh)
             ),
-            h2(
+            h(
               "div",
               { className: P + "-toolbar" },
-              h2(
+              h(
                 "div",
                 { className: P + "-search" },
-                h2("input", {
+                h("input", {
                   type: "search",
                   value: searchDraft,
                   placeholder: t.search,
@@ -2373,31 +2528,31 @@ var require_data = __commonJS({
                   }
                 })
               ),
-              h2(
+              h(
                 "label",
                 { className: P + "-switch" },
-                h2("input", { type: "checkbox", checked: includeDeleted, onChange: function(e) {
+                h("input", { type: "checkbox", checked: includeDeleted, onChange: function(e) {
                   setIncludeDeleted(e.target.checked);
                   setPage(1);
                 } }),
-                h2("span", { className: P + "-track" }),
-                h2("span", null, t.includeDeleted)
+                h("span", { className: P + "-track" }),
+                h("span", null, t.includeDeleted)
               ),
-              h2(
+              h(
                 "label",
                 { className: P + "-switch" },
-                h2("input", { type: "checkbox", checked: showSystem, onChange: function(e) {
+                h("input", { type: "checkbox", checked: showSystem, onChange: function(e) {
                   setShowSystem(e.target.checked);
                 } }),
-                h2("span", { className: P + "-track" }),
-                h2("span", null, t.showSystem)
+                h("span", { className: P + "-track" }),
+                h("span", null, t.showSystem)
               ),
-              h2("span", { className: P + "-grow" }),
-              h2(
+              h("span", { className: P + "-grow" }),
+              h(
                 "label",
                 { style: { display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11.5px", color: "var(--cfg-muted)" } },
-                h2("span", null, t.pageSize),
-                h2("select", {
+                h("span", null, t.pageSize),
+                h("select", {
                   className: P + "-select",
                   value: size,
                   onChange: function(e) {
@@ -2405,7 +2560,7 @@ var require_data = __commonJS({
                     setPage(1);
                   }
                 }, PAGE_SIZES.map(function(n) {
-                  return h2("option", { key: n, value: n }, String(n));
+                  return h("option", { key: n, value: n }, String(n));
                 }))
               )
             ),
@@ -2413,30 +2568,30 @@ var require_data = __commonJS({
             renderFoot()
           ]
         ),
-        drawer ? h2(
+        drawer ? h(
           "div",
           null,
-          h2("div", { className: P + "-mask", onClick: function() {
+          h("div", { className: P + "-mask", onClick: function() {
             setDrawer(null);
           } }),
-          h2(
+          h(
             "aside",
             { className: P + "-drawer", role: "dialog", "aria-modal": "true", "aria-label": drawer.column },
-            h2("h3", null, fmt(t.drawerTitle, { column: drawer.column, row: drawer.row }), h2("span", { className: P + "-code" }, drawer.name)),
-            h2("pre", null, drawerText(drawer.value)),
-            h2(
+            h("h3", null, fmt(t.drawerTitle, { column: drawer.column, row: drawer.row }), h("span", { className: P + "-code" }, drawer.name)),
+            h("pre", null, drawerText(drawer.value)),
+            h(
               "div",
               { className: P + "-drawerfoot" },
-              h2("button", { type: "button", className: P + "-btn", onClick: function() {
+              h("button", { type: "button", className: P + "-btn", onClick: function() {
                 copyCell(drawer.value);
               } }, t.copy),
-              h2("button", { type: "button", className: P + "-btn", onClick: function() {
+              h("button", { type: "button", className: P + "-btn", onClick: function() {
                 setDrawer(null);
               } }, t.close)
             )
           )
         ) : null,
-        toast ? h2("div", { className: P + "-toast", role: "status" }, toast) : null
+        toast ? h("div", { className: P + "-toast", role: "status" }, toast) : null
       );
     }
     function drawerText(value) {
@@ -3414,8 +3569,6 @@ var init_refresh_cw = __esm({
 });
 
 // packages/addons/tasks/client/client.src.cjs
-var React = require("react");
-var h = React.createElement;
 (function() {
   "use strict";
   var host = window.__WB_HOST__;
@@ -3425,8 +3578,9 @@ var h = React.createElement;
     } };
     return;
   }
-  var React2 = require("react");
-  var h2 = React2.createElement;
+  var React = require("react");
+  var h = React.createElement;
+  var TagFilter = require_tagfilter();
   var statsView = require_stats();
   var configView = require_config();
   var dataView = require_data();
@@ -3479,6 +3633,12 @@ var h = React.createElement;
       tagFilter: "\u6807\u7B7E\u7B5B\u9009",
       allTags: "\u5168\u90E8\u6807\u7B7E",
       noTags: "\u6682\u65E0\u6807\u7B7E",
+      tagSearchPlaceholder: "\u641C\u7D22\u6807\u7B7E\u540D\u79F0",
+      tagNoMatch: "\u6CA1\u6709\u5339\u914D\u7684\u6807\u7B7E",
+      loadingMore: "\u52A0\u8F7D\u4E2D\u2026",
+      noMore: "\u6CA1\u6709\u66F4\u591A",
+      tagSelected: "\u5DF2\u9009",
+      tagRemove: "\u79FB\u9664",
       untagged: "\u672A\u6253\u6807\u7B7E",
       publish: "\u53D1\u5E03",
       target: "\u8BA1\u5212\u5B8C\u6210",
@@ -3596,6 +3756,12 @@ var h = React.createElement;
       tagFilter: "Filter by tag",
       allTags: "All tags",
       noTags: "No tags",
+      tagSearchPlaceholder: "Search tag name",
+      tagNoMatch: "No matching tag",
+      loadingMore: "Loading\u2026",
+      noMore: "No more",
+      tagSelected: "Selected",
+      tagRemove: "Remove",
       untagged: "Untagged",
       publish: "Published",
       target: "Target",
@@ -3717,13 +3883,13 @@ var h = React.createElement;
   function Icon2(props) {
     var C = ICONS[props.name];
     if (!C) return null;
-    return h2(C, { size: props.size || 14, strokeWidth: 2, "aria-hidden": "true", className: "wbt-svg" });
+    return h(C, { size: props.size || 14, strokeWidth: 2, "aria-hidden": "true", className: "wbt-svg" });
   }
   function Countdown(props) {
-    var s = React2.useState(Date.now());
+    var s = React.useState(Date.now());
     var now = s[0];
     var setNow = s[1];
-    React2.useEffect(function() {
+    React.useEffect(function() {
       var id = setInterval(function() {
         setNow(Date.now());
       }, 1e3);
@@ -3738,10 +3904,10 @@ var h = React.createElement;
       return (n < 10 ? "0" : "") + n;
     };
     var text = (over ? "\u903E\u671F " : "") + pad(Math.floor(total / 3600)) + ":" + pad(Math.floor(total % 3600 / 60)) + ":" + pad(total % 60);
-    return h2("span", {
+    return h("span", {
       className: "wbt-countdown" + (over ? " overdue" : diff < 36e5 ? " soon" : ""),
       title: over ? "\u5DF2\u8D85\u8FC7\u8BA1\u5212\u5B8C\u6210\u65F6\u95F4" : "\u8DDD\u8BA1\u5212\u5B8C\u6210"
-    }, h2(Icon2, { name: "clock", size: 11 }), h2("span", { className: "wbt-cd-num" }, text));
+    }, h(Icon2, { name: "clock", size: 11 }), h("span", { className: "wbt-cd-num" }, text));
   }
   var CSS = [
     ".wbt-root{--wbt-line:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wbt-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));--wbt-bg:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));--wbt-accent:var(--dsw-alias-brand-primary,#11a89b);display:flex;flex-direction:column;gap:10px;min-height:0;color:inherit;font-size:13px}",
@@ -3810,6 +3976,16 @@ var h = React.createElement;
     ".wbt-card .wbt-metazone .wbt-meta{row-gap:2px}",
     ".wbt-tagfilter{position:relative;display:flex;align-items:center;gap:5px;min-width:0}",
     ".wbt-tagfilter .wbt-btn.on{border-color:var(--wbt-accent);color:var(--wbt-accent);background:color-mix(in oklab,var(--wbt-accent) 12%,transparent)}",
+    ".wbt-tagsearch{padding:0 0 6px}",
+    ".wbt-tagsearch .wbt-input{width:100%;box-sizing:border-box;font-size:12.5px;padding:6px 9px}",
+    ".wbt-tagsel{border-bottom:1px dashed var(--wbt-line);margin-bottom:6px;padding-bottom:5px}",
+    ".wbt-tagsel-list{display:flex;flex-wrap:wrap;gap:4px;padding:0 2px 2px}",
+    ".wbt-tagselitem{display:inline-flex;align-items:center;gap:4px;max-width:100%;border:1px solid color-mix(in oklab,var(--wbt-accent) 40%,transparent);background:color-mix(in oklab,var(--wbt-accent) 10%,transparent);color:var(--wbt-accent);border-radius:999px;padding:2px 7px;font-size:11.5px;cursor:pointer;font-family:inherit}",
+    ".wbt-tagselitem .wbt-tagnm{max-width:150px}",
+    ".wbt-tagx{opacity:.7;font-size:12px;line-height:1}",
+    ".wbt-taglist{max-height:236px;overflow:auto;overscroll-behavior:contain}",
+    ".wbt-tagmore{font-size:11px;opacity:.5;text-align:center;padding:6px 0 2px}",
+    ".wbt-card .wbt-metazone{row-gap:3px}",
     ".wbt-tagmenu{position:absolute;z-index:60;top:calc(100% + 6px);right:0;width:236px;max-height:320px;overflow:auto;padding:8px;border-radius:10px;border:1px solid var(--wbt-line);box-shadow:0 14px 34px rgba(26,20,12,.2);background-color:var(--wbt-bg);background-image:linear-gradient(var(--wbt-bg),var(--wbt-bg)),linear-gradient(var(--wbt-bg),var(--wbt-bg));-webkit-backdrop-filter:blur(24px) saturate(1.4);backdrop-filter:blur(24px) saturate(1.4)}",
     ".wbt-tagmenu-head{display:flex;align-items:center;gap:6px;font-size:11px;opacity:.6;padding:2px 4px 7px}",
     ".wbt-tagopt{display:flex;align-items:center;gap:7px;padding:6px;border-radius:6px;cursor:pointer;font-size:12.5px}",
@@ -4053,19 +4229,19 @@ var h = React.createElement;
   function PathCrumbs(props) {
     var path = props.path || [];
     if (!path.length) return null;
-    return h2("div", { className: "wbt-path" }, path.map(function(p, i) {
-      return h2(
-        React2.Fragment,
+    return h("div", { className: "wbt-path" }, path.map(function(p, i) {
+      return h(
+        React.Fragment,
         { key: p.id + "-" + i },
-        i > 0 ? h2("span", { className: "sep", children: "\u203A" }) : null,
-        h2("button", {
+        i > 0 ? h("span", { className: "sep", children: "\u203A" }) : null,
+        h("button", {
           type: "button",
           title: p.name || p.id,
           onClick: function(e) {
             e.stopPropagation();
             if (props.onPick) props.onPick(p, i, path);
           }
-        }, h2(Icon2, { name: pathIcon(p.type), size: 11 }), h2("span", null, p.name || p.id))
+        }, h(Icon2, { name: pathIcon(p.type), size: 11 }), h("span", null, p.name || p.id))
       );
     }));
   }
@@ -4076,22 +4252,22 @@ var h = React.createElement;
     var stName = props.lang === "en" ? st.en : st.zh;
     var myTags = task.tags || [];
     var isActive = String(task.status) === "0";
-    var titleState = React2.useState(null);
+    var titleState = React.useState(null);
     var editingTitle = titleState[0], setEditingTitle = titleState[1];
-    var descState = React2.useState(null);
+    var descState = React.useState(null);
     var editingDesc = descState[0], setEditingDesc = descState[1];
-    var revState = React2.useState(null);
+    var revState = React.useState(null);
     var editingReview = revState[0], setEditingReview = revState[1];
-    var titleRef = React2.useRef(null);
-    var descRef = React2.useRef(null);
-    var revRef = React2.useRef(null);
-    React2.useEffect(function() {
+    var titleRef = React.useRef(null);
+    var descRef = React.useRef(null);
+    var revRef = React.useRef(null);
+    React.useEffect(function() {
       if (editingTitle !== null && titleRef.current) titleRef.current.focus();
     }, [editingTitle]);
-    React2.useEffect(function() {
+    React.useEffect(function() {
       if (editingDesc !== null && descRef.current) descRef.current.focus();
     }, [editingDesc]);
-    React2.useEffect(function() {
+    React.useEffect(function() {
       if (editingReview !== null && revRef.current) revRef.current.focus();
     }, [editingReview]);
     function beginTitle() {
@@ -4133,7 +4309,7 @@ var h = React.createElement;
     var countdown = String(task.status) === "0" ? daysBetween(task.targetDate) : null;
     var cdTarget = String(task.status) === "0" && task.targetDate ? (/* @__PURE__ */ new Date(String(task.targetDate) + "T23:59:59")).getTime() : NaN;
     var tagNodes = myTags.map(function(tag) {
-      return h2("span", {
+      return h("span", {
         key: "tag-" + String(tag.id),
         className: "wbt-tag",
         title: tag.name,
@@ -4144,26 +4320,26 @@ var h = React.createElement;
       }, "#" + tag.name);
     });
     var meta = [];
-    if (task.publishDate) meta.push(h2("span", { key: "p" }, h2("b", null, t.publish), " ", task.publishDate));
+    if (task.publishDate) meta.push(h("span", { key: "p" }, h("b", null, t.publish), " ", task.publishDate));
     if (String(task.status) === "0" && task.targetDate) {
-      meta.push(h2(
+      meta.push(h(
         "span",
         { key: "g" },
-        h2("b", null, t.target),
+        h("b", null, t.target),
         " ",
         task.targetDate,
-        Number.isFinite(cdTarget) ? h2(Countdown, { target: cdTarget }) : null
+        Number.isFinite(cdTarget) ? h(Countdown, { target: cdTarget }) : null
       ));
     } else if (String(task.status) === "2") {
-      if (task.targetDate) meta.push(h2("span", { key: "g" }, h2("b", null, t.target), " ", task.targetDate));
-      if (task.doneDate) meta.push(h2("span", { key: "d" }, h2("b", null, t.done), " ", task.doneDate));
-      meta.push(h2("span", { key: "s", className: "wbt-stars", children: stars(task.difficulty) + " " + Number(task.difficulty || 0).toFixed(1) }));
+      if (task.targetDate) meta.push(h("span", { key: "g" }, h("b", null, t.target), " ", task.targetDate));
+      if (task.doneDate) meta.push(h("span", { key: "d" }, h("b", null, t.done), " ", task.doneDate));
+      meta.push(h("span", { key: "s", className: "wbt-stars", children: stars(task.difficulty) + " " + Number(task.difficulty || 0).toFixed(1) }));
     } else {
-      if (task.targetDate) meta.push(h2("span", { key: "g" }, h2("b", null, t.target), " ", task.targetDate));
-      if (task.shutdownDate) meta.push(h2("span", { key: "s" }, h2("b", null, t.shutdown), " ", task.shutdownDate));
+      if (task.targetDate) meta.push(h("span", { key: "g" }, h("b", null, t.target), " ", task.targetDate));
+      if (task.shutdownDate) meta.push(h("span", { key: "s" }, h("b", null, t.shutdown), " ", task.shutdownDate));
     }
     var ops = [];
-    ops.push(h2("button", {
+    ops.push(h("button", {
       key: "edit",
       className: "wbt-icon",
       title: t.edit,
@@ -4171,29 +4347,29 @@ var h = React.createElement;
       onClick: function() {
         props.onEdit(task);
       }
-    }, h2(Icon2, { name: "pencil", size: 14 })));
+    }, h(Icon2, { name: "pencil", size: 14 })));
     if (isActive) {
-      ops.push(h2("button", { key: "p+", className: "wbt-icon", title: t.priority + " +1", onClick: function() {
+      ops.push(h("button", { key: "p+", className: "wbt-icon", title: t.priority + " +1", onClick: function() {
         if (Number(task.priority) < 10) props.update(task, { type: "PRIORITY", priority: Math.max(1, Number(task.priority) + 1) });
-      } }, h2(Icon2, { name: "plus", size: 14 })));
-      ops.push(h2("button", { key: "p-", className: "wbt-icon", title: t.priority + " -1", onClick: function() {
+      } }, h(Icon2, { name: "plus", size: 14 })));
+      ops.push(h("button", { key: "p-", className: "wbt-icon", title: t.priority + " -1", onClick: function() {
         if (Number(task.priority) > 1) props.update(task, { type: "PRIORITY", priority: Number(task.priority) - 1 });
-      } }, h2(Icon2, { name: "minus", size: 14 })));
-      ops.push(h2("button", { key: "done", className: "wbt-btn wbt-act-done", onClick: function() {
+      } }, h(Icon2, { name: "minus", size: 14 })));
+      ops.push(h("button", { key: "done", className: "wbt-btn wbt-act-done", onClick: function() {
         props.onDone(task);
-      } }, h2(Icon2, { name: "check", size: 14 }), t.complete));
-      ops.push(h2("button", { key: "shut", className: "wbt-btn wbt-act-close", onClick: function() {
+      } }, h(Icon2, { name: "check", size: 14 }), t.complete));
+      ops.push(h("button", { key: "shut", className: "wbt-btn wbt-act-close", onClick: function() {
         props.update(task, { type: "STATUS", status: "1", date: today() });
-      } }, h2(Icon2, { name: "stop", size: 14 }), t.shutdownOp));
+      } }, h(Icon2, { name: "stop", size: 14 }), t.shutdownOp));
     }
-    ops.push(h2("button", { key: "restart", className: "wbt-btn ghost", onClick: function() {
+    ops.push(h("button", { key: "restart", className: "wbt-btn ghost", onClick: function() {
       props.onRestart(task);
-    } }, h2(Icon2, { name: "restart", size: 14 }), t.restart));
-    ops.push(h2("button", { key: "timeline", className: "wbt-btn ghost", onClick: function() {
+    } }, h(Icon2, { name: "restart", size: 14 }), t.restart));
+    ops.push(h("button", { key: "timeline", className: "wbt-btn ghost", onClick: function() {
       props.onTimeline(task);
-    } }, h2(Icon2, { name: "timeline", size: 14 }), t.timeline));
+    } }, h(Icon2, { name: "timeline", size: 14 }), t.timeline));
     if (props.onDelete) {
-      ops.push(h2("button", {
+      ops.push(h("button", {
         key: "del",
         className: "wbt-icon wbt-danger",
         title: t.del,
@@ -4201,9 +4377,9 @@ var h = React.createElement;
         onClick: function() {
           props.onDelete(task);
         }
-      }, h2(Icon2, { name: "trash", size: 14 })));
+      }, h(Icon2, { name: "trash", size: 14 })));
     }
-    var titleNode = editingTitle !== null ? h2("input", {
+    var titleNode = editingTitle !== null ? h("input", {
       ref: titleRef,
       className: "wbt-input",
       style: { fontSize: "13px", padding: "4px 7px" },
@@ -4219,8 +4395,8 @@ var h = React.createElement;
         if (e.key === "Escape") setEditingTitle(null);
       },
       onBlur: saveTitle
-    }) : h2("div", { className: "wbt-title", onDoubleClick: beginTitle, title: t.editTitle }, task.title);
-    var descNode = editingDesc !== null ? h2("textarea", {
+    }) : h("div", { className: "wbt-title", onDoubleClick: beginTitle, title: t.editTitle }, task.title);
+    var descNode = editingDesc !== null ? h("textarea", {
       ref: descRef,
       className: "wbt-textarea",
       rows: 2,
@@ -4236,8 +4412,8 @@ var h = React.createElement;
         }
       },
       onBlur: saveDesc
-    }) : task.description ? h2("div", { className: "wbt-desc", onDoubleClick: beginDesc }, task.description) : null;
-    var reviewNode = editingReview !== null ? h2("textarea", {
+    }) : task.description ? h("div", { className: "wbt-desc", onDoubleClick: beginDesc }, task.description) : null;
+    var reviewNode = editingReview !== null ? h("textarea", {
       ref: revRef,
       className: "wbt-textarea",
       rows: 2,
@@ -4254,34 +4430,34 @@ var h = React.createElement;
         }
       },
       onBlur: saveReview
-    }) : task.review ? h2(
+    }) : task.review ? h(
       "div",
       { className: "wbt-review", title: isDone ? "\u53CC\u51FB\u7F16\u8F91" + t.review : "", onDoubleClick: isDone ? beginReview : null },
-      h2("span", { className: "wbt-review-label" }, t.review),
+      h("span", { className: "wbt-review-label" }, t.review),
       task.review
     ) : null;
-    var line1 = h2(
+    var line1 = h(
       "div",
       { className: "wbt-line1" },
-      String(task.status) === "0" ? h2("span", { className: "wbt-prio " + pClass(task.priority), children: "P" + task.priority }) : h2("span", { className: "wbt-prio low", title: t.priority + " 0", children: "\u2014" }),
-      h2("span", { className: "wbt-badge " + st.cls, children: stName }),
+      String(task.status) === "0" ? h("span", { className: "wbt-prio " + pClass(task.priority), children: "P" + task.priority }) : h("span", { className: "wbt-prio low", title: t.priority + " 0", children: "\u2014" }),
+      h("span", { className: "wbt-badge " + st.cls, children: stName }),
       titleNode
     );
-    var opsNode = h2("div", { className: cx("wbt-ops", props.card && "wbt-ops-block"), key: "ops" }, ops);
-    var tagBlock = tagNodes.length ? h2("div", { className: "wbt-tags", key: "tags" }, tagNodes) : null;
-    var metaBlock = meta.length ? h2("div", { className: "wbt-foot", key: "meta" }, h2("div", { className: "wbt-meta" }, meta)) : null;
-    var pathBlock = task.path && task.path.length ? h2("div", { className: "wbt-taskpath", key: "path" }, h2(PathCrumbs, { path: task.path, t, onPick: props.onPathPick })) : null;
-    var metaZone = tagBlock || metaBlock || pathBlock ? h2("div", { className: "wbt-metazone", key: "metazone" }, tagBlock, metaBlock, pathBlock) : null;
-    return h2(
+    var opsNode = h("div", { className: cx("wbt-ops", props.card && "wbt-ops-block"), key: "ops" }, ops);
+    var tagBlock = tagNodes.length ? h("div", { className: "wbt-tags", key: "tags" }, tagNodes) : null;
+    var metaBlock = meta.length ? h("div", { className: "wbt-foot", key: "meta" }, h("div", { className: "wbt-meta" }, meta)) : null;
+    var pathBlock = task.path && task.path.length ? h("div", { className: "wbt-taskpath", key: "path" }, h(PathCrumbs, { path: task.path, t, onPick: props.onPathPick })) : null;
+    var metaZone = tagBlock || metaBlock || pathBlock ? h("div", { className: "wbt-metazone", key: "metazone" }, tagBlock, metaBlock, pathBlock) : null;
+    return h(
       "div",
       { className: cx("wbt-item", props.card && "wbt-card", String(task.status) === "1" && "closed") },
-      props.selectionMode ? h2("input", { type: "checkbox", className: "wbt-check", checked: !!props.checked, onChange: function() {
+      props.selectionMode ? h("input", { type: "checkbox", className: "wbt-check", checked: !!props.checked, onChange: function() {
         props.onCheck(task.id);
       } }) : null,
-      h2(
+      h(
         "div",
         { className: "wbt-main" },
-        h2("div", { className: "wbt-chead" }, line1, props.card ? null : opsNode),
+        h("div", { className: "wbt-chead" }, line1, props.card ? null : opsNode),
         metaZone,
         props.card ? opsNode : null,
         descNode,
@@ -4322,10 +4498,10 @@ var h = React.createElement;
       var asChild = !isTable;
       props.onMove(src, node.id, asChild ? 0 : 2);
     }
-    return h2(
+    return h(
       "div",
       null,
-      h2(
+      h(
         "div",
         {
           className: cx("wbt-tree-row", selected && "sel", props.dropId === String(node.id) && "drop"),
@@ -4340,12 +4516,12 @@ var h = React.createElement;
           },
           onDrop: drop
         },
-        isTable || !hasKids ? h2("span", { className: "wbt-tw void" }) : h2("button", { className: "wbt-tw", "aria-label": node.name, "aria-expanded": !!isExpanded, onClick: toggle }, h2(Icon2, { name: isExpanded ? "down" : "right", size: 12 })),
-        h2("span", { className: "wbt-ti" }, h2(Icon2, { name: isRoot ? "house" : isTable ? "table" : isExpanded ? "folderOpen" : "folder", size: 13 })),
-        h2(
+        isTable || !hasKids ? h("span", { className: "wbt-tw void" }) : h("button", { className: "wbt-tw", "aria-label": node.name, "aria-expanded": !!isExpanded, onClick: toggle }, h(Icon2, { name: isExpanded ? "down" : "right", size: 12 })),
+        h("span", { className: "wbt-ti" }, h(Icon2, { name: isRoot ? "house" : isTable ? "table" : isExpanded ? "folderOpen" : "folder", size: 13 })),
+        h(
           "div",
           { className: "wbt-tn", onClick: select, title: node.description ? node.name + "\n" + node.description : node.name },
-          editing ? h2("input", {
+          editing ? h("input", {
             className: "wbt-input",
             style: { padding: "2px 6px", fontSize: "12px", width: "150px" },
             value: props.editName,
@@ -4366,29 +4542,29 @@ var h = React.createElement;
             onBlur: function() {
               props.onRename(node.id, props.editName);
             }
-          }) : h2("span", { className: "nm" }, node.name),
-          !editing && node.description ? h2("span", { className: "wbt-tdesc" }, String(node.description).replace(/\s+/g, " ")) : null,
-          !isTable && hasKids && !editing ? h2("span", { className: "wbt-tcnt" }, kids) : null
+          }) : h("span", { className: "nm" }, node.name),
+          !editing && node.description ? h("span", { className: "wbt-tdesc" }, String(node.description).replace(/\s+/g, " ")) : null,
+          !isTable && hasKids && !editing ? h("span", { className: "wbt-tcnt" }, kids) : null
         ),
-        h2(
+        h(
           "div",
           { className: "wbt-tacts" },
-          !isTable ? h2("button", { title: t.addGroup, "aria-label": t.addGroup, onClick: stop(function() {
+          !isTable ? h("button", { title: t.addGroup, "aria-label": t.addGroup, onClick: stop(function() {
             props.onAdd(node.id, "0");
-          }) }, h2(Icon2, { name: "folderPlus", size: 12 })) : null,
-          !isTable ? h2("button", { title: t.addTable, "aria-label": t.addTable, onClick: stop(function() {
+          }) }, h(Icon2, { name: "folderPlus", size: 12 })) : null,
+          !isTable ? h("button", { title: t.addTable, "aria-label": t.addTable, onClick: stop(function() {
             props.onAdd(node.id, "1");
-          }) }, h2(Icon2, { name: "filePlus", size: 12 })) : null,
-          !isRoot ? h2("button", { title: t.rename, "aria-label": t.rename, onClick: stop(function() {
+          }) }, h(Icon2, { name: "filePlus", size: 12 })) : null,
+          !isRoot ? h("button", { title: t.rename, "aria-label": t.rename, onClick: stop(function() {
             props.onEdit(node);
-          }) }, h2(Icon2, { name: "pencil", size: 12 })) : null,
-          props.manager && !isRoot ? h2("button", { title: t.del, "aria-label": t.del, className: "wbt-danger", onClick: stop(function() {
+          }) }, h(Icon2, { name: "pencil", size: 12 })) : null,
+          props.manager && !isRoot ? h("button", { title: t.del, "aria-label": t.del, className: "wbt-danger", onClick: stop(function() {
             props.onDelete(node);
-          }) }, h2(Icon2, { name: "trash", size: 12 })) : null
+          }) }, h(Icon2, { name: "trash", size: 12 })) : null
         )
       ),
-      isExpanded && hasKids ? h2("div", null, node.children.map(function(kid) {
-        return h2(TreeNode, Object.assign({}, props, { key: kid.id, node: kid, depth: (props.depth || 0) + 1 }));
+      isExpanded && hasKids ? h("div", null, node.children.map(function(kid) {
+        return h(TreeNode, Object.assign({}, props, { key: kid.id, node: kid, depth: (props.depth || 0) + 1 }));
       })) : null
     );
   }
@@ -4396,14 +4572,14 @@ var h = React.createElement;
     var t = props.t;
     var node = props.node || null;
     var editing = !!node;
-    var f = React2.useState({
+    var f = React.useState({
       name: node ? String(node.name || "") : "",
       description: node ? String(node.description || "") : ""
     });
     var form = f[0], setForm = f[1];
-    var err = React2.useState("");
+    var err = React.useState("");
     var error = err[0], setError = err[1];
-    var busy = React2.useState(false);
+    var busy = React.useState(false);
     var isBusy = busy[0], setBusy = busy[1];
     function set(k, v) {
       var next = Object.assign({}, form);
@@ -4438,41 +4614,41 @@ var h = React.createElement;
     }
     var isTable = String(node ? node.type : props.type) === "1";
     var title = editing ? isTable ? t.editTable : t.editGroup : isTable ? t.addTable : t.addGroup;
-    return h2(
+    return h(
       "div",
       { className: "wbt-modal-mask", onMouseDown: function(e) {
         if (e.target === e.currentTarget) props.onClose();
       } },
-      h2(
+      h(
         "div",
         { className: "wbt-modal" },
-        h2("div", { className: "wbt-modal-head" }, h2("h3", null, title), h2("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")),
-        h2(
+        h("div", { className: "wbt-modal-head" }, h("h3", null, title), h("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")),
+        h(
           "div",
           { className: "wbt-form" },
-          h2(
+          h(
             "label",
             { className: "wbt-field full" },
-            h2("span", null, t.nodeName + " *"),
-            h2("input", { className: "wbt-input", value: form.name, maxLength: 20, autoFocus: true, onChange: function(e) {
+            h("span", null, t.nodeName + " *"),
+            h("input", { className: "wbt-input", value: form.name, maxLength: 20, autoFocus: true, onChange: function(e) {
               set("name", e.target.value);
             } })
           ),
-          h2(
+          h(
             "label",
             { className: "wbt-field full" },
-            h2("span", null, t.nodeDesc),
-            h2("textarea", { className: "wbt-textarea", rows: 3, value: form.description, placeholder: t.nodeDescPh, onChange: function(e) {
+            h("span", null, t.nodeDesc),
+            h("textarea", { className: "wbt-textarea", rows: 3, value: form.description, placeholder: t.nodeDescPh, onChange: function(e) {
               set("description", e.target.value);
             } })
           )
         ),
-        error ? h2("div", { className: "wbt-err" }, error) : null,
-        h2(
+        error ? h("div", { className: "wbt-err" }, error) : null,
+        h(
           "div",
           { className: "wbt-modal-foot" },
-          h2("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
-          h2("button", { className: "wbt-btn primary", disabled: isBusy, onClick: submit }, isBusy ? "\u2026" : editing ? t.save : t.create)
+          h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
+          h("button", { className: "wbt-btn primary", disabled: isBusy, onClick: submit }, isBusy ? "\u2026" : editing ? t.save : t.create)
         )
       )
     );
@@ -4492,7 +4668,7 @@ var h = React.createElement;
     if (!(initDifficulty >= 1)) initDifficulty = 1;
     var initOffset = Math.floor(Number(defaults.targetOffset));
     if (!(initOffset >= 0)) initOffset = 0;
-    var f = React2.useState({
+    var f = React.useState({
       title: "",
       description: "",
       tags: initTags,
@@ -4506,9 +4682,9 @@ var h = React.createElement;
       tableId: initTable
     });
     var form = f[0], setForm = f[1];
-    var busy = React2.useState(false);
+    var busy = React.useState(false);
     var isBusy = busy[0], setBusy = busy[1];
-    var err = React2.useState("");
+    var err = React.useState("");
     var error = err[0], setError = err[1];
     function set(k, v) {
       var next = Object.assign({}, form);
@@ -4563,67 +4739,67 @@ var h = React.createElement;
       });
     }
     var title = source === "2" ? t.restartTitle : source === "1" ? t.newTimeline : t.newTask;
-    return h2(
+    return h(
       "div",
       { className: "wbt-modal-mask", onMouseDown: function(e) {
         if (e.target === e.currentTarget) props.onClose();
       } },
-      h2(
+      h(
         "div",
         { className: "wbt-modal" },
-        h2("div", { className: "wbt-modal-head" }, h2("h3", null, title), h2("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")),
-        source !== "0" && origin ? h2("div", { className: "wbt-mhint" }, "\u6765\u6E90\uFF1A" + (origin.title || origin.id) + (source === "2" ? " \xB7 \u91CD\u542F\u94FE " + (origin.restartKey || origin.id) : " \xB7 \u65F6\u95F4\u7EBF " + (origin.timelineKey || origin.id))) : null,
-        h2(
+        h("div", { className: "wbt-modal-head" }, h("h3", null, title), h("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")),
+        source !== "0" && origin ? h("div", { className: "wbt-mhint" }, "\u6765\u6E90\uFF1A" + (origin.title || origin.id) + (source === "2" ? " \xB7 \u91CD\u542F\u94FE " + (origin.restartKey || origin.id) : " \xB7 \u65F6\u95F4\u7EBF " + (origin.timelineKey || origin.id))) : null,
+        h(
           "div",
           { className: "wbt-form" },
-          h2("label", { className: "wbt-field full" }, h2("span", null, t.titleField + " *"), h2("input", { className: "wbt-input", value: form.title, onChange: function(e) {
+          h("label", { className: "wbt-field full" }, h("span", null, t.titleField + " *"), h("input", { className: "wbt-input", value: form.title, onChange: function(e) {
             set("title", e.target.value);
           }, autoFocus: true })),
-          h2("label", { className: "wbt-field full" }, h2("span", null, t.desc), h2("textarea", { className: "wbt-textarea", rows: 2, value: form.description, onChange: function(e) {
+          h("label", { className: "wbt-field full" }, h("span", null, t.desc), h("textarea", { className: "wbt-textarea", rows: 2, value: form.description, onChange: function(e) {
             set("description", e.target.value);
           } })),
-          hostHasAddon("wb-addon-tags") ? h2("label", { className: "wbt-field full" }, h2("span", null, t.tags), h2("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function(e) {
+          hostHasAddon("wb-addon-tags") ? h("label", { className: "wbt-field full" }, h("span", null, t.tags), h("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function(e) {
             set("tags", e.target.value);
           } })) : null,
-          h2("label", { className: "wbt-field" }, h2("span", null, t.status), h2(
+          h("label", { className: "wbt-field" }, h("span", null, t.status), h(
             "select",
             { className: "wbt-select", value: source === "2" ? "0" : form.status, disabled: source === "2", onChange: function(e) {
               set("status", e.target.value);
             } },
-            h2("option", { value: "0" }, "\u5DF2\u5F00\u542F"),
-            h2("option", { value: "2" }, "\u5DF2\u5B8C\u6210"),
-            h2("option", { value: "1" }, "\u5DF2\u5173\u95ED")
+            h("option", { value: "0" }, "\u5DF2\u5F00\u542F"),
+            h("option", { value: "2" }, "\u5DF2\u5B8C\u6210"),
+            h("option", { value: "1" }, "\u5DF2\u5173\u95ED")
           )),
-          h2("label", { className: "wbt-field" }, h2("span", null, t.priority + "\uFF081\u201310\uFF09"), h2("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, disabled: form.status !== "0", value: form.priority, onChange: function(e) {
+          h("label", { className: "wbt-field" }, h("span", null, t.priority + "\uFF081\u201310\uFF09"), h("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, disabled: form.status !== "0", value: form.priority, onChange: function(e) {
             set("priority", e.target.value);
           } })),
-          h2("label", { className: "wbt-field" }, h2("span", null, t.table + " *"), h2("select", { className: "wbt-select", value: form.tableId, onChange: function(e) {
+          h("label", { className: "wbt-field" }, h("span", null, t.table + " *"), h("select", { className: "wbt-select", value: form.tableId, onChange: function(e) {
             set("tableId", e.target.value);
           } }, tables.map(function(x) {
-            return h2("option", { key: x.id, value: x.id }, "\u3000".repeat(x.depth) + x.name);
+            return h("option", { key: x.id, value: x.id }, "\u3000".repeat(x.depth) + x.name);
           }))),
-          h2("label", { className: "wbt-field" }, h2("span", null, t.publishDate), h2("input", { className: "wbt-input", type: "date", value: form.publishDate, onChange: function(e) {
+          h("label", { className: "wbt-field" }, h("span", null, t.publishDate), h("input", { className: "wbt-input", type: "date", value: form.publishDate, onChange: function(e) {
             set("publishDate", e.target.value);
           } })),
-          h2("label", { className: "wbt-field" }, h2("span", null, t.targetDate), h2("input", { className: "wbt-input", type: "date", value: form.targetDate, onChange: function(e) {
+          h("label", { className: "wbt-field" }, h("span", null, t.targetDate), h("input", { className: "wbt-input", type: "date", value: form.targetDate, onChange: function(e) {
             set("targetDate", e.target.value);
           } })),
-          source !== "2" && form.status === "2" ? h2("label", { className: "wbt-field" }, h2("span", null, t.doneDate), h2("input", { className: "wbt-input", type: "date", value: form.doneDate, onChange: function(e) {
+          source !== "2" && form.status === "2" ? h("label", { className: "wbt-field" }, h("span", null, t.doneDate), h("input", { className: "wbt-input", type: "date", value: form.doneDate, onChange: function(e) {
             set("doneDate", e.target.value);
           } })) : null,
-          source !== "2" && form.status === "2" ? h2("label", { className: "wbt-field" }, h2("span", null, t.difficulty + "\uFF080\u20135\uFF09"), h2("input", { className: "wbt-input", type: "number", min: 0, max: 5, step: 0.5, value: form.difficulty, onChange: function(e) {
+          source !== "2" && form.status === "2" ? h("label", { className: "wbt-field" }, h("span", null, t.difficulty + "\uFF080\u20135\uFF09"), h("input", { className: "wbt-input", type: "number", min: 0, max: 5, step: 0.5, value: form.difficulty, onChange: function(e) {
             set("difficulty", e.target.value);
           } })) : null,
-          source !== "2" && form.status === "1" ? h2("label", { className: "wbt-field" }, h2("span", null, t.shutdownDate), h2("input", { className: "wbt-input", type: "date", value: form.shutdownDate, onChange: function(e) {
+          source !== "2" && form.status === "1" ? h("label", { className: "wbt-field" }, h("span", null, t.shutdownDate), h("input", { className: "wbt-input", type: "date", value: form.shutdownDate, onChange: function(e) {
             set("shutdownDate", e.target.value);
           } })) : null
         ),
-        error ? h2("div", { className: "wbt-err" }, error) : null,
-        h2(
+        error ? h("div", { className: "wbt-err" }, error) : null,
+        h(
           "div",
           { className: "wbt-modal-foot" },
-          h2("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
-          h2("button", { className: "wbt-btn primary", disabled: isBusy, onClick: submit }, isBusy ? "\u2026" : t.create)
+          h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
+          h("button", { className: "wbt-btn primary", disabled: isBusy, onClick: submit }, isBusy ? "\u2026" : t.create)
         )
       )
     );
@@ -4631,9 +4807,9 @@ var h = React.createElement;
   function TimelineModal(props) {
     var t = props.t;
     var task = props.task;
-    var s = React2.useState({ items: [], loading: true, error: "" });
+    var s = React.useState({ items: [], loading: true, error: "" });
     var state = s[0], setState = s[1];
-    React2.useEffect(function() {
+    React.useEffect(function() {
       props.api.call("tasks.timeline", { timelineKey: task.timelineKey }).then(function(r) {
         if (r && r.ok) setState({ items: Array.isArray(r.result) ? r.result : [], loading: false, error: "" });
         else setState({ items: [], loading: false, error: r && r.error || "load failed" });
@@ -4643,48 +4819,48 @@ var h = React.createElement;
     }, [task.timelineKey]);
     var items = state.items;
     var last = items.length ? items[items.length - 1] : task;
-    return h2(
+    return h(
       "div",
       { className: "wbt-modal-mask", onMouseDown: function(e) {
         if (e.target === e.currentTarget) props.onClose();
       } },
-      h2(
+      h(
         "div",
         { className: "wbt-modal wide" },
-        h2(
+        h(
           "div",
           { className: "wbt-modal-head" },
-          h2("h3", null, t.timelineTitle),
-          h2("button", { className: "wbt-btn", onClick: function() {
+          h("h3", null, t.timelineTitle),
+          h("button", { className: "wbt-btn", onClick: function() {
             props.onCreateTimeline(last);
           } }, "\uFF0B " + t.newTimeline),
-          h2("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")
+          h("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")
         ),
-        state.loading ? h2("div", { className: "wbt-mhint" }, t.loading) : state.error ? h2("div", { className: "wbt-err" }, t.error + state.error) : items.length === 0 ? h2("div", { className: "wbt-empty" }, t.noTimeline) : h2("div", { className: "wbt-timeline" }, items.map(function(x, i) {
+        state.loading ? h("div", { className: "wbt-mhint" }, t.loading) : state.error ? h("div", { className: "wbt-err" }, t.error + state.error) : items.length === 0 ? h("div", { className: "wbt-empty" }, t.noTimeline) : h("div", { className: "wbt-timeline" }, items.map(function(x, i) {
           var st = statusInfo(x.status);
-          return h2(
+          return h(
             "div",
             { className: "wbt-tl-item", key: x.id },
-            h2("div", { className: "wbt-tl-rail" }, h2("div", { className: "wbt-tl-dot" }), i < items.length - 1 ? h2("div", { className: "wbt-tl-line" }) : null),
-            h2(
+            h("div", { className: "wbt-tl-rail" }, h("div", { className: "wbt-tl-dot" }), i < items.length - 1 ? h("div", { className: "wbt-tl-line" }) : null),
+            h(
               "div",
               { className: "wbt-tl-body" },
-              h2(
+              h(
                 "div",
                 { className: "wbt-row" },
-                h2("span", { className: "wbt-badge " + st.cls }, st.zh),
-                h2("span", { className: "wbt-tl-title" }, x.title),
-                h2("span", { className: "wbt-pill" }, "P" + x.priority)
+                h("span", { className: "wbt-badge " + st.cls }, st.zh),
+                h("span", { className: "wbt-tl-title" }, x.title),
+                h("span", { className: "wbt-pill" }, "P" + x.priority)
               ),
-              h2(
+              h(
                 "div",
                 { className: "wbt-tl-meta" },
-                h2("span", null, "\u53D1\u5E03 " + (x.publishDate || "-")),
-                h2("span", null, "\u8BA1\u5212 " + (x.targetDate || "-")),
-                x.doneDate ? h2("span", null, "\u5B8C\u6210 " + x.doneDate) : null,
-                x.shutdownDate ? h2("span", null, "\u5173\u95ED " + x.shutdownDate) : null
+                h("span", null, "\u53D1\u5E03 " + (x.publishDate || "-")),
+                h("span", null, "\u8BA1\u5212 " + (x.targetDate || "-")),
+                x.doneDate ? h("span", null, "\u5B8C\u6210 " + x.doneDate) : null,
+                x.shutdownDate ? h("span", null, "\u5173\u95ED " + x.shutdownDate) : null
               ),
-              h2(PathCrumbs, { path: x.path })
+              h(PathCrumbs, { path: x.path })
             )
           );
         }))
@@ -4693,44 +4869,44 @@ var h = React.createElement;
   }
   function DoneModal(props) {
     var t = props.t;
-    var s = React2.useState(1);
+    var s = React.useState(1);
     var value = s[0], setValue = s[1];
-    var rs = React2.useState("");
+    var rs = React.useState("");
     var review = rs[0], setReview = rs[1];
-    var busy = React2.useState(false);
+    var busy = React.useState(false);
     var isBusy = busy[0], setBusy = busy[1];
-    return h2(
+    return h(
       "div",
       { className: "wbt-modal-mask", onMouseDown: function(e) {
         if (e.target === e.currentTarget) props.onClose();
       } },
-      h2(
+      h(
         "div",
         { className: "wbt-modal", style: { width: "420px" } },
-        h2("div", { className: "wbt-modal-head" }, h2("h3", null, t.complete + " \xB7 " + props.task.title), h2("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")),
-        h2("div", { className: "wbt-mhint" }, t.difficultyHint),
-        h2(
+        h("div", { className: "wbt-modal-head" }, h("h3", null, t.complete + " \xB7 " + props.task.title), h("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")),
+        h("div", { className: "wbt-mhint" }, t.difficultyHint),
+        h(
           "div",
           { className: "wbt-row" },
-          h2("span", { className: "wbt-stars", style: { fontSize: "22px" } }, stars(value)),
-          h2("input", { type: "range", min: 0.5, max: 5, step: 0.5, value, onChange: function(e) {
+          h("span", { className: "wbt-stars", style: { fontSize: "22px" } }, stars(value)),
+          h("input", { type: "range", min: 0.5, max: 5, step: 0.5, value, onChange: function(e) {
             setValue(Number(e.target.value));
           }, style: { flex: 1 } }),
-          h2("b", null, value.toFixed(1))
+          h("b", null, value.toFixed(1))
         ),
-        h2(
+        h(
           "label",
           { className: "wbt-field", style: { marginTop: "12px" } },
-          h2("span", null, t.review + " \xB7 " + t.reviewHint),
-          h2("textarea", { className: "wbt-textarea", rows: 3, placeholder: t.reviewPlaceholder, value: review, onChange: function(e) {
+          h("span", null, t.review + " \xB7 " + t.reviewHint),
+          h("textarea", { className: "wbt-textarea", rows: 3, placeholder: t.reviewPlaceholder, value: review, onChange: function(e) {
             setReview(e.target.value);
           } })
         ),
-        h2(
+        h(
           "div",
           { className: "wbt-modal-foot" },
-          h2("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
-          h2("button", { className: "wbt-btn primary", disabled: isBusy, onClick: function() {
+          h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
+          h("button", { className: "wbt-btn primary", disabled: isBusy, onClick: function() {
             if (!value || value <= 0) return;
             setBusy(true);
             props.api.call("tasks.update", { id: props.task.id, type: "STATUS", status: "2", date: today(), difficulty: value, review: String(review || "") }).then(function(r) {
@@ -4748,7 +4924,7 @@ var h = React.createElement;
     var task = props.task;
     var done = String(task.status) === "2";
     var canPriority = !done;
-    var fs = React2.useState({
+    var fs = React.useState({
       title: String(task.title || ""),
       description: String(task.description || ""),
       review: String(task.review || ""),
@@ -4757,9 +4933,9 @@ var h = React.createElement;
       targetDate: String(task.targetDate || "")
     });
     var form = fs[0], setForm = fs[1];
-    var bs = React2.useState(false);
+    var bs = React.useState(false);
     var isBusy = bs[0], setBusy = bs[1];
-    var es = React2.useState("");
+    var es = React.useState("");
     var err = es[0], setErr = es[1];
     function set(k, v) {
       setForm(function(prev) {
@@ -4797,81 +4973,81 @@ var h = React.createElement;
       });
     }
     var st = statusInfo(task.status);
-    return h2(
+    return h(
       "div",
       { className: "wbt-modal-mask", onMouseDown: function(e) {
         if (e.target === e.currentTarget) props.onClose();
       } },
-      h2(
+      h(
         "div",
         { className: "wbt-modal" },
-        h2(
+        h(
           "div",
           { className: "wbt-modal-head" },
-          h2("h3", null, t.editTitle),
-          h2("span", { className: "wbt-badge " + st.cls }, props.lang === "en" ? st.en : st.zh),
-          h2("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")
+          h("h3", null, t.editTitle),
+          h("span", { className: "wbt-badge " + st.cls }, props.lang === "en" ? st.en : st.zh),
+          h("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")
         ),
-        h2("div", { className: "wbt-mhint" }, done ? t.editHintDone : t.editHintOpen),
-        h2(
+        h("div", { className: "wbt-mhint" }, done ? t.editHintDone : t.editHintOpen),
+        h(
           "label",
           { className: "wbt-field" },
-          h2("span", null, t.titleField + " *"),
-          h2("input", { className: "wbt-input", value: form.title, autoFocus: true, onChange: function(e) {
+          h("span", null, t.titleField + " *"),
+          h("input", { className: "wbt-input", value: form.title, autoFocus: true, onChange: function(e) {
             set("title", e.target.value);
           } })
         ),
-        h2(
+        h(
           "label",
           { className: "wbt-field" },
-          h2("span", null, t.desc),
-          h2("textarea", { className: "wbt-textarea", rows: 4, value: form.description, onChange: function(e) {
+          h("span", null, t.desc),
+          h("textarea", { className: "wbt-textarea", rows: 4, value: form.description, onChange: function(e) {
             set("description", e.target.value);
           } })
         ),
-        canPriority ? h2(
+        canPriority ? h(
           "label",
           { className: "wbt-field" },
-          h2("span", null, t.targetDate),
-          h2("input", { className: "wbt-input", type: "date", value: form.targetDate, onChange: function(e) {
+          h("span", null, t.targetDate),
+          h("input", { className: "wbt-input", type: "date", value: form.targetDate, onChange: function(e) {
             set("targetDate", e.target.value);
           } })
         ) : null,
-        canPriority ? h2(
+        canPriority ? h(
           "label",
           { className: "wbt-field" },
-          h2("span", null, t.priority + "\uFF081\u201310\uFF09"),
-          h2("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, value: form.priority, onChange: function(e) {
+          h("span", null, t.priority + "\uFF081\u201310\uFF09"),
+          h("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, value: form.priority, onChange: function(e) {
             set("priority", e.target.value);
           } })
-        ) : h2(
+        ) : h(
           "label",
           { className: "wbt-field" },
-          h2("span", null, t.review + " \xB7 " + t.reviewHint),
-          h2("textarea", { className: "wbt-textarea", rows: 3, placeholder: t.reviewPlaceholder, value: form.review, onChange: function(e) {
+          h("span", null, t.review + " \xB7 " + t.reviewHint),
+          h("textarea", { className: "wbt-textarea", rows: 3, placeholder: t.reviewPlaceholder, value: form.review, onChange: function(e) {
             set("review", e.target.value);
           } })
         ),
-        done ? h2(
+        done ? h(
           "div",
           { className: "wbt-field" },
-          h2("span", null, t.difficulty + "\uFF080\u20135\uFF09"),
-          h2(
+          h("span", null, t.difficulty + "\uFF080\u20135\uFF09"),
+          h(
             "div",
             { className: "wbt-row" },
-            h2("span", { className: "wbt-stars" }, stars(form.difficulty)),
-            h2("input", { type: "range", min: 0.5, max: 5, step: 0.5, value: form.difficulty, style: { flex: 1 }, onChange: function(e) {
+            h("span", { className: "wbt-stars" }, stars(form.difficulty)),
+            h("input", { type: "range", min: 0.5, max: 5, step: 0.5, value: form.difficulty, style: { flex: 1 }, onChange: function(e) {
               set("difficulty", Number(e.target.value));
             } }),
-            h2("b", null, Number(form.difficulty).toFixed(1))
+            h("b", null, Number(form.difficulty).toFixed(1))
           )
         ) : null,
-        err ? h2("div", { className: "wbt-err" }, err) : null,
-        h2(
+        err ? h("div", { className: "wbt-err" }, err) : null,
+        h(
           "div",
           { className: "wbt-modal-foot" },
-          h2("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
-          h2("button", { className: "wbt-btn primary", disabled: isBusy || !titleOk, onClick: submit }, isBusy ? "\u2026" : t.save)
+          h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
+          h("button", { className: "wbt-btn primary", disabled: isBusy || !titleOk, onClick: submit }, isBusy ? "\u2026" : t.save)
         )
       )
     );
@@ -4881,13 +5057,13 @@ var h = React.createElement;
     var items = props.items || [];
     var mode = props.mode;
     var nodes = props.nodes || [];
-    var s = React2.useState(mode === "timeline" ? items[0] && items[0].id || "" : props.tables[0] && props.tables[0].id || "");
+    var s = React.useState(mode === "timeline" ? items[0] && items[0].id || "" : props.tables[0] && props.tables[0].id || "");
     var value = s[0], setValue = s[1];
-    var qs = React2.useState("");
+    var qs = React.useState("");
     var query = qs[0], setQuery = qs[1];
-    var busy = React2.useState(false);
+    var busy = React.useState(false);
     var isBusy = busy[0], setBusy = busy[1];
-    var err = React2.useState("");
+    var err = React.useState("");
     var error = err[0], setError = err[1];
     var kw = query.trim().toLowerCase();
     var picked = null;
@@ -4895,24 +5071,24 @@ var h = React.createElement;
     if (mode === "timeline") {
       items.forEach(function(x) {
         if (String(x.id) === String(value)) picked = x;
-        rows.push(h2(
+        rows.push(h(
           "label",
           { key: x.id, className: cx("wbt-bpick wrap", String(value) === String(x.id) && "on") },
-          h2("input", { type: "radio", name: "wbt-base", checked: String(value) === String(x.id), onChange: function() {
+          h("input", { type: "radio", name: "wbt-base", checked: String(value) === String(x.id), onChange: function() {
             setValue(String(x.id));
           } }),
-          h2(
+          h(
             "span",
             { className: "wbt-bpick-main" },
-            h2("span", { className: "wbt-bpick-name" }, x.title),
-            h2(
+            h("span", { className: "wbt-bpick-name" }, x.title),
+            h(
               "span",
               { className: "wbt-bpick-meta" },
-              h2("code", { title: x.timelineKey || "" }, "timeline " + (x.timelineKey || "-")),
-              x.priority !== void 0 ? h2("span", null, "P" + x.priority) : null
+              h("code", { title: x.timelineKey || "" }, "timeline " + (x.timelineKey || "-")),
+              x.priority !== void 0 ? h("span", null, "P" + x.priority) : null
             )
           ),
-          h2("span", { className: "wbt-bpick-check" }, String(value) === String(x.id) ? h2(Icon2, { name: "check", size: 13 }) : null)
+          h("span", { className: "wbt-bpick-check" }, String(value) === String(x.id) ? h(Icon2, { name: "check", size: 13 }) : null)
         ));
       });
     } else {
@@ -4923,7 +5099,7 @@ var h = React.createElement;
         var isTable = n.type === "1";
         if (isTable && String(n.id) === String(value)) picked = n;
         var pad = 2 + n.depth * 15;
-        rows.push(h2(
+        rows.push(h(
           "button",
           {
             key: String(n.id),
@@ -4936,44 +5112,44 @@ var h = React.createElement;
               setValue(String(n.id));
             } : null
           },
-          !isTable ? h2(Icon2, { name: "folder", size: 12 }) : null,
-          h2("span", { className: "wbt-bpick-main" }, h2("span", { className: "wbt-bpick-name" }, n.name)),
-          isTable ? h2("span", { className: "wbt-bpick-check" }, String(value) === String(n.id) ? h2(Icon2, { name: "check", size: 13 }) : null) : null
+          !isTable ? h(Icon2, { name: "folder", size: 12 }) : null,
+          h("span", { className: "wbt-bpick-main" }, h("span", { className: "wbt-bpick-name" }, n.name)),
+          isTable ? h("span", { className: "wbt-bpick-check" }, String(value) === String(n.id) ? h(Icon2, { name: "check", size: 13 }) : null) : null
         ));
       });
-      if (!shown.length) rows.push(h2("div", { key: "empty", className: "wbt-batch-empty" }, t.noTable));
+      if (!shown.length) rows.push(h("div", { key: "empty", className: "wbt-batch-empty" }, t.noTable));
     }
-    return h2(
+    return h(
       "div",
       { className: "wbt-modal-mask", onMouseDown: function(e) {
         if (e.target === e.currentTarget) props.onClose();
       } },
-      h2(
+      h(
         "div",
         { className: "wbt-modal batch" },
-        h2(
+        h(
           "div",
           { className: "wbt-modal-head" },
-          h2("h3", null, mode === "timeline" ? t.batchTimeline : t.batchMigrate),
-          h2("span", { className: "wbt-badge" }, t.batchCount + " " + items.length),
-          h2("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")
+          h("h3", null, mode === "timeline" ? t.batchTimeline : t.batchMigrate),
+          h("span", { className: "wbt-badge" }, t.batchCount + " " + items.length),
+          h("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")
         ),
-        h2("div", { className: "wbt-mhint" }, mode === "timeline" ? t.chooseBase : t.chooseTable),
-        mode === "migrate" ? h2("input", { className: "wbt-input wbt-bpick-name", placeholder: t.searchTable, value: query, onChange: function(e) {
+        h("div", { className: "wbt-mhint" }, mode === "timeline" ? t.chooseBase : t.chooseTable),
+        mode === "migrate" ? h("input", { className: "wbt-input wbt-bpick-name", placeholder: t.searchTable, value: query, onChange: function(e) {
           setQuery(e.target.value);
         }, style: { whiteSpace: "normal" } }) : null,
-        h2("div", { className: "wbt-batch" }, h2("div", { className: "wbt-batch-body" }, rows)),
-        h2(
+        h("div", { className: "wbt-batch" }, h("div", { className: "wbt-batch-body" }, rows)),
+        h(
           "div",
           { className: "wbt-batch-sel" },
-          mode === "timeline" ? h2("span", null, t.baseLabel + "\uFF1A", h2("b", null, picked ? picked.title : "-")) : h2("span", null, t.targetLabel + "\uFF1A", h2("b", null, picked ? picked.name : "-"))
+          mode === "timeline" ? h("span", null, t.baseLabel + "\uFF1A", h("b", null, picked ? picked.title : "-")) : h("span", null, t.targetLabel + "\uFF1A", h("b", null, picked ? picked.name : "-"))
         ),
-        error ? h2("div", { className: "wbt-err" }, error) : null,
-        h2(
+        error ? h("div", { className: "wbt-err" }, error) : null,
+        h(
           "div",
           { className: "wbt-modal-foot" },
-          h2("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
-          h2("button", { className: "wbt-btn primary", disabled: isBusy, onClick: function() {
+          h("button", { className: "wbt-btn ghost", onClick: props.onClose }, t.cancel),
+          h("button", { className: "wbt-btn primary", disabled: isBusy, onClick: function() {
             if (!value) {
               setError(mode === "timeline" ? t.needBase : t.needTable);
               return;
@@ -5030,9 +5206,9 @@ var h = React.createElement;
     var lang = props.lang === "en" ? "en" : "zh";
     var cfg = configView.useConfig(props.api, CFG_FALLBACK);
     if (!cfg.ready) {
-      return h2("div", { style: { padding: "48px", textAlign: "center", fontSize: "12.5px", opacity: 0.6 } }, lang === "en" ? "Loading\u2026" : "\u8F7D\u5165\u4E2D\u2026");
+      return h("div", { style: { padding: "48px", textAlign: "center", fontSize: "12.5px", opacity: 0.6 } }, lang === "en" ? "Loading\u2026" : "\u8F7D\u5165\u4E2D\u2026");
     }
-    return h2(TasksViewBody, Object.assign({}, props, { cfg: cfg.values }));
+    return h(TasksViewBody, Object.assign({}, props, { cfg: cfg.values }));
   }
   function expandedByDepth(nodes, depth) {
     var out = /* @__PURE__ */ new Set();
@@ -5057,82 +5233,80 @@ var h = React.createElement;
     if (!(cfgDepth >= 0)) cfgDepth = 2;
     var cfgSort = typeof cfg["list.sort"] === "string" ? cfg["list.sort"] : "auto";
     var cfgConfirm = cfg["ui.confirmDelete"] !== false;
-    var treeS = React2.useState([]);
+    var treeS = React.useState([]);
     var tree = treeS[0], setTree = treeS[1];
-    var expS = React2.useState(/* @__PURE__ */ new Set());
+    var expS = React.useState(/* @__PURE__ */ new Set());
     var expanded = expS[0], setExpanded = expS[1];
-    var expInitRef = React2.useRef(false);
-    var targetS = React2.useState({ groupId: "1", tableId: null });
+    var expInitRef = React.useRef(false);
+    var targetS = React.useState({ groupId: "1", tableId: null });
     var target = targetS[0], setTarget = targetS[1];
-    var pathS = React2.useState([]);
+    var pathS = React.useState([]);
     var currentPath = pathS[0], setCurrentPath = pathS[1];
-    var tabS = React2.useState(cfgTab);
+    var tabS = React.useState(cfgTab);
     var tab = tabS[0], setTab = tabS[1];
-    var viewS = React2.useState(cfg["ui.listView"] === "card" ? "card" : "list");
+    var viewS = React.useState(cfg["ui.listView"] === "card" ? "card" : "list");
     var view = viewS[0], setView = viewS[1];
-    var searchS = React2.useState("");
+    var searchS = React.useState("");
     var searchDraft = searchS[0], setSearchDraft = searchS[1];
-    var tqS = React2.useState("");
+    var tqS = React.useState("");
     var treeQuery = tqS[0], setTreeQuery = tqS[1];
-    var titleS = React2.useState("");
+    var titleS = React.useState("");
     var titleKey = titleS[0], setTitleKey = titleS[1];
-    var filterS = React2.useState(cfg["list.filterRestarted"] !== false);
+    var filterS = React.useState(cfg["list.filterRestarted"] !== false);
     var filterRestarted = filterS[0], setFilterRestarted = filterS[1];
-    var tagNavS = React2.useState({ available: false, tags: [], untagged: { total: 0 } });
-    var tagNav = tagNavS[0], setTagNav = tagNavS[1];
-    var filterTagIdsS = React2.useState([]);
+    var tagReloadS = React.useState(0);
+    var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
+    var filterTagIdsS = React.useState([]);
     var filterTagIds = filterTagIdsS[0], setFilterTagIds = filterTagIdsS[1];
-    var tagMenuS = React2.useState(false);
-    var tagMenu = tagMenuS[0], setTagMenu = tagMenuS[1];
-    var pageS = React2.useState(1);
+    var pageS = React.useState(1);
     var pageNumber = pageS[0], setPageNumber = pageS[1];
-    var sizeS = React2.useState(cfgSize);
+    var sizeS = React.useState(cfgSize);
     var pageSize = sizeS[0], setPageSize = sizeS[1];
-    var dataS = React2.useState({ records: [], total: 0, current: 1, size: 0, pageable: false });
+    var dataS = React.useState({ records: [], total: 0, current: 1, size: 0, pageable: false });
     var data = dataS[0], setData = dataS[1];
-    var loadingS = React2.useState(true);
+    var loadingS = React.useState(true);
     var loading = loadingS[0], setLoading = loadingS[1];
-    var errorS = React2.useState("");
+    var errorS = React.useState("");
     var error = errorS[0], setError = errorS[1];
-    var drawerS = React2.useState(false);
+    var drawerS = React.useState(false);
     var drawer = drawerS[0], setDrawer = drawerS[1];
-    var managerS = React2.useState(false);
+    var managerS = React.useState(false);
     var manager = managerS[0], setManager = managerS[1];
-    var selModeS = React2.useState(false);
+    var selModeS = React.useState(false);
     var selectionMode = selModeS[0], setSelectionMode = selModeS[1];
-    var selS = React2.useState(/* @__PURE__ */ new Set());
+    var selS = React.useState(/* @__PURE__ */ new Set());
     var selectedIds = selS[0], setSelectedIds = selS[1];
-    var selItemsS = React2.useState([]);
+    var selItemsS = React.useState([]);
     var selectedItems = selItemsS[0], setSelectedItems = selItemsS[1];
-    var selOpenS = React2.useState(false);
+    var selOpenS = React.useState(false);
     var selectedOpen = selOpenS[0], setSelectedOpen = selOpenS[1];
-    var batchS = React2.useState(null);
+    var batchS = React.useState(null);
     var batchMode = batchS[0], setBatchMode = batchS[1];
-    var createS = React2.useState(null);
+    var createS = React.useState(null);
     var createState = createS[0], setCreateState = createS[1];
-    var timelineS = React2.useState(null);
+    var timelineS = React.useState(null);
     var timelineTask = timelineS[0], setTimelineTask = timelineS[1];
-    var doneS = React2.useState(null);
+    var doneS = React.useState(null);
     var doneTask = doneS[0], setDoneTask = doneS[1];
-    var editTaskS = React2.useState(null);
+    var editTaskS = React.useState(null);
     var editTask = editTaskS[0], setEditTask = editTaskS[1];
-    var editS = React2.useState(null);
+    var editS = React.useState(null);
     var edit = editS[0], setEdit = editS[1];
-    var nodeModalS = React2.useState(null);
+    var nodeModalS = React.useState(null);
     var nodeModal = nodeModalS[0], setNodeModal = nodeModalS[1];
-    var editNameS = React2.useState("");
+    var editNameS = React.useState("");
     var editName = editNameS[0], setEditName = editNameS[1];
-    var dragS = React2.useState(null);
+    var dragS = React.useState(null);
     var dragId = dragS[0], setDragId = dragS[1];
-    var dropS = React2.useState(null);
+    var dropS = React.useState(null);
     var dropId = dropS[0], setDropId = dropS[1];
-    var toastS = React2.useState("");
+    var toastS = React.useState("");
     var toast = toastS[0], setToast = toastS[1];
-    var refreshRef = React2.useRef({});
+    var refreshRef = React.useRef({});
     function say(msg) {
       setToast(String(msg || ""));
     }
-    React2.useEffect(function() {
+    React.useEffect(function() {
       if (!toast) return;
       var id = setTimeout(function() {
         setToast("");
@@ -5141,8 +5315,8 @@ var h = React.createElement;
         clearTimeout(id);
       };
     }, [toast]);
-    var treeSearchRef = React2.useRef(null);
-    React2.useEffect(function() {
+    var treeSearchRef = React.useRef(null);
+    React.useEffect(function() {
       if (!drawer) return;
       var id = setTimeout(function() {
         if (treeSearchRef.current) treeSearchRef.current.focus();
@@ -5156,7 +5330,7 @@ var h = React.createElement;
         window.removeEventListener("keydown", onKey);
       };
     }, [drawer]);
-    var refreshTree = React2.useCallback(function() {
+    var refreshTree = React.useCallback(function() {
       return api.call("taskNodes.tree").then(function(r) {
         if (r && r.ok) {
           var nodes = Array.isArray(r.result) ? r.result : [];
@@ -5170,13 +5344,12 @@ var h = React.createElement;
         setError(String(e && e.message || e));
       });
     }, [api]);
-    var refreshTagNav = React2.useCallback(function() {
-      return api.call("tasks.tags").then(function(r) {
-        if (r && r.ok) setTagNav(r.result || { available: false, tags: [], untagged: { total: 0 } });
-      }).catch(function() {
+    var refreshTagNav = React.useCallback(function() {
+      setTagReload(function(n) {
+        return n + 1;
       });
-    }, [api]);
-    var refreshPath = React2.useCallback(function(id) {
+    }, []);
+    var refreshPath = React.useCallback(function(id) {
       if (!id) {
         setCurrentPath([]);
         return Promise.resolve();
@@ -5186,7 +5359,7 @@ var h = React.createElement;
       }).catch(function() {
       });
     }, [api]);
-    var refreshList = React2.useCallback(function() {
+    var refreshList = React.useCallback(function() {
       setLoading(true);
       return api.call("tasks.list", {
         tab,
@@ -5212,16 +5385,16 @@ var h = React.createElement;
       });
     }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, cfgSort]);
     refreshRef.current = { tree: refreshTree, list: refreshList, path: refreshPath, tags: refreshTagNav };
-    React2.useEffect(function() {
+    React.useEffect(function() {
       injectCss();
       refreshTree();
       refreshTagNav();
       refreshPath("1");
     }, [refreshTree, refreshTagNav, refreshPath]);
-    React2.useEffect(function() {
+    React.useEffect(function() {
       refreshList();
     }, [refreshList]);
-    React2.useEffect(function() {
+    React.useEffect(function() {
       var off = api.subscribe(function(p) {
         if (!p) return;
         if (p.event === "tasks-changed") {
@@ -5235,7 +5408,7 @@ var h = React.createElement;
       });
       return off;
     }, [api, target.tableId, target.groupId]);
-    React2.useEffect(function() {
+    React.useEffect(function() {
       refreshPath(target.tableId || target.groupId);
     }, [target.tableId, target.groupId, refreshPath]);
     function update(task, patch) {
@@ -5430,23 +5603,23 @@ var h = React.createElement;
       var node = item.node;
       var isTable = String(node.type) === "1";
       var selected = String(target.tableId || "") === String(node.id) || !target.tableId && String(target.groupId || "") === String(node.id);
-      return h2(
+      return h(
         "div",
         {
           key: node.id,
           className: cx("wbt-tree-row", selected && "sel"),
           style: { paddingLeft: 3 + item.depth * 15 + "px" }
         },
-        h2("span", { className: "wbt-tw void" }),
-        h2("span", { className: "wbt-ti" }, h2(Icon2, { name: isTable ? "table" : "folder", size: 13 })),
-        h2(
+        h("span", { className: "wbt-tw void" }),
+        h("span", { className: "wbt-ti" }, h(Icon2, { name: isTable ? "table" : "folder", size: 13 })),
+        h(
           "div",
           { className: "wbt-tn", onClick: function() {
             pickNode(node);
           }, title: node.description ? node.name + "\n" + node.description : node.name },
-          h2("span", { className: "nm" }, node.name),
-          node.description ? h2("span", { className: "wbt-tdesc" }, String(node.description).replace(/\s+/g, " ")) : null,
-          !isTable && node.children && node.children.length ? h2("span", { className: "wbt-tcnt" }, node.children.length) : null
+          h("span", { className: "nm" }, node.name),
+          node.description ? h("span", { className: "wbt-tdesc" }, String(node.description).replace(/\s+/g, " ")) : null,
+          !isTable && node.children && node.children.length ? h("span", { className: "wbt-tcnt" }, node.children.length) : null
         )
       );
     }
@@ -5468,28 +5641,28 @@ var h = React.createElement;
     var treeHits = tq ? flatNodes.filter(function(x) {
       return String(x.node.name || "").toLowerCase().indexOf(tq) >= 0;
     }) : [];
-    var treeBody = !tree.length ? h2("div", { className: "wbt-empty" }, t.emptyTree) : tq ? treeHits.length ? treeHits.map(flatTreeRow) : h2("div", { className: "wbt-empty" }, t.treeNoMatch) : tree.map(function(n) {
-      return h2(TreeNode, Object.assign({}, treeProps, { key: n.id, node: n, depth: 0 }));
+    var treeBody = !tree.length ? h("div", { className: "wbt-empty" }, t.emptyTree) : tq ? treeHits.length ? treeHits.map(flatTreeRow) : h("div", { className: "wbt-empty" }, t.treeNoMatch) : tree.map(function(n) {
+      return h(TreeNode, Object.assign({}, treeProps, { key: n.id, node: n, depth: 0 }));
     });
     var curDesc = curNode ? String(curNode.description || "") : "";
     var shownCount = data.returned === void 0 ? (data.records || []).length : data.returned;
-    var filterBar = h2(
+    var filterBar = h(
       "div",
       { className: "wbt-filters" },
-      pageable ? h2("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
-      data.truncated ? h2("span", { className: "wbt-hint" }, t.truncated + " " + shownCount + " / " + data.total) : null,
-      tab === 5 || tab === 8 ? h2(
+      pageable ? h("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
+      data.truncated ? h("span", { className: "wbt-hint" }, t.truncated + " " + shownCount + " / " + data.total) : null,
+      tab === 5 || tab === 8 ? h(
         "label",
         { className: "wbt-check" },
-        h2("input", { type: "checkbox", checked: filterRestarted, onChange: function(e) {
+        h("input", { type: "checkbox", checked: filterRestarted, onChange: function(e) {
           setFilterRestarted(e.target.checked);
           setPageNumber(1);
         } }),
         t.filterRestarted
       ) : null
     );
-    var listBody = loading ? h2("div", { className: "wbt-empty" }, t.loading) : error ? h2("div", { className: "wbt-err" }, t.error + error) : data.records.length === 0 ? h2("div", { className: "wbt-empty" }, t.empty) : h2("div", { className: view === "card" ? "wbt-grid" : "wbt-list" }, data.records.map(function(task) {
-      return h2(TaskItem, {
+    var listBody = loading ? h("div", { className: "wbt-empty" }, t.loading) : error ? h("div", { className: "wbt-err" }, t.error + error) : data.records.length === 0 ? h("div", { className: "wbt-empty" }, t.empty) : h("div", { className: view === "card" ? "wbt-grid" : "wbt-list" }, data.records.map(function(task) {
+      return h(TaskItem, {
         key: task.id,
         task,
         t,
@@ -5517,23 +5690,23 @@ var h = React.createElement;
         onTagPick: toggleTagId
       });
     }));
-    return h2(
+    return h(
       "div",
       { className: "wbt-root" },
-      h2(
+      h(
         "div",
         { className: "wbt-pathrow" },
-        h2(
+        h(
           "div",
           { className: "wbt-tree-slot" },
-          h2("button", { className: "wbt-btn", onClick: function() {
+          h("button", { className: "wbt-btn", onClick: function() {
             setDrawer(true);
             refreshTree();
-          } }, h2(Icon2, { name: "tree", size: 13 }), t.tree)
+          } }, h(Icon2, { name: "tree", size: 13 }), t.tree)
         ),
-        h2(PathCrumbs, { path: currentPath, onPick: pickPath }),
-        h2("div", { className: "wbt-grow" }),
-        h2("input", {
+        h(PathCrumbs, { path: currentPath, onPick: pickPath }),
+        h("div", { className: "wbt-grow" }),
+        h("input", {
           className: "wbt-input wbt-search",
           placeholder: t.search,
           value: searchDraft,
@@ -5547,11 +5720,11 @@ var h = React.createElement;
             }
           }
         }),
-        h2("button", { className: "wbt-btn ghost", title: t.search, "aria-label": t.search, onClick: function() {
+        h("button", { className: "wbt-btn ghost", title: t.search, "aria-label": t.search, onClick: function() {
           setTitleKey(searchDraft);
           setPageNumber(1);
-        } }, h2(Icon2, { name: "search", size: 14 })),
-        h2("button", {
+        } }, h(Icon2, { name: "search", size: 14 })),
+        h("button", {
           className: "wbt-btn ghost",
           title: t.refresh,
           "aria-label": t.refresh,
@@ -5560,63 +5733,37 @@ var h = React.createElement;
             refreshList();
             refreshTagNav();
           }
-        }, h2(Icon2, { name: "refresh", size: 13 }), t.refresh),
-        h2("button", { className: "wbt-btn " + (selectionMode ? "primary" : "ghost"), onClick: function() {
+        }, h(Icon2, { name: "refresh", size: 13 }), t.refresh),
+        h("button", { className: "wbt-btn " + (selectionMode ? "primary" : "ghost"), onClick: function() {
           if (selectionMode) {
             setSelectionMode(false);
             clearSelection();
           } else setSelectionMode(true);
-        } }, h2(Icon2, { name: "select", size: 13 }), selectionMode ? t.cancelSelect : t.select),
-        tagNav.available && tagNav.tags.length ? h2(
-          "div",
-          { className: "wbt-tagfilter" },
-          h2("button", {
-            className: "wbt-btn ghost" + (filterTagIds.length ? " on" : ""),
-            "aria-expanded": tagMenu ? "true" : "false",
-            onClick: function() {
-              setTagMenu(!tagMenu);
-            }
-          }, h2(Icon2, { name: "tag", size: 13 }), t.tagFilter + (filterTagIds.length ? " \xB7 " + filterTagIds.length : ""), h2(Icon2, { name: "down", size: 12 })),
-          tagMenu ? h2(
-            "div",
-            { className: "wbt-tagmenu", role: "menu" },
-            h2(
-              "div",
-              { className: "wbt-tagmenu-head" },
-              h2("span", null, t.allTags),
-              h2("span", { className: "wbt-grow" }),
-              h2("button", { className: "wbt-mini", onClick: function() {
-                setFilterTagIds([]);
-                setPageNumber(1);
-              } }, t.clear)
-            ),
-            tagNav.tags.length ? tagNav.tags.map(function(x) {
-              var on = filterTagIds.indexOf(String(x.id)) >= 0;
-              return h2(
-                "label",
-                { key: x.id, className: "wbt-tagopt" },
-                h2("input", { type: "checkbox", checked: on, onChange: function() {
-                  toggleTagId(String(x.id));
-                } }),
-                h2("span", { className: "wbt-tagnm" }, x.name),
-                h2("span", { className: "wbt-tagcnt" }, x.total)
-              );
-            }) : h2("div", { className: "wbt-note" }, t.noTags)
-          ) : null
-        ) : null,
-        h2("button", { className: "wbt-btn primary", onClick: function() {
+        } }, h(Icon2, { name: "select", size: 13 }), selectionMode ? t.cancelSelect : t.select),
+        h(TagFilter, {
+          api,
+          t,
+          Icon: Icon2,
+          ids: filterTagIds,
+          reloadKey: tagReload,
+          onChange: function(next) {
+            setFilterTagIds(next);
+            setPageNumber(1);
+          }
+        }),
+        h("button", { className: "wbt-btn primary", onClick: function() {
           setCreateState({ source: "0", originTask: null, defaultTableId: target.tableId || firstTable && firstTable.id });
-        } }, h2(Icon2, { name: "plus", size: 14 }), t.newTask),
-        h2("button", { className: "wbt-btn ghost", onClick: function() {
+        } }, h(Icon2, { name: "plus", size: 14 }), t.newTask),
+        h("button", { className: "wbt-btn ghost", onClick: function() {
           setView(view === "list" ? "card" : "list");
-        } }, h2(Icon2, { name: view === "list" ? "grid" : "list", size: 13 }), view === "list" ? t.card : t.list)
+        } }, h(Icon2, { name: view === "list" ? "grid" : "list", size: 13 }), view === "list" ? t.card : t.list)
       ),
-      curDesc ? h2("div", { className: "wbt-tabledesc", title: curDesc }, curDesc.length > 220 ? curDesc.slice(0, 220) + "\u2026" : curDesc) : null,
-      h2(
+      curDesc ? h("div", { className: "wbt-tabledesc", title: curDesc }, curDesc.length > 220 ? curDesc.slice(0, 220) + "\u2026" : curDesc) : null,
+      h(
         "div",
         { className: "wbt-body" },
-        h2("nav", { className: "wbt-nav" }, TABS.map(function(x) {
-          var btn = h2("button", {
+        h("nav", { className: "wbt-nav" }, TABS.map(function(x) {
+          var btn = h("button", {
             key: x.id,
             className: "wbt-tab" + (tab === x.id ? " on" : ""),
             onClick: function() {
@@ -5625,84 +5772,84 @@ var h = React.createElement;
             }
           }, t === COPY.zh ? x.zh : x.en);
           if (x.id !== 5) return btn;
-          return [h2("div", { key: "nav-sep", className: "wbt-nav-sep" }), btn];
+          return [h("div", { key: "nav-sep", className: "wbt-nav-sep" }), btn];
         })),
-        h2(
+        h(
           "div",
           { className: "wbt-content" },
           filterBar,
           listBody,
-          pageable ? h2(
+          pageable ? h(
             "div",
             { className: "wbt-pager" },
-            h2("button", { className: "wbt-btn ghost", disabled: pageNumber <= 1, onClick: function() {
+            h("button", { className: "wbt-btn ghost", disabled: pageNumber <= 1, onClick: function() {
               setPageNumber(Math.max(1, pageNumber - 1));
-            } }, h2(Icon2, { name: "left", size: 14 })),
-            h2("span", null, t.page + " " + pageNumber + " / " + totalPages),
-            h2(
+            } }, h(Icon2, { name: "left", size: 14 })),
+            h("span", null, t.page + " " + pageNumber + " / " + totalPages),
+            h(
               "select",
               { className: "wbt-select", value: pageSize, onChange: function(e) {
                 setPageSize(Number(e.target.value));
                 setPageNumber(1);
               } },
               [6, 12, 24].map(function(n) {
-                return h2("option", { key: n, value: n }, n + " / " + t.page);
+                return h("option", { key: n, value: n }, n + " / " + t.page);
               })
             ),
-            h2("button", { className: "wbt-btn ghost", disabled: pageNumber >= totalPages, onClick: function() {
+            h("button", { className: "wbt-btn ghost", disabled: pageNumber >= totalPages, onClick: function() {
               setPageNumber(Math.min(totalPages, pageNumber + 1));
-            } }, h2(Icon2, { name: "right", size: 14 }))
+            } }, h(Icon2, { name: "right", size: 14 }))
           ) : null
         )
       ),
-      selectionMode && selectedIds.size ? h2(
+      selectionMode && selectedIds.size ? h(
         "div",
         { className: "wbt-selbar" },
-        h2("b", null, t.selected + " " + selectedIds.size),
-        h2("button", { className: "wbt-btn", onClick: openSelected }, t.selectedTasks),
-        h2("button", { className: "wbt-btn", onClick: function() {
+        h("b", null, t.selected + " " + selectedIds.size),
+        h("button", { className: "wbt-btn", onClick: openSelected }, t.selectedTasks),
+        h("button", { className: "wbt-btn", onClick: function() {
           setBatchMode("timeline");
           openSelected();
         } }, t.batchTimeline),
-        h2("button", { className: "wbt-btn", onClick: function() {
+        h("button", { className: "wbt-btn", onClick: function() {
           setBatchMode("migrate");
           openSelected();
         } }, t.batchMigrate),
-        h2("button", { className: "wbt-btn wbt-act-del", onClick: batchDelete }, h2(Icon2, { name: "trash", size: 13 }), t.batchDelete),
-        h2("button", { className: "wbt-btn ghost", onClick: clearSelection }, t.clear)
+        h("button", { className: "wbt-btn wbt-act-del", onClick: batchDelete }, h(Icon2, { name: "trash", size: 13 }), t.batchDelete),
+        h("button", { className: "wbt-btn ghost", onClick: clearSelection }, t.clear)
       ) : null,
-      drawer ? h2(
+      drawer ? h(
         "div",
         { className: "wbt-drawer-mask", onMouseDown: function(e) {
           if (e.target === e.currentTarget) setDrawer(false);
         } },
-        h2(
+        h(
           "div",
           { className: "wbt-drawer", role: "dialog", "aria-label": t.tree },
-          h2(
+          h(
             "div",
             { className: "wbt-drawer-head" },
-            h2(Icon2, { name: "tree", size: 15 }),
-            h2(
+            h(Icon2, { name: "tree", size: 15 }),
+            h(
               "div",
               { className: "wbt-drawer-title" },
-              h2("b", null, t.tree),
-              h2("span", { className: "wbt-drawer-meta" }, groupCount + " " + t.groups + " \xB7 " + tableCount + " " + t.tables)
+              h("b", null, t.tree),
+              h("span", { className: "wbt-drawer-meta" }, groupCount + " " + t.groups + " \xB7 " + tableCount + " " + t.tables)
             ),
-            h2("button", {
+            h("button", {
               className: "wbt-tool" + (manager ? " on" : ""),
               onClick: function() {
                 setManager(!manager);
               }
             }, t.manager),
-            h2("button", { className: "wbt-icon", title: t.close, "aria-label": t.close, onClick: function() {
+            h("button", { className: "wbt-icon", title: t.close, "aria-label": t.close, onClick: function() {
               setDrawer(false);
-            } }, h2(Icon2, { name: "close", size: 15 }))
+            } }, h(Icon2, { name: "close", size: 15 }))
           ),
-          h2(
+          h(
             "div",
             { className: "wbt-drawer-search" },
-            h2("input", {
+            h("input", {
               className: "wbt-input",
               ref: treeSearchRef,
               placeholder: t.treeSearch,
@@ -5718,7 +5865,7 @@ var h = React.createElement;
                 }
               }
             }),
-            treeQuery ? h2("button", {
+            treeQuery ? h("button", {
               className: "wbt-search-clear",
               title: t.clear,
               "aria-label": t.clear,
@@ -5726,37 +5873,37 @@ var h = React.createElement;
                 setTreeQuery("");
                 if (treeSearchRef.current) treeSearchRef.current.focus();
               }
-            }, h2(Icon2, { name: "close", size: 13 })) : null
+            }, h(Icon2, { name: "close", size: 13 })) : null
           ),
-          h2("div", { className: "wbt-drawer-body" }, treeBody),
-          h2(
+          h("div", { className: "wbt-drawer-body" }, treeBody),
+          h(
             "div",
             { className: "wbt-drawer-foot" },
-            h2(
+            h(
               "div",
               { className: "wbt-drawer-acts" },
-              h2(
+              h(
                 "button",
                 { className: "wbt-addbtn", title: t.addGroup, onClick: function() {
                   if (footGroupId) addNode(footGroupId, "0");
                 } },
-                h2(Icon2, { name: "folderPlus", size: 13 }),
+                h(Icon2, { name: "folderPlus", size: 13 }),
                 t.addGroup
               ),
-              h2(
+              h(
                 "button",
                 { className: "wbt-addbtn", title: t.addTable, onClick: function() {
                   if (footGroupId) addNode(footGroupId, "1");
                 } },
-                h2(Icon2, { name: "filePlus", size: 13 }),
+                h(Icon2, { name: "filePlus", size: 13 }),
                 t.addTable
               )
             ),
-            h2("div", { className: "wbt-drawer-hint" }, t.treeHint)
+            h("div", { className: "wbt-drawer-hint" }, t.treeHint)
           )
         )
       ) : null,
-      createState ? h2(CreateModal, {
+      createState ? h(CreateModal, {
         key: (createState.source || "0") + "-" + (createState.originTask && createState.originTask.id || ""),
         t,
         api,
@@ -5779,7 +5926,7 @@ var h = React.createElement;
           say(t.created);
         }
       }) : null,
-      timelineTask ? h2(TimelineModal, {
+      timelineTask ? h(TimelineModal, {
         key: timelineTask.id,
         t,
         api,
@@ -5792,7 +5939,7 @@ var h = React.createElement;
           setCreateState({ source: "1", originTask, defaultTableId: originTask.tableId });
         }
       }) : null,
-      nodeModal ? h2(NodeModal, {
+      nodeModal ? h(NodeModal, {
         key: "node-" + (nodeModal.node ? nodeModal.node.id : "new"),
         t,
         api,
@@ -5804,7 +5951,7 @@ var h = React.createElement;
         },
         onSaved: nodeSaved
       }) : null,
-      editTask ? h2(EditModal, {
+      editTask ? h(EditModal, {
         key: "edit-" + editTask.id,
         t,
         api,
@@ -5819,7 +5966,7 @@ var h = React.createElement;
           say(t.updated);
         }
       }) : null,
-      doneTask ? h2(DoneModal, {
+      doneTask ? h(DoneModal, {
         key: doneTask.id,
         t,
         api,
@@ -5837,7 +5984,7 @@ var h = React.createElement;
           say(e);
         }
       }) : null,
-      selectedOpen && batchMode ? h2(BatchModal, {
+      selectedOpen && batchMode ? h(BatchModal, {
         key: batchMode,
         t,
         api,
@@ -5850,12 +5997,12 @@ var h = React.createElement;
         },
         onDone: batchDone
       }) : null,
-      toast ? h2("div", { className: "wbt-toast" }, toast) : null
+      toast ? h("div", { className: "wbt-toast" }, toast) : null
     );
   }
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.10.9",
+    version: "2.10.10",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

@@ -42,7 +42,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/配置/数据四个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "2.10.9",
+        version: "2.10.10",
         tables: ["task", "task_dep", "task_node"],
         sync: taskSync,
         views: [
@@ -123,6 +123,7 @@ export function apply(ctx) {
             "任务标题不唯一：允许同名，用 id 区分；与「标签名唯一」「任务节点名同级唯一」是不同规则。",
             "任务没有「类型」字段：工作/生活/学习/开发 已迁成同名标签，用 tags 或 tagIds 归类。",
             "标签写入规则：tags/addTags 传名字，默认自动创建未知名字（配置 form.autoCreateTags 关掉后改为报错并列出可用标签）；tagIds/addTagIds 传 id，必须已存在，否则报错并列出可用标签；create/update/bulkCreate/bulkUpdate 共用同一套校验。",
+            "标签下拉用 tasks.tagOptions（text 模糊匹配、pageNumber/pageSize 分页，返回 total/hasMore）按需取数；tasks.tags 会一次返回全部标签及计数，只适合导航/统计这类需要全量的场景。",
           ],
         },
         setup,

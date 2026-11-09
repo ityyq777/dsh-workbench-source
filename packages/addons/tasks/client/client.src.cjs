@@ -1,7 +1,4 @@
 // dsh-workbench-tasks 浏览器侧源码。构建：node scripts/build-addon-clients.mjs → lib/client.js
-var React = require("react");
-var h = React.createElement;
-
 (function () {
   "use strict";
 
@@ -13,6 +10,7 @@ var h = React.createElement;
   }
   var React = require("react");
   var h = React.createElement;
+  var TagFilter = require("./tagfilter.cjs");
   var statsView = require("./stats.cjs");
   var configView = require("./config.cjs");
   var dataView = require("./data.cjs");
@@ -36,6 +34,8 @@ var h = React.createElement;
       groups: "个任务组", tables: "张任务表", treeNoMatch: "没有匹配的节点",
       tags: "标签", tagsHint: "用标签归类（工作/生活/学习/开发 已是标签）", tagPlaceholder: "多个标签用逗号分隔，例如：工作, 开发",
       tagFilter: "标签筛选", allTags: "全部标签", noTags: "暂无标签",
+      tagSearchPlaceholder: "搜索标签名称", tagNoMatch: "没有匹配的标签", loadingMore: "加载中…", noMore: "没有更多",
+      tagSelected: "已选", tagRemove: "移除",
       untagged: "未打标签", publish: "发布", target: "计划完成", done: "实际完成",
       shutdown: "关闭时间", priority: "优先级", difficulty: "难度", desc: "描述",
       review: "感受", reviewHint: "写下完成时的感受（可选）",
@@ -77,6 +77,8 @@ var h = React.createElement;
       groups: "groups", tables: "tables", treeNoMatch: "No matching node",
       tags: "Tags", tagsHint: "Group tasks with tags (Work/Life/Study/Dev are tags now)", tagPlaceholder: "Comma separated, e.g. Work, Dev",
       tagFilter: "Filter by tag", allTags: "All tags", noTags: "No tags",
+      tagSearchPlaceholder: "Search tag name", tagNoMatch: "No matching tag", loadingMore: "Loading…", noMore: "No more",
+      tagSelected: "Selected", tagRemove: "Remove",
       untagged: "Untagged", publish: "Published", target: "Target", done: "Done",
       shutdown: "Closed", priority: "Priority", difficulty: "Difficulty", desc: "Description",
       review: "Feeling", reviewHint: "How did it feel to finish? (optional)",
@@ -247,6 +249,16 @@ var h = React.createElement;
     ".wbt-card .wbt-metazone .wbt-meta{row-gap:2px}",
     ".wbt-tagfilter{position:relative;display:flex;align-items:center;gap:5px;min-width:0}",
     ".wbt-tagfilter .wbt-btn.on{border-color:var(--wbt-accent);color:var(--wbt-accent);background:color-mix(in oklab,var(--wbt-accent) 12%,transparent)}",
+    ".wbt-tagsearch{padding:0 0 6px}",
+    ".wbt-tagsearch .wbt-input{width:100%;box-sizing:border-box;font-size:12.5px;padding:6px 9px}",
+    ".wbt-tagsel{border-bottom:1px dashed var(--wbt-line);margin-bottom:6px;padding-bottom:5px}",
+    ".wbt-tagsel-list{display:flex;flex-wrap:wrap;gap:4px;padding:0 2px 2px}",
+    ".wbt-tagselitem{display:inline-flex;align-items:center;gap:4px;max-width:100%;border:1px solid color-mix(in oklab,var(--wbt-accent) 40%,transparent);background:color-mix(in oklab,var(--wbt-accent) 10%,transparent);color:var(--wbt-accent);border-radius:999px;padding:2px 7px;font-size:11.5px;cursor:pointer;font-family:inherit}",
+    ".wbt-tagselitem .wbt-tagnm{max-width:150px}",
+    ".wbt-tagx{opacity:.7;font-size:12px;line-height:1}",
+    ".wbt-taglist{max-height:236px;overflow:auto;overscroll-behavior:contain}",
+    ".wbt-tagmore{font-size:11px;opacity:.5;text-align:center;padding:6px 0 2px}",
+    ".wbt-card .wbt-metazone{row-gap:3px}",
     ".wbt-tagmenu{position:absolute;z-index:60;top:calc(100% + 6px);right:0;width:236px;max-height:320px;overflow:auto;padding:8px;border-radius:10px;border:1px solid var(--wbt-line);box-shadow:0 14px 34px rgba(26,20,12,.2);background-color:var(--wbt-bg);background-image:linear-gradient(var(--wbt-bg),var(--wbt-bg)),linear-gradient(var(--wbt-bg),var(--wbt-bg));-webkit-backdrop-filter:blur(24px) saturate(1.4);backdrop-filter:blur(24px) saturate(1.4)}",
     ".wbt-tagmenu-head{display:flex;align-items:center;gap:6px;font-size:11px;opacity:.6;padding:2px 4px 7px}",
     ".wbt-tagopt{display:flex;align-items:center;gap:7px;padding:6px;border-radius:6px;cursor:pointer;font-size:12.5px}",
@@ -1237,12 +1249,10 @@ var h = React.createElement;
     var titleKey = titleS[0], setTitleKey = titleS[1];
     var filterS = React.useState(cfg["list.filterRestarted"] !== false);
     var filterRestarted = filterS[0], setFilterRestarted = filterS[1];
-    var tagNavS = React.useState({ available: false, tags: [], untagged: { total: 0 } });
-    var tagNav = tagNavS[0], setTagNav = tagNavS[1];
+    var tagReloadS = React.useState(0);
+    var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
     var filterTagIdsS = React.useState([]);
     var filterTagIds = filterTagIdsS[0], setFilterTagIds = filterTagIdsS[1];
-    var tagMenuS = React.useState(false);
-    var tagMenu = tagMenuS[0], setTagMenu = tagMenuS[1];
     var pageS = React.useState(1);
     var pageNumber = pageS[0], setPageNumber = pageS[1];
     var sizeS = React.useState(cfgSize);
@@ -1318,12 +1328,7 @@ var h = React.createElement;
       }).catch(function (e) { setError(String(e && e.message || e)); });
     }, [api]);
 
-    var refreshTagNav = React.useCallback(function () {
-      return api.call("tasks.tags").then(function (r) {
-        if (r && r.ok) setTagNav(r.result || { available: false, tags: [], untagged: { total: 0 } });
-      }).catch(function () {});
-    }, [api]);
-
+    var refreshTagNav = React.useCallback(function () { setTagReload(function (n) { return n + 1; }); }, []);
     var refreshPath = React.useCallback(function (id) {
       if (!id) { setCurrentPath([]); return Promise.resolve(); }
       return api.call("taskNodes.path", { id: id }).then(function (r) {
@@ -1632,28 +1637,8 @@ var h = React.createElement;
           if (selectionMode) { setSelectionMode(false); clearSelection(); }
           else setSelectionMode(true);
         } }, h(Icon, { name: "select", size: 13 }), selectionMode ? t.cancelSelect : t.select),
-        tagNav.available && tagNav.tags.length ? h("div", { className: "wbt-tagfilter" },
-          h("button", {
-            className: "wbt-btn ghost" + (filterTagIds.length ? " on" : ""),
-            "aria-expanded": tagMenu ? "true" : "false",
-            onClick: function () { setTagMenu(!tagMenu); },
-          }, h(Icon, { name: "tag", size: 13 }), t.tagFilter + (filterTagIds.length ? " · " + filterTagIds.length : ""), h(Icon, { name: "down", size: 12 })),
-          tagMenu ? h("div", { className: "wbt-tagmenu", role: "menu" },
-            h("div", { className: "wbt-tagmenu-head" },
-              h("span", null, t.allTags),
-              h("span", { className: "wbt-grow" }),
-              h("button", { className: "wbt-mini", onClick: function () { setFilterTagIds([]); setPageNumber(1); } }, t.clear)
-            ),
-            tagNav.tags.length ? tagNav.tags.map(function (x) {
-              var on = filterTagIds.indexOf(String(x.id)) >= 0;
-              return h("label", { key: x.id, className: "wbt-tagopt" },
-                h("input", { type: "checkbox", checked: on, onChange: function () { toggleTagId(String(x.id)); } }),
-                h("span", { className: "wbt-tagnm" }, x.name),
-                h("span", { className: "wbt-tagcnt" }, x.total)
-              );
-            }) : h("div", { className: "wbt-note" }, t.noTags)
-          ) : null
-        ) : null,
+        h(TagFilter, { api: api, t: t, Icon: Icon, ids: filterTagIds, reloadKey: tagReload,
+          onChange: function (next) { setFilterTagIds(next); setPageNumber(1); } }),
         h("button", { className: "wbt-btn primary", onClick: function () {
           setCreateState({ source: "0", originTask: null, defaultTableId: target.tableId || (firstTable && firstTable.id) });
         } }, h(Icon, { name: "plus", size: 14 }), t.newTask),
@@ -1773,7 +1758,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "2.10.9",
+    version: "2.10.10",
     views: [
       { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView },
       { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },
