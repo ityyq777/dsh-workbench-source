@@ -3,15 +3,15 @@
  * 业务全部本地；云端只备份数据。标签能力通过 host.hasDomain 探测。
  */
 
-import { bindClock, ensureSchema } from "./db.js";
-import { exportSitesData, importSitesData } from "./backup.js";
-import { siteSync } from "./sync.js";
-import { registerSiteTreeActions } from "./tree.js";
-import { registerOverviewAction } from "./overview.js";
-import { registerSiteActions } from "./sites.js";
-import { registerAccountActions } from "./accounts.js";
-import { registerConfigActions } from "./config.js";
-import { registerDataActions } from "./data.js";
+import { bindClock, ensureSchema } from "./db/db.js";
+import { exportSitesData, importSitesData } from "./infra/backup.js";
+import { siteSync } from "./infra/sync.js";
+import { registerSiteTreeActions } from "./tree/tree.js";
+import { registerOverviewAction } from "./stats/overview.js";
+import { registerSiteActions } from "./domain/sites.js";
+import { registerAccountActions } from "./domain/accounts.js";
+import { registerConfigActions } from "./infra/config.js";
+import { registerDataActions } from "./infra/data.js";
 
 export const inject = ["workbench"];
 

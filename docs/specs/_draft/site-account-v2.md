@@ -286,7 +286,7 @@ Provider 注册：`client/lib/ui/providers/app_providers.dart:71-78`（`siteAcco
 
 | v2 能力 | DSH 对应物 |
 | --- | --- |
-| `site` 表 4 个业务列 | `site` DDL：`site_name / description / bindable / site_link`（`packages/addons/sites/lib/db.js:13-28`） |
+| `site` 表 4 个业务列 | `site` DDL：`site_name / description / bindable / site_link`（`packages/addons/sites/lib/db/db.js:13-28`） |
 | `site_link` JSON + 单默认约束 | `parseLinks/encodeLinks`（`db.js:180-212`，`:206-209` 强制至多一个 `isDefault`）+ `defaultLinkOf`（`db.js:214-221`，无默认标记时兜底取第一条有效链接） |
 | `site_node` 树 | `site_node` DDL + `siteNodes.tree/children/multipleChildren/pathChildren/path/create/rename/move/delete`（`lib/tree.js:301-392`） |
 | `site_node_mapping` | `site_node_mapping` DDL + 唯一索引 `uk_site_node_mapping`（`db.js:48-61`） |

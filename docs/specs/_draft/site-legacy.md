@@ -371,7 +371,7 @@ const handleBindableChange = async (checked: boolean) => {
 
 ### 7.2 一期插件现有表（对照用）
 
-`packages/addons/sites/lib/db.js`：`site`(14)、`site_node`(31)、`site_node_mapping`(49)（+ 通用 `meta` 于 `:302`）。
+`packages/addons/sites/lib/db/db.js`：`site`(14)、`site_node`(31)、`site_node_mapping`(49)（+ 通用 `meta` 于 `:302`）。
 `site` 表已含 `bindable INTEGER NOT NULL DEFAULT 1`，但**没有 account 表**。
 
 ### 7.3 旧系统 5 张表（还原，非 DDL）

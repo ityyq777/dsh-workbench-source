@@ -226,6 +226,7 @@
 |---|---|---|
 |`packages/addons/tasks/lib/db/timeline-schema.js`|原样保存 TIMELINE_DDL，由建表代码和时间线存储引用|不得引用领域层|
 |`packages/addons/tasks/lib/db/ownership-path.js`|ownershipError 与 pathFromMap 纯函数，原任务模型模块 re-export 保持原 API|不得引用领域层，不执行数据库写入|
+|`packages/addons/sites/lib/db/accounts-schema.js`|原样保存 ACCOUNT_DDL 与 EXTERNAL_DDL，由数据库初始化引用，domain/accounts.js re-export 保持原 API|不得引用领域层，不改变 DDL 或数据库结构|
 
 ## 迁移前置与顺序
 

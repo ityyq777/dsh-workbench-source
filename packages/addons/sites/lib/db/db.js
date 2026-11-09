@@ -8,7 +8,7 @@
 
 export const SITE_TABLE = "site";
 export const NODE_TABLE = "site_node";
-import { ACCOUNT_DDL, EXTERNAL_DDL } from "./accounts.js";
+import { ACCOUNT_DDL, EXTERNAL_DDL } from "./accounts-schema.js";
 export { ACCOUNT_DDL, EXTERNAL_DDL };
 export const NODE_MAPPING_TABLE = "site_node_mapping";
 

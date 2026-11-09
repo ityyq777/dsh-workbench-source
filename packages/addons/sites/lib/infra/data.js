@@ -9,7 +9,7 @@
  */
 
 import { DOMAIN } from "./config.js";
-import { maskSecret, maskMiddle } from "./vault.js";
+import { maskSecret, maskMiddle } from "../domain/vault.js";
 
 export const SCHEMA_VERSION = 1;
 

@@ -7,27 +7,17 @@
  * - 三条挂靠规则：删站守卫、bindable 关闭守卫、删账号双向清外联。
  */
 
-import { now, newId, idOf, tx, logChange, SITE_TABLE } from "./db.js";
+import { now, newId, idOf, tx, logChange, SITE_TABLE } from "../db/db.js";
 import {
   ACCOUNT_TABLE,
   EXTERNAL_TABLE,
-  ACCOUNT_DDL,
-  EXTERNAL_DDL,
   MAX_ACCOUNT,
-  MAX_KEY,
-  MAX_PHONE,
-  MAX_IDENTITY,
   MAX_REMARK,
   liveAccount,
   siteOf,
   textOf,
   keyOf,
   assertKeyUnique,
-  externalRefsOfSite,
-  countAccounts,
-  assertNoAccounts,
-  assertBindableUnused,
-  externalsOf,
   outAccount,
   listAccounts,
   sealSensitive,
@@ -51,12 +41,10 @@ export {
   assertBindableUnused,
 } from "./accounts-model.js";
 import {
-  encryptField,
   decryptField,
   isEncrypted,
   maskSecret,
   maskMiddle,
-  requireKey,
   vaultEnabled,
   vaultStatus,
   setupVault,

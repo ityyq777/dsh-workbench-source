@@ -51,7 +51,7 @@ try {
     for(const path of targets) assert(path.split('/').length<=LAYOUT.maxDirectoryDepth);
     const counts=new Map();for(const path of targets) if(!spec.generated.includes(path)) counts.set(dirname(path),(counts.get(dirname(path))||0)+1);
     assert([...counts.values()].every(n=>n<=LAYOUT.maxFilesPerDirectory));
-    for(const file of sourceFiles(join(ROOT,spec.root))) {const rel=relative(join(ROOT,spec.root),file).split('\\').join('/');assert(Object.hasOwn(spec.files,rel)||targets.includes(rel)||(spec.root==='packages/addons/tasks/lib'&&['db/timeline-schema.js','db/ownership-path.js'].includes(rel)),'unmapped baseline '+file);}
+    for(const file of sourceFiles(join(ROOT,spec.root))) {const rel=relative(join(ROOT,spec.root),file).split('\\').join('/');assert(Object.hasOwn(spec.files,rel)||targets.includes(rel)||(spec.root==='packages/addons/tasks/lib'&&['db/timeline-schema.js','db/ownership-path.js'].includes(rel))||(spec.root==='packages/addons/sites/lib'&&rel==='db/accounts-schema.js'),'unmapped baseline '+file);}
   }
   const e2e=readFileSync(join(ROOT,'scripts/e2e.mjs'),'utf8');assert(e2e.includes('"scripts/audit-structure.mjs"'));assert(!e2e.includes('--scope'));
   console.log('STRUCTURE TEST PASS: CLI failures, scopes, roots, depth/count, dependency graph, recursive inventory and frozen budget relocation');

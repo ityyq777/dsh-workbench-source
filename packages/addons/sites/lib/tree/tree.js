@@ -20,7 +20,7 @@ import {
   nodeById,
   subtreeRows,
   insertNode,
-} from "./db.js";
+} from "../db/db.js";
 
 const NAME_MAX = 40;
 

@@ -1,7 +1,7 @@
 // dsh-workbench-sites 浏览器侧源码。构建：node scripts/build-addon-clients.mjs → lib/client.js
 var React = require("react");
 var h = React.createElement;
-var TagFilter = require("./tagfilter.cjs");
+var TagFilter = require("./ui/tagfilter.cjs");
 
 (function () {
   var host = window.__WB_HOST__;
@@ -12,9 +12,9 @@ var TagFilter = require("./tagfilter.cjs");
   }
   var React = require("react");
   var h = React.createElement;
-  var statsView = require("./stats.cjs");
-  var configView = require("./config.cjs");
-  var dataView = require("./data.cjs");
+  var statsView = require("./views/stats.cjs");
+  var configView = require("./views/config.cjs");
+  var dataView = require("./views/data.cjs");
 
   // 站点插件自带 lucide-react 图标；每个图标按需引入，随 client.js 一起打包。
   var ICONS = {
@@ -62,7 +62,7 @@ var TagFilter = require("./tagfilter.cjs");
   var useRef = React.useRef;
   var useMemo = React.useMemo;
 
-  var COPY = require("./copy.cjs");
+  var COPY = require("./ui/copy.cjs");
 
   function text(lang, key, vars) {
     var dict = COPY[lang] || COPY.zh;
@@ -82,7 +82,7 @@ var TagFilter = require("./tagfilter.cjs");
     return list.some(function (a) { return a && a.id === id && a.enabled !== false; });
   }
 
-  var cssText = require("./styles.cjs");
+  var cssText = require("./ui/styles.cjs");
 
   function injectCss() {
     var id = "wb-addon-sites-css";

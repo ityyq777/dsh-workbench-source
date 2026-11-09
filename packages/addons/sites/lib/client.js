@@ -38,9 +38,9 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// packages/addons/sites/client/tagfilter.cjs
+// packages/addons/sites/client/ui/tagfilter.cjs
 var require_tagfilter = __commonJS({
-  "packages/addons/sites/client/tagfilter.cjs"(exports2, module2) {
+  "packages/addons/sites/client/ui/tagfilter.cjs"(exports2, module2) {
     var React2 = require("react");
     var h2 = React2.createElement;
     var useState = React2.useState;
@@ -763,9 +763,9 @@ var init_plus = __esm({
   }
 });
 
-// packages/addons/sites/client/charts.cjs
+// packages/addons/sites/client/stats/charts.cjs
 var require_charts = __commonJS({
-  "packages/addons/sites/client/charts.cjs"(exports2, module2) {
+  "packages/addons/sites/client/stats/charts.cjs"(exports2, module2) {
     var React2 = require("react");
     var h2 = React2.createElement;
     var ICONS = {
@@ -1271,9 +1271,9 @@ var require_charts = __commonJS({
   }
 });
 
-// packages/addons/sites/client/config.cjs
+// packages/addons/sites/client/views/config.cjs
 var require_config = __commonJS({
-  "packages/addons/sites/client/config.cjs"(exports2, module2) {
+  "packages/addons/sites/client/views/config.cjs"(exports2, module2) {
     var React2 = require("react");
     var h2 = React2.createElement;
     var DOMAIN = "sites";
@@ -1784,9 +1784,9 @@ var require_config = __commonJS({
   }
 });
 
-// packages/addons/sites/client/stats.cjs
+// packages/addons/sites/client/views/stats.cjs
 var require_stats = __commonJS({
-  "packages/addons/sites/client/stats.cjs"(exports2, module2) {
+  "packages/addons/sites/client/views/stats.cjs"(exports2, module2) {
     var React2 = require("react");
     var h2 = React2.createElement;
     var charts = require_charts();
@@ -3245,9 +3245,9 @@ var require_data_view = __commonJS({
   }
 });
 
-// packages/addons/sites/client/data.cjs
+// packages/addons/sites/client/views/data.cjs
 var require_data = __commonJS({
-  "packages/addons/sites/client/data.cjs"(exports2, module2) {
+  "packages/addons/sites/client/views/data.cjs"(exports2, module2) {
     "use strict";
     module2.exports = require_data_view()({
       domain: "sites",
@@ -3802,9 +3802,9 @@ var init_copy = __esm({
   }
 });
 
-// packages/addons/sites/client/copy.cjs
+// packages/addons/sites/client/ui/copy.cjs
 var require_copy = __commonJS({
-  "packages/addons/sites/client/copy.cjs"(exports2, module2) {
+  "packages/addons/sites/client/ui/copy.cjs"(exports2, module2) {
     "use strict";
     module2.exports = {
       zh: {
@@ -4033,9 +4033,9 @@ var require_copy = __commonJS({
   }
 });
 
-// packages/addons/sites/client/styles.cjs
+// packages/addons/sites/client/ui/styles.cjs
 var require_styles = __commonJS({
-  "packages/addons/sites/client/styles.cjs"(exports2, module2) {
+  "packages/addons/sites/client/ui/styles.cjs"(exports2, module2) {
     "use strict";
     module2.exports = [
       ".wbs-root{--wbs-line:var(--dsw-alias-border-l2, color-mix(in srgb, var(--dsw-alias-label-primary,#1f2328) 13%, transparent));--wbs-soft:var(--dsw-alias-interactive-bg-hover, color-mix(in srgb, var(--dsw-alias-label-primary,#1f2328) 4.5%, transparent));--wbs-accent:var(--dsw-alias-brand-primary,#0a8f7d);--wbs-muted:var(--dsw-alias-label-secondary, color-mix(in srgb, var(--dsw-alias-label-primary,#1f2328) 58%, transparent));display:flex;flex-direction:column;min-height:560px;color:var(--dsw-alias-label-primary,#1f2328);font-size:13px}",

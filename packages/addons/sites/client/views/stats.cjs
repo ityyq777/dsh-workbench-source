@@ -1,7 +1,7 @@
 // 站点统计视图：一次拉取 sites.statsReport，区块化渲染。
 var React = require("react");
 var h = React.createElement;
-var charts = require("./charts.cjs");
+var charts = require("../stats/charts.cjs");
 var configView = require("./config.cjs");
 
 var COPY = {

@@ -134,7 +134,7 @@ try {
   assert.equal(caps.tags, false);
   assert.equal(caps.overviewAction, "siteNodes.overview");
   assert.ok(s.defs["sites.capabilities"].render(caps).includes(caps.placementGuidance));
-  const { overview } = await import("../packages/addons/sites/lib/overview.js");
+  const { overview } = await import("../packages/addons/sites/lib/stats/overview.js");
   for (let i = 0; i < 150; i++) node.run("many" + i, "目录" + i, "g", "/g/many" + i + "/", 1, null);
   const many = assertQueries(s.db, db => overview(db));
   assert.equal(many.total, 154);
@@ -158,8 +158,8 @@ import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import { setup as setupSites } from "./packages/addons/sites/lib/index.js";
 import { setup as setupTasks } from "./packages/addons/tasks/lib/index.js";
-import { importSitesData } from "./packages/addons/sites/lib/backup.js";
-import { overview as sitesOverview, renderOverview as sitesRender } from "./packages/addons/sites/lib/overview.js";
+import { importSitesData } from "./packages/addons/sites/lib/infra/backup.js";
+import { overview as sitesOverview, renderOverview as sitesRender } from "./packages/addons/sites/lib/stats/overview.js";
 import { overview as tasksOverview, renderOverview as tasksRender } from "./packages/addons/tasks/lib/stats/overview.js";
 for (const domain of ["sites", "tasks"]) {
   const db = new DatabaseSync(":memory:");

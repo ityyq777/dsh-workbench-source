@@ -11,7 +11,7 @@ import {
   SITE_TABLE,
   logChange,
   tableExists,
-} from "./db.js";
+} from "../db/db.js";
 
 const SCHEMA_VERSION = 1;
 const TAG_MAPPING_TABLE = "tag_mapping";

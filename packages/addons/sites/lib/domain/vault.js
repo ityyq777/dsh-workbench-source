@@ -12,7 +12,7 @@
 
 import { randomBytes, scrypt as scryptCb, createHmac, createCipheriv, createDecipheriv } from "node:crypto";
 import { promisify } from "node:util";
-import { metaGet, metaSet } from "./db.js";
+import { metaGet, metaSet } from "../db/db.js";
 
 const scrypt = promisify(scryptCb);
 

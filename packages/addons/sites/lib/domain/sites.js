@@ -17,14 +17,13 @@ import {
   rowSite,
   nodeById,
   subtreeRows,
-  childrenOf,
   hasTagDomain,
   SITE_TABLE,
   NODE_MAPPING_TABLE,
-} from "./db.js";
-import { statsReport, renderStats } from "./stats.js";
+} from "../db/db.js";
+import { statsReport, renderStats } from "../stats/stats.js";
 import { assertNoAccounts, assertBindableUnused } from "./accounts.js";
-import { configValues } from "./config.js";
+import { configValues } from "../infra/config.js";
 import { replaceDirMappings, replaceTagMappings } from "./sites-mappings.js";
 
 const PAGE_SIZE_DEFAULT = 16;

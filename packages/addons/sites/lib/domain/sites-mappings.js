@@ -4,7 +4,7 @@
  * 编辑时按集合差异增删，软删过的历史行优先复活，避免每改一次就多一条墓碑。
  */
 
-import { newId, logChange, hasTagDomain, NODE_MAPPING_TABLE } from "./db.js";
+import { newId, logChange, hasTagDomain, NODE_MAPPING_TABLE } from "../db/db.js";
 
 function reviveOrInsertMapping(db, table, idKey, where, values, ts) {
   // 仅用于 site_node_mapping / tag_mapping 的软删复用，避免每次编辑都新增历史行。

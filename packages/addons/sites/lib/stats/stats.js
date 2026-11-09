@@ -1,7 +1,7 @@
 // 站点统计报表：只读聚合，不写库、不发事件。
 // 契约见 docs/specs/18-统计报表设计.md §6。
-import { parseLinks } from "./db.js";
-import { configValues } from "./config.js";
+import { parseLinks } from "../db/db.js";
+import { configValues } from "../infra/config.js";
 
 function pad(n) {
   return String(n).padStart(2, "0");
