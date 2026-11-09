@@ -6,9 +6,9 @@ import { createSchema } from '../packages/addons/tasks/lib/db/db-core.js';
 import { exportTasksData, importTasksData } from '../packages/addons/tasks/lib/infra/backup.js';
 import { taskSync } from '../packages/addons/tasks/lib/infra/sync.js';
 import { activeTimeline } from '../packages/addons/tasks/lib/timeline/timeline-store.js';
-import { applyIncoming } from '../packages/shell/lib/sync-incoming.js';
-import { resolveConflict } from '../packages/shell/lib/sync-conflicts.js';
-import { SyncEngine, SyncClock } from '../packages/shell/lib/sync.js';
+import { applyIncoming } from '../packages/shell/lib/sync/sync-incoming.js';
+import { resolveConflict } from '../packages/shell/lib/sync/sync-conflicts.js';
+import { SyncEngine, SyncClock } from '../packages/shell/lib/sync/sync.js';
 import { writeConflict, applyRemoteUpsert } from '../packages/core/lib/repo.js';
 const all=[];
 function api() { const db=new DatabaseSync(':memory:');all.push(db);db.exec(SCHEMA_SQL);createSchema(db);return {db,emit(){},hasDomain(){return false;}}; }

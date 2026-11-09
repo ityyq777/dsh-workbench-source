@@ -1,5 +1,5 @@
 import { renderTaskTarget } from "./task-targets.js";
-import type { RegisteredDomain } from "./host-types.js";
+import type { RegisteredDomain } from "../types/host-types.js";
 export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTargets }: any) {
   function findDomain(raw: string): RegisteredDomain | null {
     const key = String(raw ?? "").trim();

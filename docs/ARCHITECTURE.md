@@ -1,6 +1,6 @@
 # 业务目录架构与迁移契约
 
-本方案对应任务 `01a1c018-d6e1-7289-a113-61331801ec1c`。路径映射以 [structure-map.json](../scripts/structure-map.json) 为机器可读清单；下列每行均指定一个现有文件的目标，不以文件名推断新文件职责。当前是迁移基建阶段，业务文件尚未移动。
+本方案对应任务 `01a1c018-d6e1-7289-a113-61331801ec1c`。路径映射以 [structure-map.json](../scripts/structure-map.json) 为机器可读清单；下列每行均指定一个现有文件的目标，不以文件名推断新文件职责。tasks、sites、tags、storage 与 shell/src 各范围已执行迁移；全范围目录结构审计通过。完整 E2E 与临时完整包安装验证另行记录，不以结构审计替代。逐文件表保留迁移前文件名与目标路径，文件名链接指向迁移后的实际文件；完整旧路径映射保留在机器可读清单中。
 
 ## 目录与依赖方向
 
@@ -26,197 +26,197 @@
 
 ### tasks/lib
 
-|当前文件|目标路径|
+|迁移前文件名（链接到现文件）|迁移后路径|
 |---|---|
 |[index.js](../packages/addons/tasks/lib/index.js)|`packages/addons/tasks/lib/index.js`|
 |[tasks.js](../packages/addons/tasks/lib/tasks.js)|`packages/addons/tasks/lib/tasks.js`|
 |[client.js](../packages/addons/tasks/lib/client.js)|`packages/addons/tasks/lib/client.js`（生成物，原位）|
-|[db.js](../packages/addons/tasks/lib/db.js)|`packages/addons/tasks/lib/db/db.js`|
-|[db-core.js](../packages/addons/tasks/lib/db-core.js)|`packages/addons/tasks/lib/db/db-core.js`|
-|[db-legacy.js](../packages/addons/tasks/lib/db-legacy.js)|`packages/addons/tasks/lib/db/db-legacy.js`|
-|[task-model.js](../packages/addons/tasks/lib/task-model.js)|`packages/addons/tasks/lib/task/model/task-model.js`|
-|[task-priority.js](../packages/addons/tasks/lib/task-priority.js)|`packages/addons/tasks/lib/task/model/task-priority.js`|
-|[task-difficulty.js](../packages/addons/tasks/lib/task-difficulty.js)|`packages/addons/tasks/lib/task/model/task-difficulty.js`|
-|[task-ownership-path.js](../packages/addons/tasks/lib/task-ownership-path.js)|`packages/addons/tasks/lib/task/model/task-ownership-path.js`|
-|[task-create.js](../packages/addons/tasks/lib/task-create.js)|`packages/addons/tasks/lib/task/write/task-create.js`|
-|[task-create-schema.js](../packages/addons/tasks/lib/task-create-schema.js)|`packages/addons/tasks/lib/task/write/task-create-schema.js`|
-|[task-update.js](../packages/addons/tasks/lib/task-update.js)|`packages/addons/tasks/lib/task/write/task-update.js`|
-|[task-bulk.js](../packages/addons/tasks/lib/task-bulk.js)|`packages/addons/tasks/lib/task/write/task-bulk.js`|
-|[task-operations.js](../packages/addons/tasks/lib/task-operations.js)|`packages/addons/tasks/lib/task/write/task-operations.js`|
-|[task-target.js](../packages/addons/tasks/lib/task-target.js)|`packages/addons/tasks/lib/task/write/task-target.js`|
-|[task-transaction.js](../packages/addons/tasks/lib/task-transaction.js)|`packages/addons/tasks/lib/task/write/task-transaction.js`|
-|[task-query.js](../packages/addons/tasks/lib/task-query.js)|`packages/addons/tasks/lib/task/read/task-query.js`|
-|[task-search-schema.js](../packages/addons/tasks/lib/task-search-schema.js)|`packages/addons/tasks/lib/task/read/task-search-schema.js`|
-|[task-view.js](../packages/addons/tasks/lib/task-view.js)|`packages/addons/tasks/lib/task/read/task-view.js`|
-|[task-publish-filter.js](../packages/addons/tasks/lib/task-publish-filter.js)|`packages/addons/tasks/lib/task/read/task-publish-filter.js`|
-|[task-discovery.js](../packages/addons/tasks/lib/task-discovery.js)|`packages/addons/tasks/lib/task/read/task-discovery.js`|
-|[tree.js](../packages/addons/tasks/lib/tree.js)|`packages/addons/tasks/lib/tree/tree.js`|
-|[task-node-write.js](../packages/addons/tasks/lib/task-node-write.js)|`packages/addons/tasks/lib/tree/task-node-write.js`|
-|[timeline-actions.js](../packages/addons/tasks/lib/timeline-actions.js)|`packages/addons/tasks/lib/timeline/timeline-actions.js`|
-|[timeline-store.js](../packages/addons/tasks/lib/timeline-store.js)|`packages/addons/tasks/lib/timeline/timeline-store.js`|
-|[timeline-migration.js](../packages/addons/tasks/lib/timeline-migration.js)|`packages/addons/tasks/lib/timeline/timeline-migration.js`|
-|[timeline-sync.js](../packages/addons/tasks/lib/timeline-sync.js)|`packages/addons/tasks/lib/timeline/timeline-sync.js`|
-|[task-timelines.js](../packages/addons/tasks/lib/task-timelines.js)|`packages/addons/tasks/lib/timeline/task-timelines.js`|
-|[stats.js](../packages/addons/tasks/lib/stats.js)|`packages/addons/tasks/lib/stats/stats.js`|
-|[stats-today.js](../packages/addons/tasks/lib/stats-today.js)|`packages/addons/tasks/lib/stats/stats-today.js`|
-|[activity-calendar.js](../packages/addons/tasks/lib/activity-calendar.js)|`packages/addons/tasks/lib/stats/activity-calendar.js`|
-|[overview.js](../packages/addons/tasks/lib/overview.js)|`packages/addons/tasks/lib/stats/overview.js`|
-|[tagging.js](../packages/addons/tasks/lib/tagging.js)|`packages/addons/tasks/lib/tagging/tagging.js`|
-|[tag-options.js](../packages/addons/tasks/lib/tag-options.js)|`packages/addons/tasks/lib/tagging/tag-options.js`|
-|[backup.js](../packages/addons/tasks/lib/backup.js)|`packages/addons/tasks/lib/infra/backup.js`|
-|[sync.js](../packages/addons/tasks/lib/sync.js)|`packages/addons/tasks/lib/infra/sync.js`|
-|[data.js](../packages/addons/tasks/lib/data.js)|`packages/addons/tasks/lib/infra/data.js`|
-|[config.js](../packages/addons/tasks/lib/config.js)|`packages/addons/tasks/lib/infra/config.js`|
+|[db.js](../packages/addons/tasks/lib/db/db.js)|`packages/addons/tasks/lib/db/db.js`|
+|[db-core.js](../packages/addons/tasks/lib/db/db-core.js)|`packages/addons/tasks/lib/db/db-core.js`|
+|[db-legacy.js](../packages/addons/tasks/lib/db/db-legacy.js)|`packages/addons/tasks/lib/db/db-legacy.js`|
+|[task-model.js](../packages/addons/tasks/lib/task/model/task-model.js)|`packages/addons/tasks/lib/task/model/task-model.js`|
+|[task-priority.js](../packages/addons/tasks/lib/task/model/task-priority.js)|`packages/addons/tasks/lib/task/model/task-priority.js`|
+|[task-difficulty.js](../packages/addons/tasks/lib/task/model/task-difficulty.js)|`packages/addons/tasks/lib/task/model/task-difficulty.js`|
+|[task-ownership-path.js](../packages/addons/tasks/lib/task/model/task-ownership-path.js)|`packages/addons/tasks/lib/task/model/task-ownership-path.js`|
+|[task-create.js](../packages/addons/tasks/lib/task/write/task-create.js)|`packages/addons/tasks/lib/task/write/task-create.js`|
+|[task-create-schema.js](../packages/addons/tasks/lib/task/write/task-create-schema.js)|`packages/addons/tasks/lib/task/write/task-create-schema.js`|
+|[task-update.js](../packages/addons/tasks/lib/task/write/task-update.js)|`packages/addons/tasks/lib/task/write/task-update.js`|
+|[task-bulk.js](../packages/addons/tasks/lib/task/write/task-bulk.js)|`packages/addons/tasks/lib/task/write/task-bulk.js`|
+|[task-operations.js](../packages/addons/tasks/lib/task/write/task-operations.js)|`packages/addons/tasks/lib/task/write/task-operations.js`|
+|[task-target.js](../packages/addons/tasks/lib/task/write/task-target.js)|`packages/addons/tasks/lib/task/write/task-target.js`|
+|[task-transaction.js](../packages/addons/tasks/lib/task/write/task-transaction.js)|`packages/addons/tasks/lib/task/write/task-transaction.js`|
+|[task-query.js](../packages/addons/tasks/lib/task/read/task-query.js)|`packages/addons/tasks/lib/task/read/task-query.js`|
+|[task-search-schema.js](../packages/addons/tasks/lib/task/read/task-search-schema.js)|`packages/addons/tasks/lib/task/read/task-search-schema.js`|
+|[task-view.js](../packages/addons/tasks/lib/task/read/task-view.js)|`packages/addons/tasks/lib/task/read/task-view.js`|
+|[task-publish-filter.js](../packages/addons/tasks/lib/task/read/task-publish-filter.js)|`packages/addons/tasks/lib/task/read/task-publish-filter.js`|
+|[task-discovery.js](../packages/addons/tasks/lib/task/read/task-discovery.js)|`packages/addons/tasks/lib/task/read/task-discovery.js`|
+|[tree.js](../packages/addons/tasks/lib/tree/tree.js)|`packages/addons/tasks/lib/tree/tree.js`|
+|[task-node-write.js](../packages/addons/tasks/lib/tree/task-node-write.js)|`packages/addons/tasks/lib/tree/task-node-write.js`|
+|[timeline-actions.js](../packages/addons/tasks/lib/timeline/timeline-actions.js)|`packages/addons/tasks/lib/timeline/timeline-actions.js`|
+|[timeline-store.js](../packages/addons/tasks/lib/timeline/timeline-store.js)|`packages/addons/tasks/lib/timeline/timeline-store.js`|
+|[timeline-migration.js](../packages/addons/tasks/lib/timeline/timeline-migration.js)|`packages/addons/tasks/lib/timeline/timeline-migration.js`|
+|[timeline-sync.js](../packages/addons/tasks/lib/timeline/timeline-sync.js)|`packages/addons/tasks/lib/timeline/timeline-sync.js`|
+|[task-timelines.js](../packages/addons/tasks/lib/timeline/task-timelines.js)|`packages/addons/tasks/lib/timeline/task-timelines.js`|
+|[stats.js](../packages/addons/tasks/lib/stats/stats.js)|`packages/addons/tasks/lib/stats/stats.js`|
+|[stats-today.js](../packages/addons/tasks/lib/stats/stats-today.js)|`packages/addons/tasks/lib/stats/stats-today.js`|
+|[activity-calendar.js](../packages/addons/tasks/lib/stats/activity-calendar.js)|`packages/addons/tasks/lib/stats/activity-calendar.js`|
+|[overview.js](../packages/addons/tasks/lib/stats/overview.js)|`packages/addons/tasks/lib/stats/overview.js`|
+|[tagging.js](../packages/addons/tasks/lib/tagging/tagging.js)|`packages/addons/tasks/lib/tagging/tagging.js`|
+|[tag-options.js](../packages/addons/tasks/lib/tagging/tag-options.js)|`packages/addons/tasks/lib/tagging/tag-options.js`|
+|[backup.js](../packages/addons/tasks/lib/infra/backup.js)|`packages/addons/tasks/lib/infra/backup.js`|
+|[sync.js](../packages/addons/tasks/lib/infra/sync.js)|`packages/addons/tasks/lib/infra/sync.js`|
+|[data.js](../packages/addons/tasks/lib/infra/data.js)|`packages/addons/tasks/lib/infra/data.js`|
+|[config.js](../packages/addons/tasks/lib/infra/config.js)|`packages/addons/tasks/lib/infra/config.js`|
 
 ### tasks/client
 
-|当前文件|目标路径|
+|迁移前文件名（链接到现文件）|迁移后路径|
 |---|---|
 |[client.src.cjs](../packages/addons/tasks/client/client.src.cjs)|`packages/addons/tasks/client/client.src.cjs`|
-|[tasks-view.cjs](../packages/addons/tasks/client/tasks-view.cjs)|`packages/addons/tasks/client/views/tasks-view.cjs`|
-|[stats.cjs](../packages/addons/tasks/client/stats.cjs)|`packages/addons/tasks/client/views/stats.cjs`|
-|[timeline-view.cjs](../packages/addons/tasks/client/timeline-view.cjs)|`packages/addons/tasks/client/views/timeline-view.cjs`|
-|[config.cjs](../packages/addons/tasks/client/config.cjs)|`packages/addons/tasks/client/views/config.cjs`|
-|[data.cjs](../packages/addons/tasks/client/data.cjs)|`packages/addons/tasks/client/views/data.cjs`|
-|[styles.cjs](../packages/addons/tasks/client/styles.cjs)|`packages/addons/tasks/client/ui/styles.cjs`|
-|[copy.cjs](../packages/addons/tasks/client/copy.cjs)|`packages/addons/tasks/client/ui/copy.cjs`|
-|[icons.cjs](../packages/addons/tasks/client/icons.cjs)|`packages/addons/tasks/client/ui/icons.cjs`|
-|[body-mode.cjs](../packages/addons/tasks/client/body-mode.cjs)|`packages/addons/tasks/client/ui/body-mode.cjs`|
-|[date-filter.cjs](../packages/addons/tasks/client/date-filter.cjs)|`packages/addons/tasks/client/ui/date-filter.cjs`|
-|[tagfilter.cjs](../packages/addons/tasks/client/tagfilter.cjs)|`packages/addons/tasks/client/ui/tagfilter.cjs`|
-|[highlight.cjs](../packages/addons/tasks/client/highlight.cjs)|`packages/addons/tasks/client/ui/highlight.cjs`|
-|[task-item.cjs](../packages/addons/tasks/client/task-item.cjs)|`packages/addons/tasks/client/item/task-item.cjs`|
-|[recent-columns.cjs](../packages/addons/tasks/client/recent-columns.cjs)|`packages/addons/tasks/client/item/recent-columns.cjs`|
-|[difficulty-field.cjs](../packages/addons/tasks/client/difficulty-field.cjs)|`packages/addons/tasks/client/item/difficulty-field.cjs`|
-|[create-modal.cjs](../packages/addons/tasks/client/create-modal.cjs)|`packages/addons/tasks/client/modals/create-modal.cjs`|
-|[edit-modal.cjs](../packages/addons/tasks/client/edit-modal.cjs)|`packages/addons/tasks/client/modals/edit-modal.cjs`|
-|[batch-modal.cjs](../packages/addons/tasks/client/batch-modal.cjs)|`packages/addons/tasks/client/modals/batch-modal.cjs`|
-|[table-picker.cjs](../packages/addons/tasks/client/table-picker.cjs)|`packages/addons/tasks/client/modals/table-picker.cjs`|
-|[ownership-fields.cjs](../packages/addons/tasks/client/ownership-fields.cjs)|`packages/addons/tasks/client/modals/ownership-fields.cjs`|
-|[ownership.cjs](../packages/addons/tasks/client/ownership.cjs)|`packages/addons/tasks/client/modals/ownership.cjs`|
-|[task-timeline-modal.cjs](../packages/addons/tasks/client/task-timeline-modal.cjs)|`packages/addons/tasks/client/timeline/task-timeline-modal.cjs`|
-|[timeline-add-members.cjs](../packages/addons/tasks/client/timeline-add-members.cjs)|`packages/addons/tasks/client/timeline/timeline-add-members.cjs`|
-|[timeline-controls.cjs](../packages/addons/tasks/client/timeline-controls.cjs)|`packages/addons/tasks/client/timeline/timeline-controls.cjs`|
-|[timeline-copy.cjs](../packages/addons/tasks/client/timeline-copy.cjs)|`packages/addons/tasks/client/timeline/timeline-copy.cjs`|
-|[timeline-members.cjs](../packages/addons/tasks/client/timeline-members.cjs)|`packages/addons/tasks/client/timeline/timeline-members.cjs`|
-|[timeline-merge.cjs](../packages/addons/tasks/client/timeline-merge.cjs)|`packages/addons/tasks/client/timeline/timeline-merge.cjs`|
-|[timeline-styles.cjs](../packages/addons/tasks/client/timeline-styles.cjs)|`packages/addons/tasks/client/timeline/timeline-styles.cjs`|
-|[charts.cjs](../packages/addons/tasks/client/charts.cjs)|`packages/addons/tasks/client/stats/charts.cjs`|
-|[heatmap.cjs](../packages/addons/tasks/client/heatmap.cjs)|`packages/addons/tasks/client/stats/heatmap.cjs`|
-|[heatmap-model.cjs](../packages/addons/tasks/client/heatmap-model.cjs)|`packages/addons/tasks/client/stats/heatmap-model.cjs`|
-|[heatmap-styles.cjs](../packages/addons/tasks/client/heatmap-styles.cjs)|`packages/addons/tasks/client/stats/heatmap-styles.cjs`|
-|[today.cjs](../packages/addons/tasks/client/today.cjs)|`packages/addons/tasks/client/stats/today.cjs`|
-|[activity-filter.cjs](../packages/addons/tasks/client/activity-filter.cjs)|`packages/addons/tasks/client/stats/activity-filter.cjs`|
+|[tasks-view.cjs](../packages/addons/tasks/client/views/tasks-view.cjs)|`packages/addons/tasks/client/views/tasks-view.cjs`|
+|[stats.cjs](../packages/addons/tasks/client/views/stats.cjs)|`packages/addons/tasks/client/views/stats.cjs`|
+|[timeline-view.cjs](../packages/addons/tasks/client/views/timeline-view.cjs)|`packages/addons/tasks/client/views/timeline-view.cjs`|
+|[config.cjs](../packages/addons/tasks/client/views/config.cjs)|`packages/addons/tasks/client/views/config.cjs`|
+|[data.cjs](../packages/addons/tasks/client/views/data.cjs)|`packages/addons/tasks/client/views/data.cjs`|
+|[styles.cjs](../packages/addons/tasks/client/ui/styles.cjs)|`packages/addons/tasks/client/ui/styles.cjs`|
+|[copy.cjs](../packages/addons/tasks/client/ui/copy.cjs)|`packages/addons/tasks/client/ui/copy.cjs`|
+|[icons.cjs](../packages/addons/tasks/client/ui/icons.cjs)|`packages/addons/tasks/client/ui/icons.cjs`|
+|[body-mode.cjs](../packages/addons/tasks/client/ui/body-mode.cjs)|`packages/addons/tasks/client/ui/body-mode.cjs`|
+|[date-filter.cjs](../packages/addons/tasks/client/ui/date-filter.cjs)|`packages/addons/tasks/client/ui/date-filter.cjs`|
+|[tagfilter.cjs](../packages/addons/tasks/client/ui/tagfilter.cjs)|`packages/addons/tasks/client/ui/tagfilter.cjs`|
+|[highlight.cjs](../packages/addons/tasks/client/ui/highlight.cjs)|`packages/addons/tasks/client/ui/highlight.cjs`|
+|[task-item.cjs](../packages/addons/tasks/client/item/task-item.cjs)|`packages/addons/tasks/client/item/task-item.cjs`|
+|[recent-columns.cjs](../packages/addons/tasks/client/item/recent-columns.cjs)|`packages/addons/tasks/client/item/recent-columns.cjs`|
+|[difficulty-field.cjs](../packages/addons/tasks/client/item/difficulty-field.cjs)|`packages/addons/tasks/client/item/difficulty-field.cjs`|
+|[create-modal.cjs](../packages/addons/tasks/client/modals/create-modal.cjs)|`packages/addons/tasks/client/modals/create-modal.cjs`|
+|[edit-modal.cjs](../packages/addons/tasks/client/modals/edit-modal.cjs)|`packages/addons/tasks/client/modals/edit-modal.cjs`|
+|[batch-modal.cjs](../packages/addons/tasks/client/modals/batch-modal.cjs)|`packages/addons/tasks/client/modals/batch-modal.cjs`|
+|[table-picker.cjs](../packages/addons/tasks/client/modals/table-picker.cjs)|`packages/addons/tasks/client/modals/table-picker.cjs`|
+|[ownership-fields.cjs](../packages/addons/tasks/client/modals/ownership-fields.cjs)|`packages/addons/tasks/client/modals/ownership-fields.cjs`|
+|[ownership.cjs](../packages/addons/tasks/client/modals/ownership.cjs)|`packages/addons/tasks/client/modals/ownership.cjs`|
+|[task-timeline-modal.cjs](../packages/addons/tasks/client/timeline/task-timeline-modal.cjs)|`packages/addons/tasks/client/timeline/task-timeline-modal.cjs`|
+|[timeline-add-members.cjs](../packages/addons/tasks/client/timeline/timeline-add-members.cjs)|`packages/addons/tasks/client/timeline/timeline-add-members.cjs`|
+|[timeline-controls.cjs](../packages/addons/tasks/client/timeline/timeline-controls.cjs)|`packages/addons/tasks/client/timeline/timeline-controls.cjs`|
+|[timeline-copy.cjs](../packages/addons/tasks/client/timeline/timeline-copy.cjs)|`packages/addons/tasks/client/timeline/timeline-copy.cjs`|
+|[timeline-members.cjs](../packages/addons/tasks/client/timeline/timeline-members.cjs)|`packages/addons/tasks/client/timeline/timeline-members.cjs`|
+|[timeline-merge.cjs](../packages/addons/tasks/client/timeline/timeline-merge.cjs)|`packages/addons/tasks/client/timeline/timeline-merge.cjs`|
+|[timeline-styles.cjs](../packages/addons/tasks/client/timeline/timeline-styles.cjs)|`packages/addons/tasks/client/timeline/timeline-styles.cjs`|
+|[charts.cjs](../packages/addons/tasks/client/stats/charts.cjs)|`packages/addons/tasks/client/stats/charts.cjs`|
+|[heatmap.cjs](../packages/addons/tasks/client/stats/heatmap.cjs)|`packages/addons/tasks/client/stats/heatmap.cjs`|
+|[heatmap-model.cjs](../packages/addons/tasks/client/stats/heatmap-model.cjs)|`packages/addons/tasks/client/stats/heatmap-model.cjs`|
+|[heatmap-styles.cjs](../packages/addons/tasks/client/stats/heatmap-styles.cjs)|`packages/addons/tasks/client/stats/heatmap-styles.cjs`|
+|[today.cjs](../packages/addons/tasks/client/stats/today.cjs)|`packages/addons/tasks/client/stats/today.cjs`|
+|[activity-filter.cjs](../packages/addons/tasks/client/stats/activity-filter.cjs)|`packages/addons/tasks/client/stats/activity-filter.cjs`|
 
 ### sites/lib
 
-|当前文件|目标路径|
+|迁移前文件名（链接到现文件）|迁移后路径|
 |---|---|
 |[index.js](../packages/addons/sites/lib/index.js)|`packages/addons/sites/lib/index.js`|
 |[client.js](../packages/addons/sites/lib/client.js)|`packages/addons/sites/lib/client.js`（生成物，原位）|
-|[db.js](../packages/addons/sites/lib/db.js)|`packages/addons/sites/lib/db/db.js`|
-|[accounts-model.js](../packages/addons/sites/lib/accounts-model.js)|`packages/addons/sites/lib/domain/accounts-model.js`|
-|[accounts.js](../packages/addons/sites/lib/accounts.js)|`packages/addons/sites/lib/domain/accounts.js`|
-|[sites-mappings.js](../packages/addons/sites/lib/sites-mappings.js)|`packages/addons/sites/lib/domain/sites-mappings.js`|
-|[sites.js](../packages/addons/sites/lib/sites.js)|`packages/addons/sites/lib/domain/sites.js`|
-|[vault.js](../packages/addons/sites/lib/vault.js)|`packages/addons/sites/lib/domain/vault.js`|
-|[tree.js](../packages/addons/sites/lib/tree.js)|`packages/addons/sites/lib/tree/tree.js`|
-|[stats.js](../packages/addons/sites/lib/stats.js)|`packages/addons/sites/lib/stats/stats.js`|
-|[overview.js](../packages/addons/sites/lib/overview.js)|`packages/addons/sites/lib/stats/overview.js`|
-|[backup.js](../packages/addons/sites/lib/backup.js)|`packages/addons/sites/lib/infra/backup.js`|
-|[config.js](../packages/addons/sites/lib/config.js)|`packages/addons/sites/lib/infra/config.js`|
-|[data.js](../packages/addons/sites/lib/data.js)|`packages/addons/sites/lib/infra/data.js`|
-|[sync.js](../packages/addons/sites/lib/sync.js)|`packages/addons/sites/lib/infra/sync.js`|
+|[db.js](../packages/addons/sites/lib/db/db.js)|`packages/addons/sites/lib/db/db.js`|
+|[accounts-model.js](../packages/addons/sites/lib/domain/accounts-model.js)|`packages/addons/sites/lib/domain/accounts-model.js`|
+|[accounts.js](../packages/addons/sites/lib/domain/accounts.js)|`packages/addons/sites/lib/domain/accounts.js`|
+|[sites-mappings.js](../packages/addons/sites/lib/domain/sites-mappings.js)|`packages/addons/sites/lib/domain/sites-mappings.js`|
+|[sites.js](../packages/addons/sites/lib/domain/sites.js)|`packages/addons/sites/lib/domain/sites.js`|
+|[vault.js](../packages/addons/sites/lib/domain/vault.js)|`packages/addons/sites/lib/domain/vault.js`|
+|[tree.js](../packages/addons/sites/lib/tree/tree.js)|`packages/addons/sites/lib/tree/tree.js`|
+|[stats.js](../packages/addons/sites/lib/stats/stats.js)|`packages/addons/sites/lib/stats/stats.js`|
+|[overview.js](../packages/addons/sites/lib/stats/overview.js)|`packages/addons/sites/lib/stats/overview.js`|
+|[backup.js](../packages/addons/sites/lib/infra/backup.js)|`packages/addons/sites/lib/infra/backup.js`|
+|[config.js](../packages/addons/sites/lib/infra/config.js)|`packages/addons/sites/lib/infra/config.js`|
+|[data.js](../packages/addons/sites/lib/infra/data.js)|`packages/addons/sites/lib/infra/data.js`|
+|[sync.js](../packages/addons/sites/lib/infra/sync.js)|`packages/addons/sites/lib/infra/sync.js`|
 
 ### sites/client
 
-|当前文件|目标路径|
+|迁移前文件名（链接到现文件）|迁移后路径|
 |---|---|
 |[client.src.cjs](../packages/addons/sites/client/client.src.cjs)|`packages/addons/sites/client/client.src.cjs`|
-|[config.cjs](../packages/addons/sites/client/config.cjs)|`packages/addons/sites/client/views/config.cjs`|
-|[data.cjs](../packages/addons/sites/client/data.cjs)|`packages/addons/sites/client/views/data.cjs`|
-|[stats.cjs](../packages/addons/sites/client/stats.cjs)|`packages/addons/sites/client/views/stats.cjs`|
-|[copy.cjs](../packages/addons/sites/client/copy.cjs)|`packages/addons/sites/client/ui/copy.cjs`|
-|[styles.cjs](../packages/addons/sites/client/styles.cjs)|`packages/addons/sites/client/ui/styles.cjs`|
-|[tagfilter.cjs](../packages/addons/sites/client/tagfilter.cjs)|`packages/addons/sites/client/ui/tagfilter.cjs`|
-|[charts.cjs](../packages/addons/sites/client/charts.cjs)|`packages/addons/sites/client/stats/charts.cjs`|
+|[config.cjs](../packages/addons/sites/client/views/config.cjs)|`packages/addons/sites/client/views/config.cjs`|
+|[data.cjs](../packages/addons/sites/client/views/data.cjs)|`packages/addons/sites/client/views/data.cjs`|
+|[stats.cjs](../packages/addons/sites/client/views/stats.cjs)|`packages/addons/sites/client/views/stats.cjs`|
+|[copy.cjs](../packages/addons/sites/client/ui/copy.cjs)|`packages/addons/sites/client/ui/copy.cjs`|
+|[styles.cjs](../packages/addons/sites/client/ui/styles.cjs)|`packages/addons/sites/client/ui/styles.cjs`|
+|[tagfilter.cjs](../packages/addons/sites/client/ui/tagfilter.cjs)|`packages/addons/sites/client/ui/tagfilter.cjs`|
+|[charts.cjs](../packages/addons/sites/client/stats/charts.cjs)|`packages/addons/sites/client/stats/charts.cjs`|
 
 ### tags/lib
 
-|当前文件|目标路径|
+|迁移前文件名（链接到现文件）|迁移后路径|
 |---|---|
 |[index.js](../packages/addons/tags/lib/index.js)|`packages/addons/tags/lib/index.js`|
 |[client.js](../packages/addons/tags/lib/client.js)|`packages/addons/tags/lib/client.js`（生成物，原位）|
-|[db.js](../packages/addons/tags/lib/db.js)|`packages/addons/tags/lib/db/db.js`|
-|[tags.js](../packages/addons/tags/lib/tags.js)|`packages/addons/tags/lib/domain/tags.js`|
-|[stats.js](../packages/addons/tags/lib/stats.js)|`packages/addons/tags/lib/stats/stats.js`|
-|[backup.js](../packages/addons/tags/lib/backup.js)|`packages/addons/tags/lib/infra/backup.js`|
-|[config.js](../packages/addons/tags/lib/config.js)|`packages/addons/tags/lib/infra/config.js`|
-|[data.js](../packages/addons/tags/lib/data.js)|`packages/addons/tags/lib/infra/data.js`|
-|[sync.js](../packages/addons/tags/lib/sync.js)|`packages/addons/tags/lib/infra/sync.js`|
+|[db.js](../packages/addons/tags/lib/db/db.js)|`packages/addons/tags/lib/db/db.js`|
+|[tags.js](../packages/addons/tags/lib/domain/tags.js)|`packages/addons/tags/lib/domain/tags.js`|
+|[stats.js](../packages/addons/tags/lib/stats/stats.js)|`packages/addons/tags/lib/stats/stats.js`|
+|[backup.js](../packages/addons/tags/lib/infra/backup.js)|`packages/addons/tags/lib/infra/backup.js`|
+|[config.js](../packages/addons/tags/lib/infra/config.js)|`packages/addons/tags/lib/infra/config.js`|
+|[data.js](../packages/addons/tags/lib/infra/data.js)|`packages/addons/tags/lib/infra/data.js`|
+|[sync.js](../packages/addons/tags/lib/infra/sync.js)|`packages/addons/tags/lib/infra/sync.js`|
 
 ### tags/client
 
-|当前文件|目标路径|
+|迁移前文件名（链接到现文件）|迁移后路径|
 |---|---|
 |[client.src.cjs](../packages/addons/tags/client/client.src.cjs)|`packages/addons/tags/client/client.src.cjs`|
-|[config.cjs](../packages/addons/tags/client/config.cjs)|`packages/addons/tags/client/views/config.cjs`|
-|[data.cjs](../packages/addons/tags/client/data.cjs)|`packages/addons/tags/client/views/data.cjs`|
-|[stats.cjs](../packages/addons/tags/client/stats.cjs)|`packages/addons/tags/client/views/stats.cjs`|
-|[charts.cjs](../packages/addons/tags/client/charts.cjs)|`packages/addons/tags/client/stats/charts.cjs`|
-|[top-tags.cjs](../packages/addons/tags/client/top-tags.cjs)|`packages/addons/tags/client/stats/top-tags.cjs`|
+|[config.cjs](../packages/addons/tags/client/views/config.cjs)|`packages/addons/tags/client/views/config.cjs`|
+|[data.cjs](../packages/addons/tags/client/views/data.cjs)|`packages/addons/tags/client/views/data.cjs`|
+|[stats.cjs](../packages/addons/tags/client/views/stats.cjs)|`packages/addons/tags/client/views/stats.cjs`|
+|[charts.cjs](../packages/addons/tags/client/stats/charts.cjs)|`packages/addons/tags/client/stats/charts.cjs`|
+|[top-tags.cjs](../packages/addons/tags/client/stats/top-tags.cjs)|`packages/addons/tags/client/stats/top-tags.cjs`|
 
 ### storage/lib
 
-|当前文件|目标路径|
+|迁移前文件名（链接到现文件）|迁移后路径|
 |---|---|
 |[index.js](../packages/addons/storage/lib/index.js)|`packages/addons/storage/lib/index.js`|
 |[client.js](../packages/addons/storage/lib/client.js)|`packages/addons/storage/lib/client.js`（生成物，原位）|
-|[db.js](../packages/addons/storage/lib/db.js)|`packages/addons/storage/lib/db/db.js`|
-|[storage.js](../packages/addons/storage/lib/storage.js)|`packages/addons/storage/lib/domain/storage.js`|
-|[deletion.js](../packages/addons/storage/lib/deletion.js)|`packages/addons/storage/lib/domain/deletion.js`|
-|[tags.js](../packages/addons/storage/lib/tags.js)|`packages/addons/storage/lib/domain/tags.js`|
-|[backup.js](../packages/addons/storage/lib/backup.js)|`packages/addons/storage/lib/infra/backup.js`|
-|[config.js](../packages/addons/storage/lib/config.js)|`packages/addons/storage/lib/infra/config.js`|
-|[data.js](../packages/addons/storage/lib/data.js)|`packages/addons/storage/lib/infra/data.js`|
+|[db.js](../packages/addons/storage/lib/db/db.js)|`packages/addons/storage/lib/db/db.js`|
+|[storage.js](../packages/addons/storage/lib/domain/storage.js)|`packages/addons/storage/lib/domain/storage.js`|
+|[deletion.js](../packages/addons/storage/lib/domain/deletion.js)|`packages/addons/storage/lib/domain/deletion.js`|
+|[tags.js](../packages/addons/storage/lib/domain/tags.js)|`packages/addons/storage/lib/domain/tags.js`|
+|[backup.js](../packages/addons/storage/lib/infra/backup.js)|`packages/addons/storage/lib/infra/backup.js`|
+|[config.js](../packages/addons/storage/lib/infra/config.js)|`packages/addons/storage/lib/infra/config.js`|
+|[data.js](../packages/addons/storage/lib/infra/data.js)|`packages/addons/storage/lib/infra/data.js`|
 
 ### storage/client
 
-|当前文件|目标路径|
+|迁移前文件名（链接到现文件）|迁移后路径|
 |---|---|
 |[client.src.cjs](../packages/addons/storage/client/client.src.cjs)|`packages/addons/storage/client/client.src.cjs`|
-|[config.cjs](../packages/addons/storage/client/config.cjs)|`packages/addons/storage/client/views/config.cjs`|
-|[data.cjs](../packages/addons/storage/client/data.cjs)|`packages/addons/storage/client/views/data.cjs`|
-|[stats.cjs](../packages/addons/storage/client/stats.cjs)|`packages/addons/storage/client/views/stats.cjs`|
-|[records.cjs](../packages/addons/storage/client/records.cjs)|`packages/addons/storage/client/views/records.cjs`|
-|[config-copy.cjs](../packages/addons/storage/client/config-copy.cjs)|`packages/addons/storage/client/ui/config-copy.cjs`|
-|[data-columns.cjs](../packages/addons/storage/client/data-columns.cjs)|`packages/addons/storage/client/ui/data-columns.cjs`|
-|[icons.cjs](../packages/addons/storage/client/icons.cjs)|`packages/addons/storage/client/ui/icons.cjs`|
-|[selection.cjs](../packages/addons/storage/client/selection.cjs)|`packages/addons/storage/client/ui/selection.cjs`|
-|[styles.cjs](../packages/addons/storage/client/styles.cjs)|`packages/addons/storage/client/ui/styles.cjs`|
-|[ui.cjs](../packages/addons/storage/client/ui.cjs)|`packages/addons/storage/client/ui/ui.cjs`|
-|[card.cjs](../packages/addons/storage/client/card.cjs)|`packages/addons/storage/client/item/card.cjs`|
-|[editor.cjs](../packages/addons/storage/client/editor.cjs)|`packages/addons/storage/client/modals/editor.cjs`|
+|[config.cjs](../packages/addons/storage/client/views/config.cjs)|`packages/addons/storage/client/views/config.cjs`|
+|[data.cjs](../packages/addons/storage/client/views/data.cjs)|`packages/addons/storage/client/views/data.cjs`|
+|[stats.cjs](../packages/addons/storage/client/views/stats.cjs)|`packages/addons/storage/client/views/stats.cjs`|
+|[records.cjs](../packages/addons/storage/client/views/records.cjs)|`packages/addons/storage/client/views/records.cjs`|
+|[config-copy.cjs](../packages/addons/storage/client/ui/config-copy.cjs)|`packages/addons/storage/client/ui/config-copy.cjs`|
+|[data-columns.cjs](../packages/addons/storage/client/ui/data-columns.cjs)|`packages/addons/storage/client/ui/data-columns.cjs`|
+|[icons.cjs](../packages/addons/storage/client/ui/icons.cjs)|`packages/addons/storage/client/ui/icons.cjs`|
+|[selection.cjs](../packages/addons/storage/client/ui/selection.cjs)|`packages/addons/storage/client/ui/selection.cjs`|
+|[styles.cjs](../packages/addons/storage/client/ui/styles.cjs)|`packages/addons/storage/client/ui/styles.cjs`|
+|[ui.cjs](../packages/addons/storage/client/ui/ui.cjs)|`packages/addons/storage/client/ui/ui.cjs`|
+|[card.cjs](../packages/addons/storage/client/item/card.cjs)|`packages/addons/storage/client/item/card.cjs`|
+|[editor.cjs](../packages/addons/storage/client/modals/editor.cjs)|`packages/addons/storage/client/modals/editor.cjs`|
 
 ### shell/src
 
-|当前文件|目标路径|
+|迁移前文件名（链接到现文件）|迁移后路径|
 |---|---|
 |[index.ts](../packages/shell/src/index.ts)|`packages/shell/src/index.ts`|
-|[actions.ts](../packages/shell/src/actions.ts)|`packages/shell/src/actions/actions.ts`|
-|[action-output.ts](../packages/shell/src/action-output.ts)|`packages/shell/src/actions/action-output.ts`|
-|[capabilities.ts](../packages/shell/src/capabilities.ts)|`packages/shell/src/actions/capabilities.ts`|
-|[task-targets.ts](../packages/shell/src/task-targets.ts)|`packages/shell/src/actions/task-targets.ts`|
-|[sync.ts](../packages/shell/src/sync.ts)|`packages/shell/src/sync/sync.ts`|
-|[sync-conflicts.ts](../packages/shell/src/sync-conflicts.ts)|`packages/shell/src/sync/sync-conflicts.ts`|
-|[sync-incoming.ts](../packages/shell/src/sync-incoming.ts)|`packages/shell/src/sync/sync-incoming.ts`|
-|[sync-types.ts](../packages/shell/src/sync-types.ts)|`packages/shell/src/sync/sync-types.ts`|
-|[sync-values.ts](../packages/shell/src/sync-values.ts)|`packages/shell/src/sync/sync-values.ts`|
-|[audit.ts](../packages/shell/src/audit.ts)|`packages/shell/src/infra/audit.ts`|
-|[backup.ts](../packages/shell/src/backup.ts)|`packages/shell/src/infra/backup.ts`|
-|[network.ts](../packages/shell/src/network.ts)|`packages/shell/src/infra/network.ts`|
-|[zip.ts](../packages/shell/src/zip.ts)|`packages/shell/src/infra/zip.ts`|
-|[host-types.ts](../packages/shell/src/host-types.ts)|`packages/shell/src/types/host-types.ts`|
+|[actions.ts](../packages/shell/src/actions/actions.ts)|`packages/shell/src/actions/actions.ts`|
+|[action-output.ts](../packages/shell/src/actions/action-output.ts)|`packages/shell/src/actions/action-output.ts`|
+|[capabilities.ts](../packages/shell/src/actions/capabilities.ts)|`packages/shell/src/actions/capabilities.ts`|
+|[task-targets.ts](../packages/shell/src/actions/task-targets.ts)|`packages/shell/src/actions/task-targets.ts`|
+|[sync.ts](../packages/shell/src/sync/sync.ts)|`packages/shell/src/sync/sync.ts`|
+|[sync-conflicts.ts](../packages/shell/src/sync/sync-conflicts.ts)|`packages/shell/src/sync/sync-conflicts.ts`|
+|[sync-incoming.ts](../packages/shell/src/sync/sync-incoming.ts)|`packages/shell/src/sync/sync-incoming.ts`|
+|[sync-types.ts](../packages/shell/src/sync/sync-types.ts)|`packages/shell/src/sync/sync-types.ts`|
+|[sync-values.ts](../packages/shell/src/sync/sync-values.ts)|`packages/shell/src/sync/sync-values.ts`|
+|[audit.ts](../packages/shell/src/infra/audit.ts)|`packages/shell/src/infra/audit.ts`|
+|[backup.ts](../packages/shell/src/infra/backup.ts)|`packages/shell/src/infra/backup.ts`|
+|[network.ts](../packages/shell/src/infra/network.ts)|`packages/shell/src/infra/network.ts`|
+|[zip.ts](../packages/shell/src/infra/zip.ts)|`packages/shell/src/infra/zip.ts`|
+|[host-types.ts](../packages/shell/src/types/host-types.ts)|`packages/shell/src/types/host-types.ts`|
 
 ## 迁移时新增的基础叶模块
 

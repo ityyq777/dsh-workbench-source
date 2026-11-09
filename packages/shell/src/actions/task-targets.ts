@@ -2,7 +2,7 @@ import { getSyncStateText, setSyncStateText } from "@wb/core";
 import type { DatabaseSync } from "node:sqlite";
 import type { DomainActionDef } from "@wb/sdk";
 import { actionErrorText } from "./action-output.js";
-import type { RegisteredDomain } from "./host-types.js";
+import type { RegisteredDomain } from "../types/host-types.js";
 
 type Invoke = (action: string, args: Record<string, unknown>, origin: "ui" | "agent" | "sync") => Promise<{ result: any }>;
 const PREFIX = "capability.taskTarget:";

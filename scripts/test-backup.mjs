@@ -108,7 +108,7 @@ try {
   const exported = await call("GET", "/workbench/api/backup/export?modules=all");
   if (exported.status !== 200) throw new Error("export failed: " + exported.status + " " + exported.body.toString());
   if (!/application\/zip/.test(String(exported.headers["content-type"]))) throw new Error("export content-type is not zip");
-  const zip = await import("../packages/shell/lib/zip.js");
+  const zip = await import("../packages/shell/lib/infra/zip.js");
   const files = zip.zipRead(exported.body);
   const manifest = JSON.parse(files.get("manifest.json").toString("utf8"));
   if (manifest.kind !== "dsh-workbench-backup") throw new Error("bad manifest kind");
@@ -192,7 +192,7 @@ try {
   console.log("reverse empty inventory restore ok");
 
   // 通用依赖：循环必须在所有写入前拒绝；未包含的可选依赖不阻塞。
-  const { importBackup } = await import("../packages/shell/lib/backup.js");
+  const { importBackup } = await import("../packages/shell/lib/infra/backup.js");
   const stableOrder = [];
   const stableDomains = manifest.modules.map(m => ({enabled:true,error:null,def:{id:m.id,title:m.title,version:m.version,backupAfter:m.id === "wb-addon-storage" ? ["wb-addon-tags"] : [],importData:() => {stableOrder.push(m.id);return {ok:true};}}}));
   await importBackup({buffer: reversedArchive, domains: stableDomains});

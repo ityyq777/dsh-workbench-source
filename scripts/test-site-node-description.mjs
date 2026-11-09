@@ -4,7 +4,7 @@ import { ensureSchema, insertNode, rowNode } from "../packages/addons/sites/lib/
 import { registerSiteTreeActions } from "../packages/addons/sites/lib/tree/tree.js";
 import { exportSitesData, importSitesData } from "../packages/addons/sites/lib/infra/backup.js";
 import { reconcileSiteTree, siteSync } from "../packages/addons/sites/lib/infra/sync.js";
-import { SyncEngine } from "../packages/shell/lib/sync.js";
+import { SyncEngine } from "../packages/shell/lib/sync/sync.js";
 
 // Entire suite uses isolated in-memory databases; no profile or network access.
 const databases = [];

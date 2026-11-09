@@ -3,7 +3,7 @@
  * @wb/core 的 lib 以相对路径内联（demo 单包分发；正式版发 npm 后改回依赖）。
  */
 import { cpSync, readFileSync, writeFileSync, rmSync, mkdirSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 
 const root = join(import.meta.dirname, "..");
 const out = join(root, "packages", "shell-dist");
@@ -25,7 +25,8 @@ function inlineCore(dir) {
     if (!name.name.endsWith(".js")) continue;
     const src = readFileSync(p, "utf8");
     if (!src.includes("@wb/core")) continue;
-    writeFileSync(p, src.replaceAll("@wb/core", "./core/index.js"));
+    const corePath = relative(dirname(p), join(out, "lib", "core", "index.js")).split(sep).join("/");
+    writeFileSync(p, src.replaceAll("@wb/core", corePath.startsWith(".") ? corePath : "./" + corePath));
   }
 }
 inlineCore(join(out, "lib"));

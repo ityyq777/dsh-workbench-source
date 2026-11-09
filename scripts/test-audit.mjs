@@ -87,7 +87,7 @@ try {
   assert(String(failed.records[0].error).length > 0, "失败记录缺少错误信息");
 
   // 5. 脱敏：键名命中密码/token/保险箱等一律 ***
-  const { redactValue, encodeAuditJson } = await import("../packages/shell/lib/audit.js");
+  const { redactValue, encodeAuditJson } = await import("../packages/shell/lib/infra/audit.js");
   const red = redactValue({
     password: "p@ss",
     token: "tok-123",

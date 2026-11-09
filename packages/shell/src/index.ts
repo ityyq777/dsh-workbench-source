@@ -22,15 +22,15 @@ import type {
 } from "@wb/sdk";
 import {
   SyncClock,
-} from "./sync.js";
-import { AuditLog } from "./audit.js";
+} from "./sync/sync.js";
+import { AuditLog } from "./infra/audit.js";
 import {
   type BackupDomain,
-} from "./backup.js";
+} from "./infra/backup.js";
 
-import type { WbState, RegisteredDomain } from "./host-types.js";
-import { createActions } from "./actions.js";
-import { installNetwork } from "./network.js";
+import type { WbState, RegisteredDomain } from "./types/host-types.js";
+import { createActions } from "./actions/actions.js";
+import { installNetwork } from "./infra/network.js";
 
 export const name = "dsh-workbench";
 export const inject = ["webServer", "tools", "connection"];
