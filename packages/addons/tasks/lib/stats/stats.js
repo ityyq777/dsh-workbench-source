@@ -436,7 +436,7 @@ export function statsReport(db, args, api) {
     totals: totals,
     rates: rates,
     breakdowns: {
-      status: ["0", "1", "2", "3"].map(function (key) {
+      status: ["0", "1", "2"].map(function (key) {
         return { key: key, label: STATUS_LABELS[key], count: statusCount[key] || 0 };
       }),
       priority: priorityBins,

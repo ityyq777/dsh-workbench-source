@@ -206,6 +206,7 @@ var require_charts = __commonJS({
       "var(--dsw-alias-state-done-primary, #7c5cff)",
       "var(--dsw-alias-state-idle-primary, #8f959e)"
     ];
+    var STATUS_COLORS = { "0": COLORS[0], "1": COLORS[3], "2": COLORS[1] };
     function css(prefix) {
       return [
         ".@-table-link{border:0;padding:0;background:none;font:inherit;color:var(--dsw-alias-brand-primary,#4f6ef7);text-align:left;cursor:pointer}.@-table-link:hover{text-decoration:underline}.@-table-link:focus-visible{outline:2px solid currentColor;outline-offset:3px}.@-recent-difficulty{white-space:nowrap}.@-recent-reason{opacity:.65}",
@@ -688,7 +689,8 @@ var require_charts = __commonJS({
         pct,
         timeText,
         dateText,
-        colors: COLORS
+        colors: COLORS,
+        statusColors: STATUS_COLORS
       };
     }
     module2.exports = { makeCharts };
@@ -1880,19 +1882,25 @@ var require_stats = __commonJS({
               ]
             })
           ));
+          var statusData = (b.status || []).filter(function(s) {
+            return Object.prototype.hasOwnProperty.call(ch.statusColors, s.key);
+          }).map(function(s) {
+            return { key: s.key, label: String(s.key) === "0" ? t.open : String(s.key) === "1" ? t.shutdown : t.colDone, count: s.count, color: ch.statusColors[s.key] };
+          });
+          var statusTotal = statusData.reduce(function(sum, s) {
+            return sum + Number(s.count || 0);
+          }, 0);
           children.push(h(
             ch.Card,
             { key: "status", span: 4, title: t.status, note: t.statusNote },
             h(ch.Donut, {
-              data: (b.status || []).map(function(s, i) {
-                return { key: s.key, label: s.label, count: s.count, color: i === 1 ? "var(--dsw-alias-label-tertiary,#8f959e)" : ch.colors[i] };
-              }),
-              total: totals.total,
+              data: statusData,
+              total: statusTotal,
               lang,
               centerLabel: t.total,
-              aria: (b.status || []).map(function(s) {
+              aria: t.total + " " + statusTotal + "; " + statusData.map(function(s) {
                 return s.label + " " + s.count;
-              }).join("\uFF0C")
+              }).join("; ")
             })
           ));
           children.push(h(
@@ -3207,7 +3215,6 @@ var require_copy = __commonJS({
         batchMigrate: "\u8FC1\u79FB\u4EFB\u52A1\u8868",
         refresh: "\u5237\u65B0",
         clear: "\u6E05\u7A7A",
-        truncated: "\u5DF2\u622A\u65AD\uFF1A\u53EA\u663E\u793A\u524D",
         chooseBase: "\u9009\u62E9\u57FA\u51C6\u4EFB\u52A1\uFF08\u4F7F\u7528\u5B83\u7684\u65F6\u95F4\u7EBF\uFF09",
         chooseTable: "\u9009\u62E9\u76EE\u6807\u4EFB\u52A1\u8868",
         searchTable: "\u641C\u7D22\u4EFB\u52A1\u8868",
@@ -3361,7 +3368,6 @@ var require_copy = __commonJS({
         batchMigrate: "Move table",
         refresh: "Refresh",
         clear: "Clear",
-        truncated: "Truncated: showing first",
         searchTable: "Search tables",
         noTable: "No matching table",
         baseLabel: "Base task",
@@ -6923,7 +6929,6 @@ var require_tasks_view = __commonJS({
           return h(TreeNode, Object.assign({}, treeProps, { key: n.id, node: n, depth: 0 }));
         });
         var curDesc = curNode ? String(curNode.description || "") : "";
-        var shownCount = data.returned === void 0 ? (data.records || []).length : data.returned;
         var filterBar = h(
           "div",
           { className: "wbt-filters" },
@@ -6931,6 +6936,7 @@ var require_tasks_view = __commonJS({
             setActivity(null);
             setPageNumber(1);
           } }),
+          pageable ? h("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
           h(
             "label",
             { className: "wbt-check" },
@@ -6940,8 +6946,6 @@ var require_tasks_view = __commonJS({
             } }),
             t.difficultyMissing
           ),
-          pageable ? h("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
-          data.truncated ? h("span", { className: "wbt-hint" }, t.truncated + " " + shownCount + " / " + data.total) : null,
           tab === 5 || tab === 8 ? h(
             "label",
             { className: "wbt-check" },

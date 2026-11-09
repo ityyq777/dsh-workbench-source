@@ -413,13 +413,11 @@ module.exports = function createTasksView(deps) {
           });
 
     var curDesc = curNode ? String(curNode.description || "") : "";
-    var shownCount = data.returned === undefined ? (data.records || []).length : data.returned;
     var filterBar = h("div", { className: "wbt-filters" },
       h(activityFilter.ActivityFilter, { value: activity, lang: props.lang, onClear: function () { setActivity(null); setPageNumber(1); } }),
+      pageable ? h("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
       h("label", { className: "wbt-check" },
         h("input", { type: "checkbox", checked: difficultyMissing, onChange: function (e) { setDifficultyMissing(e.target.checked); setPageNumber(1); } }), t.difficultyMissing),
-      pageable ? h("span", { className: "wbt-sum" }, t.total + " " + data.total + " " + t.items) : null,
-      data.truncated ? h("span", { className: "wbt-hint" }, t.truncated + " " + shownCount + " / " + data.total) : null,
       (tab === 5 || tab === 8) ? h("label", { className: "wbt-check" },
         h("input", { type: "checkbox", checked: filterRestarted, onChange: function (e) { setFilterRestarted(e.target.checked); setPageNumber(1); } }),
         t.filterRestarted) : null

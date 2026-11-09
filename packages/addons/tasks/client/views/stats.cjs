@@ -210,13 +210,15 @@ function TasksStatsBody(props) {
             { key: "due", label: t.due, color: ch.colors[2] },
           ],
         })));
+      var statusData = (b.status || []).filter(function (s) { return Object.prototype.hasOwnProperty.call(ch.statusColors, s.key); }).map(function (s) {
+        return { key: s.key, label: String(s.key) === "0" ? t.open : String(s.key) === "1" ? t.shutdown : t.colDone, count: s.count, color: ch.statusColors[s.key] };
+      });
+      var statusTotal = statusData.reduce(function (sum, s) { return sum + Number(s.count || 0); }, 0);
       children.push(h(ch.Card, { key: "status", span: 4, title: t.status, note: t.statusNote },
         h(ch.Donut, {
-          data: (b.status || []).map(function (s, i) {
-            return { key: s.key, label: s.label, count: s.count, color: i === 1 ? "var(--dsw-alias-label-tertiary,#8f959e)" : ch.colors[i] };
-          }),
-          total: totals.total, lang: lang, centerLabel: t.total,
-          aria: (b.status || []).map(function (s) { return s.label + " " + s.count; }).join("，"),
+          data: statusData,
+          total: statusTotal, lang: lang, centerLabel: t.total,
+          aria: t.total + " " + statusTotal + "; " + statusData.map(function (s) { return s.label + " " + s.count; }).join("; "),
         })));
 
       children.push(h(ch.Card, { key: "priority", span: 6, title: t.priority, note: t.priorityNote },

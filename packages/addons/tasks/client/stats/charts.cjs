@@ -13,6 +13,9 @@ var COLORS = [
   "var(--dsw-alias-state-idle-primary, #8f959e)",
 ];
 
+// 按状态含义取色，不依赖序列位置；零值项仍与图例使用同一颜色。
+var STATUS_COLORS = { "0": COLORS[0], "1": COLORS[3], "2": COLORS[1] };
+
 function css(prefix) {
   return [
     ".@-table-link{border:0;padding:0;background:none;font:inherit;color:var(--dsw-alias-brand-primary,#4f6ef7);text-align:left;cursor:pointer}.@-table-link:hover{text-decoration:underline}.@-table-link:focus-visible{outline:2px solid currentColor;outline-offset:3px}.@-recent-difficulty{white-space:nowrap}.@-recent-reason{opacity:.65}",
@@ -392,7 +395,7 @@ function makeCharts(prefix) {
     Card: Card, Kpi: Kpi, Donut: Donut, BarList: BarList, StackedRows: StackedRows,
     Trend: Trend, Histogram: Histogram, DataTable: DataTable, RangeSwitch: RangeSwitch, DateRangePicker: DateRangePicker,
     Empty: Empty, Skeleton: Skeleton, ErrorBar: ErrorBar, Warnings: Warnings,
-    num: num, pct: pct, timeText: timeText, dateText: dateText, colors: COLORS,
+    num: num, pct: pct, timeText: timeText, dateText: dateText, colors: COLORS, statusColors: STATUS_COLORS,
   };
 }
 
