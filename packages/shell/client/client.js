@@ -89,7 +89,7 @@ var require_locale = __commonJS({
         audit_until: "\u7ED3\u675F\u65E5\u671F",
         audit_search: "\u67E5\u8BE2",
         audit_refresh: "\u5237\u65B0",
-        audit_empty: "\u6CA1\u6709\u7B26\u5408\u6761\u4EF6\u7684\u5BA1\u8BA1\u8BB0\u5F55",
+        audit_empty: "\u5F53\u524D\u7B5B\u9009\u65E0\u8BB0\u5F55",
         audit_load_failed: "\u8BFB\u53D6\u5BA1\u8BA1\u65E5\u5FD7\u5931\u8D25",
         audit_time: "\u65F6\u95F4",
         audit_action: "action",
@@ -97,7 +97,11 @@ var require_locale = __commonJS({
         audit_duration: "\u8017\u65F6",
         audit_detail: "\u53C2\u6570\u4E0E\u7ED3\u679C",
         audit_error: "\u9519\u8BEF",
-        audit_stats: "\u8FD1 30 \u5929",
+        audit_active: "\u7B5B\u9009\u4E2D",
+        audit_clear: "\u6E05\u9664\u7B5B\u9009",
+        audit_loading: "\u67E5\u8BE2\u4E2D\u2026",
+        audit_page_size: "\u6BCF\u9875\u6761\u6570",
+        audit_stats: "\u8FD1 30 \u5929\uFF08\u4E0D\u53D7\u4E0A\u65B9\u7B5B\u9009\u5F71\u54CD\uFF09",
         audit_total: "\u5171",
         audit_failed: "\u5931\u8D25",
         audit_prev: "\u4E0A\u4E00\u9875",
@@ -261,7 +265,11 @@ var require_locale = __commonJS({
         audit_duration: "Duration",
         audit_detail: "Arguments & result",
         audit_error: "Error",
-        audit_stats: "Last 30 days",
+        audit_active: "Filtering",
+        audit_clear: "Clear filters",
+        audit_loading: "Loading\u2026",
+        audit_page_size: "Records per page",
+        audit_stats: "Last 30 days (unaffected by filters)",
         audit_total: "total",
         audit_failed: "failed",
         audit_prev: "Previous",
@@ -453,8 +461,12 @@ var require_styles = __commonJS({
       ".wb-backup-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
       ".wb-backup-note{font-size:12px;opacity:.6;line-height:1.55}",
       ".wb-backup-report{display:flex;flex-direction:column;gap:8px}",
-      ".wb-audit-filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}",
-      ".wb-audit-filters .wb-input{padding:6px 9px;font-size:12px;min-width:120px}",
+      ".wb-audit-filters{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-top:10px}",
+      ".wb-audit-field{display:flex;flex:1 1 150px;min-width:0;flex-direction:column;gap:5px;font-size:12px}",
+      ".wb-audit-field .wb-input,.wb-audit-field .wb-select{width:100%;min-width:0;box-sizing:border-box;height:36px;padding:6px 9px;font-size:12px}",
+      ".wb-audit-summary{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;font-size:12px;overflow-wrap:anywhere}",
+      ".wb-audit-summary span{min-width:0}.wb-audit-row:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#11a89b);outline-offset:-2px}",
+      "@media(max-width:480px){.wb-audit-field{flex-basis:100%}.wb-audit-pager{flex-wrap:wrap}.wb-audit-filters .wb-btn{flex:1}}",
       ".wb-audit-table{width:100%;border-collapse:collapse;font-size:12px}",
       ".wb-audit-table th{text-align:left;font-weight:600;opacity:.6;padding:6px 8px;border-bottom:1px solid var(--wb-line);white-space:nowrap}",
       ".wb-audit-table td{padding:7px 8px;border-bottom:1px solid var(--wb-line);vertical-align:top}",
@@ -983,41 +995,59 @@ var require_system_tabs = __commonJS({
         var ost = react2.useState(null);
         var openId = ost[0];
         var setOpenId = ost[1];
-        function query(p, size) {
+        var latest = react2.useRef(0);
+        var currentFilters = react2.useRef(filters);
+        function query(p, size, filters2) {
           var qs = new URLSearchParams();
-          if (filters.action) qs.set("actionPrefix", filters.action);
-          if (filters.actor) qs.set("actor", filters.actor);
-          if (filters.ok !== "") qs.set("ok", filters.ok);
-          if (filters.q) qs.set("q", filters.q);
-          if (filters.since) qs.set("since", filters.since);
-          if (filters.until) qs.set("until", filters.until);
+          if (filters2.action) qs.set("actionPrefix", filters2.action);
+          if (filters2.actor) qs.set("actor", filters2.actor);
+          if (filters2.ok !== "") qs.set("ok", filters2.ok);
+          if (filters2.q) qs.set("q", filters2.q);
+          if (filters2.since) qs.set("since", filters2.since);
+          if (filters2.until) qs.set("until", filters2.until);
           qs.set("page", String(p));
           qs.set("pageSize", String(size || pageSize));
           qs.set("stats", "1");
           qs.set("rangeDays", "30");
           return qs.toString();
         }
-        function load(p, size) {
+        function load(p, size, selected) {
+          var request = ++latest.current;
+          setData(null);
+          setOpenId(null);
+          setPage(p || page);
           setBusy(true);
           setErr("");
-          fetch("/workbench/api/audit?" + query(p || page, size)).then(function(r) {
+          fetch("/workbench/api/audit?" + query(p || page, size, selected || currentFilters.current)).then(function(r) {
             return r.json();
           }).then(function(j) {
+            if (request !== latest.current) return;
             if (!j || j.ok === false) throw new Error(j && j.error || t("audit_load_failed"));
             setData(j);
             setStats(j.stats || null);
             setPage(j.page || 1);
           }).catch(function(e) {
-            setErr(String(e && e.message || e));
+            if (request === latest.current) setErr(String(e && e.message || e));
           }).then(function() {
-            setBusy(false);
+            if (request === latest.current) setBusy(false);
           });
         }
         react2.useEffect(function() {
           load(1);
+          return function() {
+            latest.current++;
+          };
         }, []);
+        function applyFilters(next) {
+          currentFilters.current = next;
+          setFilters(next);
+          load(1, pageSize, next);
+        }
         function field(key, value) {
-          setFilters(Object.assign({}, filters, { [key]: value }));
+          applyFilters(Object.assign({}, currentFilters.current, { [key]: value }));
+        }
+        function clearFilters() {
+          applyFilters({ action: "", actor: "", ok: "", q: "", since: "", until: "" });
         }
         function search() {
           load(1);
@@ -1039,6 +1069,16 @@ var require_system_tabs = __commonJS({
           if (!text) return "";
           return String(text).length > (limit || 400) ? String(text).slice(0, limit || 400) + "\u2026" : String(text);
         }
+        var active = Object.keys(filters).filter(function(key) {
+          return filters[key] !== "";
+        });
+        var labels = { action: "audit_action_prefix", actor: "audit_actor", ok: "audit_ok", q: "audit_q", since: "audit_since", until: "audit_until" };
+        function labeled(key, control) {
+          return jsx2.jsxs("label", { className: "wb-audit-field", children: [jsx2.jsx("span", { children: t(labels[key]) }), control] }, key);
+        }
+        var summary = active.map(function(key) {
+          return t(labels[key]) + "=" + (key === "ok" ? t(filters.ok === "true" ? "audit_ok_only" : "audit_fail_only") : filters[key]);
+        }).join(" \xB7 ");
         var records = data && data.records || [];
         var total = data ? data.total : 0;
         var totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -1052,42 +1092,45 @@ var require_system_tabs = __commonJS({
               jsx2.jsx("h3", { children: t("audit_filters") }),
               jsx2.jsx("span", { className: "wb-hint", children: statsText })
             ] }),
-            jsx2.jsxs("div", { className: "wb-audit-filters", children: [
-              jsx2.jsx("input", { className: "wb-input", placeholder: t("audit_action_prefix"), value: filters.action, onChange: function(e) {
+            jsx2.jsxs("form", { className: "wb-audit-filters", onSubmit: function(e) {
+              e.preventDefault();
+              search();
+            }, children: [
+              labeled("action", jsx2.jsx("input", { className: "wb-input", placeholder: t("audit_action_prefix"), value: filters.action, onChange: function(e) {
                 field("action", e.target.value);
-              }, onKeyDown: function(e) {
-                if (e.key === "Enter") search();
-              } }),
-              jsx2.jsx("select", { className: "wb-select", value: filters.actor, onChange: function(e) {
+              } })),
+              labeled("actor", jsx2.jsx("select", { className: "wb-select", "aria-label": t("audit_actor"), value: filters.actor, onChange: function(e) {
                 field("actor", e.target.value);
               }, children: [
                 jsx2.jsx("option", { value: "", children: t("audit_all") + " \xB7 " + t("audit_actor") }),
                 jsx2.jsx("option", { value: "agent", children: "agent" }),
                 jsx2.jsx("option", { value: "ui", children: "ui" }),
                 jsx2.jsx("option", { value: "sync", children: "sync" })
-              ] }),
-              jsx2.jsx("select", { className: "wb-select", value: filters.ok, onChange: function(e) {
+              ] })),
+              labeled("ok", jsx2.jsx("select", { className: "wb-select", "aria-label": t("audit_ok"), value: filters.ok, onChange: function(e) {
                 field("ok", e.target.value);
               }, children: [
-                jsx2.jsx("option", { value: "", children: t("audit_all") }),
+                jsx2.jsx("option", { value: "", children: t("audit_all") + " \xB7 " + t("audit_ok") }),
                 jsx2.jsx("option", { value: "true", children: t("audit_ok_only") }),
                 jsx2.jsx("option", { value: "false", children: t("audit_fail_only") })
-              ] }),
-              jsx2.jsx("input", { className: "wb-input", placeholder: t("audit_q"), value: filters.q, onChange: function(e) {
+              ] })),
+              labeled("q", jsx2.jsx("input", { className: "wb-input", placeholder: t("audit_q"), value: filters.q, onChange: function(e) {
                 field("q", e.target.value);
-              }, onKeyDown: function(e) {
-                if (e.key === "Enter") search();
-              } }),
-              jsx2.jsx("input", { className: "wb-input", type: "date", title: t("audit_since"), value: filters.since, onChange: function(e) {
+              } })),
+              labeled("since", jsx2.jsx("input", { className: "wb-input", type: "date", title: t("audit_since"), value: filters.since, onChange: function(e) {
                 field("since", e.target.value);
-              } }),
-              jsx2.jsx("input", { className: "wb-input", type: "date", title: t("audit_until"), value: filters.until, onChange: function(e) {
+              } })),
+              labeled("until", jsx2.jsx("input", { className: "wb-input", type: "date", title: t("audit_until"), value: filters.until, onChange: function(e) {
                 field("until", e.target.value);
-              } }),
-              jsx2.jsx("button", { className: "wb-btn", disabled: busy, onClick: search, children: busy ? "\u2026" : t("audit_search") }),
-              jsx2.jsx("button", { className: "wb-btn ghost", disabled: busy, onClick: function() {
+              } })),
+              jsx2.jsx("button", { className: "wb-btn", type: "submit", disabled: busy, children: busy ? "\u2026" : t("audit_search") }),
+              jsx2.jsx("button", { className: "wb-btn ghost", type: "button", disabled: busy, onClick: function() {
                 load(page);
               }, children: t("audit_refresh") })
+            ] }),
+            jsx2.jsxs("div", { className: "wb-audit-summary", role: "status", "aria-live": "polite", children: [
+              jsx2.jsx("span", { children: (summary ? t("audit_active") + "\uFF1A" + summary : t("audit_all")) + " \xB7 " + (busy ? t("audit_loading") : err ? t("audit_load_failed") : t("audit_total") + " " + total) }),
+              active.length ? jsx2.jsx("button", { type: "button", className: "wb-btn ghost", onClick: clearFilters, children: t("audit_clear") }) : null
             ] }),
             err ? jsx2.jsx("div", { className: "wb-err", style: { marginTop: 10 }, children: err }) : null,
             jsx2.jsx("div", { className: "wb-hint", style: { marginTop: 10 }, children: t("audit_reads_hint") + " \xB7 " + t("audit_retention") })
@@ -1095,7 +1138,7 @@ var require_system_tabs = __commonJS({
           jsx2.jsxs("div", { className: "wb-card", children: [
             jsx2.jsxs("div", { className: "wb-sec", children: [
               jsx2.jsx("h3", { children: t("tab_audit") }),
-              jsx2.jsx("span", { className: "wb-hint", children: t("audit_total") + " " + total + " \xB7 " + page + " / " + totalPages + " " + t("audit_page") })
+              jsx2.jsx("span", { className: "wb-hint", children: (busy ? t("audit_loading") : err ? t("audit_load_failed") : t("audit_total") + " " + total) + " \xB7 " + page + " / " + totalPages + " " + t("audit_page") })
             ] }),
             records.length ? jsx2.jsx("div", { style: { overflowX: "auto" }, children: jsx2.jsxs("table", { className: "wb-audit-table", children: [
               jsx2.jsx("thead", { children: jsx2.jsxs("tr", { children: [
@@ -1109,7 +1152,12 @@ var require_system_tabs = __commonJS({
               jsx2.jsx("tbody", { children: records.map(function(r) {
                 var open = openId === r.id;
                 return jsx2.jsxs(react2.Fragment, { children: [
-                  jsx2.jsxs("tr", { className: "wb-audit-row", onClick: function() {
+                  jsx2.jsxs("tr", { className: "wb-audit-row", tabIndex: 0, "aria-expanded": open, onKeyDown: function(e) {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setOpenId(open ? null : r.id);
+                    }
+                  }, onClick: function() {
                     setOpenId(open ? null : r.id);
                   }, children: [
                     jsx2.jsx("td", { className: "wb-audit-mono", children: fmtTime(r.at) }),
@@ -1125,7 +1173,7 @@ var require_system_tabs = __commonJS({
                   ] }) }) }) : null
                 ] }, r.id);
               }) })
-            ] }) }) : jsx2.jsx("div", { className: "wb-msg", children: busy ? "\u2026" : t("audit_empty") }),
+            ] }) }) : jsx2.jsxs("div", { className: "wb-msg", children: [busy ? t("audit_loading") : err ? t("audit_load_failed") : t("audit_empty"), !busy && !err && active.length ? jsx2.jsx("button", { className: "wb-btn ghost", onClick: clearFilters, children: t("audit_clear") }) : null] }),
             jsx2.jsxs("div", { className: "wb-audit-pager", children: [
               jsx2.jsx("button", { className: "wb-btn ghost", disabled: busy || page <= 1, onClick: function() {
                 load(page - 1);
@@ -1133,7 +1181,7 @@ var require_system_tabs = __commonJS({
               jsx2.jsx("button", { className: "wb-btn ghost", disabled: busy || page >= totalPages, onClick: function() {
                 load(page + 1);
               }, children: t("audit_next") }),
-              jsx2.jsx("select", { className: "wb-select", value: String(pageSize), onChange: function(e) {
+              jsx2.jsx("select", { className: "wb-select", "aria-label": t("audit_page_size"), value: String(pageSize), onChange: function(e) {
                 setSize(e.target.value);
               }, children: [20, 50, 100, 200].map(function(n) {
                 return jsx2.jsx("option", { value: String(n), children: n + " / " + t("audit_page") }, n);
