@@ -93,6 +93,8 @@ DESKTOP_DSH="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/b
 
 安装后核对目标 profile 的包版本、bundle 清单和入口 import；重启/重新加载后再用 `capabilities.list` 核对运行中版本与 actionCount。磁盘安装成功但进程尚未重载时，明确说明仍需重启，不能声称运行中插件已可见。
 
+本地 `file:` 依赖可能复用旧内容：本次 `add --force` 和 `update --force` 均退出成功，但已安装宿主仍为 0.5.5、标签仍为 1.6.5。必须读目标 `node_modules/<包>/package.json` 核实；版本未更新时，准备新的、带版本标识的完整安装源，再通过桌面 CLI 安装。保留包间相对依赖目录结构；不要直接挑文件覆盖 profile。本次使用 `~/.dsh/workbench/local-packages/storage-1.0.0/packages/` 下的完整 `shell-dist` 与 `addons/tags`，最终核实为 0.5.6 / 1.6.6。
+
 ### 不要手工「拷一半」插件目录（高频事故）
 
 拷贝安装是按 `package.json` 的 `files` 把整个目录复制过去的。开发期如果只手工
