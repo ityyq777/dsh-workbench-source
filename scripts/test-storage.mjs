@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import { setup, apply, storageSync } from "../packages/addons/storage/lib/index.js";
 import { exportStorageData, importStorageData } from "../packages/addons/storage/lib/backup.js";
-import { ensureSchema as ensureTagsSchema } from "../packages/addons/tags/lib/db.js";
-import { exportTagsData, importTagsData } from "../packages/addons/tags/lib/backup.js";
+import { ensureSchema as ensureTagsSchema } from "../packages/addons/tags/lib/db/db.js";
+import { exportTagsData, importTagsData } from "../packages/addons/tags/lib/infra/backup.js";
 const db = new DatabaseSync(":memory:"),
   defs = {},
   events = [];

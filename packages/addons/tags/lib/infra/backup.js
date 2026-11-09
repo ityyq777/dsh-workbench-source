@@ -5,7 +5,7 @@
  * 这里排除掉，避免同一映射在两个模块的备份里重复出现。
  */
 
-import { MAPPING_TABLE, TAG_TABLE, logChange, tableExists } from "./db.js";
+import { MAPPING_TABLE, TAG_TABLE, logChange, tableExists } from "../db/db.js";
 
 const SCHEMA_VERSION = 1;
 

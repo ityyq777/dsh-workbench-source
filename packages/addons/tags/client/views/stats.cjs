@@ -1,9 +1,9 @@
 // 标签统计视图：一次拉取 tags.statsReport，区块化渲染。
 var React = require("react");
 var h = React.createElement;
-var charts = require("./charts.cjs");
+var charts = require("../stats/charts.cjs");
 var configView = require("./config.cjs");
-var TopTags = require("./top-tags.cjs").TopTags;
+var TopTags = require("../stats/top-tags.cjs").TopTags;
 
 var COPY = {
   zh: {

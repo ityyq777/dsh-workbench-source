@@ -108,7 +108,7 @@ assert(db3.prepare("SELECT * FROM tag_mapping WHERE id='m-dupe-other'").get().ta
 assert(db3.prepare("SELECT * FROM tag_mapping WHERE id='m-dupe-same'").get().deleted_at, "同对象重复映射被软删");
 
 // 备份导入：不同 id 同名时按名字合并，不留两条活跃标签
-const backupMod = await import("../packages/addons/tags/lib/backup.js");
+const backupMod = await import("../packages/addons/tags/lib/infra/backup.js");
 const payload = JSON.stringify({
   schemaVersion: 1,
   tags: [

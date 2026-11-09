@@ -33,7 +33,7 @@ function round(n, digits) {
   const f = Math.pow(10, digits === undefined ? 1 : digits);
   return Math.round(n * f) / f;
 }
-import { configValues } from "./config.js";
+import { configValues } from "../infra/config.js";
 
 function hasTable(db, name) {
   return !!db.prepare("SELECT 1 AS x FROM sqlite_master WHERE type='table' AND name=?").get(name);

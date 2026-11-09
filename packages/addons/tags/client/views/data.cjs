@@ -1,5 +1,5 @@
 "use strict";
-module.exports = require("../../lib/data-view.cjs")({
+module.exports = require("../../../lib/data-view.cjs")({
   domain: "tags",
   prefix: "wbg",
   tables: ["tag","tag_mapping"],

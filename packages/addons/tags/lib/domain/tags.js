@@ -18,10 +18,9 @@ import {
   tx,
   logChange,
   rowTag,
-  formatTime,
-} from "./db.js";
-import { quickStats, statsReport, renderStats } from "./stats.js";
-import { configValues } from "./config.js";
+} from "../db/db.js";
+import { quickStats, statsReport, renderStats } from "../stats/stats.js";
+import { configValues } from "../infra/config.js";
 
 const DEFAULT_PAGE_SIZE = 18;
 const MAX_PAGE_SIZE = 200;

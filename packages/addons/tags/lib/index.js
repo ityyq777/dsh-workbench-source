@@ -3,12 +3,12 @@
  * 所有业务逻辑都在本地 SQLite 完成；云端只负责备份。
  */
 
-import { bindClock, ensureSchema } from "./db.js";
-import { exportTagsData, importTagsData } from "./backup.js";
-import { tagSync } from "./sync.js";
-import { registerTagActions } from "./tags.js";
-import { registerConfigActions } from "./config.js";
-import { registerDataActions } from "./data.js";
+import { bindClock, ensureSchema } from "./db/db.js";
+import { exportTagsData, importTagsData } from "./infra/backup.js";
+import { tagSync } from "./infra/sync.js";
+import { registerTagActions } from "./domain/tags.js";
+import { registerConfigActions } from "./infra/config.js";
+import { registerDataActions } from "./infra/data.js";
 
 export const inject = ["workbench"];
 

@@ -38,9 +38,9 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// packages/addons/tags/client/charts.cjs
+// packages/addons/tags/client/stats/charts.cjs
 var require_charts = __commonJS({
-  "packages/addons/tags/client/charts.cjs"(exports2, module2) {
+  "packages/addons/tags/client/stats/charts.cjs"(exports2, module2) {
     var React2 = require("react");
     var h2 = React2.createElement;
     var COLORS = [
@@ -539,9 +539,9 @@ var require_charts = __commonJS({
   }
 });
 
-// packages/addons/tags/client/config.cjs
+// packages/addons/tags/client/views/config.cjs
 var require_config = __commonJS({
-  "packages/addons/tags/client/config.cjs"(exports2, module2) {
+  "packages/addons/tags/client/views/config.cjs"(exports2, module2) {
     var React2 = require("react");
     var h2 = React2.createElement;
     var DOMAIN = "tags";
@@ -1052,9 +1052,9 @@ var require_config = __commonJS({
   }
 });
 
-// packages/addons/tags/client/top-tags.cjs
+// packages/addons/tags/client/stats/top-tags.cjs
 var require_top_tags = __commonJS({
-  "packages/addons/tags/client/top-tags.cjs"(exports2, module2) {
+  "packages/addons/tags/client/stats/top-tags.cjs"(exports2, module2) {
     var React2 = require("react");
     var h2 = React2.createElement;
     function TopTags(props) {
@@ -1133,9 +1133,9 @@ var require_top_tags = __commonJS({
   }
 });
 
-// packages/addons/tags/client/stats.cjs
+// packages/addons/tags/client/views/stats.cjs
 var require_stats = __commonJS({
-  "packages/addons/tags/client/stats.cjs"(exports2, module2) {
+  "packages/addons/tags/client/views/stats.cjs"(exports2, module2) {
     var React2 = require("react");
     var h2 = React2.createElement;
     var charts = require_charts();
@@ -2545,9 +2545,9 @@ var require_data_view = __commonJS({
   }
 });
 
-// packages/addons/tags/client/data.cjs
+// packages/addons/tags/client/views/data.cjs
 var require_data = __commonJS({
-  "packages/addons/tags/client/data.cjs"(exports2, module2) {
+  "packages/addons/tags/client/views/data.cjs"(exports2, module2) {
     "use strict";
     module2.exports = require_data_view()({
       domain: "tags",

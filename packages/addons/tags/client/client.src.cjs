@@ -13,9 +13,9 @@ var h = React.createElement;
   }
   var React = require("react");
   var h = React.createElement;
-  var statsView = require("./stats.cjs");
-  var configView = require("./config.cjs");
-  var dataView = require("./data.cjs");
+  var statsView = require("./views/stats.cjs");
+  var configView = require("./views/config.cjs");
+  var dataView = require("./views/data.cjs");
 
   // 标签插件自带 lucide-react 图标；每个图标按需引入，随 client.js 一起打包。
   var ICONS = {
