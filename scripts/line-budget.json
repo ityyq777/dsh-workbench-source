@@ -3,7 +3,7 @@
   "warn": 600,
   "fail": 900,
   "budget": {
-    "packages/addons/tasks/lib/tasks.js": 1583,
+    "packages/addons/tasks/lib/tasks.js": 1329,
     "packages/addons/tasks/client/client.src.cjs": 1295,
     "packages/addons/sites/client/client.src.cjs": 1259
   }
