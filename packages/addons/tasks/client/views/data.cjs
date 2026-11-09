@@ -1,5 +1,5 @@
 "use strict";
-module.exports = require("../../lib/data-view.cjs")({
+module.exports = require("../../../lib/data-view.cjs")({
   domain: "tasks",
   prefix: "wbt",
   tables: ["task","task_dep","task_node"],

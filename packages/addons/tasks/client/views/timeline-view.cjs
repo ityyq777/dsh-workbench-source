@@ -2,9 +2,9 @@
 "use strict";
 module.exports = function (deps) {
   var React = deps.React, h = React.createElement, COPY = deps.COPY;
-  var controls = require("./timeline-controls.cjs")(React), AddMembers = require("./timeline-add-members.cjs")(React);
-  var Merge = require("./timeline-merge.cjs")(React);
-  var CSS = require("./timeline-styles.cjs");
+  var controls = require("../timeline/timeline-controls.cjs")(React), AddMembers = require("../timeline/timeline-add-members.cjs")(React);
+  var Merge = require("../timeline/timeline-merge.cjs")(React);
+  var CSS = require("../timeline/timeline-styles.cjs");
   function result(r) { if (!r || !r.ok) throw new Error(r && r.error || "Request failed"); return r.result; }
   function pageData(r) { return { records: r.records || [], total: Number(r.total) || 0 }; }
   function Pager(p) {
@@ -15,7 +15,7 @@ module.exports = function (deps) {
   }
   function TimelineView(props) {
     var lang = props.lang === "en" ? "en" : "zh", t = COPY[lang], api = props.api;
-    var tr = require("./timeline-copy.cjs")(t);
+    var tr = require("../timeline/timeline-copy.cjs")(t);
     var queryS = React.useState(""), query = queryS[0], setQuery = queryS[1];
     var draftS = React.useState(""), draft = draftS[0], setDraft = draftS[1];
     var singleS = React.useState(true), single = singleS[0], setSingle = singleS[1];

@@ -38,9 +38,9 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// packages/addons/tasks/client/tagfilter.cjs
+// packages/addons/tasks/client/ui/tagfilter.cjs
 var require_tagfilter = __commonJS({
-  "packages/addons/tasks/client/tagfilter.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/ui/tagfilter.cjs"(exports2, module2) {
     var React = require("react");
     var h = React.createElement;
     module2.exports = function TagFilter(props) {
@@ -193,9 +193,9 @@ var require_tagfilter = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/charts.cjs
+// packages/addons/tasks/client/stats/charts.cjs
 var require_charts = __commonJS({
-  "packages/addons/tasks/client/charts.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/stats/charts.cjs"(exports2, module2) {
     var React = require("react");
     var h = React.createElement;
     var COLORS = [
@@ -695,9 +695,9 @@ var require_charts = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/config.cjs
+// packages/addons/tasks/client/views/config.cjs
 var require_config = __commonJS({
-  "packages/addons/tasks/client/config.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/views/config.cjs"(exports2, module2) {
     var React = require("react");
     var h = React.createElement;
     var DOMAIN = "tasks";
@@ -1243,9 +1243,9 @@ var require_config = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/recent-columns.cjs
+// packages/addons/tasks/client/item/recent-columns.cjs
 var require_recent_columns = __commonJS({
-  "packages/addons/tasks/client/recent-columns.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/item/recent-columns.cjs"(exports2, module2) {
     var React = require("react");
     var h = React.createElement;
     module2.exports = function recentColumns(t, lang, onNavigate) {
@@ -1282,9 +1282,9 @@ var require_recent_columns = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/heatmap-model.cjs
+// packages/addons/tasks/client/stats/heatmap-model.cjs
 var require_heatmap_model = __commonJS({
-  "packages/addons/tasks/client/heatmap-model.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/stats/heatmap-model.cjs"(exports2, module2) {
     var TYPES = ["done", "publish", "shutdown"];
     var LEVELS = [{ min: 1, max: 1, label: "1" }, { min: 2, max: 3, label: "2\u20133" }, { min: 4, max: 6, label: "4\u20136" }, { min: 7, max: null, label: "7+" }];
     var COPY = {
@@ -1330,16 +1330,16 @@ var require_heatmap_model = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/heatmap-styles.cjs
+// packages/addons/tasks/client/stats/heatmap-styles.cjs
 var require_heatmap_styles = __commonJS({
-  "packages/addons/tasks/client/heatmap-styles.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/stats/heatmap-styles.cjs"(exports2, module2) {
     module2.exports = ".wbt-heatmap{--hm-empty:#e9ecef;--hm-done-1:#d3f0d7;--hm-done-2:#91d69c;--hm-done-3:#51b566;--hm-done-4:#2f9e44;--hm-publish-1:#d5e7f8;--hm-publish-2:#96bee6;--hm-publish-3:#568fc7;--hm-publish-4:#2b6cb0;--hm-shutdown-1:#fbdada;--hm-shutdown-2:#f1a0a0;--hm-shutdown-3:#df6262;--hm-shutdown-4:#c92a2a;min-width:0;max-width:100%;border:1px solid color-mix(in srgb,currentColor 15%,transparent);border-radius:12px;padding:16px;margin-bottom:16px;color:inherit;font-size:12px;box-sizing:border-box}.wbt-hm-head,.wbt-hm-legend{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.wbt-hm-head{justify-content:space-between;margin-bottom:16px}.wbt-hm-head h3{margin:0;font-size:14px}.wbt-hm-years{display:flex;align-items:center;gap:12px;font-variant-numeric:tabular-nums}.wbt-heatmap button{font:inherit;color:inherit}.wbt-hm-control{border:1px solid color-mix(in srgb,currentColor 20%,transparent);background:transparent;border-radius:5px;cursor:pointer;padding:4px 8px}.wbt-hm-control[role=tab]{border:0;outline:none;box-shadow:none}.wbt-hm-control[role=tab]:hover{background:color-mix(in srgb,currentColor 6%,transparent)}.wbt-hm-control[aria-selected=true]{font-weight:700;background:color-mix(in srgb,currentColor 10%,transparent)}.wbt-hm-control[role=tab]:focus-visible{outline:2px solid #568fc7;outline-offset:2px}.wbt-hm-scroll{overflow-x:auto;padding:3px;max-width:100%}.wbt-hm-layout{display:flex;gap:8px;min-width:max-content}.wbt-hm-weekdays{display:grid;grid-template-rows:repeat(7,12px);gap:3px;padding-top:22px;font-size:10px;line-height:12px;opacity:.65}.wbt-hm-body{flex:1;min-width:0}.wbt-hm-months{display:grid;grid-template-columns:repeat(var(--hm-weeks),12px);column-gap:3px;height:22px;font-size:10px}.wbt-hm-months span{white-space:nowrap}.wbt-hm-grid{display:grid;grid-template-columns:repeat(var(--hm-weeks),12px);grid-template-rows:repeat(7,12px);gap:3px}.wbt-hm-day{border:0;border-radius:2px;width:12px;height:12px;padding:0;cursor:pointer}.wbt-hm-day[aria-disabled=true]{cursor:default}.wbt-hm-day{outline:none}.wbt-hm-day:focus-visible{outline:2px solid #568fc7;outline-offset:1px}.wbt-hm-day:hover{filter:brightness(.92)}.wbt-hm-future{opacity:.4}.wbt-hm-legend{margin-top:14px}.wbt-hm-swatch{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:5px}.wbt-hm-types{display:flex;align-items:center;gap:10px}.wbt-hm-intensity{display:flex;align-items:center;flex-wrap:wrap;gap:10px;border-inline-start:1px solid color-mix(in srgb,currentColor 20%,transparent);padding-inline-start:12px;font-size:11px}.wbt-hm-intensity-label{color:color-mix(in srgb,currentColor 70%,transparent)}.wbt-hm-intensity-item{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}.wbt-hm-intensity-item .wbt-hm-swatch{flex:none;margin:0}.wbt-hm-summary{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.wbt-hm-state{padding:28px 8px;text-align:center}.wbt-hm-skeleton{height:102px;border-radius:3px;background:repeating-linear-gradient(90deg,var(--hm-empty) 0 12px,transparent 12px 15px);opacity:.55}.dark .wbt-heatmap,[data-theme=dark] .wbt-heatmap,:root[style*='color-scheme:dark'] .wbt-heatmap,:root[style*='color-scheme: dark'] .wbt-heatmap,[data-color-scheme=dark] .wbt-heatmap{--hm-empty:#303740;--hm-done-1:#21452b;--hm-done-2:#2f7440;--hm-done-3:#46a75c;--hm-done-4:#72d38a;--hm-publish-1:#223e5c;--hm-publish-2:#326496;--hm-publish-3:#508ecb;--hm-publish-4:#85baf0;--hm-shutdown-1:#58292b;--hm-shutdown-2:#914146;--hm-shutdown-3:#c95c63;--hm-shutdown-4:#f58e93;}@media(prefers-color-scheme:dark){:root:not([data-theme=light]):not([data-color-scheme=light]):not([style*='color-scheme:light']):not([style*='color-scheme: light']) .wbt-heatmap{--hm-empty:#303740;--hm-done-1:#21452b;--hm-done-2:#2f7440;--hm-done-3:#46a75c;--hm-done-4:#72d38a;--hm-publish-1:#223e5c;--hm-publish-2:#326496;--hm-publish-3:#508ecb;--hm-publish-4:#85baf0;--hm-shutdown-1:#58292b;--hm-shutdown-2:#914146;--hm-shutdown-3:#c95c63;--hm-shutdown-4:#f58e93;}}@media(min-width:1200px){.wbt-hm-layout{min-width:0}.wbt-hm-months,.wbt-hm-grid{grid-template-columns:repeat(var(--hm-weeks),minmax(12px,1fr))}.wbt-hm-day{width:12px}}@media(prefers-reduced-motion:reduce){.wbt-heatmap *{animation:none!important;transition:none!important}}";
   }
 });
 
-// packages/addons/tasks/client/heatmap.cjs
+// packages/addons/tasks/client/stats/heatmap.cjs
 var require_heatmap = __commonJS({
-  "packages/addons/tasks/client/heatmap.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/stats/heatmap.cjs"(exports2, module2) {
     var React = require("react");
     var h = React.createElement;
     var model = require_heatmap_model();
@@ -1507,9 +1507,9 @@ var require_heatmap = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/today.cjs
+// packages/addons/tasks/client/stats/today.cjs
 var require_today = __commonJS({
-  "packages/addons/tasks/client/today.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/stats/today.cjs"(exports2, module2) {
     var React = require("react");
     var h = React.createElement;
     var COPY = {
@@ -1557,9 +1557,9 @@ var require_today = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/stats.cjs
+// packages/addons/tasks/client/views/stats.cjs
 var require_stats = __commonJS({
-  "packages/addons/tasks/client/stats.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/views/stats.cjs"(exports2, module2) {
     var React = require("react");
     var h = React.createElement;
     var charts = require_charts();
@@ -3067,9 +3067,9 @@ var require_data_view = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/data.cjs
+// packages/addons/tasks/client/views/data.cjs
 var require_data = __commonJS({
-  "packages/addons/tasks/client/data.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/views/data.cjs"(exports2, module2) {
     "use strict";
     module2.exports = require_data_view()({
       domain: "tasks",
@@ -3090,9 +3090,9 @@ var require_body_copy = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/copy.cjs
+// packages/addons/tasks/client/ui/copy.cjs
 var require_copy = __commonJS({
-  "packages/addons/tasks/client/copy.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/ui/copy.cjs"(exports2, module2) {
     "use strict";
     var bodyCopy = require_body_copy();
     module2.exports = {
@@ -4440,9 +4440,9 @@ var init_refresh_cw = __esm({
   }
 });
 
-// packages/addons/tasks/client/icons.cjs
+// packages/addons/tasks/client/ui/icons.cjs
 var require_icons = __commonJS({
-  "packages/addons/tasks/client/icons.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/ui/icons.cjs"(exports2, module2) {
     "use strict";
     var h = require("react").createElement;
     var ICONS = {
@@ -4765,9 +4765,9 @@ var require_description = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/styles.cjs
+// packages/addons/tasks/client/ui/styles.cjs
 var require_styles = __commonJS({
-  "packages/addons/tasks/client/styles.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/ui/styles.cjs"(exports2, module2) {
     "use strict";
     module2.exports = [
       ".wbt-date-popover{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:280px;max-width:calc(100vw - 40px);padding:12px;border-radius:10px;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);background:var(--wbt-bg);box-shadow:0 8px 24px color-mix(in srgb,currentColor 12%,transparent)}.wbt-date-clear{border:0;background:transparent;color:inherit;padding:5px;cursor:pointer;border-radius:4px}.wbt-date-clear:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:1px}",
@@ -4987,9 +4987,9 @@ var require_styles = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/highlight.cjs
+// packages/addons/tasks/client/ui/highlight.cjs
 var require_highlight = __commonJS({
-  "packages/addons/tasks/client/highlight.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/ui/highlight.cjs"(exports2, module2) {
     "use strict";
     module2.exports = function(React) {
       var h = React.createElement;
@@ -5015,16 +5015,16 @@ var require_highlight = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/body-mode.cjs
+// packages/addons/tasks/client/ui/body-mode.cjs
 var require_body_mode = __commonJS({
-  "packages/addons/tasks/client/body-mode.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/ui/body-mode.cjs"(exports2, module2) {
     module2.exports = require_body_toggle();
   }
 });
 
-// packages/addons/tasks/client/task-item.cjs
+// packages/addons/tasks/client/item/task-item.cjs
 var require_task_item = __commonJS({
-  "packages/addons/tasks/client/task-item.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/item/task-item.cjs"(exports2, module2) {
     "use strict";
     module2.exports = function(deps) {
       var React = deps.React, h = React.createElement;
@@ -5173,9 +5173,9 @@ var require_task_item = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/timeline-copy.cjs
+// packages/addons/tasks/client/timeline/timeline-copy.cjs
 var require_timeline_copy = __commonJS({
-  "packages/addons/tasks/client/timeline-copy.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/timeline/timeline-copy.cjs"(exports2, module2) {
     "use strict";
     var english = {
       "\u641C\u7D22\u5DF2\u6709\u65F6\u95F4\u7EBF": "Search existing timelines",
@@ -5225,9 +5225,9 @@ var require_timeline_copy = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/timeline-controls.cjs
+// packages/addons/tasks/client/timeline/timeline-controls.cjs
 var require_timeline_controls = __commonJS({
-  "packages/addons/tasks/client/timeline-controls.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/timeline/timeline-controls.cjs"(exports2, module2) {
     "use strict";
     function result(r) {
       if (!r || !r.ok) throw Error(r && r.error || "\u8BF7\u6C42\u5931\u8D25");
@@ -5342,9 +5342,9 @@ var require_timeline_controls = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/difficulty-field.cjs
+// packages/addons/tasks/client/item/difficulty-field.cjs
 var require_difficulty_field = __commonJS({
-  "packages/addons/tasks/client/difficulty-field.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/item/difficulty-field.cjs"(exports2, module2) {
     "use strict";
     module2.exports = function(React) {
       var h = React.createElement;
@@ -5385,9 +5385,9 @@ var require_difficulty_field = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/ownership.cjs
+// packages/addons/tasks/client/modals/ownership.cjs
 var require_ownership = __commonJS({
-  "packages/addons/tasks/client/ownership.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/modals/ownership.cjs"(exports2, module2) {
     "use strict";
     function tables(nodes, parents) {
       var out = [], prefix = parents || [];
@@ -5438,9 +5438,9 @@ var require_ownership = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/table-picker.cjs
+// packages/addons/tasks/client/modals/table-picker.cjs
 var require_table_picker = __commonJS({
-  "packages/addons/tasks/client/table-picker.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/modals/table-picker.cjs"(exports2, module2) {
     "use strict";
     function rows(tree, parents, out) {
       var result = out || [], prefix = parents || [];
@@ -5594,9 +5594,9 @@ var require_table_picker = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/ownership-fields.cjs
+// packages/addons/tasks/client/modals/ownership-fields.cjs
 var require_ownership_fields = __commonJS({
-  "packages/addons/tasks/client/ownership-fields.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/modals/ownership-fields.cjs"(exports2, module2) {
     "use strict";
     var ownership = require_ownership();
     module2.exports = function(React) {
@@ -5707,9 +5707,9 @@ var require_ownership_fields = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/create-modal.cjs
+// packages/addons/tasks/client/modals/create-modal.cjs
 var require_create_modal = __commonJS({
-  "packages/addons/tasks/client/create-modal.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/modals/create-modal.cjs"(exports2, module2) {
     function initialPriority(source, origin, fallback) {
       var original = Number(origin && origin.priority);
       if (source === "2" && Number.isInteger(original) && original >= 1 && original <= 10) return original;
@@ -5947,9 +5947,9 @@ var require_create_modal = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/timeline-members.cjs
+// packages/addons/tasks/client/timeline/timeline-members.cjs
 var require_timeline_members = __commonJS({
-  "packages/addons/tasks/client/timeline-members.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/timeline/timeline-members.cjs"(exports2, module2) {
     "use strict";
     module2.exports = function timelineMembers(api, task) {
       if (task.timelineId == null || task.timelineId === "") return Promise.resolve([]);
@@ -5961,9 +5961,9 @@ var require_timeline_members = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/task-timeline-modal.cjs
+// packages/addons/tasks/client/timeline/task-timeline-modal.cjs
 var require_task_timeline_modal = __commonJS({
-  "packages/addons/tasks/client/task-timeline-modal.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/timeline/task-timeline-modal.cjs"(exports2, module2) {
     "use strict";
     module2.exports = function(React) {
       var h = React.createElement, controls = require_timeline_controls()(React);
@@ -6061,9 +6061,9 @@ var require_task_timeline_modal = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/edit-modal.cjs
+// packages/addons/tasks/client/modals/edit-modal.cjs
 var require_edit_modal = __commonJS({
-  "packages/addons/tasks/client/edit-modal.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/modals/edit-modal.cjs"(exports2, module2) {
     "use strict";
     module2.exports = function createEditModal(React, statusInfo, stars) {
       var h = React.createElement;
@@ -6239,9 +6239,9 @@ var require_edit_modal = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/batch-modal.cjs
+// packages/addons/tasks/client/modals/batch-modal.cjs
 var require_batch_modal = __commonJS({
-  "packages/addons/tasks/client/batch-modal.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/modals/batch-modal.cjs"(exports2, module2) {
     "use strict";
     module2.exports = function(React, cx, Icon2) {
       var TimelinePicker = require_timeline_controls()(React).Picker;
@@ -6319,9 +6319,9 @@ var require_batch_modal = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/activity-filter.cjs
+// packages/addons/tasks/client/stats/activity-filter.cjs
 var require_activity_filter = __commonJS({
-  "packages/addons/tasks/client/activity-filter.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/stats/activity-filter.cjs"(exports2, module2) {
     var React = require("react");
     var h = React.createElement;
     var model = require_heatmap_model();
@@ -6339,9 +6339,9 @@ var require_activity_filter = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/date-filter.cjs
+// packages/addons/tasks/client/ui/date-filter.cjs
 var require_date_filter = __commonJS({
-  "packages/addons/tasks/client/date-filter.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/ui/date-filter.cjs"(exports2, module2) {
     var React = require("react");
     var h = React.createElement;
     var charts = require_charts().makeCharts("wbt-date");
@@ -6439,9 +6439,9 @@ var require_date_filter = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/tasks-view.cjs
+// packages/addons/tasks/client/views/tasks-view.cjs
 var require_tasks_view = __commonJS({
-  "packages/addons/tasks/client/tasks-view.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/views/tasks-view.cjs"(exports2, module2) {
     module2.exports = function createTasksView(deps) {
       var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, TABS = deps.TABS, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon2 = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
       var h = React.createElement, activityFilter = require_activity_filter(), DateFilter = require_date_filter().DateFilter;
@@ -7304,9 +7304,9 @@ var require_tasks_view = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/timeline-add-members.cjs
+// packages/addons/tasks/client/timeline/timeline-add-members.cjs
 var require_timeline_add_members = __commonJS({
-  "packages/addons/tasks/client/timeline-add-members.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/timeline/timeline-add-members.cjs"(exports2, module2) {
     "use strict";
     module2.exports = function(React) {
       var h = React.createElement, result = require_timeline_controls()(React).result;
@@ -7367,9 +7367,9 @@ var require_timeline_add_members = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/timeline-merge.cjs
+// packages/addons/tasks/client/timeline/timeline-merge.cjs
 var require_timeline_merge = __commonJS({
-  "packages/addons/tasks/client/timeline-merge.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/timeline/timeline-merge.cjs"(exports2, module2) {
     "use strict";
     module2.exports = function(React) {
       var h = React.createElement;
@@ -7447,9 +7447,9 @@ var require_timeline_merge = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/timeline-styles.cjs
+// packages/addons/tasks/client/timeline/timeline-styles.cjs
 var require_timeline_styles = __commonJS({
-  "packages/addons/tasks/client/timeline-styles.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/timeline/timeline-styles.cjs"(exports2, module2) {
     "use strict";
     module2.exports = [
       ".wbt-timeline-view{padding:20px;color:inherit;height:100%;box-sizing:border-box;overflow:auto}",
@@ -7471,9 +7471,9 @@ var require_timeline_styles = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/timeline-view.cjs
+// packages/addons/tasks/client/views/timeline-view.cjs
 var require_timeline_view = __commonJS({
-  "packages/addons/tasks/client/timeline-view.cjs"(exports2, module2) {
+  "packages/addons/tasks/client/views/timeline-view.cjs"(exports2, module2) {
     "use strict";
     module2.exports = function(deps) {
       var React = deps.React, h = React.createElement, COPY = deps.COPY;

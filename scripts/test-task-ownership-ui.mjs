@@ -2,16 +2,16 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const copy = require('../packages/addons/tasks/client/copy.cjs');
-const ownership = require('../packages/addons/tasks/client/ownership.cjs');
+const copy = require('../packages/addons/tasks/client/ui/copy.cjs');
+const ownership = require('../packages/addons/tasks/client/modals/ownership.cjs');
 let state, cursor, effects, deps;
 const React = {
   createElement: (type, props, ...children) => ({ type, props: props || {}, children: children.flat(Infinity).filter(x => x != null) }),
   useState: value => { const i = cursor++; if (!(i in state)) state[i] = value; return [state[i], v => { state[i] = typeof v === 'function' ? v(state[i]) : v; }]; },
   useEffect: (fn, next) => { const i = cursor++; if (!deps[i] || next.some((x, j) => x !== deps[i][j])) { effects.push(fn); deps[i] = next; } },
 };
-const Create = require('../packages/addons/tasks/client/create-modal.cjs')({ React, tagNames: () => [], splitTags: () => [], today: () => '2026-11-09', addDays: () => '2026-11-09', hostHasAddon: () => false });
-const Edit = require('../packages/addons/tasks/client/edit-modal.cjs')(React, () => ({ cls: 'active' }), () => '');
+const Create = require('../packages/addons/tasks/client/modals/create-modal.cjs')({ React, tagNames: () => [], splitTags: () => [], today: () => '2026-11-09', addDays: () => '2026-11-09', hostHasAddon: () => false });
+const Edit = require('../packages/addons/tasks/client/modals/edit-modal.cjs')(React, () => ({ cls: 'active' }), () => '');
 const tree = [{ id: 'root', type: '2', name: '任务根', children: [{ id: 'group', type: '0', name: '插件', children: [
   { id: 'table', type: '1', name: 'storage', description: '存储插件开发职责' },
   { id: 'other', type: '1', name: 'tasks', description: '任务插件开发职责' },

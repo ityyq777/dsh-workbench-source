@@ -4,7 +4,7 @@ import {createRequire} from 'node:module';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 const require=createRequire(import.meta.url), dir='../packages/addons/tasks/client/';
-const model=require(dir+'heatmap-model.cjs');
+const model=require(dir+'stats/heatmap-model.cjs');
 for(let y=1900;y<=2400;y++){
  const g=model.calendar(y),leap=y%4===0&&(y%100!==0||y%400===0);
  assert.equal(g.days.length,leap?366:365);assert.equal(g.days.at(-1).date,y+'-12-31');
@@ -20,7 +20,7 @@ for(const [index,entry] of model.LEVELS.entries()){
  if(entry.max!==null)assert.equal(model.level(entry.max),index+1);
  for(const type of model.TYPES)assert.equal(model.background({[type]:entry.min},type),`var(--hm-${type}-${index+1})`);
 }
-const css=require(dir+'heatmap-styles.cjs');assert.ok(!css.includes('.wbt-hm-levels'));
+const css=require(dir+'stats/heatmap-styles.cjs');assert.ok(!css.includes('.wbt-hm-levels'));
 assert.ok(css.includes('gap:4px'));assert.ok(css.includes('padding-inline-start:12px'));
 let state=[],cursor=0,effects=[];
 const memo=(fn,deps)=>{const i=cursor++,old=state[i];if(!old||deps.some((v,j)=>v!==old.deps[j]))state[i]={value:fn(),deps};return state[i].value;};
@@ -30,7 +30,7 @@ const flush=async()=>{const jobs=effects;effects=[];jobs.forEach(fn=>fn());for(l
 const walk=n=>n&&typeof n==='object'?[n,...n.children.flatMap(walk)]:[];
 const text=n=>n&&typeof n==='object'?n.children.map(text).join(''):String(n??'');
 const find=(tree,pred)=>{const n=walk(tree).find(pred);assert.ok(n,'control exists');return n;};
-const mod={exports:{}};runInNewContext(readFileSync('packages/addons/tasks/client/heatmap.cjs','utf8'),{module:mod,require:n=>n==='react'?React:require(dir+n.slice(2)),Date,Map});
+const mod={exports:{}};runInNewContext(readFileSync('packages/addons/tasks/client/stats/heatmap.cjs','utf8'),{module:mod,require:n=>n==='react'?React:createRequire(require.resolve(dir+'stats/heatmap.cjs'))(n),Date,Map});
 const Heatmap=mod.exports,y=new Date().getFullYear(),date=y+'-01-01';
 for(const lang of ['zh','en']){
  reset();let navigation,fail=false;const calls=[];
@@ -55,8 +55,8 @@ for(const lang of ['zh','en']){
  fail=true;find(v,n=>n.props['aria-label']===model.COPY[lang].next).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].error));
  find(v,n=>n.type==='button'&&text(n)===model.COPY[lang].retry).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].empty.shutdown));assert.equal(calls.length,4);
 }
-const noop=()=>null,copy=require(dir+'copy.cjs'),filter=require(dir+'activity-filter.cjs');
-const View=require(dir+'tasks-view.cjs')({React,configView:{useConfig:()=>({ready:true,values:{'list.filterRestarted':true,'ui.defaultTab':0}})},COPY:copy,TABS:[],allTables:()=>[],treeWalk:()=>[],treeFlat:()=>[],cx:(...s)=>s.join(' '),injectCss:noop,Icon:noop,PathCrumbs:noop,TagFilter:noop});
+const noop=()=>null,copy=require(dir+'ui/copy.cjs'),filter=require(dir+'stats/activity-filter.cjs');
+const View=require(dir+'views/tasks-view.cjs')({React,configView:{useConfig:()=>({ready:true,values:{'list.filterRestarted':true,'ui.defaultTab':0}})},COPY:copy,TABS:[],allTables:()=>[],treeWalk:()=>[],treeFlat:()=>[],cx:(...s)=>s.join(' '),injectCss:noop,Icon:noop,PathCrumbs:noop,TagFilter:noop});
 for(const activityType of model.TYPES){
  reset();const calls=[],p={lang:'en',viewParams:{activityDate:date,activityType,tableId:'stale',difficultyMissing:true},api:{subscribe:()=>noop,call:async(action,args)=>{calls.push({action,args});return {ok:true,result:action==='tasks.list'?{records:[],total:0}:[]};}}};
  const outer=View(p),Body=outer.type;render(Body,outer.props);await flush();render(Body,outer.props);await flush();let args=calls.filter(c=>c.action==='tasks.list').at(-1).args;

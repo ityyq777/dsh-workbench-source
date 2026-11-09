@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { createBody } = require('../packages/addons/lib/markdown.cjs');
-const Highlight = require('../packages/addons/tasks/client/highlight.cjs')(React);
+const Highlight = require('../packages/addons/tasks/client/ui/highlight.cjs')(React);
 const Body = createBody(React, Highlight), h = React.createElement;
 // Confirm this renderer catches the exact shape accepted by the old permissive mocks.
 for (const tag of ['br', 'hr']) assert.throws(() => renderToStaticMarkup(h(tag, {}, [])), /self-closing tag/);
@@ -26,8 +26,8 @@ const literal = renderToStaticMarkup(h(Body, { text: fence+'\n**raw**\n---\n'+fe
 assert.ok(literal.includes('<pre><code>**raw**\n---</code></pre>'));assert.ok(!literal.includes('<hr'));
 const inspect = node => { if (!React.isValidElement(node)) return; if (node.type === 'br' || node.type === 'hr') assert.equal(Object.hasOwn(node.props,'children'),false); React.Children.forEach(node.props.children, inspect); };
 inspect(Body({text:fixture}));
-const copy = require('../packages/addons/tasks/client/copy.cjs');
-const Task = require('../packages/addons/tasks/client/task-item.cjs')({React,statusInfo:()=>({zh:'开启',en:'Active',cls:'active'}),stars:()=>'',pClass:()=> 'low',today:()=> '2026-11-09',daysBetween:()=>1,cx:(...x)=>x.filter(Boolean).join(' '),Icon:()=>null,Countdown:()=>null,PathCrumbs:()=>null});
+const copy = require('../packages/addons/tasks/client/ui/copy.cjs');
+const Task = require('../packages/addons/tasks/client/item/task-item.cjs')({React,statusInfo:()=>({zh:'开启',en:'Active',cls:'active'}),stars:()=>'',pClass:()=> 'low',today:()=> '2026-11-09',daysBetween:()=>1,cx:(...x)=>x.filter(Boolean).join(' '),Icon:()=>null,Countdown:()=>null,PathCrumbs:()=>null});
 for (const card of [true,false]) for (const lang of ['zh','en']) {
   const output=renderToStaticMarkup(h(Task,{card,lang,t:copy[lang],keyword:'needle',task:{id:'fixture',title:'Title',description:fixture,review:'reflection needle\nnext line\n\n---',status:'0',tags:[]},update(){}}));
   assert.equal((output.match(/<br\/>/g)||[]).length,2);
@@ -36,7 +36,7 @@ for (const card of [true,false]) for (const lang of ['zh','en']) {
   assert.ok(!output.includes('<textarea') && !output.includes('wb-body-edit') && !output.includes('wb-source-hint'));
   assert.ok(!output.includes('Double-click') && !output.includes('双击'));
 }
-const EditModal = require('../packages/addons/tasks/client/edit-modal.cjs')(React,()=>({zh:'开启',en:'Active',cls:'active'}),()=> '');
+const EditModal = require('../packages/addons/tasks/client/modals/edit-modal.cjs')(React,()=>({zh:'开启',en:'Active',cls:'active'}),()=> '');
 for (const lang of ['zh','en']) for (const status of ['0','1','2','3']) {
   const panel = renderToStaticMarkup(h(EditModal,{lang,t:copy[lang],task:{id:'fixture',title:'Raw <title>',description:'**raw** <script>literal</script>',review:'*raw reflection*',status},tree:[],onClose(){}}));
   assert.ok(panel.includes('value="Raw &lt;title&gt;"'));

@@ -10,12 +10,12 @@
   }
   var React = require("react");
   var h = React.createElement;
-  var TagFilter = require("./tagfilter.cjs");
-  var statsView = require("./stats.cjs");
-  var configView = require("./config.cjs");
-  var dataView = require("./data.cjs");
+  var TagFilter = require("./ui/tagfilter.cjs");
+  var statsView = require("./views/stats.cjs");
+  var configView = require("./views/config.cjs");
+  var dataView = require("./views/data.cjs");
 
-  var COPY = require("./copy.cjs");
+  var COPY = require("./ui/copy.cjs");
   // 标签是可选子插件：以宿主已安装/启用列表为准；旧宿主没有列表时返回 true，交给后端降级。
   function hostHasAddon(id) {
     var list = host.addons;
@@ -38,7 +38,7 @@
     "3": { zh: "已重启", en: "Restarted", cls: "restarted" },
   };
 
-  var icons = require("./icons.cjs"), ICONS = icons.ICONS, Icon = icons.Icon;
+  var icons = require("./ui/icons.cjs"), ICONS = icons.ICONS, Icon = icons.Icon;
 
   // 计划完成倒计时：按秒刷新，超过计划完成时间后转为「逾期 hh:mm:ss」。
   function Countdown(props) {
@@ -60,7 +60,7 @@
     }, h(Icon, { name: "clock", size: 11 }), h("span", { className: "wbt-cd-num" }, text));
   }
 
-  var CSS = require("./styles.cjs");
+  var CSS = require("./ui/styles.cjs");
 
   function injectCss() {
     if (typeof document === "undefined") return;
@@ -185,7 +185,7 @@
     }));
   }
 
-  var TaskItem = require("./task-item.cjs")({ React: React, statusInfo: statusInfo, stars: stars, pClass: pClass,
+  var TaskItem = require("./item/task-item.cjs")({ React: React, statusInfo: statusInfo, stars: stars, pClass: pClass,
     today: today, daysBetween: daysBetween, cx: cx, Icon: Icon, Countdown: Countdown, PathCrumbs: PathCrumbs });
 
   function TreeNode(props) {
@@ -317,9 +317,9 @@
     );
   }
 
-  var CreateModal = require("./create-modal.cjs")({ React: React, allTables: allTables, tagNames: tagNames, splitTags: splitTags, today: today, addDays: addDays, hostHasAddon: hostHasAddon });
+  var CreateModal = require("./modals/create-modal.cjs")({ React: React, allTables: allTables, tagNames: tagNames, splitTags: splitTags, today: today, addDays: addDays, hostHasAddon: hostHasAddon });
 
-  var TimelineModal = require("./task-timeline-modal.cjs")(React);
+  var TimelineModal = require("./timeline/task-timeline-modal.cjs")(React);
 
   function DoneModal(props) {
     var t = props.t;
@@ -333,7 +333,7 @@
       h("div", { className: "wbt-modal", style: { width: "420px" } },
         h("div", { className: "wbt-modal-head" }, h("h3", null, t.complete + " · " + props.task.title), h("button", { className: "wbt-icon", onClick: props.onClose }, "×")),
         h("div", { className: "wbt-mhint" }, t.difficultyHint),
-        require("./difficulty-field.cjs")(React)(t, value, setValue, "wbt-done-difficulty"),
+        require("./item/difficulty-field.cjs")(React)(t, value, setValue, "wbt-done-difficulty"),
         h("label", { className: "wbt-field", style: { marginTop: "12px" } },
           h("span", null, t.review + " · " + t.reviewHint),
           h("textarea", { className: "wbt-textarea", rows: 3, placeholder: t.reviewPlaceholder, value: review, onChange: function (e) { setReview(e.target.value); } })
@@ -354,9 +354,9 @@
     );
   }
 
-  var EditModal = require("./edit-modal.cjs")(React, statusInfo, stars);
+  var EditModal = require("./modals/edit-modal.cjs")(React, statusInfo, stars);
 
-  var BatchModal = require("./batch-modal.cjs")(React, cx, Icon);
+  var BatchModal = require("./modals/batch-modal.cjs")(React, cx, Icon);
 
   var CFG_FALLBACK = {
     "ui.defaultTab": 0, "ui.listView": "list", "ui.expandDepth": 2, "ui.confirmDelete": true,
@@ -367,9 +367,9 @@
     "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "recentDone", "recentShutdown"],
   };
 
-  var TasksView = require("./tasks-view.cjs")({ React: React, configView: configView, CFG_FALLBACK: CFG_FALLBACK, COPY: COPY, TABS: TABS, injectCss: injectCss, allTables: allTables, findFirstTable: findFirstTable, treeWalk: treeWalk, treeFlat: treeFlat, cx: cx, Icon: Icon, TaskItem: TaskItem, PathCrumbs: PathCrumbs, TagFilter: TagFilter, TreeNode: TreeNode, CreateModal: CreateModal, TimelineModal: TimelineModal, NodeModal: NodeModal, EditModal: EditModal, DoneModal: DoneModal, BatchModal: BatchModal });
+  var TasksView = require("./views/tasks-view.cjs")({ React: React, configView: configView, CFG_FALLBACK: CFG_FALLBACK, COPY: COPY, TABS: TABS, injectCss: injectCss, allTables: allTables, findFirstTable: findFirstTable, treeWalk: treeWalk, treeFlat: treeFlat, cx: cx, Icon: Icon, TaskItem: TaskItem, PathCrumbs: PathCrumbs, TagFilter: TagFilter, TreeNode: TreeNode, CreateModal: CreateModal, TimelineModal: TimelineModal, NodeModal: NodeModal, EditModal: EditModal, DoneModal: DoneModal, BatchModal: BatchModal });
 
-  var TimelineView = require("./timeline-view.cjs")({ React: React, COPY: COPY, injectCss: injectCss, statusInfo: statusInfo, EditModal: EditModal });
+  var TimelineView = require("./views/timeline-view.cjs")({ React: React, COPY: COPY, injectCss: injectCss, statusInfo: statusInfo, EditModal: EditModal });
 
   host.registerAddon({
     id: "wb-addon-tasks",

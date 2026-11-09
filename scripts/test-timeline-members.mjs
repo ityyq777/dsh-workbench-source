@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url);
-const members=require('../packages/addons/tasks/client/timeline-members.cjs');
+const members=require('../packages/addons/tasks/client/timeline/timeline-members.cjs');
 let calls=0;
 const api={async call(){calls++;return {ok:true,result:[]}}};
 for(const timelineId of [undefined,null,'']) assert.deepEqual(await members(api,{id:'task',timelineId,timelineKey:'legacy-self'}),[]);

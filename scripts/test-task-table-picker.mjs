@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {createRequire} from 'node:module';
-const require=createRequire(import.meta.url), factory=require('../packages/addons/tasks/client/table-picker.cjs');
+const require=createRequire(import.meta.url), factory=require('../packages/addons/tasks/client/modals/table-picker.cjs');
 const tree=[{id:'root',name:'Root',type:'2',children:[{id:'group',name:'Platform',type:'0',children:[{id:'a',name:'Storage',type:'1',description:'职责'.repeat(110)},{id:'b',name:'Tasks',type:'1'}]},{id:'empty',name:'空组',type:'0'},{id:'deleted',name:'Deleted',type:'0',deleted_at:1,children:[{id:'gone',name:'Gone',type:'1'}]}]}];
 assert.deepEqual(factory.visible(tree,'root / PLATFORM / TASKS').map(x=>x.id),['b']);
 assert.deepEqual(factory.visible(tree,'STORAGE').map(x=>x.id),['a']);

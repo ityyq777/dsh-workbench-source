@@ -4,8 +4,8 @@ import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
-const require=createRequire(import.meta.url), recent=require('../packages/addons/tasks/client/recent-columns.cjs');
-const charts=require('../packages/addons/tasks/client/charts.cjs').makeCharts('test');
+const require=createRequire(import.meta.url), recent=require('../packages/addons/tasks/client/item/recent-columns.cjs');
+const charts=require('../packages/addons/tasks/client/stats/charts.cjs').makeCharts('test');
 for(const lang of ['zh','en']) {
  let navigation;const columns=recent({colTitle:'Task',colTable:'Table',colDate:'Date',colAgo:'Ago'},lang,(...a)=>navigation=a);
  const difficulty=columns.find(c=>c.key==='difficulty'),table=columns.find(c=>c.key==='tableTitle');
@@ -20,8 +20,8 @@ for(const lang of ['zh','en']) {
 // Hook harness tests the actual task list request with non-default configuration.
 let state=[],cursor=0,effects=[];const memo=(fn,deps)=>{const i=cursor++,old=state[i];if(!old||deps.some((v,j)=>v!==old.deps[j]))state[i]={value:fn(),deps};return state[i].value;};
 const R={createElement:(type,props,...children)=>({type,props:props||{},children}),useState:v=>{const i=cursor++;if(!(i in state))state[i]=v;return[state[i],v=>state[i]=typeof v==='function'?v(state[i]):v];},useRef:v=>{const i=cursor++;return state[i]||={current:v};},useMemo:memo,useCallback:(fn,d)=>memo(()=>fn,d),useEffect:(fn,d)=>memo(()=>{effects.push(fn);},d)};
-const noop=()=>null, copy=require('../packages/addons/tasks/client/copy.cjs');
-const View=require('../packages/addons/tasks/client/tasks-view.cjs')({React:R,configView:{useConfig:()=>({ready:true,values:{'ui.defaultTab':0,'ui.listView':'card','list.sort':'difficulty','list.filterRestarted':true}})},COPY:copy,TABS:[],allTables:()=>[],treeWalk:()=>[],treeFlat:()=>[],cx:(...s)=>s.join(' '),injectCss:noop,Icon:noop,PathCrumbs:noop,TagFilter:noop});
+const noop=()=>null, copy=require('../packages/addons/tasks/client/ui/copy.cjs');
+const View=require('../packages/addons/tasks/client/views/tasks-view.cjs')({React:R,configView:{useConfig:()=>({ready:true,values:{'ui.defaultTab':0,'ui.listView':'card','list.sort':'difficulty','list.filterRestarted':true}})},COPY:copy,TABS:[],allTables:()=>[],treeWalk:()=>[],treeFlat:()=>[],cx:(...s)=>s.join(' '),injectCss:noop,Icon:noop,PathCrumbs:noop,TagFilter:noop});
 const calls=[], outer=View({lang:'en',viewParams:{tableId:'t',groupId:'g',difficultyMissing:true},api:{subscribe:()=>noop,call:async(action,args)=>{calls.push({action,args});return {ok:true,result:action==='tasks.list'?{records:[],total:0}:[]};}}});
 cursor=0;outer.type(outer.props);effects.forEach(f=>f());for(let i=0;i<12;i++)await Promise.resolve();
 const args=calls.find(c=>c.action==='tasks.list').args;assert.equal(args.tableId,'t');assert.equal(args.groupId,null);assert.equal(args.tab,8);assert.equal(args.titleKey,'');assert.deepEqual(args.tagIds,[]);assert.equal(args.difficultyMissing,false);assert.equal(args.filterRestarted,false);assert.equal(args.sort,undefined);assert.equal(args.pageNumber,1);

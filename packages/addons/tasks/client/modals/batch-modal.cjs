@@ -1,10 +1,10 @@
 // Batch dialog extracted to keep the registration entry below its line budget.
 "use strict";
 module.exports = function (React, cx, Icon) {
-  var TimelinePicker = require("./timeline-controls.cjs")(React).Picker;
+  var TimelinePicker = require("../timeline/timeline-controls.cjs")(React).Picker;
   var h = React.createElement, Picker = require("./table-picker.cjs")(React);
   function BatchModal(props) {
-    var t = props.t, tr = require("./timeline-copy.cjs")(props.t);
+    var t = props.t, tr = require("../timeline/timeline-copy.cjs")(props.t);
     var items = props.items || [];
     var mode = props.mode;
     var trigger = React.useRef(typeof document === "undefined" ? null : document.activeElement);

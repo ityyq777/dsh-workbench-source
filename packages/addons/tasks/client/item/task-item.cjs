@@ -2,9 +2,9 @@
 "use strict";
 module.exports = function (deps) {
   var React = deps.React, h = React.createElement;
-  var Highlight = require("./highlight.cjs")(React);
-  var Body = require("../../lib/markdown.cjs").createBody(React, Highlight);
-  var BodyMode = require("./body-mode.cjs")(React);
+  var Highlight = require("../ui/highlight.cjs")(React);
+  var Body = require("../../../lib/markdown.cjs").createBody(React, Highlight);
+  var BodyMode = require("../ui/body-mode.cjs")(React);
   var statusInfo = deps.statusInfo, stars = deps.stars, pClass = deps.pClass;
   var today = deps.today, daysBetween = deps.daysBetween, cx = deps.cx;
   var Icon = deps.Icon, Countdown = deps.Countdown, PathCrumbs = deps.PathCrumbs;
@@ -12,7 +12,7 @@ module.exports = function (deps) {
     var t = props.t;
     var initialMode = props.bodyMode === "text" ? "text" : "markdown";
     var descMode = React.useState(initialMode), reviewMode = React.useState(initialMode);
-    var bodyId = require("../../lib/body-id.cjs")(React);
+    var bodyId = require("../../../lib/body-id.cjs")(React);
     function bodySection(label, text, state, review) {
       var labelId = bodyId + (review ? "-review" : "-desc");
       if (!String(text || "").trim()) return null;

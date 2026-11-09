@@ -1,7 +1,7 @@
 // 任务视图的中英文案。改文案只动这里，别在组件里散落字符串。
 "use strict";
 
-var bodyCopy = require("../../lib/body-copy.cjs");
+var bodyCopy = require("../../../lib/body-copy.cjs");
 module.exports = {
     zh: {
       timelineTasks: "任务数", timelineActivity: "最近活动", timelineMerge: "合并", timelineSingletons: "包含空线和单任务时间线", timelineSearch: "搜索时间线标题", timelineSearchButton: "搜索", timelineMembers: "成员任务", timelineOrder: "按发布时间正序排列，点击任务打开详情", timelineEmpty: "暂无匹配的时间线，可点击“新建时间线”手动建立。", timelineOpen: "开启", timelineDone: "完成", timelinePrevious: "上一页", timelineNext: "下一页", timelineTarget: "合并到时间线", timelineMergeHint: "选中时间线的全部有效任务将归并到目标时间线，包含当前页外的任务，排除已重启和已删除任务。请先预览再确认。", timelinePreview: "预览合并", timelinePreviewCount: "将移动 {n} 条任务到目标时间线。", timelineConfirm: "确认合并",

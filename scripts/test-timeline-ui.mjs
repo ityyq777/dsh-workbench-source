@@ -3,7 +3,7 @@ import { build } from 'esbuild';
 import { createServer } from 'node:http';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url), copy = require('../packages/addons/tasks/client/copy.cjs');
+const require = createRequire(import.meta.url), copy = require('../packages/addons/tasks/client/ui/copy.cjs');
 for(const key of Object.keys(copy.zh).filter(k=>k.startsWith('timeline'))) assert.ok(copy.en[key],key);
 assert.ok(copy.zh.timelineSingletons.includes('空线'));
 assert.ok(!copy.zh.timelineEmpty.includes('暂未提供'));

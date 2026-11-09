@@ -16,7 +16,7 @@ const React = {
   useEffect(fn,deps) { const i=cursor++,old=slots[i];if(!old||deps.some((v,j)=>v!==old.deps[j])){slots[i]={deps};effects.push(fn);} },
 };
 const module={exports:{}};
-runInNewContext(readFileSync('packages/addons/tasks/client/config.cjs','utf8'),{module,window,require:n=>n==='react'?React:pref});
+runInNewContext(readFileSync('packages/addons/tasks/client/views/config.cjs','utf8'),{module,window,require:n=>n==='react'?React:pref});
 const Config=module.exports.ConfigView;
 const walk=n=>Array.isArray(n)?n.flatMap(walk):n&&typeof n==='object'?[n,...walk(n.children)]:[];
 const text=n=>Array.isArray(n)?n.map(text).join(''):n&&typeof n==='object'?text(n.children):String(n??'');

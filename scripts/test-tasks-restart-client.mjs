@@ -2,14 +2,14 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const copy = require('../packages/addons/tasks/client/copy.cjs');
+const copy = require('../packages/addons/tasks/client/ui/copy.cjs');
 let state = [], cursor = 0;
 const React = {
   createElement: (type, props, ...children) => ({ type, props: props || {}, children: children.flat(Infinity).filter(x => x != null) }),
   useEffect() {},
   useState: value => { const i = cursor++; if (!(i in state)) state[i] = value; return [state[i], v => { state[i] = typeof v === 'function' ? v(state[i]) : v; }]; },
 };
-const CreateModal = require('../packages/addons/tasks/client/create-modal.cjs')({ React,
+const CreateModal = require('../packages/addons/tasks/client/modals/create-modal.cjs')({ React,
   allTables: () => [{ id: 'table', name: 'Table', depth: 0 }], tagNames: () => [], splitTags: () => [],
   today: () => '2026-11-09', addDays: () => '2026-11-09', hostHasAddon: () => false,
 });

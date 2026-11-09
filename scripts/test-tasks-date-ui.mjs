@@ -6,7 +6,7 @@ import { runInNewContext } from 'node:vm';
 import RealReact from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 const require = createRequire(import.meta.url), dir = '../packages/addons/tasks/client/';
-const copy = require(dir+'copy.cjs');
+const copy = require(dir+'ui/copy.cjs');
 let state=[], cursor=0, effects=[];
 const memo=(fn,deps)=>{const i=cursor++,old=state[i];if(!old||deps.some((v,j)=>v!==old.deps[j]))state[i]={value:fn(),deps};return state[i].value;};
 const React={
@@ -22,12 +22,12 @@ const reset=()=>{state=[];cursor=0;effects=[];};
 const render=(C,p)=>{cursor=0;return C(p);};
 const flush=async()=>{const jobs=effects;effects=[];jobs.forEach(fn=>fn());for(let i=0;i<12;i++)await Promise.resolve();};
 const dirPath='packages/addons/tasks/client/';
-function load(name,extra={}) { const mod={exports:{}};runInNewContext(readFileSync(dirPath+name,'utf8'),{module:mod,require:n=>n==='react'?React:extra[n]||require(dir+n.replace('./','')),document:{getElementById(){return true;},addEventListener(){},removeEventListener(){}},Date,isFinite});return mod.exports; }
-const dates=load('date-filter.cjs');
+function load(name,extra={}) { const mod={exports:{}};runInNewContext(readFileSync(dirPath+name,'utf8'),{module:mod,require:n=>n==='react'?React:extra[n]||createRequire(require.resolve(dir+name))(n),document:{getElementById(){return true;},addEventListener(){},removeEventListener(){}},Date,isFinite});return mod.exports; }
+const dates=load('ui/date-filter.cjs');
 assert.equal(dates.validDate('2025-02-29'),false);assert.equal(dates.validDate('2024-02-29'),true);
 assert.equal(dates.validDate('2026-04-31'),false);assert.equal(dates.validDate('0000-01-01'),false);
 const noop=()=>null,config={useConfig:()=>({ready:true,values:{}})};
-const View=require(dir+'tasks-view.cjs')({React,configView:config,COPY:copy,TABS:[{id:8,en:'All'},{id:5,en:'Done'}],allTables:()=>[],treeWalk:()=>[],treeFlat:()=>[],cx:(...s)=>s.join(' '),injectCss:noop,Icon:noop,PathCrumbs:noop,TagFilter:noop});
+const View=require(dir+'views/tasks-view.cjs')({React,configView:config,COPY:copy,TABS:[{id:8,en:'All'},{id:5,en:'Done'}],allTables:()=>[],treeWalk:()=>[],treeFlat:()=>[],cx:(...s)=>s.join(' '),injectCss:noop,Icon:noop,PathCrumbs:noop,TagFilter:noop});
 reset();const calls=[];const props={lang:'en',api:{subscribe:()=>noop,call:async(action,args)=>{calls.push({action,args});return {ok:true,result:action==='tasks.list'?{records:[],total:30,pageable:true}:[]};}}};
 const outer=View(props),Body=outer.type;
 const draw=()=>render(Body,outer.props),list=()=>calls.filter(c=>c.action==='tasks.list').at(-1).args;
@@ -55,13 +55,13 @@ for(const lang of ['zh','en']) {
  picker().props.onCustomChange({from:'2026-11-09',to:'2026-11-01'});assert.equal(changed.at(-1).from,'2026-11-01');assert.ok(picker().props.customHint.includes(lang==='en'?'swapped':'已交换'));
  picker().props.onCustomClear();assert.equal(changed.at(-1).from,'');
 }
-const ch=require(dir+'charts.cjs').makeCharts('test-date');
+const ch=require(dir+'stats/charts.cjs').makeCharts('test-date');
 for(const C of [ch.DateRangePicker,ch.RangeSwitch]) {
  const html=renderToStaticMarkup(RealReact.createElement(C,{custom:{from:'2026-11-01',to:'2026-11-09'},today:C===ch.RangeSwitch?'2026-11-08':undefined,customHint:'hint',options:C===ch.RangeSwitch?[{key:'7d',label:'7 days'}]:undefined}));
  assert.ok(html.includes('min="2026-11-01"'));assert.ok(html.includes('role="status"'));assert.ok(html.includes(C===ch.RangeSwitch?'max="2026-11-08"':'max="2026-11-09"'));
  assert.equal(html.includes('7 days'),C===ch.RangeSwitch);assert.equal(html.includes('刷新'),C===ch.RangeSwitch);
 }
-const fakeCharts=load('charts.cjs').makeCharts('partial');let partialCalls=0,invalidCalls=0;
+const fakeCharts=load('stats/charts.cjs').makeCharts('partial');let partialCalls=0,invalidCalls=0;
 const partial=fakeCharts.DateRangePicker({custom:{from:'2026-11-01',to:''},onCustomChange:()=>partialCalls++,onInvalidInput:()=>invalidCalls++});
 find(partial,n=>n.type==='input').props.onChange({target:{value:'',validity:{badInput:true}}});assert.equal(partialCalls,0);assert.equal(invalidCalls,1);
 console.log('TASK DATE UI PASS: single/double/empty, invalid dates, swap notice, AND filters, reset page, refresh/tab preservation, activity navigation, statistics compatibility');

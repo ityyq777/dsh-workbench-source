@@ -1,6 +1,6 @@
 // Publication range UI; API state only receives real calendar dates in ascending order.
 var React = require("react"), h = React.createElement;
-var charts = require("./charts.cjs").makeCharts("wbt-date");
+var charts = require("../stats/charts.cjs").makeCharts("wbt-date");
 var Icon = require("./icons.cjs").Icon;
 function validDate(value) {
   if (!value) return true;

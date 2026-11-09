@@ -153,7 +153,7 @@ for(const [name,size,expected] of [["box",48,14],["box",99,14],["empty",48,48],[
   root=iconModule.exports.Icon;props={name,size};frames.clear();render();
   assert.equal(Number(all().find(n=>n.type==="svg").props.width),expected,"only empty states allow 48px");
 }
-assert.ok(readFileSync("packages/addons/tasks/client/styles.cjs","utf8").includes("visual-tokens.cjs"));
+assert.ok(readFileSync("packages/addons/tasks/client/ui/styles.cjs","utf8").includes("visual-tokens.cjs"));
 await import("./test-storage-cards.mjs");
 await import("./test-storage-selection.mjs");
 console.log('PASS storage visual: real bundle/SVG, four views and tabs, labels, tokens, skeletons, gallery and selection regressions');

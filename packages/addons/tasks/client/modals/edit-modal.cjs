@@ -2,7 +2,7 @@
 "use strict";
 module.exports = function createEditModal(React, statusInfo, stars) {
   var h = React.createElement;
-  var difficultyField = require("./difficulty-field.cjs")(React);
+  var difficultyField = require("../item/difficulty-field.cjs")(React);
   var ownership = require("./ownership.cjs"), fields = require("./ownership-fields.cjs")(React);
   // 任务编辑弹窗：按状态收敛可编辑字段。
   // 所有状态均可编辑难度；0/null 表示未设置。

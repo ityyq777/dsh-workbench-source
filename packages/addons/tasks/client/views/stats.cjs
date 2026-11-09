@@ -1,11 +1,11 @@
 // 任务统计视图：一次拉取 tasks.statsReport，区块化渲染。
 var React = require("react");
 var h = React.createElement;
-var charts = require("./charts.cjs");
+var charts = require("../stats/charts.cjs");
 var configView = require("./config.cjs");
-var recentColumns = require("./recent-columns.cjs");
-var Heatmap = require("./heatmap.cjs");
-var Today = require("./today.cjs");
+var recentColumns = require("../item/recent-columns.cjs");
+var Heatmap = require("../stats/heatmap.cjs");
+var Today = require("../stats/today.cjs");
 
 var COPY = {
   zh: {

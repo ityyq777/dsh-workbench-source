@@ -1,7 +1,7 @@
 // 任务列表与树导航视图；依赖由入口注入，无循环依赖。
 module.exports = function createTasksView(deps) {
   var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, TABS = deps.TABS, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
-  var h = React.createElement, activityFilter = require("./activity-filter.cjs"), DateFilter = require("./date-filter.cjs").DateFilter;
+  var h = React.createElement, activityFilter = require("../stats/activity-filter.cjs"), DateFilter = require("../ui/date-filter.cjs").DateFilter;
   function TasksView(props) {
     var lang = props.lang === "en" ? "en" : "zh";
     var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -551,7 +551,7 @@ module.exports = function createTasksView(deps) {
           targetOffset: cfg["form.defaultTargetOffset"],
         },
         onClose: function () { setCreateState(null); },
-        onCreated: function (result) { setCreateState(null); refreshList(); refreshTree(); say(require("./ownership.cjs").receipt(result)); },
+        onCreated: function (result) { setCreateState(null); refreshList(); refreshTree(); say(require("../modals/ownership.cjs").receipt(result)); },
       }) : null,
       timelineTask ? h(TimelineModal, {
         key: timelineTask.id, t: t, api: api, task: timelineTask, onChanged: refreshList,
@@ -570,7 +570,7 @@ module.exports = function createTasksView(deps) {
       editTask ? h(EditModal, {
         key: "edit-" + editTask.id, t: t, api: api, task: editTask, lang: props.lang, tree: tree,
         onClose: function () { setEditTask(null); },
-        onSaved: function (result) { setEditTask(null); refreshList(); say(require("./ownership.cjs").receipt(result)); },
+        onSaved: function (result) { setEditTask(null); refreshList(); say(require("../modals/ownership.cjs").receipt(result)); },
       }) : null,
       doneTask ? h(DoneModal, {
         key: doneTask.id, t: t, api: api, task: doneTask,

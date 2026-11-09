@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 const require = createRequire(import.meta.url);
-const copy = require('../packages/addons/tasks/client/copy.cjs');
+const copy = require('../packages/addons/tasks/client/ui/copy.cjs');
 let state = [], cursor = 0;
 const React = {
   createElement: (type, props, ...children) => ({ type, props: props || {}, children: children.flat(Infinity).filter(x => x != null) }),
@@ -17,7 +17,7 @@ const render = (C, props) => { cursor = 0; return C(props); };
 const all = node => node && typeof node === 'object' ? [node, ...node.children.flatMap(all)] : [];
 const find = (node, predicate) => { const hit = all(node).find(predicate); assert.ok(hit, 'expected UI control'); return hit; };
 const sandbox = { window: { __WB_HOST__: { registerAddon() {} } }, module: {}, console,
-  require: name => name === 'react' ? React : ['./icons.cjs', './edit-modal.cjs', './create-modal.cjs', './task-item.cjs', './tasks-view.cjs', './difficulty-field.cjs', './batch-modal.cjs', './timeline-view.cjs', './task-timeline-modal.cjs'].includes(name) ? require('../packages/addons/tasks/client/' + name.slice(2)) : {},
+  require: name => name === 'react' ? React : ['./ui/icons.cjs', './modals/edit-modal.cjs', './modals/create-modal.cjs', './item/task-item.cjs', './views/tasks-view.cjs', './item/difficulty-field.cjs', './modals/batch-modal.cjs', './views/timeline-view.cjs', './timeline/task-timeline-modal.cjs'].includes(name) ? require('../packages/addons/tasks/client/' + name.slice(2)) : {},
 };
 const source = readFileSync('packages/addons/tasks/client/client.src.cjs', 'utf8');
 runInNewContext(source.replace('  host.registerAddon({', '  window.test = { TaskItem, DoneModal, EditModal }; host.registerAddon({'), sandbox);

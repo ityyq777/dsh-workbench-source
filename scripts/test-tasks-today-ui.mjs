@@ -6,7 +6,7 @@ import {runInNewContext} from 'node:vm';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 const require = createRequire(import.meta.url);
-const Today = require('../packages/addons/tasks/client/today.cjs');
+const Today = require('../packages/addons/tasks/client/stats/today.cjs');
 const snapshot = {published: 8, done: 3, shutdown: 0, avgDifficultyDone: 3, avgSample: 2, date: '2000-01-02'};
 const markup = (today, lang) => renderToStaticMarkup(React.createElement(Today, {today, lang}));
 for (const lang of ['zh', 'en']) {
@@ -40,7 +40,7 @@ const fakeReact = {
 const config = {useConfig: () => ({ready: true, values: {'stats.sections': [], 'stats.showKpi': false}})};
 const charts = {makeCharts: () => new Proxy({colors: [], pct: String}, {get: (o,k) => k in o ? o[k] : String(k)})};
 const mod = {exports: {}};
-runInNewContext(readFileSync('packages/addons/tasks/client/stats.cjs', 'utf8'), {module: mod, require: name => name === 'react' ? fakeReact : name === './config.cjs' ? config : name === './charts.cjs' ? charts : name === './today.cjs' ? Today : name === './heatmap.cjs' ? 'Heatmap' : require('../packages/addons/tasks/client/recent-columns.cjs')});
+runInNewContext(readFileSync('packages/addons/tasks/client/views/stats.cjs', 'utf8'), {module: mod, require: name => name === 'react' ? fakeReact : name === './config.cjs' ? config : name === '../stats/charts.cjs' ? charts : name === '../stats/today.cjs' ? Today : name === '../stats/heatmap.cjs' ? 'Heatmap' : require('../packages/addons/tasks/client/item/recent-columns.cjs')});
 const calls = [];
 const api = {call: async (action, args) => {calls.push({action, args}); return {result: {today: snapshot, totals: {total: 0}}};}};
 const outer = mod.exports.TasksStatsView({api, lang: 'zh'});

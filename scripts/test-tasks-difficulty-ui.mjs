@@ -6,7 +6,7 @@ import { runInNewContext } from 'node:vm';
 import RealReact from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 const require = createRequire(import.meta.url), dir = '../packages/addons/tasks/client/';
-const copy = require(dir+'copy.cjs');
+const copy = require(dir+'ui/copy.cjs');
 let state=[], cursor=0, effects=[];
 const memo=(fn,deps)=>{const i=cursor++,old=state[i];if(!old||deps.some((v,j)=>v!==old.deps[j]))state[i]={value:fn(),deps};return state[i].value;};
 const React={
@@ -22,8 +22,8 @@ const reset=()=>{state=[];cursor=0;effects=[];};
 const render=(C,p)=>{cursor=0;return C(p);};
 const flush=async()=>{const jobs=effects;effects=[];jobs.forEach(fn=>fn());for(let i=0;i<12;i++)await Promise.resolve();};
 const tree=[{id:'table',name:'Table',type:'1'}];
-const Create=require(dir+'create-modal.cjs')({React,allTables:()=>tree,tagNames:()=>[],splitTags:()=>[],today:()=> '2026-11-09',addDays:()=> '2026-11-09',hostHasAddon:()=>false});
-const Edit=require(dir+'edit-modal.cjs')(React,()=>({}),()=> '');
+const Create=require(dir+'modals/create-modal.cjs')({React,allTables:()=>tree,tagNames:()=>[],splitTags:()=>[],today:()=> '2026-11-09',addDays:()=> '2026-11-09',hostHasAddon:()=>false});
+const Edit=require(dir+'modals/edit-modal.cjs')(React,()=>({}),()=> '');
 let cases=0;
 for(const lang of ['zh','en']) for(const source of ['0','1','2']) for(const status of ['0','2']) {
   reset();const calls=[];const props={tree,t:copy[lang],source,originTask:{id:'origin',timelineId:'line'},api:{call:async(action,args)=>{calls.push({action,args});return {ok:true};}},onCreated(){}};
@@ -46,7 +46,7 @@ for(const lang of ['zh','en']) for(const status of ['0','1','2','3']) for(const 
   reset();input().props.onChange({target:{value:''}});find(render(Edit,props),n=>n.props.className==='wbt-btn primary').props.onClick();await flush();assert.equal(patch.difficulty,0);cases++;
 }
 // Real React rendering verifies accessible numeric input and stars in both list/card layouts.
-const Item=require(dir+'task-item.cjs')({React:RealReact,statusInfo:()=>({}),stars:()=> '★★★☆☆',pClass:()=>'',today:()=>'',daysBetween:()=>0,cx:(...s)=>s.filter(Boolean).join(' '),Icon:()=>null,Countdown:()=>null,PathCrumbs:()=>null});
+const Item=require(dir+'item/task-item.cjs')({React:RealReact,statusInfo:()=>({}),stars:()=> '★★★☆☆',pClass:()=>'',today:()=>'',daysBetween:()=>0,cx:(...s)=>s.filter(Boolean).join(' '),Icon:()=>null,Countdown:()=>null,PathCrumbs:()=>null});
 for(const status of ['0','1','2','3'])for(const card of [true,false])for(const difficulty of [null,0,3]) {
   const html=renderToStaticMarkup(RealReact.createElement(Item,{task:{title:'Task',status,difficulty},card,t:copy.en}));
   assert.equal(html.includes('wbt-stars'),difficulty>0);cases++;
@@ -54,7 +54,7 @@ for(const status of ['0','1','2','3'])for(const card of [true,false])for(const d
 const config={useConfig:()=>({ready:true,values:{}})};
 const charts={makeCharts:()=>new Proxy({colors:[],pct:n=>String(n)},{get:(o,k)=>k in o?o[k]:String(k)})};
 const mod={exports:{}};
-runInNewContext(readFileSync('packages/addons/tasks/client/stats.cjs','utf8'),{module:mod,require:n=>n==='react'?React:n==='./config.cjs'?config:n==='./recent-columns.cjs'?require(dir+'recent-columns.cjs'):charts});
+runInNewContext(readFileSync('packages/addons/tasks/client/views/stats.cjs','utf8'),{module:mod,require:n=>n==='react'?React:n==='./config.cjs'?config:n==='../item/recent-columns.cjs'?require(dir+'item/recent-columns.cjs'):charts});
 for(const lang of ['zh','en']) {
   reset();let navigation;const props={lang,api:{call:async()=>({result:{totals:{total:5},breakdowns:{difficulty:[{key:'unset',count:2,hidden:true},{key:'3',count:3}]}}})},onNavigate:(...args)=>navigation=args};
   const outer=mod.exports.TasksStatsView(props), Body=outer.type;
@@ -65,7 +65,7 @@ for(const lang of ['zh','en']) {
   assert.equal(navigation[0],'tasks');assert.equal(navigation[1].difficultyMissing,true);cases++;
 }
 const noop=()=>null;
-const View=require(dir+'tasks-view.cjs')({React,configView:config,COPY:copy,TABS:[],allTables:()=>[],treeWalk:()=>[],treeFlat:()=>[],cx:(...s)=>s.join(' '),injectCss:noop,Icon:noop,PathCrumbs:noop,TagFilter:noop});
+const View=require(dir+'views/tasks-view.cjs')({React,configView:config,COPY:copy,TABS:[],allTables:()=>[],treeWalk:()=>[],treeFlat:()=>[],cx:(...s)=>s.join(' '),injectCss:noop,Icon:noop,PathCrumbs:noop,TagFilter:noop});
 reset();const calls=[];const props={lang:'en',viewParams:{difficultyMissing:true},api:{subscribe:()=>noop,call:async(action,args)=>{calls.push({action,args});return {ok:true,result:action==='tasks.list'?{records:[],total:0}:[]};}}};
 const outer=View(props), Body=outer.type;render(Body,outer.props);await flush();
 let list=calls.find(c=>c.action==='tasks.list');assert.equal(list.args.tab,8);assert.equal(list.args.difficultyMissing,true);assert.equal(list.args.filterRestarted,false);

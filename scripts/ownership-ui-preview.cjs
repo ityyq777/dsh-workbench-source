@@ -1,11 +1,11 @@
 // Real React components and memory-only API; no host or database writes.
 const React = require('react'), h = React.createElement;
 const {createRoot} = require('react-dom/client');
-const copy = require('../packages/addons/tasks/client/copy.cjs').zh;
-const ownership = require('../packages/addons/tasks/client/ownership.cjs');
-const Create = require('../packages/addons/tasks/client/create-modal.cjs')({React, tagNames:()=>[], splitTags:()=>[], today:()=> '2026-11-09', addDays:()=> '2026-11-09', hostHasAddon:()=>false});
-const Edit = require('../packages/addons/tasks/client/edit-modal.cjs')(React,()=>({zh:'已开启',cls:'active'}),()=> '');
-const Batch = require('../packages/addons/tasks/client/batch-modal.cjs')(React,(...x)=>x.filter(Boolean).join(' '),()=>null);
+const copy = require('../packages/addons/tasks/client/ui/copy.cjs').zh;
+const ownership = require('../packages/addons/tasks/client/modals/ownership.cjs');
+const Create = require('../packages/addons/tasks/client/modals/create-modal.cjs')({React, tagNames:()=>[], splitTags:()=>[], today:()=> '2026-11-09', addDays:()=> '2026-11-09', hostHasAddon:()=>false});
+const Edit = require('../packages/addons/tasks/client/modals/edit-modal.cjs')(React,()=>({zh:'已开启',cls:'active'}),()=> '');
+const Batch = require('../packages/addons/tasks/client/modals/batch-modal.cjs')(React,(...x)=>x.filter(Boolean).join(' '),()=>null);
 const long = '描述支持自动换行且不裁切。'.repeat(20);
 const tree = [{id:'root',type:'2',name:'任务根',children:[{id:'group',type:'0',name:'研发平台 Platform',children:[{id:'old',type:'1',name:'Storage',description:'存储插件职责'},{id:'nested',type:'0',name:'跨团队协作与客户端交互专项',children:[{id:'target',type:'1',name:'Tasks',description:long}]}]},{id:'empty',type:'0',name:'空组不可选'}]}];
 window.calls=[]; window.previewTree=tree;
@@ -20,5 +20,5 @@ function App(){const [mode,setMode]=React.useState(''),[receipt,setReceipt]=Reac
  mode==='edit'?h(Edit,{t:copy,tree,task,api,onClose:close,onSaved:saved}):null,
  mode==='batch'?h(Batch,{t:copy,tree,api,items:[task],mode:'migrate',onClose:close,onDone:()=>{setReceipt('批量迁移完成');close();}}):null);
 }
-const style=document.createElement('style');style.textContent=require('../packages/addons/tasks/client/styles.cjs')+'body{margin:0;font:14px system-ui}nav{padding:16px}';document.head.appendChild(style);
+const style=document.createElement('style');style.textContent=require('../packages/addons/tasks/client/ui/styles.cjs')+'body{margin:0;font:14px system-ui}nav{padding:16px}';document.head.appendChild(style);
 createRoot(document.getElementById('root')).render(h(App));

@@ -1,11 +1,11 @@
 // Browser-only integration fixture: every action mutates memory, never production data.
 const React = require('react'), {createRoot} = require('react-dom/client');
-const h = React.createElement, copy = require('../packages/addons/tasks/client/copy.cjs');
+const h = React.createElement, copy = require('../packages/addons/tasks/client/ui/copy.cjs');
 let addon;
 window.__WB_HOST__ = {registerAddon(value){addon=value},addons:[]};
 require('../packages/addons/tasks/client/client.src.cjs');
-const TaskTimeline = require('../packages/addons/tasks/client/task-timeline-modal.cjs')(React);
-const Create = require('../packages/addons/tasks/client/create-modal.cjs')({React, tagNames:()=>[], splitTags:()=>[], today:()=> '2026-11-09', addDays:()=> '2026-11-09', hostHasAddon:()=>false});
+const TaskTimeline = require('../packages/addons/tasks/client/timeline/task-timeline-modal.cjs')(React);
+const Create = require('../packages/addons/tasks/client/modals/create-modal.cjs')({React, tagNames:()=>[], splitTags:()=>[], today:()=> '2026-11-09', addDays:()=> '2026-11-09', hostHasAddon:()=>false});
 const tree=[{id:'table-1',type:'1',name:'Fixture table'}], calls=[];
 let lines=[],tasks=[],nextId=0,mode='timeline',language='zh',target='ordinary',dark=false;
 function reset(){

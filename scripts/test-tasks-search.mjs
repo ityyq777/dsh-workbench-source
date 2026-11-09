@@ -12,7 +12,7 @@ const React = {
   useState(value) { const i = cursor++; if (!(i in state)) state[i] = value; return [state[i], v => { state[i] = v; }]; },
   useRef: () => ({ current: null }), useEffect() {},
 };
-const Highlight = require('../packages/addons/tasks/client/highlight.cjs')(React);
+const Highlight = require('../packages/addons/tasks/client/ui/highlight.cjs')(React);
 const all = n => Array.isArray(n) ? n.flatMap(all) : n && typeof n === 'object' ? [n, ...n.children.flatMap(all)] : [];
 const text = n => Array.isArray(n) ? n.map(text).join('') : n && typeof n === 'object' ? text(n.children) : String(n ?? '');
 const find = (n, cls) => { const found = all(n).find(x => x.props.className === cls); assert.ok(found, cls); return found; };
@@ -35,12 +35,12 @@ for (const [upper, lower] of [['É', 'é'], ['Σ', 'σ']]) {
   assert.equal(text(mixed), upper + ' AbC ' + lower);
   assert.equal(all(mixed).filter(n => n.type === 'mark').length, 1); cases++;
 }
-const TaskItem = require('../packages/addons/tasks/client/task-item.cjs')({ React,
+const TaskItem = require('../packages/addons/tasks/client/item/task-item.cjs')({ React,
   statusInfo: () => ({ zh: '开启', en: 'Active', cls: 'active' }), stars: () => '', pClass: () => 'low',
   today: () => '2026-11-09', daysBetween: () => 1, cx: (...x) => x.filter(Boolean).join(' '),
   Icon() {}, Countdown() {}, PathCrumbs() {},
 });
-const copy = require('../packages/addons/tasks/client/copy.cjs');
+const copy = require('../packages/addons/tasks/client/ui/copy.cjs');
 for (const card of [false, true]) for (const [field, cls, patchType] of [
   ['title', 'wbt-title', 'TITLE'], ['description', 'wbt-desc wb-desc', 'DESCRIPTION'], ['review', 'wbt-review', 'REVIEW'],
 ]) {
@@ -58,13 +58,13 @@ for (const card of [false, true]) for (const [field, cls, patchType] of [
   assert.ok(!all(render()).some(n => n.type === 'textarea' || n.type === 'input'));
   assert.deepEqual(calls, []); cases++;
 }
-const css = readFileSync('packages/addons/tasks/client/styles.cjs', 'utf8');
+const css = readFileSync('packages/addons/tasks/client/ui/styles.cjs', 'utf8');
 const color = name => css.match(new RegExp(name + ':#([0-9a-f]{6})'))[1];
 const lum = hex => hex.match(/../g).map(x => parseInt(x, 16) / 255).map(x => x <= .04045 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4).reduce((s, x, i) => s + x * [.2126, .7152, .0722][i], 0);
 const contrast = (lum(color('--wbt-hit-bg')) + .05) / (lum(color('--wbt-hit-fg')) + .05);
 assert.ok(contrast >= 4.5);
 assert.ok(css.includes('.wbt-root .wbt-item.closed:has(mark.wbt-hit){opacity:1}'));
-const entry = readFileSync('packages/addons/tasks/client/tasks-view.cjs', 'utf8');
+const entry = readFileSync('packages/addons/tasks/client/views/tasks-view.cjs', 'utf8');
 assert.ok(entry.includes('keyword: titleKey.trim()'), 'highlight follows submitted search, not draft');
 const home = mkdtempSync(join(tmpdir(), 'wb-search-')); process.env.WB_HOME = home;
 const cleanups = []; let host;

@@ -16,13 +16,13 @@ function validatePriority(value, source, t) {
 }
 module.exports = function createModal(deps) {
   var React = deps.React, h = React.createElement;
-  var TimelinePicker = require("./timeline-controls.cjs")(React).Picker;
-  var difficultyField = require("./difficulty-field.cjs")(React);
+  var TimelinePicker = require("../timeline/timeline-controls.cjs")(React).Picker;
+  var difficultyField = require("../item/difficulty-field.cjs")(React);
   var ownership = require("./ownership.cjs"), fields = require("./ownership-fields.cjs")(React);
   var allTables = deps.allTables, tagNames = deps.tagNames, splitTags = deps.splitTags;
   var today = deps.today, addDays = deps.addDays, hostHasAddon = deps.hostHasAddon;
   function CreateModal(props) {
-    var t = props.t, tr = require("./timeline-copy.cjs")(props.t);
+    var t = props.t, tr = require("../timeline/timeline-copy.cjs")(props.t);
     var source = String(props.source || "0");
     var origin = props.originTask || null;
     var tables = ownership.tables(props.tree);

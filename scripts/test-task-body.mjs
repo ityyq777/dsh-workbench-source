@@ -35,13 +35,13 @@ assert.ok(performance.now() - start < 3000, 'adversarial parse bounded');
 let state = [], cursor = 0;
 const React = { createElement(type, props, ...children) { return { type, props: props || {}, children: children.flat(Infinity).filter(x => x != null) }; }, useState(v) { const i = cursor++; if (!(i in state)) state[i] = v; return [state[i], v => state[i] = v]; }, useRef() { return { current: null }; }, useEffect() {} };
 const expand = n => Array.isArray(n) ? n.map(expand) : n && typeof n === 'object' ? typeof n.type === 'function' ? expand(n.type(n.props)) : { ...n, children: n.children.map(expand) } : n;
-const Body = createBody(React, require('../packages/addons/tasks/client/highlight.cjs')(React));
+const Body = createBody(React, require('../packages/addons/tasks/client/ui/highlight.cjs')(React));
 const rendered = expand(Body({ text: '**needle** [needle](https://example.test/needle)\n\n' + fence + '\nneedle **literal**\n' + fence, keyword: 'needle' }));
 assert.equal(walk(rendered).filter(n => n.type === 'mark').length, 3);
 assert.equal(walk(rendered).find(n => n.type === 'a').props.href, 'https://example.test/needle');
 assert.ok(walk(rendered).every(n => !n.props.dangerouslySetInnerHTML));
-const copy = require('../packages/addons/tasks/client/copy.cjs');
-const Task = require('../packages/addons/tasks/client/task-item.cjs')({ React, statusInfo: () => ({ zh: '开启', en: 'Active', cls: 'active' }), stars: () => '', pClass: () => 'low', today: () => '2026-11-09', daysBetween: () => 1, cx: (...x) => x.filter(Boolean).join(' '), Icon() {}, Countdown() {}, PathCrumbs() {} });
+const copy = require('../packages/addons/tasks/client/ui/copy.cjs');
+const Task = require('../packages/addons/tasks/client/item/task-item.cjs')({ React, statusInfo: () => ({ zh: '开启', en: 'Active', cls: 'active' }), stars: () => '', pClass: () => 'low', today: () => '2026-11-09', daysBetween: () => 1, cx: (...x) => x.filter(Boolean).join(' '), Icon() {}, Countdown() {}, PathCrumbs() {} });
 for (const lang of ['zh', 'en']) for (const card of [true, false]) {
   state = []; const calls = [];
   const props = { task: { id: 'x', title: 'title', description: '**description**', review: '*reflection*', status: '0', tags: [] }, t: copy[lang], lang, card, update: (_task, patch) => calls.push(patch) };
@@ -93,7 +93,7 @@ const listeners = new Map(), values = new Map(); globalThis.CustomEvent = class 
 globalThis.window = { localStorage: { getItem: k => values.get(k), setItem: (k,v) => values.set(k,v) }, dispatchEvent: e => (listeners.get(e.type) || []).forEach(fn => fn(e)), addEventListener: (k,fn) => listeners.set(k,[...(listeners.get(k)||[]),fn]), removeEventListener: (k,fn) => listeners.set(k,(listeners.get(k)||[]).filter(f => f !== fn)) };
 const pref = require('../packages/addons/lib/body-mode.cjs'); assert.equal(pref.get(),'markdown'); pref.set('text'); assert.equal(pref.get(),'text');
 let cleanup, observed; pref.useMode({ useState: () => ['text', v => observed = v], useEffect: fn => cleanup = fn() }); pref.set('markdown'); assert.equal(observed,'markdown'); values.set('wb.bodyMode','text'); window.dispatchEvent({type:'storage'}); assert.equal(observed,'text'); cleanup();
-const Control = require('../packages/addons/tasks/client/body-mode.cjs')(React);
+const Control = require('../packages/addons/tasks/client/ui/body-mode.cjs')(React);
 let changed; const ctl = Control({ mode: 'markdown', label: '描述', t: copy.zh, Icon() {}, onChange: v => changed = v });
 assert.equal(ctl.props['aria-pressed'], true);
 assert.equal(ctl.props.title, '描述 · 当前：Markdown 渲染；切换为纯文本');
