@@ -47,9 +47,9 @@
 
 仅以下图片已通过 read_image 视觉核对，名称与实际内容相符：
 
-- [最终五列储物卡片，1280内容宽](verified-storage-cards-1280.jpg)
-- [标签共享数据页](verified-tags-data.jpg)
-- [站点共享数据页](verified-sites-data.jpg)
+- [最终五列储物卡片，1280内容宽](verified-storage-cards-1280.png)
+- [标签共享数据页](verified-tags-data.png)
+- [站点共享数据页](verified-sites-data.png)
 
 截图载体存在明显滞后：不同页面调用保存成功但返回此前帧，相同SHA；重复截图有时更新、有时仍旧帧。名为 cards768-confirmed 的原始图实际为1280五列，因此仅按实际内容归档为 verified-storage-cards-1280.jpg。768/360、图片抽屉、长备注抽屉等以DOM读回为证据，不提供未经核对的截图结论。本目录其他 storage-*/tags-data-*/tasks-data-*/sites-data-* PNG 是旧采集，不应交付或视作其文件名所称证据。
 
