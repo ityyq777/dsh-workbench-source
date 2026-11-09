@@ -38,6 +38,163 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// packages/addons/sites/client/tagfilter.cjs
+var require_tagfilter = __commonJS({
+  "packages/addons/sites/client/tagfilter.cjs"(exports2, module2) {
+    var React2 = require("react");
+    var h2 = React2.createElement;
+    var useState = React2.useState;
+    var useEffect = React2.useEffect;
+    var useCallback = React2.useCallback;
+    module2.exports = function TagFilter2(props) {
+      var api = props.api;
+      var text = props.text;
+      var Icon2 = props.Icon;
+      var ids = props.ids || [];
+      var onChange = props.onChange;
+      var visible = props.visible !== false;
+      var [open, setOpen] = useState(false);
+      var [query, setQuery] = useState("");
+      var [rows, setRows] = useState([]);
+      var [total, setTotal] = useState(0);
+      var [page, setPage] = useState(0);
+      var [hasMore, setHasMore] = useState(false);
+      var [loading, setLoading] = useState(false);
+      var [names, setNames] = useState({});
+      var load = useCallback(function(q, pageNumber, append) {
+        setLoading(true);
+        return api.call("siteTags.search", { text: q || "", pageNumber, pageSize: 20 }).then(function(r) {
+          setLoading(false);
+          if (!r || !r.ok) return;
+          var out = r.result || {};
+          var records = out.records || [];
+          setRows(function(prev) {
+            return append ? prev.concat(records) : records;
+          });
+          setTotal(out.total || 0);
+          setPage(out.current || pageNumber);
+          setHasMore(!!out.hasNext || (out.current || pageNumber) * 20 < (out.total || 0));
+          setNames(function(prev) {
+            var next = Object.assign({}, prev);
+            records.forEach(function(x) {
+              next[String(x.id)] = x.name;
+            });
+            return next;
+          });
+        }).catch(function() {
+          setLoading(false);
+        });
+      }, [api]);
+      useEffect(function() {
+        if (!open) return void 0;
+        var timer = setTimeout(function() {
+          load(query, 1, false);
+        }, query ? 200 : 0);
+        return function() {
+          clearTimeout(timer);
+        };
+      }, [open, query, load, props.reloadKey]);
+      useEffect(function() {
+        if (!open) return void 0;
+        function onKey(e) {
+          if (e.key === "Escape") setOpen(false);
+        }
+        document.addEventListener("keydown", onKey);
+        return function() {
+          document.removeEventListener("keydown", onKey);
+        };
+      }, [open]);
+      if (!visible) return null;
+      function toggle(id) {
+        var key = String(id);
+        var next = ids.slice();
+        var i = next.indexOf(key);
+        if (i >= 0) next.splice(i, 1);
+        else next.push(key);
+        onChange(next);
+      }
+      return h2(
+        "div",
+        { className: "wbs-tagfilter" },
+        h2("button", {
+          className: "wbs-btn" + (ids.length ? " on" : ""),
+          onClick: function(e) {
+            e.stopPropagation();
+            setOpen(!open);
+          }
+        }, h2(Icon2, { name: "tag", size: 13 }), text("tagFilter") + (ids.length ? " \xB7 " + ids.length : ""), h2(Icon2, { name: "chevron-down", size: 12 })),
+        open ? h2(
+          "div",
+          { className: "wbs-tagmenu", style: { width: 260 }, onClick: function(e) {
+            e.stopPropagation();
+          } },
+          h2(
+            "div",
+            { style: { padding: "2px 4px 6px" } },
+            h2("input", {
+              className: "wbs-input",
+              autoFocus: true,
+              value: query,
+              placeholder: text("tagSearchPlaceholder"),
+              onChange: function(e) {
+                setQuery(e.target.value);
+              }
+            })
+          ),
+          ids.length ? h2(
+            "div",
+            { style: { padding: "0 4px 4px", display: "flex", flexDirection: "column", gap: 3 } },
+            h2("div", { className: "wbs-tagmenu-head" }, h2("span", null, text("tagSelected") + " " + ids.length)),
+            ids.map(function(id) {
+              return h2(
+                "button",
+                { key: id, className: "wbs-mini", style: { justifyContent: "space-between" }, onClick: function() {
+                  toggle(id);
+                } },
+                h2("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, names[String(id)] || "#" + id),
+                h2("span", null, "\xD7")
+              );
+            })
+          ) : null,
+          h2(
+            "div",
+            { className: "wbs-tagmenu-head" },
+            h2("span", null, text("allTags") + (total ? " \xB7 " + total : "")),
+            h2("span", { className: "wbs-grow" }),
+            h2("button", { className: "wbs-mini", title: text("clear"), onClick: function() {
+              onChange([]);
+              setQuery("");
+            } }, h2(Icon2, { name: "x", size: 12 }), text("clear"))
+          ),
+          h2(
+            "div",
+            {
+              style: { maxHeight: 240, overflow: "auto" },
+              onScroll: function(e) {
+                var el = e.currentTarget;
+                if (!hasMore || loading) return;
+                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 24) load(query, (page || 1) + 1, true);
+              }
+            },
+            rows.length ? rows.map(function(t) {
+              var on = ids.indexOf(String(t.id)) >= 0;
+              return h2(
+                "label",
+                { key: t.id, className: "wbs-tagopt" },
+                h2("input", { type: "checkbox", checked: on, onChange: function() {
+                  toggle(t.id);
+                } }),
+                h2("span", null, t.name)
+              );
+            }) : h2("div", { className: "wbs-note", style: { padding: 6 } }, loading ? text("loadingMore") : query ? text("tagNoMatch") : text("allTags")),
+            rows.length ? h2("div", { className: "wbs-note", style: { padding: 6, textAlign: "center" } }, loading ? text("loadingMore") : hasMore ? "" : text("noMore")) : null
+          )
+        ) : null
+      );
+    };
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.3.1/node_modules/lucide-react/dist/esm/shared/src/utils/toKebabCase.mjs
 var toKebabCase;
 var init_toKebabCase = __esm({
@@ -3564,12 +3721,14 @@ var init_copy = __esm({
 // packages/addons/sites/client/client.src.cjs
 var React = require("react");
 var h = React.createElement;
+var TagFilter = require_tagfilter();
 (function() {
   var host = window.__WB_HOST__;
   if (!host) {
     console.error("[wb-addon-sites] \u7F3A\u5C11 window.__WB_HOST__\uFF0C\u65E0\u6CD5\u6CE8\u518C\u7AD9\u70B9\u89C6\u56FE");
-    return { name: "dsh-workbench-sites", inject: [], apply: function() {
+    module.exports = { name: "dsh-workbench-sites", inject: [], apply: function() {
     } };
+    return;
   }
   var React2 = require("react");
   var h2 = React2.createElement;
@@ -3678,6 +3837,11 @@ var h = React.createElement;
       requiredName: "\u8BF7\u586B\u5199\u7AD9\u70B9\u540D\u79F0",
       requiredDirs: "\u8BF7\u81F3\u5C11\u9009\u62E9\u4E00\u4E2A\u76EE\u5F55",
       tagFilter: "\u6807\u7B7E\u7B5B\u9009",
+      tagSearchPlaceholder: "\u641C\u7D22\u6807\u7B7E\u2026",
+      tagSelected: "\u5DF2\u9009",
+      tagNoMatch: "\u6CA1\u6709\u5339\u914D\u7684\u6807\u7B7E",
+      loadingMore: "\u52A0\u8F7D\u4E2D\u2026",
+      noMore: "\u6CA1\u6709\u66F4\u591A\u4E86",
       allTags: "\u5168\u90E8\u6807\u7B7E",
       clear: "\u6E05\u9664",
       refresh: "\u5237\u65B0",
@@ -3784,6 +3948,11 @@ var h = React.createElement;
       requiredName: "Site name is required",
       requiredDirs: "Choose at least one folder",
       tagFilter: "Filter by tag",
+      tagSearchPlaceholder: "Search tags\u2026",
+      tagSelected: "Selected",
+      tagNoMatch: "No matching tags",
+      loadingMore: "Loading\u2026",
+      noMore: "No more",
       allTags: "All tags",
       clear: "Clear",
       refresh: "Refresh",
@@ -4862,8 +5031,7 @@ var h = React.createElement;
     var [textQuery, setTextQuery] = useState("");
     var [searchInput, setSearchInput] = useState("");
     var [tagFilter, setTagFilter] = useState([]);
-    var [allTags, setAllTags] = useState([]);
-    var [tagMenu, setTagMenu] = useState(false);
+    var [tagReload, setTagReload] = useState(0);
     var [tagOn, setTagOn] = useState(false);
     var tagOnRef = useRef(false);
     var [sortCol, setSortCol] = useState(cfgSortCol);
@@ -4919,25 +5087,13 @@ var h = React.createElement;
         setKids(map);
       });
     }
-    function loadAllTags() {
-      if (!tagOnRef.current) return Promise.resolve([]);
-      return callApi(api, "siteTags.search", { pageSize: 100 }).then(function(r) {
-        setAllTags(r.records || []);
-      }).catch(function() {
-      });
-    }
     useEffect(function() {
       refreshTree();
       callApi(api, "sites.capabilities").then(function(r) {
         var on = !!(r && r.tags) && hostHasAddon("wb-addon-tags");
         tagOnRef.current = on;
         setTagOn(on);
-        if (!on) {
-          setTagFilter([]);
-          setTagMenu(false);
-        } else {
-          loadAllTags();
-        }
+        if (!on) setTagFilter([]);
       }).catch(function() {
         tagOnRef.current = false;
         setTagOn(false);
@@ -4949,7 +5105,9 @@ var h = React.createElement;
         if (msg.event === "sites-changed") setTick(function(x) {
           return x + 1;
         });
-        if (msg.event === "tags-changed") loadAllTags();
+        if (msg.event === "tags-changed") setTagReload(function(x) {
+          return x + 1;
+        });
         if (msg.event === "site-nodes-changed") {
           setTick(function(x) {
             return x + 1;
@@ -5005,26 +5163,6 @@ var h = React.createElement;
         alive = false;
       };
     }, [current.id, tick]);
-    useEffect(function() {
-      if (!tagMenu) return void 0;
-      function onDown(e) {
-        var el = e.target;
-        while (el && el !== document.body) {
-          if (el.classList && el.classList.contains("wbs-tagfilter")) return;
-          el = el.parentNode;
-        }
-        setTagMenu(false);
-      }
-      function onKey(e) {
-        if (e.key === "Escape") setTagMenu(false);
-      }
-      document.addEventListener("mousedown", onDown, true);
-      document.addEventListener("keydown", onKey, true);
-      return function() {
-        document.removeEventListener("mousedown", onDown, true);
-        document.removeEventListener("keydown", onKey, true);
-      };
-    }, [tagMenu]);
     function selectDir(id) {
       if (id === "0") {
         setCurrent({ id: "0", path: [] });
@@ -5348,50 +5486,20 @@ var h = React.createElement;
                 setPage(1);
               } }, h2(Icon2, { name: "x", size: 14 })) : null
             ),
-            tagsVisible ? h2(
-              "div",
-              { className: "wbs-tagfilter" },
-              h2("button", {
-                className: "wbs-btn" + (tagFilter.length ? " on" : ""),
-                onClick: function() {
-                  setTagMenu(!tagMenu);
-                }
-              }, h2(Icon2, { name: "tag", size: 13 }), text(lang, "tagFilter") + (tagFilter.length ? " \xB7 " + tagFilter.length : ""), h2(Icon2, { name: "chevron-down", size: 12 })),
-              tagMenu ? h2(
-                "div",
-                { className: "wbs-tagmenu" },
-                h2(
-                  "div",
-                  { className: "wbs-tagmenu-head" },
-                  h2("span", null, text(lang, "allTags")),
-                  h2("span", { className: "wbs-grow" }),
-                  h2("button", { className: "wbs-mini", title: text(lang, "clear"), onClick: function() {
-                    setTagFilter([]);
-                    setPage(1);
-                  } }, h2(Icon2, { name: "x", size: 12 }), text(lang, "clear"))
-                ),
-                allTags.length ? allTags.map(function(t) {
-                  var on = tagFilter.indexOf(t.id) >= 0;
-                  return h2(
-                    "label",
-                    { key: t.id, className: "wbs-tagopt" },
-                    h2("input", {
-                      type: "checkbox",
-                      checked: on,
-                      onChange: function() {
-                        setTagFilter(function(prev) {
-                          return on ? prev.filter(function(x) {
-                            return x !== t.id;
-                          }) : prev.concat([t.id]);
-                        });
-                        setPage(1);
-                      }
-                    }),
-                    h2("span", null, t.name)
-                  );
-                }) : h2("div", { className: "wbs-note", style: { padding: 6 } }, "\u6682\u65E0\u6807\u7B7E")
-              ) : null
-            ) : null,
+            h2(TagFilter, {
+              api,
+              text: function(k) {
+                return text(lang, k);
+              },
+              Icon: Icon2,
+              visible: tagsVisible,
+              ids: tagFilter,
+              reloadKey: tagReload,
+              onChange: function(next) {
+                setTagFilter(next);
+                setPage(1);
+              }
+            }),
             h2("div", { className: "wbs-grow" }),
             selectedIds.length ? h2("button", { className: "wbs-btn danger", onClick: deleteSelected }, h2(Icon2, { name: "trash", size: 13 }), text(lang, "deleteSelected") + " (" + selectedIds.length + ")") : null
           ),

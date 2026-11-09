@@ -1,12 +1,14 @@
 // dsh-workbench-sites 浏览器侧源码。构建：node scripts/build-addon-clients.mjs → lib/client.js
 var React = require("react");
 var h = React.createElement;
+var TagFilter = require("./tagfilter.cjs");
 
 (function () {
   var host = window.__WB_HOST__;
   if (!host) {
     console.error("[wb-addon-sites] 缺少 window.__WB_HOST__，无法注册站点视图");
-    return { name: "dsh-workbench-sites", inject: [], apply: function () {} };
+    module.exports = { name: "dsh-workbench-sites", inject: [], apply: function () {} };
+    return;
   }
   var React = require("react");
   var h = React.createElement;
@@ -120,6 +122,11 @@ var h = React.createElement;
       requiredName: "请填写站点名称",
       requiredDirs: "请至少选择一个目录",
       tagFilter: "标签筛选",
+      tagSearchPlaceholder: "搜索标签…",
+      tagSelected: "已选",
+      tagNoMatch: "没有匹配的标签",
+      loadingMore: "加载中…",
+      noMore: "没有更多了",
       allTags: "全部标签",
       clear: "清除",
       refresh: "刷新",
@@ -226,6 +233,11 @@ var h = React.createElement;
       requiredName: "Site name is required",
       requiredDirs: "Choose at least one folder",
       tagFilter: "Filter by tag",
+      tagSearchPlaceholder: "Search tags…",
+      tagSelected: "Selected",
+      tagNoMatch: "No matching tags",
+      loadingMore: "Loading…",
+      noMore: "No more",
       allTags: "All tags",
       clear: "Clear",
       refresh: "Refresh",
@@ -1125,8 +1137,7 @@ var h = React.createElement;
     var [textQuery, setTextQuery] = useState("");
     var [searchInput, setSearchInput] = useState("");
     var [tagFilter, setTagFilter] = useState([]);
-    var [allTags, setAllTags] = useState([]);
-    var [tagMenu, setTagMenu] = useState(false);
+    var [tagReload, setTagReload] = useState(0);
     var [tagOn, setTagOn] = useState(false);
     var tagOnRef = useRef(false);
     var [sortCol, setSortCol] = useState(cfgSortCol);
@@ -1181,25 +1192,13 @@ var h = React.createElement;
       });
     }
 
-    function loadAllTags() {
-      if (!tagOnRef.current) return Promise.resolve([]);
-      return callApi(api, "siteTags.search", { pageSize: 100 }).then(function (r) {
-        setAllTags(r.records || []);
-      }).catch(function () {});
-    }
-
     useEffect(function () {
       refreshTree();
       callApi(api, "sites.capabilities").then(function (r) {
         var on = !!(r && r.tags) && hostHasAddon("wb-addon-tags");
         tagOnRef.current = on;
         setTagOn(on);
-        if (!on) {
-          setTagFilter([]);
-          setTagMenu(false);
-        } else {
-          loadAllTags();
-        }
+        if (!on) setTagFilter([]);
       }).catch(function () {
         tagOnRef.current = false;
         setTagOn(false);
@@ -1210,7 +1209,7 @@ var h = React.createElement;
       var off = api.subscribe(function (msg) {
         if (!msg) return;
         if (msg.event === "sites-changed") setTick(function (x) { return x + 1; });
-        if (msg.event === "tags-changed") loadAllTags();
+        if (msg.event === "tags-changed") setTagReload(function (x) { return x + 1; });
         if (msg.event === "site-nodes-changed") {
           setTick(function (x) { return x + 1; });
           refreshTree();
@@ -1259,26 +1258,6 @@ var h = React.createElement;
       }).catch(function () {});
       return function () { alive = false; };
     }, [current.id, tick]);
-
-    // 标签筛选下拉：点空白处、或点开其它弹窗时自动收起，避免浮层留在大弹窗上面。
-    useEffect(function () {
-      if (!tagMenu) return undefined;
-      function onDown(e) {
-        var el = e.target;
-        while (el && el !== document.body) {
-          if (el.classList && el.classList.contains("wbs-tagfilter")) return;
-          el = el.parentNode;
-        }
-        setTagMenu(false);
-      }
-      function onKey(e) { if (e.key === "Escape") setTagMenu(false); }
-      document.addEventListener("mousedown", onDown, true);
-      document.addEventListener("keydown", onKey, true);
-      return function () {
-        document.removeEventListener("mousedown", onDown, true);
-        document.removeEventListener("keydown", onKey, true);
-      };
-    }, [tagMenu]);
 
     function selectDir(id) {
       if (id === "0") {
@@ -1506,35 +1485,11 @@ var h = React.createElement;
               h("button", { title: "搜索", onClick: function () { setTextQuery(searchInput.trim()); setPage(1); } }, h(Icon, { name: "search", size: 14 })),
               searchInput ? h("button", { title: "清空", onClick: function () { setSearchInput(""); setTextQuery(""); setPage(1); } }, h(Icon, { name: "x", size: 14 })) : null,
             ),
-            tagsVisible ? h("div", { className: "wbs-tagfilter" },
-              h("button", {
-                className: "wbs-btn" + (tagFilter.length ? " on" : ""),
-                onClick: function () { setTagMenu(!tagMenu); },
-              }, h(Icon, { name: "tag", size: 13 }), text(lang, "tagFilter") + (tagFilter.length ? " · " + tagFilter.length : ""), h(Icon, { name: "chevron-down", size: 12 })),
-              tagMenu ? h("div", { className: "wbs-tagmenu" },
-                h("div", { className: "wbs-tagmenu-head" },
-                  h("span", null, text(lang, "allTags")),
-                  h("span", { className: "wbs-grow" }),
-                  h("button", { className: "wbs-mini", title: text(lang, "clear"), onClick: function () { setTagFilter([]); setPage(1); } }, h(Icon, { name: "x", size: 12 }), text(lang, "clear")),
-                ),
-                allTags.length ? allTags.map(function (t) {
-                  var on = tagFilter.indexOf(t.id) >= 0;
-                  return h("label", { key: t.id, className: "wbs-tagopt" },
-                    h("input", {
-                      type: "checkbox",
-                      checked: on,
-                      onChange: function () {
-                        setTagFilter(function (prev) {
-                          return on ? prev.filter(function (x) { return x !== t.id; }) : prev.concat([t.id]);
-                        });
-                        setPage(1);
-                      },
-                    }),
-                    h("span", null, t.name),
-                  );
-                }) : h("div", { className: "wbs-note", style: { padding: 6 } }, "暂无标签"),
-              ) : null,
-            ) : null,
+            h(TagFilter, {
+              api: api, text: function (k) { return text(lang, k); }, Icon: Icon, visible: tagsVisible,
+              ids: tagFilter, reloadKey: tagReload,
+              onChange: function (next) { setTagFilter(next); setPage(1); },
+            }),
             h("div", { className: "wbs-grow" }),
             selectedIds.length ? h("button", { className: "wbs-btn danger", onClick: deleteSelected }, h(Icon, { name: "trash", size: 13 }), text(lang, "deleteSelected") + " (" + selectedIds.length + ")") : null,
           ),
