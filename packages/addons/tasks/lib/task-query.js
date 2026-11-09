@@ -1,6 +1,7 @@
 /** 列表查询。与 tasks.js 的循环依赖只在函数调用期读取，顶层不求值。 */
 import { idOf, addDays, todayStr, nodeMap, taskOut } from "./db.js";
 import { asCode, STATUS_NAMES, STATUSES, requireTable, dateArg, withNotices, tagMissingNotices } from "./tasks.js";
+import { publishFilter } from "./task-publish-filter.js";
 import { activityFilter } from "./activity-calendar.js";
 import { clampPriority } from "./task-priority.js";
 import { LEGACY_TYPE_TAGS, tagsAvailable, normalizeTagIds, normalizeTagNames, tagIdsByNames, attachTags, migrateLegacyTypes } from "./tagging.js";
@@ -23,6 +24,7 @@ function tabCode(value) {
 
 export function listTasks(db, args, api) {
   const activity = activityFilter(args.activityDate, args.activityType);
+  const { publishFrom, publishTo, notices: publishNotices } = publishFilter(args.publishFrom, args.publishTo);
   // 第一次打开列表时把旧「类型」补成标签；幂等，失败不阻断列表。
   try {
     migrateLegacyTypes(db, api, "migrate");
@@ -35,7 +37,9 @@ export function listTasks(db, args, api) {
   const tab = tabAll ? 8 : tabCode(rawTab);
   const where = ["t.deleted_at IS NULL"];
   const params = [];
-  const listNotices = [];
+  const listNotices = publishNotices.slice();
+  if (publishFrom) { where.push("substr(t.publish_date,1,10)>=?"); params.push(publishFrom); }
+  if (publishTo) { where.push("substr(t.publish_date,1,10)<=?"); params.push(publishTo); }
   if (activity) { where.push(activity.sql); params.push(...activity.params); }
 
   const titleKey = args.titleKey === undefined || args.titleKey === null ? "" : String(args.titleKey).trim();
@@ -57,10 +61,11 @@ export function listTasks(db, args, api) {
     const prefix = String(group.path || "") + "%";
     const tables = db.prepare("SELECT id FROM task_node WHERE type='1' AND deleted_at IS NULL AND path LIKE ?").all(prefix);
     if (!tables.length) {
-      return withNotices({ records: [], current: 1, size: null, total: 0, returned: 0, truncated: false, pageable: false, pageSize: null }, listNotices);
+      where.push("1=0");
+    } else {
+      where.push("t.table_id IN (" + tables.map(function () { return "?"; }).join(",") + ")");
+      for (const t of tables) params.push(String(t.id));
     }
-    where.push("t.table_id IN (" + tables.map(function () { return "?"; }).join(",") + ")");
-    for (const t of tables) params.push(String(t.id));
   }
 
   const tableKey = args.tableKey === undefined || args.tableKey === null ? "" : String(args.tableKey).trim();
@@ -124,7 +129,7 @@ export function listTasks(db, args, api) {
     params.push(targetTo);
   }
   if (filterTagIds.length && !tagAvailable) {
-    if (!listNotices.length) listNotices.push(tagMissingNotices({ tags: [] }, false)[0]);
+    if (!listNotices.some(n => n.code === "tag_domain_missing")) listNotices.push(tagMissingNotices({ tags: [] }, false)[0]);
     where.push("1=0");
   } else if (filterTagIds.length) {
     where.push("EXISTS (SELECT 1 FROM tag_mapping tm WHERE tm.item_type='task' AND tm.item_id=t.id AND tm.deleted_at IS NULL AND tm.tag_id IN (" + filterTagIds.map(function () { return "?"; }).join(",") + "))");
@@ -248,6 +253,8 @@ export function listTasks(db, args, api) {
   if (difficultyMissing) filter.difficultyMissing = true;
   if (priorityMin !== null) filter.priorityMin = priorityMin;
   if (priorityMax !== null) filter.priorityMax = priorityMax;
+  if (publishFrom) filter.publishFrom = publishFrom;
+  if (publishTo) filter.publishTo = publishTo;
   if (targetFrom) filter.targetFrom = targetFrom;
   if (targetTo) filter.targetTo = targetTo;
   if (args.sort) filter.sort = String(args.sort) + (args.order ? " " + String(args.order) : "");

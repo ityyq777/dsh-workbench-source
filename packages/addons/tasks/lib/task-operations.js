@@ -307,6 +307,7 @@ export function exportTasks(db, args, api) {
   const format = String(args.format || "json").toLowerCase();
   if (["json", "markdown", "md", "csv"].indexOf(format) < 0) throw new Error("format 只支持 json / markdown / csv");
   let records;
+  let feedback = {};
   if (Array.isArray(args.ids) && args.ids.length) {
     const idStmt = db.prepare("SELECT * FROM task WHERE deleted_at IS NULL AND id IN (" + args.ids.map(function () { return "?"; }).join(",") + ")");
     const rows = idStmt.all.apply(idStmt, args.ids.map(String));
@@ -315,9 +316,10 @@ export function exportTasks(db, args, api) {
   } else {
     const listed = listTasks(db, Object.assign({}, args, { pageNumber: undefined, pageSize: undefined }), api);
     records = listed.records;
+    feedback = withNotices({ filter: listed.filter }, listed.notices);
   }
   if (format === "json") {
-    return { format: "json", count: records.length, content: JSON.stringify({ exportedAt: now(), count: records.length, tasks: records }, null, 2) };
+    return { ...feedback, format: "json", count: records.length, content: JSON.stringify({ exportedAt: now(), count: records.length, tasks: records }, null, 2) };
   }
   if (format === "csv") {
     const cols = ["id", "title", "status", "priority", "difficulty", "tableId", "publishDate", "targetDate", "doneDate", "shutdownDate", "createdAt", "updatedAt", "tags"];
@@ -328,13 +330,13 @@ export function exportTasks(db, args, api) {
         return csvCell(t[c]);
       }).join(","));
     }
-    return { format: "csv", count: records.length, content: lines.join("\n") };
+    return { ...feedback, format: "csv", count: records.length, content: lines.join("\n") };
   }
   const lines = ["| id | 标题 | 状态 | P | 目标日期 | 标签 |", "| --- | --- | --- | --- | --- | --- |"];
   for (const t of records) {
     lines.push("| " + t.id + " | " + String(t.title).replace(/\|/g, "\\|") + " | " + t.status + " | " + t.priority + " | " + (t.targetDate || "") + " | " + (t.tags || []).map(function (g) { return g.name; }).join(", ") + " |");
   }
-  return { format: "markdown", count: records.length, content: lines.join("\n") };
+  return { ...feedback, format: "markdown", count: records.length, content: lines.join("\n") };
 }
 
 export function reorderTasks(db, args, origin, api) {

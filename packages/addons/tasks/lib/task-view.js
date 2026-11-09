@@ -77,6 +77,8 @@ export function renderList(result) {
     if (f.difficultyMissing) parts.push("难度未设置（NULL/0）");
     if (f.priorityMin !== undefined) parts.push("P>=" + f.priorityMin);
     if (f.priorityMax !== undefined) parts.push("P<=" + f.priorityMax);
+    if (f.publishFrom) parts.push("发布日>=" + f.publishFrom);
+    if (f.publishTo) parts.push("发布日<=" + f.publishTo);
     if (f.targetFrom) parts.push("target>=" + f.targetFrom);
     if (f.targetTo) parts.push("target<=" + f.targetTo);
     if (f.sort) parts.push("排序=" + f.sort + (SORT_NOTES[f.sort] ? "（" + SORT_NOTES[f.sort] + "）" : ""));

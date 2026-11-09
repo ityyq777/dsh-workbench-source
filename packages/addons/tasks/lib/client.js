@@ -551,11 +551,15 @@ var require_charts = __commonJS({
           }))
         );
       }
-      function RangeSwitch(props) {
+      function DateRangePicker(props) {
         var custom = props.custom || null;
         var from = custom && custom.from ? custom.from : "";
         var to = custom && custom.to ? custom.to : "";
-        function setDate(key, value) {
+        function setDate(key, value, input) {
+          if (input && input.validity && input.validity.badInput) {
+            if (props.onInvalidInput) props.onInvalidInput();
+            return;
+          }
           if (typeof props.onCustomChange !== "function") return;
           var next = { from, to };
           next[key] = value;
@@ -564,7 +568,7 @@ var require_charts = __commonJS({
         return h(
           "div",
           { className: prefix + "-stoolbar" },
-          h("div", { className: prefix + "-seg", role: "group", "aria-label": props.aria || "\u65F6\u95F4\u8303\u56F4" }, (props.options || []).map(function(o) {
+          (props.options || []).length ? h("div", { className: prefix + "-seg", role: "group", "aria-label": props.aria || "\u65F6\u95F4\u8303\u56F4" }, (props.options || []).map(function(o) {
             return h("button", {
               key: o.key,
               type: "button",
@@ -574,7 +578,7 @@ var require_charts = __commonJS({
                 props.onChange(o.key);
               }
             }, o.label);
-          })),
+          })) : null,
           h(
             "div",
             { className: prefix + "-range", role: "group", "aria-label": props.customAria || "\u81EA\u5B9A\u4E49\u65E5\u671F\u8303\u56F4" },
@@ -582,11 +586,11 @@ var require_charts = __commonJS({
               type: "date",
               className: prefix + "-date",
               value: from,
-              max: props.today || void 0,
+              max: to && (!props.today || to < props.today) ? to : props.today || void 0,
               "aria-label": props.fromLabel || "\u8D77\u59CB\u65E5\u671F",
               title: props.fromLabel || "\u8D77\u59CB\u65E5\u671F",
               onChange: function(e) {
-                setDate("from", e.target.value);
+                setDate("from", e.target.value, e.target);
               }
             }),
             h("span", { className: prefix + "-dash", "aria-hidden": "true" }, "\u2013"),
@@ -599,7 +603,7 @@ var require_charts = __commonJS({
               "aria-label": props.toLabel || "\u7EC8\u6B62\u65E5\u671F",
               title: props.toLabel || "\u7EC8\u6B62\u65E5\u671F",
               onChange: function(e) {
-                setDate("to", e.target.value);
+                setDate("to", e.target.value, e.target);
               }
             }),
             from || to ? h("button", {
@@ -612,7 +616,14 @@ var require_charts = __commonJS({
               }
             }, "\xD7") : null
           ),
-          props.customHint ? h("span", { className: prefix + "-hint", role: "status" }, props.customHint) : null,
+          props.customHint ? h("span", { className: prefix + "-hint", role: "status" }, props.customHint) : null
+        );
+      }
+      function RangeSwitch(props) {
+        return h(
+          "div",
+          { className: prefix + "-stoolbar" },
+          h(DateRangePicker, props),
           h("button", { type: "button", className: prefix + "-ghost", disabled: !!props.loading, onClick: props.onRefresh }, props.refreshLabel || "\u5237\u65B0"),
           h("span", { className: prefix + "-muted" }, props.generatedAt ? (props.timeLabel || "\u622A\u81F3") + " " + timeText(props.generatedAt) : ""),
           props.right ? h("span", { style: { marginLeft: "auto" } }, props.right) : null
@@ -668,6 +679,7 @@ var require_charts = __commonJS({
         Histogram,
         DataTable,
         RangeSwitch,
+        DateRangePicker,
         Empty,
         Skeleton,
         ErrorBar,
@@ -4621,6 +4633,7 @@ var require_styles = __commonJS({
   "packages/addons/tasks/client/styles.cjs"(exports2, module2) {
     "use strict";
     module2.exports = [
+      ".wbt-date-popover{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:280px;max-width:calc(100vw - 40px);padding:12px;border-radius:10px;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);background:var(--wbt-bg);box-shadow:0 8px 24px color-mix(in srgb,currentColor 12%,transparent)}.wbt-date-clear{border:0;background:transparent;color:inherit;padding:5px;cursor:pointer;border-radius:4px}.wbt-date-clear:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:1px}",
       ".wbt-body-section{margin-top:5px}.wbt-body-section .wbt-desc,.wbt-body-section .wbt-review{margin-top:0}",
       ".wbt-root{--wbt-hit-bg:#ffe4e6;--wbt-hit-fg:#881337}.wbt-root mark.wbt-hit{background:var(--wbt-hit-bg);color:var(--wbt-hit-fg);border-radius:2px;padding:0;font:inherit;box-decoration-break:clone;-webkit-box-decoration-break:clone}",
       ".wbt-root .wbt-item.closed:has(mark.wbt-hit){opacity:1}",
@@ -5930,12 +5943,111 @@ var require_activity_filter = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/date-filter.cjs
+var require_date_filter = __commonJS({
+  "packages/addons/tasks/client/date-filter.cjs"(exports2, module2) {
+    var React = require("react");
+    var h = React.createElement;
+    var charts = require_charts().makeCharts("wbt-date");
+    function validDate(value) {
+      if (!value) return true;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+      var d = /* @__PURE__ */ new Date(value + "T00:00:00Z");
+      return isFinite(d.getTime()) && d.toISOString().slice(0, 10) === value && value.slice(0, 4) !== "0000";
+    }
+    function normalize(value) {
+      var from = value.from || "", to = value.to || "";
+      if (!validDate(from) || !validDate(to)) return null;
+      return from && to && from > to ? { from: to, to: from, swapped: true } : { from, to, swapped: false };
+    }
+    function label(value, en) {
+      var from = value.from.slice(5), to = value.to.slice(5);
+      return from && to ? from + "\u2013" + to : from ? from + (en ? " onward" : "\u8D77") : to ? (en ? "Until " : "\u81F3") + to : en ? "Time range" : "\u65F6\u95F4\u8303\u56F4";
+    }
+    function DateFilter(props) {
+      var en = props.lang === "en", value = props.value;
+      var openS = React.useState(false), open = openS[0], setOpen = openS[1];
+      var hintS = React.useState(""), hint = hintS[0], setHint = hintS[1];
+      var root = React.useRef(null), trigger = React.useRef(null), id = React.useId();
+      React.useEffect(function() {
+        if (!open) return;
+        function outside(e) {
+          if (root.current && !root.current.contains(e.target)) setOpen(false);
+        }
+        function key(e) {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            setOpen(false);
+            if (trigger.current) trigger.current.focus();
+          }
+        }
+        document.addEventListener("pointerdown", outside);
+        document.addEventListener("keydown", key);
+        return function() {
+          document.removeEventListener("pointerdown", outside);
+          document.removeEventListener("keydown", key);
+        };
+      }, [open]);
+      React.useEffect(function() {
+        setHint("");
+      }, [props.lang]);
+      function clear() {
+        setHint("");
+        props.onChange({ from: "", to: "" });
+      }
+      function change(next) {
+        var normalized = normalize(next);
+        if (!normalized) {
+          setHint(en ? "Enter a valid date" : "\u8BF7\u8F93\u5165\u6709\u6548\u65E5\u671F");
+          return;
+        }
+        setHint(normalized.swapped ? en ? "Start was after end; dates swapped" : "\u8D77\u59CB\u665A\u4E8E\u7EC8\u6B62\uFF0C\u5DF2\u4EA4\u6362" : "");
+        props.onChange({ from: normalized.from, to: normalized.to });
+      }
+      return h(
+        "div",
+        { ref: root, className: "wbt-publication-filter", style: { position: "relative", display: "inline-flex", alignItems: "center" } },
+        h("button", {
+          type: "button",
+          ref: trigger,
+          className: "wbt-btn " + (value.from || value.to ? "primary" : "ghost"),
+          "aria-expanded": open,
+          "aria-controls": id,
+          title: en ? "Publication time" : "\u53D1\u5E03\u65F6\u95F4",
+          onClick: function() {
+            setOpen(!open);
+          }
+        }, label(value, en)),
+        value.from || value.to ? h("button", { type: "button", className: "wbt-date-clear", "aria-label": en ? "Clear time range" : "\u6E05\u9664\u65F6\u95F4\u8303\u56F4", onClick: clear }, "\xD7") : null,
+        open ? h(
+          "div",
+          { id, role: "group", "aria-label": en ? "Publication time" : "\u53D1\u5E03\u65F6\u95F4", className: "wbt-date-popover" },
+          h(charts.DateRangePicker, {
+            custom: value,
+            onCustomChange: change,
+            onCustomClear: clear,
+            onInvalidInput: function() {
+              setHint(en ? "Enter a valid date" : "\u8BF7\u8F93\u5165\u6709\u6548\u65E5\u671F");
+            },
+            fromLabel: en ? "Publication start date" : "\u53D1\u5E03\u8D77\u59CB\u65E5\u671F",
+            toLabel: en ? "Publication end date" : "\u53D1\u5E03\u7EC8\u6B62\u65E5\u671F",
+            customAria: en ? "Publication date range" : "\u53D1\u5E03\u65F6\u95F4\u8303\u56F4",
+            clearLabel: en ? "Clear time range" : "\u6E05\u9664\u65F6\u95F4\u8303\u56F4",
+            customHint: hint
+          })
+        ) : null
+      );
+    }
+    module2.exports = { DateFilter, normalize, label, validDate };
+  }
+});
+
 // packages/addons/tasks/client/tasks-view.cjs
 var require_tasks_view = __commonJS({
   "packages/addons/tasks/client/tasks-view.cjs"(exports2, module2) {
     module2.exports = function createTasksView(deps) {
       var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, TABS = deps.TABS, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon2 = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
-      var h = React.createElement, activityFilter = require_activity_filter();
+      var h = React.createElement, activityFilter = require_activity_filter(), DateFilter = require_date_filter().DateFilter;
       function TasksView(props) {
         var lang = props.lang === "en" ? "en" : "zh";
         var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -5998,6 +6110,7 @@ var require_tasks_view = __commonJS({
         var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
         var filterTagIdsS = React.useState([]);
         var filterTagIds = filterTagIdsS[0], setFilterTagIds = filterTagIdsS[1];
+        var datesS = React.useState({ from: "", to: "" }), dates = datesS[0], setDates = datesS[1];
         var pageS = React.useState(1);
         var pageNumber = pageS[0], setPageNumber = pageS[1];
         var sizeS = React.useState(cfgSize);
@@ -6053,6 +6166,7 @@ var require_tasks_view = __commonJS({
           setSearchDraft("");
           setTitleKey("");
           setFilterTagIds([]);
+          setDates({ from: "", to: "" });
           setPageNumber(1);
           setSelectedIds(/* @__PURE__ */ new Set());
           setSelectionMode(false);
@@ -6129,6 +6243,8 @@ var require_tasks_view = __commonJS({
           return api.call("tasks.list", Object.assign({
             tab,
             titleKey,
+            publishFrom: dates.from || void 0,
+            publishTo: dates.to || void 0,
             tableId: target.tableId,
             groupId: target.tableId ? null : target.groupId,
             pageNumber,
@@ -6149,7 +6265,7 @@ var require_tasks_view = __commonJS({
             setLoading(false);
             setError(String(e && e.message || e));
           });
-        }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, difficultyMissing, cfgSort, activity]);
+        }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, difficultyMissing, cfgSort, activity, dates.from, dates.to]);
         refreshRef.current = { tree: refreshTree, list: refreshList, path: refreshPath, tags: refreshTagNav };
         React.useEffect(function() {
           injectCss();
@@ -6520,6 +6636,10 @@ var require_tasks_view = __commonJS({
                 clearSelection();
               } else setSelectionMode(true);
             } }, h(Icon2, { name: "select", size: 13 }), selectionMode ? t.cancelSelect : t.select),
+            h(DateFilter, { value: dates, lang: props.lang, onChange: function(next) {
+              setDates(next);
+              setPageNumber(1);
+            } }),
             h(TagFilter, {
               api,
               t,
@@ -7340,7 +7460,7 @@ var require_tasks_view = __commonJS({
   var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, TABS, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.1.6",
+    version: "3.1.7",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

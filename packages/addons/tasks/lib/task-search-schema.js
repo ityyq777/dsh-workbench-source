@@ -1,5 +1,7 @@
 /** Shared list/export filtering contract; paging remains list-only. */
 export const TASK_FILTER_SCHEMA = {
+  publishFrom: { type: ["string", "null"], description: "发布日起始（含），严格真实 YYYY-MM-DD（0001..9999 年）；可独立传，空串/null 等同未传。按 substr(publish_date,1,10) 比较，与 target/activity 及其他筛选 AND。起始晚于终止时交换，filter 回显归一后值，notices 返回 {code:'publish_range_swapped',field:'publishFrom/publishTo',message:'发布日期起始晚于终止，已交换',publishFrom,publishTo}。非 ids 导出同口径并透传 filter/notices。" },
+  publishTo: { type: ["string", "null"], description: "发布日终止（含），严格真实 YYYY-MM-DD（0001..9999 年）；可独立传，空串/null 等同未传。与 publishFrom 构成闭区间，反序自动交换；filter/notices 契约同 publishFrom。" },
   activityDate: { type: "string", pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", description: "活动日（合法 YYYY-MM-DD，1900..9999 年），与 tasks.activityCalendar 同口径；选定单一事件类型，与现有筛选 AND。全状态日点击请传 tab=all、filterRestarted=false。非 ids 导出与列表共用。" },
   activityType: { type: "string", enum: ["publish", "done", "shutdown"], description: "需同时传 activityDate，缺省 done；publish=publish_date，done=status2 且 done_date，shutdown=status1 且 shutdown_date。" },
   tab: { type: ["number", "string"], description: "0 紧急 / 1..4 旧类型页签（按同名标签筛）/ 5 已关闭 / 6 进行中 / 7 已完成 / 8 总览；缺省或传 all 等于 8（全量，不再只看紧急）" },

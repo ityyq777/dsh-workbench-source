@@ -1,7 +1,7 @@
 // 任务列表与树导航视图；依赖由入口注入，无循环依赖。
 module.exports = function createTasksView(deps) {
   var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, TABS = deps.TABS, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
-  var h = React.createElement, activityFilter = require("./activity-filter.cjs");
+  var h = React.createElement, activityFilter = require("./activity-filter.cjs"), DateFilter = require("./date-filter.cjs").DateFilter;
   function TasksView(props) {
     var lang = props.lang === "en" ? "en" : "zh";
     var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -67,6 +67,7 @@ module.exports = function createTasksView(deps) {
     var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
     var filterTagIdsS = React.useState([]);
     var filterTagIds = filterTagIdsS[0], setFilterTagIds = filterTagIdsS[1];
+    var datesS = React.useState({from:"",to:""}), dates = datesS[0], setDates = datesS[1];
     var pageS = React.useState(1);
     var pageNumber = pageS[0], setPageNumber = pageS[1];
     var sizeS = React.useState(cfgSize);
@@ -116,7 +117,7 @@ module.exports = function createTasksView(deps) {
       if (!activityNavigation) return;
       setActivity(activityNavigation); setTarget({ groupId: "1", tableId: null });
       setTab(8); setFilterRestarted(false); setDifficultyMissing(false);
-      setSearchDraft(""); setTitleKey(""); setFilterTagIds([]); setPageNumber(1);
+      setSearchDraft(""); setTitleKey(""); setFilterTagIds([]); setDates({from:"",to:""}); setPageNumber(1);
       setSelectedIds(new Set()); setSelectionMode(false);
     }, [props.viewParams && props.viewParams.activityDate, props.viewParams && props.viewParams.activityType]);
 
@@ -166,7 +167,7 @@ module.exports = function createTasksView(deps) {
     var refreshList = React.useCallback(function () {
       setLoading(true);
       return api.call("tasks.list", Object.assign({
-        tab: tab, titleKey: titleKey,
+        tab: tab, titleKey: titleKey, publishFrom: dates.from || undefined, publishTo: dates.to || undefined,
         tableId: target.tableId, groupId: target.tableId ? null : target.groupId,
         pageNumber: pageNumber, pageSize: pageSize,
         filterRestarted: filterRestarted, tagIds: filterTagIds, difficultyMissing: difficultyMissing,
@@ -180,7 +181,7 @@ module.exports = function createTasksView(deps) {
           setError((r && r.error) || "list load failed");
         }
       }).catch(function (e) { setLoading(false); setError(String(e && e.message || e)); });
-    }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, difficultyMissing, cfgSort, activity]);
+    }, [api, tab, titleKey, target.tableId, target.groupId, pageNumber, pageSize, filterRestarted, filterTagIds, difficultyMissing, cfgSort, activity, dates.from, dates.to]);
 
     refreshRef.current = { tree: refreshTree, list: refreshList, path: refreshPath, tags: refreshTagNav };
 
@@ -466,6 +467,7 @@ module.exports = function createTasksView(deps) {
           if (selectionMode) { setSelectionMode(false); clearSelection(); }
           else setSelectionMode(true);
         } }, h(Icon, { name: "select", size: 13 }), selectionMode ? t.cancelSelect : t.select),
+        h(DateFilter, {value:dates,lang:props.lang,onChange:function(next){setDates(next);setPageNumber(1);}}),
         h(TagFilter, { api: api, t: t, Icon: Icon, ids: filterTagIds, reloadKey: tagReload,
           onChange: function (next) { setFilterTagIds(next); setPageNumber(1); } }),
         h("button", { className: "wbt-btn primary", onClick: function () {

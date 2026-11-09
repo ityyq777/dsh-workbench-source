@@ -298,38 +298,41 @@ function makeCharts(prefix) {
     );
   }
 
-  // 快捷范围 + 手选起止日期：两者互斥，选中预设会清掉自定义区间。
-  function RangeSwitch(props) {
+  function DateRangePicker(props) {
     var custom = props.custom || null;
     var from = custom && custom.from ? custom.from : "";
     var to = custom && custom.to ? custom.to : "";
-    function setDate(key, value) {
+    function setDate(key, value, input) {
+      if (input && input.validity && input.validity.badInput) {
+        if (props.onInvalidInput) props.onInvalidInput();
+        return;
+      }
       if (typeof props.onCustomChange !== "function") return;
       var next = { from: from, to: to };
       next[key] = value;
       props.onCustomChange(next);
     }
     return h("div", { className: prefix + "-stoolbar" },
-      h("div", { className: prefix + "-seg", role: "group", "aria-label": props.aria || "时间范围" }, (props.options || []).map(function (o) {
+      (props.options || []).length ? h("div", { className: prefix + "-seg", role: "group", "aria-label": props.aria || "时间范围" }, (props.options || []).map(function (o) {
         return h("button", {
           key: o.key, type: "button", className: o.key === props.value ? prefix + "-on" : "",
           "aria-pressed": !!props.value && o.key === props.value,
           onClick: function () { props.onChange(o.key); },
         }, o.label);
-      })),
+      })) : null,
       h("div", { className: prefix + "-range", role: "group", "aria-label": props.customAria || "自定义日期范围" },
         h("input", {
           type: "date", className: prefix + "-date", value: from,
-          max: props.today || undefined,
+          max: to && (!props.today || to < props.today) ? to : props.today || undefined,
           "aria-label": props.fromLabel || "起始日期", title: props.fromLabel || "起始日期",
-          onChange: function (e) { setDate("from", e.target.value); },
+          onChange: function (e) { setDate("from", e.target.value, e.target); },
         }),
         h("span", { className: prefix + "-dash", "aria-hidden": "true" }, "–"),
         h("input", {
           type: "date", className: prefix + "-date", value: to,
           min: from || undefined, max: props.today || undefined,
           "aria-label": props.toLabel || "终止日期", title: props.toLabel || "终止日期",
-          onChange: function (e) { setDate("to", e.target.value); },
+          onChange: function (e) { setDate("to", e.target.value, e.target); },
         }),
         (from || to) ? h("button", {
           type: "button", className: prefix + "-clear", "aria-label": props.clearLabel || "清除自定义范围",
@@ -338,6 +341,13 @@ function makeCharts(prefix) {
         }, "×") : null,
       ),
       props.customHint ? h("span", { className: prefix + "-hint", role: "status" }, props.customHint) : null,
+    );
+  }
+
+  // Statistics retain presets, refresh and generated time around the reusable picker.
+  function RangeSwitch(props) {
+    return h("div", { className: prefix + "-stoolbar" },
+      h(DateRangePicker, props),
       h("button", { type: "button", className: prefix + "-ghost", disabled: !!props.loading, onClick: props.onRefresh }, props.refreshLabel || "刷新"),
       h("span", { className: prefix + "-muted" }, props.generatedAt ? (props.timeLabel || "截至") + " " + timeText(props.generatedAt) : ""),
       props.right ? h("span", { style: { marginLeft: "auto" } }, props.right) : null,
@@ -380,7 +390,7 @@ function makeCharts(prefix) {
 
   return {
     Card: Card, Kpi: Kpi, Donut: Donut, BarList: BarList, StackedRows: StackedRows,
-    Trend: Trend, Histogram: Histogram, DataTable: DataTable, RangeSwitch: RangeSwitch,
+    Trend: Trend, Histogram: Histogram, DataTable: DataTable, RangeSwitch: RangeSwitch, DateRangePicker: DateRangePicker,
     Empty: Empty, Skeleton: Skeleton, ErrorBar: ErrorBar, Warnings: Warnings,
     num: num, pct: pct, timeText: timeText, dateText: dateText, colors: COLORS,
   };
