@@ -74,6 +74,25 @@ pnpm test:native && pnpm test:tags && pnpm test:sites
 改完插件的正确姿势：`pnpm build` → 重新安装到 profile → 重启 DSH → 用
 `capabilities.list` 核对版本号与 `actionCount`。
 
+### 桌面实例必须使用桌面端 CLI 安装
+
+先读取 `DSH_PROFILE`、`DSH_PROFILE_DIR` 确认用户当前实例；不要把临时 profile 的安装验证当作已安装到用户实例。新增插件仅提交源码、重启应用不会自动安装。交付时明确区分「源码完成」「临时实例验证」「当前实例已安装」，用户要求当前实例可用时要完成对应 profile 的安装。
+
+macOS 桌面版使用应用附带的 CLI，不要直接调用 PATH 中 npm 安装的 `dsh`：
+
+```sh
+DESKTOP_DSH="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh"
+"$DESKTOP_DSH" --help
+"$DESKTOP_DSH" plugin --profile desktop add \
+  "file:$PWD/packages/shell-dist" \
+  "file:$PWD/packages/addons/tags" \
+  "file:$PWD/packages/addons/storage" --force
+```
+
+以上为 storage 的安装示例；按实际目标调整 profile、安装位置及包列表，先完成构建。普通 `dsh plugin --profile desktop ...` 会报 `profile "desktop" is managed exclusively by the Electron application`；这表示选错 CLI，不是需要绕过限制或手改 profile。不要仅凭两个 CLI 帮助文字相似就认为它们相同。
+
+安装后核对目标 profile 的包版本、bundle 清单和入口 import；重启/重新加载后再用 `capabilities.list` 核对运行中版本与 actionCount。磁盘安装成功但进程尚未重载时，明确说明仍需重启，不能声称运行中插件已可见。
+
 ### 不要手工「拷一半」插件目录（高频事故）
 
 拷贝安装是按 `package.json` 的 `files` 把整个目录复制过去的。开发期如果只手工
