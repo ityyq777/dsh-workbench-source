@@ -4,6 +4,16 @@
 
 commit 信息使用中文：提交标题与正文均用中文说明改动及原因；代码标识符、包名和必要的技术术语可保留原文。
 
+## ESLint 与格式化
+
+- 修改 JS/TS（含 `.js`、`.mjs`、`.cjs`、`.ts`、`.tsx`）后，必须使用项目本地 ESLint 工具检查相关文件。
+- 对本次修改的文件运行 `pnpm exec eslint <文件路径...> --fix` 自动清理未使用的 ES import，再运行 `pnpm exec eslint <文件路径...>` 确认无问题；全量检查用 `pnpm lint`，全量清理用 `pnpm lint:fix`。
+- 工作区有其他未提交改动时，优先针对本次文件执行，不要将其他人的业务修改混入提交。全量检查发现历史问题时如实报告，不要关闭规则或添加忽略来掩盖。
+- 规则与扫描范围见 `eslint.config.mjs`：覆盖手写源码和脚本，排除生成物、归档及 cloud 子模块。addon 的 `lib` 多数是手写源码，不能整体忽略。
+- 当前只启用 `unused-imports/no-unused-imports`，支持类型导入；不会清理 CommonJS `require()` 或普通未使用变量。ESLint 清理不能替代构建和相关业务测试。
+- 自动修复可能删除整条未使用的 import。模块若需要执行初始化副作用，应明确写成 `import "./setup.js"`，并复查修复 diff。
+- 排版交给 Prettier，配置为支持详细注释的 `.prettierrc.json5`；不要再创建同名的 JSON 配置造成配置选择歧义。
+
 ## 仓库结构与 cloud 子模块
 
 本仓库是宿主源码仓库；云端 Java 服务通过 `cloud/` 子模块引用，指向

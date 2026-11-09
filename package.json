@@ -45,12 +45,19 @@
     "publish:npm": "node scripts/publish-npm.mjs",
     "publish:github": "node scripts/publish-github.mjs",
     "test:audit": "node scripts/test-audit.mjs",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "audit:lines": "node scripts/audit-lines.mjs"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.72.1",
+    "@typescript-eslint/parser": "^8.72.1",
     "esbuild": "^0.28.2",
+    "eslint": "^9.39.4",
+    "eslint-plugin-unused-imports": "^4.4.1",
     "lucide-react": "^1.70.0",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "typescript": "^5.9.3"
   }
 }

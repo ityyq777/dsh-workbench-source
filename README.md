@@ -95,6 +95,20 @@ pnpm build && node scripts/dist-shell.mjs
 pnpm test:e2e
 ```
 
+未使用的 ES import 由 ESLint + `eslint-plugin-unused-imports` 检查，支持 JS/TS 和类型导入：
+
+```sh
+pnpm lint                           # 只检查，发现未使用的导入时返回非零退出码
+pnpm lint:fix                       # 自动删除未使用的导入
+pnpm exec eslint path/to/file.ts --fix # 只清理指定文件
+```
+
+检查覆盖手写源码与脚本，排除构建产物、归档和 cloud 子模块。当前仅启用 import
+清理规则，不清理 CommonJS `require()` 或普通未使用变量；显式副作用导入会保留。
+已有源码中的未使用导入会直接报告，不设历史问题豁免。涉及初始化副作用的模块应明确
+使用 `import "./setup.js"`，避免依赖未引用的导入变量来执行初始化。
+Prettier 的排版配置使用支持注释的 `.prettierrc.json5`，与 ESLint 分工独立。
+
 ## 许可
 
 MIT · Copyright (c) 2026 ityq777
