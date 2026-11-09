@@ -8,7 +8,8 @@ var h = React.createElement;
   var host = window.__WB_HOST__;
   if (!host) {
     console.error("[wb-addon-tags] 宿主桥 window.__WB_HOST__ 不存在，视图未注册");
-    return { name: "dsh-workbench-tags", inject: [], apply: function () {} };
+    module.exports = { name: "dsh-workbench-tags", inject: [], apply: function () {} };
+    return;
   }
   var React = require("react");
   var h = React.createElement;
