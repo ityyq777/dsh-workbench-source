@@ -18,6 +18,7 @@ import {
 import { TASK_FILTER_SCHEMA } from "./task-search-schema.js";
 import { listTasks } from "./task-query.js";
 import { statsReport, renderStats } from "./stats.js";
+import { todayActivity } from "./stats-today.js";
 import { registerTagOptionsAction } from "./tag-options.js";
 import { configValues } from "./config.js";
 import { clampPriority, priorityForStatus, priorityForCreate } from "./task-priority.js";
@@ -230,6 +231,7 @@ export function stats(db, args, api) {
     restarted: row.restarted || 0,
     overdue: row.overdue || 0,
     today: row.today || 0,
+    todayActivity: todayActivity(db, day),
   };
   const groupBy = a.groupBy === undefined || a.groupBy === null || a.groupBy === "" ? null : String(a.groupBy);
   if (!groupBy) return base;

@@ -1468,6 +1468,58 @@ var require_heatmap = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/today.cjs
+var require_today = __commonJS({
+  "packages/addons/tasks/client/today.cjs"(exports2, module2) {
+    var React = require("react");
+    var h = React.createElement;
+    var COPY = {
+      zh: { title: "\u4ECA\u65E5", published: "\u4ECA\u65E5\u53D1\u5E03", done: "\u4ECA\u65E5\u5B8C\u6210", shutdown: "\u4ECA\u65E5\u5173\u95ED", average: "\u5E73\u5747\u96BE\u5EA6", sample: "\u6837\u672C\u6570", noSample: "\u65E0\u6837\u672C", clock: "\u4EE5\u670D\u52A1\u7AEF\u5F53\u524D\u65F6\u95F4\u4E3A\u51C6" },
+      en: { title: "Today", published: "Published today", done: "Completed today", shutdown: "Closed today", average: "Avg difficulty", sample: "samples", noSample: "No samples", clock: "Based on the server's current time" }
+    };
+    var css = ".wbt-today h3{margin:0;font-size:14px}.wbt-today-date{display:block;margin:4px 0 12px;font-size:12px;color:var(--dsw-alias-label-tertiary,#8f959e)}";
+    function Today(props) {
+      var data = props.today;
+      if (!data || typeof data !== "object") return null;
+      var lang = props.lang === "en" ? "en" : "zh", t = COPY[lang];
+      var sample = Number.isFinite(data.avgSample) && data.avgSample > 0 ? data.avgSample : 0;
+      var average = sample && Number.isFinite(data.avgDifficultyDone) ? data.avgDifficultyDone.toFixed(1) : "\u2014";
+      var metrics = ["published", "done", "shutdown"].map(function(key) {
+        var value = Number.isFinite(data[key]) ? data[key] : 0;
+        return { key, label: t[key], value, aria: lang === "zh" ? t[key] + value + "\u6761" : t[key] + ": " + value + " tasks" };
+      });
+      metrics.push({
+        key: "average",
+        label: t.average,
+        value: average,
+        aria: t.average + (lang === "zh" ? "" : ": ") + average + ", " + (sample ? t.sample + " " + sample : t.noSample),
+        sample
+      });
+      return h(
+        "section",
+        { className: "wbt-today", "aria-label": t.title, title: t.clock },
+        h("style", null, css),
+        h("h3", null, t.title),
+        h("time", { className: "wbt-today-date", dateTime: data.date }, data.date),
+        h("div", { className: "wbt-kpis" }, metrics.map(function(metric) {
+          return h(
+            "div",
+            { key: metric.key, className: "wbt-kpi", role: "group", "aria-label": metric.aria },
+            h("div", { className: "wbt-kpi-l", "aria-hidden": true }, metric.label),
+            h(
+              "div",
+              { className: "wbt-kpi-v", "aria-hidden": true },
+              metric.value,
+              metric.sample !== void 0 ? h("span", { className: "wbt-kpi-u" }, "\xB1" + metric.sample) : null
+            )
+          );
+        }))
+      );
+    }
+    module2.exports = Today;
+  }
+});
+
 // packages/addons/tasks/client/stats.cjs
 var require_stats = __commonJS({
   "packages/addons/tasks/client/stats.cjs"(exports2, module2) {
@@ -1477,6 +1529,7 @@ var require_stats = __commonJS({
     var configView = require_config();
     var recentColumns = require_recent_columns();
     var Heatmap = require_heatmap();
+    var Today = require_today();
     var COPY = {
       zh: {
         title: "\u4EFB\u52A1\u7EDF\u8BA1",
@@ -1906,6 +1959,7 @@ var require_stats = __commonJS({
       return h(
         "div",
         { className: "wbt-stats" },
+        h(Today, { today: data && data.today, lang }),
         h(Heatmap, { api, lang, active: props.active, onNavigate: props.onNavigate }),
         h(ch.RangeSwitch, {
           options,
@@ -7286,7 +7340,7 @@ var require_tasks_view = __commonJS({
   var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, TABS, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.1.5",
+    version: "3.1.6",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

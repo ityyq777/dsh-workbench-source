@@ -2,6 +2,7 @@
 // 契约见 docs/specs/18-统计报表设计.md §4。
 
 import { configValues } from "./config.js";
+import { todayActivity } from "./stats-today.js";
 
 const STATUS_LABELS = {
   "0": "进行中",
@@ -431,6 +432,7 @@ export function statsReport(db, args, api) {
   return {
     generatedAt: Date.now(),
     range: range,
+    today: todayActivity(db, today),
     totals: totals,
     rates: rates,
     breakdowns: {

@@ -1,4 +1,5 @@
 import { DIFFICULTY_SCHEMA, DIFFICULTY_GUIDANCE } from "./task-difficulty.js";
+import { TODAY_STATS_DESCRIPTION } from "./stats-today.js";
 import { TASK_CREATE_SCHEMA } from './task-create-schema.js';
 import { registerDiscoveryActions, GUIDANCE } from './task-discovery.js';
 import { renderOwnership } from './task-ownership-path.js';
@@ -414,7 +415,7 @@ export function registerTaskActions(api) {
   registerTagOptionsAction(action, db, api, migrateLegacyTypes);
 
   action("tasks.stats", {
-    description: "任务统计：默认 7 个计数器；groupBy=tag/tableId/status/priority 时额外返回 groups（可按 from/to 限定 targetDate）",
+    description: "任务统计：保留 7 个计数器（today 为今日到期的进行中任务数）；groupBy=tag/tableId/status/priority 时额外返回 groups（可按 from/to 限定 targetDate）；另返回 todayActivity 对象：" + TODAY_STATS_DESCRIPTION,
     input: {
       type: "object",
       properties: {
@@ -433,7 +434,7 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.statsReport", {
-    description: "任务统计报表：总量/状态/标签/优先级/难度、趋势、逾期账龄、近期完成/关闭清单、任务表与任务组排行",
+    description: "任务统计报表：总量/状态/标签/优先级/难度、趋势、逾期账龄、近期完成/关闭清单、任务表与任务组排行；另返回 today 对象：" + TODAY_STATS_DESCRIPTION,
     input: {
       type: "object",
       properties: {
