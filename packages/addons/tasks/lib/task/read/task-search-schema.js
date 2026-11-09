@@ -1,7 +1,7 @@
 /** Shared list/export filtering contract; paging remains list-only. */
 export const TASK_FILTER_SCHEMA = {
-  statuses: { type: "array", items: { type: "integer", enum: [0, 1, 2, 3] }, description: "多选状态：0 已开启、1 已关闭、2 已完成、3 已重启；去重后 OR，与 urgent 谓词 OR，再与其它筛选 AND。statuses 或 urgent 任一传入即覆盖旧 tab/filterRestarted 分支（包括旧类型页签），另一项缺省 []/false；空数组且 urgent=false 表示全部（含重启）。filter 回显去重 statuses、urgent，tab=8 且不回显 tabGiven/filterRestarted。" },
-  urgent: { type: "boolean", description: "紧急谓词：status=0 且（priority>=6 或 target_date<=本地今天+2天），与 statuses 各状态 OR；不是独立状态。传 false 也启用新状态模式；缺省 false，空 statuses 且 false 不筛状态。" },
+  statuses: { type: "array", items: { type: "integer", enum: [0, 1, 2, 3] }, description: "多选状态：0 已开启、1 已关闭、2 已完成、3 已重启；去重后 OR，再与其它筛选 AND。statuses 或 urgent 任一传入即覆盖旧 tab/filterRestarted 分支（包括旧类型页签），另一项缺省 []/false；空数组且 urgent=false 表示不按状态筛。过滤面板固定发送本字段（可能是空数组），因此优先级/难度区间筛选不会回落到旧 tab=0 紧急分支。filter 回显去重 statuses，tab=8 且不回显 tabGiven/filterRestarted。" },
+  urgent: { type: "boolean", description: "旧紧急谓词（仅兼容保留）：status=0 且（priority>=6 或 target_date<=本地今天+2天），与 statuses 各状态 OR；不是独立状态。过滤面板已不再发送它，改为前端快捷组合 priorityMin=6、priorityMax=10（口径因此不再包含「优先级低但 2 天内到期」的任务）。传 false 仍会启用新状态模式；缺省 false。" },
   doneFrom: { type: ["string", "null"], description: "完成日起始（含），严格真实 YYYY-MM-DD（0001..9999 年），独立端点，空串/null 未传；按 substr(done_date,1,10) 比较且强制当前 status=2。与发布/关闭范围及其它条件 AND；同时有完成、关闭范围时结果为空。反序交换并在 filter 回显，notices 返回 {code:'done_range_swapped',field:'doneFrom/doneTo',message:'完成日期起始晚于终止，已交换',doneFrom,doneTo}。非 ids 导出共用。" },
   doneTo: { type: ["string", "null"], description: "完成日终止（含）；校验、独立端点、空值、status=2、AND、反序和 filter/notices 契约同 doneFrom。" },
   shutdownFrom: { type: ["string", "null"], description: "关闭日起始（含），严格真实 YYYY-MM-DD（0001..9999 年），独立端点，空串/null 未传；按 substr(shutdown_date,1,10) 比较且强制当前 status=1。与发布/完成范围及其它条件 AND；同时有完成、关闭范围时结果为空。反序交换并在 filter 回显，notices 返回 {code:'shutdown_range_swapped',field:'shutdownFrom/shutdownTo',message:'关闭日期起始晚于终止，已交换',shutdownFrom,shutdownTo}。非 ids 导出共用。" },
@@ -20,8 +20,10 @@ export const TASK_FILTER_SCHEMA = {
   tags: { type: "array", items: { type: "string" }, description: "按标签名过滤，命中任一即可" },
   status: { type: ["string", "number"], description: "直接按状态过滤（与 statuses/urgent 或旧 tab 条件 AND）" },
   difficultyMissing: { type: "boolean", description: "true 只看未填难度（NULL 或 0）；false/缺省不筛难度，与其他条件 AND，可配合 tasks.bulkUpdate 补齐" },
-  priorityMin: { type: "number", description: "最低优先级（含）" },
-  priorityMax: { type: "number", description: "最高优先级（含）" },
+  priorityMin: { type: "number", description: "最低优先级（含），0..10 整数；与 priorityMax AND。0 只表示没有优先级，UI 区间端点从 1 起。与 statuses 等其它条件 AND。" },
+  priorityMax: { type: "number", description: "最高优先级（含），0..10 整数；与 priorityMin AND，min>max 时结果为空（不自动交换）。" },
+  difficultyMin: { type: "number", description: "最低难度（含），0..5，兼容 0.5 档；NULL 视作 0。与 difficultyMax AND；下界为 0 时把 NULL 一并算入，下界>0 时排除未填难度的任务。非法或越界抛错，不静默截断。" },
+  difficultyMax: { type: "number", description: "最高难度（含），0..5，兼容 0.5 档；NULL 视作 0（因此上限条件包含未填难度）。与 difficultyMin AND。" },
   targetFrom: { type: "string", description: "targetDate >= 该日期" },
   targetTo: { type: "string", description: "targetDate <= 该日期" },
   tagIds: { type: "array", items: { type: "string" }, description: "任一标签命中（AND 到其他条件）" },

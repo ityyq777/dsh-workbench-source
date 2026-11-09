@@ -33,8 +33,17 @@ try {
   assert(!members(a.timelineKey).some(r=>r.id===retired.id || r.id===deleted.id));
   db.prepare("UPDATE task SET publish_date='2023-12-31' WHERE id=?").run(a.id);
   assert.equal(list({titleKey:'aLPHa %_'}).total,1);
-  assert.equal(list({titleKey:'Later unmatched'}).total,0,'search only representative title');
+  assert.equal(list({titleKey:'Later unmatched'}).total,0,'does not search member task titles');
   assert.equal(list({titleKey:"' OR 1=1 --"}).total,0);
+  call('taskTimelines.update',{timelineId:'alpha',description:'独有专名 Case %_( <b> É'});
+  call('taskTimelines.update',{timelineId:'beta',description:'独有专名'});
+  assert.equal(list({titleKey:'独有专名'}).total,1,'description search AND singleton filter');
+  assert.equal(list({titleKey:'独有专名',includeSingletons:true}).total,2);
+  for(const titleKey of ['cASE','%_(','<b>','É']) assert.equal(list({titleKey}).total,1);
+  assert.equal(list({titleKey:'é'}).total,0,'ASCII-only case folding');
+  assert.equal(list({titleKey:'%x'}).total,0,'percent is literal');
+  assert.equal(list({titleKey:''}).total,1,'clear restores unfiltered list');
+  assert.equal(list({titleKey:'独有专名'}).records[0].timelineKey,a.timelineKey,'sort unchanged');
   let queries=0;
   const wrapped={prepare(sql){queries++;assert.match(sql,/GROUP BY timeline_id/);return db.prepare(sql);}};
   assert.equal(timelines(wrapped,{}).total,1); assert.equal(queries,1,'single SQL, no per-line query');

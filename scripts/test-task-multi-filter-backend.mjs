@@ -85,5 +85,36 @@ try {
   add('closed-timestamp', 1, 1, '9999-12-31', day, null, day + 'T23:59:59+08:00');
   assert.equal(list({ statuses: [], doneFrom: day, doneTo: day }).total, 3);
   assert.equal(list({ statuses: [], shutdownFrom: day, shutdownTo: day }).total, 2);
+  // 难度/优先级区间：NULL 视作 0，下界为 0 时把未填难度的任务一并算入。
+  const setDifficulty = (id, value) => db.prepare('UPDATE task SET difficulty=? WHERE id=?').run(value, id);
+  setDifficulty('active', null); setDifficulty('urgent-priority', 3); setDifficulty('not-urgent-date', 0);
+  setDifficulty('closed', 5); setDifficulty('done-a', 2.5); setDifficulty('done-b', null);
+  const oracle = sql => db.prepare('SELECT id FROM task WHERE deleted_at IS NULL AND ' + sql).all().map(r => r.id).sort();
+  const difficulty = args => ids(list({ statuses: [], ...args }));
+  assert.deepEqual(difficulty({ difficultyMin: 3, difficultyMax: 5 }), oracle("difficulty BETWEEN 3 AND 5"), 'min>0 excludes unset and lower half steps');
+  assert.deepEqual(difficulty({ difficultyMax: 3 }), oracle("(difficulty IS NULL OR difficulty<=3)"), 'upper bound counts NULL as 0');
+  assert.deepEqual(difficulty({ difficultyMin: 0, difficultyMax: 3 }), oracle("(difficulty IS NULL OR difficulty BETWEEN 0 AND 3)"), 'explicit 0 lower bound keeps NULL');
+  assert.deepEqual(difficulty({ difficultyMin: 0 }), oracle("(difficulty IS NULL OR difficulty>=0)"), 'lower bound 0 keeps everything');
+  assert.deepEqual(difficulty({ difficultyMin: 2.5 }), oracle("difficulty>=2.5"), 'half steps are accepted');
+  const upper = difficulty({ difficultyMax: 3 });
+  assert.ok(upper.includes('active') && upper.includes('done-b'), 'unset difficulty is inside a 0-based upper bound');
+  assert.ok(!upper.includes('closed'), 'difficulty 5 stays outside an upper bound of 3');
+  assert.ok(!difficulty({ difficultyMin: 3 }).includes('active'), 'unset difficulty is outside a positive lower bound');
+  assert.equal(list({ statuses: [], difficultyMin: 3 }).filter.difficultyMin, 3);
+  assert.equal(list({ statuses: [], difficultyMax: 3 }).filter.difficultyMax, 3);
+  assert.equal(list({ statuses: [] }).filter.difficultyMin, undefined, 'no echo without the parameter');
+  // 优先级区间与「紧急」口径：6–10 是前端快捷条件，走后端 priorityMin/Max。
+  assert.deepEqual(ids(list({ statuses: [], priorityMin: 6, priorityMax: 10 })), oracle("priority BETWEEN 6 AND 10"), 'priority range independent of status');
+  assert.deepEqual(ids(list({ statuses: [0], priorityMin: 6, priorityMax: 10 })), ids(list({ statuses: [0], priorityMin: 6 })).filter(id => db.prepare('SELECT priority FROM task WHERE id=?').get(id).priority <= 10), 'urgent shortcut is priority AND statuses');
+  const legacyUrgent = ids(list({ statuses: [0], urgent: true }));
+  assert.ok(legacyUrgent.includes('urgent-date') && legacyUrgent.includes('active'), 'legacy urgent ORs statuses with the due-date rule');
+  assert.ok(!ids(list({ statuses: [0], priorityMin: 6, priorityMax: 10 })).includes('urgent-date'), 'priority shortcut drops the due-date rule');
+  assert.equal(list({ statuses: [], priorityMin: 4, priorityMax: 8 }).filter.priorityMax, 8);
+  for (const bad of [6, -1, 5.5, -0.5, 'abc', {}]) for (const action of ['tasks.list','tasks.export']) assert.throws(() => call(action, { difficultyMax: bad }), /difficultyMax/);
+  for (const bad of [11, -1, 'abc', {}]) for (const action of ['tasks.list','tasks.export']) assert.throws(() => call(action, { priorityMin: bad }), /priorityMin/);
+  assert.equal(list({ statuses: [], priorityMin: 1.5 }).filter.priorityMin, 2, 'priority keeps its historical rounding');
+  for (const action of ['tasks.list','tasks.export']) for (const field of ['priorityMin','priorityMax','difficultyMin','difficultyMax']) assert.ok(actions.get(action).input.properties[field], action + ' declares ' + field);
+  assert.match(renderList(list({ statuses: [], priorityMin: 6, difficultyMin: 3 })), /P>=6.*难度>=3/);
+  assert.match(renderList(list({ statuses: [], difficultyMin: 2, difficultyMax: 4 })), /难度2–4/);
   console.log('MULTI FILTER PASS: statuses/urgent OR, legacy tab/activity, all dates AND, strict validation, swaps/filter/notices, heatmap counts, export/schema, paging and timestamps');
 } finally { db.close(); }

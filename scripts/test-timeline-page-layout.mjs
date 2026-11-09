@@ -33,4 +33,27 @@ assert.ok(css.includes('var(--wbt-accent) 8%,transparent'));
 assert.ok(css.includes('button:is(.wbt-timeline-member,.wbt-timeline-remove,.wbt-timeline-id)'));
 assert.ok(!css.includes('rgba('));
 assert.ok(!css.includes('48vh') && !css.includes('58vh'));
-console.log('Timeline page title, shared member actions, semantics and theme contracts PASS');
+// Render the actual timeline view with settled read state; exercise shared Highlight output.
+const COPY = require('../packages/addons/tasks/client/ui/copy.cjs');
+function searchHtml(query, records, lang = 'zh') {
+  let index = 0;
+  const state = { 0: query, 4: { records, total: records.length }, 5: false };
+  const R = { ...React, useState(value) { const i = index++; return [i in state ? state[i] : value, () => {}]; }, useRef: () => ({current:null}), useEffect() {} };
+  const View = require('../packages/addons/tasks/client/views/timeline-view.cjs')({React:R,COPY,statusInfo,injectCss() {}});
+  return renderToStaticMarkup(React.createElement(View,{api:{},lang}));
+}
+const record = { timelineKey:'a',title:'Alpha %_(',description:'Description ALPHA %_( <b>\nNot in excerpt',taskCount:2,openCount:2,doneCount:0 };
+for (const query of ['alpha','%_(']) {
+  const out = searchHtml(query,[record]);
+  assert.equal((out.match(/<mark class="wbt-hit">/g)||[]).length,2);
+  assert.match(out,/class="wbt-timeline-excerpt"/);
+  assert.ok(!out.includes('<b>'),'description is escaped text');
+}
+assert.equal((searchHtml('',[record]).match(/<mark /g)||[]).length,0);
+assert.ok(!searchHtml('',[{...record,description:null}]).includes('<span class="wbt-timeline-excerpt"'));
+assert.ok(searchHtml('$&',[]).includes('“$&amp;”'),'replacement tokens remain literal escaped text');
+assert.ok(searchHtml('missing',[]).includes('没有找到包含 “missing” 的时间线'));
+assert.ok(searchHtml('missing',[],'en').includes('No timelines contain “missing”.'));
+assert.ok(searchHtml('',[]).includes(COPY.zh.timelineEmpty));
+assert.ok(!searchHtml('',[]).includes('没有找到包含'));
+console.log('Timeline page PASS: shared rows, theme contracts, title/description highlights, literal queries and distinct empty results');

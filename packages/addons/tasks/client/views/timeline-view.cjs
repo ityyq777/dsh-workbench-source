@@ -7,6 +7,7 @@ module.exports = function (deps) {
   var CSS = require("../timeline/timeline-styles.cjs");
   var MemberRows = require("../timeline/timeline-member-rows.cjs")(React, deps.statusInfo);
   var splitTitle = require("../timeline/timeline-title.cjs");
+  var Highlight = require("../ui/highlight.cjs")(React);
   function result(r) { if (!r || !r.ok) throw new Error(r && r.error || "Request failed"); return r.result; }
   function pageData(r) { return { records: r.records || [], total: Number(r.total) || 0 }; }
   function Pager(p) {
@@ -107,13 +108,15 @@ module.exports = function (deps) {
           h("label", { className: "wbt-timeline-single" }, h("input", { type: "checkbox", "aria-label": t.timelineSingletons, checked: single, onChange: function (e) { setSingle(e.target.checked); setPage(1); } }), t.timelineSingletons),
           error ? h("p", { role: "alert", className: "wbt-err" }, t.error + error) : null,
           h("div", { ref: listRef, className: "wbt-timeline-list", role: "listbox", "aria-label": t.timeline, "aria-multiselectable": multi, "aria-busy": busy }, data.records.map(function (item, i) {
+            var excerpt = String(item.description || "").trim().split(/\r?\n/)[0];
             var isActive = activeKey === item.timelineKey, checked = selected.some(function (x) { return x.timelineKey === item.timelineKey; });
             return h("div", { key: item.timelineKey, role: "option", tabIndex: isActive || !activeKey && i === 0 ? 0 : -1, "aria-selected": multi ? checked : isActive, "aria-current": isActive ? "true" : undefined,
               className: "wbt-timeline-option" + (isActive ? " current" : ""), onClick: function () { choose(item, multi); setDeleting(false); }, onKeyDown: function (e) { keyboard(e, i); } },
-              h("div", { className: "wbt-timeline-option-title" }, multi ? h("input", { type: "checkbox", checked: checked, disabled: busy || !item.taskCount, "aria-label": item.title || tr("未命名时间线"), onClick: function (e) { e.stopPropagation(); }, onChange: function () { choose(item, true); } }) : null, h("strong", null, item.title || tr("未命名时间线"))),
-              h("span", null, t.timelineTasks + " " + item.taskCount + " · " + t.timelineOpen + " " + item.openCount + " · " + t.timelineDone + " " + item.doneCount + " · " + t.timelineActivity + " " + (item.lastActivityDate || "—")));
+              h("div", { className: "wbt-timeline-option-title" }, multi ? h("input", { type: "checkbox", checked: checked, disabled: busy || !item.taskCount, "aria-label": item.title || tr("未命名时间线"), onClick: function (e) { e.stopPropagation(); }, onChange: function () { choose(item, true); } }) : null, h("strong", null, h(Highlight, { text: item.title || tr("未命名时间线"), keyword: query }))),
+              excerpt ? h("span", { className: "wbt-timeline-excerpt", title: item.description }, h(Highlight, { text: Array.from(excerpt).slice(0, 90).join(""), keyword: query })) : null,
+               h("span", null, t.timelineTasks + " " + item.taskCount + " · " + t.timelineOpen + " " + item.openCount + " · " + t.timelineDone + " " + item.doneCount + " · " + t.timelineActivity + " " + (item.lastActivityDate || "—")));
           })),
-          busy ? h("p", { role: "status" }, t.loading) : !error && !data.records.length ? h("p", { className: "wbt-empty" }, t.timelineEmpty) : null,
+          busy ? h("p", { role: "status" }, t.loading) : !error && !data.records.length ? h("p", { className: "wbt-empty", role: "status" }, query ? t.timelineSearchEmpty.replace("{query}", function () { return query; }) : t.timelineEmpty) : null,
           h(Pager, { t: t, label: t.timeline, busy: busy, page: page, total: data.total, set: setPage })),
         h("section", { className: "wbt-timeline-right", "aria-label": t.timelineMembers, "aria-busy": memberBusy },
           heading.eyebrow ? h("div", { className: "wbt-timeline-eyebrow" }, heading.eyebrow) : null,

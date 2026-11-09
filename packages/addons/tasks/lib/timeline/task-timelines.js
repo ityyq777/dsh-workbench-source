@@ -32,10 +32,10 @@ export function timelines(db, args) {
     "counts AS (SELECT timeline_id,COUNT(*) AS taskCount,SUM(status='0') AS openCount,SUM(status='2') AS doneCount,MIN(publish_date) AS firstPublishDate," +
     "MAX(MAX(COALESCE(publish_date,''),COALESCE(done_date,''),COALESCE(shutdown_date,''),COALESCE(date(created_at/1000.0,'unixepoch','localtime'),''),COALESCE(date(updated_at/1000.0,'unixepoch','localtime'),''))) AS lastActivityDate FROM eligible GROUP BY timeline_id), " +
     "grouped AS (SELECT e.id AS timelineKey,e.id AS timelineId,e.title,e.description,e.updated_at AS timelineUpdatedAt,COALESCE(c.taskCount,0) AS taskCount,COALESCE(c.openCount,0) AS openCount,COALESCE(c.doneCount,0) AS doneCount,c.firstPublishDate,c.lastActivityDate FROM task_timeline e LEFT JOIN counts c ON c.timeline_id=e.id WHERE e.deleted_at IS NULL), " +
-    "filtered AS (SELECT * FROM grouped WHERE taskCount>=? AND instr(lower(title),lower(?))>0), " +
+    "filtered AS (SELECT * FROM grouped WHERE taskCount>=? AND (instr(lower(title),lower(?))>0 OR instr(lower(COALESCE(description,'')),lower(?))>0)), " +
     "page AS (SELECT * FROM filtered ORDER BY lastActivityDate DESC,timelineKey ASC LIMIT ? OFFSET ?) " +
     "SELECT page.*,totals.total FROM (SELECT COUNT(*) AS total FROM filtered) totals LEFT JOIN page ON 1=1 ORDER BY page.lastActivityDate DESC,page.timelineKey ASC"
-  ).all(args.includeSingletons === true ? 0 : 2,titleKey,size,offset);
+  ).all(args.includeSingletons === true ? 0 : 2,titleKey,titleKey,size,offset);
   return { records: rows.filter(r => r.timelineKey !== null).map(({ total, ...row }) => ({ ...row })), total: Number(rows[0].total), current, size };
 }
 
@@ -95,8 +95,8 @@ export function timelineRefactor(db, args, origin, api) {
 
 export function registerTimelineActions(api) {
   api.action("tasks.timelines", {
-    description: "分页列出时间线，默认20条、过滤单任务线；排除已重启和已删除任务。标题取独立实体标题；includeSingletons=true 包含单成员及空线；openCount仅status0，doneCount仅status2。lastActivityDate为发布/完成/关闭日与创建/修改时间的本地日最大值，不计计划targetDate；按最近活动倒序、timelineKey正序稳定排序。返回{records,total,current,size}。",
-    input: { type:"object", properties: { titleKey:{type:"string",description:"时间线实体标题的字面子串搜索，不搜索其它成员标题"}, ...TIMELINE_PAGE_SCHEMA, includeSingletons:{type:"boolean",default:false,description:"true 包含单成员及空线；默认仅列至少两个可见成员的线"} } },
+    description: "分页列出时间线，默认20条、过滤单任务线；排除已重启和已删除任务。按独立实体标题或描述的字面子串搜索（不搜索成员任务标题）；includeSingletons=true 包含单成员及空线；openCount仅status0，doneCount仅status2。lastActivityDate为发布/完成/关闭日与创建/修改时间的本地日最大值，不计计划targetDate；按最近活动倒序、timelineKey正序稳定排序。返回{records,total,current,size}。",
+    input: { type:"object", properties: { titleKey:{type:"string",description:"时间线实体标题或描述的字面子串搜索，ASCII 大小写不敏感，不搜索成员任务标题"}, ...TIMELINE_PAGE_SCHEMA, includeSingletons:{type:"boolean",default:false,description:"true 包含单成员及空线；默认仅列至少两个可见成员的线"} } },
     execute: args => timelines(api.db,args || {}),
     render: result => "时间线 " + result.total + " 条",
   });

@@ -16,11 +16,12 @@ function reset(){
  calls.length=0;
 }
 reset();
+function asciiLower(text){return String(text).replace(/[A-Z]/g,c=>c.toLowerCase())}
 function projected(task){const line=lines.find(x=>x.id===task.timelineId);return {...task,timelineId:line?.id||null,timelineKey:line?.id||null,timelineTitle:line?.title||null,timelineDescription:line?.description||null};}
 function paged(rows,args){const page=args.pageNumber||1,size=args.pageSize||20;return {records:rows.slice((page-1)*size,page*size),total:rows.length,current:page,size};}
 const api={async call(action,args){
  calls.push({action,args:structuredClone(args)});
- if(action==='tasks.timelines')return {ok:true,result:paged(lines.map(line=>{const members=tasks.filter(x=>x.timelineId===line.id&&x.status!=='3');return {...line,taskCount:members.length,openCount:members.filter(x=>x.status==='0').length,doneCount:members.filter(x=>x.status==='2').length,lastActivityDate:'2026-11-09'};}).filter(x=>(args.includeSingletons||x.taskCount>=2)&&x.title.toLowerCase().includes((args.titleKey||'').toLowerCase())),args)};
+ if(action==='tasks.timelines')return {ok:true,result:paged(lines.map(line=>{const members=tasks.filter(x=>x.timelineId===line.id&&x.status!=='3');return {...line,taskCount:members.length,openCount:members.filter(x=>x.status==='0').length,doneCount:members.filter(x=>x.status==='2').length,lastActivityDate:'2026-11-09'};}).filter(x=>(args.includeSingletons||x.taskCount>=2)&&[x.title,x.description||''].some(text=>asciiLower(text).includes(asciiLower(args.titleKey||'')))),args)};
  if(action==='tasks.get')return {ok:true,result:{task:projected(tasks.find(x=>x.id===args.id))}};
  if(action==='tasks.list')return {ok:true,result:paged(tasks.filter(x=>x.status!=='3'&&x.title.includes(args.titleKey||'')).map(projected),args)};
  if(action==='tasks.timeline'){const rows=tasks.filter(x=>x.timelineId===(args.timelineId||args.timelineKey)&&x.status!=='3').sort((a,b)=>(a.publishDate||'').localeCompare(b.publishDate||'')||a.id.localeCompare(b.id)).map(projected);return {ok:true,result:args.pageNumber?paged(rows,args):rows};}
@@ -54,7 +55,7 @@ async function fill(selector,value){const node=document.querySelector(selector);
 window.runTimelineTests=async()=>{
  let checks=0;const ok=(v,m)=>{check(v,m);checks++};
  await wait(()=>options().length===20&&document.querySelectorAll('.wbt-timeline-member').length===20);
- ok(addon.version==='3.4.1','client version');ok(calls[0].args.includeSingletons===true,'empty and singleton default');
+ ok(addon.version==='3.4.2','client version');ok(calls[0].args.includeSingletons===true,'empty and singleton default');
  const list=document.querySelector('[role=listbox]');list.scrollTop=200;const scroll=list.scrollTop;options()[5].click();await pause();ok(document.querySelector('[role=listbox]')===list&&list.scrollTop===scroll,'stable list');
  options()[5].focus();options()[5].dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}));await pause();ok(document.activeElement===options()[6],'keyboard selection');
  options()[0].click();await wait(()=>document.querySelectorAll('.wbt-timeline-member').length===20);document.querySelector('.wbt-timeline-right [aria-label="下一页"]').click();await wait(()=>document.querySelector('.wbt-timeline-right nav').textContent.includes('2 / 3'));ok(calls.at(-1).args.pageNumber===2,'member pagination');
@@ -77,7 +78,7 @@ window.runTimelineTests=async()=>{
  show('task',restarted.id);await wait(()=>document.querySelector('h4'));await click('移出当前任务');await click('确认移出');await wait(()=>document.body.textContent.includes('没有关联时间线'));ok(restarted.timelineId===null,'detach');
  const count=tasks.length,writes=calls.filter(x=>x.action==='tasks.create').length;show('restart',restarted.id);await pause();ok(document.body.textContent.includes('请先手动建立并关联时间线，再重启'),'unlinked restart guidance');ok(button('创建').disabled,'unlinked restart disabled');button('创建').click();await pause();ok(tasks.length===count&&calls.filter(x=>x.action==='tasks.create').length===writes,'unlinked restart zero writes');
  show('task','self');await wait(()=>document.querySelector('h4'));ok(document.querySelector('h4').textContent==='Self single'&&document.body.textContent.includes('Self singleton task'),'self-id singleton visible');
- show('timeline');await wait(()=>options().length===20);await fill('input[aria-label="搜索时间线标题"]','Renamed line');await click('搜索');await wait(()=>options().length===1&&document.querySelector('.wbt-timeline-right h3').textContent==='Renamed line');
+ show('timeline');await wait(()=>options().length===20);await fill('input[aria-label="搜索时间线标题或描述"]','Renamed line');await click('搜索');await wait(()=>options().length===1&&document.querySelector('.wbt-timeline-right h3').textContent==='Renamed line');
  const before=tasks.length;await click('删除时间线');ok(lines.includes(line),'delete confirmation first');await click('确认删除时间线');await wait(()=>!lines.includes(line));ok(tasks.length===before&&tasks.find(x=>x.id==='ordinary').timelineId===null,'delete retains tasks and detaches hidden history');
  window.fixture.setLanguage('en');await wait(()=>buttons().some(x=>x.textContent==='New timeline'));ok(document.body.textContent.includes('Include empty and single-task timelines'),'English labels');await click('New timeline');ok(document.querySelector('[role=dialog]').textContent.includes('Timeline title'),'English editor');await click('Cancel');
  window.fixture.setDark(true);await pause();ok(getComputedStyle(document.querySelector('.wbt-timeline-view')).color.replaceAll(' ','')==='rgb(229,231,235)','dark foreground');
@@ -107,4 +108,17 @@ window.runTimelineModalTests=async()=>{
  first.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',shiftKey:true,bubbles:true,cancelable:true}));ok(document.activeElement===last,'Shift Tab wraps focus');
  dialog.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));await wait(()=>!document.querySelector('.wbt-timeline-modal'));ok(true,'Escape closes');
  return {passed:true,checks,noProductionWrites:true};
+};
+
+window.runTimelineSearchTests=async()=>{
+ let checks=0;const ok=(v,m)=>{check(v,m);checks++};
+ const original={...lines[0]};lines[0].title='Unique ALPHA %_(';lines[0].description='专有描述 alpha %_( <b> É';
+ show('task','ordinary');await pause();show('timeline');await wait(()=>options().length===20);
+ async function search(term){await fill('.wbt-timeline-search input',term);document.querySelector('.wbt-timeline-search').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));await pause();await wait(()=>document.querySelector('[role=listbox]').getAttribute('aria-busy')==='false');}
+ await search('专有描述');ok(options().length===1,'description-only search');ok(options()[0].querySelector('mark').textContent==='专有描述','description highlighted');
+ await search('alpha');ok(options()[0].querySelectorAll('mark').length===2,'ASCII case-insensitive title and description highlights');
+ await search('%_(');ok(options().length===1&&options()[0].querySelectorAll('mark').length===2,'literal punctuation');
+ await search('é');ok(options().length===0,'non-ASCII case is literal');ok(document.querySelector('.wbt-timeline-left .wbt-empty').textContent.includes('é'),'query shown in empty result');
+ await search('');ok(options().length===20&&!document.querySelector('.wbt-timeline-list mark'),'clear restores list');
+ Object.assign(lines[0],original);return {passed:true,checks,noProductionWrites:true};
 };

@@ -49,11 +49,14 @@ module.exports = function createTasksView(deps) {
     var target = targetS[0], setTarget = targetS[1];
     var pathS = React.useState([]);
     var currentPath = pathS[0], setCurrentPath = pathS[1];
-    var initialMissing = !activityNavigation && !nodeNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
+    // 视图切走会卸载，用会话存储还原上次的筛选；显式导航（排行/热力图跳转）优先并覆盖它。
+    var storedFilters = filters.load(props.viewParams);
+    var initialMissing = storedFilters ? storedFilters.missing : !activityNavigation && !nodeNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
     var missingS = React.useState(initialMissing);
     var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
-    var filterState = React.useState(activityNavigation || filters.fromTab(nodeNavigation || initialMissing ? 8 : cfgTab));
+    var filterState = React.useState((storedFilters && storedFilters.value) || activityNavigation || filters.fromTab(nodeNavigation || initialMissing ? 8 : cfgTab));
     var filterValue = filterState[0], setFilterValue = filterState[1];
+    React.useEffect(function () { filters.save(filterValue, difficultyMissing, props.viewParams); }, [filterValue, difficultyMissing, JSON.stringify(props.viewParams || {})]);
     var panelState = React.useState(false), panelOpen = panelState[0], setPanelOpen = panelState[1];
     var hintState = React.useState(""), filterHint = hintState[0], setFilterHint = hintState[1];
     var panelId = React.useId();
@@ -113,8 +116,9 @@ module.exports = function createTasksView(deps) {
     var dropId = dropS[0], setDropId = dropS[1];
     var toastS = React.useState("");
     var toast = toastS[0], setToast = toastS[1];
-    var refreshRef = React.useRef({});
+    var refreshRef = React.useRef({}), initialNavigation = React.useRef(true);
     React.useEffect(function () {
+      if (initialNavigation.current) { initialNavigation.current = false; if (storedFilters) return; }
       if (!activityNavigation && !nodeNavigation) return;
       setFilterValue(activityNavigation || filters.fromTab(8));
       setTarget(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: groupNavigation ? String(groupNavigation) : "1", tableId: null });
@@ -419,13 +423,16 @@ module.exports = function createTasksView(deps) {
       lang: props.lang, value: filterValue, open: panelOpen, id: panelId, hint: filterHint, onHint: setFilterHint,
       onToggle: function () { setPanelOpen(!panelOpen); },
       onChange: function (next) { setFilterValue(next); setPageNumber(1); },
+      difficultyMissing: difficultyMissing,
+      onMissingChange: function (next) { setDifficultyMissing(next); setPageNumber(1); },
       search: h("form", { className: "wbt-filter-search", onSubmit: function (e) { e.preventDefault(); setTitleKey(searchDraft); setPageNumber(1); } },
         h("input", { className: "wbt-input", placeholder: t.search, "aria-label": t.search, value: searchDraft, onChange: function (e) { setSearchDraft(e.target.value); } }),
         h("button", { type: "submit", className: "wbt-btn ghost", "aria-label": t.search }, h(Icon, { name: "search", size: 14 }))),
       tags: h(TagFilter, { api: api, t: t, Icon: Icon, ids: filterTagIds, reloadKey: tagReload,
         onChange: function (next) { setFilterTagIds(next); setPageNumber(1); } }),
+      // 与难度区间互斥：两者同时生效必然是空集，勾选「仅未填难度」时清掉难度区间。
       missing: h("label", { className: "wbt-check" }, h("input", { type: "checkbox", checked: difficultyMissing,
-        onChange: function (e) { setDifficultyMissing(e.target.checked); setPageNumber(1); } }), t.difficultyMissing),
+        onChange: function (e) { var next = e.target.checked; setDifficultyMissing(next); if (next) setFilterValue(filters.clearDifficulty(filterValue)); setPageNumber(1); } }), t.difficultyMissing),
     });
 
     var listBody = loading

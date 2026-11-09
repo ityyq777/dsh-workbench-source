@@ -4,6 +4,7 @@ import { asCode, STATUS_NAMES, STATUSES, requireTable, dateArg, withNotices, tag
 import { dateRangeFilter } from "./task-publish-filter.js";
 import { activityFilter } from "../../stats/activity-calendar.js";
 import { clampPriority } from "../model/task-priority.js";
+import { clampDifficulty } from "../model/task-model.js";
 import { LEGACY_TYPE_TAGS, tagsAvailable, normalizeTagIds, normalizeTagNames, tagIdsByNames, attachTags, migrateLegacyTypes } from "../../tagging/tagging.js";
 
 /**
@@ -117,6 +118,18 @@ export function listTasks(db, args, api) {
     if (!resolved.ids.length) where.push("1=0");
   }
 
+/**
+ * 区间端点校验：复用优先级/难度各自的 clamp，但把错误归到具体字段名上。
+ * agent 只看到 schema，报错里没有字段名就无法判断是 min 还是 max 传错。
+ */
+function rangeArg(clamp, value, label, span) {
+  try {
+    return clamp(value, null);
+  } catch (e) {
+    throw new Error(label + " 必须是 " + span + " 内的数字");
+  }
+}
+
   // 额外过滤：与 tab/tableId/groupId 条件是 AND 关系。
   if (args.status !== undefined && args.status !== null && args.status !== "") {
     where.push("t.status=?");
@@ -124,15 +137,35 @@ export function listTasks(db, args, api) {
   }
   const difficultyMissing = args.difficultyMissing === true;
   if (difficultyMissing) where.push("(t.difficulty IS NULL OR t.difficulty=0)");
-  const priorityMin = clampPriority(args.priorityMin, null);
+  const priorityMin = rangeArg(clampPriority, args.priorityMin, "priorityMin", "0..10");
+  const priorityMax = rangeArg(clampPriority, args.priorityMax, "priorityMax", "0..10");
   if (priorityMin !== null) {
     where.push("t.priority>=?");
     params.push(priorityMin);
   }
-  const priorityMax = clampPriority(args.priorityMax, null);
   if (priorityMax !== null) {
     where.push("t.priority<=?");
     params.push(priorityMax);
+  }
+  // 难度区间：NULL 视作未设置（0），所以凡是下界为 0 的区间都要显式把 NULL 算进来，
+  // 否则「难度 ≤3」会把未填难度的任务整批漏掉。0 是合法端点，1..5 才是可选档位。
+  const difficultyMin = rangeArg(clampDifficulty, args.difficultyMin, "difficultyMin", "0..5");
+  const difficultyMax = rangeArg(clampDifficulty, args.difficultyMax, "difficultyMax", "0..5");
+  if (difficultyMin !== null && difficultyMax !== null) {
+    if (difficultyMin <= 0) {
+      where.push("(t.difficulty IS NULL OR t.difficulty BETWEEN ? AND ?)");
+      params.push(difficultyMin, difficultyMax);
+    } else {
+      where.push("t.difficulty BETWEEN ? AND ?");
+      params.push(difficultyMin, difficultyMax);
+    }
+  } else if (difficultyMin !== null) {
+    if (difficultyMin <= 0) where.push("(t.difficulty IS NULL OR t.difficulty>=?)");
+    else where.push("t.difficulty>=?");
+    params.push(difficultyMin);
+  } else if (difficultyMax !== null) {
+    where.push("(t.difficulty IS NULL OR t.difficulty<=?)");
+    params.push(difficultyMax);
   }
   const targetFrom = dateArg(args.targetFrom, "targetFrom");
   if (targetFrom) {
@@ -280,6 +313,8 @@ export function listTasks(db, args, api) {
   if (difficultyMissing) filter.difficultyMissing = true;
   if (priorityMin !== null) filter.priorityMin = priorityMin;
   if (priorityMax !== null) filter.priorityMax = priorityMax;
+  if (difficultyMin !== null) filter.difficultyMin = difficultyMin;
+  if (difficultyMax !== null) filter.difficultyMax = difficultyMax;
   for (const range of ranges) for (const [key, value] of Object.entries(range)) {
     if (key !== "notices" && value) filter[key] = value;
   }

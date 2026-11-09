@@ -3159,11 +3159,12 @@ var require_copy = __commonJS({
         timelineActivity: "\u6700\u8FD1\u6D3B\u52A8",
         timelineMerge: "\u5408\u5E76",
         timelineSingletons: "\u5305\u542B\u7A7A\u7EBF\u548C\u5355\u4EFB\u52A1\u65F6\u95F4\u7EBF",
-        timelineSearch: "\u641C\u7D22\u65F6\u95F4\u7EBF\u6807\u9898",
+        timelineSearch: "\u641C\u7D22\u65F6\u95F4\u7EBF\u6807\u9898\u6216\u63CF\u8FF0",
         timelineSearchButton: "\u641C\u7D22",
         timelineMembers: "\u6210\u5458\u4EFB\u52A1",
         timelineOrder: "\u6309\u53D1\u5E03\u65F6\u95F4\u6B63\u5E8F\u6392\u5217\uFF0C\u70B9\u51FB\u4EFB\u52A1\u6253\u5F00\u8BE6\u60C5",
-        timelineEmpty: "\u6682\u65E0\u5339\u914D\u7684\u65F6\u95F4\u7EBF\uFF0C\u53EF\u70B9\u51FB\u201C\u65B0\u5EFA\u65F6\u95F4\u7EBF\u201D\u624B\u52A8\u5EFA\u7ACB\u3002",
+        timelineSearchEmpty: "\u6CA1\u6709\u627E\u5230\u5305\u542B \u201C{query}\u201D \u7684\u65F6\u95F4\u7EBF",
+        timelineEmpty: "\u6682\u65E0\u65F6\u95F4\u7EBF\uFF0C\u53EF\u70B9\u51FB\u201C\u65B0\u5EFA\u65F6\u95F4\u7EBF\u201D\u624B\u52A8\u5EFA\u7ACB\u3002",
         timelineOpen: "\u5F00\u542F",
         timelineDone: "\u5B8C\u6210",
         timelinePrevious: "\u4E0A\u4E00\u9875",
@@ -3312,11 +3313,12 @@ var require_copy = __commonJS({
         timelineActivity: "Last activity",
         timelineMerge: "Merge",
         timelineSingletons: "Include empty and single-task timelines",
-        timelineSearch: "Search timeline title",
+        timelineSearch: "Search timeline titles or descriptions",
         timelineSearchButton: "Search",
         timelineMembers: "Member tasks",
         timelineOrder: "Oldest publication first. Click a task to open details.",
-        timelineEmpty: "No matching timelines. Use New timeline to create one manually.",
+        timelineSearchEmpty: "No timelines contain \u201C{query}\u201D.",
+        timelineEmpty: "No timelines yet. Use New timeline to create one manually.",
         timelineOpen: "Open",
         timelineDone: "Done",
         timelinePrevious: "Previous page",
@@ -4886,6 +4888,7 @@ var require_styles = __commonJS({
       ".wbt-body{display:flex;gap:14px;align-items:stretch;min-height:0;flex:1;overflow:hidden}",
       ".wbt-filter-panel{flex:0 0 248px;width:248px;min-width:0;max-height:100%;overflow-y:auto;overscroll-behavior:contain;border:1px solid var(--wbt-line);border-radius:10px;background:var(--wbt-bg);box-sizing:border-box;padding:12px}",
       ".wbt-filter-content{display:flex;flex-direction:column;gap:12px}.wbt-filter-toggle{display:none}.wbt-filter-group{display:flex;flex-direction:column;gap:8px;min-width:0;margin:0;padding:10px 0;border:0;border-bottom:1px solid var(--wbt-line)}.wbt-filter-group legend{font-weight:600;padding:0}.wbt-filter-search{display:flex;gap:4px}.wbt-filter-search input{width:100%;min-width:0}.wbt-filter-panel .wbt-check{white-space:normal}.wbt-filter-panel .wbt-tagmenu{position:static;width:100%;box-sizing:border-box;max-height:240px}.wbt-filter-panel .wbt-tagfilter{flex-wrap:wrap}.wbt-filter-panel input:disabled{opacity:.45;cursor:not-allowed}.wbt-filter-panel .wbt-mhint{margin:0;line-height:1.6}.wbt-filter-panel .wbt-field input{width:100%;box-sizing:border-box}",
+      ".wbt-limit-group{gap:10px}.wbt-limit-hint{margin:0;font-size:11.5px;line-height:1.6;opacity:.65;overflow-wrap:anywhere}.wbt-limit-row{display:flex;flex-direction:column;gap:4px;min-width:0}.wbt-limit-row>strong{font-weight:560;font-size:12.5px}.wbt-limit-fields{display:flex;align-items:center;gap:4px;min-width:0}.wbt-limit-fields input{flex:1 1 0;width:0;min-width:0;box-sizing:border-box;text-align:center;padding-left:6px;padding-right:6px}.wbt-limit-fields>span{flex:none;opacity:.5}.wbt-limit-clear{flex:none;padding:2px 6px;line-height:1.2}.wbt-limit-unit{font-size:11px;opacity:.55;overflow-wrap:anywhere}",
       ".wbt-status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 8px}.wbt-status-grid .wbt-check{min-width:0;overflow-wrap:anywhere}.wbt-pathrow>.wbt-sum{flex:none;white-space:nowrap}",
       ".wbt-publication-filter{width:100%}.wbt-range-entry{display:flex;gap:4px;align-items:center}.wbt-range-trigger{width:100%;min-width:0;text-align:left;white-space:normal}.wbt-range-trigger span{min-width:0;overflow-wrap:anywhere}.wbt-range-calendar{margin-top:8px;padding:6px;border:1px solid var(--wbt-line);border-radius:8px;background:var(--wbt-bg)}.wbt-range-month{display:flex;gap:4px;align-items:center;margin-bottom:8px}.wbt-range-month input{width:100%;min-width:0;padding:4px;border:1px solid var(--wbt-line);border-radius:4px;background:var(--wbt-bg);color:inherit}.wbt-range-month .wbt-btn{padding:4px 7px}.wbt-range-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;margin:8px 0}.wbt-range-weekday{text-align:center;font-size:11px;opacity:.7}.wbt-range-day{min-width:0;padding:6px 0;border:0;border-radius:4px;background:transparent;color:inherit;font:inherit;cursor:pointer}.wbt-range-day.between{background:color-mix(in srgb,var(--wbt-accent) 18%,transparent)}.wbt-range-day:hover{box-shadow:inset 0 0 0 1px var(--wbt-accent)}.wbt-range-day.selected{background:var(--wbt-accent);color:#fff}.wbt-range-day:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:1px}.wbt-range-actions{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}",
       ".wbt-nav{display:flex;flex-direction:column;gap:2px;flex:0 0 138px;width:138px;padding:3px 0;border-right:1px solid var(--wbt-line)}",
@@ -6117,6 +6120,7 @@ var require_timeline_styles = __commonJS({
       ".wbt-timeline-single{display:flex;align-items:center;gap:8px;margin:12px 0;font-size:13px}.wbt-timeline-search input{min-width:0;flex:1}",
       ".wbt-timeline-list{max-height:840px;overflow:auto;overscroll-behavior:contain}.wbt-timeline-view .wbt-timeline-option{position:relative;box-sizing:border-box;min-height:56px;padding:10px 12px;border:0;border-bottom:1px solid var(--wbt-line);border-radius:var(--wb-radius-sm,6px);display:flex;flex-direction:column;gap:4px;cursor:pointer;color:inherit;background:transparent;background-image:none}",
       ".wbt-timeline-option-title{display:flex;gap:8px;align-items:center;min-width:0}.wbt-timeline-option-title strong{font-size:13px;font-weight:560;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}.wbt-timeline-option>span{font-size:11.5px;opacity:.6;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}",
+      ".wbt-timeline-option>.wbt-timeline-excerpt{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
       ".wbt-timeline-view .wbt-timeline-option.current{box-shadow:inset 3px 0 var(--wbt-accent),inset 0 0 0 1px var(--wbt-line);background:color-mix(in oklab,var(--wbt-accent) 8%,transparent);background-image:none}.wbt-timeline-view .wbt-timeline-option:hover{background:color-mix(in oklab,var(--wbt-accent) 12%,transparent)}",
       ".wbt-timeline-option:focus-visible,.wbt-timeline-view button:focus-visible,.wbt-timeline-modal button:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:2px}.wbt-timeline-option input[type=checkbox],.wbt-timeline-single input{appearance:auto;width:15px;height:15px;flex:none;accent-color:var(--wbt-accent)}",
       ".wbt-timeline-pager{justify-content:space-between;font-size:12px;margin-top:12px}.wbt-timeline-right h3,.wbt-timeline-summary h4{font-size:15px;font-weight:600;margin:0 0 8px;overflow-wrap:anywhere}.wbt-timeline-eyebrow{font-size:11.5px;opacity:.55;margin-bottom:4px;overflow-wrap:anywhere}",
@@ -6775,27 +6779,41 @@ var require_task_filter_model = __commonJS({
   "packages/addons/tasks/client/views/task-filter-model.cjs"(exports2, module2) {
     var date = require_date_filter();
     var groups = ["publish", "done", "shutdown"];
-    function all(value) {
-      return !value.statuses.length && !value.urgent;
+    var limits = { priority: 10, difficulty: 5 };
+    var STORE = "wbt.taskFilters.v2";
+    function bounds() {
+      return { min: "", max: "" };
     }
     function empty() {
-      return { statuses: [], urgent: false, publish: { from: "", to: "" }, done: { from: "", to: "" }, shutdown: { from: "", to: "" } };
+      return { statuses: [], priority: bounds(), difficulty: bounds(), publish: { from: "", to: "" }, done: { from: "", to: "" }, shutdown: { from: "", to: "" } };
+    }
+    function statusFree(value) {
+      return !value.statuses.length;
+    }
+    function hasRange(value) {
+      return groups.some(function(key) {
+        return value[key].from || value[key].to;
+      }) || !!(value.priority.min || value.priority.max || value.difficulty.min || value.difficulty.max);
+    }
+    function all(value) {
+      return statusFree(value) && !hasRange(value);
+    }
+    function isUrgent(value) {
+      return value.priority.min === "6" && value.priority.max === "10";
     }
     function fromTab(tab) {
       var value = empty(), status = { 5: "1", 6: "0", 7: "2" }[tab];
       if (status) value.statuses = [status];
-      value.urgent = Number(tab) === 0;
+      if (Number(tab) === 0) value.priority = { min: "6", max: "10" };
       return value;
     }
     function includes(value, status) {
-      return all(value) || value.statuses.indexOf(status) >= 0;
+      return statusFree(value) || value.statuses.indexOf(status) >= 0;
     }
     function toggle(value, key) {
       var next = Object.assign({}, value, { statuses: value.statuses.slice() });
-      if (key === "all") {
-        next.statuses = [];
-        next.urgent = false;
-      } else if (key === "urgent") next.urgent = !value.urgent;
+      if (key === "all") return empty();
+      else if (key === "urgent") next.priority = isUrgent(value) ? bounds() : { min: "6", max: "10" };
       else {
         var index = next.statuses.indexOf(key);
         if (index >= 0) next.statuses.splice(index, 1);
@@ -6807,7 +6825,7 @@ var require_task_filter_model = __commonJS({
     }
     function enable(value, key) {
       var status = key === "done" ? "2" : "1";
-      return Object.assign({}, value, { statuses: all(value) ? [status] : Array.from(new Set(value.statuses.concat(status))) });
+      return Object.assign({}, value, { statuses: statusFree(value) ? [status] : Array.from(new Set(value.statuses.concat(status))) });
     }
     function range(value, key, input) {
       var normalized = date.normalize(input);
@@ -6818,29 +6836,123 @@ var require_task_filter_model = __commonJS({
       next[key] = { from: normalized.from, to: normalized.to };
       return { value: next, swapped: normalized.swapped, autoSelected: key !== "publish" && value.statuses.indexOf(key === "done" ? "2" : "1") < 0 && !!(normalized.from || normalized.to) };
     }
+    function limit(value, key, end, input) {
+      var text = String(input == null ? "" : input).trim(), box = Object.assign({}, value[key]);
+      if (!text) box[end] = "";
+      else {
+        if (!/^\d+$/.test(text)) return null;
+        var number = Number(text);
+        if (number < 1 || number > limits[key]) return null;
+        box[end] = String(number);
+      }
+      var swapped = false;
+      if (box.min && box.max && Number(box.min) > Number(box.max)) {
+        var swap = box.min;
+        box.min = box.max;
+        box.max = swap;
+        swapped = true;
+      }
+      var next = Object.assign({}, value);
+      next[key] = box;
+      return { value: next, swapped, clearsMissing: key === "difficulty" && !!(box.min || box.max) };
+    }
+    function clearDifficulty(value) {
+      var next = Object.assign({}, value);
+      next.difficulty = bounds();
+      return next;
+    }
     function args(value) {
-      var out = { statuses: value.statuses.map(Number), urgent: value.urgent };
+      var out = { statuses: value.statuses.map(Number) };
       groups.forEach(function(key) {
         out[key + "From"] = value[key].from || void 0;
         out[key + "To"] = value[key].to || void 0;
       });
+      if (value.priority.min) out.priorityMin = Number(value.priority.min);
+      if (value.priority.max) out.priorityMax = Number(value.priority.max);
+      if (value.difficulty.min) out.difficultyMin = Number(value.difficulty.min);
+      if (value.difficulty.max) out.difficultyMax = Number(value.difficulty.max);
       return out;
+    }
+    function readBounds(params, key, target) {
+      var min = String(params[key + "Min"] == null ? "" : params[key + "Min"]), max = String(params[key + "Max"] == null ? "" : params[key + "Max"]);
+      var result = limit(target, key, "min", min);
+      if (!result && min) return null;
+      var next = result ? result.value : target;
+      result = limit(next, key, "max", max);
+      if (!result && max) return null;
+      return result ? result.value : next;
     }
     function navigation(params) {
       if (!params) return null;
+      var value;
       if (params.activityDate && date.validDate(params.activityDate)) {
         var type = groups.indexOf(params.activityType) >= 0 ? params.activityType : "done";
-        return range(empty(), type, { from: params.activityDate, to: params.activityDate }).value;
-      }
-      if (params.filterRoot !== true) return null;
-      var value = empty();
-      groups.forEach(function(key) {
-        var result = range(value, key, { from: params[key + "From"] || "", to: params[key + "To"] || "" });
-        if (result) value = result.value;
-      });
-      return value;
+        value = range(empty(), type, { from: params.activityDate, to: params.activityDate }).value;
+      } else if (params.filterRoot === true) {
+        value = empty();
+        groups.forEach(function(key) {
+          var result = range(value, key, { from: params[key + "From"] || "", to: params[key + "To"] || "" });
+          if (result) value = result.value;
+        });
+      } else if (params.priorityMin !== void 0 || params.priorityMax !== void 0 || params.difficultyMin !== void 0 || params.difficultyMax !== void 0) {
+        value = empty();
+      } else return null;
+      var withPriority = readBounds(params, "priority", value);
+      var withDifficulty = withPriority ? readBounds(params, "difficulty", withPriority) : null;
+      return withDifficulty || value;
     }
-    module2.exports = { groups, all, empty, fromTab, includes, toggle, enable, range, args, navigation };
+    function save(value, missing, params) {
+      try {
+        if (typeof sessionStorage === "undefined") return;
+        sessionStorage.setItem(STORE, JSON.stringify(Object.assign({ missing: missing === true, navigation: JSON.stringify(params || {}) }, value)));
+      } catch (e) {
+      }
+    }
+    function load(params) {
+      try {
+        if (typeof sessionStorage === "undefined") return null;
+        var raw = sessionStorage.getItem(STORE);
+        if (!raw) return null;
+        var parsed = JSON.parse(raw), value = empty();
+        if (parsed.navigation !== JSON.stringify(params || {})) return null;
+        if (Array.isArray(parsed.statuses)) value.statuses = parsed.statuses.map(String).filter(function(s) {
+          return /^[0-3]$/.test(s);
+        });
+        groups.forEach(function(key) {
+          var box = parsed[key] || {};
+          if (date.validDate(box.from)) value[key].from = box.from;
+          if (date.validDate(box.to)) value[key].to = box.to;
+        });
+        ["priority", "difficulty"].forEach(function(key) {
+          var box = parsed[key] || {}, min = limit(value, key, "min", box.min), max;
+          if (min) {
+            value = min.value;
+            max = limit(value, key, "max", box.max);
+            if (max) value = max.value;
+          }
+        });
+        return { value, missing: parsed.missing === true && !value.difficulty.min && !value.difficulty.max };
+      } catch (e) {
+        return null;
+      }
+    }
+    module2.exports = {
+      groups,
+      all,
+      empty,
+      fromTab,
+      includes,
+      toggle,
+      enable,
+      range,
+      limit,
+      clearDifficulty,
+      isUrgent,
+      args,
+      navigation,
+      save,
+      load
+    };
   }
 });
 
@@ -6850,11 +6962,49 @@ var require_task_filter_panel = __commonJS({
     var Icon2 = require_icons().Icon;
     var model = require_task_filter_model();
     var DateFilter = require_date_filter().DateFilter;
+    function NumberInput(p) {
+      var React = p.React, draftState = React.useState(p.value), draft = draftState[0], setDraft = draftState[1];
+      React.useEffect(function() {
+        setDraft(p.value);
+      }, [p.value]);
+      function commit(node) {
+        var result = p.commit(node.validity && node.validity.badInput ? "invalid" : draft);
+        setDraft(result === void 0 ? p.value : result);
+      }
+      return React.createElement("input", {
+        type: "number",
+        min: 1,
+        max: p.max,
+        step: 1,
+        inputMode: "numeric",
+        value: draft,
+        "aria-label": p.label,
+        placeholder: p.placeholder,
+        onChange: function(e) {
+          setDraft(e.target.value);
+        },
+        onBlur: function(e) {
+          commit(e.currentTarget);
+        },
+        onKeyDown: function(e) {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            e.currentTarget.blur();
+          }
+          if (e.key === "Escape") {
+            e.preventDefault();
+            setDraft(p.value);
+          }
+        }
+      });
+    }
     module2.exports = function renderFilterPanel(React, p) {
       var h = React.createElement, en = p.lang === "en", value = p.value;
       var title = en ? "Filters" : "\u7B5B\u9009";
       var labels = en ? { publish: "Publication range", done: "Completion range", shutdown: "Closure range" } : { publish: "\u53D1\u5E03\u65F6\u95F4\u8303\u56F4", done: "\u5B8C\u6210\u65F6\u95F4\u8303\u56F4", shutdown: "\u5173\u95ED\u65F6\u95F4\u8303\u56F4" };
       var options = [["all", en ? "All" : "\u5168\u90E8"], ["urgent", en ? "Urgent tasks" : "\u7D27\u6025\u4EFB\u52A1"], ["0", en ? "Opened" : "\u5DF2\u5F00\u542F"], ["2", en ? "Completed" : "\u5DF2\u5B8C\u6210"], ["1", en ? "Closed" : "\u5DF2\u5173\u95ED"], ["3", en ? "Restarted" : "\u5DF2\u91CD\u542F"]];
+      var unitId = p.id + "-unit";
+      var units = en ? { priority: "Priority 1\u201310, higher is more urgent", difficulty: "Difficulty 1\u20135, higher is harder" } : { priority: "\u4F18\u5148\u7EA7 1\u201310\uFF0C\u6570\u5B57\u8D8A\u5927\u8D8A\u7D27\u6025", difficulty: "\u96BE\u5EA6 1\u20135\uFF0C\u6570\u5B57\u8D8A\u5927\u8D8A\u96BE" };
       function change(next) {
         p.onChange(next);
       }
@@ -6870,6 +7020,51 @@ var require_task_filter_panel = __commonJS({
         p.onHint(hints.join(" \xB7 "));
         change(result.value);
       }
+      function setLimit(key, end, text) {
+        var result = model.limit(value, key, end, text);
+        if (!result) {
+          p.onHint(en ? "Use a whole number within the allowed range" : "\u8BF7\u8F93\u5165\u8303\u56F4\u5185\u7684\u6574\u6570\uFF08\u8D85\u51FA\u6216\u975E\u6570\u5B57\u4E0D\u63A5\u53D7\uFF09");
+          return;
+        }
+        var hints = [];
+        if (result.swapped) hints.push(en ? "Start was above end; values swapped" : "\u8D77\u59CB\u5927\u4E8E\u7EC8\u6B62\uFF0C\u5DF2\u4EA4\u6362");
+        if (result.clearsMissing && p.difficultyMissing) hints.push(en ? "Cleared \u201Cdifficulty unset only\u201D" : "\u5DF2\u53D6\u6D88\u300C\u4EC5\u672A\u586B\u96BE\u5EA6\u300D");
+        p.onHint(hints.join(" \xB7 "));
+        if (result.clearsMissing && p.onMissingChange) p.onMissingChange(false);
+        change(result.value);
+        return result.value[key][end];
+      }
+      function limitRow(key, label) {
+        var box = value[key], max = key === "priority" ? 10 : 5;
+        function field(end) {
+          var labelText = en ? (end === "min" ? "Minimum " : "Maximum ") + label : label + (end === "min" ? "\u4E0B\u9650" : "\u4E0A\u9650");
+          return h(NumberInput, { React, value: box[end], max, label: labelText, placeholder: en ? "Any" : "\u4E0D\u9650", commit: function(text) {
+            return setLimit(key, end, text);
+          } });
+        }
+        function clear() {
+          p.onHint("");
+          change(Object.assign({}, value, (function() {
+            var next = {};
+            next[key] = { min: "", max: "" };
+            return next;
+          })()));
+        }
+        return h(
+          "div",
+          { className: "wbt-limit-row", key },
+          h("strong", null, label),
+          h(
+            "div",
+            { className: "wbt-limit-fields", role: "group", "aria-label": label, "aria-describedby": unitId + "-" + key },
+            field("min"),
+            h("span", { "aria-hidden": true }, "\u2013"),
+            field("max"),
+            h("button", { type: "button", className: "wbt-btn ghost wbt-limit-clear", "aria-label": (en ? "Clear " : "\u6E05\u7A7A") + label, title: (en ? "Clear " : "\u6E05\u7A7A") + label, onClick: clear }, "\xD7")
+          ),
+          h("span", { className: "wbt-limit-unit", id: unitId + "-" + key }, units[key])
+        );
+      }
       return h(
         "aside",
         { className: "wbt-filter-panel" + (p.open ? " expanded" : ""), "aria-label": title },
@@ -6878,7 +7073,7 @@ var require_task_filter_panel = __commonJS({
           "div",
           { className: "wbt-filter-content", id: p.id },
           h("fieldset", { className: "wbt-filter-group wbt-status-grid" }, h("legend", null, en ? "Status (match any)" : "\u72B6\u6001"), options.map(function(option) {
-            var key = option[0], checked = key === "all" ? model.all(value) : key === "urgent" ? value.urgent : value.statuses.indexOf(key) >= 0;
+            var key = option[0], checked = key === "all" ? model.all(value) : key === "urgent" ? model.isUrgent(value) : value.statuses.indexOf(key) >= 0;
             return h("label", { key, className: "wbt-check" }, h("input", { type: "checkbox", checked, "data-status": key, onChange: function() {
               change(model.toggle(value, key));
               p.onHint("");
@@ -6886,6 +7081,14 @@ var require_task_filter_panel = __commonJS({
           })),
           p.search,
           h("div", { className: "wbt-filter-group" }, p.tags, p.missing),
+          h(
+            "fieldset",
+            { className: "wbt-filter-group wbt-limit-group" },
+            h("legend", null, en ? "Priority and difficulty" : "\u4F18\u5148\u7EA7\u4E0E\u96BE\u5EA6"),
+            h("p", { className: "wbt-limit-hint" }, en ? "Only whole numbers; blank means no limit. Urgent tasks are priority 6\u201310, which no longer includes \u201Clow priority but due within 2 days\u201D." : "\u53EA\u63A5\u53D7\u6574\u6570\uFF0C\u7559\u7A7A\u8868\u793A\u4E0D\u9650\u3002\u300C\u7D27\u6025\u4EFB\u52A1\u300D\u7B49\u4E8E\u4F18\u5148\u7EA7 6\u201310\uFF0C\u4E0D\u518D\u5305\u542B\u300C\u4F18\u5148\u7EA7\u4F4E\u4F46 2 \u5929\u5185\u5230\u671F\u300D\u7684\u60C5\u51B5\u3002"),
+            limitRow("priority", en ? "Priority" : "\u4F18\u5148\u7EA7"),
+            limitRow("difficulty", en ? "Difficulty" : "\u96BE\u5EA6")
+          ),
           model.groups.map(function(key) {
             return h(
               "section",
@@ -6954,11 +7157,15 @@ var require_tasks_view = __commonJS({
         var target = targetS[0], setTarget = targetS[1];
         var pathS = React.useState([]);
         var currentPath = pathS[0], setCurrentPath = pathS[1];
-        var initialMissing = !activityNavigation && !nodeNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
+        var storedFilters = filters.load(props.viewParams);
+        var initialMissing = storedFilters ? storedFilters.missing : !activityNavigation && !nodeNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
         var missingS = React.useState(initialMissing);
         var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
-        var filterState = React.useState(activityNavigation || filters.fromTab(nodeNavigation || initialMissing ? 8 : cfgTab));
+        var filterState = React.useState(storedFilters && storedFilters.value || activityNavigation || filters.fromTab(nodeNavigation || initialMissing ? 8 : cfgTab));
         var filterValue = filterState[0], setFilterValue = filterState[1];
+        React.useEffect(function() {
+          filters.save(filterValue, difficultyMissing, props.viewParams);
+        }, [filterValue, difficultyMissing, JSON.stringify(props.viewParams || {})]);
         var panelState = React.useState(false), panelOpen = panelState[0], setPanelOpen = panelState[1];
         var hintState = React.useState(""), filterHint = hintState[0], setFilterHint = hintState[1];
         var panelId = React.useId();
@@ -7018,8 +7225,12 @@ var require_tasks_view = __commonJS({
         var dropId = dropS[0], setDropId = dropS[1];
         var toastS = React.useState("");
         var toast = toastS[0], setToast = toastS[1];
-        var refreshRef = React.useRef({});
+        var refreshRef = React.useRef({}), initialNavigation = React.useRef(true);
         React.useEffect(function() {
+          if (initialNavigation.current) {
+            initialNavigation.current = false;
+            if (storedFilters) return;
+          }
           if (!activityNavigation && !nodeNavigation) return;
           setFilterValue(activityNavigation || filters.fromTab(8));
           setTarget(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: groupNavigation ? String(groupNavigation) : "1", tableId: null });
@@ -7397,6 +7608,11 @@ var require_tasks_view = __commonJS({
             setFilterValue(next);
             setPageNumber(1);
           },
+          difficultyMissing,
+          onMissingChange: function(next) {
+            setDifficultyMissing(next);
+            setPageNumber(1);
+          },
           search: h(
             "form",
             { className: "wbt-filter-search", onSubmit: function(e) {
@@ -7420,11 +7636,14 @@ var require_tasks_view = __commonJS({
               setPageNumber(1);
             }
           }),
+          // 与难度区间互斥：两者同时生效必然是空集，勾选「仅未填难度」时清掉难度区间。
           missing: h("label", { className: "wbt-check" }, h("input", {
             type: "checkbox",
             checked: difficultyMissing,
             onChange: function(e) {
-              setDifficultyMissing(e.target.checked);
+              var next = e.target.checked;
+              setDifficultyMissing(next);
+              if (next) setFilterValue(filters.clearDifficulty(filterValue));
               setPageNumber(1);
             }
           }), t.difficultyMissing)
@@ -7900,6 +8119,7 @@ var require_timeline_view = __commonJS({
       var CSS = require_timeline_styles();
       var MemberRows = require_timeline_member_rows()(React, deps.statusInfo);
       var splitTitle = require_timeline_title();
+      var Highlight = require_highlight()(React);
       function result(r) {
         if (!r || !r.ok) throw new Error(r && r.error || "Request failed");
         return r.result;
@@ -8110,6 +8330,7 @@ var require_timeline_view = __commonJS({
               } }), t.timelineSingletons),
               error ? h("p", { role: "alert", className: "wbt-err" }, t.error + error) : null,
               h("div", { ref: listRef, className: "wbt-timeline-list", role: "listbox", "aria-label": t.timeline, "aria-multiselectable": multi, "aria-busy": busy }, data.records.map(function(item, i) {
+                var excerpt = String(item.description || "").trim().split(/\r?\n/)[0];
                 var isActive = activeKey === item.timelineKey, checked = selected.some(function(x) {
                   return x.timelineKey === item.timelineKey;
                 });
@@ -8134,11 +8355,14 @@ var require_timeline_view = __commonJS({
                     e.stopPropagation();
                   }, onChange: function() {
                     choose(item, true);
-                  } }) : null, h("strong", null, item.title || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF"))),
+                  } }) : null, h("strong", null, h(Highlight, { text: item.title || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF"), keyword: query }))),
+                  excerpt ? h("span", { className: "wbt-timeline-excerpt", title: item.description }, h(Highlight, { text: Array.from(excerpt).slice(0, 90).join(""), keyword: query })) : null,
                   h("span", null, t.timelineTasks + " " + item.taskCount + " \xB7 " + t.timelineOpen + " " + item.openCount + " \xB7 " + t.timelineDone + " " + item.doneCount + " \xB7 " + t.timelineActivity + " " + (item.lastActivityDate || "\u2014"))
                 );
               })),
-              busy ? h("p", { role: "status" }, t.loading) : !error && !data.records.length ? h("p", { className: "wbt-empty" }, t.timelineEmpty) : null,
+              busy ? h("p", { role: "status" }, t.loading) : !error && !data.records.length ? h("p", { className: "wbt-empty", role: "status" }, query ? t.timelineSearchEmpty.replace("{query}", function() {
+                return query;
+              }) : t.timelineEmpty) : null,
               h(Pager, { t, label: t.timeline, busy, page, total: data.total, set: setPage })
             ),
             h(
@@ -8712,7 +8936,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.4.1",
+    version: "3.4.2",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },
