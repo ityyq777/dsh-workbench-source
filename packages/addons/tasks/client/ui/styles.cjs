@@ -8,7 +8,9 @@ module.exports = [
     ".wbt-root{--wbt-hit-bg:#ffe4e6;--wbt-hit-fg:#881337}.wbt-root mark.wbt-hit{background:var(--wbt-hit-bg);color:var(--wbt-hit-fg);border-radius:2px;padding:0;font:inherit;box-decoration-break:clone;-webkit-box-decoration-break:clone}",
     ".wbt-root .wbt-item.closed:has(mark.wbt-hit){opacity:1}",
     ".wbt-root{--wbt-line:var(--wb-border);--wbt-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));--wbt-bg:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base,#fff));--wbt-accent:var(--dsw-alias-brand-primary,#11a89b);display:flex;flex-direction:column;gap:10px;min-height:0;color:inherit;font-size:13px}",
-    ".wbt-pathrow{position:sticky;top:0;z-index:30;background:var(--wbt-bg);box-shadow:0 1px 0 var(--wbt-line);display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 0 2px}",
+    // 主题 layer-1 可能透明：吸顶层叠在基础色及不透明 Canvas 上；同时封住宿主滚动区的顶部内边距。
+    ".wbt-pathrow{position:sticky;top:0;z-index:30;background:linear-gradient(var(--wbt-bg),var(--wbt-bg)),linear-gradient(var(--dsw-alias-bg-base,Canvas),var(--dsw-alias-bg-base,Canvas)),Canvas;box-shadow:0 1px 0 var(--wbt-line);display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 0 2px}",
+    ".wb-immersive-main .wbt-pathrow::before{content:'';position:absolute;inset:-18px 0 0;z-index:-1;background:inherit;pointer-events:auto}",
     ".wbt-tree-slot{flex:0 0 auto;display:flex;align-items:center}",
     ".wbt-grow{flex:1;min-width:0}",
     ".wbt-btn{border:1px solid var(--wbt-line);background:var(--wbt-surface);color:inherit;border-radius:var(--wb-radius-sm);padding:6px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;line-height:1.3;display:inline-flex;align-items:center;gap:5px}",
