@@ -74,6 +74,30 @@ pnpm test:native && pnpm test:tags && pnpm test:sites
 改完插件的正确姿势：`pnpm build` → 重新安装到 profile → 重启 DSH → 用
 `capabilities.list` 核对版本号与 `actionCount`。
 
+### 不要手工「拷一半」插件目录（高频事故）
+
+拷贝安装是按 `package.json` 的 `files` 把整个目录复制过去的。开发期如果只手工
+`cp`/`rsync` 了一部分文件（比如改了 `lib/tasks.js` 只拷这一个文件），profile 里就会
+出现**半套源码**：主文件已经 `import "./task-options.js"`，但目标目录没有这个文件。
+
+后果不是「某个 action 报错」，而是**整个插件加载失败、从工作台彻底消失**：
+`ERR_MODULE_NOT_FOUND` 发生在模块求值阶段，宿主会跳过该 addon，
+`capabilities.list` 里只剩别的插件，用户看到的就是「插件不见了」。
+
+本次踩坑（2026-11-09）：tasks 插件在 profile 里只有 11 个文件，缺
+`db-core.js` / `db-legacy.js` / `tag-options.js`，重启后任务域整体消失；补全文件后
+不重启仍然不出现，因为失败的加载结果在进程内是缓存住的。
+
+规矩：
+
+1. 拆文件/新增 `lib/*.js`、`client/*.cjs` 之后，**重新安装该插件**，不要手工挑文件拷；
+2. 真要手工同步，必须整目录 `rsync -a --delete <pkg>/lib/ <profile>/…/<pkg>/lib/`，
+   并顺带同步 `package.json`；
+3. 同步后在 profile 目录做一次导入冒烟：
+   `node --input-type=module -e 'await import("./node_modules/dsh-workbench-tasks/lib/index.js")'`，
+   四个包入口都能 import 才算装好；
+4. 改完必须重启 DSH 再验证，进程内不会因为文件补齐而自动重载失败的插件。
+
 ### 单文件规模
 
 手写源（`packages/**/src/**`、`packages/addons/*/lib/*.js`、`packages/addons/*/client/*.src.cjs`）
