@@ -473,9 +473,13 @@ try {
   const pBuckets = taskReport.result.breakdowns.priority;
   assert(pBuckets.length === 11, "优先级应为 11 个单值桶（0–10）：" + pBuckets.length);
   assert(pBuckets.map((x) => x.key).join(",") === "0,1,2,3,4,5,6,7,8,9,10", "优先级桶键不是 0–10 单值");
+  assert(pBuckets[0].hidden === true, "优先级 0 桶应标 hidden（图表不画）");
+  assert(pBuckets.slice(1).every((x) => !x.hidden), "优先级 1–10 不应被隐藏");
   const dBuckets = taskReport.result.breakdowns.difficulty.filter((x) => x.key !== "unset");
   assert(dBuckets.length === 10, "难度应为 10 个单值桶（0.5–5）：" + dBuckets.length);
   assert(dBuckets[0].key === "0.5" && dBuckets[9].key === "5", "难度桶键不是 0.5 步进");
+  const dUnset = taskReport.result.breakdowns.difficulty.find((x) => x.key === "unset");
+  assert(dUnset && dUnset.hidden === true, "难度「未设置」桶应保留并标 hidden");
   const pSum = pBuckets.reduce((a, x) => a + x.count, 0);
   assert(pSum === taskReport.result.totals.total, "优先级分桶之和应等于任务总数：" + pSum + "/" + taskReport.result.totals.total);
   const taskAll = await call("tasks.statsReport", { range: "all" });

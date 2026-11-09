@@ -17,8 +17,8 @@ var COPY = {
     trend: "新增 / 完成 / 到期趋势", trendNote: "按自然日 / 周 / 月分桶",
     created: "新增", done: "完成", due: "到期",
     status: "状态构成", statusNote: "当前存量",
-    priority: "优先级分布", priorityNote: "当前存量；0–10 每级一桶",
-    difficulty: "难度分布", difficultyNote: "当前存量；0.5–5 每档一桶",
+    priority: "优先级分布", priorityNote: "当前存量；不含已关闭/已完成",
+    difficulty: "难度分布", difficultyNote: "当前存量；不含未设置",
     aging: "逾期账龄", agingNote: "当前逾期任务",
     overdueList: "逾期清单", overdueNote: "按账龄降序",
     tables: "任务表排行", tablesNote: "按进行中 + 逾期权重",
@@ -42,8 +42,8 @@ var COPY = {
     trend: "Created / done / due trend", trendNote: "Bucketed by day / week / month",
     created: "Created", done: "Done", due: "Due",
     status: "Status", statusNote: "Current",
-    priority: "Priority", priorityNote: "Current; one bucket per level 0–10",
-    difficulty: "Difficulty", difficultyNote: "Current; one bucket per 0.5 step",
+    priority: "Priority", priorityNote: "Current; excludes closed/completed",
+    difficulty: "Difficulty", difficultyNote: "Current; excludes unset",
     aging: "Overdue aging", agingNote: "Current overdue",
     overdueList: "Overdue list", overdueNote: "Oldest first",
     tables: "Task tables", tablesNote: "Weighted by active + overdue",
@@ -58,6 +58,11 @@ var COPY = {
 };
 
 var RANGES = ["7d", "30d", "90d", "365d", "all"];
+
+// 图表只画真实分布：优先级 0（已关闭/已完成）与难度「未设置」由后端标 hidden，数据仍保留供导出。
+function visibleBins(list) {
+  return (list || []).filter(function (b) { return !b.hidden; });
+}
 
 var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true, "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10 };
 
@@ -212,9 +217,9 @@ function TasksStatsBody(props) {
         })));
 
       children.push(h(ch.Card, { key: "priority", span: 6, title: t.priority, note: t.priorityNote },
-        h(ch.Histogram, { data: b.priority || [], lang: lang, color: ch.colors[0] })));
+        h(ch.Histogram, { data: visibleBins(b.priority), lang: lang, color: ch.colors[0] })));
       children.push(h(ch.Card, { key: "difficulty", span: 6, title: t.difficulty, note: t.difficultyNote },
-        h(ch.Histogram, { data: b.difficulty || [], lang: lang, color: ch.colors[4] })));
+        h(ch.Histogram, { data: visibleBins(b.difficulty), lang: lang, color: ch.colors[4] })));
 
       children.push(h(ch.Card, { key: "aging", span: 6, title: t.aging, note: t.agingNote },
         h(ch.Histogram, { data: data.aging || [], lang: lang, color: ch.colors[2] })));

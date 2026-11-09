@@ -230,13 +230,25 @@ export function statsReport(db, args, api) {
     });
   }
 
+  const openZero = db.prepare(
+    "SELECT COUNT(*) AS n FROM task WHERE deleted_at IS NULL AND status='0' AND priority=0",
+  ).get().n || 0;
+  if (openZero > 0) {
+    warnings.push({
+      code: "priority_zero_open",
+      message: openZero + " 个已开启任务优先级为 0（应为 1..10），请用 tasks.update 修正或运行优先级回填",
+    });
+  }
+
   const priorityRows = db.prepare(
     "SELECT priority, COUNT(*) AS n FROM task WHERE deleted_at IS NULL GROUP BY priority",
   ).all();
   // 单值分桶：0..10 各自一桶，不再合并区间——区间会把「9 和 10」糊在一起，看不出真实分布。
+  // 0 桶只可能是历史数据或异常数据（已开启任务应为 1..10，关闭/完成为 0），
+  // 图表不画它，但数据照常下发并标 hidden，导出与数据质量检查仍能拿到全量口径。
   const priorityBins = [];
   for (let p = 0; p <= 10; p += 1) {
-    priorityBins.push({ key: String(p), label: String(p), count: 0 });
+    priorityBins.push({ key: String(p), label: String(p), count: 0, hidden: p === 0 });
   }
   for (const row of priorityRows) {
     const n = Number(row.n || 0);
@@ -264,9 +276,8 @@ export function statsReport(db, args, api) {
     const idx = Math.min(10, Math.max(1, Math.round(d * 2)));
     difficultyBins[idx - 1].count += n;
   }
-  if (difficultyUnset > 0) {
-    difficultyBins.push({ key: "unset", label: "未设置", count: difficultyUnset });
-  }
+  // 「未设置」不是难度，图表不画；保留在数据里（hidden）供导出与口径核对。
+  difficultyBins.push({ key: "unset", label: "未设置", count: difficultyUnset, hidden: true });
 
   const overdueRows = db.prepare(
     "SELECT id,title,target_date,table_id FROM task WHERE deleted_at IS NULL AND status='0' " +
