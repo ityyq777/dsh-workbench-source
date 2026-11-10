@@ -27,7 +27,7 @@ module.exports = function renderFilterPanel(React, p) {
     : {urgent:"紧急任务 P8–10",hard:"高难度 D4–5",overdue:"已逾期",dueToday:"今日到期",recentDone:"近 7 天完成",claimed:"已接取"};
   var activePreset = model.activePreset(value);
   var unitId = p.id + "-unit";
-  var units = en ? {priority:"1–10, higher is more urgent", difficulty:"0.5–5 in half steps, higher is harder"} : {priority:"1–10，越大越紧急", difficulty:"0.5–5，半档递增，越大越难"};
+  var units = en ? {priority:"0–10, higher is more urgent", difficulty:"0–5 in half steps, higher is harder"} : {priority:"0–10，越大越紧急", difficulty:"0–5，半档递增，越大越难"};
   function change(next) { p.onChange(next); }
   function pickPreset(id) {
     p.onHint("");
@@ -44,7 +44,7 @@ module.exports = function renderFilterPanel(React, p) {
   }
   function setLimit(key, end, text) {
     var result = model.limit(value,key,end,text);
-    if (!result) { p.onHint(en ? (key === "difficulty" ? "Difficulty takes 0.5 steps from 0.5 to 5" : "Priority takes whole numbers 1–10") : (key === "difficulty" ? "难度仅接受 0.5–5 之间的半档数值" : "优先级仅接受 1–10 的整数")); return; }
+    if (!result) { p.onHint(en ? (key === "difficulty" ? "Difficulty takes 0.5 steps from 0 to 5" : "Priority takes whole numbers 0–10") : (key === "difficulty" ? "难度仅接受 0–5 之间的半档数值" : "优先级仅接受 0–10 的整数")); return; }
     var hints = [];
     if (result.swapped) hints.push(en ? "Start was above end; values swapped" : "起始大于终止，已交换");
     if (result.clearsMissing && p.difficultyMissing) hints.push(en ? "Cleared “difficulty unset only”" : "已取消「仅未填难度」");
@@ -57,16 +57,18 @@ module.exports = function renderFilterPanel(React, p) {
     var box = value[key], spec = model.limits[key];
     function field(end) {
       var labelText = en ? (end === "min" ? "Minimum " : "Maximum ") + label : (end === "min" ? "最低" : "最高") + label;
-      return h(NumberInput,{React:React,value:box[end],min:spec.min,max:spec.max,step:spec.step,label:labelText,placeholder:en?"Any":"不限",commit:function(text){return setLimit(key,end,text);}});
+      return h(NumberInput,{React:React,value:box[end],min:spec.min,max:spec.max,step:spec.step,label:labelText,placeholder:String(end === "min" ? spec.min : spec.max),commit:function(text){return setLimit(key,end,text);}});
     }
     function clear() {
-      p.onHint(""); change(Object.assign({},value,(function(){var next={};next[key]={min:"",max:""};return next;})()));
+      p.onHint("");
+      change(Object.assign({},value,(function(){var next={};next[key]={min:String(spec.min),max:String(spec.max)};return next;})()));
     }
     return h("div",{className:"wbt-limit-row",key:key},
-      h("strong",null,label),
+      h("div",{className:"wbt-limit-head"},
+        h("strong",null,label),
+        h("span",{className:"wbt-limit-unit",id:unitId+"-"+key},units[key])),
       h("div",{className:"wbt-limit-fields",role:"group","aria-label":label,"aria-describedby":unitId+"-"+key},field("min"),h("span",{className:"wbt-limit-join","aria-hidden":true},en?"to":"至"),field("max"),
-        h("button",{type:"button",className:"wbt-btn ghost wbt-limit-clear","aria-label":(en?"Clear ":"清空")+label,title:(en?"Clear ":"清空")+label,onClick:clear},"×")),
-      h("span",{className:"wbt-limit-unit",id:unitId+"-"+key},units[key]));
+        h("button",{type:"button",className:"wbt-btn ghost wbt-limit-clear","aria-label":(en?"Reset ":"重置")+label,title:(en?"Reset ":"重置")+label,onClick:clear},"×")));
   }
   return h("aside", {className:"wbt-filter-panel" + (p.open ? " expanded" : ""),"aria-label":title},
     h("button",{type:"button",className:"wbt-btn wbt-filter-toggle","aria-label":title,title:title,"aria-expanded":p.open,"aria-controls":p.id,onClick:p.onToggle}, h(Icon,{name:"filter"})),
@@ -91,8 +93,7 @@ module.exports = function renderFilterPanel(React, p) {
           : h("p",{className:"wbt-limit-hint"},en?"No workspaces yet; create one in the task editor.":"还没有工作区，可在任务编辑里新建。"),
         h("label",{className:"wbt-check"},h("input",{type:"checkbox",checked:value.noWorkspace === true,onChange:function(){change(model.toggleNoWorkspace(value));p.onHint("");}}),en?"Not linked to any workspace":"未关联工作区")),
       h("div",{className:"wbt-filter-group"},p.tags,p.missing),
-      h("fieldset",{className:"wbt-filter-group wbt-limit-group"},h("legend",null,en?"Priority and difficulty":"优先级与难度"),
-        h("p",{className:"wbt-limit-hint"},en?"Priority takes whole numbers 1–10; difficulty takes 0.5 steps. Blank means no limit.":"优先级取 1–10 的整数，难度按 0.5 递增；留空表示不限。"),
+      h("section",{className:"wbt-filter-group wbt-limit-group",role:"group","aria-label":en?"Priority and difficulty":"优先级与难度"},
         limitRow("priority", en ? "Priority" : "优先级"),
         limitRow("difficulty", en ? "Difficulty" : "难度")),
       h("section",{className:"wbt-filter-group wbt-target-group","aria-label":labels.target},

@@ -3,10 +3,11 @@
 var date = require("../ui/date-filter.cjs");
 var groups = ["publish", "done", "shutdown"];
 // 0 只表示「没有优先级 / 没有难度」，所以 UI 区间端点从 1 起：优先级整数 1–10，难度 0.5 起按半档递增。
-var limits = {priority:{min:1, max:10, step:1}, difficulty:{min:0.5, max:5, step:0.5}};
+// 0 也是有效取值：优先级 0 表示已关闭/已完成，难度 0 是「设置过」而 NULL 才是未设置。
+var limits = {priority:{min:0, max:10, step:1}, difficulty:{min:0, max:5, step:0.5}};
 var STORE = "wbt.taskFilters.v3";
-function bounds() { return {min:"", max:""}; }
-function empty() { return {statuses:[], priority:bounds(), difficulty:bounds(), publish:{from:"",to:""}, done:{from:"",to:""}, shutdown:{from:"",to:""}, target:{from:"",to:""}, workspaceIds:[], noWorkspace:false}; }
+function bounds(key) { return key === "difficulty" ? {min:"0", max:"5"} : key === "priority" ? {min:"0", max:"10"} : {min:"", max:""}; }
+function empty() { return {statuses:[], priority:bounds("priority"), difficulty:bounds("difficulty"), publish:{from:"",to:""}, done:{from:"",to:""}, shutdown:{from:"",to:""}, target:{from:"",to:""}, workspaceIds:[], noWorkspace:false}; }
 // 未关联工作区与具体工作区互斥：勾选其一就清掉另一个。
 function toggleWorkspace(value, id) {
   var next = Object.assign({}, value, {workspaceIds:value.workspaceIds.slice(), noWorkspace:false});
@@ -20,9 +21,15 @@ function toggleNoWorkspace(value) {
   return next;
 }
 function statusFree(value) { return !value.statuses.length; }
+// 端点等于完整域（0–10 / 0–5）时视为「没有额外限制」，这样默认预填不会变成隐性筛选。
+function fullLimits(key, box) {
+  var spec = limits[key];
+  return Number(box.min) === spec.min && Number(box.max) === spec.max;
+}
 function hasRange(value) {
   return groups.concat(["target"]).some(function (key) { return value[key].from || value[key].to; }) ||
-    !!(value.priority.min || value.priority.max || value.difficulty.min || value.difficulty.max) ||
+    !!(value.priority.min || value.priority.max) && !fullLimits("priority", value.priority) ||
+    !!(value.difficulty.min || value.difficulty.max) && !fullLimits("difficulty", value.difficulty) ||
     !!(value.workspaceIds && value.workspaceIds.length) || value.noWorkspace === true;
 }
 function all(value) { return statusFree(value) && !hasRange(value); }
@@ -104,14 +111,14 @@ function limit(value, key, end, input) {
   var next = Object.assign({}, value); next[key] = box;
   return {value:next, swapped:swapped, clearsMissing:key === "difficulty" && !!(box.min || box.max)};
 }
-function clearDifficulty(value) { var next = Object.assign({}, value); next.difficulty = bounds(); return next; }
+function clearDifficulty(value) { var next = Object.assign({}, value); next.difficulty = bounds("difficulty"); return next; }
 function args(value) {
   var out = {statuses:value.statuses.map(Number)};
   groups.concat(["target"]).forEach(function(key){out[key+"From"] = value[key].from || undefined; out[key+"To"] = value[key].to || undefined;});
-  if (value.priority.min) out.priorityMin = Number(value.priority.min);
-  if (value.priority.max) out.priorityMax = Number(value.priority.max);
-  if (value.difficulty.min) out.difficultyMin = Number(value.difficulty.min);
-  if (value.difficulty.max) out.difficultyMax = Number(value.difficulty.max);
+  if (value.priority.min && !fullLimits("priority", value.priority)) out.priorityMin = Number(value.priority.min);
+  if (value.priority.max && !fullLimits("priority", value.priority)) out.priorityMax = Number(value.priority.max);
+  if (value.difficulty.min && !fullLimits("difficulty", value.difficulty)) out.difficultyMin = Number(value.difficulty.min);
+  if (value.difficulty.max && !fullLimits("difficulty", value.difficulty)) out.difficultyMax = Number(value.difficulty.max);
   if (value.noWorkspace) out.noWorkspace = true;
   else if (value.workspaceIds && value.workspaceIds.length) out.workspaceIds = value.workspaceIds.slice();
   return out;
