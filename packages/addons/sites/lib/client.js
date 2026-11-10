@@ -3881,6 +3881,62 @@ var init_copy = __esm({
   }
 });
 
+// packages/addons/sites/client/ui/icons.cjs
+var require_icons = __commonJS({
+  "packages/addons/sites/client/ui/icons.cjs"(exports2, module2) {
+    "use strict";
+    var h2 = require("react").createElement;
+    var ICONS = {
+      "x": (init_x(), __toCommonJS(x_exports)).default,
+      "plus": (init_plus(), __toCommonJS(plus_exports)).default,
+      "check": (init_check(), __toCommonJS(check_exports)).default,
+      "edit": (init_pencil(), __toCommonJS(pencil_exports)).default,
+      "trash": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
+      "folder": (init_folder(), __toCommonJS(folder_exports)).default,
+      "folder-open": (init_folder_open(), __toCommonJS(folder_open_exports)).default,
+      "folder-plus": (init_folder_plus(), __toCommonJS(folder_plus_exports)).default,
+      "folder-tree": (init_folder_tree(), __toCommonJS(folder_tree_exports)).default,
+      "house": (init_house(), __toCommonJS(house_exports)).default,
+      "link": (init_link_2(), __toCommonJS(link_2_exports)).default,
+      "tag": (init_tag(), __toCommonJS(tag_exports)).default,
+      "star": (init_star(), __toCommonJS(star_exports)).default,
+      "search": (init_search(), __toCommonJS(search_exports)).default,
+      "refresh": (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
+      "chevron-left": (init_chevron_left(), __toCommonJS(chevron_left_exports)).default,
+      "chevron-right": (init_chevron_right(), __toCommonJS(chevron_right_exports)).default,
+      "chevron-down": (init_chevron_down(), __toCommonJS(chevron_down_exports)).default,
+      "arrow-up": (init_arrow_up(), __toCommonJS(arrow_up_exports)).default,
+      "arrow-down": (init_arrow_down(), __toCommonJS(arrow_down_exports)).default,
+      "arrow-up-down": (init_arrow_up_down(), __toCommonJS(arrow_up_down_exports)).default,
+      "key": (init_key_round(), __toCommonJS(key_round_exports)).default,
+      "lock": (init_lock(), __toCommonJS(lock_exports)).default,
+      "eye": (init_eye(), __toCommonJS(eye_exports)).default,
+      "eye-off": (init_eye_off(), __toCommonJS(eye_off_exports)).default,
+      "chart": (init_chart_column(), __toCommonJS(chart_column_exports)).default,
+      "settings": (init_settings(), __toCommonJS(settings_exports)).default,
+      "database": (init_database(), __toCommonJS(database_exports)).default,
+      "globe": (init_globe(), __toCommonJS(globe_exports)).default,
+      "copy": (init_copy(), __toCommonJS(copy_exports)).default
+    };
+    function Icon2(props) {
+      var C = ICONS[props.name];
+      if (!C) return null;
+      return h2(C, {
+        size: props.size || 14,
+        strokeWidth: props.strokeWidth || 2,
+        "aria-hidden": "true",
+        className: "wbs-svg" + (props.className ? " " + props.className : "")
+      });
+    }
+    function tabIcon(name) {
+      return function SitesTabIcon() {
+        return h2(Icon2, { name, size: 14 });
+      };
+    }
+    module2.exports = { ICONS, Icon: Icon2, tabIcon };
+  }
+});
+
 // packages/addons/sites/client/ui/copy.cjs
 var require_copy = __commonJS({
   "packages/addons/sites/client/ui/copy.cjs"(exports2, module2) {
@@ -4289,53 +4345,7 @@ var TagFilter = require_tagfilter();
   var statsView = require_stats();
   var configView = require_config();
   var dataView = require_data();
-  var ICONS = {
-    "x": (init_x(), __toCommonJS(x_exports)).default,
-    "plus": (init_plus(), __toCommonJS(plus_exports)).default,
-    "check": (init_check(), __toCommonJS(check_exports)).default,
-    "edit": (init_pencil(), __toCommonJS(pencil_exports)).default,
-    "trash": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
-    "folder": (init_folder(), __toCommonJS(folder_exports)).default,
-    "folder-open": (init_folder_open(), __toCommonJS(folder_open_exports)).default,
-    "folder-plus": (init_folder_plus(), __toCommonJS(folder_plus_exports)).default,
-    "folder-tree": (init_folder_tree(), __toCommonJS(folder_tree_exports)).default,
-    "house": (init_house(), __toCommonJS(house_exports)).default,
-    "link": (init_link_2(), __toCommonJS(link_2_exports)).default,
-    "tag": (init_tag(), __toCommonJS(tag_exports)).default,
-    "star": (init_star(), __toCommonJS(star_exports)).default,
-    "search": (init_search(), __toCommonJS(search_exports)).default,
-    "refresh": (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
-    "chevron-left": (init_chevron_left(), __toCommonJS(chevron_left_exports)).default,
-    "chevron-right": (init_chevron_right(), __toCommonJS(chevron_right_exports)).default,
-    "chevron-down": (init_chevron_down(), __toCommonJS(chevron_down_exports)).default,
-    "arrow-up": (init_arrow_up(), __toCommonJS(arrow_up_exports)).default,
-    "arrow-down": (init_arrow_down(), __toCommonJS(arrow_down_exports)).default,
-    "arrow-up-down": (init_arrow_up_down(), __toCommonJS(arrow_up_down_exports)).default,
-    "key": (init_key_round(), __toCommonJS(key_round_exports)).default,
-    "lock": (init_lock(), __toCommonJS(lock_exports)).default,
-    "eye": (init_eye(), __toCommonJS(eye_exports)).default,
-    "eye-off": (init_eye_off(), __toCommonJS(eye_off_exports)).default,
-    "chart": (init_chart_column(), __toCommonJS(chart_column_exports)).default,
-    "settings": (init_settings(), __toCommonJS(settings_exports)).default,
-    "database": (init_database(), __toCommonJS(database_exports)).default,
-    "globe": (init_globe(), __toCommonJS(globe_exports)).default,
-    "copy": (init_copy(), __toCommonJS(copy_exports)).default
-  };
-  function Icon2(props) {
-    var C = ICONS[props.name];
-    if (!C) return null;
-    return h2(C, {
-      size: props.size || 14,
-      strokeWidth: props.strokeWidth || 2,
-      "aria-hidden": "true",
-      className: "wbs-svg" + (props.className ? " " + props.className : "")
-    });
-  }
-  function tabIcon(name) {
-    return function SitesTabIcon() {
-      return h2(Icon2, { name, size: 14 });
-    };
-  }
+  var icons = require_icons(), Icon2 = icons.Icon, tabIcon = icons.tabIcon;
   var useState = React2.useState;
   var useEffect = React2.useEffect;
   var useRef = React2.useRef;
