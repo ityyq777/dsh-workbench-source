@@ -1207,13 +1207,13 @@ var TagFilter = require("./ui/tagfilter.cjs");
 
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.9.4",
+    version: "1.10.0",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.SitesStatsView },
       { id: "sites", icon: tabIcon("globe"), title: { zh: "记录", en: "Records" }, component: SitesView },
       { id: "config", icon: tabIcon("settings"), title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
       { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: dataView.DataView },
-      { id: "actions", icon: tabIcon("code-2"), title: { zh: "Action 清单", en: "Actions" }, component: require("./views/actions.cjs").ActionSchemaView },
+      { id: "actions", icon: tabIcon("code-2"), title: { zh: "Action", en: "Actions" }, component: require("./views/actions.cjs").ActionSchemaView },
     ],
   });
 

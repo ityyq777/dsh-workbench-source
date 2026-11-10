@@ -370,14 +370,14 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.1.4",
+    version: "5.1.5",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "记录", en: "Records" }, component: TasksView },
       { id: "timeline", icon: tabIcon("timeline"), title: { zh: "时间线", en: "Timeline" }, component: TimelineView },
       { id: "config", icon: tabIcon("settings"), title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
       { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: dataView.DataView },
-      { id: "actions", icon: tabIcon("code-2"), title: { zh: "Action 清单", en: "Actions" }, component: actionSchemaView.ActionSchemaView },
+      { id: "actions", icon: tabIcon("code-2"), title: { zh: "Action", en: "Actions" }, component: actionSchemaView.ActionSchemaView },
     ],
   });
 

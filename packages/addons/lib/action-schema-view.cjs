@@ -1,19 +1,22 @@
 "use strict";
-// 共享只读「Action 清单」视图：数据来自各插件自己注册的 <域>.actionSchema（插件自证清单，
+// 共享只读「Action」页视图：数据来自各插件自己注册的 <域>.actionSchema（插件自证清单，
 // 与 actions.list(detail=true) 同源同义），按当前插件域过滤后结构化渲染。只读：不提供执行入口、不写库、不做磁盘缓存；
 // 跨域 action（如任务页偶尔调用 tags.*）不算本域清单，也不改真实 schema。
+// 搜索采用「过滤 + 高亮同口径」：命中范围与过滤 haystack 完全一致（名称 / 描述 / 参数名 / 类型 / 说明），
+// 示例与原始 JSON Schema 只展示不高亮，避免在代码块里插标签破坏可复制性。
 var React = require("react");
+var createHighlight = require("./highlight.cjs")(React);
 var h = React.createElement;
 
 var COPY = {
   zh: {
-    title: "Action 清单",
+    title: "Action",
     hint: "运行时注册 · 只读",
     domain: "域",
     versionLabel: "版本",
     shell: "宿主",
     count: function (shown, total) { return shown + " / " + total + " 个 action"; },
-    search: "搜索名称、描述、参数",
+    search: "搜索名称、描述、参数（命中处高亮）",
     filterReq: "必填筛选",
     all: "全部",
     onlyRequired: "含必填项",
@@ -54,7 +57,7 @@ var COPY = {
     versionLabel: "Version",
     shell: "Host",
     count: function (shown, total) { return shown + " / " + total + " actions"; },
-    search: "Search name, description, params",
+    search: "Search name, description, params (matches highlighted)",
     filterReq: "Required",
     all: "All",
     onlyRequired: "Has required",
@@ -172,6 +175,9 @@ module.exports = function createActionSchemaView(options) {
   var P = prefix + "-as";
   var Icon = options.Icon || null;
   var injectCss = require("./action-schema-style.cjs")(prefix, DOMAIN);
+  // 高亮类名跟本页样式同前缀（"wbt-as" → "wbt-as-hit"），避免与记录页的 wbt-hit 抢样式；
+  // 这里直接取 Highlight.hit() 的片段，少一层元素包装，同步渲染的视图测试也能断到 mark。
+  var Highlight = createHighlight(P);
 
   function icon(name, size) {
     return Icon ? h(Icon, { name: name, size: size || 14 }) : null;
@@ -273,7 +279,9 @@ module.exports = function createActionSchemaView(options) {
     });
     typeOptions.sort();
 
-    var q = String(query || "").trim().toLowerCase();
+    // 过滤用转小写后的 q；高亮用 trim 后的原串（高亮内部只折叠 ASCII 大小写）。
+    var kw = String(query || "").trim();
+    var q = kw.toLowerCase();
     var visible = all.filter(function (a) {
       var rows = paramRows(a);
       if (q) {
@@ -293,11 +301,12 @@ module.exports = function createActionSchemaView(options) {
     function paramRow(row) {
       var extra = extraText(row.schema, t);
       return h("tr", { key: row.name },
-        h("td", { className: P + "-mono" }, row.name),
-        h("td", { className: P + "-mono" }, row.type),
+        h("td", { className: P + "-mono" }, Highlight.hit(row.name, kw)),
+        h("td", { className: P + "-mono" }, Highlight.hit(row.type, kw)),
         h("td", { className: row.required ? P + "-req" : P + "-opt" }, row.required ? t.required : t.optional),
+        // extra（默认 / 枚举 / 约束）不在过滤 haystack 里，因此也不高亮，保持「显示即命中」口径。
         h("td", { className: P + "-mono" }, extra),
-        h("td", null, row.description));
+        h("td", null, Highlight.hit(row.description, kw)));
     }
 
     function card(action) {
@@ -305,13 +314,13 @@ module.exports = function createActionSchemaView(options) {
       var examples = Array.isArray(action.examples) ? action.examples : [];
       return h("div", { className: P + "-card", key: action.name },
         h("div", { className: P + "-cardhead" },
-          h("code", { className: P + "-mono" }, action.name),
+          h("code", { className: P + "-mono" }, Highlight.hit(action.name, kw)),
           h("span", { className: P + "-badge" }, action.domain),
           h("span", { className: P + "-badge" }, rows.length ? t.paramCount(rows.length) : t.noParams),
           rows.some(function (row) { return row.required; })
             ? h("span", { className: P + "-badge " + P + "-req" }, t.required)
             : null),
-        action.description ? h("p", { className: P + "-desc" }, action.description) : null,
+        action.description ? h("p", { className: P + "-desc" }, Highlight.hit(action.description, kw)) : null,
         rows.length
           ? h("table", { className: P + "-table" },
             h("thead", null, h("tr", null,

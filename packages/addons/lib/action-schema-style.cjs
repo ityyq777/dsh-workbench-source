@@ -1,5 +1,5 @@
 "use strict";
-// 「Action 清单」页的样式：只读清单，沿用工作台主题 token，深浅色自动适配。
+// Action 页的样式：只读清单，沿用工作台主题 token，深浅色自动适配。
 module.exports = function (PREFIX, DOMAIN) {
   var P = PREFIX + "-as";
   var CSS = [
@@ -20,6 +20,8 @@ module.exports = function (PREFIX, DOMAIN) {
     "." + P + "-cardhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
     "." + P + "-cardhead code{font-weight:640}",
     "." + P + "-desc{margin:0;color:var(--dsw-alias-label-secondary,inherit);line-height:1.55;font-size:12.5px}",
+    // 搜索命中：用品牌色透明度叠加而不是写死浅色，深浅主题都可读；继承文字颜色、不覆盖 ::selection。
+    "." + P + " mark." + P + "-hit{background:color-mix(in oklab,var(--dsw-alias-brand-primary,#4f6ef7) 22%,transparent);color:inherit;border-radius:2px;padding:0;font:inherit;box-decoration-break:clone;-webkit-box-decoration-break:clone}",
     "." + P + "-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:auto}",
     "." + P + "-table th{text-align:left;font-weight:620;font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--dsw-alias-label-tertiary,inherit);padding:4px 8px 4px 0;white-space:nowrap}",
     "." + P + "-table td{padding:4px 8px 4px 0;vertical-align:top;border-top:1px solid color-mix(in oklab,currentColor 8%,transparent);line-height:1.5}",

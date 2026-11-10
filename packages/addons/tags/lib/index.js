@@ -19,7 +19,7 @@ function requireApi() {
 }
 
 /**
- * 只读「Action 清单」页的数据源完全由插件自己维护：注册时记录 action 定义，
+ * 只读「Action」页的数据源完全由插件自己维护：注册时记录 action 定义，
  * 再由本插件注册的 <域>.actionSchema 返回，不经过宿主 schema 接口。
  */
 function trackActions(api) {
@@ -37,7 +37,7 @@ function trackActions(api) {
 function registerActionSchemaAction(api, defs, domain) {
   const prefix = domain.replace(/^wb-addon-/, "");
   api.action(prefix + ".actionSchema", {
-    description: "只读：返回本插件运行时注册的 action schema（供「Action 清单」页渲染；不执行任何 action、不写库、不产生审计）",
+    description: "只读：返回本插件运行时注册的 action schema（供「Action」页渲染；不执行任何 action、不写库、不产生审计）",
     input: { type: "object", properties: {}, additionalProperties: false },
     execute: () => ({
       shellVersion: api.shellVersion || "",
@@ -74,7 +74,7 @@ export function apply(ctx) {
         id: "wb-addon-tags",
         title: "标签",
         description: "创建与管理标签，为站点等业务提供标签归类；含统计/记录/配置/数据四个视图",
-        version: "1.6.13",
+        version: "1.7.0",
         tables: ["tag", "tag_mapping"],
         sync: tagSync,
         views: [

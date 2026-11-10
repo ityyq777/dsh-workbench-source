@@ -1356,7 +1356,7 @@ function apiFor(id) {
       });
     },
     // 只读 schema 快照：宿主 /workbench/api/schema 与 actions.list(detail=true) 同源，
-    // 供「Action 清单」页渲染运行时注册；不走 action 执行链路，也不会产生审计记录。
+    // 供工作台 Action 页渲染运行时注册；不走 action 执行链路，也不会产生审计记录。
     schema: function(domain) {
       var q = domain ? "?domain=" + encodeURIComponent(domain) : "";
       return fetch("/workbench/api/schema" + q).then(function(r) {

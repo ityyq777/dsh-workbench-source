@@ -22,7 +22,7 @@ function requireApi() {
 }
 
 /**
- * 只读「Action 清单」页的数据源完全由插件自己维护：注册时记录 action 定义，
+ * 只读「Action」页的数据源完全由插件自己维护：注册时记录 action 定义，
  * 再由本插件注册的 <域>.actionSchema 返回，不经过宿主 schema 接口。
  */
 function trackActions(api) {
@@ -40,7 +40,7 @@ function trackActions(api) {
 function registerActionSchemaAction(api, defs, domain) {
   const prefix = domain.replace(/^wb-addon-/, "");
   api.action(prefix + ".actionSchema", {
-    description: "只读：返回本插件运行时注册的 action schema（供「Action 清单」页渲染；不执行任何 action、不写库、不产生审计）",
+    description: "只读：返回本插件运行时注册的 action schema（供「Action」页渲染；不执行任何 action、不写库、不产生审计）",
     input: { type: "object", properties: {}, additionalProperties: false },
     execute: () => ({
       shellVersion: api.shellVersion || "",
@@ -80,7 +80,7 @@ export function apply(ctx) {
         id: "wb-addon-sites",
         title: "站点",
         description: "站点收藏：目录树、链接与标签（标签需安装标签插件）；含统计/记录/配置/数据四个视图",
-        version: "1.9.4",
+        version: "1.10.0",
         tables: ["site", "site_node", "site_node_mapping", "tag_mapping", "site_account", "site_account_external"],
         sync: siteSync,
         views: [

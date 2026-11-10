@@ -4128,6 +4128,50 @@ var require_data = __commonJS({
   }
 });
 
+// packages/addons/lib/highlight.cjs
+var require_highlight = __commonJS({
+  "packages/addons/lib/highlight.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(React) {
+      var h2 = React.createElement;
+      function sourceOf(keyword) {
+        var pattern = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        return pattern.replace(/[a-zA-Z]/g, function(letter) {
+          return "[" + letter.toLowerCase() + letter.toUpperCase() + "]";
+        });
+      }
+      return function createHighlight(prefix) {
+        var className = String(prefix || "wb") + "-hit";
+        function hit(rawText, rawKeyword) {
+          var text = rawText == null ? "" : String(rawText);
+          var keyword = rawKeyword == null ? "" : String(rawKeyword);
+          if (!keyword) return text;
+          var matcher, match, end = 0, parts = [];
+          try {
+            matcher = new RegExp(sourceOf(keyword), "g");
+          } catch (error) {
+            return text;
+          }
+          while (match = matcher.exec(text)) {
+            if (match.index > end) parts.push(text.slice(end, match.index));
+            parts.push(h2("mark", { className, key: match.index }, match[0]));
+            end = match.index + match[0].length;
+            if (!match[0]) matcher.lastIndex += 1;
+          }
+          if (!parts.length) return text;
+          if (end < text.length) parts.push(text.slice(end));
+          return parts;
+        }
+        function Highlight(props) {
+          return hit(props.text, props.keyword);
+        }
+        Highlight.hit = hit;
+        return Highlight;
+      };
+    };
+  }
+});
+
 // packages/addons/lib/action-schema-style.cjs
 var require_action_schema_style = __commonJS({
   "packages/addons/lib/action-schema-style.cjs"(exports2, module2) {
@@ -4152,6 +4196,8 @@ var require_action_schema_style = __commonJS({
         "." + P + "-cardhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
         "." + P + "-cardhead code{font-weight:640}",
         "." + P + "-desc{margin:0;color:var(--dsw-alias-label-secondary,inherit);line-height:1.55;font-size:12.5px}",
+        // 搜索命中：用品牌色透明度叠加而不是写死浅色，深浅主题都可读；继承文字颜色、不覆盖 ::selection。
+        "." + P + " mark." + P + "-hit{background:color-mix(in oklab,var(--dsw-alias-brand-primary,#4f6ef7) 22%,transparent);color:inherit;border-radius:2px;padding:0;font:inherit;box-decoration-break:clone;-webkit-box-decoration-break:clone}",
         "." + P + "-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:auto}",
         "." + P + "-table th{text-align:left;font-weight:620;font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--dsw-alias-label-tertiary,inherit);padding:4px 8px 4px 0;white-space:nowrap}",
         "." + P + "-table td{padding:4px 8px 4px 0;vertical-align:top;border-top:1px solid color-mix(in oklab,currentColor 8%,transparent);line-height:1.5}",
@@ -4194,10 +4240,11 @@ var require_action_schema_view = __commonJS({
   "packages/addons/lib/action-schema-view.cjs"(exports2, module2) {
     "use strict";
     var React = require("react");
+    var createHighlight = require_highlight()(React);
     var h2 = React.createElement;
     var COPY = {
       zh: {
-        title: "Action \u6E05\u5355",
+        title: "Action",
         hint: "\u8FD0\u884C\u65F6\u6CE8\u518C \xB7 \u53EA\u8BFB",
         domain: "\u57DF",
         versionLabel: "\u7248\u672C",
@@ -4205,7 +4252,7 @@ var require_action_schema_view = __commonJS({
         count: function(shown, total) {
           return shown + " / " + total + " \u4E2A action";
         },
-        search: "\u641C\u7D22\u540D\u79F0\u3001\u63CF\u8FF0\u3001\u53C2\u6570",
+        search: "\u641C\u7D22\u540D\u79F0\u3001\u63CF\u8FF0\u3001\u53C2\u6570\uFF08\u547D\u4E2D\u5904\u9AD8\u4EAE\uFF09",
         filterReq: "\u5FC5\u586B\u7B5B\u9009",
         all: "\u5168\u90E8",
         onlyRequired: "\u542B\u5FC5\u586B\u9879",
@@ -4250,7 +4297,7 @@ var require_action_schema_view = __commonJS({
         count: function(shown, total) {
           return shown + " / " + total + " actions";
         },
-        search: "Search name, description, params",
+        search: "Search name, description, params (matches highlighted)",
         filterReq: "Required",
         all: "All",
         onlyRequired: "Has required",
@@ -4361,6 +4408,7 @@ var require_action_schema_view = __commonJS({
       var P = prefix + "-as";
       var Icon3 = options.Icon || null;
       var injectCss = require_action_schema_style()(prefix, DOMAIN);
+      var Highlight = createHighlight(P);
       function icon(name, size) {
         return Icon3 ? h2(Icon3, { name, size: size || 14 }) : null;
       }
@@ -4464,7 +4512,8 @@ var require_action_schema_view = __commonJS({
           });
         });
         typeOptions.sort();
-        var q = String(query || "").trim().toLowerCase();
+        var kw = String(query || "").trim();
+        var q = kw.toLowerCase();
         var visible = all.filter(function(a) {
           var rows = paramRows(a);
           if (q) {
@@ -4488,11 +4537,12 @@ var require_action_schema_view = __commonJS({
           return h2(
             "tr",
             { key: row.name },
-            h2("td", { className: P + "-mono" }, row.name),
-            h2("td", { className: P + "-mono" }, row.type),
+            h2("td", { className: P + "-mono" }, Highlight.hit(row.name, kw)),
+            h2("td", { className: P + "-mono" }, Highlight.hit(row.type, kw)),
             h2("td", { className: row.required ? P + "-req" : P + "-opt" }, row.required ? t.required : t.optional),
+            // extra（默认 / 枚举 / 约束）不在过滤 haystack 里，因此也不高亮，保持「显示即命中」口径。
             h2("td", { className: P + "-mono" }, extra),
-            h2("td", null, row.description)
+            h2("td", null, Highlight.hit(row.description, kw))
           );
         }
         function card(action) {
@@ -4504,14 +4554,14 @@ var require_action_schema_view = __commonJS({
             h2(
               "div",
               { className: P + "-cardhead" },
-              h2("code", { className: P + "-mono" }, action.name),
+              h2("code", { className: P + "-mono" }, Highlight.hit(action.name, kw)),
               h2("span", { className: P + "-badge" }, action.domain),
               h2("span", { className: P + "-badge" }, rows.length ? t.paramCount(rows.length) : t.noParams),
               rows.some(function(row) {
                 return row.required;
               }) ? h2("span", { className: P + "-badge " + P + "-req" }, t.required) : null
             ),
-            action.description ? h2("p", { className: P + "-desc" }, action.description) : null,
+            action.description ? h2("p", { className: P + "-desc" }, Highlight.hit(action.description, kw)) : null,
             rows.length ? h2(
               "table",
               { className: P + "-table" },
@@ -4672,13 +4722,13 @@ if (host) {
   h = require("react").createElement, Icon2 = require_icons().Icon;
   host.registerAddon({
     id: "wb-addon-storage",
-    version: "1.4.3",
+    version: "1.5.0",
     views: [
       { id: "stats", icon: tabIcon2("chart"), title: { zh: "\u7EDF\u8BA1", en: "Statistics" }, component: require_stats().Stats },
       { id: "storage", icon: tabIcon2("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: require_records().Records },
       { id: "config", icon: tabIcon2("settings"), title: { zh: "\u914D\u7F6E", en: "Config" }, component: require_config().ConfigView },
       { id: "data", icon: tabIcon2("database"), title: { zh: "\u6570\u636E", en: "Data" }, component: require_data().DataView },
-      { id: "actions", icon: tabIcon2("code-2"), title: { zh: "Action \u6E05\u5355", en: "Actions" }, component: require_actions().ActionSchemaView }
+      { id: "actions", icon: tabIcon2("code-2"), title: { zh: "Action", en: "Actions" }, component: require_actions().ActionSchemaView }
     ]
   });
 } else console.error("[wb-addon-storage] Missing workbench host");

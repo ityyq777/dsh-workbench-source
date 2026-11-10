@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 「Action 清单」页的浏览器预览：无头启动宿主 + 四个业务插件，取运行时注册的
+ * 「Action」页的浏览器预览：无头启动宿主 + 四个业务插件，取运行时注册的
  * action schema（与 GET /workbench/api/schema 同源），再用 esbuild 把共享视图
  * 打成一个静态页面起在本机，供人工/截图核对版面与交互。
  *
@@ -82,7 +82,7 @@ await build({
   logLevel: "error",
 });
 const html = `<!doctype html>
-<html lang="zh"><head><meta charset="utf-8" /><title>Action 清单预览</title>
+<html lang="zh"><head><meta charset="utf-8" /><title>Action 预览</title>
 <style>body{margin:0;font:14px/1.6 -apple-system,system-ui,"PingFang SC",sans-serif;background:#f7f4ee;color:#2a241c}
 #root{padding:18px}</style></head>
 <body><div id="root"></div>

@@ -241,7 +241,7 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
               }
 
               if (p === "/schema" && m === "GET") {
-                // 只读 schema 快照：Action 清单页用它渲染运行时注册，不经过 action 执行链路。
+                // 只读 schema 快照：Action 页用它渲染运行时注册，不经过 action 执行链路。
                 try {
                   const domain = String(url.searchParams.get("domain") ?? "").trim();
                   return send(200, { ok: true, readonly: true, ...schemaSnapshot(domain || undefined) });

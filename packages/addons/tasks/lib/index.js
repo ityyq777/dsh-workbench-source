@@ -28,7 +28,7 @@ function requireApi() {
 
 
 /**
- * 只读「Action 清单」页的数据源完全由插件自己维护：注册时记录 action 定义，
+ * 只读「Action」页的数据源完全由插件自己维护：注册时记录 action 定义，
  * 再由本插件注册的 <域>.actionSchema 返回，不经过宿主 schema 接口。
  */
 function trackActions(api) {
@@ -46,7 +46,7 @@ function trackActions(api) {
 function registerActionSchemaAction(api, defs, domain) {
   const prefix = domain.replace(/^wb-addon-/, "");
   api.action(prefix + ".actionSchema", {
-    description: "只读：返回本插件运行时注册的 action schema（供「Action 清单」页渲染；不执行任何 action、不写库、不产生审计）",
+    description: "只读：返回本插件运行时注册的 action schema（供「Action」页渲染；不执行任何 action、不写库、不产生审计）",
     input: { type: "object", properties: {}, additionalProperties: false },
     execute: () => ({
       shellVersion: api.shellVersion || "",
@@ -88,7 +88,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/时间线/配置/数据五个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "5.1.4",
+        version: "5.1.5",
         tables: ["task", "task_node", "task_timeline", "task_timeline_link", "task_workspace", "task_workspace_link"],
         sync: taskSync,
         views: [

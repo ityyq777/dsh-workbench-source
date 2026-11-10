@@ -1,5 +1,6 @@
-// 「Action 清单」共享视图回归：清单数据来自本插件自己注册的 <域>.actionSchema（插件自证），
-// 覆盖字段渲染、搜索/筛选、示例复制、原始 schema 展开、错误与空态，并确认不走宿主统一 schema 接口。
+// 「Action」共享视图回归：清单数据来自本插件自己注册的 <域>.actionSchema（插件自证），
+// 覆盖字段渲染、搜索/筛选、搜索高亮、示例复制、原始 schema 展开、错误与空态，
+// 并确认不走宿主统一 schema 接口。
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { createReact } from "./data-ui-harness.mjs";
@@ -17,20 +18,22 @@ const { fileURLToPath } = require("node:url");
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const VIEW_SRC = resolve(ROOT, "packages/addons/lib/action-schema-view.cjs");
 const STYLE_SRC = resolve(ROOT, "packages/addons/lib/action-schema-style.cjs");
+const HIGHLIGHT_SRC = resolve(ROOT, "packages/addons/lib/highlight.cjs");
 
 function loadFactory(React) {
   const sandbox = createContext({ console, Promise, Set, Map, JSON, Object, Array, String, Number, Error, RegExp, Date });
   const cache = new Map();
   const requireStub = (name) => {
     if (name === "react") return React;
-    if (name === "./action-schema-style.cjs") return loadStyle();
+    if (name === "./action-schema-style.cjs") return loadOnce(STYLE_SRC);
+    if (name === "./highlight.cjs") return loadOnce(HIGHLIGHT_SRC);
     throw new Error("Unexpected runtime dependency: " + name);
   };
-  function loadStyle() {
-    if (cache.has(STYLE_SRC)) return cache.get(STYLE_SRC).exports;
+  function loadOnce(file) {
+    if (cache.has(file)) return cache.get(file).exports;
     const mod = { exports: {} };
-    cache.set(STYLE_SRC, mod);
-    runInContext("(function (module, exports, require) {" + readFileSync(STYLE_SRC, "utf8") + "\n})", sandbox)(
+    cache.set(file, mod);
+    runInContext("(function (module, exports, require) {" + readFileSync(file, "utf8") + "\n})", sandbox)(
       mod, mod.exports, requireStub,
     );
     return mod.exports;
@@ -122,7 +125,7 @@ const settle = async () => { await new Promise((r) => setImmediate(r)); };
 let calls = 0;
 const api = {
   call: (name) => { calls++; assert.equal(name, "tasks.actionSchema"); return Promise.resolve({ ok: true, result: fixture }); },
-  schema: () => { throw new Error("Action 清单页不得走宿主统一 schema 接口"); },
+  schema: () => { throw new Error("Action 页不得走宿主统一 schema 接口"); },
 };
 const m = mountView(api);
 assert.match(text(m.tree()), /载入中/);
@@ -130,7 +133,9 @@ await settle();
 let tree = m.rerender();
 const body = text(tree);
 assert.equal(calls, 1, "只应调用一次本域 actionSchema");
-assert.match(body, /Action 清单/);
+assert.match(body, /Action/);
+assert.equal(body.includes("Action 清单"), false, "页签/页内标题不再叫「Action 清单」：页内标题直接是 Action");
+assert.equal(text(find(tree, (n) => hasClass(n, "wbt-as-title"))), "Action");
 assert.match(body, /wb-addon-tasks/);
 assert.match(body, /v3\.4\.6/, "应展示本域版本");
 assert.match(body, /v0\.6\.5/, "应展示宿主版本");
@@ -176,8 +181,30 @@ assert.match(text(tree), /1 \/ 2 个 action/);
 assert.match(text(tree), /tasks\.list/);
 assert.ok(!text(tree).includes("tasks.create"), "不匹配的 action 应被搜索过滤");
 
+// ── 搜索命中高亮：与过滤同口径，类名带页面前缀，示例/原始 JSON 不插标签 ──
+input.props.onChange({ target: { value: "TITLEKEY" } });
+tree = m.rerender();
+let marks = findAll(tree, (n) => n.type === "mark");
+assert.ok(marks.length >= 1, "命中参数名时应有 mark 高亮");
+assert.ok(marks.every((n) => hasClass(n, "wbt-as-hit")), "mark 类名应带页面前缀（wbt-as-hit）");
+assert.ok(marks.some((n) => text(n) === "titleKey"), "ASCII 大小写不敏感：TITLEKEY 应高亮 titleKey 原文");
+assert.ok(findAll(tree, (n) => n.type === "pre").every((p) => findAll(p, (n) => n.type === "mark").length === 0), "示例与原始 JSON Schema 不高亮");
+assert.ok(marks.length > 0 && text(tree).includes("1 / 2 个 action"), "高亮与过滤同口径：过滤命中才高亮");
+
+input.props.onChange({ target: { value: "tasks.list" } });
+tree = m.rerender();
+marks = findAll(tree, (n) => n.type === "mark");
+assert.ok(marks.some((n) => text(n) === "tasks.list"), "正则特殊字符（.）应按字面匹配 action 名称");
+assert.match(text(tree), /1 \/ 2 个 action/);
+
+input.props.onChange({ target: { value: "(" } });
+tree = m.rerender();
+assert.match(text(tree), /没有匹配的 action/, "未转义的正则字符不应抛错，只按字面过滤");
+assert.equal(findAll(tree, (n) => n.type === "mark").length, 0, "没有命中就不应有 mark");
+
 input.props.onChange({ target: { value: "" } });
 tree = m.rerender();
+assert.equal(findAll(tree, (n) => n.type === "mark").length, 0, "清空搜索后不应残留 mark");
 const selects = findAll(tree, (n) => n.type === "select");
 assert.equal(selects.length, 2, "应有必填筛选与类型筛选两个下拉");
 selects[0].props.onChange({ target: { value: "required" } });
