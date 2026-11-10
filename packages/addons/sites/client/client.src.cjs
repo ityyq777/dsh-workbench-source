@@ -43,6 +43,10 @@ var TagFilter = require("./ui/tagfilter.cjs");
     "lock": require("lucide-react/icons/lock").default,
     "eye": require("lucide-react/icons/eye").default,
     "eye-off": require("lucide-react/icons/eye-off").default,
+    "chart": require("lucide-react/icons/chart-column").default,
+    "settings": require("lucide-react/icons/settings").default,
+    "database": require("lucide-react/icons/database").default,
+    "globe": require("lucide-react/icons/globe").default,
     "copy": require("lucide-react/icons/copy").default,
   };
   // 统一的小尺寸图标调用方式，保持各视图里的 Icon({ name, size }) 不变。
@@ -56,6 +60,9 @@ var TagFilter = require("./ui/tagfilter.cjs");
       className: "wbs-svg" + (props.className ? " " + props.className : ""),
     });
   }
+
+  // 标签页标题左侧图标：与储物/任务/标签保持同语义、同尺寸。
+  function tabIcon(name) { return function SitesTabIcon() { return h(Icon, { name: name, size: 14 }); }; }
 
   var useState = React.useState;
   var useEffect = React.useEffect;
@@ -1247,10 +1254,10 @@ var TagFilter = require("./ui/tagfilter.cjs");
     id: "wb-addon-sites",
     version: "1.9.2",
     views: [
-      { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.SitesStatsView },
-      { id: "sites", title: { zh: "记录", en: "Records" }, component: SitesView },
-      { id: "config", title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
-      { id: "data", title: { zh: "数据", en: "Data" }, component: dataView.DataView },
+      { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.SitesStatsView },
+      { id: "sites", icon: tabIcon("globe"), title: { zh: "记录", en: "Records" }, component: SitesView },
+      { id: "config", icon: tabIcon("settings"), title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
+      { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: dataView.DataView },
     ],
   });
 

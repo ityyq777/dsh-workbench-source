@@ -4,6 +4,9 @@ var h = require("react").createElement;
 // 任务插件自带 lucide-react 图标；每个图标按需引入，随 client.js 一起打包。
 var ICONS = {
   "filter": require("lucide-react/icons/sliders-horizontal").default,
+  "chart": require("lucide-react/icons/chart-column").default,
+  "settings": require("lucide-react/icons/settings").default,
+  "database": require("lucide-react/icons/database").default,
   "calendar": require("lucide-react/icons/calendar-days").default,
   "code-2": require("lucide-react/icons/code-xml").default,
   "pilcrow": require("lucide-react/icons/pilcrow").default,

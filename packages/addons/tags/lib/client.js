@@ -3054,6 +3054,118 @@ var init_refresh_cw = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chart-column.mjs
+var chart_column_exports = {};
+__export(chart_column_exports, {
+  __iconData: () => __iconData8,
+  default: () => ChartColumn
+});
+var __iconData8, ChartColumn;
+var init_chart_column = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chart-column.mjs"() {
+    init_createLucideIcon();
+    __iconData8 = {
+      name: "chart-column",
+      size: 24,
+      node: [
+        ["path", { d: "M3 3v16a2 2 0 0 0 2 2h16", key: "c24i48" }],
+        ["path", { d: "M18 17V9", key: "2bz60n" }],
+        ["path", { d: "M13 17V5", key: "1frdt8" }],
+        ["path", { d: "M8 17v-3", key: "17ska0" }]
+      ],
+      aliases: ["bar-chart-3"]
+    };
+    __iconData8.node;
+    ChartColumn = createLucideIcon(__iconData8);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/settings.mjs
+var settings_exports = {};
+__export(settings_exports, {
+  __iconData: () => __iconData9,
+  default: () => Settings
+});
+var __iconData9, Settings;
+var init_settings = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/settings.mjs"() {
+    init_createLucideIcon();
+    __iconData9 = {
+      name: "settings",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915",
+            key: "1i5ecw"
+          }
+        ],
+        ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
+      ]
+    };
+    __iconData9.node;
+    Settings = createLucideIcon(__iconData9);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs
+var database_exports = {};
+__export(database_exports, {
+  __iconData: () => __iconData10,
+  default: () => Database
+});
+var __iconData10, Database;
+var init_database = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs"() {
+    init_createLucideIcon();
+    __iconData10 = {
+      name: "database",
+      size: 24,
+      node: [
+        ["ellipse", { cx: "12", cy: "5", rx: "9", ry: "3", key: "msslwz" }],
+        ["path", { d: "M3 5V19A9 3 0 0 0 21 19V5", key: "1wlel7" }],
+        ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
+      ]
+    };
+    __iconData10.node;
+    Database = createLucideIcon(__iconData10);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/tags.mjs
+var tags_exports = {};
+__export(tags_exports, {
+  __iconData: () => __iconData11,
+  default: () => Tags
+});
+var __iconData11, Tags;
+var init_tags = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/tags.mjs"() {
+    init_createLucideIcon();
+    __iconData11 = {
+      name: "tags",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M13.172 2a2 2 0 0 1 1.414.586l6.71 6.71a2.4 2.4 0 0 1 0 3.408l-4.592 4.592a2.4 2.4 0 0 1-3.408 0l-6.71-6.71A2 2 0 0 1 6 9.172V3a1 1 0 0 1 1-1z",
+            key: "16rjxf"
+          }
+        ],
+        [
+          "path",
+          { d: "M2 7v6.172a2 2 0 0 0 .586 1.414l6.71 6.71a2.4 2.4 0 0 0 3.191.193", key: "178nd4" }
+        ],
+        ["circle", { cx: "10.5", cy: "6.5", r: ".5", fill: "currentColor", key: "12ikhr" }]
+      ]
+    };
+    __iconData11.node;
+    Tags = createLucideIcon(__iconData11);
+  }
+});
+
 // packages/addons/tags/client/client.src.cjs
 var React = require("react");
 var h = React.createElement;
@@ -3078,8 +3190,17 @@ var h = React.createElement;
     "trash": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
     "pencil": (init_pencil(), __toCommonJS(pencil_exports)).default,
     "check": (init_check(), __toCommonJS(check_exports)).default,
-    "refresh": (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default
+    "refresh": (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
+    "chart": (init_chart_column(), __toCommonJS(chart_column_exports)).default,
+    "settings": (init_settings(), __toCommonJS(settings_exports)).default,
+    "database": (init_database(), __toCommonJS(database_exports)).default,
+    "tags": (init_tags(), __toCommonJS(tags_exports)).default
   };
+  function tabIcon(name) {
+    return function TagsTabIcon() {
+      return h2(Icon2, { name, size: 14 });
+    };
+  }
   function Icon2(props) {
     var C = ICONS[props.name];
     if (!C) return null;
@@ -3727,10 +3848,10 @@ var h = React.createElement;
     id: "wb-addon-tags",
     version: "1.6.11",
     views: [
-      { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },
-      { id: "tags", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TagsView },
-      { id: "config", title: { zh: "\u914D\u7F6E", en: "Config" }, component: configView.ConfigView },
-      { id: "data", title: { zh: "\u6570\u636E", en: "Data" }, component: dataView.DataView }
+      { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },
+      { id: "tags", icon: tabIcon("tags"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TagsView },
+      { id: "config", icon: tabIcon("settings"), title: { zh: "\u914D\u7F6E", en: "Config" }, component: configView.ConfigView },
+      { id: "data", icon: tabIcon("database"), title: { zh: "\u6570\u636E", en: "Data" }, component: dataView.DataView }
     ]
   });
   module.exports = { name: "dsh-workbench-tags", inject: [], apply: function() {

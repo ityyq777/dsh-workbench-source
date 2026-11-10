@@ -40,6 +40,8 @@
   };
 
   var icons = require("./ui/icons.cjs"), ICONS = icons.ICONS, Icon = icons.Icon;
+  // 标签页标题左侧图标：宿主统一按 size 14 渲染，两边都传 14 兜底。
+  function tabIcon(name) { return function TasksTabIcon() { return React.createElement(Icon, { name: name, size: 14 }); }; }
 
   // 计划完成倒计时：按秒刷新，超过计划完成时间后转为「逾期 hh:mm:ss」。
   function Countdown(props) {
@@ -376,11 +378,11 @@
     id: "wb-addon-tasks",
     version: "3.4.2",
     views: [
-      { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
-      { id: "tasks", title: { zh: "记录", en: "Records" }, component: TasksView },
-      { id: "timeline", title: { zh: "时间线", en: "Timeline" }, component: TimelineView },
-      { id: "config", title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
-      { id: "data", title: { zh: "数据", en: "Data" }, component: dataView.DataView },
+      { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
+      { id: "tasks", icon: tabIcon("list"), title: { zh: "记录", en: "Records" }, component: TasksView },
+      { id: "timeline", icon: tabIcon("timeline"), title: { zh: "时间线", en: "Timeline" }, component: TimelineView },
+      { id: "config", icon: tabIcon("settings"), title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
+      { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: dataView.DataView },
     ],
   });
 

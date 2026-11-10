@@ -26,7 +26,13 @@ var h = React.createElement;
     "pencil": require("lucide-react/icons/pencil").default,
     "check": require("lucide-react/icons/check").default,
     "refresh": require("lucide-react/icons/refresh-cw").default,
+    "chart": require("lucide-react/icons/chart-column").default,
+    "settings": require("lucide-react/icons/settings").default,
+    "database": require("lucide-react/icons/database").default,
+    "tags": require("lucide-react/icons/tags").default,
   };
+  // 标签页标题左侧图标：与储物/任务/站点保持同语义、同尺寸。
+  function tabIcon(name) { return function TagsTabIcon() { return h(Icon, { name: name, size: 14 }); }; }
   // 统一的小尺寸图标调用方式，保持各视图里的 Icon({ name, size }) 不变。
   function Icon(props) {
     var C = ICONS[props.name];
@@ -527,10 +533,10 @@ var h = React.createElement;
     id: "wb-addon-tags",
     version: "1.6.11",
     views: [
-      { id: "stats", title: { zh: "统计", en: "Stats" }, component: statsView.TagsStatsView },
-      { id: "tags", title: { zh: "记录", en: "Records" }, component: TagsView },
-      { id: "config", title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
-      { id: "data", title: { zh: "数据", en: "Data" }, component: dataView.DataView },
+      { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TagsStatsView },
+      { id: "tags", icon: tabIcon("tags"), title: { zh: "记录", en: "Records" }, component: TagsView },
+      { id: "config", icon: tabIcon("settings"), title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
+      { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: dataView.DataView },
     ],
   });
 
