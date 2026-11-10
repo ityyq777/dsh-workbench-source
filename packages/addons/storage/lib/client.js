@@ -4407,10 +4407,14 @@ var require_action_schema_view = __commonJS({
           setLoading(true);
           setErr("");
           var pending;
-          if (api && typeof api.schema === "function") {
-            pending = api.schema(DOMAIN);
+          var actionName = DOMAIN.replace(/^wb-addon-/, "") + ".actionSchema";
+          if (api && typeof api.call === "function") {
+            pending = Promise.resolve(api.call(actionName)).then(function(r) {
+              if (r && r.ok === false) return r;
+              return r && r.result || r;
+            });
           } else {
-            pending = Promise.reject(new Error("no schema api"));
+            pending = Promise.reject(new Error("no call api"));
           }
           Promise.resolve(pending).then(function(r) {
             if (!alive) return;
@@ -4668,7 +4672,7 @@ if (host) {
   h = require("react").createElement, Icon2 = require_icons().Icon;
   host.registerAddon({
     id: "wb-addon-storage",
-    version: "1.4.2",
+    version: "1.4.3",
     views: [
       { id: "stats", icon: tabIcon2("chart"), title: { zh: "\u7EDF\u8BA1", en: "Statistics" }, component: require_stats().Stats },
       { id: "storage", icon: tabIcon2("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: require_records().Records },

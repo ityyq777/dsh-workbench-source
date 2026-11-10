@@ -1,6 +1,6 @@
 "use strict";
-// 共享只读「Action 清单」视图：数据来自宿主 GET /workbench/api/schema（与 actions.list(detail=true)
-// 同源），按当前插件域过滤后结构化渲染。只读：不提供执行入口、不写库、不做磁盘缓存；
+// 共享只读「Action 清单」视图：数据来自各插件自己注册的 <域>.actionSchema（插件自证清单，
+// 与 actions.list(detail=true) 同源同义），按当前插件域过滤后结构化渲染。只读：不提供执行入口、不写库、不做磁盘缓存；
 // 跨域 action（如任务页偶尔调用 tags.*）不算本域清单，也不改真实 schema。
 var React = require("react");
 var h = React.createElement;
@@ -218,10 +218,15 @@ module.exports = function createActionSchemaView(options) {
       setLoading(true);
       setErr("");
       var pending;
-      if (api && typeof api.schema === "function") {
-        pending = api.schema(DOMAIN);
+      // 清单数据来自本插件自己注册的 <域>.actionSchema：页面归属插件，不经过宿主 schema 接口。
+      var actionName = DOMAIN.replace(/^wb-addon-/, "") + ".actionSchema";
+      if (api && typeof api.call === "function") {
+        pending = Promise.resolve(api.call(actionName)).then(function (r) {
+          if (r && r.ok === false) return r;
+          return (r && r.result) || r;
+        });
       } else {
-        pending = Promise.reject(new Error("no schema api"));
+        pending = Promise.reject(new Error("no call api"));
       }
       Promise.resolve(pending).then(function (r) {
         if (!alive) return;

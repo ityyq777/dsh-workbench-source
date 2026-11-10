@@ -3470,10 +3470,14 @@ var require_action_schema_view = __commonJS({
           setLoading(true);
           setErr("");
           var pending;
-          if (api && typeof api.schema === "function") {
-            pending = api.schema(DOMAIN);
+          var actionName = DOMAIN.replace(/^wb-addon-/, "") + ".actionSchema";
+          if (api && typeof api.call === "function") {
+            pending = Promise.resolve(api.call(actionName)).then(function(r) {
+              if (r && r.ok === false) return r;
+              return r && r.result || r;
+            });
           } else {
-            pending = Promise.reject(new Error("no schema api"));
+            pending = Promise.reject(new Error("no call api"));
           }
           Promise.resolve(pending).then(function(r) {
             if (!alive) return;
@@ -4393,7 +4397,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.6.12",
+    version: "1.6.13",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },
       { id: "tags", icon: tabIcon("tags"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TagsView },

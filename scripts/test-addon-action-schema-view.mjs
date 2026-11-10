@@ -1,5 +1,5 @@
-// 「Action 清单」共享视图回归：只读渲染运行时注册（GET /workbench/api/schema 的数据形状），
-// 覆盖字段渲染、搜索/筛选、示例复制、原始 schema 展开、错误与空态，并确认绝不走 action 执行链路。
+// 「Action 清单」共享视图回归：清单数据来自本插件自己注册的 <域>.actionSchema（插件自证），
+// 覆盖字段渲染、搜索/筛选、示例复制、原始 schema 展开、错误与空态，并确认不走宿主统一 schema 接口。
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { createReact } from "./data-ui-harness.mjs";
@@ -121,15 +121,15 @@ const settle = async () => { await new Promise((r) => setImmediate(r)); };
 // ── 加载态 → 数据态 ────────────────────────────────────────────────
 let calls = 0;
 const api = {
-  schema: (domain) => { calls++; assert.equal(domain, "wb-addon-tasks"); return Promise.resolve(fixture); },
-  call: () => { throw new Error("Action 清单页不得走 action 执行链路"); },
+  call: (name) => { calls++; assert.equal(name, "tasks.actionSchema"); return Promise.resolve({ ok: true, result: fixture }); },
+  schema: () => { throw new Error("Action 清单页不得走宿主统一 schema 接口"); },
 };
 const m = mountView(api);
 assert.match(text(m.tree()), /载入中/);
 await settle();
 let tree = m.rerender();
 const body = text(tree);
-assert.equal(calls, 1, "只应读取一次 schema");
+assert.equal(calls, 1, "只应调用一次本域 actionSchema");
 assert.match(body, /Action 清单/);
 assert.match(body, /wb-addon-tasks/);
 assert.match(body, /v3\.4\.6/, "应展示本域版本");
@@ -203,7 +203,7 @@ assert.match(text(tree), /没有匹配的 action/);
 // ── 错误态可重试，且不会退回伪造数据 ──────────────────────────────
 let attempts = 0;
 const failing = {
-  schema: () => { attempts++; return Promise.reject(new Error("connection rejected")); },
+  call: () => { attempts++; return Promise.reject(new Error("connection rejected")); },
 };
 const m2 = mountView(failing);
 await settle();
@@ -215,10 +215,10 @@ assert.ok(retry, "错误态应提供重试按钮");
 retry.props.onClick();
 m2.rerender();
 await settle();
-assert.equal(attempts, 2, "重试应重新读取 schema");
+assert.equal(attempts, 2, "重试应重新调用本域 actionSchema");
 
 // ── 本域没有注册 action 时的空态 ───────────────────────────────────
-const empty = { schema: () => Promise.resolve({ ok: true, shellVersion: "0.6.5", domains: [], actions: [] }) };
+const empty = { call: () => Promise.resolve({ ok: true, result: { shellVersion: "0.6.5", domains: [], actions: [] } }) };
 const m3 = mountView(empty);
 await settle();
 tree = m3.rerender();

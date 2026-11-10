@@ -3762,10 +3762,14 @@ var require_action_schema_view = __commonJS({
           setLoading(true);
           setErr("");
           var pending;
-          if (api && typeof api.schema === "function") {
-            pending = api.schema(DOMAIN);
+          var actionName = DOMAIN.replace(/^wb-addon-/, "") + ".actionSchema";
+          if (api && typeof api.call === "function") {
+            pending = Promise.resolve(api.call(actionName)).then(function(r) {
+              if (r && r.ok === false) return r;
+              return r && r.result || r;
+            });
           } else {
-            pending = Promise.reject(new Error("no schema api"));
+            pending = Promise.reject(new Error("no call api"));
           }
           Promise.resolve(pending).then(function(r) {
             if (!alive) return;
@@ -10047,7 +10051,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.5.0",
+    version: "3.5.1",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

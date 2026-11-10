@@ -1207,7 +1207,7 @@ var TagFilter = require("./ui/tagfilter.cjs");
 
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.9.3",
+    version: "1.9.4",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.SitesStatsView },
       { id: "sites", icon: tabIcon("globe"), title: { zh: "记录", en: "Records" }, component: SitesView },

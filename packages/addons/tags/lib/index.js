@@ -18,13 +18,50 @@ function requireApi() {
   return domainApi;
 }
 
+/**
+ * 只读「Action 清单」页的数据源完全由插件自己维护：注册时记录 action 定义，
+ * 再由本插件注册的 <域>.actionSchema 返回，不经过宿主 schema 接口。
+ */
+function trackActions(api) {
+  const defs = new Map();
+  const rawAction = typeof api.action === "function" ? api.action.bind(api) : null;
+  if (rawAction) {
+    api.action = function (name, def) {
+      defs.set(name, def || {});
+      return rawAction(name, def);
+    };
+  }
+  return defs;
+}
+
+function registerActionSchemaAction(api, defs, domain) {
+  const prefix = domain.replace(/^wb-addon-/, "");
+  api.action(prefix + ".actionSchema", {
+    description: "只读：返回本插件运行时注册的 action schema（供「Action 清单」页渲染；不执行任何 action、不写库、不产生审计）",
+    input: { type: "object", properties: {}, additionalProperties: false },
+    execute: () => ({
+      shellVersion: api.shellVersion || "",
+      domains: [{ id: domain, version: api.addon && api.addon.version ? api.addon.version : "" }],
+      actions: Array.from(defs, ([name, def]) => ({
+        name: name,
+        domain: domain,
+        description: typeof def.description === "string" ? def.description : "",
+        input: def.input && typeof def.input === "object" ? def.input : { type: "object", properties: {} },
+        examples: Array.isArray(def.examples) ? def.examples : [],
+      })),
+    }),
+  });
+}
+
 export function setup(api) {
   domainApi = api;
   if (typeof api.now === "function") bindClock(api.now);
   ensureSchema(api.db, api.log);
+  const actionDefs = trackActions(api);
   registerTagActions(api);
   registerConfigActions(api);
   registerDataActions(api);
+  registerActionSchemaAction(api, actionDefs, "wb-addon-tags");
   api.log("tags domain ready", api.addon.version);
 }
 
@@ -37,7 +74,7 @@ export function apply(ctx) {
         id: "wb-addon-tags",
         title: "标签",
         description: "创建与管理标签，为站点等业务提供标签归类；含统计/记录/配置/数据四个视图",
-        version: "1.6.12",
+        version: "1.6.13",
         tables: ["tag", "tag_mapping"],
         sync: tagSync,
         views: [

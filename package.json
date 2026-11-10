@@ -28,6 +28,7 @@
     "test:clients": "node scripts/test-clients.mjs",
     "test:task-stats-bars": "node scripts/test-task-stats-bars-ui.mjs",
     "test:addon-actions": "node scripts/test-addon-action-schema-view.mjs",
+    "test:action-schema": "node scripts/test-addon-action-schema-actions.mjs && node scripts/test-addon-action-schema-view.mjs",
     "test:schema": "node scripts/test-shell-schema-endpoint.mjs",
     "preview:actions": "node scripts/actions-ui-preview.mjs",
     "test:view-icons": "node packages/shell/client/view-tabs.test.mjs && node packages/shell/client/view-tabs.test.mjs --bundle",

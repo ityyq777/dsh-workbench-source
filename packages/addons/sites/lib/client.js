@@ -4633,10 +4633,14 @@ var require_action_schema_view = __commonJS({
           setLoading(true);
           setErr("");
           var pending;
-          if (api && typeof api.schema === "function") {
-            pending = api.schema(DOMAIN);
+          var actionName = DOMAIN.replace(/^wb-addon-/, "") + ".actionSchema";
+          if (api && typeof api.call === "function") {
+            pending = Promise.resolve(api.call(actionName)).then(function(r) {
+              if (r && r.ok === false) return r;
+              return r && r.result || r;
+            });
           } else {
-            pending = Promise.reject(new Error("no schema api"));
+            pending = Promise.reject(new Error("no call api"));
           }
           Promise.resolve(pending).then(function(r) {
             if (!alive) return;
@@ -6442,7 +6446,7 @@ var TagFilter = require_tagfilter();
   injectCss();
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.9.3",
+    version: "1.9.4",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },
       { id: "sites", icon: tabIcon("globe"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: SitesView },
