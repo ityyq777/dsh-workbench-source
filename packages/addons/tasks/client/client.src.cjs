@@ -16,6 +16,7 @@
   var configView = require("./views/config.cjs");
   var dataView = require("./views/data.cjs");
   var actionSchemaView = require("./views/actions.cjs");
+  var commandsView = require("./views/commands.cjs")({ React: React });
 
   var COPY = require("./ui/copy.cjs");
   // 标签是可选子插件：以宿主已安装/启用列表为准；旧宿主没有列表时返回 true，交给后端降级。
@@ -370,13 +371,14 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.1.5",
+    version: "5.2.0",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "记录", en: "Records" }, component: TasksView },
       { id: "timeline", icon: tabIcon("timeline"), title: { zh: "时间线", en: "Timeline" }, component: TimelineView },
       { id: "config", icon: tabIcon("settings"), title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
       { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: dataView.DataView },
+      { id: "commands", icon: tabIcon("terminal"), title: { zh: "命令", en: "Commands" }, component: commandsView.CommandsView },
       { id: "actions", icon: tabIcon("code-2"), title: { zh: "Action", en: "Actions" }, component: actionSchemaView.ActionSchemaView },
     ],
   });

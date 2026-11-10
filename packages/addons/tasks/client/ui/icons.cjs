@@ -9,6 +9,7 @@ var ICONS = {
   "database": require("lucide-react/icons/database").default,
   "calendar": require("lucide-react/icons/calendar-days").default,
   "code-2": require("lucide-react/icons/code-xml").default,
+  "terminal": require("lucide-react/icons/terminal").default,
   "pilcrow": require("lucide-react/icons/pilcrow").default,
   "plus": require("lucide-react/icons/plus").default,
   "minus": require("lucide-react/icons/minus").default,

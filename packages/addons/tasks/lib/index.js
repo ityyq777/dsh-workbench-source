@@ -17,6 +17,7 @@ import { registerOverviewAction } from "./stats/overview.js";
 import { registerConfigActions } from "./infra/config.js";
 import { registerDataActions } from "./infra/data.js";
 import { registerPublisherCommand } from "./publisher/command.js";
+import { commandCatalog } from "./publisher/catalog.js";
 
 export const inject = ["workbench"];
 
@@ -41,6 +42,22 @@ function trackActions(api) {
     };
   }
   return defs;
+}
+
+/**
+ * 只读命令目录：「命令」页与 agent 都用它发现本插件注册了哪些斜杠命令。
+ * 数据来自 publisher/catalog.js 的同一份数组，页面不重复维护文案。
+ */
+function registerCommandsAction(api) {
+  api.action("tasks.commands", {
+    description: "只读：返回本插件注册的斜杠命令目录（名称、用途、用法、输入提示、字符上限、示例、说明），供「命令」页渲染；不执行命令、不写库、不产生审计",
+    input: { type: "object", properties: {}, additionalProperties: false },
+    examples: [{}],
+    execute: () => {
+      const commands = commandCatalog();
+      return { count: commands.length, commands: commands };
+    },
+  });
 }
 
 function registerActionSchemaAction(api, defs, domain) {
@@ -75,6 +92,7 @@ export function setup(api) {
   registerOverviewAction(api);
   registerConfigActions(api);
   registerDataActions(api);
+  registerCommandsAction(api);
   registerActionSchemaAction(api, actionDefs, "wb-addon-tasks");
   api.log("tasks domain ready", api.addon.version);
 }
@@ -88,7 +106,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/时间线/配置/数据五个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "5.1.5",
+        version: "5.2.0",
         tables: ["task", "task_node", "task_timeline", "task_timeline_link", "task_workspace", "task_workspace_link"],
         sync: taskSync,
         views: [

@@ -57,8 +57,10 @@ const api={async call(name,args){calls.push({name,args});const values={};
     name.endsWith('dataList')?{rows:[item],total:1,columns:[{name:'name',type:'TEXT'}]}:
     name.endsWith('list')?{records:[item],total:24,pages:2}:{};
   return {ok:true,result};}};
-assert.deepEqual(Array.from(addon.views,v=>v.id),['stats','storage','config','data']);
+assert.deepEqual(Array.from(addon.views,v=>v.id),['stats','storage','config','data','actions']);
 for(const v of addon.views){
+  // 只读 Action 页是共享视图（见 test-addon-action-schema-view），没有卡片骨架与 Markdown 描述，跳过视觉断言。
+  if(v.id==='actions')continue;
   resetFrames();root=v.component;props={api,lang:'en'};render();
   assert.equal(cls('wbi-skeleton-card').length,3,v.id+' initial loading has three cards');
   await settle();
