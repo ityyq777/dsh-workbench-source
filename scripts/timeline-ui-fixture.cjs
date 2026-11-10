@@ -1,5 +1,5 @@
 // Browser-only integration fixture: every action mutates memory, never production data.
-const React = require('react'), {createRoot} = require('react-dom/client');
+const React = require('react'), {createRoot} = require('react-dom/client'), pkgVersion = require('../packages/addons/tasks/package.json').version;
 const h = React.createElement, copy = require('../packages/addons/tasks/client/ui/copy.cjs');
 let addon;
 window.__WB_HOST__ = {registerAddon(value){addon=value},addons:[]};
@@ -55,7 +55,7 @@ async function fill(selector,value){const node=document.querySelector(selector);
 window.runTimelineTests=async()=>{
  let checks=0;const ok=(v,m)=>{check(v,m);checks++};
  await wait(()=>options().length===20&&document.querySelectorAll('.wbt-timeline-member').length===20);
- ok(addon.version==='3.4.2','client version');ok(calls[0].args.includeSingletons===true,'empty and singleton default');
+ ok(addon.version===pkgVersion,'client version');ok(calls[0].args.includeSingletons===true,'empty and singleton default');
  const list=document.querySelector('[role=listbox]');list.scrollTop=200;const scroll=list.scrollTop;options()[5].click();await pause();ok(document.querySelector('[role=listbox]')===list&&list.scrollTop===scroll,'stable list');
  options()[5].focus();options()[5].dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}));await pause();ok(document.activeElement===options()[6],'keyboard selection');
  options()[0].click();await wait(()=>document.querySelectorAll('.wbt-timeline-member').length===20);document.querySelector('.wbt-timeline-right [aria-label="下一页"]').click();await wait(()=>document.querySelector('.wbt-timeline-right nav').textContent.includes('2 / 3'));ok(calls.at(-1).args.pageNumber===2,'member pagination');
@@ -64,18 +64,18 @@ window.runTimelineTests=async()=>{
  const line=lines.find(x=>x.title==='Manual empty');ok(!!line,'manual create');ok(tasks.every(x=>x.timelineId!==line.id),'create never attaches');ok(document.querySelector('.wbt-timeline-right').textContent.includes('暂无可显示成员'),'empty entity detail');
  await click('添加已有任务');await fill('[aria-label="搜索已有任务"]','Ordinary task');await wait(()=>document.querySelectorAll('[role=dialog] input[type=checkbox]').length===1);document.querySelector('[role=dialog] input[type=checkbox]').click();await pause();await click('关联任务 (1)');await wait(()=>!document.querySelector('[role=dialog]')&&document.querySelectorAll('.wbt-timeline-member').length===1);ok(tasks.find(x=>x.id==='ordinary').timelineId===line.id&&document.querySelector('.wbt-timeline-right h3').textContent==='Manual empty','top-level attach preserves out-of-page entity');document.querySelector('.wbt-timeline-right .wbt-timeline-remove').click();await pause();await wait(()=>document.querySelector('.wbt-timeline-right').textContent.includes('暂无可显示成员'));ok(tasks.find(x=>x.id==='ordinary').timelineId===null,'top-level detach preserves empty entity');
  await click('编辑时间线');await fill('[role=dialog] input','Renamed line');await fill('[role=dialog] textarea','Edited description');await click('保存时间线');await wait(()=>!document.querySelector('[role=dialog]'));ok(line.title==='Renamed line'&&line.description==='Edited description','entity metadata');
- show('task','ordinary');await wait(()=>document.body.textContent.includes('没有关联时间线'));ok(!tasks.find(x=>x.id==='ordinary').timelineId,'ordinary task unlinked');
+ show('task','ordinary');await wait(()=>document.body.textContent.includes('当前未关联时间线'));ok(!tasks.find(x=>x.id==='ordinary').timelineId,'ordinary task unlinked');
  // Picker lists both empty and singleton entities across pages, without requesting filtered aggregation.
- await click('下一页');await wait(()=>document.querySelector('.wbt-timeline-picker select option[value="empty"]'));ok(!!document.querySelector('.wbt-timeline-picker select option[value="self"]'),'picker includes singleton on second page');ok(document.querySelector('.wbt-timeline-picker select option[value="empty"]').textContent.includes('0 个任务'),'picker includes empty line');
- await fill('.wbt-timeline-picker input','Renamed line');await wait(()=>document.querySelector('.wbt-timeline-picker select option[value="'+line.id+'"]'));
- await fill('.wbt-timeline-picker select',line.id);ok(!tasks.find(x=>x.id==='ordinary').timelineId,'select alone never attaches');await click('关联所选时间线');await wait(()=>document.querySelector('h4')?.textContent==='Renamed line');ok(tasks.find(x=>x.id==='ordinary').timelineId===line.id,'explicit association');
+ await click('下一页');await wait(()=>document.querySelector('.wbt-timeline-picker [role=option][data-id="empty"]'));ok(!!document.querySelector('.wbt-timeline-picker [role=option][data-id="self"]'),'picker includes singleton on second page');ok(document.querySelector('.wbt-timeline-picker [role=option][data-id="empty"]').textContent.includes('0 个任务'),'picker includes empty line');
+ await fill('.wbt-timeline-picker input','Renamed line');await wait(()=>document.querySelector('.wbt-timeline-picker [role=option][data-id="'+line.id+'"]'));
+ document.querySelector('.wbt-timeline-picker [role=option][data-id="'+line.id+'"]').click();await pause();ok(!tasks.find(x=>x.id==='ordinary').timelineId,'select alone never attaches');await click('关联所选时间线');await wait(()=>document.querySelector('h4')?.textContent==='Renamed line');ok(tasks.find(x=>x.id==='ordinary').timelineId===line.id,'explicit association');
  show('restart','ordinary');await wait(()=>document.querySelector('.wbt-form input'));
  await fill('.wbt-form input','Restarted task');
  // Target ownership uses the real table-picker UI.
  await click('选择目标任务表');
  const tableOption=Array.from(document.querySelectorAll('[role=option]')).find(x=>x.textContent.includes('Fixture table'));check(tableOption,'table option');tableOption.click();await pause();
  await click('创建');await wait(()=>mode==='timeline');const restarted=tasks.find(x=>x.title==='Restarted task');ok(restarted.timelineId===line.id,'restart inherits entity');ok(tasks.find(x=>x.id==='ordinary').status==='3','old task restarted');const createCall=calls.findLast(x=>x.action==='tasks.create');ok(createCall.args.restartKey==='ordinary'&&!('timelineId'in createCall.args)&&!('timelineKey'in createCall.args),'restart does not choose another line');
- show('task',restarted.id);await wait(()=>document.querySelector('h4'));await click('移出当前任务');await click('确认移出');await wait(()=>document.body.textContent.includes('没有关联时间线'));ok(restarted.timelineId===null,'detach');
+ show('task',restarted.id);await wait(()=>document.querySelector('h4'));await click('移出当前任务');await click('确认移出');await wait(()=>document.body.textContent.includes('当前未关联时间线'));ok(restarted.timelineId===null,'detach');
  const count=tasks.length,writes=calls.filter(x=>x.action==='tasks.create').length;show('restart',restarted.id);await pause();ok(document.body.textContent.includes('请先手动建立并关联时间线，再重启'),'unlinked restart guidance');ok(button('创建').disabled,'unlinked restart disabled');button('创建').click();await pause();ok(tasks.length===count&&calls.filter(x=>x.action==='tasks.create').length===writes,'unlinked restart zero writes');
  show('task','self');await wait(()=>document.querySelector('h4'));ok(document.querySelector('h4').textContent==='Self single'&&document.body.textContent.includes('Self singleton task'),'self-id singleton visible');
  show('timeline');await wait(()=>options().length===20);await fill('input[aria-label="搜索时间线标题或描述"]','Renamed line');await click('搜索');await wait(()=>options().length===1&&document.querySelector('.wbt-timeline-right h3').textContent==='Renamed line');
@@ -99,10 +99,17 @@ window.runTimelineModalTests=async()=>{
  const count=calls.filter(x=>x.action==='taskTimelines.detach').length;
  await click('移出当前任务');ok(calls.filter(x=>x.action==='taskTimelines.detach').length===count,'remove requires confirmation');
  await click('取消');ok(calls.filter(x=>x.action==='taskTimelines.detach').length===count,'cancel performs no write');
- await click('移出当前任务');await click('确认移出');await wait(()=>document.body.textContent.includes('没有关联时间线'));
+ await click('移出当前任务');await click('确认移出');await wait(()=>document.body.textContent.includes('当前未关联时间线'));
  ok(calls.filter(x=>x.action==='taskTimelines.detach').length===count+1,'confirmed removal once');
  const attach=button('关联所选时间线');ok(attach.disabled&&!!attach.title,'disabled association explains why');
- ok(!!document.querySelector('.wbt-timeline-empty button'),'empty state includes create action');
+ ok(buttons().filter(x=>x.textContent==='新建时间线').length===1,'single create action in empty state');
+ await wait(()=>document.querySelector('.wbt-picker-opt'));
+ ok(!document.querySelector('.wbt-timeline-picker select'),'picker no native select');
+ const box=document.querySelector('.wbt-picker-list');ok(getComputedStyle(box).overflow==='auto'&&parseFloat(getComputedStyle(box).maxHeight)>0,'candidate list limited height');
+ const opt=document.querySelector('.wbt-picker-opt');opt.focus();opt.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}));await pause();ok(document.activeElement&&document.activeElement.getAttribute('role')==='option'&&document.activeElement!==opt,'arrow moves candidate focus');
+ const rect=box.getBoundingClientRect(),dialogRect=dialog.getBoundingClientRect();ok(rect.bottom<=dialogRect.bottom+1&&rect.left>=dialogRect.left-1,'candidate list stays inside dialog');
+ ok(document.querySelector('.wbt-picker-selected').textContent.includes('尚未选择'),'explicit unselected wording');
+ ok(buttons().filter(x=>x.textContent==='新建时间线').length===1,'single create entry');
  const enabled=Array.from(dialog.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),summary')).filter(x=>x.getClientRects().length);
  const last=enabled.at(-1),first=enabled[0];last.focus();last.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',bubbles:true,cancelable:true}));ok(document.activeElement===first,'Tab wraps focus');
  first.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',shiftKey:true,bubbles:true,cancelable:true}));ok(document.activeElement===last,'Shift Tab wraps focus');

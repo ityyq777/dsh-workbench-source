@@ -6310,6 +6310,8 @@ var require_timeline_controls = __commonJS({
         var es = React.useState(""), error = es[0], setError = es[1];
         var bs = React.useState(false), busy = bs[0], setBusy = bs[1];
         var rs = React.useState(0), retry = rs[0], setRetry = rs[1];
+        var as = React.useState(-1), active = as[0], setActive = as[1];
+        var list = React.useRef(null);
         React.useEffect(function() {
           var cancelled = false;
           setBusy(true);
@@ -6317,6 +6319,7 @@ var require_timeline_controls = __commonJS({
           p.api.call("tasks.timelines", { includeSingletons: true, titleKey: query, pageNumber: page, pageSize: 20 }).then(result).then(function(r) {
             if (!cancelled) {
               setData(r);
+              setActive(-1);
               setBusy(false);
             }
           }).catch(function(e) {
@@ -6329,29 +6332,79 @@ var require_timeline_controls = __commonJS({
             cancelled = true;
           };
         }, [p.api, page, query, retry]);
+        var rows = data.records || [], pages = Math.max(1, Math.ceil(data.total / 20));
+        function choose(row) {
+          if (row) p.onChange(row.timelineId || row.timelineKey, row.title || "");
+        }
+        function optionAt(index) {
+          var nodes = list.current ? list.current.querySelectorAll('[role="option"]') : [];
+          return nodes[index];
+        }
+        function move(next) {
+          if (!rows.length) return;
+          var index = Math.max(0, Math.min(rows.length - 1, next));
+          setActive(index);
+          var node = optionAt(index);
+          if (node) node.focus();
+        }
+        function focusedIndex() {
+          var nodes = list.current ? list.current.querySelectorAll('[role="option"]') : [];
+          return Array.prototype.indexOf.call(nodes, document.activeElement);
+        }
+        function onKeyDown(e) {
+          var base = focusedIndex() >= 0 ? focusedIndex() : active;
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            move(base + 1);
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            move(base <= 0 ? 0 : base - 1);
+          } else if (e.key === "Home") {
+            e.preventDefault();
+            move(0);
+          } else if (e.key === "End") {
+            e.preventDefault();
+            move(rows.length - 1);
+          } else if (e.key === "Enter") {
+            if (document.activeElement && document.activeElement.getAttribute("role") === "option") return;
+            e.preventDefault();
+            choose(rows[active < 0 ? 0 : active]);
+          }
+        }
         return h(
           "div",
           { className: "wbt-timeline-picker" },
-          h("label", { className: "wbt-field" }, tr("\u641C\u7D22\u5DF2\u6709\u65F6\u95F4\u7EBF"), h("input", { className: "wbt-input", value: query, onChange: function(e) {
-            setQuery(e.target.value);
-            setPage(1);
-          } })),
           h(
-            "select",
-            { className: "wbt-select", "aria-label": tr("\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF"), value: p.value || "", disabled: p.disabled || busy, onChange: function(e) {
-              var row = data.records.find(function(x) {
-                return (x.timelineId || x.timelineKey) === e.target.value;
-              });
-              p.onChange(e.target.value, row && row.title || "");
-            } },
-            h("option", { value: "" }, tr("\u4E0D\u5173\u8054\u65F6\u95F4\u7EBF")),
-            p.value && !data.records.some(function(x) {
-              return (x.timelineId || x.timelineKey) === p.value;
-            }) ? h("option", { value: p.value }, p.title || tr("\u5DF2\u9009\u65F6\u95F4\u7EBF")) : null,
-            data.records.map(function(x) {
-              var id = x.timelineId || x.timelineKey;
-              return h("option", { key: id, value: id }, (x.title || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF")) + " \xB7 " + x.taskCount + tr(" \u4E2A\u4EFB\u52A1"));
-            })
+            "label",
+            { className: "wbt-field" },
+            tr("\u641C\u7D22\u5DF2\u6709\u65F6\u95F4\u7EBF"),
+            h("input", { className: "wbt-input", "aria-label": tr("\u641C\u7D22\u5DF2\u6709\u65F6\u95F4\u7EBF"), value: query, onChange: function(e) {
+              setQuery(e.target.value);
+              setPage(1);
+            } })
+          ),
+          h("div", { className: "wbt-picker-selected", role: "status" }, p.value ? tr("\u5DF2\u9009\u65F6\u95F4\u7EBF") + "\uFF1A" + (p.title || p.value) : tr("\u5C1A\u672A\u9009\u62E9\u65F6\u95F4\u7EBF")),
+          h(
+            "div",
+            { ref: list, className: "wbt-picker-list", role: "listbox", "aria-label": tr("\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF"), "aria-busy": busy ? "true" : "false", onKeyDown },
+            busy ? h("p", { className: "wbt-picker-note" }, tr("\u52A0\u8F7D\u4E2D\u2026")) : null,
+            error ? h("div", { className: "wbt-picker-note wbt-err", role: "alert" }, error, h("button", { type: "button", className: "wbt-btn", onClick: function() {
+              setRetry(retry + 1);
+            } }, tr("\u91CD\u8BD5"))) : null,
+            !busy && !error && !rows.length ? h("p", { className: "wbt-picker-note" }, query ? tr("\u6CA1\u6709\u5339\u914D\u7684\u65F6\u95F4\u7EBF\uFF0C\u53EF\u5728\u4E0B\u65B9\u65B0\u5EFA\u3002") : tr("\u6682\u65E0\u65F6\u95F4\u7EBF\uFF0C\u53EF\u5728\u4E0B\u65B9\u65B0\u5EFA\u3002")) : null,
+            !busy && !error ? rows.map(function(row, index) {
+              var id = row.timelineId || row.timelineKey, selected = id === p.value;
+              return h(
+                "button",
+                { key: id, type: "button", role: "option", "aria-selected": selected ? "true" : "false", "data-id": id, title: row.title || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF"), tabIndex: index === active ? 0 : -1, className: "wbt-picker-opt" + (selected ? " selected" : ""), onMouseEnter: function() {
+                  setActive(index);
+                }, onClick: function() {
+                  choose(row);
+                } },
+                h("span", { className: "wbt-picker-opt-title" }, row.title || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF")),
+                h("span", { className: "wbt-picker-opt-count" }, row.taskCount + tr(" \u4E2A\u4EFB\u52A1"))
+              );
+            }) : null
           ),
           h(
             "div",
@@ -6359,14 +6412,11 @@ var require_timeline_controls = __commonJS({
             h("button", { type: "button", className: "wbt-btn", disabled: busy || page <= 1, onClick: function() {
               setPage(page - 1);
             } }, tr("\u4E0A\u4E00\u9875")),
-            h("span", null, page + " / " + Math.max(1, Math.ceil(data.total / 20))),
-            h("button", { type: "button", className: "wbt-btn", disabled: busy || page * 20 >= data.total, onClick: function() {
+            h("span", null, page + " / " + pages),
+            h("button", { type: "button", className: "wbt-btn", disabled: busy || page >= pages, onClick: function() {
               setPage(page + 1);
             } }, tr("\u4E0B\u4E00\u9875"))
-          ),
-          error ? h("div", { role: "alert" }, error, h("button", { type: "button", onClick: function() {
-            setRetry(retry + 1);
-          } }, tr("\u91CD\u8BD5"))) : null
+          )
         );
       }
       function Editor(p) {
@@ -6392,7 +6442,10 @@ var require_timeline_controls = __commonJS({
           });
         }
         return h("div", { className: "wbt-modal-mask", onKeyDown: function(e) {
-          if (e.key === "Escape" && !busy) p.onClose();
+          if (e.key === "Escape" && !busy) {
+            e.stopPropagation();
+            p.onClose();
+          }
         } }, h(
           "div",
           { className: "wbt-modal", role: "dialog", "aria-modal": true, "aria-label": item ? tr("\u7F16\u8F91\u65F6\u95F4\u7EBF") : tr("\u65B0\u5EFA\u65F6\u95F4\u7EBF") },
@@ -7090,9 +7143,9 @@ var require_timeline_styles = __commonJS({
       '.wbt-timeline-members{list-style:none;padding:0;margin:8px 0;min-width:0}.wbt-timeline-member-row{display:grid;grid-template-columns:92px 14px minmax(0,1fr) auto 28px;gap:8px;align-items:center;min-height:40px;position:relative;padding:0;margin:0}.wbt-timeline-date{font-size:11.5px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;opacity:.7}.wbt-timeline-node{align-self:stretch;position:relative}.wbt-timeline-node:before{content:"";position:absolute;width:1px;left:50%;top:0;bottom:0;background:var(--wbt-line)}.wbt-timeline-node:after{content:"";position:absolute;width:6px;height:6px;left:calc(50% - 2.5px);top:calc(50% - 3px);border-radius:50%;background:var(--wbt-accent)}',
       ":is(.wbt-timeline-view,.wbt-timeline-modal) button.wbt-timeline-member{padding:8px 0;text-align:left;font-size:13px;line-height:1.5;overflow-wrap:anywhere;white-space:normal}:is(.wbt-timeline-view,.wbt-timeline-modal) button.wbt-timeline-member:hover{text-decoration:underline;text-underline-offset:3px}:is(.wbt-timeline-view,.wbt-timeline-modal) button.wbt-timeline-remove{display:flex;justify-content:center;align-items:center;width:28px;height:28px;padding:4px;opacity:.35}:is(.wbt-timeline-view,.wbt-timeline-modal) button.wbt-timeline-remove:is(:hover,:focus-visible){opacity:.9;background:var(--wbt-surface)}.wbt-timeline-member-row>.wbt-badge{white-space:nowrap;margin:0}.wbt-timeline-remove:disabled{cursor:default}",
       ".wbt-timeline-member-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;border-top:1px solid var(--wbt-line);padding-top:8px}.wbt-timeline-member-footer>span{font-size:11.5px;opacity:.65}.wbt-timeline-member-footer .wbt-timeline-pager{margin:0}",
-      ".wbt-modal.wide.wbt-timeline-modal{display:flex;flex-direction:column;max-height:90vh;overflow:hidden}.wbt-timeline-modal-body{min-height:0;overflow:auto;flex:1;padding:12px}.wbt-timeline-member-section{min-width:0;margin-top:12px}.wbt-timeline-member-scroll{max-height:40vh;overflow:auto;overscroll-behavior:contain}.wbt-timeline-other{border-top:1px solid var(--wbt-line);padding-top:12px;margin-top:12px}.wbt-timeline-other>summary{cursor:pointer}.wbt-timeline-confirm{padding:12px;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);margin:8px 0;line-height:1.6;background:var(--wbt-surface)}.wbt-timeline-confirm .wbt-btn{margin:8px 8px 0 0}",
-      ".wbt-timeline-desc.expanded{max-height:none}.wbt-timeline-selected{min-width:0;overflow-wrap:anywhere;flex:1}.wbt-timeline-modal .wbt-empty{padding:12px;margin:8px 0;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);background:var(--wbt-surface);line-height:1.6}",
-      "@media(max-width:720px){.wbt-timeline-columns{grid-template-columns:1fr}.wbt-timeline-toolbar-main{flex:1 1 100%}.wbt-timeline-toolbar-actions{flex:1 1 100%;justify-content:flex-end;margin-left:0}.wbt-timeline-list{max-height:320px}.wbt-timeline-toolbar{flex-wrap:wrap}.wbt-timeline-member-row{grid-template-columns:76px 8px minmax(0,1fr) auto 28px;gap:4px}.wbt-timeline-left,.wbt-timeline-right{padding:12px}.wbt-timeline-date{font-size:10.5px}.wbt-timeline-member-row>.wbt-badge{font-size:10.5px;padding:2px 4px}.wbt-timeline-actions>.wbt-act-del{margin-left:0}.wbt-timeline-id{max-width:140px}}"
+      ".wbt-modal.wide.wbt-timeline-modal{display:flex;flex-direction:column;max-height:90vh;overflow:hidden}.wbt-timeline-modal-body{min-height:0;overflow:auto;flex:1;padding:12px}.wbt-timeline-member-section{min-width:0;margin-top:12px}.wbt-timeline-member-scroll{max-height:40vh;overflow:auto;overscroll-behavior:contain}.wbt-timeline-pick{border-top:1px solid var(--wbt-line);padding-top:12px;margin-top:12px}.wbt-timeline-empty{padding:12px 0}.wbt-picker-selected{font-size:12px;margin:6px 0;min-height:16px}.wbt-picker-list{max-height:220px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-sm,6px);padding:4px;background:var(--wbt-surface)}.wbt-picker-note{margin:6px;font-size:12px;opacity:.7}.wbt-picker-opt{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:6px 8px;border:0;border-radius:var(--wb-radius-sm,6px);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}.wbt-picker-opt:hover,.wbt-picker-opt:focus-visible{background:color-mix(in oklab,var(--wbt-accent) 12%,transparent)}.wbt-picker-opt:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:-2px}.wbt-picker-opt.selected{background:color-mix(in oklab,var(--wbt-accent) 16%,transparent);font-weight:600}.wbt-picker-opt-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wbt-picker-opt-count{font-size:11px;opacity:.6;white-space:nowrap}.wbt-timeline-confirm{padding:12px;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);margin:8px 0;line-height:1.6;background:var(--wbt-surface)}.wbt-timeline-confirm .wbt-btn{margin:8px 8px 0 0}",
+      ".wbt-timeline-desc.expanded{max-height:none}.wbt-timeline-selected{min-width:0;overflow-wrap:anywhere;flex:1}.wbt-modal-foot.wbt-timeline-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:none}.wbt-timeline-modal .wbt-empty{padding:12px;margin:8px 0;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);background:var(--wbt-surface);line-height:1.6}",
+      "@media(max-width:720px){.wbt-timeline-selected{flex:1 1 100%}.wbt-picker-list{max-height:180px}.wbt-timeline-columns{grid-template-columns:1fr}.wbt-timeline-toolbar-main{flex:1 1 100%}.wbt-timeline-toolbar-actions{flex:1 1 100%;justify-content:flex-end;margin-left:0}.wbt-timeline-list{max-height:320px}.wbt-timeline-toolbar{flex-wrap:wrap}.wbt-timeline-member-row{grid-template-columns:76px 8px minmax(0,1fr) auto 28px;gap:4px}.wbt-timeline-left,.wbt-timeline-right{padding:12px}.wbt-timeline-date{font-size:10.5px}.wbt-timeline-member-row>.wbt-badge{font-size:10.5px;padding:2px 4px}.wbt-timeline-actions>.wbt-act-del{margin-left:0}.wbt-timeline-id{max-width:140px}}"
     ].join("\n");
   }
 });
@@ -7133,6 +7186,7 @@ var require_task_timeline_modal = __commonJS({
         var ds = React.useState(false), expanded = ds[0], setExpanded = ds[1];
         var cs = React.useState(null), removing = cs[0], setRemoving = cs[1];
         var ps = React.useState(1), page = ps[0], setPage = ps[1];
+        var ks = React.useState(false), picking = ks[0], setPicking = ks[1];
         var dialog = React.useRef(null), pending = React.useRef(false);
         React.useEffect(function() {
           var previous = typeof document !== "undefined" ? document.activeElement : null;
@@ -7178,6 +7232,7 @@ var require_task_timeline_modal = __commonJS({
             setValue("");
             setSelectedTitle("");
             setRemoving(null);
+            setPicking(false);
             setRevision(function(n) {
               return n + 1;
             });
@@ -7198,7 +7253,7 @@ var require_task_timeline_modal = __commonJS({
           if (e.key !== "Tab" || !dialog.current) return;
           var dialogs = dialog.current.parentElement.querySelectorAll('[role="dialog"]');
           var activeDialog = creating ? dialogs[dialogs.length - 1] : dialog.current;
-          var nodes = Array.from(activeDialog.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),summary,[tabindex="0"]')).filter(function(node) {
+          var nodes = Array.from(activeDialog.querySelectorAll('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),[tabindex="0"]')).filter(function(node) {
             return node.getClientRects().length > 0;
           });
           var first = nodes[0], last = nodes[nodes.length - 1];
@@ -7215,9 +7270,72 @@ var require_task_timeline_modal = __commonJS({
         }
         var title = splitTitle(task.timelineTitle || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF"));
         var pages = Math.max(1, Math.ceil(members.length / 20));
+        var linked = !!task.timelineId;
+        var showPicker = !linked || picking;
         var newButton = h("button", { type: "button", className: "wbt-btn", disabled: busy, onClick: function() {
           setCreating(true);
         } }, tr("\u65B0\u5EFA\u65F6\u95F4\u7EBF"));
+        var summaryBlock = h(
+          "header",
+          { className: "wbt-timeline-summary" },
+          title.eyebrow ? h("div", { className: "wbt-timeline-eyebrow" }, title.eyebrow) : null,
+          h("h4", null, title.title),
+          h("div", { className: "wbt-desc wbt-timeline-desc" + (expanded ? " expanded" : "") }, task.timelineDescription || tr("\u6682\u65E0\u63CF\u8FF0")),
+          task.timelineDescription ? h("button", { type: "button", className: "wbt-btn ghost", "aria-expanded": expanded, onClick: function() {
+            setExpanded(!expanded);
+          } }, tr(expanded ? "\u6536\u8D77\u63CF\u8FF0" : "\u5C55\u5F00\u63CF\u8FF0")) : null
+        );
+        var membersBlock = h(
+          "section",
+          { className: "wbt-timeline-member-section", "aria-label": tr("\u6210\u5458") },
+          h(
+            "div",
+            { className: "wbt-timeline-actions" },
+            h("strong", null, tr("\u6210\u5458"), " ", members.length),
+            h("button", { type: "button", className: "wbt-btn ghost", "aria-expanded": picking, disabled: busy, onClick: function() {
+              setPicking(!picking);
+            } }, tr(picking ? "\u6536\u8D77\u66F4\u6362" : "\u66F4\u6362\u65F6\u95F4\u7EBF")),
+            h("button", { type: "button", className: "wbt-btn ghost", disabled: busy, onClick: function() {
+              setRemoving(task);
+            } }, tr("\u79FB\u51FA\u5F53\u524D\u4EFB\u52A1")),
+            h("button", { type: "button", className: "wbt-btn", disabled: busy, onClick: function() {
+              p.onCreateTimeline(task);
+            } }, tr("\u6DFB\u52A0\u65B0\u4EFB\u52A1"))
+          ),
+          removing ? h(
+            "div",
+            { className: "wbt-timeline-confirm", role: "alert" },
+            h("p", null, tr("\u786E\u8BA4\u79FB\u51FA\u4EFB\u52A1\uFF1F"), " ", removing.title, " \xB7 ", tr("\u4EC5\u89E3\u9664\u5173\u8054\uFF0C\u4EFB\u52A1\u4ECD\u4FDD\u7559\u3002")),
+            h(
+              "div",
+              { className: "wbt-timeline-actions" },
+              h("button", { type: "button", className: "wbt-btn", disabled: busy, onClick: function() {
+                setRemoving(null);
+              } }, tr("\u53D6\u6D88")),
+              h("button", { type: "button", className: "wbt-btn wbt-act-del", disabled: busy, onClick: function() {
+                change("taskTimelines.detach", { taskId: removing.id });
+              } }, tr("\u786E\u8BA4\u79FB\u51FA"))
+            )
+          ) : null,
+          h("div", { className: "wbt-timeline-member-scroll" }, members.length ? h(MemberRows, { rows: members.slice((page - 1) * 20, page * 20), lang, disabled: busy, onOpen: p.onOpen, onRemove: setRemoving }) : h("p", { className: "wbt-empty" }, tr("\u6682\u65E0\u53EF\u663E\u793A\u6210\u5458"))),
+          h(
+            "div",
+            { className: "wbt-timeline-pager" },
+            h("span", null, tr("\u6309\u53D1\u5E03\u65F6\u95F4\u6B63\u5E8F\u6392\u5217")),
+            h("button", { type: "button", className: "wbt-btn", disabled: busy || page <= 1, onClick: function() {
+              setPage(page - 1);
+            } }, tr("\u4E0A\u4E00\u9875")),
+            h("span", null, page + " / " + pages),
+            h("button", { type: "button", className: "wbt-btn", disabled: busy || page >= pages, onClick: function() {
+              setPage(page + 1);
+            } }, tr("\u4E0B\u4E00\u9875"))
+          )
+        );
+        var linkedBody = h(React.Fragment, null, summaryBlock, membersBlock);
+        var unlinkedBody = h("div", { className: "wbt-timeline-empty" }, h("strong", null, tr("\u5F53\u524D\u672A\u5173\u8054\u65F6\u95F4\u7EBF")), h("p", null, tr("\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF\uFF0C\u6216\u65B0\u5EFA\u4E00\u6761\uFF1B\u5173\u95ED\u5F39\u7A97\u4E0D\u4F1A\u81EA\u52A8\u5173\u8054\u3002")));
+        var attachButton = h("button", { type: "button", className: "wbt-btn primary", disabled: busy || !value, title: busy ? tr("\u52A0\u8F7D\u4E2D\u2026") : !value ? tr("\u8BF7\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF\uFF1B\u65E0\u5339\u914D\u65F6\u53EF\u65B0\u5EFA") : selectedTitle, onClick: function() {
+          change("taskTimelines.attach", { taskId: task.id, timelineId: value });
+        } }, tr("\u5173\u8054\u6240\u9009\u65F6\u95F4\u7EBF"));
         return h(
           "div",
           { className: "wbt-modal-mask", onKeyDown },
@@ -7232,82 +7350,23 @@ var require_task_timeline_modal = __commonJS({
               error ? h("p", { className: "wbt-err", role: "alert" }, error, h("button", { type: "button", className: "wbt-btn", onClick: function() {
                 setRevision(revision + 1);
               } }, tr("\u91CD\u8BD5"))) : null,
-              busy ? h("p", { role: "status" }, tr("\u52A0\u8F7D\u4E2D\u2026")) : null,
-              task.timelineId ? h(
-                React.Fragment,
-                null,
-                h(
-                  "header",
-                  { className: "wbt-timeline-summary" },
-                  title.eyebrow ? h("div", { className: "wbt-timeline-eyebrow" }, title.eyebrow) : null,
-                  h("h4", null, title.title),
-                  h("div", { className: "wbt-desc wbt-timeline-desc" + (expanded ? " expanded" : "") }, task.timelineDescription || tr("\u6682\u65E0\u63CF\u8FF0")),
-                  task.timelineDescription ? h("button", { type: "button", className: "wbt-btn ghost", "aria-expanded": expanded, onClick: function() {
-                    setExpanded(!expanded);
-                  } }, tr(expanded ? "\u6536\u8D77\u63CF\u8FF0" : "\u5C55\u5F00\u63CF\u8FF0")) : null
-                ),
-                h(
-                  "section",
-                  { className: "wbt-timeline-member-section", "aria-label": tr("\u6210\u5458") },
-                  h(
-                    "div",
-                    { className: "wbt-timeline-actions" },
-                    h("strong", null, tr("\u6210\u5458"), " ", members.length),
-                    h("button", { type: "button", className: "wbt-btn ghost", disabled: busy, onClick: function() {
-                      setRemoving(task);
-                    } }, tr("\u79FB\u51FA\u5F53\u524D\u4EFB\u52A1")),
-                    h("button", { type: "button", className: "wbt-btn", disabled: busy, onClick: function() {
-                      p.onCreateTimeline(task);
-                    } }, tr("\u6DFB\u52A0\u65B0\u4EFB\u52A1"))
-                  ),
-                  removing ? h(
-                    "div",
-                    { className: "wbt-timeline-confirm", role: "alert" },
-                    h("p", null, tr("\u786E\u8BA4\u79FB\u51FA\u4EFB\u52A1\uFF1F"), " ", removing.title, " \xB7 ", tr("\u4EC5\u89E3\u9664\u5173\u8054\uFF0C\u4EFB\u52A1\u4ECD\u4FDD\u7559\u3002")),
-                    h(
-                      "div",
-                      { className: "wbt-timeline-actions" },
-                      h("button", { type: "button", className: "wbt-btn", disabled: busy, onClick: function() {
-                        setRemoving(null);
-                      } }, tr("\u53D6\u6D88")),
-                      h("button", { type: "button", className: "wbt-btn wbt-act-del", disabled: busy, onClick: function() {
-                        change("taskTimelines.detach", { taskId: removing.id });
-                      } }, tr("\u786E\u8BA4\u79FB\u51FA"))
-                    )
-                  ) : null,
-                  h("div", { className: "wbt-timeline-member-scroll" }, members.length ? h(MemberRows, { rows: members.slice((page - 1) * 20, page * 20), lang, disabled: busy, onOpen: p.onOpen, onRemove: setRemoving }) : h("p", { className: "wbt-empty" }, tr("\u6682\u65E0\u53EF\u663E\u793A\u6210\u5458"))),
-                  h(
-                    "div",
-                    { className: "wbt-timeline-pager" },
-                    h("span", null, tr("\u6309\u53D1\u5E03\u65F6\u95F4\u6B63\u5E8F\u6392\u5217")),
-                    h("button", { type: "button", className: "wbt-btn", disabled: busy || page <= 1, onClick: function() {
-                      setPage(page - 1);
-                    } }, tr("\u4E0A\u4E00\u9875")),
-                    h("span", null, page + " / " + pages),
-                    h("button", { type: "button", className: "wbt-btn", disabled: busy || page >= pages, onClick: function() {
-                      setPage(page + 1);
-                    } }, tr("\u4E0B\u4E00\u9875"))
-                  )
-                )
-              ) : h("div", { className: "wbt-timeline-empty" }, h("strong", null, tr("\u6CA1\u6709\u5173\u8054\u65F6\u95F4\u7EBF")), h("p", null, tr("\u65B0\u5EFA\u65F6\u95F4\u7EBF\u6216\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF\uFF0C\u5C06\u76F8\u5173\u4EFB\u52A1\u96C6\u4E2D\u67E5\u770B\u3002")), newButton),
-              h(
-                "details",
-                { className: "wbt-timeline-other", open: !task.timelineId || void 0 },
-                h("summary", null, tr("\u5176\u4ED6\u65F6\u95F4\u7EBF")),
+              busy && !members.length ? h("p", { role: "status" }, tr("\u52A0\u8F7D\u4E2D\u2026")) : null,
+              linked ? linkedBody : unlinkedBody,
+              showPicker ? h(
+                "section",
+                { className: "wbt-timeline-pick", "aria-label": tr("\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF") },
                 h(controls.Picker, { api: p.api, t: p.t, value, title: selectedTitle, onChange: function(id, label) {
                   setValue(id);
                   setSelectedTitle(label || "");
                 }, disabled: busy })
-              )
+              ) : null
             ),
             h(
               "div",
               { className: "wbt-modal-foot wbt-timeline-actions" },
-              h("span", { className: "wbt-timeline-selected", role: "status" }, value ? tr("\u5DF2\u9009\u65F6\u95F4\u7EBF") + "\uFF1A" + (selectedTitle || value) : tr("\u8BF7\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF")),
+              h("span", { className: "wbt-timeline-selected", role: "status" }, value ? tr("\u5DF2\u9009\u65F6\u95F4\u7EBF") + "\uFF1A" + (selectedTitle || value) : linked ? tr("\u66F4\u6362\u6216\u79FB\u51FA\u65F6\u95F4\u7EBF") : tr("\u5C1A\u672A\u9009\u62E9\u65F6\u95F4\u7EBF")),
               newButton,
-              h("button", { type: "button", className: "wbt-btn primary", disabled: busy || !value, title: busy ? tr("\u52A0\u8F7D\u4E2D\u2026") : !value ? tr("\u8BF7\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF\uFF1B\u65E0\u5339\u914D\u65F6\u53EF\u65B0\u5EFA") : selectedTitle, onClick: function() {
-                change("taskTimelines.attach", { taskId: task.id, timelineId: value });
-              } }, tr("\u5173\u8054\u6240\u9009\u65F6\u95F4\u7EBF"))
+              showPicker ? attachButton : null
             )
           ),
           creating ? h(controls.Editor, { api: p.api, t: p.t, onClose: function() {
@@ -8071,12 +8130,73 @@ var require_task_filter_panel = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/views/claim-batch.cjs
+var require_claim_batch = __commonJS({
+  "packages/addons/tasks/client/views/claim-batch.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function claimBatch(api, ids, t) {
+      return api.call("tasks.claimBatch", { ids }).then(function(r) {
+        var d = r && r.result ? r.result : r;
+        if (!d) return { ok: [], message: "claim failed" };
+        var ok = (d.claimed || []).map(function(x) {
+          return String(x.id);
+        });
+        var c = d.counts || {};
+        var already = Number(c.alreadyClaimed || 0), notClaimable = Number(c.notClaimable || 0);
+        var missing = Number(c.notFound || 0) + Number(c.deleted || 0), busy = Number(c.busy || 0);
+        if (!already && !notClaimable && !missing && !busy) return { ok, message: t.claimedCount.replace("{n}", String(ok.length)) };
+        return { ok, message: t.claimSummary.replace("{ok}", String(ok.length)).replace("{fail}", String(already + notClaimable + missing + busy)).replace("{already}", String(already)).replace("{notClaimable}", String(notClaimable)).replace("{missing}", String(missing)) };
+      }).catch(function(e) {
+        return { ok: [], message: e && e.message || "claim failed" };
+      });
+    };
+    module2.exports.makeClaimSelected = function makeClaimSelected(d) {
+      return function claimSelected() {
+        var ids = d.ids();
+        if (!ids.length) return;
+        module2.exports(d.api, ids, d.t).then(function(r) {
+          var done = new Set(r.ok);
+          var left = new Set(ids.filter(function(id) {
+            return !done.has(String(id));
+          }));
+          d.setIds(left);
+          d.refreshList();
+          d.refreshTagNav();
+          if (!left.size) d.clear();
+          d.say(r.message);
+        });
+      };
+    };
+  }
+});
+
+// packages/addons/tasks/client/views/selection-bar.cjs
+var require_selection_bar = __commonJS({
+  "packages/addons/tasks/client/views/selection-bar.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function renderSelectionBar(h, Icon2, p) {
+      var t = p.t;
+      return h(
+        "div",
+        { className: "wbt-selbar" },
+        h("b", null, t.selected + " " + p.count),
+        h("button", { className: "wbt-btn", onClick: p.openSelected }, t.selectedTasks),
+        h("button", { className: "wbt-btn", onClick: p.batchTimeline }, t.batchTimeline),
+        h("button", { className: "wbt-btn", onClick: p.batchMigrate }, t.batchMigrate),
+        h("button", { className: "wbt-btn", onClick: p.claimSelected }, t.claimSelected),
+        h("button", { className: "wbt-btn wbt-act-del", onClick: p.batchDelete }, h(Icon2, { name: "trash", size: 13 }), t.batchDelete),
+        h("button", { className: "wbt-btn ghost", onClick: p.clear }, t.clear)
+      );
+    };
+  }
+});
+
 // packages/addons/tasks/client/views/tasks-view.cjs
 var require_tasks_view = __commonJS({
   "packages/addons/tasks/client/views/tasks-view.cjs"(exports2, module2) {
     module2.exports = function createTasksView(deps) {
       var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon2 = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
-      var h = React.createElement, filters = require_task_filter_model(), renderFilters = require_task_filter_panel();
+      var h = React.createElement, filters = require_task_filter_model(), renderFilters = require_task_filter_panel(), claimBatch = require_claim_batch(), renderSelectionBar = require_selection_bar();
       function TasksView(props) {
         var lang = props.lang === "en" ? "en" : "zh";
         var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -8413,35 +8533,18 @@ var require_tasks_view = __commonJS({
             say(fail ? t.deleted + " " + ok + " \xB7 " + t.deletePartial + " " + fail : t.deleted + " " + ok);
           });
         }
-        function claimSelected() {
-          var ids = Array.from(selectedIds);
-          if (!ids.length) return;
-          api.call("tasks.claimBatch", { ids }).then(function(r) {
-            var d = r && r.result ? r.result : r;
-            if (!d) {
-              say("claim failed");
-              return;
-            }
-            var got = Array.isArray(d.claimed) ? d.claimed.map(function(x) {
-              return String(x.id);
-            }) : [];
-            var c = d.counts || {};
-            var left = new Set(Array.from(selectedIds).filter(function(id) {
-              return got.indexOf(String(id)) < 0;
-            }));
-            setSelectedIds(left);
-            refreshList();
-            refreshTagNav();
-            if (!left.size) {
-              clearSelection();
-              say(t.claimedCount.replace("{n}", String(got.length)));
-              return;
-            }
-            say(t.claimSummary.replace("{ok}", String(got.length)).replace("{fail}", String(Number(c.alreadyClaimed || 0) + Number(c.notClaimable || 0) + Number(c.notFound || 0) + Number(c.deleted || 0) + Number(c.busy || 0))).replace("{already}", String(c.alreadyClaimed || 0)).replace("{notClaimable}", String(c.notClaimable || 0)).replace("{missing}", String(Number(c.notFound || 0) + Number(c.deleted || 0))));
-          }).catch(function(e) {
-            say(e && e.message || "claim failed");
-          });
-        }
+        var claimSelected = claimBatch.makeClaimSelected({
+          api,
+          t,
+          ids: function() {
+            return Array.from(selectedIds);
+          },
+          setIds: setSelectedIds,
+          clear: clearSelection,
+          say,
+          refreshList,
+          refreshTagNav
+        });
         function deleteNode(node) {
           if (cfgConfirm && !window.confirm(t.deleteConfirm)) return;
           api.call("taskNodes.delete", { id: node.id }).then(function(r) {
@@ -8744,23 +8847,22 @@ var require_tasks_view = __commonJS({
               ) : null
             )
           ),
-          selectionMode && selectedIds.size ? h(
-            "div",
-            { className: "wbt-selbar" },
-            h("b", null, t.selected + " " + selectedIds.size),
-            h("button", { className: "wbt-btn", onClick: openSelected }, t.selectedTasks),
-            h("button", { className: "wbt-btn", onClick: function() {
+          selectionMode && selectedIds.size ? renderSelectionBar(h, Icon2, {
+            t,
+            count: selectedIds.size,
+            openSelected,
+            batchDelete,
+            claimSelected,
+            clear: clearSelection,
+            batchTimeline: function() {
               setBatchMode("timeline");
               openSelected();
-            } }, t.batchTimeline),
-            h("button", { className: "wbt-btn", onClick: function() {
+            },
+            batchMigrate: function() {
               setBatchMode("migrate");
               openSelected();
-            } }, t.batchMigrate),
-            h("button", { className: "wbt-btn", onClick: claimSelected }, t.claimSelected),
-            h("button", { className: "wbt-btn wbt-act-del", onClick: batchDelete }, h(Icon2, { name: "trash", size: 13 }), t.batchDelete),
-            h("button", { className: "wbt-btn ghost", onClick: clearSelection }, t.clear)
-          ) : null,
+            }
+          }) : null,
           drawer ? h(
             "div",
             { className: "wbt-drawer-mask", onMouseDown: function(e) {
