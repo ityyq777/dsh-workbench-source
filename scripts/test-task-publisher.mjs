@@ -63,7 +63,9 @@ check("brief 结构完整", () => {
   assert.ok(brief.includes("## 边界规则"));
   assert.ok(brief.includes("非代码") === false || brief.includes("只有需求明确是代码改动时才看仓库"));
   assert.ok(brief.includes("sessionId: s-abc"));
-  assert.ok(brief.includes("dedupeKey 建议: dsh-session:s-abc"));
+  assert.ok(brief.includes('用 "dsh-session:" 前缀拼接上面的 sessionId'));
+  // 回归：正文里不能出现 dsh-session: 紧跟裸 id 的串，会被 DSH 当会话引用 URI 解析
+  assert.equal(/dsh-session:[A-Za-z0-9_-]+/u.test(brief), false, "brief 不得包含裸 dsh-session 引用");
   assert.ok(brief.includes("2026-11-10T03:00:00.000Z"));
 });
 
@@ -71,7 +73,8 @@ check("brief 结构完整", () => {
 check("brief 兜底", () => {
   const brief = buildPublisherBrief({ requirement: "  x  " });
   assert.ok(brief.includes("sessionId: unknown"));
-  assert.ok(brief.includes("dsh-session:unknown"));
+  assert.ok(brief.includes('用 "dsh-session:" 前缀拼接上面的 sessionId'));
+  assert.equal(/dsh-session:[A-Za-z0-9_-]+/u.test(brief), false);
 });
 
 // 3) 注册：名称、描述、input、recordInput=false、handler 返回用法

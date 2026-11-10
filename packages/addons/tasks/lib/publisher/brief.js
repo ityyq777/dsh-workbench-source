@@ -11,7 +11,7 @@ const SOP_STEPS = [
   "B. 润色与补充：标题写成「动词 + 对象 + 结果」；补齐背景、现状、目标、范围与非目标、验收标准、风险与依赖、计划完成日期、难度（0.5 步进）、优先级。用户没说的关键项标注「待确认」，不擅自扩大范围，不把推测写成事实。",
   "C. 归属：先调用 taskNodes.overview 拿全量任务树，按职责选择任务表；出现多个候选必须问用户，禁止按热度、第一个候选或分数自动选择。没有合适节点时给出建议路径、命名与理由，获得授权后再创建。历史任务只作线索，不作现行规则。",
   "D. 时间线：判断现有时间线是否匹配、是否需要新建、能否与历史任务形成同一条线 / 重启链（restartKey）/ 后续任务。没有合适时间线就明确写「无时间线归属」，不要为了凑线硬挂。",
-  "E. 发布：先调用 tasks.list 以标题关键词查重；创建时 source 用 0，dedupeKey 用 dsh-session:<sessionId>（用户手写发布可用自定义键）。创建回执必须给出任务 id、任务表路径、时间线归属与计划完成日期，并给用户一屏摘要，不要原样贴 action JSON。",
+  "E. 发布：先调用 tasks.list 以标题关键词查重；创建时 source 用 0，dedupeKey 用「dsh-session:」前缀拼接 sessionId（用户手写发布可用自定义键）。创建回执必须给出任务 id、任务表路径、时间线归属与计划完成日期，并给用户一屏摘要，不要原样贴 action JSON。",
   "F. 何时停下来问：归属有歧义、信息互相冲突、查重命中、需要新建节点或任务表时，先给草案并提问，不创建；信息齐全且归属唯一时直接发布。",
 ];
 
@@ -54,7 +54,9 @@ export function buildPublisherBrief({ requirement, sessionId, now } = {}) {
     "",
     "## 会话信息",
     "sessionId: " + sid,
-    "dedupeKey 建议: dsh-session:" + sid,
+    // 不要把 dsh-session: 前缀和裸 sessionId 连写：DSH 会把 "dsh-session:<base64url>" 当会话引用 URI，
+    // 裸 id 不是合法 payload，会让下一轮在模型调用前就解析失败。这里只描述拼法，由模型自行组装。
+    "dedupeKey 建议: 用 \"dsh-session:\" 前缀拼接上面的 sessionId（前缀后接的是会话 id 本身）",
     "生成时间: " + stamp,
   ].join("\n");
 }
