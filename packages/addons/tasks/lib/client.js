@@ -4261,6 +4261,391 @@ var require_commands = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/views/workspace-view.cjs
+var require_workspace_view = __commonJS({
+  "packages/addons/tasks/client/views/workspace-view.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(deps) {
+      var React = deps.React, h = React.createElement;
+      var COPY = {
+        zh: {
+          title: "\u5DE5\u4F5C\u533A",
+          hint: "\u76EE\u5F55\u53EA\u4FDD\u5B58\u4E0E\u56DE\u663E\uFF0C\u4E0D\u6821\u9A8C\u662F\u5426\u5B58\u5728\uFF1B\u4EFB\u52A1\u6570\u53EF\u70B9\u5F00\u8BB0\u5F55\u9875",
+          create: "\u65B0\u5EFA\u5DE5\u4F5C\u533A",
+          search: "\u641C\u7D22\u6807\u9898\u3001\u6807\u8BC6\u3001\u76EE\u5F55\u4E0E\u63CF\u8FF0",
+          count: function(n) {
+            return "\u5171 " + n + " \u4E2A";
+          },
+          tasks: function(n) {
+            return n + " \u4E2A\u4EFB\u52A1";
+          },
+          noDir: "\u672A\u8BBE\u7F6E\u76EE\u5F55",
+          edit: "\u7F16\u8F91",
+          del: "\u5220\u9664",
+          cancel: "\u53D6\u6D88",
+          confirm: "\u786E\u8BA4\u5220\u9664",
+          empty: "\u8FD8\u6CA1\u6709\u5DE5\u4F5C\u533A\u3002\u65B0\u5EFA\u4E00\u4E2A\uFF0C\u5C31\u80FD\u5728\u4EFB\u52A1\u91CC\u5173\u8054\u672C\u673A\u4F1A\u8BDD\u76EE\u5F55\u3002",
+          noMatch: "\u6CA1\u6709\u5339\u914D\u7684\u5DE5\u4F5C\u533A\u3002",
+          loading: "\u6B63\u5728\u8BFB\u53D6\u5DE5\u4F5C\u533A\u2026",
+          error: "\u5DE5\u4F5C\u533A\u52A0\u8F7D\u5931\u8D25",
+          retry: "\u91CD\u8BD5",
+          formCreate: "\u65B0\u5EFA\u5DE5\u4F5C\u533A",
+          formEdit: "\u7F16\u8F91\u5DE5\u4F5C\u533A",
+          fTitle: "\u6807\u9898 *",
+          fName: "\u6807\u8BC6\uFF08\u53EF\u7A7A\uFF09",
+          fDir: "\u76EE\u5F55\uFF08\u672C\u673A\u7EDD\u5BF9\u8DEF\u5F84\uFF0C\u53EF\u7A7A\uFF09",
+          fDesc: "\u63CF\u8FF0\uFF08\u53EF\u7A7A\uFF09",
+          save: "\u4FDD\u5B58",
+          titleRequired: "\u6807\u9898\u4E0D\u80FD\u4E3A\u7A7A",
+          dirInvalid: "\u76EE\u5F55\u5FC5\u987B\u662F\u672C\u673A\u7EDD\u5BF9\u8DEF\u5F84\uFF08/ \u6216 X:\\\uFF09",
+          created: "\u5DF2\u521B\u5EFA\u5DE5\u4F5C\u533A",
+          updated: "\u5DF2\u66F4\u65B0\u5DE5\u4F5C\u533A",
+          removed: "\u5DF2\u5220\u9664\u5DE5\u4F5C\u533A",
+          deleteWithTasks: function(title, n) {
+            return "\u5220\u9664\u300C" + title + "\u300D\uFF1F\u5B83\u5173\u8054\u4E86 " + n + " \u4E2A\u4EFB\u52A1\uFF0C\u5220\u9664\u540E\u8FD9\u4E9B\u4EFB\u52A1\u4F1A\u89E3\u9664\u5173\u8054\uFF0C\u4EFB\u52A1\u672C\u8EAB\u4E0D\u4F1A\u88AB\u5220\u9664\u3002";
+          },
+          deletePlain: function(title) {
+            return "\u5220\u9664\u300C" + title + "\u300D\uFF1F\u6B64\u64CD\u4F5C\u4E0D\u53EF\u64A4\u9500\u3002";
+          },
+          openTasks: "\u5728\u8BB0\u5F55\u9875\u67E5\u770B\u8BE5\u5DE5\u4F5C\u533A\u7684\u4EFB\u52A1"
+        },
+        en: {
+          title: "Workspaces",
+          hint: "Directories are displayed only, never checked; click a task count to open Records",
+          create: "New workspace",
+          search: "Search title, name, directory and description",
+          count: function(n) {
+            return n + (n === 1 ? " workspace" : " workspaces");
+          },
+          tasks: function(n) {
+            return n + (n === 1 ? " task" : " tasks");
+          },
+          noDir: "No directory",
+          edit: "Edit",
+          del: "Delete",
+          cancel: "Cancel",
+          confirm: "Confirm delete",
+          empty: "No workspaces yet. Create one to link local session directories to tasks.",
+          noMatch: "No matching workspaces.",
+          loading: "Loading workspaces\u2026",
+          error: "Failed to load workspaces",
+          retry: "Retry",
+          formCreate: "New workspace",
+          formEdit: "Edit workspace",
+          fTitle: "Title *",
+          fName: "Name (optional)",
+          fDir: "Directory (absolute local path, optional)",
+          fDesc: "Description (optional)",
+          save: "Save",
+          titleRequired: "Title is required",
+          dirInvalid: "Directory must be an absolute local path (/ or X:\\)",
+          created: "Workspace created",
+          updated: "Workspace updated",
+          removed: "Workspace deleted",
+          deleteWithTasks: function(title, n) {
+            return 'Delete "' + title + '"? ' + n + " task(s) will be unlinked; the tasks themselves are kept.";
+          },
+          deletePlain: function(title) {
+            return 'Delete "' + title + '"? This cannot be undone.';
+          },
+          openTasks: "Open the tasks of this workspace in Records"
+        }
+      };
+      var CSS = [
+        ".wbt-ws{display:flex;flex-direction:column;gap:10px;min-height:0}",
+        ".wbt-ws-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}",
+        ".wbt-ws-hint,.wbt-ws-count{color:var(--dsw-alias-label-secondary,inherit);font-size:12px}",
+        ".wbt-ws-head .wbt-btn{margin-left:auto}",
+        ".wbt-ws-search{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
+        ".wbt-ws-search .wbt-input{flex:1;min-width:220px}",
+        ".wbt-ws-list{display:flex;flex-direction:column;gap:8px;overflow:auto;min-height:0}",
+        ".wbt-ws-row{border:1px solid var(--wb-border);border-radius:var(--wb-radius-sm);padding:10px 12px;display:flex;gap:10px;align-items:flex-start}",
+        ".wbt-ws-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}",
+        ".wbt-ws-titleline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+        ".wbt-ws-title{font-weight:600;overflow-wrap:anywhere}",
+        ".wbt-ws-name{font-size:11px;border:1px solid var(--wb-border);border-radius:999px;padding:0 8px;color:var(--dsw-alias-label-secondary,inherit)}",
+        ".wbt-ws-dir{font-size:12px;overflow-wrap:anywhere}",
+        ".wbt-ws-dir code{background:color-mix(in oklab,currentColor 6%,transparent);padding:1px 6px;border-radius:4px}",
+        ".wbt-ws-nodir{color:var(--dsw-alias-label-secondary,inherit);font-size:12px}",
+        ".wbt-ws-desc{margin:0;font-size:12.5px;line-height:1.55;color:var(--dsw-alias-label-secondary,inherit);overflow-wrap:anywhere}",
+        ".wbt-ws-ops{display:flex;gap:6px;flex:none;flex-wrap:wrap;justify-content:flex-end}",
+        ".wbt-ws-ask{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border:1px solid var(--dsw-alias-status-danger,var(--wb-border));border-radius:var(--wb-radius-sm);padding:8px 10px;font-size:12.5px}",
+        ".wbt-ws-ask .wbt-btn[data-danger]{color:var(--dsw-alias-status-danger,inherit)}",
+        ".wbt-ws-empty,.wbt-ws-error{padding:12px;border:1px dashed var(--wb-border);border-radius:var(--wb-radius-sm);font-size:12.5px}",
+        ".wbt-ws-error{border-style:solid;color:var(--dsw-alias-status-danger,inherit)}",
+        ".wbt-ws-toast{font-size:12px;color:var(--dsw-alias-label-secondary,inherit)}",
+        ".wbt-ws-fields{display:flex;flex-direction:column;gap:8px}",
+        ".wbt-ws-fields .wbt-input{width:100%;box-sizing:border-box}",
+        ".wbt-ws-fields textarea.wbt-input{min-height:64px;resize:vertical;font:inherit}"
+      ].join("");
+      function result(r) {
+        if (!r || !r.ok) throw new Error(r && r.error || "Request failed");
+        return r.result || {};
+      }
+      function WorkspaceForm(props) {
+        var t = props.t;
+        var ws = props.workspace || {};
+        var ss = React.useState({
+          title: String(ws.title || ""),
+          name: String(ws.name || ""),
+          dir: String(ws.dir || ""),
+          description: String(ws.description || "")
+        });
+        var draft = ss[0], setDraft = ss[1];
+        var es = React.useState(""), err = es[0], setErr = es[1];
+        var bs = React.useState(false), busy = bs[0], setBusy = bs[1];
+        function field(key) {
+          return function(event) {
+            var value = event.target.value;
+            setDraft(function(prev) {
+              return Object.assign({}, prev, { [key]: value });
+            });
+          };
+        }
+        function submit() {
+          var title = draft.title.trim();
+          if (!title) {
+            setErr(t.titleRequired);
+            return;
+          }
+          var dir = draft.dir.trim();
+          if (dir && !(/^\//.test(dir) || /^[A-Za-z]:[\\/]/.test(dir) || /^\\\\/.test(dir))) {
+            setErr(t.dirInvalid);
+            return;
+          }
+          setErr("");
+          setBusy(true);
+          var args = { title, name: draft.name.trim(), description: draft.description };
+          if (props.mode === "edit") args.id = String(ws.id);
+          if (props.mode === "edit") args.dir = dir || null;
+          else args.dir = dir || null;
+          props.api.call(props.mode === "edit" ? "taskWorkspaces.update" : "taskWorkspaces.create", args).then(function(r) {
+            setBusy(false);
+            try {
+              result(r);
+            } catch (e) {
+              setErr(String(e && e.message || e));
+              return;
+            }
+            props.onSaved(props.mode);
+          }, function(e) {
+            setBusy(false);
+            setErr(String(e && e.message || e));
+          });
+        }
+        return h(
+          "div",
+          { className: "wbt-modal-mask", role: "dialog", "aria-modal": "true", "aria-label": props.mode === "edit" ? t.formEdit : t.formCreate },
+          h(
+            "div",
+            { className: "wbt-modal" },
+            h("div", { className: "wbt-modal-head" }, h("h3", null, props.mode === "edit" ? t.formEdit : t.formCreate)),
+            h(
+              "div",
+              { className: "wbt-ws-fields" },
+              h("input", { className: "wbt-input", value: draft.title, placeholder: t.fTitle, "aria-label": t.fTitle, onChange: field("title") }),
+              h("input", { className: "wbt-input", value: draft.name, placeholder: t.fName, "aria-label": t.fName, onChange: field("name") }),
+              h("input", { className: "wbt-input", value: draft.dir, placeholder: t.fDir, "aria-label": t.fDir, onChange: field("dir") }),
+              h("textarea", { className: "wbt-input", value: draft.description, placeholder: t.fDesc, "aria-label": t.fDesc, onChange: field("description") })
+            ),
+            err ? h("div", { className: "wbt-ws-error" }, err) : null,
+            h(
+              "div",
+              { className: "wbt-modal-foot" },
+              h("button", { className: "wbt-btn primary", type: "button", disabled: busy, onClick: submit }, t.save),
+              h("button", { className: "wbt-btn ghost", type: "button", onClick: props.onCancel }, t.cancel)
+            )
+          )
+        );
+      }
+      function WorkspaceView(props) {
+        var lang = props.lang === "en" ? "en" : "zh", t = COPY[lang];
+        var api = props.api;
+        var listS = React.useState(null), records = listS[0], setRecords = listS[1];
+        var busyS = React.useState(true), busy = busyS[0], setBusy = busyS[1];
+        var errS = React.useState(""), error = errS[0], setError = errS[1];
+        var tickS = React.useState(0), tick = tickS[0], setTick = tickS[1];
+        var queryS = React.useState(""), query = queryS[0], setQuery = queryS[1];
+        var formS = React.useState(null), form = formS[0], setForm = formS[1];
+        var askS = React.useState(null), ask = askS[0], setAsk = askS[1];
+        var toastS = React.useState(""), toast = toastS[0], setToast = toastS[1];
+        React.useEffect(function() {
+          var cancelled = false;
+          setBusy(true);
+          setError("");
+          api.call("taskWorkspaces.list", { pageSize: 100 }).then(result).then(function(r) {
+            if (cancelled) return;
+            setRecords(Array.isArray(r.records) ? r.records : []);
+            setBusy(false);
+          }).catch(function(e) {
+            if (cancelled) return;
+            setBusy(false);
+            setError(String(e && e.message || e));
+          });
+          return function() {
+            cancelled = true;
+          };
+        }, [api, tick]);
+        React.useEffect(function() {
+          if (!api || typeof api.subscribe !== "function") return void 0;
+          var off = api.subscribe(function(p) {
+            if (!p) return;
+            if (p.event === "task-workspaces-changed" || p.event === "tasks-changed") setTick(function(n) {
+              return n + 1;
+            });
+          });
+          return off;
+        }, [api]);
+        React.useEffect(function() {
+          if (!toast) return;
+          var id = setTimeout(function() {
+            setToast("");
+          }, 2600);
+          return function() {
+            clearTimeout(id);
+          };
+        }, [toast]);
+        function reload() {
+          setTick(function(n) {
+            return n + 1;
+          });
+        }
+        function say(msg) {
+          setToast(msg);
+        }
+        function openTasks(id) {
+          if (typeof props.onNavigate === "function") props.onNavigate("tasks", { workspaceIds: [String(id)] });
+        }
+        function confirmDelete() {
+          if (!ask) return;
+          api.call("taskWorkspaces.delete", { id: String(ask.id) }).then(function(r) {
+            try {
+              result(r);
+            } catch (e) {
+              say(String(e && e.message || e));
+              return;
+            }
+            setAsk(null);
+            say(t.removed);
+            reload();
+          }, function(e) {
+            say(String(e && e.message || e));
+          });
+        }
+        var list = records || [];
+        var keyword = query.trim().toLowerCase();
+        var shown = list.filter(function(w) {
+          if (!keyword) return true;
+          return [w.title, w.name, w.dir, w.description].some(function(v) {
+            return String(v || "").toLowerCase().indexOf(keyword) >= 0;
+          });
+        });
+        return h(
+          "div",
+          { className: "wbt-root wbt-ws" },
+          h("style", null, CSS),
+          h(
+            "div",
+            { className: "wbt-ws-head" },
+            h("strong", null, t.title),
+            h("span", { className: "wbt-ws-hint" }, t.hint),
+            busy ? null : h("span", { className: "wbt-ws-count" }, t.count(list.length)),
+            h("button", { className: "wbt-btn primary", type: "button", onClick: function() {
+              setForm({ mode: "create", workspace: null });
+            } }, t.create)
+          ),
+          h(
+            "div",
+            { className: "wbt-ws-search" },
+            h("input", { className: "wbt-input", value: query, placeholder: t.search, "aria-label": t.search, onChange: function(e) {
+              setQuery(e.target.value);
+            } })
+          ),
+          busy ? h("div", { className: "wbt-ws-empty" }, t.loading) : null,
+          error ? h(
+            "div",
+            { className: "wbt-ws-error" },
+            t.error + "\uFF1A" + error,
+            h("button", { className: "wbt-btn", type: "button", onClick: function() {
+              reload();
+            } }, t.retry)
+          ) : null,
+          !busy && !error && !list.length ? h("div", { className: "wbt-ws-empty" }, t.empty) : null,
+          !busy && !error && list.length && !shown.length ? h("div", { className: "wbt-ws-empty" }, t.noMatch) : null,
+          !busy && !error && shown.length ? h("div", { className: "wbt-ws-list" }, shown.map(function(w) {
+            var id = String(w.id), name = String(w.title || w.name || id);
+            var count = Number(w.taskCount) || 0;
+            return h(
+              "article",
+              { className: "wbt-ws-row", key: id },
+              h(
+                "div",
+                { className: "wbt-ws-main" },
+                h(
+                  "div",
+                  { className: "wbt-ws-titleline" },
+                  h("span", { className: "wbt-ws-title" }, name),
+                  w.name && w.name !== w.title ? h("span", { className: "wbt-ws-name" }, String(w.name)) : null,
+                  h("button", {
+                    className: "wbt-btn ghost",
+                    type: "button",
+                    title: t.openTasks,
+                    "aria-label": t.openTasks + " " + name,
+                    onClick: function() {
+                      openTasks(id);
+                    }
+                  }, t.tasks(count))
+                ),
+                h(
+                  "div",
+                  { className: "wbt-ws-dir" },
+                  w.dir ? h("code", null, String(w.dir)) : h("span", { className: "wbt-ws-nodir" }, t.noDir)
+                ),
+                w.description ? h("p", { className: "wbt-ws-desc" }, String(w.description)) : null,
+                ask && String(ask.id) === id ? h(
+                  "div",
+                  { className: "wbt-ws-ask", role: "alert" },
+                  h("span", null, count ? t.deleteWithTasks(name, count) : t.deletePlain(name)),
+                  h("button", { className: "wbt-btn", type: "button", "data-danger": "1", onClick: confirmDelete }, t.confirm),
+                  h("button", { className: "wbt-btn ghost", type: "button", onClick: function() {
+                    setAsk(null);
+                  } }, t.cancel)
+                ) : null
+              ),
+              h(
+                "div",
+                { className: "wbt-ws-ops" },
+                h("button", { className: "wbt-btn ghost", type: "button", onClick: function() {
+                  setForm({ mode: "edit", workspace: w });
+                } }, t.edit),
+                h("button", { className: "wbt-btn ghost", type: "button", onClick: function() {
+                  setAsk({ id, title: name });
+                } }, t.del)
+              )
+            );
+          })) : null,
+          toast ? h("span", { className: "wbt-ws-toast", "aria-live": "polite" }, toast) : null,
+          form ? h(WorkspaceForm, {
+            api,
+            t,
+            mode: form.mode,
+            workspace: form.workspace,
+            onCancel: function() {
+              setForm(null);
+            },
+            onSaved: function(mode) {
+              setForm(null);
+              say(mode === "edit" ? t.updated : t.created);
+              reload();
+            }
+          }) : null
+        );
+      }
+      return { WorkspaceView, CSS };
+    };
+  }
+});
+
 // packages/addons/lib/body-copy.cjs
 var require_body_copy = __commonJS({
   "packages/addons/lib/body-copy.cjs"(exports2, module2) {
@@ -8427,6 +8812,10 @@ var require_task_filter_model = __commonJS({
         });
       } else if (params.priorityMin !== void 0 || params.priorityMax !== void 0 || params.difficultyMin !== void 0 || params.difficultyMax !== void 0 || params.targetFrom !== void 0 || params.targetTo !== void 0) {
         value = empty();
+      } else if (params.noWorkspace === true || Array.isArray(params.workspaceIds) && params.workspaceIds.length) {
+        value = empty();
+        if (params.noWorkspace === true) value.noWorkspace = true;
+        else value.workspaceIds = params.workspaceIds.map(String).filter(Boolean);
       } else return null;
       var withPriority = readBounds(params, "priority", value);
       var withDifficulty = withPriority ? readBounds(params, "difficulty", withPriority) : null;
@@ -9000,6 +9389,7 @@ var require_tasks_view = __commonJS({
               refreshRef.current.tree();
               refreshRef.current.path(target.tableId || target.groupId);
             }
+            if (p.event === "task-workspaces-changed") refreshRef.current.list();
           });
           return off;
         }, [api, target.tableId, target.groupId]);
@@ -10158,6 +10548,7 @@ var require_timeline_view = __commonJS({
   var dataView = require_data();
   var actionSchemaView = require_actions();
   var commandsView = require_commands()({ React });
+  var workspaceView = require_workspace_view()({ React });
   var COPY = require_copy();
   function hostHasAddon(id) {
     var list = host.addons;
@@ -10601,11 +10992,12 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.0",
+    version: "5.2.1",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },
       { id: "timeline", icon: tabIcon("timeline"), title: { zh: "\u65F6\u95F4\u7EBF", en: "Timeline" }, component: TimelineView },
+      { id: "workspace", icon: tabIcon("folder"), title: { zh: "\u5DE5\u4F5C\u533A", en: "Workspaces" }, component: workspaceView.WorkspaceView },
       { id: "config", icon: tabIcon("settings"), title: { zh: "\u914D\u7F6E", en: "Config" }, component: configView.ConfigView },
       { id: "data", icon: tabIcon("database"), title: { zh: "\u6570\u636E", en: "Data" }, component: dataView.DataView },
       { id: "commands", icon: tabIcon("terminal"), title: { zh: "\u547D\u4EE4", en: "Commands" }, component: commandsView.CommandsView },

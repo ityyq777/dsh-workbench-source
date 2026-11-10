@@ -143,6 +143,11 @@ function navigation(params) {
     groups.forEach(function(key){var result = range(value,key,{from:params[key+"From"] || "",to:params[key+"To"] || ""});if(result)value=result.value;});
   } else if (params.priorityMin !== undefined || params.priorityMax !== undefined || params.difficultyMin !== undefined || params.difficultyMax !== undefined || params.targetFrom !== undefined || params.targetTo !== undefined) {
     value = empty();
+  } else if (params.noWorkspace === true || (Array.isArray(params.workspaceIds) && params.workspaceIds.length)) {
+    // 从「工作区」页点任务数跳过来：工作区条件与其它条件一样是独立 AND 筛选。
+    value = empty();
+    if (params.noWorkspace === true) value.noWorkspace = true;
+    else value.workspaceIds = params.workspaceIds.map(String).filter(Boolean);
   } else return null;
   var withPriority = readBounds(params, "priority", value);
   var withDifficulty = withPriority ? readBounds(params, "difficulty", withPriority) : null;

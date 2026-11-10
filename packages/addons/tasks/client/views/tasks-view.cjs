@@ -215,6 +215,8 @@ module.exports = function createTasksView(deps) {
           refreshRef.current.tree();
           refreshRef.current.path(target.tableId || target.groupId);
         }
+        // 工作区改名/删除后，任务行上的工作区 chip 也要跟着换标题或消失。
+        if (p.event === "task-workspaces-changed") refreshRef.current.list();
       });
       return off;
     }, [api, target.tableId, target.groupId]);
