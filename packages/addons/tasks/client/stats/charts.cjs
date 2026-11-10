@@ -72,6 +72,10 @@ function css(prefix) {
     ".@-hbar-v{font-size:11px;color:var(--dsw-alias-label-secondary,#646a73);font-variant-numeric:tabular-nums}",
     ".@-hbar-f{width:100%;max-width:44px;border-radius:5px 5px 0 0;background:var(--dsw-alias-state-business-primary,#4f6ef7);min-height:2px}",
     ".@-hbar-l{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}",
+    ".@-hbar-link{cursor:pointer;border-radius:6px;padding-top:2px}",
+    ".@-hbar-link:hover{background:var(--dsw-alias-bg-skeleton,#f2f3f5)}",
+    ".@-hbar-link:hover .@-hbar-l,.@-hbar-link:focus-visible .@-hbar-l{color:var(--dsw-alias-brand-primary,#4f6ef7)}",
+    ".@-hbar-link:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
     ".@-trend{width:100%;height:auto;display:block}",
     ".@-tlegend{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
     ".@-table-scroll{max-width:100%;overflow-x:auto}.@-table{width:100%;border-collapse:collapse;font-size:12px}",
@@ -273,14 +277,30 @@ function makeCharts(prefix) {
     );
   }
 
+  // 传 onSelect 才会变成可点击分桶（统计页优先级/难度分布用）；逾期账龄等图表不传，
+  // 仍保持 role=img 的纯展示语义，键盘也不进入 tab 序列。
   function Histogram(props) {
     var data = props.data || [];
     var max = data.reduce(function (m, d) { return Math.max(m, Number(d.count || 0)); }, 0) || 1;
-    return h("div", { className: prefix + "-hist", role: "img", "aria-label": props.aria || data.map(function (d) { return d.label + " " + d.count; }).join("，") },
+    var interactive = typeof props.onSelect === "function";
+    var hint = props.selectHint || "";
+    return h("div", { className: prefix + "-hist", role: interactive ? "group" : "img", "aria-label": props.aria || data.map(function (d) { return d.label + " " + d.count; }).join("，") },
       data.map(function (d, i) {
-        return h("div", { key: d.key || d.label || i, className: prefix + "-hbar", title: d.label + "：" + d.count },
+        var count = Number(d.count || 0), canPick = interactive && count > 0;
+        return h("div", {
+          key: d.key || d.label || i,
+          className: prefix + "-hbar" + (canPick ? " " + prefix + "-hbar-link" : ""),
+          title: canPick && hint ? d.label + "：" + count + " · " + hint : d.label + "：" + count,
+          role: canPick ? "button" : undefined,
+          tabIndex: canPick ? 0 : undefined,
+          "aria-label": canPick ? d.label + "：" + count + (hint ? "，" + hint : "") : undefined,
+          onClick: canPick ? function () { props.onSelect(d); } : undefined,
+          onKeyDown: canPick ? function (e) {
+            if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") { e.preventDefault(); props.onSelect(d); }
+          } : undefined,
+        },
           h("span", { className: prefix + "-hbar-v" }, num(props.lang, d.count)),
-          h("span", { className: prefix + "-hbar-f", style: { height: Math.max(2, (Number(d.count || 0) / max) * 100) + "%", background: d.color || props.color || COLORS[0] } }),
+          h("span", { className: prefix + "-hbar-f", style: { height: Math.max(2, (count / max) * 100) + "%", background: d.color || props.color || COLORS[0] } }),
           h("span", { className: prefix + "-hbar-l" }, d.label),
         );
       }),

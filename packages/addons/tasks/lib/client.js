@@ -271,6 +271,10 @@ var require_charts = __commonJS({
         ".@-hbar-v{font-size:11px;color:var(--dsw-alias-label-secondary,#646a73);font-variant-numeric:tabular-nums}",
         ".@-hbar-f{width:100%;max-width:44px;border-radius:5px 5px 0 0;background:var(--dsw-alias-state-business-primary,#4f6ef7);min-height:2px}",
         ".@-hbar-l{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}",
+        ".@-hbar-link{cursor:pointer;border-radius:6px;padding-top:2px}",
+        ".@-hbar-link:hover{background:var(--dsw-alias-bg-skeleton,#f2f3f5)}",
+        ".@-hbar-link:hover .@-hbar-l,.@-hbar-link:focus-visible .@-hbar-l{color:var(--dsw-alias-brand-primary,#4f6ef7)}",
+        ".@-hbar-link:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
         ".@-trend{width:100%;height:auto;display:block}",
         ".@-tlegend{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
         ".@-table-scroll{max-width:100%;overflow-x:auto}.@-table{width:100%;border-collapse:collapse;font-size:12px}",
@@ -527,17 +531,36 @@ var require_charts = __commonJS({
         var max = data.reduce(function(m, d) {
           return Math.max(m, Number(d.count || 0));
         }, 0) || 1;
+        var interactive = typeof props.onSelect === "function";
+        var hint = props.selectHint || "";
         return h(
           "div",
-          { className: prefix + "-hist", role: "img", "aria-label": props.aria || data.map(function(d) {
+          { className: prefix + "-hist", role: interactive ? "group" : "img", "aria-label": props.aria || data.map(function(d) {
             return d.label + " " + d.count;
           }).join("\uFF0C") },
           data.map(function(d, i) {
+            var count = Number(d.count || 0), canPick = interactive && count > 0;
             return h(
               "div",
-              { key: d.key || d.label || i, className: prefix + "-hbar", title: d.label + "\uFF1A" + d.count },
+              {
+                key: d.key || d.label || i,
+                className: prefix + "-hbar" + (canPick ? " " + prefix + "-hbar-link" : ""),
+                title: canPick && hint ? d.label + "\uFF1A" + count + " \xB7 " + hint : d.label + "\uFF1A" + count,
+                role: canPick ? "button" : void 0,
+                tabIndex: canPick ? 0 : void 0,
+                "aria-label": canPick ? d.label + "\uFF1A" + count + (hint ? "\uFF0C" + hint : "") : void 0,
+                onClick: canPick ? function() {
+                  props.onSelect(d);
+                } : void 0,
+                onKeyDown: canPick ? function(e) {
+                  if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+                    e.preventDefault();
+                    props.onSelect(d);
+                  }
+                } : void 0
+              },
               h("span", { className: prefix + "-hbar-v" }, num(props.lang, d.count)),
-              h("span", { className: prefix + "-hbar-f", style: { height: Math.max(2, Number(d.count || 0) / max * 100) + "%", background: d.color || props.color || COLORS[0] } }),
+              h("span", { className: prefix + "-hbar-f", style: { height: Math.max(2, count / max * 100) + "%", background: d.color || props.color || COLORS[0] } }),
               h("span", { className: prefix + "-hbar-l" }, d.label)
             );
           })
@@ -1643,7 +1666,8 @@ var require_stats = __commonJS({
         status: "\u72B6\u6001\u6784\u6210",
         statusNote: "\u5F53\u524D\u5B58\u91CF",
         priority: "\u4F18\u5148\u7EA7\u5206\u5E03",
-        priorityNote: "\u5F53\u524D\u5B58\u91CF\uFF1B\u4E0D\u542B\u5DF2\u5173\u95ED/\u5DF2\u5B8C\u6210",
+        priorityNote: "\u5F53\u524D\u5B58\u91CF\uFF1B\u4E0D\u542B\u5DF2\u5173\u95ED/\u5DF2\u5B8C\u6210\uFF1B\u70B9\u67F1\u5F62\u67E5\u770B\u4EFB\u52A1",
+        pickHint: "\u70B9\u51FB\u67F1\u5F62\u67E5\u770B\u5BF9\u5E94\u4EFB\u52A1",
         difficulty: "\u96BE\u5EA6\u5206\u5E03",
         difficultyNote: "\u5F53\u524D\u5B58\u91CF\uFF1B\u5305\u542B\u672A\u8BBE\u7F6E",
         difficultyMissing: "\u672A\u586B\u96BE\u5EA6 {n} \u6761",
@@ -1720,7 +1744,8 @@ var require_stats = __commonJS({
         status: "Status",
         statusNote: "Current",
         priority: "Priority",
-        priorityNote: "Current; excludes closed/completed",
+        priorityNote: "Current; excludes closed/completed; click a bar to list tasks",
+        pickHint: "Click a bar to list matching tasks",
         difficulty: "Difficulty",
         difficultyNote: "Current; includes unset",
         difficultyMissing: "{n} tasks without difficulty",
@@ -1765,6 +1790,27 @@ var require_stats = __commonJS({
       return (list || []).filter(function(b) {
         return !b.hidden;
       });
+    }
+    function priorityPicker(onNavigate) {
+      if (typeof onNavigate !== "function") return null;
+      return function(bin) {
+        var n = Number(bin && bin.key);
+        if (!Number.isInteger(n) || n < 1 || n > 10) return;
+        onNavigate("tasks", { priorityMin: n, priorityMax: n });
+      };
+    }
+    function difficultyPicker(onNavigate) {
+      if (typeof onNavigate !== "function") return null;
+      return function(bin) {
+        var key = bin && bin.key;
+        if (key === "unset") {
+          onNavigate("tasks", { difficultyMissing: true });
+          return;
+        }
+        var n = Number(key);
+        if (!(n >= 0.5 && n <= 5)) return;
+        onNavigate("tasks", { difficultyMin: n, difficultyMax: n });
+      };
     }
     var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true, "stats.recentPublishLimit": 10, "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10 };
     function TasksStatsView(props) {
@@ -1946,7 +1992,7 @@ var require_stats = __commonJS({
           children.push(h(
             ch.Card,
             { key: "priority", span: 6, title: t.priority, note: t.priorityNote },
-            h(ch.Histogram, { data: visibleBins(b.priority), lang, color: ch.colors[0] })
+            h(ch.Histogram, { data: visibleBins(b.priority), lang, color: ch.colors[0], onSelect: priorityPicker(props.onNavigate), selectHint: lang === "en" ? "click to list" : "\u70B9\u51FB\u67E5\u770B\u4EFB\u52A1" })
           ));
           var missingBin = (b.difficulty || []).find(function(bin) {
             return bin.key === "unset";
@@ -1956,7 +2002,7 @@ var require_stats = __commonJS({
             { key: "difficulty", span: 6, title: t.difficulty, note: t.difficultyNote },
             h(ch.Histogram, { data: (b.difficulty || []).map(function(bin) {
               return bin.key === "unset" ? Object.assign({}, bin, { label: lang === "en" ? "Unset" : "\u672A\u8BBE\u7F6E" }) : bin;
-            }), lang, color: ch.colors[4] }),
+            }), lang, color: ch.colors[4], onSelect: difficultyPicker(props.onNavigate), selectHint: lang === "en" ? "click to list" : "\u70B9\u51FB\u67E5\u770B\u4EFB\u52A1" }),
             h(
               "p",
               null,

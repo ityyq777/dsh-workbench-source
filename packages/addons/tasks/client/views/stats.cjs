@@ -21,7 +21,8 @@ var COPY = {
     trend: "新增 / 完成 / 到期趋势", trendNote: "按自然日 / 周 / 月分桶",
     created: "新增", done: "完成", due: "到期",
     status: "状态构成", statusNote: "当前存量",
-    priority: "优先级分布", priorityNote: "当前存量；不含已关闭/已完成",
+    priority: "优先级分布", priorityNote: "当前存量；不含已关闭/已完成；点柱形查看任务",
+    pickHint: "点击柱形查看对应任务",
     difficulty: "难度分布", difficultyNote: "当前存量；包含未设置", difficultyMissing: "未填难度 {n} 条", difficultyMissingLink: "查看并补齐难度",
     aging: "逾期账龄", agingNote: "当前逾期任务",
     overdueList: "逾期清单", overdueNote: "按账龄降序",
@@ -47,7 +48,8 @@ var COPY = {
     trend: "Created / done / due trend", trendNote: "Bucketed by day / week / month",
     created: "Created", done: "Done", due: "Due",
     status: "Status", statusNote: "Current",
-    priority: "Priority", priorityNote: "Current; excludes closed/completed",
+    priority: "Priority", priorityNote: "Current; excludes closed/completed; click a bar to list tasks",
+    pickHint: "Click a bar to list matching tasks",
     difficulty: "Difficulty", difficultyNote: "Current; includes unset", difficultyMissing: "{n} tasks without difficulty", difficultyMissingLink: "Review missing difficulty",
     aging: "Overdue aging", agingNote: "Current overdue",
     overdueList: "Overdue list", overdueNote: "Oldest first",
@@ -68,6 +70,28 @@ var RANGES = ["7d", "30d", "90d", "365d", "all"];
 // 优先级 0（已关闭/已完成）不画；难度未设置保留并提供补齐入口。
 function visibleBins(list) {
   return (list || []).filter(function (b) { return !b.hidden; });
+}
+
+// 柱形点击→任务列表：单值桶直接映射成区间上下限，未设置桶走 difficultyMissing。
+// 传空参数让 task-filter-model.navigation 走「全局范围」分支，顺带清掉表/组/关键词/标签/日期。
+function priorityPicker(onNavigate) {
+  if (typeof onNavigate !== "function") return null;
+  return function (bin) {
+    var n = Number(bin && bin.key);
+    if (!Number.isInteger(n) || n < 1 || n > 10) return;
+    onNavigate("tasks", { priorityMin: n, priorityMax: n });
+  };
+}
+
+function difficultyPicker(onNavigate) {
+  if (typeof onNavigate !== "function") return null;
+  return function (bin) {
+    var key = bin && bin.key;
+    if (key === "unset") { onNavigate("tasks", { difficultyMissing: true }); return; }
+    var n = Number(key);
+    if (!(n >= 0.5 && n <= 5)) return;
+    onNavigate("tasks", { difficultyMin: n, difficultyMax: n });
+  };
 }
 
 var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true, "stats.recentPublishLimit": 10, "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10 };
@@ -226,10 +250,10 @@ function TasksStatsBody(props) {
         })));
 
       children.push(h(ch.Card, { key: "priority", span: 6, title: t.priority, note: t.priorityNote },
-        h(ch.Histogram, { data: visibleBins(b.priority), lang: lang, color: ch.colors[0] })));
+        h(ch.Histogram, { data: visibleBins(b.priority), lang: lang, color: ch.colors[0], onSelect: priorityPicker(props.onNavigate), selectHint: lang === "en" ? "click to list" : "点击查看任务" })));
       var missingBin = (b.difficulty || []).find(function (bin) { return bin.key === "unset"; });
       children.push(h(ch.Card, { key: "difficulty", span: 6, title: t.difficulty, note: t.difficultyNote },
-        h(ch.Histogram, { data: (b.difficulty || []).map(function (bin) { return bin.key === "unset" ? Object.assign({}, bin, { label: lang === "en" ? "Unset" : "未设置" }) : bin; }), lang: lang, color: ch.colors[4] }),
+        h(ch.Histogram, { data: (b.difficulty || []).map(function (bin) { return bin.key === "unset" ? Object.assign({}, bin, { label: lang === "en" ? "Unset" : "未设置" }) : bin; }), lang: lang, color: ch.colors[4], onSelect: difficultyPicker(props.onNavigate), selectHint: lang === "en" ? "click to list" : "点击查看任务" }),
         h("p", null, t.difficultyMissing.replace("{n}", String(missingBin ? missingBin.count : 0)), " ",
           typeof props.onNavigate === "function" ? h("button", { type: "button", className: "wbt-btn ghost", onClick: function () { props.onNavigate("tasks", { difficultyMissing: true }); } }, t.difficultyMissingLink) : null)));
 

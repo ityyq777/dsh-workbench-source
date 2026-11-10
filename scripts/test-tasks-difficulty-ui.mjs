@@ -56,13 +56,27 @@ const charts={makeCharts:()=>new Proxy({colors:[],pct:n=>String(n)},{get:(o,k)=>
 const mod={exports:{}};
 runInNewContext(readFileSync('packages/addons/tasks/client/views/stats.cjs','utf8'),{module:mod,require:n=>n==='react'?React:n==='./config.cjs'?config:n==='../item/ranking-name.cjs'?require(dir+'item/ranking-name.cjs'):n==='../item/recent-columns.cjs'?require(dir+'item/recent-columns.cjs'):charts});
 for(const lang of ['zh','en']) {
-  reset();let navigation;const props={lang,api:{call:async()=>({result:{totals:{total:5},breakdowns:{difficulty:[{key:'unset',count:2,hidden:true},{key:'3',count:3}]}}})},onNavigate:(...args)=>navigation=args};
+  reset();let navigation;const props={lang,api:{call:async()=>({result:{totals:{total:5},breakdowns:{priority:[{key:'9',count:4,hidden:false},{key:'0',count:1,hidden:true}],difficulty:[{key:'unset',count:2,hidden:true},{key:'3',count:3}],aging:[{key:'1-7',count:2}]}}})},onNavigate:(...args)=>navigation=args};
   const outer=mod.exports.TasksStatsView(props), Body=outer.type;
   render(Body,outer.props);await flush();const rendered=render(Body,outer.props);
   assert.ok(text(rendered).includes(lang==='en'?'2 tasks without difficulty':'未填难度 2 条'));
   const histogram=walk(rendered).find(n=>n.type==='Histogram'&&n.props.data.some(x=>x.key==='unset'));assert.ok(histogram);assert.equal(histogram.props.data.find(x=>x.key==='unset').label,lang==='en'?'Unset':'未设置');
   find(rendered,n=>n.type==='button'&&text(n).includes(lang==='en'?'Review missing':'查看并补齐')).props.onClick();
-  assert.equal(navigation[0],'tasks');assert.equal(navigation[1].difficultyMissing,true);cases++;
+  assert.equal(navigation[0],'tasks');assert.equal(navigation[1].difficultyMissing,true);
+  // 柱形点击：单值桶映射成同一上下限；未设置桶与「补齐难度」按钮同参数；逾期账龄图不可点击。
+  const priorityHist=walk(rendered).find(n=>n.type==='Histogram'&&n.props.data.some(x=>x.key==='9'));
+  assert.ok(priorityHist);assert.equal(priorityHist.props.data.some(x=>x.key==='0'),false,'隐藏桶不应画出来');
+  assert.equal(typeof priorityHist.props.onSelect,'function');assert.ok(priorityHist.props.selectHint);
+  priorityHist.props.onSelect(priorityHist.props.data.find(x=>x.key==='9'));
+  assert.equal(JSON.stringify(navigation),JSON.stringify(['tasks',{priorityMin:9,priorityMax:9}]));
+  assert.equal(typeof histogram.props.onSelect,'function');
+  histogram.props.onSelect({key:'3',count:3});assert.equal(JSON.stringify(navigation),JSON.stringify(['tasks',{difficultyMin:3,difficultyMax:3}]));
+  histogram.props.onSelect({key:'0.5',count:1});assert.equal(JSON.stringify(navigation),JSON.stringify(['tasks',{difficultyMin:0.5,difficultyMax:0.5}]));
+  histogram.props.onSelect({key:'unset',count:2});assert.equal(JSON.stringify(navigation),JSON.stringify(['tasks',{difficultyMissing:true}]));
+  assert.equal(histogram.props.onSelect({key:'x',count:1}),undefined);assert.equal(JSON.stringify(navigation),JSON.stringify(['tasks',{difficultyMissing:true}]),'非法桶不跳转');
+  const agingHist=walk(rendered).find(n=>n.type==='Histogram'&&n.props.data.some(x=>String(x.key)==='1-7'));
+  if(agingHist)assert.equal(agingHist.props.onSelect,undefined,'逾期账龄图必须保持不可点击');
+  cases++;
 }
 const noop=()=>null;
 const View=require(dir+'views/tasks-view.cjs')({React,configView:config,COPY:copy,TABS:[],allTables:()=>[],treeWalk:()=>[],treeFlat:()=>[],cx:(...s)=>s.join(' '),injectCss:noop,Icon:noop,PathCrumbs:noop,TagFilter:noop});
@@ -71,4 +85,17 @@ const outer=View(props), Body=outer.type;render(Body,outer.props);await flush();
 let list=calls.find(c=>c.action==='tasks.list');assert.deepEqual(list.args.statuses,[]);assert.ok(!('urgent' in list.args),'urgent is no longer sent');assert.equal(list.args.difficultyMissing,true);assert.equal(list.args.filterRestarted,undefined);
 let rendered=render(Body,outer.props);const filter=find(rendered,n=>n.type==='label'&&text(n).includes(copy.en.difficultyMissing));find(filter,n=>n.type==='input').props.onChange({target:{checked:false}});
 render(Body,outer.props);await flush();list=calls.filter(c=>c.action==='tasks.list').at(-1);assert.equal(list.args.difficultyMissing,false);assert.equal(list.args.pageNumber,1);
-console.log('TASK DIFFICULTY UI PASS',{cases,filterNavigation:true,realReact:RealReact.version});
+// 统计柱形跳转：只带优先级/难度区间时按「全局范围」清空表、组、搜索词、标签与状态，分页回第 1 页。
+for(const viewParams of [{priorityMin:9,priorityMax:9},{difficultyMin:0.5,difficultyMax:0.5}]) {
+  reset();const listCalls=[];const p2={lang:'en',viewParams,api:{subscribe:()=>noop,call:async(action,args)=>{listCalls.push({action,args});return {ok:true,result:action==='tasks.list'?{records:[],total:0}:[]};}}};
+  const outer2=View(p2),Body2=outer2.type;render(Body2,outer2.props);await flush();
+  const list=listCalls.find(c=>c.action==='tasks.list');
+  assert.deepEqual(list.args.statuses,[]);assert.equal(list.args.pageNumber,1);
+  assert.ok(list.args.tableId==null,'跳转应清空 tableId');assert.ok(list.args.groupId==='1','跳转应回到根分组');
+  assert.equal(list.args.titleKey,'');assert.deepEqual(list.args.tagIds,[]);
+  assert.equal(list.args.difficultyMissing,false,'跳转应取消「未填难度」勾选');
+  for(const key of ['publishFrom','publishTo','doneFrom','doneTo','shutdownFrom','shutdownTo'])assert.ok(list.args[key]==null,'跳转应清空 '+key);
+  if(viewParams.priorityMin){assert.equal(list.args.priorityMin,9);assert.equal(list.args.priorityMax,9);assert.equal(list.args.difficultyMin,undefined);}
+  else {assert.equal(list.args.difficultyMin,0.5);assert.equal(list.args.difficultyMax,0.5);assert.equal(list.args.priorityMin,undefined);}
+}
+console.log('TASK DIFFICULTY UI PASS',{cases,filterNavigation:true,barNavigation:true,realReact:RealReact.version});
