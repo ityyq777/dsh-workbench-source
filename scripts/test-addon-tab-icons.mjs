@@ -12,8 +12,9 @@ const ADDONS = [
   { dir: "packages/addons/tasks", version: "tasks" },
   { dir: "packages/addons/tags", version: "tags" },
   { dir: "packages/addons/sites", version: "sites" },
+  { dir: "packages/addons/storage", version: "storage" },
 ];
-const EXPECTED = { stats: "chart", config: "settings", data: "database" };
+const EXPECTED = { stats: "chart", config: "settings", data: "database", actions: "code-2" };
 
 function loadAddon(dir) {
   const { React } = createReact();

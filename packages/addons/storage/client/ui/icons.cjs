@@ -16,6 +16,7 @@ var ICONS = {
   list: require("lucide-react/icons/list").default,
   settings: require("lucide-react/icons/settings").default,
   database: require("lucide-react/icons/database").default,
+  "code-2": require("lucide-react/icons/code-xml").default,
   download: require("lucide-react/icons/download").default,
   empty: require("lucide-react/icons/package-open").default,
   brand: require("lucide-react/icons/factory").default,

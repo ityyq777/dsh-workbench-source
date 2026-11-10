@@ -31,6 +31,7 @@ var ICONS = {
   "chart": require("lucide-react/icons/chart-column").default,
   "settings": require("lucide-react/icons/settings").default,
   "database": require("lucide-react/icons/database").default,
+  "code-2": require("lucide-react/icons/code-xml").default,
   "globe": require("lucide-react/icons/globe").default,
   "copy": require("lucide-react/icons/copy").default,
 };

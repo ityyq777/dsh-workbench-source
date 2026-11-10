@@ -459,5 +459,21 @@ function installTool(ctx: any) {
     },
   });
 }
-return { invoke, actionNames, installTool };
+/**
+ * 只读 schema 快照：给 /workbench/api/schema 的「Action 清单」页用。
+ * 与 actions.list(detail=true) 同源（同一份 actionEntry + 注册表），额外带上每个 action 的示例；
+ * 只读取运行时注册，不执行任何 action、不写库、不产生审计记录。
+ */
+function schemaSnapshot(domain?: string) {
+  const wanted = String(domain ?? "").trim();
+  const meta = listActionsMeta({ detail: true, ...(wanted ? { domain: wanted } : {}) }) as any;
+  const actions = (meta.actions as any[]).map((entry) => {
+    const found = findActionDef(entry.name);
+    const examples = found && Array.isArray(found.def.examples) ? found.def.examples : [];
+    return { ...entry, examples };
+  });
+  return { shellVersion: meta.shellVersion, domains: meta.domains, actions };
+}
+
+return { invoke, actionNames, installTool, schemaSnapshot };
 }

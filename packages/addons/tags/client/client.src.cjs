@@ -30,6 +30,7 @@ var h = React.createElement;
     "settings": require("lucide-react/icons/settings").default,
     "database": require("lucide-react/icons/database").default,
     "tags": require("lucide-react/icons/tags").default,
+    "code-2": require("lucide-react/icons/code-xml").default,
   };
   // 标签页标题左侧图标：与储物/任务/站点保持同语义、同尺寸。
   function tabIcon(name) { return function TagsTabIcon() { return h(Icon, { name: name, size: 14 }); }; }
@@ -531,12 +532,13 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.6.11",
+    version: "1.6.12",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TagsStatsView },
       { id: "tags", icon: tabIcon("tags"), title: { zh: "记录", en: "Records" }, component: TagsView },
       { id: "config", icon: tabIcon("settings"), title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
       { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: dataView.DataView },
+      { id: "actions", icon: tabIcon("code-2"), title: { zh: "Action 清单", en: "Actions" }, component: require("./views/actions.cjs").ActionSchemaView },
     ],
   });
 

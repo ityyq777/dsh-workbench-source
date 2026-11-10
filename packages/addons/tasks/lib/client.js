@@ -3483,6 +3483,527 @@ var require_data = __commonJS({
   }
 });
 
+// packages/addons/lib/action-schema-style.cjs
+var require_action_schema_style = __commonJS({
+  "packages/addons/lib/action-schema-style.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(PREFIX, DOMAIN) {
+      var P = PREFIX + "-as";
+      var CSS = [
+        "." + P + "{display:flex;flex-direction:column;gap:12px;width:100%;min-width:0;font-size:13px;color:inherit}",
+        "." + P + "-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+        "." + P + "-title{font-size:15px;font-weight:660;margin:0}",
+        "." + P + "-badge{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--wb-border,#e3e5e9);border-radius:999px;padding:1px 8px;font-size:11px;color:var(--dsw-alias-label-secondary,currentColor);font-variant-numeric:tabular-nums}",
+        "." + P + "-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}",
+        "." + P + "-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+        "." + P + "-search{position:relative;flex:1 1 220px;min-width:0;display:flex;align-items:center}",
+        "." + P + "-search input{width:100%;border:1px solid var(--wb-border,#e3e5e9);border-radius:8px;background:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));color:inherit;font:inherit;padding:6px 10px 6px 30px}",
+        "." + P + "-search input:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:1px}",
+        "." + P + "-search .wbi-svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--dsw-alias-label-tertiary,inherit)}",
+        "." + P + " select{border:1px solid var(--wb-border,#e3e5e9);border-radius:8px;background:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));color:inherit;font:inherit;padding:6px 8px}",
+        "." + P + " select:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:1px}",
+        "." + P + "-list{display:flex;flex-direction:column;gap:8px}",
+        "." + P + "-card{border:1px solid var(--wb-border,#e3e5e9);border-radius:10px;padding:10px 12px;background:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));display:flex;flex-direction:column;gap:8px;min-width:0}",
+        "." + P + "-cardhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+        "." + P + "-cardhead code{font-weight:640}",
+        "." + P + "-desc{margin:0;color:var(--dsw-alias-label-secondary,inherit);line-height:1.55;font-size:12.5px}",
+        "." + P + "-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:auto}",
+        "." + P + "-table th{text-align:left;font-weight:620;font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--dsw-alias-label-tertiary,inherit);padding:4px 8px 4px 0;white-space:nowrap}",
+        "." + P + "-table td{padding:4px 8px 4px 0;vertical-align:top;border-top:1px solid color-mix(in oklab,currentColor 8%,transparent);line-height:1.5}",
+        "." + P + "-req{color:var(--dsw-alias-state-error-primary,#d9534f);font-weight:620}",
+        "." + P + "-opt{color:var(--dsw-alias-label-tertiary,inherit)}",
+        "." + P + "-none{color:var(--dsw-alias-label-tertiary,inherit);font-size:12px}",
+        "." + P + "-example{position:relative;display:flex;flex-direction:column;gap:4px}",
+        "." + P + "-examplehead{display:flex;align-items:center;justify-content:space-between;gap:8px}",
+        "." + P + "-pre{margin:0;padding:8px 10px;border-radius:8px;background:var(--dsw-alias-bg-skeleton,#f2f3f5);color:inherit;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.5;overflow:auto;max-height:280px;white-space:pre-wrap;word-break:break-word}",
+        "." + P + "-copy{border:1px solid var(--wb-border,#e3e5e9);border-radius:7px;background:transparent;color:inherit;font:inherit;font-size:11.5px;padding:2px 8px;cursor:pointer}",
+        "." + P + "-copy:hover{background:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent))}",
+        "." + P + "-copy:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
+        "." + P + " details>summary{cursor:pointer;font-size:11.5px;color:var(--dsw-alias-label-secondary,inherit);width:max-content}",
+        "." + P + " details>summary:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
+        "." + P + "-empty{padding:24px;text-align:center;border:1px dashed var(--wb-border,#e3e5e9);border-radius:10px;color:var(--dsw-alias-label-tertiary,inherit)}",
+        "." + P + "-error{padding:12px;border:1px solid var(--dsw-alias-state-error-primary,#d9534f);border-radius:10px;color:var(--dsw-alias-state-error-primary,#d9534f);display:flex;gap:10px;align-items:center}",
+        "." + P + "-toast{position:sticky;bottom:8px;align-self:flex-start;border-radius:999px;padding:3px 10px;background:var(--dsw-alias-bg-skeleton,#f2f3f5);font-size:11.5px}",
+        "@media(max-width:600px){." + P + "-table thead{display:none}." + P + "-table td{display:block;border-top:0;padding:2px 0}." + P + "-table tr{display:block;border-top:1px solid color-mix(in oklab,currentColor 8%,transparent);padding:4px 0}}"
+      ].join("\n");
+      return function injectCss() {
+        if (typeof document === "undefined") return;
+        var id = "wb-addon-" + DOMAIN + "-actions-css";
+        var old = document.getElementById(id);
+        if (old) {
+          old.textContent = CSS;
+          return;
+        }
+        var style = document.createElement("style");
+        style.id = id;
+        style.setAttribute("data-wb-addon", "wb-addon-" + DOMAIN);
+        style.textContent = CSS;
+        document.head.appendChild(style);
+      };
+    };
+  }
+});
+
+// packages/addons/lib/action-schema-view.cjs
+var require_action_schema_view = __commonJS({
+  "packages/addons/lib/action-schema-view.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h = React.createElement;
+    var COPY = {
+      zh: {
+        title: "Action \u6E05\u5355",
+        hint: "\u8FD0\u884C\u65F6\u6CE8\u518C \xB7 \u53EA\u8BFB",
+        domain: "\u57DF",
+        versionLabel: "\u7248\u672C",
+        shell: "\u5BBF\u4E3B",
+        count: function(shown, total) {
+          return shown + " / " + total + " \u4E2A action";
+        },
+        search: "\u641C\u7D22\u540D\u79F0\u3001\u63CF\u8FF0\u3001\u53C2\u6570",
+        filterReq: "\u5FC5\u586B\u7B5B\u9009",
+        all: "\u5168\u90E8",
+        onlyRequired: "\u542B\u5FC5\u586B\u9879",
+        onlyOptional: "\u65E0\u5FC5\u586B\u9879",
+        filterType: "\u53C2\u6570\u7C7B\u578B",
+        allTypes: "\u5168\u90E8\u7C7B\u578B",
+        colName: "\u53C2\u6570",
+        colType: "\u7C7B\u578B",
+        colReq: "\u5FC5\u586B",
+        colExtra: "\u9ED8\u8BA4 / \u679A\u4E3E / \u7EA6\u675F",
+        colDesc: "\u8BF4\u660E",
+        required: "\u5FC5\u586B",
+        optional: "\u53EF\u9009",
+        noParams: "\u65E0\u53C2\u6570",
+        paramCount: function(n) {
+          return n + " \u4E2A\u53C2\u6570";
+        },
+        examples: "\u793A\u4F8B",
+        noExamples: "\u65E0\u793A\u4F8B",
+        copy: "\u590D\u5236",
+        copied: "\u5DF2\u590D\u5236",
+        raw: "\u539F\u59CB JSON Schema",
+        loading: "\u8F7D\u5165\u4E2D\u2026",
+        loadFail: "\u8BFB\u53D6 action schema \u5931\u8D25",
+        retry: "\u91CD\u8BD5",
+        empty: "\u6CA1\u6709\u5339\u914D\u7684 action",
+        emptyRegistry: "\u8BE5\u57DF\u6CA1\u6709\u6CE8\u518C action",
+        envelope: "\u9ED8\u8BA4",
+        enumLabel: "\u679A\u4E3E",
+        range: "\u8303\u56F4",
+        length: "\u957F\u5EA6",
+        pattern: "\u6B63\u5219",
+        format: "\u683C\u5F0F",
+        items: "\u5143\u7D20\u6570"
+      },
+      en: {
+        title: "Actions",
+        hint: "runtime registry \xB7 read-only",
+        domain: "Domain",
+        versionLabel: "Version",
+        shell: "Host",
+        count: function(shown, total) {
+          return shown + " / " + total + " actions";
+        },
+        search: "Search name, description, params",
+        filterReq: "Required",
+        all: "All",
+        onlyRequired: "Has required",
+        onlyOptional: "No required",
+        filterType: "Param type",
+        allTypes: "All types",
+        colName: "Param",
+        colType: "Type",
+        colReq: "Required",
+        colExtra: "Default / enum / constraints",
+        colDesc: "Description",
+        required: "required",
+        optional: "optional",
+        noParams: "No parameters",
+        paramCount: function(n) {
+          return n + " params";
+        },
+        examples: "Examples",
+        noExamples: "No examples",
+        copy: "Copy",
+        copied: "Copied",
+        raw: "Raw JSON Schema",
+        loading: "Loading\u2026",
+        loadFail: "Failed to read action schema",
+        retry: "Retry",
+        empty: "No matching action",
+        emptyRegistry: "This domain has no registered action",
+        envelope: "Default",
+        enumLabel: "Enum",
+        range: "Range",
+        length: "Length",
+        pattern: "Pattern",
+        format: "Format",
+        items: "Items"
+      }
+    };
+    function typeLabel(schema) {
+      if (!schema || typeof schema !== "object") return "";
+      if (Array.isArray(schema.type)) return schema.type.join(" | ");
+      if (typeof schema.type === "string") {
+        if (schema.type === "array" && schema.items) {
+          var inner = typeLabel(schema.items);
+          return inner ? inner + "[]" : "array";
+        }
+        return schema.type;
+      }
+      if (Array.isArray(schema.oneOf)) return schema.oneOf.map(typeLabel).filter(Boolean).join(" | ");
+      if (Array.isArray(schema.anyOf)) return schema.anyOf.map(typeLabel).filter(Boolean).join(" | ");
+      return "";
+    }
+    function typeNames(schema) {
+      var label = typeLabel(schema);
+      if (!label) return [];
+      return label.split("|").map(function(x) {
+        return x.trim().replace(/\[\]$/, "");
+      }).filter(Boolean);
+    }
+    function scalar(value) {
+      if (typeof value === "string") return JSON.stringify(value);
+      return String(value);
+    }
+    function extraText(schema, t) {
+      if (!schema || typeof schema !== "object") return "";
+      var parts = [];
+      if (Object.prototype.hasOwnProperty.call(schema, "default")) {
+        parts.push(t.envelope + " " + scalar(schema.default));
+      }
+      if (Array.isArray(schema.enum)) {
+        parts.push(t.enumLabel + " " + schema.enum.map(scalar).join(" / "));
+      }
+      if (typeof schema.minimum === "number" || typeof schema.maximum === "number") {
+        var lo = typeof schema.minimum === "number" ? schema.minimum : null;
+        var hi = typeof schema.maximum === "number" ? schema.maximum : null;
+        if (lo !== null && hi !== null) parts.push(t.range + " \u2265" + lo + " \u4E14 \u2264" + hi);
+        else if (lo !== null) parts.push(t.range + " \u2265" + lo);
+        else parts.push(t.range + " \u2264" + hi);
+      }
+      if (typeof schema.minLength === "number" || typeof schema.maxLength === "number") {
+        parts.push(t.length + " " + (schema.minLength ?? 0) + "\u2013" + (schema.maxLength ?? "\u221E"));
+      }
+      if (typeof schema.minItems === "number" || typeof schema.maxItems === "number") {
+        parts.push(t.items + " " + (schema.minItems ?? 0) + "\u2013" + (schema.maxItems ?? "\u221E"));
+      }
+      if (typeof schema.pattern === "string") parts.push(t.pattern + " " + schema.pattern);
+      if (typeof schema.format === "string") parts.push(t.format + " " + schema.format);
+      return parts.join(" \xB7 ");
+    }
+    function paramRows(action) {
+      var input = action && action.input && typeof action.input === "object" ? action.input : {};
+      var props = input.properties && typeof input.properties === "object" ? input.properties : {};
+      var required = Array.isArray(input.required) ? input.required : [];
+      return Object.keys(props).map(function(key) {
+        var schema = props[key] && typeof props[key] === "object" ? props[key] : {};
+        return {
+          name: key,
+          schema,
+          type: typeLabel(schema),
+          types: typeNames(schema),
+          required: required.indexOf(key) >= 0,
+          description: typeof schema.description === "string" ? schema.description : ""
+        };
+      });
+    }
+    module2.exports = function createActionSchemaView(options) {
+      var raw = String(options.domain || "");
+      var DOMAIN = raw.indexOf("wb-addon-") === 0 ? raw : "wb-addon-" + raw;
+      var prefix = options.prefix;
+      var P = prefix + "-as";
+      var Icon2 = options.Icon || null;
+      var injectCss = require_action_schema_style()(prefix, DOMAIN);
+      function icon(name, size) {
+        return Icon2 ? h(Icon2, { name, size: size || 14 }) : null;
+      }
+      function plainCopy(text) {
+        if (typeof document === "undefined") return;
+        var area = document.createElement("textarea");
+        area.value = text;
+        area.setAttribute("readonly", "readonly");
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        try {
+          document.execCommand("copy");
+        } catch (e) {
+        }
+        document.body.removeChild(area);
+      }
+      function ActionSchemaView(props) {
+        var lang = props.lang === "en" ? "en" : "zh";
+        var t = COPY[lang];
+        var api = props.api;
+        var snapState = React.useState(null);
+        var snap = snapState[0], setSnap = snapState[1];
+        var errState = React.useState("");
+        var err = errState[0], setErr = errState[1];
+        var loadingState = React.useState(true);
+        var loading = loadingState[0], setLoading = loadingState[1];
+        var reloadState = React.useState(0);
+        var reload = reloadState[0], setReload = reloadState[1];
+        var queryState = React.useState("");
+        var query = queryState[0], setQuery = queryState[1];
+        var reqState = React.useState("all");
+        var reqMode = reqState[0], setReqMode = reqState[1];
+        var typeState = React.useState("");
+        var typePick = typeState[0], setTypePick = typeState[1];
+        var toastState = React.useState("");
+        var toast = toastState[0], setToast = toastState[1];
+        React.useEffect(function() {
+          injectCss();
+        }, []);
+        React.useEffect(function() {
+          var alive = true;
+          setLoading(true);
+          setErr("");
+          var pending;
+          if (api && typeof api.schema === "function") {
+            pending = api.schema(DOMAIN);
+          } else {
+            pending = Promise.reject(new Error("no schema api"));
+          }
+          Promise.resolve(pending).then(function(r) {
+            if (!alive) return;
+            if (!r || r.ok === false) {
+              setSnap(null);
+              setErr(String(r && (r.error || r.text) || t.loadFail));
+            } else {
+              setSnap(r);
+            }
+            setLoading(false);
+          }, function(e) {
+            if (!alive) return;
+            setSnap(null);
+            setErr(String(e && e.message || e || t.loadFail));
+            setLoading(false);
+          });
+          return function() {
+            alive = false;
+          };
+        }, [reload]);
+        function copy(text) {
+          var done = function() {
+            setToast(t.copied);
+          };
+          if (typeof navigator !== "undefined" && navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+            navigator.clipboard.writeText(text).then(done, function() {
+              plainCopy(text);
+              done();
+            });
+            return;
+          }
+          plainCopy(text);
+          done();
+        }
+        var all = snap && Array.isArray(snap.actions) ? snap.actions.filter(function(a) {
+          return a && a.domain === DOMAIN;
+        }) : [];
+        var info = snap && Array.isArray(snap.domains) ? snap.domains.filter(function(d) {
+          return d && d.id === DOMAIN;
+        })[0] || null : null;
+        var typeOptions = [];
+        all.forEach(function(a) {
+          paramRows(a).forEach(function(row) {
+            row.types.forEach(function(name) {
+              if (typeOptions.indexOf(name) < 0) typeOptions.push(name);
+            });
+          });
+        });
+        typeOptions.sort();
+        var q = String(query || "").trim().toLowerCase();
+        var visible = all.filter(function(a) {
+          var rows = paramRows(a);
+          if (q) {
+            var hay = [a.name || "", a.description || ""].concat(rows.map(function(row) {
+              return row.name + " " + row.type + " " + row.description;
+            })).join(" ").toLowerCase();
+            if (hay.indexOf(q) < 0) return false;
+          }
+          var hasRequired = rows.some(function(row) {
+            return row.required;
+          });
+          if (reqMode === "required" && !hasRequired) return false;
+          if (reqMode === "optional" && hasRequired) return false;
+          if (typePick && !rows.some(function(row) {
+            return row.types.indexOf(typePick) >= 0;
+          })) return false;
+          return true;
+        });
+        function paramRow(row) {
+          var extra = extraText(row.schema, t);
+          return h(
+            "tr",
+            { key: row.name },
+            h("td", { className: P + "-mono" }, row.name),
+            h("td", { className: P + "-mono" }, row.type),
+            h("td", { className: row.required ? P + "-req" : P + "-opt" }, row.required ? t.required : t.optional),
+            h("td", { className: P + "-mono" }, extra),
+            h("td", null, row.description)
+          );
+        }
+        function card(action) {
+          var rows = paramRows(action);
+          var examples = Array.isArray(action.examples) ? action.examples : [];
+          return h(
+            "div",
+            { className: P + "-card", key: action.name },
+            h(
+              "div",
+              { className: P + "-cardhead" },
+              h("code", { className: P + "-mono" }, action.name),
+              h("span", { className: P + "-badge" }, action.domain),
+              h("span", { className: P + "-badge" }, rows.length ? t.paramCount(rows.length) : t.noParams),
+              rows.some(function(row) {
+                return row.required;
+              }) ? h("span", { className: P + "-badge " + P + "-req" }, t.required) : null
+            ),
+            action.description ? h("p", { className: P + "-desc" }, action.description) : null,
+            rows.length ? h(
+              "table",
+              { className: P + "-table" },
+              h("thead", null, h(
+                "tr",
+                null,
+                h("th", null, t.colName),
+                h("th", null, t.colType),
+                h("th", null, t.colReq),
+                h("th", null, t.colExtra),
+                h("th", null, t.colDesc)
+              )),
+              h("tbody", null, rows.map(paramRow))
+            ) : h("div", { className: P + "-none" }, t.noParams),
+            h(
+              "div",
+              { className: P + "-example" },
+              h(
+                "div",
+                { className: P + "-examplehead" },
+                h("span", { className: P + "-none" }, t.examples),
+                examples.length ? h("button", {
+                  type: "button",
+                  className: P + "-copy",
+                  "data-copy-example": action.name,
+                  onClick: function() {
+                    copy(JSON.stringify(examples.length === 1 ? examples[0] : examples, null, 2));
+                  }
+                }, t.copy) : null
+              ),
+              examples.length ? examples.map(function(example, index) {
+                return h("pre", { className: P + "-pre", key: index }, JSON.stringify(example, null, 2));
+              }) : h("div", { className: P + "-none" }, t.noExamples)
+            ),
+            h(
+              "details",
+              null,
+              h("summary", null, t.raw),
+              h("pre", { className: P + "-pre" }, JSON.stringify(action.input || {}, null, 2))
+            )
+          );
+        }
+        var body;
+        if (loading) {
+          body = h("div", { className: P + "-empty", role: "status" }, t.loading);
+        } else if (err) {
+          body = h(
+            "div",
+            { className: P + "-error", role: "alert" },
+            h("span", null, t.loadFail + "\uFF1A" + err),
+            h("button", { type: "button", className: P + "-copy", onClick: function() {
+              setReload(reload + 1);
+            } }, t.retry)
+          );
+        } else if (!all.length) {
+          body = h("div", { className: P + "-empty" }, t.emptyRegistry);
+        } else if (!visible.length) {
+          body = h("div", { className: P + "-empty" }, t.empty);
+        } else {
+          body = h("div", { className: P + "-list" }, visible.map(card));
+        }
+        return h(
+          "div",
+          { className: P },
+          h(
+            "div",
+            { className: P + "-head" },
+            h("h3", { className: P + "-title" }, t.title),
+            h("span", { className: P + "-badge" }, t.domain + " " + DOMAIN),
+            info && info.version ? h("span", { className: P + "-badge" }, t.versionLabel + " v" + info.version) : null,
+            snap && snap.shellVersion ? h("span", { className: P + "-badge" }, t.shell + " v" + snap.shellVersion) : null,
+            h("span", { className: P + "-badge" }, t.count(visible.length, all.length)),
+            h("span", { className: P + "-none" }, t.hint)
+          ),
+          snap ? h(
+            "div",
+            { className: P + "-toolbar" },
+            h(
+              "label",
+              { className: P + "-search" },
+              icon("search", 14),
+              h("input", {
+                type: "search",
+                value: query,
+                placeholder: t.search,
+                "aria-label": t.search,
+                onChange: function(e) {
+                  setQuery(e.target.value);
+                }
+              })
+            ),
+            h(
+              "label",
+              { className: P + "-none" },
+              t.filterReq + " ",
+              h(
+                "select",
+                { value: reqMode, "aria-label": t.filterReq, onChange: function(e) {
+                  setReqMode(e.target.value);
+                } },
+                h("option", { value: "all" }, t.all),
+                h("option", { value: "required" }, t.onlyRequired),
+                h("option", { value: "optional" }, t.onlyOptional)
+              )
+            ),
+            h(
+              "label",
+              { className: P + "-none" },
+              t.filterType + " ",
+              h(
+                "select",
+                { value: typePick, "aria-label": t.filterType, onChange: function(e) {
+                  setTypePick(e.target.value);
+                } },
+                h("option", { value: "" }, t.allTypes),
+                typeOptions.map(function(name) {
+                  return h("option", { value: name, key: name }, name);
+                })
+              )
+            )
+          ) : null,
+          body,
+          toast ? h("div", { className: P + "-toast", role: "status" }, toast) : null
+        );
+      }
+      return { ActionSchemaView, DOMAIN, typeLabel, paramRows };
+    };
+  }
+});
+
+// packages/addons/tasks/client/views/actions.cjs
+var require_actions = __commonJS({
+  "packages/addons/tasks/client/views/actions.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = require_action_schema_view()({
+      domain: "tasks",
+      prefix: "wbt"
+    });
+  }
+});
+
 // packages/addons/lib/body-copy.cjs
 var require_body_copy = __commonJS({
   "packages/addons/lib/body-copy.cjs"(exports2, module2) {
@@ -6541,11 +7062,14 @@ var require_timeline_styles = __commonJS({
     module2.exports = [
       ".wbt-timeline-view{padding:0;color:inherit;box-sizing:border-box;overflow:auto}",
       ".wbt-timeline-toolbar,.wbt-timeline-search,.wbt-timeline-pager,.wbt-timeline-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
-      ".wbt-timeline-toolbar h2{font-size:18px;margin:0 auto 0 0}.wbt-timeline-toolbar{margin-bottom:12px}",
+      ".wbt-timeline-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px}",
+      ".wbt-timeline-toolbar-main{display:flex;align-items:center;gap:8px;flex:1 1 320px;min-width:0;flex-wrap:wrap}",
+      ".wbt-timeline-toolbar-main .wbt-timeline-search{flex:1 1 220px;min-width:0}",
+      ".wbt-timeline-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto}",
       ".wbt-timeline-columns{display:grid;grid-template-columns:minmax(240px,32%) minmax(0,1fr);gap:12px;align-items:start}",
       ".wbt-timeline-left,.wbt-timeline-right{min-width:0;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);padding:12px}",
-      ".wbt-timeline-single{display:flex;align-items:center;gap:8px;margin:12px 0;font-size:13px}.wbt-timeline-search input{min-width:0;flex:1}",
-      ".wbt-timeline-list{max-height:840px;overflow:auto;overscroll-behavior:contain}.wbt-timeline-view .wbt-timeline-option{position:relative;box-sizing:border-box;min-height:56px;padding:10px 12px;border:0;border-bottom:1px solid var(--wbt-line);border-radius:var(--wb-radius-sm,6px);display:flex;flex-direction:column;gap:4px;cursor:pointer;color:inherit;background:transparent;background-image:none}",
+      ".wbt-timeline-single{display:flex;align-items:center;gap:8px;margin:0;font-size:13px;white-space:nowrap}.wbt-timeline-search input{min-width:0;flex:1}",
+      ".wbt-timeline-list{max-height:840px;overflow:auto;overscroll-behavior:contain}.wbt-timeline-left>.wbt-timeline-list,.wbt-timeline-left>.wbt-err{margin-top:2px}.wbt-timeline-view .wbt-timeline-option{position:relative;box-sizing:border-box;min-height:56px;padding:10px 12px;border:0;border-bottom:1px solid var(--wbt-line);border-radius:var(--wb-radius-sm,6px);display:flex;flex-direction:column;gap:4px;cursor:pointer;color:inherit;background:transparent;background-image:none}",
       ".wbt-timeline-option-title{display:flex;gap:8px;align-items:center;min-width:0}.wbt-timeline-option-title strong{font-size:13px;font-weight:560;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}.wbt-timeline-option>span{font-size:11.5px;opacity:.6;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}",
       ".wbt-timeline-option>.wbt-timeline-excerpt{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
       ".wbt-timeline-view .wbt-timeline-option.current{box-shadow:inset 3px 0 var(--wbt-accent),inset 0 0 0 1px var(--wbt-line);background:color-mix(in oklab,var(--wbt-accent) 8%,transparent);background-image:none}.wbt-timeline-view .wbt-timeline-option:hover{background:color-mix(in oklab,var(--wbt-accent) 12%,transparent)}",
@@ -6561,7 +7085,7 @@ var require_timeline_styles = __commonJS({
       ".wbt-timeline-member-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;border-top:1px solid var(--wbt-line);padding-top:8px}.wbt-timeline-member-footer>span{font-size:11.5px;opacity:.65}.wbt-timeline-member-footer .wbt-timeline-pager{margin:0}",
       ".wbt-modal.wide.wbt-timeline-modal{display:flex;flex-direction:column;max-height:90vh;overflow:hidden}.wbt-timeline-modal-body{min-height:0;overflow:auto;flex:1;padding:12px}.wbt-timeline-member-section{min-width:0;margin-top:12px}.wbt-timeline-member-scroll{max-height:40vh;overflow:auto;overscroll-behavior:contain}.wbt-timeline-other{border-top:1px solid var(--wbt-line);padding-top:12px;margin-top:12px}.wbt-timeline-other>summary{cursor:pointer}.wbt-timeline-confirm{padding:12px;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);margin:8px 0;line-height:1.6;background:var(--wbt-surface)}.wbt-timeline-confirm .wbt-btn{margin:8px 8px 0 0}",
       ".wbt-timeline-desc.expanded{max-height:none}.wbt-timeline-selected{min-width:0;overflow-wrap:anywhere;flex:1}.wbt-timeline-modal .wbt-empty{padding:12px;margin:8px 0;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);background:var(--wbt-surface);line-height:1.6}",
-      "@media(max-width:720px){.wbt-timeline-columns{grid-template-columns:1fr}.wbt-timeline-list{max-height:320px}.wbt-timeline-toolbar{flex-wrap:wrap}.wbt-timeline-member-row{grid-template-columns:76px 8px minmax(0,1fr) auto 28px;gap:4px}.wbt-timeline-left,.wbt-timeline-right{padding:12px}.wbt-timeline-date{font-size:10.5px}.wbt-timeline-member-row>.wbt-badge{font-size:10.5px;padding:2px 4px}.wbt-timeline-actions>.wbt-act-del{margin-left:0}.wbt-timeline-id{max-width:140px}}"
+      "@media(max-width:720px){.wbt-timeline-columns{grid-template-columns:1fr}.wbt-timeline-toolbar-main{flex:1 1 100%}.wbt-timeline-toolbar-actions{flex:1 1 100%;justify-content:flex-end;margin-left:0}.wbt-timeline-list{max-height:320px}.wbt-timeline-toolbar{flex-wrap:wrap}.wbt-timeline-member-row{grid-template-columns:76px 8px minmax(0,1fr) auto 28px;gap:4px}.wbt-timeline-left,.wbt-timeline-right{padding:12px}.wbt-timeline-date{font-size:10.5px}.wbt-timeline-member-row>.wbt-badge{font-size:10.5px;padding:2px 4px}.wbt-timeline-actions>.wbt-act-del{margin-left:0}.wbt-timeline-id{max-width:140px}}"
     ].join("\n");
   }
 });
@@ -8726,25 +9250,9 @@ var require_timeline_view = __commonJS({
           h(
             "div",
             { className: "wbt-timeline-toolbar" },
-            h("h2", null, t.timeline),
-            h("button", { className: "wbt-btn primary", onClick: function() {
-              setEditor({});
-            } }, tr("\u65B0\u5EFA\u65F6\u95F4\u7EBF")),
-            h("button", { className: "wbt-btn", onClick: function() {
-              setMulti(!multi);
-              setSelected([]);
-            }, "aria-pressed": multi }, multi ? t.cancelSelect : t.select),
-            multi ? h("button", { ref: mergeButton, className: "wbt-btn", disabled: selected.length < 2 || busy, onClick: function() {
-              setMerge(true);
-            } }, t.timelineMerge + " (" + selected.length + ")") : null,
-            h("button", { className: "wbt-btn", disabled: busy, onClick: reload }, t.refresh)
-          ),
-          h(
-            "div",
-            { className: "wbt-timeline-columns" },
             h(
-              "section",
-              { className: "wbt-timeline-left", "aria-label": t.timeline },
+              "div",
+              { className: "wbt-timeline-toolbar-main" },
               h(
                 "form",
                 { className: "wbt-timeline-search", onSubmit: function(e) {
@@ -8760,7 +9268,30 @@ var require_timeline_view = __commonJS({
               h("label", { className: "wbt-timeline-single" }, h("input", { type: "checkbox", "aria-label": t.timelineSingletons, checked: single, onChange: function(e) {
                 setSingle(e.target.checked);
                 setPage(1);
-              } }), t.timelineSingletons),
+              } }), t.timelineSingletons)
+            ),
+            h(
+              "div",
+              { className: "wbt-timeline-toolbar-actions" },
+              h("button", { className: "wbt-btn primary", onClick: function() {
+                setEditor({});
+              } }, tr("\u65B0\u5EFA\u65F6\u95F4\u7EBF")),
+              h("button", { className: "wbt-btn", onClick: function() {
+                setMulti(!multi);
+                setSelected([]);
+              }, "aria-pressed": multi }, multi ? t.cancelSelect : t.select),
+              multi ? h("button", { ref: mergeButton, className: "wbt-btn", disabled: selected.length < 2 || busy, onClick: function() {
+                setMerge(true);
+              } }, t.timelineMerge + " (" + selected.length + ")") : null,
+              h("button", { className: "wbt-btn", disabled: busy, onClick: reload }, t.refresh)
+            )
+          ),
+          h(
+            "div",
+            { className: "wbt-timeline-columns" },
+            h(
+              "section",
+              { className: "wbt-timeline-left", "aria-label": t.timeline },
               error ? h("p", { role: "alert", className: "wbt-err" }, t.error + error) : null,
               h("div", { ref: listRef, className: "wbt-timeline-list", role: "listbox", "aria-label": t.timeline, "aria-multiselectable": multi, "aria-busy": busy }, data.records.map(function(item, i) {
                 var excerpt = String(item.description || "").trim().split(/\r?\n/)[0];
@@ -8924,6 +9455,7 @@ var require_timeline_view = __commonJS({
   var statsView = require_stats();
   var configView = require_config();
   var dataView = require_data();
+  var actionSchemaView = require_actions();
   var COPY = require_copy();
   function hostHasAddon(id) {
     var list = host.addons;
@@ -9374,13 +9906,14 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.4.5",
+    version: "3.4.6",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },
       { id: "timeline", icon: tabIcon("timeline"), title: { zh: "\u65F6\u95F4\u7EBF", en: "Timeline" }, component: TimelineView },
       { id: "config", icon: tabIcon("settings"), title: { zh: "\u914D\u7F6E", en: "Config" }, component: configView.ConfigView },
-      { id: "data", icon: tabIcon("database"), title: { zh: "\u6570\u636E", en: "Data" }, component: dataView.DataView }
+      { id: "data", icon: tabIcon("database"), title: { zh: "\u6570\u636E", en: "Data" }, component: dataView.DataView },
+      { id: "actions", icon: tabIcon("code-2"), title: { zh: "Action \u6E05\u5355", en: "Actions" }, component: actionSchemaView.ActionSchemaView }
     ]
   });
   module.exports = { name: "dsh-workbench-tasks", inject: [], apply: function() {

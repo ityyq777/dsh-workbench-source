@@ -4,7 +4,7 @@ import { getSyncStateText, setSyncStateText } from "@wb/core";
 import { SyncEngine, SyncHttpError, listConflicts, resolveConflict, type SyncTransport, type SyncDomain } from "../sync/sync.js";
 import { BackupError, createBackup, importBackup, normalizeImportPolicy } from "./backup.js";
 import type { Subscriber } from "../types/host-types.js";
-export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionModeOf, setSessionMode, audit, backupDomains, actionNames, invoke, log }: any) {
+export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionModeOf, setSessionMode, audit, backupDomains, actionNames, invoke, log, schemaSnapshot }: any) {
   /** 云端 fetch 封装（带 access token；401 时尝试 refresh 一次）。 */
   async function cloudFetch(path: string, init?: RequestInit & { json?: unknown }, retry = true): Promise<any> {
     const headers: Record<string, string> = {
@@ -240,6 +240,15 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
                 }
               }
 
+              if (p === "/schema" && m === "GET") {
+                // 只读 schema 快照：Action 清单页用它渲染运行时注册，不经过 action 执行链路。
+                try {
+                  const domain = String(url.searchParams.get("domain") ?? "").trim();
+                  return send(200, { ok: true, readonly: true, ...schemaSnapshot(domain || undefined) });
+                } catch (e: any) {
+                  return send(500, { ok: false, error: String((e && e.message) || e) });
+                }
+              }
               if (p === "/backup/export" && m === "GET") {
                 try {
                   const raw = url.searchParams.get("modules");

@@ -40,7 +40,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.6.4";
+export const SHELL_VERSION = "0.6.5";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -247,7 +247,7 @@ export function apply(ctx: any): void {
   }
 
 
-  const { invoke, actionNames, installTool } = createActions({ domains, SHELL_VERSION, publicInfo, audit, clock, emit, db: state.db });
+  const { invoke, actionNames, installTool, schemaSnapshot } = createActions({ domains, SHELL_VERSION, publicInfo, audit, clock, emit, db: state.db });
 
   const host: WorkbenchHost = {
     db: state.db,
@@ -341,7 +341,7 @@ export function apply(ctx: any): void {
 
 
 
-  const { runSync } = installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionModeOf, setSessionMode, audit, backupDomains, actionNames, invoke, log });
+  const { runSync } = installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionModeOf, setSessionMode, audit, backupDomains, actionNames, invoke, log, schemaSnapshot });
   installTool(ctx);
 
   // ── 后台同步循环：30s 周期；登录后立即一轮；离线静默 ──
