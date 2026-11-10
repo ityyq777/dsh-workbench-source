@@ -51,6 +51,21 @@ const ITEMS = [
     ],
   },
   {
+    id: "ui.defaultPreset", group: "ui", type: "enum", surface: "ui", apply: "mount", default: "",
+    zh: "默认快捷筛选", en: "Default quick filter",
+    hintZh: "打开记录页时自动套用的快捷查询预设；「全部」表示不套用（有会话筛选记忆时以记忆为准）",
+    hintEn: "Quick filter applied when Records opens; All means none (session memory wins when present)",
+    values: [
+      { value: "", zh: "全部", en: "All" },
+      { value: "urgent", zh: "紧急任务 P8–10", en: "Urgent (P8–10)" },
+      { value: "hard", zh: "高难度 D4–5", en: "Hard (D4–5)" },
+      { value: "overdue", zh: "已逾期", en: "Overdue" },
+      { value: "dueToday", zh: "今日到期", en: "Due today" },
+      { value: "recentDone", zh: "近 7 天完成", en: "Done in 7 days" },
+      { value: "claimed", zh: "已接取", en: "Claimed" },
+    ],
+  },
+  {
     id: "ui.expandDepth", group: "ui", type: "int", surface: "ui", apply: "mount", default: 2, min: 0, max: 9,
     zh: "默认展开层级", en: "Default tree depth",
     hintZh: "左侧任务树初始展开到第几层（0 只展开根）", hintEn: "Initial tree depth (0 = root only)",

@@ -5845,6 +5845,7 @@ var require_styles = __commonJS({
       ".wbt-filter-panel{flex:0 0 248px;width:248px;min-width:0;max-height:100%;overflow-y:auto;overscroll-behavior:contain;border:1px solid var(--wbt-line);border-radius:10px;background:var(--wbt-bg);box-sizing:border-box;padding:12px}",
       ".wbt-filter-content{display:flex;flex-direction:column;gap:12px}.wbt-filter-toggle{display:none}.wbt-filter-group{display:flex;flex-direction:column;gap:8px;min-width:0;margin:0;padding:10px 0;border:0;border-bottom:1px solid var(--wbt-line)}.wbt-filter-group legend{font-weight:600;padding:0}.wbt-filter-search{display:flex;gap:4px}.wbt-filter-search input{width:100%;min-width:0}.wbt-filter-panel .wbt-check{white-space:normal}.wbt-filter-panel .wbt-tagmenu{position:static;width:100%;box-sizing:border-box;max-height:240px}.wbt-filter-panel .wbt-tagfilter{flex-wrap:wrap}.wbt-filter-panel input:disabled{opacity:.45;cursor:not-allowed}.wbt-filter-panel .wbt-mhint{margin:0;line-height:1.6}.wbt-filter-panel .wbt-field input{width:100%;box-sizing:border-box}",
       ".wbt-limit-group{gap:10px}.wbt-limit-hint{margin:0;font-size:11.5px;line-height:1.6;opacity:.65;overflow-wrap:anywhere}.wbt-limit-row{display:flex;flex-direction:column;gap:4px;min-width:0}.wbt-limit-row>strong{font-weight:560;font-size:12.5px}.wbt-limit-fields{display:flex;align-items:center;gap:4px;min-width:0}.wbt-limit-fields input{flex:1 1 0;width:0;min-width:0;box-sizing:border-box;text-align:center;padding-left:6px;padding-right:6px}.wbt-limit-fields .wbt-limit-input{background-color:var(--wbt-surface);border:1px solid var(--wbt-line);border-radius:8px;padding:6px 4px;font-size:13px;color:inherit;font-variant-numeric:tabular-nums;-moz-appearance:textfield;appearance:textfield}.wbt-limit-fields .wbt-limit-input:focus{border-color:var(--wbt-accent);outline:none;box-shadow:0 0 0 3px color-mix(in oklab,var(--wbt-accent) 18%,transparent)}.wbt-limit-fields .wbt-limit-input::-webkit-outer-spin-button,.wbt-limit-fields .wbt-limit-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}.wbt-limit-fields>span{flex:none;opacity:.55;font-size:11.5px}.wbt-limit-clear{flex:none;padding:2px 6px;line-height:1.2}.wbt-limit-unit{font-size:11px;opacity:.55;overflow-wrap:anywhere}",
+      ".wbt-presets{gap:6px}.wbt-preset-list{display:flex;flex-wrap:wrap;gap:6px}.wbt-preset{padding:4px 9px;border:1px solid var(--wbt-line);border-radius:999px;background:var(--wbt-surface);color:inherit;font-size:12px;line-height:1.5;white-space:normal}.wbt-preset:hover{border-color:var(--wbt-accent)}.wbt-preset.active{background:var(--wbt-accent);border-color:var(--wbt-accent);color:#fff}.wbt-preset:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:2px}.wbt-target-group{gap:8px}",
       ".wbt-status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 8px}.wbt-status-grid .wbt-check{min-width:0;overflow-wrap:anywhere}.wbt-pathrow>.wbt-sum{flex:none;white-space:nowrap}",
       ".wbt-publication-filter{width:100%}.wbt-range-entry{display:flex;gap:4px;align-items:center}.wbt-range-trigger{width:100%;min-width:0;text-align:left;white-space:normal}.wbt-range-trigger span{min-width:0;overflow-wrap:anywhere}.wbt-range-calendar{margin-top:8px;padding:6px;border:1px solid var(--wbt-line);border-radius:8px;background:var(--wbt-bg)}.wbt-range-month{display:flex;gap:4px;align-items:center;margin-bottom:8px}.wbt-range-month input{width:100%;min-width:0;padding:4px;border:1px solid var(--wbt-line);border-radius:4px;background:var(--wbt-bg);color:inherit}.wbt-range-month .wbt-btn{padding:4px 7px}.wbt-range-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;margin:8px 0}.wbt-range-weekday{text-align:center;font-size:11px;opacity:.7}.wbt-range-day{min-width:0;padding:6px 0;border:0;border-radius:4px;background:transparent;color:inherit;font:inherit;cursor:pointer}.wbt-range-day.between{background:color-mix(in srgb,var(--wbt-accent) 18%,transparent)}.wbt-range-day:hover{box-shadow:inset 0 0 0 1px var(--wbt-accent)}.wbt-range-day.selected{background:var(--wbt-accent);color:#fff}.wbt-range-day:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:1px}.wbt-range-actions{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}",
       ".wbt-nav{display:flex;flex-direction:column;gap:2px;flex:0 0 138px;width:138px;padding:3px 0;border-right:1px solid var(--wbt-line)}",
@@ -7672,7 +7673,7 @@ var require_date_filter = __commonJS({
     }
     function DateFilter(props) {
       var en = props.lang === "en", value = props.value;
-      var names = en ? { publish: "Publication", done: "Completion", shutdown: "Closure" } : { publish: "\u53D1\u5E03", done: "\u5B8C\u6210", shutdown: "\u5173\u95ED" };
+      var names = en ? { publish: "Publication", done: "Completion", shutdown: "Closure", target: "Target" } : { publish: "\u53D1\u5E03", done: "\u5B8C\u6210", shutdown: "\u5173\u95ED", target: "\u76EE\u6807" };
       var name = names[props.kind] || names.publish, title = name + (en ? " date range" : "\u65F6\u95F4\u8303\u56F4");
       var openS = React.useState(false), open = openS[0], setOpen = openS[1];
       var startS = React.useState(""), start = startS[0], setStart = startS[1];
@@ -7789,7 +7790,7 @@ var require_date_filter = __commonJS({
         ) : null
       );
     }
-    module2.exports = { DateFilter, normalize, validDate };
+    module2.exports = { DateFilter, normalize, validDate, today, shift };
   }
 });
 
@@ -7799,26 +7800,64 @@ var require_task_filter_model = __commonJS({
     var date = require_date_filter();
     var groups = ["publish", "done", "shutdown"];
     var limits = { priority: { min: 1, max: 10, step: 1 }, difficulty: { min: 0.5, max: 5, step: 0.5 } };
-    var STORE = "wbt.taskFilters.v2";
+    var STORE = "wbt.taskFilters.v3";
     function bounds() {
       return { min: "", max: "" };
     }
     function empty() {
-      return { statuses: [], priority: bounds(), difficulty: bounds(), publish: { from: "", to: "" }, done: { from: "", to: "" }, shutdown: { from: "", to: "" } };
+      return { statuses: [], priority: bounds(), difficulty: bounds(), publish: { from: "", to: "" }, done: { from: "", to: "" }, shutdown: { from: "", to: "" }, target: { from: "", to: "" } };
     }
     function statusFree(value) {
       return !value.statuses.length;
     }
     function hasRange(value) {
-      return groups.some(function(key) {
+      return groups.concat(["target"]).some(function(key) {
         return value[key].from || value[key].to;
       }) || !!(value.priority.min || value.priority.max || value.difficulty.min || value.difficulty.max);
     }
     function all(value) {
       return statusFree(value) && !hasRange(value);
     }
-    function isUrgent(value) {
-      return value.priority.min === "6" && value.priority.max === "10";
+    var PRESETS = [
+      { id: "urgent", statuses: ["0"], priority: { min: "8", max: "10" } },
+      { id: "hard", statuses: ["0", "4"], difficulty: { min: "4", max: "5" } },
+      { id: "overdue", statuses: ["0", "4"], target: "before" },
+      { id: "dueToday", statuses: ["0", "4"], target: "today" },
+      { id: "recentDone", statuses: ["2"], done: "week" },
+      { id: "claimed", statuses: ["4"] }
+    ];
+    function presetValue(id) {
+      var spec = null;
+      PRESETS.forEach(function(item) {
+        if (item.id === id) spec = item;
+      });
+      if (!spec) return null;
+      var value = empty(), now = date.today();
+      value.statuses = spec.statuses.slice();
+      if (spec.priority) value.priority = { min: spec.priority.min, max: spec.priority.max };
+      if (spec.difficulty) value.difficulty = { min: spec.difficulty.min, max: spec.difficulty.max };
+      if (spec.target === "before") value.target = { from: "", to: date.shift(now, -1) };
+      if (spec.target === "today") value.target = { from: now, to: now };
+      if (spec.done === "week") value.done = { from: date.shift(now, -6), to: now };
+      return value;
+    }
+    function signature(value) {
+      return JSON.stringify({
+        statuses: value.statuses.slice().sort(),
+        priority: value.priority,
+        difficulty: value.difficulty,
+        publish: value.publish,
+        done: value.done,
+        shutdown: value.shutdown,
+        target: value.target
+      });
+    }
+    function activePreset(value) {
+      var found = "", want = signature(value);
+      PRESETS.forEach(function(spec) {
+        if (!found && signature(presetValue(spec.id)) === want) found = spec.id;
+      });
+      return found;
     }
     function includes(value, status) {
       return statusFree(value) || value.statuses.indexOf(status) >= 0;
@@ -7826,7 +7865,6 @@ var require_task_filter_model = __commonJS({
     function toggle(value, key) {
       var next = Object.assign({}, value, { statuses: value.statuses.slice() });
       if (key === "all") return empty();
-      else if (key === "urgent") next.priority = isUrgent(value) ? bounds() : { min: "6", max: "10" };
       else {
         var index = next.statuses.indexOf(key);
         if (index >= 0) next.statuses.splice(index, 1);
@@ -7844,10 +7882,10 @@ var require_task_filter_model = __commonJS({
       var normalized = date.normalize(input);
       if (!normalized) return null;
       var next = value;
-      if (key !== "publish" && (normalized.from || normalized.to)) next = enable(value, key);
+      if (key !== "publish" && key !== "target" && (normalized.from || normalized.to)) next = enable(value, key);
       next = Object.assign({}, next);
       next[key] = { from: normalized.from, to: normalized.to };
-      return { value: next, swapped: normalized.swapped, autoSelected: key !== "publish" && value.statuses.indexOf(key === "done" ? "2" : "1") < 0 && !!(normalized.from || normalized.to) };
+      return { value: next, swapped: normalized.swapped, autoSelected: key !== "publish" && key !== "target" && value.statuses.indexOf(key === "done" ? "2" : "1") < 0 && !!(normalized.from || normalized.to) };
     }
     function parseLimit(key, input) {
       var text = String(input == null ? "" : input).trim(), spec = limits[key];
@@ -7880,7 +7918,7 @@ var require_task_filter_model = __commonJS({
     }
     function args(value) {
       var out = { statuses: value.statuses.map(Number) };
-      groups.forEach(function(key) {
+      groups.concat(["target"]).forEach(function(key) {
         out[key + "From"] = value[key].from || void 0;
         out[key + "To"] = value[key].to || void 0;
       });
@@ -7911,7 +7949,7 @@ var require_task_filter_model = __commonJS({
           var result = range(value, key, { from: params[key + "From"] || "", to: params[key + "To"] || "" });
           if (result) value = result.value;
         });
-      } else if (params.priorityMin !== void 0 || params.priorityMax !== void 0 || params.difficultyMin !== void 0 || params.difficultyMax !== void 0) {
+      } else if (params.priorityMin !== void 0 || params.priorityMax !== void 0 || params.difficultyMin !== void 0 || params.difficultyMax !== void 0 || params.targetFrom !== void 0 || params.targetTo !== void 0) {
         value = empty();
       } else return null;
       var withPriority = readBounds(params, "priority", value);
@@ -7935,10 +7973,10 @@ var require_task_filter_model = __commonJS({
         if (Array.isArray(parsed.statuses)) value.statuses = parsed.statuses.map(String).filter(function(s) {
           return /^[0-4]$/.test(s);
         });
-        groups.forEach(function(key) {
+        groups.concat(["target"]).forEach(function(key) {
           var box = parsed[key] || {};
-          if (date.validDate(box.from)) value[key].from = box.from;
-          if (date.validDate(box.to)) value[key].to = box.to;
+          if (typeof box.from === "string" && date.validDate(box.from)) value[key].from = box.from;
+          if (typeof box.to === "string" && date.validDate(box.to)) value[key].to = box.to;
         });
         ["priority", "difficulty"].forEach(function(key) {
           var box = parsed[key] || {}, min = limit(value, key, "min", box.min), max;
@@ -7964,8 +8002,12 @@ var require_task_filter_model = __commonJS({
       limit,
       limits,
       clearDifficulty,
-      isUrgent,
       args,
+      presets: PRESETS.map(function(spec) {
+        return spec.id;
+      }),
+      presetValue,
+      activePreset,
       navigation,
       save,
       load
@@ -8019,12 +8061,19 @@ var require_task_filter_panel = __commonJS({
     module2.exports = function renderFilterPanel(React, p) {
       var h = React.createElement, en = p.lang === "en", value = p.value;
       var title = en ? "Filters" : "\u7B5B\u9009";
-      var labels = en ? { publish: "Publication range", done: "Completion range", shutdown: "Closure range" } : { publish: "\u53D1\u5E03\u65F6\u95F4\u8303\u56F4", done: "\u5B8C\u6210\u65F6\u95F4\u8303\u56F4", shutdown: "\u5173\u95ED\u65F6\u95F4\u8303\u56F4" };
-      var options = [["all", en ? "All" : "\u5168\u90E8"], ["urgent", en ? "Urgent tasks" : "\u7D27\u6025\u4EFB\u52A1"], ["0", en ? "Opened" : "\u5DF2\u5F00\u542F"], ["2", en ? "Completed" : "\u5DF2\u5B8C\u6210"], ["1", en ? "Closed" : "\u5DF2\u5173\u95ED"], ["3", en ? "Restarted" : "\u5DF2\u91CD\u542F"], ["4", en ? "Claimed" : "\u5DF2\u63A5\u53D6"]];
+      var labels = en ? { publish: "Publication range", done: "Completion range", shutdown: "Closure range", target: "Target range" } : { publish: "\u53D1\u5E03\u65F6\u95F4\u8303\u56F4", done: "\u5B8C\u6210\u65F6\u95F4\u8303\u56F4", shutdown: "\u5173\u95ED\u65F6\u95F4\u8303\u56F4", target: "\u76EE\u6807\u65E5\u671F\u8303\u56F4" };
+      var options = [["all", en ? "All" : "\u5168\u90E8"], ["0", en ? "Opened" : "\u5DF2\u5F00\u542F"], ["2", en ? "Completed" : "\u5DF2\u5B8C\u6210"], ["1", en ? "Closed" : "\u5DF2\u5173\u95ED"], ["3", en ? "Restarted" : "\u5DF2\u91CD\u542F"], ["4", en ? "Claimed" : "\u5DF2\u63A5\u53D6"]];
+      var presetNames = en ? { urgent: "Urgent (P8\u201310)", hard: "Hard (D4\u20135)", overdue: "Overdue", dueToday: "Due today", recentDone: "Done in 7 days", claimed: "Claimed" } : { urgent: "\u7D27\u6025\u4EFB\u52A1 P8\u201310", hard: "\u9AD8\u96BE\u5EA6 D4\u20135", overdue: "\u5DF2\u903E\u671F", dueToday: "\u4ECA\u65E5\u5230\u671F", recentDone: "\u8FD1 7 \u5929\u5B8C\u6210", claimed: "\u5DF2\u63A5\u53D6" };
+      var activePreset = model.activePreset(value);
       var unitId = p.id + "-unit";
       var units = en ? { priority: "1\u201310, higher is more urgent", difficulty: "0.5\u20135 in half steps, higher is harder" } : { priority: "1\u201310\uFF0C\u8D8A\u5927\u8D8A\u7D27\u6025", difficulty: "0.5\u20135\uFF0C\u534A\u6863\u9012\u589E\uFF0C\u8D8A\u5927\u8D8A\u96BE" };
       function change(next) {
         p.onChange(next);
+      }
+      function pickPreset(id) {
+        p.onHint("");
+        if (p.onMissingChange) p.onMissingChange(false);
+        change(id === activePreset ? model.empty() : model.presetValue(id));
       }
       function setRange(key, input) {
         var result = model.range(value, key, input);
@@ -8090,8 +8139,19 @@ var require_task_filter_panel = __commonJS({
         h(
           "div",
           { className: "wbt-filter-content", id: p.id },
+          h(
+            "section",
+            { className: "wbt-filter-group wbt-presets", role: "group", "aria-label": en ? "Quick filters" : "\u5FEB\u6377\u7B5B\u9009" },
+            h("strong", null, en ? "Quick filters" : "\u5FEB\u6377\u7B5B\u9009"),
+            h("div", { className: "wbt-preset-list" }, model.presets.map(function(id) {
+              var on = id === activePreset;
+              return h("button", { key: id, type: "button", className: "wbt-btn wbt-preset" + (on ? " active" : ""), "aria-pressed": on, "data-preset": id, onClick: function() {
+                pickPreset(id);
+              } }, presetNames[id]);
+            }))
+          ),
           h("fieldset", { className: "wbt-filter-group wbt-status-grid" }, h("legend", null, en ? "Status (match any)" : "\u72B6\u6001"), options.map(function(option) {
-            var key = option[0], checked = key === "all" ? model.all(value) : key === "urgent" ? model.isUrgent(value) : value.statuses.indexOf(key) >= 0;
+            var key = option[0], checked = key === "all" ? model.all(value) : value.statuses.indexOf(key) >= 0;
             return h("label", { key, className: "wbt-check" }, h("input", { type: "checkbox", checked, "data-status": key, onChange: function() {
               change(model.toggle(value, key));
               p.onHint("");
@@ -8106,6 +8166,14 @@ var require_task_filter_panel = __commonJS({
             h("p", { className: "wbt-limit-hint" }, en ? "Priority takes whole numbers 1\u201310; difficulty takes 0.5 steps. Blank means no limit." : "\u4F18\u5148\u7EA7\u53D6 1\u201310 \u7684\u6574\u6570\uFF0C\u96BE\u5EA6\u6309 0.5 \u9012\u589E\uFF1B\u7559\u7A7A\u8868\u793A\u4E0D\u9650\u3002"),
             limitRow("priority", en ? "Priority" : "\u4F18\u5148\u7EA7"),
             limitRow("difficulty", en ? "Difficulty" : "\u96BE\u5EA6")
+          ),
+          h(
+            "section",
+            { className: "wbt-filter-group wbt-target-group", "aria-label": labels.target },
+            h("strong", null, labels.target),
+            h(DateFilter, { lang: p.lang, kind: "target", value: value.target, onChange: function(next) {
+              setRange("target", next);
+            } })
           ),
           model.groups.map(function(key) {
             return h(
@@ -8238,7 +8306,8 @@ var require_tasks_view = __commonJS({
         var initialMissing = storedFilters ? storedFilters.missing : !activityNavigation && !nodeNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
         var missingS = React.useState(initialMissing);
         var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
-        var filterState = React.useState(storedFilters && storedFilters.value || activityNavigation || filters.empty());
+        var defaultPreset = filters.presetValue(cfg["ui.defaultPreset"]);
+        var filterState = React.useState(storedFilters && storedFilters.value || activityNavigation || defaultPreset || filters.empty());
         var filterValue = filterState[0], setFilterValue = filterState[1];
         React.useEffect(function() {
           filters.save(filterValue, difficultyMissing, props.viewParams);
@@ -8309,7 +8378,7 @@ var require_tasks_view = __commonJS({
             if (storedFilters) return;
           }
           if (!activityNavigation && !nodeNavigation) return;
-          setFilterValue(activityNavigation || filters.empty());
+          setFilterValue(activityNavigation || defaultPreset || filters.empty());
           setTarget(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: groupNavigation ? String(groupNavigation) : "1", tableId: null });
           setDifficultyMissing(false);
           setFilterHint("");
@@ -10013,6 +10082,7 @@ var require_timeline_view = __commonJS({
     "ui.listView": "list",
     "ui.expandDepth": 2,
     "ui.confirmDelete": true,
+    "ui.defaultPreset": "",
     "list.pageSize": 12,
     "list.sort": "auto",
     "form.defaultPriority": 1,
@@ -10030,7 +10100,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "4.0.0",
+    version: "4.1.0",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

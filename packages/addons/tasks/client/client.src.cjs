@@ -356,7 +356,7 @@
   var BatchModal = require("./modals/batch-modal.cjs")(React, cx, Icon);
 
   var CFG_FALLBACK = {
-    "ui.listView": "list", "ui.expandDepth": 2, "ui.confirmDelete": true,
+    "ui.listView": "list", "ui.expandDepth": 2, "ui.confirmDelete": true, "ui.defaultPreset": "",
     "list.pageSize": 12, "list.sort": "auto",
     "form.defaultPriority": 1, "form.defaultDifficulty": 0, "form.defaultTargetOffset": 0,
     "stats.range": "30d", "stats.top": 10, "stats.showKpi": true,
@@ -370,7 +370,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "4.0.0",
+    version: "4.1.0",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "记录", en: "Records" }, component: TasksView },

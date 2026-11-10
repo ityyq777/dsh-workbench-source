@@ -52,7 +52,9 @@ module.exports = function createTasksView(deps) {
     var initialMissing = storedFilters ? storedFilters.missing : !activityNavigation && !nodeNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
     var missingS = React.useState(initialMissing);
     var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
-    var filterState = React.useState((storedFilters && storedFilters.value) || activityNavigation || filters.empty());
+    // 默认快捷预设（ui.defaultPreset）只在没有会话筛选记忆、也没有显式导航时套用一次。
+    var defaultPreset = filters.presetValue(cfg["ui.defaultPreset"]);
+    var filterState = React.useState((storedFilters && storedFilters.value) || activityNavigation || defaultPreset || filters.empty());
     var filterValue = filterState[0], setFilterValue = filterState[1];
     React.useEffect(function () { filters.save(filterValue, difficultyMissing, props.viewParams); }, [filterValue, difficultyMissing, JSON.stringify(props.viewParams || {})]);
     var panelState = React.useState(false), panelOpen = panelState[0], setPanelOpen = panelState[1];
@@ -118,7 +120,7 @@ module.exports = function createTasksView(deps) {
     React.useEffect(function () {
       if (initialNavigation.current) { initialNavigation.current = false; if (storedFilters) return; }
       if (!activityNavigation && !nodeNavigation) return;
-      setFilterValue(activityNavigation || filters.empty());
+      setFilterValue(activityNavigation || defaultPreset || filters.empty());
       setTarget(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: groupNavigation ? String(groupNavigation) : "1", tableId: null });
       setDifficultyMissing(false); setFilterHint("");
       setSearchDraft(""); setTitleKey(""); setFilterTagIds([]); setPageNumber(1);

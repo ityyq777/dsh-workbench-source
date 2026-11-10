@@ -7,7 +7,7 @@ const year=new Date().getFullYear(), date=year+'-03-14';
 window.calls=[]; window.calendarFailure=false;
 const api={subscribe:()=>()=>{},call:async(action,args={})=>{
  window.calls.push({action,args}); let result=[];
- if(action==='tasks.configGet')result={values:{'ui.defaultTab':0,'list.filterRestarted':true,'stats.sections':['recentDone'],'stats.showKpi':false}};
+ if(action==='tasks.configGet')result={values:{'ui.defaultPreset':'urgent','stats.sections':['recentDone'],'stats.showKpi':false}};
  if(action==='taskNodes.tree')result=[{id:'1',name:'全部任务',type:'2',children:[]}];
  if(action==='tasks.statsReport')result={generatedAt:date,totals:{total:10},lists:{recentDone:[{id:'a',title:'完成日期核对',date,daysAgo:1,difficulty:2,tableTitle:'开发'}]}};
  if(action==='tasks.activityCalendar'){

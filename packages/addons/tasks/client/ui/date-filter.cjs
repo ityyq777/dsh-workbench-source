@@ -19,7 +19,7 @@ function today() {
 function shift(date, days) { var d=new Date(date+"T00:00:00Z"); d.setUTCDate(d.getUTCDate()+days); return d.toISOString().slice(0,10); }
 function DateFilter(props) {
   var en=props.lang==="en", value=props.value;
-  var names=en?{publish:"Publication",done:"Completion",shutdown:"Closure"}:{publish:"发布",done:"完成",shutdown:"关闭"};
+  var names=en?{publish:"Publication",done:"Completion",shutdown:"Closure",target:"Target"}:{publish:"发布",done:"完成",shutdown:"关闭",target:"目标"};
   var name=names[props.kind]||names.publish, title=name+(en?" date range":"时间范围");
   var openS=React.useState(false), open=openS[0], setOpen=openS[1];
   var startS=React.useState(""), start=startS[0], setStart=startS[1];
@@ -54,4 +54,4 @@ function DateFilter(props) {
       start?h("div",{className:"wbt-range-actions"},h("button",{type:"button",className:"wbt-btn ghost",onClick:function(){apply({from:start,to:""});}},en?"From this date":"仅起始日期"),h("button",{type:"button",className:"wbt-btn ghost",onClick:function(){apply({from:"",to:start});}},en?"Until this date":"仅截止日期")):null,
       h("button",{type:"button",className:"wbt-btn ghost",onClick:close},en?"Cancel":"取消")):null);
 }
-module.exports={DateFilter:DateFilter,normalize:normalize,validDate:validDate};
+module.exports={DateFilter:DateFilter,normalize:normalize,validDate:validDate,today:today,shift:shift};

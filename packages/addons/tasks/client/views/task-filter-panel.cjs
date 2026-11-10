@@ -19,11 +19,21 @@ function NumberInput(p) {
 module.exports = function renderFilterPanel(React, p) {
   var h = React.createElement, en = p.lang === "en", value = p.value;
   var title = en ? "Filters" : "筛选";
-  var labels = en ? {publish:"Publication range",done:"Completion range",shutdown:"Closure range"} : {publish:"发布时间范围",done:"完成时间范围",shutdown:"关闭时间范围"};
-  var options = [["all",en?"All":"全部"],["urgent",en?"Urgent tasks":"紧急任务"],["0",en?"Opened":"已开启"],["2",en?"Completed":"已完成"],["1",en?"Closed":"已关闭"],["3",en?"Restarted":"已重启"],["4",en?"Claimed":"已接取"]];
+  var labels = en ? {publish:"Publication range",done:"Completion range",shutdown:"Closure range",target:"Target range"} : {publish:"发布时间范围",done:"完成时间范围",shutdown:"关闭时间范围",target:"目标日期范围"};
+  var options = [["all",en?"All":"全部"],["0",en?"Opened":"已开启"],["2",en?"Completed":"已完成"],["1",en?"Closed":"已关闭"],["3",en?"Restarted":"已重启"],["4",en?"Claimed":"已接取"]];
+  // 快捷预设只是筛选值的组合；激活态从当前值推导，手动改任何条件都会自动熄灭。
+  var presetNames = en
+    ? {urgent:"Urgent (P8–10)",hard:"Hard (D4–5)",overdue:"Overdue",dueToday:"Due today",recentDone:"Done in 7 days",claimed:"Claimed"}
+    : {urgent:"紧急任务 P8–10",hard:"高难度 D4–5",overdue:"已逾期",dueToday:"今日到期",recentDone:"近 7 天完成",claimed:"已接取"};
+  var activePreset = model.activePreset(value);
   var unitId = p.id + "-unit";
   var units = en ? {priority:"1–10, higher is more urgent", difficulty:"0.5–5 in half steps, higher is harder"} : {priority:"1–10，越大越紧急", difficulty:"0.5–5，半档递增，越大越难"};
   function change(next) { p.onChange(next); }
+  function pickPreset(id) {
+    p.onHint("");
+    if (p.onMissingChange) p.onMissingChange(false);
+    change(id === activePreset ? model.empty() : model.presetValue(id));
+  }
   function setRange(key, input) {
     var result = model.range(value,key,input);
     if (!result) { p.onHint(en ? "Enter a valid date" : "请输入有效日期"); return; }
@@ -61,8 +71,14 @@ module.exports = function renderFilterPanel(React, p) {
   return h("aside", {className:"wbt-filter-panel" + (p.open ? " expanded" : ""),"aria-label":title},
     h("button",{type:"button",className:"wbt-btn wbt-filter-toggle","aria-label":title,title:title,"aria-expanded":p.open,"aria-controls":p.id,onClick:p.onToggle}, h(Icon,{name:"filter"})),
     h("div",{className:"wbt-filter-content",id:p.id},
+      h("section",{className:"wbt-filter-group wbt-presets",role:"group","aria-label":en?"Quick filters":"快捷筛选"},
+        h("strong",null,en?"Quick filters":"快捷筛选"),
+        h("div",{className:"wbt-preset-list"},model.presets.map(function(id){
+          var on = id === activePreset;
+          return h("button",{key:id,type:"button",className:"wbt-btn wbt-preset"+(on?" active":""),"aria-pressed":on,"data-preset":id,onClick:function(){pickPreset(id);}},presetNames[id]);
+        }))),
       h("fieldset",{className:"wbt-filter-group wbt-status-grid"},h("legend",null,en?"Status (match any)":"状态"),options.map(function(option){
-        var key = option[0], checked = key === "all" ? model.all(value) : key === "urgent" ? model.isUrgent(value) : value.statuses.indexOf(key) >= 0;
+        var key = option[0], checked = key === "all" ? model.all(value) : value.statuses.indexOf(key) >= 0;
         return h("label",{key:key,className:"wbt-check"},h("input",{type:"checkbox",checked:checked,"data-status":key,onChange:function(){change(model.toggle(value,key));p.onHint("");}}),option[1]);
       })),
       p.search,
@@ -71,6 +87,9 @@ module.exports = function renderFilterPanel(React, p) {
         h("p",{className:"wbt-limit-hint"},en?"Priority takes whole numbers 1–10; difficulty takes 0.5 steps. Blank means no limit.":"优先级取 1–10 的整数，难度按 0.5 递增；留空表示不限。"),
         limitRow("priority", en ? "Priority" : "优先级"),
         limitRow("difficulty", en ? "Difficulty" : "难度")),
+      h("section",{className:"wbt-filter-group wbt-target-group","aria-label":labels.target},
+        h("strong",null,labels.target),
+        h(DateFilter,{lang:p.lang,kind:"target",value:value.target,onChange:function(next){setRange("target",next);}})),
       model.groups.map(function(key){
         return h("section",{key:key,className:"wbt-filter-group","aria-label":labels[key]},
           h("strong",null,labels[key]),
