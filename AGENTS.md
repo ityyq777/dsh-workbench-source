@@ -169,6 +169,28 @@ DESKTOP_DSH="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/b
 `docs/插件功能清单.md` 是给人看的 action 清单，含版本表与 action 表；改 schema 时
 把对应行的字段串、枚举描述、必填列一起改，并更新版本表与 action 数。
 
+### 插件页面必须自证数据源，不许走宿主统一接口
+
+宿主提供 `GET /workbench/api/schema`、`api.schema(domain)`、`capabilities.*`、
+`actions.list` 这类**跨域统一接口**，用途是宿主自己的调试台、agent 发现与跨插件编排；
+它们不是业务插件页面取数的捷径。
+
+业务页面归各业务插件自己，取数也只能用**本插件注册的 action**：
+
+1. 需要运行时信息（清单、统计、配置快照等）时，在插件 `setup(api)` 里注册自己的只读
+   action，例如 `tasks.actionSchema`、`tags.actionSchema`、`sites.actionSchema`、
+   `storage.actionSchema`；页面用 `api.call("<域>.xxx")` 调用本域 action，
+   不要 `api.schema()` 或直连宿主路由。
+2. 统一接口只服务宿主场景，不要求每个插件都提供某个页面；插件没加载时，页面按错误态
+   降级，不伪造空数据、也不回退去问宿主。
+3. 新增这类 action 同样是 agent 可见的 schema 变更：同步五处版本号、`docs/插件功能清单.md`
+   与对应测试（参照 `test:action-schema`）。
+4. 判据很简单：**这个页面删掉宿主对应路由后还能不能用**。不能，就是踩了这条线。
+
+历史教训：`Action 清单` 页最初读宿主 `GET /workbench/api/schema`，升级后宿主缺路由时
+整页报 `no schema api`；后改为各插件注册 `<域>.actionSchema` 自证清单，宿主接口保留但
+不再是这些页面的数据源。设计见 `docs/specs/41-插件自证Action清单.md`。
+
 ## 插件市场发布与维护
 
 个人工作台由四个 DSH 原生插件组成，发布链路与市场维护都按本节执行。
