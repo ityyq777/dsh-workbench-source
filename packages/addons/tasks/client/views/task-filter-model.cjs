@@ -2,8 +2,8 @@
 // 优先级/难度区间共用同一份状态：「紧急任务」只是优先级 6–10 的快捷显示，不再单独传给接口。
 var date = require("../ui/date-filter.cjs");
 var groups = ["publish", "done", "shutdown"];
-// 0 只表示「没有优先级 / 没有难度」，所以 UI 区间端点从 1 起。
-var limits = {priority:10, difficulty:5};
+// 0 只表示「没有优先级 / 没有难度」，所以 UI 区间端点从 1 起：优先级整数 1–10，难度 0.5 起按半档递增。
+var limits = {priority:{min:1, max:10, step:1}, difficulty:{min:0.5, max:5, step:0.5}};
 var STORE = "wbt.taskFilters.v2";
 function bounds() { return {min:"", max:""}; }
 function empty() { return {statuses:[], priority:bounds(), difficulty:bounds(), publish:{from:"",to:""}, done:{from:"",to:""}, shutdown:{from:"",to:""}}; }
@@ -44,16 +44,20 @@ function range(value, key, input) {
   next = Object.assign({},next); next[key] = {from:normalized.from,to:normalized.to};
   return {value:next,swapped:normalized.swapped,autoSelected:key !== "publish" && value.statuses.indexOf(key === "done" ? "2" : "1") < 0 && !!(normalized.from || normalized.to)};
 }
-/** 单端输入：只接受 1..limit 的整数；min>max 自动交换，非法值返回 null 交给调用方提示。 */
+/** 单端输入：按 limits[key] 的 min/max/step 校验（优先级整数、难度半档）；非法值返回 null 交给调用方提示。 */
+function parseLimit(key, input) {
+  var text = String(input == null ? "" : input).trim(), spec = limits[key];
+  if (!text) return "";
+  if (!/^\d+(?:\.\d)?$/.test(text)) return null;
+  var number = Number(text);
+  if (!isFinite(number) || Math.abs(Math.round(number / spec.step) * spec.step - number) > 1e-9) return null;
+  if (number < spec.min || number > spec.max) return null;
+  return String(Number(number.toFixed(1)));
+}
 function limit(value, key, end, input) {
-  var text = String(input == null ? "" : input).trim(), box = Object.assign({}, value[key]);
-  if (!text) box[end] = "";
-  else {
-    if (!/^\d+$/.test(text)) return null;
-    var number = Number(text);
-    if (number < 1 || number > limits[key]) return null;
-    box[end] = String(number);
-  }
+  var parsed = parseLimit(key, input), box = Object.assign({}, value[key]);
+  if (parsed === null) return null;
+  box[end] = parsed;
   var swapped = false;
   if (box.min && box.max && Number(box.min) > Number(box.max)) {
     var swap = box.min; box.min = box.max; box.max = swap; swapped = true;
@@ -125,6 +129,6 @@ function load(params) {
 }
 module.exports = {
   groups:groups, all:all, empty:empty, fromTab:fromTab, includes:includes, toggle:toggle, enable:enable,
-  range:range, limit:limit, clearDifficulty:clearDifficulty, isUrgent:isUrgent, args:args,
+  range:range, limit:limit, limits:limits, clearDifficulty:clearDifficulty, isUrgent:isUrgent, args:args,
   navigation:navigation, save:save, load:load,
 };

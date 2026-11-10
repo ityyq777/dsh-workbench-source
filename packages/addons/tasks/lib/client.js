@@ -4883,7 +4883,7 @@ var require_styles = __commonJS({
       ".wbt-body{display:flex;gap:14px;align-items:stretch;min-height:0;flex:1;overflow:hidden}",
       ".wbt-filter-panel{flex:0 0 248px;width:248px;min-width:0;max-height:100%;overflow-y:auto;overscroll-behavior:contain;border:1px solid var(--wbt-line);border-radius:10px;background:var(--wbt-bg);box-sizing:border-box;padding:12px}",
       ".wbt-filter-content{display:flex;flex-direction:column;gap:12px}.wbt-filter-toggle{display:none}.wbt-filter-group{display:flex;flex-direction:column;gap:8px;min-width:0;margin:0;padding:10px 0;border:0;border-bottom:1px solid var(--wbt-line)}.wbt-filter-group legend{font-weight:600;padding:0}.wbt-filter-search{display:flex;gap:4px}.wbt-filter-search input{width:100%;min-width:0}.wbt-filter-panel .wbt-check{white-space:normal}.wbt-filter-panel .wbt-tagmenu{position:static;width:100%;box-sizing:border-box;max-height:240px}.wbt-filter-panel .wbt-tagfilter{flex-wrap:wrap}.wbt-filter-panel input:disabled{opacity:.45;cursor:not-allowed}.wbt-filter-panel .wbt-mhint{margin:0;line-height:1.6}.wbt-filter-panel .wbt-field input{width:100%;box-sizing:border-box}",
-      ".wbt-limit-group{gap:10px}.wbt-limit-hint{margin:0;font-size:11.5px;line-height:1.6;opacity:.65;overflow-wrap:anywhere}.wbt-limit-row{display:flex;flex-direction:column;gap:4px;min-width:0}.wbt-limit-row>strong{font-weight:560;font-size:12.5px}.wbt-limit-fields{display:flex;align-items:center;gap:4px;min-width:0}.wbt-limit-fields input{flex:1 1 0;width:0;min-width:0;box-sizing:border-box;text-align:center;padding-left:6px;padding-right:6px}.wbt-limit-fields>span{flex:none;opacity:.5}.wbt-limit-clear{flex:none;padding:2px 6px;line-height:1.2}.wbt-limit-unit{font-size:11px;opacity:.55;overflow-wrap:anywhere}",
+      ".wbt-limit-group{gap:10px}.wbt-limit-hint{margin:0;font-size:11.5px;line-height:1.6;opacity:.65;overflow-wrap:anywhere}.wbt-limit-row{display:flex;flex-direction:column;gap:4px;min-width:0}.wbt-limit-row>strong{font-weight:560;font-size:12.5px}.wbt-limit-fields{display:flex;align-items:center;gap:4px;min-width:0}.wbt-limit-fields input{flex:1 1 0;width:0;min-width:0;box-sizing:border-box;text-align:center;padding-left:6px;padding-right:6px}.wbt-limit-fields .wbt-limit-input{background-color:var(--wbt-surface);border:1px solid var(--wbt-line);border-radius:8px;padding:6px 4px;font-size:13px;color:inherit;font-variant-numeric:tabular-nums;-moz-appearance:textfield;appearance:textfield}.wbt-limit-fields .wbt-limit-input:focus{border-color:var(--wbt-accent);outline:none;box-shadow:0 0 0 3px color-mix(in oklab,var(--wbt-accent) 18%,transparent)}.wbt-limit-fields .wbt-limit-input::-webkit-outer-spin-button,.wbt-limit-fields .wbt-limit-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}.wbt-limit-fields>span{flex:none;opacity:.55;font-size:11.5px}.wbt-limit-clear{flex:none;padding:2px 6px;line-height:1.2}.wbt-limit-unit{font-size:11px;opacity:.55;overflow-wrap:anywhere}",
       ".wbt-status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 8px}.wbt-status-grid .wbt-check{min-width:0;overflow-wrap:anywhere}.wbt-pathrow>.wbt-sum{flex:none;white-space:nowrap}",
       ".wbt-publication-filter{width:100%}.wbt-range-entry{display:flex;gap:4px;align-items:center}.wbt-range-trigger{width:100%;min-width:0;text-align:left;white-space:normal}.wbt-range-trigger span{min-width:0;overflow-wrap:anywhere}.wbt-range-calendar{margin-top:8px;padding:6px;border:1px solid var(--wbt-line);border-radius:8px;background:var(--wbt-bg)}.wbt-range-month{display:flex;gap:4px;align-items:center;margin-bottom:8px}.wbt-range-month input{width:100%;min-width:0;padding:4px;border:1px solid var(--wbt-line);border-radius:4px;background:var(--wbt-bg);color:inherit}.wbt-range-month .wbt-btn{padding:4px 7px}.wbt-range-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;margin:8px 0}.wbt-range-weekday{text-align:center;font-size:11px;opacity:.7}.wbt-range-day{min-width:0;padding:6px 0;border:0;border-radius:4px;background:transparent;color:inherit;font:inherit;cursor:pointer}.wbt-range-day.between{background:color-mix(in srgb,var(--wbt-accent) 18%,transparent)}.wbt-range-day:hover{box-shadow:inset 0 0 0 1px var(--wbt-accent)}.wbt-range-day.selected{background:var(--wbt-accent);color:#fff}.wbt-range-day:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:1px}.wbt-range-actions{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}",
       ".wbt-nav{display:flex;flex-direction:column;gap:2px;flex:0 0 138px;width:138px;padding:3px 0;border-right:1px solid var(--wbt-line)}",
@@ -6774,7 +6774,7 @@ var require_task_filter_model = __commonJS({
   "packages/addons/tasks/client/views/task-filter-model.cjs"(exports2, module2) {
     var date = require_date_filter();
     var groups = ["publish", "done", "shutdown"];
-    var limits = { priority: 10, difficulty: 5 };
+    var limits = { priority: { min: 1, max: 10, step: 1 }, difficulty: { min: 0.5, max: 5, step: 0.5 } };
     var STORE = "wbt.taskFilters.v2";
     function bounds() {
       return { min: "", max: "" };
@@ -6831,15 +6831,19 @@ var require_task_filter_model = __commonJS({
       next[key] = { from: normalized.from, to: normalized.to };
       return { value: next, swapped: normalized.swapped, autoSelected: key !== "publish" && value.statuses.indexOf(key === "done" ? "2" : "1") < 0 && !!(normalized.from || normalized.to) };
     }
+    function parseLimit(key, input) {
+      var text = String(input == null ? "" : input).trim(), spec = limits[key];
+      if (!text) return "";
+      if (!/^\d+(?:\.\d)?$/.test(text)) return null;
+      var number = Number(text);
+      if (!isFinite(number) || Math.abs(Math.round(number / spec.step) * spec.step - number) > 1e-9) return null;
+      if (number < spec.min || number > spec.max) return null;
+      return String(Number(number.toFixed(1)));
+    }
     function limit(value, key, end, input) {
-      var text = String(input == null ? "" : input).trim(), box = Object.assign({}, value[key]);
-      if (!text) box[end] = "";
-      else {
-        if (!/^\d+$/.test(text)) return null;
-        var number = Number(text);
-        if (number < 1 || number > limits[key]) return null;
-        box[end] = String(number);
-      }
+      var parsed = parseLimit(key, input), box = Object.assign({}, value[key]);
+      if (parsed === null) return null;
+      box[end] = parsed;
       var swapped = false;
       if (box.min && box.max && Number(box.min) > Number(box.max)) {
         var swap = box.min;
@@ -6941,6 +6945,7 @@ var require_task_filter_model = __commonJS({
       enable,
       range,
       limit,
+      limits,
       clearDifficulty,
       isUrgent,
       args,
@@ -6958,20 +6963,21 @@ var require_task_filter_panel = __commonJS({
     var model = require_task_filter_model();
     var DateFilter = require_date_filter().DateFilter;
     function NumberInput(p) {
-      var React = p.React, draftState = React.useState(p.value), draft = draftState[0], setDraft = draftState[1];
+      var React = p.React, draftState = React.useState(String(p.value)), draft = draftState[0], setDraft = draftState[1];
       React.useEffect(function() {
-        setDraft(p.value);
+        setDraft(String(p.value));
       }, [p.value]);
       function commit(node) {
         var result = p.commit(node.validity && node.validity.badInput ? "invalid" : draft);
-        setDraft(result === void 0 ? p.value : result);
+        setDraft(result === void 0 ? String(p.value) : result);
       }
       return React.createElement("input", {
         type: "number",
-        min: 1,
+        className: "wbt-input wbt-limit-input",
+        min: p.min,
         max: p.max,
-        step: 1,
-        inputMode: "numeric",
+        step: p.step,
+        inputMode: p.step === 1 ? "numeric" : "decimal",
         value: draft,
         "aria-label": p.label,
         placeholder: p.placeholder,
@@ -6988,7 +6994,7 @@ var require_task_filter_panel = __commonJS({
           }
           if (e.key === "Escape") {
             e.preventDefault();
-            setDraft(p.value);
+            setDraft(String(p.value));
           }
         }
       });
@@ -6999,7 +7005,7 @@ var require_task_filter_panel = __commonJS({
       var labels = en ? { publish: "Publication range", done: "Completion range", shutdown: "Closure range" } : { publish: "\u53D1\u5E03\u65F6\u95F4\u8303\u56F4", done: "\u5B8C\u6210\u65F6\u95F4\u8303\u56F4", shutdown: "\u5173\u95ED\u65F6\u95F4\u8303\u56F4" };
       var options = [["all", en ? "All" : "\u5168\u90E8"], ["urgent", en ? "Urgent tasks" : "\u7D27\u6025\u4EFB\u52A1"], ["0", en ? "Opened" : "\u5DF2\u5F00\u542F"], ["2", en ? "Completed" : "\u5DF2\u5B8C\u6210"], ["1", en ? "Closed" : "\u5DF2\u5173\u95ED"], ["3", en ? "Restarted" : "\u5DF2\u91CD\u542F"]];
       var unitId = p.id + "-unit";
-      var units = en ? { priority: "Priority 1\u201310, higher is more urgent", difficulty: "Difficulty 1\u20135, higher is harder" } : { priority: "\u4F18\u5148\u7EA7 1\u201310\uFF0C\u6570\u5B57\u8D8A\u5927\u8D8A\u7D27\u6025", difficulty: "\u96BE\u5EA6 1\u20135\uFF0C\u6570\u5B57\u8D8A\u5927\u8D8A\u96BE" };
+      var units = en ? { priority: "1\u201310, higher is more urgent", difficulty: "0.5\u20135 in half steps, higher is harder" } : { priority: "1\u201310\uFF0C\u8D8A\u5927\u8D8A\u7D27\u6025", difficulty: "0.5\u20135\uFF0C\u534A\u6863\u9012\u589E\uFF0C\u8D8A\u5927\u8D8A\u96BE" };
       function change(next) {
         p.onChange(next);
       }
@@ -7018,7 +7024,7 @@ var require_task_filter_panel = __commonJS({
       function setLimit(key, end, text) {
         var result = model.limit(value, key, end, text);
         if (!result) {
-          p.onHint(en ? "Use a whole number within the allowed range" : "\u8BF7\u8F93\u5165\u8303\u56F4\u5185\u7684\u6574\u6570\uFF08\u8D85\u51FA\u6216\u975E\u6570\u5B57\u4E0D\u63A5\u53D7\uFF09");
+          p.onHint(en ? key === "difficulty" ? "Difficulty takes 0.5 steps from 0.5 to 5" : "Priority takes whole numbers 1\u201310" : key === "difficulty" ? "\u96BE\u5EA6\u4EC5\u63A5\u53D7 0.5\u20135 \u4E4B\u95F4\u7684\u534A\u6863\u6570\u503C" : "\u4F18\u5148\u7EA7\u4EC5\u63A5\u53D7 1\u201310 \u7684\u6574\u6570");
           return;
         }
         var hints = [];
@@ -7030,10 +7036,10 @@ var require_task_filter_panel = __commonJS({
         return result.value[key][end];
       }
       function limitRow(key, label) {
-        var box = value[key], max = key === "priority" ? 10 : 5;
+        var box = value[key], spec = model.limits[key];
         function field(end) {
-          var labelText = en ? (end === "min" ? "Minimum " : "Maximum ") + label : label + (end === "min" ? "\u4E0B\u9650" : "\u4E0A\u9650");
-          return h(NumberInput, { React, value: box[end], max, label: labelText, placeholder: en ? "Any" : "\u4E0D\u9650", commit: function(text) {
+          var labelText = en ? (end === "min" ? "Minimum " : "Maximum ") + label : (end === "min" ? "\u6700\u4F4E" : "\u6700\u9AD8") + label;
+          return h(NumberInput, { React, value: box[end], min: spec.min, max: spec.max, step: spec.step, label: labelText, placeholder: en ? "Any" : "\u4E0D\u9650", commit: function(text) {
             return setLimit(key, end, text);
           } });
         }
@@ -7053,7 +7059,7 @@ var require_task_filter_panel = __commonJS({
             "div",
             { className: "wbt-limit-fields", role: "group", "aria-label": label, "aria-describedby": unitId + "-" + key },
             field("min"),
-            h("span", { "aria-hidden": true }, "\u2013"),
+            h("span", { className: "wbt-limit-join", "aria-hidden": true }, en ? "to" : "\u81F3"),
             field("max"),
             h("button", { type: "button", className: "wbt-btn ghost wbt-limit-clear", "aria-label": (en ? "Clear " : "\u6E05\u7A7A") + label, title: (en ? "Clear " : "\u6E05\u7A7A") + label, onClick: clear }, "\xD7")
           ),
@@ -7080,7 +7086,7 @@ var require_task_filter_panel = __commonJS({
             "fieldset",
             { className: "wbt-filter-group wbt-limit-group" },
             h("legend", null, en ? "Priority and difficulty" : "\u4F18\u5148\u7EA7\u4E0E\u96BE\u5EA6"),
-            h("p", { className: "wbt-limit-hint" }, en ? "Only whole numbers; blank means no limit. Urgent tasks are priority 6\u201310, which no longer includes \u201Clow priority but due within 2 days\u201D." : "\u53EA\u63A5\u53D7\u6574\u6570\uFF0C\u7559\u7A7A\u8868\u793A\u4E0D\u9650\u3002\u300C\u7D27\u6025\u4EFB\u52A1\u300D\u7B49\u4E8E\u4F18\u5148\u7EA7 6\u201310\uFF0C\u4E0D\u518D\u5305\u542B\u300C\u4F18\u5148\u7EA7\u4F4E\u4F46 2 \u5929\u5185\u5230\u671F\u300D\u7684\u60C5\u51B5\u3002"),
+            h("p", { className: "wbt-limit-hint" }, en ? "Priority takes whole numbers 1\u201310; difficulty takes 0.5 steps. Blank means no limit." : "\u4F18\u5148\u7EA7\u53D6 1\u201310 \u7684\u6574\u6570\uFF0C\u96BE\u5EA6\u6309 0.5 \u9012\u589E\uFF1B\u7559\u7A7A\u8868\u793A\u4E0D\u9650\u3002"),
             limitRow("priority", en ? "Priority" : "\u4F18\u5148\u7EA7"),
             limitRow("difficulty", en ? "Difficulty" : "\u96BE\u5EA6")
           ),
