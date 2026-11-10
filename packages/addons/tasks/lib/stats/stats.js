@@ -465,6 +465,8 @@ export function statsReport(db, args, api) {
       groups: rank(Object.keys(groupAgg).map(function (k) { return groupAgg[k]; })),
     },
     lists: { overdue: overdueList, recentPublish: recentPublish, recentDone: recentDone, recentShutdown: recentShutdown },
+    // 能力标记：前端据此区分「后端未返回某清单」与「清单确实为空」，旧后端缺该字段时按键存在性判断。
+    capabilities: { lists: ["overdue", "recentPublish", "recentDone", "recentShutdown"] },
     warnings: warnings,
   };
 }

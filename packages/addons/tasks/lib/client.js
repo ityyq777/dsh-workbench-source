@@ -569,6 +569,7 @@ var require_charts = __commonJS({
       function DataTable(props) {
         var cols = props.columns || [];
         var rows = props.rows || [];
+        if (props.missing) return h(Missing, { text: props.missingText });
         if (!rows.length) return h("div", { className: prefix + "-empty" }, props.empty || "\u6682\u65E0\u6570\u636E");
         return h("div", { className: prefix + "-table-scroll", tabIndex: 0, role: "region", "aria-label": props.lang === "en" ? "Data table" : "\u6570\u636E\u8868\u683C" }, h(
           "table",
@@ -661,6 +662,9 @@ var require_charts = __commonJS({
           props.right ? h("span", { style: { marginLeft: "auto" } }, props.right) : null
         );
       }
+      function Missing(props) {
+        return h("div", { className: prefix + "-empty " + prefix + "-missing", role: "status" }, props.text || "\u6682\u65E0\u6570\u636E");
+      }
       function Empty(props) {
         return h("div", { className: prefix + "-empty" }, props.text || "\u6682\u65E0\u6570\u636E");
       }
@@ -713,6 +717,7 @@ var require_charts = __commonJS({
         RangeSwitch,
         DateRangePicker,
         Empty,
+        Missing,
         Skeleton,
         ErrorBar,
         Warnings,
@@ -1885,6 +1890,30 @@ var require_timeline_section = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/stats/list-state.cjs
+var require_list_state = __commonJS({
+  "packages/addons/tasks/client/stats/list-state.cjs"(exports2, module2) {
+    var LISTS = ["overdue", "recentPublish", "recentDone", "recentShutdown"];
+    var COPY = {
+      zh: "\u7EDF\u8BA1\u63A5\u53E3\u672A\u8FD4\u56DE\u300C{key}\u300D\u6E05\u5355\uFF0C\u524D\u540E\u7AEF\u7248\u672C\u53EF\u80FD\u4E0D\u4E00\u81F4\uFF1B\u8BF7\u91CD\u542F\u63D2\u4EF6\u670D\u52A1\u540E\u91CD\u8BD5",
+      en: 'Stats API did not return the "{key}" list; frontend and backend versions may differ. Restart the plugin service and retry.'
+    };
+    function listState(data, key) {
+      if (LISTS.indexOf(key) < 0) throw new Error("unknown list: " + key);
+      var lists = data && data.lists;
+      var declared = data && data.capabilities && Array.isArray(data.capabilities.lists) ? data.capabilities.lists : null;
+      var missing = !lists || !Object.prototype.hasOwnProperty.call(lists, key);
+      if (!missing && declared && declared.indexOf(key) < 0) missing = true;
+      var rows = !missing && Array.isArray(lists[key]) ? lists[key] : [];
+      return { key, missing, rows };
+    }
+    function missingText(lang, key) {
+      return (lang === "en" ? COPY.en : COPY.zh).replace("{key}", key);
+    }
+    module2.exports = { LISTS, listState, missingText };
+  }
+});
+
 // packages/addons/tasks/client/views/stats.cjs
 var require_stats = __commonJS({
   "packages/addons/tasks/client/views/stats.cjs"(exports2, module2) {
@@ -1897,6 +1926,7 @@ var require_stats = __commonJS({
     var Heatmap = require_heatmap();
     var Today = require_today();
     var TimelineSection = require_timeline_section().TimelineSection;
+    var listState = require_list_state();
     var COPY = {
       zh: {
         title: "\u4EFB\u52A1\u7EDF\u8BA1",
@@ -2056,6 +2086,10 @@ var require_stats = __commonJS({
       }
     };
     var RANGES = ["7d", "30d", "90d", "365d", "all"];
+    function listProps(data, key, lang, rest) {
+      var st = listState.listState(data, key);
+      return Object.assign({ rows: st.rows, missing: st.missing, missingText: listState.missingText(lang, key) }, rest);
+    }
     function visibleBins(list) {
       return (list || []).filter(function(b) {
         return !b.hidden;
@@ -2291,8 +2325,7 @@ var require_stats = __commonJS({
           children.push(h(
             ch.Card,
             { key: "overdue", span: 6, title: t.overdueList, note: t.overdueNote },
-            h(ch.DataTable, {
-              rows: data.lists && data.lists.overdue || [],
+            h(ch.DataTable, listProps(data, "overdue", lang, {
               lang,
               empty: t.noOverdue,
               columns: [
@@ -2301,7 +2334,7 @@ var require_stats = __commonJS({
                 { key: "daysOverdue", label: t.colAge, num: true },
                 { key: "tableTitle", label: t.colTable }
               ]
-            })
+            }))
           ));
           children.push(h(
             ch.Card,
@@ -2342,17 +2375,17 @@ var require_stats = __commonJS({
           children.push(h(
             ch.Card,
             { key: "recentPublish", span: 4, title: t.recentPublish, note: t.recentPublishNote },
-            h(ch.DataTable, { rows: data.lists && data.lists.recentPublish || [], lang, empty: t.noRecentPublish, columns: recentCols })
+            h(ch.DataTable, listProps(data, "recentPublish", lang, { lang, empty: t.noRecentPublish, columns: recentCols }))
           ));
           children.push(h(
             ch.Card,
             { key: "recentDone", span: 4, title: t.recentDone, note: t.recentDoneNote },
-            h(ch.DataTable, { rows: data.lists && data.lists.recentDone || [], lang, empty: t.noRecentDone, columns: recentCols })
+            h(ch.DataTable, listProps(data, "recentDone", lang, { lang, empty: t.noRecentDone, columns: recentCols }))
           ));
           children.push(h(
             ch.Card,
             { key: "recentShutdown", span: 4, title: t.recentShutdown, note: t.recentShutdownNote },
-            h(ch.DataTable, { rows: data.lists && data.lists.recentShutdown || [], lang, empty: t.noRecentShutdown, columns: recentCols })
+            h(ch.DataTable, listProps(data, "recentShutdown", lang, { lang, empty: t.noRecentShutdown, columns: recentCols }))
           ));
         }
         children.push(h(ch.Warnings, { key: "warn", items: data.warnings || [] }));
@@ -9341,7 +9374,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.4.4",
+    version: "3.4.5",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

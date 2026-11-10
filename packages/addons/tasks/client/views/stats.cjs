@@ -8,6 +8,7 @@ var rankingName = require("../item/ranking-name.cjs");
 var Heatmap = require("../stats/heatmap.cjs");
 var Today = require("../stats/today.cjs");
 var TimelineSection = require("../stats/timeline-section.cjs").TimelineSection;
+var listState = require("../stats/list-state.cjs");
 
 var COPY = {
   zh: {
@@ -67,6 +68,12 @@ var COPY = {
 };
 
 var RANGES = ["7d", "30d", "90d", "365d", "all"];
+
+// 清单卡片的入参：缺键 → 能力降级提示；键存在但为空 → 真正的空态。
+function listProps(data, key, lang, rest) {
+  var st = listState.listState(data, key);
+  return Object.assign({ rows: st.rows, missing: st.missing, missingText: listState.missingText(lang, key) }, rest);
+}
 
 // 优先级 0（已关闭/已完成）不画；难度未设置保留并提供补齐入口。
 function visibleBins(list) {
@@ -261,15 +268,15 @@ function TasksStatsBody(props) {
       children.push(h(ch.Card, { key: "aging", span: 6, title: t.aging, note: t.agingNote },
         h(ch.Histogram, { data: data.aging || [], lang: lang, color: ch.colors[2] })));
       children.push(h(ch.Card, { key: "overdue", span: 6, title: t.overdueList, note: t.overdueNote },
-        h(ch.DataTable, {
-          rows: (data.lists && data.lists.overdue) || [], lang: lang, empty: t.noOverdue,
+        h(ch.DataTable, listProps(data, "overdue", lang, {
+          lang: lang, empty: t.noOverdue,
           columns: [
             { key: "title", label: t.colTitle },
             { key: "targetDate", label: t.colTarget },
             { key: "daysOverdue", label: t.colAge, num: true },
             { key: "tableTitle", label: t.colTable },
           ],
-        })));
+        }))));
 
       children.push(h(ch.Card, { key: "tables", span: 6, title: t.tables, note: t.tablesNote },
         h(ch.DataTable, {
@@ -298,11 +305,11 @@ function TasksStatsBody(props) {
 
       var recentCols = recentColumns(t, lang, props.onNavigate);
       children.push(h(ch.Card, { key: "recentPublish", span: 4, title: t.recentPublish, note: t.recentPublishNote },
-        h(ch.DataTable, { rows: (data.lists && data.lists.recentPublish) || [], lang: lang, empty: t.noRecentPublish, columns: recentCols })));
+        h(ch.DataTable, listProps(data, "recentPublish", lang, { lang: lang, empty: t.noRecentPublish, columns: recentCols }))));
       children.push(h(ch.Card, { key: "recentDone", span: 4, title: t.recentDone, note: t.recentDoneNote },
-        h(ch.DataTable, { rows: (data.lists && data.lists.recentDone) || [], lang: lang, empty: t.noRecentDone, columns: recentCols })));
+        h(ch.DataTable, listProps(data, "recentDone", lang, { lang: lang, empty: t.noRecentDone, columns: recentCols }))));
       children.push(h(ch.Card, { key: "recentShutdown", span: 4, title: t.recentShutdown, note: t.recentShutdownNote },
-        h(ch.DataTable, { rows: (data.lists && data.lists.recentShutdown) || [], lang: lang, empty: t.noRecentShutdown, columns: recentCols })));
+        h(ch.DataTable, listProps(data, "recentShutdown", lang, { lang: lang, empty: t.noRecentShutdown, columns: recentCols }))));
     }
     children.push(h(ch.Warnings, { key: "warn", items: data.warnings || [] }));
   }

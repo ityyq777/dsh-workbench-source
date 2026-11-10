@@ -310,6 +310,7 @@ function makeCharts(prefix) {
   function DataTable(props) {
     var cols = props.columns || [];
     var rows = props.rows || [];
+    if (props.missing) return h(Missing, { text: props.missingText });
     if (!rows.length) return h("div", { className: prefix + "-empty" }, props.empty || "暂无数据");
     return h("div", { className: prefix + "-table-scroll", tabIndex: 0, role: "region", "aria-label": props.lang === "en" ? "Data table" : "数据表格" }, h("table", { className: prefix + "-table" },
       h("thead", null, h("tr", null, cols.map(function (c) { return h("th", { key: c.key, className: c.num ? prefix + "-num" : "" }, c.label); }))),
@@ -377,6 +378,10 @@ function makeCharts(prefix) {
     );
   }
 
+  function Missing(props) {
+    return h("div", { className: prefix + "-empty " + prefix + "-missing", role: "status" }, props.text || "暂无数据");
+  }
+
   function Empty(props) {
     return h("div", { className: prefix + "-empty" }, props.text || "暂无数据");
   }
@@ -414,7 +419,7 @@ function makeCharts(prefix) {
   return {
     Card: Card, Kpi: Kpi, Donut: Donut, BarList: BarList, StackedRows: StackedRows,
     Trend: Trend, Histogram: Histogram, DataTable: DataTable, RangeSwitch: RangeSwitch, DateRangePicker: DateRangePicker,
-    Empty: Empty, Skeleton: Skeleton, ErrorBar: ErrorBar, Warnings: Warnings,
+    Empty: Empty, Missing: Missing, Skeleton: Skeleton, ErrorBar: ErrorBar, Warnings: Warnings,
     num: num, pct: pct, timeText: timeText, dateText: dateText, colors: COLORS, statusColors: STATUS_COLORS,
   };
 }
