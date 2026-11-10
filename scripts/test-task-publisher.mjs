@@ -61,6 +61,15 @@ check("brief 结构完整", () => {
   }
   assert.ok(brief.includes("## 输出格式"));
   assert.ok(brief.includes("## 边界规则"));
+  // 边界规则只保留「不改 schema / 不伪造证据」与「一次性问答不建任务」两条：
+  // 建节点授权与直接发布口径统一由 SOP C/F 定义，避免同一份 brief 里出现相反指令。
+  const boundaryBlock = brief.split("## 边界规则")[1].split("## 会话信息")[0];
+  const boundaryLines = boundaryBlock.split("\n").filter((line) => line.startsWith("- "));
+  assert.equal(boundaryLines.length, 2, "边界规则应只剩 2 条");
+  assert.equal(brief.includes("不要自动建任务表或任务节点"), false);
+  assert.equal(brief.includes("不做无人值守的全自动发布"), false);
+  assert.ok(brief.includes("获得授权后再创建"), "SOP C 的建节点授权口径必须保留");
+  assert.ok(brief.includes("信息齐全且归属唯一时直接发布"), "SOP F 的直接发布口径必须保留");
   assert.ok(brief.includes("非代码") === false || brief.includes("只有需求明确是代码改动时才看仓库"));
   assert.ok(brief.includes("sessionId: s-abc"));
   assert.ok(brief.includes('用 "dsh-session:" 前缀拼接上面的 sessionId'));
