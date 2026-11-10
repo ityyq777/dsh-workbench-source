@@ -457,22 +457,13 @@ try {
   const d2 = await call("tasks.create", { tableId: fixtureTableId, title: "幂等任务副本", dedupeKey: "native-dedupe-1" });
   assert(d2.result.deduped === true && d2.result.id === d1.result.id, "dedupeKey 未命中已有任务");
 
-  // ── 10. 任务依赖 ──
-  const up = await call("tasks.create", { tableId: fixtureTableId, title: "上游任务" });
-  const down = await call("tasks.create", { tableId: fixtureTableId, title: "下游任务" });
-  const linkedDep = await call("tasks.link", { id: down.result.id, dependsOnId: up.result.id });
-  assert(linkedDep.result.linked === true, "tasks.link 未建立依赖");
-  const depView = await call("tasks.depends", { id: down.result.id });
-  assert(depView.result.dependsOn.length === 1 && depView.result.blocked === true, "tasks.depends 未显示阻塞");
-  const depAgain = await call("tasks.link", { id: down.result.id, dependsOnId: up.result.id });
-  assert(depAgain.result.linked === false && depAgain.result.existing === true, "重复 link 未返回 existing");
-  let cycleErr = null;
-  try { await call("tasks.link", { id: up.result.id, dependsOnId: down.result.id }); } catch (e) { cycleErr = e; }
-  assert(cycleErr && String(cycleErr.message).includes("循环"), "未拒绝循环依赖");
-  const unlinked = await call("tasks.unlink", { id: down.result.id, dependsOnId: up.result.id });
-  assert(unlinked.result.unlinked === true, "tasks.unlink 未删除依赖");
-  const depAfter = await call("tasks.depends", { id: down.result.id });
-  assert(depAfter.result.dependsOn.length === 0 && depAfter.result.blocked === false, "unlink 后仍显示依赖");
+  // ── 10. 任务依赖已整体移除（5.0.0） ──
+  assert(!names.includes("tasks.depends") && !names.includes("tasks.link") && !names.includes("tasks.unlink"), "依赖 action 仍被注册");
+  const tableNames = (await call("tasks.dataTables")).result.tables.map((t) => t.name);
+  assert(tableNames.indexOf("task_dep") < 0, "task_dep 表仍出现在数据页");
+  let depQueryErr = null;
+  try { await call("tasks.dataQuery", { table: "task_dep", pageSize: 10 }); } catch (e) { depQueryErr = e; }
+  assert(depQueryErr && String(depQueryErr.message).includes("task_dep"), "task_dep 表未被移除");
 
   // ── 11. 任务手动排序接口已移除（数据库迁移另见 test-task-sort-removal.mjs） ──
   assert(!names.includes("tasks.reorder"), "tasks.reorder 仍被注册");

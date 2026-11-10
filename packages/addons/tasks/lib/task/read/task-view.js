@@ -22,7 +22,7 @@ export function taskHistory(db, args) {
 export function changelog(db, args) {
   const limit = Math.max(1, Math.min(1000, Number(args.limit) || 100));
   const since = args.since ? String(args.since) : null;
-  const tables = Array.isArray(args.tables) && args.tables.length ? args.tables.map(String) : ["task", "tag_mapping", "task_dep"];
+  const tables = Array.isArray(args.tables) && args.tables.length ? args.tables.map(String) : ["task", "tag_mapping"];
   const where = ["table_name IN (" + tables.map(function () { return "?"; }).join(",") + ")"];
   const params = tables.slice();
   if (since) { where.push("updated_at>=?"); params.push(since); }

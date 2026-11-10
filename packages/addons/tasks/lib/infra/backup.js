@@ -9,7 +9,7 @@
 import { logChange, tableExists, tx } from "../db/db.js";
 import { LEGACY_TYPE_TAGS, addTaskTagByName, tagsAvailable } from "../tagging/tagging.js";
 
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 function asText(value, fallback) {
   if (value === undefined || value === null) return fallback === undefined ? "" : fallback;
@@ -65,24 +65,6 @@ function taskValues(row) {
   ];
 }
 
-function depValues(row) {
-  const id = asText(row && row.id).trim();
-  if (!id) throw new Error("task_dep.id 为空");
-  const taskId = asText(row.task_id).trim();
-  const dependsOn = asText(row.depends_on_id).trim();
-  if (!taskId || !dependsOn) throw new Error("task_dep 关联为空：" + id);
-  const updated = asInt(row.updated_at, Date.now());
-  return [
-    id,
-    taskId,
-    dependsOn,
-    asInt(row.created_at, updated),
-    updated,
-    row.deleted_at === null || row.deleted_at === undefined ? null : asInt(row.deleted_at, updated),
-    Math.max(1, asInt(row.rev, 1)),
-  ];
-}
-
 function nodeValues(row) {
   const id = asText(row && row.id).trim();
   if (!id) throw new Error("task_node.id 为空");
@@ -107,7 +89,6 @@ const DEFINITIONS = [
   ["task_node", "taskNodes", "id,name,description,type,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev", nodeValues],
   ["task_timeline", "taskTimelines", "id,title,description,created_at,updated_at,deleted_at,rev", timelineValues],
   ["task", "tasks", "id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,dedupe_key,owner,claimed_at,claim_token,created_at,updated_at,deleted_at,rev", taskValues],
-  ["task_dep", "taskDeps", "id,task_id,depends_on_id,created_at,updated_at,deleted_at,rev", depValues],
   ["task_timeline_link", "taskTimelineLinks", "id,task_id,timeline_id,created_at,updated_at,deleted_at,rev", linkValues],
 ];
 
@@ -143,12 +124,13 @@ export function exportTasksData(api) {
 }
 
 function prepareBackup(data) {
-  if (!data || ![1, 2, 3].includes(Number(data.schemaVersion))) throw new Error("任务备份版本不兼容：需要 1、2 或 3");
+  if (!data || ![1, 2, 3, 4].includes(Number(data.schemaVersion))) throw new Error("任务备份版本不兼容：需要 1、2、3 或 4");
+  const droppedDeps = !Array.isArray(data.taskDeps) ? 0 : data.taskDeps.length;
   const legacy = Number(data.schemaVersion) === 1;
   const prepared = [];
   for (const [table, key, columnText, convert] of DEFINITIONS) {
     if (legacy && (table === "task_timeline" || table === "task_timeline_link")) continue;
-    const rows = data[key] === undefined && (legacy && key === "taskDeps") ? [] : data[key];
+    const rows = key === "taskDeps" ? [] : data[key];
     if (!Array.isArray(rows)) throw new Error("任务备份结构不完整：" + key);
     const columns = columnText.split(",");
     const ids = new Set();
@@ -163,7 +145,7 @@ function prepareBackup(data) {
   }
   const migrationRecords = legacy ? [] : (data.timelineMigrationRecords ?? []);
   if (!Array.isArray(migrationRecords) || migrationRecords.some(r => !r || typeof r.k !== "string" || !r.k.startsWith("task_timeline_migration:") || typeof r.v !== "string")) throw new Error("非法时间线迁移记录");
-  return { legacy, prepared, migrationRecords };
+  return { legacy, prepared, migrationRecords, droppedDeps };
 }
 
 function legacyCandidates(tasks) {
@@ -286,5 +268,7 @@ export function importTasksData(api, raw, options) {
       ids: claimBroken,
     }] : [],
     timelineCandidates: plan.legacy ? legacyCandidates(data.tasks) : [],
-    message: plan.legacy ? "旧字段已保留；历史时间线候选需用户批准，未自动实体化" : "任务备份已原子恢复" };
+    message: plan.droppedDeps
+      ? "5.0.0 起任务依赖已移除，备份中的 " + plan.droppedDeps + " 条 taskDeps 已忽略" + (plan.legacy ? "；历史时间线候选需用户批准，未自动实体化" : "")
+      : plan.legacy ? "旧字段已保留；历史时间线候选需用户批准，未自动实体化" : "任务备份已原子恢复" };
 }

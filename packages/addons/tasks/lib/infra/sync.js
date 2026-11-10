@@ -1,5 +1,5 @@
 /**
- * 任务域的同步声明：task/task_dep 行级，task_node 树表整表收敛。
+ * 任务域的同步声明：task 行级，task_node 树表整表收敛。
  *
  * reconcile 只做数据结构收敛（合并版本、修孤儿、重排 sort、重算 path/depth），
  * 不写数据库；宿主拿到 rows 后整表替换并 full push。
@@ -162,7 +162,6 @@ export const taskSync = {
     { name: "task", mode: "row", normalizeIncoming: normalizeTimelineTask, afterApply: afterTimelineTask },
     { name: "task_timeline", mode: "row", afterApply: afterTimelineEntity },
     { name: "task_timeline_link", mode: "row", normalizeIncoming: normalizeTimelineLink, afterApply: afterTimelineLink },
-    { name: "task_dep", mode: "row" },
     { name: "task_node", mode: "tree", reconcile: reconcileTaskTree },
   ],
 };

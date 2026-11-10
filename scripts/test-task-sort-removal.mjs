@@ -14,10 +14,11 @@ function verifySchema(db) {
   assert(!indexes.includes("idx_task_sort"), "idx_task_sort must be absent");
   assert(indexes.includes("idx_task_dedupe"), "unrelated task index must remain");
   assert(db.prepare("PRAGMA index_list(task_node)").all().some((r) => r.name === "idx_task_node_sort"));
-  assert.equal(db.prepare("SELECT v FROM meta WHERE k='task_schema_version'").get().v, "3");
+  assert.equal(db.prepare("SELECT v FROM meta WHERE k='task_schema_version'").get().v, "5");
+  assert(!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='task_dep'").get(), "task_dep must be dropped");
 }
 function snapshot(db) {
-  return Object.fromEntries(["task", "task_node", "task_dep", "task_timeline", "task_timeline_link", "tag_mapping"].map((table) => [
+  return Object.fromEntries(["task", "task_node", "task_timeline", "task_timeline_link", "tag_mapping"].map((table) => [
     table, db.prepare(`SELECT * FROM ${table} ORDER BY id`).all().map((row) => {
       const clean = { ...row };
       if (table === "task") delete clean.sort;
@@ -41,6 +42,7 @@ try {
     INSERT INTO task(id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,dedupe_key,created_at,updated_at,deleted_at,rev,sort)
       VALUES('task-a','保留任务','正文','0',7,2.5,'复盘','table-z','line-1',NULL,'2026-11-01','2026-11-10',NULL,NULL,'dedupe-a',100,200,NULL,4,500),
             ('task-b','软删任务','仍需保留','2',0,NULL,'','table-a',NULL,'task-a','2026-11-02','2026-11-09','2026-11-08',NULL,NULL,101,201,202,3,-100);
+    CREATE TABLE task_dep(id TEXT PRIMARY KEY,task_id TEXT,depends_on_id TEXT,created_at INTEGER,updated_at INTEGER,deleted_at INTEGER,rev INTEGER);
     INSERT INTO task_dep VALUES('dep-1','task-a','task-b',100,200,NULL,2);
     INSERT INTO task_timeline VALUES('line-1','独立时间线','描述',100,200,NULL,2);
     INSERT INTO task_timeline_link VALUES('task-a','task-a','line-1',100,200,NULL,2);

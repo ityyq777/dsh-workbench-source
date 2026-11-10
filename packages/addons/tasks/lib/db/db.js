@@ -30,6 +30,7 @@ export function ensureSchema(db, log) {
     droppedTags: 0,
     droppedTypeColumn: false,
     droppedSortColumn: false,
+    droppedDependencyTable: false,
   };
 
   const hasTask = tableExists(db, "task");
@@ -64,6 +65,12 @@ export function ensureSchema(db, log) {
     report.source = "fresh";
   }
 
+  // 5.0.0 起任务依赖整体移除：旧库把 task_dep 表 DROP 掉，不再保留墓碑行。
+  if (tableExists(db, "task_dep")) {
+    db.exec("DROP TABLE IF EXISTS task_dep");
+    report.droppedDependencyTable = true;
+  }
+
   // 旧库补列/删列必须先完成，再补建当前 schema 的索引。
   ensureTaskColumns(db, report);
   ensureNodeColumns(db, report);
@@ -83,7 +90,7 @@ export function ensureSchema(db, log) {
       if (log) log("[tasks] 优先级回填失败：" + String((e && e.message) || e));
     }
   }
-  metaSet(db, "task_schema_version", "4");
+  metaSet(db, "task_schema_version", "5");
   metaSet(db, "task_migration_report", JSON.stringify(report));
   if (log) log("[tasks] migration", report);
   return report;

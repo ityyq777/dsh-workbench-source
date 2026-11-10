@@ -10,13 +10,12 @@
 
 import { DOMAIN } from "./config.js";
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 5;
 
 const TABLES = [
   { name: "task", zh: "任务", en: "Tasks" },
   { name: "task_timeline", zh: "任务时间线", en: "Task timelines" },
   { name: "task_timeline_link", zh: "时间线成员关系", en: "Timeline membership rows" },
-  { name: "task_dep", zh: "任务依赖", en: "Task dependencies" },
   { name: "task_node", zh: "任务单元", en: "Task nodes" },
 ];
 
@@ -39,7 +38,6 @@ const COLUMN_LABELS = {
   sort: { zh: "排序", en: "Sort" },
   dedupe_key: { zh: "幂等键", en: "Dedupe key" },
   task_id: { zh: "任务 ID", en: "Task ID" },
-  depends_on_id: { zh: "依赖任务 ID", en: "Depends on" },
   name: { zh: "名称", en: "Name" },
   type: { zh: "类型", en: "Type" },
   parent_id: { zh: "父 ID", en: "Parent" },

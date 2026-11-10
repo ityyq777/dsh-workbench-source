@@ -3477,7 +3477,7 @@ var require_data = __commonJS({
     module2.exports = require_data_view()({
       domain: "tasks",
       prefix: "wbt",
-      tables: ["task", "task_dep", "task_node"],
+      tables: ["task", "task_node"],
       useConfig: require_config().useConfig
     });
   }
@@ -10100,7 +10100,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "4.1.0",
+    version: "5.0.0",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

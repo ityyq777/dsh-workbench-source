@@ -92,7 +92,6 @@ try {
   const taskId = created.result.id;
   const created2 = await host.invoke("tasks.create", { tableId: fixtureTableId, title: "备份依赖任务", priority: 3 }, "agent");
   const task2Id = created2.result.id;
-  await host.invoke("tasks.link", { id: taskId, dependsOnId: task2Id }, "agent");
   const tag = await host.invoke("tags.create", { name: "备份验收标签" }, "agent");
   const node = await host.invoke("siteNodes.create", { parentId: "0", name: "备份验收目录" }, "agent");
   const site = await host.invoke("sites.create", {
@@ -121,14 +120,12 @@ try {
   console.log("export ok:", manifest.modules.map((m) => m.id + "@" + m.version).join(", "));
 
   const taskBackup = JSON.parse(files.get("modules/wb-addon-tasks.json").toString("utf8"));
-  if (!Array.isArray(taskBackup.taskDeps) || !taskBackup.taskDeps.some((d) => d.task_id === taskId && d.depends_on_id === task2Id)) {
-    throw new Error("task_dep missing from task backup");
-  }
+  if ("taskDeps" in taskBackup) throw new Error("taskDeps must not be exported after 5.0.0");
   const exportedTaskRow = taskBackup.tasks.find((t) => t.id === taskId);
   if (!exportedTaskRow || taskBackup.tasks.some((t) => "sort" in t)) throw new Error("task.sort must not be exported");
   const exportedNode = taskBackup.taskNodes.find((n) => n.id === fixtureTableId);
   if (!exportedNode || typeof exportedNode.sort !== "number") throw new Error("task_node.sort missing from backup");
-  console.log("task backup extras ok: taskDeps + node sort, no task sort");
+  console.log("task backup extras ok: no taskDeps, node sort kept, no task sort");
 
   const inventoryBackup = JSON.parse(files.get("modules/wb-addon-storage.json").toString("utf8"));
   if (!inventoryBackup.storage.some(r => r.id === inventoryId && r.stock === "1~2")) throw new Error("storage record missing from backup");
@@ -153,7 +150,7 @@ try {
   console.log("import ok:", report.summary);
 
   const db = new DatabaseSync(join(home, "workbench.db"));
-  db.exec("DELETE FROM task; DELETE FROM task_dep; DELETE FROM storage; DELETE FROM tag_mapping WHERE item_type = 'storage';");
+  db.exec("DELETE FROM task; DELETE FROM storage; DELETE FROM tag_mapping WHERE item_type = 'storage';");
   db.close();
   const empty = await host.invoke("tasks.list", {}, "agent");
   if (empty.result.records.some((t) => t.id === taskId)) throw new Error("task should be gone after delete");
@@ -162,14 +159,14 @@ try {
   const restoredList = await host.invoke("tasks.list", {}, "agent");
   if (!restoredList.result.records.some((t) => t.id === taskId)) throw new Error("task was not restored");
   const checkDb = new DatabaseSync(join(home, "workbench.db"));
-  const depRow = checkDb.prepare("SELECT 1 FROM task_dep WHERE task_id = ? AND depends_on_id = ? AND deleted_at IS NULL").get(taskId, task2Id);
+  const noDepTable = !checkDb.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='task_dep'").get();
   const restoredColumns = checkDb.prepare("PRAGMA table_info(task)").all();
   const restoredNode = checkDb.prepare("SELECT sort FROM task_node WHERE id = ?").get(fixtureTableId);
   checkDb.close();
-  if (!depRow) throw new Error("task_dep was not restored");
+  if (!noDepTable) throw new Error("restore recreated task_dep");
   if (restoredColumns.some((c) => c.name === "sort")) throw new Error("restore recreated task.sort");
   if (restoredNode.sort !== exportedNode.sort) throw new Error("task_node.sort was not restored");
-  console.log("restore ok:", taskId, "dep + node sort");
+  console.log("restore ok:", taskId, "no task_dep + node sort");
 
   // 旧 schema 1/2 备份携带 task.sort：恢复忽略旧字段，但保留任务与目录排序。
   for (const schemaVersion of [1, 2]) {
@@ -181,7 +178,7 @@ try {
       name, data: name === "modules/wb-addon-tasks.json" ? legacyData : name === "manifest.json" ? Buffer.from(JSON.stringify(legacyManifest)) : data,
     })));
     const clearTasks = new DatabaseSync(join(home, "workbench.db"));
-    clearTasks.exec("DELETE FROM task; DELETE FROM task_dep;");
+    clearTasks.exec("DELETE FROM task;");
     clearTasks.close();
     const legacyReport = parseJson(await call("POST", "/workbench/api/backup/import", legacyArchive));
     if (!legacyReport?.ok) throw new Error("legacy task backup restore failed: " + JSON.stringify(legacyReport));
@@ -189,11 +186,25 @@ try {
     if (restoredTask.title !== exportedTaskRow.title || "sort" in restoredTask) throw new Error("legacy sort leaked into restored task");
     const verifyLegacy = new DatabaseSync(join(home, "workbench.db"));
     if (verifyLegacy.prepare("PRAGMA table_info(task)").all().some((c) => c.name === "sort")) throw new Error("legacy backup recreated task.sort");
-    if (!verifyLegacy.prepare("SELECT 1 FROM task_dep WHERE task_id=? AND depends_on_id=?").get(taskId, task2Id)) throw new Error("legacy backup lost dependency");
+    if (verifyLegacy.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='task_dep'").get()) throw new Error("legacy backup recreated task_dep");
     if (verifyLegacy.prepare("SELECT sort FROM task_node WHERE id=?").get(fixtureTableId).sort !== exportedNode.sort) throw new Error("legacy backup changed node order");
     verifyLegacy.close();
   }
   console.log("legacy task backup schema 1/2 restore ok");
+
+  // 旧备份里的 taskDeps 在 5.0.0 被忽略，并在导入回执里给出 notice。
+  const depsBackup = { ...taskBackup, schemaVersion: 3, taskDeps: [{ id: "dep-1", task_id: taskId, depends_on_id: task2Id, created_at: 1, updated_at: 2, deleted_at: null, rev: 1 }] };
+  const depsData = Buffer.from(JSON.stringify(depsBackup));
+  const depsManifest = { ...manifest, modules: manifest.modules.map((m) => m.id === "wb-addon-tasks"
+    ? { ...m, size: depsData.length, sha256: createHash("sha256").update(depsData).digest("hex") } : m) };
+  const depsArchive = zip.zipCreate([...files].map(([name, data]) => ({
+    name, data: name === "modules/wb-addon-tasks.json" ? depsData : name === "manifest.json" ? Buffer.from(JSON.stringify(depsManifest)) : data,
+  })));
+  const depsReport = parseJson(await call("POST", "/workbench/api/backup/import", depsArchive));
+  const taskResult = (depsReport?.results || []).find((m) => m.id === "wb-addon-tasks") || {};
+  if (!depsReport?.ok) throw new Error("deps backup import failed: " + JSON.stringify(depsReport));
+  if (!String(taskResult.message || "").includes("taskDeps 已忽略")) throw new Error("taskDeps notice missing: " + JSON.stringify(depsReport));
+  console.log("legacy taskDeps ignored with notice ok");
   const restoredInventory = await host.invoke("storage.list", { text: "备份验收物品" }, "agent");
   if (!restoredInventory.result.records.some(r => r.id === inventoryId && r.stock === "1~2")) throw new Error("storage record was not restored");
   const restoredDb = new DatabaseSync(join(home, "workbench.db"));

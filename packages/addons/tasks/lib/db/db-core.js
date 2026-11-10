@@ -44,21 +44,6 @@ export const TASK_DDL = [
   "CREATE INDEX IF NOT EXISTS idx_task_done_date ON task(done_date);",
 ];
 
-export const DEP_DDL = [
-  "CREATE TABLE IF NOT EXISTS task_dep (" +
-    "id TEXT PRIMARY KEY," +
-    "task_id TEXT NOT NULL," +
-    "depends_on_id TEXT NOT NULL," +
-    "created_at INTEGER NOT NULL," +
-    "updated_at INTEGER NOT NULL," +
-    "deleted_at INTEGER," +
-    "rev INTEGER NOT NULL DEFAULT 1" +
-    ");",
-  "CREATE INDEX IF NOT EXISTS idx_task_dep_task ON task_dep(task_id) WHERE deleted_at IS NULL;",
-  "CREATE INDEX IF NOT EXISTS idx_task_dep_on ON task_dep(depends_on_id) WHERE deleted_at IS NULL;",
-  "CREATE UNIQUE INDEX IF NOT EXISTS uk_task_dep ON task_dep(task_id, depends_on_id) WHERE deleted_at IS NULL;",
-];
-
 export const NODE_DDL = [
   "CREATE TABLE IF NOT EXISTS task_node (" +
     "id TEXT PRIMARY KEY," +
@@ -384,7 +369,6 @@ export function insertNode(db, row) {
 export function createSchema(db) {
   for (const sql of TASK_DDL) db.exec(sql);
   for (const sql of NODE_DDL) db.exec(sql);
-  for (const sql of DEP_DDL) db.exec(sql);
   for (const sql of TIMELINE_DDL) db.exec(sql);
 }
 

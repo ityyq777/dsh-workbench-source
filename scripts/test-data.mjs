@@ -43,7 +43,6 @@ function snap() {
   return {
     tasks: Number(db.prepare("SELECT COUNT(*) AS n FROM task").get().n),
     nodes: Number(db.prepare("SELECT COUNT(*) AS n FROM task_node").get().n),
-    deps: Number(db.prepare("SELECT COUNT(*) AS n FROM task_dep").get().n),
     tags: Number(db.prepare("SELECT COUNT(*) AS n FROM tag").get().n),
     log: Number(db.prepare("SELECT COUNT(*) AS n FROM sync_change_log").get().n),
   };
@@ -56,7 +55,7 @@ const storage = await load("../packages/addons/storage/lib/index.js", "wb-addon-
 
 // 1. 表清单必须是本插件负责的表，且不暴露 meta / sync_*
 for (const [name, mod, expected] of [
-  ["tasks", tasks, ["task", "task_timeline", "task_timeline_link", "task_dep", "task_node"]],
+  ["tasks", tasks, ["task", "task_timeline", "task_timeline_link", "task_node"]],
   ["tags", tags, ["tag", "tag_mapping"]],
   ["storage", storage, ["storage"]],
   ["sites", sites, ["site", "site_node", "site_node_mapping", "site_account", "site_account_external"]],
@@ -166,11 +165,11 @@ assert(!!delRow && delRow.deleted_at !== null && delRow.deleted_at !== undefined
 // 5. 只读：查询不写库、不产日志
 const s0 = snap();
 tasks.call("tasks.dataQuery", { table: "task", search: "分页", pageSize: 25 });
-tasks.call("tasks.dataQuery", { table: "task_dep", pageSize: 10 });
+tasks.call("tasks.dataQuery", { table: "task_node", pageSize: 10 });
 tags.call("tags.dataQuery", { table: "tag", pageSize: 10 });
 sites.call("sites.dataQuery", { table: "site", pageSize: 10 });
 const s1 = snap();
-assert(s0.tasks === s1.tasks && s0.nodes === s1.nodes && s0.deps === s1.deps && s0.tags === s1.tags, "只读查询改变了数据");
+assert(s0.tasks === s1.tasks && s0.nodes === s1.nodes && s0.tags === s1.tags, "只读查询改变了数据");
 assert(s0.log === s1.log, "只读查询写入了 sync_change_log");
 
 // 6. tags / sites 的最小闭环

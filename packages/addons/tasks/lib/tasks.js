@@ -31,7 +31,7 @@ import { createTask } from "./task/write/task-create.js";
 import { registerTimelineActions, TIMELINE_PAGE_SCHEMA } from "./timeline/task-timelines.js";
 import { updateTask } from "./task/write/task-update.js";
 import { claimTask, claimBatch, grabTask } from "./task/write/task-claim.js";
-import { selectedTasks, timelineTasks, restartTasks, timelineRefactor, migrateTasks, sweepShutdown, stats, removeTask, completeTask, exportTasks, taskDeps, taskLink, taskUnlink } from "./task/write/task-operations.js";
+import { selectedTasks, timelineTasks, restartTasks, timelineRefactor, migrateTasks, sweepShutdown, stats, removeTask, completeTask, exportTasks } from "./task/write/task-operations.js";
 export { tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, clampDifficulty, dateArg, getTask, requireTable, saveTaskRow, emitChange, writeChange, checkRequiredDates, currentTaskTagIds, resolveTagPatch, PATCH_FIELDS, DIFF_COLUMNS } from "./task/model/task-model.js";
 export { priorityForStatus } from "./task/model/task-priority.js";
 export { createTask } from "./task/write/task-create.js";
@@ -267,12 +267,12 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.changelog", {
-    description: "增量读变更日志（task / tag_mapping / task_dep），可按 since 与表过滤",
+    description: "增量读变更日志（task / tag_mapping），可按 since 与表过滤",
     input: {
       type: "object",
       properties: {
         since: { type: "string", description: "只返回该时间点之后的记录（ISO 或 YYYY-MM-DD）" },
-        tables: { type: "array", items: { type: "string" }, description: "默认 task / tag_mapping / task_dep" },
+        tables: { type: "array", items: { type: "string" }, description: "默认 task / tag_mapping" },
         limit: { type: "number", description: "默认 100，最大 1000" },
       },
     },
@@ -294,44 +294,6 @@ export function registerTaskActions(api) {
     examples: [{ format: "csv", statuses: [] }, { format: "markdown", ids: ["1001", "1002"] }],
     execute: function (args) { return exportTasks(db, args || {}, api); },
     render: function (r) { return "已导出 " + r.count + " 条任务（" + r.format + "）"; },
-  });
-
-  action("tasks.depends", {
-    description: "查看任务依赖：dependsOn（上游）/ blocks（下游）/ blocked（是否被未完成上游阻塞）",
-    input: { type: "object", properties: { id: { type: "string" }, taskId: { type: ["string", "number"] } } },
-    examples: [{ id: "1001" }],
-    execute: function (args) { return taskDeps(db, args || {}); },
-    render: function (r) { return "任务 " + r.task.id + " 依赖 " + r.dependsOn.length + " 条，被 " + r.blocks.length + " 条依赖" + (r.blocked ? "（阻塞中）" : ""); },
-  });
-
-  action("tasks.link", {
-    description: "新增任务依赖：任务 id 阻塞于 dependsOnId（会拒绝自依赖与成环）",
-    input: {
-      type: "object",
-      required: ["id", "dependsOnId"],
-      properties: {
-        id: { type: "string" },
-        dependsOnId: { type: "string" },
-      },
-    },
-    examples: [{ id: "1002", dependsOnId: "1001" }],
-    execute: function (args, ctx) { return taskLink(db, args || {}, ctx.origin, api); },
-    render: function (r) { return r.linked ? "已建立依赖：" + r.id + " ← " + r.dependsOn : "依赖已存在"; },
-  });
-
-  action("tasks.unlink", {
-    description: "删除任务依赖（软删）",
-    input: {
-      type: "object",
-      required: ["id", "dependsOnId"],
-      properties: {
-        id: { type: "string" },
-        dependsOnId: { type: "string" },
-      },
-    },
-    examples: [{ id: "1002", dependsOnId: "1001" }],
-    execute: function (args, ctx) { return taskUnlink(db, args || {}, ctx.origin, api); },
-    render: function (r) { return r.unlinked ? "已删除依赖" : "依赖不存在"; },
   });
 
   action("tasks.selected", {

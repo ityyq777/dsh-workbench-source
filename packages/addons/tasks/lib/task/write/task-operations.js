@@ -3,7 +3,6 @@ import { taskTransaction } from "./task-transaction.js";
 // 与 task-bulk 的循环引用只在调用期取值，顶层不求值。
 import {
   now,
-  newId,
   idOf,
   todayStr,
   tx,
@@ -20,98 +19,8 @@ import {
   tagsAvailable,
   attachTags,
 } from "../../tagging/tagging.js";
-import { TAG_DOMAIN_NOTICE, withNotices, dateArg, getTask, saveTaskRow, outOne, emitChange, writeChange } from "../model/task-model.js";
+import { TAG_DOMAIN_NOTICE, withNotices, dateArg, getTask, saveTaskRow, emitChange, writeChange } from "../model/task-model.js";
 import { updateTask } from "./task-update.js";
-/** 上游依赖（本任务依赖谁）与下游（谁依赖本任务），软删行忽略。 */
-export function depRows(db, taskId, direction) {
-  const col = direction === "up" ? "task_id" : "depends_on_id";
-  const other = direction === "up" ? "depends_on_id" : "task_id";
-  return db.prepare(
-    "SELECT d.*, t.title AS title, t.status AS status FROM task_dep d JOIN task t ON t.id=d." + other + " " +
-      "WHERE d." + col + "=? AND d.deleted_at IS NULL AND t.deleted_at IS NULL ORDER BY d.created_at ASC",
-  ).all(String(taskId));
-}
-
-export function wouldCycle(db, taskId, dependsOnId) {
-  // 若 dependsOn 的上游里已经存在 taskId，则新增会成环。
-  const seen = new Set();
-  const stack = [String(dependsOnId)];
-  while (stack.length) {
-    const cur = stack.pop();
-    if (cur === String(taskId)) return true;
-    if (seen.has(cur)) continue;
-    seen.add(cur);
-    for (const row of depRows(db, cur, "up")) stack.push(String(row.depends_on_id));
-  }
-  return false;
-}
-
-export function linkDep(db, args, origin, api) {
-  const id = idOf(args.id || args.taskId);
-  const dependsOn = idOf(args.dependsOn || args.dependsOnId);
-  if (!id) throw new Error("缺少 id");
-  if (!dependsOn) throw new Error("缺少 dependsOn");
-  if (id === dependsOn) throw new Error("任务不能依赖自己");
-  if (!getTask(db, id)) throw new Error("任务不存在：" + id);
-  if (!getTask(db, dependsOn)) throw new Error("被依赖的任务不存在：" + dependsOn);
-  if (wouldCycle(db, id, dependsOn)) throw new Error("会形成循环依赖：" + id + " → " + dependsOn);
-  const ts = now();
-  const existing = db.prepare(
-    "SELECT * FROM task_dep WHERE task_id=? AND depends_on_id=? AND deleted_at IS NULL",
-  ).get(id, dependsOn);
-  if (existing) return { linked: false, existing: true, id: id, dependsOn: dependsOn };
-  const deleted = db.prepare(
-    "SELECT * FROM task_dep WHERE task_id=? AND depends_on_id=? AND deleted_at IS NOT NULL ORDER BY updated_at DESC LIMIT 1",
-  ).get(id, dependsOn);
-  if (deleted) {
-    db.prepare("UPDATE task_dep SET deleted_at=NULL, updated_at=?, rev=rev+1 WHERE id=?").run(ts, String(deleted.id));
-    logChange(db, "task_dep", String(deleted.id), "upsert", {
-      id: String(deleted.id), task_id: id, depends_on_id: dependsOn, updated_at: ts, deleted_at: null, rev: Number(deleted.rev) + 1,
-    }, origin, ts);
-    api.emit("tasks-changed", { id: id, op: "link" });
-    return { linked: true, revived: true, id: id, dependsOn: dependsOn };
-  }
-  const depId = newId();
-  db.prepare(
-    "INSERT INTO task_dep(id,task_id,depends_on_id,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?)",
-  ).run(depId, id, dependsOn, ts, ts, null, 1);
-  logChange(db, "task_dep", depId, "create", {
-    id: depId, task_id: id, depends_on_id: dependsOn, created_at: ts, updated_at: ts, deleted_at: null, rev: 1,
-  }, origin, ts);
-  api.emit("tasks-changed", { id: id, op: "link" });
-  return { linked: true, id: id, dependsOn: dependsOn };
-}
-
-export function unlinkDep(db, args, origin, api) {
-  const id = idOf(args.id || args.taskId);
-  const dependsOn = idOf(args.dependsOn || args.dependsOnId);
-  if (!id || !dependsOn) throw new Error("缺少 id 或 dependsOn");
-  const row = db.prepare(
-    "SELECT * FROM task_dep WHERE task_id=? AND depends_on_id=? AND deleted_at IS NULL",
-  ).get(id, dependsOn);
-  if (!row) return { unlinked: false, missing: true, id: id, dependsOn: dependsOn };
-  const ts = now();
-  db.prepare("UPDATE task_dep SET deleted_at=?, updated_at=?, rev=rev+1 WHERE id=?").run(ts, ts, String(row.id));
-  logChange(db, "task_dep", String(row.id), "delete", null, origin, ts);
-  api.emit("tasks-changed", { id: id, op: "unlink" });
-  return { unlinked: true, id: id, dependsOn: dependsOn };
-}
-
-export function depView(db, args) {
-  const id = idOf(args.id || args.taskId);
-  if (!id) throw new Error("缺少 id");
-  const cur = getTask(db, id);
-  if (!cur) throw new Error("任务不存在：" + id);
-  const upstream = depRows(db, id, "up").map(function (r) {
-    return { id: String(r.depends_on_id), title: String(r.title || ""), status: String(r.status || "0") };
-  });
-  const downstream = depRows(db, id, "down").map(function (r) {
-    return { id: String(r.task_id), title: String(r.title || ""), status: String(r.status || "0") };
-  });
-  const blocked = upstream.some(function (x) { return x.status === "0" || x.status === "1" || x.status === "3"; });
-  return { id: id, task: outOne(db, cur), dependsOn: upstream, blocks: downstream, blocked: blocked };
-}
-
 export function selectedTasks(db, args) {
   const ids = Array.isArray(args.ids) ? args.ids.map(String) : [];
   if (!ids.length) return [];
@@ -291,20 +200,3 @@ export function exportTasks(db, args, api) {
   return { ...feedback, format: "markdown", count: records.length, content: lines.join("\n") };
 }
 
-export function taskDeps(db, args) {
-  return depView(db, { id: args.id || args.taskId });
-}
-
-export function taskLink(db, args, origin, api) {
-  const id = idOf(args.id || args.taskId);
-  const on = idOf(args.dependsOnId || args.on || args.dependsOn);
-  if (!id || !on) throw new Error("需要 id 与 dependsOnId");
-  return linkDep(db, { id: id, dependsOn: on }, origin, api);
-}
-
-export function taskUnlink(db, args, origin, api) {
-  const id = idOf(args.id || args.taskId);
-  const on = idOf(args.dependsOnId || args.on || args.dependsOn);
-  if (!id || !on) throw new Error("需要 id 与 dependsOnId");
-  return unlinkDep(db, { id: id, dependsOn: on }, origin, api);
-}
