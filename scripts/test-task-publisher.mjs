@@ -76,6 +76,20 @@ check("brief 结构完整", () => {
   // 回归：正文里不能出现 dsh-session: 紧跟裸 id 的串，会被 DSH 当会话引用 URI 解析
   assert.equal(/dsh-session:[A-Za-z0-9_-]+/u.test(brief), false, "brief 不得包含裸 dsh-session 引用");
   assert.ok(brief.includes("2026-11-10T03:00:00.000Z"));
+  // 工作区归属：与任务表归属同属 SOP C，且回执要写清
+  assert.ok(brief.includes("C. 归属（任务表 + 工作区）"), "SOP C 应同时覆盖任务表与工作区");
+  assert.ok(brief.includes("taskWorkspaces.list"), "SOP C 应先列工作区候选");
+  assert.ok(brief.includes("workspaceIds"), "SOP C/E 应说明创建时传 workspaceIds");
+  assert.ok(brief.includes("pageSize 用到 100"), "工作区候选应允许取满 100 条");
+  for (const outcome of ["不关联工作区", "关联一个", "关联多个"]) {
+    assert.ok(brief.includes(outcome), "SOP C 应明确合法归属结果：" + outcome);
+  }
+  assert.ok(brief.includes("禁止按名称相似或列表第一条自动挂"), "不得自动挑第一个工作区");
+  assert.ok(brief.includes("不要擅自调用 taskWorkspaces.create"), "新建工作区需先征得同意");
+  assert.ok(brief.includes("整体替换语义"), "workspaceIds 是整体替换");
+  assert.ok(brief.includes("工作区归属"), "输出格式与回执应包含工作区归属");
+  assert.ok(brief.includes("无工作区时写明「无工作区」"), "回执要写「无工作区」");
+  assert.ok(brief.includes("多个时列全名称与 id"), "多工作区回执要列全名称与 id");
 });
 
 // 2) 缺 sessionId / now 时兜底，不抛错
@@ -179,4 +193,14 @@ check("agent 不支持 followup", () => {
   assert.match(result.text, /无法接收下一轮消息/);
 });
 
-console.log("TASK PUBLISHER PASS:", checks, "checks (brief, registration, empty, attachments, too long, no-commands, followup)");
+// 10) 工作区规则只落在 SOP C/E，不进「边界规则」，且边界仍是 2 条
+check("工作区归属不挤进边界规则", () => {
+  const brief = buildPublisherBrief({ requirement: "给记录页加批量接取", sessionId: "s-ws" });
+  const boundaryBlock = brief.split("## 边界规则")[1].split("## 会话信息")[0];
+  assert.equal(boundaryBlock.includes("workspaceIds"), false, "边界规则不应重复工作区口径");
+  assert.equal(boundaryBlock.includes("taskWorkspaces"), false, "边界规则不应重复工作区口径");
+  const cStep = brief.split("\n").find((line) => line.startsWith("C. 归属"));
+  assert.ok(cStep.includes("taskWorkspaces.list") && cStep.includes("workspaceIds"), "工作区判断应在 SOP C");
+});
+
+console.log("TASK PUBLISHER PASS:", checks, "checks (brief, registration, empty, attachments, too long, no-commands, followup, workspace)");
