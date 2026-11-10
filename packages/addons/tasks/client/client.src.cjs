@@ -376,7 +376,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.4.2",
+    version: "3.4.3",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "记录", en: "Records" }, component: TasksView },

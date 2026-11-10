@@ -19,7 +19,7 @@ import { TASK_FILTER_SCHEMA } from "./task/read/task-search-schema.js";
 import { listTasks } from "./task/read/task-query.js";
 import { statsReport, renderStats } from "./stats/stats.js";
 import { registerTagOptionsAction } from "./tagging/tag-options.js";
-import { taskHistory, changelog, renderArray, renderList } from "./task/read/task-view.js";
+import { taskHistory, changelog, renderArray, renderList, renderTaskDetail } from "./task/read/task-view.js";
 import { bulkUpdate, bulkCreate, bulkDelete, renderBulkUpdate, renderBulkCreate, renderBulkDelete } from "./task/write/task-bulk.js";
 import {
   attachTags,
@@ -92,7 +92,7 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.get", {
-    description: "按 id 取单个任务（含任务树路径）",
+    description: "按 id 取单个任务（含任务树路径、表职责、时间线、标签、完整描述）。回执给全文描述与归属路径，便于核对历史任务意图；历史描述不代表当前实现。",
     input: {
       type: "object",
       properties: {
@@ -102,7 +102,7 @@ export function registerTaskActions(api) {
     },
     examples: [{ id: "1001" }],
     execute: function (args) { return getTaskAction(args || {}); },
-    render: function (r) { return "任务：" + r.task.title + "（id=" + r.task.id + "，status=" + r.task.status + "，P" + r.task.priority + "）"; },
+    render: renderTaskDetail,
   });
 
   action("tasks.create", {

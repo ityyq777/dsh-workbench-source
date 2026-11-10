@@ -80,7 +80,10 @@ try {
  call('taskNodes.update',{id:tableId,description:'存储代码开发'});
  fail('tasks.capabilities',{cursor:cap.nextCursor},/INVALID_CURSOR/);
  const found=call('tasks.resolveTable',{query:'存储相关的待办'});assert.ok(found.candidates.some(c=>c.id===tableId));assert.equal(found.needsSelection,true);assert.ok(found.candidates[0].reasons.length);
- assert.equal(call('tasks.resolveTable',{query:'%_\\'}).candidates.length,0);
+ const miss=call('tasks.resolveTable',{query:'%_\\'});assert.equal(miss.candidates.length,0);assert.equal(miss.noMatch,true);assert.ok(miss.catalogSize>=1);assert.match(miss.notice,/不代表不存在任务表.*张存活任务表/);assert.ok(miss.nextActions.some(a=>a.includes('taskNodes.overview')));assert.ok(miss.nextActions.some(a=>a.includes('tasks.capabilities')));assert.match(miss.evidence,/运行时/);
+ const hit=call('tasks.resolveTable',{query:'存储相关的待办'});assert.equal(hit.noMatch,false);assert.ok(hit.catalogSize>=hit.candidates.length);
+ const detail=call('tasks.get',{id:created.id});const detailText=actions.get('tasks.get').render(detail);assert.match(detailText,/描述：/);assert.ok(detailText.includes('存储代码开发'),'table description in detail');assert.ok(detailText.includes('归属：otherGroup/产品改名/storage（tableId='));assert.match(detailText,/状态：进行中/);
+ assert.match(detailText,/描述：\n\(空\)/);
  const hot=call('tasks.create',{title:'unrelated hot',tablePath:'unrelated',createMissing:true,pathDescriptions:['unrelated task']});
  db.prepare('UPDATE task SET updated_at=? WHERE id=?').run(Date.now()+99999999,hot.id);
  assert.equal(call('tasks.resolveTable',{query:'存储相关的待办'}).candidates[0].id,tableId,'unrelated recency cannot win');
@@ -124,5 +127,9 @@ try {
  assert.ok(call('tasks.capabilities',{}).diagnostics.some(d=>d.id===other.id));
  db.prepare('UPDATE task SET dedupe_key=? WHERE id=?').run(newArgs.dedupeKey,original.id);
  fail('tasks.create',{title:'Duplicate keys',tableId,dedupeKey:newArgs.dedupeKey},/DEDUPE_AMBIGUOUS/);
+ // No live table: the notice must distinguish "really no table" from "no domain mapping".
+ db.prepare('UPDATE task_node SET deleted_at=?').run(Date.now());
+ const none=call('tasks.capabilities',{});assert.equal(none.total,0);assert.match(none.notice,/没有任何存活任务表.*未配置/);
+ const miss2=call('tasks.resolveTable',{query:'anything'});assert.equal(miss2.noMatch,true);assert.equal(miss2.catalogSize,0);assert.match(miss2.notice,/不代表不存在任务表/);
  console.log('TASK OWNERSHIP BACKEND PASS: atomic failure, zero-write target errors, full path, ambiguity, dedupe, tags/restart/log rollback, dryRun, discovery and node consistency');
 } finally { db.close(); }

@@ -37,6 +37,36 @@ export function changelog(db, args) {
 }
 
 
+const STATUS_TEXT = { "0": "进行中", "1": "已关闭", "2": "已完成", "3": "已重启" };
+
+function tagNames(tags) {
+  return (Array.isArray(tags) ? tags : []).map(function (tag) {
+    return typeof tag === "string" ? tag : String(tag && tag.name ? tag.name : (tag && tag.id ? tag.id : ""));
+  }).filter(Boolean);
+}
+
+/** tasks.get 的回执：让 agent 一眼看到完整描述与归属路径，而不是只看标题和优先级。 */
+export function renderTaskDetail(result) {
+  const task = result && result.task;
+  if (!task) return "任务不存在";
+  const segments = Array.isArray(task.pathSegments) && task.pathSegments.length
+    ? task.pathSegments.map(function (p) { return p.name; }).join(" / ")
+    : "(无完整祖先链)";
+  const lines = [
+    "任务：" + task.title,
+    "id：" + task.id + " · 状态：" + (STATUS_TEXT[task.status] || "未知") + "（" + task.status + "） · 优先级：P" + task.priority
+      + " · 难度：" + (task.difficulty === null || task.difficulty === undefined ? "未设置" : task.difficulty),
+    "归属：" + (task.tablePath || segments) + "（tableId=" + task.tableId + "） · 表职责：" + (task.tableDescription || "未填写"),
+    "时间线：" + (task.timelineId ? (task.timelineTitle || task.timelineId) + "（timelineId=" + task.timelineId + "）" : "未关联"),
+    "日期：发布 " + (task.publishDate || "-") + " · 目标 " + (task.targetDate || "-") + " · 完成 " + (task.doneDate || "-") + " · 关闭 " + (task.shutdownDate || "-"),
+    "标签：" + (tagNames(task.tags).join("、") || "无"),
+  ];
+  if (task.ownershipDiagnostic) lines.push("归属诊断：" + task.ownershipDiagnostic.code + " " + task.ownershipDiagnostic.message);
+  if (task.review) lines.push("复盘：" + task.review);
+  lines.push("描述：", task.description || "(空)");
+  return lines.join("\n");
+}
+
 export function csvCell(v) {
   const s = v === null || v === undefined ? "" : String(v);
   return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
