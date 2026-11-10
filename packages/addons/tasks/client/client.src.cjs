@@ -25,15 +25,6 @@
     return list.some(function (a) { return a && a.id === id && a.enabled !== false; });
   }
 
-  // 任务不再有「类型」：工作/生活/学习/开发 已迁成标签，按标签筛选。
-  var TABS = [
-    { id: 0, zh: "紧急任务", en: "Urgent" },
-    { id: 5, zh: "已关闭", en: "Closed" },
-    { id: 6, zh: "已开启", en: "Active" },
-    { id: 9, zh: "已接取", en: "Claimed" },
-    { id: 7, zh: "已完成", en: "Done" },
-    { id: 8, zh: "总览", en: "Overview" },
-  ];
   var STATUS = {
     "0": { zh: "已开启", en: "Active", cls: "active" },
     "1": { zh: "已关闭", en: "Closed", cls: "shutdown" },
@@ -365,21 +356,21 @@
   var BatchModal = require("./modals/batch-modal.cjs")(React, cx, Icon);
 
   var CFG_FALLBACK = {
-    "ui.defaultTab": 0, "ui.listView": "list", "ui.expandDepth": 2, "ui.confirmDelete": true,
-    "list.pageSize": 12, "list.sort": "auto", "list.filterRestarted": true,
+    "ui.listView": "list", "ui.expandDepth": 2, "ui.confirmDelete": true,
+    "list.pageSize": 12, "list.sort": "auto",
     "form.defaultPriority": 1, "form.defaultDifficulty": 0, "form.defaultTargetOffset": 0,
     "stats.range": "30d", "stats.top": 10, "stats.showKpi": true,
     "stats.recentPublishLimit": 10, "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10,
     "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "recentPublish", "recentDone", "recentShutdown"],
   };
 
-  var TasksView = require("./views/tasks-view.cjs")({ React: React, configView: configView, CFG_FALLBACK: CFG_FALLBACK, COPY: COPY, TABS: TABS, injectCss: injectCss, allTables: allTables, findFirstTable: findFirstTable, treeWalk: treeWalk, treeFlat: treeFlat, cx: cx, Icon: Icon, TaskItem: TaskItem, PathCrumbs: PathCrumbs, TagFilter: TagFilter, TreeNode: TreeNode, CreateModal: CreateModal, TimelineModal: TimelineModal, NodeModal: NodeModal, EditModal: EditModal, DoneModal: DoneModal, BatchModal: BatchModal });
+  var TasksView = require("./views/tasks-view.cjs")({ React: React, configView: configView, CFG_FALLBACK: CFG_FALLBACK, COPY: COPY, injectCss: injectCss, allTables: allTables, findFirstTable: findFirstTable, treeWalk: treeWalk, treeFlat: treeFlat, cx: cx, Icon: Icon, TaskItem: TaskItem, PathCrumbs: PathCrumbs, TagFilter: TagFilter, TreeNode: TreeNode, CreateModal: CreateModal, TimelineModal: TimelineModal, NodeModal: NodeModal, EditModal: EditModal, DoneModal: DoneModal, BatchModal: BatchModal });
 
   var TimelineView = require("./views/timeline-view.cjs")({ React: React, COPY: COPY, injectCss: injectCss, statusInfo: statusInfo, EditModal: EditModal });
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.5.1",
+    version: "4.0.0",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "记录", en: "Records" }, component: TasksView },

@@ -95,9 +95,13 @@ export function renderList(result) {
   const lines = [];
   const f = result.filter;
   if (f) {
-    const parts = Array.isArray(f.statuses)
-      ? ["状态多选=" + (f.statuses.length || f.urgent ? f.statuses.concat(f.urgent ? ["紧急"] : []).join(" OR ") : "全部（含已重启）")]
-      : ["tab=" + f.tab + " " + f.tabTitle + (f.tabGiven ? "" : "（默认：未传 tab 时按总览检索）")];
+    const parts = [];
+    if (Array.isArray(f.statuses)) {
+      const picked = f.statuses.concat(f.urgent ? ["紧急"] : []);
+      parts.push("状态多选=" + (picked.length ? picked.join(" OR ") : "全部（含已重启）"));
+    } else if (f.urgent) {
+      parts.push("状态多选=紧急");
+    }
     if (f.titleKey) parts.push("关键词=\"" + f.titleKey + "\"（标题或描述）");
     if (f.tableId) parts.push("任务表=" + f.tableId);
     if (f.groupId) parts.push("任务组=" + f.groupId);
@@ -119,7 +123,6 @@ export function renderList(result) {
     if (f.targetFrom) parts.push("target>=" + f.targetFrom);
     if (f.targetTo) parts.push("target<=" + f.targetTo);
     if (f.sort) parts.push("排序=" + f.sort + (SORT_NOTES[f.sort] ? "（" + SORT_NOTES[f.sort] + "）" : ""));
-    if (f.filterRestarted === false) parts.push("含已重启");
     if (f.pageable) parts.push("第 " + f.pageNumber + "/" + f.totalPages + " 页，每页 " + f.pageSize);
     if (f.pageSizeCapped) parts.push("pageSize 超过上限 200，已按 200 截断");
     lines.push("筛选：" + parts.join(" · "));

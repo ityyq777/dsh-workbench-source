@@ -31,8 +31,6 @@ module.exports = function createTasksView(deps) {
     var tableNavigation = !activityNavigation && props.viewParams && props.viewParams.tableId;
     var groupNavigation = !activityNavigation && !tableNavigation && props.viewParams && props.viewParams.groupId;
     var nodeNavigation = tableNavigation || groupNavigation;
-    var cfgTab = Number(cfg["ui.defaultTab"]);
-    if ([0, 5, 6, 7, 8].indexOf(cfgTab) < 0) cfgTab = 0;
     var cfgSize = Math.floor(Number(cfg["list.pageSize"]));
     if (!(cfgSize > 0)) cfgSize = 12;
     var cfgDepth = Math.floor(Number(cfg["ui.expandDepth"]));
@@ -54,7 +52,7 @@ module.exports = function createTasksView(deps) {
     var initialMissing = storedFilters ? storedFilters.missing : !activityNavigation && !nodeNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
     var missingS = React.useState(initialMissing);
     var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
-    var filterState = React.useState((storedFilters && storedFilters.value) || activityNavigation || filters.fromTab(nodeNavigation || initialMissing ? 8 : cfgTab));
+    var filterState = React.useState((storedFilters && storedFilters.value) || activityNavigation || filters.empty());
     var filterValue = filterState[0], setFilterValue = filterState[1];
     React.useEffect(function () { filters.save(filterValue, difficultyMissing, props.viewParams); }, [filterValue, difficultyMissing, JSON.stringify(props.viewParams || {})]);
     var panelState = React.useState(false), panelOpen = panelState[0], setPanelOpen = panelState[1];
@@ -120,7 +118,7 @@ module.exports = function createTasksView(deps) {
     React.useEffect(function () {
       if (initialNavigation.current) { initialNavigation.current = false; if (storedFilters) return; }
       if (!activityNavigation && !nodeNavigation) return;
-      setFilterValue(activityNavigation || filters.fromTab(8));
+      setFilterValue(activityNavigation || filters.empty());
       setTarget(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: groupNavigation ? String(groupNavigation) : "1", tableId: null });
       setDifficultyMissing(false); setFilterHint("");
       setSearchDraft(""); setTitleKey(""); setFilterTagIds([]); setPageNumber(1);

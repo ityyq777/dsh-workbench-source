@@ -6,7 +6,7 @@ import { renderList } from '../packages/addons/tasks/lib/task/read/task-view.js'
 const db = new DatabaseSync(':memory:'), actions = new Map();
 setup({ db, addon: { version: 'test' }, log() {}, hasDomain: () => false, action: (name, def) => actions.set(name, def) });
 const call = (name, args = {}) => actions.get(name).execute(args, { origin: 'agent' });
-const base = { tab: 'all', filterRestarted: false, sort: 'publish' };
+const base = { statuses: [], sort: 'publish' };
 const list = args => call('tasks.list', { ...base, ...args });
 const ids = result => result.records.map(r => r.id);
 let cases = 0;

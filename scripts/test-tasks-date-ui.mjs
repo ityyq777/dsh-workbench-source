@@ -101,12 +101,13 @@ assert.equal(single.value.difficulty.min,'5');assert.equal(single.swapped,false,
 const both = model.limit({...model.empty(),difficulty:{min:'5',max:''}},'difficulty','max','2');
 assert.deepEqual(both.value.difficulty,{min:'2',max:'5'}); assert.equal(both.swapped,true); assert.equal(both.clearsMissing,true);
 assert.equal(model.args({...model.empty(),priority:{min:'6',max:'10'}}).priorityMin,6);
-assert.ok(!('urgent' in model.args(model.fromTab(0))), 'urgent is never sent');
-assert.equal(model.isUrgent(model.fromTab(0)),true); assert.equal(model.toggle(model.fromTab(0),'urgent').priority.min,'');
+const urgentValue = {...model.empty(), priority:{min:'6',max:'10'}};
+assert.ok(!('urgent' in model.args(urgentValue)), 'urgent is never sent');
+assert.equal(model.isUrgent(urgentValue),true); assert.equal(model.toggle(urgentValue,'urgent').priority.min,'');
 assert.equal(model.toggle(model.empty(),'urgent').priority.max,'10');
 assert.equal(model.all({...model.empty(),difficulty:{min:'3',max:''}}),false);
 assert.equal(model.includes({...model.empty(),difficulty:{min:'3',max:''}},'2'),true,'ranges do not drop status matches');
-const saved = model.fromTab(0); model.save(saved,false,{tableId:'t1'});
+const saved = urgentValue; model.save(saved,false,{tableId:'t1'});
 assert.deepEqual(model.load({tableId:'t1'}).value.priority,{min:'6',max:'10'});
 assert.equal(model.load({tableId:'t2'}),null,'a different navigation target drops stale filters');
 model.save({...saved,difficulty:{min:'3',max:'5'}},true,{});

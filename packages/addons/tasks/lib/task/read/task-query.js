@@ -8,19 +8,30 @@ import { clampDifficulty } from "../model/task-model.js";
 import { LEGACY_TYPE_TAGS, tagsAvailable, normalizeTagIds, normalizeTagNames, tagIdsByNames, attachTags, migrateLegacyTypes } from "../../tagging/tagging.js";
 
 /**
- * 列表分页：0 紧急（未完成 + 高优先级）、1..4 是旧「类型」页签，保留为同名
- * 标签筛选（工作/生活/学习/开发），5..8 是状态页签。
+ * 旧页签参数已移除：tab 与 filterRestarted 不再有实现，传入时明确抛错并给出
+ * 迁移映射，避免调用方以为「传了还在生效」。
  */
-const TABS = {
-  EMERGENCY: 0, WORK: 1, LIFE: 2, STUDY: 3, DEV: 4,
-  SHUTDOWN: 5, ACTIVE: 6, DONE: 7, OVERVIEW: 8, CLAIMED: 9,
+const LEGACY_TAB_HINT = {
+  0: "statuses:[0] 且 priorityMin=8、priorityMax=10（新口径的紧急任务只含优先级 8..10）",
+  1: "tags:['工作']（旧类型页签已迁成同名标签）",
+  2: "tags:['生活']",
+  3: "tags:['学习']",
+  4: "tags:['开发']",
+  5: "statuses:[1]（要看已重启传 statuses:[3]）",
+  6: "statuses:[0]",
+  7: "statuses:[2]",
+  8: "statuses:[]（全部状态，含已重启）",
+  9: "statuses:[4]",
 };
-function tabCode(value) {
-  if (value === undefined || value === null || value === "") return 0;
-  if (TABS[String(value)] !== undefined) return TABS[String(value)];
-  const n = Number(value);
-  if (!Number.isFinite(n) || n < 0 || n > 9) throw new Error("tab 取值非法：" + value);
-  return Math.floor(n);
+function rejectLegacyArgs(args) {
+  if (args.tab !== undefined && args.tab !== null && String(args.tab).trim() !== "") {
+    const key = Number(args.tab);
+    const hint = LEGACY_TAB_HINT[key] || "statuses（0..4 整数数组，空数组=全部状态）";
+    throw new Error("tab 参数已移除：状态筛选统一走 statuses。tab=" + args.tab + " 的等价写法是 " + hint);
+  }
+  if (args.filterRestarted !== undefined && args.filterRestarted !== null) {
+    throw new Error("filterRestarted 参数已移除：状态筛选统一走 statuses；需要含已重启请传 statuses:[0,1,2,3,4] 或空数组（全部状态）");
+  }
 }
 
 export function listTasks(db, args, api) {
@@ -30,6 +41,7 @@ export function listTasks(db, args, api) {
     dateRangeFilter(args.doneFrom, args.doneTo, "done"),
     dateRangeFilter(args.shutdownFrom, args.shutdownTo, "shutdown"),
   ];
+  rejectLegacyArgs(args);
   const multiStatus = args.statuses !== undefined || args.urgent !== undefined;
   if (args.statuses !== undefined && (!Array.isArray(args.statuses) ||
       args.statuses.some(s => !Number.isInteger(s) || s < 0 || s > 4))) {
@@ -44,10 +56,6 @@ export function listTasks(db, args, api) {
   } catch (e) {
     /* ignore */
   }
-  const rawTab = args.tab;
-  const tabAll = rawTab === undefined || rawTab === null || String(rawTab).trim() === ""
-    || /^(all|\*)$/i.test(String(rawTab).trim());
-  const tab = multiStatus || tabAll ? 8 : tabCode(rawTab);
   const where = ["t.deleted_at IS NULL"];
   const params = [];
   const listNotices = ranges.flatMap(range => range.notices);
@@ -94,7 +102,6 @@ export function listTasks(db, args, api) {
     params.push("%" + key + "%", "%" + key + "%");
   }
 
-  const filterRestarted = args.filterRestarted === undefined ? true : Boolean(args.filterRestarted);
   // 旧前端的 checkedTypes（0..3）仍接受，按旧类型名映射成标签过滤。
   const checkedTypes = Array.isArray(args.checkedTypes) ? args.checkedTypes.map(String) : [];
   for (const c of checkedTypes) {
@@ -196,34 +203,6 @@ function rangeArg(clamp, value, label, span) {
       params.push(addDays(todayStr(), 2));
     }
     if (alternatives.length) where.push("(" + alternatives.join(" OR ") + ")");
-  } else if (tab === 0) {
-    where.push("(t.priority >= 6 OR t.target_date <= ?)");
-    where.push("t.status='0'");
-    params.push(addDays(todayStr(), 2));
-  } else if (tab >= 1 && tab <= 4) {
-    // 旧「类型」页签（兼容旧客户端）：只按同名标签筛；task.type 列已删除，标签域缺失时无结果。
-    where.push("t.status='0'");
-    const legacy = tagAvailable
-      ? db.prepare(
-        "SELECT id FROM tag WHERE name=? AND deleted_at IS NULL ORDER BY created_at ASC LIMIT 1",
-      ).get(LEGACY_TYPE_TAGS[String(tab - 1)])
-      : null;
-    if (legacy) {
-      where.push("EXISTS (SELECT 1 FROM tag_mapping tm WHERE tm.item_type='task' AND tm.item_id=t.id AND tm.deleted_at IS NULL AND tm.tag_id=?)");
-      params.push(String(legacy.id));
-    } else {
-      where.push("1=0");
-    }
-  } else if (tab === 5) {
-    where.push(filterRestarted ? "t.status='1'" : "t.status='3'");
-  } else if (tab === 6) {
-    where.push("t.status='0'");
-  } else if (tab === 7) {
-    where.push("t.status='2'");
-  } else if (tab === 8) {
-    if (filterRestarted) where.push("t.status!='3'");
-  } else if (tab === 9) {
-    where.push("t.status='4'");
   }
 
   // 分页语义（2026-11-08 明确化）：
@@ -233,7 +212,7 @@ function rangeArg(clamp, value, label, span) {
   const MAX_PAGE_SIZE = 200;
   const MAX_UNPAGED = 500;
   const wantPaging = args.pageNumber !== undefined || args.pageSize !== undefined;
-  const pageable = (tab > 4 && tab < 10) || wantPaging;
+  const pageable = wantPaging;
   let pageNumber = 1;
   let pageSize = 0;
   let limitSql = "";
@@ -285,12 +264,9 @@ function rangeArg(clamp, value, label, span) {
     return taskOut(r, map);
   });
   attachTags(db, api, records);
-  const TAB_TITLES = { 0: "紧急", 5: "已关闭", 6: "进行中", 7: "已完成", 8: "总览" };
   const returned = records.length;
   const truncated = returned < total;
   const filter = {
-    tab: tab,
-    tabTitle: TAB_TITLES[tab] || ("类型页签 " + tab),
     pageNumber: pageable ? pageNumber : 1,
     pageSize: pageable ? pageSize : null,
     pageable: pageable,
@@ -324,8 +300,6 @@ function rangeArg(clamp, value, label, span) {
   if (targetFrom) filter.targetFrom = targetFrom;
   if (targetTo) filter.targetTo = targetTo;
   if (args.sort) filter.sort = String(args.sort) + (args.order ? " " + String(args.order) : "");
-  if (!multiStatus && !filterRestarted && (tab === 5 || tab === 8)) filter.filterRestarted = false;
-  if (!multiStatus && !tabAll) filter.tabGiven = true;
   return withNotices({
     records,
     current: pageable ? pageNumber : 1,

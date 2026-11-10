@@ -120,10 +120,10 @@ assert.equal(row(r.id).owner, null);
 assert.equal(restarted.task.status, '0');
 
 // 列表/统计口径
-const limited = env.call('tasks.list', { tab: 9 });
+const limited = env.call('tasks.list', { statuses: [4] });
 assert.ok(limited.records.every(t => t.status === '4'));
 assert.ok(limited.records.some(t => t.id === g.id));
-assert.equal(env.call('tasks.list', { statuses: [4] }).records.length, limited.records.length);
+
 assert.throws(() => env.call('tasks.list', { statuses: [5] }), /statuses 必须是/);
 const stats = env.call('tasks.statsReport', {});
 assert.ok(stats.totals.claimed >= 1);

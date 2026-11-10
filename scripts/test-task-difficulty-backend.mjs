@@ -63,10 +63,10 @@ try {
   const afterRestart = await call('tasks.statsReport', {});
   const restartedUnset = afterRestart.breakdowns.difficulty.find(b => b.key === 'unset');
   assert.equal(restartedUnset.count, 5, 'statistics include unset restarted tasks');
-  const allUnset = await call('tasks.list', { tab: 8, filterRestarted: false, difficultyMissing: true });
+  const allUnset = await call('tasks.list', { difficultyMissing: true });
   assert.equal(allUnset.total, restartedUnset.count, 'statistics drilldown and list share the same scope');
   assert.ok(allUnset.records.some(t => t.id === restarted.id));
-  assert.equal((await call('tasks.list', { tab: 8, difficultyMissing: true })).total, restartedUnset.count - 1, 'default overview still excludes restarted');
+  assert.equal((await call('tasks.list', { statuses: [0, 1, 2, 4], difficultyMissing: true })).total, restartedUnset.count - 1, 'excluding status 3 drops the restarted task');
   const caps = await call('tasks.capabilities'); assert.ok(caps.guidance.includes(DIFFICULTY_GUIDANCE));
   // Capture the registered contracts directly, independent of host help formatting.
   const definitions = new Map();

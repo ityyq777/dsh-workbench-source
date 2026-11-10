@@ -20,28 +20,36 @@ try {
   add('restarted', 3, 9); add('deleted', 2, 9, day, day, day, day, 123);
   add('done-no-date', 2, 1, '9999-12-31', day, null);
   const all = ['active','urgent-priority','urgent-date','not-urgent-date','closed','done-a','done-b','restarted','done-no-date'].sort();
-  for (const args of [{ statuses: [] }, { urgent: false }, { statuses: [], urgent: false, tab: 5 }, { statuses: [], tab: 'invalid', filterRestarted: true }]) {
+  for (const args of [{ statuses: [] }, { urgent: false }, { statuses: [], urgent: false }]) {
     const result = list(args); assert.deepEqual(ids(result), all); assert.deepEqual(result.filter.statuses, []); assert.equal(result.filter.urgent, false);
-    assert.equal(result.filter.tab, 8); assert.equal(result.filter.tabGiven, undefined); assert.equal(result.filter.filterRestarted, undefined);
+    assert.equal(result.filter.tab, undefined); assert.equal(result.filter.filterRestarted, undefined);
   }
-  assert.deepEqual(ids(list({ statuses: [3], filterRestarted: true, tab: 7 })), ['restarted']);
+  assert.deepEqual(ids(list({ statuses: [3] })), ['restarted']);
   assert.deepEqual(ids(list({ statuses: [1, 3, 1] })), ['closed','restarted']);
   assert.deepEqual(list({ statuses: [1, 3, 1] }).filter.statuses, [1, 3]);
   assert.deepEqual(ids(list({ urgent: true })), ['urgent-date','urgent-priority']);
   assert.deepEqual(ids(list({ statuses: [1, 3], urgent: true })), ['closed','restarted','urgent-date','urgent-priority']);
   assert.equal(list({ statuses: [0], urgent: true }).total, 4, 'OR does not duplicate urgent active tasks');
   assert.equal(list({ statuses: [1, 2], status: 3 }).total, 0, 'legacy direct status stays AND');
-  for (const statuses of [null, '2', 2, {}, ['2'], [4], [-1], [1.2], [false]]) for (const action of ['tasks.list','tasks.export']) assert.throws(() => call(action, { statuses }), /statuses/);
+  for (const statuses of [null, '2', 2, {}, ['2'], [5], [-1], [1.2], [false]]) for (const action of ['tasks.list','tasks.export']) assert.throws(() => call(action, { statuses }), /statuses/);
+  assert.equal(list({ statuses: [4] }).total, 0, 'claimed status accepted even with no rows');
   for (const urgent of [null, 'false', 0, 1, {}]) for (const action of ['tasks.list','tasks.export']) assert.throws(() => call(action, { urgent }), /urgent/);
-  for (const [tab, expected] of [[0,['urgent-date','urgent-priority']], [5,['closed']], [6,['active','not-urgent-date','urgent-date','urgent-priority']], [7,['done-a','done-b','done-no-date']]]) assert.deepEqual(ids(list({ tab })), expected);
-  assert.deepEqual(ids(list({ tab: 5, filterRestarted: false })), ['restarted']);
-  assert.equal(list({ tab: 8 }).total, all.length - 1); assert.equal(list({ tab: 'all', filterRestarted: false }).total, all.length);
-  for (const tab of [1, 2, 3, 4]) { assert.equal(list({ tab }).total, 0); assert.equal(list({ tab, statuses: [3] }).total, 1); }
+  // 旧页签参数已移除：必须报错并给出 statuses 迁移写法，而不是静默按旧语义过滤。
+  for (const [tab, hint] of [[0, /priorityMin=8/], [1, /tags:\['工作'\]/], [5, /statuses:\[1\]/], [7, /statuses:\[2\]/], [8, /statuses:\[\]/], [9, /statuses:\[4\]/]]) {
+    for (const action of ['tasks.list','tasks.export']) assert.throws(() => call(action, { tab }), /tab 参数已移除/);
+    assert.throws(() => list({ tab }), hint);
+  }
+  assert.throws(() => list({ tab: 'all' }), /tab 参数已移除/);
+  assert.throws(() => list({ tab: 99 }), /tab 参数已移除/);
+  for (const action of ['tasks.list','tasks.export']) assert.throws(() => call(action, { filterRestarted: false }), /filterRestarted 参数已移除/);
+  assert.deepEqual(ids(list({ statuses: [1] })), ['closed']);
+  assert.equal(list({}).total, all.length);
+  assert.equal(list({ statuses: [] }).total, all.length);
   const calendar = call('tasks.activityCalendar', { year: 2026 });
   for (const cell of calendar.days) for (const kind of ['publish','done','shutdown']) {
     const args = { statuses: kind === 'done' ? [2] : kind === 'shutdown' ? [1] : [], [kind + 'From']: cell.date, [kind + 'To']: cell.date };
     const result = list(args); assert.equal(result.total, cell[kind], 'heatmap same-day count ' + kind);
-    assert.equal(list({ activityDate: cell.date, activityType: kind, tab: 'all', filterRestarted: false }).total, result.total, 'legacy activity same count');
+    assert.equal(list({ activityDate: cell.date, activityType: kind, statuses: [] }).total, result.total, 'activity day scoped to all statuses matches aggregated cell');
     const exported = call('tasks.export', args); assert.equal(exported.count, result.total); assert.deepEqual(JSON.parse(exported.content).tasks.map(t => t.id).sort(), ids(result));
   }
   assert.deepEqual(ids(list({ statuses: [0,1,2,3], doneFrom: day, doneTo: day })), ['done-a','done-b'], 'stale done dates in other statuses excluded');

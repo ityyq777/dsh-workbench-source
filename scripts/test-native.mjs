@@ -143,22 +143,28 @@ try {
   const byTarget = await call("tasks.list", { status: "0", targetFrom: today(-1), targetTo: today(0) });
   assert(byTarget.result.records.some((t) => t.id === id), "targetFrom/targetTo 过滤漏了昨天到期的任务");
 
-  // ── 4.1 检索可用性：默认 tab、筛选回显、关键词搜描述、任意 tab 分页、标签增量 ──
-  const noTab = await call("tasks.list", {});
-  assert(noTab.result.filter.tab === 8 && noTab.result.filter.tabGiven !== true, "未传 tab 时应按总览（8）检索：" + JSON.stringify(noTab.result.filter));
-  assert(noTab.text.startsWith("筛选："), "tasks.list 未回显筛选条件：" + noTab.text.split("\n")[0]);
-  assert(noTab.text.includes("tab=8"), "筛选回显缺少 tab：" + noTab.text.split("\n")[0]);
+  // ── 4.1 检索可用性：默认全部状态、旧参数报错、筛选回显、关键词搜描述、分页、标签增量 ──
+  const noStatus = await call("tasks.list", {});
+  assert(noStatus.result.filter.statuses === undefined, "未传 statuses/urgent 时不应回显状态筛选：" + JSON.stringify(noStatus.result.filter));
+  assert(noStatus.text.startsWith("筛选："), "tasks.list 未回显筛选条件：" + noStatus.text.split("\n")[0]);
+  assert(!/tab=/.test(noStatus.text), "筛选回显不应再出现 tab：" + noStatus.text.split("\n")[0]);
+  let legacyTabErr = null;
+  try { await call("tasks.list", { tab: 8 }); } catch (e) { legacyTabErr = e; }
+  assert(legacyTabErr && /tab 参数已移除/.test(String(legacyTabErr.message || legacyTabErr)) && /statuses:\[\]/.test(String(legacyTabErr.message || legacyTabErr)), "旧 tab 参数未报错或没给迁移写法：" + String(legacyTabErr && (legacyTabErr.message || legacyTabErr)));
+  let legacyRestartErr = null;
+  try { await call("tasks.list", { filterRestarted: false }); } catch (e) { legacyRestartErr = e; }
+  assert(legacyRestartErr && /filterRestarted 参数已移除/.test(String(legacyRestartErr.message || legacyRestartErr)), "旧 filterRestarted 参数未报错：" + String(legacyRestartErr && (legacyRestartErr.message || legacyRestartErr)));
   const descTask = await call("tasks.create", { tableId: fixtureTableId, title: "描述检索源", description: "正文里藏着一个独特词 zeta-flag" });
   const byDesc = await call("tasks.list", { titleKey: "zeta-flag" });
   assert(byDesc.result.records.length === 1 && byDesc.result.records[0].id === descTask.result.id, "titleKey 未匹配描述：" + JSON.stringify(byDesc.result.records.map((t) => t.title)));
   const pagedAll = await call("tasks.list", { status: "0", pageNumber: 1, pageSize: 2 });
-  assert(pagedAll.result.filter.pageable === true && pagedAll.result.records.length <= 2, "非 tab5..8 传 pageSize 未分页");
+  assert(pagedAll.result.filter.pageable === true && pagedAll.result.records.length <= 2, "传 pageSize 未分页");
   assert(pagedAll.result.filter.pageSize === 2, "分页参数未回显");
   assert(pagedAll.result.returned === pagedAll.result.records.length, "分页未回显 returned");
   assert(typeof pagedAll.result.truncated === "boolean", "分页未回显 truncated");
   const capped = await call("tasks.list", { status: "0", pageNumber: 1, pageSize: 9999 });
   assert(capped.result.pageSize === 200 && capped.result.filter.pageSizeCapped === true, "pageSize 超上限未按 200 截断并回显");
-  const unpagedAll = await call("tasks.list", { tab: 1, status: "0" });
+  const unpagedAll = await call("tasks.list", { status: "0" });
   assert(unpagedAll.result.pageSize === null && unpagedAll.result.returned === unpagedAll.result.records.length && unpagedAll.result.truncated === false, "未分页的 pageSize/returned/truncated 不对");
   // 标题允许重复：同名创建不判重，靠 id 区分
   const dupTitleA = await call("tasks.create", { tableId: fixtureTableId, title: "同名任务-契约" });
@@ -219,7 +225,8 @@ try {
   assert(/1\.\.10/.test(fieldMap.get("priority").type || ""), "priority 字段未写明关闭状态取值范围：" + fieldMap.get("priority").type);
   assert(/0/.test(fieldMap.get("priority").type || ""), "priority 字段未说明关闭/完成为 0：" + fieldMap.get("priority").type);
   assert(/0=进行中|0=进行中/.test(fieldMap.get("status").description), "status 字段未写明 0 的含义");
-  assert(/缺省/.test(fieldMap.get("tab").description) && /8/.test(fieldMap.get("tab").description), "tab 字段未写明缺省值");
+  assert(!fieldMap.has("tab"), "字段字典不应再有 tab");
+  assert(/不传 statuses\/urgent 时不过滤状态/.test(String(fieldMap.get("statuses / urgent").description || "")), "statuses/urgent 字段未写明缺省语义");
   assert(/闭区间/.test(fieldMap.get("range / from / to").description), "range/from/to 未写明闭区间语义");
   assert(capTasks.text.includes("字段字典"), "capabilities.get 文本未渲染字段字典");
   for (const domain of ["tags", "sites"]) {
@@ -229,15 +236,15 @@ try {
 
   const sortField = await call("actions.help", { action: "tasks.list" });
   assert(/越大越紧急/.test(sortField.text), "tasks.list 描述未写明优先级方向");
-  assert(/缺省=总览/.test(sortField.text), "tasks.list 描述未写明 tab 缺省");
+  assert(/旧参数 tab 与 filterRestarted 已移除/.test(sortField.text), "tasks.list 描述未写明旧参数已移除");
   const bulkHelp = await call("actions.help", { action: "tasks.bulkUpdate" });
   assert(/整体替换/.test(bulkHelp.text) && /addTags/.test(bulkHelp.text), "tasks.bulkUpdate 描述未提示整体替换风险");
   const updHelp = await call("actions.help", { action: "tasks.update" });
   assert(/更新模式/.test(updHelp.text), "tasks.update 描述未说明 type 是更新模式");
 
-  // 默认 tab=8 与排序方向必须与描述一致
+  // 不传状态参数时返回全部状态（含已重启），排序方向必须与描述一致
   const defaultList = await call("tasks.list", {});
-  assert(defaultList.result.filter.tab === 8, "tasks.list 不传 tab 的默认值不是 8：" + defaultList.result.filter.tab);
+  assert(defaultList.result.filter.statuses === undefined && defaultList.result.total >= 1, "tasks.list 不传 statuses 时应返回全部状态：" + JSON.stringify(defaultList.result.filter));
   const lowP = await call("tasks.create", { tableId: fixtureTableId, title: "契约排序-低优先", priority: 3 });
   const highP = await call("tasks.create", { tableId: fixtureTableId, title: "契约排序-高优先", priority: 9 });
   const descSort = await call("tasks.list", { titleKey: "契约排序", sort: "-priority" });
@@ -437,7 +444,7 @@ try {
   assert(itemsOf.result.items.length === 1 && itemsOf.result.items[0].tags.length === 2, "tags.itemsOf 未返回两个标签");
   const tagged = await call("tasks.get", { id });
   assert(tagged.result.task.tags && tagged.result.task.tags.length === 2, "tasks.get 未聚合标签");
-  const byTag = await call("tasks.list", { tagIds: [tagA.result.id], tab: 8 });
+  const byTag = await call("tasks.list", { tagIds: [tagA.result.id], statuses: [] });
   assert(byTag.result.records.length >= 2, "tasks.list tagIds 过滤漏了任务");
   const unlinkRes = await call("tags.unlink", { tagIds: [tagA.result.id], itemIds: [id], itemType: "task" });
   assert(unlinkRes.result.unlinked === 1, "tags.unlink 数量不对");

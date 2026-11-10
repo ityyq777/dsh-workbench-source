@@ -4087,7 +4087,6 @@ var require_copy = __commonJS({
         claimedCount: "\u5DF2\u63A5\u53D6 {n} \u6761\u4EFB\u52A1",
         root: "\u5168\u90E8\u4EFB\u52A1\u7EC4",
         manager: "\u7BA1\u7406\u6A21\u5F0F",
-        filterRestarted: "\u8FC7\u6EE4\u5DF2\u91CD\u542F",
         treeSearch: "\u641C\u7D22\u4EFB\u52A1\u7EC4 / \u4EFB\u52A1\u8868",
         treeHint: "\u70B9\u4EFB\u52A1\u8868\u7B5B\u9009\u4EFB\u52A1\uFF1B\u7BA1\u7406\u6A21\u5F0F\u53EF\u62D6\u62FD\u6392\u5E8F\u3001\u6539\u540D\u6216\u5220\u9664",
         groups: "\u4E2A\u4EFB\u52A1\u7EC4",
@@ -4244,7 +4243,6 @@ var require_copy = __commonJS({
         claimedCount: "Claimed {n} task(s)",
         root: "All tasks",
         manager: "Manage",
-        filterRestarted: "Hide restarted",
         treeSearch: "Search groups / tables",
         treeHint: "Pick a table to filter tasks; Manage mode allows drag, rename and delete",
         groups: "groups",
@@ -7822,12 +7820,6 @@ var require_task_filter_model = __commonJS({
     function isUrgent(value) {
       return value.priority.min === "6" && value.priority.max === "10";
     }
-    function fromTab(tab) {
-      var value = empty(), status = { 5: "1", 6: "0", 7: "2", 9: "4" }[tab];
-      if (status) value.statuses = [status];
-      if (Number(tab) === 0) value.priority = { min: "6", max: "10" };
-      return value;
-    }
     function includes(value, status) {
       return statusFree(value) || value.statuses.indexOf(status) >= 0;
     }
@@ -7965,7 +7957,6 @@ var require_task_filter_model = __commonJS({
       groups,
       all,
       empty,
-      fromTab,
       includes,
       toggle,
       enable,
@@ -8228,8 +8219,6 @@ var require_tasks_view = __commonJS({
         var tableNavigation = !activityNavigation && props.viewParams && props.viewParams.tableId;
         var groupNavigation = !activityNavigation && !tableNavigation && props.viewParams && props.viewParams.groupId;
         var nodeNavigation = tableNavigation || groupNavigation;
-        var cfgTab = Number(cfg["ui.defaultTab"]);
-        if ([0, 5, 6, 7, 8].indexOf(cfgTab) < 0) cfgTab = 0;
         var cfgSize = Math.floor(Number(cfg["list.pageSize"]));
         if (!(cfgSize > 0)) cfgSize = 12;
         var cfgDepth = Math.floor(Number(cfg["ui.expandDepth"]));
@@ -8249,7 +8238,7 @@ var require_tasks_view = __commonJS({
         var initialMissing = storedFilters ? storedFilters.missing : !activityNavigation && !nodeNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
         var missingS = React.useState(initialMissing);
         var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
-        var filterState = React.useState(storedFilters && storedFilters.value || activityNavigation || filters.fromTab(nodeNavigation || initialMissing ? 8 : cfgTab));
+        var filterState = React.useState(storedFilters && storedFilters.value || activityNavigation || filters.empty());
         var filterValue = filterState[0], setFilterValue = filterState[1];
         React.useEffect(function() {
           filters.save(filterValue, difficultyMissing, props.viewParams);
@@ -8320,7 +8309,7 @@ var require_tasks_view = __commonJS({
             if (storedFilters) return;
           }
           if (!activityNavigation && !nodeNavigation) return;
-          setFilterValue(activityNavigation || filters.fromTab(8));
+          setFilterValue(activityNavigation || filters.empty());
           setTarget(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: groupNavigation ? String(groupNavigation) : "1", tableId: null });
           setDifficultyMissing(false);
           setFilterHint("");
@@ -9082,7 +9071,7 @@ var require_timeline_add_members = __commonJS({
         React.useEffect(function() {
           var cancelled = false;
           setError("");
-          p.api.call("tasks.list", { titleKey: query, pageNumber: page, pageSize: 20, filterRestarted: true, tab: 8 }).then(result).then(function(r) {
+          p.api.call("tasks.list", { titleKey: query, pageNumber: page, pageSize: 20, statuses: [] }).then(result).then(function(r) {
             if (!cancelled) setData(r);
           }).catch(function(e) {
             if (!cancelled) setError(String(e.message || e));
@@ -9607,14 +9596,6 @@ var require_timeline_view = __commonJS({
       return a && a.id === id && a.enabled !== false;
     });
   }
-  var TABS = [
-    { id: 0, zh: "\u7D27\u6025\u4EFB\u52A1", en: "Urgent" },
-    { id: 5, zh: "\u5DF2\u5173\u95ED", en: "Closed" },
-    { id: 6, zh: "\u5DF2\u5F00\u542F", en: "Active" },
-    { id: 9, zh: "\u5DF2\u63A5\u53D6", en: "Claimed" },
-    { id: 7, zh: "\u5DF2\u5B8C\u6210", en: "Done" },
-    { id: 8, zh: "\u603B\u89C8", en: "Overview" }
-  ];
   var STATUS = {
     "0": { zh: "\u5DF2\u5F00\u542F", en: "Active", cls: "active" },
     "1": { zh: "\u5DF2\u5173\u95ED", en: "Closed", cls: "shutdown" },
@@ -10029,13 +10010,11 @@ var require_timeline_view = __commonJS({
   var EditModal = require_edit_modal()(React, statusInfo, stars);
   var BatchModal = require_batch_modal()(React, cx, Icon2);
   var CFG_FALLBACK = {
-    "ui.defaultTab": 0,
     "ui.listView": "list",
     "ui.expandDepth": 2,
     "ui.confirmDelete": true,
     "list.pageSize": 12,
     "list.sort": "auto",
-    "list.filterRestarted": true,
     "form.defaultPriority": 1,
     "form.defaultDifficulty": 0,
     "form.defaultTargetOffset": 0,
@@ -10047,11 +10026,11 @@ var require_timeline_view = __commonJS({
     "stats.recentShutdownLimit": 10,
     "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "recentPublish", "recentDone", "recentShutdown"]
   };
-  var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, TABS, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
+  var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.5.1",
+    version: "4.0.0",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

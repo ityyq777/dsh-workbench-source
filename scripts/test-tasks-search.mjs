@@ -95,9 +95,9 @@ try {
   assert.equal((await call('tasks.list', { titleKey: 'absent' })).total, 0);
   for (let i = 0; i < 13; i++) await call('tasks.create', { tableId: fixtureTableId, title: 'cap fixture', review: 'CapNeedle', priority: 6 });
   const capped = await call('tasks.list', { titleKey: 'capneedle' });
-  assert.equal(capped.total, 13); assert.equal(capped.returned, 12); assert.equal(capped.truncated, true);
-  assert.equal((await call('tasks.export', { titleKey: 'capneedle' })).count, 12);
-  assert.equal((await call('tasks.export', { titleKey: 'capneedle', tab: 0 })).count, 13);
+  assert.equal(capped.total, 13); assert.equal(capped.returned, 13); assert.equal(capped.truncated, false, 'unpaged list returns every match up to the 500 cap');
+  assert.equal((await call('tasks.export', { titleKey: 'capneedle' })).count, 13, 'export ignores the list page limit');
+  assert.equal((await call('tasks.export', { titleKey: 'capneedle', statuses: [] })).count, 13);
   assert.equal((await call('tasks.export', { titleKey: 'capneedle', priorityMin: 7 })).count, 0);
   for (const [upper, lower] of [['É', 'é'], ['Σ', 'σ']]) {
     const id = (await call('tasks.create', { tableId: fixtureTableId, title: upper, description: lower, review: upper })).id;

@@ -44,6 +44,8 @@ const NON_SCHEMA = new Set([
   "lft", "rgt", "rev", "open", "overdue", "total", "created_at", "updated_at", "deleted_at",
   "values", // tasks.configSet 的内部值对象（该 action 不对 agent 暴露）
   "filter", // 数组用法 args.filter(...)
+  "tab", // 4.0.0 起 tab 已移除，实现只读取它以抛 "tab 参数已移除" 并给 statuses 迁移写法
+  "filterRestarted", // 同上：只用于识别旧参数并报错，不再声明为可调参数
 ]);
 
 const problems = [];

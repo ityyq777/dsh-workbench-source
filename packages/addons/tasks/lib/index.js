@@ -16,6 +16,7 @@ import { registerTreeActions } from "./tree/tree.js";
 import { registerOverviewAction } from "./stats/overview.js";
 import { registerConfigActions } from "./infra/config.js";
 import { registerDataActions } from "./infra/data.js";
+import { registerPublisherCommand } from "./publisher/command.js";
 
 export const inject = ["workbench"];
 
@@ -87,7 +88,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/时间线/配置/数据五个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "3.5.1",
+        version: "4.0.0",
         tables: ["task", "task_dep", "task_node", "task_timeline", "task_timeline_link"],
         sync: taskSync,
         views: [
@@ -139,15 +140,14 @@ export function apply(ctx) {
           fields: [
             { name: "includeSingletons / timelineKeys", type: "boolean / string[]", description: "tasks.timelines默认20条且只显示多任务线；timelineKeys用于timelineRefactor整线合并，与ids互斥，目标必须在所选keys中；dryRun返回wouldUpdate及total完整计数，无list上限。" },
             { name: "lastActivityDate", type: "YYYY-MM-DD", description: "时间线有效成员发布/完成/关闭日及创建/修改本地日最大值；不含计划targetDate，排除已重启和已删除成员；openCount仅status0，doneCount仅status2。" },
-            { name: "statuses / urgent", type: "integer[] / boolean", description: "list/非ids export：任一参数出现即接管旧tab和filterRestarted；statuses为0/1/2/3，状态与紧急取OR，再与其他筛选AND。紧急为开启且(priority>=6或targetDate<=今天+2)。空数组且urgent=false为全部，包含已重启；缺少另一参数时默认[]/false。" },
+            { name: "statuses / urgent", type: "integer[] / boolean", description: "list/非ids export：statuses 为 0/1/2/3/4 整数数组，与 urgent 取 OR，再与其他筛选 AND。紧急为开启且(priority>=6或targetDate<=今天+2)。不传 statuses/urgent 时不过滤状态，返回全部状态（含已重启）；空数组且 urgent=false 同样为全部；缺少另一参数时默认 []/false。旧参数 tab、filterRestarted 已移除，传入会报错。" },
             { name: "publishFrom / publishTo / doneFrom / doneTo / shutdownFrom / shutdownTo", type: "YYYY-MM-DD", description: "list/非ids export 三组闭区间，两端独立可选，空串不筛，真实日期校验；日期前10位与其他条件AND。完成范围要求状态2，关闭范围要求状态1，同时非空则交集为空。反序交换后filter回显并返回publish_range_swapped/done_range_swapped/shutdown_range_swapped notice。" },
             { name: "year", type: "integer 1900..9999", description: "tasks.activityCalendar 必填年份：独立年度稀疏日历，publish/done/shutdown 三类事件计数及 totals/max（含 total）" },
-            { name: "activityDate / activityType", type: "YYYY-MM-DD / publish|done|shutdown", description: "list/非ids export 活动日筛选；type 缺省 done，有 type 必须有日期。单类事件，与既有条件 AND；与日历同口径，完整日点击需 tab=all、filterRestarted=false" },
-            { name: "tab", type: "number | \"all\"", description: "列表页签：0=紧急（status=0 且 priority>=6 或 targetDate<=今天+2）、1..4=旧类型页签（按同名标签筛，已弃用）、5=已关闭（默认 SHUTDOWN=1，filterRestarted=false 时看 RESTARTED=3）、6=进行中(0)、7=已完成(2)、8=总览（排除已重启）；缺省或传 all 等于 8" },
+            { name: "activityDate / activityType", type: "YYYY-MM-DD / publish|done|shutdown", description: "list/非ids export 活动日筛选；type 缺省 done，有 type 必须有日期。单类事件，与既有条件 AND；与日历同口径，完整日点击请传 statuses=[]" },
             { name: "status", type: "0|1|2|3", description: "0=进行中 ACTIVE、1=已关闭 SHUTDOWN、2=已完成 DONE、3=已重启 RESTARTED（创建时不允许 3）；也接受 open/done。别按“0=未开始”理解：0 是在办" },
-            { name: "priority", type: "1..10（关闭/完成为 0）", description: "数值越大越紧急，不是越小越急；已开启任务必须 P1..P10（显式传 0 会报错，缺省 P1）；已关闭/已完成/已重启一律 P0，传值被忽略；>=6 进紧急页签（tab=0）；参数优先级 min/max 同样是数值越大越急" },
+            { name: "priority", type: "1..10（关闭/完成为 0）", description: "数值越大越紧急，不是越小越急；已开启任务必须 P1..P10（显式传 0 会报错，缺省 P1）；已关闭/已完成/已重启一律 P0，传值被忽略；>=6 满足紧急谓词；参数优先级 min/max 同样是数值越大越急" },
             { name: "difficulty", type: "0..5", description: DIFFICULTY_GUIDANCE },
-            { name: "sort", type: "string", description: "priority / target（targetDate）/ publish（publishDate）/ updated / created；前缀 - 表示降序，例如 sort=-priority 才是最紧急在前；不传时未分页按 priority 降序，分页（tab 5..8 或传 pageNumber/pageSize）按 publishDate 降序" },
+            { name: "sort", type: "string", description: "priority / target（targetDate）/ publish（publishDate）/ updated / created；前缀 - 表示降序，例如 sort=-priority 才是最紧急在前；不传时未分页按 priority 降序，分页（传 pageNumber/pageSize）按 publishDate 降序" },
             { name: "order", type: "asc|desc", description: "显式指定排序方向，覆盖 sort 前缀" },
             { name: "targetDate", type: "YYYY-MM-DD", description: "目标日期（截止）；缺省表示未定；targetFrom/targetTo 按它过滤，target<今天且未完成即视为逾期" },
             { name: "publishDate", type: "YYYY-MM-DD", description: "发布日期，缺省为创建当天" },
@@ -158,7 +158,7 @@ export function apply(ctx) {
             { name: "tableId / groupId", type: "string|number", description: "按任务表 / 任务组过滤；groupId 含义是该组下所有任务表" },
             { name: "tags / tagIds", type: "string[]", description: "写入时是整体替换（会覆盖原有标签，批量套用最危险）；读取时是“命中任一”过滤。tags 传标签名，不存在会自动建" },
             { name: "addTags / removeTags / addTagIds / removeTagIds", type: "string[]", description: "增量加/减标签，保留其余标签；不能与 tags/tagIds 同时传" },
-            { name: "pageNumber / pageSize", type: "number", description: "页码从 1 开始，每页默认 12、上限 200（超出按 200 截断，filter.pageSizeCapped=true）；任意 tab 传了就分页。返回 total=真实总数、returned=本页条数、truncated=是否还有未返回的；未分页最多 500 条，超出时 truncated=true" },
+            { name: "pageNumber / pageSize", type: "number", description: "页码从 1 开始，每页默认 12、上限 200（超出按 200 截断，filter.pageSizeCapped=true）；传 pageNumber 或 pageSize 即分页。返回 total=真实总数、returned=本页条数、truncated=是否还有未返回的；未分页最多 500 条，超出时 truncated=true" },
             { name: "title", type: "string", description: "任务标题，仅 trim + 非空校验；标题不唯一，允许与其它任务重名，用 id 区分（标签名唯一、任务节点名同级唯一，别混）" },
             { name: "type", type: "0|1|2|3|4", description: "仅 tasks.update 使用：0=改状态 1=改优先级 2=改标题 3=改描述 4=改感受；这是“更新模式”，不是任务类型（任务没有类型字段，用标签表达）" },
             { name: "review", type: "string", description: "完成后的感受/复盘自由文本，通常随完成一起写入" },
@@ -188,4 +188,7 @@ export function apply(ctx) {
       }),
     "tasks-domain",
   );
+  // 斜杠命令：缺少 commands 服务时 registerPublisherCommand 内部静默跳过，
+  // 不影响插件加载（ACP/无 UI 环境没有该服务）。
+  ctx.effect(() => registerPublisherCommand(ctx), "tasks-publisher-command");
 }

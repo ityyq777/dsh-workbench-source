@@ -14,12 +14,6 @@ function hasRange(value) {
 }
 function all(value) { return statusFree(value) && !hasRange(value); }
 function isUrgent(value) { return value.priority.min === "6" && value.priority.max === "10"; }
-function fromTab(tab) {
-  var value = empty(), status = {5:"1",6:"0",7:"2",9:"4"}[tab];
-  if (status) value.statuses = [status];
-  if (Number(tab) === 0) value.priority = {min:"6", max:"10"};
-  return value;
-}
 // 状态是否入选只看状态本身；区间是额外 AND 条件，不能让它把状态判断一起带走。
 function includes(value, status) { return statusFree(value) || value.statuses.indexOf(status) >= 0; }
 function toggle(value, key) {
@@ -128,7 +122,7 @@ function load(params) {
   } catch (e) { return null; }
 }
 module.exports = {
-  groups:groups, all:all, empty:empty, fromTab:fromTab, includes:includes, toggle:toggle, enable:enable,
+  groups:groups, all:all, empty:empty, includes:includes, toggle:toggle, enable:enable,
   range:range, limit:limit, limits:limits, clearDifficulty:clearDifficulty, isUrgent:isUrgent, args:args,
   navigation:navigation, save:save, load:load,
 };

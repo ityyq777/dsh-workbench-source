@@ -6,7 +6,7 @@ import { activityCalendar } from '../packages/addons/tasks/lib/stats/activity-ca
 const db = new DatabaseSync(':memory:'), actions = new Map();
 setup({db, addon:{version:'test'}, log(){}, hasDomain:()=>false, action:(name,def)=>actions.set(name,def)});
 const call=(name,args={})=>actions.get(name).execute(args,{origin:'agent'});
-const list=args=>call('tasks.list',{tab:'all',filterRestarted:false,...args});
+const list=args=>call('tasks.list',{statuses:[],...args});
 const ids=result=>result.records.map(r=>r.id);
 const leap='2024-02-29';
 try {
@@ -45,7 +45,7 @@ try {
     const result=list(args);
     assert.equal(result.total,day[type],day.date+' '+type);
     assert.equal(result.filter.activityType,type);
-    const exported=call('tasks.export',{tab:'all',filterRestarted:false,...args});
+    const exported=call('tasks.export',{statuses:[],...args});
     assert.deepEqual(JSON.parse(exported.content).tasks.map(r=>r.id),ids(result));
   }
   assert.deepEqual(ids(list({activityDate:leap,sort:'created'})),['done-a','done-b']);

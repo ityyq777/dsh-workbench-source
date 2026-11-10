@@ -48,14 +48,14 @@ const tasks = await load("../packages/addons/tasks/lib/index.js", "wb-addon-task
 // 1. 默认值
 const g0 = tasks.call("tasks.configGet");
 assert(g0.values["list.pageSize"] === 12, "tasks 默认分页应为 12");
-assert(g0.values["ui.defaultTab"] === 0, "tasks 默认页签应为 0");
+assert(!Object.hasOwn(g0.values, "ui.defaultTab") && !Object.hasOwn(g0.values, "list.filterRestarted"), "页签与已重启过滤配置已移除");
 assert(g0.values["stats.recentPublishLimit"] === 10, "tasks 最近发布默认应为 10");
 assert(g0.values["stats.sections"].includes("recentPublish"), "最近发布默认可见");
 assert(g0.items.find(x => x.id === "stats.recentPublishLimit").group === "stats", "最近发布配置归属统计分组");
 assert(g0.values["stats.recentDoneLimit"] === 10, "tasks 最近完成默认应为 10");
 assert(g0.values["stats.recentShutdownLimit"] === 10, "tasks 最近关闭默认应为 10");
 assert(g0.values["ui.confirmDelete"] === true, "tasks 删除确认默认应为 true");
-assert(g0.items.length >= 18, "tasks 配置项数量不足：" + g0.items.length);
+assert(g0.items.length >= 16, "tasks 配置项数量不足：" + g0.items.length);
 assert(Object.keys(g0.overrides).length === 0, "初始不应有覆盖项");
 
 // 2. 未知键与越界都必须整批拒绝
@@ -66,11 +66,11 @@ assert(metaKeys().length === 0, "失败的批次不能写入任何键");
 assert(tasks.call("tasks.configGet").values["list.pageSize"] === 12, "失败批次不能留下部分写入");
 
 // 3. 正常写入与读取
-const set1 = tasks.call("tasks.configSet", { values: { "list.pageSize": 24, "ui.defaultTab": 5 } });
+const set1 = tasks.call("tasks.configSet", { values: { "list.pageSize": 24, "ui.listView": "card" } });
 assert(set1.ok !== false, "configSet 失败");
 assert(metaKeys().length === 2, "应写入两个 meta 键，实际 " + metaKeys().length);
 const g1 = tasks.call("tasks.configGet");
-assert(g1.values["list.pageSize"] === 24 && g1.values["ui.defaultTab"] === 5, "覆盖值未生效");
+assert(g1.values["list.pageSize"] === 24 && g1.values["ui.listView"] === "card", "覆盖值未生效");
 assert(g1.overrides["list.pageSize"] === 24, "overrides 未标记修改项");
 assert(db.prepare("SELECT COUNT(*) AS n FROM sync_change_log").get().n === 0, "配置写入不能进 sync_change_log");
 

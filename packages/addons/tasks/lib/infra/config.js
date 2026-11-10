@@ -42,18 +42,6 @@ const ITEMS = [
     values: [{ value: "markdown", zh: "Markdown", en: "Markdown" }, { value: "text", zh: "纯文本", en: "Plain text" }],
   },
   {
-    id: "ui.defaultTab", group: "ui", type: "enum", surface: "ui", apply: "mount", default: 0,
-    zh: "默认页签", en: "Default tab",
-    hintZh: "打开「记录」时默认落在哪个页签", hintEn: "Tab opened by default in Records",
-    values: [
-      { value: 0, zh: "紧急", en: "Urgent" },
-      { value: 5, zh: "已关闭", en: "Closed" },
-      { value: 6, zh: "已开启", en: "Active" },
-      { value: 7, zh: "已完成", en: "Done" },
-      { value: 8, zh: "总览", en: "Overview" },
-    ],
-  },
-  {
     id: "ui.listView", group: "ui", type: "enum", surface: "ui", apply: "mount", default: "list",
     zh: "列表形态", en: "List style",
     hintZh: "记录页默认用列表还是卡片", hintEn: "List or card layout in Records",
@@ -81,9 +69,9 @@ const ITEMS = [
   {
     id: "list.sort", group: "list", type: "enum", surface: "ui", apply: "mount", default: "auto",
     zh: "默认排序", en: "Default sort",
-    hintZh: "auto 表示沿用各页签的原有排序", hintEn: "auto keeps each tab's built-in order",
+    hintZh: "auto 表示沿用记录页的默认排序", hintEn: "auto keeps the default Records order",
     values: [
-      { value: "auto", zh: "自动（按页签）", en: "Auto (by tab)" },
+      { value: "auto", zh: "自动（默认）", en: "Auto (default)" },
       { value: "priority", zh: "优先级升序", en: "Priority asc" },
       { value: "-priority", zh: "优先级降序", en: "Priority desc" },
       { value: "target", zh: "目标日期升序", en: "Target asc" },
@@ -95,11 +83,6 @@ const ITEMS = [
       { value: "created", zh: "创建时间升序", en: "Created asc" },
       { value: "-created", zh: "创建时间降序", en: "Created desc" },
     ],
-  },
-  {
-    id: "list.filterRestarted", group: "list", type: "bool", surface: "ui", apply: "mount", default: true,
-    zh: "默认过滤已重启", en: "Filter restarted by default",
-    hintZh: "只影响「已关闭」「总览」页签的筛选开关初始值", hintEn: "Initial state of the restart filter on Closed/Overview",
   },
   {
     id: "form.defaultPriority", group: "form", type: "int", surface: "ui", apply: "mount", default: 1, min: 0, max: 10,

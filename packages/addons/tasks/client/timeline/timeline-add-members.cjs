@@ -11,7 +11,7 @@ module.exports = function (React) {
     var bs = React.useState(false), busy = bs[0], setBusy = bs[1];
     React.useEffect(function () {
       var cancelled = false; setError("");
-      p.api.call("tasks.list", { titleKey: query, pageNumber: page, pageSize: 20, filterRestarted: true, tab: 8 }).then(result).then(function (r) { if (!cancelled) setData(r); }).catch(function (e) { if (!cancelled) setError(String(e.message || e)); });
+      p.api.call("tasks.list", { titleKey: query, pageNumber: page, pageSize: 20, statuses: [] }).then(result).then(function (r) { if (!cancelled) setData(r); }).catch(function (e) { if (!cancelled) setError(String(e.message || e)); });
       return function () { cancelled = true; };
     }, [p.api, query, page]);
     function submit() {
