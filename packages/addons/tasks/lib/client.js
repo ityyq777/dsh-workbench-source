@@ -1287,9 +1287,6 @@ var require_recent_columns = __commonJS({
         } },
         { key: "date", label: t.colDate, render: function(row) {
           return row.date || "\u2014";
-        } },
-        { key: "daysAgo", label: t.colAgo, num: true, render: function(row) {
-          return row.daysAgo == null ? "\u2014" : row.daysAgo;
         } }
       ];
     };
@@ -1677,7 +1674,6 @@ var require_stats = __commonJS({
         recentShutdown: "\u6700\u8FD1\u5173\u95ED",
         recentShutdownNote: "\u6309\u5173\u95ED\u65E5\u671F\u5012\u5E8F",
         colDate: "\u65E5\u671F",
-        colAgo: "\u8DDD\u4ECA\u5929",
         noRecentDone: "\u8FD8\u6CA1\u6709\u5DF2\u5B8C\u6210\u7684\u4EFB\u52A1",
         noRecentShutdown: "\u8FD8\u6CA1\u6709\u5DF2\u5173\u95ED\u7684\u4EFB\u52A1",
         noOverdue: "\u6CA1\u6709\u903E\u671F\u4EFB\u52A1",
@@ -1755,7 +1751,6 @@ var require_stats = __commonJS({
         recentShutdown: "Recently closed",
         recentShutdownNote: "Newest closure first",
         colDate: "Date",
-        colAgo: "Days ago",
         noRecentDone: "No completed tasks yet",
         noRecentShutdown: "No closed tasks yet",
         noOverdue: "No overdue tasks",

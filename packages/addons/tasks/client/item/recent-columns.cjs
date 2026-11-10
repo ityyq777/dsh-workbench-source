@@ -19,6 +19,5 @@ module.exports = function recentColumns(t, lang, onNavigate) {
       }, row.tableTitle);
     } },
     { key: "date", label: t.colDate, render: function (row) { return row.date || "—"; } },
-    { key: "daysAgo", label: t.colAgo, num: true, render: function (row) { return row.daysAgo == null ? "—" : row.daysAgo; } },
   ];
 };

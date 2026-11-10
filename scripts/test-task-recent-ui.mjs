@@ -10,8 +10,8 @@ for(const lang of ['zh','en']) {
  let navigation;const columns=recent({colTitle:'Task',colTable:'Table',colDate:'Date',colAgo:'Ago'},lang,(...a)=>navigation=a);
  const difficulty=columns.find(c=>c.key==='difficulty'),table=columns.find(c=>c.key==='tableTitle');
  assert.equal(columns.find(c=>c.key==='date').render({date:''}),'—');
- assert.equal(columns.find(c=>c.key==='daysAgo').render({daysAgo:null}),'—');
- assert.equal(columns.find(c=>c.key==='daysAgo').render({daysAgo:0}),0);
+ assert.deepEqual(columns.map(c=>c.key),['title','difficulty','tableTitle','date'],'距今天列已移除，保留任务/难度/任务表/日期四列');
+ assert.equal(columns.some(c=>c.key==='daysAgo'),false);
  for(const value of [0,null,undefined])assert.equal(difficulty.render({difficulty:value}),'—');
  const half=renderToStaticMarkup(difficulty.render({difficulty:2.5}));assert.match(half,/★★⯪☆☆/);assert.match(half,/2.5/);
  const live={tableId:'t',groupId:'g',tableTitle:'Table',difficulty:2.5};
