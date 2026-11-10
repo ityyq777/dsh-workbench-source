@@ -307,17 +307,19 @@ check("空名被拦下且提示", () => {
 // 同一客户端 bundle 验证统计页固定请求 100、只保留左列榜单以及区块开关。
 const StatsView = addon.views.find((v) => v.id === "stats").component;
 const navigations = [];
-async function mountStats(sections, count = 100, lang = "zh") {
+let statsSub = null;
+async function mountStats(sections, count = 100, lang = "zh", itemTypes = []) {
   await tick();
   for (const slot of rt.hooks) if (typeof slot?.cleanup === "function") slot.cleanup();
   rt.hooks = [];
+  statsSub = null;
   const statsApi = {
-    subscribe() { return () => {}; },
+    subscribe(fn) { statsSub = fn; return () => {}; },
     call(action, params) {
       calls.push({ action, params });
       if (action === "tags.configGet") return Promise.resolve({ result: { values: { "stats.top": 5, "stats.sections": sections } } });
       return Promise.resolve({ result: {
-        totals: { tags: count, mappings: count }, rates: {}, breakdowns: {},
+        totals: { tags: count, mappings: count }, rates: {}, breakdowns: { itemTypes },
         rankings: { topTags: Array.from({ length: count }, (_, i) => ({ id: "t" + i, name: "标签" + i, count: count - i })) },
         lists: { stale: [], recent: [] }, trend: [], warnings: [],
       } });
@@ -346,6 +348,35 @@ check("排行单tabstop、可访问名称和点击跳转", () => {
   rows[0].props.onKeyDown({ key: "End", preventDefault() {}, currentTarget: { parentElement: { querySelectorAll: () => rows.map((_, i) => ({ focus() { focused = i; } })) } } });
   rt.rerender();
   assert(focused === 99 && byClass(rt.tree, "wbg-top-row")[99].props.tabIndex === 0, "End key roving focus");
+});
+await mountStats(["top"], 1);
+// 储物标签变化要驱动统计页自动刷新；无关事件不触发。
+const statsCallsBefore = calls.filter((c) => c.action === "tags.statsReport").length;
+if (typeof statsSub === "function") statsSub({ event: "storage-changed" });
+await new Promise((r) => setTimeout(r, 900));
+for (let i = 0; i < 4; i++) { await tick(); rt.rerender(); }
+const statsCallsAfter = calls.filter((c) => c.action === "tags.statsReport").length;
+check("储物标签变化触发统计刷新", () => assert(statsCallsAfter > statsCallsBefore, "storage-changed ignored"));
+const noiseBefore = calls.filter((c) => c.action === "tags.statsReport").length;
+if (typeof statsSub === "function") statsSub({ event: "storage-ping" });
+await new Promise((r) => setTimeout(r, 900));
+check("无关事件不触发统计刷新", () => assert(calls.filter((c) => c.action === "tags.statsReport").length === noiseBefore, "unrelated event reloaded"));
+
+await mountStats(["types"], 3, "zh", [{ key: "storage", label: "物品", mappings: 16, items: 16 }]);
+check("对象类型图例区分条数与对象", () => {
+  const leg = byClass(rt.tree, "wbg-leg")[0];
+  assert(leg && JSON.stringify(leg).includes("物品"), "zh storage label missing");
+  assert(JSON.stringify(leg).includes("16 对象"), "object note missing");
+  const svg = findAll(rt.tree, (n) => n.type === "svg" && n.props["aria-label"] && n.props["aria-label"].includes("16 条关联，16 个对象"))[0];
+  assert(svg, "donut aria label missing link/object wording");
+});
+await mountStats(["types"], 3, "en", [{ key: "storage", label: "物品", mappings: 16, items: 16 }, { key: "other", label: "其他", mappings: 3, items: 2 }]);
+check("英文类型名与未知类型", () => {
+  const text = JSON.stringify(rt.tree);
+  assert(text.includes("Items"), "en storage label missing");
+  assert(text.includes("Other"), "en other label missing");
+  assert(text.includes("16 objects"), "en object note missing");
+  assert(!text.includes("物品"), "server zh label leaked in en UI");
 });
 await mountStats(["top"], 1);
 check("单个标签横条不铺满", () => assert(byClass(rt.tree, "wbg-top-fill")[0].props.style.width === "50%", "single tag full bar"));

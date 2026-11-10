@@ -181,11 +181,13 @@ export function statsReport(db, args) {
     "SELECT item_type, COUNT(*) AS mappings, COUNT(DISTINCT item_id) AS items FROM tag_mapping WHERE deleted_at IS NULL GROUP BY item_type",
   ).all();
   const itemTypes = [];
-  let unknownTypes = 0;
+  let otherMappings = 0;
+  let otherItems = 0;
   for (const row of typeRows) {
     const key = String(row.item_type || "");
     if (!(key in TYPE_LABELS)) {
-      unknownTypes += Number(row.mappings || 0);
+      otherMappings += Number(row.mappings || 0);
+      otherItems += Number(row.items || 0);
       continue;
     }
     itemTypes.push({
@@ -195,9 +197,9 @@ export function statsReport(db, args) {
       items: Number(row.items || 0),
     });
   }
-  if (unknownTypes > 0) {
-    itemTypes.push({ key: "other", label: "其他", mappings: unknownTypes, items: 0 });
-    warnings.push({ code: "item_type_unknown", message: unknownTypes + " 条关联的对象类型未知，已归入「其他」" });
+  if (otherMappings > 0) {
+    itemTypes.push({ key: "other", label: "其他", mappings: otherMappings, items: otherItems });
+    warnings.push({ code: "item_type_unknown", message: otherMappings + " 条关联的对象类型未知，已归入「其他」" });
   }
 
   const newTags = Number(db.prepare(

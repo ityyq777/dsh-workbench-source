@@ -101,6 +101,7 @@ var require_charts = __commonJS({
         ".@-legend{display:flex;flex-direction:column;gap:7px;min-width:120px;flex:1}",
         ".@-leg{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dsw-alias-label-secondary,#646a73)}",
         ".@-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}",
+        ".@-leg-note{font-style:normal;font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e);margin-left:2px}",
         ".@-leg b{margin-left:auto;font-weight:600;color:var(--dsw-alias-label-primary,#1f2329);font-variant-numeric:tabular-nums}",
         ".@-bars{display:flex;flex-direction:column;gap:9px}",
         ".@-bar{display:grid;grid-template-columns:minmax(72px,1.2fr) 3fr auto;gap:8px;align-items:center;font-size:12px}",
@@ -201,6 +202,9 @@ var require_charts = __commonJS({
           props.hint ? h2("div", { className: prefix + "-kpi-h" }, props.hint) : null
         );
       }
+      function donutTitle(d) {
+        return d.label + "\uFF1A" + d.count + (d.note ? "\uFF08" + d.note + "\uFF09" : "");
+      }
       function Donut(props) {
         var data = (props.data || []).filter(function(d) {
           return Number(d.count) > 0;
@@ -234,7 +238,7 @@ var require_charts = __commonJS({
                 strokeDashoffset: -offset,
                 transform: "rotate(-90 " + size / 2 + " " + size / 2 + ")",
                 strokeLinecap: "butt"
-              }, h2("title", null, d.label + "\uFF1A" + d.count));
+              }, h2("title", null, donutTitle(d)));
               offset += len;
               return seg;
             }) : null,
@@ -246,7 +250,7 @@ var require_charts = __commonJS({
               "div",
               { key: d.key || d.label || i, className: prefix + "-leg" },
               h2("span", { className: prefix + "-dot", style: { background: d.color || COLORS[i % COLORS.length] } }),
-              h2("span", null, d.label),
+              h2("span", null, d.label, d.note ? h2("i", { className: prefix + "-leg-note" }, "\xB7 " + d.note) : null),
               h2("b", null, num(props.lang, d.count))
             );
           }))
@@ -1165,14 +1169,19 @@ var require_stats = __commonJS({
         avgPerItem: "\u5E73\u5747\u6BCF\u5BF9\u8C61",
         newTags: "\u8303\u56F4\u5185\u65B0\u589E\u6807\u7B7E",
         newMappings: "\u8303\u56F4\u5185\u65B0\u589E\u5173\u8054",
-        times: "\u4E2A",
+        times: "\u6761",
         current: "\u5F53\u524D",
         inRange: "\u8303\u56F4\u5185",
         ofTotal: "\u5360\u603B\u91CF",
         usage: "\u4F7F\u7528\u6B21\u6570\u5206\u5E03",
         usageNote: "\u6309\u6807\u7B7E\u7684\u5173\u8054\u6761\u6570\u5206\u6876",
+        bin0: "0 \u6B21",
+        bin1: "1\u20132 \u6B21",
+        bin2: "3\u20135 \u6B21",
+        bin3: "6\u201310 \u6B21",
+        bin4: ">10 \u6B21",
         types: "\u5173\u8054\u5BF9\u8C61\u7C7B\u578B",
-        typesNote: "\u5F53\u524D\u5173\u8054",
+        typesNote: "\u6761\u6570=\u5173\u8054\u6761\u6570\uFF0C\u5BF9\u8C61=\u53BB\u91CD\u5BF9\u8C61\uFF1B\u7269\u54C1\u5373\u50A8\u7269\u6A21\u5757\u4E2D\u7684\u7269\u4EF6",
         trend: "\u65B0\u589E\u6807\u7B7E / \u5173\u8054\u8D8B\u52BF",
         trendNote: "\u5305\u542B\u540E\u6765\u89E3\u9664\u7684\u5173\u8054\uFF08\u5386\u53F2\u65B0\u589E\uFF09",
         newTagSeries: "\u65B0\u589E\u6807\u7B7E",
@@ -1191,6 +1200,7 @@ var require_stats = __commonJS({
         noData: "\u8FD8\u6CA1\u6709\u6807\u7B7E\u3002\u5728\u300C\u6807\u7B7E\u300D\u9875\u521B\u5EFA\u540E\uFF0C\u8FD9\u91CC\u4F1A\u81EA\u52A8\u6C47\u603B",
         typeSite: "\u7AD9\u70B9",
         typeTask: "\u4EFB\u52A1",
+        typeStorage: "\u7269\u54C1",
         typeOther: "\u5176\u4ED6"
       },
       en: {
@@ -1222,8 +1232,13 @@ var require_stats = __commonJS({
         ofTotal: "of total",
         usage: "Usage distribution",
         usageNote: "Tags bucketed by mapping count",
+        bin0: "0",
+        bin1: "1\u20132",
+        bin2: "3\u20135",
+        bin3: "6\u201310",
+        bin4: ">10",
         types: "Object types",
-        typesNote: "Current mappings",
+        typesNote: "Links vs distinct objects; Items are storage-module records",
         trend: "New tags / mappings",
         trendNote: "Includes mappings later removed",
         newTagSeries: "Tags",
@@ -1242,6 +1257,7 @@ var require_stats = __commonJS({
         noData: "No tags yet. Create one on the Tags page and the summary appears here.",
         typeSite: "Sites",
         typeTask: "Tasks",
+        typeStorage: "Items",
         typeOther: "Other"
       }
     };
@@ -1329,7 +1345,7 @@ var require_stats = __commonJS({
         var pending = false;
         var off = api.subscribe(function(payload) {
           var ev = payload && payload.event;
-          if (ev !== "tags-changed" && ev !== "tasks-changed" && ev !== "sites-changed") return;
+          if (ev !== "tags-changed" && ev !== "tasks-changed" && ev !== "sites-changed" && ev !== "storage-changed") return;
           if (typeof document !== "undefined" && document.visibilityState && document.visibilityState !== "visible") {
             pending = true;
             return;
@@ -1362,6 +1378,26 @@ var require_stats = __commonJS({
         var totals = data.totals;
         var rates = data.rates || {};
         var b = data.breakdowns || {};
+        var usageLabel = { "0": t.bin0, "1-2": t.bin1, "3-5": t.bin2, "6-10": t.bin3, "10+": t.bin4 };
+        var usageData = (b.usage || []).map(function(row) {
+          return Object.assign({}, row, { label: usageLabel[row.key] || row.label });
+        });
+        var typeName = { site: t.typeSite, task: t.typeTask, storage: t.typeStorage, other: t.typeOther };
+        var types = b.itemTypes || [];
+        var donutData = types.map(function(x, i) {
+          var items = Number(x.items) || 0;
+          return {
+            key: x.key,
+            label: typeName[x.key] || x.label,
+            count: x.mappings,
+            note: lang === "en" ? items + " objects" : items + " \u5BF9\u8C61",
+            color: ch.colors[i]
+          };
+        });
+        var donutAria = types.map(function(x) {
+          var items = Number(x.items) || 0;
+          return lang === "en" ? (typeName[x.key] || x.label) + " " + x.mappings + " links, " + items + " objects" : (typeName[x.key] || x.label) + " " + x.mappings + " \u6761\u5173\u8054\uFF0C" + items + " \u4E2A\u5BF9\u8C61";
+        }).join(lang === "en" ? "; " : "\uFF1B");
         children.push(h2(
           "div",
           { key: "kpi", className: "wbg-kpis" },
@@ -1380,7 +1416,7 @@ var require_stats = __commonJS({
           children.push(h2(
             ch.Card,
             { key: "usage", span: 6, title: t.usage, note: t.usageNote },
-            h2(ch.Histogram, { data: b.usage || [], lang, color: ch.colors[0] })
+            h2(ch.Histogram, { data: usageData, lang, color: ch.colors[0] })
           ));
           children.push(h2(TopTags, {
             key: "top",
@@ -1395,15 +1431,11 @@ var require_stats = __commonJS({
             ch.Card,
             { key: "types", span: 4, title: t.types, note: t.typesNote },
             h2(ch.Donut, {
-              data: (b.itemTypes || []).map(function(x, i) {
-                return { key: x.key, label: x.label, count: x.mappings, color: ch.colors[i] };
-              }),
+              data: donutData,
               total: totals.mappings,
               lang,
               centerLabel: t.mappings,
-              aria: (b.itemTypes || []).map(function(x) {
-                return x.label + " " + x.mappings;
-              }).join("\uFF0C")
+              aria: donutAria
             })
           ));
           children.push(h2(
@@ -3693,7 +3725,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.6.10",
+    version: "1.6.11",
     views: [
       { id: "stats", title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },
       { id: "tags", title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TagsView },

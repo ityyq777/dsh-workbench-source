@@ -63,6 +63,7 @@ function css(prefix) {
     ".@-legend{display:flex;flex-direction:column;gap:7px;min-width:120px;flex:1}",
     ".@-leg{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dsw-alias-label-secondary,#646a73)}",
     ".@-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}",
+    ".@-leg-note{font-style:normal;font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e);margin-left:2px}",
     ".@-leg b{margin-left:auto;font-weight:600;color:var(--dsw-alias-label-primary,#1f2329);font-variant-numeric:tabular-nums}",
     ".@-bars{display:flex;flex-direction:column;gap:9px}",
     ".@-bar{display:grid;grid-template-columns:minmax(72px,1.2fr) 3fr auto;gap:8px;align-items:center;font-size:12px}",
@@ -156,6 +157,9 @@ function makeCharts(prefix) {
     );
   }
 
+  function donutTitle(d) {
+    return d.label + "：" + d.count + (d.note ? "（" + d.note + "）" : "");
+  }
   function Donut(props) {
     var data = (props.data || []).filter(function (d) { return Number(d.count) > 0; });
     var total = Number(props.total || 0);
@@ -177,7 +181,7 @@ function makeCharts(prefix) {
             strokeDashoffset: -offset,
             transform: "rotate(-90 " + size / 2 + " " + size / 2 + ")",
             strokeLinecap: "butt",
-          }, h("title", null, d.label + "：" + d.count));
+          }, h("title", null, donutTitle(d)));
           offset += len;
           return seg;
         }) : null,
@@ -187,7 +191,7 @@ function makeCharts(prefix) {
       h("div", { className: prefix + "-legend" }, (props.data || []).map(function (d, i) {
         return h("div", { key: d.key || d.label || i, className: prefix + "-leg" },
           h("span", { className: prefix + "-dot", style: { background: d.color || COLORS[i % COLORS.length] } }),
-          h("span", null, d.label),
+          h("span", null, d.label, d.note ? h("i", { className: prefix + "-leg-note" }, "· " + d.note) : null),
           h("b", null, num(props.lang, d.count)),
         );
       })),

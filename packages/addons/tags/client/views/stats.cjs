@@ -14,9 +14,10 @@ var COPY = {
     rangeInvalid: "起始日期不能晚于终止日期",
     tags: "标签总数", used: "已使用", mappings: "关联总数", items: "覆盖对象",
     avgPerItem: "平均每对象", newTags: "范围内新增标签", newMappings: "范围内新增关联",
-    times: "个", current: "当前", inRange: "范围内", ofTotal: "占总量",
+    times: "条", current: "当前", inRange: "范围内", ofTotal: "占总量",
     usage: "使用次数分布", usageNote: "按标签的关联条数分桶",
-    types: "关联对象类型", typesNote: "当前关联",
+    bin0: "0 次", bin1: "1–2 次", bin2: "3–5 次", bin3: "6–10 次", bin4: ">10 次",
+    types: "关联对象类型", typesNote: "条数=关联条数，对象=去重对象；物品即储物模块中的物件",
     trend: "新增标签 / 关联趋势", trendNote: "包含后来解除的关联（历史新增）",
     newTagSeries: "新增标签", newMapSeries: "新增关联",
     stale: "沉睡标签", staleNote: "从未使用或 90 天未使用",
@@ -24,7 +25,7 @@ var COPY = {
     colName: "标签", colCount: "使用次数", colLast: "最近使用", colShare: "占比",
     never: "从未使用", noStale: "没有沉睡标签", noRecent: "还没有使用记录",
     noData: "还没有标签。在「标签」页创建后，这里会自动汇总",
-    typeSite: "站点", typeTask: "任务", typeOther: "其他",
+    typeSite: "站点", typeTask: "任务", typeStorage: "物品", typeOther: "其他",
   },
   en: {
     range7: "7 days", range30: "30 days", range90: "90 days", range365: "1 year", rangeAll: "All",
@@ -36,7 +37,8 @@ var COPY = {
     avgPerItem: "Avg per object", newTags: "New tags", newMappings: "New mappings",
     times: "", current: "Current", inRange: "In range", ofTotal: "of total",
     usage: "Usage distribution", usageNote: "Tags bucketed by mapping count",
-    types: "Object types", typesNote: "Current mappings",
+    bin0: "0", bin1: "1–2", bin2: "3–5", bin3: "6–10", bin4: ">10",
+    types: "Object types", typesNote: "Links vs distinct objects; Items are storage-module records",
     trend: "New tags / mappings", trendNote: "Includes mappings later removed",
     newTagSeries: "Tags", newMapSeries: "Mappings",
     stale: "Stale tags", staleNote: "Never used or unused for 90 days",
@@ -44,7 +46,7 @@ var COPY = {
     colName: "Tag", colCount: "Uses", colLast: "Last used", colShare: "Share",
     never: "Never", noStale: "No stale tags", noRecent: "No usage yet",
     noData: "No tags yet. Create one on the Tags page and the summary appears here.",
-    typeSite: "Sites", typeTask: "Tasks", typeOther: "Other",
+    typeSite: "Sites", typeTask: "Tasks", typeStorage: "Items", typeOther: "Other",
   },
 };
 
@@ -119,7 +121,7 @@ function TagsStatsBody(props) {
     var pending = false;
     var off = api.subscribe(function (payload) {
       var ev = payload && payload.event;
-      if (ev !== "tags-changed" && ev !== "tasks-changed" && ev !== "sites-changed") return;
+      if (ev !== "tags-changed" && ev !== "tasks-changed" && ev !== "sites-changed" && ev !== "storage-changed") return;
       if (typeof document !== "undefined" && document.visibilityState && document.visibilityState !== "visible") {
         pending = true;
         return;
@@ -152,6 +154,23 @@ function TagsStatsBody(props) {
     var totals = data.totals;
     var rates = data.rates || {};
     var b = data.breakdowns || {};
+    var usageLabel = { "0": t.bin0, "1-2": t.bin1, "3-5": t.bin2, "6-10": t.bin3, "10+": t.bin4 };
+    var usageData = (b.usage || []).map(function (row) { return Object.assign({}, row, { label: usageLabel[row.key] || row.label }); });
+    var typeName = { site: t.typeSite, task: t.typeTask, storage: t.typeStorage, other: t.typeOther };
+    var types = b.itemTypes || [];
+    var donutData = types.map(function (x, i) {
+      var items = Number(x.items) || 0;
+      return {
+        key: x.key, label: typeName[x.key] || x.label, count: x.mappings,
+        note: lang === "en" ? items + " objects" : items + " 对象", color: ch.colors[i],
+      };
+    });
+    var donutAria = types.map(function (x) {
+      var items = Number(x.items) || 0;
+      return lang === "en"
+        ? (typeName[x.key] || x.label) + " " + x.mappings + " links, " + items + " objects"
+        : (typeName[x.key] || x.label) + " " + x.mappings + " 条关联，" + items + " 个对象";
+    }).join(lang === "en" ? "; " : "；");
     children.push(h("div", { key: "kpi", className: "wbg-kpis" },
       h(ch.Kpi, { label: t.tags, value: totals.tags, hint: t.current, lang: lang }),
       h(ch.Kpi, { label: t.used, value: totals.used, hint: ch.pct(rates.usedRatio) + " " + t.ofTotal, tone: "ok", lang: lang }),
@@ -167,16 +186,16 @@ function TagsStatsBody(props) {
       children.push(h(ch.Card, { key: "empty", span: 12 }, h(ch.Empty, { text: t.noData })));
     } else {
       children.push(h(ch.Card, { key: "usage", span: 6, title: t.usage, note: t.usageNote },
-        h(ch.Histogram, { data: b.usage || [], lang: lang, color: ch.colors[0] })));
+        h(ch.Histogram, { data: usageData, lang: lang, color: ch.colors[0] })));
       children.push(h(TopTags, {
         key: "top", rows: ((data.rankings && data.rankings.topTags) || []).slice(0, 100), total: totals.tags, lang: lang,
         onSelect: function (row) { if (props.onNavigate) props.onNavigate("tags", { text: row.name }); },
       }));
       children.push(h(ch.Card, { key: "types", span: 4, title: t.types, note: t.typesNote },
         h(ch.Donut, {
-          data: (b.itemTypes || []).map(function (x, i) { return { key: x.key, label: x.label, count: x.mappings, color: ch.colors[i] }; }),
+          data: donutData,
           total: totals.mappings, lang: lang, centerLabel: t.mappings,
-          aria: (b.itemTypes || []).map(function (x) { return x.label + " " + x.mappings; }).join("，"),
+          aria: donutAria,
         })));
       children.push(h(ch.Card, { key: "trend", span: 8, title: t.trend, note: t.trendNote },
         h(ch.Trend, {

@@ -182,7 +182,57 @@ assert(capped.lists.stale.length === 20 && capped.lists.recent.length === 10, "t
 const tied = capped.rankings.topTags.filter((row) => row.count === 0).map((row) => row.id);
 assert(tied.join() === tied.slice().sort().join(), "ties ordered by id ascending");
 assert(report({ top: 5 }).rankings.topTags.length === 100, "Top default independent of top");
+// 未知对象类型：归入「其他」时也要给出去重对象数，不能恒为 0。
+statsDb.prepare("INSERT INTO tag_mapping(id,tag_id,item_id,item_type,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,'device',?,?,NULL,1)").run("other-a", "rank-000", "dev-1", stamp, stamp);
+statsDb.prepare("INSERT INTO tag_mapping(id,tag_id,item_id,item_type,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,'device',?,?,NULL,1)").run("other-b", "rank-000", "dev-2", stamp, stamp);
+const otherType = report({ topTagsLimit: 100 }).breakdowns.itemTypes.find(function (row) { return row.key === "other"; });
+assert(otherType && otherType.mappings === 2 && otherType.items === 2, "unknown types keep distinct items: " + JSON.stringify(otherType));
+assert(report().warnings.some(function (w) { return w.code === "item_type_unknown"; }), "unknown type warning missing");
 statsDb.close();
+
+// 可核算样本：储物 A 挂 X/Y、储物 B 挂 X，跨类型同 ID、空标签、已删关联分别核对口径。
+const sampleDb = new DatabaseSync(":memory:");
+const sampleDefs = {};
+mod.setup({ ...api, db: sampleDb, action: (name, def) => { sampleDefs[name] = def; } });
+const sample = (args = {}) => sampleDefs["tags.statsReport"].execute(Object.assign({ range: "all" }, args));
+sampleDb.exec("CREATE TABLE storage(id TEXT PRIMARY KEY,deleted_at INTEGER)");
+sampleDb.exec("CREATE TABLE task(id TEXT PRIMARY KEY,deleted_at INTEGER)");
+for (const id of ["sA", "sB", "sEmpty"]) sampleDb.prepare("INSERT INTO storage VALUES(?,NULL)").run(id);
+sampleDb.prepare("INSERT INTO task VALUES('sA',NULL)").run();
+const nowTs = Date.now();
+for (const tagId of ["tX", "tY"])
+  sampleDb.prepare("INSERT INTO tag(id,name,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,NULL,1)").run(tagId, tagId === "tX" ? "X" : "Y", nowTs, nowTs);
+let seq = 0;
+const link = (tagId, itemId, itemType, deleted) =>
+  sampleDb.prepare("INSERT INTO tag_mapping(id,tag_id,item_id,item_type,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?,1)")
+    .run("m" + ++seq, tagId, itemId, itemType, nowTs, nowTs, deleted || null);
+link("tX", "sA", "storage");
+link("tY", "sA", "storage");
+link("tX", "sB", "storage");
+let rep = sample();
+let types = Object.fromEntries(rep.breakdowns.itemTypes.map((row) => [row.key, row]));
+assert(types.storage.mappings === 3 && types.storage.items === 2, "储物示例关联/对象口径错误：" + JSON.stringify(types.storage));
+assert(rep.totals.items === 2 && rep.totals.mappings === 3, "储物样本总量错误");
+let counts = Object.fromEntries(rep.rankings.topTags.map((row) => [row.name, row.count]));
+assert(counts.X === 2 && counts.Y === 1, "储物标签次数错误：" + JSON.stringify(counts));
+assert(types.storage.label === "物品", "储物类型名应为物品");
+// 跨类型同 ID：任务 sA 再挂 X，对象按 (item_type,item_id) 去重，不能并入储物。
+link("tX", "sA", "task");
+rep = sample();
+types = Object.fromEntries(rep.breakdowns.itemTypes.map((row) => [row.key, row]));
+assert(types.storage.items === 2 && types.task.items === 1, "跨类型同 ID 被误合并：" + JSON.stringify(types));
+assert(rep.totals.items === 3, "跨类型对象总数应为 3");
+counts = Object.fromEntries(rep.rankings.topTags.map((row) => [row.name, row.count]));
+assert(counts.X === 3, "跨类型后 X 应贡献 3 次，实际 " + counts.X);
+// 已删关联：物品 B 移除 X 后按当前存量统计。
+sampleDb.prepare("UPDATE tag_mapping SET deleted_at=? WHERE tag_id='tX' AND item_id='sB' AND item_type='storage'").run(Date.now());
+rep = sample();
+types = Object.fromEntries(rep.breakdowns.itemTypes.map((row) => [row.key, row]));
+assert(types.storage.mappings === 2 && types.storage.items === 1, "移除关联后储物统计未更新：" + JSON.stringify(types.storage));
+assert(rep.totals.items === 2 && rep.totals.used === 2, "移除关联后对象/已用标签未更新");
+counts = Object.fromEntries(rep.rankings.topTags.map((row) => [row.name, row.count]));
+assert(counts.X === 2 && counts.Y === 1, "移除关联后次数未更新：" + JSON.stringify(counts));
+sampleDb.close();
 
 console.log("TAGS TEST PASS", { events: events.length, tables: tables.length });
 db.close();
