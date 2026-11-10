@@ -13,13 +13,13 @@ import { LEGACY_TYPE_TAGS, tagsAvailable, normalizeTagIds, normalizeTagNames, ta
  */
 const TABS = {
   EMERGENCY: 0, WORK: 1, LIFE: 2, STUDY: 3, DEV: 4,
-  SHUTDOWN: 5, ACTIVE: 6, DONE: 7, OVERVIEW: 8,
+  SHUTDOWN: 5, ACTIVE: 6, DONE: 7, OVERVIEW: 8, CLAIMED: 9,
 };
 function tabCode(value) {
   if (value === undefined || value === null || value === "") return 0;
   if (TABS[String(value)] !== undefined) return TABS[String(value)];
   const n = Number(value);
-  if (!Number.isFinite(n) || n < 0 || n > 8) throw new Error("tab 取值非法：" + value);
+  if (!Number.isFinite(n) || n < 0 || n > 9) throw new Error("tab 取值非法：" + value);
   return Math.floor(n);
 }
 
@@ -32,8 +32,8 @@ export function listTasks(db, args, api) {
   ];
   const multiStatus = args.statuses !== undefined || args.urgent !== undefined;
   if (args.statuses !== undefined && (!Array.isArray(args.statuses) ||
-      args.statuses.some(s => !Number.isInteger(s) || s < 0 || s > 3))) {
-    throw new Error("statuses 必须是 0/1/2/3 整数数组");
+      args.statuses.some(s => !Number.isInteger(s) || s < 0 || s > 4))) {
+    throw new Error("statuses 必须是 0/1/2/3/4 整数数组");
   }
   if (args.urgent !== undefined && typeof args.urgent !== "boolean") throw new Error("urgent 必须是布尔值");
   const statuses = [...new Set(args.statuses || [])];
@@ -222,6 +222,8 @@ function rangeArg(clamp, value, label, span) {
     where.push("t.status='2'");
   } else if (tab === 8) {
     if (filterRestarted) where.push("t.status!='3'");
+  } else if (tab === 9) {
+    where.push("t.status='4'");
   }
 
   // 分页语义（2026-11-08 明确化）：
@@ -231,7 +233,7 @@ function rangeArg(clamp, value, label, span) {
   const MAX_PAGE_SIZE = 200;
   const MAX_UNPAGED = 500;
   const wantPaging = args.pageNumber !== undefined || args.pageSize !== undefined;
-  const pageable = (tab > 4 && tab < 9) || wantPaging;
+  const pageable = (tab > 4 && tab < 10) || wantPaging;
   let pageNumber = 1;
   let pageSize = 0;
   let limitSql = "";

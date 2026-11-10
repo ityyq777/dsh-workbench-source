@@ -11,10 +11,12 @@ export function clampPriority(value, fallback) {
  * 优先级状态机（唯一入口）：
  * - 已开启（status=0）：P1..P10，显式传 0 是错误（0 只表示「没有优先级」）；
  * - 已关闭/已完成/已重启：一律 P0，写入什么都被忽略；
+ * - 已接取（4）：仍持有 P1..P10，与已开启同规；
  * - 开启但历史值为 0（旧数据）且本次没有显式传值：回落到 P1。
  */
 export function priorityForStatus(status, requested, fallback) {
-  if (status !== "0") return 0;
+  // 已接取（4）仍持有优先级，按「开启类」处理。
+  if (status !== "0" && status !== "4") return 0;
   if (requested !== undefined && requested !== null && requested !== "" && Number(requested) === 0) {
     throw new Error("已开启任务的优先级必须在 1..10（0 仅用于已完成/已关闭）");
   }

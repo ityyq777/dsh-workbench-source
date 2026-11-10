@@ -136,11 +136,11 @@ export function createTask(db, args, origin, api, opts) {
   const body = function () {
     if (source === "2") {
       const active = db.prepare(
-        "SELECT * FROM task WHERE restart_key=? AND status='0' AND deleted_at IS NULL",
+        "SELECT * FROM task WHERE restart_key=? AND status IN ('0','4') AND deleted_at IS NULL",
       ).all(restartKey);
       const shutdownTs = now();
       for (const old of active) {
-        const next = Object.assign({}, old, { status: "1", priority: 0, shutdown_date: todayStr(), updated_at: shutdownTs, rev: Number(old.rev) + 1 });
+        const next = Object.assign({}, old, { status: "1", priority: 0, shutdown_date: todayStr(), owner: null, claimed_at: null, claim_token: null, updated_at: shutdownTs, rev: Number(old.rev) + 1 });
         saveTaskRow(db, next);
         writeChange(db, next, "update", origin, api, shutdownTs);
       }

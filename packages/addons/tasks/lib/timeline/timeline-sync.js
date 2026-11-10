@@ -12,6 +12,11 @@ export function normalizeTimelineTask({db,row,local}) {
   delete result.sort;
   const hasTimelineKey = Object.hasOwn(row, "timeline_key");
   if (!hasTimelineKey && local) result.timeline_key = local.timeline_key;
+  // 旧客户端不认识接取列：incoming 缺这三列时保留本地值，绝不用 undefined 清空；
+  // 显式传 null 视为新值（例如对方已释放），交给整行覆盖逻辑。
+  for (const column of ["owner", "claimed_at", "claim_token"]) {
+    if (!Object.hasOwn(row, column) && local) result[column] = local[column];
+  }
   // Derived fields are not persisted as task columns. Never use them to create membership.
   delete result.timeline_id; delete result.timelineId; delete result.timelineKey;
   const link = db.prepare('SELECT * FROM task_timeline_link WHERE task_id=?').get(row.id);

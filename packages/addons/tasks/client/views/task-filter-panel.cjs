@@ -20,7 +20,7 @@ module.exports = function renderFilterPanel(React, p) {
   var h = React.createElement, en = p.lang === "en", value = p.value;
   var title = en ? "Filters" : "筛选";
   var labels = en ? {publish:"Publication range",done:"Completion range",shutdown:"Closure range"} : {publish:"发布时间范围",done:"完成时间范围",shutdown:"关闭时间范围"};
-  var options = [["all",en?"All":"全部"],["urgent",en?"Urgent tasks":"紧急任务"],["0",en?"Opened":"已开启"],["2",en?"Completed":"已完成"],["1",en?"Closed":"已关闭"],["3",en?"Restarted":"已重启"]];
+  var options = [["all",en?"All":"全部"],["urgent",en?"Urgent tasks":"紧急任务"],["0",en?"Opened":"已开启"],["2",en?"Completed":"已完成"],["1",en?"Closed":"已关闭"],["3",en?"Restarted":"已重启"],["4",en?"Claimed":"已接取"]];
   var unitId = p.id + "-unit";
   var units = en ? {priority:"1–10, higher is more urgent", difficulty:"0.5–5 in half steps, higher is harder"} : {priority:"1–10，越大越紧急", difficulty:"0.5–5，半档递增，越大越难"};
   function change(next) { p.onChange(next); }

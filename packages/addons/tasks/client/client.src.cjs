@@ -30,6 +30,7 @@
     { id: 0, zh: "紧急任务", en: "Urgent" },
     { id: 5, zh: "已关闭", en: "Closed" },
     { id: 6, zh: "已开启", en: "Active" },
+    { id: 9, zh: "已接取", en: "Claimed" },
     { id: 7, zh: "已完成", en: "Done" },
     { id: 8, zh: "总览", en: "Overview" },
   ];
@@ -38,6 +39,7 @@
     "1": { zh: "已关闭", en: "Closed", cls: "shutdown" },
     "2": { zh: "已完成", en: "Done", cls: "done" },
     "3": { zh: "已重启", en: "Restarted", cls: "restarted" },
+    "4": { zh: "已接取", en: "Claimed", cls: "claimed" },
   };
 
   var icons = require("./ui/icons.cjs"), ICONS = icons.ICONS, Icon = icons.Icon;
@@ -377,7 +379,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.4.6",
+    version: "3.5.0",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "记录", en: "Records" }, component: TasksView },

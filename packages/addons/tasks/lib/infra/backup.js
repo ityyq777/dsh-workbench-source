@@ -55,6 +55,9 @@ function taskValues(row) {
     asTextOrNull(row.done_date),
     asTextOrNull(row.shutdown_date),
     asTextOrNull(row.dedupe_key),
+    asTextOrNull(row.owner),
+    row.claimed_at === undefined || row.claimed_at === null ? null : asInt(row.claimed_at, 0),
+    asTextOrNull(row.claim_token),
     asInt(row.created_at, updated),
     updated,
     row.deleted_at === null || row.deleted_at === undefined ? null : asInt(row.deleted_at, updated),
@@ -103,7 +106,7 @@ function nodeValues(row) {
 const DEFINITIONS = [
   ["task_node", "taskNodes", "id,name,description,type,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev", nodeValues],
   ["task_timeline", "taskTimelines", "id,title,description,created_at,updated_at,deleted_at,rev", timelineValues],
-  ["task", "tasks", "id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,dedupe_key,created_at,updated_at,deleted_at,rev", taskValues],
+  ["task", "tasks", "id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,dedupe_key,owner,claimed_at,claim_token,created_at,updated_at,deleted_at,rev", taskValues],
   ["task_dep", "taskDeps", "id,task_id,depends_on_id,created_at,updated_at,deleted_at,rev", depValues],
   ["task_timeline_link", "taskTimelineLinks", "id,task_id,timeline_id,created_at,updated_at,deleted_at,rev", linkValues],
 ];
@@ -195,6 +198,7 @@ export function importTasksData(api, raw, options) {
   try { data = JSON.parse(String(raw || "{}")); plan = prepareBackup(data); }
   catch (error) { return { ok: false, imported: 0, skipped: 0, failed: 1, message: error.message, errors: [error.message] }; }
   const counts = {};
+  const importedTaskIds = new Set();
   let imported = 0, skipped = 0;
   try {
     tx(db, () => {
@@ -214,6 +218,7 @@ export function importTasksData(api, raw, options) {
           if (table === "task" || table === "task_timeline_link") affectedTasks.add(table === "task" ? row.id : row.task_id);
           if (table === "task_timeline") affectedTimelines.add(row.id);
           counts[table].imported++; imported++;
+          if (table === "task") importedTaskIds.add(row.id);
           changed.push({ table, row, original, local, columns });
         }
       }
@@ -267,7 +272,19 @@ export function importTasksData(api, raw, options) {
     api.emit?.("task-nodes-changed", { source: "import" });
     api.emit?.("task-timelines-changed", { source: "import" });
   }
+  // 接取列不变量：旧备份没有 owner/claim_token，status=4 的行恢复后需要人工补齐。
+  const claimBroken = [];
+  for (const id of importedTaskIds) {
+    const row = db.prepare("SELECT id,status,owner,claim_token FROM task WHERE id=?").get(id);
+    if (!row || String(row.status) !== "4") continue;
+    if (!row.owner || !row.claim_token) claimBroken.push(String(row.id));
+  }
   return { ok: true, imported, skipped, failed: 0, tables: counts,
+    claimWarnings: claimBroken.length ? [{
+      code: "CLAIM_FIELDS_MISSING",
+      message: "恢复的 " + claimBroken.length + " 条任务状态为「已接取」但缺少 owner/claim_token（旧备份无此列）：请用 tasks.get 核对后重新接取或关闭",
+      ids: claimBroken,
+    }] : [],
     timelineCandidates: plan.legacy ? legacyCandidates(data.tasks) : [],
     message: plan.legacy ? "旧字段已保留；历史时间线候选需用户批准，未自动实体化" : "任务备份已原子恢复" };
 }

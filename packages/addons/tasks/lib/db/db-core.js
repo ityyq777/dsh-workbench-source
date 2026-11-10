@@ -28,7 +28,10 @@ export const TASK_DDL = [
     "created_at INTEGER NOT NULL," +
     "updated_at INTEGER NOT NULL," +
     "deleted_at INTEGER," +
-    "rev INTEGER NOT NULL DEFAULT 1" +
+    "rev INTEGER NOT NULL DEFAULT 1," +
+    "owner TEXT," +
+    "claimed_at INTEGER," +
+    "claim_token TEXT" +
     ");",
   "CREATE INDEX IF NOT EXISTS idx_task_table_id ON task(table_id);",
   "CREATE INDEX IF NOT EXISTS idx_task_status ON task(status);",
@@ -255,6 +258,9 @@ export function rowTask(row) {
     doneDate: row.done_date || null,
     shutdownDate: row.shutdown_date || null,
     dedupeKey: row.dedupe_key === null || row.dedupe_key === undefined ? null : String(row.dedupe_key),
+    claimedBy: row.owner === null || row.owner === undefined ? null : String(row.owner),
+    claimedAt: row.claimed_at === null || row.claimed_at === undefined ? null : Number(row.claimed_at),
+    claimToken: row.claim_token === null || row.claim_token === undefined ? null : String(row.claim_token),
     path: [],
   };
 }

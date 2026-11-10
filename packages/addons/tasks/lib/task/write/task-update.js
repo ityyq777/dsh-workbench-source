@@ -13,6 +13,7 @@ import {
 } from "../../tagging/tagging.js";
 import { tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, putTypeCode, clampDifficulty, dateArg, getTask, requireTable, saveTaskRow, outOne, writeChange, checkRequiredDates, resolveTagPatch } from "../model/task-model.js";
 import { taskTransaction } from './task-transaction.js';
+import { assertClaimToken, clearClaimFields, claimError } from './task-claim.js';
 import { ownershipFields } from '../model/task-ownership-path.js';
 export function updateTask(db, args, origin, api, opts) {
   if (!opts?.skipTx) return taskTransaction(db, api, buffered => updateTask(db,args,origin,buffered,{skipTx:true}));
@@ -21,6 +22,8 @@ export function updateTask(db, args, origin, api, opts) {
   if (!cur) throw new Error("任务不存在：" + (id || "(空)"));
   const ts = now();
   const next = Object.assign({}, cur);
+  const token = args.claimToken === undefined || args.claimToken === null ? "" : String(args.claimToken).trim();
+  if (token) assertClaimToken(db, id, token);
   const type = putTypeCode(args.type);
 
   if (type === "0") {
@@ -67,11 +70,17 @@ export function updateTask(db, args, origin, api, opts) {
     }
   }
 
+  // 只有「显式写 status」才拦截；已接取任务改标题等字段时 next.status 本来就等于 4。
+  if (next.status === "4" && args.status !== undefined) {
+    throw claimError("CLAIM_REQUIRED", "状态「已接取」不能通过 tasks.update 直接写入，请使用 tasks.claim / tasks.claimBatch / tasks.grab 以 CAS 方式接取", { nextActions: ["tasks.claim({id})", "tasks.claimBatch({ids:[...]})"] });
+  }
   if (next.status === "2" && next.done_date === null) next.done_date = todayStr();
   if (next.status === "2" && (next.difficulty === null || next.difficulty === undefined)) next.difficulty = 0;
-  // 优先级不变量兜底：非开启状态一律 P0；开启状态不允许 P0（历史数据回落到 P1）。
-  if (next.status !== "0") next.priority = 0;
+  // 优先级不变量兜底：非开启/非已接取状态一律 P0；开启类不允许 P0（历史数据回落到 P1）。
+  if (next.status !== "0" && next.status !== "4") next.priority = 0;
   else if (!next.priority) next.priority = 1;
+  // 进入终态时清空接取字段，保持「status=4 才允许有 owner/token」的列不变量。
+  if (next.status === "1" || next.status === "2") Object.assign(next, clearClaimFields(next));
   if (next.status === "1" && next.shutdown_date === null) next.shutdown_date = todayStr();
   checkRequiredDates(next);
   next.updated_at = ts;

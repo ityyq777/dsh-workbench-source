@@ -4078,6 +4078,9 @@ var require_copy = __commonJS({
         batchDelete: "\u6279\u91CF\u5220\u9664",
         batchDeleteConfirm: "\u786E\u5B9A\u5220\u9664\u9009\u4E2D\u7684 {n} \u6761\u4EFB\u52A1\u5417\uFF1F\u5220\u9664\u540E\u4E0D\u53EF\u6062\u590D\u3002",
         deletePartial: "\u90E8\u5206\u5220\u9664\u5931\u8D25",
+        claimSelected: "\u63A5\u53D6\u9009\u4E2D",
+        claimSummary: "\u6210\u529F {ok} \u6761\uFF1B\u5931\u8D25 {fail} \u6761\uFF1A\u5DF2\u88AB\u63A5\u53D6 {already}\u3001\u72B6\u6001\u4E0D\u652F\u6301 {notClaimable}\u3001\u4E0D\u5B58\u5728 {missing}",
+        claimedCount: "\u5DF2\u63A5\u53D6 {n} \u6761\u4EFB\u52A1",
         root: "\u5168\u90E8\u4EFB\u52A1\u7EC4",
         manager: "\u7BA1\u7406\u6A21\u5F0F",
         filterRestarted: "\u8FC7\u6EE4\u5DF2\u91CD\u542F",
@@ -4232,6 +4235,9 @@ var require_copy = __commonJS({
         batchDelete: "Delete",
         batchDeleteConfirm: "Delete {n} selected tasks? This cannot be undone.",
         deletePartial: "some deletes failed",
+        claimSelected: "Claim",
+        claimSummary: "Claimed {ok}; failed {fail}: already claimed {already}, not claimable {notClaimable}, missing {missing}",
+        claimedCount: "Claimed {n} task(s)",
         root: "All tasks",
         manager: "Manage",
         filterRestarted: "Hide restarted",
@@ -5911,7 +5917,7 @@ var require_styles = __commonJS({
       '.wbt-badge::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;margin-right:4px;vertical-align:1px;opacity:.8}',
       ".wbt-badge.active{color:var(--dsw-alias-brand-primary,#0b8a7f)}",
       ".wbt-badge.done{color:var(--dsw-alias-state-success-primary,#2f9e44)}",
-      ".wbt-badge.shutdown{color:var(--dsw-alias-label-tertiary,#7d8698)}.wbt-badge.restarted{color:var(--dsw-alias-state-business-primary,#7048e8)}",
+      ".wbt-badge.shutdown{color:var(--dsw-alias-label-tertiary,#7d8698)}.wbt-badge.restarted{color:var(--dsw-alias-state-business-primary,#7048e8)}.wbt-badge.claimed{color:var(--dsw-alias-state-warning-primary,#b8860b)}",
       ".wbt-ops{display:flex;gap:3px;align-items:center;flex-wrap:wrap;flex:0 1 auto;min-width:0;max-width:100%;justify-content:flex-end;padding-top:1px}",
       ".wbt-icon{border:none;background:color-mix(in oklab,currentColor 5%,transparent);color:inherit;width:24px;height:24px;border-radius:6px;cursor:pointer;font-size:12.5px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:none;opacity:.7;padding:0}",
       ".wbt-icon:hover{opacity:1;background:color-mix(in oklab,var(--wbt-accent) 13%,transparent);color:var(--wbt-accent)}",
@@ -6110,9 +6116,10 @@ var require_task_item = __commonJS({
         var st = statusInfo(task.status);
         var stName = props.lang === "en" ? st.en : st.zh;
         var myTags = task.tags || [];
-        var isActive = String(task.status) === "0";
-        var countdown = String(task.status) === "0" ? daysBetween(task.targetDate) : null;
-        var cdTarget = String(task.status) === "0" && task.targetDate ? (/* @__PURE__ */ new Date(String(task.targetDate) + "T23:59:59")).getTime() : NaN;
+        var openLike = String(task.status) === "0" || String(task.status) === "4";
+        var isActive = openLike;
+        var countdown = openLike ? daysBetween(task.targetDate) : null;
+        var cdTarget = openLike && task.targetDate ? (/* @__PURE__ */ new Date(String(task.targetDate) + "T23:59:59")).getTime() : NaN;
         var tagNodes = myTags.map(function(tag) {
           return h("span", {
             key: "tag-" + String(tag.id),
@@ -6126,7 +6133,7 @@ var require_task_item = __commonJS({
         });
         var meta = [];
         if (task.publishDate) meta.push(h("span", { key: "p" }, h("b", null, t.publish), " ", task.publishDate));
-        if (String(task.status) === "0" && task.targetDate) {
+        if (openLike && task.targetDate) {
           meta.push(h(
             "span",
             { key: "g" },
@@ -6190,7 +6197,7 @@ var require_task_item = __commonJS({
         var line1 = h(
           "div",
           { className: "wbt-line1" },
-          String(task.status) === "0" ? h("span", { className: "wbt-prio " + pClass(task.priority), children: "P" + task.priority }) : h("span", { className: "wbt-prio low", title: t.priority + " 0", children: "\u2014" }),
+          openLike ? h("span", { className: "wbt-prio " + pClass(task.priority), children: "P" + task.priority }) : h("span", { className: "wbt-prio low", title: t.priority + " 0", children: "\u2014" }),
           h("span", { className: "wbt-badge " + st.cls, children: stName }),
           titleNode
         );
@@ -7753,7 +7760,7 @@ var require_task_filter_model = __commonJS({
       return value.priority.min === "6" && value.priority.max === "10";
     }
     function fromTab(tab) {
-      var value = empty(), status = { 5: "1", 6: "0", 7: "2" }[tab];
+      var value = empty(), status = { 5: "1", 6: "0", 7: "2", 9: "4" }[tab];
       if (status) value.statuses = [status];
       if (Number(tab) === 0) value.priority = { min: "6", max: "10" };
       return value;
@@ -7871,7 +7878,7 @@ var require_task_filter_model = __commonJS({
         var parsed = JSON.parse(raw), value = empty();
         if (parsed.navigation !== JSON.stringify(params || {})) return null;
         if (Array.isArray(parsed.statuses)) value.statuses = parsed.statuses.map(String).filter(function(s) {
-          return /^[0-3]$/.test(s);
+          return /^[0-4]$/.test(s);
         });
         groups.forEach(function(key) {
           var box = parsed[key] || {};
@@ -7959,7 +7966,7 @@ var require_task_filter_panel = __commonJS({
       var h = React.createElement, en = p.lang === "en", value = p.value;
       var title = en ? "Filters" : "\u7B5B\u9009";
       var labels = en ? { publish: "Publication range", done: "Completion range", shutdown: "Closure range" } : { publish: "\u53D1\u5E03\u65F6\u95F4\u8303\u56F4", done: "\u5B8C\u6210\u65F6\u95F4\u8303\u56F4", shutdown: "\u5173\u95ED\u65F6\u95F4\u8303\u56F4" };
-      var options = [["all", en ? "All" : "\u5168\u90E8"], ["urgent", en ? "Urgent tasks" : "\u7D27\u6025\u4EFB\u52A1"], ["0", en ? "Opened" : "\u5DF2\u5F00\u542F"], ["2", en ? "Completed" : "\u5DF2\u5B8C\u6210"], ["1", en ? "Closed" : "\u5DF2\u5173\u95ED"], ["3", en ? "Restarted" : "\u5DF2\u91CD\u542F"]];
+      var options = [["all", en ? "All" : "\u5168\u90E8"], ["urgent", en ? "Urgent tasks" : "\u7D27\u6025\u4EFB\u52A1"], ["0", en ? "Opened" : "\u5DF2\u5F00\u542F"], ["2", en ? "Completed" : "\u5DF2\u5B8C\u6210"], ["1", en ? "Closed" : "\u5DF2\u5173\u95ED"], ["3", en ? "Restarted" : "\u5DF2\u91CD\u542F"], ["4", en ? "Claimed" : "\u5DF2\u63A5\u53D6"]];
       var unitId = p.id + "-unit";
       var units = en ? { priority: "1\u201310, higher is more urgent", difficulty: "0.5\u20135 in half steps, higher is harder" } : { priority: "1\u201310\uFF0C\u8D8A\u5927\u8D8A\u7D27\u6025", difficulty: "0.5\u20135\uFF0C\u534A\u6863\u9012\u589E\uFF0C\u8D8A\u5927\u8D8A\u96BE" };
       function change(next) {
@@ -8406,6 +8413,35 @@ var require_tasks_view = __commonJS({
             say(fail ? t.deleted + " " + ok + " \xB7 " + t.deletePartial + " " + fail : t.deleted + " " + ok);
           });
         }
+        function claimSelected() {
+          var ids = Array.from(selectedIds);
+          if (!ids.length) return;
+          api.call("tasks.claimBatch", { ids }).then(function(r) {
+            var d = r && r.result ? r.result : r;
+            if (!d) {
+              say("claim failed");
+              return;
+            }
+            var got = Array.isArray(d.claimed) ? d.claimed.map(function(x) {
+              return String(x.id);
+            }) : [];
+            var c = d.counts || {};
+            var left = new Set(Array.from(selectedIds).filter(function(id) {
+              return got.indexOf(String(id)) < 0;
+            }));
+            setSelectedIds(left);
+            refreshList();
+            refreshTagNav();
+            if (!left.size) {
+              clearSelection();
+              say(t.claimedCount.replace("{n}", String(got.length)));
+              return;
+            }
+            say(t.claimSummary.replace("{ok}", String(got.length)).replace("{fail}", String(Number(c.alreadyClaimed || 0) + Number(c.notClaimable || 0) + Number(c.notFound || 0) + Number(c.deleted || 0) + Number(c.busy || 0))).replace("{already}", String(c.alreadyClaimed || 0)).replace("{notClaimable}", String(c.notClaimable || 0)).replace("{missing}", String(Number(c.notFound || 0) + Number(c.deleted || 0))));
+          }).catch(function(e) {
+            say(e && e.message || "claim failed");
+          });
+        }
         function deleteNode(node) {
           if (cfgConfirm && !window.confirm(t.deleteConfirm)) return;
           api.call("taskNodes.delete", { id: node.id }).then(function(r) {
@@ -8721,6 +8757,7 @@ var require_tasks_view = __commonJS({
               setBatchMode("migrate");
               openSelected();
             } }, t.batchMigrate),
+            h("button", { className: "wbt-btn", onClick: claimSelected }, t.claimSelected),
             h("button", { className: "wbt-btn wbt-act-del", onClick: batchDelete }, h(Icon2, { name: "trash", size: 13 }), t.batchDelete),
             h("button", { className: "wbt-btn ghost", onClick: clearSelection }, t.clear)
           ) : null,
@@ -9468,6 +9505,7 @@ var require_timeline_view = __commonJS({
     { id: 0, zh: "\u7D27\u6025\u4EFB\u52A1", en: "Urgent" },
     { id: 5, zh: "\u5DF2\u5173\u95ED", en: "Closed" },
     { id: 6, zh: "\u5DF2\u5F00\u542F", en: "Active" },
+    { id: 9, zh: "\u5DF2\u63A5\u53D6", en: "Claimed" },
     { id: 7, zh: "\u5DF2\u5B8C\u6210", en: "Done" },
     { id: 8, zh: "\u603B\u89C8", en: "Overview" }
   ];
@@ -9475,7 +9513,8 @@ var require_timeline_view = __commonJS({
     "0": { zh: "\u5DF2\u5F00\u542F", en: "Active", cls: "active" },
     "1": { zh: "\u5DF2\u5173\u95ED", en: "Closed", cls: "shutdown" },
     "2": { zh: "\u5DF2\u5B8C\u6210", en: "Done", cls: "done" },
-    "3": { zh: "\u5DF2\u91CD\u542F", en: "Restarted", cls: "restarted" }
+    "3": { zh: "\u5DF2\u91CD\u542F", en: "Restarted", cls: "restarted" },
+    "4": { zh: "\u5DF2\u63A5\u53D6", en: "Claimed", cls: "claimed" }
   };
   var icons = require_icons(), ICONS = icons.ICONS, Icon2 = icons.Icon;
   function tabIcon(name) {
@@ -9906,7 +9945,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.4.6",
+    version: "3.5.0",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

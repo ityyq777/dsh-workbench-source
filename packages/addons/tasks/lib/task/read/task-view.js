@@ -37,7 +37,7 @@ export function changelog(db, args) {
 }
 
 
-const STATUS_TEXT = { "0": "进行中", "1": "已关闭", "2": "已完成", "3": "已重启" };
+const STATUS_TEXT = { "0": "进行中", "1": "已关闭", "2": "已完成", "3": "已重启", "4": "已接取" };
 
 function tagNames(tags) {
   return (Array.isArray(tags) ? tags : []).map(function (tag) {
@@ -129,7 +129,7 @@ export function renderList(result) {
     "任务 " + returned + " 条（total " + result.total + (result.truncated ? "，已截断：只返回前 " + returned + " 条" : "") + "）",
   );
   for (const t of result.records) {
-    const mark = t.status === "2" ? "[x]" : t.status === "1" ? "[-]" : t.status === "3" ? "[~]" : "[ ]";
+    const mark = t.status === "2" ? "[x]" : t.status === "1" ? "[-]" : t.status === "3" ? "[~]" : t.status === "4" ? "[>]" : "[ ]";
     const path = (t.path || []).map(function (p) { return p.name; }).join(" / ");
     lines.push("- " + mark + " " + t.title + "（P" + t.priority + "，target " + (t.targetDate || "-") + "，id=" + t.id + (path ? "，" + path : "") + "）");
   }

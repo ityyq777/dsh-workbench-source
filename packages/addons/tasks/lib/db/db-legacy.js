@@ -409,6 +409,9 @@ export function ensureTaskColumns(db, report) {
   dropTaskSortColumn(db, report || {});
   if (!hasColumn(db, "task", "dedupe_key")) db.exec("ALTER TABLE task ADD COLUMN dedupe_key TEXT");
   if (!hasColumn(db, "task", "review")) db.exec("ALTER TABLE task ADD COLUMN review TEXT NOT NULL DEFAULT ''");
+  if (!hasColumn(db, "task", "owner")) db.exec("ALTER TABLE task ADD COLUMN owner TEXT");
+  if (!hasColumn(db, "task", "claimed_at")) db.exec("ALTER TABLE task ADD COLUMN claimed_at INTEGER");
+  if (!hasColumn(db, "task", "claim_token")) db.exec("ALTER TABLE task ADD COLUMN claim_token TEXT");
   dropTaskTypeColumn(db, report || {});
 }
 

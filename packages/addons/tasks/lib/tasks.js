@@ -30,6 +30,7 @@ import { getTask, outOne } from "./task/model/task-model.js";
 import { createTask } from "./task/write/task-create.js";
 import { registerTimelineActions, TIMELINE_PAGE_SCHEMA } from "./timeline/task-timelines.js";
 import { updateTask } from "./task/write/task-update.js";
+import { claimTask, claimBatch, grabTask } from "./task/write/task-claim.js";
 import { selectedTasks, timelineTasks, restartTasks, timelineRefactor, migrateTasks, sweepShutdown, stats, removeTask, completeTask, exportTasks, taskDeps, taskLink, taskUnlink } from "./task/write/task-operations.js";
 export { tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, clampDifficulty, dateArg, getTask, requireTable, saveTaskRow, emitChange, writeChange, checkRequiredDates, currentTaskTagIds, resolveTagPatch, PATCH_FIELDS, DIFF_COLUMNS } from "./task/model/task-model.js";
 export { priorityForStatus } from "./task/model/task-priority.js";
@@ -140,6 +141,7 @@ export function registerTaskActions(api) {
         removeTags: { type: "array", items: { type: "string" }, description: "增量移除标签名（保留其他标签）；名字不存在时报错" },
         addTagIds: { type: "array", items: { type: "string" }, description: "增量添加标签 id；id 不存在报错并列出可用标签" },
         removeTagIds: { type: "array", items: { type: "string" }, description: "增量移除标签 id；id 不存在报错" },
+        claimToken: { type: "string", description: "接取凭据（tasks.claim/grab 返回）：任务当前 status=4 时用于 ABA 校验，不匹配返回 TASK_CLAIM_LOST；不传视为人工放行" },
       },
     },
     examples: [{ id: "1001", status: "done", difficulty: 3 }, { id: "1001", addTags: ["开发"], difficulty: 2 }],
@@ -165,6 +167,51 @@ export function registerTaskActions(api) {
     ],
     execute: function (args, ctx) { return bulkUpdate(db, args || {}, ctx.origin, api); },
     render: renderBulkUpdate,
+  });
+
+  action("tasks.claim", {
+    description: "按 id 接取单个任务：CAS 抢占（条件 UPDATE，失败不留半改），成功把 status 改为 4（已接取）并写入 owner/claimed_at/claim_token，保留原优先级；任务不存在返回 TASK_NOT_FOUND，非「已开启」返回 TASK_NOT_CLAIMABLE（附当前 status 与 nextActions）。owner 缺省 local，agent 可传 agent:<sessionId>。返回 claimed:true、id、task、previousStatus 与新 claimToken；后续自动化写操作可带 claimToken，失效返回 TASK_CLAIM_LOST。",
+    input: {
+      type: "object",
+      required: ["id"],
+      properties: {
+        id: { type: ["string", "number"], description: "任务 id" },
+        owner: { type: "string", description: "接取者标识，建议 local（人工）或 agent:<sessionId>；缺省 local，最长 120 字符" },
+      },
+    },
+    examples: [{ id: "1001" }, { id: "1001", owner: "agent:session-abc" }],
+    execute: function (args, ctx) { return claimTask(db, args || {}, ctx.origin, api); },
+  });
+
+  action("tasks.claimBatch", {
+    description: "批量接取：ids 去重保序，整批在一个 BEGIN IMMEDIATE 事务里逐条 CAS；单条失败不抛错、只进 failed（reason=already_claimed/not_claimable/not_found/deleted/busy），成功项不因其他失败回滚。dryRun:true 只返回可接取/不可接取预览，不写库。整批结束只发一次 tasks-changed 聚合事件。返回 requested、claimed[]、failed[]、counts{claimed,alreadyClaimed,notClaimable,notFound,deleted,busy}。",
+    input: {
+      type: "object",
+      required: ["ids"],
+      properties: {
+        ids: { type: "array", items: { type: ["string", "number"] }, description: "任务 id 列表（去重保序）" },
+        owner: { type: "string", description: "接取者标识，缺省 local" },
+        dryRun: { type: "boolean", description: "true 时只预览，不写库、不发事件" },
+        skipMissing: { type: "boolean", description: "保留兼容：不存在/已删除的 id 始终进 failed.notFound/deleted，不抛错" },
+      },
+    },
+    examples: [{ ids: ["1001", "1002"], dryRun: true }, { ids: ["1001", "1002"], owner: "agent:session-abc" }],
+    execute: function (args, ctx) { return claimBatch(db, args || {}, ctx.origin, api); },
+  });
+
+  action("tasks.grab", {
+    description: "抢夺（强制占有）单个任务，把 status 0 或 4 覆盖为 4 并换新 claim_token；返回 previousStatus/previousOwner/previousClaimToken 供审计，reason 写入变更日志。仅在用户明确要求「抢夺/强取/占用某任务」时调用；普通开工一律用 tasks.claim，不得自行判断后抢夺。UI 没有任何入口。",
+    input: {
+      type: "object",
+      required: ["id"],
+      properties: {
+        id: { type: ["string", "number"], description: "任务 id" },
+        owner: { type: "string", description: "接取者标识，缺省 local" },
+        reason: { type: "string", description: "抢夺原因，写入变更日志供审计" },
+      },
+    },
+    examples: [{ id: "1001", owner: "agent:session-abc", reason: "用户要求接手" }],
+    execute: function (args, ctx) { return grabTask(db, args || {}, ctx.origin, api); },
   });
 
   action("tasks.bulkCreate", {

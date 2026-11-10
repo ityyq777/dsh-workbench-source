@@ -27,10 +27,12 @@ module.exports = function (deps) {
     var st = statusInfo(task.status);
     var stName = props.lang === "en" ? st.en : st.zh;
     var myTags = task.tags || [];
-    var isActive = String(task.status) === "0";
+    // 已接取仍处于「开启类」：保留优先级、截止倒计时，并可完成/关闭。
+    var openLike = String(task.status) === "0" || String(task.status) === "4";
+    var isActive = openLike;
 
-    var countdown = String(task.status) === "0" ? daysBetween(task.targetDate) : null;
-    var cdTarget = String(task.status) === "0" && task.targetDate ? new Date(String(task.targetDate) + "T23:59:59").getTime() : NaN;
+    var countdown = openLike ? daysBetween(task.targetDate) : null;
+    var cdTarget = openLike && task.targetDate ? new Date(String(task.targetDate) + "T23:59:59").getTime() : NaN;
     var tagNodes = myTags.map(function (tag) {
       return h("span", {
         key: "tag-" + String(tag.id), className: "wbt-tag", title: tag.name,
@@ -39,7 +41,7 @@ module.exports = function (deps) {
     });
     var meta = [];
     if (task.publishDate) meta.push(h("span", { key: "p" }, h("b", null, t.publish), " ", task.publishDate));
-    if (String(task.status) === "0" && task.targetDate) {
+    if (openLike && task.targetDate) {
       meta.push(h("span", { key: "g" }, h("b", null, t.target), " ", task.targetDate,
         Number.isFinite(cdTarget) ? h(Countdown, { target: cdTarget }) : null));
     } else if (String(task.status) === "2") {
@@ -82,7 +84,7 @@ module.exports = function (deps) {
     // 信息层级：标题 → 标签/时间/路径（元信息区）→ [卡片] 操作按钮 → 描述 → 复核。
     // 列表态操作按钮仍在标题行右侧；两种形态共用同一套节点，避免两套布局再次跑偏。
     var line1 = h("div", { className: "wbt-line1" },
-      String(task.status) === "0"
+      openLike
         ? h("span", { className: "wbt-prio " + pClass(task.priority), children: "P" + task.priority })
         : h("span", { className: "wbt-prio low", title: t.priority + " 0", children: "—" }),
       h("span", { className: "wbt-badge " + st.cls, children: stName }),

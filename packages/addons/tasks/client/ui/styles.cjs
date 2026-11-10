@@ -107,7 +107,7 @@ module.exports = [
     ".wbt-badge::before{content:\"\";display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;margin-right:4px;vertical-align:1px;opacity:.8}",
     ".wbt-badge.active{color:var(--dsw-alias-brand-primary,#0b8a7f)}",
     ".wbt-badge.done{color:var(--dsw-alias-state-success-primary,#2f9e44)}",
-    ".wbt-badge.shutdown{color:var(--dsw-alias-label-tertiary,#7d8698)}.wbt-badge.restarted{color:var(--dsw-alias-state-business-primary,#7048e8)}",
+    ".wbt-badge.shutdown{color:var(--dsw-alias-label-tertiary,#7d8698)}.wbt-badge.restarted{color:var(--dsw-alias-state-business-primary,#7048e8)}.wbt-badge.claimed{color:var(--dsw-alias-state-warning-primary,#b8860b)}",
     ".wbt-ops{display:flex;gap:3px;align-items:center;flex-wrap:wrap;flex:0 1 auto;min-width:0;max-width:100%;justify-content:flex-end;padding-top:1px}",
     ".wbt-icon{border:none;background:color-mix(in oklab,currentColor 5%,transparent);color:inherit;width:24px;height:24px;border-radius:6px;cursor:pointer;font-size:12.5px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:none;opacity:.7;padding:0}",
     ".wbt-icon:hover{opacity:1;background:color-mix(in oklab,var(--wbt-accent) 13%,transparent);color:var(--wbt-accent)}",

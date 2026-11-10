@@ -15,7 +15,7 @@ function hasRange(value) {
 function all(value) { return statusFree(value) && !hasRange(value); }
 function isUrgent(value) { return value.priority.min === "6" && value.priority.max === "10"; }
 function fromTab(tab) {
-  var value = empty(), status = {5:"1",6:"0",7:"2"}[tab];
+  var value = empty(), status = {5:"1",6:"0",7:"2",9:"4"}[tab];
   if (status) value.statuses = [status];
   if (Number(tab) === 0) value.priority = {min:"6", max:"10"};
   return value;
@@ -114,7 +114,7 @@ function load(params) {
     if (!raw) return null;
     var parsed = JSON.parse(raw), value = empty();
     if (parsed.navigation !== JSON.stringify(params || {})) return null;
-    if (Array.isArray(parsed.statuses)) value.statuses = parsed.statuses.map(String).filter(function (s) { return /^[0-3]$/.test(s); });
+    if (Array.isArray(parsed.statuses)) value.statuses = parsed.statuses.map(String).filter(function (s) { return /^[0-4]$/.test(s); });
     groups.forEach(function (key) {
       var box = parsed[key] || {};
       if (date.validDate(box.from)) value[key].from = box.from;

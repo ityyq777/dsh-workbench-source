@@ -9,6 +9,7 @@ const STATUS_LABELS = {
   "1": "已关闭",
   "2": "已完成",
   "3": "已重启",
+  "4": "已接取",
 };
 
 function pad(n) {
@@ -184,15 +185,18 @@ export function statsReport(db, args, api) {
   const shutdown = statusCount["1"] || 0;
   const done = statusCount["2"] || 0;
   const restarted = statusCount["3"] || 0;
+  // 已接取单列，不并入进行中：两个口径相加不会超过总数。
+  const claimed = statusCount["4"] || 0;
 
+  // 逾期/今日到期/未来 7 天都覆盖已接取（4），文案注明「含已接取」。
   const overdue = Number(db.prepare(
-    "SELECT COUNT(*) AS n FROM task WHERE deleted_at IS NULL AND status='0' AND target_date IS NOT NULL AND target_date<>'' AND target_date<?",
+    "SELECT COUNT(*) AS n FROM task WHERE deleted_at IS NULL AND status IN ('0','4') AND target_date IS NOT NULL AND target_date<>'' AND target_date<?",
   ).get(today).n || 0);
   const dueToday = Number(db.prepare(
-    "SELECT COUNT(*) AS n FROM task WHERE deleted_at IS NULL AND status='0' AND target_date=?",
+    "SELECT COUNT(*) AS n FROM task WHERE deleted_at IS NULL AND status IN ('0','4') AND target_date=?",
   ).get(today).n || 0);
   const dueNext7 = Number(db.prepare(
-    "SELECT COUNT(*) AS n FROM task WHERE deleted_at IS NULL AND status='0' AND target_date>=? AND target_date<=?",
+    "SELECT COUNT(*) AS n FROM task WHERE deleted_at IS NULL AND status IN ('0','4') AND target_date>=? AND target_date<=?",
   ).get(tomorrow, next7).n || 0);
 
   const trend = zeroTrend(range);
@@ -281,7 +285,7 @@ export function statsReport(db, args, api) {
   difficultyBins.push({ key: "unset", label: "未设置", count: difficultyUnset });
 
   const overdueRows = db.prepare(
-    "SELECT id,title,target_date,table_id FROM task WHERE deleted_at IS NULL AND status='0' " +
+    "SELECT id,title,target_date,table_id FROM task WHERE deleted_at IS NULL AND status IN ('0','4') " +
       "AND target_date IS NOT NULL AND target_date<>'' AND target_date<? ORDER BY target_date ASC, id ASC LIMIT ?",
   ).all(today, Math.min(top, 10));
   const nodeMap = loadNodes(db);
@@ -367,7 +371,7 @@ export function statsReport(db, args, api) {
     { key: "30+", label: ">30 天", count: 0 },
   ];
   const agingRows = db.prepare(
-    "SELECT target_date FROM task WHERE deleted_at IS NULL AND status='0' AND target_date IS NOT NULL AND target_date<>'' AND target_date<?",
+    "SELECT target_date FROM task WHERE deleted_at IS NULL AND status IN ('0','4') AND target_date IS NOT NULL AND target_date<>'' AND target_date<?",
   ).all(today);
   for (const row of agingRows) {
     const age = Math.max(1, diffDays(parseDay(String(row.target_date)), startOfDay(new Date())));
@@ -399,7 +403,7 @@ export function statsReport(db, args, api) {
     t.total += 1;
     if (String(row.status) === "0") t.open += 1;
     if (String(row.status) === "2") t.done += 1;
-    if (String(row.status) === "0" && row.target_date && String(row.target_date) < today) t.overdue += 1;
+    if ((String(row.status) === "0" || String(row.status) === "4") && row.target_date && String(row.target_date) < today) t.overdue += 1;
 
     const groupNode = groupOf(tableNode, nodeMap);
     const groupKey = groupNode ? String(groupNode.id) : "__ungrouped__";
@@ -414,7 +418,7 @@ export function statsReport(db, args, api) {
     g.total += 1;
     if (String(row.status) === "0") g.open += 1;
     if (String(row.status) === "2") g.done += 1;
-    if (String(row.status) === "0" && row.target_date && String(row.target_date) < today) g.overdue += 1;
+    if ((String(row.status) === "0" || String(row.status) === "4") && row.target_date && String(row.target_date) < today) g.overdue += 1;
   }
   function rank(list) {
     return list.map(function (item) {
@@ -431,6 +435,7 @@ export function statsReport(db, args, api) {
     shutdown: shutdown,
     done: done,
     restarted: restarted,
+    claimed: claimed,
     overdue: overdue,
     dueToday: dueToday,
     dueNext7: dueNext7,
@@ -438,7 +443,8 @@ export function statsReport(db, args, api) {
   };
   const rates = {
     completion: total > 0 ? round(done / total, 3) : 0,
-    overdue: active > 0 ? round(overdue / active, 3) : 0,
+    // 逾期率分母用「开启+已接取」，与逾期分子口径一致。
+    overdue: active + claimed > 0 ? round(overdue / (active + claimed), 3) : 0,
     restart: total > 0 ? round(restarted / total, 3) : 0,
     shutdown: total > 0 ? round(shutdown / total, 3) : 0,
     avgLeadDays: leadRow && Number.isFinite(Number(leadRow.v)) ? round(Number(leadRow.v), 1) : null,
@@ -452,7 +458,7 @@ export function statsReport(db, args, api) {
     totals: totals,
     rates: rates,
     breakdowns: {
-      status: ["0", "1", "2"].map(function (key) {
+      status: ["0", "1", "2", "4"].map(function (key) {
         return { key: key, label: STATUS_LABELS[key], count: statusCount[key] || 0 };
       }),
       priority: priorityBins,

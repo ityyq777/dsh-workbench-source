@@ -1,7 +1,7 @@
 // 任务列表与树导航视图；依赖由入口注入，无循环依赖。
 module.exports = function createTasksView(deps) {
   var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
-  var h = React.createElement, filters = require("./task-filter-model.cjs"), renderFilters = require("./task-filter-panel.cjs");
+  var h = React.createElement, filters = require("./task-filter-model.cjs"), renderFilters = require("./task-filter-panel.cjs"), claimBatch = require("./claim-batch.cjs"), renderSelectionBar = require("./selection-bar.cjs");
   function TasksView(props) {
     var lang = props.lang === "en" ? "en" : "zh";
     var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -306,6 +306,11 @@ module.exports = function createTasksView(deps) {
       });
     }
 
+    var claimSelected = claimBatch.makeClaimSelected({
+      api: api, t: t, ids: function () { return Array.from(selectedIds); }, setIds: setSelectedIds,
+      clear: clearSelection, say: say, refreshList: refreshList, refreshTagNav: refreshTagNav,
+    });
+
     function deleteNode(node) {
       if (cfgConfirm && !window.confirm(t.deleteConfirm)) return;
       api.call("taskNodes.delete", { id: node.id }).then(function (r) {
@@ -491,14 +496,11 @@ module.exports = function createTasksView(deps) {
           ) : null
         )
       ),
-      selectionMode && selectedIds.size ? h("div", { className: "wbt-selbar" },
-        h("b", null, t.selected + " " + selectedIds.size),
-        h("button", { className: "wbt-btn", onClick: openSelected }, t.selectedTasks),
-        h("button", { className: "wbt-btn", onClick: function () { setBatchMode("timeline"); openSelected(); } }, t.batchTimeline),
-        h("button", { className: "wbt-btn", onClick: function () { setBatchMode("migrate"); openSelected(); } }, t.batchMigrate),
-        h("button", { className: "wbt-btn wbt-act-del", onClick: batchDelete }, h(Icon, { name: "trash", size: 13 }), t.batchDelete),
-        h("button", { className: "wbt-btn ghost", onClick: clearSelection }, t.clear)
-      ) : null,
+      selectionMode && selectedIds.size ? renderSelectionBar(h, Icon, {
+        t: t, count: selectedIds.size, openSelected: openSelected, batchDelete: batchDelete, claimSelected: claimSelected, clear: clearSelection,
+        batchTimeline: function () { setBatchMode("timeline"); openSelected(); },
+        batchMigrate: function () { setBatchMode("migrate"); openSelected(); },
+      }) : null,
       drawer ? h("div", { className: "wbt-drawer-mask", onMouseDown: function (e) { if (e.target === e.currentTarget) setDrawer(false); } },
         h("div", { className: "wbt-drawer", role: "dialog", "aria-label": t.tree },
           h("div", { className: "wbt-drawer-head" },

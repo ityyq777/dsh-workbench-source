@@ -59,10 +59,10 @@ export function withNotices(result, notices) {
   return result;
 }
 
-export const STATUSES = ["0", "1", "2", "3"];
+export const STATUSES = ["0", "1", "2", "3", "4"];
 const SOURCES = { TASK_TABLE: "0", TASK_TIMELINE: "1", TASK_RESTART: "2" };
-const PUT_TYPES = { STATUS: "0", PRIORITY: "1", TITLE: "2", DESCRIPTION: "3", REVIEW: "4" };
-export const STATUS_NAMES = { ACTIVE: "0", SHUTDOWN: "1", DONE: "2", RESTARTED: "3", open: "0", done: "2" };
+const PUT_TYPES = { STATUS: "0", PRIORITY: "1", TITLE: "2", DESCRIPTION: "3", REVIEW: "4", CLAIM: "5" };
+export const STATUS_NAMES = { ACTIVE: "0", SHUTDOWN: "1", DONE: "2", RESTARTED: "3", CLAIMED: "4", open: "0", done: "2" };
 
 export function asCode(value, names, allowed, label) {
   if (value === undefined || value === null || value === "") return null;
@@ -153,7 +153,7 @@ export function insertTaskRow(db, row) {
 
 export function saveTaskRow(db, row) {
   db.prepare(
-    "UPDATE task SET title=?,description=?,status=?,priority=?,difficulty=?,review=?,table_id=?,timeline_key=?,restart_key=?,publish_date=?,target_date=?,done_date=?,shutdown_date=?,dedupe_key=?,updated_at=?,deleted_at=?,rev=? WHERE id=?",
+    "UPDATE task SET title=?,description=?,status=?,priority=?,difficulty=?,review=?,table_id=?,timeline_key=?,restart_key=?,publish_date=?,target_date=?,done_date=?,shutdown_date=?,dedupe_key=?,owner=?,claimed_at=?,claim_token=?,updated_at=?,deleted_at=?,rev=? WHERE id=?",
   ).run(
     String(row.title),
     String(row.description || ""),
@@ -169,6 +169,9 @@ export function saveTaskRow(db, row) {
     row.done_date === undefined ? null : row.done_date,
     row.shutdown_date === undefined ? null : row.shutdown_date,
     row.dedupe_key === undefined ? null : row.dedupe_key,
+    row.owner === undefined ? null : row.owner,
+    row.claimed_at === undefined ? null : row.claimed_at,
+    row.claim_token === undefined ? null : row.claim_token,
     Number(row.updated_at),
     row.deleted_at === undefined ? null : row.deleted_at,
     Number(row.rev || 1),

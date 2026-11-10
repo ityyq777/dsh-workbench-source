@@ -82,6 +82,11 @@ export function applyPatchRow(db, cur, patch, ts) {
   }
   if ("description" in patch) next.description = String(patch.description === null || patch.description === undefined ? "" : patch.description);
   if ("status" in patch) next.status = asCode(patch.status, STATUS_NAMES, STATUSES, "status");
+  if (next.status === "4") {
+    const error = new Error("状态「已接取」不能通过 bulkUpdate 直接写入，请使用 tasks.claimBatch 接取");
+    error.code = "CLAIM_REQUIRED";
+    throw error;
+  }
   if ("priority" in patch) next.priority = priorityForStatus(next.status, patch.priority, Number(cur.priority) || 1);
   if ("difficulty" in patch) next.difficulty = clampDifficulty(patch.difficulty, null);
   if ("review" in patch) next.review = String(patch.review === null || patch.review === undefined ? "" : patch.review);
@@ -93,8 +98,9 @@ export function applyPatchRow(db, cur, patch, ts) {
   // tagIds 不是 task 列，由 bulkUpdate 在行写入后同步 tag_mapping。
   if (next.status === "2" && !next.done_date) next.done_date = todayStr();
   if (next.status === "2" && (next.difficulty === null || next.difficulty === undefined)) next.difficulty = 0;
-  if (next.status !== "0") next.priority = 0;
+  if (next.status !== "0" && next.status !== "4") next.priority = 0;
   else if (!next.priority) next.priority = 1;
+  if (next.status === "1" || next.status === "2") { next.owner = null; next.claimed_at = null; next.claim_token = null; }
   if (next.status === "1" && !next.shutdown_date) next.shutdown_date = todayStr();
   checkRequiredDates(next);
   next.updated_at = ts;
