@@ -7,6 +7,7 @@ var recentColumns = require("../item/recent-columns.cjs");
 var rankingName = require("../item/ranking-name.cjs");
 var Heatmap = require("../stats/heatmap.cjs");
 var Today = require("../stats/today.cjs");
+var TimelineSection = require("../stats/timeline-section.cjs").TimelineSection;
 
 var COPY = {
   zh: {
@@ -292,6 +293,8 @@ function TasksStatsBody(props) {
             { key: "completion", label: t.colRate, num: true, render: function (r) { return ch.pct(r.completion); } },
           ],
         })));
+
+      children.push(h(TimelineSection, { key: "timeline", api: api, lang: lang, active: props.active, ch: ch }));
 
       var recentCols = recentColumns(t, lang, props.onNavigate);
       children.push(h(ch.Card, { key: "recentPublish", span: 4, title: t.recentPublish, note: t.recentPublishNote },

@@ -1616,6 +1616,275 @@ var require_today = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/stats/timeline-section.cjs
+var require_timeline_section = __commonJS({
+  "packages/addons/tasks/client/stats/timeline-section.cjs"(exports2, module2) {
+    var React = require("react");
+    var h = React.createElement;
+    var COPY = {
+      zh: {
+        title: "\u65F6\u95F4\u7EBF",
+        note: "\u5F53\u524D\u5B58\u91CF\uFF1B\u5DF2\u91CD\u542F\u4EFB\u52A1\u4E0D\u8BA1\u5165\uFF0C\u65E0\u65F6\u95F4\u7EBF\u4E0D\u662F\u9519\u8BEF",
+        lines: "\u65F6\u95F4\u7EBF",
+        withTasks: "\u6709\u4EFB\u52A1",
+        empty: "\u7A7A\u7EBF",
+        emptyRatio: "\u7A7A\u7EBF\u5360\u6BD4",
+        tasks: "\u6709\u6548\u4EFB\u52A1",
+        coverage: "\u5F52\u5C5E\u8986\u76D6\u7387",
+        unassigned: "\u672A\u5F52\u5C5E {n} \u6761",
+        distribution: "\u89C4\u6A21\u5206\u5E03",
+        distributionNote: "\u6309\u6BCF\u6761\u7EBF\u6709\u6548\u4EFB\u52A1\u6570",
+        ranking: "\u65F6\u95F4\u7EBF\u6392\u884C",
+        rankingNote: "\u5168\u91CF\u805A\u5408\u540E\u53D6\u524D 100\uFF0C\u540C\u6570\u6309 id \u5347\u5E8F",
+        overdue: "\u903E\u671F\u65F6\u95F4\u7EBF",
+        overdueNote: "\u6309\u903E\u671F\u4EFB\u52A1\u6570\u964D\u5E8F",
+        trend: "\u8303\u56F4\u5185\u8D8B\u52BF",
+        trendNote: "\u53EA\u7EDF\u8BA1\u8303\u56F4\u5185\u4E8B\u4EF6\uFF0C\u4E0D\u6539\u53D8\u5B58\u91CF",
+        colName: "\u65F6\u95F4\u7EBF",
+        colTotal: "\u4EFB\u52A1",
+        colOpen: "\u8FDB\u884C\u4E2D",
+        colDone: "\u5DF2\u5B8C\u6210",
+        colShutdown: "\u5DF2\u5173\u95ED",
+        colRate: "\u5B8C\u6210\u7387",
+        colOverdue: "\u903E\u671F",
+        colActivity: "\u6700\u8FD1\u6D3B\u52A8",
+        members: "\u6210\u5458",
+        memberEmpty: "\u6CA1\u6709\u6709\u6548\u6210\u5458",
+        loadFail: "\u65F6\u95F4\u7EBF\u7EDF\u8BA1\u6682\u4E0D\u53EF\u7528",
+        noData: "\u8FD8\u6CA1\u6709\u65F6\u95F4\u7EBF\u3002\u5728\u300C\u65F6\u95F4\u7EBF\u300D\u91CC\u521B\u5EFA\u540E\u4F1A\u51FA\u73B0\u5728\u8FD9\u91CC",
+        noOverdue: "\u6CA1\u6709\u903E\u671F\u65F6\u95F4\u7EBF",
+        newLines: "\u65B0\u589E\u65F6\u95F4\u7EBF",
+        newTasks: "\u65B0\u589E\u4EFB\u52A1",
+        doneTasks: "\u5B8C\u6210\u4EFB\u52A1"
+      },
+      en: {
+        title: "Timelines",
+        note: "Current stock; restarted tasks excluded, no timeline is not an error",
+        lines: "Timelines",
+        withTasks: "With tasks",
+        empty: "Empty",
+        emptyRatio: "Empty share",
+        tasks: "Active tasks",
+        coverage: "Coverage",
+        unassigned: "{n} unassigned",
+        distribution: "Size distribution",
+        distributionNote: "By active tasks per line",
+        ranking: "Timeline ranking",
+        rankingNote: "Full aggregation, top 100, ties by id",
+        overdue: "Overdue timelines",
+        overdueNote: "By overdue count",
+        trend: "In-range trend",
+        trendNote: "Events only; stock unchanged",
+        colName: "Timeline",
+        colTotal: "Tasks",
+        colOpen: "Active",
+        colDone: "Done",
+        colShutdown: "Closed",
+        colRate: "Completion",
+        colOverdue: "Overdue",
+        colActivity: "Last activity",
+        members: "Members",
+        memberEmpty: "No active members",
+        loadFail: "Timeline stats unavailable",
+        noData: "No timelines yet. Create one and it appears here.",
+        noOverdue: "No overdue timelines",
+        newLines: "New timelines",
+        newTasks: "New tasks",
+        doneTasks: "Done tasks"
+      }
+    };
+    function text(lang) {
+      return COPY[lang === "en" ? "en" : "zh"];
+    }
+    function fmt(v) {
+      return v === null || v === void 0 ? "\u2014" : v;
+    }
+    function buildSection(data, ctx) {
+      var ch = ctx.ch, t = ctx.t, lang = ctx.lang;
+      var members = ctx.members || {}, openId = ctx.openId || "", toggle = ctx.toggle || function() {
+      };
+      var totals = data.totals || {};
+      var rows = data.top && data.top.records || [];
+      var children = [];
+      children.push(h(
+        ch.Card,
+        { key: "tl", span: 12, title: t.title, note: t.note },
+        h(
+          "div",
+          { className: "wbt-kpis" },
+          h(ch.Kpi, { label: t.lines, value: fmt(totals.timelines), hint: t.emptyRatio + " " + fmt(totals.emptyRatio) + (totals.emptyRatio === null ? "" : "%"), lang }),
+          h(ch.Kpi, { label: t.withTasks, value: fmt(totals.timelinesWithTasks), hint: t.empty + " " + fmt(totals.emptyTimelines), lang }),
+          h(ch.Kpi, { label: t.empty, value: fmt(totals.emptyTimelines), tone: totals.emptyTimelines > 0 ? "warn" : "", hint: t.emptyRatio + " " + fmt(totals.emptyRatio) + (totals.emptyRatio === null ? "" : "%"), lang }),
+          h(ch.Kpi, { label: t.coverage, value: totals.coverage === null || totals.coverage === void 0 ? "\u2014" : ch.pct(totals.coverage / 100), hint: t.unassigned.replace("{n}", String(fmt(totals.unassignedTasks))) + " / " + fmt(totals.tasks), lang })
+        ),
+        totals.timelines === 0 ? h(ch.Empty, { text: t.noData }) : null,
+        totals.timelines > 0 ? h(
+          "table",
+          { className: "wbt-table", "data-ranking": t.ranking },
+          h("thead", null, h(
+            "tr",
+            null,
+            h("th", null, t.colName),
+            h("th", null, t.colTotal),
+            h("th", null, t.colOpen),
+            h("th", null, t.colDone),
+            h("th", null, t.colShutdown),
+            h("th", null, t.colRate),
+            h("th", null, t.colOverdue),
+            h("th", null, t.colActivity)
+          )),
+          h("tbody", null, rows.map(function(line) {
+            var memberRows = members[line.id];
+            var expanded = openId === line.id;
+            return h(
+              React.Fragment,
+              { key: line.id },
+              h(
+                "tr",
+                null,
+                h("td", null, h("button", {
+                  type: "button",
+                  className: "wbt-btn ghost",
+                  "aria-expanded": expanded,
+                  onClick: function() {
+                    toggle(line);
+                  }
+                }, line.title || line.id)),
+                h("td", { className: "num" }, line.taskCount),
+                h("td", { className: "num" }, line.openCount),
+                h("td", { className: "num" }, line.doneCount),
+                h("td", { className: "num" }, line.shutdownCount),
+                h("td", { className: "num" }, line.doneRate === null || line.doneRate === void 0 ? "\u2014" : ch.pct(line.doneRate / 100)),
+                h("td", { className: "num" }, line.overdueCount),
+                h("td", null, line.lastActivityDate || "\u2014")
+              ),
+              expanded ? h("tr", { key: line.id + "-members" }, h(
+                "td",
+                { colSpan: 8 },
+                h(
+                  "div",
+                  { className: "wbt-tl-members" },
+                  h("strong", null, t.members + "\uFF1A"),
+                  memberRows === void 0 ? h("span", null, "\u2026") : memberRows.length === 0 ? h("span", null, t.memberEmpty) : h("span", null, memberRows.map(function(task) {
+                    return task.title;
+                  }).join("\u3001"))
+                )
+              )) : null
+            );
+          })),
+          h("caption", null, (data.top && data.top.truncated ? lang === "en" ? "Showing the first " + rows.length + ". " : "\u4EC5\u663E\u793A\u524D " + rows.length + " \u6761\u3002" : "") + t.rankingNote)
+        ) : null
+      ));
+      if (totals.timelines > 0) {
+        children.push(h(
+          ch.Card,
+          { key: "tldist", span: 6, title: t.distribution, note: t.distributionNote },
+          h(ch.Histogram, { data: data.distribution || [], lang, color: ch.colors[3] })
+        ));
+        var overdue = data.overdue && data.overdue.lines || [];
+        children.push(h(
+          ch.Card,
+          { key: "tloverdue", span: 6, title: t.overdue, note: t.overdueNote },
+          h(ch.DataTable, {
+            rows: overdue,
+            lang,
+            empty: t.noOverdue,
+            columns: [
+              { key: "title", label: t.colName },
+              { key: "taskCount", label: t.colTotal, num: true },
+              { key: "overdueCount", label: t.colOverdue, num: true },
+              { key: "lastActivityDate", label: t.colActivity }
+            ]
+          })
+        ));
+      }
+      if (data.trend) {
+        children.push(h(
+          ch.Card,
+          { key: "tltrend", span: 12, title: t.trend, note: t.trendNote },
+          h(
+            "div",
+            { className: "wbt-kpis" },
+            h(ch.Kpi, { label: t.newLines, value: data.trend.newTimelines, hint: data.trend.from + " ~ " + data.trend.to, lang }),
+            h(ch.Kpi, { label: t.newTasks, value: data.trend.newTasks, lang }),
+            h(ch.Kpi, { label: t.doneTasks, value: data.trend.doneTasks, lang })
+          )
+        ));
+      }
+      return children;
+    }
+    function TimelineSection(props) {
+      var api = props.api;
+      var ch = props.ch;
+      var lang = props.lang;
+      var t = text(lang);
+      var state = React.useState(null);
+      var data = state[0], setData = state[1];
+      var failPair = React.useState("");
+      var err = failPair[0], setErr = failPair[1];
+      var openPair = React.useState("");
+      var openId = openPair[0], setOpenId = openPair[1];
+      var memberPair = React.useState({});
+      var members = memberPair[0], setMembers = memberPair[1];
+      var load = React.useCallback(function() {
+        return Promise.resolve(api.call("tasks.timelineStats", { topLimit: 100 })).then(function(r) {
+          return r && r.result !== void 0 ? r.result : r;
+        }).then(function(d) {
+          setData(d || null);
+          setErr("");
+        }).catch(function(e) {
+          setErr(String(e && e.message || e || "load failed"));
+        });
+      }, [api]);
+      React.useEffect(function() {
+        if (props.active !== false) load();
+      }, [load, props.active]);
+      React.useEffect(function() {
+        if (props.active === false || !api || typeof api.subscribe !== "function") return void 0;
+        var timer = null;
+        var off = api.subscribe(function(payload) {
+          var ev = payload && payload.event;
+          if (ev !== "tasks-changed" && ev !== "task-timelines-changed") return;
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(function() {
+            load();
+          }, 800);
+        });
+        return function() {
+          if (timer) clearTimeout(timer);
+          if (typeof off === "function") off();
+        };
+      }, [api, load, props.active]);
+      function toggle(line) {
+        var next = openId === line.id ? "" : line.id;
+        setOpenId(next);
+        if (!next || members[next]) return;
+        Promise.resolve(api.call("tasks.timeline", { timelineId: line.id, pageNumber: 1, pageSize: 100 })).then(function(r) {
+          return r && r.result !== void 0 ? r.result : r;
+        }).then(function(r) {
+          setMembers(function(prev) {
+            var copy = Object.assign({}, prev);
+            copy[next] = r && r.records || [];
+            return copy;
+          });
+        }).catch(function() {
+          setMembers(function(prev) {
+            var copy = Object.assign({}, prev);
+            copy[next] = [];
+            return copy;
+          });
+        });
+      }
+      if (err && !data) {
+        return h(ch.Card, { key: "tlerr", span: 12, title: t.title }, h(ch.Empty, { text: t.loadFail }));
+      }
+      if (!data) return h(ch.Card, { key: "tlsk", span: 12, title: t.title }, h(ch.Skeleton, {}));
+      return h(React.Fragment, null, buildSection(data, { ch, t, lang, members, openId, toggle }));
+    }
+    module2.exports = { TimelineSection, buildSection, text };
+  }
+});
+
 // packages/addons/tasks/client/views/stats.cjs
 var require_stats = __commonJS({
   "packages/addons/tasks/client/views/stats.cjs"(exports2, module2) {
@@ -1627,6 +1896,7 @@ var require_stats = __commonJS({
     var rankingName = require_ranking_name();
     var Heatmap = require_heatmap();
     var Today = require_today();
+    var TimelineSection = require_timeline_section().TimelineSection;
     var COPY = {
       zh: {
         title: "\u4EFB\u52A1\u7EDF\u8BA1",
@@ -2067,6 +2337,7 @@ var require_stats = __commonJS({
               ]
             })
           ));
+          children.push(h(TimelineSection, { key: "timeline", api, lang, active: props.active, ch }));
           var recentCols = recentColumns(t, lang, props.onNavigate);
           children.push(h(
             ch.Card,
@@ -9070,7 +9341,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "3.4.3",
+    version: "3.4.4",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

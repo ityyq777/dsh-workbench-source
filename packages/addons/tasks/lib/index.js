@@ -6,6 +6,7 @@
  */
 
 import { registerActivityCalendarAction } from "./stats/activity-calendar.js";
+import { registerTimelineStatsAction } from "./stats/timeline-stats.js";
 import { DIFFICULTY_GUIDANCE } from "./task/model/task-difficulty.js";
 import { bindClock, ensureSchema } from "./db/db.js";
 import { exportTasksData, importTasksData } from "./infra/backup.js";
@@ -31,6 +32,7 @@ export function setup(api) {
   ensureSchema(api.db, api.log);
   registerTaskActions(api);
   registerActivityCalendarAction(api);
+  registerTimelineStatsAction(api);
   registerTreeActions(api);
   registerOverviewAction(api);
   registerConfigActions(api);
@@ -47,7 +49,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/时间线/配置/数据五个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "3.4.3",
+        version: "3.4.4",
         tables: ["task", "task_dep", "task_node", "task_timeline", "task_timeline_link"],
         sync: taskSync,
         views: [

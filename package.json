@@ -27,6 +27,7 @@
     "test:clients": "node scripts/test-clients.mjs",
     "test:task-stats-bars": "node scripts/test-task-stats-bars-ui.mjs",
     "test:view-icons": "node packages/shell/client/view-tabs.test.mjs && node packages/shell/client/view-tabs.test.mjs --bundle",
+    "test:timeline": "node scripts/test-timeline-stats.mjs",
     "test:tags": "node scripts/test-tags.mjs",
     "test:tags-ui": "node scripts/test-tags-ui.mjs",
     "test:sites": "node scripts/test-sites.mjs",
