@@ -81,6 +81,28 @@ pnpm test:native && pnpm test:tags && pnpm test:sites
 新增兼容别名时改脚本里的 `ALIASES`；静态扫描确有误报的字段改 `NON_SCHEMA`，
 并在注释里写清原因，不要为了让脚本变绿而放宽规则。
 
+### 交付前必须核对「profile 已安装版本 == 源码版本」（每个 agent 都走）
+
+只改源码、只重启，用户看到的仍然是旧版本：profile 里是**拷贝安装**的产物，重启只是重载
+那次拷贝。2026-11-10 踩坑：源码已经到 tasks 5.2.0 / tags 1.7.0 / sites 1.10.0 /
+storage 1.5.0，desktop profile 里还是 5.1.3 / 1.6.13 / 1.9.4 / 1.4.3，用户重启后界面
+毫无变化，还以为是代码没生效。
+
+改完插件代码，交付前按顺序做完，并在回复里给出各步结果：
+
+1. `pnpm build && pnpm dist:shell`：把源码构建成 `packages/shell-dist` 与各插件 `lib/client.js`；
+2. 准备**带版本标识的完整安装源**：`~/.dsh/workbench/local-packages/<标识>/packages/`
+   下放 `shell-dist` 与 `addons/{tasks,tags,sites,storage}`，用
+   `rsync -a --exclude node_modules` 整目录复制，保持 `file:../../shell-dist` 的相对结构；
+3. 用桌面端 CLI 装进 `$DSH_PROFILE`（见下一节），加 `--force`；
+4. 回读 `$DSH_PROFILE_DIR/node_modules/<包>/package.json`，确认版本等于源码版本；再对五个包入口
+   各做一次 `node --input-type=module -e 'await import("./node_modules/<包>/lib/index.js")'` 冒烟；
+5. 重启后 `capabilities.list` 报的版本号与源码一致，才算「当前实例已安装」。
+
+不允许的结论：「源码好了，重启就行」「安装命令成功，所以已经生效」。安装命令退出成功
+不代表内容更新，必须回读 profile 里的 `package.json` 与产物文件；磁盘已更新但进程未重载时，
+明确写「仍需重启」，不能声称运行中已可见。
+
 ### 本地安装要重装，不是只重启
 
 `~/.dsh/profiles/<profile>/node_modules/` 里是**拷贝安装**的产物，源码改完不重装就
