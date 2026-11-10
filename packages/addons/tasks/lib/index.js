@@ -88,8 +88,8 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/时间线/配置/数据五个视图：紧急/已关闭/进行中/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "5.0.0",
-        tables: ["task", "task_node", "task_timeline", "task_timeline_link"],
+        version: "5.1.0",
+        tables: ["task", "task_node", "task_timeline", "task_timeline_link", "task_workspace", "task_workspace_link"],
         sync: taskSync,
         views: [
           { id: "stats", title: { zh: "统计", en: "Stats" } },
@@ -99,7 +99,7 @@ export function apply(ctx) {
           { id: "data", title: { zh: "数据", en: "Data" } },
         ],
         capability: {
-          summary: "记录可执行、可交付的工作项（任务），支持任务树、时间线、重启链与依赖。",
+          summary: "记录可执行、可交付的工作项（任务），支持任务树、时间线、重启链与工作区关联。",
           records: [
             {
               kind: "task",
@@ -120,6 +120,7 @@ export function apply(ctx) {
               relations: [
                 { kind: "taskNode", via: "tableId", description: "先调用 taskNodes.overview 查看全文描述、类型、路径与子树计数，再用 tasks.create 的 tableId 选表；group/root_group 只能装子节点，table 才能直接放任务。创建必须显式tableId或tablePath且互斥；无默认表。优先tasks.capabilities/resolveTable核对职责；新路径授权后用createMissing+pathDescriptions。" },
                 { kind: "tag", via: "tags / tagIds", description: "用标签做主题归类（工作/生活/学习/开发 已是标签）；传标签名会自动建。" },
+                { kind: "taskWorkspace", via: "workspaceIds", description: "工作区是本机目录或逻辑分组（可空目录），与任务多对多；先用 taskWorkspaces.list 选，创建时传 workspaceIds。" },
               ],
               examples: [
                 {

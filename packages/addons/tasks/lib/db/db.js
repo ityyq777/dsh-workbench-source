@@ -90,7 +90,7 @@ export function ensureSchema(db, log) {
       if (log) log("[tasks] 优先级回填失败：" + String((e && e.message) || e));
     }
   }
-  metaSet(db, "task_schema_version", "5");
+  metaSet(db, "task_schema_version", "6");
   metaSet(db, "task_migration_report", JSON.stringify(report));
   if (log) log("[tasks] migration", report);
   return report;

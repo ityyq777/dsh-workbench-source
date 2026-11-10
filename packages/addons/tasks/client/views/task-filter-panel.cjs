@@ -82,6 +82,14 @@ module.exports = function renderFilterPanel(React, p) {
         return h("label",{key:key,className:"wbt-check"},h("input",{type:"checkbox",checked:checked,"data-status":key,onChange:function(){change(model.toggle(value,key));p.onHint("");}}),option[1]);
       })),
       p.search,
+      h("fieldset",{className:"wbt-filter-group wbt-ws-group"},h("legend",null,en?"Workspaces":"工作区"),
+        (p.workspaces && p.workspaces.length)
+          ? h("div",{className:"wbt-ws-options"},p.workspaces.map(function(ws){
+              var checked = value.workspaceIds.indexOf(String(ws.id)) >= 0;
+              return h("label",{key:ws.id,className:"wbt-check"},h("input",{type:"checkbox",checked:checked,"data-workspace":ws.id,onChange:function(){change(model.toggleWorkspace(value,String(ws.id)));p.onHint("");}}),String(ws.title||ws.id));
+            }))
+          : h("p",{className:"wbt-limit-hint"},en?"No workspaces yet; create one in the task editor.":"还没有工作区，可在任务编辑里新建。"),
+        h("label",{className:"wbt-check"},h("input",{type:"checkbox",checked:value.noWorkspace === true,onChange:function(){change(model.toggleNoWorkspace(value));p.onHint("");}}),en?"Not linked to any workspace":"未关联工作区")),
       h("div",{className:"wbt-filter-group"},p.tags,p.missing),
       h("fieldset",{className:"wbt-filter-group wbt-limit-group"},h("legend",null,en?"Priority and difficulty":"优先级与难度"),
         h("p",{className:"wbt-limit-hint"},en?"Priority takes whole numbers 1–10; difficulty takes 0.5 steps. Blank means no limit.":"优先级取 1–10 的整数，难度按 0.5 递增；留空表示不限。"),

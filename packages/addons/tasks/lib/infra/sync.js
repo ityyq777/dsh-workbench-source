@@ -157,11 +157,33 @@ export function reconcileTaskTree(remoteRows, localRows) {
   };
 }
 
+/**
+ * 工作区关联的行级同步：id 由 workspace_id + ":" + task_id 决定，
+ * 校验不通过直接阻断本轮同步，避免多设备合并出找不到父行的半行。
+ */
+function normalizeWorkspaceLink(row) {
+  const workspaceId = String(row.workspace_id || row.workspaceId || '').trim();
+  const taskId = String(row.task_id || row.taskId || '').trim();
+  if (!workspaceId || !taskId) {
+    throw ownershipError('WORKSPACE_LINK_INVALID', '工作区关联缺少 workspace_id 或 task_id，已拒绝本次同步', {
+      id: row && row.id !== undefined && row.id !== null ? String(row.id) : null,
+    });
+  }
+  const expected = workspaceId + ':' + taskId;
+  const cur = row.id === undefined || row.id === null ? '' : String(row.id);
+  if (cur && cur !== expected) {
+    throw ownershipError('WORKSPACE_LINK_ID_MISMATCH', '工作区关联 id 必须是 workspace_id + ":" + task_id', { id: cur, expected });
+  }
+  return Object.assign({}, row, { id: expected, workspace_id: workspaceId, task_id: taskId });
+}
+
 export const taskSync = {
   tables: [
     { name: "task", mode: "row", normalizeIncoming: normalizeTimelineTask, afterApply: afterTimelineTask },
     { name: "task_timeline", mode: "row", afterApply: afterTimelineEntity },
     { name: "task_timeline_link", mode: "row", normalizeIncoming: normalizeTimelineLink, afterApply: afterTimelineLink },
+    { name: "task_workspace", mode: "row" },
+    { name: "task_workspace_link", mode: "row", normalizeIncoming: normalizeWorkspaceLink },
     { name: "task_node", mode: "tree", reconcile: reconcileTaskTree },
   ],
 };

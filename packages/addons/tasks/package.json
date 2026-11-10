@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbench-tasks",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "description": "个人工作台任务插件：任务树、标签、优先级、截止日、时间线与重启",
   "type": "module",
   "main": "lib/index.js",
@@ -15,13 +15,15 @@
       "id": "wb-addon-tasks",
       "title": "任务",
       "description": "任务树 + 统计/记录/时间线/配置/数据五个视图：紧急/已关闭/已开启/已完成/总览，可按标签筛选，附统计报表与表数据浏览",
-      "version": "5.0.0",
+      "version": "5.1.0",
       "minShell": "0.6.3",
       "tables": [
         "task",
         "task_node",
         "task_timeline",
-        "task_timeline_link"
+        "task_timeline_link",
+        "task_workspace",
+        "task_workspace_link"
       ],
       "views": [
         "stats",
@@ -46,6 +48,14 @@
         "taskTimelines.attach",
         "taskTimelines.detach",
         "taskTimelines.migrate",
+        "taskWorkspaces.create",
+        "taskWorkspaces.get",
+        "taskWorkspaces.update",
+        "taskWorkspaces.delete",
+        "taskWorkspaces.list",
+        "taskWorkspaces.attach",
+        "taskWorkspaces.detach",
+        "tasks.workspaces",
         "tasks.timelines",
         "tasks.timeline",
         "tasks.restart",

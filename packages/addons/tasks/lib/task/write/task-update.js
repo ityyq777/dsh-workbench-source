@@ -13,6 +13,7 @@ import {
 } from "../../tagging/tagging.js";
 import { tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, putTypeCode, clampDifficulty, dateArg, getTask, requireTable, saveTaskRow, outOne, writeChange, checkRequiredDates, resolveTagPatch } from "../model/task-model.js";
 import { taskTransaction } from './task-transaction.js';
+import { setTaskWorkspaces, attachWorkspaces } from '../../workspace/workspace-store.js';
 import { assertClaimToken, clearClaimFields, claimError } from './task-claim.js';
 import { ownershipFields } from '../model/task-ownership-path.js';
 export function updateTask(db, args, origin, api, opts) {
@@ -92,8 +93,12 @@ export function updateTask(db, args, origin, api, opts) {
   const desiredTags = wantsTagWrite && tagWritable ? resolveTagPatch(db, next, args, ts, origin, false) : null;
   saveTaskRow(db, next);
   if (desiredTags) replaceTaskTags(db, String(next.id), desiredTags, ts, origin);
+  if (args.workspaceIds !== undefined && args.workspaceIds !== null) {
+    setTaskWorkspaces(db, String(next.id), args.workspaceIds, ts, origin, api);
+  }
   writeChange(db, next, "update", origin, api, ts);
   const task = outOne(db, next);
   attachTags(db, api, task);
+  attachWorkspaces(db, [task]);
   return withNotices({ task: task, ...ownershipFields(task) }, tagMissingNotices(args, tagWritable));
 }

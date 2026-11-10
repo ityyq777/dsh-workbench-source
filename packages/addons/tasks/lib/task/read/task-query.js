@@ -5,6 +5,7 @@ import { dateRangeFilter } from "./task-publish-filter.js";
 import { activityFilter } from "../../stats/activity-calendar.js";
 import { clampPriority } from "../model/task-priority.js";
 import { clampDifficulty } from "../model/task-model.js";
+import { attachWorkspaces } from "../../workspace/workspace-store.js";
 import { LEGACY_TYPE_TAGS, tagsAvailable, normalizeTagIds, normalizeTagNames, tagIdsByNames, attachTags, migrateLegacyTypes } from "../../tagging/tagging.js";
 
 /**
@@ -100,6 +101,27 @@ export function listTasks(db, args, api) {
       "EXISTS (SELECT 1 FROM task_node n WHERE n.id=t.table_id AND n.deleted_at IS NULL AND (n.name LIKE ? ESCAPE '\\' OR n.description LIKE ? ESCAPE '\\'))",
     );
     params.push("%" + key + "%", "%" + key + "%");
+  }
+
+  const workspaceIds = Array.isArray(args.workspaceIds)
+    ? [...new Set(args.workspaceIds.map(function (v) { return String(v).trim(); }).filter(Boolean))]
+    : [];
+  const noWorkspace = args.noWorkspace === true;
+  if (workspaceIds.length && noWorkspace) {
+    throw new Error("workspaceIds 与 noWorkspace 互斥：要么按工作区筛，要么只看未关联工作区的任务");
+  }
+  if (workspaceIds.length) {
+    where.push(
+      "EXISTS (SELECT 1 FROM task_workspace_link wl JOIN task_workspace w ON w.id=wl.workspace_id " +
+      "WHERE wl.task_id=t.id AND wl.deleted_at IS NULL AND w.deleted_at IS NULL AND wl.workspace_id IN (" +
+      workspaceIds.map(function () { return "?"; }).join(",") + "))",
+    );
+    for (const id of workspaceIds) params.push(id);
+  } else if (noWorkspace) {
+    where.push(
+      "NOT EXISTS (SELECT 1 FROM task_workspace_link wl JOIN task_workspace w ON w.id=wl.workspace_id " +
+      "WHERE wl.task_id=t.id AND wl.deleted_at IS NULL AND w.deleted_at IS NULL)",
+    );
   }
 
   // 旧前端的 checkedTypes（0..3）仍接受，按旧类型名映射成标签过滤。
@@ -264,6 +286,7 @@ function rangeArg(clamp, value, label, span) {
     return taskOut(r, map);
   });
   attachTags(db, api, records);
+  attachWorkspaces(db, records);
   const returned = records.length;
   const truncated = returned < total;
   const filter = {
@@ -288,6 +311,8 @@ function rangeArg(clamp, value, label, span) {
   if (args.status !== undefined && args.status !== null && args.status !== "") filter.status = String(args.status);
   if (filterTagIds.length) filter.tagIds = filterTagIds.slice();
   if (filterTagNames.length) filter.tags = filterTagNames.slice();
+  if (workspaceIds.length) filter.workspaceIds = workspaceIds.slice();
+  if (noWorkspace) filter.noWorkspace = true;
   if (difficultyMissing) filter.difficultyMissing = true;
   if (priorityMin !== null) filter.priorityMin = priorityMin;
   if (priorityMax !== null) filter.priorityMax = priorityMax;

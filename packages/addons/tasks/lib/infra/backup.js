@@ -9,7 +9,7 @@
 import { logChange, tableExists, tx } from "../db/db.js";
 import { LEGACY_TYPE_TAGS, addTaskTagByName, tagsAvailable } from "../tagging/tagging.js";
 
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 function asText(value, fallback) {
   if (value === undefined || value === null) return fallback === undefined ? "" : fallback;
@@ -85,11 +85,25 @@ function nodeValues(row) {
   ];
 }
 
+function workspaceValues(row) {
+  return [identity(row.id, "task_workspace.id"), asText(row.title), asText(row.name), asText(row.description),
+    asTextOrNull(row.dir), ...stamps(row)];
+}
+function workspaceLinkValues(row) {
+  const workspaceId = identity(row.workspace_id, "task_workspace_link.workspace_id");
+  const taskId = identity(row.task_id, "task_workspace_link.task_id");
+  const expected = workspaceId + ":" + taskId;
+  if (identity(row.id, "task_workspace_link.id") !== expected) throw new Error("WORKSPACE_LINK_ID_MISMATCH: link.id 必须等于 workspace_id + ':' + task_id");
+  return [expected, workspaceId, taskId, ...stamps(row)];
+}
+
 const DEFINITIONS = [
   ["task_node", "taskNodes", "id,name,description,type,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev", nodeValues],
   ["task_timeline", "taskTimelines", "id,title,description,created_at,updated_at,deleted_at,rev", timelineValues],
   ["task", "tasks", "id,title,description,status,priority,difficulty,review,table_id,timeline_key,restart_key,publish_date,target_date,done_date,shutdown_date,dedupe_key,owner,claimed_at,claim_token,created_at,updated_at,deleted_at,rev", taskValues],
   ["task_timeline_link", "taskTimelineLinks", "id,task_id,timeline_id,created_at,updated_at,deleted_at,rev", linkValues],
+  ["task_workspace", "taskWorkspaces", "id,title,name,description,dir,created_at,updated_at,deleted_at,rev", workspaceValues],
+  ["task_workspace_link", "taskWorkspaceLinks", "id,workspace_id,task_id,created_at,updated_at,deleted_at,rev", workspaceLinkValues],
 ];
 
 function identity(value, field) {
@@ -124,13 +138,14 @@ export function exportTasksData(api) {
 }
 
 function prepareBackup(data) {
-  if (!data || ![1, 2, 3, 4].includes(Number(data.schemaVersion))) throw new Error("任务备份版本不兼容：需要 1、2、3 或 4");
+  if (!data || ![1, 2, 3, 4, 5].includes(Number(data.schemaVersion))) throw new Error("任务备份版本不兼容：需要 1、2、3、4 或 5");
   const droppedDeps = !Array.isArray(data.taskDeps) ? 0 : data.taskDeps.length;
   const legacy = Number(data.schemaVersion) === 1;
   const prepared = [];
   for (const [table, key, columnText, convert] of DEFINITIONS) {
     if (legacy && (table === "task_timeline" || table === "task_timeline_link")) continue;
-    const rows = key === "taskDeps" ? [] : data[key];
+    // 5 之前的备份没有工作区两张表，缺键按空数组处理，不阻断恢复。
+    const rows = key === "taskDeps" ? [] : (data[key] === undefined && table === "task_workspace" || data[key] === undefined && table === "task_workspace_link" ? [] : data[key]);
     if (!Array.isArray(rows)) throw new Error("任务备份结构不完整：" + key);
     const columns = columnText.split(",");
     const ids = new Set();

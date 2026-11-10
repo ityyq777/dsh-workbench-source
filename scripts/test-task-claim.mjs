@@ -19,7 +19,7 @@ const create = (title, extra) => env.call('tasks.create', Object.assign({ title,
 const row = id => env.db.prepare('SELECT * FROM task WHERE id=?').get(id);
 
 // 状态机元数据
-assert.equal(env.db.prepare("SELECT v FROM meta WHERE k='task_schema_version'").get().v, '4');
+assert.equal(env.db.prepare("SELECT v FROM meta WHERE k='task_schema_version'").get().v, '6');
 
 // update/bulkUpdate 不允许直接写 4
 const u1 = create('直接写四');

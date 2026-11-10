@@ -3,6 +3,7 @@
 module.exports = function createEditModal(React, statusInfo, stars) {
   var h = React.createElement;
   var difficultyField = require("../item/difficulty-field.cjs")(React);
+  var WorkspaceSelect = require("../workspace/workspace-select.cjs")(React).WorkspaceSelect;
   var ownership = require("./ownership.cjs"), fields = require("./ownership-fields.cjs")(React);
   // 任务编辑弹窗：按状态收敛可编辑字段。
   // 所有状态均可编辑难度；0/null 表示未设置。
@@ -20,6 +21,7 @@ module.exports = function createEditModal(React, statusInfo, stars) {
       priority: String(task.priority === null || task.priority === undefined ? 0 : task.priority),
       difficulty: Number(task.difficulty || 0),
       targetDate: String(task.targetDate || ""),
+      workspaceIds: (task.workspaces || []).map(function (w) { return String(w.id); }),
     });
     var form = fs[0], setForm = fs[1];
     var bs = React.useState(false);
@@ -64,6 +66,7 @@ module.exports = function createEditModal(React, statusInfo, stars) {
         if (String(form.targetDate || "").trim()) patch.targetDate = String(form.targetDate).trim();
       }
       patch.difficulty = Math.max(0, Math.min(5, Number(form.difficulty) || 0));
+      patch.workspaceIds = (form.workspaceIds || []).slice();
       if (String(form.review) !== String(task.review || "")) patch.review = String(form.review);
       submission.pending = true; setBusy(true);
       setErr("");
@@ -104,6 +107,7 @@ module.exports = function createEditModal(React, statusInfo, stars) {
           h("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, value: form.priority, onChange: function (e) { set("priority", e.target.value); } })
         ) : null,
         difficultyField(t, form.difficulty, function (value) { set("difficulty", value); }, "wbt-edit-difficulty"),
+        h(WorkspaceSelect, { api: props.api, lang: props.lang, value: form.workspaceIds, onChange: function (ids) { set("workspaceIds", ids); } }),
         err ? h("div", { className: "wbt-err" }, err) : null,
         h("div", { className: "wbt-modal-foot" },
           h("button", { className: "wbt-btn ghost", disabled: isBusy, onClick: requestClose }, t.cancel),

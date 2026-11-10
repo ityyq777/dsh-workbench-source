@@ -5891,6 +5891,16 @@ var require_styles = __commonJS({
       ".wbt-metazone{display:flex;flex-direction:column;gap:4px;min-width:0;max-width:100%;margin-top:5px}",
       ".wbt-metazone > *{margin-top:0}",
       ".wbt-metazone + .wbt-desc{margin-top:7px}",
+      ".wbt-wschips{display:flex;flex-wrap:wrap;gap:4px;min-width:0}",
+      ".wbt-wschip{display:inline-flex;align-items:center;gap:4px;max-width:100%;padding:1px 8px;border-radius:999px;border:1px solid var(--wbt-line);background:color-mix(in oklab,var(--wbt-accent) 8%,transparent);font-size:11.5px;line-height:1.7}",
+      ".wbt-wschip b{font-weight:560;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:22em}",
+      ".wbt-wschip button{border:0;background:transparent;color:inherit;cursor:pointer;font-size:13px;line-height:1;padding:0 2px;opacity:.6}",
+      ".wbt-wschip button:hover{opacity:1}",
+      ".wbt-wschip-ro{opacity:.85;background:transparent}",
+      ".wbt-ws-options{display:flex;flex-direction:column;gap:2px;max-height:168px;overflow:auto}",
+      ".wbt-ws-group .wbt-check{min-width:0;overflow-wrap:anywhere}",
+      ".wbt-ws-select{display:flex;flex-direction:column;gap:6px;min-width:0}",
+      ".wbt-ws-select .wbt-picker-list{max-height:180px}",
       ".wbt-ops-block{width:100%;min-width:0;justify-content:flex-start;flex-wrap:wrap;padding-top:2px;margin-top:2px}",
       ".wbt-card .wbt-chead{row-gap:0}",
       ".wbt-card .wbt-metazone .wbt-meta{row-gap:2px}",
@@ -6206,9 +6216,13 @@ var require_task_item = __commonJS({
         );
         var opsNode = h("div", { className: cx("wbt-ops", props.card && "wbt-ops-block"), key: "ops" }, ops);
         var tagBlock = tagNodes.length ? h("div", { className: "wbt-tags", key: "tags" }, tagNodes) : null;
+        var wsList = Array.isArray(task.workspaces) ? task.workspaces : [];
+        var wsBlock = wsList.length ? h("div", { className: "wbt-wschips", key: "workspaces" }, wsList.map(function(w) {
+          return h("span", { className: "wbt-wschip wbt-wschip-ro", key: String(w.id), title: w.dir || "" }, (w.dir ? "" : "\u25E6 ") + (w.title || w.id));
+        })) : null;
         var metaBlock = meta.length ? h("div", { className: "wbt-foot", key: "meta" }, h("div", { className: "wbt-meta" }, meta)) : null;
         var pathBlock = task.path && task.path.length ? h("div", { className: "wbt-taskpath", key: "path" }, h(PathCrumbs, { path: task.path, t, onPick: props.onPathPick })) : null;
-        var metaZone = tagBlock || metaBlock || pathBlock ? h("div", { className: "wbt-metazone", key: "metazone" }, tagBlock, metaBlock, pathBlock) : null;
+        var metaZone = tagBlock || wsBlock || metaBlock || pathBlock ? h("div", { className: "wbt-metazone", key: "metazone" }, tagBlock, wsBlock, metaBlock, pathBlock) : null;
         return h(
           "div",
           { className: cx("wbt-item", props.card && "wbt-card", String(task.status) === "1" && "closed") },
@@ -6464,6 +6478,175 @@ var require_timeline_controls = __commonJS({
         ));
       }
       return { Picker, Editor, result };
+    };
+  }
+});
+
+// packages/addons/tasks/client/workspace/workspace-select.cjs
+var require_workspace_select = __commonJS({
+  "packages/addons/tasks/client/workspace/workspace-select.cjs"(exports2, module2) {
+    module2.exports = function createWorkspaceSelect(React) {
+      var h = React.createElement;
+      var COPY = {
+        zh: { label: "\u5DE5\u4F5C\u533A", empty: "\u672A\u5173\u8054\u5DE5\u4F5C\u533A", search: "\u641C\u7D22\u5DE5\u4F5C\u533A", none: "\u6CA1\u6709\u5339\u914D\u7684\u5DE5\u4F5C\u533A", createHint: "\u65B0\u5EFA\u5DE5\u4F5C\u533A", title: "\u6807\u9898", dir: "\u76EE\u5F55\uFF08\u672C\u673A\u7EDD\u5BF9\u8DEF\u5F84\uFF0C\u53EF\u7A7A\uFF09", desc: "\u63CF\u8FF0\uFF08\u53EF\u7A7A\uFF09", create: "\u521B\u5EFA\u5E76\u5173\u8054", cancel: "\u53D6\u6D88", loading: "\u52A0\u8F7D\u4E2D\u2026", fail: "\u5DE5\u4F5C\u533A\u5217\u8868\u52A0\u8F7D\u5931\u8D25", remove: "\u79FB\u9664", dirInvalid: "\u76EE\u5F55\u5FC5\u987B\u662F\u672C\u673A\u7EDD\u5BF9\u8DEF\u5F84\uFF08/ \u6216 X:\\\uFF09" },
+        en: { label: "Workspaces", empty: "No workspace", search: "Search workspaces", none: "No matching workspace", createHint: "New workspace", title: "Title", dir: "Directory (absolute local path, optional)", desc: "Description (optional)", create: "Create and link", cancel: "Cancel", loading: "Loading\u2026", fail: "Failed to load workspaces", remove: "Remove", dirInvalid: "Directory must be an absolute local path (/ or X:\\)" }
+      };
+      function text(lang, key) {
+        return (COPY[lang] || COPY.zh)[key];
+      }
+      function useWorkspaces(api) {
+        var state = React.useState({ list: [], loading: true, error: "" });
+        var snap = state[0], set = state[1];
+        function reload() {
+          set(function(prev) {
+            return Object.assign({}, prev, { loading: true, error: "" });
+          });
+          api.call("taskWorkspaces.list", { pageSize: 100 }).then(function(r) {
+            if (!r || !r.ok) {
+              set({ list: [], loading: false, error: r && r.error || "list failed" });
+              return;
+            }
+            set({ list: r.result && r.result.records || [], loading: false, error: "" });
+          }, function(e) {
+            set({ list: [], loading: false, error: e && e.message || "list failed" });
+          });
+        }
+        React.useEffect(reload, []);
+        return { list: snap.list, loading: snap.loading, error: snap.error, reload };
+      }
+      function WorkspaceSelect(props) {
+        var lang = props.lang === "en" ? "en" : "zh";
+        var t = function(key) {
+          return text(lang, key);
+        };
+        var ws = useWorkspaces(props.api);
+        var qs = React.useState("");
+        var query = qs[0], setQuery = qs[1];
+        var cs = React.useState(false);
+        var creating = cs[0], setCreating = cs[1];
+        var ns = React.useState({ title: "", dir: "", description: "" });
+        var draft = ns[0], setDraft = ns[1];
+        var es = React.useState("");
+        var err = es[0], setErr = es[1];
+        var selected = Array.isArray(props.value) ? props.value.map(String) : [];
+        var byId = {};
+        ws.list.forEach(function(w) {
+          byId[String(w.id)] = w;
+        });
+        var keyword = query.trim().toLowerCase();
+        var candidates = ws.list.filter(function(w) {
+          if (!keyword) return true;
+          return [w.title, w.name, w.description].some(function(v) {
+            return String(v || "").toLowerCase().indexOf(keyword) >= 0;
+          });
+        });
+        function toggle(id) {
+          var key = String(id);
+          var next = selected.indexOf(key) >= 0 ? selected.filter(function(x) {
+            return x !== key;
+          }) : selected.concat([key]);
+          if (props.onChange) props.onChange(next);
+        }
+        function submitCreate() {
+          if (!String(draft.title).trim()) {
+            setErr(t("title") + " *");
+            return;
+          }
+          setErr("");
+          props.api.call("taskWorkspaces.create", { title: String(draft.title).trim(), dir: String(draft.dir || "").trim() || null, description: String(draft.description || "") }).then(function(r) {
+            if (!r || !r.ok) {
+              setErr(r && r.error || "create failed");
+              return;
+            }
+            var id = String(r.result.workspace.id);
+            setCreating(false);
+            setDraft({ title: "", dir: "", description: "" });
+            ws.reload();
+            if (props.onChange) props.onChange(selected.concat([id]));
+          }, function(e) {
+            setErr(e && e.message || "create failed");
+          });
+        }
+        return h(
+          "div",
+          { className: "wbt-field full wbt-wspicker" },
+          h("span", null, t("label")),
+          h(
+            "div",
+            { className: "wbt-wschips" },
+            selected.length ? selected.map(function(id) {
+              var w = byId[id] || { id, title: id };
+              return h(
+                "span",
+                { className: "wbt-wschip", key: id, title: w.dir || "" },
+                h("span", null, w.title || id),
+                h("button", { type: "button", className: "wbt-icon", "aria-label": t("remove") + " " + (w.title || id), onClick: function() {
+                  toggle(id);
+                } }, "\xD7")
+              );
+            }) : h("span", { className: "wbt-hint" }, t("empty"))
+          ),
+          h(
+            "div",
+            { className: "wbt-wsrow" },
+            h("input", { className: "wbt-input", value: query, placeholder: t("search"), onChange: function(e) {
+              setQuery(e.target.value);
+            } }),
+            h("button", { type: "button", className: "wbt-btn ghost", onClick: function() {
+              setCreating(!creating);
+            } }, t("createHint"))
+          ),
+          ws.loading ? h("div", { className: "wbt-hint" }, t("loading")) : null,
+          ws.error ? h("div", { className: "wbt-err" }, t("fail")) : null,
+          h(
+            "div",
+            { className: "wbt-wslist", role: "listbox", "aria-multiselectable": "true" },
+            !ws.loading && !candidates.length ? h("div", { className: "wbt-hint" }, t("none")) : null,
+            candidates.map(function(w) {
+              var id = String(w.id), on = selected.indexOf(id) >= 0;
+              return h(
+                "button",
+                { type: "button", role: "option", key: id, "aria-selected": on, className: "wbt-wsopt" + (on ? " on" : ""), title: w.dir || "", onClick: function() {
+                  toggle(id);
+                } },
+                h("span", { className: "wbt-wsopt-title" }, w.title || id),
+                h("span", { className: "wbt-wsopt-meta" }, (w.taskCount || 0) + " \xB7 " + (w.dir || "\u2014"))
+              );
+            })
+          ),
+          creating ? h(
+            "div",
+            { className: "wbt-wscreate" },
+            h("input", { className: "wbt-input", value: draft.title, placeholder: t("title") + " *", onChange: function(e) {
+              setDraft(Object.assign({}, draft, { title: e.target.value }));
+            } }),
+            h("input", { className: "wbt-input", value: draft.dir, placeholder: t("dir"), onChange: function(e) {
+              setDraft(Object.assign({}, draft, { dir: e.target.value }));
+            } }),
+            h("input", { className: "wbt-input", value: draft.description, placeholder: t("desc"), onChange: function(e) {
+              setDraft(Object.assign({}, draft, { description: e.target.value }));
+            } }),
+            err ? h("div", { className: "wbt-err" }, err) : null,
+            h(
+              "div",
+              { className: "wbt-wsrow" },
+              h("button", { type: "button", className: "wbt-btn primary", onClick: submitCreate }, t("create")),
+              h("button", { type: "button", className: "wbt-btn ghost", onClick: function() {
+                setCreating(false);
+                setErr("");
+              } }, t("cancel"))
+            )
+          ) : null
+        );
+      }
+      function WorkspaceChips(props) {
+        var list = Array.isArray(props.list) ? props.list : [];
+        if (!list.length) return null;
+        return h("div", { className: "wbt-wschips" }, list.map(function(w) {
+          return h("span", { className: "wbt-wschip", key: String(w.id), title: w.dir || "" }, w.title || w.id);
+        }));
+      }
+      return { WorkspaceSelect, WorkspaceChips, useWorkspaces, text };
     };
   }
 });
@@ -6857,6 +7040,7 @@ var require_create_modal = __commonJS({
     module2.exports = function createModal(deps) {
       var React = deps.React, h = React.createElement;
       var TimelinePicker = require_timeline_controls()(React).Picker;
+      var WorkspaceSelect = require_workspace_select()(React).WorkspaceSelect;
       var difficultyField = require_difficulty_field()(React);
       var ownership = require_ownership(), fields = require_ownership_fields()(React);
       var allTables = deps.allTables, tagNames = deps.tagNames, splitTags = deps.splitTags;
@@ -6888,7 +7072,8 @@ var require_create_modal = __commonJS({
           newPath: false,
           tablePath: "",
           pathDescriptions: [],
-          confirmed: false
+          confirmed: false,
+          workspaceIds: []
         });
         var form = f[0], setForm = f[1];
         var busy = React.useState(false);
@@ -6979,6 +7164,7 @@ var require_create_modal = __commonJS({
             targetDate: form.targetDate,
             source: source === "2" ? "2" : form.timelineId ? "1" : "0"
           };
+          if (form.workspaceIds && form.workspaceIds.length) args.workspaceIds = form.workspaceIds.slice();
           if (form.newPath) Object.assign(args, { tablePath: plan.parts, createMissing: true, pathDescriptions: plan.parts.map(function(_, i) {
             return form.pathDescriptions[i] || "";
           }) });
@@ -7032,6 +7218,9 @@ var require_create_modal = __commonJS({
               hostHasAddon("wb-addon-tags") ? h("label", { className: "wbt-field full" }, h("span", null, t.tags), h("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function(e) {
                 set("tags", e.target.value);
               } })) : null,
+              h(WorkspaceSelect, { api: props.api, lang: props.lang, value: form.workspaceIds, onChange: function(ids) {
+                set("workspaceIds", ids);
+              } }),
               h("label", { className: "wbt-field" }, h("span", null, t.status), h(
                 "select",
                 { className: "wbt-select", value: source === "2" ? "0" : form.status, disabled: source === "2", onChange: function(e) {
@@ -7394,6 +7583,7 @@ var require_edit_modal = __commonJS({
     module2.exports = function createEditModal(React, statusInfo, stars) {
       var h = React.createElement;
       var difficultyField = require_difficulty_field()(React);
+      var WorkspaceSelect = require_workspace_select()(React).WorkspaceSelect;
       var ownership = require_ownership(), fields = require_ownership_fields()(React);
       function EditModal(props) {
         var t = props.t;
@@ -7407,7 +7597,10 @@ var require_edit_modal = __commonJS({
           review: String(task.review || ""),
           priority: String(task.priority === null || task.priority === void 0 ? 0 : task.priority),
           difficulty: Number(task.difficulty || 0),
-          targetDate: String(task.targetDate || "")
+          targetDate: String(task.targetDate || ""),
+          workspaceIds: (task.workspaces || []).map(function(w) {
+            return String(w.id);
+          })
         });
         var form = fs[0], setForm = fs[1];
         var bs = React.useState(false);
@@ -7473,6 +7666,7 @@ var require_edit_modal = __commonJS({
             if (String(form.targetDate || "").trim()) patch.targetDate = String(form.targetDate).trim();
           }
           patch.difficulty = Math.max(0, Math.min(5, Number(form.difficulty) || 0));
+          patch.workspaceIds = (form.workspaceIds || []).slice();
           if (String(form.review) !== String(task.review || "")) patch.review = String(form.review);
           submission.pending = true;
           setBusy(true);
@@ -7550,6 +7744,9 @@ var require_edit_modal = __commonJS({
             difficultyField(t, form.difficulty, function(value) {
               set("difficulty", value);
             }, "wbt-edit-difficulty"),
+            h(WorkspaceSelect, { api: props.api, lang: props.lang, value: form.workspaceIds, onChange: function(ids) {
+              set("workspaceIds", ids);
+            } }),
             err ? h("div", { className: "wbt-err" }, err) : null,
             h(
               "div",
@@ -7805,7 +8002,19 @@ var require_task_filter_model = __commonJS({
       return { min: "", max: "" };
     }
     function empty() {
-      return { statuses: [], priority: bounds(), difficulty: bounds(), publish: { from: "", to: "" }, done: { from: "", to: "" }, shutdown: { from: "", to: "" }, target: { from: "", to: "" } };
+      return { statuses: [], priority: bounds(), difficulty: bounds(), publish: { from: "", to: "" }, done: { from: "", to: "" }, shutdown: { from: "", to: "" }, target: { from: "", to: "" }, workspaceIds: [], noWorkspace: false };
+    }
+    function toggleWorkspace(value, id) {
+      var next = Object.assign({}, value, { workspaceIds: value.workspaceIds.slice(), noWorkspace: false });
+      var index = next.workspaceIds.indexOf(id);
+      if (index >= 0) next.workspaceIds.splice(index, 1);
+      else next.workspaceIds.push(id);
+      return next;
+    }
+    function toggleNoWorkspace(value) {
+      var next = Object.assign({}, value, { noWorkspace: !value.noWorkspace });
+      if (next.noWorkspace) next.workspaceIds = [];
+      return next;
     }
     function statusFree(value) {
       return !value.statuses.length;
@@ -7813,7 +8022,7 @@ var require_task_filter_model = __commonJS({
     function hasRange(value) {
       return groups.concat(["target"]).some(function(key) {
         return value[key].from || value[key].to;
-      }) || !!(value.priority.min || value.priority.max || value.difficulty.min || value.difficulty.max);
+      }) || !!(value.priority.min || value.priority.max || value.difficulty.min || value.difficulty.max) || !!(value.workspaceIds && value.workspaceIds.length) || value.noWorkspace === true;
     }
     function all(value) {
       return statusFree(value) && !hasRange(value);
@@ -7849,7 +8058,9 @@ var require_task_filter_model = __commonJS({
         publish: value.publish,
         done: value.done,
         shutdown: value.shutdown,
-        target: value.target
+        target: value.target,
+        workspaceIds: value.workspaceIds,
+        noWorkspace: value.noWorkspace
       });
     }
     function activePreset(value) {
@@ -7926,6 +8137,8 @@ var require_task_filter_model = __commonJS({
       if (value.priority.max) out.priorityMax = Number(value.priority.max);
       if (value.difficulty.min) out.difficultyMin = Number(value.difficulty.min);
       if (value.difficulty.max) out.difficultyMax = Number(value.difficulty.max);
+      if (value.noWorkspace) out.noWorkspace = true;
+      else if (value.workspaceIds && value.workspaceIds.length) out.workspaceIds = value.workspaceIds.slice();
       return out;
     }
     function readBounds(params, key, target) {
@@ -7978,6 +8191,8 @@ var require_task_filter_model = __commonJS({
           if (typeof box.from === "string" && date.validDate(box.from)) value[key].from = box.from;
           if (typeof box.to === "string" && date.validDate(box.to)) value[key].to = box.to;
         });
+        if (Array.isArray(parsed.workspaceIds)) value.workspaceIds = parsed.workspaceIds.map(String).filter(Boolean);
+        value.noWorkspace = parsed.noWorkspace === true;
         ["priority", "difficulty"].forEach(function(key) {
           var box = parsed[key] || {}, min = limit(value, key, "min", box.min), max;
           if (min) {
@@ -8003,6 +8218,8 @@ var require_task_filter_model = __commonJS({
       limits,
       clearDifficulty,
       args,
+      toggleWorkspace,
+      toggleNoWorkspace,
       presets: PRESETS.map(function(spec) {
         return spec.id;
       }),
@@ -8158,6 +8375,22 @@ var require_task_filter_panel = __commonJS({
             } }), option[1]);
           })),
           p.search,
+          h(
+            "fieldset",
+            { className: "wbt-filter-group wbt-ws-group" },
+            h("legend", null, en ? "Workspaces" : "\u5DE5\u4F5C\u533A"),
+            p.workspaces && p.workspaces.length ? h("div", { className: "wbt-ws-options" }, p.workspaces.map(function(ws) {
+              var checked = value.workspaceIds.indexOf(String(ws.id)) >= 0;
+              return h("label", { key: ws.id, className: "wbt-check" }, h("input", { type: "checkbox", checked, "data-workspace": ws.id, onChange: function() {
+                change(model.toggleWorkspace(value, String(ws.id)));
+                p.onHint("");
+              } }), String(ws.title || ws.id));
+            })) : h("p", { className: "wbt-limit-hint" }, en ? "No workspaces yet; create one in the task editor." : "\u8FD8\u6CA1\u6709\u5DE5\u4F5C\u533A\uFF0C\u53EF\u5728\u4EFB\u52A1\u7F16\u8F91\u91CC\u65B0\u5EFA\u3002"),
+            h("label", { className: "wbt-check" }, h("input", { type: "checkbox", checked: value.noWorkspace === true, onChange: function() {
+              change(model.toggleNoWorkspace(value));
+              p.onHint("");
+            } }), en ? "Not linked to any workspace" : "\u672A\u5173\u8054\u5DE5\u4F5C\u533A")
+          ),
           h("div", { className: "wbt-filter-group" }, p.tags, p.missing),
           h(
             "fieldset",
@@ -8259,7 +8492,7 @@ var require_tasks_view = __commonJS({
   "packages/addons/tasks/client/views/tasks-view.cjs"(exports2, module2) {
     module2.exports = function createTasksView(deps) {
       var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon2 = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
-      var h = React.createElement, filters = require_task_filter_model(), renderFilters = require_task_filter_panel(), claimBatch = require_claim_batch(), renderSelectionBar = require_selection_bar();
+      var h = React.createElement, filters = require_task_filter_model(), renderFilters = require_task_filter_panel(), claimBatch = require_claim_batch(), renderSelectionBar = require_selection_bar(), WorkspaceSelectFactory = require_workspace_select()(React);
       function TasksView(props) {
         var lang = props.lang === "en" ? "en" : "zh";
         var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -8325,6 +8558,7 @@ var require_tasks_view = __commonJS({
         var titleKey = titleS[0], setTitleKey = titleS[1];
         var tagReloadS = React.useState(0);
         var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
+        var wsList = WorkspaceSelectFactory.useWorkspaces(api).list;
         var filterTagIdsS = React.useState([]);
         var filterTagIds = filterTagIdsS[0], setFilterTagIds = filterTagIdsS[1];
         var pageS = React.useState(1);
@@ -8795,6 +9029,7 @@ var require_tasks_view = __commonJS({
             }
           }),
           // 与难度区间互斥：两者同时生效必然是空集，勾选「仅未填难度」时清掉难度区间。
+          workspaces: wsList,
           missing: h("label", { className: "wbt-check" }, h("input", {
             type: "checkbox",
             checked: difficultyMissing,
@@ -10100,7 +10335,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.0.0",
+    version: "5.1.0",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

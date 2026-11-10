@@ -25,6 +25,8 @@ export const TASK_FILTER_SCHEMA = {
   targetFrom: { type: "string", description: "targetDate >= 该日期" },
   targetTo: { type: "string", description: "targetDate <= 该日期" },
   tagIds: { type: "array", items: { type: "string" }, description: "任一标签命中（AND 到其他条件）" },
+  workspaceIds: { type: "array", items: { type: "string" }, description: "按工作区筛选，命中任一即可（OR，再与其他条件 AND）；与 noWorkspace 互斥；已删除的工作区与关联不参与匹配" },
+  noWorkspace: { type: "boolean", description: "true 只看未关联任何工作区的任务；与 workspaceIds 互斥" },
   sort: { type: "string", description: "priority / target / publish / updated / created；前缀 - 表示降序" },
   order: { type: "string", enum: ["asc", "desc"], description: "配合 sort 指定方向" },
 };

@@ -20,6 +20,7 @@ import {
   attachTags,
 } from "../../tagging/tagging.js";
 import { TAG_DOMAIN_NOTICE, withNotices, dateArg, getTask, saveTaskRow, emitChange, writeChange } from "../model/task-model.js";
+import { clearTaskWorkspaces, attachWorkspaces } from "../../workspace/workspace-store.js";
 import { updateTask } from "./task-update.js";
 export function selectedTasks(db, args) {
   const ids = Array.isArray(args.ids) ? args.ids.map(String) : [];
@@ -149,6 +150,8 @@ export function removeTask(db, args, origin, api, skipTx = false) {
   setMembership(db,cur.id,null,origin,api,{ts,project:false});
   const next = Object.assign({}, cur, { timeline_key:null, deleted_at: ts, updated_at: ts, rev: Number(cur.rev) + 1 });
   saveTaskRow(db, next);
+  // 删除任务连带软删它的工作区关联，避免 link 变成指向已删任务的孤儿行。
+  clearTaskWorkspaces(db, next.id, origin, api, ts);
   logChange(db, "task", next.id, "delete", null, origin, ts);
   emitChange(api, next.id, "delete");
   return { ok: true, id: String(next.id) };
@@ -174,6 +177,7 @@ export function exportTasks(db, args, api) {
     const rows = idStmt.all.apply(idStmt, args.ids.map(String));
     records = rows.map(function (row) { return taskOut(row, nodeMap(db)); });
     attachTags(db, api, records);
+    attachWorkspaces(db, records);
   } else {
     const listed = listTasks(db, Object.assign({}, args, { pageNumber: undefined, pageSize: undefined }), api);
     records = listed.records;
@@ -183,19 +187,20 @@ export function exportTasks(db, args, api) {
     return { ...feedback, format: "json", count: records.length, content: JSON.stringify({ exportedAt: now(), count: records.length, tasks: records }, null, 2) };
   }
   if (format === "csv") {
-    const cols = ["id", "title", "status", "priority", "difficulty", "tableId", "publishDate", "targetDate", "doneDate", "shutdownDate", "createdAt", "updatedAt", "tags"];
+    const cols = ["id", "title", "status", "priority", "difficulty", "tableId", "publishDate", "targetDate", "doneDate", "shutdownDate", "createdAt", "updatedAt", "tags", "workspaces"];
     const lines = [cols.join(",")];
     for (const t of records) {
       lines.push(cols.map(function (c) {
         if (c === "tags") return csvCell((t.tags || []).map(function (g) { return g.name; }).join("|"));
+        if (c === "workspaces") return csvCell((t.workspaces || []).map(function (w) { return w.title; }).join("|"));
         return csvCell(t[c]);
       }).join(","));
     }
     return { ...feedback, format: "csv", count: records.length, content: lines.join("\n") };
   }
-  const lines = ["| id | 标题 | 状态 | P | 目标日期 | 标签 |", "| --- | --- | --- | --- | --- | --- |"];
+  const lines = ["| id | 标题 | 状态 | P | 目标日期 | 标签 | 工作区 |", "| --- | --- | --- | --- | --- | --- | --- |"];
   for (const t of records) {
-    lines.push("| " + t.id + " | " + String(t.title).replace(/\|/g, "\\|") + " | " + t.status + " | " + t.priority + " | " + (t.targetDate || "") + " | " + (t.tags || []).map(function (g) { return g.name; }).join(", ") + " |");
+    lines.push("| " + t.id + " | " + String(t.title).replace(/\|/g, "\\|") + " | " + t.status + " | " + t.priority + " | " + (t.targetDate || "") + " | " + (t.tags || []).map(function (g) { return g.name; }).join(", ") + " | " + (t.workspaces || []).map(function (w) { return w.title; }).join(", ") + " |");
   }
   return { ...feedback, format: "markdown", count: records.length, content: lines.join("\n") };
 }

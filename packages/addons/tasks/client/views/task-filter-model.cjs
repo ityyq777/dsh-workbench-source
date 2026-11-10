@@ -6,11 +6,24 @@ var groups = ["publish", "done", "shutdown"];
 var limits = {priority:{min:1, max:10, step:1}, difficulty:{min:0.5, max:5, step:0.5}};
 var STORE = "wbt.taskFilters.v3";
 function bounds() { return {min:"", max:""}; }
-function empty() { return {statuses:[], priority:bounds(), difficulty:bounds(), publish:{from:"",to:""}, done:{from:"",to:""}, shutdown:{from:"",to:""}, target:{from:"",to:""}}; }
+function empty() { return {statuses:[], priority:bounds(), difficulty:bounds(), publish:{from:"",to:""}, done:{from:"",to:""}, shutdown:{from:"",to:""}, target:{from:"",to:""}, workspaceIds:[], noWorkspace:false}; }
+// 未关联工作区与具体工作区互斥：勾选其一就清掉另一个。
+function toggleWorkspace(value, id) {
+  var next = Object.assign({}, value, {workspaceIds:value.workspaceIds.slice(), noWorkspace:false});
+  var index = next.workspaceIds.indexOf(id);
+  if (index >= 0) next.workspaceIds.splice(index, 1); else next.workspaceIds.push(id);
+  return next;
+}
+function toggleNoWorkspace(value) {
+  var next = Object.assign({}, value, {noWorkspace:!value.noWorkspace});
+  if (next.noWorkspace) next.workspaceIds = [];
+  return next;
+}
 function statusFree(value) { return !value.statuses.length; }
 function hasRange(value) {
   return groups.concat(["target"]).some(function (key) { return value[key].from || value[key].to; }) ||
-    !!(value.priority.min || value.priority.max || value.difficulty.min || value.difficulty.max);
+    !!(value.priority.min || value.priority.max || value.difficulty.min || value.difficulty.max) ||
+    !!(value.workspaceIds && value.workspaceIds.length) || value.noWorkspace === true;
 }
 function all(value) { return statusFree(value) && !hasRange(value); }
 // 预设是唯一常量表：日期按浏览器本地时区临时算，避免把「昨天/今天」固化进状态。
@@ -39,6 +52,7 @@ function signature(value) {
   return JSON.stringify({
     statuses: value.statuses.slice().sort(), priority: value.priority, difficulty: value.difficulty,
     publish: value.publish, done: value.done, shutdown: value.shutdown, target: value.target,
+    workspaceIds: value.workspaceIds, noWorkspace: value.noWorkspace,
   });
 }
 function activePreset(value) {
@@ -98,6 +112,8 @@ function args(value) {
   if (value.priority.max) out.priorityMax = Number(value.priority.max);
   if (value.difficulty.min) out.difficultyMin = Number(value.difficulty.min);
   if (value.difficulty.max) out.difficultyMax = Number(value.difficulty.max);
+  if (value.noWorkspace) out.noWorkspace = true;
+  else if (value.workspaceIds && value.workspaceIds.length) out.workspaceIds = value.workspaceIds.slice();
   return out;
 }
 function readBounds(params, key, target) {
@@ -145,6 +161,8 @@ function load(params) {
       if (typeof box.from === "string" && date.validDate(box.from)) value[key].from = box.from;
       if (typeof box.to === "string" && date.validDate(box.to)) value[key].to = box.to;
     });
+    if (Array.isArray(parsed.workspaceIds)) value.workspaceIds = parsed.workspaceIds.map(String).filter(Boolean);
+    value.noWorkspace = parsed.noWorkspace === true;
     ["priority", "difficulty"].forEach(function (key) {
       var box = parsed[key] || {}, min = limit(value, key, "min", box.min), max;
       if (min) { value = min.value; max = limit(value, key, "max", box.max); if (max) value = max.value; }
@@ -155,6 +173,7 @@ function load(params) {
 module.exports = {
   groups:groups, all:all, empty:empty, includes:includes, toggle:toggle, enable:enable,
   range:range, limit:limit, limits:limits, clearDifficulty:clearDifficulty, args:args,
+  toggleWorkspace:toggleWorkspace, toggleNoWorkspace:toggleNoWorkspace,
   presets:PRESETS.map(function (spec) { return spec.id; }), presetValue:presetValue, activePreset:activePreset,
   navigation:navigation, save:save, load:load,
 };

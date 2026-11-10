@@ -35,6 +35,7 @@
     "preview:actions": "node scripts/actions-ui-preview.mjs",
     "test:view-icons": "node packages/shell/client/view-tabs.test.mjs && node packages/shell/client/view-tabs.test.mjs --bundle",
     "test:timeline": "node scripts/test-timeline-stats.mjs",
+    "test:workspaces": "node scripts/test-workspaces.mjs",
     "test:tags": "node scripts/test-tags.mjs",
     "test:tags-ui": "node scripts/test-tags-ui.mjs",
     "test:sites": "node scripts/test-sites.mjs",

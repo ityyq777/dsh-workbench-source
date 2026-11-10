@@ -39,10 +39,9 @@ assert.match(state.said[0], /已被接取 1/);
 
 const src = p => readFileSync(new URL('../packages/addons/tasks/' + p, import.meta.url), 'utf8');
 assert.match(src('client/client.src.cjs'), /"4": \{ zh: "已接取", en: "Claimed", cls: "claimed" \}/);
-assert.match(src('client/client.src.cjs'), /id: 9, zh: "已接取", en: "Claimed"/);
+// 5.0.0 起旧页签已移除，状态入口走 statuses 筛选；这里只校验状态文案与筛选选项。
 assert.match(src('client/views/task-filter-panel.cjs'), /\["4",en\?"Claimed":"已接取"\]/);
 assert.match(src('client/views/selection-bar.cjs'), /p\.claimSelected/);
-assert.match(src('client/views/task-filter-model.cjs'), /9:"4"/);
 assert.match(src('client/views/task-filter-model.cjs'), /\^\[0-4\]\$/);
 assert.match(src('client/item/task-item.cjs'), /var openLike = String\(task\.status\) === "0" \|\| String\(task\.status\) === "4";/);
 assert.match(src('lib/task/read/task-view.js'), /"4": "已接取"/);

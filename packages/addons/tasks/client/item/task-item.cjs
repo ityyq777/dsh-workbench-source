@@ -92,10 +92,17 @@ module.exports = function (deps) {
     );
     var opsNode = h("div", { className: cx("wbt-ops", props.card && "wbt-ops-block"), key: "ops" }, ops);
     var tagBlock = tagNodes.length ? h("div", { className: "wbt-tags", key: "tags" }, tagNodes) : null;
+    // 工作区 chip：目录只是保存的绝对路径，无目录时只显示标题，完整路径放 title。
+    var wsList = Array.isArray(task.workspaces) ? task.workspaces : [];
+    var wsBlock = wsList.length
+      ? h("div", { className: "wbt-wschips", key: "workspaces" }, wsList.map(function (w) {
+          return h("span", { className: "wbt-wschip wbt-wschip-ro", key: String(w.id), title: w.dir || "" }, (w.dir ? "" : "◦ ") + (w.title || w.id));
+        }))
+      : null;
     var metaBlock = meta.length ? h("div", { className: "wbt-foot", key: "meta" }, h("div", { className: "wbt-meta" }, meta)) : null;
     var pathBlock = (task.path && task.path.length) ? h("div", { className: "wbt-taskpath", key: "path" }, h(PathCrumbs, { path: task.path, t: t, onPick: props.onPathPick })) : null;
-    var metaZone = (tagBlock || metaBlock || pathBlock)
-      ? h("div", { className: "wbt-metazone", key: "metazone" }, tagBlock, metaBlock, pathBlock)
+    var metaZone = (tagBlock || wsBlock || metaBlock || pathBlock)
+      ? h("div", { className: "wbt-metazone", key: "metazone" }, tagBlock, wsBlock, metaBlock, pathBlock)
       : null;
 
     return h("div", { className: cx("wbt-item", props.card && "wbt-card", String(task.status) === "1" && "closed") },

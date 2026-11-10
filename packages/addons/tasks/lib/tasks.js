@@ -31,6 +31,8 @@ import { createTask } from "./task/write/task-create.js";
 import { registerTimelineActions, TIMELINE_PAGE_SCHEMA } from "./timeline/task-timelines.js";
 import { updateTask } from "./task/write/task-update.js";
 import { claimTask, claimBatch, grabTask } from "./task/write/task-claim.js";
+import { registerWorkspaceActions } from "./workspace/workspace-actions.js";
+import { attachWorkspaces } from "./workspace/workspace-store.js";
 import { selectedTasks, timelineTasks, restartTasks, timelineRefactor, migrateTasks, sweepShutdown, stats, removeTask, completeTask, exportTasks } from "./task/write/task-operations.js";
 export { tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, clampDifficulty, dateArg, getTask, requireTable, saveTaskRow, emitChange, writeChange, checkRequiredDates, currentTaskTagIds, resolveTagPatch, PATCH_FIELDS, DIFF_COLUMNS } from "./task/model/task-model.js";
 export { priorityForStatus } from "./task/model/task-priority.js";
@@ -39,6 +41,7 @@ export function registerTaskActions(api) {
   registerDiscoveryActions(api);
   registerTimelineActions(api);
   registerEntityTimelineActions(api);
+  registerWorkspaceActions(api);
   const db = api.db;
   const action = api.action;
 
@@ -49,6 +52,7 @@ export function registerTaskActions(api) {
     if (!cur) throw new Error("任务不存在：" + id);
     const task = outOne(db, cur);
     attachTags(db, api, task);
+    attachWorkspaces(db, [task]);
     return { task: task };
   }
 
@@ -141,6 +145,7 @@ export function registerTaskActions(api) {
         removeTags: { type: "array", items: { type: "string" }, description: "增量移除标签名（保留其他标签）；名字不存在时报错" },
         addTagIds: { type: "array", items: { type: "string" }, description: "增量添加标签 id；id 不存在报错并列出可用标签" },
         removeTagIds: { type: "array", items: { type: "string" }, description: "增量移除标签 id；id 不存在报错" },
+        workspaceIds: { type: "array", items: { type: "string" }, description: "用这批工作区 id 整体替换当前关联（事务内先软删旧关联再建新关联）；不传则不动；任一 id 不存在/已删除则整次更新回滚" },
         claimToken: { type: "string", description: "接取凭据（tasks.claim/grab 返回）：任务当前 status=4 时用于 ABA 校验，不匹配返回 TASK_CLAIM_LOST；不传视为人工放行" },
       },
     },

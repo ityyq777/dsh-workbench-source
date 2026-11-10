@@ -61,6 +61,10 @@ export function renderTaskDetail(result) {
     "日期：发布 " + (task.publishDate || "-") + " · 目标 " + (task.targetDate || "-") + " · 完成 " + (task.doneDate || "-") + " · 关闭 " + (task.shutdownDate || "-"),
     "标签：" + (tagNames(task.tags).join("、") || "无"),
   ];
+  const workspaces = Array.isArray(task.workspaces) ? task.workspaces : [];
+  lines.push("工作区：" + (workspaces.length
+    ? workspaces.map(function (w) { return String(w.title || w.id) + (w.dir ? "（dir=" + w.dir + "）" : ""); }).join("、")
+    : "无"));
   if (task.ownershipDiagnostic) lines.push("归属诊断：" + task.ownershipDiagnostic.code + " " + task.ownershipDiagnostic.message);
   if (task.review) lines.push("复盘：" + task.review);
   lines.push("描述：", task.description || "(空)");
@@ -108,6 +112,8 @@ export function renderList(result) {
     if (f.status !== undefined) parts.push("状态=" + f.status);
     if (f.tags && f.tags.length) parts.push("标签名=" + f.tags.join(","));
     if (f.tagIds && f.tagIds.length) parts.push("标签 id=" + f.tagIds.join(","));
+    if (f.workspaceIds && f.workspaceIds.length) parts.push("工作区 id=" + f.workspaceIds.join(","));
+    if (f.noWorkspace) parts.push("未关联工作区");
     if (f.difficultyMissing) parts.push("难度未设置（NULL/0）");
     if (f.priorityMin !== undefined) parts.push("P>=" + f.priorityMin);
     if (f.priorityMax !== undefined) parts.push("P<=" + f.priorityMax);

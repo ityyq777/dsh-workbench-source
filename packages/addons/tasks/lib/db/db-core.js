@@ -5,6 +5,7 @@
  */
 
 import { TIMELINE_DDL } from "./timeline-schema.js";
+import { WORKSPACE_DDL } from "./workspace-schema.js";
 export const TASK_TABLE = "task";
 export const NODE_TABLE = "task_node";
 
@@ -370,6 +371,7 @@ export function createSchema(db) {
   for (const sql of TASK_DDL) db.exec(sql);
   for (const sql of NODE_DDL) db.exec(sql);
   for (const sql of TIMELINE_DDL) db.exec(sql);
+  for (const sql of WORKSPACE_DDL) db.exec(sql);
 }
 
 export function seedDefaultTree(db) {

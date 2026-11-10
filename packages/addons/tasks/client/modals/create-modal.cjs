@@ -17,6 +17,7 @@ function validatePriority(value, source, t) {
 module.exports = function createModal(deps) {
   var React = deps.React, h = React.createElement;
   var TimelinePicker = require("../timeline/timeline-controls.cjs")(React).Picker;
+  var WorkspaceSelect = require("../workspace/workspace-select.cjs")(React).WorkspaceSelect;
   var difficultyField = require("../item/difficulty-field.cjs")(React);
   var ownership = require("./ownership.cjs"), fields = require("./ownership-fields.cjs")(React);
   var allTables = deps.allTables, tagNames = deps.tagNames, splitTags = deps.splitTags;
@@ -37,7 +38,7 @@ module.exports = function createModal(deps) {
       title: "", description: "", timelineId: source === "1" && origin ? origin.timelineId || "" : "",
       tags: initTags, status: "0", priority: initPriority, difficulty: initDifficulty,
       publishDate: today(), targetDate: addDays(initOffset), doneDate: today(), shutdownDate: today(),
-      tableId: "", newPath: false, tablePath: "", pathDescriptions: [], confirmed: false,
+      tableId: "", newPath: false, tablePath: "", pathDescriptions: [], confirmed: false, workspaceIds: [],
     });
     var form = f[0], setForm = f[1];
     var busy = React.useState(false);
@@ -95,6 +96,7 @@ module.exports = function createModal(deps) {
         targetDate: form.targetDate,
         source: source === "2" ? "2" : form.timelineId ? "1" : "0",
       };
+      if (form.workspaceIds && form.workspaceIds.length) args.workspaceIds = form.workspaceIds.slice();
       if (form.newPath) Object.assign(args, { tablePath: plan.parts, createMissing: true, pathDescriptions: plan.parts.map(function (_, i) { return form.pathDescriptions[i] || ""; }) });
       else args.tableId = String(form.tableId);
       if (source === "2" && origin) args.restartKey = String(origin.id);
@@ -124,6 +126,7 @@ module.exports = function createModal(deps) {
           h("label", { className: "wbt-field full" }, h("span", null, t.titleField + " *"), h("input", { className: "wbt-input", value: form.title, onChange: function (e) { set("title", e.target.value); }, autoFocus: true })),
           h("label", { className: "wbt-field full" }, h("span", null, t.desc), h("textarea", { className: "wbt-textarea", rows: 2, value: form.description, onChange: function (e) { set("description", e.target.value); } })),
           hostHasAddon("wb-addon-tags") ? h("label", { className: "wbt-field full" }, h("span", null, t.tags), h("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function (e) { set("tags", e.target.value); } })) : null,
+          h(WorkspaceSelect, { api: props.api, lang: props.lang, value: form.workspaceIds, onChange: function (ids) { set("workspaceIds", ids); } }),
           h("label", { className: "wbt-field" }, h("span", null, t.status), h("select", { className: "wbt-select", value: source === "2" ? "0" : form.status, disabled: source === "2", onChange: function (e) { set("status", e.target.value); } },
             h("option", { value: "0" }, "已开启"), h("option", { value: "2" }, "已完成"), h("option", { value: "1" }, "已关闭"))),
           h("label", { className: "wbt-field" }, h("span", null, t.priority + "（1–10）"), h("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, disabled: !active, "aria-invalid": !!priorityError, "aria-describedby": priorityError ? "wbt-create-priority-error" : undefined, value: form.priority, onChange: function (e) { set("priority", e.target.value); } })),

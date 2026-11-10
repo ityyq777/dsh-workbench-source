@@ -20,6 +20,7 @@ import {
 } from "../../tagging/tagging.js";
 import { requireKnownTagNames, tagMissingNotices, withNotices, STATUSES, STATUS_NAMES, asCode, sourceCode, clampDifficulty, dateArg, getTask, insertTaskRow, saveTaskRow, outOne, writeChange, checkRequiredDates } from "../model/task-model.js";
 import { taskTransaction } from './task-transaction.js';
+import { setTaskWorkspaces, attachWorkspaces } from '../../workspace/workspace-store.js';
 import { validateTargetArgs, resolveTarget, requireOwnedTable } from './task-target.js';
 import { ownershipError, ownershipFields } from '../model/task-ownership-path.js';
 // 标题不做唯一性校验：允许与其它任务同名，调用方用 id 区分（与标签名唯一是两条规则）。
@@ -162,6 +163,9 @@ export function createTask(db, args, origin, api, opts) {
       }
       replaceTaskTags(db, id, all, ts, origin);
     }
+    if (args.workspaceIds !== undefined && args.workspaceIds !== null) {
+      setTaskWorkspaces(db, id, args.workspaceIds, ts, origin, api);
+    }
     writeChange(db, row, "create", origin, api, ts);
   };
   // skipTx 供 bulkCreate 在外层事务里复用；单条创建仍自己开事务。
@@ -169,5 +173,6 @@ export function createTask(db, args, origin, api, opts) {
 
   const task = outOne(db, row);
   attachTags(db, api, task);
+  attachWorkspaces(db, [task]);
   return withNotices({ id: id, task: cleanDifficultyReceipt(task), ...ownershipFields(task), createdNodes, deduped: false }, [...tagMissingNotices(args, tagOn), ...difficultyMissingNotices(args, difficulty)]);
 }
