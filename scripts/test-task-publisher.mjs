@@ -56,7 +56,7 @@ check("brief 结构完整", () => {
   });
   assert.ok(brief.includes("记录页加常用筛选快捷按钮"));
   assert.ok(brief.includes("用户原话（逐字保留，不要先改写）"));
-  for (const step of ["A. 调研现状", "B. 润色与补充", "C. 归属", "D. 时间线", "E. 发布", "F. 何时停下来问"]) {
+  for (const step of ["A. 调研现状", "B. 润色与补充", "C. 归属", "D. 时间线", "E. 标签", "F. 发布", "G. 何时停下来问"]) {
     assert.ok(brief.includes(step), "缺少步骤 " + step);
   }
   assert.ok(brief.includes("## 输出格式"));
@@ -107,6 +107,24 @@ check("brief 结构完整", () => {
   assert.ok(brief.includes("本次自建"), "回执与输出格式应包含「本次自建」段");
   assert.equal(brief.split("本次自建").length - 1 >= 3, true, "E 步与输出格式都要写「本次自建」");
   assert.ok(brief.includes("本次自建：无"), "没有自建时要写「本次自建：无」");
+
+  // 标签步骤：独立步骤、按名传参、自动创建、标签域缺失降级、回执与输出格式都写标签
+  assert.ok(brief.includes("E. 标签"), "SOP 应有独立的标签步骤");
+  assert.equal(brief.indexOf("E. 标签") < brief.indexOf("F. 发布"), true, "标签步骤应在发布之前");
+  assert.equal(brief.indexOf("F. 发布") < brief.indexOf("G. 何时停下来问"), true, "停问仍是最后一步");
+  assert.ok(brief.includes('tags: [\"标签名\"]'), "应按标签名传参");
+  assert.ok(brief.includes("不要用 tagIds"), "不应让 agent 用 tagIds");
+  assert.ok(brief.includes("也不必先 tags.create"), "未知标签名不必先建");
+  assert.ok(brief.includes("form.autoCreateTags"), "应说明未知标签名由配置决定是否自动创建");
+  assert.ok(brief.includes("标签域未安装时仍传 tags"), "标签域缺失时应降级为照常创建");
+  assert.ok(brief.includes("不要因此停问、重试或声称已打标"), "标签域缺失不得阻断、重试或虚报");
+  assert.ok(brief.includes("业务域、功能面、动作、影响面"), "标签维度应写成可执行建议");
+  assert.ok(brief.includes("建议至少 3 个、通常 4–6 个"), "标签数量给出下限与常见区间");
+  assert.ok(brief.includes("工作区归属、时间线归属、标签（名称，标注沿用或新建）"), "创建回执要写标签");
+  const fmt3 = brief.split("\n").find((line) => line.startsWith("3. 归属"));
+  assert.ok(fmt3.includes("标签"), "输出格式第 3 条应包含标签");
+  const fmt4 = brief.split("\n").find((line) => line.startsWith("4. 发布回执"));
+  assert.ok(fmt4.includes("标签") && fmt4.includes("未打标须说明原因"), "输出格式第 4 条应包含标签与未打标原因");
 });
 
 // 2) 缺 sessionId / now 时兜底，不抛错
@@ -237,6 +255,7 @@ check("工作区归属不挤进边界规则", () => {
   assert.equal(boundaryBlock.includes("taskWorkspaces"), false, "边界规则不应重复工作区口径");
   const cStep = brief.split("\n").find((line) => line.startsWith("C. 归属"));
   assert.ok(cStep.includes("taskWorkspaces.list") && cStep.includes("workspaceIds"), "工作区判断应在 SOP C");
+  assert.equal(boundaryBlock.includes("tags"), false, "标签口径不应重复写进边界规则");
 });
 
 console.log("TASK PUBLISHER PASS:", checks, "checks (brief, preview, registration, empty, attachments, too long, no-commands, followup, workspace)");
