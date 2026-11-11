@@ -57,9 +57,11 @@
     "publish:npm": "node scripts/publish-npm.mjs",
     "publish:github": "node scripts/publish-github.mjs",
     "test:audit": "node scripts/test-audit.mjs",
+    "test:profile-sync": "node scripts/test-check-profile-sync.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "audit:lines": "node scripts/audit-lines.mjs",
+    "audit:profile": "node scripts/check-profile-sync.mjs",
     "audit:structure": "node scripts/audit-structure.mjs",
     "test:structure": "node scripts/test-structure.mjs"
   },

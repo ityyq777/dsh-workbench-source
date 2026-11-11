@@ -95,9 +95,16 @@ storage 1.5.0，desktop profile 里还是 5.1.3 / 1.6.13 / 1.9.4 / 1.4.3，用�
    下放 `shell-dist` 与 `addons/{tasks,tags,sites,storage}`，用
    `rsync -a --exclude node_modules` 整目录复制，保持 `file:../../shell-dist` 的相对结构；
 3. 用桌面端 CLI 装进 `$DSH_PROFILE`（见下一节），加 `--force`；
-4. 回读 `$DSH_PROFILE_DIR/node_modules/<包>/package.json`，确认版本等于源码版本；再对五个包入口
-   各做一次 `node --input-type=module -e 'await import("./node_modules/<包>/lib/index.js")'` 冒烟；
+4. 跑 `pnpm audit:profile`：脚本会读源码 `packages/{shell-dist,addons/*}/package.json`，回读
+   `$DSH_PROFILE_DIR/node_modules/<包>/package.json` 逐包比对版本，对五个包入口各做一次
+   `import()` 冒烟，并打印 profile 的 `file:` 安装源；退出码 0 一致、1 版本差异或冒烟失败、
+   2 参数/缺包/环境错误。`--skip-import` 跳过冒烟，`--json` 给 agent/CI 读，
+   `--profile` / `--profile-dir` 显式指定实例（默认读 `DSH_PROFILE` / `DSH_PROFILE_DIR`）；
 5. 重启后 `capabilities.list` 报的版本号与源码一致，才算「当前实例已安装」。
+
+脚本化核对：`pnpm audit:profile`（实现 `scripts/check-profile-sync.mjs`，自测
+`pnpm test:profile-sync`）。它只核对磁盘与入口 import，**不自动安装/构建/重启**，也读不到
+进程内运行版本——第 5 步仍需重启后看 `capabilities.list`。
 
 不允许的结论：「源码好了，重启就行」「安装命令成功，所以已经生效」。安装命令退出成功
 不代表内容更新，必须回读 profile 里的 `package.json` 与产物文件；磁盘已更新但进程未重载时，
