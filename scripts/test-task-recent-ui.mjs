@@ -43,7 +43,7 @@ for(const lang of ['zh','en']) for(const [configured,expected] of [[undefined,10
  const cfg=configured===undefined?{}:{'stats.recentPublishLimit':configured};
  const statsModule={exports:{}};
  runInNewContext(readFileSync(statsPath,'utf8'),{module:statsModule,require:n=>n==='react'?R:n==='./config.cjs'?{useConfig:(_api,f)=>{fallback=f;return {ready:true,values:cfg};}}:statsRequire(n),Date,document:{addEventListener(){},removeEventListener(){}}});
- const root=statsModule.exports.TasksStatsView({lang,api:{call:async(action,args)=>{statsCalls.push({action,args});return {result:{totals:{total:1},lists:{}}};}}});
+ const root=statsModule.exports.TasksStatsView({lang,api:{call:async(action,args)=>{statsCalls.push({action,args});return {result:{totals:{total:1},lists:{recentPublish:[],recentDone:[],recentShutdown:[]}}};}}});
  assert.equal(fallback['stats.recentPublishLimit'],10);
  const drawStats=()=>{cursor=0;return root.type(root.props);};
  drawStats();effects.splice(0).forEach(fn=>fn());for(let i=0;i<12;i++)await Promise.resolve();

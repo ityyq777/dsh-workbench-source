@@ -19,6 +19,16 @@
         "client.js"
       ],
       "files": {
+        "db/ownership-path.js": "db/ownership-path.js",
+        "db/timeline-schema.js": "db/timeline-schema.js",
+        "db/workspace-schema.js": "db/workspace-schema.js",
+        "publisher/brief.js": "publisher/brief.js",
+        "publisher/catalog.js": "publisher/catalog.js",
+        "publisher/command.js": "publisher/command.js",
+        "stats/timeline-stats.js": "stats/timeline-stats.js",
+        "task/write/task-claim.js": "task/write/task-claim.js",
+        "workspace/workspace-actions.js": "workspace/workspace-actions.js",
+        "workspace/workspace-store.js": "workspace/workspace-store.js",
         "index.js": "index.js",
         "tasks.js": "tasks.js",
         "client.js": "client.js",
@@ -67,6 +77,15 @@
       ],
       "generated": [],
       "files": {
+        "stats/list-state.cjs": "stats/list-state.cjs",
+        "stats/timeline-section.cjs": "stats/timeline-section.cjs",
+        "ui/workspacefilter.cjs": "ui/workspacefilter.cjs",
+        "views/actions.cjs": "views/actions.cjs",
+        "views/claim-batch.cjs": "views/claim-batch.cjs",
+        "views/commands.cjs": "views/commands.cjs",
+        "views/selection-bar.cjs": "views/selection-bar.cjs",
+        "views/workspace-view.cjs": "views/workspace-view.cjs",
+        "workspace/workspace-select.cjs": "workspace/workspace-select.cjs",
         "client.src.cjs": "client.src.cjs",
         "tasks-view.cjs": "views/tasks-view.cjs",
         "task-filter-model.cjs": "views/task-filter-model.cjs",
@@ -118,6 +137,7 @@
         "client.js"
       ],
       "files": {
+        "db/accounts-schema.js": "db/accounts-schema.js",
         "index.js": "index.js",
         "client.js": "client.js",
         "db.js": "db/db.js",
@@ -142,6 +162,8 @@
       ],
       "generated": [],
       "files": {
+        "ui/icons.cjs": "ui/icons.cjs",
+        "views/actions.cjs": "views/actions.cjs",
         "client.src.cjs": "client.src.cjs",
         "config.cjs": "views/config.cjs",
         "data.cjs": "views/data.cjs",
@@ -179,6 +201,7 @@
       ],
       "generated": [],
       "files": {
+        "views/actions.cjs": "views/actions.cjs",
         "client.src.cjs": "client.src.cjs",
         "config.cjs": "views/config.cjs",
         "data.cjs": "views/data.cjs",
@@ -214,6 +237,7 @@
       ],
       "generated": [],
       "files": {
+        "views/actions.cjs": "views/actions.cjs",
         "client.src.cjs": "client.src.cjs",
         "config.cjs": "views/config.cjs",
         "data.cjs": "views/data.cjs",

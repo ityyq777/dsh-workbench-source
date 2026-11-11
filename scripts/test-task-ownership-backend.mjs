@@ -82,7 +82,7 @@ try {
  const found=call('tasks.resolveTable',{query:'存储相关的待办'});assert.ok(found.candidates.some(c=>c.id===tableId));assert.equal(found.needsSelection,true);assert.ok(found.candidates[0].reasons.length);
  const miss=call('tasks.resolveTable',{query:'%_\\'});assert.equal(miss.candidates.length,0);assert.equal(miss.noMatch,true);assert.ok(miss.catalogSize>=1);assert.match(miss.notice,/不代表不存在任务表.*张存活任务表/);assert.ok(miss.nextActions.some(a=>a.includes('taskNodes.overview')));assert.ok(miss.nextActions.some(a=>a.includes('tasks.capabilities')));assert.match(miss.evidence,/运行时/);
  const hit=call('tasks.resolveTable',{query:'存储相关的待办'});assert.equal(hit.noMatch,false);assert.ok(hit.catalogSize>=hit.candidates.length);
- const detail=call('tasks.get',{id:created.id});const detailText=actions.get('tasks.get').render(detail);assert.match(detailText,/描述：/);assert.ok(detailText.includes('存储代码开发'),'table description in detail');assert.ok(detailText.includes('归属：otherGroup/产品改名/storage（tableId='));assert.match(detailText,/状态：进行中/);
+ const detail=call('tasks.get',{id:created.id});const detailText=actions.get('tasks.get').render(detail);assert.match(detailText,/描述：/);assert.ok(detailText.includes('存储代码开发'),'table description in detail');assert.ok(detailText.includes('归属：otherGroup/产品改名/storage（tableId='));assert.match(detailText,/状态：已开启/);
  assert.match(detailText,/描述：\n\(空\)/);
  const hot=call('tasks.create',{title:'unrelated hot',tablePath:'unrelated',createMissing:true,pathDescriptions:['unrelated task']});
  db.prepare('UPDATE task SET updated_at=? WHERE id=?').run(Date.now()+99999999,hot.id);

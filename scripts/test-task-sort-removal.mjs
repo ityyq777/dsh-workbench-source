@@ -14,7 +14,7 @@ function verifySchema(db) {
   assert(!indexes.includes("idx_task_sort"), "idx_task_sort must be absent");
   assert(indexes.includes("idx_task_dedupe"), "unrelated task index must remain");
   assert(db.prepare("PRAGMA index_list(task_node)").all().some((r) => r.name === "idx_task_node_sort"));
-  assert.equal(db.prepare("SELECT v FROM meta WHERE k='task_schema_version'").get().v, "5");
+  assert.equal(db.prepare("SELECT v FROM meta WHERE k='task_schema_version'").get().v, "6");
   assert(!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='task_dep'").get(), "task_dep must be dropped");
 }
 function snapshot(db) {

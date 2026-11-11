@@ -21,7 +21,7 @@ const api = {
 setup(api);
 const call = (name, args = {}) => defs[name].execute(args, { origin: "ui" });
 const count = (table) => Number(db.prepare("SELECT COUNT(*) n FROM " + table).get().n);
-assert.equal(Object.keys(defs).length, 16);
+assert.equal(Object.keys(defs).length, 17);
 assert.equal(call("storage.capabilities").tags, false);
 assert.throws(() => call("storage.create", { name: " " }), /名称/);
 assert.throws(() => call("storage.create", { name: "x", stock: 1 }), /字符串/);
@@ -262,7 +262,7 @@ apply({
   effect: (fn) => fn(),
 });
 assert.equal(domain.id, "wb-addon-storage");
-assert.equal(domain.version, "1.4.1");
+assert.equal(domain.version, "1.5.0");
 assert.equal(domain.views.find((v) => v.id === "stats").title.zh, "统计");
 assert.deepEqual(domain.tables, ["storage"]);
 assert.deepEqual(domain.capability.requires, []);

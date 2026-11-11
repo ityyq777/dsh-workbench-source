@@ -10,8 +10,8 @@
  *   dist/release/marketplace/*.yml                 插件市场条目草稿
  *   dist/release/README.md / LICENSE
  */
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync, statSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 const root = join(import.meta.dirname, "..");
 const out = join(root, "dist", "release");
@@ -183,7 +183,7 @@ for (const [key, meta] of Object.entries(addons)) {
     meta.description,
     meta.keywords,
   );
-  pkg.files = ["lib", "cordis.patch.yml", "README.md", "LICENSE"];
+  pkg.files = [...new Set([...(pkg.files ?? ["lib", "cordis.patch.yml"]), "README.md", "LICENSE"])];
   const deps = { ...(pkg.dependencies ?? {}) };
   delete deps["dsh-workbench"];
   deps[HOST_NAME] = `^${hostVersion}`;
