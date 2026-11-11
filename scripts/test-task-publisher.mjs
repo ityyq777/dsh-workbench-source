@@ -68,8 +68,18 @@ check("brief 结构完整", () => {
   assert.equal(boundaryLines.length, 2, "边界规则应只剩 2 条");
   assert.equal(brief.includes("不要自动建任务表或任务节点"), false);
   assert.equal(brief.includes("不做无人值守的全自动发布"), false);
-  assert.ok(brief.includes("获得授权后再创建"), "SOP C 的建节点授权口径必须保留");
+  // 缺任务表 / 时间线 / 工作区不再停问：agent 自行补齐，只在回执说明
+  assert.equal(brief.includes("获得授权后再创建"), false, "SOP C 不应再要求建节点前授权");
+  assert.ok(brief.includes("直接调用 taskNodes.create"), "SOP C 应允许自行建组/建表");
+  assert.ok(brief.includes("不必等用户确认"), "SOP C 的建节点不需要再确认");
+  assert.ok(brief.includes("只有确有新职能域才新建上级组"), "建组仍受职能域约束");
+  assert.ok(brief.includes("不得为单条任务建整条组层级"), "不得为单条任务建整条组层级");
   assert.ok(brief.includes("信息齐全且归属唯一时直接发布"), "SOP F 的直接发布口径必须保留");
+  assert.ok(brief.includes("只有三种情况先给草案并提问"), "SOP F 应把停问条件收敛为三种");
+  assert.ok(brief.includes("缺任务表 / 时间线 / 工作区不属于停问条件"), "SOP F 不应再为缺归属停问");
+  for (const reason of ["任务表多候选且职责相当", "信息互相冲突", "查重命中同主题任务"]) {
+    assert.ok(brief.includes(reason), "SOP F 的停问条件应包含：" + reason);
+  }
   assert.ok(brief.includes("非代码") === false || brief.includes("只有需求明确是代码改动时才看仓库"));
   assert.ok(brief.includes("sessionId: s-abc"));
   assert.ok(brief.includes('用 "dsh-session:" 前缀拼接上面的 sessionId'));
@@ -85,11 +95,18 @@ check("brief 结构完整", () => {
     assert.ok(brief.includes(outcome), "SOP C 应明确合法归属结果：" + outcome);
   }
   assert.ok(brief.includes("禁止按名称相似或列表第一条自动挂"), "不得自动挑第一个工作区");
-  assert.ok(brief.includes("不要擅自调用 taskWorkspaces.create"), "新建工作区需先征得同意");
+  assert.equal(brief.includes("不要擅自调用 taskWorkspaces.create"), false, "缺工作区应自行创建，不再要授权");
+  assert.ok(brief.includes("就用 taskWorkspaces.create 建一个再挂"), "缺工作区时按目录判断自行创建");
   assert.ok(brief.includes("整体替换语义"), "workspaceIds 是整体替换");
   assert.ok(brief.includes("工作区归属"), "输出格式与回执应包含工作区归属");
   assert.ok(brief.includes("无工作区时写明「无工作区」"), "回执要写「无工作区」");
   assert.ok(brief.includes("多个时列全名称与 id"), "多工作区回执要列全名称与 id");
+  // 自建通道与回执段
+  assert.ok(brief.includes("taskTimelines.create"), "SOP D 应允许自建时间线");
+  assert.ok(brief.includes("2 个及以上任务的链条"), "SOP D 应说明何时开新时间线");
+  assert.ok(brief.includes("本次自建"), "回执与输出格式应包含「本次自建」段");
+  assert.equal(brief.split("本次自建").length - 1 >= 3, true, "E 步与输出格式都要写「本次自建」");
+  assert.ok(brief.includes("本次自建：无"), "没有自建时要写「本次自建：无」");
 });
 
 // 2) 缺 sessionId / now 时兜底，不抛错

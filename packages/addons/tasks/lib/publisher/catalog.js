@@ -34,12 +34,12 @@ export const TASK_COMMANDS = [
       { text: "/wb-task-publisher 修复配置页重置按钮不生效（附复现步骤）" },
     ],
     sentText: {
-      zh: "已把发布引导送入下一轮：先调研现状，再润色、判归属与时间线、查重，最后发布。",
-      en: "Publisher guidance sent to the next turn: research, polish, ownership, timeline, dedupe, then publish.",
+      zh: "已把发布引导送入下一轮：先调研现状，再润色、判归属与时间线、查重，缺任务表/时间线/工作区会自行补齐，最后发布并在回执说明自建内容。",
+      en: "Publisher guidance sent to the next turn: research, polish, ownership, timeline, dedupe — missing tables, timelines or workspaces are created without asking — then publish, listing anything it created.",
     },
     notes: {
-      zh: "命令会把你的原话与发布 SOP 送入下一轮模型：先调研现状，再润色、判归属与时间线、查重，最后才创建任务。可以在需求后附截图或文档。",
-      en: "The command sends your words plus the publishing SOP into the next model turn: research the current state, polish, decide ownership and timeline, check for duplicates, then create the task. Screenshots or docs can be attached.",
+      zh: "命令会把你的原话与发布 SOP 送入下一轮模型：先调研现状，再润色、判归属与时间线、查重，缺任务表 / 时间线 / 工作区时会自行补齐、不再追着你确认，并在回执的「本次自建」里列出新建了什么。可以在需求后附截图或文档。",
+      en: "The command sends your words plus the publishing SOP into the next model turn: research the current state, polish, decide ownership and timeline, check for duplicates, missing tables, timelines or workspaces are created without asking and listed in the receipt. Screenshots or docs can be attached.",
     },
     buildBrief: (options) => buildPublisherBrief(options),
   },
