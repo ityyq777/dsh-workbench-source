@@ -1472,18 +1472,25 @@ var require_ranking_name = __commonJS({
     var React = require("react");
     var h = React.createElement;
     module2.exports = function rankingName(t, lang, onNavigate, kind) {
-      var en = lang === "en", table = kind === "table";
+      var en = lang === "en", table = kind === "table", workspace = kind === "workspace";
       return { key: "title", label: t.colName, render: function(row) {
+        var none = workspace && row.id === "__none__";
         if (!row.id || row.id === "__missing__" || row.id === "__ungrouped__") {
           return h("span", { title: en ? "Deleted task table / unfiled; cannot open" : "\u5DF2\u5220\u9664\u4EFB\u52A1\u8868/\u672A\u5F52\u6863\uFF0C\u65E0\u6CD5\u6253\u5F00" }, row.title);
         }
         if (typeof onNavigate !== "function") return row.title;
+        var base = none ? en ? "Open tasks without workspace: " : "\u6253\u5F00\u672A\u5173\u8054\u5DE5\u4F5C\u533A\u7684\u4EFB\u52A1\uFF1A" : en ? table ? "Open task table: " : workspace ? "Open tasks in workspace: " : "Open task group: " : table ? "\u6253\u5F00\u4EFB\u52A1\u8868\uFF1A" : workspace ? "\u6253\u5F00\u5DE5\u4F5C\u533A\u4EFB\u52A1\uFF1A" : "\u6253\u5F00\u4EFB\u52A1\u7EC4\uFF1A";
         return h("button", {
           type: "button",
-          className: "wbt-table-link",
-          "aria-label": (en ? table ? "Open task table: " : "Open task group: " : table ? "\u6253\u5F00\u4EFB\u52A1\u8868\uFF1A" : "\u6253\u5F00\u4EFB\u52A1\u7EC4\uFF1A") + row.title,
+          className: "wbt-table-link" + (none ? " wbt-muted-link" : ""),
+          title: workspace ? row.dir || "" : void 0,
+          "aria-label": base + row.title,
           onClick: function() {
-            onNavigate("tasks", table ? { tableId: String(row.id), groupId: row.groupId == null ? null : String(row.groupId), allTableTasks: true } : { groupId: String(row.id), tableId: null });
+            if (none) {
+              onNavigate("tasks", { noWorkspace: true, workspaceIds: [], tableId: null, groupId: null });
+              return;
+            }
+            onNavigate("tasks", workspace ? { workspaceIds: [String(row.id)], noWorkspace: false, tableId: null, groupId: null } : table ? { tableId: String(row.id), groupId: row.groupId == null ? null : String(row.groupId), allTableTasks: true } : { groupId: String(row.id), tableId: null });
           }
         }, row.title);
       } };
@@ -2126,6 +2133,11 @@ var require_stats = __commonJS({
         tablesNote: "\u6309\u5DF2\u5F00\u542F + \u903E\u671F\u6743\u91CD",
         groups: "\u4EFB\u52A1\u7EC4\u6392\u884C",
         groupsNote: "\u4E00\u7EA7\u4EFB\u52A1\u7EC4",
+        workspaces: "\u5DE5\u4F5C\u533A\u6392\u884C",
+        workspacesNote: "\u5B58\u91CF\u53E3\u5F84\uFF1B\u4EFB\u52A1\u53EF\u6302\u591A\u4E2A\u5DE5\u4F5C\u533A\uFF0C\u5404\u884C\u5408\u8BA1\u53EF\u80FD\u5927\u4E8E\u4EFB\u52A1\u603B\u6570",
+        noWorkspaceRow: "\u672A\u5173\u8054\u5DE5\u4F5C\u533A",
+        noWorkspaceNote: "\u6B63\u5E38\u72B6\u6001\uFF1A\u8FD9\u4E9B\u4EFB\u52A1\u6CA1\u6709\u5F52\u5C5E\u4EFB\u4F55\u5DE5\u4F5C\u533A",
+        noWorkspacesEmpty: "\u8FD8\u6CA1\u6709\u5DE5\u4F5C\u533A\uFF0C\u4E5F\u6CA1\u6709\u672A\u5173\u8054\u5DE5\u4F5C\u533A\u7684\u4EFB\u52A1",
         colName: "\u540D\u79F0",
         colTotal: "\u603B\u6570",
         colOpen: "\u5DF2\u5F00\u542F",
@@ -2205,6 +2217,11 @@ var require_stats = __commonJS({
         tablesNote: "Weighted by active + overdue",
         groups: "Task groups",
         groupsNote: "First-level groups",
+        workspaces: "Workspaces",
+        workspacesNote: "Current stock; a task can sit in several workspaces, so rows may add up to more than the total",
+        noWorkspaceRow: "No workspace",
+        noWorkspaceNote: "Normal state: these tasks belong to no workspace",
+        noWorkspacesEmpty: "No workspaces and no tasks without one yet",
         colName: "Name",
         colTotal: "Total",
         colOpen: "Active",
@@ -2508,6 +2525,29 @@ var require_stats = __commonJS({
               lang,
               columns: [
                 rankingName(t, lang, props.onNavigate, "group"),
+                { key: "total", label: t.colTotal, num: true },
+                { key: "open", label: t.colOpen, num: true },
+                { key: "overdue", label: t.colOverdue, num: true },
+                { key: "completion", label: t.colRate, num: true, render: function(r) {
+                  return ch.pct(r.completion);
+                } }
+              ]
+            })
+          ));
+          var wsRows = (data.rankings && data.rankings.workspaces || []).slice();
+          var noneRow = data.rankings && data.rankings.noWorkspace;
+          if (noneRow && (wsRows.length || noneRow.total > 0)) {
+            wsRows.push(Object.assign({}, noneRow, { title: t.noWorkspaceRow }));
+          }
+          children.push(h(
+            ch.Card,
+            { key: "workspaces", span: 6, title: t.workspaces, note: t.workspacesNote },
+            h(ch.DataTable, {
+              rows: wsRows,
+              lang,
+              empty: t.noWorkspacesEmpty,
+              columns: [
+                rankingName(t, lang, props.onNavigate, "workspace"),
                 { key: "total", label: t.colTotal, num: true },
                 { key: "open", label: t.colOpen, num: true },
                 { key: "overdue", label: t.colOverdue, num: true },
@@ -6782,6 +6822,7 @@ var require_styles = __commonJS({
       ".wbt-wschip button:hover{opacity:1}",
       ".wbt-wschip-ro{opacity:.85;background:transparent}",
       ".wbt-wsfilter{width:100%}",
+      ".wbt-muted-link{opacity:.7;text-decoration-style:dashed}",
       ".wbt-wsmenu .wbt-tagopt{padding:5px 6px}",
       ".wbt-wsmenu .wbt-wsnone{border-top:1px dashed var(--wbt-line);margin-top:4px;padding-top:7px}",
       ".wbt-ws-group .wbt-check{min-width:0;overflow-wrap:anywhere}",
@@ -11216,13 +11257,13 @@ var require_timeline_view = __commonJS({
     "stats.recentPublishLimit": 10,
     "stats.recentDoneLimit": 10,
     "stats.recentShutdownLimit": 10,
-    "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "recentPublish", "recentDone", "recentShutdown"]
+    "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "workspaces", "recentPublish", "recentDone", "recentShutdown"]
   };
   var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, WorkspaceFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.4",
+    version: "5.2.5",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

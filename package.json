@@ -10,6 +10,7 @@
     "cloud:build": "mvn -f cloud/pom.xml -DskipTests package",
     "dist:shell": "node scripts/dist-shell.mjs",
     "test:native": "node scripts/test-native.mjs",
+    "test:workspace-stats": "node scripts/test-workspace-stats.mjs",
     "test:claim": "node scripts/test-task-claim.mjs && node scripts/test-task-claim-ui.mjs",
     "test:task-publisher": "node scripts/test-task-publisher.mjs",
     "test:commands": "node scripts/test-tasks-commands.mjs",

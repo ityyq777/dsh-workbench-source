@@ -382,6 +382,35 @@ export function statsReport(db, args, api) {
     else agingBins[4].count += 1;
   }
 
+  // 工作区排行是「存量」口径：任务按存活关联在每个工作区各计一次，所以各行合计会大于任务总数。
+  // 只认「关联存活 + 工作区存活」，与 tasks.list 的 workspaceIds / noWorkspace 过滤保持同一条件。
+  const workspaceAgg = Object.create(null);
+  for (const ws of db.prepare(
+    "SELECT id,title,name,dir FROM task_workspace WHERE deleted_at IS NULL",
+  ).all()) {
+    workspaceAgg[String(ws.id)] = {
+      id: String(ws.id),
+      title: String(ws.title || ""),
+      name: String(ws.name || ""),
+      dir: ws.dir === null || ws.dir === undefined ? "" : String(ws.dir),
+      total: 0, open: 0, overdue: 0, done: 0,
+    };
+  }
+  const workspaceOfTask = Object.create(null);
+  for (const link of db.prepare(
+    "SELECT workspace_id,task_id FROM task_workspace_link WHERE deleted_at IS NULL",
+  ).all()) {
+    const wsId = String(link.workspace_id);
+    if (!workspaceAgg[wsId]) continue; // 工作区已删：任务回落到「未关联工作区」
+    const taskId = String(link.task_id);
+    if (!workspaceOfTask[taskId]) workspaceOfTask[taskId] = [];
+    workspaceOfTask[taskId].push(wsId);
+  }
+  const noWorkspaceAgg = {
+    id: "__none__", title: "未关联工作区", name: "", dir: "",
+    total: 0, open: 0, overdue: 0, done: 0,
+  };
+
   const allTasks = db.prepare(
     "SELECT id,status,target_date,table_id FROM task WHERE deleted_at IS NULL",
   ).all();
@@ -399,11 +428,18 @@ export function statsReport(db, args, api) {
         total: 0, open: 0, overdue: 0, done: 0,
       };
     }
+    const isOpen = String(row.status) === "0";
+    const isDone = String(row.status) === "2";
+    const isOverdue =
+      (isOpen || String(row.status) === "4") &&
+      !!row.target_date &&
+      String(row.target_date) < today;
+
     const t = tableAgg[tableKey];
     t.total += 1;
-    if (String(row.status) === "0") t.open += 1;
-    if (String(row.status) === "2") t.done += 1;
-    if ((String(row.status) === "0" || String(row.status) === "4") && row.target_date && String(row.target_date) < today) t.overdue += 1;
+    if (isOpen) t.open += 1;
+    if (isDone) t.done += 1;
+    if (isOverdue) t.overdue += 1;
 
     const groupNode = groupOf(tableNode, nodeMap);
     const groupKey = groupNode ? String(groupNode.id) : "__ungrouped__";
@@ -416,15 +452,33 @@ export function statsReport(db, args, api) {
     }
     const g = groupAgg[groupKey];
     g.total += 1;
-    if (String(row.status) === "0") g.open += 1;
-    if (String(row.status) === "2") g.done += 1;
-    if ((String(row.status) === "0" || String(row.status) === "4") && row.target_date && String(row.target_date) < today) g.overdue += 1;
+    if (isOpen) g.open += 1;
+    if (isDone) g.done += 1;
+    if (isOverdue) g.overdue += 1;
+
+    const wsIds = workspaceOfTask[String(row.id)] || [];
+    if (!wsIds.length) {
+      noWorkspaceAgg.total += 1;
+      if (isOpen) noWorkspaceAgg.open += 1;
+      if (isDone) noWorkspaceAgg.done += 1;
+      if (isOverdue) noWorkspaceAgg.overdue += 1;
+    } else {
+      for (const wsId of wsIds) {
+        const bucket = workspaceAgg[wsId];
+        if (!bucket) continue;
+        bucket.total += 1;
+        if (isOpen) bucket.open += 1;
+        if (isDone) bucket.done += 1;
+        if (isOverdue) bucket.overdue += 1;
+      }
+    }
+  }
+  function withCompletion(item) {
+    item.completion = item.total > 0 ? round(item.done / item.total, 3) : 0;
+    return item;
   }
   function rank(list) {
-    return list.map(function (item) {
-      item.completion = item.total > 0 ? round(item.done / item.total, 3) : 0;
-      return item;
-    }).sort(function (a, b) {
+    return list.map(withCompletion).sort(function (a, b) {
       return (b.open + b.overdue) - (a.open + a.overdue) || b.total - a.total;
     }).slice(0, top);
   }
@@ -469,6 +523,8 @@ export function statsReport(db, args, api) {
     rankings: {
       tables: rank(Object.keys(tableAgg).map(function (k) { return tableAgg[k]; })),
       groups: rank(Object.keys(groupAgg).map(function (k) { return groupAgg[k]; })),
+      workspaces: rank(Object.keys(workspaceAgg).map(function (k) { return workspaceAgg[k]; })),
+      noWorkspace: withCompletion(noWorkspaceAgg),
     },
     lists: { overdue: overdueList, recentPublish: recentPublish, recentDone: recentDone, recentShutdown: recentShutdown },
     // 能力标记：前端据此区分「后端未返回某清单」与「清单确实为空」，旧后端缺该字段时按键存在性判断。

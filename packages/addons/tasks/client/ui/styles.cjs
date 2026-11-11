@@ -86,6 +86,7 @@ module.exports = [
     ".wbt-wschip button:hover{opacity:1}",
     ".wbt-wschip-ro{opacity:.85;background:transparent}",
     ".wbt-wsfilter{width:100%}",
+    ".wbt-muted-link{opacity:.7;text-decoration-style:dashed}",
     ".wbt-wsmenu .wbt-tagopt{padding:5px 6px}",
     ".wbt-wsmenu .wbt-wsnone{border-top:1px dashed var(--wbt-line);margin-top:4px;padding-top:7px}",
     ".wbt-ws-group .wbt-check{min-width:0;overflow-wrap:anywhere}",

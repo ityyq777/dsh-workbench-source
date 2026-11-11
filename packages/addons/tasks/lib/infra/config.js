@@ -29,6 +29,7 @@ const SECTIONS = [
   { value: "overdue", zh: "逾期清单", en: "Overdue list" },
   { value: "tables", zh: "任务表排行", en: "Task tables" },
   { value: "groups", zh: "任务组排行", en: "Task groups" },
+  { value: "workspaces", zh: "工作区排行", en: "Workspaces" },
   { value: "recentPublish", zh: "最近发布", en: "Recently published" },
   { value: "recentDone", zh: "最近完成", en: "Recently completed" },
   { value: "recentShutdown", zh: "最近关闭", en: "Recently closed" },

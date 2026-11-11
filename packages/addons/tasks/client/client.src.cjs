@@ -373,7 +373,7 @@
     "form.defaultPriority": 1, "form.defaultDifficulty": 0, "form.defaultTargetOffset": 0,
     "stats.range": "30d", "stats.top": 10, "stats.showKpi": true,
     "stats.recentPublishLimit": 10, "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10,
-    "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "recentPublish", "recentDone", "recentShutdown"],
+    "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "workspaces", "recentPublish", "recentDone", "recentShutdown"],
   };
 
   var TasksView = require("./views/tasks-view.cjs")({ React: React, configView: configView, CFG_FALLBACK: CFG_FALLBACK, COPY: COPY, injectCss: injectCss, allTables: allTables, findFirstTable: findFirstTable, treeWalk: treeWalk, treeFlat: treeFlat, cx: cx, Icon: Icon, TaskItem: TaskItem, PathCrumbs: PathCrumbs, TagFilter: TagFilter, WorkspaceFilter: WorkspaceFilter, TreeNode: TreeNode, CreateModal: CreateModal, TimelineModal: TimelineModal, NodeModal: NodeModal, EditModal: EditModal, DoneModal: DoneModal, BatchModal: BatchModal });
@@ -382,7 +382,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.4",
+    version: "5.2.5",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "记录", en: "Records" }, component: TasksView },

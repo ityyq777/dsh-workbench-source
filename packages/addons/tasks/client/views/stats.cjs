@@ -30,6 +30,8 @@ var COPY = {
     overdueList: "逾期清单", overdueNote: "按账龄降序",
     tables: "任务表排行", tablesNote: "按已开启 + 逾期权重",
     groups: "任务组排行", groupsNote: "一级任务组",
+    workspaces: "工作区排行", workspacesNote: "存量口径；任务可挂多个工作区，各行合计可能大于任务总数",
+    noWorkspaceRow: "未关联工作区", noWorkspaceNote: "正常状态：这些任务没有归属任何工作区", noWorkspacesEmpty: "还没有工作区，也没有未关联工作区的任务",
     colName: "名称", colTotal: "总数", colOpen: "已开启", colOverdue: "逾期", colDone: "已完成", colRate: "完成率",
     colTitle: "任务", colTarget: "计划完成", colAge: "逾期天数", colTable: "任务表",
     recentPublish: "最近发布", recentPublishNote: "按发布日期倒序", noRecentPublish: "还没有发布的任务",
@@ -57,6 +59,8 @@ var COPY = {
     overdueList: "Overdue list", overdueNote: "Oldest first",
     tables: "Task tables", tablesNote: "Weighted by active + overdue",
     groups: "Task groups", groupsNote: "First-level groups",
+    workspaces: "Workspaces", workspacesNote: "Current stock; a task can sit in several workspaces, so rows may add up to more than the total",
+    noWorkspaceRow: "No workspace", noWorkspaceNote: "Normal state: these tasks belong to no workspace", noWorkspacesEmpty: "No workspaces and no tasks without one yet",
     colName: "Name", colTotal: "Total", colOpen: "Active", colOverdue: "Overdue", colDone: "Done", colRate: "Completion",
     colTitle: "Task", colTarget: "Target", colAge: "Days late", colTable: "Table",
     recentPublish: "Recently published", recentPublishNote: "Newest publication first", noRecentPublish: "No published tasks yet",
@@ -294,6 +298,23 @@ function TasksStatsBody(props) {
           rows: (data.rankings && data.rankings.groups) || [], lang: lang,
           columns: [
             rankingName(t, lang, props.onNavigate, "group"),
+            { key: "total", label: t.colTotal, num: true },
+            { key: "open", label: t.colOpen, num: true },
+            { key: "overdue", label: t.colOverdue, num: true },
+            { key: "completion", label: t.colRate, num: true, render: function (r) { return ch.pct(r.completion); } },
+          ],
+        })));
+
+      var wsRows = ((data.rankings && data.rankings.workspaces) || []).slice();
+      var noneRow = data.rankings && data.rankings.noWorkspace;
+      if (noneRow && (wsRows.length || noneRow.total > 0)) {
+        wsRows.push(Object.assign({}, noneRow, { title: t.noWorkspaceRow }));
+      }
+      children.push(h(ch.Card, { key: "workspaces", span: 6, title: t.workspaces, note: t.workspacesNote },
+        h(ch.DataTable, {
+          rows: wsRows, lang: lang, empty: t.noWorkspacesEmpty,
+          columns: [
+            rankingName(t, lang, props.onNavigate, "workspace"),
             { key: "total", label: t.colTotal, num: true },
             { key: "open", label: t.colOpen, num: true },
             { key: "overdue", label: t.colOverdue, num: true },

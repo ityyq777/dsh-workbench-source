@@ -411,7 +411,7 @@ export function registerTaskActions(api) {
   });
 
   action("tasks.statsReport", {
-    description: "任务统计报表：总量/状态/标签/优先级/难度、趋势、逾期账龄、近期发布/完成/关闭清单（lists.recentPublish 不限状态，按发布日期倒序；lists.recentDone / lists.recentShutdown 分别按完成/关闭日期倒序；lists.overdue 为逾期清单）、任务表与任务组排行；另返回 today 对象：" + TODAY_STATS_DESCRIPTION,
+    description: "任务统计报表：总量/状态/标签/优先级/难度、趋势、逾期账龄、近期发布/完成/关闭清单（lists.recentPublish 不限状态，按发布日期倒序；lists.recentDone / lists.recentShutdown 分别按完成/关闭日期倒序；lists.overdue 为逾期清单）、任务表 / 任务组 / 工作区排行（rankings.workspaces 为存量口径，同一任务按存活关联在每个工作区各计一次，各行合计会大于 totals.total；rankings.noWorkspace 是未关联任何存活工作区的任务数，属正常状态，与 tasks.list 的 noWorkspace 同口径）；另返回 today 对象：" + TODAY_STATS_DESCRIPTION,
     input: {
       type: "object",
       properties: {
