@@ -14,6 +14,7 @@
     "test:task-publisher": "node scripts/test-task-publisher.mjs",
     "test:commands": "node scripts/test-tasks-commands.mjs",
     "test:workspace-view": "node scripts/test-tasks-workspace-view.mjs",
+    "test:workspace-filter": "node scripts/test-task-workspace-filter.mjs",
     "test:ownership-backend": "node scripts/test-task-ownership-backend.mjs",
     "test:ownership-concurrency": "node scripts/test-task-ownership-concurrency.mjs",
     "test:ownership-ui": "node scripts/test-task-ownership-ui.mjs",

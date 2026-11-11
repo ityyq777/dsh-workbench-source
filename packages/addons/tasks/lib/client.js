@@ -201,6 +201,151 @@ var require_tagfilter = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/ui/workspacefilter.cjs
+var require_workspacefilter = __commonJS({
+  "packages/addons/tasks/client/ui/workspacefilter.cjs"(exports2, module2) {
+    var React = require("react");
+    var h = React.createElement;
+    var PAGE_SIZE = 20;
+    module2.exports = function WorkspaceFilter(props) {
+      var api = props.api, t = props.t, Icon2 = props.Icon;
+      var ids = props.ids || [], noWorkspace = props.noWorkspace === true;
+      var openState = React.useState(false), open = openState[0], setOpen = openState[1];
+      var queryState = React.useState(""), query = queryState[0], setQuery = queryState[1];
+      var viewState = React.useState({ records: [], total: 0, page: 0, hasMore: false }), view = viewState[0], setView = viewState[1];
+      var loadingState = React.useState(false), loading = loadingState[0], setLoading = loadingState[1];
+      var errorState = React.useState(""), error = errorState[0], setError = errorState[1];
+      var namesState = React.useState({}), names = namesState[0], setNames = namesState[1];
+      var load = React.useCallback(function(keyword, pageNumber, append) {
+        setLoading(true);
+        setError("");
+        return api.call("taskWorkspaces.list", { keyword: keyword || "", pageNumber, pageSize: PAGE_SIZE }).then(function(res) {
+          setLoading(false);
+          if (!res || res.ok === false) {
+            setError(res && res.error || "list failed");
+            return;
+          }
+          var out = res.result || {}, records2 = out.records || [], page = out.pageNumber || pageNumber, total = out.total || 0;
+          setView(function(prev) {
+            return { records: append ? prev.records.concat(records2) : records2, total, page, hasMore: page * PAGE_SIZE < total };
+          });
+          if (!records2.length) return;
+          setNames(function(prev) {
+            var next = Object.assign({}, prev);
+            records2.forEach(function(ws) {
+              next[String(ws.id)] = String(ws.title || ws.name || ws.id);
+            });
+            return next;
+          });
+        }).catch(function(e) {
+          setLoading(false);
+          setError(String(e && e.message || e));
+        });
+      }, [api]);
+      React.useEffect(function() {
+        if (!open) return void 0;
+        var timer = setTimeout(function() {
+          load(query, 1, false);
+        }, query ? 200 : 0);
+        return function() {
+          clearTimeout(timer);
+        };
+      }, [open, query, load, props.reloadKey]);
+      function onScroll(e) {
+        var el = e && e.target;
+        if (!el || !view.hasMore || loading) return;
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 24) load(query, view.page + 1, true);
+      }
+      function name(id) {
+        return names[String(id)] || String(id);
+      }
+      var caption = t.workspaceFilter + (ids.length ? " \xB7 " + ids.length : "") + (noWorkspace && !ids.length ? " \xB7 " + t.noWorkspace : "");
+      var head = h(
+        "button",
+        {
+          type: "button",
+          className: "wbt-btn ghost" + (ids.length || noWorkspace ? " on" : ""),
+          "aria-expanded": open,
+          title: caption,
+          onClick: function() {
+            setOpen(!open);
+          }
+        },
+        Icon2 ? h(Icon2, { name: "folder", size: 13 }) : null,
+        caption,
+        Icon2 ? h(Icon2, { name: "down", size: 12 }) : null
+      );
+      if (!open) return h("div", { className: "wbt-tagfilter wbt-wsfilter" }, head);
+      var records = view.records || [];
+      var menu = h(
+        "div",
+        { className: "wbt-tagmenu wbt-wsmenu", role: "menu" },
+        h("div", { className: "wbt-tagsearch" }, h("input", {
+          className: "wbt-input",
+          autoFocus: true,
+          value: query,
+          placeholder: t.workspaceSearchPlaceholder,
+          "aria-label": t.workspaceSearchPlaceholder,
+          onChange: function(e) {
+            setQuery(e.target.value);
+          },
+          onKeyDown: function(e) {
+            if (e.key === "Escape") setOpen(false);
+          }
+        })),
+        ids.length ? h(
+          "div",
+          { className: "wbt-tagsel" },
+          h("div", { className: "wbt-tagmenu-head" }, t.workspaceSelected + " " + ids.length),
+          h("div", { className: "wbt-tagsel-list" }, ids.map(function(id) {
+            return h(
+              "button",
+              { key: String(id), type: "button", className: "wbt-tagselitem", title: t.workspaceRemove, onClick: function() {
+                props.onToggle(String(id));
+              } },
+              h("span", { className: "wbt-tagnm" }, name(id)),
+              h("span", { className: "wbt-tagx" }, "\xD7")
+            );
+          }))
+        ) : null,
+        h(
+          "div",
+          { className: "wbt-tagmenu-head" },
+          t.allWorkspaces + " " + view.total,
+          h("span", { className: "wbt-grow" }),
+          h("button", { type: "button", className: "wbt-mini", onClick: function() {
+            setQuery("");
+            props.onClear();
+          } }, t.clear)
+        ),
+        records.length ? h("div", { className: "wbt-taglist", onScroll }, records.map(function(ws) {
+          var id = String(ws.id), checked = ids.indexOf(id) >= 0;
+          return h(
+            "label",
+            { key: id, className: "wbt-tagopt" },
+            h("input", { type: "checkbox", checked, onChange: function() {
+              props.onToggle(id);
+            } }),
+            h("span", { className: "wbt-tagnm" }, String(ws.title || ws.name || id)),
+            h("span", { className: "wbt-tagcnt" }, String(ws.taskCount || 0))
+          );
+        })) : h("div", { className: "wbt-note" }, loading ? t.loadingMore : error ? error : query ? t.workspaceNoMatch : t.noWorkspaces),
+        error && records.length ? h("div", { className: "wbt-note" }, error) : null,
+        h(
+          "label",
+          { className: "wbt-tagopt wbt-wsnone" },
+          h("input", { type: "checkbox", checked: noWorkspace, onChange: function() {
+            props.onToggleNoWorkspace();
+          } }),
+          h("span", { className: "wbt-tagnm" }, t.noWorkspace)
+        ),
+        h("div", { className: "wbt-tagmore" }, loading ? t.loadingMore : view.hasMore ? "" : t.noMore)
+      );
+      return h("div", { className: "wbt-tagfilter wbt-wsfilter" }, head, menu);
+    };
+  }
+});
+
 // packages/addons/tasks/client/stats/charts.cjs
 var require_charts = __commonJS({
   "packages/addons/tasks/client/stats/charts.cjs"(exports2, module2) {
@@ -4541,6 +4686,14 @@ var require_copy = __commonJS({
         noMore: "\u6CA1\u6709\u66F4\u591A",
         tagSelected: "\u5DF2\u9009",
         tagRemove: "\u79FB\u9664",
+        workspaceFilter: "\u5DE5\u4F5C\u533A\u7B5B\u9009",
+        allWorkspaces: "\u5168\u90E8\u5DE5\u4F5C\u533A",
+        noWorkspaces: "\u6682\u65E0\u5DE5\u4F5C\u533A",
+        noWorkspace: "\u672A\u5173\u8054\u5DE5\u4F5C\u533A",
+        workspaceSearchPlaceholder: "\u641C\u7D22\u5DE5\u4F5C\u533A\u540D\u79F0",
+        workspaceNoMatch: "\u6CA1\u6709\u5339\u914D\u7684\u5DE5\u4F5C\u533A",
+        workspaceSelected: "\u5DF2\u9009\u5DE5\u4F5C\u533A",
+        workspaceRemove: "\u79FB\u9664",
         untagged: "\u672A\u6253\u6807\u7B7E",
         publish: "\u53D1\u5E03",
         target: "\u8BA1\u5212\u5B8C\u6210",
@@ -4697,6 +4850,14 @@ var require_copy = __commonJS({
         noMore: "No more",
         tagSelected: "Selected",
         tagRemove: "Remove",
+        workspaceFilter: "Filter by workspace",
+        allWorkspaces: "All workspaces",
+        noWorkspaces: "No workspaces",
+        noWorkspace: "No workspace",
+        workspaceSearchPlaceholder: "Search workspace name",
+        workspaceNoMatch: "No matching workspace",
+        workspaceSelected: "Selected workspaces",
+        workspaceRemove: "Remove",
         untagged: "Untagged",
         publish: "Published",
         target: "Target",
@@ -6620,7 +6781,9 @@ var require_styles = __commonJS({
       ".wbt-wschip button{border:0;background:transparent;color:inherit;cursor:pointer;font-size:13px;line-height:1;padding:0 2px;opacity:.6}",
       ".wbt-wschip button:hover{opacity:1}",
       ".wbt-wschip-ro{opacity:.85;background:transparent}",
-      ".wbt-ws-options{display:flex;flex-direction:column;gap:2px;max-height:168px;overflow:auto}",
+      ".wbt-wsfilter{width:100%}",
+      ".wbt-wsmenu .wbt-tagopt{padding:5px 6px}",
+      ".wbt-wsmenu .wbt-wsnone{border-top:1px dashed var(--wbt-line);margin-top:4px;padding-top:7px}",
       ".wbt-ws-group .wbt-check{min-width:0;overflow-wrap:anywhere}",
       ".wbt-ws-select{display:flex;flex-direction:column;gap:6px;min-width:0}",
       ".wbt-ws-select .wbt-picker-list{max-height:180px}",
@@ -8945,6 +9108,7 @@ var require_task_filter_panel = __commonJS({
     var Icon2 = require_icons().Icon;
     var model = require_task_filter_model();
     var DateFilter = require_date_filter().DateFilter;
+    var WorkspaceFilter = require_workspacefilter();
     function NumberInput(p) {
       var React = p.React, draftState = React.useState(String(p.value)), draft = draftState[0], setDraft = draftState[1];
       React.useEffect(function() {
@@ -9086,22 +9250,23 @@ var require_task_filter_panel = __commonJS({
             } }), option[1]);
           })),
           p.search,
-          h(
-            "fieldset",
-            { className: "wbt-filter-group wbt-ws-group" },
-            h("legend", null, en ? "Workspaces" : "\u5DE5\u4F5C\u533A"),
-            p.workspaces && p.workspaces.length ? h("div", { className: "wbt-ws-options" }, p.workspaces.map(function(ws) {
-              var checked = value.workspaceIds.indexOf(String(ws.id)) >= 0;
-              return h("label", { key: ws.id, className: "wbt-check" }, h("input", { type: "checkbox", checked, "data-workspace": ws.id, onChange: function() {
-                change(model.toggleWorkspace(value, String(ws.id)));
-                p.onHint("");
-              } }), String(ws.title || ws.id));
-            })) : h("p", { className: "wbt-limit-hint" }, en ? "No workspaces yet; create one in the task editor." : "\u8FD8\u6CA1\u6709\u5DE5\u4F5C\u533A\uFF0C\u53EF\u5728\u4EFB\u52A1\u7F16\u8F91\u91CC\u65B0\u5EFA\u3002"),
-            h("label", { className: "wbt-check" }, h("input", { type: "checkbox", checked: value.noWorkspace === true, onChange: function() {
+          // 工作区与标签同为下拉多选；「未关联工作区」收在菜单里，互斥由 model.toggle* 保证。
+          p.api ? h("div", { className: "wbt-filter-group wbt-ws-group" }, h(WorkspaceFilter, {
+            api: p.api,
+            t: p.t,
+            Icon: p.Icon,
+            ids: value.workspaceIds,
+            noWorkspace: value.noWorkspace === true,
+            onToggle: function(id) {
+              change(model.toggleWorkspace(value, id));
+            },
+            onToggleNoWorkspace: function() {
               change(model.toggleNoWorkspace(value));
-              p.onHint("");
-            } }), en ? "Not linked to any workspace" : "\u672A\u5173\u8054\u5DE5\u4F5C\u533A")
-          ),
+            },
+            onClear: function() {
+              change(Object.assign({}, value, { workspaceIds: [], noWorkspace: false }));
+            }
+          })) : p.workspaces || null,
           h("div", { className: "wbt-filter-group" }, p.tags, p.missing),
           h(
             "section",
@@ -9201,7 +9366,7 @@ var require_tasks_view = __commonJS({
   "packages/addons/tasks/client/views/tasks-view.cjs"(exports2, module2) {
     module2.exports = function createTasksView(deps) {
       var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon2 = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
-      var h = React.createElement, filters = require_task_filter_model(), renderFilters = require_task_filter_panel(), claimBatch = require_claim_batch(), renderSelectionBar = require_selection_bar(), WorkspaceSelectFactory = require_workspace_select()(React);
+      var h = React.createElement, filters = require_task_filter_model(), renderFilters = require_task_filter_panel(), claimBatch = require_claim_batch(), renderSelectionBar = require_selection_bar();
       function TasksView(props) {
         var lang = props.lang === "en" ? "en" : "zh";
         var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -9267,7 +9432,6 @@ var require_tasks_view = __commonJS({
         var titleKey = titleS[0], setTitleKey = titleS[1];
         var tagReloadS = React.useState(0);
         var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
-        var wsList = WorkspaceSelectFactory.useWorkspaces(api).list;
         var filterTagIdsS = React.useState([]);
         var filterTagIds = filterTagIdsS[0], setFilterTagIds = filterTagIdsS[1];
         var pageS = React.useState(1);
@@ -9739,7 +9903,9 @@ var require_tasks_view = __commonJS({
             }
           }),
           // 与难度区间互斥：两者同时生效必然是空集，勾选「仅未填难度」时清掉难度区间。
-          workspaces: wsList,
+          api,
+          t,
+          Icon: Icon2,
           missing: h("label", { className: "wbt-check" }, h("input", {
             type: "checkbox",
             checked: difficultyMissing,
@@ -10598,6 +10764,7 @@ var require_timeline_view = __commonJS({
   var React = require("react");
   var h = React.createElement;
   var TagFilter = require_tagfilter();
+  var WorkspaceFilter = require_workspacefilter();
   var statsView = require_stats();
   var configView = require_config();
   var dataView = require_data();
@@ -11051,7 +11218,7 @@ var require_timeline_view = __commonJS({
     "stats.recentShutdownLimit": 10,
     "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "recentPublish", "recentDone", "recentShutdown"]
   };
-  var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
+  var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, WorkspaceFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",

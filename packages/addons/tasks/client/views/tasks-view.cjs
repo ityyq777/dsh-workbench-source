@@ -1,7 +1,7 @@
 // 任务列表与树导航视图；依赖由入口注入，无循环依赖。
 module.exports = function createTasksView(deps) {
   var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
-  var h = React.createElement, filters = require("./task-filter-model.cjs"), renderFilters = require("./task-filter-panel.cjs"), claimBatch = require("./claim-batch.cjs"), renderSelectionBar = require("./selection-bar.cjs"), WorkspaceSelectFactory = require("../workspace/workspace-select.cjs")(React);
+  var h = React.createElement, filters = require("./task-filter-model.cjs"), renderFilters = require("./task-filter-panel.cjs"), claimBatch = require("./claim-batch.cjs"), renderSelectionBar = require("./selection-bar.cjs");
   function TasksView(props) {
     var lang = props.lang === "en" ? "en" : "zh";
     var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -71,7 +71,6 @@ module.exports = function createTasksView(deps) {
     var tagReloadS = React.useState(0);
     var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
     // 筛选面板的工作区清单与任务列表分开拉，失败只让该分组降级为空。
-    var wsList = WorkspaceSelectFactory.useWorkspaces(api).list;
     var filterTagIdsS = React.useState([]);
     var filterTagIds = filterTagIdsS[0], setFilterTagIds = filterTagIdsS[1];
     var pageS = React.useState(1);
@@ -440,7 +439,7 @@ module.exports = function createTasksView(deps) {
       tags: h(TagFilter, { api: api, t: t, Icon: Icon, ids: filterTagIds, reloadKey: tagReload,
         onChange: function (next) { setFilterTagIds(next); setPageNumber(1); } }),
       // 与难度区间互斥：两者同时生效必然是空集，勾选「仅未填难度」时清掉难度区间。
-      workspaces: wsList,
+      api: api, t: t, Icon: Icon,
       missing: h("label", { className: "wbt-check" }, h("input", { type: "checkbox", checked: difficultyMissing,
         onChange: function (e) { var next = e.target.checked; setDifficultyMissing(next); if (next) setFilterValue(filters.clearDifficulty(filterValue)); setPageNumber(1); } }), t.difficultyMissing),
     });

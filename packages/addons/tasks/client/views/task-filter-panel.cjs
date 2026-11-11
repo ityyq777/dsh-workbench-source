@@ -1,6 +1,7 @@
 // Render-only filter panel; state and request ownership stay in TasksView.
 var Icon = require("../ui/icons.cjs").Icon;
 var model = require("./task-filter-model.cjs"), DateFilter = require("../ui/date-filter.cjs").DateFilter;
+var WorkspaceFilter = require("../ui/workspacefilter.cjs");
 // Keep an editing draft so typing “10” does not swap the range after its first digit.
 function NumberInput(p) {
   var React = p.React, draftState = React.useState(String(p.value)), draft = draftState[0], setDraft = draftState[1];
@@ -84,14 +85,11 @@ module.exports = function renderFilterPanel(React, p) {
         return h("label",{key:key,className:"wbt-check"},h("input",{type:"checkbox",checked:checked,"data-status":key,onChange:function(){change(model.toggle(value,key));p.onHint("");}}),option[1]);
       })),
       p.search,
-      h("fieldset",{className:"wbt-filter-group wbt-ws-group"},h("legend",null,en?"Workspaces":"工作区"),
-        (p.workspaces && p.workspaces.length)
-          ? h("div",{className:"wbt-ws-options"},p.workspaces.map(function(ws){
-              var checked = value.workspaceIds.indexOf(String(ws.id)) >= 0;
-              return h("label",{key:ws.id,className:"wbt-check"},h("input",{type:"checkbox",checked:checked,"data-workspace":ws.id,onChange:function(){change(model.toggleWorkspace(value,String(ws.id)));p.onHint("");}}),String(ws.title||ws.id));
-            }))
-          : h("p",{className:"wbt-limit-hint"},en?"No workspaces yet; create one in the task editor.":"还没有工作区，可在任务编辑里新建。"),
-        h("label",{className:"wbt-check"},h("input",{type:"checkbox",checked:value.noWorkspace === true,onChange:function(){change(model.toggleNoWorkspace(value));p.onHint("");}}),en?"Not linked to any workspace":"未关联工作区")),
+      // 工作区与标签同为下拉多选；「未关联工作区」收在菜单里，互斥由 model.toggle* 保证。
+      p.api ? h("div",{className:"wbt-filter-group wbt-ws-group"},h(WorkspaceFilter,{api:p.api,t:p.t,Icon:p.Icon,ids:value.workspaceIds,
+        noWorkspace:value.noWorkspace===true,onToggle:function(id){change(model.toggleWorkspace(value,id));},
+        onToggleNoWorkspace:function(){change(model.toggleNoWorkspace(value));},
+        onClear:function(){change(Object.assign({},value,{workspaceIds:[],noWorkspace:false}));}})) : (p.workspaces || null),
       h("div",{className:"wbt-filter-group"},p.tags,p.missing),
       h("section",{className:"wbt-filter-group wbt-limit-group",role:"group","aria-label":en?"Priority and difficulty":"优先级与难度"},
         limitRow("priority", en ? "Priority" : "优先级"),
