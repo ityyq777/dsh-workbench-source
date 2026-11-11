@@ -13,7 +13,7 @@ for(let y=1900;y<=2400;y++){
 }
 assert.equal(model.calendar(2012).weeks,54);
 assert.deepEqual([1,2,3,4,6,7,99].map(model.level),[1,2,2,3,3,4,4]);
-assert.deepEqual(model.TYPES,['done','publish','shutdown']);
+assert.deepEqual(model.TYPES,['done','publish','shutdown','claimed']);
 assert.deepEqual(model.LEVELS.map(v=>v.label),['1','2–3','4–6','7+']);
 for(const [index,entry] of model.LEVELS.entries()){
  assert.equal(model.level(entry.min),index+1);
@@ -34,7 +34,7 @@ const mod={exports:{}};runInNewContext(readFileSync('packages/addons/tasks/clien
 const Heatmap=mod.exports,y=new Date().getFullYear(),date=y+'-01-01';
 for(const lang of ['zh','en']){
  reset();let navigation,fail=false;const calls=[];
- const p={lang,onNavigate:(...v)=>navigation=v,api:{call:async(action,args)=>{calls.push(args);if(fail){fail=false;return {ok:false};}return {ok:true,result:{year:args.year,days:args.year===y?[{date,done:2,publish:4,shutdown:7}]:[]}};}}};
+ const p={lang,onNavigate:(...v)=>navigation=v,api:{call:async(action,args)=>{calls.push(args);if(fail){fail=false;return {ok:false};}return {ok:true,result:{year:args.year,days:args.year===y?[{date,done:2,publish:4,shutdown:7,claimed:3}]:[]}};}}};
  let v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].loading));await flush();v=render(Heatmap,p);
  const day=()=>find(render(Heatmap,p),n=>n.props['data-date']===date);
  assert.equal(day().props.title,date+' · '+model.COPY[lang].done+' 2');
@@ -45,15 +45,15 @@ for(const lang of ['zh','en']){
   assert.ok(text(legend).startsWith(model.COPY[lang].dailyCount));
   const items=walk(legend).filter(n=>n.props.className==='wbt-hm-intensity-item');assert.equal(items.length,4);
   items.forEach((item,index)=>{assert.equal(text(item),model.LEVELS[index].label);const swatch=find(item,n=>n.props.className==='wbt-hm-swatch');assert.equal(swatch.props['aria-hidden'],true);assert.equal(swatch.props.style.background,`var(--hm-${type}-${index+1})`);});
-  const tabs=find(v,n=>n.props.role==='tablist');assert.equal(tabs.children.length,3);assert.ok(!walk(tabs).includes(legend));
+  const tabs=find(v,n=>n.props.role==='tablist');assert.equal(tabs.children.length,4);assert.ok(!walk(tabs).includes(legend));
  }
- assert.equal(walk(v).filter(n=>n.props.role==='tab').length,3);
+ assert.equal(walk(v).filter(n=>n.props.role==='tab').length,4);
  const future=walk(v).find(n=>n.props['data-date']>model.localDay(new Date()));
  if(future){navigation=null;assert.equal(future.props['aria-disabled'],true);assert.equal(future.props.disabled,undefined);future.props.onClick();assert.equal(navigation,null);}
- find(v,n=>n.props['aria-label']===model.COPY[lang].previous).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].empty.shutdown));
+ find(v,n=>n.props['aria-label']===model.COPY[lang].previous).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].empty[model.TYPES.at(-1)]));
  find(v,n=>n.props['aria-label']===model.COPY[lang].next).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.equal(calls.length,2);
  fail=true;find(v,n=>n.props['aria-label']===model.COPY[lang].next).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].error));
- find(v,n=>n.type==='button'&&text(n)===model.COPY[lang].retry).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].empty.shutdown));assert.equal(calls.length,4);
+ find(v,n=>n.type==='button'&&text(n)===model.COPY[lang].retry).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].empty[model.TYPES.at(-1)]));assert.equal(calls.length,4);
 }
 const noop=()=>null,copy=require(dir+'ui/copy.cjs');
 const View=require(dir+'views/tasks-view.cjs')({React,configView:{useConfig:()=>({ready:true,values:{'list.filterRestarted':true,'ui.defaultTab':0}})},COPY:copy,TABS:[],allTables:()=>[],treeWalk:()=>[],treeFlat:()=>[],cx:(...s)=>s.join(' '),injectCss:noop,Icon:noop,PathCrumbs:noop,TagFilter:noop});
@@ -63,4 +63,4 @@ for(const activityType of model.TYPES){
  assert.equal(args[activityType+'From'],date);assert.equal(args[activityType+'To'],date);assert.deepEqual(args.statuses,activityType==='done'?[2]:activityType==='shutdown'?[1]:[]);assert.ok(!('urgent' in args),'the panel never sends the legacy urgent flag');assert.equal(args.filterRestarted,undefined);assert.equal(args.tableId,null);assert.equal(args.difficultyMissing,false);assert.equal(args.titleKey,'');assert.deepEqual(args.tagIds,[]);
  find(render(Body,outer.props),n=>n.props.kind===activityType&&n.props.value).props.onChange({from:'',to:''});render(Body,outer.props);await flush();args=calls.filter(c=>c.action==='tasks.list').at(-1).args;assert.ok(!('activityDate' in args));assert.ok(!('activityType' in args));
 }
-console.log('TASK ACTIVITY UI PASS: 501 years, leap/54-week geometry, 3 single types, zh/en, cache/retry/empty, accessible future cells, list drilldown and clear');
+console.log('TASK ACTIVITY UI PASS: 501 years, leap/54-week geometry, 4 single types, zh/en, cache/retry/empty, accessible future cells, list drilldown and clear');

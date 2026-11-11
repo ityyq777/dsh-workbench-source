@@ -12,7 +12,7 @@ var COPY = {
     ranking: "时间线排行", rankingNote: "全量聚合后取前 100，同数按 id 升序",
     overdue: "逾期时间线", overdueNote: "按逾期任务数降序",
     trend: "范围内趋势", trendNote: "只统计范围内事件，不改变存量",
-    colName: "时间线", colTotal: "任务", colOpen: "进行中", colDone: "已完成", colShutdown: "已关闭", colRate: "完成率", colOverdue: "逾期", colActivity: "最近活动",
+    colName: "时间线", colTotal: "任务", colOpen: "已开启", colDone: "已完成", colShutdown: "已关闭", colRate: "完成率", colOverdue: "逾期", colActivity: "最近活动",
     members: "成员", memberEmpty: "没有有效成员",
     loadFail: "时间线统计暂不可用", noData: "还没有时间线。在「时间线」里创建后会出现在这里",
     noOverdue: "没有逾期时间线",

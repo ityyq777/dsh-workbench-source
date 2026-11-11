@@ -62,6 +62,7 @@ function Heatmap(props) {
     content,h("div",{className:"wbt-hm-legend"},
       h("div",{className:"wbt-hm-types",role:"tablist","aria-label":t.title},model.TYPES.map(function(k){return h("button",{key:k,type:"button",className:"wbt-hm-control",role:"tab","aria-selected":type===k,onClick:function(){setType(k);setTip("");}},h("span",{className:"wbt-hm-swatch",style:{background:"var(--hm-"+k+"-4)"},"aria-hidden":true}),t[k]);})),
       ready && h("span",{className:"wbt-hm-summary","aria-live":"polite"},tip||t.total+" · "+total),
+      type==="claimed" && h("span",{className:"wbt-hm-intensity-label"},t.claimedNote),
       h("div",{className:"wbt-hm-intensity",role:"img","aria-label":model.legendLabel(lang)},
         h("span",{className:"wbt-hm-intensity-label","aria-hidden":true},t.dailyCount),
         model.LEVELS.map(function(entry,index){return h("span",{key:entry.label,className:"wbt-hm-intensity-item","aria-hidden":true},

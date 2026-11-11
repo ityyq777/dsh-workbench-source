@@ -14,7 +14,7 @@ var COLORS = [
 ];
 
 // 按状态含义取色，不依赖序列位置；零值项仍与图例使用同一颜色。
-var STATUS_COLORS = { "0": COLORS[0], "1": COLORS[3], "2": COLORS[1] };
+var STATUS_COLORS = { "0": COLORS[0], "1": COLORS[3], "2": COLORS[1], "4": COLORS[2] };
 
 function css(prefix) {
   return [
@@ -41,7 +41,7 @@ function css(prefix) {
     ".@-chead{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;flex-wrap:wrap}",
     ".@-ctitle{font-size:13px;font-weight:600;color:var(--dsw-alias-label-primary,#1f2329)}",
     ".@-cnote{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
-    ".@-kpis{grid-column:span 12;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}",
+    ".@-kpis{grid-column:span 12;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px}",
     ".@-kpi{background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:12px;padding:12px 14px;min-width:0}",
     ".@-kpi-l{font-size:12px;color:var(--dsw-alias-label-tertiary,#8f959e);display:flex;align-items:center;gap:6px}",
     ".@-kpi-v{font-size:26px;line-height:1.25;font-weight:650;margin-top:4px;font-variant-numeric:tabular-nums}",

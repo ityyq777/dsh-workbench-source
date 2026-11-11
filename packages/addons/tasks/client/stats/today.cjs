@@ -2,8 +2,8 @@
 var React = require("react"), h = React.createElement;
 // title labels the accessible section; clock retains the server-time tooltip.
 var COPY = {
-  zh: { title: "今日", published: "今日发布", done: "今日完成", shutdown: "今日关闭", average: "平均难度", sample: "样本数", noSample: "无样本", clock: "以服务端当前时间为准" },
-  en: { title: "Today", published: "Published today", done: "Completed today", shutdown: "Closed today", average: "Avg difficulty", sample: "samples", noSample: "No samples", clock: "Based on the server's current time" },
+  zh: { title: "今日", published: "今日发布", claimed: "今日接取", done: "今日完成", shutdown: "今日关闭", average: "平均难度", sample: "样本数", noSample: "无样本", clock: "以服务端当前时间为准" },
+  en: { title: "Today", published: "Published today", claimed: "Claimed today", done: "Completed today", shutdown: "Closed today", average: "Avg difficulty", sample: "samples", noSample: "No samples", clock: "Based on the server's current time" },
 };
 var css = ".wbt-today{margin:12px 0}";
 function Today(props) {
@@ -13,7 +13,7 @@ function Today(props) {
   var lang = props.lang === "en" ? "en" : "zh", t = COPY[lang];
   var sample = Number.isFinite(data.avgSample) && data.avgSample > 0 ? data.avgSample : 0;
   var average = sample && Number.isFinite(data.avgDifficultyDone) ? data.avgDifficultyDone.toFixed(1) : "—";
-  var metrics = ["published", "done", "shutdown"].map(function (key) {
+  var metrics = ["published", "claimed", "done", "shutdown"].map(function (key) {
     var value = Number.isFinite(data[key]) ? data[key] : 0;
     return { key: key, label: t[key], value: value, aria: lang === "zh" ? t[key] + value + "条" : t[key] + ": " + value + " tasks" };
   });

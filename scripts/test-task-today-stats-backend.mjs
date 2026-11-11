@@ -11,16 +11,16 @@ try {
   registerTaskActions({ db, action: (name, def) => definitions.set(name, def) });
   const call = (name, args = {}) => definitions.get(name).execute(args);
   const date = todayStr();
-  const empty = { date, published: 0, done: 0, shutdown: 0, avgDifficultyDone: null, avgSample: 0 };
+  const empty = { date, published: 0, done: 0, shutdown: 0, claimed: 0, avgDifficultyDone: null, avgSample: 0 };
   assert.deepEqual(call('tasks.statsReport').today, empty);
   assert.deepEqual(call('tasks.stats').todayActivity, empty);
   assert.equal(call('tasks.stats').today, 0);
 
   let serial = 0;
   const insert = (patch = {}) => {
-    const row = { id: String(++serial), status: '0', difficulty: null, publish: '2000-01-01', done: null, shutdown: null, deleted: null, ...patch };
-    db.prepare('INSERT INTO task(id,title,table_id,status,priority,difficulty,publish_date,target_date,done_date,shutdown_date,deleted_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)')
-      .run(row.id, 'daily fixture', 'fixture-table', row.status, 1, row.difficulty, row.publish, date, row.done, row.shutdown, row.deleted, Date.now(), Date.now());
+    const row = { id: String(++serial), status: '0', difficulty: null, publish: '2000-01-01', done: null, shutdown: null, claimed: null, deleted: null, ...patch };
+    db.prepare('INSERT INTO task(id,title,table_id,status,priority,difficulty,publish_date,target_date,done_date,shutdown_date,claimed_at,deleted_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+      .run(row.id, 'daily fixture', 'fixture-table', row.status, 1, row.difficulty, row.publish, date, row.done, row.shutdown, row.claimed, row.deleted, Date.now(), Date.now());
   };
   // Publication counts all current statuses, including restarted; stored timestamps keep their literal date.
   for (const status of ['0', '1', '2', '3']) insert({ status, publish: date + 'T23:59:59-12:00' });
@@ -38,7 +38,11 @@ try {
   insert({ status: '1', publish: date, shutdown: date, deleted: 1 });
   insert({ status: '2', done: '2000-01-01 12:00:00', difficulty: 5 });
   insert({ status: '1', shutdown: '2000-01-01T12:00:00Z' });
-  const expected = { date, published: 4, done: 5, shutdown: 2, avgDifficultyDone: 1.7, avgSample: 3 };
+  // 接取日优先用 claimed_at（本地日）；已接取同样按 COALESCE 兜底计入。
+  insert({ status: '2', done: '2000-01-01', claimed: Date.parse(date + 'T12:00:00') });
+  insert({ status: '4', claimed: Date.parse(date + 'T23:30:00') });
+  insert({ status: '4', claimed: Date.parse('2000-01-01T12:00:00'), deleted: 1 });
+  const expected = { date, published: 4, done: 5, shutdown: 2, claimed: 3, avgDifficultyDone: 1.7, avgSample: 3 };
   const before = db.prepare('SELECT total_changes() AS n').get().n;
   for (const args of [{}, ...['7d', '30d', '90d', '365d', 'all'].map(range => ({ range })), { from: '2000-01-01', to: '2000-01-02' }]) {
     assert.deepEqual(call('tasks.statsReport', args).today, expected, JSON.stringify(args));

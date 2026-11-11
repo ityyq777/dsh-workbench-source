@@ -63,7 +63,7 @@ export function registerTaskActions(api) {
       title: { type: "string" },
       description: { type: "string" },
       review: { type: "string", description: "完成后的感受/复盘（自由文本）" },
-      status: { type: ["string", "number"], description: "0=进行中(ACTIVE，也接受 open)、1=已关闭(SHUTDOWN)、2=已完成(DONE，也接受 done)、3=已重启(RESTARTED，创建时不允许)；改成 2 时 priority 自动清零并补 doneDate" },
+      status: { type: ["string", "number"], description: "0=已开启(ACTIVE，也接受 open)、1=已关闭(SHUTDOWN)、2=已完成(DONE，也接受 done)、3=已重启(RESTARTED，创建时不允许)；改成 2 时 priority 自动清零并补 doneDate" },
       priority: { type: "number", description: "1..10 整数，数值越大越紧急（>=6 进「紧急」页签）；已开启任务传 0 会报错；任务改为 SHUTDOWN/DONE 时写入值被忽略并清零" },
       difficulty: DIFFICULTY_SCHEMA,
       publishDate: { type: "string", description: "YYYY-MM-DD" },
@@ -392,7 +392,7 @@ export function registerTaskActions(api) {
   registerTagOptionsAction(action, db, api, migrateLegacyTypes);
 
   action("tasks.stats", {
-    description: "任务统计：保留 7 个计数器（today 为今日到期的进行中任务数）；groupBy=tag/tableId/status/priority 时额外返回 groups（可按 from/to 限定 targetDate）；另返回 todayActivity 对象：" + TODAY_STATS_DESCRIPTION,
+    description: "任务统计：保留 7 个计数器（today 为今日到期的已开启任务数，含已接取）；groupBy=tag/tableId/status/priority 时额外返回 groups（可按 from/to 限定 targetDate）；另返回 todayActivity 对象：" + TODAY_STATS_DESCRIPTION,
     input: {
       type: "object",
       properties: {
@@ -404,7 +404,7 @@ export function registerTaskActions(api) {
     examples: [{ groupBy: "priority" }, { groupBy: "tag", from: "2026-11-01", to: "2026-11-30" }],
     execute: function (args) { return stats(db, args || {}, api); },
     render: function (s) {
-      const base = "进行中 " + s.active + " / 已关闭 " + s.shutdown + " / 已完成 " + s.done + " / 已重启 " + s.restarted + " / 逾期 " + s.overdue;
+      const base = "已开启 " + s.active + " / 已关闭 " + s.shutdown + " / 已完成 " + s.done + " / 已重启 " + s.restarted + " / 逾期 " + s.overdue;
       if (!s.groupBy) return base;
       return base + "\n" + s.groupBy + " 分布：" + s.groups.map(function (g) { return (g.label || g.key || "-") + "=" + g.count; }).join("，");
     },

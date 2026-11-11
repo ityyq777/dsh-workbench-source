@@ -37,7 +37,7 @@ export function changelog(db, args) {
 }
 
 
-const STATUS_TEXT = { "0": "进行中", "1": "已关闭", "2": "已完成", "3": "已重启", "4": "已接取" };
+const STATUS_TEXT = { "0": "已开启", "1": "已关闭", "2": "已完成", "3": "已重启", "4": "已接取" };
 
 function tagNames(tags) {
   return (Array.isArray(tags) ? tags : []).map(function (tag) {

@@ -14,7 +14,7 @@ export const TASK_CREATE_SCHEMA = {
         tablePath: { type: ['string','array'], maxLength: PATH_LEN_MAX, maxItems: PATH_MAX, items: {type:'string', maxLength: NAME_MAX}, description: `从逻辑根下一层起的精确名称路径；斜杠分隔字符串或字符串数组（名称含斜杠必须用数组）；禁止空段/点段，最多${PATH_MAX}段、每段${NAME_MAX}字符、总长${PATH_LEN_MAX}（JS length）` },
         createMissing: {type:'boolean',description:'仅tablePath可用；true时事务内建缺失组/表，默认false，不自动推断授权'},
         pathDescriptions: {type:'array',items:{type:'string'},description:'仅createMissing=true可用，长度与路径段相同；每个新节点职责描述必须非空且最多2000字符，已有节点不覆盖'},
-        status: { type: ["string", "number"], description: "0=进行中/1=已关闭/2=已完成（不能直接创建 RESTARTED）；source=2 固定为 0；关闭/完成时优先级自动清零，不必手工传 0" },
+        status: { type: ["string", "number"], description: "0=已开启/1=已关闭/2=已完成（不能直接创建 RESTARTED）；source=2 固定为 0；关闭/完成时优先级自动清零，不必手工传 0" },
         priority: { type: "number", description: "1..10（重启需优先级 >0，source=2 缺省 1，显式 0 报错；普通开启同样缺省 1；关闭/完成自动清零，不必手工传 0）" },
         difficulty: DIFFICULTY_SCHEMA,
         publishDate: { type: "string", description: "YYYY-MM-DD，缺省今天" },

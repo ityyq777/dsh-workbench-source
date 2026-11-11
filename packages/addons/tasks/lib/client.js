@@ -214,7 +214,7 @@ var require_charts = __commonJS({
       "var(--dsw-alias-state-done-primary, #7c5cff)",
       "var(--dsw-alias-state-idle-primary, #8f959e)"
     ];
-    var STATUS_COLORS = { "0": COLORS[0], "1": COLORS[3], "2": COLORS[1] };
+    var STATUS_COLORS = { "0": COLORS[0], "1": COLORS[3], "2": COLORS[1], "4": COLORS[2] };
     function css(prefix) {
       return [
         ".@-table-link{border:0;padding:0;background:none;font:inherit;color:var(--dsw-alias-brand-primary,#4f6ef7);text-align:left;cursor:pointer}.@-table-link:hover{text-decoration:underline}.@-table-link:focus-visible{outline:2px solid currentColor;outline-offset:3px}.@-recent-difficulty{white-space:nowrap}.@-recent-reason{opacity:.65}",
@@ -240,7 +240,7 @@ var require_charts = __commonJS({
         ".@-chead{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;flex-wrap:wrap}",
         ".@-ctitle{font-size:13px;font-weight:600;color:var(--dsw-alias-label-primary,#1f2329)}",
         ".@-cnote{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
-        ".@-kpis{grid-column:span 12;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}",
+        ".@-kpis{grid-column:span 12;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px}",
         ".@-kpi{background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:12px;padding:12px 14px;min-width:0}",
         ".@-kpi-l{font-size:12px;color:var(--dsw-alias-label-tertiary,#8f959e);display:flex;align-items:center;gap:6px}",
         ".@-kpi-v{font-size:26px;line-height:1.25;font-weight:650;margin-top:4px;font-variant-numeric:tabular-nums}",
@@ -1349,11 +1349,11 @@ var require_ranking_name = __commonJS({
 // packages/addons/tasks/client/stats/heatmap-model.cjs
 var require_heatmap_model = __commonJS({
   "packages/addons/tasks/client/stats/heatmap-model.cjs"(exports2, module2) {
-    var TYPES = ["done", "publish", "shutdown"];
+    var TYPES = ["done", "publish", "shutdown", "claimed"];
     var LEVELS = [{ min: 1, max: 1, label: "1" }, { min: 2, max: 3, label: "2\u20133" }, { min: 4, max: 6, label: "4\u20136" }, { min: 7, max: null, label: "7+" }];
     var COPY = {
-      zh: { title: "\u5E74\u5EA6\u6D3B\u52A8", previous: "\u4E0A\u4E00\u5E74", next: "\u4E0B\u4E00\u5E74", done: "\u5B8C\u6210", publish: "\u53D1\u5E03", shutdown: "\u5173\u95ED", empty: { done: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5B8C\u6210\u8BB0\u5F55", publish: "\u672C\u5E74\u5EA6\u6CA1\u6709\u53D1\u5E03\u8BB0\u5F55", shutdown: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5173\u95ED\u8BB0\u5F55" }, loading: "\u6B63\u5728\u52A0\u8F7D\u5E74\u5EA6\u6D3B\u52A8", error: "\u5E74\u5EA6\u6D3B\u52A8\u52A0\u8F7D\u5931\u8D25", retry: "\u91CD\u8BD5", future: "\u672A\u6765\u65E5\u671F", none: "\u65E0\u6D3B\u52A8", clear: "\u6E05\u9664\u6D3B\u52A8\u7B5B\u9009", filter: "\u6D3B\u52A8\u7B5B\u9009", total: "\u6D3B\u52A8\u603B\u6570", dailyCount: "\u6BCF\u65E5\u6B21\u6570", weekdays: ["\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D", "\u65E5"] },
-      en: { title: "Annual task activity", previous: "Previous year", next: "Next year", done: "Done", publish: "Published", shutdown: "Closed", empty: { done: "No completed tasks this year", publish: "No published tasks this year", shutdown: "No closed tasks this year" }, loading: "Loading annual activity", error: "Could not load annual activity", retry: "Retry", future: "Future date", none: "No activity", clear: "Clear activity filter", filter: "Activity filter", total: "Total events", dailyCount: "Daily count", weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] }
+      zh: { title: "\u5E74\u5EA6\u6D3B\u52A8", previous: "\u4E0A\u4E00\u5E74", next: "\u4E0B\u4E00\u5E74", done: "\u5B8C\u6210", publish: "\u53D1\u5E03", shutdown: "\u5173\u95ED", claimed: "\u63A5\u53D6", empty: { done: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5B8C\u6210\u8BB0\u5F55", publish: "\u672C\u5E74\u5EA6\u6CA1\u6709\u53D1\u5E03\u8BB0\u5F55", shutdown: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5173\u95ED\u8BB0\u5F55", claimed: "\u672C\u5E74\u5EA6\u6CA1\u6709\u63A5\u53D6\u8BB0\u5F55" }, loading: "\u6B63\u5728\u52A0\u8F7D\u5E74\u5EA6\u6D3B\u52A8", error: "\u5E74\u5EA6\u6D3B\u52A8\u52A0\u8F7D\u5931\u8D25", retry: "\u91CD\u8BD5", future: "\u672A\u6765\u65E5\u671F", none: "\u65E0\u6D3B\u52A8", clear: "\u6E05\u9664\u6D3B\u52A8\u7B5B\u9009", filter: "\u6D3B\u52A8\u7B5B\u9009", total: "\u6D3B\u52A8\u603B\u6570", dailyCount: "\u6BCF\u65E5\u6B21\u6570", weekdays: ["\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D", "\u65E5"], claimedNote: "\u5DF2\u63A5\u53D6/\u5DF2\u5B8C\u6210\u4EFB\u52A1\uFF1B\u5386\u53F2\u4EFB\u52A1\u672A\u8BB0\u5F55\u63A5\u53D6\u65F6\u95F4\uFF0C\u6309\u53D1\u5E03\u65E5\u671F\u8BA1" },
+      en: { title: "Annual task activity", previous: "Previous year", next: "Next year", done: "Done", publish: "Published", shutdown: "Closed", claimed: "Claimed", empty: { done: "No completed tasks this year", publish: "No published tasks this year", shutdown: "No closed tasks this year", claimed: "No claimed tasks this year" }, loading: "Loading annual activity", error: "Could not load annual activity", retry: "Retry", future: "Future date", none: "No activity", clear: "Clear activity filter", filter: "Activity filter", total: "Total events", dailyCount: "Daily count", weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], claimedNote: "claimed or completed tasks; historical tasks without a claim time use the publish date" }
     };
     function localDay(d) {
       return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
@@ -1397,7 +1397,7 @@ var require_heatmap_model = __commonJS({
 // packages/addons/tasks/client/stats/heatmap-styles.cjs
 var require_heatmap_styles = __commonJS({
   "packages/addons/tasks/client/stats/heatmap-styles.cjs"(exports2, module2) {
-    module2.exports = ".wbt-heatmap{--hm-empty:#e9ecef;--hm-done-1:#d3f0d7;--hm-done-2:#91d69c;--hm-done-3:#51b566;--hm-done-4:#2f9e44;--hm-publish-1:#d5e7f8;--hm-publish-2:#96bee6;--hm-publish-3:#568fc7;--hm-publish-4:#2b6cb0;--hm-shutdown-1:#fbdada;--hm-shutdown-2:#f1a0a0;--hm-shutdown-3:#df6262;--hm-shutdown-4:#c92a2a;min-width:0;max-width:100%;border:1px solid color-mix(in srgb,currentColor 15%,transparent);border-radius:12px;padding:16px;margin-bottom:16px;color:inherit;font-size:12px;box-sizing:border-box}.wbt-hm-head,.wbt-hm-legend{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.wbt-hm-head{justify-content:space-between;margin-bottom:16px}.wbt-hm-head h3{margin:0;font-size:14px}.wbt-hm-years{display:flex;align-items:center;gap:12px;font-variant-numeric:tabular-nums}.wbt-heatmap button{font:inherit;color:inherit}.wbt-hm-control{border:1px solid color-mix(in srgb,currentColor 20%,transparent);background:transparent;border-radius:5px;cursor:pointer;padding:4px 8px}.wbt-hm-control[role=tab]{border:0;outline:none;box-shadow:none}.wbt-hm-control[role=tab]:hover{background:color-mix(in srgb,currentColor 6%,transparent)}.wbt-hm-control[aria-selected=true]{font-weight:700;background:color-mix(in srgb,currentColor 10%,transparent)}.wbt-hm-control[role=tab]:focus-visible{outline:2px solid #568fc7;outline-offset:2px}.wbt-hm-scroll{overflow-x:auto;padding:3px;max-width:100%}.wbt-hm-layout{display:flex;gap:8px;min-width:max-content}.wbt-hm-weekdays{display:grid;grid-template-rows:repeat(7,12px);gap:3px;padding-top:22px;font-size:10px;line-height:12px;opacity:.65}.wbt-hm-body{flex:1;min-width:0}.wbt-hm-months{display:grid;grid-template-columns:repeat(var(--hm-weeks),12px);column-gap:3px;height:22px;font-size:10px}.wbt-hm-months span{white-space:nowrap}.wbt-hm-grid{display:grid;grid-template-columns:repeat(var(--hm-weeks),12px);grid-template-rows:repeat(7,12px);gap:3px}.wbt-hm-day{border:0;border-radius:2px;width:12px;height:12px;padding:0;cursor:pointer}.wbt-hm-day[aria-disabled=true]{cursor:default}.wbt-hm-day{outline:none}.wbt-hm-day:focus-visible{outline:2px solid #568fc7;outline-offset:1px}.wbt-hm-day:hover{filter:brightness(.92)}.wbt-hm-future{opacity:.4}.wbt-hm-legend{margin-top:14px}.wbt-hm-swatch{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:5px}.wbt-hm-types{display:flex;align-items:center;gap:10px}.wbt-hm-intensity{display:flex;align-items:center;flex-wrap:wrap;gap:10px;border-inline-start:1px solid color-mix(in srgb,currentColor 20%,transparent);padding-inline-start:12px;font-size:11px}.wbt-hm-intensity-label{color:color-mix(in srgb,currentColor 70%,transparent)}.wbt-hm-intensity-item{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}.wbt-hm-intensity-item .wbt-hm-swatch{flex:none;margin:0}.wbt-hm-summary{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.wbt-hm-state{padding:28px 8px;text-align:center}.wbt-hm-skeleton{height:102px;border-radius:3px;background:repeating-linear-gradient(90deg,var(--hm-empty) 0 12px,transparent 12px 15px);opacity:.55}.dark .wbt-heatmap,[data-theme=dark] .wbt-heatmap,:root[style*='color-scheme:dark'] .wbt-heatmap,:root[style*='color-scheme: dark'] .wbt-heatmap,[data-color-scheme=dark] .wbt-heatmap{--hm-empty:#303740;--hm-done-1:#21452b;--hm-done-2:#2f7440;--hm-done-3:#46a75c;--hm-done-4:#72d38a;--hm-publish-1:#223e5c;--hm-publish-2:#326496;--hm-publish-3:#508ecb;--hm-publish-4:#85baf0;--hm-shutdown-1:#58292b;--hm-shutdown-2:#914146;--hm-shutdown-3:#c95c63;--hm-shutdown-4:#f58e93;}@media(prefers-color-scheme:dark){:root:not([data-theme=light]):not([data-color-scheme=light]):not([style*='color-scheme:light']):not([style*='color-scheme: light']) .wbt-heatmap{--hm-empty:#303740;--hm-done-1:#21452b;--hm-done-2:#2f7440;--hm-done-3:#46a75c;--hm-done-4:#72d38a;--hm-publish-1:#223e5c;--hm-publish-2:#326496;--hm-publish-3:#508ecb;--hm-publish-4:#85baf0;--hm-shutdown-1:#58292b;--hm-shutdown-2:#914146;--hm-shutdown-3:#c95c63;--hm-shutdown-4:#f58e93;}}@media(min-width:1200px){.wbt-hm-layout{min-width:0}.wbt-hm-months,.wbt-hm-grid{grid-template-columns:repeat(var(--hm-weeks),minmax(12px,1fr))}.wbt-hm-day{width:12px}}@media(prefers-reduced-motion:reduce){.wbt-heatmap *{animation:none!important;transition:none!important}}";
+    module2.exports = ".wbt-heatmap{--hm-empty:#e9ecef;--hm-done-1:#d3f0d7;--hm-done-2:#91d69c;--hm-done-3:#51b566;--hm-done-4:#2f9e44;--hm-publish-1:#d5e7f8;--hm-publish-2:#96bee6;--hm-publish-3:#568fc7;--hm-publish-4:#2b6cb0;--hm-shutdown-1:#fbdada;--hm-shutdown-2:#f1a0a0;--hm-shutdown-3:#df6262;--hm-shutdown-4:#c92a2a;--hm-claimed-1:#ffedd5;--hm-claimed-2:#fdba74;--hm-claimed-3:#f89a3c;--hm-claimed-4:#d9600d;min-width:0;max-width:100%;border:1px solid color-mix(in srgb,currentColor 15%,transparent);border-radius:12px;padding:16px;margin-bottom:16px;color:inherit;font-size:12px;box-sizing:border-box}.wbt-hm-head,.wbt-hm-legend{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.wbt-hm-head{justify-content:space-between;margin-bottom:16px}.wbt-hm-head h3{margin:0;font-size:14px}.wbt-hm-years{display:flex;align-items:center;gap:12px;font-variant-numeric:tabular-nums}.wbt-heatmap button{font:inherit;color:inherit}.wbt-hm-control{border:1px solid color-mix(in srgb,currentColor 20%,transparent);background:transparent;border-radius:5px;cursor:pointer;padding:4px 8px}.wbt-hm-control[role=tab]{border:0;outline:none;box-shadow:none}.wbt-hm-control[role=tab]:hover{background:color-mix(in srgb,currentColor 6%,transparent)}.wbt-hm-control[aria-selected=true]{font-weight:700;background:color-mix(in srgb,currentColor 10%,transparent)}.wbt-hm-control[role=tab]:focus-visible{outline:2px solid #568fc7;outline-offset:2px}.wbt-hm-scroll{overflow-x:auto;padding:3px;max-width:100%}.wbt-hm-layout{display:flex;gap:8px;min-width:max-content}.wbt-hm-weekdays{display:grid;grid-template-rows:repeat(7,12px);gap:3px;padding-top:22px;font-size:10px;line-height:12px;opacity:.65}.wbt-hm-body{flex:1;min-width:0}.wbt-hm-months{display:grid;grid-template-columns:repeat(var(--hm-weeks),12px);column-gap:3px;height:22px;font-size:10px}.wbt-hm-months span{white-space:nowrap}.wbt-hm-grid{display:grid;grid-template-columns:repeat(var(--hm-weeks),12px);grid-template-rows:repeat(7,12px);gap:3px}.wbt-hm-day{border:0;border-radius:2px;width:12px;height:12px;padding:0;cursor:pointer}.wbt-hm-day[aria-disabled=true]{cursor:default}.wbt-hm-day{outline:none}.wbt-hm-day:focus-visible{outline:2px solid #568fc7;outline-offset:1px}.wbt-hm-day:hover{filter:brightness(.92)}.wbt-hm-future{opacity:.4}.wbt-hm-legend{margin-top:14px}.wbt-hm-swatch{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:5px}.wbt-hm-types{display:flex;align-items:center;gap:10px}.wbt-hm-intensity{display:flex;align-items:center;flex-wrap:wrap;gap:10px;border-inline-start:1px solid color-mix(in srgb,currentColor 20%,transparent);padding-inline-start:12px;font-size:11px}.wbt-hm-intensity-label{color:color-mix(in srgb,currentColor 70%,transparent)}.wbt-hm-intensity-item{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}.wbt-hm-intensity-item .wbt-hm-swatch{flex:none;margin:0}.wbt-hm-summary{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.wbt-hm-state{padding:28px 8px;text-align:center}.wbt-hm-skeleton{height:102px;border-radius:3px;background:repeating-linear-gradient(90deg,var(--hm-empty) 0 12px,transparent 12px 15px);opacity:.55}.dark .wbt-heatmap,[data-theme=dark] .wbt-heatmap,:root[style*='color-scheme:dark'] .wbt-heatmap,:root[style*='color-scheme: dark'] .wbt-heatmap,[data-color-scheme=dark] .wbt-heatmap{--hm-empty:#303740;--hm-done-1:#21452b;--hm-done-2:#2f7440;--hm-done-3:#46a75c;--hm-done-4:#72d38a;--hm-publish-1:#223e5c;--hm-publish-2:#326496;--hm-publish-3:#508ecb;--hm-publish-4:#85baf0;--hm-shutdown-1:#58292b;--hm-shutdown-2:#914146;--hm-shutdown-3:#c95c63;--hm-shutdown-4:#f58e93;--hm-claimed-1:#4a2f14;--hm-claimed-2:#7a4a16;--hm-claimed-3:#b06d1c;--hm-claimed-4:#e6952f;}@media(prefers-color-scheme:dark){:root:not([data-theme=light]):not([data-color-scheme=light]):not([style*='color-scheme:light']):not([style*='color-scheme: light']) .wbt-heatmap{--hm-empty:#303740;--hm-done-1:#21452b;--hm-done-2:#2f7440;--hm-done-3:#46a75c;--hm-done-4:#72d38a;--hm-publish-1:#223e5c;--hm-publish-2:#326496;--hm-publish-3:#508ecb;--hm-publish-4:#85baf0;--hm-shutdown-1:#58292b;--hm-shutdown-2:#914146;--hm-shutdown-3:#c95c63;--hm-shutdown-4:#f58e93;--hm-claimed-1:#4a2f14;--hm-claimed-2:#7a4a16;--hm-claimed-3:#b06d1c;--hm-claimed-4:#e6952f;}}@media(min-width:1200px){.wbt-hm-layout{min-width:0}.wbt-hm-months,.wbt-hm-grid{grid-template-columns:repeat(var(--hm-weeks),minmax(12px,1fr))}.wbt-hm-day{width:12px}}@media(prefers-reduced-motion:reduce){.wbt-heatmap *{animation:none!important;transition:none!important}}";
   }
 });
 
@@ -1551,6 +1551,7 @@ var require_heatmap = __commonJS({
             } }, h("span", { className: "wbt-hm-swatch", style: { background: "var(--hm-" + k + "-4)" }, "aria-hidden": true }), t[k]);
           })),
           ready && h("span", { className: "wbt-hm-summary", "aria-live": "polite" }, tip || t.total + " \xB7 " + total),
+          type === "claimed" && h("span", { className: "wbt-hm-intensity-label" }, t.claimedNote),
           h(
             "div",
             { className: "wbt-hm-intensity", role: "img", "aria-label": model.legendLabel(lang) },
@@ -1577,8 +1578,8 @@ var require_today = __commonJS({
     var React = require("react");
     var h = React.createElement;
     var COPY = {
-      zh: { title: "\u4ECA\u65E5", published: "\u4ECA\u65E5\u53D1\u5E03", done: "\u4ECA\u65E5\u5B8C\u6210", shutdown: "\u4ECA\u65E5\u5173\u95ED", average: "\u5E73\u5747\u96BE\u5EA6", sample: "\u6837\u672C\u6570", noSample: "\u65E0\u6837\u672C", clock: "\u4EE5\u670D\u52A1\u7AEF\u5F53\u524D\u65F6\u95F4\u4E3A\u51C6" },
-      en: { title: "Today", published: "Published today", done: "Completed today", shutdown: "Closed today", average: "Avg difficulty", sample: "samples", noSample: "No samples", clock: "Based on the server's current time" }
+      zh: { title: "\u4ECA\u65E5", published: "\u4ECA\u65E5\u53D1\u5E03", claimed: "\u4ECA\u65E5\u63A5\u53D6", done: "\u4ECA\u65E5\u5B8C\u6210", shutdown: "\u4ECA\u65E5\u5173\u95ED", average: "\u5E73\u5747\u96BE\u5EA6", sample: "\u6837\u672C\u6570", noSample: "\u65E0\u6837\u672C", clock: "\u4EE5\u670D\u52A1\u7AEF\u5F53\u524D\u65F6\u95F4\u4E3A\u51C6" },
+      en: { title: "Today", published: "Published today", claimed: "Claimed today", done: "Completed today", shutdown: "Closed today", average: "Avg difficulty", sample: "samples", noSample: "No samples", clock: "Based on the server's current time" }
     };
     var css = ".wbt-today{margin:12px 0}";
     function Today(props) {
@@ -1587,7 +1588,7 @@ var require_today = __commonJS({
       var lang = props.lang === "en" ? "en" : "zh", t = COPY[lang];
       var sample = Number.isFinite(data.avgSample) && data.avgSample > 0 ? data.avgSample : 0;
       var average = sample && Number.isFinite(data.avgDifficultyDone) ? data.avgDifficultyDone.toFixed(1) : "\u2014";
-      var metrics = ["published", "done", "shutdown"].map(function(key) {
+      var metrics = ["published", "claimed", "done", "shutdown"].map(function(key) {
         var value = Number.isFinite(data[key]) ? data[key] : 0;
         return { key, label: t[key], value, aria: lang === "zh" ? t[key] + value + "\u6761" : t[key] + ": " + value + " tasks" };
       });
@@ -1647,7 +1648,7 @@ var require_timeline_section = __commonJS({
         trendNote: "\u53EA\u7EDF\u8BA1\u8303\u56F4\u5185\u4E8B\u4EF6\uFF0C\u4E0D\u6539\u53D8\u5B58\u91CF",
         colName: "\u65F6\u95F4\u7EBF",
         colTotal: "\u4EFB\u52A1",
-        colOpen: "\u8FDB\u884C\u4E2D",
+        colOpen: "\u5DF2\u5F00\u542F",
         colDone: "\u5DF2\u5B8C\u6210",
         colShutdown: "\u5DF2\u5173\u95ED",
         colRate: "\u5B8C\u6210\u7387",
@@ -1946,7 +1947,7 @@ var require_stats = __commonJS({
         rangeIncomplete: "\u8BF7\u9009\u62E9\u5B8C\u6574\u7684\u8D77\u59CB\u4E0E\u7EC8\u6B62\u65E5\u671F",
         rangeInvalid: "\u8D77\u59CB\u65E5\u671F\u4E0D\u80FD\u665A\u4E8E\u7EC8\u6B62\u65E5\u671F",
         total: "\u603B\u4EFB\u52A1",
-        active: "\u8FDB\u884C\u4E2D",
+        active: "\u5DF2\u5F00\u542F",
         overdue: "\u903E\u671F",
         completion: "\u5B8C\u6210\u7387",
         dueToday: "\u4ECA\u65E5\u5230\u671F",
@@ -1957,7 +1958,7 @@ var require_stats = __commonJS({
         current: "\u5F53\u524D",
         inRange: "\u8303\u56F4\u5185",
         ofTotal: "\u5360\u603B\u91CF",
-        ofActive: "\u5360\u8FDB\u884C\u4E2D",
+        ofActive: "\u5360\u5DF2\u5F00\u542F",
         trend: "\u65B0\u589E / \u5B8C\u6210 / \u5230\u671F\u8D8B\u52BF",
         trendNote: "\u6309\u81EA\u7136\u65E5 / \u5468 / \u6708\u5206\u6876",
         created: "\u65B0\u589E",
@@ -1977,12 +1978,12 @@ var require_stats = __commonJS({
         overdueList: "\u903E\u671F\u6E05\u5355",
         overdueNote: "\u6309\u8D26\u9F84\u964D\u5E8F",
         tables: "\u4EFB\u52A1\u8868\u6392\u884C",
-        tablesNote: "\u6309\u8FDB\u884C\u4E2D + \u903E\u671F\u6743\u91CD",
+        tablesNote: "\u6309\u5DF2\u5F00\u542F + \u903E\u671F\u6743\u91CD",
         groups: "\u4EFB\u52A1\u7EC4\u6392\u884C",
         groupsNote: "\u4E00\u7EA7\u4EFB\u52A1\u7EC4",
         colName: "\u540D\u79F0",
         colTotal: "\u603B\u6570",
-        colOpen: "\u8FDB\u884C\u4E2D",
+        colOpen: "\u5DF2\u5F00\u542F",
         colOverdue: "\u903E\u671F",
         colDone: "\u5DF2\u5B8C\u6210",
         colRate: "\u5B8C\u6210\u7387",
@@ -2002,7 +2003,8 @@ var require_stats = __commonJS({
         noRecentShutdown: "\u8FD8\u6CA1\u6709\u5DF2\u5173\u95ED\u7684\u4EFB\u52A1",
         noOverdue: "\u6CA1\u6709\u903E\u671F\u4EFB\u52A1",
         noData: "\u8FD8\u6CA1\u6709\u4EFB\u52A1\u3002\u5728\u300C\u8BB0\u5F55\u300D\u91CC\u521B\u5EFA\u540E\uFF0C\u8FD9\u91CC\u4F1A\u81EA\u52A8\u6C47\u603B",
-        open: "\u8FDB\u884C\u4E2D",
+        open: "\u5DF2\u5F00\u542F",
+        claimed: "\u5DF2\u63A5\u53D6",
         shutdown: "\u5DF2\u5173\u95ED",
         restarted: "\u5DF2\u91CD\u542F"
       },
@@ -2275,7 +2277,7 @@ var require_stats = __commonJS({
           var statusData = (b.status || []).filter(function(s) {
             return Object.prototype.hasOwnProperty.call(ch.statusColors, s.key);
           }).map(function(s) {
-            return { key: s.key, label: String(s.key) === "0" ? t.open : String(s.key) === "1" ? t.shutdown : t.colDone, count: s.count, color: ch.statusColors[s.key] };
+            return { key: s.key, label: String(s.key) === "0" ? t.open : String(s.key) === "1" ? t.shutdown : String(s.key) === "4" ? t.claimed : t.colDone, count: s.count, color: ch.statusColors[s.key] };
           });
           var statusTotal = statusData.reduce(function(sum, s) {
             return sum + Number(s.count || 0);
@@ -8639,14 +8641,14 @@ var require_date_filter = __commonJS({
 var require_task_filter_model = __commonJS({
   "packages/addons/tasks/client/views/task-filter-model.cjs"(exports2, module2) {
     var date = require_date_filter();
-    var groups = ["publish", "done", "shutdown"];
+    var groups = ["publish", "done", "shutdown", "claimed"];
     var limits = { priority: { min: 0, max: 10, step: 1 }, difficulty: { min: 0, max: 5, step: 0.5 } };
     var STORE = "wbt.taskFilters.v3";
     function bounds(key) {
       return key === "difficulty" ? { min: "0", max: "5" } : key === "priority" ? { min: "0", max: "10" } : { min: "", max: "" };
     }
     function empty() {
-      return { statuses: [], priority: bounds("priority"), difficulty: bounds("difficulty"), publish: { from: "", to: "" }, done: { from: "", to: "" }, shutdown: { from: "", to: "" }, target: { from: "", to: "" }, workspaceIds: [], noWorkspace: false };
+      return { statuses: [], priority: bounds("priority"), difficulty: bounds("difficulty"), publish: { from: "", to: "" }, done: { from: "", to: "" }, shutdown: { from: "", to: "" }, claimed: { from: "", to: "" }, target: { from: "", to: "" }, workspaceIds: [], noWorkspace: false };
     }
     function toggleWorkspace(value, id) {
       var next = Object.assign({}, value, { workspaceIds: value.workspaceIds.slice(), noWorkspace: false });
@@ -8706,6 +8708,7 @@ var require_task_filter_model = __commonJS({
         publish: value.publish,
         done: value.done,
         shutdown: value.shutdown,
+        claimed: value.claimed,
         target: value.target,
         workspaceIds: value.workspaceIds,
         noWorkspace: value.noWorkspace
@@ -8741,10 +8744,10 @@ var require_task_filter_model = __commonJS({
       var normalized = date.normalize(input);
       if (!normalized) return null;
       var next = value;
-      if (key !== "publish" && key !== "target" && (normalized.from || normalized.to)) next = enable(value, key);
+      if (key !== "publish" && key !== "claimed" && key !== "target" && (normalized.from || normalized.to)) next = enable(value, key);
       next = Object.assign({}, next);
       next[key] = { from: normalized.from, to: normalized.to };
-      return { value: next, swapped: normalized.swapped, autoSelected: key !== "publish" && key !== "target" && value.statuses.indexOf(key === "done" ? "2" : "1") < 0 && !!(normalized.from || normalized.to) };
+      return { value: next, swapped: normalized.swapped, autoSelected: key !== "publish" && key !== "claimed" && key !== "target" && value.statuses.indexOf(key === "done" ? "2" : "1") < 0 && !!(normalized.from || normalized.to) };
     }
     function parseLimit(key, input) {
       var text = String(input == null ? "" : input).trim(), spec = limits[key];
@@ -8930,7 +8933,7 @@ var require_task_filter_panel = __commonJS({
     module2.exports = function renderFilterPanel(React, p) {
       var h = React.createElement, en = p.lang === "en", value = p.value;
       var title = en ? "Filters" : "\u7B5B\u9009";
-      var labels = en ? { publish: "Publication range", done: "Completion range", shutdown: "Closure range", target: "Target range" } : { publish: "\u53D1\u5E03\u65F6\u95F4\u8303\u56F4", done: "\u5B8C\u6210\u65F6\u95F4\u8303\u56F4", shutdown: "\u5173\u95ED\u65F6\u95F4\u8303\u56F4", target: "\u76EE\u6807\u65E5\u671F\u8303\u56F4" };
+      var labels = en ? { publish: "Publication range", done: "Completion range", shutdown: "Closure range", claimed: "Claim range", target: "Target range" } : { publish: "\u53D1\u5E03\u65F6\u95F4\u8303\u56F4", done: "\u5B8C\u6210\u65F6\u95F4\u8303\u56F4", shutdown: "\u5173\u95ED\u65F6\u95F4\u8303\u56F4", claimed: "\u63A5\u53D6\u65F6\u95F4\u8303\u56F4", target: "\u76EE\u6807\u65E5\u671F\u8303\u56F4" };
       var options = [["all", en ? "All" : "\u5168\u90E8"], ["0", en ? "Opened" : "\u5DF2\u5F00\u542F"], ["2", en ? "Completed" : "\u5DF2\u5B8C\u6210"], ["1", en ? "Closed" : "\u5DF2\u5173\u95ED"], ["3", en ? "Restarted" : "\u5DF2\u91CD\u542F"], ["4", en ? "Claimed" : "\u5DF2\u63A5\u53D6"]];
       var presetNames = en ? { urgent: "Urgent (P8\u201310)", hard: "Hard (D4\u20135)", overdue: "Overdue", dueToday: "Due today", recentDone: "Done in 7 days", claimed: "Claimed" } : { urgent: "\u7D27\u6025\u4EFB\u52A1 P8\u201310", hard: "\u9AD8\u96BE\u5EA6 D4\u20135", overdue: "\u5DF2\u903E\u671F", dueToday: "\u4ECA\u65E5\u5230\u671F", recentDone: "\u8FD1 7 \u5929\u5B8C\u6210", claimed: "\u5DF2\u63A5\u53D6" };
       var activePreset = model.activePreset(value);
@@ -10992,7 +10995,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.1",
+    version: "5.2.2",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

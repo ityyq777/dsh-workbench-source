@@ -224,7 +224,7 @@ try {
   assert(/越大越紧急/.test(fieldMap.get("priority").description), "priority 字段未写明方向（数值越大越紧急）");
   assert(/1\.\.10/.test(fieldMap.get("priority").type || ""), "priority 字段未写明关闭状态取值范围：" + fieldMap.get("priority").type);
   assert(/0/.test(fieldMap.get("priority").type || ""), "priority 字段未说明关闭/完成为 0：" + fieldMap.get("priority").type);
-  assert(/0=进行中|0=进行中/.test(fieldMap.get("status").description), "status 字段未写明 0 的含义");
+  assert(/0=已开启/.test(fieldMap.get("status").description), "status 字段未写明 0 的含义（应为 0=已开启）");
   assert(!fieldMap.has("tab"), "字段字典不应再有 tab");
   assert(/不传 statuses\/urgent 时不过滤状态/.test(String(fieldMap.get("statuses / urgent").description || "")), "statuses/urgent 字段未写明缺省语义");
   assert(/闭区间/.test(fieldMap.get("range / from / to").description), "range/from/to 未写明闭区间语义");

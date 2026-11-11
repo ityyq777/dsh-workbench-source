@@ -41,6 +41,7 @@ export function listTasks(db, args, api) {
     dateRangeFilter(args.publishFrom, args.publishTo, "publish"),
     dateRangeFilter(args.doneFrom, args.doneTo, "done"),
     dateRangeFilter(args.shutdownFrom, args.shutdownTo, "shutdown"),
+    dateRangeFilter(args.claimedFrom, args.claimedTo, "claimed"),
   ];
   rejectLegacyArgs(args);
   const multiStatus = args.statuses !== undefined || args.urgent !== undefined;
@@ -60,11 +61,22 @@ export function listTasks(db, args, api) {
   const where = ["t.deleted_at IS NULL"];
   const params = [];
   const listNotices = ranges.flatMap(range => range.notices);
-  for (const [index, kind] of ["publish", "done", "shutdown"].entries()) {
+  // 四组事件日期共用闭区间；claimed 没有独立列（终态清空接取列），按 COALESCE(claimed_at 本地日, 发布日) 兜底。
+  const DATE_FIELDS = {
+    publish: { column: "substr(t.publish_date,1,10)", status: null },
+    done: { column: "substr(t.done_date,1,10)", status: "t.status='2'" },
+    shutdown: { column: "substr(t.shutdown_date,1,10)", status: "t.status='1'" },
+    claimed: {
+      column: "COALESCE(strftime('%Y-%m-%d', t.claimed_at/1000, 'unixepoch', 'localtime'), substr(t.publish_date,1,10))",
+      status: "t.status IN ('2','4')",
+    },
+  };
+  for (const [index, kind] of ["publish", "done", "shutdown", "claimed"].entries()) {
     const from = ranges[index][kind + "From"], to = ranges[index][kind + "To"];
-    if ((from || to) && kind !== "publish") where.push(kind === "done" ? "t.status='2'" : "t.status='1'");
-    if (from) { where.push("substr(t." + kind + "_date,1,10)>=?"); params.push(from); }
-    if (to) { where.push("substr(t." + kind + "_date,1,10)<=?"); params.push(to); }
+    const spec = DATE_FIELDS[kind];
+    if ((from || to) && spec.status) where.push(spec.status);
+    if (from) { where.push(spec.column + ">=?"); params.push(from); }
+    if (to) { where.push(spec.column + "<=?"); params.push(to); }
   }
   if (activity) { where.push(activity.sql); params.push(...activity.params); }
 

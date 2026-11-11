@@ -19,7 +19,7 @@ function NumberInput(p) {
 module.exports = function renderFilterPanel(React, p) {
   var h = React.createElement, en = p.lang === "en", value = p.value;
   var title = en ? "Filters" : "筛选";
-  var labels = en ? {publish:"Publication range",done:"Completion range",shutdown:"Closure range",target:"Target range"} : {publish:"发布时间范围",done:"完成时间范围",shutdown:"关闭时间范围",target:"目标日期范围"};
+  var labels = en ? {publish:"Publication range",done:"Completion range",shutdown:"Closure range",claimed:"Claim range",target:"Target range"} : {publish:"发布时间范围",done:"完成时间范围",shutdown:"关闭时间范围",claimed:"接取时间范围",target:"目标日期范围"};
   var options = [["all",en?"All":"全部"],["0",en?"Opened":"已开启"],["2",en?"Completed":"已完成"],["1",en?"Closed":"已关闭"],["3",en?"Restarted":"已重启"],["4",en?"Claimed":"已接取"]];
   // 快捷预设只是筛选值的组合；激活态从当前值推导，手动改任何条件都会自动熄灭。
   var presetNames = en

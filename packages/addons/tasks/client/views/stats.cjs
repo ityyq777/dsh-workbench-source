@@ -17,9 +17,9 @@ var COPY = {
     rangeFrom: "起始日期", rangeTo: "终止日期", rangeClear: "清除自定义范围",
     rangeCustom: "自定义日期范围", rangeIncomplete: "请选择完整的起始与终止日期",
     rangeInvalid: "起始日期不能晚于终止日期",
-    total: "总任务", active: "进行中", overdue: "逾期", completion: "完成率",
+    total: "总任务", active: "已开启", overdue: "逾期", completion: "完成率",
     dueToday: "今日到期", dueNext7: "未来 7 天到期", newInRange: "范围内新增", avgCycle: "平均完成周期",
-    days: "天", current: "当前", inRange: "范围内", ofTotal: "占总量", ofActive: "占进行中",
+    days: "天", current: "当前", inRange: "范围内", ofTotal: "占总量", ofActive: "占已开启",
     trend: "新增 / 完成 / 到期趋势", trendNote: "按自然日 / 周 / 月分桶",
     created: "新增", done: "完成", due: "到期",
     status: "状态构成", statusNote: "当前存量",
@@ -28,15 +28,15 @@ var COPY = {
     difficulty: "难度分布", difficultyNote: "当前存量；包含未设置", difficultyMissing: "未填难度 {n} 条", difficultyMissingLink: "查看并补齐难度",
     aging: "逾期账龄", agingNote: "当前逾期任务",
     overdueList: "逾期清单", overdueNote: "按账龄降序",
-    tables: "任务表排行", tablesNote: "按进行中 + 逾期权重",
+    tables: "任务表排行", tablesNote: "按已开启 + 逾期权重",
     groups: "任务组排行", groupsNote: "一级任务组",
-    colName: "名称", colTotal: "总数", colOpen: "进行中", colOverdue: "逾期", colDone: "已完成", colRate: "完成率",
+    colName: "名称", colTotal: "总数", colOpen: "已开启", colOverdue: "逾期", colDone: "已完成", colRate: "完成率",
     colTitle: "任务", colTarget: "计划完成", colAge: "逾期天数", colTable: "任务表",
     recentPublish: "最近发布", recentPublishNote: "按发布日期倒序", noRecentPublish: "还没有发布的任务",
     recentDone: "最近完成", recentDoneNote: "按完成日期倒序", recentShutdown: "最近关闭", recentShutdownNote: "按关闭日期倒序",
     colDate: "日期", noRecentDone: "还没有已完成的任务", noRecentShutdown: "还没有已关闭的任务",
     noOverdue: "没有逾期任务", noData: "还没有任务。在「记录」里创建后，这里会自动汇总",
-    open: "进行中", shutdown: "已关闭", restarted: "已重启",
+    open: "已开启", claimed: "已接取", shutdown: "已关闭", restarted: "已重启",
   },
   en: {
     title: "Task stats", range7: "7 days", range30: "30 days", range90: "90 days", range365: "1 year", rangeAll: "All",
@@ -247,7 +247,7 @@ function TasksStatsBody(props) {
           ],
         })));
       var statusData = (b.status || []).filter(function (s) { return Object.prototype.hasOwnProperty.call(ch.statusColors, s.key); }).map(function (s) {
-        return { key: s.key, label: String(s.key) === "0" ? t.open : String(s.key) === "1" ? t.shutdown : t.colDone, count: s.count, color: ch.statusColors[s.key] };
+        return { key: s.key, label: String(s.key) === "0" ? t.open : String(s.key) === "1" ? t.shutdown : String(s.key) === "4" ? t.claimed : t.colDone, count: s.count, color: ch.statusColors[s.key] };
       });
       var statusTotal = statusData.reduce(function (sum, s) { return sum + Number(s.count || 0); }, 0);
       children.push(h(ch.Card, { key: "status", span: 4, title: t.status, note: t.statusNote },

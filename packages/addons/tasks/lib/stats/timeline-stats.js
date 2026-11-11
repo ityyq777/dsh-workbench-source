@@ -149,7 +149,7 @@ export function renderTimelineStats(result) {
   const lines = ["时间线统计：" + pieces.join("；")];
   if (result.top.records.length) {
     lines.push("Top" + result.top.returned + (result.top.truncated ? "/" + t.timelinesWithTasks + "（已截断）" : "") + "："
-      + result.top.records.map((line) => line.title + "=" + line.taskCount + "（进行中 " + line.openCount + "/完成 " + line.doneCount + "/关闭 " + line.shutdownCount + "）").join("，"));
+      + result.top.records.map((line) => line.title + "=" + line.taskCount + "（已开启 " + line.openCount + "/完成 " + line.doneCount + "/关闭 " + line.shutdownCount + "）").join("，"));
   }
   if (result.overdue.taskCount) lines.push("逾期任务 " + result.overdue.taskCount + " 个，分布在 " + result.overdue.lineCount + " 条时间线");
   if (result.trend) lines.push("趋势 " + result.trend.from + "~" + result.trend.to + "：新增时间线 " + result.trend.newTimelines + "、新增任务 " + result.trend.newTasks + "、完成 " + result.trend.doneTasks);

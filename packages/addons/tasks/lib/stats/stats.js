@@ -5,7 +5,7 @@ import { configValues } from "../infra/config.js";
 import { todayActivity } from "./stats-today.js";
 
 const STATUS_LABELS = {
-  "0": "进行中",
+  "0": "已开启",
   "1": "已关闭",
   "2": "已完成",
   "3": "已重启",
@@ -185,7 +185,7 @@ export function statsReport(db, args, api) {
   const shutdown = statusCount["1"] || 0;
   const done = statusCount["2"] || 0;
   const restarted = statusCount["3"] || 0;
-  // 已接取单列，不并入进行中：两个口径相加不会超过总数。
+  // 已接取单列，不并入已开启：两个口径相加不会超过总数。
   const claimed = statusCount["4"] || 0;
 
   // 逾期/今日到期/未来 7 天都覆盖已接取（4），文案注明「含已接取」。
@@ -480,7 +480,7 @@ export function statsReport(db, args, api) {
 export function renderStats(r) {
   if (!r || !r.totals) return "任务统计暂无数据";
   const t = r.totals;
-  return "任务 " + t.total + " 个：进行中 " + t.active + "、已完成 " + t.done + "、已关闭 " + t.shutdown +
+  return "任务 " + t.total + " 个：已开启 " + t.active + "、已完成 " + t.done + "、已关闭 " + t.shutdown +
     "、已重启 " + t.restarted + "；逾期 " + t.overdue + "；近 " + r.range.days + " 天完成 " +
     r.trend.reduce(function (n, x) { return n + x.done; }, 0) + "、新增 " + t.newInRange + "。";
 }

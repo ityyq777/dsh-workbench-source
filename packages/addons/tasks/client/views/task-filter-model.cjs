@@ -1,13 +1,13 @@
 // One state contract for checkbox OR selection and independent range AND filters.
 // 快捷预设只是「一组筛选值」的常量表：激活态由当前值精确比对推导，不另存 flag。
 var date = require("../ui/date-filter.cjs");
-var groups = ["publish", "done", "shutdown"];
+var groups = ["publish", "done", "shutdown", "claimed"];
 // 0 只表示「没有优先级 / 没有难度」，所以 UI 区间端点从 1 起：优先级整数 1–10，难度 0.5 起按半档递增。
 // 0 也是有效取值：优先级 0 表示已关闭/已完成，难度 0 是「设置过」而 NULL 才是未设置。
 var limits = {priority:{min:0, max:10, step:1}, difficulty:{min:0, max:5, step:0.5}};
 var STORE = "wbt.taskFilters.v3";
 function bounds(key) { return key === "difficulty" ? {min:"0", max:"5"} : key === "priority" ? {min:"0", max:"10"} : {min:"", max:""}; }
-function empty() { return {statuses:[], priority:bounds("priority"), difficulty:bounds("difficulty"), publish:{from:"",to:""}, done:{from:"",to:""}, shutdown:{from:"",to:""}, target:{from:"",to:""}, workspaceIds:[], noWorkspace:false}; }
+function empty() { return {statuses:[], priority:bounds("priority"), difficulty:bounds("difficulty"), publish:{from:"",to:""}, done:{from:"",to:""}, shutdown:{from:"",to:""}, claimed:{from:"",to:""}, target:{from:"",to:""}, workspaceIds:[], noWorkspace:false}; }
 // 未关联工作区与具体工作区互斥：勾选其一就清掉另一个。
 function toggleWorkspace(value, id) {
   var next = Object.assign({}, value, {workspaceIds:value.workspaceIds.slice(), noWorkspace:false});
@@ -58,7 +58,7 @@ function presetValue(id) {
 function signature(value) {
   return JSON.stringify({
     statuses: value.statuses.slice().sort(), priority: value.priority, difficulty: value.difficulty,
-    publish: value.publish, done: value.done, shutdown: value.shutdown, target: value.target,
+    publish: value.publish, done: value.done, shutdown: value.shutdown, claimed: value.claimed, target: value.target,
     workspaceIds: value.workspaceIds, noWorkspace: value.noWorkspace,
   });
 }
@@ -86,9 +86,9 @@ function range(value, key, input) {
   var normalized = date.normalize(input);
   if (!normalized) return null;
   var next = value;
-  if (key !== "publish" && key !== "target" && (normalized.from || normalized.to)) next = enable(value,key);
+  if (key !== "publish" && key !== "claimed" && key !== "target" && (normalized.from || normalized.to)) next = enable(value,key);
   next = Object.assign({},next); next[key] = {from:normalized.from,to:normalized.to};
-  return {value:next,swapped:normalized.swapped,autoSelected:key !== "publish" && key !== "target" && value.statuses.indexOf(key === "done" ? "2" : "1") < 0 && !!(normalized.from || normalized.to)};
+  return {value:next,swapped:normalized.swapped,autoSelected:key !== "publish" && key !== "claimed" && key !== "target" && value.statuses.indexOf(key === "done" ? "2" : "1") < 0 && !!(normalized.from || normalized.to)};
 }
 /** 单端输入：按 limits[key] 的 min/max/step 校验（优先级整数、难度半档）；非法值返回 null 交给调用方提示。 */
 function parseLimit(key, input) {

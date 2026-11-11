@@ -1,4 +1,4 @@
-/** 三组事件日期范围共用真实日期校验；只比较存储值的日期部分。 */
+/** 四组事件日期范围共用真实日期校验；只比较存储值的日期部分。 */
 function rangeDay(value, field) {
   if (value === undefined || value === null || value === "") return null;
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -19,7 +19,7 @@ export function dateRangeFilter(from, to, kind) {
   const notices = [];
   if (start && end && start > end) {
     [start, end] = [end, start];
-    const label = { publish: "发布", done: "完成", shutdown: "关闭" }[kind];
+    const label = { publish: "发布", done: "完成", shutdown: "关闭", claimed: "接取" }[kind];
     notices.push({ code: kind + "_range_swapped", field: fromKey + "/" + toKey,
       message: label + "日期起始晚于终止，已交换", [fromKey]: start, [toKey]: end });
   }
