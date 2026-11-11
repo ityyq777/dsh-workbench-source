@@ -17,7 +17,6 @@
   var configView = require("./views/config.cjs");
   var dataView = require("./views/data.cjs");
   var actionSchemaView = require("./views/actions.cjs");
-  var workspaceView = require("./views/workspace-view.cjs")({ React: React });
 
   var COPY = require("./ui/copy.cjs");
   // 标签是可选子插件：以宿主已安装/启用列表为准；旧宿主没有列表时返回 true，交给后端降级。
@@ -36,6 +35,7 @@
   };
 
   var icons = require("./ui/icons.cjs"), ICONS = icons.ICONS, Icon = icons.Icon;
+  var workspaceView = require("./views/workspace-view.cjs")({ React: React, Icon: Icon });
   // 命令页的模板正文复用描述/感受的渲染与切换控件，由入口注入；视图自身保持零 require。
   var commandsView = require("./views/commands.cjs")({
     React: React,

@@ -178,7 +178,7 @@ async function mount(api, extra = {}) {
   const api = makeApi();
   const rt = await mount(api, { onNavigate: (...args) => seen.push(args) });
   const tree = await settle(rt);
-  const countButton = find(tree, (n) => n.type === "button" && text(n) === "3 个任务");
+  const countButton = find(tree, (n) => n.type === "button" && text(n).trim() === "3 个任务");
   assert.ok(countButton, "任务数应是可点按钮");
   countButton.props.onClick();
   assert.deepEqual(JSON.parse(JSON.stringify(seen)), [["tasks", { workspaceIds: ["w1"] }]], "点任务数应带上工作区筛选跳记录页");

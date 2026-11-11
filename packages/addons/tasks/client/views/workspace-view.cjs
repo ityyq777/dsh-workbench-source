@@ -1,15 +1,20 @@
 // 「工作区」页：工作区实体的列表 / 新建 / 编辑 / 删除，并显示每个工作区下的任务数。
 // 数据只走本插件自己的 taskWorkspaces.* action；目录只回显不校验（与 action 语义一致）。
 // 点任务数会通过宿主 onNavigate 跳到「记录」页并带上 workspaceIds 筛选。
+// 结构对齐记录页：.wbt-pathrow 工具栏 + .wbt-content / .wbt-item 列表容器（见 docs/specs/44）。
 "use strict";
 module.exports = function (deps) {
   var React = deps.React, h = React.createElement;
+  // 视图本身不 require：图标由入口注入；测试里没传时退化为无图标，结构不变。
+  var Icon = typeof deps.Icon === "function" ? deps.Icon : null;
+  function icon(name, size) { return Icon ? h(Icon, { name: name, size: size || 13 }) : null; }
 
   var COPY = {
     zh: {
       title: "工作区", hint: "目录只保存与回显，不校验是否存在；任务数可点开记录页",
-      create: "新建工作区", search: "搜索标题、标识、目录与描述",
+      create: "新建工作区", search: "搜索标题、标识、目录与描述", refresh: "刷新",
       count: function (n) { return "共 " + n + " 个"; },
+      match: function (n) { return "匹配 " + n + " 个"; },
       tasks: function (n) { return n + " 个任务"; },
       noDir: "未设置目录", edit: "编辑", del: "删除", cancel: "取消", confirm: "确认删除",
       empty: "还没有工作区。新建一个，就能在任务里关联本机会话目录。",
@@ -25,8 +30,9 @@ module.exports = function (deps) {
     },
     en: {
       title: "Workspaces", hint: "Directories are displayed only, never checked; click a task count to open Records",
-      create: "New workspace", search: "Search title, name, directory and description",
+      create: "New workspace", search: "Search title, name, directory and description", refresh: "Refresh",
       count: function (n) { return n + (n === 1 ? " workspace" : " workspaces"); },
+      match: function (n) { return n + " match" + (n === 1 ? "" : "es"); },
       tasks: function (n) { return n + (n === 1 ? " task" : " tasks"); },
       noDir: "No directory", edit: "Edit", del: "Delete", cancel: "Cancel", confirm: "Confirm delete",
       empty: "No workspaces yet. Create one to link local session directories to tasks.",
@@ -42,29 +48,27 @@ module.exports = function (deps) {
     },
   };
 
+  // 只补共享样式没覆盖到的结构间距；容器、行卡片、按钮、输入框、空态与错误态都复用 styles.cjs。
   var CSS = [
-    ".wbt-ws{display:flex;flex-direction:column;gap:10px;min-height:0}",
-    ".wbt-ws-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}",
-    ".wbt-ws-hint,.wbt-ws-count{color:var(--dsw-alias-label-secondary,inherit);font-size:12px}",
-    ".wbt-ws-head .wbt-btn{margin-left:auto}",
-    ".wbt-ws-search{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
-    ".wbt-ws-search .wbt-input{flex:1;min-width:220px}",
-    ".wbt-ws-list{display:flex;flex-direction:column;gap:8px;overflow:auto;min-height:0}",
-    ".wbt-ws-row{border:1px solid var(--wb-border);border-radius:var(--wb-radius-sm);padding:10px 12px;display:flex;gap:10px;align-items:flex-start}",
-    ".wbt-ws-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}",
-    ".wbt-ws-titleline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
-    ".wbt-ws-title{font-weight:600;overflow-wrap:anywhere}",
-    ".wbt-ws-name{font-size:11px;border:1px solid var(--wb-border);border-radius:999px;padding:0 8px;color:var(--dsw-alias-label-secondary,inherit)}",
-    ".wbt-ws-dir{font-size:12px;overflow-wrap:anywhere}",
+    ".wbt-ws-heading{display:flex;flex-direction:column;gap:2px;min-width:0}",
+    ".wbt-ws-h2{margin:0;font-size:17px;line-height:1.3;font-weight:600}",
+    ".wbt-ws-hint{font-size:12px;line-height:1.4;color:var(--dsw-alias-label-secondary,inherit);overflow-wrap:anywhere}",
+    ".wbt-ws-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:none}",
+    ".wbt-ws-toolbar .wbt-input{flex:1 1 220px;min-width:0}",
+    ".wbt-ws-count{font-size:12px;color:var(--dsw-alias-label-secondary,inherit);white-space:nowrap}",
+    ".wbt-ws-row{align-items:flex-start}",
+    ".wbt-ws-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}",
+    ".wbt-ws-titleline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}",
+    ".wbt-ws-title{font-weight:600;font-size:13.5px;line-height:1.4;overflow-wrap:anywhere}",
+    ".wbt-ws-name{font-size:11px;line-height:1.6;border:1px solid var(--wbt-line);border-radius:999px;padding:0 8px;color:var(--dsw-alias-label-secondary,inherit)}",
+    ".wbt-ws-dir{font-size:12px;line-height:1.5;overflow-wrap:anywhere}",
     ".wbt-ws-dir code{background:color-mix(in oklab,currentColor 6%,transparent);padding:1px 6px;border-radius:4px}",
-    ".wbt-ws-nodir{color:var(--dsw-alias-label-secondary,inherit);font-size:12px}",
+    ".wbt-ws-nodir{color:var(--dsw-alias-label-secondary,inherit)}",
     ".wbt-ws-desc{margin:0;font-size:12.5px;line-height:1.55;color:var(--dsw-alias-label-secondary,inherit);overflow-wrap:anywhere}",
     ".wbt-ws-ops{display:flex;gap:6px;flex:none;flex-wrap:wrap;justify-content:flex-end}",
-    ".wbt-ws-ask{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border:1px solid var(--dsw-alias-status-danger,var(--wb-border));border-radius:var(--wb-radius-sm);padding:8px 10px;font-size:12.5px}",
-    ".wbt-ws-ask .wbt-btn[data-danger]{color:var(--dsw-alias-status-danger,inherit)}",
-    ".wbt-ws-empty,.wbt-ws-error{padding:12px;border:1px dashed var(--wb-border);border-radius:var(--wb-radius-sm);font-size:12.5px}",
-    ".wbt-ws-error{border-style:solid;color:var(--dsw-alias-status-danger,inherit)}",
-    ".wbt-ws-toast{font-size:12px;color:var(--dsw-alias-label-secondary,inherit)}",
+    ".wbt-ws-ask{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:2px;border:1px solid color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 45%,transparent);border-radius:var(--wb-radius-sm);padding:7px 9px;font-size:12.5px;line-height:1.5}",
+    ".wbt-ws-ask .wbt-btn[data-danger]{color:var(--dsw-alias-state-error-primary,#e5484d)}",
+    ".wbt-ws-toast{font-size:12px;color:var(--dsw-alias-label-secondary,inherit);white-space:nowrap}",
     ".wbt-ws-fields{display:flex;flex-direction:column;gap:8px}",
     ".wbt-ws-fields .wbt-input{width:100%;box-sizing:border-box}",
     ".wbt-ws-fields textarea.wbt-input{min-height:64px;resize:vertical;font:inherit}",
@@ -100,7 +104,7 @@ module.exports = function (deps) {
       setErr(""); setBusy(true);
       var args = { title: title, name: draft.name.trim(), description: draft.description };
       if (props.mode === "edit") args.id = String(ws.id);
-      if (props.mode === "edit") args.dir = dir || null; else args.dir = dir || null;
+      args.dir = dir || null;
       props.api.call(props.mode === "edit" ? "taskWorkspaces.update" : "taskWorkspaces.create", args).then(function (r) {
         setBusy(false);
         try { result(r); } catch (e) { setErr(String((e && e.message) || e)); return; }
@@ -115,7 +119,7 @@ module.exports = function (deps) {
           h("input", { className: "wbt-input", value: draft.name, placeholder: t.fName, "aria-label": t.fName, onChange: field("name") }),
           h("input", { className: "wbt-input", value: draft.dir, placeholder: t.fDir, "aria-label": t.fDir, onChange: field("dir") }),
           h("textarea", { className: "wbt-input", value: draft.description, placeholder: t.fDesc, "aria-label": t.fDesc, onChange: field("description") })),
-        err ? h("div", { className: "wbt-ws-error" }, err) : null,
+        err ? h("div", { className: "wbt-err", role: "alert" }, err) : null,
         h("div", { className: "wbt-modal-foot" },
           h("button", { className: "wbt-btn primary", type: "button", disabled: busy, onClick: submit }, t.save),
           h("button", { className: "wbt-btn ghost", type: "button", onClick: props.onCancel }, t.cancel))));
@@ -184,51 +188,64 @@ module.exports = function (deps) {
       return [w.title, w.name, w.dir, w.description].some(function (v) { return String(v || "").toLowerCase().indexOf(keyword) >= 0; });
     });
 
+    function row(w) {
+      var id = String(w.id), name = String(w.title || w.name || id);
+      var count = Number(w.taskCount) || 0;
+      return h("article", { className: "wbt-item wbt-ws-row", key: id },
+        h("div", { className: "wbt-ws-main" },
+          h("div", { className: "wbt-ws-titleline" },
+            h("span", { className: "wbt-ws-title" }, name),
+            w.name && w.name !== w.title ? h("span", { className: "wbt-ws-name" }, String(w.name)) : null,
+            h("button", {
+              className: "wbt-btn ghost", type: "button", title: t.openTasks,
+              "aria-label": t.openTasks + " " + name,
+              onClick: function () { openTasks(id); },
+            }, icon("list"), t.tasks(count))),
+          h("div", { className: "wbt-ws-dir" },
+            w.dir ? h("code", null, String(w.dir)) : h("span", { className: "wbt-ws-nodir" }, t.noDir)),
+          w.description ? h("p", { className: "wbt-ws-desc" }, String(w.description)) : null,
+          ask && String(ask.id) === id
+            ? h("div", { className: "wbt-ws-ask", role: "alert" },
+              h("span", null, count ? t.deleteWithTasks(name, count) : t.deletePlain(name)),
+              h("button", { className: "wbt-btn", type: "button", "data-danger": "1", onClick: confirmDelete }, icon("trash"), t.confirm),
+              h("button", { className: "wbt-btn ghost", type: "button", onClick: function () { setAsk(null); } }, t.cancel))
+            : null),
+        h("div", { className: "wbt-ws-ops" },
+          h("button", { className: "wbt-btn ghost", type: "button", onClick: function () { setForm({ mode: "edit", workspace: w }); } }, icon("pencil"), t.edit),
+          h("button", { className: "wbt-btn ghost", type: "button", onClick: function () { setAsk({ id: id, title: name }); } }, icon("trash"), t.del)));
+    }
+
+    var body;
+    if (busy) body = h("p", { className: "wbt-empty", role: "status" }, t.loading);
+    else if (error) {
+      body = h("div", { className: "wbt-err", role: "alert" },
+        h("div", null, t.error + "：" + error),
+        h("button", { className: "wbt-btn", type: "button", onClick: reload }, icon("refresh"), t.retry));
+    } else if (!list.length) body = h("p", { className: "wbt-empty", role: "status" }, t.empty);
+    else if (!shown.length) body = h("p", { className: "wbt-empty", role: "status" }, t.noMatch);
+    else body = shown.map(row);
+
     return h("div", { className: "wbt-root wbt-ws" },
       h("style", null, CSS),
-      h("div", { className: "wbt-ws-head" },
-        h("strong", null, t.title),
-        h("span", { className: "wbt-ws-hint" }, t.hint),
-        busy ? null : h("span", { className: "wbt-ws-count" }, t.count(list.length)),
-        h("button", { className: "wbt-btn primary", type: "button", onClick: function () { setForm({ mode: "create", workspace: null }); } }, t.create)),
-      h("div", { className: "wbt-ws-search" },
-        h("input", { className: "wbt-input", value: query, placeholder: t.search, "aria-label": t.search, onChange: function (e) { setQuery(e.target.value); } })),
-      busy ? h("div", { className: "wbt-ws-empty" }, t.loading) : null,
-      error
-        ? h("div", { className: "wbt-ws-error" }, (t.error + "：" + error),
-          h("button", { className: "wbt-btn", type: "button", onClick: function () { reload(); } }, t.retry))
-        : null,
-      !busy && !error && !list.length ? h("div", { className: "wbt-ws-empty" }, t.empty) : null,
-      !busy && !error && list.length && !shown.length ? h("div", { className: "wbt-ws-empty" }, t.noMatch) : null,
-      !busy && !error && shown.length
-        ? h("div", { className: "wbt-ws-list" }, shown.map(function (w) {
-          var id = String(w.id), name = String(w.title || w.name || id);
-          var count = Number(w.taskCount) || 0;
-          return h("article", { className: "wbt-ws-row", key: id },
-            h("div", { className: "wbt-ws-main" },
-              h("div", { className: "wbt-ws-titleline" },
-                h("span", { className: "wbt-ws-title" }, name),
-                w.name && w.name !== w.title ? h("span", { className: "wbt-ws-name" }, String(w.name)) : null,
-                h("button", {
-                  className: "wbt-btn ghost", type: "button", title: t.openTasks,
-                  "aria-label": t.openTasks + " " + name,
-                  onClick: function () { openTasks(id); },
-                }, t.tasks(count))),
-              h("div", { className: "wbt-ws-dir" },
-                w.dir ? h("code", null, String(w.dir)) : h("span", { className: "wbt-ws-nodir" }, t.noDir)),
-              w.description ? h("p", { className: "wbt-ws-desc" }, String(w.description)) : null,
-              ask && String(ask.id) === id
-                ? h("div", { className: "wbt-ws-ask", role: "alert" },
-                  h("span", null, count ? t.deleteWithTasks(name, count) : t.deletePlain(name)),
-                  h("button", { className: "wbt-btn", type: "button", "data-danger": "1", onClick: confirmDelete }, t.confirm),
-                  h("button", { className: "wbt-btn ghost", type: "button", onClick: function () { setAsk(null); } }, t.cancel))
-                : null),
-            h("div", { className: "wbt-ws-ops" },
-              h("button", { className: "wbt-btn ghost", type: "button", onClick: function () { setForm({ mode: "edit", workspace: w }); } }, t.edit),
-              h("button", { className: "wbt-btn ghost", type: "button", onClick: function () { setAsk({ id: id, title: name }); } }, t.del)));
-        }))
-        : null,
-      toast ? h("span", { className: "wbt-ws-toast", "aria-live": "polite" }, toast) : null,
+      h("div", { className: "wbt-pathrow" },
+        h("div", { className: "wbt-ws-heading" },
+          h("h2", { className: "wbt-ws-h2" }, t.title),
+          h("span", { className: "wbt-ws-hint" }, t.hint)),
+        h("div", { className: "wbt-grow" }),
+        toast ? h("span", { className: "wbt-ws-toast", "aria-live": "polite" }, toast) : null,
+        h("button", { className: "wbt-btn ghost", type: "button", title: t.refresh, "aria-label": t.refresh, onClick: reload }, icon("refresh"), t.refresh),
+        h("button", {
+          className: "wbt-btn primary", type: "button",
+          onClick: function () { setForm({ mode: "create", workspace: null }); },
+        }, icon("plus", 14), t.create)),
+      h("div", { className: "wbt-ws-toolbar" },
+        h("input", {
+          className: "wbt-input", value: query, placeholder: t.search, "aria-label": t.search,
+          onChange: function (e) { setQuery(e.target.value); },
+        }),
+        busy ? null : h("span", { className: "wbt-ws-count", role: "status" }, keyword ? t.count(list.length) + " · " + t.match(shown.length) : t.count(list.length))),
+      h("div", { className: "wbt-content" },
+        h("div", { className: "wbt-list-scroll" }, body)),
       form
         ? h(WorkspaceForm, {
           api: api, t: t, mode: form.mode, workspace: form.workspace,
