@@ -173,9 +173,37 @@ const actionsAt = clientSource.indexOf('id: "actions"');
 assert.ok(dataAt > 0 && commandsAt > dataAt && actionsAt > commandsAt, "「命令」页签应位于「数据」之后、「Action」之前");
 assert.ok(!clientSource.includes("api.schema("), "页面不得走宿主统一 schema 接口");
 assert.ok(readFileSync(VIEW_SRC, "utf8").includes('api.call("tasks.commands"'), "视图应自己调用 tasks.commands");
+assert.equal(
+  readFileSync(VIEW_SRC, "utf8").includes("require("),
+  false,
+  "视图保持零 require，共享正文组件由入口注入",
+);
+assert.match(
+  clientSource,
+  /views\/commands\.cjs"\)\(\{[\s\S]*?Body: require\("\.\.\/\.\.\/lib\/markdown\.cjs"\)/,
+  "入口应把共享 Markdown 正文组件注入命令页",
+);
 
 // ── 3. 页面四态 ──
-function loadView(React) {
+// 共享正文组件由客户端入口注入；这里用真实 markdown/body-toggle 覆盖渲染与切换，
+// Icon 用轻量替身，避免测试加载器认识 lucide。
+function loadDeps(React, opts) {
+  const o = opts || {};
+  const markdown = require(resolve(ROOT, "packages/addons/lib/markdown.cjs"));
+  return {
+    React,
+    Icon: function StubIcon(props) { return React.createElement("span", { "data-icon": props.name }); },
+    Body: markdown.createBody(React),
+    BodyMode: require(resolve(ROOT, "packages/addons/lib/body-toggle.cjs"))(React),
+    bodyStyles: require(resolve(ROOT, "packages/addons/lib/body-styles.cjs")),
+    bodyCopy: require(resolve(ROOT, "packages/addons/lib/body-copy.cjs")),
+    useConfig: () => ({
+      ready: o.configReady !== false,
+      values: { "ui.bodyMode": o.bodyMode === "text" ? "text" : "markdown" },
+    }),
+  };
+}
+function loadView(React, opts) {
   const sandbox = createContext({
     console, Promise, Set, Map, JSON, Object, Array, String, Number, Error, RegExp, Date,
     setTimeout: (fn) => { fn(); return 0; },
@@ -185,7 +213,7 @@ function loadView(React) {
   runInContext("(function (module, exports, require) {" + readFileSync(VIEW_SRC, "utf8") + "\n})", sandbox)(
     mod, mod.exports, () => { throw new Error("view should not require anything"); },
   );
-  return mod.exports({ React }).CommandsView;
+  return mod.exports(loadDeps(React, opts)).CommandsView;
 }
 
 // 渲染树里 props.children 保留的是未展开的元素，children 才是 harness 展开后的子节点；
@@ -210,9 +238,9 @@ async function settle(rt) {
   return rt.tree;
 }
 
-async function mountWith(api, lang) {
+async function mountWith(api, lang, opts) {
   const rt = createReact();
-  const View = loadView(rt.React);
+  const View = loadView(rt.React, opts);
   rt.mount(View, { api, lang: lang || "zh" });
   return rt;
 }
@@ -281,15 +309,32 @@ async function mountWith(api, lang) {
     assert.ok(body.includes(item.notes.zh), "应显示说明：" + item.name);
   }
   assert.ok(find(tree, (n) => n.type === "code" && text(n) === "/" + PUBLISHER_COMMAND), "命令名应渲染成代码片段");
-  // 提示词模板：默认折叠的只读展开区，含全文与占位符说明，且没有任何可编辑控件。
+  // 提示词模板：默认折叠，正文与描述/感受同款（Markdown 渲染 + 逐块纯文本切换）。
   const details = walk(tree).filter((n) => n.type === "details");
   assert.equal(details.length, fixture.length, "每条命令都应有「提示词模板」折叠区");
   assert.ok(details.every((n) => !n.props.open), "模板应默认折叠");
   assert.ok(body.includes("提示词模板"), "折叠区标题应可见");
   assert.ok(body.includes("<sessionId>"), "折叠区应有占位符说明");
-  const pres = walk(tree).filter((n) => n.type === "pre");
-  assert.equal(pres.length, fixture.length, "每条命令都应有只读模板正文 pre");
-  assert.ok(text(pres[0]).includes("## 输出格式") && text(pres[0]).includes("## 边界规则"), "pre 应展示模板全文");
+  assert.equal(
+    walk(tree).some((n) => String((n.props && n.props.className) || "").includes("wbt-cmd-pre")),
+    false,
+    "模板正文不再用固定纯文本 pre 渲染",
+  );
+  const md = walk(tree).filter((n) => String((n.props && n.props.className) || "").split(" ").includes("wb-markdown"));
+  assert.equal(md.length, fixture.length, "默认按 Markdown 渲染每条模板");
+  const h2Before = walk(tree).filter((n) => n.type === "h2").length;
+  assert.ok(h2Before >= fixture.length, "Markdown 模板应渲染出标题");
+  const toggles = walk(tree).filter((n) => n.type === "button" && /(^|\s)wb-body-toggle(\s|$)/.test(String((n.props && n.props.className) || "")));
+  assert.equal(toggles.length, fixture.length, "每条模板都应有显示模式切换");
+  assert.ok(String(toggles[0].props.title).includes("提示词模板"), "切换按钮应说明所属字段");
+  assert.equal(toggles[0].props["aria-pressed"], true, "Markdown 模式下切换按钮应处于按下态");
+  toggles[0].props.onClick({ stopPropagation() {} });
+  const plain = await settle(rt);
+  assert.ok(
+    walk(plain).some((n) => String((n.props && n.props.className) || "").split(" ").includes("wb-body-text")),
+    "切换后应使用纯文本块渲染",
+  );
+  assert.ok(walk(plain).filter((n) => n.type === "h2").length < h2Before, "切换为纯文本后不应再有 Markdown 标题");
   assert.equal(
     walk(tree).some((n) => n.type === "input" || n.type === "textarea" || n.type === "select"),
     false,
@@ -302,6 +347,33 @@ async function mountWith(api, lang) {
   assert.ok(text(copied).includes("已复制"), "复制成功后应有反馈");
 }
 
+// 初始模式跟随 ui.bodyMode：配置为纯文本时模板直接按文本渲染，仍可切回 Markdown。
+{
+  const api = { call: () => Promise.resolve({ ok: true, result: { count: 1, commands: catalog } }) };
+  const rt = await mountWith(api, "zh", { bodyMode: "text" });
+  let tree = await settle(rt);
+  assert.equal(walk(tree).some((n) => n.type === "h2"), false, "配置为纯文本时不应渲染 Markdown 标题");
+  assert.ok(
+    walk(tree).some((n) => String((n.props && n.props.className) || "").split(" ").includes("wb-body-text")),
+    "配置为纯文本时应使用 wb-body-text",
+  );
+  const toggle = find(tree, (n) => n.type === "button" && /(^|\s)wb-body-toggle(\s|$)/.test(String((n.props && n.props.className) || "")));
+  assert.ok(toggle, "纯文本下也应有切换按钮");
+  assert.equal(toggle.props["aria-pressed"], false);
+  toggle.props.onClick({ stopPropagation() {} });
+  tree = await settle(rt);
+  assert.ok(walk(tree).some((n) => n.type === "h2"), "切回 Markdown 应恢复标题");
+}
+
+// 配置未就绪时先留在加载态，不渲染空目录或旧内容。
+{
+  const api = { call: () => Promise.resolve({ ok: true, result: { count: 1, commands: catalog } }) };
+  const rt = await mountWith(api, "zh", { configReady: false });
+  const tree = await settle(rt);
+  assert.ok(text(tree).includes("正在读取命令目录"), "配置未就绪时应保持加载态");
+  assert.equal(walk(tree).some((n) => n.type === "details"), false, "配置未就绪时不渲染模板");
+}
+
 // 英文界面取 en 文案。
 {
   const api = { call: () => Promise.resolve({ ok: true, result: { count: 1, commands: catalog } }) };
@@ -312,4 +384,4 @@ async function mountWith(api, lang) {
   assert.ok(body.includes("Prompt template"), "英文界面应显示模板折叠区");
 }
 
-console.log("TASKS COMMANDS PASS: catalog, template, registration, usage/handler, client view 4 states");
+console.log("TASKS COMMANDS PASS: catalog, template markdown/plain toggle, registration, usage/handler, client view 4 states");

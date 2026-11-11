@@ -4060,230 +4060,6 @@ var require_actions = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/views/commands.cjs
-var require_commands = __commonJS({
-  "packages/addons/tasks/client/views/commands.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = function(deps) {
-      var React = deps.React, h = React.createElement;
-      var COPY = {
-        zh: {
-          title: "\u547D\u4EE4",
-          hint: "\u53EA\u8BFB \xB7 \u6570\u636E\u6765\u81EA tasks.commands",
-          loading: "\u6B63\u5728\u8BFB\u53D6\u547D\u4EE4\u76EE\u5F55\u2026",
-          empty: "\u672C\u63D2\u4EF6\u8FD8\u6CA1\u6709\u6CE8\u518C\u659C\u6760\u547D\u4EE4\u3002",
-          retry: "\u91CD\u8BD5",
-          error: "\u547D\u4EE4\u76EE\u5F55\u52A0\u8F7D\u5931\u8D25",
-          count: function(n) {
-            return n + " \u6761\u547D\u4EE4";
-          },
-          usage: "\u7528\u6CD5",
-          input: "\u8F93\u5165",
-          examples: "\u793A\u4F8B",
-          limit: "\u4E0A\u9650",
-          attachments: "\u652F\u6301\u9644\u4EF6",
-          noAttachments: "\u4E0D\u652F\u6301\u9644\u4EF6",
-          notes: "\u8BF4\u660E",
-          copy: "\u590D\u5236",
-          copied: "\u5DF2\u590D\u5236",
-          chars: function(n) {
-            return "\u6700\u591A " + n + " \u5B57\u7B26";
-          },
-          template: "\u63D0\u793A\u8BCD\u6A21\u677F",
-          templateHint: "\u53EA\u8BFB \xB7 \u9ED8\u8BA4\u6298\u53E0\uFF0C\u5C55\u5F00\u53EF\u770B\u5168\u6587\uFF1B{\u9700\u6C42\u63CF\u8FF0} \u6362\u6210\u4F60\u7684\u539F\u8BDD\uFF0C<sessionId> \u4E3A\u5F53\u524D\u4F1A\u8BDD id",
-          copyTemplate: "\u590D\u5236\u6A21\u677F"
-        },
-        en: {
-          title: "Commands",
-          hint: "Read-only \xB7 from tasks.commands",
-          loading: "Loading command catalog\u2026",
-          empty: "No slash commands registered yet.",
-          retry: "Retry",
-          error: "Failed to load command catalog",
-          count: function(n) {
-            return n + (n === 1 ? " command" : " commands");
-          },
-          usage: "Usage",
-          input: "Input",
-          examples: "Examples",
-          limit: "Limit",
-          attachments: "Attachments allowed",
-          noAttachments: "No attachments",
-          notes: "Notes",
-          copy: "Copy",
-          copied: "Copied",
-          chars: function(n) {
-            return "up to " + n + " characters";
-          },
-          template: "Prompt template",
-          templateHint: "Read-only \xB7 collapsed by default; {requirement} is replaced by your words and <sessionId> by the current session id",
-          copyTemplate: "Copy template"
-        }
-      };
-      var CSS = [
-        ".wbt-cmd{display:flex;flex-direction:column;gap:10px;min-height:0}",
-        ".wbt-cmd-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}",
-        ".wbt-cmd-hint,.wbt-cmd-count{color:var(--dsw-alias-label-secondary,inherit);font-size:12px}",
-        ".wbt-cmd-list{display:flex;flex-direction:column;gap:10px;overflow:auto;min-height:0}",
-        ".wbt-cmd-card{border:1px solid var(--wb-border);border-radius:var(--wb-radius-sm);padding:10px 12px;display:flex;flex-direction:column;gap:6px}",
-        ".wbt-cmd-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
-        ".wbt-cmd-name code{font-size:13px}",
-        ".wbt-cmd-title{font-weight:600}",
-        ".wbt-cmd-badge{border:1px solid var(--wb-border);border-radius:999px;padding:0 8px;font-size:11px;color:var(--dsw-alias-label-secondary,inherit)}",
-        ".wbt-cmd-summary,.wbt-cmd-notes{margin:0;line-height:1.55;font-size:12.5px;color:var(--dsw-alias-label-secondary,inherit)}",
-        ".wbt-cmd-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}",
-        ".wbt-cmd-label{font-size:11.5px;color:var(--dsw-alias-label-secondary,inherit);flex:none}",
-        ".wbt-cmd-row code{min-width:0;overflow-wrap:anywhere;background:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));padding:2px 6px;border-radius:4px}",
-        ".wbt-cmd-examples{margin:0;padding-left:18px;font-size:12.5px;display:flex;flex-direction:column;gap:4px}",
-        ".wbt-cmd-examples li{overflow-wrap:anywhere}",
-        ".wbt-cmd-empty,.wbt-cmd-error{padding:12px;border:1px dashed var(--wb-border);border-radius:var(--wb-radius-sm);font-size:12.5px}",
-        ".wbt-cmd-error{border-style:solid;color:var(--dsw-alias-status-danger,inherit)}",
-        ".wbt-cmd-template{border-top:1px dashed var(--wb-border);padding-top:8px;display:flex;flex-direction:column;gap:8px}",
-        ".wbt-cmd-template>summary{cursor:pointer;font-size:12.5px;font-weight:600;list-style:revert}",
-        ".wbt-cmd-pre{margin:0;max-height:340px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11.5px;line-height:1.55;background:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));border-radius:var(--wb-radius-sm);padding:10px}"
-      ].join("");
-      function result(r) {
-        if (!r || !r.ok) throw new Error(r && r.error || "Request failed");
-        return r.result || {};
-      }
-      function CopyButton(p) {
-        var s = React.useState(false), done = s[0], setDone = s[1];
-        return h("button", {
-          className: "wbt-btn",
-          type: "button",
-          title: p.t.copy,
-          onClick: function() {
-            var clip = typeof navigator !== "undefined" && navigator.clipboard;
-            var write = clip && typeof clip.writeText === "function" ? clip.writeText(p.text) : Promise.reject(new Error("no clipboard"));
-            write.then(function() {
-              setDone(true);
-              if (typeof p.onCopied === "function") p.onCopied(p.text);
-              if (typeof setTimeout === "function") setTimeout(function() {
-                setDone(false);
-              }, 1200);
-            }).catch(function() {
-              setDone(false);
-            });
-          }
-        }, done ? p.t.copied : p.t.copy);
-      }
-      function CommandCard(props) {
-        var c = props.command, t = props.t;
-        var limit = c.limit && c.limit.max ? t.chars(c.limit.max) : "";
-        return h(
-          "article",
-          { className: "wbt-cmd-card" },
-          h(
-            "div",
-            { className: "wbt-cmd-name" },
-            h("code", null, "/" + c.name),
-            h("span", { className: "wbt-cmd-title" }, c.title.zh && t === COPY.zh ? c.title.zh : c.title.en || c.title.zh),
-            h("span", { className: "wbt-cmd-badge" }, c.attachments ? t.attachments : t.noAttachments)
-          ),
-          h("p", { className: "wbt-cmd-summary" }, t === COPY.zh ? c.summary.zh : c.summary.en),
-          h(
-            "div",
-            { className: "wbt-cmd-row" },
-            h("span", { className: "wbt-cmd-label" }, t.usage),
-            h("code", null, t === COPY.zh ? c.usage.zh : c.usage.en),
-            h(CopyButton, { t, text: t === COPY.zh ? c.usage.zh : c.usage.en, onCopied: props.onCopied })
-          ),
-          h(
-            "div",
-            { className: "wbt-cmd-row" },
-            h("span", { className: "wbt-cmd-label" }, t.input),
-            h("code", null, t === COPY.zh ? c.inputHint.zh : c.inputHint.en)
-          ),
-          c.examples && c.examples.length ? h(
-            "div",
-            { className: "wbt-cmd-row", style: { alignItems: "flex-start" } },
-            h("span", { className: "wbt-cmd-label" }, t.examples),
-            h("ul", { className: "wbt-cmd-examples" }, c.examples.map(function(text, i) {
-              return h(
-                "li",
-                { key: i },
-                h("code", null, text),
-                " ",
-                h(CopyButton, { t, text, onCopied: props.onCopied })
-              );
-            }))
-          ) : null,
-          limit ? h("div", { className: "wbt-cmd-row" }, h("span", { className: "wbt-cmd-label" }, t.limit), h("span", null, limit)) : null,
-          c.notes && (t === COPY.zh ? c.notes.zh : c.notes.en) ? h("p", { className: "wbt-cmd-notes" }, t === COPY.zh ? c.notes.zh : c.notes.en) : null,
-          typeof c.template === "string" && c.template.trim() ? h(
-            "details",
-            { className: "wbt-cmd-template" },
-            h("summary", null, t.template),
-            h("span", { className: "wbt-cmd-hint" }, t.templateHint),
-            h(
-              "div",
-              { className: "wbt-cmd-row" },
-              h(CopyButton, { t, text: c.template, onCopied: props.onCopied })
-            ),
-            h("pre", { className: "wbt-cmd-pre" }, c.template)
-          ) : null
-        );
-      }
-      function CommandsView(props) {
-        var lang = props.lang === "en" ? "en" : "zh", t = COPY[lang];
-        var api = props.api;
-        var dataS = React.useState(null), data = dataS[0], setData = dataS[1];
-        var busyS = React.useState(true), busy = busyS[0], setBusy = busyS[1];
-        var errorS = React.useState(""), error = errorS[0], setError = errorS[1];
-        var refreshS = React.useState(0), refresh = refreshS[0], setRefresh = refreshS[1];
-        var toastS = React.useState(""), toast = toastS[0], setToast = toastS[1];
-        React.useEffect(function() {
-          var cancelled = false;
-          setBusy(true);
-          setError("");
-          api.call("tasks.commands", {}).then(result).then(function(r) {
-            if (cancelled) return;
-            setData(Array.isArray(r.commands) ? r.commands : []);
-            setBusy(false);
-          }).catch(function(e) {
-            if (cancelled) return;
-            setBusy(false);
-            setError(String(e && e.message || e));
-          });
-          return function() {
-            cancelled = true;
-          };
-        }, [api, refresh]);
-        var commands = data || [];
-        return h(
-          "div",
-          { className: "wbt-root wbt-cmd" },
-          h("style", null, CSS),
-          h(
-            "div",
-            { className: "wbt-cmd-head" },
-            h("strong", null, t.title),
-            h("span", { className: "wbt-cmd-hint" }, t.hint),
-            busy ? null : h("span", { className: "wbt-cmd-count" }, t.count(commands.length))
-          ),
-          busy ? h("div", { className: "wbt-cmd-empty" }, t.loading) : null,
-          error ? h(
-            "div",
-            { className: "wbt-cmd-error" },
-            t.error + "\uFF1A" + error,
-            h("button", { className: "wbt-btn", type: "button", onClick: function() {
-              setRefresh(refresh + 1);
-            } }, t.retry)
-          ) : null,
-          !busy && !error && !commands.length ? h("div", { className: "wbt-cmd-empty" }, t.empty) : null,
-          !busy && !error && commands.length ? h("div", { className: "wbt-cmd-list" }, commands.map(function(c) {
-            return h(CommandCard, { key: c.name, command: c, t, onCopied: function(text) {
-              setToast(text);
-            } });
-          })) : null,
-          toast ? h("span", { className: "wbt-cmd-hint", "aria-live": "polite" }, t.copied) : null
-        );
-      }
-      return { CommandsView, CSS };
-    };
-  }
-});
-
 // packages/addons/tasks/client/views/workspace-view.cjs
 var require_workspace_view = __commonJS({
   "packages/addons/tasks/client/views/workspace-view.cjs"(exports2, module2) {
@@ -6215,6 +5991,261 @@ var require_icons = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/views/commands.cjs
+var require_commands = __commonJS({
+  "packages/addons/tasks/client/views/commands.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(deps) {
+      var React = deps.React, h = React.createElement;
+      var Icon2 = deps.Icon, Body = deps.Body, BodyMode = deps.BodyMode;
+      var bodyCopy = deps.bodyCopy || { zh: {}, en: {} };
+      var BODY_DEFAULT = { "ui.bodyMode": "markdown" };
+      var useConfig = deps.useConfig || function() {
+        return { ready: true, values: BODY_DEFAULT };
+      };
+      var COPY = {
+        zh: {
+          title: "\u547D\u4EE4",
+          hint: "\u53EA\u8BFB \xB7 \u6570\u636E\u6765\u81EA tasks.commands",
+          loading: "\u6B63\u5728\u8BFB\u53D6\u547D\u4EE4\u76EE\u5F55\u2026",
+          empty: "\u672C\u63D2\u4EF6\u8FD8\u6CA1\u6709\u6CE8\u518C\u659C\u6760\u547D\u4EE4\u3002",
+          retry: "\u91CD\u8BD5",
+          error: "\u547D\u4EE4\u76EE\u5F55\u52A0\u8F7D\u5931\u8D25",
+          count: function(n) {
+            return n + " \u6761\u547D\u4EE4";
+          },
+          usage: "\u7528\u6CD5",
+          input: "\u8F93\u5165",
+          examples: "\u793A\u4F8B",
+          limit: "\u4E0A\u9650",
+          attachments: "\u652F\u6301\u9644\u4EF6",
+          noAttachments: "\u4E0D\u652F\u6301\u9644\u4EF6",
+          notes: "\u8BF4\u660E",
+          copy: "\u590D\u5236",
+          copied: "\u5DF2\u590D\u5236",
+          chars: function(n) {
+            return "\u6700\u591A " + n + " \u5B57\u7B26";
+          },
+          template: "\u63D0\u793A\u8BCD\u6A21\u677F",
+          templateHint: "\u53EA\u8BFB \xB7 \u9ED8\u8BA4\u6298\u53E0\uFF0C\u5C55\u5F00\u53EF\u770B\u5168\u6587\uFF1B{\u9700\u6C42\u63CF\u8FF0} \u6362\u6210\u4F60\u7684\u539F\u8BDD\uFF0C<sessionId> \u4E3A\u5F53\u524D\u4F1A\u8BDD id",
+          copyTemplate: "\u590D\u5236\u6A21\u677F",
+          bodyModeToggle: bodyCopy.zh.bodyModeToggle || "{field} \xB7 \u5F53\u524D\uFF1A{current}\uFF1B\u5207\u6362\u4E3A{target}",
+          markdown: bodyCopy.zh.markdown || "Markdown \u6E32\u67D3",
+          plainText: bodyCopy.zh.plainText || "\u7EAF\u6587\u672C"
+        },
+        en: {
+          title: "Commands",
+          hint: "Read-only \xB7 from tasks.commands",
+          loading: "Loading command catalog\u2026",
+          empty: "No slash commands registered yet.",
+          retry: "Retry",
+          error: "Failed to load command catalog",
+          count: function(n) {
+            return n + (n === 1 ? " command" : " commands");
+          },
+          usage: "Usage",
+          input: "Input",
+          examples: "Examples",
+          limit: "Limit",
+          attachments: "Attachments allowed",
+          noAttachments: "No attachments",
+          notes: "Notes",
+          copy: "Copy",
+          copied: "Copied",
+          chars: function(n) {
+            return "up to " + n + " characters";
+          },
+          template: "Prompt template",
+          templateHint: "Read-only \xB7 collapsed by default; {requirement} is replaced by your words and <sessionId> by the current session id",
+          copyTemplate: "Copy template",
+          bodyModeToggle: bodyCopy.en.bodyModeToggle || "{field} \xB7 Current: {current}; switch to {target}",
+          markdown: bodyCopy.en.markdown || "Rendered Markdown",
+          plainText: bodyCopy.en.plainText || "Plain text"
+        }
+      };
+      var CSS = String(deps.bodyStyles || "") + [
+        ".wbt-cmd{display:flex;flex-direction:column;gap:10px;min-height:0}",
+        ".wbt-cmd-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}",
+        ".wbt-cmd-hint,.wbt-cmd-count{color:var(--dsw-alias-label-secondary,inherit);font-size:12px}",
+        ".wbt-cmd-list{display:flex;flex-direction:column;gap:10px;overflow:auto;min-height:0}",
+        ".wbt-cmd-card{border:1px solid var(--wb-border);border-radius:var(--wb-radius-sm);padding:10px 12px;display:flex;flex-direction:column;gap:6px}",
+        ".wbt-cmd-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+        ".wbt-cmd-name code{font-size:13px}",
+        ".wbt-cmd-title{font-weight:600}",
+        ".wbt-cmd-badge{border:1px solid var(--wb-border);border-radius:999px;padding:0 8px;font-size:11px;color:var(--dsw-alias-label-secondary,inherit)}",
+        ".wbt-cmd-summary,.wbt-cmd-notes{margin:0;line-height:1.55;font-size:12.5px;color:var(--dsw-alias-label-secondary,inherit)}",
+        ".wbt-cmd-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}",
+        ".wbt-cmd-label{font-size:11.5px;color:var(--dsw-alias-label-secondary,inherit);flex:none}",
+        ".wbt-cmd-row code{min-width:0;overflow-wrap:anywhere;background:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));padding:2px 6px;border-radius:4px}",
+        ".wbt-cmd-examples{margin:0;padding-left:18px;font-size:12.5px;display:flex;flex-direction:column;gap:4px}",
+        ".wbt-cmd-examples li{overflow-wrap:anywhere}",
+        ".wbt-cmd-empty,.wbt-cmd-error{padding:12px;border:1px dashed var(--wb-border);border-radius:var(--wb-radius-sm);font-size:12.5px}",
+        ".wbt-cmd-error{border-style:solid;color:var(--dsw-alias-status-danger,inherit)}",
+        ".wbt-cmd-template{border-top:1px dashed var(--wb-border);padding-top:8px;display:flex;flex-direction:column;gap:8px}",
+        ".wbt-cmd-template>summary{cursor:pointer;font-size:12.5px;font-weight:600;list-style:revert}",
+        ".wbt-cmd-template-head{padding-left:0;margin:0}",
+        ".wbt-cmd-bar{display:inline-flex;align-items:center;gap:6px}",
+        ".wbt-cmd-body{max-height:340px;overflow:auto;background:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));border-radius:var(--wb-radius-sm);padding:10px}",
+        ".wbt-cmd-body .wb-markdown,.wbt-cmd-body .wb-body-text{font-size:11.5px;line-height:1.55}"
+      ].join("");
+      function result(r) {
+        if (!r || !r.ok) throw new Error(r && r.error || "Request failed");
+        return r.result || {};
+      }
+      function CopyButton(p) {
+        var s = React.useState(false), done = s[0], setDone = s[1];
+        return h("button", {
+          className: "wbt-btn",
+          type: "button",
+          title: p.t.copy,
+          onClick: function() {
+            var clip = typeof navigator !== "undefined" && navigator.clipboard;
+            var write = clip && typeof clip.writeText === "function" ? clip.writeText(p.text) : Promise.reject(new Error("no clipboard"));
+            write.then(function() {
+              setDone(true);
+              if (typeof p.onCopied === "function") p.onCopied(p.text);
+              if (typeof setTimeout === "function") setTimeout(function() {
+                setDone(false);
+              }, 1200);
+            }).catch(function() {
+              setDone(false);
+            });
+          }
+        }, done ? p.t.copied : p.t.copy);
+      }
+      function TemplateBlock(props) {
+        var c = props.command, t = props.t;
+        var text = typeof c.template === "string" ? c.template : "";
+        var s = React.useState(props.mode === "text" ? "text" : "markdown"), mode = s[0], setMode = s[1];
+        if (!text.trim()) return null;
+        return h(
+          "details",
+          { className: "wbt-cmd-template" },
+          h("summary", null, t.template),
+          h("span", { className: "wbt-cmd-hint" }, t.templateHint),
+          h(
+            "div",
+            { className: "wb-body-heading wbt-cmd-template-head" },
+            h("span", { className: "wb-body-label" }, t.template),
+            h(
+              "span",
+              { className: "wbt-cmd-bar" },
+              h(BodyMode, { label: t.template, mode, onChange: setMode, t, Icon: Icon2 }),
+              h(CopyButton, { t, text, onCopied: props.onCopied })
+            )
+          ),
+          h("div", { className: "wbt-cmd-body" }, h(Body, { text, mode }))
+        );
+      }
+      function CommandCard(props) {
+        var c = props.command, t = props.t;
+        var limit = c.limit && c.limit.max ? t.chars(c.limit.max) : "";
+        return h(
+          "article",
+          { className: "wbt-cmd-card" },
+          h(
+            "div",
+            { className: "wbt-cmd-name" },
+            h("code", null, "/" + c.name),
+            h("span", { className: "wbt-cmd-title" }, c.title.zh && t === COPY.zh ? c.title.zh : c.title.en || c.title.zh),
+            h("span", { className: "wbt-cmd-badge" }, c.attachments ? t.attachments : t.noAttachments)
+          ),
+          h("p", { className: "wbt-cmd-summary" }, t === COPY.zh ? c.summary.zh : c.summary.en),
+          h(
+            "div",
+            { className: "wbt-cmd-row" },
+            h("span", { className: "wbt-cmd-label" }, t.usage),
+            h("code", null, t === COPY.zh ? c.usage.zh : c.usage.en),
+            h(CopyButton, { t, text: t === COPY.zh ? c.usage.zh : c.usage.en, onCopied: props.onCopied })
+          ),
+          h(
+            "div",
+            { className: "wbt-cmd-row" },
+            h("span", { className: "wbt-cmd-label" }, t.input),
+            h("code", null, t === COPY.zh ? c.inputHint.zh : c.inputHint.en)
+          ),
+          c.examples && c.examples.length ? h(
+            "div",
+            { className: "wbt-cmd-row", style: { alignItems: "flex-start" } },
+            h("span", { className: "wbt-cmd-label" }, t.examples),
+            h("ul", { className: "wbt-cmd-examples" }, c.examples.map(function(text, i) {
+              return h(
+                "li",
+                { key: i },
+                h("code", null, text),
+                " ",
+                h(CopyButton, { t, text, onCopied: props.onCopied })
+              );
+            }))
+          ) : null,
+          limit ? h("div", { className: "wbt-cmd-row" }, h("span", { className: "wbt-cmd-label" }, t.limit), h("span", null, limit)) : null,
+          c.notes && (t === COPY.zh ? c.notes.zh : c.notes.en) ? h("p", { className: "wbt-cmd-notes" }, t === COPY.zh ? c.notes.zh : c.notes.en) : null,
+          h(TemplateBlock, { command: c, t, mode: props.bodyMode, onCopied: props.onCopied })
+        );
+      }
+      function CommandsView(props) {
+        var lang = props.lang === "en" ? "en" : "zh", t = COPY[lang];
+        var api = props.api;
+        var cfg = useConfig(api, BODY_DEFAULT);
+        var bodyMode = cfg.values && cfg.values["ui.bodyMode"] === "text" ? "text" : "markdown";
+        var dataS = React.useState(null), data = dataS[0], setData = dataS[1];
+        var busyS = React.useState(true), busy = busyS[0], setBusy = busyS[1];
+        var errorS = React.useState(""), error = errorS[0], setError = errorS[1];
+        var refreshS = React.useState(0), refresh = refreshS[0], setRefresh = refreshS[1];
+        var toastS = React.useState(""), toast = toastS[0], setToast = toastS[1];
+        React.useEffect(function() {
+          var cancelled = false;
+          setBusy(true);
+          setError("");
+          api.call("tasks.commands", {}).then(result).then(function(r) {
+            if (cancelled) return;
+            setData(Array.isArray(r.commands) ? r.commands : []);
+            setBusy(false);
+          }).catch(function(e) {
+            if (cancelled) return;
+            setBusy(false);
+            setError(String(e && e.message || e));
+          });
+          return function() {
+            cancelled = true;
+          };
+        }, [api, refresh]);
+        var commands = data || [];
+        var ready = !busy && cfg.ready;
+        return h(
+          "div",
+          { className: "wbt-root wbt-cmd" },
+          h("style", null, CSS),
+          h(
+            "div",
+            { className: "wbt-cmd-head" },
+            h("strong", null, t.title),
+            h("span", { className: "wbt-cmd-hint" }, t.hint),
+            ready && !error ? h("span", { className: "wbt-cmd-count" }, t.count(commands.length)) : null
+          ),
+          !ready && !error ? h("div", { className: "wbt-cmd-empty" }, t.loading) : null,
+          error ? h(
+            "div",
+            { className: "wbt-cmd-error" },
+            t.error + "\uFF1A" + error,
+            h("button", { className: "wbt-btn", type: "button", onClick: function() {
+              setRefresh(refresh + 1);
+            } }, t.retry)
+          ) : null,
+          ready && !error && !commands.length ? h("div", { className: "wbt-cmd-empty" }, t.empty) : null,
+          ready && !error && commands.length ? h("div", { className: "wbt-cmd-list" }, commands.map(function(c) {
+            return h(CommandCard, { key: c.name, command: c, t, bodyMode, onCopied: function(text) {
+              setToast(text);
+            } });
+          })) : null,
+          toast ? h("span", { className: "wbt-cmd-hint", "aria-live": "polite" }, t.copied) : null
+        );
+      }
+      return { CommandsView, CSS };
+    };
+  }
+});
+
 // packages/addons/lib/markdown.cjs
 var require_markdown = __commonJS({
   "packages/addons/lib/markdown.cjs"(exports2, module2) {
@@ -6370,14 +6401,10 @@ var require_body_toggle = __commonJS({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-2.mjs
-var code_2_exports = {};
-__export(code_2_exports, {
-  default: () => CodeXml
-});
-var init_code_2 = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-2.mjs"() {
-    init_code_xml();
+// packages/addons/tasks/client/ui/body-mode.cjs
+var require_body_mode = __commonJS({
+  "packages/addons/tasks/client/ui/body-mode.cjs"(exports2, module2) {
+    module2.exports = require_body_toggle();
   }
 });
 
@@ -6408,6 +6435,17 @@ var require_body_styles = __commonJS({
 @media(prefers-reduced-motion:reduce){.wb-body-toggle-icon{animation:none}}
 .wbt-item.closed:has(.wb-body-label){opacity:1}
 `;
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-2.mjs
+var code_2_exports = {};
+__export(code_2_exports, {
+  default: () => CodeXml
+});
+var init_code_2 = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-2.mjs"() {
+    init_code_xml();
   }
 });
 
@@ -6746,13 +6784,6 @@ var require_highlight2 = __commonJS({
     module2.exports = function(React) {
       return require_highlight()(React)("wbt");
     };
-  }
-});
-
-// packages/addons/tasks/client/ui/body-mode.cjs
-var require_body_mode = __commonJS({
-  "packages/addons/tasks/client/ui/body-mode.cjs"(exports2, module2) {
-    module2.exports = require_body_toggle();
   }
 });
 
@@ -10571,7 +10602,6 @@ var require_timeline_view = __commonJS({
   var configView = require_config();
   var dataView = require_data();
   var actionSchemaView = require_actions();
-  var commandsView = require_commands()({ React });
   var workspaceView = require_workspace_view()({ React });
   var COPY = require_copy();
   function hostHasAddon(id) {
@@ -10589,6 +10619,15 @@ var require_timeline_view = __commonJS({
     "4": { zh: "\u5DF2\u63A5\u53D6", en: "Claimed", cls: "claimed" }
   };
   var icons = require_icons(), ICONS = icons.ICONS, Icon2 = icons.Icon;
+  var commandsView = require_commands()({
+    React,
+    Icon: Icon2,
+    Body: require_markdown().createBody(React),
+    BodyMode: require_body_mode()(React),
+    bodyStyles: require_body_styles(),
+    bodyCopy: require_body_copy(),
+    useConfig: configView.useConfig
+  });
   function tabIcon(name) {
     return function TasksTabIcon() {
       return React.createElement(Icon2, { name, size: 14 });

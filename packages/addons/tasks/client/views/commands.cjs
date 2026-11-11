@@ -5,6 +5,11 @@
 "use strict";
 module.exports = function (deps) {
   var React = deps.React, h = React.createElement;
+  // 共享正文渲染与配置钩子由客户端入口注入：本视图保持零 require，便于测试装载。
+  var Icon = deps.Icon, Body = deps.Body, BodyMode = deps.BodyMode;
+  var bodyCopy = deps.bodyCopy || { zh: {}, en: {} };
+  var BODY_DEFAULT = { "ui.bodyMode": "markdown" };
+  var useConfig = deps.useConfig || function () { return { ready: true, values: BODY_DEFAULT }; };
 
   var COPY = {
     zh: {
@@ -18,6 +23,9 @@ module.exports = function (deps) {
       template: "提示词模板",
       templateHint: "只读 · 默认折叠，展开可看全文；{需求描述} 换成你的原话，<sessionId> 为当前会话 id",
       copyTemplate: "复制模板",
+      bodyModeToggle: bodyCopy.zh.bodyModeToggle || "{field} · 当前：{current}；切换为{target}",
+      markdown: bodyCopy.zh.markdown || "Markdown 渲染",
+      plainText: bodyCopy.zh.plainText || "纯文本",
     },
     en: {
       title: "Commands", hint: "Read-only · from tasks.commands",
@@ -30,10 +38,13 @@ module.exports = function (deps) {
       template: "Prompt template",
       templateHint: "Read-only · collapsed by default; {requirement} is replaced by your words and <sessionId> by the current session id",
       copyTemplate: "Copy template",
+      bodyModeToggle: bodyCopy.en.bodyModeToggle || "{field} · Current: {current}; switch to {target}",
+      markdown: bodyCopy.en.markdown || "Rendered Markdown",
+      plainText: bodyCopy.en.plainText || "Plain text",
     },
   };
 
-  var CSS = [
+  var CSS = String(deps.bodyStyles || "") + [
     ".wbt-cmd{display:flex;flex-direction:column;gap:10px;min-height:0}",
     ".wbt-cmd-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}",
     ".wbt-cmd-hint,.wbt-cmd-count{color:var(--dsw-alias-label-secondary,inherit);font-size:12px}",
@@ -53,7 +64,10 @@ module.exports = function (deps) {
     ".wbt-cmd-error{border-style:solid;color:var(--dsw-alias-status-danger,inherit)}",
     ".wbt-cmd-template{border-top:1px dashed var(--wb-border);padding-top:8px;display:flex;flex-direction:column;gap:8px}",
     ".wbt-cmd-template>summary{cursor:pointer;font-size:12.5px;font-weight:600;list-style:revert}",
-    ".wbt-cmd-pre{margin:0;max-height:340px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11.5px;line-height:1.55;background:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));border-radius:var(--wb-radius-sm);padding:10px}",
+    ".wbt-cmd-template-head{padding-left:0;margin:0}",
+    ".wbt-cmd-bar{display:inline-flex;align-items:center;gap:6px}",
+    ".wbt-cmd-body{max-height:340px;overflow:auto;background:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));border-radius:var(--wb-radius-sm);padding:10px}",
+    ".wbt-cmd-body .wb-markdown,.wbt-cmd-body .wb-body-text{font-size:11.5px;line-height:1.55}",
   ].join("");
 
   function result(r) {
@@ -75,6 +89,24 @@ module.exports = function (deps) {
         }).catch(function () { setDone(false); });
       },
     }, done ? p.t.copied : p.t.copy);
+  }
+
+  // 提示词模板与任务描述共用同一套正文显示：Markdown 渲染 / 纯文本逐块切换。
+  // 初始模式跟随 ui.bodyMode 配置，切换只影响当前块（与描述、感受一致）。
+  function TemplateBlock(props) {
+    var c = props.command, t = props.t;
+    var text = typeof c.template === "string" ? c.template : "";
+    var s = React.useState(props.mode === "text" ? "text" : "markdown"), mode = s[0], setMode = s[1];
+    if (!text.trim()) return null;
+    return h("details", { className: "wbt-cmd-template" },
+      h("summary", null, t.template),
+      h("span", { className: "wbt-cmd-hint" }, t.templateHint),
+      h("div", { className: "wb-body-heading wbt-cmd-template-head" },
+        h("span", { className: "wb-body-label" }, t.template),
+        h("span", { className: "wbt-cmd-bar" },
+          h(BodyMode, { label: t.template, mode: mode, onChange: setMode, t: t, Icon: Icon }),
+          h(CopyButton, { t: t, text: text, onCopied: props.onCopied }))),
+      h("div", { className: "wbt-cmd-body" }, h(Body, { text: text, mode: mode })));
   }
 
   function CommandCard(props) {
@@ -107,19 +139,14 @@ module.exports = function (deps) {
       c.notes && (t === COPY.zh ? c.notes.zh : c.notes.en)
         ? h("p", { className: "wbt-cmd-notes" }, t === COPY.zh ? c.notes.zh : c.notes.en)
         : null,
-      typeof c.template === "string" && c.template.trim()
-        ? h("details", { className: "wbt-cmd-template" },
-          h("summary", null, t.template),
-          h("span", { className: "wbt-cmd-hint" }, t.templateHint),
-          h("div", { className: "wbt-cmd-row" },
-            h(CopyButton, { t: t, text: c.template, onCopied: props.onCopied })),
-          h("pre", { className: "wbt-cmd-pre" }, c.template))
-        : null);
+      h(TemplateBlock, { command: c, t: t, mode: props.bodyMode, onCopied: props.onCopied }));
   }
 
   function CommandsView(props) {
     var lang = props.lang === "en" ? "en" : "zh", t = COPY[lang];
     var api = props.api;
+    var cfg = useConfig(api, BODY_DEFAULT);
+    var bodyMode = cfg.values && cfg.values["ui.bodyMode"] === "text" ? "text" : "markdown";
     var dataS = React.useState(null), data = dataS[0], setData = dataS[1];
     var busyS = React.useState(true), busy = busyS[0], setBusy = busyS[1];
     var errorS = React.useState(""), error = errorS[0], setError = errorS[1];
@@ -143,22 +170,23 @@ module.exports = function (deps) {
     }, [api, refresh]);
 
     var commands = data || [];
+    var ready = !busy && cfg.ready;
     return h("div", { className: "wbt-root wbt-cmd" },
       h("style", null, CSS),
       h("div", { className: "wbt-cmd-head" },
         h("strong", null, t.title),
         h("span", { className: "wbt-cmd-hint" }, t.hint),
-        busy ? null : h("span", { className: "wbt-cmd-count" }, t.count(commands.length))),
-      busy ? h("div", { className: "wbt-cmd-empty" }, t.loading) : null,
+        ready && !error ? h("span", { className: "wbt-cmd-count" }, t.count(commands.length)) : null),
+      !ready && !error ? h("div", { className: "wbt-cmd-empty" }, t.loading) : null,
       error
         ? h("div", { className: "wbt-cmd-error" },
           (t.error + "：" + error),
           h("button", { className: "wbt-btn", type: "button", onClick: function () { setRefresh(refresh + 1); } }, t.retry))
         : null,
-      !busy && !error && !commands.length ? h("div", { className: "wbt-cmd-empty" }, t.empty) : null,
-      !busy && !error && commands.length
+      ready && !error && !commands.length ? h("div", { className: "wbt-cmd-empty" }, t.empty) : null,
+      ready && !error && commands.length
         ? h("div", { className: "wbt-cmd-list" }, commands.map(function (c) {
-          return h(CommandCard, { key: c.name, command: c, t: t, onCopied: function (text) { setToast(text); } });
+          return h(CommandCard, { key: c.name, command: c, t: t, bodyMode: bodyMode, onCopied: function (text) { setToast(text); } });
         }))
         : null,
       toast ? h("span", { className: "wbt-cmd-hint", "aria-live": "polite" }, t.copied) : null);

@@ -16,7 +16,6 @@
   var configView = require("./views/config.cjs");
   var dataView = require("./views/data.cjs");
   var actionSchemaView = require("./views/actions.cjs");
-  var commandsView = require("./views/commands.cjs")({ React: React });
   var workspaceView = require("./views/workspace-view.cjs")({ React: React });
 
   var COPY = require("./ui/copy.cjs");
@@ -36,6 +35,16 @@
   };
 
   var icons = require("./ui/icons.cjs"), ICONS = icons.ICONS, Icon = icons.Icon;
+  // 命令页的模板正文复用描述/感受的渲染与切换控件，由入口注入；视图自身保持零 require。
+  var commandsView = require("./views/commands.cjs")({
+    React: React,
+    Icon: Icon,
+    Body: require("../../lib/markdown.cjs").createBody(React),
+    BodyMode: require("./ui/body-mode.cjs")(React),
+    bodyStyles: require("../../lib/body-styles.cjs"),
+    bodyCopy: require("../../lib/body-copy.cjs"),
+    useConfig: configView.useConfig,
+  });
   // 标签页标题左侧图标：宿主统一按 size 14 渲染，两边都传 14 兜底。
   function tabIcon(name) { return function TasksTabIcon() { return React.createElement(Icon, { name: name, size: 14 }); }; }
 
