@@ -1,5 +1,6 @@
-// 「命令」页：只读展示本插件注册的斜杠命令与发布模版元信息。
+// 「命令」页：只读展示本插件注册的斜杠命令及其提示词模板。
 // 数据来自本插件自己的 action tasks.commands（目录在 lib/publisher/catalog.js），
+// 模板由 buildBrief 用占位符现场渲染，页面不另存一份正文；
 // 不读宿主统一接口；action 不可用（旧版本）时按错误态降级，不伪造空目录。
 "use strict";
 module.exports = function (deps) {
@@ -14,6 +15,9 @@ module.exports = function (deps) {
       usage: "用法", input: "输入", examples: "示例", limit: "上限",
       attachments: "支持附件", noAttachments: "不支持附件", notes: "说明", copy: "复制", copied: "已复制",
       chars: function (n) { return "最多 " + n + " 字符"; },
+      template: "提示词模板",
+      templateHint: "只读 · 默认折叠，展开可看全文；{需求描述} 换成你的原话，<sessionId> 为当前会话 id",
+      copyTemplate: "复制模板",
     },
     en: {
       title: "Commands", hint: "Read-only · from tasks.commands",
@@ -23,6 +27,9 @@ module.exports = function (deps) {
       usage: "Usage", input: "Input", examples: "Examples", limit: "Limit",
       attachments: "Attachments allowed", noAttachments: "No attachments", notes: "Notes", copy: "Copy", copied: "Copied",
       chars: function (n) { return "up to " + n + " characters"; },
+      template: "Prompt template",
+      templateHint: "Read-only · collapsed by default; {requirement} is replaced by your words and <sessionId> by the current session id",
+      copyTemplate: "Copy template",
     },
   };
 
@@ -44,6 +51,9 @@ module.exports = function (deps) {
     ".wbt-cmd-examples li{overflow-wrap:anywhere}",
     ".wbt-cmd-empty,.wbt-cmd-error{padding:12px;border:1px dashed var(--wb-border);border-radius:var(--wb-radius-sm);font-size:12.5px}",
     ".wbt-cmd-error{border-style:solid;color:var(--dsw-alias-status-danger,inherit)}",
+    ".wbt-cmd-template{border-top:1px dashed var(--wb-border);padding-top:8px;display:flex;flex-direction:column;gap:8px}",
+    ".wbt-cmd-template>summary{cursor:pointer;font-size:12.5px;font-weight:600;list-style:revert}",
+    ".wbt-cmd-pre{margin:0;max-height:340px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11.5px;line-height:1.55;background:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));border-radius:var(--wb-radius-sm);padding:10px}",
   ].join("");
 
   function result(r) {
@@ -96,6 +106,14 @@ module.exports = function (deps) {
       limit ? h("div", { className: "wbt-cmd-row" }, h("span", { className: "wbt-cmd-label" }, t.limit), h("span", null, limit)) : null,
       c.notes && (t === COPY.zh ? c.notes.zh : c.notes.en)
         ? h("p", { className: "wbt-cmd-notes" }, t === COPY.zh ? c.notes.zh : c.notes.en)
+        : null,
+      typeof c.template === "string" && c.template.trim()
+        ? h("details", { className: "wbt-cmd-template" },
+          h("summary", null, t.template),
+          h("span", { className: "wbt-cmd-hint" }, t.templateHint),
+          h("div", { className: "wbt-cmd-row" },
+            h(CopyButton, { t: t, text: c.template, onCopied: props.onCopied })),
+          h("pre", { className: "wbt-cmd-pre" }, c.template))
         : null);
   }
 

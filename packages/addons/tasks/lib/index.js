@@ -50,7 +50,7 @@ function trackActions(api) {
  */
 function registerCommandsAction(api) {
   api.action("tasks.commands", {
-    description: "只读：返回本插件注册的斜杠命令目录（名称、用途、用法、输入提示、字符上限、示例、说明），供「命令」页渲染；不执行命令、不写库、不产生审计",
+    description: "只读：返回本插件注册的斜杠命令目录（名称、用途、用法、输入提示、字符上限、示例、说明，含只读提示词模板），供「命令」页渲染；不执行命令、不写库、不产生审计",
     input: { type: "object", properties: {}, additionalProperties: false },
     examples: [{}],
     execute: () => {
@@ -106,7 +106,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/时间线/配置/数据五个视图：紧急/已关闭/已开启/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "5.2.3",
+        version: "5.2.4",
         tables: ["task", "task_node", "task_timeline", "task_timeline_link", "task_workspace", "task_workspace_link"],
         sync: taskSync,
         views: [

@@ -26,11 +26,24 @@ function textOf(value) {
   return typeof value === "string" ? value : "";
 }
 
-/** 构造送进下一轮模型的 brief 文本。 */
-export function buildPublisherBrief({ requirement, sessionId, now } = {}) {
+/** 预览时替换「生成时间」，避免把一次性的时间戳印进只读模板。 */
+export const PREVIEW_STAMP = "<生成时间>";
+
+/**
+ * 构造送进下一轮模型的 brief 文本。
+ *
+ * `preview: true` 只把生成时间换成占位符，供「命令」页展示只读模板；
+ * 需求与会话 id 由调用方传占位符（`{需求描述}` / `<sessionId>`），
+ * 正式发布的默认行为完全不变。
+ */
+export function buildPublisherBrief({ requirement, sessionId, now, preview } = {}) {
   const raw = textOf(requirement);
   const sid = textOf(sessionId).trim() || "unknown";
-  const stamp = now instanceof Date && !Number.isNaN(now.getTime()) ? now.toISOString() : new Date().toISOString();
+  const stamp = preview
+    ? PREVIEW_STAMP
+    : now instanceof Date && !Number.isNaN(now.getTime())
+      ? now.toISOString()
+      : new Date().toISOString();
   return [
     "请按任务发布 SOP 处理下面这条需求，并在本轮结束时给出发布结果或明确的待确认问题。",
     "",

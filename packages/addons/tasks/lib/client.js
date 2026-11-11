@@ -4088,7 +4088,10 @@ var require_commands = __commonJS({
           copied: "\u5DF2\u590D\u5236",
           chars: function(n) {
             return "\u6700\u591A " + n + " \u5B57\u7B26";
-          }
+          },
+          template: "\u63D0\u793A\u8BCD\u6A21\u677F",
+          templateHint: "\u53EA\u8BFB \xB7 \u9ED8\u8BA4\u6298\u53E0\uFF0C\u5C55\u5F00\u53EF\u770B\u5168\u6587\uFF1B{\u9700\u6C42\u63CF\u8FF0} \u6362\u6210\u4F60\u7684\u539F\u8BDD\uFF0C<sessionId> \u4E3A\u5F53\u524D\u4F1A\u8BDD id",
+          copyTemplate: "\u590D\u5236\u6A21\u677F"
         },
         en: {
           title: "Commands",
@@ -4111,7 +4114,10 @@ var require_commands = __commonJS({
           copied: "Copied",
           chars: function(n) {
             return "up to " + n + " characters";
-          }
+          },
+          template: "Prompt template",
+          templateHint: "Read-only \xB7 collapsed by default; {requirement} is replaced by your words and <sessionId> by the current session id",
+          copyTemplate: "Copy template"
         }
       };
       var CSS = [
@@ -4131,7 +4137,10 @@ var require_commands = __commonJS({
         ".wbt-cmd-examples{margin:0;padding-left:18px;font-size:12.5px;display:flex;flex-direction:column;gap:4px}",
         ".wbt-cmd-examples li{overflow-wrap:anywhere}",
         ".wbt-cmd-empty,.wbt-cmd-error{padding:12px;border:1px dashed var(--wb-border);border-radius:var(--wb-radius-sm);font-size:12.5px}",
-        ".wbt-cmd-error{border-style:solid;color:var(--dsw-alias-status-danger,inherit)}"
+        ".wbt-cmd-error{border-style:solid;color:var(--dsw-alias-status-danger,inherit)}",
+        ".wbt-cmd-template{border-top:1px dashed var(--wb-border);padding-top:8px;display:flex;flex-direction:column;gap:8px}",
+        ".wbt-cmd-template>summary{cursor:pointer;font-size:12.5px;font-weight:600;list-style:revert}",
+        ".wbt-cmd-pre{margin:0;max-height:340px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11.5px;line-height:1.55;background:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));border-radius:var(--wb-radius-sm);padding:10px}"
       ].join("");
       function result(r) {
         if (!r || !r.ok) throw new Error(r && r.error || "Request failed");
@@ -4200,7 +4209,19 @@ var require_commands = __commonJS({
             }))
           ) : null,
           limit ? h("div", { className: "wbt-cmd-row" }, h("span", { className: "wbt-cmd-label" }, t.limit), h("span", null, limit)) : null,
-          c.notes && (t === COPY.zh ? c.notes.zh : c.notes.en) ? h("p", { className: "wbt-cmd-notes" }, t === COPY.zh ? c.notes.zh : c.notes.en) : null
+          c.notes && (t === COPY.zh ? c.notes.zh : c.notes.en) ? h("p", { className: "wbt-cmd-notes" }, t === COPY.zh ? c.notes.zh : c.notes.en) : null,
+          typeof c.template === "string" && c.template.trim() ? h(
+            "details",
+            { className: "wbt-cmd-template" },
+            h("summary", null, t.template),
+            h("span", { className: "wbt-cmd-hint" }, t.templateHint),
+            h(
+              "div",
+              { className: "wbt-cmd-row" },
+              h(CopyButton, { t, text: c.template, onCopied: props.onCopied })
+            ),
+            h("pre", { className: "wbt-cmd-pre" }, c.template)
+          ) : null
         );
       }
       function CommandsView(props) {
@@ -10995,7 +11016,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.3",
+    version: "5.2.4",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

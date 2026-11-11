@@ -60,6 +60,32 @@ for (const item of catalog) {
   assert.equal(Object.keys(item).filter((key) => typeof item[key] === "function").length, 0, "投影不应含函数");
   assert.ok(item.examples.every((text) => typeof text === "string" && text.startsWith("/" + item.name)), "示例应是可复制的完整命令");
 }
+// 模板：每条命令都带非空只读模板，骨架与占位符齐全，且与正式 brief 同源。
+for (const item of catalog) {
+  assert.equal(typeof item.template, "string", item.name + " 应带只读模板 template");
+  assert.ok(item.template.trim().length > 200, item.name + " 的模板不应为空");
+  for (const marker of ["A. 调研现状", "## 输出格式", "## 边界规则", "## 会话信息"]) {
+    assert.ok(item.template.includes(marker), item.name + " 的模板缺骨架：" + marker);
+  }
+  for (const holder of ["{需求描述}", "<sessionId>", "<生成时间>"]) {
+    assert.ok(item.template.includes(holder), item.name + " 的模板缺占位符：" + holder);
+  }
+}
+const SAMPLE = catalog[0];
+const REAL_SID = "session-real-command-1";
+const REAL_REQ = "把命令页的模板展示补齐";
+const realBrief = TASK_COMMANDS[0].buildBrief({
+  requirement: REAL_REQ,
+  sessionId: REAL_SID,
+  now: new Date("2026-11-11T08:00:00.000Z"),
+});
+const restored = SAMPLE.template
+  .split("{需求描述}").join(REAL_REQ)
+  .split("<sessionId>").join(REAL_SID)
+  .split("<生成时间>").join("2026-11-11T08:00:00.000Z");
+assert.equal(restored, realBrief, "模板换回真实值后应与正式 brief 逐字一致");
+assert.equal(SAMPLE.template.includes(REAL_SID), false, "模板不得泄露真实会话 id");
+
 const publisher = findCommand(PUBLISHER_COMMAND);
 assert.ok(publisher, "findCommand 应能按名称取到发布命令");
 assert.equal(publisher.limit.max, MAX_REQUIREMENT_LENGTH, "目录上限应与 brief.js 的常量一致");
@@ -255,6 +281,20 @@ async function mountWith(api, lang) {
     assert.ok(body.includes(item.notes.zh), "应显示说明：" + item.name);
   }
   assert.ok(find(tree, (n) => n.type === "code" && text(n) === "/" + PUBLISHER_COMMAND), "命令名应渲染成代码片段");
+  // 提示词模板：默认折叠的只读展开区，含全文与占位符说明，且没有任何可编辑控件。
+  const details = walk(tree).filter((n) => n.type === "details");
+  assert.equal(details.length, fixture.length, "每条命令都应有「提示词模板」折叠区");
+  assert.ok(details.every((n) => !n.props.open), "模板应默认折叠");
+  assert.ok(body.includes("提示词模板"), "折叠区标题应可见");
+  assert.ok(body.includes("<sessionId>"), "折叠区应有占位符说明");
+  const pres = walk(tree).filter((n) => n.type === "pre");
+  assert.equal(pres.length, fixture.length, "每条命令都应有只读模板正文 pre");
+  assert.ok(text(pres[0]).includes("## 输出格式") && text(pres[0]).includes("## 边界规则"), "pre 应展示模板全文");
+  assert.equal(
+    walk(tree).some((n) => n.type === "input" || n.type === "textarea" || n.type === "select"),
+    false,
+    "模板区不得出现可编辑控件",
+  );
   const copies = walk(tree).filter((n) => n.type === "button" && text(n) === "复制");
   assert.ok(copies.length >= catalog.length, "用法与示例都应可复制");
   copies[0].props.onClick();
@@ -269,6 +309,7 @@ async function mountWith(api, lang) {
   const body = text(await settle(rt));
   assert.ok(body.includes("Commands") && body.includes("Read-only"), body.slice(0, 120));
   assert.ok(body.includes(catalog[0].summary.en), "英文界面应显示 en 用途");
+  assert.ok(body.includes("Prompt template"), "英文界面应显示模板折叠区");
 }
 
-console.log("TASKS COMMANDS PASS: catalog, registration, usage/handler, client view 4 states");
+console.log("TASKS COMMANDS PASS: catalog, template, registration, usage/handler, client view 4 states");

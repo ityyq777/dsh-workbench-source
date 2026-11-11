@@ -117,6 +117,25 @@ check("brief 兜底", () => {
   assert.equal(/dsh-session:[A-Za-z0-9_-]+/u.test(brief), false);
 });
 
+// 2.1) 预览模式只替换生成时间，正式 brief 的行为不变
+check("preview 不影响正式 brief", () => {
+  const real = buildPublisherBrief({
+    requirement: "把命令页的模板展示补齐",
+    sessionId: "session-real-1",
+    now: new Date("2026-11-11T08:00:00.000Z"),
+  });
+  const preview = buildPublisherBrief({ requirement: "{需求描述}", sessionId: "<sessionId>", preview: true });
+  assert.ok(real.includes("sessionId: session-real-1"), "正式 brief 应带真实 sessionId");
+  assert.ok(real.includes("生成时间: 2026-11-11T08:00:00.000Z"), "正式 brief 应带真实生成时间");
+  assert.ok(preview.includes("sessionId: <sessionId>"), "预览应使用占位符 sessionId");
+  assert.ok(preview.includes("生成时间: <生成时间>"), "预览应使用占位符生成时间");
+  const restored = preview
+    .split("{需求描述}").join("把命令页的模板展示补齐")
+    .split("<sessionId>").join("session-real-1")
+    .split("<生成时间>").join("2026-11-11T08:00:00.000Z");
+  assert.equal(restored, real, "预览换回真实值后应与正式 brief 逐字一致");
+});
+
 // 3) 注册：名称、描述、input、recordInput=false、handler 返回用法
 check("注册与空参数", () => {
   const commands = fakeCommands();
@@ -220,4 +239,4 @@ check("工作区归属不挤进边界规则", () => {
   assert.ok(cStep.includes("taskWorkspaces.list") && cStep.includes("workspaceIds"), "工作区判断应在 SOP C");
 });
 
-console.log("TASK PUBLISHER PASS:", checks, "checks (brief, registration, empty, attachments, too long, no-commands, followup, workspace)");
+console.log("TASK PUBLISHER PASS:", checks, "checks (brief, preview, registration, empty, attachments, too long, no-commands, followup, workspace)");

@@ -10,6 +10,12 @@
  */
 import { buildPublisherBrief, MAX_REQUIREMENT_LENGTH } from "./brief.js";
 
+/** 只读模板里替换需求与会话 id 的占位符；页面提示「换回你的原话/当前会话 id」即为此。 */
+export const TEMPLATE_PLACEHOLDERS = {
+  requirement: "{需求描述}",
+  sessionId: "<sessionId>",
+};
+
 export const TASK_COMMANDS = [
   {
     name: "wb-task-publisher",
@@ -63,7 +69,19 @@ export function commandCatalog() {
     limit: entry.limit ? { field: entry.limit.field, max: entry.limit.max } : null,
     examples: (entry.examples || []).map((item) => item.text),
     notes: entry.notes,
+    // 模板由 buildBrief 现场渲染，不另存一份正文：预览时需求与会话 id 用占位符、生成时间用 <生成时间>。
+    template: renderTemplate(entry),
   }));
+}
+
+/** 用占位符渲染命令正文；没有 buildBrief 的条目没有模板。 */
+function renderTemplate(entry) {
+  if (typeof entry.buildBrief !== "function") return "";
+  return entry.buildBrief({
+    requirement: TEMPLATE_PLACEHOLDERS.requirement,
+    sessionId: TEMPLATE_PLACEHOLDERS.sessionId,
+    preview: true,
+  });
 }
 
 /**
