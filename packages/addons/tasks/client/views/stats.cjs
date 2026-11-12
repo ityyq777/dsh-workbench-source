@@ -4,6 +4,7 @@ var h = React.createElement;
 var charts = require("../stats/charts.cjs");
 var configView = require("./config.cjs");
 var recentColumns = require("../item/recent-columns.cjs");
+var taskTitle = require("../stats/task-link.cjs");
 var rankingName = require("../item/ranking-name.cjs");
 var Heatmap = require("../stats/heatmap.cjs");
 var Today = require("../stats/today.cjs");
@@ -305,7 +306,7 @@ function TasksStatsBody(props) {
         h(ch.DataTable, listProps(data, "overdue", lang, {
           lang: lang, empty: t.noOverdue,
           columns: [
-            { key: "title", label: t.colTitle },
+            { key: "title", label: t.colTitle, render: taskTitle(lang, props.onNavigate) },
             { key: "targetDate", label: t.colTarget },
             { key: "daysOverdue", label: t.colAge, num: true },
             { key: "tableTitle", label: t.colTable },

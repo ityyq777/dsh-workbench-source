@@ -24,6 +24,7 @@
     "test:task-difficulty": "node scripts/test-task-difficulty-backend.mjs && node scripts/test-tasks-difficulty-ui.mjs",
     "test:task-presets": "node scripts/test-task-presets.mjs",
     "test:tasks-search": "node scripts/test-tasks-search.mjs",
+    "test:task-stats-task-link": "node scripts/test-task-stats-task-link.mjs",
     "test:task-body": "node scripts/test-task-body.mjs",
     "test:task-body-react": "node scripts/test-task-body-react.mjs",
     "test:task-config-ui": "node scripts/test-task-config-ui.mjs",

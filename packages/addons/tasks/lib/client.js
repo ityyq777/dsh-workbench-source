@@ -1442,15 +1442,42 @@ var require_config = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/stats/task-link.cjs
+var require_task_link = __commonJS({
+  "packages/addons/tasks/client/stats/task-link.cjs"(exports2, module2) {
+    var React = require("react");
+    var h = React.createElement;
+    module2.exports = function taskTitle(lang, onNavigate) {
+      var en = lang === "en";
+      return function(row) {
+        var title = row.title == null ? "" : String(row.title);
+        var id = row.id == null ? "" : String(row.id);
+        if (!id || typeof onNavigate !== "function") return title;
+        return h("button", {
+          type: "button",
+          className: "wbt-table-link",
+          "data-task-id": id,
+          "aria-label": (en ? "Search by task ID: " : "\u6309\u4EFB\u52A1 ID \u68C0\u7D22\uFF1A") + id,
+          title: en ? "Search by task ID: " + id : "\u6309\u4EFB\u52A1 ID \u68C0\u7D22\uFF1A" + id,
+          onClick: function() {
+            onNavigate("tasks", { taskId: id });
+          }
+        }, title);
+      };
+    };
+  }
+});
+
 // packages/addons/tasks/client/item/recent-columns.cjs
 var require_recent_columns = __commonJS({
   "packages/addons/tasks/client/item/recent-columns.cjs"(exports2, module2) {
     var React = require("react");
     var h = React.createElement;
+    var taskTitle = require_task_link();
     module2.exports = function recentColumns(t, lang, onNavigate) {
       var en = lang === "en";
       return [
-        { key: "title", label: t.colTitle },
+        { key: "title", label: t.colTitle, render: taskTitle(lang, onNavigate) },
         { key: "difficulty", label: en ? "Difficulty" : "\u96BE\u5EA6", render: function(row) {
           var n = Number(row.difficulty);
           if (!(n > 0)) return "\u2014";
@@ -2094,6 +2121,7 @@ var require_stats = __commonJS({
     var charts = require_charts();
     var configView = require_config();
     var recentColumns = require_recent_columns();
+    var taskTitle = require_task_link();
     var rankingName = require_ranking_name();
     var Heatmap = require_heatmap();
     var Today = require_today();
@@ -2557,7 +2585,7 @@ var require_stats = __commonJS({
               lang,
               empty: t.noOverdue,
               columns: [
-                { key: "title", label: t.colTitle },
+                { key: "title", label: t.colTitle, render: taskTitle(lang, props.onNavigate) },
                 { key: "targetDate", label: t.colTarget },
                 { key: "daysOverdue", label: t.colAge, num: true },
                 { key: "tableTitle", label: t.colTable }
@@ -9147,6 +9175,11 @@ var require_task_filter_model = __commonJS({
       if (!result && max) return null;
       return result ? result.value : next;
     }
+    function taskNavigation(params) {
+      if (!params || typeof params.taskId !== "string") return null;
+      var id = params.taskId.trim();
+      return /^[A-Za-z0-9_-]{1,64}$/.test(id) ? id : null;
+    }
     function navigation(params) {
       if (!params) return null;
       var value;
@@ -9227,6 +9260,7 @@ var require_task_filter_model = __commonJS({
       presetValue,
       activePreset,
       navigation,
+      taskNavigation,
       save,
       load
     };
@@ -9522,6 +9556,7 @@ var require_tasks_view = __commonJS({
         var api = props.api;
         var cfg = props.cfg || {};
         var activityNavigation = filters.navigation(props.viewParams);
+        var taskNavigation = filters.taskNavigation(props.viewParams);
         var tableNavigation = !activityNavigation && props.viewParams && props.viewParams.tableId;
         var groupNavigation = !activityNavigation && !tableNavigation && props.viewParams && props.viewParams.groupId;
         var nodeNavigation = tableNavigation || groupNavigation;
@@ -9536,16 +9571,16 @@ var require_tasks_view = __commonJS({
         var expS = React.useState(/* @__PURE__ */ new Set());
         var expanded = expS[0], setExpanded = expS[1];
         var expInitRef = React.useRef(false);
-        var targetS = React.useState(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: groupNavigation ? String(groupNavigation) : "1", tableId: null });
+        var targetS = React.useState(taskNavigation ? { groupId: "1", tableId: null } : tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: groupNavigation ? String(groupNavigation) : "1", tableId: null });
         var target = targetS[0], setTarget = targetS[1];
         var pathS = React.useState([]);
         var currentPath = pathS[0], setCurrentPath = pathS[1];
-        var storedFilters = filters.load(props.viewParams);
-        var initialMissing = storedFilters ? storedFilters.missing : !activityNavigation && !nodeNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
+        var storedFilters = taskNavigation ? null : filters.load(props.viewParams);
+        var initialMissing = taskNavigation ? false : storedFilters ? storedFilters.missing : !activityNavigation && !nodeNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
         var missingS = React.useState(initialMissing);
         var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
         var defaultPreset = filters.presetValue(cfg["ui.defaultPreset"]);
-        var filterState = React.useState(storedFilters && storedFilters.value || activityNavigation || defaultPreset || filters.empty());
+        var filterState = React.useState(taskNavigation ? filters.empty() : storedFilters && storedFilters.value || activityNavigation || defaultPreset || filters.empty());
         var filterValue = filterState[0], setFilterValue = filterState[1];
         React.useEffect(function() {
           filters.save(filterValue, difficultyMissing, props.viewParams);
@@ -9553,11 +9588,11 @@ var require_tasks_view = __commonJS({
         var panelState = React.useState(false), panelOpen = panelState[0], setPanelOpen = panelState[1];
         var hintState = React.useState(""), filterHint = hintState[0], setFilterHint = hintState[1];
         var panelId = React.useId();
-        var searchS = React.useState("");
+        var searchS = React.useState(taskNavigation || "");
         var searchDraft = searchS[0], setSearchDraft = searchS[1];
         var tqS = React.useState("");
         var treeQuery = tqS[0], setTreeQuery = tqS[1];
-        var titleS = React.useState("");
+        var titleS = React.useState(taskNavigation || "");
         var titleKey = titleS[0], setTitleKey = titleS[1];
         var tagReloadS = React.useState(0);
         var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
@@ -9611,7 +9646,20 @@ var require_tasks_view = __commonJS({
         React.useEffect(function() {
           if (initialNavigation.current) {
             initialNavigation.current = false;
-            if (storedFilters) return;
+            if (storedFilters || taskNavigation) return;
+          }
+          if (taskNavigation) {
+            setSearchDraft(taskNavigation);
+            setTitleKey(taskNavigation);
+            setFilterValue(filters.empty());
+            setTarget({ groupId: "1", tableId: null });
+            setDifficultyMissing(false);
+            setFilterHint("");
+            setFilterTagIds([]);
+            setPageNumber(1);
+            setSelectedIds(/* @__PURE__ */ new Set());
+            setSelectionMode(false);
+            return;
           }
           if (!activityNavigation && !nodeNavigation) return;
           setFilterValue(activityNavigation || defaultPreset || filters.empty());
@@ -11372,7 +11420,7 @@ var init_list_checks = __esm({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.11",
+    version: "5.2.12",
     icon: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },

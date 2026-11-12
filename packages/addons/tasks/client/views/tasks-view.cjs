@@ -28,6 +28,7 @@ module.exports = function createTasksView(deps) {
     var api = props.api;
     var cfg = props.cfg || {};
     var activityNavigation = filters.navigation(props.viewParams);
+    var taskNavigation = filters.taskNavigation(props.viewParams);
     var tableNavigation = !activityNavigation && props.viewParams && props.viewParams.tableId;
     var groupNavigation = !activityNavigation && !tableNavigation && props.viewParams && props.viewParams.groupId;
     var nodeNavigation = tableNavigation || groupNavigation;
@@ -43,28 +44,28 @@ module.exports = function createTasksView(deps) {
     var expS = React.useState(new Set());
     var expanded = expS[0], setExpanded = expS[1];
     var expInitRef = React.useRef(false);
-    var targetS = React.useState(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: groupNavigation ? String(groupNavigation) : "1", tableId: null });
+    var targetS = React.useState(taskNavigation ? { groupId: "1", tableId: null } : tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: groupNavigation ? String(groupNavigation) : "1", tableId: null });
     var target = targetS[0], setTarget = targetS[1];
     var pathS = React.useState([]);
     var currentPath = pathS[0], setCurrentPath = pathS[1];
     // 视图切走会卸载，用会话存储还原上次的筛选；显式导航（排行/热力图跳转）优先并覆盖它。
-    var storedFilters = filters.load(props.viewParams);
-    var initialMissing = storedFilters ? storedFilters.missing : !activityNavigation && !nodeNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
+    var storedFilters = taskNavigation ? null : filters.load(props.viewParams);
+    var initialMissing = taskNavigation ? false : storedFilters ? storedFilters.missing : !activityNavigation && !nodeNavigation && !!(props.viewParams && props.viewParams.difficultyMissing === true);
     var missingS = React.useState(initialMissing);
     var difficultyMissing = missingS[0], setDifficultyMissing = missingS[1];
     // 默认快捷预设（ui.defaultPreset）只在没有会话筛选记忆、也没有显式导航时套用一次。
     var defaultPreset = filters.presetValue(cfg["ui.defaultPreset"]);
-    var filterState = React.useState((storedFilters && storedFilters.value) || activityNavigation || defaultPreset || filters.empty());
+    var filterState = React.useState(taskNavigation ? filters.empty() : (storedFilters && storedFilters.value) || activityNavigation || defaultPreset || filters.empty());
     var filterValue = filterState[0], setFilterValue = filterState[1];
     React.useEffect(function () { filters.save(filterValue, difficultyMissing, props.viewParams); }, [filterValue, difficultyMissing, JSON.stringify(props.viewParams || {})]);
     var panelState = React.useState(false), panelOpen = panelState[0], setPanelOpen = panelState[1];
     var hintState = React.useState(""), filterHint = hintState[0], setFilterHint = hintState[1];
     var panelId = React.useId();
-    var searchS = React.useState("");
+    var searchS = React.useState(taskNavigation || "");
     var searchDraft = searchS[0], setSearchDraft = searchS[1];
     var tqS = React.useState("");
     var treeQuery = tqS[0], setTreeQuery = tqS[1];
-    var titleS = React.useState("");
+    var titleS = React.useState(taskNavigation || "");
     var titleKey = titleS[0], setTitleKey = titleS[1];
     var tagReloadS = React.useState(0);
     var tagReload = tagReloadS[0], setTagReload = tagReloadS[1];
@@ -117,7 +118,11 @@ module.exports = function createTasksView(deps) {
     var toast = toastS[0], setToast = toastS[1];
     var refreshRef = React.useRef({}), initialNavigation = React.useRef(true);
     React.useEffect(function () {
-      if (initialNavigation.current) { initialNavigation.current = false; if (storedFilters) return; }
+      if (initialNavigation.current) { initialNavigation.current = false; if (storedFilters || taskNavigation) return; }
+      if (taskNavigation) { // 任务 ID 导航优先：预填搜索并清空残留筛选，落到全部任务组。
+        setSearchDraft(taskNavigation); setTitleKey(taskNavigation); setFilterValue(filters.empty()); setTarget({ groupId: "1", tableId: null });
+        setDifficultyMissing(false); setFilterHint(""); setFilterTagIds([]); setPageNumber(1); setSelectedIds(new Set()); setSelectionMode(false); return;
+      }
       if (!activityNavigation && !nodeNavigation) return;
       setFilterValue(activityNavigation || defaultPreset || filters.empty());
       setTarget(tableNavigation ? { tableId: String(tableNavigation), groupId: props.viewParams.groupId } : { groupId: groupNavigation ? String(groupNavigation) : "1", tableId: null });
