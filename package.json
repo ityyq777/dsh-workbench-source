@@ -70,6 +70,7 @@
     "verify:standalone": "node scripts/verify-standalone-install.mjs",
     "test:message": "node scripts/test-message.mjs",
     "test:vault": "node --test packages/addons/vault/test/vault.test.mjs",
+    "test:connector": "node --test packages/addons/connector/test/connector.test.mjs",
     "test:message-config": "node scripts/test-message-config-state.mjs",
     "test:difficulty-dimensions": "node scripts/test-difficulty-dimensions.mjs"
   },

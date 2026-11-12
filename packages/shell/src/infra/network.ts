@@ -160,7 +160,8 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
               if (!hookM) return send(404, { ok: false, error: "no hook route " + p });
               const domainId = decodeURIComponent(hookM[1]);
               const hookName = decodeURIComponent(hookM[2]);
-              const rec = domains.get(domainId);
+              // 允许 /hooks/connector/inbound 这样的短域名；内部 id 仍是 wb-addon-connector。
+              const rec = domains.get(domainId) ?? domains.get("wb-addon-" + domainId);
               const handler = rec?.hooks?.get(hookName);
               if (!handler) return send(404, { ok: false, error: "no hook " + domainId + "/" + hookName });
               const remote = String(req.socket?.remoteAddress ?? "");
