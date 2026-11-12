@@ -1947,7 +1947,9 @@ var require_data_view = __commonJS({
         }
         function loadTables() {
           setLoadingTables(true);
-          Promise.resolve(api.call(DOMAIN + ".dataTables")).then(function(r) {
+          Promise.resolve((options.tablesLoader || function(a) {
+            return a.call(DOMAIN + ".dataTables");
+          })(api)).then(function(r) {
             if (r && r.ok === false) throw new Error(r && r.error || t.loadFail);
             var body = unwrap(r);
             if (!body || !Array.isArray(body.tables)) throw new Error(t.loadFail);
@@ -2012,7 +2014,9 @@ var require_data_view = __commonJS({
           if (sort) args.sort = sort;
           if (search) args.search = search;
           if (Object.keys(filters).length) args.filters = filters;
-          Promise.resolve(api.call(DOMAIN + ".dataQuery", args)).then(function(r) {
+          Promise.resolve((options.query || function(a, q) {
+            return a.call(DOMAIN + ".dataQuery", q);
+          })(api, args)).then(function(r) {
             if (req !== reqRef.current) return;
             if (r && r.ok === false) throw new Error(r && r.error || t.queryFail);
             var body = unwrap(r);
@@ -2394,7 +2398,7 @@ var require_data_view = __commonJS({
                 }
               }
             }),
-            h2("span", null, fmt(t.queryTime, { n: data ? data.queryMs : 0 }))
+            data && data.queryMs !== void 0 ? h2("span", null, fmt(t.queryTime, { n: data.queryMs })) : null
           );
         }
         if (!tables && loadingTables && options.Skeleton) return h2(options.Skeleton, { lang, label: t.loading });
@@ -2430,7 +2434,7 @@ var require_data_view = __commonJS({
                   "span",
                   { className: P + "-stabname" },
                   h2("span", null, tableLabel(tb)),
-                  h2("span", { className: P + "-sidecount" }, String(tb.count))
+                  h2("span", { className: P + "-sidecount" }, tb.count === void 0 || tb.count === null ? "" : String(tb.count))
                 ),
                 h2("span", { className: P + "-sidetable" }, tb.name)
               );
@@ -2457,7 +2461,7 @@ var require_data_view = __commonJS({
                   h2(
                     "div",
                     { className: P + "-sub" },
-                    current ? fmt(t.rowCount, { n: current.count }) : "",
+                    current && data && data.total !== void 0 ? fmt(t.rowCount, { n: data.total }) : "",
                     current && current.deletedCount ? " \xB7 " + fmt(t.deletedCount, { n: current.deletedCount }) : "",
                     " \xB7 " + t.subtitle
                   )

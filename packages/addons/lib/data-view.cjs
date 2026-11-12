@@ -114,7 +114,7 @@ function DataView(props) {
 
   function loadTables() {
     setLoadingTables(true);
-    Promise.resolve(api.call(DOMAIN + ".dataTables"))
+    Promise.resolve((options.tablesLoader || function (a) { return a.call(DOMAIN + ".dataTables"); })(api))
       .then(function (r) {
         if (r && r.ok === false) throw new Error((r && r.error) || t.loadFail);
         var body = unwrap(r);
@@ -176,7 +176,7 @@ function DataView(props) {
     if (sort) args.sort = sort;
     if (search) args.search = search;
     if (Object.keys(filters).length) args.filters = filters;
-    Promise.resolve(api.call(DOMAIN + ".dataQuery", args))
+    Promise.resolve((options.query || function (a, q) { return a.call(DOMAIN + ".dataQuery", q); })(api, args))
       .then(function (r) {
         if (req !== reqRef.current) return;
         if (r && r.ok === false) throw new Error((r && r.error) || t.queryFail);
@@ -467,7 +467,7 @@ function DataView(props) {
         className: P + "-jump", type: "number", min: 1, max: pages, "aria-label": t.jump,
         onKeyDown: function (e) { if (e.key === "Enter") { var n = Math.floor(Number(e.target.value)); if (n >= 1) setPage(Math.min(pages, n)); } },
       }),
-      h("span", null, fmt(t.queryTime, { n: data ? data.queryMs : 0 })));
+      data && data.queryMs !== undefined ? h("span", null, fmt(t.queryTime, { n: data.queryMs })) : null);
   }
 
   if (!tables && loadingTables && options.Skeleton) return h(options.Skeleton, { lang: lang, label: t.loading });
@@ -489,7 +489,7 @@ function DataView(props) {
         },
           h("span", { className: P + "-stabname" },
             h("span", null, tableLabel(tb)),
-            h("span", { className: P + "-sidecount" }, String(tb.count))),
+            h("span", { className: P + "-sidecount" }, tb.count === undefined || tb.count === null ? "" : String(tb.count))),
           h("span", { className: P + "-sidetable" }, tb.name));
       })),
     h("div", { className: P + "-main" },
@@ -502,7 +502,7 @@ function DataView(props) {
         h("div", { className: P + "-headmain" },
           h("h2", null, icon("database"), tableLabel(current), h("span", { className: P + "-code" }, active)),
           h("div", { className: P + "-sub" },
-            current ? fmt(t.rowCount, { n: current.count }) : "",
+            current && data && data.total !== undefined ? fmt(t.rowCount, { n: data.total }) : "",
             current && current.deletedCount ? " · " + fmt(t.deletedCount, { n: current.deletedCount }) : "",
             " · " + t.subtitle)),
         h("button", {

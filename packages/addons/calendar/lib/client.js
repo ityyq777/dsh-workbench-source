@@ -774,37 +774,1180 @@ var require_config = __commonJS({
   }
 });
 
+// packages/addons/lib/legacy-data.cjs
+var require_legacy_data = __commonJS({
+  "packages/addons/lib/legacy-data.cjs"(exports2, module2) {
+    "use strict";
+    function unwrap(r) {
+      return r && r.result !== void 0 ? r.result : r;
+    }
+    function rowsOf(body) {
+      if (!body) return [];
+      if (Array.isArray(body)) return body;
+      if (Array.isArray(body.rows)) return body.rows;
+      if (Array.isArray(body.items)) return body.items;
+      return [];
+    }
+    function textOf(value) {
+      if (value === null || value === void 0) return "";
+      return typeof value === "object" ? JSON.stringify(value) : String(value);
+    }
+    function columnsOf(rows) {
+      if (!rows.length) return [];
+      return Object.keys(rows[0]).map(function(name) {
+        return { name, type: "TEXT", system: false };
+      });
+    }
+    function tableNames(body) {
+      var list = body && Array.isArray(body.tables) ? body.tables : [];
+      return list.map(function(t) {
+        if (typeof t === "string") return { name: t };
+        return { name: t.name, count: t.count, columns: t.columns };
+      }).filter(function(t) {
+        return t.name;
+      });
+    }
+    function compare(a, b) {
+      if (typeof a === "number" && typeof b === "number") return a - b;
+      var sa = textOf(a), sb = textOf(b);
+      var na = Number(sa), nb = Number(sb);
+      if (sa !== "" && sb !== "" && Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+      return sa.localeCompare(sb, "zh-CN");
+    }
+    module2.exports = function createLegacyData(domain, options) {
+      options = options || {};
+      var paged = options.paged !== false;
+      var maxRows = Math.max(1, Number(options.maxRows) || 2e3);
+      var pageLimit = Math.min(200, maxRows);
+      function tablesLoader(api) {
+        return api.call(domain + ".dataTables").then(function(r) {
+          if (r && r.ok === false) throw new Error(r.error || "dataTables failed");
+          var body = unwrap(r);
+          return { tables: tableNames(body) };
+        });
+      }
+      function fetchAll(api, table) {
+        var rows = [];
+        var offset = 0;
+        function next() {
+          var args = { table, limit: pageLimit };
+          if (paged) args.offset = offset;
+          return api.call(domain + ".dataQuery", args).then(function(r) {
+            if (r && r.ok === false) throw new Error(r.error || "dataQuery failed");
+            var batch = rowsOf(unwrap(r));
+            rows = rows.concat(batch);
+            if (!paged || batch.length < pageLimit || rows.length >= maxRows) return rows.slice(0, maxRows);
+            offset += batch.length;
+            return next();
+          });
+        }
+        return next();
+      }
+      function query(api, args) {
+        return fetchAll(api, args.table).then(function(all) {
+          var search = String(args.search || "").trim().toLowerCase();
+          var filters = args.filters && typeof args.filters === "object" ? args.filters : {};
+          var filterKeys = Object.keys(filters).slice(0, 20);
+          var colNames = all.length ? Object.keys(all[0]) : [];
+          var includeDeleted = args.includeDeleted === true;
+          var rows = all.filter(function(row) {
+            if (!includeDeleted && row.deleted_at) return false;
+            if (search) {
+              var hit = colNames.some(function(c) {
+                return textOf(row[c]).toLowerCase().indexOf(search) >= 0;
+              });
+              if (!hit) return false;
+            }
+            return filterKeys.every(function(c) {
+              return textOf(row[c]).toLowerCase().indexOf(textOf(filters[c]).toLowerCase()) >= 0;
+            });
+          });
+          var sort = String(args.sort || "");
+          var order = args.order === "asc" ? "asc" : "desc";
+          if (sort && colNames.indexOf(sort) >= 0) {
+            rows = rows.slice().sort(function(a, b) {
+              var d = compare(a[sort], b[sort]);
+              return order === "asc" ? d : -d;
+            });
+          }
+          var pageSize = Math.max(1, Math.min(200, Number(args.pageSize) || 50));
+          var total = rows.length;
+          var pages = Math.max(1, Math.ceil(total / pageSize));
+          var page = Math.max(1, Math.min(pages, Number(args.page) || 1));
+          var start = (page - 1) * pageSize;
+          var started = Date.now();
+          return {
+            table: args.table,
+            columns: columnsOf(all),
+            rows: rows.slice(start, start + pageSize),
+            page,
+            pageSize,
+            pages,
+            total,
+            sort,
+            order,
+            search,
+            filters,
+            includeDeleted,
+            queryMs: Math.max(0, Date.now() - started)
+          };
+        });
+      }
+      return { tablesLoader, query };
+    };
+  }
+});
+
+// packages/addons/lib/data-copy.cjs
+var require_data_copy = __commonJS({
+  "packages/addons/lib/data-copy.cjs"(exports2, module2) {
+    "use strict";
+    var COPY = {
+      zh: {
+        title: "\u6570\u636E",
+        subtitle: "\u53EA\u8BFB\u6D4F\u89C8\u672C\u63D2\u4EF6\u8D1F\u8D23\u7684\u8868\uFF1B\u7CFB\u7EDF\u5217\u4E0E\u5DF2\u5220\u9664\u884C\u9ED8\u8BA4\u9690\u85CF",
+        tables: "\u8868",
+        rows: "\u884C",
+        deleted: "\u5DF2\u5220\u9664",
+        rowCount: "\u5171 {n} \u884C",
+        deletedCount: "\u5176\u4E2D {n} \u884C\u5DF2\u5220\u9664",
+        search: "\u641C\u7D22\u6240\u6709\u6587\u672C\u5217\u2026",
+        pageSize: "\u6BCF\u9875",
+        includeDeleted: "\u542B\u5DF2\u5220\u9664",
+        showSystem: "\u7CFB\u7EDF\u5217",
+        refresh: "\u5237\u65B0",
+        loading: "\u8F7D\u5165\u4E2D\u2026",
+        empty: "\u8FD9\u5F20\u8868\u8FD8\u6CA1\u6709\u6570\u636E",
+        emptyTable: "\u6CA1\u6709\u53EF\u5C55\u793A\u7684\u8868",
+        loadFail: "\u6570\u636E\u670D\u52A1\u4E0D\u53EF\u7528\uFF08\u63D2\u4EF6\u7248\u672C\u8FC7\u65E7\uFF1F\uFF09",
+        retry: "\u91CD\u8BD5",
+        queryFail: "\u67E5\u8BE2\u5931\u8D25\uFF1A",
+        noRows: "\u6CA1\u6709\u5339\u914D\u7684\u884C",
+        prev: "\u4E0A\u4E00\u9875",
+        next: "\u4E0B\u4E00\u9875",
+        pageInfo: "\u7B2C {page} / {pages} \u9875",
+        jump: "\u8DF3\u8F6C",
+        total: "\u5171 {n} \u884C",
+        copied: "\u5DF2\u590D\u5236",
+        copy: "\u590D\u5236",
+        close: "\u5173\u95ED",
+        drawerTitle: "{column} \xB7 \u7B2C {row} \u884C",
+        nullText: "NULL",
+        emptyText: "\u7A7A",
+        yes: "\u662F",
+        no: "\u5426",
+        json: "JSON",
+        queryTime: "{n} ms",
+        sortAsc: "\u5347\u5E8F",
+        sortDesc: "\u964D\u5E8F",
+        filterCol: "\u7B5B\u9009\u2026",
+        filterClear: "\u6E05\u9664\u7B5B\u9009",
+        index: "\u8868\u7D22\u5F15",
+        indexSub: "\u5F53\u524D\u9009\u4E2D\u8868\u7684\u7D22\u5F15\uFF08\u53EA\u8BFB\uFF09\uFF1B\u884C\u6570\u4E3A\u6240\u5C5E\u8868\u603B\u884C\u6570\uFF0C\u4E0D\u662F\u7D22\u5F15\u6761\u76EE\u6570",
+        idxName: "\u7D22\u5F15\u540D",
+        idxColumns: "\u5217",
+        idxType: "\u7C7B\u578B",
+        idxSource: "\u6765\u6E90",
+        idxUnique: "\u552F\u4E00",
+        idxNormal: "\u666E\u901A",
+        idxAuto: "\u81EA\u52A8",
+        idxCreated: "\u663E\u5F0F\u521B\u5EFA",
+        idxCount: "\u5171 {n} \u4E2A\u7D22\u5F15",
+        idxNoExtra: "\u8BE5\u8868\u9664\u4E3B\u952E\u5916\u6CA1\u6709\u989D\u5916\u7D22\u5F15",
+        idxRowsHelp: "\u6240\u5C5E\u8868\u603B\u884C\u6570\uFF08\u542B\u5DF2\u5220\u9664\u884C\uFF09\uFF0C\u4E0D\u662F\u7D22\u5F15\u6761\u76EE\u6570",
+        idxTable: "\u8868",
+        idxRows: "\u884C\u6570",
+        idxCols: "\u5217\u6570",
+        idxKey: "\u4E3B\u952E",
+        idxIndexes: "\u7D22\u5F15",
+        idxLastWrite: "\u6700\u8FD1\u5199\u5165",
+        idxNone: "\u65E0",
+        idxEmpty: "\u5F53\u524D\u8868\u6CA1\u6709\u53EF\u7528\u7684\u7D22\u5F15\u7EDF\u8BA1",
+        idxTables: "\u8868",
+        idxAt: "\u7EDF\u8BA1\u65F6\u95F4"
+      },
+      en: {
+        title: "Data",
+        subtitle: "Read-only view of this plugin's tables; system and deleted rows are hidden by default",
+        tables: "Tables",
+        rows: "rows",
+        deleted: "deleted",
+        rowCount: "{n} rows",
+        deletedCount: "{n} deleted",
+        search: "Search all text columns\u2026",
+        pageSize: "Rows",
+        includeDeleted: "Deleted",
+        showSystem: "System",
+        refresh: "Refresh",
+        loading: "Loading\u2026",
+        empty: "This table has no rows yet",
+        emptyTable: "No tables to show",
+        loadFail: "Data service unavailable (plugin too old?)",
+        retry: "Retry",
+        queryFail: "Query failed: ",
+        noRows: "No matching rows",
+        prev: "Previous",
+        next: "Next",
+        pageInfo: "Page {page} / {pages}",
+        jump: "Jump",
+        total: "{n} rows",
+        copied: "Copied",
+        copy: "Copy",
+        close: "Close",
+        drawerTitle: "{column} \xB7 row {row}",
+        nullText: "NULL",
+        emptyText: "empty",
+        yes: "Yes",
+        no: "No",
+        json: "JSON",
+        queryTime: "{n} ms",
+        sortAsc: "ascending",
+        sortDesc: "descending",
+        filterCol: "Filter\u2026",
+        filterClear: "Clear filter",
+        index: "Table index",
+        indexSub: "Indexes of the selected table (read-only); rows are the table total, not index entries",
+        idxName: "Index name",
+        idxColumns: "Columns",
+        idxType: "Type",
+        idxSource: "Source",
+        idxUnique: "Unique",
+        idxNormal: "Normal",
+        idxAuto: "Automatic",
+        idxCreated: "Explicit",
+        idxCount: "{n} indexes",
+        idxNoExtra: "This table has no indexes other than its primary key",
+        idxRowsHelp: "Total table rows (including deleted rows), not index entries",
+        idxTable: "Table",
+        idxRows: "Rows",
+        idxCols: "Cols",
+        idxKey: "Primary key",
+        idxIndexes: "Indexes",
+        idxLastWrite: "Last write",
+        idxNone: "\u2014",
+        idxEmpty: "No index statistics available for this table",
+        idxTables: "Tables",
+        idxAt: "Generated"
+      }
+    };
+    module2.exports = COPY;
+  }
+});
+
+// packages/addons/lib/visual-tokens.cjs
+var require_visual_tokens = __commonJS({
+  "packages/addons/lib/visual-tokens.cjs"(exports2, module2) {
+    module2.exports = `
+:where(.wbt-root,.wbi-root,.wbi-cfg,.wbt-data,.wbs-data,.wbg-data,.wbi-data,.wb-desc){--wb-radius-sm:8px;--wb-radius-card:12px;--wb-space-sm:8px;--wb-space-md:14px;--wb-border:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wb-description-bg:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 7%,transparent);--wb-description-line:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 34%,transparent);--wb-motion:140ms;--wb-btn-bg:transparent;--wb-btn-hover-bg:color-mix(in oklab,currentColor 6%,transparent);--wb-btn-active-bg:color-mix(in oklab,currentColor 11%,transparent);--wb-btn-primary-bg:var(--dsw-alias-brand-primary,#2563eb);--wb-btn-primary-fg:var(--dsw-alias-label-primary-inverted,#fff);--wb-btn-danger-fg:var(--dsw-alias-state-error-primary,#b91c1c);--wb-btn-size-sm:32px;--wb-btn-focus:2px solid var(--dsw-alias-brand-primary,#2563eb);--wb-btn-focus-offset:2px}
+.wb-desc{background:var(--wb-description-bg);border-left-color:var(--wb-description-line);border-radius:0 var(--wb-radius-sm) var(--wb-radius-sm) 0}
+`;
+  }
+});
+
+// packages/addons/lib/data-style.cjs
+var require_data_style = __commonJS({
+  "packages/addons/lib/data-style.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(DOMAIN, PREFIX) {
+      var P = PREFIX + "-data";
+      var CSS = [
+        require_visual_tokens(),
+        "." + P + "-search:has(.wbi-svg) input{padding-left:30px}." + P + "-search>.wbi-svg{position:absolute;left:10px;top:50%;transform:translateY(-50%)}",
+        "." + P + "-btn{transition:background var(--wb-motion),border-color var(--wb-motion)}",
+        "@media(max-width:480px){." + P + "-head>." + P + "-btn:has(.wbi-svg){width:32px;height:32px;padding:0;justify-content:center}." + P + "-head>." + P + "-btn:has(.wbi-svg) ." + P + "-btnlabel{display:none}}",
+        "." + P + "{--cfg-line:var(--wb-border);--cfg-surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));--cfg-muted:var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 62%,transparent));--cfg-faint:var(--dsw-alias-label-tertiary,color-mix(in oklab,currentColor 42%,transparent));--cfg-hover:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent));display:grid;grid-template-columns:216px minmax(0,1fr);gap:16px;width:100%;min-width:0;color:inherit;font-size:13px;align-items:start}",
+        "." + P + "-side{position:sticky;top:12px;display:flex;flex-direction:column;gap:3px;border:1px solid var(--cfg-line);border-radius:var(--wb-radius-card);background:var(--cfg-surface);padding:8px;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
+        "." + P + "-sidetitle{display:flex;align-items:center;justify-content:space-between;padding:6px 10px 8px;font-size:11px;font-weight:660;letter-spacing:.6px;text-transform:uppercase;color:var(--cfg-faint)}",
+        "." + P + "-stab{display:flex;flex-direction:column;gap:3px;align-items:stretch;border:1px solid transparent;background:transparent;border-radius:9px;padding:8px 10px;font:inherit;color:inherit;text-align:left;cursor:pointer;position:relative;transition:background .12s ease,border-color .12s ease}",
+        "." + P + "-stab:hover{background:var(--cfg-hover)}",
+        "." + P + "-stab:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
+        "." + P + "-stab.on{background:color-mix(in oklab,currentColor 6%,transparent);border-color:var(--cfg-line)}",
+        "." + P + "-stab.on::before{content:'';position:absolute;left:-1px;top:9px;bottom:9px;width:2px;border-radius:2px;background:var(--dsw-alias-brand-primary,currentColor)}",
+        "." + P + "-stabname{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;line-height:1.4;min-width:0}",
+        "." + P + "-stabname span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+        "." + P + "-sidetable{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;color:var(--cfg-muted);margin-top:3px;letter-spacing:.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+        "." + P + "-sidecount{margin-left:auto;font-size:10.5px;font-variant-numeric:tabular-nums;color:var(--cfg-muted);background:color-mix(in oklab,currentColor 8%,transparent);border-radius:999px;padding:1px 7px;flex:none}",
+        "." + P + "-main{display:flex;flex-direction:column;gap:10px;min-width:0;border:1px solid var(--cfg-line);border-radius:var(--wb-radius-card);background:var(--cfg-surface);padding:14px 16px 12px;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
+        "." + P + "-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}",
+        "." + P + "-headmain{min-width:0;flex:1}",
+        "." + P + "-head h2{margin:0;font-size:16px;font-weight:660;letter-spacing:.1px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+        "." + P + "-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;font-weight:500;color:var(--cfg-muted);background:color-mix(in oklab,currentColor 6%,transparent);border-radius:6px;padding:2px 6px}",
+        "." + P + "-sub{font-size:11.5px;color:var(--cfg-muted);line-height:1.55;margin-top:4px}",
+        "." + P + "-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:2px 0 4px}",
+        "." + P + "-search{position:relative;flex:1;min-width:180px;max-width:340px}",
+        "." + P + "-search input{width:100%;border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:9px;padding:8px 11px;font:inherit;font-size:12.5px;outline:none;transition:border-color .15s ease,box-shadow .15s ease}",
+        "." + P + "-search input:hover{border-color:color-mix(in oklab,currentColor 28%,var(--cfg-line))}",
+        "." + P + "-search input:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
+        "." + P + "-select{border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:9px;padding:7px 10px;font:inherit;font-size:12px;outline:none}",
+        "." + P + "-select:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
+        "." + P + "-switch{position:relative;display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:var(--cfg-muted);user-select:none;padding:4px 2px}",
+        "." + P + "-switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}",
+        "." + P + "-track{position:relative;width:34px;height:20px;border-radius:999px;background:color-mix(in oklab,currentColor 18%,transparent);transition:background .16s ease;flex:none}",
+        "." + P + "-track::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--dsw-alias-label-primary,currentColor);transition:transform .16s ease,background .16s ease}",
+        "." + P + "-switch input:checked+." + P + "-track{background:var(--dsw-alias-brand-primary,currentColor)}",
+        "." + P + "-switch input:checked+." + P + "-track::after{transform:translateX(14px);background:var(--dsw-alias-label-primary-inverted,var(--dsw-alias-bg-base))}",
+        "." + P + "-switch input:focus-visible+." + P + "-track{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
+        "." + P + "-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--cfg-line);background:transparent;color:var(--cfg-muted);border-radius:8px;padding:6px 10px;font:inherit;font-size:11.5px;cursor:pointer;white-space:nowrap;transition:background .12s ease,color .12s ease}",
+        "." + P + "-btn:hover{background:var(--cfg-hover);color:var(--dsw-alias-label-primary,inherit)}",
+        "." + P + "-btn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
+        "." + P + "-btn:disabled{opacity:.45;cursor:not-allowed}",
+        "." + P + "-btn[aria-busy='true']{opacity:.6}",
+        "." + P + "-tablewrap{overflow:auto;max-height:calc(100vh - 300px);border:1px solid var(--cfg-line);border-radius:11px;background:var(--dsw-alias-bg-base,transparent)}",
+        "." + P + "-table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:12.5px}",
+        "." + P + "-table th{position:sticky;top:0;z-index:2;background:var(--cfg-surface);border-bottom:1px solid var(--cfg-line);padding:0;text-align:left;font-weight:600;white-space:nowrap}",
+        "." + P + "-thbtn{display:flex;align-items:baseline;gap:6px;width:100%;border:0;background:transparent;color:inherit;font:inherit;font-size:11.5px;font-weight:660;letter-spacing:.2px;padding:9px 12px;cursor:pointer;text-align:left;white-space:nowrap}",
+        "." + P + "-thbtn:hover{background:var(--cfg-hover)}",
+        "." + P + "-thbtn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:-2px}",
+        "." + P + "-coltype{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9.5px;font-weight:500;color:var(--cfg-faint);letter-spacing:.3px}",
+        "." + P + "-sortmark{color:var(--dsw-alias-brand-primary,currentColor);font-size:10px}",
+        "." + P + "-rownum{position:sticky;left:0;z-index:1;background:var(--cfg-surface);color:var(--cfg-faint);text-align:right;font-variant-numeric:tabular-nums;font-size:10.5px;padding:0 8px;width:1%;white-space:nowrap;border-right:1px solid color-mix(in oklab,currentColor 7%,transparent)}",
+        "." + P + "-table thead ." + P + "-rownum{z-index:3}",
+        "." + P + "-cell{padding:7px 12px;border-bottom:1px solid color-mix(in oklab,currentColor 6%,transparent);max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default;vertical-align:top}",
+        "." + P + "-table tbody tr:hover ." + P + "-cell{background:var(--cfg-hover)}",
+        "." + P + "-table tbody tr:nth-child(even) ." + P + "-cell,." + P + "-table tbody tr:nth-child(even) ." + P + "-rownum{background:color-mix(in oklab,currentColor 2.5%,transparent)}",
+        "." + P + "-cell.num{text-align:right;font-variant-numeric:tabular-nums}",
+        "." + P + "-cell.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}",
+        "." + P + "-cell.null{color:var(--cfg-faint);font-style:italic}",
+        "." + P + "-cell.json .v{color:var(--dsw-alias-brand-primary,inherit)}",
+        "." + P + "-tr.deleted ." + P + "-cell,." + P + "-tr.deleted ." + P + "-rownum{opacity:.55}",
+        "." + P + "-tr.deleted ." + P + "-cell .v{text-decoration:line-through;text-decoration-color:color-mix(in oklab,currentColor 35%,transparent)}",
+        "." + P + "-delbadge{display:inline-block;margin-left:6px;font-size:9.5px;line-height:1.5;padding:0 5px;border-radius:999px;background:color-mix(in oklab,var(--dsw-alias-state-error-primary,currentColor) 14%,transparent);color:var(--dsw-alias-state-error-primary,inherit);vertical-align:middle}",
+        "." + P + "-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px;font-size:11.5px;color:var(--cfg-muted)}",
+        "." + P + "-grow{flex:1}",
+        "." + P + "-pageinfo{font-variant-numeric:tabular-nums}",
+        "." + P + "-jump{width:56px;border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:7px;padding:4px 7px;font:inherit;font-size:11.5px;text-align:right;outline:none}",
+        "." + P + "-jump:focus{border-color:var(--dsw-alias-brand-primary,currentColor)}",
+        "." + P + "-empty{border:1px dashed var(--cfg-line);border-radius:11px;padding:44px 16px;text-align:center;font-size:12.5px;color:var(--cfg-muted)}",
+        "." + P + "-err{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid color-mix(in oklab,var(--dsw-alias-state-error-primary,currentColor) 32%,var(--cfg-line));border-radius:10px;padding:9px 12px;color:var(--dsw-alias-state-error-primary,inherit);font-size:12px;line-height:1.5}",
+        "." + P + "-skwrap{display:flex;flex-direction:column;gap:1px;padding:2px}",
+        "." + P + "-sk{height:26px;border-radius:4px;background:var(--dsw-alias-bg-skeleton,color-mix(in oklab,currentColor 6%,transparent));animation:" + PREFIX + "-data-pulse 1.4s ease-in-out infinite}",
+        "@keyframes " + PREFIX + "-data-pulse{0%,100%{opacity:.6}50%{opacity:1}}",
+        "." + P + "-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:40;background:var(--dsw-alias-bg-layer-1,var(--cfg-surface));border:1px solid var(--cfg-line);border-radius:999px;padding:7px 14px;font-size:12px;color:var(--dsw-alias-label-primary,inherit);box-shadow:0 6px 24px color-mix(in oklab,currentColor 18%,transparent)}",
+        "." + P + "-mask{position:fixed;inset:0;z-index:30;background:color-mix(in oklab,currentColor 26%,transparent)}",
+        "." + P + "-drawer{position:fixed;top:0;right:0;bottom:0;z-index:31;width:min(520px,92vw);display:flex;flex-direction:column;gap:12px;background:var(--dsw-alias-bg-layer-1,var(--cfg-surface));border-left:1px solid var(--cfg-line);box-shadow:-8px 0 28px color-mix(in oklab,currentColor 16%,transparent);padding:18px 20px}",
+        "." + P + "-drawer h3{margin:0;font-size:14px;font-weight:660;display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+        "." + P + "-drawer pre{margin:0;flex:1;overflow:auto;border:1px solid var(--cfg-line);border-radius:10px;background:var(--dsw-alias-bg-base,transparent);padding:12px 14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.65;white-space:pre-wrap;word-break:break-word}",
+        "." + P + "-drawerfoot{display:flex;gap:8px;justify-content:flex-end}",
+        "." + P + "-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
+        "@media (max-width:900px){." + P + "{grid-template-columns:minmax(0,1fr)}." + P + "-side{position:static;flex-direction:row;flex-wrap:wrap;gap:6px;padding:6px}." + P + "-sidetitle{display:none}." + P + "-stab{padding:6px 10px;flex:none}." + P + "-sidecount{display:none}." + P + "-tablewrap{max-height:calc(100vh - 260px)}}",
+        "@media (prefers-reduced-motion:reduce){." + P + " *,." + P + "-track,." + P + "-track::after,." + P + "-sk,." + P + "-drawer{transition:none;animation:none}}",
+        "." + P + "-idxsub{font-size:11.5px;color:var(--cfg-muted);line-height:1.55}",
+        "." + P + "-idxsum{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--cfg-muted)}",
+        "." + P + "-idxsum b{font-weight:660;color:var(--dsw-alias-label-primary,inherit);font-variant-numeric:tabular-nums}",
+        "." + P + "-idxtable{width:100%;table-layout:fixed}." + P + "-idxtable ." + P + "-cell{white-space:normal;overflow-wrap:anywhere;max-width:none}." + P + "-idxtable th:first-child{width:30%}." + P + "-idxtable th:nth-child(2){width:28%}",
+        "." + P + "-idxtags{display:flex;flex-wrap:wrap;gap:4px;max-width:280px}",
+        "." + P + "-idxchip{display:inline-block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;line-height:1.6;border-radius:999px;padding:0 7px;background:color-mix(in oklab,currentColor 7%,transparent);color:var(--cfg-muted);white-space:nowrap}",
+        "." + P + "-idxchip.u{background:color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 15%,transparent);color:var(--dsw-alias-brand-primary,inherit)}",
+        "." + P + "-idxnone{color:var(--cfg-faint)}",
+        "." + P + "-frow th{padding:0 8px 6px;border-bottom:1px solid var(--cfg-line)}",
+        "." + P + "-fcell{position:relative;display:block;min-width:96px}",
+        "." + P + "-finput{width:100%;box-sizing:border-box;border:1px solid transparent;border-radius:6px;background:color-mix(in oklab,currentColor 4%,transparent);color:inherit;font:inherit;font-size:11.5px;padding:3px 18px 3px 6px;min-width:0}",
+        "." + P + "-finput:hover{background:color-mix(in oklab,currentColor 7%,transparent)}",
+        "." + P + "-finput:focus{outline:none;border-color:var(--dsw-alias-brand-primary,currentColor);background:var(--cfg-surface)}",
+        "." + P + "-fclear{position:absolute;right:2px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--cfg-muted);cursor:pointer;font-size:13px;line-height:1;padding:2px 4px;border-radius:4px}",
+        "." + P + "-fclear:hover{color:inherit;background:var(--cfg-hover)}",
+        "." + P + "-emptycell{padding:22px 12px;text-align:center;color:var(--cfg-muted)}",
+        "." + P + " *{box-sizing:border-box}",
+        "." + P + "-tabs{display:flex;gap:6px;border-bottom:1px solid var(--cfg-line);padding-bottom:9px}",
+        "." + P + "-tabs [aria-selected=true]{background:var(--cfg-hover);color:inherit;font-weight:660}",
+        "." + P + "-images{display:flex;gap:5px;align-items:center}",
+        "." + P + "-images img{width:36px;height:36px;object-fit:cover;border-radius:5px}",
+        "." + P + "-gallery{display:flex;flex-direction:column;gap:12px;overflow:auto;flex:1}",
+        "." + P + "-gallery img{width:100%;height:auto;object-fit:contain;border-radius:8px}"
+      ].join("\n");
+      if (DOMAIN === "storage") {
+        var buttons = "." + P + " :is(button)";
+        CSS += buttons + "{border:none;background:var(--wb-btn-bg);min-height:var(--wb-btn-size-sm);min-width:var(--wb-btn-size-sm)}" + buttons + ":enabled:hover{background:var(--wb-btn-hover-bg)}" + buttons + ":enabled:active{background:var(--wb-btn-active-bg)}" + buttons + ":disabled{background:var(--wb-btn-bg);color:var(--cfg-muted)}" + buttons + ":focus-visible{outline:var(--wb-btn-focus);outline-offset:var(--wb-btn-focus-offset)}." + P + "-fcell:has(button) input{padding-right:34px}";
+      }
+      function injectCss() {
+        if (typeof document === "undefined") return;
+        var old = document.getElementById("wb-addon-" + DOMAIN + "-data-css");
+        if (old) {
+          old.textContent = CSS;
+          return;
+        }
+        var style = document.createElement("style");
+        style.id = "wb-addon-" + DOMAIN + "-data-css";
+        style.setAttribute("data-wb-addon", "wb-addon-" + DOMAIN);
+        style.textContent = CSS;
+        document.head.appendChild(style);
+      }
+      return injectCss;
+    };
+  }
+});
+
+// packages/addons/lib/data-view.cjs
+var require_data_view = __commonJS({
+  "packages/addons/lib/data-view.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h = React.createElement;
+    var COPY = require_data_copy();
+    module2.exports = function createDataView(options) {
+      var DOMAIN = options.domain;
+      function icon(name) {
+        return options.Icon ? h(options.Icon, { name }) : null;
+      }
+      var P = options.prefix + "-data";
+      var configView = { useConfig: options.useConfig };
+      var columnHooks = options.columns || {};
+      var injectCss = require_data_style()(DOMAIN, options.prefix);
+      var CFG_FALLBACK = {
+        "data.pageSize": 50,
+        "data.showSystemColumns": false,
+        "data.includeDeleted": false
+      };
+      var PAGE_SIZES = [10, 25, 50, 100, 200];
+      function unwrap(r) {
+        return r && r.result !== void 0 ? r.result : r;
+      }
+      function fmt(template, vars) {
+        return String(template).replace(/\{(\w+)\}/g, function(m, key) {
+          return vars[key] === void 0 ? m : String(vars[key]);
+        });
+      }
+      function pad2(n) {
+        return n < 10 ? "0" + n : String(n);
+      }
+      function timeText(ms) {
+        var d = new Date(Number(ms));
+        if (!Number.isFinite(d.getTime())) return String(ms);
+        return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+      }
+      function looksJson(value) {
+        var text = String(value).trim();
+        if (!text || text[0] !== "{" && text[0] !== "[") return false;
+        try {
+          JSON.parse(text);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+      function rawText(value, col) {
+        if (value === null || value === void 0) return "";
+        return String(value);
+      }
+      function DataView(props) {
+        var api = props.api;
+        var lang = props.lang === "en" ? "en" : "zh";
+        var t = Object.assign({}, COPY[lang], { indexSub: fmt(COPY[lang].indexSub, { tables: options.tables.join(" / "), domain: DOMAIN }) });
+        var cfgWrap = configView.useConfig(api, CFG_FALLBACK);
+        var cfg = cfgWrap.values;
+        var tablesS = React.useState(null);
+        var tables = tablesS[0], setTables = tablesS[1];
+        var activeS = React.useState("");
+        var active = activeS[0], setActive = activeS[1];
+        var dataS = React.useState(null);
+        var data = dataS[0], setData = dataS[1];
+        var loadingS = React.useState(false);
+        var loadingRows = loadingS[0], setLoadingRows = loadingS[1];
+        var loadingTablesS = React.useState(true);
+        var loadingTables = loadingTablesS[0], setLoadingTables = loadingTablesS[1];
+        var errorS = React.useState("");
+        var error = errorS[0], setError = errorS[1];
+        var pageS = React.useState(1);
+        var page = pageS[0], setPage = pageS[1];
+        var sizeS = React.useState(0);
+        var pageSize = sizeS[0], setPageSize = sizeS[1];
+        var sortS = React.useState("");
+        var sort = sortS[0], setSort = sortS[1];
+        var orderS = React.useState("desc");
+        var order = orderS[0], setOrder = orderS[1];
+        var searchDraftS = React.useState("");
+        var searchDraft = searchDraftS[0], setSearchDraft = searchDraftS[1];
+        var searchS = React.useState("");
+        var search = searchS[0], setSearch = searchS[1];
+        var filterDraftS = React.useState({});
+        var filterDraft = filterDraftS[0], setFilterDraft = filterDraftS[1];
+        var filtersS = React.useState({});
+        var filters = filtersS[0], setFilters = filtersS[1];
+        var includeDeletedS = React.useState(null);
+        var includeDeletedRaw = includeDeletedS[0], setIncludeDeleted = includeDeletedS[1];
+        var showSystemS = React.useState(null);
+        var showSystemRaw = showSystemS[0], setShowSystem = showSystemS[1];
+        var drawerS = React.useState(null);
+        var drawer = drawerS[0], setDrawer = drawerS[1];
+        var toastS = React.useState("");
+        var toast = toastS[0], setToast = toastS[1];
+        var filtersKey = JSON.stringify(filters);
+        var reqRef = React.useRef(0);
+        var toastTimer = React.useRef(null);
+        var refreshS = React.useState(0);
+        function refresh() {
+          loadTables();
+          refreshS[1](function(n) {
+            return n + 1;
+          });
+        }
+        var indexReqRef = React.useRef(0);
+        var indexS = React.useState(null);
+        var index = indexS[0], setIndex = indexS[1];
+        var indexBusyS = React.useState(false);
+        var indexBusy = indexBusyS[0], setIndexBusy = indexBusyS[1];
+        var cfgSize = Number(cfg["data.pageSize"]) || 50;
+        var size = pageSize || (PAGE_SIZES.indexOf(cfgSize) >= 0 ? cfgSize : 50);
+        var includeDeleted = includeDeletedRaw === null ? cfg["data.includeDeleted"] === true : includeDeletedRaw;
+        var showSystem = showSystemRaw === null ? cfg["data.showSystemColumns"] === true : showSystemRaw;
+        function say(text) {
+          setToast(text);
+          if (toastTimer.current) clearTimeout(toastTimer.current);
+          toastTimer.current = setTimeout(function() {
+            setToast("");
+          }, 1600);
+        }
+        function loadTables() {
+          setLoadingTables(true);
+          Promise.resolve((options.tablesLoader || function(a) {
+            return a.call(DOMAIN + ".dataTables");
+          })(api)).then(function(r) {
+            if (r && r.ok === false) throw new Error(r && r.error || t.loadFail);
+            var body = unwrap(r);
+            if (!body || !Array.isArray(body.tables)) throw new Error(t.loadFail);
+            setTables(body.tables);
+            setError("");
+            if (!active && body.tables.length) setActive(body.tables[0].name);
+          }).catch(function(e) {
+            setError(String(e && e.message || e) || t.loadFail);
+          }).then(function() {
+            setLoadingTables(false);
+          });
+        }
+        React.useEffect(function() {
+          injectCss();
+          loadTables();
+          return function() {
+            indexReqRef.current++;
+            if (toastTimer.current) clearTimeout(toastTimer.current);
+          };
+        }, []);
+        function selectTable(name) {
+          if (name === active) return;
+          reqRef.current++;
+          setActive(name);
+          setData(null);
+          setDrawer(null);
+          setError("");
+          setLoadingRows(true);
+          setPage(1);
+          setSort("");
+          setOrder("desc");
+          setSearch("");
+          setSearchDraft("");
+          setFilterDraft({});
+          setFilters({});
+        }
+        React.useEffect(function() {
+          if (searchDraft === search) return void 0;
+          var timer = setTimeout(function() {
+            setSearch(searchDraft);
+            setPage(1);
+          }, 280);
+          return function() {
+            clearTimeout(timer);
+          };
+        }, [searchDraft]);
+        React.useEffect(function() {
+          if (JSON.stringify(filterDraft) === JSON.stringify(filters)) return void 0;
+          var timer = setTimeout(function() {
+            setFilters(filterDraft);
+            setPage(1);
+          }, 280);
+          return function() {
+            clearTimeout(timer);
+          };
+        }, [filterDraft]);
+        React.useEffect(function() {
+          if (!active || !cfgWrap.ready || index) return void 0;
+          var req = ++reqRef.current;
+          setLoadingRows(true);
+          var args = { table: active, page, pageSize: size, order, includeDeleted };
+          if (sort) args.sort = sort;
+          if (search) args.search = search;
+          if (Object.keys(filters).length) args.filters = filters;
+          Promise.resolve((options.query || function(a, q) {
+            return a.call(DOMAIN + ".dataQuery", q);
+          })(api, args)).then(function(r) {
+            if (req !== reqRef.current) return;
+            if (r && r.ok === false) throw new Error(r && r.error || t.queryFail);
+            var body = unwrap(r);
+            if (!body) throw new Error(t.queryFail);
+            setData(body);
+            setError("");
+            if (body.page !== page) setPage(body.page);
+          }).catch(function(e) {
+            if (req !== reqRef.current) return;
+            setError(String(e && e.message || e) || t.queryFail);
+          }).then(function() {
+            if (req === reqRef.current) setLoadingRows(false);
+          });
+          return function() {
+            reqRef.current++;
+          };
+        }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey, refreshS[0], !!index]);
+        React.useEffect(function() {
+          if (!drawer) return void 0;
+          function onKey(e) {
+            if (e.key === "Escape") setDrawer(null);
+          }
+          document.addEventListener("keydown", onKey);
+          return function() {
+            document.removeEventListener("keydown", onKey);
+          };
+        }, [drawer]);
+        var current = null;
+        if (tables) {
+          for (var i = 0; i < tables.length; i++) if (tables[i].name === active) current = tables[i];
+        }
+        function leaveIndex() {
+          indexReqRef.current++;
+          setIndex(null);
+          setIndexBusy(false);
+          setError("");
+        }
+        function loadIndex() {
+          reqRef.current++;
+          setError("");
+          var req = ++indexReqRef.current;
+          setIndex([]);
+          setIndexBusy(true);
+          Promise.resolve(api.call(DOMAIN + ".dataTables", { stats: true })).then(function(r) {
+            if (req !== indexReqRef.current) return;
+            if (r && r.ok === false) throw new Error(r.error || t.loadFail);
+            var payload = unwrap(r) || {};
+            var rows = (payload.tables || []).map(function(tb) {
+              return { table: tb, stats: tb.stats || null };
+            });
+            setIndex(rows);
+            setError("");
+            setIndexBusy(false);
+          }).catch(function(e) {
+            if (req !== indexReqRef.current) return;
+            setError(String(e.message || e));
+            setIndex([]);
+            setIndexBusy(false);
+          });
+        }
+        function renderIndex() {
+          var row = (index || []).filter(function(r) {
+            return r.table.name === active;
+          })[0];
+          var tb = row ? row.table : current;
+          var st = row && row.stats;
+          var indexes = st ? st.indexes || [] : [];
+          var hasExtra = indexes.some(function(ix) {
+            return ix.origin !== "pk";
+          });
+          var count = st && st.rows !== void 0 ? st.rows : tb && tb.count;
+          return h(
+            "div",
+            { className: P + "-idx" },
+            h(
+              "div",
+              { className: P + "-head" },
+              h(
+                "div",
+                { className: P + "-headmain" },
+                h("h2", null, icon("database"), tableLabel(tb), h("span", { className: P + "-code" }, active)),
+                h("div", { className: P + "-idxsub" }, t.indexSub)
+              ),
+              h("button", {
+                type: "button",
+                className: P + "-btn",
+                "aria-label": t.refresh,
+                title: t.refresh,
+                "aria-busy": indexBusy ? "true" : "false",
+                onClick: function() {
+                  loadIndex();
+                }
+              }, icon("refresh"), h("span", { className: P + "-btnlabel" }, t.refresh))
+            ),
+            st ? h(
+              "div",
+              { className: P + "-idxsum" },
+              h("span", null, t.idxRows, " ", h("b", null, String(count))),
+              h("span", null, t.idxCols, " ", h("b", null, String(st.columnCount === void 0 ? (tb.columns || []).length : st.columnCount))),
+              h("span", null, fmt(t.idxCount, { n: indexes.length }))
+            ) : null,
+            indexBusy ? options.Skeleton ? h(options.Skeleton, { lang, label: t.loading }) : h("div", { className: P + "-empty", role: "status", "aria-busy": "true" }, t.loading) : !st ? h("div", { className: P + "-empty" }, t.idxEmpty) : !hasExtra ? h("div", { className: P + "-empty" }, t.idxNoExtra) : h(
+              "div",
+              { className: P + "-tablewrap" },
+              h(
+                "table",
+                { className: P + "-table " + P + "-idxtable" },
+                h("thead", null, h(
+                  "tr",
+                  null,
+                  [t.idxName, t.idxColumns, t.idxType, t.idxSource, t.idxRows].map(function(label) {
+                    return h("th", { scope: "col", key: label }, h("span", { className: P + "-thbtn" }, label));
+                  })
+                )),
+                h("tbody", null, indexes.map(function(ix) {
+                  return h(
+                    "tr",
+                    { className: P + "-tr", key: ix.name },
+                    h("td", { className: P + "-cell mono" }, ix.name),
+                    h("td", { className: P + "-cell mono" }, (ix.columns || []).join(", ") || t.idxNone),
+                    h("td", { className: P + "-cell" }, ix.origin === "pk" ? t.idxKey : ix.unique ? t.idxUnique : t.idxNormal),
+                    h("td", { className: P + "-cell" }, /^sqlite_autoindex_/.test(ix.name) ? t.idxAuto : t.idxCreated),
+                    h("td", { className: P + "-cell num", title: t.idxRowsHelp }, String(count))
+                  );
+                }))
+              )
+            )
+          );
+        }
+        function tableLabel(tb) {
+          if (!tb || !tb.label) return "";
+          return lang === "en" ? tb.label.en || tb.label.zh : tb.label.zh || tb.label.en;
+        }
+        function colLabel(col) {
+          if (!col.label) return col.name;
+          return lang === "en" ? col.label.en || col.label.zh : col.label.zh || col.label.en;
+        }
+        function visibleColumns() {
+          var cols = data && data.columns ? data.columns.map(function(col) {
+            var hook = columnHooks[col.name];
+            return hook && hook.kind ? Object.assign({}, col, { kind: hook.kind, type: hook.type || col.type }) : col;
+          }) : [];
+          return cols.filter(function(c) {
+            return showSystem || !c.system;
+          });
+        }
+        function toggleSort(name) {
+          if (sort !== name) {
+            setSort(name);
+            setOrder("desc");
+            return;
+          }
+          if (order === "desc") {
+            setOrder("asc");
+            return;
+          }
+          setSort("");
+          setOrder("desc");
+        }
+        function ariaSort(name) {
+          if (sort !== name) return "none";
+          return order === "asc" ? "ascending" : "descending";
+        }
+        function copyCell(value) {
+          var text = value === null || value === void 0 ? "" : String(value);
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text);
+            else {
+              var ta = document.createElement("textarea");
+              ta.value = text;
+              ta.style.position = "fixed";
+              ta.style.opacity = "0";
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand("copy");
+              document.body.removeChild(ta);
+            }
+            say(t.copied);
+          } catch (e) {
+          }
+        }
+        function cellText(col, value) {
+          if (value === null || value === void 0) return null;
+          if (col.kind === "bool") return value ? t.yes : t.no;
+          if (col.kind === "timestamp") return timeText(value);
+          return String(value);
+        }
+        function cellClass(col, value) {
+          var cls = P + "-cell";
+          if (value === null || value === void 0) return cls + " null";
+          if (col.kind === "number") return cls + " num";
+          if (col.kind === "id" || col.kind === "path") return cls + " mono";
+          if (col.kind === "text" && looksJson(value)) return cls + " json";
+          return cls;
+        }
+        function cellTitle(col, value) {
+          if (value === null || value === void 0) return t.nullText;
+          if (col.kind === "timestamp") return String(value);
+          if (col.kind === "bool") return value ? "1" : "0";
+          return String(value);
+        }
+        function renderCell(row, col) {
+          var value = row[col.name];
+          var hook = columnHooks[col.name];
+          function openDetail() {
+            setDrawer({ column: colLabel(col), name: col.name, row: (data.page - 1) * data.pageSize + row.__i + 1, value });
+          }
+          var text = cellText(col, value);
+          var content;
+          if (text === null) content = h("span", { className: "v" }, t.nullText);
+          else if (text === "") content = h("span", { className: "v" }, '""');
+          else content = h("span", { className: "v" }, text);
+          if (hook && hook.render) content = hook.render({ value, row, col, lang, prefix: P, openDetail });
+          return h("td", {
+            key: col.name,
+            className: cellClass(col, value),
+            title: cellTitle(col, value),
+            onClick: function() {
+              copyCell(value);
+            },
+            onDoubleClick: openDetail
+          }, content);
+        }
+        function activeFilterCount() {
+          var n = 0;
+          for (var k in filters) if (Object.prototype.hasOwnProperty.call(filters, k)) n++;
+          return n;
+        }
+        function filterCell(col) {
+          var val = filterDraft[col.name] === void 0 ? "" : filterDraft[col.name];
+          return h(
+            "th",
+            { key: col.name, scope: "col", className: P + "-fth" },
+            h(
+              "span",
+              { className: P + "-fcell" },
+              h("input", {
+                className: P + "-finput",
+                type: "search",
+                value: val,
+                placeholder: t.filterCol,
+                "aria-label": t.filterCol + " " + colLabel(col),
+                title: colLabel(col) + " \xB7 " + t.filterCol,
+                onChange: function(e) {
+                  var v = e.target.value;
+                  setFilterDraft(function(prev) {
+                    var next = Object.assign({}, prev);
+                    if (v) next[col.name] = v;
+                    else delete next[col.name];
+                    return next;
+                  });
+                }
+              }),
+              val ? h("button", {
+                type: "button",
+                className: P + "-fclear",
+                title: t.filterClear,
+                "aria-label": t.filterClear + " " + colLabel(col),
+                onClick: function() {
+                  setFilterDraft(function(prev) {
+                    var next = Object.assign({}, prev);
+                    delete next[col.name];
+                    return next;
+                  });
+                }
+              }, "\xD7") : null
+            )
+          );
+        }
+        function renderRows() {
+          if (loadingRows && !data && options.Skeleton) return h(options.Skeleton, { lang, label: t.loading });
+          if (loadingRows && !data) {
+            return h(
+              "div",
+              { className: P + "-skwrap", "aria-busy": "true" },
+              h("span", { className: P + "-sr" }, t.loading),
+              [0, 1, 2, 3, 4, 5, 6, 7].map(function(i2) {
+                return h("div", { key: i2, className: P + "-sk" });
+              })
+            );
+          }
+          if (error) {
+            return h(
+              "div",
+              { className: P + "-err", role: "alert" },
+              h("span", null, t.queryFail + error),
+              h("button", { type: "button", className: P + "-btn", onClick: refresh }, t.retry)
+            );
+          }
+          if (!data) return h("div", { className: P + "-empty" }, t.empty);
+          var cols = visibleColumns();
+          var rows = data.rows || [];
+          var narrowing = !!search || activeFilterCount() > 0;
+          return h(
+            "div",
+            { className: P + "-tablewrap" },
+            h(
+              "table",
+              { className: P + "-table" },
+              h(
+                "thead",
+                null,
+                h(
+                  "tr",
+                  null,
+                  h("th", { className: P + "-rownum", scope: "col" }, "#"),
+                  cols.map(function(col) {
+                    return h(
+                      "th",
+                      { key: col.name, scope: "col", "aria-sort": ariaSort(col.name) },
+                      h(
+                        "button",
+                        {
+                          type: "button",
+                          className: P + "-thbtn",
+                          title: colLabel(col) + " \xB7 " + col.type,
+                          onClick: function() {
+                            toggleSort(col.name);
+                          }
+                        },
+                        h("span", null, colLabel(col)),
+                        h("span", { className: P + "-coltype" }, String(col.type || "").toLowerCase()),
+                        sort === col.name ? h("span", { className: P + "-sortmark", "aria-hidden": "true" }, order === "asc" ? "\u25B2" : "\u25BC") : null
+                      )
+                    );
+                  })
+                ),
+                h(
+                  "tr",
+                  { className: P + "-frow" },
+                  h("th", { className: P + "-rownum", scope: "col" }, ""),
+                  cols.map(filterCell)
+                )
+              ),
+              h("tbody", null, rows.length ? rows.map(function(row, idx) {
+                row.__i = idx;
+                var deleted = row.deleted_at !== null && row.deleted_at !== void 0;
+                return h(
+                  "tr",
+                  { key: row.id || idx, className: P + "-tr" + (deleted ? " deleted" : "") },
+                  h("td", { className: P + "-rownum" }, (data.page - 1) * data.pageSize + idx + 1),
+                  cols.map(function(col) {
+                    var cell = renderCell(row, col);
+                    if (deleted && col.name === "id") {
+                      return React.cloneElement(cell, { key: col.name }, cell.props.children, h("span", { className: P + "-delbadge" }, t.deleted));
+                    }
+                    return cell;
+                  })
+                );
+              }) : h("tr", null, h("td", { className: P + "-emptycell", colSpan: cols.length + 1 }, narrowing ? t.noRows : t.empty)))
+            )
+          );
+        }
+        function renderFoot() {
+          var pages = data ? data.pages : 1;
+          var total = data ? data.total : 0;
+          return h(
+            "div",
+            { className: P + "-foot" },
+            h("span", null, fmt(t.total, { n: total })),
+            h("span", { className: P + "-grow" }),
+            h("button", { type: "button", className: P + "-btn", disabled: !data || page <= 1, onClick: function() {
+              setPage(Math.max(1, page - 1));
+            } }, "\u2039 " + t.prev),
+            h("span", { className: P + "-pageinfo" }, fmt(t.pageInfo, { page: data ? data.page : 1, pages })),
+            h("button", { type: "button", className: P + "-btn", disabled: !data || page >= pages, onClick: function() {
+              setPage(Math.min(pages, page + 1));
+            } }, t.next + " \u203A"),
+            h("input", {
+              className: P + "-jump",
+              type: "number",
+              min: 1,
+              max: pages,
+              "aria-label": t.jump,
+              onKeyDown: function(e) {
+                if (e.key === "Enter") {
+                  var n = Math.floor(Number(e.target.value));
+                  if (n >= 1) setPage(Math.min(pages, n));
+                }
+              }
+            }),
+            data && data.queryMs !== void 0 ? h("span", null, fmt(t.queryTime, { n: data.queryMs })) : null
+          );
+        }
+        if (!tables && loadingTables && options.Skeleton) return h(options.Skeleton, { lang, label: t.loading });
+        if (!tables && loadingTables) {
+          return h("div", { className: P + "-skwrap", "aria-busy": "true" }, h("span", { className: P + "-sr" }, t.loading), [0, 1, 2, 3].map(function(i2) {
+            return h("div", { key: i2, className: P + "-sk" });
+          }));
+        }
+        if (!tables) {
+          return h("div", { className: P + "-err", role: "alert" }, h("span", null, t.loadFail), h("button", { type: "button", className: P + "-btn", onClick: loadTables }, t.retry));
+        }
+        if (!tables.length) return h("div", { className: P + "-empty" }, t.emptyTable);
+        return h(
+          "div",
+          { className: P },
+          h(
+            "div",
+            { className: P + "-side" },
+            h("div", { className: P + "-sidetitle" }, h("span", null, icon("table"), t.tables), h("span", null, String(tables.length))),
+            tables.map(function(tb) {
+              return h(
+                "button",
+                {
+                  key: tb.name,
+                  type: "button",
+                  className: P + "-stab" + (tb.name === active ? " on" : ""),
+                  "aria-pressed": tb.name === active,
+                  onClick: function() {
+                    selectTable(tb.name);
+                  }
+                },
+                h(
+                  "span",
+                  { className: P + "-stabname" },
+                  h("span", null, tableLabel(tb)),
+                  h("span", { className: P + "-sidecount" }, tb.count === void 0 || tb.count === null ? "" : String(tb.count))
+                ),
+                h("span", { className: P + "-sidetable" }, tb.name)
+              );
+            })
+          ),
+          h(
+            "div",
+            { className: P + "-main" },
+            h(
+              "div",
+              { className: P + "-tabs", role: "tablist", "aria-label": t.title },
+              h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !index, onClick: leaveIndex }, icon("list"), lang === "en" ? "Row data" : "\u884C\u6570\u636E"),
+              h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !!index, onClick: loadIndex }, icon("database"), t.index)
+            ),
+            index && error ? h("div", { className: P + "-err", role: "alert" }, error) : null,
+            index ? renderIndex() : [
+              h(
+                "div",
+                { className: P + "-head" },
+                h(
+                  "div",
+                  { className: P + "-headmain" },
+                  h("h2", null, icon("database"), tableLabel(current), h("span", { className: P + "-code" }, active)),
+                  h(
+                    "div",
+                    { className: P + "-sub" },
+                    current && data && data.total !== void 0 ? fmt(t.rowCount, { n: data.total }) : "",
+                    current && current.deletedCount ? " \xB7 " + fmt(t.deletedCount, { n: current.deletedCount }) : "",
+                    " \xB7 " + t.subtitle
+                  )
+                ),
+                h("button", {
+                  type: "button",
+                  className: P + "-btn",
+                  "aria-label": t.refresh,
+                  title: t.refresh,
+                  "aria-busy": loadingRows ? "true" : "false",
+                  onClick: refresh
+                }, icon("refresh"), h("span", { className: P + "-btnlabel" }, t.refresh))
+              ),
+              h(
+                "div",
+                { className: P + "-toolbar" },
+                h(
+                  "div",
+                  { className: P + "-search" },
+                  icon("search"),
+                  h("input", {
+                    type: "search",
+                    value: searchDraft,
+                    placeholder: t.search,
+                    "aria-label": t.search,
+                    onChange: function(e) {
+                      setSearchDraft(e.target.value);
+                    }
+                  })
+                ),
+                h(
+                  "label",
+                  { className: P + "-switch" },
+                  h("input", { type: "checkbox", checked: includeDeleted, onChange: function(e) {
+                    setIncludeDeleted(e.target.checked);
+                    setPage(1);
+                  } }),
+                  h("span", { className: P + "-track" }),
+                  h("span", null, t.includeDeleted)
+                ),
+                h(
+                  "label",
+                  { className: P + "-switch" },
+                  h("input", { type: "checkbox", checked: showSystem, onChange: function(e) {
+                    setShowSystem(e.target.checked);
+                  } }),
+                  h("span", { className: P + "-track" }),
+                  h("span", null, t.showSystem)
+                ),
+                h("span", { className: P + "-grow" }),
+                h(
+                  "label",
+                  { style: { display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11.5px", color: "var(--cfg-muted)" } },
+                  h("span", null, t.pageSize),
+                  h("select", {
+                    className: P + "-select",
+                    value: size,
+                    onChange: function(e) {
+                      setPageSize(Number(e.target.value));
+                      setPage(1);
+                    }
+                  }, PAGE_SIZES.map(function(n) {
+                    return h("option", { key: n, value: n }, String(n));
+                  }))
+                )
+              ),
+              renderRows(),
+              renderFoot()
+            ]
+          ),
+          drawer ? h(
+            "div",
+            null,
+            h("div", { className: P + "-mask", onClick: function() {
+              setDrawer(null);
+            } }),
+            h(
+              "aside",
+              { className: P + "-drawer", role: "dialog", "aria-modal": "true", "aria-label": drawer.column },
+              h("h3", null, fmt(t.drawerTitle, { column: drawer.column, row: drawer.row }), h("span", { className: P + "-code" }, drawer.name)),
+              columnHooks[drawer.name] && columnHooks[drawer.name].detail ? columnHooks[drawer.name].detail({ value: drawer.value, lang, prefix: P }) : h("pre", null, drawerText(drawer.value)),
+              h(
+                "div",
+                { className: P + "-drawerfoot" },
+                h("button", { type: "button", className: P + "-btn", onClick: function() {
+                  copyCell(drawer.value);
+                } }, t.copy),
+                h("button", { type: "button", className: P + "-btn", onClick: function() {
+                  setDrawer(null);
+                } }, t.close)
+              )
+            )
+          ) : null,
+          toast ? h("div", { className: P + "-toast", role: "status" }, toast) : null
+        );
+      }
+      function drawerText(value) {
+        if (value === null || value === void 0) return "NULL";
+        if (typeof value === "string" && looksJson(value)) {
+          try {
+            return JSON.stringify(JSON.parse(value), null, 2);
+          } catch (e) {
+            return value;
+          }
+        }
+        if (typeof value === "object") {
+          try {
+            return JSON.stringify(value, null, 2);
+          } catch (e) {
+            return String(value);
+          }
+        }
+        return String(value);
+      }
+      return { DataView, DOMAIN };
+    };
+  }
+});
+
 // packages/addons/calendar/client/views/data.cjs
 var require_data = __commonJS({
   "packages/addons/calendar/client/views/data.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = function Data(props) {
-      var h = props.h, React = props.React, api = props.api;
-      var C = require_common();
-      var tables = C.useLoad(React, api, "calendar.dataTables", {}, []);
-      var table = React.useState("calendar");
-      var limit = React.useState(20);
-      var rows = C.useLoad(React, api, "calendar.dataQuery", { table: table[0], limit: Number(limit[0]) || 20 }, [table[0], limit[0]]);
-      var list = tables.data && tables.data.tables || [];
-      return h(
-        "div",
-        { className: "wbca-page" },
-        h("h2", null, "\u6570\u636E\u6D4F\u89C8"),
-        h(
-          "div",
-          { className: "wbca-row" },
-          h("select", { className: "wbca-input", value: table[0], onChange: function(e) {
-            table[1](e.target.value);
-          } }, list.map(function(t) {
-            return h("option", { key: t.name, value: t.name }, t.name);
-          })),
-          h("input", { className: "wbca-input", type: "number", min: 1, max: 100, value: limit[0], onChange: function(e) {
-            limit[1](e.target.value);
-          } })
-        ),
-        rows.error ? h(C.Notice, { h, kind: "error", text: rows.error }) : h(C.Json, { h, value: rows.data && rows.data.rows || [] })
-      );
-    };
+    var legacy = require_legacy_data()("calendar", { paged: false });
+    module2.exports = require_data_view()({
+      domain: "calendar",
+      prefix: "wbca",
+      tables: ["calendar", "calendar_event", "calendar_attendee", "calendar_reminder"],
+      useConfig: function(api, fallback) {
+        return { values: fallback, ready: true };
+      },
+      tablesLoader: legacy.tablesLoader,
+      query: legacy.query
+    }).DataView;
   }
 });
 
