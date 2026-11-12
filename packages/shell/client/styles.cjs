@@ -287,7 +287,6 @@ var CSS = [
   // 标题区吸收剩余宽度，模块描述填满中部；标签保持紧凑并右对齐。
   ".wb-root .wb-immersive-bar .wb-grow{display:none}",
   ".wb-root .wb-immersive-bar .wb-immersive-title{flex:1 1 auto;min-width:0}",
-  ".wb-root .wb-immersive-desc{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:400;opacity:.55;border-left:1px solid var(--wb-line);padding-left:10px;margin-left:2px}",
   ".wb-root .wb-immersive-bar .wb-page-tabs{margin:0 0 0 18px;flex:0 1 auto;min-width:0;max-width:none;justify-content:flex-end;gap:2px}",
   ".wb-root .wb-immersive-bar .wb-tab{flex:0 0 auto;min-width:0;justify-content:center;text-align:center;padding:6px 10px}",
 ].join("\n");

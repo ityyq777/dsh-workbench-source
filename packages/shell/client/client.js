@@ -660,7 +660,6 @@ var require_styles = __commonJS({
       // 标题区吸收剩余宽度，模块描述填满中部；标签保持紧凑并右对齐。
       ".wb-root .wb-immersive-bar .wb-grow{display:none}",
       ".wb-root .wb-immersive-bar .wb-immersive-title{flex:1 1 auto;min-width:0}",
-      ".wb-root .wb-immersive-desc{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:400;opacity:.55;border-left:1px solid var(--wb-line);padding-left:10px;margin-left:2px}",
       ".wb-root .wb-immersive-bar .wb-page-tabs{margin:0 0 0 18px;flex:0 1 auto;min-width:0;max-width:none;justify-content:flex-end;gap:2px}",
       ".wb-root .wb-immersive-bar .wb-tab{flex:0 0 auto;min-width:0;justify-content:center;text-align:center;padding:6px 10px}"
     ].join("\n");
@@ -1983,10 +1982,8 @@ function WorkbenchPage(props) {
           go("home");
         }, children: "\u2190 " + t("back_home") }),
         jsx.jsxs("div", { className: "wb-immersive-title", children: [
-          jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(currentAddon.id, addonTitle) }),
           jsx.jsx("span", { children: addonTitle }),
-          jsx.jsx("span", { className: "wb-badge", children: "v" + (currentAddon.version || "?") }),
-          currentAddon.description ? jsx.jsx("span", { className: "wb-immersive-desc", children: currentAddon.description }) : null
+          jsx.jsx("span", { className: "wb-badge", children: "v" + (currentAddon.version || "?") })
         ] }),
         jsx.jsx("div", { className: "wb-grow" }),
         jsx.jsx(ViewTabs, { views: viewList, activeView, addonId: currentAddon.id, lang, go })
