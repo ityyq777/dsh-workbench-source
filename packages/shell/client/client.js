@@ -657,10 +657,13 @@ var require_styles = __commonJS({
       ".wb-root .wb-immersive-bar .wb-tab{padding:6px 10px;white-space:nowrap}",
       "@media (max-width:760px){.wb-root .wb-immersive-bar{flex-wrap:nowrap;padding:calc(6px + var(--dsh-frame-top-clearance,0px)) 12px 6px}.wb-root .wb-immersive-bar .wb-page-tabs{max-width:none}.wb-root .wb-immersive-title{display:none}}",
       "html[data-platform=darwin] .wb-root .wb-immersive-bar{padding-top:8px;padding-left:max(88px,calc(12px + var(--dsh-frame-leading-clearance,0px)))}",
-      // 标题区吸收剩余宽度，模块描述填满中部；标签保持紧凑并右对齐。
+      // 顶栏分左右两区：左区标题+版本，右区标签，两区贴边。
+      ".wb-root .wb-immersive-bar{justify-content:space-between;gap:16px}",
+      ".wb-root .wb-immersive-left{display:flex;align-items:center;gap:10px;min-width:0;flex:0 1 auto}",
       ".wb-root .wb-immersive-bar .wb-grow{display:none}",
-      ".wb-root .wb-immersive-bar .wb-immersive-title{flex:1 1 auto;min-width:0}",
-      ".wb-root .wb-immersive-bar .wb-page-tabs{margin:0 0 0 18px;flex:0 1 auto;min-width:0;max-width:none;justify-content:flex-end;gap:2px}",
+      ".wb-root .wb-immersive-bar .wb-immersive-title{flex:0 0 auto;min-width:0}",
+      ".wb-root .wb-immersive-bar .wb-immersive-title>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wb-root .wb-immersive-bar .wb-page-tabs{margin:0;flex:0 1 auto;min-width:0;max-width:none;justify-content:flex-end;gap:2px}",
       ".wb-root .wb-immersive-bar .wb-tab{flex:0 0 auto;min-width:0;justify-content:center;text-align:center;padding:6px 10px}"
     ].join("\n");
     module2.exports = CSS2;
@@ -1978,14 +1981,15 @@ function WorkbenchPage(props) {
     var addonTitle = currentAddon.title || pickTitle(activeView && activeView.title, lang) || currentAddon.id;
     return jsx.jsxs("div", { className: "wb-root wb-immersive", children: [
       jsx.jsxs("div", { className: "wb-immersive-bar", children: [
-        jsx.jsx("button", { className: "wb-back", onClick: function() {
-          go("home");
-        }, children: "\u2190 " + t("back_home") }),
-        jsx.jsxs("div", { className: "wb-immersive-title", children: [
-          jsx.jsx("span", { children: addonTitle }),
-          jsx.jsx("span", { className: "wb-badge", children: "v" + (currentAddon.version || "?") })
+        jsx.jsxs("div", { className: "wb-immersive-left", children: [
+          jsx.jsx("button", { className: "wb-back", onClick: function() {
+            go("home");
+          }, children: "\u2190 " + t("back_home") }),
+          jsx.jsxs("div", { className: "wb-immersive-title", children: [
+            jsx.jsx("span", { children: addonTitle }),
+            jsx.jsx("span", { className: "wb-badge", children: "v" + (currentAddon.version || "?") })
+          ] })
         ] }),
-        jsx.jsx("div", { className: "wb-grow" }),
         jsx.jsx(ViewTabs, { views: viewList, activeView, addonId: currentAddon.id, lang, go })
       ] }),
       jsx.jsxs("div", { className: "wb-immersive-main", children: [
