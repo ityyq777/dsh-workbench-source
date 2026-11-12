@@ -193,6 +193,22 @@ DESKTOP_DSH="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/b
 
 待拆清单与建议切法见 `docs/specs/26-大文件拆分清单.md`。
 
+### 模块页布局与桌面端顶栏
+
+这两条是用户明确提出的界面红线，改布局或新增插件视图时必须遵守：
+
+1. **业务视图不要两侧留白**。模块页容器（`wbc-wrap`、`wbv`、`wba-wrap`、`wbct-wrap`、
+   `wbca-wrap`、`wbm-wrap`、`wbm-page` 一类）不得用 `max-width` + `margin:0 auto`
+   居中收窄；宽度撑满可用区域，只保留统一内边距。需要限制阅读宽度时，限制正文段落，
+   不要收窄整个视图。
+2. **桌面端顶栏只能有一层**。沉浸式模块页的 `--dsh-frame-top-clearance` 必须并入
+   `.wb-immersive-bar` 的 `padding-top`，由顶栏自身背景从窗口顶端连续覆盖；
+   `.wb-immersive` 外层不得再用 `padding-top` 留出透明带。视图标签
+   （`.wb-page-tabs`）必须并进同一行顶栏，不得在内容区再渲染第二行栏。
+3. 验证不能只看浏览器：浏览器里 `--dsh-frame-top-clearance` 为 `0`，会掩盖桌面端的
+   空白带。改完要模拟 `--dsh-frame-top-clearance: 32px` 截图，并在独立 profile
+   实机确认浅色、深色都只有一层顶栏。
+
 ### 文档同步
 
 `docs/插件功能清单.md` 是给人看的 action 清单，含版本表与 action 表；改 schema 时
