@@ -157,6 +157,32 @@ try {
   const descTask = await call("tasks.create", { tableId: fixtureTableId, title: "描述检索源", description: "正文里藏着一个独特词 zeta-flag" });
   const byDesc = await call("tasks.list", { titleKey: "zeta-flag" });
   assert(byDesc.result.records.length === 1 && byDesc.result.records[0].id === descTask.result.id, "titleKey 未匹配描述：" + JSON.stringify(byDesc.result.records.map((t) => t.title)));
+  // 4.1.1 关键词同样匹配任务 ID：完整值 / 前 8 位 / 中段片段 / 大小写，且与其它条件 AND
+  const idProbe = descTask.result.id;
+  const byFullId = await call("tasks.list", { titleKey: idProbe });
+  assert(byFullId.result.records.length === 1 && byFullId.result.records[0].id === idProbe, "titleKey 未命中完整任务 ID（或产生重复行）：" + JSON.stringify(byFullId.result.records.map((t) => t.title)));
+  const byIdHead = await call("tasks.list", { titleKey: idProbe.slice(0, 8) });
+  assert(byIdHead.result.records.some((t) => t.id === idProbe), "titleKey 未命中任务 ID 前 8 位");
+  const byIdMid = await call("tasks.list", { titleKey: idProbe.slice(10, 18) });
+  assert(byIdMid.result.records.some((t) => t.id === idProbe), "titleKey 未命中任务 ID 中段片段");
+  const byIdUpper = await call("tasks.list", { titleKey: idProbe.toUpperCase() });
+  assert(byIdUpper.result.records.some((t) => t.id === idProbe), "大写任务 ID 未命中（应为 ASCII 大小写不敏感）");
+  const idWithFilter = await call("tasks.list", { titleKey: idProbe, statuses: [0] });
+  assert(idWithFilter.result.records.length === 1, "任务 ID 关键词未与状态筛选 AND：" + JSON.stringify(idWithFilter.result.records.map((t) => t.id)));
+  const idWrongStatus = await call("tasks.list", { titleKey: idProbe, statuses: [2] });
+  assert(idWrongStatus.result.records.length === 0, "任务 ID 关键词绕过了状态筛选");
+  // 关键词里的 % / _ / 反斜杠仍是字面字符，不会变成通配符
+  const wildcardTask = await call("tasks.create", { tableId: fixtureTableId, title: "字面通配符 100%_完成" });
+  const byPercent = await call("tasks.list", { titleKey: "100%" });
+  assert(byPercent.result.records.length === 1 && byPercent.result.records[0].id === wildcardTask.result.id, "% 被当成通配符：" + JSON.stringify(byPercent.result.records.map((t) => t.title)));
+  const byWildPair = await call("tasks.list", { titleKey: "%_" });
+  assert(byWildPair.result.records.length === 1 && byWildPair.result.records[0].id === wildcardTask.result.id, "%_ 未按字面匹配");
+  const backslashTask = await call("tasks.create", { tableId: fixtureTableId, title: "反斜杠A\\B路径" });
+  const byBackslash = await call("tasks.list", { titleKey: "A\\B" });
+  assert(byBackslash.result.records.length === 1 && byBackslash.result.records[0].id === backslashTask.result.id, "反斜杠未按字面匹配");
+  const emptyKey = await call("tasks.list", { titleKey: "   " });
+  assert(emptyKey.result.filter.titleKey === undefined, "空白关键词不应回显 titleKey");
+  assert(emptyKey.result.records.length === (await call("tasks.list", {})).result.records.length, "空白关键词误筛了任务");
   const pagedAll = await call("tasks.list", { status: "0", pageNumber: 1, pageSize: 2 });
   assert(pagedAll.result.filter.pageable === true && pagedAll.result.records.length <= 2, "传 pageSize 未分页");
   assert(pagedAll.result.filter.pageSize === 2, "分页参数未回显");
@@ -487,6 +513,11 @@ try {
   assert(expCsv.result.content.startsWith("id,title,"), "tasks.export csv 表头不对");
   const expMd = await call("tasks.export", { ids: [id], format: "markdown" });
   assert(expMd.result.content.includes("| id | 标题 |"), "tasks.export markdown 表头不对");
+  const expById = await call("tasks.export", { titleKey: idProbe, format: "json" });
+  const parsedById = JSON.parse(expById.result.content);
+  assert(parsedById.count === 1 && parsedById.tasks[0].id === idProbe, "tasks.export titleKey 未按任务 ID 命中：" + expById.result.content.slice(0, 120));
+  const expByHead = await call("tasks.export", { titleKey: idProbe.slice(0, 8), format: "json" });
+  assert(JSON.parse(expByHead.result.content).tasks.some((t) => t.id === idProbe), "tasks.export 未命中任务 ID 前 8 位");
   const grouped = await call("tasks.stats", { groupBy: "status" });
   assert(grouped.result.groupBy === "status" && grouped.result.groups.length >= 1, "stats groupBy 未返回分组");
   const sum = grouped.result.groups.reduce((n, g) => n + g.count, 0);

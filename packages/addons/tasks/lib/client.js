@@ -4342,7 +4342,7 @@ var require_copy = __commonJS({
         plainText: "\u7EAF\u6587\u672C",
         bodyModeLocal: "\u5DF2\u5728\u5F53\u524D\u6D4F\u89C8\u5668\u5207\u6362\uFF0C\u914D\u7F6E\u4FDD\u5B58\u5931\u8D25\uFF1A",
         title: "\u4EFB\u52A1",
-        search: "\u641C\u7D22\u6807\u9898 / \u63CF\u8FF0 / \u611F\u53D7",
+        search: "\u641C\u7D22\u6807\u9898 / \u63CF\u8FF0 / \u611F\u53D7 / \u4EFB\u52A1 ID",
         newTask: "\u65B0\u5EFA\u4EFB\u52A1",
         tree: "\u4EFB\u52A1\u6811",
         select: "\u9009\u62E9",
@@ -4506,7 +4506,7 @@ var require_copy = __commonJS({
         plainText: "Plain text",
         bodyModeLocal: "Changed in this browser; could not save config:",
         title: "Tasks",
-        search: "Search title / description / feeling",
+        search: "Search title / description / feeling / task ID",
         newTask: "New task",
         tree: "Task tree",
         select: "Select",
@@ -11374,7 +11374,7 @@ var init_list_checks = __esm({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.7",
+    version: "5.2.8",
     icon: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
