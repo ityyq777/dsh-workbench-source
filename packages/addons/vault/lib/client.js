@@ -503,6 +503,35 @@ var init_list = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs
+var shield_check_exports = {};
+__export(shield_check_exports, {
+  __iconData: () => __iconData6,
+  default: () => ShieldCheck
+});
+var __iconData6, ShieldCheck;
+var init_shield_check = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs"() {
+    init_createLucideIcon();
+    __iconData6 = {
+      name: "shield-check",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
+            key: "oel41y"
+          }
+        ],
+        ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
+      ]
+    };
+    __iconData6.node;
+    ShieldCheck = createLucideIcon(__iconData6);
+  }
+});
+
 // packages/addons/vault/client/ui/common.cjs
 var require_common = __commonJS({
   "packages/addons/vault/client/ui/common.cjs"(exports2, module2) {
@@ -1318,6 +1347,7 @@ var require_actions = __commonJS({
   host.registerAddon({
     id: "wb-addon-vault",
     version: "0.1.0",
+    icon: (init_shield_check(), __toCommonJS(shield_check_exports)).default,
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },
       { id: "secrets", icon: tabIcon("key"), title: { zh: "\u51ED\u636E", en: "Secrets" }, component: withProps(require_secrets(), "\u51ED\u636E") },

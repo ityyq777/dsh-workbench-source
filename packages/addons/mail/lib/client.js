@@ -916,13 +916,18 @@ var require_actions = __commonJS({
     s.textContent = CSS;
     document.head.appendChild(s);
   }
-  host.registerAddon({ id: "wb-addon-mail", version: "0.1.0", views: [
-    { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },
-    { id: "compose", icon: tab("send"), title: { zh: "\u5199\u4FE1", en: "Compose" }, component: withProps(require_compose(), "\u5199\u4FE1") },
-    { id: "accounts", icon: tab("users"), title: { zh: "\u8D26\u6237", en: "Accounts" }, component: withProps(require_accounts(), "\u8D26\u6237") },
-    { id: "data", icon: tab("db"), title: { zh: "\u6570\u636E", en: "Data" }, component: withProps(require_data(), "\u6570\u636E") },
-    { id: "actions", icon: tab("list"), title: { zh: "Action", en: "Actions" }, component: withProps(require_actions(), "Action") }
-  ] });
+  host.registerAddon({
+    id: "wb-addon-mail",
+    version: "0.1.0",
+    icon: (init_mail(), __toCommonJS(mail_exports)).default,
+    views: [
+      { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },
+      { id: "compose", icon: tab("send"), title: { zh: "\u5199\u4FE1", en: "Compose" }, component: withProps(require_compose(), "\u5199\u4FE1") },
+      { id: "accounts", icon: tab("users"), title: { zh: "\u8D26\u6237", en: "Accounts" }, component: withProps(require_accounts(), "\u8D26\u6237") },
+      { id: "data", icon: tab("db"), title: { zh: "\u6570\u636E", en: "Data" }, component: withProps(require_data(), "\u6570\u636E") },
+      { id: "actions", icon: tab("list"), title: { zh: "Action", en: "Actions" }, component: withProps(require_actions(), "Action") }
+    ]
+  });
   module.exports = { name: "dsh-workbench-mail", inject: [], apply: function() {
   } };
 })();

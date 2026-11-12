@@ -1124,6 +1124,7 @@ var require_actions = __commonJS({
   host.registerAddon({
     id: "wb-addon-connector",
     version: "0.1.0",
+    icon: (init_rss(), __toCommonJS(rss_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("activity"), title: { zh: "\u6982\u89C8", en: "Overview" }, component: withProps(require_stats(), "\u6982\u89C8") },
       { id: "sources", icon: tabIcon("rss"), title: { zh: "\u6765\u6E90", en: "Sources" }, component: withProps(require_sources(), "\u6765\u6E90") },

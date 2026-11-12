@@ -93,6 +93,7 @@
   host.registerAddon({
     id: "wb-addon-message",
     version: "0.1.0",
+    icon: require("lucide-react/icons/message-square").default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: Stats },
       { id: "inbox", icon: tabIcon("inbox"), title: { zh: "收件箱", en: "Inbox" }, component: Inbox },

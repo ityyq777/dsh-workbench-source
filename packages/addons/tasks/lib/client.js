@@ -10872,6 +10872,32 @@ var require_timeline_view = __commonJS({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list-checks.mjs
+var list_checks_exports = {};
+__export(list_checks_exports, {
+  __iconData: () => __iconData35,
+  default: () => ListChecks
+});
+var __iconData35, ListChecks;
+var init_list_checks = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list-checks.mjs"() {
+    init_createLucideIcon();
+    __iconData35 = {
+      name: "list-checks",
+      size: 24,
+      node: [
+        ["path", { d: "M13 5h8", key: "a7qcls" }],
+        ["path", { d: "M13 12h8", key: "h98zly" }],
+        ["path", { d: "M13 19h8", key: "c3s6r1" }],
+        ["path", { d: "m3 17 2 2 4-4", key: "1jhpwq" }],
+        ["path", { d: "m3 7 2 2 4-4", key: "1obspn" }]
+      ]
+    };
+    __iconData35.node;
+    ListChecks = createLucideIcon(__iconData35);
+  }
+});
+
 // packages/addons/tasks/client/client.src.cjs
 (function() {
   "use strict";
@@ -11345,6 +11371,7 @@ var require_timeline_view = __commonJS({
   host.registerAddon({
     id: "wb-addon-tasks",
     version: "5.2.7",
+    icon: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

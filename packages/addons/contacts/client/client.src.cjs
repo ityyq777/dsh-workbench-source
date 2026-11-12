@@ -34,6 +34,7 @@
   host.registerAddon({
     id: "wb-addon-contacts",
     version: "0.1.0",
+    icon: require("lucide-react/icons/users").default,
     views: [
       { id: "contacts", icon: tabIcon("users"), title: { zh: "联系人", en: "Contacts" }, component: withProps(require("./views/contacts.cjs"), "联系人") },
       { id: "groups", icon: tabIcon("folder"), title: { zh: "分组", en: "Groups" }, component: withProps(require("./views/groups.cjs"), "分组") },

@@ -45,6 +45,7 @@
   host.registerAddon({
     id: "wb-addon-connector",
     version: "0.1.0",
+    icon: require("lucide-react/icons/rss").default,
     views: [
       { id: "stats", icon: tabIcon("activity"), title: { zh: "概览", en: "Overview" }, component: withProps(require("./views/stats.cjs"), "概览") },
       { id: "sources", icon: tabIcon("rss"), title: { zh: "来源", en: "Sources" }, component: withProps(require("./views/sources.cjs"), "来源") },

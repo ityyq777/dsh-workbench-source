@@ -876,6 +876,7 @@ var require_actions = __commonJS({
   host.registerAddon({
     id: "wb-addon-calendar",
     version: "0.1.0",
+    icon: (init_calendar_days(), __toCommonJS(calendar_days_exports)).default,
     views: [
       { id: "events", icon: tabIcon("calendar"), title: { zh: "\u65E5\u7A0B", en: "Agenda" }, component: withProps(require_events(), "\u65E5\u7A0B") },
       { id: "calendars", icon: tabIcon("grid"), title: { zh: "\u65E5\u5386", en: "Calendars" }, component: withProps(require_calendars(), "\u65E5\u5386") },

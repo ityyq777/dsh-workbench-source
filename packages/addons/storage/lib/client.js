@@ -4759,6 +4759,7 @@ if (host) {
   host.registerAddon({
     id: "wb-addon-storage",
     version: "1.5.1",
+    icon: (init_package(), __toCommonJS(package_exports)).default,
     views: [
       { id: "stats", icon: tabIcon2("chart"), title: { zh: "\u7EDF\u8BA1", en: "Statistics" }, component: require_stats().Stats },
       { id: "storage", icon: tabIcon2("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: require_records().Records },

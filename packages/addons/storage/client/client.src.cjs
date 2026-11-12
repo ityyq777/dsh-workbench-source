@@ -13,6 +13,7 @@ if (host) {
   host.registerAddon({
     id: "wb-addon-storage",
     version: "1.5.1",
+    icon: require("lucide-react/icons/package").default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Statistics" }, component: require("./views/stats.cjs").Stats },
       { id: "storage", icon: tabIcon("list"), title: { zh: "记录", en: "Records" }, component: require("./views/records.cjs").Records },

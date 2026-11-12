@@ -1025,6 +1025,7 @@ var require_actions = __commonJS({
   host.registerAddon({
     id: "wb-addon-contacts",
     version: "0.1.0",
+    icon: (init_users(), __toCommonJS(users_exports)).default,
     views: [
       { id: "contacts", icon: tabIcon("users"), title: { zh: "\u8054\u7CFB\u4EBA", en: "Contacts" }, component: withProps(require_contacts(), "\u8054\u7CFB\u4EBA") },
       { id: "groups", icon: tabIcon("folder"), title: { zh: "\u5206\u7EC4", en: "Groups" }, component: withProps(require_groups(), "\u5206\u7EC4") },

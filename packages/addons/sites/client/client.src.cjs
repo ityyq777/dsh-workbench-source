@@ -1208,6 +1208,7 @@ var TagFilter = require("./ui/tagfilter.cjs");
   host.registerAddon({
     id: "wb-addon-sites",
     version: "1.10.0",
+    icon: require("lucide-react/icons/globe").default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.SitesStatsView },
       { id: "sites", icon: tabIcon("globe"), title: { zh: "记录", en: "Records" }, component: SitesView },

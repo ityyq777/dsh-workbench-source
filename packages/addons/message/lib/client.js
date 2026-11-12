@@ -3655,6 +3655,34 @@ var require_actions = __commonJS({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/message-square.mjs
+var message_square_exports = {};
+__export(message_square_exports, {
+  __iconData: () => __iconData25,
+  default: () => MessageSquare
+});
+var __iconData25, MessageSquare;
+var init_message_square = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/message-square.mjs"() {
+    init_createLucideIcon();
+    __iconData25 = {
+      name: "message-square",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z",
+            key: "18887p"
+          }
+        ]
+      ]
+    };
+    __iconData25.node;
+    MessageSquare = createLucideIcon(__iconData25);
+  }
+});
+
 // packages/addons/message/client/client.src.cjs
 (function() {
   var root = typeof window !== "undefined" ? window : null;
@@ -3740,6 +3768,7 @@ var require_actions = __commonJS({
   host.registerAddon({
     id: "wb-addon-message",
     version: "0.1.0",
+    icon: (init_message_square(), __toCommonJS(message_square_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: Stats },
       { id: "inbox", icon: tabIcon("inbox"), title: { zh: "\u6536\u4EF6\u7BB1", en: "Inbox" }, component: Inbox2 },

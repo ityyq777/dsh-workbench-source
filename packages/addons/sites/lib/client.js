@@ -6497,6 +6497,7 @@ var TagFilter = require_tagfilter();
   host.registerAddon({
     id: "wb-addon-sites",
     version: "1.10.0",
+    icon: (init_globe(), __toCommonJS(globe_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },
       { id: "sites", icon: tabIcon("globe"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: SitesView },

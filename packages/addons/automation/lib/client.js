@@ -1204,6 +1204,7 @@ var require_actions = __commonJS({
   host.registerAddon({
     id: "wb-addon-automation",
     version: "0.1.0",
+    icon: (init_zap(), __toCommonJS(zap_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("activity"), title: { zh: "\u6982\u89C8", en: "Overview" }, component: withProps(require_stats(), "\u6982\u89C8") },
       { id: "rules", icon: tabIcon("zap"), title: { zh: "\u89C4\u5219", en: "Rules" }, component: withProps(require_rules(), "\u89C4\u5219") },

@@ -34,6 +34,7 @@
   host.registerAddon({
     id: "wb-addon-automation",
     version: "0.1.0",
+    icon: require("lucide-react/icons/zap").default,
     views: [
       { id: "stats", icon: tabIcon("activity"), title: { zh: "概览", en: "Overview" }, component: withProps(require("./views/stats.cjs"), "概览") },
       { id: "rules", icon: tabIcon("zap"), title: { zh: "规则", en: "Rules" }, component: withProps(require("./views/rules.cjs"), "规则") },

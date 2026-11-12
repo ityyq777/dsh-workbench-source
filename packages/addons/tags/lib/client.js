@@ -3191,6 +3191,35 @@ var init_code_xml = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/tag.mjs
+var tag_exports = {};
+__export(tag_exports, {
+  __iconData: () => __iconData13,
+  default: () => Tag
+});
+var __iconData13, Tag;
+var init_tag = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/tag.mjs"() {
+    init_createLucideIcon();
+    __iconData13 = {
+      name: "tag",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z",
+            key: "vktsd0"
+          }
+        ],
+        ["circle", { cx: "7.5", cy: "7.5", r: ".5", fill: "currentColor", key: "kqv944" }]
+      ]
+    };
+    __iconData13.node;
+    Tag = createLucideIcon(__iconData13);
+  }
+});
+
 // packages/addons/lib/highlight.cjs
 var require_highlight = __commonJS({
   "packages/addons/lib/highlight.cjs"(exports2, module2) {
@@ -4448,6 +4477,7 @@ var h = React.createElement;
   host.registerAddon({
     id: "wb-addon-tags",
     version: "1.7.0",
+    icon: (init_tag(), __toCommonJS(tag_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },
       { id: "tags", icon: tabIcon("tags"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TagsView },

@@ -364,7 +364,11 @@ function WorkbenchPage(props) {
       go("addon:" + currentAddon.id + ":" + viewId, params);
     }
   }
-  var cardIcon = require("./icons.cjs");
+  function cardIcon(id, title) {
+    var m = registry.get(id) || registry.get("wb-addon-" + id);
+    if (m && m.icon) return h(m.icon, { size: 18, strokeWidth: 1.9, "aria-hidden": "true" });
+    return String(title || "?").slice(0, 1);
+  }
   function openAddon(a) {
     var m = registry.get(a.id);
     var v = (m && m.views && m.views[0]) || (a.views && a.views[0]) || null;
