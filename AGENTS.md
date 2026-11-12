@@ -9,7 +9,7 @@ commit 信息使用中文：提交标题与正文均用中文说明改动及原�
 
 ## 界面红线
 
-以下三条是用户明确提出的 UI 要求，改布局、新增插件视图、调整主题时必须遵守。
+以下四条是用户明确提出的 UI 要求，改布局、新增插件视图、调整主题时必须遵守。
 
 1. **业务视图不要两侧留白**。模块页容器（`wbc-wrap`、`wbv`、`wba-wrap`、`wbct-wrap`、
    `wbca-wrap`、`wbm-wrap`、`wbm-page` 一类）不得用 `max-width` + `margin:0 auto`
@@ -28,6 +28,12 @@ commit 信息使用中文：提交标题与正文均用中文说明改动及原�
    `--wb-muted`、`--wb-ok`、`--wb-warn`、`--wb-danger`，由 DSH 主题变量派生）；
    禁止写死 `#fff`、`#000`、`#2563eb` 一类固定色，禁止为单个模块另建色板。
    新增组件必须同时验证浅色、深色下的背景、文字、边框与 hover/focus/disabled。
+4. **先复用共享组件，不要复制**。新增或改造插件视图前，先查 `packages/addons/lib/`：
+   数据页用 `data-view.cjs`，Action 页用 `action-schema-view.cjs`，按钮/字段/提示/空态/
+   加载用 `client-common.cjs`，基础样式用 `client-base-styles.cjs`。两个以上插件出现的
+   同类 UI 必须抽到 `packages/addons/lib/`，禁止整段复制后只改 CSS 前缀。共享组件用
+   `domain`、`prefix`、`tables` 等参数接收上下文，不得 import 具体业务域；业务专属布局
+   留在插件内，通过参数或样式追加扩展。
 
 详细实现、验证步骤和常见错误见
 [`04-UI规范.md`](docs/AGENTS规范/04-UI规范.md)。
@@ -56,6 +62,6 @@ commit 信息使用中文：提交标题与正文均用中文说明改动及原�
 | [`01-代码风格与目录.md`](docs/AGENTS规范/01-代码风格与目录.md)           | ESLint/格式化、目录分层与纯路径迁移、单文件规模与拆分                | 写代码、迁目录、拆文件前           |
 | [`02-ActionSchema与页面数据.md`](docs/AGENTS规范/02-ActionSchema与页面数据.md) | Action schema 硬规则、改完必跑、文档同步、插件页面自证数据源    | 增删改 action、写插件页面时        |
 | [`03-安装与交付.md`](docs/AGENTS规范/03-安装与交付.md)                   | profile 版本核对、本地重装、桌面端 CLI、避免手工拷一半                | 交付插件、改客户端、准备重启前     |
-| [`04-UI规范.md`](docs/AGENTS规范/04-UI规范.md)                           | 全宽、桌面端顶栏、主题跟随、响应式与实机验证                        | 改布局、样式、图标、主题时         |
+| [`04-UI规范.md`](docs/AGENTS规范/04-UI规范.md)                           | 全宽、桌面端顶栏、主题跟随、共享组件复用、响应式与实机验证          | 改布局、样式、图标、主题、写插件视图时 |
 | [`05-发布与插件市场.md`](docs/AGENTS规范/05-发布与插件市场.md)           | 版本升级、构建发布树、npm 发布、GitHub 镜像、市场收录                | 发版、更新市场条目时               |
 | [`06-仓库结构与cloud子模块.md`](docs/AGENTS规范/06-仓库结构与cloud子模块.md) | 宿主与 cloud 子模块的提交、构建、部署关系                        | 改云端代码、更新子模块时           |
