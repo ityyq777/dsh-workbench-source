@@ -77,9 +77,10 @@ export async function sendMail(account, password, msg) {
   const headers = [
     "From: " + from, "To: " + [].concat(msg.to || []).join(", "), msg.cc && msg.cc.length ? "Cc: " + msg.cc.join(", ") : "",
     "Subject: =?UTF-8?B?" + Buffer.from(msg.subject || "(无主题)").toString("base64") + "?=",
-    "Date: " + new Date().toUTCString(), "MIME-Version: 1.0", "Content-Type: text/plain; charset=utf-8", "Content-Transfer-Encoding: base64", "", Buffer.from(msg.text || "").toString("base64"),
-  ].filter((l) => l !== "").join("\r\n");
-  socket.write(headers.replace(/\r\n\./g, "\r\n..") + "\r\n.\r\n");
+    "Date: " + new Date().toUTCString(), "MIME-Version: 1.0", "Content-Type: text/plain; charset=utf-8", "Content-Transfer-Encoding: base64",
+  ].filter(Boolean).join("\r\n");
+  const data = headers + "\r\n\r\n" + Buffer.from(msg.text || "").toString("base64") + "\r\n";
+  socket.write(data.replace(/^/gm, (m, offset) => "").replace(/\r\n\./g, "\r\n..") + ".\r\n");
   await expect(read, [250], "DATA 结束");
   try { await cmd("QUIT", [221], "QUIT"); } catch { /* 忽略 */ }
   socket.destroy();

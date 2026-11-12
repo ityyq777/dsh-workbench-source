@@ -24,7 +24,7 @@ function client(socket) {
   socket.on("close", () => { while (waiters.length) waiters.shift().reject(new Error("IMAP 连接关闭")); });
   return {
     waitFor(needle, timeout = 15000) { return new Promise((resolve, reject) => { const t = setTimeout(() => reject(new Error("IMAP 响应超时")), timeout); waiters.push({ needle, resolve: (v) => { clearTimeout(t); resolve(v); }, reject: (e) => { clearTimeout(t); reject(e); } }); if (buf.includes(needle)) { const out = buf; buf = ""; const w = waiters.pop(); w.resolve(out); } }); },
-    cmd(tag, line) { socket.write(tag + " " + line + "\r\n"); return this.waitFor("\r\n" + tag + " "); },
+    cmd(tag, line) { socket.write(tag + " " + line + "\r\n"); return this.waitFor(tag + " "); },
     raw() { return socket.write.bind(socket); },
   };
 }
@@ -62,10 +62,9 @@ export async function imapList(account, password) {
   const socket = await connect(account.host, account.port, !!account.secure);
   const c = client(socket);
   await c.waitFor("* OK");
-  await c.waitFor("* OK");
   let tag = "a1";
   const login = await c.cmd(tag, "LOGIN " + quote(account.user) + " " + quote(password));
-  if (!/\r\na1 OK/.test(login)) throw new Error("IMAP 登录失败：" + login.split("\r\n").find((l) => /^a1 /.test(l)));
+  if (!/a1 OK/.test(login)) throw new Error("IMAP 登录失败：" + login.split("\r\n").find((l) => /^a1 /.test(l)));
   tag = "a2";
   const list = await c.cmd(tag, 'LIST "" "*"');
   await c.cmd("a3", "LOGOUT").catch(() => {});
@@ -76,7 +75,6 @@ export async function imapList(account, password) {
 export async function imapRecent(account, password, mailbox = "INBOX", limit = 20) {
   const socket = await connect(account.host, account.port, !!account.secure);
   const c = client(socket);
-  await c.waitFor("* OK");
   await c.waitFor("* OK");
   await c.cmd("a1", "LOGIN " + quote(account.user) + " " + quote(password));
   const sel = await c.cmd("a2", "SELECT " + quote(mailbox));
