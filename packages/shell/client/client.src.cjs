@@ -440,16 +440,16 @@ function WorkbenchPage(props) {
     return jsx.jsxs("div", { className: "wb-root wb-immersive", children: [
       jsx.jsxs("div", { className: "wb-immersive-bar", children: [
         jsx.jsx("button", { className: "wb-back", onClick: function () { go("home"); }, children: "← " + t("back_home") }),
-        jsx.jsx("div", { className: "wb-grow" }),
         jsx.jsxs("div", { className: "wb-immersive-title", children: [
           jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(currentAddon.id, addonTitle) }),
           jsx.jsx("span", { children: addonTitle }),
           jsx.jsx("span", { className: "wb-badge", children: "v" + (currentAddon.version || "?") }),
         ] }),
+        jsx.jsx("div", { className: "wb-grow" }),
+        jsx.jsx(ViewTabs, { views: viewList, activeView: activeView, addonId: currentAddon.id, lang: lang, go: go }),
       ] }),
       jsx.jsxs("div", { className: "wb-immersive-main", children: [
         jsx.jsxs("div", { className: "wb-inner wb-wide", children: [
-          jsx.jsx(ViewTabs, { views: viewList, activeView: activeView, addonId: currentAddon.id, lang: lang, go: go }),
           currentAddon.error
             ? jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + currentAddon.error }) })
             : canRender

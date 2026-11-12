@@ -162,7 +162,7 @@ var CSS = [
   ".wb-root{--wb-border:var(--wb-line);--wb-card:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-layer-2,#fff));--wb-surface:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-layer-2,#fff));--wb-accent:var(--dsw-alias-brand-primary,#11a89b);--wb-muted:var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 58%,transparent));--wb-ok:var(--dsw-alias-state-success-primary,#18a058);--wb-warn:var(--dsw-alias-state-warn-primary,var(--dsw-alias-state-warning-primary,#d48806));--wb-danger:var(--dsw-alias-state-error-primary,#e5484d);--wb-radius-card:14px;--wb-space-md:14px}",
   ".wb-root *{scrollbar-width:thin;scrollbar-color:color-mix(in oklab,currentColor 22%,transparent) transparent}",
   ".wb-root ::-webkit-scrollbar{width:10px;height:10px}.wb-root ::-webkit-scrollbar-thumb{background:color-mix(in oklab,currentColor 18%,transparent);border-radius:999px;border:2px solid transparent;background-clip:padding-box}",
-  ".wb-root :is(.wbc-wrap,.wbv,.wba-wrap,.wbct-wrap,.wbca-wrap,.wbm-wrap,.wbm-page){width:100%;max-width:1180px;margin:0 auto;padding:22px clamp(16px,3vw,28px) 36px;gap:16px;box-sizing:border-box}",
+  ".wb-root :is(.wbc-wrap,.wbv,.wba-wrap,.wbct-wrap,.wbca-wrap,.wbm-wrap,.wbm-page){width:100%;max-width:none;margin:0;padding:0;gap:16px;box-sizing:border-box}",
   ".wb-root :is(.wbc-wrap,.wbv,.wba-wrap,.wbct-wrap,.wbca-wrap,.wbm-wrap,.wbm-page) h2{font-size:20px;line-height:1.3;font-weight:680;letter-spacing:-.02em;margin:0}",
   ".wb-root :is(.wbc-sub,.wba-sub,.wbct-sub,.wbca-sub,.wbm-sub,.wbv-muted,.wbct-muted,.wbc-muted,.wba-muted,.wbca-muted,.wbm-muted){font-size:12.5px;line-height:1.55;color:var(--wb-muted)}",
   ".wb-root :is(.wbc-wrap,.wbv,.wba-wrap,.wbct-wrap,.wbca-wrap,.wbm-wrap,.wbm-page) > :is(.wbc-head,.wba-head,.wbct-head,.wbca-head,.wbm-head){padding-bottom:12px;border-bottom:1px solid var(--wb-border);align-items:flex-start}",
@@ -273,5 +273,14 @@ var CSS = [
   ".wb-root .wbm-detailpane .wbm-body{padding:0 16px 18px;margin:0}",
   "@media (max-width:980px){.wb-root .wbm-layout,.wb-root .wbm-layout.has-detail{grid-template-columns:180px minmax(0,1fr)}.wb-root .wbm-layout.has-detail .wbm-detailpane{grid-column:1/-1;max-height:none}}",
   "@media (max-width:760px){.wb-root :is(.wbc-wrap,.wbv,.wba-wrap,.wbct-wrap,.wbca-wrap,.wbm-wrap,.wbm-page){padding:16px 14px 28px;gap:14px}.wb-root .wb-hero h2{font-size:20px}.wb-root .wb-home-card{min-height:0;padding:16px}.wb-root :is(.wbc-card,.wbv-card,.wba-card,.wbct-card,.wbca-card,.wbm-card,.wbct-panel){padding:14px;border-radius:12px}.wb-root .wbm-layout,.wb-root .wbm-layout.has-detail{grid-template-columns:1fr}.wb-root .wbm-pane{max-height:none}.wb-root .wbm-rail{order:2}}",
+  // 全宽模块页：去掉两侧留白，并把视图标签并入唯一的一层顶栏。
+  ".wb-root .wb-inner{max-width:none}",
+  ".wb-root .wb-immersive-main{padding:16px 22px 24px}",
+  ".wb-root .wb-immersive-main>.wb-inner{max-width:none;width:100%;padding:0}",
+  ".wb-root .wb-immersive-bar{padding:8px 18px;background:var(--wb-card);box-shadow:none;border-bottom:1px solid var(--wb-line)}",
+  ".wb-root .wb-immersive-bar .wb-page-tabs{border-bottom:0;margin:0 0 0 auto;padding:0;flex-wrap:nowrap;overflow-x:auto;max-width:min(72vw,980px);scrollbar-width:none}",
+  ".wb-root .wb-immersive-bar .wb-page-tabs::-webkit-scrollbar{display:none}",
+  ".wb-root .wb-immersive-bar .wb-tab{padding:6px 10px;white-space:nowrap}",
+  "@media (max-width:760px){.wb-root .wb-immersive-bar{flex-wrap:nowrap;padding:8px 12px}.wb-root .wb-immersive-bar .wb-page-tabs{max-width:none}.wb-root .wb-immersive-title{display:none}}",
 ].join("\n");
 module.exports = CSS;
