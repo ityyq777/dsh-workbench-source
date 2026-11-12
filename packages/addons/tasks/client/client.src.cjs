@@ -382,7 +382,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.12",
+    version: "5.2.13",
     icon: require("lucide-react/icons/list-checks").default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },

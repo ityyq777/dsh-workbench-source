@@ -23,9 +23,15 @@ for(const [index,entry] of model.LEVELS.entries()){
 const css=require(dir+'stats/heatmap-styles.cjs');assert.ok(!css.includes('.wbt-hm-levels'));
 assert.ok(css.includes('gap:4px'));assert.ok(css.includes('padding-inline-start:12px'));
 assert.ok(/--hm-fg-1:/.test(css)&&/--hm-fg-4:/.test(css),'新增方块内文字对比度变量');
-assert.ok(css.includes('repeat(7,20px)')&&css.includes('grid-template-columns:repeat(var(--hm-weeks),20px)'),'方块与星期/月份列同步 20px');
+assert.ok(css.includes('repeat(7,1fr)')&&css.includes('grid-template-columns:repeat(var(--hm-weeks),minmax(14px,1fr))'),'方块列按容器等分、星期列同步 1fr');
+assert.ok(css.includes('aspect-ratio:1'),'方块保持正方形');
 assert.ok(!css.includes('min-width:1200px'),'去掉宽屏只拉列不拉块的规则');
 assert.ok(css.includes('height:152px'),'骨架按新高度');
+// 色板必须由主题 token 派生，禁止写死 hex 与靠 .dark 选择器猜主题。
+assert.ok(css.includes('var(--wb-ok')&&css.includes('var(--wb-danger')&&css.includes('var(--wb-warn'),'类型色取自主题语义色');
+assert.ok(css.includes('color-mix(in oklab,var(--hm-hue-done)'),'强度档位按主题色混合');
+assert.ok(!/\.dark|data-theme=dark|prefers-color-scheme|color-scheme:dark/.test(css),'不再自带深色覆写');
+assert.ok(!/#e9ecef|#303740|#568fc7|#d3f0d7/i.test(css),'不再有写死的浅色/深色方块色');
 let state=[],cursor=0,effects=[];
 const memo=(fn,deps)=>{const i=cursor++,old=state[i];if(!old||deps.some((v,j)=>v!==old.deps[j]))state[i]={value:fn(),deps};return state[i].value;};
 const React={createElement:(type,props,...children)=>({type,props:props||{},children:children.flat(Infinity).filter(x=>x!=null)}),useState:v=>{const i=cursor++;if(!(i in state))state[i]=v;return [state[i],v=>state[i]=typeof v==='function'?v(state[i]):v];},useId:()=>"filter-test",useRef:v=>{const i=cursor++;return state[i]||={current:v};},useMemo:memo,useCallback:(fn,deps)=>memo(()=>fn,deps),useEffect:(fn,deps)=>memo(()=>{effects.push(fn);},deps)};
