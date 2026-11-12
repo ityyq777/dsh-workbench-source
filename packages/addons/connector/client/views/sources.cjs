@@ -77,6 +77,7 @@ module.exports = function SourcesView(props) {
       ),
       d ? h("div", { className: "wbc-form", style: { marginTop: "10px" } }, (d.configFields || []).map(function (cf) {
         var val = f.config[cf.name] === undefined ? "" : f.config[cf.name];
+        if (cf.type === "select") return h(C.Field, { key: cf.name, label: cf.label || cf.name, hint: cf.placeholder || "" }, h("select", { value: val || (cf.default || ""), onChange: function (e) { setConfig(cf.name, e.target.value); } }, (cf.options || []).map(function (op) { return h("option", { key: op, value: op }, op); })));
         if (cf.type === "boolean") return h(C.Field, { key: cf.name, label: cf.label || cf.name }, h("select", { value: val ? "1" : "0", onChange: function (e) { setConfig(cf.name, e.target.value === "1", "boolean"); } }, h("option", { value: "1" }, "是"), h("option", { value: "0" }, "否")));
         return h(C.Field, { key: cf.name, label: cf.label || cf.name, hint: cf.placeholder || "" }, h("input", { type: cf.type === "number" ? "number" : "text", value: val, onChange: function (e) { setConfig(cf.name, e.target.value, cf.type); } }));
       })) : null,

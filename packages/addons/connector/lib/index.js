@@ -88,7 +88,9 @@ export function createDomain(host) {
             const out = await connector.handleInbound(req);
             return { status: 200, body: { ok: true, ...out } };
           } catch (error) {
-            return { status: 400, body: { ok: false, error: String((error && error.message) || error) } };
+            const status = Number((error && error.status) || 400);
+            const headers = status === 429 ? { "retry-after": "60" } : {};
+            return { status, headers, body: { ok: false, error: String((error && error.message) || error) } };
           }
         });
       }
