@@ -661,9 +661,10 @@ var require_styles = __commonJS({
       ".wb-root .wb-immersive-bar{justify-content:space-between;gap:16px}",
       ".wb-root .wb-immersive-left{display:flex;align-items:center;gap:10px;min-width:0;flex:0 1 auto}",
       ".wb-root .wb-immersive-bar .wb-grow{display:none}",
+      ".wb-root .wb-immersive-bar .wb-immersive-left .wb-back{margin-right:0}",
       ".wb-root .wb-immersive-bar .wb-immersive-title{flex:0 0 auto;min-width:0}",
       ".wb-root .wb-immersive-bar .wb-immersive-title>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".wb-root .wb-immersive-bar .wb-page-tabs{margin:0;flex:0 1 auto;min-width:0;max-width:none;justify-content:flex-end;gap:2px}",
+      ".wb-root .wb-immersive-bar .wb-page-tabs{margin:0;flex:0 1 auto;min-width:0;max-width:none;justify-content:flex-start;gap:4px}",
       ".wb-root .wb-immersive-bar .wb-tab{flex:0 0 auto;min-width:0;justify-content:center;text-align:center;padding:6px 10px}"
     ].join("\n");
     module2.exports = CSS2;
@@ -1985,12 +1986,12 @@ function WorkbenchPage(props) {
           jsx.jsx("button", { className: "wb-back", onClick: function() {
             go("home");
           }, children: "\u2190 " + t("back_home") }),
-          jsx.jsxs("div", { className: "wb-immersive-title", children: [
-            jsx.jsx("span", { children: addonTitle }),
-            jsx.jsx("span", { className: "wb-badge", children: "v" + (currentAddon.version || "?") })
-          ] })
+          jsx.jsx(ViewTabs, { views: viewList, activeView, addonId: currentAddon.id, lang, go })
         ] }),
-        jsx.jsx(ViewTabs, { views: viewList, activeView, addonId: currentAddon.id, lang, go })
+        jsx.jsxs("div", { className: "wb-immersive-title", children: [
+          jsx.jsx("span", { children: addonTitle }),
+          jsx.jsx("span", { className: "wb-badge", children: "v" + (currentAddon.version || "?") })
+        ] })
       ] }),
       jsx.jsxs("div", { className: "wb-immersive-main", children: [
         jsx.jsxs("div", { className: "wb-inner wb-wide", children: [

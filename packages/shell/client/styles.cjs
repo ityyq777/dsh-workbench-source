@@ -288,9 +288,10 @@ var CSS = [
   ".wb-root .wb-immersive-bar{justify-content:space-between;gap:16px}",
   ".wb-root .wb-immersive-left{display:flex;align-items:center;gap:10px;min-width:0;flex:0 1 auto}",
   ".wb-root .wb-immersive-bar .wb-grow{display:none}",
+  ".wb-root .wb-immersive-bar .wb-immersive-left .wb-back{margin-right:0}",
   ".wb-root .wb-immersive-bar .wb-immersive-title{flex:0 0 auto;min-width:0}",
   ".wb-root .wb-immersive-bar .wb-immersive-title>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-  ".wb-root .wb-immersive-bar .wb-page-tabs{margin:0;flex:0 1 auto;min-width:0;max-width:none;justify-content:flex-end;gap:2px}",
+  ".wb-root .wb-immersive-bar .wb-page-tabs{margin:0;flex:0 1 auto;min-width:0;max-width:none;justify-content:flex-start;gap:4px}",
   ".wb-root .wb-immersive-bar .wb-tab{flex:0 0 auto;min-width:0;justify-content:center;text-align:center;padding:6px 10px}",
 ].join("\n");
 module.exports = CSS;
