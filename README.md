@@ -62,7 +62,7 @@ pnpm cloud:build
 dsh plugin --profile web add dsh-workbench-tasks@5.2.6
 dsh plugin --profile web add dsh-workbench-tags@1.7.0
 dsh plugin --profile web add dsh-workbench-sites@1.10.0
-dsh plugin --profile web add dsh-workbench-storage@1.5.1
+dsh plugin --profile web add dsh-workbench-storage@1.5.2
 dsh plugin --profile web add dsh-workbench-message@0.1.0
 ```
 

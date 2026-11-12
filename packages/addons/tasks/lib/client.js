@@ -100,6 +100,16 @@ var require_tagfilter = __commonJS({
         };
       }, [open, query, load, props.reloadKey]);
       React.useEffect(function() {
+        if (!open) return void 0;
+        function onKey(e) {
+          if (e.key === "Escape") setOpen(false);
+        }
+        document.addEventListener("keydown", onKey);
+        return function() {
+          document.removeEventListener("keydown", onKey);
+        };
+      }, [open]);
+      React.useEffect(function() {
         api.call("tasks.tagOptions", { pageSize: 1 }).then(function(r) {
           if (r && r.ok) setAvailable(!!(r.result && r.result.available));
         }).catch(function() {

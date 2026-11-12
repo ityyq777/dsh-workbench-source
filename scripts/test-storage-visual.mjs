@@ -107,7 +107,13 @@ for(const v of addon.views){
     cls('wbi-chip').find(n=>n.type==='button').props.onClick();render();await settle();
     assert.equal(latest().tagIds[0],'tag','chip filters real request');
     assert.equal(latest().pageNumber,1,'filter resets pagination');
-    button('Clear tag filter').props.onClick();render();await settle();
+    const tfBtn=all().find(n=>n.type==='button'&&text(n).startsWith('Tag filter'));
+    assert.ok(tfBtn,'toolbar exposes the tag filter control');
+    assert.match(text(tfBtn),/· 1/,'tag filter shows the selected count');
+    tfBtn.props.onClick({stopPropagation(){}});render();await settle();
+    const clearBtn=all().find(n=>n.type==='button'&&n.props.title==='Clear');
+    assert.ok(clearBtn,'tag filter menu offers clear');
+    clearBtn.props.onClick({stopPropagation(){}});render();await settle();
     assert.equal(latest().tagIds,undefined,'clear removes filter');
     button('Edit Test inventory').props.onClick();render();await settle();
     assert.ok(all().some(n=>n.props.role==='dialog'),'edit still opens editor');

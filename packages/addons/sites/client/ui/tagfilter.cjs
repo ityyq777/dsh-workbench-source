@@ -30,7 +30,18 @@ module.exports = function TagFilter(props) {
       if (!r || !r.ok) return;
       var out = r.result || {};
       var records = out.records || [];
-      setRows(function (prev) { return append ? prev.concat(records) : records; });
+      setRows(function (prev) {
+        if (!append) return records;
+        var seen = {};
+        var out = [];
+        prev.concat(records).forEach(function (x) {
+          var key = String(x.id);
+          if (seen[key]) return;
+          seen[key] = true;
+          out.push(x);
+        });
+        return out;
+      });
       setTotal(out.total || 0);
       setPage(out.current || pageNumber);
       setHasMore(!!out.hasNext || (out.current || pageNumber) * 20 < (out.total || 0));
@@ -104,7 +115,7 @@ module.exports = function TagFilter(props) {
           return h("label", { key: t.id, className: "wbs-tagopt" },
             h("input", { type: "checkbox", checked: on, onChange: function () { toggle(t.id); } }),
             h("span", null, t.name));
-        }) : h("div", { className: "wbs-note", style: { padding: 6 } }, loading ? text("loadingMore") : (query ? text("tagNoMatch") : text("allTags"))),
+        }) : h("div", { className: "wbs-note", style: { padding: 6 } }, loading ? text("loadingMore") : (query ? text("tagNoMatch") : text("noTags"))),
         rows.length ? h("div", { className: "wbs-note", style: { padding: 6, textAlign: "center" } }, loading ? text("loadingMore") : (hasMore ? "" : text("noMore"))) : null
       )
     ) : null

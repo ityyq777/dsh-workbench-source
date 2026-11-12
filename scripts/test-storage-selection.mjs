@@ -11,6 +11,7 @@ const React={
   createElement(type,props,...children){return {type,props:{...props,children},children};},
   useState(initial){ const f=active,i=f.i++; if(!(i in f.slots)) f.slots[i]=initial; return [f.slots[i],v=>{f.slots[i]=typeof v==='function'?v(f.slots[i]):v;dirty=true;}]; },
   useRef(initial){const f=active,i=f.i++;return f.slots[i] ||= {current:initial};},
+  useCallback(fn,deps){const f=active,i=f.i++,old=f.slots[i];if(!old||old.deps.length!==deps.length||deps.some((v,j)=>v!==old.deps[j]))f.slots[i]={deps,fn};return f.slots[i].fn;},
   useEffect(fn,deps){const f=active,i=f.i++,old=f.slots[i];if(!old||deps.some((v,j)=>v!==old.deps[j]))effects.push(()=>{old?.cleanup?.();f.slots[i]={deps,cleanup:fn()};});}
 };
 const document={activeElement:null,addEventListener:(n,f)=>listeners.add(f),removeEventListener:(n,f)=>listeners.delete(f)};

@@ -69,7 +69,16 @@ var require_tagfilter = __commonJS({
           var out = r.result || {};
           var records = out.records || [];
           setRows(function(prev) {
-            return append ? prev.concat(records) : records;
+            if (!append) return records;
+            var seen = {};
+            var out2 = [];
+            prev.concat(records).forEach(function(x) {
+              var key = String(x.id);
+              if (seen[key]) return;
+              seen[key] = true;
+              out2.push(x);
+            });
+            return out2;
           });
           setTotal(out.total || 0);
           setPage(out.current || pageNumber);
@@ -186,7 +195,7 @@ var require_tagfilter = __commonJS({
                 } }),
                 h2("span", null, t.name)
               );
-            }) : h2("div", { className: "wbs-note", style: { padding: 6 } }, loading ? text("loadingMore") : query ? text("tagNoMatch") : text("allTags")),
+            }) : h2("div", { className: "wbs-note", style: { padding: 6 } }, loading ? text("loadingMore") : query ? text("tagNoMatch") : text("noTags")),
             rows.length ? h2("div", { className: "wbs-note", style: { padding: 6, textAlign: "center" } }, loading ? text("loadingMore") : hasMore ? "" : text("noMore")) : null
           )
         ) : null

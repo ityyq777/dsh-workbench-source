@@ -49,6 +49,7 @@
     "test:storage-cards": "node scripts/test-storage-cards.mjs",
     "test:storage-bulk": "node scripts/test-storage-bulk.mjs",
     "test:storage-selection": "node scripts/test-storage-selection.mjs",
+    "test:storage-tagfilter": "node scripts/test-storage-tagfilter.mjs",
     "test:config": "node scripts/test-config.mjs",
     "test:data": "node scripts/test-data.mjs",
     "test:data-ui": "node scripts/test-data-ui.mjs",
