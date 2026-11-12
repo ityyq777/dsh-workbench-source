@@ -86,6 +86,10 @@ try {
     if (!d.backup || !d.backup.export || !d.backup.import) throw new Error("missing backup capability: " + d.id);
   }
 
+  // 注册一个刻意不提供 exportData 的域：等价于消息插件「只落本机、不备份」的设计选择。
+  host.registerDomain({ id: "wb-addon-noexport", title: "不备份探针", version: "0.0.1", tables: [], views: [] });
+  if (host.listDomains().length !== 5) throw new Error("probe domain not registered");
+
   const fixtureTableId = (await host.invoke("taskNodes.create", { parentId: "1", type: "1", name: "备份回归任务表" }, "agent")).result.node.id;
 
   const created = await host.invoke("tasks.create", { tableId: fixtureTableId, title: "备份验收任务", priority: 7 }, "agent");
@@ -117,6 +121,11 @@ try {
   for (const m of manifest.modules) {
     if (!files.has(m.file)) throw new Error("missing module file " + m.file);
   }
+  if (manifest.modules.some((m) => m.id === "wb-addon-noexport")) throw new Error("skipped domain must not be exported");
+  const skippedRow = (manifest.skipped || []).find((row) => row.id === "wb-addon-noexport");
+  if (!skippedRow || skippedRow.reason !== "no-export") throw new Error("manifest.skipped missing no-export domain: " + JSON.stringify(manifest.skipped));
+  if (manifest.skipped.length !== 1) throw new Error("unexpected skipped entries: " + JSON.stringify(manifest.skipped));
+  console.log("full export skips no-export domain:", JSON.stringify(manifest.skipped));
   console.log("export ok:", manifest.modules.map((m) => m.id + "@" + m.version).join(", "));
 
   const taskBackup = JSON.parse(files.get("modules/wb-addon-tasks.json").toString("utf8"));
@@ -142,6 +151,59 @@ try {
     throw new Error("module selection failed");
   }
   console.log("selection ok:", onlyManifest.modules[0].id);
+
+  // 缺省 modules 与 all 等价：都走全量导出（跳过不可导出域）。
+  const defaultExport = await call("GET", "/workbench/api/backup/export");
+  if (defaultExport.status !== 200) throw new Error("default export failed: " + defaultExport.status + " " + defaultExport.body.toString());
+  const defaultManifest = JSON.parse(zip.zipRead(defaultExport.body).get("manifest.json").toString("utf8"));
+  if (defaultManifest.modules.length !== 4 || (defaultManifest.skipped || []).length !== 1) {
+    throw new Error("default export should equal all: " + JSON.stringify({ modules: defaultManifest.modules.length, skipped: defaultManifest.skipped }));
+  }
+  if (onlyManifest.skipped) throw new Error("explicit export must not carry skipped list");
+  console.log("default export equals all ok");
+
+  // 显式请求不可导出模块 / 未知模块：400 + machine-readable code，不再整包 500。
+  const notExportable = await call("GET", "/workbench/api/backup/export?modules=wb-addon-noexport");
+  const notExportableBody = parseJson(notExportable);
+  if (notExportable.status !== 400) throw new Error("not-exportable must be 400, got " + notExportable.status);
+  if (!notExportableBody || notExportableBody.code !== "not_exportable") throw new Error("not-exportable code missing: " + JSON.stringify(notExportableBody));
+  if (!String(notExportableBody.error).includes("未实现数据导出")) throw new Error("not-exportable message not readable: " + notExportableBody.error);
+
+  const unknownModule = await call("GET", "/workbench/api/backup/export?modules=wb-addon-missing");
+  const unknownBody = parseJson(unknownModule);
+  if (unknownModule.status !== 400 || !unknownBody || unknownBody.code !== "invalid") throw new Error("unknown module must be 400 invalid: " + unknownModule.status + " " + unknownModule.body.toString());
+  if (!String(unknownBody.error).includes("模块未安装")) throw new Error("unknown module message missing: " + unknownBody.error);
+  console.log("export 4xx codes ok:", unknownBody.code, notExportableBody.code);
+
+  // createBackup 直接调用：空数组与 ["all"] 都按全量处理；显式不可导出模块抛 not_exportable。
+  const { createBackup } = await import("../packages/shell/lib/infra/backup.js");
+  const directDomains = [
+    { enabled: true, error: null, def: { id: "wb-addon-alpha", title: "Alpha", version: "1.0.0", exportData: () => ({ schemaVersion: 1, rows: [] }) } },
+    { enabled: true, error: null, def: { id: "wb-addon-beta", title: "Beta", version: "1.0.0" } },
+    { enabled: false, error: "boom", def: { id: "wb-addon-gamma", title: "Gamma", version: "1.0.0" } },
+  ];
+  const emptyIds = await createBackup({ domains: directDomains, shellVersion: "9.9.9", moduleIds: [] });
+  if (emptyIds.manifest.modules.length !== 1 || emptyIds.manifest.modules[0].id !== "wb-addon-alpha") throw new Error("empty ids should export only exportable domains");
+  if ((emptyIds.manifest.skipped || []).map((row) => row.id).join(",") !== "wb-addon-beta") throw new Error("empty ids skipped list wrong: " + JSON.stringify(emptyIds.manifest.skipped));
+  const allIds = await createBackup({ domains: directDomains, shellVersion: "9.9.9", moduleIds: ["all"] });
+  if (allIds.manifest.modules.length !== 1 || (allIds.manifest.skipped || []).length !== 1) throw new Error("['all'] should behave like full export");
+  let codeError = null;
+  try { await createBackup({ domains: directDomains, shellVersion: "9.9.9", moduleIds: ["wb-addon-beta"] }); } catch (e) { codeError = e; }
+  if (!codeError || codeError.code !== "not_exportable") throw new Error("explicit non-exportable must throw not_exportable: " + String(codeError && codeError.code));
+  let missingError = null;
+  try { await createBackup({ domains: directDomains, shellVersion: "9.9.9", moduleIds: ["wb-addon-missing"] }); } catch (e) { missingError = e; }
+  if (!missingError || missingError.code !== "invalid") throw new Error("unknown id must throw invalid: " + String(missingError && missingError.code));
+  console.log("createBackup semantics ok");
+
+  // 旧备份包没有 manifest.skipped：仍可导入（新字段只对新包生效）。
+  const legacyManifestNoSkip = { ...manifest };
+  delete legacyManifestNoSkip.skipped;
+  const noSkipArchive = zip.zipCreate([...files].map(([name, data]) => ({
+    name, data: name === "manifest.json" ? Buffer.from(JSON.stringify(legacyManifestNoSkip)) : data,
+  })));
+  const noSkipReport = parseJson(await call("POST", "/workbench/api/backup/import", noSkipArchive));
+  if (!noSkipReport?.ok || noSkipReport.summary.ok !== 4) throw new Error("manifest without skipped must still import: " + JSON.stringify(noSkipReport));
+  console.log("manifest without skipped imports ok");
 
   const imported = await call("POST", "/workbench/api/backup/import", exported.body);
   if (imported.status !== 200) throw new Error("import failed: " + imported.status + " " + imported.body.toString());

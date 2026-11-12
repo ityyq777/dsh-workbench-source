@@ -250,9 +250,9 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
                 }
               }
               if (p === "/backup/export" && m === "GET") {
+                const raw = url.searchParams.get("modules");
+                const ids = raw && raw !== "all" ? raw.split(",").map((x) => x.trim()).filter(Boolean) : null;
                 try {
-                  const raw = url.searchParams.get("modules");
-                  const ids = raw && raw !== "all" ? raw.split(",").map((x) => x.trim()).filter(Boolean) : null;
                   const backup = await createBackup({ domains: backupDomains(), shellVersion: SHELL_VERSION, moduleIds: ids });
                   res.writeHead(200, {
                     "content-type": "application/zip",
@@ -263,7 +263,12 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
                   res.end(backup.buffer);
                   return;
                 } catch (e) {
-                  return send(500, { ok: false, error: String((e && (e as Error).message) || e) });
+                  const err = e as any;
+                  const code = err && err.name === "BackupError" && err.code ? String(err.code) : "export";
+                  // 调用方可纠正的问题给 4xx（带 machine-readable code），导出执行期异常才算 500。
+                  const status = code === "incompatible" ? 422 : code === "export" ? 500 : 400;
+                  log("备份导出失败", code, ids && ids.length ? ids.join(",") : "all");
+                  return send(status, { ok: false, code, error: String((e && (e as Error).message) || e) });
                 }
               }
 
