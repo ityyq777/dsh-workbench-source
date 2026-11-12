@@ -283,5 +283,6 @@ var CSS = [
   ".wb-root .wb-immersive-bar .wb-page-tabs::-webkit-scrollbar{display:none}",
   ".wb-root .wb-immersive-bar .wb-tab{padding:6px 10px;white-space:nowrap}",
   "@media (max-width:760px){.wb-root .wb-immersive-bar{flex-wrap:nowrap;padding:calc(6px + var(--dsh-frame-top-clearance,0px)) 12px 6px}.wb-root .wb-immersive-bar .wb-page-tabs{max-width:none}.wb-root .wb-immersive-title{display:none}}",
+  "html[data-platform=darwin] .wb-root .wb-immersive-bar{padding-top:8px;padding-left:max(88px,calc(12px + var(--dsh-frame-leading-clearance,0px)))}",
 ].join("\n");
 module.exports = CSS;
