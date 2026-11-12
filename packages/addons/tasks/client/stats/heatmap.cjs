@@ -44,13 +44,15 @@ function Heatmap(props) {
       h("div",{className:"wbt-hm-body"},
         h("div",{className:"wbt-hm-months","aria-hidden":true},geometry.days.filter(function(d){return d.first;}).map(function(d){return h("span",{key:d.date,style:{gridColumn:d.column}},new Date(Date.UTC(year,d.month,1)).toLocaleString(lang==="en"?"en-US":"zh-CN",{month:"short",timeZone:"UTC"}));})),
         h("div",{className:"wbt-hm-grid"},geometry.days.map(function(d){
-          var day=byDate[d.date]||{}, future=d.date>today, enabled=!future && model.count(day,type)>0;
-          var title=model.label(d.date,day,t,type)+(future?" · "+t.future:!model.count(day,type)?" · "+t.none:"");
-          return h("button",{key:d.date,type:"button",className:"wbt-hm-day"+(future?" wbt-hm-future":""),"data-date":d.date,title:title,"aria-label":title,"aria-disabled":!enabled,
+          var day=byDate[d.date]||{}, future=d.date>today, n=future?0:model.count(day,type), enabled=!future && n>0;
+          // 有活动才渲染数字；0 与未来日期留空，99+ 兜住三位数避免溢出 20px 方块。
+          var text=!future && n>0 ? (n>=100?"99+":String(n)) : "";
+          var title=model.label(d.date,day,t,type)+(future?" · "+t.future:!n?" · "+t.none:"");
+          return h("button",{key:d.date,type:"button",className:"wbt-hm-day"+(future?" wbt-hm-future":""),"data-date":d.date,"data-level":future?0:(n?model.level(n):0),"data-type":type,title:title,"aria-label":title,"aria-disabled":!enabled,
             style:{gridColumn:d.column,gridRow:d.row,background:future?"var(--hm-empty)":model.background(day,type)},
             onMouseEnter:function(){setTip(title);},onMouseLeave:function(){setTip("");},onFocus:function(){setTip(title);},onBlur:function(){setTip("");},
             onClick:function(){if(enabled && props.onNavigate)props.onNavigate("tasks",{activityDate:d.date,activityType:type});}
-          });
+          },text?h("span",{className:"wbt-hm-num","aria-hidden":true},text):null);
         }))
       )
     ))
