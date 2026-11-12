@@ -119,10 +119,18 @@ check("brief 结构完整", () => {
   assert.ok(brief.includes("标签域未安装时仍传 tags"), "标签域缺失时应降级为照常创建");
   assert.ok(brief.includes("不要因此停问、重试或声称已打标"), "标签域缺失不得阻断、重试或虚报");
   assert.ok(brief.includes("业务域、功能面、动作、影响面"), "标签维度应写成可执行建议");
-  assert.ok(brief.includes("建议至少 3 个、通常 4–6 个"), "标签数量给出下限与常见区间");
-  assert.ok(brief.includes("工作区归属、时间线归属、标签（名称，标注沿用或新建）"), "创建回执要写标签");
+  // 2026-11-12 口径放宽：不再引导先查现有标签、不再给 3–6 的区间，改为自由联想、越多越好
+  assert.ok(brief.includes("自由联想"), "标签应鼓励自由联想");
+  assert.ok(brief.includes("越多越好"), "标签数量口径应为越多越好");
+  assert.ok(brief.includes("通常 5–8 个"), "给出常见区间作为参考而非上限");
+  assert.ok(brief.includes("通常 5–8 个，上不封顶"), "不应设置硬上限");
+  assert.equal(brief.includes("先取现有标签"), false, "不应再要求先取现有标签");
+  assert.equal(brief.includes("tasks.tagOptions 分页"), false, "不应引导分页枚举现有标签");
+  assert.equal(brief.includes("4–6 个"), false, "旧的 4–6 区间必须移除");
+  assert.equal(brief.includes("优先复用同义标签"), false, "不应以复用现有标签为优先");
+  assert.ok(brief.includes("工作区归属、时间线归属、标签（完整名称；新建的单独标出，没标注的视为沿用）"), "创建回执要写标签");
   const fmt3 = brief.split("\n").find((line) => line.startsWith("3. 归属"));
-  assert.ok(fmt3.includes("标签"), "输出格式第 3 条应包含标签");
+  assert.ok(fmt3.includes("标签") && fmt3.includes("新建的单独标出"), "输出格式第 3 条应包含标签与新建标记");
   const fmt4 = brief.split("\n").find((line) => line.startsWith("4. 发布回执"));
   assert.ok(fmt4.includes("标签") && fmt4.includes("未打标须说明原因"), "输出格式第 4 条应包含标签与未打标原因");
 });
