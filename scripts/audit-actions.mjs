@@ -89,6 +89,14 @@ function versions(addon) {
   const pkgPath = join(dir, "package.json");
   if (!existsSync(pkgPath)) return null;
   const pkg = JSON.parse(read(pkgPath));
+  if (pkg.dsh && pkg.dsh.client) {
+    if (typeof pkg.dsh.client.platform !== "string" || !pkg.dsh.client.platform) {
+      problems.push(`${addon}: dsh.client.platform 缺失，真实启动时 client-modules 组合会失败`);
+    }
+    if (!pkg.exports || !pkg.exports["./client"]) {
+      problems.push(`${addon}: exports["./client"] 缺失，真实启动时找不到客户端 bundle`);
+    }
+  }
   const entries = [
     ["package.json version", pkg.version],
     ["package.json wb.addon.version", pkg.wb && pkg.wb.addon && pkg.wb.addon.version],
