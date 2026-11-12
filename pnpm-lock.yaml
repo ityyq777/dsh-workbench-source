@@ -42,7 +42,25 @@ importers:
         specifier: file:../../shell-dist
         version: link:../../shell-dist
 
+  packages/addons/calendar:
+    dependencies:
+      dsh-workbench:
+        specifier: file:../../shell-dist
+        version: link:../../shell-dist
+
   packages/addons/connector:
+    dependencies:
+      dsh-workbench:
+        specifier: file:../../shell-dist
+        version: link:../../shell-dist
+
+  packages/addons/contacts:
+    dependencies:
+      dsh-workbench:
+        specifier: file:../../shell-dist
+        version: link:../../shell-dist
+
+  packages/addons/mail:
     dependencies:
       dsh-workbench:
         specifier: file:../../shell-dist
