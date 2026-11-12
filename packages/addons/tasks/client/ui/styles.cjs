@@ -186,6 +186,7 @@ module.exports = [
     ".wbt-field.full{grid-column:1 / -1}",
     ".wbt-field>span{opacity:.62;font-size:11.5px}",
     ".wbt-modal-foot{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:2px}",
+    ".wbt-modal-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.45;letter-spacing:.2px;opacity:.6;user-select:text;-webkit-user-select:text;overflow-wrap:anywhere;border-top:1px solid var(--wbt-line);margin-top:2px;padding-top:7px}",
     ".wbt-timeline{display:flex;flex-direction:column;gap:0;margin:2px 0}",
     ".wbt-tl-item{display:flex;gap:9px;min-height:40px}",
     ".wbt-tl-rail{width:12px;display:flex;flex-direction:column;align-items:center;flex:none}",

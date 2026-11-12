@@ -4368,6 +4368,7 @@ var require_copy = __commonJS({
         cancel: "\u53D6\u6D88",
         create: "\u521B\u5EFA",
         close: "\u5173\u95ED",
+        taskId: "\u4EFB\u52A1 ID",
         addGroup: "\u65B0\u5EFA\u7EC4",
         addTable: "\u65B0\u5EFA\u8868",
         rename: "\u91CD\u547D\u540D",
@@ -4530,6 +4531,7 @@ var require_copy = __commonJS({
         cancel: "Cancel",
         create: "Create",
         close: "Close",
+        taskId: "Task ID",
         addGroup: "New group",
         addTable: "New table",
         rename: "Rename",
@@ -7014,6 +7016,7 @@ var require_styles = __commonJS({
       ".wbt-field.full{grid-column:1 / -1}",
       ".wbt-field>span{opacity:.62;font-size:11.5px}",
       ".wbt-modal-foot{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:2px}",
+      ".wbt-modal-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.45;letter-spacing:.2px;opacity:.6;user-select:text;-webkit-user-select:text;overflow-wrap:anywhere;border-top:1px solid var(--wbt-line);margin-top:2px;padding-top:7px}",
       ".wbt-timeline{display:flex;flex-direction:column;gap:0;margin:2px 0}",
       ".wbt-tl-item{display:flex;gap:9px;min-height:40px}",
       ".wbt-tl-rail{width:12px;display:flex;flex-direction:column;align-items:center;flex:none}",
@@ -8740,7 +8743,9 @@ var require_edit_modal = __commonJS({
               { className: "wbt-modal-foot" },
               h("button", { className: "wbt-btn ghost", disabled: isBusy, onClick: requestClose }, t.cancel),
               h("button", { className: "wbt-btn primary", disabled: isBusy || !titleOk, onClick: submit }, isBusy ? "\u2026" : t.save)
-            )
+            ),
+            // 详情最下方展示完整任务 ID：小字、等宽、可选中复制，不参与提交。
+            String(task.id || "") ? h("div", { className: "wbt-modal-id", title: String(task.id) }, t.taskId + " \xB7 " + String(task.id)) : null
           )
         );
       }
@@ -11367,7 +11372,7 @@ var init_list_checks = __esm({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.10",
+    version: "5.2.11",
     icon: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },

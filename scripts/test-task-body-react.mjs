@@ -44,6 +44,15 @@ for (const lang of ['zh','en']) for (const status of ['0','1','2','3']) {
   assert.ok(panel.includes('*raw reflection*</textarea>'));
   assert.equal((panel.match(/<textarea/g)||[]).length,2);
 }
+const ULID = '01a1d070c5db7579ad833f6d3904189b';
+for (const lang of ['zh', 'en']) {
+  const panel = renderToStaticMarkup(h(EditModal, { lang, t: copy[lang], task: { id: ULID, title: 'Title', description: '', review: '', status: '0' }, tree: [], onClose() {} }));
+  const label = lang === 'en' ? 'Task ID' : '任务 ID';
+  assert.ok(panel.includes(label + ' \u00b7 ' + ULID), 'detail footer shows the full task id');
+  assert.equal((panel.match(/wbt-modal-id/g) || []).length, 1, 'exactly one id line');
+  assert.ok(panel.indexOf('wbt-modal-foot') < panel.indexOf('wbt-modal-id'), 'id line sits below the button row');
+  assert.ok(!panel.includes('wbt-modal-id">' + ULID + ' ·'), 'id line keeps its label');
+}
 const Description = require('../packages/addons/lib/description.cjs').Description;
 const storage=renderToStaticMarkup(h(Description,{text:fixture,lang:'en'}));
 assert.ok(storage.includes('<br/>')&&storage.includes('<hr/>'));assert.ok(storage.includes('Description'));

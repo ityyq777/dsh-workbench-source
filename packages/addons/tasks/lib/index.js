@@ -118,7 +118,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/时间线/配置/数据五个视图：紧急/已关闭/已开启/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "5.2.10",
+        version: "5.2.11",
         tables: ["task", "task_node", "task_timeline", "task_timeline_link", "task_workspace", "task_workspace_link"],
         sync: taskSync,
         views: [

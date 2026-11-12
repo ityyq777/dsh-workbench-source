@@ -112,7 +112,9 @@ module.exports = function createEditModal(React, statusInfo, stars) {
         h("div", { className: "wbt-modal-foot" },
           h("button", { className: "wbt-btn ghost", disabled: isBusy, onClick: requestClose }, t.cancel),
           h("button", { className: "wbt-btn primary", disabled: isBusy || !titleOk, onClick: submit }, isBusy ? "…" : t.save)
-        )
+        ),
+        // 详情最下方展示完整任务 ID：小字、等宽、可选中复制，不参与提交。
+        String(task.id || "") ? h("div", { className: "wbt-modal-id", title: String(task.id) }, t.taskId + " · " + String(task.id)) : null
       )
     );
   }
