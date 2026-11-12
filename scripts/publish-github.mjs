@@ -92,7 +92,7 @@ for (const name of sourceEntries) {
 
 // 3. 看差异。
 const status = gitOk(["status", "--porcelain"], mirrorDir);
-const versions = ["host", "tasks", "tags", "sites", "storage"]
+const versions = ["host", "tasks", "tags", "sites", "storage", "message"]
   .map((k) => {
     const p = JSON.parse(readFileSync(join(mirrorDir, "packages", k, "package.json"), "utf8"));
     return `${p.name}@${p.version}`;

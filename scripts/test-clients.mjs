@@ -65,6 +65,7 @@ try {
     ["packages/addons/tags/lib/client.js", "dsh-workbench-tags", "wb-addon-tags", "tags"],
     ["packages/addons/sites/lib/client.js", "dsh-workbench-sites", "wb-addon-sites", "sites"],
     ["packages/addons/storage/lib/client.js", "dsh-workbench-storage", "wb-addon-storage", "storage"],
+    ["packages/addons/message/lib/client.js", "dsh-workbench-message", "wb-addon-message", "inbox"],
   ];
   for (const [file, id, addonId, viewId] of mods) {
     const mod = load(file, id);

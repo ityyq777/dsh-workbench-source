@@ -29,6 +29,7 @@ const PACKAGES = [
   { key: "tags", label: "标签", dir: "packages/addons/tags", names: ["dsh-workbench-tags"], addon: true },
   { key: "sites", label: "站点", dir: "packages/addons/sites", names: ["dsh-workbench-sites"], addon: true },
   { key: "storage", label: "储物", dir: "packages/addons/storage", names: ["dsh-workbench-storage"], addon: true },
+  { key: "message", label: "消息", dir: "packages/addons/message", names: ["dsh-workbench-message"], addon: true },
 ];
 
 const EXIT_OK = 0;

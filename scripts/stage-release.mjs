@@ -28,6 +28,7 @@ const pkgDirs = {
   tags: join(root, "packages", "addons", "tags"),
   sites: join(root, "packages", "addons", "sites"),
   storage: join(root, "packages", "addons", "storage"),
+  message: join(root, "packages", "addons", "message"),
 };
 
 for (const [key, dir] of Object.entries(pkgDirs)) {
@@ -162,6 +163,15 @@ const addons = {
     marketZh: "DSH 标签管理：创建、搜索、删除标签，支持软删除与条目映射，供任务、站点与储物插件使用。",
     marketExtra: "标签被删除后，站点等引用它的条目会失去该标签，但条目本身保留。",
   },
+  message: {
+    dir: "message",
+    description: "个人工作台消息插件：统一消息发送入口、收件箱、未读统计与提示音",
+    keywords: ["message", "notification", "inbox", "sound"],
+    marketCategory: "tools",
+    marketEn: "Message center for DSH: one send entry for agents and other plugins, inbox with unread counts, stats and a configurable notification sound.",
+    marketZh: "DSH 消息中心：给 agent 与其他插件统一的消息发送入口，收件箱、未读数、统计与可配置提示音。",
+    marketExtra: "消息只保存在本机，不参与云端同步，也不进入备份导出；已读消息默认 30 天后清理。",
+  },
   sites: {
     dir: "sites",
     description: "个人工作台站点插件：目录树、链接与标签",
@@ -208,6 +218,7 @@ const marketEntries = [
   { file: "packages-tags", sub: "tags", pkg: built.tags, category: "tools", en: addons.tags.marketEn, zh: addons.tags.marketZh },
   { file: "packages-sites", sub: "sites", pkg: built.sites, category: "tools", en: addons.sites.marketEn, zh: addons.sites.marketZh },
   { file: "packages-storage", sub: "storage", pkg: built.storage, category: "tools", en: addons.storage.marketEn, zh: addons.storage.marketZh },
+  { file: "packages-message", sub: "message", pkg: built.message, category: "tools", en: addons.message.marketEn, zh: addons.message.marketZh },
 ];
 for (const e of marketEntries) {
   const name = `${OWNER}/${REPO}#${e.sub}`;

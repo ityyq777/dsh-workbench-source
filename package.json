@@ -67,7 +67,8 @@
     "audit:structure": "node scripts/audit-structure.mjs",
     "test:structure": "node scripts/test-structure.mjs",
     "test:shell-immersive": "node scripts/test-shell-immersive.mjs",
-    "verify:standalone": "node scripts/verify-standalone-install.mjs"
+    "verify:standalone": "node scripts/verify-standalone-install.mjs",
+    "test:message": "node scripts/test-message.mjs"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.72.1",

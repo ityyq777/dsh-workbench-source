@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const require = createRequire(import.meta.url);
 
-const ADDONS = ["tasks", "tags", "sites", "storage"];
+const ADDONS = ["tasks", "tags", "sites", "storage", "message"];
 
 function wrapper(id) {
   return {

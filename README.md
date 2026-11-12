@@ -1,6 +1,6 @@
 # 个人工作台 · DSH 插件
 
-个人工作台是 DeepSeek Harness（DSH）的本地优先工作台，由五个可独立安装的插件组成：
+个人工作台是 DeepSeek Harness（DSH）的本地优先工作台，由六个可独立安装的插件组成：
 
 | 包 | 作用 |
 | --- | --- |
@@ -9,8 +9,9 @@
 | `dsh-workbench-tags` | 标签管理，供站点等业务归类 |
 | `dsh-workbench-sites` | 站点收藏：目录树、多链接、标签与筛选 |
 | `dsh-workbench-storage` | 储物：名称、品牌、单位、库存文本与标签的本地台账 |
+| `dsh-workbench-message` | 消息中心：给 agent 与其他插件的统一发送入口，收件箱、未读数与可配置提示音 |
 
-任务、标签、站点、储物都会把 `dsh-workbench-host` 声明为依赖：安装任意业务插件时，
+任务、标签、站点、储物、消息都会把 `dsh-workbench-host` 声明为依赖：安装任意业务插件时，
 DSH 会一并准备宿主。数据保存在 `~/.dsh/workbench/workbench.db`，卸载插件只删代码，
 不删数据。
 
@@ -55,13 +56,14 @@ pnpm cloud:build
 
 ## 安装
 
-从插件市场或 DSH 设置 → 插件安装；命令行（四个业务包任选其一即可，宿主会被自动带入）：
+从插件市场或 DSH 设置 → 插件安装；命令行（五个业务包任选其一即可，宿主会被自动带入）：
 
 ```sh
 dsh plugin --profile web add dsh-workbench-tasks@5.2.6
 dsh plugin --profile web add dsh-workbench-tags@1.7.0
 dsh plugin --profile web add dsh-workbench-sites@1.10.0
 dsh plugin --profile web add dsh-workbench-storage@1.5.1
+dsh plugin --profile web add dsh-workbench-message@0.1.0
 ```
 
 - 装任意一个业务包都会自动安装宿主 `dsh-workbench-host`（业务包依赖它），不需要先单独装宿主；

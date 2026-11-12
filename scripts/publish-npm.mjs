@@ -24,7 +24,7 @@ const only = argValue("--only");
 const publish = process.argv.includes("--publish");
 const tag = argValue("--tag") ?? "latest";
 
-const order = ["host", "tasks", "tags", "sites", "storage"];
+const order = ["host", "tasks", "tags", "sites", "storage", "message"];
 const selected = only ? order.filter((x) => x === only) : order;
 if (only && selected.length === 0) {
   console.error(`unknown --only=${only}，可选：${order.join(", ")}`);

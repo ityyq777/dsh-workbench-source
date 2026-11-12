@@ -30,7 +30,7 @@ const fakeCtx = {
 };
 const shell = await import(pathToFileURL(join(ROOT, "packages/shell/lib/index.js")).href);
 shell.apply(fakeCtx);
-for (const name of ["tasks", "tags", "sites", "storage"]) {
+for (const name of ["tasks", "tags", "sites", "storage", "message"]) {
   const mod = await import(pathToFileURL(join(ROOT, "packages/addons", name, "lib/index.js")).href);
   mod.apply({ workbench: host, effect: fakeCtx.effect });
 }

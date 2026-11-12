@@ -7,7 +7,9 @@
       "root": "packages/addons/tasks/shared",
       "entries": [],
       "generated": [],
-      "files": { "limits.cjs": "tree/limits.cjs" }
+      "files": {
+        "limits.cjs": "tree/limits.cjs"
+      }
     },
     "tasks/lib": {
       "root": "packages/addons/tasks/lib",
@@ -275,6 +277,42 @@
         "network.ts": "infra/network.ts",
         "zip.ts": "infra/zip.ts",
         "host-types.ts": "types/host-types.ts"
+      }
+    },
+    "message/lib": {
+      "root": "packages/addons/message/lib",
+      "entries": [
+        "index.js"
+      ],
+      "generated": [
+        "client.js"
+      ],
+      "files": {
+        "index.js": "index.js",
+        "client.js": "client.js",
+        "db.js": "db/db.js",
+        "messages.js": "domain/messages.js",
+        "config.js": "infra/config.js",
+        "data.js": "infra/data.js"
+      }
+    },
+    "message/client": {
+      "root": "packages/addons/message/client",
+      "entries": [
+        "client.src.cjs"
+      ],
+      "generated": [],
+      "files": {
+        "client.src.cjs": "client.src.cjs",
+        "actions.cjs": "views/actions.cjs",
+        "config.cjs": "views/config.cjs",
+        "data.cjs": "views/data.cjs",
+        "inbox.cjs": "views/inbox.cjs",
+        "stats.cjs": "views/stats.cjs",
+        "copy.cjs": "ui/copy.cjs",
+        "icons.cjs": "ui/icons.cjs",
+        "styles.cjs": "ui/styles.cjs",
+        "notifier.cjs": "notify/notifier.cjs"
       }
     }
   }
