@@ -68,8 +68,13 @@ var CSS = [
   ".wb-page-tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--wb-line)}",
   ".wb-page-loading{display:flex;flex-direction:column;gap:8px;align-items:flex-start}",
   ".wb-grow{flex:1;min-width:0}",
-  ".wb-immersive{position:fixed;inset:0;z-index:700;height:100vh;box-sizing:border-box;padding:var(--dsh-frame-top-clearance,0px) 0 0;background:var(--dsw-alias-bg-layer-2,var(--dsw-alias-bg-layer-1,#faf7ea));backdrop-filter:saturate(1.05) blur(10px);overflow:hidden}",
-  ".wb-immersive-bar{display:flex;align-items:center;gap:10px;padding:9px 22px;border-bottom:1px solid var(--wb-line);flex:none;background:transparent}",
+  // 全屏页铺满整个窗口（inset:0），但根节点必须声明 -webkit-app-region:no-drag：
+  // macOS 的宿主 chrome 把顶部条带标成 drag 区，Electron 按图层几何计算拖拽区，
+  // 覆盖在 drag 区上的元素若不声明 no-drag，点击会被当成拖窗口，
+  // 「返回首页」按钮就永远收不到 click。工具栏空白段再恢复 drag（按钮另有 no-drag 规则）。
+  ".wb-immersive{position:fixed;inset:0;z-index:700;height:100vh;box-sizing:border-box;padding:var(--dsh-frame-top-clearance,0px) 0 0;background:var(--dsw-alias-bg-layer-2,var(--dsw-alias-bg-layer-1,#faf7ea));backdrop-filter:saturate(1.05) blur(10px);overflow:hidden;-webkit-app-region:no-drag}",
+  ".wb-immersive-bar{display:flex;align-items:center;gap:10px;padding:9px 22px;border-bottom:1px solid var(--wb-line);flex:none;background:transparent;-webkit-app-region:drag}",
+  ".wb-immersive-bar button,.wb-immersive-bar a,.wb-immersive-bar input,.wb-immersive-bar select,.wb-immersive-bar textarea,.wb-immersive-bar [role=button]{-webkit-app-region:no-drag}",
   ".wb-immersive-title{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;opacity:.85}",
   ".wb-immersive-title .wb-home-icon{width:24px;height:24px;border-radius:7px;font-size:12px}",
   ".wb-immersive-main{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:18px 24px 24px}",
