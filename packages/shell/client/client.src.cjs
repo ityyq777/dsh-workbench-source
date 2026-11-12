@@ -364,7 +364,7 @@ function WorkbenchPage(props) {
       go("addon:" + currentAddon.id + ":" + viewId, params);
     }
   }
-  var cardIcon = require("./icons.cjs")(h);
+  var cardIcon = require("./icons.cjs");
   function openAddon(a) {
     var m = registry.get(a.id);
     var v = (m && m.views && m.views[0]) || (a.views && a.views[0]) || null;

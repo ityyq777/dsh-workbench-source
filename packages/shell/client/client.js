@@ -6,7 +6,18 @@ window.__ModuleLoader__.load({
     var module = { exports: {} };
     var exports = module.exports;
 "use strict";
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __esm = (fn, res, err) => function __init() {
+  if (err) throw err[0];
+  try {
+    return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+  } catch (e) {
+    throw err = [e], e;
+  }
+};
 var __commonJS = (cb, mod) => function __require() {
   try {
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
@@ -14,6 +25,19 @@ var __commonJS = (cb, mod) => function __require() {
     throw mod = 0, e;
   }
 };
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // packages/shell/client/locale.cjs
 var require_locale = __commonJS({
@@ -1349,7 +1373,7 @@ var require_view_tabs = __commonJS({
         return h2("div", { className: "wb-page-tabs" }, props.views.map(function(view) {
           var title = pickTitle2(view.title, props.lang) || view.id;
           var on = props.activeView && view.id === props.activeView.id;
-          var Icon = typeof view.icon === "function" ? view.icon : null;
+          var Icon2 = typeof view.icon === "function" ? view.icon : null;
           return h2("button", {
             key: view.id,
             type: "button",
@@ -1358,10 +1382,10 @@ var require_view_tabs = __commonJS({
             onClick: function() {
               props.go("addon:" + props.addonId + ":" + view.id);
             }
-          }, Icon ? h2("span", {
+          }, Icon2 ? h2("span", {
             "aria-hidden": true,
             style: { display: "inline-flex", verticalAlign: "middle", marginRight: 6 }
-          }, h2(Icon, { size: 14, strokeWidth: 2, "aria-hidden": true })) : null, title);
+          }, h2(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true })) : null, title);
         }));
       };
     };
@@ -1421,43 +1445,691 @@ var require_view_outlet = __commonJS({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toKebabCase.mjs
+var toKebabCase;
+var init_toKebabCase = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toKebabCase.mjs"() {
+    toKebabCase = (string) => string?.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toLucideIconData.mjs
+function toLucideIconData(iconName, iconNode, aliases = []) {
+  if (iconNode == null) {
+    throw new Error("[lucide]: iconNode is required when icon name is used");
+  }
+  return {
+    name: toKebabCase(iconName),
+    size: 24,
+    node: iconNode,
+    ...aliases.length > 0 ? { aliases } : {}
+  };
+}
+var init_toLucideIconData = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toLucideIconData.mjs"() {
+    init_toKebabCase();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toCamelCase.mjs
+var toCamelCase;
+var init_toCamelCase = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toCamelCase.mjs"() {
+    toCamelCase = (string) => {
+      let out = "";
+      let upperNext = false;
+      for (const ch of string) {
+        if (ch === "-" || ch === "_" || ch <= " ") {
+          upperNext = out.length > 0;
+          continue;
+        }
+        if (out.length === 0) {
+          out += ch.toLowerCase();
+        } else {
+          out += upperNext ? ch.toUpperCase() : ch;
+        }
+        upperNext = false;
+      }
+      return out;
+    };
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toPascalCase.mjs
+var toPascalCase;
+var init_toPascalCase = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toPascalCase.mjs"() {
+    init_toCamelCase();
+    toPascalCase = (string) => {
+      const camelCase = toCamelCase(string);
+      return camelCase.charAt(0).toUpperCase() + camelCase.slice(1);
+    };
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/mergeClasses.mjs
+var mergeClasses;
+var init_mergeClasses = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/mergeClasses.mjs"() {
+    mergeClasses = (...classes) => classes.filter((className, index, array) => {
+      return Boolean(className) && className.trim() !== "" && array.indexOf(className) === index;
+    }).join(" ").trim();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/defaultAttributes.mjs
+var defaultAttributes;
+var init_defaultAttributes = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/defaultAttributes.mjs"() {
+    defaultAttributes = {
+      xmlns: "http://www.w3.org/2000/svg",
+      width: 24,
+      height: 24,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": 2,
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round"
+    };
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/buildLucideIconNode.mjs
+function isDefined(value) {
+  return value !== null && value !== void 0;
+}
+function buildLucideIconNode(icon, params = {}) {
+  const attributeNames = params.attributeNames ?? {};
+  const getAttributeName = (attributeName) => attributeNames[attributeName] ?? attributeName;
+  const viewBoxWidth = icon.size ?? icon.width ?? defaultAttributes["width"];
+  const viewBoxHeight = icon.size ?? icon.height ?? defaultAttributes["height"];
+  const aliasClassNames = icon.aliases?.filter((alias) => typeof alias === "string" && alias.trim() !== "").map((alias) => `lucide-${alias}`) ?? [];
+  const iconClassNames = [...icon.name ? [`lucide-${icon.name}`] : [], ...aliasClassNames];
+  const classNamesFromClassName = params.className?.split(" ").filter(Boolean) ?? [];
+  const className = params.includeDefaultClasses === false ? mergeClasses(...classNamesFromClassName) : mergeClasses("lucide", ...iconClassNames, ...classNamesFromClassName);
+  const calculatedStrokeWidth = params.absoluteStrokeWidth ? Number(params.strokeWidth ?? defaultAttributes["stroke-width"]) * Number(icon.size ?? icon.width ?? defaultAttributes["width"]) / Number(params.size ?? params.width ?? defaultAttributes["width"]) : params.strokeWidth ?? defaultAttributes["stroke-width"];
+  const attributes = {
+    ...Object.entries(defaultAttributes).reduce((attrs, [attrName, value]) => {
+      attrs[getAttributeName(attrName)] = value;
+      return attrs;
+    }, {}),
+    ..."color" in params && params.color && {
+      [getAttributeName("stroke")]: params.color
+    },
+    ..."size" in params && isDefined(params.size) && {
+      [getAttributeName("width")]: params.size,
+      [getAttributeName("height")]: params.size
+    },
+    ..."width" in params && isDefined(params.width) && {
+      [getAttributeName("width")]: params.width
+    },
+    ..."height" in params && isDefined(params.height) && {
+      [getAttributeName("height")]: params.height
+    },
+    [getAttributeName("stroke-width")]: calculatedStrokeWidth,
+    ...className && {
+      [getAttributeName("class")]: className
+    },
+    [getAttributeName("viewBox")]: `0 0 ${viewBoxWidth} ${viewBoxHeight}`,
+    ...params.hasA11yProp === false ? {
+      [getAttributeName("aria-hidden")]: "true"
+    } : {},
+    ..."attributes" in params && params.attributes
+  };
+  return [
+    "svg",
+    attributes,
+    icon.node.map((child) => {
+      const [name, attrs, children] = child;
+      const nextAttrs = params.nonScalingStroke ? { [getAttributeName("vector-effect")]: "non-scaling-stroke", ...attrs } : attrs;
+      return children ? [name, nextAttrs, children] : [name, nextAttrs];
+    })
+  ];
+}
+var init_buildLucideIconNode = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/buildLucideIconNode.mjs"() {
+    init_defaultAttributes();
+    init_mergeClasses();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/buildLucideIconForReact.mjs
+function buildLucideIconForReact(icon, params = {}) {
+  return buildLucideIconNode(icon, {
+    ...params,
+    attributeNames: {
+      ...params.attributeNames,
+      class: "className",
+      "stroke-width": "strokeWidth",
+      "stroke-linecap": "strokeLinecap",
+      "stroke-linejoin": "strokeLinejoin",
+      "vector-effect": "vectorEffect"
+    }
+  });
+}
+var init_buildLucideIconForReact = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/buildLucideIconForReact.mjs"() {
+    init_buildLucideIconNode();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/hasA11yProp.mjs
+var hasA11yProp;
+var init_hasA11yProp = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/hasA11yProp.mjs"() {
+    hasA11yProp = (props) => {
+      for (const prop in props) {
+        if (prop.startsWith("aria-") || prop === "role" || prop === "title") {
+          return true;
+        }
+      }
+      return false;
+    };
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/context.mjs
+var import_react, LucideContext, useLucideContext;
+var init_context = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/context.mjs"() {
+    "use strict";
+    "use client";
+    import_react = require("react");
+    LucideContext = (0, import_react.createContext)({});
+    useLucideContext = () => (0, import_react.useContext)(LucideContext);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/Icon.mjs
+var import_react2, Icon;
+var init_Icon = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/Icon.mjs"() {
+    "use strict";
+    "use client";
+    import_react2 = require("react");
+    init_mergeClasses();
+    init_buildLucideIconForReact();
+    init_hasA11yProp();
+    init_context();
+    Icon = (0, import_react2.forwardRef)(
+      ({
+        color,
+        size,
+        width,
+        height,
+        strokeWidth,
+        absoluteStrokeWidth,
+        nonScalingStroke,
+        className = "",
+        children,
+        iconNode = [],
+        icon = {
+          node: iconNode,
+          aliases: [],
+          size: 24
+        },
+        ...rest
+      }, ref) => {
+        const {
+          size: contextSize = 24,
+          strokeWidth: contextStrokeWidth = 2,
+          absoluteStrokeWidth: contextAbsoluteStrokeWidth = false,
+          nonScalingStroke: contextNonScalingStroke = false,
+          color: contextColor = "currentColor",
+          className: contextClass = ""
+        } = useLucideContext() ?? {};
+        const hasAccessibleProp = Boolean(children) || hasA11yProp(rest);
+        const [name, svgAttributes, builtIconNode = []] = buildLucideIconForReact(icon, {
+          color: color ?? contextColor,
+          width: width ?? size ?? contextSize,
+          height: height ?? size ?? contextSize,
+          strokeWidth: strokeWidth ?? contextStrokeWidth,
+          absoluteStrokeWidth: absoluteStrokeWidth ?? contextAbsoluteStrokeWidth,
+          nonScalingStroke: nonScalingStroke ?? contextNonScalingStroke,
+          className: mergeClasses(contextClass, className),
+          hasA11yProp: hasAccessibleProp,
+          attributes: rest
+        });
+        return (0, import_react2.createElement)(
+          name,
+          {
+            ref,
+            ...svgAttributes
+          },
+          [
+            ...builtIconNode.map(([tag, attrs]) => (0, import_react2.createElement)(tag, attrs)),
+            ...Array.isArray(children) ? children : [children]
+          ]
+        );
+      }
+    );
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/createLucideIcon.mjs
+function createLucideIcon(iconDataOrName, iconNode = [], aliases = []) {
+  const iconData = typeof iconDataOrName === "string" ? toLucideIconData(iconDataOrName, iconNode, aliases) : iconDataOrName;
+  const Component = (0, import_react3.forwardRef)(
+    ({ className, ...props }, ref) => (0, import_react3.createElement)(Icon, {
+      ref,
+      icon: iconData,
+      className,
+      ...props
+    })
+  );
+  if (iconData.name) {
+    Component.displayName = toPascalCase(iconData.name);
+  }
+  return Component;
+}
+var import_react3;
+var init_createLucideIcon = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/createLucideIcon.mjs"() {
+    import_react3 = require("react");
+    init_toLucideIconData();
+    init_toPascalCase();
+    init_Icon();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list-checks.mjs
+var list_checks_exports = {};
+__export(list_checks_exports, {
+  __iconData: () => __iconData,
+  default: () => ListChecks
+});
+var __iconData, ListChecks;
+var init_list_checks = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list-checks.mjs"() {
+    init_createLucideIcon();
+    __iconData = {
+      name: "list-checks",
+      size: 24,
+      node: [
+        ["path", { d: "M13 5h8", key: "a7qcls" }],
+        ["path", { d: "M13 12h8", key: "h98zly" }],
+        ["path", { d: "M13 19h8", key: "c3s6r1" }],
+        ["path", { d: "m3 17 2 2 4-4", key: "1jhpwq" }],
+        ["path", { d: "m3 7 2 2 4-4", key: "1obspn" }]
+      ]
+    };
+    __iconData.node;
+    ListChecks = createLucideIcon(__iconData);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/tag.mjs
+var tag_exports = {};
+__export(tag_exports, {
+  __iconData: () => __iconData2,
+  default: () => Tag
+});
+var __iconData2, Tag;
+var init_tag = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/tag.mjs"() {
+    init_createLucideIcon();
+    __iconData2 = {
+      name: "tag",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z",
+            key: "vktsd0"
+          }
+        ],
+        ["circle", { cx: "7.5", cy: "7.5", r: ".5", fill: "currentColor", key: "kqv944" }]
+      ]
+    };
+    __iconData2.node;
+    Tag = createLucideIcon(__iconData2);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/globe.mjs
+var globe_exports = {};
+__export(globe_exports, {
+  __iconData: () => __iconData3,
+  default: () => Globe
+});
+var __iconData3, Globe;
+var init_globe = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/globe.mjs"() {
+    init_createLucideIcon();
+    __iconData3 = {
+      name: "globe",
+      size: 24,
+      node: [
+        ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+        ["path", { d: "M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20", key: "13o1zl" }],
+        ["path", { d: "M2 12h20", key: "9i4pu4" }]
+      ]
+    };
+    __iconData3.node;
+    Globe = createLucideIcon(__iconData3);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/package.mjs
+var package_exports = {};
+__export(package_exports, {
+  __iconData: () => __iconData4,
+  default: () => Package
+});
+var __iconData4, Package;
+var init_package = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/package.mjs"() {
+    init_createLucideIcon();
+    __iconData4 = {
+      name: "package",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z",
+            key: "1a0edw"
+          }
+        ],
+        ["path", { d: "M12 22V12", key: "d0xqtd" }],
+        ["polyline", { points: "3.29 7 12 12 20.71 7", key: "ousv84" }],
+        ["path", { d: "m7.5 4.27 9 5.15", key: "1c824w" }]
+      ]
+    };
+    __iconData4.node;
+    Package = createLucideIcon(__iconData4);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/message-square.mjs
+var message_square_exports = {};
+__export(message_square_exports, {
+  __iconData: () => __iconData5,
+  default: () => MessageSquare
+});
+var __iconData5, MessageSquare;
+var init_message_square = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/message-square.mjs"() {
+    init_createLucideIcon();
+    __iconData5 = {
+      name: "message-square",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z",
+            key: "18887p"
+          }
+        ]
+      ]
+    };
+    __iconData5.node;
+    MessageSquare = createLucideIcon(__iconData5);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs
+var shield_check_exports = {};
+__export(shield_check_exports, {
+  __iconData: () => __iconData6,
+  default: () => ShieldCheck
+});
+var __iconData6, ShieldCheck;
+var init_shield_check = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs"() {
+    init_createLucideIcon();
+    __iconData6 = {
+      name: "shield-check",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
+            key: "oel41y"
+          }
+        ],
+        ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
+      ]
+    };
+    __iconData6.node;
+    ShieldCheck = createLucideIcon(__iconData6);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/rss.mjs
+var rss_exports = {};
+__export(rss_exports, {
+  __iconData: () => __iconData7,
+  default: () => Rss
+});
+var __iconData7, Rss;
+var init_rss = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/rss.mjs"() {
+    init_createLucideIcon();
+    __iconData7 = {
+      name: "rss",
+      size: 24,
+      node: [
+        ["path", { d: "M4 11a9 9 0 0 1 9 9", key: "pv89mb" }],
+        ["path", { d: "M4 4a16 16 0 0 1 16 16", key: "k0647b" }],
+        ["circle", { cx: "5", cy: "19", r: "1", key: "bfqh0e" }]
+      ]
+    };
+    __iconData7.node;
+    Rss = createLucideIcon(__iconData7);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/zap.mjs
+var zap_exports = {};
+__export(zap_exports, {
+  __iconData: () => __iconData8,
+  default: () => Zap
+});
+var __iconData8, Zap;
+var init_zap = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/zap.mjs"() {
+    init_createLucideIcon();
+    __iconData8 = {
+      name: "zap",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z",
+            key: "1v7up4"
+          }
+        ]
+      ]
+    };
+    __iconData8.node;
+    Zap = createLucideIcon(__iconData8);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/users.mjs
+var users_exports = {};
+__export(users_exports, {
+  __iconData: () => __iconData9,
+  default: () => Users
+});
+var __iconData9, Users;
+var init_users = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/users.mjs"() {
+    init_createLucideIcon();
+    __iconData9 = {
+      name: "users",
+      size: 24,
+      node: [
+        ["path", { d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2", key: "1yyitq" }],
+        ["path", { d: "M16 3.128a4 4 0 0 1 0 7.744", key: "16gr8j" }],
+        ["path", { d: "M22 21v-2a4 4 0 0 0-3-3.87", key: "kshegd" }],
+        ["circle", { cx: "9", cy: "7", r: "4", key: "nufk8" }]
+      ]
+    };
+    __iconData9.node;
+    Users = createLucideIcon(__iconData9);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/calendar-days.mjs
+var calendar_days_exports = {};
+__export(calendar_days_exports, {
+  __iconData: () => __iconData10,
+  default: () => CalendarDays
+});
+var __iconData10, CalendarDays;
+var init_calendar_days = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/calendar-days.mjs"() {
+    init_createLucideIcon();
+    __iconData10 = {
+      name: "calendar-days",
+      size: 24,
+      node: [
+        ["path", { d: "M8 2v3", key: "1ioesn" }],
+        ["path", { d: "M16 2v3", key: "otl347" }],
+        ["rect", { x: "3", y: "3", width: "18", height: "18", rx: "2", key: "h1oib" }],
+        ["path", { d: "M3 9h18", key: "1pudct" }],
+        ["path", { d: "M8 13h.01", key: "1sbv64" }],
+        ["path", { d: "M12 13h.01", key: "y0uutt" }],
+        ["path", { d: "M16 13h.01", key: "wip0gl" }],
+        ["path", { d: "M8 17h.01", key: "p3bg7i" }],
+        ["path", { d: "M12 17h.01", key: "p32p05" }],
+        ["path", { d: "M16 17h.01", key: "ql8jdd" }]
+      ]
+    };
+    __iconData10.node;
+    CalendarDays = createLucideIcon(__iconData10);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail.mjs
+var mail_exports = {};
+__export(mail_exports, {
+  __iconData: () => __iconData11,
+  default: () => Mail
+});
+var __iconData11, Mail;
+var init_mail = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail.mjs"() {
+    init_createLucideIcon();
+    __iconData11 = {
+      name: "mail",
+      size: 24,
+      node: [
+        ["path", { d: "m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7", key: "132q7q" }],
+        ["rect", { x: "2", y: "4", width: "20", height: "16", rx: "2", key: "izxlao" }]
+      ]
+    };
+    __iconData11.node;
+    Mail = createLucideIcon(__iconData11);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs
+var database_exports = {};
+__export(database_exports, {
+  __iconData: () => __iconData12,
+  default: () => Database
+});
+var __iconData12, Database;
+var init_database = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs"() {
+    init_createLucideIcon();
+    __iconData12 = {
+      name: "database",
+      size: 24,
+      node: [
+        ["ellipse", { cx: "12", cy: "5", rx: "9", ry: "3", key: "msslwz" }],
+        ["path", { d: "M3 5V19A9 3 0 0 0 21 19V5", key: "1wlel7" }],
+        ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
+      ]
+    };
+    __iconData12.node;
+    Database = createLucideIcon(__iconData12);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/clipboard-check.mjs
+var clipboard_check_exports = {};
+__export(clipboard_check_exports, {
+  __iconData: () => __iconData13,
+  default: () => ClipboardCheck
+});
+var __iconData13, ClipboardCheck;
+var init_clipboard_check = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/clipboard-check.mjs"() {
+    init_createLucideIcon();
+    __iconData13 = {
+      name: "clipboard-check",
+      size: 24,
+      node: [
+        ["rect", { width: "8", height: "4", x: "8", y: "2", rx: "1", ry: "1", key: "tgr4d6" }],
+        [
+          "path",
+          {
+            d: "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2",
+            key: "116196"
+          }
+        ],
+        ["path", { d: "m9 14 2 2 4-4", key: "df797q" }]
+      ]
+    };
+    __iconData13.node;
+    ClipboardCheck = createLucideIcon(__iconData13);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/cloud.mjs
+var cloud_exports = {};
+__export(cloud_exports, {
+  __iconData: () => __iconData14,
+  default: () => Cloud
+});
+var __iconData14, Cloud;
+var init_cloud = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/cloud.mjs"() {
+    init_createLucideIcon();
+    __iconData14 = {
+      name: "cloud",
+      size: 24,
+      node: [["path", { d: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z", key: "p7xjir" }]]
+    };
+    __iconData14.node;
+    Cloud = createLucideIcon(__iconData14);
+  }
+});
+
 // packages/shell/client/icons.cjs
 var require_icons = __commonJS({
   "packages/shell/client/icons.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = function(h2) {
-      var ICONS = {
-        tasks: [["path", { d: "M9 11l3 3L22 4" }], ["path", { d: "M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" }]],
-        tags: [["path", { d: "M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" }], ["circle", { cx: 7, cy: 7, r: 1 }]],
-        sites: [["circle", { cx: 12, cy: 12, r: 10 }], ["path", { d: "M2 12h20" }], ["path", { d: "M12 2a15.3 15.3 0 0 1 0 20 15.3 15.3 0 0 1 0-20" }]],
-        storage: [["path", { d: "M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" }], ["path", { d: "M3.3 7l8.7 5 8.7-5" }], ["path", { d: "M12 22V12" }]],
-        message: [["path", { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" }]],
-        vault: [["path", { d: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" }], ["circle", { cx: 12, cy: 11, r: 2 }], ["path", { d: "M12 13v3" }]],
-        connector: [["path", { d: "M4 11a9 9 0 0 1 9 9" }], ["path", { d: "M4 4a16 16 0 0 1 16 16" }], ["circle", { cx: 5, cy: 19, r: 1 }]],
-        automation: [["path", { d: "M13 2L3 14h9l-1 8 10-12h-9z" }]],
-        contacts: [["path", { d: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" }], ["circle", { cx: 9, cy: 7, r: 4 }], ["path", { d: "M23 21v-2a4 4 0 0 0-3-3.87" }]],
-        calendar: [["rect", { x: 3, y: 4, width: 18, height: 18, rx: 2 }], ["path", { d: "M16 2v4M8 2v4M3 10h18" }]],
-        mail: [["rect", { x: 2, y: 4, width: 20, height: 16, rx: 2 }], ["path", { d: "M22 7l-10 7L2 7" }]],
-        backup: [["ellipse", { cx: 12, cy: 5, rx: 9, ry: 3 }], ["path", { d: "M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5" }], ["path", { d: "M3 12c0 1.7 4 3 9 3s9-1.3 9-3" }]],
-        audit: [["path", { d: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" }], ["path", { d: "M9 12l2 2 4-4" }]],
-        account: [["path", { d: "M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.6-1.6A4 4 0 0 0 6 19z" }]]
-      };
-      function iconFor(id) {
-        var spec = ICONS[String(id || "").replace(/^wb-addon-/, "")];
-        if (!spec) return null;
-        return h2(
-          "svg",
-          { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" },
-          spec.map(function(item, i) {
-            var attrs = Object.assign({ key: i }, item[1]);
-            return h2(item[0], attrs);
-          })
-        );
-      }
-      function cardIcon(id, title) {
-        return iconFor(id) || String(title || "?").slice(0, 1);
-      }
-      return cardIcon;
+    var h2 = require("react").createElement;
+    var ICONS = {
+      tasks: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
+      tags: (init_tag(), __toCommonJS(tag_exports)).default,
+      sites: (init_globe(), __toCommonJS(globe_exports)).default,
+      storage: (init_package(), __toCommonJS(package_exports)).default,
+      message: (init_message_square(), __toCommonJS(message_square_exports)).default,
+      vault: (init_shield_check(), __toCommonJS(shield_check_exports)).default,
+      connector: (init_rss(), __toCommonJS(rss_exports)).default,
+      automation: (init_zap(), __toCommonJS(zap_exports)).default,
+      contacts: (init_users(), __toCommonJS(users_exports)).default,
+      calendar: (init_calendar_days(), __toCommonJS(calendar_days_exports)).default,
+      mail: (init_mail(), __toCommonJS(mail_exports)).default,
+      backup: (init_database(), __toCommonJS(database_exports)).default,
+      audit: (init_clipboard_check(), __toCommonJS(clipboard_check_exports)).default,
+      account: (init_cloud(), __toCommonJS(cloud_exports)).default
+    };
+    module2.exports = function cardIcon(id, title) {
+      var C = ICONS[String(id || "").replace(/^wb-addon-/, "")];
+      if (C) return h2(C, { size: 18, strokeWidth: 1.9, "aria-hidden": "true" });
+      return String(title || "?").slice(0, 1);
     };
   }
 });
@@ -1923,7 +2595,7 @@ function WorkbenchPage(props) {
       go("addon:" + currentAddon.id + ":" + viewId, params);
     }
   }
-  var cardIcon = require_icons()(h);
+  var cardIcon = require_icons();
   function openAddon(a2) {
     var m = registry.get(a2.id);
     var v = m && m.views && m.views[0] || a2.views && a2.views[0] || null;
