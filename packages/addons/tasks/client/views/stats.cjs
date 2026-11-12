@@ -26,6 +26,8 @@ var COPY = {
     priority: "优先级分布", priorityNote: "当前存量；不含已关闭/已完成；点柱形查看任务",
     pickHint: "点击柱形查看对应任务",
     difficulty: "难度分布", difficultyNote: "当前存量；包含未设置", difficultyMissing: "未填难度 {n} 条", difficultyMissingLink: "查看并补齐难度",
+    difficultyDimension: "难度分布口径", dimAll: "全部", dimDone: "完成", dimPublish: "发布", dimClaimed: "接取", dimShutdown: "关闭",
+    difficultyNoteRange: "年度活动口径 {from} ~ {to}；包含未设置",
     aging: "逾期账龄", agingNote: "当前逾期任务",
     overdueList: "逾期清单", overdueNote: "按账龄降序",
     tables: "任务表排行", tablesNote: "按已开启 + 逾期权重",
@@ -55,6 +57,8 @@ var COPY = {
     priority: "Priority", priorityNote: "Current; excludes closed/completed; click a bar to list tasks",
     pickHint: "Click a bar to list matching tasks",
     difficulty: "Difficulty", difficultyNote: "Current; includes unset", difficultyMissing: "{n} tasks without difficulty", difficultyMissingLink: "Review missing difficulty",
+    difficultyDimension: "Difficulty scope", dimAll: "All", dimDone: "Done", dimPublish: "Published", dimClaimed: "Claimed", dimShutdown: "Closed",
+    difficultyNoteRange: "Annual activity scope {from} ~ {to}; includes unset",
     aging: "Overdue aging", agingNote: "Current overdue",
     overdueList: "Overdue list", overdueNote: "Oldest first",
     tables: "Task tables", tablesNote: "Weighted by active + overdue",
@@ -95,14 +99,24 @@ function priorityPicker(onNavigate) {
   };
 }
 
-function difficultyPicker(onNavigate) {
+// 维度页签下的柱形跳转要带上同一事件区间，否则跳过去看到的数字会对不上。
+function difficultyPicker(onNavigate, dimension, range) {
   if (typeof onNavigate !== "function") return null;
   return function (bin) {
     var key = bin && bin.key;
     if (key === "unset") { onNavigate("tasks", { difficultyMissing: true }); return; }
     var n = Number(key);
     if (!(n >= 0.5 && n <= 5)) return;
-    onNavigate("tasks", { difficultyMin: n, difficultyMax: n });
+    if (!dimension || dimension === "all") {
+      onNavigate("tasks", { difficultyMin: n, difficultyMax: n });
+      return;
+    }
+    var params = { filterRoot: true, difficultyMin: n, difficultyMax: n };
+    if (range && range.from && range.to) {
+      params[dimension + "From"] = range.from;
+      params[dimension + "To"] = range.to;
+    }
+    onNavigate("tasks", params);
   };
 }
 
@@ -131,6 +145,9 @@ function TasksStatsBody(props) {
   var ch = React.useMemo(function () { return charts.makeCharts("wbt"); }, []);
   var rangePair = React.useState(cfgRange);
   var range = rangePair[0], setRange = rangePair[1];
+  // 难度分布口径：默认「全部」= 现有存量口径，删掉数据依赖，切换只重取一次 statsReport。
+  var dimPair = React.useState("all");
+  var dimension = dimPair[0], setDimension = dimPair[1];
   var dataPair = React.useState(null);
   var data = dataPair[0], setData = dataPair[1];
   var errPair = React.useState("");
@@ -165,6 +182,7 @@ function TasksStatsBody(props) {
     var id = ++req.current;
     if (!silent) setLoading(true);
     var args = {
+      dimension: dimension,
       top: cfgTop,
       recentPublishLimit: cfgLimit("stats.recentPublishLimit"),
       recentDoneLimit: cfgLimit("stats.recentDoneLimit"),
@@ -182,7 +200,7 @@ function TasksStatsBody(props) {
         setErr(String((e && e.message) || e || "load failed"));
       })
       .then(function () { if (id === req.current) setLoading(false); });
-  }, [api, range, customOk, customFrom, customTo, cfgTop, cfg]);
+  }, [api, range, dimension, customOk, customFrom, customTo, cfgTop, cfg]);
 
   React.useEffect(function () { if (props.active !== false) load(true); }, [load, props.active]);
 
@@ -264,8 +282,20 @@ function TasksStatsBody(props) {
       children.push(h(ch.Card, { key: "priority", span: 6, title: t.priority, note: t.priorityNote },
         h(ch.Histogram, { data: visibleBins(b.priority), lang: lang, color: ch.colors[0], onSelect: priorityPicker(props.onNavigate), selectHint: lang === "en" ? "click to list" : "点击查看任务" })));
       var missingBin = (b.difficulty || []).find(function (bin) { return bin.key === "unset"; });
-      children.push(h(ch.Card, { key: "difficulty", span: 6, title: t.difficulty, note: t.difficultyNote },
-        h(ch.Histogram, { data: (b.difficulty || []).map(function (bin) { return bin.key === "unset" ? Object.assign({}, bin, { label: lang === "en" ? "Unset" : "未设置" }) : bin; }), lang: lang, color: ch.colors[4], onSelect: difficultyPicker(props.onNavigate), selectHint: lang === "en" ? "click to list" : "点击查看任务" }),
+      var dims = [["all", t.dimAll], ["done", t.dimDone], ["publish", t.dimPublish], ["claimed", t.dimClaimed], ["shutdown", t.dimShutdown]];
+      var rangeBox = data.range || {};
+      var diffNote = dimension === "all" ? t.difficultyNote
+        : t.difficultyNoteRange.replace("{from}", String(rangeBox.from || "")).replace("{to}", String(rangeBox.to || ""));
+      children.push(h(ch.Card, { key: "difficulty", span: 6, title: t.difficulty, note: diffNote },
+        h("div", { className: "wbt-dims", role: "tablist", "aria-label": t.difficultyDimension },
+          dims.map(function (item) {
+            return h("button", {
+              key: item[0], type: "button", role: "tab", className: "wbt-dims-tab",
+              "aria-selected": dimension === item[0],
+              onClick: function () { setDimension(item[0]); },
+            }, item[1]);
+          })),
+        h(ch.Histogram, { data: (b.difficulty || []).map(function (bin) { return bin.key === "unset" ? Object.assign({}, bin, { label: lang === "en" ? "Unset" : "未设置" }) : bin; }), lang: lang, color: ch.colors[4], onSelect: difficultyPicker(props.onNavigate, dimension, dims.length ? (data.range || null) : null), selectHint: lang === "en" ? "click to list" : "点击查看任务" }),
         h("p", null, t.difficultyMissing.replace("{n}", String(missingBin ? missingBin.count : 0)), " ",
           typeof props.onNavigate === "function" ? h("button", { type: "button", className: "wbt-btn ghost", onClick: function () { props.onNavigate("tasks", { difficultyMissing: true }); } }, t.difficultyMissingLink) : null)));
 

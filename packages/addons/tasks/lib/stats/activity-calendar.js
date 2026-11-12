@@ -1,14 +1,8 @@
 /** 年度任务活动：日期字段保持本地 YYYY-MM-DD，与统计列表一致；只读 SQL 聚合。
- * claimed 用 COALESCE(claimed_at 本地日, publish_date) 兜底：终态会清空接取三列（spec 40），
- * 已完成任务不写库、不回填，历史任务的接取日按发布日期近似，图例里注明。 */
-const CLAIMED_DAY = "COALESCE(strftime('%Y-%m-%d', t.claimed_at/1000, 'unixepoch', 'localtime'), t.publish_date)";
-const EVENTS = {
-  publish: { date: "t.publish_date", condition: "1=1" },
-  done: { date: "t.done_date", condition: "t.status='2'" },
-  shutdown: { date: "t.shutdown_date", condition: "t.status='1'" },
-  claimed: { date: CLAIMED_DAY, condition: "t.status IN ('2','4')" },
-};
-const TYPES = Object.keys(EVENTS);
+ * 事件口径定义在 ./events.js，与难度分布的五维切换共用，避免两处漂移。 */
+import { EVENTS, EVENT_TYPES } from "./events.js";
+
+const TYPES = EVENT_TYPES;
 const zero = () => ({ publish: 0, done: 0, shutdown: 0, claimed: 0, total: 0 });
 
 function validDay(value) {

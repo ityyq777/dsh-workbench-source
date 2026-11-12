@@ -379,6 +379,12 @@ var require_charts = __commonJS({
         ".@-ghost{appearance:none;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-secondary,#646a73);border-radius:8px;font-size:12px;padding:6px 10px;cursor:pointer}",
         ".@-ghost:hover{border-color:var(--dsw-alias-brand-primary,#4f6ef7);color:var(--dsw-alias-brand-primary,#4f6ef7)}",
         ".@-muted{color:var(--dsw-alias-label-tertiary,#8f959e);font-size:12px}",
+        // 难度分布的口径切换：轻量 tablist，视觉上与页首时间范围分段保持一致。
+        ".@-dims{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 8px}",
+        ".@-dims button{appearance:none;border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-size:11.5px;padding:3px 8px;border-radius:6px;cursor:pointer;opacity:.7;white-space:nowrap}",
+        ".@-dims button:hover{background:var(--dsw-alias-bg-skeleton,#f2f3f5);opacity:1}",
+        ".@-dims button[aria-selected=true]{border-color:var(--dsw-alias-border-l2,#e5e6eb);background:var(--dsw-alias-bg-skeleton,#f2f3f5);font-weight:600;opacity:1}",
+        ".@-dims button:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:1px}",
         ".@-sgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}",
         ".@-scard{grid-column:span 6;min-width:0;background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:12px;padding:14px 16px}",
         ".@-span-3{grid-column:span 3}.@-span-4{grid-column:span 4}.@-span-6{grid-column:span 6}.@-span-8{grid-column:span 8}.@-span-12{grid-column:span 12}",
@@ -2125,6 +2131,13 @@ var require_stats = __commonJS({
         difficultyNote: "\u5F53\u524D\u5B58\u91CF\uFF1B\u5305\u542B\u672A\u8BBE\u7F6E",
         difficultyMissing: "\u672A\u586B\u96BE\u5EA6 {n} \u6761",
         difficultyMissingLink: "\u67E5\u770B\u5E76\u8865\u9F50\u96BE\u5EA6",
+        difficultyDimension: "\u96BE\u5EA6\u5206\u5E03\u53E3\u5F84",
+        dimAll: "\u5168\u90E8",
+        dimDone: "\u5B8C\u6210",
+        dimPublish: "\u53D1\u5E03",
+        dimClaimed: "\u63A5\u53D6",
+        dimShutdown: "\u5173\u95ED",
+        difficultyNoteRange: "\u5E74\u5EA6\u6D3B\u52A8\u53E3\u5F84 {from} ~ {to}\uFF1B\u5305\u542B\u672A\u8BBE\u7F6E",
         aging: "\u903E\u671F\u8D26\u9F84",
         agingNote: "\u5F53\u524D\u903E\u671F\u4EFB\u52A1",
         overdueList: "\u903E\u671F\u6E05\u5355",
@@ -2209,6 +2222,13 @@ var require_stats = __commonJS({
         difficultyNote: "Current; includes unset",
         difficultyMissing: "{n} tasks without difficulty",
         difficultyMissingLink: "Review missing difficulty",
+        difficultyDimension: "Difficulty scope",
+        dimAll: "All",
+        dimDone: "Done",
+        dimPublish: "Published",
+        dimClaimed: "Claimed",
+        dimShutdown: "Closed",
+        difficultyNoteRange: "Annual activity scope {from} ~ {to}; includes unset",
         aging: "Overdue aging",
         agingNote: "Current overdue",
         overdueList: "Overdue list",
@@ -2267,7 +2287,7 @@ var require_stats = __commonJS({
         onNavigate("tasks", { priorityMin: n, priorityMax: n });
       };
     }
-    function difficultyPicker(onNavigate) {
+    function difficultyPicker(onNavigate, dimension, range) {
       if (typeof onNavigate !== "function") return null;
       return function(bin) {
         var key = bin && bin.key;
@@ -2277,7 +2297,16 @@ var require_stats = __commonJS({
         }
         var n = Number(key);
         if (!(n >= 0.5 && n <= 5)) return;
-        onNavigate("tasks", { difficultyMin: n, difficultyMax: n });
+        if (!dimension || dimension === "all") {
+          onNavigate("tasks", { difficultyMin: n, difficultyMax: n });
+          return;
+        }
+        var params = { filterRoot: true, difficultyMin: n, difficultyMax: n };
+        if (range && range.from && range.to) {
+          params[dimension + "From"] = range.from;
+          params[dimension + "To"] = range.to;
+        }
+        onNavigate("tasks", params);
       };
     }
     var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true, "stats.recentPublishLimit": 10, "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10 };
@@ -2307,6 +2336,8 @@ var require_stats = __commonJS({
       }, []);
       var rangePair = React.useState(cfgRange);
       var range = rangePair[0], setRange = rangePair[1];
+      var dimPair = React.useState("all");
+      var dimension = dimPair[0], setDimension = dimPair[1];
       var dataPair = React.useState(null);
       var data = dataPair[0], setData = dataPair[1];
       var errPair = React.useState("");
@@ -2340,6 +2371,7 @@ var require_stats = __commonJS({
         var id = ++req.current;
         if (!silent) setLoading(true);
         var args = {
+          dimension,
           top: cfgTop,
           recentPublishLimit: cfgLimit("stats.recentPublishLimit"),
           recentDoneLimit: cfgLimit("stats.recentDoneLimit"),
@@ -2363,7 +2395,7 @@ var require_stats = __commonJS({
         }).then(function() {
           if (id === req.current) setLoading(false);
         });
-      }, [api, range, customOk, customFrom, customTo, cfgTop, cfg]);
+      }, [api, range, dimension, customOk, customFrom, customTo, cfgTop, cfg]);
       React.useEffect(function() {
         if (props.active !== false) load(true);
       }, [load, props.active]);
@@ -2465,12 +2497,31 @@ var require_stats = __commonJS({
           var missingBin = (b.difficulty || []).find(function(bin) {
             return bin.key === "unset";
           });
+          var dims = [["all", t.dimAll], ["done", t.dimDone], ["publish", t.dimPublish], ["claimed", t.dimClaimed], ["shutdown", t.dimShutdown]];
+          var rangeBox = data.range || {};
+          var diffNote = dimension === "all" ? t.difficultyNote : t.difficultyNoteRange.replace("{from}", String(rangeBox.from || "")).replace("{to}", String(rangeBox.to || ""));
           children.push(h(
             ch.Card,
-            { key: "difficulty", span: 6, title: t.difficulty, note: t.difficultyNote },
+            { key: "difficulty", span: 6, title: t.difficulty, note: diffNote },
+            h(
+              "div",
+              { className: "wbt-dims", role: "tablist", "aria-label": t.difficultyDimension },
+              dims.map(function(item) {
+                return h("button", {
+                  key: item[0],
+                  type: "button",
+                  role: "tab",
+                  className: "wbt-dims-tab",
+                  "aria-selected": dimension === item[0],
+                  onClick: function() {
+                    setDimension(item[0]);
+                  }
+                }, item[1]);
+              })
+            ),
             h(ch.Histogram, { data: (b.difficulty || []).map(function(bin) {
               return bin.key === "unset" ? Object.assign({}, bin, { label: lang === "en" ? "Unset" : "\u672A\u8BBE\u7F6E" }) : bin;
-            }), lang, color: ch.colors[4], onSelect: difficultyPicker(props.onNavigate), selectHint: lang === "en" ? "click to list" : "\u70B9\u51FB\u67E5\u770B\u4EFB\u52A1" }),
+            }), lang, color: ch.colors[4], onSelect: difficultyPicker(props.onNavigate, dimension, dims.length ? data.range || null : null), selectHint: lang === "en" ? "click to list" : "\u70B9\u51FB\u67E5\u770B\u4EFB\u52A1" }),
             h(
               "p",
               null,
@@ -11293,7 +11344,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.6",
+    version: "5.2.7",
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },
