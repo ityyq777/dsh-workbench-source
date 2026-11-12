@@ -1380,7 +1380,16 @@ var require_config = __commonJS({
           alive = false;
         };
       }, [api]);
-      return state;
+      function setValues(next) {
+        if (!next || typeof next !== "object") return;
+        setState(function(prev) {
+          var values = Object.assign({}, prev.values, next);
+          var body = prev.state;
+          if (body && typeof body === "object") body = Object.assign({}, body, { values });
+          return Object.assign({}, prev, { values, state: body });
+        });
+      }
+      return Object.assign({}, state, { setValues });
     }
     function labelOf(item, lang) {
       return lang === "en" ? item.en || item.zh || item.id : item.zh || item.en || item.id;
@@ -1408,7 +1417,18 @@ var require_config = __commonJS({
           setToast("");
         }, 2e3);
       }
+      var seqRef = React.useRef(0);
+      function dropLocal(id, value) {
+        setLocal(function(prev) {
+          if (!(id in prev)) return prev;
+          if (JSON.stringify(prev[id]) !== JSON.stringify(value)) return prev;
+          var next = Object.assign({}, prev);
+          delete next[id];
+          return next;
+        });
+      }
       function save(id, value) {
+        var seq = ++seqRef.current;
         var patch = {};
         patch[id] = value;
         setLocal(function(prev) {
@@ -1419,26 +1439,23 @@ var require_config = __commonJS({
         return Promise.resolve(api.call(DOMAIN + ".configSet", { values: patch })).then(function(r) {
           if (r && r.ok === false) throw new Error(r && r.error || t.loadFail);
           var body = unwrap(r) || {};
-          setLocal(function(prev) {
-            var next = Object.assign({}, prev);
-            delete next[id];
-            return next;
-          });
+          if (seq !== seqRef.current) return body;
+          if (typeof cfg.setValues === "function") cfg.setValues(body.values);
+          setLocal({});
           toastOnce(t.saved);
           if (notifier && typeof notifier.refreshConfig === "function") notifier.refreshConfig();
           return body;
         }).catch(function(e) {
-          setLocal(function(prev) {
-            var next = Object.assign({}, prev);
-            delete next[id];
-            return next;
-          });
+          dropLocal(id, value);
           toastOnce(String(e && e.message || e));
         });
       }
       function resetAll() {
         Promise.resolve(api.call(DOMAIN + ".configReset", {})).then(function(r) {
           if (r && r.ok === false) throw new Error(r && r.error || t.loadFail);
+          var body = unwrap(r) || {};
+          if (typeof cfg.setValues === "function") cfg.setValues(body.values);
+          seqRef.current += 1;
           setLocal({});
           toastOnce(t.saved);
           if (notifier && typeof notifier.refreshConfig === "function") notifier.refreshConfig();

@@ -44,7 +44,18 @@ var DOMAIN = "message";
         });
       return function () { alive = false; };
     }, [api]);
-    return state;
+    // 服务端回包是权威值：写成功后把 configSet 返回的 values 合并回视图状态。
+    // 只清本地乐观值而不回填，界面会退回写入前的旧值（音量拉高又回弹的根因）。
+    function setValues(next) {
+      if (!next || typeof next !== "object") return;
+      setState(function (prev) {
+        var values = Object.assign({}, prev.values, next);
+        var body = prev.state;
+        if (body && typeof body === "object") body = Object.assign({}, body, { values: values });
+        return Object.assign({}, prev, { values: values, state: body });
+      });
+    }
+    return Object.assign({}, state, { setValues: setValues });
   }
 
   function labelOf(item, lang) {
@@ -76,7 +87,22 @@ function ConfigView(props) {
       setTimeout(function () { setToast(""); }, 2000);
     }
 
+    // 连续拖动会产生并发的 configSet：只让最后一次回包改写权威值，
+    // 避免先发的旧回包把刚拖到的新值又覆盖回去。
+    var seqRef = React.useRef(0);
+
+    function dropLocal(id, value) {
+      setLocal(function (prev) {
+        if (!(id in prev)) return prev;
+        if (JSON.stringify(prev[id]) !== JSON.stringify(value)) return prev;
+        var next = Object.assign({}, prev);
+        delete next[id];
+        return next;
+      });
+    }
+
     function save(id, value) {
+      var seq = ++seqRef.current;
       var patch = {};
       patch[id] = value;
       setLocal(function (prev) {
@@ -88,21 +114,16 @@ function ConfigView(props) {
         .then(function (r) {
           if (r && r.ok === false) throw new Error((r && r.error) || t.loadFail);
           var body = unwrap(r) || {};
-          setLocal(function (prev) {
-            var next = Object.assign({}, prev);
-            delete next[id];
-            return next;
-          });
+          // 更晚的写入还在路上：不回填、不清乐观值，等最新那次落地。
+          if (seq !== seqRef.current) return body;
+          if (typeof cfg.setValues === "function") cfg.setValues(body.values);
+          setLocal({});
           toastOnce(t.saved);
           if (notifier && typeof notifier.refreshConfig === "function") notifier.refreshConfig();
           return body;
         })
         .catch(function (e) {
-          setLocal(function (prev) {
-            var next = Object.assign({}, prev);
-            delete next[id];
-            return next;
-          });
+          dropLocal(id, value);
           toastOnce(String((e && e.message) || e));
         });
     }
@@ -111,6 +132,9 @@ function ConfigView(props) {
       Promise.resolve(api.call(DOMAIN + ".configReset", {}))
         .then(function (r) {
           if (r && r.ok === false) throw new Error((r && r.error) || t.loadFail);
+          var body = unwrap(r) || {};
+          if (typeof cfg.setValues === "function") cfg.setValues(body.values);
+          seqRef.current += 1; // 重置后作废仍在路上的单条写入
           setLocal({});
           toastOnce(t.saved);
           if (notifier && typeof notifier.refreshConfig === "function") notifier.refreshConfig();
