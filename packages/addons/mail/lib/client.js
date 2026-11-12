@@ -611,7 +611,7 @@ var require_messages = __commonJS({
       }
       function sync() {
         if (!accountId[0]) {
-          msg[1]({ kind: "error", text: "\u5148\u9009\u8D26\u6237" });
+          msg[1]({ kind: "error", text: "\u5148\u5728\u5DE6\u4FA7\u9009\u62E9\u4E00\u4E2A\u8D26\u6237" });
           return;
         }
         C.call(api, "mail.sync", { id: accountId[0], limit: 20 }).then(function(r) {
@@ -622,28 +622,79 @@ var require_messages = __commonJS({
         });
       }
       var items = list.data && list.data.items || [];
+      var unread = items.filter(function(m) {
+        return !m.seen;
+      }).length;
+      var current = sel[0];
       return h(
         "div",
         { className: "wbm-page" },
-        h("div", { className: "wbm-head" }, h("div", null, h("h2", null, "\u90AE\u4EF6"), h("p", { className: "wbm-sub" }, "\u672C\u5730\u526F\u672C\uFF1BIMAP \u53EA\u6293\u4FE1\u5934\uFF0C\u5BC6\u7801\u5728\u4FDD\u9669\u7BB1")), h(
+        h("div", { className: "wbm-head" }, h("div", null, h("h2", null, "\u90AE\u4EF6"), h("p", { className: "wbm-sub" }, "\u672C\u5730\u526F\u672C\uFF1BIMAP \u53EA\u6293\u4FE1\u5934\uFF0C\u5BC6\u7801\u4FDD\u5B58\u5728\u4FDD\u9669\u7BB1\u3002")), h(
           "div",
           { className: "wbm-row" },
-          h("select", { className: "wbm-input", value: accountId[0], onChange: function(e) {
-            accountId[1](e.target.value);
-            sel[1](null);
-          } }, h("option", { value: "" }, "\u5168\u90E8\u8D26\u6237"), accs.map(function(a) {
-            return h("option", { key: a.id, value: a.id }, a.name);
-          })),
-          h(C.Btn, { h, onClick: sync }, "\u540C\u6B65\u6536\u4EF6\u7BB1")
+          h(C.Btn, { h, onClick: list.refresh }, "\u5237\u65B0")
         )),
         h(C.Notice, { h, text: msg[0] && msg[0].text, kind: msg[0] && msg[0].kind }),
-        sel[0] ? h("div", { className: "wbm-card" }, h("div", { className: "wbm-row", style: { justifyContent: "space-between" } }, h("strong", null, sel[0].subject || "(\u65E0\u4E3B\u9898)"), h(C.Btn, { h, onClick: function() {
-          sel[1](null);
-        } }, "\u8FD4\u56DE")), h("p", { className: "wbm-muted" }, sel[0].from + " \xB7 " + C.fmtTime(sel[0].dateAt, props.lang)), h("pre", { className: "wbm-body" }, sel[0].body || sel[0].preview || "(\u6B63\u6587\u672A\u4E0B\u8F7D)")) : list.loading ? h(C.Empty, { h, text: "\u52A0\u8F7D\u4E2D\u2026" }) : list.error ? h(C.Notice, { h, kind: "error", text: list.error }) : items.length === 0 ? h(C.Empty, { h, text: "\u6CA1\u6709\u672C\u5730\u90AE\u4EF6\uFF1B\u5148\u5728\u8D26\u6237\u9875\u540C\u6B65" }) : h("div", { className: "wbm-list" }, items.map(function(m) {
-          return h("button", { key: m.id, type: "button", className: "wbm-list-row", onClick: function() {
-            open(m.id);
-          } }, h("div", { className: "wbm-main" }, h("strong", null, m.subject || "(\u65E0\u4E3B\u9898)"), h("span", { className: "wbm-muted" }, m.from + " \xB7 " + m.mailbox)), h("span", { className: "wbm-time" }, C.fmtTime(m.dateAt, props.lang)));
-        }))
+        accounts.error ? h(C.Notice, { h, kind: "error", text: accounts.error }) : null,
+        h(
+          "div",
+          { className: "wbm-layout" + (current ? " has-detail" : "") },
+          h(
+            "aside",
+            { className: "wbm-rail" },
+            h(
+              "div",
+              { className: "wbm-card wbm-rail-card" },
+              h("div", { className: "wbm-rail-title" }, "\u6536\u4EF6\u8D26\u6237"),
+              h("select", { className: "wbm-input", value: accountId[0], onChange: function(e) {
+                accountId[1](e.target.value);
+                sel[1](null);
+              } }, h("option", { value: "" }, "\u5168\u90E8\u8D26\u6237"), accs.map(function(a) {
+                return h("option", { key: a.id, value: a.id }, a.name);
+              })),
+              h("div", { className: "wbm-rail-stats" }, h("span", null, h("b", null, items.length), " \u5C01\u672C\u5730"), h("span", null, h("b", null, unread), " \u5C01\u672A\u8BFB")),
+              h(C.Btn, { h, kind: "primary", onClick: sync }, "\u540C\u6B65\u6536\u4EF6\u7BB1"),
+              h("p", { className: "wbm-hint" }, "\u53EA\u6293\u6700\u8FD1 20 \u5C01\u4FE1\u5934\uFF1B\u6B63\u6587\u6309\u9700\u4E0B\u8F7D\u3002")
+            ),
+            h("div", { className: "wbm-rail-tip" }, "\u63D0\u793A\uFF1A\u70B9\u5F00\u4E00\u5C01\u90AE\u4EF6\u4F1A\u5728\u53F3\u4FA7\u9605\u8BFB\uFF0C\u5217\u8868\u4E0D\u4F1A\u6D88\u5931\u3002")
+          ),
+          h(
+            "section",
+            { className: "wbm-pane wbm-listpane" },
+            h("div", { className: "wbm-pane-head" }, h("strong", null, "\u90AE\u4EF6\u5217\u8868"), h("span", { className: "wbm-muted" }, items.length + " \u5C01")),
+            list.loading ? h(C.Empty, { h, text: "\u52A0\u8F7D\u4E2D\u2026" }) : list.error ? h(C.Notice, { h, kind: "error", text: list.error }) : items.length === 0 ? h(C.Empty, { h, text: "\u6CA1\u6709\u672C\u5730\u90AE\u4EF6\uFF1B\u5148\u5728\u8D26\u6237\u9875\u540C\u6B65\u3002" }) : h("div", { className: "wbm-list" }, items.map(function(m) {
+              return h(
+                "button",
+                { key: m.id, type: "button", className: "wbm-list-row" + (current && current.id === m.id ? " on" : "") + (m.seen ? "" : " unread"), onClick: function() {
+                  open(m.id);
+                } },
+                h("span", { className: "wbm-dot" }),
+                h(
+                  "div",
+                  { className: "wbm-main" },
+                  h("strong", { className: "wbm-subject" }, m.subject || "(\u65E0\u4E3B\u9898)"),
+                  h("span", { className: "wbm-muted" }, (m.from || "\u672A\u77E5\u53D1\u4EF6\u4EBA") + " \xB7 " + (m.mailbox || "INBOX")),
+                  m.preview ? h("span", { className: "wbm-snippet" }, m.preview) : null
+                ),
+                h("span", { className: "wbm-time" }, C.fmtTime(m.dateAt, props.lang))
+              );
+            }))
+          ),
+          current ? h(
+            "section",
+            { className: "wbm-pane wbm-detailpane" },
+            h(
+              "div",
+              { className: "wbm-detail-head" },
+              h("div", { className: "wbm-detail-title" }, h("strong", null, current.subject || "(\u65E0\u4E3B\u9898)"), h("span", { className: "wbm-muted" }, (current.from || "") + " \xB7 " + C.fmtTime(current.dateAt, props.lang))),
+              h(C.Btn, { h, onClick: function() {
+                sel[1](null);
+              } }, "\u5173\u95ED")
+            ),
+            h("div", { className: "wbm-detail-meta" }, h("span", null, "\u6536\u4EF6\u4EBA\uFF1A", current.to || "\u2014"), h("span", null, "\u90AE\u7BB1\uFF1A", current.mailbox || "INBOX")),
+            h("pre", { className: "wbm-body" }, current.body || current.preview || "(\u6B63\u6587\u672A\u4E0B\u8F7D)")
+          ) : null
+        )
       );
     };
   }

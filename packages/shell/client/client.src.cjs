@@ -364,7 +364,7 @@ function WorkbenchPage(props) {
       go("addon:" + currentAddon.id + ":" + viewId, params);
     }
   }
-  function cardIcon(title) { return String(title || "?").slice(0, 1); }
+  var cardIcon = require("./icons.cjs")(h);
   function openAddon(a) {
     var m = registry.get(a.id);
     var v = (m && m.views && m.views[0]) || (a.views && a.views[0]) || null;
@@ -376,7 +376,7 @@ function WorkbenchPage(props) {
         jsx.jsx("button", { className: "wb-back", onClick: function () { go("home"); }, children: "← " + t("back_home") }),
       ] }),
       jsx.jsxs("div", { className: "wb-page-title", children: [
-        jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(title) }),
+        jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(a.id, title) }),
         jsx.jsx("h2", { children: title }),
       ] }),
       desc ? jsx.jsx("div", { className: "wb-page-desc", children: desc }) : null,
@@ -389,21 +389,29 @@ function WorkbenchPage(props) {
     var count = (m && m.views ? m.views.length : (a.views ? a.views.length : 0));
     return jsx.jsxs("button", { type: "button", className: "wb-home-card" + (a.error ? " dim" : ""), onClick: function () { openAddon(a); }, children: [
       jsx.jsxs("div", { className: "wb-home-top", children: [
-        jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(a.title || title) }),
+        jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(a.id, a.title || title) }),
         jsx.jsx("span", { className: "wb-badge", children: "v" + (a.version || "?") }),
       ] }),
       jsx.jsx("div", { className: "wb-home-title", children: title }),
       jsx.jsx("div", { className: "wb-home-desc", children: a.description || (count > 1 ? count + " " + t("views") : "") }),
       a.error ? jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + a.error }) : null,
+      jsx.jsxs("div", { className: "wb-home-foot", children: [
+        jsx.jsx("span", { children: count ? count + " " + t("views") : "" }),
+        jsx.jsx("b", { children: t("open") + " →" }),
+      ] }),
     ] }, a.id);
   }
   function systemCard(key, icon, title, desc) {
     return jsx.jsxs("button", { type: "button", className: "wb-home-card", onClick: function () { go(key); }, children: [
       jsx.jsxs("div", { className: "wb-home-top", children: [
-        jsx.jsx("span", { className: "wb-home-icon", children: icon }),
+        jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(key, icon) }),
       ] }),
       jsx.jsx("div", { className: "wb-home-title", children: title }),
       jsx.jsx("div", { className: "wb-home-desc", children: desc }),
+      jsx.jsxs("div", { className: "wb-home-foot", children: [
+        jsx.jsx("span", { children: "" }),
+        jsx.jsx("b", { children: t("open") + " →" }),
+      ] }),
     ] }, key);
   }
 
@@ -430,7 +438,7 @@ function WorkbenchPage(props) {
         jsx.jsx("button", { className: "wb-back", onClick: function () { go("home"); }, children: "← " + t("back_home") }),
         jsx.jsx("div", { className: "wb-grow" }),
         jsx.jsxs("div", { className: "wb-immersive-title", children: [
-          jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(addonTitle) }),
+          jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(currentAddon.id, addonTitle) }),
           jsx.jsx("span", { children: addonTitle }),
           jsx.jsx("span", { className: "wb-badge", children: "v" + (currentAddon.version || "?") }),
         ] }),
@@ -465,9 +473,9 @@ function WorkbenchPage(props) {
         jsx.jsx("span", { className: "wb-hint", children: t("home_hint") }),
       ] }),
       jsx.jsxs("div", { className: "wb-home-grid manage", children: [
-        systemCard("backup", "⤓", t("tab_backup"), t("backup_desc")),
-        systemCard("audit", "▤", t("tab_audit"), t("audit_desc")),
-        systemCard("account", "☁", t("tab_account"), t("account_desc")),
+        systemCard("backup", "backup", t("tab_backup"), t("backup_desc")),
+        systemCard("audit", "audit", t("tab_audit"), t("audit_desc")),
+        systemCard("account", "account", t("tab_account"), t("account_desc")),
       ] }),
     ] }),
   ] });
