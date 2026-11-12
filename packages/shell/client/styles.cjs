@@ -68,13 +68,18 @@ var CSS = [
   ".wb-page-tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--wb-line)}",
   ".wb-page-loading{display:flex;flex-direction:column;gap:8px;align-items:flex-start}",
   ".wb-grow{flex:1;min-width:0}",
-  ".wb-immersive{position:fixed;inset:0;z-index:700;height:100vh;box-sizing:border-box;padding:var(--dsh-frame-top-clearance,0px) 0 0;background:var(--dsw-alias-bg-layer-2,var(--dsw-alias-bg-layer-1,#faf7ea));backdrop-filter:saturate(1.05) blur(10px);overflow:hidden}",
-  ".wb-immersive-bar{display:flex;align-items:center;gap:10px;padding:9px 22px;border-bottom:1px solid var(--wb-line);flex:none;background:transparent}",
+  // 全屏页不覆盖宿主窗口拖拽区：macOS 的 drag 区由 -webkit-app-region 决定，
+  // 覆盖层若压在 drag 区之上且自身没声明 no-drag，Electron 会把这段的点击当成拖窗口，
+  // 「返回首页」按钮就永远收不到 click。所以根节点整体 no-drag，
+  // 再让工具栏空白段恢复 drag（按钮另有 no-drag 规则），与宿主 chrome 行的约定一致。
+  ".wb-immersive{position:fixed;top:var(--dsh-frame-top-clearance,0px);right:0;bottom:0;left:0;z-index:700;box-sizing:border-box;padding:0;background:var(--dsw-alias-bg-layer-2,var(--dsw-alias-bg-layer-1,#faf7ea));backdrop-filter:saturate(1.05) blur(10px);overflow:hidden;-webkit-app-region:no-drag}",
+  ".wb-immersive-bar{display:flex;align-items:center;gap:10px;padding:9px 22px;border-bottom:1px solid var(--wb-line);flex:none;background:transparent;-webkit-app-region:drag}",
+  ".wb-immersive-bar button,.wb-immersive-bar a,.wb-immersive-bar input,.wb-immersive-bar select,.wb-immersive-bar textarea,.wb-immersive-bar [role=button]{-webkit-app-region:no-drag}",
   ".wb-immersive-title{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;opacity:.85}",
   ".wb-immersive-title .wb-home-icon{width:24px;height:24px;border-radius:7px;font-size:12px}",
   ".wb-immersive-main{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:18px 24px 24px}",
   ".wb-immersive-main>.wb-inner{max-width:none}",
-  "@media (max-width:760px){.wb-root{padding:16px}.wb-home-grid{grid-template-columns:1fr}.wb-page-title h2{font-size:17px}.wb-immersive{padding:var(--dsh-frame-top-clearance,0px) 0 0}.wb-immersive-bar{padding:8px 14px}.wb-immersive-main{padding:14px 16px 20px}.wb-immersive-title span:not(.wb-home-icon):not(.wb-badge){display:none}}",
+  "@media (max-width:760px){.wb-root{padding:16px}.wb-home-grid{grid-template-columns:1fr}.wb-page-title h2{font-size:17px}.wb-immersive{top:var(--dsh-frame-top-clearance,0px);padding:0}.wb-immersive-bar{padding:8px 14px}.wb-immersive-main{padding:14px 16px 20px}.wb-immersive-title span:not(.wb-home-icon):not(.wb-badge){display:none}}",
   ".wb-backup{display:flex;flex-direction:column;gap:14px}",
   ".wb-backup-item{display:flex;flex-direction:column}",
   ".wb-backup-row{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border:1px solid var(--wb-line);border-radius:10px;background:var(--wb-surface)}",
