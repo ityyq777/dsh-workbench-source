@@ -11,6 +11,7 @@ function Editor(props) {
       brand: item.brand || "",
       unit: item.unit || "",
       stock: item.stock || "",
+      location: item.location || "",
       remark: item.remark || "",
       images: (item.imgList || []).join("\n"),
       tagIds: (
@@ -95,6 +96,7 @@ function Editor(props) {
       brand: form.brand,
       unit: form.unit,
       stock: form.stock,
+      location: form.location,
       remark: form.remark,
       imgList: images,
     };
@@ -132,6 +134,7 @@ function Editor(props) {
         field("brand", "品牌", "Brand"),
         field("unit", "单位", "Unit"),
         field("stock", "库存（可填写 1~2 等文字）", "Stock (text such as 1–2)", true),
+        field("location", "存放位置", "Location"),
         field("remark", "备注", "Notes", true, true),
         field("images", "图片 URL（每行一个）", "Image URLs (one per line)", true, true),
         h(

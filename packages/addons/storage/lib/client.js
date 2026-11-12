@@ -1241,12 +1241,41 @@ var init_ruler = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/map-pin.mjs
+var map_pin_exports = {};
+__export(map_pin_exports, {
+  __iconData: () => __iconData22,
+  default: () => MapPin
+});
+var __iconData22, MapPin;
+var init_map_pin = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/map-pin.mjs"() {
+    init_createLucideIcon();
+    __iconData22 = {
+      name: "map-pin",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0",
+            key: "1r0f0z"
+          }
+        ],
+        ["circle", { cx: "12", cy: "10", r: "3", key: "ilqhr7" }]
+      ]
+    };
+    __iconData22.node;
+    MapPin = createLucideIcon(__iconData22);
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/square-check-big.mjs
-var __iconData22, SquareCheckBig;
+var __iconData23, SquareCheckBig;
 var init_square_check_big = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/square-check-big.mjs"() {
     init_createLucideIcon();
-    __iconData22 = {
+    __iconData23 = {
       name: "square-check-big",
       size: 24,
       node: [
@@ -1258,8 +1287,8 @@ var init_square_check_big = __esm({
       ],
       aliases: ["check-square"]
     };
-    __iconData22.node;
-    SquareCheckBig = createLucideIcon(__iconData22);
+    __iconData23.node;
+    SquareCheckBig = createLucideIcon(__iconData23);
   }
 });
 
@@ -1277,14 +1306,14 @@ var init_check_square = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs
 var x_exports = {};
 __export(x_exports, {
-  __iconData: () => __iconData23,
+  __iconData: () => __iconData24,
   default: () => X
 });
-var __iconData23, X;
+var __iconData24, X;
 var init_x = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs"() {
     init_createLucideIcon();
-    __iconData23 = {
+    __iconData24 = {
       name: "x",
       size: 24,
       node: [
@@ -1292,22 +1321,22 @@ var init_x = __esm({
         ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
       ]
     };
-    __iconData23.node;
-    X = createLucideIcon(__iconData23);
+    __iconData24.node;
+    X = createLucideIcon(__iconData24);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/table.mjs
 var table_exports = {};
 __export(table_exports, {
-  __iconData: () => __iconData24,
+  __iconData: () => __iconData25,
   default: () => Table
 });
-var __iconData24, Table;
+var __iconData25, Table;
 var init_table = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/table.mjs"() {
     init_createLucideIcon();
-    __iconData24 = {
+    __iconData25 = {
       name: "table",
       size: 24,
       node: [
@@ -1317,22 +1346,22 @@ var init_table = __esm({
         ["path", { d: "M3 15h18", key: "5xshup" }]
       ]
     };
-    __iconData24.node;
-    Table = createLucideIcon(__iconData24);
+    __iconData25.node;
+    Table = createLucideIcon(__iconData25);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/rotate-ccw.mjs
 var rotate_ccw_exports = {};
 __export(rotate_ccw_exports, {
-  __iconData: () => __iconData25,
+  __iconData: () => __iconData26,
   default: () => RotateCcw
 });
-var __iconData25, RotateCcw;
+var __iconData26, RotateCcw;
 var init_rotate_ccw = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/rotate-ccw.mjs"() {
     init_createLucideIcon();
-    __iconData25 = {
+    __iconData26 = {
       name: "rotate-ccw",
       size: 24,
       node: [
@@ -1340,8 +1369,8 @@ var init_rotate_ccw = __esm({
         ["path", { d: "M3 3v5h5", key: "1xhq8a" }]
       ]
     };
-    __iconData25.node;
-    RotateCcw = createLucideIcon(__iconData25);
+    __iconData26.node;
+    RotateCcw = createLucideIcon(__iconData26);
   }
 });
 
@@ -1370,6 +1399,7 @@ var require_icons = __commonJS({
       empty: (init_package_open(), __toCommonJS(package_open_exports)).default,
       brand: (init_factory(), __toCommonJS(factory_exports)).default,
       unit: (init_ruler(), __toCommonJS(ruler_exports)).default,
+      location: (init_map_pin(), __toCommonJS(map_pin_exports)).default,
       check: (init_check_square(), __toCommonJS(check_square_exports)).default,
       close: (init_x(), __toCommonJS(x_exports)).default,
       table: (init_table(), __toCommonJS(table_exports)).default,
@@ -1636,6 +1666,7 @@ var require_editor = __commonJS({
           brand: item.brand || "",
           unit: item.unit || "",
           stock: item.stock || "",
+          location: item.location || "",
           remark: item.remark || "",
           images: (item.imgList || []).join("\n"),
           tagIds: (item.tagIds || (item.tags || []).map(function(t) {
@@ -1706,6 +1737,7 @@ var require_editor = __commonJS({
           brand: form.brand,
           unit: form.unit,
           stock: form.stock,
+          location: form.location,
           remark: form.remark,
           imgList: images
         };
@@ -1740,6 +1772,7 @@ var require_editor = __commonJS({
             field("brand", "\u54C1\u724C", "Brand"),
             field("unit", "\u5355\u4F4D", "Unit"),
             field("stock", "\u5E93\u5B58\uFF08\u53EF\u586B\u5199 1~2 \u7B49\u6587\u5B57\uFF09", "Stock (text such as 1\u20132)", true),
+            field("location", "\u5B58\u653E\u4F4D\u7F6E", "Location"),
             field("remark", "\u5907\u6CE8", "Notes", true, true),
             field("images", "\u56FE\u7247 URL\uFF08\u6BCF\u884C\u4E00\u4E2A\uFF09", "Image URLs (one per line)", true, true),
             h2(
@@ -1835,7 +1868,8 @@ var require_card = __commonJS({
       var hasStock = item.stock != null && item.stock !== "";
       var meta = [
         item.brand && tr(lang, "\u54C1\u724C\uFF1A", "Brand: ") + item.brand,
-        item.unit && tr(lang, "\u5355\u4F4D\uFF1A", "Unit: ") + item.unit
+        item.unit && tr(lang, "\u5355\u4F4D\uFF1A", "Unit: ") + item.unit,
+        item.location && tr(lang, "\u4F4D\u7F6E\uFF1A", "Location: ") + item.location
       ].filter(Boolean);
       return h2(
         "article",
@@ -1892,7 +1926,8 @@ var require_card = __commonJS({
             "div",
             { className: "wbi-muted" },
             item.brand ? h2("span", { className: "wbi-inline" }, h2(ui.Icon, { name: "brand", size: 11 }), meta[0]) : null,
-            item.unit ? h2("span", { className: "wbi-inline" }, h2(ui.Icon, { name: "unit", size: 11 }), meta[meta.length - 1]) : null
+            item.unit ? h2("span", { className: "wbi-inline" }, h2(ui.Icon, { name: "unit", size: 11 }), tr(lang, "\u5355\u4F4D\uFF1A", "Unit: ") + item.unit) : null,
+            item.location ? h2("span", { className: "wbi-inline" }, h2(ui.Icon, { name: "location", size: 11 }), tr(lang, "\u4F4D\u7F6E\uFF1A", "Location: ") + item.location) : null
           ) : null,
           item.createTime || item.updateTime ? h2(
             "div",
@@ -2203,7 +2238,7 @@ var require_records = __commonJS({
           h2("input", {
             type: "search",
             value: query[0],
-            placeholder: tr(lang, "\u641C\u7D22\u540D\u79F0\u3001\u54C1\u724C\u6216\u5907\u6CE8", "Search name, brand or notes"),
+            placeholder: tr(lang, "\u641C\u7D22\u540D\u79F0\u3001\u54C1\u724C\u3001\u4F4D\u7F6E\u6216\u5907\u6CE8", "Search name, brand, location or notes"),
             "aria-label": tr(lang, "\u641C\u7D22\u7269\u54C1", "Search inventory"),
             onChange: function(e) {
               query[1](e.target.value);
@@ -2224,7 +2259,8 @@ var require_records = __commonJS({
               ["create_time", "\u521B\u5EFA\u65F6\u95F4", "Created"],
               ["name", "\u540D\u79F0", "Name"],
               ["brand", "\u54C1\u724C", "Brand"],
-              ["stock", "\u5E93\u5B58\u6587\u672C", "Stock text"]
+              ["stock", "\u5E93\u5B58\u6587\u672C", "Stock text"],
+              ["location", "\u4F4D\u7F6E", "Location"]
             ].map(function(o) {
               return h2("option", { key: o[0], value: o[0] }, tr(lang, o[1], o[2]));
             })
@@ -4722,7 +4758,7 @@ if (host) {
   h = require("react").createElement, Icon2 = require_icons().Icon;
   host.registerAddon({
     id: "wb-addon-storage",
-    version: "1.5.0",
+    version: "1.5.1",
     views: [
       { id: "stats", icon: tabIcon2("chart"), title: { zh: "\u7EDF\u8BA1", en: "Statistics" }, component: require_stats().Stats },
       { id: "storage", icon: tabIcon2("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: require_records().Records },

@@ -35,7 +35,7 @@ const ITEMS = [
     default: "update_time",
     zh: "默认排序列",
     en: "Sort column",
-    values: ["update_time", "create_time", "name", "brand", "stock"].map(option),
+    values: ["update_time", "create_time", "name", "brand", "stock", "location"].map(option),
   },
   {
     id: "list.sortOrder",

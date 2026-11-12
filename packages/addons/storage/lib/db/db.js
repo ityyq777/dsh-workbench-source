@@ -12,10 +12,20 @@ export function now() {
 export function tableExists(db, name) {
   return !!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(name);
 }
+export function hasColumn(db, table, column) {
+  return db
+    .prepare("PRAGMA table_info(" + table + ")")
+    .all()
+    .some((c) => c.name === column);
+}
 export function ensureSchema(db) {
   db.exec(
-    "CREATE TABLE IF NOT EXISTS storage (id TEXT PRIMARY KEY,name TEXT NOT NULL,brand TEXT NOT NULL DEFAULT '',unit TEXT NOT NULL DEFAULT '',stock TEXT NOT NULL DEFAULT '',img_list TEXT NOT NULL DEFAULT '[]',remark TEXT NOT NULL DEFAULT '',created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,deleted_at INTEGER,rev INTEGER NOT NULL DEFAULT 1); CREATE INDEX IF NOT EXISTS idx_storage_updated ON storage(updated_at); CREATE INDEX IF NOT EXISTS idx_storage_name ON storage(name);",
+    "CREATE TABLE IF NOT EXISTS storage (id TEXT PRIMARY KEY,name TEXT NOT NULL,brand TEXT NOT NULL DEFAULT '',unit TEXT NOT NULL DEFAULT '',stock TEXT NOT NULL DEFAULT '',location TEXT NOT NULL DEFAULT '',img_list TEXT NOT NULL DEFAULT '[]',remark TEXT NOT NULL DEFAULT '',created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,deleted_at INTEGER,rev INTEGER NOT NULL DEFAULT 1); CREATE INDEX IF NOT EXISTS idx_storage_updated ON storage(updated_at); CREATE INDEX IF NOT EXISTS idx_storage_name ON storage(name);",
   );
+  // 1.5.1 起新增 location：老库的 CREATE TABLE IF NOT EXISTS 不会补列，用 PRAGMA 判列后幂等 ALTER。
+  if (!hasColumn(db, "storage", "location")) {
+    db.exec("ALTER TABLE storage ADD COLUMN location TEXT NOT NULL DEFAULT ''");
+  }
 }
 export function tx(db, fn) {
   db.exec("BEGIN IMMEDIATE");
@@ -70,8 +80,8 @@ export function imagesOf(value) {
 }
 export function fieldsOf(args, old = {}) {
   const out = {};
-  const input = { name: args.name, brand: args.brand, unit: args.unit, stock: args.stock, remark: args.remark };
-  for (const key of ["name", "brand", "unit", "stock", "remark"]) {
+  const input = { name: args.name, brand: args.brand, unit: args.unit, stock: args.stock, location: args.location, remark: args.remark };
+  for (const key of ["name", "brand", "unit", "stock", "location", "remark"]) {
     const v = input[key] === undefined ? old[key] || "" : input[key];
     if (typeof v !== "string") throw new Error(key + " 必须是字符串");
     out[key] = v.trim();
@@ -97,6 +107,7 @@ export function rowStorage(api, row) {
     brand: row.brand,
     unit: row.unit,
     stock: row.stock,
+    location: row.location || "",
     imgList: JSON.parse(row.img_list),
     remark: row.remark,
     tags,

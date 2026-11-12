@@ -86,7 +86,7 @@ for (const stock of [null, undefined, "", 0, "0", 5, "12"]) {
 assert.equal(card.children.at(-1).props.className, "wbi-actions");
 for (const button of cls(card, "wbi-actions")[0].children) button.props.onClick();
 assert.deepEqual(calls, [["edit", "empty"], ["delete", "empty"]]);
-const item = { id: "full", name: "LongName".repeat(40), stock: "12", unit: "件", brand: "Maker", remark: "Body",
+const item = { id: "full", name: "LongName".repeat(40), stock: "12", unit: "件", brand: "Maker", location: "A 区", remark: "Body",
   createTime: "2026-11-09", tags: [{ id: "tag", name: "标签" }],
   imgList: ["javascript:alert(1)", "https://example.test/1.png", "https://example.test/2.png", "https://example.test/3.png"] };
 const full = renderer(StorageCard, { ...base, item });
@@ -95,6 +95,9 @@ assert.equal(cls(card, "wbi-cardhead")[0].children[0].children[0], item.name);
 assert.equal(card.children[1].props.className, "wbi-tags", "tags immediately follow heading");
 assert.equal(card.children[2].props.className, "wbi-metazone", "metadata precedes body");
 assert.equal(card.children[3].type, Description);
+const metaText = JSON.stringify(cls(card, "wbi-metazone")[0]);
+assert.ok(metaText.includes("Location: A 区"), "card shows location");
+assert.ok(metaText.includes('"name":"location"'), "location uses the map-pin icon");
 assert.equal(cls(card, "wbi-image").length, 1);
 assert.equal(cls(card, "wbi-more")[0].children[0], "+2", "only safe hidden images count");
 cls(card, "wbi-chip")[0].props.onClick();

@@ -59,8 +59,8 @@ export function apply(ctx) {
       host.registerDomain({
         id: "wb-addon-storage",
         title: "储物",
-        description: "储物：记录物品名称、品牌、单位、库存文本、图片URL、备注与可选标签",
-        version: "1.5.0",
+        description: "储物：记录物品名称、品牌、单位、库存文本、存放位置、图片URL、备注与可选标签",
+        version: "1.5.1",
         tables: ["storage"],
         sync: storageSync,
         backupAfter: ["wb-addon-tags"],
@@ -72,7 +72,7 @@ export function apply(ctx) {
         ],
         capability: {
           taskOwnership: { boundary: "物品登记使用 storage.create；开发、修复 storage 功能的工作项使用 tasks.create，不把物品记成任务。", query: "storage" },
-          summary: "记录储物条目，库存可为 1~2 等文本；图片只保存HTTP(S) URL，不上传。标签为可选能力。",
+          summary: "记录储物条目，库存可为 1~2 等文本，可记录存放位置；图片只保存HTTP(S) URL，不上传。标签为可选能力。",
           requires: [],
           records: [
             {
@@ -82,15 +82,16 @@ export function apply(ctx) {
               when: ["用户记录储物条目"],
               notFor: ["库存流水、自动扣减、文件上传"],
               primaryAction: "storage.create",
-              keyArgs: ["name", "brand", "unit", "stock", "imgList", "remark", "tagIds"],
+              keyArgs: ["name", "brand", "unit", "stock", "location", "imgList", "remark", "tagIds"],
               dedupe: "先用 storage.list 按名称查询",
               relations: [{ kind: "tag", via: "tagIds", description: "可选标签，需标签插件启用" }],
-              examples: [{ purpose: "记录物品", args: { name: "电池", stock: "1~2", unit: "盒" } }],
+              examples: [{ purpose: "记录物品", args: { name: "电池", stock: "1~2", unit: "盒", location: "储物柜 A 层" } }],
             },
           ],
           fields: [
             { name: "name", type: "string", description: "必填物品名称" },
             { name: "stock", type: "string", description: "库存文本，支持范围" },
+            { name: "location", type: "string", description: "存放位置，最多200字" },
             { name: "imgList", type: "string[]", description: "HTTP(S)图片URL" },
             { name: "remark", type: "string", description: "保存的备注" },
           ],

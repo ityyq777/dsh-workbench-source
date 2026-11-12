@@ -21,6 +21,7 @@ var ICONS = {
   empty: require("lucide-react/icons/package-open").default,
   brand: require("lucide-react/icons/factory").default,
   unit: require("lucide-react/icons/ruler").default,
+  location: require("lucide-react/icons/map-pin").default,
   check: require("lucide-react/icons/check-square").default,
   close: require("lucide-react/icons/x").default,
   table: require("lucide-react/icons/table").default,

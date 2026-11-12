@@ -20,6 +20,7 @@ const COLUMN_LABELS = {
   brand: { zh: "品牌", en: "Brand" },
   unit: { zh: "单位", en: "Unit" },
   stock: { zh: "库存", en: "Stock" },
+  location: { zh: "位置", en: "Location" },
   img_list: { zh: "图片URL（JSON）", en: "Image URLs (JSON)" },
   remark: { zh: "备注", en: "Remark" },
   created_at: { zh: "创建时间", en: "Created at" },

@@ -159,7 +159,7 @@ function Records(props) {
       h("input", {
         type: "search",
         value: query[0],
-        placeholder: tr(lang, "搜索名称、品牌或备注", "Search name, brand or notes"),
+        placeholder: tr(lang, "搜索名称、品牌、位置或备注", "Search name, brand, location or notes"),
         "aria-label": tr(lang, "搜索物品", "Search inventory"),
         onChange: function (e) {
           query[1](e.target.value);
@@ -181,6 +181,7 @@ function Records(props) {
           ["name", "名称", "Name"],
           ["brand", "品牌", "Brand"],
           ["stock", "库存文本", "Stock text"],
+          ["location", "位置", "Location"],
         ].map(function (o) {
           return h("option", { key: o[0], value: o[0] }, tr(lang, o[1], o[2]));
         }),

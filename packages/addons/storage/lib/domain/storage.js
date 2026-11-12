@@ -2,7 +2,7 @@ import { now, newId, tx, logChange, tagsOn, idsOf, fieldsOf, rowStorage, pageInf
 import { validateTags, replaceTags, searchTags, tagsByIds } from "./tags.js";
 import { configValues } from "../infra/config.js";
 import { deleteRow, bulkDelete } from "./deletion.js";
-const SORT = { name: "name", brand: "brand", stock: "stock", create_time: "created_at", update_time: "updated_at" };
+const SORT = { name: "name", brand: "brand", stock: "stock", location: "location", create_time: "created_at", update_time: "updated_at" };
 function requireId(id) {
   if (id === undefined || id === null || !String(id).trim()) throw new Error("id 必填");
   return String(id);
@@ -18,9 +18,9 @@ function list(api, args) {
   const text = String(args.text || "").trim();
   if (text) {
     where.push(
-      "(instr(lower(s.name),lower(?))>0 OR instr(lower(s.brand),lower(?))>0 OR instr(lower(s.remark),lower(?))>0)",
+      "(instr(lower(s.name),lower(?))>0 OR instr(lower(s.brand),lower(?))>0 OR instr(lower(s.location),lower(?))>0 OR instr(lower(s.remark),lower(?))>0)",
     );
-    params.push(text, text, text);
+    params.push(text, text, text, text);
   }
   const tagIds = idsOf(args.tagIds === undefined ? args.tags : args.tagIds);
   if (tagIds.length) {
@@ -57,12 +57,12 @@ function save(api, args, origin, update) {
     const tags = rawTags === undefined ? null : validateTags(api, rawTags);
     if (update)
       db.prepare(
-        "UPDATE storage SET name=?,brand=?,unit=?,stock=?,img_list=?,remark=?,updated_at=?,rev=rev+1 WHERE id=?",
-      ).run(fields.name, fields.brand, fields.unit, fields.stock, fields.img_list, fields.remark, ts, id);
+        "UPDATE storage SET name=?,brand=?,unit=?,stock=?,location=?,img_list=?,remark=?,updated_at=?,rev=rev+1 WHERE id=?",
+      ).run(fields.name, fields.brand, fields.unit, fields.stock, fields.location, fields.img_list, fields.remark, ts, id);
     else
       db.prepare(
-        "INSERT INTO storage(id,name,brand,unit,stock,img_list,remark,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?,?,?,NULL,1)",
-      ).run(id, fields.name, fields.brand, fields.unit, fields.stock, fields.img_list, fields.remark, ts, ts);
+        "INSERT INTO storage(id,name,brand,unit,stock,location,img_list,remark,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?,?,?,?,NULL,1)",
+      ).run(id, fields.name, fields.brand, fields.unit, fields.stock, fields.location, fields.img_list, fields.remark, ts, ts);
     replaceTags(api, id, tags, origin, ts);
     logChange(db, "storage", id, update ? "upsert" : "create", origin, ts);
   });
@@ -109,6 +109,7 @@ const fields = {
   name: { type: "string", description: "物品名称，非空，最多200字；创建必填，更新省略时保留原值" },
   brand: { type: "string" },
   unit: { type: "string" },
+  location: { type: "string", description: "存放位置，最多200字；默认空串，更新省略时保留原值" },
   stock: { type: "string", description: "库存文本，支持 1~2，不做数值计算" },
   imgList: { type: "array", items: { type: "string" }, description: "最多50个 HTTP(S) 图片URL，仅预览，不上传" },
   remark: { type: "string", description: "备注，最多10000字" },
@@ -126,7 +127,7 @@ export function registerStorageActions(api) {
   action("storage.capabilities", "探测可选标签插件；储物独立可用", {}, [], () => ({ tags: tagsOn(api) }));
   action(
     "storage.list",
-    "分页查询物品，关键词匹配名称/品牌/备注，标签命中任一",
+    "分页查询物品，关键词匹配名称/品牌/位置/备注，标签命中任一",
     {
       text: { type: "string" },
       tagIds: tagsSchema,

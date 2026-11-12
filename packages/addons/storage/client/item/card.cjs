@@ -6,7 +6,8 @@ function StorageCard(props) {
   var shown = gallery[0] ? images : images.slice(0, 1);
   var hasStock = item.stock != null && item.stock !== "";
   var meta = [item.brand && tr(lang, "品牌：", "Brand: ") + item.brand,
-    item.unit && tr(lang, "单位：", "Unit: ") + item.unit].filter(Boolean);
+    item.unit && tr(lang, "单位：", "Unit: ") + item.unit,
+    item.location && tr(lang, "位置：", "Location: ") + item.location].filter(Boolean);
   return h("article", {
     className: "wbi-card" + (props.selectionMode ? " wbi-selectable" : "") + (props.checked ? " wbi-selected" : ""),
     onClickCapture: props.selectionMode ? function (e) {
@@ -30,7 +31,8 @@ function StorageCard(props) {
     })) : null,
     meta.length || item.createTime || item.updateTime ? h("div", { className: "wbi-metazone" },
       meta.length ? h("div", { className: "wbi-muted" }, item.brand ? h("span", { className: "wbi-inline" }, h(ui.Icon, { name: "brand", size: 11 }), meta[0]) : null,
-        item.unit ? h("span", { className: "wbi-inline" }, h(ui.Icon, { name: "unit", size: 11 }), meta[meta.length - 1]) : null) : null,
+        item.unit ? h("span", { className: "wbi-inline" }, h(ui.Icon, { name: "unit", size: 11 }), tr(lang, "单位：", "Unit: ") + item.unit) : null,
+        item.location ? h("span", { className: "wbi-inline" }, h(ui.Icon, { name: "location", size: 11 }), tr(lang, "位置：", "Location: ") + item.location) : null) : null,
       item.createTime || item.updateTime ? h("div", { className: "wbi-meta" },
         item.createTime ? h("span", null, tr(lang, "创建 ", "Created ") + props.date(item.createTime)) : null,
         item.updateTime ? h("span", null, tr(lang, "更新 ", "Updated ") + props.date(item.updateTime)) : null) : null) : null,

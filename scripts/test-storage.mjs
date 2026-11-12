@@ -36,7 +36,14 @@ const first = call("storage.create", {
   remark: "旧备注",
 }).storage;
 assert.equal(first.stock, "1~2");
+assert.equal(first.location, "", "location defaults to an empty string");
+assert.equal(call("storage.update", { id: first.id, location: "  储物柜 A 层  " }).storage.location, "储物柜 A 层");
+assert.equal(call("storage.list", { text: "储物柜" }).total, 1, "text search hits location");
+assert.equal(call("storage.list", { sortColumn: "location", sortOrder: "asc" }).total, 1);
+assert.throws(() => call("storage.create", { name: "bad-location", location: 1 }), /字符串/);
+assert.throws(() => call("storage.create", { name: "long-location", location: "长".repeat(201) }), /过长/);
 assert.equal(call("storage.update", { id: first.id, remark: "新备注" }).storage.remark, "新备注");
+assert.equal(call("storage.get", { id: first.id }).location, "储物柜 A 层", "update keeps location when omitted");
 assert.equal(call("storage.get", { id: first.id }).imgList.length, 1);
 assert.equal(call("storage.list", { text: "新备注" }).total, 1);
 assert.equal(call("storage.list", { text: "测试品牌" }).total, 1);
@@ -108,6 +115,7 @@ assert.equal(call("storage.configGet").values["ui.bodyMode"], "markdown");
 assert.equal(call("storage.configOptions").domain, "storage");
 assert.equal(call("storage.dataTables", { stats: true }).tables[0].stats.rows, 21);
 assert.equal(call("storage.dataQuery", { table: "storage", filters: { stock: "1~2" } }).total, 1);
+assert.equal(call("storage.dataQuery", { table: "storage", filters: { location: "储物柜 A 层" } }).total, 1);
 assert.throws(() => call("storage.dataQuery", { table: "tag" }), /未知数据表/);
 assert.throws(() => call("storage.dataQuery", { table: "storage", sort: "invalid" }), /未知排序列/);
 assert.equal(call("storage.stats").withImages, 1);
@@ -115,6 +123,7 @@ assert.equal(call("storage.stats").tagged, 1);
 // Export must not capture other domains; import must not overwrite their ids.
 db.prepare("INSERT INTO tag_mapping VALUES('foreign','t1','site-1','site',1,1,NULL,1)").run();
 const backup = exportStorageData(api);
+assert.equal(backup.storage.find((r) => r.id === first.id).location, "储物柜 A 层", "export keeps location");
 assert.equal(backup.tagMappings.length, 2);
 const foreign = { ...backup.tagMappings[0], id: "foreign", updated_at: Date.now() + 1000 };
 let result = importStorageData(api, JSON.stringify({ ...backup, tagMappings: [foreign] }), { policy: "overwrite" });
@@ -262,11 +271,31 @@ apply({
   effect: (fn) => fn(),
 });
 assert.equal(domain.id, "wb-addon-storage");
-assert.equal(domain.version, "1.5.0");
+assert.equal(domain.version, "1.5.1");
 assert.equal(domain.views.find((v) => v.id === "stats").title.zh, "统计");
 assert.deepEqual(domain.tables, ["storage"]);
 assert.deepEqual(domain.capability.requires, []);
 for (const def of Object.values(defs)) for (const key of def.input.required || []) assert.ok(def.input.properties[key]);
+// 1.5.0 -> 1.5.1：老库缺 location 列时必须幂等补列且原数据不丢。
+const db4 = new DatabaseSync(":memory:");
+db4.exec(
+  "CREATE TABLE sync_change_log(seq INTEGER PRIMARY KEY,table_name TEXT,row_id TEXT,op,payload TEXT,origin TEXT,updated_at INTEGER)",
+);
+db4.exec(
+  "CREATE TABLE storage (id TEXT PRIMARY KEY,name TEXT NOT NULL,brand TEXT NOT NULL DEFAULT '',unit TEXT NOT NULL DEFAULT '',stock TEXT NOT NULL DEFAULT '',img_list TEXT NOT NULL DEFAULT '[]',remark TEXT NOT NULL DEFAULT '',created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,deleted_at INTEGER,rev INTEGER NOT NULL DEFAULT 1)",
+);
+db4.exec("INSERT INTO storage VALUES('legacy','旧物品','旧品牌','盒','1','[]','旧备注',11,11,NULL,1)");
+const columns = () => db4.prepare("PRAGMA table_info(storage)").all().map((c) => c.name);
+assert.equal(columns().includes("location"), false, "legacy table starts without location");
+const api4 = { ...api, db: db4, action: () => {}, emit: () => {} };
+setup(api4);
+assert.equal(columns().includes("location"), true, "setup adds location to a legacy table");
+setup(api4);
+assert.equal(columns().filter((n) => n === "location").length, 1, "migration is idempotent");
+assert.equal(db4.prepare("SELECT COUNT(*) n FROM storage").get().n, 1, "legacy rows survive the migration");
+assert.equal(db4.prepare("SELECT location FROM storage WHERE id='legacy'").get().location, "", "legacy rows default to empty location");
+assert.equal(db4.prepare("SELECT name FROM storage WHERE id='legacy'").get().name, "旧物品");
+db4.close();
 db.close();
 console.log(
   "PASS storage: CRUD, validation, pagination, tags missing/disabled/recovery, config/data, backups, sync ownership, transactional rollback",
