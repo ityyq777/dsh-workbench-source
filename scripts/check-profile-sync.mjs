@@ -30,6 +30,12 @@ const PACKAGES = [
   { key: "sites", label: "站点", dir: "packages/addons/sites", names: ["dsh-workbench-sites"], addon: true },
   { key: "storage", label: "储物", dir: "packages/addons/storage", names: ["dsh-workbench-storage"], addon: true },
   { key: "message", label: "消息", dir: "packages/addons/message", names: ["dsh-workbench-message"], addon: true },
+  { key: "vault", label: "保险箱", dir: "packages/addons/vault", names: ["dsh-workbench-vault"], addon: true },
+  { key: "connector", label: "连接器", dir: "packages/addons/connector", names: ["dsh-workbench-connector"], addon: true },
+  { key: "automation", label: "自动化", dir: "packages/addons/automation", names: ["dsh-workbench-automation"], addon: true },
+  { key: "contacts", label: "联系人", dir: "packages/addons/contacts", names: ["dsh-workbench-contacts"], addon: true },
+  { key: "calendar", label: "日历", dir: "packages/addons/calendar", names: ["dsh-workbench-calendar"], addon: true },
+  { key: "mail", label: "邮件", dir: "packages/addons/mail", names: ["dsh-workbench-mail"], addon: true },
 ];
 
 const EXIT_OK = 0;

@@ -16,6 +16,13 @@ const SOURCE_PKGS = [
   { dir: "packages/addons/tags", name: "dsh-workbench-tags", version: "3.0.0", addon: true },
   { dir: "packages/addons/sites", name: "dsh-workbench-sites", version: "4.0.0", addon: true },
   { dir: "packages/addons/storage", name: "dsh-workbench-storage", version: "5.0.0", addon: true },
+  { dir: "packages/addons/message", name: "dsh-workbench-message", version: "6.0.0", addon: true },
+  { dir: "packages/addons/vault", name: "dsh-workbench-vault", version: "7.0.0", addon: true },
+  { dir: "packages/addons/connector", name: "dsh-workbench-connector", version: "8.0.0", addon: true },
+  { dir: "packages/addons/automation", name: "dsh-workbench-automation", version: "9.0.0", addon: true },
+  { dir: "packages/addons/contacts", name: "dsh-workbench-contacts", version: "10.0.0", addon: true },
+  { dir: "packages/addons/calendar", name: "dsh-workbench-calendar", version: "11.0.0", addon: true },
+  { dir: "packages/addons/mail", name: "dsh-workbench-mail", version: "12.0.0", addon: true },
 ];
 
 function writeFile(path, content) {
@@ -79,13 +86,13 @@ function run({ source, profile }, extra = []) {
 }
 
 try {
-  // 1) 一致：退出码 0，五包全过，宿主命中的是源码包名
+  // 1) 一致：退出码 0，全包通过，宿主命中的是源码包名
   {
     const fixture = makeFixture("consistent");
     const { status, payload } = run(fixture);
     assert.equal(status, 0, "一致场景应退出 0");
     assert.equal(payload.ok, true);
-    assert.equal(payload.packages.length, 5);
+    assert.equal(payload.packages.length, 12);
     assert.ok(payload.packages.every((pkg) => pkg.ok && pkg.importOk === true));
     assert.equal(payload.packages[0].name, "dsh-workbench");
     assert.match(payload.packages[0].via, /^file:/, "应回显安装源");
