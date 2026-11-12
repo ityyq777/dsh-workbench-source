@@ -445,14 +445,14 @@ var require_styles = __commonJS({
       // macOS 的宿主 chrome 把顶部条带标成 drag 区，Electron 按图层几何计算拖拽区，
       // 覆盖在 drag 区上的元素若不声明 no-drag，点击会被当成拖窗口，
       // 「返回首页」按钮就永远收不到 click。工具栏空白段再恢复 drag（按钮另有 no-drag 规则）。
-      ".wb-immersive{position:fixed;inset:0;z-index:700;height:100vh;box-sizing:border-box;padding:var(--dsh-frame-top-clearance,0px) 0 0;background:var(--dsw-alias-bg-layer-2,var(--dsw-alias-bg-layer-1,#faf7ea));backdrop-filter:saturate(1.05) blur(10px);overflow:hidden;-webkit-app-region:no-drag}",
-      ".wb-immersive-bar{display:flex;align-items:center;gap:10px;padding:9px 22px;border-bottom:1px solid var(--wb-line);flex:none;background:transparent;-webkit-app-region:drag}",
+      ".wb-immersive{position:fixed;inset:0;z-index:700;height:100vh;box-sizing:border-box;padding:0;background:var(--dsw-alias-bg-layer-2,var(--dsw-alias-bg-layer-1,#faf7ea));backdrop-filter:saturate(1.05) blur(10px);overflow:hidden;-webkit-app-region:no-drag}",
+      ".wb-immersive-bar{display:flex;align-items:center;gap:10px;padding:calc(9px + var(--dsh-frame-top-clearance,0px)) 22px 9px;border-bottom:1px solid var(--wb-line);flex:none;background:transparent;-webkit-app-region:drag}",
       ".wb-immersive-bar button,.wb-immersive-bar a,.wb-immersive-bar input,.wb-immersive-bar select,.wb-immersive-bar textarea,.wb-immersive-bar [role=button]{-webkit-app-region:no-drag}",
       ".wb-immersive-title{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;opacity:.85}",
       ".wb-immersive-title .wb-home-icon{width:24px;height:24px;border-radius:7px;font-size:12px}",
       ".wb-immersive-main{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:18px 24px 24px}",
       ".wb-immersive-main>.wb-inner{max-width:none}",
-      "@media (max-width:760px){.wb-root{padding:16px}.wb-home-grid{grid-template-columns:1fr}.wb-page-title h2{font-size:17px}.wb-immersive{padding:var(--dsh-frame-top-clearance,0px) 0 0}.wb-immersive-bar{padding:8px 14px}.wb-immersive-main{padding:14px 16px 20px}.wb-immersive-title span:not(.wb-home-icon):not(.wb-badge){display:none}}",
+      "@media (max-width:760px){.wb-root{padding:16px}.wb-home-grid{grid-template-columns:1fr}.wb-page-title h2{font-size:17px}.wb-immersive-bar{padding:calc(8px + var(--dsh-frame-top-clearance,0px)) 14px 8px}.wb-immersive-main{padding:14px 16px 20px}.wb-immersive-title span:not(.wb-home-icon):not(.wb-badge){display:none}}",
       ".wb-backup{display:flex;flex-direction:column;gap:14px}",
       ".wb-backup-item{display:flex;flex-direction:column}",
       ".wb-backup-row{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border:1px solid var(--wb-line);border-radius:10px;background:var(--wb-surface)}",
@@ -650,11 +650,11 @@ var require_styles = __commonJS({
       ".wb-root .wb-inner{max-width:none}",
       ".wb-root .wb-immersive-main{padding:16px 22px 24px}",
       ".wb-root .wb-immersive-main>.wb-inner{max-width:none;width:100%;padding:0}",
-      ".wb-root .wb-immersive-bar{padding:8px 18px;background:var(--wb-card);box-shadow:none;border-bottom:1px solid var(--wb-line)}",
+      ".wb-root .wb-immersive-bar{padding:calc(8px + var(--dsh-frame-top-clearance,0px)) 18px 8px;background:var(--wb-card);box-shadow:none;border-bottom:1px solid var(--wb-line)}",
       ".wb-root .wb-immersive-bar .wb-page-tabs{border-bottom:0;margin:0 0 0 auto;padding:0;flex-wrap:nowrap;overflow-x:auto;max-width:min(72vw,980px);scrollbar-width:none}",
       ".wb-root .wb-immersive-bar .wb-page-tabs::-webkit-scrollbar{display:none}",
       ".wb-root .wb-immersive-bar .wb-tab{padding:6px 10px;white-space:nowrap}",
-      "@media (max-width:760px){.wb-root .wb-immersive-bar{flex-wrap:nowrap;padding:8px 12px}.wb-root .wb-immersive-bar .wb-page-tabs{max-width:none}.wb-root .wb-immersive-title{display:none}}"
+      "@media (max-width:760px){.wb-root .wb-immersive-bar{flex-wrap:nowrap;padding:calc(6px + var(--dsh-frame-top-clearance,0px)) 12px 6px}.wb-root .wb-immersive-bar .wb-page-tabs{max-width:none}.wb-root .wb-immersive-title{display:none}}"
     ].join("\n");
     module2.exports = CSS2;
   }
