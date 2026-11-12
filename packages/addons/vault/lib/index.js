@@ -59,7 +59,7 @@ export function createDomain(host) {
       vault = createVault({ db: api.db, log: api.log });
       const register = api.action.bind(api);
       api.action = (actionName, def) => {
-        schemas.push({ name: actionName, description: def.description, input: def.input, examples: def.examples });
+        schemas.push({ name: actionName, domain: "wb-addon-vault", description: def.description, input: def.input, examples: def.examples });
         register(actionName, def);
       };
       registerVaultActions(api, vault);
@@ -69,7 +69,7 @@ export function createDomain(host) {
       api.action("vault.actionSchema", {
         description: "只读：本域 action 清单与输入 schema（插件自证，不读宿主统一接口）。",
         input: { type: "object", properties: {}, additionalProperties: false },
-        execute: () => ({ domain: "wb-addon-vault", version: "0.1.0", actions: schemas }),
+        execute: () => ({ shellVersion: api.shellVersion || "", domains: [{ id: "wb-addon-vault", version: (api.addon && api.addon.version) || "0.1.0" }], actions: schemas }),
       });
       void host;
     },

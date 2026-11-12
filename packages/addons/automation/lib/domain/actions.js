@@ -15,7 +15,11 @@ function deny(origin, allow) {
 }
 
 export function registerActions(api, engine) {
-  const action = (name, def) => api.action(name, def);
+  const defs = [];
+  const action = (name, def) => {
+    defs.push({ name, domain: "wb-addon-automation", description: def.description || "", input: def.input || { type: "object", properties: {} }, examples: def.examples || [] });
+    api.action(name, def);
+  };
 
   action("automation.status", {
     description: "自动化域状态：规则数量、启用数、今日运行与配置",
@@ -156,16 +160,9 @@ export function registerActions(api, engine) {
   });
 
   action("automation.actionSchema", {
-    description: "自证 action 清单（供 Action 页读取）",
+    description: "自证 action 清单与输入 schema（供 Action 页读取）",
     input: { type: "object", properties: {} },
-    execute: () => ({
-      actions: [
-        "automation.status", "automation.ruleList", "automation.ruleGet", "automation.ruleCreate",
-        "automation.ruleUpdate", "automation.ruleDelete", "automation.ruleRun", "automation.runList",
-        "automation.runGet", "automation.stats", "automation.configGet", "automation.configSet",
-        "automation.actionOptions", "automation.actionSchema", "automation.dataTables", "automation.dataQuery",
-      ],
-    }),
+    execute: () => ({ shellVersion: api.shellVersion || "", domains: [{ id: "wb-addon-automation", version: (api.addon && api.addon.version) || "0.1.0" }], actions: defs }),
   });
 
   action("automation.dataTables", {

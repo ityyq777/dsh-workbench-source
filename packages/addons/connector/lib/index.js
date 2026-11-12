@@ -72,7 +72,7 @@ export function createDomain(host) {
       connector = createConnector({ db: api.db, host, log: api.log, emit: api.emit });
       const register = api.action.bind(api);
       api.action = (actionName, def) => {
-        schemas.push({ name: actionName, description: def.description, input: def.input, examples: def.examples });
+        schemas.push({ name: actionName, domain: "wb-addon-connector", description: def.description, input: def.input, examples: def.examples });
         register(actionName, def);
       };
       registerConnectorActions(api, connector);
@@ -80,7 +80,7 @@ export function createDomain(host) {
       api.action("connector.actionSchema", {
         description: "只读：本域 action 清单与输入 schema（插件自证）。",
         input: { type: "object", properties: {}, additionalProperties: false },
-        execute: () => ({ domain: "wb-addon-connector", version: "0.1.0", actions: schemas }),
+        execute: () => ({ shellVersion: api.shellVersion || "", domains: [{ id: "wb-addon-connector", version: (api.addon && api.addon.version) || "0.1.0" }], actions: schemas }),
       });
       if (typeof api.registerSearchProvider === "function") {
         api.registerSearchProvider({

@@ -7,7 +7,11 @@ const TABLES = {
 function deny(origin) { if (origin !== "ui") { const e = new Error("该操作只允许 ui 调用"); e.status = 403; throw e; } }
 
 export function registerContactActions(api, engine) {
-  const action = (name, def) => api.action(name, def);
+  const defs = [];
+  const action = (name, def) => {
+    defs.push({ name, domain: "wb-addon-contacts", description: def.description || "", input: def.input || { type: "object", properties: {} }, examples: def.examples || [] });
+    api.action(name, def);
+  };
   action("contacts.status", { description: "联系人统计", input: { type: "object", properties: {} }, execute: () => engine.stats() });
   action("contacts.list", {
     description: "联系人列表，可按关键词或分组过滤",
@@ -45,5 +49,5 @@ export function registerContactActions(api, engine) {
       return { table, rows: api.db.prepare("SELECT " + TABLES[table].join(",") + " FROM " + table + " ORDER BY rowid DESC LIMIT ? OFFSET ?").all(limit, offset) };
     },
   });
-  action("contacts.actionSchema", { description: "本域 action 清单", input: { type: "object", properties: {} }, execute: () => ({ actions: ["contacts.status", "contacts.list", "contacts.get", "contacts.create", "contacts.update", "contacts.delete", "contacts.search", "contacts.groupList", "contacts.groupCreate", "contacts.groupDelete", "contacts.importVcf", "contacts.exportVcf", "contacts.dataTables", "contacts.dataQuery", "contacts.actionSchema"] }) });
+  action("contacts.actionSchema", { description: "本域 action 清单与输入 schema", input: { type: "object", properties: {} }, execute: () => ({ shellVersion: api.shellVersion || "", domains: [{ id: "wb-addon-contacts", version: (api.addon && api.addon.version) || "0.1.0" }], actions: defs }) });
 }

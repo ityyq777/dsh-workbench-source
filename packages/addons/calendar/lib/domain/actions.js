@@ -85,6 +85,10 @@ export function registerCalendarActions(api, cal) {
   action("calendar.actionSchema", {
     description: "只读：本插件注册的 action 清单",
     input: obj({}),
-    execute: () => ({ actions: defs.filter((d) => d.name !== "calendar.actionSchema") }),
+    execute: () => ({
+      shellVersion: api.shellVersion || "",
+      domains: [{ id: "wb-addon-calendar", version: (api.addon && api.addon.version) || "0.1.0" }],
+      actions: defs.filter((d) => d.name !== "calendar.actionSchema").map((d) => ({ ...d, domain: "wb-addon-calendar", examples: d.examples || [] })),
+    }),
   });
 }
