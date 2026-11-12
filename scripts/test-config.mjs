@@ -55,22 +55,25 @@ assert(g0.items.find(x => x.id === "stats.recentPublishLimit").group === "stats"
 assert(g0.values["stats.recentDoneLimit"] === 10, "tasks 最近完成默认应为 10");
 assert(g0.values["stats.recentShutdownLimit"] === 10, "tasks 最近关闭默认应为 10");
 assert(g0.values["ui.confirmDelete"] === true, "tasks 删除确认默认应为 true");
-assert(g0.items.length >= 16, "tasks 配置项数量不足：" + g0.items.length);
+assert(g0.items.length === 21, "tasks 配置项应为 21 项，实际：" + g0.items.length);
+assert(!g0.items.some(function (x) { return x.id === "ui.listView"; }), "ui.listView 已随卡片模式移除");
+assert(!Object.hasOwn(g0.values, "ui.listView"), "configGet 不应再返回 ui.listView");
 assert(Object.keys(g0.overrides).length === 0, "初始不应有覆盖项");
 
 // 2. 未知键与越界都必须整批拒绝
 mustThrow(() => tasks.call("tasks.configSet", { values: { "no.such.key": 1 } }), "no.such.key", "未知配置项应报错");
+mustThrow(() => tasks.call("tasks.configSet", { values: { "ui.listView": "card" } }), "未知配置项", "已移除的 ui.listView 应报未知配置项");
 mustThrow(() => tasks.call("tasks.configSet", { values: { "list.pageSize": 999 } }), "list.pageSize", "越界分页应报错");
 mustThrow(() => tasks.call("tasks.configSet", { values: { "list.pageSize": 24, "nope.key": 1 } }), "nope.key", "整批校验失败应报错");
 assert(metaKeys().length === 0, "失败的批次不能写入任何键");
 assert(tasks.call("tasks.configGet").values["list.pageSize"] === 12, "失败批次不能留下部分写入");
 
 // 3. 正常写入与读取
-const set1 = tasks.call("tasks.configSet", { values: { "list.pageSize": 24, "ui.listView": "card" } });
+const set1 = tasks.call("tasks.configSet", { values: { "list.pageSize": 24, "ui.bodyMode": "text" } });
 assert(set1.ok !== false, "configSet 失败");
 assert(metaKeys().length === 2, "应写入两个 meta 键，实际 " + metaKeys().length);
 const g1 = tasks.call("tasks.configGet");
-assert(g1.values["list.pageSize"] === 24 && g1.values["ui.listView"] === "card", "覆盖值未生效");
+assert(g1.values["list.pageSize"] === 24 && g1.values["ui.bodyMode"] === "text", "覆盖值未生效");
 assert(g1.overrides["list.pageSize"] === 24, "overrides 未标记修改项");
 assert(db.prepare("SELECT COUNT(*) AS n FROM sync_change_log").get().n === 0, "配置写入不能进 sync_change_log");
 

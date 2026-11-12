@@ -43,15 +43,6 @@ const ITEMS = [
     values: [{ value: "markdown", zh: "Markdown", en: "Markdown" }, { value: "text", zh: "纯文本", en: "Plain text" }],
   },
   {
-    id: "ui.listView", group: "ui", type: "enum", surface: "ui", apply: "mount", default: "list",
-    zh: "列表形态", en: "List style",
-    hintZh: "记录页默认用列表还是卡片", hintEn: "List or card layout in Records",
-    values: [
-      { value: "list", zh: "列表", en: "List" },
-      { value: "card", zh: "卡片", en: "Cards" },
-    ],
-  },
-  {
     id: "ui.defaultPreset", group: "ui", type: "enum", surface: "ui", apply: "mount", default: "",
     zh: "默认快捷筛选", en: "Default quick filter",
     hintZh: "打开记录页时自动套用的快捷查询预设；「全部」表示不套用（有会话筛选记忆时以记忆为准）",

@@ -10,7 +10,7 @@ const rows = Array.from({length:24}, (_,i) => ({id:'task'+i,title:['半星任务
 window.calls=[];
 const api={subscribe:()=>()=>{},call:async(action,args={})=>{
  window.calls.push({action,args});let result=[];
- if(action==='tasks.configGet')result={values:{'ui.defaultTab':0,'ui.listView':'card','ui.expandDepth':0,'list.sort':'difficulty','list.filterRestarted':true,'stats.sections':['recentDone','recentShutdown'],'stats.showKpi':false}};
+ if(action==='tasks.configGet')result={values:{'ui.defaultTab':0,'ui.expandDepth':0,'list.sort':'difficulty','list.filterRestarted':true,'stats.sections':['recentDone','recentShutdown'],'stats.showKpi':false}};
  if(action==='taskNodes.tree')result=tree;
  if(action==='taskNodes.path')result=[tree[0],tree[0].children[0],tree[0].children[0].children[0]];
  if(action==='tasks.statsReport')result={generatedAt:'2026-11-09',totals:{total:24},lists:{recentDone:rows,recentShutdown:rows}};

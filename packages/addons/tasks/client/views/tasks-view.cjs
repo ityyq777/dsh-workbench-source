@@ -60,8 +60,6 @@ module.exports = function createTasksView(deps) {
     var panelState = React.useState(false), panelOpen = panelState[0], setPanelOpen = panelState[1];
     var hintState = React.useState(""), filterHint = hintState[0], setFilterHint = hintState[1];
     var panelId = React.useId();
-    var viewS = React.useState(!nodeNavigation && cfg["ui.listView"] === "card" ? "card" : "list");
-    var view = viewS[0], setView = viewS[1];
     var searchS = React.useState("");
     var searchDraft = searchS[0], setSearchDraft = searchS[1];
     var tqS = React.useState("");
@@ -450,9 +448,9 @@ module.exports = function createTasksView(deps) {
         ? h("div", { className: "wbt-err" }, t.error + error)
         : data.records.length === 0
           ? h("div", { className: "wbt-empty" }, t.empty)
-          : h("div", { className: view === "card" ? "wbt-grid" : "wbt-list" }, data.records.map(function (task) {
+          : h("div", { className: "wbt-list" }, data.records.map(function (task) {
               return h(TaskItem, {
-                key: task.id, task: task, t: t, lang: props.lang, card: view === "card", keyword: titleKey.trim(),
+                key: task.id, task: task, t: t, lang: props.lang, keyword: titleKey.trim(),
                 bodyMode: cfg["ui.bodyMode"], selectionMode: selectionMode, checked: selectedIds.has(String(task.id)),
                 onCheck: toggleSelect, update: update, toast: say,
                 onEdit: function (x) { setEditTask(x); },
@@ -483,8 +481,7 @@ module.exports = function createTasksView(deps) {
         } }, h(Icon, { name: "select", size: 13 }), selectionMode ? t.cancelSelect : t.select),
         h("button", { className: "wbt-btn primary", onClick: function () {
           setCreateState({ source: "0", originTask: null, defaultTableId: target.tableId });
-        } }, h(Icon, { name: "plus", size: 14 }), t.newTask),
-        h("button", { className: "wbt-btn ghost", onClick: function () { setView(view === "list" ? "card" : "list"); } }, h(Icon, { name: view === "list" ? "grid" : "list", size: 13 }), view === "list" ? t.card : t.list)
+        } }, h(Icon, { name: "plus", size: 14 }), t.newTask)
       ),
       curDesc ? h("div", { className: "wbt-tabledesc", title: curDesc }, curDesc.length > 220 ? curDesc.slice(0, 220) + "…" : curDesc) : null,
       h("div", { className: "wbt-body" },

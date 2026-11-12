@@ -24,9 +24,19 @@ for(const lang of ['zh','en']) {
 let state=[],cursor=0,effects=[];const memo=(fn,deps)=>{const i=cursor++,old=state[i];if(!old||deps.some((v,j)=>v!==old.deps[j]))state[i]={value:fn(),deps};return state[i].value;};
 const R={createElement:(type,props,...children)=>({type,key:props?.key,props:props||{},children}),useState:v=>{const i=cursor++;if(!(i in state))state[i]=v;return[state[i],v=>state[i]=typeof v==='function'?v(state[i]):v];},useId:()=>"filter-test",useRef:v=>{const i=cursor++;return state[i]||={current:v};},useMemo:memo,useCallback:(fn,d)=>memo(()=>fn,d),useEffect:(fn,d)=>memo(()=>{effects.push(fn);},d)};
 const noop=()=>null, copy=require('../packages/addons/tasks/client/ui/copy.cjs');
-const View=require('../packages/addons/tasks/client/views/tasks-view.cjs')({React:R,configView:{useConfig:()=>({ready:true,values:{'ui.defaultTab':0,'ui.listView':'card','list.sort':'difficulty','list.filterRestarted':true}})},COPY:copy,TABS:[],allTables:()=>[],treeWalk:()=>[],treeFlat:()=>[],cx:(...s)=>s.join(' '),injectCss:noop,Icon:noop,PathCrumbs:noop,TagFilter:noop});
+const View=require('../packages/addons/tasks/client/views/tasks-view.cjs')({React:R,configView:{useConfig:()=>({ready:true,values:{'ui.defaultTab':0,'list.sort':'difficulty','list.filterRestarted':true}})},COPY:copy,TABS:[],allTables:()=>[],treeWalk:()=>[],treeFlat:()=>[],cx:(...s)=>s.join(' '),injectCss:noop,Icon:noop,PathCrumbs:noop,TagFilter:noop});
 const calls=[], outer=View({lang:'en',viewParams:{tableId:'t',groupId:'g',difficultyMissing:true},api:{subscribe:()=>noop,call:async(action,args)=>{calls.push({action,args});return {ok:true,result:action==='tasks.list'?{records:[],total:0}:[]};}}});
-cursor=0;outer.type(outer.props);effects.forEach(f=>f());for(let i=0;i<12;i++)await Promise.resolve();
+cursor=0;const rendered=outer.type(outer.props);effects.forEach(f=>f());for(let i=0;i<12;i++)await Promise.resolve();
+const walkNode=n=>n&&typeof n==='object'?[n].concat((n.children||[]).flat(Infinity).flatMap(walkNode)):[];
+const nodes=walkNode(rendered);
+assert.ok(!nodes.some(n=>n.props&&/wbt-grid|wbt-card/.test(String(n.props.className||''))),'不应再渲染卡片/网格容器');
+assert.equal(copy.zh.card,undefined,'zh 文案不应再有 card');
+assert.equal(copy.zh.list,undefined,'zh 文案不应再有 list');
+const viewSrc=readFileSync('packages/addons/tasks/client/views/tasks-view.cjs','utf8');
+assert.ok(!/wbt-grid|wbt-card|ui\.listView|setView|props\.card/.test(viewSrc),'记录页不应残留卡片模式代码');
+const itemSrc=readFileSync('packages/addons/tasks/client/item/task-item.cjs','utf8');
+assert.ok(!/wbt-grid|wbt-card|wbt-ops-block|props\.card/.test(itemSrc),'任务条不应残留卡片分支');
+assert.ok(/className: "wbt-list"/.test(viewSrc),'列表容器应为 wbt-list');
 const args=calls.find(c=>c.action==='tasks.list').args;assert.equal(args.tableId,'t');assert.equal(args.groupId,null);assert.deepEqual(args.statuses,[]);assert.ok(!('urgent' in args),'urgent is no longer sent');assert.equal(args.titleKey,'');assert.deepEqual(args.tagIds,[]);assert.equal(args.difficultyMissing,false);assert.equal(args.filterRestarted,undefined);assert.equal(args.sort,undefined);assert.equal(args.pageNumber,1);
 // Test reusable outlet cache and scroll restoration through the actual Slot lifecycle.
 state=[];cursor=0;effects=[];R.Fragment='fragment';R.useLayoutEffect=R.useEffect;

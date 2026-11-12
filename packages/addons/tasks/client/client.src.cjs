@@ -368,7 +368,7 @@
   var BatchModal = require("./modals/batch-modal.cjs")(React, cx, Icon);
 
   var CFG_FALLBACK = {
-    "ui.listView": "list", "ui.expandDepth": 2, "ui.confirmDelete": true, "ui.defaultPreset": "",
+    "ui.expandDepth": 2, "ui.confirmDelete": true, "ui.defaultPreset": "",
     "list.pageSize": 12, "list.sort": "auto",
     "form.defaultPriority": 1, "form.defaultDifficulty": 0, "form.defaultTargetOffset": 0,
     "stats.range": "30d", "stats.top": 10, "stats.showKpi": true,
@@ -382,7 +382,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.8",
+    version: "5.2.9",
     icon: require("lucide-react/icons/list-checks").default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
