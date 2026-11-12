@@ -440,6 +440,7 @@ function WorkbenchPage(props) {
     return jsx.jsxs("div", { className: "wb-root wb-immersive", children: [
       jsx.jsxs("div", { className: "wb-immersive-bar", children: [
         jsx.jsxs("div", { className: "wb-immersive-left", children: [
+          jsx.jsx("span", { className: "wb-immersive-icon", children: cardIcon(currentAddon.id, addonTitle) }),
           jsx.jsx("button", { className: "wb-back", onClick: function () { go("home"); }, children: "← " + t("back_home") }),
           jsx.jsx(ViewTabs, { views: viewList, activeView: activeView, addonId: currentAddon.id, lang: lang, go: go }),
         ] }),

@@ -662,6 +662,8 @@ var require_styles = __commonJS({
       ".wb-root .wb-immersive-left{display:flex;align-items:center;gap:10px;min-width:0;flex:0 1 auto}",
       ".wb-root .wb-immersive-bar .wb-grow{display:none}",
       ".wb-root .wb-immersive-bar .wb-immersive-left .wb-back{margin-right:0}",
+      ".wb-root .wb-immersive-icon{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:9px;background:var(--wb-card);border:1px solid var(--wb-border);color:var(--wb-accent)}",
+      ".wb-root .wb-immersive-icon svg{width:17px;height:17px}",
       ".wb-root .wb-immersive-bar .wb-immersive-title{flex:0 0 auto;min-width:0}",
       ".wb-root .wb-immersive-bar .wb-immersive-title>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".wb-root .wb-immersive-bar .wb-page-tabs{margin:0;flex:0 1 auto;min-width:0;max-width:none;justify-content:flex-start;gap:4px}",
@@ -1983,6 +1985,7 @@ function WorkbenchPage(props) {
     return jsx.jsxs("div", { className: "wb-root wb-immersive", children: [
       jsx.jsxs("div", { className: "wb-immersive-bar", children: [
         jsx.jsxs("div", { className: "wb-immersive-left", children: [
+          jsx.jsx("span", { className: "wb-immersive-icon", children: cardIcon(currentAddon.id, addonTitle) }),
           jsx.jsx("button", { className: "wb-back", onClick: function() {
             go("home");
           }, children: "\u2190 " + t("back_home") }),
