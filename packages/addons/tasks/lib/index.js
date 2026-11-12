@@ -94,6 +94,18 @@ export function setup(api) {
   registerDataActions(api);
   registerCommandsAction(api);
   registerActionSchemaAction(api, actionDefs, "wb-addon-tasks");
+  if (typeof api.registerSearchProvider === "function") {
+    api.registerSearchProvider({
+      domainId: "wb-addon-tasks",
+      search(q, { limit }) {
+        const like = "%" + String(q).replace(/[\\%_]/g, "\\$&") + "%";
+        const rows = api.db
+          .prepare("SELECT id,title,description,updated_at FROM task WHERE deleted_at IS NULL AND (title LIKE ? ESCAPE '\\' OR description LIKE ? ESCAPE '\\') ORDER BY updated_at DESC LIMIT ?")
+          .all(like, like, Math.max(1, Math.min(50, Number(limit) || 20)));
+        return rows.map((r) => ({ id: r.id, title: r.title, snippet: String(r.description || "").slice(0, 160), view: "tasks", at: r.updated_at }));
+      },
+    });
+  }
   api.log("tasks domain ready", api.addon.version);
 }
 

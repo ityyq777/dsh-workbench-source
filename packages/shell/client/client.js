@@ -74,6 +74,10 @@ var require_locale = __commonJS({
         open: "\u6253\u5F00",
         manage: "\u5DE5\u4F5C\u53F0\u7BA1\u7406",
         home_hint: "\u70B9\u5F00\u5361\u7247\u8FDB\u5165\u4E1A\u52A1\u63D2\u4EF6\uFF1B\u5B89\u88C5\u4E0E\u5378\u8F7D\u5728 DSH \u63D2\u4EF6\u7BA1\u7406\u91CC",
+        search_placeholder: "\u641C\u7D22\u4EFB\u52A1\u3001\u6807\u7B7E\u3001\u7AD9\u70B9\u3001\u8FDE\u63A5\u5668\u5185\u5BB9\u2026\uFF08\u2318K\uFF09",
+        searching: "\u641C\u7D22\u4E2D\u2026",
+        search_none: "\u6CA1\u6709\u547D\u4E2D",
+        search_partial: "\u90E8\u5206\u57DF\u641C\u7D22\u5931\u8D25",
         account_desc: "\u767B\u5F55\u4E91\u7AEF\u8D26\u53F7\uFF0C\u5907\u4EFD\u4E0E\u540C\u6B65\u6570\u636E",
         tab_audit: "\u5BA1\u8BA1\u65E5\u5FD7",
         audit_desc: "\u672C\u673A\u884C\u4E3A\u8D26\u672C\uFF1A\u8C01\u5728\u4F55\u65F6\u8C03\u7528\u4E86\u54EA\u4E2A action\u3001\u6210\u529F\u4E0E\u5426\uFF1B\u5BC6\u7801\u4E0E token \u7B49\u53C2\u6570\u5DF2\u8131\u654F",
@@ -242,6 +246,10 @@ var require_locale = __commonJS({
         open: "Open",
         manage: "Manage",
         home_hint: "Open a card to enter a domain; install or remove plugins in DSH",
+        search_placeholder: "Search tasks, tags, sites, connector items\u2026 (\u2318K)",
+        searching: "Searching\u2026",
+        search_none: "No matches",
+        search_partial: "Some domains failed",
         account_desc: "Sign in to back up and sync your data",
         tab_audit: "Audit log",
         audit_desc: "A local ledger of who called which action and how it went; passwords and tokens are redacted",
@@ -507,7 +515,21 @@ var require_styles = __commonJS({
       ".wb-record-pill.err{opacity:1;border-color:var(--dsw-alias-state-error-primary,#e5484d);color:var(--dsw-alias-state-error-primary,#e5484d)}",
       ".wb-record-pill.err .wb-record-dot{background:currentColor;opacity:1}",
       ".wb-record-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.5;flex:none}",
-      ".wb-record-pill.on .wb-record-dot{background:var(--dsw-alias-brand-primary,#11a89b);opacity:1;box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 18%,transparent)}"
+      ".wb-record-pill.on .wb-record-dot{background:var(--dsw-alias-brand-primary,#11a89b);opacity:1;box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 18%,transparent)}",
+      ".wb-search-wrap{position:relative;display:flex;flex-direction:column;gap:6px}",
+      ".wb-search-bar{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--wb-line);border-radius:10px;background:var(--wb-surface)}",
+      ".wb-search-bar:focus-within{border-color:var(--dsw-alias-brand-primary,#11a89b)}",
+      ".wb-search-icon{opacity:.55;font-size:15px;line-height:1}",
+      ".wb-search-input{flex:1;min-width:0;border:0;background:transparent;color:inherit;font:inherit;font-size:13px;outline:none}",
+      ".wb-search-kbd{font-size:11px;opacity:.5;border:1px solid var(--wb-line);border-radius:5px;padding:1px 5px}",
+      ".wb-search-panel{position:absolute;top:100%;left:0;right:0;z-index:40;margin-top:6px;max-height:340px;overflow:auto;border:1px solid var(--wb-line);border-radius:10px;background:var(--dsw-alias-bg-layer-1,var(--wb-surface));box-shadow:0 12px 32px rgba(0,0,0,.18);padding:6px}",
+      ".wb-search-hit{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:0;border-radius:7px;background:transparent;color:inherit;font:inherit;font-size:12px;padding:7px 8px;cursor:pointer}",
+      ".wb-search-hit:hover{background:color-mix(in oklab,currentColor 7%,transparent)}",
+      ".wb-search-domain{flex:none;min-width:52px;font-size:11px;opacity:.6;padding-top:2px}",
+      ".wb-search-hit-main{display:flex;flex-direction:column;gap:2px;min-width:0}",
+      ".wb-search-hit-title{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wb-search-hit-snippet{opacity:.65;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}",
+      ".wb-search-empty{padding:12px;font-size:12px;opacity:.65;text-align:center}"
     ].join("\n");
     module2.exports = CSS2;
   }
@@ -1587,6 +1609,118 @@ function ensureCss() {
   s.textContent = CSS;
   document.head.appendChild(s);
 }
+function SearchPanel(props) {
+  var api = props.api;
+  var st = react.useState("");
+  var rs = react.useState([]);
+  var bs = react.useState(false);
+  var es = react.useState("");
+  var os = react.useState(false);
+  var inputRef = react.useRef(null);
+  var q = st[0];
+  var results = rs[0];
+  var loading = bs[0];
+  var error = es[0];
+  var open = os[0];
+  var t = props.t;
+  react.useEffect(function() {
+    function onKey(e) {
+      if ((e.metaKey || e.ctrlKey) && String(e.key).toLowerCase() === "k") {
+        e.preventDefault();
+        os[1](true);
+        setTimeout(function() {
+          if (inputRef.current) inputRef.current.focus();
+        }, 0);
+      }
+      if (e.key === "Escape") os[1](false);
+    }
+    document.addEventListener("keydown", onKey);
+    return function() {
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
+  react.useEffect(function() {
+    var text = String(q || "").trim();
+    if (!text) {
+      rs[1]([]);
+      es[1]("");
+      return;
+    }
+    var alive = true;
+    bs[1](true);
+    es[1]("");
+    var timer = setTimeout(function() {
+      api.post("/domains/wb-shell/actions/search.query", { q: text, limit: 20 }).then(function(j) {
+        if (!alive) return;
+        var data = j && j.result || j || {};
+        rs[1](data.items || []);
+        if (data.partial) es[1](t("search_partial") + ": " + (data.failed || []).join("\u3001"));
+      }).catch(function(e) {
+        if (alive) es[1](String(e && e.message || e));
+      }).then(function() {
+        if (alive) bs[1](false);
+      });
+    }, 220);
+    return function() {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [q]);
+  function pick(hit) {
+    os[1](false);
+    st[1]("");
+    if (hit.url) {
+      window.open(hit.url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    var addon = (props.addons || []).filter(function(a) {
+      return a.id === hit.domainId;
+    })[0];
+    if (addon) props.go("addon:" + addon.id + ":" + (hit.view || ""));
+  }
+  return jsx.jsxs("div", { className: "wb-search-wrap", children: [
+    jsx.jsxs("div", { className: "wb-search-bar", children: [
+      jsx.jsx("span", { className: "wb-search-icon", children: "\u2315" }),
+      jsx.jsx("input", {
+        ref: inputRef,
+        className: "wb-search-input",
+        value: q,
+        placeholder: t("search_placeholder"),
+        onFocus: function() {
+          os[1](true);
+        },
+        onChange: function(e) {
+          st[1](e.target.value);
+          os[1](true);
+        },
+        onKeyDown: function(e) {
+          if (e.key === "Enter" && results.length) pick(results[0]);
+        }
+      }),
+      jsx.jsx("kbd", { className: "wb-search-kbd", children: "\u2318K" })
+    ] }),
+    open && String(q || "").trim() ? jsx.jsxs("div", { className: "wb-search-panel", children: [
+      loading ? jsx.jsx("div", { className: "wb-search-empty", children: t("searching") }) : null,
+      error ? jsx.jsx("div", { className: "wb-search-empty", children: error }) : null,
+      !loading && !error && results.length === 0 ? jsx.jsx("div", { className: "wb-search-empty", children: t("search_none") }) : null,
+      results.map(function(hit) {
+        var addon = (props.addons || []).filter(function(a) {
+          return a.id === hit.domainId;
+        })[0];
+        var title = addon ? addon.title || addon.id : hit.domainId;
+        return jsx.jsxs("button", { type: "button", className: "wb-search-hit", onClick: function() {
+          pick(hit);
+        }, children: [
+          jsx.jsx("span", { className: "wb-search-domain", children: title }),
+          jsx.jsxs("span", { className: "wb-search-hit-main", children: [
+            jsx.jsx("span", { className: "wb-search-hit-title", children: hit.title }),
+            hit.snippet ? jsx.jsx("span", { className: "wb-search-hit-snippet", children: hit.snippet }) : null
+          ] })
+        ] }, hit.domainId + ":" + hit.id);
+      })
+    ] }) : null
+  ] });
+}
 function WorkbenchPage(props) {
   var t = props.t;
   var store = useAddonStore();
@@ -1596,6 +1730,7 @@ function WorkbenchPage(props) {
   var navigation = react.useState({});
   var viewParams = navigation[0];
   var lang = currentLang();
+  var api = useApi();
   react.useEffect(function() {
     ensureCss();
   }, []);
@@ -1727,6 +1862,7 @@ function WorkbenchPage(props) {
           go("account");
         } })
       ] }),
+      jsx.jsx(SearchPanel, { api, addons, go, t }),
       addons.length ? jsx.jsx("div", { className: "wb-home-grid", children: addons.map(addonCard) }) : jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg wb-empty-cta", children: t("no_installed") }) }),
       jsx.jsxs("div", { className: "wb-sec", children: [
         jsx.jsx("h3", { children: t("manage") }),

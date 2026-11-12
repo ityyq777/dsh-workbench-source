@@ -82,6 +82,18 @@ export function createDomain(host) {
         input: { type: "object", properties: {}, additionalProperties: false },
         execute: () => ({ domain: "wb-addon-connector", version: "0.1.0", actions: schemas }),
       });
+      if (typeof api.registerSearchProvider === "function") {
+        api.registerSearchProvider({
+          domainId: "wb-addon-connector",
+          search(q, { limit }) {
+            const like = "%" + String(q).replace(/[\\%_]/g, "\\$&") + "%";
+            const rows = api.db
+              .prepare("SELECT id,title,summary,url,published_at FROM connector_item WHERE title LIKE ? ESCAPE '\\' OR summary LIKE ? ESCAPE '\\' ORDER BY COALESCE(published_at,0) DESC LIMIT ?")
+              .all(like, like, Math.max(1, Math.min(50, Number(limit) || 20)));
+            return rows.map((r) => ({ id: r.id, title: r.title, snippet: String(r.summary || "").slice(0, 160), url: r.url || undefined, view: "items", at: r.published_at || undefined }));
+          },
+        });
+      }
       if (typeof api.registerHook === "function") {
         api.registerHook("inbound", async (req) => {
           try {

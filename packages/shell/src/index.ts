@@ -18,6 +18,7 @@ import type {
   DomainDef,
   DomainPublicInfo,
   DomainSetupApi,
+  SearchProvider,
   WorkbenchHost,
 } from "@wb/sdk";
 import {
@@ -31,6 +32,7 @@ import {
 import type { WbState, RegisteredDomain } from "./types/host-types.js";
 import { createActions } from "./actions/actions.js";
 import { installNetwork } from "./infra/network.js";
+import { createSearch } from "./infra/search.js";
 
 export const name = "dsh-workbench";
 export const inject = ["webServer", "tools", "connection"];
@@ -40,7 +42,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.6.7";
+export const SHELL_VERSION = "0.7.0";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -149,6 +151,21 @@ export function apply(ctx: any): void {
     }
   };
   const log = (...args: unknown[]) => console.warn("[dsh-workbench]", ...args);
+
+  // ── 跨域搜索：插件注册 provider，宿主只聚合，不读业务表 ──
+  const searchProviders = new Map<string, SearchProvider>();
+  function registerSearchProvider(provider: SearchProvider): () => void {
+    const id = String(provider?.domainId || "");
+    if (!id || typeof provider.search !== "function") {
+      log("registerSearchProvider 参数不合法", provider);
+      return () => {};
+    }
+    searchProviders.set(id, provider);
+    return () => {
+      if (searchProviders.get(id) === provider) searchProviders.delete(id);
+    };
+  }
+  const search = createSearch(searchProviders, (...args: unknown[]) => log(...args));
   // 审计日志：本机行为账本；表初始化与过期清理失败都不应影响宿主启动。
   const audit = new AuditLog(state.db, () => clock.now());
   try {
@@ -188,6 +205,7 @@ export function apply(ctx: any): void {
     clock,
     emit,
     db: state.db,
+    search,
   });
 
   function registerAction(rec: RegisteredDomain, action: string, def: DomainActionDef): void {
@@ -237,6 +255,7 @@ export function apply(ctx: any): void {
         }
         rec.hooks.set(String(name), handler);
       },
+      registerSearchProvider,
       emit: (event: string, data?: unknown) => emit("domain-event", { domainId: def.id, event, data: data ?? null }),
       now: () => clock.now(),
       markSyncDirty: (table?: string) => {
@@ -310,6 +329,7 @@ export function apply(ctx: any): void {
         set!.delete(listener);
       };
     },
+    registerSearchProvider,
     actionNames,
     emit,
     log,

@@ -240,12 +240,106 @@ function ensureCss() {
   document.head.appendChild(s);
 }
 
+function SearchPanel(props) {
+  var api = props.api;
+  var st = react.useState("");
+  var rs = react.useState([]);
+  var bs = react.useState(false);
+  var es = react.useState("");
+  var os = react.useState(false);
+  var inputRef = react.useRef(null);
+  var q = st[0];
+  var results = rs[0];
+  var loading = bs[0];
+  var error = es[0];
+  var open = os[0];
+  var t = props.t;
+
+  react.useEffect(function () {
+    function onKey(e) {
+      if ((e.metaKey || e.ctrlKey) && String(e.key).toLowerCase() === "k") {
+        e.preventDefault();
+        os[1](true);
+        setTimeout(function () { if (inputRef.current) inputRef.current.focus(); }, 0);
+      }
+      if (e.key === "Escape") os[1](false);
+    }
+    document.addEventListener("keydown", onKey);
+    return function () { document.removeEventListener("keydown", onKey); };
+  }, []);
+
+  react.useEffect(function () {
+    var text = String(q || "").trim();
+    if (!text) { rs[1]([]); es[1](""); return; }
+    var alive = true;
+    bs[1](true); es[1]("");
+    var timer = setTimeout(function () {
+      api.post("/domains/wb-shell/actions/search.query", { q: text, limit: 20 })
+        .then(function (j) {
+          if (!alive) return;
+          var data = (j && j.result) || j || {};
+          rs[1](data.items || []);
+          if (data.partial) es[1](t("search_partial") + ": " + (data.failed || []).join("、"));
+        })
+        .catch(function (e) { if (alive) es[1](String((e && e.message) || e)); })
+        .then(function () { if (alive) bs[1](false); });
+    }, 220);
+    return function () { alive = false; clearTimeout(timer); };
+  }, [q]);
+
+  function pick(hit) {
+    os[1](false);
+    st[1]("");
+    if (hit.url) {
+      window.open(hit.url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    var addon = (props.addons || []).filter(function (a) { return a.id === hit.domainId; })[0];
+    if (addon) props.go("addon:" + addon.id + ":" + (hit.view || ""));
+  }
+
+  return jsx.jsxs("div", { className: "wb-search-wrap", children: [
+    jsx.jsxs("div", { className: "wb-search-bar", children: [
+      jsx.jsx("span", { className: "wb-search-icon", children: "⌕" }),
+      jsx.jsx("input", {
+        ref: inputRef,
+        className: "wb-search-input",
+        value: q,
+        placeholder: t("search_placeholder"),
+        onFocus: function () { os[1](true); },
+        onChange: function (e) { st[1](e.target.value); os[1](true); },
+        onKeyDown: function (e) { if (e.key === "Enter" && results.length) pick(results[0]); },
+      }),
+      jsx.jsx("kbd", { className: "wb-search-kbd", children: "⌘K" }),
+    ] }),
+    open && String(q || "").trim()
+      ? jsx.jsxs("div", { className: "wb-search-panel", children: [
+        loading ? jsx.jsx("div", { className: "wb-search-empty", children: t("searching") }) : null,
+        error ? jsx.jsx("div", { className: "wb-search-empty", children: error }) : null,
+        !loading && !error && results.length === 0 ? jsx.jsx("div", { className: "wb-search-empty", children: t("search_none") }) : null,
+        results.map(function (hit) {
+          var addon = (props.addons || []).filter(function (a) { return a.id === hit.domainId; })[0];
+          var title = addon ? (addon.title || addon.id) : hit.domainId;
+          return jsx.jsxs("button", { type: "button", className: "wb-search-hit", onClick: function () { pick(hit); }, children: [
+            jsx.jsx("span", { className: "wb-search-domain", children: title }),
+            jsx.jsxs("span", { className: "wb-search-hit-main", children: [
+              jsx.jsx("span", { className: "wb-search-hit-title", children: hit.title }),
+              hit.snippet ? jsx.jsx("span", { className: "wb-search-hit-snippet", children: hit.snippet }) : null,
+            ] }),
+          ] }, hit.domainId + ":" + hit.id);
+        }),
+      ] })
+      : null,
+  ] });
+}
+
 function WorkbenchPage(props) {
   var t = props.t;
   var store = useAddonStore();
   var rs = react.useState("home"); var route = rs[0]; var setRoute = rs[1];
   var navigation = react.useState({}); var viewParams = navigation[0];
   var lang = currentLang();
+  var api = useApi();
   react.useEffect(function () { ensureCss(); }, []);
 
   var addons = (store.addons || []).filter(function (a) { return a && a.enabled; });
@@ -362,6 +456,7 @@ function WorkbenchPage(props) {
         jsx.jsxs("div", { children: [jsx.jsx("h2", { children: t("title") }), jsx.jsx("span", { className: "wb-tag", children: t("tagline") })] }),
         jsx.jsx(CloudStatusPill, { t: t, onOpen: function () { go("account"); } }),
       ] }),
+      jsx.jsx(SearchPanel, { api: api, addons: addons, go: go, t: t }),
       addons.length
         ? jsx.jsx("div", { className: "wb-home-grid", children: addons.map(addonCard) })
         : jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg wb-empty-cta", children: t("no_installed") }) }),

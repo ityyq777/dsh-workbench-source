@@ -117,6 +117,35 @@ export interface DomainSyncDef {
   tables: DomainSyncTable[];
 }
 
+/** 跨域搜索：一条命中。宿主只做聚合与排序，不跨域读表。 */
+export interface SearchHit {
+  id: string;
+  title: string;
+  snippet?: string;
+  /** 外部链接；有则客户端可直接打开 */
+  url?: string;
+  /** 命中时间（毫秒），用于同分排序 */
+  at?: number;
+  /** 打开命中时优先进入的视图 id */
+  view?: string;
+  [key: string]: unknown;
+}
+
+/** 跨域搜索提供者：插件在 setup 注册，宿主并行调用。 */
+export interface SearchProvider {
+  domainId: string;
+  search(q: string, opts: { limit: number }): SearchHit[] | Promise<SearchHit[]>;
+}
+
+export interface SearchQueryResult {
+  q: string;
+  items: (SearchHit & { domainId: string; score: number })[];
+  domains: string[];
+  partial: boolean;
+  failed: string[];
+  tookMs: number;
+}
+
 /** 业务插件在 setup 期间拿到的宿主 API（兼容旧 addon 的 setup 形态）。 */
 export interface DomainSetupApi {
   readonly addon: { id: string; version: string; dir: string };
@@ -139,6 +168,8 @@ export interface DomainSetupApi {
   on(event: string, listener: (data: unknown) => void): () => void;
   /** 注册一个外部 HTTP hook，路径为 /workbench/hooks/<domain>/<name>。 */
   registerHook(name: string, handler: DomainHookHandler): void;
+  /** 注册跨域搜索提供者；不注册就不参与聚合。返回注销函数。 */
+  registerSearchProvider(provider: SearchProvider): () => void;
   /** 同 action；保留旧称便于迁移 */
   tool(name: string, def: DomainActionDef): void;
   /** 向本业务域的 SSE 订阅者广播 */
@@ -267,6 +298,8 @@ export interface WorkbenchHost {
   ): Promise<{ result: unknown; text: string; domainId: string }>;
   /** 订阅宿主事件；返回取消函数。 */
   on(event: string, listener: (data: unknown) => void): () => void;
+  /** 注册跨域搜索提供者；不注册就不参与聚合。返回注销函数。 */
+  registerSearchProvider(provider: SearchProvider): () => void;
   /** action -> 所属 domain */
   actionNames(): { name: string; domainId: string; description?: string }[];
   emit(event: string, data?: unknown): void;

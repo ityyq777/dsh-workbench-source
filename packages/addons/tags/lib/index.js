@@ -62,6 +62,18 @@ export function setup(api) {
   registerConfigActions(api);
   registerDataActions(api);
   registerActionSchemaAction(api, actionDefs, "wb-addon-tags");
+  if (typeof api.registerSearchProvider === "function") {
+    api.registerSearchProvider({
+      domainId: "wb-addon-tags",
+      search(q, { limit }) {
+        const like = "%" + String(q).replace(/[\\%_]/g, "\\$&") + "%";
+        const rows = api.db
+          .prepare("SELECT id,name,updated_at FROM tag WHERE deleted_at IS NULL AND name LIKE ? ESCAPE '\\' ORDER BY updated_at DESC LIMIT ?")
+          .all(like, Math.max(1, Math.min(50, Number(limit) || 20)));
+        return rows.map((r) => ({ id: r.id, title: r.name, snippet: "标签", view: "tags", at: r.updated_at }));
+      },
+    });
+  }
   api.log("tags domain ready", api.addon.version);
 }
 

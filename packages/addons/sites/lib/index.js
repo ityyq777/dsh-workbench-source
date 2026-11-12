@@ -68,6 +68,18 @@ export function setup(api) {
   registerConfigActions(api);
   registerDataActions(api);
   registerActionSchemaAction(api, actionDefs, "wb-addon-sites");
+  if (typeof api.registerSearchProvider === "function") {
+    api.registerSearchProvider({
+      domainId: "wb-addon-sites",
+      search(q, { limit }) {
+        const like = "%" + String(q).replace(/[\\%_]/g, "\\$&") + "%";
+        const rows = api.db
+          .prepare("SELECT id,site_name,description,site_link,updated_at FROM site WHERE deleted_at IS NULL AND (site_name LIKE ? ESCAPE '\\' OR description LIKE ? ESCAPE '\\' OR site_link LIKE ? ESCAPE '\\') ORDER BY updated_at DESC LIMIT ?")
+          .all(like, like, like, Math.max(1, Math.min(50, Number(limit) || 20)));
+        return rows.map((r) => ({ id: r.id, title: r.site_name, snippet: String(r.description || "").slice(0, 160), url: r.site_link || undefined, view: "sites", at: r.updated_at }));
+      },
+    });
+  }
   api.log("sites domain ready");
 }
 
