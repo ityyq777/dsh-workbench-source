@@ -4,7 +4,11 @@
   "description": "个人工作台联系人：本地联系人、分组、多值字段与 vCard 导入导出",
   "type": "module",
   "main": "lib/index.js",
-  "files": ["lib", "cordis.patch.yml", "package.json"],
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "package.json"
+  ],
   "license": "MIT",
   "wb": {
     "addon": {
@@ -12,12 +16,57 @@
       "title": "联系人",
       "version": "0.1.0",
       "minShell": "0.6.7",
-      "tables": ["contact", "contact_group", "contact_field", "contact_group_member"],
-      "views": ["contacts", "groups", "importExport", "config", "data", "actions"],
-      "toolActions": ["contacts.status", "contacts.list", "contacts.get", "contacts.create", "contacts.update", "contacts.delete", "contacts.search", "contacts.groupList", "contacts.groupCreate", "contacts.groupDelete", "contacts.importVcf", "contacts.exportVcf", "contacts.dataTables", "contacts.dataQuery", "contacts.actionSchema"],
+      "tables": [
+        "contact",
+        "contact_group",
+        "contact_field",
+        "contact_group_member"
+      ],
+      "views": [
+        "contacts",
+        "groups",
+        "importExport",
+        "config",
+        "data",
+        "actions"
+      ],
+      "toolActions": [
+        "contacts.status",
+        "contacts.list",
+        "contacts.get",
+        "contacts.create",
+        "contacts.update",
+        "contacts.delete",
+        "contacts.search",
+        "contacts.groupList",
+        "contacts.groupCreate",
+        "contacts.groupDelete",
+        "contacts.importVcf",
+        "contacts.exportVcf",
+        "contacts.dataTables",
+        "contacts.dataQuery",
+        "contacts.actionSchema"
+      ],
       "client": "lib/client.js"
     }
   },
-  "dependencies": { "dsh-workbench": "file:../../shell-dist" },
-  "dsh": { "bundle": { "patch": "./cordis.patch.yml" }, "client": { "inject": ["dsh-workbench"] } }
+  "dependencies": {
+    "dsh-workbench": "file:../../shell-dist"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "dsh-workbench"
+      ],
+      "platform": "web"
+    }
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  }
 }

@@ -4,7 +4,11 @@
   "description": "个人工作台自动化：定时/域事件/手动触发白名单 action，含模板、条件、限频与运行记录",
   "type": "module",
   "main": "lib/index.js",
-  "files": ["lib", "cordis.patch.yml", "package.json"],
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "package.json"
+  ],
   "license": "MIT",
   "wb": {
     "addon": {
@@ -12,8 +16,19 @@
       "title": "自动化",
       "version": "0.1.0",
       "minShell": "0.6.7",
-      "tables": ["automation_rule", "automation_run", "automation_meta"],
-      "views": ["stats", "rules", "runs", "config", "data", "actions"],
+      "tables": [
+        "automation_rule",
+        "automation_run",
+        "automation_meta"
+      ],
+      "views": [
+        "stats",
+        "rules",
+        "runs",
+        "config",
+        "data",
+        "actions"
+      ],
       "toolActions": [
         "automation.status",
         "automation.ruleList",
@@ -43,7 +58,15 @@
       "patch": "./cordis.patch.yml"
     },
     "client": {
-      "inject": ["dsh-workbench"]
+      "inject": [
+        "dsh-workbench"
+      ],
+      "platform": "web"
     }
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
   }
 }

@@ -4,7 +4,11 @@
   "description": "个人工作台凭据保险箱：加密保存密码/token，agent 只见掩码",
   "type": "module",
   "main": "lib/index.js",
-  "files": ["lib", "cordis.patch.yml", "package.json"],
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "package.json"
+  ],
   "license": "MIT",
   "wb": {
     "addon": {
@@ -12,8 +16,17 @@
       "title": "凭据保险箱",
       "version": "0.1.0",
       "minShell": "0.6.7",
-      "tables": ["vault_meta", "vault_secret"],
-      "views": ["status", "secrets", "config", "data", "actions"],
+      "tables": [
+        "vault_meta",
+        "vault_secret"
+      ],
+      "views": [
+        "status",
+        "secrets",
+        "config",
+        "data",
+        "actions"
+      ],
       "toolActions": [
         "vault.status",
         "vault.setup",
@@ -42,7 +55,15 @@
       "patch": "./cordis.patch.yml"
     },
     "client": {
-      "inject": ["dsh-workbench"]
+      "inject": [
+        "dsh-workbench"
+      ],
+      "platform": "web"
     }
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
   }
 }

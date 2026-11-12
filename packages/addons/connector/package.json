@@ -4,7 +4,11 @@
   "description": "个人工作台连接器：RSS/Webhook 内容接入，来源定义可同步、凭据本机",
   "type": "module",
   "main": "lib/index.js",
-  "files": ["lib", "cordis.patch.yml", "package.json"],
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "package.json"
+  ],
   "license": "MIT",
   "wb": {
     "addon": {
@@ -12,8 +16,21 @@
       "title": "连接器",
       "version": "0.1.0",
       "minShell": "0.6.7",
-      "tables": ["connector_source", "connector_source_state", "connector_item", "connector_run"],
-      "views": ["stats", "sources", "items", "runs", "config", "data", "actions"],
+      "tables": [
+        "connector_source",
+        "connector_source_state",
+        "connector_item",
+        "connector_run"
+      ],
+      "views": [
+        "stats",
+        "sources",
+        "items",
+        "runs",
+        "config",
+        "data",
+        "actions"
+      ],
       "toolActions": [
         "connector.status",
         "connector.stats",
@@ -43,7 +60,15 @@
       "patch": "./cordis.patch.yml"
     },
     "client": {
-      "inject": ["dsh-workbench"]
+      "inject": [
+        "dsh-workbench"
+      ],
+      "platform": "web"
     }
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
   }
 }
