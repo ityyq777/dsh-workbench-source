@@ -33,7 +33,7 @@ function resultOf(reply) {
   return reply;
 }
 
-export function createConnector({ db, host, log = () => {} }) {
+export function createConnector({ db, host, log = () => {}, emit = null }) {
   const inFlight = new Set();
   let timer = null;
 
@@ -292,7 +292,18 @@ export function createConnector({ db, host, log = () => {} }) {
       for (const item of items) {
         const kind = upsertItem(source.id, item);
         counts[kind] += 1;
-        if (kind !== "skipped") await deliver(source, item);
+        if (kind !== "skipped") {
+          if (typeof emit === "function") {
+            emit("item.created", {
+              sourceId: source.id,
+              sourceName: source.name,
+              driver: source.driver,
+              item: { externalId: item.externalId, title: item.title, url: item.url, summary: item.summary, author: item.author, publishedAt: item.publishedAt },
+              at: now(),
+            });
+          }
+          await deliver(source, item);
+        }
       }
       const ts = now();
       db.prepare(
@@ -328,7 +339,18 @@ export function createConnector({ db, host, log = () => {} }) {
     const runId = beginRun(source.id, "webhook");
     try {
       const kind = upsertItem(source.id, item);
-      if (kind !== "skipped") await deliver(source, item);
+      if (kind !== "skipped") {
+        if (typeof emit === "function") {
+          emit("item.created", {
+            sourceId: source.id,
+            sourceName: source.name,
+            driver: source.driver,
+            item: { externalId: item.externalId, title: item.title, url: item.url, summary: item.summary, author: item.author, publishedAt: item.publishedAt },
+            at: now(),
+          });
+        }
+        await deliver(source, item);
+      }
       db.prepare(
         "UPDATE connector_source_state SET last_run_at=?, last_status='ok', last_error=NULL, fail_count=0, updated_at=? WHERE source_id=?",
       ).run(now(), now(), source.id);

@@ -69,7 +69,7 @@ export function createDomain(host) {
     setup(api) {
       ensureSchema(api.db);
       bindClock(() => api.now());
-      connector = createConnector({ db: api.db, host, log: api.log });
+      connector = createConnector({ db: api.db, host, log: api.log, emit: api.emit });
       const register = api.action.bind(api);
       api.action = (actionName, def) => {
         schemas.push({ name: actionName, description: def.description, input: def.input, examples: def.examples });
