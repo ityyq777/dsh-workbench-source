@@ -1,29 +1,6 @@
 "use strict";
-module.exports = [
-  ".wbca-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
-  ".wbca-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
-  ".wbca-title{font-size:16px;font-weight:650;margin:0}",
-  ".wbca-sub{font-size:12px;color:var(--wb-muted,#6b7280);margin:2px 0 0}",
-  ".wbca-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
-  ".wbca-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
-  ".wbca-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
-  ".wbca-kpi{font-size:22px;font-weight:700;line-height:1.2}.wbca-kpi-label{font-size:12px;color:var(--wb-muted,#6b7280)}",
-  ".wbca-table{width:100%;border-collapse:collapse;font-size:12px}.wbca-table th,.wbca-table td{padding:7px 8px;border-bottom:1px solid var(--wb-border,#eef0f3);text-align:left;vertical-align:top}",
-  ".wbca-table th{font-weight:600;color:var(--wb-muted,#6b7280);white-space:nowrap}",
-  ".wbca-btn{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer}",
-  ".wbca-btn:hover:not(:disabled){border-color:var(--wb-accent,#2563eb)}.wbca-btn:disabled{opacity:.5;cursor:default}",
-  ".wbca-btn.primary{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:#fff}",
-  ".wbca-btn.danger{color:#b91c1c;border-color:#fecaca}",
-  ".wbca-field{display:flex;flex-direction:column;gap:4px;font-size:12px}.wbca-label{font-weight:600}",
-  ".wbca-field input,.wbca-field select,.wbca-field textarea{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:0}",
-  ".wbca-hint{color:var(--wb-muted,#6b7280);font-size:11px}.wbca-notice{padding:8px 10px;border-radius:8px;font-size:12px;background:#eff6ff;color:#1e40af}",
-  ".wbca-notice.error{background:#fef2f2;color:#b91c1c}.wbca-notice.ok{background:#ecfdf5;color:#047857}",
-  ".wbca-empty{padding:18px;text-align:center;color:var(--wb-muted,#6b7280);font-size:12px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:8px}",
-  ".wbca-pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;background:#f3f4f6;color:#374151}",
-  ".wbca-pill.ok{background:#ecfdf5;color:#047857}.wbca-pill.error{background:#fef2f2;color:#b91c1c}.wbca-pill.warn{background:#fffbeb;color:#b45309}",
-  ".wbca-json{margin:0;padding:8px;background:#f8fafc;border-radius:8px;font-size:11px;max-height:240px;overflow:auto}",
-  ".wbca-muted{color:var(--wb-muted,#6b7280)}.wbca-link{color:var(--wb-accent,#2563eb);cursor:pointer;text-decoration:none}",
-  ".wbca-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}",
+/** 基础样式 + 日历页面专属规则。 */
+module.exports = require("../../../lib/client-base-styles.cjs")("wbca").concat([
   ".wbca-page{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
   ".wbca-input{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:120px}",
   ".wbca-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}",
@@ -38,4 +15,4 @@ module.exports = [
   ".wbca-icon-btn{border:0;background:transparent;color:var(--wb-muted,#6b7280);font-size:16px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:6px}",
   ".wbca-icon-btn:hover{background:#fef2f2;color:#b91c1c}",
   ".wbca-ul{margin:6px 0 0;padding-left:18px;font-size:12px;line-height:1.7}",
-].join("\n");
+]);

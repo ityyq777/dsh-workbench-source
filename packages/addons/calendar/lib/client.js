@@ -39,35 +39,48 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// packages/addons/lib/client-base-styles.cjs
+var require_client_base_styles = __commonJS({
+  "packages/addons/lib/client-base-styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function baseStyles(prefix) {
+      var p = String(prefix || "wb");
+      var s = "." + p;
+      return [
+        s + "-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
+        s + "-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
+        s + "-title{font-size:16px;font-weight:650;margin:0}",
+        s + "-sub{font-size:12px;color:var(--wb-muted,#6b7280);margin:2px 0 0}",
+        s + "-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
+        s + "-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
+        s + "-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
+        s + "-kpi{font-size:22px;font-weight:700;line-height:1.2}" + s + "-kpi-label{font-size:12px;color:var(--wb-muted,#6b7280)}",
+        s + "-table{width:100%;border-collapse:collapse;font-size:12px}" + s + "-table th," + s + "-table td{padding:7px 8px;border-bottom:1px solid var(--wb-border,#eef0f3);text-align:left;vertical-align:top}",
+        s + "-table th{font-weight:600;color:var(--wb-muted,#6b7280);white-space:nowrap}",
+        s + "-btn{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer}",
+        s + "-btn:hover:not(:disabled){border-color:var(--wb-accent,#2563eb)}" + s + "-btn:disabled{opacity:.5;cursor:default}",
+        s + "-btn.primary{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:#fff}",
+        s + "-btn.danger{color:#b91c1c;border-color:#fecaca}",
+        s + "-field{display:flex;flex-direction:column;gap:4px;font-size:12px}" + s + "-label{font-weight:600}",
+        s + "-field input," + s + "-field select," + s + "-field textarea{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:0}",
+        s + "-hint{color:var(--wb-muted,#6b7280);font-size:11px}" + s + "-notice{padding:8px 10px;border-radius:8px;font-size:12px;background:#eff6ff;color:#1e40af}",
+        s + "-notice.error{background:#fef2f2;color:#b91c1c}" + s + "-notice.ok{background:#ecfdf5;color:#047857}",
+        s + "-empty{padding:18px;text-align:center;color:var(--wb-muted,#6b7280);font-size:12px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:8px}",
+        s + "-pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;background:#f3f4f6;color:#374151}",
+        s + "-pill.ok{background:#ecfdf5;color:#047857}" + s + "-pill.error{background:#fef2f2;color:#b91c1c}" + s + "-pill.warn{background:#fffbeb;color:#b45309}",
+        s + "-json{margin:0;padding:8px;background:#f8fafc;border-radius:8px;font-size:11px;max-height:240px;overflow:auto}",
+        s + "-muted{color:var(--wb-muted,#6b7280)}" + s + "-link{color:var(--wb-accent,#2563eb);cursor:pointer;text-decoration:none}",
+        s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}"
+      ];
+    };
+  }
+});
+
 // packages/addons/calendar/client/ui/styles.cjs
 var require_styles = __commonJS({
   "packages/addons/calendar/client/ui/styles.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = [
-      ".wbca-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
-      ".wbca-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
-      ".wbca-title{font-size:16px;font-weight:650;margin:0}",
-      ".wbca-sub{font-size:12px;color:var(--wb-muted,#6b7280);margin:2px 0 0}",
-      ".wbca-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
-      ".wbca-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
-      ".wbca-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
-      ".wbca-kpi{font-size:22px;font-weight:700;line-height:1.2}.wbca-kpi-label{font-size:12px;color:var(--wb-muted,#6b7280)}",
-      ".wbca-table{width:100%;border-collapse:collapse;font-size:12px}.wbca-table th,.wbca-table td{padding:7px 8px;border-bottom:1px solid var(--wb-border,#eef0f3);text-align:left;vertical-align:top}",
-      ".wbca-table th{font-weight:600;color:var(--wb-muted,#6b7280);white-space:nowrap}",
-      ".wbca-btn{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer}",
-      ".wbca-btn:hover:not(:disabled){border-color:var(--wb-accent,#2563eb)}.wbca-btn:disabled{opacity:.5;cursor:default}",
-      ".wbca-btn.primary{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:#fff}",
-      ".wbca-btn.danger{color:#b91c1c;border-color:#fecaca}",
-      ".wbca-field{display:flex;flex-direction:column;gap:4px;font-size:12px}.wbca-label{font-weight:600}",
-      ".wbca-field input,.wbca-field select,.wbca-field textarea{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:0}",
-      ".wbca-hint{color:var(--wb-muted,#6b7280);font-size:11px}.wbca-notice{padding:8px 10px;border-radius:8px;font-size:12px;background:#eff6ff;color:#1e40af}",
-      ".wbca-notice.error{background:#fef2f2;color:#b91c1c}.wbca-notice.ok{background:#ecfdf5;color:#047857}",
-      ".wbca-empty{padding:18px;text-align:center;color:var(--wb-muted,#6b7280);font-size:12px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:8px}",
-      ".wbca-pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;background:#f3f4f6;color:#374151}",
-      ".wbca-pill.ok{background:#ecfdf5;color:#047857}.wbca-pill.error{background:#fef2f2;color:#b91c1c}.wbca-pill.warn{background:#fffbeb;color:#b45309}",
-      ".wbca-json{margin:0;padding:8px;background:#f8fafc;border-radius:8px;font-size:11px;max-height:240px;overflow:auto}",
-      ".wbca-muted{color:var(--wb-muted,#6b7280)}.wbca-link{color:var(--wb-accent,#2563eb);cursor:pointer;text-decoration:none}",
-      ".wbca-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}",
+    module2.exports = require_client_base_styles()("wbca").concat([
       ".wbca-page{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
       ".wbca-input{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:120px}",
       ".wbca-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}",
@@ -82,7 +95,7 @@ var require_styles = __commonJS({
       ".wbca-icon-btn{border:0;background:transparent;color:var(--wb-muted,#6b7280);font-size:16px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:6px}",
       ".wbca-icon-btn:hover{background:#fef2f2;color:#b91c1c}",
       ".wbca-ul{margin:6px 0 0;padding-left:18px;font-size:12px;line-height:1.7}"
-    ].join("\n");
+    ]);
   }
 });
 
@@ -511,81 +524,123 @@ var init_list = __esm({
   }
 });
 
+// packages/addons/lib/client-common.cjs
+var require_client_common = __commonJS({
+  "packages/addons/lib/client-common.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function createCommon(prefix) {
+      var p = String(prefix || "wb");
+      function unwrap(r) {
+        return r && r.result !== void 0 ? r.result : r;
+      }
+      function call(api, action, args) {
+        return Promise.resolve(api.call(action, args || {})).then(unwrap);
+      }
+      function errText(e) {
+        if (!e) return "\u64CD\u4F5C\u5931\u8D25";
+        if (typeof e === "string") return e;
+        return e.message || e.error || String(e);
+      }
+      function fmtTime(ts, lang) {
+        if (!ts) return "\u2014";
+        try {
+          return new Date(ts).toLocaleString(lang === "en" ? "en-US" : "zh-CN", { hour12: false });
+        } catch (e) {
+          return String(ts);
+        }
+      }
+      function Btn(props) {
+        var h = props.h;
+        return h(
+          "button",
+          {
+            type: props.type || "button",
+            className: p + "-btn" + (props.kind ? " " + props.kind : ""),
+            disabled: props.disabled,
+            onClick: props.onClick,
+            title: props.title
+          },
+          props.children
+        );
+      }
+      function Field(props) {
+        var h = props.h;
+        return h(
+          "label",
+          { className: p + "-field" },
+          h("span", { className: p + "-label" }, props.label),
+          props.children,
+          props.hint ? h("span", { className: p + "-hint" }, props.hint) : null
+        );
+      }
+      function Notice(props) {
+        var h = props.h;
+        if (!props.text) return null;
+        return h("div", { className: p + "-notice " + (props.kind || "info") }, props.text);
+      }
+      function Empty(props) {
+        var h = props.h;
+        return h("div", { className: p + "-empty" }, props.text || "\u6682\u65E0\u6570\u636E");
+      }
+      function Pill(props) {
+        var h = props.h;
+        return h("span", { className: p + "-pill " + (props.kind || "") }, props.children);
+      }
+      function Json(props) {
+        var h = props.h;
+        var text;
+        try {
+          text = JSON.stringify(props.value, null, 2);
+        } catch (e) {
+          text = String(props.value);
+        }
+        return h("pre", { className: p + "-json" }, text);
+      }
+      function useLoad(React, api, action, args, deps) {
+        var s = React.useState({ loading: true, data: null, error: "" });
+        var tick = React.useState(0);
+        var refresh = function() {
+          tick[1](tick[0] + 1);
+        };
+        React.useEffect(
+          function() {
+            var alive = true;
+            s[1]({ loading: true, data: null, error: "" });
+            call(api, action, args).then(function(data) {
+              if (alive) s[1]({ loading: false, data, error: "" });
+            }).catch(function(e) {
+              if (alive) s[1]({ loading: false, data: null, error: errText(e) });
+            });
+            return function() {
+              alive = false;
+            };
+          },
+          (deps || []).concat([tick[0]])
+        );
+        return { loading: s[0].loading, data: s[0].data, error: s[0].error, refresh };
+      }
+      return {
+        unwrap,
+        call,
+        errText,
+        fmtTime,
+        Btn,
+        Field,
+        Notice,
+        Empty,
+        Pill,
+        Json,
+        useLoad
+      };
+    };
+  }
+});
+
 // packages/addons/calendar/client/ui/common.cjs
 var require_common = __commonJS({
   "packages/addons/calendar/client/ui/common.cjs"(exports2, module2) {
     "use strict";
-    function unwrap(r) {
-      return r && r.result !== void 0 ? r.result : r;
-    }
-    function call(api, action, args) {
-      return Promise.resolve(api.call(action, args || {})).then(unwrap);
-    }
-    function errText(e) {
-      if (!e) return "\u64CD\u4F5C\u5931\u8D25";
-      if (typeof e === "string") return e;
-      return e.message || e.error || String(e);
-    }
-    function fmtTime(ts, lang) {
-      if (!ts) return "\u2014";
-      try {
-        return new Date(ts).toLocaleString(lang === "en" ? "en-US" : "zh-CN", { hour12: false });
-      } catch (e) {
-        return String(ts);
-      }
-    }
-    function Btn(props) {
-      var h = props.h;
-      return h("button", { type: props.type || "button", className: "wbca-btn" + (props.kind ? " " + props.kind : ""), disabled: props.disabled, onClick: props.onClick, title: props.title }, props.children);
-    }
-    function Field(props) {
-      var h = props.h;
-      return h("label", { className: "wbca-field" }, h("span", { className: "wbca-label" }, props.label), props.children, props.hint ? h("span", { className: "wbca-hint" }, props.hint) : null);
-    }
-    function Notice(props) {
-      var h = props.h;
-      if (!props.text) return null;
-      return h("div", { className: "wbca-notice " + (props.kind || "info") }, props.text);
-    }
-    function Empty(props) {
-      var h = props.h;
-      return h("div", { className: "wbca-empty" }, props.text || "\u6682\u65E0\u6570\u636E");
-    }
-    function Pill(props) {
-      var h = props.h;
-      return h("span", { className: "wbca-pill " + (props.kind || "") }, props.children);
-    }
-    function Json(props) {
-      var h = props.h;
-      var t;
-      try {
-        t = JSON.stringify(props.value, null, 2);
-      } catch (e) {
-        t = String(props.value);
-      }
-      return h("pre", { className: "wbca-json" }, t);
-    }
-    function useLoad(React, api, action, args, deps) {
-      var s = React.useState({ loading: true, data: null, error: "" });
-      var tick = React.useState(0);
-      var refresh = function() {
-        tick[1](tick[0] + 1);
-      };
-      React.useEffect(function() {
-        var alive = true;
-        s[1]({ loading: true, data: null, error: "" });
-        call(api, action, args).then(function(d) {
-          if (alive) s[1]({ loading: false, data: d, error: "" });
-        }).catch(function(e) {
-          if (alive) s[1]({ loading: false, data: null, error: errText(e) });
-        });
-        return function() {
-          alive = false;
-        };
-      }, (deps || []).concat([tick[0]]));
-      return { loading: s[0].loading, data: s[0].data, error: s[0].error, refresh };
-    }
-    module2.exports = { unwrap, call, errText, fmtTime, Btn, Field, Notice, Empty, Pill, Json, useLoad };
+    module2.exports = require_client_common()("wbca");
   }
 });
 

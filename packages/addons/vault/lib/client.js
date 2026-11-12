@@ -532,93 +532,123 @@ var init_shield_check = __esm({
   }
 });
 
+// packages/addons/lib/client-common.cjs
+var require_client_common = __commonJS({
+  "packages/addons/lib/client-common.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function createCommon(prefix) {
+      var p = String(prefix || "wb");
+      function unwrap(r) {
+        return r && r.result !== void 0 ? r.result : r;
+      }
+      function call(api, action, args) {
+        return Promise.resolve(api.call(action, args || {})).then(unwrap);
+      }
+      function errText(e) {
+        if (!e) return "\u64CD\u4F5C\u5931\u8D25";
+        if (typeof e === "string") return e;
+        return e.message || e.error || String(e);
+      }
+      function fmtTime(ts, lang) {
+        if (!ts) return "\u2014";
+        try {
+          return new Date(ts).toLocaleString(lang === "en" ? "en-US" : "zh-CN", { hour12: false });
+        } catch (e) {
+          return String(ts);
+        }
+      }
+      function Btn(props) {
+        var h = props.h;
+        return h(
+          "button",
+          {
+            type: props.type || "button",
+            className: p + "-btn" + (props.kind ? " " + props.kind : ""),
+            disabled: props.disabled,
+            onClick: props.onClick,
+            title: props.title
+          },
+          props.children
+        );
+      }
+      function Field(props) {
+        var h = props.h;
+        return h(
+          "label",
+          { className: p + "-field" },
+          h("span", { className: p + "-label" }, props.label),
+          props.children,
+          props.hint ? h("span", { className: p + "-hint" }, props.hint) : null
+        );
+      }
+      function Notice(props) {
+        var h = props.h;
+        if (!props.text) return null;
+        return h("div", { className: p + "-notice " + (props.kind || "info") }, props.text);
+      }
+      function Empty(props) {
+        var h = props.h;
+        return h("div", { className: p + "-empty" }, props.text || "\u6682\u65E0\u6570\u636E");
+      }
+      function Pill(props) {
+        var h = props.h;
+        return h("span", { className: p + "-pill " + (props.kind || "") }, props.children);
+      }
+      function Json(props) {
+        var h = props.h;
+        var text;
+        try {
+          text = JSON.stringify(props.value, null, 2);
+        } catch (e) {
+          text = String(props.value);
+        }
+        return h("pre", { className: p + "-json" }, text);
+      }
+      function useLoad(React, api, action, args, deps) {
+        var s = React.useState({ loading: true, data: null, error: "" });
+        var tick = React.useState(0);
+        var refresh = function() {
+          tick[1](tick[0] + 1);
+        };
+        React.useEffect(
+          function() {
+            var alive = true;
+            s[1]({ loading: true, data: null, error: "" });
+            call(api, action, args).then(function(data) {
+              if (alive) s[1]({ loading: false, data, error: "" });
+            }).catch(function(e) {
+              if (alive) s[1]({ loading: false, data: null, error: errText(e) });
+            });
+            return function() {
+              alive = false;
+            };
+          },
+          (deps || []).concat([tick[0]])
+        );
+        return { loading: s[0].loading, data: s[0].data, error: s[0].error, refresh };
+      }
+      return {
+        unwrap,
+        call,
+        errText,
+        fmtTime,
+        Btn,
+        Field,
+        Notice,
+        Empty,
+        Pill,
+        Json,
+        useLoad
+      };
+    };
+  }
+});
+
 // packages/addons/vault/client/ui/common.cjs
 var require_common = __commonJS({
   "packages/addons/vault/client/ui/common.cjs"(exports2, module2) {
     "use strict";
-    function unwrap(r) {
-      return r && r.result !== void 0 ? r.result : r;
-    }
-    function call(api, action, args) {
-      return Promise.resolve(api.call(action, args || {})).then(unwrap);
-    }
-    function errText(e) {
-      if (!e) return "\u64CD\u4F5C\u5931\u8D25";
-      if (typeof e === "string") return e;
-      return e.message || e.error || String(e);
-    }
-    function fmtTime(ts, lang) {
-      if (!ts) return "\u2014";
-      try {
-        return new Date(ts).toLocaleString(lang === "en" ? "en-US" : "zh-CN", { hour12: false });
-      } catch (e) {
-        return String(ts);
-      }
-    }
-    function Btn(props) {
-      var h = props.h;
-      return h(
-        "button",
-        {
-          type: props.type || "button",
-          className: "wbv-btn" + (props.kind ? " " + props.kind : ""),
-          disabled: props.disabled,
-          onClick: props.onClick,
-          title: props.title
-        },
-        props.children
-      );
-    }
-    function Field(props) {
-      var h = props.h;
-      return h(
-        "label",
-        { className: "wbv-field" },
-        h("span", { className: "wbv-label" }, props.label),
-        props.children,
-        props.hint ? h("span", { className: "wbv-hint" }, props.hint) : null
-      );
-    }
-    function Notice(props) {
-      var h = props.h;
-      if (!props.text) return null;
-      return h("div", { className: "wbv-notice " + (props.kind || "info") }, props.text);
-    }
-    function Empty(props) {
-      var h = props.h;
-      return h("div", { className: "wbv-empty" }, props.text || "\u6682\u65E0\u6570\u636E");
-    }
-    function useLoad(React, api, action, args, deps) {
-      var s = React.useState({ loading: true, data: null, error: "" });
-      var tick = React.useState(0);
-      var refresh = function() {
-        tick[1](tick[0] + 1);
-      };
-      React.useEffect(function() {
-        var alive = true;
-        s[1]({ loading: true, data: null, error: "" });
-        call(api, action, args).then(function(data) {
-          if (alive) s[1]({ loading: false, data, error: "" });
-        }).catch(function(e) {
-          if (alive) s[1]({ loading: false, data: null, error: errText(e) });
-        });
-        return function() {
-          alive = false;
-        };
-      }, (deps || []).concat([tick[0]]));
-      return { loading: s[0].loading, data: s[0].data, error: s[0].error, refresh };
-    }
-    module2.exports = {
-      unwrap,
-      call,
-      errText,
-      fmtTime,
-      Btn,
-      Field,
-      Notice,
-      Empty,
-      useLoad
-    };
+    module2.exports = require_client_common()("wbv");
   }
 });
 
