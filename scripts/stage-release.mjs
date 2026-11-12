@@ -137,11 +137,11 @@ const hostVersion = hostPkg.version;
 const addons = {
   storage: {
     dir: "storage",
-    description: "个人工作台储物插件：名称、品牌、单位、库存文本与标签",
+    description: "个人工作台储物插件：名称、品牌、位置、单位、库存文本与标签",
     keywords: ["storage", "inventory", "items", "tags"],
     marketCategory: "tools",
-    marketEn: "Storage records for DSH: names, brands, units, stock text and tags with local SQLite and optional metadata sync.",
-    marketZh: "DSH 储物：记录名称、品牌、单位、库存文本与标签，本地 SQLite 保存，可选元数据同步。",
+    marketEn: "Storage records for DSH: names, brands, locations, units, stock text and tags with local SQLite and optional metadata sync.",
+    marketZh: "DSH 储物：记录名称、品牌、位置、单位、库存文本与标签，本地 SQLite 保存，可选元数据同步。",
     marketExtra: "管理物品库存文本台账，不上传或下载文件字节；卸载插件不删数据。",
   },
   tasks: {
@@ -149,17 +149,17 @@ const addons = {
     description: "个人工作台任务插件：任务树、优先级、截止日、时间线与重启",
     keywords: ["tasks", "todo", "tree", "timeline"],
     marketCategory: "workflow",
-    marketEn: "Task manager for DSH: a task tree, nine list views, priorities, due dates, timeline/restart chains, batch merge and table moves.",
-    marketZh: "DSH 任务管理：任务树、九个视图、优先级、截止日、时间线/重启链、批量归并与迁表。",
+    marketEn: "Task manager for DSH: a task tree, eight views, priorities, due dates, timeline/restart chains, batch merge and table moves.",
+    marketZh: "DSH 任务管理：任务树、八个视图、优先级、截止日、时间线/重启链、批量归并与迁表。",
     marketExtra: "任务、标签、站点数据都保存在宿主 SQLite；卸载插件不删数据。",
   },
   tags: {
     dir: "tags",
-    description: "个人工作台标签插件：创建与管理标签，为站点等业务提供标签归类",
+    description: "个人工作台标签插件：创建与管理标签，为任务、站点与储物提供标签归类",
     keywords: ["tags", "label", "catalog"],
     marketCategory: "tools",
-    marketEn: "Tag manager for DSH: create, search and delete tags, with soft-delete and per-item mappings used by the Sites plugin.",
-    marketZh: "DSH 标签管理：创建、搜索、删除标签，支持软删除与条目映射，供站点插件使用。",
+    marketEn: "Tag manager for DSH: create, search and delete tags, with soft-delete and per-item mappings used by the workbench task, site and storage plugins.",
+    marketZh: "DSH 标签管理：创建、搜索、删除标签，支持软删除与条目映射，供任务、站点与储物插件使用。",
     marketExtra: "标签被删除后，站点等引用它的条目会失去该标签，但条目本身保留。",
   },
   sites: {
