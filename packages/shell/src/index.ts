@@ -127,12 +127,24 @@ export function apply(ctx: any): void {
   const domains = new Map<string, RegisteredDomain>();
   const clock = new SyncClock();
 
+  const eventListeners = new Map<string, Set<(data: unknown) => void>>();
   const emit = (event: string, data: unknown) => {
     for (const s of subscribers) {
       try {
         s(event, data);
       } catch {
         /* 单个订阅者断开不影响其他订阅者 */
+      }
+    }
+    for (const key of [event, "*"]) {
+      const set = eventListeners.get(key);
+      if (!set) continue;
+      for (const listener of set) {
+        try {
+          listener(data);
+        } catch {
+          /* 单个插件监听器出错不影响其它监听器 */
+        }
       }
     }
   };
@@ -168,6 +180,16 @@ export function apply(ctx: any): void {
     };
   }
 
+  const { invoke, actionNames, installTool, schemaSnapshot } = createActions({
+    domains,
+    SHELL_VERSION,
+    publicInfo,
+    audit,
+    clock,
+    emit,
+    db: state.db,
+  });
+
   function registerAction(rec: RegisteredDomain, action: string, def: DomainActionDef): void {
     if (!ACTION_RE.test(action)) {
       throw new Error("非法 action 名（应形如 tasks.list）：" + action);
@@ -184,7 +206,7 @@ export function apply(ctx: any): void {
       log("业务域已注册，忽略重复注册", def.id);
       return () => {};
     }
-    const rec: RegisteredDomain = { def, actions: new Map(), error: null, dispose: null };
+    const rec: RegisteredDomain = { def, actions: new Map(), hooks: new Map(), error: null, dispose: null };
     domains.set(def.id, rec);
 
     const setupApi: DomainSetupApi = {
@@ -195,6 +217,26 @@ export function apply(ctx: any): void {
       hasAddon: (id: string) => domains.has(id),
       action: (name: string, actionDef: DomainActionDef) => registerAction(rec, name, actionDef),
       tool: (name: string, actionDef: DomainActionDef) => registerAction(rec, name, actionDef),
+      call: (action: string, args?: Record<string, unknown>) =>
+        invoke(action, args ?? {}, "plugin"),
+      on: (event: string, listener: (data: unknown) => void) => {
+        const key = String(event || "*");
+        let set = eventListeners.get(key);
+        if (!set) {
+          set = new Set();
+          eventListeners.set(key, set);
+        }
+        set.add(listener);
+        return () => {
+          set!.delete(listener);
+        };
+      },
+      registerHook: (name: string, handler) => {
+        if (!/^[a-z][a-z0-9_-]{1,40}$/.test(String(name || ""))) {
+          throw new Error("非法 hook 名（小写字母开头，允许数字/_/-）：" + name);
+        }
+        rec.hooks.set(String(name), handler);
+      },
       emit: (event: string, data?: unknown) => emit("domain-event", { domainId: def.id, event, data: data ?? null }),
       now: () => clock.now(),
       markSyncDirty: (table?: string) => {
@@ -247,15 +289,27 @@ export function apply(ctx: any): void {
   }
 
 
-  const { invoke, actionNames, installTool, schemaSnapshot } = createActions({ domains, SHELL_VERSION, publicInfo, audit, clock, emit, db: state.db });
-
   const host: WorkbenchHost = {
     db: state.db,
     shellVersion: SHELL_VERSION,
     registerDomain,
     hasDomain: (id: string) => domains.has(id),
     listDomains,
-    invoke,
+    call: (action: string, args?: Record<string, unknown>) => invoke(action, args ?? {}, "plugin"),
+    invoke: (action: string, args: Record<string, unknown>, _origin?: unknown) =>
+      invoke(action, args ?? {}, "plugin"),
+    on: (event: string, listener: (data: unknown) => void) => {
+      const key = String(event || "*");
+      let set = eventListeners.get(key);
+      if (!set) {
+        set = new Set();
+        eventListeners.set(key, set);
+      }
+      set.add(listener);
+      return () => {
+        set!.delete(listener);
+      };
+    },
     actionNames,
     emit,
     log,

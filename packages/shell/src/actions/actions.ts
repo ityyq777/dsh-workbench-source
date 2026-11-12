@@ -1,4 +1,4 @@
-import type { DomainActionDef } from "@wb/sdk";
+import type { ActionOrigin, DomainActionDef } from "@wb/sdk";
 import { actionErrorText, schemaChoices } from "./action-output.js";
 import { createTaskTargets } from "./task-targets.js";
 import { createCapabilities } from "./capabilities.js";
@@ -298,7 +298,7 @@ const { capabilityListMeta, renderCapabilityList, capabilityGetMeta, renderCapab
     return out;
   }
 
-  async function invoke(action: string, args: Record<string, unknown>, origin: "ui" | "agent" | "sync") {
+  async function invoke(action: string, args: Record<string, unknown>, origin: ActionOrigin) {
     // 审计只在分发外层做一次：成功按实际 domainId 记，失败记下错误后原样抛出。
     // 能力发现与审计自身不记录，避免自举递归和噪声。
     const audited = !/^(capabilities|actions|audit)\./.test(action);
@@ -334,7 +334,7 @@ const { capabilityListMeta, renderCapabilityList, capabilityGetMeta, renderCapab
     }
   }
 
-  async function invokeAction(action: string, args: Record<string, unknown>, origin: "ui" | "agent" | "sync") {
+  async function invokeAction(action: string, args: Record<string, unknown>, origin: ActionOrigin) {
     if (action === "capabilities.list") {
       const result = await capabilityListMeta(args);
       return { result, text: renderCapabilityList(result), domainId: META_DOMAIN };

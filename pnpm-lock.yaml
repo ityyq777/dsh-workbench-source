@@ -66,6 +66,12 @@ importers:
         specifier: file:../../shell-dist
         version: link:../../shell-dist
 
+  packages/addons/vault:
+    dependencies:
+      dsh-workbench:
+        specifier: file:../../shell-dist
+        version: link:../../shell-dist
+
   packages/core:
     devDependencies:
       '@types/node':

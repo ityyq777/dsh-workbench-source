@@ -24,7 +24,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const ADDONS = ["tasks", "tags", "sites", "storage", "message"];
+const ADDONS = ["tasks", "tags", "sites", "storage", "message", "vault"];
 
 /**
  * 兼容层别名：实现接受，但故意不写进 schema，避免污染 agent 的填参视野。

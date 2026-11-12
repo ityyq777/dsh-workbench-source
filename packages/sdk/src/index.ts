@@ -21,10 +21,13 @@ export interface DomainViewDecl {
   title: string | DomainViewTitle;
 }
 
+/** action 调用来源：plugin 是插件后台调用，不能伪装成 ui。 */
+export type ActionOrigin = "ui" | "agent" | "sync" | "plugin";
+
 /** action 执行上下文：宿主注入来源与事件通道。 */
 export interface DomainActionContext {
-  /** ui/agent 本地写入需要进 change log；sync 回写不进 */
-  origin: "ui" | "agent" | "sync";
+  /** ui/agent 本地写入需要进 change log；sync 回写不进；plugin 是插件后台 */
+  origin: ActionOrigin;
   /** 广播到本业务域的所有订阅者（SSE -> 浏览器） */
   emit(event: string, data?: unknown): void;
 }
@@ -130,6 +133,12 @@ export interface DomainSetupApi {
   hasAddon(id: string): boolean;
   /** 注册一个 action（同名再注册会覆盖，热重载友好） */
   action(name: string, def: DomainActionDef): void;
+  /** 以固定 plugin origin 调用其它域的 action；不能指定 origin，避免伪装 ui。 */
+  call(action: string, args?: Record<string, unknown>): Promise<{ result: unknown; text: string; domainId: string }>;
+  /** 订阅宿主事件；返回取消函数。 */
+  on(event: string, listener: (data: unknown) => void): () => void;
+  /** 注册一个外部 HTTP hook，路径为 /workbench/hooks/<domain>/<name>。 */
+  registerHook(name: string, handler: DomainHookHandler): void;
   /** 同 action；保留旧称便于迁移 */
   tool(name: string, def: DomainActionDef): void;
   /** 向本业务域的 SSE 订阅者广播 */
@@ -195,6 +204,25 @@ export interface DomainCapability {
   notes?: string[];
 }
 
+/** 外部 hook 请求；body 已按上限读入内存。 */
+export interface DomainHookRequest {
+  method: string;
+  path: string;
+  query: Record<string, string>;
+  headers: Record<string, string | string[] | undefined>;
+  remoteAddress?: string;
+  body: Uint8Array;
+}
+
+export interface DomainHookResponse {
+  status?: number;
+  headers?: Record<string, string>;
+  /** 对象按 JSON 返回；字符串原样返回；Buffer/Uint8Array 作为二进制。 */
+  body?: unknown;
+}
+
+export type DomainHookHandler = (req: DomainHookRequest) => DomainHookResponse | Promise<DomainHookResponse>;
+
 /** 业务域定义：DSH 插件 apply() 里交给宿主。 */
 export interface DomainDef {
   /** 稳定 id，如 wb-addon-tasks；用于 DOM / action 归属 / 跨插件探测 */
@@ -229,12 +257,16 @@ export interface WorkbenchHost {
   hasDomain(id: string): boolean;
   /** 已注册业务域（给 HTTP / 客户端用） */
   listDomains(): DomainPublicInfo[];
-  /** 执行一个 <namespace>.<action>；返回结果与 agent 文本 */
+  /** 以固定 plugin origin 执行一个 <namespace>.<action>；不接收 origin 参数。 */
+  call(action: string, args?: Record<string, unknown>): Promise<{ result: unknown; text: string; domainId: string }>;
+  /** 兼容旧名；同样固定 plugin origin，忽略调用方传入的 origin。 */
   invoke(
     action: string,
     args: Record<string, unknown>,
-    origin: "ui" | "agent" | "sync",
+    origin?: ActionOrigin,
   ): Promise<{ result: unknown; text: string; domainId: string }>;
+  /** 订阅宿主事件；返回取消函数。 */
+  on(event: string, listener: (data: unknown) => void): () => void;
   /** action -> 所属 domain */
   actionNames(): { name: string; domainId: string; description?: string }[];
   emit(event: string, data?: unknown): void;

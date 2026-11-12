@@ -1,5 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
-import type { DomainDef, DomainActionDef } from "@wb/sdk";
+import type { DomainDef, DomainActionDef, DomainHookHandler } from "@wb/sdk";
 export interface WbState {
   db: DatabaseSync;
   creds: { accessToken: string; refreshToken: string; userId: string; deviceId: string } | null;
@@ -9,6 +9,7 @@ export interface WbState {
 export interface RegisteredDomain {
   def: DomainDef;
   actions: Map<string, DomainActionDef>;
+  hooks: Map<string, DomainHookHandler>;
   error: string | null;
   dispose: (() => void) | null;
 }

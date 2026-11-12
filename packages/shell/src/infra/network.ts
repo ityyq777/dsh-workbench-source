@@ -138,6 +138,75 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
     }
   }
 
+  // ── HTTP：/workbench/hooks/*（外部入口，不经过 DSH connection 门）──
+  // 鉴权由业务插件负责（token/HMAC/IP）；宿主只保证默认只监听本机回环。
+  ctx.effect?.(
+    () =>
+      ctx.webServer?.register(
+        {
+          kind: "prefix" as const,
+          path: "/workbench/hooks",
+          handler: async (req: any, res: any) => {
+            const send = (code: number, obj: unknown, headers: Record<string, string> = {}) => {
+              res.writeHead(code, { "content-type": "application/json", ...headers });
+              res.end(JSON.stringify(obj));
+            };
+            try {
+              const url = new URL(req.url ?? "", "http://local");
+              const p = url.pathname.replace(/^\/workbench\/hooks/, "");
+              const m = req.method ?? "GET";
+              if (m !== "POST" && m !== "GET") return send(405, { ok: false, error: "method not allowed" });
+              const hookM = /^\/([^/]+)\/([^/]+)$/.exec(p);
+              if (!hookM) return send(404, { ok: false, error: "no hook route " + p });
+              const domainId = decodeURIComponent(hookM[1]);
+              const hookName = decodeURIComponent(hookM[2]);
+              const rec = domains.get(domainId);
+              const handler = rec?.hooks?.get(hookName);
+              if (!handler) return send(404, { ok: false, error: "no hook " + domainId + "/" + hookName });
+              const remote = String(req.socket?.remoteAddress ?? "");
+              const loopback = remote === "127.0.0.1" || remote === "::1" || remote === "::ffff:127.0.0.1";
+              if (!loopback) return send(403, { ok: false, error: "hook is local-only (use a reverse proxy)" });
+              const chunks: Uint8Array[] = [];
+              let total = 0;
+              for await (const c of req) {
+                const buf = c as Uint8Array;
+                total += buf.length;
+                if (total > 1024 * 1024) return send(413, { ok: false, error: "body too large" });
+                chunks.push(buf);
+              }
+              const body = Buffer.concat(chunks.map((c) => Buffer.from(c)));
+              const out = await handler({
+                method: m,
+                path: p,
+                query: Object.fromEntries(url.searchParams),
+                headers: req.headers as Record<string, string | string[] | undefined>,
+                remoteAddress: remote,
+                body,
+              });
+              const status = Number(out?.status ?? 200);
+              const headers = out?.headers ?? {};
+              const payload = out?.body ?? { ok: true };
+              if (Buffer.isBuffer(payload) || payload instanceof Uint8Array) {
+                res.writeHead(status, { "content-type": "application/octet-stream", ...headers });
+                res.end(Buffer.from(payload as Uint8Array));
+                return;
+              }
+              if (typeof payload === "string") {
+                res.writeHead(status, { "content-type": "text/plain; charset=utf-8", ...headers });
+                res.end(payload);
+                return;
+              }
+              send(status, payload, headers);
+            } catch (e) {
+              return send(500, { ok: false, error: String((e && (e as Error).message) || e) });
+            }
+          },
+        },
+        "workbench-hooks",
+      ),
+    "workbench-hooks",
+  );
+
   // ── HTTP：/workbench/api/*（同域 cookie 之外的连接门由 host connection.requestRejection 兜底）──
   ctx.effect?.(
     () =>
