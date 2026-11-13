@@ -56,7 +56,7 @@
 
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.2.1",
+    version: "0.2.2",
     icon: require("lucide-react/icons/shield-check").default,
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "保险箱", en: "Vault" }, component: withProps(require("./views/status.cjs"), "保险箱") },
