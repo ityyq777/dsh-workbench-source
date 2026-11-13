@@ -19,6 +19,7 @@ module.exports = function SecretsView(props) {
   var listS = React.useState({ loading: true, rows: [], error: "" });
   var qS = React.useState("");
   var statusS = React.useState(null);
+  var groupsS = React.useState([]);
   var formS = React.useState(emptyForm());
   var editingS = React.useState(false);
   var busyS = React.useState(false);
@@ -32,9 +33,11 @@ module.exports = function SecretsView(props) {
     Promise.all([
       C.call(api, "vault.secretList", { q: qS[0] }),
       C.call(api, "vault.status").catch(function () { return null; }),
+      C.call(api, "vault.groupList").catch(function () { return { items: [] }; }),
     ]).then(function (r) {
       listS[1]({ loading: false, rows: (r[0] && (r[0].items || r[0].secrets)) || [], error: "" });
       statusS[1](r[1]);
+      groupsS[1]((r[2] && r[2].items) || []);
     }).catch(function (e) {
       listS[1]({ loading: false, rows: [], error: C.errText(e) });
     });
@@ -51,7 +54,7 @@ module.exports = function SecretsView(props) {
   function startEdit(row) {
     var meta = {};
     try { meta = JSON.parse(row.meta || "{}"); } catch (e) { meta = {}; }
-    formS[1]({ id: row.id, name: row.name, kind: row.kind, secret: "", username: meta.username || "", url: meta.url || "" });
+    formS[1]({ id: row.id, name: row.name, kind: row.kind, secret: "", groupId: row.groupId || "", username: meta.username || "", url: meta.url || "" });
     editingS[1](true);
     msgS[1]("");
   }
@@ -64,8 +67,8 @@ module.exports = function SecretsView(props) {
     busyS[1](true); msgS[1]("");
     var meta = { username: f.username, url: f.url };
     var p = f.id
-      ? C.call(api, "vault.secretUpdate", { id: f.id, name: f.name.trim(), kind: f.kind, secret: f.secret || undefined, meta: meta })
-      : C.call(api, "vault.secretCreate", { name: f.name.trim(), kind: f.kind, secret: f.secret, meta: meta });
+      ? C.call(api, "vault.secretUpdate", { id: f.id, name: f.name.trim(), kind: f.kind, secret: f.secret || undefined, meta: meta, groupId: f.groupId || "" })
+      : C.call(api, "vault.secretCreate", { name: f.name.trim(), kind: f.kind, secret: f.secret, meta: meta, groupId: f.groupId || undefined });
     p.then(function () {
       busyS[1](false); editingS[1](false); formS[1](emptyForm()); load();
     }).catch(function (e) { busyS[1](false); msgS[1](C.errText(e)); });
@@ -103,13 +106,14 @@ module.exports = function SecretsView(props) {
     listS[0].loading ? h(C.Empty, { h: h, text: "读取中…" }) :
       rows.length === 0 ? h(C.Empty, { h: h, text: "还没有凭据。新增一条后，可把它绑定给连接器。" }) :
       h("table", { className: "wbv-table" },
-        h("thead", null, h("tr", null, ["名称", "类型", "备注", "最近使用", "操作"].map(function (x) { return h("th", { key: x }, x); }))),
+        h("thead", null, h("tr", null, ["名称", "类型", "分组", "备注", "最近使用", "操作"].map(function (x) { return h("th", { key: x }, x); }))),
         h("tbody", null, rows.map(function (row) {
           var meta = {};
           try { meta = JSON.parse(row.meta || "{}"); } catch (e) { meta = {}; }
           return h("tr", { key: row.id },
             h("td", null, h("strong", null, row.name)),
             h("td", null, h("span", { className: "wbv-pill" }, KIND_LABEL[row.kind] || row.kind)),
+            h("td", null, groupName(groupsS[0], row.groupId) || "—"),
             h("td", null, [meta.username, meta.url].filter(Boolean).join(" · ") || "—"),
             h("td", null, C.fmtTime(row.lastUsedAt, lang)),
             h("td", null, h("div", { className: "wbv-inline" },
@@ -126,6 +130,10 @@ module.exports = function SecretsView(props) {
             Object.keys(KIND_LABEL).map(function (k) { return h("option", { key: k, value: k }, KIND_LABEL[k]); }))),
         h(C.Field, { h: h, label: formS[0].id ? "新明文（留空不轮换）" : "明文" },
           h("input", { type: "password", autoComplete: "new-password", value: formS[0].secret, placeholder: formS[0].id ? "不修改请留空" : "密码 / token", onChange: function (e) { formS[1](Object.assign({}, formS[0], { secret: e.target.value })); } })),
+        h(C.Field, { h: h, label: "分组" },
+          h("select", { value: formS[0].groupId || "", onChange: function (e) { formS[1](Object.assign({}, formS[0], { groupId: e.target.value })); } },
+            h("option", { value: "" }, "未分组"),
+            groupsS[0].map(function (g) { return h("option", { key: g.id, value: g.id }, g.name); }))),
         h(C.Field, { h: h, label: "备注用户名" }, h("input", { value: formS[0].username, onChange: function (e) { formS[1](Object.assign({}, formS[0], { username: e.target.value })); } })),
         h(C.Field, { h: h, label: "备注 URL" }, h("input", { value: formS[0].url, onChange: function (e) { formS[1](Object.assign({}, formS[0], { url: e.target.value })); } })),
         h(C.Notice, { h: h, kind: "error", text: msgS[0] }),
@@ -146,5 +154,10 @@ module.exports = function SecretsView(props) {
 };
 
 function emptyForm() {
-  return { id: "", name: "", kind: "password", secret: "", username: "", url: "" };
+  return { id: "", name: "", kind: "password", secret: "", groupId: "", username: "", url: "" };
+}
+
+function groupName(groups, id) {
+  for (var i = 0; i < groups.length; i += 1) if (groups[i].id === id) return groups[i].name;
+  return "";
 }

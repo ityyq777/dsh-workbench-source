@@ -422,17 +422,45 @@ var init_key_round = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder.mjs
+var folder_exports = {};
+__export(folder_exports, {
+  __iconData: () => __iconData3,
+  default: () => Folder
+});
+var __iconData3, Folder;
+var init_folder = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder.mjs"() {
+    init_createLucideIcon();
+    __iconData3 = {
+      name: "folder",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z",
+            key: "1kt360"
+          }
+        ]
+      ]
+    };
+    __iconData3.node;
+    Folder = createLucideIcon(__iconData3);
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs
 var sliders_horizontal_exports = {};
 __export(sliders_horizontal_exports, {
-  __iconData: () => __iconData3,
+  __iconData: () => __iconData4,
   default: () => SlidersHorizontal
 });
-var __iconData3, SlidersHorizontal;
+var __iconData4, SlidersHorizontal;
 var init_sliders_horizontal = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs"() {
     init_createLucideIcon();
-    __iconData3 = {
+    __iconData4 = {
       name: "sliders-horizontal",
       size: 24,
       node: [
@@ -447,22 +475,22 @@ var init_sliders_horizontal = __esm({
         ["path", { d: "M8 12H3", key: "a7s4jb" }]
       ]
     };
-    __iconData3.node;
-    SlidersHorizontal = createLucideIcon(__iconData3);
+    __iconData4.node;
+    SlidersHorizontal = createLucideIcon(__iconData4);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs
 var database_exports = {};
 __export(database_exports, {
-  __iconData: () => __iconData4,
+  __iconData: () => __iconData5,
   default: () => Database
 });
-var __iconData4, Database;
+var __iconData5, Database;
 var init_database = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs"() {
     init_createLucideIcon();
-    __iconData4 = {
+    __iconData5 = {
       name: "database",
       size: 24,
       node: [
@@ -471,22 +499,22 @@ var init_database = __esm({
         ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
       ]
     };
-    __iconData4.node;
-    Database = createLucideIcon(__iconData4);
+    __iconData5.node;
+    Database = createLucideIcon(__iconData5);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs
 var list_exports = {};
 __export(list_exports, {
-  __iconData: () => __iconData5,
+  __iconData: () => __iconData6,
   default: () => List
 });
-var __iconData5, List;
+var __iconData6, List;
 var init_list = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs"() {
     init_createLucideIcon();
-    __iconData5 = {
+    __iconData6 = {
       name: "list",
       size: 24,
       node: [
@@ -498,22 +526,22 @@ var init_list = __esm({
         ["path", { d: "M8 19h13", key: "m83p4d" }]
       ]
     };
-    __iconData5.node;
-    List = createLucideIcon(__iconData5);
+    __iconData6.node;
+    List = createLucideIcon(__iconData6);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs
 var shield_check_exports = {};
 __export(shield_check_exports, {
-  __iconData: () => __iconData6,
+  __iconData: () => __iconData7,
   default: () => ShieldCheck
 });
-var __iconData6, ShieldCheck;
+var __iconData7, ShieldCheck;
 var init_shield_check = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs"() {
     init_createLucideIcon();
-    __iconData6 = {
+    __iconData7 = {
       name: "shield-check",
       size: 24,
       node: [
@@ -527,8 +555,8 @@ var init_shield_check = __esm({
         ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
       ]
     };
-    __iconData6.node;
-    ShieldCheck = createLucideIcon(__iconData6);
+    __iconData7.node;
+    ShieldCheck = createLucideIcon(__iconData7);
   }
 });
 
@@ -713,14 +741,14 @@ var require_status = __commonJS({
           "div",
           { className: "wbv" },
           h("h2", null, "\u521D\u59CB\u5316\u51ED\u636E\u4FDD\u9669\u7BB1"),
-          h("p", { className: "wbv-muted" }, "\u53E3\u4EE4\u53EA\u7528\u4E8E\u6D3E\u751F\u5BC6\u94A5\uFF0C\u4E0D\u4F1A\u843D\u5E93\uFF1B\u5FD8\u8BB0\u53E3\u4EE4\u65E0\u6CD5\u6062\u590D\u5DF2\u4FDD\u5B58\u7684\u51ED\u636E\u3002"),
+          h("p", { className: "wbv-muted" }, "\u53E3\u4EE4\u53EA\u7528\u4E8E\u6D3E\u751F\u5BC6\u94A5\uFF0C\u4E0D\u4F1A\u843D\u5E93\uFF1B\u5FD8\u8BB0\u53E3\u4EE4\u65E0\u6CD5\u6062\u590D\u5DF2\u4FDD\u5B58\u7684\u51ED\u636E\u3002\u53E3\u4EE4\u5305\u88F9\u4E0E\u5BC6\u6587\u4F1A\u968F\u4E91\u540C\u6B65\u4E0A\u4F20\uFF0C\u4E91\u7AEF\u6CA1\u6709\u53E3\u4EE4\u89E3\u4E0D\u5F00\u3002"),
           h(C.Notice, { h, kind: "info", text: "\u9ED8\u8BA4 A \u6A21\u5F0F\uFF1A\u6BCF\u6B21\u542F\u52A8\u540E\u9700\u8981\u91CD\u65B0\u89E3\u9501\u3002\u53EF\u7A0D\u540E\u5728\u8BBE\u7F6E\u91CC\u6539\u6210\u81EA\u52A8\u89E3\u9501\u3002" }),
           h(
             "div",
             { className: "wbv-card wbv-row" },
             h(
               C.Field,
-              { h, label: "\u4E3B\u53E3\u4EE4\uFF08\u81F3\u5C11 10 \u4F4D\uFF09" },
+              { h, label: "\u4E3B\u53E3\u4EE4\uFF08\u81F3\u5C11 12 \u4F4D\uFF09" },
               h("input", { type: "password", value: pass[0], autoComplete: "new-password", onChange: function(e) {
                 pass[1](e.target.value);
               } })
@@ -751,7 +779,7 @@ var require_status = __commonJS({
             "div",
             { className: "wbv-row" },
             h(C.Btn, { h, kind: "primary", disabled: busy[0], onClick: function() {
-              if (pass[0].length < 10) return msg[1]("\u53E3\u4EE4\u81F3\u5C11 10 \u4E2A\u5B57\u7B26");
+              if (pass[0].length < 12) return msg[1]("\u53E3\u4EE4\u81F3\u5C11 12 \u4E2A\u5B57\u7B26");
               if (pass[0] !== pass2[0]) return msg[1]("\u4E24\u6B21\u8F93\u5165\u4E0D\u4E00\u81F4");
               run(function() {
                 return C.call(api, "vault.setup", { passphrase: pass[0], mode: mode[0] });
@@ -796,6 +824,7 @@ var require_status = __commonJS({
           "div",
           { className: "wbv-grid" },
           h("div", { className: "wbv-card" }, h("div", { className: "wbv-muted" }, "\u51ED\u636E\u6570\u91CF"), h("div", { className: "wbv-kpi" }, status.secretCount || 0)),
+          h("div", { className: "wbv-card" }, h("div", { className: "wbv-muted" }, "\u5206\u7EC4\u6570\u91CF"), h("div", { className: "wbv-kpi" }, status.groupCount || 0)),
           h("div", { className: "wbv-card" }, h("div", { className: "wbv-muted" }, "\u89E3\u9501\u6A21\u5F0F"), h("div", { className: "wbv-kpi" }, status.unlockMode), h("div", { className: "wbv-muted" }, modeText)),
           h("div", { className: "wbv-card" }, h("div", { className: "wbv-muted" }, "\u4E0A\u6B21\u89E3\u9501"), h("div", null, C.fmtTime(status.lastUnlockAt, lang)))
         ),
@@ -855,6 +884,7 @@ var require_secrets = __commonJS({
       var listS = React.useState({ loading: true, rows: [], error: "" });
       var qS = React.useState("");
       var statusS = React.useState(null);
+      var groupsS = React.useState([]);
       var formS = React.useState(emptyForm());
       var editingS = React.useState(false);
       var busyS = React.useState(false);
@@ -869,10 +899,14 @@ var require_secrets = __commonJS({
           C.call(api, "vault.secretList", { q: qS[0] }),
           C.call(api, "vault.status").catch(function() {
             return null;
+          }),
+          C.call(api, "vault.groupList").catch(function() {
+            return { items: [] };
           })
         ]).then(function(r) {
           listS[1]({ loading: false, rows: r[0] && (r[0].items || r[0].secrets) || [], error: "" });
           statusS[1](r[1]);
+          groupsS[1](r[2] && r[2].items || []);
         }).catch(function(e) {
           listS[1]({ loading: false, rows: [], error: C.errText(e) });
         });
@@ -892,7 +926,7 @@ var require_secrets = __commonJS({
         } catch (e) {
           meta = {};
         }
-        formS[1]({ id: row.id, name: row.name, kind: row.kind, secret: "", username: meta.username || "", url: meta.url || "" });
+        formS[1]({ id: row.id, name: row.name, kind: row.kind, secret: "", groupId: row.groupId || "", username: meta.username || "", url: meta.url || "" });
         editingS[1](true);
         msgS[1]("");
       }
@@ -904,7 +938,7 @@ var require_secrets = __commonJS({
         busyS[1](true);
         msgS[1]("");
         var meta = { username: f.username, url: f.url };
-        var p = f.id ? C.call(api, "vault.secretUpdate", { id: f.id, name: f.name.trim(), kind: f.kind, secret: f.secret || void 0, meta }) : C.call(api, "vault.secretCreate", { name: f.name.trim(), kind: f.kind, secret: f.secret, meta });
+        var p = f.id ? C.call(api, "vault.secretUpdate", { id: f.id, name: f.name.trim(), kind: f.kind, secret: f.secret || void 0, meta, groupId: f.groupId || "" }) : C.call(api, "vault.secretCreate", { name: f.name.trim(), kind: f.kind, secret: f.secret, meta, groupId: f.groupId || void 0 });
         p.then(function() {
           busyS[1](false);
           editingS[1](false);
@@ -961,7 +995,7 @@ var require_secrets = __commonJS({
         listS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u4E2D\u2026" }) : rows.length === 0 ? h(C.Empty, { h, text: "\u8FD8\u6CA1\u6709\u51ED\u636E\u3002\u65B0\u589E\u4E00\u6761\u540E\uFF0C\u53EF\u628A\u5B83\u7ED1\u5B9A\u7ED9\u8FDE\u63A5\u5668\u3002" }) : h(
           "table",
           { className: "wbv-table" },
-          h("thead", null, h("tr", null, ["\u540D\u79F0", "\u7C7B\u578B", "\u5907\u6CE8", "\u6700\u8FD1\u4F7F\u7528", "\u64CD\u4F5C"].map(function(x) {
+          h("thead", null, h("tr", null, ["\u540D\u79F0", "\u7C7B\u578B", "\u5206\u7EC4", "\u5907\u6CE8", "\u6700\u8FD1\u4F7F\u7528", "\u64CD\u4F5C"].map(function(x) {
             return h("th", { key: x }, x);
           }))),
           h("tbody", null, rows.map(function(row) {
@@ -976,6 +1010,7 @@ var require_secrets = __commonJS({
               { key: row.id },
               h("td", null, h("strong", null, row.name)),
               h("td", null, h("span", { className: "wbv-pill" }, KIND_LABEL[row.kind] || row.kind)),
+              h("td", null, groupName(groupsS[0], row.groupId) || "\u2014"),
               h("td", null, [meta.username, meta.url].filter(Boolean).join(" \xB7 ") || "\u2014"),
               h("td", null, C.fmtTime(row.lastUsedAt, lang)),
               h("td", null, h(
@@ -1023,6 +1058,20 @@ var require_secrets = __commonJS({
               h("input", { type: "password", autoComplete: "new-password", value: formS[0].secret, placeholder: formS[0].id ? "\u4E0D\u4FEE\u6539\u8BF7\u7559\u7A7A" : "\u5BC6\u7801 / token", onChange: function(e) {
                 formS[1](Object.assign({}, formS[0], { secret: e.target.value }));
               } })
+            ),
+            h(
+              C.Field,
+              { h, label: "\u5206\u7EC4" },
+              h(
+                "select",
+                { value: formS[0].groupId || "", onChange: function(e) {
+                  formS[1](Object.assign({}, formS[0], { groupId: e.target.value }));
+                } },
+                h("option", { value: "" }, "\u672A\u5206\u7EC4"),
+                groupsS[0].map(function(g) {
+                  return h("option", { key: g.id, value: g.id }, g.name);
+                })
+              )
             ),
             h(C.Field, { h, label: "\u5907\u6CE8\u7528\u6237\u540D" }, h("input", { value: formS[0].username, onChange: function(e) {
               formS[1](Object.assign({}, formS[0], { username: e.target.value }));
@@ -1072,8 +1121,189 @@ var require_secrets = __commonJS({
       );
     };
     function emptyForm() {
-      return { id: "", name: "", kind: "password", secret: "", username: "", url: "" };
+      return { id: "", name: "", kind: "password", secret: "", groupId: "", username: "", url: "" };
     }
+    function groupName(groups, id) {
+      for (var i = 0; i < groups.length; i += 1) if (groups[i].id === id) return groups[i].name;
+      return "";
+    }
+  }
+});
+
+// packages/addons/vault/client/views/groups.cjs
+var require_groups = __commonJS({
+  "packages/addons/vault/client/views/groups.cjs"(exports2, module2) {
+    "use strict";
+    var C = require_common();
+    module2.exports = function GroupsView(props) {
+      var h = props.h;
+      var api = props.api;
+      var lang = props.lang || "zh";
+      var React = props.React;
+      var listS = React.useState({ loading: true, rows: [], error: "" });
+      var msgS = React.useState("");
+      var busyS = React.useState(false);
+      var formS = React.useState({ name: "", description: "" });
+      var openS = React.useState(null);
+      function load() {
+        listS[1](function(old) {
+          return Object.assign({}, old, { loading: true });
+        });
+        C.call(api, "vault.groupList").then(function(r) {
+          listS[1]({ loading: false, rows: r && r.items || [], error: "" });
+        }).catch(function(e) {
+          listS[1]({ loading: false, rows: [], error: C.errText(e) });
+        });
+      }
+      React.useEffect(function() {
+        load();
+      }, []);
+      function create() {
+        var f = formS[0];
+        if (!f.name.trim()) return msgS[1]("\u7EC4\u540D\u4E0D\u80FD\u4E3A\u7A7A");
+        busyS[1](true);
+        msgS[1]("");
+        C.call(api, "vault.groupCreate", { name: f.name.trim(), description: f.description.trim() }).then(function() {
+          busyS[1](false);
+          formS[1]({ name: "", description: "" });
+          load();
+        }).catch(function(e) {
+          busyS[1](false);
+          msgS[1](C.errText(e));
+        });
+      }
+      function remove(row) {
+        var others = listS[0].rows.filter(function(g) {
+          return g.id !== row.id;
+        });
+        var hint = others.length ? "\u8F93\u5165\u63A5\u6536\u51ED\u636E\u7684\u5206\u7EC4 id\uFF08\u7559\u7A7A\u8868\u793A\u79FB\u51FA\u5206\u7EC4\uFF09\uFF1A\n" + others.map(function(g) {
+          return g.id + "  " + g.name;
+        }).join("\n") : "\u7EC4\u5185\u51ED\u636E\u5C06\u79FB\u51FA\u5206\u7EC4\u3002";
+        var moveTo = window.prompt("\u5220\u9664\u5206\u7EC4\u300C" + row.name + "\u300D\uFF1F\n" + hint, "");
+        if (moveTo === null) return;
+        busyS[1](true);
+        msgS[1]("");
+        C.call(api, "vault.groupDelete", { id: row.id, moveTo: moveTo.trim() || void 0 }).then(function() {
+          busyS[1](false);
+          if (openS[0] && openS[0].group.id === row.id) openS[1](null);
+          load();
+        }).catch(function(e) {
+          busyS[1](false);
+          msgS[1](C.errText(e));
+        });
+      }
+      function open(row) {
+        openS[1]({ group: row, items: [], loading: true, error: "" });
+        C.call(api, "vault.subjectsOf", { groupId: row.id }).then(function(r) {
+          openS[1]({ group: row, items: r && r.items || [], loading: false, error: "" });
+        }).catch(function(e) {
+          openS[1]({ group: row, items: [], loading: false, error: C.errText(e) });
+        });
+      }
+      return h(
+        "div",
+        { className: "wbv" },
+        h(
+          "div",
+          { className: "wbv-row" },
+          h("h2", { className: "wbv-grow" }, "\u5206\u7EC4\u4E0E\u5173\u8054"),
+          h(C.Btn, { h, onClick: load }, "\u5237\u65B0")
+        ),
+        h(
+          "p",
+          { className: "wbv-muted" },
+          "\u4E1A\u52A1\u6A21\u5757\uFF08\u7AD9\u70B9\u3001\u8FDE\u63A5\u5668\u7B49\uFF09\u628A\u81EA\u5DF1\u7684\u5BF9\u8C61\u5173\u8054\u5230\u5206\u7EC4\uFF0C\u518D\u6309\u7EC4\u53D6\u7528\u7EC4\u5185\u51ED\u636E\uFF1B\u5173\u8054\u5F15\u7528\u4FDD\u5B58\u5728\u4FDD\u9669\u7BB1\uFF0C\u4E0D\u8981\u6C42\u6A21\u5757\u4F9D\u8D56 sites\u3002"
+        ),
+        h(C.Notice, { h, kind: "error", text: listS[0].error || msgS[0] }),
+        h(
+          "div",
+          { className: "wbv-card wbv-row" },
+          h(
+            C.Field,
+            { h, label: "\u65B0\u5206\u7EC4\u540D\u79F0" },
+            h("input", { value: formS[0].name, placeholder: "\u5982 \u5C11\u6570\u6D3E / \u5DE5\u4F5C\u90AE\u7BB1", onChange: function(e) {
+              formS[1](Object.assign({}, formS[0], { name: e.target.value }));
+            } })
+          ),
+          h(
+            C.Field,
+            { h, label: "\u63CF\u8FF0" },
+            h("input", { value: formS[0].description, placeholder: "\u53EF\u9009", onChange: function(e) {
+              formS[1](Object.assign({}, formS[0], { description: e.target.value }));
+            } })
+          ),
+          h(
+            "div",
+            { style: { alignSelf: "flex-end" } },
+            h(C.Btn, { h, kind: "primary", disabled: busyS[0], onClick: create }, busyS[0] ? "\u521B\u5EFA\u4E2D\u2026" : "\u65B0\u5EFA\u5206\u7EC4")
+          )
+        ),
+        listS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u5206\u7EC4\u2026" }) : listS[0].rows.length === 0 ? h(C.Empty, { h, text: "\u8FD8\u6CA1\u6709\u5206\u7EC4\u3002\u5148\u5EFA\u4E00\u4E2A\u7EC4\uFF0C\u518D\u628A\u51ED\u636E\u653E\u8FDB\u53BB\u3002" }) : h(
+          "table",
+          { className: "wbv-table" },
+          h("thead", null, h("tr", null, ["\u5206\u7EC4", "\u63CF\u8FF0", "\u51ED\u636E", "\u5173\u8054\u5BF9\u8C61", "\u64CD\u4F5C"].map(function(x) {
+            return h("th", { key: x }, x);
+          }))),
+          h("tbody", null, listS[0].rows.map(function(row) {
+            return h(
+              "tr",
+              { key: row.id },
+              h("td", null, h("strong", null, row.name), h("div", { className: "wbv-muted" }, row.id)),
+              h("td", null, row.description || "\u2014"),
+              h("td", null, row.secretCount || 0),
+              h("td", null, row.bindingCount || 0),
+              h("td", null, h(
+                "div",
+                { className: "wbv-inline" },
+                h(C.Btn, { h, kind: "ghost", onClick: function() {
+                  open(row);
+                } }, "\u67E5\u770B\u5173\u8054"),
+                h(C.Btn, { h, kind: "ghost", onClick: function() {
+                  remove(row);
+                } }, "\u5220\u9664")
+              ))
+            );
+          }))
+        ),
+        openS[0] ? h(
+          "div",
+          { className: "wbv-modal", onClick: function() {
+            openS[1](null);
+          } },
+          h(
+            "div",
+            { className: "wbv-modal-box", onClick: function(e) {
+              e.stopPropagation();
+            } },
+            h("h3", null, "\u300C" + openS[0].group.name + "\u300D\u7684\u5173\u8054\u5BF9\u8C61"),
+            openS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u4E2D\u2026" }) : openS[0].error ? h(C.Notice, { h, kind: "error", text: openS[0].error }) : openS[0].items.length === 0 ? h(C.Empty, { h, text: "\u8FD8\u6CA1\u6709\u6A21\u5757\u5173\u8054\u5230\u8FD9\u4E2A\u5206\u7EC4\u3002" }) : h(
+              "table",
+              { className: "wbv-table" },
+              h("thead", null, h("tr", null, ["\u7C7B\u578B", "\u5BF9\u8C61 id", "\u6807\u9898"].map(function(x) {
+                return h("th", { key: x }, x);
+              }))),
+              h("tbody", null, openS[0].items.map(function(item, i) {
+                return h(
+                  "tr",
+                  { key: i },
+                  h("td", null, item.subjectType),
+                  h("td", null, item.subjectId),
+                  h("td", null, item.title || "\u2014")
+                );
+              }))
+            ),
+            h(
+              "div",
+              { className: "wbv-row" },
+              h("span", { className: "wbv-muted wbv-grow" }, "\u5173\u8054\u7531\u4E1A\u52A1\u6A21\u5757\u901A\u8FC7 vault.bind \u6CE8\u518C\uFF1B\u8FD9\u91CC\u53EA\u8BFB\u3002"),
+              h(C.Btn, { h, onClick: function() {
+                openS[1](null);
+              } }, "\u5173\u95ED")
+            )
+          )
+        ) : null
+      );
+    };
   }
 });
 
@@ -2363,7 +2593,7 @@ var require_data = __commonJS({
     module2.exports = require_data_view()({
       domain: "vault",
       prefix: "wbv",
-      tables: ["vault_secret", "vault_meta"],
+      tables: ["vault_secret", "vault_group", "vault_binding"],
       useConfig: function(api, fallback) {
         return { values: fallback, ready: true };
       },
@@ -2964,6 +3194,7 @@ var require_actions = __commonJS({
   var ICONS = {
     shield: (init_shield(), __toCommonJS(shield_exports)).default,
     key: (init_key_round(), __toCommonJS(key_round_exports)).default,
+    folder: (init_folder(), __toCommonJS(folder_exports)).default,
     sliders: (init_sliders_horizontal(), __toCommonJS(sliders_horizontal_exports)).default,
     database: (init_database(), __toCommonJS(database_exports)).default,
     list: (init_list(), __toCommonJS(list_exports)).default
@@ -2999,11 +3230,12 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.1.0",
+    version: "0.2.0",
     icon: (init_shield_check(), __toCommonJS(shield_check_exports)).default,
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },
       { id: "secrets", icon: tabIcon("key"), title: { zh: "\u51ED\u636E", en: "Secrets" }, component: withProps(require_secrets(), "\u51ED\u636E") },
+      { id: "groups", icon: tabIcon("folder"), title: { zh: "\u5206\u7EC4\u4E0E\u5173\u8054", en: "Groups" }, component: withProps(require_groups(), "\u5206\u7EC4\u4E0E\u5173\u8054") },
       { id: "config", icon: tabIcon("sliders"), title: { zh: "\u8BBE\u7F6E", en: "Settings" }, component: withProps(require_config(), "\u8BBE\u7F6E") },
       { id: "data", icon: tabIcon("database"), title: { zh: "\u6570\u636E", en: "Data" }, component: withProps(require_data(), "\u6570\u636E") },
       { id: "actions", icon: tabIcon("list"), title: { zh: "Action", en: "Actions" }, component: withProps(require_actions(), "Action") }

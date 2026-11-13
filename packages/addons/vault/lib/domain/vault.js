@@ -1,5 +1,6 @@
 /**
  * 保险箱核心：KDF 包裹 DEK、DEK 加密 secret，DEK 只在内存。
+ * 0.2.0：口令包裹存单行 vault_header（随云同步），device key 与使用记录留本机。
  * A/B/C 三种 unlock_mode 共用同一套表；切换失败保持原模式。
  */
 import { randomBytes } from "node:crypto";
@@ -14,19 +15,24 @@ import {
   writeDeviceKey,
 } from "../infra/crypto.js";
 import {
-  metaAll,
-  metaDel,
-  metaGet,
-  metaSet,
+  deviceGet,
+  deviceSet,
+  headerGet,
+  headerSet,
   newId,
   now,
   secretRow,
+  touchUsage,
   tx,
+  usageMap,
 } from "../db/db.js";
 
 const KINDS = new Set(["password", "token", "app_password", "api_key", "other"]);
 const MODES = new Set(["A", "B", "C"]);
 const META_BAD = /(pass(word|wd)?|pwd|token|secret|api[_-]?key|private[_-]?key|credential)/i;
+const SYNC_NOTE =
+  "vault_header（口令包裹）与 vault_secret/vault_group/vault_binding 的结构和密文会随云同步上传；" +
+  "device key 与 last_used_at 只留本机。";
 
 function parseKdf(raw) {
   try {
@@ -53,7 +59,7 @@ function validateMode(mode) {
 
 function assertPassphrase(passphrase) {
   const value = String(passphrase || "");
-  if (value.length < 10) throw new Error("口令至少 10 个字符");
+  if (value.length < 12) throw new Error("口令至少 12 个字符");
   return value;
 }
 
@@ -91,12 +97,13 @@ export function createVault({ db, log = () => {} }) {
   };
 
   function initialized() {
-    return Boolean(metaGet(db, "schema_version"));
+    return Boolean(headerGet(db));
   }
 
   function touch() {
     if (!state.dek) return;
-    const idle = Number(metaGet(db, "idle_timeout_sec") || "900");
+    const device = deviceGet(db);
+    const idle = Number((device && device.idle_timeout_sec) || 900);
     if (idle > 0 && state.lastActivity && now() - state.lastActivity > idle * 1000) {
       lock();
       throw new Error("保险箱已因空闲锁定");
@@ -115,36 +122,35 @@ export function createVault({ db, log = () => {} }) {
     return state.dek;
   }
 
-  function wrapForPassphrase(passphrase, salt, dek) {
-    const kek = deriveKey(passphrase, salt, parseKdf(metaGet(db, "kdf")));
-    return seal(kek, dek, "vault:dek");
-  }
-
   function checkPassphrase(passphrase) {
-    const salt = metaGet(db, "salt");
-    const wrapped = metaGet(db, "wrapped_dek");
-    if (!salt || !wrapped) throw new Error("保险箱未初始化");
+    const head = headerGet(db);
+    if (!head) throw new Error("保险箱未初始化");
     try {
-      const kek = deriveKey(String(passphrase || ""), salt, parseKdf(metaGet(db, "kdf")));
-      open(kek, wrapped, "vault:dek");
+      const kek = deriveKey(String(passphrase || ""), head.salt, parseKdf(head.kdf));
+      open(kek, head.wrapped_dek, "vault:dek");
       return true;
     } catch {
       throw new Error("口令错误");
     }
   }
 
+  function groupExists(groupId) {
+    if (!groupId) return true;
+    return Boolean(db.prepare("SELECT 1 FROM vault_group WHERE id = ? AND deleted_at IS NULL").get(String(groupId)));
+  }
+
   function tryAutoUnlock() {
     if (state.dek || !initialized()) return false;
-    if (metaGet(db, "auto_unlock") !== "1") return false;
-    const mode = metaGet(db, "unlock_mode") || "A";
-    if (mode !== "B" && mode !== "C") return false;
-    const wrapped = metaGet(db, "wrapped_dek_device");
+    const device = deviceGet(db);
+    if (!device || Number(device.auto_unlock) !== 1) return false;
+    if (device.unlock_mode !== "B" && device.unlock_mode !== "C") return false;
     const deviceKey = readDeviceKey();
-    if (!wrapped || !deviceKey) return false;
+    if (!device.wrapped_dek_device || !deviceKey) return false;
+    const head = headerGet(db);
     try {
-      state.dek = open(deviceKey, wrapped, "vault:device");
+      state.dek = open(deviceKey, device.wrapped_dek_device, "vault:device");
       state.lastActivity = now();
-      metaSet(db, "last_unlock_at", String(now()));
+      deviceSet(db, { last_unlock_at: now(), passphrase_rev_seen: head.passphrase_rev });
       return true;
     } catch (error) {
       log("自动解锁失败", String(error && error.message));
@@ -163,18 +169,28 @@ export function createVault({ db, log = () => {} }) {
         }
       }
     }
+    const head = headerGet(db);
+    const device = deviceGet(db) || {};
     const count = initialized()
       ? Number(db.prepare("SELECT COUNT(*) AS n FROM vault_secret WHERE deleted_at IS NULL").get()?.n || 0)
+      : 0;
+    const groupCount = initialized()
+      ? Number(db.prepare("SELECT COUNT(*) AS n FROM vault_group WHERE deleted_at IS NULL").get()?.n || 0)
       : 0;
     return {
       initialized: initialized(),
       locked: !state.dek,
-      unlockMode: metaGet(db, "unlock_mode") || "A",
-      revealPolicy: metaGet(db, "reveal_policy") || "session",
-      autoUnlock: metaGet(db, "auto_unlock") === "1",
-      idleTimeoutSec: Number(metaGet(db, "idle_timeout_sec") || "900"),
+      unlockMode: device.unlock_mode || "A",
+      revealPolicy: device.reveal_policy || "session",
+      autoUnlock: Number(device.auto_unlock) === 1,
+      idleTimeoutSec: Number(device.idle_timeout_sec || 900),
       secretCount: count,
-      lastUnlockAt: Number(metaGet(db, "last_unlock_at") || "0") || null,
+      groupCount,
+      lastUnlockAt: Number(device.last_unlock_at || 0) || null,
+      passphraseRev: head ? Number(head.passphrase_rev || 1) : 0,
+      schemaVersion: head ? Number(head.schema_version || 2) : 0,
+      cloudSync: true,
+      syncNote: SYNC_NOTE,
     };
   }
 
@@ -192,22 +208,28 @@ export function createVault({ db, log = () => {} }) {
     const wrappedDevice = deviceKey ? seal(deviceKey, dek, "vault:device") : null;
 
     tx(db, () => {
-      metaSet(db, "schema_version", "1");
-      metaSet(db, "salt", salt.toString("base64"));
-      metaSet(db, "kdf", JSON.stringify(kdf));
-      metaSet(db, "wrapped_dek", wrapped);
-      metaSet(db, "unlock_mode", mode);
-      metaSet(db, "auto_unlock", mode === "A" ? "0" : "1");
-      metaSet(db, "reveal_policy", mode === "B" ? "passphrase" : "session");
-      metaSet(db, "idle_timeout_sec", "900");
-      metaSet(db, "created_at", String(ts));
-      metaSet(db, "last_unlock_at", String(ts));
-      if (wrappedDevice) metaSet(db, "wrapped_dek_device", wrappedDevice);
+      headerSet(db, {
+        salt: salt.toString("base64"),
+        kdf: JSON.stringify(kdf),
+        wrapped_dek: wrapped,
+        passphrase_rev: 1,
+        created_at: ts,
+      });
+      deviceSet(db, {
+        wrapped_dek_device: wrappedDevice,
+        unlock_mode: mode,
+        auto_unlock: mode === "A" ? 0 : 1,
+        reveal_policy: mode === "B" ? "passphrase" : "session",
+        idle_timeout_sec: 900,
+        last_unlock_at: ts,
+        passphrase_rev_seen: 1,
+        created_at: ts,
+      });
     });
     if (deviceKey) writeDeviceKey(deviceKey);
     state.dek = dek;
     state.lastActivity = ts;
-    return { ok: true, unlockMode: mode };
+    return { ok: true, unlockMode: mode, cloudSync: true, syncNote: SYNC_NOTE };
   }
 
   function unlock(args = {}) {
@@ -221,20 +243,26 @@ export function createVault({ db, log = () => {} }) {
       throw new Error("口令错误次数过多，请 " + left + " 秒后重试");
     }
     const passphrase = String(args.passphrase || "");
-    const salt = metaGet(db, "salt");
-    const wrapped = metaGet(db, "wrapped_dek");
+    const head = headerGet(db);
+    const device = deviceGet(db) || { passphrase_rev_seen: head.passphrase_rev };
     try {
-      const kek = deriveKey(passphrase, salt, parseKdf(metaGet(db, "kdf")));
-      state.dek = open(kek, wrapped, "vault:dek");
+      const kek = deriveKey(passphrase, head.salt, parseKdf(head.kdf));
+      state.dek = open(kek, head.wrapped_dek, "vault:dek");
       state.failures = 0;
       state.lastActivity = now();
-      metaSet(db, "last_unlock_at", String(now()));
+      deviceSet(db, { last_unlock_at: now(), passphrase_rev_seen: head.passphrase_rev });
+      if (Number(head.passphrase_rev) > Number(device.passphrase_rev_seen || 0)) {
+        return { ok: true, notice: "口令已在其他设备修改，本机已采用新口令。" };
+      }
       return { ok: true };
-    } catch {
+    } catch (error) {
       state.failures += 1;
       if (state.failures >= 5) {
         state.failures = 0;
         state.lockUntil = now() + 5 * 60 * 1000;
+      }
+      if (Number(head.passphrase_rev) > Number(device.passphrase_rev_seen || 0)) {
+        throw new Error("口令已在其他设备修改，请使用新口令");
       }
       throw new Error("口令错误");
     }
@@ -243,6 +271,7 @@ export function createVault({ db, log = () => {} }) {
   function listSecrets(args = {}) {
     const q = String(args.q || "").trim();
     const kind = String(args.kind || "").trim();
+    const groupId = args.groupId == null ? "" : String(args.groupId);
     const where = ["deleted_at IS NULL"];
     const params = [];
     if (q) {
@@ -253,12 +282,17 @@ export function createVault({ db, log = () => {} }) {
       where.push("kind = ?");
       params.push(kind);
     }
+    if (groupId) {
+      where.push("group_id = ?");
+      params.push(groupId);
+    }
     const rows = db
       .prepare("SELECT * FROM vault_secret WHERE " + where.join(" AND ") + " ORDER BY updated_at DESC")
       .all(...params);
+    const usage = usageMap(db);
     return {
       items: rows.map((row) => ({
-        ...secretRow(row),
+        ...secretRow(row, usage),
         meta: parseJson(row.meta, {}),
       })),
     };
@@ -271,14 +305,16 @@ export function createVault({ db, log = () => {} }) {
     const secret = String(args.secret ?? "");
     if (!secret) throw new Error("secret 不能为空");
     const meta = assertMeta(args.meta);
+    const groupId = args.groupId == null || args.groupId === "" ? null : String(args.groupId);
+    if (!groupExists(groupId)) throw new Error("分组不存在：" + groupId);
     const id = newId("sec");
     const ts = now();
     const ciphertext = seal(dek, secret, secretAad(id, name, kind));
     try {
       db.prepare(
-        "INSERT INTO vault_secret(id, name, kind, meta, ciphertext, created_at, updated_at, rev) " +
-          "VALUES(?, ?, ?, ?, ?, ?, ?, 1)",
-      ).run(id, name, kind, meta, ciphertext, ts, ts);
+        "INSERT INTO vault_secret(id, name, kind, group_id, meta, ciphertext, created_at, updated_at, rev) " +
+          "VALUES(?, ?, ?, ?, ?, ?, ?, ?, 1)",
+      ).run(id, name, kind, groupId, meta, ciphertext, ts, ts);
     } catch (error) {
       const msg = String(error && error.message);
       if (msg.includes("UNIQUE")) throw new Error("已有同名 secret：" + name);
@@ -295,6 +331,9 @@ export function createVault({ db, log = () => {} }) {
     const name = args.name == null ? row.name : assertSecretName(args.name);
     const kind = args.kind == null ? row.kind : assertKind(args.kind);
     const meta = args.meta == null ? row.meta : assertMeta(args.meta);
+    const groupId =
+      args.groupId === undefined ? row.group_id || null : args.groupId === null || args.groupId === "" ? null : String(args.groupId);
+    if (!groupExists(groupId)) throw new Error("分组不存在：" + groupId);
     let ciphertext = row.ciphertext;
     if (args.secret != null && String(args.secret) !== "") {
       ciphertext = seal(dek, String(args.secret), secretAad(id, name, kind));
@@ -305,8 +344,9 @@ export function createVault({ db, log = () => {} }) {
     const ts = now();
     try {
       db.prepare(
-        "UPDATE vault_secret SET name = ?, kind = ?, meta = ?, ciphertext = ?, updated_at = ?, rev = rev + 1 WHERE id = ?",
-      ).run(name, kind, meta, ciphertext, ts, id);
+        "UPDATE vault_secret SET name = ?, kind = ?, group_id = ?, meta = ?, ciphertext = ?, updated_at = ?, rev = rev + 1 " +
+          "WHERE id = ?",
+      ).run(name, kind, groupId, meta, ciphertext, ts, id);
     } catch (error) {
       const msg = String(error && error.message);
       if (msg.includes("UNIQUE")) throw new Error("已有同名 secret：" + name);
@@ -329,8 +369,9 @@ export function createVault({ db, log = () => {} }) {
   function reveal(args = {}) {
     const dek = requireUnlocked();
     const id = String(args.id || "");
-    const mode = metaGet(db, "unlock_mode") || "A";
-    const policy = metaGet(db, "reveal_policy") || "session";
+    const device = deviceGet(db) || {};
+    const mode = device.unlock_mode || "A";
+    const policy = device.reveal_policy || "session";
     if (mode === "B" || policy === "passphrase") {
       const passphrase = String(args.passphrase || "");
       if (!passphrase) throw new Error("当前模式查看凭据需要口令");
@@ -339,19 +380,35 @@ export function createVault({ db, log = () => {} }) {
     const row = db.prepare("SELECT * FROM vault_secret WHERE id = ? AND deleted_at IS NULL").get(id);
     if (!row) throw new Error("secret 不存在：" + id);
     const secret = open(dek, row.ciphertext, secretAad(row.id, row.name, row.kind)).toString("utf8");
-    db.prepare("UPDATE vault_secret SET last_used_at = ? WHERE id = ?").run(now(), id);
+    touchUsage(db, id);
     return { secret, id: row.id, name: row.name, kind: row.kind };
   }
 
   function lease(args = {}) {
     const dek = requireUnlocked();
     const id = String(args.id || "");
+    const subjectType = String(args.subjectType || "");
+    const subjectId = String(args.subjectId || "");
+    if (subjectType && subjectId) {
+      const bound = db
+        .prepare("SELECT 1 FROM vault_binding WHERE subject_type = ? AND subject_id = ? AND deleted_at IS NULL LIMIT 1")
+        .get(subjectType, subjectId);
+      if (!bound) throw new Error("该对象未绑定任何凭据组，无法租用：" + subjectType + "/" + subjectId);
+    }
     const ttl = Math.max(30, Math.min(300, Number(args.ttlSeconds) || 60));
     const row = db.prepare("SELECT * FROM vault_secret WHERE id = ? AND deleted_at IS NULL").get(id);
     if (!row) throw new Error("secret 不存在：" + id);
     const secret = open(dek, row.ciphertext, secretAad(row.id, row.name, row.kind)).toString("utf8");
-    db.prepare("UPDATE vault_secret SET last_used_at = ? WHERE id = ?").run(now(), id);
-    return { secret, name: row.name, kind: row.kind, expiresAt: now() + ttl * 1000, purpose: String(args.purpose || "") };
+    touchUsage(db, id);
+    return {
+      secret,
+      id: row.id,
+      name: row.name,
+      kind: row.kind,
+      groupId: row.group_id || null,
+      expiresAt: now() + ttl * 1000,
+      purpose: String(args.purpose || ""),
+    };
   }
 
   function changePassphrase(args = {}) {
@@ -359,24 +416,27 @@ export function createVault({ db, log = () => {} }) {
     const oldPassphrase = String(args.oldPassphrase || "");
     checkPassphrase(oldPassphrase);
     const next = assertPassphrase(args.newPassphrase);
+    const head = headerGet(db);
     const salt = randomBytes(16);
     const kek = deriveKey(next, salt.toString("base64"), KDF_DEFAULT);
     const wrapped = seal(kek, state.dek, "vault:dek");
-    metaSet(db, "salt", salt.toString("base64"));
-    metaSet(db, "kdf", JSON.stringify(KDF_DEFAULT));
-    metaSet(db, "wrapped_dek", wrapped);
-    return { ok: true };
+    const passphraseRev = Number(head.passphrase_rev || 1) + 1;
+    tx(db, () => {
+      headerSet(db, {
+        salt: salt.toString("base64"),
+        kdf: JSON.stringify(KDF_DEFAULT),
+        wrapped_dek: wrapped,
+        passphrase_rev: passphraseRev,
+      });
+      deviceSet(db, { passphrase_rev_seen: passphraseRev });
+    });
+    return { ok: true, passphraseRev };
   }
 
   function setUnlockMode(args = {}) {
     if (!initialized()) throw new Error("保险箱未初始化");
     const mode = validateMode(args.mode);
-    const before = {
-      unlock_mode: metaGet(db, "unlock_mode"),
-      auto_unlock: metaGet(db, "auto_unlock"),
-      reveal_policy: metaGet(db, "reveal_policy"),
-      wrapped_dek_device: metaGet(db, "wrapped_dek_device"),
-    };
+    const before = deviceGet(db);
     try {
       if (!state.dek) {
         if (!args.passphrase) throw new Error("保险箱已锁定，切换模式需要口令");
@@ -384,39 +444,35 @@ export function createVault({ db, log = () => {} }) {
       }
       if (mode === "A") {
         removeDeviceKey();
-        metaDel(db, "wrapped_dek_device");
-        metaSet(db, "unlock_mode", "A");
-        metaSet(db, "auto_unlock", "0");
-        metaSet(db, "reveal_policy", "session");
+        deviceSet(db, { wrapped_dek_device: null, unlock_mode: "A", auto_unlock: 0, reveal_policy: "session" });
       } else {
         const deviceKey = readDeviceKey() || randomBytes(32);
         const wrapped = seal(deviceKey, state.dek, "vault:device");
         writeDeviceKey(deviceKey);
-        metaSet(db, "wrapped_dek_device", wrapped);
-        metaSet(db, "unlock_mode", mode);
-        metaSet(db, "auto_unlock", "1");
-        metaSet(db, "reveal_policy", mode === "B" ? "passphrase" : "session");
+        deviceSet(db, {
+          wrapped_dek_device: wrapped,
+          unlock_mode: mode,
+          auto_unlock: 1,
+          reveal_policy: mode === "B" ? "passphrase" : "session",
+        });
       }
       return { ok: true, unlockMode: mode };
     } catch (error) {
-      for (const [key, value] of Object.entries(before)) {
-        if (value == null) metaDel(db, key);
-        else metaSet(db, key, value);
-      }
+      if (before) deviceSet(db, before);
       throw error;
     }
   }
 
   function rotateDeviceKey(args = {}) {
     if (!initialized()) throw new Error("保险箱未初始化");
-    const mode = metaGet(db, "unlock_mode") || "A";
-    if (mode === "A") throw new Error("A 模式没有 device key");
+    const device = deviceGet(db) || {};
+    if ((device.unlock_mode || "A") === "A") throw new Error("A 模式没有 device key");
     if (!state.dek) throw new Error("保险箱已锁定");
     checkPassphrase(String(args.passphrase || ""));
     const deviceKey = randomBytes(32);
     const wrapped = seal(deviceKey, state.dek, "vault:device");
     writeDeviceKey(deviceKey);
-    metaSet(db, "wrapped_dek_device", wrapped);
+    deviceSet(db, { wrapped_dek_device: wrapped });
     return { ok: true };
   }
 
@@ -425,7 +481,9 @@ export function createVault({ db, log = () => {} }) {
       formatVersion: 1,
       exportedAt: new Date(now()).toISOString(),
       secrets: [],
-      note: "保险箱密文不进入备份；换机请重新录入凭据。",
+      groups: [],
+      bindings: [],
+      note: "保险箱密文与 KDF 参数不进入备份；换机请重新录入凭据。",
     };
   }
 
@@ -450,7 +508,6 @@ export function createVault({ db, log = () => {} }) {
     exportData,
     importData,
     initialized,
-    metaAll: () => metaAll(db),
-    mode: () => metaGet(db, "unlock_mode") || "A",
+    mode: () => (deviceGet(db) || {}).unlock_mode || "A",
   };
 }

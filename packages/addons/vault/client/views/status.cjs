@@ -50,10 +50,10 @@ module.exports = function StatusView(props) {
   if (!status || !status.initialized) {
     return h("div", { className: "wbv" },
       h("h2", null, "初始化凭据保险箱"),
-      h("p", { className: "wbv-muted" }, "口令只用于派生密钥，不会落库；忘记口令无法恢复已保存的凭据。"),
+      h("p", { className: "wbv-muted" }, "口令只用于派生密钥，不会落库；忘记口令无法恢复已保存的凭据。口令包裹与密文会随云同步上传，云端没有口令解不开。"),
       h(C.Notice, { h: h, kind: "info", text: "默认 A 模式：每次启动后需要重新解锁。可稍后在设置里改成自动解锁。" }),
       h("div", { className: "wbv-card wbv-row" },
-        h(C.Field, { h: h, label: "主口令（至少 10 位）" },
+        h(C.Field, { h: h, label: "主口令（至少 12 位）" },
           h("input", { type: "password", value: pass[0], autoComplete: "new-password", onChange: function (e) { pass[1](e.target.value); } })),
         h(C.Field, { h: h, label: "确认口令" },
           h("input", { type: "password", value: pass2[0], autoComplete: "new-password", onChange: function (e) { pass2[1](e.target.value); } })),
@@ -65,7 +65,7 @@ module.exports = function StatusView(props) {
       h(C.Notice, { h: h, kind: "error", text: msg[0] }),
       h("div", { className: "wbv-row" },
         h(C.Btn, { h: h, kind: "primary", disabled: busy[0], onClick: function () {
-          if (pass[0].length < 10) return msg[1]("口令至少 10 个字符");
+          if (pass[0].length < 12) return msg[1]("口令至少 12 个字符");
           if (pass[0] !== pass2[0]) return msg[1]("两次输入不一致");
           run(function () { return C.call(api, "vault.setup", { passphrase: pass[0], mode: mode[0] }); });
         } }, busy[0] ? "初始化中…" : "创建保险箱")));
@@ -91,6 +91,7 @@ module.exports = function StatusView(props) {
     h("div", { className: "wbv-row" }, h("h2", { className: "wbv-grow" }, "凭据保险箱"), h("span", { className: "wbv-pill ok" }, "已解锁")),
     h("div", { className: "wbv-grid" },
       h("div", { className: "wbv-card" }, h("div", { className: "wbv-muted" }, "凭据数量"), h("div", { className: "wbv-kpi" }, status.secretCount || 0)),
+      h("div", { className: "wbv-card" }, h("div", { className: "wbv-muted" }, "分组数量"), h("div", { className: "wbv-kpi" }, status.groupCount || 0)),
       h("div", { className: "wbv-card" }, h("div", { className: "wbv-muted" }, "解锁模式"), h("div", { className: "wbv-kpi" }, status.unlockMode), h("div", { className: "wbv-muted" }, modeText)),
       h("div", { className: "wbv-card" }, h("div", { className: "wbv-muted" }, "上次解锁"), h("div", null, C.fmtTime(status.lastUnlockAt, lang)))),
     h(C.Notice, { h: h, kind: "info", text: "agent 只能看到名称和备注；查看明文必须由你在界面上操作。" }),

@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbench-vault",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "个人工作台凭据保险箱：加密保存密码/token，agent 只见掩码",
   "type": "module",
   "main": "lib/index.js",
@@ -14,15 +14,21 @@
     "addon": {
       "id": "wb-addon-vault",
       "title": "凭据保险箱",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "minShell": "0.6.7",
       "tables": [
-        "vault_meta",
-        "vault_secret"
+        "vault_header",
+        "vault_device",
+        "vault_group",
+        "vault_secret",
+        "vault_binding",
+        "vault_subject_type",
+        "vault_secret_usage"
       ],
       "views": [
         "status",
         "secrets",
+        "groups",
         "config",
         "data",
         "actions"
@@ -42,7 +48,19 @@
         "vault.rotateDeviceKey",
         "vault.dataTables",
         "vault.dataQuery",
-        "vault.actionSchema"
+        "vault.actionSchema",
+        "vault.groupList",
+        "vault.groupCreate",
+        "vault.groupUpdate",
+        "vault.groupDelete",
+        "vault.subjectRegister",
+        "vault.bind",
+        "vault.unbind",
+        "vault.bindingsOf",
+        "vault.subjectsOf",
+        "vault.subjectSecrets",
+        "vault.bindingPurge",
+        "vault.syncStatus"
       ],
       "client": "lib/client.js"
     }
