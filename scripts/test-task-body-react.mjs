@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
 const require = createRequire(import.meta.url);
 const { createBody } = require('../packages/addons/lib/markdown.cjs');
 const Highlight = require('../packages/addons/tasks/client/ui/highlight.cjs')(React);
@@ -44,15 +45,29 @@ for (const lang of ['zh','en']) for (const status of ['0','1','2','3']) {
   assert.ok(panel.includes('*raw reflection*</textarea>'));
   assert.equal((panel.match(/<textarea/g)||[]).length,2);
 }
+// 任务 ID 只出现在记录页卡片最下方，弹窗内不再重复。
 const ULID = '01a1d070c5db7579ad833f6d3904189b';
+const readSrc = (rel) => readFileSync(new URL('../' + rel, import.meta.url), 'utf8');
+const styles = readSrc('packages/addons/tasks/client/ui/styles.cjs');
+const itemSrc = readSrc('packages/addons/tasks/client/item/task-item.cjs');
 for (const lang of ['zh', 'en']) {
-  const panel = renderToStaticMarkup(h(EditModal, { lang, t: copy[lang], task: { id: ULID, title: 'Title', description: '', review: '', status: '0' }, tree: [], onClose() {} }));
   const label = lang === 'en' ? 'Task ID' : '任务 ID';
-  assert.ok(panel.includes(label + ' \u00b7 ' + ULID), 'detail footer shows the full task id');
-  assert.equal((panel.match(/wbt-modal-id/g) || []).length, 1, 'exactly one id line');
-  assert.ok(panel.indexOf('wbt-modal-foot') < panel.indexOf('wbt-modal-id'), 'id line sits below the button row');
-  assert.ok(!panel.includes('wbt-modal-id">' + ULID + ' ·'), 'id line keeps its label');
+  const panel = renderToStaticMarkup(h(EditModal, { lang, t: copy[lang], task: { id: ULID, title: 'Title', description: '', review: '', status: '0' }, tree: [], onClose() {} }));
+  assert.ok(!panel.includes('wbt-modal-id'), 'modal no longer renders the id line');
+  assert.ok(!panel.includes(ULID), 'modal shows no task id at all');
+  const card = renderToStaticMarkup(h(Task, { lang, t: copy[lang], task: { id: ULID, title: 'Title', description: 'Body', review: 'Review', status: '0', tags: [] }, update() {} }));
+  assert.ok(card.includes(label + ' \u00b7 ' + ULID), 'card bottom shows the full task id');
+  assert.equal((card.match(/wbt-item-id/g) || []).length, 1, 'exactly one id line per card');
+  assert.ok(card.indexOf('wbt-review') < card.indexOf('wbt-item-id'), 'id line sits below the review body');
+  assert.ok(card.includes('title="' + ULID + '"'), 'id line keeps the raw id as title');
+  const noId = renderToStaticMarkup(h(Task, { lang, t: copy[lang], task: { id: '', title: 'No id', description: '', review: '', status: '0', tags: [] }, update() {} }));
+  assert.ok(!noId.includes('wbt-item-id'), 'empty id renders no line');
 }
+assert.ok(/\.wbt-item-id\{[^}]*user-select:text/.test(styles), 'id line is selectable');
+assert.ok(/\.wbt-item-id\{[^}]*overflow-wrap:anywhere/.test(styles), 'id line wraps instead of overflowing');
+assert.ok(/\.wbt-item-id\{[^}]*font-family:ui-monospace/.test(styles), 'id line uses a monospace face');
+assert.ok(!styles.includes('.wbt-modal-id'), 'dead modal id style removed');
+assert.ok(/className: "wbt-item-id"/.test(itemSrc) && /stopPropagation/.test(itemSrc), 'card id click does not bubble to edit/select');
 const Description = require('../packages/addons/lib/description.cjs').Description;
 const storage=renderToStaticMarkup(h(Description,{text:fixture,lang:'en'}));
 assert.ok(storage.includes('<br/>')&&storage.includes('<hr/>'));assert.ok(storage.includes('Description'));
@@ -64,4 +79,4 @@ assert.ok(storage.includes('lucide-code'));
 assert.ok(storage.includes('aria-pressed="true"'));
 const storageText=renderToStaticMarkup(h(Description,{text:'**raw**',bodyMode:'text',lang:'en'}));
 assert.ok(storageText.includes('lucide-pilcrow')); assert.ok(storageText.includes('aria-pressed="false"')); assert.ok(storageText.includes('**raw**'));
-console.log('TASK BODY REAL REACT PASS', {version:React.version,voidElements:['br','hr'],taskCards:4,storage:true,escaping:true,highlight:true});
+console.log('TASK BODY REAL REACT PASS', {version:React.version,voidElements:['br','hr'],taskCards:4,storage:true,escaping:true,highlight:true,cardTaskId:true});

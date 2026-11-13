@@ -104,13 +104,24 @@ module.exports = function (deps) {
       ? h("div", { className: "wbt-metazone", key: "metazone" }, tagBlock, wsBlock, metaBlock, pathBlock)
       : null;
 
+    // 卡片最下方一行任务 ID：可拖选复制；点击不冒泡，避免触发编辑或切换勾选。
+    var idNode = String(task.id || "")
+      ? h("div", {
+          className: "wbt-item-id",
+          key: "taskid",
+          title: String(task.id),
+          onClick: function (e) { e.stopPropagation(); },
+        }, t.taskId + " · " + String(task.id))
+      : null;
+
     return h("div", { className: cx("wbt-item", String(task.status) === "1" && "closed") },
       props.selectionMode ? h("input", { type: "checkbox", className: "wbt-check", checked: !!props.checked, onChange: function () { props.onCheck(task.id); } }) : null,
       h("div", { className: "wbt-main" },
         h("div", { className: "wbt-chead" }, line1, opsNode),
         metaZone,
         descNode,
-        reviewNode
+        reviewNode,
+        idNode
       )
     );
   }

@@ -6983,6 +6983,8 @@ var require_styles = __commonJS({
       ".wbt-item.closed{opacity:.62}",
       ".wbt-item.closed .wbt-title{text-decoration:line-through}",
       ".wbt-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}",
+      ".wbt-item-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.4;letter-spacing:.2px;opacity:.55;color:inherit;user-select:text;-webkit-user-select:text;overflow-wrap:anywhere;word-break:break-all;border-top:1px dashed color-mix(in oklab,var(--wbt-line) 80%,transparent);margin-top:2px;padding-top:5px;cursor:text}",
+      ".wbt-item-id:hover{opacity:.8}",
       ".wbt-chead{display:flex;align-items:flex-start;gap:10px;min-width:0}",
       ".wbt-line1{display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap;flex:1 1 auto}",
       ".wbt-title{font-weight:620;font-size:14px;line-height:1.38;letter-spacing:.1px;word-break:break-word;overflow-wrap:anywhere;max-width:100%}",
@@ -7112,7 +7114,6 @@ var require_styles = __commonJS({
       ".wbt-field.full{grid-column:1 / -1}",
       ".wbt-field>span{opacity:.62;font-size:11.5px}",
       ".wbt-modal-foot{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:2px}",
-      ".wbt-modal-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.45;letter-spacing:.2px;opacity:.6;user-select:text;-webkit-user-select:text;overflow-wrap:anywhere;border-top:1px solid var(--wbt-line);margin-top:2px;padding-top:7px}",
       ".wbt-timeline{display:flex;flex-direction:column;gap:0;margin:2px 0}",
       ".wbt-tl-item{display:flex;gap:9px;min-height:40px}",
       ".wbt-tl-rail{width:12px;display:flex;flex-direction:column;align-items:center;flex:none}",
@@ -7310,6 +7311,14 @@ var require_task_item = __commonJS({
         var metaBlock = meta.length ? h("div", { className: "wbt-foot", key: "meta" }, h("div", { className: "wbt-meta" }, meta)) : null;
         var pathBlock = task.path && task.path.length ? h("div", { className: "wbt-taskpath", key: "path" }, h(PathCrumbs, { path: task.path, t, onPick: props.onPathPick })) : null;
         var metaZone = tagBlock || wsBlock || metaBlock || pathBlock ? h("div", { className: "wbt-metazone", key: "metazone" }, tagBlock, wsBlock, metaBlock, pathBlock) : null;
+        var idNode = String(task.id || "") ? h("div", {
+          className: "wbt-item-id",
+          key: "taskid",
+          title: String(task.id),
+          onClick: function(e) {
+            e.stopPropagation();
+          }
+        }, t.taskId + " \xB7 " + String(task.id)) : null;
         return h(
           "div",
           { className: cx("wbt-item", String(task.status) === "1" && "closed") },
@@ -7322,7 +7331,8 @@ var require_task_item = __commonJS({
             h("div", { className: "wbt-chead" }, line1, opsNode),
             metaZone,
             descNode,
-            reviewNode
+            reviewNode,
+            idNode
           )
         );
       }
@@ -8839,9 +8849,7 @@ var require_edit_modal = __commonJS({
               { className: "wbt-modal-foot" },
               h("button", { className: "wbt-btn ghost", disabled: isBusy, onClick: requestClose }, t.cancel),
               h("button", { className: "wbt-btn primary", disabled: isBusy || !titleOk, onClick: submit }, isBusy ? "\u2026" : t.save)
-            ),
-            // 详情最下方展示完整任务 ID：小字、等宽、可选中复制，不参与提交。
-            String(task.id || "") ? h("div", { className: "wbt-modal-id", title: String(task.id) }, t.taskId + " \xB7 " + String(task.id)) : null
+            )
           )
         );
       }
@@ -11488,7 +11496,7 @@ var init_list_checks = __esm({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.13",
+    version: "5.2.14",
     icon: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
