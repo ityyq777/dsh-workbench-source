@@ -5058,7 +5058,7 @@ if (host) {
   h = require("react").createElement, Icon2 = require_icons().Icon;
   host.registerAddon({
     id: "wb-addon-storage",
-    version: "1.5.2",
+    version: "1.5.3",
     icon: (init_package(), __toCommonJS(package_exports)).default,
     views: [
       { id: "stats", icon: tabIcon2("chart"), title: { zh: "\u7EDF\u8BA1", en: "Statistics" }, component: require_stats().Stats },

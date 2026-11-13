@@ -43,6 +43,7 @@
     "test:timeline": "node scripts/test-timeline-stats.mjs",
     "test:workspaces": "node scripts/test-workspaces.mjs",
     "test:tags": "node scripts/test-tags.mjs",
+    "test:tag-source-registry": "node scripts/test-tag-source-registry.mjs",
     "test:tags-ui": "node scripts/test-tags-ui.mjs",
     "test:sites": "node scripts/test-sites.mjs",
     "test:node-overview": "node scripts/test-node-overview.mjs",
@@ -79,7 +80,8 @@
     "test:calendar": "node --test packages/addons/calendar/test/calendar.test.mjs",
     "test:mail": "node --test packages/addons/mail/test/mail.test.mjs",
     "test:message-config": "node scripts/test-message-config-state.mjs",
-    "test:difficulty-dimensions": "node scripts/test-difficulty-dimensions.mjs"
+    "test:difficulty-dimensions": "node scripts/test-difficulty-dimensions.mjs",
+    "test:tag-source-adopt": "node scripts/test-tag-source-adopt.mjs"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.72.1",

@@ -9,6 +9,7 @@ import { registerActivityCalendarAction } from "./stats/activity-calendar.js";
 import { registerTimelineStatsAction } from "./stats/timeline-stats.js";
 import { DIFFICULTY_GUIDANCE } from "./task/model/task-difficulty.js";
 import { bindClock, ensureSchema } from "./db/db.js";
+import { ensureTaskTagSource } from "./tagging/tagging.js";
 import { exportTasksData, importTasksData } from "./infra/backup.js";
 import { taskSync } from "./infra/sync.js";
 import { registerTaskActions } from "./tasks.js";
@@ -84,6 +85,8 @@ export function setup(api) {
   domainApi = api;
   if (typeof api.now === "function") bindClock(api.now);
   ensureSchema(api.db, api.log);
+  // 标签来源登记：标签域（tags ≥ 1.7.1）要求 item_type 先注册才能写 tag_mapping。
+  ensureTaskTagSource(api.db, api.log);
   const actionDefs = trackActions(api);
   registerTaskActions(api);
   registerActivityCalendarAction(api);
@@ -118,7 +121,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/时间线/配置/数据五个视图：紧急/已关闭/已开启/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "5.2.15",
+        version: "5.2.16",
         tables: ["task", "task_node", "task_timeline", "task_timeline_link", "task_workspace", "task_workspace_link"],
         sync: taskSync,
         views: [

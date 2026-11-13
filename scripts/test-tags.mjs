@@ -183,6 +183,8 @@ const tied = capped.rankings.topTags.filter((row) => row.count === 0).map((row) 
 assert(tied.join() === tied.slice().sort().join(), "ties ordered by id ascending");
 assert(report({ top: 5 }).rankings.topTags.length === 100, "Top default independent of top");
 // 未知对象类型：归入「其他」时也要给出去重对象数，不能恒为 0。
+// 来源注册门禁（tags 1.7.1）：直接写 tag_mapping 前必须先把 item_type 注册成唯一来源。
+statsDefs["tags.registerSource"].execute({ source: "device", owner: "wb-addon-fixture" });
 statsDb.prepare("INSERT INTO tag_mapping(id,tag_id,item_id,item_type,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,'device',?,?,NULL,1)").run("other-a", "rank-000", "dev-1", stamp, stamp);
 statsDb.prepare("INSERT INTO tag_mapping(id,tag_id,item_id,item_type,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,'device',?,?,NULL,1)").run("other-b", "rank-000", "dev-2", stamp, stamp);
 const otherType = report({ topTagsLimit: 100 }).breakdowns.itemTypes.find(function (row) { return row.key === "other"; });

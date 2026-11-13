@@ -4,6 +4,7 @@
  */
 
 import { bindClock, ensureSchema } from "./db/db.js";
+import { ensureSiteTagSource } from "./domain/sites-mappings.js";
 import { exportSitesData, importSitesData } from "./infra/backup.js";
 import { siteSync } from "./infra/sync.js";
 import { registerSiteTreeActions } from "./tree/tree.js";
@@ -62,6 +63,8 @@ export function setup(api) {
   if (typeof api.call === "function") bindVault(api.call);
   if (typeof api.now === "function") bindClock(api.now);
   ensureSchema(api.db, api.log);
+  // 标签来源登记：标签域（tags ≥ 1.7.1）要求 item_type 先注册才能写 tag_mapping。
+  ensureSiteTagSource(api.db, api.log);
   const actionDefs = trackActions(api);
   registerSiteTreeActions(api);
   registerOverviewAction(api);
@@ -94,7 +97,7 @@ export function apply(ctx) {
         id: "wb-addon-sites",
         title: "站点",
         description: "站点收藏：目录树、链接与标签（标签需安装标签插件）；含统计/记录/配置/数据四个视图",
-        version: "1.11.0",
+        version: "1.11.1",
         tables: ["site", "site_node", "site_node_mapping", "tag_mapping", "site_account", "site_account_external"],
         sync: siteSync,
         views: [
