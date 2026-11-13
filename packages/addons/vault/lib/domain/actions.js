@@ -2,7 +2,7 @@
  * 保险箱 action 契约：所有写操作按 origin 门禁，agent 永远拿不到明文。
  * 分组与关联对 plugin 开放，业务模块用自身标识注册，不需要依赖 sites。
  */
-const KINDS = ["password", "token", "app_password", "api_key", "other"];
+const KINDS = ["password", "token", "app_password", "api_key", "other", "site-account"];
 
 function only(ctx, allowed, action) {
   const origin = ctx && ctx.origin ? ctx.origin : "agent";
@@ -14,7 +14,7 @@ export function registerVaultActions(api, vault, groups) {
     description: "只读：保险箱是否初始化、是否锁定、解锁模式、凭据/分组数量与同步状态；不含任何密文。",
     input: { type: "object", properties: {}, additionalProperties: false },
     execute: (_args, ctx) => {
-      only(ctx, ["ui", "agent"], "vault.status");
+      only(ctx, ["ui", "agent", "plugin"], "vault.status");
       return vault.status();
     },
   });
@@ -117,7 +117,7 @@ export function registerVaultActions(api, vault, groups) {
     input: {
       type: "object",
       properties: {
-        name: { type: "string", description: "唯一名称，1–80 字" },
+        name: { type: "string", description: "唯一名称，1–100 字" },
         kind: { type: "string", enum: KINDS },
         secret: { type: "string", description: "明文密码/token，不会落审计" },
         meta: { type: "object", description: "非敏感备注：用户名、URL、过期提醒" },
@@ -317,7 +317,7 @@ export function registerVaultActions(api, vault, groups) {
       additionalProperties: false,
     },
     execute: (args, ctx) => {
-      only(ctx, ["plugin"], "vault.bind");
+      only(ctx, ["ui", "plugin"], "vault.bind");
       return groups.bind(args);
     },
   });
@@ -335,7 +335,7 @@ export function registerVaultActions(api, vault, groups) {
       additionalProperties: false,
     },
     execute: (args, ctx) => {
-      only(ctx, ["plugin"], "vault.unbind");
+      only(ctx, ["ui", "plugin"], "vault.unbind");
       return groups.unbind(args);
     },
   });
@@ -383,6 +383,79 @@ export function registerVaultActions(api, vault, groups) {
     execute: (args, ctx) => {
       only(ctx, ["plugin"], "vault.subjectSecrets");
       return groups.subjectSecrets(args);
+    },
+  });
+
+  function boundGroups(args) {
+    const subjectType = String(args.subjectType || "");
+    const subjectId = String(args.subjectId || "");
+    if (!subjectType || !subjectId) throw new Error("subjectType 与 subjectId 必填");
+    const result = groups.bindingsOf({ subjectType, subjectId });
+    if (!result.items.length) throw new Error("该对象未绑定任何凭据组，无法写入");
+    return result.items;
+  }
+
+  function pickGroup(args, items) {
+    const wanted = args.groupId ? String(args.groupId) : "";
+    if (wanted) {
+      if (!items.some((item) => item.groupId === wanted)) throw new Error("该凭据组未绑定到此对象");
+      return wanted;
+    }
+    if (items.length === 1) return items[0].groupId;
+    throw new Error("对象绑定了多个凭据组，需指定 groupId");
+  }
+
+  function assertPluginSecretName(name) {
+    const value = String(name || "").trim();
+    if (!/^site\.[^.]+(\.[^.]+){2,}$/.test(value)) {
+      throw new Error("pluginSecret 名称需为 site.<siteId>.<accountId>.<field>");
+    }
+    return value;
+  }
+
+  api.action("vault.pluginSecretUpsert", {
+    description:
+      "后台插件写：只能写自己 subject 已绑定的凭据组，按 (组, 名称) 幂等写入一条凭据；不返回明文。",
+    input: {
+      type: "object",
+      properties: {
+        subjectType: { type: "string", description: "业务对象类型，如 site" },
+        subjectId: { type: "string", description: "业务对象 id" },
+        groupId: { type: "string", description: "绑定的凭据组；对象只绑一个组时可省略" },
+        name: { type: "string", description: "凭据名，形如 site.<siteId>.<accountId>.<field>" },
+        kind: { type: "string", enum: KINDS },
+        secret: { type: "string", description: "明文，落库前加密" },
+        meta: { type: "object", description: "非敏感元数据，禁止 password/token 等键名" },
+      },
+      required: ["subjectType", "subjectId", "name", "secret"],
+      additionalProperties: false,
+    },
+    execute: (args, ctx) => {
+      only(ctx, ["plugin"], "vault.pluginSecretUpsert");
+      const items = boundGroups(args);
+      const groupId = pickGroup(args, items);
+      return vault.upsertSecretInGroup({ ...args, groupId, name: assertPluginSecretName(args.name) });
+    },
+  });
+
+  api.action("vault.pluginSecretDelete", {
+    description: "后台插件写：删除自己 subject 已绑定组内的一条凭据（软删，幂等）。",
+    input: {
+      type: "object",
+      properties: {
+        subjectType: { type: "string" },
+        subjectId: { type: "string" },
+        groupId: { type: "string", description: "绑定的凭据组；对象只绑一个组时可省略" },
+        name: { type: "string" },
+      },
+      required: ["subjectType", "subjectId", "name"],
+      additionalProperties: false,
+    },
+    execute: (args, ctx) => {
+      only(ctx, ["plugin"], "vault.pluginSecretDelete");
+      const items = boundGroups(args);
+      const groupId = pickGroup(args, items);
+      return vault.deleteSecretInGroup({ ...args, groupId, name: assertPluginSecretName(args.name) });
     },
   });
 

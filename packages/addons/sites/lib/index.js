@@ -12,6 +12,7 @@ import { registerSiteActions } from "./domain/sites.js";
 import { registerAccountActions } from "./domain/accounts.js";
 import { registerConfigActions } from "./infra/config.js";
 import { registerDataActions } from "./infra/data.js";
+import { bindVault } from "./infra/vault-link.js";
 
 export const inject = ["workbench"];
 
@@ -58,6 +59,7 @@ function registerActionSchemaAction(api, defs, domain) {
 
 export function setup(api) {
   domainApi = api;
+  if (typeof api.call === "function") bindVault(api.call);
   if (typeof api.now === "function") bindClock(api.now);
   ensureSchema(api.db, api.log);
   const actionDefs = trackActions(api);
@@ -92,7 +94,7 @@ export function apply(ctx) {
         id: "wb-addon-sites",
         title: "站点",
         description: "站点收藏：目录树、链接与标签（标签需安装标签插件）；含统计/记录/配置/数据四个视图",
-        version: "1.10.0",
+        version: "1.11.0",
         tables: ["site", "site_node", "site_node_mapping", "tag_mapping", "site_account", "site_account_external"],
         sync: siteSync,
         views: [

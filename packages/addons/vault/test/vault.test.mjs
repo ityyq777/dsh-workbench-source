@@ -122,7 +122,7 @@ test("分组、关联与按组可见凭据", () => {
   const bound = run("vault.bind", { subjectType: "site", subjectId: "site_1", groupId }, "plugin");
   assert.ok(bound.id);
   assert.equal(run("vault.bind", { subjectType: "site", subjectId: "site_1", groupId }, "plugin").existing, true);
-  assert.throws(() => run("vault.bind", { subjectType: "site", subjectId: "site_1", groupId }, "ui"), /不允许 ui/);
+  assert.equal(run("vault.bind", { subjectType: "site", subjectId: "site_1", groupId }, "ui").existing, true);
 
   const bindings = run("vault.bindingsOf", { subjectType: "site", subjectId: "site_1" }, "agent");
   assert.equal(bindings.items.length, 1);
@@ -151,6 +151,80 @@ test("分组、关联与按组可见凭据", () => {
     0,
     "删组后凭据应移出分组",
   );
+});
+
+test("plugin 写入受绑定约束，按 (组, 名称) 幂等", () => {
+  const { db, run } = makeVault();
+  run("vault.setup", { passphrase: PASS, mode: "A" });
+  const groupId = run("vault.groupCreate", { name: "站点账号 · 少数派" }).id;
+  const otherId = run("vault.groupCreate", { name: "别的组" }).id;
+  run("vault.subjectRegister", { type: "site", title: "站点" }, "plugin");
+  run("vault.bind", { subjectType: "site", subjectId: "site_1", groupId }, "plugin");
+
+  const name = "site.site_1.acc_1.password";
+  const meta = { siteId: "site_1", accountId: "acc_1", field: "password" };
+  const created = run(
+    "vault.pluginSecretUpsert",
+    { subjectType: "site", subjectId: "site_1", name, kind: "site-account", secret: "pw-a", meta },
+    "plugin",
+  );
+  assert.equal(created.created, true);
+  const row = db.prepare("SELECT * FROM vault_secret WHERE id = ?").get(created.id);
+  assert.ok(row.ciphertext.startsWith("v1:"));
+  assert.ok(!row.ciphertext.includes("pw-a"));
+
+  const visible = run("vault.subjectSecrets", { subjectType: "site", subjectId: "site_1" }, "plugin");
+  assert.equal(visible.items.length, 1);
+  assert.deepEqual(visible.items[0].meta, meta);
+  assert.equal(visible.items[0].groupId, groupId);
+
+  const updated = run(
+    "vault.pluginSecretUpsert",
+    { subjectType: "site", subjectId: "site_1", name, kind: "site-account", secret: "pw-b", meta },
+    "plugin",
+  );
+  assert.equal(updated.created, false);
+  assert.equal(updated.id, created.id);
+  assert.equal(run("vault.secretReveal", { id: created.id }).secret, "pw-b");
+  assert.equal(db.prepare("SELECT rev FROM vault_secret WHERE id = ?").get(created.id).rev, 2);
+
+  assert.throws(
+    () =>
+      run(
+        "vault.pluginSecretUpsert",
+        { subjectType: "site", subjectId: "site_404", name, secret: "pw" },
+        "plugin",
+      ),
+    /未绑定任何凭据组/,
+  );
+  assert.throws(
+    () =>
+      run(
+        "vault.pluginSecretUpsert",
+        { subjectType: "site", subjectId: "site_1", groupId: otherId, name, secret: "pw" },
+        "plugin",
+      ),
+    /未绑定到此对象/,
+  );
+  assert.throws(
+    () =>
+      run(
+        "vault.pluginSecretUpsert",
+        { subjectType: "site", subjectId: "site_1", name, secret: "pw" },
+        "agent",
+      ),
+    /不允许 agent/,
+  );
+
+  assert.equal(
+    run("vault.pluginSecretDelete", { subjectType: "site", subjectId: "site_1", name }, "plugin").removed,
+    true,
+  );
+  assert.equal(
+    run("vault.pluginSecretDelete", { subjectType: "site", subjectId: "site_1", name }, "plugin").removed,
+    false,
+  );
+  assert.equal(run("vault.subjectSecrets", { subjectType: "site", subjectId: "site_1" }, "plugin").items.length, 0);
 });
 
 test("并发改口令：LWW + 提示", () => {

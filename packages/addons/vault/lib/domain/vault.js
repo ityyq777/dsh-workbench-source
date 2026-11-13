@@ -27,7 +27,7 @@ import {
   usageMap,
 } from "../db/db.js";
 
-const KINDS = new Set(["password", "token", "app_password", "api_key", "other"]);
+const KINDS = new Set(["password", "token", "app_password", "api_key", "other", "site-account"]);
 const MODES = new Set(["A", "B", "C"]);
 const META_BAD = /(pass(word|wd)?|pwd|token|secret|api[_-]?key|private[_-]?key|credential)/i;
 const SYNC_NOTE =
@@ -65,13 +65,13 @@ function assertPassphrase(passphrase) {
 
 function assertSecretName(name) {
   const value = String(name || "").trim();
-  if (!value || value.length > 80) throw new Error("名称必填，最多 80 字");
+  if (!value || value.length > 100) throw new Error("名称必填，最多 100 字");
   return value;
 }
 
 function assertKind(kind) {
   const value = String(kind || "other");
-  if (!KINDS.has(value)) throw new Error("kind 必须是 password/token/app_password/api_key/other");
+  if (!KINDS.has(value)) throw new Error("kind 必须是 password/token/app_password/api_key/other/site-account");
   return value;
 }
 
@@ -476,6 +476,54 @@ export function createVault({ db, log = () => {} }) {
     return { ok: true };
   }
 
+  /**
+   * 供受绑定约束的 plugin 写接口使用：按 (groupId, name) 幂等写入一条凭据。
+   * 绑定/授权校验在 action 层完成，这里只负责加密落库。
+   */
+  function upsertSecretInGroup(args = {}) {
+    const dek = requireUnlocked();
+    const name = assertSecretName(args.name);
+    const kind = assertKind(args.kind || "other");
+    const secret = String(args.secret ?? "");
+    if (!secret) throw new Error("secret 不能为空");
+    const meta = assertMeta(args.meta);
+    const groupId = String(args.groupId || "");
+    if (!groupId) throw new Error("groupId 必填");
+    if (!groupExists(groupId)) throw new Error("分组不存在：" + groupId);
+    const row = db
+      .prepare("SELECT * FROM vault_secret WHERE group_id = ? AND name = ? AND deleted_at IS NULL")
+      .get(groupId, name);
+    const ts = now();
+    if (row) {
+      const ciphertext = seal(dek, secret, secretAad(row.id, name, kind));
+      db.prepare(
+        "UPDATE vault_secret SET kind = ?, meta = ?, ciphertext = ?, updated_at = ?, rev = rev + 1 WHERE id = ?",
+      ).run(kind, meta, ciphertext, ts, row.id);
+      return { id: row.id, created: false, updated: true };
+    }
+    const id = newId("sec");
+    const ciphertext = seal(dek, secret, secretAad(id, name, kind));
+    db.prepare(
+      "INSERT INTO vault_secret(id, name, kind, group_id, meta, ciphertext, created_at, updated_at, rev) " +
+        "VALUES(?, ?, ?, ?, ?, ?, ?, ?, 1)",
+    ).run(id, name, kind, groupId, meta, ciphertext, ts, ts);
+    return { id, created: true, updated: false };
+  }
+
+  function deleteSecretInGroup(args = {}) {
+    requireUnlocked();
+    const name = assertSecretName(args.name);
+    const groupId = String(args.groupId || "");
+    if (!groupId) throw new Error("groupId 必填");
+    const info = db
+      .prepare(
+        "UPDATE vault_secret SET deleted_at = ?, updated_at = ?, rev = rev + 1 " +
+          "WHERE group_id = ? AND name = ? AND deleted_at IS NULL",
+      )
+      .run(now(), now(), groupId, name);
+    return { ok: true, removed: Number(info.changes || 0) > 0 };
+  }
+
   function exportData() {
     return {
       formatVersion: 1,
@@ -500,6 +548,8 @@ export function createVault({ db, log = () => {} }) {
     createSecret,
     updateSecret,
     deleteSecret,
+    upsertSecretInGroup,
+    deleteSecretInGroup,
     reveal,
     lease,
     changePassphrase,

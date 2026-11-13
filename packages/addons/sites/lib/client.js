@@ -4367,6 +4367,421 @@ var require_styles = __commonJS({
   }
 });
 
+// packages/addons/sites/client/ui/accounts-modal.cjs
+var require_accounts_modal = __commonJS({
+  "packages/addons/sites/client/ui/accounts-modal.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function createAccountsModal(deps) {
+      var h2 = deps.h;
+      var React2 = deps.React;
+      var useState = deps.useState;
+      var useEffect = deps.useEffect;
+      var Modal = deps.Modal;
+      var Icon2 = deps.Icon;
+      var text = deps.text;
+      var callApi = deps.callApi;
+      var errText = deps.errText;
+      function AccountModal(props) {
+        var api = props.api;
+        var lang = props.lang || "zh";
+        var site = props.site;
+        var [accounts, setAccounts] = useState([]);
+        var [vault, setVault] = useState({});
+        var [loading, setLoading] = useState(true);
+        var [error, setError] = useState("");
+        var [busy, setBusy] = useState(false);
+        var [draft, setDraft] = useState(null);
+        var [pass, setPass] = useState("");
+        var [pass2, setPass2] = useState("");
+        var [cascade, setCascade] = useState([]);
+        var [pickKey, setPickKey] = useState("");
+        var [pendingDelete, setPendingDelete] = useState("");
+        var [shown, setShown] = useState({});
+        var [binding, setBinding] = useState(null);
+        function mapVault(st) {
+          var r = st || {};
+          var idle = Number(r.idleTimeoutSec) > 0 ? Math.round(Number(r.idleTimeoutSec) / 60) : 15;
+          return {
+            installed: true,
+            enabled: Boolean(r.initialized),
+            unlocked: !r.locked,
+            locked: Boolean(r.locked),
+            unlockMode: r.unlockMode,
+            idleMinutes: idle,
+            remainingMs: r.locked ? 0 : idle * 60 * 1e3
+          };
+        }
+        function reload() {
+          setLoading(true);
+          return Promise.all([
+            callApi(api, "sites.accounts.list", { siteId: site.id }),
+            callApi(api, "vault.status", {}),
+            callApi(api, "vault.bindingsOf", { subjectType: "site", subjectId: site.id })
+          ]).then(function(out) {
+            setAccounts(out[0].accounts || []);
+            setVault(mapVault(out[1]));
+            setBinding(out[2] && out[2].items && out[2].items[0] || null);
+            setError("");
+          }).catch(function(e) {
+            setError(errText(e));
+          }).finally(function() {
+            setLoading(false);
+          });
+        }
+        function loadCascade() {
+          callApi(api, "sites.accounts.cascade", { excludeSiteId: site.id }).then(function(r) {
+            var list = [];
+            (r.groups || []).forEach(function(g) {
+              g.accounts.forEach(function(a) {
+                list.push({ id: a.id, label: g.siteName + " \xB7 " + a.accountKey });
+              });
+            });
+            setCascade(list);
+          }).catch(function() {
+            setCascade([]);
+          });
+        }
+        useEffect(function() {
+          reload();
+          loadCascade();
+        }, [site.id]);
+        function guard(fn) {
+          setBusy(true);
+          setError("");
+          return Promise.resolve().then(fn).catch(function(e) {
+            setError(errText(e));
+          }).finally(function() {
+            setBusy(false);
+          });
+        }
+        function submitVault() {
+          if (!pass || pass.length < 12) {
+            setError(text(lang, "passTooShort"));
+            return;
+          }
+          if (!vault.enabled && pass !== pass2) {
+            setError(text(lang, "passMismatch"));
+            return;
+          }
+          guard(function() {
+            var req = vault.enabled ? callApi(api, "vault.unlock", { passphrase: pass }) : callApi(api, "vault.setup", { passphrase: pass, mode: "A" });
+            return req.then(function() {
+              setPass("");
+              setPass2("");
+              return reload();
+            });
+          });
+        }
+        function lockVault() {
+          guard(function() {
+            return callApi(api, "vault.lock", {}).then(function() {
+              setShown({});
+              return reload();
+            });
+          });
+        }
+        function bindGroup() {
+          guard(function() {
+            return callApi(api, "vault.groupCreate", { name: "\u7AD9\u70B9\u8D26\u53F7 \xB7 " + (site.siteName || site.id) }).then(function(g) {
+              return callApi(api, "vault.bind", { subjectType: "site", subjectId: site.id, groupId: g.id });
+            }).then(function() {
+              return reload();
+            });
+          });
+        }
+        function saveDraft() {
+          var body = {
+            accountKey: draft.accountKey,
+            account: draft.account,
+            remark: draft.remark
+          };
+          if (draft.password) body.password = draft.password;
+          if (draft.phoneNumber) body.phoneNumber = draft.phoneNumber;
+          if (draft.identityCard) body.identityCard = draft.identityCard;
+          guard(function() {
+            var req = draft.id ? callApi(api, "sites.accounts.update", Object.assign({ id: draft.id }, body)) : callApi(api, "sites.accounts.create", Object.assign({ siteId: site.id }, body));
+            return req.then(function() {
+              setDraft(null);
+              props.onChanged && props.onChanged();
+              return reload();
+            });
+          });
+        }
+        function removeAccount(id) {
+          guard(function() {
+            return callApi(api, "sites.accounts.delete", { id }).then(function() {
+              setPendingDelete("");
+              props.onChanged && props.onChanged();
+              return reload();
+            });
+          });
+        }
+        function reveal(acc) {
+          guard(function() {
+            return callApi(api, "sites.accounts.get", { id: acc.id }).then(function(r) {
+              var ids = r.secretIds || {};
+              var jobs = [["password", "password"], ["phone", "phoneNumber"], ["identity", "identityCard"]].filter(function(pair) {
+                return ids[pair[0]];
+              }).map(function(pair) {
+                return callApi(api, "vault.secretReveal", { id: ids[pair[0]] }).then(function(res) {
+                  var v = {};
+                  v[pair[1]] = res && res.secret !== void 0 ? res.secret : "";
+                  return v;
+                }).catch(function() {
+                  return null;
+                });
+              });
+              return Promise.all(jobs).then(function(list) {
+                var out = {};
+                list.forEach(function(v) {
+                  if (v) Object.assign(out, v);
+                });
+                setShown(function(prev) {
+                  var next = Object.assign({}, prev);
+                  next[acc.id] = out;
+                  return next;
+                });
+              });
+            });
+          });
+        }
+        function copyText(value) {
+          if (!value) return;
+          try {
+            navigator.clipboard.writeText(value);
+            if (typeof showToast === "function") showToast(text(lang, "copied"));
+          } catch (e) {
+            setError(String(e && e.message || e));
+          }
+        }
+        function linkExternal(acc) {
+          if (!pickKey) return;
+          guard(function() {
+            return callApi(api, "sites.accounts.link", { nativeAccountId: acc.id, externalAccountId: pickKey }).then(function() {
+              setPickKey("");
+              return reload();
+            });
+          });
+        }
+        function unlink(acc, rel) {
+          guard(function() {
+            return callApi(api, "sites.accounts.unlink", { nativeAccountId: acc.id, externalAccountId: rel.accountId }).then(function() {
+              return reload();
+            });
+          });
+        }
+        function renderVaultBar() {
+          if (!vault.enabled) {
+            return h2(
+              "div",
+              { className: "wbs-vaultbar" },
+              h2("div", { className: "wbs-vault-hint" }, text(lang, "vaultNotSet")),
+              h2(
+                "div",
+                { className: "wbs-vault-form" },
+                h2("input", { className: "wbs-input", type: "password", placeholder: text(lang, "passphrase"), value: pass, onChange: function(e) {
+                  setPass(e.target.value);
+                } }),
+                h2("input", { className: "wbs-input", type: "password", placeholder: text(lang, "passphraseAgain"), value: pass2, onChange: function(e) {
+                  setPass2(e.target.value);
+                } }),
+                h2("button", { className: "wbs-btn", disabled: busy, onClick: submitVault }, text(lang, "vaultSetup"))
+              )
+            );
+          }
+          if (!vault.unlocked) {
+            return h2(
+              "div",
+              { className: "wbs-vaultbar locked" },
+              h2("div", { className: "wbs-vault-hint" }, text(lang, "vaultLocked")),
+              h2(
+                "div",
+                { className: "wbs-vault-form" },
+                h2("input", { className: "wbs-input", type: "password", placeholder: text(lang, "passphrase"), value: pass, onChange: function(e) {
+                  setPass(e.target.value);
+                } }),
+                h2("button", { className: "wbs-btn", disabled: busy, onClick: submitVault }, text(lang, "vaultUnlock"))
+              )
+            );
+          }
+          return h2(
+            "div",
+            { className: "wbs-vaultbar unlocked" },
+            h2("div", { className: "wbs-vault-hint" }, text(lang, "vaultUnlocked", { min: vault.idleMinutes || 15 })),
+            h2("div", { className: "wbs-grow" }),
+            binding ? h2("span", { className: "wbs-chip" }, "\u51ED\u636E\u7EC4\uFF1A" + (binding.groupName || binding.groupId)) : h2(
+              React2.Fragment,
+              null,
+              h2("span", { className: "wbs-vault-hint" }, "\u672C\u7AD9\u70B9\u5C1A\u672A\u5173\u8054\u51ED\u636E\u7EC4"),
+              h2("button", { className: "wbs-btn sm", disabled: busy, onClick: bindGroup }, h2(Icon2, { name: "plus", size: 12 }), "\u521B\u5EFA\u5E76\u5173\u8054")
+            ),
+            h2("button", { className: "wbs-btn sm", disabled: busy, onClick: lockVault }, h2(Icon2, { name: "lock", size: 12 }), text(lang, "vaultLock"))
+          );
+        }
+        function renderDraft() {
+          var d = draft;
+          function field(key, label, type, ph) {
+            return h2(
+              React2.Fragment,
+              null,
+              h2("label", { className: "wbs-label" }, label),
+              h2("input", {
+                className: "wbs-input",
+                type: type || "text",
+                placeholder: ph || "",
+                value: d[key] || "",
+                onChange: function(e) {
+                  var v = e.target.value;
+                  setDraft(function(prev) {
+                    var next = Object.assign({}, prev);
+                    next[key] = v;
+                    return next;
+                  });
+                }
+              })
+            );
+          }
+          return h2(
+            "div",
+            { className: "wbs-accdraft" },
+            h2("div", { className: "wbs-accdraft-title" }, d.id ? text(lang, "editAccount") : text(lang, "addAccount")),
+            field("accountKey", text(lang, "accountKey") + " *", "text", "prod-admin"),
+            field("account", text(lang, "loginName")),
+            field("password", text(lang, "password"), "password"),
+            field("phoneNumber", text(lang, "phone")),
+            field("identityCard", text(lang, "identity")),
+            field("remark", text(lang, "remark")),
+            h2("div", { className: "wbs-vault-hint" }, text(lang, "sensitiveHint")),
+            h2(
+              "div",
+              { className: "wbs-formfoot" },
+              h2("div", { className: "wbs-grow" }),
+              h2("button", { className: "wbs-btn", disabled: busy, onClick: function() {
+                setDraft(null);
+              } }, text(lang, "cancel")),
+              h2("button", { className: "wbs-btn primary", disabled: busy, onClick: saveDraft }, text(lang, "save"))
+            )
+          );
+        }
+        return h2(
+          Modal,
+          { onClose: props.onClose },
+          h2(
+            "div",
+            { className: "wbs-modal-title" },
+            h2(Icon2, { name: "key", size: 15 }),
+            text(lang, "accountsTitle", { name: site.siteName }),
+            h2("button", { type: "button", className: "wbs-mini wbs-modal-x", title: text(lang, "cancel"), onClick: props.onClose }, h2(Icon2, { name: "x", size: 15 }))
+          ),
+          h2("div", { className: "wbs-modal-sub" }, text(lang, "accountsSub")),
+          renderVaultBar(),
+          error ? h2("div", { className: "wbs-error" }, error) : null,
+          draft ? renderDraft() : h2(
+            React2.Fragment,
+            null,
+            loading ? h2("div", { className: "wbs-loading" }, text(lang, "loading")) : null,
+            !loading && !accounts.length ? h2("div", { className: "wbs-acc-empty" }, text(lang, "accountEmpty")) : null,
+            !loading ? accounts.map(function(acc) {
+              var plain = shown[acc.id] || null;
+              return h2(
+                "div",
+                { className: "wbs-accrow", key: acc.id },
+                h2(
+                  "div",
+                  { className: "wbs-accrow-head" },
+                  h2("b", null, acc.accountKey || "\u2014"),
+                  acc.account ? h2("span", { className: "wbs-acc-login" }, acc.account) : null,
+                  h2("div", { className: "wbs-grow" }),
+                  h2("button", { className: "wbs-btn sm icononly", title: text(lang, "edit"), onClick: function() {
+                    setDraft({ id: acc.id, accountKey: acc.accountKey, account: acc.account, remark: acc.remark, password: "", phoneNumber: "", identityCard: "" });
+                  } }, h2(Icon2, { name: "edit", size: 12 })),
+                  pendingDelete === acc.id ? h2(
+                    React2.Fragment,
+                    null,
+                    h2("button", { className: "wbs-btn sm danger", disabled: busy, onClick: function() {
+                      removeAccount(acc.id);
+                    } }, text(lang, "confirm")),
+                    h2("button", { className: "wbs-btn sm", onClick: function() {
+                      setPendingDelete("");
+                    } }, text(lang, "cancel"))
+                  ) : h2("button", { className: "wbs-btn sm danger icononly", title: text(lang, "del"), onClick: function() {
+                    setPendingDelete(acc.id);
+                  } }, h2(Icon2, { name: "trash", size: 12 }))
+                ),
+                h2(
+                  "div",
+                  { className: "wbs-accrow-fields" },
+                  h2(
+                    "div",
+                    null,
+                    h2("i", null, text(lang, "password")),
+                    h2("span", null, plain ? plain.password || "\u2014" : acc.hasPassword ? "\u2022\u2022\u2022\u2022\u2022\u2022" : "\u2014"),
+                    acc.hasPassword ? h2("button", { className: "wbs-mini", title: text(lang, "reveal"), onClick: function() {
+                      if (plain) {
+                        setShown(function(prev) {
+                          var next = Object.assign({}, prev);
+                          delete next[acc.id];
+                          return next;
+                        });
+                      } else {
+                        reveal(acc);
+                      }
+                    } }, h2(Icon2, { name: plain ? "eye-off" : "eye", size: 11 })) : null,
+                    acc.hasPassword ? h2("button", { className: "wbs-mini", title: text(lang, "copy"), onClick: function() {
+                      if (plain) copyText(plain.password);
+                      else reveal(acc);
+                    } }, h2(Icon2, { name: "copy", size: 11 })) : null
+                  ),
+                  h2("div", null, h2("i", null, text(lang, "phone")), h2("span", null, plain ? plain.phoneNumber || "\u2014" : acc.phoneNumber || "\u2014")),
+                  h2("div", null, h2("i", null, text(lang, "identity")), h2("span", null, plain ? plain.identityCard || "\u2014" : acc.identityCard || "\u2014")),
+                  acc.remark ? h2("div", { className: "wbs-acc-remark" }, h2("i", null, text(lang, "remark")), h2("span", null, acc.remark)) : null
+                ),
+                h2(
+                  "div",
+                  { className: "wbs-accrow-ext" },
+                  (acc.externals || []).map(function(rel) {
+                    return h2(
+                      "span",
+                      { className: "wbs-chip", key: rel.relationId },
+                      rel.siteName + " \xB7 " + rel.accountKey,
+                      h2("button", { className: "wbs-mini", title: text(lang, "unlink"), onClick: function() {
+                        unlink(acc, rel);
+                      } }, h2(Icon2, { name: "x", size: 10 }))
+                    );
+                  }),
+                  h2(
+                    "select",
+                    { className: "wbs-select wbs-acc-extsel", value: pickKey, onChange: function(e) {
+                      setPickKey(e.target.value);
+                    } },
+                    h2("option", { value: "" }, text(lang, "externalPick")),
+                    cascade.map(function(o) {
+                      return h2("option", { key: o.id, value: o.id }, o.label);
+                    })
+                  ),
+                  h2("button", { className: "wbs-btn sm", disabled: !pickKey || busy, onClick: function() {
+                    linkExternal(acc);
+                  } }, text(lang, "externalAdd"))
+                )
+              );
+            }) : null,
+            !loading ? h2(
+              "div",
+              { className: "wbs-formfoot" },
+              h2("button", { className: "wbs-btn primary", disabled: busy, onClick: function() {
+                setDraft({ id: "", accountKey: "", account: "", password: "", phoneNumber: "", identityCard: "", remark: "" });
+              } }, h2(Icon2, { name: "plus", size: 12 }), text(lang, "addAccount")),
+              h2("div", { className: "wbs-grow" }),
+              h2("button", { className: "wbs-btn", onClick: props.onClose }, text(lang, "close"))
+            ) : null
+          )
+        );
+      }
+      return AccountModal;
+    };
+  }
+});
+
 // packages/addons/lib/highlight.cjs
 var require_highlight = __commonJS({
   "packages/addons/lib/highlight.cjs"(exports2, module2) {
@@ -5417,353 +5832,17 @@ var TagFilter = require_tagfilter();
       )
     );
   }
-  function AccountModal(props) {
-    var api = props.api;
-    var lang = props.lang || "zh";
-    var site = props.site;
-    var [accounts, setAccounts] = useState([]);
-    var [vault, setVault] = useState({});
-    var [loading, setLoading] = useState(true);
-    var [error, setError] = useState("");
-    var [busy, setBusy] = useState(false);
-    var [draft, setDraft] = useState(null);
-    var [pass, setPass] = useState("");
-    var [pass2, setPass2] = useState("");
-    var [cascade, setCascade] = useState([]);
-    var [pickKey, setPickKey] = useState("");
-    var [pendingDelete, setPendingDelete] = useState("");
-    var [shown, setShown] = useState({});
-    function reload() {
-      setLoading(true);
-      return Promise.all([
-        callApi(api, "sites.accounts.list", { siteId: site.id }),
-        callApi(api, "sites.vault.status", {})
-      ]).then(function(out) {
-        setAccounts(out[0].accounts || []);
-        setVault(out[1] || {});
-        setError("");
-      }).catch(function(e) {
-        setError(errText(e));
-      }).finally(function() {
-        setLoading(false);
-      });
-    }
-    function loadCascade() {
-      callApi(api, "sites.accounts.cascade", { excludeSiteId: site.id }).then(function(r) {
-        var list = [];
-        (r.groups || []).forEach(function(g) {
-          g.accounts.forEach(function(a) {
-            list.push({ id: a.id, label: g.siteName + " \xB7 " + a.accountKey });
-          });
-        });
-        setCascade(list);
-      }).catch(function() {
-        setCascade([]);
-      });
-    }
-    useEffect(function() {
-      reload();
-      loadCascade();
-    }, [site.id]);
-    function guard(fn) {
-      setBusy(true);
-      setError("");
-      return Promise.resolve().then(fn).catch(function(e) {
-        setError(errText(e));
-      }).finally(function() {
-        setBusy(false);
-      });
-    }
-    function submitVault() {
-      if (!pass || pass.length < 8) {
-        setError(text(lang, "passTooShort"));
-        return;
-      }
-      if (!vault.enabled && pass !== pass2) {
-        setError(text(lang, "passMismatch"));
-        return;
-      }
-      guard(function() {
-        var name = vault.enabled ? "sites.vault.unlock" : "sites.vault.setup";
-        var args = vault.enabled ? { passphrase: pass } : { passphrase: pass };
-        return callApi(api, name, args).then(function() {
-          setPass("");
-          setPass2("");
-          return reload();
-        });
-      });
-    }
-    function lockVault() {
-      guard(function() {
-        return callApi(api, "sites.vault.lock", {}).then(function() {
-          setShown({});
-          return reload();
-        });
-      });
-    }
-    function saveDraft() {
-      var body = {
-        accountKey: draft.accountKey,
-        account: draft.account,
-        remark: draft.remark
-      };
-      if (draft.password) body.password = draft.password;
-      if (draft.phoneNumber) body.phoneNumber = draft.phoneNumber;
-      if (draft.identityCard) body.identityCard = draft.identityCard;
-      guard(function() {
-        var req = draft.id ? callApi(api, "sites.accounts.update", Object.assign({ id: draft.id }, body)) : callApi(api, "sites.accounts.create", Object.assign({ siteId: site.id }, body));
-        return req.then(function() {
-          setDraft(null);
-          props.onChanged && props.onChanged();
-          return reload();
-        });
-      });
-    }
-    function removeAccount(id) {
-      guard(function() {
-        return callApi(api, "sites.accounts.delete", { id }).then(function() {
-          setPendingDelete("");
-          props.onChanged && props.onChanged();
-          return reload();
-        });
-      });
-    }
-    function reveal(acc) {
-      guard(function() {
-        return callApi(api, "sites.accounts.reveal", { id: acc.id }).then(function(r) {
-          setShown(function(prev) {
-            var next = Object.assign({}, prev);
-            next[acc.id] = r;
-            return next;
-          });
-        });
-      });
-    }
-    function copyText(value) {
-      if (!value) return;
-      try {
-        navigator.clipboard.writeText(value);
-        showToast(text(lang, "copied"));
-      } catch (e) {
-        setError(String(e && e.message || e));
-      }
-    }
-    function linkExternal(acc) {
-      if (!pickKey) return;
-      guard(function() {
-        return callApi(api, "sites.accounts.link", { nativeAccountId: acc.id, externalAccountId: pickKey }).then(function() {
-          setPickKey("");
-          return reload();
-        });
-      });
-    }
-    function unlink(acc, rel) {
-      guard(function() {
-        return callApi(api, "sites.accounts.unlink", { nativeAccountId: acc.id, externalAccountId: rel.accountId }).then(function() {
-          return reload();
-        });
-      });
-    }
-    function renderVaultBar() {
-      if (!vault.enabled) {
-        return h2(
-          "div",
-          { className: "wbs-vaultbar" },
-          h2("div", { className: "wbs-vault-hint" }, text(lang, "vaultNotSet")),
-          h2(
-            "div",
-            { className: "wbs-vault-form" },
-            h2("input", { className: "wbs-input", type: "password", placeholder: text(lang, "passphrase"), value: pass, onChange: function(e) {
-              setPass(e.target.value);
-            } }),
-            h2("input", { className: "wbs-input", type: "password", placeholder: text(lang, "passphraseAgain"), value: pass2, onChange: function(e) {
-              setPass2(e.target.value);
-            } }),
-            h2("button", { className: "wbs-btn", disabled: busy, onClick: submitVault }, text(lang, "vaultSetup"))
-          )
-        );
-      }
-      if (!vault.unlocked) {
-        return h2(
-          "div",
-          { className: "wbs-vaultbar locked" },
-          h2("div", { className: "wbs-vault-hint" }, text(lang, "vaultLocked")),
-          h2(
-            "div",
-            { className: "wbs-vault-form" },
-            h2("input", { className: "wbs-input", type: "password", placeholder: text(lang, "passphrase"), value: pass, onChange: function(e) {
-              setPass(e.target.value);
-            } }),
-            h2("button", { className: "wbs-btn", disabled: busy, onClick: submitVault }, text(lang, "vaultUnlock"))
-          )
-        );
-      }
-      return h2(
-        "div",
-        { className: "wbs-vaultbar unlocked" },
-        h2("div", { className: "wbs-vault-hint" }, text(lang, "vaultUnlocked", { min: vault.idleMinutes || 15 })),
-        h2("button", { className: "wbs-btn sm", disabled: busy, onClick: lockVault }, h2(Icon2, { name: "lock", size: 12 }), text(lang, "vaultLock"))
-      );
-    }
-    function renderDraft() {
-      var d = draft;
-      function field(key, label, type, ph) {
-        return h2(
-          React2.Fragment,
-          null,
-          h2("label", { className: "wbs-label" }, label),
-          h2("input", {
-            className: "wbs-input",
-            type: type || "text",
-            placeholder: ph || "",
-            value: d[key] || "",
-            onChange: function(e) {
-              var v = e.target.value;
-              setDraft(function(prev) {
-                var next = Object.assign({}, prev);
-                next[key] = v;
-                return next;
-              });
-            }
-          })
-        );
-      }
-      return h2(
-        "div",
-        { className: "wbs-accdraft" },
-        h2("div", { className: "wbs-accdraft-title" }, d.id ? text(lang, "editAccount") : text(lang, "addAccount")),
-        field("accountKey", text(lang, "accountKey") + " *", "text", "prod-admin"),
-        field("account", text(lang, "loginName")),
-        field("password", text(lang, "password"), "password"),
-        field("phoneNumber", text(lang, "phone")),
-        field("identityCard", text(lang, "identity")),
-        field("remark", text(lang, "remark")),
-        h2("div", { className: "wbs-vault-hint" }, text(lang, "sensitiveHint")),
-        h2(
-          "div",
-          { className: "wbs-formfoot" },
-          h2("div", { className: "wbs-grow" }),
-          h2("button", { className: "wbs-btn", disabled: busy, onClick: function() {
-            setDraft(null);
-          } }, text(lang, "cancel")),
-          h2("button", { className: "wbs-btn primary", disabled: busy, onClick: saveDraft }, text(lang, "save"))
-        )
-      );
-    }
-    return h2(
-      Modal,
-      { onClose: props.onClose },
-      h2(
-        "div",
-        { className: "wbs-modal-title" },
-        h2(Icon2, { name: "key", size: 15 }),
-        text(lang, "accountsTitle", { name: site.siteName }),
-        h2("button", { type: "button", className: "wbs-mini wbs-modal-x", title: text(lang, "cancel"), onClick: props.onClose }, h2(Icon2, { name: "x", size: 15 }))
-      ),
-      h2("div", { className: "wbs-modal-sub" }, text(lang, "accountsSub")),
-      renderVaultBar(),
-      error ? h2("div", { className: "wbs-error" }, error) : null,
-      draft ? renderDraft() : h2(
-        React2.Fragment,
-        null,
-        loading ? h2("div", { className: "wbs-loading" }, text(lang, "loading")) : null,
-        !loading && !accounts.length ? h2("div", { className: "wbs-acc-empty" }, text(lang, "accountEmpty")) : null,
-        !loading ? accounts.map(function(acc) {
-          var plain = shown[acc.id] || null;
-          return h2(
-            "div",
-            { className: "wbs-accrow", key: acc.id },
-            h2(
-              "div",
-              { className: "wbs-accrow-head" },
-              h2("b", null, acc.accountKey || "\u2014"),
-              acc.account ? h2("span", { className: "wbs-acc-login" }, acc.account) : null,
-              h2("div", { className: "wbs-grow" }),
-              h2("button", { className: "wbs-btn sm icononly", title: text(lang, "edit"), onClick: function() {
-                setDraft({ id: acc.id, accountKey: acc.accountKey, account: acc.account, remark: acc.remark, password: "", phoneNumber: "", identityCard: "" });
-              } }, h2(Icon2, { name: "edit", size: 12 })),
-              pendingDelete === acc.id ? h2(
-                React2.Fragment,
-                null,
-                h2("button", { className: "wbs-btn sm danger", disabled: busy, onClick: function() {
-                  removeAccount(acc.id);
-                } }, text(lang, "confirm")),
-                h2("button", { className: "wbs-btn sm", onClick: function() {
-                  setPendingDelete("");
-                } }, text(lang, "cancel"))
-              ) : h2("button", { className: "wbs-btn sm danger icononly", title: text(lang, "del"), onClick: function() {
-                setPendingDelete(acc.id);
-              } }, h2(Icon2, { name: "trash", size: 12 }))
-            ),
-            h2(
-              "div",
-              { className: "wbs-accrow-fields" },
-              h2(
-                "div",
-                null,
-                h2("i", null, text(lang, "password")),
-                h2("span", null, plain ? plain.password || "\u2014" : acc.hasPassword ? "\u2022\u2022\u2022\u2022\u2022\u2022" : "\u2014"),
-                acc.hasPassword ? h2("button", { className: "wbs-mini", title: text(lang, "reveal"), onClick: function() {
-                  if (plain) {
-                    setShown(function(prev) {
-                      var next = Object.assign({}, prev);
-                      delete next[acc.id];
-                      return next;
-                    });
-                  } else {
-                    reveal(acc);
-                  }
-                } }, h2(Icon2, { name: plain ? "eye-off" : "eye", size: 11 })) : null,
-                acc.hasPassword ? h2("button", { className: "wbs-mini", title: text(lang, "copy"), onClick: function() {
-                  if (plain) copyText(plain.password);
-                  else reveal(acc);
-                } }, h2(Icon2, { name: "copy", size: 11 })) : null
-              ),
-              h2("div", null, h2("i", null, text(lang, "phone")), h2("span", null, plain ? plain.phoneNumber || "\u2014" : acc.phoneNumber || "\u2014")),
-              h2("div", null, h2("i", null, text(lang, "identity")), h2("span", null, plain ? plain.identityCard || "\u2014" : acc.identityCard || "\u2014")),
-              acc.remark ? h2("div", { className: "wbs-acc-remark" }, h2("i", null, text(lang, "remark")), h2("span", null, acc.remark)) : null
-            ),
-            h2(
-              "div",
-              { className: "wbs-accrow-ext" },
-              (acc.externals || []).map(function(rel) {
-                return h2(
-                  "span",
-                  { className: "wbs-chip", key: rel.relationId },
-                  rel.siteName + " \xB7 " + rel.accountKey,
-                  h2("button", { className: "wbs-mini", title: text(lang, "unlink"), onClick: function() {
-                    unlink(acc, rel);
-                  } }, h2(Icon2, { name: "x", size: 10 }))
-                );
-              }),
-              h2(
-                "select",
-                { className: "wbs-select wbs-acc-extsel", value: pickKey, onChange: function(e) {
-                  setPickKey(e.target.value);
-                } },
-                h2("option", { value: "" }, text(lang, "externalPick")),
-                cascade.map(function(o) {
-                  return h2("option", { key: o.id, value: o.id }, o.label);
-                })
-              ),
-              h2("button", { className: "wbs-btn sm", disabled: !pickKey || busy, onClick: function() {
-                linkExternal(acc);
-              } }, text(lang, "externalAdd"))
-            )
-          );
-        }) : null,
-        !loading ? h2(
-          "div",
-          { className: "wbs-formfoot" },
-          h2("button", { className: "wbs-btn primary", disabled: busy, onClick: function() {
-            setDraft({ id: "", accountKey: "", account: "", password: "", phoneNumber: "", identityCard: "", remark: "" });
-          } }, h2(Icon2, { name: "plus", size: 12 }), text(lang, "addAccount")),
-          h2("div", { className: "wbs-grow" }),
-          h2("button", { className: "wbs-btn", onClick: props.onClose }, text(lang, "close"))
-        ) : null
-      )
-    );
-  }
+  var AccountModal = require_accounts_modal()({
+    h: h2,
+    React: React2,
+    useState,
+    useEffect,
+    Modal,
+    Icon: Icon2,
+    text,
+    callApi,
+    errText
+  });
   function DeleteSiteModal(props) {
     var api = props.api;
     var lang = props.lang || "zh";
@@ -6509,7 +6588,7 @@ var TagFilter = require_tagfilter();
   injectCss();
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.10.0",
+    version: "1.11.0",
     icon: (init_globe(), __toCommonJS(globe_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },

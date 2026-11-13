@@ -4,6 +4,14 @@
  */
 import { bindingRow, groupRow, newId, now, tx } from "../db/db.js";
 
+function parseJson(value, fallback) {
+  try {
+    return value ? JSON.parse(value) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function assertGroupName(name) {
   const value = String(name || "").trim();
   if (!value || value.length > 60) throw new Error("组名必填，最多 60 字");
@@ -258,7 +266,7 @@ export function createGroups({ db }) {
         name: row.name,
         kind: row.kind,
         groupId: row.group_id || null,
-        meta: row.meta || "{}",
+        meta: parseJson(row.meta, {}),
       })),
     };
   }

@@ -108,7 +108,7 @@ export function createDomain(host) {
       api.action("vault.actionSchema", {
         description: "只读：本域 action 清单与输入 schema（插件自证，不读宿主统一接口）。",
         input: { type: "object", properties: {}, additionalProperties: false },
-        execute: () => ({ shellVersion: api.shellVersion || "", domains: [{ id: "wb-addon-vault", version: (api.addon && api.addon.version) || "0.2.0" }], actions: schemas }),
+        execute: () => ({ shellVersion: api.shellVersion || "", domains: [{ id: "wb-addon-vault", version: (api.addon && api.addon.version) || "0.2.1" }], actions: schemas }),
       });
       void host;
     },
