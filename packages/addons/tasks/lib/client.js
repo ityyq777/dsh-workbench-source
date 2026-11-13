@@ -7016,6 +7016,23 @@ var require_styles = __commonJS({
       ".wbt-wschip button:hover{opacity:1}",
       ".wbt-wschip-ro{opacity:.85;background:transparent}",
       ".wbt-wsfilter{width:100%}",
+      ".wbt-wslist{display:flex;flex-direction:column;gap:1px;max-height:200px;overflow:auto;border:1px solid var(--wbt-line);border-radius:8px;padding:4px;background:var(--wbt-bg);box-sizing:border-box;min-width:0}",
+      ".wbt-wsopt{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;border:1px solid transparent;background:transparent;color:inherit;font:inherit;padding:5px 8px;border-radius:6px;cursor:pointer;min-width:0;box-sizing:border-box}",
+      ".wbt-wsopt:hover{background:color-mix(in oklab,var(--wbt-accent) 7%,transparent)}",
+      ".wbt-wsopt.on{background:color-mix(in oklab,var(--wbt-accent) 11%,transparent);border-color:color-mix(in oklab,var(--wbt-accent) 40%,transparent)}",
+      ".wbt-wsopt:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:-2px}",
+      ".wbt-wsopt-title{display:flex;align-items:center;gap:6px;min-width:0;font-size:12.5px;font-weight:560;line-height:1.35}",
+      ".wbt-wsopt-name{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbt-wsopt-check{flex:none;font-size:11px;font-weight:700;color:var(--wbt-accent)}",
+      ".wbt-wsopt-meta{display:flex;align-items:center;gap:6px;min-width:0;font-size:11px;opacity:.55;line-height:1.3}",
+      ".wbt-wsopt-count{flex:none;font-variant-numeric:tabular-nums}",
+      ".wbt-wsopt-meta code{flex:0 1 auto;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;background:color-mix(in oklab,currentColor 8%,transparent);border-radius:4px;padding:0 4px}",
+      ".wbt-wsrow{display:flex;align-items:center;gap:6px;min-width:0}",
+      ".wbt-wsrow .wbt-input{flex:1 1 auto;min-width:0}",
+      ".wbt-wsrow .wbt-btn{flex:none}",
+      ".wbt-wscreate{display:flex;flex-direction:column;gap:5px;min-width:0}",
+      ".wbt-wscreate .wbt-input{width:100%;box-sizing:border-box}",
+      ".wbt-hint{font-size:11.5px;opacity:.62;line-height:1.5;overflow-wrap:anywhere}",
       ".wbt-muted-link{opacity:.7;text-decoration-style:dashed}",
       ".wbt-wsmenu .wbt-tagopt{padding:5px 6px}",
       ".wbt-wsmenu .wbt-wsnone{border-top:1px dashed var(--wbt-line);margin-top:4px;padding-top:7px}",
@@ -7685,7 +7702,7 @@ var require_workspace_select = __commonJS({
           h(
             "div",
             { className: "wbt-wsrow" },
-            h("input", { className: "wbt-input", value: query, placeholder: t("search"), onChange: function(e) {
+            h("input", { className: "wbt-input", value: query, placeholder: t("search"), "aria-label": t("search"), onChange: function(e) {
               setQuery(e.target.value);
             } }),
             h("button", { type: "button", className: "wbt-btn ghost", onClick: function() {
@@ -7705,8 +7722,18 @@ var require_workspace_select = __commonJS({
                 { type: "button", role: "option", key: id, "aria-selected": on, className: "wbt-wsopt" + (on ? " on" : ""), title: w.dir || "", onClick: function() {
                   toggle(id);
                 } },
-                h("span", { className: "wbt-wsopt-title" }, w.title || id),
-                h("span", { className: "wbt-wsopt-meta" }, (w.taskCount || 0) + " \xB7 " + (w.dir || "\u2014"))
+                h(
+                  "span",
+                  { className: "wbt-wsopt-title" },
+                  h("span", { className: "wbt-wsopt-name" }, w.title || id),
+                  on ? h("span", { className: "wbt-wsopt-check", "aria-hidden": true }, "\u2713") : null
+                ),
+                h(
+                  "span",
+                  { className: "wbt-wsopt-meta" },
+                  h("span", { className: "wbt-wsopt-count" }, String(w.taskCount || 0)),
+                  w.dir ? h("code", { title: w.dir }, w.dir) : h("span", null, "\u2014")
+                )
               );
             })
           ),

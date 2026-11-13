@@ -27,6 +27,7 @@
     "test:task-stats-task-link": "node scripts/test-task-stats-task-link.mjs",
     "test:task-body": "node scripts/test-task-body.mjs",
     "test:task-body-react": "node scripts/test-task-body-react.mjs",
+    "test:task-workspace-select-ui": "node scripts/test-task-workspace-select-ui.mjs",
     "test:task-config-ui": "node scripts/test-task-config-ui.mjs",
     "test:markdown-performance": "node scripts/test-markdown-performance.mjs",
     "test:tasks-restart": "node scripts/test-tasks-restart.mjs",
