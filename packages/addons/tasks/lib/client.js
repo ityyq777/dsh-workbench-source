@@ -2160,7 +2160,7 @@ var require_timeline_section = __commonJS({
 // packages/addons/tasks/client/stats/list-state.cjs
 var require_list_state = __commonJS({
   "packages/addons/tasks/client/stats/list-state.cjs"(exports2, module2) {
-    var LISTS = ["overdue", "recentPublish", "recentDone", "recentShutdown"];
+    var LISTS = ["overdue", "recentPublish", "recentDone", "recentShutdown", "recentClaimed"];
     var COPY = {
       zh: "\u7EDF\u8BA1\u63A5\u53E3\u672A\u8FD4\u56DE\u300C{key}\u300D\u6E05\u5355\uFF0C\u524D\u540E\u7AEF\u7248\u672C\u53EF\u80FD\u4E0D\u4E00\u81F4\uFF1B\u8BF7\u91CD\u542F\u63D2\u4EF6\u670D\u52A1\u540E\u91CD\u8BD5",
       en: 'Stats API did not return the "{key}" list; frontend and backend versions may differ. Restart the plugin service and retry.'
@@ -2270,6 +2270,12 @@ var require_stats = __commonJS({
         colTarget: "\u8BA1\u5212\u5B8C\u6210",
         colAge: "\u903E\u671F\u5929\u6570",
         colTable: "\u4EFB\u52A1\u8868",
+        recentTasks: "\u6700\u8FD1\u4EFB\u52A1",
+        recentTasksNote: "\u5207\u6362\u7EF4\u5EA6\u67E5\u770B\u6700\u8FD1\u53D1\u5E03 / \u5B8C\u6210 / \u5173\u95ED / \u63A5\u53D6\u7684\u4EFB\u52A1",
+        recentTabPublish: "\u6700\u8FD1\u53D1\u5E03",
+        recentTabDone: "\u6700\u8FD1\u5B8C\u6210",
+        recentTabShutdown: "\u6700\u8FD1\u5173\u95ED",
+        recentTabClaimed: "\u6700\u8FD1\u63A5\u53D6",
         recentPublish: "\u6700\u8FD1\u53D1\u5E03",
         recentPublishNote: "\u6309\u53D1\u5E03\u65E5\u671F\u5012\u5E8F",
         noRecentPublish: "\u8FD8\u6CA1\u6709\u53D1\u5E03\u7684\u4EFB\u52A1",
@@ -2280,6 +2286,7 @@ var require_stats = __commonJS({
         colDate: "\u65E5\u671F",
         noRecentDone: "\u8FD8\u6CA1\u6709\u5DF2\u5B8C\u6210\u7684\u4EFB\u52A1",
         noRecentShutdown: "\u8FD8\u6CA1\u6709\u5DF2\u5173\u95ED\u7684\u4EFB\u52A1",
+        noRecentClaimed: "\u8FD8\u6CA1\u6709\u5DF2\u63A5\u53D6\u7684\u4EFB\u52A1\uFF08\u63A5\u53D6\u65F6\u95F4\u53EA\u8BB0\u5F55 5.2.15 \u4E4B\u540E\u7684\u64CD\u4F5C\uFF09",
         noOverdue: "\u6CA1\u6709\u903E\u671F\u4EFB\u52A1",
         noData: "\u8FD8\u6CA1\u6709\u4EFB\u52A1\u3002\u5728\u300C\u8BB0\u5F55\u300D\u91CC\u521B\u5EFA\u540E\uFF0C\u8FD9\u91CC\u4F1A\u81EA\u52A8\u6C47\u603B",
         open: "\u5DF2\u5F00\u542F",
@@ -2361,6 +2368,12 @@ var require_stats = __commonJS({
         colTarget: "Target",
         colAge: "Days late",
         colTable: "Table",
+        recentTasks: "Recent tasks",
+        recentTasksNote: "Switch the dimension: recently published / completed / closed / claimed",
+        recentTabPublish: "Published",
+        recentTabDone: "Completed",
+        recentTabShutdown: "Closed",
+        recentTabClaimed: "Claimed",
         recentPublish: "Recently published",
         recentPublishNote: "Newest publication first",
         noRecentPublish: "No published tasks yet",
@@ -2371,6 +2384,7 @@ var require_stats = __commonJS({
         colDate: "Date",
         noRecentDone: "No completed tasks yet",
         noRecentShutdown: "No closed tasks yet",
+        noRecentClaimed: "No claimed tasks yet (claim time is only recorded after 5.2.15)",
         noOverdue: "No overdue tasks",
         noData: "No tasks yet. Create one in Tasks and the summary appears here.",
         open: "Active",
@@ -2418,7 +2432,7 @@ var require_stats = __commonJS({
         onNavigate("tasks", params);
       };
     }
-    var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true, "stats.recentPublishLimit": 10, "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10 };
+    var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true, "stats.recentPublishLimit": 10, "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10, "stats.recentClaimedLimit": 10 };
     function TasksStatsView(props) {
       var lang = props.lang === "en" ? "en" : "zh";
       var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -2447,6 +2461,8 @@ var require_stats = __commonJS({
       var range = rangePair[0], setRange = rangePair[1];
       var dimPair = React.useState("all");
       var dimension = dimPair[0], setDimension = dimPair[1];
+      var recentPair = React.useState("publish");
+      var recentType = recentPair[0], setRecentType = recentPair[1];
       var dataPair = React.useState(null);
       var data = dataPair[0], setData = dataPair[1];
       var errPair = React.useState("");
@@ -2484,7 +2500,8 @@ var require_stats = __commonJS({
           top: cfgTop,
           recentPublishLimit: cfgLimit("stats.recentPublishLimit"),
           recentDoneLimit: cfgLimit("stats.recentDoneLimit"),
-          recentShutdownLimit: cfgLimit("stats.recentShutdownLimit")
+          recentShutdownLimit: cfgLimit("stats.recentShutdownLimit"),
+          recentClaimedLimit: cfgLimit("stats.recentClaimedLimit")
         };
         if (customOk) {
           args.from = customFrom;
@@ -2719,20 +2736,36 @@ var require_stats = __commonJS({
           ));
           children.push(h(TimelineSection, { key: "timeline", api, lang, active: props.active, ch }));
           var recentCols = recentColumns(t, lang, props.onNavigate);
+          var recentTabs = [
+            ["publish", t.recentTabPublish, "recentPublish", t.noRecentPublish],
+            ["done", t.recentTabDone, "recentDone", t.noRecentDone],
+            ["shutdown", t.recentTabShutdown, "recentShutdown", t.noRecentShutdown],
+            ["claimed", t.recentTabClaimed, "recentClaimed", t.noRecentClaimed]
+          ];
+          var recentTab = recentTabs[0];
+          recentTabs.forEach(function(item) {
+            if (item[0] === recentType) recentTab = item;
+          });
           children.push(h(
             ch.Card,
-            { key: "recentPublish", span: 4, title: t.recentPublish, note: t.recentPublishNote },
-            h(ch.DataTable, listProps(data, "recentPublish", lang, { lang, empty: t.noRecentPublish, columns: recentCols }))
-          ));
-          children.push(h(
-            ch.Card,
-            { key: "recentDone", span: 4, title: t.recentDone, note: t.recentDoneNote },
-            h(ch.DataTable, listProps(data, "recentDone", lang, { lang, empty: t.noRecentDone, columns: recentCols }))
-          ));
-          children.push(h(
-            ch.Card,
-            { key: "recentShutdown", span: 4, title: t.recentShutdown, note: t.recentShutdownNote },
-            h(ch.DataTable, listProps(data, "recentShutdown", lang, { lang, empty: t.noRecentShutdown, columns: recentCols }))
+            { key: "recent", span: 12, title: t.recentTasks, note: t.recentTasksNote },
+            h(
+              "div",
+              { className: "wbt-dims", role: "tablist", "aria-label": t.recentTasks },
+              recentTabs.map(function(item) {
+                return h("button", {
+                  key: item[0],
+                  type: "button",
+                  role: "tab",
+                  className: "wbt-dims-tab",
+                  "aria-selected": recentType === item[0],
+                  onClick: function() {
+                    setRecentType(item[0]);
+                  }
+                }, item[1]);
+              })
+            ),
+            h(ch.DataTable, listProps(data, recentTab[2], lang, { lang, empty: recentTab[3], columns: recentCols }))
           ));
         }
         children.push(h(ch.Warnings, { key: "warn", items: data.warnings || [] }));
@@ -11517,13 +11550,14 @@ var init_list_checks = __esm({
     "stats.recentPublishLimit": 10,
     "stats.recentDoneLimit": 10,
     "stats.recentShutdownLimit": 10,
-    "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "workspaces", "recentPublish", "recentDone", "recentShutdown"]
+    "stats.recentClaimedLimit": 10,
+    "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "workspaces", "recent"]
   };
   var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, WorkspaceFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.14",
+    version: "5.2.15",
     icon: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },

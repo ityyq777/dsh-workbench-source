@@ -46,30 +46,52 @@ const outlet=(view)=>{cursor=0;return mod.exports({view,viewProps:{}});};
 let out=outlet(stats);const Slot=out.children[0][0].type;outlet(tasks);out=outlet(stats);assert.equal(out.children[0].length,1,'transient task view unmounted');assert.equal(out.children[0][0].props.view,stats);
 state=[];cursor=0;effects=[];const node={scrollTop:450,scrollLeft:0,parentElement:null};let slot=Slot({active:true,view:stats,viewProps:{}});slot.props.ref.current=node;effects.splice(0).forEach(fn=>fn());listeners.forEach(fn=>fn());
 cursor=0;Slot({active:false,view:stats,viewProps:{}});effects.splice(0).forEach(fn=>fn());node.scrollTop=0;cursor=0;Slot({active:true,view:stats,viewProps:{}});effects.splice(0).forEach(fn=>fn());assert.equal(node.scrollTop,450);
-// Actual stats component: request limits, bilingual empty states, legacy response fallback and three equal cards.
+// Actual stats component: one merged "recent" card with four tabs, limits passed through, legacy fallback.
 const statsPath='packages/addons/tasks/client/views/stats.cjs',statsRequire=createRequire(require.resolve('../'+statsPath));
 for(const lang of ['zh','en']) for(const [configured,expected] of [[undefined,10],[7,7],[999,50],[-1,1]]) {
  state=[];cursor=0;effects=[];let fallback;const statsCalls=[];
- const cfg=configured===undefined?{}:{'stats.recentPublishLimit':configured};
+ const cfg=configured===undefined?{}:{'stats.recentClaimedLimit':configured};
  const statsModule={exports:{}};
  runInNewContext(readFileSync(statsPath,'utf8'),{module:statsModule,require:n=>n==='react'?R:n==='./config.cjs'?{useConfig:(_api,f)=>{fallback=f;return {ready:true,values:cfg};}}:statsRequire(n),Date,document:{addEventListener(){},removeEventListener(){}}});
- const root=statsModule.exports.TasksStatsView({lang,api:{call:async(action,args)=>{statsCalls.push({action,args});return {result:{totals:{total:1},lists:{recentPublish:[],recentDone:[],recentShutdown:[]}}};}}});
- assert.equal(fallback['stats.recentPublishLimit'],10);
+ const rows={recentPublish:{id:'p1',title:'Published',date:'2026-11-13',daysAgo:0,tableTitle:'T',tableId:'t',groupId:'g',difficulty:1},recentDone:{id:'d1',title:'Done',date:'2026-11-12',daysAgo:1,tableTitle:'T',tableId:'t',groupId:'g',difficulty:2},recentShutdown:{id:'s1',title:'Closed',date:'2026-11-11',daysAgo:2,tableTitle:'T',tableId:'t',groupId:'g',difficulty:3},recentClaimed:{id:'c1',title:'Claimed',date:'2026-11-10',daysAgo:3,tableTitle:'T',tableId:'t',groupId:'g',difficulty:4}};
+ const api={call:async(action,args)=>{statsCalls.push({action,args});return {result:{totals:{total:1},lists:{recentPublish:[rows.recentPublish],recentDone:[rows.recentDone],recentShutdown:[rows.recentShutdown],recentClaimed:[rows.recentClaimed]}}};}};
+ const root=statsModule.exports.TasksStatsView({lang,api});
+ assert.equal(fallback['stats.recentClaimedLimit'],10);
  const drawStats=()=>{cursor=0;return root.type(root.props);};
  drawStats();effects.splice(0).forEach(fn=>fn());for(let i=0;i<12;i++)await Promise.resolve();
- assert.equal(statsCalls[0].args.recentPublishLimit,expected);
+ assert.equal(statsCalls[0].args.recentClaimedLimit,expected,'claim limit rides the same request');
  const walk=n=>n&&typeof n==='object'?[n,...n.children.flat(Infinity).flatMap(walk)]:[];
- const cards=walk(drawStats()).filter(n=>['recentPublish','recentDone','recentShutdown'].includes(n.key));
- assert.deepEqual(cards.map(n=>n.key),['recentPublish','recentDone','recentShutdown']);
- assert.ok(cards.every(n=>n.props.span===4));
- assert.equal(cards[0].props.title,lang==='en'?'Recently published':'最近发布');
- assert.equal(cards[0].props.note,lang==='en'?'Newest publication first':'按发布日期倒序');
- const table=cards[0].children[0];assert.equal(table.props.rows.length,0);
- const emptyHtml=renderToStaticMarkup(React.createElement(table.type,table.props));
- assert.ok(emptyHtml.includes(lang==='en'?'No published tasks yet':'还没有发布的任务'));
- const legacyHtml=renderToStaticMarkup(React.createElement(table.type,{...table.props,rows:[{id:'old',title:'Old',date:'',daysAgo:null,tableDeleted:true}]}));
+ const cards=walk(drawStats()).filter(n=>n&&['recent','recentPublish','recentDone','recentShutdown'].includes(n.key));
+ assert.equal(cards.length,1,'the three old lists collapse into one card');
+ const card=cards[0];
+ assert.equal(card.key,'recent');assert.equal(card.props.span,12);
+ assert.equal(card.props.title,lang==='en'?'Recent tasks':'最近任务');
+ const tablist=walk(card).find(n=>n&&n.props&&n.props.role==='tablist');
+ assert.ok(tablist,'merged card has a tablist');
+ assert.equal(tablist.props['aria-label'],lang==='en'?'Recent tasks':'最近任务');
+ const tabs=walk(tablist).filter(n=>n&&n.props&&n.props.role==='tab');
+ assert.equal(tabs.length,4,'four dimensions');
+ assert.deepEqual(tabs.map(b=>b.props.role),['tab','tab','tab','tab']);
+ assert.deepEqual(tabs.map(b=>b.children.join('')),lang==='en'?['Published','Completed','Closed','Claimed']:['最近发布','最近完成','最近关闭','最近接取']);
+ assert.deepEqual(tabs.map(b=>b.props['aria-selected']),[true,false,false,false],'publish is the default dimension');
+ assert.ok(tabs.every(b=>b.props.className==='wbt-dims-tab'&&b.props.type==='button'),'tabs are focusable buttons');
+ const expectedRows={publish:'Published',done:'Done',shutdown:'Closed',claimed:'Claimed'};
+ for(const [i,key] of ['publish','done','shutdown','claimed'].entries()) {
+   if(i>0){tabs[i].props.onClick();const next=walk(drawStats()).find(n=>n&&n.key==='recent');
+     assert.deepEqual(walk(next).filter(n=>n&&n.props&&n.props.role==='tab').map(b=>b.props['aria-selected']),[i===0,i===1,i===2,i===3]);}
+   const current=walk(drawStats()).find(n=>n&&n.key==='recent');
+   const table=walk(current).find(n=>n&&n.props&&Array.isArray(n.props.rows)&&Array.isArray(n.props.columns));
+   assert.equal(table.props.rows.length,1,'one row for '+key);
+   assert.equal(table.props.rows[0].title,expectedRows[key],'tab switches the list: '+key);
+ }
+ const last=walk(walk(drawStats()).find(n=>n&&n.key==='recent')).find(n=>n&&n.props&&Array.isArray(n.props.rows)&&Array.isArray(n.props.columns));
+ const emptyHtml=renderToStaticMarkup(React.createElement(last.type,{...last.props,rows:[]}));
+ assert.ok(emptyHtml.includes(lang==='en'?'No claimed tasks yet (claim time is only recorded after 5.2.15)':'还没有已接取的任务（接取时间只记录 5.2.15 之后的操作）'),'claimed empty state explains the missing history');
+ const legacyHtml=renderToStaticMarkup(React.createElement(last.type,{...last.props,rows:[{id:'old',title:'Old',date:'',daysAgo:null,tableDeleted:true}]}));
  assert.ok(legacyHtml.includes('—'));assert.ok(!legacyHtml.includes('NaN'));
- cfg['stats.sections']=['recentDone'];
- assert.equal(walk(drawStats()).filter(n=>n.key==='recentPublish').length,0,'explicit section preference hides publication card');
+ cfg['stats.sections']=['trend'];
+ assert.equal(walk(drawStats()).filter(n=>n.key==='recent').length,0,'section preference can hide the merged card');
+ cfg['stats.sections']=['recent'];
+ assert.equal(walk(drawStats()).filter(n=>n.key==='recent').length,1,'the merged key is the section switch');
 }
 console.log('TASK RECENT UI PASS: publication cards/limits/i18n/legacy fallback, deleted/zero/null/half-star/table semantics/navigation/default filters/host cache/scroll');

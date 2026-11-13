@@ -37,9 +37,12 @@ var COPY = {
     noWorkspaceRow: "未关联工作区", noWorkspaceNote: "正常状态：这些任务没有归属任何工作区", noWorkspacesEmpty: "还没有工作区，也没有未关联工作区的任务",
     colName: "名称", colTotal: "总数", colOpen: "已开启", colOverdue: "逾期", colDone: "已完成", colRate: "完成率",
     colTitle: "任务", colTarget: "计划完成", colAge: "逾期天数", colTable: "任务表",
+    recentTasks: "最近任务", recentTasksNote: "切换维度查看最近发布 / 完成 / 关闭 / 接取的任务",
+    recentTabPublish: "最近发布", recentTabDone: "最近完成", recentTabShutdown: "最近关闭", recentTabClaimed: "最近接取",
     recentPublish: "最近发布", recentPublishNote: "按发布日期倒序", noRecentPublish: "还没有发布的任务",
     recentDone: "最近完成", recentDoneNote: "按完成日期倒序", recentShutdown: "最近关闭", recentShutdownNote: "按关闭日期倒序",
     colDate: "日期", noRecentDone: "还没有已完成的任务", noRecentShutdown: "还没有已关闭的任务",
+    noRecentClaimed: "还没有已接取的任务（接取时间只记录 5.2.15 之后的操作）",
     noOverdue: "没有逾期任务", noData: "还没有任务。在「记录」里创建后，这里会自动汇总",
     open: "已开启", claimed: "已接取", shutdown: "已关闭", restarted: "已重启",
   },
@@ -68,9 +71,12 @@ var COPY = {
     noWorkspaceRow: "No workspace", noWorkspaceNote: "Normal state: these tasks belong to no workspace", noWorkspacesEmpty: "No workspaces and no tasks without one yet",
     colName: "Name", colTotal: "Total", colOpen: "Active", colOverdue: "Overdue", colDone: "Done", colRate: "Completion",
     colTitle: "Task", colTarget: "Target", colAge: "Days late", colTable: "Table",
+    recentTasks: "Recent tasks", recentTasksNote: "Switch the dimension: recently published / completed / closed / claimed",
+    recentTabPublish: "Published", recentTabDone: "Completed", recentTabShutdown: "Closed", recentTabClaimed: "Claimed",
     recentPublish: "Recently published", recentPublishNote: "Newest publication first", noRecentPublish: "No published tasks yet",
     recentDone: "Recently completed", recentDoneNote: "Newest completion first", recentShutdown: "Recently closed", recentShutdownNote: "Newest closure first",
     colDate: "Date", noRecentDone: "No completed tasks yet", noRecentShutdown: "No closed tasks yet",
+    noRecentClaimed: "No claimed tasks yet (claim time is only recorded after 5.2.15)",
     noOverdue: "No overdue tasks", noData: "No tasks yet. Create one in Tasks and the summary appears here.",
     open: "Active", shutdown: "Closed", restarted: "Restarted",
   },
@@ -121,7 +127,7 @@ function difficultyPicker(onNavigate, dimension, range) {
   };
 }
 
-var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true, "stats.recentPublishLimit": 10, "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10 };
+var CFG_FALLBACK = { "stats.range": "30d", "stats.top": 10, "stats.showKpi": true, "stats.recentPublishLimit": 10, "stats.recentDoneLimit": 10, "stats.recentShutdownLimit": 10, "stats.recentClaimedLimit": 10 };
 
 function TasksStatsView(props) {
   var lang = props.lang === "en" ? "en" : "zh";
@@ -149,6 +155,9 @@ function TasksStatsBody(props) {
   // 难度分布口径：默认「全部」= 现有存量口径，删掉数据依赖，切换只重取一次 statsReport。
   var dimPair = React.useState("all");
   var dimension = dimPair[0], setDimension = dimPair[1];
+  // 「最近任务」卡的维度切换：只换行数据与空态，不写配置、不持久化。
+  var recentPair = React.useState("publish");
+  var recentType = recentPair[0], setRecentType = recentPair[1];
   var dataPair = React.useState(null);
   var data = dataPair[0], setData = dataPair[1];
   var errPair = React.useState("");
@@ -188,6 +197,7 @@ function TasksStatsBody(props) {
       recentPublishLimit: cfgLimit("stats.recentPublishLimit"),
       recentDoneLimit: cfgLimit("stats.recentDoneLimit"),
       recentShutdownLimit: cfgLimit("stats.recentShutdownLimit"),
+      recentClaimedLimit: cfgLimit("stats.recentClaimedLimit"),
     };
     if (customOk) { args.from = customFrom; args.to = customTo; } else { args.range = range; }
     return Promise.resolve(api.call("tasks.statsReport", args))
@@ -356,12 +366,25 @@ function TasksStatsBody(props) {
       children.push(h(TimelineSection, { key: "timeline", api: api, lang: lang, active: props.active, ch: ch }));
 
       var recentCols = recentColumns(t, lang, props.onNavigate);
-      children.push(h(ch.Card, { key: "recentPublish", span: 4, title: t.recentPublish, note: t.recentPublishNote },
-        h(ch.DataTable, listProps(data, "recentPublish", lang, { lang: lang, empty: t.noRecentPublish, columns: recentCols }))));
-      children.push(h(ch.Card, { key: "recentDone", span: 4, title: t.recentDone, note: t.recentDoneNote },
-        h(ch.DataTable, listProps(data, "recentDone", lang, { lang: lang, empty: t.noRecentDone, columns: recentCols }))));
-      children.push(h(ch.Card, { key: "recentShutdown", span: 4, title: t.recentShutdown, note: t.recentShutdownNote },
-        h(ch.DataTable, listProps(data, "recentShutdown", lang, { lang: lang, empty: t.noRecentShutdown, columns: recentCols }))));
+      // 四个维度共用一张卡：tab 只切换清单键与空态文案，口径各自沿用原三张卡。
+      var recentTabs = [
+        ["publish", t.recentTabPublish, "recentPublish", t.noRecentPublish],
+        ["done", t.recentTabDone, "recentDone", t.noRecentDone],
+        ["shutdown", t.recentTabShutdown, "recentShutdown", t.noRecentShutdown],
+        ["claimed", t.recentTabClaimed, "recentClaimed", t.noRecentClaimed],
+      ];
+      var recentTab = recentTabs[0];
+      recentTabs.forEach(function (item) { if (item[0] === recentType) recentTab = item; });
+      children.push(h(ch.Card, { key: "recent", span: 12, title: t.recentTasks, note: t.recentTasksNote },
+        h("div", { className: "wbt-dims", role: "tablist", "aria-label": t.recentTasks },
+          recentTabs.map(function (item) {
+            return h("button", {
+              key: item[0], type: "button", role: "tab", className: "wbt-dims-tab",
+              "aria-selected": recentType === item[0],
+              onClick: function () { setRecentType(item[0]); },
+            }, item[1]);
+          })),
+        h(ch.DataTable, listProps(data, recentTab[2], lang, { lang: lang, empty: recentTab[3], columns: recentCols }))));
     }
     children.push(h(ch.Warnings, { key: "warn", items: data.warnings || [] }));
   }

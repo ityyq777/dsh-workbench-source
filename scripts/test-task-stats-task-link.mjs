@@ -44,5 +44,6 @@ assert.equal(recentColumns(copy, 'zh', undefined).find(c => c.key === 'title').r
 const stats = readFileSync(new URL('../packages/addons/tasks/client/views/stats.cjs', import.meta.url), 'utf8');
 assert.ok(stats.includes('render: taskTitle(lang, props.onNavigate)'), 'overdue list uses the shared title factory');
 assert.equal((stats.match(/recentColumns\(/g) || []).length, 1, 'recent lists share one column factory');
-assert.equal((stats.match(/listProps\(data, "recent/g) || []).length, 3, 'recent publish/done/shutdown tables');
-console.log('TASK STATS TASK LINK PASS', { cases: 20, overdue: true, recent: 3, degrade: true });
+assert.equal((stats.match(/listProps\(data, recentTab\[2\]/g) || []).length, 1, 'one table serves the four recent dimensions');
+for (const key of ["recentPublish","recentDone","recentShutdown","recentClaimed"]) assert.ok(stats.includes('"'+key+'"'), 'recent tab maps list '+key);
+console.log('TASK STATS TASK LINK PASS', { cases: 20, overdue: true, recent: 4, degrade: true });

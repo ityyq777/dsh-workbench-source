@@ -30,9 +30,8 @@ const SECTIONS = [
   { value: "tables", zh: "任务表排行", en: "Task tables" },
   { value: "groups", zh: "任务组排行", en: "Task groups" },
   { value: "workspaces", zh: "工作区排行", en: "Workspaces" },
-  { value: "recentPublish", zh: "最近发布", en: "Recently published" },
-  { value: "recentDone", zh: "最近完成", en: "Recently completed" },
-  { value: "recentShutdown", zh: "最近关闭", en: "Recently closed" },
+  // 最近发布/完成/关闭/接取合并成一张「最近任务」卡，卡内用按钮切换，区块只保留一项。
+  { value: "recent", zh: "最近任务", en: "Recent tasks" },
 ];
 
 const ITEMS = [
@@ -143,6 +142,8 @@ const ITEMS = [
     zh: "显示的区块", en: "Visible sections",
     hintZh: "统计页展示哪些区块；KPI 由下一项单独控制", hintEn: "Sections rendered on Stats; KPIs are controlled separately",
     values: SECTIONS,
+    // 5.2.15 把三张最近清单卡并成一张「最近任务」：旧值里的三个 id 迁移到 recent，避免整项回退默认。
+    aliases: { recentPublish: "recent", recentDone: "recent", recentShutdown: "recent" },
   },
   {
     id: "stats.recentPublishLimit", group: "stats", type: "int", surface: "ui", apply: "mount", default: 10, min: 1, max: 50,
@@ -158,6 +159,11 @@ const ITEMS = [
     id: "stats.recentShutdownLimit", group: "stats", type: "int", surface: "ui", apply: "mount", default: 10, min: 1, max: 50,
     zh: "最近关闭条数", en: "Recently closed rows",
     hintZh: "「最近关闭」区块显示多少条（1–50）", hintEn: "Rows in Recently closed (1–50)",
+  },
+  {
+    id: "stats.recentClaimedLimit", group: "stats", type: "int", surface: "ui", apply: "mount", default: 10, min: 1, max: 50,
+    zh: "最近接取条数", en: "Recently claimed rows",
+    hintZh: "「最近接取」页签显示多少条（1–50）；只统计有真实接取时间的任务", hintEn: "Rows in Recently claimed (1–50); only tasks with a real claim time",
   },
   {
     id: "ui.confirmDelete", group: "ui", type: "bool", surface: "ui", apply: "mount", default: true,
@@ -268,8 +274,10 @@ export function coerceValue(item, raw) {
   if (item.type === "multi") {
     if (!Array.isArray(raw)) throw new Error(label + " 需要数组");
     const allowed = (item.values || []).map(function (o) { return o.value; });
+    // aliases 把已合并/改名的旧取值迁到新值（例如 recentPublish → recent），迁移后仍按 allowed 校验。
+    const src = item.aliases ? raw.map(function (v) { return String(v) in item.aliases ? item.aliases[String(v)] : v; }) : raw;
     const seen = [];
-    for (const v of raw) {
+    for (const v of src) {
       if (allowed.indexOf(v) < 0) throw new Error(label + " 含非法取值：" + JSON.stringify(v));
       if (seen.indexOf(v) < 0) seen.push(v);
     }

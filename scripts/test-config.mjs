@@ -50,12 +50,18 @@ const g0 = tasks.call("tasks.configGet");
 assert(g0.values["list.pageSize"] === 12, "tasks 默认分页应为 12");
 assert(!Object.hasOwn(g0.values, "ui.defaultTab") && !Object.hasOwn(g0.values, "list.filterRestarted"), "页签与已重启过滤配置已移除");
 assert(g0.values["stats.recentPublishLimit"] === 10, "tasks 最近发布默认应为 10");
-assert(g0.values["stats.sections"].includes("recentPublish"), "最近发布默认可见");
+assert(g0.values["stats.sections"].includes("recent"), "最近任务卡默认可见");
+assert(!g0.values["stats.sections"].some(function (v) { return /^recent(Publish|Done|Shutdown)$/.test(v); }), "旧的三张最近卡开关已合并为 recent");
+const sectionItem = g0.items.find(x => x.id === "stats.sections");
+assert(JSON.stringify(sectionItem.options.map(function (o) { return o.value; }).filter(function (v) { return String(v).indexOf("recent") === 0; })) === JSON.stringify(["recent"]), "分区选项只保留「最近任务」");
+assert(!("aliases" in sectionItem), "别名只在内部迁移，不对外暴露");
 assert(g0.items.find(x => x.id === "stats.recentPublishLimit").group === "stats", "最近发布配置归属统计分组");
 assert(g0.values["stats.recentDoneLimit"] === 10, "tasks 最近完成默认应为 10");
 assert(g0.values["stats.recentShutdownLimit"] === 10, "tasks 最近关闭默认应为 10");
+assert(g0.values["stats.recentClaimedLimit"] === 10, "tasks 最近接取默认应为 10");
+assert(g0.items.find(x => x.id === "stats.recentClaimedLimit").group === "stats", "最近接取配置归属统计分组");
 assert(g0.values["ui.confirmDelete"] === true, "tasks 删除确认默认应为 true");
-assert(g0.items.length === 21, "tasks 配置项应为 21 项，实际：" + g0.items.length);
+assert(g0.items.length === 22, "tasks 配置项应为 22 项，实际：" + g0.items.length);
 assert(!g0.items.some(function (x) { return x.id === "ui.listView"; }), "ui.listView 已随卡片模式移除");
 assert(!Object.hasOwn(g0.values, "ui.listView"), "configGet 不应再返回 ui.listView");
 assert(Object.keys(g0.overrides).length === 0, "初始不应有覆盖项");
@@ -89,6 +95,22 @@ assert(tasks.call("tasks.configGet").values["stats.recentPublishLimit"] === 7, "
 tasks.call("tasks.configReset", {ids:["stats.recentPublishLimit"]});
 assert(tasks.call("tasks.configGet").values["stats.recentPublishLimit"] === 10, "最近发布条数重置失败");
 
+// 最近接取条数同样可配置、越界拒绝、重置回默认。
+for (const value of [0,51]) mustThrow(() => tasks.call("tasks.configSet", {values:{"stats.recentClaimedLimit":value}}), "stats.recentClaimedLimit", "最近接取条数越界应报错");
+tasks.call("tasks.configSet", {values:{"stats.recentClaimedLimit":3}});
+assert(tasks.call("tasks.configGet").values["stats.recentClaimedLimit"] === 3, "最近接取条数覆盖未生效");
+assert(tasks.call("tasks.statsReport", {range:"90d"}).lists.recentClaimed.length <= 3, "最近接取条数未按配置截断");
+tasks.call("tasks.configReset", {ids:["stats.recentClaimedLimit"]});
+assert(tasks.call("tasks.configGet").values["stats.recentClaimedLimit"] === 10, "最近接取条数重置失败");
+
+// 旧版本存量的三张最近卡开关按别名迁移到 recent，未知值仍整项回退默认。
+tasks.call("tasks.configSet", {values:{"stats.sections":["recentPublish","trend","recentDone"]}});
+assert(JSON.stringify(tasks.call("tasks.configGet").values["stats.sections"]) === JSON.stringify(["recent","trend"]), "旧的最近卡开关应迁移为 recent");
+tasks.call("tasks.configSet", {values:{"stats.sections":["recentShutdown","overdue"]}});
+assert(JSON.stringify(tasks.call("tasks.configGet").values["stats.sections"]) === JSON.stringify(["recent","overdue"]), "关闭卡开关也应迁移");
+tasks.call("tasks.configReset", {ids:["stats.sections"]});
+assert(tasks.call("tasks.configGet").values["stats.sections"].includes("recent"), "分区开关重置后应含最近任务");
+
 // 5. 服务端读取：每周起始日影响统计分桶
 tasks.call("tasks.configSet", { values: { "stats.weekStartsOn": 0 } });
 assert(tasks.call("tasks.statsReport", { range: "90d" }).range.weekStartsOn === 0, "周起始日未生效");
@@ -99,6 +121,10 @@ assert(Array.isArray(rep0.lists.recentDone), "缺少最近完成清单");
 assert(Array.isArray(rep0.lists.recentShutdown), "缺少最近关闭清单");
 assert(rep0.lists.recentDone.length <= 3, "最近完成条数未按参数截断");
 assert(rep0.lists.recentShutdown.length <= 4, "最近关闭条数未按参数截断");
+const repC = tasks.call("tasks.statsReport", { range: "90d", recentClaimedLimit: 2 });
+assert(Array.isArray(repC.lists.recentClaimed), "缺少最近接取清单");
+assert(repC.lists.recentClaimed.length <= 2, "最近接取条数未按参数截断");
+assert(repC.capabilities.lists.includes("recentClaimed"), "capabilities 未声明最近接取清单");
 const rep1 = tasks.call("tasks.statsReport", { range: "90d", recentDoneLimit: 999, recentShutdownLimit: -1 });
 assert(rep1.lists.recentDone.length <= 50, "最近完成条数未夹到上限");
 

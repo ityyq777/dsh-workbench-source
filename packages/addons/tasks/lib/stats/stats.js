@@ -334,6 +334,7 @@ export function statsReport(db, args, api) {
   const recentPublishLimit = limitOf(input.recentPublishLimit);
   const recentDoneLimit = limitOf(input.recentDoneLimit);
   const recentShutdownLimit = limitOf(input.recentShutdownLimit);
+  const recentClaimedLimit = limitOf(input.recentClaimedLimit);
   const recentTable = function (tableId) {
     const table = nodeMap[String(tableId)];
     return {
@@ -384,6 +385,28 @@ export function statsReport(db, args, api) {
       id: String(row.id),
       title: String(row.title || ""),
       date: String(row.shutdown_date || ""),
+      daysAgo: day ? Math.max(0, diffDays(day, todayStart)) : null,
+      difficulty: Number(row.difficulty) || 0,
+      ...recentTable(row.table_id),
+    };
+  });
+
+  // 最近接取：只列真实接取时间（claimed_at 非空）且已接取过（2/4）的任务，按接取时间倒序；
+  // 历史任务普遍缺 claimed_at，不按发布日近似，避免伪造接取记录。
+  const recentClaimedRows = db.prepare(
+    "SELECT id,title,claimed_at,table_id,difficulty FROM task WHERE deleted_at IS NULL " +
+      "AND status IN ('2','4') AND claimed_at IS NOT NULL AND claimed_at <> '' AND claimed_at > 0 " +
+      "ORDER BY claimed_at DESC, updated_at DESC, id DESC LIMIT ?",
+  ).all(recentClaimedLimit);
+  const recentClaimed = recentClaimedRows.map(function (row) {
+    // claimed_at 是毫秒时间戳，清单里的 date 统一转成本地日期，与完成/关闭清单同格式。
+    const ms = Number(row.claimed_at);
+    const at = Number.isFinite(ms) && ms > 0 ? new Date(ms) : null;
+    const day = at ? startOfDay(at) : null;
+    return {
+      id: String(row.id),
+      title: String(row.title || ""),
+      date: day ? dayStr(day) : "",
       daysAgo: day ? Math.max(0, diffDays(day, todayStart)) : null,
       difficulty: Number(row.difficulty) || 0,
       ...recentTable(row.table_id),
@@ -555,9 +578,9 @@ export function statsReport(db, args, api) {
       workspaces: rank(Object.keys(workspaceAgg).map(function (k) { return workspaceAgg[k]; })),
       noWorkspace: withCompletion(noWorkspaceAgg),
     },
-    lists: { overdue: overdueList, recentPublish: recentPublish, recentDone: recentDone, recentShutdown: recentShutdown },
+    lists: { overdue: overdueList, recentPublish: recentPublish, recentDone: recentDone, recentShutdown: recentShutdown, recentClaimed: recentClaimed },
     // 能力标记：前端据此区分「后端未返回某清单」与「清单确实为空」，旧后端缺该字段时按键存在性判断。
-    capabilities: { lists: ["overdue", "recentPublish", "recentDone", "recentShutdown"] },
+    capabilities: { lists: ["overdue", "recentPublish", "recentDone", "recentShutdown", "recentClaimed"] },
     warnings: warnings,
   };
 }
