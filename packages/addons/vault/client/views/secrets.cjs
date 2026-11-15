@@ -62,8 +62,7 @@ module.exports = function SecretsView(props) {
       kind: row.kind,
       secret: "",
       setIds: (row.setIds || []).slice(),
-      username: meta.username || "",
-      url: meta.url || "",
+      note: noteOf(meta),
     });
     editingS[1](true);
     msgS[1]("");
@@ -80,7 +79,9 @@ module.exports = function SecretsView(props) {
     if (!f.name.trim()) return msgS[1]("名称不能为空");
     if (!f.id && !f.secret) return msgS[1]("新增凭据必须填写明文");
     busyS[1](true); msgS[1]("");
-    var meta = { username: f.username, url: f.url };
+    var meta = {};
+    var note = (f.note || "").trim();
+    if (note) meta.note = note;
     var picked = f.setIds || [];
     var payload = {
       id: f.id || undefined,
@@ -189,7 +190,7 @@ module.exports = function SecretsView(props) {
             h("td", null, h("strong", null, row.name), h("div", { className: "wbv-muted" }, row.id)),
             h("td", null, h("span", { className: "wbv-pill" }, KIND_LABEL[row.kind] || row.kind)),
             h("td", null, chips.length ? h("div", { className: "wbv-chips" }, chips) : h("span", { className: "wbv-muted" }, "未加入集合")),
-            h("td", null, [meta.username, meta.url].filter(Boolean).join(" · ") || "—"),
+            h("td", null, noteOf(meta) || "—"),
             h("td", null, C.fmtTime(row.lastUsedAt, lang)),
             h("td", null, h("div", { className: "wbv-inline" },
               h(C.Btn, { h: h, kind: "ghost", onClick: function () { reveal(row); } }, "查看"),
@@ -221,8 +222,12 @@ module.exports = function SecretsView(props) {
               h("span", null, s.name),
               h("span", { className: "wbv-muted" }, " · " + (s.secretCount || 0) + " 条"));
           })) : h("span", { className: "wbv-muted" }, "—")),
-        h(C.Field, { h: h, label: "备注用户名" }, h("input", { value: formS[0].username, onChange: function (e) { formS[1](Object.assign({}, formS[0], { username: e.target.value })); } })),
-        h(C.Field, { h: h, label: "备注 URL" }, h("input", { value: formS[0].url, onChange: function (e) { formS[1](Object.assign({}, formS[0], { url: e.target.value })); } })),
+        h(C.Field, { h: h, label: "备注", hint: "非敏感信息（用户名、URL、过期提醒）" },
+          h("input", {
+            value: formS[0].note || "",
+            placeholder: "例如：用户名、URL、过期提醒",
+            onChange: function (e) { formS[1](Object.assign({}, formS[0], { note: e.target.value })); },
+          })),
         h(C.Notice, { h: h, kind: "error", text: msgS[0] }),
         h("div", { className: "wbv-row" },
           h("span", { className: "wbv-grow" }),
@@ -242,6 +247,15 @@ module.exports = function SecretsView(props) {
           h(C.Btn, { h: h, onClick: function () { revealS[1](null); } }, "关闭")))) : null);
 };
 
-function emptyForm() {
-  return { id: "", name: "", kind: "password", secret: "", setIds: [], username: "", url: "" };
+/** 备注：新数据统一用 meta.note；旧数据回退「用户名 · URL」。 */
+function noteOf(meta) {
+  if (!meta) return "";
+  if (meta.note) return String(meta.note);
+  return [meta.username, meta.url].filter(Boolean).join(" · ");
 }
+
+function emptyForm() {
+  return { id: "", name: "", kind: "password", secret: "", setIds: [], note: "" };
+}
+
+module.exports.noteOf = noteOf;

@@ -11,7 +11,7 @@ module.exports = function GroupsView(props) {
   var listS = React.useState({ loading: true, rows: [], error: "" });
   var msgS = React.useState("");
   var busyS = React.useState(false);
-  var formS = React.useState({ name: "", description: "" });
+  var createS = React.useState(null); // { name, description, setIds, error, busy }
   var openS = React.useState(null); // { group, items, loading, error }
   var setsS = React.useState([]);
   var delS = React.useState(null); // { row, moveTo }
@@ -31,14 +31,53 @@ module.exports = function GroupsView(props) {
 
   React.useEffect(function () { load(); }, []);
 
-  function create() {
-    var f = formS[0];
-    if (!f.name.trim()) return msgS[1]("组名不能为空");
-    busyS[1](true); msgS[1]("");
-    C.call(api, "vault.groupCreate", { name: f.name.trim(), description: f.description.trim() }).then(function () {
-      busyS[1](false); formS[1]({ name: "", description: "" }); load();
-    }).catch(function (e) { busyS[1](false); msgS[1](C.errText(e)); });
+  function openCreate() {
+    createS[1]({ name: "", description: "", setIds: [], error: "", busy: false });
   }
+  function closeCreate() {
+    if (createS[0] && createS[0].busy) return;
+    createS[1](null);
+  }
+  function patchCreate(patch) {
+    createS[1](function (old) { return old ? Object.assign({}, old, patch) : old; });
+  }
+  function toggleCreateSet(id) {
+    var cur = (createS[0] && createS[0].setIds) || [];
+    var next = cur.indexOf(id) >= 0 ? cur.filter(function (x) { return x !== id; }) : cur.concat([id]);
+    patchCreate({ setIds: next });
+  }
+
+  // 建组 + 挂集合：groupCreate 拿 id 后逐个 groupAttachSet（幂等）；部分失败只提示，不回滚分组。
+  function create() {
+    var c = createS[0];
+    if (!c) return;
+    if (!c.name.trim()) return patchCreate({ error: "分组名称不能为空" });
+    patchCreate({ busy: true, error: "" });
+    C.call(api, "vault.groupCreate", { name: c.name.trim(), description: c.description.trim() }).then(function (r) {
+      var groupId = r && r.id;
+      var picks = c.setIds || [];
+      return Promise.all(picks.map(function (setId) {
+        return C.call(api, "vault.groupAttachSet", { groupId: groupId, setId: setId }).then(
+          function () { return true; },
+          function () { return false; },
+        );
+      })).then(function (results) {
+        var failed = results.filter(function (ok) { return !ok; }).length;
+        createS[1](null);
+        msgS[1](failed ? "分组已创建，" + failed + " 个集合挂载失败，可在「查看关联」里补挂" : "");
+        load();
+      });
+    }).catch(function (e) { patchCreate({ busy: false, error: C.errText(e) }); });
+  }
+
+  // Esc 关闭建组弹窗（创建中忽略）。
+  var createOpen = Boolean(createS[0]);
+  React.useEffect(function () {
+    if (!createOpen) return undefined;
+    function onKey(e) { if (e.key === "Escape") closeCreate(); }
+    window.addEventListener("keydown", onKey);
+    return function () { window.removeEventListener("keydown", onKey); };
+  }, [createOpen]);
 
   // 桌面端 webview 不支持 window.prompt，删除分组用应用内确认弹层（可选接收分组）。
   function remove(row) { delS[1]({ row: row, moveTo: "" }); }
@@ -91,21 +130,17 @@ module.exports = function GroupsView(props) {
   return h("div", { className: "wbv" },
     h("div", { className: "wbv-row" },
       h("h2", { className: "wbv-grow" }, "分组与关联"),
-      h(C.Btn, { h: h, onClick: load }, "刷新")),
+      h(C.Btn, { h: h, onClick: load }, "刷新"),
+      h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, "新建分组")),
     h("p", { className: "wbv-muted" },
       "业务模块（站点、连接器等）把自己的对象关联到分组，再按组取用组内凭据；关联引用保存在保险箱，不要求模块依赖 sites。"),
     h(C.Notice, { h: h, kind: "error", text: listS[0].error || msgS[0] }),
 
-    h("div", { className: "wbv-card wbv-row" },
-      h(C.Field, { h: h, label: "新分组名称" },
-        h("input", { value: formS[0].name, placeholder: "如 少数派 / 工作邮箱", onChange: function (e) { formS[1](Object.assign({}, formS[0], { name: e.target.value })); } })),
-      h(C.Field, { h: h, label: "描述" },
-        h("input", { value: formS[0].description, placeholder: "可选", onChange: function (e) { formS[1](Object.assign({}, formS[0], { description: e.target.value })); } })),
-      h("div", { style: { alignSelf: "flex-end" } },
-        h(C.Btn, { h: h, kind: "primary", disabled: busyS[0], onClick: create }, busyS[0] ? "创建中…" : "新建分组"))),
-
     listS[0].loading ? h(C.Empty, { h: h, text: "读取分组…" }) :
-      listS[0].rows.length === 0 ? h(C.Empty, { h: h, text: "还没有分组。先建一个组，再把凭据放进去。" }) :
+      listS[0].rows.length === 0 ? h("div", { className: "wbv-empty-card" },
+        h("div", { className: "wbv-empty-title" }, "还没有分组"),
+        h("div", { className: "wbv-muted" }, "建一个组，把集合挂进来，再把模块对象关联到组。"),
+        h("div", { className: "wbv-row" }, h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, "新建分组"))) :
       h("table", { className: "wbv-table" },
         h("thead", null, h("tr", null, ["分组", "描述", "集合", "凭据", "关联对象", "操作"].map(function (x) { return h("th", { key: x }, x); }))),
         h("tbody", null, listS[0].rows.map(function (row) {
@@ -121,6 +156,43 @@ module.exports = function GroupsView(props) {
               h(C.Btn, { h: h, kind: "ghost", onClick: function () { open(row); } }, "查看关联"),
               h(C.Btn, { h: h, kind: "ghost", onClick: function () { remove(row); } }, "删除"))));
         }))),
+
+    createS[0] ? h("div", { className: "wbv-modal", onClick: closeCreate },
+      h("div", { className: "wbv-modal-box", onClick: function (e) { e.stopPropagation(); } },
+        h("h3", null, "新建分组"),
+        h(C.Field, { h: h, label: "分组名称" },
+          h("input", {
+            value: createS[0].name,
+            placeholder: "如 少数派 / 工作邮箱",
+            disabled: createS[0].busy,
+            autoFocus: true,
+            onChange: function (e) { patchCreate({ name: e.target.value }); },
+          })),
+        h(C.Field, { h: h, label: "描述" },
+          h("input", {
+            value: createS[0].description,
+            placeholder: "可选",
+            disabled: createS[0].busy,
+            onChange: function (e) { patchCreate({ description: e.target.value }); },
+          })),
+        h(C.Field, { h: h, label: "集合（可多选）", hint: "勾选的集合会一并挂到这个分组" },
+          setsS[0].length ? h("div", { className: "wbv-check-list" }, setsS[0].map(function (set) {
+            var on = (createS[0].setIds || []).indexOf(set.id) >= 0;
+            return h("label", { key: set.id, className: "wbv-check" },
+              h("input", {
+                type: "checkbox",
+                checked: on,
+                disabled: createS[0].busy,
+                onChange: function () { toggleCreateSet(set.id); },
+              }),
+              h("span", { className: "wbv-dot", style: { background: set.color || "var(--wb-accent)" } }),
+              h("span", null, set.name),
+              h("span", { className: "wbv-muted" }, " · " + (set.secretCount || 0) + " 条"));
+          })) : h("span", { className: "wbv-muted" }, "还没有集合，可先建组，再到「集合」页新建")),
+        h(C.Notice, { h: h, kind: "error", text: createS[0].error }),
+        h("div", { className: "wbv-row", style: { justifyContent: "flex-end" } },
+          h(C.Btn, { h: h, disabled: createS[0].busy, onClick: closeCreate }, "取消"),
+          h(C.Btn, { h: h, kind: "primary", disabled: createS[0].busy, onClick: create }, createS[0].busy ? "创建中…" : "创建")))) : null,
 
     delS[0] ? h("div", { className: "wbv-modal", onClick: function () { if (!busyS[0]) delS[1](null); } },
       h("div", { className: "wbv-modal-box", onClick: function (e) { e.stopPropagation(); } },

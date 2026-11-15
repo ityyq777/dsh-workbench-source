@@ -12,6 +12,7 @@ const C = require("../../lib/client-common.cjs")("wbv");
 
 const SecretField = require("../client/ui/secret-field.cjs");
 const AskPassphrase = require("../client/ui/ask-passphrase.cjs");
+const SecretsView = require("../client/views/secrets.cjs");
 
 const dir = path.join(process.cwd(), "packages/addons/vault/client");
 
@@ -77,4 +78,39 @@ test("vault 客户端不再使用 window.prompt（桌面端不支持，会静默
     const src = fs.readFileSync(file, "utf8");
     assert.doesNotMatch(src, /window\.prompt\(/, `${path.relative(dir, file)} 仍有 window.prompt`);
   }
+});
+
+test("备注合并：新数据读 note，旧数据回退「用户名 · URL」", () => {
+  const noteOf = SecretsView.noteOf;
+  assert.equal(noteOf({ username: "neo", url: "https://a.b" }), "neo · https://a.b");
+  assert.equal(noteOf({ note: "工作邮箱", username: "neo" }), "工作邮箱");
+  assert.equal(noteOf({}), "");
+  assert.equal(noteOf(null), "");
+});
+
+test("保存路径只写 meta.note，不再写 username/url", () => {
+  const src = fs.readFileSync(path.join(dir, "views/secrets.cjs"), "utf8");
+  assert.doesNotMatch(src, /username:\s*f\.username/);
+  assert.doesNotMatch(src, /url:\s*f\.url/);
+  assert.match(src, /meta\.note = note/);
+  assert.match(src, /label: "备注"/);
+  assert.doesNotMatch(src, /备注用户名|备注 URL/);
+});
+
+test("分组页：建组走弹窗，顶部不再有内联建组表单", () => {
+  const src = fs.readFileSync(path.join(dir, "views/groups.cjs"), "utf8");
+  assert.doesNotMatch(src, /新分组名称/);
+  assert.doesNotMatch(src, /wbv-card wbv-row/);
+  assert.match(src, /className: "wbv-modal-box"/);
+  assert.match(src, /label: "集合（可多选）"/);
+  assert.match(src, /kind: "primary", onClick: openCreate/);
+});
+
+test("分组页：创建时先 groupCreate 再逐个 groupAttachSet，Esc 可关、创建中不可关", () => {
+  const src = fs.readFileSync(path.join(dir, "views/groups.cjs"), "utf8");
+  assert.match(src, /vault\.groupCreate/);
+  assert.match(src, /vault\.groupAttachSet/);
+  assert.match(src, /e\.key === "Escape"/);
+  assert.match(src, /if \(createS\[0\] && createS\[0\]\.busy\) return;/);
+  assert.match(src, /个集合挂载失败/);
 });

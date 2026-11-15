@@ -1306,8 +1306,7 @@ var require_secrets = __commonJS({
           kind: row.kind,
           secret: "",
           setIds: (row.setIds || []).slice(),
-          username: meta.username || "",
-          url: meta.url || ""
+          note: noteOf(meta)
         });
         editingS[1](true);
         msgS[1]("");
@@ -1325,7 +1324,9 @@ var require_secrets = __commonJS({
         if (!f.id && !f.secret) return msgS[1]("\u65B0\u589E\u51ED\u636E\u5FC5\u987B\u586B\u5199\u660E\u6587");
         busyS[1](true);
         msgS[1]("");
-        var meta = { username: f.username, url: f.url };
+        var meta = {};
+        var note = (f.note || "").trim();
+        if (note) meta.note = note;
         var picked = f.setIds || [];
         var payload = {
           id: f.id || void 0,
@@ -1476,7 +1477,7 @@ var require_secrets = __commonJS({
               h("td", null, h("strong", null, row.name), h("div", { className: "wbv-muted" }, row.id)),
               h("td", null, h("span", { className: "wbv-pill" }, KIND_LABEL[row.kind] || row.kind)),
               h("td", null, chips.length ? h("div", { className: "wbv-chips" }, chips) : h("span", { className: "wbv-muted" }, "\u672A\u52A0\u5165\u96C6\u5408")),
-              h("td", null, [meta.username, meta.url].filter(Boolean).join(" \xB7 ") || "\u2014"),
+              h("td", null, noteOf(meta) || "\u2014"),
               h("td", null, C.fmtTime(row.lastUsedAt, lang)),
               h("td", null, h(
                 "div",
@@ -1555,12 +1556,17 @@ var require_secrets = __commonJS({
                 );
               })) : h("span", { className: "wbv-muted" }, "\u2014")
             ),
-            h(C.Field, { h, label: "\u5907\u6CE8\u7528\u6237\u540D" }, h("input", { value: formS[0].username, onChange: function(e) {
-              formS[1](Object.assign({}, formS[0], { username: e.target.value }));
-            } })),
-            h(C.Field, { h, label: "\u5907\u6CE8 URL" }, h("input", { value: formS[0].url, onChange: function(e) {
-              formS[1](Object.assign({}, formS[0], { url: e.target.value }));
-            } })),
+            h(
+              C.Field,
+              { h, label: "\u5907\u6CE8", hint: "\u975E\u654F\u611F\u4FE1\u606F\uFF08\u7528\u6237\u540D\u3001URL\u3001\u8FC7\u671F\u63D0\u9192\uFF09" },
+              h("input", {
+                value: formS[0].note || "",
+                placeholder: "\u4F8B\u5982\uFF1A\u7528\u6237\u540D\u3001URL\u3001\u8FC7\u671F\u63D0\u9192",
+                onChange: function(e) {
+                  formS[1](Object.assign({}, formS[0], { note: e.target.value }));
+                }
+              })
+            ),
             h(C.Notice, { h, kind: "error", text: msgS[0] }),
             h(
               "div",
@@ -1608,9 +1614,15 @@ var require_secrets = __commonJS({
         ) : null
       );
     };
-    function emptyForm() {
-      return { id: "", name: "", kind: "password", secret: "", setIds: [], username: "", url: "" };
+    function noteOf(meta) {
+      if (!meta) return "";
+      if (meta.note) return String(meta.note);
+      return [meta.username, meta.url].filter(Boolean).join(" \xB7 ");
     }
+    function emptyForm() {
+      return { id: "", name: "", kind: "password", secret: "", setIds: [], note: "" };
+    }
+    module2.exports.noteOf = noteOf;
   }
 });
 
@@ -1971,7 +1983,7 @@ var require_groups = __commonJS({
       var listS = React.useState({ loading: true, rows: [], error: "" });
       var msgS = React.useState("");
       var busyS = React.useState(false);
-      var formS = React.useState({ name: "", description: "" });
+      var createS = React.useState(null);
       var openS = React.useState(null);
       var setsS = React.useState([]);
       var delS = React.useState(null);
@@ -1994,20 +2006,65 @@ var require_groups = __commonJS({
       React.useEffect(function() {
         load();
       }, []);
-      function create() {
-        var f = formS[0];
-        if (!f.name.trim()) return msgS[1]("\u7EC4\u540D\u4E0D\u80FD\u4E3A\u7A7A");
-        busyS[1](true);
-        msgS[1]("");
-        C.call(api, "vault.groupCreate", { name: f.name.trim(), description: f.description.trim() }).then(function() {
-          busyS[1](false);
-          formS[1]({ name: "", description: "" });
-          load();
-        }).catch(function(e) {
-          busyS[1](false);
-          msgS[1](C.errText(e));
+      function openCreate() {
+        createS[1]({ name: "", description: "", setIds: [], error: "", busy: false });
+      }
+      function closeCreate() {
+        if (createS[0] && createS[0].busy) return;
+        createS[1](null);
+      }
+      function patchCreate(patch) {
+        createS[1](function(old) {
+          return old ? Object.assign({}, old, patch) : old;
         });
       }
+      function toggleCreateSet(id) {
+        var cur = createS[0] && createS[0].setIds || [];
+        var next = cur.indexOf(id) >= 0 ? cur.filter(function(x) {
+          return x !== id;
+        }) : cur.concat([id]);
+        patchCreate({ setIds: next });
+      }
+      function create() {
+        var c = createS[0];
+        if (!c) return;
+        if (!c.name.trim()) return patchCreate({ error: "\u5206\u7EC4\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A" });
+        patchCreate({ busy: true, error: "" });
+        C.call(api, "vault.groupCreate", { name: c.name.trim(), description: c.description.trim() }).then(function(r) {
+          var groupId = r && r.id;
+          var picks = c.setIds || [];
+          return Promise.all(picks.map(function(setId) {
+            return C.call(api, "vault.groupAttachSet", { groupId, setId }).then(
+              function() {
+                return true;
+              },
+              function() {
+                return false;
+              }
+            );
+          })).then(function(results) {
+            var failed = results.filter(function(ok) {
+              return !ok;
+            }).length;
+            createS[1](null);
+            msgS[1](failed ? "\u5206\u7EC4\u5DF2\u521B\u5EFA\uFF0C" + failed + " \u4E2A\u96C6\u5408\u6302\u8F7D\u5931\u8D25\uFF0C\u53EF\u5728\u300C\u67E5\u770B\u5173\u8054\u300D\u91CC\u8865\u6302" : "");
+            load();
+          });
+        }).catch(function(e) {
+          patchCreate({ busy: false, error: C.errText(e) });
+        });
+      }
+      var createOpen = Boolean(createS[0]);
+      React.useEffect(function() {
+        if (!createOpen) return void 0;
+        function onKey(e) {
+          if (e.key === "Escape") closeCreate();
+        }
+        window.addEventListener("keydown", onKey);
+        return function() {
+          window.removeEventListener("keydown", onKey);
+        };
+      }, [createOpen]);
       function remove(row) {
         delS[1]({ row, moveTo: "" });
       }
@@ -2069,7 +2126,8 @@ var require_groups = __commonJS({
           "div",
           { className: "wbv-row" },
           h("h2", { className: "wbv-grow" }, "\u5206\u7EC4\u4E0E\u5173\u8054"),
-          h(C.Btn, { h, onClick: load }, "\u5237\u65B0")
+          h(C.Btn, { h, onClick: load }, "\u5237\u65B0"),
+          h(C.Btn, { h, kind: "primary", onClick: openCreate }, "\u65B0\u5EFA\u5206\u7EC4")
         ),
         h(
           "p",
@@ -2077,30 +2135,13 @@ var require_groups = __commonJS({
           "\u4E1A\u52A1\u6A21\u5757\uFF08\u7AD9\u70B9\u3001\u8FDE\u63A5\u5668\u7B49\uFF09\u628A\u81EA\u5DF1\u7684\u5BF9\u8C61\u5173\u8054\u5230\u5206\u7EC4\uFF0C\u518D\u6309\u7EC4\u53D6\u7528\u7EC4\u5185\u51ED\u636E\uFF1B\u5173\u8054\u5F15\u7528\u4FDD\u5B58\u5728\u4FDD\u9669\u7BB1\uFF0C\u4E0D\u8981\u6C42\u6A21\u5757\u4F9D\u8D56 sites\u3002"
         ),
         h(C.Notice, { h, kind: "error", text: listS[0].error || msgS[0] }),
-        h(
+        listS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u5206\u7EC4\u2026" }) : listS[0].rows.length === 0 ? h(
           "div",
-          { className: "wbv-card wbv-row" },
-          h(
-            C.Field,
-            { h, label: "\u65B0\u5206\u7EC4\u540D\u79F0" },
-            h("input", { value: formS[0].name, placeholder: "\u5982 \u5C11\u6570\u6D3E / \u5DE5\u4F5C\u90AE\u7BB1", onChange: function(e) {
-              formS[1](Object.assign({}, formS[0], { name: e.target.value }));
-            } })
-          ),
-          h(
-            C.Field,
-            { h, label: "\u63CF\u8FF0" },
-            h("input", { value: formS[0].description, placeholder: "\u53EF\u9009", onChange: function(e) {
-              formS[1](Object.assign({}, formS[0], { description: e.target.value }));
-            } })
-          ),
-          h(
-            "div",
-            { style: { alignSelf: "flex-end" } },
-            h(C.Btn, { h, kind: "primary", disabled: busyS[0], onClick: create }, busyS[0] ? "\u521B\u5EFA\u4E2D\u2026" : "\u65B0\u5EFA\u5206\u7EC4")
-          )
-        ),
-        listS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u5206\u7EC4\u2026" }) : listS[0].rows.length === 0 ? h(C.Empty, { h, text: "\u8FD8\u6CA1\u6709\u5206\u7EC4\u3002\u5148\u5EFA\u4E00\u4E2A\u7EC4\uFF0C\u518D\u628A\u51ED\u636E\u653E\u8FDB\u53BB\u3002" }) : h(
+          { className: "wbv-empty-card" },
+          h("div", { className: "wbv-empty-title" }, "\u8FD8\u6CA1\u6709\u5206\u7EC4"),
+          h("div", { className: "wbv-muted" }, "\u5EFA\u4E00\u4E2A\u7EC4\uFF0C\u628A\u96C6\u5408\u6302\u8FDB\u6765\uFF0C\u518D\u628A\u6A21\u5757\u5BF9\u8C61\u5173\u8054\u5230\u7EC4\u3002"),
+          h("div", { className: "wbv-row" }, h(C.Btn, { h, kind: "primary", onClick: openCreate }, "\u65B0\u5EFA\u5206\u7EC4"))
+        ) : h(
           "table",
           { className: "wbv-table" },
           h("thead", null, h("tr", null, ["\u5206\u7EC4", "\u63CF\u8FF0", "\u96C6\u5408", "\u51ED\u636E", "\u5173\u8054\u5BF9\u8C61", "\u64CD\u4F5C"].map(function(x) {
@@ -2130,6 +2171,71 @@ var require_groups = __commonJS({
             );
           }))
         ),
+        createS[0] ? h(
+          "div",
+          { className: "wbv-modal", onClick: closeCreate },
+          h(
+            "div",
+            { className: "wbv-modal-box", onClick: function(e) {
+              e.stopPropagation();
+            } },
+            h("h3", null, "\u65B0\u5EFA\u5206\u7EC4"),
+            h(
+              C.Field,
+              { h, label: "\u5206\u7EC4\u540D\u79F0" },
+              h("input", {
+                value: createS[0].name,
+                placeholder: "\u5982 \u5C11\u6570\u6D3E / \u5DE5\u4F5C\u90AE\u7BB1",
+                disabled: createS[0].busy,
+                autoFocus: true,
+                onChange: function(e) {
+                  patchCreate({ name: e.target.value });
+                }
+              })
+            ),
+            h(
+              C.Field,
+              { h, label: "\u63CF\u8FF0" },
+              h("input", {
+                value: createS[0].description,
+                placeholder: "\u53EF\u9009",
+                disabled: createS[0].busy,
+                onChange: function(e) {
+                  patchCreate({ description: e.target.value });
+                }
+              })
+            ),
+            h(
+              C.Field,
+              { h, label: "\u96C6\u5408\uFF08\u53EF\u591A\u9009\uFF09", hint: "\u52FE\u9009\u7684\u96C6\u5408\u4F1A\u4E00\u5E76\u6302\u5230\u8FD9\u4E2A\u5206\u7EC4" },
+              setsS[0].length ? h("div", { className: "wbv-check-list" }, setsS[0].map(function(set) {
+                var on = (createS[0].setIds || []).indexOf(set.id) >= 0;
+                return h(
+                  "label",
+                  { key: set.id, className: "wbv-check" },
+                  h("input", {
+                    type: "checkbox",
+                    checked: on,
+                    disabled: createS[0].busy,
+                    onChange: function() {
+                      toggleCreateSet(set.id);
+                    }
+                  }),
+                  h("span", { className: "wbv-dot", style: { background: set.color || "var(--wb-accent)" } }),
+                  h("span", null, set.name),
+                  h("span", { className: "wbv-muted" }, " \xB7 " + (set.secretCount || 0) + " \u6761")
+                );
+              })) : h("span", { className: "wbv-muted" }, "\u8FD8\u6CA1\u6709\u96C6\u5408\uFF0C\u53EF\u5148\u5EFA\u7EC4\uFF0C\u518D\u5230\u300C\u96C6\u5408\u300D\u9875\u65B0\u5EFA")
+            ),
+            h(C.Notice, { h, kind: "error", text: createS[0].error }),
+            h(
+              "div",
+              { className: "wbv-row", style: { justifyContent: "flex-end" } },
+              h(C.Btn, { h, disabled: createS[0].busy, onClick: closeCreate }, "\u53D6\u6D88"),
+              h(C.Btn, { h, kind: "primary", disabled: createS[0].busy, onClick: create }, createS[0].busy ? "\u521B\u5EFA\u4E2D\u2026" : "\u521B\u5EFA")
+            )
+          )
+        ) : null,
         delS[0] ? h(
           "div",
           { className: "wbv-modal", onClick: function() {
@@ -4178,7 +4284,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.3.1",
+    version: "0.3.3",
     icon: (init_shield_check(), __toCommonJS(shield_check_exports)).default,
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },
