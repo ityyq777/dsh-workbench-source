@@ -106,6 +106,21 @@ test("分组页：建组走弹窗，顶部不再有内联建组表单", () => {
   assert.match(src, /kind: "primary", onClick: openCreate/);
 });
 
+test("分组页：集合选择器复用共享清单，搜索走后端、本地每页 20 条", () => {
+  const src = fs.readFileSync(path.join(dir, "views/groups.cjs"), "utf8");
+  assert.match(src, /require\("\.\.\/\.\.\/\.\.\/lib\/filter-checklist\.cjs"\)/);
+  assert.match(src, /h\(FilterChecklist, \{/);
+  assert.match(src, /title: "全部集合"/);
+  assert.match(src, /searchPlaceholder: "搜索集合名称或描述"/);
+  assert.match(src, /"vault\.setList", pickQ \? \{ q: pickQ \} : \{\}/);
+  assert.match(src, /var PICK_PAGE = 20;/);
+  assert.match(src, /slice\(0, pickS\[0\]\.page \* PICK_PAGE\)/);
+  assert.match(src, /onClear: pickClear/);
+  // 已选跨搜索保留：搜索与页码只动 pickS，不重置 createS.setIds
+  assert.match(src, /function pickQuery\(v\)/);
+  assert.doesNotMatch(src, /pickQuery[\s\S]{0,200}setIds: \[\]/);
+});
+
 test("分组页：创建时先 groupCreate 再逐个 groupAttachSet，Esc 可关、创建中不可关", () => {
   const src = fs.readFileSync(path.join(dir, "views/groups.cjs"), "utf8");
   assert.match(src, /vault\.groupCreate/);

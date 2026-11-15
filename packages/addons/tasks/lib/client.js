@@ -46,11 +46,128 @@ var require_limits = __commonJS({
   }
 });
 
+// packages/addons/lib/filter-checklist.cjs
+var require_filter_checklist = __commonJS({
+  "packages/addons/lib/filter-checklist.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h = React.createElement;
+    var NEAR = 24;
+    function nearBottom(el, threshold) {
+      if (!el) return false;
+      var gap = Number(threshold);
+      if (!isFinite(gap) || gap < 0) gap = NEAR;
+      return el.scrollTop + el.clientHeight >= el.scrollHeight - gap;
+    }
+    function FilterChecklist(props) {
+      var items = props.items || [];
+      var selected = props.selected || [];
+      var disabled = props.disabled === true;
+      var loading = props.loading === true;
+      var hasMore = props.hasMore === true;
+      var query = props.query || "";
+      var total = typeof props.total === "number" ? props.total : items.length;
+      var title = props.title || "\u5168\u90E8";
+      var selectedText = props.selectedText || "\u5DF2\u9009";
+      var clearText = props.clearText || "\u6E05\u7A7A";
+      var searchPlaceholder = props.searchPlaceholder || "\u641C\u7D22";
+      var emptyText = props.emptyText || "\u6682\u65E0\u6570\u636E";
+      var noMatchText = props.noMatchText || "\u6CA1\u6709\u5339\u914D\u9879";
+      var loadingText = props.loadingText || "\u52A0\u8F7D\u4E2D\u2026";
+      var noMoreText = typeof props.noMoreText === "string" ? props.noMoreText : "\u6CA1\u6709\u66F4\u591A";
+      var onToggle = props.onToggle || function() {
+      };
+      var onQuery = props.onQuery || function() {
+      };
+      var onLoadMore = props.onLoadMore;
+      var onClear = props.onClear || function() {
+      };
+      function toggle(id) {
+        if (disabled) return;
+        onToggle(id);
+      }
+      function scroll(e) {
+        if (disabled || loading || !hasMore || !onLoadMore) return;
+        if (nearBottom(e.currentTarget)) onLoadMore();
+      }
+      var head = h(
+        "div",
+        { className: "wbck-head" },
+        h("span", { className: "wbck-grow" }, title + (total ? " \xB7 " + total : "")),
+        selected.length ? h("span", { className: "wbck-sel" }, selectedText + " " + selected.length) : null,
+        selected.length || query ? h("button", {
+          type: "button",
+          className: "wbck-clear",
+          disabled,
+          onClick: function() {
+            if (disabled) return;
+            onClear();
+          }
+        }, clearText) : null
+      );
+      var body;
+      if (!items.length) {
+        body = h("div", { className: "wbck-note", role: "status" }, loading ? loadingText : query ? noMatchText : emptyText);
+      } else {
+        body = items.map(function(x) {
+          var on = selected.indexOf(String(x.id)) >= 0;
+          return h(
+            "label",
+            { key: x.id, className: "wbck-opt" + (on ? " is-on" : "") },
+            h("input", {
+              type: "checkbox",
+              checked: on,
+              disabled,
+              onChange: function() {
+                toggle(x.id);
+              }
+            }),
+            h("span", { className: "wbck-nm", title: x.name }, x.name),
+            x.meta ? h("span", { className: "wbck-meta" }, x.meta) : null
+          );
+        });
+        var more = loading ? loadingText : hasMore ? "" : noMoreText;
+        if (more) body = body.concat([h("div", { key: "__more", className: "wbck-more", role: "status" }, more)]);
+      }
+      return h(
+        "div",
+        { className: "wbck", "data-role": "checklist" },
+        h(
+          "div",
+          { className: "wbck-search" },
+          h("input", {
+            type: "search",
+            autoFocus: props.autoFocus !== false,
+            className: "wbck-input",
+            placeholder: searchPlaceholder,
+            "aria-label": searchPlaceholder,
+            value: query,
+            disabled,
+            onChange: function(e) {
+              onQuery(e.target.value);
+            }
+          })
+        ),
+        props.beforeHead || null,
+        head,
+        h("div", {
+          className: "wbck-list",
+          onScroll: scroll,
+          "aria-busy": loading ? "true" : "false"
+        }, body)
+      );
+    }
+    module2.exports = FilterChecklist;
+    module2.exports.nearBottom = nearBottom;
+  }
+});
+
 // packages/addons/tasks/client/ui/tagfilter.cjs
 var require_tagfilter = __commonJS({
   "packages/addons/tasks/client/ui/tagfilter.cjs"(exports2, module2) {
     var React = require("react");
     var h = React.createElement;
+    var FilterChecklist = require_filter_checklist();
     module2.exports = function TagFilter(props) {
       var api = props.api;
       var t = props.t;
@@ -137,74 +254,47 @@ var require_tagfilter = __commonJS({
         open ? h(
           "div",
           { className: "wbt-tagmenu", role: "menu" },
-          h(
-            "div",
-            { className: "wbt-tagsearch" },
-            h("input", {
-              className: "wbt-input",
-              autoFocus: true,
-              placeholder: t.tagSearchPlaceholder,
-              value: query,
-              onChange: function(e) {
-                setQuery(e.target.value);
-              },
-              onKeyDown: function(e) {
-                if (e.key === "Escape") {
-                  e.stopPropagation();
-                  setOpen(false);
-                }
-              }
-            })
-          ),
-          ids.length ? h(
-            "div",
-            { className: "wbt-tagsel" },
-            h("div", { className: "wbt-tagmenu-head" }, h("span", null, t.tagSelected + " " + ids.length), h("span", { className: "wbt-grow" })),
-            h("div", { className: "wbt-tagsel-list" }, ids.map(function(id) {
-              return h(
-                "button",
-                { key: id, className: "wbt-tagselitem", title: t.tagRemove, onClick: function() {
-                  toggle(id);
-                } },
-                h("span", { className: "wbt-tagnm" }, names[String(id)] || "#" + id),
-                h("span", { className: "wbt-tagx" }, "\xD7")
-              );
-            }))
-          ) : null,
-          h(
-            "div",
-            { className: "wbt-tagmenu-head" },
-            h("span", null, t.allTags + (opts.total ? " \xB7 " + opts.total : "")),
-            h("span", { className: "wbt-grow" }),
-            h("button", { className: "wbt-mini", onClick: function() {
+          h(FilterChecklist, {
+            beforeHead: ids.length ? h(
+              "div",
+              { className: "wbt-tagsel" },
+              h("div", { className: "wbt-tagmenu-head" }, h("span", null, t.tagSelected + " " + ids.length), h("span", { className: "wbt-grow" })),
+              h("div", { className: "wbt-tagsel-list" }, ids.map(function(id) {
+                return h(
+                  "button",
+                  { key: id, className: "wbt-tagselitem", title: t.tagRemove, onClick: function() {
+                    toggle(id);
+                  } },
+                  h("span", { className: "wbt-tagnm" }, names[String(id)] || "#" + id),
+                  h("span", { className: "wbt-tagx" }, "\xD7")
+                );
+              }))
+            ) : null,
+            items: opts.tags.map(function(x) {
+              return { id: x.id, name: x.name, meta: x.total };
+            }),
+            selected: ids,
+            onToggle: toggle,
+            query,
+            onQuery: setQuery,
+            title: t.allTags,
+            total: opts.total,
+            clearText: t.clear,
+            onClear: function() {
               onChange([]);
               setQuery("");
-            } }, t.clear)
-          ),
-          h(
-            "div",
-            {
-              className: "wbt-taglist",
-              onScroll: function(e) {
-                var el = e.currentTarget;
-                if (!opts.hasMore || loading) return;
-                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 24) load(query, (opts.pageNumber || 1) + 1, true);
-              }
             },
-            opts.tags.length ? opts.tags.map(function(x) {
-              var on = ids.indexOf(String(x.id)) >= 0;
-              return h(
-                "label",
-                { key: x.id, className: "wbt-tagopt" },
-                h("input", { type: "checkbox", checked: on, onChange: function() {
-                  toggle(x.id);
-                } }),
-                h("span", { className: "wbt-tagnm" }, x.name),
-                h("span", { className: "wbt-tagcnt" }, x.total)
-              );
-            }) : h("div", { className: "wbt-note" }, loading ? t.loadingMore : query ? t.tagNoMatch : t.noTags),
-            opts.tags.length ? h("div", { className: "wbt-tagmore" }, loading ? t.loadingMore : opts.hasMore ? "" : t.noMore) : null
-          )
+            searchPlaceholder: t.tagSearchPlaceholder,
+            loading,
+            hasMore: opts.hasMore,
+            onLoadMore: function() {
+              load(query, (opts.pageNumber || 1) + 1, true);
+            },
+            emptyText: t.noTags,
+            noMatchText: t.tagNoMatch,
+            loadingText: t.loadingMore,
+            noMoreText: t.noMore
+          })
         ) : null
       );
     };
@@ -6959,6 +7049,37 @@ var require_description = __commonJS({
   }
 });
 
+// packages/addons/lib/filter-checklist-styles.cjs
+var require_filter_checklist_styles = __commonJS({
+  "packages/addons/lib/filter-checklist-styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = [
+      ".wbck{display:flex;flex-direction:column;min-width:0}",
+      ".wbck-search{padding:0 0 6px}",
+      ".wbck-input{width:100%;box-sizing:border-box;font:inherit;font-size:12.5px;padding:6px 9px;border:1px solid var(--wb-border);border-radius:8px;background:var(--wb-surface);color:inherit}",
+      ".wbck-input:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}",
+      ".wbck-input:disabled{opacity:.6;cursor:not-allowed}",
+      ".wbck-head{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--wb-muted);padding:2px 4px 7px}",
+      ".wbck-grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbck-sel{flex:none;color:var(--wb-accent)}",
+      ".wbck-clear{appearance:none;flex:none;border:0;background:transparent;color:inherit;border-radius:4px;margin:0;padding:3px 5px;font:inherit;font-size:11.5px;line-height:1;cursor:pointer;opacity:.75}",
+      ".wbck-clear:hover:enabled{opacity:1;background:color-mix(in srgb, currentColor 8%, transparent)}",
+      ".wbck-clear:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}",
+      ".wbck-clear:disabled{opacity:.4;cursor:not-allowed}",
+      ".wbck-list{max-height:220px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--wb-border);border-radius:10px;padding:2px}",
+      ".wbck-opt{display:flex;align-items:center;gap:7px;padding:6px;border-radius:6px;font-size:12.5px;cursor:pointer}",
+      ".wbck-opt:hover{background:color-mix(in srgb, currentColor 7%, transparent)}",
+      ".wbck-opt.is-on{background:color-mix(in srgb, var(--wb-accent) 10%, transparent)}",
+      ".wbck-opt input{margin:0;flex:none;accent-color:var(--wb-accent)}",
+      ".wbck-nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbck-meta{margin-left:auto;flex:none;font-size:11.5px;color:var(--wb-muted)}",
+      ".wbck-note{font-size:12px;color:var(--wb-muted);padding:8px 6px}",
+      ".wbck-more{font-size:11px;color:var(--wb-muted);text-align:center;padding:6px 0 2px;opacity:.8}",
+      "@media (max-width:760px){.wbck-list{max-height:200px}}"
+    ];
+  }
+});
+
 // packages/addons/tasks/client/ui/styles.cjs
 var require_styles = __commonJS({
   "packages/addons/tasks/client/ui/styles.cjs"(exports2, module2) {
@@ -7213,7 +7334,7 @@ var require_styles = __commonJS({
       "@media (max-width:760px){.wbt-body{flex-direction:column;gap:8px}.wbt-nav{flex-direction:row;width:100%;flex:0 0 auto;overflow-x:auto;border-right:none;border-bottom:1px solid var(--wbt-line);padding:0 0 6px}.wbt-tab{width:auto;white-space:nowrap;padding:6px 9px}.wbt-tab.on{box-shadow:inset 0 -2px 0 var(--wbt-accent)}.wbt-nav-sep{width:1px;height:18px;flex:none;margin:auto 4px}.wbt-tree-slot{flex:0 0 auto;width:auto;margin-right:0}.wbt-pathrow .wbt-search{flex:1 1 160px;max-width:none}}",
       "@media (max-width:760px){.wbt-filter-panel{width:100%;flex:0 0 auto;padding:8px;max-height:40%}.wbt-filter-toggle{display:inline-flex}.wbt-filter-panel:not(.expanded) .wbt-filter-content{display:none}.wbt-filter-panel.expanded .wbt-filter-content{padding-top:10px}.wbt-content{width:100%;box-sizing:border-box}}",
       "@media (max-width:640px){.wbt-form{grid-template-columns:1fr}.wbt-drawer{width:94vw}.wbt-search{width:100%}.wbt-item{padding:9px}.wbt-ops{width:100%;justify-content:flex-end}}"
-    ].join("\n");
+    ].concat(require_filter_checklist_styles()).join("\n");
   }
 });
 
@@ -11557,7 +11678,7 @@ var init_list_checks = __esm({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.16",
+    version: "5.2.17",
     icon: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },

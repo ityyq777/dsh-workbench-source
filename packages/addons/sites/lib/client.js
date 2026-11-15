@@ -38,6 +38,122 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// packages/addons/lib/filter-checklist.cjs
+var require_filter_checklist = __commonJS({
+  "packages/addons/lib/filter-checklist.cjs"(exports2, module2) {
+    "use strict";
+    var React2 = require("react");
+    var h2 = React2.createElement;
+    var NEAR = 24;
+    function nearBottom(el, threshold) {
+      if (!el) return false;
+      var gap = Number(threshold);
+      if (!isFinite(gap) || gap < 0) gap = NEAR;
+      return el.scrollTop + el.clientHeight >= el.scrollHeight - gap;
+    }
+    function FilterChecklist(props) {
+      var items = props.items || [];
+      var selected = props.selected || [];
+      var disabled = props.disabled === true;
+      var loading = props.loading === true;
+      var hasMore = props.hasMore === true;
+      var query = props.query || "";
+      var total = typeof props.total === "number" ? props.total : items.length;
+      var title = props.title || "\u5168\u90E8";
+      var selectedText = props.selectedText || "\u5DF2\u9009";
+      var clearText = props.clearText || "\u6E05\u7A7A";
+      var searchPlaceholder = props.searchPlaceholder || "\u641C\u7D22";
+      var emptyText = props.emptyText || "\u6682\u65E0\u6570\u636E";
+      var noMatchText = props.noMatchText || "\u6CA1\u6709\u5339\u914D\u9879";
+      var loadingText = props.loadingText || "\u52A0\u8F7D\u4E2D\u2026";
+      var noMoreText = typeof props.noMoreText === "string" ? props.noMoreText : "\u6CA1\u6709\u66F4\u591A";
+      var onToggle = props.onToggle || function() {
+      };
+      var onQuery = props.onQuery || function() {
+      };
+      var onLoadMore = props.onLoadMore;
+      var onClear = props.onClear || function() {
+      };
+      function toggle(id) {
+        if (disabled) return;
+        onToggle(id);
+      }
+      function scroll(e) {
+        if (disabled || loading || !hasMore || !onLoadMore) return;
+        if (nearBottom(e.currentTarget)) onLoadMore();
+      }
+      var head = h2(
+        "div",
+        { className: "wbck-head" },
+        h2("span", { className: "wbck-grow" }, title + (total ? " \xB7 " + total : "")),
+        selected.length ? h2("span", { className: "wbck-sel" }, selectedText + " " + selected.length) : null,
+        selected.length || query ? h2("button", {
+          type: "button",
+          className: "wbck-clear",
+          disabled,
+          onClick: function() {
+            if (disabled) return;
+            onClear();
+          }
+        }, clearText) : null
+      );
+      var body;
+      if (!items.length) {
+        body = h2("div", { className: "wbck-note", role: "status" }, loading ? loadingText : query ? noMatchText : emptyText);
+      } else {
+        body = items.map(function(x) {
+          var on = selected.indexOf(String(x.id)) >= 0;
+          return h2(
+            "label",
+            { key: x.id, className: "wbck-opt" + (on ? " is-on" : "") },
+            h2("input", {
+              type: "checkbox",
+              checked: on,
+              disabled,
+              onChange: function() {
+                toggle(x.id);
+              }
+            }),
+            h2("span", { className: "wbck-nm", title: x.name }, x.name),
+            x.meta ? h2("span", { className: "wbck-meta" }, x.meta) : null
+          );
+        });
+        var more = loading ? loadingText : hasMore ? "" : noMoreText;
+        if (more) body = body.concat([h2("div", { key: "__more", className: "wbck-more", role: "status" }, more)]);
+      }
+      return h2(
+        "div",
+        { className: "wbck", "data-role": "checklist" },
+        h2(
+          "div",
+          { className: "wbck-search" },
+          h2("input", {
+            type: "search",
+            autoFocus: props.autoFocus !== false,
+            className: "wbck-input",
+            placeholder: searchPlaceholder,
+            "aria-label": searchPlaceholder,
+            value: query,
+            disabled,
+            onChange: function(e) {
+              onQuery(e.target.value);
+            }
+          })
+        ),
+        props.beforeHead || null,
+        head,
+        h2("div", {
+          className: "wbck-list",
+          onScroll: scroll,
+          "aria-busy": loading ? "true" : "false"
+        }, body)
+      );
+    }
+    module2.exports = FilterChecklist;
+    module2.exports.nearBottom = nearBottom;
+  }
+});
+
 // packages/addons/sites/client/ui/tagfilter.cjs
 var require_tagfilter = __commonJS({
   "packages/addons/sites/client/ui/tagfilter.cjs"(exports2, module2) {
@@ -46,6 +162,7 @@ var require_tagfilter = __commonJS({
     var useState = React2.useState;
     var useEffect = React2.useEffect;
     var useCallback = React2.useCallback;
+    var FilterChecklist = require_filter_checklist();
     module2.exports = function TagFilter2(props) {
       var api = props.api;
       var text = props.text;
@@ -137,67 +254,47 @@ var require_tagfilter = __commonJS({
           { className: "wbs-tagmenu", style: { width: 260 }, onClick: function(e) {
             e.stopPropagation();
           } },
-          h2(
-            "div",
-            { style: { padding: "2px 4px 6px" } },
-            h2("input", {
-              className: "wbs-input",
-              autoFocus: true,
-              value: query,
-              placeholder: text("tagSearchPlaceholder"),
-              onChange: function(e) {
-                setQuery(e.target.value);
-              }
-            })
-          ),
-          ids.length ? h2(
-            "div",
-            { style: { padding: "0 4px 4px", display: "flex", flexDirection: "column", gap: 3 } },
-            h2("div", { className: "wbs-tagmenu-head" }, h2("span", null, text("tagSelected") + " " + ids.length)),
-            ids.map(function(id) {
-              return h2(
-                "button",
-                { key: id, className: "wbs-mini", style: { justifyContent: "space-between" }, onClick: function() {
-                  toggle(id);
-                } },
-                h2("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, names[String(id)] || "#" + id),
-                h2("span", null, "\xD7")
-              );
-            })
-          ) : null,
-          h2(
-            "div",
-            { className: "wbs-tagmenu-head" },
-            h2("span", null, text("allTags") + (total ? " \xB7 " + total : "")),
-            h2("span", { className: "wbs-grow" }),
-            h2("button", { className: "wbs-mini", title: text("clear"), onClick: function() {
+          h2(FilterChecklist, {
+            beforeHead: ids.length ? h2(
+              "div",
+              { style: { padding: "0 4px 4px" } },
+              h2("div", { className: "wbs-tagmenu-head" }, h2("span", null, text("tagSelected") + " " + ids.length)),
+              ids.map(function(id) {
+                return h2(
+                  "button",
+                  { key: id, className: "wbs-mini", style: { justifyContent: "space-between" }, onClick: function() {
+                    toggle(id);
+                  } },
+                  h2("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, names[String(id)] || "#" + id),
+                  h2("span", null, "\xD7")
+                );
+              })
+            ) : null,
+            items: rows.map(function(x) {
+              return { id: x.id, name: x.name };
+            }),
+            selected: ids,
+            onToggle: toggle,
+            query,
+            onQuery: setQuery,
+            title: text("allTags"),
+            total,
+            clearText: text("clear"),
+            onClear: function() {
               onChange([]);
               setQuery("");
-            } }, h2(Icon2, { name: "x", size: 12 }), text("clear"))
-          ),
-          h2(
-            "div",
-            {
-              style: { maxHeight: 240, overflow: "auto" },
-              onScroll: function(e) {
-                var el = e.currentTarget;
-                if (!hasMore || loading) return;
-                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 24) load(query, (page || 1) + 1, true);
-              }
             },
-            rows.length ? rows.map(function(t) {
-              var on = ids.indexOf(String(t.id)) >= 0;
-              return h2(
-                "label",
-                { key: t.id, className: "wbs-tagopt" },
-                h2("input", { type: "checkbox", checked: on, onChange: function() {
-                  toggle(t.id);
-                } }),
-                h2("span", null, t.name)
-              );
-            }) : h2("div", { className: "wbs-note", style: { padding: 6 } }, loading ? text("loadingMore") : query ? text("tagNoMatch") : text("noTags")),
-            rows.length ? h2("div", { className: "wbs-note", style: { padding: 6, textAlign: "center" } }, loading ? text("loadingMore") : hasMore ? "" : text("noMore")) : null
-          )
+            searchPlaceholder: text("tagSearchPlaceholder"),
+            loading,
+            hasMore,
+            onLoadMore: function() {
+              load(query, (page || 1) + 1, true);
+            },
+            emptyText: text("noTags"),
+            noMatchText: text("tagNoMatch"),
+            loadingText: text("loadingMore"),
+            noMoreText: text("noMore")
+          })
         ) : null
       );
     };
@@ -4209,6 +4306,37 @@ var require_copy = __commonJS({
   }
 });
 
+// packages/addons/lib/filter-checklist-styles.cjs
+var require_filter_checklist_styles = __commonJS({
+  "packages/addons/lib/filter-checklist-styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = [
+      ".wbck{display:flex;flex-direction:column;min-width:0}",
+      ".wbck-search{padding:0 0 6px}",
+      ".wbck-input{width:100%;box-sizing:border-box;font:inherit;font-size:12.5px;padding:6px 9px;border:1px solid var(--wb-border);border-radius:8px;background:var(--wb-surface);color:inherit}",
+      ".wbck-input:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}",
+      ".wbck-input:disabled{opacity:.6;cursor:not-allowed}",
+      ".wbck-head{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--wb-muted);padding:2px 4px 7px}",
+      ".wbck-grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbck-sel{flex:none;color:var(--wb-accent)}",
+      ".wbck-clear{appearance:none;flex:none;border:0;background:transparent;color:inherit;border-radius:4px;margin:0;padding:3px 5px;font:inherit;font-size:11.5px;line-height:1;cursor:pointer;opacity:.75}",
+      ".wbck-clear:hover:enabled{opacity:1;background:color-mix(in srgb, currentColor 8%, transparent)}",
+      ".wbck-clear:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}",
+      ".wbck-clear:disabled{opacity:.4;cursor:not-allowed}",
+      ".wbck-list{max-height:220px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--wb-border);border-radius:10px;padding:2px}",
+      ".wbck-opt{display:flex;align-items:center;gap:7px;padding:6px;border-radius:6px;font-size:12.5px;cursor:pointer}",
+      ".wbck-opt:hover{background:color-mix(in srgb, currentColor 7%, transparent)}",
+      ".wbck-opt.is-on{background:color-mix(in srgb, var(--wb-accent) 10%, transparent)}",
+      ".wbck-opt input{margin:0;flex:none;accent-color:var(--wb-accent)}",
+      ".wbck-nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbck-meta{margin-left:auto;flex:none;font-size:11.5px;color:var(--wb-muted)}",
+      ".wbck-note{font-size:12px;color:var(--wb-muted);padding:8px 6px}",
+      ".wbck-more{font-size:11px;color:var(--wb-muted);text-align:center;padding:6px 0 2px;opacity:.8}",
+      "@media (max-width:760px){.wbck-list{max-height:200px}}"
+    ];
+  }
+});
+
 // packages/addons/sites/client/ui/styles.cjs
 var require_styles = __commonJS({
   "packages/addons/sites/client/ui/styles.cjs"(exports2, module2) {
@@ -4365,7 +4493,7 @@ var require_styles = __commonJS({
       ".wbs-note{font-size:11px;color:var(--wbs-muted);line-height:1.6}",
       "@media(max-width:860px){.wbs-body{flex-direction:column}.wbs-tree{width:100%;max-height:220px}.wbs-table{min-width:760px}.wbs-root{min-height:0}}",
       "@media(max-width:600px){.wbs-head h2{font-size:18px}.wbs-linkrow{grid-template-columns:1fr 1fr}.wbs-modal{padding:14px}}"
-    ].join("\n");
+    ].concat(require_filter_checklist_styles()).join("\n");
   }
 });
 
@@ -6591,7 +6719,7 @@ var TagFilter = require_tagfilter();
   injectCss();
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.12.0",
+    version: "1.12.1",
     icon: (init_globe(), __toCommonJS(globe_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },

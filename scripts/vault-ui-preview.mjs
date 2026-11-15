@@ -39,6 +39,10 @@ var SETS = [
   { id: "set_2", name: "工作邮箱", description: "SMTP 与 IMAP 共用", color: "", secretCount: 2, groupIds: ["g_1", "g_2"], createdAt: now, updatedAt: now },
   { id: "set_3", name: "运维 token", description: "", color: "", secretCount: 0, groupIds: [], createdAt: now, updatedAt: now },
 ];
+// 再补 21 个集合，用来核对「每页 20 条 + 触底加载 + 搜索」。
+for (var gi = 4; gi <= 24; gi++) {
+  SETS.push({ id: "set_" + gi, name: "批量集合 " + gi, description: gi % 3 ? "演示用" : "", color: "", secretCount: gi % 5, groupIds: [], createdAt: now, updatedAt: now });
+}
 var SECRETS = [
   { id: "sec_1", name: "acc_1 · 密码", kind: "password", meta: JSON.stringify({ username: "me", url: "https://sspai.com" }), setIds: ["set_1"], lastUsedAt: now - 3600e3 },
   { id: "sec_2", name: "acc_1 · 手机号", kind: "phone", meta: "{}", setIds: ["set_1"], lastUsedAt: 0 },
@@ -53,7 +57,11 @@ var GROUPS = [
 var STATUS = { unlocked: true, unlockMode: "A", deviceKey: true, createdAt: now };
 var api = { call: function (action, args) {
   if (action === "vault.secretList") return Promise.resolve({ result: { items: SECRETS } });
-  if (action === "vault.setList") return Promise.resolve({ result: { items: SETS } });
+  if (action === "vault.setList") {
+    var q = (args && args.q ? String(args.q) : "").toLowerCase();
+    var hit = q ? SETS.filter(function (x) { return (x.name + " " + (x.description || "")).toLowerCase().indexOf(q) >= 0; }) : SETS;
+    return Promise.resolve({ result: { items: hit } });
+  }
   if (action === "vault.groupList") return Promise.resolve({ result: { items: GROUPS } });
   if (action === "vault.status") return Promise.resolve({ result: STATUS });
   if (action === "vault.secretReveal") return Promise.resolve({ result: { secret: "hunter2-demo" } });

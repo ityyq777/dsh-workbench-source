@@ -3,6 +3,7 @@
 // 已选置顶、Esc 关闭、三态文案），差异只允许出现在「是否展示使用计数」。
 var React = require("react");
 var ui = require("./ui.cjs");
+var FilterChecklist = require("../../../lib/filter-checklist.cjs");
 var h = React.createElement,
   tr = ui.tr;
 
@@ -159,115 +160,60 @@ module.exports = function TagFilter(props) {
       ? h(
           "div",
           { className: "wbi-tagmenu", role: "menu", onClick: function (e) { e.stopPropagation(); } },
-          h(
-            "div",
-            { className: "wbi-tagsearch" },
-            h("input", {
-              type: "search",
-              autoFocus: true,
-              className: "wbi",
-              placeholder: tr(lang, "搜索标签名称", "Search tag names"),
-              "aria-label": tr(lang, "搜索标签名称", "Search tag names"),
-              value: query,
-              onChange: function (e) {
-                setQuery(e.target.value);
-              },
-            }),
-          ),
-          ids.length
-            ? h(
-                "div",
-                { className: "wbi-tagsel" },
-                h("div", { className: "wbi-tagmenu-head" }, h("span", null, tr(lang, "已选", "Selected") + " " + ids.length)),
-                h(
-                  "div",
-                  { className: "wbi-tagsel-list" },
-                  ids.map(function (id) {
-                    return h(
-                      "button",
-                      {
-                        key: id,
-                        type: "button",
-                        className: "wbi-tagselitem",
-                        title: tr(lang, "移除", "Remove"),
-                        onClick: function () {
-                          toggle(id);
-                        },
-                      },
-                      h("span", { className: "wbi-tagnm" }, names[String(id)] || "#" + id),
-                      h("span", { className: "wbi-tagx" }, "×"),
-                    );
-                  }),
-                ),
-              )
-            : null,
-          h(
-            "div",
-            { className: "wbi-tagmenu-head" },
-            h("span", null, tr(lang, "全部标签", "All tags") + (opts.total ? " · " + opts.total : "")),
-            h("span", { className: "wbi-grow" }),
-            h(
-              "button",
-              {
-                type: "button",
-                className: "wbi-mini",
-                title: tr(lang, "清空", "Clear"),
-                onClick: function () {
-                  onChange([]);
-                  setQuery("");
-                },
-              },
-              tr(lang, "清空", "Clear"),
-            ),
-          ),
-          h(
-            "div",
-            {
-              className: "wbi-taglist",
-              onScroll: function (e) {
-                var el = e.currentTarget;
-                if (!opts.hasMore || loading) return;
-                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 24)
-                  load(query, (opts.pageNumber || 1) + 1, true);
-              },
-            },
-            opts.tags.length
-              ? opts.tags.map(function (x) {
-                  var on = ids.indexOf(String(x.id)) >= 0;
-                  return h(
-                    "label",
-                    { key: x.id, className: "wbi-tagopt" },
-                    h("input", {
-                      type: "checkbox",
-                      checked: on,
-                      onChange: function () {
-                        toggle(x.id);
-                      },
-                    }),
-                    h("span", { className: "wbi-tagnm" }, x.name),
-                  );
-                })
-              : h(
-                  "div",
-                  { className: "wbi-note" },
-                  loading
-                    ? tr(lang, "加载中…", "Loading…")
-                    : query
-                      ? tr(lang, "没有匹配的标签", "No matching tags")
-                      : tr(lang, "暂无标签", "No tags yet"),
-                ),
-            opts.tags.length
+          h(FilterChecklist, {
+            beforeHead: ids.length
               ? h(
                   "div",
-                  { className: "wbi-tagmore" },
-                  loading
-                    ? tr(lang, "加载中…", "Loading…")
-                    : opts.hasMore
-                      ? ""
-                      : tr(lang, "没有更多", "No more"),
+                  { className: "wbi-tagsel" },
+                  h("div", { className: "wbi-tagmenu-head" }, h("span", null, tr(lang, "已选", "Selected") + " " + ids.length)),
+                  h(
+                    "div",
+                    { className: "wbi-tagsel-list" },
+                    ids.map(function (id) {
+                      return h(
+                        "button",
+                        {
+                          key: id,
+                          type: "button",
+                          className: "wbi-tagselitem",
+                          title: tr(lang, "移除", "Remove"),
+                          onClick: function () {
+                            toggle(id);
+                          },
+                        },
+                        h("span", { className: "wbi-tagnm" }, names[String(id)] || "#" + id),
+                        h("span", { className: "wbi-tagx" }, "×"),
+                      );
+                    }),
+                  ),
                 )
               : null,
-          ),
+            items: opts.tags.map(function (x) {
+              return { id: x.id, name: x.name };
+            }),
+            selected: ids,
+            onToggle: toggle,
+            query: query,
+            onQuery: setQuery,
+            title: tr(lang, "全部标签", "All tags"),
+            total: opts.total,
+            selectedText: tr(lang, "已选", "Selected"),
+            clearText: tr(lang, "清空", "Clear"),
+            onClear: function () {
+              onChange([]);
+              setQuery("");
+            },
+            searchPlaceholder: tr(lang, "搜索标签名称", "Search tag names"),
+            loading: loading,
+            hasMore: opts.hasMore,
+            onLoadMore: function () {
+              load(query, (opts.pageNumber || 1) + 1, true);
+            },
+            emptyText: tr(lang, "暂无标签", "No tags yet"),
+            noMatchText: tr(lang, "没有匹配的标签", "No matching tags"),
+            loadingText: tr(lang, "加载中…", "Loading…"),
+            noMoreText: tr(lang, "没有更多", "No more"),
+          }),
         )
       : null,
   );

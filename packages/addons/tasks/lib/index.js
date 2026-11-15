@@ -3,6 +3,7 @@
  *
  * 所有业务逻辑都在本地 SQLite 完成；云端只负责备份。
  * 宿主由 dsh-workbench 提供，通过 ctx.workbench.registerDomain 注册。
+ * 5.2.17：标签筛选列表体改用共享 filter-checklist（搜索 + 滚动分页 + 三态文案）。
  */
 
 import { registerActivityCalendarAction } from "./stats/activity-calendar.js";
@@ -121,7 +122,7 @@ export function apply(ctx) {
         id: "wb-addon-tasks",
         title: "任务",
         description: "任务树 + 统计/记录/时间线/配置/数据五个视图：紧急/已关闭/已开启/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
-        version: "5.2.16",
+        version: "5.2.17",
         tables: ["task", "task_node", "task_timeline", "task_timeline_link", "task_workspace", "task_workspace_link"],
         sync: taskSync,
         views: [

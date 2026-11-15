@@ -63,4 +63,4 @@ module.exports = [
   ".wbv-eye{position:absolute;right:4px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:6px;padding:4px;color:var(--wb-muted);cursor:pointer}",
   ".wbv-eye:hover{color:var(--wb-accent);background:color-mix(in srgb, var(--wb-accent) 12%, transparent)}",
   ".wbv-eye:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}",
-];
+].concat(require("../../../lib/filter-checklist-styles.cjs"));

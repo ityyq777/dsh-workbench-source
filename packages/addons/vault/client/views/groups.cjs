@@ -1,6 +1,7 @@
 "use strict";
 /** 分组与关联：vault 持有引用，业务模块用自身标识注册；这里只做管理与查看。 */
 var C = require("../ui/common.cjs");
+var FilterChecklist = require("../../../lib/filter-checklist.cjs");
 
 module.exports = function GroupsView(props) {
   var h = props.h;
@@ -15,6 +16,7 @@ module.exports = function GroupsView(props) {
   var openS = React.useState(null); // { group, items, loading, error }
   var setsS = React.useState([]);
   var delS = React.useState(null); // { row, moveTo }
+  var pickS = React.useState({ q: "", rows: [], page: 1, loading: false });
 
   function load() {
     listS[1](function (old) { return Object.assign({}, old, { loading: true }); });
@@ -45,6 +47,38 @@ module.exports = function GroupsView(props) {
     var cur = (createS[0] && createS[0].setIds) || [];
     var next = cur.indexOf(id) >= 0 ? cur.filter(function (x) { return x !== id; }) : cur.concat([id]);
     patchCreate({ setIds: next });
+  }
+
+  // 建组弹窗的集合清单：200ms 防抖走后端模糊搜索；接口不分页，本地每页 20 条切片。
+  var PICK_PAGE = 20;
+  var pickOpen = Boolean(createS[0]);
+  var pickQ = pickS[0].q;
+  React.useEffect(function () {
+    if (!pickOpen) return undefined;
+    var alive = true;
+    var timer = setTimeout(function () {
+      pickS[1](function (old) { return Object.assign({}, old, { loading: true }); });
+      C.call(api, "vault.setList", pickQ ? { q: pickQ } : {}).then(function (r) {
+        if (!alive) return;
+        pickS[1]({ q: pickQ, rows: (r && r.items) || [], page: 1, loading: false });
+      }).catch(function () {
+        if (alive) pickS[1](function (old) { return Object.assign({}, old, { loading: false }); });
+      });
+    }, pickQ ? 200 : 0);
+    return function () { alive = false; clearTimeout(timer); };
+  }, [pickOpen, pickQ]);
+
+  function pickQuery(v) {
+    pickS[1](function (old) { return Object.assign({}, old, { q: v, loading: true }); });
+  }
+  function pickMore() {
+    pickS[1](function (old) {
+      return old.page * PICK_PAGE >= old.rows.length ? old : Object.assign({}, old, { page: old.page + 1 });
+    });
+  }
+  function pickClear() {
+    patchCreate({ setIds: [] });
+    pickS[1](function (old) { return Object.assign({}, old, { q: "", page: 1 }); });
   }
 
   // 建组 + 挂集合：groupCreate 拿 id 后逐个 groupAttachSet（幂等）；部分失败只提示，不回滚分组。
@@ -176,19 +210,30 @@ module.exports = function GroupsView(props) {
             onChange: function (e) { patchCreate({ description: e.target.value }); },
           })),
         h(C.Field, { h: h, label: "集合（可多选）", hint: "勾选的集合会一并挂到这个分组" },
-          setsS[0].length ? h("div", { className: "wbv-check-list" }, setsS[0].map(function (set) {
-            var on = (createS[0].setIds || []).indexOf(set.id) >= 0;
-            return h("label", { key: set.id, className: "wbv-check" },
-              h("input", {
-                type: "checkbox",
-                checked: on,
-                disabled: createS[0].busy,
-                onChange: function () { toggleCreateSet(set.id); },
-              }),
-              h("span", { className: "wbv-dot", style: { background: set.color || "var(--wb-accent)" } }),
-              h("span", null, set.name),
-              h("span", { className: "wbv-muted" }, " · " + (set.secretCount || 0) + " 条"));
-          })) : h("span", { className: "wbv-muted" }, "还没有集合，可先建组，再到「集合」页新建")),
+          h(FilterChecklist, {
+            items: pickS[0].rows.slice(0, pickS[0].page * PICK_PAGE).map(function (set) {
+              return { id: set.id, name: set.name, meta: (set.secretCount || 0) + " 条" };
+            }),
+            selected: createS[0].setIds || [],
+            onToggle: toggleCreateSet,
+            query: pickS[0].q,
+            onQuery: pickQuery,
+            title: "全部集合",
+            total: pickS[0].rows.length,
+            selectedText: "已选",
+            clearText: "清空",
+            onClear: pickClear,
+            searchPlaceholder: "搜索集合名称或描述",
+            loading: pickS[0].loading,
+            hasMore: pickS[0].page * PICK_PAGE < pickS[0].rows.length,
+            onLoadMore: pickMore,
+            emptyText: "还没有集合，可先建组，再到「集合」页新建",
+            noMatchText: "没有匹配的集合",
+            noMoreText: pickS[0].rows.length > PICK_PAGE ? "没有更多" : "",
+            loadingText: "加载中…",
+            disabled: createS[0].busy,
+            autoFocus: false,
+          })),
         h(C.Notice, { h: h, kind: "error", text: createS[0].error }),
         h("div", { className: "wbv-row", style: { justifyContent: "flex-end" } },
           h(C.Btn, { h: h, disabled: createS[0].busy, onClick: closeCreate }, "取消"),

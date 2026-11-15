@@ -1,3 +1,6 @@
+/**
+ * 储物业务插件：标签筛选列表体改用共享 filter-checklist（1.5.4）。
+ */
 import { bindClock, ensureSchema } from "./db/db.js";
 import { ensureStorageTagSource } from "./domain/tags.js";
 import { registerStorageActions } from "./domain/storage.js";
@@ -63,7 +66,7 @@ export function apply(ctx) {
         id: "wb-addon-storage",
         title: "储物",
         description: "储物：记录物品名称、品牌、单位、库存文本、存放位置、图片URL、备注与可选标签",
-        version: "1.5.3",
+        version: "1.5.4",
         tables: ["storage"],
         sync: storageSync,
         backupAfter: ["wb-addon-tags"],

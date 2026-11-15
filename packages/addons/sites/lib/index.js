@@ -1,6 +1,7 @@
 /**
  * 站点业务插件（DSH 原生插件）。
  * 业务全部本地；云端只备份数据。标签能力通过 host.hasDomain 探测。
+ * 1.12.1：站点标签筛选列表体改用共享 filter-checklist。
  */
 
 import { bindClock, ensureSchema } from "./db/db.js";
@@ -97,7 +98,7 @@ export function apply(ctx) {
         id: "wb-addon-sites",
         title: "站点",
         description: "站点收藏：目录树、链接与标签（标签需安装标签插件）；含统计/记录/配置/数据四个视图",
-        version: "1.12.0",
+        version: "1.12.1",
         tables: ["site", "site_node", "site_node_mapping", "tag_mapping", "site_account", "site_account_external"],
         sync: siteSync,
         views: [

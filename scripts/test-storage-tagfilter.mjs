@@ -143,25 +143,25 @@ assert.equal(searchCalls().length, 1, "展开只发一次请求");
 assert.equal(searchCalls()[0].args.pageNumber, 1);
 assert.equal(searchCalls()[0].args.pageSize, 20);
 assert.match(text(nodesOf("wbi-tagmenu")[0]), /全部标签 · 45/);
-assert.equal(nodesOf("wbi-tagopt").length, 20, "首屏一页 20 条");
+assert.equal(nodesOf("wbck-opt").length, 20, "首屏一页 20 条");
 
 // 3) 滚动触底加载下一页，重复 id 去重；到最后一页显示没有更多。
 page2Duplicate = true;
-nodesOf("wbi-taglist")[0].props.onScroll({ currentTarget: { scrollTop: 2000, clientHeight: 200, scrollHeight: 2200 } });
+nodesOf("wbck-list")[0].props.onScroll({ currentTarget: { scrollTop: 2000, clientHeight: 200, scrollHeight: 2200 } });
 await settle();
 assert.equal(searchCalls().length, 2);
 assert.equal(searchCalls()[1].args.pageNumber, 2);
-assert.equal(nodesOf("wbi-tagopt").length, 40, "追加时按 id 去重（g0 不重复）");
+assert.equal(nodesOf("wbck-opt").length, 40, "追加时按 id 去重（g0 不重复）");
 page2Duplicate = false;
-nodesOf("wbi-taglist")[0].props.onScroll({ currentTarget: { scrollTop: 2000, clientHeight: 200, scrollHeight: 2200 } });
+nodesOf("wbck-list")[0].props.onScroll({ currentTarget: { scrollTop: 2000, clientHeight: 200, scrollHeight: 2200 } });
 await settle();
 assert.equal(searchCalls().length, 3);
-assert.equal(nodesOf("wbi-tagopt").length, 45);
+assert.equal(nodesOf("wbck-opt").length, 45);
 assert.equal(searchCalls().filter(c => c.args.pageNumber === 4).length, 0, "没有下一页就不再请求");
-assert.match(text(nodesOf("wbi-tagmore")[0]), /没有更多/);
+assert.match(text(nodesOf("wbck-more")[0]), /没有更多/);
 
 // 4) 勾选/取消都通过 onChange 回传字符串 id 数组。
-const firstOption = nodesOf("wbi-tagopt")[0];
+const firstOption = nodesOf("wbck-opt")[0];
 const firstBox = all(firstOption).find(n => n.type === "input");
 firstBox.props.onChange();
 assert.equal(JSON.stringify(changes.at(-1)), JSON.stringify(["g0"]));
@@ -174,7 +174,7 @@ assert.match(text(nodesOf("wbi-tagsel")[0]), /已选 1/);
 assert.match(text(nodesOf("wbi-tagselitem")[0]), /标签5/);
 nodesOf("wbi-tagselitem")[0].props.onClick();
 assert.equal(JSON.stringify(changes.at(-1)), "[]");
-nodesOf("wbi-mini")[0].props.onClick();
+nodesOf("wbck-clear")[0].props.onClick();
 assert.equal(JSON.stringify(changes.at(-1)), "[]");
 
 // 6) Esc 关闭菜单（document 级监听）。
@@ -196,7 +196,7 @@ await settle();
 assert.equal(searchCalls().length, 2);
 assert.equal(searchCalls()[1].args.text, "不存在");
 assert.equal(searchCalls()[1].args.pageNumber, 1, "搜索回到第一页");
-assert.match(text(nodesOf("wbi-note")[0]), /没有匹配的标签/);
+assert.match(text(nodesOf("wbck-note")[0]), /没有匹配的标签/);
 
 // 8) 编辑弹窗：标签每页 20，已选置顶，搜索与翻页都不丢已选。
 calls.length = 0;
@@ -234,7 +234,7 @@ await settle();
 assert.equal(listCalls().length > 0, true, "记录页加载列表");
 assert.equal(listCalls().every(c => c.args.tagIds === undefined), true, "默认不带标签条件");
 await openMenu();
-const recCheckboxes = nodesOf("wbi-tagopt").map(n => all(n).find(x => x.type === "input"));
+const recCheckboxes = nodesOf("wbck-opt").map(n => all(n).find(x => x.type === "input"));
 recCheckboxes[0].props.onChange();
 await settle();
 assert.equal(JSON.stringify(listCalls().at(-1).args.tagIds), JSON.stringify(["g0"]), "单选标签进请求");
@@ -242,7 +242,7 @@ assert.match(text(nodesOf("wbi-tagon")), /标签筛选 · 1/, "已选数量回�
 render(current);
 await settle();
 assert.equal(nodesOf("wbi-tagmenu").length, 1, "选择后菜单保持展开");
-const recCheckboxes2 = nodesOf("wbi-tagopt").map(n => all(n).find(x => x.type === "input"));
+const recCheckboxes2 = nodesOf("wbck-opt").map(n => all(n).find(x => x.type === "input"));
 recCheckboxes2[1].props.onChange();
 await settle();
 assert.equal(JSON.stringify(listCalls().at(-1).args.tagIds), JSON.stringify(["g0", "g1"]), "多选标签一起进请求");

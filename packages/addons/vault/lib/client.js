@@ -39,6 +39,37 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// packages/addons/lib/filter-checklist-styles.cjs
+var require_filter_checklist_styles = __commonJS({
+  "packages/addons/lib/filter-checklist-styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = [
+      ".wbck{display:flex;flex-direction:column;min-width:0}",
+      ".wbck-search{padding:0 0 6px}",
+      ".wbck-input{width:100%;box-sizing:border-box;font:inherit;font-size:12.5px;padding:6px 9px;border:1px solid var(--wb-border);border-radius:8px;background:var(--wb-surface);color:inherit}",
+      ".wbck-input:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}",
+      ".wbck-input:disabled{opacity:.6;cursor:not-allowed}",
+      ".wbck-head{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--wb-muted);padding:2px 4px 7px}",
+      ".wbck-grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbck-sel{flex:none;color:var(--wb-accent)}",
+      ".wbck-clear{appearance:none;flex:none;border:0;background:transparent;color:inherit;border-radius:4px;margin:0;padding:3px 5px;font:inherit;font-size:11.5px;line-height:1;cursor:pointer;opacity:.75}",
+      ".wbck-clear:hover:enabled{opacity:1;background:color-mix(in srgb, currentColor 8%, transparent)}",
+      ".wbck-clear:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}",
+      ".wbck-clear:disabled{opacity:.4;cursor:not-allowed}",
+      ".wbck-list{max-height:220px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--wb-border);border-radius:10px;padding:2px}",
+      ".wbck-opt{display:flex;align-items:center;gap:7px;padding:6px;border-radius:6px;font-size:12.5px;cursor:pointer}",
+      ".wbck-opt:hover{background:color-mix(in srgb, currentColor 7%, transparent)}",
+      ".wbck-opt.is-on{background:color-mix(in srgb, var(--wb-accent) 10%, transparent)}",
+      ".wbck-opt input{margin:0;flex:none;accent-color:var(--wb-accent)}",
+      ".wbck-nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbck-meta{margin-left:auto;flex:none;font-size:11.5px;color:var(--wb-muted)}",
+      ".wbck-note{font-size:12px;color:var(--wb-muted);padding:8px 6px}",
+      ".wbck-more{font-size:11px;color:var(--wb-muted);text-align:center;padding:6px 0 2px;opacity:.8}",
+      "@media (max-width:760px){.wbck-list{max-height:200px}}"
+    ];
+  }
+});
+
 // packages/addons/vault/client/ui/styles.cjs
 var require_styles = __commonJS({
   "packages/addons/vault/client/ui/styles.cjs"(exports2, module2) {
@@ -106,7 +137,7 @@ var require_styles = __commonJS({
       ".wbv-eye{position:absolute;right:4px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:6px;padding:4px;color:var(--wb-muted);cursor:pointer}",
       ".wbv-eye:hover{color:var(--wb-accent);background:color-mix(in srgb, var(--wb-accent) 12%, transparent)}",
       ".wbv-eye:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}"
-    ];
+    ].concat(require_filter_checklist_styles());
   }
 });
 
@@ -1970,11 +2001,128 @@ var require_sets = __commonJS({
   }
 });
 
+// packages/addons/lib/filter-checklist.cjs
+var require_filter_checklist = __commonJS({
+  "packages/addons/lib/filter-checklist.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h = React.createElement;
+    var NEAR = 24;
+    function nearBottom(el, threshold) {
+      if (!el) return false;
+      var gap = Number(threshold);
+      if (!isFinite(gap) || gap < 0) gap = NEAR;
+      return el.scrollTop + el.clientHeight >= el.scrollHeight - gap;
+    }
+    function FilterChecklist(props) {
+      var items = props.items || [];
+      var selected = props.selected || [];
+      var disabled = props.disabled === true;
+      var loading = props.loading === true;
+      var hasMore = props.hasMore === true;
+      var query = props.query || "";
+      var total = typeof props.total === "number" ? props.total : items.length;
+      var title = props.title || "\u5168\u90E8";
+      var selectedText = props.selectedText || "\u5DF2\u9009";
+      var clearText = props.clearText || "\u6E05\u7A7A";
+      var searchPlaceholder = props.searchPlaceholder || "\u641C\u7D22";
+      var emptyText = props.emptyText || "\u6682\u65E0\u6570\u636E";
+      var noMatchText = props.noMatchText || "\u6CA1\u6709\u5339\u914D\u9879";
+      var loadingText = props.loadingText || "\u52A0\u8F7D\u4E2D\u2026";
+      var noMoreText = typeof props.noMoreText === "string" ? props.noMoreText : "\u6CA1\u6709\u66F4\u591A";
+      var onToggle = props.onToggle || function() {
+      };
+      var onQuery = props.onQuery || function() {
+      };
+      var onLoadMore = props.onLoadMore;
+      var onClear = props.onClear || function() {
+      };
+      function toggle(id) {
+        if (disabled) return;
+        onToggle(id);
+      }
+      function scroll(e) {
+        if (disabled || loading || !hasMore || !onLoadMore) return;
+        if (nearBottom(e.currentTarget)) onLoadMore();
+      }
+      var head = h(
+        "div",
+        { className: "wbck-head" },
+        h("span", { className: "wbck-grow" }, title + (total ? " \xB7 " + total : "")),
+        selected.length ? h("span", { className: "wbck-sel" }, selectedText + " " + selected.length) : null,
+        selected.length || query ? h("button", {
+          type: "button",
+          className: "wbck-clear",
+          disabled,
+          onClick: function() {
+            if (disabled) return;
+            onClear();
+          }
+        }, clearText) : null
+      );
+      var body;
+      if (!items.length) {
+        body = h("div", { className: "wbck-note", role: "status" }, loading ? loadingText : query ? noMatchText : emptyText);
+      } else {
+        body = items.map(function(x) {
+          var on = selected.indexOf(String(x.id)) >= 0;
+          return h(
+            "label",
+            { key: x.id, className: "wbck-opt" + (on ? " is-on" : "") },
+            h("input", {
+              type: "checkbox",
+              checked: on,
+              disabled,
+              onChange: function() {
+                toggle(x.id);
+              }
+            }),
+            h("span", { className: "wbck-nm", title: x.name }, x.name),
+            x.meta ? h("span", { className: "wbck-meta" }, x.meta) : null
+          );
+        });
+        var more = loading ? loadingText : hasMore ? "" : noMoreText;
+        if (more) body = body.concat([h("div", { key: "__more", className: "wbck-more", role: "status" }, more)]);
+      }
+      return h(
+        "div",
+        { className: "wbck", "data-role": "checklist" },
+        h(
+          "div",
+          { className: "wbck-search" },
+          h("input", {
+            type: "search",
+            autoFocus: props.autoFocus !== false,
+            className: "wbck-input",
+            placeholder: searchPlaceholder,
+            "aria-label": searchPlaceholder,
+            value: query,
+            disabled,
+            onChange: function(e) {
+              onQuery(e.target.value);
+            }
+          })
+        ),
+        props.beforeHead || null,
+        head,
+        h("div", {
+          className: "wbck-list",
+          onScroll: scroll,
+          "aria-busy": loading ? "true" : "false"
+        }, body)
+      );
+    }
+    module2.exports = FilterChecklist;
+    module2.exports.nearBottom = nearBottom;
+  }
+});
+
 // packages/addons/vault/client/views/groups.cjs
 var require_groups = __commonJS({
   "packages/addons/vault/client/views/groups.cjs"(exports2, module2) {
     "use strict";
     var C = require_common();
+    var FilterChecklist = require_filter_checklist();
     module2.exports = function GroupsView(props) {
       var h = props.h;
       var api = props.api;
@@ -1987,6 +2135,7 @@ var require_groups = __commonJS({
       var openS = React.useState(null);
       var setsS = React.useState([]);
       var delS = React.useState(null);
+      var pickS = React.useState({ q: "", rows: [], page: 1, loading: false });
       function load() {
         listS[1](function(old) {
           return Object.assign({}, old, { loading: true });
@@ -2024,6 +2173,46 @@ var require_groups = __commonJS({
           return x !== id;
         }) : cur.concat([id]);
         patchCreate({ setIds: next });
+      }
+      var PICK_PAGE = 20;
+      var pickOpen = Boolean(createS[0]);
+      var pickQ = pickS[0].q;
+      React.useEffect(function() {
+        if (!pickOpen) return void 0;
+        var alive = true;
+        var timer = setTimeout(function() {
+          pickS[1](function(old) {
+            return Object.assign({}, old, { loading: true });
+          });
+          C.call(api, "vault.setList", pickQ ? { q: pickQ } : {}).then(function(r) {
+            if (!alive) return;
+            pickS[1]({ q: pickQ, rows: r && r.items || [], page: 1, loading: false });
+          }).catch(function() {
+            if (alive) pickS[1](function(old) {
+              return Object.assign({}, old, { loading: false });
+            });
+          });
+        }, pickQ ? 200 : 0);
+        return function() {
+          alive = false;
+          clearTimeout(timer);
+        };
+      }, [pickOpen, pickQ]);
+      function pickQuery(v) {
+        pickS[1](function(old) {
+          return Object.assign({}, old, { q: v, loading: true });
+        });
+      }
+      function pickMore() {
+        pickS[1](function(old) {
+          return old.page * PICK_PAGE >= old.rows.length ? old : Object.assign({}, old, { page: old.page + 1 });
+        });
+      }
+      function pickClear() {
+        patchCreate({ setIds: [] });
+        pickS[1](function(old) {
+          return Object.assign({}, old, { q: "", page: 1 });
+        });
       }
       function create() {
         var c = createS[0];
@@ -2208,24 +2397,30 @@ var require_groups = __commonJS({
             h(
               C.Field,
               { h, label: "\u96C6\u5408\uFF08\u53EF\u591A\u9009\uFF09", hint: "\u52FE\u9009\u7684\u96C6\u5408\u4F1A\u4E00\u5E76\u6302\u5230\u8FD9\u4E2A\u5206\u7EC4" },
-              setsS[0].length ? h("div", { className: "wbv-check-list" }, setsS[0].map(function(set) {
-                var on = (createS[0].setIds || []).indexOf(set.id) >= 0;
-                return h(
-                  "label",
-                  { key: set.id, className: "wbv-check" },
-                  h("input", {
-                    type: "checkbox",
-                    checked: on,
-                    disabled: createS[0].busy,
-                    onChange: function() {
-                      toggleCreateSet(set.id);
-                    }
-                  }),
-                  h("span", { className: "wbv-dot", style: { background: set.color || "var(--wb-accent)" } }),
-                  h("span", null, set.name),
-                  h("span", { className: "wbv-muted" }, " \xB7 " + (set.secretCount || 0) + " \u6761")
-                );
-              })) : h("span", { className: "wbv-muted" }, "\u8FD8\u6CA1\u6709\u96C6\u5408\uFF0C\u53EF\u5148\u5EFA\u7EC4\uFF0C\u518D\u5230\u300C\u96C6\u5408\u300D\u9875\u65B0\u5EFA")
+              h(FilterChecklist, {
+                items: pickS[0].rows.slice(0, pickS[0].page * PICK_PAGE).map(function(set) {
+                  return { id: set.id, name: set.name, meta: (set.secretCount || 0) + " \u6761" };
+                }),
+                selected: createS[0].setIds || [],
+                onToggle: toggleCreateSet,
+                query: pickS[0].q,
+                onQuery: pickQuery,
+                title: "\u5168\u90E8\u96C6\u5408",
+                total: pickS[0].rows.length,
+                selectedText: "\u5DF2\u9009",
+                clearText: "\u6E05\u7A7A",
+                onClear: pickClear,
+                searchPlaceholder: "\u641C\u7D22\u96C6\u5408\u540D\u79F0\u6216\u63CF\u8FF0",
+                loading: pickS[0].loading,
+                hasMore: pickS[0].page * PICK_PAGE < pickS[0].rows.length,
+                onLoadMore: pickMore,
+                emptyText: "\u8FD8\u6CA1\u6709\u96C6\u5408\uFF0C\u53EF\u5148\u5EFA\u7EC4\uFF0C\u518D\u5230\u300C\u96C6\u5408\u300D\u9875\u65B0\u5EFA",
+                noMatchText: "\u6CA1\u6709\u5339\u914D\u7684\u96C6\u5408",
+                noMoreText: pickS[0].rows.length > PICK_PAGE ? "\u6CA1\u6709\u66F4\u591A" : "",
+                loadingText: "\u52A0\u8F7D\u4E2D\u2026",
+                disabled: createS[0].busy,
+                autoFocus: false
+              })
             ),
             h(C.Notice, { h, kind: "error", text: createS[0].error }),
             h(
@@ -4284,7 +4479,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.3.3",
+    version: "0.3.4",
     icon: (init_shield_check(), __toCommonJS(shield_check_exports)).default,
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },
