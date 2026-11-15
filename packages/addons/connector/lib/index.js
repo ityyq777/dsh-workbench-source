@@ -23,7 +23,7 @@ export function createDomain(host) {
     id: "wb-addon-connector",
     title: "连接器",
     description: "把 RSS、Webhook 等外部内容接进工作台；来源定义可同步，凭据与本机状态不出机器。",
-    version: "0.1.0",
+    version: "0.1.1",
     tables: ["connector_source", "connector_source_state", "connector_item", "connector_run"],
     sync: {
       tables: [{ name: "connector_source", mode: "row", uniqueKeys: [["id"]], uniquePolicy: "lww-tombstone" }],
@@ -80,7 +80,7 @@ export function createDomain(host) {
       api.action("connector.actionSchema", {
         description: "只读：本域 action 清单与输入 schema（插件自证）。",
         input: { type: "object", properties: {}, additionalProperties: false },
-        execute: () => ({ shellVersion: api.shellVersion || "", domains: [{ id: "wb-addon-connector", version: (api.addon && api.addon.version) || "0.1.0" }], actions: schemas }),
+        execute: () => ({ shellVersion: api.shellVersion || "", domains: [{ id: "wb-addon-connector", version: (api.addon && api.addon.version) || "0.1.1" }], actions: schemas }),
       });
       if (typeof api.registerSearchProvider === "function") {
         api.registerSearchProvider({

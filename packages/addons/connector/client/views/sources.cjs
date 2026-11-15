@@ -8,6 +8,31 @@ function defaults(driver) {
   return out;
 }
 
+function SourceForm(props) {
+  var h = props.h, C = props.C, f = props.form, d = props.driver;
+  var drivers = props.drivers, secrets = props.secrets;
+  var setField = props.setField, setConfig = props.setConfig, save = props.save;
+  function driver(id) { return drivers.filter(function (x) { return x.id === id; })[0] || null; }
+  return h("div", { className: "wbc-card" },
+        h("div", { className: "wbc-head" }, h("strong", null, f.id ? "编辑来源" : "新建来源"), h(C.Btn, { h: h, onClick: function () { props.onCancel(); } }, "取消")),
+        h("div", { className: "wbc-form" },
+          h(C.Field, { h: h, label: "名称" }, h("input", { value: f.name, maxLength: 80, onChange: function (e) { setField("name", e.target.value); }, placeholder: "例如：少数派 RSS" })),
+          h(C.Field, { h: h, label: "类型" }, h("select", { value: f.driver, onChange: function (e) { var nd = driver(e.target.value); setField("driver", e.target.value); setField("config", defaults(nd)); } }, drivers.map(function (x) { return h("option", { key: x.id, value: x.id }, x.title); }))),
+          h(C.Field, { h: h, label: "抓取间隔（秒）", hint: f.driver === "webhook" ? "Webhook 固定为推送，0" : "最少 60；0 表示只手动" }, h("input", { type: "number", min: 0, value: f.scheduleSec, onChange: function (e) { setField("scheduleSec", e.target.value); } })),
+          h(C.Field, { h: h, label: "新内容投递" }, h("select", { value: f.sink, onChange: function (e) { setField("sink", e.target.value); } }, h("option", { value: "message" }, "消息域"), h("option", { value: "none" }, "只入库不投递"))),
+          h(C.Field, { h: h, label: "启用" }, h("select", { value: f.enabled ? "1" : "0", onChange: function (e) { setField("enabled", e.target.value === "1"); } }, h("option", { value: "1" }, "启用"), h("option", { value: "0" }, "停用"))),
+          h(C.Field, { h: h, label: "凭据" }, h("select", { value: f.secretId || "", onChange: function (e) { setField("secretId", e.target.value); } }, h("option", { value: "" }, "不绑定"), secrets.map(function (x) { return h("option", { key: x.id, value: x.id }, x.name + " (" + x.kind + ")"); })))
+        ),
+        d ? h("div", { className: "wbc-form", style: { marginTop: "10px" } }, (d.configFields || []).map(function (cf) {
+          var val = f.config[cf.name] === undefined ? "" : f.config[cf.name];
+          if (cf.type === "select") return h(C.Field, { h: h, key: cf.name, label: cf.label || cf.name, hint: cf.placeholder || "" }, h("select", { value: val || (cf.default || ""), onChange: function (e) { setConfig(cf.name, e.target.value); } }, (cf.options || []).map(function (op) { return h("option", { key: op, value: op }, op); })));
+          if (cf.type === "boolean") return h(C.Field, { h: h, key: cf.name, label: cf.label || cf.name }, h("select", { value: val ? "1" : "0", onChange: function (e) { setConfig(cf.name, e.target.value === "1", "boolean"); } }, h("option", { value: "1" }, "是"), h("option", { value: "0" }, "否")));
+          return h(C.Field, { h: h, key: cf.name, label: cf.label || cf.name, hint: cf.placeholder || "" }, h("input", { type: cf.type === "number" ? "number" : "text", value: val, onChange: function (e) { setConfig(cf.name, e.target.value, cf.type); } }));
+        })) : null,
+        h("div", { className: "wbc-row", style: { marginTop: "10px" } }, h(C.Btn, { h: h, kind: "primary", onClick: save, disabled: props.busy || !f.name.trim() }, props.busy ? "保存中…" : "保存"))
+      );
+}
+
 module.exports = function SourcesView(props) {
   var h = props.h, api = props.api, React = props.React, lang = props.lang || "zh";
   var s = C.useLoad(React, api, "connector.sourceList", {}, []);
@@ -65,24 +90,7 @@ module.exports = function SourcesView(props) {
     h("div", { className: "wbc-head" }, h("div", null, h("h2", { className: "wbc-title" }, "来源"), h("p", { className: "wbc-sub" }, "一个来源一条定义；RSS 定时抓取，Webhook 等待外部推送。")), h("div", { className: "wbc-row" }, h(C.Btn, { h: h, onClick: s.refresh }, "刷新"), h(C.Btn, { h: h, kind: "primary", onClick: startCreate, disabled: drivers.length === 0 }, "新建来源"))),
     msgS[0] ? h(C.Notice, { h: h, kind: msgS[0].indexOf("完成") >= 0 ? "ok" : "error", text: msgS[0] }) : null,
     s.error ? h(C.Notice, { h: h, kind: "error", text: s.error }) : null,
-    f ? h("div", { className: "wbc-card" },
-      h("div", { className: "wbc-head" }, h("strong", null, f.id ? "编辑来源" : "新建来源"), h(C.Btn, { h: h, onClick: function () { formS[1](null); } }, "取消")),
-      h("div", { className: "wbc-form" },
-        h(C.Field, { h: h, label: "名称" }, h("input", { value: f.name, maxLength: 80, onChange: function (e) { setField("name", e.target.value); }, placeholder: "例如：少数派 RSS" })),
-        h(C.Field, { h: h, label: "类型" }, h("select", { value: f.driver, onChange: function (e) { var nd = driver(e.target.value); setField("driver", e.target.value); setField("config", defaults(nd)); } }, drivers.map(function (x) { return h("option", { key: x.id, value: x.id }, x.title); }))),
-        h(C.Field, { h: h, label: "抓取间隔（秒）", hint: f.driver === "webhook" ? "Webhook 固定为推送，0" : "最少 60；0 表示只手动" }, h("input", { type: "number", min: 0, value: f.scheduleSec, onChange: function (e) { setField("scheduleSec", e.target.value); } })),
-        h(C.Field, { h: h, label: "新内容投递" }, h("select", { value: f.sink, onChange: function (e) { setField("sink", e.target.value); } }, h("option", { value: "message" }, "消息域"), h("option", { value: "none" }, "只入库不投递"))),
-        h(C.Field, { h: h, label: "启用" }, h("select", { value: f.enabled ? "1" : "0", onChange: function (e) { setField("enabled", e.target.value === "1"); } }, h("option", { value: "1" }, "启用"), h("option", { value: "0" }, "停用"))),
-        h(C.Field, { h: h, label: "凭据" }, h("select", { value: f.secretId || "", onChange: function (e) { setField("secretId", e.target.value); } }, h("option", { value: "" }, "不绑定"), secrets.map(function (x) { return h("option", { key: x.id, value: x.id }, x.name + " (" + x.kind + ")"); })))
-      ),
-      d ? h("div", { className: "wbc-form", style: { marginTop: "10px" } }, (d.configFields || []).map(function (cf) {
-        var val = f.config[cf.name] === undefined ? "" : f.config[cf.name];
-        if (cf.type === "select") return h(C.Field, { key: cf.name, label: cf.label || cf.name, hint: cf.placeholder || "" }, h("select", { value: val || (cf.default || ""), onChange: function (e) { setConfig(cf.name, e.target.value); } }, (cf.options || []).map(function (op) { return h("option", { key: op, value: op }, op); })));
-        if (cf.type === "boolean") return h(C.Field, { key: cf.name, label: cf.label || cf.name }, h("select", { value: val ? "1" : "0", onChange: function (e) { setConfig(cf.name, e.target.value === "1", "boolean"); } }, h("option", { value: "1" }, "是"), h("option", { value: "0" }, "否")));
-        return h(C.Field, { key: cf.name, label: cf.label || cf.name, hint: cf.placeholder || "" }, h("input", { type: cf.type === "number" ? "number" : "text", value: val, onChange: function (e) { setConfig(cf.name, e.target.value, cf.type); } }));
-      })) : null,
-      h("div", { className: "wbc-row", style: { marginTop: "10px" } }, h(C.Btn, { h: h, kind: "primary", onClick: save, disabled: busyS[0] || !f.name.trim() }, busyS[0] ? "保存中…" : "保存"))
-    ) : null,
+    f ? h(SourceForm, { h: h, C: C, form: f, driver: d, drivers: drivers, secrets: secrets, setField: setField, setConfig: setConfig, save: save, busy: busyS[0], onCancel: function () { formS[1](null); } }) : null,
     s.loading ? h(C.Empty, { h: h, text: "加载中…" }) : rows.length === 0 ? h(C.Empty, { h: h, text: "还没有来源。" }) : rows.map(function (src) {
       var st = src.state || {};
       return h("div", { key: src.id, className: "wbc-card" },
@@ -101,3 +109,5 @@ module.exports = function SourcesView(props) {
     })
   );
 };
+
+module.exports.SourceForm = SourceForm;
