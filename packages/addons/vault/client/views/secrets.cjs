@@ -2,13 +2,8 @@
 /** 凭据列表与增删改查；明文只在 reveal 弹层里出现。 */
 var C = require("../ui/common.cjs");
 
-var KIND_LABEL = {
-  password: "密码",
-  token: "Token",
-  app_password: "应用专用密码",
-  api_key: "API Key",
-  other: "其它",
-};
+var K = require("../ui/kinds.cjs");
+var KIND_LABEL = K.KIND_LABEL;
 
 module.exports = function SecretsView(props) {
   var h = props.h;
@@ -127,7 +122,7 @@ module.exports = function SecretsView(props) {
         h(C.Field, { h: h, label: "名称" }, h("input", { value: formS[0].name, onChange: function (e) { formS[1](Object.assign({}, formS[0], { name: e.target.value })); } })),
         h(C.Field, { h: h, label: "类型" },
           h("select", { value: formS[0].kind, onChange: function (e) { formS[1](Object.assign({}, formS[0], { kind: e.target.value })); } },
-            Object.keys(KIND_LABEL).map(function (k) { return h("option", { key: k, value: k }, KIND_LABEL[k]); }))),
+            K.kindOptions(formS[0].kind).map(function (k) { return h("option", { key: k, value: k }, KIND_LABEL[k]); }))),
         h(C.Field, { h: h, label: formS[0].id ? "新明文（留空不轮换）" : "明文" },
           h("input", { type: "password", autoComplete: "new-password", value: formS[0].secret, placeholder: formS[0].id ? "不修改请留空" : "密码 / token", onChange: function (e) { formS[1](Object.assign({}, formS[0], { secret: e.target.value })); } })),
         h(C.Field, { h: h, label: "分组" },

@@ -864,18 +864,33 @@ var require_status = __commonJS({
   }
 });
 
-// packages/addons/vault/client/views/secrets.cjs
-var require_secrets = __commonJS({
-  "packages/addons/vault/client/views/secrets.cjs"(exports2, module2) {
+// packages/addons/vault/client/ui/kinds.cjs
+var require_kinds = __commonJS({
+  "packages/addons/vault/client/ui/kinds.cjs"(exports2, module2) {
     "use strict";
-    var C = require_common();
     var KIND_LABEL = {
       password: "\u5BC6\u7801",
       token: "Token",
       app_password: "\u5E94\u7528\u4E13\u7528\u5BC6\u7801",
       api_key: "API Key",
-      other: "\u5176\u5B83"
+      other: "\u5176\u5B83",
+      "site-account": "\u7AD9\u70B9\u8D26\u53F7"
     };
+    var CREATABLE_KINDS = ["password", "token", "app_password", "api_key", "other"];
+    function kindOptions(current) {
+      return CREATABLE_KINDS.indexOf(current) === -1 ? [current].concat(CREATABLE_KINDS) : CREATABLE_KINDS;
+    }
+    module2.exports = { KIND_LABEL, CREATABLE_KINDS, kindOptions };
+  }
+});
+
+// packages/addons/vault/client/views/secrets.cjs
+var require_secrets = __commonJS({
+  "packages/addons/vault/client/views/secrets.cjs"(exports2, module2) {
+    "use strict";
+    var C = require_common();
+    var K = require_kinds();
+    var KIND_LABEL = K.KIND_LABEL;
     module2.exports = function SecretsView(props) {
       var h = props.h;
       var api = props.api;
@@ -1047,7 +1062,7 @@ var require_secrets = __commonJS({
                 { value: formS[0].kind, onChange: function(e) {
                   formS[1](Object.assign({}, formS[0], { kind: e.target.value }));
                 } },
-                Object.keys(KIND_LABEL).map(function(k) {
+                K.kindOptions(formS[0].kind).map(function(k) {
                   return h("option", { key: k, value: k }, KIND_LABEL[k]);
                 })
               )
@@ -3230,7 +3245,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.2.2",
+    version: "0.2.3",
     icon: (init_shield_check(), __toCommonJS(shield_check_exports)).default,
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },

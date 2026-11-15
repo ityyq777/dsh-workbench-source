@@ -5,6 +5,7 @@ import { mkdtempSync, existsSync, statSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createRequire } from "node:module";
 
 process.env.WB_HOME = mkdtempSync(join(tmpdir(), "wb-vault-test-"));
 
@@ -26,7 +27,7 @@ function makeVault() {
     groups,
   );
   const run = (name, args = {}, origin = "ui") => actions.get(name).execute(args, { origin });
-  return { db, vault, groups, run };
+  return { db, vault, groups, actions, run };
 }
 
 const PASS = "correct-horse-1";
@@ -295,4 +296,25 @@ test("0.1.0 的 vault_meta 迁移到 header/device/usage", () => {
   assert.equal(items[0].name, "legacy");
   assert.equal(items[0].lastUsedAt, ts + 5);
   assert.equal(run("vault.secretReveal", { id: "sec_old" }).secret, "old-secret");
+});
+
+const KINDS = ["password", "token", "app_password", "api_key", "other", "site-account"];
+const clientKinds = createRequire(import.meta.url)("../client/ui/kinds.cjs");
+
+test("kind 契约：schema、能力清单与界面标签三处同口径 6 种", async () => {
+  const { createDomain } = await import("../lib/index.js");
+  const kindField = createDomain().capability.fields.find((f) => f.name === "kind");
+  assert.match(kindField.type, /\bsite-account\b/);
+  assert.match(kindField.description, /site-account/);
+
+  const { actions } = makeVault();
+  for (const name of ["vault.secretList", "vault.secretCreate", "vault.secretUpdate", "vault.pluginSecretUpsert"]) {
+    assert.deepEqual(actions.get(name).input.properties.kind.enum, KINDS, name + " 的 kind 枚举必须覆盖 6 种");
+  }
+
+  assert.deepEqual(Object.keys(clientKinds.KIND_LABEL), KINDS);
+  assert.equal(clientKinds.KIND_LABEL["site-account"], "站点账号");
+  assert.deepEqual(clientKinds.CREATABLE_KINDS, KINDS.slice(0, 5));
+  assert.deepEqual(clientKinds.kindOptions("site-account"), ["site-account"].concat(KINDS.slice(0, 5)));
+  assert.deepEqual(clientKinds.kindOptions("password"), KINDS.slice(0, 5));
 });

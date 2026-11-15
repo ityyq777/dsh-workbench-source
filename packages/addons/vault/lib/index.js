@@ -26,7 +26,7 @@ export function createDomain(host) {
     id: "wb-addon-vault",
     title: "凭据保险箱",
     description: "集中保存密码、应用专用密码与 token；按分组授权给业务模块，加密落库、密文可同步。",
-    version: "0.2.2",
+    version: "0.2.3",
     tables: [
       "vault_header",
       "vault_device",
@@ -80,7 +80,11 @@ export function createDomain(host) {
       ],
       fields: [
         { name: "name", type: "string", description: "唯一名称" },
-        { name: "kind", type: "password|token|app_password|api_key|other", description: "凭据类型" },
+        {
+          name: "kind",
+          type: "password|token|app_password|api_key|other|site-account",
+          description: "凭据类型；site-account 由业务模块（站点）经 plugin 接口写入，不手工新建",
+        },
         { name: "groupId", type: "string", description: "所属分组，可空" },
         { name: "meta", type: "object", description: "非敏感备注（用户名、URL、过期提醒）" },
       ],
@@ -108,7 +112,7 @@ export function createDomain(host) {
       api.action("vault.actionSchema", {
         description: "只读：本域 action 清单与输入 schema（插件自证，不读宿主统一接口）。",
         input: { type: "object", properties: {}, additionalProperties: false },
-        execute: () => ({ shellVersion: api.shellVersion || "", domains: [{ id: "wb-addon-vault", version: (api.addon && api.addon.version) || "0.2.2" }], actions: schemas }),
+        execute: () => ({ shellVersion: api.shellVersion || "", domains: [{ id: "wb-addon-vault", version: (api.addon && api.addon.version) || "0.2.3" }], actions: schemas }),
       });
       void host;
     },
