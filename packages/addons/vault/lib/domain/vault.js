@@ -298,6 +298,7 @@ export function createVault({ db, log = () => {} }) {
       items: rows.map((row) => ({
         ...secretRow(row, usage),
         meta: parseJson(row.meta, {}),
+        setIds: sets.setIdsOfSecret(row.id),
       })),
     };
   }

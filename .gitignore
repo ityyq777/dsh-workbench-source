@@ -17,3 +17,5 @@ dist/
 .tmp-install-test
 .tmp-actions-preview
 .tmp-automation-preview
+.tmp-vault-preview
+

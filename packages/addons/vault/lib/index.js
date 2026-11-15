@@ -69,6 +69,7 @@ export function createDomain(host) {
     views: [
       { id: "status", title: "保险箱", icon: "shield" },
       { id: "secrets", title: "凭据", icon: "key" },
+      { id: "sets", title: "集合", icon: "layers" },
       { id: "groups", title: "分组与关联", icon: "folder" },
       { id: "config", title: "设置", icon: "sliders" },
       { id: "data", title: "数据", icon: "database" },

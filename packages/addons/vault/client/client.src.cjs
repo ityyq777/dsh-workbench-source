@@ -11,7 +11,8 @@
   }
   var React = host.react;
   var h = host.h;
-  var CSS = require("./ui/styles.cjs");
+  var CSS_ARR = require("./ui/styles.cjs");
+  var CSS = Array.isArray(CSS_ARR) ? CSS_ARR.join("\n") : String(CSS_ARR || "");
 
   var ICONS = {
     shield: require("lucide-react/icons/shield").default,
@@ -20,6 +21,7 @@
     sliders: require("lucide-react/icons/sliders-horizontal").default,
     database: require("lucide-react/icons/database").default,
     list: require("lucide-react/icons/list").default,
+    layers: require("lucide-react/icons/layers").default,
   };
 
   function Icon(props) {
@@ -61,6 +63,7 @@
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "保险箱", en: "Vault" }, component: withProps(require("./views/status.cjs"), "保险箱") },
       { id: "secrets", icon: tabIcon("key"), title: { zh: "凭据", en: "Secrets" }, component: withProps(require("./views/secrets.cjs"), "凭据") },
+      { id: "sets", icon: tabIcon("layers"), title: { zh: "集合", en: "Sets" }, component: withProps(require("./views/sets.cjs"), "集合") },
       { id: "groups", icon: tabIcon("folder"), title: { zh: "分组与关联", en: "Groups" }, component: withProps(require("./views/groups.cjs"), "分组与关联") },
       { id: "config", icon: tabIcon("sliders"), title: { zh: "设置", en: "Settings" }, component: withProps(require("./views/config.cjs"), "设置") },
       { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: withProps(require("./views/data.cjs"), "数据") },

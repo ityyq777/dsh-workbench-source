@@ -48,32 +48,60 @@ var require_styles = __commonJS({
       ".wbv h2{font-size:17px;margin:0}.wbv h3{font-size:14px;margin:0}",
       ".wbv-muted{opacity:.62}.wbv-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
       ".wbv-grow{flex:1}.wbv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
-      ".wbv-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;padding:12px;background:var(--wb-card,#fff)}",
+      ".wbv-card{border:1px solid var(--wb-border);border-radius:10px;padding:12px;background:var(--wb-card)}",
       ".wbv-card h3{margin-bottom:6px}.wbv-kpi{font-size:22px;font-weight:650;line-height:1.2}",
-      ".wbv-btn{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-btn,#fff);color:inherit;border-radius:7px;padding:5px 10px;cursor:pointer;font-size:12px;line-height:1.4}",
-      ".wbv-btn:hover{border-color:#9ca3af}.wbv-btn:disabled{opacity:.45;cursor:not-allowed}",
-      ".wbv-btn.primary{background:#2563eb;border-color:#2563eb;color:#fff}.wbv-btn.danger{color:#b91c1c;border-color:#fecaca}",
-      ".wbv-btn.ghost{background:transparent;border-color:transparent;color:#2563eb;padding:2px 4px}",
+      ".wbv-btn{border:1px solid var(--wb-border);background:var(--wb-card);color:inherit;border-radius:7px;padding:5px 10px;cursor:pointer;font-size:12px;line-height:1.4}",
+      ".wbv-btn:hover{border-color:var(--wb-accent)}.wbv-btn:disabled{opacity:.45;cursor:not-allowed}",
+      ".wbv-btn.primary{background:var(--wb-accent);border-color:var(--wb-accent);color:var(--wb-on-accent,inherit)}",
+      ".wbv-btn.danger{color:var(--wb-danger);border-color:color-mix(in srgb,var(--wb-danger) 45%,transparent)}",
+      ".wbv-btn.ghost{background:transparent;border-color:transparent;color:var(--wb-accent);padding:2px 4px}",
       ".wbv-field{display:flex;flex-direction:column;gap:4px;min-width:180px;flex:1}",
       ".wbv-label{font-size:11px;font-weight:600;opacity:.75}.wbv-hint{font-size:11px;opacity:.55}",
-      ".wbv input,.wbv select,.wbv textarea{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-input,#fff);color:inherit;width:100%;box-sizing:border-box}",
+      ".wbv input,.wbv select,.wbv textarea{border:1px solid var(--wb-border);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface);color:inherit;width:100%;box-sizing:border-box}",
       ".wbv input[type=checkbox]{width:auto}",
       ".wbv textarea{min-height:70px;resize:vertical}",
-      ".wbv-notice{border-radius:8px;padding:8px 10px;font-size:12px;border:1px solid #bfdbfe;background:#eff6ff;color:#1e3a8a}",
-      ".wbv-notice.error{border-color:#fecaca;background:#fef2f2;color:#991b1b}.wbv-notice.ok{border-color:#bbf7d0;background:#f0fdf4;color:#166534}",
-      ".wbv-empty{padding:22px;text-align:center;opacity:.55;border:1px dashed var(--wb-border,#d1d5db);border-radius:10px}",
-      ".wbv-table{width:100%;border-collapse:collapse;font-size:12px}.wbv-table th,.wbv-table td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--wb-border,#eee);vertical-align:top}",
+      ".wbv-notice{border-radius:8px;padding:8px 10px;font-size:12px;border:1px solid var(--wb-border);background:color-mix(in srgb,var(--wb-accent) 8%,transparent);color:inherit}",
+      ".wbv-notice.error{border-color:color-mix(in srgb,var(--wb-danger) 45%,transparent);background:color-mix(in srgb,var(--wb-danger) 10%,transparent);color:var(--wb-danger)}",
+      ".wbv-notice.ok{border-color:color-mix(in srgb,var(--wb-ok) 45%,transparent);background:color-mix(in srgb,var(--wb-ok) 10%,transparent);color:var(--wb-ok)}",
+      ".wbv-empty{padding:22px;text-align:center;opacity:.55;border:1px dashed var(--wb-border);border-radius:10px}",
+      ".wbv-table{width:100%;border-collapse:collapse;font-size:12px}",
+      ".wbv-table th,.wbv-table td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--wb-line);vertical-align:top}",
       ".wbv-table th{font-weight:600;opacity:.65;white-space:nowrap}.wbv-table code{font-size:11px;opacity:.8}",
-      ".wbv-pill{display:inline-block;border-radius:999px;padding:1px 8px;font-size:11px;background:#f3f4f6;color:#374151}",
-      ".wbv-pill.ok{background:#dcfce7;color:#166534}.wbv-pill.warn{background:#fef3c7;color:#92400e}.wbv-pill.bad{background:#fee2e2;color:#991b1b}",
+      ".wbv-table tbody tr:hover{background:color-mix(in srgb,var(--wb-muted) 8%,transparent)}",
+      ".wbv-pill{display:inline-block;border-radius:999px;padding:1px 8px;font-size:11px;background:color-mix(in srgb,var(--wb-muted) 14%,transparent);color:inherit}",
+      ".wbv-pill.ok{background:color-mix(in srgb,var(--wb-ok) 16%,transparent);color:var(--wb-ok)}",
+      ".wbv-pill.warn{background:color-mix(in srgb,var(--wb-warn) 18%,transparent);color:var(--wb-warn)}",
+      ".wbv-pill.bad{background:color-mix(in srgb,var(--wb-danger) 16%,transparent);color:var(--wb-danger)}",
       ".wbv-tabs{display:flex;gap:6px;flex-wrap:wrap}.wbv-tab{border:none;background:transparent;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px}",
-      ".wbv-tab.on{background:#eef2ff;color:#3730a3;font-weight:600}",
-      ".wbv-secret{font-family:ui-monospace,Menlo,Consolas,monospace;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:6px 8px;word-break:break-all}",
-      ".wbv-inline{display:flex;gap:6px;align-items:center}",
-      ".wbv-modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:50;padding:18px}",
-      ".wbv-modal-box{background:var(--wb-card,#fff);border-radius:12px;padding:16px;width:min(440px,100%);display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 40px rgba(0,0,0,.2)}",
-      ".wbv-code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;white-space:pre-wrap;word-break:break-word;background:#f9fafb;border-radius:8px;padding:10px;max-height:320px;overflow:auto}"
-    ].join("\n");
+      ".wbv-tab.on{background:color-mix(in srgb,var(--wb-accent) 12%,transparent);color:var(--wb-accent);font-weight:600}",
+      ".wbv-secret{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--wb-surface);border:1px solid var(--wb-border);border-radius:6px;padding:6px 8px;word-break:break-all}",
+      ".wbv-inline{display:flex;gap:6px;align-items:center;flex-wrap:wrap}",
+      ".wbv-modal{position:fixed;inset:0;background:color-mix(in srgb,var(--wb-muted) 45%,transparent);display:flex;align-items:center;justify-content:center;z-index:50;padding:18px}",
+      ".wbv-modal-box{background:var(--wb-card);border:1px solid var(--wb-border);border-radius:12px;padding:16px;width:min(520px,100%);max-height:88vh;overflow:auto;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 40px color-mix(in srgb,var(--wb-muted) 30%,transparent)}",
+      ".wbv-code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;white-space:pre-wrap;word-break:break-word;background:var(--wb-surface);border:1px solid var(--wb-border);border-radius:8px;padding:10px;max-height:320px;overflow:auto}",
+      ".wbv-split{display:grid;grid-template-columns:minmax(260px,1fr) minmax(320px,1.6fr);gap:12px;align-items:start}",
+      ".wbv-list{display:flex;flex-direction:column;gap:6px}",
+      ".wbv-item{border:1px solid var(--wb-border);border-radius:10px;padding:9px 10px;background:var(--wb-card);cursor:pointer}",
+      ".wbv-item:hover{border-color:var(--wb-accent)}",
+      ".wbv-item.on{border-color:var(--wb-accent);box-shadow:inset 3px 0 0 var(--wb-accent)}",
+      ".wbv-item-top{display:flex;gap:8px;align-items:center}",
+      ".wbv-dot{width:10px;height:10px;border-radius:999px;flex:none;background:var(--wb-accent)}",
+      ".wbv-chips{display:flex;gap:6px;flex-wrap:wrap}",
+      ".wbv-chip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--wb-border);border-radius:999px;padding:2px 8px;font-size:11px;background:var(--wb-surface)}",
+      ".wbv-check{display:flex;gap:6px;align-items:center;padding:3px 0;font-size:12px}",
+      ".wbv-scroll{max-height:220px;overflow:auto;border:1px solid var(--wb-border);border-radius:8px;padding:8px}",
+      "@media (max-width:820px){.wbv-split{grid-template-columns:1fr}}",
+      ".wbv-search{flex:0 0 220px;width:220px}",
+      ".wbv-row>input:not([type=checkbox]),.wbv-row>select{width:auto;flex:0 1 220px;min-width:120px}",
+      ".wbv-sub{font-size:12px;opacity:.65;margin-top:2px}",
+      ".wbv-table tbody tr:hover{background:color-mix(in srgb,var(--wb-accent) 6%,transparent)}",
+      ".wbv-table td{vertical-align:top}",
+      ".wbv-empty-card{border:1px dashed var(--wb-border);border-radius:10px;padding:28px 16px;display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center;background:var(--wb-card)}",
+      ".wbv-empty-title{font-size:14px;font-weight:600}",
+      ".wbv-check-list{display:flex;flex-wrap:wrap;gap:6px 14px;margin:4px 0}",
+      ".wbv-check{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}",
+      ".wbv-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}"
+    ];
   }
 });
 
@@ -531,17 +559,60 @@ var init_list = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/layers.mjs
+var layers_exports = {};
+__export(layers_exports, {
+  __iconData: () => __iconData7,
+  default: () => Layers
+});
+var __iconData7, Layers;
+var init_layers = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/layers.mjs"() {
+    init_createLucideIcon();
+    __iconData7 = {
+      name: "layers",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z",
+            key: "zw3jo"
+          }
+        ],
+        [
+          "path",
+          {
+            d: "M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12",
+            key: "1wduqc"
+          }
+        ],
+        [
+          "path",
+          {
+            d: "M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17",
+            key: "kqbvx6"
+          }
+        ]
+      ],
+      aliases: ["layers-3"]
+    };
+    __iconData7.node;
+    Layers = createLucideIcon(__iconData7);
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs
 var shield_check_exports = {};
 __export(shield_check_exports, {
-  __iconData: () => __iconData7,
+  __iconData: () => __iconData8,
   default: () => ShieldCheck
 });
-var __iconData7, ShieldCheck;
+var __iconData8, ShieldCheck;
 var init_shield_check = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs"() {
     init_createLucideIcon();
-    __iconData7 = {
+    __iconData8 = {
       name: "shield-check",
       size: 24,
       node: [
@@ -555,8 +626,8 @@ var init_shield_check = __esm({
         ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
       ]
     };
-    __iconData7.node;
-    ShieldCheck = createLucideIcon(__iconData7);
+    __iconData8.node;
+    ShieldCheck = createLucideIcon(__iconData8);
   }
 });
 
@@ -899,8 +970,9 @@ var require_secrets = __commonJS({
       var React = props.React;
       var listS = React.useState({ loading: true, rows: [], error: "" });
       var qS = React.useState("");
+      var kindS = React.useState("");
       var statusS = React.useState(null);
-      var groupsS = React.useState([]);
+      var setsS = React.useState([]);
       var formS = React.useState(emptyForm());
       var editingS = React.useState(false);
       var busyS = React.useState(false);
@@ -912,17 +984,17 @@ var require_secrets = __commonJS({
           return Object.assign({}, old, { loading: true });
         });
         Promise.all([
-          C.call(api, "vault.secretList", { q: qS[0] }),
+          C.call(api, "vault.secretList", { q: qS[0], kind: kindS[0] || void 0 }),
           C.call(api, "vault.status").catch(function() {
             return null;
           }),
-          C.call(api, "vault.groupList").catch(function() {
+          C.call(api, "vault.setList", {}).catch(function() {
             return { items: [] };
           })
         ]).then(function(r) {
           listS[1]({ loading: false, rows: r[0] && (r[0].items || r[0].secrets) || [], error: "" });
           statusS[1](r[1]);
-          groupsS[1](r[2] && r[2].items || []);
+          setsS[1](r[2] && r[2].items || []);
         }).catch(function(e) {
           listS[1]({ loading: false, rows: [], error: C.errText(e) });
         });
@@ -942,28 +1014,72 @@ var require_secrets = __commonJS({
         } catch (e) {
           meta = {};
         }
-        formS[1]({ id: row.id, name: row.name, kind: row.kind, secret: "", groupId: row.groupId || "", username: meta.username || "", url: meta.url || "" });
+        formS[1]({
+          id: row.id,
+          name: row.name,
+          kind: row.kind,
+          secret: "",
+          setIds: (row.setIds || []).slice(),
+          username: meta.username || "",
+          url: meta.url || ""
+        });
         editingS[1](true);
         msgS[1]("");
+      }
+      function toggleSet(id) {
+        var cur = formS[0].setIds || [];
+        var next = cur.indexOf(id) >= 0 ? cur.filter(function(x) {
+          return x !== id;
+        }) : cur.concat([id]);
+        formS[1](Object.assign({}, formS[0], { setIds: next }));
       }
       function save() {
         var f = formS[0];
         if (!f.name.trim()) return msgS[1]("\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A");
-        if (!editingS[0]) return;
         if (!f.id && !f.secret) return msgS[1]("\u65B0\u589E\u51ED\u636E\u5FC5\u987B\u586B\u5199\u660E\u6587");
         busyS[1](true);
         msgS[1]("");
         var meta = { username: f.username, url: f.url };
-        var p = f.id ? C.call(api, "vault.secretUpdate", { id: f.id, name: f.name.trim(), kind: f.kind, secret: f.secret || void 0, meta, groupId: f.groupId || "" }) : C.call(api, "vault.secretCreate", { name: f.name.trim(), kind: f.kind, secret: f.secret, meta, groupId: f.groupId || void 0 });
-        p.then(function() {
-          busyS[1](false);
-          editingS[1](false);
-          formS[1](emptyForm());
-          load();
+        var picked = f.setIds || [];
+        var payload = {
+          id: f.id || void 0,
+          name: f.name.trim(),
+          kind: f.kind,
+          secret: f.secret || void 0,
+          meta
+        };
+        if (!f.id && picked.length) payload.setId = picked[0];
+        var p = f.id ? C.call(api, "vault.secretUpdate", payload) : C.call(api, "vault.secretCreate", payload);
+        p.then(function(r) {
+          var createdId = r && r.id || f.id;
+          return syncSets(createdId, f.setIds || [], f.id ? rowSetIds(f.id) : []).then(function() {
+            busyS[1](false);
+            editingS[1](false);
+            formS[1](emptyForm());
+            load();
+          });
         }).catch(function(e) {
           busyS[1](false);
           msgS[1](C.errText(e));
         });
+      }
+      function rowSetIds(id) {
+        for (var i = 0; i < rows.length; i += 1) if (rows[i].id === id) return (rows[i].setIds || []).slice();
+        return [];
+      }
+      function syncSets(secretId, next, prev) {
+        var added = next.filter(function(x) {
+          return prev.indexOf(x) < 0;
+        });
+        var removed = prev.filter(function(x) {
+          return next.indexOf(x) < 0;
+        });
+        var jobs = added.map(function(setId) {
+          return C.call(api, "vault.setAttachSecret", { setId, secretId });
+        }).concat(removed.map(function(setId) {
+          return C.call(api, "vault.setDetachSecret", { setId, secretId });
+        }));
+        return Promise.all(jobs);
       }
       function del(row) {
         if (!window.confirm("\u5220\u9664\u51ED\u636E\u300C" + row.name + "\u300D\uFF1F\u7ED1\u5B9A\u5B83\u7684\u8FDE\u63A5\u5668\u4F1A\u5931\u6548\u3002")) return;
@@ -994,24 +1110,57 @@ var require_secrets = __commonJS({
           msgS[1](C.errText(e));
         });
       }
+      var setIndex = {};
+      setsS[0].forEach(function(s) {
+        setIndex[s.id] = s.name;
+      });
       return h(
         "div",
         { className: "wbv" },
         h(
           "div",
           { className: "wbv-row" },
-          h("h2", { className: "wbv-grow" }, "\u51ED\u636E"),
-          h("input", { style: { maxWidth: "220px" }, placeholder: "\u641C\u7D22\u540D\u79F0\u6216\u5907\u6CE8", value: qS[0], onChange: function(e) {
-            qS[1](e.target.value);
-          } }),
-          h(C.Btn, { h, onClick: load }, "\u641C\u7D22"),
+          h("h2", { className: "wbv-grow" }, "\u51ED\u636E\u5E93"),
+          h("input", {
+            className: "wbv-search",
+            placeholder: "\u641C\u7D22\u540D\u79F0\u3001\u5907\u6CE8\u6216\u96C6\u5408",
+            value: qS[0],
+            onChange: function(e) {
+              qS[1](e.target.value);
+            },
+            onKeyDown: function(e) {
+              if (e.key === "Enter") load();
+            }
+          }),
+          h(
+            "select",
+            {
+              value: kindS[0],
+              onChange: function(e) {
+                kindS[1](e.target.value);
+                setTimeout(load, 0);
+              }
+            },
+            h("option", { value: "" }, "\u5168\u90E8\u7C7B\u578B"),
+            K.CREATABLE_KINDS.map(function(k) {
+              return h("option", { key: k, value: k }, KIND_LABEL[k]);
+            })
+          ),
+          h(C.Btn, { h, onClick: load }, "\u5237\u65B0"),
           h(C.Btn, { h, kind: "primary", onClick: startCreate }, "\u65B0\u589E\u51ED\u636E")
         ),
+        h("p", { className: "wbv-muted" }, "\u51ED\u636E\u6309\u300C\u96C6\u5408\u300D\u7EC4\u7EC7\uFF1A\u4E00\u6761\u51ED\u636E\u53EF\u4EE5\u8FDB\u591A\u4E2A\u96C6\u5408\uFF0C\u4E00\u4E2A\u96C6\u5408\u53EF\u4EE5\u6302\u5230\u591A\u4E2A\u5206\u7EC4\u3002\u660E\u6587\u53EA\u5728\u672C\u673A\u89E3\u9501\u540E\u53EF\u89C1\u3002"),
         h(C.Notice, { h, kind: "error", text: listS[0].error || msgS[0] }),
-        listS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u4E2D\u2026" }) : rows.length === 0 ? h(C.Empty, { h, text: "\u8FD8\u6CA1\u6709\u51ED\u636E\u3002\u65B0\u589E\u4E00\u6761\u540E\uFF0C\u53EF\u628A\u5B83\u7ED1\u5B9A\u7ED9\u8FDE\u63A5\u5668\u3002" }) : h(
+        listS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u4E2D\u2026" }) : rows.length === 0 ? h(
+          "div",
+          { className: "wbv-empty-card" },
+          h("div", { className: "wbv-empty-title" }, qS[0] || kindS[0] ? "\u6CA1\u6709\u5339\u914D\u7684\u51ED\u636E" : "\u8FD8\u6CA1\u6709\u51ED\u636E"),
+          h("div", { className: "wbv-muted" }, qS[0] || kindS[0] ? "\u6362\u4E2A\u5173\u952E\u8BCD\u6216\u7C7B\u578B\u8BD5\u8BD5\u3002" : "\u65B0\u589E\u4E00\u6761\u540E\uFF0C\u628A\u5B83\u52A0\u5165\u96C6\u5408\uFF1B\u7AD9\u70B9\u8D26\u53F7\u4F1A\u81EA\u52A8\u7528\u8D26\u53F7 id \u4F5C\u4E3A\u96C6\u5408\u540D\u3002"),
+          h("div", { className: "wbv-row" }, h(C.Btn, { h, kind: "primary", onClick: startCreate }, "\u65B0\u589E\u51ED\u636E"))
+        ) : h(
           "table",
           { className: "wbv-table" },
-          h("thead", null, h("tr", null, ["\u540D\u79F0", "\u7C7B\u578B", "\u5206\u7EC4", "\u5907\u6CE8", "\u6700\u8FD1\u4F7F\u7528", "\u64CD\u4F5C"].map(function(x) {
+          h("thead", null, h("tr", null, ["\u540D\u79F0", "\u7C7B\u578B", "\u6240\u5C5E\u96C6\u5408", "\u5907\u6CE8", "\u6700\u8FD1\u4F7F\u7528", "\u64CD\u4F5C"].map(function(x) {
             return h("th", { key: x }, x);
           }))),
           h("tbody", null, rows.map(function(row) {
@@ -1021,12 +1170,15 @@ var require_secrets = __commonJS({
             } catch (e) {
               meta = {};
             }
+            var chips = (row.setIds || []).map(function(id) {
+              return h("span", { key: id, className: "wbv-chip" }, setIndex[id] || id);
+            });
             return h(
               "tr",
               { key: row.id },
-              h("td", null, h("strong", null, row.name)),
+              h("td", null, h("strong", null, row.name), h("div", { className: "wbv-muted" }, row.id)),
               h("td", null, h("span", { className: "wbv-pill" }, KIND_LABEL[row.kind] || row.kind)),
-              h("td", null, groupName(groupsS[0], row.groupId) || "\u2014"),
+              h("td", null, chips.length ? h("div", { className: "wbv-chips" }, chips) : h("span", { className: "wbv-muted" }, "\u672A\u52A0\u5165\u96C6\u5408")),
               h("td", null, [meta.username, meta.url].filter(Boolean).join(" \xB7 ") || "\u2014"),
               h("td", null, C.fmtTime(row.lastUsedAt, lang)),
               h("td", null, h(
@@ -1047,10 +1199,14 @@ var require_secrets = __commonJS({
         ),
         editingS[0] ? h(
           "div",
-          { className: "wbv-modal" },
+          { className: "wbv-modal", onClick: function() {
+            editingS[1](false);
+          } },
           h(
             "div",
-            { className: "wbv-modal-box" },
+            { className: "wbv-modal-box", onClick: function(e) {
+              e.stopPropagation();
+            } },
             h("h3", null, formS[0].id ? "\u7F16\u8F91\u51ED\u636E" : "\u65B0\u589E\u51ED\u636E"),
             h(C.Field, { h, label: "\u540D\u79F0" }, h("input", { value: formS[0].name, onChange: function(e) {
               formS[1](Object.assign({}, formS[0], { name: e.target.value }));
@@ -1063,7 +1219,7 @@ var require_secrets = __commonJS({
                 { value: formS[0].kind, onChange: function(e) {
                   formS[1](Object.assign({}, formS[0], { kind: e.target.value }));
                 } },
-                K.kindOptions(formS[0].kind).map(function(k) {
+                K.CREATABLE_KINDS.map(function(k) {
                   return h("option", { key: k, value: k }, KIND_LABEL[k]);
                 })
               )
@@ -1071,23 +1227,26 @@ var require_secrets = __commonJS({
             h(
               C.Field,
               { h, label: formS[0].id ? "\u65B0\u660E\u6587\uFF08\u7559\u7A7A\u4E0D\u8F6E\u6362\uFF09" : "\u660E\u6587" },
-              h("input", { type: "password", autoComplete: "new-password", value: formS[0].secret, placeholder: formS[0].id ? "\u4E0D\u4FEE\u6539\u8BF7\u7559\u7A7A" : "\u5BC6\u7801 / token", onChange: function(e) {
+              h("input", { type: "password", autoComplete: "new-password", value: formS[0].secret, placeholder: formS[0].id ? "\u4E0D\u4FEE\u6539\u8BF7\u7559\u7A7A" : "\u5BC6\u7801 / \u624B\u673A\u53F7 / \u8BC1\u4EF6\u53F7 / token", onChange: function(e) {
                 formS[1](Object.assign({}, formS[0], { secret: e.target.value }));
               } })
             ),
             h(
               C.Field,
-              { h, label: "\u5206\u7EC4" },
-              h(
-                "select",
-                { value: formS[0].groupId || "", onChange: function(e) {
-                  formS[1](Object.assign({}, formS[0], { groupId: e.target.value }));
-                } },
-                h("option", { value: "" }, "\u672A\u5206\u7EC4"),
-                groupsS[0].map(function(g) {
-                  return h("option", { key: g.id, value: g.id }, g.name);
-                })
-              )
+              { h, label: "\u6240\u5C5E\u96C6\u5408\uFF08\u53EF\u591A\u9009\uFF09", hint: setsS[0].length ? "\u52FE\u9009\u540E\u4FDD\u5B58\u65F6\u540C\u6B65\u6302\u8F7D/\u6458\u9664" : "\u8FD8\u6CA1\u6709\u96C6\u5408\uFF0C\u53EF\u5148\u5728\u300C\u96C6\u5408\u300D\u9875\u65B0\u5EFA" },
+              setsS[0].length ? h("div", { className: "wbv-check-list" }, setsS[0].map(function(s) {
+                var on = (formS[0].setIds || []).indexOf(s.id) >= 0;
+                return h(
+                  "label",
+                  { key: s.id, className: "wbv-check" },
+                  h("input", { type: "checkbox", checked: on, onChange: function() {
+                    toggleSet(s.id);
+                  } }),
+                  h("span", { className: "wbv-dot", style: { background: s.color || "var(--wb-accent)" } }),
+                  h("span", null, s.name),
+                  h("span", { className: "wbv-muted" }, " \xB7 " + (s.secretCount || 0) + " \u6761")
+                );
+              })) : h("span", { className: "wbv-muted" }, "\u2014")
             ),
             h(C.Field, { h, label: "\u5907\u6CE8\u7528\u6237\u540D" }, h("input", { value: formS[0].username, onChange: function(e) {
               formS[1](Object.assign({}, formS[0], { username: e.target.value }));
@@ -1137,12 +1296,352 @@ var require_secrets = __commonJS({
       );
     };
     function emptyForm() {
-      return { id: "", name: "", kind: "password", secret: "", groupId: "", username: "", url: "" };
+      return { id: "", name: "", kind: "password", secret: "", setIds: [], username: "", url: "" };
     }
-    function groupName(groups, id) {
-      for (var i = 0; i < groups.length; i += 1) if (groups[i].id === id) return groups[i].name;
-      return "";
-    }
+  }
+});
+
+// packages/addons/vault/client/views/sets.cjs
+var require_sets = __commonJS({
+  "packages/addons/vault/client/views/sets.cjs"(exports2, module2) {
+    "use strict";
+    var C = require_common();
+    var K = require_kinds();
+    module2.exports = function SetsView(props) {
+      var h = props.h;
+      var api = props.api;
+      var lang = props.lang || "zh";
+      var React = props.React;
+      var listS = React.useState({ loading: true, items: [], error: "" });
+      var secretsS = React.useState([]);
+      var groupsS = React.useState([]);
+      var activeS = React.useState(null);
+      var detailS = React.useState({ setId: "", secrets: [], groups: [], error: "" });
+      var qS = React.useState("");
+      var msgS = React.useState("");
+      var busyS = React.useState(false);
+      var draftS = React.useState(null);
+      var pickS = React.useState([]);
+      function load() {
+        listS[1](function(old) {
+          return Object.assign({}, old, { loading: true });
+        });
+        Promise.all([
+          C.call(api, "vault.setList", { q: qS[0] }),
+          C.call(api, "vault.secretList", {}),
+          C.call(api, "vault.groupList", {})
+        ]).then(function(r) {
+          listS[1]({ loading: false, items: r[0] && r[0].items || [], error: "" });
+          secretsS[1](r[1] && (r[1].items || r[1].secrets) || []);
+          groupsS[1](r[2] && r[2].items || []);
+          if (activeS[0]) return open(activeS[0]).then(null, function() {
+          });
+        }).catch(function(e) {
+          listS[1]({ loading: false, items: [], error: C.errText(e) });
+        });
+      }
+      React.useEffect(function() {
+        load();
+      }, []);
+      function secretName(id) {
+        for (var i = 0; i < secretsS[0].length; i += 1) if (secretsS[0][i].id === id) return secretsS[0][i].name;
+        return id;
+      }
+      function open(row) {
+        activeS[1](row);
+        detailS[1]({ setId: row.id, secrets: [], groups: [], error: "" });
+        return C.call(api, "vault.setGet", { id: row.id }).then(function(r) {
+          detailS[1]({ setId: row.id, secrets: r && r.secrets || [], groups: r && r.groupIds || [], error: "" });
+        }).catch(function(e) {
+          detailS[1]({ setId: row.id, secrets: [], groups: [], error: C.errText(e) });
+        });
+      }
+      function startCreate() {
+        draftS[1]({ name: "", description: "", color: "" });
+        msgS[1]("");
+      }
+      function startEdit(set) {
+        draftS[1]({ id: set.id, name: set.name, description: set.description || "", color: set.color || "" });
+        msgS[1]("");
+      }
+      function saveDraft() {
+        var d = draftS[0];
+        if (!d || !String(d.name || "").trim()) return msgS[1]("\u96C6\u5408\u540D\u4E0D\u80FD\u4E3A\u7A7A");
+        busyS[1](true);
+        msgS[1]("");
+        var body = { name: String(d.name).trim(), description: d.description || "", color: d.color || "" };
+        var req = d.id ? C.call(api, "vault.setUpdate", Object.assign({ id: d.id }, body)) : C.call(api, "vault.setCreate", body);
+        req.then(function() {
+          busyS[1](false);
+          draftS[1](null);
+          load();
+        }).catch(function(e) {
+          busyS[1](false);
+          msgS[1](C.errText(e));
+        });
+      }
+      function removeSet(set) {
+        if (!window.confirm("\u5220\u9664\u96C6\u5408\u300C" + set.name + "\u300D\uFF1F\u53EA\u89E3\u9664\u5173\u8054\uFF0C\u51ED\u636E\u672C\u8EAB\u4FDD\u7559\u3002")) return;
+        busyS[1](true);
+        msgS[1]("");
+        C.call(api, "vault.setDelete", { id: set.id }).then(function() {
+          busyS[1](false);
+          activeS[1](null);
+          load();
+        }).catch(function(e) {
+          busyS[1](false);
+          msgS[1](C.errText(e));
+        });
+      }
+      function detach(secretId) {
+        busyS[1](true);
+        msgS[1]("");
+        C.call(api, "vault.setDetachSecret", { setId: activeS[0].id, secretId }).then(function() {
+          busyS[1](false);
+          open(activeS[0]);
+          load();
+        }).catch(function(e) {
+          busyS[1](false);
+          msgS[1](C.errText(e));
+        });
+      }
+      function attachPicked() {
+        if (!pickS[0].length) return;
+        busyS[1](true);
+        msgS[1]("");
+        var jobs = pickS[0].map(function(secretId) {
+          return C.call(api, "vault.setAttachSecret", { setId: activeS[0].id, secretId });
+        });
+        Promise.all(jobs).then(function() {
+          busyS[1](false);
+          pickS[1]([]);
+          open(activeS[0]);
+          load();
+        }).catch(function(e) {
+          busyS[1](false);
+          msgS[1](C.errText(e));
+        });
+      }
+      function toggleGroup(groupId, on) {
+        busyS[1](true);
+        msgS[1]("");
+        var action = on ? "vault.groupAttachSet" : "vault.groupDetachSet";
+        C.call(api, action, { groupId, setId: activeS[0].id }).then(function() {
+          busyS[1](false);
+          open(activeS[0]);
+          load();
+        }).catch(function(e) {
+          busyS[1](false);
+          msgS[1](C.errText(e));
+        });
+      }
+      var items = listS[0].items.filter(function(set) {
+        var q = qS[0].trim();
+        if (!q) return true;
+        return (set.name || "").indexOf(q) >= 0 || (set.description || "").indexOf(q) >= 0;
+      });
+      var detail = detailS[0];
+      var inSet = {};
+      detail.secrets.forEach(function(s) {
+        inSet[s.id] = true;
+      });
+      var candidates = secretsS[0].filter(function(s) {
+        return !inSet[s.id];
+      });
+      return h(
+        "div",
+        { className: "wbv" },
+        h(
+          "div",
+          { className: "wbv-row" },
+          h("h2", { className: "wbv-grow" }, "\u51ED\u636E\u96C6\u5408"),
+          h("input", { style: { maxWidth: "200px" }, placeholder: "\u641C\u7D22\u96C6\u5408\u540D/\u63CF\u8FF0", value: qS[0], onChange: function(e) {
+            qS[1](e.target.value);
+          } }),
+          h(C.Btn, { h, onClick: load }, "\u5237\u65B0"),
+          h(C.Btn, { h, kind: "primary", onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408")
+        ),
+        h("p", { className: "wbv-muted" }, "\u4E00\u4E2A\u96C6\u5408\u53EF\u4EE5\u6302\u5230\u591A\u4E2A\u5206\u7EC4\u3001\u88C5\u591A\u6761\u51ED\u636E\uFF1B\u5220\u9664\u96C6\u5408\u53EA\u65AD\u5173\u8054\uFF0C\u4E0D\u5220\u51ED\u636E\u3002"),
+        h(C.Notice, { h, kind: "error", text: listS[0].error || msgS[0] }),
+        h(
+          "div",
+          { className: "wbv-split" },
+          h(
+            "div",
+            { className: "wbv-list" },
+            listS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u96C6\u5408\u2026" }) : items.length === 0 ? h(
+              "div",
+              { className: "wbv-card" },
+              h("div", { className: "wbv-muted" }, qS[0] ? "\u6CA1\u6709\u5339\u914D\u7684\u96C6\u5408\u3002" : "\u8FD8\u6CA1\u6709\u96C6\u5408\u3002\u65B0\u5EFA\u4E00\u4E2A\u540E\uFF0C\u53EF\u4EE5\u628A\u51ED\u636E\u548C\u5206\u7EC4\u90FD\u6302\u8FDB\u6765\u3002"),
+              h(
+                "div",
+                { className: "wbv-row", style: { marginTop: "8px" } },
+                h(C.Btn, { h, kind: "primary", onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408")
+              )
+            ) : items.map(function(set) {
+              var on = activeS[0] && activeS[0].id === set.id;
+              return h(
+                "div",
+                {
+                  key: set.id,
+                  className: "wbv-item" + (on ? " on" : ""),
+                  onClick: function() {
+                    open(set);
+                  }
+                },
+                h(
+                  "div",
+                  { className: "wbv-item-top" },
+                  h("span", { className: "wbv-dot", style: set.color ? { background: set.color } : null }),
+                  h("strong", null, set.name),
+                  h("span", { className: "wbv-grow" }),
+                  h("span", { className: "wbv-pill" }, (set.secretCount || 0) + " \u6761\u51ED\u636E")
+                ),
+                h(
+                  "div",
+                  { className: "wbv-muted", style: { fontSize: "11px", marginTop: "2px" } },
+                  (set.description || "\u2014") + " \xB7 " + (set.groupIds || []).length + " \u4E2A\u5206\u7EC4"
+                )
+              );
+            })
+          ),
+          h(
+            "div",
+            { className: "wbv-card" },
+            !activeS[0] ? h(C.Empty, { h, text: "\u5DE6\u4FA7\u9009\u4E00\u4E2A\u96C6\u5408\uFF0C\u67E5\u770B\u51ED\u636E\u4E0E\u5206\u7EC4\u3002" }) : h(
+              React.Fragment,
+              null,
+              h(
+                "div",
+                { className: "wbv-row" },
+                h("h3", { className: "wbv-grow" }, activeS[0].name),
+                h(C.Btn, { h, onClick: function() {
+                  startEdit(activeS[0]);
+                } }, "\u7F16\u8F91"),
+                h(C.Btn, { h, kind: "danger", onClick: function() {
+                  removeSet(activeS[0]);
+                } }, "\u5220\u9664\u96C6\u5408")
+              ),
+              detail.error ? h(C.Notice, { h, kind: "error", text: detail.error }) : null,
+              h("div", { className: "wbv-label" }, "\u96C6\u5408\u5185\u51ED\u636E"),
+              detail.secrets.length === 0 ? h("div", { className: "wbv-muted" }, "\u8FD8\u6CA1\u6709\u51ED\u636E\u3002") : h(
+                "table",
+                { className: "wbv-table" },
+                h("thead", null, h("tr", null, ["\u540D\u79F0", "\u7C7B\u578B", "\u66F4\u65B0\u65F6\u95F4", "\u64CD\u4F5C"].map(function(x) {
+                  return h("th", { key: x }, x);
+                }))),
+                h("tbody", null, detail.secrets.map(function(s) {
+                  return h(
+                    "tr",
+                    { key: s.id },
+                    h("td", null, h("strong", null, s.name)),
+                    h("td", null, h("span", { className: "wbv-pill" }, K.KIND_LABEL[s.kind] || s.kind)),
+                    h("td", null, C.fmtTime(s.updatedAt, lang)),
+                    h("td", null, h(C.Btn, { h, kind: "ghost", onClick: function() {
+                      detach(s.id);
+                    } }, "\u79FB\u51FA"))
+                  );
+                }))
+              ),
+              h(
+                "div",
+                { className: "wbv-row" },
+                h(
+                  "select",
+                  {
+                    style: { maxWidth: "260px" },
+                    value: "",
+                    onChange: function(e) {
+                      var v = e.target.value;
+                      if (v) pickS[1](pickS[0].concat([v]));
+                      e.target.value = "";
+                    }
+                  },
+                  h("option", { value: "" }, candidates.length ? "\u9009\u62E9\u8981\u52A0\u5165\u7684\u51ED\u636E\u2026" : "\u6CA1\u6709\u53EF\u52A0\u5165\u7684\u51ED\u636E"),
+                  candidates.map(function(s) {
+                    return h("option", { key: s.id, value: s.id }, s.name + "\uFF08" + (K.KIND_LABEL[s.kind] || s.kind) + "\uFF09");
+                  })
+                ),
+                pickS[0].length ? h("span", { className: "wbv-chips" }, pickS[0].map(function(id) {
+                  return h(
+                    "span",
+                    { className: "wbv-chip", key: id },
+                    secretName(id),
+                    h("button", { className: "wbv-btn ghost", onClick: function() {
+                      pickS[1](pickS[0].filter(function(x) {
+                        return x !== id;
+                      }));
+                    } }, "\xD7")
+                  );
+                })) : null,
+                h("span", { className: "wbv-grow" }),
+                h(C.Btn, { h, kind: "primary", disabled: !pickS[0].length || busyS[0], onClick: attachPicked }, "\u52A0\u5165 " + (pickS[0].length || ""))
+              ),
+              h("div", { className: "wbv-label" }, "\u6302\u9760\u5206\u7EC4"),
+              h(
+                "div",
+                { className: "wbv-chips" },
+                groupsS[0].length === 0 ? h("span", { className: "wbv-muted" }, "\u8FD8\u6CA1\u6709\u5206\u7EC4\u3002") : groupsS[0].map(function(g) {
+                  var on = detail.groups.indexOf(g.id) >= 0;
+                  return h(
+                    "label",
+                    { key: g.id, className: "wbv-chip", style: { cursor: "pointer" } },
+                    h("input", { type: "checkbox", checked: on, disabled: busyS[0], onChange: function(e) {
+                      toggleGroup(g.id, e.target.checked);
+                    } }),
+                    g.name
+                  );
+                })
+              )
+            ),
+            draftS[0] ? h(
+              "div",
+              { className: "wbv-modal", onClick: function() {
+                draftS[1](null);
+              } },
+              h(
+                "div",
+                { className: "wbv-modal-box", onClick: function(e) {
+                  e.stopPropagation();
+                } },
+                h("h3", null, draftS[0].id ? "\u7F16\u8F91\u96C6\u5408" : "\u65B0\u5EFA\u96C6\u5408"),
+                h(
+                  C.Field,
+                  { h, label: "\u96C6\u5408\u540D" },
+                  h("input", { value: draftS[0].name, placeholder: "\u5982 acc_1 / \u5DE5\u4F5C\u90AE\u7BB1", onChange: function(e) {
+                    draftS[1](Object.assign({}, draftS[0], { name: e.target.value }));
+                  } })
+                ),
+                h(
+                  C.Field,
+                  { h, label: "\u63CF\u8FF0" },
+                  h("input", { value: draftS[0].description, placeholder: "\u53EF\u9009", onChange: function(e) {
+                    draftS[1](Object.assign({}, draftS[0], { description: e.target.value }));
+                  } })
+                ),
+                h(
+                  C.Field,
+                  { h, label: "\u989C\u8272\uFF08\u53EF\u9009\uFF0C\u4E3B\u9898 token \u540D\u6216\u8272\u503C\uFF09" },
+                  h("input", { value: draftS[0].color, placeholder: "\u5982 --wb-accent", onChange: function(e) {
+                    draftS[1](Object.assign({}, draftS[0], { color: e.target.value }));
+                  } })
+                ),
+                h(C.Notice, { h, kind: "error", text: msgS[0] }),
+                h(
+                  "div",
+                  { className: "wbv-row" },
+                  h("span", { className: "wbv-grow" }),
+                  h(C.Btn, { h, onClick: function() {
+                    draftS[1](null);
+                  } }, "\u53D6\u6D88"),
+                  h(C.Btn, { h, kind: "primary", disabled: busyS[0], onClick: saveDraft }, busyS[0] ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58")
+                )
+              )
+            ) : null
+          )
+        )
+      );
+    };
   }
 });
 
@@ -1161,12 +1660,19 @@ var require_groups = __commonJS({
       var busyS = React.useState(false);
       var formS = React.useState({ name: "", description: "" });
       var openS = React.useState(null);
+      var setsS = React.useState([]);
       function load() {
         listS[1](function(old) {
           return Object.assign({}, old, { loading: true });
         });
-        C.call(api, "vault.groupList").then(function(r) {
-          listS[1]({ loading: false, rows: r && r.items || [], error: "" });
+        Promise.all([
+          C.call(api, "vault.groupList"),
+          C.call(api, "vault.setList", {}).catch(function() {
+            return { items: [] };
+          })
+        ]).then(function(r) {
+          listS[1]({ loading: false, rows: r[0] && r[0].items || [], error: "" });
+          setsS[1](r[1] && r[1].items || []);
         }).catch(function(e) {
           listS[1]({ loading: false, rows: [], error: C.errText(e) });
         });
@@ -1216,6 +1722,34 @@ var require_groups = __commonJS({
           openS[1]({ group: row, items: [], loading: false, error: C.errText(e) });
         });
       }
+      function setsOfGroup(row) {
+        return setsS[0].filter(function(set) {
+          return (set.groupIds || []).indexOf(row.id) >= 0;
+        });
+      }
+      function toggleSet(row, set) {
+        var linked = (set.groupIds || []).indexOf(row.id) >= 0;
+        busyS[1](true);
+        msgS[1]("");
+        var call = linked ? C.call(api, "vault.groupDetachSet", { groupId: row.id, setId: set.id }) : C.call(api, "vault.groupAttachSet", { groupId: row.id, setId: set.id });
+        call.then(function() {
+          busyS[1](false);
+          setsS[1](function(old) {
+            return old.map(function(item) {
+              if (item.id !== set.id) return item;
+              var ids = (item.groupIds || []).slice();
+              var i = ids.indexOf(row.id);
+              if (linked && i >= 0) ids.splice(i, 1);
+              if (!linked && i < 0) ids.push(row.id);
+              return Object.assign({}, item, { groupIds: ids });
+            });
+          });
+          load();
+        }).catch(function(e) {
+          busyS[1](false);
+          msgS[1](C.errText(e));
+        });
+      }
       return h(
         "div",
         { className: "wbv" },
@@ -1257,7 +1791,7 @@ var require_groups = __commonJS({
         listS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u5206\u7EC4\u2026" }) : listS[0].rows.length === 0 ? h(C.Empty, { h, text: "\u8FD8\u6CA1\u6709\u5206\u7EC4\u3002\u5148\u5EFA\u4E00\u4E2A\u7EC4\uFF0C\u518D\u628A\u51ED\u636E\u653E\u8FDB\u53BB\u3002" }) : h(
           "table",
           { className: "wbv-table" },
-          h("thead", null, h("tr", null, ["\u5206\u7EC4", "\u63CF\u8FF0", "\u51ED\u636E", "\u5173\u8054\u5BF9\u8C61", "\u64CD\u4F5C"].map(function(x) {
+          h("thead", null, h("tr", null, ["\u5206\u7EC4", "\u63CF\u8FF0", "\u96C6\u5408", "\u51ED\u636E", "\u5173\u8054\u5BF9\u8C61", "\u64CD\u4F5C"].map(function(x) {
             return h("th", { key: x }, x);
           }))),
           h("tbody", null, listS[0].rows.map(function(row) {
@@ -1266,6 +1800,9 @@ var require_groups = __commonJS({
               { key: row.id },
               h("td", null, h("strong", null, row.name), h("div", { className: "wbv-muted" }, row.id)),
               h("td", null, row.description || "\u2014"),
+              h("td", null, setsOfGroup(row).length ? h("div", { className: "wbv-chips" }, setsOfGroup(row).map(function(set) {
+                return h("span", { key: set.id, className: "wbv-chip" }, set.name);
+              })) : h("span", { className: "wbv-muted" }, "\u672A\u6302\u96C6\u5408")),
               h("td", null, row.secretCount || 0),
               h("td", null, row.bindingCount || 0),
               h("td", null, h(
@@ -1292,6 +1829,20 @@ var require_groups = __commonJS({
               e.stopPropagation();
             } },
             h("h3", null, "\u300C" + openS[0].group.name + "\u300D\u7684\u5173\u8054\u5BF9\u8C61"),
+            h("div", { className: "wbv-sub" }, "\u6302\u8F7D\u96C6\u5408\uFF08\u52FE\u9009\u5373\u6302\u8F7D\uFF0C\u53D6\u6D88\u5373\u6458\u9664\uFF0C\u53EA\u6539\u5173\u8054\u4E0D\u52A8\u51ED\u636E\uFF09"),
+            h("div", { className: "wbv-check-list" }, setsS[0].length ? setsS[0].map(function(set) {
+              var on = (set.groupIds || []).indexOf(openS[0].group.id) >= 0;
+              return h(
+                "label",
+                { key: set.id, className: "wbv-check" },
+                h("input", { type: "checkbox", checked: on, disabled: busyS[0], onChange: function() {
+                  toggleSet(openS[0].group, set);
+                } }),
+                h("span", { className: "wbv-dot", style: { background: set.color || "var(--wb-accent)" } }),
+                h("span", null, set.name),
+                h("span", { className: "wbv-muted" }, " \xB7 " + (set.secretCount || 0) + " \u6761")
+              );
+            }) : h("span", { className: "wbv-muted" }, "\u8FD8\u6CA1\u6709\u96C6\u5408")),
             openS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u4E2D\u2026" }) : openS[0].error ? h(C.Notice, { h, kind: "error", text: openS[0].error }) : openS[0].items.length === 0 ? h(C.Empty, { h, text: "\u8FD8\u6CA1\u6709\u6A21\u5757\u5173\u8054\u5230\u8FD9\u4E2A\u5206\u7EC4\u3002" }) : h(
               "table",
               { className: "wbv-table" },
@@ -2609,7 +3160,7 @@ var require_data = __commonJS({
     module2.exports = require_data_view()({
       domain: "vault",
       prefix: "wbv",
-      tables: ["vault_secret", "vault_group", "vault_binding"],
+      tables: ["vault_secret", "vault_group", "vault_set", "vault_group_set", "vault_set_secret", "vault_binding"],
       useConfig: function(api, fallback) {
         return { values: fallback, ready: true };
       },
@@ -3206,14 +3757,16 @@ var require_actions = __commonJS({
   }
   var React = host.react;
   var h = host.h;
-  var CSS = require_styles();
+  var CSS_ARR = require_styles();
+  var CSS = Array.isArray(CSS_ARR) ? CSS_ARR.join("\n") : String(CSS_ARR || "");
   var ICONS = {
     shield: (init_shield(), __toCommonJS(shield_exports)).default,
     key: (init_key_round(), __toCommonJS(key_round_exports)).default,
     folder: (init_folder(), __toCommonJS(folder_exports)).default,
     sliders: (init_sliders_horizontal(), __toCommonJS(sliders_horizontal_exports)).default,
     database: (init_database(), __toCommonJS(database_exports)).default,
-    list: (init_list(), __toCommonJS(list_exports)).default
+    list: (init_list(), __toCommonJS(list_exports)).default,
+    layers: (init_layers(), __toCommonJS(layers_exports)).default
   };
   function Icon2(props) {
     var C = ICONS[props.name] || ICONS.shield;
@@ -3251,6 +3804,7 @@ var require_actions = __commonJS({
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },
       { id: "secrets", icon: tabIcon("key"), title: { zh: "\u51ED\u636E", en: "Secrets" }, component: withProps(require_secrets(), "\u51ED\u636E") },
+      { id: "sets", icon: tabIcon("layers"), title: { zh: "\u96C6\u5408", en: "Sets" }, component: withProps(require_sets(), "\u96C6\u5408") },
       { id: "groups", icon: tabIcon("folder"), title: { zh: "\u5206\u7EC4\u4E0E\u5173\u8054", en: "Groups" }, component: withProps(require_groups(), "\u5206\u7EC4\u4E0E\u5173\u8054") },
       { id: "config", icon: tabIcon("sliders"), title: { zh: "\u8BBE\u7F6E", en: "Settings" }, component: withProps(require_config(), "\u8BBE\u7F6E") },
       { id: "data", icon: tabIcon("database"), title: { zh: "\u6570\u636E", en: "Data" }, component: withProps(require_data(), "\u6570\u636E") },
