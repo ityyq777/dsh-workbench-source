@@ -18,10 +18,39 @@
     sliders: require("lucide-react/icons/sliders-horizontal").default,
     database: require("lucide-react/icons/database").default,
     list: require("lucide-react/icons/list").default,
+    timer: require("lucide-react/icons/timer").default,
+    "alarm-clock": require("lucide-react/icons/alarm-clock").default,
+    radio: require("lucide-react/icons/radio").default,
+    hand: require("lucide-react/icons/hand").default,
+    play: require("lucide-react/icons/play").default,
+    pencil: require("lucide-react/icons/pencil").default,
+    power: require("lucide-react/icons/power").default,
+    "power-off": require("lucide-react/icons/power-off").default,
+    "trash-2": require("lucide-react/icons/trash-2").default,
+    x: require("lucide-react/icons/x").default,
+    "check-circle": require("lucide-react/icons/check-circle").default,
+    "alert-triangle": require("lucide-react/icons/alert-triangle").default,
+    "skip-forward": require("lucide-react/icons/skip-forward").default,
+    layers: require("lucide-react/icons/layers").default,
+    "shield-check": require("lucide-react/icons/shield-check").default,
   };
-  function Icon(props) { var C = ICONS[props.name] || ICONS.zap; return h(C, { size: props.size || 14, strokeWidth: 2, "aria-hidden": "true", className: "wbg-svg" }); }
+  function Icon(props) { var C = ICONS[props.name] || ICONS.zap; return h(C, { size: props.size || 14, strokeWidth: 2, "aria-hidden": "true", className: "wba-svg" }); }
+  function icon(name, size) { return h(Icon, { name: name, size: size || 14 }); }
   function tabIcon(name) { return function () { return h(Icon, { name: name, size: 14 }); }; }
-  function withProps(Inner, title) { return function Wrapped(props) { return h(Inner, { api: props.api, lang: props.lang === "en" ? "en" : "zh", h: h, React: React, title: title }); }; }
+  function withProps(Inner, title) {
+    return function Wrapped(props) {
+      return h(Inner, {
+        api: props.api,
+        lang: props.lang === "en" ? "en" : "zh",
+        h: h,
+        React: React,
+        title: title,
+        icon: icon,
+        viewParams: props.viewParams,
+        onNavigate: props.onNavigate,
+      });
+    };
+  }
   function ensureStyles() {
     if (typeof document === "undefined" || !document.head) return;
     if (document.getElementById("wb-automation-style")) return;
@@ -33,7 +62,7 @@
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-automation",
-    version: "0.1.0",
+    version: "0.2.0",
     icon: require("lucide-react/icons/zap").default,
     views: [
       { id: "stats", icon: tabIcon("activity"), title: { zh: "概览", en: "Overview" }, component: withProps(require("./views/stats.cjs"), "概览") },

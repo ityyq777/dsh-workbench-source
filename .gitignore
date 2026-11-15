@@ -16,3 +16,4 @@ dist/
 .pnpm-store
 .tmp-install-test
 .tmp-actions-preview
+.tmp-automation-preview

@@ -75,7 +75,7 @@
     "test:message": "node scripts/test-message.mjs",
     "test:vault": "node --test packages/addons/vault/test/vault.test.mjs",
     "test:connector": "node --test packages/addons/connector/test/connector.test.mjs",
-    "test:automation": "node --test packages/addons/automation/test/automation.test.mjs",
+    "test:automation": "node --test packages/addons/automation/test/automation.test.mjs packages/addons/automation/test/ui.test.mjs",
     "test:contacts": "node --test packages/addons/contacts/test/contacts.test.mjs",
     "test:calendar": "node --test packages/addons/calendar/test/calendar.test.mjs",
     "test:mail": "node --test packages/addons/mail/test/mail.test.mjs",

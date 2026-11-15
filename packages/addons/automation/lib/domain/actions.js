@@ -162,7 +162,7 @@ export function registerActions(api, engine) {
   action("automation.actionSchema", {
     description: "自证 action 清单与输入 schema（供 Action 页读取）",
     input: { type: "object", properties: {} },
-    execute: () => ({ shellVersion: api.shellVersion || "", domains: [{ id: "wb-addon-automation", version: (api.addon && api.addon.version) || "0.1.0" }], actions: defs }),
+    execute: () => ({ shellVersion: api.shellVersion || "", domains: [{ id: "wb-addon-automation", version: (api.addon && api.addon.version) || "0.2.0" }], actions: defs }),
   });
 
   action("automation.dataTables", {
