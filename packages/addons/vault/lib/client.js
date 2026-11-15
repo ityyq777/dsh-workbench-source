@@ -100,7 +100,12 @@ var require_styles = __commonJS({
       ".wbv-empty-title{font-size:14px;font-weight:600}",
       ".wbv-check-list{display:flex;flex-wrap:wrap;gap:6px 14px;margin:4px 0}",
       ".wbv-check{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}",
-      ".wbv-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}"
+      ".wbv-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}",
+      ".wbv-secret-field{position:relative;display:flex;align-items:center;min-width:0}",
+      ".wbv-secret-field input{flex:1 1 auto;min-width:0;padding-right:34px}",
+      ".wbv-eye{position:absolute;right:4px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:6px;padding:4px;color:var(--wb-muted);cursor:pointer}",
+      ".wbv-eye:hover{color:var(--wb-accent);background:color-mix(in srgb, var(--wb-accent) 12%, transparent)}",
+      ".wbv-eye:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}"
     ];
   }
 });
@@ -751,11 +756,60 @@ var require_common = __commonJS({
   }
 });
 
+// packages/addons/vault/client/ui/ask-passphrase.cjs
+var require_ask_passphrase = __commonJS({
+  "packages/addons/vault/client/ui/ask-passphrase.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function AskPassphraseModal(props) {
+      var h = props.h, C = props.C;
+      return h(
+        "div",
+        { className: "wbv-modal", onClick: function() {
+          if (!props.busy) props.onCancel();
+        } },
+        h(
+          "div",
+          { className: "wbv-modal-box", onClick: function(e) {
+            e.stopPropagation();
+          } },
+          h("h3", null, props.title || "\u8F93\u5165\u4E3B\u53E3\u4EE4"),
+          props.hint ? h("p", { className: "wbv-sub" }, props.hint) : null,
+          h(
+            C.Field,
+            { h, label: props.label || "\u4E3B\u53E3\u4EE4" },
+            h("input", {
+              type: "password",
+              autoFocus: true,
+              autoComplete: "current-password",
+              value: props.value,
+              disabled: props.busy,
+              onChange: function(e) {
+                props.onChange(e.target.value);
+              },
+              onKeyDown: function(e) {
+                if (e.key === "Enter" && props.value && !props.busy) props.onConfirm();
+              }
+            })
+          ),
+          props.error ? h(C.Notice, { h, kind: "error", text: props.error }) : null,
+          h(
+            "div",
+            { className: "wbv-row", style: { justifyContent: "flex-end" } },
+            h(C.Btn, { h, disabled: props.busy, onClick: props.onCancel }, "\u53D6\u6D88"),
+            h(C.Btn, { h, kind: "primary", disabled: props.busy || !props.value, onClick: props.onConfirm }, props.busy ? "\u5904\u7406\u4E2D\u2026" : "\u786E\u8BA4")
+          )
+        )
+      );
+    };
+  }
+});
+
 // packages/addons/vault/client/views/status.cjs
 var require_status = __commonJS({
   "packages/addons/vault/client/views/status.cjs"(exports2, module2) {
     "use strict";
     var C = require_common();
+    var AskPassphrase = require_ask_passphrase();
     module2.exports = function StatusView(props) {
       var h = props.h;
       var api = props.api;
@@ -769,6 +823,7 @@ var require_status = __commonJS({
       var pass2 = React.useState("");
       var mode = React.useState("A");
       var msg = React.useState("");
+      var askS = React.useState(null);
       var refreshTick = React.useState(0);
       var refresh = function() {
         refreshTick[1](refreshTick[0] + 1);
@@ -799,6 +854,38 @@ var require_status = __commonJS({
       }
       if (st[0].loading) return h("div", { className: "wbv" }, h(C.Empty, { h, text: "\u6B63\u5728\u8BFB\u53D6\u4FDD\u9669\u7BB1\u72B6\u6001\u2026" }));
       if (error) {
+        let confirmAsk2 = function() {
+          var a = askS[0];
+          if (!a || !a.value) return;
+          askS[1](Object.assign({}, a, { busy: true, error: "" }));
+          busy[1](true);
+          msg[1]("");
+          C.call(api, "vault.unlock", { passphrase: a.value }).then(function() {
+            return C.call(api, "vault.setUnlockMode", { mode: "A" });
+          }).then(function() {
+            askS[1](null);
+            busy[1](false);
+            refresh();
+          }).catch(function(e) {
+            askS[1](Object.assign({}, a, { busy: false, error: C.errText(e) }));
+          });
+        };
+        var modal = askS[0] ? h(AskPassphrase, {
+          h,
+          C,
+          title: "\u5207\u56DE A \u6A21\u5F0F",
+          hint: "\u5207\u6362\u540E\u4E0B\u6B21\u542F\u52A8\u9700\u8981\u91CD\u65B0\u89E3\u9501\uFF0C\u8BF7\u9A8C\u8BC1\u4E3B\u53E3\u4EE4\u3002",
+          value: askS[0].value,
+          busy: askS[0].busy,
+          error: askS[0].error,
+          onChange: function(v) {
+            askS[1](Object.assign({}, askS[0], { value: v }));
+          },
+          onCancel: function() {
+            if (!askS[0].busy) askS[1](null);
+          },
+          onConfirm: confirmAsk2
+        }) : null;
         return h(
           "div",
           { className: "wbv" },
@@ -808,6 +895,38 @@ var require_status = __commonJS({
         );
       }
       if (!status || !status.initialized) {
+        let confirmAsk2 = function() {
+          var a = askS[0];
+          if (!a || !a.value) return;
+          askS[1](Object.assign({}, a, { busy: true, error: "" }));
+          busy[1](true);
+          msg[1]("");
+          C.call(api, "vault.unlock", { passphrase: a.value }).then(function() {
+            return C.call(api, "vault.setUnlockMode", { mode: "A" });
+          }).then(function() {
+            askS[1](null);
+            busy[1](false);
+            refresh();
+          }).catch(function(e) {
+            askS[1](Object.assign({}, a, { busy: false, error: C.errText(e) }));
+          });
+        };
+        var modal = askS[0] ? h(AskPassphrase, {
+          h,
+          C,
+          title: "\u5207\u56DE A \u6A21\u5F0F",
+          hint: "\u5207\u6362\u540E\u4E0B\u6B21\u542F\u52A8\u9700\u8981\u91CD\u65B0\u89E3\u9501\uFF0C\u8BF7\u9A8C\u8BC1\u4E3B\u53E3\u4EE4\u3002",
+          value: askS[0].value,
+          busy: askS[0].busy,
+          error: askS[0].error,
+          onChange: function(v) {
+            askS[1](Object.assign({}, askS[0], { value: v }));
+          },
+          onCancel: function() {
+            if (!askS[0].busy) askS[1](null);
+          },
+          onConfirm: confirmAsk2
+        }) : null;
         return h(
           "div",
           { className: "wbv" },
@@ -860,6 +979,38 @@ var require_status = __commonJS({
         );
       }
       if (status.locked) {
+        let confirmAsk2 = function() {
+          var a = askS[0];
+          if (!a || !a.value) return;
+          askS[1](Object.assign({}, a, { busy: true, error: "" }));
+          busy[1](true);
+          msg[1]("");
+          C.call(api, "vault.unlock", { passphrase: a.value }).then(function() {
+            return C.call(api, "vault.setUnlockMode", { mode: "A" });
+          }).then(function() {
+            askS[1](null);
+            busy[1](false);
+            refresh();
+          }).catch(function(e) {
+            askS[1](Object.assign({}, a, { busy: false, error: C.errText(e) }));
+          });
+        };
+        var modal = askS[0] ? h(AskPassphrase, {
+          h,
+          C,
+          title: "\u5207\u56DE A \u6A21\u5F0F",
+          hint: "\u5207\u6362\u540E\u4E0B\u6B21\u542F\u52A8\u9700\u8981\u91CD\u65B0\u89E3\u9501\uFF0C\u8BF7\u9A8C\u8BC1\u4E3B\u53E3\u4EE4\u3002",
+          value: askS[0].value,
+          busy: askS[0].busy,
+          error: askS[0].error,
+          onChange: function(v) {
+            askS[1](Object.assign({}, askS[0], { value: v }));
+          },
+          onCancel: function() {
+            if (!askS[0].busy) askS[1](null);
+          },
+          onConfirm: confirmAsk2
+        }) : null;
         return h(
           "div",
           { className: "wbv" },
@@ -887,6 +1038,38 @@ var require_status = __commonJS({
         );
       }
       var modeText = modeName(status.unlockMode);
+      function confirmAsk() {
+        var a = askS[0];
+        if (!a || !a.value) return;
+        askS[1](Object.assign({}, a, { busy: true, error: "" }));
+        busy[1](true);
+        msg[1]("");
+        C.call(api, "vault.unlock", { passphrase: a.value }).then(function() {
+          return C.call(api, "vault.setUnlockMode", { mode: "A" });
+        }).then(function() {
+          askS[1](null);
+          busy[1](false);
+          refresh();
+        }).catch(function(e) {
+          askS[1](Object.assign({}, a, { busy: false, error: C.errText(e) }));
+        });
+      }
+      var modal = askS[0] ? h(AskPassphrase, {
+        h,
+        C,
+        title: "\u5207\u56DE A \u6A21\u5F0F",
+        hint: "\u5207\u6362\u540E\u4E0B\u6B21\u542F\u52A8\u9700\u8981\u91CD\u65B0\u89E3\u9501\uFF0C\u8BF7\u9A8C\u8BC1\u4E3B\u53E3\u4EE4\u3002",
+        value: askS[0].value,
+        busy: askS[0].busy,
+        error: askS[0].error,
+        onChange: function(v) {
+          askS[1](Object.assign({}, askS[0], { value: v }));
+        },
+        onCancel: function() {
+          if (!askS[0].busy) askS[1](null);
+        },
+        onConfirm: confirmAsk
+      }) : null;
       return h(
         "div",
         { className: "wbv" },
@@ -909,22 +1092,11 @@ var require_status = __commonJS({
             });
           } }, "\u7ACB\u5373\u9501\u5B9A"),
           h(C.Btn, { h, onClick: function() {
-            var p = window.prompt("\u5207\u6362\u4E3A A \u6A21\u5F0F\u540E\uFF0C\u4E0B\u6B21\u542F\u52A8\u9700\u8981\u91CD\u65B0\u89E3\u9501\u3002\u8F93\u5165\u4E3B\u53E3\u4EE4\u786E\u8BA4\uFF1A");
-            if (p === null) return;
-            busy[1](true);
-            msg[1]("");
-            C.call(api, "vault.unlock", { passphrase: p }).then(function() {
-              return C.call(api, "vault.setUnlockMode", { mode: "A" });
-            }).then(function() {
-              busy[1](false);
-              refresh();
-            }).catch(function(e) {
-              busy[1](false);
-              msg[1](C.errText(e));
-            });
+            askS[1]({ value: "", busy: false, error: "" });
           } }, "\u5207\u56DE A \u6A21\u5F0F")
         ),
-        h(C.Notice, { h, kind: "error", text: msg[0] })
+        h(C.Notice, { h, kind: "error", text: msg[0] }),
+        modal
       );
     };
     function modeName(mode) {
@@ -932,6 +1104,114 @@ var require_status = __commonJS({
       if (mode === "C") return "\u542F\u52A8\u81EA\u52A8\u89E3\u9501\uFF0C\u67E5\u770B\u514D\u53E3\u4EE4";
       return "\u5168\u9501\uFF1A\u6BCF\u6B21\u542F\u52A8\u9700\u89E3\u9501";
     }
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs
+var eye_exports = {};
+__export(eye_exports, {
+  __iconData: () => __iconData9,
+  default: () => Eye
+});
+var __iconData9, Eye;
+var init_eye = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs"() {
+    init_createLucideIcon();
+    __iconData9 = {
+      name: "eye",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
+            key: "1nclc0"
+          }
+        ],
+        ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
+      ]
+    };
+    __iconData9.node;
+    Eye = createLucideIcon(__iconData9);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs
+var eye_off_exports = {};
+__export(eye_off_exports, {
+  __iconData: () => __iconData10,
+  default: () => EyeOff
+});
+var __iconData10, EyeOff;
+var init_eye_off = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs"() {
+    init_createLucideIcon();
+    __iconData10 = {
+      name: "eye-off",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49",
+            key: "ct8e1f"
+          }
+        ],
+        ["path", { d: "M14.084 14.158a3 3 0 0 1-4.242-4.242", key: "151rxh" }],
+        [
+          "path",
+          {
+            d: "M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143",
+            key: "13bj9a"
+          }
+        ],
+        ["path", { d: "m2 2 20 20", key: "1ooewy" }]
+      ]
+    };
+    __iconData10.node;
+    EyeOff = createLucideIcon(__iconData10);
+  }
+});
+
+// packages/addons/vault/client/ui/secret-field.cjs
+var require_secret_field = __commonJS({
+  "packages/addons/vault/client/ui/secret-field.cjs"(exports2, module2) {
+    "use strict";
+    var Eye2 = (init_eye(), __toCommonJS(eye_exports)).default;
+    var EyeOff2 = (init_eye_off(), __toCommonJS(eye_off_exports)).default;
+    function SecretField(props) {
+      var h = props.h;
+      var show = Boolean(props.show);
+      var label = show ? "\u9690\u85CF\u660E\u6587" : "\u663E\u793A\u660E\u6587";
+      var Ico = show ? EyeOff2 : Eye2;
+      return h(
+        "div",
+        { className: "wbv-secret-field" },
+        h("input", {
+          type: show ? "text" : "password",
+          autoComplete: "new-password",
+          spellCheck: false,
+          value: props.value,
+          placeholder: props.placeholder,
+          onChange: function(e) {
+            props.onChange(e.target.value);
+          }
+        }),
+        h("button", {
+          type: "button",
+          className: "wbv-eye",
+          title: label,
+          "aria-label": label,
+          "aria-pressed": show ? "true" : "false",
+          onClick: function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            props.onToggle();
+          }
+        }, h(Ico, { size: 15, strokeWidth: 2, "aria-hidden": "true" }))
+      );
+    }
+    module2.exports = SecretField;
   }
 });
 
@@ -961,6 +1241,8 @@ var require_secrets = __commonJS({
   "packages/addons/vault/client/views/secrets.cjs"(exports2, module2) {
     "use strict";
     var C = require_common();
+    var AskPassphrase = require_ask_passphrase();
+    var SecretField = require_secret_field();
     var K = require_kinds();
     var KIND_LABEL = K.KIND_LABEL;
     module2.exports = function SecretsView(props) {
@@ -975,9 +1257,11 @@ var require_secrets = __commonJS({
       var setsS = React.useState([]);
       var formS = React.useState(emptyForm());
       var editingS = React.useState(false);
+      var showSecretS = React.useState(false);
       var busyS = React.useState(false);
       var msgS = React.useState("");
       var revealS = React.useState(null);
+      var askS = React.useState(null);
       var rows = listS[0].rows;
       function load() {
         listS[1](function(old) {
@@ -1004,10 +1288,12 @@ var require_secrets = __commonJS({
       }, []);
       function startCreate() {
         formS[1](emptyForm());
+        showSecretS[1](false);
         editingS[1](true);
         msgS[1]("");
       }
       function startEdit(row) {
+        showSecretS[1](false);
         var meta = {};
         try {
           meta = JSON.parse(row.meta || "{}");
@@ -1055,6 +1341,7 @@ var require_secrets = __commonJS({
           return syncSets(createdId, f.setIds || [], f.id ? rowSetIds(f.id) : []).then(function() {
             busyS[1](false);
             editingS[1](false);
+            showSecretS[1](false);
             formS[1](emptyForm());
             load();
           });
@@ -1096,19 +1383,29 @@ var require_secrets = __commonJS({
       function reveal(row) {
         msgS[1]("");
         var mode = statusS[0] && statusS[0].unlockMode;
-        var passphrase;
         if (mode === "B") {
-          passphrase = window.prompt("B \u6A21\u5F0F\u4E0B\u67E5\u770B\u51ED\u636E\u9700\u8981\u518D\u6B21\u8F93\u5165\u4E3B\u53E3\u4EE4\uFF1A");
-          if (passphrase === null) return;
+          askS[1]({ row, value: "", busy: false, error: "" });
+          return;
         }
+        doReveal(row, void 0);
+      }
+      function doReveal(row, passphrase) {
         busyS[1](true);
         C.call(api, "vault.secretReveal", { id: row.id, passphrase }).then(function(r) {
           busyS[1](false);
+          askS[1](null);
           revealS[1]({ name: row.name, secret: r.secret });
         }).catch(function(e) {
           busyS[1](false);
-          msgS[1](C.errText(e));
+          if (askS[0]) askS[1](Object.assign({}, askS[0], { busy: false, error: C.errText(e) }));
+          else msgS[1](C.errText(e));
         });
+      }
+      function confirmPassphrase() {
+        var a = askS[0];
+        if (!a || !a.value) return;
+        askS[1](Object.assign({}, a, { busy: true, error: "" }));
+        doReveal(a.row, a.value);
       }
       var setIndex = {};
       setsS[0].forEach(function(s) {
@@ -1201,6 +1498,7 @@ var require_secrets = __commonJS({
           "div",
           { className: "wbv-modal", onClick: function() {
             editingS[1](false);
+            showSecretS[1](false);
           } },
           h(
             "div",
@@ -1227,9 +1525,18 @@ var require_secrets = __commonJS({
             h(
               C.Field,
               { h, label: formS[0].id ? "\u65B0\u660E\u6587\uFF08\u7559\u7A7A\u4E0D\u8F6E\u6362\uFF09" : "\u660E\u6587" },
-              h("input", { type: "password", autoComplete: "new-password", value: formS[0].secret, placeholder: formS[0].id ? "\u4E0D\u4FEE\u6539\u8BF7\u7559\u7A7A" : "\u5BC6\u7801 / \u624B\u673A\u53F7 / \u8BC1\u4EF6\u53F7 / token", onChange: function(e) {
-                formS[1](Object.assign({}, formS[0], { secret: e.target.value }));
-              } })
+              h(SecretField, {
+                h,
+                show: showSecretS[0],
+                value: formS[0].secret,
+                placeholder: formS[0].id ? "\u4E0D\u4FEE\u6539\u8BF7\u7559\u7A7A" : "\u5BC6\u7801 / \u624B\u673A\u53F7 / \u8BC1\u4EF6\u53F7 / token",
+                onChange: function(v) {
+                  formS[1](Object.assign({}, formS[0], { secret: v }));
+                },
+                onToggle: function() {
+                  showSecretS[1](!showSecretS[0]);
+                }
+              })
             ),
             h(
               C.Field,
@@ -1261,11 +1568,17 @@ var require_secrets = __commonJS({
               h("span", { className: "wbv-grow" }),
               h(C.Btn, { h, onClick: function() {
                 editingS[1](false);
+                showSecretS[1](false);
               } }, "\u53D6\u6D88"),
               h(C.Btn, { h, kind: "primary", disabled: busyS[0], onClick: save }, busyS[0] ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58")
             )
           )
         ) : null,
+        askS[0] ? h(AskPassphrase, { h, C, title: "\u67E5\u770B\u51ED\u636E\u660E\u6587", hint: "\u5F53\u524D\u662F B \u6A21\u5F0F\uFF0C\u67E5\u770B\u660E\u6587\u9700\u8981\u518D\u6B21\u8F93\u5165\u4E3B\u53E3\u4EE4\u3002", label: "\u4E3B\u53E3\u4EE4\uFF08" + askS[0].row.name + "\uFF09", value: askS[0].value, busy: askS[0].busy, error: askS[0].error, onChange: function(v) {
+          askS[1](Object.assign({}, askS[0], { value: v }));
+        }, onCancel: function() {
+          if (!askS[0].busy) askS[1](null);
+        }, onConfirm: confirmPassphrase }) : null,
         revealS[0] ? h(
           "div",
           { className: "wbv-modal", onClick: function() {
@@ -1661,6 +1974,7 @@ var require_groups = __commonJS({
       var formS = React.useState({ name: "", description: "" });
       var openS = React.useState(null);
       var setsS = React.useState([]);
+      var delS = React.useState(null);
       function load() {
         listS[1](function(old) {
           return Object.assign({}, old, { loading: true });
@@ -1695,19 +2009,17 @@ var require_groups = __commonJS({
         });
       }
       function remove(row) {
-        var others = listS[0].rows.filter(function(g) {
-          return g.id !== row.id;
-        });
-        var hint = others.length ? "\u8F93\u5165\u63A5\u6536\u51ED\u636E\u7684\u5206\u7EC4 id\uFF08\u7559\u7A7A\u8868\u793A\u79FB\u51FA\u5206\u7EC4\uFF09\uFF1A\n" + others.map(function(g) {
-          return g.id + "  " + g.name;
-        }).join("\n") : "\u7EC4\u5185\u51ED\u636E\u5C06\u79FB\u51FA\u5206\u7EC4\u3002";
-        var moveTo = window.prompt("\u5220\u9664\u5206\u7EC4\u300C" + row.name + "\u300D\uFF1F\n" + hint, "");
-        if (moveTo === null) return;
+        delS[1]({ row, moveTo: "" });
+      }
+      function confirmRemove() {
+        var d = delS[0];
+        if (!d) return;
         busyS[1](true);
         msgS[1]("");
-        C.call(api, "vault.groupDelete", { id: row.id, moveTo: moveTo.trim() || void 0 }).then(function() {
+        C.call(api, "vault.groupDelete", { id: d.row.id, moveTo: d.moveTo || void 0 }).then(function() {
           busyS[1](false);
-          if (openS[0] && openS[0].group.id === row.id) openS[1](null);
+          delS[1](null);
+          if (openS[0] && openS[0].group.id === d.row.id) openS[1](null);
           load();
         }).catch(function(e) {
           busyS[1](false);
@@ -1818,6 +2130,44 @@ var require_groups = __commonJS({
             );
           }))
         ),
+        delS[0] ? h(
+          "div",
+          { className: "wbv-modal", onClick: function() {
+            if (!busyS[0]) delS[1](null);
+          } },
+          h(
+            "div",
+            { className: "wbv-modal-box", onClick: function(e) {
+              e.stopPropagation();
+            } },
+            h("h3", null, "\u5220\u9664\u5206\u7EC4\u300C" + delS[0].row.name + "\u300D\uFF1F"),
+            h("p", { className: "wbv-sub" }, "\u53EA\u5220\u9664\u5206\u7EC4\u4E0E\u96C6\u5408\u3001\u5173\u8054\u5BF9\u8C61\u7684\u7ED1\u5B9A\uFF0C\u51ED\u636E\u4E0E\u96C6\u5408\u672C\u8EAB\u90FD\u4FDD\u7559\u3002"),
+            h(
+              C.Field,
+              { h, label: "\u7EC4\u5185\u96C6\u5408\u6539\u6302\u5230", hint: "\u7559\u7A7A\u8868\u793A\u4ECE\u6240\u6709\u5206\u7EC4\u79FB\u51FA\uFF08\u96C6\u5408\u4E0E\u51ED\u636E\u4E0D\u5220\uFF09" },
+              h(
+                "select",
+                { value: delS[0].moveTo, disabled: busyS[0], onChange: function(e) {
+                  delS[1]({ row: delS[0].row, moveTo: e.target.value });
+                } },
+                h("option", { value: "" }, "\u4E0D\u8F6C\u79FB\uFF08\u79FB\u51FA\u5206\u7EC4\uFF09"),
+                listS[0].rows.filter(function(g) {
+                  return g.id !== delS[0].row.id;
+                }).map(function(g) {
+                  return h("option", { key: g.id, value: g.id }, g.name);
+                })
+              )
+            ),
+            h(
+              "div",
+              { className: "wbv-row", style: { justifyContent: "flex-end" } },
+              h(C.Btn, { h, disabled: busyS[0], onClick: function() {
+                delS[1](null);
+              } }, "\u53D6\u6D88"),
+              h(C.Btn, { h, kind: "danger", disabled: busyS[0], onClick: confirmRemove }, busyS[0] ? "\u5220\u9664\u4E2D\u2026" : "\u786E\u8BA4\u5220\u9664")
+            )
+          )
+        ) : null,
         openS[0] ? h(
           "div",
           { className: "wbv-modal", onClick: function() {
@@ -1879,6 +2229,7 @@ var require_config = __commonJS({
   "packages/addons/vault/client/views/config.cjs"(exports2, module2) {
     "use strict";
     var C = require_common();
+    var AskPassphrase = require_ask_passphrase();
     var MODES = [
       { id: "A", title: "A \u5168\u9501\uFF08\u63A8\u8350\uFF09", desc: "\u6BCF\u6B21 DSH \u542F\u52A8\u540E\u9700\u8981\u8F93\u5165\u4E3B\u53E3\u4EE4\uFF1B\u660E\u6587\u53EA\u5728\u5F53\u524D\u8FDB\u7A0B\u5185\u5B58\u3002" },
       { id: "B", title: "B \u81EA\u52A8\u89E3\u9501\uFF0C\u67E5\u770B\u9700\u53E3\u4EE4", desc: "\u542F\u52A8\u65F6\u7528\u672C\u673A device key \u81EA\u52A8\u89E3\u9501\uFF1B\u6BCF\u6B21\u67E5\u770B/\u7F16\u8F91\u51ED\u636E\u518D\u8F93\u4E3B\u53E3\u4EE4\u3002" },
@@ -1895,6 +2246,7 @@ var require_config = __commonJS({
       var msg = React.useState("");
       var busy = React.useState(false);
       var tick = React.useState(0);
+      var askS = React.useState(null);
       React.useEffect(function() {
         C.call(api, "vault.status").then(function(s) {
           st[1](s);
@@ -1916,14 +2268,26 @@ var require_config = __commonJS({
       }
       function applyMode() {
         var target = mode[0];
-        var passphrase;
         if (target === "B" || target === "C") {
           if (!st[0] || st[0].locked) {
-            passphrase = window.prompt("\u5207\u6362\u5230 " + target + " \u6A21\u5F0F\u9700\u8981\u4E3B\u53E3\u4EE4\uFF1A");
-            if (passphrase === null) return;
+            askS[1]({ kind: "mode", value: "", busy: false, error: "" });
+            return;
           }
         }
-        run(C.call(api, "vault.setUnlockMode", { mode: target, passphrase }));
+        run(C.call(api, "vault.setUnlockMode", { mode: target }));
+      }
+      function confirmAsk() {
+        var a = askS[0];
+        if (!a || !a.value) return;
+        askS[1](Object.assign({}, a, { busy: true, error: "" }));
+        var p = a.kind === "mode" ? C.call(api, "vault.setUnlockMode", { mode: mode[0], passphrase: a.value }) : C.call(api, "vault.rotateDeviceKey", { passphrase: a.value });
+        p.then(function() {
+          askS[1](null);
+          busy[1](false);
+          tick[1](tick[0] + 1);
+        }).catch(function(e) {
+          askS[1](Object.assign({}, a, { busy: false, error: C.errText(e) }));
+        });
       }
       function changePass() {
         if (newPass[0].length < 10) return msg[1]("\u65B0\u53E3\u4EE4\u81F3\u5C11 10 \u4E2A\u5B57\u7B26");
@@ -1932,11 +2296,25 @@ var require_config = __commonJS({
         newPass[1]("");
       }
       function rotate() {
-        var p = window.prompt("\u8F6E\u6362 device key \u9700\u8981\u4E3B\u53E3\u4EE4\uFF1B\u65E7 key \u6587\u4EF6\u4F1A\u88AB\u8986\u76D6\uFF1A");
-        if (p === null) return;
-        run(C.call(api, "vault.rotateDeviceKey", { passphrase: p }));
+        askS[1]({ kind: "rotate", value: "", busy: false, error: "" });
       }
       var status = st[0];
+      var modal = askS[0] ? h(AskPassphrase, {
+        h,
+        C,
+        title: askS[0].kind === "mode" ? "\u5207\u6362\u5230 " + mode[0] + " \u6A21\u5F0F" : "\u8F6E\u6362 device key",
+        hint: askS[0].kind === "mode" ? "\u5207\u6362\u89E3\u9501\u6A21\u5F0F\u9700\u8981\u9A8C\u8BC1\u4E3B\u53E3\u4EE4\u3002" : "\u65E7 device key \u6587\u4EF6\u4F1A\u88AB\u8986\u76D6\uFF0C\u4E4B\u540E\u7528\u65B0 key \u81EA\u52A8\u89E3\u9501\u3002",
+        value: askS[0].value,
+        busy: askS[0].busy,
+        error: askS[0].error,
+        onChange: function(v) {
+          askS[1](Object.assign({}, askS[0], { value: v }));
+        },
+        onCancel: function() {
+          if (!askS[0].busy) askS[1](null);
+        },
+        onConfirm: confirmAsk
+      }) : null;
       return h(
         "div",
         { className: "wbv" },
@@ -1987,7 +2365,8 @@ var require_config = __commonJS({
           h("h3", null, "Device key"),
           h("p", { className: "wbv-muted" }, "B/C \u6A21\u5F0F\u7528\u6765\u5728\u542F\u52A8\u65F6\u81EA\u52A8\u89E3\u9501\u3002key \u6587\u4EF6\u4F4D\u4E8E $WB_HOME/vault-device.key\uFF0C\u6743\u9650 0600\uFF1B\u5220\u9664\u5B83\u7B49\u540C\u56DE\u5230\u9501\u5B9A\u72B6\u6001\u3002"),
           h(C.Btn, { h, disabled: busy[0] || !status || status.unlockMode === "A", onClick: rotate }, "\u8F6E\u6362 device key")
-        )
+        ),
+        modal
       );
     };
   }
@@ -3799,7 +4178,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.3.0",
+    version: "0.3.1",
     icon: (init_shield_check(), __toCommonJS(shield_check_exports)).default,
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },

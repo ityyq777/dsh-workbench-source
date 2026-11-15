@@ -81,6 +81,16 @@ document.getElementById("tabs").addEventListener("click", function (e) {
   if (b) window.__GO__(b.getAttribute("data-view"));
 });
 window.__SET_THEME__ = function (theme) { document.documentElement.setAttribute("data-theme", theme); };
+window.__OPEN__ = function (text) {
+  var b = Array.prototype.slice.call(document.querySelectorAll("button")).filter(function (x) { return (x.textContent || "").trim() === (text || "新增凭据"); })[0];
+  if (b) b.click();
+  return Boolean(b);
+};
+window.__EYE__ = function () {
+  var b = document.querySelector(".wbv-eye");
+  if (b) b.click();
+  return Boolean(b);
+};
 `,
 );
 await build({

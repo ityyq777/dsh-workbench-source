@@ -1,6 +1,8 @@
 "use strict";
 /** 凭据库：全局列表 + 搜索/类型筛选 + 所属集合；明文只在 reveal 弹层里出现。 */
 var C = require("../ui/common.cjs");
+var AskPassphrase = require("../ui/ask-passphrase.cjs");
+var SecretField = require("../ui/secret-field.cjs");
 
 var K = require("../ui/kinds.cjs");
 var KIND_LABEL = K.KIND_LABEL;
@@ -18,9 +20,11 @@ module.exports = function SecretsView(props) {
   var setsS = React.useState([]);
   var formS = React.useState(emptyForm());
   var editingS = React.useState(false);
+  var showSecretS = React.useState(false);
   var busyS = React.useState(false);
   var msgS = React.useState("");
   var revealS = React.useState(null);
+  var askS = React.useState(null); // { row, value, busy, error }
 
   var rows = listS[0].rows;
 
@@ -43,11 +47,13 @@ module.exports = function SecretsView(props) {
 
   function startCreate() {
     formS[1](emptyForm());
+    showSecretS[1](false);
     editingS[1](true);
     msgS[1]("");
   }
 
   function startEdit(row) {
+    showSecretS[1](false);
     var meta = {};
     try { meta = JSON.parse(row.meta || "{}"); } catch (e) { meta = {}; }
     formS[1]({
@@ -90,7 +96,7 @@ module.exports = function SecretsView(props) {
     p.then(function (r) {
       var createdId = (r && r.id) || f.id;
       return syncSets(createdId, f.setIds || [], f.id ? rowSetIds(f.id) : []).then(function () {
-        busyS[1](false); editingS[1](false); formS[1](emptyForm()); load();
+        busyS[1](false); editingS[1](false); showSecretS[1](false); formS[1](emptyForm()); load();
       });
     }).catch(function (e) { busyS[1](false); msgS[1](C.errText(e)); });
   }
@@ -122,15 +128,26 @@ module.exports = function SecretsView(props) {
   function reveal(row) {
     msgS[1]("");
     var mode = statusS[0] && statusS[0].unlockMode;
-    var passphrase;
-    if (mode === "B") {
-      passphrase = window.prompt("B 模式下查看凭据需要再次输入主口令：");
-      if (passphrase === null) return;
-    }
+    if (mode === "B") { askS[1]({ row: row, value: "", busy: false, error: "" }); return; }
+    doReveal(row, undefined);
+  }
+
+  function doReveal(row, passphrase) {
     busyS[1](true);
     C.call(api, "vault.secretReveal", { id: row.id, passphrase: passphrase }).then(function (r) {
-      busyS[1](false); revealS[1]({ name: row.name, secret: r.secret });
-    }).catch(function (e) { busyS[1](false); msgS[1](C.errText(e)); });
+      busyS[1](false); askS[1](null); revealS[1]({ name: row.name, secret: r.secret });
+    }).catch(function (e) {
+      busyS[1](false);
+      if (askS[0]) askS[1](Object.assign({}, askS[0], { busy: false, error: C.errText(e) }));
+      else msgS[1](C.errText(e));
+    });
+  }
+
+  function confirmPassphrase() {
+    var a = askS[0];
+    if (!a || !a.value) return;
+    askS[1](Object.assign({}, a, { busy: true, error: "" }));
+    doReveal(a.row, a.value);
   }
 
   var setIndex = {};
@@ -179,7 +196,7 @@ module.exports = function SecretsView(props) {
               h(C.Btn, { h: h, kind: "ghost", onClick: function () { startEdit(row); } }, "编辑"),
               h(C.Btn, { h: h, kind: "ghost", onClick: function () { del(row); } }, "删除"))));
         }))),
-    editingS[0] ? h("div", { className: "wbv-modal", onClick: function () { editingS[1](false); } },
+    editingS[0] ? h("div", { className: "wbv-modal", onClick: function () { editingS[1](false); showSecretS[1](false); } },
       h("div", { className: "wbv-modal-box", onClick: function (e) { e.stopPropagation(); } },
         h("h3", null, formS[0].id ? "编辑凭据" : "新增凭据"),
         h(C.Field, { h: h, label: "名称" }, h("input", { value: formS[0].name, onChange: function (e) { formS[1](Object.assign({}, formS[0], { name: e.target.value })); } })),
@@ -187,7 +204,14 @@ module.exports = function SecretsView(props) {
           h("select", { value: formS[0].kind, onChange: function (e) { formS[1](Object.assign({}, formS[0], { kind: e.target.value })); } },
             K.CREATABLE_KINDS.map(function (k) { return h("option", { key: k, value: k }, KIND_LABEL[k]); }))),
         h(C.Field, { h: h, label: formS[0].id ? "新明文（留空不轮换）" : "明文" },
-          h("input", { type: "password", autoComplete: "new-password", value: formS[0].secret, placeholder: formS[0].id ? "不修改请留空" : "密码 / 手机号 / 证件号 / token", onChange: function (e) { formS[1](Object.assign({}, formS[0], { secret: e.target.value })); } })),
+          h(SecretField, {
+            h: h,
+            show: showSecretS[0],
+            value: formS[0].secret,
+            placeholder: formS[0].id ? "不修改请留空" : "密码 / 手机号 / 证件号 / token",
+            onChange: function (v) { formS[1](Object.assign({}, formS[0], { secret: v })); },
+            onToggle: function () { showSecretS[1](!showSecretS[0]); },
+          })),
         h(C.Field, { h: h, label: "所属集合（可多选）", hint: setsS[0].length ? "勾选后保存时同步挂载/摘除" : "还没有集合，可先在「集合」页新建" },
           setsS[0].length ? h("div", { className: "wbv-check-list" }, setsS[0].map(function (s) {
             var on = (formS[0].setIds || []).indexOf(s.id) >= 0;
@@ -202,8 +226,10 @@ module.exports = function SecretsView(props) {
         h(C.Notice, { h: h, kind: "error", text: msgS[0] }),
         h("div", { className: "wbv-row" },
           h("span", { className: "wbv-grow" }),
-          h(C.Btn, { h: h, onClick: function () { editingS[1](false); } }, "取消"),
+          h(C.Btn, { h: h, onClick: function () { editingS[1](false); showSecretS[1](false); } }, "取消"),
           h(C.Btn, { h: h, kind: "primary", disabled: busyS[0], onClick: save }, busyS[0] ? "保存中…" : "保存")))) : null,
+    askS[0] ? h(AskPassphrase, { h: h, C: C, title: "查看凭据明文", hint: "当前是 B 模式，查看明文需要再次输入主口令。", label: "主口令（" + askS[0].row.name + "）", value: askS[0].value, busy: askS[0].busy, error: askS[0].error, onChange: function (v) { askS[1](Object.assign({}, askS[0], { value: v })); }, onCancel: function () { if (!askS[0].busy) askS[1](null); }, onConfirm: confirmPassphrase }) : null,
+
     revealS[0] ? h("div", { className: "wbv-modal", onClick: function () { revealS[1](null); } },
       h("div", { className: "wbv-modal-box", onClick: function (e) { e.stopPropagation(); } },
         h("h3", null, "凭据明文 · " + revealS[0].name),

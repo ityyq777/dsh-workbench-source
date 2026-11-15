@@ -73,7 +73,7 @@
     "test:shell-immersive": "node scripts/test-shell-immersive.mjs",
     "verify:standalone": "node scripts/verify-standalone-install.mjs",
     "test:message": "node scripts/test-message.mjs",
-    "test:vault": "node --test packages/addons/vault/test/vault.test.mjs",
+    "test:vault": "node --test packages/addons/vault/test/vault.test.mjs packages/addons/vault/test/ui.test.mjs",
     "test:connector": "node --test packages/addons/connector/test/connector.test.mjs packages/addons/connector/test/ui.test.mjs",
     "test:automation": "node --test packages/addons/automation/test/automation.test.mjs packages/addons/automation/test/ui.test.mjs",
     "test:contacts": "node --test packages/addons/contacts/test/contacts.test.mjs",

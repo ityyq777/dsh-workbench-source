@@ -14,6 +14,7 @@ module.exports = function GroupsView(props) {
   var formS = React.useState({ name: "", description: "" });
   var openS = React.useState(null); // { group, items, loading, error }
   var setsS = React.useState([]);
+  var delS = React.useState(null); // { row, moveTo }
 
   function load() {
     listS[1](function (old) { return Object.assign({}, old, { loading: true }); });
@@ -39,16 +40,16 @@ module.exports = function GroupsView(props) {
     }).catch(function (e) { busyS[1](false); msgS[1](C.errText(e)); });
   }
 
-  function remove(row) {
-    var others = listS[0].rows.filter(function (g) { return g.id !== row.id; });
-    var hint = others.length
-      ? "输入接收凭据的分组 id（留空表示移出分组）：\n" + others.map(function (g) { return g.id + "  " + g.name; }).join("\n")
-      : "组内凭据将移出分组。";
-    var moveTo = window.prompt("删除分组「" + row.name + "」？\n" + hint, "");
-    if (moveTo === null) return;
+  // 桌面端 webview 不支持 window.prompt，删除分组用应用内确认弹层（可选接收分组）。
+  function remove(row) { delS[1]({ row: row, moveTo: "" }); }
+  function confirmRemove() {
+    var d = delS[0];
+    if (!d) return;
     busyS[1](true); msgS[1]("");
-    C.call(api, "vault.groupDelete", { id: row.id, moveTo: moveTo.trim() || undefined }).then(function () {
-      busyS[1](false); if (openS[0] && openS[0].group.id === row.id) openS[1](null); load();
+    C.call(api, "vault.groupDelete", { id: d.row.id, moveTo: d.moveTo || undefined }).then(function () {
+      busyS[1](false); delS[1](null);
+      if (openS[0] && openS[0].group.id === d.row.id) openS[1](null);
+      load();
     }).catch(function (e) { busyS[1](false); msgS[1](C.errText(e)); });
   }
 
@@ -120,6 +121,20 @@ module.exports = function GroupsView(props) {
               h(C.Btn, { h: h, kind: "ghost", onClick: function () { open(row); } }, "查看关联"),
               h(C.Btn, { h: h, kind: "ghost", onClick: function () { remove(row); } }, "删除"))));
         }))),
+
+    delS[0] ? h("div", { className: "wbv-modal", onClick: function () { if (!busyS[0]) delS[1](null); } },
+      h("div", { className: "wbv-modal-box", onClick: function (e) { e.stopPropagation(); } },
+        h("h3", null, "删除分组「" + delS[0].row.name + "」？"),
+        h("p", { className: "wbv-sub" }, "只删除分组与集合、关联对象的绑定，凭据与集合本身都保留。"),
+        h(C.Field, { h: h, label: "组内集合改挂到", hint: "留空表示从所有分组移出（集合与凭据不删）" },
+          h("select", { value: delS[0].moveTo, disabled: busyS[0], onChange: function (e) { delS[1]({ row: delS[0].row, moveTo: e.target.value }); } },
+            h("option", { value: "" }, "不转移（移出分组）"),
+            listS[0].rows.filter(function (g) { return g.id !== delS[0].row.id; }).map(function (g) {
+              return h("option", { key: g.id, value: g.id }, g.name);
+            }))),
+        h("div", { className: "wbv-row", style: { justifyContent: "flex-end" } },
+          h(C.Btn, { h: h, disabled: busyS[0], onClick: function () { delS[1](null); } }, "取消"),
+          h(C.Btn, { h: h, kind: "danger", disabled: busyS[0], onClick: confirmRemove }, busyS[0] ? "删除中…" : "确认删除")))) : null,
 
     openS[0] ? h("div", { className: "wbv-modal", onClick: function () { openS[1](null); } },
       h("div", { className: "wbv-modal-box", onClick: function (e) { e.stopPropagation(); } },

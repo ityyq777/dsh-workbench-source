@@ -1,6 +1,7 @@
 "use strict";
 /** 保险箱设置：解锁模式、改主口令、device key 轮换。 */
 var C = require("../ui/common.cjs");
+var AskPassphrase = require("../ui/ask-passphrase.cjs");
 
 var MODES = [
   { id: "A", title: "A 全锁（推荐）", desc: "每次 DSH 启动后需要输入主口令；明文只在当前进程内存。" },
@@ -19,6 +20,7 @@ module.exports = function ConfigView(props) {
   var msg = React.useState("");
   var busy = React.useState(false);
   var tick = React.useState(0);
+  var askS = React.useState(null); // { kind: "mode" | "rotate", value, busy, error }
 
   React.useEffect(function () {
     C.call(api, "vault.status").then(function (s) {
@@ -35,14 +37,21 @@ module.exports = function ConfigView(props) {
 
   function applyMode() {
     var target = mode[0];
-    var passphrase;
     if (target === "B" || target === "C") {
-      if (!st[0] || st[0].locked) {
-        passphrase = window.prompt("切换到 " + target + " 模式需要主口令：");
-        if (passphrase === null) return;
-      }
+      if (!st[0] || st[0].locked) { askS[1]({ kind: "mode", value: "", busy: false, error: "" }); return; }
     }
-    run(C.call(api, "vault.setUnlockMode", { mode: target, passphrase: passphrase }));
+    run(C.call(api, "vault.setUnlockMode", { mode: target }));
+  }
+
+  function confirmAsk() {
+    var a = askS[0];
+    if (!a || !a.value) return;
+    askS[1](Object.assign({}, a, { busy: true, error: "" }));
+    var p = a.kind === "mode"
+      ? C.call(api, "vault.setUnlockMode", { mode: mode[0], passphrase: a.value })
+      : C.call(api, "vault.rotateDeviceKey", { passphrase: a.value });
+    p.then(function () { askS[1](null); busy[1](false); tick[1](tick[0] + 1); })
+      .catch(function (e) { askS[1](Object.assign({}, a, { busy: false, error: C.errText(e) })); });
   }
 
   function changePass() {
@@ -52,12 +61,20 @@ module.exports = function ConfigView(props) {
   }
 
   function rotate() {
-    var p = window.prompt("轮换 device key 需要主口令；旧 key 文件会被覆盖：");
-    if (p === null) return;
-    run(C.call(api, "vault.rotateDeviceKey", { passphrase: p }));
+    askS[1]({ kind: "rotate", value: "", busy: false, error: "" });
   }
 
   var status = st[0];
+  var modal = askS[0] ? h(AskPassphrase, {
+    h: h, C: C,
+    title: askS[0].kind === "mode" ? "切换到 " + mode[0] + " 模式" : "轮换 device key",
+    hint: askS[0].kind === "mode" ? "切换解锁模式需要验证主口令。" : "旧 device key 文件会被覆盖，之后用新 key 自动解锁。",
+    value: askS[0].value, busy: askS[0].busy, error: askS[0].error,
+    onChange: function (v) { askS[1](Object.assign({}, askS[0], { value: v })); },
+    onCancel: function () { if (!askS[0].busy) askS[1](null); },
+    onConfirm: confirmAsk,
+  }) : null;
+
   return h("div", { className: "wbv" },
     h("h2", null, "保险箱设置"),
     h(C.Notice, { h: h, kind: "error", text: msg[0] }),
@@ -82,5 +99,6 @@ module.exports = function ConfigView(props) {
     h("div", { className: "wbv-card" },
       h("h3", null, "Device key"),
       h("p", { className: "wbv-muted" }, "B/C 模式用来在启动时自动解锁。key 文件位于 $WB_HOME/vault-device.key，权限 0600；删除它等同回到锁定状态。"),
-      h(C.Btn, { h: h, disabled: busy[0] || !status || status.unlockMode === "A", onClick: rotate }, "轮换 device key")));
+      h(C.Btn, { h: h, disabled: busy[0] || !status || status.unlockMode === "A", onClick: rotate }, "轮换 device key"))  , modal);
 };
+
