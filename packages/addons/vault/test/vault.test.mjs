@@ -156,7 +156,7 @@ test("分组、关联与按组可见凭据", () => {
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_secret").get().n, 2, "凭据本身不随分组删除");
 });
 
-test("plugin 写入受绑定约束，按 (组, 名称) 幂等", () => {
+test("plugin 写入受绑定约束：按 setName 建集合、按 name 幂等写凭据", () => {
   const { db, run } = makeVault();
   run("vault.setup", { passphrase: PASS, mode: "A" });
   const groupId = run("vault.groupCreate", { name: "站点账号 · 少数派" }).id;
@@ -164,70 +164,96 @@ test("plugin 写入受绑定约束，按 (组, 名称) 幂等", () => {
   run("vault.subjectRegister", { type: "site", title: "站点" }, "plugin");
   run("vault.bind", { subjectType: "site", subjectId: "site_1", groupId }, "plugin");
 
-  const name = "site.site_1.acc_1.password";
+  const base = { subjectType: "site", subjectId: "site_1", setName: "acc_1" };
+  const name = "acc_1 · 密码";
   const meta = { siteId: "site_1", accountId: "acc_1", field: "password" };
-  const created = run(
-    "vault.pluginSecretUpsert",
-    { subjectType: "site", subjectId: "site_1", name, kind: "password", secret: "pw-a", meta },
-    "plugin",
-  );
+  const created = run("vault.pluginSecretUpsert", { ...base, name, kind: "password", secret: "pw-a", meta }, "plugin");
   assert.equal(created.created, true);
   const row = db.prepare("SELECT * FROM vault_secret WHERE id = ?").get(created.id);
   assert.ok(row.ciphertext.startsWith("v1:"));
   assert.ok(!row.ciphertext.includes("pw-a"));
+  assert.ok(created.setId, "返回值应带集合 id");
+
+  const set = run("vault.pluginSetGet", base, "plugin").set;
+  assert.equal(set.name, "acc_1");
+  assert.equal(run("vault.setGet", { id: set.id }, "plugin").secrets.length, 1);
 
   const visible = run("vault.subjectSecrets", { subjectType: "site", subjectId: "site_1" }, "plugin");
   assert.equal(visible.items.length, 1);
   assert.deepEqual(visible.items[0].meta, meta);
-  assert.ok(visible.items[0].setId, "subject 侧应能拿到集合 id");
+  assert.equal(visible.items[0].setId, created.setId, "subject 侧应能拿到集合 id");
 
-  const updated = run(
-    "vault.pluginSecretUpsert",
-    { subjectType: "site", subjectId: "site_1", name, kind: "password", secret: "pw-b", meta },
-    "plugin",
-  );
+  const updated = run("vault.pluginSecretUpsert", { ...base, name, kind: "password", secret: "pw-b", meta }, "plugin");
   assert.equal(updated.created, false);
   assert.equal(updated.id, created.id);
   assert.equal(run("vault.secretReveal", { id: created.id }).secret, "pw-b");
   assert.equal(db.prepare("SELECT rev FROM vault_secret WHERE id = ?").get(created.id).rev, 2);
+  assert.equal(run("vault.pluginSetGet", base, "plugin").set.id, created.setId, "setName 复用同一集合");
 
   assert.throws(
-    () =>
-      run(
-        "vault.pluginSecretUpsert",
-        { subjectType: "site", subjectId: "site_404", name, secret: "pw" },
-        "plugin",
-      ),
+    () => run("vault.pluginSecretUpsert", { subjectType: "site", subjectId: "site_404", setName: "a", name, secret: "pw" }, "plugin"),
     /未绑定任何凭据组/,
   );
   assert.throws(
-    () =>
-      run(
-        "vault.pluginSecretUpsert",
-        { subjectType: "site", subjectId: "site_1", groupId: otherId, name, secret: "pw" },
-        "plugin",
-      ),
+    () => run("vault.pluginSecretUpsert", { ...base, groupId: otherId, name, secret: "pw" }, "plugin"),
     /未绑定到此对象/,
   );
   assert.throws(
-    () =>
-      run(
-        "vault.pluginSecretUpsert",
-        { subjectType: "site", subjectId: "site_1", name, secret: "pw" },
-        "agent",
-      ),
+    () => run("vault.pluginSecretUpsert", { ...base, name, secret: "pw" }, "agent"),
     /不允许 agent/,
   );
 
-  assert.equal(
-    run("vault.pluginSecretDelete", { subjectType: "site", subjectId: "site_1", name }, "plugin").removed,
-    true,
+  // plugin 不能把凭据塞进别人组下的集合
+  const foreignSet = run("vault.setCreate", { name: "外部集合" }).id;
+  run("vault.groupAttachSet", { groupId: otherId, setId: foreignSet });
+  assert.throws(
+    () => run("vault.setAttachSecret", { ...base, setId: foreignSet, secretId: created.id }, "plugin"),
+    /不属于此对象已绑定的凭据组/,
   );
-  assert.equal(
-    run("vault.pluginSecretDelete", { subjectType: "site", subjectId: "site_1", name }, "plugin").removed,
-    false,
-  );
+
+  assert.equal(run("vault.pluginSecretDelete", { ...base, name }, "plugin").removed, true);
+  assert.equal(run("vault.pluginSecretDelete", { ...base, name }, "plugin").removed, false);
   assert.equal(run("vault.subjectSecrets", { subjectType: "site", subjectId: "site_1" }, "plugin").items.length, 0);
+});
+
+test("集合 action：增删改、挂载/摘除与权限", () => {
+  const { db, run } = makeVault();
+  run("vault.setup", { passphrase: PASS, mode: "A" });
+  const g1 = run("vault.groupCreate", { name: "组一" }).id;
+  const g2 = run("vault.groupCreate", { name: "组二" }).id;
+  const set = run("vault.setCreate", { name: "共享集合", description: "给两个组用" });
+  assert.ok(set.id);
+  assert.throws(() => run("vault.setCreate", { name: "共享集合" }), /同名集合/);
+
+  const setB = run("vault.setCreate", { name: "另一集合" }).id;
+  run("vault.groupAttachSet", { groupId: g1, setId: set.id });
+  run("vault.groupAttachSet", { groupId: g2, setId: set.id });
+  assert.equal(run("vault.groupAttachSet", { groupId: g1, setId: set.id }).existing, true, "重复挂载幂等");
+  assert.equal(run("vault.setList", { groupId: g1 }).items.length, 1);
+  assert.deepEqual(run("vault.setGet", { id: set.id }).groupIds.sort(), [g1, g2].sort());
+
+  const phoneA = run("vault.secretCreate", { name: "手机号 A", kind: "phone", secret: "13800000001", setId: set.id });
+  const phoneB = run("vault.secretCreate", { name: "手机号 B", kind: "phone", secret: "13800000002", setId: set.id });
+  assert.equal(run("vault.setGet", { id: set.id }).secrets.length, 2, "同一集合可放两条 phone");
+  run("vault.setAttachSecret", { setId: setB, secretId: phoneA.id });
+  assert.equal(run("vault.setAttachSecret", { setId: setB, secretId: phoneA.id }).existing, true, "重复挂载幂等");
+  assert.equal(run("vault.secretList", { setId: setB }).items.length, 1);
+  assert.equal(run("vault.secretList", { groupId: g2 }).items.length, 2);
+
+  assert.equal(run("vault.setDetachSecret", { setId: setB, secretId: phoneA.id }).removed, true);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_secret WHERE deleted_at IS NULL").get().n, 2, "摘除不删凭据");
+
+  run("vault.setDelete", { id: set.id });
+  assert.equal(run("vault.setList", {}).items.length, 1);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_secret WHERE deleted_at IS NULL").get().n, 2, "删集合不删凭据");
+  assert.equal(run("vault.secretList", { setId: set.id }).items.length, 0);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_group_set WHERE deleted_at IS NULL").get().n, 0);
+
+  // 权限：集合读取 agent 可、写入 agent 不可
+  assert.ok(run("vault.setList", {}, "agent").items.length >= 1);
+  assert.throws(() => run("vault.setCreate", { name: "agent 建的" }, "agent"), /不允许 agent/);
+  assert.throws(() => run("vault.groupAttachSet", { groupId: g1, setId: setB }, "plugin"), /不允许 plugin/);
+  assert.ok(Array.isArray(run("vault.setList", {}, "plugin").items), "集合读取对 plugin 开放");
 });
 
 test("并发改口令：LWW + 提示", () => {

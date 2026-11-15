@@ -78,6 +78,14 @@ export function createDomain(host) {
       summary: "保存连接器/站点需要的密码、手机号、证件号与 token；分组挂集合、集合装凭据，明文只向 UI 或 plugin 租约暴露。",
       records: [
         {
+          kind: "set",
+          table: "vault_set",
+          title: "凭据集合",
+          description: "可复用的凭据容器：一个集合能挂到多个分组，也能装多条凭据，删除只断关联。",
+          when: ["同一个业务账号要复用多条凭据", "一份凭据要给多个分组使用"],
+          primaryAction: "vault.setList",
+        },
+        {
           kind: "secret",
           table: "vault_secret",
           title: "凭据",

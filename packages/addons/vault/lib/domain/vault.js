@@ -497,17 +497,19 @@ export function createVault({ db, log = () => {} }) {
    * 供受绑定约束的 plugin 写接口使用：按 (groupId, name) 幂等写入一条凭据。
    * 绑定/授权校验在 action 层完成，这里只负责加密落库。
    */
-  function upsertSecretInGroup(args = {}) {
+  /** 往指定集合幂等写一条凭据（全局按 name 去重）；调用方负责先校验归属权限。 */
+  function writeSecretToSet(args = {}) {
     const dek = requireUnlocked();
     const name = assertSecretName(args.name);
     const kind = assertKind(args.kind || "other");
     const secret = String(args.secret ?? "");
     if (!secret) throw new Error("secret 不能为空");
     const meta = assertMeta(args.meta);
-    const groupId = String(args.groupId || "");
-    if (!groupId) throw new Error("groupId 必填");
-    if (!groupExists(groupId)) throw new Error("分组不存在：" + groupId);
-    const setRow = sets.ensureDefaultSet(groupId);
+    const setId = String(args.setId || "");
+    if (!setId) throw new Error("setId 必填");
+
+    const setRow = db.prepare("SELECT * FROM vault_set WHERE id = ? AND deleted_at IS NULL").get(setId);
+    if (!setRow) throw new Error("集合不存在：" + setId);
     const row = db.prepare("SELECT * FROM vault_secret WHERE name = ? AND deleted_at IS NULL").get(name);
     const ts = now();
     if (row) {
@@ -515,8 +517,8 @@ export function createVault({ db, log = () => {} }) {
       db.prepare(
         "UPDATE vault_secret SET kind = ?, meta = ?, ciphertext = ?, updated_at = ?, rev = rev + 1 WHERE id = ?",
       ).run(kind, meta, ciphertext, ts, row.id);
-      sets.linkSecret(setRow.id, row.id);
-      return { id: row.id, setId: setRow.id, created: false, updated: true };
+      sets.linkSecret(setId, row.id);
+      return { id: row.id, setId, created: false, updated: true };
     }
     const id = newId("sec");
     const ciphertext = seal(dek, secret, secretAad(id, name, kind));
@@ -524,25 +526,25 @@ export function createVault({ db, log = () => {} }) {
       "INSERT INTO vault_secret(id, name, kind, meta, ciphertext, created_at, updated_at, rev) " +
         "VALUES(?, ?, ?, ?, ?, ?, ?, 1)",
     ).run(id, name, kind, meta, ciphertext, ts, ts);
-    sets.linkSecret(setRow.id, id);
-    return { id, setId: setRow.id, created: true, updated: false };
+    sets.linkSecret(setId, id);
+    return { id, setId, created: true, updated: false };
   }
 
-  function deleteSecretInGroup(args = {}) {
+  /** 把集合里的某条凭据摘出来；不再属于任何集合时才软删，避免误删别处还在用的凭据。 */
+  function detachSecretFromSet(args = {}) {
     requireUnlocked();
+    const setId = String(args.setId || "");
+    if (!setId) throw new Error("setId 必填");
     const name = assertSecretName(args.name);
-    const groupId = String(args.groupId || "");
-    if (!groupId) throw new Error("groupId 必填");
     const row = db.prepare("SELECT * FROM vault_secret WHERE name = ? AND deleted_at IS NULL").get(name);
     if (!row) return { ok: true, removed: false };
-    const setsOfGroup = sets.setsOfGroup(groupId).map((item) => item.id);
-    for (const setId of setsOfGroup) sets.unlinkSecret(setId, row.id);
-    const left = sets.setIdsOfSecret(row.id).length;
-    if (!left) {
+    sets.unlinkSecret(setId, row.id);
+    if (!sets.setIdsOfSecret(row.id).length) {
       const ts = now();
       db.prepare("UPDATE vault_secret SET deleted_at = ?, updated_at = ?, rev = rev + 1 WHERE id = ?").run(ts, ts, row.id);
+      return { ok: true, removed: true, deleted: true };
     }
-    return { ok: true, removed: true };
+    return { ok: true, removed: true, deleted: false };
   }
 
   function exportData() {
@@ -569,8 +571,8 @@ export function createVault({ db, log = () => {} }) {
     createSecret,
     updateSecret,
     deleteSecret,
-    upsertSecretInGroup,
-    deleteSecretInGroup,
+    writeSecretToSet,
+    detachSecretFromSet,
     reveal,
     lease,
     changePassphrase,
