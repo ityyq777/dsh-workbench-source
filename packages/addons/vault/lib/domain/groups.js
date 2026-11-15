@@ -3,6 +3,7 @@
  * 不碰密文；subject_id 由调用方负责，vault 不校验业务对象是否存在。
  */
 import { bindingRow, groupRow, newId, now, tx } from "../db/db.js";
+import { createSets } from "./sets.js";
 
 function parseJson(value, fallback) {
   try {
@@ -31,6 +32,7 @@ function assertSubjectId(id) {
 }
 
 export function createGroups({ db }) {
+  const sets = createSets({ db });
   function groupOrThrow(id) {
     const row = db.prepare("SELECT * FROM vault_group WHERE id = ? AND deleted_at IS NULL").get(String(id || ""));
     if (!row) throw new Error("分组不存在：" + id);
@@ -50,12 +52,20 @@ export function createGroups({ db }) {
       .all(...params);
     const items = rows.map((row) => {
       const secretCount = Number(
-        db.prepare("SELECT COUNT(*) AS n FROM vault_secret WHERE group_id = ? AND deleted_at IS NULL").get(row.id)?.n || 0,
+        db
+          .prepare(
+            "SELECT COUNT(DISTINCT k.id) AS n FROM vault_secret k " +
+              "JOIN vault_set_secret ss ON ss.secret_id = k.id AND ss.deleted_at IS NULL " +
+              "JOIN vault_group_set gs ON gs.set_id = ss.set_id AND gs.deleted_at IS NULL " +
+              "WHERE gs.group_id = ? AND k.deleted_at IS NULL",
+          )
+          .get(row.id)?.n || 0,
       );
+      const setCount = sets.setsOfGroup(row.id).length;
       const bindingCount = Number(
         db.prepare("SELECT COUNT(*) AS n FROM vault_binding WHERE group_id = ? AND deleted_at IS NULL").get(row.id)?.n || 0,
       );
-      return { ...groupRow(row), secretCount, bindingCount };
+      return { ...groupRow(row), secretCount, setCount, bindingCount };
     });
     return { items };
   }
@@ -105,11 +115,7 @@ export function createGroups({ db }) {
       moveTo = target.id;
     }
     tx(db, () => {
-      db.prepare("UPDATE vault_secret SET group_id = ?, updated_at = ?, rev = rev + 1 WHERE group_id = ?").run(
-        moveTo,
-        ts,
-        row.id,
-      );
+      sets.relinkGroup(row.id, moveTo);
       db.prepare(
         "UPDATE vault_binding SET deleted_at = ?, updated_at = ?, rev = rev + 1 WHERE group_id = ? AND deleted_at IS NULL",
       ).run(ts, ts, row.id);
@@ -206,8 +212,14 @@ export function createGroups({ db }) {
         groupName: row.group_name || "",
         groupColor: row.group_color || null,
         secretCount: Number(
-          db.prepare("SELECT COUNT(*) AS n FROM vault_secret WHERE group_id = ? AND deleted_at IS NULL").get(row.group_id)
-            ?.n || 0,
+          db
+            .prepare(
+              "SELECT COUNT(DISTINCT k.id) AS n FROM vault_secret k " +
+                "JOIN vault_set_secret ss ON ss.secret_id = k.id AND ss.deleted_at IS NULL " +
+                "JOIN vault_group_set gs ON gs.set_id = ss.set_id AND gs.deleted_at IS NULL " +
+                "WHERE gs.group_id = ? AND k.deleted_at IS NULL",
+            )
+            .get(row.group_id)?.n || 0,
         ),
       })),
     };
@@ -254,10 +266,12 @@ export function createGroups({ db }) {
     const subjectId = assertSubjectId(args.subjectId);
     const rows = db
       .prepare(
-        "SELECT DISTINCT s.* FROM vault_secret s " +
-          "JOIN vault_binding b ON b.group_id = s.group_id " +
+        "SELECT DISTINCT s.*, ss.set_id AS set_id FROM vault_secret s " +
+          "JOIN vault_set_secret ss ON ss.secret_id = s.id AND ss.deleted_at IS NULL " +
+          "JOIN vault_group_set gs ON gs.set_id = ss.set_id AND gs.deleted_at IS NULL " +
+          "JOIN vault_binding b ON b.group_id = gs.group_id " +
           "WHERE b.subject_type = ? AND b.subject_id = ? AND b.deleted_at IS NULL AND s.deleted_at IS NULL " +
-          "ORDER BY s.name COLLATE NOCASE",
+          "AND gs.group_id = b.group_id ORDER BY s.name COLLATE NOCASE",
       )
       .all(subjectType, subjectId);
     return {
@@ -265,7 +279,7 @@ export function createGroups({ db }) {
         id: row.id,
         name: row.name,
         kind: row.kind,
-        groupId: row.group_id || null,
+        setId: row.set_id || null,
         meta: parseJson(row.meta, {}),
       })),
     };

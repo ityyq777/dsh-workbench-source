@@ -870,15 +870,16 @@ var require_kinds = __commonJS({
     "use strict";
     var KIND_LABEL = {
       password: "\u5BC6\u7801",
+      phone: "\u624B\u673A\u53F7",
+      id_card: "\u8EAB\u4EFD\u8BC1\u53F7",
       token: "Token",
       app_password: "\u5E94\u7528\u4E13\u7528\u5BC6\u7801",
       api_key: "API Key",
-      other: "\u5176\u5B83",
-      "site-account": "\u7AD9\u70B9\u8D26\u53F7"
+      other: "\u5176\u5B83"
     };
-    var CREATABLE_KINDS = ["password", "token", "app_password", "api_key", "other"];
+    var CREATABLE_KINDS = ["password", "phone", "id_card", "token", "app_password", "api_key", "other"];
     function kindOptions(current) {
-      return CREATABLE_KINDS.indexOf(current) === -1 ? [current].concat(CREATABLE_KINDS) : CREATABLE_KINDS;
+      return current && CREATABLE_KINDS.indexOf(current) === -1 ? [current].concat(CREATABLE_KINDS) : CREATABLE_KINDS;
     }
     module2.exports = { KIND_LABEL, CREATABLE_KINDS, kindOptions };
   }
@@ -3245,7 +3246,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.2.3",
+    version: "0.3.0",
     icon: (init_shield_check(), __toCommonJS(shield_check_exports)).default,
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },

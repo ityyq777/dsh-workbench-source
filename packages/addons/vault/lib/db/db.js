@@ -7,15 +7,21 @@ export const VAULT_HEADER = "vault_header";
 export const VAULT_DEVICE = "vault_device";
 export const VAULT_GROUP = "vault_group";
 export const VAULT_SECRET = "vault_secret";
+export const VAULT_SET = "vault_set";
+export const VAULT_GROUP_SET = "vault_group_set";
+export const VAULT_SET_SECRET = "vault_set_secret";
 export const VAULT_BINDING = "vault_binding";
 export const VAULT_SUBJECT_TYPE = "vault_subject_type";
 export const VAULT_SECRET_USAGE = "vault_secret_usage";
 export const VAULT_META_LEGACY = "vault_meta_legacy";
 
+/** 0.3.0 起：集合层（set）与两张多对多关联表；schema_version 3。 */
+export const SCHEMA_VERSION = 3;
+
 export const VAULT_DDL = [
   "CREATE TABLE IF NOT EXISTS vault_header (" +
     "id INTEGER PRIMARY KEY CHECK (id = 1)," +
-    "schema_version INTEGER NOT NULL DEFAULT 2," +
+    "schema_version INTEGER NOT NULL DEFAULT 3," +
     "salt TEXT NOT NULL," +
     "kdf TEXT NOT NULL," +
     "wrapped_dek TEXT NOT NULL," +
@@ -52,7 +58,6 @@ export const VAULT_DDL = [
     "id TEXT PRIMARY KEY," +
     "name TEXT NOT NULL," +
     "kind TEXT NOT NULL," +
-    "group_id TEXT," +
     "meta TEXT NOT NULL DEFAULT '{}'," +
     "ciphertext TEXT NOT NULL," +
     "created_at INTEGER NOT NULL," +
@@ -62,7 +67,41 @@ export const VAULT_DDL = [
     ");",
   "CREATE UNIQUE INDEX IF NOT EXISTS uk_vault_secret_name ON vault_secret(name) WHERE deleted_at IS NULL;",
   "CREATE INDEX IF NOT EXISTS idx_vault_secret_kind ON vault_secret(deleted_at, kind);",
-  "CREATE INDEX IF NOT EXISTS idx_vault_secret_group ON vault_secret(group_id);",
+  "CREATE TABLE IF NOT EXISTS vault_set (" +
+    "id TEXT PRIMARY KEY," +
+    "name TEXT NOT NULL," +
+    "description TEXT NOT NULL DEFAULT ''," +
+    "color TEXT," +
+    "created_at INTEGER NOT NULL," +
+    "updated_at INTEGER NOT NULL," +
+    "deleted_at INTEGER," +
+    "rev INTEGER NOT NULL DEFAULT 1" +
+    ");",
+  "CREATE UNIQUE INDEX IF NOT EXISTS uk_vault_set_name ON vault_set(name) WHERE deleted_at IS NULL;",
+  "CREATE TABLE IF NOT EXISTS vault_group_set (" +
+    "id TEXT PRIMARY KEY," +
+    "group_id TEXT NOT NULL," +
+    "set_id TEXT NOT NULL," +
+    "created_at INTEGER NOT NULL," +
+    "updated_at INTEGER NOT NULL," +
+    "deleted_at INTEGER," +
+    "rev INTEGER NOT NULL DEFAULT 1" +
+    ");",
+  "CREATE UNIQUE INDEX IF NOT EXISTS uk_vault_group_set ON vault_group_set(group_id, set_id) WHERE deleted_at IS NULL;",
+  "CREATE INDEX IF NOT EXISTS idx_vault_group_set_group ON vault_group_set(group_id);",
+  "CREATE INDEX IF NOT EXISTS idx_vault_group_set_set ON vault_group_set(set_id);",
+  "CREATE TABLE IF NOT EXISTS vault_set_secret (" +
+    "id TEXT PRIMARY KEY," +
+    "set_id TEXT NOT NULL," +
+    "secret_id TEXT NOT NULL," +
+    "created_at INTEGER NOT NULL," +
+    "updated_at INTEGER NOT NULL," +
+    "deleted_at INTEGER," +
+    "rev INTEGER NOT NULL DEFAULT 1" +
+    ");",
+  "CREATE UNIQUE INDEX IF NOT EXISTS uk_vault_set_secret ON vault_set_secret(set_id, secret_id) WHERE deleted_at IS NULL;",
+  "CREATE INDEX IF NOT EXISTS idx_vault_set_secret_set ON vault_set_secret(set_id);",
+  "CREATE INDEX IF NOT EXISTS idx_vault_set_secret_secret ON vault_set_secret(secret_id);",
   "CREATE TABLE IF NOT EXISTS vault_binding (" +
     "id TEXT PRIMARY KEY," +
     "subject_type TEXT NOT NULL," +
@@ -111,16 +150,19 @@ export function newId(prefix = "sec") {
   return prefix + "_" + now().toString(36) + "_" + tail;
 }
 
+export function hasColumn(db, table, column) {
+  return tableExists(db, table) && columnNames(db, table).includes(String(column));
+}
+
 export function tableExists(db, table) {
   return Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(String(table)));
 }
 
-function columnNames(db, table) {
+export function columnNames(db, table) {
   return db.prepare("PRAGMA table_info(" + String(table) + ")").all().map((row) => row.name);
 }
 
 export function ensureSchema(db) {
-  ensureGroupColumn(db);
   for (const sql of VAULT_DDL) db.exec(sql);
   migrateV1(db);
 }
@@ -130,15 +172,8 @@ export function ensureSchema(db) {
  * last_used_at 搬到 vault_secret_usage。幂等；不改密文本体，解锁前也能跑。
  */
 export function migrateV1(db) {
-  const legacy = tableExists(db, VAULT_META_LEGACY);
-  if (!tableExists(db, "vault_meta")) {
-    if (legacy) ensureGroupColumn(db);
-    return;
-  }
-  if (headerGet(db)) {
-    ensureGroupColumn(db);
-    return;
-  }
+  if (!tableExists(db, "vault_meta")) return;
+  if (headerGet(db)) return;
   const rows = db.prepare("SELECT key, value FROM vault_meta").all();
   if (!rows.length) return;
   const meta = {};
@@ -187,7 +222,7 @@ export function headerGet(db) {
 export function headerSet(db, patch = {}) {
   const cur = headerGet(db) || {};
   const next = {
-    schema_version: 2,
+    schema_version: patch.schema_version ?? cur.schema_version ?? SCHEMA_VERSION,
     salt: patch.salt ?? cur.salt,
     kdf: patch.kdf ?? cur.kdf,
     wrapped_dek: patch.wrapped_dek ?? cur.wrapped_dek,
@@ -294,11 +329,47 @@ export function secretRow(row, usage = {}) {
     id: row.id,
     name: row.name,
     kind: row.kind,
-    groupId: row.group_id || null,
     meta: row.meta || "{}",
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     lastUsedAt: usage[row.id] || null,
+    rev: row.rev,
+  };
+}
+
+export function setRow(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description || "",
+    color: row.color || null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    rev: row.rev,
+  };
+}
+
+export function groupSetRow(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    groupId: row.group_id,
+    setId: row.set_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    rev: row.rev,
+  };
+}
+
+export function setSecretRow(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    setId: row.set_id,
+    secretId: row.secret_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
     rev: row.rev,
   };
 }

@@ -2,7 +2,7 @@
  * 保险箱 action 契约：所有写操作按 origin 门禁，agent 永远拿不到明文。
  * 分组与关联对 plugin 开放，业务模块用自身标识注册，不需要依赖 sites。
  */
-const KINDS = ["password", "token", "app_password", "api_key", "other", "site-account"];
+import { KINDS } from "./secret-input.js";
 
 function only(ctx, allowed, action) {
   const origin = ctx && ctx.origin ? ctx.origin : "agent";
@@ -96,13 +96,14 @@ export function registerVaultActions(api, vault, groups) {
   });
 
   api.action("vault.secretList", {
-    description: "只读：列出凭据名称/类型/分组/备注/最近使用时间，永远不含明文。",
+    description: "只读：列出凭据名称/类型/集合归属/备注/最近使用时间，永远不含明文。",
     input: {
       type: "object",
       properties: {
         q: { type: "string", description: "按名称或备注模糊搜索" },
         kind: { type: "string", enum: KINDS },
-        groupId: { type: "string", description: "只看某个分组" },
+        groupId: { type: "string", description: "只看某个分组（经集合关联）" },
+        setId: { type: "string", description: "只看某个凭据集合" },
       },
       additionalProperties: false,
     },
@@ -121,7 +122,8 @@ export function registerVaultActions(api, vault, groups) {
         kind: { type: "string", enum: KINDS },
         secret: { type: "string", description: "明文密码/token，不会落审计" },
         meta: { type: "object", description: "非敏感备注：用户名、URL、过期提醒" },
-        groupId: { type: "string", description: "所属分组，可空" },
+        groupId: { type: "string", description: "所属分组，可空；写入时自动挂到该组的默认集合" },
+        setId: { type: "string", description: "直接指定凭据集合，优先于 groupId" },
       },
       required: ["name", "kind", "secret"],
       additionalProperties: false,
@@ -134,7 +136,7 @@ export function registerVaultActions(api, vault, groups) {
   });
 
   api.action("vault.secretUpdate", {
-    description: "更新名称/类型/分组/备注或轮换明文；改名称或类型会重加密，改组不会。",
+    description: "更新名称/类型/备注或轮换明文；改名称或类型会重加密，改归属不会。",
     input: {
       type: "object",
       properties: {
@@ -143,7 +145,8 @@ export function registerVaultActions(api, vault, groups) {
         kind: { type: "string", enum: KINDS },
         secret: { type: "string", description: "留空表示不轮换" },
         meta: { type: "object" },
-        groupId: { type: "string", description: "传空字符串表示移出分组" },
+        groupId: { type: "string", description: "再挂到某个分组的默认集合（不改动已有集合）" },
+        setId: { type: "string", description: "指定集合；P2 起可用" },
       },
       required: ["id"],
       additionalProperties: false,
@@ -405,14 +408,6 @@ export function registerVaultActions(api, vault, groups) {
     throw new Error("对象绑定了多个凭据组，需指定 groupId");
   }
 
-  function assertPluginSecretName(name) {
-    const value = String(name || "").trim();
-    if (!/^site\.[^.]+(\.[^.]+){2,}$/.test(value)) {
-      throw new Error("pluginSecret 名称需为 site.<siteId>.<accountId>.<field>");
-    }
-    return value;
-  }
-
   api.action("vault.pluginSecretUpsert", {
     description:
       "后台插件写：只能写自己 subject 已绑定的凭据组，按 (组, 名称) 幂等写入一条凭据；不返回明文。",
@@ -434,7 +429,7 @@ export function registerVaultActions(api, vault, groups) {
       only(ctx, ["plugin"], "vault.pluginSecretUpsert");
       const items = boundGroups(args);
       const groupId = pickGroup(args, items);
-      return vault.upsertSecretInGroup({ ...args, groupId, name: assertPluginSecretName(args.name) });
+      return vault.upsertSecretInGroup({ ...args, groupId });
     },
   });
 
@@ -455,7 +450,7 @@ export function registerVaultActions(api, vault, groups) {
       only(ctx, ["plugin"], "vault.pluginSecretDelete");
       const items = boundGroups(args);
       const groupId = pickGroup(args, items);
-      return vault.deleteSecretInGroup({ ...args, groupId, name: assertPluginSecretName(args.name) });
+      return vault.deleteSecretInGroup({ ...args, groupId });
     },
   });
 
@@ -501,12 +496,24 @@ export function registerVaultActions(api, vault, groups) {
         tables: [
           {
             name: "vault_secret",
-            columns: ["id", "name", "kind", "group_id", "meta", "ciphertext", "created_at", "updated_at", "deleted_at", "rev"],
+            columns: ["id", "name", "kind", "meta", "ciphertext", "created_at", "updated_at", "deleted_at", "rev"],
           },
           { name: "vault_group", columns: ["id", "name", "description", "color", "created_at", "updated_at"] },
           {
             name: "vault_binding",
             columns: ["id", "subject_type", "subject_id", "group_id", "created_at", "updated_at"],
+          },
+          {
+            name: "vault_set",
+            columns: ["id", "name", "description", "color", "created_at", "updated_at", "deleted_at", "rev"],
+          },
+          {
+            name: "vault_group_set",
+            columns: ["id", "group_id", "set_id", "created_at", "updated_at", "deleted_at", "rev"],
+          },
+          {
+            name: "vault_set_secret",
+            columns: ["id", "set_id", "secret_id", "created_at", "updated_at", "deleted_at", "rev"],
           },
         ],
       };
@@ -518,7 +525,10 @@ export function registerVaultActions(api, vault, groups) {
     input: {
       type: "object",
       properties: {
-        table: { type: "string", enum: ["vault_secret", "vault_group", "vault_binding"] },
+        table: {
+          type: "string",
+          enum: ["vault_secret", "vault_group", "vault_binding", "vault_set", "vault_group_set", "vault_set_secret"],
+        },
         limit: { type: "number", description: "默认 50，上限 200" },
         offset: { type: "number", description: "默认 0" },
       },
@@ -533,7 +543,7 @@ export function registerVaultActions(api, vault, groups) {
       if (table === "vault_secret") {
         const rows = api.db
           .prepare(
-            "SELECT id, name, kind, group_id, meta, ciphertext, created_at, updated_at, deleted_at, rev " +
+            "SELECT id, name, kind, meta, ciphertext, created_at, updated_at, deleted_at, rev " +
               "FROM vault_secret ORDER BY updated_at DESC LIMIT ? OFFSET ?",
           )
           .all(limit, offset);
@@ -544,7 +554,13 @@ export function registerVaultActions(api, vault, groups) {
           offset,
         };
       }
-      const safe = { vault_group: "vault_group", vault_binding: "vault_binding" }[table];
+      const safe = {
+        vault_group: "vault_group",
+        vault_binding: "vault_binding",
+        vault_set: "vault_set",
+        vault_group_set: "vault_group_set",
+        vault_set_secret: "vault_set_secret",
+      }[table];
       if (!safe) throw new Error("不支持的数据表：" + table);
       const rows = api.db
         .prepare("SELECT * FROM " + safe + " ORDER BY updated_at DESC LIMIT ? OFFSET ?")
