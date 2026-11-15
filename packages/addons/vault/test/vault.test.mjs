@@ -469,3 +469,51 @@ test("迁移失败整批回滚，schema_version 保持 2", async () => {
   assert.match(String(res.notice || ""), /升级失败，已回滚/);
   assert.equal(headerGet(db).schema_version, 2);
 });
+
+test("两设备同步：复制同步表后集合、关联与凭据一致", () => {
+  const TABLES = [
+    "vault_header",
+    "vault_secret",
+    "vault_group",
+    "vault_set",
+    "vault_group_set",
+    "vault_set_secret",
+    "vault_binding",
+    "vault_subject_type",
+  ];
+  const a = makeVault();
+  a.run("vault.setup", { passphrase: PASS, mode: "A" });
+  const groupId = a.run("vault.groupCreate", { name: "同步组" }).id;
+  const setId = a.run("vault.setCreate", { name: "同步集合", description: "跨设备" }).id;
+  a.run("vault.groupAttachSet", { groupId, setId });
+  a.run("vault.subjectRegister", { type: "site", title: "站点" }, "plugin");
+  a.run("vault.bind", { subjectType: "site", subjectId: "site_9", groupId }, "plugin");
+  const secret = a.run("vault.secretCreate", { name: "同步密码", kind: "password", secret: "pw-sync", setId });
+
+  // 设备 B：先建空库，再把 A 的同步表整表拷过去（等价宿主同步后的状态）
+  const b = makeVault();
+  b.run("vault.setup", { passphrase: PASS, mode: "A" });
+  b.vault.lock();
+  for (const table of TABLES) {
+    b.db.exec("DELETE FROM " + table);
+    const rows = a.db.prepare("SELECT * FROM " + table).all();
+    for (const row of rows) {
+      const cols = Object.keys(row);
+      b.db
+        .prepare(
+          "INSERT INTO " + table + "(" + cols.join(",") + ") VALUES(" + cols.map(() => "?").join(",") + ")",
+        )
+        .run(...cols.map((c) => row[c]));
+    }
+  }
+
+  const unlocked = b.run("vault.unlock", { passphrase: PASS });
+  assert.ok(unlocked);
+  assert.equal(b.run("vault.secretReveal", { id: secret.id }).secret, "pw-sync", "同一密文在 B 可显形");
+  const setB = b.run("vault.setGet", { id: setId });
+  assert.equal(setB.name, "同步集合");
+  assert.equal(setB.secrets.length, 1, "集合内凭据随同步一致");
+  assert.deepEqual(setB.groupIds, [groupId], "集合与分组关联随同步一致");
+  assert.equal(b.run("vault.subjectSecrets", { subjectType: "site", subjectId: "site_9" }, "plugin").items.length, 1);
+  assert.equal(b.run("vault.unlock", { passphrase: PASS }).notice, undefined, "同步后的库不触发迁移");
+});
