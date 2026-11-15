@@ -260,6 +260,7 @@ module.exports = function createAccountsModal(deps) {
                 )
                 : h("button", { className: "wbs-btn sm danger icononly", title: text(lang, "del"), onClick: function () { setPendingDelete(acc.id); } }, h(Icon, { name: "trash", size: 12 })),
             ),
+            acc.vaultInvalid ? h("div", { className: "wbs-error" }, text(lang, "vaultInvalid")) : null,
             h("div", { className: "wbs-accrow-fields" },
               h("div", null, h("i", null, text(lang, "password")), h("span", null, plain ? (plain.password || "—") : (acc.hasPassword ? "••••••" : "—")),
                 acc.hasPassword ? h("button", { className: "wbs-mini", title: text(lang, "reveal"), onClick: function () { if (plain) { setShown(function (prev) { var next = Object.assign({}, prev); delete next[acc.id]; return next; }); } else { reveal(acc); } } }, h(Icon, { name: plain ? "eye-off" : "eye", size: 11 })) : null,

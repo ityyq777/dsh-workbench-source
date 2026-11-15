@@ -327,6 +327,9 @@ export function ensureSchema(db, log) {
   }
   for (const sql of NODE_MAPPING_DDL) db.exec(sql);
   for (const sql of ACCOUNT_DDL) db.exec(sql);
+  if (!columnsOf(db, "site_account").includes("vault_set_id")) {
+    db.exec("ALTER TABLE site_account ADD COLUMN vault_set_id TEXT");
+  }
   // 1.11.0 起敏感字段整体移入凭据保险箱：旧库尽力删列；SQLite 过旧时保留列但不再读写。
   for (const col of ["password", "phone_number", "identity_card"]) {
     if (columnsOf(db, "site_account").indexOf(col) < 0) continue;

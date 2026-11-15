@@ -8,6 +8,7 @@ export const ACCOUNT_DDL = [
     "remark TEXT NOT NULL DEFAULT ''," +
     "created_at INTEGER NOT NULL," +
     "updated_at INTEGER NOT NULL," +
+    "vault_set_id TEXT," +
     "deleted_at INTEGER," +
     "rev INTEGER NOT NULL DEFAULT 1" +
     ");",
@@ -22,6 +23,7 @@ export const EXTERNAL_DDL = [
     "external_account_id TEXT NOT NULL," +
     "created_at INTEGER NOT NULL," +
     "updated_at INTEGER NOT NULL," +
+    "vault_set_id TEXT," +
     "deleted_at INTEGER," +
     "rev INTEGER NOT NULL DEFAULT 1" +
     ");",

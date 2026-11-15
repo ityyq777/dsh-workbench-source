@@ -28,7 +28,15 @@ import {
   replaceExternals,
   insertRelation,
 } from "./accounts-model.js";
-import { vaultInstalled, vaultStatus, requireVault, flagsOfSite, upsertField, deleteField } from "../infra/vault-link.js";
+import {
+  vaultInstalled,
+  vaultStatus,
+  requireVault,
+  flagsOfSite,
+  upsertAccountSecrets,
+  deleteAccountField,
+  deleteAccountSecrets,
+} from "../infra/vault-link.js";
 
 export {
   ACCOUNT_TABLE,
@@ -52,8 +60,20 @@ function assertFieldLength(field, value) {
 
 /** 账号在 vault 里的三个字段是否已保存（缺省视为未保存）。 */
 async function accountEntry(db, row) {
-  const flags = await flagsOfSite(row.site_id);
-  return flags.get(String(row.id)) || { fields: new Set(), ids: {} };
+  const flags = await flagsOfSite(db, row.site_id);
+  return flags.get(String(row.id)) || { fields: new Set(), ids: {}, setId: "", invalid: false };
+}
+
+/** 站点行记住账号的凭据集合，便于列表发现「集合被删」。 */
+function rememberSet(db, accountId, setId, origin) {
+  const ts = now();
+  db.prepare("UPDATE " + ACCOUNT_TABLE + " SET vault_set_id=?, updated_at=?, rev=rev+1 WHERE id=?").run(
+    String(setId),
+    ts,
+    accountId,
+  );
+  const row = db.prepare("SELECT * FROM " + ACCOUNT_TABLE + " WHERE id=?").get(accountId);
+  logChange(db, ACCOUNT_TABLE, accountId, "upsert", row, origin, ts);
 }
 
 export async function createAccount(db, args, origin) {
@@ -89,21 +109,15 @@ export async function createAccount(db, args, origin) {
     if (Array.isArray(args.externalAccountIds)) replaceExternals(db, id, args.externalAccountIds, ts, origin);
   });
 
-  const written = [];
+  if (!fields.length) return { id: id, accountKey: key };
   try {
-    for (const item of fields) {
-      await upsertField(siteId, id, item.field, item.value);
-      written.push(item.field);
-    }
+    const values = {};
+    for (const item of fields) values[item.field] = item.value;
+    const writtenSet = await upsertAccountSecrets(siteId, id, values);
+    if (writtenSet.setId) rememberSet(db, id, writtenSet.setId, origin);
   } catch (error) {
     // 敏感字段未能全部落进保险箱：撤掉刚插入的账号，避免“半条账号”。
-    for (const field of written) {
-      try {
-        await deleteField(siteId, id, field);
-      } catch {
-        /* 回滚尽力而为 */
-      }
-    }
+    await deleteAccountSecrets(siteId, id);
     db.prepare("DELETE FROM " + ACCOUNT_TABLE + " WHERE id=?").run(id);
     throw error;
   }
@@ -126,10 +140,15 @@ export async function updateAccount(db, args, origin) {
   if (fields.length) await requireVault();
 
   // 先写保险箱，再改本地行：保险箱失败时本地行保持原样。
+  let writtenSet = { setId: "" };
   for (const item of fields) {
-    if (item.value.length === 0) await deleteField(existing.site_id, id, item.field);
-    else await upsertField(existing.site_id, id, item.field, item.value);
+    if (item.value.length === 0) await deleteAccountField(existing.site_id, id, item.field);
+    else {
+      const result = await upsertAccountSecrets(existing.site_id, id, { [item.field]: item.value });
+      if (result.setId) writtenSet = result;
+    }
   }
+  if (writtenSet.setId && !existing.vault_set_id) rememberSet(db, id, writtenSet.setId, origin);
 
   const ts = now();
   tx(db, function () {
@@ -164,15 +183,7 @@ export async function deleteAccount(db, args, origin) {
     logChange(db, ACCOUNT_TABLE, id, "delete", null, origin, ts);
   });
   // 凭据清理尽力而为：保险箱未装/锁定不应阻塞删账号。
-  if (vaultInstalled()) {
-    for (const field of ["password", "phone", "identity"]) {
-      try {
-        await deleteField(existing.site_id, id, field);
-      } catch {
-        /* ignore */
-      }
-    }
-  }
+  if (vaultInstalled()) await deleteAccountSecrets(existing.site_id, id);
   return { ok: true, deleted: true, clearedRelations: cleared };
 }
 
@@ -281,7 +292,7 @@ export function registerAccountActions(api) {
       required: ["siteId"],
     },
     execute: async function (args) {
-      const flags = await flagsOfSite(args.siteId);
+      const flags = await flagsOfSite(db, args.siteId);
       const result = listAccounts(db, args.siteId, flags);
       result.vault = await vaultStatus();
       return result;

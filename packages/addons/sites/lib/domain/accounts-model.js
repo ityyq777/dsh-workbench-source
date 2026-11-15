@@ -119,6 +119,8 @@ export function outAccount(db, row, entry) {
     hasPassword: hasPassword,
     hasPhone: hasPhone,
     hasIdentity: hasIdentity,
+    vaultSetId: String((entry && entry.setId) || row.vault_set_id || ""),
+    vaultInvalid: Boolean(entry && entry.invalid),
     phoneNumber: hasPhone ? "已保存" : "",
     identityCard: hasIdentity ? "已保存" : "",
     remark: String(row.remark || ""),

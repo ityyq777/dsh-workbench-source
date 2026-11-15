@@ -4081,6 +4081,7 @@ var require_copy = __commonJS({
         cancel: "\u53D6\u6D88",
         close: "\u5173\u95ED",
         sensitiveHint: "\u5BC6\u7801/\u624B\u673A\u53F7/\u8EAB\u4EFD\u8BC1\u5199\u5E93\u524D\u52A0\u5BC6\uFF0C\u4EC5\u5728\u754C\u9762\u89E3\u9501\u4FDD\u9669\u7BB1\u540E\u53EF\u67E5\u770B\u4E0E\u590D\u5236\u3002",
+        vaultInvalid: "\u51ED\u636E\u96C6\u5408\u5DF2\u5931\u6548\uFF08\u96C6\u5408\u88AB\u5220\u9664\uFF09\uFF0C\u4FDD\u5B58\u4EFB\u4E00\u654F\u611F\u5B57\u6BB5\u5373\u53EF\u91CD\u5EFA\u3002",
         vaultNotSet: "\u8D26\u53F7\u4FDD\u9669\u7BB1\u5C1A\u672A\u8BBE\u7F6E\u53E3\u4EE4\uFF1A\u8BBE\u7F6E\u53E3\u4EE4\u540E\u624D\u80FD\u586B\u5199\u5BC6\u7801\u3001\u624B\u673A\u53F7\u4E0E\u8EAB\u4EFD\u8BC1\u3002",
         vaultLocked: "\u8D26\u53F7\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A\uFF1A\u8F93\u5165\u53E3\u4EE4\u540E\u5373\u53EF\u67E5\u770B\u4E0E\u586B\u5199\u654F\u611F\u5B57\u6BB5\u3002",
         vaultUnlocked: "\u8D26\u53F7\u4FDD\u9669\u7BB1\u5DF2\u89E3\u9501\uFF0C\u7A7A\u95F2 {min} \u5206\u949F\u81EA\u52A8\u9501\u5B9A\u3002",
@@ -4192,6 +4193,7 @@ var require_copy = __commonJS({
         cancel: "Cancel",
         close: "Close",
         sensitiveHint: "Password / phone / ID card are encrypted before writing and can only be read after unlocking the vault.",
+        vaultInvalid: "The credential set is gone (deleted); saving any sensitive field rebuilds it.",
         vaultNotSet: "Vault passphrase is not set yet: set one before filling in password, phone or ID card.",
         vaultLocked: "Vault is locked: unlock to view or edit sensitive fields.",
         vaultUnlocked: "Vault unlocked; it locks after {min} idle minutes.",
@@ -4708,6 +4710,7 @@ var require_accounts_modal = __commonJS({
                     setPendingDelete(acc.id);
                   } }, h2(Icon2, { name: "trash", size: 12 }))
                 ),
+                acc.vaultInvalid ? h2("div", { className: "wbs-error" }, text(lang, "vaultInvalid")) : null,
                 h2(
                   "div",
                   { className: "wbs-accrow-fields" },
@@ -6588,7 +6591,7 @@ var TagFilter = require_tagfilter();
   injectCss();
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.11.1",
+    version: "1.12.0",
     icon: (init_globe(), __toCommonJS(globe_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },

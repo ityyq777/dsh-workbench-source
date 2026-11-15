@@ -215,8 +215,19 @@ const accA1 = r.id;
 assert(r.accountKey === "prod-admin", "account created");
 const rawRow = db.prepare("SELECT * FROM site_account WHERE id=?").get(accA1);
 assert(!("password" in rawRow) && !("phone_number" in rawRow), "site_account has no sensitive columns");
-const secretsA1 = db.prepare("SELECT * FROM vault_secret WHERE deleted_at IS NULL AND name LIKE ?").all("site." + accSiteA + "." + accA1 + ".%");
+const secretsA1 = db.prepare("SELECT * FROM vault_secret WHERE deleted_at IS NULL AND name LIKE ?").all(accA1 + " · %");
 assert(secretsA1.length === 3, "three secrets stored in vault");
+assert(
+  secretsA1.map(function (x) { return x.kind; }).sort().join(",") === "id_card,password,phone",
+  "account secrets use general kinds",
+);
+const vaultSetId = db.prepare("SELECT vault_set_id FROM site_account WHERE id=?").get(accA1).vault_set_id;
+const accountSet = db.prepare("SELECT * FROM vault_set WHERE id=?").get(vaultSetId);
+assert(accountSet && accountSet.name === accA1, "account backed by a set named after accountId");
+assert(
+  db.prepare("SELECT COUNT(*) AS n FROM vault_set_secret WHERE set_id=? AND deleted_at IS NULL").get(vaultSetId).n === 3,
+  "account set holds three secrets",
+);
 assert(secretsA1.every(function (x) { return String(x.ciphertext).indexOf("v1:") === 0; }), "secrets encrypted");
 assert(!secretsA1.some(function (x) { return String(x.ciphertext).indexOf("secret-1") >= 0; }), "no plaintext in ciphertext");
 
@@ -232,6 +243,7 @@ assert(r.total === 1, "account listed");
 assert(r.accounts[0].password === undefined, "list never returns password");
 assert(r.accounts[0].phoneNumber === "已保存", "list never returns phone plaintext");
 assert(r.accounts[0].hasPassword && r.accounts[0].hasPhone && r.accounts[0].hasIdentity, "list reports has flags");
+assert(r.accounts[0].vaultSetId === vaultSetId && r.accounts[0].vaultInvalid === false, "list reports serving set");
 
 r = await defs["sites.accounts.get"].execute({ id: accA1 }, { origin: "cloud" });
 assert(r.masked === true && r.secretIds === undefined, "agent get stays masked");
@@ -312,12 +324,20 @@ assert(dataRow && !("password" in dataRow) && !("phone_number" in dataRow), "dat
 const dataTables = call("sites.dataTables", {});
 assert(dataTables.tables.some(function (t) { return t.name === "site_account"; }), "dataTables has site_account");
 
+// 集合被删：账号详情/列表标注「凭据集合已失效」
+await call("vault.setDelete", { id: vaultSetId });
+r = await call("sites.accounts.list", { siteId: accSiteA });
+const broken = r.accounts.filter(function (a) { return a.id === accA1; })[0];
+assert(broken.vaultInvalid === true, "deleted set marks account invalid");
+r = await call("sites.accounts.get", { id: accA1 });
+assert(r.account.vaultInvalid === true, "account detail shows invalid set");
+
 // 删除账号：双向清外联 + 尽力清理凭据
 call("sites.accounts.link", { nativeAccountId: accA1, externalAccountId: accB1 });
 r = await call("sites.accounts.delete", { id: accB1 });
 assert(r.deleted === true && r.clearedRelations >= 1, "delete account clears relations");
 assert(db.prepare("SELECT COUNT(*) AS n FROM site_account_external WHERE deleted_at IS NULL").get().n === 0, "no live relations left");
-const leftLive = db.prepare("SELECT COUNT(*) AS n FROM vault_secret WHERE deleted_at IS NULL AND name LIKE ?").get("site." + accSiteB + "." + accB1 + ".%");
+const leftLive = db.prepare("SELECT COUNT(*) AS n FROM vault_secret WHERE deleted_at IS NULL AND name LIKE ?").get(accB1 + " · %");
 assert(leftLive.n === 0, "account secrets soft deleted");
 
 // 校验
