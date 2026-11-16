@@ -19,3 +19,5 @@ dist/
 .tmp-automation-preview
 .tmp-vault-preview
 
+
+.tmp-storage-preview

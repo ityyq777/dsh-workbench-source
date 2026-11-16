@@ -2053,6 +2053,7 @@ var require_filter_checklist = __commonJS({
         selected.length || query ? h("button", {
           type: "button",
           className: "wbck-clear",
+          title: clearText,
           disabled,
           onClick: function() {
             if (disabled) return;

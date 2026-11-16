@@ -98,6 +98,7 @@ var require_filter_checklist = __commonJS({
         selected.length || query ? h("button", {
           type: "button",
           className: "wbck-clear",
+          title: clearText,
           disabled,
           onClick: function() {
             if (disabled) return;
@@ -6981,6 +6982,13 @@ var require_description = __commonJS({
     var React = require("react");
     var h = React.createElement;
     var Body = require_markdown().createBody(React);
+    var bodies = typeof WeakMap === "function" ? /* @__PURE__ */ new WeakMap() : null;
+    function bodyFor(Highlight) {
+      if (!Highlight) return Body;
+      if (!bodies) return require_markdown().createBody(React, Highlight);
+      if (!bodies.has(Highlight)) bodies.set(Highlight, require_markdown().createBody(React, Highlight));
+      return bodies.get(Highlight);
+    }
     var BodyMode = require_body_toggle()(React);
     var copy = require_body_copy();
     var Code = (init_code_2(), __toCommonJS(code_2_exports)).default;
@@ -6999,6 +7007,7 @@ var require_description = __commonJS({
       var mode = React.useState(props.bodyMode === "text" ? "text" : "markdown");
       var labelId = require_body_id()(React) + "-desc", t = copy[props.lang === "en" ? "en" : "zh"];
       var text = props.text == null ? "" : String(props.text);
+      var DescBody = bodyFor(props.Highlight);
       var expanded = React.useState(false), overflow = React.useState(false), ref = React.useRef(null);
       React.useEffect(function() {
         expanded[1](false);
@@ -7032,7 +7041,7 @@ var require_description = __commonJS({
           h(
             "div",
             { ref, className: "wb-desc-text" + (expanded[0] ? "" : " wb-desc-clamped") },
-            h(Body, { text, mode: mode[0] })
+            h(DescBody, { text, mode: mode[0], keyword: props.keyword })
           ),
           overflow[0] || expanded[0] ? h("button", {
             type: "button",

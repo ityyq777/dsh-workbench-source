@@ -1,6 +1,15 @@
 // Shared body treatment: inherit primary text rather than the metadata's muted color.
 var React = require("react"), h = React.createElement;
 var Body = require("./markdown.cjs").createBody(React);
+// 调用方传入 Highlight（createHighlight 返回的组件）时，正文按关键词高亮；
+// 组件类型按 Highlight 缓存，避免每次渲染都造一个新的 Body 导致整段重挂。
+var bodies = typeof WeakMap === "function" ? new WeakMap() : null;
+function bodyFor(Highlight) {
+  if (!Highlight) return Body;
+  if (!bodies) return require("./markdown.cjs").createBody(React, Highlight);
+  if (!bodies.has(Highlight)) bodies.set(Highlight, require("./markdown.cjs").createBody(React, Highlight));
+  return bodies.get(Highlight);
+}
 var BodyMode = require("./body-toggle.cjs")(React), copy = require("./body-copy.cjs");
 var Code = require("lucide-react/icons/code-2").default, Pilcrow = require("lucide-react/icons/pilcrow").default;
 function BodyIcon(props) { return h(props.name === "pilcrow" ? Pilcrow : Code, { size: props.size, "aria-hidden": true, focusable: false }); }
@@ -15,6 +24,7 @@ function Description(props) {
   var mode = React.useState(props.bodyMode === "text" ? "text" : "markdown");
   var labelId = require("./body-id.cjs")(React) + "-desc", t = copy[props.lang === "en" ? "en" : "zh"];
   var text = props.text == null ? "" : String(props.text);
+  var DescBody = bodyFor(props.Highlight);
   var expanded = React.useState(false), overflow = React.useState(false), ref = React.useRef(null);
   React.useEffect(function () {
     expanded[1](false);
@@ -38,7 +48,7 @@ function Description(props) {
       h(BodyMode, { label: t.desc, mode: mode[0], onChange: mode[1], t: t, Icon: props.Icon || BodyIcon })),
     h("div", { className: "wb-desc" },
     h("div", { ref: ref, className: "wb-desc-text" + (expanded[0] ? "" : " wb-desc-clamped") },
-      h(Body, { text: text, mode: mode[0] })),
+      h(DescBody, { text: text, mode: mode[0], keyword: props.keyword })),
     overflow[0] || expanded[0] ? h("button", {
       type: "button", className: "wb-desc-toggle", "aria-expanded": expanded[0],
       onClick: function () { expanded[1](!expanded[0]); }

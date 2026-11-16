@@ -91,12 +91,16 @@ const item = { id: "full", name: "LongName".repeat(40), stock: "12", unit: "件"
   imgList: ["javascript:alert(1)", "https://example.test/1.png", "https://example.test/2.png", "https://example.test/3.png"] };
 const full = renderer(StorageCard, { ...base, item });
 card = full.render();
-assert.equal(cls(card, "wbi-cardhead")[0].children[0].children[0], item.name);
+// 标题经共享高亮组件渲染（keyword 为空时原样返回文本），结构从字符串变成组件节点。
+var titleNode = cls(card, "wbi-cardhead")[0].children[0].children[0];
+assert.equal(typeof titleNode.type, "function", "标题走 Highlight 组件");
+assert.equal(titleNode.props.text, item.name);
 assert.equal(card.children[1].props.className, "wbi-tags", "tags immediately follow heading");
 assert.equal(card.children[2].props.className, "wbi-metazone", "metadata precedes body");
 assert.equal(card.children[3].type, Description);
 const metaText = JSON.stringify(cls(card, "wbi-metazone")[0]);
-assert.ok(metaText.includes("Location: A 区"), "card shows location");
+assert.ok(metaText.includes("Location: "), "card shows the location label");
+assert.ok(metaText.includes('"text":"A 区"'), "location value goes through the highlight component");
 assert.ok(metaText.includes('"name":"location"'), "location uses the map-pin icon");
 assert.equal(cls(card, "wbi-image").length, 1);
 assert.equal(cls(card, "wbi-more")[0].children[0], "+2", "only safe hidden images count");

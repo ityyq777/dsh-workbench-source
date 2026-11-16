@@ -53,6 +53,7 @@ function FilterChecklist(props) {
         (selected.length || query) ? h("button", {
             type: "button",
             className: "wbck-clear",
+            title: clearText,
             disabled: disabled,
             onClick: function () {
                 if (disabled) return;

@@ -597,6 +597,13 @@ var require_description = __commonJS({
     var React = require("react");
     var h2 = React.createElement;
     var Body = require_markdown().createBody(React);
+    var bodies = typeof WeakMap === "function" ? /* @__PURE__ */ new WeakMap() : null;
+    function bodyFor(Highlight) {
+      if (!Highlight) return Body;
+      if (!bodies) return require_markdown().createBody(React, Highlight);
+      if (!bodies.has(Highlight)) bodies.set(Highlight, require_markdown().createBody(React, Highlight));
+      return bodies.get(Highlight);
+    }
     var BodyMode = require_body_toggle()(React);
     var copy = require_body_copy();
     var Code = (init_code_2(), __toCommonJS(code_2_exports)).default;
@@ -615,6 +622,7 @@ var require_description = __commonJS({
       var mode = React.useState(props.bodyMode === "text" ? "text" : "markdown");
       var labelId = require_body_id()(React) + "-desc", t = copy[props.lang === "en" ? "en" : "zh"];
       var text = props.text == null ? "" : String(props.text);
+      var DescBody = bodyFor(props.Highlight);
       var expanded = React.useState(false), overflow = React.useState(false), ref = React.useRef(null);
       React.useEffect(function() {
         expanded[1](false);
@@ -648,7 +656,7 @@ var require_description = __commonJS({
           h2(
             "div",
             { ref, className: "wb-desc-text" + (expanded[0] ? "" : " wb-desc-clamped") },
-            h2(Body, { text, mode: mode[0] })
+            h2(DescBody, { text, mode: mode[0], keyword: props.keyword })
           ),
           overflow[0] || expanded[0] ? h2("button", {
             type: "button",
@@ -710,8 +718,8 @@ var require_filter_checklist_styles = __commonJS({
 var require_styles = __commonJS({
   "packages/addons/storage/client/ui/styles.cjs"(exports2, module2) {
     module2.exports = require_description().css + require_visual_tokens() + `
-.wbi-root{--line:var(--wb-line,var(--dsw-alias-border-l2,#d9dfe6));--surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,#fff));--muted:var(--dsw-alias-label-secondary,#64748b);--accent:var(--dsw-alias-brand-primary,#2563eb);font-size:13px;color:inherit;min-width:0;container-type:inline-size;container-name:storage}
-.wbi-root *{box-sizing:border-box}.wbi-root h2{font-size:18px;margin:0}.wbi-root h3{font-size:15px;margin:0}.wbi-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.wbi-grow{flex:1;min-width:0}.wbi-muted{color:var(--muted);font-size:12px}.wbi-root input,.wbi-root textarea,.wbi-root select{background:var(--surface);color:inherit;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;max-width:100%}.wbi-root textarea{resize:vertical;min-height:80px}.wbi-root :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wbi-root{--wbi-hit-bg:color-mix(in oklab,var(--wb-hit-bg-base,var(--dsw-alias-brand-primary,#2563eb)) 18%,transparent);--wbi-hit-fg:inherit;--line:var(--wb-line,var(--dsw-alias-border-l2,#d9dfe6));--surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,#fff));--muted:var(--dsw-alias-label-secondary,#64748b);--accent:var(--dsw-alias-brand-primary,#2563eb);font-size:13px;color:inherit;min-width:0;container-type:inline-size;container-name:storage}
+.wbi-root *{box-sizing:border-box}.wbi-root h2{font-size:18px;margin:0}.wbi-root h3{font-size:15px;margin:0}.wbi-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.wbi-grow{flex:1;min-width:0}.wbi-muted{color:var(--muted);font-size:12px}mark.wbi-hit{background:var(--wbi-hit-bg);color:var(--wbi-hit-fg);border-radius:3px;padding:0 2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}.wbi-root input,.wbi-root textarea,.wbi-root select{background:var(--surface);color:inherit;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;max-width:100%}.wbi-root textarea{resize:vertical;min-height:80px}.wbi-root :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .wbi-btn,.wbi-image,.wbi-root .wb-desc-toggle{border:none;background:var(--wb-btn-bg);color:inherit;min-height:var(--wb-btn-size-sm);min-width:var(--wb-btn-size-sm);border-radius:8px;padding:7px 12px;cursor:pointer;font:inherit}
 .wbi-btn:enabled:hover,.wbi-image:enabled:hover,.wbi-root .wb-desc-toggle:enabled:hover{background:var(--wb-btn-hover-bg)}
 .wbi-btn:enabled:active,.wbi-image:enabled:active,.wbi-root .wb-desc-toggle:enabled:active{background:var(--wb-btn-active-bg)}
@@ -1954,6 +1962,60 @@ var require_editor = __commonJS({
   }
 });
 
+// packages/addons/lib/highlight.cjs
+var require_highlight = __commonJS({
+  "packages/addons/lib/highlight.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(React) {
+      var h2 = React.createElement;
+      function sourceOf(keyword) {
+        var pattern = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        return pattern.replace(/[a-zA-Z]/g, function(letter) {
+          return "[" + letter.toLowerCase() + letter.toUpperCase() + "]";
+        });
+      }
+      return function createHighlight(prefix) {
+        var className = String(prefix || "wb") + "-hit";
+        function hit(rawText, rawKeyword) {
+          var text = rawText == null ? "" : String(rawText);
+          var keyword = rawKeyword == null ? "" : String(rawKeyword);
+          if (!keyword) return text;
+          var matcher, match, end = 0, parts = [];
+          try {
+            matcher = new RegExp(sourceOf(keyword), "g");
+          } catch (error) {
+            return text;
+          }
+          while (match = matcher.exec(text)) {
+            if (match.index > end) parts.push(text.slice(end, match.index));
+            parts.push(h2("mark", { className, key: match.index }, match[0]));
+            end = match.index + match[0].length;
+            if (!match[0]) matcher.lastIndex += 1;
+          }
+          if (!parts.length) return text;
+          if (end < text.length) parts.push(text.slice(end));
+          return parts;
+        }
+        function Highlight(props) {
+          return hit(props.text, props.keyword);
+        }
+        Highlight.hit = hit;
+        return Highlight;
+      };
+    };
+  }
+});
+
+// packages/addons/storage/client/ui/highlight.cjs
+var require_highlight2 = __commonJS({
+  "packages/addons/storage/client/ui/highlight.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(React) {
+      return require_highlight()(React)("wbi");
+    };
+  }
+});
+
 // packages/addons/storage/client/item/card.cjs
 var require_card = __commonJS({
   "packages/addons/storage/client/item/card.cjs"(exports2, module2) {
@@ -1962,8 +2024,10 @@ var require_card = __commonJS({
     var h2 = ui.h;
     var tr = ui.tr;
     var Description = require_description().Description;
+    var Highlight = require_highlight2()(React);
     function StorageCard(props) {
       var item = props.item, lang = props.lang, gallery = React.useState(false);
+      var keyword = String(props.keyword || "");
       var images = (item.imgList || []).filter(ui.safeImage), tags = item.tags || [];
       var shown = gallery[0] ? images : images.slice(0, 1);
       var hasStock = item.stock != null && item.stock !== "";
@@ -1999,7 +2063,7 @@ var require_card = __commonJS({
         h2(
           "div",
           { className: "wbi-cardhead" },
-          h2("h3", null, item.name),
+          h2("h3", null, h2(Highlight, { text: item.name, keyword })),
           h2(
             "span",
             { className: "wbi-stock" },
@@ -2026,9 +2090,10 @@ var require_card = __commonJS({
           meta.length ? h2(
             "div",
             { className: "wbi-muted" },
-            item.brand ? h2("span", { className: "wbi-inline" }, h2(ui.Icon, { name: "brand", size: 11 }), meta[0]) : null,
+            item.brand ? h2("span", { className: "wbi-inline" }, h2(ui.Icon, { name: "brand", size: 11 }), tr(lang, "\u54C1\u724C\uFF1A", "Brand: "), h2(Highlight, { text: item.brand, keyword })) : null,
+            // 单位不参与文字搜索，按原样展示，避免「亮了却搜不到」的错觉。
             item.unit ? h2("span", { className: "wbi-inline" }, h2(ui.Icon, { name: "unit", size: 11 }), tr(lang, "\u5355\u4F4D\uFF1A", "Unit: ") + item.unit) : null,
-            item.location ? h2("span", { className: "wbi-inline" }, h2(ui.Icon, { name: "location", size: 11 }), tr(lang, "\u4F4D\u7F6E\uFF1A", "Location: ") + item.location) : null
+            item.location ? h2("span", { className: "wbi-inline" }, h2(ui.Icon, { name: "location", size: 11 }), tr(lang, "\u4F4D\u7F6E\uFF1A", "Location: "), h2(Highlight, { text: item.location, keyword })) : null
           ) : null,
           item.createTime || item.updateTime ? h2(
             "div",
@@ -2037,7 +2102,7 @@ var require_card = __commonJS({
             item.updateTime ? h2("span", null, tr(lang, "\u66F4\u65B0 ", "Updated ") + props.date(item.updateTime)) : null
           ) : null
         ) : null,
-        h2(Description, { text: item.remark, lang, bodyMode: props.bodyMode }),
+        h2(Description, { text: item.remark, lang, bodyMode: props.bodyMode, Highlight, keyword }),
         images.length ? h2("div", { className: "wbi-images" }, shown.map(function(url, i) {
           return h2(
             "button",
@@ -2144,6 +2209,7 @@ var require_filter_checklist = __commonJS({
         selected.length || query ? h2("button", {
           type: "button",
           className: "wbck-clear",
+          title: clearText,
           disabled,
           onClick: function() {
             if (disabled) return;
@@ -2720,6 +2786,7 @@ var require_records = __commonJS({
               caps: caps[0],
               busy: busy[0] || !!bulk[0],
               date,
+              keyword: String(text[0] || "").trim(),
               selectionMode: selected.mode,
               checked: selected.ids.includes(item.id),
               onCheck: selected.toggle,
@@ -4569,50 +4636,6 @@ var require_data = __commonJS({
   }
 });
 
-// packages/addons/lib/highlight.cjs
-var require_highlight = __commonJS({
-  "packages/addons/lib/highlight.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = function(React) {
-      var h2 = React.createElement;
-      function sourceOf(keyword) {
-        var pattern = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        return pattern.replace(/[a-zA-Z]/g, function(letter) {
-          return "[" + letter.toLowerCase() + letter.toUpperCase() + "]";
-        });
-      }
-      return function createHighlight(prefix) {
-        var className = String(prefix || "wb") + "-hit";
-        function hit(rawText, rawKeyword) {
-          var text = rawText == null ? "" : String(rawText);
-          var keyword = rawKeyword == null ? "" : String(rawKeyword);
-          if (!keyword) return text;
-          var matcher, match, end = 0, parts = [];
-          try {
-            matcher = new RegExp(sourceOf(keyword), "g");
-          } catch (error) {
-            return text;
-          }
-          while (match = matcher.exec(text)) {
-            if (match.index > end) parts.push(text.slice(end, match.index));
-            parts.push(h2("mark", { className, key: match.index }, match[0]));
-            end = match.index + match[0].length;
-            if (!match[0]) matcher.lastIndex += 1;
-          }
-          if (!parts.length) return text;
-          if (end < text.length) parts.push(text.slice(end));
-          return parts;
-        }
-        function Highlight(props) {
-          return hit(props.text, props.keyword);
-        }
-        Highlight.hit = hit;
-        return Highlight;
-      };
-    };
-  }
-});
-
 // packages/addons/lib/action-schema-style.cjs
 var require_action_schema_style = __commonJS({
   "packages/addons/lib/action-schema-style.cjs"(exports2, module2) {
@@ -5163,7 +5186,7 @@ if (host) {
   h = require("react").createElement, Icon2 = require_icons().Icon;
   host.registerAddon({
     id: "wb-addon-storage",
-    version: "1.5.4",
+    version: "1.5.5",
     icon: (init_package(), __toCommonJS(package_exports)).default,
     views: [
       { id: "stats", icon: tabIcon2("chart"), title: { zh: "\u7EDF\u8BA1", en: "Statistics" }, component: require_stats().Stats },

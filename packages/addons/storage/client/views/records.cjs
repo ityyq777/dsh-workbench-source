@@ -230,6 +230,7 @@ function Records(props) {
         ? rows.map(function (item) {
             return h(StorageCard, {
               key: item.id, item: item, lang: lang, bodyMode: bodyMode[0], caps: caps[0], busy: busy[0] || !!bulk[0], date: date,
+              keyword: String(text[0] || "").trim(),
               selectionMode: selected.mode, checked: selected.ids.includes(item.id), onCheck: selected.toggle,
               onTag: function (t) {
                 tagIds[1]([String(t.id)]);
