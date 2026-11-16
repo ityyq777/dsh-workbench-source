@@ -22,6 +22,8 @@ var COPY = {
     dueToday: "今日到期", dueNext7: "未来 7 天到期", newInRange: "范围内新增", avgCycle: "平均完成周期",
     days: "天", current: "当前", inRange: "范围内", ofTotal: "占总量", ofActive: "占已开启",
     trend: "新增 / 完成 / 到期趋势", trendNote: "按自然日 / 周 / 月分桶",
+    eventTrend: "事件趋势", eventTrendNote: "与年度活动同口径；按日 / 周 / 月分桶，目标按计划完成日期统计",
+    publish: "发布", target: "目标", evShutdown: "关闭", evClaimed: "接取",
     created: "新增", done: "完成", due: "到期",
     status: "状态构成", statusNote: "当前存量",
     priority: "优先级分布", priorityNote: "当前存量；不含已关闭/已完成；点柱形查看任务",
@@ -56,6 +58,8 @@ var COPY = {
     dueToday: "Due today", dueNext7: "Due next 7d", newInRange: "New in range", avgCycle: "Avg cycle",
     days: "d", current: "Current", inRange: "In range", ofTotal: "of total", ofActive: "of active",
     trend: "Created / done / due trend", trendNote: "Bucketed by day / week / month",
+    eventTrend: "Event trend", eventTrendNote: "Same scope as annual activity; bucketed by day / week / month, target by planned date",
+    publish: "Published", target: "Target", evShutdown: "Closed", evClaimed: "Claimed",
     created: "Created", done: "Done", due: "Due",
     status: "Status", statusNote: "Current",
     priority: "Priority", priorityNote: "Current; excludes closed/completed; click a bar to list tasks",
@@ -270,6 +274,19 @@ function TasksStatsBody(props) {
     if (totals.total === 0) {
       children.push(h(ch.Card, { key: "empty", span: 12 }, h(ch.Empty, { text: t.noData })));
     } else {
+      // 事件趋势与年度活动日历同口径（发布/目标/完成/关闭/接取），颜色对齐热力图 hue，
+      // 保证两张图同色同义；旧趋势卡的 created/due 是存量语义，两张卡并存不合并。
+      children.push(h(ch.Card, { key: "eventTrend", span: 12, title: t.eventTrend, note: t.eventTrendNote },
+        h(ch.Trend, {
+          data: data.eventTrend || [], lang: lang,
+          series: [
+            { key: "publish", label: t.publish, color: ch.colors[0] },
+            { key: "target", label: t.target, color: ch.colors[5] },
+            { key: "done", label: t.done, color: ch.colors[1] },
+            { key: "shutdown", label: t.evShutdown, color: ch.colors[3] },
+            { key: "claimed", label: t.evClaimed, color: ch.colors[2] },
+          ],
+        })));
       children.push(h(ch.Card, { key: "trend", span: 8, title: t.trend, note: t.trendNote },
         h(ch.Trend, {
           data: data.trend || [], lang: lang,

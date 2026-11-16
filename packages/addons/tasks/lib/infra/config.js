@@ -21,6 +21,7 @@ const GROUPS = [
 ];
 
 const SECTIONS = [
+  { value: "eventTrend", zh: "事件趋势", en: "Event trend" },
   { value: "trend", zh: "新增/完成/到期趋势", en: "Created / done / due trend" },
   { value: "status", zh: "状态构成", en: "Status breakdown" },
   { value: "priority", zh: "优先级分布", en: "Priority distribution" },

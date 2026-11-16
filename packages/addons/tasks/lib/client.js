@@ -765,7 +765,8 @@ var require_charts = __commonJS({
               );
             }),
             labelIdx.map(function(i2) {
-              return h("text", { key: "x" + i2, x: x(i2), y: height - 6, textAnchor: "middle", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, String(data[i2].bucket).slice(5));
+              var anchor = i2 === data.length - 1 ? "end" : "middle";
+              return h("text", { key: "x" + i2, x: x(i2), y: height - 6, textAnchor: anchor, fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, String(data[i2].bucket).slice(5));
             })
           ),
           h("div", { className: prefix + "-tlegend" }, series.map(function(s, i2) {
@@ -2329,6 +2330,12 @@ var require_stats = __commonJS({
         ofActive: "\u5360\u5DF2\u5F00\u542F",
         trend: "\u65B0\u589E / \u5B8C\u6210 / \u5230\u671F\u8D8B\u52BF",
         trendNote: "\u6309\u81EA\u7136\u65E5 / \u5468 / \u6708\u5206\u6876",
+        eventTrend: "\u4E8B\u4EF6\u8D8B\u52BF",
+        eventTrendNote: "\u4E0E\u5E74\u5EA6\u6D3B\u52A8\u540C\u53E3\u5F84\uFF1B\u6309\u65E5 / \u5468 / \u6708\u5206\u6876\uFF0C\u76EE\u6807\u6309\u8BA1\u5212\u5B8C\u6210\u65E5\u671F\u7EDF\u8BA1",
+        publish: "\u53D1\u5E03",
+        target: "\u76EE\u6807",
+        evShutdown: "\u5173\u95ED",
+        evClaimed: "\u63A5\u53D6",
         created: "\u65B0\u589E",
         done: "\u5B8C\u6210",
         due: "\u5230\u671F",
@@ -2427,6 +2434,12 @@ var require_stats = __commonJS({
         ofActive: "of active",
         trend: "Created / done / due trend",
         trendNote: "Bucketed by day / week / month",
+        eventTrend: "Event trend",
+        eventTrendNote: "Same scope as annual activity; bucketed by day / week / month, target by planned date",
+        publish: "Published",
+        target: "Target",
+        evShutdown: "Closed",
+        evClaimed: "Claimed",
         created: "Created",
         done: "Done",
         due: "Due",
@@ -2682,6 +2695,21 @@ var require_stats = __commonJS({
         if (totals.total === 0) {
           children.push(h(ch.Card, { key: "empty", span: 12 }, h(ch.Empty, { text: t.noData })));
         } else {
+          children.push(h(
+            ch.Card,
+            { key: "eventTrend", span: 12, title: t.eventTrend, note: t.eventTrendNote },
+            h(ch.Trend, {
+              data: data.eventTrend || [],
+              lang,
+              series: [
+                { key: "publish", label: t.publish, color: ch.colors[0] },
+                { key: "target", label: t.target, color: ch.colors[5] },
+                { key: "done", label: t.done, color: ch.colors[1] },
+                { key: "shutdown", label: t.evShutdown, color: ch.colors[3] },
+                { key: "claimed", label: t.evClaimed, color: ch.colors[2] }
+              ]
+            })
+          ));
           children.push(h(
             ch.Card,
             { key: "trend", span: 8, title: t.trend, note: t.trendNote },
@@ -11691,13 +11719,13 @@ var init_list_checks = __esm({
     "stats.recentDoneLimit": 10,
     "stats.recentShutdownLimit": 10,
     "stats.recentClaimedLimit": 10,
-    "stats.sections": ["trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "workspaces", "recent"]
+    "stats.sections": ["eventTrend", "trend", "status", "priority", "difficulty", "aging", "overdue", "tables", "groups", "workspaces", "recent"]
   };
   var TasksView = require_tasks_view()({ React, configView, CFG_FALLBACK, COPY, injectCss, allTables, findFirstTable, treeWalk, treeFlat, cx, Icon: Icon2, TaskItem, PathCrumbs, TagFilter, WorkspaceFilter, TreeNode, CreateModal, TimelineModal, NodeModal, EditModal, DoneModal, BatchModal });
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.18",
+    version: "5.2.19",
     icon: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },

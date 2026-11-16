@@ -1,7 +1,7 @@
 /** 年度任务活动：日期字段保持本地 YYYY-MM-DD，与统计列表一致；只读 SQL 聚合。
  * 事件口径定义在 ./events.js，与难度分布的五维切换共用，避免两处漂移。 */
 import { EVENTS, EVENT_TYPES } from "./events.js";
-import { PLAN, planRange } from "./plans.js";
+import { PLAN, planRange } from "./events.js";
 
 const TYPES = EVENT_TYPES;
 // target 是计划口径：与四类事件并列展示，但不计入 total/totals.total（活动总数只数事件）。

@@ -4,7 +4,9 @@ let addon;window.__WB_HOST__={addons:[],registerAddon:a=>addon=a};
 require('../packages/addons/tasks/client/client.src.cjs');
 const row={id:'table-1',title:'开发任务表',groupId:'group-1',total:179,open:23,overdue:2,completion:.865};
 const recent=[{id:'task-1',title:'今天发布的任务',date:'2026-11-09',daysAgo:0,difficulty:2.5,tableId:'table-1',groupId:'group-1',tableTitle:'开发任务表'}, {id:'task-2',title:'历史任务',date:'',daysAgo:null,difficulty:0,tableDeleted:true,tableTitle:'已删除任务表'}];
-const report={totals:{total:179,active:23,done:155,overdue:2},rates:{completion:.865},rankings:{tables:[row,{...row,id:'__missing__',title:'已删除任务表'}],groups:[{...row,id:'group-1',title:'文档处理平台'},{...row,id:'__ungrouped__',title:'未归档'}]},lists:{recentPublish:recent,recentDone:recent,recentShutdown:recent,overdue:[{title:'逾期任务',targetDate:'2026-11-01',daysOverdue:8,tableTitle:'开发任务表'}]}};
+const buckets=[];for(let i=0;i<31;i++){const d=new Date(2026,9,11+i);const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+ buckets.push({bucket:k,publish:2+(i%4),done:i%3,shutdown:i%2,claimed:1+(i%3),target:(i%3===0?1:0)+(i%5===0?1:0)});}
+const report={eventTrend:buckets,eventTrendTypes:['publish','done','shutdown','claimed','target'],totals:{total:179,active:23,done:155,overdue:2},rates:{completion:.865},rankings:{tables:[row,{...row,id:'__missing__',title:'已删除任务表'}],groups:[{...row,id:'group-1',title:'文档处理平台'},{...row,id:'__ungrouped__',title:'未归档'}]},lists:{recentPublish:recent,recentDone:recent,recentShutdown:recent,overdue:[{title:'逾期任务',targetDate:'2026-11-01',daysOverdue:8,tableTitle:'开发任务表'}]}};
 window.calls=[];window.navigation=[];
 const api={subscribe:()=>()=>{},call:async(action,args={})=>{window.calls.push({action,args});let result=[];
  if(action==='tasks.configGet')result={values:{}};

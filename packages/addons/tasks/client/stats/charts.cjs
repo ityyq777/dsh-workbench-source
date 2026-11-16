@@ -271,7 +271,9 @@ function makeCharts(prefix) {
           );
         }),
         labelIdx.map(function (i) {
-          return h("text", { key: "x" + i, x: x(i), y: height - 6, textAnchor: "middle", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, String(data[i].bucket).slice(5));
+          // 末点标签靠右对齐，否则「11-10」会被 viewBox 右边界裁成「11-1C」。
+          var anchor = i === data.length - 1 ? "end" : "middle";
+          return h("text", { key: "x" + i, x: x(i), y: height - 6, textAnchor: anchor, fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, String(data[i].bucket).slice(5));
         }),
       ),
       h("div", { className: prefix + "-tlegend" }, series.map(function (s, i) {

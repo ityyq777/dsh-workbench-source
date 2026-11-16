@@ -3,7 +3,8 @@
 
 import { configValues } from "../infra/config.js";
 import { todayActivity } from "./stats-today.js";
-import { eventRange } from "./events.js";
+import { EVENTS, EVENT_TYPES, PLAN, eventRange, planRange } from "./events.js";
+import { difficultyBinsFor, normalizeDimension } from "./difficulty-bins.js";
 
 const STATUS_LABELS = {
   "0": "已开启",
@@ -167,52 +168,38 @@ function fillTrend(trend, range, field, rows) {
   }
 }
 
-// 难度分布的五维切换：all 保持「当前存量」语义，其余四维与年度活动日历同口径、按页首区间重算。
-const DIFFICULTY_DIMENSIONS = ["all", "done", "publish", "claimed", "shutdown"];
+// 事件趋势：五条曲线（四类事件 + 计划目标）与年度活动日历完全同口径，
+// 只是按页首区间的日/周/月桶再聚合一次。旧 trend 的 created/done/due 语义不同，
+// 因此另起 eventTrend 字段，避免把老卡片的三条线搅浑。
+const EVENT_TREND_SERIES = EVENT_TYPES.concat([PLAN.key]);
 
-function normalizeDimension(value) {
-  const dimension = value === undefined || value === null || value === "" ? "all" : String(value);
-  if (DIFFICULTY_DIMENSIONS.indexOf(dimension) < 0) {
-    throw new Error("dimension 只支持 all / done / publish / claimed / shutdown");
-  }
-  return dimension;
+function zeroEventTrend(range) {
+  return bucketKeys(range).keys.map(function (key) {
+    const row = { bucket: key };
+    for (const name of EVENT_TREND_SERIES) row[name] = 0;
+    return row;
+  });
 }
 
-function buildDifficultyBins(rows) {
-  // 难度是 0.5 步进的单值（0.5–5），一值一桶；0/空值单独归到「未设置」。
-  const bins = [];
-  for (let i = 1; i <= 10; i += 1) {
-    const v = i / 2;
-    bins.push({ key: String(v), label: String(v), count: 0 });
-  }
-  let unset = 0;
+function fillEventTrend(trend, range, type, rows) {
+  const index = bucketKeys(range).index;
   for (const row of rows) {
-    const n = Number(row.n || 0);
-    const d = Number(row.difficulty);
-    if (row.difficulty === null || row.difficulty === undefined || !(d > 0)) {
-      unset += n;
-      continue;
-    }
-    const idx = Math.min(10, Math.max(1, Math.round(d * 2)));
-    bins[idx - 1].count += n;
+    const key = bucketOf(String(row.d || ""), range);
+    if (!(key in index)) continue;
+    trend[index[key]][type] += Number(row.n || 0);
   }
-  // 未填写必须可见，便于从统计巡检并补齐难度。
-  bins.push({ key: "unset", label: "未设置", count: unset });
-  return bins;
 }
 
-function difficultyBinsFor(db, dimension, range) {
-  if (dimension === "all") {
-    return buildDifficultyBins(db.prepare(
-      "SELECT difficulty, COUNT(*) AS n FROM task WHERE deleted_at IS NULL GROUP BY difficulty",
-    ).all());
-  }
-  const slice = eventRange(dimension, range.from, range.to);
-  return buildDifficultyBins(db.prepare(
-    "SELECT difficulty, COUNT(*) AS n FROM task t WHERE " + slice.sql + " GROUP BY difficulty",
-  ).all(slice.params[0], slice.params[1]));
+/** 单系列按日计数：事件用 EVENTS 口径，target 用 PLAN 计划口径（同一份日期定义）。 */
+function countSeriesByDay(db, type, from, to) {
+  const spec = type === PLAN.key ? planRange(from, to) : eventRange(type, from, to);
+  const date = type === PLAN.key ? PLAN.date : EVENTS[type].date;
+  return db.prepare(
+    "SELECT " + date + " AS d, COUNT(*) AS n FROM task t WHERE " + spec.sql + " GROUP BY 1",
+  ).all(...spec.params);
 }
 
+// 难度分布的五维切换：all 保持「当前存量」语义，其余四维与年度活动日历同口径、按页首区间重算。
 export function statsReport(db, args, api) {
   const input = args || {};
   const range = resolveRange(db, input);
@@ -260,6 +247,11 @@ export function statsReport(db, args, api) {
     "SELECT target_date AS d, COUNT(*) AS n FROM task WHERE deleted_at IS NULL AND target_date IS NOT NULL AND target_date<>'' " +
       "AND target_date BETWEEN ? AND ? GROUP BY target_date",
   ).all(range.from, range.to));
+  const eventTrend = zeroEventTrend(range);
+  for (const type of EVENT_TREND_SERIES) {
+    fillEventTrend(eventTrend, range, type, countSeriesByDay(db, type, range.from, range.to));
+  }
+
   const newInRange = trend.reduce(function (n, row) { return n + row.created; }, 0);
   const doneInRange = trend.reduce(function (n, row) { return n + row.done; }, 0);
 
@@ -571,6 +563,9 @@ export function statsReport(db, args, api) {
       difficultyDimension: dimension,
     },
     trend: trend,
+    // 事件趋势与年度活动日历同口径：四类事件 + 目标计划数，按日/周/月桶聚合。
+    eventTrend: eventTrend,
+    eventTrendTypes: EVENT_TREND_SERIES,
     aging: agingBins,
     rankings: {
       tables: rank(Object.keys(tableAgg).map(function (k) { return tableAgg[k]; })),
