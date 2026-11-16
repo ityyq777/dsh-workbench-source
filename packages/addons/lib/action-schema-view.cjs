@@ -315,7 +315,7 @@ module.exports = function createActionSchemaView(options) {
       return h("div", { className: P + "-card", key: action.name },
         h("div", { className: P + "-cardhead" },
           h("code", { className: P + "-mono" }, Highlight.hit(action.name, kw)),
-          h("span", { className: P + "-badge" }, action.domain),
+          // 域名在页头已展示一次，卡片内不再重复（所有条目必然同域，见 visible 过滤）。
           h("span", { className: P + "-badge" }, rows.length ? t.paramCount(rows.length) : t.noParams),
           rows.some(function (row) { return row.required; })
             ? h("span", { className: P + "-badge " + P + "-req" }, t.required)

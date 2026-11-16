@@ -142,6 +142,15 @@ assert.match(body, /v0\.6\.5/, "应展示宿主版本");
 assert.match(body, /2 \/ 2 个 action/, "只统计本域 action 并显示命中数");
 assert.ok(!body.includes("tags.list"), "跨域 action 不进本域清单");
 
+// 卡片标题行不再重复域名：域只在页头出现一次（venv 期间曾每张卡都渲染一次）。
+const cardHeads = findAll(tree, (n) => hasClass(n, "wbt-as-cardhead"));
+assert.equal(cardHeads.length, 2, "两个本域 action 各一张卡");
+for (const head of cardHeads) {
+  const badges = findAll(head, (n) => hasClass(n, "wbt-as-badge")).map((n) => text(n));
+  assert.equal(badges.some((b) => b.includes("wb-addon")), false, "卡片内不得再出现域 badge：" + badges.join("|"));
+  assert.ok(badges.length >= 1 && badges.length <= 2, "卡片只保留参数数与必填两个 badge");
+}
+
 // 参数表：联合类型、必填、默认/范围/枚举/长度约束、参数说明都不伪造。
 const rows = findAll(tree, (n) => n.type === "tr");
 const listRow = rows.find((row) => text(row).includes("pageNumber") && text(row).includes("页码"));
