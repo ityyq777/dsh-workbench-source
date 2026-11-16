@@ -13,7 +13,9 @@ for(let y=1900;y<=2400;y++){
 }
 assert.equal(model.calendar(2012).weeks,54);
 assert.deepEqual([1,2,3,4,6,7,99].map(model.level),[1,2,2,3,3,4,4]);
-assert.deepEqual(model.TYPES,['done','publish','shutdown','claimed']);
+assert.deepEqual(model.TYPES,['done','publish','shutdown','claimed','target'],'目标排在四类事件之后');
+assert.deepEqual(model.FILTER_TYPES,['done','publish','shutdown','claimed'],'活动筛选只认四类事件');
+assert.deepEqual(model.activityParams({activityDate:'2024-01-01',activityType:'target'}),{activityDate:'2024-01-01',activityType:'done'},'目标不进活动筛选');
 assert.deepEqual(model.LEVELS.map(v=>v.label),['1','2–3','4–6','7+']);
 for(const [index,entry] of model.LEVELS.entries()){
  assert.equal(model.level(entry.min),index+1);
@@ -44,7 +46,7 @@ const mod={exports:{}};runInNewContext(readFileSync('packages/addons/tasks/clien
 const Heatmap=mod.exports,y=new Date().getFullYear(),date=y+'-01-01',big=y+'-02-02',zero=y+'-03-03';
 for(const lang of ['zh','en']){
  reset();let navigation,fail=false;const calls=[];
- const p={lang,onNavigate:(...v)=>navigation=v,api:{call:async(action,args)=>{calls.push(args);if(fail){fail=false;return {ok:false};}return {ok:true,result:{year:args.year,days:args.year===y?[{date,done:2,publish:4,shutdown:7,claimed:3},{date:big,done:150,publish:4,shutdown:7,claimed:3}]:[]}};}}};
+ const p={lang,onNavigate:(...v)=>navigation=v,api:{call:async(action,args)=>{calls.push(args);if(fail){fail=false;return {ok:false};}return {ok:true,result:{year:args.year,days:args.year===y?[{date,done:2,publish:4,shutdown:7,claimed:3,target:5},{date:big,done:150,publish:4,shutdown:7,claimed:3,target:150}]:[]}};}}};
  let v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].loading));await flush();v=render(Heatmap,p);
  const day=()=>find(render(Heatmap,p),n=>n.props['data-date']===date);
  assert.equal(day().props.title,date+' · '+model.COPY[lang].done+' 2');
@@ -55,29 +57,39 @@ for(const lang of ['zh','en']){
  assert.equal(numCell(zero).children.length,0,'0 条不渲染数字');assert.equal(numCell(zero).props['data-level'],0);
  assert.equal(numCell(date).children.length,1);const num=numCell(date).children[0];
  assert.equal(num.props.className,'wbt-hm-num');assert.equal(num.props['aria-hidden'],true);assert.equal(text(num),'2');
- for(const type of model.TYPES){find(render(Heatmap,p),n=>n.props.role==='tab'&&text(n)===model.COPY[lang][type]).props.onClick();await flush();v=render(Heatmap,p);assert.equal(calls.length,1);day().props.onClick();assert.equal(navigation[0],'tasks');assert.equal(navigation[1].activityType,type);assert.equal(navigation[1].activityDate,date);
+ for(const type of model.FILTER_TYPES){find(render(Heatmap,p),n=>n.props.role==='tab'&&text(n)===model.COPY[lang][type]).props.onClick();await flush();v=render(Heatmap,p);assert.equal(calls.length,1);day().props.onClick();assert.equal(navigation[0],'tasks');assert.equal(navigation[1].activityType,type);assert.equal(navigation[1].activityDate,date);
   const legend=find(v,n=>n.props.className==='wbt-hm-intensity');
   assert.equal(legend.props.role,'img');assert.equal(legend.props['aria-label'],model.legendLabel(lang));
   assert.ok(text(legend).startsWith(model.COPY[lang].dailyCount));
   const items=walk(legend).filter(n=>n.props.className==='wbt-hm-intensity-item');assert.equal(items.length,4);
   items.forEach((item,index)=>{assert.equal(text(item),model.LEVELS[index].label);const swatch=find(item,n=>n.props.className==='wbt-hm-swatch');assert.equal(swatch.props['aria-hidden'],true);assert.equal(swatch.props.style.background,`var(--hm-${type}-${index+1})`);});
-  const tabs=find(v,n=>n.props.role==='tablist');assert.equal(tabs.children.length,4);assert.ok(!walk(tabs).includes(legend));
+  const tabs=find(v,n=>n.props.role==='tablist');assert.equal(tabs.children.length,5);assert.ok(!walk(tabs).includes(legend));
  }
- assert.equal(walk(v).filter(n=>n.props.role==='tab').length,4);
+ // 目标维度：可切、显示数字与图例，但格子不可点、不拼活动筛选，总数换标签。
+ find(render(Heatmap,p),n=>n.props.role==='tab'&&text(n)===model.COPY[lang].target).props.onClick();await flush();v=render(Heatmap,p);
+ assert.equal(text(numCell(date)),'5','目标格显示计划数');
+ assert.equal(day().props.title,date+' · '+model.COPY[lang].target+' 5');
+ assert.equal(day().props['aria-disabled'],true,'目标格不可点');
+ navigation=null;day().props.onClick();assert.equal(navigation,null,'点目标格不跳转');
+ assert.equal(numCell(big).props['data-level'],4,'目标强度档位复用到第四档');
+ assert.equal(numCell(big).props.style.background,'var(--hm-target-4)');
+ assert.ok(text(v).includes(model.COPY[lang].targetTotal+' · 155'),'目标总数单独统计（5+150）');
+ assert.ok(text(v).includes(model.COPY[lang].targetNote),'目标维度给出计划口径说明');
+ assert.equal(walk(v).filter(n=>n.props.role==='tab').length,5);
  const claimedTab=walk(v).find(n=>n.props.role==='tab'&&text(n)===model.COPY[lang].claimed);if(claimedTab){claimedTab.props.onClick();await flush();render(Heatmap,p);assert.equal(text(find(render(Heatmap,p),n=>n.props['data-date']===date)),'3');}
  const future=walk(v).find(n=>n.props['data-date']>model.localDay(new Date()));
  if(future){assert.equal(future.children.length,0,'未来日期不渲染数字');assert.equal(future.props['data-level'],0);navigation=null;assert.equal(future.props['aria-disabled'],true);assert.equal(future.props.disabled,undefined);future.props.onClick();assert.equal(navigation,null);}
- find(v,n=>n.props['aria-label']===model.COPY[lang].previous).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].empty[model.TYPES.at(-1)]));
+ find(v,n=>n.props['aria-label']===model.COPY[lang].previous).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].empty.claimed),'空年份沿用当前维度文案');
  find(v,n=>n.props['aria-label']===model.COPY[lang].next).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.equal(calls.length,2);
  fail=true;find(v,n=>n.props['aria-label']===model.COPY[lang].next).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].error));
- find(v,n=>n.type==='button'&&text(n)===model.COPY[lang].retry).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].empty[model.TYPES.at(-1)]));assert.equal(calls.length,4);
+ find(v,n=>n.type==='button'&&text(n)===model.COPY[lang].retry).props.onClick();render(Heatmap,p);await flush();v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].empty.claimed));assert.equal(calls.length,4);
 }
 const noop=()=>null,copy=require(dir+'ui/copy.cjs');
 const View=require(dir+'views/tasks-view.cjs')({React,configView:{useConfig:()=>({ready:true,values:{'list.filterRestarted':true,'ui.defaultTab':0}})},COPY:copy,TABS:[],allTables:()=>[],treeWalk:()=>[],treeFlat:()=>[],cx:(...s)=>s.join(' '),injectCss:noop,Icon:noop,PathCrumbs:noop,TagFilter:noop});
-for(const activityType of model.TYPES){
+for(const activityType of model.FILTER_TYPES){
  reset();const calls=[],p={lang:'en',viewParams:{activityDate:date,activityType,tableId:'stale',difficultyMissing:true},api:{subscribe:()=>noop,call:async(action,args)=>{calls.push({action,args});return {ok:true,result:action==='tasks.list'?{records:[],total:0}:[]};}}};
  const outer=View(p),Body=outer.type;render(Body,outer.props);await flush();render(Body,outer.props);await flush();let args=calls.filter(c=>c.action==='tasks.list').at(-1).args;
  assert.equal(args[activityType+'From'],date);assert.equal(args[activityType+'To'],date);assert.deepEqual(args.statuses,activityType==='done'?[2]:activityType==='shutdown'?[1]:[]);assert.ok(!('urgent' in args),'the panel never sends the legacy urgent flag');assert.equal(args.filterRestarted,undefined);assert.equal(args.tableId,null);assert.equal(args.difficultyMissing,false);assert.equal(args.titleKey,'');assert.deepEqual(args.tagIds,[]);
  find(render(Body,outer.props),n=>n.props.kind===activityType&&n.props.value).props.onChange({from:'',to:''});render(Body,outer.props);await flush();args=calls.filter(c=>c.action==='tasks.list').at(-1).args;assert.ok(!('activityDate' in args));assert.ok(!('activityType' in args));
 }
-console.log('TASK ACTIVITY UI PASS: 501 years, leap/54-week geometry, 4 single types, in-cell counts (2, 99+, empty 0/future), zh/en, cache/retry/empty, accessible future cells, list drilldown and clear');
+console.log('TASK ACTIVITY UI PASS: 501 years, leap/54-week geometry, 5 legend tabs with target plan dimension, in-cell counts (2, 99+, empty 0/future), zh/en, cache/retry/empty, accessible non-clickable target cells, list drilldown and clear');

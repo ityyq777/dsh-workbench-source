@@ -28,17 +28,31 @@ try {
   const before=db.prepare('SELECT total_changes() n').get().n;
   const calendar=call('tasks.activityCalendar',{year:2024});
   assert.deepEqual(calendar,{year:2024,days:[
-    {date:'2024-01-01',publish:1,done:0,shutdown:0,claimed:1},
-    {date:leap,publish:4,done:2,shutdown:1,claimed:1},
-    {date:'2024-03-01',publish:1,done:1,shutdown:0,claimed:1},
-    {date:'2024-06-01',publish:1,done:0,shutdown:0,claimed:0},
-  ],totals:{publish:7,done:3,shutdown:1,claimed:3,total:14},max:{publish:4,done:2,shutdown:1,claimed:1,total:8}});
+    {date:'2024-01-01',publish:1,done:0,shutdown:0,claimed:1,target:0},
+    {date:leap,publish:4,done:2,shutdown:1,claimed:1,target:10},
+    {date:'2024-03-01',publish:1,done:1,shutdown:0,claimed:1,target:0},
+    {date:'2024-06-01',publish:1,done:0,shutdown:0,claimed:0,target:0},
+  ],totals:{publish:7,done:3,shutdown:1,claimed:3,target:10,total:14},max:{publish:4,done:2,shutdown:1,claimed:1,target:10,total:8}});
+  assert.equal(calendar.totals.total,14,'活动总数只累加四类事件，不含目标');
+  assert.equal(calendar.max.total,8,'max.total 不受目标影响');
+  assert.equal(calendar.totals.target,10,'目标按 target_date 计数，排除已删除任务');
+  // 只在目标日有值的日期也要出现在 days 里，且仍不改变活动总数。
+  db.prepare("UPDATE task SET target_date='2024-07-07' WHERE id='active-stale'").run();
+  const planOnly=call('tasks.activityCalendar',{year:2024});
+  const july=planOnly.days.find(day=>day.date==='2024-07-07');
+  assert.deepEqual(july,{date:'2024-07-07',publish:0,done:0,shutdown:0,claimed:0,target:1},'只有目标计划的日期也返回');
+  assert.equal(planOnly.totals.total,calendar.totals.total,'目标维度不改活动总数');
+  assert.equal(planOnly.totals.target,10,'目标总数不变');
+  db.prepare("UPDATE task SET target_date=? WHERE id='active-stale'").run(leap);
   const nextYear=call('tasks.activityCalendar',{year:2025});
   assert.deepEqual(nextYear.days,[
-    {date:'2025-01-01',publish:1,done:0,shutdown:1,claimed:0},
-    {date:'2025-01-03',publish:0,done:0,shutdown:0,claimed:1},
+    {date:'2025-01-01',publish:1,done:0,shutdown:1,claimed:0,target:0},
+    {date:'2025-01-03',publish:0,done:0,shutdown:0,claimed:1,target:0},
   ],'claimed_at 本地日优先于发布日');
-  assert.equal(db.prepare('SELECT total_changes() n').get().n,before,'calendar is read-only');
+  assert.equal(nextYear.totals.target,0,'跨年目标不计入其它年份');
+  const before2=db.prepare('SELECT total_changes() n').get().n;
+  call('tasks.activityCalendar',{year:2024});
+  assert.equal(db.prepare('SELECT total_changes() n').get().n,before2,'calendar is read-only');
   const recentDone=call('tasks.statsReport',{range:'all',recentDoneLimit:50}).lists.recentDone;
   for(const day of calendar.days) {
     const recentIds=recentDone.filter(row=>row.date===day.date).map(row=>row.id).sort();
@@ -67,7 +81,7 @@ try {
   assert.deepEqual(ids(list({activityDate:leap,titleKey:'done-b'})),['done-b'],'AND with search');
   const page=list({activityDate:leap,activityType:'publish',sort:'created',pageNumber:2,pageSize:2});
   assert.equal(page.total,4);assert.deepEqual(ids(page),['done-a','restarted']);
-  assert.deepEqual(call('tasks.activityCalendar',{year:2022}),{year:2022,days:[],totals:{publish:0,done:0,shutdown:0,claimed:0,total:0},max:{publish:0,done:0,shutdown:0,claimed:0,total:0}});
+  assert.deepEqual(call('tasks.activityCalendar',{year:2022}),{year:2022,days:[],totals:{publish:0,done:0,shutdown:0,claimed:0,target:0,total:0},max:{publish:0,done:0,shutdown:0,claimed:0,target:0,total:0}});
   for(const year of [undefined,null,'2024',2024.5,NaN,Infinity,1899,10000]) assert.throws(()=>call('tasks.activityCalendar',{year}),/year/);
   for(const year of [1900,2000,9999]) assert.equal(call('tasks.activityCalendar',{year}).year,year);
   for(const date of ['',null,'2023-02-29','1900-02-29','2024-04-31','2024-1-01','1899-12-31','10000-01-01',"2024-02-29' OR 1=1 --"]) {

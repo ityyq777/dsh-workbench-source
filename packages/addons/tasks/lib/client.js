@@ -1635,11 +1635,12 @@ var require_ranking_name = __commonJS({
 // packages/addons/tasks/client/stats/heatmap-model.cjs
 var require_heatmap_model = __commonJS({
   "packages/addons/tasks/client/stats/heatmap-model.cjs"(exports2, module2) {
-    var TYPES = ["done", "publish", "shutdown", "claimed"];
+    var FILTER_TYPES = ["done", "publish", "shutdown", "claimed"];
+    var TYPES = FILTER_TYPES.concat(["target"]);
     var LEVELS = [{ min: 1, max: 1, label: "1" }, { min: 2, max: 3, label: "2\u20133" }, { min: 4, max: 6, label: "4\u20136" }, { min: 7, max: null, label: "7+" }];
     var COPY = {
-      zh: { title: "\u5E74\u5EA6\u6D3B\u52A8", previous: "\u4E0A\u4E00\u5E74", next: "\u4E0B\u4E00\u5E74", done: "\u5B8C\u6210", publish: "\u53D1\u5E03", shutdown: "\u5173\u95ED", claimed: "\u63A5\u53D6", empty: { done: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5B8C\u6210\u8BB0\u5F55", publish: "\u672C\u5E74\u5EA6\u6CA1\u6709\u53D1\u5E03\u8BB0\u5F55", shutdown: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5173\u95ED\u8BB0\u5F55", claimed: "\u672C\u5E74\u5EA6\u6CA1\u6709\u63A5\u53D6\u8BB0\u5F55" }, loading: "\u6B63\u5728\u52A0\u8F7D\u5E74\u5EA6\u6D3B\u52A8", error: "\u5E74\u5EA6\u6D3B\u52A8\u52A0\u8F7D\u5931\u8D25", retry: "\u91CD\u8BD5", future: "\u672A\u6765\u65E5\u671F", none: "\u65E0\u6D3B\u52A8", clear: "\u6E05\u9664\u6D3B\u52A8\u7B5B\u9009", filter: "\u6D3B\u52A8\u7B5B\u9009", total: "\u6D3B\u52A8\u603B\u6570", dailyCount: "\u6BCF\u65E5\u6B21\u6570", weekdays: ["\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D", "\u65E5"], claimedNote: "\u5DF2\u63A5\u53D6/\u5DF2\u5B8C\u6210\u4EFB\u52A1\uFF1B\u5386\u53F2\u4EFB\u52A1\u672A\u8BB0\u5F55\u63A5\u53D6\u65F6\u95F4\uFF0C\u6309\u53D1\u5E03\u65E5\u671F\u8BA1" },
-      en: { title: "Annual task activity", previous: "Previous year", next: "Next year", done: "Done", publish: "Published", shutdown: "Closed", claimed: "Claimed", empty: { done: "No completed tasks this year", publish: "No published tasks this year", shutdown: "No closed tasks this year", claimed: "No claimed tasks this year" }, loading: "Loading annual activity", error: "Could not load annual activity", retry: "Retry", future: "Future date", none: "No activity", clear: "Clear activity filter", filter: "Activity filter", total: "Total events", dailyCount: "Daily count", weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], claimedNote: "claimed or completed tasks; historical tasks without a claim time use the publish date" }
+      zh: { title: "\u5E74\u5EA6\u6D3B\u52A8", previous: "\u4E0A\u4E00\u5E74", next: "\u4E0B\u4E00\u5E74", done: "\u5B8C\u6210", publish: "\u53D1\u5E03", shutdown: "\u5173\u95ED", claimed: "\u63A5\u53D6", target: "\u76EE\u6807", empty: { done: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5B8C\u6210\u8BB0\u5F55", publish: "\u672C\u5E74\u5EA6\u6CA1\u6709\u53D1\u5E03\u8BB0\u5F55", shutdown: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5173\u95ED\u8BB0\u5F55", claimed: "\u672C\u5E74\u5EA6\u6CA1\u6709\u63A5\u53D6\u8BB0\u5F55", target: "\u672C\u5E74\u5EA6\u6CA1\u6709\u76EE\u6807\u8BA1\u5212" }, loading: "\u6B63\u5728\u52A0\u8F7D\u5E74\u5EA6\u6D3B\u52A8", error: "\u5E74\u5EA6\u6D3B\u52A8\u52A0\u8F7D\u5931\u8D25", retry: "\u91CD\u8BD5", future: "\u672A\u6765\u65E5\u671F", none: "\u65E0\u6D3B\u52A8", clear: "\u6E05\u9664\u6D3B\u52A8\u7B5B\u9009", filter: "\u6D3B\u52A8\u7B5B\u9009", total: "\u6D3B\u52A8\u603B\u6570", dailyCount: "\u6BCF\u65E5\u6B21\u6570", weekdays: ["\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D", "\u65E5"], claimedNote: "\u5DF2\u63A5\u53D6/\u5DF2\u5B8C\u6210\u4EFB\u52A1\uFF1B\u5386\u53F2\u4EFB\u52A1\u672A\u8BB0\u5F55\u63A5\u53D6\u65F6\u95F4\uFF0C\u6309\u53D1\u5E03\u65E5\u671F\u8BA1", targetNote: "\u6309\u76EE\u6807\u8BA1\u5212\u65E5\u671F\u7EDF\u8BA1\uFF0C\u5C5E\u4E8E\u8BA1\u5212\u53E3\u5F84\uFF0C\u4E0D\u8BA1\u5165\u6D3B\u52A8\u603B\u6570", targetTotal: "\u76EE\u6807\u603B\u6570" },
+      en: { title: "Annual task activity", previous: "Previous year", next: "Next year", done: "Done", publish: "Published", shutdown: "Closed", claimed: "Claimed", target: "Target", empty: { done: "No completed tasks this year", publish: "No published tasks this year", shutdown: "No closed tasks this year", claimed: "No claimed tasks this year", target: "No target dates this year" }, loading: "Loading annual activity", error: "Could not load annual activity", retry: "Retry", future: "Future date", none: "No activity", clear: "Clear activity filter", filter: "Activity filter", total: "Total events", dailyCount: "Daily count", weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], claimedNote: "claimed or completed tasks; historical tasks without a claim time use the publish date", targetNote: "counted by target plan date; planning scope, not included in total events", targetTotal: "Planned" }
     };
     function localDay(d) {
       return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
@@ -1674,9 +1675,9 @@ var require_heatmap_model = __commonJS({
     }
     function activityParams(params) {
       if (!params || !/^\d{4}-\d{2}-\d{2}$/.test(params.activityDate || "")) return null;
-      return { activityDate: params.activityDate, activityType: TYPES.indexOf(params.activityType) >= 0 ? params.activityType : "done" };
+      return { activityDate: params.activityDate, activityType: FILTER_TYPES.indexOf(params.activityType) >= 0 ? params.activityType : "done" };
     }
-    module2.exports = { TYPES, LEVELS, COPY, legendLabel, localDay, calendar, level, count, background, label, activityParams };
+    module2.exports = { TYPES, FILTER_TYPES, LEVELS, COPY, legendLabel, localDay, calendar, level, count, background, label, activityParams };
   }
 });
 
@@ -1690,6 +1691,9 @@ var require_heatmap_styles = __commonJS({
       "--hm-hue-publish:var(--wbt-accent,var(--wb-accent,#11a89b));",
       "--hm-hue-shutdown:var(--wb-danger,#e5484d);",
       "--hm-hue-claimed:var(--wb-warn,#d48806);",
+      // 目标是计划口径，用中性灰蓝，弱于四类彩色事件；灰阶在浅底上对比度低，
+      // 四档取 26/42/58/74%（比四类事件更高），保证与空白格、与相邻档都能分辨。
+      "--hm-hue-target:var(--wb-muted,#8b8f96);",
       "--hm-surface:var(--wbt-surface,color-mix(in oklab,currentColor 4%,transparent));",
       "--hm-empty:color-mix(in oklab,var(--wbt-line,color-mix(in oklab,currentColor 18%,transparent)) 55%,var(--hm-surface));",
       "--hm-done-1:color-mix(in oklab,var(--hm-hue-done) 14%,var(--hm-surface));",
@@ -1708,6 +1712,10 @@ var require_heatmap_styles = __commonJS({
       "--hm-claimed-2:color-mix(in oklab,var(--hm-hue-claimed) 26%,var(--hm-surface));",
       "--hm-claimed-3:color-mix(in oklab,var(--hm-hue-claimed) 38%,var(--hm-surface));",
       "--hm-claimed-4:color-mix(in oklab,var(--hm-hue-claimed) 52%,var(--hm-surface));",
+      "--hm-target-1:color-mix(in oklab,var(--hm-hue-target) 26%,var(--hm-surface));",
+      "--hm-target-2:color-mix(in oklab,var(--hm-hue-target) 42%,var(--hm-surface));",
+      "--hm-target-3:color-mix(in oklab,var(--hm-hue-target) 58%,var(--hm-surface));",
+      "--hm-target-4:color-mix(in oklab,var(--hm-hue-target) 74%,var(--hm-surface));",
       // 四档都保留正文色：最深档只混到 52%，深色主题里前景文字对比度仍 ≥4.7，浅色主题 ≥7。
       "--hm-fg-1:currentColor;--hm-fg-2:currentColor;--hm-fg-3:currentColor;--hm-fg-4:currentColor;",
       "min-width:0;max-width:100%;border:1px solid var(--wbt-line,color-mix(in oklab,currentColor 15%,transparent));border-radius:12px;padding:16px;margin-bottom:16px;color:inherit;font-size:12px;box-sizing:border-box}",
@@ -1849,6 +1857,7 @@ var require_heatmap = __commonJS({
             })),
             h("div", { className: "wbt-hm-grid" }, geometry.days.map(function(d) {
               var day = byDate[d.date] || {}, future = d.date > today, n = future ? 0 : model.count(day, type), enabled = !future && n > 0;
+              var clickable = enabled && type !== "target";
               var text = !future && n > 0 ? n >= 100 ? "99+" : String(n) : "";
               var title = model.label(d.date, day, t, type) + (future ? " \xB7 " + t.future : !n ? " \xB7 " + t.none : "");
               return h("button", {
@@ -1860,7 +1869,7 @@ var require_heatmap = __commonJS({
                 "data-type": type,
                 title,
                 "aria-label": title,
-                "aria-disabled": !enabled,
+                "aria-disabled": !clickable,
                 style: { gridColumn: d.column, gridRow: d.row, background: future ? "var(--hm-empty)" : model.background(day, type) },
                 onMouseEnter: function() {
                   setTip(title);
@@ -1875,7 +1884,7 @@ var require_heatmap = __commonJS({
                   setTip("");
                 },
                 onClick: function() {
-                  if (enabled && props.onNavigate) props.onNavigate("tasks", { activityDate: d.date, activityType: type });
+                  if (clickable && props.onNavigate) props.onNavigate("tasks", { activityDate: d.date, activityType: type });
                 }
               }, text ? h("span", { className: "wbt-hm-num", "aria-hidden": true }, text) : null);
             }))
@@ -1907,8 +1916,9 @@ var require_heatmap = __commonJS({
               setTip("");
             } }, h("span", { className: "wbt-hm-swatch", style: { background: "var(--hm-" + k + "-4)" }, "aria-hidden": true }), t[k]);
           })),
-          ready && h("span", { className: "wbt-hm-summary", "aria-live": "polite" }, tip || t.total + " \xB7 " + total),
+          ready && h("span", { className: "wbt-hm-summary", "aria-live": "polite" }, tip || (type === "target" ? t.targetTotal : t.total) + " \xB7 " + total),
           type === "claimed" && h("span", { className: "wbt-hm-intensity-label" }, t.claimedNote),
+          type === "target" && h("span", { className: "wbt-hm-intensity-label" }, t.targetNote),
           h(
             "div",
             { className: "wbt-hm-intensity", role: "img", "aria-label": model.legendLabel(lang) },
@@ -11687,7 +11697,7 @@ var init_list_checks = __esm({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, EditModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.17",
+    version: "5.2.18",
     icon: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },

@@ -8,6 +8,9 @@ module.exports = [
   "--hm-hue-publish:var(--wbt-accent,var(--wb-accent,#11a89b));",
   "--hm-hue-shutdown:var(--wb-danger,#e5484d);",
   "--hm-hue-claimed:var(--wb-warn,#d48806);",
+  // 目标是计划口径，用中性灰蓝，弱于四类彩色事件；灰阶在浅底上对比度低，
+  // 四档取 26/42/58/74%（比四类事件更高），保证与空白格、与相邻档都能分辨。
+  "--hm-hue-target:var(--wb-muted,#8b8f96);",
   "--hm-surface:var(--wbt-surface,color-mix(in oklab,currentColor 4%,transparent));",
   "--hm-empty:color-mix(in oklab,var(--wbt-line,color-mix(in oklab,currentColor 18%,transparent)) 55%,var(--hm-surface));",
   "--hm-done-1:color-mix(in oklab,var(--hm-hue-done) 14%,var(--hm-surface));",
@@ -26,6 +29,10 @@ module.exports = [
   "--hm-claimed-2:color-mix(in oklab,var(--hm-hue-claimed) 26%,var(--hm-surface));",
   "--hm-claimed-3:color-mix(in oklab,var(--hm-hue-claimed) 38%,var(--hm-surface));",
   "--hm-claimed-4:color-mix(in oklab,var(--hm-hue-claimed) 52%,var(--hm-surface));",
+  "--hm-target-1:color-mix(in oklab,var(--hm-hue-target) 26%,var(--hm-surface));",
+  "--hm-target-2:color-mix(in oklab,var(--hm-hue-target) 42%,var(--hm-surface));",
+  "--hm-target-3:color-mix(in oklab,var(--hm-hue-target) 58%,var(--hm-surface));",
+  "--hm-target-4:color-mix(in oklab,var(--hm-hue-target) 74%,var(--hm-surface));",
   // 四档都保留正文色：最深档只混到 52%，深色主题里前景文字对比度仍 ≥4.7，浅色主题 ≥7。
   "--hm-fg-1:currentColor;--hm-fg-2:currentColor;--hm-fg-3:currentColor;--hm-fg-4:currentColor;",
   "min-width:0;max-width:100%;border:1px solid var(--wbt-line,color-mix(in oklab,currentColor 15%,transparent));border-radius:12px;padding:16px;margin-bottom:16px;color:inherit;font-size:12px;box-sizing:border-box}",
