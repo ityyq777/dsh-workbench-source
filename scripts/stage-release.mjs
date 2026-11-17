@@ -3,11 +3,15 @@
  *
  * 主仓库里宿主包名是内部名 dsh-workbench；npm 上这个名字已被无关项目占用，
  * 因此发布名默认是 dsh-workbench-host（可用 NPM_HOST_NAME 覆盖）。
- * 业务插件仍使用 dsh-workbench-tasks / tags / sites / storage。
+ * 业务插件逐个取 packages/addons/<目录>，npm 名沿用插件自身 package.json。
+ *
+ * 插件清单按目录枚举，不在这里硬编码：新增插件只要在 ADDON_META 里补一段市场
+ * 文案就会被带上；漏登记会直接报错，避免新插件悄悄漏发布。
  *
  * 输出：
- *   dist/release/packages/{host,tasks,tags,sites,storage}  五个可安装包
+ *   dist/release/packages/host + dist/release/packages/<插件>   可安装包
  *   dist/release/marketplace/*.yml                 插件市场条目草稿
+ *   dist/release/release.json                      发布清单（publish-npm / publish-github 读它）
  *   dist/release/README.md / LICENSE
  */
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -22,13 +26,120 @@ const REPO_URL = `https://github.com/${OWNER}/${REPO}`;
 const DSH_ENGINES = { dsh: ">=0.2.0-rc.1 <0.3.0" };
 const NODE_ENGINES = { node: ">=22.5" };
 
+const addonsRoot = join(root, "packages", "addons");
+
+// 每个业务插件一段发布元数据：目录名即 key。新增插件必须在这里登记，
+// 否则脚本直接报错（宁可发布失败，也不要新插件悄悄漏发）。
+const ADDON_META = {
+  tasks: {
+    description: "个人工作台任务插件：任务树、优先级、截止日、时间线与重启",
+    keywords: ["tasks", "todo", "tree", "timeline"],
+    marketCategory: "workflow",
+    marketEn: "Task manager for DSH: a task tree, eight views, priorities, due dates, timeline/restart chains, batch merge and table moves.",
+    marketZh: "DSH 任务管理：任务树、八个视图、优先级、截止日、时间线/重启链、批量归并与迁表。",
+    marketExtra: "任务、标签、站点数据都保存在宿主 SQLite；卸载插件不删数据。",
+  },
+  tags: {
+    description: "个人工作台标签插件：创建与管理标签，为任务、站点与储物提供标签归类",
+    keywords: ["tags", "label", "catalog"],
+    marketCategory: "tools",
+    marketEn: "Tag manager for DSH: create, search and delete tags, with soft-delete and per-item mappings used by the workbench task, site and storage plugins.",
+    marketZh: "DSH 标签管理：创建、搜索、删除标签，支持软删除与条目映射，供任务、站点与储物插件使用。",
+    marketExtra: "标签被删除后，站点等引用它的条目会失去该标签，但条目本身保留。",
+  },
+  sites: {
+    description: "个人工作台站点插件：目录树、链接与标签",
+    keywords: ["sites", "bookmarks", "links", "tree"],
+    marketCategory: "tools",
+    marketEn: "Site bookmark manager for DSH: a folder tree, multiple links per site, tags and filtering, with per-folder views.",
+    marketZh: "DSH 站点收藏：目录树、每个站点多条链接、标签与筛选，支持按目录浏览。",
+    marketExtra: "标签功能在检测到 dsh-workbench-tags 已安装时显示；未安装时站点仍可正常使用目录与链接。",
+  },
+  storage: {
+    description: "个人工作台储物插件：名称、品牌、位置、单位、库存文本与标签",
+    keywords: ["storage", "inventory", "items", "tags"],
+    marketCategory: "tools",
+    marketEn: "Storage records for DSH: names, brands, locations, units, stock text and tags with local SQLite and optional metadata sync.",
+    marketZh: "DSH 储物：记录名称、品牌、位置、单位、库存文本与标签，本地 SQLite 保存，可选元数据同步。",
+    marketExtra: "管理物品库存文本台账，不上传或下载文件字节；卸载插件不删数据。",
+  },
+  message: {
+    description: "个人工作台消息插件：统一消息发送入口、收件箱、未读统计与提示音",
+    keywords: ["message", "notification", "inbox", "sound"],
+    marketCategory: "tools",
+    marketEn: "Message center for DSH: one send entry for agents and other plugins, inbox with unread counts, stats and a configurable notification sound.",
+    marketZh: "DSH 消息中心：给 agent 与其他插件统一的消息发送入口，收件箱、未读数、统计与可配置提示音。",
+    marketExtra: "消息只保存在本机，不参与云端同步，也不进入备份导出；已读消息默认 30 天后清理。",
+  },
+  vault: {
+    description: "个人工作台凭据保险箱：加密保存密码与 token，agent 只见掩码",
+    keywords: ["vault", "secrets", "password", "token", "security"],
+    marketCategory: "tools",
+    marketEn: "Credential vault for DSH: secrets are encrypted with AES-256-GCM under a scrypt-derived key, stay on the local machine, and the agent only ever sees a masked preview.",
+    marketZh: "DSH 凭据保险箱：密码与 token 用 scrypt 派生密钥 + AES-256-GCM 加密，只存本机，agent 只见掩码。",
+    marketExtra: "密文与 KDF 参数不进备份导出，换机需重新录入或等云同步。",
+  },
+  connector: {
+    description: "个人工作台连接器插件：RSS/Webhook 内容接入，来源定义、条目与运行记录",
+    keywords: ["connector", "rss", "webhook", "feed"],
+    marketCategory: "tools",
+    marketEn: "Content connector for DSH: define RSS or webhook sources, sync items into the workbench, keep credentials local and review per-source run logs.",
+    marketZh: "DSH 连接器：定义 RSS/Webhook 来源并同步条目进工作台，凭据留在本机，按来源查看运行记录。",
+    marketExtra: "只保存来源定义与拉取到的条目，不代理浏览外部页面；凭据优先存保险箱。",
+  },
+  automation: {
+    description: "个人工作台自动化：定时/域事件/手动触发白名单 action，含模板、条件、限频与运行记录",
+    keywords: ["automation", "rules", "cron", "trigger"],
+    marketCategory: "workflow",
+    marketEn: "Automation for DSH: run whitelisted actions on a schedule, on domain events or manually, with templates, conditions, rate limits and run history.",
+    marketZh: "DSH 自动化：按定时、域事件或手动触发白名单 action，含模板、条件、限频与运行记录。",
+    marketExtra: "定时规则由插件内 30 秒定时器驱动，不依赖宿主调度器。",
+  },
+  contacts: {
+    description: "个人工作台联系人插件：本地联系人、分组、多值字段与 vCard 导入导出",
+    keywords: ["contacts", "vcard", "addressbook"],
+    marketCategory: "tools",
+    marketEn: "Contacts for DSH: local address book with groups, multi-value fields, search and vCard import/export.",
+    marketZh: "DSH 联系人：本地通讯录，支持分组、多值字段、搜索与 vCard 导入导出。",
+    marketExtra: "联系人只存本机 SQLite；vCard 导入导出按文件和文本处理，不上传。",
+  },
+  calendar: {
+    description: "个人工作台日历插件：本地日历、事件、参与人与提醒",
+    keywords: ["calendar", "events", "reminder"],
+    marketCategory: "tools",
+    marketEn: "Calendar for DSH: local calendars, events, participants and reminders, searchable from the workbench agent.",
+    marketZh: "DSH 日历：本地日历、事件、参与人与提醒，工作台 agent 可搜索。",
+    marketExtra: "事件与提醒存本机；不订阅外部日历协议。",
+  },
+  mail: {
+    description: "个人工作台邮件插件：IMAP 收信头、SMTP 发信、保险箱托管密码",
+    keywords: ["mail", "imap", "smtp", "email"],
+    marketCategory: "tools",
+    marketEn: "Mail client for DSH: IMAP fetches recent headers only, SMTP sends plain-text mail, and account passwords live in the vault as secret ids.",
+    marketZh: "DSH 邮件：IMAP 只抓最近邮件头，SMTP 发纯文本，账户密码由保险箱托管（只存 secretId）。",
+    marketExtra: "不下载完整正文与附件；发信仅纯文本，需要先安装 dsh-workbench-vault 保存密码。",
+  },
+};
+
+const addonNames = readdirSync(addonsRoot)
+  .filter((name) => name !== "lib" && existsSync(join(addonsRoot, name, "package.json")))
+  .sort();
+const unregistered = addonNames.filter((name) => !ADDON_META[name]);
+if (unregistered.length) {
+  throw new Error(
+    `新增插件还没登记发布文案：${unregistered.join("、")}；请在 scripts/stage-release.mjs 的 ADDON_META 补 description/keywords/marketCategory/marketEn/marketZh`,
+  );
+}
+const vanished = Object.keys(ADDON_META).filter((name) => !addonNames.includes(name));
+if (vanished.length) {
+  throw new Error(`ADDON_META 里的插件已不存在：${vanished.join("、")}；请同步删除登记`);
+}
+
+// 发布顺序固定：宿主在前，其余按 ADDON_META 声明顺序（业务包依赖宿主）。
+const releaseOrder = Object.keys(ADDON_META);
 const pkgDirs = {
   host: join(root, "packages", "shell-dist"),
-  tasks: join(root, "packages", "addons", "tasks"),
-  tags: join(root, "packages", "addons", "tags"),
-  sites: join(root, "packages", "addons", "sites"),
-  storage: join(root, "packages", "addons", "storage"),
-  message: join(root, "packages", "addons", "message"),
+  ...Object.fromEntries(releaseOrder.map((name) => [name, join(addonsRoot, name)])),
 };
 
 for (const [key, dir] of Object.entries(pkgDirs)) {
@@ -131,65 +242,18 @@ hostPkg.files = ["lib", "client", "cordis.patch.yml", "README.md", "LICENSE"];
 writeJson(join(hostDir, "package.json"), hostPkg);
 rewritePatch(join(hostDir, "cordis.patch.yml"), HOST_NAME);
 rewriteHostClient(join(hostDir, "client", "client.js"), HOST_NAME);
-writeFileSync(join(hostDir, "README.md"), packageReadme(hostPkg, "宿主本身不提供任务/标签/站点/物品视图；安装任一业务插件即可使用。业务插件会自动依赖本包。"));
+writeFileSync(join(hostDir, "README.md"), packageReadme(hostPkg, "宿主本身不提供业务视图；安装任一业务插件即可使用。业务插件会自动依赖本包。"));
 cpSync(join(root, "LICENSE"), join(hostDir, "LICENSE"));
 
 const hostVersion = hostPkg.version;
-const addons = {
-  storage: {
-    dir: "storage",
-    description: "个人工作台储物插件：名称、品牌、位置、单位、库存文本与标签",
-    keywords: ["storage", "inventory", "items", "tags"],
-    marketCategory: "tools",
-    marketEn: "Storage records for DSH: names, brands, locations, units, stock text and tags with local SQLite and optional metadata sync.",
-    marketZh: "DSH 储物：记录名称、品牌、位置、单位、库存文本与标签，本地 SQLite 保存，可选元数据同步。",
-    marketExtra: "管理物品库存文本台账，不上传或下载文件字节；卸载插件不删数据。",
-  },
-  tasks: {
-    dir: "tasks",
-    description: "个人工作台任务插件：任务树、优先级、截止日、时间线与重启",
-    keywords: ["tasks", "todo", "tree", "timeline"],
-    marketCategory: "workflow",
-    marketEn: "Task manager for DSH: a task tree, eight views, priorities, due dates, timeline/restart chains, batch merge and table moves.",
-    marketZh: "DSH 任务管理：任务树、八个视图、优先级、截止日、时间线/重启链、批量归并与迁表。",
-    marketExtra: "任务、标签、站点数据都保存在宿主 SQLite；卸载插件不删数据。",
-  },
-  tags: {
-    dir: "tags",
-    description: "个人工作台标签插件：创建与管理标签，为任务、站点与储物提供标签归类",
-    keywords: ["tags", "label", "catalog"],
-    marketCategory: "tools",
-    marketEn: "Tag manager for DSH: create, search and delete tags, with soft-delete and per-item mappings used by the workbench task, site and storage plugins.",
-    marketZh: "DSH 标签管理：创建、搜索、删除标签，支持软删除与条目映射，供任务、站点与储物插件使用。",
-    marketExtra: "标签被删除后，站点等引用它的条目会失去该标签，但条目本身保留。",
-  },
-  message: {
-    dir: "message",
-    description: "个人工作台消息插件：统一消息发送入口、收件箱、未读统计与提示音",
-    keywords: ["message", "notification", "inbox", "sound"],
-    marketCategory: "tools",
-    marketEn: "Message center for DSH: one send entry for agents and other plugins, inbox with unread counts, stats and a configurable notification sound.",
-    marketZh: "DSH 消息中心：给 agent 与其他插件统一的消息发送入口，收件箱、未读数、统计与可配置提示音。",
-    marketExtra: "消息只保存在本机，不参与云端同步，也不进入备份导出；已读消息默认 30 天后清理。",
-  },
-  sites: {
-    dir: "sites",
-    description: "个人工作台站点插件：目录树、链接与标签",
-    keywords: ["sites", "bookmarks", "links", "tree"],
-    marketCategory: "tools",
-    marketEn: "Site bookmark manager for DSH: a folder tree, multiple links per site, tags and filtering, with per-folder views.",
-    marketZh: "DSH 站点收藏：目录树、每个站点多条链接、标签与筛选，支持按目录浏览。",
-    marketExtra: "标签功能在检测到 dsh-workbench-tags 已安装时显示；未安装时站点仍可正常使用目录与链接。",
-  },
-};
 
 const built = {};
-for (const [key, meta] of Object.entries(addons)) {
-  const dir = join(out, "packages", meta.dir);
+for (const [key, meta] of Object.entries(ADDON_META)) {
+  const dir = join(out, "packages", key);
   copyDir(pkgDirs[key], dir);
   const pkg = commonMeta(
     readJson(join(dir, "package.json")),
-    `packages/${meta.dir}`,
+    `packages/${key}`,
     meta.description,
     meta.keywords,
   );
@@ -212,14 +276,26 @@ for (const [key, meta] of Object.entries(addons)) {
 cpSync(join(root, "README.md"), join(out, "README.md"));
 cpSync(join(root, "LICENSE"), join(out, "LICENSE"));
 
+const hostMarket = {
+  file: "packages-host",
+  sub: "host",
+  category: "ui",
+  en: "Shared runtime for the Personal Workbench: local SQLite, domain registration, agent tool, HTTP/SSE and opt-in cloud sync for the workbench plugins.",
+  zh: "个人工作台共享宿主：本地 SQLite、业务域注册、agent 工具、HTTP/SSE，以及各工作台插件的可选云端同步。",
+};
 const marketEntries = [
-  { file: "packages-host", sub: "host", pkg: hostPkg, category: "ui", en: "Shared runtime for the Personal Workbench: local SQLite, domain registration, agent tool, HTTP/SSE and opt-in cloud sync for the Tasks, Tags, Sites and Storage plugins.", zh: "个人工作台共享宿主：本地 SQLite、业务域注册、agent 工具、HTTP/SSE，以及任务/标签/站点/物品插件的可选云端同步。" },
-  { file: "packages-tasks", sub: "tasks", pkg: built.tasks, category: "workflow", en: addons.tasks.marketEn, zh: addons.tasks.marketZh },
-  { file: "packages-tags", sub: "tags", pkg: built.tags, category: "tools", en: addons.tags.marketEn, zh: addons.tags.marketZh },
-  { file: "packages-sites", sub: "sites", pkg: built.sites, category: "tools", en: addons.sites.marketEn, zh: addons.sites.marketZh },
-  { file: "packages-storage", sub: "storage", pkg: built.storage, category: "tools", en: addons.storage.marketEn, zh: addons.storage.marketZh },
-  { file: "packages-message", sub: "message", pkg: built.message, category: "tools", en: addons.message.marketEn, zh: addons.message.marketZh },
+  hostMarket,
+  ...Object.entries(ADDON_META).map(([key, meta]) => ({
+    file: `packages-${key}`,
+    sub: key,
+    category: meta.marketCategory,
+    en: meta.marketEn,
+    zh: meta.marketZh,
+  })),
 ];
+// 草稿目录整目录重建：插件删掉后不要残留过期条目。
+rmSync(join(out, "marketplace"), { recursive: true, force: true });
+mkdirSync(join(out, "marketplace"), { recursive: true });
 for (const e of marketEntries) {
   const name = `${OWNER}/${REPO}#${e.sub}`;
   const url = `${REPO_URL}/tree/main/packages/${e.sub}`;
@@ -238,8 +314,16 @@ for (const e of marketEntries) {
 const summary = {
   out,
   repo: REPO_URL,
+  packages: ["host", ...releaseOrder],
   host: { name: hostPkg.name, version: hostPkg.version },
   addons: Object.fromEntries(Object.entries(built).map(([k, p]) => [k, { name: p.name, version: p.version }])),
   marketplace: readdirSync(join(out, "marketplace")),
 };
+// 发布顺序写进清单，publish-npm / publish-github 读它，避免再维护一份硬编码列表。
+writeJson(join(out, "release.json"), {
+  generatedAt: new Date().toISOString(),
+  packages: summary.packages,
+  host: summary.host,
+  addons: summary.addons,
+});
 console.log(JSON.stringify(summary, null, 2));

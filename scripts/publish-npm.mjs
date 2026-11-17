@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 发布 dist/release/packages 下的四个包到 npm。
+ * 发布 dist/release/packages 下的全部包到 npm（宿主 + 所有业务插件）。
  *
  * 默认只做 dry-run（npm publish --dry-run），确认无误后加 --publish。
  * 宿主必须先发布，业务包依赖它的版本。
@@ -12,7 +12,7 @@
  *   node scripts/publish-npm.mjs --only=host --publish
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 const root = join(import.meta.dirname, "..");
@@ -24,11 +24,22 @@ const only = argValue("--only");
 const publish = process.argv.includes("--publish");
 const tag = argValue("--tag") ?? "latest";
 
-const order = ["host", "tasks", "tags", "sites", "storage", "message"];
+const order = releaseOrder();
 const selected = only ? order.filter((x) => x === only) : order;
 if (only && selected.length === 0) {
   console.error(`unknown --only=${only}，可选：${order.join(", ")}`);
   process.exit(2);
+}
+
+/** 发布顺序以 stage-release 生成的 release.json 为准；缺失时按目录回退，宿主仍排第一。 */
+function releaseOrder() {
+  const manifestFile = join(root, "dist", "release", "release.json");
+  if (existsSync(manifestFile)) {
+    const manifest = JSON.parse(readFileSync(manifestFile, "utf8"));
+    if (Array.isArray(manifest.packages) && manifest.packages.length > 0) return manifest.packages;
+  }
+  const dirs = readdirSync(releaseRoot).filter((name) => existsSync(join(releaseRoot, name, "package.json")));
+  return ["host", ...dirs.filter((name) => name !== "host").sort()];
 }
 
 function argValue(name) {

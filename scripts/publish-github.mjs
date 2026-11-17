@@ -92,7 +92,12 @@ for (const name of sourceEntries) {
 
 // 3. 看差异。
 const status = gitOk(["status", "--porcelain"], mirrorDir);
-const versions = ["host", "tasks", "tags", "sites", "storage", "message"]
+const manifestFile = join(releaseRoot, "release.json");
+const versions = (
+  existsSync(manifestFile)
+    ? JSON.parse(readFileSync(manifestFile, "utf8")).packages
+    : readdirSync(join(releaseRoot, "packages")).filter((k) => existsSync(join(releaseRoot, "packages", k, "package.json")))
+)
   .map((k) => {
     const p = JSON.parse(readFileSync(join(mirrorDir, "packages", k, "package.json"), "utf8"));
     return `${p.name}@${p.version}`;
