@@ -36,11 +36,11 @@ module.exports = function VaultGate(props) {
   if (vault === "missing") {
     body = h(
       "div",
-      { className: "wbm-gate" },
-      h("div", { className: "wbm-gate-title" }, t(lang, "保险箱插件未安装", "Vault plugin is not installed")),
+      { className: "wbml-gate" },
+      h("div", { className: "wbml-gate-title" }, t(lang, "保险箱插件未安装", "Vault plugin is not installed")),
       h(
         "p",
-        { className: "wbm-gate-text" },
+        { className: "wbml-gate-text" },
         t(
           lang,
           "邮箱密码要存进保险箱。可以先手动填写已有凭据 id（secretId）继续，安装保险箱后再换成自动托管。",
@@ -49,46 +49,46 @@ module.exports = function VaultGate(props) {
       ),
       h(
         "button",
-        { type: "button", className: "wbm-btn", onClick: props.onSkip },
+        { type: "button", className: "wbml-btn", onClick: props.onSkip },
         t(lang, "改用手填凭据 id", "Enter credential id manually"),
       ),
     );
   } else if (vault === "init") {
     body = h(
       "div",
-      { className: "wbm-gate" },
-      h("div", { className: "wbm-gate-title" }, t(lang, "保险箱还没有主口令", "The vault has no master password yet")),
+      { className: "wbml-gate" },
+      h("div", { className: "wbml-gate-title" }, t(lang, "保险箱还没有主口令", "The vault has no master password yet")),
       h(
         "p",
-        { className: "wbm-gate-text" },
+        { className: "wbml-gate-text" },
         t(
           lang,
           "设置一个主口令（至少 12 位），用于加密这台机器上的所有凭据。设置后不能找回，请记牢。",
           "Set a master password (12+ characters) that encrypts every credential on this machine. It cannot be recovered, so keep it safe.",
         ),
       ),
-      h("div", { className: "wbm-gate-row" }, secret(props.pass, props.onPass, props.showPass, props.onTogglePass, "wbm-vault-pass", "new-password")),
-      h("div", { className: "wbm-gate-row" }, secret(props.pass2, props.onPass2, props.showPass2, props.onTogglePass2, "wbm-vault-pass2", "new-password")),
+      h("div", { className: "wbml-gate-row" }, secret(props.pass, props.onPass, props.showPass, props.onTogglePass, "wbml-vault-pass", "new-password")),
+      h("div", { className: "wbml-gate-row" }, secret(props.pass2, props.onPass2, props.showPass2, props.onTogglePass2, "wbml-vault-pass2", "new-password")),
       h(
         "button",
-        { type: "button", className: "wbm-btn primary", disabled: busy, onClick: props.onSubmit },
+        { type: "button", className: "wbml-btn primary", disabled: busy, onClick: props.onSubmit },
         busy ? t(lang, "处理中…", "Working…") : t(lang, "初始化保险箱并继续", "Initialize vault and continue"),
       ),
     );
   } else {
     body = h(
       "div",
-      { className: "wbm-gate" },
-      h("div", { className: "wbm-gate-title" }, t(lang, "保险箱已锁定", "The vault is locked")),
-      h("p", { className: "wbm-gate-text" }, t(lang, "输入主口令解锁后即可保存账户。", "Unlock with your master password to save the account.")),
-      h("div", { className: "wbm-gate-row" }, secret(props.pass, props.onPass, props.showPass, props.onTogglePass, "wbm-vault-pass", "current-password")),
+      { className: "wbml-gate" },
+      h("div", { className: "wbml-gate-title" }, t(lang, "保险箱已锁定", "The vault is locked")),
+      h("p", { className: "wbml-gate-text" }, t(lang, "输入主口令解锁后即可保存账户。", "Unlock with your master password to save the account.")),
+      h("div", { className: "wbml-gate-row" }, secret(props.pass, props.onPass, props.showPass, props.onTogglePass, "wbml-vault-pass", "current-password")),
       h(
         "button",
-        { type: "button", className: "wbm-btn primary", disabled: busy, onClick: props.onSubmit },
+        { type: "button", className: "wbml-btn primary", disabled: busy, onClick: props.onSubmit },
         busy ? t(lang, "解锁中…", "Unlocking…") : t(lang, "解锁并继续", "Unlock and continue"),
       ),
     );
   }
 
-  return h("div", { className: "wbm-gate-wrap" }, body, props.error ? h(C.Notice, { h: h, text: props.error, kind: "warn" }) : null);
+  return h("div", { className: "wbml-gate-wrap" }, body, props.error ? h(C.Notice, { h: h, text: props.error, kind: "warn" }) : null);
 };

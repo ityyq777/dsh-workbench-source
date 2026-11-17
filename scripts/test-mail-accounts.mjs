@@ -130,4 +130,29 @@ assert.match(formSrc, /vault\.secretDelete[\s\S]{0,120}回滚|vault\.secretDelet
 assert.ok(src('client/views/accounts.cjs').includes('mail.providerList'), '账户页从本插件 action 取服务商预设');
 assert.ok(src('client/views/accounts.cjs').includes('mail.accountList'), '账户页从本插件 action 取账户列表');
 
+// ---------- 回归：state setter 必须真的声明过 ----------
+// 曾经踩过：onPick 里调 setProbe(null)，但 setProbe 从未声明，点 chip 直接抛 ReferenceError，
+// 于是「服务商切换不了」。这类错误 eslint 的 no-undef 只对 ESM/脚本生效（这里文件头是 "use strict"
+// 的 CJS，且被包在函数里），单测与 SSR 渲染都发现不了，所以在这里补一条静态检查。
+const ALLOW_SETTERS = new Set(['setTimeout', 'setInterval', 'setImmediate', 'setAttribute', 'setState']);
+function assertSettersDeclared(file) {
+  const text = src(file);
+  const used = new Set();
+  const re = /\b(set[A-Z][A-Za-z0-9_]*)\s*\(/g;
+  let m;
+  while ((m = re.exec(text))) used.add(m[1]);
+  for (const name of used) {
+    if (ALLOW_SETTERS.has(name)) continue;
+    const declared =
+      new RegExp('(?:var|let|const)\\s+' + name + '\\s*=').test(text) ||
+      new RegExp('function\\s+' + name + '\\s*\\(').test(text) ||
+      new RegExp('\\b' + name + '\\s*[,}]').test(text) ||
+      new RegExp('props\\.' + name).test(text);
+    assert.ok(declared, `${file} 调用了未声明的 ${name}(`);
+  }
+}
+for (const file of ['client/ui/account-form.cjs', 'client/ui/vault-gate.cjs', 'client/ui/account-card.cjs', 'client/views/accounts.cjs']) {
+  assertSettersDeclared(file);
+}
+
 console.log('mail accounts: ok');

@@ -11,7 +11,7 @@ module.exports = function ProviderChips(props) {
   var arr = (props.providers && props.providers.providers) || [];
   return h(
     "div",
-    { className: "wbm-chips", role: "radiogroup", "aria-label": lang === "en" ? "Mail provider" : "邮箱服务商" },
+    { className: "wbml-chips", role: "radiogroup", "aria-label": lang === "en" ? "Mail provider" : "邮箱服务商" },
     arr.map(function (p) {
       var on = p.id === props.value;
       return h(
@@ -21,7 +21,7 @@ module.exports = function ProviderChips(props) {
           type: "button",
           role: "radio",
           "aria-checked": on ? "true" : "false",
-          className: "wbm-chip" + (on ? " on" : ""),
+          className: "wbml-chip" + (on ? " on" : ""),
           onClick: function () {
             props.onPick(p.id);
           },

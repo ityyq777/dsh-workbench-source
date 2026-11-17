@@ -24,18 +24,18 @@ module.exports = function AccountCard(props) {
   var last = a.lastMessageAt ? C.fmtTime(a.lastMessageAt, lang) : t(lang, "还没有本地来信", "No local mail yet");
   return h(
     "div",
-    { className: "wbm-card" },
+    { className: "wbml-card" },
     h(
       "div",
-      { className: "wbm-card-main" },
-      h("div", { className: "wbm-card-title" }, a.name || a.email),
-      h("div", { className: "wbm-card-sub" }, a.email, a.username && a.username !== a.email ? " · " + a.username : ""),
-      h("div", { className: "wbm-card-meta" }, (a.imapHost || "—") + ":" + a.imapPort + " · " + (a.smtpHost || "—") + ":" + a.smtpPort),
-      h("div", { className: "wbm-card-meta" }, t(lang, "最近来信：", "Last mail: ") + last),
+      { className: "wbml-card-main" },
+      h("div", { className: "wbml-card-title" }, a.name || a.email),
+      h("div", { className: "wbml-card-sub" }, a.email, a.username && a.username !== a.email ? " · " + a.username : ""),
+      h("div", { className: "wbml-card-meta" }, (a.imapHost || "—") + ":" + a.imapPort + " · " + (a.smtpHost || "—") + ":" + a.smtpPort),
+      h("div", { className: "wbml-card-meta" }, t(lang, "最近来信：", "Last mail: ") + last),
     ),
     h(
       "div",
-      { className: "wbm-card-actions" },
+      { className: "wbml-card-actions" },
       h(C.Btn, { h: h, onClick: props.onEdit, disabled: busy }, t(lang, "编辑", "Edit")),
       h(C.Btn, { h: h, onClick: props.onTest, disabled: busy }, busy ? t(lang, "测试中…", "Testing…") : t(lang, "测试", "Test")),
       h(C.Btn, { h: h, kind: "danger", onClick: props.onDelete, disabled: busy }, t(lang, "删除", "Delete")),
@@ -43,7 +43,7 @@ module.exports = function AccountCard(props) {
     res
       ? h(
           "div",
-          { className: "wbm-card-result " + (res.ok ? "ok" : "fail"), role: "status" },
+          { className: "wbml-card-result " + (res.ok ? "ok" : "fail"), role: "status" },
           h(C.Pill, { h: h, kind: res.ok ? "ok" : "error" }, res.ok ? t(lang, "通过", "OK") : t(lang, "失败", "Failed")),
           h("span", null, resultText(res, lang)),
         )

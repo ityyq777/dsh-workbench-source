@@ -71,11 +71,11 @@ module.exports = function Accounts(props) {
 
   return h(
     "div",
-    { className: "wbm-page" },
+    { className: "wbml-page" },
     h(
       "div",
-      { className: "wbm-head" },
-      h("div", null, h("h2", null, lang === "en" ? "Mail accounts" : "邮箱账户"), h("p", { className: "wbm-sub" }, lang === "en" ? "Pick a provider, paste the app password; the vault stores it." : "选服务商、填授权码即可，密码只存保险箱。")),
+      { className: "wbml-head" },
+      h("div", null, h("h2", null, lang === "en" ? "Mail accounts" : "邮箱账户"), h("p", { className: "wbml-sub" }, lang === "en" ? "Pick a provider, paste the app password; the vault stores it." : "选服务商、填授权码即可，密码只存保险箱。")),
       h(C.Btn, { h: h, kind: "primary", onClick: function () { openS[1]({}); } }, lang === "en" ? "Add account" : "添加账户"),
     ),
     msgS[0] ? h(C.Notice, { h: h, text: msgS[0].text, kind: msgS[0].kind }) : null,
@@ -102,7 +102,7 @@ module.exports = function Accounts(props) {
         ? h(C.Empty, { h: h, text: lang === "en" ? "No accounts yet" : "还没有账户，点右上角添加。" })
         : h(
             "div",
-            { className: "wbm-cards" },
+            { className: "wbml-cards" },
             items.map(function (a) {
               return h(AccountCard, {
                 key: a.id,

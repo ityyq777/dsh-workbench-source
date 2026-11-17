@@ -89,49 +89,50 @@ var require_client_base_styles = __commonJS({
 var require_styles = __commonJS({
   "packages/addons/mail/client/ui/styles.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = require_client_base_styles()("wbm").concat([
-      ".wbm-page{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
-      ".wbm-input{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:120px}",
-      ".wbm-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}",
-      ".wbm-list{display:flex;flex-direction:column;gap:2px}",
-      ".wbm-list-row{display:flex;align-items:center;gap:10px;padding:8px;border:0;border-bottom:1px solid var(--wb-border,#eef0f3);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}",
-      ".wbm-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}",
-      ".wbm-time{font-size:11px;color:var(--wb-muted,#6b7280);white-space:nowrap}",
-      ".wbm-body{white-space:pre-wrap;font:inherit;font-size:13px;line-height:1.6;margin:8px 0 0}",
-      ".wbm-icon-btn{border:0;background:transparent;color:var(--wb-muted,#6b7280);font-size:16px;cursor:pointer;padding:2px 6px}",
+    module2.exports = require_client_base_styles()("wbml").concat([
+      ".wbml-page{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
+      ".wbml-input{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:120px}",
+      ".wbml-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}",
+      ".wbml-list{display:flex;flex-direction:column;gap:2px}",
+      ".wbml-list-row{display:flex;align-items:center;gap:10px;padding:8px;border:0;border-bottom:1px solid var(--wb-border,#eef0f3);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}",
+      ".wbml-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}",
+      ".wbml-time{font-size:11px;color:var(--wb-muted,#6b7280);white-space:nowrap}",
+      ".wbml-body{white-space:pre-wrap;font:inherit;font-size:13px;line-height:1.6;margin:8px 0 0}",
+      ".wbml-icon-btn{border:0;background:transparent;color:var(--wb-muted,#6b7280);font-size:16px;cursor:pointer;padding:2px 6px}",
       /* 服务商选择器 */
-      ".wbm-chips{display:flex;flex-wrap:wrap;gap:6px}",
-      ".wbm-chip{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer}",
-      ".wbm-chip:hover{border-color:var(--wb-accent,#2563eb)}",
-      ".wbm-chip:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:1px}",
-      ".wbm-chip.on{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:var(--wb-on-accent,#fff)}",
+      ".wbml-chips{display:flex;flex-wrap:wrap;gap:6px}",
+      ".wbml-chip{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer}",
+      ".wbml-chip:hover{border-color:var(--wb-accent,#2563eb)}",
+      ".wbml-chip:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:1px}",
+      ".wbml-chip.on{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:var(--wb-on-accent,#fff)}",
       /* 账户表单 */
-      ".wbm-acct-form{display:flex;flex-direction:column;gap:10px;border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
-      ".wbm-acct-head{display:flex;align-items:center;justify-content:space-between;gap:8px}",
-      ".wbm-acct-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
-      ".wbm-acct-foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}",
-      ".wbm-check{display:flex;align-items:center;gap:6px;font-size:12px;padding-top:18px}",
-      ".wbm-hint-line{margin:0;font-size:11px;line-height:1.6;color:var(--wb-muted,#6b7280)}",
+      ".wbml-acct-form{display:flex;flex-direction:column;gap:10px;border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
+      ".wbml-acct-head{display:flex;align-items:center;justify-content:space-between;gap:8px}",
+      ".wbml-acct-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
+      ".wbml-acct-foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}",
+      ".wbml-check{display:flex;align-items:center;gap:6px;font-size:12px;padding-top:18px}",
+      ".wbml-hint-line{margin:0;font-size:11px;line-height:1.6;color:var(--wb-muted,#6b7280)}",
       /* 保险箱门禁 */
-      ".wbm-gate-wrap{display:flex;flex-direction:column;gap:8px}",
-      ".wbm-gate{border:1px solid var(--wb-warn,#f59e0b);border-radius:9px;padding:10px;display:flex;flex-direction:column;gap:8px;background:color-mix(in srgb, var(--wb-warn,#f59e0b) 8%, transparent)}",
-      ".wbm-gate-title{font-size:13px;font-weight:650}",
-      ".wbm-gate-text{margin:0;font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280)}",
-      ".wbm-gate-row{max-width:320px}",
+      ".wbml-gate-wrap{display:flex;flex-direction:column;gap:8px}",
+      ".wbml-gate{border:1px solid var(--wb-warn,#f59e0b);border-radius:9px;padding:10px;display:flex;flex-direction:column;gap:8px;background:color-mix(in srgb, var(--wb-warn,#f59e0b) 8%, transparent)}",
+      ".wbml-gate-title{font-size:13px;font-weight:650}",
+      ".wbml-gate-text{margin:0;font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280)}",
+      ".wbml-gate-row{max-width:320px}",
+      ".wbml-gate > .wbml-btn{align-self:flex-start;padding:0 14px}",
       /* 账户卡片 */
-      ".wbm-cards{display:flex;flex-direction:column;gap:8px}",
-      ".wbm-cards .wbm-card{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}",
-      ".wbm-card-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}",
-      ".wbm-card-title{font-size:13px;font-weight:650}",
-      ".wbm-card-sub{font-size:12px}",
-      ".wbm-card-meta{font-size:11px;color:var(--wb-muted,#6b7280)}",
-      ".wbm-card-actions{display:flex;gap:6px;flex-wrap:wrap}",
-      ".wbm-card-result{display:flex;align-items:center;gap:6px;flex:1 0 100%;font-size:12px;line-height:1.6}",
-      ".wbm-acct-form > .wbm-btn{align-self:flex-start}",
+      ".wbml-cards{display:flex;flex-direction:column;gap:8px}",
+      ".wbml-cards .wbml-card{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}",
+      ".wbml-card-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}",
+      ".wbml-card-title{font-size:13px;font-weight:650}",
+      ".wbml-card-sub{font-size:12px}",
+      ".wbml-card-meta{font-size:11px;color:var(--wb-muted,#6b7280)}",
+      ".wbml-card-actions{display:flex;gap:6px;flex-wrap:wrap}",
+      ".wbml-card-result{display:flex;align-items:center;gap:6px;flex:1 0 100%;font-size:12px;line-height:1.6}",
+      ".wbml-acct-form > .wbml-btn{align-self:flex-start}",
       /* 基础 pill / danger 按钮用固定浅色，深色主题下自己按主题 token 重算一次 */
-      ".wbm-card-result .wbm-pill.ok{background:color-mix(in srgb,var(--wb-ok,#047857) 16%,transparent);color:var(--wb-ok,#047857)}",
-      ".wbm-card-result .wbm-pill.error{background:color-mix(in srgb,var(--wb-danger,#b91c1c) 16%,transparent);color:var(--wb-danger,#b91c1c)}",
-      ".wbm-card-actions .wbm-btn.danger{color:var(--wb-danger,#b91c1c);border-color:color-mix(in srgb,var(--wb-danger,#b91c1c) 45%,transparent)}"
+      ".wbml-card-result .wbml-pill.ok{background:color-mix(in srgb,var(--wb-ok,#047857) 16%,transparent);color:var(--wb-ok,#047857)}",
+      ".wbml-card-result .wbml-pill.error{background:color-mix(in srgb,var(--wb-danger,#b91c1c) 16%,transparent);color:var(--wb-danger,#b91c1c)}",
+      ".wbml-card-actions .wbml-btn.danger{color:var(--wb-danger,#b91c1c);border-color:color-mix(in srgb,var(--wb-danger,#b91c1c) 45%,transparent)}"
     ]).join("\n");
   }
 });
@@ -674,7 +675,7 @@ var require_client_common = __commonJS({
 var require_common = __commonJS({
   "packages/addons/mail/client/ui/common.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = require_client_common()("wbm");
+    module2.exports = require_client_common()("wbml");
   }
 });
 
@@ -717,71 +718,71 @@ var require_messages = __commonJS({
       var current = sel[0];
       return h(
         "div",
-        { className: "wbm-page" },
-        h("div", { className: "wbm-head" }, h("div", null, h("h2", null, "\u90AE\u4EF6"), h("p", { className: "wbm-sub" }, "\u672C\u5730\u526F\u672C\uFF1BIMAP \u53EA\u6293\u4FE1\u5934\uFF0C\u5BC6\u7801\u4FDD\u5B58\u5728\u4FDD\u9669\u7BB1\u3002")), h(
+        { className: "wbml-page" },
+        h("div", { className: "wbml-head" }, h("div", null, h("h2", null, "\u90AE\u4EF6"), h("p", { className: "wbml-sub" }, "\u672C\u5730\u526F\u672C\uFF1BIMAP \u53EA\u6293\u4FE1\u5934\uFF0C\u5BC6\u7801\u4FDD\u5B58\u5728\u4FDD\u9669\u7BB1\u3002")), h(
           "div",
-          { className: "wbm-row" },
+          { className: "wbml-row" },
           h(C.Btn, { h, onClick: list.refresh }, "\u5237\u65B0")
         )),
         h(C.Notice, { h, text: msg[0] && msg[0].text, kind: msg[0] && msg[0].kind }),
         accounts.error ? h(C.Notice, { h, kind: "error", text: accounts.error }) : null,
         h(
           "div",
-          { className: "wbm-layout" + (current ? " has-detail" : "") },
+          { className: "wbml-layout" + (current ? " has-detail" : "") },
           h(
             "aside",
-            { className: "wbm-rail" },
+            { className: "wbml-rail" },
             h(
               "div",
-              { className: "wbm-card wbm-rail-card" },
-              h("div", { className: "wbm-rail-title" }, "\u6536\u4EF6\u8D26\u6237"),
-              h("select", { className: "wbm-input", value: accountId[0], onChange: function(e) {
+              { className: "wbml-card wbml-rail-card" },
+              h("div", { className: "wbml-rail-title" }, "\u6536\u4EF6\u8D26\u6237"),
+              h("select", { className: "wbml-input", value: accountId[0], onChange: function(e) {
                 accountId[1](e.target.value);
                 sel[1](null);
               } }, h("option", { value: "" }, "\u5168\u90E8\u8D26\u6237"), accs.map(function(a) {
                 return h("option", { key: a.id, value: a.id }, a.name);
               })),
-              h("div", { className: "wbm-rail-stats" }, h("span", null, h("b", null, items.length), " \u5C01\u672C\u5730"), h("span", null, h("b", null, unread), " \u5C01\u672A\u8BFB")),
+              h("div", { className: "wbml-rail-stats" }, h("span", null, h("b", null, items.length), " \u5C01\u672C\u5730"), h("span", null, h("b", null, unread), " \u5C01\u672A\u8BFB")),
               h(C.Btn, { h, kind: "primary", onClick: sync }, "\u540C\u6B65\u6536\u4EF6\u7BB1"),
-              h("p", { className: "wbm-hint" }, "\u53EA\u6293\u6700\u8FD1 20 \u5C01\u4FE1\u5934\uFF1B\u6B63\u6587\u6309\u9700\u4E0B\u8F7D\u3002")
+              h("p", { className: "wbml-hint" }, "\u53EA\u6293\u6700\u8FD1 20 \u5C01\u4FE1\u5934\uFF1B\u6B63\u6587\u6309\u9700\u4E0B\u8F7D\u3002")
             ),
-            h("div", { className: "wbm-rail-tip" }, "\u63D0\u793A\uFF1A\u70B9\u5F00\u4E00\u5C01\u90AE\u4EF6\u4F1A\u5728\u53F3\u4FA7\u9605\u8BFB\uFF0C\u5217\u8868\u4E0D\u4F1A\u6D88\u5931\u3002")
+            h("div", { className: "wbml-rail-tip" }, "\u63D0\u793A\uFF1A\u70B9\u5F00\u4E00\u5C01\u90AE\u4EF6\u4F1A\u5728\u53F3\u4FA7\u9605\u8BFB\uFF0C\u5217\u8868\u4E0D\u4F1A\u6D88\u5931\u3002")
           ),
           h(
             "section",
-            { className: "wbm-pane wbm-listpane" },
-            h("div", { className: "wbm-pane-head" }, h("strong", null, "\u90AE\u4EF6\u5217\u8868"), h("span", { className: "wbm-muted" }, items.length + " \u5C01")),
-            list.loading ? h(C.Empty, { h, text: "\u52A0\u8F7D\u4E2D\u2026" }) : list.error ? h(C.Notice, { h, kind: "error", text: list.error }) : items.length === 0 ? h(C.Empty, { h, text: "\u6CA1\u6709\u672C\u5730\u90AE\u4EF6\uFF1B\u5148\u5728\u8D26\u6237\u9875\u540C\u6B65\u3002" }) : h("div", { className: "wbm-list" }, items.map(function(m) {
+            { className: "wbml-pane wbml-listpane" },
+            h("div", { className: "wbml-pane-head" }, h("strong", null, "\u90AE\u4EF6\u5217\u8868"), h("span", { className: "wbml-muted" }, items.length + " \u5C01")),
+            list.loading ? h(C.Empty, { h, text: "\u52A0\u8F7D\u4E2D\u2026" }) : list.error ? h(C.Notice, { h, kind: "error", text: list.error }) : items.length === 0 ? h(C.Empty, { h, text: "\u6CA1\u6709\u672C\u5730\u90AE\u4EF6\uFF1B\u5148\u5728\u8D26\u6237\u9875\u540C\u6B65\u3002" }) : h("div", { className: "wbml-list" }, items.map(function(m) {
               return h(
                 "button",
-                { key: m.id, type: "button", className: "wbm-list-row" + (current && current.id === m.id ? " on" : "") + (m.seen ? "" : " unread"), onClick: function() {
+                { key: m.id, type: "button", className: "wbml-list-row" + (current && current.id === m.id ? " on" : "") + (m.seen ? "" : " unread"), onClick: function() {
                   open(m.id);
                 } },
-                h("span", { className: "wbm-dot" }),
+                h("span", { className: "wbml-dot" }),
                 h(
                   "div",
-                  { className: "wbm-main" },
-                  h("strong", { className: "wbm-subject" }, m.subject || "(\u65E0\u4E3B\u9898)"),
-                  h("span", { className: "wbm-muted" }, (m.from || "\u672A\u77E5\u53D1\u4EF6\u4EBA") + " \xB7 " + (m.mailbox || "INBOX")),
-                  m.preview ? h("span", { className: "wbm-snippet" }, m.preview) : null
+                  { className: "wbml-main" },
+                  h("strong", { className: "wbml-subject" }, m.subject || "(\u65E0\u4E3B\u9898)"),
+                  h("span", { className: "wbml-muted" }, (m.from || "\u672A\u77E5\u53D1\u4EF6\u4EBA") + " \xB7 " + (m.mailbox || "INBOX")),
+                  m.preview ? h("span", { className: "wbml-snippet" }, m.preview) : null
                 ),
-                h("span", { className: "wbm-time" }, C.fmtTime(m.dateAt, props.lang))
+                h("span", { className: "wbml-time" }, C.fmtTime(m.dateAt, props.lang))
               );
             }))
           ),
           current ? h(
             "section",
-            { className: "wbm-pane wbm-detailpane" },
+            { className: "wbml-pane wbml-detailpane" },
             h(
               "div",
-              { className: "wbm-detail-head" },
-              h("div", { className: "wbm-detail-title" }, h("strong", null, current.subject || "(\u65E0\u4E3B\u9898)"), h("span", { className: "wbm-muted" }, (current.from || "") + " \xB7 " + C.fmtTime(current.dateAt, props.lang))),
+              { className: "wbml-detail-head" },
+              h("div", { className: "wbml-detail-title" }, h("strong", null, current.subject || "(\u65E0\u4E3B\u9898)"), h("span", { className: "wbml-muted" }, (current.from || "") + " \xB7 " + C.fmtTime(current.dateAt, props.lang))),
               h(C.Btn, { h, onClick: function() {
                 sel[1](null);
               } }, "\u5173\u95ED")
             ),
-            h("div", { className: "wbm-detail-meta" }, h("span", null, "\u6536\u4EF6\u4EBA\uFF1A", current.to || "\u2014"), h("span", null, "\u90AE\u7BB1\uFF1A", current.mailbox || "INBOX")),
-            h("pre", { className: "wbm-body" }, current.body || current.preview || "(\u6B63\u6587\u672A\u4E0B\u8F7D)")
+            h("div", { className: "wbml-detail-meta" }, h("span", null, "\u6536\u4EF6\u4EBA\uFF1A", current.to || "\u2014"), h("span", null, "\u90AE\u7BB1\uFF1A", current.mailbox || "INBOX")),
+            h("pre", { className: "wbml-body" }, current.body || current.preview || "(\u6B63\u6587\u672A\u4E0B\u8F7D)")
           ) : null
         )
       );
@@ -824,27 +825,27 @@ var require_compose = __commonJS({
       }
       return h(
         "div",
-        { className: "wbm-page" },
+        { className: "wbml-page" },
         h("h2", null, "\u5199\u4FE1"),
         h(C.Notice, { h, text: msg[0] && msg[0].text, kind: msg[0] && msg[0].kind }),
         h(
           "div",
-          { className: "wbm-card" },
-          h(C.Field, { h, label: "\u53D1\u4EF6\u8D26\u6237" }, h("select", { className: "wbm-input", value: st[0].accountId, onChange: function(e) {
+          { className: "wbml-card" },
+          h(C.Field, { h, label: "\u53D1\u4EF6\u8D26\u6237" }, h("select", { className: "wbml-input", value: st[0].accountId, onChange: function(e) {
             set("accountId", e.target.value);
           } }, h("option", { value: "" }, "\u8BF7\u9009\u62E9"), accs.map(function(a) {
             return h("option", { key: a.id, value: a.id }, a.name + " <" + a.email + ">");
           }))),
-          h(C.Field, { h, label: "\u6536\u4EF6\u4EBA", hint: "\u591A\u4E2A\u90AE\u7BB1\u7528\u9017\u53F7\u5206\u9694" }, h("input", { className: "wbm-input", value: st[0].to, onChange: function(e) {
+          h(C.Field, { h, label: "\u6536\u4EF6\u4EBA", hint: "\u591A\u4E2A\u90AE\u7BB1\u7528\u9017\u53F7\u5206\u9694" }, h("input", { className: "wbml-input", value: st[0].to, onChange: function(e) {
             set("to", e.target.value);
           } })),
-          h(C.Field, { h, label: "\u4E3B\u9898" }, h("input", { className: "wbm-input", value: st[0].subject, onChange: function(e) {
+          h(C.Field, { h, label: "\u4E3B\u9898" }, h("input", { className: "wbml-input", value: st[0].subject, onChange: function(e) {
             set("subject", e.target.value);
           } })),
-          h(C.Field, { h, label: "\u6B63\u6587" }, h("textarea", { className: "wbm-input", rows: 10, value: st[0].text, onChange: function(e) {
+          h(C.Field, { h, label: "\u6B63\u6587" }, h("textarea", { className: "wbml-input", rows: 10, value: st[0].text, onChange: function(e) {
             set("text", e.target.value);
           } })),
-          h("div", { className: "wbm-actions" }, h(C.Btn, { h, kind: "primary", disabled: busy[0], onClick: send }, busy[0] ? "\u53D1\u9001\u4E2D\u2026" : "\u53D1\u9001"))
+          h("div", { className: "wbml-actions" }, h(C.Btn, { h, kind: "primary", disabled: busy[0], onClick: send }, busy[0] ? "\u53D1\u9001\u4E2D\u2026" : "\u53D1\u9001"))
         )
       );
     };
@@ -962,11 +963,11 @@ var require_vault_gate = __commonJS({
       if (vault === "missing") {
         body = h(
           "div",
-          { className: "wbm-gate" },
-          h("div", { className: "wbm-gate-title" }, t(lang, "\u4FDD\u9669\u7BB1\u63D2\u4EF6\u672A\u5B89\u88C5", "Vault plugin is not installed")),
+          { className: "wbml-gate" },
+          h("div", { className: "wbml-gate-title" }, t(lang, "\u4FDD\u9669\u7BB1\u63D2\u4EF6\u672A\u5B89\u88C5", "Vault plugin is not installed")),
           h(
             "p",
-            { className: "wbm-gate-text" },
+            { className: "wbml-gate-text" },
             t(
               lang,
               "\u90AE\u7BB1\u5BC6\u7801\u8981\u5B58\u8FDB\u4FDD\u9669\u7BB1\u3002\u53EF\u4EE5\u5148\u624B\u52A8\u586B\u5199\u5DF2\u6709\u51ED\u636E id\uFF08secretId\uFF09\u7EE7\u7EED\uFF0C\u5B89\u88C5\u4FDD\u9669\u7BB1\u540E\u518D\u6362\u6210\u81EA\u52A8\u6258\u7BA1\u3002",
@@ -975,47 +976,47 @@ var require_vault_gate = __commonJS({
           ),
           h(
             "button",
-            { type: "button", className: "wbm-btn", onClick: props.onSkip },
+            { type: "button", className: "wbml-btn", onClick: props.onSkip },
             t(lang, "\u6539\u7528\u624B\u586B\u51ED\u636E id", "Enter credential id manually")
           )
         );
       } else if (vault === "init") {
         body = h(
           "div",
-          { className: "wbm-gate" },
-          h("div", { className: "wbm-gate-title" }, t(lang, "\u4FDD\u9669\u7BB1\u8FD8\u6CA1\u6709\u4E3B\u53E3\u4EE4", "The vault has no master password yet")),
+          { className: "wbml-gate" },
+          h("div", { className: "wbml-gate-title" }, t(lang, "\u4FDD\u9669\u7BB1\u8FD8\u6CA1\u6709\u4E3B\u53E3\u4EE4", "The vault has no master password yet")),
           h(
             "p",
-            { className: "wbm-gate-text" },
+            { className: "wbml-gate-text" },
             t(
               lang,
               "\u8BBE\u7F6E\u4E00\u4E2A\u4E3B\u53E3\u4EE4\uFF08\u81F3\u5C11 12 \u4F4D\uFF09\uFF0C\u7528\u4E8E\u52A0\u5BC6\u8FD9\u53F0\u673A\u5668\u4E0A\u7684\u6240\u6709\u51ED\u636E\u3002\u8BBE\u7F6E\u540E\u4E0D\u80FD\u627E\u56DE\uFF0C\u8BF7\u8BB0\u7262\u3002",
               "Set a master password (12+ characters) that encrypts every credential on this machine. It cannot be recovered, so keep it safe."
             )
           ),
-          h("div", { className: "wbm-gate-row" }, secret(props.pass, props.onPass, props.showPass, props.onTogglePass, "wbm-vault-pass", "new-password")),
-          h("div", { className: "wbm-gate-row" }, secret(props.pass2, props.onPass2, props.showPass2, props.onTogglePass2, "wbm-vault-pass2", "new-password")),
+          h("div", { className: "wbml-gate-row" }, secret(props.pass, props.onPass, props.showPass, props.onTogglePass, "wbml-vault-pass", "new-password")),
+          h("div", { className: "wbml-gate-row" }, secret(props.pass2, props.onPass2, props.showPass2, props.onTogglePass2, "wbml-vault-pass2", "new-password")),
           h(
             "button",
-            { type: "button", className: "wbm-btn primary", disabled: busy, onClick: props.onSubmit },
+            { type: "button", className: "wbml-btn primary", disabled: busy, onClick: props.onSubmit },
             busy ? t(lang, "\u5904\u7406\u4E2D\u2026", "Working\u2026") : t(lang, "\u521D\u59CB\u5316\u4FDD\u9669\u7BB1\u5E76\u7EE7\u7EED", "Initialize vault and continue")
           )
         );
       } else {
         body = h(
           "div",
-          { className: "wbm-gate" },
-          h("div", { className: "wbm-gate-title" }, t(lang, "\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A", "The vault is locked")),
-          h("p", { className: "wbm-gate-text" }, t(lang, "\u8F93\u5165\u4E3B\u53E3\u4EE4\u89E3\u9501\u540E\u5373\u53EF\u4FDD\u5B58\u8D26\u6237\u3002", "Unlock with your master password to save the account.")),
-          h("div", { className: "wbm-gate-row" }, secret(props.pass, props.onPass, props.showPass, props.onTogglePass, "wbm-vault-pass", "current-password")),
+          { className: "wbml-gate" },
+          h("div", { className: "wbml-gate-title" }, t(lang, "\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A", "The vault is locked")),
+          h("p", { className: "wbml-gate-text" }, t(lang, "\u8F93\u5165\u4E3B\u53E3\u4EE4\u89E3\u9501\u540E\u5373\u53EF\u4FDD\u5B58\u8D26\u6237\u3002", "Unlock with your master password to save the account.")),
+          h("div", { className: "wbml-gate-row" }, secret(props.pass, props.onPass, props.showPass, props.onTogglePass, "wbml-vault-pass", "current-password")),
           h(
             "button",
-            { type: "button", className: "wbm-btn primary", disabled: busy, onClick: props.onSubmit },
+            { type: "button", className: "wbml-btn primary", disabled: busy, onClick: props.onSubmit },
             busy ? t(lang, "\u89E3\u9501\u4E2D\u2026", "Unlocking\u2026") : t(lang, "\u89E3\u9501\u5E76\u7EE7\u7EED", "Unlock and continue")
           )
         );
       }
-      return h("div", { className: "wbm-gate-wrap" }, body, props.error ? h(C.Notice, { h, text: props.error, kind: "warn" }) : null);
+      return h("div", { className: "wbml-gate-wrap" }, body, props.error ? h(C.Notice, { h, text: props.error, kind: "warn" }) : null);
     };
   }
 });
@@ -1100,7 +1101,7 @@ var require_provider_chips = __commonJS({
       var arr = props.providers && props.providers.providers || [];
       return h(
         "div",
-        { className: "wbm-chips", role: "radiogroup", "aria-label": lang === "en" ? "Mail provider" : "\u90AE\u7BB1\u670D\u52A1\u5546" },
+        { className: "wbml-chips", role: "radiogroup", "aria-label": lang === "en" ? "Mail provider" : "\u90AE\u7BB1\u670D\u52A1\u5546" },
         arr.map(function(p) {
           var on = p.id === props.value;
           return h(
@@ -1110,7 +1111,7 @@ var require_provider_chips = __commonJS({
               type: "button",
               role: "radio",
               "aria-checked": on ? "true" : "false",
-              className: "wbm-chip" + (on ? " on" : ""),
+              className: "wbml-chip" + (on ? " on" : ""),
               onClick: function() {
                 props.onPick(p.id);
               }
@@ -1204,6 +1205,15 @@ var require_account_form = __commonJS({
         });
       }
       var setBusyState = busyS[1];
+      function setProbe(value) {
+        probeS[1](value);
+      }
+      function setErr(value) {
+        errS[1](value);
+      }
+      function setNotice(value) {
+        noticeS[1](value);
+      }
       function checkVault() {
         return C.call(api, "vault.status").then(function(r2) {
           var state = !r2 || !r2.initialized ? "init" : r2.locked ? "locked" : "ready";
@@ -1380,7 +1390,7 @@ var require_account_form = __commonJS({
       function textInput(key, opts) {
         var o = opts || {};
         return h("input", {
-          className: "wbm-input",
+          className: "wbml-input",
           type: o.type || "text",
           value: f[key],
           placeholder: o.placeholder || "",
@@ -1393,7 +1403,7 @@ var require_account_form = __commonJS({
       function tlsRow(key, label) {
         return h(
           "label",
-          { className: "wbm-check" },
+          { className: "wbml-check" },
           h("input", {
             type: "checkbox",
             checked: !!f[key],
@@ -1417,19 +1427,19 @@ var require_account_form = __commonJS({
       }
       return h(
         "div",
-        { className: "wbm-acct-form" },
+        { className: "wbml-acct-form" },
         h(
           "div",
-          { className: "wbm-acct-head" },
+          { className: "wbml-acct-head" },
           h("strong", null, editing ? t(lang, "\u7F16\u8F91\u8D26\u6237", "Edit account") : t(lang, "\u65B0\u589E\u8D26\u6237", "New account")),
-          h("button", { type: "button", className: "wbm-icon-btn", onClick: props.onCancel, title: t(lang, "\u5173\u95ED", "Close") }, "\xD7")
+          h("button", { type: "button", className: "wbml-icon-btn", onClick: props.onCancel, title: t(lang, "\u5173\u95ED", "Close") }, "\xD7")
         ),
         h(require_provider_chips(), { h, lang, providers, value: f.provider, onPick }),
         h(
           "div",
-          { className: "wbm-acct-grid" },
+          { className: "wbml-acct-grid" },
           field(t(lang, "\u90AE\u7BB1\u5730\u5740", "Email address"), h("input", {
-            className: "wbm-input",
+            className: "wbml-input",
             type: "email",
             value: f.email,
             placeholder: "you@example.com",
@@ -1459,13 +1469,13 @@ var require_account_form = __commonJS({
           }),
           t(lang, "\u5BC6\u7801\u53EA\u5B58\u8FDB\u4FDD\u9669\u7BB1\uFF0C\u4E0D\u4F1A\u5199\u8FDB\u8D26\u6237\u8868\u3002", "Passwords go to the vault, never into the account row.")
         ),
-        provider && util.hintOf(provider, lang) ? h("p", { className: "wbm-hint-line" }, util.hintOf(provider, lang)) : null,
-        !f.advanced && f.imapHost ? h("p", { className: "wbm-hint-line" }, "IMAP " + f.imapHost + ":" + f.imapPort + (f.imapTls ? " TLS" : "") + " \xB7 SMTP " + (f.smtpHost || "\u2014") + ":" + f.smtpPort + (f.smtpTls ? " TLS" : " STARTTLS")) : null,
-        !f.advanced ? h("button", { type: "button", className: "wbm-btn", onClick: function() {
+        provider && util.hintOf(provider, lang) ? h("p", { className: "wbml-hint-line" }, util.hintOf(provider, lang)) : null,
+        !f.advanced && f.imapHost ? h("p", { className: "wbml-hint-line" }, "IMAP " + f.imapHost + ":" + f.imapPort + (f.imapTls ? " TLS" : "") + " \xB7 SMTP " + (f.smtpHost || "\u2014") + ":" + f.smtpPort + (f.smtpTls ? " TLS" : " STARTTLS")) : null,
+        !f.advanced ? h("button", { type: "button", className: "wbml-btn", onClick: function() {
           upd({ advanced: true });
         } }, t(lang, "\u5176\u4ED6\u8BBE\u7F6E\uFF08\u4E3B\u673A / \u7AEF\u53E3 / \u767B\u5F55\u540D\uFF09", "Advanced (hosts / ports / login name)")) : h(
           "div",
-          { className: "wbm-acct-grid" },
+          { className: "wbml-acct-grid" },
           field(t(lang, "\u767B\u5F55\u540D", "Login name"), textInput("username", { placeholder: t(lang, "\u9ED8\u8BA4\u4E0E\u90AE\u7BB1\u76F8\u540C", "Defaults to the email") })),
           field(t(lang, "IMAP \u670D\u52A1\u5668", "IMAP server"), textInput("imapHost")),
           field(t(lang, "IMAP \u7AEF\u53E3", "IMAP port"), textInput("imapPort", { type: "number" })),
@@ -1509,7 +1519,7 @@ var require_account_form = __commonJS({
         noticeS[0] ? h(C.Notice, { h, text: noticeS[0], kind: "ok" }) : null,
         h(
           "div",
-          { className: "wbm-acct-foot" },
+          { className: "wbml-acct-foot" },
           h(C.Btn, { h, onClick: runProbe, disabled: busy.probe || busy.save }, busy.probe ? t(lang, "\u81EA\u68C0\u4E2D\u2026", "Checking\u2026") : t(lang, "\u4FDD\u5B58\u524D\u81EA\u68C0", "Check connection")),
           h(C.Btn, { h, kind: "primary", onClick: submit, disabled: busy.save }, busy.save ? t(lang, "\u4FDD\u5B58\u4E2D\u2026", "Saving\u2026") : t(lang, "\u4FDD\u5B58", "Save")),
           h(C.Btn, { h, onClick: props.onCancel }, t(lang, "\u53D6\u6D88", "Cancel"))
@@ -1544,25 +1554,25 @@ var require_account_card = __commonJS({
       var last = a.lastMessageAt ? C.fmtTime(a.lastMessageAt, lang) : t(lang, "\u8FD8\u6CA1\u6709\u672C\u5730\u6765\u4FE1", "No local mail yet");
       return h(
         "div",
-        { className: "wbm-card" },
+        { className: "wbml-card" },
         h(
           "div",
-          { className: "wbm-card-main" },
-          h("div", { className: "wbm-card-title" }, a.name || a.email),
-          h("div", { className: "wbm-card-sub" }, a.email, a.username && a.username !== a.email ? " \xB7 " + a.username : ""),
-          h("div", { className: "wbm-card-meta" }, (a.imapHost || "\u2014") + ":" + a.imapPort + " \xB7 " + (a.smtpHost || "\u2014") + ":" + a.smtpPort),
-          h("div", { className: "wbm-card-meta" }, t(lang, "\u6700\u8FD1\u6765\u4FE1\uFF1A", "Last mail: ") + last)
+          { className: "wbml-card-main" },
+          h("div", { className: "wbml-card-title" }, a.name || a.email),
+          h("div", { className: "wbml-card-sub" }, a.email, a.username && a.username !== a.email ? " \xB7 " + a.username : ""),
+          h("div", { className: "wbml-card-meta" }, (a.imapHost || "\u2014") + ":" + a.imapPort + " \xB7 " + (a.smtpHost || "\u2014") + ":" + a.smtpPort),
+          h("div", { className: "wbml-card-meta" }, t(lang, "\u6700\u8FD1\u6765\u4FE1\uFF1A", "Last mail: ") + last)
         ),
         h(
           "div",
-          { className: "wbm-card-actions" },
+          { className: "wbml-card-actions" },
           h(C.Btn, { h, onClick: props.onEdit, disabled: busy }, t(lang, "\u7F16\u8F91", "Edit")),
           h(C.Btn, { h, onClick: props.onTest, disabled: busy }, busy ? t(lang, "\u6D4B\u8BD5\u4E2D\u2026", "Testing\u2026") : t(lang, "\u6D4B\u8BD5", "Test")),
           h(C.Btn, { h, kind: "danger", onClick: props.onDelete, disabled: busy }, t(lang, "\u5220\u9664", "Delete"))
         ),
         res ? h(
           "div",
-          { className: "wbm-card-result " + (res.ok ? "ok" : "fail"), role: "status" },
+          { className: "wbml-card-result " + (res.ok ? "ok" : "fail"), role: "status" },
           h(C.Pill, { h, kind: res.ok ? "ok" : "error" }, res.ok ? t(lang, "\u901A\u8FC7", "OK") : t(lang, "\u5931\u8D25", "Failed")),
           h("span", null, resultText(res, lang))
         ) : null
@@ -1759,11 +1769,11 @@ var require_accounts = __commonJS({
       var loading = load.loading || !tableS[0];
       return h(
         "div",
-        { className: "wbm-page" },
+        { className: "wbml-page" },
         h(
           "div",
-          { className: "wbm-head" },
-          h("div", null, h("h2", null, lang === "en" ? "Mail accounts" : "\u90AE\u7BB1\u8D26\u6237"), h("p", { className: "wbm-sub" }, lang === "en" ? "Pick a provider, paste the app password; the vault stores it." : "\u9009\u670D\u52A1\u5546\u3001\u586B\u6388\u6743\u7801\u5373\u53EF\uFF0C\u5BC6\u7801\u53EA\u5B58\u4FDD\u9669\u7BB1\u3002")),
+          { className: "wbml-head" },
+          h("div", null, h("h2", null, lang === "en" ? "Mail accounts" : "\u90AE\u7BB1\u8D26\u6237"), h("p", { className: "wbml-sub" }, lang === "en" ? "Pick a provider, paste the app password; the vault stores it." : "\u9009\u670D\u52A1\u5546\u3001\u586B\u6388\u6743\u7801\u5373\u53EF\uFF0C\u5BC6\u7801\u53EA\u5B58\u4FDD\u9669\u7BB1\u3002")),
           h(C.Btn, { h, kind: "primary", onClick: function() {
             openS[1]({});
           } }, lang === "en" ? "Add account" : "\u6DFB\u52A0\u8D26\u6237")
@@ -1786,7 +1796,7 @@ var require_accounts = __commonJS({
         }) : null,
         loading ? h(C.Empty, { h, text: lang === "en" ? "Loading\u2026" : "\u52A0\u8F7D\u4E2D\u2026" }) : items.length === 0 ? h(C.Empty, { h, text: lang === "en" ? "No accounts yet" : "\u8FD8\u6CA1\u6709\u8D26\u6237\uFF0C\u70B9\u53F3\u4E0A\u89D2\u6DFB\u52A0\u3002" }) : h(
           "div",
-          { className: "wbm-cards" },
+          { className: "wbml-cards" },
           items.map(function(a) {
             return h(AccountCard, {
               key: a.id,
@@ -2979,7 +2989,7 @@ var require_data = __commonJS({
     var legacy = require_legacy_data()("mail", { paged: false });
     module2.exports = require_data_view()({
       domain: "mail",
-      prefix: "wbm",
+      prefix: "wbml",
       tables: ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"],
       useConfig: function(api, fallback) {
         return { values: fallback, ready: true };
@@ -3296,7 +3306,7 @@ var require_action_schema_view = __commonJS({
         var snapState = React.useState(null);
         var snap = snapState[0], setSnap = snapState[1];
         var errState = React.useState("");
-        var err = errState[0], setErr2 = errState[1];
+        var err = errState[0], setErr = errState[1];
         var loadingState = React.useState(true);
         var loading = loadingState[0], setLoading = loadingState[1];
         var reloadState = React.useState(0);
@@ -3315,7 +3325,7 @@ var require_action_schema_view = __commonJS({
         React.useEffect(function() {
           var alive = true;
           setLoading(true);
-          setErr2("");
+          setErr("");
           var pending;
           var actionName = DOMAIN.replace(/^wb-addon-/, "") + ".actionSchema";
           if (api && typeof api.call === "function") {
@@ -3330,7 +3340,7 @@ var require_action_schema_view = __commonJS({
             if (!alive) return;
             if (!r || r.ok === false) {
               setSnap(null);
-              setErr2(String(r && (r.error || r.text) || t.loadFail));
+              setErr(String(r && (r.error || r.text) || t.loadFail));
             } else {
               setSnap(r);
             }
@@ -3338,7 +3348,7 @@ var require_action_schema_view = __commonJS({
           }, function(e) {
             if (!alive) return;
             setSnap(null);
-            setErr2(String(e && e.message || e || t.loadFail));
+            setErr(String(e && e.message || e || t.loadFail));
             setLoading(false);
           });
           return function() {
@@ -3560,7 +3570,7 @@ var require_actions = __commonJS({
     "use strict";
     module2.exports = require_action_schema_view()({
       domain: "wb-addon-mail",
-      prefix: "wbm"
+      prefix: "wbml"
     }).ActionSchemaView;
   }
 });
@@ -3600,7 +3610,7 @@ var require_actions = __commonJS({
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.2.0",
+    version: "0.2.1",
     icon: (init_mail(), __toCommonJS(mail_exports)).default,
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },

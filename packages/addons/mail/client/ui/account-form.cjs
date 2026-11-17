@@ -89,6 +89,16 @@ module.exports = function AccountForm(props) {
   }
   var setBusyState = busyS[1];
 
+  function setProbe(value) {
+    probeS[1](value);
+  }
+  function setErr(value) {
+    errS[1](value);
+  }
+  function setNotice(value) {
+    noticeS[1](value);
+  }
+
   function checkVault() {
     return C.call(api, "vault.status")
       .then(function (r) {
@@ -287,7 +297,7 @@ module.exports = function AccountForm(props) {
   function textInput(key, opts) {
     var o = opts || {};
     return h("input", {
-      className: "wbm-input",
+      className: "wbml-input",
       type: o.type || "text",
       value: f[key],
       placeholder: o.placeholder || "",
@@ -300,7 +310,7 @@ module.exports = function AccountForm(props) {
   function tlsRow(key, label) {
     return h(
       "label",
-      { className: "wbm-check" },
+      { className: "wbml-check" },
       h("input", {
         type: "checkbox",
         checked: !!f[key],
@@ -326,17 +336,17 @@ module.exports = function AccountForm(props) {
 
   return h(
     "div",
-    { className: "wbm-acct-form" },
+    { className: "wbml-acct-form" },
     h(
       "div",
-      { className: "wbm-acct-head" },
+      { className: "wbml-acct-head" },
       h("strong", null, editing ? t(lang, "编辑账户", "Edit account") : t(lang, "新增账户", "New account")),
-      h("button", { type: "button", className: "wbm-icon-btn", onClick: props.onCancel, title: t(lang, "关闭", "Close") }, "×"),
+      h("button", { type: "button", className: "wbml-icon-btn", onClick: props.onCancel, title: t(lang, "关闭", "Close") }, "×"),
     ),
     h(require("./provider-chips.cjs"), { h: h, lang: lang, providers: providers, value: f.provider, onPick: onPick }),
-    h("div", { className: "wbm-acct-grid" },
+    h("div", { className: "wbml-acct-grid" },
       field(t(lang, "邮箱地址", "Email address"), h("input", {
-        className: "wbm-input", type: "email", value: f.email, placeholder: "you@example.com", autoComplete: "off",
+        className: "wbml-input", type: "email", value: f.email, placeholder: "you@example.com", autoComplete: "off",
         onChange: function (e) { upd({ email: e.target.value }); },
         onBlur: onEmailBlur,
       })),
@@ -356,13 +366,13 @@ module.exports = function AccountForm(props) {
       }),
       t(lang, "密码只存进保险箱，不会写进账户表。", "Passwords go to the vault, never into the account row."),
     ),
-    provider && util.hintOf(provider, lang) ? h("p", { className: "wbm-hint-line" }, util.hintOf(provider, lang)) : null,
+    provider && util.hintOf(provider, lang) ? h("p", { className: "wbml-hint-line" }, util.hintOf(provider, lang)) : null,
     !f.advanced && f.imapHost
-      ? h("p", { className: "wbm-hint-line" }, "IMAP " + f.imapHost + ":" + f.imapPort + (f.imapTls ? " TLS" : "") + " · SMTP " + (f.smtpHost || "—") + ":" + f.smtpPort + (f.smtpTls ? " TLS" : " STARTTLS"))
+      ? h("p", { className: "wbml-hint-line" }, "IMAP " + f.imapHost + ":" + f.imapPort + (f.imapTls ? " TLS" : "") + " · SMTP " + (f.smtpHost || "—") + ":" + f.smtpPort + (f.smtpTls ? " TLS" : " STARTTLS"))
       : null,
     !f.advanced
-      ? h("button", { type: "button", className: "wbm-btn", onClick: function () { upd({ advanced: true }); } }, t(lang, "其他设置（主机 / 端口 / 登录名）", "Advanced (hosts / ports / login name)"))
-      : h("div", { className: "wbm-acct-grid" },
+      ? h("button", { type: "button", className: "wbml-btn", onClick: function () { upd({ advanced: true }); } }, t(lang, "其他设置（主机 / 端口 / 登录名）", "Advanced (hosts / ports / login name)"))
+      : h("div", { className: "wbml-acct-grid" },
           field(t(lang, "登录名", "Login name"), textInput("username", { placeholder: t(lang, "默认与邮箱相同", "Defaults to the email") })),
           field(t(lang, "IMAP 服务器", "IMAP server"), textInput("imapHost")),
           field(t(lang, "IMAP 端口", "IMAP port"), textInput("imapPort", { type: "number" })),
@@ -392,7 +402,7 @@ module.exports = function AccountForm(props) {
     noticeS[0] ? h(C.Notice, { h: h, text: noticeS[0], kind: "ok" }) : null,
     h(
       "div",
-      { className: "wbm-acct-foot" },
+      { className: "wbml-acct-foot" },
       h(C.Btn, { h: h, onClick: runProbe, disabled: busy.probe || busy.save }, busy.probe ? t(lang, "自检中…", "Checking…") : t(lang, "保存前自检", "Check connection")),
       h(C.Btn, { h: h, kind: "primary", onClick: submit, disabled: busy.save }, busy.save ? t(lang, "保存中…", "Saving…") : t(lang, "保存", "Save")),
       h(C.Btn, { h: h, onClick: props.onCancel }, t(lang, "取消", "Cancel")),
