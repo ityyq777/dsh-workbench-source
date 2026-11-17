@@ -11,6 +11,11 @@ export function setup(api) {
   ensureSchema(api.db);
   engine = createMail({ db: api.db, host: api, log: api.log });
   registerMailActions(api, engine);
+  try {
+    engine.backfillHeaders();
+  } catch (e) {
+    api.log("mail: 历史信头重解失败", String(e && e.message ? e.message : e));
+  }
   if (typeof api.registerSearchProvider === "function") api.registerSearchProvider({ domainId: "wb-addon-mail", search: (q, opts) => engine.search(q, opts) });
   api.log("mail domain ready", api.addon.version);
 }
@@ -22,7 +27,7 @@ export function apply(ctx) {
     id: "wb-addon-mail",
     title: "邮件",
     description: "IMAP 收信头 + SMTP 发信；密码存保险箱；本地副本与搜索",
-    version: "0.2.2",
+    version: "0.2.3",
     tables: ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"],
     sync: { tables: [] },
     views: [

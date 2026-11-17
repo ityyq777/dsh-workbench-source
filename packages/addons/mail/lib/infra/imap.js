@@ -1,6 +1,7 @@
 /** 最小 IMAP 客户端：LIST 文件夹、SELECT、抓最近 20 封邮件头。仅 TLS / STARTTLS。 */
 import net from "node:net";
 import tls from "node:tls";
+import { decodeWords, parseAddress } from "./mime-word.js";
 
 function connect(host, port, secure, timeout = 15000) {
   return new Promise((resolve, reject) => {
@@ -39,7 +40,7 @@ function parseList(text) {
   }
   return out;
 }
-function parseHeaders(text) {
+export function parseHeaders(text) {
   const out = []; const re = /UID (\d+)[\s\S]*?\{(\d+)\}\r\n/g;
   let m;
   while ((m = re.exec(text))) {
@@ -53,7 +54,17 @@ function parseHeaders(text) {
       const i = line.indexOf(":"); if (i <= 0) continue;
       key = line.slice(0, i).toLowerCase(); h[key] = line.slice(i + 1).trim();
     }
-    out.push({ uid: Number(m[1]), subject: h.subject || "", from: h.from || "", to: h.to || "", cc: h.cc || "", date: h.date || "", messageId: h["message-id"] || "" });
+    const sender = parseAddress(h.from || "");
+    out.push({
+      uid: Number(m[1]),
+      subject: decodeWords(h.subject || ""),
+      from: sender.address || decodeWords(h.from || ""),
+      fromName: sender.name,
+      to: decodeWords(h.to || ""),
+      cc: decodeWords(h.cc || ""),
+      date: h.date || "",
+      messageId: h["message-id"] || "",
+    });
   }
   return out;
 }

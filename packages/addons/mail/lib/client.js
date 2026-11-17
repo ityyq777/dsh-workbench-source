@@ -726,6 +726,18 @@ var require_messages = __commonJS({
           msg[1]({ kind: "error", text: C.errText(e) });
         });
       }
+      function senderLabel(m) {
+        var name = m && m.fromName ? String(m.fromName).trim() : "";
+        var addr = m && m.from ? String(m.from).trim() : "";
+        if (name && name !== addr) return name;
+        return addr || "\u672A\u77E5\u53D1\u4EF6\u4EBA";
+      }
+      function senderDetail(m) {
+        var name = m && m.fromName ? String(m.fromName).trim() : "";
+        var addr = m && m.from ? String(m.from).trim() : "";
+        if (name && addr && name !== addr) return name + " <" + addr + ">";
+        return addr || name || "\u672A\u77E5\u53D1\u4EF6\u4EBA";
+      }
       var items = list.data && list.data.items || [];
       var unread = items.filter(function(m) {
         return !m.seen;
@@ -778,7 +790,7 @@ var require_messages = __commonJS({
                   "div",
                   { className: "wbml-main" },
                   h("strong", { className: "wbml-subject" }, m.subject || "(\u65E0\u4E3B\u9898)"),
-                  h("span", { className: "wbml-muted" }, (m.from || "\u672A\u77E5\u53D1\u4EF6\u4EBA") + " \xB7 " + (m.mailbox || "INBOX")),
+                  h("span", { className: "wbml-muted" }, senderLabel(m) + " \xB7 " + (m.mailbox || "INBOX")),
                   m.preview ? h("span", { className: "wbml-snippet" }, m.preview) : null
                 ),
                 h("span", { className: "wbml-time" }, C.fmtTime(m.dateAt, props.lang))
@@ -791,7 +803,7 @@ var require_messages = __commonJS({
             h(
               "div",
               { className: "wbml-detail-head" },
-              h("div", { className: "wbml-detail-title" }, h("strong", null, current.subject || "(\u65E0\u4E3B\u9898)"), h("span", { className: "wbml-muted" }, (current.from || "") + " \xB7 " + C.fmtTime(current.dateAt, props.lang))),
+              h("div", { className: "wbml-detail-title" }, h("strong", null, current.subject || "(\u65E0\u4E3B\u9898)"), h("span", { className: "wbml-muted" }, senderDetail(current) + " \xB7 " + C.fmtTime(current.dateAt, props.lang))),
               h(C.Btn, { h, onClick: function() {
                 sel[1](null);
               } }, "\u5173\u95ED")
@@ -4006,7 +4018,7 @@ var require_actions = __commonJS({
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.2.2",
+    version: "0.2.3",
     icon: (init_mail(), __toCommonJS(mail_exports)).default,
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },

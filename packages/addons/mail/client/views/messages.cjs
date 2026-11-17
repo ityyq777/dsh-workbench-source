@@ -13,6 +13,18 @@ module.exports = function Messages(props) {
     if (!accountId[0]) { msg[1]({ kind: "error", text: "先在左侧选择一个账户" }); return; }
     C.call(api, "mail.sync", { id: accountId[0], limit: 20 }).then(function (r) { msg[1]({ kind: "ok", text: "抓取 " + r.fetched + " 封，新增 " + r.inserted }); list.refresh(); }).catch(function (e) { msg[1]({ kind: "error", text: C.errText(e) }); });
   }
+  function senderLabel(m) {
+    var name = m && m.fromName ? String(m.fromName).trim() : "";
+    var addr = m && m.from ? String(m.from).trim() : "";
+    if (name && name !== addr) return name;
+    return addr || "未知发件人";
+  }
+  function senderDetail(m) {
+    var name = m && m.fromName ? String(m.fromName).trim() : "";
+    var addr = m && m.from ? String(m.from).trim() : "";
+    if (name && addr && name !== addr) return name + " <" + addr + ">";
+    return addr || name || "未知发件人";
+  }
   var items = (list.data && list.data.items) || [];
   var unread = items.filter(function (m) { return !m.seen; }).length;
   var current = sel[0];
@@ -38,13 +50,13 @@ module.exports = function Messages(props) {
               h("span", { className: "wbml-dot" }),
               h("div", { className: "wbml-main" },
                 h("strong", { className: "wbml-subject" }, m.subject || "(无主题)"),
-                h("span", { className: "wbml-muted" }, (m.from || "未知发件人") + " · " + (m.mailbox || "INBOX")),
+                h("span", { className: "wbml-muted" }, senderLabel(m) + " · " + (m.mailbox || "INBOX")),
                 m.preview ? h("span", { className: "wbml-snippet" }, m.preview) : null),
               h("span", { className: "wbml-time" }, C.fmtTime(m.dateAt, props.lang)));
           }))),
       current ? h("section", { className: "wbml-pane wbml-detailpane" },
         h("div", { className: "wbml-detail-head" },
-          h("div", { className: "wbml-detail-title" }, h("strong", null, current.subject || "(无主题)"), h("span", { className: "wbml-muted" }, (current.from || "") + " · " + C.fmtTime(current.dateAt, props.lang))),
+          h("div", { className: "wbml-detail-title" }, h("strong", null, current.subject || "(无主题)"), h("span", { className: "wbml-muted" }, senderDetail(current) + " · " + C.fmtTime(current.dateAt, props.lang))),
           h(C.Btn, { h: h, onClick: function () { sel[1](null); } }, "关闭")),
         h("div", { className: "wbml-detail-meta" }, h("span", null, "收件人：", (current.to || "—")), h("span", null, "邮箱：", current.mailbox || "INBOX")),
         h("pre", { className: "wbml-body" }, current.body || current.preview || "(正文未下载)")) : null)

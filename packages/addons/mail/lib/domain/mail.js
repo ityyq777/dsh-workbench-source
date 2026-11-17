@@ -3,6 +3,7 @@ import { accountRow, messageRow, newId, now } from "../db/db.js";
 import { imapList, imapRecent } from "../infra/imap.js";
 import { sendMail, probeSmtp } from "../infra/smtp.js";
 import { classifyProbeError } from "./probe-error.js";
+import { decodeWords, parseAddress } from "../infra/mime-word.js";
 
 export function createMail({ db, host, log }) {
   const one = (sql, ...a) => db.prepare(sql).get(...a);
@@ -80,6 +81,31 @@ export function createMail({ db, host, log }) {
     }
     return out;
   }
+  /**
+   * 老库里的信头是原串（=`=?gbk?B?…?=`、发件人 `"名字" <地址>`），这里一次性就地重解。
+   * 只处理确实需要的行，且与解析结果比较过才写，重复启动不会反复改。
+   */
+  function backfillHeaderRows() {
+    const rows = all("SELECT id, subject, from_addr, from_name, to_addr, cc_addr FROM mail_message");
+    let fixed = 0;
+    for (const r of rows) {
+      const needSubject = String(r.subject || "").indexOf("=?") >= 0;
+      const needFrom = String(r.from_addr || "").indexOf("<") >= 0 || String(r.from_addr || "").indexOf("=?") >= 0 || (!r.from_name && String(r.from_addr || "").indexOf('"') === 0);
+      const needTo = String(r.to_addr || "").indexOf("=?") >= 0;
+      const needCc = String(r.cc_addr || "").indexOf("=?") >= 0;
+      if (!needSubject && !needFrom && !needTo && !needCc) continue;
+      const subject = needSubject ? decodeWords(r.subject) : r.subject;
+      const sender = needFrom ? parseAddress(r.from_addr) : { name: r.from_name || "", address: r.from_addr };
+      const to = needTo ? decodeWords(r.to_addr) : r.to_addr;
+      const cc = needCc ? decodeWords(r.cc_addr) : r.cc_addr;
+      if (subject === r.subject && sender.address === r.from_addr && (sender.name || "") === (r.from_name || "") && to === r.to_addr && cc === r.cc_addr) continue;
+      run("UPDATE mail_message SET subject=?, from_addr=?, from_name=?, to_addr=?, cc_addr=? WHERE id=?", subject, sender.address || r.from_addr, sender.name || "", to, cc, r.id);
+      fixed += 1;
+    }
+    if (fixed && log) log("mail: 重解 " + fixed + " 条历史信头");
+    return fixed;
+  }
+
   async function syncMailboxes(id) {
     const a = account(id); const p = await password(a);
     const boxes = await imapList({ host: a.imap_host, port: a.imap_port, secure: !!a.imap_tls, user: p.user }, p.secret);
@@ -99,7 +125,7 @@ export function createMail({ db, host, log }) {
       const dateAt = Date.parse(it.date) || now();
       const exists = one("SELECT id FROM mail_message WHERE account_id=? AND mailbox=? AND uid=?", a.id, mailbox, it.uid);
       if (exists) continue;
-      run("INSERT INTO mail_message (id,account_id,mailbox,uid,message_id,subject,from_addr,to_addr,cc_addr,date_at,preview,body,flags,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newId("msg"), a.id, mailbox, it.uid, it.messageId, it.subject, it.from, it.to, it.cc, dateAt, "", "", "", now(), now());
+      run("INSERT INTO mail_message (id,account_id,mailbox,uid,message_id,subject,from_addr,from_name,to_addr,cc_addr,date_at,preview,body,flags,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newId("msg"), a.id, mailbox, it.uid, it.messageId, it.subject, it.from, it.fromName || "", it.to, it.cc, dateAt, "", "", "", now(), now());
       inserted += 1;
     }
     return { mailbox, exists: r.exists, fetched: r.items.length, inserted };
@@ -130,7 +156,7 @@ export function createMail({ db, host, log }) {
     if (!to.length) throw new Error("至少一个收件人");
     const r = await sendMail({ host: a.smtp_host, port: a.smtp_port, secure: !!a.smtp_tls, user: a.username || a.email }, p.secret, { from: a.email, to, cc: input.cc || [], subject: input.subject, text: input.text });
     const mb = one("SELECT name FROM mail_mailbox WHERE account_id=? AND role='sent'", a.id) || one("SELECT name FROM mail_mailbox WHERE account_id=? ORDER BY role DESC LIMIT 1", a.id);
-    run("INSERT INTO mail_message (id,account_id,mailbox,uid,message_id,subject,from_addr,to_addr,cc_addr,date_at,preview,body,flags,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newId("msg"), a.id, mb ? mb.name : "Sent", -now(), r.messageId, String(input.subject || ""), a.email, to.join(", "), (input.cc || []).join(", "), now(), String(input.text || "").slice(0, 200), String(input.text || ""), "\\Seen", now(), now());
+    run("INSERT INTO mail_message (id,account_id,mailbox,uid,message_id,subject,from_addr,from_name,to_addr,cc_addr,date_at,preview,body,flags,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newId("msg"), a.id, mb ? mb.name : "Sent", -now(), r.messageId, String(input.subject || ""), a.email, a.name || "", to.join(", "), (input.cc || []).join(", "), now(), String(input.text || "").slice(0, 200), String(input.text || ""), "\\Seen", now(), now());
     return { sent: true, messageId: r.messageId };
   }
   function search(q, { limit = 10 } = {}) {
@@ -144,5 +170,5 @@ export function createMail({ db, host, log }) {
     const limit = Math.min(Math.max(Number(input.limit) || 20, 1), 100);
     return { table: input.table, rows: all("SELECT * FROM " + input.table + " LIMIT ?", limit) };
   }
-  return { status, stats, listAccounts, createAccount, updateAccount, deleteAccount, testAccount, probeAccount, syncMailboxes, mailboxes, sync, messages, message, markRead, move, remove, send, search, dataQuery };
+  return { status, stats, backfillHeaders: backfillHeaderRows, listAccounts, createAccount, updateAccount, deleteAccount, testAccount, probeAccount, syncMailboxes, mailboxes, sync, messages, message, markRead, move, remove, send, search, dataQuery };
 }
