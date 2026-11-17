@@ -1,12 +1,15 @@
 "use strict";
 /**
- * 账户表单：服务商选择 → 自动填主机 → 授权码内联 → 保存前自检 → 落库。
+ * 账户表单：服务商选择 → 自动填主机 → 选保险箱凭据 → 保存前自检 → 落库。
  *
- * 保存顺序按设计文档第 7 节：先 vault.secretCreate 拿到 secretId，再 mail.accountCreate；
- * 后者失败就回滚刚建的 secret，避免保险箱里留下没人引用的孤儿凭据。
+ * 授权码不在本页填写（0.2.2 起）：用户在「凭据保险箱」自己新建一条
+ * （类型 app_password），这里只负责把它的 secret_id 绑定到账户。
+ * 所以保存链路里没有 vault.secretCreate / secretUpdate / secretDelete，
+ * 表单也不再持有任何明文密码，自检同样只传 secretId。
  */
 var util = require("./provider-util.cjs");
 var VaultGate = require("./vault-gate.cjs");
+var SecretPicker = require("./secret-picker.cjs");
 var probe = require("../../lib/domain/probe-error.js");
 
 function t(lang, zh, en) {
@@ -37,7 +40,6 @@ module.exports = function AccountForm(props) {
     };
     base.email = "";
     base.name = "";
-    base.password = "";
     base.secretId = "";
     base.advanced = false;
     if (!editing) return base;
@@ -64,7 +66,7 @@ module.exports = function AccountForm(props) {
   var vaultS = S("loading");
   var passS = S("");
   var pass2S = S("");
-  var showS = S({ pass: false, pass2: false, secret: false });
+  var showS = S({ pass: false, pass2: false });
   var vaultErrS = S("");
   var afterS = S("");
   var probeS = S(null);
@@ -144,8 +146,8 @@ module.exports = function AccountForm(props) {
     if (!String(f.name || "").trim()) return t(lang, "请填写账户名称", "Enter an account name");
     if (!String(f.imapHost || "").trim()) return t(lang, "请填写 IMAP 服务器", "Enter the IMAP server");
     if (!String(f.username || "").trim()) return t(lang, "请填写登录名", "Enter the login name");
-    if (!editing || f.password) {
-      if (!f.password && !f.secretId) return t(lang, "请填写授权码 / 应用密码", "Enter the app password");
+    if (!String(f.secretId || "").trim()) {
+      return t(lang, "请先在保险箱新建并选择凭据", "Create a credential in the vault and pick it here");
     }
     var ports = [f.imapPort, f.smtpPort];
     for (var i = 0; i < ports.length; i += 1) {
@@ -155,35 +157,9 @@ module.exports = function AccountForm(props) {
     return "";
   }
 
-  function secretName() {
-    return "mail:" + String(f.email || "").trim();
-  }
-
-  function createSecret() {
-    var args = { name: secretName(), kind: "app_password", secret: f.password, meta: { username: f.username, url: "mailto:" + f.email } };
-    return C.call(api, "vault.secretCreate", args).catch(function (e) {
-      if (String(C.errText(e)).indexOf("同名") < 0) throw e;
-      args.name = secretName() + ":" + Date.now().toString(36);
-      return C.call(api, "vault.secretCreate", args);
-    });
-  }
-
   function persist() {
     setErr("");
     setBusy("save", true);
-    var createdId = "";
-    var secretId = f.secretId;
-    var step = Promise.resolve();
-    if (f.password) {
-      step = editing
-        ? C.call(api, "vault.secretUpdate", { id: editing.secretId, secret: f.password }).then(function () {
-            secretId = editing.secretId;
-          })
-        : createSecret().then(function (r) {
-            createdId = r && r.id ? r.id : "";
-            secretId = createdId;
-          });
-    }
     var payload = {
       name: String(f.name || "").trim(),
       email: String(f.email || "").trim(),
@@ -194,24 +170,20 @@ module.exports = function AccountForm(props) {
       smtpPort: Number(f.smtpPort),
       smtpTls: !!f.smtpTls,
       username: String(f.username || "").trim() || String(f.email || "").trim(),
-      secretId: secretId,
+      secretId: String(f.secretId || "").trim(),
     };
+    var step = editing
+      ? C.call(api, "mail.accountUpdate", Object.assign({ id: editing.id }, payload))
+      : C.call(api, "mail.accountCreate", payload);
     step
-      .then(function () {
-        if (editing) return C.call(api, "mail.accountUpdate", Object.assign({ id: editing.id }, payload));
-        return C.call(api, "mail.accountCreate", payload);
-      })
       .then(function () {
         setBusy("save", false);
         setNotice(t(lang, "已保存", "Saved"));
         if (props.onSaved) props.onSaved();
       })
       .catch(function (e) {
-        var rollback = createdId ? C.call(api, "vault.secretDelete", { id: createdId }).catch(function () {}) : Promise.resolve();
-        rollback.then(function () {
-          setBusy("save", false);
-          setErr(C.errText(e));
-        });
+        setBusy("save", false);
+        setErr(C.errText(e));
       });
   }
 
@@ -278,8 +250,7 @@ module.exports = function AccountForm(props) {
       smtpHost: f.smtpHost,
       smtpPort: Number(f.smtpPort),
       smtpTls: !!f.smtpTls,
-      password: f.password || "",
-      secretId: f.password ? "" : f.secretId,
+      secretId: f.secretId,
     })
       .then(function (r) {
         setBusy("probe", false);
@@ -353,18 +324,23 @@ module.exports = function AccountForm(props) {
       field(t(lang, "账户名称", "Account name"), textInput("name", { placeholder: t(lang, "例如 工作邮箱", "e.g. Work mail") })),
     ),
     field(
-      editing ? t(lang, "新授权码（留空则不修改）", "New app password (leave empty to keep)") : t(lang, "授权码 / 应用密码", "App password"),
-      h(SecretField, {
+      t(lang, "保险箱凭据", "Vault credential"),
+      h(SecretPicker, {
         h: h,
-        value: f.password,
-        onChange: function (v) { upd({ password: v }); },
-        show: showS[0].secret,
-        onToggle: function () { showS[1](Object.assign({}, showS[0], { secret: !showS[0].secret })); },
-        autoComplete: editing ? "new-password" : "off",
-        showLabel: t(lang, "显示明文", "Show plain text"),
-        hideLabel: t(lang, "隐藏明文", "Hide plain text"),
+        React: React,
+        C: C,
+        api: api,
+        lang: lang,
+        vault: vault,
+        value: f.secretId,
+        disabled: busy.save,
+        onChange: function (id, item) {
+          upd({ secretId: id, secretName: item ? item.name : "" });
+          setProbe(null);
+        },
       }),
-      t(lang, "密码只存进保险箱，不会写进账户表。", "Passwords go to the vault, never into the account row."),
+      t(lang, "先在保险箱新建一条「应用专用密码」，再在这里选用；邮件页只保存它的 id。",
+        "Create an app-password entry in the vault first, then pick it here — this page only stores its id."),
     ),
     provider && util.hintOf(provider, lang) ? h("p", { className: "wbml-hint-line" }, util.hintOf(provider, lang)) : null,
     !f.advanced && f.imapHost
@@ -381,9 +357,6 @@ module.exports = function AccountForm(props) {
           field(t(lang, "SMTP 端口", "SMTP port"), textInput("smtpPort", { type: "number" })),
           field("", tlsRow("smtpTls", t(lang, "SMTP 隐式 TLS（关掉走 STARTTLS）", "SMTP implicit TLS (off = STARTTLS)"))),
         ),
-    vault === "missing"
-      ? field(t(lang, "已有凭据 id（secretId）", "Existing credential id (secretId)"), textInput("secretId"))
-      : null,
     h(VaultGate, {
       h: h, C: C, lang: lang, SecretField: SecretField, vault: vault,
       pass: passS[0], pass2: pass2S[0],
@@ -395,16 +368,19 @@ module.exports = function AccountForm(props) {
       onSubmit: onVaultSubmit,
       busy: busy.vault,
       error: vaultErrS[0],
-      onSkip: function () { vaultS[1]("missing"); },
+      onRetry: function () { checkVault(); },
     }),
     probeS[0] ? h(C.Notice, { h: h, text: probeText, kind: probeS[0].ok ? "ok" : "warn" }) : null,
     errS[0] ? h(C.Notice, { h: h, text: errS[0], kind: "warn" }) : null,
     noticeS[0] ? h(C.Notice, { h: h, text: noticeS[0], kind: "ok" }) : null,
+    !f.secretId
+      ? h("p", { className: "wbml-hint-line" }, t(lang, "请先在保险箱新建并选择凭据，未选时不能保存。", "Pick a vault credential before saving."))
+      : null,
     h(
       "div",
       { className: "wbml-acct-foot" },
-      h(C.Btn, { h: h, onClick: runProbe, disabled: busy.probe || busy.save }, busy.probe ? t(lang, "自检中…", "Checking…") : t(lang, "保存前自检", "Check connection")),
-      h(C.Btn, { h: h, kind: "primary", onClick: submit, disabled: busy.save }, busy.save ? t(lang, "保存中…", "Saving…") : t(lang, "保存", "Save")),
+      h(C.Btn, { h: h, onClick: runProbe, disabled: busy.probe || busy.save || !f.secretId }, busy.probe ? t(lang, "自检中…", "Checking…") : t(lang, "保存前自检", "Check connection")),
+      h(C.Btn, { h: h, kind: "primary", onClick: submit, disabled: busy.save || !f.secretId }, busy.save ? t(lang, "保存中…", "Saving…") : t(lang, "保存", "Save")),
       h(C.Btn, { h: h, onClick: props.onCancel }, t(lang, "取消", "Cancel")),
     ),
   );

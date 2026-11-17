@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbench-mail",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "个人工作台邮件：IMAP 收信头、SMTP 发信、保险箱托管密码",
   "type": "module",
   "main": "lib/index.js",
@@ -14,7 +14,7 @@
     "addon": {
       "id": "wb-addon-mail",
       "title": "邮件",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "minShell": "0.6.7",
       "tables": [
         "mail_account",

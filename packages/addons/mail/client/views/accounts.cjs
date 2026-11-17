@@ -1,6 +1,6 @@
 "use strict";
 /**
- * 邮箱账户页：服务商预设 + 授权码内联 + 保存前自检 + 卡片式编辑。
+ * 邮箱账户页：服务商预设 + 保险箱凭据选择 + 保存前自检 + 卡片式编辑。
  * 设计见 docs/specs/51-邮箱账户接入流程设计.md。
  */
 var AccountForm = require("../ui/account-form.cjs");
@@ -75,7 +75,7 @@ module.exports = function Accounts(props) {
     h(
       "div",
       { className: "wbml-head" },
-      h("div", null, h("h2", null, lang === "en" ? "Mail accounts" : "邮箱账户"), h("p", { className: "wbml-sub" }, lang === "en" ? "Pick a provider, paste the app password; the vault stores it." : "选服务商、填授权码即可，密码只存保险箱。")),
+      h("div", null, h("h2", null, lang === "en" ? "Mail accounts" : "邮箱账户"), h("p", { className: "wbml-sub" }, lang === "en" ? "Pick a provider, then choose an app-password credential from the vault; this page only stores its id." : "选服务商、再从保险箱挑一条授权码即可，邮件页只保存凭据 id。")),
       h(C.Btn, { h: h, kind: "primary", onClick: function () { openS[1]({}); } }, lang === "en" ? "Add account" : "添加账户"),
     ),
     msgS[0] ? h(C.Notice, { h: h, text: msgS[0].text, kind: msgS[0].kind }) : null,

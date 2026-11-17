@@ -1,6 +1,10 @@
 // 共享勾选清单：搜索框 + 头部计数/清空 + 固定高度滚动列表 + 触底加载 + 三态文案。
 // 纯展示组件，不依赖任何域的 action：数据、分页与搜索都由调用方提供。
 // 任务/站点/储物的标签筛选与保险箱建组弹窗的集合选择共用这一份实现。
+//
+// mode:"single" 是单选变体（保险箱凭据选择器在用）：每项渲染成 role="radio"、
+// 点选即回调 onPick（没有 onPick 时退回 onToggle），头部不出现「已选 n / 清空」。
+// 默认仍是多选 checkbox，既有调用方一行都不用改。
 "use strict";
 
 var React = require("react");
@@ -36,6 +40,8 @@ function FilterChecklist(props) {
     var onQuery = props.onQuery || function () {};
     var onLoadMore = props.onLoadMore;
     var onClear = props.onClear || function () {};
+    var single = props.mode === "single";
+    var onPick = typeof props.onPick === "function" ? props.onPick : onToggle;
 
     function toggle(id) {
         if (disabled) return;
@@ -49,8 +55,8 @@ function FilterChecklist(props) {
 
     var head = h("div", { className: "wbck-head" },
         h("span", { className: "wbck-grow" }, title + (total ? " · " + total : "")),
-        selected.length ? h("span", { className: "wbck-sel" }, selectedText + " " + selected.length) : null,
-        (selected.length || query) ? h("button", {
+        !single && selected.length ? h("span", { className: "wbck-sel" }, selectedText + " " + selected.length) : null,
+        !single && (selected.length || query) ? h("button", {
             type: "button",
             className: "wbck-clear",
             title: clearText,
@@ -67,6 +73,23 @@ function FilterChecklist(props) {
     } else {
         body = items.map(function (x) {
             var on = selected.indexOf(String(x.id)) >= 0;
+            if (single) {
+                // 单选：按钮 + role="radio"，保持键盘可达（Tab 聚焦、Enter/Space 触发）。
+                return h("button", {
+                    key: x.id,
+                    type: "button",
+                    role: "radio",
+                    "aria-checked": on ? "true" : "false",
+                    className: "wbck-opt" + (on ? " is-on" : ""),
+                    disabled: disabled,
+                    onClick: function () {
+                        if (disabled) return;
+                        onPick(x.id);
+                    },
+                },
+                h("span", { className: "wbck-nm", title: x.name }, x.name),
+                x.meta ? h("span", { className: "wbck-meta" }, x.meta) : null);
+            }
             return h("label", { key: x.id, className: "wbck-opt" + (on ? " is-on" : "") },
                 h("input", {
                     type: "checkbox",
@@ -98,6 +121,8 @@ function FilterChecklist(props) {
         h("div", {
             className: "wbck-list",
             onScroll: scroll,
+            role: single ? "radiogroup" : undefined,
+            "aria-label": single ? (props.groupLabel || searchPlaceholder) : undefined,
             "aria-busy": loading ? "true" : "false",
         }, body));
 }

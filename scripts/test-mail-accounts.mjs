@@ -102,8 +102,9 @@ assert.ok(card.includes('授权码'), '认证失败时给的是授权码提示�
 assert.equal(renderToStaticMarkup(h(VaultGate, { h, C, lang: 'zh', vault: 'ready' })), '', '保险箱就绪时不占位');
 const locked = renderToStaticMarkup(h(VaultGate, { h, C, lang: 'zh', SecretField, vault: 'locked', pass: '', onPass: () => {} }));
 assert.ok(locked.includes('解锁并继续') && locked.includes('wb-secret-field'), '锁定态给解锁入口，口令框走共享明文控件');
-const missing = renderToStaticMarkup(h(VaultGate, { h, C, lang: 'zh', SecretField, vault: 'missing', onSkip: () => {} }));
-assert.ok(missing.includes('手填凭据 id'), '保险箱缺失时留手动填 secretId 的出路');
+const missing = renderToStaticMarkup(h(VaultGate, { h, C, lang: 'zh', SecretField, vault: 'missing', onRetry: () => {} }));
+assert.ok(missing.includes('保险箱插件未安装') && missing.includes('重新检测'), '保险箱缺失时给安装引导与重新检测入口');
+assert.equal(missing.includes('手填凭据 id'), false, '不再提供手填 secretId 的旁路：授权码只能存保险箱');
 
 const form = renderToStaticMarkup(h(AccountForm, {
   h, React, api: { call: async () => ({}) }, C, lang: 'zh', SecretField, providers: table,
@@ -117,18 +118,61 @@ const other = renderToStaticMarkup(h(AccountForm, {
   onCancel: () => {}, onSaved: () => {},
 }));
 assert.ok(other.includes('IMAP 服务器') && other.includes('登录名'), '陌生域名进入「其他」，展开主机/端口/登录名字段');
-assert.ok(form.includes('wb-secret-field') && form.includes('wb-eye'), '授权码走共享的明文切换控件');
+const SecretPicker = require('../packages/addons/mail/client/ui/secret-picker.cjs');
+const picker = renderToStaticMarkup(h(SecretPicker, {
+  h, React, C, api: { call: async () => ({ items: [] }) }, lang: 'zh', vault: 'ready', value: '', onChange: () => {},
+}));
+assert.ok(picker.includes('选择保险箱凭据'), '凭据选择器未选时显示占位文案');
+assert.ok(picker.includes('aria-haspopup="listbox"'), '触发器声明为下拉入口');
+const pickerLocked = renderToStaticMarkup(h(SecretPicker, {
+  h, React, C, api: { call: async () => ({ items: [] }) }, lang: 'zh', vault: 'locked', value: '', onChange: () => {},
+}));
+assert.ok(pickerLocked.includes('保险箱已锁定或未初始化'), '保险箱锁定时选择器退化成说明文案');
+assert.equal(form.includes('授权码 / 应用密码'), false, '表单里不再有授权码输入框');
+assert.equal(form.includes('wb-eye'), false, '表单不再渲染明文切换小眼睛（保险箱口令框除外，vault loading 时不渲染）');
 assert.ok(form.includes('保存前自检'), '表单提供保存前自检');
+// 未选凭据时「保存」与「自检」都置灰，并给一句提示
+assert.match(form, /disabled=""[^>]*>保存<\/button>/, '未选凭据时保存按钮禁用');
+assert.ok(form.includes('请先在保险箱新建并选择凭据'), '未选凭据时给出提示');
 
 // ---------- 源码特征：只走本插件 action，没有裸密码框 ----------
 const formSrc = src('client/ui/account-form.cjs');
-for (const action of ['mail.accountProbe', 'vault.secretCreate', 'vault.secretUpdate', 'vault.secretDelete', 'mail.accountCreate', 'mail.accountUpdate']) {
+for (const action of ['mail.accountProbe', 'mail.accountCreate', 'mail.accountUpdate']) {
   assert.ok(formSrc.includes(action), '表单调用 ' + action);
 }
+// 0.2.2：不再替用户建凭据，三条写入保险箱的 action 必须从表单里消失
+for (const gone of ['vault.secretCreate', 'vault.secretUpdate', 'vault.secretDelete']) {
+  // 注释里会提到这三个名字，所以只认真正的调用形态
+  assert.equal(formSrc.includes('C.call(api, "' + gone + '"'), false, '表单不再调用 ' + gone);
+}
+assert.match(formSrc, /secretId: f\.secretId/, '自检与保存都把选中的 secretId 透传给后端');
 assert.equal(/type:\s*"password"/.test(formSrc), false, '表单不再出现裸密码框');
-assert.match(formSrc, /vault\.secretDelete[\s\S]{0,120}回滚|vault\.secretDelete/, '账户保存失败后回滚刚建的 secret');
+assert.equal(/f\.password/.test(formSrc), false, '表单不再持有明文密码字段');
+const pickerSrc = src('client/ui/secret-picker.cjs');
+assert.ok(pickerSrc.includes('vault.secretList'), '凭据选择器只从 vault.secretList 取数');
+assert.match(pickerSrc, /Escape/, 'Esc 能收起选择器');
+assert.match(pickerSrc, /mousedown/, '点外部能收起选择器');
+assert.match(pickerSrc, /navigateAddon/, '无凭据时提供「去保险箱新建」的跳转');
+
+// ---------- 共享清单：单选变体 ----------
+const FilterChecklist = require('../packages/addons/lib/filter-checklist.cjs');
+const single = renderToStaticMarkup(h(FilterChecklist, {
+  mode: 'single', items: [{ id: 's1', name: 'QQ 授权码', meta: '应用专用密码' }, { id: 's2', name: '网易授权码' }],
+  selected: ['s1'], onPick: () => {}, title: '保险箱凭据', total: 2, autoFocus: false, query: 'qq',
+}));
+assert.ok(single.includes('role="radiogroup"'), '单选变体用 radiogroup 容器');
+assert.equal((single.match(/role="radio"/g) || []).length, 2, '每项都是 radio');
+assert.ok(single.includes('aria-checked="true"') && single.includes('aria-checked="false"'), '选中态用 aria-checked 表达');
+assert.equal(single.includes('wbck-clear'), false, '单选不出现清空按钮');
+assert.equal(single.includes('已选'), false, '单选不出现已选计数');
+assert.equal(/type="checkbox"/.test(single), false, '单选不渲染 checkbox');
+// 默认多选行为不变
+const multi = renderToStaticMarkup(h(FilterChecklist, { items: [{ id: 'a', name: 'A' }], selected: ['a'], autoFocus: false, title: '全部', total: 1 }));
+assert.ok(multi.includes('type="checkbox"') && multi.includes('已选 1'), '多选行为保持不变');
 assert.ok(src('client/views/accounts.cjs').includes('mail.providerList'), '账户页从本插件 action 取服务商预设');
 assert.ok(src('client/views/accounts.cjs').includes('mail.accountList'), '账户页从本插件 action 取账户列表');
+assert.ok(src('client/views/accounts.cjs').includes('再从保险箱挑一条授权码'), '账户页副标题改成凭据选择口径');
+assert.equal(src('client/views/accounts.cjs').includes('填授权码即可'), false, '账户页不再暗示在这里填授权码');
 
 // ---------- 回归：state setter 必须真的声明过 ----------
 // 曾经踩过：onPick 里调 setProbe(null)，但 setProbe 从未声明，点 chip 直接抛 ReferenceError，

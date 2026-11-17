@@ -1622,6 +1622,7 @@ function useAddonStore() {
   }, []);
   return addonState;
 }
+var navigateAddonHook = null;
 window.__WB_HOST__ = {
   react,
   jsx,
@@ -1632,6 +1633,9 @@ window.__WB_HOST__ = {
   },
   error: function() {
     return lastAddonError;
+  },
+  navigateAddon: function(addonId) {
+    return typeof navigateAddonHook === "function" && !!addonId && navigateAddonHook(String(addonId)) !== false;
   }
 };
 function useApi() {
@@ -1916,6 +1920,18 @@ function WorkbenchPage(props) {
     var v = m && m.views && m.views[0] || a2.views && a2.views[0] || null;
     go("addon:" + a2.id + ":" + (v && v.id ? v.id : ""));
   }
+  react.useEffect(function() {
+    navigateAddonHook = function(addonId) {
+      var t2 = addons.filter(function(a2) {
+        return a2 && a2.id === addonId;
+      })[0];
+      if (t2) openAddon(t2);
+      return !!t2;
+    };
+    return function() {
+      navigateAddonHook = null;
+    };
+  }, [addons]);
   function pageHead(title, desc) {
     return jsx.jsxs("div", { className: "wb-page-head", children: [
       jsx.jsx("div", { className: "wb-page-top", children: [

@@ -19,6 +19,10 @@ module.exports = [
     ".wbck-opt:hover{background:color-mix(in srgb, currentColor 7%, transparent)}",
     ".wbck-opt.is-on{background:color-mix(in srgb, var(--wb-accent) 10%, transparent)}",
     ".wbck-opt input{margin:0;flex:none;accent-color:var(--wb-accent)}",
+    // 单选变体用 button 渲染（role="radio"），这里把浏览器默认按钮样式清掉，视觉与多选行一致。
+    '.wbck-opt[role="radio"]{appearance:none;width:100%;box-sizing:border-box;border:0;background:transparent;color:inherit;font:inherit;text-align:left}',
+    '.wbck-opt[role="radio"]:disabled{opacity:.55;cursor:not-allowed}',
+    '.wbck-opt[role="radio"]:focus-visible{outline:2px solid var(--wb-accent);outline-offset:-2px}',
     ".wbck-nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
     ".wbck-meta{margin-left:auto;flex:none;font-size:11.5px;color:var(--wb-muted)}",
     ".wbck-note{font-size:12px;color:var(--wb-muted);padding:8px 6px}",

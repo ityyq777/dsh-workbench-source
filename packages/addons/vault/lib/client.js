@@ -61,6 +61,10 @@ var require_filter_checklist_styles = __commonJS({
       ".wbck-opt:hover{background:color-mix(in srgb, currentColor 7%, transparent)}",
       ".wbck-opt.is-on{background:color-mix(in srgb, var(--wb-accent) 10%, transparent)}",
       ".wbck-opt input{margin:0;flex:none;accent-color:var(--wb-accent)}",
+      // 单选变体用 button 渲染（role="radio"），这里把浏览器默认按钮样式清掉，视觉与多选行一致。
+      '.wbck-opt[role="radio"]{appearance:none;width:100%;box-sizing:border-box;border:0;background:transparent;color:inherit;font:inherit;text-align:left}',
+      '.wbck-opt[role="radio"]:disabled{opacity:.55;cursor:not-allowed}',
+      '.wbck-opt[role="radio"]:focus-visible{outline:2px solid var(--wb-accent);outline-offset:-2px}',
       ".wbck-nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".wbck-meta{margin-left:auto;flex:none;font-size:11.5px;color:var(--wb-muted)}",
       ".wbck-note{font-size:12px;color:var(--wb-muted);padding:8px 6px}",
@@ -2209,6 +2213,8 @@ var require_filter_checklist = __commonJS({
       var onLoadMore = props.onLoadMore;
       var onClear = props.onClear || function() {
       };
+      var single = props.mode === "single";
+      var onPick = typeof props.onPick === "function" ? props.onPick : onToggle;
       function toggle(id) {
         if (disabled) return;
         onToggle(id);
@@ -2221,8 +2227,8 @@ var require_filter_checklist = __commonJS({
         "div",
         { className: "wbck-head" },
         h("span", { className: "wbck-grow" }, title + (total ? " \xB7 " + total : "")),
-        selected.length ? h("span", { className: "wbck-sel" }, selectedText + " " + selected.length) : null,
-        selected.length || query ? h("button", {
+        !single && selected.length ? h("span", { className: "wbck-sel" }, selectedText + " " + selected.length) : null,
+        !single && (selected.length || query) ? h("button", {
           type: "button",
           className: "wbck-clear",
           title: clearText,
@@ -2239,6 +2245,25 @@ var require_filter_checklist = __commonJS({
       } else {
         body = items.map(function(x) {
           var on = selected.indexOf(String(x.id)) >= 0;
+          if (single) {
+            return h(
+              "button",
+              {
+                key: x.id,
+                type: "button",
+                role: "radio",
+                "aria-checked": on ? "true" : "false",
+                className: "wbck-opt" + (on ? " is-on" : ""),
+                disabled,
+                onClick: function() {
+                  if (disabled) return;
+                  onPick(x.id);
+                }
+              },
+              h("span", { className: "wbck-nm", title: x.name }, x.name),
+              x.meta ? h("span", { className: "wbck-meta" }, x.meta) : null
+            );
+          }
           return h(
             "label",
             { key: x.id, className: "wbck-opt" + (on ? " is-on" : "") },
@@ -2281,6 +2306,8 @@ var require_filter_checklist = __commonJS({
         h("div", {
           className: "wbck-list",
           onScroll: scroll,
+          role: single ? "radiogroup" : void 0,
+          "aria-label": single ? props.groupLabel || searchPlaceholder : void 0,
           "aria-busy": loading ? "true" : "false"
         }, body)
       );

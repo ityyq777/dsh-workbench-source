@@ -123,6 +123,9 @@ function useAddonStore() {
   return addonState;
 }
 
+// 跨插件跳转钩子：路由是本地 state，没有深链锚点，由 WorkbenchPage 登记；返回是否真的跳了。
+var navigateAddonHook = null;
+
 window.__WB_HOST__ = {
   react: react,
   jsx: jsx,
@@ -130,6 +133,9 @@ window.__WB_HOST__ = {
   registerAddon: registerAddon,
   get addons() { return addonState.addons; },
   error: function () { return lastAddonError; },
+  navigateAddon: function (addonId) {
+    return typeof navigateAddonHook === "function" && !!addonId && navigateAddonHook(String(addonId)) !== false;
+  },
 };
 
 function useApi() {
@@ -374,6 +380,14 @@ function WorkbenchPage(props) {
     var v = (m && m.views && m.views[0]) || (a.views && a.views[0]) || null;
     go("addon:" + a.id + ":" + (v && v.id ? v.id : ""));
   }
+  react.useEffect(function () {
+    navigateAddonHook = function (addonId) {
+      var t = addons.filter(function (a) { return a && a.id === addonId; })[0];
+      if (t) openAddon(t);
+      return !!t;
+    };
+    return function () { navigateAddonHook = null; };
+  }, [addons]);
   function pageHead(title, desc) {
     return jsx.jsxs("div", { className: "wb-page-head", children: [
       jsx.jsx("div", { className: "wb-page-top", children: [

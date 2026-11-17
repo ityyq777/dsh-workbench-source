@@ -1,8 +1,9 @@
 "use strict";
 /**
  * 保险箱门禁：账户表单提交前，保险箱必须「已安装 + 已初始化 + 未锁定」。
- * 三种状态各给一条出路：未安装 → 手填凭据 id；未初始化 → 现场设主口令；
+ * 三种状态各给一条出路：未安装 → 装好插件后重新检测；未初始化 → 现场设主口令；
  * 锁定 → 现场解锁。这里只渲染，状态与调用都在 account-form.cjs。
+ * 0.2.2 起不再提供「手填凭据 id」的旁路：授权码只能在保险箱里新建。
  */
 function t(lang, zh, en) {
   return lang === "en" ? en : zh;
@@ -43,14 +44,14 @@ module.exports = function VaultGate(props) {
         { className: "wbml-gate-text" },
         t(
           lang,
-          "邮箱密码要存进保险箱。可以先手动填写已有凭据 id（secretId）继续，安装保险箱后再换成自动托管。",
-          "Mail passwords live in the vault. You can continue with an existing credential id (secretId) and switch to automatic storage once the vault plugin is installed.",
+          "邮件授权码只能保存在保险箱里。先安装并初始化「凭据保险箱」插件，再回到本页选择凭据。",
+          "Mail credentials can only live in the vault. Install and initialise the Vault plugin, then come back and pick one.",
         ),
       ),
       h(
         "button",
-        { type: "button", className: "wbml-btn", onClick: props.onSkip },
-        t(lang, "改用手填凭据 id", "Enter credential id manually"),
+        { type: "button", className: "wbml-btn", onClick: props.onRetry },
+        t(lang, "重新检测", "Check again"),
       ),
     );
   } else if (vault === "init") {
