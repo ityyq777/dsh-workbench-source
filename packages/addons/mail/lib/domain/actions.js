@@ -1,20 +1,25 @@
-/** 邮件 action：读允许 agent；写/发信/同步仅 UI。 */
+/** 邮件 action：读允许 agent；写/发信/同步/自检仅 UI。 */
+import { PROVIDER_SCHEMA, PROVIDERS } from "./providers.js";
 const S = (d) => ({ type: "string", description: d });
 const N = (d) => ({ type: "number", description: d });
 const B = (d) => ({ type: "boolean", description: d });
 const A = (d) => ({ type: "array", description: d });
 const obj = (p, r = []) => ({ type: "object", properties: p, required: r, additionalProperties: false });
 const deny = (origin) => { if (origin && origin !== "ui") throw new Error("该操作只允许在界面中执行"); };
+// 预设表是服务端唯一一份数据：客户端选服务商、识别域名、填主机都读 mail.providerList。
+const providerTable = () => ({ schema: PROVIDER_SCHEMA, providers: PROVIDERS });
 
 export function registerMailActions(api, mail) {
   const defs = [];
   const action = (name, def) => { defs.push({ name, description: def.description, input: def.input }); api.action(name, def); };
   action("mail.status", { description: "只读：账户/邮件/未读/文件夹数量", input: obj({}), execute: () => mail.status() });
-  action("mail.accountList", { description: "只读：邮箱账户列表（不含密码）", input: obj({}), execute: () => mail.listAccounts() });
+  action("mail.accountList", { description: "只读：邮箱账户列表（不含密码，含 lastMessageAt）", input: obj({}), execute: () => mail.listAccounts() });
+  action("mail.providerList", { description: "只读：邮箱服务商预设（QQ/网易/微软/Gmail/iCloud/其他）与域名识别规则；客户端选服务商、自动填主机都读这份表", input: obj({}), execute: () => providerTable() });
   action("mail.accountCreate", { description: "新建邮箱账户（仅 UI）；secretId 为保险箱凭据 id", input: obj({ name: S("账户名，必填"), email: S("邮箱地址，必填"), imapHost: S("IMAP 主机"), imapPort: N("IMAP 端口，默认 993"), imapTls: B("IMAP 是否 TLS"), smtpHost: S("SMTP 主机"), smtpPort: N("SMTP 端口，默认 465"), smtpTls: B("SMTP 是否 TLS"), username: S("登录名，默认邮箱地址"), secretId: S("保险箱 secret id"), enabled: B("是否启用") }, ["name", "email"]), execute: (args, ctx) => { deny(ctx.origin); return mail.createAccount({ name: args.name, email: args.email, imapHost: args.imapHost, imapPort: args.imapPort, imapTls: args.imapTls, smtpHost: args.smtpHost, smtpPort: args.smtpPort, smtpTls: args.smtpTls, username: args.username, secretId: args.secretId, enabled: args.enabled }); } });
   action("mail.accountUpdate", { description: "更新邮箱账户（仅 UI）", input: obj({ id: S("账户 id"), name: S("名称"), email: S("邮箱"), imapHost: S("IMAP 主机"), imapPort: N("IMAP 端口"), imapTls: B("IMAP TLS"), smtpHost: S("SMTP 主机"), smtpPort: N("SMTP 端口"), smtpTls: B("SMTP TLS"), username: S("登录名"), secretId: S("secret id"), enabled: B("是否启用") }, ["id"]), execute: (args, ctx) => { deny(ctx.origin); return mail.updateAccount({ id: args.id, name: args.name, email: args.email, imapHost: args.imapHost, imapPort: args.imapPort, imapTls: args.imapTls, smtpHost: args.smtpHost, smtpPort: args.smtpPort, smtpTls: args.smtpTls, username: args.username, secretId: args.secretId, enabled: args.enabled }); } });
   action("mail.accountDelete", { description: "软删除邮箱账户（仅 UI）", input: obj({ id: S("账户 id") }, ["id"]), execute: (args, ctx) => { deny(ctx.origin); return mail.deleteAccount(args.id); } });
-  action("mail.accountTest", { description: "测试 IMAP 登录并列出文件夹（仅 UI）", input: obj({ id: S("账户 id") }, ["id"]), execute: (args, ctx) => { deny(ctx.origin); return mail.testAccount(args.id); } });
+  action("mail.accountTest", { description: "测试 IMAP 登录并列出文件夹（仅 UI）；返回 ok/errorClass(auth|dns|refused|timeout|tls|starttls|unknown)", input: obj({ id: S("账户 id") }, ["id"]), execute: (args, ctx) => { deny(ctx.origin); return mail.testAccount(args.id); } });
+  action("mail.accountProbe", { description: "保存前自检（仅 UI）：用草稿参数登录 IMAP 列文件夹、可选验证 SMTP 认证，不落库；password 只在本进程内存里用一次", input: obj({ email: S("邮箱地址"), username: S("登录名，默认邮箱地址"), imapHost: S("IMAP 主机，必填"), imapPort: N("IMAP 端口，默认 993"), imapTls: B("IMAP 是否隐式 TLS"), smtpHost: S("SMTP 主机，可选"), smtpPort: N("SMTP 端口，默认 465"), smtpTls: B("SMTP 是否隐式 TLS（false 走 STARTTLS）"), password: S("授权码/应用密码，仅本次调用使用"), secretId: S("已保存的保险箱 secret id（可不传 password）") }, ["imapHost"]), execute: (args, ctx) => { deny(ctx.origin); return mail.probeAccount({ email: args.email, username: args.username, imapHost: args.imapHost, imapPort: args.imapPort, imapTls: args.imapTls, smtpHost: args.smtpHost, smtpPort: args.smtpPort, smtpTls: args.smtpTls, password: args.password, secretId: args.secretId }); } });
   action("mail.mailboxList", { description: "只读：文件夹列表，可按账户过滤", input: obj({ accountId: S("账户 id") }), execute: (args) => mail.mailboxes(args.accountId) });
   action("mail.mailboxSync", { description: "从 IMAP 同步文件夹（仅 UI）", input: obj({ id: S("账户 id") }, ["id"]), execute: (args, ctx) => { deny(ctx.origin); return mail.syncMailboxes(args.id); } });
   action("mail.messageList", { description: "只读：邮件列表，支持账户/文件夹/未读/关键词", input: obj({ accountId: S("账户 id"), mailbox: S("文件夹名"), unread: B("只看未读"), q: S("关键词"), limit: N("1–200，默认 30") }), execute: (args) => mail.messages({ accountId: args.accountId, mailbox: args.mailbox, unread: args.unread, q: args.q, limit: args.limit }) });

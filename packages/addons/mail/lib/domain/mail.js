@@ -1,7 +1,8 @@
 /** 邮件域引擎：账户、文件夹、本地邮件、SMTP 发送、IMAP 抓信头。 */
 import { accountRow, messageRow, newId, now } from "../db/db.js";
 import { imapList, imapRecent } from "../infra/imap.js";
-import { sendMail } from "../infra/smtp.js";
+import { sendMail, probeSmtp } from "../infra/smtp.js";
+import { classifyProbeError } from "./probe-error.js";
 
 export function createMail({ db, host, log }) {
   const one = (sql, ...a) => db.prepare(sql).get(...a);
@@ -15,7 +16,11 @@ export function createMail({ db, host, log }) {
     return { user: acc.username || acc.email, secret: v.secret };
   }
   function status() { return { accounts: one("SELECT COUNT(*) n FROM mail_account WHERE deleted_at IS NULL").n, messages: one("SELECT COUNT(*) n FROM mail_message").n, unread: one("SELECT COUNT(*) n FROM mail_message WHERE flags NOT LIKE '%\\Seen%'").n, mailboxes: one("SELECT COUNT(*) n FROM mail_mailbox").n }; }
-  function listAccounts() { return { items: all("SELECT * FROM mail_account WHERE deleted_at IS NULL ORDER BY created_at").map(accountRow) }; }
+  // 账户卡片上的「最近来信」由本地邮件派生，不额外加列（见设计文档第 10 节）。
+  function listAccounts() {
+    const last = new Map(all("SELECT account_id, MAX(date_at) AS at FROM mail_message GROUP BY account_id").map((r) => [r.account_id, r.at]));
+    return { items: all("SELECT * FROM mail_account WHERE deleted_at IS NULL ORDER BY created_at").map((r) => Object.assign(accountRow(r), { lastMessageAt: last.get(r.id) || null })) };
+  }
   function createAccount(input = {}) {
     const name = String(input.name || "").trim(); const email = String(input.email || "").trim();
     if (!name || !email) throw new Error("账户名称与邮箱地址必填");
@@ -29,10 +34,51 @@ export function createMail({ db, host, log }) {
     return accountRow(account(a.id));
   }
   function deleteAccount(id) { account(id); run("UPDATE mail_account SET deleted_at=?,updated_at=? WHERE id=?", now(), now(), id); return { deleted: true, id }; }
+  // 连接失败不再整条抛错：界面要按 errorClass 给不同的补救文案，抛错只剩一句 message。
   async function testAccount(id) {
     const a = account(id); const p = await password(a);
-    const boxes = await imapList({ host: a.imap_host, port: a.imap_port, secure: !!a.imap_tls, user: p.user }, p.secret);
-    return { ok: true, mailboxes: boxes.length, imap: a.imap_host };
+    try {
+      const boxes = await imapList({ host: a.imap_host, port: a.imap_port, secure: !!a.imap_tls, user: p.user }, p.secret);
+      return { ok: true, mailboxes: boxes.length, imap: a.imap_host, errorClass: "" };
+    } catch (e) {
+      return { ok: false, errorClass: classifyProbeError(e), imap: a.imap_host, message: String((e && e.message) || e).slice(0, 240) };
+    }
+  }
+  /**
+   * 保存前自检：用草稿参数（尚未落库）连一次 IMAP 并列出文件夹，可选再验证 SMTP 认证。
+   * 密码可以明文传（仅本次调用内存里用），也可以传已有 secretId 走保险箱租约。
+   */
+  async function probeAccount(input = {}) {
+    const imapHost = String(input.imapHost || "").trim();
+    const smtpHost = String(input.smtpHost || "").trim();
+    const user = String(input.username || "").trim() || String(input.email || "").trim();
+    if (!imapHost) throw new Error("请先填写 IMAP 服务器");
+    if (!user) throw new Error("请先填写登录名或邮箱地址");
+    let secret = String(input.password || "");
+    if (!secret && input.secretId) secret = (await password({ secret_id: input.secretId, id: "probe" })).secret;
+    if (!secret) throw new Error("请先填写授权码");
+    const out = { ok: true, imap: null, smtp: null, errorClass: "" };
+    const t0 = now();
+    try {
+      const boxes = await imapList({ host: imapHost, port: Number(input.imapPort) || 993, secure: input.imapTls !== false, user }, secret);
+      out.imap = { ok: true, mailboxes: boxes.length, ms: now() - t0 };
+    } catch (e) {
+      const errorClass = classifyProbeError(e);
+      out.imap = { ok: false, errorClass, message: String((e && e.message) || e).slice(0, 240), ms: now() - t0 };
+      out.ok = false; out.errorClass = errorClass;
+    }
+    if (smtpHost) {
+      const t1 = now();
+      try {
+        await probeSmtp({ host: smtpHost, port: Number(input.smtpPort) || 465, secure: input.smtpTls !== false, user }, secret);
+        out.smtp = { ok: true, ms: now() - t1 };
+      } catch (e) {
+        const errorClass = classifyProbeError(e);
+        out.smtp = { ok: false, errorClass, message: String((e && e.message) || e).slice(0, 240), ms: now() - t1 };
+        out.ok = false; if (!out.errorClass) out.errorClass = errorClass;
+      }
+    }
+    return out;
   }
   async function syncMailboxes(id) {
     const a = account(id); const p = await password(a);
@@ -98,5 +144,5 @@ export function createMail({ db, host, log }) {
     const limit = Math.min(Math.max(Number(input.limit) || 20, 1), 100);
     return { table: input.table, rows: all("SELECT * FROM " + input.table + " LIMIT ?", limit) };
   }
-  return { status, stats, listAccounts, createAccount, updateAccount, deleteAccount, testAccount, syncMailboxes, mailboxes, sync, messages, message, markRead, move, remove, send, search, dataQuery };
+  return { status, stats, listAccounts, createAccount, updateAccount, deleteAccount, testAccount, probeAccount, syncMailboxes, mailboxes, sync, messages, message, markRead, move, remove, send, search, dataQuery };
 }

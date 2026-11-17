@@ -98,8 +98,41 @@ var require_styles = __commonJS({
       ".wbm-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}",
       ".wbm-time{font-size:11px;color:var(--wb-muted,#6b7280);white-space:nowrap}",
       ".wbm-body{white-space:pre-wrap;font:inherit;font-size:13px;line-height:1.6;margin:8px 0 0}",
-      ".wbm-icon-btn{border:0;background:transparent;color:var(--wb-muted,#6b7280);font-size:16px;cursor:pointer;padding:2px 6px}"
-    ]);
+      ".wbm-icon-btn{border:0;background:transparent;color:var(--wb-muted,#6b7280);font-size:16px;cursor:pointer;padding:2px 6px}",
+      /* 服务商选择器 */
+      ".wbm-chips{display:flex;flex-wrap:wrap;gap:6px}",
+      ".wbm-chip{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer}",
+      ".wbm-chip:hover{border-color:var(--wb-accent,#2563eb)}",
+      ".wbm-chip:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:1px}",
+      ".wbm-chip.on{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:var(--wb-on-accent,#fff)}",
+      /* 账户表单 */
+      ".wbm-acct-form{display:flex;flex-direction:column;gap:10px;border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
+      ".wbm-acct-head{display:flex;align-items:center;justify-content:space-between;gap:8px}",
+      ".wbm-acct-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
+      ".wbm-acct-foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}",
+      ".wbm-check{display:flex;align-items:center;gap:6px;font-size:12px;padding-top:18px}",
+      ".wbm-hint-line{margin:0;font-size:11px;line-height:1.6;color:var(--wb-muted,#6b7280)}",
+      /* 保险箱门禁 */
+      ".wbm-gate-wrap{display:flex;flex-direction:column;gap:8px}",
+      ".wbm-gate{border:1px solid var(--wb-warn,#f59e0b);border-radius:9px;padding:10px;display:flex;flex-direction:column;gap:8px;background:color-mix(in srgb, var(--wb-warn,#f59e0b) 8%, transparent)}",
+      ".wbm-gate-title{font-size:13px;font-weight:650}",
+      ".wbm-gate-text{margin:0;font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280)}",
+      ".wbm-gate-row{max-width:320px}",
+      /* 账户卡片 */
+      ".wbm-cards{display:flex;flex-direction:column;gap:8px}",
+      ".wbm-cards .wbm-card{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}",
+      ".wbm-card-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}",
+      ".wbm-card-title{font-size:13px;font-weight:650}",
+      ".wbm-card-sub{font-size:12px}",
+      ".wbm-card-meta{font-size:11px;color:var(--wb-muted,#6b7280)}",
+      ".wbm-card-actions{display:flex;gap:6px;flex-wrap:wrap}",
+      ".wbm-card-result{display:flex;align-items:center;gap:6px;flex:1 0 100%;font-size:12px;line-height:1.6}",
+      ".wbm-acct-form > .wbm-btn{align-self:flex-start}",
+      /* 基础 pill / danger 按钮用固定浅色，深色主题下自己按主题 token 重算一次 */
+      ".wbm-card-result .wbm-pill.ok{background:color-mix(in srgb,var(--wb-ok,#047857) 16%,transparent);color:var(--wb-ok,#047857)}",
+      ".wbm-card-result .wbm-pill.error{background:color-mix(in srgb,var(--wb-danger,#b91c1c) 16%,transparent);color:var(--wb-danger,#b91c1c)}",
+      ".wbm-card-actions .wbm-btn.danger{color:var(--wb-danger,#b91c1c);border-color:color-mix(in srgb,var(--wb-danger,#b91c1c) 45%,transparent)}"
+    ]).join("\n");
   }
 });
 
@@ -818,80 +851,963 @@ var require_compose = __commonJS({
   }
 });
 
+// packages/addons/mail/client/ui/provider-util.cjs
+var require_provider_util = __commonJS({
+  "packages/addons/mail/client/ui/provider-util.cjs"(exports2, module2) {
+    "use strict";
+    function domainOf(email) {
+      var raw = String(email || "").trim().toLowerCase();
+      var at = raw.lastIndexOf("@");
+      if (at < 0) return "";
+      return raw.slice(at + 1).replace(/\.+$/, "");
+    }
+    function localOf(email) {
+      var raw = String(email || "").trim();
+      var at = raw.lastIndexOf("@");
+      return at < 0 ? raw : raw.slice(0, at);
+    }
+    function list(table) {
+      return table && table.providers || [];
+    }
+    function providerById(table, id) {
+      var arr = list(table);
+      for (var i = 0; i < arr.length; i += 1) if (arr[i].id === id) return arr[i];
+      return null;
+    }
+    function detect(table, email) {
+      var domain = domainOf(email);
+      if (!domain) return null;
+      var best = null;
+      var arr = list(table);
+      for (var i = 0; i < arr.length; i += 1) {
+        var domains = arr[i].domains || [];
+        for (var j = 0; j < domains.length; j += 1) {
+          var d = domains[j];
+          if (domain !== d && domain.slice(-(d.length + 1)) !== "." + d) continue;
+          if (!best || d.length > best.domain.length) best = { id: arr[i].id, domain: d };
+        }
+      }
+      return best;
+    }
+    function hostOf(tpl, domain) {
+      return String(tpl || "").replace("{domain}", domain);
+    }
+    function presetFor(table, id, email) {
+      var p = providerById(table, id);
+      if (!p) return null;
+      var domain = domainOf(email) || p.domains && p.domains[0] || "";
+      return {
+        provider: p.id,
+        imapHost: hostOf(p.imapHost, domain),
+        imapPort: p.imapPort,
+        imapTls: p.imapTls,
+        smtpHost: hostOf(p.smtpHost, domain),
+        smtpPort: p.smtpPort,
+        smtpTls: p.smtpTls,
+        username: p.usernameMode === "local" ? localOf(email) : String(email || "").trim()
+      };
+    }
+    function labelOf(provider, lang) {
+      if (!provider) return "";
+      var l = provider.label || {};
+      return lang === "en" ? l.en || l.zh || provider.id : l.zh || l.en || provider.id;
+    }
+    function hintOf(provider, lang) {
+      if (!provider) return "";
+      var h = provider.hint || {};
+      return lang === "en" ? h.en || h.zh || "" : h.zh || h.en || "";
+    }
+    module2.exports = {
+      domainOf,
+      localOf,
+      providerById,
+      detect,
+      presetFor,
+      labelOf,
+      hintOf
+    };
+  }
+});
+
+// packages/addons/mail/client/ui/vault-gate.cjs
+var require_vault_gate = __commonJS({
+  "packages/addons/mail/client/ui/vault-gate.cjs"(exports2, module2) {
+    "use strict";
+    function t(lang, zh, en) {
+      return lang === "en" ? en : zh;
+    }
+    module2.exports = function VaultGate(props) {
+      var h = props.h;
+      var C = props.C;
+      var lang = props.lang;
+      var vault = props.vault || "loading";
+      if (vault === "ready" || vault === "loading") return null;
+      var SecretField = props.SecretField;
+      var busy = !!props.busy;
+      function secret(value, onChange, show, onToggle, id, autoComplete) {
+        return h(SecretField, {
+          h,
+          value,
+          onChange,
+          show,
+          onToggle,
+          id,
+          autoComplete,
+          disabled: busy,
+          showLabel: t(lang, "\u663E\u793A\u660E\u6587", "Show plain text"),
+          hideLabel: t(lang, "\u9690\u85CF\u660E\u6587", "Hide plain text")
+        });
+      }
+      var body;
+      if (vault === "missing") {
+        body = h(
+          "div",
+          { className: "wbm-gate" },
+          h("div", { className: "wbm-gate-title" }, t(lang, "\u4FDD\u9669\u7BB1\u63D2\u4EF6\u672A\u5B89\u88C5", "Vault plugin is not installed")),
+          h(
+            "p",
+            { className: "wbm-gate-text" },
+            t(
+              lang,
+              "\u90AE\u7BB1\u5BC6\u7801\u8981\u5B58\u8FDB\u4FDD\u9669\u7BB1\u3002\u53EF\u4EE5\u5148\u624B\u52A8\u586B\u5199\u5DF2\u6709\u51ED\u636E id\uFF08secretId\uFF09\u7EE7\u7EED\uFF0C\u5B89\u88C5\u4FDD\u9669\u7BB1\u540E\u518D\u6362\u6210\u81EA\u52A8\u6258\u7BA1\u3002",
+              "Mail passwords live in the vault. You can continue with an existing credential id (secretId) and switch to automatic storage once the vault plugin is installed."
+            )
+          ),
+          h(
+            "button",
+            { type: "button", className: "wbm-btn", onClick: props.onSkip },
+            t(lang, "\u6539\u7528\u624B\u586B\u51ED\u636E id", "Enter credential id manually")
+          )
+        );
+      } else if (vault === "init") {
+        body = h(
+          "div",
+          { className: "wbm-gate" },
+          h("div", { className: "wbm-gate-title" }, t(lang, "\u4FDD\u9669\u7BB1\u8FD8\u6CA1\u6709\u4E3B\u53E3\u4EE4", "The vault has no master password yet")),
+          h(
+            "p",
+            { className: "wbm-gate-text" },
+            t(
+              lang,
+              "\u8BBE\u7F6E\u4E00\u4E2A\u4E3B\u53E3\u4EE4\uFF08\u81F3\u5C11 12 \u4F4D\uFF09\uFF0C\u7528\u4E8E\u52A0\u5BC6\u8FD9\u53F0\u673A\u5668\u4E0A\u7684\u6240\u6709\u51ED\u636E\u3002\u8BBE\u7F6E\u540E\u4E0D\u80FD\u627E\u56DE\uFF0C\u8BF7\u8BB0\u7262\u3002",
+              "Set a master password (12+ characters) that encrypts every credential on this machine. It cannot be recovered, so keep it safe."
+            )
+          ),
+          h("div", { className: "wbm-gate-row" }, secret(props.pass, props.onPass, props.showPass, props.onTogglePass, "wbm-vault-pass", "new-password")),
+          h("div", { className: "wbm-gate-row" }, secret(props.pass2, props.onPass2, props.showPass2, props.onTogglePass2, "wbm-vault-pass2", "new-password")),
+          h(
+            "button",
+            { type: "button", className: "wbm-btn primary", disabled: busy, onClick: props.onSubmit },
+            busy ? t(lang, "\u5904\u7406\u4E2D\u2026", "Working\u2026") : t(lang, "\u521D\u59CB\u5316\u4FDD\u9669\u7BB1\u5E76\u7EE7\u7EED", "Initialize vault and continue")
+          )
+        );
+      } else {
+        body = h(
+          "div",
+          { className: "wbm-gate" },
+          h("div", { className: "wbm-gate-title" }, t(lang, "\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A", "The vault is locked")),
+          h("p", { className: "wbm-gate-text" }, t(lang, "\u8F93\u5165\u4E3B\u53E3\u4EE4\u89E3\u9501\u540E\u5373\u53EF\u4FDD\u5B58\u8D26\u6237\u3002", "Unlock with your master password to save the account.")),
+          h("div", { className: "wbm-gate-row" }, secret(props.pass, props.onPass, props.showPass, props.onTogglePass, "wbm-vault-pass", "current-password")),
+          h(
+            "button",
+            { type: "button", className: "wbm-btn primary", disabled: busy, onClick: props.onSubmit },
+            busy ? t(lang, "\u89E3\u9501\u4E2D\u2026", "Unlocking\u2026") : t(lang, "\u89E3\u9501\u5E76\u7EE7\u7EED", "Unlock and continue")
+          )
+        );
+      }
+      return h("div", { className: "wbm-gate-wrap" }, body, props.error ? h(C.Notice, { h, text: props.error, kind: "warn" }) : null);
+    };
+  }
+});
+
+// packages/addons/mail/lib/domain/probe-error.js
+var probe_error_exports = {};
+__export(probe_error_exports, {
+  ERROR_CLASSES: () => ERROR_CLASSES,
+  ERROR_TEXT: () => ERROR_TEXT,
+  classifyProbeError: () => classifyProbeError
+});
+function classifyProbeError(e) {
+  const code = String(e && e.code || "");
+  const msg = String(e && (e.message || e) || "");
+  const s = code + " " + msg;
+  if (/不支持\s*starttls/i.test(msg)) return "starttls";
+  if (TLS_CODE.has(code) || /certificate|证书|self[- ]signed|wrong version number|ssl/i.test(s)) return "tls";
+  if (DNS_CODE.has(code) || /getaddrinfo|enotfound|域名解析/i.test(s)) return "dns";
+  if (REFUSED_CODE.has(code) || /econnrefused|连接被拒绝|connection refused/i.test(s)) return "refused";
+  if (code === "ETIMEDOUT" || /超时|timed?\s?out/i.test(s)) return "timeout";
+  if (AUTH_RE.test(s)) return "auth";
+  return "unknown";
+}
+var ERROR_CLASSES, AUTH_RE, TLS_CODE, REFUSED_CODE, DNS_CODE, ERROR_TEXT;
+var init_probe_error = __esm({
+  "packages/addons/mail/lib/domain/probe-error.js"() {
+    ERROR_CLASSES = ["auth", "dns", "refused", "timeout", "tls", "starttls", "unknown"];
+    AUTH_RE = /authenticationfailed|invalid credentials|login failed|imap 登录失败|smtp (用户名|密码) 失败|\b535\b|\b5\.7\.8\b|\bauth(?:entication)? failed\b/i;
+    TLS_CODE = /* @__PURE__ */ new Set([
+      "ERR_TLS_CERT_ALTNAME_INVALID",
+      "DEPTH_ZERO_SELF_SIGNED_CERT",
+      "SELF_SIGNED_CERT_IN_CHAIN",
+      "CERT_HAS_EXPIRED",
+      "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+      "ERR_SSL_WRONG_VERSION_NUMBER",
+      "EPROTO",
+      "ERR_SSL_WRONG_SSL_VERSION"
+    ]);
+    REFUSED_CODE = /* @__PURE__ */ new Set(["ECONNREFUSED", "ECONNRESET", "EHOSTUNREACH", "ENETUNREACH", "EADDRNOTAVAIL"]);
+    DNS_CODE = /* @__PURE__ */ new Set(["ENOTFOUND", "EAI_AGAIN", "EAI_FAIL"]);
+    ERROR_TEXT = {
+      auth: {
+        zh: "\u8D26\u53F7\u6216\u6388\u6743\u7801\u4E0D\u5BF9\u3002QQ/\u7F51\u6613/Gmail/iCloud \u9700\u8981\u300C\u6388\u6743\u7801 / App \u4E13\u7528\u5BC6\u7801\u300D\uFF0C\u4E0D\u662F\u7F51\u9875\u767B\u5F55\u5BC6\u7801\u3002",
+        en: "Wrong account or password. QQ/NetEase/Gmail/iCloud need an app password, not your web login password."
+      },
+      dns: {
+        zh: "\u670D\u52A1\u5668\u5730\u5740\u89E3\u6790\u5931\u8D25\uFF0C\u68C0\u67E5\u4E3B\u673A\u540D\u662F\u5426\u5199\u9519\uFF08\u4F8B\u5982 imap.qq.com\uFF09\u3002",
+        en: "Host name could not be resolved; check the server address (for example imap.qq.com)."
+      },
+      refused: {
+        zh: "\u7AEF\u53E3\u6CA1\u6709\u54CD\u5E94\uFF0C\u68C0\u67E5\u7AEF\u53E3\u53F7\u4E0E\u670D\u52A1\u5668\u662F\u5426\u7981\u7528\u4E86\u8BE5\u534F\u8BAE\u3002",
+        en: "The port did not answer; check the port number and whether the server disables that protocol."
+      },
+      timeout: {
+        zh: "\u8FDE\u63A5\u8D85\u65F6\uFF0C\u53EF\u80FD\u662F\u7F51\u7EDC\u6216\u9632\u706B\u5899\u62E6\u622A\u4E86 993/465/587 \u7AEF\u53E3\u3002",
+        en: "Connection timed out; the network or firewall may block ports 993/465/587."
+      },
+      tls: {
+        zh: "TLS \u63E1\u624B\u5931\u8D25\uFF0C\u68C0\u67E5\u7AEF\u53E3\u4E0E\u52A0\u5BC6\u65B9\u5F0F\u662F\u5426\u5339\u914D\uFF08993 \u7528 SSL/TLS\uFF0C587 \u7528 STARTTLS\uFF09\u3002",
+        en: "TLS handshake failed; check that port and encryption match (993 uses SSL/TLS, 587 uses STARTTLS)."
+      },
+      starttls: {
+        zh: "\u670D\u52A1\u5668\u4E0D\u652F\u6301 STARTTLS\uFF0C\u8BF7\u6539\u7528 993/465 \u7684\u9690\u5F0F TLS \u7AEF\u53E3\u3002",
+        en: "The server does not support STARTTLS; use an implicit-TLS port such as 993 or 465."
+      },
+      unknown: {
+        zh: "\u8FDE\u63A5\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u670D\u52A1\u5668\u5730\u5740\u3001\u7AEF\u53E3\u4E0E\u6388\u6743\u7801\u3002",
+        en: "Connection failed; check the server address, port and app password."
+      }
+    };
+  }
+});
+
+// packages/addons/mail/client/ui/provider-chips.cjs
+var require_provider_chips = __commonJS({
+  "packages/addons/mail/client/ui/provider-chips.cjs"(exports2, module2) {
+    "use strict";
+    var util = require_provider_util();
+    module2.exports = function ProviderChips(props) {
+      var h = props.h;
+      var lang = props.lang;
+      var arr = props.providers && props.providers.providers || [];
+      return h(
+        "div",
+        { className: "wbm-chips", role: "radiogroup", "aria-label": lang === "en" ? "Mail provider" : "\u90AE\u7BB1\u670D\u52A1\u5546" },
+        arr.map(function(p) {
+          var on = p.id === props.value;
+          return h(
+            "button",
+            {
+              key: p.id,
+              type: "button",
+              role: "radio",
+              "aria-checked": on ? "true" : "false",
+              className: "wbm-chip" + (on ? " on" : ""),
+              onClick: function() {
+                props.onPick(p.id);
+              }
+            },
+            util.labelOf(p, lang)
+          );
+        })
+      );
+    };
+  }
+});
+
+// packages/addons/mail/client/ui/account-form.cjs
+var require_account_form = __commonJS({
+  "packages/addons/mail/client/ui/account-form.cjs"(exports2, module2) {
+    "use strict";
+    var util = require_provider_util();
+    var VaultGate = require_vault_gate();
+    var probe = (init_probe_error(), __toCommonJS(probe_error_exports));
+    function t(lang, zh, en) {
+      return lang === "en" ? en : zh;
+    }
+    module2.exports = function AccountForm(props) {
+      var h = props.h;
+      var React = props.React;
+      var C = props.C;
+      var api = props.api;
+      var lang = props.lang;
+      var SecretField = props.SecretField;
+      var providers = props.providers || { providers: [] };
+      var editing = props.account || null;
+      var S = React.useState;
+      function initial() {
+        var base = util.presetFor(providers, "qq", "") || {
+          provider: "qq",
+          imapHost: "",
+          imapPort: 993,
+          imapTls: true,
+          smtpHost: "",
+          smtpPort: 465,
+          smtpTls: true,
+          username: ""
+        };
+        base.email = "";
+        base.name = "";
+        base.password = "";
+        base.secretId = "";
+        base.advanced = false;
+        if (!editing) return base;
+        return Object.assign(base, {
+          provider: util.detect(providers, editing.email) ? util.detect(providers, editing.email).id : "other",
+          email: editing.email || "",
+          name: editing.name || "",
+          username: editing.username || editing.email || "",
+          imapHost: editing.imapHost || "",
+          imapPort: editing.imapPort || 993,
+          imapTls: editing.imapTls !== false,
+          smtpHost: editing.smtpHost || "",
+          smtpPort: editing.smtpPort || 465,
+          smtpTls: editing.smtpTls !== false,
+          secretId: editing.secretId || "",
+          advanced: true
+        });
+      }
+      var fs = S(initial);
+      var f = fs[0];
+      var setF = fs[1];
+      var touchedS = S(!!editing);
+      var vaultS = S("loading");
+      var passS = S("");
+      var pass2S = S("");
+      var showS = S({ pass: false, pass2: false, secret: false });
+      var vaultErrS = S("");
+      var afterS = S("");
+      var probeS = S(null);
+      var busyS = S({ save: false, probe: false, vault: false });
+      var errS = S("");
+      var noticeS = S("");
+      var vault = vaultS[0];
+      var busy = busyS[0];
+      function upd(patch) {
+        setF(function(prev) {
+          return Object.assign({}, prev, patch);
+        });
+      }
+      function setBusy(key, on) {
+        setBusyState(function(prev) {
+          var next = Object.assign({}, prev);
+          next[key] = on;
+          return next;
+        });
+      }
+      var setBusyState = busyS[1];
+      function checkVault() {
+        return C.call(api, "vault.status").then(function(r2) {
+          var state = !r2 || !r2.initialized ? "init" : r2.locked ? "locked" : "ready";
+          vaultS[1](state);
+          return state;
+        }).catch(function() {
+          vaultS[1]("missing");
+          return "missing";
+        });
+      }
+      React.useEffect(function() {
+        checkVault();
+      }, []);
+      function applyPreset(id, email) {
+        var p = util.presetFor(providers, id, email);
+        if (!p) return;
+        upd({ provider: id, imapHost: p.imapHost, imapPort: p.imapPort, imapTls: p.imapTls, smtpHost: p.smtpHost, smtpPort: p.smtpPort, smtpTls: p.smtpTls, username: p.username, advanced: id === "other" });
+      }
+      function onPick(id) {
+        touchedS[1](true);
+        setProbe(null);
+        applyPreset(id, f.email);
+      }
+      function onEmailBlur() {
+        if (touchedS[0] || !f.email) return;
+        var hit = util.detect(providers, f.email);
+        if (hit) {
+          if (hit.id !== f.provider) applyPreset(hit.id, f.email);
+          else upd({ username: f.username || f.email });
+        } else {
+          upd({ provider: "other", advanced: true, username: f.username || f.email });
+        }
+      }
+      function validate() {
+        if (!/^\S+@\S+\.\S+$/.test(String(f.email || "").trim())) return t(lang, "\u8BF7\u586B\u5199\u6B63\u786E\u7684\u90AE\u7BB1\u5730\u5740", "Enter a valid email address");
+        if (!String(f.name || "").trim()) return t(lang, "\u8BF7\u586B\u5199\u8D26\u6237\u540D\u79F0", "Enter an account name");
+        if (!String(f.imapHost || "").trim()) return t(lang, "\u8BF7\u586B\u5199 IMAP \u670D\u52A1\u5668", "Enter the IMAP server");
+        if (!String(f.username || "").trim()) return t(lang, "\u8BF7\u586B\u5199\u767B\u5F55\u540D", "Enter the login name");
+        if (!editing || f.password) {
+          if (!f.password && !f.secretId) return t(lang, "\u8BF7\u586B\u5199\u6388\u6743\u7801 / \u5E94\u7528\u5BC6\u7801", "Enter the app password");
+        }
+        var ports = [f.imapPort, f.smtpPort];
+        for (var i = 0; i < ports.length; i += 1) {
+          var n = Number(ports[i]);
+          if (!(n >= 1 && n <= 65535)) return t(lang, "\u7AEF\u53E3\u9700\u5728 1\u201365535 \u4E4B\u95F4", "Port must be between 1 and 65535");
+        }
+        return "";
+      }
+      function secretName() {
+        return "mail:" + String(f.email || "").trim();
+      }
+      function createSecret() {
+        var args = { name: secretName(), kind: "app_password", secret: f.password, meta: { username: f.username, url: "mailto:" + f.email } };
+        return C.call(api, "vault.secretCreate", args).catch(function(e) {
+          if (String(C.errText(e)).indexOf("\u540C\u540D") < 0) throw e;
+          args.name = secretName() + ":" + Date.now().toString(36);
+          return C.call(api, "vault.secretCreate", args);
+        });
+      }
+      function persist() {
+        setErr("");
+        setBusy("save", true);
+        var createdId = "";
+        var secretId = f.secretId;
+        var step = Promise.resolve();
+        if (f.password) {
+          step = editing ? C.call(api, "vault.secretUpdate", { id: editing.secretId, secret: f.password }).then(function() {
+            secretId = editing.secretId;
+          }) : createSecret().then(function(r2) {
+            createdId = r2 && r2.id ? r2.id : "";
+            secretId = createdId;
+          });
+        }
+        var payload = {
+          name: String(f.name || "").trim(),
+          email: String(f.email || "").trim(),
+          imapHost: String(f.imapHost || "").trim(),
+          imapPort: Number(f.imapPort),
+          imapTls: !!f.imapTls,
+          smtpHost: String(f.smtpHost || "").trim(),
+          smtpPort: Number(f.smtpPort),
+          smtpTls: !!f.smtpTls,
+          username: String(f.username || "").trim() || String(f.email || "").trim(),
+          secretId
+        };
+        step.then(function() {
+          if (editing) return C.call(api, "mail.accountUpdate", Object.assign({ id: editing.id }, payload));
+          return C.call(api, "mail.accountCreate", payload);
+        }).then(function() {
+          setBusy("save", false);
+          setNotice(t(lang, "\u5DF2\u4FDD\u5B58", "Saved"));
+          if (props.onSaved) props.onSaved();
+        }).catch(function(e) {
+          var rollback = createdId ? C.call(api, "vault.secretDelete", { id: createdId }).catch(function() {
+          }) : Promise.resolve();
+          rollback.then(function() {
+            setBusy("save", false);
+            setErr(C.errText(e));
+          });
+        });
+      }
+      function submit() {
+        var msg = validate();
+        if (msg) {
+          setErr(msg);
+          return;
+        }
+        setErr("");
+        if (vault !== "ready") {
+          afterS[1]("save");
+          setNotice("");
+          if (vault === "loading") checkVault();
+          return;
+        }
+        persist();
+      }
+      function onVaultSubmit() {
+        var p = passS[0];
+        if (!p) {
+          vaultErrS[1](t(lang, "\u8BF7\u8F93\u5165\u4E3B\u53E3\u4EE4", "Enter the master password"));
+          return;
+        }
+        if (vault === "init" && p !== pass2S[0]) {
+          vaultErrS[1](t(lang, "\u4E24\u6B21\u8F93\u5165\u7684\u4E3B\u53E3\u4EE4\u4E0D\u4E00\u81F4", "The two passwords do not match"));
+          return;
+        }
+        vaultErrS[1]("");
+        setBusy("vault", true);
+        var call = vault === "init" ? C.call(api, "vault.setup", { passphrase: p, mode: "A" }) : C.call(api, "vault.unlock", { passphrase: p });
+        call.then(function() {
+          setBusy("vault", false);
+          passS[1]("");
+          pass2S[1]("");
+          vaultS[1]("ready");
+          if (afterS[0] === "save") {
+            afterS[1]("");
+            persist();
+          }
+        }).catch(function(e) {
+          setBusy("vault", false);
+          vaultErrS[1](C.errText(e));
+        });
+      }
+      function runProbe() {
+        var msg = validate();
+        if (msg) {
+          setErr(msg);
+          return;
+        }
+        setErr("");
+        setBusy("probe", true);
+        C.call(api, "mail.accountProbe", {
+          email: f.email,
+          username: f.username,
+          imapHost: f.imapHost,
+          imapPort: Number(f.imapPort),
+          imapTls: !!f.imapTls,
+          smtpHost: f.smtpHost,
+          smtpPort: Number(f.smtpPort),
+          smtpTls: !!f.smtpTls,
+          password: f.password || "",
+          secretId: f.password ? "" : f.secretId
+        }).then(function(r2) {
+          setBusy("probe", false);
+          setProbe(r2);
+        }).catch(function(e) {
+          setBusy("probe", false);
+          setErr(C.errText(e));
+        });
+      }
+      function field(label, input, hint) {
+        return h(C.Field, { h, label, hint }, input);
+      }
+      function textInput(key, opts) {
+        var o = opts || {};
+        return h("input", {
+          className: "wbm-input",
+          type: o.type || "text",
+          value: f[key],
+          placeholder: o.placeholder || "",
+          autoComplete: o.autoComplete || "off",
+          onChange: function(e) {
+            upd(key === "imapPort" || key === "smtpPort" ? { [key]: e.target.value } : { [key]: e.target.value });
+          }
+        });
+      }
+      function tlsRow(key, label) {
+        return h(
+          "label",
+          { className: "wbm-check" },
+          h("input", {
+            type: "checkbox",
+            checked: !!f[key],
+            onChange: function(e) {
+              upd({ [key]: e.target.checked });
+            }
+          }),
+          h("span", null, label)
+        );
+      }
+      var provider = util.providerById(providers, f.provider);
+      var probeText = "";
+      if (probeS[0]) {
+        var r = probeS[0];
+        if (r.ok) probeText = t(lang, "\u81EA\u68C0\u901A\u8FC7\uFF1AIMAP \u767B\u5F55\u6210\u529F" + (r.imap ? "\uFF0C\u5217\u51FA " + r.imap.mailboxes + " \u4E2A\u6587\u4EF6\u5939" : "") + (r.smtp ? "\uFF1BSMTP \u8BA4\u8BC1\u6210\u529F" : ""), "Check passed: IMAP login succeeded" + (r.smtp ? " and SMTP authenticated" : ""));
+        else {
+          var cls = r.errorClass || "unknown";
+          var tx = probe.ERROR_TEXT[cls] || probe.ERROR_TEXT.unknown;
+          probeText = (lang === "en" ? tx.en : tx.zh) + " " + t(lang, "\uFF08" + cls + "\uFF09", "(" + cls + ")");
+        }
+      }
+      return h(
+        "div",
+        { className: "wbm-acct-form" },
+        h(
+          "div",
+          { className: "wbm-acct-head" },
+          h("strong", null, editing ? t(lang, "\u7F16\u8F91\u8D26\u6237", "Edit account") : t(lang, "\u65B0\u589E\u8D26\u6237", "New account")),
+          h("button", { type: "button", className: "wbm-icon-btn", onClick: props.onCancel, title: t(lang, "\u5173\u95ED", "Close") }, "\xD7")
+        ),
+        h(require_provider_chips(), { h, lang, providers, value: f.provider, onPick }),
+        h(
+          "div",
+          { className: "wbm-acct-grid" },
+          field(t(lang, "\u90AE\u7BB1\u5730\u5740", "Email address"), h("input", {
+            className: "wbm-input",
+            type: "email",
+            value: f.email,
+            placeholder: "you@example.com",
+            autoComplete: "off",
+            onChange: function(e) {
+              upd({ email: e.target.value });
+            },
+            onBlur: onEmailBlur
+          })),
+          field(t(lang, "\u8D26\u6237\u540D\u79F0", "Account name"), textInput("name", { placeholder: t(lang, "\u4F8B\u5982 \u5DE5\u4F5C\u90AE\u7BB1", "e.g. Work mail") }))
+        ),
+        field(
+          editing ? t(lang, "\u65B0\u6388\u6743\u7801\uFF08\u7559\u7A7A\u5219\u4E0D\u4FEE\u6539\uFF09", "New app password (leave empty to keep)") : t(lang, "\u6388\u6743\u7801 / \u5E94\u7528\u5BC6\u7801", "App password"),
+          h(SecretField, {
+            h,
+            value: f.password,
+            onChange: function(v) {
+              upd({ password: v });
+            },
+            show: showS[0].secret,
+            onToggle: function() {
+              showS[1](Object.assign({}, showS[0], { secret: !showS[0].secret }));
+            },
+            autoComplete: editing ? "new-password" : "off",
+            showLabel: t(lang, "\u663E\u793A\u660E\u6587", "Show plain text"),
+            hideLabel: t(lang, "\u9690\u85CF\u660E\u6587", "Hide plain text")
+          }),
+          t(lang, "\u5BC6\u7801\u53EA\u5B58\u8FDB\u4FDD\u9669\u7BB1\uFF0C\u4E0D\u4F1A\u5199\u8FDB\u8D26\u6237\u8868\u3002", "Passwords go to the vault, never into the account row.")
+        ),
+        provider && util.hintOf(provider, lang) ? h("p", { className: "wbm-hint-line" }, util.hintOf(provider, lang)) : null,
+        !f.advanced && f.imapHost ? h("p", { className: "wbm-hint-line" }, "IMAP " + f.imapHost + ":" + f.imapPort + (f.imapTls ? " TLS" : "") + " \xB7 SMTP " + (f.smtpHost || "\u2014") + ":" + f.smtpPort + (f.smtpTls ? " TLS" : " STARTTLS")) : null,
+        !f.advanced ? h("button", { type: "button", className: "wbm-btn", onClick: function() {
+          upd({ advanced: true });
+        } }, t(lang, "\u5176\u4ED6\u8BBE\u7F6E\uFF08\u4E3B\u673A / \u7AEF\u53E3 / \u767B\u5F55\u540D\uFF09", "Advanced (hosts / ports / login name)")) : h(
+          "div",
+          { className: "wbm-acct-grid" },
+          field(t(lang, "\u767B\u5F55\u540D", "Login name"), textInput("username", { placeholder: t(lang, "\u9ED8\u8BA4\u4E0E\u90AE\u7BB1\u76F8\u540C", "Defaults to the email") })),
+          field(t(lang, "IMAP \u670D\u52A1\u5668", "IMAP server"), textInput("imapHost")),
+          field(t(lang, "IMAP \u7AEF\u53E3", "IMAP port"), textInput("imapPort", { type: "number" })),
+          field("", tlsRow("imapTls", t(lang, "IMAP \u9690\u5F0F TLS", "IMAP implicit TLS"))),
+          field(t(lang, "SMTP \u670D\u52A1\u5668", "SMTP server"), textInput("smtpHost")),
+          field(t(lang, "SMTP \u7AEF\u53E3", "SMTP port"), textInput("smtpPort", { type: "number" })),
+          field("", tlsRow("smtpTls", t(lang, "SMTP \u9690\u5F0F TLS\uFF08\u5173\u6389\u8D70 STARTTLS\uFF09", "SMTP implicit TLS (off = STARTTLS)")))
+        ),
+        vault === "missing" ? field(t(lang, "\u5DF2\u6709\u51ED\u636E id\uFF08secretId\uFF09", "Existing credential id (secretId)"), textInput("secretId")) : null,
+        h(VaultGate, {
+          h,
+          C,
+          lang,
+          SecretField,
+          vault,
+          pass: passS[0],
+          pass2: pass2S[0],
+          showPass: showS[0].pass,
+          showPass2: showS[0].pass2,
+          onPass: function(v) {
+            passS[1](v);
+          },
+          onPass2: function(v) {
+            pass2S[1](v);
+          },
+          onTogglePass: function() {
+            showS[1](Object.assign({}, showS[0], { pass: !showS[0].pass }));
+          },
+          onTogglePass2: function() {
+            showS[1](Object.assign({}, showS[0], { pass2: !showS[0].pass2 }));
+          },
+          onSubmit: onVaultSubmit,
+          busy: busy.vault,
+          error: vaultErrS[0],
+          onSkip: function() {
+            vaultS[1]("missing");
+          }
+        }),
+        probeS[0] ? h(C.Notice, { h, text: probeText, kind: probeS[0].ok ? "ok" : "warn" }) : null,
+        errS[0] ? h(C.Notice, { h, text: errS[0], kind: "warn" }) : null,
+        noticeS[0] ? h(C.Notice, { h, text: noticeS[0], kind: "ok" }) : null,
+        h(
+          "div",
+          { className: "wbm-acct-foot" },
+          h(C.Btn, { h, onClick: runProbe, disabled: busy.probe || busy.save }, busy.probe ? t(lang, "\u81EA\u68C0\u4E2D\u2026", "Checking\u2026") : t(lang, "\u4FDD\u5B58\u524D\u81EA\u68C0", "Check connection")),
+          h(C.Btn, { h, kind: "primary", onClick: submit, disabled: busy.save }, busy.save ? t(lang, "\u4FDD\u5B58\u4E2D\u2026", "Saving\u2026") : t(lang, "\u4FDD\u5B58", "Save")),
+          h(C.Btn, { h, onClick: props.onCancel }, t(lang, "\u53D6\u6D88", "Cancel"))
+        )
+      );
+    };
+  }
+});
+
+// packages/addons/mail/client/ui/account-card.cjs
+var require_account_card = __commonJS({
+  "packages/addons/mail/client/ui/account-card.cjs"(exports2, module2) {
+    "use strict";
+    var probe = (init_probe_error(), __toCommonJS(probe_error_exports));
+    function t(lang, zh, en) {
+      return lang === "en" ? en : zh;
+    }
+    function resultText(res, lang) {
+      if (!res) return "";
+      if (res.ok) return t(lang, "\u8FDE\u63A5\u6B63\u5E38\uFF0C\u5DF2\u5217\u51FA\u6587\u4EF6\u5939", "Connected; folders listed");
+      var cls = res.errorClass || "unknown";
+      var text = probe.ERROR_TEXT[cls] || probe.ERROR_TEXT.unknown;
+      return (lang === "en" ? text.en : text.zh) + (res.message ? "\uFF08" + res.message + "\uFF09" : "");
+    }
+    module2.exports = function AccountCard(props) {
+      var h = props.h;
+      var C = props.C;
+      var lang = props.lang;
+      var a = props.account || {};
+      var res = props.test || null;
+      var busy = !!props.busy;
+      var last = a.lastMessageAt ? C.fmtTime(a.lastMessageAt, lang) : t(lang, "\u8FD8\u6CA1\u6709\u672C\u5730\u6765\u4FE1", "No local mail yet");
+      return h(
+        "div",
+        { className: "wbm-card" },
+        h(
+          "div",
+          { className: "wbm-card-main" },
+          h("div", { className: "wbm-card-title" }, a.name || a.email),
+          h("div", { className: "wbm-card-sub" }, a.email, a.username && a.username !== a.email ? " \xB7 " + a.username : ""),
+          h("div", { className: "wbm-card-meta" }, (a.imapHost || "\u2014") + ":" + a.imapPort + " \xB7 " + (a.smtpHost || "\u2014") + ":" + a.smtpPort),
+          h("div", { className: "wbm-card-meta" }, t(lang, "\u6700\u8FD1\u6765\u4FE1\uFF1A", "Last mail: ") + last)
+        ),
+        h(
+          "div",
+          { className: "wbm-card-actions" },
+          h(C.Btn, { h, onClick: props.onEdit, disabled: busy }, t(lang, "\u7F16\u8F91", "Edit")),
+          h(C.Btn, { h, onClick: props.onTest, disabled: busy }, busy ? t(lang, "\u6D4B\u8BD5\u4E2D\u2026", "Testing\u2026") : t(lang, "\u6D4B\u8BD5", "Test")),
+          h(C.Btn, { h, kind: "danger", onClick: props.onDelete, disabled: busy }, t(lang, "\u5220\u9664", "Delete"))
+        ),
+        res ? h(
+          "div",
+          { className: "wbm-card-result " + (res.ok ? "ok" : "fail"), role: "status" },
+          h(C.Pill, { h, kind: res.ok ? "ok" : "error" }, res.ok ? t(lang, "\u901A\u8FC7", "OK") : t(lang, "\u5931\u8D25", "Failed")),
+          h("span", null, resultText(res, lang))
+        ) : null
+      );
+    };
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs
+var eye_exports = {};
+__export(eye_exports, {
+  __iconData: () => __iconData6,
+  default: () => Eye
+});
+var __iconData6, Eye;
+var init_eye = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs"() {
+    init_createLucideIcon();
+    __iconData6 = {
+      name: "eye",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
+            key: "1nclc0"
+          }
+        ],
+        ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
+      ]
+    };
+    __iconData6.node;
+    Eye = createLucideIcon(__iconData6);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs
+var eye_off_exports = {};
+__export(eye_off_exports, {
+  __iconData: () => __iconData7,
+  default: () => EyeOff
+});
+var __iconData7, EyeOff;
+var init_eye_off = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs"() {
+    init_createLucideIcon();
+    __iconData7 = {
+      name: "eye-off",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49",
+            key: "ct8e1f"
+          }
+        ],
+        ["path", { d: "M14.084 14.158a3 3 0 0 1-4.242-4.242", key: "151rxh" }],
+        [
+          "path",
+          {
+            d: "M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143",
+            key: "13bj9a"
+          }
+        ],
+        ["path", { d: "m2 2 20 20", key: "1ooewy" }]
+      ]
+    };
+    __iconData7.node;
+    EyeOff = createLucideIcon(__iconData7);
+  }
+});
+
+// packages/addons/lib/secret-field.cjs
+var require_secret_field = __commonJS({
+  "packages/addons/lib/secret-field.cjs"(exports2, module2) {
+    "use strict";
+    var Eye2 = (init_eye(), __toCommonJS(eye_exports)).default;
+    var EyeOff2 = (init_eye_off(), __toCommonJS(eye_off_exports)).default;
+    function SecretField(props) {
+      var h = props.h;
+      var show = Boolean(props.show);
+      var label = show ? props.hideLabel || "\u9690\u85CF\u660E\u6587" : props.showLabel || "\u663E\u793A\u660E\u6587";
+      var Ico = show ? EyeOff2 : Eye2;
+      function toggle(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var box = e.currentTarget && e.currentTarget.parentNode;
+        if (props.onToggle) props.onToggle();
+        var input = box && box.querySelector ? box.querySelector("input") : null;
+        if (!input || !input.focus) return;
+        input.focus();
+        var end = String(input.value == null ? "" : input.value).length;
+        if (input.setSelectionRange) {
+          try {
+            input.setSelectionRange(end, end);
+          } catch (err) {
+          }
+        }
+      }
+      return h(
+        "div",
+        { className: "wb-secret-field" + (props.className ? " " + props.className : "") },
+        h("input", {
+          type: show ? "text" : "password",
+          className: props.inputClassName || void 0,
+          id: props.id || void 0,
+          name: props.name || void 0,
+          autoComplete: props.autoComplete || "new-password",
+          autoFocus: props.autoFocus ? true : void 0,
+          spellCheck: false,
+          disabled: props.disabled ? true : void 0,
+          "aria-label": props.ariaLabel || void 0,
+          value: props.value == null ? "" : props.value,
+          placeholder: props.placeholder || void 0,
+          onChange: function(e) {
+            if (props.onChange) props.onChange(e.target.value);
+          },
+          onKeyDown: props.onKeyDown || void 0
+        }),
+        h("button", {
+          type: "button",
+          className: "wb-eye",
+          title: label,
+          "aria-label": label,
+          "aria-pressed": show ? "true" : "false",
+          tabIndex: props.disabled ? -1 : void 0,
+          onClick: toggle
+        }, h(Ico, { size: 15, strokeWidth: 2, "aria-hidden": "true" }))
+      );
+    }
+    module2.exports = SecretField;
+  }
+});
+
 // packages/addons/mail/client/views/accounts.cjs
 var require_accounts = __commonJS({
   "packages/addons/mail/client/views/accounts.cjs"(exports2, module2) {
     "use strict";
+    var AccountForm = require_account_form();
+    var AccountCard = require_account_card();
+    var SecretField = require_secret_field();
+    var providerCache = null;
     module2.exports = function Accounts(props) {
-      var h = props.h, React = props.React, api = props.api;
+      var h = props.h;
+      var React = props.React;
+      var api = props.api;
+      var lang = props.lang || "zh";
       var C = require_common();
       var load = C.useLoad(React, api, "mail.accountList", {}, []);
-      var form = React.useState({ open: false, name: "", email: "", imapHost: "", imapPort: 993, smtpHost: "", smtpPort: 465, username: "", secretId: "" });
-      var msg = React.useState(null);
-      function set(k, v) {
-        form[1](Object.assign({}, form[0], { [k]: v }));
-      }
-      function add() {
-        C.call(api, "mail.accountCreate", form[0]).then(function() {
-          form[1]({ open: false, name: "", email: "", imapHost: "", imapPort: 993, smtpHost: "", smtpPort: 465, username: "", secretId: "" });
-          load.refresh();
+      var tableS = React.useState(providerCache);
+      var openS = React.useState(null);
+      var testS = React.useState({});
+      var busyS = React.useState("");
+      var msgS = React.useState(null);
+      React.useEffect(function() {
+        if (tableS[0]) return;
+        C.call(api, "mail.providerList", {}).then(function(r) {
+          providerCache = r;
+          tableS[1](r);
         }).catch(function(e) {
-          msg[1]({ kind: "error", text: C.errText(e) });
+          msgS[1]({ kind: "warn", text: C.errText(e) });
+        });
+      }, []);
+      function refresh() {
+        load.refresh();
+      }
+      function close() {
+        openS[1](null);
+      }
+      function test(a) {
+        busyS[1](a.id);
+        C.call(api, "mail.accountTest", { id: a.id }).then(function(r) {
+          busyS[1]("");
+          testS[1](Object.assign({}, testS[0], { [a.id]: r }));
+        }).catch(function(e) {
+          busyS[1]("");
+          msgS[1]({ kind: "warn", text: C.errText(e) });
         });
       }
-      function test(id) {
-        C.call(api, "mail.accountTest", { id }).then(function(r) {
-          msg[1]({ kind: "ok", text: "\u8FDE\u63A5\u6210\u529F\uFF0C\u53D1\u73B0 " + r.mailboxes + " \u4E2A\u6587\u4EF6\u5939" });
+      function remove(a) {
+        var text = lang === "en" ? "Delete account \u201C" + (a.name || a.email) + "\u201D? The vault credential is kept." : "\u5220\u9664\u8D26\u6237\u300C" + (a.name || a.email) + "\u300D\uFF1F\u4FDD\u9669\u7BB1\u91CC\u7684\u51ED\u636E\u4F1A\u4FDD\u7559\u3002";
+        if (typeof window !== "undefined" && window.confirm && !window.confirm(text)) return;
+        C.call(api, "mail.accountDelete", { id: a.id }).then(function() {
+          refresh();
         }).catch(function(e) {
-          msg[1]({ kind: "error", text: C.errText(e) });
-        });
-      }
-      function del(id) {
-        C.call(api, "mail.accountDelete", { id }).then(function() {
-          load.refresh();
-        }).catch(function(e) {
-          msg[1]({ kind: "error", text: C.errText(e) });
+          msgS[1]({ kind: "warn", text: C.errText(e) });
         });
       }
       var items = load.data && load.data.items || [];
+      var editing = openS[0];
+      var providers = tableS[0] || { providers: [] };
+      var loading = load.loading || !tableS[0];
       return h(
         "div",
         { className: "wbm-page" },
-        h("div", { className: "wbm-head" }, h("div", null, h("h2", null, "\u90AE\u7BB1\u8D26\u6237"), h("p", { className: "wbm-sub" }, "\u5BC6\u7801\u53EA\u5B58\u4FDD\u9669\u7BB1\uFF0C\u8D26\u6237\u4FDD\u5B58 secretId")), h(C.Btn, { h, kind: "primary", onClick: function() {
-          set("open", !form[0].open);
-        } }, "\u6DFB\u52A0\u8D26\u6237")),
-        h(C.Notice, { h, text: msg[0] && msg[0].text, kind: msg[0] && msg[0].kind }),
-        form[0].open ? h(
+        h(
           "div",
-          { className: "wbm-card" },
-          h(
-            "div",
-            { className: "wbm-row" },
-            h(C.Field, { h, label: "\u540D\u79F0" }, h("input", { className: "wbm-input", value: form[0].name, onChange: function(e) {
-              set("name", e.target.value);
-            } })),
-            h(C.Field, { h, label: "\u90AE\u7BB1" }, h("input", { className: "wbm-input", value: form[0].email, onChange: function(e) {
-              set("email", e.target.value);
-            } })),
-            h(C.Field, { h, label: "IMAP \u4E3B\u673A" }, h("input", { className: "wbm-input", value: form[0].imapHost, onChange: function(e) {
-              set("imapHost", e.target.value);
-            } })),
-            h(C.Field, { h, label: "SMTP \u4E3B\u673A" }, h("input", { className: "wbm-input", value: form[0].smtpHost, onChange: function(e) {
-              set("smtpHost", e.target.value);
-            } })),
-            h(C.Field, { h, label: "\u4FDD\u9669\u7BB1 secret id" }, h("input", { className: "wbm-input", value: form[0].secretId, onChange: function(e) {
-              set("secretId", e.target.value);
-            } }))
-          ),
-          h("div", { className: "wbm-actions" }, h(C.Btn, { h, kind: "primary", onClick: add }, "\u4FDD\u5B58"))
-        ) : null,
-        load.loading ? h(C.Empty, { h, text: "\u52A0\u8F7D\u4E2D\u2026" }) : items.length === 0 ? h(C.Empty, { h, text: "\u8FD8\u6CA1\u6709\u8D26\u6237" }) : h("div", { className: "wbm-list" }, items.map(function(a) {
-          return h("div", { key: a.id, className: "wbm-list-row" }, h("div", { className: "wbm-main" }, h("strong", null, a.name), h("span", { className: "wbm-muted" }, a.email + " \xB7 IMAP " + a.imapHost)), h(C.Btn, { h, onClick: function() {
-            test(a.id);
-          } }, "\u6D4B\u8BD5"), h("button", { type: "button", className: "wbm-icon-btn", onClick: function() {
-            del(a.id);
-          } }, "\xD7"));
-        }))
+          { className: "wbm-head" },
+          h("div", null, h("h2", null, lang === "en" ? "Mail accounts" : "\u90AE\u7BB1\u8D26\u6237"), h("p", { className: "wbm-sub" }, lang === "en" ? "Pick a provider, paste the app password; the vault stores it." : "\u9009\u670D\u52A1\u5546\u3001\u586B\u6388\u6743\u7801\u5373\u53EF\uFF0C\u5BC6\u7801\u53EA\u5B58\u4FDD\u9669\u7BB1\u3002")),
+          h(C.Btn, { h, kind: "primary", onClick: function() {
+            openS[1]({});
+          } }, lang === "en" ? "Add account" : "\u6DFB\u52A0\u8D26\u6237")
+        ),
+        msgS[0] ? h(C.Notice, { h, text: msgS[0].text, kind: msgS[0].kind }) : null,
+        editing ? h(AccountForm, {
+          h,
+          React,
+          api,
+          C,
+          lang,
+          SecretField,
+          providers,
+          account: editing.id ? editing : null,
+          onCancel: close,
+          onSaved: function() {
+            close();
+            refresh();
+          }
+        }) : null,
+        loading ? h(C.Empty, { h, text: lang === "en" ? "Loading\u2026" : "\u52A0\u8F7D\u4E2D\u2026" }) : items.length === 0 ? h(C.Empty, { h, text: lang === "en" ? "No accounts yet" : "\u8FD8\u6CA1\u6709\u8D26\u6237\uFF0C\u70B9\u53F3\u4E0A\u89D2\u6DFB\u52A0\u3002" }) : h(
+          "div",
+          { className: "wbm-cards" },
+          items.map(function(a) {
+            return h(AccountCard, {
+              key: a.id,
+              h,
+              C,
+              lang,
+              account: a,
+              test: testS[0][a.id] || null,
+              busy: busyS[0] === a.id,
+              onEdit: function() {
+                openS[1](a);
+              },
+              onTest: function() {
+                test(a);
+              },
+              onDelete: function() {
+                remove(a);
+              }
+            });
+          })
+        )
       );
     };
   }
@@ -2380,7 +3296,7 @@ var require_action_schema_view = __commonJS({
         var snapState = React.useState(null);
         var snap = snapState[0], setSnap = snapState[1];
         var errState = React.useState("");
-        var err = errState[0], setErr = errState[1];
+        var err = errState[0], setErr2 = errState[1];
         var loadingState = React.useState(true);
         var loading = loadingState[0], setLoading = loadingState[1];
         var reloadState = React.useState(0);
@@ -2399,7 +3315,7 @@ var require_action_schema_view = __commonJS({
         React.useEffect(function() {
           var alive = true;
           setLoading(true);
-          setErr("");
+          setErr2("");
           var pending;
           var actionName = DOMAIN.replace(/^wb-addon-/, "") + ".actionSchema";
           if (api && typeof api.call === "function") {
@@ -2414,7 +3330,7 @@ var require_action_schema_view = __commonJS({
             if (!alive) return;
             if (!r || r.ok === false) {
               setSnap(null);
-              setErr(String(r && (r.error || r.text) || t.loadFail));
+              setErr2(String(r && (r.error || r.text) || t.loadFail));
             } else {
               setSnap(r);
             }
@@ -2422,7 +3338,7 @@ var require_action_schema_view = __commonJS({
           }, function(e) {
             if (!alive) return;
             setSnap(null);
-            setErr(String(e && e.message || e || t.loadFail));
+            setErr2(String(e && e.message || e || t.loadFail));
             setLoading(false);
           });
           return function() {
@@ -2684,7 +3600,7 @@ var require_actions = __commonJS({
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.1.1",
+    version: "0.2.0",
     icon: (init_mail(), __toCommonJS(mail_exports)).default,
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },
