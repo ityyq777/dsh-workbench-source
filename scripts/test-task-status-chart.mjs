@@ -24,7 +24,8 @@ let fixture, hook;
 const React = {
   createElement: (type,props,...children) => ({type,props:props||{},key:props?.key,children:children.flat(Infinity)}),
   useMemo: fn => fn(), useCallback: fn => fn, useEffect: () => {}, useRef: value => ({current:value}),
-  useState: value => [++hook === 2 ? fixture : value, () => {}],
+  // 数据槽位：range/dimension/recent 三个 useState 之后才是 data（第 4 个）。
+  useState: value => [++hook === 4 ? fixture : value, () => {}],
 };
 function load(path, dependencies) {
   const module = {exports:{}};
@@ -35,6 +36,7 @@ const charts = load('../packages/addons/tasks/client/stats/charts.cjs', {react:R
 const view = load('../packages/addons/tasks/client/views/stats.cjs', {
   react:React, '../stats/charts.cjs':charts, './config.cjs':{useConfig:()=>({ready:true,values:{}})},
   '../item/recent-columns.cjs':()=>[], '../item/ranking-name.cjs':()=>({key:'title'}), '../stats/heatmap.cjs':()=>null, '../stats/today.cjs':()=>null, '../stats/timeline-section.cjs':{TimelineSection:()=>null},
+  '../stats/task-link.cjs':()=>null,
   '../stats/list-state.cjs':{listState:()=>({rows:[]}), missingText:()=>''},
 });
 function nodes(node) { return node && typeof node==='object' ? [node,...(node.children||[]).flatMap(nodes)] : []; }

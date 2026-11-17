@@ -103,9 +103,11 @@ assert(tasks.call("tasks.statsReport", {range:"90d"}).lists.recentClaimed.length
 tasks.call("tasks.configReset", {ids:["stats.recentClaimedLimit"]});
 assert(tasks.call("tasks.configGet").values["stats.recentClaimedLimit"] === 10, "最近接取条数重置失败");
 
-// 旧版本存量的三张最近卡开关按别名迁移到 recent，未知值仍整项回退默认。
+// 旧版本存量的三张最近卡开关按别名迁移到 recent；5.2.21 删除的 trend 卡迁移到 eventTrend，未知值仍整项回退默认。
 tasks.call("tasks.configSet", {values:{"stats.sections":["recentPublish","trend","recentDone"]}});
-assert(JSON.stringify(tasks.call("tasks.configGet").values["stats.sections"]) === JSON.stringify(["recent","trend"]), "旧的最近卡开关应迁移为 recent");
+assert(JSON.stringify(tasks.call("tasks.configGet").values["stats.sections"]) === JSON.stringify(["recent","eventTrend"]), "最近的旧卡迁移为 recent，旧趋势卡迁移为 eventTrend");
+tasks.call("tasks.configSet", {values:{"stats.sections":["trend"]}});
+assert(JSON.stringify(tasks.call("tasks.configGet").values["stats.sections"]) === JSON.stringify(["eventTrend"]), "存量的 trend 开关不应被判非法");
 tasks.call("tasks.configSet", {values:{"stats.sections":["recentShutdown","overdue"]}});
 assert(JSON.stringify(tasks.call("tasks.configGet").values["stats.sections"]) === JSON.stringify(["recent","overdue"]), "关闭卡开关也应迁移");
 tasks.call("tasks.configReset", {ids:["stats.sections"]});

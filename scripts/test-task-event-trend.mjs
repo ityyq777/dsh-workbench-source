@@ -120,16 +120,15 @@ for (const lang of ['zh', 'en']) {
   assert.deepEqual([...trend.props.series.map((s) => s.label)], [...(lang === 'en'
     ? ['Published', 'Target', 'Done', 'Closed', 'Claimed'] : ['发布', '目标', '完成', '关闭', '接取'])]);
   assert.equal(new Set(trend.props.series.map((s) => s.color)).size, 5, '五条线颜色互不相同');
-  // 旧趋势卡保留三条线，语义不被搅浑。
-  const legacy = walk(body).find((n) => n && n.key === 'trend');
-  assert.ok(legacy, '旧趋势卡仍在');
-  assert.deepEqual([...walk(legacy).find((n) => n && Array.isArray(n.props.series)).props.series.map((s) => s.key)], ['created', 'done', 'due']);
+  // 5.2.21 起旧「新增/完成/到期趋势」卡已删除，整页只保留事件趋势一张折线图。
+  assert.equal(walk(body).filter((n) => n && n.key === 'trend').length, 0, '旧趋势卡已移除');
+  assert.equal(walk(body).filter((n) => n && Array.isArray(n.props.series)).length, 1, '整页只有一张折线图');
   // 配置里关掉该区块后整卡消失。
-  cfgValues = { 'stats.sections': ['trend'] };
+  cfgValues = { 'stats.sections': ['status'] };
   reset(); const off = mod.exports.TasksStatsView({ lang, api, onNavigate() {} });
   cursor = 0; off.type(off.props); const jobs2 = effects; effects = []; jobs2.forEach((fn) => fn());
   for (let i = 0; i < 12; i += 1) await Promise.resolve();
   cursor = 0; assert.equal(walk(off.type(off.props)).filter((n) => n && n.key === 'eventTrend').length, 0, '区块开关可隐藏事件趋势');
   cfgValues = {};
 }
-console.log('EVENT TREND UI PASS: 五序列顺序/文案/配色、旧卡保留、区块开关可隐藏');
+console.log('EVENT TREND UI PASS: 五序列顺序/文案/配色、旧趋势卡已移除、区块开关可隐藏');

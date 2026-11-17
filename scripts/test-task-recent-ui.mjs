@@ -89,7 +89,7 @@ for(const lang of ['zh','en']) for(const [configured,expected] of [[undefined,10
  assert.ok(emptyHtml.includes(lang==='en'?'No claimed tasks yet (claim time is only recorded after 5.2.15)':'还没有已接取的任务（接取时间只记录 5.2.15 之后的操作）'),'claimed empty state explains the missing history');
  const legacyHtml=renderToStaticMarkup(React.createElement(last.type,{...last.props,rows:[{id:'old',title:'Old',date:'',daysAgo:null,tableDeleted:true}]}));
  assert.ok(legacyHtml.includes('—'));assert.ok(!legacyHtml.includes('NaN'));
- cfg['stats.sections']=['trend'];
+ cfg['stats.sections']=['eventTrend'];
  assert.equal(walk(drawStats()).filter(n=>n.key==='recent').length,0,'section preference can hide the merged card');
  cfg['stats.sections']=['recent'];
  assert.equal(walk(drawStats()).filter(n=>n.key==='recent').length,1,'the merged key is the section switch');

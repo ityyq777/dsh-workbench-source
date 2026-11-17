@@ -464,7 +464,7 @@ var require_charts = __commonJS({
     function css(prefix) {
       return [
         ".@-table-link{border:0;padding:0;background:none;font:inherit;color:var(--dsw-alias-brand-primary,#4f6ef7);text-align:left;cursor:pointer}.@-table-link:hover{text-decoration:underline}.@-table-link:focus-visible{outline:2px solid currentColor;outline-offset:3px}.@-recent-difficulty{white-space:nowrap}.@-recent-reason{opacity:.65}",
-        ".@-stats{display:flex;flex-direction:column;gap:14px;padding:4px 2px 24px;color:var(--dsw-alias-label-primary,#1f2329)}",
+        ".@-stats{display:flex;flex-direction:column;gap:18px;padding:4px 2px 24px;color:var(--dsw-alias-label-primary,#1f2329)}",
         ".@-stoolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
         ".@-seg{display:inline-flex;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:9px;overflow:hidden;background:var(--dsw-alias-bg-layer-1,#fff)}",
         ".@-seg button{appearance:none;border:0;background:transparent;color:var(--dsw-alias-label-secondary,#646a73);font-size:12px;padding:6px 10px;cursor:pointer;white-space:nowrap}",
@@ -487,20 +487,36 @@ var require_charts = __commonJS({
         ".@-dims button[aria-selected=true]{border-color:var(--dsw-alias-border-l2,#e5e6eb);background:var(--dsw-alias-bg-skeleton,#f2f3f5);font-weight:600;opacity:1}",
         ".@-dims button:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:1px}",
         ".@-sgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}",
+        // 分区容器：把 12 栅格切成「一眼看清 → 结构 → 风险 → 排行 → 明细」几段，
+        // 每段自己一条标题带，卡片之间仍按 span 排；段与段之间用更大的间距制造阅读停顿。
+        ".@-sect{grid-column:span 12;display:flex;flex-direction:column;gap:8px;min-width:0}",
+        ".@-sect-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:2px 2px 0}",
+        ".@-sect-title{margin:0;font-size:13px;font-weight:650;letter-spacing:.2px;color:var(--dsw-alias-label-primary,#1f2329)}",
+        ".@-sect-note{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
+        ".@-sect-body{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px;min-width:0}",
         ".@-scard{grid-column:span 6;min-width:0;background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:12px;padding:14px 16px}",
         ".@-span-3{grid-column:span 3}.@-span-4{grid-column:span 4}.@-span-6{grid-column:span 6}.@-span-8{grid-column:span 8}.@-span-12{grid-column:span 12}",
         ".@-chead{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;flex-wrap:wrap}",
         ".@-ctitle{font-size:13px;font-weight:600;color:var(--dsw-alias-label-primary,#1f2329)}",
         ".@-cnote{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
         ".@-kpis{grid-column:span 12;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px}",
+        // 核心指标与次级指标分两行：核心 4 张给足字号，次级 4 张收紧，避免 8 张 KPI 抢同一层的视觉重量。
+        ".@-kpis-main{grid-template-columns:repeat(4,minmax(0,1fr))}",
+        ".@-kpis-sub{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}",
+        ".@-kpi-lg{padding:14px 16px}",
+        ".@-kpi-lg .@-kpi-v{font-size:30px}",
+        ".@-kpi-sm{padding:9px 12px}",
+        ".@-kpi-sm .@-kpi-l{font-size:11.5px}",
+        ".@-kpi-sm .@-kpi-v{font-size:19px}",
+        ".@-kpi-sm .@-kpi-h{font-size:10.5px;margin-top:1px}",
         ".@-kpi{background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:12px;padding:12px 14px;min-width:0}",
         ".@-kpi-l{font-size:12px;color:var(--dsw-alias-label-tertiary,#8f959e);display:flex;align-items:center;gap:6px}",
         ".@-kpi-v{font-size:26px;line-height:1.25;font-weight:650;margin-top:4px;font-variant-numeric:tabular-nums}",
         ".@-kpi-u{font-size:12px;font-weight:400;color:var(--dsw-alias-label-tertiary,#8f959e);margin-left:3px}",
         ".@-kpi-h{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e);margin-top:3px}",
-        ".@-kpi.@-danger .@-kpi-v{color:var(--dsw-alias-state-error-primary,#d9534f)}",
-        ".@-kpi.@-warn .@-kpi-v{color:var(--dsw-alias-state-warn-primary,#d99100)}",
-        ".@-kpi.@-ok .@-kpi-v{color:var(--dsw-alias-state-success-primary,#2f9e6e)}",
+        ".@-kpi.@-kpi-tone-danger .@-kpi-v{color:var(--dsw-alias-state-error-primary,#d9534f)}",
+        ".@-kpi.@-kpi-tone-warn .@-kpi-v{color:var(--dsw-alias-state-warn-primary,#d99100)}",
+        ".@-kpi.@-kpi-tone-ok .@-kpi-v{color:var(--dsw-alias-state-success-primary,#2f9e6e)}",
         ".@-donut{display:flex;align-items:center;gap:16px;flex-wrap:wrap}",
         ".@-donut svg{flex:0 0 auto}",
         ".@-legend{display:flex;flex-direction:column;gap:7px;min-width:120px;flex:1}",
@@ -536,11 +552,11 @@ var require_charts = __commonJS({
         ".@-table th.@-num,.@-table td.@-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}",
         ".@-empty{padding:26px 8px;text-align:center;color:var(--dsw-alias-label-tertiary,#8f959e);font-size:12px}",
         ".@-err{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#d9534f) 8%,transparent);border:1px solid color-mix(in srgb,var(--dsw-alias-state-error-primary,#d9534f) 30%,transparent);color:var(--dsw-alias-state-error-primary,#d9534f);border-radius:10px;padding:10px 12px;font-size:12px}",
-        ".@-warn{grid-column:span 12;border:1px dashed var(--dsw-alias-state-warn-primary,#d99100);border-radius:10px;padding:9px 12px;font-size:12px;color:var(--dsw-alias-state-warn-primary,#d99100);background:color-mix(in srgb,var(--dsw-alias-state-warn-primary,#d99100) 6%,transparent)}",
+        ".@-warnbar{grid-column:span 12;border:1px dashed var(--dsw-alias-state-warn-primary,#d99100);border-radius:10px;padding:9px 12px;font-size:12px;color:var(--dsw-alias-state-warn-primary,#d99100);background:color-mix(in srgb,var(--dsw-alias-state-warn-primary,#d99100) 6%,transparent)}",
         ".@-sk{height:14px;border-radius:6px;background:var(--dsw-alias-bg-skeleton,#f2f3f5);margin:7px 0;animation:@-pulse 1.2s ease-in-out infinite}",
         "@keyframes @-pulse{0%,100%{opacity:.55}50%{opacity:1}}",
-        "@media (max-width:900px){.@-scard{grid-column:span 12}.@-span-3,.@-span-4,.@-span-6,.@-span-8{grid-column:span 12}.@-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}",
-        "@media (max-width:600px){.@-stats{padding-bottom:16px}.@-hist{height:130px}.@-kpi-v{font-size:22px}}",
+        "@media (max-width:900px){.@-scard{grid-column:span 12}.@-span-3,.@-span-4,.@-span-6,.@-span-8{grid-column:span 12}.@-kpis,.@-kpis-main,.@-kpis-sub{grid-template-columns:repeat(2,minmax(0,1fr))}}",
+        "@media (max-width:600px){.@-stats{padding-bottom:16px;gap:14px}.@-hist{height:130px}.@-kpi-v{font-size:22px}.@-kpi-lg .@-kpi-v{font-size:24px}.@-kpi-sm .@-kpi-v{font-size:18px}}",
         "@media (prefers-reduced-motion:reduce){.@-sk{animation:none}}"
       ].join("\n").replace(/@-/g, prefix + "-");
     }
@@ -595,11 +611,31 @@ var require_charts = __commonJS({
           props.children
         );
       }
+      function Section(props) {
+        var body = props.children || [];
+        var list = Array.isArray(body) ? body.filter(function(n) {
+          return n !== null && n !== void 0 && n !== false;
+        }) : body;
+        if (Array.isArray(list) && !list.length) return null;
+        return h(
+          "section",
+          { className: prefix + "-sect", "aria-label": props.title },
+          h(
+            "div",
+            { className: prefix + "-sect-head" },
+            h("h2", { className: prefix + "-sect-title" }, props.title),
+            props.note ? h("span", { className: prefix + "-sect-note" }, props.note) : null,
+            props.right ? h("span", { className: prefix + "-sect-note", style: { marginLeft: "auto" } }, props.right) : null
+          ),
+          h("div", { className: prefix + "-sect-body" }, list)
+        );
+      }
       function Kpi(props) {
-        var tone = props.tone ? " " + prefix + "-" + props.tone : "";
+        var tone = props.tone ? " " + prefix + "-kpi-tone-" + props.tone : "";
+        var size = props.size === "lg" || props.size === "sm" ? " " + prefix + "-kpi-" + props.size : "";
         return h(
           "div",
-          { className: prefix + "-kpi" + tone },
+          { className: prefix + "-kpi" + size + tone },
           h("div", { className: prefix + "-kpi-l" }, props.label),
           h(
             "div",
@@ -954,11 +990,12 @@ var require_charts = __commonJS({
       function Warnings(props) {
         var items = props.items || [];
         if (!items.length) return null;
-        return h("div", { className: prefix + "-warn", role: "status" }, items.map(function(w) {
+        return h("div", { className: prefix + "-warnbar", role: "status" }, items.map(function(w) {
           return w.message;
         }).join("\uFF1B"));
       }
       return {
+        Section,
         Card,
         Kpi,
         Donut,
@@ -1687,6 +1724,8 @@ var require_heatmap_styles = __commonJS({
   "packages/addons/tasks/client/stats/heatmap-styles.cjs"(exports2, module2) {
     module2.exports = [
       ".wbt-heatmap{",
+      // 作为统计页「活动与趋势」分区的一员时占满一行；脱离栅格容器时该声明无副作用。
+      "grid-column:span 12;",
       "--hm-gap:3px;",
       "--hm-hue-done:var(--wb-ok,#18a058);",
       "--hm-hue-publish:var(--wbt-accent,var(--wb-accent,#11a89b));",
@@ -1949,7 +1988,7 @@ var require_today = __commonJS({
       zh: { title: "\u4ECA\u65E5", published: "\u4ECA\u65E5\u53D1\u5E03", claimed: "\u4ECA\u65E5\u63A5\u53D6", done: "\u4ECA\u65E5\u5B8C\u6210", shutdown: "\u4ECA\u65E5\u5173\u95ED", average: "\u5E73\u5747\u96BE\u5EA6", sample: "\u6837\u672C\u6570", noSample: "\u65E0\u6837\u672C", clock: "\u4EE5\u670D\u52A1\u7AEF\u5F53\u524D\u65F6\u95F4\u4E3A\u51C6" },
       en: { title: "Today", published: "Published today", claimed: "Claimed today", done: "Completed today", shutdown: "Closed today", average: "Avg difficulty", sample: "samples", noSample: "No samples", clock: "Based on the server's current time" }
     };
-    var css = ".wbt-today{margin:12px 0}";
+    var css = ".wbt-today{margin:12px 0;grid-column:span 12}";
     function Today(props) {
       var data = props.today;
       if (!data || typeof data !== "object") return null;
@@ -2305,6 +2344,18 @@ var require_stats = __commonJS({
         range90: "\u8FD1 90 \u5929",
         range365: "\u8FD1 1 \u5E74",
         rangeAll: "\u5168\u90E8",
+        secToday: "\u4ECA\u65E5",
+        secTodayNote: "\u670D\u52A1\u7AEF\u5F53\u65E5\u5FEB\u7167\uFF0C\u4E0D\u968F\u4E0A\u65B9\u65F6\u95F4\u8303\u56F4\u53D8\u5316",
+        secHealth: "\u603B\u4F53\u5065\u5EB7\u5EA6",
+        secHealthNote: "\u5B58\u91CF\u53E3\u5F84\uFF1B\u300C\u8303\u56F4\u5185\u300D\u4E24\u9879\u8DDF\u968F\u65F6\u95F4\u8303\u56F4",
+        secActivity: "\u6D3B\u52A8\u4E0E\u8D8B\u52BF",
+        secActivityNote: "\u4E8B\u4EF6\u8D8B\u52BF\u8DDF\u968F\u65F6\u95F4\u8303\u56F4\uFF0C\u5E74\u5EA6\u6D3B\u52A8\u8986\u76D6\u6574\u5E74",
+        secDist: "\u5206\u5E03",
+        secDistNote: "\u5F53\u524D\u5B58\u91CF\u7ED3\u6784\uFF0C\u70B9\u67F1\u5F62\u53EF\u4E0B\u94BB\u5230\u8BB0\u5F55\u9875",
+        secRisk: "\u98CE\u9669",
+        secRiskNote: "\u5F53\u524D\u5B58\u91CF\uFF1B\u8D26\u9F84\u4E0E\u6E05\u5355\u540C\u4E00\u53E3\u5F84",
+        secRank: "\u6392\u884C",
+        secRankNote: "\u6309\u4EFB\u52A1\u8868 / \u4EFB\u52A1\u7EC4 / \u5DE5\u4F5C\u533A\u805A\u5408",
         refresh: "\u5237\u65B0",
         asOf: "\u622A\u81F3",
         retry: "\u91CD\u8BD5",
@@ -2328,8 +2379,6 @@ var require_stats = __commonJS({
         inRange: "\u8303\u56F4\u5185",
         ofTotal: "\u5360\u603B\u91CF",
         ofActive: "\u5360\u5DF2\u5F00\u542F",
-        trend: "\u65B0\u589E / \u5B8C\u6210 / \u5230\u671F\u8D8B\u52BF",
-        trendNote: "\u6309\u81EA\u7136\u65E5 / \u5468 / \u6708\u5206\u6876",
         eventTrend: "\u4E8B\u4EF6\u8D8B\u52BF",
         eventTrendNote: "\u4E0E\u5E74\u5EA6\u6D3B\u52A8\u540C\u53E3\u5F84\uFF1B\u6309\u65E5 / \u5468 / \u6708\u5206\u6876\uFF0C\u76EE\u6807\u6309\u8BA1\u5212\u5B8C\u6210\u65E5\u671F\u7EDF\u8BA1",
         publish: "\u53D1\u5E03",
@@ -2409,6 +2458,18 @@ var require_stats = __commonJS({
         range90: "90 days",
         range365: "1 year",
         rangeAll: "All",
+        secToday: "Today",
+        secTodayNote: "Server-side snapshot for today; the range above does not affect it",
+        secHealth: "Health",
+        secHealthNote: "Current stock; the two in-range figures follow the range above",
+        secActivity: "Activity & trend",
+        secActivityNote: "The event trend follows the range; annual activity covers the whole year",
+        secDist: "Distribution",
+        secDistNote: "Current stock; click a bar to list matching tasks",
+        secRisk: "Risk",
+        secRiskNote: "Current stock; aging and the overdue list share one scope",
+        secRank: "Rankings",
+        secRankNote: "Grouped by task table / group / workspace",
         refresh: "Refresh",
         asOf: "As of",
         retry: "Retry",
@@ -2432,8 +2493,6 @@ var require_stats = __commonJS({
         inRange: "In range",
         ofTotal: "of total",
         ofActive: "of active",
-        trend: "Created / done / due trend",
-        trendNote: "Bucketed by day / week / month",
         eventTrend: "Event trend",
         eventTrendNote: "Same scope as annual activity; bucketed by day / week / month, target by planned date",
         publish: "Published",
@@ -2672,30 +2731,47 @@ var require_stats = __commonJS({
         return { key, label: t["range" + (key === "all" ? "All" : key.replace("d", ""))] };
       });
       var children = [];
+      var totals = data ? data.totals || {} : {};
+      var rates = data ? data.rates || {} : {};
+      var b = data ? data.breakdowns || {} : {};
       if (!data && loading) children.push(h(ch.Skeleton, { key: "sk" }));
       if (!data && !loading && err) {
         children.push(h(ch.Card, { key: "err", span: 12 }, h(ch.Empty, { text: t.loadFail })));
       }
       if (data) {
-        var totals = data.totals || {};
-        var rates = data.rates || {};
-        var b = data.breakdowns || {};
         children.push(h(
-          "div",
-          { key: "kpi", className: "wbt-kpis" },
-          h(ch.Kpi, { label: t.total, value: totals.total, hint: t.current, lang }),
-          h(ch.Kpi, { label: t.active, value: totals.active, hint: t.ofTotal + " " + ch.pct(totals.total ? totals.active / totals.total : 0), lang }),
-          h(ch.Kpi, { label: t.overdue, value: totals.overdue, hint: t.ofActive + " " + ch.pct(rates.overdue), tone: totals.overdue > 0 ? "danger" : "", lang }),
-          h(ch.Kpi, { label: t.completion, value: ch.pct(rates.completion), hint: totals.done + " / " + totals.total, tone: "ok", lang }),
-          h(ch.Kpi, { label: t.dueToday, value: totals.dueToday, hint: t.current, tone: totals.dueToday > 0 ? "warn" : "", lang }),
-          h(ch.Kpi, { label: t.dueNext7, value: totals.dueNext7, hint: t.current, lang }),
-          h(ch.Kpi, { label: t.newInRange, value: totals.newInRange, hint: t.inRange, lang }),
-          h(ch.Kpi, { label: t.avgCycle, value: rates.avgCycleDays === null || rates.avgCycleDays === void 0 ? "\u2014" : rates.avgCycleDays, unit: t.days, hint: t.inRange, lang })
+          ch.Section,
+          { key: "today", title: t.secToday, note: t.secTodayNote },
+          data.today ? h(Today, { today: data.today, lang }) : null
         ));
-        if (totals.total === 0) {
-          children.push(h(ch.Card, { key: "empty", span: 12 }, h(ch.Empty, { text: t.noData })));
-        } else {
-          children.push(h(
+      }
+      if (data && totals.total === 0) {
+        children.push(h(ch.Card, { key: "empty", span: 12 }, h(ch.Empty, { text: t.noData })));
+      }
+      if (data && totals.total > 0) {
+        if (cfg["stats.showKpi"] !== false) {
+          children.push(h(ch.Section, { key: "health", title: t.secHealth, note: t.secHealthNote }, [
+            h(
+              "div",
+              { key: "kpiMain", className: "wbt-kpis wbt-kpis-main" },
+              h(ch.Kpi, { label: t.total, value: totals.total, hint: t.current, size: "lg", lang }),
+              h(ch.Kpi, { label: t.active, value: totals.active, hint: t.ofTotal + " " + ch.pct(totals.total ? totals.active / totals.total : 0), size: "lg", lang }),
+              h(ch.Kpi, { label: t.overdue, value: totals.overdue, hint: t.ofActive + " " + ch.pct(rates.overdue), tone: totals.overdue > 0 ? "danger" : "", size: "lg", lang }),
+              h(ch.Kpi, { label: t.completion, value: ch.pct(rates.completion), hint: totals.done + " / " + totals.total, tone: "ok", size: "lg", lang })
+            ),
+            h(
+              "div",
+              { key: "kpiSub", className: "wbt-kpis wbt-kpis-sub" },
+              h(ch.Kpi, { label: t.dueToday, value: totals.dueToday, hint: t.current, tone: totals.dueToday > 0 ? "warn" : "", size: "sm", lang }),
+              h(ch.Kpi, { label: t.dueNext7, value: totals.dueNext7, hint: t.current, size: "sm", lang }),
+              h(ch.Kpi, { label: t.newInRange, value: totals.newInRange, hint: t.inRange, size: "sm", lang }),
+              h(ch.Kpi, { label: t.avgCycle, value: rates.avgCycleDays === null || rates.avgCycleDays === void 0 ? "\u2014" : rates.avgCycleDays, unit: t.days, hint: t.inRange, size: "sm", lang })
+            )
+          ]));
+        }
+        var activity = [];
+        if (sectionOn("eventTrend")) {
+          activity.push(h(
             ch.Card,
             { key: "eventTrend", span: 12, title: t.eventTrend, note: t.eventTrendNote },
             h(ch.Trend, {
@@ -2710,19 +2786,11 @@ var require_stats = __commonJS({
               ]
             })
           ));
-          children.push(h(
-            ch.Card,
-            { key: "trend", span: 8, title: t.trend, note: t.trendNote },
-            h(ch.Trend, {
-              data: data.trend || [],
-              lang,
-              series: [
-                { key: "created", label: t.created, color: ch.colors[0] },
-                { key: "done", label: t.done, color: ch.colors[1] },
-                { key: "due", label: t.due, color: ch.colors[2] }
-              ]
-            })
-          ));
+        }
+        activity.push(h(Heatmap, { key: "heatmap", api, lang, active: props.active, onNavigate: props.onNavigate }));
+        children.push(h(ch.Section, { key: "activity", title: t.secActivity, note: t.secActivityNote }, activity));
+        var dist = [];
+        if (sectionOn("status")) {
           var statusData = (b.status || []).filter(function(s) {
             return Object.prototype.hasOwnProperty.call(ch.statusColors, s.key);
           }).map(function(s) {
@@ -2731,7 +2799,7 @@ var require_stats = __commonJS({
           var statusTotal = statusData.reduce(function(sum, s) {
             return sum + Number(s.count || 0);
           }, 0);
-          children.push(h(
+          dist.push(h(
             ch.Card,
             { key: "status", span: 4, title: t.status, note: t.statusNote },
             h(ch.Donut, {
@@ -2744,20 +2812,24 @@ var require_stats = __commonJS({
               }).join("; ")
             })
           ));
-          children.push(h(
+        }
+        if (sectionOn("priority")) {
+          dist.push(h(
             ch.Card,
-            { key: "priority", span: 6, title: t.priority, note: t.priorityNote },
+            { key: "priority", span: 4, title: t.priority, note: t.priorityNote },
             h(ch.Histogram, { data: visibleBins(b.priority), lang, color: ch.colors[0], onSelect: priorityPicker(props.onNavigate), selectHint: lang === "en" ? "click to list" : "\u70B9\u51FB\u67E5\u770B\u4EFB\u52A1" })
           ));
+        }
+        if (sectionOn("difficulty")) {
           var missingBin = (b.difficulty || []).find(function(bin) {
             return bin.key === "unset";
           });
           var dims = [["all", t.dimAll], ["done", t.dimDone], ["publish", t.dimPublish], ["claimed", t.dimClaimed], ["shutdown", t.dimShutdown]];
           var rangeBox = data.range || {};
           var diffNote = dimension === "all" ? t.difficultyNote : t.difficultyNoteRange.replace("{from}", String(rangeBox.from || "")).replace("{to}", String(rangeBox.to || ""));
-          children.push(h(
+          dist.push(h(
             ch.Card,
-            { key: "difficulty", span: 6, title: t.difficulty, note: diffNote },
+            { key: "difficulty", span: 4, title: t.difficulty, note: diffNote },
             h(
               "div",
               { className: "wbt-dims", role: "tablist", "aria-label": t.difficultyDimension },
@@ -2787,12 +2859,18 @@ var require_stats = __commonJS({
               } }, t.difficultyMissingLink) : null
             )
           ));
-          children.push(h(
+        }
+        children.push(h(ch.Section, { key: "distribution", title: t.secDist, note: t.secDistNote }, dist));
+        var risk = [];
+        if (sectionOn("aging")) {
+          risk.push(h(
             ch.Card,
             { key: "aging", span: 6, title: t.aging, note: t.agingNote },
             h(ch.Histogram, { data: data.aging || [], lang, color: ch.colors[2] })
           ));
-          children.push(h(
+        }
+        if (sectionOn("overdue")) {
+          risk.push(h(
             ch.Card,
             { key: "overdue", span: 6, title: t.overdueList, note: t.overdueNote },
             h(ch.DataTable, listProps(data, "overdue", lang, {
@@ -2806,7 +2884,11 @@ var require_stats = __commonJS({
               ]
             }))
           ));
-          children.push(h(
+        }
+        children.push(h(ch.Section, { key: "risk", title: t.secRisk, note: t.secRiskNote }, risk));
+        var rank = [];
+        if (sectionOn("tables")) {
+          rank.push(h(
             ch.Card,
             { key: "tables", span: 6, title: t.tables, note: t.tablesNote },
             h(ch.DataTable, {
@@ -2823,7 +2905,9 @@ var require_stats = __commonJS({
               ]
             })
           ));
-          children.push(h(
+        }
+        if (sectionOn("groups")) {
+          rank.push(h(
             ch.Card,
             { key: "groups", span: 6, title: t.groups, note: t.groupsNote },
             h(ch.DataTable, {
@@ -2840,14 +2924,16 @@ var require_stats = __commonJS({
               ]
             })
           ));
+        }
+        if (sectionOn("workspaces")) {
           var wsRows = (data.rankings && data.rankings.workspaces || []).slice();
           var noneRow = data.rankings && data.rankings.noWorkspace;
           if (noneRow && (wsRows.length || noneRow.total > 0)) {
             wsRows.push(Object.assign({}, noneRow, { title: t.noWorkspaceRow }));
           }
-          children.push(h(
+          rank.push(h(
             ch.Card,
-            { key: "workspaces", span: 6, title: t.workspaces, note: t.workspacesNote },
+            { key: "workspaces", span: 12, title: t.workspaces, note: t.workspacesNote },
             h(ch.DataTable, {
               rows: wsRows,
               lang,
@@ -2863,7 +2949,12 @@ var require_stats = __commonJS({
               ]
             })
           ));
+        }
+        children.push(h(ch.Section, { key: "rank", title: t.secRank, note: t.secRankNote }, rank));
+        if (sectionOn("timeline")) {
           children.push(h(TimelineSection, { key: "timeline", api, lang, active: props.active, ch }));
+        }
+        if (sectionOn("recent")) {
           var recentCols = recentColumns(t, lang, props.onNavigate);
           var recentTabs = [
             ["publish", t.recentTabPublish, "recentPublish", t.noRecentPublish],
@@ -2897,19 +2988,11 @@ var require_stats = __commonJS({
             h(ch.DataTable, listProps(data, recentTab[2], lang, { lang, empty: recentTab[3], columns: recentCols }))
           ));
         }
-        children.push(h(ch.Warnings, { key: "warn", items: data.warnings || [] }));
       }
-      children = children.filter(function(node) {
-        var k = node && node.key;
-        if (!k || k === "sk" || k === "err" || k === "warn" || k === "empty") return true;
-        if (k === "kpi") return cfg["stats.showKpi"] !== false;
-        return sectionOn(k);
-      });
+      if (data) children.push(h(ch.Warnings, { key: "warn", items: data.warnings || [] }));
       return h(
         "div",
         { className: "wbt-stats" },
-        h(Today, { today: data && data.today, lang }),
-        h(Heatmap, { api, lang, active: props.active, onNavigate: props.onNavigate }),
         h(ch.RangeSwitch, {
           options,
           value: customFrom || customTo ? null : range,
@@ -11942,7 +12025,7 @@ var init_list_checks = __esm({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.20",
+    version: "5.2.21",
     icon: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },

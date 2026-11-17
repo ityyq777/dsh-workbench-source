@@ -41,22 +41,44 @@ const fakeReact = {
 const config = {useConfig: () => ({ready: true, values: {'stats.sections': [], 'stats.showKpi': false}})};
 const charts = {makeCharts: () => new Proxy({colors: [], pct: String}, {get: (o,k) => k in o ? o[k] : String(k)})};
 const mod = {exports: {}};
-runInNewContext(readFileSync('packages/addons/tasks/client/views/stats.cjs', 'utf8'), {module: mod, require: name => name === 'react' ? fakeReact : name === './config.cjs' ? config : name === '../stats/charts.cjs' ? charts : name === '../stats/today.cjs' ? Today : name === '../stats/heatmap.cjs' ? 'Heatmap' : name === '../item/ranking-name.cjs' ? require('../packages/addons/tasks/client/item/ranking-name.cjs') : require('../packages/addons/tasks/client/item/recent-columns.cjs')});
+const stubs = {
+  react: fakeReact,
+  './config.cjs': config,
+  '../stats/charts.cjs': charts,
+  '../stats/today.cjs': Today,
+  '../stats/heatmap.cjs': 'Heatmap',
+  '../stats/task-link.cjs': () => null,
+  '../stats/list-state.cjs': {listState: () => ({rows: []}), missingText: () => ''},
+  '../stats/timeline-section.cjs': {TimelineSection: () => null},
+  '../item/ranking-name.cjs': () => ({key: 'title'}),
+  '../item/recent-columns.cjs': () => [],
+};
+runInNewContext(readFileSync('packages/addons/tasks/client/views/stats.cjs', 'utf8'), {module: mod, require: name => { assert(name in stubs, 'unexpected require: ' + name); return stubs[name]; }});
 const calls = [];
-const api = {call: async (action, args) => {calls.push({action, args}); return {result: {today: snapshot, totals: {total: 0}}};}};
+const api = {call: async (action, args) => {calls.push({action, args}); return {result: {today: snapshot, totals: {total: 1, active: 1, done: 0, overdue: 0}, rates: {}, breakdowns: {}, range: {from: '2000-01-01', to: '2000-01-31'}}};}};
 const outer = mod.exports.TasksStatsView({api, lang: 'zh'});
 const render = () => {cursor = 0; return outer.type(outer.props);};
 const flush = async () => {const pending = effects; effects = []; pending.forEach(fn => fn()); for (let i=0;i<12;i++) await Promise.resolve();};
 render(); await flush();
-let view = render();
-assert.equal(view.children[0].type, Today);
-assert.equal(view.children[1].type, 'Heatmap');
-assert.equal(view.children[2].type, 'RangeSwitch');
-assert.equal(view.children[0].props.today, snapshot);
-view.children[2].props.onChange('7d'); render(); await flush(); view = render();
+const walk = (n) => (n && typeof n === 'object' ? [n, ...(n.children || []).flatMap(walk)] : []);
+const pick = (type) => walk(render()).find(n => n.type === type);
+const view = render();
+// 5.2.21 版面重排：时间范围切到页面顶部工具栏，不再夹在卡片之间。
+assert.equal(view.children[0].type, 'RangeSwitch', '范围开关在页面顶部');
+const grid = view.children[1];
+assert.equal(grid.props.className, 'wbt-sgrid');
+// 今日卡归入「今日」分区：存量归零时依然保留（当日快照独立于存量）。
+const todaySect = grid.children[0];
+assert.equal(todaySect.type, 'Section');
+assert.equal(todaySect.props.title, '今日');
+assert.equal(pick(Today).props.today, snapshot);
+assert.ok(walk(render()).some(n => n.type === 'Section' && n.props.title === '活动与趋势'), '活动与趋势分区存在');
+assert.equal(walk(render()).filter(n => n.type === 'Heatmap').length, 1);
+const rangeSwitch = pick('RangeSwitch');
+rangeSwitch.props.onChange('7d'); render(); await flush();
 assert.equal(calls.at(-1).args.range, '7d');
-assert.equal(view.children[0].props.today, snapshot);
-view.children[2].props.onCustomChange({from: '1999-01-01', to: '1999-01-02'}); render(); await flush(); view = render();
+assert.equal(pick(Today).props.today, snapshot, '切换范围不影响今日快照');
+pick('RangeSwitch').props.onCustomChange({from: '1999-01-01', to: '1999-01-02'}); render(); await flush();
 assert.equal(calls.at(-1).args.from, '1999-01-01');
-assert.equal(view.children[0].props.today.date, '2000-01-02');
+assert.equal(pick(Today).props.today.date, '2000-01-02');
 console.log('TODAY UI PASS: bilingual metrics (5 cards incl. claimed), precision, zero, empty, legacy, server date, order and range independence');

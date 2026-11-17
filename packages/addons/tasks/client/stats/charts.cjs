@@ -19,7 +19,7 @@ var STATUS_COLORS = { "0": COLORS[0], "1": COLORS[3], "2": COLORS[1], "4": COLOR
 function css(prefix) {
   return [
     ".@-table-link{border:0;padding:0;background:none;font:inherit;color:var(--dsw-alias-brand-primary,#4f6ef7);text-align:left;cursor:pointer}.@-table-link:hover{text-decoration:underline}.@-table-link:focus-visible{outline:2px solid currentColor;outline-offset:3px}.@-recent-difficulty{white-space:nowrap}.@-recent-reason{opacity:.65}",
-    ".@-stats{display:flex;flex-direction:column;gap:14px;padding:4px 2px 24px;color:var(--dsw-alias-label-primary,#1f2329)}",
+    ".@-stats{display:flex;flex-direction:column;gap:18px;padding:4px 2px 24px;color:var(--dsw-alias-label-primary,#1f2329)}",
     ".@-stoolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
     ".@-seg{display:inline-flex;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:9px;overflow:hidden;background:var(--dsw-alias-bg-layer-1,#fff)}",
     ".@-seg button{appearance:none;border:0;background:transparent;color:var(--dsw-alias-label-secondary,#646a73);font-size:12px;padding:6px 10px;cursor:pointer;white-space:nowrap}",
@@ -42,20 +42,36 @@ function css(prefix) {
     ".@-dims button[aria-selected=true]{border-color:var(--dsw-alias-border-l2,#e5e6eb);background:var(--dsw-alias-bg-skeleton,#f2f3f5);font-weight:600;opacity:1}",
     ".@-dims button:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:1px}",
     ".@-sgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}",
+    // 分区容器：把 12 栅格切成「一眼看清 → 结构 → 风险 → 排行 → 明细」几段，
+    // 每段自己一条标题带，卡片之间仍按 span 排；段与段之间用更大的间距制造阅读停顿。
+    ".@-sect{grid-column:span 12;display:flex;flex-direction:column;gap:8px;min-width:0}",
+    ".@-sect-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:2px 2px 0}",
+    ".@-sect-title{margin:0;font-size:13px;font-weight:650;letter-spacing:.2px;color:var(--dsw-alias-label-primary,#1f2329)}",
+    ".@-sect-note{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
+    ".@-sect-body{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px;min-width:0}",
     ".@-scard{grid-column:span 6;min-width:0;background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:12px;padding:14px 16px}",
     ".@-span-3{grid-column:span 3}.@-span-4{grid-column:span 4}.@-span-6{grid-column:span 6}.@-span-8{grid-column:span 8}.@-span-12{grid-column:span 12}",
     ".@-chead{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;flex-wrap:wrap}",
     ".@-ctitle{font-size:13px;font-weight:600;color:var(--dsw-alias-label-primary,#1f2329)}",
     ".@-cnote{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
     ".@-kpis{grid-column:span 12;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px}",
+    // 核心指标与次级指标分两行：核心 4 张给足字号，次级 4 张收紧，避免 8 张 KPI 抢同一层的视觉重量。
+    ".@-kpis-main{grid-template-columns:repeat(4,minmax(0,1fr))}",
+    ".@-kpis-sub{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}",
+    ".@-kpi-lg{padding:14px 16px}",
+    ".@-kpi-lg .@-kpi-v{font-size:30px}",
+    ".@-kpi-sm{padding:9px 12px}",
+    ".@-kpi-sm .@-kpi-l{font-size:11.5px}",
+    ".@-kpi-sm .@-kpi-v{font-size:19px}",
+    ".@-kpi-sm .@-kpi-h{font-size:10.5px;margin-top:1px}",
     ".@-kpi{background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:12px;padding:12px 14px;min-width:0}",
     ".@-kpi-l{font-size:12px;color:var(--dsw-alias-label-tertiary,#8f959e);display:flex;align-items:center;gap:6px}",
     ".@-kpi-v{font-size:26px;line-height:1.25;font-weight:650;margin-top:4px;font-variant-numeric:tabular-nums}",
     ".@-kpi-u{font-size:12px;font-weight:400;color:var(--dsw-alias-label-tertiary,#8f959e);margin-left:3px}",
     ".@-kpi-h{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e);margin-top:3px}",
-    ".@-kpi.@-danger .@-kpi-v{color:var(--dsw-alias-state-error-primary,#d9534f)}",
-    ".@-kpi.@-warn .@-kpi-v{color:var(--dsw-alias-state-warn-primary,#d99100)}",
-    ".@-kpi.@-ok .@-kpi-v{color:var(--dsw-alias-state-success-primary,#2f9e6e)}",
+    ".@-kpi.@-kpi-tone-danger .@-kpi-v{color:var(--dsw-alias-state-error-primary,#d9534f)}",
+    ".@-kpi.@-kpi-tone-warn .@-kpi-v{color:var(--dsw-alias-state-warn-primary,#d99100)}",
+    ".@-kpi.@-kpi-tone-ok .@-kpi-v{color:var(--dsw-alias-state-success-primary,#2f9e6e)}",
     ".@-donut{display:flex;align-items:center;gap:16px;flex-wrap:wrap}",
     ".@-donut svg{flex:0 0 auto}",
     ".@-legend{display:flex;flex-direction:column;gap:7px;min-width:120px;flex:1}",
@@ -91,11 +107,11 @@ function css(prefix) {
     ".@-table th.@-num,.@-table td.@-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}",
     ".@-empty{padding:26px 8px;text-align:center;color:var(--dsw-alias-label-tertiary,#8f959e);font-size:12px}",
     ".@-err{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#d9534f) 8%,transparent);border:1px solid color-mix(in srgb,var(--dsw-alias-state-error-primary,#d9534f) 30%,transparent);color:var(--dsw-alias-state-error-primary,#d9534f);border-radius:10px;padding:10px 12px;font-size:12px}",
-    ".@-warn{grid-column:span 12;border:1px dashed var(--dsw-alias-state-warn-primary,#d99100);border-radius:10px;padding:9px 12px;font-size:12px;color:var(--dsw-alias-state-warn-primary,#d99100);background:color-mix(in srgb,var(--dsw-alias-state-warn-primary,#d99100) 6%,transparent)}",
+    ".@-warnbar{grid-column:span 12;border:1px dashed var(--dsw-alias-state-warn-primary,#d99100);border-radius:10px;padding:9px 12px;font-size:12px;color:var(--dsw-alias-state-warn-primary,#d99100);background:color-mix(in srgb,var(--dsw-alias-state-warn-primary,#d99100) 6%,transparent)}",
     ".@-sk{height:14px;border-radius:6px;background:var(--dsw-alias-bg-skeleton,#f2f3f5);margin:7px 0;animation:@-pulse 1.2s ease-in-out infinite}",
     "@keyframes @-pulse{0%,100%{opacity:.55}50%{opacity:1}}",
-    "@media (max-width:900px){.@-scard{grid-column:span 12}.@-span-3,.@-span-4,.@-span-6,.@-span-8{grid-column:span 12}.@-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}",
-    "@media (max-width:600px){.@-stats{padding-bottom:16px}.@-hist{height:130px}.@-kpi-v{font-size:22px}}",
+    "@media (max-width:900px){.@-scard{grid-column:span 12}.@-span-3,.@-span-4,.@-span-6,.@-span-8{grid-column:span 12}.@-kpis,.@-kpis-main,.@-kpis-sub{grid-template-columns:repeat(2,minmax(0,1fr))}}",
+    "@media (max-width:600px){.@-stats{padding-bottom:16px;gap:14px}.@-hist{height:130px}.@-kpi-v{font-size:22px}.@-kpi-lg .@-kpi-v{font-size:24px}.@-kpi-sm .@-kpi-v{font-size:18px}}",
     "@media (prefers-reduced-motion:reduce){.@-sk{animation:none}}",
   ].join("\n").replace(/@-/g, prefix + "-");
 }
@@ -146,9 +162,25 @@ function makeCharts(prefix) {
     );
   }
 
+  // 分区容器：一条标题带 + 一个 12 栅格主体。区块标题用 h2，保证读屏与键盘用户能按标题跳读整页。
+  function Section(props) {
+    var body = props.children || [];
+    var list = Array.isArray(body) ? body.filter(function (n) { return n !== null && n !== undefined && n !== false; }) : body;
+    if (Array.isArray(list) && !list.length) return null;
+    return h("section", { className: prefix + "-sect", "aria-label": props.title },
+      h("div", { className: prefix + "-sect-head" },
+        h("h2", { className: prefix + "-sect-title" }, props.title),
+        props.note ? h("span", { className: prefix + "-sect-note" }, props.note) : null,
+        props.right ? h("span", { className: prefix + "-sect-note", style: { marginLeft: "auto" } }, props.right) : null,
+      ),
+      h("div", { className: prefix + "-sect-body" }, list),
+    );
+  }
+
   function Kpi(props) {
-    var tone = props.tone ? " " + prefix + "-" + props.tone : "";
-    return h("div", { className: prefix + "-kpi" + tone },
+    var tone = props.tone ? " " + prefix + "-kpi-tone-" + props.tone : "";
+    var size = props.size === "lg" || props.size === "sm" ? " " + prefix + "-kpi-" + props.size : "";
+    return h("div", { className: prefix + "-kpi" + size + tone },
       h("div", { className: prefix + "-kpi-l" }, props.label),
       h("div", { className: prefix + "-kpi-v" },
         props.value === null || props.value === undefined ? "—" : (typeof props.value === "number" ? num(props.lang, props.value) : props.value),
@@ -421,11 +453,11 @@ function makeCharts(prefix) {
   function Warnings(props) {
     var items = props.items || [];
     if (!items.length) return null;
-    return h("div", { className: prefix + "-warn", role: "status" }, items.map(function (w) { return w.message; }).join("；"));
+    return h("div", { className: prefix + "-warnbar", role: "status" }, items.map(function (w) { return w.message; }).join("；"));
   }
 
   return {
-    Card: Card, Kpi: Kpi, Donut: Donut, BarList: BarList, StackedRows: StackedRows,
+    Section: Section, Card: Card, Kpi: Kpi, Donut: Donut, BarList: BarList, StackedRows: StackedRows,
     Trend: Trend, Histogram: Histogram, DataTable: DataTable, RangeSwitch: RangeSwitch, DateRangePicker: DateRangePicker,
     Empty: Empty, Missing: Missing, Skeleton: Skeleton, ErrorBar: ErrorBar, Warnings: Warnings,
     num: num, pct: pct, timeText: timeText, dateText: dateText, colors: COLORS, statusColors: STATUS_COLORS,
