@@ -116,10 +116,16 @@ for (const lang of ['zh', 'en']) {
   assert.equal(card.props.title, lang === 'en' ? 'Event trend' : '事件趋势', '卡片标题用用户用语');
   assert.match(String(card.props.note || ''), lang === 'en' ? /annual activity/ : /年度活动/, 'note 说明口径来源');
   const trend = walk(card).find((n) => n && Array.isArray(n.props.series));
-  assert.deepEqual([...trend.props.series.map((s) => s.key)], ['publish', 'target', 'done', 'shutdown', 'claimed'], '五条曲线顺序：发布/目标/完成/关闭/接取');
+  assert.deepEqual([...trend.props.series.map((s) => s.key)], ['publish', 'target', 'claimed', 'shutdown', 'done'], '五条曲线顺序：发布/目标/接取/关闭/完成');
   assert.deepEqual([...trend.props.series.map((s) => s.label)], [...(lang === 'en'
-    ? ['Published', 'Target', 'Done', 'Closed', 'Claimed'] : ['发布', '目标', '完成', '关闭', '接取'])]);
+    ? ['Published', 'Target', 'Claimed', 'Closed', 'Done'] : ['发布', '目标', '接取', '关闭', '完成'])]);
   assert.equal(new Set(trend.props.series.map((s) => s.color)).size, 5, '五条线颜色互不相同');
+  // 换序不换色：颜色跟着含义走，否则读者要重新认一遍颜色。
+  const chartColors = charts.makeCharts('wbt').colors;
+  assert.deepEqual([...trend.props.series.map((s) => s.key + '=' + s.color)], [
+    'publish=' + chartColors[0], 'target=' + chartColors[5], 'claimed=' + chartColors[2],
+    'shutdown=' + chartColors[3], 'done=' + chartColors[1],
+  ], '序列颜色与含义绑定');
   // 5.2.21 起旧「新增/完成/到期趋势」卡已删除，整页只保留事件趋势一张折线图。
   assert.equal(walk(body).filter((n) => n && n.key === 'trend').length, 0, '旧趋势卡已移除');
   assert.equal(walk(body).filter((n) => n && Array.isArray(n.props.series)).length, 1, '整页只有一张折线图');

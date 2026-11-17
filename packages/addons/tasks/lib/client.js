@@ -470,6 +470,90 @@ var require_workspacefilter = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/stats/trend-interaction.cjs
+var require_trend_interaction = __commonJS({
+  "packages/addons/tasks/client/stats/trend-interaction.cjs"(exports2, module2) {
+    function isVisible(hidden, key) {
+      return !(hidden && hidden[key]);
+    }
+    function visibleSeries(series, hidden) {
+      return (series || []).filter(function(s) {
+        return s && isVisible(hidden, s.key);
+      });
+    }
+    function rangeMax(data, series, hidden) {
+      if (!data || !data.length) return 1;
+      var list = visibleSeries(series, hidden);
+      var max = 1;
+      (data || []).forEach(function(d) {
+        list.forEach(function(s) {
+          max = Math.max(max, Number(d[s.key] || 0));
+        });
+      });
+      return Math.ceil(max * 1.15) || 1;
+    }
+    function toggle(hidden, series, key) {
+      var next = Object.assign({}, hidden);
+      if (isVisible(hidden, key)) {
+        if (visibleSeries(series, hidden).length <= 1) return { hidden, blocked: true };
+        next[key] = true;
+      } else {
+        delete next[key];
+      }
+      return { hidden: next, blocked: false };
+    }
+    function indexAt(ratio, length) {
+      if (!length) return 0;
+      var i = Math.round(Number(ratio) * (length - 1));
+      if (!isFinite(i)) return 0;
+      return Math.min(length - 1, Math.max(0, i));
+    }
+    function moveIndex(index, delta, length) {
+      if (!length) return 0;
+      if (index === null || index === void 0 || index < 0) return delta > 0 ? 0 : length - 1;
+      return Math.min(length - 1, Math.max(0, index + delta));
+    }
+    function tipAnchor(ratio, plotLeftPct, plotWidthPct) {
+      var r = Math.min(1, Math.max(0, Number(ratio) || 0));
+      var left = plotLeftPct + r * plotWidthPct;
+      var flip = left > 72 ? "right" : left < 18 ? "left" : "center";
+      return { left: Math.round(left * 100) / 100, flip };
+    }
+    function tipTransform(flip) {
+      if (flip === "right") return "translateX(-100%)";
+      if (flip === "left") return "translateX(0)";
+      return "translateX(-50%)";
+    }
+    function tipRows(data, series, hidden, index) {
+      var row = (data || [])[index];
+      if (!row) return [];
+      return visibleSeries(series, hidden).map(function(s) {
+        return { key: s.key, label: s.label, color: s.color, value: Number(row[s.key] || 0) };
+      });
+    }
+    function summaryText(data, series, hidden, sep) {
+      var list = visibleSeries(series, hidden);
+      return list.map(function(s) {
+        return s.label + " " + (data || []).reduce(function(n, d) {
+          return n + Number(d[s.key] || 0);
+        }, 0);
+      }).join(sep || "\uFF0C");
+    }
+    module2.exports = {
+      isVisible,
+      visibleSeries,
+      rangeMax,
+      toggle,
+      indexAt,
+      moveIndex,
+      tipAnchor,
+      tipTransform,
+      tipRows,
+      summaryText
+    };
+  }
+});
+
 // packages/addons/tasks/client/stats/charts.cjs
 var require_charts = __commonJS({
   "packages/addons/tasks/client/stats/charts.cjs"(exports2, module2) {
@@ -568,6 +652,21 @@ var require_charts = __commonJS({
         ".@-hbar-link:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
         ".@-trend{width:100%;height:auto;display:block}",
         ".@-tlegend{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
+        ".@-trend-wrap{position:relative}",
+        ".@-trend-box{position:relative;border-radius:10px}",
+        ".@-trend-box:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
+        ".@-trend-tip{position:absolute;top:4px;z-index:3;pointer-events:none;display:flex;flex-direction:column;gap:2px;min-width:104px;padding:6px 8px;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:8px;background:var(--dsw-alias-bg-layer-1,#fff);box-shadow:0 6px 20px color-mix(in srgb,var(--dsw-alias-label-primary,#1f2329) 16%,transparent);font-size:11px;color:var(--dsw-alias-label-primary,#1f2329)}",
+        ".@-tip-day{font-size:11.5px;margin-bottom:2px}",
+        ".@-tip-row{display:flex;align-items:center;gap:6px;white-space:nowrap}",
+        ".@-tip-name{color:var(--dsw-alias-label-secondary,#646a73)}",
+        ".@-tip-row b{margin-left:auto;font-variant-numeric:tabular-nums}",
+        ".@-tlegend-item{display:inline-flex;align-items:center;gap:5px;appearance:none;border:0;background:none;padding:2px 0;font:inherit;font-size:11px;color:inherit;cursor:pointer;border-radius:4px}",
+        ".@-tlegend-item:hover:not(:disabled){color:var(--dsw-alias-label-primary,#1f2329)}",
+        ".@-tlegend-item[aria-pressed=false]{opacity:.45}",
+        ".@-tlegend-item[aria-pressed=false] .@-dot{background:transparent;border:1px solid currentColor}",
+        ".@-tlegend-item:disabled{cursor:default}",
+        ".@-tlegend-item:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
+        ".@-dot-off{width:8px;height:8px;border-radius:50%;border:1px solid;flex:0 0 auto}",
         ".@-table-scroll{max-width:100%;overflow-x:auto}.@-table{width:100%;border-collapse:collapse;font-size:12px}",
         ".@-table th{text-align:left;font-weight:500;color:var(--dsw-alias-label-tertiary,#8f959e);padding:6px 8px;border-bottom:1px solid var(--dsw-alias-border-l2,#e5e6eb);white-space:nowrap}",
         ".@-table td{padding:7px 8px;border-bottom:1px solid var(--dsw-alias-border-l1,#f2f3f5);color:var(--dsw-alias-label-secondary,#646a73);vertical-align:top}",
@@ -765,13 +864,13 @@ var require_charts = __commonJS({
         var height = props.height || 200;
         var left = 30, right = 10, top = 12, bottom = 24;
         var pw = width - left - right, ph = height - top - bottom;
-        var max = 1;
-        data.forEach(function(d) {
-          series.forEach(function(s) {
-            max = Math.max(max, Number(d[s.key] || 0));
-          });
-        });
-        max = Math.ceil(max * 1.15) || 1;
+        var ix = require_trend_interaction();
+        var hiddenS = React.useState({});
+        var activeS = React.useState(null);
+        var hidden = hiddenS[0];
+        var active = activeS[0];
+        var visible = ix.visibleSeries(series, hidden);
+        var max = ix.rangeMax(data, series, hidden);
         function x(i2) {
           return left + (data.length <= 1 ? pw / 2 : i2 / (data.length - 1) * pw);
         }
@@ -786,53 +885,135 @@ var require_charts = __commonJS({
           for (var i = 0; i < data.length; i += step) labelIdx.push(i);
           if (labelIdx[labelIdx.length - 1] !== data.length - 1) labelIdx.push(data.length - 1);
         }
-        var aria = series.map(function(s) {
-          return s.label + " " + data.reduce(function(n, d) {
-            return n + Number(d[s.key] || 0);
-          }, 0);
-        }).join("\uFF0C");
-        return h(
+        var aria = ix.summaryText(data, series, hidden, "\uFF0C");
+        var band = data.length > 1 ? pw / (data.length - 1) : pw;
+        function bandBox(i2) {
+          var bx = Math.max(left, x(i2) - band / 2);
+          return { x: bx, width: Math.max(1, Math.min(width - right, x(i2) + band / 2) - bx) };
+        }
+        var tipLeftPct = left / width * 100, tipWidthPct = pw / width * 100;
+        var activeRow = active !== null && data[active] ? data[active] : null;
+        var anchor = activeRow ? ix.tipAnchor((x(active) - left) / pw, tipLeftPct, tipWidthPct) : null;
+        var tip = activeRow ? h(
           "div",
-          null,
-          h(
-            "svg",
-            { className: prefix + "-trend", viewBox: "0 0 " + width + " " + height, role: "img", "aria-label": props.aria || aria },
-            ticks.map(function(v, i2) {
-              return h(
-                "g",
-                { key: "t" + i2 },
-                h("line", { x1: left, x2: width - right, y1: y(v), y2: y(v), stroke: "var(--dsw-alias-border-l1,#f2f3f5)", strokeWidth: 1 }),
-                h("text", { x: left - 5, y: y(v) + 3, textAnchor: "end", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, num(props.lang, v))
-              );
-            }),
-            series.map(function(s, si) {
-              var pts = data.map(function(d, i2) {
-                return x(i2) + "," + y(d[s.key]);
-              }).join(" ");
-              return h(
-                "g",
-                { key: s.key },
-                h("polyline", { points: pts, fill: "none", stroke: s.color || COLORS[si % COLORS.length], strokeWidth: 2, strokeLinejoin: "round", strokeLinecap: "round" }),
-                data.map(function(d, i2) {
-                  if (data.length > 40 && i2 % 3 !== 0) return null;
-                  return h(
-                    "circle",
-                    { key: i2, cx: x(i2), cy: y(d[s.key]), r: 2.4, fill: s.color || COLORS[si % COLORS.length] },
-                    h("title", null, d.bucket + "\uFF1A" + s.label + " " + (d[s.key] || 0))
-                  );
-                })
-              );
-            }),
-            labelIdx.map(function(i2) {
-              var anchor = i2 === data.length - 1 ? "end" : "middle";
-              return h("text", { key: "x" + i2, x: x(i2), y: height - 6, textAnchor: anchor, fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, String(data[i2].bucket).slice(5));
-            })
-          ),
-          h("div", { className: prefix + "-tlegend" }, series.map(function(s, i2) {
+          {
+            className: prefix + "-trend-tip",
+            style: { left: anchor.left + "%", transform: ix.tipTransform(anchor.flip) }
+          },
+          h("b", { className: prefix + "-tip-day" }, String(activeRow.bucket)),
+          ix.tipRows(data, series, hidden, active).map(function(r) {
             return h(
               "span",
-              { key: s.key, style: { display: "inline-flex", alignItems: "center", gap: 5 } },
-              h("span", { className: prefix + "-dot", style: { background: s.color || COLORS[i2 % COLORS.length] } }),
+              { key: r.key, className: prefix + "-tip-row" },
+              h("span", { className: prefix + "-dot", style: { background: r.color } }),
+              h("span", { className: prefix + "-tip-name" }, r.label),
+              h("b", null, num(props.lang, r.value))
+            );
+          })
+        ) : null;
+        return h(
+          "div",
+          { className: prefix + "-trend-wrap" },
+          h(
+            "div",
+            {
+              className: prefix + "-trend-box",
+              role: "group",
+              tabIndex: 0,
+              "aria-label": props.aria || aria,
+              onMouseLeave: function() {
+                activeS[1](null);
+              },
+              onBlur: function() {
+                activeS[1](null);
+              },
+              onKeyDown: function(e) {
+                if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                  e.preventDefault();
+                  activeS[1](ix.moveIndex(active, e.key === "ArrowRight" ? 1 : -1, data.length));
+                } else if (e.key === "Escape") {
+                  activeS[1](null);
+                }
+              }
+            },
+            h(
+              "svg",
+              { className: prefix + "-trend", viewBox: "0 0 " + width + " " + height, "aria-hidden": "true" },
+              ticks.map(function(v, i2) {
+                return h(
+                  "g",
+                  { key: "t" + i2 },
+                  h("line", { x1: left, x2: width - right, y1: y(v), y2: y(v), stroke: "var(--dsw-alias-border-l1,#f2f3f5)", strokeWidth: 1 }),
+                  h("text", { x: left - 5, y: y(v) + 3, textAnchor: "end", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, num(props.lang, v))
+                );
+              }),
+              activeRow ? h("line", {
+                className: prefix + "-trend-guide",
+                x1: x(active),
+                x2: x(active),
+                y1: top,
+                y2: top + ph,
+                stroke: "var(--dsw-alias-border-l2,#c9cdd4)",
+                strokeWidth: 1,
+                strokeDasharray: "3 3"
+              }) : null,
+              visible.map(function(s, si) {
+                var pts = data.map(function(d, i2) {
+                  return x(i2) + "," + y(d[s.key]);
+                }).join(" ");
+                return h(
+                  "g",
+                  { key: s.key },
+                  h("polyline", { points: pts, fill: "none", stroke: s.color || COLORS[si % COLORS.length], strokeWidth: 2, strokeLinejoin: "round", strokeLinecap: "round" }),
+                  data.map(function(d, i2) {
+                    if (data.length > 40 && i2 % 3 !== 0 && i2 !== active) return null;
+                    return h("circle", { key: i2, cx: x(i2), cy: y(d[s.key]), r: i2 === active ? 4 : 2.4, fill: s.color || COLORS[si % COLORS.length] });
+                  })
+                );
+              }),
+              labelIdx.map(function(i2) {
+                var textAnchor = i2 === data.length - 1 ? "end" : "middle";
+                return h("text", { key: "x" + i2, x: x(i2), y: height - 6, textAnchor, fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, String(data[i2].bucket).slice(5));
+              }),
+              data.map(function(d, i2) {
+                var box = bandBox(i2);
+                return h("rect", {
+                  key: "h" + i2,
+                  x: box.x,
+                  y: top,
+                  width: box.width,
+                  height: ph + 8,
+                  fill: "transparent",
+                  style: { cursor: "crosshair" },
+                  onMouseEnter: function() {
+                    activeS[1](i2);
+                  },
+                  onTouchStart: function() {
+                    activeS[1](i2);
+                  }
+                });
+              })
+            ),
+            tip
+          ),
+          h("div", { className: prefix + "-tlegend" }, series.map(function(s, i2) {
+            var on = ix.isVisible(hidden, s.key);
+            var last = on && ix.visibleSeries(series, hidden).length <= 1;
+            return h(
+              "button",
+              {
+                key: s.key,
+                type: "button",
+                className: prefix + "-tlegend-item",
+                "aria-pressed": on ? "true" : "false",
+                disabled: last,
+                title: last ? props.lang === "en" ? "At least one series stays visible" : "\u81F3\u5C11\u8981\u4FDD\u7559\u4E00\u6761\u66F2\u7EBF" : void 0,
+                onClick: function() {
+                  var r = ix.toggle(hidden, series, s.key);
+                  if (!r.blocked) hiddenS[1](r.hidden);
+                }
+              },
+              h("span", { className: prefix + "-dot" + (on ? "" : " " + prefix + "-dot-off"), style: on ? { background: s.color || COLORS[i2 % COLORS.length] } : { borderColor: s.color || COLORS[i2 % COLORS.length] } }),
               s.label
             );
           }))
@@ -2800,12 +2981,14 @@ var require_stats = __commonJS({
             h(ch.Trend, {
               data: data.eventTrend || [],
               lang,
+              // 顺序按用户要求：发布 → 目标 → 接取 → 关闭 → 完成；
+              // 颜色跟着含义走不跟着位置走（换序不换色），否则读者要重新认一遍颜色。
               series: [
                 { key: "publish", label: t.publish, color: ch.colors[0] },
                 { key: "target", label: t.target, color: ch.colors[5] },
-                { key: "done", label: t.done, color: ch.colors[1] },
+                { key: "claimed", label: t.evClaimed, color: ch.colors[2] },
                 { key: "shutdown", label: t.evShutdown, color: ch.colors[3] },
-                { key: "claimed", label: t.evClaimed, color: ch.colors[2] }
+                { key: "done", label: t.done, color: ch.colors[1] }
               ]
             })
           ));
@@ -12179,7 +12362,7 @@ var init_list_checks = __esm({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.23",
+    version: "5.2.24",
     icon: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },

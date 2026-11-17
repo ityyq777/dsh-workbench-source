@@ -308,12 +308,14 @@ function TasksStatsBody(props) {
       activity.push(h(ch.Card, { key: "eventTrend", span: 12, title: t.eventTrend, note: t.eventTrendNote },
         h(ch.Trend, {
           data: data.eventTrend || [], lang: lang,
+          // 顺序按用户要求：发布 → 目标 → 接取 → 关闭 → 完成；
+          // 颜色跟着含义走不跟着位置走（换序不换色），否则读者要重新认一遍颜色。
           series: [
             { key: "publish", label: t.publish, color: ch.colors[0] },
             { key: "target", label: t.target, color: ch.colors[5] },
-            { key: "done", label: t.done, color: ch.colors[1] },
-            { key: "shutdown", label: t.evShutdown, color: ch.colors[3] },
             { key: "claimed", label: t.evClaimed, color: ch.colors[2] },
+            { key: "shutdown", label: t.evShutdown, color: ch.colors[3] },
+            { key: "done", label: t.done, color: ch.colors[1] },
           ],
         })));
     }

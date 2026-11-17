@@ -25,6 +25,7 @@
     "test:task-presets": "node scripts/test-task-presets.mjs",
     "test:tasks-search": "node scripts/test-tasks-search.mjs",
     "test:task-stats-task-link": "node scripts/test-task-stats-task-link.mjs",
+    "test:task-event-trend": "node scripts/test-task-event-trend.mjs && node scripts/test-task-trend-interaction.mjs",
     "test:task-body": "node scripts/test-task-body.mjs",
     "test:task-body-react": "node scripts/test-task-body-react.mjs",
     "test:task-workspace-select-ui": "node scripts/test-task-workspace-select-ui.mjs",

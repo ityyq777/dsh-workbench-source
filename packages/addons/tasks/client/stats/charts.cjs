@@ -100,6 +100,21 @@ function css(prefix) {
     ".@-hbar-link:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
     ".@-trend{width:100%;height:auto;display:block}",
     ".@-tlegend{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
+    ".@-trend-wrap{position:relative}",
+    ".@-trend-box{position:relative;border-radius:10px}",
+    ".@-trend-box:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
+    ".@-trend-tip{position:absolute;top:4px;z-index:3;pointer-events:none;display:flex;flex-direction:column;gap:2px;min-width:104px;padding:6px 8px;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:8px;background:var(--dsw-alias-bg-layer-1,#fff);box-shadow:0 6px 20px color-mix(in srgb,var(--dsw-alias-label-primary,#1f2329) 16%,transparent);font-size:11px;color:var(--dsw-alias-label-primary,#1f2329)}",
+    ".@-tip-day{font-size:11.5px;margin-bottom:2px}",
+    ".@-tip-row{display:flex;align-items:center;gap:6px;white-space:nowrap}",
+    ".@-tip-name{color:var(--dsw-alias-label-secondary,#646a73)}",
+    ".@-tip-row b{margin-left:auto;font-variant-numeric:tabular-nums}",
+    ".@-tlegend-item{display:inline-flex;align-items:center;gap:5px;appearance:none;border:0;background:none;padding:2px 0;font:inherit;font-size:11px;color:inherit;cursor:pointer;border-radius:4px}",
+    ".@-tlegend-item:hover:not(:disabled){color:var(--dsw-alias-label-primary,#1f2329)}",
+    ".@-tlegend-item[aria-pressed=false]{opacity:.45}",
+    ".@-tlegend-item[aria-pressed=false] .@-dot{background:transparent;border:1px solid currentColor}",
+    ".@-tlegend-item:disabled{cursor:default}",
+    ".@-tlegend-item:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
+    ".@-dot-off{width:8px;height:8px;border-radius:50%;border:1px solid;flex:0 0 auto}",
     ".@-table-scroll{max-width:100%;overflow-x:auto}.@-table{width:100%;border-collapse:collapse;font-size:12px}",
     ".@-table th{text-align:left;font-weight:500;color:var(--dsw-alias-label-tertiary,#8f959e);padding:6px 8px;border-bottom:1px solid var(--dsw-alias-border-l2,#e5e6eb);white-space:nowrap}",
     ".@-table td{padding:7px 8px;border-bottom:1px solid var(--dsw-alias-border-l1,#f2f3f5);color:var(--dsw-alias-label-secondary,#646a73);vertical-align:top}",
@@ -267,9 +282,14 @@ function makeCharts(prefix) {
     var height = props.height || 200;
     var left = 30, right = 10, top = 12, bottom = 24;
     var pw = width - left - right, ph = height - top - bottom;
-    var max = 1;
-    data.forEach(function (d) { series.forEach(function (s) { max = Math.max(max, Number(d[s.key] || 0)); }); });
-    max = Math.ceil(max * 1.15) || 1;
+    var ix = require("./trend-interaction.cjs");
+    var hiddenS = React.useState({});
+    var activeS = React.useState(null);
+    var hidden = hiddenS[0];
+    var active = activeS[0];
+    var visible = ix.visibleSeries(series, hidden);
+    // 量程只按可见序列算：关掉「发布」的尖峰后其余四条不会被压平。
+    var max = ix.rangeMax(data, series, hidden);
     function x(i) { return left + (data.length <= 1 ? pw / 2 : (i / (data.length - 1)) * pw); }
     function y(v) { return top + ph - (Number(v || 0) / max) * ph; }
     var ticks = [];
@@ -280,37 +300,96 @@ function makeCharts(prefix) {
       for (var i = 0; i < data.length; i += step) labelIdx.push(i);
       if (labelIdx[labelIdx.length - 1] !== data.length - 1) labelIdx.push(data.length - 1);
     }
-    var aria = series.map(function (s) {
-      return s.label + " " + data.reduce(function (n, d) { return n + Number(d[s.key] || 0); }, 0);
-    }).join("，");
-    return h("div", null,
-      h("svg", { className: prefix + "-trend", viewBox: "0 0 " + width + " " + height, role: "img", "aria-label": props.aria || aria },
+    var aria = ix.summaryText(data, series, hidden, "，");
+    // 命中带：每个桶一条透明矩形，宽度取相邻间距，覆盖整个绘图高度。
+    var band = data.length > 1 ? pw / (data.length - 1) : pw;
+    function bandBox(i) {
+      var bx = Math.max(left, x(i) - band / 2);
+      return { x: bx, width: Math.max(1, Math.min(width - right, x(i) + band / 2) - bx) };
+    }
+    var tipLeftPct = (left / width) * 100, tipWidthPct = (pw / width) * 100;
+    var activeRow = active !== null && data[active] ? data[active] : null;
+    var anchor = activeRow ? ix.tipAnchor((x(active) - left) / pw, tipLeftPct, tipWidthPct) : null;
+    var tip = activeRow ? h("div", {
+      className: prefix + "-trend-tip",
+      style: { left: anchor.left + "%", transform: ix.tipTransform(anchor.flip) },
+    },
+      h("b", { className: prefix + "-tip-day" }, String(activeRow.bucket)),
+      ix.tipRows(data, series, hidden, active).map(function (r) {
+        return h("span", { key: r.key, className: prefix + "-tip-row" },
+          h("span", { className: prefix + "-dot", style: { background: r.color } }),
+          h("span", { className: prefix + "-tip-name" }, r.label),
+          h("b", null, num(props.lang, r.value)));
+      })) : null;
+    return h("div", { className: prefix + "-trend-wrap" },
+      h("div", {
+        className: prefix + "-trend-box",
+        role: "group",
+        tabIndex: 0,
+        "aria-label": props.aria || aria,
+        onMouseLeave: function () { activeS[1](null); },
+        onBlur: function () { activeS[1](null); },
+        onKeyDown: function (e) {
+          if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+            e.preventDefault();
+            activeS[1](ix.moveIndex(active, e.key === "ArrowRight" ? 1 : -1, data.length));
+          } else if (e.key === "Escape") {
+            activeS[1](null);
+          }
+        },
+      },
+      h("svg", { className: prefix + "-trend", viewBox: "0 0 " + width + " " + height, "aria-hidden": "true" },
         ticks.map(function (v, i) {
           return h("g", { key: "t" + i },
             h("line", { x1: left, x2: width - right, y1: y(v), y2: y(v), stroke: "var(--dsw-alias-border-l1,#f2f3f5)", strokeWidth: 1 }),
             h("text", { x: left - 5, y: y(v) + 3, textAnchor: "end", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, num(props.lang, v)),
           );
         }),
-        series.map(function (s, si) {
+        activeRow ? h("line", {
+          className: prefix + "-trend-guide",
+          x1: x(active), x2: x(active), y1: top, y2: top + ph,
+          stroke: "var(--dsw-alias-border-l2,#c9cdd4)", strokeWidth: 1, strokeDasharray: "3 3",
+        }) : null,
+        visible.map(function (s, si) {
           var pts = data.map(function (d, i) { return x(i) + "," + y(d[s.key]); }).join(" ");
           return h("g", { key: s.key },
             h("polyline", { points: pts, fill: "none", stroke: s.color || COLORS[si % COLORS.length], strokeWidth: 2, strokeLinejoin: "round", strokeLinecap: "round" }),
             data.map(function (d, i) {
-              if (data.length > 40 && i % 3 !== 0) return null;
-              return h("circle", { key: i, cx: x(i), cy: y(d[s.key]), r: 2.4, fill: s.color || COLORS[si % COLORS.length] },
-                h("title", null, d.bucket + "：" + s.label + " " + (d[s.key] || 0)));
+              // 数据点多时仍全部渲染，只是不画点；命中带保证每个日期都能取值。
+              if (data.length > 40 && i % 3 !== 0 && i !== active) return null;
+              return h("circle", { key: i, cx: x(i), cy: y(d[s.key]), r: i === active ? 4 : 2.4, fill: s.color || COLORS[si % COLORS.length] });
             }),
           );
         }),
         labelIdx.map(function (i) {
           // 末点标签靠右对齐，否则「11-10」会被 viewBox 右边界裁成「11-1C」。
-          var anchor = i === data.length - 1 ? "end" : "middle";
-          return h("text", { key: "x" + i, x: x(i), y: height - 6, textAnchor: anchor, fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, String(data[i].bucket).slice(5));
+          var textAnchor = i === data.length - 1 ? "end" : "middle";
+          return h("text", { key: "x" + i, x: x(i), y: height - 6, textAnchor: textAnchor, fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, String(data[i].bucket).slice(5));
+        }),
+        data.map(function (d, i) {
+          var box = bandBox(i);
+          return h("rect", {
+            key: "h" + i, x: box.x, y: top, width: box.width, height: ph + 8, fill: "transparent",
+            style: { cursor: "crosshair" },
+            onMouseEnter: function () { activeS[1](i); },
+            onTouchStart: function () { activeS[1](i); },
+          });
         }),
       ),
+      tip),
       h("div", { className: prefix + "-tlegend" }, series.map(function (s, i) {
-        return h("span", { key: s.key, style: { display: "inline-flex", alignItems: "center", gap: 5 } },
-          h("span", { className: prefix + "-dot", style: { background: s.color || COLORS[i % COLORS.length] } }),
+        var on = ix.isVisible(hidden, s.key);
+        var last = on && ix.visibleSeries(series, hidden).length <= 1;
+        return h("button", {
+          key: s.key, type: "button", className: prefix + "-tlegend-item",
+          "aria-pressed": on ? "true" : "false", disabled: last,
+          title: last ? (props.lang === "en" ? "At least one series stays visible" : "至少要保留一条曲线") : undefined,
+          onClick: function () {
+            var r = ix.toggle(hidden, series, s.key);
+            if (!r.blocked) hiddenS[1](r.hidden);
+          },
+        },
+          h("span", { className: prefix + "-dot" + (on ? "" : " " + prefix + "-dot-off"), style: on ? { background: s.color || COLORS[i % COLORS.length] } : { borderColor: s.color || COLORS[i % COLORS.length] } }),
           s.label,
         );
       })),
