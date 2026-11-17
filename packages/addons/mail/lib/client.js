@@ -43,10 +43,18 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var require_client_base_styles = __commonJS({
   "packages/addons/lib/client-base-styles.cjs"(exports2, module2) {
     "use strict";
+    var SECRET_FIELD = [
+      ".wb-secret-field{position:relative;display:flex;align-items:center;min-width:0}",
+      ".wb-secret-field input{flex:1 1 auto;min-width:0;padding-right:34px}",
+      ".wb-eye{position:absolute;right:4px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:6px;padding:4px;color:var(--wb-muted,#6b7280);cursor:pointer}",
+      ".wb-eye:hover:not(:disabled){color:var(--wb-accent,#2563eb);background:color-mix(in srgb, var(--wb-accent,#2563eb) 12%, transparent)}",
+      ".wb-eye:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:1px}",
+      ".wb-eye:disabled{opacity:.45;cursor:not-allowed}"
+    ];
     module2.exports = function baseStyles(prefix) {
       var p = String(prefix || "wb");
       var s = "." + p;
-      return [
+      return SECRET_FIELD.concat([
         s + "-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
         s + "-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
         s + "-title{font-size:16px;font-weight:650;margin:0}",
@@ -71,8 +79,9 @@ var require_client_base_styles = __commonJS({
         s + "-json{margin:0;padding:8px;background:#f8fafc;border-radius:8px;font-size:11px;max-height:240px;overflow:auto}",
         s + "-muted{color:var(--wb-muted,#6b7280)}" + s + "-link{color:var(--wb-accent,#2563eb);cursor:pointer;text-decoration:none}",
         s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}"
-      ];
+      ]);
     };
+    module2.exports.secretFieldStyles = SECRET_FIELD;
   }
 });
 

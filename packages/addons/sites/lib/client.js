@@ -4189,7 +4189,9 @@ var require_copy = __commonJS({
         passphrase: "\u8F93\u5165\u53E3\u4EE4\uFF08\u81F3\u5C11 8 \u4F4D\uFF09",
         passphraseAgain: "\u518D\u8F93\u4E00\u6B21\u53E3\u4EE4",
         passTooShort: "\u53E3\u4EE4\u81F3\u5C11 8 \u4F4D",
-        passMismatch: "\u4E24\u6B21\u53E3\u4EE4\u4E0D\u4E00\u81F4"
+        passMismatch: "\u4E24\u6B21\u53E3\u4EE4\u4E0D\u4E00\u81F4",
+        showPlain: "\u663E\u793A\u660E\u6587",
+        hidePlain: "\u9690\u85CF\u660E\u6587"
       },
       en: {
         title: "Sites",
@@ -4301,7 +4303,9 @@ var require_copy = __commonJS({
         passphrase: "Passphrase (8+ characters)",
         passphraseAgain: "Repeat passphrase",
         passTooShort: "Passphrase must be at least 8 characters",
-        passMismatch: "Passphrases do not match"
+        passMismatch: "Passphrases do not match",
+        showPlain: "Show plain text",
+        hidePlain: "Hide plain text"
       }
     };
   }
@@ -4335,6 +4339,52 @@ var require_filter_checklist_styles = __commonJS({
       ".wbck-more{font-size:11px;color:var(--wb-muted);text-align:center;padding:6px 0 2px;opacity:.8}",
       "@media (max-width:760px){.wbck-list{max-height:200px}}"
     ];
+  }
+});
+
+// packages/addons/lib/client-base-styles.cjs
+var require_client_base_styles = __commonJS({
+  "packages/addons/lib/client-base-styles.cjs"(exports2, module2) {
+    "use strict";
+    var SECRET_FIELD = [
+      ".wb-secret-field{position:relative;display:flex;align-items:center;min-width:0}",
+      ".wb-secret-field input{flex:1 1 auto;min-width:0;padding-right:34px}",
+      ".wb-eye{position:absolute;right:4px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:6px;padding:4px;color:var(--wb-muted,#6b7280);cursor:pointer}",
+      ".wb-eye:hover:not(:disabled){color:var(--wb-accent,#2563eb);background:color-mix(in srgb, var(--wb-accent,#2563eb) 12%, transparent)}",
+      ".wb-eye:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:1px}",
+      ".wb-eye:disabled{opacity:.45;cursor:not-allowed}"
+    ];
+    module2.exports = function baseStyles(prefix) {
+      var p = String(prefix || "wb");
+      var s = "." + p;
+      return SECRET_FIELD.concat([
+        s + "-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
+        s + "-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
+        s + "-title{font-size:16px;font-weight:650;margin:0}",
+        s + "-sub{font-size:12px;color:var(--wb-muted,#6b7280);margin:2px 0 0}",
+        s + "-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
+        s + "-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
+        s + "-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
+        s + "-kpi{font-size:22px;font-weight:700;line-height:1.2}" + s + "-kpi-label{font-size:12px;color:var(--wb-muted,#6b7280)}",
+        s + "-table{width:100%;border-collapse:collapse;font-size:12px}" + s + "-table th," + s + "-table td{padding:7px 8px;border-bottom:1px solid var(--wb-border,#eef0f3);text-align:left;vertical-align:top}",
+        s + "-table th{font-weight:600;color:var(--wb-muted,#6b7280);white-space:nowrap}",
+        s + "-btn{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer}",
+        s + "-btn:hover:not(:disabled){border-color:var(--wb-accent,#2563eb)}" + s + "-btn:disabled{opacity:.5;cursor:default}",
+        s + "-btn.primary{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:#fff}",
+        s + "-btn.danger{color:#b91c1c;border-color:#fecaca}",
+        s + "-field{display:flex;flex-direction:column;gap:4px;font-size:12px}" + s + "-label{font-weight:600}",
+        s + "-field input," + s + "-field select," + s + "-field textarea{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:0}",
+        s + "-hint{color:var(--wb-muted,#6b7280);font-size:11px}" + s + "-notice{padding:8px 10px;border-radius:8px;font-size:12px;background:#eff6ff;color:#1e40af}",
+        s + "-notice.error{background:#fef2f2;color:#b91c1c}" + s + "-notice.ok{background:#ecfdf5;color:#047857}",
+        s + "-empty{padding:18px;text-align:center;color:var(--wb-muted,#6b7280);font-size:12px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:8px}",
+        s + "-pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;background:#f3f4f6;color:#374151}",
+        s + "-pill.ok{background:#ecfdf5;color:#047857}" + s + "-pill.error{background:#fef2f2;color:#b91c1c}" + s + "-pill.warn{background:#fffbeb;color:#b45309}",
+        s + "-json{margin:0;padding:8px;background:#f8fafc;border-radius:8px;font-size:11px;max-height:240px;overflow:auto}",
+        s + "-muted{color:var(--wb-muted,#6b7280)}" + s + "-link{color:var(--wb-accent,#2563eb);cursor:pointer;text-decoration:none}",
+        s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}"
+      ]);
+    };
+    module2.exports.secretFieldStyles = SECRET_FIELD;
   }
 });
 
@@ -4494,7 +4544,69 @@ var require_styles = __commonJS({
       ".wbs-note{font-size:11px;color:var(--wbs-muted);line-height:1.6}",
       "@media(max-width:860px){.wbs-body{flex-direction:column}.wbs-tree{width:100%;max-height:220px}.wbs-table{min-width:760px}.wbs-root{min-height:0}}",
       "@media(max-width:600px){.wbs-head h2{font-size:18px}.wbs-linkrow{grid-template-columns:1fr 1fr}.wbs-modal{padding:14px}}"
-    ].concat(require_filter_checklist_styles()).join("\n");
+    ].concat(require_filter_checklist_styles()).concat(require_client_base_styles().secretFieldStyles).join("\n");
+  }
+});
+
+// packages/addons/lib/secret-field.cjs
+var require_secret_field = __commonJS({
+  "packages/addons/lib/secret-field.cjs"(exports2, module2) {
+    "use strict";
+    var Eye2 = (init_eye(), __toCommonJS(eye_exports)).default;
+    var EyeOff2 = (init_eye_off(), __toCommonJS(eye_off_exports)).default;
+    function SecretField(props) {
+      var h2 = props.h;
+      var show = Boolean(props.show);
+      var label = show ? props.hideLabel || "\u9690\u85CF\u660E\u6587" : props.showLabel || "\u663E\u793A\u660E\u6587";
+      var Ico = show ? EyeOff2 : Eye2;
+      function toggle(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var box = e.currentTarget && e.currentTarget.parentNode;
+        if (props.onToggle) props.onToggle();
+        var input = box && box.querySelector ? box.querySelector("input") : null;
+        if (!input || !input.focus) return;
+        input.focus();
+        var end = String(input.value == null ? "" : input.value).length;
+        if (input.setSelectionRange) {
+          try {
+            input.setSelectionRange(end, end);
+          } catch (err) {
+          }
+        }
+      }
+      return h2(
+        "div",
+        { className: "wb-secret-field" + (props.className ? " " + props.className : "") },
+        h2("input", {
+          type: show ? "text" : "password",
+          className: props.inputClassName || void 0,
+          id: props.id || void 0,
+          name: props.name || void 0,
+          autoComplete: props.autoComplete || "new-password",
+          autoFocus: props.autoFocus ? true : void 0,
+          spellCheck: false,
+          disabled: props.disabled ? true : void 0,
+          "aria-label": props.ariaLabel || void 0,
+          value: props.value == null ? "" : props.value,
+          placeholder: props.placeholder || void 0,
+          onChange: function(e) {
+            if (props.onChange) props.onChange(e.target.value);
+          },
+          onKeyDown: props.onKeyDown || void 0
+        }),
+        h2("button", {
+          type: "button",
+          className: "wb-eye",
+          title: label,
+          "aria-label": label,
+          "aria-pressed": show ? "true" : "false",
+          tabIndex: props.disabled ? -1 : void 0,
+          onClick: toggle
+        }, h2(Ico, { size: 15, strokeWidth: 2, "aria-hidden": "true" }))
+      );
+    }
+    module2.exports = SecretField;
   }
 });
 
@@ -4512,6 +4624,7 @@ var require_accounts_modal = __commonJS({
       var text = deps.text;
       var callApi = deps.callApi;
       var errText = deps.errText;
+      var SecretField = require_secret_field();
       function AccountModal(props) {
         var api = props.api;
         var lang = props.lang || "zh";
@@ -4529,6 +4642,9 @@ var require_accounts_modal = __commonJS({
         var [pendingDelete, setPendingDelete] = useState("");
         var [shown, setShown] = useState({});
         var [binding, setBinding] = useState(null);
+        var [vaultPassShow, setVaultPassShow] = useState(false);
+        var [vaultPass2Show, setVaultPass2Show] = useState(false);
+        var [draftPassShow, setDraftPassShow] = useState(false);
         function mapVault(st) {
           var r = st || {};
           var idle = Number(r.idleTimeoutSec) > 0 ? Math.round(Number(r.idleTimeoutSec) / 60) : 15;
@@ -4710,12 +4826,36 @@ var require_accounts_modal = __commonJS({
               h2(
                 "div",
                 { className: "wbs-vault-form" },
-                h2("input", { className: "wbs-input", type: "password", placeholder: text(lang, "passphrase"), value: pass, onChange: function(e) {
-                  setPass(e.target.value);
-                } }),
-                h2("input", { className: "wbs-input", type: "password", placeholder: text(lang, "passphraseAgain"), value: pass2, onChange: function(e) {
-                  setPass2(e.target.value);
-                } }),
+                h2(SecretField, {
+                  h: h2,
+                  inputClassName: "wbs-input",
+                  autoComplete: "new-password",
+                  ariaLabel: text(lang, "passphrase"),
+                  placeholder: text(lang, "passphrase"),
+                  showLabel: text(lang, "showPlain"),
+                  hideLabel: text(lang, "hidePlain"),
+                  value: pass,
+                  show: vaultPassShow,
+                  onChange: setPass,
+                  onToggle: function() {
+                    setVaultPassShow(!vaultPassShow);
+                  }
+                }),
+                h2(SecretField, {
+                  h: h2,
+                  inputClassName: "wbs-input",
+                  autoComplete: "new-password",
+                  ariaLabel: text(lang, "passphraseAgain"),
+                  placeholder: text(lang, "passphraseAgain"),
+                  showLabel: text(lang, "showPlain"),
+                  hideLabel: text(lang, "hidePlain"),
+                  value: pass2,
+                  show: vaultPass2Show,
+                  onChange: setPass2,
+                  onToggle: function() {
+                    setVaultPass2Show(!vaultPass2Show);
+                  }
+                }),
                 h2("button", { className: "wbs-btn", disabled: busy, onClick: submitVault }, text(lang, "vaultSetup"))
               )
             );
@@ -4728,9 +4868,21 @@ var require_accounts_modal = __commonJS({
               h2(
                 "div",
                 { className: "wbs-vault-form" },
-                h2("input", { className: "wbs-input", type: "password", placeholder: text(lang, "passphrase"), value: pass, onChange: function(e) {
-                  setPass(e.target.value);
-                } }),
+                h2(SecretField, {
+                  h: h2,
+                  inputClassName: "wbs-input",
+                  autoComplete: "current-password",
+                  ariaLabel: text(lang, "passphrase"),
+                  placeholder: text(lang, "passphrase"),
+                  showLabel: text(lang, "showPlain"),
+                  hideLabel: text(lang, "hidePlain"),
+                  value: pass,
+                  show: vaultPassShow,
+                  onChange: setPass,
+                  onToggle: function() {
+                    setVaultPassShow(!vaultPassShow);
+                  }
+                }),
                 h2("button", { className: "wbs-btn", disabled: busy, onClick: submitVault }, text(lang, "vaultUnlock"))
               )
             );
@@ -4751,25 +4903,44 @@ var require_accounts_modal = __commonJS({
         }
         function renderDraft() {
           var d = draft;
+          function setField(key, v) {
+            setDraft(function(prev) {
+              var next = Object.assign({}, prev);
+              next[key] = v;
+              return next;
+            });
+          }
           function field(key, label, type, ph) {
+            var input = type === "password" ? h2(SecretField, {
+              h: h2,
+              inputClassName: "wbs-input",
+              autoComplete: "new-password",
+              ariaLabel: label,
+              placeholder: ph || "",
+              showLabel: text(lang, "showPlain"),
+              hideLabel: text(lang, "hidePlain"),
+              value: d[key] || "",
+              show: draftPassShow,
+              onChange: function(v) {
+                setField(key, v);
+              },
+              onToggle: function() {
+                setDraftPassShow(!draftPassShow);
+              }
+            }) : h2("input", {
+              className: "wbs-input",
+              type: type || "text",
+              placeholder: ph || "",
+              value: d[key] || "",
+              onChange: function(e) {
+                setField(key, e.target.value);
+              }
+            });
             return h2(
               React2.Fragment,
               null,
               h2("label", { className: "wbs-label" }, label),
-              h2("input", {
-                className: "wbs-input",
-                type: type || "text",
-                placeholder: ph || "",
-                value: d[key] || "",
-                onChange: function(e) {
-                  var v = e.target.value;
-                  setDraft(function(prev) {
-                    var next = Object.assign({}, prev);
-                    next[key] = v;
-                    return next;
-                  });
-                }
-              })
+              input
             );
           }
           return h2(
@@ -6720,7 +6891,7 @@ var TagFilter = require_tagfilter();
   injectCss();
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.12.1",
+    version: "1.12.2",
     icon: (init_globe(), __toCommonJS(globe_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },
