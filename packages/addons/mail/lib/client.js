@@ -93,11 +93,44 @@ var require_styles = __commonJS({
       ".wbml-page{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
       ".wbml-input{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:120px}",
       ".wbml-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}",
-      ".wbml-list{display:flex;flex-direction:column;gap:2px}",
-      ".wbml-list-row{display:flex;align-items:center;gap:10px;padding:8px;border:0;border-bottom:1px solid var(--wb-border,#eef0f3);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}",
-      ".wbml-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}",
-      ".wbml-time{font-size:11px;color:var(--wb-muted,#6b7280);white-space:nowrap}",
-      ".wbml-body{white-space:pre-wrap;font:inherit;font-size:13px;line-height:1.6;margin:8px 0 0}",
+      ".wbml-btn:disabled{opacity:1;background:color-mix(in srgb,var(--wb-muted,#6b7280) 14%,transparent);color:var(--wb-muted,#6b7280);border:1px solid var(--wb-border,#e5e7eb);cursor:not-allowed}",
+      "/* \u4E09\u680F\u5DE5\u4F5C\u533A\uFF1A\u8D26\u6237\u680F 300px + \u5217\u8868\u81EA\u9002\u5E94 (+ \u9605\u8BFB\u680F 360\u2013520px) */",
+      ".wbml-page.is-split{height:100%;overflow:hidden;min-height:0}",
+      ".wbml-layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:12px;flex:1;min-height:0;align-items:stretch}",
+      ".wbml-layout.has-detail{grid-template-columns:300px minmax(0,1fr) minmax(360px,520px)}",
+      ".wbml-rail{display:flex;flex-direction:column;gap:10px;min-height:0;overflow:auto}",
+      ".wbml-rail-card{display:flex;flex-direction:column;gap:10px}",
+      ".wbml-rail-title{font-size:12px;font-weight:600;color:var(--wb-muted,#6b7280)}",
+      ".wbml-rail-stats{display:flex;gap:16px;font-size:12px;color:var(--wb-muted,#6b7280)}",
+      ".wbml-rail-stats b{font-size:15px;font-weight:650;color:inherit;margin-right:2px}",
+      ".wbml-rail-tip{font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280);padding:0 2px}",
+      ".wbml-pane{display:flex;flex-direction:column;min-width:0;min-height:0;border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);overflow:hidden}",
+      ".wbml-pane-head{position:sticky;top:0;z-index:2;display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--wb-border,#eef0f3);background:var(--wb-surface,#fff)}",
+      ".wbml-pane-head strong{font-size:13px}",
+      ".wbml-state-box{display:flex;flex-direction:column;min-height:0;overflow:auto}",
+      ".wbml-state{padding:32px 16px;text-align:center;font-size:13px;color:var(--wb-muted,#6b7280)}",
+      ".wbml-state-error{color:var(--wb-danger,#b91c1c)}",
+      ".wbml-list{display:flex;flex-direction:column;overflow:auto;min-height:0}",
+      '.wbml-list-row{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"who time" "line line";gap:1px 10px;padding:8px 12px 8px 15px;border:0;border-bottom:1px solid var(--wb-line,#eef0f3);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;min-height:56px;box-sizing:border-box}',
+      ".wbml-list-row:hover{background:var(--wb-surface,#f8fafc)}",
+      ".wbml-list-row.on{background:color-mix(in srgb,var(--wb-accent,#2563eb) 12%,transparent)}",
+      ".wbml-list-row.unread{font-weight:600}",
+      '.wbml-list-row.unread::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:var(--wb-accent,#2563eb)}',
+      ".wbml-who{grid-area:who;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbml-line{grid-area:line;display:flex;align-items:baseline;gap:8px;min-width:0}",
+      ".wbml-subject{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto;min-width:0}",
+      ".wbml-snippet{font-size:12px;color:var(--wb-muted,#6b7280);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 0;min-width:0}",
+      ".wbml-time{grid-area:time;font-size:11px;color:var(--wb-muted,#6b7280);white-space:nowrap}",
+      ".wbml-listpane{min-height:0}",
+      ".wbml-detailpane{min-height:0}",
+      ".wbml-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--wb-border,#eef0f3);background:var(--wb-surface,#fff)}",
+      ".wbml-detail-title{display:flex;flex-direction:column;gap:4px;min-width:0}",
+      ".wbml-detail-title strong{font-size:14px;line-height:1.45;overflow-wrap:anywhere}",
+      ".wbml-muted{font-size:12px;color:var(--wb-muted,#6b7280);overflow-wrap:anywhere}",
+      ".wbml-detail-meta{display:flex;flex-wrap:wrap;gap:14px;padding:8px 12px;border-bottom:1px solid var(--wb-line,#eef0f3);font-size:12px;color:var(--wb-muted,#6b7280)}",
+      ".wbml-body{flex:1;overflow:auto;min-height:0;white-space:pre-wrap;font:inherit;font-size:13px;line-height:1.7;margin:0;padding:12px}",
+      "@media (max-width:1180px){.wbml-layout.has-detail{grid-template-columns:256px minmax(0,1fr) minmax(320px,420px)}}",
+      "@media (max-width:900px){.wbml-page.is-split{height:auto;overflow:visible}.wbml-layout,.wbml-layout.has-detail{display:flex;flex-direction:column;gap:12px;align-items:stretch;flex:0 0 auto}.wbml-rail{flex-direction:row;align-items:stretch;overflow:visible;flex:0 0 auto}.wbml-rail-card{flex:1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}.wbml-rail-card .wbml-rail-title{flex-basis:100%}.wbml-rail-tip{display:none}.wbml-rail-stats{flex:1 0 auto}.wbml-pane{flex:0 0 auto;max-height:none}.wbml-listpane{max-height:62vh}.wbml-detailpane{max-height:70vh}}",
       ".wbml-icon-btn{border:0;background:transparent;color:var(--wb-muted,#6b7280);font-size:16px;cursor:pointer;padding:2px 6px}",
       /* 服务商选择器 */
       ".wbml-chips{display:flex;flex-wrap:wrap;gap:6px}",
@@ -707,24 +740,28 @@ var require_messages = __commonJS({
       var sel = React.useState(null);
       var msg = React.useState(null);
       var accs = accounts.data && accounts.data.items || [];
-      function open(id) {
-        C.call(api, "mail.messageGet", { id }).then(function(d) {
+      function open(m) {
+        C.call(api, "mail.messageGet", { id: m.id }).then(function(d) {
           sel[1](d);
         }).catch(function(e) {
           msg[1]({ kind: "error", text: C.errText(e) });
         });
+        if (isUnread(m)) C.call(api, "mail.messageMarkRead", { id: m.id }).then(function() {
+          list.refresh();
+        }).catch(function() {
+        });
       }
       function sync() {
-        if (!accountId[0]) {
-          msg[1]({ kind: "error", text: "\u5148\u5728\u5DE6\u4FA7\u9009\u62E9\u4E00\u4E2A\u8D26\u6237" });
-          return;
-        }
+        if (!accountId[0]) return;
         C.call(api, "mail.sync", { id: accountId[0], limit: 20 }).then(function(r) {
           msg[1]({ kind: "ok", text: "\u6293\u53D6 " + r.fetched + " \u5C01\uFF0C\u65B0\u589E " + r.inserted });
           list.refresh();
         }).catch(function(e) {
           msg[1]({ kind: "error", text: C.errText(e) });
         });
+      }
+      function isUnread(m) {
+        return !/\\Seen/.test(String(m && m.flags || ""));
       }
       function senderLabel(m) {
         var name = m && m.fromName ? String(m.fromName).trim() : "";
@@ -738,14 +775,43 @@ var require_messages = __commonJS({
         if (name && addr && name !== addr) return name + " <" + addr + ">";
         return addr || name || "\u672A\u77E5\u53D1\u4EF6\u4EBA";
       }
+      function accountName(id) {
+        if (!id) return "\u5168\u90E8\u8D26\u6237";
+        var hit = accs.filter(function(a) {
+          return a.id === id;
+        })[0];
+        return hit ? hit.name : "\u5168\u90E8\u8D26\u6237";
+      }
       var items = list.data && list.data.items || [];
-      var unread = items.filter(function(m) {
-        return !m.seen;
-      }).length;
+      var unread = items.filter(isUnread).length;
       var current = sel[0];
+      var canSync = !!accountId[0];
+      var body = list.loading ? h("div", { className: "wbml-state" }, "\u52A0\u8F7D\u4E2D\u2026") : list.error ? h("div", { className: "wbml-state wbml-state-error" }, list.error) : items.length === 0 ? h("div", { className: "wbml-state" }, accs.length ? "\u6CA1\u6709\u672C\u5730\u90AE\u4EF6\uFF1B\u5728\u5DE6\u4FA7\u70B9\u300C\u540C\u6B65\u6536\u4EF6\u7BB1\u300D\u6293\u6700\u8FD1 20 \u5C01\u3002" : "\u8FD8\u6CA1\u6709\u8D26\u6237\uFF0C\u5148\u5230\u300C\u8D26\u6237\u300D\u9875\u6DFB\u52A0\u4E00\u4E2A\u3002") : h("div", { className: "wbml-list" }, items.map(function(m) {
+        var on = current && current.id === m.id;
+        return h(
+          "button",
+          {
+            key: m.id,
+            type: "button",
+            title: senderDetail(m) + " \xB7 " + (m.subject || "(\u65E0\u4E3B\u9898)"),
+            className: "wbml-list-row" + (on ? " on" : "") + (isUnread(m) ? " unread" : ""),
+            onClick: function() {
+              open(m);
+            }
+          },
+          h("span", { className: "wbml-who" }, senderLabel(m)),
+          h("span", { className: "wbml-time" }, C.fmtTime(m.dateAt, props.lang)),
+          h(
+            "div",
+            { className: "wbml-line" },
+            h("span", { className: "wbml-subject" }, m.subject || "(\u65E0\u4E3B\u9898)"),
+            m.preview ? h("span", { className: "wbml-snippet" }, m.preview) : null
+          )
+        );
+      }));
       return h(
         "div",
-        { className: "wbml-page" },
+        { className: "wbml-page is-split wb-fill" },
         h("div", { className: "wbml-head" }, h("div", null, h("h2", null, "\u90AE\u4EF6"), h("p", { className: "wbml-sub" }, "\u672C\u5730\u526F\u672C\uFF1BIMAP \u53EA\u6293\u4FE1\u5934\uFF0C\u5BC6\u7801\u4FDD\u5B58\u5728\u4FDD\u9669\u7BB1\u3002")), h(
           "div",
           { className: "wbml-row" },
@@ -769,33 +835,17 @@ var require_messages = __commonJS({
               } }, h("option", { value: "" }, "\u5168\u90E8\u8D26\u6237"), accs.map(function(a) {
                 return h("option", { key: a.id, value: a.id }, a.name);
               })),
-              h("div", { className: "wbml-rail-stats" }, h("span", null, h("b", null, items.length), " \u5C01\u672C\u5730"), h("span", null, h("b", null, unread), " \u5C01\u672A\u8BFB")),
-              h(C.Btn, { h, kind: "primary", onClick: sync }, "\u540C\u6B65\u6536\u4EF6\u7BB1"),
-              h("p", { className: "wbml-hint" }, "\u53EA\u6293\u6700\u8FD1 20 \u5C01\u4FE1\u5934\uFF1B\u6B63\u6587\u6309\u9700\u4E0B\u8F7D\u3002")
+              h("div", { className: "wbml-rail-stats" }, h("span", null, h("b", null, items.length), "\u5C01\u672C\u5730"), h("span", null, h("b", null, unread), "\u5C01\u672A\u8BFB")),
+              h(C.Btn, { h, kind: "primary", disabled: !canSync, onClick: sync }, "\u540C\u6B65\u6536\u4EF6\u7BB1"),
+              h("p", { className: "wbml-hint" }, canSync ? "\u53EA\u6293\u6700\u8FD1 20 \u5C01\u4FE1\u5934\uFF1B\u6B63\u6587\u6309\u9700\u4E0B\u8F7D\u3002" : "\u9009\u62E9\u5177\u4F53\u8D26\u6237\u540E\u53EF\u540C\u6B65\uFF1B\u300C\u5168\u90E8\u8D26\u6237\u300D\u53EA\u770B\u672C\u5730\u526F\u672C\u3002")
             ),
-            h("div", { className: "wbml-rail-tip" }, "\u63D0\u793A\uFF1A\u70B9\u5F00\u4E00\u5C01\u90AE\u4EF6\u4F1A\u5728\u53F3\u4FA7\u9605\u8BFB\uFF0C\u5217\u8868\u4E0D\u4F1A\u6D88\u5931\u3002")
+            h("div", { className: "wbml-rail-tip" }, "\u63D0\u793A\uFF1A\u70B9\u4E00\u5C01\u90AE\u4EF6\u4F1A\u5728\u53F3\u4FA7\u9605\u8BFB\uFF0C\u5217\u8868\u4E0D\u4F1A\u6D88\u5931\u3002")
           ),
           h(
             "section",
             { className: "wbml-pane wbml-listpane" },
-            h("div", { className: "wbml-pane-head" }, h("strong", null, "\u90AE\u4EF6\u5217\u8868"), h("span", { className: "wbml-muted" }, items.length + " \u5C01")),
-            list.loading ? h(C.Empty, { h, text: "\u52A0\u8F7D\u4E2D\u2026" }) : list.error ? h(C.Notice, { h, kind: "error", text: list.error }) : items.length === 0 ? h(C.Empty, { h, text: "\u6CA1\u6709\u672C\u5730\u90AE\u4EF6\uFF1B\u5148\u5728\u8D26\u6237\u9875\u540C\u6B65\u3002" }) : h("div", { className: "wbml-list" }, items.map(function(m) {
-              return h(
-                "button",
-                { key: m.id, type: "button", className: "wbml-list-row" + (current && current.id === m.id ? " on" : "") + (m.seen ? "" : " unread"), onClick: function() {
-                  open(m.id);
-                } },
-                h("span", { className: "wbml-dot" }),
-                h(
-                  "div",
-                  { className: "wbml-main" },
-                  h("strong", { className: "wbml-subject" }, m.subject || "(\u65E0\u4E3B\u9898)"),
-                  h("span", { className: "wbml-muted" }, senderLabel(m) + " \xB7 " + (m.mailbox || "INBOX")),
-                  m.preview ? h("span", { className: "wbml-snippet" }, m.preview) : null
-                ),
-                h("span", { className: "wbml-time" }, C.fmtTime(m.dateAt, props.lang))
-              );
-            }))
+            h("div", { className: "wbml-pane-head" }, h("strong", null, accountName(accountId[0])), h("span", { className: "wbml-muted" }, items.length + " \u5C01 \xB7 " + unread + " \u672A\u8BFB")),
+            h("div", { className: "wbml-state-box" }, body)
           ),
           current ? h(
             "section",
@@ -808,7 +858,7 @@ var require_messages = __commonJS({
                 sel[1](null);
               } }, "\u5173\u95ED")
             ),
-            h("div", { className: "wbml-detail-meta" }, h("span", null, "\u6536\u4EF6\u4EBA\uFF1A", current.to || "\u2014"), h("span", null, "\u90AE\u7BB1\uFF1A", current.mailbox || "INBOX")),
+            h("div", { className: "wbml-detail-meta" }, h("span", null, "\u6536\u4EF6\u4EBA\uFF1A" + (current.to || "\u2014")), h("span", null, "\u6587\u4EF6\u5939\uFF1A" + (current.mailbox || "INBOX"))),
             h("pre", { className: "wbml-body" }, current.body || current.preview || "(\u6B63\u6587\u672A\u4E0B\u8F7D)")
           ) : null
         )
@@ -4018,7 +4068,7 @@ var require_actions = __commonJS({
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.2.3",
+    version: "0.2.4",
     icon: (init_mail(), __toCommonJS(mail_exports)).default,
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },
