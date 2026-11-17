@@ -22,7 +22,7 @@ export function apply(ctx) {
     id: "wb-addon-mail",
     title: "邮件",
     description: "IMAP 收信头 + SMTP 发信；密码存保险箱；本地副本与搜索",
-    version: "0.1.0",
+    version: "0.1.1",
     tables: ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"],
     sync: { tables: [] },
     views: [

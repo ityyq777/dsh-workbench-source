@@ -9,7 +9,21 @@
 module.exports = function createCommon(prefix) {
   var p = String(prefix || "wb");
 
+  /**
+   * 解包宿主 /workbench/api 的 {ok,result,text}。
+   *
+   * 这里必须对 ok:false 抛错：服务端拒绝（锁定、权限、schema、重名）返回的是
+   * HTTP 500 + {ok:false,error}，以前原样返回给调用方，导致各插件写的 .catch
+   * 全成死代码，界面上「保存成功」却什么都没发生。⚠️ 只判顶层 ok，业务结果
+   * 自己的 ok 字段嵌在 result 里，不受影响。
+   */
   function unwrap(r) {
+    if (r && r.ok === false) {
+      var error = new Error(r.error || r.message || "操作失败");
+      if (r.code !== undefined) error.code = r.code;
+      error.payload = r;
+      throw error;
+    }
     return r && r.result !== undefined ? r.result : r;
   }
 

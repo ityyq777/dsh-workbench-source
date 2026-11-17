@@ -265,14 +265,16 @@ export function createVault({ db, log = () => {} }) {
     const q = String(args.q || "").trim();
     const kind = String(args.kind || "").trim();
     const groupId = args.groupId == null ? "" : String(args.groupId);
-    const where = ["deleted_at IS NULL"];
+    // 谓词自带表别名前缀：历史实现事后给每个谓词拼 "s."，带括号的 OR 条件会被拼成
+    // "s.(name LIKE ? OR meta LIKE ?)" 而报 SQLite 语法错误（搜索框一输入就失败）。
+    const where = ["s.deleted_at IS NULL"];
     const params = [];
     if (q) {
-      where.push("(name LIKE ? OR meta LIKE ?)");
+      where.push("(s.name LIKE ? OR s.meta LIKE ?)");
       params.push("%" + q + "%", "%" + q + "%");
     }
     if (kind) {
-      where.push("kind = ?");
+      where.push("s.kind = ?");
       params.push(kind);
     }
     const setId = args.setId == null ? "" : String(args.setId);
@@ -289,7 +291,7 @@ export function createVault({ db, log = () => {} }) {
     }
     const rows = db
       .prepare(
-        "SELECT DISTINCT s.* FROM vault_secret s " + join + "WHERE " + where.map((w) => "s." + w).join(" AND ") +
+        "SELECT DISTINCT s.* FROM vault_secret s " + join + "WHERE " + where.join(" AND ") +
           " ORDER BY s.updated_at DESC",
       )
       .all(...params);

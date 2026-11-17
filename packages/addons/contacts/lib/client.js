@@ -537,6 +537,12 @@ var require_client_common = __commonJS({
     module2.exports = function createCommon(prefix) {
       var p = String(prefix || "wb");
       function unwrap(r) {
+        if (r && r.ok === false) {
+          var error = new Error(r.error || r.message || "\u64CD\u4F5C\u5931\u8D25");
+          if (r.code !== void 0) error.code = r.code;
+          error.payload = r;
+          throw error;
+        }
         return r && r.result !== void 0 ? r.result : r;
       }
       function call(api, action, args) {
@@ -2755,7 +2761,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-contacts",
-    version: "0.1.0",
+    version: "0.1.1",
     icon: (init_users(), __toCommonJS(users_exports)).default,
     views: [
       { id: "contacts", icon: tabIcon("users"), title: { zh: "\u8054\u7CFB\u4EBA", en: "Contacts" }, component: withProps(require_contacts(), "\u8054\u7CFB\u4EBA") },

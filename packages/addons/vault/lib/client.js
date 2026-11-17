@@ -674,6 +674,12 @@ var require_client_common = __commonJS({
     module2.exports = function createCommon(prefix) {
       var p = String(prefix || "wb");
       function unwrap(r) {
+        if (r && r.ok === false) {
+          var error = new Error(r.error || r.message || "\u64CD\u4F5C\u5931\u8D25");
+          if (r.code !== void 0) error.code = r.code;
+          error.payload = r;
+          throw error;
+        }
         return r && r.result !== void 0 ? r.result : r;
       }
       function call(api, action, args) {
@@ -1293,6 +1299,7 @@ var require_secrets = __commonJS({
       var msgS = React.useState("");
       var revealS = React.useState(null);
       var askS = React.useState(null);
+      var unlockS = React.useState(null);
       var rows = listS[0].rows;
       function load() {
         listS[1](function(old) {
@@ -1349,10 +1356,34 @@ var require_secrets = __commonJS({
         }) : cur.concat([id]);
         formS[1](Object.assign({}, formS[0], { setIds: next }));
       }
-      function save() {
+      function isLockedText(text) {
+        return /保险箱已锁定|请先解锁/.test(String(text || ""));
+      }
+      function askUnlock(hint) {
+        unlockS[1]({ value: "", busy: false, error: hint || "" });
+      }
+      function confirmUnlock() {
+        var u = unlockS[0];
+        if (!u || !u.value) return;
+        unlockS[1](Object.assign({}, u, { busy: true, error: "" }));
+        C.call(api, "vault.unlock", { passphrase: u.value }).then(function() {
+          unlockS[1](null);
+          msgS[1]("");
+          if (editingS[0]) save(true);
+          else load();
+        }).catch(function(e) {
+          unlockS[1](Object.assign({}, u, { busy: false, error: C.errText(e) }));
+        });
+      }
+      function save(alreadyUnlocked) {
         var f = formS[0];
         if (!f.name.trim()) return msgS[1]("\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A");
         if (!f.id && !f.secret) return msgS[1]("\u65B0\u589E\u51ED\u636E\u5FC5\u987B\u586B\u5199\u660E\u6587");
+        if (!alreadyUnlocked && statusS[0] && statusS[0].locked) {
+          msgS[1]("\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A\uFF0C\u8BF7\u5148\u89E3\u9501\u518D\u4FDD\u5B58");
+          askUnlock("\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A\uFF0C\u8F93\u5165\u4E3B\u53E3\u4EE4\u540E\u4F1A\u81EA\u52A8\u7EE7\u7EED\u4FDD\u5B58\u3002");
+          return;
+        }
         busyS[1](true);
         msgS[1]("");
         var meta = {};
@@ -1360,17 +1391,19 @@ var require_secrets = __commonJS({
         if (note) meta.note = note;
         var picked = f.setIds || [];
         var payload = {
-          id: f.id || void 0,
           name: f.name.trim(),
           kind: f.kind,
-          secret: f.secret || void 0,
           meta
         };
+        if (f.secret) payload.secret = f.secret;
+        if (f.id) payload.id = f.id;
         if (!f.id && picked.length) payload.setId = picked[0];
         var p = f.id ? C.call(api, "vault.secretUpdate", payload) : C.call(api, "vault.secretCreate", payload);
         p.then(function(r) {
           var createdId = r && r.id || f.id;
-          return syncSets(createdId, f.setIds || [], f.id ? rowSetIds(f.id) : []).then(function() {
+          return syncSets(createdId, f.setIds || [], f.id ? rowSetIds(f.id) : []).catch(function(e) {
+            msgS[1]("\u51ED\u636E\u5DF2\u4FDD\u5B58\uFF0C\u4F46\u96C6\u5408\u6302\u8F7D\u5931\u8D25\uFF1A" + C.errText(e));
+          }).then(function() {
             busyS[1](false);
             editingS[1](false);
             showSecretS[1](false);
@@ -1379,7 +1412,10 @@ var require_secrets = __commonJS({
           });
         }).catch(function(e) {
           busyS[1](false);
-          msgS[1](C.errText(e));
+          var text = C.errText(e);
+          msgS[1](text);
+          load();
+          if (isLockedText(text)) askUnlock("\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A\uFF0C\u8F93\u5165\u4E3B\u53E3\u4EE4\u540E\u4F1A\u81EA\u52A8\u7EE7\u7EED\u4FDD\u5B58\u3002");
         });
       }
       function rowSetIds(id) {
@@ -1476,9 +1512,13 @@ var require_secrets = __commonJS({
             })
           ),
           h(C.Btn, { h, onClick: load }, "\u5237\u65B0"),
+          statusS[0] && statusS[0].locked ? h(C.Btn, { h, kind: "primary", onClick: function() {
+            askUnlock("");
+          } }, "\u89E3\u9501") : null,
           h(C.Btn, { h, kind: "primary", onClick: startCreate }, "\u65B0\u589E\u51ED\u636E")
         ),
         h("p", { className: "wbv-muted" }, "\u51ED\u636E\u6309\u300C\u96C6\u5408\u300D\u7EC4\u7EC7\uFF1A\u4E00\u6761\u51ED\u636E\u53EF\u4EE5\u8FDB\u591A\u4E2A\u96C6\u5408\uFF0C\u4E00\u4E2A\u96C6\u5408\u53EF\u4EE5\u6302\u5230\u591A\u4E2A\u5206\u7EC4\u3002\u660E\u6587\u53EA\u5728\u672C\u673A\u89E3\u9501\u540E\u53EF\u89C1\u3002"),
+        statusS[0] && statusS[0].locked ? h(C.Notice, { h, kind: "error", text: "\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A\uFF08" + (statusS[0].unlockMode || "A") + " \u6A21\u5F0F\uFF09\uFF1A\u65B0\u589E\u3001\u7F16\u8F91\u548C\u67E5\u770B\u660E\u6587\u90FD\u9700\u8981\u5148\u89E3\u9501\u3002\u70B9\u53F3\u4E0A\u89D2\u300C\u89E3\u9501\u300D\uFF0C\u6216\u76F4\u63A5\u4FDD\u5B58\u65F6\u6309\u63D0\u793A\u89E3\u9501\u3002" }) : null,
         h(C.Notice, { h, kind: "error", text: listS[0].error || msgS[0] }),
         listS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u4E2D\u2026" }) : rows.length === 0 ? h(
           "div",
@@ -1607,10 +1647,29 @@ var require_secrets = __commonJS({
                 editingS[1](false);
                 showSecretS[1](false);
               } }, "\u53D6\u6D88"),
-              h(C.Btn, { h, kind: "primary", disabled: busyS[0], onClick: save }, busyS[0] ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58")
+              h(C.Btn, { h, kind: "primary", disabled: busyS[0], onClick: function() {
+                save(false);
+              } }, busyS[0] ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58")
             )
           )
         ) : null,
+        unlockS[0] ? h(AskPassphrase, {
+          h,
+          C,
+          title: "\u89E3\u9501\u4FDD\u9669\u7BB1",
+          hint: "\u89E3\u9501\u72B6\u6001\u53EA\u4FDD\u5B58\u5728\u5F53\u524D\u8FDB\u7A0B\u5185\u5B58\uFF0C\u7A7A\u95F2\u8D85\u65F6\u4F1A\u81EA\u52A8\u9501\u5B9A\u3002",
+          label: "\u4E3B\u53E3\u4EE4",
+          value: unlockS[0].value,
+          busy: unlockS[0].busy,
+          error: unlockS[0].error,
+          onChange: function(v) {
+            unlockS[1](Object.assign({}, unlockS[0], { value: v }));
+          },
+          onCancel: function() {
+            if (!unlockS[0].busy) unlockS[1](null);
+          },
+          onConfirm: confirmUnlock
+        }) : null,
         askS[0] ? h(AskPassphrase, { h, C, title: "\u67E5\u770B\u51ED\u636E\u660E\u6587", hint: "\u5F53\u524D\u662F B \u6A21\u5F0F\uFF0C\u67E5\u770B\u660E\u6587\u9700\u8981\u518D\u6B21\u8F93\u5165\u4E3B\u53E3\u4EE4\u3002", label: "\u4E3B\u53E3\u4EE4\uFF08" + askS[0].row.name + "\uFF09", value: askS[0].value, busy: askS[0].busy, error: askS[0].error, onChange: function(v) {
           askS[1](Object.assign({}, askS[0], { value: v }));
         }, onCancel: function() {
@@ -4480,7 +4539,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.3.4",
+    version: "0.3.5",
     icon: (init_shield_check(), __toCommonJS(shield_check_exports)).default,
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },

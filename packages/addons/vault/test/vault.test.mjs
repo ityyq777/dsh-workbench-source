@@ -517,3 +517,28 @@ test("两设备同步：复制同步表后集合、关联与凭据一致", () =>
   assert.equal(b.run("vault.subjectSecrets", { subjectType: "site", subjectId: "site_9" }, "plugin").items.length, 1);
   assert.equal(b.run("vault.unlock", { passphrase: PASS }).notice, undefined, "同步后的库不触发迁移");
 });
+
+test("凭据列表关键字搜索：名称与备注都能命中，不再报 SQL 语法错误", () => {
+  const { run } = makeVault();
+  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.secretCreate", {
+    name: "ID_CARD",
+    kind: "id_card",
+    secret: "110101199001011234",
+    meta: { note: "身份证" },
+  });
+  run("vault.secretCreate", { name: "rss-token", kind: "token", secret: "tok-abc", meta: { note: "阅读器" } });
+
+  assert.deepEqual(
+    run("vault.secretList", { q: "ID_CAR" }, "agent").items.map((i) => i.name),
+    ["ID_CARD"],
+    "按名称搜索能命中",
+  );
+  assert.deepEqual(
+    run("vault.secretList", { q: "阅读器" }, "agent").items.map((i) => i.name),
+    ["rss-token"],
+    "按 meta.note 搜索能命中",
+  );
+  assert.equal(run("vault.secretList", { q: "ID", kind: "token" }, "agent").items.length, 0, "关键字与类型同时生效");
+  assert.equal(run("vault.secretList", { q: "ID" }, "agent").items.length, 1);
+});

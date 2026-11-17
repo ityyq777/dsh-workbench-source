@@ -129,3 +129,156 @@ test("分组页：创建时先 groupCreate 再逐个 groupAttachSet，Esc 可关
   assert.match(src, /if \(createS\[0\] && createS\[0\]\.busy\) return;/);
   assert.match(src, /个集合挂载失败/);
 });
+
+test("共享 call：服务端 ok:false 必须 reject，不能当成功返回", async () => {
+  const locked = { call: () => Promise.resolve({ ok: false, error: "保险箱已锁定，请先解锁" }) };
+  await assert.rejects(() => C.call(locked, "vault.secretCreate", {}), /保险箱已锁定/);
+
+  const bad = { call: () => Promise.reject(new Error("网络异常")) };
+  await assert.rejects(() => C.call(bad, "vault.secretList", {}), /网络异常/);
+
+  // 业务结果里自带的 ok 字段在 result 里，不能被当成失败
+  const okApi = { call: () => Promise.resolve({ ok: true, result: { id: "sec_1", ok: true, setId: null } }) };
+  assert.deepEqual(await C.call(okApi, "vault.secretCreate", {}), { id: "sec_1", ok: true, setId: null });
+});
+
+test("凭据页：create 参数不含 id，保存成功后无条件刷新列表", () => {
+  const src = fs.readFileSync(path.join(dir, "views/secrets.cjs"), "utf8");
+  // 回归：曾经把 id/secret 写成 undefined 参与 payload，schema 是 additionalProperties:false
+  assert.doesNotMatch(src, /id: f\.id \|\| undefined/);
+  assert.doesNotMatch(src, /secret: f\.secret \|\| undefined/);
+  assert.match(src, /if \(f\.id\) payload\.id = f\.id;/);
+  assert.match(src, /if \(f\.secret\) payload\.secret = f\.secret;/);
+  // 集合同步失败只提示，仍然关闭弹窗并刷新列表
+  assert.match(src, /凭据已保存，但集合挂载失败/);
+  assert.match(src, /formS\[1\]\(emptyForm\(\)\);\s*load\(\);/);
+});
+
+test("凭据页：锁定态有提示和解锁入口，失败时保留弹窗", () => {
+  const src = fs.readFileSync(path.join(dir, "views/secrets.cjs"), "utf8");
+  assert.match(src, /保险箱已锁定，请先解锁再保存/);
+  assert.match(src, /statusS\[0\] && statusS\[0\]\.locked/);
+  assert.match(src, /"解锁"/);
+  assert.match(src, /C\.call\(api, "vault\.unlock"/);
+  assert.match(src, /if \(isLockedText\(text\)\) askUnlock\(/);
+  // 失败分支不能关弹窗（editingS 保持 true），且要和后端对齐状态
+  assert.match(src, /var text = C\.errText\(e\);\s*msgS\[1\]\(text\);\s*\/\/ 失败也要刷新/);
+  assert.match(src, /if \(isLockedText\(text\)\) askUnlock\("保险箱已锁定，输入主口令后会自动继续保存。"\);/);
+});
+
+/** 极简 hook 宿主：让视图函数能被反复调用（重绘），便于验证 save() 的真实行为。 */
+function mountSecrets(api) {
+  const slots = [];
+  const effects = [];
+  let idx = 0;
+  const FakeReact = {
+    useState(init) {
+      const i = idx;
+      idx += 1;
+      if (slots.length <= i) slots.push(typeof init === "function" ? init() : init);
+      return [slots[i], function (v) { slots[i] = typeof v === "function" ? v(slots[i]) : v; }, i];
+    },
+    useEffect(fn) {
+      const i = idx;
+      idx += 1;
+      if (!effects[i]) { effects[i] = true; fn(); }
+    },
+  };
+  function paint() {
+    idx = 0;
+    return SecretsView({ h, api, lang: "zh", React: FakeReact });
+  }
+  return { paint };
+}
+
+function walk(node, out) {
+  if (!node || typeof node !== "object") return out;
+  if (Array.isArray(node)) {
+    node.forEach(function (n) { walk(n, out); });
+    return out;
+  }
+  if (typeof node.type === "function") return walk(node.type(node.props), out);
+  out.push(node);
+  if (node.props && node.props.children !== undefined) walk(node.props.children, out);
+  return out;
+}
+
+function texts(tree) {
+  return walk(tree, []).map(function (n) {
+    const c = n.props && n.props.children;
+    return typeof c === "string" ? c : "";
+  }).join(" | ");
+}
+
+function button(tree, label) {
+  const hit = walk(tree, []).filter(function (n) { return n.type === "button" && n.props.children === label; });
+  return hit[hit.length - 1] || null;
+}
+
+function fieldInput(tree, i) {
+  return walk(tree, []).filter(function (n) { return n.type === "input"; })[i];
+}
+
+async function flush() {
+  for (let i = 0; i < 12; i += 1) await Promise.resolve();
+}
+
+test("保存成功后弹窗关闭、列表出现新凭据；失败时保留弹窗并显示错误原文", async () => {
+  const calls = [];
+  let created = null;
+  const api = {
+    call(action, args) {
+      calls.push({ action: action, args: args });
+      if (action === "vault.secretCreate") {
+        if (created) return Promise.resolve({ ok: false, error: "保险箱已锁定，请先解锁" });
+        created = { id: "sec_1", name: args.name, kind: args.kind, meta: JSON.stringify(args.meta || {}), setIds: [] };
+        return Promise.resolve({ ok: true, result: { id: "sec_1", ok: true, setId: null } });
+      }
+      if (action === "vault.secretList") {
+        return Promise.resolve({ ok: true, result: { items: created ? [created] : [] } });
+      }
+      if (action === "vault.status") return Promise.resolve({ ok: true, result: { locked: false, unlockMode: "B" } });
+      return Promise.resolve({ ok: true, result: { items: [] } });
+    },
+  };
+
+  const view = mountSecrets(api);
+  let tree = view.paint();
+  await flush();
+  tree = view.paint();
+  assert.match(texts(tree), /还没有凭据/);
+
+  button(tree, "新增凭据").props.onClick();
+  tree = view.paint();
+  fieldInput(tree, 1).props.onChange({ target: { value: "ID_CARD" } });
+  tree = view.paint();
+  fieldInput(tree, 2).props.onChange({ target: { value: "123456789012345678" } });
+  tree = view.paint();
+  button(tree, "保存").props.onClick();
+
+  await flush();
+  tree = view.paint();
+
+  const create = calls.filter(function (c) { return c.action === "vault.secretCreate"; })[0];
+  assert.ok(create, "应该真的调用了 secretCreate");
+  assert.equal("id" in create.args, false, "create 参数不能带 id 键");
+  assert.equal(create.args.name, "ID_CARD");
+  assert.equal(create.args.kind, "password");
+  // 成功：弹窗关闭 + 列表里出现这条
+  assert.doesNotMatch(texts(tree), /保存中…/);
+  assert.match(texts(tree), /ID_CARD/);
+  assert.doesNotMatch(texts(tree), /还没有凭据/);
+
+  // 失败：保留弹窗、显示服务端原文、并弹出解锁框
+  button(tree, "新增凭据").props.onClick();
+  tree = view.paint();
+  fieldInput(tree, 1).props.onChange({ target: { value: "ID_CARD2" } });
+  tree = view.paint();
+  fieldInput(tree, 2).props.onChange({ target: { value: "123456789012345678" } });
+  tree = view.paint();
+  button(tree, "保存").props.onClick();
+  await flush();
+  tree = view.paint();
+  assert.match(texts(tree), /保险箱已锁定，请先解锁/);
+  assert.match(texts(tree), /解锁保险箱/);
+});

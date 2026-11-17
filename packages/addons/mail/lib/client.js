@@ -517,6 +517,12 @@ var require_client_common = __commonJS({
     module2.exports = function createCommon(prefix) {
       var p = String(prefix || "wb");
       function unwrap(r) {
+        if (r && r.ok === false) {
+          var error = new Error(r.error || r.message || "\u64CD\u4F5C\u5931\u8D25");
+          if (r.code !== void 0) error.code = r.code;
+          error.payload = r;
+          throw error;
+        }
         return r && r.result !== void 0 ? r.result : r;
       }
       function call(api, action, args) {
@@ -2669,7 +2675,7 @@ var require_actions = __commonJS({
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.1.0",
+    version: "0.1.1",
     icon: (init_mail(), __toCommonJS(mail_exports)).default,
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },

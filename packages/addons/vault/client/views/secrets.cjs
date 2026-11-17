@@ -25,6 +25,7 @@ module.exports = function SecretsView(props) {
   var msgS = React.useState("");
   var revealS = React.useState(null);
   var askS = React.useState(null); // { row, value, busy, error }
+  var unlockS = React.useState(null); // { value, busy, error } 解锁弹层
 
   var rows = listS[0].rows;
 
@@ -74,32 +75,78 @@ module.exports = function SecretsView(props) {
     formS[1](Object.assign({}, formS[0], { setIds: next }));
   }
 
-  function save() {
+  /** 服务端拒绝（锁定）时的原文，用来识别「要不要顺手弹解锁框」。 */
+  function isLockedText(text) {
+    return /保险箱已锁定|请先解锁/.test(String(text || ""));
+  }
+
+  function askUnlock(hint) {
+    unlockS[1]({ value: "", busy: false, error: hint || "" });
+  }
+
+  function confirmUnlock() {
+    var u = unlockS[0];
+    if (!u || !u.value) return;
+    unlockS[1](Object.assign({}, u, { busy: true, error: "" }));
+    C.call(api, "vault.unlock", { passphrase: u.value }).then(function () {
+      unlockS[1](null);
+      msgS[1]("");
+      if (editingS[0]) save(true);
+      else load();
+    }).catch(function (e) {
+      unlockS[1](Object.assign({}, u, { busy: false, error: C.errText(e) }));
+    });
+  }
+
+  /**
+   * 保存凭据。
+   *
+   * 三条硬约定（都来自「保存后列表不新增」这个线上问题）：
+   * 1. 锁定态必须当场说清楚，并给出解锁入口，不能点了保存什么都不发生；
+   * 2. 写入成功后**无条件** load()，集合挂载失败只提示、不回滚、不跳过刷新；
+   * 3. 失败时保留弹窗和用户输入，错误原文留在弹窗内。
+   */
+  function save(alreadyUnlocked) {
     var f = formS[0];
     if (!f.name.trim()) return msgS[1]("名称不能为空");
     if (!f.id && !f.secret) return msgS[1]("新增凭据必须填写明文");
+    if (!alreadyUnlocked && statusS[0] && statusS[0].locked) {
+      msgS[1]("保险箱已锁定，请先解锁再保存");
+      askUnlock("保险箱已锁定，输入主口令后会自动继续保存。");
+      return;
+    }
     busyS[1](true); msgS[1]("");
     var meta = {};
     var note = (f.note || "").trim();
     if (note) meta.note = note;
     var picked = f.setIds || [];
+    // create 的 payload 里不能出现 id 键：schema 是 additionalProperties:false，多带一个键就会被拒。
     var payload = {
-      id: f.id || undefined,
       name: f.name.trim(),
       kind: f.kind,
-      secret: f.secret || undefined,
       meta: meta,
     };
+    if (f.secret) payload.secret = f.secret;
+    if (f.id) payload.id = f.id;
     if (!f.id && picked.length) payload.setId = picked[0];
     var p = f.id
       ? C.call(api, "vault.secretUpdate", payload)
       : C.call(api, "vault.secretCreate", payload);
     p.then(function (r) {
       var createdId = (r && r.id) || f.id;
-      return syncSets(createdId, f.setIds || [], f.id ? rowSetIds(f.id) : []).then(function () {
+      return syncSets(createdId, f.setIds || [], f.id ? rowSetIds(f.id) : []).catch(function (e) {
+        msgS[1]("凭据已保存，但集合挂载失败：" + C.errText(e));
+      }).then(function () {
         busyS[1](false); editingS[1](false); showSecretS[1](false); formS[1](emptyForm()); load();
       });
-    }).catch(function (e) { busyS[1](false); msgS[1](C.errText(e)); });
+    }).catch(function (e) {
+      busyS[1](false);
+      var text = C.errText(e);
+      msgS[1](text);
+      // 失败也要刷新：锁定状态和服务端对齐后，顶部才会出现解锁入口。
+      load();
+      if (isLockedText(text)) askUnlock("保险箱已锁定，输入主口令后会自动继续保存。");
+    });
   }
 
   function rowSetIds(id) {
@@ -170,8 +217,14 @@ module.exports = function SecretsView(props) {
       }, h("option", { value: "" }, "全部类型"),
         K.CREATABLE_KINDS.map(function (k) { return h("option", { key: k, value: k }, KIND_LABEL[k]); })),
       h(C.Btn, { h: h, onClick: load }, "刷新"),
+      statusS[0] && statusS[0].locked
+        ? h(C.Btn, { h: h, kind: "primary", onClick: function () { askUnlock(""); } }, "解锁")
+        : null,
       h(C.Btn, { h: h, kind: "primary", onClick: startCreate }, "新增凭据")),
     h("p", { className: "wbv-muted" }, "凭据按「集合」组织：一条凭据可以进多个集合，一个集合可以挂到多个分组。明文只在本机解锁后可见。"),
+    statusS[0] && statusS[0].locked
+      ? h(C.Notice, { h: h, kind: "error", text: "保险箱已锁定（" + (statusS[0].unlockMode || "A") + " 模式）：新增、编辑和查看明文都需要先解锁。点右上角「解锁」，或直接保存时按提示解锁。" })
+      : null,
     h(C.Notice, { h: h, kind: "error", text: listS[0].error || msgS[0] }),
     listS[0].loading ? h(C.Empty, { h: h, text: "读取中…" }) :
       rows.length === 0 ? h("div", { className: "wbv-empty-card" },
@@ -232,7 +285,17 @@ module.exports = function SecretsView(props) {
         h("div", { className: "wbv-row" },
           h("span", { className: "wbv-grow" }),
           h(C.Btn, { h: h, onClick: function () { editingS[1](false); showSecretS[1](false); } }, "取消"),
-          h(C.Btn, { h: h, kind: "primary", disabled: busyS[0], onClick: save }, busyS[0] ? "保存中…" : "保存")))) : null,
+          h(C.Btn, { h: h, kind: "primary", disabled: busyS[0], onClick: function () { save(false); } }, busyS[0] ? "保存中…" : "保存")))) : null,
+    unlockS[0] ? h(AskPassphrase, {
+      h: h, C: C,
+      title: "解锁保险箱",
+      hint: "解锁状态只保存在当前进程内存，空闲超时会自动锁定。",
+      label: "主口令",
+      value: unlockS[0].value, busy: unlockS[0].busy, error: unlockS[0].error,
+      onChange: function (v) { unlockS[1](Object.assign({}, unlockS[0], { value: v })); },
+      onCancel: function () { if (!unlockS[0].busy) unlockS[1](null); },
+      onConfirm: confirmUnlock,
+    }) : null,
     askS[0] ? h(AskPassphrase, { h: h, C: C, title: "查看凭据明文", hint: "当前是 B 模式，查看明文需要再次输入主口令。", label: "主口令（" + askS[0].row.name + "）", value: askS[0].value, busy: askS[0].busy, error: askS[0].error, onChange: function (v) { askS[1](Object.assign({}, askS[0], { value: v })); }, onCancel: function () { if (!askS[0].busy) askS[1](null); }, onConfirm: confirmPassphrase }) : null,
 
     revealS[0] ? h("div", { className: "wbv-modal", onClick: function () { revealS[1](null); } },
