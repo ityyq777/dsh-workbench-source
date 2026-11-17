@@ -7673,6 +7673,7 @@ var require_timeline_copy = __commonJS({
       "\u5C55\u5F00\u63CF\u8FF0": "Expand description",
       "\u6536\u8D77\u63CF\u8FF0": "Collapse description",
       "\u6309\u53D1\u5E03\u65F6\u95F4\u6B63\u5E8F\u6392\u5217": "Oldest publication first",
+      "\u6309\u53D1\u5E03\u65F6\u95F4\u6B63\u5E8F\u6392\u5217\uFF0C\u70B9\u51FB\u4EFB\u52A1\u6253\u5F00\u9884\u89C8": "Oldest publication first. Click a task to open a preview.",
       "\u65B0\u5EFA\u65F6\u95F4\u7EBF\u6216\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF\uFF0C\u5C06\u76F8\u5173\u4EFB\u52A1\u96C6\u4E2D\u67E5\u770B\u3002": "Create or choose a timeline to view related tasks together.",
       "\u5176\u4ED6\u65F6\u95F4\u7EBF": "Other timelines",
       "\u8BF7\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF\uFF1B\u65E0\u5339\u914D\u65F6\u53EF\u65B0\u5EFA": "Choose a timeline, or create one if there is no match",
@@ -8839,6 +8840,11 @@ var require_task_timeline_modal = __commonJS({
             cancelled = true;
           };
         }, [p.api, p.task.id, revision]);
+        React.useEffect(function() {
+          if (p.refreshKey) setRevision(function(n) {
+            return n + 1;
+          });
+        }, [p.refreshKey]);
         function change(action, args) {
           if (busy || pending.current) return;
           pending.current = true;
@@ -8938,7 +8944,7 @@ var require_task_timeline_modal = __commonJS({
           h(
             "div",
             { className: "wbt-timeline-pager" },
-            h("span", null, tr("\u6309\u53D1\u5E03\u65F6\u95F4\u6B63\u5E8F\u6392\u5217")),
+            h("span", null, tr("\u6309\u53D1\u5E03\u65F6\u95F4\u6B63\u5E8F\u6392\u5217\uFF0C\u70B9\u51FB\u4EFB\u52A1\u6253\u5F00\u9884\u89C8")),
             h("button", { type: "button", className: "wbt-btn", disabled: busy || page <= 1, onClick: function() {
               setPage(page - 1);
             } }, tr("\u4E0A\u4E00\u9875")),
@@ -9931,12 +9937,82 @@ var require_selection_bar = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/modals/task-preview.cjs
+var require_task_preview = __commonJS({
+  "packages/addons/tasks/client/modals/task-preview.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function createTaskPreview(React, TaskItem) {
+      var h = React.createElement;
+      function TaskPreview(props) {
+        var t = props.t, task = props.task;
+        var titleId = "wbt-preview-title";
+        function onKey(e) {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            props.onClose();
+            return;
+          }
+          if (e.key !== "Tab") return;
+          var mask = e.currentTarget;
+          var box = mask && mask.querySelector ? mask.querySelector('[role="dialog"]') : null;
+          if (!box) return;
+          var nodes = Array.from(box.querySelectorAll('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href],[tabindex="0"]')).filter(function(node) {
+            return node.getClientRects().length > 0;
+          });
+          var first = nodes[0], last = nodes[nodes.length - 1];
+          if (!first) {
+            e.preventDefault();
+            if (box.focus) box.focus();
+          } else if (e.shiftKey && (document.activeElement === first || document.activeElement === box)) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+        return h(
+          "div",
+          {
+            className: "wbt-modal-mask",
+            onKeyDownCapture: onKey,
+            onMouseDown: function(e) {
+              if (e.target === e.currentTarget) props.onClose();
+            }
+          },
+          h(
+            "div",
+            {
+              tabIndex: -1,
+              className: "wbt-modal wide wbt-preview",
+              role: "dialog",
+              "aria-modal": "true",
+              "aria-labelledby": titleId,
+              "aria-label": t.previewLabel
+            },
+            h(
+              "div",
+              { className: "wbt-modal-head wbt-preview-head" },
+              h("h3", { id: titleId }, String(task.title || "").trim() || t.previewUntitled),
+              h("button", { type: "button", className: "wbt-icon", title: t.close, "aria-label": t.close, autoFocus: true, onClick: props.onClose }, "\xD7")
+            ),
+            h("div", { className: "wbt-preview-body" }, h(TaskItem, props.cardProps))
+          )
+        );
+      }
+      return TaskPreview;
+    };
+  }
+});
+
 // packages/addons/tasks/client/views/tasks-view.cjs
 var require_tasks_view = __commonJS({
   "packages/addons/tasks/client/views/tasks-view.cjs"(exports2, module2) {
     module2.exports = function createTasksView(deps) {
       var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon2 = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
       var h = React.createElement, filters = require_task_filter_model(), renderFilters = require_task_filter_panel(), claimBatch = require_claim_batch(), renderSelectionBar = require_selection_bar();
+      var TaskPreview = require_task_preview()(React, TaskItem);
       function TasksView(props) {
         var lang = props.lang === "en" ? "en" : "zh";
         var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -10035,6 +10111,11 @@ var require_tasks_view = __commonJS({
         var doneTask = doneS[0], setDoneTask = doneS[1];
         var editTaskS = React.useState(null);
         var editTask = editTaskS[0], setEditTask = editTaskS[1];
+        var timelinePreviewS = React.useState(null);
+        var timelinePreview = timelinePreviewS[0], setTimelinePreview = timelinePreviewS[1];
+        var timelineTrigger = React.useRef(null);
+        var timelineReloadS = React.useState(0);
+        var timelineReload = timelineReloadS[0], setTimelineReload = timelineReloadS[1];
         var editS = React.useState(null);
         var edit = editS[0], setEdit = editS[1];
         var nodeModalS = React.useState(null);
@@ -10260,6 +10341,40 @@ var require_tasks_view = __commonJS({
             if (r && r.ok) {
               refreshList();
               refreshTagNav();
+              say(t.deleted);
+            } else say(r && r.error || "delete failed");
+          });
+        }
+        function openTimelinePreview(member, event) {
+          timelineTrigger.current = event && event.currentTarget || timelineTrigger.current;
+          api.call("tasks.get", { id: member.id }).then(function(r) {
+            if (r && r.ok && r.result && r.result.task) return r.result.task;
+            return member;
+          }).catch(function() {
+            return member;
+          }).then(function(task) {
+            if (task) setTimelinePreview(task);
+          });
+        }
+        function closeTimelinePreview() {
+          setTimelinePreview(null);
+          var trigger = timelineTrigger.current;
+          timelineTrigger.current = null;
+          if (trigger && trigger.isConnected) trigger.focus({ preventScroll: true });
+        }
+        function bumpTimeline() {
+          setTimelineReload(function(n) {
+            return n + 1;
+          });
+        }
+        function deletePreviewTask(task) {
+          if (cfgConfirm && !window.confirm(t.deleteTaskConfirm)) return;
+          api.call("tasks.delete", { id: task.id }).then(function(r) {
+            if (r && r.ok) {
+              closeTimelinePreview();
+              refreshList();
+              refreshTagNav();
+              bumpTimeline();
               say(t.deleted);
             } else say(r && r.error || "delete failed");
           });
@@ -10719,6 +10834,7 @@ var require_tasks_view = __commonJS({
               setCreateState(null);
               refreshList();
               refreshTree();
+              bumpTimeline();
               say(require_ownership().receipt(result));
             }
           }) : null,
@@ -10728,21 +10844,62 @@ var require_tasks_view = __commonJS({
             api,
             task: timelineTask,
             onChanged: refreshList,
+            refreshKey: timelineReload,
             onClose: function() {
               setTimelineTask(null);
+              setTimelinePreview(null);
             },
-            onOpen: function(member) {
-              api.call("tasks.get", { id: member.id }).then(function(r) {
-                if (!r || !r.ok) throw Error(r && r.error || t.fail);
-                setTimelineTask(null);
-                setEditTask(r.result.task);
-              }).catch(function(err) {
-                say(String(err.message || err));
-              });
-            },
+            // 成员行只开只读预览；预览里的「编辑」才进编辑面板。
+            onOpen: openTimelinePreview,
             onCreateTimeline: function(originTask) {
               setTimelineTask(null);
+              setTimelinePreview(null);
               setCreateState({ source: "1", originTask, defaultTableId: originTask.tableId });
+            }
+          }) : null,
+          timelineTask && timelinePreview ? h(TaskPreview, {
+            key: "preview-" + timelinePreview.id,
+            t,
+            task: timelinePreview,
+            onClose: closeTimelinePreview,
+            cardProps: {
+              task: timelinePreview,
+              t,
+              lang: props.lang,
+              keyword: "",
+              bodyMode: cfg["ui.bodyMode"],
+              update: function(task, patch) {
+                api.call("tasks.update", Object.assign({ id: task.id }, patch)).then(function(r) {
+                  if (!r || !r.ok) {
+                    say(r && r.error || "update failed");
+                    return;
+                  }
+                  return api.call("tasks.get", { id: task.id }).then(function(next) {
+                    if (next && next.ok && next.result && next.result.task) setTimelinePreview(next.result.task);
+                    refreshList();
+                    bumpTimeline();
+                  });
+                }).catch(function(e) {
+                  say(String(e && e.message || e));
+                });
+              },
+              onEdit: function(task) {
+                closeTimelinePreview();
+                setEditTask(task);
+              },
+              onDone: function(task) {
+                closeTimelinePreview();
+                setDoneTask(task);
+              },
+              onRestart: function(task) {
+                closeTimelinePreview();
+                setCreateState({ source: "2", originTask: task });
+              },
+              onTimeline: function(task) {
+                closeTimelinePreview();
+                setTimelineTask(task);
+              },
+              onDelete: deletePreviewTask
             }
           }) : null,
           nodeModal ? h(NodeModal, {
@@ -10770,6 +10927,7 @@ var require_tasks_view = __commonJS({
             onSaved: function(result) {
               setEditTask(null);
               refreshList();
+              bumpTimeline();
               say(require_ownership().receipt(result));
             }
           }) : null,
@@ -10784,6 +10942,7 @@ var require_tasks_view = __commonJS({
             onDone: function() {
               setDoneTask(null);
               refreshList();
+              bumpTimeline();
               say(t.doneSuccess);
             },
             onError: function(e) {
@@ -10951,54 +11110,6 @@ var require_timeline_merge = __commonJS({
           )
         ));
       };
-    };
-  }
-});
-
-// packages/addons/tasks/client/modals/task-preview.cjs
-var require_task_preview = __commonJS({
-  "packages/addons/tasks/client/modals/task-preview.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = function createTaskPreview(React, TaskItem) {
-      var h = React.createElement;
-      function TaskPreview(props) {
-        var t = props.t, task = props.task;
-        var titleId = "wbt-preview-title";
-        function onKey(e) {
-          if (e.key !== "Escape") return;
-          e.preventDefault();
-          e.stopPropagation();
-          props.onClose();
-        }
-        return h(
-          "div",
-          {
-            className: "wbt-modal-mask",
-            onKeyDownCapture: onKey,
-            onMouseDown: function(e) {
-              if (e.target === e.currentTarget) props.onClose();
-            }
-          },
-          h(
-            "div",
-            {
-              className: "wbt-modal wide wbt-preview",
-              role: "dialog",
-              "aria-modal": "true",
-              "aria-labelledby": titleId,
-              "aria-label": t.previewLabel
-            },
-            h(
-              "div",
-              { className: "wbt-modal-head wbt-preview-head" },
-              h("h3", { id: titleId }, String(task.title || "").trim() || t.previewUntitled),
-              h("button", { type: "button", className: "wbt-icon", title: t.close, "aria-label": t.close, autoFocus: true, onClick: props.onClose }, "\xD7")
-            ),
-            h("div", { className: "wbt-preview-body" }, h(TaskItem, props.cardProps))
-          )
-        );
-      }
-      return TaskPreview;
     };
   }
 });
@@ -11193,6 +11304,13 @@ var require_timeline_view = __commonJS({
         function closeDetail() {
           setDetail(null);
           if (detailTrigger.current) detailTrigger.current.focus({ preventScroll: true });
+        }
+        function openPreview(member) {
+          api.call("tasks.get", { id: member.id }).then(function(r) {
+            setDetail(r && r.ok && r.result && r.result.task ? r.result.task : member);
+          }).catch(function() {
+            setDetail(member);
+          });
         }
         function say(message) {
           setToast(String(message || ""));
@@ -11416,33 +11534,6 @@ var require_timeline_view = __commonJS({
             setMulti(false);
             reload();
           } }) : null,
-          detail && !editTask ? h(TaskPreview, {
-            key: "preview-" + detail.id,
-            t,
-            task: detail,
-            onClose: closeDetail,
-            cardProps: {
-              task: detail,
-              t,
-              lang,
-              keyword: "",
-              bodyMode: cfg["ui.bodyMode"],
-              update: updateTask,
-              onEdit: function(task) {
-                setEditTask(task);
-              },
-              onDone: function(task) {
-                setDoneTask(task);
-              },
-              onRestart: function(task) {
-                setCreateState({ source: "2", originTask: task });
-              },
-              onTimeline: function(task) {
-                setTimelineTask(task);
-              },
-              onDelete: removeTask
-            }
-          }) : null,
           editTask ? h(deps.EditModal, {
             key: "edit-" + editTask.id,
             api,
@@ -11488,20 +11579,52 @@ var require_timeline_view = __commonJS({
             api,
             task: timelineTask,
             onChanged: reload,
+            refreshKey: refresh,
             onClose: function() {
               setTimelineTask(null);
+              setDetail(null);
             },
-            onOpen: function(member) {
-              api.call("tasks.get", { id: member.id }).then(result).then(function(r) {
-                setTimelineTask(null);
-                setEditTask(r.task);
-              }).catch(function(e) {
-                say(String(e && e.message || e));
-              });
+            // 弹窗里的成员行同样只开预览：弹窗保持挂载，页码与滚动不丢。
+            onOpen: function(member, e) {
+              detailTrigger.current = e && e.currentTarget;
+              openPreview(member);
             },
             onCreateTimeline: function(originTask) {
               setTimelineTask(null);
+              setDetail(null);
               setCreateState({ source: "1", originTask, defaultTableId: originTask.tableId });
+            }
+          }) : null,
+          // 预览渲染在时间线弹窗之后，叠在它上面：Esc 只关预览，弹窗与分页原样保留。
+          detail && !editTask ? h(TaskPreview, {
+            key: "preview-" + detail.id,
+            t,
+            task: detail,
+            onClose: closeDetail,
+            cardProps: {
+              task: detail,
+              t,
+              lang,
+              keyword: "",
+              bodyMode: cfg["ui.bodyMode"],
+              update: updateTask,
+              onEdit: function(task) {
+                closeDetail();
+                setEditTask(task);
+              },
+              onDone: function(task) {
+                closeDetail();
+                setDoneTask(task);
+              },
+              onRestart: function(task) {
+                closeDetail();
+                setCreateState({ source: "2", originTask: task });
+              },
+              onTimeline: function(task) {
+                closeDetail();
+                setTimelineTask(task);
+              },
+              onDelete: removeTask
             }
           }) : null,
           createState ? h(deps.CreateModal, {
@@ -12029,7 +12152,7 @@ var init_list_checks = __esm({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.22",
+    version: "5.2.23",
     icon: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },

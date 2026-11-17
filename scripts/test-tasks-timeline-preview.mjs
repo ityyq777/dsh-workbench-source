@@ -119,4 +119,36 @@ assert.match(sheet, /\.wbt-preview-head\{flex:none\}/, '标题栏不参与压缩
 const entry = src('client/client.src.cjs');
 assert.match(entry, /timeline-view\.cjs"\)\(\{ React: React, COPY: COPY, injectCss: injectCss, statusInfo: statusInfo, configView: configView, CFG_FALLBACK: CFG_FALLBACK, TaskItem: TaskItem, EditModal: EditModal, DoneModal: DoneModal, TimelineModal: TimelineModal, CreateModal: CreateModal \}/, '入口注入预览所需依赖');
 
+// ---------- 时间线弹窗内部：成员点击同样只开预览，弹窗不卸载 ----------
+const modal = src('client/timeline/task-timeline-modal.cjs');
+assert.match(modal, /refreshKey/, '弹窗接受刷新令牌，预览里改完任务能只重拉成员');
+assert.match(modal, /按发布时间正序排列，点击任务打开预览/, '分页文案与时间线页一致');
+assert.match(modal, /if \(p\.refreshKey\) setRevision/, '刷新令牌只递增 revision，不重挂弹窗');
+
+const tasksView = src('client/views/tasks-view.cjs');
+assert.match(tasksView, /onOpen: openTimelinePreview/, '记录页成员点击走预览');
+assert.match(tasksView, /refreshKey: timelineReload/, '记录页把刷新令牌接到弹窗');
+assert.doesNotMatch(tasksView, /setTimelineTask\(null\); setEditTask/, '记录页不再点成员直接进编辑面板');
+assert.ok(
+  tasksView.indexOf('h(TimelineModal, {') < tasksView.indexOf('h(TaskPreview, {'),
+  '预览渲染在时间线弹窗之后，才叠在它上面（Esc 只关最上层）',
+);
+assert.match(tasksView, /trigger\.focus\(\{ preventScroll: true \}\)/, '关闭预览后焦点回到被点的成员行');
+for (const key of ['onEdit:', 'onDone:', 'onRestart:', 'onTimeline:', 'onDelete: deletePreviewTask']) {
+  assert.ok(tasksView.includes(key), '预览动作已接线：' + key);
+}
+
+assert.doesNotMatch(view, /setTimelineTask\(null\); setEditTask/, '时间线页弹窗同样不再直接进编辑面板');
+assert.match(view, /refreshKey: refresh/, '时间线页把刷新令牌接到弹窗');
+assert.ok(
+  view.indexOf('h(deps.TimelineModal, {') < view.indexOf('h(TaskPreview, {'),
+  '时间线页的预览也叠在弹窗之后',
+);
+assert.match(view, /function openPreview\(member\)/, '两处共用同一个预览打开函数');
+
+// Tab 陷阱：预览自己的控件循环，键盘焦点不跑到下层弹窗
+const previewSource = src('client/modals/task-preview.cjs');
+assert.match(previewSource, /e\.key !== "Tab"/);
+assert.match(previewSource, /querySelectorAll\('button:not\(:disabled\)/, 'Tab 只在预览内可聚焦控件间循环');
+
 console.log('tasks timeline preview: ok');
