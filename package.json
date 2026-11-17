@@ -41,6 +41,7 @@
     "preview:actions": "node scripts/actions-ui-preview.mjs",
     "test:view-icons": "node packages/shell/client/view-tabs.test.mjs && node packages/shell/client/view-tabs.test.mjs --bundle",
     "test:timeline": "node scripts/test-timeline-stats.mjs",
+    "test:timeline-preview": "node scripts/test-tasks-timeline-preview.mjs",
     "test:workspaces": "node scripts/test-workspaces.mjs",
     "test:tags": "node scripts/test-tags.mjs",
     "test:tag-source-registry": "node scripts/test-tag-source-registry.mjs",
