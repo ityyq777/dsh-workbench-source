@@ -7423,6 +7423,15 @@ var require_styles = __commonJS({
       ".wbt-field.full{grid-column:1 / -1}",
       ".wbt-field>span{opacity:.62;font-size:11.5px}",
       ".wbt-modal-foot{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:2px}",
+      // 预览面板：只让内容区滚动，头部标题与右上角 × 固定不动（滚动壳限定在 .wbt-preview，不影响其它弹窗）。
+      ".wbt-preview{overflow:hidden}",
+      ".wbt-preview-head{flex:none}",
+      ".wbt-preview-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding-right:2px;scrollbar-width:thin;scrollbar-color:color-mix(in oklab,var(--wbt-line) 85%,transparent) transparent}",
+      ".wbt-preview-body::-webkit-scrollbar{width:10px;height:10px}",
+      ".wbt-preview-body::-webkit-scrollbar-track{background:transparent}",
+      ".wbt-preview-body::-webkit-scrollbar-thumb{background-color:color-mix(in oklab,var(--wbt-line) 78%,transparent);border-radius:999px;border:3px solid transparent;background-clip:content-box}",
+      ".wbt-preview-body::-webkit-scrollbar-thumb:hover{background-color:color-mix(in oklab,var(--wbt-line) 100%,transparent)}",
+      ".wbt-preview-body::-webkit-scrollbar-corner{background:transparent}",
       ".wbt-timeline{display:flex;flex-direction:column;gap:0;margin:2px 0}",
       ".wbt-tl-item{display:flex;gap:9px;min-height:40px}",
       ".wbt-tl-rail{width:12px;display:flex;flex-direction:column;align-items:center;flex:none}",
@@ -10981,16 +10990,11 @@ var require_task_preview = __commonJS({
             },
             h(
               "div",
-              { className: "wbt-modal-head" },
+              { className: "wbt-modal-head wbt-preview-head" },
               h("h3", { id: titleId }, String(task.title || "").trim() || t.previewUntitled),
-              h("button", { type: "button", className: "wbt-icon", title: t.close, "aria-label": t.close, onClick: props.onClose }, "\xD7")
+              h("button", { type: "button", className: "wbt-icon", title: t.close, "aria-label": t.close, autoFocus: true, onClick: props.onClose }, "\xD7")
             ),
-            h("div", { className: "wbt-preview-body" }, h(TaskItem, props.cardProps)),
-            h(
-              "div",
-              { className: "wbt-modal-foot" },
-              h("button", { type: "button", className: "wbt-btn ghost", autoFocus: true, onClick: props.onClose }, t.close)
-            )
+            h("div", { className: "wbt-preview-body" }, h(TaskItem, props.cardProps))
           )
         );
       }
@@ -12025,7 +12029,7 @@ var init_list_checks = __esm({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.21",
+    version: "5.2.22",
     icon: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },

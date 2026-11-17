@@ -24,14 +24,11 @@ module.exports = function createTaskPreview(React, TaskItem) {
         "aria-labelledby": titleId,
         "aria-label": t.previewLabel,
       },
-        h("div", { className: "wbt-modal-head" },
+        h("div", { className: "wbt-modal-head wbt-preview-head" },
           h("h3", { id: titleId }, String(task.title || "").trim() || t.previewUntitled),
-          h("button", { type: "button", className: "wbt-icon", title: t.close, "aria-label": t.close, onClick: props.onClose }, "×")
+          h("button", { type: "button", className: "wbt-icon", title: t.close, "aria-label": t.close, autoFocus: true, onClick: props.onClose }, "×")
         ),
-        h("div", { className: "wbt-preview-body" }, h(TaskItem, props.cardProps)),
-        h("div", { className: "wbt-modal-foot" },
-          h("button", { type: "button", className: "wbt-btn ghost", autoFocus: true, onClick: props.onClose }, t.close)
-        )
+        h("div", { className: "wbt-preview-body" }, h(TaskItem, props.cardProps))
       )
     );
   }

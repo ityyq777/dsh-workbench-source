@@ -55,6 +55,11 @@ assert.ok(html.includes('card:预览任务'), '内容就是列表那张卡片组
 assert.equal(seen.length, 1);
 assert.deepEqual(seen[0], cardProps, '卡片 props 原样透传（含全部动作回调），预览不另做一套');
 
+// 只有一个关闭入口：右上角 ×；底部不再重复一个「关闭」按钮，焦点落在 × 上
+assert.equal((html.match(/aria-label="关闭"/g) || []).length, 1, '整块面板只有一个关闭控件');
+assert.ok(!html.includes('wbt-modal-foot'), '底部不再有重复的关闭按钮');
+assert.ok(/aria-label="关闭"[^>]*autofocus/.test(html.replace(/\/?>/g, '>')) || html.includes('autofocus'), '打开后焦点落在 × 上');
+
 // Esc 关闭：遮罩捕获阶段处理
 const mask = tree.props.children;
 assert.equal(typeof tree.props.onKeyDownCapture, 'function');
@@ -95,6 +100,21 @@ assert.match(item, /var opsNode = h\("div", \{ className: "wbt-ops", key: "ops" 
 assert.equal(t.timelineOrder, '按发布时间正序排列，点击任务打开预览');
 assert.equal(copy.en.timelineOrder, 'Oldest publication first. Click a task to open a preview.');
 assert.equal(t.previewLabel, '任务预览');
+
+// ---------- 滚动收敛：只有内容区滚动，头部固定；样式限定在 .wbt-preview 作用域内 ----------
+const styles = require('../packages/addons/tasks/client/ui/styles.cjs');
+const sheet = [].concat(styles).join('\n');
+assert.match(sheet, /\.wbt-preview\{overflow:hidden\}/, '预览壳自己不再滚动');
+assert.match(
+  sheet,
+  /\.wbt-preview-body\{flex:1;min-height:0;overflow:auto/,
+  '滚动下推到内容区（flex:1 + min-height:0 才能让子元素真正可滚）',
+);
+assert.match(sheet, /\.wbt-preview-body\{flex:1;min-height:0;overflow:auto[^}]*scrollbar-color:color-mix\(in oklab,var\(--wbt-line\)/, '滚动条颜色跟随主题 token');
+assert.match(sheet, /\.wbt-preview-body::-webkit-scrollbar-thumb\{background-color:color-mix\(in oklab,var\(--wbt-line\)/, 'WebKit 滚动条同样走主题 token');
+assert.match(sheet, /\.wbt-modal\{width:560px;max-width:96vw;max-height:90vh;overflow:auto/, '通用弹窗壳的滚动规则保持不变');
+assert.ok(!/\.wbt-modal\{[^}]*overflow:hidden/.test(sheet), '没有为预览改掉通用 .wbt-modal 的滚动');
+assert.match(sheet, /\.wbt-preview-head\{flex:none\}/, '标题栏不参与压缩');
 
 const entry = src('client/client.src.cjs');
 assert.match(entry, /timeline-view\.cjs"\)\(\{ React: React, COPY: COPY, injectCss: injectCss, statusInfo: statusInfo, configView: configView, CFG_FALLBACK: CFG_FALLBACK, TaskItem: TaskItem, EditModal: EditModal, DoneModal: DoneModal, TimelineModal: TimelineModal, CreateModal: CreateModal \}/, '入口注入预览所需依赖');
