@@ -117,6 +117,13 @@ var PAGE = [
   ".wbsal-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}",
   ".wbsal-section-head h3{font-size:13.5px;font-weight:650;margin:0}",
   ".wbsal-section-head span{font-size:11.5px;color:var(--wb-muted,#8b94a6)}",
+  ".wbsal-section-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap}",
+  // 图表口径切换：与任务插件统计页一致的分段式小控件，选中态用 aria-pressed 表达。
+  ".wbsal-metric{display:inline-flex;align-items:center;gap:2px;padding:2px;border:1px solid var(--wb-border,#e2e6ec);border-radius:8px;background:var(--wb-surface,#fff)}",
+  ".wbsal-metric button{appearance:none;border:0;background:transparent;color:var(--wb-muted,#8b94a6);font:inherit;font-size:11.5px;padding:4px 8px;border-radius:6px;cursor:pointer;white-space:nowrap}",
+  ".wbsal-metric button:hover{background:color-mix(in srgb,var(--wb-muted) 12%,transparent);color:var(--wb-text,#20242c)}",
+  ".wbsal-metric button.on,.wbsal-metric button[aria-pressed=true]{background:var(--wb-accent,#2563eb);color:var(--wb-on-accent,#fff);font-weight:600}",
+  ".wbsal-metric button:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:1px}",
   ".wbsal-chart{display:flex;align-items:flex-end;gap:8px;height:210px;padding:8px 2px 0;border-bottom:1px solid var(--wb-line,#eef0f4)}",
   ".wbsal-bar{flex:1 1 0;min-width:14px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%}",
   ".wbsal-bar-value{font-size:10.5px;line-height:1;color:var(--wb-muted,#8b94a6);font-variant-numeric:tabular-nums;white-space:nowrap}",

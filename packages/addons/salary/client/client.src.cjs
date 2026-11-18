@@ -30,7 +30,7 @@
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.1.1",
+    version: "0.1.2",
     icon: require("lucide-react/icons/wallet").default,
     views: [
       { id: "records", icon: tabIcon("records"), title: { zh: "工资记录", en: "Records" }, component: withProps(require("./views/records.cjs"), "工资记录") },

@@ -8,11 +8,23 @@ module.exports = function Stats(props) {
   var year = yearState[0], setYear = yearState[1];
   var load = C.useLoad(React, api, "salary.stats", { year: year }, [year]);
   var data = load.data;
+  // 柱状图口径：实发 / 基本工资 / 绩效工资 / 应发，交互方式与任务插件统计页的口径切换一致。
+  var METRICS = [
+    { key: "netPay", label: "实发" },
+    { key: "basePay", label: "基本工资" },
+    { key: "performancePay", label: "绩效工资" },
+    { key: "grossPay", label: "应发" },
+  ];
+  var metricState = React.useState(props.initialMetric || "netPay");
+  var metric = metricState[0], setMetric = metricState[1];
+  var metricLabel = "实发";
+  METRICS.forEach(function (m) { if (m.key === metric) metricLabel = m.label; });
   var monthly = (data && data.monthly) || [];
+  function metricValue(bucket) { return Number(bucket[metric]) || 0; }
   var maxNet = 1;
-  monthly.forEach(function (bucket) { if (bucket.netPay > maxNet) maxNet = bucket.netPay; });
+  monthly.forEach(function (bucket) { if (metricValue(bucket) > maxNet) maxNet = metricValue(bucket); });
   var topMonth = -1;
-  monthly.forEach(function (bucket, i) { if (bucket.netPay > 0 && (topMonth < 0 || bucket.netPay > monthly[topMonth].netPay)) topMonth = i; });
+  monthly.forEach(function (bucket, i) { if (metricValue(bucket) > 0 && (topMonth < 0 || metricValue(bucket) > metricValue(monthly[topMonth]))) topMonth = i; });
 
   function signed(amount) {
     var n = Number(amount) || 0;
@@ -61,23 +73,32 @@ module.exports = function Stats(props) {
 
       h("div", { className: "wbsal-card wbsal-section" },
         h("div", { className: "wbsal-section-head" },
-          h("h3", null, "月度实发趋势"),
-          h("span", null, "最高 " + F.monthLabel(monthly[topMonth] ? monthly[topMonth].period : "") + " · " + F.money(maxNet))),
+          h("h3", null, "月度" + metricLabel + "趋势"),
+          h("div", { className: "wbsal-section-tools" },
+            h("div", { className: "wbsal-metric", role: "group", "aria-label": "图表统计口径" }, METRICS.map(function (m) {
+              return h("button", {
+                key: m.key, type: "button", className: m.key === metric ? "on" : "",
+                "aria-pressed": m.key === metric,
+                onClick: function () { setMetric(m.key); },
+              }, m.label);
+            })),
+            h("span", { className: "wbsal-section-note" }, "最高 " + F.monthLabel(monthly[topMonth] ? monthly[topMonth].period : "") + " · " + F.money(maxNet)))),
         h("div", { className: "wbsal-chart" }, monthly.map(function (bucket, i) {
-          var ratio = bucket.netPay > 0 ? bucket.netPay / chartMax : 0;
-          var height = Math.round(Math.max(ratio * 150, bucket.netPay > 0 ? 6 : 0));
+          var value = metricValue(bucket);
+          var ratio = value > 0 ? value / chartMax : 0;
+          var height = Math.round(Math.max(ratio * 150, value > 0 ? 6 : 0));
           return h("div", {
             key: bucket.month, className: "wbsal-bar",
-            title: bucket.month + " 月 · 实发 " + F.money(bucket.netPay) + " / 应发 " + F.money(bucket.grossPay) + " / 个税 " + F.money(bucket.incomeTax),
+            title: bucket.month + " 月 · 基本 " + F.money(bucket.basePay) + " / 绩效 " + F.money(bucket.performancePay) + " / 应发 " + F.money(bucket.grossPay) + " / 实发 " + F.money(bucket.netPay),
           },
-            h("div", { className: "wbsal-bar-value" }, bucket.netPay > 0 ? Math.round(bucket.netPay).toLocaleString("zh-CN") : ""),
+            h("div", { className: "wbsal-bar-value" }, value > 0 ? Math.round(value).toLocaleString("zh-CN") : ""),
             h("div", { className: "wbsal-bar-fill" + (i === topMonth ? " top" : ""), style: { height: height + "px" } }),
             h("div", { className: "wbsal-bar-label" }, ""));
         })),
         h("div", { className: "wbsal-axis" }, monthly.map(function (bucket) { return h("span", { key: bucket.month }, bucket.month); })),
         h("div", { className: "wbsal-chart-foot" },
           h("span", { className: "wbsal-legend" }, h("i", null), "有记录月份", h("i", { className: "soft" }), "其他月份"),
-          h("span", null, "单位：元 · 按发薪日期归属月份"))),
+          h("span", null, "单位：元 · 按发薪日期归属月份 · 当前口径 " + metricLabel))),
 
       h("div", { className: "wbsal-card wbsal-section" },
         h("div", { className: "wbsal-section-head" },

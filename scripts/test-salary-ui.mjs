@@ -24,6 +24,8 @@ const salaryStats = {
   monthly: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((month) => ({
     month, period: "2026-" + String(month).padStart(2, "0"),
     records: month >= 7 && month <= 10 ? 1 : 0,
+    basePay: [7040, 0, 0, 8800][month - 7] || 0,
+    performancePay: [2200, 0, 0, 2200][month - 7] || 0,
     netPay: [7878.77, 8111.56, 8189.17, 10672.36][month - 7] || 0,
     grossPay: [9400, 9640, 9720, 12280][month - 7] || 0,
     incomeTax: [89.03, 96.24, 98.63, 175.44][month - 7] || 0,
@@ -143,14 +145,14 @@ const problems = [];
 if (!HOST.addon || HOST.addon.id !== "wb-addon-salary") problems.push("client.src.cjs 没有注册 wb-addon-salary");
 if (!HOST.addon || !Array.isArray(HOST.addon.views) || HOST.addon.views.length !== 4) problems.push("views 数量不是 4");
 const css = styles.map((el) => el.textContent).join("\n");
-for (const klass of ["wbsal-page", "wbsal-kpi", "wbsal-record-row", "wbsal-chart", "wbsal-comp", "wbsal-input", "--wb-card", "wbsal-table", "wbsal-card"]) {
+for (const klass of ["wbsal-page", "wbsal-kpi", "wbsal-record-row", "wbsal-chart", "wbsal-comp", "wbsal-input", "--wb-card", "wbsal-table", "wbsal-card", "wbsal-metric"]) {
   if (!css.includes(klass)) problems.push("样式表缺少 " + klass);
 }
 
 const api = { call: async (action) => ({ ok: true, result: RESPONSES[action] !== undefined ? RESPONSES[action] : {} }) };
 const checks = [
   ["records", "views/records.cjs", "工资记录", ["wbsal-record-row", "wbsal-kpi", "wbsal-toolbar", "wbsal-toolbar-end", "wbsal-month"]],
-  ["stats", "views/stats.cjs", "统计", ["wbsal-chart", "wbsal-comp", "wbsal-table"]],
+  ["stats", "views/stats.cjs", "统计", ["wbsal-chart", "wbsal-comp", "wbsal-table", "wbsal-metric"]],
 ];
 for (const [id, file, title, expected] of checks) {
   const view = HOST.addon.views.find((v) => v.id === id);
@@ -174,8 +176,9 @@ for (const file of ["views/records.cjs", "views/stats.cjs", "views/data.cjs", "v
   if (/\.reload\s*\(/.test(src)) problems.push(file + " 调用了 useLoad 不存在的 .reload()，请用 .refresh()");
 }
 
+const pkgVersion = JSON.parse(readFileSync(ROOT + "packages/addons/salary/package.json", "utf8")).version;
 const bundle = readFileSync(ROOT + "packages/addons/salary/lib/client.js", "utf8");
-for (const needle of ['id: "wb-addon-salary"', "version: \"0.1.1\""]) {
+for (const needle of ['id: "wb-addon-salary"', 'version: "' + pkgVersion + '"']) {
   if (!bundle.includes(needle.replace(/"([^"]+)"/g, (m) => m))) {
     const alt = needle.replace(/"([^"]+)"/g, "'$1'");
     if (!bundle.includes(needle) && !bundle.includes(alt)) problems.push("构建产物 lib/client.js 缺少 " + needle);

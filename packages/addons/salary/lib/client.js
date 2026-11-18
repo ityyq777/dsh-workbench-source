@@ -196,6 +196,13 @@ var require_styles = __commonJS({
       ".wbsal-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}",
       ".wbsal-section-head h3{font-size:13.5px;font-weight:650;margin:0}",
       ".wbsal-section-head span{font-size:11.5px;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-section-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap}",
+      // 图表口径切换：与任务插件统计页一致的分段式小控件，选中态用 aria-pressed 表达。
+      ".wbsal-metric{display:inline-flex;align-items:center;gap:2px;padding:2px;border:1px solid var(--wb-border,#e2e6ec);border-radius:8px;background:var(--wb-surface,#fff)}",
+      ".wbsal-metric button{appearance:none;border:0;background:transparent;color:var(--wb-muted,#8b94a6);font:inherit;font-size:11.5px;padding:4px 8px;border-radius:6px;cursor:pointer;white-space:nowrap}",
+      ".wbsal-metric button:hover{background:color-mix(in srgb,var(--wb-muted) 12%,transparent);color:var(--wb-text,#20242c)}",
+      ".wbsal-metric button.on,.wbsal-metric button[aria-pressed=true]{background:var(--wb-accent,#2563eb);color:var(--wb-on-accent,#fff);font-weight:600}",
+      ".wbsal-metric button:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:1px}",
       ".wbsal-chart{display:flex;align-items:flex-end;gap:8px;height:210px;padding:8px 2px 0;border-bottom:1px solid var(--wb-line,#eef0f4)}",
       ".wbsal-bar{flex:1 1 0;min-width:14px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%}",
       ".wbsal-bar-value{font-size:10.5px;line-height:1;color:var(--wb-muted,#8b94a6);font-variant-numeric:tabular-nums;white-space:nowrap}",
@@ -1338,14 +1345,29 @@ var require_stats = __commonJS({
       var year = yearState[0], setYear = yearState[1];
       var load = C.useLoad(React, api, "salary.stats", { year }, [year]);
       var data = load.data;
+      var METRICS = [
+        { key: "netPay", label: "\u5B9E\u53D1" },
+        { key: "basePay", label: "\u57FA\u672C\u5DE5\u8D44" },
+        { key: "performancePay", label: "\u7EE9\u6548\u5DE5\u8D44" },
+        { key: "grossPay", label: "\u5E94\u53D1" }
+      ];
+      var metricState = React.useState(props.initialMetric || "netPay");
+      var metric = metricState[0], setMetric = metricState[1];
+      var metricLabel = "\u5B9E\u53D1";
+      METRICS.forEach(function(m) {
+        if (m.key === metric) metricLabel = m.label;
+      });
       var monthly = data && data.monthly || [];
+      function metricValue(bucket) {
+        return Number(bucket[metric]) || 0;
+      }
       var maxNet = 1;
       monthly.forEach(function(bucket) {
-        if (bucket.netPay > maxNet) maxNet = bucket.netPay;
+        if (metricValue(bucket) > maxNet) maxNet = metricValue(bucket);
       });
       var topMonth = -1;
       monthly.forEach(function(bucket, i) {
-        if (bucket.netPay > 0 && (topMonth < 0 || bucket.netPay > monthly[topMonth].netPay)) topMonth = i;
+        if (metricValue(bucket) > 0 && (topMonth < 0 || metricValue(bucket) > metricValue(monthly[topMonth]))) topMonth = i;
       });
       function signed(amount) {
         var n = Number(amount) || 0;
@@ -1409,20 +1431,36 @@ var require_stats = __commonJS({
             h(
               "div",
               { className: "wbsal-section-head" },
-              h("h3", null, "\u6708\u5EA6\u5B9E\u53D1\u8D8B\u52BF"),
-              h("span", null, "\u6700\u9AD8 " + F.monthLabel(monthly[topMonth] ? monthly[topMonth].period : "") + " \xB7 " + F.money(maxNet))
+              h("h3", null, "\u6708\u5EA6" + metricLabel + "\u8D8B\u52BF"),
+              h(
+                "div",
+                { className: "wbsal-section-tools" },
+                h("div", { className: "wbsal-metric", role: "group", "aria-label": "\u56FE\u8868\u7EDF\u8BA1\u53E3\u5F84" }, METRICS.map(function(m) {
+                  return h("button", {
+                    key: m.key,
+                    type: "button",
+                    className: m.key === metric ? "on" : "",
+                    "aria-pressed": m.key === metric,
+                    onClick: function() {
+                      setMetric(m.key);
+                    }
+                  }, m.label);
+                })),
+                h("span", { className: "wbsal-section-note" }, "\u6700\u9AD8 " + F.monthLabel(monthly[topMonth] ? monthly[topMonth].period : "") + " \xB7 " + F.money(maxNet))
+              )
             ),
             h("div", { className: "wbsal-chart" }, monthly.map(function(bucket, i) {
-              var ratio = bucket.netPay > 0 ? bucket.netPay / chartMax : 0;
-              var height = Math.round(Math.max(ratio * 150, bucket.netPay > 0 ? 6 : 0));
+              var value = metricValue(bucket);
+              var ratio = value > 0 ? value / chartMax : 0;
+              var height = Math.round(Math.max(ratio * 150, value > 0 ? 6 : 0));
               return h(
                 "div",
                 {
                   key: bucket.month,
                   className: "wbsal-bar",
-                  title: bucket.month + " \u6708 \xB7 \u5B9E\u53D1 " + F.money(bucket.netPay) + " / \u5E94\u53D1 " + F.money(bucket.grossPay) + " / \u4E2A\u7A0E " + F.money(bucket.incomeTax)
+                  title: bucket.month + " \u6708 \xB7 \u57FA\u672C " + F.money(bucket.basePay) + " / \u7EE9\u6548 " + F.money(bucket.performancePay) + " / \u5E94\u53D1 " + F.money(bucket.grossPay) + " / \u5B9E\u53D1 " + F.money(bucket.netPay)
                 },
-                h("div", { className: "wbsal-bar-value" }, bucket.netPay > 0 ? Math.round(bucket.netPay).toLocaleString("zh-CN") : ""),
+                h("div", { className: "wbsal-bar-value" }, value > 0 ? Math.round(value).toLocaleString("zh-CN") : ""),
                 h("div", { className: "wbsal-bar-fill" + (i === topMonth ? " top" : ""), style: { height: height + "px" } }),
                 h("div", { className: "wbsal-bar-label" }, "")
               );
@@ -1434,7 +1472,7 @@ var require_stats = __commonJS({
               "div",
               { className: "wbsal-chart-foot" },
               h("span", { className: "wbsal-legend" }, h("i", null), "\u6709\u8BB0\u5F55\u6708\u4EFD", h("i", { className: "soft" }), "\u5176\u4ED6\u6708\u4EFD"),
-              h("span", null, "\u5355\u4F4D\uFF1A\u5143 \xB7 \u6309\u53D1\u85AA\u65E5\u671F\u5F52\u5C5E\u6708\u4EFD")
+              h("span", null, "\u5355\u4F4D\uFF1A\u5143 \xB7 \u6309\u53D1\u85AA\u65E5\u671F\u5F52\u5C5E\u6708\u4EFD \xB7 \u5F53\u524D\u53E3\u5F84 " + metricLabel)
             )
           ),
           h(
@@ -3381,7 +3419,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.1.1",
+    version: "0.1.2",
     icon: (init_wallet(), __toCommonJS(wallet_exports)).default,
     views: [
       { id: "records", icon: tabIcon("records"), title: { zh: "\u5DE5\u8D44\u8BB0\u5F55", en: "Records" }, component: withProps(require_records(), "\u5DE5\u8D44\u8BB0\u5F55") },

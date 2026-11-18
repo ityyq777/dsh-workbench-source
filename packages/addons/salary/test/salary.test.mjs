@@ -112,6 +112,10 @@ test("年度统计：月桶求和、月均、环比与最近月构成", () => {
   assert.equal(s.socialTotal, 5728.8);
   assert.equal(s.monthly[6].pension, 739.2);
   assert.equal(s.monthly[9].housingFund, 462);
+  assert.equal(s.monthly[6].basePay, 9400);
+  assert.equal(s.monthly[6].performancePay, 0);
+  assert.equal(s.monthly[9].basePay, 8800);
+  assert.equal(s.monthly[9].performancePay, 2200);
 });
 
 test("软删除后不再返回，dataQuery 白名单", () => {

@@ -162,6 +162,8 @@ export function createSalary({ db, host, log }) {
       month: i + 1,
       period: `${year}-${PAD(i + 1)}`,
       records: 0,
+      basePay: 0,
+      performancePay: 0,
       netPay: 0,
       grossPay: 0,
       incomeTax: 0,
@@ -174,6 +176,8 @@ export function createSalary({ db, host, log }) {
     for (const row of rows) {
       const bucket = monthly[MONTH_OF(row.payDate) - 1];
       bucket.records += 1;
+      bucket.basePay = round2(bucket.basePay + row.basePay);
+      bucket.performancePay = round2(bucket.performancePay + row.performancePay);
       bucket.netPay = round2(bucket.netPay + row.netPay);
       bucket.grossPay = round2(bucket.grossPay + row.grossPay);
       bucket.incomeTax = round2(bucket.incomeTax + row.incomeTax);

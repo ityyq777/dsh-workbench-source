@@ -28,7 +28,7 @@ const records = [
 const monthly = [7, 8, 9, 10].map((month) => {
   const item = records[10 - month];
   const social = item.pension + item.medical + item.unemployment + item.housingFund;
-  return { month, period: "2026-" + String(month).padStart(2, "0"), records: 1, netPay: item.netPay, grossPay: item.grossPay, incomeTax: item.incomeTax, socialTotal: social, pension: item.pension, medical: item.medical, unemployment: item.unemployment, housingFund: item.housingFund };
+  return { month, period: "2026-" + String(month).padStart(2, "0"), records: 1, basePay: item.basePay, performancePay: item.performancePay, netPay: item.netPay, grossPay: item.grossPay, incomeTax: item.incomeTax, socialTotal: social, pension: item.pension, medical: item.medical, unemployment: item.unemployment, housingFund: item.housingFund };
 });
 
 const stats = {
@@ -37,7 +37,7 @@ const stats = {
   deductionTotal: 6188.14, avgNetPay: 8712.97,
   monthly: Array.from({ length: 12 }, (_, index) => {
     const hit = monthly.find((m) => m.month === index + 1);
-    return hit || { month: index + 1, period: "2026-" + String(index + 1).padStart(2, "0"), records: 0, netPay: 0, grossPay: 0, incomeTax: 0, socialTotal: 0, pension: 0, medical: 0, unemployment: 0, housingFund: 0 };
+    return hit || { month: index + 1, period: "2026-" + String(index + 1).padStart(2, "0"), records: 0, basePay: 0, performancePay: 0, netPay: 0, grossPay: 0, incomeTax: 0, socialTotal: 0, pension: 0, medical: 0, unemployment: 0, housingFund: 0 };
   }),
   latestMonth: {
     month: 10, period: "2026-10", records: 1, netPay: 10672.36, grossPay: 12280, incomeTax: 175.44, socialTotal: 1432.2,
@@ -134,6 +134,12 @@ function toHtml(tree) {
     attrs.push(' style="' + esc(cssText) + '"');
   }
   if (props.id) attrs.push(' id="' + esc(props.id) + '"');
+  // aria-*/role 决定状态样式与可访问性，预览也要如实输出（之前丢了 aria-pressed，选中态画不出来）
+  for (const key of Object.keys(props)) {
+    if (/^(aria-|role$|data-)/.test(key) && props[key] !== undefined && props[key] !== false) {
+      attrs.push(" " + key.toLowerCase() + '="' + esc(String(props[key])) + '"');
+    }
+  }
   // colspan/rowspan 在真实 DOM 里是 colSpan/rowSpan，预览渲染器要转成小写属性
   for (const key of ["colSpan", "rowSpan"]) {
     if (props[key] !== undefined) attrs.push(" " + key.toLowerCase() + '="' + esc(props[key]) + '"');
@@ -169,6 +175,8 @@ const themeVars = {
 
 const recordsHtml = toHtml(await renderView("views/records.cjs"));
 const statsHtml = toHtml(await renderView("views/stats.cjs"));
+// 第二个统计实例切到「应发」口径，用来核对切换后的柱形高度与数值
+const statsGrossHtml = toHtml(await renderView("views/stats.cjs", { initialMetric: "grossPay" }));
 const detailHtml = toHtml(await renderView("views/records.cjs", { initialOpenId: "sal_4" }));
 const formValues = {};
 for (const key of FIELDS) formValues[key] = "";
@@ -198,10 +206,12 @@ const html = `<!doctype html><html lang="zh"><head><meta charset="utf-8"><title>
 ${pane("light", "light · records", recordsHtml)}
 ${pane("light", "light · detail", detailHtml)}
 ${pane("light", "light · stats", statsHtml)}
+${pane("light", "light · stats · 应发口径", statsGrossHtml)}
 ${pane("light", "light · form", formHtml)}
 ${pane("dark", "dark · records", detailHtml)}
 ${pane("dark", "dark · form", formHtml)}
 ${pane("dark", "dark · stats", statsHtml)}
+${pane("dark", "dark · stats · 应发口径", statsGrossHtml)}
 </div></body></html>`;
 
 writeFileSync("/tmp/salary-preview.html", html);
