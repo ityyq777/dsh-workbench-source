@@ -65,11 +65,12 @@ module.exports = function Stats(props) {
     var chartMax = Math.max(1, maxNet);
     body = h("div", { className: "wbsal-section" },
       h("div", { className: "wbsal-kpis" },
-        kpi("年度实发合计", F.money(data.netTotal), data.records + " 笔 · 覆盖 " + data.months + " 个月"),
+        kpi("最近实发", data.latest ? F.money(data.latest.netPay) : "—", data.latest ? data.latest.payDate + " · 最近一笔" : "还没有记录"),
         kpi("月均实发", F.money(data.avgNetPay), "按有记录的月份平均"),
+        kpi("年度实发合计", F.money(data.netTotal), data.records + " 笔 · 覆盖 " + data.months + " 个月"),
         kpi("年度应发", F.money(data.grossTotal), "税前"),
         kpi("年度个税", F.money(data.incomeTaxTotal), "工资薪金预扣"),
-        kpi("年度社保公积金", F.money(data.socialTotal), "养老 / 医疗 / 失业 / 公积金")),
+        kpi("年度五险一金", F.money(data.socialTotal), "养老 / 医疗 / 失业 / 公积金")),
 
       h("div", { className: "wbsal-card wbsal-section" },
         h("div", { className: "wbsal-section-head" },

@@ -470,6 +470,419 @@ var require_workspacefilter = __commonJS({
   }
 });
 
+// packages/addons/lib/date-picker.cjs
+var require_date_picker = __commonJS({
+  "packages/addons/lib/date-picker.cjs"(exports2, module2) {
+    "use strict";
+    var ReactDefault = require("react");
+    var MONTH_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    function pad(n) {
+      return String(n).padStart(2, "0");
+    }
+    function todayISO() {
+      var d = /* @__PURE__ */ new Date();
+      return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+    }
+    function validDate(value) {
+      if (!value) return false;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+      var d = /* @__PURE__ */ new Date(value + "T00:00:00Z");
+      return isFinite(d.getTime()) && d.toISOString().slice(0, 10) === value && value.slice(0, 4) !== "0000";
+    }
+    function toUTC(iso) {
+      return /* @__PURE__ */ new Date(iso + "T00:00:00Z");
+    }
+    function shiftDate(iso, days) {
+      var d = toUTC(iso);
+      d.setUTCDate(d.getUTCDate() + days);
+      return d.toISOString().slice(0, 10);
+    }
+    function shiftMonth(month, delta) {
+      var d = toUTC(month + "-01");
+      d.setUTCMonth(d.getUTCMonth() + delta);
+      return d.toISOString().slice(0, 7);
+    }
+    function monthKey(iso) {
+      return (iso || todayISO()).slice(0, 7);
+    }
+    function monthLabel(month, en) {
+      return en ? month.slice(0, 4) + "-" + month.slice(5) : month.slice(0, 4) + "\u5E74" + Number(month.slice(5)) + "\u6708";
+    }
+    function daysInMonth(month) {
+      return new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5)), 0)).getUTCDate();
+    }
+    function normalizeRange(value) {
+      var from = value && validDate(value.from) ? value.from : "";
+      var to = value && validDate(value.to) ? value.to : "";
+      if (from && to && from > to) return { from: to, to: from, swapped: true };
+      return { from, to, swapped: false };
+    }
+    function clampDay(iso, min, max) {
+      if (min && iso < min) return false;
+      if (max && iso > max) return false;
+      return true;
+    }
+    function ctx(props) {
+      var R = props && props.React || ReactDefault;
+      return { R, h: props && props.h || R.createElement };
+    }
+    function usePopover(R, open, setOpen, root) {
+      R.useEffect(function() {
+        if (!open) return void 0;
+        function onDoc(ev) {
+          if (root.current && !root.current.contains(ev.target)) setOpen(false);
+        }
+        function onKey(ev) {
+          if (ev.key === "Escape") setOpen(false);
+        }
+        if (typeof document !== "undefined" && typeof document.addEventListener === "function") {
+          document.addEventListener("mousedown", onDoc);
+          document.addEventListener("keydown", onKey);
+          return function() {
+            document.removeEventListener("mousedown", onDoc);
+            document.removeEventListener("keydown", onKey);
+          };
+        }
+        return void 0;
+      }, [open]);
+    }
+    function Calendar(props) {
+      var h = props.h, p = props.prefix, en = props.lang === "en";
+      var month = props.month, cells = [];
+      var offset = toUTC(month + "-01").getUTCDay();
+      var count = daysInMonth(month);
+      var i;
+      for (i = 0; i < offset; i++) cells.push(h("span", { key: "e" + i, "aria-hidden": "true" }));
+      for (i = 1; i <= count; i++) {
+        var day = month + "-" + pad(i);
+        var disabled = !clampDay(day, props.min, props.max);
+        var selected = props.isSelected ? props.isSelected(day) : false;
+        var between = props.isBetween ? props.isBetween(day) : false;
+        cells.push(h("button", {
+          key: day,
+          type: "button",
+          disabled,
+          "data-day": day,
+          "aria-label": day,
+          "aria-pressed": selected,
+          "aria-current": day === todayISO() ? "date" : void 0,
+          className: p + "-dp-day" + (selected ? " is-on" : "") + (between ? " is-between" : "") + (day === todayISO() ? " is-today" : ""),
+          onClick: props.onPick.bind(null, day),
+          onKeyDown: function(ev) {
+            var delta = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[ev.key];
+            if (!delta) return;
+            ev.preventDefault();
+            var next = shiftDate(ev.currentTarget.getAttribute("data-day"), delta);
+            if (clampDay(next, props.min, props.max)) props.onMove(monthKey(next), next);
+          }
+        }, i));
+      }
+      return h(
+        "div",
+        { className: p + "-dp-cal", role: "group", "aria-label": en ? "Calendar" : "\u65E5\u5386" },
+        h(
+          "div",
+          { className: p + "-dp-head" },
+          h("button", { type: "button", className: p + "-dp-nav", "aria-label": en ? "Previous month" : "\u4E0A\u4E2A\u6708", onClick: function() {
+            props.onMove(shiftMonth(month, -1), "");
+          } }, "\u2039"),
+          h("strong", { className: p + "-dp-title", "aria-live": "polite" }, monthLabel(month, en)),
+          h("button", { type: "button", className: p + "-dp-nav", "aria-label": en ? "Next month" : "\u4E0B\u4E2A\u6708", onClick: function() {
+            props.onMove(shiftMonth(month, 1), "");
+          } }, "\u203A")
+        ),
+        h(
+          "div",
+          { className: p + "-dp-weekdays", "aria-hidden": "true" },
+          (en ? ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] : ["\u65E5", "\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D"]).map(function(w) {
+            return h("span", { key: w }, w);
+          })
+        ),
+        h("div", { className: p + "-dp-grid" }, cells)
+      );
+    }
+    function DatePicker(props) {
+      var c = ctx(props), R = c.R, h = c.h;
+      var p = props.prefix, en = props.lang === "en";
+      var value = validDate(props.value) ? props.value : "";
+      var openS = R.useState(!!props.defaultOpen), open = openS[0], setOpen = openS[1];
+      var monthS = R.useState(monthKey(value || props.max || todayISO())), month = monthS[0], setMonth = monthS[1];
+      var root = R.useRef(null);
+      usePopover(R, open, setOpen, root);
+      function pick(day) {
+        if (props.onChange) props.onChange(day);
+        setOpen(false);
+      }
+      function toggle() {
+        setMonth(monthKey(validDate(props.value) ? props.value : props.max || todayISO()));
+        setOpen(!open);
+      }
+      return h(
+        "div",
+        { className: p + "-dp" + (props.className ? " " + props.className : ""), ref: root },
+        h(
+          "div",
+          { className: p + "-dp-field" },
+          h(
+            "button",
+            {
+              type: "button",
+              className: p + "-dp-trigger",
+              disabled: !!props.disabled,
+              "aria-haspopup": "dialog",
+              "aria-expanded": open,
+              "aria-label": (props.label ? props.label + ": " : "") + (value || props.placeholder || (en ? "Pick a date" : "\u9009\u62E9\u65E5\u671F")),
+              onClick: toggle
+            },
+            h("span", { className: p + "-dp-glyph", "aria-hidden": "true" }),
+            h("span", { className: p + "-dp-value" + (value ? "" : " is-empty") }, value || props.placeholder || (en ? "Pick a date" : "\u9009\u62E9\u65E5\u671F"))
+          ),
+          value && !props.disabled && props.clearable !== false ? h("button", { type: "button", className: p + "-dp-clear", "aria-label": en ? "Clear date" : "\u6E05\u9664\u65E5\u671F", onClick: function() {
+            if (props.onChange) props.onChange("");
+          } }, "\xD7") : null
+        ),
+        open ? h(
+          "div",
+          { className: p + "-dp-pop", role: "dialog", "aria-modal": "false", "aria-label": props.label || (en ? "Pick a date" : "\u9009\u62E9\u65E5\u671F") },
+          h(Calendar, { h, prefix: p, lang: props.lang, month, min: props.min, max: props.max, onMove: function(m) {
+            setMonth(m);
+          }, isSelected: function(d) {
+            return d === value;
+          }, onPick: pick }),
+          h(
+            "div",
+            { className: p + "-dp-foot" },
+            h("button", { type: "button", className: p + "-dp-link", onClick: function() {
+              pick(todayISO());
+            } }, en ? "Today" : "\u4ECA\u5929"),
+            props.min || props.max ? h("span", { className: p + "-dp-hint" }, [props.min, props.max].filter(Boolean).join(" \u2014 ")) : null
+          )
+        ) : null
+      );
+    }
+    function RangePicker(props) {
+      var c = ctx(props), R = c.R, h = c.h;
+      var p = props.prefix, en = props.lang === "en";
+      var range = normalizeRange(props.value);
+      var from = range.from, to = range.to;
+      var openS = R.useState(!!props.defaultOpen), open = openS[0], setOpen = openS[1];
+      var startS = R.useState(""), start = startS[0], setStart = startS[1];
+      var monthS = R.useState(monthKey(from || to || props.max || todayISO())), month = monthS[0], setMonth = monthS[1];
+      var root = R.useRef(null);
+      usePopover(R, open, setOpen, root);
+      function apply(next) {
+        if (typeof props.onChange === "function") props.onChange(normalizeRange(next));
+        setStart("");
+        setOpen(false);
+      }
+      function pick(day) {
+        if (!start) {
+          setStart(day);
+          return;
+        }
+        apply({ from: start, to: day });
+      }
+      function toggle() {
+        setStart("");
+        setMonth(monthKey(from || to || props.max || todayISO()));
+        setOpen(!open);
+      }
+      var summary = from && to ? from + " \u2014 " + to : from ? from + (en ? " onward" : " \u8D77") : to ? (en ? "Until " : "\u622A\u81F3 ") + to : props.placeholder || (en ? "Choose date range" : "\u9009\u62E9\u65E5\u671F\u8303\u56F4");
+      return h(
+        "div",
+        { className: p + "-dr" + (props.className ? " " + props.className : ""), ref: root },
+        h(
+          "div",
+          { className: p + "-dp-field" },
+          h(
+            "button",
+            {
+              type: "button",
+              className: p + "-dp-trigger",
+              "aria-haspopup": "dialog",
+              "aria-expanded": open,
+              "aria-label": (props.label || (en ? "Date range" : "\u65E5\u671F\u8303\u56F4")) + ": " + summary,
+              onClick: toggle
+            },
+            h("span", { className: p + "-dp-glyph", "aria-hidden": "true" }),
+            h("span", { className: p + "-dp-value" + (from || to ? "" : " is-empty") }, summary)
+          ),
+          (from || to) && props.clearable !== false ? h("button", { type: "button", className: p + "-dp-clear", "aria-label": en ? "Clear range" : "\u6E05\u9664\u8303\u56F4", onClick: function() {
+            apply({ from: "", to: "" });
+          } }, "\xD7") : null
+        ),
+        open ? h(
+          "div",
+          { className: p + "-dp-pop", role: "dialog", "aria-modal": "false", "aria-label": props.label || (en ? "Date range" : "\u65E5\u671F\u8303\u56F4") },
+          h(Calendar, {
+            h,
+            prefix: p,
+            lang: props.lang,
+            month,
+            min: props.min,
+            max: props.max,
+            onMove: function(m) {
+              setMonth(m);
+            },
+            isSelected: function(d) {
+              return start ? d === start : d === from || d === to;
+            },
+            isBetween: function(d) {
+              return start ? start < d && d < (to || "") : !!(from && to && d > from && d < to);
+            },
+            onPick: pick
+          }),
+          h(
+            "p",
+            { className: p + "-dp-hint", role: "status" },
+            start ? en ? "Start " + start + " \xB7 pick the end date" : "\u8D77\u59CB " + start + " \xB7 \u8BF7\u9009\u62E9\u7ED3\u675F\u65E5\u671F" : en ? "Pick start, then end date" : "\u5148\u9009\u5F00\u59CB\u65E5\u671F\uFF0C\u518D\u9009\u7ED3\u675F\u65E5\u671F"
+          ),
+          start ? h(
+            "div",
+            { className: p + "-dp-acts" },
+            h("button", { type: "button", className: p + "-dp-link", onClick: function() {
+              apply({ from: start, to: "" });
+            } }, en ? "Only start" : "\u4EC5\u8D77\u59CB\u65E5\u671F"),
+            h("button", { type: "button", className: p + "-dp-link", onClick: function() {
+              apply({ from: "", to: start });
+            } }, en ? "Only end" : "\u4EC5\u622A\u6B62\u65E5\u671F")
+          ) : null,
+          h(
+            "div",
+            { className: p + "-dp-foot" },
+            h("button", { type: "button", className: p + "-dp-link", onClick: function() {
+              setOpen(false);
+              setStart("");
+            } }, en ? "Cancel" : "\u53D6\u6D88")
+          )
+        ) : null
+      );
+    }
+    function MonthPicker(props) {
+      var c = ctx(props), R = c.R, h = c.h;
+      var p = props.prefix, en = props.lang === "en";
+      var value = /^\d{4}-\d{2}$/.test(props.value || "") ? props.value : "";
+      var base = value || monthKey(props.max || todayISO());
+      var openS = R.useState(!!props.defaultOpen), open = openS[0], setOpen = openS[1];
+      var yearS = R.useState(Number(base.slice(0, 4))), year = yearS[0], setYear = yearS[1];
+      var root = R.useRef(null);
+      usePopover(R, open, setOpen, root);
+      function pick(month) {
+        if (props.onChange) props.onChange(month);
+        setOpen(false);
+      }
+      var months = [];
+      for (var m = 1; m <= 12; m++) {
+        var key = year + "-" + pad(m);
+        months.push(h("button", {
+          key,
+          type: "button",
+          "data-month": key,
+          "aria-pressed": key === value,
+          className: p + "-dp-day" + (key === value ? " is-on" : "") + (key === monthKey(todayISO()) ? " is-today" : ""),
+          onClick: pick.bind(null, key)
+        }, en ? MONTH_EN[m - 1] : m + "\u6708"));
+      }
+      return h(
+        "div",
+        { className: p + "-dp" + (props.className ? " " + props.className : ""), ref: root },
+        h(
+          "div",
+          { className: p + "-dp-field" },
+          h(
+            "button",
+            {
+              type: "button",
+              className: p + "-dp-trigger",
+              "aria-haspopup": "dialog",
+              "aria-expanded": open,
+              "aria-label": (props.label || (en ? "Pick a month" : "\u9009\u62E9\u6708\u4EFD")) + ": " + (value ? monthLabel(value, en) : ""),
+              onClick: function() {
+                setYear(Number((value || base).slice(0, 4)));
+                setOpen(!open);
+              }
+            },
+            h("span", { className: p + "-dp-glyph", "aria-hidden": "true" }),
+            h("span", { className: p + "-dp-value" + (value ? "" : " is-empty") }, value ? monthLabel(value, en) : props.placeholder || (en ? "Pick a month" : "\u9009\u62E9\u6708\u4EFD"))
+          ),
+          value && props.clearable !== false ? h("button", { type: "button", className: p + "-dp-clear", "aria-label": en ? "Clear month" : "\u6E05\u9664\u6708\u4EFD", onClick: function() {
+            if (props.onChange) props.onChange("");
+          } }, "\xD7") : null
+        ),
+        open ? h(
+          "div",
+          { className: p + "-dp-pop is-months", role: "dialog", "aria-modal": "false", "aria-label": props.label || (en ? "Pick a month" : "\u9009\u62E9\u6708\u4EFD") },
+          h(
+            "div",
+            { className: p + "-dp-head" },
+            h("button", { type: "button", className: p + "-dp-nav", "aria-label": en ? "Previous year" : "\u4E0A\u4E00\u5E74", onClick: function() {
+              setYear(year - 1);
+            } }, "\u2039"),
+            h("strong", { className: p + "-dp-title", "aria-live": "polite" }, en ? String(year) : year + "\u5E74"),
+            h("button", { type: "button", className: p + "-dp-nav", "aria-label": en ? "Next year" : "\u4E0B\u4E00\u5E74", onClick: function() {
+              setYear(year + 1);
+            } }, "\u203A")
+          ),
+          h("div", { className: p + "-dp-months" }, months),
+          h(
+            "div",
+            { className: p + "-dp-foot" },
+            h("button", { type: "button", className: p + "-dp-link", onClick: function() {
+              pick(monthKey(todayISO()));
+            } }, en ? "This month" : "\u672C\u6708"),
+            h("button", { type: "button", className: p + "-dp-link", onClick: function() {
+              setOpen(false);
+            } }, en ? "Cancel" : "\u53D6\u6D88")
+          )
+        ) : null
+      );
+    }
+    function InlineCalendar(props) {
+      var c = ctx(props), R = c.R, h = c.h;
+      var p = props.prefix;
+      var value = validDate(props.value) ? props.value : "";
+      var monthS = R.useState(monthKey(props.month || value || props.max || todayISO())), month = monthS[0], setMonth = monthS[1];
+      return h(
+        "div",
+        { className: p + "-dp is-inline" },
+        h(Calendar, {
+          h,
+          prefix: p,
+          lang: props.lang,
+          month,
+          min: props.min,
+          max: props.max,
+          onMove: function(m) {
+            setMonth(m);
+            if (props.onMonthChange) props.onMonthChange(m);
+          },
+          isSelected: function(d) {
+            return d === value;
+          },
+          isBetween: props.isBetween,
+          onPick: function(d) {
+            if (props.onChange) props.onChange(d);
+          }
+        }),
+        props.footer ? h("div", { className: p + "-dp-foot" }, props.footer) : null
+      );
+    }
+    module2.exports = {
+      DatePicker,
+      RangePicker,
+      MonthPicker,
+      InlineCalendar,
+      todayISO,
+      validDate,
+      shiftDate,
+      shiftMonth,
+      normalizeRange,
+      monthLabel,
+      daysInMonth
+    };
+  }
+});
+
 // packages/addons/tasks/client/stats/trend-interaction.cjs
 var require_trend_interaction = __commonJS({
   "packages/addons/tasks/client/stats/trend-interaction.cjs"(exports2, module2) {
@@ -559,6 +972,7 @@ var require_charts = __commonJS({
   "packages/addons/tasks/client/stats/charts.cjs"(exports2, module2) {
     var React = require("react");
     var h = React.createElement;
+    var DP = require_date_picker();
     var COLORS = [
       "var(--dsw-alias-state-business-primary, #4f6ef7)",
       "var(--dsw-alias-state-success-primary, #2f9e6e)",
@@ -1081,16 +1495,6 @@ var require_charts = __commonJS({
         var custom = props.custom || null;
         var from = custom && custom.from ? custom.from : "";
         var to = custom && custom.to ? custom.to : "";
-        function setDate(key, value, input) {
-          if (input && input.validity && input.validity.badInput) {
-            if (props.onInvalidInput) props.onInvalidInput();
-            return;
-          }
-          if (typeof props.onCustomChange !== "function") return;
-          var next = { from, to };
-          next[key] = value;
-          props.onCustomChange(next);
-        }
         return h(
           "div",
           { className: prefix + "-stoolbar" },
@@ -1108,28 +1512,18 @@ var require_charts = __commonJS({
           h(
             "div",
             { className: prefix + "-range", role: "group", "aria-label": props.customAria || "\u81EA\u5B9A\u4E49\u65E5\u671F\u8303\u56F4" },
-            h("input", {
-              type: "date",
-              className: prefix + "-date",
-              value: from,
-              max: to && (!props.today || to < props.today) ? to : props.today || void 0,
-              "aria-label": props.fromLabel || "\u8D77\u59CB\u65E5\u671F",
-              title: props.fromLabel || "\u8D77\u59CB\u65E5\u671F",
-              onChange: function(e) {
-                setDate("from", e.target.value, e.target);
-              }
-            }),
-            h("span", { className: prefix + "-dash", "aria-hidden": "true" }, "\u2013"),
-            h("input", {
-              type: "date",
-              className: prefix + "-date",
-              value: to,
-              min: from || void 0,
+            h(DP.RangePicker, {
+              React,
+              h,
+              prefix,
+              lang: props.lang,
+              label: props.customAria || "\u81EA\u5B9A\u4E49\u65E5\u671F\u8303\u56F4",
+              value: { from, to },
               max: props.today || void 0,
-              "aria-label": props.toLabel || "\u7EC8\u6B62\u65E5\u671F",
-              title: props.toLabel || "\u7EC8\u6B62\u65E5\u671F",
-              onChange: function(e) {
-                setDate("to", e.target.value, e.target);
+              clearable: false,
+              onChange: function(next) {
+                if (typeof props.onCustomChange !== "function") return;
+                props.onCustomChange({ from: next.from, to: next.to });
               }
             }),
             from || to ? h("button", {
@@ -7428,6 +7822,54 @@ var require_filter_checklist_styles = __commonJS({
   }
 });
 
+// packages/addons/lib/date-picker-styles.cjs
+var require_date_picker_styles = __commonJS({
+  "packages/addons/lib/date-picker-styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function datePickerStyles(prefix) {
+      var p = String(prefix || "wb");
+      return [
+        ".{p}-dp,.{p}-dr{position:relative;min-width:0}",
+        ".{p}-dp-field{display:flex;align-items:center;gap:6px;min-width:0}",
+        ".{p}-dp-trigger{display:flex;align-items:center;gap:8px;min-width:0;width:100%;padding:8px 10px;border:1px solid var(--wb-border);border-radius:8px;background:var(--wb-surface);color:var(--wb-text,inherit);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,box-shadow .15s}",
+        ".{p}-dp-trigger:hover{border-color:var(--wb-accent)}",
+        ".{p}-dp-trigger:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}",
+        ".{p}-dp-trigger[disabled]{opacity:.55;cursor:not-allowed}",
+        ".{p}-dp-glyph{width:13px;height:13px;flex:none;border:1.5px solid currentColor;border-radius:3px;position:relative;opacity:.72}",
+        '.{p}-dp-glyph::before{content:"";position:absolute;left:-1.5px;right:-1.5px;top:3px;border-top:1.5px solid currentColor}',
+        '.{p}-dp-glyph::after{content:"";position:absolute;left:3px;top:-3px;width:1.5px;height:3px;background:currentColor;box-shadow:4px 0 currentColor}',
+        ".{p}-dp-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}",
+        ".{p}-dp-value.is-empty{color:var(--wb-muted)}",
+        ".{p}-dp-clear{flex:none;width:22px;height:22px;padding:0;border:0;border-radius:50%;background:color-mix(in srgb,var(--wb-muted) 14%,transparent);color:var(--wb-muted);font:inherit;line-height:1;cursor:pointer}",
+        ".{p}-dp-clear:hover{color:var(--wb-danger);background:color-mix(in srgb,var(--wb-danger) 16%,transparent)}",
+        ".{p}-dp-pop{position:absolute;z-index:40;top:calc(100% + 6px);left:0;width:272px;padding:10px;border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-card);box-shadow:0 16px 40px color-mix(in srgb,var(--wb-text,var(--wb-border)) 18%,transparent);animation:{p}-dp-in .14s ease-out}",
+        ".{p}-dp-head{display:flex;align-items:center;gap:6px;margin-bottom:8px}",
+        ".{p}-dp-title{flex:1;text-align:center;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}",
+        ".{p}-dp-nav{width:26px;height:26px;padding:0;border:1px solid var(--wb-border);border-radius:7px;background:transparent;color:inherit;font:inherit;line-height:1;cursor:pointer}",
+        ".{p}-dp-nav:hover{border-color:var(--wb-accent);color:var(--wb-accent)}",
+        ".{p}-dp-weekdays,.{p}-dp-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}",
+        ".{p}-dp-weekdays{margin-bottom:4px;font-size:11px;color:var(--wb-muted);text-align:center}",
+        ".{p}-dp-day{min-width:0;height:30px;padding:0;border:0;border-radius:7px;background:transparent;color:inherit;font:inherit;font-variant-numeric:tabular-nums;cursor:pointer}",
+        ".{p}-dp-day:hover{background:color-mix(in srgb,var(--wb-accent) 12%,transparent)}",
+        ".{p}-dp-day.is-between{background:color-mix(in srgb,var(--wb-accent) 16%,transparent);border-radius:0}",
+        ".{p}-dp-day.is-today{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--wb-accent) 55%,transparent)}",
+        ".{p}-dp-day.is-on{background:var(--wb-accent);color:var(--wb-on-accent,inherit);font-weight:600}",
+        ".{p}-dp-day:disabled{opacity:.35;cursor:not-allowed}",
+        ".{p}-dp-day:focus-visible{outline:2px solid var(--wb-accent);outline-offset:-2px}",
+        ".{p}-dp-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--wb-line)}",
+        ".{p}-dp-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}",
+        ".{p}-dp-link{padding:4px 8px;border:0;border-radius:6px;background:color-mix(in srgb,var(--wb-muted) 12%,transparent);color:inherit;font:inherit;font-size:12px;cursor:pointer}",
+        ".{p}-dp-link:hover{background:color-mix(in srgb,var(--wb-accent) 16%,transparent);color:var(--wb-accent)}",
+        ".{p}-dp-hint{margin:6px 0 0;font-size:11px;color:var(--wb-muted)}",
+        ".{p}-dp-pop.is-months{width:248px}",
+        ".{p}-dp-months{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-bottom:6px}",
+        ".{p}-dp-months .{p}-dp-day{height:34px}",
+        "@keyframes {p}-dp-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}"
+      ].join("\n").replace(/\{p\}/g, p);
+    };
+  }
+});
+
 // packages/addons/tasks/client/ui/styles.cjs
 var require_styles = __commonJS({
   "packages/addons/tasks/client/ui/styles.cjs"(exports2, module2) {
@@ -7448,7 +7890,6 @@ var require_styles = __commonJS({
       ".wbt-grow{flex:1;min-width:0}",
       ".wbt-btn{border:1px solid var(--wbt-line);background:var(--wbt-surface);color:inherit;border-radius:var(--wb-radius-sm);padding:6px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;line-height:1.3;display:inline-flex;align-items:center;gap:5px}",
       ".wbt-svg{display:block;flex:none}",
-      ".wbt-publication-filter{min-width:0;max-width:100%}",
       ".wbt-btn:hover{border-color:var(--wbt-accent)}",
       ".wbt-btn.primary{background:var(--wbt-accent);border-color:var(--wbt-accent);color:var(--dsw-alias-label-primary-inverted,#fff);font-weight:600}",
       ".wbt-btn.ghost{background:transparent}",
@@ -7465,7 +7906,6 @@ var require_styles = __commonJS({
       ".wbt-limit-row{display:flex;flex-direction:column;gap:4px;min-width:0}.wbt-limit-head{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;min-width:0}.wbt-limit-hint{margin:0;font-size:11.5px;line-height:1.6;opacity:.65;overflow-wrap:anywhere}.wbt-limit-head>strong{font-weight:560;font-size:12.5px;flex:none}.wbt-limit-fields{display:flex;align-items:center;gap:4px;min-width:0}.wbt-limit-fields input{flex:1 1 0;width:0;min-width:0;box-sizing:border-box;text-align:center;padding-left:6px;padding-right:6px}.wbt-limit-fields .wbt-limit-input{background-color:var(--wbt-surface);border:1px solid var(--wbt-line);border-radius:8px;padding:6px 4px;font-size:13px;color:inherit;font-variant-numeric:tabular-nums;-moz-appearance:textfield;appearance:textfield}.wbt-limit-fields .wbt-limit-input:focus{border-color:var(--wbt-accent);outline:none;box-shadow:0 0 0 3px color-mix(in oklab,var(--wbt-accent) 18%,transparent)}.wbt-limit-fields .wbt-limit-input::-webkit-outer-spin-button,.wbt-limit-fields .wbt-limit-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}.wbt-limit-fields>span{flex:none;opacity:.55;font-size:11.5px}.wbt-limit-clear{flex:none;padding:2px 6px;line-height:1.2}.wbt-limit-unit{font-size:11px;opacity:.55;overflow-wrap:anywhere;min-width:0}",
       ".wbt-presets{gap:6px}.wbt-preset-list{display:flex;flex-wrap:wrap;gap:6px}.wbt-preset{padding:4px 9px;border:1px solid var(--wbt-line);border-radius:999px;background:var(--wbt-surface);color:inherit;font-size:12px;line-height:1.5;white-space:normal}.wbt-preset:hover{border-color:var(--wbt-accent)}.wbt-preset.active{background:var(--wbt-accent);border-color:var(--wbt-accent);color:#fff}.wbt-preset:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:2px}.wbt-target-group{gap:8px}",
       ".wbt-status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 8px}.wbt-status-grid .wbt-check{min-width:0;overflow-wrap:anywhere}.wbt-pathrow>.wbt-sum{flex:none;white-space:nowrap}",
-      ".wbt-publication-filter{width:100%}.wbt-range-entry{display:flex;gap:4px;align-items:center}.wbt-range-trigger{width:100%;min-width:0;text-align:left;white-space:normal}.wbt-range-trigger span{min-width:0;overflow-wrap:anywhere}.wbt-range-calendar{margin-top:8px;padding:6px;border:1px solid var(--wbt-line);border-radius:8px;background:var(--wbt-bg)}.wbt-range-month{display:flex;gap:4px;align-items:center;margin-bottom:8px}.wbt-range-month input{width:100%;min-width:0;padding:4px;border:1px solid var(--wbt-line);border-radius:4px;background:var(--wbt-bg);color:inherit}.wbt-range-month .wbt-btn{padding:4px 7px}.wbt-range-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;margin:8px 0}.wbt-range-weekday{text-align:center;font-size:11px;opacity:.7}.wbt-range-day{min-width:0;padding:6px 0;border:0;border-radius:4px;background:transparent;color:inherit;font:inherit;cursor:pointer}.wbt-range-day.between{background:color-mix(in srgb,var(--wbt-accent) 18%,transparent)}.wbt-range-day:hover{box-shadow:inset 0 0 0 1px var(--wbt-accent)}.wbt-range-day.selected{background:var(--wbt-accent);color:#fff}.wbt-range-day:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:1px}.wbt-range-actions{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}",
       ".wbt-nav{display:flex;flex-direction:column;gap:2px;flex:0 0 138px;width:138px;padding:3px 0;border-right:1px solid var(--wbt-line)}",
       ".wbt-content{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;border:1px solid var(--wbt-line);border-radius:10px;background:var(--wbt-surface);overflow:hidden}.wbt-list-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:10px;scrollbar-gutter:stable}.wbt-content>.wbt-pager{flex:none;margin:0;padding:8px 10px;border-top:1px solid var(--wbt-line)}",
       ".wbt-nav-sep{height:1px;background:var(--wbt-line);margin:5px 9px;opacity:.7}",
@@ -7691,7 +8131,7 @@ var require_styles = __commonJS({
       "@media (max-width:760px){.wbt-body{flex-direction:column;gap:8px}.wbt-nav{flex-direction:row;width:100%;flex:0 0 auto;overflow-x:auto;border-right:none;border-bottom:1px solid var(--wbt-line);padding:0 0 6px}.wbt-tab{width:auto;white-space:nowrap;padding:6px 9px}.wbt-tab.on{box-shadow:inset 0 -2px 0 var(--wbt-accent)}.wbt-nav-sep{width:1px;height:18px;flex:none;margin:auto 4px}.wbt-tree-slot{flex:0 0 auto;width:auto;margin-right:0}.wbt-pathrow .wbt-search{flex:1 1 160px;max-width:none}}",
       "@media (max-width:760px){.wbt-filter-panel{width:100%;flex:0 0 auto;padding:8px;max-height:40%}.wbt-filter-toggle{display:inline-flex}.wbt-filter-panel:not(.expanded) .wbt-filter-content{display:none}.wbt-filter-panel.expanded .wbt-filter-content{padding-top:10px}.wbt-content{width:100%;box-sizing:border-box}}",
       "@media (max-width:640px){.wbt-form{grid-template-columns:1fr}.wbt-drawer{width:94vw}.wbt-search{width:100%}.wbt-item{padding:9px}.wbt-ops{width:100%;justify-content:flex-end}}"
-    ].concat(require_filter_checklist_styles()).join("\n");
+    ].concat(require_filter_checklist_styles(), require_date_picker_styles()("wbt")).join("\n");
   }
 });
 
@@ -8678,6 +9118,7 @@ var require_create_modal = __commonJS({
       var WorkspaceSelect = require_workspace_select()(React).WorkspaceSelect;
       var difficultyField = require_difficulty_field()(React);
       var ownership = require_ownership(), fields = require_ownership_fields()(React);
+      var DP = require_date_picker();
       var allTables = deps.allTables, tagNames = deps.tagNames, splitTags = deps.splitTags;
       var today = deps.today, addDays = deps.addDays, hostHasAddon = deps.hostHasAddon;
       function CreateModal(props) {
@@ -8869,20 +9310,20 @@ var require_create_modal = __commonJS({
                 set("priority", e.target.value);
               } })),
               fields({ form, set, setMany, tree: props.tree, recommended: props.defaultTableId || origin && origin.tableId }),
-              h("label", { className: "wbt-field" }, h("span", null, t.publishDate), h("input", { className: "wbt-input", type: "date", value: form.publishDate, onChange: function(e) {
-                set("publishDate", e.target.value);
+              h("label", { className: "wbt-field" }, h("span", null, t.publishDate), h(DP.DatePicker, { React, h, prefix: "wbt", lang: props.lang, label: t.publishDate, value: form.publishDate, onChange: function(next) {
+                set("publishDate", next);
               } })),
-              h("label", { className: "wbt-field" }, h("span", null, t.targetDate), h("input", { className: "wbt-input", type: "date", value: form.targetDate, onChange: function(e) {
-                set("targetDate", e.target.value);
+              h("label", { className: "wbt-field" }, h("span", null, t.targetDate), h(DP.DatePicker, { React, h, prefix: "wbt", lang: props.lang, label: t.targetDate, value: form.targetDate, onChange: function(next) {
+                set("targetDate", next);
               } })),
-              source !== "2" && form.status === "2" ? h("label", { className: "wbt-field" }, h("span", null, t.doneDate), h("input", { className: "wbt-input", type: "date", value: form.doneDate, onChange: function(e) {
-                set("doneDate", e.target.value);
+              source !== "2" && form.status === "2" ? h("label", { className: "wbt-field" }, h("span", null, t.doneDate), h(DP.DatePicker, { React, h, prefix: "wbt", lang: props.lang, label: t.doneDate, value: form.doneDate, onChange: function(next) {
+                set("doneDate", next);
               } })) : null,
               difficultyField(t, form.difficulty, function(value) {
                 set("difficulty", value);
               }, "wbt-create-difficulty"),
-              source !== "2" && form.status === "1" ? h("label", { className: "wbt-field" }, h("span", null, t.shutdownDate), h("input", { className: "wbt-input", type: "date", value: form.shutdownDate, onChange: function(e) {
-                set("shutdownDate", e.target.value);
+              source !== "2" && form.status === "1" ? h("label", { className: "wbt-field" }, h("span", null, t.shutdownDate), h(DP.DatePicker, { React, h, prefix: "wbt", lang: props.lang, label: t.shutdownDate, value: form.shutdownDate, onChange: function(next) {
+                set("shutdownDate", next);
               } })) : null
             ),
             priorityError ? h("div", { id: "wbt-create-priority-error", className: "wbt-err", role: "alert" }, priorityError) : null,
@@ -9226,6 +9667,7 @@ var require_edit_modal = __commonJS({
       var difficultyField = require_difficulty_field()(React);
       var WorkspaceSelect = require_workspace_select()(React).WorkspaceSelect;
       var ownership = require_ownership(), fields = require_ownership_fields()(React);
+      var DP = require_date_picker();
       function EditModal(props) {
         var t = props.t;
         var task = props.task;
@@ -9370,8 +9812,8 @@ var require_edit_modal = __commonJS({
               "label",
               { className: "wbt-field" },
               h("span", null, t.targetDate),
-              h("input", { className: "wbt-input", type: "date", value: form.targetDate, onChange: function(e) {
-                set("targetDate", e.target.value);
+              h(DP.DatePicker, { React, h, prefix: "wbt", lang: props.lang, label: t.targetDate, value: form.targetDate, onChange: function(next) {
+                set("targetDate", next);
               } })
             ) : null,
             canPriority ? h(
@@ -9488,147 +9930,35 @@ var require_date_filter = __commonJS({
   "packages/addons/tasks/client/ui/date-filter.cjs"(exports2, module2) {
     var React = require("react");
     var h = React.createElement;
-    var Icon2 = require_icons().Icon;
-    function validDate(value) {
-      if (!value) return true;
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-      var d = /* @__PURE__ */ new Date(value + "T00:00:00Z");
-      return isFinite(d.getTime()) && d.toISOString().slice(0, 10) === value && value.slice(0, 4) !== "0000";
-    }
-    function normalize(value) {
-      var from = value.from || "", to = value.to || "";
-      if (!validDate(from) || !validDate(to)) return null;
-      return from && to && from > to ? { from: to, to: from, swapped: true } : { from, to, swapped: false };
-    }
-    function today() {
-      var d = /* @__PURE__ */ new Date();
-      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-    }
-    function shift(date, days) {
-      var d = /* @__PURE__ */ new Date(date + "T00:00:00Z");
-      d.setUTCDate(d.getUTCDate() + days);
-      return d.toISOString().slice(0, 10);
-    }
+    var DP = require_date_picker();
+    var NAMES = {
+      zh: { publish: "\u53D1\u5E03", done: "\u5B8C\u6210", shutdown: "\u5173\u95ED", target: "\u76EE\u6807" },
+      en: { publish: "Publication", done: "Completion", shutdown: "Closure", target: "Target" }
+    };
     function DateFilter(props) {
-      var en = props.lang === "en", value = props.value;
-      var names = en ? { publish: "Publication", done: "Completion", shutdown: "Closure", target: "Target" } : { publish: "\u53D1\u5E03", done: "\u5B8C\u6210", shutdown: "\u5173\u95ED", target: "\u76EE\u6807" };
-      var name = names[props.kind] || names.publish, title = name + (en ? " date range" : "\u65F6\u95F4\u8303\u56F4");
-      var openS = React.useState(false), open = openS[0], setOpen = openS[1];
-      var startS = React.useState(""), start = startS[0], setStart = startS[1];
-      var monthS = React.useState((value.from || value.to || today()).slice(0, 7)), month = monthS[0], setMonth = monthS[1];
-      var focusS = React.useState(""), focus = focusS[0], setFocus = focusS[1];
-      var root = React.useRef(null), trigger = React.useRef(null), id = React.useId();
-      React.useEffect(function() {
-        if (open && focus && root.current) {
-          var b = root.current.querySelector('[data-day="' + focus + '"]');
-          if (b) b.focus();
+      var en = props.lang === "en";
+      var names = en ? NAMES.en : NAMES.zh;
+      var name = names[props.kind] || names.publish;
+      return h(DP.RangePicker, {
+        React,
+        h,
+        prefix: "wbt",
+        lang: props.lang,
+        label: name + (en ? " date range" : "\u65F6\u95F4\u8303\u56F4"),
+        placeholder: en ? "Choose date range" : "\u9009\u62E9\u65E5\u671F\u8303\u56F4",
+        value: props.value || { from: "", to: "" },
+        onChange: function(next) {
+          props.onChange({ from: next.from, to: next.to });
         }
-      }, [open, focus, month]);
-      function close() {
-        setOpen(false);
-        setStart("");
-        if (trigger.current) trigger.current.focus();
-      }
-      function apply(next) {
-        var result = normalize(next);
-        if (result) {
-          props.onChange(result);
-          close();
-        }
-      }
-      function pick(day2) {
-        if (!start) setStart(day2);
-        else apply({ from: start, to: day2 });
-      }
-      function moveMonth(delta) {
-        var d = /* @__PURE__ */ new Date(month + "-01T00:00:00Z");
-        d.setUTCMonth(d.getUTCMonth() + delta);
-        var next = d.toISOString().slice(0, 7);
-        if (/^\d{4}-\d{2}$/.test(next) && next.slice(0, 4) !== "0000") setMonth(next);
-      }
-      function keyDay(e, day2) {
-        var delta = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key];
-        if (delta) {
-          e.preventDefault();
-          var next = shift(day2, delta);
-          if (validDate(next)) {
-            setMonth(next.slice(0, 7));
-            setFocus(next);
-          }
-        }
-      }
-      var first = month + "-01", offset = (/* @__PURE__ */ new Date(first + "T00:00:00Z")).getUTCDay();
-      var count = new Date(Number(month.slice(0, 4)), Number(month.slice(5)), 0).getDate(), cells = [];
-      for (var i = 0; i < offset; i++) cells.push(h("span", { key: "empty" + i, "aria-hidden": true }));
-      for (var n = 1; n <= count; n++) {
-        var day = month + "-" + String(n).padStart(2, "0"), endpoint = start ? day === start : day === value.from || day === value.to;
-        var inside = !start && value.from && value.to && day > value.from && day < value.to;
-        cells.push(h("button", {
-          key: day,
-          type: "button",
-          "data-day": day,
-          "aria-label": day,
-          "aria-pressed": !!endpoint,
-          "aria-current": day === today() ? "date" : void 0,
-          className: "wbt-range-day" + (endpoint ? " selected" : "") + (inside ? " between" : ""),
-          onClick: pick.bind(null, day),
-          onKeyDown: function(d, e) {
-            keyDay(e, d);
-          }.bind(null, day)
-        }, n));
-      }
-      var summary = value.from && value.to ? value.from + " \u2014 " + value.to : value.from ? value.from + (en ? " onward" : " \u8D77") : value.to ? (en ? "Until " : "\u622A\u81F3 ") + value.to : en ? "Choose date range" : "\u9009\u62E9\u65E5\u671F\u8303\u56F4";
-      return h(
-        "div",
-        { className: "wbt-publication-filter", ref: root, onKeyDown: function(e) {
-          if (e.key === "Escape" && open) {
-            e.stopPropagation();
-            close();
-          }
-        } },
-        h(
-          "div",
-          { className: "wbt-range-entry" },
-          h("button", { ref: trigger, type: "button", className: "wbt-btn wbt-range-trigger", "aria-label": title + ": " + summary, "aria-expanded": open, "aria-controls": id, onClick: function() {
-            setStart("");
-            setFocus("");
-            setMonth((value.from || value.to || today()).slice(0, 7));
-            setOpen(!open);
-          } }, h(Icon2, { name: "calendar" }), h("span", null, summary)),
-          value.from || value.to ? h("button", { type: "button", className: "wbt-date-clear", "aria-label": en ? "Clear time range" : "\u6E05\u9664\u65F6\u95F4\u8303\u56F4", onClick: function() {
-            apply({ from: "", to: "" });
-          } }, "\xD7") : null
-        ),
-        open ? h(
-          "div",
-          { id, className: "wbt-range-calendar", role: "group", "aria-label": title },
-          h(
-            "div",
-            { className: "wbt-range-month" },
-            h("button", { type: "button", className: "wbt-btn ghost", "aria-label": en ? "Previous month" : "\u4E0A\u4E2A\u6708", onClick: function() {
-              moveMonth(-1);
-            } }, "\u2039"),
-            h("input", { type: "month", value: month, min: "0001-01", max: "9999-12", "aria-label": en ? "Calendar month" : "\u65E5\u5386\u6708\u4EFD", onChange: function(e) {
-              if (validDate(e.target.value + "-01")) setMonth(e.target.value);
-            } }),
-            h("button", { type: "button", className: "wbt-btn ghost", "aria-label": en ? "Next month" : "\u4E0B\u4E2A\u6708", onClick: function() {
-              moveMonth(1);
-            } }, "\u203A")
-          ),
-          h("p", { className: "wbt-mhint", role: "status" }, start ? (en ? "Start: " : "\u8D77\u59CB\uFF1A") + start + (en ? " \xB7 Choose end date" : " \xB7 \u8BF7\u9009\u62E9\u7ED3\u675F\u65E5\u671F") : en ? "Choose start, then end date" : "\u5148\u9009\u5F00\u59CB\u65E5\u671F\uFF0C\u518D\u9009\u7ED3\u675F\u65E5\u671F"),
-          h("div", { className: "wbt-range-grid" }, (en ? ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] : ["\u65E5", "\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D"]).map(function(x) {
-            return h("span", { key: x, className: "wbt-range-weekday", "aria-hidden": true }, x);
-          }), cells),
-          start ? h("div", { className: "wbt-range-actions" }, h("button", { type: "button", className: "wbt-btn ghost", onClick: function() {
-            apply({ from: start, to: "" });
-          } }, en ? "From this date" : "\u4EC5\u8D77\u59CB\u65E5\u671F"), h("button", { type: "button", className: "wbt-btn ghost", onClick: function() {
-            apply({ from: "", to: start });
-          } }, en ? "Until this date" : "\u4EC5\u622A\u6B62\u65E5\u671F")) : null,
-          h("button", { type: "button", className: "wbt-btn ghost", onClick: close }, en ? "Cancel" : "\u53D6\u6D88")
-        ) : null
-      );
+      });
     }
-    module2.exports = { DateFilter, normalize, validDate, today, shift };
+    module2.exports = {
+      DateFilter,
+      normalize: DP.normalizeRange,
+      validDate: DP.validDate,
+      today: DP.todayISO,
+      shift: DP.shiftDate
+    };
   }
 });
 
@@ -12362,7 +12692,7 @@ var init_list_checks = __esm({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.24",
+    version: "5.2.25",
     icon: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },

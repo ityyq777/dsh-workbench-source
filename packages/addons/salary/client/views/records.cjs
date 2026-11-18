@@ -6,10 +6,10 @@
 module.exports = function Records(props) {
   var h = props.h, React = props.React, api = props.api, lang = props.lang;
   var C = require("../ui/common.cjs");
+  var DP = require("../../../lib/date-picker.cjs");
   var F = require("../ui/fields.cjs");
 
   var status = C.useLoad(React, api, "salary.status", {}, []);
-  var statsLoad = C.useLoad(React, api, "salary.stats", { year: new Date().getFullYear() }, []);
   var filterState = React.useState({ year: String(new Date().getFullYear()), cycle: "" });
   var filter = filterState[0], setFilter = filterState[1];
   var list = C.useLoad(React, api, "salary.recordList", {
@@ -44,7 +44,6 @@ module.exports = function Records(props) {
 
   function reloadAll() {
     status.refresh();
-    statsLoad.refresh();
     list.refresh();
   }
 
@@ -159,12 +158,6 @@ module.exports = function Records(props) {
   var yearOptions = ["", String(currentYear + 1), String(currentYear), String(currentYear - 1), String(currentYear - 2)];
   var latest = status.data || {};
 
-  function kpi(label, value, sub) {
-    return h("div", { className: "wbsal-card wbsal-kpi" },
-      h("span", null, label),
-      h("strong", null, value),
-      h("em", null, sub));
-  }
 
   function amountInput(key, disabled) {
     return h("input", {
@@ -189,7 +182,7 @@ module.exports = function Records(props) {
         h(C.Btn, { h: h, kind: "ghost", onClick: closeForm }, "关闭")),
       h("div", { className: "wbsal-form-meta" },
         h(C.Field, { h: h, label: "发薪日期", hint: F.incomeLabel(form.payDate) ? "对应 " + F.incomeLabel(form.payDate) + " 工资" : "月中发上月工资" },
-          h("input", { className: "wbsal-input", type: "date", value: form.payDate, onChange: function (e) { setField("payDate", e.target.value); } })),
+          h(DP.DatePicker, { React: React, h: h, prefix: "wbsal", lang: lang, label: "发薪日期", value: form.payDate, onChange: function (next) { setField("payDate", next); } })),
         h(C.Field, { h: h, label: "类型", hint: "月结=月中发上月工资" },
           h("select", { className: "wbsal-input", value: form.cycle, onChange: function (e) { setField("cycle", e.target.value); } },
             h("option", { value: "monthly" }, "月结"), h("option", { value: "daily" }, "日结"))),
@@ -331,14 +324,6 @@ module.exports = function Records(props) {
       h("div", { className: "wbsal-toolbar-end" },
         h("span", { className: "wbsal-toolbar-count" }, "共 ", h("b", null, total), " 笔"),
         h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, "＋ 记一笔"))),
-    h("div", { className: "wbsal-kpis" },
-      kpi("最近实发", latest.latestNetPay !== undefined ? F.money(latest.latestNetPay) : "—",
-        latest.latestDate ? latest.latestDate + " · 最近一笔" : "还没有记录"),
-      kpi("月均实发", statsLoad.data ? F.money(statsLoad.data.avgNetPay) : "—", "按有记录月份平均"),
-      kpi("今年累计实发", statsLoad.data ? F.money(statsLoad.data.netTotal) : "—",
-        currentYear + " 年 · " + (statsLoad.data ? statsLoad.data.records : 0) + " 笔"),
-      kpi("今年个税", statsLoad.data ? F.money(statsLoad.data.incomeTaxTotal) : "—", "工资薪金预扣"),
-      kpi("今年五险一金", statsLoad.data ? F.money(statsLoad.data.socialTotal) : "—", "养老 / 医疗 / 失业 / 公积金")),
     h(C.Notice, { h: h, kind: msg && msg.kind, text: msg && !form ? msg.text : "" }),
     body,
     form ? renderModal() : null);

@@ -2,6 +2,7 @@
 // 每个业务包各存一份，避免 npm 安装后跨包相对引用失效。
 var React = require("react");
 var h = React.createElement;
+var DP = require("../../../lib/date-picker.cjs");
 
 // 统计页图标与列表页同源：lucide-react 按需引入，随 client.js 一起打包。
 var ICONS = {
@@ -339,18 +340,13 @@ function makeCharts(prefix) {
         }, o.label);
       })),
       h("div", { className: prefix + "-range", role: "group", "aria-label": props.customAria || "自定义日期范围" },
-        h("input", {
-          type: "date", className: prefix + "-date", value: from,
-          max: props.today || undefined,
-          "aria-label": props.fromLabel || "起始日期", title: props.fromLabel || "起始日期",
-          onChange: function (e) { setDate("from", e.target.value); },
-        }),
-        h("span", { className: prefix + "-dash", "aria-hidden": "true" }, "–"),
-        h("input", {
-          type: "date", className: prefix + "-date", value: to,
-          min: from || undefined, max: props.today || undefined,
-          "aria-label": props.toLabel || "终止日期", title: props.toLabel || "终止日期",
-          onChange: function (e) { setDate("to", e.target.value); },
+        h(DP.RangePicker, {
+          React: React, h: h, prefix: prefix, lang: props.lang, label: props.customAria || "自定义日期范围",
+          value: { from: from, to: to }, max: props.today || undefined, clearable: false,
+          onChange: function (next) {
+            if (typeof props.onCustomChange !== "function") return;
+            props.onCustomChange({ from: next.from, to: next.to });
+          },
         }),
         (from || to) ? h("button", {
           type: "button", className: prefix + "-clear", "aria-label": props.clearLabel || "清除自定义范围",

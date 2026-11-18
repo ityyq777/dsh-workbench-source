@@ -165,6 +165,7 @@ function toHtml(tree) {
   return "<" + tag + attrs.join("") + ">" + inner + "</" + tag + ">";
 }
 
+async function main() {
 const css = require(ROOT + "packages/addons/salary/client/ui/styles.cjs");
 const cssText = Array.isArray(css) ? css.join("\n") : String(css);
 
@@ -219,3 +220,8 @@ ${pane("dark", "dark · stats · 应发口径", statsGrossHtml)}
 
 writeFileSync("/tmp/salary-preview.html", html);
 console.log("/tmp/salary-preview.html", html.length);
+}
+
+export { Hooks, makeReact, toHtml };
+
+if (process.argv[1] && process.argv[1].endsWith("preview-salary.mjs")) await main();

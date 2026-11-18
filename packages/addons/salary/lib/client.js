@@ -85,6 +85,54 @@ var require_client_base_styles = __commonJS({
   }
 });
 
+// packages/addons/lib/date-picker-styles.cjs
+var require_date_picker_styles = __commonJS({
+  "packages/addons/lib/date-picker-styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function datePickerStyles(prefix) {
+      var p = String(prefix || "wb");
+      return [
+        ".{p}-dp,.{p}-dr{position:relative;min-width:0}",
+        ".{p}-dp-field{display:flex;align-items:center;gap:6px;min-width:0}",
+        ".{p}-dp-trigger{display:flex;align-items:center;gap:8px;min-width:0;width:100%;padding:8px 10px;border:1px solid var(--wb-border);border-radius:8px;background:var(--wb-surface);color:var(--wb-text,inherit);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,box-shadow .15s}",
+        ".{p}-dp-trigger:hover{border-color:var(--wb-accent)}",
+        ".{p}-dp-trigger:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}",
+        ".{p}-dp-trigger[disabled]{opacity:.55;cursor:not-allowed}",
+        ".{p}-dp-glyph{width:13px;height:13px;flex:none;border:1.5px solid currentColor;border-radius:3px;position:relative;opacity:.72}",
+        '.{p}-dp-glyph::before{content:"";position:absolute;left:-1.5px;right:-1.5px;top:3px;border-top:1.5px solid currentColor}',
+        '.{p}-dp-glyph::after{content:"";position:absolute;left:3px;top:-3px;width:1.5px;height:3px;background:currentColor;box-shadow:4px 0 currentColor}',
+        ".{p}-dp-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}",
+        ".{p}-dp-value.is-empty{color:var(--wb-muted)}",
+        ".{p}-dp-clear{flex:none;width:22px;height:22px;padding:0;border:0;border-radius:50%;background:color-mix(in srgb,var(--wb-muted) 14%,transparent);color:var(--wb-muted);font:inherit;line-height:1;cursor:pointer}",
+        ".{p}-dp-clear:hover{color:var(--wb-danger);background:color-mix(in srgb,var(--wb-danger) 16%,transparent)}",
+        ".{p}-dp-pop{position:absolute;z-index:40;top:calc(100% + 6px);left:0;width:272px;padding:10px;border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-card);box-shadow:0 16px 40px color-mix(in srgb,var(--wb-text,var(--wb-border)) 18%,transparent);animation:{p}-dp-in .14s ease-out}",
+        ".{p}-dp-head{display:flex;align-items:center;gap:6px;margin-bottom:8px}",
+        ".{p}-dp-title{flex:1;text-align:center;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}",
+        ".{p}-dp-nav{width:26px;height:26px;padding:0;border:1px solid var(--wb-border);border-radius:7px;background:transparent;color:inherit;font:inherit;line-height:1;cursor:pointer}",
+        ".{p}-dp-nav:hover{border-color:var(--wb-accent);color:var(--wb-accent)}",
+        ".{p}-dp-weekdays,.{p}-dp-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}",
+        ".{p}-dp-weekdays{margin-bottom:4px;font-size:11px;color:var(--wb-muted);text-align:center}",
+        ".{p}-dp-day{min-width:0;height:30px;padding:0;border:0;border-radius:7px;background:transparent;color:inherit;font:inherit;font-variant-numeric:tabular-nums;cursor:pointer}",
+        ".{p}-dp-day:hover{background:color-mix(in srgb,var(--wb-accent) 12%,transparent)}",
+        ".{p}-dp-day.is-between{background:color-mix(in srgb,var(--wb-accent) 16%,transparent);border-radius:0}",
+        ".{p}-dp-day.is-today{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--wb-accent) 55%,transparent)}",
+        ".{p}-dp-day.is-on{background:var(--wb-accent);color:var(--wb-on-accent,inherit);font-weight:600}",
+        ".{p}-dp-day:disabled{opacity:.35;cursor:not-allowed}",
+        ".{p}-dp-day:focus-visible{outline:2px solid var(--wb-accent);outline-offset:-2px}",
+        ".{p}-dp-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--wb-line)}",
+        ".{p}-dp-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}",
+        ".{p}-dp-link{padding:4px 8px;border:0;border-radius:6px;background:color-mix(in srgb,var(--wb-muted) 12%,transparent);color:inherit;font:inherit;font-size:12px;cursor:pointer}",
+        ".{p}-dp-link:hover{background:color-mix(in srgb,var(--wb-accent) 16%,transparent);color:var(--wb-accent)}",
+        ".{p}-dp-hint{margin:6px 0 0;font-size:11px;color:var(--wb-muted)}",
+        ".{p}-dp-pop.is-months{width:248px}",
+        ".{p}-dp-months{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-bottom:6px}",
+        ".{p}-dp-months .{p}-dp-day{height:34px}",
+        "@keyframes {p}-dp-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}"
+      ].join("\n").replace(/\{p\}/g, p);
+    };
+  }
+});
+
 // packages/addons/salary/client/ui/styles.cjs
 var require_styles = __commonJS({
   "packages/addons/salary/client/ui/styles.cjs"(exports2, module2) {
@@ -260,7 +308,8 @@ var require_styles = __commonJS({
       "@media (max-width:900px){.wbsal-table th.hide-md,.wbsal-table td.hide-md{display:none}}",
       "@media (max-width:760px){.wbsal-detail{grid-template-columns:minmax(0,1fr)}.wbsal-page{padding:16px 14px 36px}.wbsal-table th,.wbsal-table td{padding:9px 10px}.wbsal-opt,.wbsal-table th.opt{display:none}.wbsal-comp-row{grid-template-columns:80px minmax(50px,1fr) 112px}.wbsal-chart{height:170px}}"
     ];
-    module2.exports = BASE.concat(PAGE).join("\n");
+    var DATE = require_date_picker_styles()("wbsal");
+    module2.exports = BASE.concat(PAGE, [DATE]).join("\n");
   }
 });
 
@@ -986,11 +1035,12 @@ var require_stats = __commonJS({
           h(
             "div",
             { className: "wbsal-kpis" },
-            kpi("\u5E74\u5EA6\u5B9E\u53D1\u5408\u8BA1", F.money(data.netTotal), data.records + " \u7B14 \xB7 \u8986\u76D6 " + data.months + " \u4E2A\u6708"),
+            kpi("\u6700\u8FD1\u5B9E\u53D1", data.latest ? F.money(data.latest.netPay) : "\u2014", data.latest ? data.latest.payDate + " \xB7 \u6700\u8FD1\u4E00\u7B14" : "\u8FD8\u6CA1\u6709\u8BB0\u5F55"),
             kpi("\u6708\u5747\u5B9E\u53D1", F.money(data.avgNetPay), "\u6309\u6709\u8BB0\u5F55\u7684\u6708\u4EFD\u5E73\u5747"),
+            kpi("\u5E74\u5EA6\u5B9E\u53D1\u5408\u8BA1", F.money(data.netTotal), data.records + " \u7B14 \xB7 \u8986\u76D6 " + data.months + " \u4E2A\u6708"),
             kpi("\u5E74\u5EA6\u5E94\u53D1", F.money(data.grossTotal), "\u7A0E\u524D"),
             kpi("\u5E74\u5EA6\u4E2A\u7A0E", F.money(data.incomeTaxTotal), "\u5DE5\u8D44\u85AA\u91D1\u9884\u6263"),
-            kpi("\u5E74\u5EA6\u793E\u4FDD\u516C\u79EF\u91D1", F.money(data.socialTotal), "\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1")
+            kpi("\u5E74\u5EA6\u4E94\u9669\u4E00\u91D1", F.money(data.socialTotal), "\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1")
           ),
           h(
             "div",
@@ -1190,6 +1240,419 @@ var require_stats = __commonJS({
   }
 });
 
+// packages/addons/lib/date-picker.cjs
+var require_date_picker = __commonJS({
+  "packages/addons/lib/date-picker.cjs"(exports2, module2) {
+    "use strict";
+    var ReactDefault = require("react");
+    var MONTH_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    function pad(n) {
+      return String(n).padStart(2, "0");
+    }
+    function todayISO() {
+      var d = /* @__PURE__ */ new Date();
+      return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+    }
+    function validDate(value) {
+      if (!value) return false;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+      var d = /* @__PURE__ */ new Date(value + "T00:00:00Z");
+      return isFinite(d.getTime()) && d.toISOString().slice(0, 10) === value && value.slice(0, 4) !== "0000";
+    }
+    function toUTC(iso) {
+      return /* @__PURE__ */ new Date(iso + "T00:00:00Z");
+    }
+    function shiftDate(iso, days) {
+      var d = toUTC(iso);
+      d.setUTCDate(d.getUTCDate() + days);
+      return d.toISOString().slice(0, 10);
+    }
+    function shiftMonth(month, delta) {
+      var d = toUTC(month + "-01");
+      d.setUTCMonth(d.getUTCMonth() + delta);
+      return d.toISOString().slice(0, 7);
+    }
+    function monthKey(iso) {
+      return (iso || todayISO()).slice(0, 7);
+    }
+    function monthLabel(month, en) {
+      return en ? month.slice(0, 4) + "-" + month.slice(5) : month.slice(0, 4) + "\u5E74" + Number(month.slice(5)) + "\u6708";
+    }
+    function daysInMonth(month) {
+      return new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5)), 0)).getUTCDate();
+    }
+    function normalizeRange(value) {
+      var from = value && validDate(value.from) ? value.from : "";
+      var to = value && validDate(value.to) ? value.to : "";
+      if (from && to && from > to) return { from: to, to: from, swapped: true };
+      return { from, to, swapped: false };
+    }
+    function clampDay(iso, min, max) {
+      if (min && iso < min) return false;
+      if (max && iso > max) return false;
+      return true;
+    }
+    function ctx(props) {
+      var R = props && props.React || ReactDefault;
+      return { R, h: props && props.h || R.createElement };
+    }
+    function usePopover(R, open, setOpen, root) {
+      R.useEffect(function() {
+        if (!open) return void 0;
+        function onDoc(ev) {
+          if (root.current && !root.current.contains(ev.target)) setOpen(false);
+        }
+        function onKey(ev) {
+          if (ev.key === "Escape") setOpen(false);
+        }
+        if (typeof document !== "undefined" && typeof document.addEventListener === "function") {
+          document.addEventListener("mousedown", onDoc);
+          document.addEventListener("keydown", onKey);
+          return function() {
+            document.removeEventListener("mousedown", onDoc);
+            document.removeEventListener("keydown", onKey);
+          };
+        }
+        return void 0;
+      }, [open]);
+    }
+    function Calendar(props) {
+      var h = props.h, p = props.prefix, en = props.lang === "en";
+      var month = props.month, cells = [];
+      var offset = toUTC(month + "-01").getUTCDay();
+      var count = daysInMonth(month);
+      var i;
+      for (i = 0; i < offset; i++) cells.push(h("span", { key: "e" + i, "aria-hidden": "true" }));
+      for (i = 1; i <= count; i++) {
+        var day = month + "-" + pad(i);
+        var disabled = !clampDay(day, props.min, props.max);
+        var selected = props.isSelected ? props.isSelected(day) : false;
+        var between = props.isBetween ? props.isBetween(day) : false;
+        cells.push(h("button", {
+          key: day,
+          type: "button",
+          disabled,
+          "data-day": day,
+          "aria-label": day,
+          "aria-pressed": selected,
+          "aria-current": day === todayISO() ? "date" : void 0,
+          className: p + "-dp-day" + (selected ? " is-on" : "") + (between ? " is-between" : "") + (day === todayISO() ? " is-today" : ""),
+          onClick: props.onPick.bind(null, day),
+          onKeyDown: function(ev) {
+            var delta = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[ev.key];
+            if (!delta) return;
+            ev.preventDefault();
+            var next = shiftDate(ev.currentTarget.getAttribute("data-day"), delta);
+            if (clampDay(next, props.min, props.max)) props.onMove(monthKey(next), next);
+          }
+        }, i));
+      }
+      return h(
+        "div",
+        { className: p + "-dp-cal", role: "group", "aria-label": en ? "Calendar" : "\u65E5\u5386" },
+        h(
+          "div",
+          { className: p + "-dp-head" },
+          h("button", { type: "button", className: p + "-dp-nav", "aria-label": en ? "Previous month" : "\u4E0A\u4E2A\u6708", onClick: function() {
+            props.onMove(shiftMonth(month, -1), "");
+          } }, "\u2039"),
+          h("strong", { className: p + "-dp-title", "aria-live": "polite" }, monthLabel(month, en)),
+          h("button", { type: "button", className: p + "-dp-nav", "aria-label": en ? "Next month" : "\u4E0B\u4E2A\u6708", onClick: function() {
+            props.onMove(shiftMonth(month, 1), "");
+          } }, "\u203A")
+        ),
+        h(
+          "div",
+          { className: p + "-dp-weekdays", "aria-hidden": "true" },
+          (en ? ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] : ["\u65E5", "\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D"]).map(function(w) {
+            return h("span", { key: w }, w);
+          })
+        ),
+        h("div", { className: p + "-dp-grid" }, cells)
+      );
+    }
+    function DatePicker(props) {
+      var c = ctx(props), R = c.R, h = c.h;
+      var p = props.prefix, en = props.lang === "en";
+      var value = validDate(props.value) ? props.value : "";
+      var openS = R.useState(!!props.defaultOpen), open = openS[0], setOpen = openS[1];
+      var monthS = R.useState(monthKey(value || props.max || todayISO())), month = monthS[0], setMonth = monthS[1];
+      var root = R.useRef(null);
+      usePopover(R, open, setOpen, root);
+      function pick(day) {
+        if (props.onChange) props.onChange(day);
+        setOpen(false);
+      }
+      function toggle() {
+        setMonth(monthKey(validDate(props.value) ? props.value : props.max || todayISO()));
+        setOpen(!open);
+      }
+      return h(
+        "div",
+        { className: p + "-dp" + (props.className ? " " + props.className : ""), ref: root },
+        h(
+          "div",
+          { className: p + "-dp-field" },
+          h(
+            "button",
+            {
+              type: "button",
+              className: p + "-dp-trigger",
+              disabled: !!props.disabled,
+              "aria-haspopup": "dialog",
+              "aria-expanded": open,
+              "aria-label": (props.label ? props.label + ": " : "") + (value || props.placeholder || (en ? "Pick a date" : "\u9009\u62E9\u65E5\u671F")),
+              onClick: toggle
+            },
+            h("span", { className: p + "-dp-glyph", "aria-hidden": "true" }),
+            h("span", { className: p + "-dp-value" + (value ? "" : " is-empty") }, value || props.placeholder || (en ? "Pick a date" : "\u9009\u62E9\u65E5\u671F"))
+          ),
+          value && !props.disabled && props.clearable !== false ? h("button", { type: "button", className: p + "-dp-clear", "aria-label": en ? "Clear date" : "\u6E05\u9664\u65E5\u671F", onClick: function() {
+            if (props.onChange) props.onChange("");
+          } }, "\xD7") : null
+        ),
+        open ? h(
+          "div",
+          { className: p + "-dp-pop", role: "dialog", "aria-modal": "false", "aria-label": props.label || (en ? "Pick a date" : "\u9009\u62E9\u65E5\u671F") },
+          h(Calendar, { h, prefix: p, lang: props.lang, month, min: props.min, max: props.max, onMove: function(m) {
+            setMonth(m);
+          }, isSelected: function(d) {
+            return d === value;
+          }, onPick: pick }),
+          h(
+            "div",
+            { className: p + "-dp-foot" },
+            h("button", { type: "button", className: p + "-dp-link", onClick: function() {
+              pick(todayISO());
+            } }, en ? "Today" : "\u4ECA\u5929"),
+            props.min || props.max ? h("span", { className: p + "-dp-hint" }, [props.min, props.max].filter(Boolean).join(" \u2014 ")) : null
+          )
+        ) : null
+      );
+    }
+    function RangePicker(props) {
+      var c = ctx(props), R = c.R, h = c.h;
+      var p = props.prefix, en = props.lang === "en";
+      var range = normalizeRange(props.value);
+      var from = range.from, to = range.to;
+      var openS = R.useState(!!props.defaultOpen), open = openS[0], setOpen = openS[1];
+      var startS = R.useState(""), start = startS[0], setStart = startS[1];
+      var monthS = R.useState(monthKey(from || to || props.max || todayISO())), month = monthS[0], setMonth = monthS[1];
+      var root = R.useRef(null);
+      usePopover(R, open, setOpen, root);
+      function apply(next) {
+        if (typeof props.onChange === "function") props.onChange(normalizeRange(next));
+        setStart("");
+        setOpen(false);
+      }
+      function pick(day) {
+        if (!start) {
+          setStart(day);
+          return;
+        }
+        apply({ from: start, to: day });
+      }
+      function toggle() {
+        setStart("");
+        setMonth(monthKey(from || to || props.max || todayISO()));
+        setOpen(!open);
+      }
+      var summary = from && to ? from + " \u2014 " + to : from ? from + (en ? " onward" : " \u8D77") : to ? (en ? "Until " : "\u622A\u81F3 ") + to : props.placeholder || (en ? "Choose date range" : "\u9009\u62E9\u65E5\u671F\u8303\u56F4");
+      return h(
+        "div",
+        { className: p + "-dr" + (props.className ? " " + props.className : ""), ref: root },
+        h(
+          "div",
+          { className: p + "-dp-field" },
+          h(
+            "button",
+            {
+              type: "button",
+              className: p + "-dp-trigger",
+              "aria-haspopup": "dialog",
+              "aria-expanded": open,
+              "aria-label": (props.label || (en ? "Date range" : "\u65E5\u671F\u8303\u56F4")) + ": " + summary,
+              onClick: toggle
+            },
+            h("span", { className: p + "-dp-glyph", "aria-hidden": "true" }),
+            h("span", { className: p + "-dp-value" + (from || to ? "" : " is-empty") }, summary)
+          ),
+          (from || to) && props.clearable !== false ? h("button", { type: "button", className: p + "-dp-clear", "aria-label": en ? "Clear range" : "\u6E05\u9664\u8303\u56F4", onClick: function() {
+            apply({ from: "", to: "" });
+          } }, "\xD7") : null
+        ),
+        open ? h(
+          "div",
+          { className: p + "-dp-pop", role: "dialog", "aria-modal": "false", "aria-label": props.label || (en ? "Date range" : "\u65E5\u671F\u8303\u56F4") },
+          h(Calendar, {
+            h,
+            prefix: p,
+            lang: props.lang,
+            month,
+            min: props.min,
+            max: props.max,
+            onMove: function(m) {
+              setMonth(m);
+            },
+            isSelected: function(d) {
+              return start ? d === start : d === from || d === to;
+            },
+            isBetween: function(d) {
+              return start ? start < d && d < (to || "") : !!(from && to && d > from && d < to);
+            },
+            onPick: pick
+          }),
+          h(
+            "p",
+            { className: p + "-dp-hint", role: "status" },
+            start ? en ? "Start " + start + " \xB7 pick the end date" : "\u8D77\u59CB " + start + " \xB7 \u8BF7\u9009\u62E9\u7ED3\u675F\u65E5\u671F" : en ? "Pick start, then end date" : "\u5148\u9009\u5F00\u59CB\u65E5\u671F\uFF0C\u518D\u9009\u7ED3\u675F\u65E5\u671F"
+          ),
+          start ? h(
+            "div",
+            { className: p + "-dp-acts" },
+            h("button", { type: "button", className: p + "-dp-link", onClick: function() {
+              apply({ from: start, to: "" });
+            } }, en ? "Only start" : "\u4EC5\u8D77\u59CB\u65E5\u671F"),
+            h("button", { type: "button", className: p + "-dp-link", onClick: function() {
+              apply({ from: "", to: start });
+            } }, en ? "Only end" : "\u4EC5\u622A\u6B62\u65E5\u671F")
+          ) : null,
+          h(
+            "div",
+            { className: p + "-dp-foot" },
+            h("button", { type: "button", className: p + "-dp-link", onClick: function() {
+              setOpen(false);
+              setStart("");
+            } }, en ? "Cancel" : "\u53D6\u6D88")
+          )
+        ) : null
+      );
+    }
+    function MonthPicker(props) {
+      var c = ctx(props), R = c.R, h = c.h;
+      var p = props.prefix, en = props.lang === "en";
+      var value = /^\d{4}-\d{2}$/.test(props.value || "") ? props.value : "";
+      var base = value || monthKey(props.max || todayISO());
+      var openS = R.useState(!!props.defaultOpen), open = openS[0], setOpen = openS[1];
+      var yearS = R.useState(Number(base.slice(0, 4))), year = yearS[0], setYear = yearS[1];
+      var root = R.useRef(null);
+      usePopover(R, open, setOpen, root);
+      function pick(month) {
+        if (props.onChange) props.onChange(month);
+        setOpen(false);
+      }
+      var months = [];
+      for (var m = 1; m <= 12; m++) {
+        var key = year + "-" + pad(m);
+        months.push(h("button", {
+          key,
+          type: "button",
+          "data-month": key,
+          "aria-pressed": key === value,
+          className: p + "-dp-day" + (key === value ? " is-on" : "") + (key === monthKey(todayISO()) ? " is-today" : ""),
+          onClick: pick.bind(null, key)
+        }, en ? MONTH_EN[m - 1] : m + "\u6708"));
+      }
+      return h(
+        "div",
+        { className: p + "-dp" + (props.className ? " " + props.className : ""), ref: root },
+        h(
+          "div",
+          { className: p + "-dp-field" },
+          h(
+            "button",
+            {
+              type: "button",
+              className: p + "-dp-trigger",
+              "aria-haspopup": "dialog",
+              "aria-expanded": open,
+              "aria-label": (props.label || (en ? "Pick a month" : "\u9009\u62E9\u6708\u4EFD")) + ": " + (value ? monthLabel(value, en) : ""),
+              onClick: function() {
+                setYear(Number((value || base).slice(0, 4)));
+                setOpen(!open);
+              }
+            },
+            h("span", { className: p + "-dp-glyph", "aria-hidden": "true" }),
+            h("span", { className: p + "-dp-value" + (value ? "" : " is-empty") }, value ? monthLabel(value, en) : props.placeholder || (en ? "Pick a month" : "\u9009\u62E9\u6708\u4EFD"))
+          ),
+          value && props.clearable !== false ? h("button", { type: "button", className: p + "-dp-clear", "aria-label": en ? "Clear month" : "\u6E05\u9664\u6708\u4EFD", onClick: function() {
+            if (props.onChange) props.onChange("");
+          } }, "\xD7") : null
+        ),
+        open ? h(
+          "div",
+          { className: p + "-dp-pop is-months", role: "dialog", "aria-modal": "false", "aria-label": props.label || (en ? "Pick a month" : "\u9009\u62E9\u6708\u4EFD") },
+          h(
+            "div",
+            { className: p + "-dp-head" },
+            h("button", { type: "button", className: p + "-dp-nav", "aria-label": en ? "Previous year" : "\u4E0A\u4E00\u5E74", onClick: function() {
+              setYear(year - 1);
+            } }, "\u2039"),
+            h("strong", { className: p + "-dp-title", "aria-live": "polite" }, en ? String(year) : year + "\u5E74"),
+            h("button", { type: "button", className: p + "-dp-nav", "aria-label": en ? "Next year" : "\u4E0B\u4E00\u5E74", onClick: function() {
+              setYear(year + 1);
+            } }, "\u203A")
+          ),
+          h("div", { className: p + "-dp-months" }, months),
+          h(
+            "div",
+            { className: p + "-dp-foot" },
+            h("button", { type: "button", className: p + "-dp-link", onClick: function() {
+              pick(monthKey(todayISO()));
+            } }, en ? "This month" : "\u672C\u6708"),
+            h("button", { type: "button", className: p + "-dp-link", onClick: function() {
+              setOpen(false);
+            } }, en ? "Cancel" : "\u53D6\u6D88")
+          )
+        ) : null
+      );
+    }
+    function InlineCalendar(props) {
+      var c = ctx(props), R = c.R, h = c.h;
+      var p = props.prefix;
+      var value = validDate(props.value) ? props.value : "";
+      var monthS = R.useState(monthKey(props.month || value || props.max || todayISO())), month = monthS[0], setMonth = monthS[1];
+      return h(
+        "div",
+        { className: p + "-dp is-inline" },
+        h(Calendar, {
+          h,
+          prefix: p,
+          lang: props.lang,
+          month,
+          min: props.min,
+          max: props.max,
+          onMove: function(m) {
+            setMonth(m);
+            if (props.onMonthChange) props.onMonthChange(m);
+          },
+          isSelected: function(d) {
+            return d === value;
+          },
+          isBetween: props.isBetween,
+          onPick: function(d) {
+            if (props.onChange) props.onChange(d);
+          }
+        }),
+        props.footer ? h("div", { className: p + "-dp-foot" }, props.footer) : null
+      );
+    }
+    module2.exports = {
+      DatePicker,
+      RangePicker,
+      MonthPicker,
+      InlineCalendar,
+      todayISO,
+      validDate,
+      shiftDate,
+      shiftMonth,
+      normalizeRange,
+      monthLabel,
+      daysInMonth
+    };
+  }
+});
+
 // packages/addons/salary/client/views/records.cjs
 var require_records = __commonJS({
   "packages/addons/salary/client/views/records.cjs"(exports2, module2) {
@@ -1197,9 +1660,9 @@ var require_records = __commonJS({
     module2.exports = function Records(props) {
       var h = props.h, React = props.React, api = props.api, lang = props.lang;
       var C = require_common();
+      var DP = require_date_picker();
       var F = require_fields();
       var status = C.useLoad(React, api, "salary.status", {}, []);
-      var statsLoad = C.useLoad(React, api, "salary.stats", { year: (/* @__PURE__ */ new Date()).getFullYear() }, []);
       var filterState = React.useState({ year: String((/* @__PURE__ */ new Date()).getFullYear()), cycle: "" });
       var filter = filterState[0], setFilter = filterState[1];
       var list = C.useLoad(React, api, "salary.recordList", {
@@ -1233,7 +1696,6 @@ var require_records = __commonJS({
       }, [modalOpen, form && form.mode, form && form.id]);
       function reloadAll() {
         status.refresh();
-        statsLoad.refresh();
         list.refresh();
       }
       function pickDate(cycle) {
@@ -1346,15 +1808,6 @@ var require_records = __commonJS({
       var currentYear = (/* @__PURE__ */ new Date()).getFullYear();
       var yearOptions = ["", String(currentYear + 1), String(currentYear), String(currentYear - 1), String(currentYear - 2)];
       var latest = status.data || {};
-      function kpi(label, value, sub) {
-        return h(
-          "div",
-          { className: "wbsal-card wbsal-kpi" },
-          h("span", null, label),
-          h("strong", null, value),
-          h("em", null, sub)
-        );
-      }
       function amountInput(key, disabled) {
         return h("input", {
           className: "wbsal-input",
@@ -1397,8 +1850,8 @@ var require_records = __commonJS({
             h(
               C.Field,
               { h, label: "\u53D1\u85AA\u65E5\u671F", hint: F.incomeLabel(form.payDate) ? "\u5BF9\u5E94 " + F.incomeLabel(form.payDate) + " \u5DE5\u8D44" : "\u6708\u4E2D\u53D1\u4E0A\u6708\u5DE5\u8D44" },
-              h("input", { className: "wbsal-input", type: "date", value: form.payDate, onChange: function(e) {
-                setField("payDate", e.target.value);
+              h(DP.DatePicker, { React, h, prefix: "wbsal", lang, label: "\u53D1\u85AA\u65E5\u671F", value: form.payDate, onChange: function(next) {
+                setField("payDate", next);
               } })
             ),
             h(
@@ -1661,23 +2114,6 @@ var require_records = __commonJS({
             h("span", { className: "wbsal-toolbar-count" }, "\u5171 ", h("b", null, total), " \u7B14"),
             h(C.Btn, { h, kind: "primary", onClick: openCreate }, "\uFF0B \u8BB0\u4E00\u7B14")
           )
-        ),
-        h(
-          "div",
-          { className: "wbsal-kpis" },
-          kpi(
-            "\u6700\u8FD1\u5B9E\u53D1",
-            latest.latestNetPay !== void 0 ? F.money(latest.latestNetPay) : "\u2014",
-            latest.latestDate ? latest.latestDate + " \xB7 \u6700\u8FD1\u4E00\u7B14" : "\u8FD8\u6CA1\u6709\u8BB0\u5F55"
-          ),
-          kpi("\u6708\u5747\u5B9E\u53D1", statsLoad.data ? F.money(statsLoad.data.avgNetPay) : "\u2014", "\u6309\u6709\u8BB0\u5F55\u6708\u4EFD\u5E73\u5747"),
-          kpi(
-            "\u4ECA\u5E74\u7D2F\u8BA1\u5B9E\u53D1",
-            statsLoad.data ? F.money(statsLoad.data.netTotal) : "\u2014",
-            currentYear + " \u5E74 \xB7 " + (statsLoad.data ? statsLoad.data.records : 0) + " \u7B14"
-          ),
-          kpi("\u4ECA\u5E74\u4E2A\u7A0E", statsLoad.data ? F.money(statsLoad.data.incomeTaxTotal) : "\u2014", "\u5DE5\u8D44\u85AA\u91D1\u9884\u6263"),
-          kpi("\u4ECA\u5E74\u4E94\u9669\u4E00\u91D1", statsLoad.data ? F.money(statsLoad.data.socialTotal) : "\u2014", "\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1")
         ),
         h(C.Notice, { h, kind: msg && msg.kind, text: msg && !form ? msg.text : "" }),
         body,
@@ -3483,7 +3919,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.1.4",
+    version: "0.1.5",
     icon: (init_wallet(), __toCommonJS(wallet_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },
