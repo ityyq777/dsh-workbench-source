@@ -146,14 +146,14 @@ const problems = [];
 if (!HOST.addon || HOST.addon.id !== "wb-addon-salary") problems.push("client.src.cjs 没有注册 wb-addon-salary");
 if (!HOST.addon || !Array.isArray(HOST.addon.views) || HOST.addon.views.length !== 4) problems.push("views 数量不是 4");
 const css = styles.map((el) => el.textContent).join("\n");
-for (const klass of ["wbsal-page", "wbsal-kpi", "wbsal-record-row", "wbsal-chart", "wbsal-comp", "wbsal-input", "--wb-card", "wbsal-table", "wbsal-card", "wbsal-metric", "wbsal-mask", "wbsal-form-modal"]) {
+for (const klass of ["wbsal-page", "wbsal-kpi", "wbsal-record-row", "wbsal-chart", "wbsal-comp", "wbsal-input", "--wb-card", "wbsal-table", "wbsal-card", "wbsal-metric", "wbsal-mask", "wbsal-form-modal", "wbsal-linechart", "wbsal-series"]) {
   if (!css.includes(klass)) problems.push("样式表缺少 " + klass);
 }
 
 const api = { call: async (action) => ({ ok: true, result: RESPONSES[action] !== undefined ? RESPONSES[action] : {} }) };
 const checks = [
   ["records", "views/records.cjs", "工资记录", ["wbsal-record-row", "wbsal-toolbar", "wbsal-toolbar-end", "wbsal-month", "wbsal-mask"]],
-  ["stats", "views/stats.cjs", "统计", ["wbsal-chart", "wbsal-comp", "wbsal-table", "wbsal-metric"]],
+  ["stats", "views/stats.cjs", "统计", ["wbsal-chart", "wbsal-comp", "wbsal-table", "wbsal-metric", "wbsal-linechart", "wbsal-series"]],
 ];
 for (const [id, file, title, expected] of checks) {
   const view = HOST.addon.views.find((v) => v.id === id);
@@ -174,6 +174,29 @@ for (const [id, file, title, expected] of checks) {
   for (const klass of expected) if (!found.has(klass)) problems.push(id + " 没渲染出 ." + klass);
   if (JSON.stringify(tree).includes("undefined")) problems.push(id + " 渲染结果含 undefined 文本");
 }
+
+// 折线图：默认四条线全显示，取消勾选后对应折线不再渲染
+function polyClasses(tree, found = []) {
+  if (!tree || typeof tree !== "object") return found;
+  if (Array.isArray(tree)) { tree.forEach((item) => polyClasses(item, found)); return found; }
+  if (tree.type === "polyline" && tree.props) found.push(tree.props.className || "");
+  (tree.children || []).forEach((child) => polyClasses(child, found));
+  return found;
+}
+const statsComp = require(ROOT + "packages/addons/salary/client/views/stats.cjs");
+const fixedApi = { call: async (action) => ({ ok: true, result: RESPONSES[action] !== undefined ? RESPONSES[action] : {} }) };
+const allLines = polyClasses(await render(statsComp, { api: fixedApi, lang: "zh", title: "统计", h: HOST.h }, fixedApi));
+for (const tone of ["s1", "s2", "s3", "s4"]) {
+  if (!allLines.some((name) => name.includes(tone))) problems.push("折线图默认应显示 " + tone + " 线");
+}
+const hiddenLines = polyClasses(await render(statsComp, {
+  api: fixedApi, lang: "zh", title: "统计", h: HOST.h,
+  initialVisible: { basePay: false, performancePay: false },
+}, fixedApi));
+if (!hiddenLines.some((name) => name.includes("s1"))) problems.push("隐藏基本/绩效后实发折线不应消失");
+if (!hiddenLines.some((name) => name.includes("s2"))) problems.push("隐藏基本/绩效后应发折线不应消失");
+if (hiddenLines.some((name) => name.includes("s3"))) problems.push("取消勾选后基本折线仍然渲染");
+if (hiddenLines.some((name) => name.includes("s4"))) problems.push("取消勾选后绩效折线仍然渲染");
 
 for (const file of ["views/records.cjs", "views/stats.cjs", "views/data.cjs", "views/actions.cjs"]) {
   const src = readFileSync(ROOT + "packages/addons/salary/client/" + file, "utf8");

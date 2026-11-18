@@ -20,8 +20,8 @@ const zero = () => Object.fromEntries(FIELDS.map((key) => [key, 0]));
 
 const records = [
   Object.assign(zero(), { id: "sal_4", payDate: "2026-10-15", cycle: "monthly", basePay: 8800, performancePay: 2200, allowance: 480, performanceBonus: 800, grossPay: 12280, pension: 739.2, medical: 184.8, unemployment: 46.2, housingFund: 462, incomeTax: 175.44, netPay: 10672.36, note: "2026 年 10 月工资条" }),
-  Object.assign(zero(), { id: "sal_3", payDate: "2026-09-15", cycle: "monthly", grossPay: 9720, pension: 739.2, medical: 184.8, unemployment: 46.2, housingFund: 462, incomeTax: 98.63, netPay: 8189.17, note: "截图未显示收入构成" }),
-  Object.assign(zero(), { id: "sal_2", payDate: "2026-08-15", cycle: "monthly", grossPay: 9640, pension: 739.2, medical: 184.8, unemployment: 46.2, housingFund: 462, incomeTax: 96.24, netPay: 8111.56, note: "截图未显示收入构成" }),
+  Object.assign(zero(), { id: "sal_3", payDate: "2026-09-15", cycle: "monthly", basePay: 7040, performancePay: 2200, grossPay: 9720, pension: 739.2, medical: 184.8, unemployment: 46.2, housingFund: 462, incomeTax: 98.63, netPay: 8189.17, note: "截图未显示收入构成" }),
+  Object.assign(zero(), { id: "sal_2", payDate: "2026-08-15", cycle: "monthly", basePay: 7040, performancePay: 2200, grossPay: 9640, pension: 739.2, medical: 184.8, unemployment: 46.2, housingFund: 462, incomeTax: 96.24, netPay: 8111.56, note: "截图未显示收入构成" }),
   Object.assign(zero(), { id: "sal_1", payDate: "2026-07-15", cycle: "monthly", basePay: 7040, performancePay: 2200, allowance: 160, grossPay: 9400, pension: 739.2, medical: 184.8, unemployment: 46.2, housingFund: 462, incomeTax: 89.03, netPay: 7878.77, note: "" }),
 ];
 
@@ -144,6 +144,16 @@ function toHtml(tree) {
   for (const key of ["colSpan", "rowSpan"]) {
     if (props[key] !== undefined) attrs.push(" " + key.toLowerCase() + '="' + esc(props[key]) + '"');
   }
+  // SVG 几何与其余普通属性照原样输出（x/y/cx/cy/r/points/viewBox/d/title 等），否则图表画不出来
+  const SKIP = new Set(["className", "style", "id", "children", "key", "ref", "type", "value", "placeholder", "colSpan", "rowSpan", "dangerouslySetInnerHTML"]);
+  for (const key of Object.keys(props)) {
+    if (SKIP.has(key) || /^on[A-Z]/.test(key) || /^(aria-|role$|data-)/.test(key)) continue;
+    const value = props[key];
+    if (value === undefined || value === null || value === false) continue;
+    if (typeof value === "function" || typeof value === "object") continue;
+    const name = key === "viewBox" ? "viewBox" : key.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase());
+    attrs.push(" " + name + '="' + esc(String(value)) + '"');
+  }
   if (tag === "input" || tag === "select" || tag === "textarea") {
     if (props.type) attrs.push(' type="' + esc(props.type) + '"');
     if (props.value !== undefined) attrs.push(' value="' + esc(props.value) + '"');
@@ -178,6 +188,8 @@ const recordsHtml = toHtml(await renderView("views/records.cjs"));
 const statsHtml = toHtml(await renderView("views/stats.cjs"));
 // 第二个统计实例切到「应发」口径，用来核对切换后的柱形高度与数值
 const statsGrossHtml = toHtml(await renderView("views/stats.cjs", { initialMetric: "grossPay" }));
+// 关掉基本/绩效两条线，核对勾选后折线消失、其余两条保留
+const statsHiddenHtml = toHtml(await renderView("views/stats.cjs", { initialVisible: { basePay: false, performancePay: false } }));
 const detailHtml = toHtml(await renderView("views/records.cjs", { initialOpenId: "sal_4" }));
 const formValues = {};
 for (const key of FIELDS) formValues[key] = "";
@@ -211,6 +223,7 @@ ${pane("light", "light · records", recordsHtml)}
 ${pane("light", "light · detail", detailHtml)}
 ${pane("light", "light · stats", statsHtml)}
 ${pane("light", "light · stats · 应发口径", statsGrossHtml)}
+${pane("light", "light · stats · 只留实发/应发", statsHiddenHtml)}
 ${pane("light", "light · form", formHtml, "pane-modal")}
 ${pane("dark", "dark · records", detailHtml)}
 ${pane("dark", "dark · form", formHtml, "pane-modal")}

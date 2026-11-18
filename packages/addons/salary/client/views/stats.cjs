@@ -26,6 +26,68 @@ module.exports = function Stats(props) {
   var topMonth = -1;
   monthly.forEach(function (bucket, i) { if (metricValue(bucket) > 0 && (topMonth < 0 || metricValue(bucket) > metricValue(monthly[topMonth]))) topMonth = i; });
 
+  // 折线图：四条线（实发/应发/基本/绩效）各自可勾选显示，默认全开。
+  var LINE_SERIES = [
+    { key: "netPay", label: "实发", tone: "s1" },
+    { key: "grossPay", label: "应发", tone: "s2" },
+    { key: "basePay", label: "基本", tone: "s3" },
+    { key: "performancePay", label: "绩效", tone: "s4" },
+  ];
+  var visibleState = React.useState(Object.assign({ netPay: true, grossPay: true, basePay: true, performancePay: true }, props.initialVisible || {}));
+  var visible = visibleState[0];
+  function toggleSeries(key) {
+    var next = {};
+    LINE_SERIES.forEach(function (m) { next[m.key] = !!visible[m.key]; });
+    next[key] = !next[key];
+    visibleState[1](next);
+  }
+  var recordedMonths = monthly.filter(function (bucket) { return bucket.records > 0; });
+  var lineMax = 1;
+  recordedMonths.forEach(function (bucket) {
+    LINE_SERIES.forEach(function (m) { var v = Number(bucket[m.key]) || 0; if (v > lineMax) lineMax = v; });
+  });
+  lineMax = Math.max(1000, Math.ceil(lineMax / 1000) * 1000);
+  var LPAD = { l: 62, r: 16, t: 14, b: 30 };
+  var LW = 1000, LH = 250;
+  var plotW = LW - LPAD.l - LPAD.r;
+  var plotH = LH - LPAD.t - LPAD.b;
+  function plotX(month) { return LPAD.l + ((month - 1) / 11) * plotW; }
+  function plotY(value) { return LPAD.t + plotH * (1 - Math.min(1, (Number(value) || 0) / lineMax)); }
+  function gridLabel(value) { return Math.round(value).toLocaleString("zh-CN"); }
+  function renderLineChart() {
+    var children = [];
+    var ticks = [1, 0.75, 0.5, 0.25, 0];
+    ticks.forEach(function (ratio) {
+      var value = lineMax * ratio;
+      var y = plotY(value);
+      children.push(h("line", { key: "g" + ratio, x1: LPAD.l, y1: y, x2: LW - LPAD.r, y2: y, className: "wbsal-line-gridline" }));
+      children.push(h("text", { key: "gt" + ratio, x: LPAD.l - 10, y: y + 4, textAnchor: "end" }, gridLabel(value)));
+    });
+    monthly.forEach(function (bucket) {
+      children.push(h("text", { key: "x" + bucket.month, x: plotX(bucket.month), y: LH - 10, textAnchor: "middle" }, bucket.month));
+    });
+    LINE_SERIES.forEach(function (m) {
+      if (!visible[m.key] || recordedMonths.length === 0) return;
+      var points = recordedMonths.map(function (bucket) {
+        return { month: bucket.month, value: Number(bucket[m.key]) || 0 };
+      });
+      if (points.length > 1) {
+        children.push(h("polyline", {
+          key: "line" + m.key,
+          className: "wbsal-line " + m.tone,
+          points: points.map(function (pt) { return plotX(pt.month) + "," + plotY(pt.value); }).join(" "),
+        }));
+      }
+      points.forEach(function (pt) {
+        children.push(h("circle", {
+          key: "dot" + m.key + pt.month, className: "wbsal-line-dot " + m.tone,
+          cx: plotX(pt.month), cy: plotY(pt.value), r: 3.6,
+        }, h("title", null, pt.month + " 月 · " + m.label + " " + F.money(pt.value))));
+      });
+    });
+    return h("svg", { viewBox: "0 0 " + LW + " " + LH, role: "img", "aria-label": "月度实发/应发/基本/绩效折线图" }, children);
+  }
+
   function signed(amount) {
     var n = Number(amount) || 0;
     return (n > 0 ? "+" : n < 0 ? "-" : "") + F.money(Math.abs(n));
@@ -100,6 +162,25 @@ module.exports = function Stats(props) {
         h("div", { className: "wbsal-chart-foot" },
           h("span", { className: "wbsal-legend" }, h("i", null), "有记录月份", h("i", { className: "soft" }), "其他月份"),
           h("span", null, "单位：元 · 按发薪日期归属月份 · 当前口径 " + metricLabel))),
+
+      h("div", { className: "wbsal-card wbsal-section" },
+        h("div", { className: "wbsal-section-head" },
+          h("h3", null, "月度趋势对比"),
+          h("div", { className: "wbsal-series", role: "group", "aria-label": "折线显示开关" }, LINE_SERIES.map(function (m) {
+            return h("button", {
+              key: m.key, type: "button",
+              className: visible[m.key] ? "on" : "off",
+              "aria-pressed": !!visible[m.key],
+              title: (visible[m.key] ? "隐藏" : "显示") + m.label,
+              onClick: function () { toggleSeries(m.key); },
+            }, h("i", { className: m.tone }), m.label);
+          }))),
+        h("div", { className: "wbsal-linechart" }, renderLineChart()),
+        LINE_SERIES.some(function (m) { return visible[m.key]; }) ? null
+          : h("div", { className: "wbsal-chart-hint" }, "四条线都关掉了，点上方「实发 / 应发 / 基本 / 绩效」任意一个恢复显示"),
+        h("div", { className: "wbsal-chart-foot" },
+          h("span", null, "实发 / 应发 / 基本 / 绩效 四条线，可点上方标签单独开关"),
+          h("span", null, "单位：元 · 仅连接有记录的月份"))),
 
       h("div", { className: "wbsal-card wbsal-section" },
         h("div", { className: "wbsal-section-head" },

@@ -269,6 +269,31 @@ var require_styles = __commonJS({
       ".wbsal-legend{display:inline-flex;align-items:center;gap:6px}",
       ".wbsal-legend i{width:8px;height:8px;border-radius:2px;background:var(--wb-accent,#2563eb);display:inline-block}",
       ".wbsal-legend i.soft{background:color-mix(in srgb,var(--wb-accent,#2563eb) 38%,transparent)}",
+      ".wbsal-series{display:flex;align-items:center;gap:6px;flex-wrap:wrap}",
+      ".wbsal-series button{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--wb-border,#e2e6ee);border-radius:999px;background:var(--wb-surface,#fff);color:var(--wb-fg,inherit);font-size:12px;line-height:1;cursor:pointer;transition:opacity .12s,border-color .12s,background .12s}",
+      ".wbsal-series button:hover{border-color:color-mix(in srgb,var(--wb-accent,#2563eb) 45%,var(--wb-border,#e2e6ee))}",
+      ".wbsal-series button.off{opacity:.45;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-series button.off i{filter:grayscale(1)}",
+      ".wbsal-series i{width:14px;height:3px;border-radius:2px;display:inline-block;background:var(--wb-muted,#8b94a6)}",
+      ".wbsal-series i.s1,.wbsal-line-dot.s1{background:var(--wb-accent,#2563eb)}",
+      ".wbsal-series i.s2,.wbsal-line-dot.s2{background:var(--wb-ok,#16a34a)}",
+      ".wbsal-series i.s3,.wbsal-line-dot.s3{background:var(--wb-warn,#d97706)}",
+      ".wbsal-series i.s4,.wbsal-line-dot.s4{background:color-mix(in oklab,var(--wb-accent,#2563eb) 45%,var(--wb-danger,#dc2626))}",
+      ".wbsal-linechart{width:100%;padding:10px 2px 0}",
+      ".wbsal-chart-hint{margin-top:8px;padding:10px 12px;border-radius:8px;background:color-mix(in srgb,var(--wb-muted,#8b94a6) 10%,transparent);color:var(--wb-muted,#8b94a6);font-size:12px}",
+      ".wbsal-linechart svg{display:block;width:100%;height:auto;overflow:visible}",
+      ".wbsal-linechart text{fill:var(--wb-muted,#8b94a6);font-size:11px;font-variant-numeric:tabular-nums}",
+      ".wbsal-line-gridline{stroke:var(--wb-line,#eef0f4);stroke-width:1;vector-effect:non-scaling-stroke}",
+      ".wbsal-line{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}",
+      ".wbsal-line.s1{stroke:var(--wb-accent,#2563eb)}",
+      ".wbsal-line.s2{stroke:var(--wb-ok,#16a34a)}",
+      ".wbsal-line.s3{stroke:var(--wb-warn,#d97706)}",
+      ".wbsal-line.s4{stroke:color-mix(in oklab,var(--wb-accent,#2563eb) 45%,var(--wb-danger,#dc2626))}",
+      ".wbsal-line-dot{stroke:none}",
+      ".wbsal-line-dot.s1{fill:var(--wb-accent,#2563eb)}",
+      ".wbsal-line-dot.s2{fill:var(--wb-ok,#16a34a)}",
+      ".wbsal-line-dot.s3{fill:var(--wb-warn,#d97706)}",
+      ".wbsal-line-dot.s4{fill:color-mix(in oklab,var(--wb-accent,#2563eb) 45%,var(--wb-danger,#dc2626))}",
       ".wbsal-comp{display:flex;flex-direction:column;gap:7px}",
       ".wbsal-comp-row{display:grid;grid-template-columns:92px minmax(60px,1fr) 132px;gap:10px;align-items:center;font-size:12px}",
       ".wbsal-comp-row span:first-child{color:var(--wb-text,inherit)}",
@@ -985,6 +1010,84 @@ var require_stats = __commonJS({
       monthly.forEach(function(bucket, i) {
         if (metricValue(bucket) > 0 && (topMonth < 0 || metricValue(bucket) > metricValue(monthly[topMonth]))) topMonth = i;
       });
+      var LINE_SERIES = [
+        { key: "netPay", label: "\u5B9E\u53D1", tone: "s1" },
+        { key: "grossPay", label: "\u5E94\u53D1", tone: "s2" },
+        { key: "basePay", label: "\u57FA\u672C", tone: "s3" },
+        { key: "performancePay", label: "\u7EE9\u6548", tone: "s4" }
+      ];
+      var visibleState = React.useState(Object.assign({ netPay: true, grossPay: true, basePay: true, performancePay: true }, props.initialVisible || {}));
+      var visible = visibleState[0];
+      function toggleSeries(key) {
+        var next = {};
+        LINE_SERIES.forEach(function(m) {
+          next[m.key] = !!visible[m.key];
+        });
+        next[key] = !next[key];
+        visibleState[1](next);
+      }
+      var recordedMonths = monthly.filter(function(bucket) {
+        return bucket.records > 0;
+      });
+      var lineMax = 1;
+      recordedMonths.forEach(function(bucket) {
+        LINE_SERIES.forEach(function(m) {
+          var v = Number(bucket[m.key]) || 0;
+          if (v > lineMax) lineMax = v;
+        });
+      });
+      lineMax = Math.max(1e3, Math.ceil(lineMax / 1e3) * 1e3);
+      var LPAD = { l: 62, r: 16, t: 14, b: 30 };
+      var LW = 1e3, LH = 250;
+      var plotW = LW - LPAD.l - LPAD.r;
+      var plotH = LH - LPAD.t - LPAD.b;
+      function plotX(month) {
+        return LPAD.l + (month - 1) / 11 * plotW;
+      }
+      function plotY(value) {
+        return LPAD.t + plotH * (1 - Math.min(1, (Number(value) || 0) / lineMax));
+      }
+      function gridLabel(value) {
+        return Math.round(value).toLocaleString("zh-CN");
+      }
+      function renderLineChart() {
+        var children = [];
+        var ticks = [1, 0.75, 0.5, 0.25, 0];
+        ticks.forEach(function(ratio) {
+          var value = lineMax * ratio;
+          var y = plotY(value);
+          children.push(h("line", { key: "g" + ratio, x1: LPAD.l, y1: y, x2: LW - LPAD.r, y2: y, className: "wbsal-line-gridline" }));
+          children.push(h("text", { key: "gt" + ratio, x: LPAD.l - 10, y: y + 4, textAnchor: "end" }, gridLabel(value)));
+        });
+        monthly.forEach(function(bucket) {
+          children.push(h("text", { key: "x" + bucket.month, x: plotX(bucket.month), y: LH - 10, textAnchor: "middle" }, bucket.month));
+        });
+        LINE_SERIES.forEach(function(m) {
+          if (!visible[m.key] || recordedMonths.length === 0) return;
+          var points = recordedMonths.map(function(bucket) {
+            return { month: bucket.month, value: Number(bucket[m.key]) || 0 };
+          });
+          if (points.length > 1) {
+            children.push(h("polyline", {
+              key: "line" + m.key,
+              className: "wbsal-line " + m.tone,
+              points: points.map(function(pt) {
+                return plotX(pt.month) + "," + plotY(pt.value);
+              }).join(" ")
+            }));
+          }
+          points.forEach(function(pt) {
+            children.push(h("circle", {
+              key: "dot" + m.key + pt.month,
+              className: "wbsal-line-dot " + m.tone,
+              cx: plotX(pt.month),
+              cy: plotY(pt.value),
+              r: 3.6
+            }, h("title", null, pt.month + " \u6708 \xB7 " + m.label + " " + F.money(pt.value))));
+          });
+        });
+        return h("svg", { viewBox: "0 0 " + LW + " " + LH, role: "img", "aria-label": "\u6708\u5EA6\u5B9E\u53D1/\u5E94\u53D1/\u57FA\u672C/\u7EE9\u6548\u6298\u7EBF\u56FE" }, children);
+      }
       function signed(amount) {
         var n = Number(amount) || 0;
         return (n > 0 ? "+" : n < 0 ? "-" : "") + F.money(Math.abs(n));
@@ -1090,6 +1193,37 @@ var require_stats = __commonJS({
               { className: "wbsal-chart-foot" },
               h("span", { className: "wbsal-legend" }, h("i", null), "\u6709\u8BB0\u5F55\u6708\u4EFD", h("i", { className: "soft" }), "\u5176\u4ED6\u6708\u4EFD"),
               h("span", null, "\u5355\u4F4D\uFF1A\u5143 \xB7 \u6309\u53D1\u85AA\u65E5\u671F\u5F52\u5C5E\u6708\u4EFD \xB7 \u5F53\u524D\u53E3\u5F84 " + metricLabel)
+            )
+          ),
+          h(
+            "div",
+            { className: "wbsal-card wbsal-section" },
+            h(
+              "div",
+              { className: "wbsal-section-head" },
+              h("h3", null, "\u6708\u5EA6\u8D8B\u52BF\u5BF9\u6BD4"),
+              h("div", { className: "wbsal-series", role: "group", "aria-label": "\u6298\u7EBF\u663E\u793A\u5F00\u5173" }, LINE_SERIES.map(function(m) {
+                return h("button", {
+                  key: m.key,
+                  type: "button",
+                  className: visible[m.key] ? "on" : "off",
+                  "aria-pressed": !!visible[m.key],
+                  title: (visible[m.key] ? "\u9690\u85CF" : "\u663E\u793A") + m.label,
+                  onClick: function() {
+                    toggleSeries(m.key);
+                  }
+                }, h("i", { className: m.tone }), m.label);
+              }))
+            ),
+            h("div", { className: "wbsal-linechart" }, renderLineChart()),
+            LINE_SERIES.some(function(m) {
+              return visible[m.key];
+            }) ? null : h("div", { className: "wbsal-chart-hint" }, "\u56DB\u6761\u7EBF\u90FD\u5173\u6389\u4E86\uFF0C\u70B9\u4E0A\u65B9\u300C\u5B9E\u53D1 / \u5E94\u53D1 / \u57FA\u672C / \u7EE9\u6548\u300D\u4EFB\u610F\u4E00\u4E2A\u6062\u590D\u663E\u793A"),
+            h(
+              "div",
+              { className: "wbsal-chart-foot" },
+              h("span", null, "\u5B9E\u53D1 / \u5E94\u53D1 / \u57FA\u672C / \u7EE9\u6548 \u56DB\u6761\u7EBF\uFF0C\u53EF\u70B9\u4E0A\u65B9\u6807\u7B7E\u5355\u72EC\u5F00\u5173"),
+              h("span", null, "\u5355\u4F4D\uFF1A\u5143 \xB7 \u4EC5\u8FDE\u63A5\u6709\u8BB0\u5F55\u7684\u6708\u4EFD")
             )
           ),
           h(
@@ -1849,14 +1983,14 @@ var require_records = __commonJS({
             { className: "wbsal-form-meta" },
             h(
               C.Field,
-              { h, label: "\u53D1\u85AA\u65E5\u671F", hint: F.incomeLabel(form.payDate) ? "\u5BF9\u5E94 " + F.incomeLabel(form.payDate) + " \u5DE5\u8D44" : "\u6708\u4E2D\u53D1\u4E0A\u6708\u5DE5\u8D44" },
+              { h, label: "\u53D1\u85AA\u65E5\u671F", hint: F.incomeLabel(form.payDate) ? "\u5BF9\u5E94 " + F.incomeLabel(form.payDate) + " \u5DE5\u8D44" : "\u6708\u7ED3" },
               h(DP.DatePicker, { React, h, prefix: "wbsal", lang, label: "\u53D1\u85AA\u65E5\u671F", value: form.payDate, onChange: function(next) {
                 setField("payDate", next);
               } })
             ),
             h(
               C.Field,
-              { h, label: "\u7C7B\u578B", hint: "\u6708\u7ED3=\u6708\u4E2D\u53D1\u4E0A\u6708\u5DE5\u8D44" },
+              { h, label: "\u7C7B\u578B", hint: "\u6708\u7ED3" },
               h(
                 "select",
                 { className: "wbsal-input", value: form.cycle, onChange: function(e) {
@@ -3919,7 +4053,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.1.5",
+    version: "0.1.6",
     icon: (init_wallet(), __toCommonJS(wallet_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },
