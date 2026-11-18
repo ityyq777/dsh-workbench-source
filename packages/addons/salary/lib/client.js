@@ -1277,13 +1277,6 @@ var require_stats = __commonJS({
       } else {
         var latestBreakdown = data.latestMonth && data.latestMonth.breakdown;
         var deductionTotal = latestBreakdown ? latestBreakdown.preTax + latestBreakdown.social + latestBreakdown.tax : 0;
-        var prevNet = 0;
-        var tableRows = [];
-        monthly.forEach(function(bucket) {
-          if (bucket.records === 0) return;
-          tableRows.push({ bucket, prev: prevNet });
-          prevNet = bucket.netPay;
-        });
         var chartMax = Math.max(1, maxNet);
         body = h(
           "div",
@@ -1443,43 +1436,7 @@ var require_stats = __commonJS({
                 compRows(F.PRETAX_KEYS.concat(F.SOCIAL_KEYS, F.TAX_KEYS), deductionTotal, true)
               )
             )
-          ) : null,
-          h(
-            "div",
-            { className: "wbsal-card wbsal-section" },
-            h(
-              "div",
-              { className: "wbsal-section-head" },
-              h("h3", null, "\u6708\u5EA6\u660E\u7EC6"),
-              h("span", null, "\u70B9\u51FB\u6708\u4EFD\u53EF\u5728\u5DE5\u8D44\u8BB0\u5F55\u9875\u67E5\u770B\u5BF9\u5E94\u8BB0\u5F55")
-            ),
-            h(
-              "div",
-              { className: "wbsal-table-wrap", style: { border: 0 } },
-              h(
-                "table",
-                { className: "wbsal-table" },
-                h("thead", null, h("tr", null, ["\u6708\u4EFD", "\u7B14\u6570", "\u5E94\u53D1", "\u5B9E\u53D1", "\u793E\u4FDD\u516C\u79EF\u91D1", "\u4E2A\u7A0E", "\u73AF\u6BD4"].map(function(label) {
-                  return h("th", { key: label }, label);
-                }))),
-                h("tbody", null, tableRows.map(function(entry) {
-                  var bucket = entry.bucket;
-                  var diff = entry.prev ? bucket.netPay - entry.prev : 0;
-                  return h(
-                    "tr",
-                    { key: bucket.month },
-                    h("td", { className: "left" }, bucket.month + " \u6708"),
-                    h("td", null, bucket.records),
-                    h("td", null, F.money(bucket.grossPay)),
-                    h("td", null, h("b", { className: "wbsal-net" }, F.money(bucket.netPay))),
-                    h("td", { className: "wbsal-opt" }, F.money(bucket.socialTotal)),
-                    h("td", { className: "wbsal-opt" }, F.money(bucket.incomeTax)),
-                    h("td", null, entry.prev ? signed(diff) : "\u2014")
-                  );
-                }))
-              )
-            )
-          )
+          ) : null
         );
       }
       return h(
@@ -4189,7 +4146,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.2.2",
+    version: "0.2.3",
     icon: (init_wallet(), __toCommonJS(wallet_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },

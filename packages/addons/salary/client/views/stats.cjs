@@ -1,5 +1,5 @@
 "use strict";
-/** 统计页：年度切换、KPI、12 月柱状图、环比、最近月构成、月度明细。 */
+/** 统计页：年度切换、KPI、12 月柱状图、折线对比、社保与个税、最近月构成。 */
 module.exports = function Stats(props) {
   var h = props.h, React = props.React, api = props.api;
   var C = require("../ui/common.cjs");
@@ -222,13 +222,6 @@ module.exports = function Stats(props) {
   } else {
     var latestBreakdown = data.latestMonth && data.latestMonth.breakdown;
     var deductionTotal = latestBreakdown ? latestBreakdown.preTax + latestBreakdown.social + latestBreakdown.tax : 0;
-    var prevNet = 0;
-    var tableRows = [];
-    monthly.forEach(function (bucket) {
-      if (bucket.records === 0) return;
-      tableRows.push({ bucket: bucket, prev: prevNet });
-      prevNet = bucket.netPay;
-    });
     var chartMax = Math.max(1, maxNet);
     body = h("div", { className: "wbsal-section" },
       h("div", { className: "wbsal-kpis" },
@@ -320,27 +313,7 @@ module.exports = function Stats(props) {
             compRows(F.INCOME_KEYS, latestBreakdown.income, false)),
           h("div", null,
             h("div", { className: "wbsal-group-title" }, "扣款项 · 合计 " + F.money(deductionTotal)),
-            compRows(F.PRETAX_KEYS.concat(F.SOCIAL_KEYS, F.TAX_KEYS), deductionTotal, true)))) : null,
-
-      h("div", { className: "wbsal-card wbsal-section" },
-        h("div", { className: "wbsal-section-head" },
-          h("h3", null, "月度明细"),
-          h("span", null, "点击月份可在工资记录页查看对应记录")),
-        h("div", { className: "wbsal-table-wrap", style: { border: 0 } },
-          h("table", { className: "wbsal-table" },
-            h("thead", null, h("tr", null, ["月份", "笔数", "应发", "实发", "社保公积金", "个税", "环比"].map(function (label) { return h("th", { key: label }, label); }))),
-            h("tbody", null, tableRows.map(function (entry) {
-              var bucket = entry.bucket;
-              var diff = entry.prev ? bucket.netPay - entry.prev : 0;
-              return h("tr", { key: bucket.month },
-                h("td", { className: "left" }, bucket.month + " 月"),
-                h("td", null, bucket.records),
-                h("td", null, F.money(bucket.grossPay)),
-                h("td", null, h("b", { className: "wbsal-net" }, F.money(bucket.netPay))),
-                h("td", { className: "wbsal-opt" }, F.money(bucket.socialTotal)),
-                h("td", { className: "wbsal-opt" }, F.money(bucket.incomeTax)),
-                h("td", null, entry.prev ? signed(diff) : "—"));
-            }))))));
+            compRows(F.PRETAX_KEYS.concat(F.SOCIAL_KEYS, F.TAX_KEYS), deductionTotal, true)))) : null);
   }
 
   return h("div", { className: "wbsal-page" },
