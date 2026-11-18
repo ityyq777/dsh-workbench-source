@@ -154,6 +154,7 @@ var PAGE = [
   ".wbsal-series i.s4,.wbsal-line-dot.s4{background:color-mix(in oklab,var(--wb-accent,#2563eb) 45%,var(--wb-danger,#dc2626))}",
   ".wbsal-linechart{width:100%;padding:10px 2px 0}",
   ".wbsal-chart-hint{margin-top:8px;padding:10px 12px;border-radius:8px;background:color-mix(in srgb,var(--wb-muted,#8b94a6) 10%,transparent);color:var(--wb-muted,#8b94a6);font-size:12px}",
+  ".wbsal-social-foot{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:14px;flex-wrap:wrap}",
   ".wbsal-linechart svg{display:block;width:100%;height:auto;overflow:visible}",
   ".wbsal-linechart text{fill:var(--wb-muted,#8b94a6);font-size:11px;font-variant-numeric:tabular-nums}",
   ".wbsal-line-gridline{stroke:var(--wb-line,#eef0f4);stroke-width:1;vector-effect:non-scaling-stroke}",

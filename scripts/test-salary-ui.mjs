@@ -146,7 +146,7 @@ const problems = [];
 if (!HOST.addon || HOST.addon.id !== "wb-addon-salary") problems.push("client.src.cjs 没有注册 wb-addon-salary");
 if (!HOST.addon || !Array.isArray(HOST.addon.views) || HOST.addon.views.length !== 4) problems.push("views 数量不是 4");
 const css = styles.map((el) => el.textContent).join("\n");
-for (const klass of ["wbsal-page", "wbsal-kpi", "wbsal-record-row", "wbsal-chart", "wbsal-comp", "wbsal-input", "--wb-card", "wbsal-table", "wbsal-card", "wbsal-metric", "wbsal-mask", "wbsal-form-modal", "wbsal-linechart", "wbsal-series"]) {
+for (const klass of ["wbsal-page", "wbsal-kpi", "wbsal-record-row", "wbsal-chart", "wbsal-comp", "wbsal-input", "--wb-card", "wbsal-table", "wbsal-card", "wbsal-metric", "wbsal-mask", "wbsal-form-modal", "wbsal-linechart", "wbsal-series", "wbsal-social-foot"]) {
   if (!css.includes(klass)) problems.push("样式表缺少 " + klass);
 }
 
@@ -185,18 +185,34 @@ function polyClasses(tree, found = []) {
 }
 const statsComp = require(ROOT + "packages/addons/salary/client/views/stats.cjs");
 const fixedApi = { call: async (action) => ({ ok: true, result: RESPONSES[action] !== undefined ? RESPONSES[action] : {} }) };
-const allLines = polyClasses(await render(statsComp, { api: fixedApi, lang: "zh", title: "统计", h: HOST.h }, fixedApi));
-for (const tone of ["s1", "s2", "s3", "s4"]) {
-  if (!allLines.some((name) => name.includes(tone))) problems.push("折线图默认应显示 " + tone + " 线");
+function toneCount(list) {
+  const count = { s1: 0, s2: 0, s3: 0, s4: 0 };
+  for (const name of list) {
+    for (const tone of Object.keys(count)) if (name.split(/\s+/).includes(tone)) count[tone] += 1;
+  }
+  return count;
 }
-const hiddenLines = polyClasses(await render(statsComp, {
+const allLines = polyClasses(await render(statsComp, { api: fixedApi, lang: "zh", title: "统计", h: HOST.h }, fixedApi));
+const allCount = toneCount(allLines);
+// 两张折线图各 4 条线，同色相（s1..s4）因此每个 tone 出现 2 次
+for (const tone of ["s1", "s2", "s3", "s4"]) {
+  if (allCount[tone] !== 2) problems.push("默认应各渲染 2 条 " + tone + " 折线，实际 " + allCount[tone]);
+}
+const hiddenLines = toneCount(polyClasses(await render(statsComp, {
   api: fixedApi, lang: "zh", title: "统计", h: HOST.h,
   initialVisible: { basePay: false, performancePay: false },
-}, fixedApi));
-if (!hiddenLines.some((name) => name.includes("s1"))) problems.push("隐藏基本/绩效后实发折线不应消失");
-if (!hiddenLines.some((name) => name.includes("s2"))) problems.push("隐藏基本/绩效后应发折线不应消失");
-if (hiddenLines.some((name) => name.includes("s3"))) problems.push("取消勾选后基本折线仍然渲染");
-if (hiddenLines.some((name) => name.includes("s4"))) problems.push("取消勾选后绩效折线仍然渲染");
+}, fixedApi)));
+if (hiddenLines.s1 !== 2) problems.push("隐藏基本/绩效后实发折线不应消失");
+if (hiddenLines.s2 !== 2) problems.push("隐藏基本/绩效后应发折线不应消失");
+if (hiddenLines.s3 !== 1) problems.push("取消勾选后主图基本折线仍应消失、五险一金保留 1 条");
+if (hiddenLines.s4 !== 1) problems.push("取消勾选后主图绩效折线仍应消失、五险一金保留 1 条");
+const socialHidden = toneCount(polyClasses(await render(statsComp, {
+  api: fixedApi, lang: "zh", title: "统计", h: HOST.h,
+  initialSocialVisible: { pension: false, medical: false },
+}, fixedApi)));
+if (socialHidden.s1 !== 1) problems.push("关掉养老后五险一金应只剩 1 条 s1（主图实发）");
+if (socialHidden.s2 !== 1) problems.push("关掉医疗后五险一金应只剩 1 条 s2（主图应发）");
+if (socialHidden.s3 !== 2) problems.push("未关失业时五险一金失业线应保留");
 
 for (const file of ["views/records.cjs", "views/stats.cjs", "views/data.cjs", "views/actions.cjs"]) {
   const src = readFileSync(ROOT + "packages/addons/salary/client/" + file, "utf8");

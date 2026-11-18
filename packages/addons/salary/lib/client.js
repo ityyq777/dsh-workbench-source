@@ -281,6 +281,7 @@ var require_styles = __commonJS({
       ".wbsal-series i.s4,.wbsal-line-dot.s4{background:color-mix(in oklab,var(--wb-accent,#2563eb) 45%,var(--wb-danger,#dc2626))}",
       ".wbsal-linechart{width:100%;padding:10px 2px 0}",
       ".wbsal-chart-hint{margin-top:8px;padding:10px 12px;border-radius:8px;background:color-mix(in srgb,var(--wb-muted,#8b94a6) 10%,transparent);color:var(--wb-muted,#8b94a6);font-size:12px}",
+      ".wbsal-social-foot{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:14px;flex-wrap:wrap}",
       ".wbsal-linechart svg{display:block;width:100%;height:auto;overflow:visible}",
       ".wbsal-linechart text{fill:var(--wb-muted,#8b94a6);font-size:11px;font-variant-numeric:tabular-nums}",
       ".wbsal-line-gridline{stroke:var(--wb-line,#eef0f4);stroke-width:1;vector-effect:non-scaling-stroke}",
@@ -1026,17 +1027,22 @@ var require_stats = __commonJS({
         next[key] = !next[key];
         visibleState[1](next);
       }
+      var SOCIAL_SERIES = F.SOCIAL_KEYS.map(function(key, index) {
+        return { key, label: F.LABELS[key], tone: "s" + (index + 1) };
+      });
+      var socialVisibleState = React.useState(Object.assign({ pension: true, medical: true, unemployment: true, housingFund: true }, props.initialSocialVisible || {}));
+      var socialVisible = socialVisibleState[0];
+      function toggleSocial(key) {
+        var next = {};
+        SOCIAL_SERIES.forEach(function(m) {
+          next[m.key] = !!socialVisible[m.key];
+        });
+        next[key] = !next[key];
+        socialVisibleState[1](next);
+      }
       var recordedMonths = monthly.filter(function(bucket) {
         return bucket.records > 0;
       });
-      var lineMax = 1;
-      recordedMonths.forEach(function(bucket) {
-        LINE_SERIES.forEach(function(m) {
-          var v = Number(bucket[m.key]) || 0;
-          if (v > lineMax) lineMax = v;
-        });
-      });
-      lineMax = Math.max(1e3, Math.ceil(lineMax / 1e3) * 1e3);
       var LPAD = { l: 62, r: 16, t: 14, b: 30 };
       var LW = 1e3, LH = 250;
       var plotW = LW - LPAD.l - LPAD.r;
@@ -1044,17 +1050,24 @@ var require_stats = __commonJS({
       function plotX(month) {
         return LPAD.l + (month - 1) / 11 * plotW;
       }
-      function plotY(value) {
-        return LPAD.t + plotH * (1 - Math.min(1, (Number(value) || 0) / lineMax));
-      }
       function gridLabel(value) {
         return Math.round(value).toLocaleString("zh-CN");
       }
-      function renderLineChart() {
+      function renderChart(series, shown, ariaLabel) {
+        var max = 1;
+        recordedMonths.forEach(function(bucket) {
+          series.forEach(function(m) {
+            var v = Number(bucket[m.key]) || 0;
+            if (v > max) max = v;
+          });
+        });
+        max = Math.max(1e3, Math.ceil(max / 1e3) * 1e3);
+        function plotY(value) {
+          return LPAD.t + plotH * (1 - Math.min(1, (Number(value) || 0) / max));
+        }
         var children = [];
-        var ticks = [1, 0.75, 0.5, 0.25, 0];
-        ticks.forEach(function(ratio) {
-          var value = lineMax * ratio;
+        [1, 0.75, 0.5, 0.25, 0].forEach(function(ratio) {
+          var value = max * ratio;
           var y = plotY(value);
           children.push(h("line", { key: "g" + ratio, x1: LPAD.l, y1: y, x2: LW - LPAD.r, y2: y, className: "wbsal-line-gridline" }));
           children.push(h("text", { key: "gt" + ratio, x: LPAD.l - 10, y: y + 4, textAnchor: "end" }, gridLabel(value)));
@@ -1062,8 +1075,8 @@ var require_stats = __commonJS({
         monthly.forEach(function(bucket) {
           children.push(h("text", { key: "x" + bucket.month, x: plotX(bucket.month), y: LH - 10, textAnchor: "middle" }, bucket.month));
         });
-        LINE_SERIES.forEach(function(m) {
-          if (!visible[m.key] || recordedMonths.length === 0) return;
+        series.forEach(function(m) {
+          if (!shown[m.key] || recordedMonths.length === 0) return;
           var points = recordedMonths.map(function(bucket) {
             return { month: bucket.month, value: Number(bucket[m.key]) || 0 };
           });
@@ -1086,7 +1099,26 @@ var require_stats = __commonJS({
             }, h("title", null, pt.month + " \u6708 \xB7 " + m.label + " " + F.money(pt.value))));
           });
         });
-        return h("svg", { viewBox: "0 0 " + LW + " " + LH, role: "img", "aria-label": "\u6708\u5EA6\u5B9E\u53D1/\u5E94\u53D1/\u57FA\u672C/\u7EE9\u6548\u6298\u7EBF\u56FE" }, children);
+        return h("svg", { viewBox: "0 0 " + LW + " " + LH, role: "img", "aria-label": ariaLabel }, children);
+      }
+      function seriesSwitch(series, shown, onToggle, ariaLabel) {
+        return h("div", { className: "wbsal-series", role: "group", "aria-label": ariaLabel }, series.map(function(m) {
+          return h("button", {
+            key: m.key,
+            type: "button",
+            className: shown[m.key] ? "on" : "off",
+            "aria-pressed": !!shown[m.key],
+            title: (shown[m.key] ? "\u9690\u85CF" : "\u663E\u793A") + m.label,
+            onClick: function() {
+              onToggle(m.key);
+            }
+          }, h("i", { className: m.tone }), m.label);
+        }));
+      }
+      function anyShown(series, shown) {
+        return series.some(function(m) {
+          return shown[m.key];
+        });
       }
       function signed(amount) {
         var n = Number(amount) || 0;
@@ -1202,23 +1234,10 @@ var require_stats = __commonJS({
               "div",
               { className: "wbsal-section-head" },
               h("h3", null, "\u6708\u5EA6\u8D8B\u52BF\u5BF9\u6BD4"),
-              h("div", { className: "wbsal-series", role: "group", "aria-label": "\u6298\u7EBF\u663E\u793A\u5F00\u5173" }, LINE_SERIES.map(function(m) {
-                return h("button", {
-                  key: m.key,
-                  type: "button",
-                  className: visible[m.key] ? "on" : "off",
-                  "aria-pressed": !!visible[m.key],
-                  title: (visible[m.key] ? "\u9690\u85CF" : "\u663E\u793A") + m.label,
-                  onClick: function() {
-                    toggleSeries(m.key);
-                  }
-                }, h("i", { className: m.tone }), m.label);
-              }))
+              seriesSwitch(LINE_SERIES, visible, toggleSeries, "\u6298\u7EBF\u663E\u793A\u5F00\u5173")
             ),
-            h("div", { className: "wbsal-linechart" }, renderLineChart()),
-            LINE_SERIES.some(function(m) {
-              return visible[m.key];
-            }) ? null : h("div", { className: "wbsal-chart-hint" }, "\u56DB\u6761\u7EBF\u90FD\u5173\u6389\u4E86\uFF0C\u70B9\u4E0A\u65B9\u300C\u5B9E\u53D1 / \u5E94\u53D1 / \u57FA\u672C / \u7EE9\u6548\u300D\u4EFB\u610F\u4E00\u4E2A\u6062\u590D\u663E\u793A"),
+            h("div", { className: "wbsal-linechart" }, renderChart(LINE_SERIES, visible, "\u6708\u5EA6\u5B9E\u53D1/\u5E94\u53D1/\u57FA\u672C/\u7EE9\u6548\u6298\u7EBF\u56FE")),
+            anyShown(LINE_SERIES, visible) ? null : h("div", { className: "wbsal-chart-hint" }, "\u56DB\u6761\u7EBF\u90FD\u5173\u6389\u4E86\uFF0C\u70B9\u4E0A\u65B9\u300C\u5B9E\u53D1 / \u5E94\u53D1 / \u57FA\u672C / \u7EE9\u6548\u300D\u4EFB\u610F\u4E00\u4E2A\u6062\u590D\u663E\u793A"),
             h(
               "div",
               { className: "wbsal-chart-foot" },
@@ -1246,29 +1265,14 @@ var require_stats = __commonJS({
                 h("em", null, "\u5360\u4E94\u9669\u4E00\u91D1 " + share + "%")
               );
             })),
+            h("div", { className: "wbsal-social-foot" }, seriesSwitch(SOCIAL_SERIES, socialVisible, toggleSocial, "\u4E94\u9669\u4E00\u91D1\u6298\u7EBF\u663E\u793A\u5F00\u5173")),
+            h("div", { className: "wbsal-linechart" }, renderChart(SOCIAL_SERIES, socialVisible, "\u6708\u5EA6\u517B\u8001/\u533B\u7597/\u5931\u4E1A/\u516C\u79EF\u91D1\u6298\u7EBF\u56FE")),
+            anyShown(SOCIAL_SERIES, socialVisible) ? null : h("div", { className: "wbsal-chart-hint" }, "\u56DB\u6761\u7EBF\u90FD\u5173\u6389\u4E86\uFF0C\u70B9\u4E0A\u65B9\u300C\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1\u300D\u4EFB\u610F\u4E00\u4E2A\u6062\u590D\u663E\u793A"),
             h(
               "div",
-              { className: "wbsal-table-wrap", style: { border: 0, marginTop: "12px" } },
-              h(
-                "table",
-                { className: "wbsal-table" },
-                h("thead", null, h("tr", null, ["\u6708\u4EFD", "\u517B\u8001", "\u533B\u7597", "\u5931\u4E1A", "\u516C\u79EF\u91D1", "\u5408\u8BA1"].map(function(label) {
-                  return h("th", { key: label, className: label === "\u6708\u4EFD" ? "left" : void 0 }, label);
-                }))),
-                h("tbody", null, data.monthly.filter(function(bucket) {
-                  return bucket.records > 0;
-                }).map(function(bucket) {
-                  return h(
-                    "tr",
-                    { key: bucket.month },
-                    h("td", { className: "left" }, bucket.month + " \u6708"),
-                    F.SOCIAL_KEYS.map(function(key) {
-                      return h("td", { key, className: "wbsal-opt" }, F.money(bucket[key]));
-                    }),
-                    h("td", null, h("b", { className: "wbsal-net" }, F.money(bucket.socialTotal)))
-                  );
-                }))
-              )
+              { className: "wbsal-chart-foot" },
+              h("span", null, "\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1 \u56DB\u6761\u7EBF\uFF0C\u53EF\u70B9\u4E0A\u65B9\u6807\u7B7E\u5355\u72EC\u5F00\u5173"),
+              h("span", null, "\u5355\u4F4D\uFF1A\u5143 \xB7 \u4EC5\u8FDE\u63A5\u6709\u8BB0\u5F55\u7684\u6708\u4EFD")
             )
           ),
           h(
@@ -4053,7 +4057,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.1.6",
+    version: "0.1.7",
     icon: (init_wallet(), __toCommonJS(wallet_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },

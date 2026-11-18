@@ -41,24 +41,36 @@ module.exports = function Stats(props) {
     next[key] = !next[key];
     visibleState[1](next);
   }
-  var recordedMonths = monthly.filter(function (bucket) { return bucket.records > 0; });
-  var lineMax = 1;
-  recordedMonths.forEach(function (bucket) {
-    LINE_SERIES.forEach(function (m) { var v = Number(bucket[m.key]) || 0; if (v > lineMax) lineMax = v; });
+  // 五险一金四条线：养老 / 医疗 / 失业 / 公积金，同样可单独开关。
+  var SOCIAL_SERIES = F.SOCIAL_KEYS.map(function (key, index) {
+    return { key: key, label: F.LABELS[key], tone: "s" + (index + 1) };
   });
-  lineMax = Math.max(1000, Math.ceil(lineMax / 1000) * 1000);
+  var socialVisibleState = React.useState(Object.assign({ pension: true, medical: true, unemployment: true, housingFund: true }, props.initialSocialVisible || {}));
+  var socialVisible = socialVisibleState[0];
+  function toggleSocial(key) {
+    var next = {};
+    SOCIAL_SERIES.forEach(function (m) { next[m.key] = !!socialVisible[m.key]; });
+    next[key] = !next[key];
+    socialVisibleState[1](next);
+  }
+  var recordedMonths = monthly.filter(function (bucket) { return bucket.records > 0; });
   var LPAD = { l: 62, r: 16, t: 14, b: 30 };
   var LW = 1000, LH = 250;
   var plotW = LW - LPAD.l - LPAD.r;
   var plotH = LH - LPAD.t - LPAD.b;
   function plotX(month) { return LPAD.l + ((month - 1) / 11) * plotW; }
-  function plotY(value) { return LPAD.t + plotH * (1 - Math.min(1, (Number(value) || 0) / lineMax)); }
   function gridLabel(value) { return Math.round(value).toLocaleString("zh-CN"); }
-  function renderLineChart() {
+  // 两张折线图共用一套几何：纵轴上限按「所有线」取值，这样开关某条线时刻度不会跳动
+  function renderChart(series, shown, ariaLabel) {
+    var max = 1;
+    recordedMonths.forEach(function (bucket) {
+      series.forEach(function (m) { var v = Number(bucket[m.key]) || 0; if (v > max) max = v; });
+    });
+    max = Math.max(1000, Math.ceil(max / 1000) * 1000);
+    function plotY(value) { return LPAD.t + plotH * (1 - Math.min(1, (Number(value) || 0) / max)); }
     var children = [];
-    var ticks = [1, 0.75, 0.5, 0.25, 0];
-    ticks.forEach(function (ratio) {
-      var value = lineMax * ratio;
+    [1, 0.75, 0.5, 0.25, 0].forEach(function (ratio) {
+      var value = max * ratio;
       var y = plotY(value);
       children.push(h("line", { key: "g" + ratio, x1: LPAD.l, y1: y, x2: LW - LPAD.r, y2: y, className: "wbsal-line-gridline" }));
       children.push(h("text", { key: "gt" + ratio, x: LPAD.l - 10, y: y + 4, textAnchor: "end" }, gridLabel(value)));
@@ -66,8 +78,8 @@ module.exports = function Stats(props) {
     monthly.forEach(function (bucket) {
       children.push(h("text", { key: "x" + bucket.month, x: plotX(bucket.month), y: LH - 10, textAnchor: "middle" }, bucket.month));
     });
-    LINE_SERIES.forEach(function (m) {
-      if (!visible[m.key] || recordedMonths.length === 0) return;
+    series.forEach(function (m) {
+      if (!shown[m.key] || recordedMonths.length === 0) return;
       var points = recordedMonths.map(function (bucket) {
         return { month: bucket.month, value: Number(bucket[m.key]) || 0 };
       });
@@ -85,8 +97,20 @@ module.exports = function Stats(props) {
         }, h("title", null, pt.month + " 月 · " + m.label + " " + F.money(pt.value))));
       });
     });
-    return h("svg", { viewBox: "0 0 " + LW + " " + LH, role: "img", "aria-label": "月度实发/应发/基本/绩效折线图" }, children);
+    return h("svg", { viewBox: "0 0 " + LW + " " + LH, role: "img", "aria-label": ariaLabel }, children);
   }
+  // 图例即开关：点一下隐藏对应折线，再点恢复
+  function seriesSwitch(series, shown, onToggle, ariaLabel) {
+    return h("div", { className: "wbsal-series", role: "group", "aria-label": ariaLabel }, series.map(function (m) {
+      return h("button", {
+        key: m.key, type: "button", className: shown[m.key] ? "on" : "off",
+        "aria-pressed": !!shown[m.key],
+        title: (shown[m.key] ? "隐藏" : "显示") + m.label,
+        onClick: function () { onToggle(m.key); },
+      }, h("i", { className: m.tone }), m.label);
+    }));
+  }
+  function anyShown(series, shown) { return series.some(function (m) { return shown[m.key]; }); }
 
   function signed(amount) {
     var n = Number(amount) || 0;
@@ -166,17 +190,9 @@ module.exports = function Stats(props) {
       h("div", { className: "wbsal-card wbsal-section" },
         h("div", { className: "wbsal-section-head" },
           h("h3", null, "月度趋势对比"),
-          h("div", { className: "wbsal-series", role: "group", "aria-label": "折线显示开关" }, LINE_SERIES.map(function (m) {
-            return h("button", {
-              key: m.key, type: "button",
-              className: visible[m.key] ? "on" : "off",
-              "aria-pressed": !!visible[m.key],
-              title: (visible[m.key] ? "隐藏" : "显示") + m.label,
-              onClick: function () { toggleSeries(m.key); },
-            }, h("i", { className: m.tone }), m.label);
-          }))),
-        h("div", { className: "wbsal-linechart" }, renderLineChart()),
-        LINE_SERIES.some(function (m) { return visible[m.key]; }) ? null
+          seriesSwitch(LINE_SERIES, visible, toggleSeries, "折线显示开关")),
+        h("div", { className: "wbsal-linechart" }, renderChart(LINE_SERIES, visible, "月度实发/应发/基本/绩效折线图")),
+        anyShown(LINE_SERIES, visible) ? null
           : h("div", { className: "wbsal-chart-hint" }, "四条线都关掉了，点上方「实发 / 应发 / 基本 / 绩效」任意一个恢复显示"),
         h("div", { className: "wbsal-chart-foot" },
           h("span", null, "实发 / 应发 / 基本 / 绩效 四条线，可点上方标签单独开关"),
@@ -194,17 +210,13 @@ module.exports = function Stats(props) {
             h("b", null, F.money(amount)),
             h("em", null, "占五险一金 " + share + "%"));
         })),
-        h("div", { className: "wbsal-table-wrap", style: { border: 0, marginTop: "12px" } },
-          h("table", { className: "wbsal-table" },
-            h("thead", null, h("tr", null, ["月份", "养老", "医疗", "失业", "公积金", "合计"].map(function (label) {
-              return h("th", { key: label, className: label === "月份" ? "left" : undefined }, label);
-            }))),
-            h("tbody", null, data.monthly.filter(function (bucket) { return bucket.records > 0; }).map(function (bucket) {
-              return h("tr", { key: bucket.month },
-                h("td", { className: "left" }, bucket.month + " 月"),
-                F.SOCIAL_KEYS.map(function (key) { return h("td", { key: key, className: "wbsal-opt" }, F.money(bucket[key])); }),
-                h("td", null, h("b", { className: "wbsal-net" }, F.money(bucket.socialTotal))));
-            }))))),
+        h("div", { className: "wbsal-social-foot" }, seriesSwitch(SOCIAL_SERIES, socialVisible, toggleSocial, "五险一金折线显示开关")),
+        h("div", { className: "wbsal-linechart" }, renderChart(SOCIAL_SERIES, socialVisible, "月度养老/医疗/失业/公积金折线图")),
+        anyShown(SOCIAL_SERIES, socialVisible) ? null
+          : h("div", { className: "wbsal-chart-hint" }, "四条线都关掉了，点上方「养老 / 医疗 / 失业 / 公积金」任意一个恢复显示"),
+        h("div", { className: "wbsal-chart-foot" },
+          h("span", null, "养老 / 医疗 / 失业 / 公积金 四条线，可点上方标签单独开关"),
+          h("span", null, "单位：元 · 仅连接有记录的月份"))),
 
       h("div", { className: "wbsal-kpis" },
         kpi("环比", data.mom ? signed(data.mom.amount) : "—",
