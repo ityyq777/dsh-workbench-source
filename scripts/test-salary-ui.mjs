@@ -169,6 +169,11 @@ for (const [id, file, title, expected] of checks) {
   if (JSON.stringify(tree).includes("undefined")) problems.push(id + " 渲染结果含 undefined 文本");
 }
 
+for (const file of ["views/records.cjs", "views/stats.cjs", "views/data.cjs", "views/actions.cjs"]) {
+  const src = readFileSync(ROOT + "packages/addons/salary/client/" + file, "utf8");
+  if (/\.reload\s*\(/.test(src)) problems.push(file + " 调用了 useLoad 不存在的 .reload()，请用 .refresh()");
+}
+
 const bundle = readFileSync(ROOT + "packages/addons/salary/lib/client.js", "utf8");
 for (const needle of ['id: "wb-addon-salary"', "version: \"0.1.1\""]) {
   if (!bundle.includes(needle.replace(/"([^"]+)"/g, (m) => m))) {

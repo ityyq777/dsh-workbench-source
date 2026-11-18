@@ -892,9 +892,9 @@ var require_records = __commonJS({
       var savingState = React.useState(false);
       var saving = savingState[0], setSaving = savingState[1];
       function reloadAll() {
-        status.reload();
-        statsLoad.reload();
-        list.reload();
+        status.refresh();
+        statsLoad.refresh();
+        list.refresh();
       }
       function pickDate(cycle) {
         var now = /* @__PURE__ */ new Date();
