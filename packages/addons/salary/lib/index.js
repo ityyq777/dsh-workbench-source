@@ -28,7 +28,7 @@ export function apply(ctx) {
     id: "wb-addon-salary",
     title: "工资",
     description: "按日期记录日结/月结工资：收入项、税前扣款、社保公积金、个税与实发",
-    version: "0.2.1",
+    version: "0.2.2",
     tables: ["salary_record"],
     sync: { tables: [] },
     views: VIEWS,

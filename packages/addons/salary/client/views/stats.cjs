@@ -45,15 +45,28 @@ module.exports = function Stats(props) {
     next[key] = !next[key];
     visibleState[1](next);
   }
-  // 五险一金四条线：养老 / 医疗 / 失业 / 公积金，同样可单独开关。
-  var SOCIAL_SERIES = F.SOCIAL_KEYS.map(function (key, index) {
+  // 社保与个税：养老 / 医疗 / 失业 / 公积金 / 个税 五条线，虚线合计为五项之和。
+  function round2(value) { return Math.round((Number(value) || 0) * 100) / 100; }
+  function deductOf(bucket) {
+    return round2((Number(bucket.pension) || 0) + (Number(bucket.medical) || 0) + (Number(bucket.unemployment) || 0)
+      + (Number(bucket.housingFund) || 0) + (Number(bucket.incomeTax) || 0));
+  }
+  function seriesValue(m, bucket) {
+    if (typeof m.get === "function") return m.get(bucket);
+    return Number(bucket[m.key]) || 0;
+  }
+  var DEDUCT_TOTAL_ALL = round2((data && data.socialTotal) + (data && data.incomeTaxTotal));
+  var DEDUCT_SERIES = F.SOCIAL_KEYS.map(function (key, index) {
     return { key: key, label: F.LABELS[key], tone: "s" + (index + 1) };
-  }).concat([{ key: "socialTotal", label: "合计", tone: "sum" }]);
-  var socialVisibleState = React.useState(Object.assign({ pension: true, medical: true, unemployment: true, housingFund: true, socialTotal: true }, props.initialSocialVisible || {}));
+  }).concat([
+    { key: "incomeTax", label: "个税", tone: "s5" },
+    { key: "deductTotal", label: "合计", tone: "sum", get: deductOf },
+  ]);
+  var socialVisibleState = React.useState(Object.assign({ pension: true, medical: true, unemployment: true, housingFund: true, incomeTax: true, deductTotal: true }, props.initialSocialVisible || {}));
   var socialVisible = socialVisibleState[0];
   function toggleSocial(key) {
     var next = {};
-    SOCIAL_SERIES.forEach(function (m) { next[m.key] = !!socialVisible[m.key]; });
+    DEDUCT_SERIES.forEach(function (m) { next[m.key] = !!socialVisible[m.key]; });
     next[key] = !next[key];
     socialVisibleState[1](next);
   }
@@ -87,7 +100,7 @@ module.exports = function Stats(props) {
     recordedMonths.forEach(function (bucket) {
       series.forEach(function (m) {
         if (!shown[m.key]) return;
-        var v = Number(bucket[m.key]) || 0;
+        var v = seriesValue(m, bucket);
         if (v > max) max = v;
       });
     });
@@ -128,7 +141,7 @@ module.exports = function Stats(props) {
     series.forEach(function (m) {
       if (!shown[m.key] || recordedMonths.length === 0) return;
       var points = recordedMonths.map(function (bucket) {
-        return { month: bucket.month, value: Number(bucket[m.key]) || 0 };
+        return { month: bucket.month, value: seriesValue(m, bucket) };
       });
       if (points.length > 1) {
         children.push(h("polyline", {
@@ -171,7 +184,7 @@ module.exports = function Stats(props) {
       kids.push(h("div", { key: m.key, className: "wbsal-tip-row" },
         h("i", { className: m.tone }),
         h("span", null, m.label),
-        h("b", null, F.money(Number(bucket[m.key]) || 0))));
+        h("b", null, F.money(seriesValue(m, bucket)))));
     });
     kids.push(h("em", { key: "n" }, bucket.records + " 笔记录"));
     return h("div", {
@@ -277,24 +290,24 @@ module.exports = function Stats(props) {
 
       h("div", { className: "wbsal-card wbsal-section" },
         h("div", { className: "wbsal-section-head" },
-          h("h3", null, "五险一金"),
-          h("span", null, "年度合计 " + F.money(data.socialTotal) + " · 占应发 " + (data.grossTotal ? Math.round((data.socialTotal / data.grossTotal) * 100) : 0) + "%")),
-        h("div", { className: "wbsal-social" }, F.SOCIAL_KEYS.map(function (key) {
-          var amount = (data.social && data.social[key]) || 0;
-          var share = data.socialTotal ? Math.round((amount / data.socialTotal) * 100) : 0;
+          h("h3", null, "社保与个税"),
+          h("span", null, "年度合计 " + F.money(DEDUCT_TOTAL_ALL) + " · 占应发 " + (data.grossTotal ? Math.round((DEDUCT_TOTAL_ALL / data.grossTotal) * 100) : 0) + "%")),
+        h("div", { className: "wbsal-social" }, F.SOCIAL_KEYS.concat(["incomeTax"]).map(function (key) {
+          var amount = key === "incomeTax" ? (data.incomeTaxTotal || 0) : ((data.social && data.social[key]) || 0);
+          var share = DEDUCT_TOTAL_ALL ? Math.round((amount / DEDUCT_TOTAL_ALL) * 100) : 0;
           return h("div", { key: key, className: "wbsal-social-item" },
             h("span", null, F.LABELS[key]),
             h("b", null, F.money(amount)),
-            h("em", null, "占五险一金 " + share + "%"));
+            h("em", null, "占社保与个税 " + share + "%"));
         })),
-        h("div", { className: "wbsal-social-foot" }, seriesSwitch(SOCIAL_SERIES, socialVisible, toggleSocial, "五险一金折线显示开关")),
+        h("div", { className: "wbsal-social-foot" }, seriesSwitch(DEDUCT_SERIES, socialVisible, toggleSocial, "社保与个税折线显示开关")),
         h("div", { className: "wbsal-linechart" },
-          renderChart(SOCIAL_SERIES, socialVisible, "月度养老/医疗/失业/公积金折线图", socialHover, setSocialHover),
-          renderTip(SOCIAL_SERIES, socialVisible, socialHover)),
-        anyShown(SOCIAL_SERIES, socialVisible) ? null
-          : h("div", { className: "wbsal-chart-hint" }, "所有线都关掉了，点上方「养老 / 医疗 / 失业 / 公积金 / 合计」任意一个恢复显示"),
+          renderChart(DEDUCT_SERIES, socialVisible, "月度养老/医疗/失业/公积金/个税折线图", socialHover, setSocialHover),
+          renderTip(DEDUCT_SERIES, socialVisible, socialHover)),
+        anyShown(DEDUCT_SERIES, socialVisible) ? null
+          : h("div", { className: "wbsal-chart-hint" }, "所有线都关掉了，点上方「养老 / 医疗 / 失业 / 公积金 / 个税 / 合计」任意一个恢复显示"),
         h("div", { className: "wbsal-chart-foot" },
-          h("span", null, "四条线 + 虚线合计可单独开关 · 鼠标移到某个月份看该月分项"),
+          h("span", null, "五条线 + 虚线合计（五项之和）可单独开关 · 鼠标移到某个月份看该月分项"),
           h("span", null, "单位：元 · 仅连接有记录的月份"))),
 
       data.latestMonth ? h("div", { className: "wbsal-card wbsal-section" },

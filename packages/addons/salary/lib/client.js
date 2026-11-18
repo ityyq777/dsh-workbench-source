@@ -1059,14 +1059,28 @@ var require_stats = __commonJS({
         next[key] = !next[key];
         visibleState[1](next);
       }
-      var SOCIAL_SERIES = F.SOCIAL_KEYS.map(function(key, index) {
+      function round2(value) {
+        return Math.round((Number(value) || 0) * 100) / 100;
+      }
+      function deductOf(bucket) {
+        return round2((Number(bucket.pension) || 0) + (Number(bucket.medical) || 0) + (Number(bucket.unemployment) || 0) + (Number(bucket.housingFund) || 0) + (Number(bucket.incomeTax) || 0));
+      }
+      function seriesValue(m, bucket) {
+        if (typeof m.get === "function") return m.get(bucket);
+        return Number(bucket[m.key]) || 0;
+      }
+      var DEDUCT_TOTAL_ALL = round2((data && data.socialTotal) + (data && data.incomeTaxTotal));
+      var DEDUCT_SERIES = F.SOCIAL_KEYS.map(function(key, index) {
         return { key, label: F.LABELS[key], tone: "s" + (index + 1) };
-      }).concat([{ key: "socialTotal", label: "\u5408\u8BA1", tone: "sum" }]);
-      var socialVisibleState = React.useState(Object.assign({ pension: true, medical: true, unemployment: true, housingFund: true, socialTotal: true }, props.initialSocialVisible || {}));
+      }).concat([
+        { key: "incomeTax", label: "\u4E2A\u7A0E", tone: "s5" },
+        { key: "deductTotal", label: "\u5408\u8BA1", tone: "sum", get: deductOf }
+      ]);
+      var socialVisibleState = React.useState(Object.assign({ pension: true, medical: true, unemployment: true, housingFund: true, incomeTax: true, deductTotal: true }, props.initialSocialVisible || {}));
       var socialVisible = socialVisibleState[0];
       function toggleSocial(key) {
         var next = {};
-        SOCIAL_SERIES.forEach(function(m) {
+        DEDUCT_SERIES.forEach(function(m) {
           next[m.key] = !!socialVisible[m.key];
         });
         next[key] = !next[key];
@@ -1102,7 +1116,7 @@ var require_stats = __commonJS({
         recordedMonths.forEach(function(bucket) {
           series.forEach(function(m) {
             if (!shown[m.key]) return;
-            var v = Number(bucket[m.key]) || 0;
+            var v = seriesValue(m, bucket);
             if (v > max) max = v;
           });
         });
@@ -1161,7 +1175,7 @@ var require_stats = __commonJS({
         series.forEach(function(m) {
           if (!shown[m.key] || recordedMonths.length === 0) return;
           var points = recordedMonths.map(function(bucket) {
-            return { month: bucket.month, value: Number(bucket[m.key]) || 0 };
+            return { month: bucket.month, value: seriesValue(m, bucket) };
           });
           if (points.length > 1) {
             children.push(h("polyline", {
@@ -1218,7 +1232,7 @@ var require_stats = __commonJS({
             { key: m.key, className: "wbsal-tip-row" },
             h("i", { className: m.tone }),
             h("span", null, m.label),
-            h("b", null, F.money(Number(bucket[m.key]) || 0))
+            h("b", null, F.money(seriesValue(m, bucket)))
           ));
         });
         kids.push(h("em", { key: "n" }, bucket.records + " \u7B14\u8BB0\u5F55"));
@@ -1375,32 +1389,32 @@ var require_stats = __commonJS({
             h(
               "div",
               { className: "wbsal-section-head" },
-              h("h3", null, "\u4E94\u9669\u4E00\u91D1"),
-              h("span", null, "\u5E74\u5EA6\u5408\u8BA1 " + F.money(data.socialTotal) + " \xB7 \u5360\u5E94\u53D1 " + (data.grossTotal ? Math.round(data.socialTotal / data.grossTotal * 100) : 0) + "%")
+              h("h3", null, "\u793E\u4FDD\u4E0E\u4E2A\u7A0E"),
+              h("span", null, "\u5E74\u5EA6\u5408\u8BA1 " + F.money(DEDUCT_TOTAL_ALL) + " \xB7 \u5360\u5E94\u53D1 " + (data.grossTotal ? Math.round(DEDUCT_TOTAL_ALL / data.grossTotal * 100) : 0) + "%")
             ),
-            h("div", { className: "wbsal-social" }, F.SOCIAL_KEYS.map(function(key) {
-              var amount = data.social && data.social[key] || 0;
-              var share = data.socialTotal ? Math.round(amount / data.socialTotal * 100) : 0;
+            h("div", { className: "wbsal-social" }, F.SOCIAL_KEYS.concat(["incomeTax"]).map(function(key) {
+              var amount = key === "incomeTax" ? data.incomeTaxTotal || 0 : data.social && data.social[key] || 0;
+              var share = DEDUCT_TOTAL_ALL ? Math.round(amount / DEDUCT_TOTAL_ALL * 100) : 0;
               return h(
                 "div",
                 { key, className: "wbsal-social-item" },
                 h("span", null, F.LABELS[key]),
                 h("b", null, F.money(amount)),
-                h("em", null, "\u5360\u4E94\u9669\u4E00\u91D1 " + share + "%")
+                h("em", null, "\u5360\u793E\u4FDD\u4E0E\u4E2A\u7A0E " + share + "%")
               );
             })),
-            h("div", { className: "wbsal-social-foot" }, seriesSwitch(SOCIAL_SERIES, socialVisible, toggleSocial, "\u4E94\u9669\u4E00\u91D1\u6298\u7EBF\u663E\u793A\u5F00\u5173")),
+            h("div", { className: "wbsal-social-foot" }, seriesSwitch(DEDUCT_SERIES, socialVisible, toggleSocial, "\u793E\u4FDD\u4E0E\u4E2A\u7A0E\u6298\u7EBF\u663E\u793A\u5F00\u5173")),
             h(
               "div",
               { className: "wbsal-linechart" },
-              renderChart(SOCIAL_SERIES, socialVisible, "\u6708\u5EA6\u517B\u8001/\u533B\u7597/\u5931\u4E1A/\u516C\u79EF\u91D1\u6298\u7EBF\u56FE", socialHover, setSocialHover),
-              renderTip(SOCIAL_SERIES, socialVisible, socialHover)
+              renderChart(DEDUCT_SERIES, socialVisible, "\u6708\u5EA6\u517B\u8001/\u533B\u7597/\u5931\u4E1A/\u516C\u79EF\u91D1/\u4E2A\u7A0E\u6298\u7EBF\u56FE", socialHover, setSocialHover),
+              renderTip(DEDUCT_SERIES, socialVisible, socialHover)
             ),
-            anyShown(SOCIAL_SERIES, socialVisible) ? null : h("div", { className: "wbsal-chart-hint" }, "\u6240\u6709\u7EBF\u90FD\u5173\u6389\u4E86\uFF0C\u70B9\u4E0A\u65B9\u300C\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1 / \u5408\u8BA1\u300D\u4EFB\u610F\u4E00\u4E2A\u6062\u590D\u663E\u793A"),
+            anyShown(DEDUCT_SERIES, socialVisible) ? null : h("div", { className: "wbsal-chart-hint" }, "\u6240\u6709\u7EBF\u90FD\u5173\u6389\u4E86\uFF0C\u70B9\u4E0A\u65B9\u300C\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1 / \u4E2A\u7A0E / \u5408\u8BA1\u300D\u4EFB\u610F\u4E00\u4E2A\u6062\u590D\u663E\u793A"),
             h(
               "div",
               { className: "wbsal-chart-foot" },
-              h("span", null, "\u56DB\u6761\u7EBF + \u865A\u7EBF\u5408\u8BA1\u53EF\u5355\u72EC\u5F00\u5173 \xB7 \u9F20\u6807\u79FB\u5230\u67D0\u4E2A\u6708\u4EFD\u770B\u8BE5\u6708\u5206\u9879"),
+              h("span", null, "\u4E94\u6761\u7EBF + \u865A\u7EBF\u5408\u8BA1\uFF08\u4E94\u9879\u4E4B\u548C\uFF09\u53EF\u5355\u72EC\u5F00\u5173 \xB7 \u9F20\u6807\u79FB\u5230\u67D0\u4E2A\u6708\u4EFD\u770B\u8BE5\u6708\u5206\u9879"),
               h("span", null, "\u5355\u4F4D\uFF1A\u5143 \xB7 \u4EC5\u8FDE\u63A5\u6709\u8BB0\u5F55\u7684\u6708\u4EFD")
             )
           ),
@@ -4175,7 +4189,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.2.1",
+    version: "0.2.2",
     icon: (init_wallet(), __toCommonJS(wallet_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },

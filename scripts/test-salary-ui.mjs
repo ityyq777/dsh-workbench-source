@@ -200,9 +200,9 @@ const allCount = toneCount(allLines);
 for (const tone of ["s1", "s2", "s3", "s4"]) {
   if (allCount[tone] !== 2) problems.push("默认应各渲染 2 条 " + tone + " 折线，实际 " + allCount[tone]);
 }
-for (const tone of ["s5", "s6"]) {
-  if (allCount[tone] !== 1) problems.push("默认应各渲染 1 条 " + tone + " 折线，实际 " + allCount[tone]);
-}
+// s5 同时用于主图「补贴」与社保卡「个税」，s6 只在主图（绩效奖惩）
+if (allCount.s5 !== 2) problems.push("默认应渲染 2 条 s5 折线（补贴 + 个税），实际 " + allCount.s5);
+if (allCount.s6 !== 1) problems.push("默认应渲染 1 条 s6 折线（绩效奖惩），实际 " + allCount.s6);
 const hiddenLines = toneCount(polyClasses(await render(statsComp, {
   api: fixedApi, lang: "zh", title: "统计", h: HOST.h,
   initialVisible: { basePay: false, performancePay: false },
@@ -211,7 +211,7 @@ if (hiddenLines.s1 !== 2) problems.push("隐藏基本/绩效后实发折线不�
 if (hiddenLines.s2 !== 2) problems.push("隐藏基本/绩效后应发折线不应消失");
 if (hiddenLines.s3 !== 1) problems.push("取消勾选后主图基本折线仍应消失、五险一金保留 1 条");
 if (hiddenLines.s4 !== 1) problems.push("取消勾选后主图绩效折线仍应消失、五险一金保留 1 条");
-if (hiddenLines.s5 !== 1) problems.push("隐藏基本/绩效不影响补贴折线");
+if (hiddenLines.s5 !== 2) problems.push("隐藏基本/绩效不影响补贴与个税折线");
 if (hiddenLines.s6 !== 1) problems.push("隐藏基本/绩效不影响绩效奖惩折线");
 const sumCount = (list) => list.filter((name) => name.split(/\s+/).includes("sum")).length;
 const allLists = polyClasses(await render(statsComp, { api: fixedApi, lang: "zh", title: "统计", h: HOST.h }, fixedApi));
@@ -225,8 +225,8 @@ const socialHidden = toneCount(socialHiddenList);
 if (socialHidden.s1 !== 1) problems.push("关掉养老后五险一金应只剩 1 条 s1（主图实发）");
 if (socialHidden.s2 !== 1) problems.push("关掉医疗后五险一金应只剩 1 条 s2（主图应发）");
 if (socialHidden.s3 !== 2) problems.push("未关失业时五险一金失业线应保留");
-if (socialHidden.s5 !== 1) problems.push("关掉养老/医疗不影响主图补贴折线");
-if (socialHidden.s6 !== 1) problems.push("关掉养老/医疗不影响主图绩效奖惩折线");
+if (socialHidden.s5 !== 2) problems.push("关掉养老/医疗不影响补贴与个税折线");
+if (socialHidden.s6 !== 1) problems.push("关掉养老/医疗不影响绩效奖惩折线");
 
 for (const file of ["views/records.cjs", "views/stats.cjs", "views/data.cjs", "views/actions.cjs"]) {
   const src = readFileSync(ROOT + "packages/addons/salary/client/" + file, "utf8");
