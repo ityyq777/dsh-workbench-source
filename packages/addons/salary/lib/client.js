@@ -174,6 +174,12 @@ var require_styles = __commonJS({
       ".wbsal-confirm{display:inline-flex;align-items:center;gap:8px;padding:3px 8px 3px 10px;border-radius:999px;background:color-mix(in srgb,var(--wb-danger,#b91c1c) 10%,transparent)}",
       /* 表单 */
       ".wbsal-form{display:flex;flex-direction:column;gap:16px}",
+      ".wbsal-mask{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-start;justify-content:center;padding:38px 18px;overflow:auto;background:transparent;backdrop-filter:brightness(.62) blur(3px);-webkit-backdrop-filter:brightness(.62) blur(3px)}",
+      "@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.wbsal-mask{background:color-mix(in oklab,currentColor 34%,transparent)}}",
+      ".wbsal-modal{width:min(960px,100%);margin:auto 0;animation:wbsal-pop .16s ease-out}",
+      "@keyframes wbsal-pop{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}",
+      ".wbsal-form-modal{margin-top:0;max-height:calc(100vh - 76px);overflow:auto;box-shadow:0 24px 64px color-mix(in oklab,currentColor 22%,transparent)}",
+      ".wbsal-form-modal .wbsal-form-head{position:sticky;top:-14px;z-index:1;margin:-14px -16px 0;padding:14px 16px;background:var(--wb-card,#fff);border-bottom:1px solid var(--wb-line,#eef0f4)}",
       ".wbsal-form-head{display:flex;align-items:center;justify-content:space-between;gap:10px}",
       ".wbsal-form-head h3{font-size:14px;font-weight:650;margin:0}",
       ".wbsal-form-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}",
@@ -1189,6 +1195,20 @@ var require_records = __commonJS({
       var msg = msgState[0], setMsg = msgState[1];
       var savingState = React.useState(false);
       var saving = savingState[0], setSaving = savingState[1];
+      var modalOpen = !!form;
+      React.useEffect(function() {
+        if (!modalOpen || typeof document === "undefined") return void 0;
+        function onKey(event) {
+          if (event.key === "Escape") closeForm();
+        }
+        document.addEventListener("keydown", onKey);
+        var previous = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return function() {
+          document.removeEventListener("keydown", onKey);
+          document.body.style.overflow = previous;
+        };
+      }, [modalOpen, form && form.mode, form && form.id]);
       function reloadAll() {
         status.refresh();
         statsLoad.refresh();
@@ -1333,7 +1353,7 @@ var require_records = __commonJS({
         }).length;
         return h(
           "div",
-          { className: "wbsal-card wbsal-form" },
+          { className: "wbsal-card wbsal-form wbsal-form-modal" },
           h(
             "div",
             { className: "wbsal-form-head" },
@@ -1423,6 +1443,19 @@ var require_records = __commonJS({
             h(C.Btn, { h, kind: "ghost", onClick: closeForm }, "\u53D6\u6D88")
           )
         );
+      }
+      function renderModal() {
+        return h("div", {
+          className: "wbsal-mask",
+          onClick: function(event) {
+            if (event.target === event.currentTarget) closeForm();
+          }
+        }, h("div", {
+          className: "wbsal-modal",
+          role: "dialog",
+          "aria-modal": "true",
+          "aria-label": form.mode === "edit" ? "\u7F16\u8F91\u5DE5\u8D44" : "\u8BB0\u4E00\u7B14\u5DE5\u8D44"
+        }, renderForm()));
       }
       function renderDetail(item) {
         var blocks = F.GROUPS.map(function(group) {
@@ -1616,9 +1649,9 @@ var require_records = __commonJS({
           kpi("\u4ECA\u5E74\u4E2A\u7A0E", statsLoad.data ? F.money(statsLoad.data.incomeTaxTotal) : "\u2014", "\u5DE5\u8D44\u85AA\u91D1\u9884\u6263"),
           kpi("\u4ECA\u5E74\u4E94\u9669\u4E00\u91D1", statsLoad.data ? F.money(statsLoad.data.socialTotal) : "\u2014", "\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1")
         ),
-        form ? renderForm() : null,
         h(C.Notice, { h, kind: msg && msg.kind, text: msg && !form ? msg.text : "" }),
-        body
+        body,
+        form ? renderModal() : null
       );
     };
   }
@@ -3420,7 +3453,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.1.2",
+    version: "0.1.3",
     icon: (init_wallet(), __toCommonJS(wallet_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },

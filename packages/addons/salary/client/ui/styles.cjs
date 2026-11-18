@@ -94,6 +94,12 @@ var PAGE = [
 
   /* 表单 */
   ".wbsal-form{display:flex;flex-direction:column;gap:16px}",
+  ".wbsal-mask{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-start;justify-content:center;padding:38px 18px;overflow:auto;background:transparent;backdrop-filter:brightness(.62) blur(3px);-webkit-backdrop-filter:brightness(.62) blur(3px)}",
+  "@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.wbsal-mask{background:color-mix(in oklab,currentColor 34%,transparent)}}",
+  ".wbsal-modal{width:min(960px,100%);margin:auto 0;animation:wbsal-pop .16s ease-out}",
+  "@keyframes wbsal-pop{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}",
+  ".wbsal-form-modal{margin-top:0;max-height:calc(100vh - 76px);overflow:auto;box-shadow:0 24px 64px color-mix(in oklab,currentColor 22%,transparent)}",
+  ".wbsal-form-modal .wbsal-form-head{position:sticky;top:-14px;z-index:1;margin:-14px -16px 0;padding:14px 16px;background:var(--wb-card,#fff);border-bottom:1px solid var(--wb-line,#eef0f4)}",
   ".wbsal-form-head{display:flex;align-items:center;justify-content:space-between;gap:10px}",
   ".wbsal-form-head h3{font-size:14px;font-weight:650;margin:0}",
   ".wbsal-form-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}",

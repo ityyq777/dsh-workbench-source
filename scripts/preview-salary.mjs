@@ -185,8 +185,8 @@ const formHtml = toHtml(await renderView("views/records.cjs", {
   initialForm: { mode: "edit", id: "sal_4", payDate: "2026-10-15", cycle: "monthly", note: "2026 年 10 月工资条", values: formValues, lockGross: false },
 }));
 
-function pane(theme, title, body) {
-  return `<section class="pane" data-theme="${theme}" style="${themeVars[theme]}">
+function pane(theme, title, body, extraClass) {
+  return `<section class="pane${extraClass ? " " + extraClass : ""}" data-theme="${theme}" style="${themeVars[theme]}">
     <div class="pane-title">${title}</div>
     <div class="pane-body">${body}</div>
   </section>`;
@@ -201,15 +201,18 @@ const html = `<!doctype html><html lang="zh"><head><meta charset="utf-8"><title>
   .pane[data-theme="dark"]{--wb-bg:#0b1020;color:#e8ecf4}
   .pane-title{font:600 11px/1 ui-monospace,monospace;letter-spacing:.12em;text-transform:uppercase;color:#7d879b;margin:0 0 10px 2px}
   .pane-body{max-width:none}
+  .pane-modal .pane-body{position:relative;min-height:1080px;border-radius:12px;overflow:hidden;border:1px solid #1d2330}
+  .pane-modal .wbsal-mask{position:absolute;padding:18px}
+  .pane-modal .wbsal-modal{width:100%;margin:0}
   ${cssText}
 </style></head><body><div class="wrap">
 ${pane("light", "light · records", recordsHtml)}
 ${pane("light", "light · detail", detailHtml)}
 ${pane("light", "light · stats", statsHtml)}
 ${pane("light", "light · stats · 应发口径", statsGrossHtml)}
-${pane("light", "light · form", formHtml)}
+${pane("light", "light · form", formHtml, "pane-modal")}
 ${pane("dark", "dark · records", detailHtml)}
-${pane("dark", "dark · form", formHtml)}
+${pane("dark", "dark · form", formHtml, "pane-modal")}
 ${pane("dark", "dark · stats", statsHtml)}
 ${pane("dark", "dark · stats · 应发口径", statsGrossHtml)}
 </div></body></html>`;

@@ -28,6 +28,20 @@ module.exports = function Records(props) {
   var savingState = React.useState(false);
   var saving = savingState[0], setSaving = savingState[1];
 
+  // 编辑/新增改为弹层：Esc 关闭、禁止背景滚动；document 不存在时（脚本渲染测试）跳过。
+  var modalOpen = !!form;
+  React.useEffect(function () {
+    if (!modalOpen || typeof document === "undefined") return undefined;
+    function onKey(event) { if (event.key === "Escape") closeForm(); }
+    document.addEventListener("keydown", onKey);
+    var previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return function () {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [modalOpen, form && form.mode, form && form.id]);
+
   function reloadAll() {
     status.refresh();
     statsLoad.refresh();
@@ -162,7 +176,7 @@ module.exports = function Records(props) {
     var computed = F.totals(form.values);
     var lockedGross = form.lockGross;
     var sameDayCount = items.filter(function (item) { return item.payDate === form.payDate && item.id !== form.id; }).length;
-    return h("div", { className: "wbsal-card wbsal-form" },
+    return h("div", { className: "wbsal-card wbsal-form wbsal-form-modal" },
       h("div", { className: "wbsal-form-head" },
         h("div", null,
           h("div", { className: "wbsal-eyebrow" }, form.mode === "edit" ? "EDIT RECORD" : "NEW RECORD"),
@@ -205,6 +219,18 @@ module.exports = function Records(props) {
       h("div", { className: "wbsal-form-actions" },
         h(C.Btn, { h: h, kind: "primary", onClick: submit, disabled: saving }, saving ? "保存中…" : (form.mode === "edit" ? "保存修改" : "保存")),
         h(C.Btn, { h: h, kind: "ghost", onClick: closeForm }, "取消")));
+  }
+
+  function renderModal() {
+    return h("div", {
+      className: "wbsal-mask",
+      onClick: function (event) { if (event.target === event.currentTarget) closeForm(); },
+    }, h("div", {
+      className: "wbsal-modal",
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-label": form.mode === "edit" ? "编辑工资" : "记一笔工资",
+    }, renderForm()));
   }
 
   function renderDetail(item) {
@@ -307,7 +333,7 @@ module.exports = function Records(props) {
         currentYear + " 年 · " + (statsLoad.data ? statsLoad.data.records : 0) + " 笔"),
       kpi("今年个税", statsLoad.data ? F.money(statsLoad.data.incomeTaxTotal) : "—", "工资薪金预扣"),
       kpi("今年五险一金", statsLoad.data ? F.money(statsLoad.data.socialTotal) : "—", "养老 / 医疗 / 失业 / 公积金")),
-    form ? renderForm() : null,
     h(C.Notice, { h: h, kind: msg && msg.kind, text: msg && !form ? msg.text : "" }),
-    body);
+    body,
+    form ? renderModal() : null);
 };
