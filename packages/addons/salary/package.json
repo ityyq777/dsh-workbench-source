@@ -1,0 +1,63 @@
+{
+  "name": "dsh-workbench-salary",
+  "version": "0.1.0",
+  "description": "个人工作台工资记录：按日期记录日结/月结工资、收入项、扣款项与实发统计",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "package.json"
+  ],
+  "license": "MIT",
+  "wb": {
+    "addon": {
+      "id": "wb-addon-salary",
+      "title": "工资",
+      "version": "0.1.0",
+      "minShell": "0.6.7",
+      "tables": [
+        "salary_record"
+      ],
+      "views": [
+        "records",
+        "stats",
+        "config",
+        "data",
+        "actions"
+      ],
+      "toolActions": [
+        "salary.status",
+        "salary.stats",
+        "salary.recordList",
+        "salary.recordGet",
+        "salary.recordCreate",
+        "salary.recordUpdate",
+        "salary.recordDelete",
+        "salary.dataTables",
+        "salary.dataQuery",
+        "salary.actionSchema"
+      ],
+      "client": "lib/client.js"
+    }
+  },
+  "dependencies": {
+    "dsh-workbench": "file:../../shell-dist"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "dsh-workbench"
+      ],
+      "platform": "web"
+    }
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  }
+}

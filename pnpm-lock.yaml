@@ -72,6 +72,12 @@ importers:
         specifier: file:../../shell-dist
         version: link:../../shell-dist
 
+  packages/addons/salary:
+    dependencies:
+      dsh-workbench:
+        specifier: file:../../shell-dist
+        version: link:../../shell-dist
+
   packages/addons/sites:
     dependencies:
       dsh-workbench:

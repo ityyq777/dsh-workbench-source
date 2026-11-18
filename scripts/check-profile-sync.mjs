@@ -36,6 +36,7 @@ const PACKAGES = [
   { key: "contacts", label: "联系人", dir: "packages/addons/contacts", names: ["dsh-workbench-contacts"], addon: true },
   { key: "calendar", label: "日历", dir: "packages/addons/calendar", names: ["dsh-workbench-calendar"], addon: true },
   { key: "mail", label: "邮件", dir: "packages/addons/mail", names: ["dsh-workbench-mail"], addon: true },
+  { key: "salary", label: "工资", dir: "packages/addons/salary", names: ["dsh-workbench-salary"], addon: true },
 ];
 
 const EXIT_OK = 0;

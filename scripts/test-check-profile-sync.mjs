@@ -23,6 +23,7 @@ const SOURCE_PKGS = [
   { dir: "packages/addons/contacts", name: "dsh-workbench-contacts", version: "10.0.0", addon: true },
   { dir: "packages/addons/calendar", name: "dsh-workbench-calendar", version: "11.0.0", addon: true },
   { dir: "packages/addons/mail", name: "dsh-workbench-mail", version: "12.0.0", addon: true },
+  { dir: "packages/addons/salary", name: "dsh-workbench-salary", version: "13.0.0", addon: true },
 ];
 
 function writeFile(path, content) {
@@ -92,7 +93,7 @@ try {
     const { status, payload } = run(fixture);
     assert.equal(status, 0, "一致场景应退出 0");
     assert.equal(payload.ok, true);
-    assert.equal(payload.packages.length, 12);
+    assert.equal(payload.packages.length, SOURCE_PKGS.length);
     assert.ok(payload.packages.every((pkg) => pkg.ok && pkg.importOk === true));
     assert.equal(payload.packages[0].name, "dsh-workbench");
     assert.match(payload.packages[0].via, /^file:/, "应回显安装源");

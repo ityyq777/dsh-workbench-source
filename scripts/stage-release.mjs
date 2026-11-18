@@ -111,6 +111,14 @@ const ADDON_META = {
     marketZh: "DSH 日历：本地日历、事件、参与人与提醒，工作台 agent 可搜索。",
     marketExtra: "事件与提醒存本机；不订阅外部日历协议。",
   },
+  salary: {
+    description: "个人工作台工资插件：按发薪日期记录工资构成、扣款与实发",
+    keywords: ["salary", "payroll", "wage", "income"],
+    marketCategory: "tools",
+    marketEn: "Salary records for DSH: track pay components, deductions and net pay by pay date, with monthly stats and a full-width records view.",
+    marketZh: "DSH 工资记录：按发薪日期记录工资构成、社保与个税扣款、实发金额，支持年度统计与按月聚合。",
+    marketExtra: "只存本机 SQLite，不存姓名与工号，不参与云同步；不限月结，日结多笔也可按日期记录。",
+  },
   mail: {
     description: "个人工作台邮件插件：IMAP 收信头、SMTP 发信、保险箱托管密码",
     keywords: ["mail", "imap", "smtp", "email"],

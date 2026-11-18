@@ -82,6 +82,7 @@
     "test:contacts": "node --test packages/addons/contacts/test/contacts.test.mjs",
     "test:calendar": "node --test packages/addons/calendar/test/calendar.test.mjs",
     "test:mail": "node --test packages/addons/mail/test/mail.test.mjs && node scripts/test-mail-accounts.mjs && node scripts/test-mail-mime.mjs && node scripts/test-mail-layout.mjs",
+    "test:salary": "node --test packages/addons/salary/test/salary.test.mjs && node scripts/test-salary-ui.mjs",
     "test:message-config": "node scripts/test-message-config-state.mjs",
     "test:difficulty-dimensions": "node scripts/test-difficulty-dimensions.mjs",
     "test:tag-source-adopt": "node scripts/test-tag-source-adopt.mjs"
