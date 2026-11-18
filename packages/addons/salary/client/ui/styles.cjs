@@ -176,7 +176,8 @@ var PAGE = [
   ".wbsal-row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}",
 
   /* 响应式 */
-  "@media (max-width:1100px){.wbsal-table th.hide-md,.wbsal-table td.hide-md{display:none}.wbsal-detail{grid-template-columns:repeat(2,minmax(0,1fr))}}",
+  "@media (max-width:1100px){.wbsal-detail{grid-template-columns:repeat(2,minmax(0,1fr))}}",
+  "@media (max-width:900px){.wbsal-table th.hide-md,.wbsal-table td.hide-md{display:none}}",
   "@media (max-width:760px){.wbsal-detail{grid-template-columns:minmax(0,1fr)}.wbsal-page{padding:16px 14px 36px}.wbsal-table th,.wbsal-table td{padding:9px 10px}.wbsal-opt,.wbsal-table th.opt{display:none}.wbsal-comp-row{grid-template-columns:80px minmax(50px,1fr) 112px}.wbsal-chart{height:170px}}",
 ];
 

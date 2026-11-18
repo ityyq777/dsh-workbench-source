@@ -250,7 +250,8 @@ var require_styles = __commonJS({
       ".wbsal-page > .wbsal-card + .wbsal-card{margin-top:14px}",
       ".wbsal-row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}",
       /* 响应式 */
-      "@media (max-width:1100px){.wbsal-table th.hide-md,.wbsal-table td.hide-md{display:none}.wbsal-detail{grid-template-columns:repeat(2,minmax(0,1fr))}}",
+      "@media (max-width:1100px){.wbsal-detail{grid-template-columns:repeat(2,minmax(0,1fr))}}",
+      "@media (max-width:900px){.wbsal-table th.hide-md,.wbsal-table td.hide-md{display:none}}",
       "@media (max-width:760px){.wbsal-detail{grid-template-columns:minmax(0,1fr)}.wbsal-page{padding:16px 14px 36px}.wbsal-table th,.wbsal-table td{padding:9px 10px}.wbsal-opt,.wbsal-table th.opt{display:none}.wbsal-comp-row{grid-template-columns:80px minmax(50px,1fr) 112px}.wbsal-chart{height:170px}}"
     ];
     module2.exports = BASE.concat(PAGE).join("\n");
@@ -871,6 +872,296 @@ var require_fields = __commonJS({
   }
 });
 
+// packages/addons/salary/client/views/stats.cjs
+var require_stats = __commonJS({
+  "packages/addons/salary/client/views/stats.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function Stats(props) {
+      var h = props.h, React = props.React, api = props.api;
+      var C = require_common();
+      var F = require_fields();
+      var yearState = React.useState((/* @__PURE__ */ new Date()).getFullYear());
+      var year = yearState[0], setYear = yearState[1];
+      var load = C.useLoad(React, api, "salary.stats", { year }, [year]);
+      var data = load.data;
+      var METRICS = [
+        { key: "netPay", label: "\u5B9E\u53D1" },
+        { key: "basePay", label: "\u57FA\u672C" },
+        { key: "performancePay", label: "\u7EE9\u6548" },
+        { key: "grossPay", label: "\u5E94\u53D1" }
+      ];
+      var metricState = React.useState(props.initialMetric || "netPay");
+      var metric = metricState[0], setMetric = metricState[1];
+      var metricLabel = "\u5B9E\u53D1";
+      METRICS.forEach(function(m) {
+        if (m.key === metric) metricLabel = m.label;
+      });
+      var monthly = data && data.monthly || [];
+      function metricValue(bucket) {
+        return Number(bucket[metric]) || 0;
+      }
+      var maxNet = 1;
+      monthly.forEach(function(bucket) {
+        if (metricValue(bucket) > maxNet) maxNet = metricValue(bucket);
+      });
+      var topMonth = -1;
+      monthly.forEach(function(bucket, i) {
+        if (metricValue(bucket) > 0 && (topMonth < 0 || metricValue(bucket) > metricValue(monthly[topMonth]))) topMonth = i;
+      });
+      function signed(amount) {
+        var n = Number(amount) || 0;
+        return (n > 0 ? "+" : n < 0 ? "-" : "") + F.money(Math.abs(n));
+      }
+      function kpi(label, value, sub) {
+        return h("div", { className: "wbsal-card wbsal-kpi" }, h("span", null, label), h("strong", null, value), h("em", null, sub));
+      }
+      function compRows(keys, total, deduction) {
+        var rows = keys.filter(function(key) {
+          return (data.latestMonth.breakdown.fields[key] || 0) !== 0;
+        });
+        if (rows.length === 0) return null;
+        return h("div", { className: "wbsal-comp" }, rows.map(function(key) {
+          var amount = data.latestMonth.breakdown.fields[key] || 0;
+          var percent = total ? Math.max(2, Math.min(100, Math.round(Math.abs(amount) / total * 100))) : 0;
+          return h(
+            "div",
+            { key, className: "wbsal-comp-row" },
+            h("span", null, F.LABELS[key]),
+            h("div", { className: "wbsal-comp-track" }, h("div", { className: "wbsal-comp-fill" + (deduction ? " deduction" : ""), style: { width: percent + "%" } })),
+            h("span", { className: "wbsal-comp-value" }, h("b", null, F.money(amount)), " \xB7 " + percent + "%")
+          );
+        }));
+      }
+      var body;
+      if (load.loading) body = h(C.Empty, { h, text: "\u52A0\u8F7D\u4E2D\u2026" });
+      else if (load.error) body = h(C.Notice, { h, kind: "error", text: load.error });
+      else if (!data || data.records === 0) {
+        body = h(
+          "div",
+          { className: "wbsal-empty" },
+          h("div", null, year + " \u5E74\u8FD8\u6CA1\u6709\u5DE5\u8D44\u8BB0\u5F55\uFF1B\u6362\u4E2A\u5E74\u4EFD\uFF0C\u6216\u5148\u53BB\u5DE5\u8D44\u8BB0\u5F55\u9875\u8BB0\u4E00\u7B14")
+        );
+      } else {
+        var latestBreakdown = data.latestMonth && data.latestMonth.breakdown;
+        var deductionTotal = latestBreakdown ? latestBreakdown.preTax + latestBreakdown.social + latestBreakdown.tax : 0;
+        var prevNet = 0;
+        var tableRows = [];
+        monthly.forEach(function(bucket) {
+          if (bucket.records === 0) return;
+          tableRows.push({ bucket, prev: prevNet });
+          prevNet = bucket.netPay;
+        });
+        var chartMax = Math.max(1, maxNet);
+        body = h(
+          "div",
+          { className: "wbsal-section" },
+          h(
+            "div",
+            { className: "wbsal-kpis" },
+            kpi("\u5E74\u5EA6\u5B9E\u53D1\u5408\u8BA1", F.money(data.netTotal), data.records + " \u7B14 \xB7 \u8986\u76D6 " + data.months + " \u4E2A\u6708"),
+            kpi("\u6708\u5747\u5B9E\u53D1", F.money(data.avgNetPay), "\u6309\u6709\u8BB0\u5F55\u7684\u6708\u4EFD\u5E73\u5747"),
+            kpi("\u5E74\u5EA6\u5E94\u53D1", F.money(data.grossTotal), "\u7A0E\u524D"),
+            kpi("\u5E74\u5EA6\u4E2A\u7A0E", F.money(data.incomeTaxTotal), "\u5DE5\u8D44\u85AA\u91D1\u9884\u6263"),
+            kpi("\u5E74\u5EA6\u793E\u4FDD\u516C\u79EF\u91D1", F.money(data.socialTotal), "\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1")
+          ),
+          h(
+            "div",
+            { className: "wbsal-card wbsal-section" },
+            h(
+              "div",
+              { className: "wbsal-section-head" },
+              h("h3", null, "\u6708\u5EA6" + metricLabel + "\u8D8B\u52BF"),
+              h(
+                "div",
+                { className: "wbsal-section-tools" },
+                h("div", { className: "wbsal-metric", role: "group", "aria-label": "\u56FE\u8868\u7EDF\u8BA1\u53E3\u5F84" }, METRICS.map(function(m) {
+                  return h("button", {
+                    key: m.key,
+                    type: "button",
+                    className: m.key === metric ? "on" : "",
+                    "aria-pressed": m.key === metric,
+                    onClick: function() {
+                      setMetric(m.key);
+                    }
+                  }, m.label);
+                })),
+                h("span", { className: "wbsal-section-note" }, "\u6700\u9AD8 " + F.monthLabel(monthly[topMonth] ? monthly[topMonth].period : "") + " \xB7 " + F.money(maxNet))
+              )
+            ),
+            h("div", { className: "wbsal-chart" }, monthly.map(function(bucket, i) {
+              var value = metricValue(bucket);
+              var ratio = value > 0 ? value / chartMax : 0;
+              var height = Math.round(Math.max(ratio * 150, value > 0 ? 6 : 0));
+              return h(
+                "div",
+                {
+                  key: bucket.month,
+                  className: "wbsal-bar",
+                  title: bucket.month + " \u6708 \xB7 \u57FA\u672C " + F.money(bucket.basePay) + " / \u7EE9\u6548 " + F.money(bucket.performancePay) + " / \u5E94\u53D1 " + F.money(bucket.grossPay) + " / \u5B9E\u53D1 " + F.money(bucket.netPay)
+                },
+                h("div", { className: "wbsal-bar-value" }, value > 0 ? Math.round(value).toLocaleString("zh-CN") : ""),
+                h("div", { className: "wbsal-bar-fill" + (i === topMonth ? " top" : ""), style: { height: height + "px" } }),
+                h("div", { className: "wbsal-bar-label" }, "")
+              );
+            })),
+            h("div", { className: "wbsal-axis" }, monthly.map(function(bucket) {
+              return h("span", { key: bucket.month }, bucket.month);
+            })),
+            h(
+              "div",
+              { className: "wbsal-chart-foot" },
+              h("span", { className: "wbsal-legend" }, h("i", null), "\u6709\u8BB0\u5F55\u6708\u4EFD", h("i", { className: "soft" }), "\u5176\u4ED6\u6708\u4EFD"),
+              h("span", null, "\u5355\u4F4D\uFF1A\u5143 \xB7 \u6309\u53D1\u85AA\u65E5\u671F\u5F52\u5C5E\u6708\u4EFD \xB7 \u5F53\u524D\u53E3\u5F84 " + metricLabel)
+            )
+          ),
+          h(
+            "div",
+            { className: "wbsal-card wbsal-section" },
+            h(
+              "div",
+              { className: "wbsal-section-head" },
+              h("h3", null, "\u4E94\u9669\u4E00\u91D1"),
+              h("span", null, "\u5E74\u5EA6\u5408\u8BA1 " + F.money(data.socialTotal) + " \xB7 \u5360\u5E94\u53D1 " + (data.grossTotal ? Math.round(data.socialTotal / data.grossTotal * 100) : 0) + "%")
+            ),
+            h("div", { className: "wbsal-social" }, F.SOCIAL_KEYS.map(function(key) {
+              var amount = data.social && data.social[key] || 0;
+              var share = data.socialTotal ? Math.round(amount / data.socialTotal * 100) : 0;
+              return h(
+                "div",
+                { key, className: "wbsal-social-item" },
+                h("span", null, F.LABELS[key]),
+                h("b", null, F.money(amount)),
+                h("em", null, "\u5360\u4E94\u9669\u4E00\u91D1 " + share + "%")
+              );
+            })),
+            h(
+              "div",
+              { className: "wbsal-table-wrap", style: { border: 0, marginTop: "12px" } },
+              h(
+                "table",
+                { className: "wbsal-table" },
+                h("thead", null, h("tr", null, ["\u6708\u4EFD", "\u517B\u8001", "\u533B\u7597", "\u5931\u4E1A", "\u516C\u79EF\u91D1", "\u5408\u8BA1"].map(function(label) {
+                  return h("th", { key: label, className: label === "\u6708\u4EFD" ? "left" : void 0 }, label);
+                }))),
+                h("tbody", null, data.monthly.filter(function(bucket) {
+                  return bucket.records > 0;
+                }).map(function(bucket) {
+                  return h(
+                    "tr",
+                    { key: bucket.month },
+                    h("td", { className: "left" }, bucket.month + " \u6708"),
+                    F.SOCIAL_KEYS.map(function(key) {
+                      return h("td", { key, className: "wbsal-opt" }, F.money(bucket[key]));
+                    }),
+                    h("td", null, h("b", { className: "wbsal-net" }, F.money(bucket.socialTotal)))
+                  );
+                }))
+              )
+            )
+          ),
+          h(
+            "div",
+            { className: "wbsal-kpis" },
+            kpi(
+              "\u73AF\u6BD4",
+              data.mom ? signed(data.mom.amount) : "\u2014",
+              data.mom ? data.mom.percent === null ? "\u4E0A\u6708\u4E3A 0" : (data.mom.percent > 0 ? "+" : "") + data.mom.percent + "% \xB7 \u6700\u8FD1\u4E24\u4E2A\u6708" : "\u81F3\u5C11\u9700\u8981\u4E24\u4E2A\u6708\u8BB0\u5F55"
+            ),
+            kpi("\u6700\u8FD1\u6708\u4EFD", data.latestMonth ? F.monthLabel(data.latestMonth.period) : "\u2014", data.latestMonth ? data.latestMonth.records + " \u7B14" : ""),
+            kpi("\u6700\u8FD1\u4E00\u7B14", data.latest ? data.latest.payDate : "\u2014", data.latest ? (data.latest.cycle === "daily" ? "\u65E5\u7ED3" : "\u6708\u7ED3") + " \xB7 " + F.money(data.latest.netPay) : "")
+          ),
+          data.latestMonth ? h(
+            "div",
+            { className: "wbsal-card wbsal-section" },
+            h(
+              "div",
+              { className: "wbsal-section-head" },
+              h("h3", null, F.monthLabel(data.latestMonth.period) + " \u6536\u5165\u4E0E\u6263\u6B3E\u6784\u6210"),
+              h("span", null, "\u5171 " + data.latestMonth.records + " \u7B14")
+            ),
+            h(
+              "div",
+              { className: "wbsal-comp-grid" },
+              h(
+                "div",
+                null,
+                h("div", { className: "wbsal-group-title" }, "\u6536\u5165\u9879 \xB7 \u5408\u8BA1 " + F.money(latestBreakdown.income)),
+                compRows(F.INCOME_KEYS, latestBreakdown.income, false)
+              ),
+              h(
+                "div",
+                null,
+                h("div", { className: "wbsal-group-title" }, "\u6263\u6B3E\u9879 \xB7 \u5408\u8BA1 " + F.money(deductionTotal)),
+                compRows(F.PRETAX_KEYS.concat(F.SOCIAL_KEYS, F.TAX_KEYS), deductionTotal, true)
+              )
+            )
+          ) : null,
+          h(
+            "div",
+            { className: "wbsal-card wbsal-section" },
+            h(
+              "div",
+              { className: "wbsal-section-head" },
+              h("h3", null, "\u6708\u5EA6\u660E\u7EC6"),
+              h("span", null, "\u70B9\u51FB\u6708\u4EFD\u53EF\u5728\u5DE5\u8D44\u8BB0\u5F55\u9875\u67E5\u770B\u5BF9\u5E94\u8BB0\u5F55")
+            ),
+            h(
+              "div",
+              { className: "wbsal-table-wrap", style: { border: 0 } },
+              h(
+                "table",
+                { className: "wbsal-table" },
+                h("thead", null, h("tr", null, ["\u6708\u4EFD", "\u7B14\u6570", "\u5E94\u53D1", "\u5B9E\u53D1", "\u793E\u4FDD\u516C\u79EF\u91D1", "\u4E2A\u7A0E", "\u73AF\u6BD4"].map(function(label) {
+                  return h("th", { key: label }, label);
+                }))),
+                h("tbody", null, tableRows.map(function(entry) {
+                  var bucket = entry.bucket;
+                  var diff = entry.prev ? bucket.netPay - entry.prev : 0;
+                  return h(
+                    "tr",
+                    { key: bucket.month },
+                    h("td", { className: "left" }, bucket.month + " \u6708"),
+                    h("td", null, bucket.records),
+                    h("td", null, F.money(bucket.grossPay)),
+                    h("td", null, h("b", { className: "wbsal-net" }, F.money(bucket.netPay))),
+                    h("td", { className: "wbsal-opt" }, F.money(bucket.socialTotal)),
+                    h("td", { className: "wbsal-opt" }, F.money(bucket.incomeTax)),
+                    h("td", null, entry.prev ? signed(diff) : "\u2014")
+                  );
+                }))
+              )
+            )
+          )
+        );
+      }
+      return h(
+        "div",
+        { className: "wbsal-page" },
+        h(
+          "div",
+          { className: "wbsal-toolbar wbsal-toolbar-plain" },
+          h(
+            "div",
+            { className: "wbsal-toolbar-end" },
+            h(
+              "div",
+              { className: "wbsal-seg" },
+              h(C.Btn, { h, kind: "ghost", onClick: function() {
+                setYear(Math.max(2e3, year - 1));
+              } }, "\u2039"),
+              h("span", { className: "wbsal-seg-year" }, year + " \u5E74"),
+              h(C.Btn, { h, kind: "ghost", onClick: function() {
+                setYear(Math.min(2100, year + 1));
+              } }, "\u203A")
+            )
+          )
+        ),
+        body
+      );
+    };
+  }
+});
+
 // packages/addons/salary/client/views/records.cjs
 var require_records = __commonJS({
   "packages/addons/salary/client/views/records.cjs"(exports2, module2) {
@@ -1327,296 +1618,6 @@ var require_records = __commonJS({
         ),
         form ? renderForm() : null,
         h(C.Notice, { h, kind: msg && msg.kind, text: msg && !form ? msg.text : "" }),
-        body
-      );
-    };
-  }
-});
-
-// packages/addons/salary/client/views/stats.cjs
-var require_stats = __commonJS({
-  "packages/addons/salary/client/views/stats.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = function Stats(props) {
-      var h = props.h, React = props.React, api = props.api;
-      var C = require_common();
-      var F = require_fields();
-      var yearState = React.useState((/* @__PURE__ */ new Date()).getFullYear());
-      var year = yearState[0], setYear = yearState[1];
-      var load = C.useLoad(React, api, "salary.stats", { year }, [year]);
-      var data = load.data;
-      var METRICS = [
-        { key: "netPay", label: "\u5B9E\u53D1" },
-        { key: "basePay", label: "\u57FA\u672C" },
-        { key: "performancePay", label: "\u7EE9\u6548" },
-        { key: "grossPay", label: "\u5E94\u53D1" }
-      ];
-      var metricState = React.useState(props.initialMetric || "netPay");
-      var metric = metricState[0], setMetric = metricState[1];
-      var metricLabel = "\u5B9E\u53D1";
-      METRICS.forEach(function(m) {
-        if (m.key === metric) metricLabel = m.label;
-      });
-      var monthly = data && data.monthly || [];
-      function metricValue(bucket) {
-        return Number(bucket[metric]) || 0;
-      }
-      var maxNet = 1;
-      monthly.forEach(function(bucket) {
-        if (metricValue(bucket) > maxNet) maxNet = metricValue(bucket);
-      });
-      var topMonth = -1;
-      monthly.forEach(function(bucket, i) {
-        if (metricValue(bucket) > 0 && (topMonth < 0 || metricValue(bucket) > metricValue(monthly[topMonth]))) topMonth = i;
-      });
-      function signed(amount) {
-        var n = Number(amount) || 0;
-        return (n > 0 ? "+" : n < 0 ? "-" : "") + F.money(Math.abs(n));
-      }
-      function kpi(label, value, sub) {
-        return h("div", { className: "wbsal-card wbsal-kpi" }, h("span", null, label), h("strong", null, value), h("em", null, sub));
-      }
-      function compRows(keys, total, deduction) {
-        var rows = keys.filter(function(key) {
-          return (data.latestMonth.breakdown.fields[key] || 0) !== 0;
-        });
-        if (rows.length === 0) return null;
-        return h("div", { className: "wbsal-comp" }, rows.map(function(key) {
-          var amount = data.latestMonth.breakdown.fields[key] || 0;
-          var percent = total ? Math.max(2, Math.min(100, Math.round(Math.abs(amount) / total * 100))) : 0;
-          return h(
-            "div",
-            { key, className: "wbsal-comp-row" },
-            h("span", null, F.LABELS[key]),
-            h("div", { className: "wbsal-comp-track" }, h("div", { className: "wbsal-comp-fill" + (deduction ? " deduction" : ""), style: { width: percent + "%" } })),
-            h("span", { className: "wbsal-comp-value" }, h("b", null, F.money(amount)), " \xB7 " + percent + "%")
-          );
-        }));
-      }
-      var body;
-      if (load.loading) body = h(C.Empty, { h, text: "\u52A0\u8F7D\u4E2D\u2026" });
-      else if (load.error) body = h(C.Notice, { h, kind: "error", text: load.error });
-      else if (!data || data.records === 0) {
-        body = h(
-          "div",
-          { className: "wbsal-empty" },
-          h("div", null, year + " \u5E74\u8FD8\u6CA1\u6709\u5DE5\u8D44\u8BB0\u5F55\uFF1B\u6362\u4E2A\u5E74\u4EFD\uFF0C\u6216\u5148\u53BB\u5DE5\u8D44\u8BB0\u5F55\u9875\u8BB0\u4E00\u7B14")
-        );
-      } else {
-        var latestBreakdown = data.latestMonth && data.latestMonth.breakdown;
-        var deductionTotal = latestBreakdown ? latestBreakdown.preTax + latestBreakdown.social + latestBreakdown.tax : 0;
-        var prevNet = 0;
-        var tableRows = [];
-        monthly.forEach(function(bucket) {
-          if (bucket.records === 0) return;
-          tableRows.push({ bucket, prev: prevNet });
-          prevNet = bucket.netPay;
-        });
-        var chartMax = Math.max(1, maxNet);
-        body = h(
-          "div",
-          { className: "wbsal-section" },
-          h(
-            "div",
-            { className: "wbsal-kpis" },
-            kpi("\u5E74\u5EA6\u5B9E\u53D1\u5408\u8BA1", F.money(data.netTotal), data.records + " \u7B14 \xB7 \u8986\u76D6 " + data.months + " \u4E2A\u6708"),
-            kpi("\u6708\u5747\u5B9E\u53D1", F.money(data.avgNetPay), "\u6309\u6709\u8BB0\u5F55\u7684\u6708\u4EFD\u5E73\u5747"),
-            kpi("\u5E74\u5EA6\u5E94\u53D1", F.money(data.grossTotal), "\u7A0E\u524D"),
-            kpi("\u5E74\u5EA6\u4E2A\u7A0E", F.money(data.incomeTaxTotal), "\u5DE5\u8D44\u85AA\u91D1\u9884\u6263"),
-            kpi("\u5E74\u5EA6\u793E\u4FDD\u516C\u79EF\u91D1", F.money(data.socialTotal), "\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1")
-          ),
-          h(
-            "div",
-            { className: "wbsal-card wbsal-section" },
-            h(
-              "div",
-              { className: "wbsal-section-head" },
-              h("h3", null, "\u6708\u5EA6" + metricLabel + "\u8D8B\u52BF"),
-              h(
-                "div",
-                { className: "wbsal-section-tools" },
-                h("div", { className: "wbsal-metric", role: "group", "aria-label": "\u56FE\u8868\u7EDF\u8BA1\u53E3\u5F84" }, METRICS.map(function(m) {
-                  return h("button", {
-                    key: m.key,
-                    type: "button",
-                    className: m.key === metric ? "on" : "",
-                    "aria-pressed": m.key === metric,
-                    onClick: function() {
-                      setMetric(m.key);
-                    }
-                  }, m.label);
-                })),
-                h("span", { className: "wbsal-section-note" }, "\u6700\u9AD8 " + F.monthLabel(monthly[topMonth] ? monthly[topMonth].period : "") + " \xB7 " + F.money(maxNet))
-              )
-            ),
-            h("div", { className: "wbsal-chart" }, monthly.map(function(bucket, i) {
-              var value = metricValue(bucket);
-              var ratio = value > 0 ? value / chartMax : 0;
-              var height = Math.round(Math.max(ratio * 150, value > 0 ? 6 : 0));
-              return h(
-                "div",
-                {
-                  key: bucket.month,
-                  className: "wbsal-bar",
-                  title: bucket.month + " \u6708 \xB7 \u57FA\u672C " + F.money(bucket.basePay) + " / \u7EE9\u6548 " + F.money(bucket.performancePay) + " / \u5E94\u53D1 " + F.money(bucket.grossPay) + " / \u5B9E\u53D1 " + F.money(bucket.netPay)
-                },
-                h("div", { className: "wbsal-bar-value" }, value > 0 ? Math.round(value).toLocaleString("zh-CN") : ""),
-                h("div", { className: "wbsal-bar-fill" + (i === topMonth ? " top" : ""), style: { height: height + "px" } }),
-                h("div", { className: "wbsal-bar-label" }, "")
-              );
-            })),
-            h("div", { className: "wbsal-axis" }, monthly.map(function(bucket) {
-              return h("span", { key: bucket.month }, bucket.month);
-            })),
-            h(
-              "div",
-              { className: "wbsal-chart-foot" },
-              h("span", { className: "wbsal-legend" }, h("i", null), "\u6709\u8BB0\u5F55\u6708\u4EFD", h("i", { className: "soft" }), "\u5176\u4ED6\u6708\u4EFD"),
-              h("span", null, "\u5355\u4F4D\uFF1A\u5143 \xB7 \u6309\u53D1\u85AA\u65E5\u671F\u5F52\u5C5E\u6708\u4EFD \xB7 \u5F53\u524D\u53E3\u5F84 " + metricLabel)
-            )
-          ),
-          h(
-            "div",
-            { className: "wbsal-card wbsal-section" },
-            h(
-              "div",
-              { className: "wbsal-section-head" },
-              h("h3", null, "\u4E94\u9669\u4E00\u91D1"),
-              h("span", null, "\u5E74\u5EA6\u5408\u8BA1 " + F.money(data.socialTotal) + " \xB7 \u5360\u5E94\u53D1 " + (data.grossTotal ? Math.round(data.socialTotal / data.grossTotal * 100) : 0) + "%")
-            ),
-            h("div", { className: "wbsal-social" }, F.SOCIAL_KEYS.map(function(key) {
-              var amount = data.social && data.social[key] || 0;
-              var share = data.socialTotal ? Math.round(amount / data.socialTotal * 100) : 0;
-              return h(
-                "div",
-                { key, className: "wbsal-social-item" },
-                h("span", null, F.LABELS[key]),
-                h("b", null, F.money(amount)),
-                h("em", null, "\u5360\u4E94\u9669\u4E00\u91D1 " + share + "%")
-              );
-            })),
-            h(
-              "div",
-              { className: "wbsal-table-wrap", style: { border: 0, marginTop: "12px" } },
-              h(
-                "table",
-                { className: "wbsal-table" },
-                h("thead", null, h("tr", null, ["\u6708\u4EFD", "\u517B\u8001", "\u533B\u7597", "\u5931\u4E1A", "\u516C\u79EF\u91D1", "\u5408\u8BA1"].map(function(label) {
-                  return h("th", { key: label, className: label === "\u6708\u4EFD" ? "left" : void 0 }, label);
-                }))),
-                h("tbody", null, data.monthly.filter(function(bucket) {
-                  return bucket.records > 0;
-                }).map(function(bucket) {
-                  return h(
-                    "tr",
-                    { key: bucket.month },
-                    h("td", { className: "left" }, bucket.month + " \u6708"),
-                    F.SOCIAL_KEYS.map(function(key) {
-                      return h("td", { key, className: "wbsal-opt" }, F.money(bucket[key]));
-                    }),
-                    h("td", null, h("b", { className: "wbsal-net" }, F.money(bucket.socialTotal)))
-                  );
-                }))
-              )
-            )
-          ),
-          h(
-            "div",
-            { className: "wbsal-kpis" },
-            kpi(
-              "\u73AF\u6BD4",
-              data.mom ? signed(data.mom.amount) : "\u2014",
-              data.mom ? data.mom.percent === null ? "\u4E0A\u6708\u4E3A 0" : (data.mom.percent > 0 ? "+" : "") + data.mom.percent + "% \xB7 \u6700\u8FD1\u4E24\u4E2A\u6708" : "\u81F3\u5C11\u9700\u8981\u4E24\u4E2A\u6708\u8BB0\u5F55"
-            ),
-            kpi("\u6700\u8FD1\u6708\u4EFD", data.latestMonth ? F.monthLabel(data.latestMonth.period) : "\u2014", data.latestMonth ? data.latestMonth.records + " \u7B14" : ""),
-            kpi("\u6700\u8FD1\u4E00\u7B14", data.latest ? data.latest.payDate : "\u2014", data.latest ? (data.latest.cycle === "daily" ? "\u65E5\u7ED3" : "\u6708\u7ED3") + " \xB7 " + F.money(data.latest.netPay) : "")
-          ),
-          data.latestMonth ? h(
-            "div",
-            { className: "wbsal-card wbsal-section" },
-            h(
-              "div",
-              { className: "wbsal-section-head" },
-              h("h3", null, F.monthLabel(data.latestMonth.period) + " \u6536\u5165\u4E0E\u6263\u6B3E\u6784\u6210"),
-              h("span", null, "\u5171 " + data.latestMonth.records + " \u7B14")
-            ),
-            h(
-              "div",
-              { className: "wbsal-comp-grid" },
-              h(
-                "div",
-                null,
-                h("div", { className: "wbsal-group-title" }, "\u6536\u5165\u9879 \xB7 \u5408\u8BA1 " + F.money(latestBreakdown.income)),
-                compRows(F.INCOME_KEYS, latestBreakdown.income, false)
-              ),
-              h(
-                "div",
-                null,
-                h("div", { className: "wbsal-group-title" }, "\u6263\u6B3E\u9879 \xB7 \u5408\u8BA1 " + F.money(deductionTotal)),
-                compRows(F.PRETAX_KEYS.concat(F.SOCIAL_KEYS, F.TAX_KEYS), deductionTotal, true)
-              )
-            )
-          ) : null,
-          h(
-            "div",
-            { className: "wbsal-card wbsal-section" },
-            h(
-              "div",
-              { className: "wbsal-section-head" },
-              h("h3", null, "\u6708\u5EA6\u660E\u7EC6"),
-              h("span", null, "\u70B9\u51FB\u6708\u4EFD\u53EF\u5728\u5DE5\u8D44\u8BB0\u5F55\u9875\u67E5\u770B\u5BF9\u5E94\u8BB0\u5F55")
-            ),
-            h(
-              "div",
-              { className: "wbsal-table-wrap", style: { border: 0 } },
-              h(
-                "table",
-                { className: "wbsal-table" },
-                h("thead", null, h("tr", null, ["\u6708\u4EFD", "\u7B14\u6570", "\u5E94\u53D1", "\u5B9E\u53D1", "\u793E\u4FDD\u516C\u79EF\u91D1", "\u4E2A\u7A0E", "\u73AF\u6BD4"].map(function(label) {
-                  return h("th", { key: label }, label);
-                }))),
-                h("tbody", null, tableRows.map(function(entry) {
-                  var bucket = entry.bucket;
-                  var diff = entry.prev ? bucket.netPay - entry.prev : 0;
-                  return h(
-                    "tr",
-                    { key: bucket.month },
-                    h("td", { className: "left" }, bucket.month + " \u6708"),
-                    h("td", null, bucket.records),
-                    h("td", null, F.money(bucket.grossPay)),
-                    h("td", null, h("b", { className: "wbsal-net" }, F.money(bucket.netPay))),
-                    h("td", { className: "wbsal-opt" }, F.money(bucket.socialTotal)),
-                    h("td", { className: "wbsal-opt" }, F.money(bucket.incomeTax)),
-                    h("td", null, entry.prev ? signed(diff) : "\u2014")
-                  );
-                }))
-              )
-            )
-          )
-        );
-      }
-      return h(
-        "div",
-        { className: "wbsal-page" },
-        h(
-          "div",
-          { className: "wbsal-toolbar wbsal-toolbar-plain" },
-          h(
-            "div",
-            { className: "wbsal-toolbar-end" },
-            h(
-              "div",
-              { className: "wbsal-seg" },
-              h(C.Btn, { h, kind: "ghost", onClick: function() {
-                setYear(Math.max(2e3, year - 1));
-              } }, "\u2039"),
-              h("span", { className: "wbsal-seg-year" }, year + " \u5E74"),
-              h(C.Btn, { h, kind: "ghost", onClick: function() {
-                setYear(Math.min(2100, year + 1));
-              } }, "\u203A")
-            )
-          )
-        ),
         body
       );
     };
@@ -3422,8 +3423,8 @@ var require_actions = __commonJS({
     version: "0.1.2",
     icon: (init_wallet(), __toCommonJS(wallet_exports)).default,
     views: [
-      { id: "records", icon: tabIcon("records"), title: { zh: "\u5DE5\u8D44\u8BB0\u5F55", en: "Records" }, component: withProps(require_records(), "\u5DE5\u8D44\u8BB0\u5F55") },
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },
+      { id: "records", icon: tabIcon("records"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: withProps(require_records(), "\u8BB0\u5F55") },
       { id: "data", icon: tabIcon("data"), title: { zh: "\u6570\u636E", en: "Data" }, component: withProps(require_data(), "\u6570\u636E") },
       { id: "actions", icon: tabIcon("actions"), title: { zh: "Action", en: "Actions" }, component: withProps(require_actions(), "Action") }
     ]

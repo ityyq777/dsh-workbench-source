@@ -33,8 +33,8 @@
     version: "0.1.2",
     icon: require("lucide-react/icons/wallet").default,
     views: [
-      { id: "records", icon: tabIcon("records"), title: { zh: "工资记录", en: "Records" }, component: withProps(require("./views/records.cjs"), "工资记录") },
       { id: "stats", icon: tabIcon("stats"), title: { zh: "统计", en: "Stats" }, component: withProps(require("./views/stats.cjs"), "统计") },
+      { id: "records", icon: tabIcon("records"), title: { zh: "记录", en: "Records" }, component: withProps(require("./views/records.cjs"), "记录") },
       { id: "data", icon: tabIcon("data"), title: { zh: "数据", en: "Data" }, component: withProps(require("./views/data.cjs"), "数据") },
       { id: "actions", icon: tabIcon("actions"), title: { zh: "Action", en: "Actions" }, component: withProps(require("./views/actions.cjs"), "Action") },
     ],
