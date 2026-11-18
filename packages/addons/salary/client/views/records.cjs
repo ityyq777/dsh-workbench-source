@@ -31,7 +31,7 @@ module.exports = function Records(props) {
   // 编辑/新增改为弹层：Esc 关闭、禁止背景滚动；document 不存在时（脚本渲染测试）跳过。
   var modalOpen = !!form;
   React.useEffect(function () {
-    if (!modalOpen || typeof document === "undefined") return undefined;
+    if (!modalOpen || typeof document === "undefined" || typeof document.addEventListener !== "function" || !document.body) return undefined;
     function onKey(event) { if (event.key === "Escape") closeForm(); }
     document.addEventListener("keydown", onKey);
     var previous = document.body.style.overflow;
@@ -59,7 +59,8 @@ module.exports = function Records(props) {
     setConfirmId("");
     setOpenId("");
     setMsg(null);
-    setForm({ mode: "create", id: "", payDate: pickDate("monthly"), cycle: "monthly", note: "", values: F.blankValues(), lockGross: false });
+    var payDate = pickDate("monthly");
+    setForm({ mode: "create", id: "", payDate: payDate, cycle: "monthly", note: F.defaultNote(payDate, "monthly"), values: F.blankValues(), lockGross: false });
   }
 
   function openEdit(item) {
@@ -84,6 +85,10 @@ module.exports = function Records(props) {
       if (key === "payDate" && !prev.cycleLocked) {
         var same = String(value).slice(5) === "15";
         if (same) next.cycle = "monthly";
+      }
+      // 备注没被手改过时，跟着发薪日自动填「所属月份工资」。
+      if (key === "payDate" && (!prev.note || prev.note === F.defaultNote(prev.payDate, prev.cycle))) {
+        next.note = F.defaultNote(value, next.cycle);
       }
       return next;
     });
@@ -183,8 +188,9 @@ module.exports = function Records(props) {
           h("h3", null, form.mode === "edit" ? "编辑工资" : "记一笔工资")),
         h(C.Btn, { h: h, kind: "ghost", onClick: closeForm }, "关闭")),
       h("div", { className: "wbsal-form-meta" },
-        h(C.Field, { h: h, label: "发薪日期" }, h("input", { className: "wbsal-input", type: "date", value: form.payDate, onChange: function (e) { setField("payDate", e.target.value); } })),
-        h(C.Field, { h: h, label: "类型", hint: "月结默认当月 15 号" },
+        h(C.Field, { h: h, label: "发薪日期", hint: F.incomeLabel(form.payDate) ? "对应 " + F.incomeLabel(form.payDate) + " 工资" : "月中发上月工资" },
+          h("input", { className: "wbsal-input", type: "date", value: form.payDate, onChange: function (e) { setField("payDate", e.target.value); } })),
+        h(C.Field, { h: h, label: "类型", hint: "月结=月中发上月工资" },
           h("select", { className: "wbsal-input", value: form.cycle, onChange: function (e) { setField("cycle", e.target.value); } },
             h("option", { value: "monthly" }, "月结"), h("option", { value: "daily" }, "日结"))),
         h(C.Field, { h: h, label: "备注" }, h("input", { className: "wbsal-input", value: form.note, onChange: function (e) { setField("note", e.target.value); } }))),
@@ -300,7 +306,7 @@ module.exports = function Records(props) {
         h("div", { className: "wbsal-month" },
           h("div", { className: "wbsal-month-title" },
             h("strong", null, F.monthLabel(period)),
-            h("span", null, rows.length + " 笔")),
+            h("span", null, "发薪月 · " + rows.length + " 笔")),
           h("div", { className: "wbsal-month-total" }, "实发合计", h("b", null, F.money(sum)))),
         h("div", { className: "wbsal-table-wrap" },
           h("table", { className: "wbsal-table" },

@@ -858,6 +858,25 @@ var require_fields = __commonJS({
       var parts = String(period || "").split("-");
       return parts.length === 2 ? parts[0] + "\u5E74" + Number(parts[1]) + "\u6708" : period;
     }
+    function incomePeriod(payDate) {
+      var parts = String(payDate || "").split("-").map(Number);
+      if (parts.length !== 3 || !parts[0] || !parts[1]) return "";
+      var year = parts[0];
+      var month = parts[1] - 1;
+      if (month === 0) {
+        month = 12;
+        year -= 1;
+      }
+      return year + "-" + String(month).padStart(2, "0");
+    }
+    function incomeLabel(payDate) {
+      return monthLabel(incomePeriod(payDate));
+    }
+    function defaultNote(payDate, cycle) {
+      if (!payDate || cycle === "daily") return "";
+      var label = incomeLabel(payDate);
+      return label ? label + "\u5DE5\u8D44" : "";
+    }
     module2.exports = {
       GROUPS,
       KEYS,
@@ -873,7 +892,10 @@ var require_fields = __commonJS({
       totals,
       blankValues,
       weekday,
-      monthLabel
+      monthLabel,
+      incomePeriod,
+      incomeLabel,
+      defaultNote
     };
   }
 });
@@ -1197,7 +1219,7 @@ var require_records = __commonJS({
       var saving = savingState[0], setSaving = savingState[1];
       var modalOpen = !!form;
       React.useEffect(function() {
-        if (!modalOpen || typeof document === "undefined") return void 0;
+        if (!modalOpen || typeof document === "undefined" || typeof document.addEventListener !== "function" || !document.body) return void 0;
         function onKey(event) {
           if (event.key === "Escape") closeForm();
         }
@@ -1224,7 +1246,8 @@ var require_records = __commonJS({
         setConfirmId("");
         setOpenId("");
         setMsg(null);
-        setForm({ mode: "create", id: "", payDate: pickDate("monthly"), cycle: "monthly", note: "", values: F.blankValues(), lockGross: false });
+        var payDate = pickDate("monthly");
+        setForm({ mode: "create", id: "", payDate, cycle: "monthly", note: F.defaultNote(payDate, "monthly"), values: F.blankValues(), lockGross: false });
       }
       function openEdit(item) {
         var values = F.blankValues();
@@ -1250,6 +1273,9 @@ var require_records = __commonJS({
           if (key === "payDate" && !prev.cycleLocked) {
             var same = String(value).slice(5) === "15";
             if (same) next.cycle = "monthly";
+          }
+          if (key === "payDate" && (!prev.note || prev.note === F.defaultNote(prev.payDate, prev.cycle))) {
+            next.note = F.defaultNote(value, next.cycle);
           }
           return next;
         });
@@ -1368,12 +1394,16 @@ var require_records = __commonJS({
           h(
             "div",
             { className: "wbsal-form-meta" },
-            h(C.Field, { h, label: "\u53D1\u85AA\u65E5\u671F" }, h("input", { className: "wbsal-input", type: "date", value: form.payDate, onChange: function(e) {
-              setField("payDate", e.target.value);
-            } })),
             h(
               C.Field,
-              { h, label: "\u7C7B\u578B", hint: "\u6708\u7ED3\u9ED8\u8BA4\u5F53\u6708 15 \u53F7" },
+              { h, label: "\u53D1\u85AA\u65E5\u671F", hint: F.incomeLabel(form.payDate) ? "\u5BF9\u5E94 " + F.incomeLabel(form.payDate) + " \u5DE5\u8D44" : "\u6708\u4E2D\u53D1\u4E0A\u6708\u5DE5\u8D44" },
+              h("input", { className: "wbsal-input", type: "date", value: form.payDate, onChange: function(e) {
+                setField("payDate", e.target.value);
+              } })
+            ),
+            h(
+              C.Field,
+              { h, label: "\u7C7B\u578B", hint: "\u6708\u7ED3=\u6708\u4E2D\u53D1\u4E0A\u6708\u5DE5\u8D44" },
               h(
                 "select",
                 { className: "wbsal-input", value: form.cycle, onChange: function(e) {
@@ -1574,7 +1604,7 @@ var require_records = __commonJS({
                 "div",
                 { className: "wbsal-month-title" },
                 h("strong", null, F.monthLabel(period)),
-                h("span", null, rows.length + " \u7B14")
+                h("span", null, "\u53D1\u85AA\u6708 \xB7 " + rows.length + " \u7B14")
               ),
               h("div", { className: "wbsal-month-total" }, "\u5B9E\u53D1\u5408\u8BA1", h("b", null, F.money(sum)))
             ),
@@ -3453,7 +3483,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.1.3",
+    version: "0.1.4",
     icon: (init_wallet(), __toCommonJS(wallet_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },

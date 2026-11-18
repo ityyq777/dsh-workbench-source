@@ -1,5 +1,5 @@
 /**
- * 工资插件客户端冒烟：不启动浏览器，用最小 React hooks 运行时把 5 个视图各渲染两轮，
+ * 工资插件客户端冒烟：不启动浏览器，用最小 React hooks 运行时把 4 个视图各渲染两轮，
  * 验证 client.src.cjs 注册形态、样式注入，以及每个视图在「有数据」时不会抛错。
  * 只做结构断言（类名/关键文案），不做像素比对。
  */
@@ -7,6 +7,7 @@ import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import Module from "node:module";
+import assert from "node:assert/strict";
 
 const require = createRequire(import.meta.url);
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
@@ -145,13 +146,13 @@ const problems = [];
 if (!HOST.addon || HOST.addon.id !== "wb-addon-salary") problems.push("client.src.cjs 没有注册 wb-addon-salary");
 if (!HOST.addon || !Array.isArray(HOST.addon.views) || HOST.addon.views.length !== 4) problems.push("views 数量不是 4");
 const css = styles.map((el) => el.textContent).join("\n");
-for (const klass of ["wbsal-page", "wbsal-kpi", "wbsal-record-row", "wbsal-chart", "wbsal-comp", "wbsal-input", "--wb-card", "wbsal-table", "wbsal-card", "wbsal-metric"]) {
+for (const klass of ["wbsal-page", "wbsal-kpi", "wbsal-record-row", "wbsal-chart", "wbsal-comp", "wbsal-input", "--wb-card", "wbsal-table", "wbsal-card", "wbsal-metric", "wbsal-mask", "wbsal-form-modal"]) {
   if (!css.includes(klass)) problems.push("样式表缺少 " + klass);
 }
 
 const api = { call: async (action) => ({ ok: true, result: RESPONSES[action] !== undefined ? RESPONSES[action] : {} }) };
 const checks = [
-  ["records", "views/records.cjs", "工资记录", ["wbsal-record-row", "wbsal-kpi", "wbsal-toolbar", "wbsal-toolbar-end", "wbsal-month"]],
+  ["records", "views/records.cjs", "工资记录", ["wbsal-record-row", "wbsal-kpi", "wbsal-toolbar", "wbsal-toolbar-end", "wbsal-month", "wbsal-mask"]],
   ["stats", "views/stats.cjs", "统计", ["wbsal-chart", "wbsal-comp", "wbsal-table", "wbsal-metric"]],
 ];
 for (const [id, file, title, expected] of checks) {
@@ -160,7 +161,10 @@ for (const [id, file, title, expected] of checks) {
   const component = require(ROOT + "packages/addons/salary/client/" + file);
   let tree;
   try {
-    tree = await render(component, { api, lang: "zh", title, h: HOST.h }, api);
+    const extra = id === "records"
+      ? { initialForm: { mode: "create", id: "", payDate: "2026-11-17", cycle: "monthly", note: "2026年10月工资", values: require(ROOT + "packages/addons/salary/client/ui/fields.cjs").blankValues(), lockGross: false } }
+      : {};
+    tree = await render(component, Object.assign({ api, lang: "zh", title, h: HOST.h }, extra), api);
   } catch (e) {
     problems.push(id + " 渲染抛错：" + (e && e.stack ? e.stack.split("\n")[0] : e));
     continue;
@@ -190,5 +194,10 @@ if (problems.length) {
   for (const p of problems) console.error("  - " + p);
   process.exitCode = 1;
 } else {
-  console.log("工资客户端冒烟通过：4 个视图注册钩子正常，records/stats 在有数据时渲染成功，样式已注入。");
+  const F = require("../packages/addons/salary/client/ui/fields.cjs");
+assert.equal(F.incomePeriod("2026-11-17"), "2026-10", "所属月份应为上一个自然月");
+assert.equal(F.incomePeriod("2026-01-15"), "2025-12", "1 月发薪应归属上一年 12 月");
+assert.equal(F.defaultNote("2026-11-17", "monthly"), "2026年10月工资", "月结默认备注应写所属月份");
+assert.equal(F.defaultNote("2026-11-17", "daily"), "", "日结不套用上月工资备注");
+console.log("工资客户端冒烟通过：4 个视图注册钩子正常，records/stats 在有数据时渲染成功，样式已注入。");
 }

@@ -68,9 +68,31 @@ function monthLabel(period) {
   return parts.length === 2 ? parts[0] + "年" + Number(parts[1]) + "月" : period;
 }
 
+/** 发薪日对应的所属月份（月中发上月工资），返回 YYYY-MM。 */
+function incomePeriod(payDate) {
+  var parts = String(payDate || "").split("-").map(Number);
+  if (parts.length !== 3 || !parts[0] || !parts[1]) return "";
+  var year = parts[0];
+  var month = parts[1] - 1;
+  if (month === 0) { month = 12; year -= 1; }
+  return year + "-" + String(month).padStart(2, "0");
+}
+
+function incomeLabel(payDate) {
+  return monthLabel(incomePeriod(payDate));
+}
+
+/** 新记录的默认备注：月结写「X年X月工资」，日结留空。 */
+function defaultNote(payDate, cycle) {
+  if (!payDate || cycle === "daily") return "";
+  var label = incomeLabel(payDate);
+  return label ? label + "工资" : "";
+}
+
 module.exports = {
   GROUPS: GROUPS, KEYS: KEYS, LABELS: LABELS,
   INCOME_KEYS: INCOME_KEYS, PRETAX_KEYS: PRETAX_KEYS, SOCIAL_KEYS: SOCIAL_KEYS, TAX_KEYS: TAX_KEYS,
   num: num, money: money, fmtAmount: fmtAmount, sumValues: sumValues, totals: totals,
   blankValues: blankValues, weekday: weekday, monthLabel: monthLabel,
+  incomePeriod: incomePeriod, incomeLabel: incomeLabel, defaultNote: defaultNote,
 };
