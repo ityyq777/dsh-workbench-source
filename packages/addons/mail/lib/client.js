@@ -129,6 +129,18 @@ var require_styles = __commonJS({
       ".wbml-muted{font-size:12px;color:var(--wb-muted,#6b7280);overflow-wrap:anywhere}",
       ".wbml-detail-meta{display:flex;flex-wrap:wrap;gap:14px;padding:8px 12px;border-bottom:1px solid var(--wb-line,#eef0f3);font-size:12px;color:var(--wb-muted,#6b7280)}",
       ".wbml-body{flex:1;overflow:auto;min-height:0;white-space:pre-wrap;font:inherit;font-size:13px;line-height:1.7;margin:0;padding:12px}",
+      /* 正文按需下载：加载/失败/附件与重拉入口 */
+      ".wbml-detail-body{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}",
+      ".wbml-body-wrap{flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:auto;padding:12px}",
+      ".wbml-body-wrap .wbml-body{flex:0 1 auto;overflow:visible;padding:0}",
+      ".wbml-body-fail{display:flex;flex-direction:column;gap:8px;padding:8px 0}",
+      ".wbml-body-fail-text{margin:0;font-size:13px;line-height:1.6;color:var(--wb-danger,#b91c1c)}",
+      ".wbml-body-note{margin:0;font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280)}",
+      ".wbml-body-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
+      ".wbml-attach{display:flex;flex-direction:column;gap:4px;border:1px dashed var(--wb-border,#d4d4d8);border-radius:8px;padding:8px 10px}",
+      ".wbml-attach-title{font-size:12px;color:var(--wb-muted,#6b7280)}",
+      ".wbml-attach-list{display:flex;flex-wrap:wrap;gap:6px}",
+      ".wbml-attach-item{font-size:12px;line-height:1.5;padding:2px 8px;border-radius:999px;background:var(--wb-surface,#f8fafc);border:1px solid var(--wb-border,#e5e7eb);color:inherit;overflow-wrap:anywhere}",
       "@media (max-width:1180px){.wbml-layout.has-detail{grid-template-columns:256px minmax(0,1fr) minmax(320px,420px)}}",
       "@media (max-width:900px){.wbml-page.is-split{height:auto;overflow:visible}.wbml-layout,.wbml-layout.has-detail{display:flex;flex-direction:column;gap:12px;align-items:stretch;flex:0 0 auto}.wbml-rail{flex-direction:row;align-items:stretch;overflow:visible;flex:0 0 auto}.wbml-rail-card{flex:1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}.wbml-rail-card .wbml-rail-title{flex-basis:100%}.wbml-rail-tip{display:none}.wbml-rail-stats{flex:1 0 auto}.wbml-pane{flex:0 0 auto;max-height:none}.wbml-listpane{max-height:62vh}.wbml-detailpane{max-height:70vh}}",
       ".wbml-icon-btn{border:0;background:transparent;color:var(--wb-muted,#6b7280);font-size:16px;cursor:pointer;padding:2px 6px}",
@@ -739,10 +751,23 @@ var require_messages = __commonJS({
       var list = C.useLoad(React, api, "mail.messageList", { accountId: accountId[0] || void 0, limit: 50 }, [accountId[0]]);
       var sel = React.useState(null);
       var msg = React.useState(null);
+      var bodyState = React.useState({ loading: false, error: "", data: null });
       var accs = accounts.data && accounts.data.items || [];
+      function loadBody(m, force) {
+        if (!m) return;
+        bodyState[1]({ loading: true, error: "", data: null });
+        C.call(api, "mail.messageBody", { id: m.id, force: !!force }).then(function(r) {
+          if (r && r.ok === false) bodyState[1]({ loading: false, error: r.message || "\u6B63\u6587\u4E0B\u8F7D\u5931\u8D25", data: r });
+          else bodyState[1]({ loading: false, error: "", data: r || null });
+        }).catch(function(e) {
+          bodyState[1]({ loading: false, error: C.errText(e), data: null });
+        });
+      }
       function open(m) {
+        bodyState[1]({ loading: false, error: "", data: null });
         C.call(api, "mail.messageGet", { id: m.id }).then(function(d) {
           sel[1](d);
+          loadBody(d);
         }).catch(function(e) {
           msg[1]({ kind: "error", text: C.errText(e) });
         });
@@ -782,6 +807,67 @@ var require_messages = __commonJS({
         })[0];
         return hit ? hit.name : "\u5168\u90E8\u8D26\u6237";
       }
+      function sizeText(n) {
+        var v = Number(n) || 0;
+        if (v >= 1024 * 1024) return (v / (1024 * 1024)).toFixed(1) + " MB";
+        if (v >= 1024) return Math.round(v / 1024) + " KB";
+        return v + " B";
+      }
+      function attachmentsOf(current2, data) {
+        var rows = data && data.attachments || current2 && current2.attachments || [];
+        if (!rows.length) return null;
+        return h(
+          "div",
+          { className: "wbml-attach" },
+          h("span", { className: "wbml-attach-title" }, "\u6536\u4EF6\u7BB1\u91CC\u7684 " + rows.length + " \u4E2A\u9644\u4EF6\uFF08\u53EA\u5217\u6587\u4EF6\u540D\u4E0E\u5927\u5C0F\uFF0C\u4E0D\u4E0B\u8F7D\u5185\u5BB9\uFF09"),
+          h("div", { className: "wbml-attach-list" }, rows.map(function(a, i) {
+            return h("span", { key: a.id || a.filename + i, className: "wbml-attach-item", title: a.mime || "" }, String(a.filename || "\u672A\u547D\u540D\u9644\u4EF6") + (a.size ? " \xB7 " + sizeText(a.size) : ""));
+          }))
+        );
+      }
+      function bodyNode(current2) {
+        var st = bodyState[0];
+        if (st.loading) return h("div", { className: "wbml-state" }, "\u6B63\u6587\u4E0B\u8F7D\u4E2D\u2026");
+        if (st.error) {
+          return h(
+            "div",
+            { className: "wbml-body-fail" },
+            h("p", { className: "wbml-body-fail-text" }, "\u6B63\u6587\u4E0B\u8F7D\u5931\u8D25\uFF1A" + st.error),
+            h(
+              "div",
+              { className: "wbml-body-tools" },
+              h(C.Btn, { h, kind: "primary", onClick: function() {
+                loadBody(current2, true);
+              } }, "\u91CD\u8BD5")
+            )
+          );
+        }
+        var data = st.data || {};
+        var text = String(data.body || current2.body || "").trim();
+        var attach = attachmentsOf(current2, data);
+        if (!text) {
+          return h(
+            "div",
+            { className: "wbml-body-wrap" },
+            h("div", { className: "wbml-state" }, "\u8FD9\u5C01\u90AE\u4EF6\u6CA1\u6709\u53EF\u8BFB\u7684\u6B63\u6587\uFF1B\u53EF\u4EE5\u70B9\u300C\u91CD\u65B0\u4E0B\u8F7D\u6B63\u6587\u300D\u518D\u8BD5\u4E00\u6B21\u3002"),
+            attach
+          );
+        }
+        return h(
+          "div",
+          { className: "wbml-body-wrap" },
+          h("pre", { className: "wbml-body" }, text),
+          data.truncated ? h("p", { className: "wbml-body-note" }, "\u6B63\u6587\u8F83\u957F\uFF0C\u5DF2\u622A\u65AD\u663E\u793A\u3002") : null,
+          attach,
+          h(
+            "div",
+            { className: "wbml-body-tools" },
+            h(C.Btn, { h, onClick: function() {
+              loadBody(current2, true);
+            } }, "\u91CD\u65B0\u4E0B\u8F7D\u6B63\u6587")
+          )
+        );
+      }
       var items = list.data && list.data.items || [];
       var unread = items.filter(isUnread).length;
       var current = sel[0];
@@ -812,7 +898,7 @@ var require_messages = __commonJS({
       return h(
         "div",
         { className: "wbml-page is-split wb-fill" },
-        h("div", { className: "wbml-head" }, h("div", null, h("h2", null, "\u90AE\u4EF6"), h("p", { className: "wbml-sub" }, "\u672C\u5730\u526F\u672C\uFF1BIMAP \u53EA\u6293\u4FE1\u5934\uFF0C\u5BC6\u7801\u4FDD\u5B58\u5728\u4FDD\u9669\u7BB1\u3002")), h(
+        h("div", { className: "wbml-head" }, h("div", null, h("h2", null, "\u90AE\u4EF6"), h("p", { className: "wbml-sub" }, "\u672C\u5730\u526F\u672C\uFF1B\u4FE1\u5934\u968F\u540C\u6B65\u62C9\u53D6\uFF0C\u6B63\u6587\u70B9\u5F00\u65F6\u4E0B\u8F7D\uFF0C\u5BC6\u7801\u4FDD\u5B58\u5728\u4FDD\u9669\u7BB1\u3002")), h(
           "div",
           { className: "wbml-row" },
           h(C.Btn, { h, onClick: list.refresh }, "\u5237\u65B0")
@@ -837,7 +923,7 @@ var require_messages = __commonJS({
               })),
               h("div", { className: "wbml-rail-stats" }, h("span", null, h("b", null, items.length), "\u5C01\u672C\u5730"), h("span", null, h("b", null, unread), "\u5C01\u672A\u8BFB")),
               h(C.Btn, { h, kind: "primary", disabled: !canSync, onClick: sync }, "\u540C\u6B65\u6536\u4EF6\u7BB1"),
-              h("p", { className: "wbml-hint" }, canSync ? "\u53EA\u6293\u6700\u8FD1 20 \u5C01\u4FE1\u5934\uFF1B\u6B63\u6587\u6309\u9700\u4E0B\u8F7D\u3002" : "\u9009\u62E9\u5177\u4F53\u8D26\u6237\u540E\u53EF\u540C\u6B65\uFF1B\u300C\u5168\u90E8\u8D26\u6237\u300D\u53EA\u770B\u672C\u5730\u526F\u672C\u3002")
+              h("p", { className: "wbml-hint" }, canSync ? "\u53EA\u6293\u6700\u8FD1 20 \u5C01\u4FE1\u5934\uFF1B\u6B63\u6587\u70B9\u5F00\u65F6\u6309\u9700\u4E0B\u8F7D\u3002" : "\u9009\u62E9\u5177\u4F53\u8D26\u6237\u540E\u53EF\u540C\u6B65\uFF1B\u300C\u5168\u90E8\u8D26\u6237\u300D\u53EA\u770B\u672C\u5730\u526F\u672C\u3002")
             ),
             h("div", { className: "wbml-rail-tip" }, "\u63D0\u793A\uFF1A\u70B9\u4E00\u5C01\u90AE\u4EF6\u4F1A\u5728\u53F3\u4FA7\u9605\u8BFB\uFF0C\u5217\u8868\u4E0D\u4F1A\u6D88\u5931\u3002")
           ),
@@ -859,7 +945,7 @@ var require_messages = __commonJS({
               } }, "\u5173\u95ED")
             ),
             h("div", { className: "wbml-detail-meta" }, h("span", null, "\u6536\u4EF6\u4EBA\uFF1A" + (current.to || "\u2014")), h("span", null, "\u6587\u4EF6\u5939\uFF1A" + (current.mailbox || "INBOX"))),
-            h("pre", { className: "wbml-body" }, current.body || current.preview || "(\u6B63\u6587\u672A\u4E0B\u8F7D)")
+            h("div", { className: "wbml-detail-body" }, bodyNode(current))
           ) : null
         )
       );
@@ -4068,7 +4154,7 @@ var require_actions = __commonJS({
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.2.4",
+    version: "0.2.5",
     icon: (init_mail(), __toCommonJS(mail_exports)).default,
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },

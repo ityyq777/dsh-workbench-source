@@ -26,7 +26,7 @@ const CHARSETS = {
 
 const WORD_RE = /=\?([^?\s]+)\?([BbQq])\?([^?]*)\?=/g;
 
-function decoderFor(charset) {
+export function decoderFor(charset) {
   const label = CHARSETS[String(charset || "").trim().toLowerCase()];
   if (!label) return null;
   try {

@@ -79,3 +79,12 @@ test("状态容器不抽走布局骨架", () => {
     assert.ok(view.indexOf(text) >= 0, "缺状态文案：" + text);
   }
 });
+
+test("正文按需下载接线：打开即拉、失败可重试、HTML 不直塞主文档", () => {
+  assert.match(view, /mail\.messageBody/);
+  assert.match(view, /正文下载中…/);
+  assert.match(view, /正文下载失败：/);
+  assert.match(view, /重试/);
+  assert.match(view, /重新下载正文/);
+  assert.doesNotMatch(view, /dangerouslySetInnerHTML|innerHTML/);
+});

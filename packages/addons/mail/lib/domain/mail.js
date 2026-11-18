@@ -1,6 +1,7 @@
 /** 邮件域引擎：账户、文件夹、本地邮件、SMTP 发送、IMAP 抓信头。 */
 import { accountRow, messageRow, newId, now } from "../db/db.js";
-import { imapList, imapRecent } from "../infra/imap.js";
+import { imapList, imapRecent, imapFetchBody } from "../infra/imap.js";
+import { parseMime } from "../infra/mime.js";
 import { sendMail, probeSmtp } from "../infra/smtp.js";
 import { classifyProbeError } from "./probe-error.js";
 import { decodeWords, parseAddress } from "../infra/mime-word.js";
@@ -137,11 +138,43 @@ export function createMail({ db, host, log }) {
     if (input.mailbox) { cond.push("mailbox=?"); args.push(input.mailbox); }
     if (input.unread) cond.push("flags NOT LIKE '%\\Seen%'");
     if (input.q) { cond.push("(subject LIKE ? ESCAPE '\\' OR from_addr LIKE ? ESCAPE '\\')"); const like = "%" + String(input.q).replace(/[\\%_]/g, "\\$&") + "%"; args.push(like, like); }
-    return { items: all("SELECT * FROM mail_message WHERE " + cond.join(" AND ") + " ORDER BY date_at DESC LIMIT ?", ...args, limit).map(messageRow) };
+    return { items: all("SELECT * FROM mail_message WHERE " + cond.join(" AND ") + " ORDER BY date_at DESC LIMIT ?", ...args, limit).map((r) => { const row = messageRow(r); delete row.body; return row; }) };
   }
   function message(id) {
     const r = one("SELECT * FROM mail_message WHERE id=?", id); if (!r) throw new Error("邮件不存在：" + id);
     const out = messageRow(r); out.attachments = all("SELECT id,filename,mime,size FROM mail_attachment WHERE message_id=?", id); return out;
+  }
+  /**
+   * 按需取正文：本地已有（body_at>0 或本地发出的邮件）直接返回缓存；
+   * 否则从 IMAP 拉整封原文、解 MIME，落 body/preview 与附件元信息。
+   * 失败不抛给界面，返回 { ok:false, errorClass, message } 让阅读区给原因与重试。
+   */
+  async function messageBody(input = {}) {
+    const id = String(input.id || "");
+    const r = one("SELECT * FROM mail_message WHERE id=?", id);
+    if (!r) throw new Error("邮件不存在：" + id);
+    const cached = Number(r.body_at) > 0;
+    const local = Number(r.uid) <= 0;
+    const attachments = () => all("SELECT id,filename,mime,size FROM mail_attachment WHERE message_id=?", id);
+    if (!input.force && (cached || local)) {
+      return { ok: true, cached: true, body: r.body || "", html: "", preview: r.preview || "", attachments: attachments(), truncated: false };
+    }
+    const a = account(r.account_id);
+    let p;
+    try { p = await password(a); } catch (e) { return { ok: false, errorClass: "vault", message: String((e && e.message) || e).slice(0, 240) }; }
+    try {
+      const fetched = await imapFetchBody({ host: a.imap_host, port: a.imap_port, secure: !!a.imap_tls, user: p.user }, p.secret, r.mailbox || "INBOX", r.uid);
+      const parsed = parseMime(fetched.raw);
+      if (!parsed.text) throw new Error("这封邮件没有可读的纯文本正文（可能只有附件或图片）");
+      const text = parsed.text.slice(0, 200000);
+      const preview = text.replace(/\s+/g, " ").trim().slice(0, 120);
+      run("UPDATE mail_message SET body=?,preview=?,body_at=?,updated_at=? WHERE id=?", text, preview, now(), now(), id);
+      run("DELETE FROM mail_attachment WHERE message_id=?", id);
+      for (const at of parsed.attachments) run("INSERT INTO mail_attachment (id,message_id,filename,mime,size) VALUES (?,?,?,?,?)", newId("att"), id, at.filename, at.mime, at.size);
+      return { ok: true, cached: false, body: text, html: parsed.html, preview, attachments: attachments(), truncated: parsed.truncated || parsed.text.length > text.length };
+    } catch (e) {
+      return { ok: false, errorClass: classifyProbeError(e), message: String((e && e.message) || e).slice(0, 240), size: e && e.size, limit: e && e.limit };
+    }
   }
   function markRead(input = {}) {
     const ids = Array.isArray(input.ids) ? input.ids : [input.id];
@@ -170,5 +203,5 @@ export function createMail({ db, host, log }) {
     const limit = Math.min(Math.max(Number(input.limit) || 20, 1), 100);
     return { table: input.table, rows: all("SELECT * FROM " + input.table + " LIMIT ?", limit) };
   }
-  return { status, stats, backfillHeaders: backfillHeaderRows, listAccounts, createAccount, updateAccount, deleteAccount, testAccount, probeAccount, syncMailboxes, mailboxes, sync, messages, message, markRead, move, remove, send, search, dataQuery };
+  return { status, stats, backfillHeaders: backfillHeaderRows, listAccounts, createAccount, updateAccount, deleteAccount, testAccount, probeAccount, syncMailboxes, mailboxes, sync, messages, message, messageBody, markRead, move, remove, send, search, dataQuery };
 }
