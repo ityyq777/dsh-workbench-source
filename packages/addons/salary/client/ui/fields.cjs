@@ -68,7 +68,7 @@ function monthLabel(period) {
   return parts.length === 2 ? parts[0] + "年" + Number(parts[1]) + "月" : period;
 }
 
-/** 发薪日对应的所属月份（月中发上月工资），返回 YYYY-MM。 */
+/** 发薪日对应的所属月份，返回 YYYY-MM。 */
 function incomePeriod(payDate) {
   var parts = String(payDate || "").split("-").map(Number);
   if (parts.length !== 3 || !parts[0] || !parts[1]) return "";
