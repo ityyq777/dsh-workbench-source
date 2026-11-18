@@ -279,6 +279,8 @@ var require_styles = __commonJS({
       ".wbsal-series i.s2,.wbsal-line-dot.s2{background:var(--wb-ok,#16a34a)}",
       ".wbsal-series i.s3,.wbsal-line-dot.s3{background:var(--wb-warn,#d97706)}",
       ".wbsal-series i.s4,.wbsal-line-dot.s4{background:color-mix(in oklab,var(--wb-accent,#2563eb) 45%,var(--wb-danger,#dc2626))}",
+      ".wbsal-series i.s5,.wbsal-line-dot.s5{background:color-mix(in oklab,var(--wb-ok,#16a34a) 55%,var(--wb-accent,#2563eb))}",
+      ".wbsal-series i.s6,.wbsal-line-dot.s6{background:color-mix(in oklab,var(--wb-warn,#d97706) 60%,var(--wb-danger,#dc2626))}",
       ".wbsal-series i.sum,.wbsal-line-dot.sum{background:color-mix(in oklab,var(--wb-muted,#8b94a6) 45%,var(--wb-accent,#2563eb))}",
       ".wbsal-line.sum{stroke:color-mix(in oklab,var(--wb-muted,#8b94a6) 45%,var(--wb-accent,#2563eb));stroke-dasharray:7 4}",
       ".wbsal-line-dot.sum{fill:color-mix(in oklab,var(--wb-muted,#8b94a6) 45%,var(--wb-accent,#2563eb))}",
@@ -293,11 +295,15 @@ var require_styles = __commonJS({
       ".wbsal-line.s2{stroke:var(--wb-ok,#16a34a)}",
       ".wbsal-line.s3{stroke:var(--wb-warn,#d97706)}",
       ".wbsal-line.s4{stroke:color-mix(in oklab,var(--wb-accent,#2563eb) 45%,var(--wb-danger,#dc2626))}",
+      ".wbsal-line.s5{stroke:color-mix(in oklab,var(--wb-ok,#16a34a) 55%,var(--wb-accent,#2563eb))}",
+      ".wbsal-line.s6{stroke:color-mix(in oklab,var(--wb-warn,#d97706) 60%,var(--wb-danger,#dc2626))}",
       ".wbsal-line-dot{stroke:none}",
       ".wbsal-line-dot.s1{fill:var(--wb-accent,#2563eb)}",
       ".wbsal-line-dot.s2{fill:var(--wb-ok,#16a34a)}",
       ".wbsal-line-dot.s3{fill:var(--wb-warn,#d97706)}",
       ".wbsal-line-dot.s4{fill:color-mix(in oklab,var(--wb-accent,#2563eb) 45%,var(--wb-danger,#dc2626))}",
+      ".wbsal-line-dot.s5{fill:color-mix(in oklab,var(--wb-ok,#16a34a) 55%,var(--wb-accent,#2563eb))}",
+      ".wbsal-line-dot.s6{fill:color-mix(in oklab,var(--wb-warn,#d97706) 60%,var(--wb-danger,#dc2626))}",
       ".wbsal-comp{display:flex;flex-direction:column;gap:7px}",
       ".wbsal-comp-row{display:grid;grid-template-columns:92px minmax(60px,1fr) 132px;gap:10px;align-items:center;font-size:12px}",
       ".wbsal-comp-row span:first-child{color:var(--wb-text,inherit)}",
@@ -994,6 +1000,8 @@ var require_stats = __commonJS({
         { key: "netPay", label: "\u5B9E\u53D1" },
         { key: "basePay", label: "\u57FA\u672C" },
         { key: "performancePay", label: "\u7EE9\u6548" },
+        { key: "allowance", label: "\u8865\u8D34" },
+        { key: "performanceBonus", label: "\u7EE9\u6548\u5956\u60E9" },
         { key: "grossPay", label: "\u5E94\u53D1" }
       ];
       var metricState = React.useState(props.initialMetric || "netPay");
@@ -1018,9 +1026,11 @@ var require_stats = __commonJS({
         { key: "netPay", label: "\u5B9E\u53D1", tone: "s1" },
         { key: "grossPay", label: "\u5E94\u53D1", tone: "s2" },
         { key: "basePay", label: "\u57FA\u672C", tone: "s3" },
-        { key: "performancePay", label: "\u7EE9\u6548", tone: "s4" }
+        { key: "performancePay", label: "\u7EE9\u6548", tone: "s4" },
+        { key: "allowance", label: "\u8865\u8D34", tone: "s5" },
+        { key: "performanceBonus", label: "\u7EE9\u6548\u5956\u60E9", tone: "s6" }
       ];
-      var visibleState = React.useState(Object.assign({ netPay: true, grossPay: true, basePay: true, performancePay: true }, props.initialVisible || {}));
+      var visibleState = React.useState(Object.assign({ netPay: true, grossPay: true, basePay: true, performancePay: true, allowance: true, performanceBonus: true }, props.initialVisible || {}));
       var visible = visibleState[0];
       function toggleSeries(key) {
         var next = {};
@@ -1225,7 +1235,7 @@ var require_stats = __commonJS({
                 {
                   key: bucket.month,
                   className: "wbsal-bar",
-                  title: bucket.month + " \u6708 \xB7 \u57FA\u672C " + F.money(bucket.basePay) + " / \u7EE9\u6548 " + F.money(bucket.performancePay) + " / \u5E94\u53D1 " + F.money(bucket.grossPay) + " / \u5B9E\u53D1 " + F.money(bucket.netPay)
+                  title: bucket.month + " \u6708 \xB7 \u57FA\u672C " + F.money(bucket.basePay) + " / \u7EE9\u6548 " + F.money(bucket.performancePay) + " / \u8865\u8D34 " + F.money(bucket.allowance) + " / \u7EE9\u6548\u5956\u60E9 " + F.money(bucket.performanceBonus) + " / \u5E94\u53D1 " + F.money(bucket.grossPay) + " / \u5B9E\u53D1 " + F.money(bucket.netPay)
                 },
                 h("div", { className: "wbsal-bar-value" }, value > 0 ? Math.round(value).toLocaleString("zh-CN") : ""),
                 h("div", { className: "wbsal-bar-fill" + (i === topMonth ? " top" : ""), style: { height: height + "px" } }),
@@ -1251,12 +1261,12 @@ var require_stats = __commonJS({
               h("h3", null, "\u6708\u5EA6\u8D8B\u52BF\u5BF9\u6BD4"),
               seriesSwitch(LINE_SERIES, visible, toggleSeries, "\u6298\u7EBF\u663E\u793A\u5F00\u5173")
             ),
-            h("div", { className: "wbsal-linechart" }, renderChart(LINE_SERIES, visible, "\u6708\u5EA6\u5B9E\u53D1/\u5E94\u53D1/\u57FA\u672C/\u7EE9\u6548\u6298\u7EBF\u56FE")),
-            anyShown(LINE_SERIES, visible) ? null : h("div", { className: "wbsal-chart-hint" }, "\u56DB\u6761\u7EBF\u90FD\u5173\u6389\u4E86\uFF0C\u70B9\u4E0A\u65B9\u300C\u5B9E\u53D1 / \u5E94\u53D1 / \u57FA\u672C / \u7EE9\u6548\u300D\u4EFB\u610F\u4E00\u4E2A\u6062\u590D\u663E\u793A"),
+            h("div", { className: "wbsal-linechart" }, renderChart(LINE_SERIES, visible, "\u6708\u5EA6\u5B9E\u53D1/\u5E94\u53D1/\u57FA\u672C/\u7EE9\u6548/\u8865\u8D34/\u7EE9\u6548\u5956\u60E9\u6298\u7EBF\u56FE")),
+            anyShown(LINE_SERIES, visible) ? null : h("div", { className: "wbsal-chart-hint" }, "\u516D\u6761\u7EBF\u90FD\u5173\u6389\u4E86\uFF0C\u70B9\u4E0A\u65B9\u300C\u5B9E\u53D1 / \u5E94\u53D1 / \u57FA\u672C / \u7EE9\u6548 / \u8865\u8D34 / \u7EE9\u6548\u5956\u60E9\u300D\u4EFB\u610F\u4E00\u4E2A\u6062\u590D\u663E\u793A"),
             h(
               "div",
               { className: "wbsal-chart-foot" },
-              h("span", null, "\u5B9E\u53D1 / \u5E94\u53D1 / \u57FA\u672C / \u7EE9\u6548 \u56DB\u6761\u7EBF\uFF0C\u53EF\u70B9\u4E0A\u65B9\u6807\u7B7E\u5355\u72EC\u5F00\u5173"),
+              h("span", null, "\u5B9E\u53D1 / \u5E94\u53D1 / \u57FA\u672C / \u7EE9\u6548 / \u8865\u8D34 / \u7EE9\u6548\u5956\u60E9 \u516D\u6761\u7EBF\uFF0C\u53EF\u70B9\u4E0A\u65B9\u6807\u7B7E\u5355\u72EC\u5F00\u5173"),
               h("span", null, "\u5355\u4F4D\uFF1A\u5143 \xB7 \u4EC5\u8FDE\u63A5\u6709\u8BB0\u5F55\u7684\u6708\u4EFD")
             )
           ),
@@ -4061,7 +4071,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.1.9",
+    version: "0.2.0",
     icon: (init_wallet(), __toCommonJS(wallet_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },

@@ -28,7 +28,7 @@ const records = [
 const monthly = [7, 8, 9, 10].map((month) => {
   const item = records[10 - month];
   const social = item.pension + item.medical + item.unemployment + item.housingFund;
-  return { month, period: "2026-" + String(month).padStart(2, "0"), records: 1, basePay: item.basePay, performancePay: item.performancePay, netPay: item.netPay, grossPay: item.grossPay, incomeTax: item.incomeTax, socialTotal: social, pension: item.pension, medical: item.medical, unemployment: item.unemployment, housingFund: item.housingFund };
+  return { month, period: "2026-" + String(month).padStart(2, "0"), records: 1, basePay: item.basePay, performancePay: item.performancePay, allowance: item.allowance, performanceBonus: item.performanceBonus, netPay: item.netPay, grossPay: item.grossPay, incomeTax: item.incomeTax, socialTotal: social, pension: item.pension, medical: item.medical, unemployment: item.unemployment, housingFund: item.housingFund };
 });
 
 const stats = {
@@ -37,7 +37,7 @@ const stats = {
   deductionTotal: 6188.14, avgNetPay: 8712.97,
   monthly: Array.from({ length: 12 }, (_, index) => {
     const hit = monthly.find((m) => m.month === index + 1);
-    return hit || { month: index + 1, period: "2026-" + String(index + 1).padStart(2, "0"), records: 0, basePay: 0, performancePay: 0, netPay: 0, grossPay: 0, incomeTax: 0, socialTotal: 0, pension: 0, medical: 0, unemployment: 0, housingFund: 0 };
+    return hit || { month: index + 1, period: "2026-" + String(index + 1).padStart(2, "0"), records: 0, basePay: 0, performancePay: 0, allowance: 0, performanceBonus: 0, netPay: 0, grossPay: 0, incomeTax: 0, socialTotal: 0, pension: 0, medical: 0, unemployment: 0, housingFund: 0 };
   }),
   latestMonth: {
     month: 10, period: "2026-10", records: 1, netPay: 10672.36, grossPay: 12280, incomeTax: 175.44, socialTotal: 1432.2,
@@ -205,6 +205,26 @@ function pane(theme, title, body, extraClass) {
   </section>`;
 }
 
+
+const paneList = [
+  pane("light", "light · records", recordsHtml),
+  pane("light", "light · detail", detailHtml),
+  pane("light", "light · stats", statsHtml),
+  pane("light", "light · stats · 应发口径", statsGrossHtml),
+  pane("light", "light · stats · 只留实发/应发", statsHiddenHtml),
+  pane("light", "light · form", formHtml, "pane-modal"),
+  pane("dark", "dark · records", detailHtml),
+  pane("dark", "dark · form", formHtml, "pane-modal"),
+  pane("dark", "dark · stats", statsHtml),
+  pane("dark", "dark · stats · 应发口径", statsGrossHtml),
+];
+if (process.env.PANE) {
+  const want = process.env.PANE;
+  const kept = paneList.filter(function (html) { return html.indexOf("· " + want) >= 0 || html.indexOf("· " + want + " ·") >= 0; });
+  paneList.length = 0;
+  Array.prototype.push.apply(paneList, kept);
+}
+
 const html = `<!doctype html><html lang="zh"><head><meta charset="utf-8"><title>salary preview</title>
 <style>
   html,body{margin:0;padding:0;background:#070a12;color:#e8ecf4;font-family:-apple-system,"PingFang SC","Segoe UI",sans-serif}
@@ -219,16 +239,7 @@ const html = `<!doctype html><html lang="zh"><head><meta charset="utf-8"><title>
   .pane-modal .wbsal-modal{width:100%;margin:0}
   ${cssText}
 </style></head><body><div class="wrap">
-${pane("light", "light · records", recordsHtml)}
-${pane("light", "light · detail", detailHtml)}
-${pane("light", "light · stats", statsHtml)}
-${pane("light", "light · stats · 应发口径", statsGrossHtml)}
-${pane("light", "light · stats · 只留实发/应发", statsHiddenHtml)}
-${pane("light", "light · form", formHtml, "pane-modal")}
-${pane("dark", "dark · records", detailHtml)}
-${pane("dark", "dark · form", formHtml, "pane-modal")}
-${pane("dark", "dark · stats", statsHtml)}
-${pane("dark", "dark · stats · 应发口径", statsGrossHtml)}
+${paneList.join("\n")}
 </div></body></html>`;
 
 writeFileSync("/tmp/salary-preview.html", html);

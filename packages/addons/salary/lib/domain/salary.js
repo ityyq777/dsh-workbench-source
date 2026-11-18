@@ -164,6 +164,8 @@ export function createSalary({ db, host, log }) {
       records: 0,
       basePay: 0,
       performancePay: 0,
+      allowance: 0,
+      performanceBonus: 0,
       netPay: 0,
       grossPay: 0,
       incomeTax: 0,
@@ -178,6 +180,8 @@ export function createSalary({ db, host, log }) {
       bucket.records += 1;
       bucket.basePay = round2(bucket.basePay + row.basePay);
       bucket.performancePay = round2(bucket.performancePay + row.performancePay);
+      bucket.allowance = round2(bucket.allowance + row.allowance);
+      bucket.performanceBonus = round2(bucket.performanceBonus + row.performanceBonus);
       bucket.netPay = round2(bucket.netPay + row.netPay);
       bucket.grossPay = round2(bucket.grossPay + row.grossPay);
       bucket.incomeTax = round2(bucket.incomeTax + row.incomeTax);

@@ -13,6 +13,8 @@ module.exports = function Stats(props) {
     { key: "netPay", label: "实发" },
     { key: "basePay", label: "基本" },
     { key: "performancePay", label: "绩效" },
+    { key: "allowance", label: "补贴" },
+    { key: "performanceBonus", label: "绩效奖惩" },
     { key: "grossPay", label: "应发" },
   ];
   var metricState = React.useState(props.initialMetric || "netPay");
@@ -26,14 +28,16 @@ module.exports = function Stats(props) {
   var topMonth = -1;
   monthly.forEach(function (bucket, i) { if (metricValue(bucket) > 0 && (topMonth < 0 || metricValue(bucket) > metricValue(monthly[topMonth]))) topMonth = i; });
 
-  // 折线图：四条线（实发/应发/基本/绩效）各自可勾选显示，默认全开。
+  // 折线图：六条线（实发/应发/基本/绩效/补贴/绩效奖惩）各自可勾选显示，默认全开。
   var LINE_SERIES = [
     { key: "netPay", label: "实发", tone: "s1" },
     { key: "grossPay", label: "应发", tone: "s2" },
     { key: "basePay", label: "基本", tone: "s3" },
     { key: "performancePay", label: "绩效", tone: "s4" },
+    { key: "allowance", label: "补贴", tone: "s5" },
+    { key: "performanceBonus", label: "绩效奖惩", tone: "s6" },
   ];
-  var visibleState = React.useState(Object.assign({ netPay: true, grossPay: true, basePay: true, performancePay: true }, props.initialVisible || {}));
+  var visibleState = React.useState(Object.assign({ netPay: true, grossPay: true, basePay: true, performancePay: true, allowance: true, performanceBonus: true }, props.initialVisible || {}));
   var visible = visibleState[0];
   function toggleSeries(key) {
     var next = {};
@@ -183,7 +187,7 @@ module.exports = function Stats(props) {
           var height = Math.round(Math.max(ratio * 150, value > 0 ? 6 : 0));
           return h("div", {
             key: bucket.month, className: "wbsal-bar",
-            title: bucket.month + " 月 · 基本 " + F.money(bucket.basePay) + " / 绩效 " + F.money(bucket.performancePay) + " / 应发 " + F.money(bucket.grossPay) + " / 实发 " + F.money(bucket.netPay),
+            title: bucket.month + " 月 · 基本 " + F.money(bucket.basePay) + " / 绩效 " + F.money(bucket.performancePay) + " / 补贴 " + F.money(bucket.allowance) + " / 绩效奖惩 " + F.money(bucket.performanceBonus) + " / 应发 " + F.money(bucket.grossPay) + " / 实发 " + F.money(bucket.netPay),
           },
             h("div", { className: "wbsal-bar-value" }, value > 0 ? Math.round(value).toLocaleString("zh-CN") : ""),
             h("div", { className: "wbsal-bar-fill" + (i === topMonth ? " top" : ""), style: { height: height + "px" } }),
@@ -198,11 +202,11 @@ module.exports = function Stats(props) {
         h("div", { className: "wbsal-section-head" },
           h("h3", null, "月度趋势对比"),
           seriesSwitch(LINE_SERIES, visible, toggleSeries, "折线显示开关")),
-        h("div", { className: "wbsal-linechart" }, renderChart(LINE_SERIES, visible, "月度实发/应发/基本/绩效折线图")),
+        h("div", { className: "wbsal-linechart" }, renderChart(LINE_SERIES, visible, "月度实发/应发/基本/绩效/补贴/绩效奖惩折线图")),
         anyShown(LINE_SERIES, visible) ? null
-          : h("div", { className: "wbsal-chart-hint" }, "四条线都关掉了，点上方「实发 / 应发 / 基本 / 绩效」任意一个恢复显示"),
+          : h("div", { className: "wbsal-chart-hint" }, "六条线都关掉了，点上方「实发 / 应发 / 基本 / 绩效 / 补贴 / 绩效奖惩」任意一个恢复显示"),
         h("div", { className: "wbsal-chart-foot" },
-          h("span", null, "实发 / 应发 / 基本 / 绩效 四条线，可点上方标签单独开关"),
+          h("span", null, "实发 / 应发 / 基本 / 绩效 / 补贴 / 绩效奖惩 六条线，可点上方标签单独开关"),
           h("span", null, "单位：元 · 仅连接有记录的月份"))),
 
       h("div", { className: "wbsal-card wbsal-section" },

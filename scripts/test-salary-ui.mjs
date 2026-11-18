@@ -27,6 +27,8 @@ const salaryStats = {
     records: month >= 7 && month <= 10 ? 1 : 0,
     basePay: [7040, 0, 0, 8800][month - 7] || 0,
     performancePay: [2200, 0, 0, 2200][month - 7] || 0,
+    allowance: [160, 0, 0, 480][month - 7] || 0,
+    performanceBonus: [0, 0, 0, 800][month - 7] || 0,
     netPay: [7878.77, 8111.56, 8189.17, 10672.36][month - 7] || 0,
     grossPay: [9400, 9640, 9720, 12280][month - 7] || 0,
     incomeTax: [89.03, 96.24, 98.63, 175.44][month - 7] || 0,
@@ -186,7 +188,7 @@ function polyClasses(tree, found = []) {
 const statsComp = require(ROOT + "packages/addons/salary/client/views/stats.cjs");
 const fixedApi = { call: async (action) => ({ ok: true, result: RESPONSES[action] !== undefined ? RESPONSES[action] : {} }) };
 function toneCount(list) {
-  const count = { s1: 0, s2: 0, s3: 0, s4: 0 };
+  const count = { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, s6: 0 };
   for (const name of list) {
     for (const tone of Object.keys(count)) if (name.split(/\s+/).includes(tone)) count[tone] += 1;
   }
@@ -194,9 +196,12 @@ function toneCount(list) {
 }
 const allLines = polyClasses(await render(statsComp, { api: fixedApi, lang: "zh", title: "统计", h: HOST.h }, fixedApi));
 const allCount = toneCount(allLines);
-// 两张折线图各 4 条线，同色相（s1..s4）因此每个 tone 出现 2 次
+// 主图 6 条线（s1..s6）+ 五险一金 4 条线（s1..s4）：s1..s4 各出现 2 次，s5/s6 各 1 次
 for (const tone of ["s1", "s2", "s3", "s4"]) {
   if (allCount[tone] !== 2) problems.push("默认应各渲染 2 条 " + tone + " 折线，实际 " + allCount[tone]);
+}
+for (const tone of ["s5", "s6"]) {
+  if (allCount[tone] !== 1) problems.push("默认应各渲染 1 条 " + tone + " 折线，实际 " + allCount[tone]);
 }
 const hiddenLines = toneCount(polyClasses(await render(statsComp, {
   api: fixedApi, lang: "zh", title: "统计", h: HOST.h,
@@ -206,6 +211,8 @@ if (hiddenLines.s1 !== 2) problems.push("隐藏基本/绩效后实发折线不�
 if (hiddenLines.s2 !== 2) problems.push("隐藏基本/绩效后应发折线不应消失");
 if (hiddenLines.s3 !== 1) problems.push("取消勾选后主图基本折线仍应消失、五险一金保留 1 条");
 if (hiddenLines.s4 !== 1) problems.push("取消勾选后主图绩效折线仍应消失、五险一金保留 1 条");
+if (hiddenLines.s5 !== 1) problems.push("隐藏基本/绩效不影响补贴折线");
+if (hiddenLines.s6 !== 1) problems.push("隐藏基本/绩效不影响绩效奖惩折线");
 const sumCount = (list) => list.filter((name) => name.split(/\s+/).includes("sum")).length;
 const allLists = polyClasses(await render(statsComp, { api: fixedApi, lang: "zh", title: "统计", h: HOST.h }, fixedApi));
 if (sumCount(allLists) !== 1) problems.push("五险一金折线图应包含 1 条合计虚线，实际 " + sumCount(allLists));
@@ -218,6 +225,8 @@ const socialHidden = toneCount(socialHiddenList);
 if (socialHidden.s1 !== 1) problems.push("关掉养老后五险一金应只剩 1 条 s1（主图实发）");
 if (socialHidden.s2 !== 1) problems.push("关掉医疗后五险一金应只剩 1 条 s2（主图应发）");
 if (socialHidden.s3 !== 2) problems.push("未关失业时五险一金失业线应保留");
+if (socialHidden.s5 !== 1) problems.push("关掉养老/医疗不影响主图补贴折线");
+if (socialHidden.s6 !== 1) problems.push("关掉养老/医疗不影响主图绩效奖惩折线");
 
 for (const file of ["views/records.cjs", "views/stats.cjs", "views/data.cjs", "views/actions.cjs"]) {
   const src = readFileSync(ROOT + "packages/addons/salary/client/" + file, "utf8");
