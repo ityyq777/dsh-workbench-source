@@ -206,10 +206,15 @@ if (hiddenLines.s1 !== 2) problems.push("隐藏基本/绩效后实发折线不�
 if (hiddenLines.s2 !== 2) problems.push("隐藏基本/绩效后应发折线不应消失");
 if (hiddenLines.s3 !== 1) problems.push("取消勾选后主图基本折线仍应消失、五险一金保留 1 条");
 if (hiddenLines.s4 !== 1) problems.push("取消勾选后主图绩效折线仍应消失、五险一金保留 1 条");
-const socialHidden = toneCount(polyClasses(await render(statsComp, {
+const sumCount = (list) => list.filter((name) => name.split(/\s+/).includes("sum")).length;
+const allLists = polyClasses(await render(statsComp, { api: fixedApi, lang: "zh", title: "统计", h: HOST.h }, fixedApi));
+if (sumCount(allLists) !== 1) problems.push("五险一金折线图应包含 1 条合计虚线，实际 " + sumCount(allLists));
+const socialHiddenList = polyClasses(await render(statsComp, {
   api: fixedApi, lang: "zh", title: "统计", h: HOST.h,
   initialSocialVisible: { pension: false, medical: false },
-}, fixedApi)));
+}, fixedApi));
+if (sumCount(socialHiddenList) !== 1) problems.push("隐藏养老/医疗后合计虚线不应消失");
+const socialHidden = toneCount(socialHiddenList);
 if (socialHidden.s1 !== 1) problems.push("关掉养老后五险一金应只剩 1 条 s1（主图实发）");
 if (socialHidden.s2 !== 1) problems.push("关掉医疗后五险一金应只剩 1 条 s2（主图应发）");
 if (socialHidden.s3 !== 2) problems.push("未关失业时五险一金失业线应保留");

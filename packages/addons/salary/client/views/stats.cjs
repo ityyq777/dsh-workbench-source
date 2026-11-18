@@ -44,8 +44,8 @@ module.exports = function Stats(props) {
   // 五险一金四条线：养老 / 医疗 / 失业 / 公积金，同样可单独开关。
   var SOCIAL_SERIES = F.SOCIAL_KEYS.map(function (key, index) {
     return { key: key, label: F.LABELS[key], tone: "s" + (index + 1) };
-  });
-  var socialVisibleState = React.useState(Object.assign({ pension: true, medical: true, unemployment: true, housingFund: true }, props.initialSocialVisible || {}));
+  }).concat([{ key: "socialTotal", label: "合计", tone: "sum" }]);
+  var socialVisibleState = React.useState(Object.assign({ pension: true, medical: true, unemployment: true, housingFund: true, socialTotal: true }, props.initialSocialVisible || {}));
   var socialVisible = socialVisibleState[0];
   function toggleSocial(key) {
     var next = {};
@@ -213,9 +213,9 @@ module.exports = function Stats(props) {
         h("div", { className: "wbsal-social-foot" }, seriesSwitch(SOCIAL_SERIES, socialVisible, toggleSocial, "五险一金折线显示开关")),
         h("div", { className: "wbsal-linechart" }, renderChart(SOCIAL_SERIES, socialVisible, "月度养老/医疗/失业/公积金折线图")),
         anyShown(SOCIAL_SERIES, socialVisible) ? null
-          : h("div", { className: "wbsal-chart-hint" }, "四条线都关掉了，点上方「养老 / 医疗 / 失业 / 公积金」任意一个恢复显示"),
+          : h("div", { className: "wbsal-chart-hint" }, "所有线都关掉了，点上方「养老 / 医疗 / 失业 / 公积金 / 合计」任意一个恢复显示"),
         h("div", { className: "wbsal-chart-foot" },
-          h("span", null, "养老 / 医疗 / 失业 / 公积金 四条线，可点上方标签单独开关"),
+          h("span", null, "养老 / 医疗 / 失业 / 公积金 四条线 + 虚线合计，可点上方标签单独开关"),
           h("span", null, "单位：元 · 仅连接有记录的月份"))),
 
       h("div", { className: "wbsal-kpis" },

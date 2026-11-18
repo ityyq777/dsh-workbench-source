@@ -279,6 +279,9 @@ var require_styles = __commonJS({
       ".wbsal-series i.s2,.wbsal-line-dot.s2{background:var(--wb-ok,#16a34a)}",
       ".wbsal-series i.s3,.wbsal-line-dot.s3{background:var(--wb-warn,#d97706)}",
       ".wbsal-series i.s4,.wbsal-line-dot.s4{background:color-mix(in oklab,var(--wb-accent,#2563eb) 45%,var(--wb-danger,#dc2626))}",
+      ".wbsal-series i.sum,.wbsal-line-dot.sum{background:color-mix(in oklab,var(--wb-muted,#8b94a6) 45%,var(--wb-accent,#2563eb))}",
+      ".wbsal-line.sum{stroke:color-mix(in oklab,var(--wb-muted,#8b94a6) 45%,var(--wb-accent,#2563eb));stroke-dasharray:7 4}",
+      ".wbsal-line-dot.sum{fill:color-mix(in oklab,var(--wb-muted,#8b94a6) 45%,var(--wb-accent,#2563eb))}",
       ".wbsal-linechart{width:100%;padding:10px 2px 0}",
       ".wbsal-chart-hint{margin-top:8px;padding:10px 12px;border-radius:8px;background:color-mix(in srgb,var(--wb-muted,#8b94a6) 10%,transparent);color:var(--wb-muted,#8b94a6);font-size:12px}",
       ".wbsal-social-foot{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:14px;flex-wrap:wrap}",
@@ -1029,8 +1032,8 @@ var require_stats = __commonJS({
       }
       var SOCIAL_SERIES = F.SOCIAL_KEYS.map(function(key, index) {
         return { key, label: F.LABELS[key], tone: "s" + (index + 1) };
-      });
-      var socialVisibleState = React.useState(Object.assign({ pension: true, medical: true, unemployment: true, housingFund: true }, props.initialSocialVisible || {}));
+      }).concat([{ key: "socialTotal", label: "\u5408\u8BA1", tone: "sum" }]);
+      var socialVisibleState = React.useState(Object.assign({ pension: true, medical: true, unemployment: true, housingFund: true, socialTotal: true }, props.initialSocialVisible || {}));
       var socialVisible = socialVisibleState[0];
       function toggleSocial(key) {
         var next = {};
@@ -1267,11 +1270,11 @@ var require_stats = __commonJS({
             })),
             h("div", { className: "wbsal-social-foot" }, seriesSwitch(SOCIAL_SERIES, socialVisible, toggleSocial, "\u4E94\u9669\u4E00\u91D1\u6298\u7EBF\u663E\u793A\u5F00\u5173")),
             h("div", { className: "wbsal-linechart" }, renderChart(SOCIAL_SERIES, socialVisible, "\u6708\u5EA6\u517B\u8001/\u533B\u7597/\u5931\u4E1A/\u516C\u79EF\u91D1\u6298\u7EBF\u56FE")),
-            anyShown(SOCIAL_SERIES, socialVisible) ? null : h("div", { className: "wbsal-chart-hint" }, "\u56DB\u6761\u7EBF\u90FD\u5173\u6389\u4E86\uFF0C\u70B9\u4E0A\u65B9\u300C\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1\u300D\u4EFB\u610F\u4E00\u4E2A\u6062\u590D\u663E\u793A"),
+            anyShown(SOCIAL_SERIES, socialVisible) ? null : h("div", { className: "wbsal-chart-hint" }, "\u6240\u6709\u7EBF\u90FD\u5173\u6389\u4E86\uFF0C\u70B9\u4E0A\u65B9\u300C\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1 / \u5408\u8BA1\u300D\u4EFB\u610F\u4E00\u4E2A\u6062\u590D\u663E\u793A"),
             h(
               "div",
               { className: "wbsal-chart-foot" },
-              h("span", null, "\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1 \u56DB\u6761\u7EBF\uFF0C\u53EF\u70B9\u4E0A\u65B9\u6807\u7B7E\u5355\u72EC\u5F00\u5173"),
+              h("span", null, "\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1 \u56DB\u6761\u7EBF + \u865A\u7EBF\u5408\u8BA1\uFF0C\u53EF\u70B9\u4E0A\u65B9\u6807\u7B7E\u5355\u72EC\u5F00\u5173"),
               h("span", null, "\u5355\u4F4D\uFF1A\u5143 \xB7 \u4EC5\u8FDE\u63A5\u6709\u8BB0\u5F55\u7684\u6708\u4EFD")
             )
           ),
@@ -4057,7 +4060,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.1.7",
+    version: "0.1.8",
     icon: (init_wallet(), __toCommonJS(wallet_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },
