@@ -79,6 +79,30 @@ module.exports = function Stats(props) {
           h("span", { className: "wbsal-legend" }, h("i", null), "有记录月份", h("i", { className: "soft" }), "其他月份"),
           h("span", null, "单位：元 · 按发薪日期归属月份"))),
 
+      h("div", { className: "wbsal-card wbsal-section" },
+        h("div", { className: "wbsal-section-head" },
+          h("h3", null, "五险一金"),
+          h("span", null, "年度合计 " + F.money(data.socialTotal) + " · 占应发 " + (data.grossTotal ? Math.round((data.socialTotal / data.grossTotal) * 100) : 0) + "%")),
+        h("div", { className: "wbsal-social" }, F.SOCIAL_KEYS.map(function (key) {
+          var amount = (data.social && data.social[key]) || 0;
+          var share = data.socialTotal ? Math.round((amount / data.socialTotal) * 100) : 0;
+          return h("div", { key: key, className: "wbsal-social-item" },
+            h("span", null, F.LABELS[key]),
+            h("b", null, F.money(amount)),
+            h("em", null, "占五险一金 " + share + "%"));
+        })),
+        h("div", { className: "wbsal-table-wrap", style: { border: 0, marginTop: "12px" } },
+          h("table", { className: "wbsal-table" },
+            h("thead", null, h("tr", null, ["月份", "养老", "医疗", "失业", "公积金", "合计"].map(function (label) {
+              return h("th", { key: label, className: label === "月份" ? "left" : undefined }, label);
+            }))),
+            h("tbody", null, data.monthly.filter(function (bucket) { return bucket.records > 0; }).map(function (bucket) {
+              return h("tr", { key: bucket.month },
+                h("td", { className: "left" }, bucket.month + " 月"),
+                F.SOCIAL_KEYS.map(function (key) { return h("td", { key: key, className: "wbsal-opt" }, F.money(bucket[key])); }),
+                h("td", null, h("b", { className: "wbsal-net" }, F.money(bucket.socialTotal))));
+            }))))),
+
       h("div", { className: "wbsal-kpis" },
         kpi("环比", data.mom ? signed(data.mom.amount) : "—",
           data.mom ? (data.mom.percent === null ? "上月为 0" : (data.mom.percent > 0 ? "+" : "") + data.mom.percent + "% · 最近两个月") : "至少需要两个月记录"),
@@ -119,14 +143,11 @@ module.exports = function Stats(props) {
   }
 
   return h("div", { className: "wbsal-page" },
-    h("header", { className: "wbsal-head" },
-      h("div", { className: "wbsal-head-main" },
-        h("div", { className: "wbsal-eyebrow" }, "Salary stats"),
-        h("h2", null, "统计"),
-        h("p", { className: "wbsal-sub" }, "按发薪日期归属月份聚合；日结多笔自动合并")),
-      h("div", { className: "wbsal-seg" },
-        h(C.Btn, { h: h, kind: "ghost", onClick: function () { setYear(Math.max(2000, year - 1)); } }, "‹"),
-        h("span", { className: "wbsal-seg-year" }, year + " 年"),
-        h(C.Btn, { h: h, kind: "ghost", onClick: function () { setYear(Math.min(2100, year + 1)); } }, "›"))),
+    h("div", { className: "wbsal-toolbar wbsal-toolbar-plain" },
+      h("div", { className: "wbsal-toolbar-end" },
+        h("div", { className: "wbsal-seg" },
+          h(C.Btn, { h: h, kind: "ghost", onClick: function () { setYear(Math.max(2000, year - 1)); } }, "‹"),
+          h("span", { className: "wbsal-seg-year" }, year + " 年"),
+          h(C.Btn, { h: h, kind: "ghost", onClick: function () { setYear(Math.min(2100, year + 1)); } }, "›")))),
     body);
 };

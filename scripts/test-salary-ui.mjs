@@ -149,7 +149,7 @@ for (const klass of ["wbsal-page", "wbsal-kpi", "wbsal-record-row", "wbsal-chart
 
 const api = { call: async (action) => ({ ok: true, result: RESPONSES[action] !== undefined ? RESPONSES[action] : {} }) };
 const checks = [
-  ["records", "views/records.cjs", "工资记录", ["wbsal-record-row", "wbsal-kpi", "wbsal-head", "wbsal-month"]],
+  ["records", "views/records.cjs", "工资记录", ["wbsal-record-row", "wbsal-kpi", "wbsal-toolbar", "wbsal-toolbar-end", "wbsal-month"]],
   ["stats", "views/stats.cjs", "统计", ["wbsal-chart", "wbsal-comp", "wbsal-table"]],
   ["config", "views/config.cjs", "设置", ["wbsal-ul"]],
 ];

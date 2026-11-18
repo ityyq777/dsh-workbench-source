@@ -103,6 +103,9 @@ var require_styles = __commonJS({
       ".wbsal-toolbar .wbsal-field{gap:5px}",
       ".wbsal-toolbar-count{margin-left:auto;font-size:12px;color:var(--wb-muted,#8b94a6)}",
       ".wbsal-toolbar-count b{font-variant-numeric:tabular-nums;color:var(--wb-text,inherit)}",
+      ".wbsal-toolbar-plain{background:transparent;border:0;padding:0;justify-content:flex-end}",
+      ".wbsal-toolbar-end{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}",
+      ".wbsal-toolbar-end .wbsal-toolbar-count{margin-left:0}",
       /* KPI */
       ".wbsal-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(186px,1fr));gap:12px}",
       ".wbsal-card{border:1px solid var(--wb-border,#e2e6ec);border-radius:12px;padding:14px 16px;background:var(--wb-card,#fff);box-sizing:border-box;min-width:0}",
@@ -220,6 +223,12 @@ var require_styles = __commonJS({
       ".wbsal-empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:44px 16px;border:1px dashed var(--wb-border,#e2e6ec);border-radius:12px;color:var(--wb-muted,#8b94a6);font-size:12.5px;text-align:center}",
       ".wbsal-empty-actions{display:flex;gap:8px;justify-content:center;margin-top:2px}",
       ".wbsal-inline-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
+      /* 五险一金 */
+      ".wbsal-social{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 14px}",
+      ".wbsal-social-item{border:1px solid var(--wb-line,#eef0f4);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:3px;background:color-mix(in srgb,var(--wb-muted,#8b94a6) 5%,transparent)}",
+      ".wbsal-social-item span{font-size:11px;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-social-item b{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums}",
+      ".wbsal-social-item em{font-size:11px;font-style:normal;color:var(--wb-muted,#8b94a6)}",
       /* 共享组件在深色主题下的覆盖：base 里 notice/pill/json 写死了浅色，这里改成 token */
       ".wbsal-notice{padding:9px 11px;border-radius:9px;font-size:12px;background:color-mix(in srgb,var(--wb-accent,#2563eb) 10%,transparent);color:var(--wb-text,inherit);border:1px solid color-mix(in srgb,var(--wb-accent,#2563eb) 18%,transparent)}",
       ".wbsal-notice.ok{background:color-mix(in srgb,var(--wb-ok,#15803d) 12%,transparent);color:var(--wb-ok,#15803d);border-color:color-mix(in srgb,var(--wb-ok,#15803d) 22%,transparent)}",
@@ -1298,39 +1307,6 @@ var require_records = __commonJS({
         "div",
         { className: "wbsal-page" },
         h(
-          "header",
-          { className: "wbsal-head" },
-          h(
-            "div",
-            { className: "wbsal-head-main" },
-            h("div", { className: "wbsal-eyebrow" }, "Salary records"),
-            h("h2", null, "\u5DE5\u8D44\u8BB0\u5F55"),
-            h("p", { className: "wbsal-sub" }, "\u6309\u53D1\u85AA\u65E5\u671F\u8BB0\u5F55\uFF0C\u65E5\u7ED3 / \u6708\u7ED3\u90FD\u8BB0\uFF1B\u540C\u4E00\u5929\u53EF\u4EE5\u6709\u591A\u7B14")
-          ),
-          h(
-            "div",
-            { className: "wbsal-head-actions" },
-            h(C.Btn, { h, kind: "primary", onClick: openCreate }, "\uFF0B \u8BB0\u4E00\u7B14")
-          )
-        ),
-        h(
-          "div",
-          { className: "wbsal-kpis" },
-          kpi(
-            "\u6700\u8FD1\u5B9E\u53D1",
-            latest.latestNetPay !== void 0 ? F.money(latest.latestNetPay) : "\u2014",
-            latest.latestDate ? latest.latestDate + " \xB7 \u6700\u8FD1\u4E00\u7B14" : "\u8FD8\u6CA1\u6709\u8BB0\u5F55"
-          ),
-          kpi("\u6708\u5747\u5B9E\u53D1", statsLoad.data ? F.money(statsLoad.data.avgNetPay) : "\u2014", "\u6309\u6709\u8BB0\u5F55\u6708\u4EFD\u5E73\u5747"),
-          kpi(
-            "\u4ECA\u5E74\u7D2F\u8BA1\u5B9E\u53D1",
-            statsLoad.data ? F.money(statsLoad.data.netTotal) : "\u2014",
-            currentYear + " \u5E74 \xB7 " + (statsLoad.data ? statsLoad.data.records : 0) + " \u7B14"
-          ),
-          kpi("\u4ECA\u5E74\u4E2A\u7A0E", statsLoad.data ? F.money(statsLoad.data.incomeTaxTotal) : "\u2014", "\u5DE5\u8D44\u85AA\u91D1\u9884\u6263")
-        ),
-        form ? renderForm() : null,
-        h(
           "div",
           { className: "wbsal-toolbar" },
           h(C.Field, { h, label: "\u5E74\u4EFD" }, h(
@@ -1351,8 +1327,31 @@ var require_records = __commonJS({
             h("option", { value: "monthly" }, "\u6708\u7ED3"),
             h("option", { value: "daily" }, "\u65E5\u7ED3")
           )),
-          h("span", { className: "wbsal-toolbar-count" }, "\u5171 ", h("b", null, total), " \u7B14")
+          h(
+            "div",
+            { className: "wbsal-toolbar-end" },
+            h("span", { className: "wbsal-toolbar-count" }, "\u5171 ", h("b", null, total), " \u7B14"),
+            h(C.Btn, { h, kind: "primary", onClick: openCreate }, "\uFF0B \u8BB0\u4E00\u7B14")
+          )
         ),
+        h(
+          "div",
+          { className: "wbsal-kpis" },
+          kpi(
+            "\u6700\u8FD1\u5B9E\u53D1",
+            latest.latestNetPay !== void 0 ? F.money(latest.latestNetPay) : "\u2014",
+            latest.latestDate ? latest.latestDate + " \xB7 \u6700\u8FD1\u4E00\u7B14" : "\u8FD8\u6CA1\u6709\u8BB0\u5F55"
+          ),
+          kpi("\u6708\u5747\u5B9E\u53D1", statsLoad.data ? F.money(statsLoad.data.avgNetPay) : "\u2014", "\u6309\u6709\u8BB0\u5F55\u6708\u4EFD\u5E73\u5747"),
+          kpi(
+            "\u4ECA\u5E74\u7D2F\u8BA1\u5B9E\u53D1",
+            statsLoad.data ? F.money(statsLoad.data.netTotal) : "\u2014",
+            currentYear + " \u5E74 \xB7 " + (statsLoad.data ? statsLoad.data.records : 0) + " \u7B14"
+          ),
+          kpi("\u4ECA\u5E74\u4E2A\u7A0E", statsLoad.data ? F.money(statsLoad.data.incomeTaxTotal) : "\u2014", "\u5DE5\u8D44\u85AA\u91D1\u9884\u6263"),
+          kpi("\u4ECA\u5E74\u4E94\u9669\u4E00\u91D1", statsLoad.data ? F.money(statsLoad.data.socialTotal) : "\u2014", "\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1")
+        ),
+        form ? renderForm() : null,
         h(C.Notice, { h, kind: msg && msg.kind, text: msg && !form ? msg.text : "" }),
         body
       );
@@ -1473,6 +1472,51 @@ var require_stats = __commonJS({
           ),
           h(
             "div",
+            { className: "wbsal-card wbsal-section" },
+            h(
+              "div",
+              { className: "wbsal-section-head" },
+              h("h3", null, "\u4E94\u9669\u4E00\u91D1"),
+              h("span", null, "\u5E74\u5EA6\u5408\u8BA1 " + F.money(data.socialTotal) + " \xB7 \u5360\u5E94\u53D1 " + (data.grossTotal ? Math.round(data.socialTotal / data.grossTotal * 100) : 0) + "%")
+            ),
+            h("div", { className: "wbsal-social" }, F.SOCIAL_KEYS.map(function(key) {
+              var amount = data.social && data.social[key] || 0;
+              var share = data.socialTotal ? Math.round(amount / data.socialTotal * 100) : 0;
+              return h(
+                "div",
+                { key, className: "wbsal-social-item" },
+                h("span", null, F.LABELS[key]),
+                h("b", null, F.money(amount)),
+                h("em", null, "\u5360\u4E94\u9669\u4E00\u91D1 " + share + "%")
+              );
+            })),
+            h(
+              "div",
+              { className: "wbsal-table-wrap", style: { border: 0, marginTop: "12px" } },
+              h(
+                "table",
+                { className: "wbsal-table" },
+                h("thead", null, h("tr", null, ["\u6708\u4EFD", "\u517B\u8001", "\u533B\u7597", "\u5931\u4E1A", "\u516C\u79EF\u91D1", "\u5408\u8BA1"].map(function(label) {
+                  return h("th", { key: label, className: label === "\u6708\u4EFD" ? "left" : void 0 }, label);
+                }))),
+                h("tbody", null, data.monthly.filter(function(bucket) {
+                  return bucket.records > 0;
+                }).map(function(bucket) {
+                  return h(
+                    "tr",
+                    { key: bucket.month },
+                    h("td", { className: "left" }, bucket.month + " \u6708"),
+                    F.SOCIAL_KEYS.map(function(key) {
+                      return h("td", { key, className: "wbsal-opt" }, F.money(bucket[key]));
+                    }),
+                    h("td", null, h("b", { className: "wbsal-net" }, F.money(bucket.socialTotal)))
+                  );
+                }))
+              )
+            )
+          ),
+          h(
+            "div",
             { className: "wbsal-kpis" },
             kpi(
               "\u73AF\u6BD4",
@@ -1550,25 +1594,22 @@ var require_stats = __commonJS({
         "div",
         { className: "wbsal-page" },
         h(
-          "header",
-          { className: "wbsal-head" },
+          "div",
+          { className: "wbsal-toolbar wbsal-toolbar-plain" },
           h(
             "div",
-            { className: "wbsal-head-main" },
-            h("div", { className: "wbsal-eyebrow" }, "Salary stats"),
-            h("h2", null, "\u7EDF\u8BA1"),
-            h("p", { className: "wbsal-sub" }, "\u6309\u53D1\u85AA\u65E5\u671F\u5F52\u5C5E\u6708\u4EFD\u805A\u5408\uFF1B\u65E5\u7ED3\u591A\u7B14\u81EA\u52A8\u5408\u5E76")
-          ),
-          h(
-            "div",
-            { className: "wbsal-seg" },
-            h(C.Btn, { h, kind: "ghost", onClick: function() {
-              setYear(Math.max(2e3, year - 1));
-            } }, "\u2039"),
-            h("span", { className: "wbsal-seg-year" }, year + " \u5E74"),
-            h(C.Btn, { h, kind: "ghost", onClick: function() {
-              setYear(Math.min(2100, year + 1));
-            } }, "\u203A")
+            { className: "wbsal-toolbar-end" },
+            h(
+              "div",
+              { className: "wbsal-seg" },
+              h(C.Btn, { h, kind: "ghost", onClick: function() {
+                setYear(Math.max(2e3, year - 1));
+              } }, "\u2039"),
+              h("span", { className: "wbsal-seg-year" }, year + " \u5E74"),
+              h(C.Btn, { h, kind: "ghost", onClick: function() {
+                setYear(Math.min(2100, year + 1));
+              } }, "\u203A")
+            )
           )
         ),
         body
@@ -1590,17 +1631,6 @@ var require_config = __commonJS({
       return h(
         "div",
         { className: "wbsal-page" },
-        h(
-          "div",
-          { className: "wbsal-head" },
-          h(
-            "div",
-            { className: "wbsal-head-main" },
-            h("div", { className: "wbsal-eyebrow" }, "Salary settings"),
-            h("h2", null, "\u8BBE\u7F6E\u4E0E\u8BF4\u660E"),
-            h("p", { className: "wbsal-sub" }, "\u53E3\u5F84\u3001\u8FB9\u754C\u4E0E\u5F53\u524D\u6570\u636E\u6982\u89C8\uFF1B\u5DE5\u8D44\u53EA\u5728\u672C\u5730\u4FDD\u5B58")
-          )
-        ),
         s.error ? h(C.Notice, { h, kind: "error", text: s.error }) : h(
           "div",
           { className: "wbsal-kpis" },

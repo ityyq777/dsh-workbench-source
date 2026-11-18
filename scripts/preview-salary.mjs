@@ -28,15 +28,16 @@ const records = [
 const monthly = [7, 8, 9, 10].map((month) => {
   const item = records[10 - month];
   const social = item.pension + item.medical + item.unemployment + item.housingFund;
-  return { month, period: "2026-" + String(month).padStart(2, "0"), records: 1, netPay: item.netPay, grossPay: item.grossPay, incomeTax: item.incomeTax, socialTotal: social };
+  return { month, period: "2026-" + String(month).padStart(2, "0"), records: 1, netPay: item.netPay, grossPay: item.grossPay, incomeTax: item.incomeTax, socialTotal: social, pension: item.pension, medical: item.medical, unemployment: item.unemployment, housingFund: item.housingFund };
 });
 
 const stats = {
   year: 2026, records: 4, months: 4, netTotal: 34851.86, grossTotal: 41040, incomeTaxTotal: 459.34, socialTotal: 5728.8,
+  social: { pension: 2956.8, medical: 739.2, unemployment: 184.8, housingFund: 1848 },
   deductionTotal: 6188.14, avgNetPay: 8712.97,
   monthly: Array.from({ length: 12 }, (_, index) => {
     const hit = monthly.find((m) => m.month === index + 1);
-    return hit || { month: index + 1, period: "2026-" + String(index + 1).padStart(2, "0"), records: 0, netPay: 0, grossPay: 0, incomeTax: 0, socialTotal: 0 };
+    return hit || { month: index + 1, period: "2026-" + String(index + 1).padStart(2, "0"), records: 0, netPay: 0, grossPay: 0, incomeTax: 0, socialTotal: 0, pension: 0, medical: 0, unemployment: 0, housingFund: 0 };
   }),
   latestMonth: {
     month: 10, period: "2026-10", records: 1, netPay: 10672.36, grossPay: 12280, incomeTax: 175.44, socialTotal: 1432.2,

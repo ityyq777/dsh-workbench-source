@@ -19,6 +19,9 @@ var PAGE = [
   ".wbsal-toolbar .wbsal-field{gap:5px}",
   ".wbsal-toolbar-count{margin-left:auto;font-size:12px;color:var(--wb-muted,#8b94a6)}",
   ".wbsal-toolbar-count b{font-variant-numeric:tabular-nums;color:var(--wb-text,inherit)}",
+  ".wbsal-toolbar-plain{background:transparent;border:0;padding:0;justify-content:flex-end}",
+  ".wbsal-toolbar-end{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}",
+  ".wbsal-toolbar-end .wbsal-toolbar-count{margin-left:0}",
 
   /* KPI */
   ".wbsal-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(186px,1fr));gap:12px}",
@@ -142,6 +145,13 @@ var PAGE = [
   ".wbsal-empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:44px 16px;border:1px dashed var(--wb-border,#e2e6ec);border-radius:12px;color:var(--wb-muted,#8b94a6);font-size:12.5px;text-align:center}",
   ".wbsal-empty-actions{display:flex;gap:8px;justify-content:center;margin-top:2px}",
   ".wbsal-inline-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
+
+  /* 五险一金 */
+  ".wbsal-social{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 14px}",
+  ".wbsal-social-item{border:1px solid var(--wb-line,#eef0f4);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:3px;background:color-mix(in srgb,var(--wb-muted,#8b94a6) 5%,transparent)}",
+  ".wbsal-social-item span{font-size:11px;color:var(--wb-muted,#8b94a6)}",
+  ".wbsal-social-item b{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums}",
+  ".wbsal-social-item em{font-size:11px;font-style:normal;color:var(--wb-muted,#8b94a6)}",
 
   /* 共享组件在深色主题下的覆盖：base 里 notice/pill/json 写死了浅色，这里改成 token */
   ".wbsal-notice{padding:9px 11px;border-radius:9px;font-size:12px;background:color-mix(in srgb,var(--wb-accent,#2563eb) 10%,transparent);color:var(--wb-text,inherit);border:1px solid color-mix(in srgb,var(--wb-accent,#2563eb) 18%,transparent)}",

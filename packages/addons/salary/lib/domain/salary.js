@@ -166,6 +166,10 @@ export function createSalary({ db, host, log }) {
       grossPay: 0,
       incomeTax: 0,
       socialTotal: 0,
+      pension: 0,
+      medical: 0,
+      unemployment: 0,
+      housingFund: 0,
     }));
     for (const row of rows) {
       const bucket = monthly[MONTH_OF(row.payDate) - 1];
@@ -174,6 +178,7 @@ export function createSalary({ db, host, log }) {
       bucket.grossPay = round2(bucket.grossPay + row.grossPay);
       bucket.incomeTax = round2(bucket.incomeTax + row.incomeTax);
       bucket.socialTotal = round2(bucket.socialTotal + sumKeys(row, SOCIAL_KEYS));
+      for (const key of SOCIAL_KEYS) bucket[key] = round2(bucket[key] + row[key]);
     }
     const monthsWithData = monthly.filter((b) => b.records > 0);
     const latestMonth = monthsWithData.length ? monthsWithData[monthsWithData.length - 1] : null;
@@ -182,6 +187,8 @@ export function createSalary({ db, host, log }) {
     const grossTotal = round2(rows.reduce((sum, r) => sum + r.grossPay, 0));
     const incomeTaxTotal = round2(rows.reduce((sum, r) => sum + r.incomeTax, 0));
     const socialTotal = round2(rows.reduce((sum, r) => sum + sumKeys(r, SOCIAL_KEYS), 0));
+    const social = {};
+    for (const key of SOCIAL_KEYS) social[key] = round2(rows.reduce((sum, r) => sum + r[key], 0));
     const deductionTotal = round2(
       rows.reduce(
         (sum, r) => sum + sumKeys(r, PRETAX_KEYS) + sumKeys(r, SOCIAL_KEYS) + r.incomeTax + r.postTaxDeduction,
@@ -202,6 +209,7 @@ export function createSalary({ db, host, log }) {
       grossTotal,
       incomeTaxTotal,
       socialTotal,
+      social,
       deductionTotal,
       avgNetPay: monthsWithData.length ? round2(netTotal / monthsWithData.length) : 0,
       monthly,
