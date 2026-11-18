@@ -284,7 +284,26 @@ var require_styles = __commonJS({
       ".wbsal-series i.sum,.wbsal-line-dot.sum{background:color-mix(in oklab,var(--wb-muted,#8b94a6) 45%,var(--wb-accent,#2563eb))}",
       ".wbsal-line.sum{stroke:color-mix(in oklab,var(--wb-muted,#8b94a6) 45%,var(--wb-accent,#2563eb));stroke-dasharray:7 4}",
       ".wbsal-line-dot.sum{fill:color-mix(in oklab,var(--wb-muted,#8b94a6) 45%,var(--wb-accent,#2563eb))}",
-      ".wbsal-linechart{width:100%;padding:10px 2px 0}",
+      ".wbsal-linechart{width:100%;padding:10px 2px 0;position:relative}",
+      ".wbsal-hit{fill:transparent;cursor:crosshair}",
+      ".wbsal-hit-area{fill:transparent}",
+      ".wbsal-crosshair{stroke:color-mix(in srgb,var(--wb-accent,#2563eb) 55%,transparent);stroke-width:1;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}",
+      ".wbsal-line-dot.is-hot{stroke:var(--wb-card,#fff);stroke-width:2}",
+      ".wbsal-tip{position:absolute;top:6px;transform:translateX(-50%);z-index:3;pointer-events:none;min-width:170px;padding:9px 11px;border:1px solid var(--wb-border,#e2e6ee);border-radius:10px;background:var(--wb-card,#fff);box-shadow:0 8px 22px rgba(15,23,42,.16)}",
+      ".wbsal-tip.is-right{transform:translateX(-100%)}",
+      ".wbsal-tip strong{display:block;font-size:12px;color:var(--wb-muted,#8b94a6);font-weight:600;margin-bottom:6px}",
+      ".wbsal-tip-row{display:flex;align-items:center;gap:7px;font-size:12px;line-height:1.7}",
+      ".wbsal-tip-row i{width:14px;height:3px;border-radius:2px;background:var(--wb-muted,#8b94a6);flex:0 0 auto}",
+      ".wbsal-tip-row span{color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-tip-row b{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:650}",
+      ".wbsal-tip-row i.s1{background:var(--wb-accent,#2563eb)}",
+      ".wbsal-tip-row i.s2{background:var(--wb-ok,#16a34a)}",
+      ".wbsal-tip-row i.s3{background:var(--wb-warn,#d97706)}",
+      ".wbsal-tip-row i.s4{background:color-mix(in oklab,var(--wb-accent,#2563eb) 45%,var(--wb-danger,#dc2626))}",
+      ".wbsal-tip-row i.s5{background:color-mix(in oklab,var(--wb-ok,#16a34a) 55%,var(--wb-accent,#2563eb))}",
+      ".wbsal-tip-row i.s6{background:color-mix(in oklab,var(--wb-warn,#d97706) 60%,var(--wb-danger,#dc2626))}",
+      ".wbsal-tip-row i.sum{background:color-mix(in oklab,var(--wb-muted,#8b94a6) 45%,var(--wb-accent,#2563eb))}",
+      ".wbsal-tip em{display:block;margin-top:5px;font-size:11px;font-style:normal;color:var(--wb-muted,#8b94a6)}",
       ".wbsal-chart-hint{margin-top:8px;padding:10px 12px;border-radius:8px;background:color-mix(in srgb,var(--wb-muted,#8b94a6) 10%,transparent);color:var(--wb-muted,#8b94a6);font-size:12px}",
       ".wbsal-social-foot{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:14px;flex-wrap:wrap}",
       ".wbsal-linechart svg{display:block;width:100%;height:auto;overflow:visible}",
@@ -1053,6 +1072,10 @@ var require_stats = __commonJS({
         next[key] = !next[key];
         socialVisibleState[1](next);
       }
+      var hoverState = React.useState(props.initialHover || null);
+      var hover = hoverState[0], setHover = hoverState[1];
+      var socialHoverState = React.useState(props.initialSocialHover || null);
+      var socialHover = socialHoverState[0], setSocialHover = socialHoverState[1];
       var recordedMonths = monthly.filter(function(bucket) {
         return bucket.records > 0;
       });
@@ -1064,23 +1087,60 @@ var require_stats = __commonJS({
         return LPAD.l + (month - 1) / 11 * plotW;
       }
       function gridLabel(value) {
-        return Math.round(value).toLocaleString("zh-CN");
+        if (value >= 100 || value === 0) return Math.round(value).toLocaleString("zh-CN");
+        return Number(value.toFixed(1)).toLocaleString("zh-CN");
       }
-      function renderChart(series, shown, ariaLabel) {
-        var max = 1;
+      function niceStep(raw) {
+        if (!(raw > 0)) return 1;
+        var exp = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
+        var norm = raw / exp;
+        var mult = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10;
+        return mult * exp;
+      }
+      function renderChart(series, shown, ariaLabel, activeMonth, onHover) {
+        var max = 0;
         recordedMonths.forEach(function(bucket) {
           series.forEach(function(m) {
+            if (!shown[m.key]) return;
             var v = Number(bucket[m.key]) || 0;
             if (v > max) max = v;
           });
         });
-        max = Math.max(1e3, Math.ceil(max / 1e3) * 1e3);
+        var step = niceStep(Math.max(max, 1) / 5);
+        var axisMax = step * 5;
         function plotY(value) {
-          return LPAD.t + plotH * (1 - Math.min(1, (Number(value) || 0) / max));
+          return LPAD.t + plotH * (1 - Math.min(1, (Number(value) || 0) / axisMax));
         }
         var children = [];
-        [1, 0.75, 0.5, 0.25, 0].forEach(function(ratio) {
-          var value = max * ratio;
+        if (onHover) {
+          var slot = plotW / 12;
+          children.push(h("rect", {
+            key: "hit-area",
+            x: LPAD.l - slot / 2,
+            y: LPAD.t,
+            width: plotW + slot,
+            height: plotH,
+            className: "wbsal-hit-area",
+            onMouseLeave: function() {
+              onHover(null);
+            }
+          }));
+          recordedMonths.forEach(function(bucket) {
+            children.push(h("rect", {
+              key: "hit" + bucket.month,
+              x: plotX(bucket.month) - slot / 2,
+              y: LPAD.t,
+              width: slot,
+              height: plotH,
+              className: "wbsal-hit",
+              onMouseEnter: function() {
+                onHover(bucket.month);
+              }
+            }));
+          });
+        }
+        [1, 0.8, 0.6, 0.4, 0.2, 0].forEach(function(ratio) {
+          var value = axisMax * ratio;
           var y = plotY(value);
           children.push(h("line", { key: "g" + ratio, x1: LPAD.l, y1: y, x2: LW - LPAD.r, y2: y, className: "wbsal-line-gridline" }));
           children.push(h("text", { key: "gt" + ratio, x: LPAD.l - 10, y: y + 4, textAnchor: "end" }, gridLabel(value)));
@@ -1088,6 +1148,16 @@ var require_stats = __commonJS({
         monthly.forEach(function(bucket) {
           children.push(h("text", { key: "x" + bucket.month, x: plotX(bucket.month), y: LH - 10, textAnchor: "middle" }, bucket.month));
         });
+        if (activeMonth) {
+          children.push(h("line", {
+            key: "crosshair",
+            x1: plotX(activeMonth),
+            y1: LPAD.t,
+            x2: plotX(activeMonth),
+            y2: LPAD.t + plotH,
+            className: "wbsal-crosshair"
+          }));
+        }
         series.forEach(function(m) {
           if (!shown[m.key] || recordedMonths.length === 0) return;
           var points = recordedMonths.map(function(bucket) {
@@ -1105,10 +1175,10 @@ var require_stats = __commonJS({
           points.forEach(function(pt) {
             children.push(h("circle", {
               key: "dot" + m.key + pt.month,
-              className: "wbsal-line-dot " + m.tone,
+              className: "wbsal-line-dot " + m.tone + (pt.month === activeMonth ? " is-hot" : ""),
               cx: plotX(pt.month),
               cy: plotY(pt.value),
-              r: 3.6
+              r: pt.month === activeMonth ? 5 : 3.6
             }, h("title", null, pt.month + " \u6708 \xB7 " + m.label + " " + F.money(pt.value))));
           });
         });
@@ -1132,6 +1202,30 @@ var require_stats = __commonJS({
         return series.some(function(m) {
           return shown[m.key];
         });
+      }
+      function renderTip(series, shown, month) {
+        if (!month) return null;
+        var bucket = null;
+        monthly.forEach(function(b) {
+          if (b.month === month) bucket = b;
+        });
+        if (!bucket) return null;
+        var kids = [h("strong", { key: "m" }, F.monthLabel(bucket.period))];
+        series.forEach(function(m) {
+          if (!shown[m.key]) return;
+          kids.push(h(
+            "div",
+            { key: m.key, className: "wbsal-tip-row" },
+            h("i", { className: m.tone }),
+            h("span", null, m.label),
+            h("b", null, F.money(Number(bucket[m.key]) || 0))
+          ));
+        });
+        kids.push(h("em", { key: "n" }, bucket.records + " \u7B14\u8BB0\u5F55"));
+        return h("div", {
+          className: "wbsal-tip" + (month >= 8 ? " is-right" : ""),
+          style: { left: plotX(month) / LW * 100 + "%" }
+        }, kids);
       }
       function signed(amount) {
         var n = Number(amount) || 0;
@@ -1261,12 +1355,17 @@ var require_stats = __commonJS({
               h("h3", null, "\u6708\u5EA6\u8D8B\u52BF\u5BF9\u6BD4"),
               seriesSwitch(LINE_SERIES, visible, toggleSeries, "\u6298\u7EBF\u663E\u793A\u5F00\u5173")
             ),
-            h("div", { className: "wbsal-linechart" }, renderChart(LINE_SERIES, visible, "\u6708\u5EA6\u5B9E\u53D1/\u5E94\u53D1/\u57FA\u672C/\u7EE9\u6548/\u8865\u8D34/\u7EE9\u6548\u5956\u60E9\u6298\u7EBF\u56FE")),
+            h(
+              "div",
+              { className: "wbsal-linechart" },
+              renderChart(LINE_SERIES, visible, "\u6708\u5EA6\u5B9E\u53D1/\u5E94\u53D1/\u57FA\u672C/\u7EE9\u6548/\u8865\u8D34/\u7EE9\u6548\u5956\u60E9\u6298\u7EBF\u56FE", hover, setHover),
+              renderTip(LINE_SERIES, visible, hover)
+            ),
             anyShown(LINE_SERIES, visible) ? null : h("div", { className: "wbsal-chart-hint" }, "\u516D\u6761\u7EBF\u90FD\u5173\u6389\u4E86\uFF0C\u70B9\u4E0A\u65B9\u300C\u5B9E\u53D1 / \u5E94\u53D1 / \u57FA\u672C / \u7EE9\u6548 / \u8865\u8D34 / \u7EE9\u6548\u5956\u60E9\u300D\u4EFB\u610F\u4E00\u4E2A\u6062\u590D\u663E\u793A"),
             h(
               "div",
               { className: "wbsal-chart-foot" },
-              h("span", null, "\u5B9E\u53D1 / \u5E94\u53D1 / \u57FA\u672C / \u7EE9\u6548 / \u8865\u8D34 / \u7EE9\u6548\u5956\u60E9 \u516D\u6761\u7EBF\uFF0C\u53EF\u70B9\u4E0A\u65B9\u6807\u7B7E\u5355\u72EC\u5F00\u5173"),
+              h("span", null, "\u516D\u6761\u7EBF\u53EF\u70B9\u4E0A\u65B9\u6807\u7B7E\u5355\u72EC\u5F00\u5173 \xB7 \u9F20\u6807\u79FB\u5230\u67D0\u4E2A\u6708\u4EFD\u770B\u8BE5\u6708\u5168\u90E8\u7EF4\u5EA6"),
               h("span", null, "\u5355\u4F4D\uFF1A\u5143 \xB7 \u4EC5\u8FDE\u63A5\u6709\u8BB0\u5F55\u7684\u6708\u4EFD")
             )
           ),
@@ -1291,12 +1390,17 @@ var require_stats = __commonJS({
               );
             })),
             h("div", { className: "wbsal-social-foot" }, seriesSwitch(SOCIAL_SERIES, socialVisible, toggleSocial, "\u4E94\u9669\u4E00\u91D1\u6298\u7EBF\u663E\u793A\u5F00\u5173")),
-            h("div", { className: "wbsal-linechart" }, renderChart(SOCIAL_SERIES, socialVisible, "\u6708\u5EA6\u517B\u8001/\u533B\u7597/\u5931\u4E1A/\u516C\u79EF\u91D1\u6298\u7EBF\u56FE")),
+            h(
+              "div",
+              { className: "wbsal-linechart" },
+              renderChart(SOCIAL_SERIES, socialVisible, "\u6708\u5EA6\u517B\u8001/\u533B\u7597/\u5931\u4E1A/\u516C\u79EF\u91D1\u6298\u7EBF\u56FE", socialHover, setSocialHover),
+              renderTip(SOCIAL_SERIES, socialVisible, socialHover)
+            ),
             anyShown(SOCIAL_SERIES, socialVisible) ? null : h("div", { className: "wbsal-chart-hint" }, "\u6240\u6709\u7EBF\u90FD\u5173\u6389\u4E86\uFF0C\u70B9\u4E0A\u65B9\u300C\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1 / \u5408\u8BA1\u300D\u4EFB\u610F\u4E00\u4E2A\u6062\u590D\u663E\u793A"),
             h(
               "div",
               { className: "wbsal-chart-foot" },
-              h("span", null, "\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1 \u56DB\u6761\u7EBF + \u865A\u7EBF\u5408\u8BA1\uFF0C\u53EF\u70B9\u4E0A\u65B9\u6807\u7B7E\u5355\u72EC\u5F00\u5173"),
+              h("span", null, "\u56DB\u6761\u7EBF + \u865A\u7EBF\u5408\u8BA1\u53EF\u5355\u72EC\u5F00\u5173 \xB7 \u9F20\u6807\u79FB\u5230\u67D0\u4E2A\u6708\u4EFD\u770B\u8BE5\u6708\u5206\u9879"),
               h("span", null, "\u5355\u4F4D\uFF1A\u5143 \xB7 \u4EC5\u8FDE\u63A5\u6709\u8BB0\u5F55\u7684\u6708\u4EFD")
             )
           ),
@@ -4071,7 +4175,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.2.0",
+    version: "0.2.1",
     icon: (init_wallet(), __toCommonJS(wallet_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },

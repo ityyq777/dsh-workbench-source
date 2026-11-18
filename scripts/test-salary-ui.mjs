@@ -233,6 +233,13 @@ for (const file of ["views/records.cjs", "views/stats.cjs", "views/data.cjs", "v
   if (/\.reload\s*\(/.test(src)) problems.push(file + " 调用了 useLoad 不存在的 .reload()，请用 .refresh()");
 }
 
+const hoverTree = await render(statsComp, { api: fixedApi, lang: "zh", title: "统计", h: HOST.h, initialHover: 10 }, fixedApi);
+const hoverClasses = collect(hoverTree);
+for (const cls of ["wbsal-tip", "wbsal-tip-row", "wbsal-crosshair", "wbsal-hit"]) {
+  if (!hoverClasses.has(cls)) problems.push("悬停某月后应渲染 ." + cls);
+}
+if (!JSON.stringify(hoverTree).includes("2026年10月")) problems.push("悬停提示卡应显示月份标题");
+
 const pkgVersion = JSON.parse(readFileSync(ROOT + "packages/addons/salary/package.json", "utf8")).version;
 const bundle = readFileSync(ROOT + "packages/addons/salary/lib/client.js", "utf8");
 for (const needle of ['id: "wb-addon-salary"', 'version: "' + pkgVersion + '"']) {

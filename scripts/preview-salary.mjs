@@ -190,6 +190,10 @@ const statsHtml = toHtml(await renderView("views/stats.cjs"));
 const statsGrossHtml = toHtml(await renderView("views/stats.cjs", { initialMetric: "grossPay" }));
 // 关掉基本/绩效两条线，核对勾选后折线消失、其余两条保留
 const statsHiddenHtml = toHtml(await renderView("views/stats.cjs", { initialVisible: { basePay: false, performancePay: false } }));
+const statsHoverHtml = toHtml(await renderView("views/stats.cjs", { initialHover: 10 }));
+const statsSoloHtml = toHtml(await renderView("views/stats.cjs", {
+  initialVisible: { netPay: false, grossPay: false, basePay: false, performancePay: false, performanceBonus: false },
+}));
 const detailHtml = toHtml(await renderView("views/records.cjs", { initialOpenId: "sal_4" }));
 const formValues = {};
 for (const key of FIELDS) formValues[key] = "";
@@ -212,6 +216,8 @@ const paneList = [
   pane("light", "light · stats", statsHtml),
   pane("light", "light · stats · 应发口径", statsGrossHtml),
   pane("light", "light · stats · 只留实发/应发", statsHiddenHtml),
+  pane("light", "light · stats · 只留补贴", statsSoloHtml),
+  pane("light", "light · stats · 悬停 10 月", statsHoverHtml),
   pane("light", "light · form", formHtml, "pane-modal"),
   pane("dark", "dark · records", detailHtml),
   pane("dark", "dark · form", formHtml, "pane-modal"),

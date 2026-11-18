@@ -57,24 +57,61 @@ module.exports = function Stats(props) {
     next[key] = !next[key];
     socialVisibleState[1](next);
   }
+  // 悬停某个月份时给出该月全部维度数值：两条折线图各记一份悬停状态
+  var hoverState = React.useState(props.initialHover || null);
+  var hover = hoverState[0], setHover = hoverState[1];
+  var socialHoverState = React.useState(props.initialSocialHover || null);
+  var socialHover = socialHoverState[0], setSocialHover = socialHoverState[1];
   var recordedMonths = monthly.filter(function (bucket) { return bucket.records > 0; });
   var LPAD = { l: 62, r: 16, t: 14, b: 30 };
   var LW = 1000, LH = 250;
   var plotW = LW - LPAD.l - LPAD.r;
   var plotH = LH - LPAD.t - LPAD.b;
   function plotX(month) { return LPAD.l + ((month - 1) / 11) * plotW; }
-  function gridLabel(value) { return Math.round(value).toLocaleString("zh-CN"); }
-  // 两张折线图共用一套几何：纵轴上限按「所有线」取值，这样开关某条线时刻度不会跳动
-  function renderChart(series, shown, ariaLabel) {
-    var max = 1;
+  function gridLabel(value) {
+    if (value >= 100 || value === 0) return Math.round(value).toLocaleString("zh-CN");
+    return Number(value.toFixed(1)).toLocaleString("zh-CN");
+  }
+  // 刻度步长取 1/2/2.5/5×10^n，纵轴上下量级都能保持整刻度
+  function niceStep(raw) {
+    if (!(raw > 0)) return 1;
+    var exp = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
+    var norm = raw / exp;
+    var mult = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10;
+    return mult * exp;
+  }
+  // 两张折线图共用一套几何：纵轴只按「当前显示的线」取值，
+  // 这样只留一条低量级的线（如补贴 480）时不会被隐藏的应发（12,280）撑成一条贴地直线
+  function renderChart(series, shown, ariaLabel, activeMonth, onHover) {
+    var max = 0;
     recordedMonths.forEach(function (bucket) {
-      series.forEach(function (m) { var v = Number(bucket[m.key]) || 0; if (v > max) max = v; });
+      series.forEach(function (m) {
+        if (!shown[m.key]) return;
+        var v = Number(bucket[m.key]) || 0;
+        if (v > max) max = v;
+      });
     });
-    max = Math.max(1000, Math.ceil(max / 1000) * 1000);
-    function plotY(value) { return LPAD.t + plotH * (1 - Math.min(1, (Number(value) || 0) / max)); }
+    var step = niceStep(Math.max(max, 1) / 5);
+    var axisMax = step * 5;
+    function plotY(value) { return LPAD.t + plotH * (1 - Math.min(1, (Number(value) || 0) / axisMax)); }
     var children = [];
-    [1, 0.75, 0.5, 0.25, 0].forEach(function (ratio) {
-      var value = max * ratio;
+    // 每个月一整列透明热区：鼠标移进来就展示该月全部维度，移出去收起
+    if (onHover) {
+      var slot = plotW / 12;
+      children.push(h("rect", {
+        key: "hit-area", x: LPAD.l - slot / 2, y: LPAD.t, width: plotW + slot, height: plotH,
+        className: "wbsal-hit-area", onMouseLeave: function () { onHover(null); },
+      }));
+      recordedMonths.forEach(function (bucket) {
+        children.push(h("rect", {
+          key: "hit" + bucket.month,
+          x: plotX(bucket.month) - slot / 2, y: LPAD.t, width: slot, height: plotH,
+          className: "wbsal-hit", onMouseEnter: function () { onHover(bucket.month); },
+        }));
+      });
+    }
+    [1, 0.8, 0.6, 0.4, 0.2, 0].forEach(function (ratio) {
+      var value = axisMax * ratio;
       var y = plotY(value);
       children.push(h("line", { key: "g" + ratio, x1: LPAD.l, y1: y, x2: LW - LPAD.r, y2: y, className: "wbsal-line-gridline" }));
       children.push(h("text", { key: "gt" + ratio, x: LPAD.l - 10, y: y + 4, textAnchor: "end" }, gridLabel(value)));
@@ -82,6 +119,12 @@ module.exports = function Stats(props) {
     monthly.forEach(function (bucket) {
       children.push(h("text", { key: "x" + bucket.month, x: plotX(bucket.month), y: LH - 10, textAnchor: "middle" }, bucket.month));
     });
+    if (activeMonth) {
+      children.push(h("line", {
+        key: "crosshair", x1: plotX(activeMonth), y1: LPAD.t, x2: plotX(activeMonth), y2: LPAD.t + plotH,
+        className: "wbsal-crosshair",
+      }));
+    }
     series.forEach(function (m) {
       if (!shown[m.key] || recordedMonths.length === 0) return;
       var points = recordedMonths.map(function (bucket) {
@@ -96,8 +139,8 @@ module.exports = function Stats(props) {
       }
       points.forEach(function (pt) {
         children.push(h("circle", {
-          key: "dot" + m.key + pt.month, className: "wbsal-line-dot " + m.tone,
-          cx: plotX(pt.month), cy: plotY(pt.value), r: 3.6,
+          key: "dot" + m.key + pt.month, className: "wbsal-line-dot " + m.tone + (pt.month === activeMonth ? " is-hot" : ""),
+          cx: plotX(pt.month), cy: plotY(pt.value), r: pt.month === activeMonth ? 5 : 3.6,
         }, h("title", null, pt.month + " 月 · " + m.label + " " + F.money(pt.value))));
       });
     });
@@ -115,6 +158,27 @@ module.exports = function Stats(props) {
     }));
   }
   function anyShown(series, shown) { return series.some(function (m) { return shown[m.key]; }); }
+
+  // 悬停提示卡：列出该月「当前显示的每条线」的数值，右侧月份改成左对齐防止溢出
+  function renderTip(series, shown, month) {
+    if (!month) return null;
+    var bucket = null;
+    monthly.forEach(function (b) { if (b.month === month) bucket = b; });
+    if (!bucket) return null;
+    var kids = [h("strong", { key: "m" }, F.monthLabel(bucket.period))];
+    series.forEach(function (m) {
+      if (!shown[m.key]) return;
+      kids.push(h("div", { key: m.key, className: "wbsal-tip-row" },
+        h("i", { className: m.tone }),
+        h("span", null, m.label),
+        h("b", null, F.money(Number(bucket[m.key]) || 0))));
+    });
+    kids.push(h("em", { key: "n" }, bucket.records + " 笔记录"));
+    return h("div", {
+      className: "wbsal-tip" + (month >= 8 ? " is-right" : ""),
+      style: { left: ((plotX(month) / LW) * 100) + "%" },
+    }, kids);
+  }
 
   function signed(amount) {
     var n = Number(amount) || 0;
@@ -202,11 +266,13 @@ module.exports = function Stats(props) {
         h("div", { className: "wbsal-section-head" },
           h("h3", null, "月度趋势对比"),
           seriesSwitch(LINE_SERIES, visible, toggleSeries, "折线显示开关")),
-        h("div", { className: "wbsal-linechart" }, renderChart(LINE_SERIES, visible, "月度实发/应发/基本/绩效/补贴/绩效奖惩折线图")),
+        h("div", { className: "wbsal-linechart" },
+          renderChart(LINE_SERIES, visible, "月度实发/应发/基本/绩效/补贴/绩效奖惩折线图", hover, setHover),
+          renderTip(LINE_SERIES, visible, hover)),
         anyShown(LINE_SERIES, visible) ? null
           : h("div", { className: "wbsal-chart-hint" }, "六条线都关掉了，点上方「实发 / 应发 / 基本 / 绩效 / 补贴 / 绩效奖惩」任意一个恢复显示"),
         h("div", { className: "wbsal-chart-foot" },
-          h("span", null, "实发 / 应发 / 基本 / 绩效 / 补贴 / 绩效奖惩 六条线，可点上方标签单独开关"),
+          h("span", null, "六条线可点上方标签单独开关 · 鼠标移到某个月份看该月全部维度"),
           h("span", null, "单位：元 · 仅连接有记录的月份"))),
 
       h("div", { className: "wbsal-card wbsal-section" },
@@ -222,11 +288,13 @@ module.exports = function Stats(props) {
             h("em", null, "占五险一金 " + share + "%"));
         })),
         h("div", { className: "wbsal-social-foot" }, seriesSwitch(SOCIAL_SERIES, socialVisible, toggleSocial, "五险一金折线显示开关")),
-        h("div", { className: "wbsal-linechart" }, renderChart(SOCIAL_SERIES, socialVisible, "月度养老/医疗/失业/公积金折线图")),
+        h("div", { className: "wbsal-linechart" },
+          renderChart(SOCIAL_SERIES, socialVisible, "月度养老/医疗/失业/公积金折线图", socialHover, setSocialHover),
+          renderTip(SOCIAL_SERIES, socialVisible, socialHover)),
         anyShown(SOCIAL_SERIES, socialVisible) ? null
           : h("div", { className: "wbsal-chart-hint" }, "所有线都关掉了，点上方「养老 / 医疗 / 失业 / 公积金 / 合计」任意一个恢复显示"),
         h("div", { className: "wbsal-chart-foot" },
-          h("span", null, "养老 / 医疗 / 失业 / 公积金 四条线 + 虚线合计，可点上方标签单独开关"),
+          h("span", null, "四条线 + 虚线合计可单独开关 · 鼠标移到某个月份看该月分项"),
           h("span", null, "单位：元 · 仅连接有记录的月份"))),
 
       data.latestMonth ? h("div", { className: "wbsal-card wbsal-section" },
