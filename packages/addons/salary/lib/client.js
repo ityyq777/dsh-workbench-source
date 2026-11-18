@@ -1180,6 +1180,18 @@ var require_stats = __commonJS({
             kpi("\u5E74\u5EA6\u4E2A\u7A0E", F.money(data.incomeTaxTotal), "\u5DE5\u8D44\u85AA\u91D1\u9884\u6263"),
             kpi("\u5E74\u5EA6\u4E94\u9669\u4E00\u91D1", F.money(data.socialTotal), "\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1")
           ),
+          // 环比 / 最近月份 / 最近一笔：紧贴月度趋势图上方，先给结论再看图
+          h(
+            "div",
+            { className: "wbsal-kpis" },
+            kpi(
+              "\u73AF\u6BD4",
+              data.mom ? signed(data.mom.amount) : "\u2014",
+              data.mom ? data.mom.percent === null ? "\u4E0A\u6708\u4E3A 0" : (data.mom.percent > 0 ? "+" : "") + data.mom.percent + "% \xB7 \u6700\u8FD1\u4E24\u4E2A\u6708" : "\u81F3\u5C11\u9700\u8981\u4E24\u4E2A\u6708\u8BB0\u5F55"
+            ),
+            kpi("\u6700\u8FD1\u6708\u4EFD", data.latestMonth ? F.monthLabel(data.latestMonth.period) : "\u2014", data.latestMonth ? data.latestMonth.records + " \u7B14" : ""),
+            kpi("\u6700\u8FD1\u4E00\u7B14", data.latest ? data.latest.payDate : "\u2014", data.latest ? (data.latest.cycle === "daily" ? "\u65E5\u7ED3" : "\u6708\u7ED3") + " \xB7 " + F.money(data.latest.netPay) : "")
+          ),
           h(
             "div",
             { className: "wbsal-card wbsal-section" },
@@ -1277,17 +1289,6 @@ var require_stats = __commonJS({
               h("span", null, "\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1 \u56DB\u6761\u7EBF + \u865A\u7EBF\u5408\u8BA1\uFF0C\u53EF\u70B9\u4E0A\u65B9\u6807\u7B7E\u5355\u72EC\u5F00\u5173"),
               h("span", null, "\u5355\u4F4D\uFF1A\u5143 \xB7 \u4EC5\u8FDE\u63A5\u6709\u8BB0\u5F55\u7684\u6708\u4EFD")
             )
-          ),
-          h(
-            "div",
-            { className: "wbsal-kpis" },
-            kpi(
-              "\u73AF\u6BD4",
-              data.mom ? signed(data.mom.amount) : "\u2014",
-              data.mom ? data.mom.percent === null ? "\u4E0A\u6708\u4E3A 0" : (data.mom.percent > 0 ? "+" : "") + data.mom.percent + "% \xB7 \u6700\u8FD1\u4E24\u4E2A\u6708" : "\u81F3\u5C11\u9700\u8981\u4E24\u4E2A\u6708\u8BB0\u5F55"
-            ),
-            kpi("\u6700\u8FD1\u6708\u4EFD", data.latestMonth ? F.monthLabel(data.latestMonth.period) : "\u2014", data.latestMonth ? data.latestMonth.records + " \u7B14" : ""),
-            kpi("\u6700\u8FD1\u4E00\u7B14", data.latest ? data.latest.payDate : "\u2014", data.latest ? (data.latest.cycle === "daily" ? "\u65E5\u7ED3" : "\u6708\u7ED3") + " \xB7 " + F.money(data.latest.netPay) : "")
           ),
           data.latestMonth ? h(
             "div",
@@ -4060,7 +4061,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.1.8",
+    version: "0.1.9",
     icon: (init_wallet(), __toCommonJS(wallet_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },

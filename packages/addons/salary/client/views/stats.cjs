@@ -158,6 +158,13 @@ module.exports = function Stats(props) {
         kpi("年度个税", F.money(data.incomeTaxTotal), "工资薪金预扣"),
         kpi("年度五险一金", F.money(data.socialTotal), "养老 / 医疗 / 失业 / 公积金")),
 
+      // 环比 / 最近月份 / 最近一笔：紧贴月度趋势图上方，先给结论再看图
+      h("div", { className: "wbsal-kpis" },
+        kpi("环比", data.mom ? signed(data.mom.amount) : "—",
+          data.mom ? (data.mom.percent === null ? "上月为 0" : (data.mom.percent > 0 ? "+" : "") + data.mom.percent + "% · 最近两个月") : "至少需要两个月记录"),
+        kpi("最近月份", data.latestMonth ? F.monthLabel(data.latestMonth.period) : "—", data.latestMonth ? data.latestMonth.records + " 笔" : ""),
+        kpi("最近一笔", data.latest ? data.latest.payDate : "—", data.latest ? (data.latest.cycle === "daily" ? "日结" : "月结") + " · " + F.money(data.latest.netPay) : "")),
+
       h("div", { className: "wbsal-card wbsal-section" },
         h("div", { className: "wbsal-section-head" },
           h("h3", null, "月度" + metricLabel + "趋势"),
@@ -217,12 +224,6 @@ module.exports = function Stats(props) {
         h("div", { className: "wbsal-chart-foot" },
           h("span", null, "养老 / 医疗 / 失业 / 公积金 四条线 + 虚线合计，可点上方标签单独开关"),
           h("span", null, "单位：元 · 仅连接有记录的月份"))),
-
-      h("div", { className: "wbsal-kpis" },
-        kpi("环比", data.mom ? signed(data.mom.amount) : "—",
-          data.mom ? (data.mom.percent === null ? "上月为 0" : (data.mom.percent > 0 ? "+" : "") + data.mom.percent + "% · 最近两个月") : "至少需要两个月记录"),
-        kpi("最近月份", data.latestMonth ? F.monthLabel(data.latestMonth.period) : "—", data.latestMonth ? data.latestMonth.records + " 笔" : ""),
-        kpi("最近一笔", data.latest ? data.latest.payDate : "—", data.latest ? (data.latest.cycle === "daily" ? "日结" : "月结") + " · " + F.money(data.latest.netPay) : "")),
 
       data.latestMonth ? h("div", { className: "wbsal-card wbsal-section" },
         h("div", { className: "wbsal-section-head" },
