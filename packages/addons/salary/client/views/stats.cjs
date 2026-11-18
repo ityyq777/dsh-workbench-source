@@ -8,11 +8,11 @@ module.exports = function Stats(props) {
   var year = yearState[0], setYear = yearState[1];
   var load = C.useLoad(React, api, "salary.stats", { year: year }, [year]);
   var data = load.data;
-  // 柱状图口径：实发 / 基本工资 / 绩效工资 / 应发，交互方式与任务插件统计页的口径切换一致。
+  // 柱状图口径：实发 / 基本 / 绩效 / 应发，交互方式与任务插件统计页的口径切换一致。
   var METRICS = [
     { key: "netPay", label: "实发" },
-    { key: "basePay", label: "基本工资" },
-    { key: "performancePay", label: "绩效工资" },
+    { key: "basePay", label: "基本" },
+    { key: "performancePay", label: "绩效" },
     { key: "grossPay", label: "应发" },
   ];
   var metricState = React.useState(props.initialMetric || "netPay");

@@ -1347,8 +1347,8 @@ var require_stats = __commonJS({
       var data = load.data;
       var METRICS = [
         { key: "netPay", label: "\u5B9E\u53D1" },
-        { key: "basePay", label: "\u57FA\u672C\u5DE5\u8D44" },
-        { key: "performancePay", label: "\u7EE9\u6548\u5DE5\u8D44" },
+        { key: "basePay", label: "\u57FA\u672C" },
+        { key: "performancePay", label: "\u7EE9\u6548" },
         { key: "grossPay", label: "\u5E94\u53D1" }
       ];
       var metricState = React.useState(props.initialMetric || "netPay");
