@@ -1,102 +1,130 @@
 "use strict";
-/** 工资记录页：KPI + 按月分组列表 + 行内详情/编辑/删除 + 内联录入表单。 */
+/**
+ * 工资记录页：KPI、筛选、按月分组、表格行展开详情、内联表单。
+ * 只调本插件 action；金额格式与汇总口径统一走 ui/fields.cjs。
+ */
 module.exports = function Records(props) {
   var h = props.h, React = props.React, api = props.api, lang = props.lang;
   var C = require("../ui/common.cjs");
   var F = require("../ui/fields.cjs");
-  var msgState = React.useState(null);
-  var msg = msgState[0], setMsg = msgState[1];
-  var filterState = React.useState({ year: "", cycle: "" });
+
+  var status = C.useLoad(React, api, "salary.status", {}, []);
+  var statsLoad = C.useLoad(React, api, "salary.stats", { year: new Date().getFullYear() }, []);
+  var filterState = React.useState({ year: String(new Date().getFullYear()), cycle: "" });
   var filter = filterState[0], setFilter = filterState[1];
-  var openState = React.useState("");
+  var list = C.useLoad(React, api, "salary.recordList", {
+    year: filter.year ? Number(filter.year) : undefined,
+    cycle: filter.cycle || undefined,
+    limit: 400,
+  }, [filter.year, filter.cycle]);
+  var openState = React.useState(props.initialOpenId || "");
   var openId = openState[0], setOpenId = openState[1];
   var confirmState = React.useState("");
   var confirmId = confirmState[0], setConfirmId = confirmState[1];
-  var formState = React.useState(null);
+  var formState = React.useState(props.initialForm || null);
   var form = formState[0], setForm = formState[1];
+  var msgState = React.useState(null);
+  var msg = msgState[0], setMsg = msgState[1];
+  var savingState = React.useState(false);
+  var saving = savingState[0], setSaving = savingState[1];
 
-  var status = C.useLoad(React, api, "salary.status", {}, []);
-  var stats = C.useLoad(React, api, "salary.stats", { year: new Date().getFullYear() }, []);
-  var list = C.useLoad(React, api, "salary.recordList", {
-    year: filter.year || undefined,
-    cycle: filter.cycle || undefined,
-    limit: 500,
-  }, [filter.year, filter.cycle]);
+  function reloadAll() {
+    status.reload();
+    statsLoad.reload();
+    list.reload();
+  }
 
-  function reloadAll() { status.refresh(); stats.refresh(); list.refresh(); }
-  function pad(n) { return (n < 10 ? "0" : "") + n; }
-  function todayStr() { var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
-  function monthlyDefault() { var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-15"; }
+  function pickDate(cycle) {
+    var now = new Date();
+    var year = now.getFullYear();
+    var month = String(now.getMonth() + 1).padStart(2, "0");
+    return cycle === "monthly" ? year + "-" + month + "-15" : year + "-" + month + "-" + String(now.getDate()).padStart(2, "0");
+  }
 
   function openCreate() {
-    var values = F.blankValues();
+    setConfirmId("");
+    setOpenId("");
     setMsg(null);
-    setForm({
-      mode: "create", id: "", payDate: monthlyDefault(), cycle: "monthly", note: "",
-      values: values, lockGross: false, lastComputed: { gross: 0, net: 0 },
-    });
+    setForm({ mode: "create", id: "", payDate: pickDate("monthly"), cycle: "monthly", note: "", values: F.blankValues(), lockGross: false });
   }
+
   function openEdit(item) {
-    var values = {};
-    F.KEYS.forEach(function (key) { values[key] = item[key] ? String(item[key]) : ""; });
-    var incomes = F.sumValues(values, F.INCOME_KEYS);
+    var values = F.blankValues();
+    F.KEYS.forEach(function (key) { values[key] = key === "grossPay" || key === "netPay" ? F.fmtAmount(item[key]) : item[key] ? F.fmtAmount(item[key]) : ""; });
+    var incomeZero = F.INCOME_KEYS.every(function (key) { return !F.num(item[key]); });
+    setConfirmId("");
+    setOpenId("");
     setMsg(null);
-    setForm({
-      mode: "edit", id: item.id, payDate: item.payDate, cycle: item.cycle || "monthly", note: item.note || "",
-      values: values, lockGross: incomes === 0 && Number(item.grossPay) > 0,
-      lastComputed: { gross: Number(item.grossPay) || 0, net: Number(item.netPay) || 0 },
+    setForm({ mode: "edit", id: item.id, payDate: item.payDate, cycle: item.cycle || "monthly", note: item.note || "", values: values, lockGross: incomeZero && F.num(item.grossPay) > 0 });
+  }
+
+  function closeForm() {
+    setForm(null);
+    setMsg(null);
+  }
+
+  function setField(key, value) {
+    setForm(function (prev) {
+      var next = Object.assign({}, prev, { note: prev.note });
+      next[key] = value;
+      if (key === "payDate" && !prev.cycleLocked) {
+        var same = String(value).slice(5) === "15";
+        if (same) next.cycle = "monthly";
+      }
+      return next;
     });
   }
-  function closeForm() { setForm(null); setMsg(null); }
 
   function setValue(key, value) {
-    var current = form.values;
-    var nextValues = Object.assign({}, current);
-    nextValues[key] = value;
-    var computed = F.totals(nextValues);
-    if (key !== "grossPay" && !form.lockGross && F.num(current.grossPay) === form.lastComputed.gross) {
-      nextValues.grossPay = F.fmtAmount(computed.gross);
-    }
-    if (key !== "netPay" && F.num(current.netPay) === form.lastComputed.net) {
-      nextValues.netPay = F.fmtAmount(computed.net);
-    }
-    setForm(Object.assign({}, form, {
-      values: nextValues,
-      lastComputed: { gross: F.num(nextValues.grossPay), net: F.num(nextValues.netPay) },
-    }));
+    setForm(function (prev) {
+      var values = Object.assign({}, prev.values);
+      values[key] = value;
+      return Object.assign({}, prev, { values: values });
+    });
   }
-  function setField(key, value) {
-    var next = Object.assign({}, form, { [key]: value });
-    if (key === "cycle" && form.mode === "create") next.payDate = value === "daily" ? todayStr() : monthlyDefault();
-    setForm(next);
-  }
+
   function recalcFromDetail() {
-    var computed = F.totals(form.values);
-    setForm(Object.assign({}, form, {
-      lockGross: false,
-      values: Object.assign({}, form.values, { grossPay: F.fmtAmount(computed.gross), netPay: F.fmtAmount(computed.net) }),
-      lastComputed: { gross: computed.gross, net: computed.net },
-    }));
+    setForm(function (prev) {
+      var computed = F.totals(prev.values);
+      var values = Object.assign({}, prev.values, { grossPay: F.fmtAmount(computed.gross), netPay: F.fmtAmount(computed.net) });
+      return Object.assign({}, prev, { values: values, lockGross: false });
+    });
   }
+
   function submit() {
-    if (!form.payDate) { setMsg({ kind: "error", text: "请选择发薪日期" }); return; }
-    var payload = { payDate: form.payDate, cycle: form.cycle, note: form.note };
-    F.KEYS.forEach(function (key) { payload[key] = F.num(form.values[key]); });
-    var pending = form.mode === "edit"
+    if (!form) return;
+    var computed = F.totals(form.values);
+    var payload = {
+      payDate: form.payDate,
+      cycle: form.cycle,
+      note: form.note || "",
+    };
+    F.KEYS.forEach(function (key) {
+      if (key === "grossPay" && form.lockGross) { payload.grossPay = F.num(form.values.grossPay); return; }
+      if (key === "grossPay" || key === "netPay") { payload[key] = F.num(form.values[key]) || computed[key === "grossPay" ? "gross" : "net"]; return; }
+      payload[key] = F.num(form.values[key]);
+    });
+    setSaving(true);
+    var request = form.mode === "edit"
       ? C.call(api, "salary.recordUpdate", Object.assign({ id: form.id }, payload))
       : C.call(api, "salary.recordCreate", payload);
-    pending.then(function () {
-      setMsg({ kind: "ok", text: form.mode === "edit" ? "已保存" : "已记录一笔工资" });
-      setForm(null);
+    request.then(function () {
+      setSaving(false);
+      closeForm();
       reloadAll();
-    }).catch(function (e) { setMsg({ kind: "error", text: C.errText(e) }); });
+      setMsg({ kind: "ok", text: "已保存" });
+    }).catch(function (e) {
+      setSaving(false);
+      setMsg({ kind: "error", text: C.errText(e) });
+    });
   }
+
   function remove(id) {
     C.call(api, "salary.recordDelete", { id: id }).then(function () {
       setConfirmId("");
       if (openId === id) setOpenId("");
-      setMsg({ kind: "ok", text: "已删除" });
       reloadAll();
+      setMsg({ kind: "ok", text: "已删除" });
     }).catch(function (e) { setMsg({ kind: "error", text: C.errText(e) }); });
   }
 
@@ -107,134 +135,183 @@ module.exports = function Records(props) {
     (groups[period] = groups[period] || []).push(item);
   });
   var periods = Object.keys(groups).sort().reverse();
-  var sameDayCount = form ? items.filter(function (item) { return item.payDate === form.payDate; }).length : 0;
+  var total = Number(list.data && list.data.total) || items.length;
   var currentYear = new Date().getFullYear();
-  var yearOptions = ["", String(currentYear + 1), String(currentYear), String(currentYear - 1), String(currentYear - 2), String(currentYear - 3)];
+  var yearOptions = ["", String(currentYear + 1), String(currentYear), String(currentYear - 1), String(currentYear - 2)];
+  var latest = status.data || {};
 
   function kpi(label, value, sub) {
-    return h("div", { className: "wbsal-card wbsal-kpi" }, h("span", null, label), h("strong", null, value), h("em", null, sub));
+    return h("div", { className: "wbsal-card wbsal-kpi" },
+      h("span", null, label),
+      h("strong", null, value),
+      h("em", null, sub));
   }
 
-  function amountInput(key, formState, disabled) {
+  function amountInput(key, disabled) {
     return h("input", {
       className: "wbsal-input", type: "number", step: "0.01",
       min: key === "performanceBonus" ? undefined : "0",
-      value: formState.values[key],
+      value: form.values[key],
       disabled: disabled,
       onChange: function (e) { setValue(key, e.target.value); },
-      onBlur: function () { setValue(key, F.fmtAmount(F.num(formState.values[key]))); },
+      onBlur: function () { setValue(key, F.fmtAmount(F.num(form.values[key]))); },
     });
   }
 
   function renderForm() {
     var computed = F.totals(form.values);
-    return h("div", { className: "wbsal-card" },
-      h("div", { className: "wbsal-head" },
-        h("h3", null, form.mode === "edit" ? "编辑工资" : "记一笔工资"),
-        h(C.Btn, { h: h, onClick: closeForm }, "关闭")),
-      form.mode === "create" && sameDayCount > 0
-        ? h(C.Notice, { h: h, text: "该日已有 " + sameDayCount + " 笔记录；保存会新增一条，不会覆盖。" })
-        : null,
-      h("div", { className: "wbsal-form-grid" },
+    var lockedGross = form.lockGross;
+    var sameDayCount = items.filter(function (item) { return item.payDate === form.payDate && item.id !== form.id; }).length;
+    return h("div", { className: "wbsal-card wbsal-form" },
+      h("div", { className: "wbsal-form-head" },
+        h("div", null,
+          h("div", { className: "wbsal-eyebrow" }, form.mode === "edit" ? "EDIT RECORD" : "NEW RECORD"),
+          h("h3", null, form.mode === "edit" ? "编辑工资" : "记一笔工资")),
+        h(C.Btn, { h: h, kind: "ghost", onClick: closeForm }, "关闭")),
+      h("div", { className: "wbsal-form-meta" },
         h(C.Field, { h: h, label: "发薪日期" }, h("input", { className: "wbsal-input", type: "date", value: form.payDate, onChange: function (e) { setField("payDate", e.target.value); } })),
         h(C.Field, { h: h, label: "类型", hint: "月结默认当月 15 号" },
           h("select", { className: "wbsal-input", value: form.cycle, onChange: function (e) { setField("cycle", e.target.value); } },
             h("option", { value: "monthly" }, "月结"), h("option", { value: "daily" }, "日结"))),
         h(C.Field, { h: h, label: "备注" }, h("input", { className: "wbsal-input", value: form.note, onChange: function (e) { setField("note", e.target.value); } }))),
+      sameDayCount > 0 ? h(C.Notice, { h: h, text: "该日已有 " + sameDayCount + " 笔记录；保存会新增一条，不会覆盖。" }) : null,
       F.GROUPS.map(function (group) {
-        return h("div", { key: group.id },
-          h("div", { className: "wbsal-group-title" }, group.title + " · " + group.hint),
+        return h("div", { key: group.id, className: "wbsal-form-group" },
+          h("div", { className: "wbsal-group-head" },
+            h("div", { className: "wbsal-group-title" }, group.title),
+            h("span", null, group.hint)),
           h("div", { className: "wbsal-form-grid" }, group.keys.map(function (key) {
-            return h(C.Field, { key: key, h: h, label: F.LABELS[key] }, amountInput(key, form, false));
+            return h(C.Field, { key: key, h: h, label: F.LABELS[key] }, amountInput(key, false));
           })));
       }),
-      h("div", { className: "wbsal-group-title" }, "汇总 · 默认按明细实时计算，也可直接改"),
-      h("div", { className: "wbsal-form-grid" },
-        h(C.Field, { h: h, label: "应发税前工资" }, amountInput("grossPay", form, false)),
-        h(C.Field, { h: h, label: "实发工资" }, amountInput("netPay", form, false)),
-        h("div", { className: "wbsal-inline-actions" },
-          form.lockGross ? h("span", { className: "wbsal-muted" }, "该记录只有汇总值，应发已锁定") : null,
-          h(C.Btn, { h: h, onClick: recalcFromDetail }, "按明细重算"))),
+      h("div", { className: "wbsal-form-group" },
+        h("div", { className: "wbsal-group-head" },
+          h("div", { className: "wbsal-group-title" }, "汇总"),
+          h("span", null, "默认按明细实时计算，也可以直接改")),
+        h("div", { className: "wbsal-form-grid" },
+          h(C.Field, { h: h, label: "应发税前工资" }, amountInput("grossPay", lockedGross)),
+          h(C.Field, { h: h, label: "实发工资" }, amountInput("netPay", false)))),
       h("div", { className: "wbsal-summary" },
         h("div", null, h("span", null, "收入合计"), h("b", null, F.money(computed.income))),
         h("div", null, h("span", null, "税前扣款"), h("b", null, F.money(computed.preTax))),
         h("div", null, h("span", null, "社保公积金"), h("b", null, F.money(computed.social))),
         h("div", null, h("span", null, "个税+税后"), h("b", null, F.money(computed.tax))),
         h("div", null, h("span", null, "应发"), h("b", null, F.money(F.num(form.values.grossPay)))),
-        h("div", null, h("span", null, "实发"), h("b", null, F.money(F.num(form.values.netPay))))),
+        h("div", null, h("span", null, "实发"), h("b", null, F.money(F.num(form.values.netPay)))),
+        lockedGross ? h("div", { className: "wbsal-lock" },
+          h("span", { className: "wbsal-muted" }, "这条历史记录只有汇总值，应发已锁定，避免被明细重算清零。"),
+          h(C.Btn, { h: h, onClick: recalcFromDetail }, "按明细重算")) : null),
       h(C.Notice, { h: h, kind: msg && msg.kind, text: msg && msg.text }),
-      h("div", { className: "wbsal-inline-actions" },
-        h(C.Btn, { h: h, kind: "primary", onClick: submit }, form.mode === "edit" ? "保存修改" : "保存"),
-        h(C.Btn, { h: h, onClick: closeForm }, "取消")));
+      h("div", { className: "wbsal-form-actions" },
+        h(C.Btn, { h: h, kind: "primary", onClick: submit, disabled: saving }, saving ? "保存中…" : (form.mode === "edit" ? "保存修改" : "保存")),
+        h(C.Btn, { h: h, kind: "ghost", onClick: closeForm }, "取消")));
   }
 
   function renderDetail(item) {
-    return h("div", { className: "wbsal-detail" },
-      F.GROUPS.map(function (group) {
-        return h("div", { key: group.id },
-          h("div", { className: "wbsal-group-title" }, group.title),
-          h("div", { className: "wbsal-fields" }, group.keys.map(function (key) {
-            return h("div", { key: key }, h("span", null, F.LABELS[key]), h("b", null, F.money(item[key])));
-          })));
-      }),
+    var blocks = F.GROUPS.map(function (group) {
+      return h("div", { key: group.id, className: "wbsal-detail-block" },
+        h("div", { className: "wbsal-group-title" }, group.title),
+        h("div", { className: "wbsal-fields" }, group.keys.map(function (key) {
+          return h("div", { key: key }, h("span", null, F.LABELS[key]), h("b", null, F.money(item[key])));
+        })));
+    });
+    blocks.push(h("div", { key: "sum", className: "wbsal-detail-block" },
+      h("div", { className: "wbsal-group-title" }, "汇总"),
       h("div", { className: "wbsal-fields" },
-        h("div", null, h("span", null, "应发税前工资"), h("b", null, F.money(item.grossPay))),
-        h("div", null, h("span", null, "实发工资"), h("b", null, F.money(item.netPay)))),
-      item.note ? h("div", { className: "wbsal-muted" }, "备注：" + item.note) : null,
-      h("div", { className: "wbsal-inline-actions" },
-        h(C.Btn, { h: h, onClick: function () { openEdit(item); } }, "编辑"),
-        confirmId === item.id
-          ? h("span", { className: "wbsal-inline-actions" }, h("span", { className: "wbsal-danger" }, "确认删除？"),
-            h(C.Btn, { h: h, kind: "danger", onClick: function () { remove(item.id); } }, "删除"),
-            h(C.Btn, { h: h, onClick: function () { setConfirmId(""); } }, "取消"))
-          : h(C.Btn, { h: h, kind: "danger", onClick: function () { setConfirmId(item.id); } }, "删除"),
-        h("span", { className: "wbsal-muted" }, "更新于 " + C.fmtTime(item.updatedAt, lang))));
+        h("div", { className: "wbsal-field-sum" }, h("span", null, "应发税前"), h("b", null, F.money(item.grossPay))),
+        h("div", { className: "wbsal-field-sum" }, h("span", null, "社保公积金"), h("b", null, F.money(F.sumValues(item, F.SOCIAL_KEYS)))),
+        h("div", { className: "wbsal-field-sum" }, h("span", null, "个税+税后"), h("b", null, F.money(F.sumValues(item, F.TAX_KEYS)))),
+        h("div", { className: "wbsal-field-sum" }, h("span", null, "实发工资"), h("b", null, F.money(item.netPay))))));
+    return h("div", { className: "wbsal-detail" },
+      blocks,
+      h("div", { className: "wbsal-detail-foot" },
+        h("div", { className: "wbsal-muted" },
+          (item.note ? "备注：" + item.note + " · " : "") + "更新于 " + C.fmtTime(item.updatedAt, lang)),
+        h("div", { className: "wbsal-detail-actions" },
+          h(C.Btn, { h: h, onClick: function () { openEdit(item); } }, "编辑"),
+          confirmId === item.id
+            ? h("span", { className: "wbsal-confirm" },
+              h("span", { className: "wbsal-danger" }, "确认删除？"),
+              h(C.Btn, { h: h, kind: "danger", onClick: function () { remove(item.id); } }, "删除"),
+              h(C.Btn, { h: h, kind: "ghost", onClick: function () { setConfirmId(""); } }, "取消"))
+            : h(C.Btn, { h: h, kind: "danger", onClick: function () { setConfirmId(item.id); } }, "删除"))));
   }
 
   function renderRow(item) {
     var expanded = openId === item.id;
-    return h("div", { key: item.id, className: "wbsal-record" },
-      h("div", { className: "wbsal-record-row", onClick: function () { setOpenId(expanded ? "" : item.id); setConfirmId(""); } },
-        h("span", { className: "wbsal-num" }, String(item.payDate).slice(5) + " " + F.weekday(item.payDate)),
-        h(C.Pill, { h: h, kind: item.cycle === "daily" ? "warn" : "ok" }, item.cycle === "daily" ? "日结" : "月结"),
-        h("span", { className: "wbsal-net" }, F.money(item.netPay)),
-        h("span", { className: "wbsal-col opt" }, F.money(item.grossPay)),
-        h("span", { className: "wbsal-col opt" }, F.money(F.sumValues(item, F.SOCIAL_KEYS))),
-        h("span", { className: "wbsal-col opt" }, F.money(item.incomeTax))),
-      expanded ? renderDetail(item) : null);
+    var rows = [h("tr", {
+      key: item.id,
+      className: "wbsal-record-row" + (expanded ? " open" : ""),
+      onClick: function () { setOpenId(expanded ? "" : item.id); setConfirmId(""); },
+    },
+      h("td", { className: "left" }, h("span", { className: "wbsal-date" }, h("b", null, String(item.payDate).slice(5)), h("span", null, F.weekday(item.payDate)))),
+      h("td", { className: "left" }, h(C.Pill, { h: h, kind: item.cycle === "daily" ? "warn" : "ok" }, item.cycle === "daily" ? "日结" : "月结")),
+      h("td", null, h("span", { className: "wbsal-net" }, F.money(item.netPay))),
+      h("td", { className: "wbsal-opt" }, F.money(item.grossPay)),
+      h("td", { className: "wbsal-opt hide-md" }, F.money(F.sumValues(item, F.SOCIAL_KEYS))),
+      h("td", { className: "wbsal-opt hide-md" }, F.money(item.incomeTax)),
+      h("td", null, h("span", { className: "wbsal-caret" }, "›"))),
+    expanded ? h("tr", { key: item.id + "-detail" }, h("td", { className: "wbsal-detail-cell", colSpan: 7 }, renderDetail(item))) : null];
+    return rows;
+  }
+
+  var body;
+  if (list.loading) body = h(C.Empty, { h: h, text: "加载中…" });
+  else if (list.error) body = h(C.Notice, { h: h, kind: "error", text: list.error });
+  else if (items.length === 0) {
+    body = h("div", { className: "wbsal-empty" },
+      h("div", null, filter.year || filter.cycle ? "这个筛选条件下没有记录" : "还没有工资记录，先记一笔"),
+      h("div", { className: "wbsal-empty-actions" },
+        filter.year || filter.cycle
+          ? h(C.Btn, { h: h, onClick: function () { setFilter({ year: "", cycle: "" }); } }, "清除筛选")
+          : null,
+        h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, "＋ 记一笔")));
+  } else {
+    body = h("div", { className: "wbsal-months" }, periods.map(function (period) {
+      var rows = groups[period];
+      var sum = rows.reduce(function (acc, item) { return acc + (Number(item.netPay) || 0); }, 0);
+      return h("section", { key: period },
+        h("div", { className: "wbsal-month" },
+          h("div", { className: "wbsal-month-title" },
+            h("strong", null, F.monthLabel(period)),
+            h("span", null, rows.length + " 笔")),
+          h("div", { className: "wbsal-month-total" }, "实发合计", h("b", null, F.money(sum)))),
+        h("div", { className: "wbsal-table-wrap" },
+          h("table", { className: "wbsal-table" },
+            h("thead", null, h("tr", null,
+              h("th", { className: "left" }, "发薪日"),
+              h("th", { className: "left" }, "类型"),
+              h("th", null, "实发"),
+              h("th", null, "应发"),
+              h("th", { className: "hide-md" }, "社保公积金"),
+              h("th", { className: "hide-md" }, "个税"),
+              h("th", null, ""))),
+            h("tbody", null, rows.map(renderRow)))));
+    }));
   }
 
   return h("div", { className: "wbsal-page" },
-    h("div", { className: "wbsal-head" },
-      h("div", null,
+    h("header", { className: "wbsal-head" },
+      h("div", { className: "wbsal-head-main" },
+        h("div", { className: "wbsal-eyebrow" }, "Salary records"),
         h("h2", null, "工资记录"),
-        h("p", { className: "wbsal-sub" }, "按发薪日期记录，日结/月结都记；同一天可以有多笔")),
-      h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, "＋ 记一笔")),
-    form ? renderForm() : null,
+        h("p", { className: "wbsal-sub" }, "按发薪日期记录，日结 / 月结都记；同一天可以有多笔")),
+      h("div", { className: "wbsal-head-actions" },
+        h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, "＋ 记一笔"))),
     h("div", { className: "wbsal-kpis" },
-      kpi("最近实发", status.data ? F.money(status.data.latestNetPay) : "—",
-        status.data && status.data.latestDate ? status.data.latestDate + " · 最近一笔" : "还没有记录"),
-      kpi("最近月合计", stats.data && stats.data.latestMonth ? F.money(stats.data.latestMonth.netPay) : "—",
-        stats.data && stats.data.latestMonth ? F.monthLabel(stats.data.latestMonth.period) + " · " + stats.data.latestMonth.records + " 笔" : "暂无"),
-      kpi("今年累计实发", stats.data ? F.money(stats.data.netTotal) : "—", currentYear + " 年 · " + (stats.data ? stats.data.records : 0) + " 笔"),
-      kpi("今年个税", stats.data ? F.money(stats.data.incomeTaxTotal) : "—", "含工资薪金预扣")),
-    h("div", { className: "wbsal-row" },
+      kpi("最近实发", latest.latestNetPay !== undefined ? F.money(latest.latestNetPay) : "—",
+        latest.latestDate ? latest.latestDate + " · 最近一笔" : "还没有记录"),
+      kpi("月均实发", statsLoad.data ? F.money(statsLoad.data.avgNetPay) : "—", "按有记录月份平均"),
+      kpi("今年累计实发", statsLoad.data ? F.money(statsLoad.data.netTotal) : "—",
+        currentYear + " 年 · " + (statsLoad.data ? statsLoad.data.records : 0) + " 笔"),
+      kpi("今年个税", statsLoad.data ? F.money(statsLoad.data.incomeTaxTotal) : "—", "工资薪金预扣")),
+    form ? renderForm() : null,
+    h("div", { className: "wbsal-toolbar" },
       h(C.Field, { h: h, label: "年份" }, h("select", { className: "wbsal-input", value: filter.year, onChange: function (e) { setFilter(Object.assign({}, filter, { year: e.target.value })); } },
         yearOptions.map(function (value) { return h("option", { key: value || "all", value: value }, value ? value + " 年" : "全部年份"); }))),
       h(C.Field, { h: h, label: "类型" }, h("select", { className: "wbsal-input", value: filter.cycle, onChange: function (e) { setFilter(Object.assign({}, filter, { cycle: e.target.value })); } },
         h("option", { value: "" }, "全部"), h("option", { value: "monthly" }, "月结"), h("option", { value: "daily" }, "日结"))),
-      h("span", { className: "wbsal-muted" }, "共 " + (list.data ? list.data.total : 0) + " 笔")),
+      h("span", { className: "wbsal-toolbar-count" }, "共 ", h("b", null, total), " 笔")),
     h(C.Notice, { h: h, kind: msg && msg.kind, text: msg && !form ? msg.text : "" }),
-    list.loading ? h(C.Empty, { h: h, text: "加载中…" })
-      : list.error ? h(C.Notice, { h: h, kind: "error", text: list.error })
-        : items.length === 0 ? h("div", null,
-          h(C.Empty, { h: h, text: filter.year || filter.cycle ? "这个筛选条件下没有记录" : "还没有工资记录，先记一笔" }),
-          h("div", { className: "wbsal-empty-actions" }, h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, "＋ 记一笔")))
-          : periods.map(function (period) {
-            var rows = groups[period];
-            var sum = rows.reduce(function (total, item) { return total + (Number(item.netPay) || 0); }, 0);
-            return h("section", { key: period },
-              h("div", { className: "wbsal-month" }, h("strong", null, F.monthLabel(period)), h("span", null, rows.length + " 笔 · 合计 " + F.money(sum))),
-              rows.map(renderRow));
-          }));
+    body);
 };

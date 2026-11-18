@@ -143,13 +143,13 @@ const problems = [];
 if (!HOST.addon || HOST.addon.id !== "wb-addon-salary") problems.push("client.src.cjs 没有注册 wb-addon-salary");
 if (!HOST.addon || !Array.isArray(HOST.addon.views) || HOST.addon.views.length !== 5) problems.push("views 数量不是 5");
 const css = styles.map((el) => el.textContent).join("\n");
-for (const klass of ["wbsal-page", "wbsal-kpi", "wbsal-record", "wbsal-chart", "wbsal-comp", "wbsal-input", "--wb-card", "wbsal-table", "wbsal-ul", "wbsal-card"]) {
+for (const klass of ["wbsal-page", "wbsal-kpi", "wbsal-record-row", "wbsal-chart", "wbsal-comp", "wbsal-input", "--wb-card", "wbsal-table", "wbsal-ul", "wbsal-card"]) {
   if (!css.includes(klass)) problems.push("样式表缺少 " + klass);
 }
 
 const api = { call: async (action) => ({ ok: true, result: RESPONSES[action] !== undefined ? RESPONSES[action] : {} }) };
 const checks = [
-  ["records", "views/records.cjs", "工资记录", ["wbsal-record", "wbsal-kpi", "wbsal-head"]],
+  ["records", "views/records.cjs", "工资记录", ["wbsal-record-row", "wbsal-kpi", "wbsal-head", "wbsal-month"]],
   ["stats", "views/stats.cjs", "统计", ["wbsal-chart", "wbsal-comp", "wbsal-table"]],
   ["config", "views/config.cjs", "设置", ["wbsal-ul"]],
 ];

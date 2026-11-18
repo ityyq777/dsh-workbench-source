@@ -89,58 +89,159 @@ var require_client_base_styles = __commonJS({
 var require_styles = __commonJS({
   "packages/addons/salary/client/ui/styles.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = require_client_base_styles()("wbsal").concat([
-      ".wbsal-page{display:flex;flex-direction:column;gap:14px;padding:16px;box-sizing:border-box;width:100%}",
-      ".wbsal-head h2,.wbsal-page h2{font-size:18px;font-weight:650;margin:0}",
-      ".wbsal-sub{margin:2px 0 0;font-size:12px;color:var(--wb-muted,#6b7280)}",
-      ".wbsal-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;padding:12px;background:var(--wb-card,#fff);box-sizing:border-box}",
-      ".wbsal-muted{font-size:12px;color:var(--wb-muted,#6b7280)}",
-      ".wbsal-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}",
-      ".wbsal-table{width:100%;border-collapse:collapse;font-size:12px}",
-      ".wbsal-table th,.wbsal-table td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--wb-border,#eef0f3);font-variant-numeric:tabular-nums}",
-      ".wbsal-table th{color:var(--wb-muted,#6b7280);font-weight:600}",
-      ".wbsal-table th:first-child,.wbsal-table td:first-child{text-align:left}",
-      ".wbsal-ul{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:13px}",
-      ".wbsal-page h3{font-size:13px;font-weight:600;margin:0 0 8px}",
-      ".wbsal-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}",
-      ".wbsal-kpi span{display:block;font-size:12px;color:var(--wb-muted,#6b7280);margin-bottom:4px}",
-      ".wbsal-kpi strong{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}",
-      ".wbsal-kpi em{display:block;font-size:11px;font-style:normal;color:var(--wb-muted,#6b7280);margin-top:3px}",
-      ".wbsal-num{font-variant-numeric:tabular-nums}",
-      ".wbsal-input{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:90px}",
-      ".wbsal-month{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:14px 0 4px;font-size:12px;color:var(--wb-muted,#6b7280)}",
-      ".wbsal-month strong{font-size:13px;color:inherit}",
-      ".wbsal-record{border-bottom:1px solid var(--wb-border,#eef0f3)}",
-      ".wbsal-record-row{display:grid;grid-template-columns:76px 52px 1fr 1fr 1fr 1fr;gap:10px;align-items:center;padding:8px 4px;cursor:pointer;font-size:12px}",
-      ".wbsal-record-row:hover{background:color-mix(in srgb, var(--wb-accent,#2563eb) 6%, transparent)}",
-      ".wbsal-record-row .wbsal-net{font-weight:650;font-variant-numeric:tabular-nums}",
-      ".wbsal-record-row .wbsal-col{font-variant-numeric:tabular-nums;color:var(--wb-muted,#6b7280);text-align:right}",
-      ".wbsal-detail{padding:4px 4px 12px;display:flex;flex-direction:column;gap:10px}",
-      ".wbsal-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px 14px;font-size:12px}",
-      ".wbsal-fields div{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px dashed var(--wb-border,#eef0f3)}",
-      ".wbsal-fields b{font-variant-numeric:tabular-nums;font-weight:600}",
-      ".wbsal-group-title{font-size:12px;color:var(--wb-muted,#6b7280);margin:6px 0 2px}",
-      ".wbsal-form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}",
-      ".wbsal-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;padding:10px 12px;background:color-mix(in srgb, var(--wb-accent,#2563eb) 5%, transparent)}",
-      ".wbsal-summary div span{display:block;font-size:11px;color:var(--wb-muted,#6b7280)}",
-      ".wbsal-summary div b{font-size:15px;font-variant-numeric:tabular-nums}",
-      ".wbsal-chart{display:flex;align-items:flex-end;gap:6px;height:170px;padding:10px 0 0;overflow-x:auto}",
-      ".wbsal-bar{flex:1 1 0;min-width:18px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}",
-      ".wbsal-bar-fill{width:100%;min-height:2px;border-radius:5px 5px 0 0;background:color-mix(in srgb, var(--wb-accent,#2563eb) 45%, transparent)}",
+    var BASE = require_client_base_styles()("wbsal");
+    var PAGE = [
+      /* 页面骨架 */
+      ".wbsal-page{display:flex;flex-direction:column;gap:18px;padding:22px 24px 48px;box-sizing:border-box;width:100%;min-height:100%}",
+      ".wbsal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}",
+      ".wbsal-head-main{display:flex;flex-direction:column;gap:4px;min-width:0}",
+      ".wbsal-eyebrow{font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-head h2,.wbsal-page h2{font-size:21px;font-weight:650;margin:0;letter-spacing:-.01em;color:var(--wb-text,inherit)}",
+      ".wbsal-sub{margin:0;font-size:12.5px;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+      ".wbsal-toolbar{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--wb-border,#e2e6ec);border-radius:12px;background:var(--wb-surface,#fff)}",
+      ".wbsal-toolbar .wbsal-field{gap:5px}",
+      ".wbsal-toolbar-count{margin-left:auto;font-size:12px;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-toolbar-count b{font-variant-numeric:tabular-nums;color:var(--wb-text,inherit)}",
+      /* KPI */
+      ".wbsal-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(186px,1fr));gap:12px}",
+      ".wbsal-card{border:1px solid var(--wb-border,#e2e6ec);border-radius:12px;padding:14px 16px;background:var(--wb-card,#fff);box-sizing:border-box;min-width:0}",
+      ".wbsal-kpi{display:flex;flex-direction:column;gap:2px}",
+      ".wbsal-kpi-head{display:flex;align-items:center;gap:7px;margin-bottom:6px}",
+      ".wbsal-kpi-icon{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;background:color-mix(in srgb,var(--wb-accent,#2563eb) 12%,transparent);color:var(--wb-accent,#2563eb);flex:0 0 auto}",
+      ".wbsal-kpi span{display:block;font-size:12px;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-kpi strong{display:block;font-size:24px;font-weight:680;font-variant-numeric:tabular-nums;line-height:1.15;letter-spacing:-.01em;color:var(--wb-text,inherit)}",
+      ".wbsal-kpi em{display:block;font-size:11.5px;font-style:normal;color:var(--wb-muted,#8b94a6);margin-top:4px}",
+      ".wbsal-kpi em b{font-weight:600;color:var(--wb-ok,#15803d);font-variant-numeric:tabular-nums}",
+      ".wbsal-kpi em b.neg{color:var(--wb-danger,#b91c1c)}",
+      /* 按钮与输入 */
+      ".wbsal-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:var(--wb-text,inherit);border-radius:9px;padding:6px 12px;font-size:12.5px;line-height:1.4;cursor:pointer;transition:border-color .12s,background .12s,color .12s}",
+      ".wbsal-btn:hover:not(:disabled){border-color:var(--wb-accent,#2563eb);color:var(--wb-accent,#2563eb)}",
+      ".wbsal-btn:disabled{opacity:.5;cursor:default}",
+      ".wbsal-btn.primary{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:#fff}",
+      ".wbsal-btn.primary:hover:not(:disabled){filter:brightness(1.06);color:#fff}",
+      ".wbsal-btn.danger{color:var(--wb-danger,#b91c1c);border-color:color-mix(in srgb,var(--wb-danger,#b91c1c) 35%,transparent)}",
+      ".wbsal-btn.danger:hover:not(:disabled){background:color-mix(in srgb,var(--wb-danger,#b91c1c) 10%,transparent);color:var(--wb-danger,#b91c1c)}",
+      ".wbsal-btn.ghost{border-color:transparent;background:color-mix(in srgb,var(--wb-muted,#8b94a6) 11%,transparent);color:var(--wb-text,inherit)}",
+      ".wbsal-btn.ghost:hover:not(:disabled){background:color-mix(in srgb,var(--wb-accent,#2563eb) 12%,transparent);color:var(--wb-accent,#2563eb)}",
+      ".wbsal-input{border:1px solid var(--wb-border,#d1d5db);border-radius:8px;padding:7px 9px;font:inherit;font-size:12.5px;background:var(--wb-surface,#fff);color:var(--wb-text,inherit);min-width:88px;box-sizing:border-box}",
+      ".wbsal-input:focus{outline:2px solid color-mix(in srgb,var(--wb-accent,#2563eb) 45%,transparent);outline-offset:1px;border-color:var(--wb-accent,#2563eb)}",
+      ".wbsal-field{display:flex;flex-direction:column;gap:4px;font-size:12px;min-width:0}",
+      ".wbsal-label{font-size:11.5px;font-weight:600;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-hint{font-size:11px;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-muted{font-size:12px;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-danger{color:var(--wb-danger,#b91c1c);font-size:12px}",
+      /* 月份分组 + 记录表 */
+      ".wbsal-months{display:flex;flex-direction:column;gap:10px}",
+      ".wbsal-month{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:2px 2px 0}",
+      ".wbsal-month-title{display:flex;align-items:baseline;gap:8px}",
+      ".wbsal-month-title strong{font-size:13.5px;font-weight:650;color:var(--wb-text,inherit)}",
+      ".wbsal-month-title span{font-size:11.5px;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-month-total{font-size:12px;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-month-total b{font-size:13px;color:var(--wb-text,inherit);font-variant-numeric:tabular-nums;margin-left:4px}",
+      ".wbsal-table-wrap{border:1px solid var(--wb-border,#e2e6ec);border-radius:12px;background:var(--wb-card,#fff);overflow:hidden}",
+      ".wbsal-table{width:100%;border-collapse:collapse;font-size:12.5px}",
+      ".wbsal-table th,.wbsal-table td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--wb-line,#eef0f4);font-variant-numeric:tabular-nums;white-space:nowrap}",
+      ".wbsal-table th{font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--wb-muted,#8b94a6);background:var(--wb-surface,#fff);padding-top:9px;padding-bottom:9px}",
+      ".wbsal-table th:first-child,.wbsal-table td:first-child,.wbsal-table th.left,.wbsal-table td.left{text-align:left}",
+      ".wbsal-table tbody tr:last-child td{border-bottom:0}",
+      ".wbsal-record td{height:44px}",
+      ".wbsal-record-row{cursor:pointer;transition:background .12s}",
+      ".wbsal-record-row:hover td{background:color-mix(in srgb,var(--wb-accent,#2563eb) 5%,transparent)}",
+      ".wbsal-record-row.open td{background:color-mix(in srgb,var(--wb-accent,#2563eb) 7%,transparent)}",
+      ".wbsal-date{display:flex;align-items:baseline;gap:7px}",
+      ".wbsal-date b{font-weight:600;font-variant-numeric:tabular-nums}",
+      ".wbsal-date span{font-size:11.5px;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-net{font-weight:680;font-size:13px;color:var(--wb-text,inherit)}",
+      ".wbsal-opt{color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-caret{display:inline-block;width:14px;color:var(--wb-muted,#8b94a6);transition:transform .15s}",
+      ".wbsal-record-row.open .wbsal-caret{transform:rotate(90deg)}",
+      ".wbsal-detail-cell{padding:0 14px 16px !important;background:color-mix(in srgb,var(--wb-accent,#2563eb) 4%,transparent)}",
+      ".wbsal-detail{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px 24px}",
+      ".wbsal-detail-block{display:flex;flex-direction:column;gap:6px;min-width:0}",
+      ".wbsal-group-title{font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--wb-muted,#8b94a6);text-transform:uppercase}",
+      ".wbsal-fields{display:flex;flex-direction:column;gap:5px;font-size:12px}",
+      ".wbsal-fields div{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding-bottom:4px;border-bottom:1px dashed var(--wb-line,#eef0f4)}",
+      ".wbsal-fields div:last-child{border-bottom:0}",
+      ".wbsal-fields span{color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-fields b{font-weight:600;font-variant-numeric:tabular-nums}",
+      ".wbsal-field-sum b{font-size:13.5px}",
+      ".wbsal-detail-foot{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between;border-top:1px solid var(--wb-line,#eef0f4);padding-top:10px}",
+      ".wbsal-detail-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+      ".wbsal-confirm{display:inline-flex;align-items:center;gap:8px;padding:3px 8px 3px 10px;border-radius:999px;background:color-mix(in srgb,var(--wb-danger,#b91c1c) 10%,transparent)}",
+      /* 表单 */
+      ".wbsal-form{display:flex;flex-direction:column;gap:16px}",
+      ".wbsal-form-head{display:flex;align-items:center;justify-content:space-between;gap:10px}",
+      ".wbsal-form-head h3{font-size:14px;font-weight:650;margin:0}",
+      ".wbsal-form-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}",
+      ".wbsal-form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 12px}",
+      ".wbsal-form-group{display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid var(--wb-line,#eef0f4)}",
+      ".wbsal-form-group:first-of-type{border-top:0;padding-top:0}",
+      ".wbsal-group-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}",
+      ".wbsal-group-head span{font-size:11px;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;padding:14px;border:1px solid var(--wb-border,#e2e6ec);border-radius:12px;background:color-mix(in srgb,var(--wb-accent,#2563eb) 5%,transparent)}",
+      ".wbsal-summary div span{display:block;font-size:11px;color:var(--wb-muted,#8b94a6);margin-bottom:3px}",
+      ".wbsal-summary div b{font-size:15px;font-variant-numeric:tabular-nums;font-weight:650}",
+      ".wbsal-summary .wbsal-lock{grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+      ".wbsal-form-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}",
+      /* 统计 */
+      ".wbsal-seg{display:inline-flex;align-items:center;gap:6px;padding:4px;border:1px solid var(--wb-border,#e2e6ec);border-radius:10px;background:var(--wb-surface,#fff)}",
+      ".wbsal-seg .wbsal-btn{border-color:transparent;background:transparent}",
+      ".wbsal-seg .wbsal-btn.primary{background:var(--wb-accent,#2563eb);color:#fff}",
+      ".wbsal-seg-year{font-size:13px;font-weight:650;font-variant-numeric:tabular-nums;min-width:64px;text-align:center}",
+      ".wbsal-section{display:flex;flex-direction:column;gap:12px}",
+      ".wbsal-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}",
+      ".wbsal-section-head h3{font-size:13.5px;font-weight:650;margin:0}",
+      ".wbsal-section-head span{font-size:11.5px;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-chart{display:flex;align-items:flex-end;gap:8px;height:210px;padding:8px 2px 0;border-bottom:1px solid var(--wb-line,#eef0f4)}",
+      ".wbsal-bar{flex:1 1 0;min-width:14px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%}",
+      ".wbsal-bar-value{font-size:10.5px;line-height:1;color:var(--wb-muted,#8b94a6);font-variant-numeric:tabular-nums;white-space:nowrap}",
+      ".wbsal-bar-fill{width:72%;max-width:42px;border-radius:6px 6px 2px 2px;background:color-mix(in srgb,var(--wb-accent,#2563eb) 38%,transparent);transition:background .12s}",
       ".wbsal-bar-fill.top{background:var(--wb-accent,#2563eb)}",
-      ".wbsal-bar-value{font-size:10px;color:var(--wb-muted,#6b7280);font-variant-numeric:tabular-nums;white-space:nowrap}",
-      ".wbsal-bar-label{font-size:11px;color:var(--wb-muted,#6b7280)}",
-      ".wbsal-comp{display:flex;flex-direction:column;gap:6px}",
-      ".wbsal-comp-row{display:grid;grid-template-columns:96px 1fr 108px;gap:8px;align-items:center;font-size:12px}",
-      ".wbsal-comp-track{height:8px;border-radius:999px;background:var(--wb-border,#e5e7eb);overflow:hidden}",
+      ".wbsal-bar:hover .wbsal-bar-fill{background:color-mix(in srgb,var(--wb-accent,#2563eb) 70%,transparent)}",
+      ".wbsal-axis{display:flex;gap:8px;padding-top:7px}",
+      ".wbsal-axis span{flex:1 1 0;text-align:center;font-size:10.5px;color:var(--wb-muted,#8b94a6);font-variant-numeric:tabular-nums}",
+      ".wbsal-chart-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11.5px;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-legend{display:inline-flex;align-items:center;gap:6px}",
+      ".wbsal-legend i{width:8px;height:8px;border-radius:2px;background:var(--wb-accent,#2563eb);display:inline-block}",
+      ".wbsal-legend i.soft{background:color-mix(in srgb,var(--wb-accent,#2563eb) 38%,transparent)}",
+      ".wbsal-comp{display:flex;flex-direction:column;gap:7px}",
+      ".wbsal-comp-row{display:grid;grid-template-columns:92px minmax(60px,1fr) 132px;gap:10px;align-items:center;font-size:12px}",
+      ".wbsal-comp-row span:first-child{color:var(--wb-text,inherit)}",
+      ".wbsal-comp-track{height:7px;border-radius:999px;background:var(--wb-line,#eef0f4);overflow:hidden}",
       ".wbsal-comp-fill{height:100%;border-radius:999px;background:var(--wb-accent,#2563eb)}",
       ".wbsal-comp-fill.deduction{background:var(--wb-warn,#b45309)}",
-      ".wbsal-comp-value{text-align:right;font-variant-numeric:tabular-nums;color:var(--wb-muted,#6b7280)}",
+      ".wbsal-comp-value{text-align:right;font-variant-numeric:tabular-nums;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-comp-value b{color:var(--wb-text,inherit);font-weight:600}",
+      ".wbsal-comp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}",
+      ".wbsal-table th.num,.wbsal-table td.num{text-align:right}",
+      ".wbsal-table tbody tr:hover td{background:color-mix(in srgb,var(--wb-accent,#2563eb) 4%,transparent)}",
+      /* 空态 */
+      ".wbsal-empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:44px 16px;border:1px dashed var(--wb-border,#e2e6ec);border-radius:12px;color:var(--wb-muted,#8b94a6);font-size:12.5px;text-align:center}",
+      ".wbsal-empty-actions{display:flex;gap:8px;justify-content:center;margin-top:2px}",
       ".wbsal-inline-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
-      ".wbsal-danger{color:var(--wb-danger,#b91c1c)}",
-      ".wbsal-empty-actions{display:flex;gap:8px;justify-content:center;margin-top:10px}",
-      "@media (max-width:760px){.wbsal-record-row{grid-template-columns:64px 46px 1fr 1fr}.wbsal-record-row .wbsal-col.opt{display:none}.wbsal-comp-row{grid-template-columns:80px 1fr 92px}}"
-    ]);
+      /* 共享组件在深色主题下的覆盖：base 里 notice/pill/json 写死了浅色，这里改成 token */
+      ".wbsal-notice{padding:9px 11px;border-radius:9px;font-size:12px;background:color-mix(in srgb,var(--wb-accent,#2563eb) 10%,transparent);color:var(--wb-text,inherit);border:1px solid color-mix(in srgb,var(--wb-accent,#2563eb) 18%,transparent)}",
+      ".wbsal-notice.ok{background:color-mix(in srgb,var(--wb-ok,#15803d) 12%,transparent);color:var(--wb-ok,#15803d);border-color:color-mix(in srgb,var(--wb-ok,#15803d) 22%,transparent)}",
+      ".wbsal-notice.error{background:color-mix(in srgb,var(--wb-danger,#b91c1c) 12%,transparent);color:var(--wb-danger,#b91c1c);border-color:color-mix(in srgb,var(--wb-danger,#b91c1c) 22%,transparent)}",
+      ".wbsal-pill{display:inline-flex;align-items:center;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;line-height:1.7;background:color-mix(in srgb,var(--wb-muted,#8b94a6) 14%,transparent);color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-pill.ok{background:color-mix(in srgb,var(--wb-ok,#15803d) 13%,transparent);color:var(--wb-ok,#15803d)}",
+      ".wbsal-pill.warn{background:color-mix(in srgb,var(--wb-warn,#b45309) 15%,transparent);color:var(--wb-warn,#b45309)}",
+      ".wbsal-pill.error{background:color-mix(in srgb,var(--wb-danger,#b91c1c) 13%,transparent);color:var(--wb-danger,#b91c1c)}",
+      ".wbsal-json{margin:0;padding:10px;border-radius:9px;background:color-mix(in srgb,var(--wb-muted,#8b94a6) 8%,transparent);font-size:11.5px;line-height:1.6;max-height:240px;overflow:auto;color:var(--wb-text,inherit)}",
+      /* 说明页 */
+      ".wbsal-card h3{margin:0 0 10px;font-size:14px;font-weight:600;letter-spacing:-0.01em}",
+      ".wbsal-page > .wbsal-card + .wbsal-card{margin-top:14px}",
+      ".wbsal-ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px;font-size:12.5px;line-height:1.65}",
+      ".wbsal-ul li{list-style:disc;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-ul li::marker{color:var(--wb-accent,#2563eb)}",
+      ".wbsal-num{font-variant-numeric:tabular-nums;letter-spacing:-0.01em}",
+      ".wbsal-row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}",
+      /* 响应式 */
+      "@media (max-width:1100px){.wbsal-table th.hide-md,.wbsal-table td.hide-md{display:none}.wbsal-detail{grid-template-columns:repeat(2,minmax(0,1fr))}}",
+      "@media (max-width:760px){.wbsal-detail{grid-template-columns:minmax(0,1fr)}.wbsal-page{padding:16px 14px 36px}.wbsal-table th,.wbsal-table td{padding:9px 10px}.wbsal-opt,.wbsal-table th.opt{display:none}.wbsal-comp-row{grid-template-columns:80px minmax(50px,1fr) 112px}.wbsal-chart{height:170px}}"
+    ];
+    module2.exports = BASE.concat(PAGE).join("\n");
   }
 });
 
@@ -795,119 +896,112 @@ var require_records = __commonJS({
       var h = props.h, React = props.React, api = props.api, lang = props.lang;
       var C = require_common();
       var F = require_fields();
-      var msgState = React.useState(null);
-      var msg = msgState[0], setMsg = msgState[1];
-      var filterState = React.useState({ year: "", cycle: "" });
+      var status = C.useLoad(React, api, "salary.status", {}, []);
+      var statsLoad = C.useLoad(React, api, "salary.stats", { year: (/* @__PURE__ */ new Date()).getFullYear() }, []);
+      var filterState = React.useState({ year: String((/* @__PURE__ */ new Date()).getFullYear()), cycle: "" });
       var filter = filterState[0], setFilter = filterState[1];
-      var openState = React.useState("");
+      var list = C.useLoad(React, api, "salary.recordList", {
+        year: filter.year ? Number(filter.year) : void 0,
+        cycle: filter.cycle || void 0,
+        limit: 400
+      }, [filter.year, filter.cycle]);
+      var openState = React.useState(props.initialOpenId || "");
       var openId = openState[0], setOpenId = openState[1];
       var confirmState = React.useState("");
       var confirmId = confirmState[0], setConfirmId = confirmState[1];
-      var formState = React.useState(null);
+      var formState = React.useState(props.initialForm || null);
       var form = formState[0], setForm = formState[1];
-      var status = C.useLoad(React, api, "salary.status", {}, []);
-      var stats = C.useLoad(React, api, "salary.stats", { year: (/* @__PURE__ */ new Date()).getFullYear() }, []);
-      var list = C.useLoad(React, api, "salary.recordList", {
-        year: filter.year || void 0,
-        cycle: filter.cycle || void 0,
-        limit: 500
-      }, [filter.year, filter.cycle]);
+      var msgState = React.useState(null);
+      var msg = msgState[0], setMsg = msgState[1];
+      var savingState = React.useState(false);
+      var saving = savingState[0], setSaving = savingState[1];
       function reloadAll() {
-        status.refresh();
-        stats.refresh();
-        list.refresh();
+        status.reload();
+        statsLoad.reload();
+        list.reload();
       }
-      function pad(n) {
-        return (n < 10 ? "0" : "") + n;
-      }
-      function todayStr() {
-        var d = /* @__PURE__ */ new Date();
-        return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
-      }
-      function monthlyDefault() {
-        var d = /* @__PURE__ */ new Date();
-        return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-15";
+      function pickDate(cycle) {
+        var now = /* @__PURE__ */ new Date();
+        var year = now.getFullYear();
+        var month = String(now.getMonth() + 1).padStart(2, "0");
+        return cycle === "monthly" ? year + "-" + month + "-15" : year + "-" + month + "-" + String(now.getDate()).padStart(2, "0");
       }
       function openCreate() {
-        var values = F.blankValues();
+        setConfirmId("");
+        setOpenId("");
         setMsg(null);
-        setForm({
-          mode: "create",
-          id: "",
-          payDate: monthlyDefault(),
-          cycle: "monthly",
-          note: "",
-          values,
-          lockGross: false,
-          lastComputed: { gross: 0, net: 0 }
-        });
+        setForm({ mode: "create", id: "", payDate: pickDate("monthly"), cycle: "monthly", note: "", values: F.blankValues(), lockGross: false });
       }
       function openEdit(item) {
-        var values = {};
+        var values = F.blankValues();
         F.KEYS.forEach(function(key) {
-          values[key] = item[key] ? String(item[key]) : "";
+          values[key] = key === "grossPay" || key === "netPay" ? F.fmtAmount(item[key]) : item[key] ? F.fmtAmount(item[key]) : "";
         });
-        var incomes = F.sumValues(values, F.INCOME_KEYS);
+        var incomeZero = F.INCOME_KEYS.every(function(key) {
+          return !F.num(item[key]);
+        });
+        setConfirmId("");
+        setOpenId("");
         setMsg(null);
-        setForm({
-          mode: "edit",
-          id: item.id,
-          payDate: item.payDate,
-          cycle: item.cycle || "monthly",
-          note: item.note || "",
-          values,
-          lockGross: incomes === 0 && Number(item.grossPay) > 0,
-          lastComputed: { gross: Number(item.grossPay) || 0, net: Number(item.netPay) || 0 }
-        });
+        setForm({ mode: "edit", id: item.id, payDate: item.payDate, cycle: item.cycle || "monthly", note: item.note || "", values, lockGross: incomeZero && F.num(item.grossPay) > 0 });
       }
       function closeForm() {
         setForm(null);
         setMsg(null);
       }
-      function setValue(key, value) {
-        var current = form.values;
-        var nextValues = Object.assign({}, current);
-        nextValues[key] = value;
-        var computed = F.totals(nextValues);
-        if (key !== "grossPay" && !form.lockGross && F.num(current.grossPay) === form.lastComputed.gross) {
-          nextValues.grossPay = F.fmtAmount(computed.gross);
-        }
-        if (key !== "netPay" && F.num(current.netPay) === form.lastComputed.net) {
-          nextValues.netPay = F.fmtAmount(computed.net);
-        }
-        setForm(Object.assign({}, form, {
-          values: nextValues,
-          lastComputed: { gross: F.num(nextValues.grossPay), net: F.num(nextValues.netPay) }
-        }));
-      }
       function setField(key, value) {
-        var next = Object.assign({}, form, { [key]: value });
-        if (key === "cycle" && form.mode === "create") next.payDate = value === "daily" ? todayStr() : monthlyDefault();
-        setForm(next);
+        setForm(function(prev) {
+          var next = Object.assign({}, prev, { note: prev.note });
+          next[key] = value;
+          if (key === "payDate" && !prev.cycleLocked) {
+            var same = String(value).slice(5) === "15";
+            if (same) next.cycle = "monthly";
+          }
+          return next;
+        });
+      }
+      function setValue(key, value) {
+        setForm(function(prev) {
+          var values = Object.assign({}, prev.values);
+          values[key] = value;
+          return Object.assign({}, prev, { values });
+        });
       }
       function recalcFromDetail() {
-        var computed = F.totals(form.values);
-        setForm(Object.assign({}, form, {
-          lockGross: false,
-          values: Object.assign({}, form.values, { grossPay: F.fmtAmount(computed.gross), netPay: F.fmtAmount(computed.net) }),
-          lastComputed: { gross: computed.gross, net: computed.net }
-        }));
+        setForm(function(prev) {
+          var computed = F.totals(prev.values);
+          var values = Object.assign({}, prev.values, { grossPay: F.fmtAmount(computed.gross), netPay: F.fmtAmount(computed.net) });
+          return Object.assign({}, prev, { values, lockGross: false });
+        });
       }
       function submit() {
-        if (!form.payDate) {
-          setMsg({ kind: "error", text: "\u8BF7\u9009\u62E9\u53D1\u85AA\u65E5\u671F" });
-          return;
-        }
-        var payload = { payDate: form.payDate, cycle: form.cycle, note: form.note };
+        if (!form) return;
+        var computed = F.totals(form.values);
+        var payload = {
+          payDate: form.payDate,
+          cycle: form.cycle,
+          note: form.note || ""
+        };
         F.KEYS.forEach(function(key) {
+          if (key === "grossPay" && form.lockGross) {
+            payload.grossPay = F.num(form.values.grossPay);
+            return;
+          }
+          if (key === "grossPay" || key === "netPay") {
+            payload[key] = F.num(form.values[key]) || computed[key === "grossPay" ? "gross" : "net"];
+            return;
+          }
           payload[key] = F.num(form.values[key]);
         });
-        var pending = form.mode === "edit" ? C.call(api, "salary.recordUpdate", Object.assign({ id: form.id }, payload)) : C.call(api, "salary.recordCreate", payload);
-        pending.then(function() {
-          setMsg({ kind: "ok", text: form.mode === "edit" ? "\u5DF2\u4FDD\u5B58" : "\u5DF2\u8BB0\u5F55\u4E00\u7B14\u5DE5\u8D44" });
-          setForm(null);
+        setSaving(true);
+        var request = form.mode === "edit" ? C.call(api, "salary.recordUpdate", Object.assign({ id: form.id }, payload)) : C.call(api, "salary.recordCreate", payload);
+        request.then(function() {
+          setSaving(false);
+          closeForm();
           reloadAll();
+          setMsg({ kind: "ok", text: "\u5DF2\u4FDD\u5B58" });
         }).catch(function(e) {
+          setSaving(false);
           setMsg({ kind: "error", text: C.errText(e) });
         });
       }
@@ -915,8 +1009,8 @@ var require_records = __commonJS({
         C.call(api, "salary.recordDelete", { id }).then(function() {
           setConfirmId("");
           if (openId === id) setOpenId("");
-          setMsg({ kind: "ok", text: "\u5DF2\u5220\u9664" });
           reloadAll();
+          setMsg({ kind: "ok", text: "\u5DF2\u5220\u9664" });
         }).catch(function(e) {
           setMsg({ kind: "error", text: C.errText(e) });
         });
@@ -928,45 +1022,58 @@ var require_records = __commonJS({
         (groups[period] = groups[period] || []).push(item);
       });
       var periods = Object.keys(groups).sort().reverse();
-      var sameDayCount = form ? items.filter(function(item) {
-        return item.payDate === form.payDate;
-      }).length : 0;
+      var total = Number(list.data && list.data.total) || items.length;
       var currentYear = (/* @__PURE__ */ new Date()).getFullYear();
-      var yearOptions = ["", String(currentYear + 1), String(currentYear), String(currentYear - 1), String(currentYear - 2), String(currentYear - 3)];
+      var yearOptions = ["", String(currentYear + 1), String(currentYear), String(currentYear - 1), String(currentYear - 2)];
+      var latest = status.data || {};
       function kpi(label, value, sub) {
-        return h("div", { className: "wbsal-card wbsal-kpi" }, h("span", null, label), h("strong", null, value), h("em", null, sub));
+        return h(
+          "div",
+          { className: "wbsal-card wbsal-kpi" },
+          h("span", null, label),
+          h("strong", null, value),
+          h("em", null, sub)
+        );
       }
-      function amountInput(key, formState2, disabled) {
+      function amountInput(key, disabled) {
         return h("input", {
           className: "wbsal-input",
           type: "number",
           step: "0.01",
           min: key === "performanceBonus" ? void 0 : "0",
-          value: formState2.values[key],
+          value: form.values[key],
           disabled,
           onChange: function(e) {
             setValue(key, e.target.value);
           },
           onBlur: function() {
-            setValue(key, F.fmtAmount(F.num(formState2.values[key])));
+            setValue(key, F.fmtAmount(F.num(form.values[key])));
           }
         });
       }
       function renderForm() {
         var computed = F.totals(form.values);
+        var lockedGross = form.lockGross;
+        var sameDayCount = items.filter(function(item) {
+          return item.payDate === form.payDate && item.id !== form.id;
+        }).length;
         return h(
           "div",
-          { className: "wbsal-card" },
+          { className: "wbsal-card wbsal-form" },
           h(
             "div",
-            { className: "wbsal-head" },
-            h("h3", null, form.mode === "edit" ? "\u7F16\u8F91\u5DE5\u8D44" : "\u8BB0\u4E00\u7B14\u5DE5\u8D44"),
-            h(C.Btn, { h, onClick: closeForm }, "\u5173\u95ED")
+            { className: "wbsal-form-head" },
+            h(
+              "div",
+              null,
+              h("div", { className: "wbsal-eyebrow" }, form.mode === "edit" ? "EDIT RECORD" : "NEW RECORD"),
+              h("h3", null, form.mode === "edit" ? "\u7F16\u8F91\u5DE5\u8D44" : "\u8BB0\u4E00\u7B14\u5DE5\u8D44")
+            ),
+            h(C.Btn, { h, kind: "ghost", onClick: closeForm }, "\u5173\u95ED")
           ),
-          form.mode === "create" && sameDayCount > 0 ? h(C.Notice, { h, text: "\u8BE5\u65E5\u5DF2\u6709 " + sameDayCount + " \u7B14\u8BB0\u5F55\uFF1B\u4FDD\u5B58\u4F1A\u65B0\u589E\u4E00\u6761\uFF0C\u4E0D\u4F1A\u8986\u76D6\u3002" }) : null,
           h(
             "div",
-            { className: "wbsal-form-grid" },
+            { className: "wbsal-form-meta" },
             h(C.Field, { h, label: "\u53D1\u85AA\u65E5\u671F" }, h("input", { className: "wbsal-input", type: "date", value: form.payDate, onChange: function(e) {
               setField("payDate", e.target.value);
             } })),
@@ -986,27 +1093,36 @@ var require_records = __commonJS({
               setField("note", e.target.value);
             } }))
           ),
+          sameDayCount > 0 ? h(C.Notice, { h, text: "\u8BE5\u65E5\u5DF2\u6709 " + sameDayCount + " \u7B14\u8BB0\u5F55\uFF1B\u4FDD\u5B58\u4F1A\u65B0\u589E\u4E00\u6761\uFF0C\u4E0D\u4F1A\u8986\u76D6\u3002" }) : null,
           F.GROUPS.map(function(group) {
             return h(
               "div",
-              { key: group.id },
-              h("div", { className: "wbsal-group-title" }, group.title + " \xB7 " + group.hint),
+              { key: group.id, className: "wbsal-form-group" },
+              h(
+                "div",
+                { className: "wbsal-group-head" },
+                h("div", { className: "wbsal-group-title" }, group.title),
+                h("span", null, group.hint)
+              ),
               h("div", { className: "wbsal-form-grid" }, group.keys.map(function(key) {
-                return h(C.Field, { key, h, label: F.LABELS[key] }, amountInput(key, form, false));
+                return h(C.Field, { key, h, label: F.LABELS[key] }, amountInput(key, false));
               }))
             );
           }),
-          h("div", { className: "wbsal-group-title" }, "\u6C47\u603B \xB7 \u9ED8\u8BA4\u6309\u660E\u7EC6\u5B9E\u65F6\u8BA1\u7B97\uFF0C\u4E5F\u53EF\u76F4\u63A5\u6539"),
           h(
             "div",
-            { className: "wbsal-form-grid" },
-            h(C.Field, { h, label: "\u5E94\u53D1\u7A0E\u524D\u5DE5\u8D44" }, amountInput("grossPay", form, false)),
-            h(C.Field, { h, label: "\u5B9E\u53D1\u5DE5\u8D44" }, amountInput("netPay", form, false)),
+            { className: "wbsal-form-group" },
             h(
               "div",
-              { className: "wbsal-inline-actions" },
-              form.lockGross ? h("span", { className: "wbsal-muted" }, "\u8BE5\u8BB0\u5F55\u53EA\u6709\u6C47\u603B\u503C\uFF0C\u5E94\u53D1\u5DF2\u9501\u5B9A") : null,
-              h(C.Btn, { h, onClick: recalcFromDetail }, "\u6309\u660E\u7EC6\u91CD\u7B97")
+              { className: "wbsal-group-head" },
+              h("div", { className: "wbsal-group-title" }, "\u6C47\u603B"),
+              h("span", null, "\u9ED8\u8BA4\u6309\u660E\u7EC6\u5B9E\u65F6\u8BA1\u7B97\uFF0C\u4E5F\u53EF\u4EE5\u76F4\u63A5\u6539")
+            ),
+            h(
+              "div",
+              { className: "wbsal-form-grid" },
+              h(C.Field, { h, label: "\u5E94\u53D1\u7A0E\u524D\u5DE5\u8D44" }, amountInput("grossPay", lockedGross)),
+              h(C.Field, { h, label: "\u5B9E\u53D1\u5DE5\u8D44" }, amountInput("netPay", false))
             )
           ),
           h(
@@ -1017,116 +1133,206 @@ var require_records = __commonJS({
             h("div", null, h("span", null, "\u793E\u4FDD\u516C\u79EF\u91D1"), h("b", null, F.money(computed.social))),
             h("div", null, h("span", null, "\u4E2A\u7A0E+\u7A0E\u540E"), h("b", null, F.money(computed.tax))),
             h("div", null, h("span", null, "\u5E94\u53D1"), h("b", null, F.money(F.num(form.values.grossPay)))),
-            h("div", null, h("span", null, "\u5B9E\u53D1"), h("b", null, F.money(F.num(form.values.netPay))))
+            h("div", null, h("span", null, "\u5B9E\u53D1"), h("b", null, F.money(F.num(form.values.netPay)))),
+            lockedGross ? h(
+              "div",
+              { className: "wbsal-lock" },
+              h("span", { className: "wbsal-muted" }, "\u8FD9\u6761\u5386\u53F2\u8BB0\u5F55\u53EA\u6709\u6C47\u603B\u503C\uFF0C\u5E94\u53D1\u5DF2\u9501\u5B9A\uFF0C\u907F\u514D\u88AB\u660E\u7EC6\u91CD\u7B97\u6E05\u96F6\u3002"),
+              h(C.Btn, { h, onClick: recalcFromDetail }, "\u6309\u660E\u7EC6\u91CD\u7B97")
+            ) : null
           ),
           h(C.Notice, { h, kind: msg && msg.kind, text: msg && msg.text }),
           h(
             "div",
-            { className: "wbsal-inline-actions" },
-            h(C.Btn, { h, kind: "primary", onClick: submit }, form.mode === "edit" ? "\u4FDD\u5B58\u4FEE\u6539" : "\u4FDD\u5B58"),
-            h(C.Btn, { h, onClick: closeForm }, "\u53D6\u6D88")
+            { className: "wbsal-form-actions" },
+            h(C.Btn, { h, kind: "primary", onClick: submit, disabled: saving }, saving ? "\u4FDD\u5B58\u4E2D\u2026" : form.mode === "edit" ? "\u4FDD\u5B58\u4FEE\u6539" : "\u4FDD\u5B58"),
+            h(C.Btn, { h, kind: "ghost", onClick: closeForm }, "\u53D6\u6D88")
           )
         );
       }
       function renderDetail(item) {
-        return h(
+        var blocks = F.GROUPS.map(function(group) {
+          return h(
+            "div",
+            { key: group.id, className: "wbsal-detail-block" },
+            h("div", { className: "wbsal-group-title" }, group.title),
+            h("div", { className: "wbsal-fields" }, group.keys.map(function(key) {
+              return h("div", { key }, h("span", null, F.LABELS[key]), h("b", null, F.money(item[key])));
+            }))
+          );
+        });
+        blocks.push(h(
           "div",
-          { className: "wbsal-detail" },
-          F.GROUPS.map(function(group) {
-            return h(
-              "div",
-              { key: group.id },
-              h("div", { className: "wbsal-group-title" }, group.title),
-              h("div", { className: "wbsal-fields" }, group.keys.map(function(key) {
-                return h("div", { key }, h("span", null, F.LABELS[key]), h("b", null, F.money(item[key])));
-              }))
-            );
-          }),
+          { key: "sum", className: "wbsal-detail-block" },
+          h("div", { className: "wbsal-group-title" }, "\u6C47\u603B"),
           h(
             "div",
             { className: "wbsal-fields" },
-            h("div", null, h("span", null, "\u5E94\u53D1\u7A0E\u524D\u5DE5\u8D44"), h("b", null, F.money(item.grossPay))),
-            h("div", null, h("span", null, "\u5B9E\u53D1\u5DE5\u8D44"), h("b", null, F.money(item.netPay)))
-          ),
-          item.note ? h("div", { className: "wbsal-muted" }, "\u5907\u6CE8\uFF1A" + item.note) : null,
+            h("div", { className: "wbsal-field-sum" }, h("span", null, "\u5E94\u53D1\u7A0E\u524D"), h("b", null, F.money(item.grossPay))),
+            h("div", { className: "wbsal-field-sum" }, h("span", null, "\u793E\u4FDD\u516C\u79EF\u91D1"), h("b", null, F.money(F.sumValues(item, F.SOCIAL_KEYS)))),
+            h("div", { className: "wbsal-field-sum" }, h("span", null, "\u4E2A\u7A0E+\u7A0E\u540E"), h("b", null, F.money(F.sumValues(item, F.TAX_KEYS)))),
+            h("div", { className: "wbsal-field-sum" }, h("span", null, "\u5B9E\u53D1\u5DE5\u8D44"), h("b", null, F.money(item.netPay)))
+          )
+        ));
+        return h(
+          "div",
+          { className: "wbsal-detail" },
+          blocks,
           h(
             "div",
-            { className: "wbsal-inline-actions" },
-            h(C.Btn, { h, onClick: function() {
-              openEdit(item);
-            } }, "\u7F16\u8F91"),
-            confirmId === item.id ? h(
-              "span",
-              { className: "wbsal-inline-actions" },
-              h("span", { className: "wbsal-danger" }, "\u786E\u8BA4\u5220\u9664\uFF1F"),
-              h(C.Btn, { h, kind: "danger", onClick: function() {
-                remove(item.id);
-              } }, "\u5220\u9664"),
+            { className: "wbsal-detail-foot" },
+            h(
+              "div",
+              { className: "wbsal-muted" },
+              (item.note ? "\u5907\u6CE8\uFF1A" + item.note + " \xB7 " : "") + "\u66F4\u65B0\u4E8E " + C.fmtTime(item.updatedAt, lang)
+            ),
+            h(
+              "div",
+              { className: "wbsal-detail-actions" },
               h(C.Btn, { h, onClick: function() {
-                setConfirmId("");
-              } }, "\u53D6\u6D88")
-            ) : h(C.Btn, { h, kind: "danger", onClick: function() {
-              setConfirmId(item.id);
-            } }, "\u5220\u9664"),
-            h("span", { className: "wbsal-muted" }, "\u66F4\u65B0\u4E8E " + C.fmtTime(item.updatedAt, lang))
+                openEdit(item);
+              } }, "\u7F16\u8F91"),
+              confirmId === item.id ? h(
+                "span",
+                { className: "wbsal-confirm" },
+                h("span", { className: "wbsal-danger" }, "\u786E\u8BA4\u5220\u9664\uFF1F"),
+                h(C.Btn, { h, kind: "danger", onClick: function() {
+                  remove(item.id);
+                } }, "\u5220\u9664"),
+                h(C.Btn, { h, kind: "ghost", onClick: function() {
+                  setConfirmId("");
+                } }, "\u53D6\u6D88")
+              ) : h(C.Btn, { h, kind: "danger", onClick: function() {
+                setConfirmId(item.id);
+              } }, "\u5220\u9664")
+            )
           )
         );
       }
       function renderRow(item) {
         var expanded = openId === item.id;
-        return h(
+        var rows = [
+          h(
+            "tr",
+            {
+              key: item.id,
+              className: "wbsal-record-row" + (expanded ? " open" : ""),
+              onClick: function() {
+                setOpenId(expanded ? "" : item.id);
+                setConfirmId("");
+              }
+            },
+            h("td", { className: "left" }, h("span", { className: "wbsal-date" }, h("b", null, String(item.payDate).slice(5)), h("span", null, F.weekday(item.payDate)))),
+            h("td", { className: "left" }, h(C.Pill, { h, kind: item.cycle === "daily" ? "warn" : "ok" }, item.cycle === "daily" ? "\u65E5\u7ED3" : "\u6708\u7ED3")),
+            h("td", null, h("span", { className: "wbsal-net" }, F.money(item.netPay))),
+            h("td", { className: "wbsal-opt" }, F.money(item.grossPay)),
+            h("td", { className: "wbsal-opt hide-md" }, F.money(F.sumValues(item, F.SOCIAL_KEYS))),
+            h("td", { className: "wbsal-opt hide-md" }, F.money(item.incomeTax)),
+            h("td", null, h("span", { className: "wbsal-caret" }, "\u203A"))
+          ),
+          expanded ? h("tr", { key: item.id + "-detail" }, h("td", { className: "wbsal-detail-cell", colSpan: 7 }, renderDetail(item))) : null
+        ];
+        return rows;
+      }
+      var body;
+      if (list.loading) body = h(C.Empty, { h, text: "\u52A0\u8F7D\u4E2D\u2026" });
+      else if (list.error) body = h(C.Notice, { h, kind: "error", text: list.error });
+      else if (items.length === 0) {
+        body = h(
           "div",
-          { key: item.id, className: "wbsal-record" },
+          { className: "wbsal-empty" },
+          h("div", null, filter.year || filter.cycle ? "\u8FD9\u4E2A\u7B5B\u9009\u6761\u4EF6\u4E0B\u6CA1\u6709\u8BB0\u5F55" : "\u8FD8\u6CA1\u6709\u5DE5\u8D44\u8BB0\u5F55\uFF0C\u5148\u8BB0\u4E00\u7B14"),
           h(
             "div",
-            { className: "wbsal-record-row", onClick: function() {
-              setOpenId(expanded ? "" : item.id);
-              setConfirmId("");
-            } },
-            h("span", { className: "wbsal-num" }, String(item.payDate).slice(5) + " " + F.weekday(item.payDate)),
-            h(C.Pill, { h, kind: item.cycle === "daily" ? "warn" : "ok" }, item.cycle === "daily" ? "\u65E5\u7ED3" : "\u6708\u7ED3"),
-            h("span", { className: "wbsal-net" }, F.money(item.netPay)),
-            h("span", { className: "wbsal-col opt" }, F.money(item.grossPay)),
-            h("span", { className: "wbsal-col opt" }, F.money(F.sumValues(item, F.SOCIAL_KEYS))),
-            h("span", { className: "wbsal-col opt" }, F.money(item.incomeTax))
-          ),
-          expanded ? renderDetail(item) : null
+            { className: "wbsal-empty-actions" },
+            filter.year || filter.cycle ? h(C.Btn, { h, onClick: function() {
+              setFilter({ year: "", cycle: "" });
+            } }, "\u6E05\u9664\u7B5B\u9009") : null,
+            h(C.Btn, { h, kind: "primary", onClick: openCreate }, "\uFF0B \u8BB0\u4E00\u7B14")
+          )
         );
+      } else {
+        body = h("div", { className: "wbsal-months" }, periods.map(function(period) {
+          var rows = groups[period];
+          var sum = rows.reduce(function(acc, item) {
+            return acc + (Number(item.netPay) || 0);
+          }, 0);
+          return h(
+            "section",
+            { key: period },
+            h(
+              "div",
+              { className: "wbsal-month" },
+              h(
+                "div",
+                { className: "wbsal-month-title" },
+                h("strong", null, F.monthLabel(period)),
+                h("span", null, rows.length + " \u7B14")
+              ),
+              h("div", { className: "wbsal-month-total" }, "\u5B9E\u53D1\u5408\u8BA1", h("b", null, F.money(sum)))
+            ),
+            h(
+              "div",
+              { className: "wbsal-table-wrap" },
+              h(
+                "table",
+                { className: "wbsal-table" },
+                h("thead", null, h(
+                  "tr",
+                  null,
+                  h("th", { className: "left" }, "\u53D1\u85AA\u65E5"),
+                  h("th", { className: "left" }, "\u7C7B\u578B"),
+                  h("th", null, "\u5B9E\u53D1"),
+                  h("th", null, "\u5E94\u53D1"),
+                  h("th", { className: "hide-md" }, "\u793E\u4FDD\u516C\u79EF\u91D1"),
+                  h("th", { className: "hide-md" }, "\u4E2A\u7A0E"),
+                  h("th", null, "")
+                )),
+                h("tbody", null, rows.map(renderRow))
+              )
+            )
+          );
+        }));
       }
       return h(
         "div",
         { className: "wbsal-page" },
         h(
-          "div",
+          "header",
           { className: "wbsal-head" },
           h(
             "div",
-            null,
+            { className: "wbsal-head-main" },
+            h("div", { className: "wbsal-eyebrow" }, "Salary records"),
             h("h2", null, "\u5DE5\u8D44\u8BB0\u5F55"),
-            h("p", { className: "wbsal-sub" }, "\u6309\u53D1\u85AA\u65E5\u671F\u8BB0\u5F55\uFF0C\u65E5\u7ED3/\u6708\u7ED3\u90FD\u8BB0\uFF1B\u540C\u4E00\u5929\u53EF\u4EE5\u6709\u591A\u7B14")
+            h("p", { className: "wbsal-sub" }, "\u6309\u53D1\u85AA\u65E5\u671F\u8BB0\u5F55\uFF0C\u65E5\u7ED3 / \u6708\u7ED3\u90FD\u8BB0\uFF1B\u540C\u4E00\u5929\u53EF\u4EE5\u6709\u591A\u7B14")
           ),
-          h(C.Btn, { h, kind: "primary", onClick: openCreate }, "\uFF0B \u8BB0\u4E00\u7B14")
+          h(
+            "div",
+            { className: "wbsal-head-actions" },
+            h(C.Btn, { h, kind: "primary", onClick: openCreate }, "\uFF0B \u8BB0\u4E00\u7B14")
+          )
         ),
-        form ? renderForm() : null,
         h(
           "div",
           { className: "wbsal-kpis" },
           kpi(
             "\u6700\u8FD1\u5B9E\u53D1",
-            status.data ? F.money(status.data.latestNetPay) : "\u2014",
-            status.data && status.data.latestDate ? status.data.latestDate + " \xB7 \u6700\u8FD1\u4E00\u7B14" : "\u8FD8\u6CA1\u6709\u8BB0\u5F55"
+            latest.latestNetPay !== void 0 ? F.money(latest.latestNetPay) : "\u2014",
+            latest.latestDate ? latest.latestDate + " \xB7 \u6700\u8FD1\u4E00\u7B14" : "\u8FD8\u6CA1\u6709\u8BB0\u5F55"
           ),
+          kpi("\u6708\u5747\u5B9E\u53D1", statsLoad.data ? F.money(statsLoad.data.avgNetPay) : "\u2014", "\u6309\u6709\u8BB0\u5F55\u6708\u4EFD\u5E73\u5747"),
           kpi(
-            "\u6700\u8FD1\u6708\u5408\u8BA1",
-            stats.data && stats.data.latestMonth ? F.money(stats.data.latestMonth.netPay) : "\u2014",
-            stats.data && stats.data.latestMonth ? F.monthLabel(stats.data.latestMonth.period) + " \xB7 " + stats.data.latestMonth.records + " \u7B14" : "\u6682\u65E0"
+            "\u4ECA\u5E74\u7D2F\u8BA1\u5B9E\u53D1",
+            statsLoad.data ? F.money(statsLoad.data.netTotal) : "\u2014",
+            currentYear + " \u5E74 \xB7 " + (statsLoad.data ? statsLoad.data.records : 0) + " \u7B14"
           ),
-          kpi("\u4ECA\u5E74\u7D2F\u8BA1\u5B9E\u53D1", stats.data ? F.money(stats.data.netTotal) : "\u2014", currentYear + " \u5E74 \xB7 " + (stats.data ? stats.data.records : 0) + " \u7B14"),
-          kpi("\u4ECA\u5E74\u4E2A\u7A0E", stats.data ? F.money(stats.data.incomeTaxTotal) : "\u2014", "\u542B\u5DE5\u8D44\u85AA\u91D1\u9884\u6263")
+          kpi("\u4ECA\u5E74\u4E2A\u7A0E", statsLoad.data ? F.money(statsLoad.data.incomeTaxTotal) : "\u2014", "\u5DE5\u8D44\u85AA\u91D1\u9884\u6263")
         ),
+        form ? renderForm() : null,
         h(
           "div",
-          { className: "wbsal-row" },
+          { className: "wbsal-toolbar" },
           h(C.Field, { h, label: "\u5E74\u4EFD" }, h(
             "select",
             { className: "wbsal-input", value: filter.year, onChange: function(e) {
@@ -1145,26 +1351,10 @@ var require_records = __commonJS({
             h("option", { value: "monthly" }, "\u6708\u7ED3"),
             h("option", { value: "daily" }, "\u65E5\u7ED3")
           )),
-          h("span", { className: "wbsal-muted" }, "\u5171 " + (list.data ? list.data.total : 0) + " \u7B14")
+          h("span", { className: "wbsal-toolbar-count" }, "\u5171 ", h("b", null, total), " \u7B14")
         ),
         h(C.Notice, { h, kind: msg && msg.kind, text: msg && !form ? msg.text : "" }),
-        list.loading ? h(C.Empty, { h, text: "\u52A0\u8F7D\u4E2D\u2026" }) : list.error ? h(C.Notice, { h, kind: "error", text: list.error }) : items.length === 0 ? h(
-          "div",
-          null,
-          h(C.Empty, { h, text: filter.year || filter.cycle ? "\u8FD9\u4E2A\u7B5B\u9009\u6761\u4EF6\u4E0B\u6CA1\u6709\u8BB0\u5F55" : "\u8FD8\u6CA1\u6709\u5DE5\u8D44\u8BB0\u5F55\uFF0C\u5148\u8BB0\u4E00\u7B14" }),
-          h("div", { className: "wbsal-empty-actions" }, h(C.Btn, { h, kind: "primary", onClick: openCreate }, "\uFF0B \u8BB0\u4E00\u7B14"))
-        ) : periods.map(function(period) {
-          var rows = groups[period];
-          var sum = rows.reduce(function(total, item) {
-            return total + (Number(item.netPay) || 0);
-          }, 0);
-          return h(
-            "section",
-            { key: period },
-            h("div", { className: "wbsal-month" }, h("strong", null, F.monthLabel(period)), h("span", null, rows.length + " \u7B14 \xB7 \u5408\u8BA1 " + F.money(sum))),
-            rows.map(renderRow)
-          );
-        })
+        body
       );
     };
   }
@@ -1198,33 +1388,33 @@ var require_stats = __commonJS({
       function kpi(label, value, sub) {
         return h("div", { className: "wbsal-card wbsal-kpi" }, h("span", null, label), h("strong", null, value), h("em", null, sub));
       }
-      function compRows(title, keys, total, deduction) {
+      function compRows(keys, total, deduction) {
         var rows = keys.filter(function(key) {
           return (data.latestMonth.breakdown.fields[key] || 0) !== 0;
         });
         if (rows.length === 0) return null;
-        return h(
-          "div",
-          { key: title },
-          h("div", { className: "wbsal-group-title" }, title),
-          h("div", { className: "wbsal-comp" }, rows.map(function(key) {
-            var amount = data.latestMonth.breakdown.fields[key] || 0;
-            var percent = total ? Math.max(0, Math.min(100, Math.round(Math.abs(amount) / total * 100))) : 0;
-            return h(
-              "div",
-              { key, className: "wbsal-comp-row" },
-              h("span", null, F.LABELS[key]),
-              h("div", { className: "wbsal-comp-track" }, h("div", { className: "wbsal-comp-fill" + (deduction ? " deduction" : ""), style: { width: percent + "%" } })),
-              h("span", { className: "wbsal-comp-value" }, F.money(amount) + " \xB7 " + percent + "%")
-            );
-          }))
-        );
+        return h("div", { className: "wbsal-comp" }, rows.map(function(key) {
+          var amount = data.latestMonth.breakdown.fields[key] || 0;
+          var percent = total ? Math.max(2, Math.min(100, Math.round(Math.abs(amount) / total * 100))) : 0;
+          return h(
+            "div",
+            { key, className: "wbsal-comp-row" },
+            h("span", null, F.LABELS[key]),
+            h("div", { className: "wbsal-comp-track" }, h("div", { className: "wbsal-comp-fill" + (deduction ? " deduction" : ""), style: { width: percent + "%" } })),
+            h("span", { className: "wbsal-comp-value" }, h("b", null, F.money(amount)), " \xB7 " + percent + "%")
+          );
+        }));
       }
       var body;
       if (load.loading) body = h(C.Empty, { h, text: "\u52A0\u8F7D\u4E2D\u2026" });
       else if (load.error) body = h(C.Notice, { h, kind: "error", text: load.error });
-      else if (!data || data.records === 0) body = h(C.Empty, { h, text: year + " \u5E74\u8FD8\u6CA1\u6709\u5DE5\u8D44\u8BB0\u5F55\uFF1B\u6539\u4E2A\u5E74\u4EFD\u6216\u5148\u53BB\u5DE5\u8D44\u8BB0\u5F55\u9875\u8BB0\u4E00\u7B14" });
-      else {
+      else if (!data || data.records === 0) {
+        body = h(
+          "div",
+          { className: "wbsal-empty" },
+          h("div", null, year + " \u5E74\u8FD8\u6CA1\u6709\u5DE5\u8D44\u8BB0\u5F55\uFF1B\u6362\u4E2A\u5E74\u4EFD\uFF0C\u6216\u5148\u53BB\u5DE5\u8D44\u8BB0\u5F55\u9875\u8BB0\u4E00\u7B14")
+        );
+      } else {
         var latestBreakdown = data.latestMonth && data.latestMonth.breakdown;
         var deductionTotal = latestBreakdown ? latestBreakdown.preTax + latestBreakdown.social + latestBreakdown.tax : 0;
         var prevNet = 0;
@@ -1234,9 +1424,10 @@ var require_stats = __commonJS({
           tableRows.push({ bucket, prev: prevNet });
           prevNet = bucket.netPay;
         });
+        var chartMax = Math.max(1, maxNet);
         body = h(
           "div",
-          { className: "wbsal-page" },
+          { className: "wbsal-section" },
           h(
             "div",
             { className: "wbsal-kpis" },
@@ -1244,22 +1435,41 @@ var require_stats = __commonJS({
             kpi("\u6708\u5747\u5B9E\u53D1", F.money(data.avgNetPay), "\u6309\u6709\u8BB0\u5F55\u7684\u6708\u4EFD\u5E73\u5747"),
             kpi("\u5E74\u5EA6\u5E94\u53D1", F.money(data.grossTotal), "\u7A0E\u524D"),
             kpi("\u5E74\u5EA6\u4E2A\u7A0E", F.money(data.incomeTaxTotal), "\u5DE5\u8D44\u85AA\u91D1\u9884\u6263"),
-            kpi("\u5E74\u5EA6\u793E\u4FDD\u516C\u79EF\u91D1", F.money(data.socialTotal), "\u517B\u8001/\u533B\u7597/\u5931\u4E1A/\u516C\u79EF\u91D1")
+            kpi("\u5E74\u5EA6\u793E\u4FDD\u516C\u79EF\u91D1", F.money(data.socialTotal), "\u517B\u8001 / \u533B\u7597 / \u5931\u4E1A / \u516C\u79EF\u91D1")
           ),
           h(
             "div",
-            { className: "wbsal-card" },
-            h("h3", null, "\u6708\u5EA6\u5B9E\u53D1\u8D8B\u52BF"),
+            { className: "wbsal-card wbsal-section" },
+            h(
+              "div",
+              { className: "wbsal-section-head" },
+              h("h3", null, "\u6708\u5EA6\u5B9E\u53D1\u8D8B\u52BF"),
+              h("span", null, "\u6700\u9AD8 " + F.monthLabel(monthly[topMonth] ? monthly[topMonth].period : "") + " \xB7 " + F.money(maxNet))
+            ),
             h("div", { className: "wbsal-chart" }, monthly.map(function(bucket, i) {
-              var percent = bucket.netPay > 0 ? Math.max(2, Math.round(bucket.netPay / maxNet * 100)) : 0;
+              var ratio = bucket.netPay > 0 ? bucket.netPay / chartMax : 0;
+              var height = Math.round(Math.max(ratio * 150, bucket.netPay > 0 ? 6 : 0));
               return h(
                 "div",
-                { key: bucket.month, className: "wbsal-bar", title: bucket.month + " \u6708 \xB7 \u5B9E\u53D1 " + F.money(bucket.netPay) + " / \u5E94\u53D1 " + F.money(bucket.grossPay) + " / \u4E2A\u7A0E " + F.money(bucket.incomeTax) },
+                {
+                  key: bucket.month,
+                  className: "wbsal-bar",
+                  title: bucket.month + " \u6708 \xB7 \u5B9E\u53D1 " + F.money(bucket.netPay) + " / \u5E94\u53D1 " + F.money(bucket.grossPay) + " / \u4E2A\u7A0E " + F.money(bucket.incomeTax)
+                },
                 h("div", { className: "wbsal-bar-value" }, bucket.netPay > 0 ? Math.round(bucket.netPay).toLocaleString("zh-CN") : ""),
-                h("div", { className: "wbsal-bar-fill" + (i === topMonth ? " top" : ""), style: { height: percent + "%" } }),
-                h("div", { className: "wbsal-bar-label" }, bucket.month)
+                h("div", { className: "wbsal-bar-fill" + (i === topMonth ? " top" : ""), style: { height: height + "px" } }),
+                h("div", { className: "wbsal-bar-label" }, "")
               );
-            }))
+            })),
+            h("div", { className: "wbsal-axis" }, monthly.map(function(bucket) {
+              return h("span", { key: bucket.month }, bucket.month);
+            })),
+            h(
+              "div",
+              { className: "wbsal-chart-foot" },
+              h("span", { className: "wbsal-legend" }, h("i", null), "\u6709\u8BB0\u5F55\u6708\u4EFD", h("i", { className: "soft" }), "\u5176\u4ED6\u6708\u4EFD"),
+              h("span", null, "\u5355\u4F4D\uFF1A\u5143 \xB7 \u6309\u53D1\u85AA\u65E5\u671F\u5F52\u5C5E\u6708\u4EFD")
+            )
           ),
           h(
             "div",
@@ -1274,36 +1484,64 @@ var require_stats = __commonJS({
           ),
           data.latestMonth ? h(
             "div",
-            { className: "wbsal-card" },
-            h("h3", null, F.monthLabel(data.latestMonth.period) + " \u6536\u5165\u4E0E\u6263\u6B3E\u6784\u6210"),
-            compRows("\u6536\u5165\u9879", F.INCOME_KEYS, latestBreakdown.income, false),
-            compRows("\u6263\u6B3E\u9879", F.PRETAX_KEYS.concat(F.SOCIAL_KEYS, F.TAX_KEYS), deductionTotal, true)
+            { className: "wbsal-card wbsal-section" },
+            h(
+              "div",
+              { className: "wbsal-section-head" },
+              h("h3", null, F.monthLabel(data.latestMonth.period) + " \u6536\u5165\u4E0E\u6263\u6B3E\u6784\u6210"),
+              h("span", null, "\u5171 " + data.latestMonth.records + " \u7B14")
+            ),
+            h(
+              "div",
+              { className: "wbsal-comp-grid" },
+              h(
+                "div",
+                null,
+                h("div", { className: "wbsal-group-title" }, "\u6536\u5165\u9879 \xB7 \u5408\u8BA1 " + F.money(latestBreakdown.income)),
+                compRows(F.INCOME_KEYS, latestBreakdown.income, false)
+              ),
+              h(
+                "div",
+                null,
+                h("div", { className: "wbsal-group-title" }, "\u6263\u6B3E\u9879 \xB7 \u5408\u8BA1 " + F.money(deductionTotal)),
+                compRows(F.PRETAX_KEYS.concat(F.SOCIAL_KEYS, F.TAX_KEYS), deductionTotal, true)
+              )
+            )
           ) : null,
           h(
             "div",
-            { className: "wbsal-card" },
-            h("h3", null, "\u6708\u5EA6\u660E\u7EC6"),
+            { className: "wbsal-card wbsal-section" },
             h(
-              "table",
-              { className: "wbsal-table" },
-              h("thead", null, h("tr", null, ["\u6708\u4EFD", "\u7B14\u6570", "\u5E94\u53D1", "\u5B9E\u53D1", "\u793E\u4FDD\u516C\u79EF\u91D1", "\u4E2A\u7A0E", "\u73AF\u6BD4"].map(function(label) {
-                return h("th", { key: label }, label);
-              }))),
-              h("tbody", null, tableRows.map(function(entry) {
-                var bucket = entry.bucket;
-                var diff = entry.prev ? bucket.netPay - entry.prev : 0;
-                return h(
-                  "tr",
-                  { key: bucket.month },
-                  h("td", null, bucket.month + " \u6708"),
-                  h("td", null, bucket.records),
-                  h("td", { className: "wbsal-num" }, F.money(bucket.grossPay)),
-                  h("td", { className: "wbsal-num" }, F.money(bucket.netPay)),
-                  h("td", { className: "wbsal-num" }, F.money(bucket.socialTotal)),
-                  h("td", { className: "wbsal-num" }, F.money(bucket.incomeTax)),
-                  h("td", { className: "wbsal-num" }, entry.prev ? signed(diff) : "\u2014")
-                );
-              }))
+              "div",
+              { className: "wbsal-section-head" },
+              h("h3", null, "\u6708\u5EA6\u660E\u7EC6"),
+              h("span", null, "\u70B9\u51FB\u6708\u4EFD\u53EF\u5728\u5DE5\u8D44\u8BB0\u5F55\u9875\u67E5\u770B\u5BF9\u5E94\u8BB0\u5F55")
+            ),
+            h(
+              "div",
+              { className: "wbsal-table-wrap", style: { border: 0 } },
+              h(
+                "table",
+                { className: "wbsal-table" },
+                h("thead", null, h("tr", null, ["\u6708\u4EFD", "\u7B14\u6570", "\u5E94\u53D1", "\u5B9E\u53D1", "\u793E\u4FDD\u516C\u79EF\u91D1", "\u4E2A\u7A0E", "\u73AF\u6BD4"].map(function(label) {
+                  return h("th", { key: label }, label);
+                }))),
+                h("tbody", null, tableRows.map(function(entry) {
+                  var bucket = entry.bucket;
+                  var diff = entry.prev ? bucket.netPay - entry.prev : 0;
+                  return h(
+                    "tr",
+                    { key: bucket.month },
+                    h("td", { className: "left" }, bucket.month + " \u6708"),
+                    h("td", null, bucket.records),
+                    h("td", null, F.money(bucket.grossPay)),
+                    h("td", null, h("b", { className: "wbsal-net" }, F.money(bucket.netPay))),
+                    h("td", { className: "wbsal-opt" }, F.money(bucket.socialTotal)),
+                    h("td", { className: "wbsal-opt" }, F.money(bucket.incomeTax)),
+                    h("td", null, entry.prev ? signed(diff) : "\u2014")
+                  );
+                }))
+              )
             )
           )
         );
@@ -1312,19 +1550,25 @@ var require_stats = __commonJS({
         "div",
         { className: "wbsal-page" },
         h(
-          "div",
+          "header",
           { className: "wbsal-head" },
-          h("div", null, h("h2", null, "\u7EDF\u8BA1"), h("p", { className: "wbsal-sub" }, "\u6309\u53D1\u85AA\u65E5\u671F\u5F52\u5C5E\u6708\u4EFD\u805A\u5408\uFF1B\u65E5\u7ED3\u591A\u7B14\u81EA\u52A8\u5408\u5E76")),
           h(
             "div",
-            { className: "wbsal-inline-actions" },
-            h(C.Btn, { h, onClick: function() {
+            { className: "wbsal-head-main" },
+            h("div", { className: "wbsal-eyebrow" }, "Salary stats"),
+            h("h2", null, "\u7EDF\u8BA1"),
+            h("p", { className: "wbsal-sub" }, "\u6309\u53D1\u85AA\u65E5\u671F\u5F52\u5C5E\u6708\u4EFD\u805A\u5408\uFF1B\u65E5\u7ED3\u591A\u7B14\u81EA\u52A8\u5408\u5E76")
+          ),
+          h(
+            "div",
+            { className: "wbsal-seg" },
+            h(C.Btn, { h, kind: "ghost", onClick: function() {
               setYear(Math.max(2e3, year - 1));
-            } }, "\u2039 \u4E0A\u4E00\u5E74"),
-            h("strong", { className: "wbsal-num" }, year + " \u5E74"),
-            h(C.Btn, { h, onClick: function() {
+            } }, "\u2039"),
+            h("span", { className: "wbsal-seg-year" }, year + " \u5E74"),
+            h(C.Btn, { h, kind: "ghost", onClick: function() {
               setYear(Math.min(2100, year + 1));
-            } }, "\u4E0B\u4E00\u5E74 \u203A")
+            } }, "\u203A")
           )
         ),
         body
@@ -1346,7 +1590,17 @@ var require_config = __commonJS({
       return h(
         "div",
         { className: "wbsal-page" },
-        h("div", { className: "wbsal-head" }, h("h2", null, "\u8BBE\u7F6E\u4E0E\u8BF4\u660E")),
+        h(
+          "div",
+          { className: "wbsal-head" },
+          h(
+            "div",
+            { className: "wbsal-head-main" },
+            h("div", { className: "wbsal-eyebrow" }, "Salary settings"),
+            h("h2", null, "\u8BBE\u7F6E\u4E0E\u8BF4\u660E"),
+            h("p", { className: "wbsal-sub" }, "\u53E3\u5F84\u3001\u8FB9\u754C\u4E0E\u5F53\u524D\u6570\u636E\u6982\u89C8\uFF1B\u5DE5\u8D44\u53EA\u5728\u672C\u5730\u4FDD\u5B58")
+          )
+        ),
         s.error ? h(C.Notice, { h, kind: "error", text: s.error }) : h(
           "div",
           { className: "wbsal-kpis" },

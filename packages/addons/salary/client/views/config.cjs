@@ -7,7 +7,11 @@ module.exports = function Config(props) {
   var s = C.useLoad(React, api, "salary.status", {}, []);
   var data = s.data || {};
   return h("div", { className: "wbsal-page" },
-    h("div", { className: "wbsal-head" }, h("h2", null, "设置与说明")),
+    h("div", { className: "wbsal-head" },
+      h("div", { className: "wbsal-head-main" },
+        h("div", { className: "wbsal-eyebrow" }, "Salary settings"),
+        h("h2", null, "设置与说明"),
+        h("p", { className: "wbsal-sub" }, "口径、边界与当前数据概览；工资只在本地保存"))),
     s.error ? h(C.Notice, { h: h, kind: "error", text: s.error })
       : h("div", { className: "wbsal-kpis" },
         h("div", { className: "wbsal-card wbsal-kpi" }, h("span", null, "记录数"), h("strong", null, s.loading ? "—" : data.records), h("em", null, "笔（软删除不计）")),
