@@ -141,9 +141,9 @@ require(clientPath);
 
 const problems = [];
 if (!HOST.addon || HOST.addon.id !== "wb-addon-salary") problems.push("client.src.cjs 没有注册 wb-addon-salary");
-if (!HOST.addon || !Array.isArray(HOST.addon.views) || HOST.addon.views.length !== 5) problems.push("views 数量不是 5");
+if (!HOST.addon || !Array.isArray(HOST.addon.views) || HOST.addon.views.length !== 4) problems.push("views 数量不是 4");
 const css = styles.map((el) => el.textContent).join("\n");
-for (const klass of ["wbsal-page", "wbsal-kpi", "wbsal-record-row", "wbsal-chart", "wbsal-comp", "wbsal-input", "--wb-card", "wbsal-table", "wbsal-ul", "wbsal-card"]) {
+for (const klass of ["wbsal-page", "wbsal-kpi", "wbsal-record-row", "wbsal-chart", "wbsal-comp", "wbsal-input", "--wb-card", "wbsal-table", "wbsal-card"]) {
   if (!css.includes(klass)) problems.push("样式表缺少 " + klass);
 }
 
@@ -151,7 +151,6 @@ const api = { call: async (action) => ({ ok: true, result: RESPONSES[action] !==
 const checks = [
   ["records", "views/records.cjs", "工资记录", ["wbsal-record-row", "wbsal-kpi", "wbsal-toolbar", "wbsal-toolbar-end", "wbsal-month"]],
   ["stats", "views/stats.cjs", "统计", ["wbsal-chart", "wbsal-comp", "wbsal-table"]],
-  ["config", "views/config.cjs", "设置", ["wbsal-ul"]],
 ];
 for (const [id, file, title, expected] of checks) {
   const view = HOST.addon.views.find((v) => v.id === id);
@@ -167,11 +166,11 @@ for (const [id, file, title, expected] of checks) {
   const found = collect(tree);
   if (process.env.SALARY_DEBUG) console.error(id, [...found].join(" "));
   for (const klass of expected) if (!found.has(klass)) problems.push(id + " 没渲染出 ." + klass);
-  if (JSON.stringify(tree).includes("undefined") && id !== "config") problems.push(id + " 渲染结果含 undefined 文本");
+  if (JSON.stringify(tree).includes("undefined")) problems.push(id + " 渲染结果含 undefined 文本");
 }
 
 const bundle = readFileSync(ROOT + "packages/addons/salary/lib/client.js", "utf8");
-for (const needle of ['id: "wb-addon-salary"', "version: \"0.1.0\""]) {
+for (const needle of ['id: "wb-addon-salary"', "version: \"0.1.1\""]) {
   if (!bundle.includes(needle.replace(/"([^"]+)"/g, (m) => m))) {
     const alt = needle.replace(/"([^"]+)"/g, "'$1'");
     if (!bundle.includes(needle) && !bundle.includes(alt)) problems.push("构建产物 lib/client.js 缺少 " + needle);
@@ -183,5 +182,5 @@ if (problems.length) {
   for (const p of problems) console.error("  - " + p);
   process.exitCode = 1;
 } else {
-  console.log("工资客户端冒烟通过：5 个视图注册钩子正常，records/stats/config 在有数据时渲染成功，样式已注入。");
+  console.log("工资客户端冒烟通过：4 个视图注册钩子正常，records/stats 在有数据时渲染成功，样式已注入。");
 }

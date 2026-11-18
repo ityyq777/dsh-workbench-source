@@ -166,10 +166,6 @@ var PAGE = [
   /* 说明页 */
   ".wbsal-card h3{margin:0 0 10px;font-size:14px;font-weight:600;letter-spacing:-0.01em}",
   ".wbsal-page > .wbsal-card + .wbsal-card{margin-top:14px}",
-  ".wbsal-ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px;font-size:12.5px;line-height:1.65}",
-  ".wbsal-ul li{list-style:disc;color:var(--wb-muted,#8b94a6)}",
-  ".wbsal-ul li::marker{color:var(--wb-accent,#2563eb)}",
-  ".wbsal-num{font-variant-numeric:tabular-nums;letter-spacing:-0.01em}",
   ".wbsal-row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}",
 
   /* 响应式 */

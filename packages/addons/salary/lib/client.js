@@ -241,10 +241,6 @@ var require_styles = __commonJS({
       /* 说明页 */
       ".wbsal-card h3{margin:0 0 10px;font-size:14px;font-weight:600;letter-spacing:-0.01em}",
       ".wbsal-page > .wbsal-card + .wbsal-card{margin-top:14px}",
-      ".wbsal-ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px;font-size:12.5px;line-height:1.65}",
-      ".wbsal-ul li{list-style:disc;color:var(--wb-muted,#8b94a6)}",
-      ".wbsal-ul li::marker{color:var(--wb-accent,#2563eb)}",
-      ".wbsal-num{font-variant-numeric:tabular-nums;letter-spacing:-0.01em}",
       ".wbsal-row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}",
       /* 响应式 */
       "@media (max-width:1100px){.wbsal-table th.hide-md,.wbsal-table td.hide-md{display:none}.wbsal-detail{grid-template-columns:repeat(2,minmax(0,1fr))}}",
@@ -597,46 +593,17 @@ var init_chart_column = __esm({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/settings.mjs
-var settings_exports = {};
-__export(settings_exports, {
-  __iconData: () => __iconData3,
-  default: () => Settings
-});
-var __iconData3, Settings;
-var init_settings = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/settings.mjs"() {
-    init_createLucideIcon();
-    __iconData3 = {
-      name: "settings",
-      size: 24,
-      node: [
-        [
-          "path",
-          {
-            d: "M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915",
-            key: "1i5ecw"
-          }
-        ],
-        ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
-      ]
-    };
-    __iconData3.node;
-    Settings = createLucideIcon(__iconData3);
-  }
-});
-
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs
 var database_exports = {};
 __export(database_exports, {
-  __iconData: () => __iconData4,
+  __iconData: () => __iconData3,
   default: () => Database
 });
-var __iconData4, Database;
+var __iconData3, Database;
 var init_database = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs"() {
     init_createLucideIcon();
-    __iconData4 = {
+    __iconData3 = {
       name: "database",
       size: 24,
       node: [
@@ -645,22 +612,22 @@ var init_database = __esm({
         ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
       ]
     };
-    __iconData4.node;
-    Database = createLucideIcon(__iconData4);
+    __iconData3.node;
+    Database = createLucideIcon(__iconData3);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs
 var list_exports = {};
 __export(list_exports, {
-  __iconData: () => __iconData5,
+  __iconData: () => __iconData4,
   default: () => List
 });
-var __iconData5, List;
+var __iconData4, List;
 var init_list = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs"() {
     init_createLucideIcon();
-    __iconData5 = {
+    __iconData4 = {
       name: "list",
       size: 24,
       node: [
@@ -672,8 +639,8 @@ var init_list = __esm({
         ["path", { d: "M8 19h13", key: "m83p4d" }]
       ]
     };
-    __iconData5.node;
-    List = createLucideIcon(__iconData5);
+    __iconData4.node;
+    List = createLucideIcon(__iconData4);
   }
 });
 
@@ -1613,60 +1580,6 @@ var require_stats = __commonJS({
           )
         ),
         body
-      );
-    };
-  }
-});
-
-// packages/addons/salary/client/views/config.cjs
-var require_config = __commonJS({
-  "packages/addons/salary/client/views/config.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = function Config(props) {
-      var h = props.h, React = props.React, api = props.api;
-      var C = require_common();
-      var F = require_fields();
-      var s = C.useLoad(React, api, "salary.status", {}, []);
-      var data = s.data || {};
-      return h(
-        "div",
-        { className: "wbsal-page" },
-        s.error ? h(C.Notice, { h, kind: "error", text: s.error }) : h(
-          "div",
-          { className: "wbsal-kpis" },
-          h("div", { className: "wbsal-card wbsal-kpi" }, h("span", null, "\u8BB0\u5F55\u6570"), h("strong", null, s.loading ? "\u2014" : data.records), h("em", null, "\u7B14\uFF08\u8F6F\u5220\u9664\u4E0D\u8BA1\uFF09")),
-          h("div", { className: "wbsal-card wbsal-kpi" }, h("span", null, "\u6700\u8FD1\u4E00\u7B14"), h("strong", { className: "wbsal-num" }, data.latestDate || "\u2014"), h("em", null, s.loading ? "" : F.money(data.latestNetPay) + " \u5143")),
-          h("div", { className: "wbsal-card wbsal-kpi" }, h("span", null, (data.currentYear || (/* @__PURE__ */ new Date()).getFullYear()) + " \u5E74\u7D2F\u8BA1"), h("strong", null, s.loading ? "\u2014" : F.money(data.currentYearNetPay)), h("em", null, (data.currentYearRecords || 0) + " \u7B14"))
-        ),
-        h(
-          "div",
-          { className: "wbsal-card" },
-          h("h3", null, "\u53E3\u5F84"),
-          h(
-            "ul",
-            { className: "wbsal-ul" },
-            h("li", null, "\u65F6\u95F4\u7EF4\u5EA6\u662F\u53D1\u85AA\u65E5\u671F\uFF08YYYY-MM-DD\uFF09\uFF0C\u65E5\u7ED3\u3001\u6708\u7ED3\u90FD\u7528\u540C\u4E00\u4E2A\u65E5\u671F\u7EF4\u5EA6\uFF1Bcycle \u53EA\u4F5C\u5206\u7C7B\u3002"),
-            h("li", null, "\u5E94\u53D1\u7A0E\u524D = \u6536\u5165\u5408\u8BA1\uFF08\u57FA\u672C+\u7EE9\u6548+\u5C97\u4F4D+\u8865\u8D34+\u7EE9\u6548\u5956\u60E9+\u5176\u4ED6+\u6CD5\u5B9A\u5047\u671F\u52A0\u73ED\uFF09\u2212 \u7A0E\u524D\u6263\u6B3E\uFF08\u75C5\u5047+\u4E8B\u5047+\u5176\u4ED6\u6263\u6B3E\uFF09\u3002"),
-            h("li", null, "\u5B9E\u53D1 = \u5E94\u53D1 \u2212 \u517B\u8001 \u2212 \u533B\u7597 \u2212 \u5931\u4E1A \u2212 \u516C\u79EF\u91D1 \u2212 \u4E2A\u7A0E \u2212 \u7A0E\u540E\u6263\u9664\u3002"),
-            h("li", null, "\u5E94\u53D1\u4E0E\u5B9E\u53D1\u9ED8\u8BA4\u6309\u660E\u7EC6\u63A8\u5BFC\uFF1B\u53EA\u8BB0\u5F97\u6C47\u603B\u503C\u65F6\u53EF\u4EE5\u76F4\u63A5\u586B\uFF0C\u4FDD\u5B58\u540E\u4EE5\u4F20\u5165\u503C\u4E3A\u51C6\u3002"),
-            h("li", null, "\u540C\u4E00\u5929\u5141\u8BB8\u591A\u7B14\uFF08\u65E5\u7ED3\u591A\u73ED\u6B21/\u8865\u53D1\uFF09\uFF1B\u7EDF\u8BA1\u6309\u65E5\u671F\u6240\u5C5E\u6708\u4EFD\u6C42\u548C\u3002"),
-            h("li", null, "\u5220\u9664\u662F\u8F6F\u5220\u9664\uFF1A\u8BB0\u5F55\u4E0D\u518D\u51FA\u73B0\u5728\u5217\u8868\u4E0E\u7EDF\u8BA1\uFF0C\u4F46\u4ECD\u5728\u6570\u636E\u5E93\u4E2D\uFF0C\u5907\u4EFD\u4F1A\u5305\u542B\u3002")
-          )
-        ),
-        h(
-          "div",
-          { className: "wbsal-card" },
-          h("h3", null, "\u8FB9\u754C"),
-          h(
-            "ul",
-            { className: "wbsal-ul" },
-            h("li", null, "\u53EA\u5728\u672C\u673A SQLite \u4FDD\u5B58\uFF0C\u4E0D\u53C2\u4E0E\u4E91\u540C\u6B65\uFF1B\u5907\u4EFD\u7531\u5BBF\u4E3B\u8D1F\u8D23\u3002"),
-            h("li", null, "\u4E0D\u5B58\u59D3\u540D\u3001\u5DE5\u53F7\u7B49\u8EAB\u4EFD\u4FE1\u606F\uFF1B\u4E0D\u505A\u5DE5\u8D44\u6761 OCR\u3002"),
-            h("li", null, "\u4E0D\u505A\u62A5\u9500\u3001\u652F\u51FA\u4E0E\u591A\u516C\u53F8\u5E76\u884C\u6838\u7B97\uFF08\u652F\u51FA\u8BF7\u7528 storage\uFF09\u3002"),
-            h("li", null, "agent \u53EF\u4EE5\u65B0\u589E\u3001\u4FEE\u6539\u3001\u8F6F\u5220\u9664\u5DE5\u8D44\u8BB0\u5F55\uFF0C\u7528\u4E8E\u53E3\u8FF0\u5F55\u5165\u3002")
-          )
-        ),
-        h("div", { className: "wbsal-card" }, h("h3", null, "\u5F53\u524D\u72B6\u6001"), h(C.Json, { h, value: data }))
       );
     };
   }
@@ -3440,7 +3353,6 @@ var require_actions = __commonJS({
   var ICONS = {
     records: (init_wallet(), __toCommonJS(wallet_exports)).default,
     stats: (init_chart_column(), __toCommonJS(chart_column_exports)).default,
-    config: (init_settings(), __toCommonJS(settings_exports)).default,
     data: (init_database(), __toCommonJS(database_exports)).default,
     actions: (init_list(), __toCommonJS(list_exports)).default
   };
@@ -3469,12 +3381,11 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.1.0",
+    version: "0.1.1",
     icon: (init_wallet(), __toCommonJS(wallet_exports)).default,
     views: [
       { id: "records", icon: tabIcon("records"), title: { zh: "\u5DE5\u8D44\u8BB0\u5F55", en: "Records" }, component: withProps(require_records(), "\u5DE5\u8D44\u8BB0\u5F55") },
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },
-      { id: "config", icon: tabIcon("config"), title: { zh: "\u8BBE\u7F6E", en: "Settings" }, component: withProps(require_config(), "\u8BBE\u7F6E") },
       { id: "data", icon: tabIcon("data"), title: { zh: "\u6570\u636E", en: "Data" }, component: withProps(require_data(), "\u6570\u636E") },
       { id: "actions", icon: tabIcon("actions"), title: { zh: "Action", en: "Actions" }, component: withProps(require_actions(), "Action") }
     ]

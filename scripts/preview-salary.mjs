@@ -170,7 +170,6 @@ const themeVars = {
 const recordsHtml = toHtml(await renderView("views/records.cjs"));
 const statsHtml = toHtml(await renderView("views/stats.cjs"));
 const detailHtml = toHtml(await renderView("views/records.cjs", { initialOpenId: "sal_4" }));
-const configHtml = toHtml(await renderView("views/config.cjs"));
 const formValues = {};
 for (const key of FIELDS) formValues[key] = "";
 Object.assign(formValues, { basePay: "8800", performancePay: "2200", allowance: "480", performanceBonus: "800", grossPay: "12280", netPay: "10672.36", pension: "739.2", medical: "184.8", unemployment: "46.2", housingFund: "462", incomeTax: "175.44" });
@@ -199,7 +198,6 @@ const html = `<!doctype html><html lang="zh"><head><meta charset="utf-8"><title>
 ${pane("light", "light · records", recordsHtml)}
 ${pane("light", "light · detail", detailHtml)}
 ${pane("light", "light · stats", statsHtml)}
-${pane("light", "light · config", configHtml)}
 ${pane("light", "light · form", formHtml)}
 ${pane("dark", "dark · records", detailHtml)}
 ${pane("dark", "dark · form", formHtml)}

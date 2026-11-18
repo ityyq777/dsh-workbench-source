@@ -17,7 +17,6 @@ export function setup(api) {
 const VIEWS = [
   { id: "records", title: { zh: "工资记录", en: "Records" } },
   { id: "stats", title: { zh: "统计", en: "Stats" } },
-  { id: "config", title: { zh: "设置", en: "Settings" } },
   { id: "data", title: { zh: "数据", en: "Data" } },
   { id: "actions", title: { zh: "Action", en: "Actions" } },
 ];
@@ -29,7 +28,7 @@ export function apply(ctx) {
     id: "wb-addon-salary",
     title: "工资",
     description: "按日期记录日结/月结工资：收入项、税前扣款、社保公积金、个税与实发",
-    version: "0.1.0",
+    version: "0.1.1",
     tables: ["salary_record"],
     sync: { tables: [] },
     views: VIEWS,

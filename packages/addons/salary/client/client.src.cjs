@@ -13,7 +13,6 @@
   var ICONS = {
     records: require("lucide-react/icons/wallet").default,
     stats: require("lucide-react/icons/chart-column").default,
-    config: require("lucide-react/icons/settings").default,
     data: require("lucide-react/icons/database").default,
     actions: require("lucide-react/icons/list").default,
   };
@@ -31,12 +30,11 @@
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.1.0",
+    version: "0.1.1",
     icon: require("lucide-react/icons/wallet").default,
     views: [
       { id: "records", icon: tabIcon("records"), title: { zh: "工资记录", en: "Records" }, component: withProps(require("./views/records.cjs"), "工资记录") },
       { id: "stats", icon: tabIcon("stats"), title: { zh: "统计", en: "Stats" }, component: withProps(require("./views/stats.cjs"), "统计") },
-      { id: "config", icon: tabIcon("config"), title: { zh: "设置", en: "Settings" }, component: withProps(require("./views/config.cjs"), "设置") },
       { id: "data", icon: tabIcon("data"), title: { zh: "数据", en: "Data" }, component: withProps(require("./views/data.cjs"), "数据") },
       { id: "actions", icon: tabIcon("actions"), title: { zh: "Action", en: "Actions" }, component: withProps(require("./views/actions.cjs"), "Action") },
     ],
