@@ -9508,6 +9508,7 @@ var require_timeline_styles = __commonJS({
       ".wbt-timeline-option:focus-visible,.wbt-timeline-view button:focus-visible,.wbt-timeline-modal button:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:2px}.wbt-timeline-option input[type=checkbox],.wbt-timeline-single input{appearance:auto;width:15px;height:15px;flex:none;accent-color:var(--wbt-accent)}",
       ".wbt-timeline-pager{justify-content:space-between;font-size:12px;margin-top:12px}.wbt-timeline-right h3,.wbt-timeline-summary h4{font-size:15px;font-weight:600;margin:0 0 8px;overflow-wrap:anywhere}.wbt-timeline-eyebrow{font-size:11.5px;opacity:.55;margin-bottom:4px;overflow-wrap:anywhere}",
       ".wbt-timeline-summary{min-width:0}.wbt-timeline-desc{max-height:64px;overflow:hidden;margin:0 0 8px;white-space:pre-wrap;overflow-wrap:anywhere}.wbt-timeline-actions{margin:8px 0}.wbt-timeline-actions>.wbt-act-del{margin-left:auto}",
+      ".wbt-timeline-right>.wbt-timeline-members{min-height:0;max-height:65vh;overflow-y:auto;overscroll-behavior-y:contain;scrollbar-gutter:stable}",
       // Scoped reset defeats ordinary host button surfaces without touching unrelated task controls.
       ":is(.wbt-timeline-view,.wbt-timeline-modal) button:is(.wbt-timeline-member,.wbt-timeline-remove,.wbt-timeline-id){appearance:none;background:transparent;background-image:none;color:inherit;border:0;box-shadow:none;border-radius:var(--wb-radius-sm,6px);font:inherit;cursor:pointer;min-width:0;min-height:0;width:auto;margin:0}",
       ":is(.wbt-timeline-view,.wbt-timeline-modal) .wbt-timeline-id{display:inline-flex;align-items:center;gap:4px;padding:4px;max-width:180px}.wbt-timeline-id code{font-size:11.5px;opacity:.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
@@ -11802,8 +11803,7 @@ var require_timeline_view = __commonJS({
         var busyS = React.useState(true), busy = busyS[0], setBusy = busyS[1];
         var errorS = React.useState(""), error = errorS[0], setError = errorS[1];
         var activeS = React.useState(null), active = activeS[0], setActive = activeS[1];
-        var memberPageS = React.useState(1), memberPage = memberPageS[0], setMemberPage = memberPageS[1];
-        var membersS = React.useState({ records: [], total: 0 }), members = membersS[0], setMembers = membersS[1];
+        var membersS = React.useState(null), loaded = membersS[0], setMembers = membersS[1];
         var memberBusyS = React.useState(false), memberBusy = memberBusyS[0], setMemberBusy = memberBusyS[1];
         var memberErrorS = React.useState(""), memberError = memberErrorS[0], setMemberError = memberErrorS[1];
         var refreshS = React.useState(0), refresh = refreshS[0], setRefresh = refreshS[1];
@@ -11815,6 +11815,7 @@ var require_timeline_view = __commonJS({
         var listRef = React.useRef(null), mergeButton = React.useRef(null), detailTrigger = React.useRef(null);
         var createdRef = React.useRef(null);
         var activeKey = active && active.timelineKey;
+        var members = loaded && loaded.key === activeKey ? loaded.rows : [];
         var heading = splitTitle(active && active.title);
         var editorS = React.useState(null), editor = editorS[0], setEditor = editorS[1];
         var addS = React.useState(false), adding = addS[0], setAdding = addS[1];
@@ -11860,23 +11861,19 @@ var require_timeline_view = __commonJS({
           };
         }, [api, query, single, page, refresh]);
         React.useEffect(function() {
-          setMemberPage(1);
-        }, [activeKey]);
-        React.useEffect(function() {
           var cancelled = false;
           setMemberError("");
-          setMembers({ records: [], total: 0 });
+          setMembers(null);
           if (!activeKey) {
             setMemberBusy(false);
             return;
           }
           setMemberBusy(true);
-          api.call("tasks.timeline", { timelineKey: activeKey, pageNumber: memberPage, pageSize: 20 }).then(result).then(function(r) {
-            if (cancelled) return;
-            var next = pageData(r);
-            setMembers(next);
-            setMemberBusy(false);
-            if (memberPage > 1 && !next.records.length) setMemberPage(Math.max(1, Math.ceil(next.total / 20)));
+          api.call("tasks.timeline", { timelineKey: activeKey }).then(result).then(function(rows) {
+            if (!cancelled) {
+              setMembers({ key: activeKey, rows });
+              setMemberBusy(false);
+            }
           }).catch(function(e) {
             if (!cancelled) {
               setMemberBusy(false);
@@ -11886,7 +11883,7 @@ var require_timeline_view = __commonJS({
           return function() {
             cancelled = true;
           };
-        }, [api, activeKey, memberPage, refresh]);
+        }, [api, activeKey, refresh]);
         React.useEffect(function() {
           if (!editTask && !createState) return;
           var cancelled = false;
@@ -11915,7 +11912,6 @@ var require_timeline_view = __commonJS({
         function choose(item, toggle) {
           if (busy) return;
           setActive(item);
-          setMemberPage(1);
           if (toggle && item.taskCount > 0) setSelected(function(old) {
             return old.some(function(x) {
               return x.timelineKey === item.timelineKey;
@@ -12129,7 +12125,7 @@ var require_timeline_view = __commonJS({
               ) : null,
               memberError ? h("p", { role: "alert", className: "wbt-err" }, t.error + memberError) : null,
               memberBusy ? h("p", { role: "status" }, t.loading) : h(MemberRows, {
-                rows: members.records,
+                rows: members,
                 lang,
                 disabled: writing,
                 onOpen: function(task, e) {
@@ -12148,8 +12144,8 @@ var require_timeline_view = __commonJS({
                   });
                 }
               }),
-              !memberBusy && !memberError && !members.records.length ? h("p", { className: "wbt-empty" }, active ? tr("\u6682\u65E0\u53EF\u663E\u793A\u6210\u5458") : t.timelineEmpty) : null,
-              active ? h("div", { className: "wbt-timeline-member-footer" }, h("span", null, t.timelineOrder), h(Pager, { t, label: t.timelineMembers, busy: memberBusy, page: memberPage, total: members.total, set: setMemberPage })) : null
+              !memberBusy && !memberError && !members.length ? h("p", { className: "wbt-empty" }, active ? tr("\u6682\u65E0\u53EF\u663E\u793A\u6210\u5458") : t.timelineEmpty) : null,
+              active ? h("div", { className: "wbt-timeline-member-footer" }, h("span", null, t.timelineOrder), loaded && loaded.key === activeKey ? h("span", null, t.total + " " + members.length) : null) : null
             )
           ),
           editor ? h(controls.Editor, { api, t, item: editor.timelineKey ? editor : null, onClose: function() {
@@ -12795,7 +12791,7 @@ var init_list_checks = __esm({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.26",
+    version: "5.2.27",
     icon: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },

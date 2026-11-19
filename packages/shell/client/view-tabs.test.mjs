@@ -35,7 +35,7 @@ function setup(lang) {
   }
   function req(file) {
     return (name) => name === "react" ? React : name === "react/jsx-runtime" ? { jsx, jsxs: jsx }
-      : name.startsWith("./") ? load(resolve(dirname(file), name))
+      : name.startsWith("./") || name.startsWith("../") ? load(resolve(dirname(file), name))
       : (() => { throw new Error("Unexpected runtime dependency: " + name); })();
   }
   let mod;
@@ -79,10 +79,20 @@ for (const lang of ["zh", "en"]) {
   const views = [{ id: "stats", title: { zh: "概览", en: "Overview" }, icon: Icon },
     ...invalid.map((icon, i) => ({ id: "plain" + i, title: "Plain " + i, icon })),
     { id: "fallback", title: "", icon: false }].map(v => ({ ...v, component: () => h("section", { "data-view": v.id }, v.id) }));
-  host.addons.push({ id: "fixture", enabled: true, title: "Fixture", views: [] });
+  const description = lang === "zh" ? "插件自带描述" : "";
+  host.addons.push({ id: "fixture", enabled: true, title: "Fixture", version: "1.2.3", description, views: [] });
   host.registerAddon({ id: "fixture", views });
   let tree = render();
-  nodes(tree, n => n.type === "button" && n.props.className === "wb-home-card")[0].props.onClick();
+  const card = nodes(tree, n => n.props.className === "wb-home-card" && text(n).includes("Fixture"))[0];
+  assert.equal(card.type, "button");
+  assert.equal(card.props.type, "button");
+  assert.ok(!card.props.disabled && (card.props.tabIndex ?? 0) >= 0, "card remains keyboard accessible");
+  assert.equal(nodes(card, n => n.props.className === "wb-home-foot").length, 0);
+  assert.equal(nodes(card, n => n.props.className === "wb-home-desc").length, description ? 1 : 0);
+  const icon = nodes(card, n => n.props.className === "wb-home-icon");
+  assert.equal(icon.length, 1);
+  assert.equal(text(card), text(icon[0]) + "v1.2.3Fixture" + description, "no injected count or open hint");
+  card.props.onClick();
   tree = render();
   let tabs = nodes(tree, n => n.type === "button" && n.props.className?.startsWith("wb-tab"));
   assert.equal(tabs.length, views.length);

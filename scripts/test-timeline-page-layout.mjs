@@ -39,7 +39,7 @@ function searchHtml(query, records, lang = 'zh') {
   let index = 0;
   const state = { 0: query, 4: { records, total: records.length }, 5: false };
   const R = { ...React, useState(value) { const i = index++; return [i in state ? state[i] : value, () => {}]; }, useRef: () => ({current:null}), useEffect() {} };
-  const View = require('../packages/addons/tasks/client/views/timeline-view.cjs')({React:R,COPY,statusInfo,injectCss() {}});
+  const View = require('../packages/addons/tasks/client/views/timeline-view.cjs')({React:R,COPY,statusInfo,injectCss() {},configView:{useConfig:()=>({values:{}})}});
   return renderToStaticMarkup(React.createElement(View,{api:{},lang}));
 }
 const record = { timelineKey:'a',title:'Alpha %_(',description:'Description ALPHA %_( <b>\nNot in excerpt',taskCount:2,openCount:2,doneCount:0 };

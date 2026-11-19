@@ -2663,7 +2663,6 @@ function WorkbenchPage(props) {
     var m = registry.get(a.id);
     var v = m && m.views && m.views[0] || a.views && a.views[0] || null;
     var title = a.title || pickTitle(v && v.title, lang) || a.id;
-    var count = m && m.views ? m.views.length : a.views ? a.views.length : 0;
     return jsx.jsxs("button", { type: "button", className: "wb-home-card" + (a.error ? " dim" : ""), onClick: function() {
       openAddon(a);
     }, children: [
@@ -2672,12 +2671,8 @@ function WorkbenchPage(props) {
         jsx.jsx("span", { className: "wb-badge", children: "v" + (a.version || "?") })
       ] }),
       jsx.jsx("div", { className: "wb-home-title", children: title }),
-      jsx.jsx("div", { className: "wb-home-desc", children: a.description || (count > 1 ? count + " " + t("views") : "") }),
-      a.error ? jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + a.error }) : null,
-      jsx.jsxs("div", { className: "wb-home-foot", children: [
-        jsx.jsx("span", { children: count ? count + " " + t("views") : "" }),
-        jsx.jsx("b", { children: t("open") + " \u2192" })
-      ] })
+      a.description ? jsx.jsx("div", { className: "wb-home-desc", children: a.description }) : null,
+      a.error ? jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + a.error }) : null
     ] }, a.id);
   }
   function systemCard(key, icon, title, desc) {

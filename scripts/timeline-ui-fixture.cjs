@@ -54,11 +54,18 @@ async function click(text){button(text).click();await pause()}
 async function fill(selector,value){const node=document.querySelector(selector);check(node,'Missing field: '+selector);const setter=Object.getOwnPropertyDescriptor(node.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:node.tagName==='SELECT'?HTMLSelectElement.prototype:HTMLInputElement.prototype,'value').set;setter.call(node,value);node.dispatchEvent(new Event(node.tagName==='SELECT'?'change':'input',{bubbles:true}));await pause()}
 window.runTimelineTests=async()=>{
  let checks=0;const ok=(v,m)=>{check(v,m);checks++};
- await wait(()=>options().length===20&&document.querySelectorAll('.wbt-timeline-member').length===20);
- ok(addon.version===pkgVersion,'client version');ok(calls[0].args.includeSingletons===true,'empty and singleton default');
+ await wait(()=>options().length===20&&document.querySelectorAll('.wbt-timeline-member').length===45);
+ ok(addon.version===pkgVersion,'client version');ok(calls.find(x=>x.action==='tasks.timelines').args.includeSingletons===true,'empty and singleton default');
  const list=document.querySelector('[role=listbox]');list.scrollTop=200;const scroll=list.scrollTop;options()[5].click();await pause();ok(document.querySelector('[role=listbox]')===list&&list.scrollTop===scroll,'stable list');
  options()[5].focus();options()[5].dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}));await pause();ok(document.activeElement===options()[6],'keyboard selection');
- options()[0].click();await wait(()=>document.querySelectorAll('.wbt-timeline-member').length===20);document.querySelector('.wbt-timeline-right [aria-label="下一页"]').click();await wait(()=>document.querySelector('.wbt-timeline-right nav').textContent.includes('2 / 3'));ok(calls.at(-1).args.pageNumber===2,'member pagination');
+ const memberCalls=()=>calls.filter(x=>x.action==='tasks.timeline');const beforeLoad=memberCalls().length;
+ options()[0].click();await wait(()=>document.querySelectorAll('.wbt-timeline-member').length===45);
+ const panel=document.querySelector('.wbt-timeline-right'),rows=panel.querySelector('.wbt-timeline-members');
+ ok(memberCalls().length===beforeLoad+1&&Object.keys(memberCalls().at(-1).args).join()==='timelineKey','one unpaged member request');
+ ok(!panel.querySelector('nav')&&document.querySelector('.wbt-timeline-left nav'),'only directory remains paged');
+ rows.scrollTop=rows.scrollHeight;await pause();const last=rows.lastElementChild;
+ ok(rows.scrollTop>0&&last.getBoundingClientRect().bottom<=rows.getBoundingClientRect().bottom+1,'last member reached by panel scrolling');
+ ok(memberCalls().length===beforeLoad+1,'scroll does not load additional members');
  await click('选择');options()[0].click();options()[1].click();await pause();await click('合并 (2)');await fill('[role=dialog] select','line-1');await click('预览合并');await wait(()=>buttons().some(x=>x.textContent==='确认合并'));ok(tasks.filter(x=>x.timelineId==='line-1').length===3,'preview read only');await click('确认合并');await wait(()=>!document.querySelector('[role=dialog]'));ok(tasks.filter(x=>x.timelineId==='line-1').length===48,'whole-line merge past page');
  await click('新建时间线');await fill('[role=dialog] input','Manual empty');await fill('[role=dialog] textarea','Independent description');await click('保存时间线');await wait(()=>!document.querySelector('[role=dialog]')&&document.querySelector('.wbt-timeline-right h3').textContent==='Manual empty');
  const line=lines.find(x=>x.title==='Manual empty');ok(!!line,'manual create');ok(tasks.every(x=>x.timelineId!==line.id),'create never attaches');ok(document.querySelector('.wbt-timeline-right').textContent.includes('暂无可显示成员'),'empty entity detail');
