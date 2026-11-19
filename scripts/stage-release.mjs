@@ -120,11 +120,11 @@ const ADDON_META = {
     marketExtra: "只存本机 SQLite，不存姓名与工号，不参与云同步；不限月结，日结多笔也可按日期记录。",
   },
   mail: {
-    description: "个人工作台邮件插件：IMAP 收信头、SMTP 发信、保险箱托管密码",
+    description: "个人工作台邮件插件：安全 IMAP 收信、文件夹与已读同步、附件按需下载、草稿与 SMTP 回复转发",
     keywords: ["mail", "imap", "smtp", "email"],
     marketCategory: "tools",
-    marketEn: "Mail client for DSH: sync IMAP headers, read bodies on demand and send plain-text mail with SMTP. The credential vault is installed with mail.",
-    marketZh: "DSH 邮件：IMAP 同步信头、按需读正文、SMTP 发纯文本；安装邮件时自动安装凭据保险箱。",
+    marketEn: "Browse IMAP folders and older mail over TLS, sync read status, download individual attachments, and reply or forward via SMTP with local drafts.",
+    marketZh: "DSH 邮件：通过加密 IMAP 浏览文件夹与历史邮件，同步已读、移动和废纸篓；按需下载附件，从本地草稿回复或转发。",
     marketExtra: "保险箱随邮件安装；首次使用仍需初始化、解锁并绑定邮箱授权码。邮件账户仅保存 secretId。",
   },
 };

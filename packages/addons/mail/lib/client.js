@@ -144,6 +144,13 @@ var require_styles = __commonJS({
       "@media (max-width:1180px){.wbml-layout.has-detail{grid-template-columns:256px minmax(0,1fr) minmax(320px,420px)}}",
       "@media (max-width:900px){.wbml-page.is-split{height:auto;overflow:visible}.wbml-layout,.wbml-layout.has-detail{display:flex;flex-direction:column;gap:12px;align-items:stretch;flex:0 0 auto}.wbml-rail{flex-direction:row;align-items:stretch;overflow:visible;flex:0 0 auto}.wbml-rail-card{flex:1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}.wbml-rail-card .wbml-rail-title{flex-basis:100%}.wbml-rail-tip{display:none}.wbml-rail-stats{flex:1 0 auto}.wbml-pane{flex:0 0 auto;max-height:none}.wbml-listpane{max-height:62vh}.wbml-detailpane{max-height:70vh}}",
       ".wbml-icon-btn{border:0;background:transparent;color:var(--wb-muted,#6b7280);font-size:16px;cursor:pointer;padding:2px 6px}",
+      ".wbml-paging,.wbml-tools,.wbml-search{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+      ".wbml-paging,.wbml-tools{padding:8px 12px;color:var(--wb-muted);border-top:1px solid var(--wb-line)}",
+      ".wbml-search .wbml-field{flex:1;min-width:0}.wbml-input{max-width:100%;box-sizing:border-box}",
+      ".wbml-detail-content{min-height:0;overflow:auto}.wbml-tools>.wbml-input{flex:1;min-width:100px}",
+      ".wbml-rail input[type=checkbox]{accent-color:var(--wb-accent)}",
+      ".wbml-page.is-split :is(button,input,select):focus-visible{outline:2px solid var(--wb-accent);outline-offset:-2px}",
+      ".wbml-list-row:hover:not(.on){background:color-mix(in srgb,var(--wb-accent) 7%,var(--wb-surface))}",
       /* 服务商选择器 */
       ".wbml-chips{display:flex;flex-wrap:wrap;gap:6px}",
       ".wbml-chip{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer}",
@@ -739,172 +746,592 @@ var require_common = __commonJS({
   }
 });
 
+// packages/addons/mail/client/ui/attachments.cjs
+var require_attachments = __commonJS({
+  "packages/addons/mail/client/ui/attachments.cjs"(exports2, module2) {
+    "use strict";
+    var C = require_common();
+    function size(n) {
+      return n >= 1048576 ? (n / 1048576).toFixed(1) + " MiB" : n >= 1024 ? Math.ceil(n / 1024) + " KiB" : n + " B";
+    }
+    function save(file) {
+      var binary = atob(file.base64), bytes = Uint8Array.from(binary, function(c) {
+        return c.charCodeAt(0);
+      });
+      if (bytes.length !== file.size) throw new Error("\u9644\u4EF6\u4F20\u8F93\u4E0D\u5B8C\u6574\uFF0C\u8BF7\u91CD\u8BD5");
+      var url = URL.createObjectURL(new Blob([bytes], { type: "application/octet-stream" }));
+      var a = document.createElement("a");
+      try {
+        a.href = url;
+        a.download = String(file.filename || "\u9644\u4EF6").split(/[\\/]/).pop().replace(/[\u0000-\u001f\u007f<>:"|?*\u202a-\u202e\u2066-\u2069]/g, "_").replace(/^[. ]+|[. ]+$/g, "") || "\u9644\u4EF6";
+        document.body.appendChild(a);
+        a.click();
+      } finally {
+        a.remove();
+        setTimeout(function() {
+          URL.revokeObjectURL(url);
+        }, 3e4);
+      }
+    }
+    module2.exports = function Attachments(props) {
+      var h = props.h, items = props.items || [];
+      var busy = props.React.useState(""), error = props.React.useState("");
+      if (!items.length) return null;
+      async function download(item) {
+        busy[1](item.id);
+        error[1]("");
+        try {
+          save(await C.call(props.api, "mail.attachmentDownload", { id: item.id }));
+        } catch (e) {
+          error[1](C.errText(e));
+        } finally {
+          busy[1]("");
+        }
+      }
+      return h(
+        "div",
+        { className: "wbml-attach" },
+        h("strong", { className: "wbml-attach-title" }, "\u9644\u4EF6\uFF08" + items.length + "\uFF09"),
+        h("div", { className: "wbml-attach-list" }, items.map(function(item) {
+          return h(
+            "div",
+            { className: "wbml-row", key: item.id },
+            h("span", { title: item.mime }, item.filename + " \xB7 " + (item.section ? "\u4F20\u8F93 " : "") + size(item.size)),
+            h(C.Btn, { h, disabled: !!busy[0] || props.localOnly || !item.section, onClick: function() {
+              download(item);
+            } }, props.localOnly ? "\u4EC5\u9644\u4EF6\u4FE1\u606F" : !item.section ? "\u8BF7\u91CD\u65B0\u4E0B\u8F7D\u6B63\u6587" : busy[0] === item.id ? "\u4E0B\u8F7D\u4E2D\u2026" : "\u4FDD\u5B58\u9644\u4EF6")
+          );
+        })),
+        h(C.Notice, { h, kind: "error", text: error[0] })
+      );
+    };
+  }
+});
+
+// packages/addons/mail/client/ui/compose-model.cjs
+var require_compose_model = __commonJS({
+  "packages/addons/mail/client/ui/compose-model.cjs"(exports2, module2) {
+    "use strict";
+    var labels = { new: "\u5199\u4FE1", reply: "\u56DE\u590D", replyAll: "\u5168\u90E8\u56DE\u590D", forward: "\u8F6C\u53D1" };
+    function addresses(value, strict) {
+      const out = [];
+      let token = "", quoted = false, angle = false, escaped = false;
+      function add() {
+        const s = token.trim();
+        token = "";
+        if (!s) return;
+        const hit = /<([^<>]+)>$/.exec(s);
+        const addr = (hit ? hit[1] : s).trim();
+        if (!/^[^\s<>,;@\x00-\x1f]+@[^\s<>,;@\x00-\x1f]+$/.test(addr)) {
+          if (strict) throw new Error("\u90AE\u7BB1\u5730\u5740\u683C\u5F0F\u65E0\u6548\uFF1A" + s);
+          return;
+        }
+        out.push(addr);
+      }
+      for (const c of String(value || "")) {
+        if (!quoted && !angle && /[,，;；\n]/.test(c)) {
+          add();
+          continue;
+        }
+        token += c;
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+        if (quoted && c === "\\") escaped = true;
+        else if (c === '"') quoted = !quoted;
+        else if (!quoted && c === "<") angle = true;
+        else if (!quoted && c === ">") angle = false;
+      }
+      add();
+      return out;
+    }
+    function unique(list, seen) {
+      return list.filter((a) => {
+        const key = a.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+    function initial(mode, m, body, accounts) {
+      if (!m) return { key: "new", mode: "new", originId: "", accountId: "", to: "", cc: "", subject: "", text: "" };
+      const self = new Set(accounts.map((a) => a.email.toLowerCase()));
+      const seen = new Set(self);
+      const senders = addresses(m.from);
+      const fromSelf = senders.length && senders.every((a) => self.has(a.toLowerCase()));
+      const forward = mode === "forward";
+      const replyTo = addresses(m.replyTo);
+      const primary = fromSelf ? addresses(m.to) : replyTo.length ? replyTo : senders;
+      const to = forward ? [] : unique(mode === "replyAll" ? primary.concat(addresses(m.to)) : primary, seen);
+      const cc = mode === "replyAll" ? unique(addresses(m.cc), seen) : [];
+      const prefix = forward ? "Fwd:" : "Re:";
+      const subject = m.subject || "";
+      return {
+        key: mode + ":" + m.id,
+        accountId: m.accountId,
+        originId: m.id,
+        mode,
+        to: to.join(", "),
+        cc: cc.join(", "),
+        subject: (forward ? /^(fwd?|转发):/i : /^(re|回复):/i).test(subject) ? subject : prefix + " " + subject,
+        text: forward ? "\n\n---------- \u8F6C\u53D1\u90AE\u4EF6 ----------\n\u53D1\u4EF6\u4EBA\uFF1A" + m.from + "\n\u6536\u4EF6\u4EBA\uFF1A" + m.to + "\n\u4E3B\u9898\uFF1A" + subject + "\n\n" + body : ""
+      };
+    }
+    module2.exports = { labels, addresses, unique, initial };
+  }
+});
+
+// packages/addons/mail/client/views/compose.cjs
+var require_compose = __commonJS({
+  "packages/addons/mail/client/views/compose.cjs"(exports2, module2) {
+    "use strict";
+    var C = require_common();
+    var M = require_compose_model();
+    var writes = /* @__PURE__ */ new Map();
+    function queued(key, operation) {
+      const prev = writes.get(key) || Promise.resolve();
+      const next = prev.catch(() => {
+      }).then(operation);
+      writes.set(key, next);
+      next.finally(() => {
+        if (writes.get(key) === next) writes.delete(key);
+      }).catch(() => {
+      });
+      return next;
+    }
+    function Editor(p) {
+      const { h, React: R, api, draftKey: key, accounts } = p;
+      const [value, setValue] = R.useState(null), [notice, setNotice] = R.useState("");
+      const [busy, setBusy] = R.useState(false), [status, setStatus] = R.useState("");
+      const latest = R.useRef(null), pending = R.useRef(null), timer = R.useRef(null), revision = R.useRef(0), locked = R.useRef(false), alive = R.useRef(false);
+      function flush() {
+        clearTimeout(timer.current);
+        const draft = pending.current;
+        if (!draft) return writes.get(key) || Promise.resolve();
+        pending.current = null;
+        const rev = revision.current;
+        return queued(key, () => C.call(api, "mail.draftSave", draft)).then(() => {
+          if (alive.current && revision.current === rev) setStatus("\u8349\u7A3F\u5DF2\u4FDD\u5B58");
+        }, (e) => {
+          if (revision.current === rev) {
+            pending.current = draft;
+            if (alive.current) setStatus("\u8349\u7A3F\u672A\u4FDD\u5B58\uFF1A" + C.errText(e));
+          }
+          throw e;
+        });
+      }
+      R.useEffect(() => {
+        let current = true;
+        alive.current = true;
+        (writes.get(key) || Promise.resolve()).catch(() => {
+        }).then(() => C.call(api, "mail.draftGet", { key })).then((r) => {
+          if (!current) return;
+          latest.current = r.draft || p.initial;
+          setValue(latest.current);
+          if (!latest.current) setNotice("\u8349\u7A3F\u5DF2\u4E0D\u5B58\u5728");
+        }).catch((e) => {
+          if (current) setNotice("\u8349\u7A3F\u8BFB\u53D6\u5931\u8D25\uFF1A" + C.errText(e));
+        });
+        const onHide = () => {
+          flush().catch(() => {
+          });
+        };
+        if (typeof window !== "undefined") window.addEventListener("pagehide", onHide);
+        return () => {
+          current = false;
+          alive.current = false;
+          if (typeof window !== "undefined") window.removeEventListener("pagehide", onHide);
+          onHide();
+        };
+      }, [key]);
+      function change(field2, v) {
+        if (locked.current) return;
+        const next = Object.assign({}, latest.current, { [field2]: v });
+        latest.current = next;
+        pending.current = next;
+        revision.current++;
+        setValue(next);
+        setStatus("\u6B63\u5728\u4FDD\u5B58\u8349\u7A3F\u2026");
+        clearTimeout(timer.current);
+        timer.current = setTimeout(() => flush().catch(() => {
+        }), 350);
+      }
+      async function send() {
+        if (locked.current) return;
+        let sent = false;
+        locked.current = true;
+        setBusy(true);
+        setNotice("");
+        try {
+          const d = latest.current;
+          const seen = /* @__PURE__ */ new Set();
+          const to = M.unique(M.addresses(d.to, true), seen), cc = M.unique(M.addresses(d.cc, true), seen);
+          if (!d.accountId || !to.length) throw new Error("\u8BF7\u9009\u62E9\u8D26\u6237\u5E76\u586B\u5199\u6536\u4EF6\u4EBA");
+          await flush();
+          await C.call(api, "mail.messageSend", { accountId: d.accountId, to, cc, subject: d.subject, text: d.text, mode: d.mode, originId: d.originId });
+          sent = true;
+          await queued(key, () => C.call(api, "mail.draftDelete", { key }));
+          p.onSent();
+        } catch (e) {
+          if (alive.current) setNotice((sent ? "\u90AE\u4EF6\u5DF2\u53D1\u9001\uFF0C\u4F46\u672A\u80FD\u6E05\u7406\u8349\u7A3F\uFF0C\u8BF7\u52FF\u91CD\u53D1\uFF1A" : "") + C.errText(e));
+        } finally {
+          if (!sent) {
+            locked.current = false;
+            if (alive.current) setBusy(false);
+          }
+        }
+      }
+      const field = (name, label, area) => h(C.Field, { h, label }, h(area ? "textarea" : "input", { className: "wbml-input", value: value[name], rows: area ? 8 : void 0, disabled: busy, onChange: (e) => change(name, e.target.value) }));
+      if (!value) return h("p", { role: "status" }, notice || "\u6B63\u5728\u8BFB\u53D6\u8349\u7A3F\u2026");
+      return h(
+        "div",
+        { className: "wbml-card" },
+        h("strong", null, M.labels[value.mode]),
+        h(C.Field, { h, label: "\u53D1\u4EF6\u8D26\u6237" }, h("select", { className: "wbml-input", value: value.accountId, disabled: busy || value.mode !== "new", onChange: (e) => change("accountId", e.target.value) }, h("option", { value: "" }, "\u8BF7\u9009\u62E9"), accounts.map((a) => h("option", { key: a.id, value: a.id }, a.name + " <" + a.email + ">")))),
+        field("to", "\u6536\u4EF6\u4EBA"),
+        field("cc", "\u6284\u9001"),
+        field("subject", "\u4E3B\u9898"),
+        field("text", "\u6B63\u6587", true),
+        h(C.Notice, { h, kind: "error", text: notice }),
+        h(
+          "div",
+          { className: "wbml-actions" },
+          h(C.Btn, { h, kind: "primary", disabled: busy, onClick: send }, busy ? "\u5904\u7406\u4E2D\u2026" : "\u53D1\u9001"),
+          h(C.Btn, { h, disabled: busy || !pending.current, onClick: () => flush().catch(() => {
+          }) }, "\u4FDD\u5B58\u8349\u7A3F"),
+          h("span", { role: "status" }, status)
+        )
+      );
+    }
+    function Compose(p) {
+      const { h, React: R, api } = p;
+      const accounts = C.useLoad(R, api, "mail.accountList", {}, []), drafts = C.useLoad(R, api, "mail.draftList", {}, []);
+      const [key, setKey] = R.useState("new"), [reset, setReset] = R.useState(0), [message, setMessage] = R.useState("");
+      return h(
+        "div",
+        { className: "wbml-page" },
+        h("h2", null, "\u5199\u4FE1"),
+        h(C.Notice, { h, kind: "ok", text: message }),
+        h(C.Notice, { h, kind: "error", text: accounts.error || drafts.error }),
+        h(C.Field, { h, label: "\u672C\u5730\u8349\u7A3F" }, h("select", { className: "wbml-input", value: key, onChange: (e) => {
+          setKey(e.target.value);
+          setMessage("");
+        } }, h("option", { value: "new" }, "\u65B0\u90AE\u4EF6\u8349\u7A3F"), (drafts.data && drafts.data.items || []).filter((d) => d.key !== "new").map((d) => h("option", { key: d.key, value: d.key }, M.labels[d.mode] + " \xB7 " + (d.subject || "(\u65E0\u4E3B\u9898)"))))),
+        h(Editor, Object.assign({}, p, { key: key + ":" + reset, draftKey: key, initial: key === "new" ? M.initial() : null, accounts: accounts.data && accounts.data.items || [], onSent: () => {
+          setMessage("\u5DF2\u53D1\u9001");
+          setKey("new");
+          setReset((n) => n + 1);
+          drafts.refresh();
+        } }))
+      );
+    }
+    module2.exports = Compose;
+    module2.exports.Editor = Editor;
+  }
+});
+
+// packages/addons/mail/client/ui/reply-tools.cjs
+var require_reply_tools = __commonJS({
+  "packages/addons/mail/client/ui/reply-tools.cjs"(exports2, module2) {
+    "use strict";
+    var C = require_common();
+    var M = require_compose_model();
+    var Editor = require_compose().Editor;
+    module2.exports = function ReplyTools(p) {
+      const { React: R, h, api, message: m } = p;
+      const accounts = C.useLoad(R, api, "mail.accountList", {}, []);
+      const [mode, setMode] = R.useState(""), [sent, setSent] = R.useState(false);
+      const rows = accounts.data && accounts.data.items || [];
+      const owner = rows.some((a) => a.id === m.accountId);
+      const initial = mode && M.initial(mode, m, p.body || "", rows);
+      return h(
+        "section",
+        null,
+        h("div", { className: "wbml-actions" }, ["reply", "replyAll", "forward"].map((v) => h(C.Btn, { key: v, h, disabled: !owner || v === "forward" && !p.bodyReady, onClick: () => {
+          setSent(false);
+          setMode(v);
+        } }, M.labels[v])), mode ? h(C.Btn, { h, onClick: () => setMode("") }, "\u6536\u8D77\u8349\u7A3F") : null),
+        h(C.Notice, { h, kind: "error", text: accounts.error }),
+        h(C.Notice, { h, kind: "ok", text: sent ? "\u5DF2\u53D1\u9001" : "" }),
+        initial ? h(Editor, Object.assign({}, p, { key: initial.key, draftKey: initial.key, initial, accounts: rows, onSent: () => {
+          setMode("");
+          setSent(true);
+        } })) : null
+      );
+    };
+  }
+});
+
 // packages/addons/mail/client/views/messages.cjs
 var require_messages = __commonJS({
   "packages/addons/mail/client/views/messages.cjs"(exports2, module2) {
     "use strict";
+    var C = require_common();
+    var Attachments = require_attachments();
+    var ReplyTools = require_reply_tools();
     module2.exports = function Messages(props) {
-      var h = props.h, React = props.React, api = props.api;
-      var C = require_common();
-      var accounts = C.useLoad(React, api, "mail.accountList", {}, []);
-      var accountId = React.useState("");
-      var list = C.useLoad(React, api, "mail.messageList", { accountId: accountId[0] || void 0, limit: 50 }, [accountId[0]]);
-      var sel = React.useState(null);
-      var msg = React.useState(null);
-      var bodyState = React.useState({ loading: false, error: "", data: null });
-      var accs = accounts.data && accounts.data.items || [];
-      function loadBody(m, force) {
-        if (!m) return;
-        bodyState[1]({ loading: true, error: "", data: null });
+      var h = props.h, React = props.React;
+      var accounts = C.useLoad(React, props.api, "mail.accountList", {}, []);
+      var account = React.useState("");
+      return h(Inbox, Object.assign({}, props, { key: account[0], accountId: account, accounts }));
+    };
+    function Inbox(props) {
+      var h = props.h, React = props.React, api = props.api, accountId = props.accountId;
+      var accs = props.accounts.data && props.accounts.data.items || [];
+      var boxes = C.useLoad(React, api, "mail.mailboxList", { accountId: accountId[0] || void 0 }, [accountId[0]]);
+      var folders = boxes.data && boxes.data.items || [];
+      var folder = React.useState(accountId[0] ? "INBOX" : "");
+      var search = React.useState(""), q = React.useState(""), unseen = React.useState(false);
+      var page = React.useState([]), tokens = page[0];
+      var list = C.useLoad(
+        React,
+        api,
+        "mail.messageList",
+        {
+          accountId: accountId[0] || void 0,
+          mailbox: folder[0] || void 0,
+          q: q[0],
+          unread: unseen[0],
+          limit: 50,
+          cursor: tokens.at(-1)
+        },
+        [folder[0], q[0], unseen[0], tokens]
+      );
+      var sel = React.useState(null), msg = React.useState(null), target = React.useState("");
+      var bodyState = React.useState({}), busy = React.useState(false), remote = React.useState(null);
+      var generation = React.useRef(0), selected = React.useRef(0), busyRef = React.useRef(false);
+      React.useEffect(function() {
+        return function() {
+          generation.current++;
+          selected.current++;
+        };
+      }, []);
+      function close() {
+        selected.current++;
+        sel[1](null);
+        target[1]("");
+        bodyState[1]({});
+      }
+      function reset() {
+        close();
+        page[1]([]);
+        msg[1](null);
+      }
+      function changeFolder(v) {
+        generation.current++;
+        busyRef.current = false;
+        busy[1](false);
+        remote[1](null);
+        folder[1](v);
+        reset();
+      }
+      function report(e) {
+        msg[1]({ kind: "error", text: C.errText(e) });
+      }
+      function button(text, click, disabled, kind) {
+        return h(C.Btn, { h, onClick: click, disabled, kind }, text);
+      }
+      function isUnread(m) {
+        return !/\\Seen/.test(String(m.flags || ""));
+      }
+      function sender(m) {
+        return m.fromName || m.from || "\u672A\u77E5\u53D1\u4EF6\u4EBA";
+      }
+      function senderDetail(m) {
+        return m.from && m.fromName && m.from !== m.fromName ? m.fromName + " <" + m.from + ">" : sender(m);
+      }
+      function loadBody(m, force, rev) {
+        bodyState[1]({ loading: true });
         C.call(api, "mail.messageBody", { id: m.id, force: !!force }).then(function(r) {
-          if (r && r.ok === false) bodyState[1]({ loading: false, error: r.message || "\u6B63\u6587\u4E0B\u8F7D\u5931\u8D25", data: r });
-          else bodyState[1]({ loading: false, error: "", data: r || null });
+          if (rev !== selected.current) return;
+          if (!r || r.ok === false) throw new Error(r && r.message || "\u6B63\u6587\u4E0B\u8F7D\u5931\u8D25");
+          bodyState[1]({ data: r });
         }).catch(function(e) {
-          bodyState[1]({ loading: false, error: C.errText(e), data: null });
+          if (rev === selected.current) bodyState[1]({ error: C.errText(e) });
         });
       }
       function open(m) {
-        bodyState[1]({ loading: false, error: "", data: null });
+        close();
+        var rev = selected.current;
+        sel[1](m);
+        bodyState[1]({ loading: true });
         C.call(api, "mail.messageGet", { id: m.id }).then(function(d) {
+          if (rev !== selected.current) return;
           sel[1](d);
-          loadBody(d);
+          loadBody(d, false, rev);
+          if (isUnread(d) && d.uid > 0) mutate("mail.messageMarkRead", { id: d.id, read: true }, false, rev);
         }).catch(function(e) {
-          msg[1]({ kind: "error", text: C.errText(e) });
-        });
-        if (isUnread(m)) C.call(api, "mail.messageMarkRead", { id: m.id }).then(function() {
-          list.refresh();
-        }).catch(function() {
+          if (rev === selected.current) bodyState[1]({ error: C.errText(e) });
         });
       }
-      function sync() {
-        if (!accountId[0]) return;
-        C.call(api, "mail.sync", { id: accountId[0], limit: 20 }).then(function(r) {
-          msg[1]({ kind: "ok", text: "\u6293\u53D6 " + r.fetched + " \u5C01\uFF0C\u65B0\u589E " + r.inserted });
+      function mutate(action, args, leave, rev) {
+        if (busyRef.current) return;
+        var epoch = generation.current;
+        busyRef.current = true;
+        busy[1](true);
+        C.call(api, action, args).then(function() {
+          if (epoch !== generation.current) return;
           list.refresh();
+          if (rev !== selected.current) return;
+          if (leave) close();
+          else
+            sel[1](function(m) {
+              if (!m) return m;
+              return Object.assign({}, m, {
+                flags: (String(m.flags || "").replace(/\\Seen\b/gi, "") + (args.read ? " \\Seen" : "")).trim()
+              });
+            });
         }).catch(function(e) {
-          msg[1]({ kind: "error", text: C.errText(e) });
+          if (epoch === generation.current) report(e);
+        }).finally(function() {
+          if (epoch === generation.current) {
+            busyRef.current = false;
+            busy[1](false);
+          }
         });
       }
-      function isUnread(m) {
-        return !/\\Seen/.test(String(m && m.flags || ""));
+      function sync(older, onlyFolders) {
+        if (!accountId[0] || busyRef.current || !onlyFolders && !canRemote) return;
+        var epoch = generation.current, args = { id: accountId[0] };
+        if (!onlyFolders) {
+          args.mailbox = folder[0];
+          args.limit = 50;
+          if (older) {
+            if (!remote[0] || !remote[0].nextBeforeUid) return;
+            args.beforeUid = remote[0].nextBeforeUid;
+            args.uidValidity = remote[0].uidValidity;
+          }
+        }
+        busyRef.current = true;
+        busy[1](true);
+        msg[1](null);
+        C.call(api, onlyFolders ? "mail.mailboxSync" : "mail.sync", args).then(function(r) {
+          if (epoch !== generation.current) return;
+          if (onlyFolders) {
+            boxes.refresh();
+            return;
+          }
+          remote[1](r);
+          list.refresh();
+          msg[1]({ kind: "ok", text: "\u6293\u53D6 " + r.fetched + " \u5C01\uFF0C\u65B0\u589E " + r.inserted + " \u5C01" });
+        }).catch(function(e) {
+          if (epoch === generation.current) report(e);
+        }).finally(function() {
+          if (epoch === generation.current) {
+            busyRef.current = false;
+            busy[1](false);
+          }
+        });
       }
-      function senderLabel(m) {
-        var name = m && m.fromName ? String(m.fromName).trim() : "";
-        var addr = m && m.from ? String(m.from).trim() : "";
-        if (name && name !== addr) return name;
-        return addr || "\u672A\u77E5\u53D1\u4EF6\u4EBA";
+      function changePage(stack) {
+        close();
+        page[1](stack);
       }
-      function senderDetail(m) {
-        var name = m && m.fromName ? String(m.fromName).trim() : "";
-        var addr = m && m.from ? String(m.from).trim() : "";
-        if (name && addr && name !== addr) return name + " <" + addr + ">";
-        return addr || name || "\u672A\u77E5\u53D1\u4EF6\u4EBA";
-      }
-      function accountName(id) {
-        if (!id) return "\u5168\u90E8\u8D26\u6237";
-        var hit = accs.filter(function(a) {
-          return a.id === id;
-        })[0];
-        return hit ? hit.name : "\u5168\u90E8\u8D26\u6237";
-      }
-      function sizeText(n) {
-        var v = Number(n) || 0;
-        if (v >= 1024 * 1024) return (v / (1024 * 1024)).toFixed(1) + " MB";
-        if (v >= 1024) return Math.round(v / 1024) + " KB";
-        return v + " B";
-      }
-      function attachmentsOf(current2, data) {
-        var rows = data && data.attachments || current2 && current2.attachments || [];
-        if (!rows.length) return null;
-        return h(
-          "div",
-          { className: "wbml-attach" },
-          h("span", { className: "wbml-attach-title" }, "\u6536\u4EF6\u7BB1\u91CC\u7684 " + rows.length + " \u4E2A\u9644\u4EF6\uFF08\u53EA\u5217\u6587\u4EF6\u540D\u4E0E\u5927\u5C0F\uFF0C\u4E0D\u4E0B\u8F7D\u5185\u5BB9\uFF09"),
-          h("div", { className: "wbml-attach-list" }, rows.map(function(a, i) {
-            return h("span", { key: a.id || a.filename + i, className: "wbml-attach-item", title: a.mime || "" }, String(a.filename || "\u672A\u547D\u540D\u9644\u4EF6") + (a.size ? " \xB7 " + sizeText(a.size) : ""));
-          }))
-        );
-      }
-      function bodyNode(current2) {
-        var st = bodyState[0];
-        if (st.loading) return h("div", { className: "wbml-state" }, "\u6B63\u6587\u4E0B\u8F7D\u4E2D\u2026");
-        if (st.error) {
+      var current = sel[0], state = bodyState[0], data = state.data || {};
+      var items = list.data && list.data.items || [], canSync = !!accountId[0];
+      var localOnly = folders.some(function(f) {
+        return f.name === folder[0] && f.localOnly;
+      });
+      var canRemote = canSync && !localOnly;
+      var names = Array.from(
+        new Set(
+          ["INBOX"].concat(
+            folders.map(function(f) {
+              return f.name;
+            })
+          )
+        )
+      );
+      function bodyNode() {
+        if (state.loading) return h("div", { className: "wbml-state" }, "\u6B63\u6587\u4E0B\u8F7D\u4E2D\u2026");
+        if (state.error)
           return h(
             "div",
             { className: "wbml-body-fail" },
-            h("p", { className: "wbml-body-fail-text" }, "\u6B63\u6587\u4E0B\u8F7D\u5931\u8D25\uFF1A" + st.error),
-            h(
-              "div",
-              { className: "wbml-body-tools" },
-              h(C.Btn, { h, kind: "primary", onClick: function() {
-                loadBody(current2, true);
-              } }, "\u91CD\u8BD5")
-            )
+            "\u6B63\u6587\u4E0B\u8F7D\u5931\u8D25\uFF1A" + state.error,
+            button("\u91CD\u8BD5", function() {
+              open(current);
+            })
           );
-        }
-        var data = st.data || {};
-        var text = String(data.body || current2.body || "").trim();
-        var attach = attachmentsOf(current2, data);
-        if (!text) {
-          return h(
-            "div",
-            { className: "wbml-body-wrap" },
-            h("div", { className: "wbml-state" }, "\u8FD9\u5C01\u90AE\u4EF6\u6CA1\u6709\u53EF\u8BFB\u7684\u6B63\u6587\uFF1B\u53EF\u4EE5\u70B9\u300C\u91CD\u65B0\u4E0B\u8F7D\u6B63\u6587\u300D\u518D\u8BD5\u4E00\u6B21\u3002"),
-            attach
-          );
-        }
         return h(
           "div",
           { className: "wbml-body-wrap" },
-          h("pre", { className: "wbml-body" }, text),
-          data.truncated ? h("p", { className: "wbml-body-note" }, "\u6B63\u6587\u8F83\u957F\uFF0C\u5DF2\u622A\u65AD\u663E\u793A\u3002") : null,
-          attach,
-          h(
-            "div",
-            { className: "wbml-body-tools" },
-            h(C.Btn, { h, onClick: function() {
-              loadBody(current2, true);
-            } }, "\u91CD\u65B0\u4E0B\u8F7D\u6B63\u6587")
-          )
+          h("pre", { className: "wbml-body" }, data.body || current.body || "\u6B64\u90AE\u4EF6\u65E0\u6587\u5B57\u6B63\u6587"),
+          h(Attachments, { h, React, api, localOnly: current.uid <= 0 || !current.uidValidity, items: data.attachments || current.attachments || [] }),
+          data.truncated || current.bodyTruncated ? h("p", { className: "wbml-body-note" }, "\u6B63\u6587\u8F83\u957F\uFF0C\u5DF2\u622A\u65AD\u663E\u793A\u3002") : null,
+          current.uid > 0 ? button("\u91CD\u65B0\u4E0B\u8F7D\u6B63\u6587", function() {
+            loadBody(current, true, ++selected.current);
+          }) : null
         );
       }
-      var items = list.data && list.data.items || [];
-      var unread = items.filter(isUnread).length;
-      var current = sel[0];
-      var canSync = !!accountId[0];
-      var body = list.loading ? h("div", { className: "wbml-state" }, "\u52A0\u8F7D\u4E2D\u2026") : list.error ? h("div", { className: "wbml-state wbml-state-error" }, list.error) : items.length === 0 ? h("div", { className: "wbml-state" }, accs.length ? "\u6CA1\u6709\u672C\u5730\u90AE\u4EF6\uFF1B\u5728\u5DE6\u4FA7\u70B9\u300C\u540C\u6B65\u6536\u4EF6\u7BB1\u300D\u6293\u6700\u8FD1 20 \u5C01\u3002" : "\u8FD8\u6CA1\u6709\u8D26\u6237\uFF0C\u5148\u5230\u300C\u8D26\u6237\u300D\u9875\u6DFB\u52A0\u4E00\u4E2A\u3002") : h("div", { className: "wbml-list" }, items.map(function(m) {
-        var on = current && current.id === m.id;
-        return h(
-          "button",
-          {
-            key: m.id,
-            type: "button",
-            title: senderDetail(m) + " \xB7 " + (m.subject || "(\u65E0\u4E3B\u9898)"),
-            className: "wbml-list-row" + (on ? " on" : "") + (isUnread(m) ? " unread" : ""),
-            onClick: function() {
-              open(m);
-            }
-          },
-          h("span", { className: "wbml-who" }, senderLabel(m)),
-          h("span", { className: "wbml-time" }, C.fmtTime(m.dateAt, props.lang)),
-          h(
-            "div",
-            { className: "wbml-line" },
-            h("span", { className: "wbml-subject" }, m.subject || "(\u65E0\u4E3B\u9898)"),
-            m.preview ? h("span", { className: "wbml-snippet" }, m.preview) : null
+      var body = list.loading ? h("div", { className: "wbml-state" }, "\u52A0\u8F7D\u4E2D\u2026") : list.error ? h(C.Notice, { h, kind: "error", text: list.error }) : h(
+        React.Fragment,
+        null,
+        !items.length ? h(C.Empty, {
+          h,
+          text: !accs.length ? "\u8FD8\u6CA1\u6709\u8D26\u6237" : q[0] || unseen[0] ? "\u672A\u627E\u5230\u7B26\u5408\u6761\u4EF6\u7684\u672C\u5730\u90AE\u4EF6" : "\u6CA1\u6709\u672C\u5730\u90AE\u4EF6"
+        }) : null,
+        h(
+          "div",
+          { className: "wbml-list" },
+          items.map(function(m) {
+            return h(
+              "button",
+              {
+                key: m.id,
+                type: "button",
+                title: senderDetail(m) + " \xB7 " + m.subject,
+                className: "wbml-list-row" + (current && current.id === m.id ? " on" : "") + (isUnread(m) ? " unread" : ""),
+                onClick: function() {
+                  open(m);
+                }
+              },
+              h("span", { className: "wbml-who" }, sender(m)),
+              h("span", { className: "wbml-time" }, C.fmtTime(m.dateAt, props.lang)),
+              h(
+                "div",
+                { className: "wbml-line" },
+                h("span", { className: "wbml-subject" }, m.subject || "(\u65E0\u4E3B\u9898)"),
+                h("span", { className: "wbml-snippet" }, m.preview)
+              )
+            );
+          })
+        ),
+        h(
+          "div",
+          { className: "wbml-paging" },
+          button(
+            "\u4E0A\u4E00\u9875",
+            function() {
+              changePage(tokens.slice(0, -1));
+            },
+            !tokens.length
+          ),
+          h("span", null, "\u7B2C " + (tokens.length + 1) + " \u9875"),
+          button(
+            "\u4E0B\u4E00\u9875",
+            function() {
+              changePage(tokens.concat(list.data.nextCursor));
+            },
+            !list.data || !list.data.hasMore
           )
-        );
-      }));
+        )
+      );
       return h(
         "div",
         { className: "wbml-page is-split wb-fill" },
-        h("div", { className: "wbml-head" }, h("div", null, h("h2", null, "\u90AE\u4EF6"), h("p", { className: "wbml-sub" }, "\u672C\u5730\u526F\u672C\uFF1B\u4FE1\u5934\u968F\u540C\u6B65\u62C9\u53D6\uFF0C\u6B63\u6587\u70B9\u5F00\u65F6\u4E0B\u8F7D\uFF0C\u5BC6\u7801\u4FDD\u5B58\u5728\u4FDD\u9669\u7BB1\u3002")), h(
+        h(
           "div",
-          { className: "wbml-row" },
-          h(C.Btn, { h, onClick: list.refresh }, "\u5237\u65B0")
-        )),
-        h(C.Notice, { h, text: msg[0] && msg[0].text, kind: msg[0] && msg[0].kind }),
-        accounts.error ? h(C.Notice, { h, kind: "error", text: accounts.error }) : null,
+          { className: "wbml-head" },
+          h("h2", null, "\u90AE\u4EF6"),
+          button("\u5237\u65B0\u672C\u5730\u5217\u8868", function() {
+            reset();
+            list.refresh();
+          })
+        ),
+        h(C.Notice, { h, kind: "error", text: props.accounts.error || boxes.error }),
+        h(C.Notice, { h, kind: msg[0] && msg[0].kind, text: msg[0] && msg[0].text }),
         h(
           "div",
           { className: "wbml-layout" + (current ? " has-detail" : "") },
@@ -913,24 +1340,123 @@ var require_messages = __commonJS({
             { className: "wbml-rail" },
             h(
               "div",
-              { className: "wbml-card wbml-rail-card" },
-              h("div", { className: "wbml-rail-title" }, "\u6536\u4EF6\u8D26\u6237"),
-              h("select", { className: "wbml-input", value: accountId[0], onChange: function(e) {
-                accountId[1](e.target.value);
-                sel[1](null);
-              } }, h("option", { value: "" }, "\u5168\u90E8\u8D26\u6237"), accs.map(function(a) {
-                return h("option", { key: a.id, value: a.id }, a.name);
-              })),
-              h("div", { className: "wbml-rail-stats" }, h("span", null, h("b", null, items.length), "\u5C01\u672C\u5730"), h("span", null, h("b", null, unread), "\u5C01\u672A\u8BFB")),
-              h(C.Btn, { h, kind: "primary", disabled: !canSync, onClick: sync }, "\u540C\u6B65\u6536\u4EF6\u7BB1"),
-              h("p", { className: "wbml-hint" }, canSync ? "\u53EA\u6293\u6700\u8FD1 20 \u5C01\u4FE1\u5934\uFF1B\u6B63\u6587\u70B9\u5F00\u65F6\u6309\u9700\u4E0B\u8F7D\u3002" : "\u9009\u62E9\u5177\u4F53\u8D26\u6237\u540E\u53EF\u540C\u6B65\uFF1B\u300C\u5168\u90E8\u8D26\u6237\u300D\u53EA\u770B\u672C\u5730\u526F\u672C\u3002")
-            ),
-            h("div", { className: "wbml-rail-tip" }, "\u63D0\u793A\uFF1A\u70B9\u4E00\u5C01\u90AE\u4EF6\u4F1A\u5728\u53F3\u4FA7\u9605\u8BFB\uFF0C\u5217\u8868\u4E0D\u4F1A\u6D88\u5931\u3002")
+              { className: "wbml-rail-card" },
+              h(
+                C.Field,
+                { h, label: "\u6536\u4EF6\u8D26\u6237" },
+                h(
+                  "select",
+                  {
+                    className: "wbml-input",
+                    value: accountId[0],
+                    onChange: function(e) {
+                      accountId[1](e.target.value);
+                    }
+                  },
+                  h("option", { value: "" }, "\u5168\u90E8\u8D26\u6237"),
+                  accs.map(function(a) {
+                    return h("option", { key: a.id, value: a.id }, a.name);
+                  })
+                )
+              ),
+              h(
+                C.Field,
+                { h, label: "\u6587\u4EF6\u5939" },
+                h(
+                  "select",
+                  {
+                    className: "wbml-input",
+                    value: folder[0],
+                    disabled: !canSync,
+                    onChange: function(e) {
+                      changeFolder(e.target.value);
+                    }
+                  },
+                  !canSync ? h("option", { value: "" }, "\u5168\u90E8\u6587\u4EF6\u5939") : null,
+                  names.map(function(n) {
+                    return h("option", { key: n, value: n }, n);
+                  })
+                )
+              ),
+              h(
+                "div",
+                { className: "wbml-body-tools" },
+                button(
+                  "\u66F4\u65B0\u6587\u4EF6\u5939",
+                  function() {
+                    sync(false, true);
+                  },
+                  !canSync || busy[0]
+                ),
+                button(
+                  "\u540C\u6B65\u6700\u65B0\u90AE\u4EF6",
+                  function() {
+                    sync(false, false);
+                  },
+                  !canRemote || busy[0],
+                  "primary"
+                )
+              ),
+              canRemote && remote[0] ? button(
+                remote[0].nextBeforeUid ? "\u4ECE\u670D\u52A1\u5668\u52A0\u8F7D\u66F4\u65E9\u90AE\u4EF6" : "\u5DF2\u5230\u670D\u52A1\u5668\u6700\u65E9\u90AE\u4EF6",
+                function() {
+                  sync(true, false);
+                },
+                !remote[0].nextBeforeUid || busy[0]
+              ) : null,
+              localOnly ? h("small", { className: "wbml-muted" }, "\u6B64\u6587\u4EF6\u5939\u4EC5\u4FDD\u7559\u672C\u5730\u526F\u672C") : !canSync ? h("small", { className: "wbml-muted" }, "\u9009\u62E9\u5177\u4F53\u8D26\u6237\u540E\u53EF\u540C\u6B65") : null,
+              h(
+                "form",
+                {
+                  className: "wbml-search",
+                  onSubmit: function(e) {
+                    e.preventDefault();
+                    q[1](search[0].trim());
+                    reset();
+                  }
+                },
+                h(
+                  C.Field,
+                  { h, label: "\u641C\u7D22\u672C\u5730\u526F\u672C", hint: "\u4EC5\u5339\u914D\u5DF2\u4E0B\u8F7D\u4FE1\u5934\u7684\u4E3B\u9898\u548C\u53D1\u4EF6\u5730\u5740" },
+                  h("input", {
+                    className: "wbml-input",
+                    type: "search",
+                    value: search[0],
+                    onChange: function(e) {
+                      search[1](e.target.value);
+                    }
+                  })
+                ),
+                h(C.Btn, { h, type: "submit" }, "\u641C\u7D22")
+              ),
+              h(
+                "label",
+                null,
+                h("input", {
+                  type: "checkbox",
+                  checked: unseen[0],
+                  onChange: function(e) {
+                    unseen[1](e.target.checked);
+                    reset();
+                  }
+                }),
+                " \u53EA\u770B\u672A\u8BFB"
+              )
+            )
           ),
           h(
             "section",
             { className: "wbml-pane wbml-listpane" },
-            h("div", { className: "wbml-pane-head" }, h("strong", null, accountName(accountId[0])), h("span", { className: "wbml-muted" }, items.length + " \u5C01 \xB7 " + unread + " \u672A\u8BFB")),
+            h(
+              "div",
+              { className: "wbml-pane-head" },
+              h("strong", null, folder[0] || "\u5168\u90E8\u8D26\u6237"),
+              h(
+                "span",
+                { className: "wbml-muted" },
+                "\u672C\u9875 " + items.length + " \u5C01 \xB7 " + items.filter(isUnread).length + " \u672A\u8BFB"
+              )
+            ),
             h("div", { className: "wbml-state-box" }, body)
           ),
           current ? h(
@@ -939,79 +1465,89 @@ var require_messages = __commonJS({
             h(
               "div",
               { className: "wbml-detail-head" },
-              h("div", { className: "wbml-detail-title" }, h("strong", null, current.subject || "(\u65E0\u4E3B\u9898)"), h("span", { className: "wbml-muted" }, senderDetail(current) + " \xB7 " + C.fmtTime(current.dateAt, props.lang))),
-              h(C.Btn, { h, onClick: function() {
-                sel[1](null);
-              } }, "\u5173\u95ED")
+              h(
+                "div",
+                { className: "wbml-detail-title" },
+                h("strong", null, current.subject || "(\u65E0\u4E3B\u9898)"),
+                h(
+                  "span",
+                  { className: "wbml-muted" },
+                  senderDetail(current) + " \xB7 " + C.fmtTime(current.dateAt, props.lang)
+                )
+              ),
+              button("\u5173\u95ED", close)
             ),
-            h("div", { className: "wbml-detail-meta" }, h("span", null, "\u6536\u4EF6\u4EBA\uFF1A" + (current.to || "\u2014")), h("span", null, "\u6587\u4EF6\u5939\uFF1A" + (current.mailbox || "INBOX"))),
-            h("div", { className: "wbml-detail-body" }, bodyNode(current))
+            h(
+              "div",
+              { className: "wbml-detail-meta" },
+              h("span", null, "\u6536\u4EF6\u4EBA\uFF1A" + (current.to || "\u2014")),
+              h("span", null, "\u6587\u4EF6\u5939\uFF1A" + current.mailbox)
+            ),
+            current.uid > 0 ? h(
+              "div",
+              { className: "wbml-tools" },
+              button(
+                isUnread(current) ? "\u6807\u4E3A\u5DF2\u8BFB" : "\u6807\u4E3A\u672A\u8BFB",
+                function() {
+                  mutate(
+                    "mail.messageMarkRead",
+                    { id: current.id, read: isUnread(current) },
+                    false,
+                    selected.current
+                  );
+                },
+                busy[0]
+              ),
+              h(
+                "select",
+                {
+                  "aria-label": "\u76EE\u6807\u6587\u4EF6\u5939",
+                  className: "wbml-input",
+                  value: target[0],
+                  onChange: function(e) {
+                    target[1](e.target.value);
+                  }
+                },
+                h("option", { value: "" }, "\u9009\u62E9\u76EE\u6807\u6587\u4EF6\u5939"),
+                folders.filter(function(f) {
+                  return !f.localOnly && f.account_id === current.accountId && f.name !== current.mailbox;
+                }).map(function(f) {
+                  return h("option", { key: f.id, value: f.name }, f.name);
+                })
+              ),
+              button(
+                "\u79FB\u52A8",
+                function() {
+                  mutate("mail.messageMove", { id: current.id, mailbox: target[0] }, true, selected.current);
+                },
+                busy[0] || !target[0]
+              ),
+              button(
+                "\u79FB\u5165\u5E9F\u7EB8\u7BD3",
+                function() {
+                  mutate("mail.messageDelete", { id: current.id }, true, selected.current);
+                },
+                busy[0]
+              )
+            ) : null,
+            h(
+              "div",
+              { className: "wbml-detail-content" },
+              bodyNode(),
+              h(
+                ReplyTools,
+                Object.assign({}, props, {
+                  key: current.id,
+                  message: current,
+                  body: data.body || current.body || "",
+                  bodyReady: !!state.data
+                })
+              )
+            )
           ) : null
         )
       );
-    };
-  }
-});
-
-// packages/addons/mail/client/views/compose.cjs
-var require_compose = __commonJS({
-  "packages/addons/mail/client/views/compose.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = function Compose(props) {
-      var h = props.h, React = props.React, api = props.api;
-      var C = require_common();
-      var accounts = C.useLoad(React, api, "mail.accountList", {}, []);
-      var st = React.useState({ accountId: "", to: "", subject: "", text: "" });
-      var msg = React.useState(null);
-      var busy = React.useState(false);
-      var accs = accounts.data && accounts.data.items || [];
-      function set(k, v) {
-        st[1](Object.assign({}, st[0], { [k]: v }));
-      }
-      function send() {
-        var to = st[0].to.split(/[,，;；\n]/).map(function(s) {
-          return s.trim();
-        }).filter(Boolean);
-        if (!st[0].accountId || !to.length) {
-          msg[1]({ kind: "error", text: "\u8BF7\u9009\u62E9\u8D26\u6237\u5E76\u586B\u5199\u6536\u4EF6\u4EBA" });
-          return;
-        }
-        busy[1](true);
-        C.call(api, "mail.messageSend", { accountId: st[0].accountId, to, subject: st[0].subject, text: st[0].text }).then(function() {
-          msg[1]({ kind: "ok", text: "\u5DF2\u53D1\u9001" });
-          st[1](Object.assign({}, st[0], { to: "", subject: "", text: "" }));
-        }).catch(function(e) {
-          msg[1]({ kind: "error", text: C.errText(e) });
-        }).finally(function() {
-          busy[1](false);
-        });
-      }
-      return h(
-        "div",
-        { className: "wbml-page" },
-        h("h2", null, "\u5199\u4FE1"),
-        h(C.Notice, { h, text: msg[0] && msg[0].text, kind: msg[0] && msg[0].kind }),
-        h(
-          "div",
-          { className: "wbml-card" },
-          h(C.Field, { h, label: "\u53D1\u4EF6\u8D26\u6237" }, h("select", { className: "wbml-input", value: st[0].accountId, onChange: function(e) {
-            set("accountId", e.target.value);
-          } }, h("option", { value: "" }, "\u8BF7\u9009\u62E9"), accs.map(function(a) {
-            return h("option", { key: a.id, value: a.id }, a.name + " <" + a.email + ">");
-          }))),
-          h(C.Field, { h, label: "\u6536\u4EF6\u4EBA", hint: "\u591A\u4E2A\u90AE\u7BB1\u7528\u9017\u53F7\u5206\u9694" }, h("input", { className: "wbml-input", value: st[0].to, onChange: function(e) {
-            set("to", e.target.value);
-          } })),
-          h(C.Field, { h, label: "\u4E3B\u9898" }, h("input", { className: "wbml-input", value: st[0].subject, onChange: function(e) {
-            set("subject", e.target.value);
-          } })),
-          h(C.Field, { h, label: "\u6B63\u6587" }, h("textarea", { className: "wbml-input", rows: 10, value: st[0].text, onChange: function(e) {
-            set("text", e.target.value);
-          } })),
-          h("div", { className: "wbml-actions" }, h(C.Btn, { h, kind: "primary", disabled: busy[0], onClick: send }, busy[0] ? "\u53D1\u9001\u4E2D\u2026" : "\u53D1\u9001"))
-        )
-      );
-    };
+    }
   }
 });
 
@@ -4257,7 +4793,7 @@ var require_actions = __commonJS({
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.2.7",
+    version: "0.3.0",
     icon: (init_mail(), __toCommonJS(mail_exports)).default,
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },

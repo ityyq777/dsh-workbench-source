@@ -1,7 +1,7 @@
 {
   "name": "dsh-workbench-mail",
-  "version": "0.2.7",
-  "description": "个人工作台邮件：IMAP 收信头、SMTP 发信、保险箱托管密码",
+  "version": "0.3.0",
+  "description": "个人工作台邮件：安全 IMAP 收信、文件夹与已读同步、附件按需下载、草稿与 SMTP 回复转发",
   "type": "module",
   "main": "lib/index.js",
   "files": [
@@ -14,7 +14,7 @@
     "addon": {
       "id": "wb-addon-mail",
       "title": "邮件",
-      "version": "0.2.7",
+      "version": "0.3.0",
       "minShell": "0.8.0",
       "tables": [
         "mail_account",
@@ -48,6 +48,13 @@
         "mail.sync",
         "mail.dataTables",
         "mail.dataQuery",
+        "mail.providerList",
+        "mail.accountProbe",
+        "mail.attachmentDownload",
+        "mail.draftGet",
+        "mail.draftList",
+        "mail.draftSave",
+        "mail.draftDelete",
         "mail.actionSchema"
       ],
       "client": "lib/client.js"

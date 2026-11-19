@@ -55,6 +55,13 @@ module.exports = require("../../../lib/client-base-styles.cjs")("wbml").concat([
   "@media (max-width:1180px){.wbml-layout.has-detail{grid-template-columns:256px minmax(0,1fr) minmax(320px,420px)}}",
   "@media (max-width:900px){.wbml-page.is-split{height:auto;overflow:visible}.wbml-layout,.wbml-layout.has-detail{display:flex;flex-direction:column;gap:12px;align-items:stretch;flex:0 0 auto}.wbml-rail{flex-direction:row;align-items:stretch;overflow:visible;flex:0 0 auto}.wbml-rail-card{flex:1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}.wbml-rail-card .wbml-rail-title{flex-basis:100%}.wbml-rail-tip{display:none}.wbml-rail-stats{flex:1 0 auto}.wbml-pane{flex:0 0 auto;max-height:none}.wbml-listpane{max-height:62vh}.wbml-detailpane{max-height:70vh}}",
   ".wbml-icon-btn{border:0;background:transparent;color:var(--wb-muted,#6b7280);font-size:16px;cursor:pointer;padding:2px 6px}",
+  ".wbml-paging,.wbml-tools,.wbml-search{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+  ".wbml-paging,.wbml-tools{padding:8px 12px;color:var(--wb-muted);border-top:1px solid var(--wb-line)}",
+  ".wbml-search .wbml-field{flex:1;min-width:0}.wbml-input{max-width:100%;box-sizing:border-box}",
+  ".wbml-detail-content{min-height:0;overflow:auto}.wbml-tools>.wbml-input{flex:1;min-width:100px}",
+  ".wbml-rail input[type=checkbox]{accent-color:var(--wb-accent)}",
+  ".wbml-page.is-split :is(button,input,select):focus-visible{outline:2px solid var(--wb-accent);outline-offset:-2px}",
+  ".wbml-list-row:hover:not(.on){background:color-mix(in srgb,var(--wb-accent) 7%,var(--wb-surface))}",
   /* 服务商选择器 */
   ".wbml-chips{display:flex;flex-wrap:wrap;gap:6px}",
   ".wbml-chip{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer}",

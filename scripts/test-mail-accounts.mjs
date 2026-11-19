@@ -62,7 +62,7 @@ const db = new DatabaseSync(':memory:');
 ensureSchema(db);
 const host = { call: async () => ({ result: { secret: 'pw' } }) };
 const mail = createMail({ db, host, log: () => {} });
-const acc = mail.createAccount({ name: '主邮箱', email: 'me@qq.test', imapHost: 'imap.qq.com', smtpHost: 'smtp.qq.com', secretId: 'sec1' });
+const acc = mail.createAccount({ name: '主邮箱', email: 'me@qq.test', imapHost: '127.0.0.1', imapPort: 1, smtpHost: '127.0.0.1', secretId: 'sec1' });
 assert.equal(mail.listAccounts().items[0].lastMessageAt, null, '没有本地来信时 lastMessageAt 为 null');
 db.prepare('INSERT INTO mail_message (id,account_id,mailbox,uid,subject,from_addr,date_at,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)').run('m1', acc.id, 'INBOX', 1, '嗨', 'a@b.test', 1700000000000, 1, 1);
 assert.equal(mail.listAccounts().items[0].lastMessageAt, 1700000000000, '最近来信取 MAX(date_at)');

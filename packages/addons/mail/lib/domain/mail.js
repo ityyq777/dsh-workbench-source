@@ -1,7 +1,10 @@
 /** 邮件域引擎：账户、文件夹、本地邮件、SMTP 发送、IMAP 抓信头。 */
 import { accountRow, messageRow, newId, now } from "../db/db.js";
-import { imapList, imapRecent, imapFetchBody } from "../infra/imap.js";
-import { parseMime } from "../infra/mime.js";
+import { imapList } from "../infra/imap.js";
+import { createSync } from "./sync.js";
+import { createComposer } from "./compose.js";
+import { createParts } from "./parts.js";
+import { listMessages } from "./list.js";
 import { sendMail, probeSmtp } from "../infra/smtp.js";
 import { classifyProbeError } from "./probe-error.js";
 import { decodeWords, parseAddress } from "../infra/mime-word.js";
@@ -32,6 +35,11 @@ export function createMail({ db, host, log }) {
   }
   function updateAccount(input = {}) {
     const a = account(input.id);
+    const endpointChanged = (input.imapHost !== undefined && String(input.imapHost).trim().toLowerCase() !== a.imap_host.toLowerCase()) || (input.imapPort !== undefined && Number(input.imapPort) !== a.imap_port);
+    const loginChanged = input.username !== undefined && String(input.username || input.email || a.email) !== (a.username || a.email);
+    if ((endpointChanged || loginChanged || (!a.username && input.email && input.email !== a.email)) && one("SELECT 1 FROM mail_message WHERE account_id=? AND uid>0 UNION ALL SELECT 1 FROM mail_mailbox WHERE account_id=? LIMIT 1", a.id, a.id)) {
+      throw new Error("此账户已有远端邮件缓存。更换 IMAP 主机或登录名请新建账户，以免误操作其他邮箱。");
+    }
     run("UPDATE mail_account SET name=?,email=?,imap_host=?,imap_port=?,imap_tls=?,smtp_host=?,smtp_port=?,smtp_tls=?,username=?,secret_id=?,enabled=?,updated_at=?,rev=rev+1 WHERE id=?", input.name !== undefined ? String(input.name).trim() || a.name : a.name, input.email !== undefined ? String(input.email).trim() || a.email : a.email, input.imapHost !== undefined ? String(input.imapHost) : a.imap_host, input.imapPort !== undefined ? Number(input.imapPort) : a.imap_port, input.imapTls !== undefined ? (input.imapTls ? 1 : 0) : a.imap_tls, input.smtpHost !== undefined ? String(input.smtpHost) : a.smtp_host, input.smtpPort !== undefined ? Number(input.smtpPort) : a.smtp_port, input.smtpTls !== undefined ? (input.smtpTls ? 1 : 0) : a.smtp_tls, input.username !== undefined ? String(input.username) : a.username, input.secretId !== undefined ? String(input.secretId) : a.secret_id, input.enabled !== undefined ? (input.enabled ? 1 : 0) : a.enabled, now(), a.id);
     return accountRow(account(a.id));
   }
@@ -110,85 +118,50 @@ export function createMail({ db, host, log }) {
   async function syncMailboxes(id) {
     const a = account(id); const p = await password(a);
     const boxes = await imapList({ host: a.imap_host, port: a.imap_port, secure: !!a.imap_tls, user: p.user }, p.secret);
+    const current = account(id);
+    if (current.rev !== a.rev) throw new Error("账户配置已更改，请重新同步文件夹");
+    const live = new Set();
+    db.exec("SAVEPOINT mail_refresh_boxes");
+    try {
     for (const b of boxes) {
-      const role = /^INBOX$/i.test(b.name) ? "inbox" : /sent/i.test(b.name) ? "sent" : /drafts/i.test(b.name) ? "drafts" : /trash|deleted/i.test(b.name) ? "trash" : "";
+      if (String(b.flags || "").toLowerCase().split(/[\s,]+/).includes("\\noselect")) continue;
+      live.add(b.name);
+      const flags = String(b.flags || "").toLowerCase().split(/[\s,]+/);
+      const role = /^INBOX$/i.test(b.name) ? "inbox" : flags.includes("\\trash") ? "trash" : flags.includes("\\sent") ? "sent" : flags.includes("\\drafts") ? "drafts" : /^(trash|deleted items|deleted messages)$/i.test(b.name) ? "trash" : /^(sent|sent items|sent messages)$/i.test(b.name) ? "sent" : /^drafts$/i.test(b.name) ? "drafts" : "";
       run("INSERT INTO mail_mailbox (id,account_id,name,delimiter,role,updated_at) VALUES (?,?,?,?,?,?) ON CONFLICT(account_id,name) DO UPDATE SET delimiter=excluded.delimiter,role=excluded.role,updated_at=excluded.updated_at", newId("box"), a.id, b.name, b.delimiter || "/", role, now());
+    }
+    for (const row of all("SELECT name FROM mail_mailbox WHERE account_id=?", a.id)) {
+      if (!live.has(row.name)) run("DELETE FROM mail_mailbox WHERE account_id=? AND name=?", a.id, row.name);
+    }
+    db.exec("RELEASE mail_refresh_boxes");
+    } catch (e) {
+      db.exec("ROLLBACK TO mail_refresh_boxes; RELEASE mail_refresh_boxes");
+      throw e;
     }
     return { items: all("SELECT id,account_id,name,delimiter,role FROM mail_mailbox WHERE account_id=? ORDER BY name", a.id) };
   }
-  function mailboxes(id) { if (id) account(id); return { items: all("SELECT id,account_id,name,delimiter,role FROM mail_mailbox WHERE (? IS NULL OR account_id=?) ORDER BY name", id || null, id || null) }; }
-  async function sync(id, input = {}) {
-    const a = account(id); const p = await password(a);
-    const mailbox = String(input.mailbox || "INBOX");
-    const r = await imapRecent({ host: a.imap_host, port: a.imap_port, secure: !!a.imap_tls, user: p.user }, p.secret, mailbox, Math.min(Number(input.limit) || 20, 50));
-    let inserted = 0;
-    for (const it of r.items) {
-      const dateAt = Date.parse(it.date) || now();
-      const exists = one("SELECT id FROM mail_message WHERE account_id=? AND mailbox=? AND uid=?", a.id, mailbox, it.uid);
-      if (exists) continue;
-      run("INSERT INTO mail_message (id,account_id,mailbox,uid,message_id,subject,from_addr,from_name,to_addr,cc_addr,date_at,preview,body,flags,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newId("msg"), a.id, mailbox, it.uid, it.messageId, it.subject, it.from, it.fromName || "", it.to, it.cc, dateAt, "", "", "", now(), now());
-      inserted += 1;
-    }
-    return { mailbox, exists: r.exists, fetched: r.items.length, inserted };
+  function mailboxes(id) {
+    if (id) account(id);
+    const stored = all("SELECT id,account_id,name,delimiter,role FROM mail_mailbox WHERE (? IS NULL OR account_id=?) ORDER BY name", id || null, id || null);
+    const local = all(`SELECT DISTINCT account_id, mailbox AS name FROM mail_message m
+      WHERE uid<=0 AND (? IS NULL OR account_id=?) AND NOT EXISTS
+      (SELECT 1 FROM mail_mailbox b WHERE b.account_id=m.account_id AND b.name=m.mailbox) ORDER BY mailbox`, id || null, id || null);
+    return { items: [...stored, ...local.map(r => ({ ...r, id: `local:${r.account_id}:${r.name}`, localOnly: true, delimiter: "/", role: "" }))] };
   }
-  function messages(input = {}) {
-    const limit = Math.min(Math.max(Number(input.limit) || 30, 1), 200);
-    const cond = ["1=1"]; const args = [];
-    if (input.accountId) { cond.push("account_id=?"); args.push(input.accountId); }
-    if (input.mailbox) { cond.push("mailbox=?"); args.push(input.mailbox); }
-    if (input.unread) cond.push("flags NOT LIKE '%\\Seen%'");
-    if (input.q) { cond.push("(subject LIKE ? ESCAPE '\\' OR from_addr LIKE ? ESCAPE '\\')"); const like = "%" + String(input.q).replace(/[\\%_]/g, "\\$&") + "%"; args.push(like, like); }
-    return { items: all("SELECT * FROM mail_message WHERE " + cond.join(" AND ") + " ORDER BY date_at DESC LIMIT ?", ...args, limit).map((r) => { const row = messageRow(r); delete row.body; return row; }) };
-  }
+  const messages = (input) => listMessages(db, input);
   function message(id) {
     const r = one("SELECT * FROM mail_message WHERE id=?", id); if (!r) throw new Error("邮件不存在：" + id);
-    const out = messageRow(r); out.attachments = all("SELECT id,filename,mime,size FROM mail_attachment WHERE message_id=?", id); return out;
+    const out = messageRow(r); out.attachments = all("SELECT id,filename,mime,size,section FROM mail_attachment WHERE message_id=?", id); return out;
   }
-  /**
-   * 按需取正文：本地已有（body_at>0 或本地发出的邮件）直接返回缓存；
-   * 否则从 IMAP 拉整封原文、解 MIME，落 body/preview 与附件元信息。
-   * 失败不抛给界面，返回 { ok:false, errorClass, message } 让阅读区给原因与重试。
-   */
-  async function messageBody(input = {}) {
-    const id = String(input.id || "");
-    const r = one("SELECT * FROM mail_message WHERE id=?", id);
-    if (!r) throw new Error("邮件不存在：" + id);
-    const cached = Number(r.body_at) > 0;
-    const local = Number(r.uid) <= 0;
-    const attachments = () => all("SELECT id,filename,mime,size FROM mail_attachment WHERE message_id=?", id);
-    if (!input.force && (cached || local)) {
-      return { ok: true, cached: true, body: r.body || "", html: "", preview: r.preview || "", attachments: attachments(), truncated: false };
-    }
-    const a = account(r.account_id);
-    let p;
-    try { p = await password(a); } catch (e) { return { ok: false, errorClass: "vault", message: String((e && e.message) || e).slice(0, 240) }; }
-    try {
-      const fetched = await imapFetchBody({ host: a.imap_host, port: a.imap_port, secure: !!a.imap_tls, user: p.user }, p.secret, r.mailbox || "INBOX", r.uid);
-      const parsed = parseMime(fetched.raw);
-      if (!parsed.text) throw new Error("这封邮件没有可读的纯文本正文（可能只有附件或图片）");
-      const text = parsed.text.slice(0, 200000);
-      const preview = text.replace(/\s+/g, " ").trim().slice(0, 120);
-      run("UPDATE mail_message SET body=?,preview=?,body_at=?,updated_at=? WHERE id=?", text, preview, now(), now(), id);
-      run("DELETE FROM mail_attachment WHERE message_id=?", id);
-      for (const at of parsed.attachments) run("INSERT INTO mail_attachment (id,message_id,filename,mime,size) VALUES (?,?,?,?,?)", newId("att"), id, at.filename, at.mime, at.size);
-      return { ok: true, cached: false, body: text, html: parsed.html, preview, attachments: attachments(), truncated: parsed.truncated || parsed.text.length > text.length };
-    } catch (e) {
-      return { ok: false, errorClass: classifyProbeError(e), message: String((e && e.message) || e).slice(0, 240), size: e && e.size, limit: e && e.limit };
-    }
-  }
-  function markRead(input = {}) {
-    const ids = Array.isArray(input.ids) ? input.ids : [input.id];
-    for (const id of ids) { const r = one("SELECT flags FROM mail_message WHERE id=?", id); if (!r) continue; const flags = /\bSeen\b/.test(r.flags) ? r.flags : (r.flags + " \\Seen").trim(); run("UPDATE mail_message SET flags=?,updated_at=? WHERE id=?", flags, now(), id); }
-    return { updated: ids.length };
-  }
-  function move(input = {}) { const r = one("SELECT id FROM mail_message WHERE id=?", input.id); if (!r) throw new Error("邮件不存在"); run("UPDATE mail_message SET mailbox=?,updated_at=? WHERE id=?", String(input.mailbox || "INBOX"), now(), input.id); return message(input.id); }
-  function remove(input = {}) { run("DELETE FROM mail_message WHERE id=?", input.id); return { deleted: true }; }
+  const composer = createComposer({ db, message, account });
+  const syncOps = createSync({ db, account, password, message });
+  const parts = createParts({ db, account, password });
   async function send(input = {}) {
     const a = account(input.accountId); const p = await password(a);
     const to = [].concat(input.to || []).map((s) => String(s).trim()).filter(Boolean);
     if (!to.length) throw new Error("至少一个收件人");
-    const r = await sendMail({ host: a.smtp_host, port: a.smtp_port, secure: !!a.smtp_tls, user: a.username || a.email }, p.secret, { from: a.email, to, cc: input.cc || [], subject: input.subject, text: input.text });
-    const mb = one("SELECT name FROM mail_mailbox WHERE account_id=? AND role='sent'", a.id) || one("SELECT name FROM mail_mailbox WHERE account_id=? ORDER BY role DESC LIMIT 1", a.id);
+    const r = await sendMail({ host: a.smtp_host, port: a.smtp_port, secure: !!a.smtp_tls, user: a.username || a.email }, p.secret, { ...composer.thread(input, a.id), from: a.email, to, cc: input.cc || [], subject: input.subject, text: input.text });
+    const mb = one("SELECT name FROM mail_mailbox WHERE account_id=? AND role='sent'", a.id);
     run("INSERT INTO mail_message (id,account_id,mailbox,uid,message_id,subject,from_addr,from_name,to_addr,cc_addr,date_at,preview,body,flags,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newId("msg"), a.id, mb ? mb.name : "Sent", -now(), r.messageId, String(input.subject || ""), a.email, a.name || "", to.join(", "), (input.cc || []).join(", "), now(), String(input.text || "").slice(0, 200), String(input.text || ""), "\\Seen", now(), now());
     return { sent: true, messageId: r.messageId };
   }
@@ -203,5 +176,5 @@ export function createMail({ db, host, log }) {
     const limit = Math.min(Math.max(Number(input.limit) || 20, 1), 100);
     return { table: input.table, rows: all("SELECT * FROM " + input.table + " LIMIT ?", limit) };
   }
-  return { status, stats, backfillHeaders: backfillHeaderRows, listAccounts, createAccount, updateAccount, deleteAccount, testAccount, probeAccount, syncMailboxes, mailboxes, sync, messages, message, messageBody, markRead, move, remove, send, search, dataQuery };
+  return { status, stats, backfillHeaders: backfillHeaderRows, listAccounts, createAccount, updateAccount, deleteAccount, testAccount, probeAccount, syncMailboxes, mailboxes, ...syncOps, messages, message, ...parts, ...composer, send, search, dataQuery };
 }

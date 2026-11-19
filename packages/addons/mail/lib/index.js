@@ -26,8 +26,9 @@ export function apply(ctx) {
   ctx.effect(() => host.registerDomain({
     id: "wb-addon-mail",
     title: "邮件",
-    description: "IMAP 按需收正文 + SMTP 发信；密码存保险箱；本地副本与搜索",
-    version: "0.2.7",
+    description: "安全 IMAP 收信与文件夹同步，按需读正文、下载附件，保存本地草稿并通过 SMTP 回复或转发。",
+    version: "0.3.0",
+    // mail_draft 含私有未发正文，不加入宿主通用表清单或同步回退。
     tables: ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"],
     sync: { tables: [] },
     views: [
@@ -40,11 +41,11 @@ export function apply(ctx) {
     capability: {
       requires: ["wb-addon-vault"],
       taskOwnership: { boundary: "发信用 mail.messageSend；需要跟进的处理项用 tasks.create。", query: "mail" },
-      summary: "本地邮件客户端：IMAP 抓最近信头、点开时下载并解码正文（纯文本/HTML），SMTP 发信，密码由保险箱托管。",
-      records: [{ kind: "message", title: "邮件", description: "账户、文件夹、主题/发件人/日期、本地正文副本。", when: ["查看最近邮件", "发送纯文本邮件"], notFor: ["完整附件下载", "OAuth2 登录"], primaryAction: "mail.messageSend", keyArgs: ["accountId", "to", "subject", "text"] }],
+      summary: "按账户和文件夹浏览历史邮件，搜索已同步信头；与原邮箱同步已读、移动和废纸篓，按需取正文与附件，从原信回复、全部回复或转发。",
+      records: [{ kind: "message", title: "邮件", description: "账户、文件夹、信头和本地正文副本。", when: ["查看邮件", "发送纯文本邮件", "回复或转发原信"], notFor: ["附件上传", "OAuth2 登录"], primaryAction: "mail.messageSend", keyArgs: ["accountId", "to", "subject", "text"] }, { kind: "draft", title: "本地邮件草稿", description: "本机保存的待发邮件，只能从界面访问。", when: ["保存未发内容"], notFor: ["跨设备同步草稿"], primaryAction: "mail.draftSave", keyArgs: ["key", "text"] }],
       fields: [{ name: "accountId", type: "string", description: "账户 id" }, { name: "to", type: "array", description: "收件人邮箱数组" }, { name: "subject", type: "string", description: "主题" }, { name: "text", type: "string", description: "纯文本正文" }],
-      notFor: ["不做 OAuth2", "不做附件上传/下载", "不参与云同步"],
-      notes: ["密码/应用专用密码必须存保险箱，账户只保存 secretId。", "IMAP 同步只抓最近信头；正文在点开邮件时按需下载（单封上限 10 MB），附件只解析元信息不下载字节；发信仅纯文本。"],
+      notFor: ["不做 OAuth2", "不发送附件", "不永久删除远端邮件", "不参与工作台云同步"],
+      notes: ["密码由保险箱托管；IMAP 仅在隐式 TLS 或 STARTTLS 成功后认证。", "搜索的是本地已同步信头，不是服务器全文搜索；要找更早的邮件可先加载历史。", "打开邮件不会自动下载附件。草稿仅存本机，SMTP 仅发送纯文本。"],
     },
     exportData: () => ({ accounts: engine.listAccounts().items, mailboxes: engine.mailboxes().items, messages: engine.messages({ limit: 200 }).items }),
     importData: (payload) => { const d = payload && typeof payload === "object" ? payload : {}; let imported = 0; for (const a of Array.isArray(d.accounts) ? d.accounts : []) { try { engine.createAccount(a); imported += 1; } catch { /* skip */ } } return { imported }; },

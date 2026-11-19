@@ -1,4 +1,5 @@
 /** 最小 SMTP 客户端：隐式 TLS / STARTTLS、AUTH LOGIN、纯文本正文。 */
+import { randomUUID } from "node:crypto";
 import net from "node:net";
 import tls from "node:tls";
 
@@ -13,27 +14,33 @@ function connect(host, port, secure, timeout = 15000) {
 }
 
 function reader(socket) {
-  let buf = "";
-  const lines = [];
-  const waiters = [];
-  socket.setEncoding("utf8");
-  const flush = () => {
+  let buf = '', lines = [], pending = null, failure = null;
+  const replies = [];
+  function wake() {
+    if (!pending || (!replies.length && !failure)) return;
+    const { resolve, reject, timer } = pending; pending = null; clearTimeout(timer);
+    if (replies.length) resolve(replies.shift()); else reject(failure);
+  }
+  function fail(e) { failure = failure || e; wake(); }
+  function data(chunk) {
+    buf += chunk.toString('utf8');
     let idx;
-    while ((idx = buf.indexOf("\r\n")) >= 0) {
-      const line = buf.slice(0, idx); buf = buf.slice(idx + 2); lines.push(line);
-      if (waiters.length) waiters.shift()(lines.splice(0));
+    while ((idx = buf.indexOf('\r\n')) >= 0) {
+      const line = buf.slice(0,idx); buf = buf.slice(idx+2);
+      const m = /^(\d{3})([- ]|$)/.exec(line);
+      if (!m || (lines.length && !lines[0].startsWith(m[1]))) { fail(new Error('SMTP 多行响应格式错误')); return; }
+      lines.push(line);
+      if (m[2] !== '-') { replies.push(lines); lines = []; wake(); }
     }
-  };
-  socket.on("data", (d) => { buf += d; flush(); });
-  socket.on("error", (e) => { while (waiters.length) waiters.shift()(null, e); });
-  socket.on("close", () => { while (waiters.length) waiters.shift()(null, new Error("SMTP 连接关闭")); });
-  return function read(timeout = 15000) {
-    return new Promise((resolve, reject) => {
-      const t = setTimeout(() => reject(new Error("SMTP 响应超时")), timeout);
-      waiters.push((batch, err) => { clearTimeout(t); if (err) reject(err); else resolve(batch || []); });
-      if (lines.length) { clearTimeout(t); waiters.pop(); resolve(lines.splice(0)); }
-    });
-  };
+  }
+  const close = () => fail(new Error('SMTP 连接关闭'));
+  socket.on('data',data).on('error',fail).on('close',close);
+  const read = (timeout=15000) => new Promise((resolve,reject) => {
+    const timer = setTimeout(() => { pending = null; reject(new Error('SMTP 响应超时')); },timeout);
+    pending = {resolve,reject,timer}; wake();
+  });
+  read.detach = () => socket.off('data',data).off('error',fail).off('close',close);
+  return read;
 }
 
 function code(batch) {
@@ -65,6 +72,7 @@ export async function probeSmtp(account, password, timeout = 15000) {
       const caps = (ehlo || []).join("\n").toUpperCase();
       if (!caps.includes("STARTTLS")) throw new Error("服务器不支持 STARTTLS");
       await cmd("STARTTLS", [220], "STARTTLS");
+      read.detach();
       socket = tls.connect({ socket, servername: account.host });
       read = reader(socket);
       ehlo = await cmd("EHLO dsh-workbench", [250], "EHLO(TLS)");
@@ -87,6 +95,7 @@ export async function probeSmtp(account, password, timeout = 15000) {
 export async function sendMail(account, password, msg) {
   let socket = await connect(account.host, account.port, !!account.secure);
   let read = reader(socket);
+  try {
   await expect(read, [220], "SMTP 问候");
   const cmd = async (line, ok, label) => { socket.write(line + "\r\n"); return expect(read, ok, label); };
   let ehlo = await cmd("EHLO dsh-workbench", [250], "EHLO");
@@ -94,7 +103,8 @@ export async function sendMail(account, password, msg) {
     const caps = (ehlo || []).join("\n").toUpperCase();
     if (!caps.includes("STARTTLS")) throw new Error("服务器不支持 STARTTLS");
     await cmd("STARTTLS", [220], "STARTTLS");
-    socket = tls.connect({ socket, servername: account.host });
+    read.detach();
+      socket = tls.connect({ socket, servername: account.host });
     read = reader(socket);
     ehlo = await cmd("EHLO dsh-workbench", [250], "EHLO(TLS)");
   }
@@ -105,19 +115,31 @@ export async function sendMail(account, password, msg) {
     await cmd(Buffer.from(password || "").toString("base64"), [235], "SMTP 密码");
   }
   const from = msg.from || account.user;
+  const addressOK = (addr) => /^[^\s<>,;@\x00-\x1f]+@[^\s<>,;@\x00-\x1f]+$/.test(addr);
+  if (![from, ...msg.to, ...(msg.cc || [])].every(addressOK)) { socket.destroy(); throw new Error('邮箱地址格式无效'); }
   await cmd("MAIL FROM:<" + from + ">", [250], "MAIL FROM");
   for (const addr of [].concat(msg.to || [], msg.cc || []).filter(Boolean)) await cmd("RCPT TO:<" + addr + ">", [250, 251], "RCPT TO");
   await cmd("DATA", [354], "DATA");
-  const headers = [
-    "From: " + from, "To: " + [].concat(msg.to || []).join(", "), msg.cc && msg.cc.length ? "Cc: " + msg.cc.join(", ") : "",
-    "Subject: =?UTF-8?B?" + Buffer.from(msg.subject || "(无主题)").toString("base64") + "?=",
-    "Date: " + new Date().toUTCString(), "MIME-Version: 1.0", "Content-Type: text/plain; charset=utf-8", "Content-Transfer-Encoding: base64",
-  ].filter(Boolean).join("\r\n");
-  const data = headers + "\r\n\r\n" + Buffer.from(msg.text || "").toString("base64") + "\r\n";
-  socket.write(data.replace(/^/gm, (m, offset) => "").replace(/\r\n\./g, "\r\n..") + ".\r\n");
+  const { data, messageId } = encodeMessage(from, msg);
+  socket.write(data + '.\r\n');
   await expect(read, [250], "DATA 结束");
   try { await cmd("QUIT", [221], "QUIT"); } catch { /* 忽略 */ }
-  socket.destroy();
-  return { sent: true, messageId: newIdLike() };
+  return { sent: true, messageId };
+  } finally { socket.destroy(); }
 }
-function newIdLike() { return Date.now().toString(36) + "." + Math.random().toString(36).slice(2, 10) + "@dsh-workbench"; }
+
+export function encodeMessage(from, msg) {
+  const messageId = '<' + randomUUID() + '@dsh-workbench>';
+  const validId = /^<[^<>@\s\x00-\x1f]+@[^<>@\s\x00-\x1f]+>$/;
+  const refs = String(msg.references || '').split(/ +/).filter(id => validId.test(id));
+  const headers = [
+    'Message-ID: ' + messageId,
+    validId.test(msg.inReplyTo) ? 'In-Reply-To: ' + msg.inReplyTo : '',
+    refs.length ? 'References: ' + refs.join('\r\n ') : '',
+    'From: ' + from, 'To: ' + msg.to.join(', '), msg.cc && msg.cc.length ? 'Cc: ' + msg.cc.join(', ') : '',
+    'Subject: =?UTF-8?B?' + Buffer.from(msg.subject || '(无主题)').toString('base64') + '?=',
+    'Date: ' + new Date().toUTCString(), 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: base64',
+  ];
+  const body = Buffer.from(msg.text || '').toString('base64').match(/.{1,76}/g) || [];
+  return { messageId, data: headers.filter(Boolean).join('\r\n') + '\r\n\r\n' + body.join('\r\n') + '\r\n' };
+}

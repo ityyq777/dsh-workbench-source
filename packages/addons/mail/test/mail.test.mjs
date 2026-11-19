@@ -25,18 +25,27 @@ test("账户 CRUD 与状态", () => {
   assert.equal(m.listAccounts().items.length, 0);
 });
 
-test("本地邮件列表/搜索/已读/移动/删除", () => {
+test("远端邮件不能在没有凭据时假装已读、移动或删除", async () => {
   const { m, db } = make();
   const a = m.createAccount({ name: "A", email: "a@test", imapHost: "i", smtpHost: "s" });
   seedMessage(db, a.id);
   assert.equal(m.messages({}).items.length, 1);
   assert.equal(m.messages({ q: "你好" }).items.length, 1);
-  m.markRead({ id: "msg1" });
-  assert.equal(m.messages({ unread: true }).items.length, 0);
-  m.move({ id: "msg1", mailbox: "Archive" });
-  assert.equal(m.message("msg1").mailbox, "Archive");
-  m.remove({ id: "msg1" });
-  assert.equal(m.messages({}).items.length, 0);
+  await assert.rejects(() => m.markRead({ id: "msg1" }));
+  await assert.rejects(() => m.move({ id: "msg1", mailbox: "Archive" }));
+  await assert.rejects(() => m.remove({ id: "msg1" }));
+  assert.equal(m.messages({ unread: true }).items.length, 1);
+  assert.equal(m.message("msg1").mailbox, "INBOX");
+});
+
+test("已有远端缓存的账户可以轮换凭据，但不能把旧 UID 改绑到新邮箱", () => {
+  const { db, m } = make();
+  const a = m.createAccount({ name: "A", email: "a@test", imapHost: "imap.test" });
+  seedMessage(db, a.id);
+  for (const patch of [{ imapHost: "other.test" }, { username: "other" }, { imapPort: 1993 }]) {
+    assert.throws(() => m.updateAccount({ id: a.id, ...patch }), /新建账户/);
+  }
+  assert.equal(m.updateAccount({ id: a.id, secretId: "rotated" }).secretId, "rotated");
 });
 
 test("消息详情与 dataQuery 白名单", () => {

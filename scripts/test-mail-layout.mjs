@@ -9,6 +9,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 
+import { DatabaseSync } from "node:sqlite";
+import { ensureSchema } from "../packages/addons/mail/lib/db/db.js";
+import { listMessages } from "../packages/addons/mail/lib/domain/list.js";
 const require = createRequire(import.meta.url);
 const root = process.cwd();
 const viewFile = path.join(root, "packages/addons/mail/client/views/messages.cjs");
@@ -53,38 +56,148 @@ test("样式表是三栏栅格 + 900px 单列降级", () => {
   assert.deepEqual(block.match(/#[0-9a-fA-F]{3,8}/g) || [], []);
 });
 
-test("三栏结构：详情栏与列表栏同级、点击即渲染阅读面板", () => {
-  assert.match(view, /className: "wbml-layout" \+ \(current \? " has-detail" : ""\)/);
-  assert.match(view, /className: "wbml-pane wbml-listpane"/);
-  assert.match(view, /className: "wbml-pane wbml-detailpane"/);
-  assert.match(view, /onClick: function \(\) \{ open\(m\); \}/);
-  // 详情面板不能挂在列表行末尾：两个 pane 必须是 layout 的直接子节点
-  assert.match(view, /wbml-state-box" \}, body\)\),\s*current \? h\("section", \{ className: "wbml-pane wbml-detailpane"/);
+test("本地游标跨三页，同日同秒与期间新到邮件不会造成漏信或重信", () => {
+  const db = new DatabaseSync(":memory:");
+  ensureSchema(db);
+  const insert = db.prepare(
+    "INSERT INTO mail_message (id,account_id,mailbox,uid,date_at,flags,subject,created_at,updated_at) VALUES(?,?,?,?,?,?,?,1,1)",
+  );
+  for (let uid = 1; uid <= 120; uid++) insert.run("m" + uid, "a", "INBOX", uid, 1000, uid % 2 ? "" : "\\Seen", "100%_");
+  insert.run("other", "b", "Archive", 1, 1001, "", "100xy");
+  const query = { accountId: "a", mailbox: "INBOX", q: "%_", limit: 50 };
+  const first = listMessages(db, query);
+  assert.equal(first.items.length, 50);
+  assert.throws(() => listMessages(db, { ...query, unread: true, cursor: first.nextCursor }), /游标/);
+  insert.run("new", "a", "INBOX", 121, 1002, "", "100%_");
+  const second = listMessages(db, { ...query, cursor: first.nextCursor });
+  const last = listMessages(db, { ...query, cursor: second.nextCursor });
+  assert.equal(second.items.length, 50);
+  assert.equal(last.items.length, 20);
+  assert.equal(last.hasMore, false);
+  assert.equal(last.nextCursor, null);
+  assert.equal(new Set([...first.items, ...second.items, ...last.items].map((m) => m.id)).size, 120);
+  assert.equal(listMessages(db, { ...query, unread: true, limit: 200 }).items.length, 61);
+  assert.throws(() => listMessages(db, { cursor: "garbage" }), /游标/);
+  db.close();
 });
 
-test("同步按钮与账户选择绑定：未选账户时禁用并给说明", () => {
-  assert.match(view, /var canSync = !!accountId\[0\];/);
-  assert.match(view, /kind: "primary", disabled: !canSync/);
-  assert.match(view, /选择具体账户后可同步/);
-  assert.doesNotMatch(view, /先在左侧选择一个账户/);
-  // 未读态必须按 flags 里的 \Seen 判定：mail_message 没有 seen 列，m.seen 永远是 undefined
-  assert.match(view, /function isUnread\(m\) \{ return !\/\\\\Seen\/\.test/);
-  assert.doesNotMatch(view, /m\.seen/);
-  assert.match(view, /mail\.messageMarkRead/);
-});
-
-test("状态容器不抽走布局骨架", () => {
-  assert.match(view, /className: "wbml-state-box" \}, body\)/);
-  for (const text of ["加载中…", "还没有账户", "没有本地邮件"]) {
-    assert.ok(view.indexOf(text) >= 0, "缺状态文案：" + text);
+test("消息页：真实控件事件调用、三栏结构、切换和正文竞态", async () => {
+  const Messages = require(viewFile),
+    common = require("../packages/addons/mail/client/ui/common.cjs");
+  const h = (type, props, ...kids) => ({
+    type,
+    props: props || {},
+    kids: kids.flat(Infinity).filter((x) => x != null),
+  });
+  const walk = (n) => (typeof n === "object" && n ? [n, ...n.kids.flatMap(walk)] : []);
+  const nodes = (n) => walk(tree).filter((x) => x.props.className?.includes(n));
+  const button = (s) => walk(tree).find((x) => x.type === common.Btn && x.kids.includes(s));
+  let idx = 0,
+    slots = [],
+    calls = [],
+    release,
+    tree;
+  const React = {
+    useState(v) {
+      const i = idx++;
+      if (!(i in slots)) slots[i] = v;
+      return [slots[i], (x) => (slots[i] = typeof x === "function" ? x(slots[i]) : x)];
+    },
+    useRef(v) {
+      const i = idx++;
+      return (slots[i] ||= { current: v });
+    },
+    useEffect() {},
+    Fragment: Symbol(),
+  };
+  const items = [1, 2].map((i) => ({
+    id: "m" + i,
+    uid: i,
+    subject: "S" + i,
+    accountId: "a",
+    mailbox: "INBOX",
+    flags: i === 1 ? "" : "\\Seen",
+    fromName: "Alice",
+    from: "a@test",
+  }));
+  const api = {
+    async call(n, a) {
+      calls.push([n, a]);
+      if (n === "mail.messageGet") return items.find((m) => m.id === a.id);
+      if (n === "mail.messageBody")
+        return a.id === "m1" ? new Promise((r) => (release = r)) : { ok: true, body: "second", attachments: [] };
+      if (n === "mail.sync") return { nextBeforeUid: 33, uidValidity: 99, fetched: 2, inserted: 1 };
+      return {};
+    },
+  };
+  const prev = common.useLoad;
+  common.useLoad = (_R, _api, n, a) => {
+    calls.push([n, a]);
+    return {
+      refresh() {},
+      data:
+        n === "mail.messageList"
+          ? { items, hasMore: !a.cursor, nextCursor: "next" }
+          : { items: [{ id: "a", name: "Archive", account_id: "a" }] },
+    };
+  };
+  const settle = async () => {
+    for (let i = 0; i < 12; i++) await Promise.resolve();
+  };
+  try {
+    const outer = Messages({ h, React, api });
+    let account = "";
+    slots = [];
+    const render = () => {
+      idx = 0;
+      tree = outer.type({ ...outer.props, accountId: [account, () => {}] });
+    };
+    render();
+    assert.ok(button("同步最新邮件").props.disabled);
+    account = "a";
+    slots = [];
+    render();
+    assert.ok(!button("同步最新邮件").props.disabled);
+    button("同步最新邮件").props.onClick();
+    await settle();
+    render();
+    button("从服务器加载更早邮件").props.onClick();
+    await settle();
+    render();
+    assert.deepEqual(calls.filter(([n]) => n === "mail.sync").at(-1)[1], {
+      id: "a",
+      mailbox: "INBOX",
+      limit: 50,
+      beforeUid: 33,
+      uidValidity: 99,
+    });
+    const rows = nodes("wbml-list-row");
+    assert.ok(rows[0].props.className.includes("unread"));
+    assert.ok(!rows[1].props.className.includes("unread"));
+    rows[0].props.onClick();
+    render();
+    const layout = nodes("wbml-layout")[0];
+    assert.ok(layout.kids.includes(nodes("wbml-listpane")[0]) && layout.kids.includes(nodes("wbml-detailpane")[0]));
+    await settle();
+    render();
+    nodes("wbml-list-row")[1].props.onClick();
+    await settle();
+    release({ ok: true, body: "first" });
+    await settle();
+    render();
+    assert.deepEqual(nodes("wbml-body").find((x) => x.type === "pre").kids, ["second"]);
+    button("下一页").props.onClick();
+    render();
+    assert.equal(nodes("wbml-detailpane").length, 0);
+    assert.equal(calls.filter(([n]) => n === "mail.messageList").at(-1)[1].cursor, "next");
+    const checkbox = walk(tree).find((x) => x.props.type === "checkbox");
+    checkbox.props.onChange({ target: { checked: true } });
+    render();
+    const args = calls.filter(([n]) => n === "mail.messageList").at(-1)[1];
+    assert.equal(args.unread, true);
+    assert.equal(args.cursor, undefined);
+    assert.doesNotMatch(view, /dangerouslySetInnerHTML|innerHTML/);
+  } finally {
+    common.useLoad = prev;
   }
-});
-
-test("正文按需下载接线：打开即拉、失败可重试、HTML 不直塞主文档", () => {
-  assert.match(view, /mail\.messageBody/);
-  assert.match(view, /正文下载中…/);
-  assert.match(view, /正文下载失败：/);
-  assert.match(view, /重试/);
-  assert.match(view, /重新下载正文/);
-  assert.doesNotMatch(view, /dangerouslySetInnerHTML|innerHTML/);
 });

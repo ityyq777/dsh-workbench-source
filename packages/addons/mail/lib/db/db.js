@@ -1,4 +1,5 @@
 /** 邮件域数据层：账户、文件夹、邮件、附件；密码只存 vault secretId。 */
+import { ensureDraftSchema } from "./drafts.js";
 let clock = () => Date.now();
 export function bindClock(fn) { clock = typeof fn === "function" ? fn : () => Date.now(); }
 export function now() { return clock(); }
@@ -16,6 +17,16 @@ function hasColumn(db, table, column) {
 }
 export function ensureSchema(db) {
   for (const sql of DDL) db.exec(sql);
+  ensureDraftSchema(db);
+  for (const [table, column, type] of [
+    ["mail_message", "body_truncated", "INTEGER NOT NULL DEFAULT 0"],
+    ["mail_message", "uid_validity", "INTEGER NOT NULL DEFAULT 0"],
+    ["mail_message", "reply_to", "TEXT NOT NULL DEFAULT ''"],
+    ["mail_message", "thread_refs", "TEXT NOT NULL DEFAULT ''"],
+    ["mail_attachment", "section", "TEXT NOT NULL DEFAULT ''"],
+  ]) {
+    if (!hasColumn(db, table, column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+  }
   // 0.2.3 起 from_name 单独存发件人显示名（from_addr 只放地址）：老库的 CREATE TABLE IF NOT EXISTS 不会补列。
   if (!hasColumn(db, "mail_message", "from_name")) {
     db.exec("ALTER TABLE mail_message ADD COLUMN from_name TEXT NOT NULL DEFAULT ''");
@@ -26,4 +37,4 @@ export function ensureSchema(db) {
   }
 }
 export function accountRow(r) { return r ? { id: r.id, name: r.name, email: r.email, imapHost: r.imap_host, imapPort: r.imap_port, imapTls: !!r.imap_tls, smtpHost: r.smtp_host, smtpPort: r.smtp_port, smtpTls: !!r.smtp_tls, username: r.username, secretId: r.secret_id, enabled: !!r.enabled, createdAt: r.created_at, updatedAt: r.updated_at } : null; }
-export function messageRow(r) { return r ? { id: r.id, accountId: r.account_id, mailbox: r.mailbox, uid: r.uid, messageId: r.message_id, subject: r.subject, from: r.from_addr, fromName: r.from_name, to: r.to_addr, cc: r.cc_addr, dateAt: r.date_at, preview: r.preview, body: r.body, bodyAt: r.body_at, flags: r.flags, createdAt: r.created_at } : null; }
+export function messageRow(r) { return r ? { id: r.id, accountId: r.account_id, mailbox: r.mailbox, uid: r.uid, uidValidity: r.uid_validity, replyTo: r.reply_to, references: r.thread_refs, messageId: r.message_id, subject: r.subject, from: r.from_addr, fromName: r.from_name, to: r.to_addr, cc: r.cc_addr, dateAt: r.date_at, preview: r.preview, body: r.body, bodyAt: r.body_at, bodyTruncated: !!r.body_truncated, flags: r.flags, createdAt: r.created_at } : null; }
