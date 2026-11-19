@@ -17,6 +17,21 @@ import {
 const PAD = (n) => String(n).padStart(2, "0");
 const MONTH_OF = (date) => Number(String(date).slice(5, 7));
 
+function incomePeriod(value, payDate, cycle) {
+  if (value === null || value === "") return null;
+  if (value !== undefined) {
+    if (typeof value === "string" && /^\d{4}-\d{2}$/.test(value)) {
+      requireDate(`${value}-01`, "工资所属期");
+      return value;
+    }
+    return requireDate(value, "工资所属期");
+  }
+  if (cycle === "daily") return payDate;
+  const year = Number(payDate.slice(0, 4));
+  const month = MONTH_OF(payDate);
+  return month === 1 ? (year === 2000 ? null : `${year - 1}-12`) : `${year}-${PAD(month - 1)}`;
+}
+
 function yearNumber(value) {
   const year = Number(value) || new Date(now()).getFullYear();
   if (!Number.isInteger(year) || year < 2000 || year > 2100) throw new Error("年份必须在 2000–2100 之间");
@@ -49,7 +64,7 @@ export function createSalary({ db, host, log }) {
     const latest = one("SELECT * FROM salary_record WHERE deleted_at IS NULL ORDER BY pay_date DESC, created_at DESC LIMIT 1");
     const y = one("SELECT COUNT(*) n, COALESCE(SUM(net_pay),0) net FROM salary_record WHERE deleted_at IS NULL AND substr(pay_date,1,4)=?", String(year));
     return {
-      version: "0.1.0",
+      version: "0.3.0",
       records: total,
       latestDate: latest ? latest.pay_date : "",
       latestNetPay: latest ? round2(latest.net_pay) : 0,
@@ -92,17 +107,19 @@ export function createSalary({ db, host, log }) {
   function create(input = {}) {
     const payDate = requireDate(input.payDate, "发薪日期");
     const cycle = normalizeCycle(input.cycle);
+    const period = incomePeriod(input.incomePeriod, payDate, cycle);
     const money = moneyInput(input);
     const gross = hasValue(input.grossPay) ? money.grossPay : derivedTotals(money).gross;
     const net = hasValue(input.netPay) ? money.netPay : round2(Math.max(gross - sumKeys(money, SOCIAL_KEYS) - money.incomeTax - money.postTaxDeduction, 0));
     const id = newId("sal");
     const columns = MONEY_FIELDS.map((f) => f.column);
     const values = MONEY_FIELDS.map((f) => (f.key === "grossPay" ? gross : f.key === "netPay" ? net : money[f.key]));
-    const placeholders = Array.from({ length: columns.length + 6 }, () => "?").join(", ");
+    const placeholders = Array.from({ length: columns.length + 7 }, () => "?").join(", ");
     run(
-      `INSERT INTO salary_record (id, pay_date, cycle, ${columns.join(", ")}, note, created_at, updated_at) VALUES (${placeholders})`,
+      `INSERT INTO salary_record (id, pay_date, income_period, cycle, ${columns.join(", ")}, note, created_at, updated_at) VALUES (${placeholders})`,
       id,
       payDate,
+      period,
       cycle,
       ...values,
       String(input.note === undefined ? "" : input.note).trim(),
@@ -117,6 +134,7 @@ export function createSalary({ db, host, log }) {
     const row = record(input.id);
     const patch = {};
     if (input.payDate !== undefined) patch.payDate = requireDate(input.payDate, "发薪日期");
+    if (input.incomePeriod !== undefined) patch.incomePeriod = incomePeriod(input.incomePeriod);
     if (input.cycle !== undefined) patch.cycle = normalizeCycle(input.cycle);
     if (input.note !== undefined) patch.note = String(input.note || "").trim();
     let moneyChanged = false;
@@ -131,8 +149,9 @@ export function createSalary({ db, host, log }) {
     if (!hasValue(input.netPay) && (moneyChanged || hasValue(input.grossPay))) merged.netPay = netFromGross(merged);
     const assignments = MONEY_FIELDS.map((f) => f.column + "=?");
     run(
-      `UPDATE salary_record SET pay_date=?, cycle=?, ${assignments.join(", ")}, note=?, updated_at=?, rev=rev+1 WHERE id=? AND deleted_at IS NULL`,
+      `UPDATE salary_record SET pay_date=?, income_period=?, cycle=?, ${assignments.join(", ")}, note=?, updated_at=?, rev=rev+1 WHERE id=? AND deleted_at IS NULL`,
       merged.payDate,
+      merged.incomePeriod,
       merged.cycle,
       ...MONEY_FIELDS.map((f) => merged[f.key]),
       merged.note,
@@ -157,7 +176,12 @@ export function createSalary({ db, host, log }) {
 
   function stats(input = {}) {
     const year = yearNumber(input.year);
-    const rows = all("SELECT * FROM salary_record WHERE deleted_at IS NULL AND substr(pay_date,1,4)=? ORDER BY pay_date, created_at", String(year)).map(salaryRow);
+    const basis = input.basis ?? "arrival";
+    if (basis !== "arrival" && basis !== "income") throw new Error("统计口径须为 arrival 或 income");
+    const dateColumn = basis === "income" ? "income_period" : "pay_date";
+    const groupDate = (row) => basis === "income" ? row.incomePeriod : row.payDate;
+    const rows = all(`SELECT * FROM salary_record WHERE deleted_at IS NULL AND ${dateColumn}>=? AND ${dateColumn}<? ORDER BY ${dateColumn}, pay_date, created_at, id`, `${year}-01`, `${year + 1}-01`).map(salaryRow);
+    const unassignedRecords = basis === "income" ? one("SELECT COUNT(*) n FROM salary_record WHERE deleted_at IS NULL AND income_period IS NULL").n : null;
     const monthly = Array.from({ length: 12 }, (_, i) => ({
       month: i + 1,
       period: `${year}-${PAD(i + 1)}`,
@@ -176,7 +200,7 @@ export function createSalary({ db, host, log }) {
       housingFund: 0,
     }));
     for (const row of rows) {
-      const bucket = monthly[MONTH_OF(row.payDate) - 1];
+      const bucket = monthly[MONTH_OF(groupDate(row)) - 1];
       bucket.records += 1;
       bucket.basePay = round2(bucket.basePay + row.basePay);
       bucket.performancePay = round2(bucket.performancePay + row.performancePay);
@@ -208,9 +232,11 @@ export function createSalary({ db, host, log }) {
     const mom = latestMonth && previousMonth
       ? { amount: diff, percent: previousMonth.netPay ? round2((diff / previousMonth.netPay) * 100) : null }
       : null;
-    const latestRows = latestMonth ? rows.filter((r) => MONTH_OF(r.payDate) === latestMonth.month) : [];
+    const latestRows = latestMonth ? rows.filter((r) => MONTH_OF(groupDate(r)) === latestMonth.month) : [];
     return {
       year,
+      basis,
+      unassignedRecords,
       records: rows.length,
       months: monthsWithData.length,
       netTotal,

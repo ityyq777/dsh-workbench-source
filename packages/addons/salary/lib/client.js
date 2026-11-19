@@ -1013,7 +1013,10 @@ var require_stats = __commonJS({
       var F = require_fields();
       var yearState = React.useState((/* @__PURE__ */ new Date()).getFullYear());
       var year = yearState[0], setYear = yearState[1];
-      var load = C.useLoad(React, api, "salary.stats", { year }, [year]);
+      var basisState = React.useState("arrival");
+      var basis = basisState[0], setBasis = basisState[1];
+      var basisLabel = basis === "income" ? "\u6309\u6240\u5C5E\u6708" : "\u6309\u5230\u8D26\u6708";
+      var load = C.useLoad(React, api, "salary.stats", { year, basis }, [year, basis]);
       var data = load.data;
       var METRICS = [
         { key: "netPay", label: "\u5B9E\u53D1" },
@@ -1272,7 +1275,7 @@ var require_stats = __commonJS({
         body = h(
           "div",
           { className: "wbsal-empty" },
-          h("div", null, year + " \u5E74\u8FD8\u6CA1\u6709\u5DE5\u8D44\u8BB0\u5F55\uFF1B\u6362\u4E2A\u5E74\u4EFD\uFF0C\u6216\u5148\u53BB\u5DE5\u8D44\u8BB0\u5F55\u9875\u8BB0\u4E00\u7B14")
+          h("div", null, year + " \u5E74\u6CA1\u6709\u6309\u5F53\u524D\u53E3\u5F84\u5F52\u5165\u7684\u5DE5\u8D44\u8BB0\u5F55")
         );
       } else {
         var latestBreakdown = data.latestMonth && data.latestMonth.breakdown;
@@ -1350,7 +1353,7 @@ var require_stats = __commonJS({
               "div",
               { className: "wbsal-chart-foot" },
               h("span", { className: "wbsal-legend" }, h("i", null), "\u6709\u8BB0\u5F55\u6708\u4EFD", h("i", { className: "soft" }), "\u5176\u4ED6\u6708\u4EFD"),
-              h("span", null, "\u5355\u4F4D\uFF1A\u5143 \xB7 \u6309\u53D1\u85AA\u65E5\u671F\u5F52\u5C5E\u6708\u4EFD \xB7 \u5F53\u524D\u53E3\u5F84 " + metricLabel)
+              h("span", null, "\u5355\u4F4D\uFF1A\u5143 \xB7 " + basisLabel + " \xB7 " + metricLabel)
             )
           ),
           h(
@@ -1450,6 +1453,22 @@ var require_stats = __commonJS({
             { className: "wbsal-toolbar-end" },
             h(
               "div",
+              { className: "wbsal-metric", role: "group", "aria-label": "\u5DE5\u8D44\u5F52\u6708\u53E3\u5F84" },
+              [["arrival", "\u6309\u5230\u8D26\u6708"], ["income", "\u6309\u6240\u5C5E\u6708"]].map(function(option) {
+                return h("button", {
+                  key: option[0],
+                  type: "button",
+                  "aria-pressed": basis === option[0],
+                  onClick: function() {
+                    setBasis(option[0]);
+                    setHover(null);
+                    setSocialHover(null);
+                  }
+                }, option[1]);
+              })
+            ),
+            h(
+              "div",
               { className: "wbsal-seg" },
               h(C.Btn, { h, kind: "ghost", onClick: function() {
                 setYear(Math.max(2e3, year - 1));
@@ -1461,6 +1480,7 @@ var require_stats = __commonJS({
             )
           )
         ),
+        basis === "income" && data && data.basis === basis && data.unassignedRecords > 0 ? h(C.Notice, { h, text: "\u5168\u90E8\u5E74\u4EFD\u5171 " + data.unassignedRecords + " \u7B14\u5DE5\u8D44\u672A\u586B\u5199\u6240\u5C5E\u671F\uFF0C\u672A\u8BA1\u5165\u6240\u5C5E\u6708\u7EDF\u8BA1\u3002" }) : null,
         body
       );
     };
@@ -1936,7 +1956,7 @@ var require_records = __commonJS({
         setOpenId("");
         setMsg(null);
         var payDate = pickDate("monthly");
-        setForm({ mode: "create", id: "", payDate, cycle: "monthly", note: F.defaultNote(payDate, "monthly"), values: F.blankValues(), lockGross: false });
+        setForm({ mode: "create", id: "", payDate, incomePeriod: defaultPeriod(payDate, "monthly"), cycle: "monthly", note: F.defaultNote(payDate, "monthly"), values: F.blankValues(), lockGross: false });
       }
       function openEdit(item) {
         var values = F.blankValues();
@@ -1949,7 +1969,10 @@ var require_records = __commonJS({
         setConfirmId("");
         setOpenId("");
         setMsg(null);
-        setForm({ mode: "edit", id: item.id, payDate: item.payDate, cycle: item.cycle || "monthly", note: item.note || "", values, lockGross: incomeZero && F.num(item.grossPay) > 0 });
+        setForm({ mode: "edit", id: item.id, payDate: item.payDate, incomePeriod: item.incomePeriod || "", cycle: item.cycle || "monthly", note: item.note || "", values, original: item, lockGross: incomeZero && F.num(item.grossPay) > 0 });
+      }
+      function defaultPeriod(payDate, cycle) {
+        return cycle === "daily" ? payDate : payDate === "" || payDate.startsWith("2000-01-") ? "" : F.incomePeriod(payDate);
       }
       function closeForm() {
         setForm(null);
@@ -1957,14 +1980,15 @@ var require_records = __commonJS({
       }
       function setField(key, value) {
         setForm(function(prev) {
-          var next = Object.assign({}, prev, { note: prev.note });
+          var next = Object.assign({}, prev);
           next[key] = value;
-          if (key === "payDate" && !prev.cycleLocked) {
-            var same = String(value).slice(5) === "15";
-            if (same) next.cycle = "monthly";
+          if (key === "incomePeriod") next.periodTouched = true;
+          if (key === "note") next.noteTouched = true;
+          if (prev.mode === "create" && (key === "payDate" || key === "cycle")) {
+            if (!prev.periodTouched) next.incomePeriod = defaultPeriod(next.payDate, next.cycle);
           }
-          if (key === "payDate" && (!prev.note || prev.note === F.defaultNote(prev.payDate, prev.cycle))) {
-            next.note = F.defaultNote(value, next.cycle);
+          if (prev.mode === "create" && !next.noteTouched) {
+            next.note = next.cycle === "monthly" && next.incomePeriod ? F.monthLabel(next.incomePeriod.slice(0, 7)) + "\u5DE5\u8D44" : "";
           }
           return next;
         });
@@ -1989,9 +2013,13 @@ var require_records = __commonJS({
         var payload = {
           payDate: form.payDate,
           cycle: form.cycle,
+          incomePeriod: form.incomePeriod || "",
           note: form.note || ""
         };
-        F.KEYS.forEach(function(key) {
+        var moneyChanged = !form.original || F.KEYS.some(function(key) {
+          return F.num(form.values[key]) !== F.num(form.original[key]);
+        });
+        if (moneyChanged) F.KEYS.forEach(function(key) {
           if (key === "grossPay" && form.lockGross) {
             payload.grossPay = F.num(form.values.grossPay);
             return;
@@ -2076,14 +2104,14 @@ var require_records = __commonJS({
             { className: "wbsal-form-meta" },
             h(
               C.Field,
-              { h, label: "\u53D1\u85AA\u65E5\u671F", hint: F.incomeLabel(form.payDate) ? "\u5BF9\u5E94 " + F.incomeLabel(form.payDate) + " \u5DE5\u8D44" : "\u6708\u7ED3" },
-              h(DP.DatePicker, { React, h, prefix: "wbsal", lang, label: "\u53D1\u85AA\u65E5\u671F", value: form.payDate, onChange: function(next) {
+              { h, label: "\u5230\u8D26\u65E5" },
+              h(DP.DatePicker, { React, h, prefix: "wbsal", lang, label: "\u5230\u8D26\u65E5", value: form.payDate, onChange: function(next) {
                 setField("payDate", next);
               } })
             ),
             h(
               C.Field,
-              { h, label: "\u7C7B\u578B", hint: "\u6708\u7ED3" },
+              { h, label: "\u7C7B\u578B" },
               h(
                 "select",
                 { className: "wbsal-input", value: form.cycle, onChange: function(e) {
@@ -2092,6 +2120,22 @@ var require_records = __commonJS({
                 h("option", { value: "monthly" }, "\u6708\u7ED3"),
                 h("option", { value: "daily" }, "\u65E5\u7ED3")
               )
+            ),
+            h(
+              C.Field,
+              { h, label: "\u5DE5\u8D44\u6240\u5C5E\u671F" },
+              h(form.cycle === "daily" && !(form.incomePeriod && form.incomePeriod.length === 7) ? DP.DatePicker : DP.MonthPicker, {
+                React,
+                h,
+                prefix: "wbsal",
+                lang,
+                label: "\u5DE5\u8D44\u6240\u5C5E\u671F",
+                placeholder: "\u672A\u5F52\u5C5E",
+                value: form.cycle === "daily" ? form.incomePeriod : (form.incomePeriod || "").slice(0, 7),
+                onChange: function(next) {
+                  setField("incomePeriod", next);
+                }
+              })
             ),
             h(C.Field, { h, label: "\u5907\u6CE8" }, h("input", { className: "wbsal-input", value: form.note, onChange: function(e) {
               setField("note", e.target.value);
@@ -2201,7 +2245,7 @@ var require_records = __commonJS({
             h(
               "div",
               { className: "wbsal-muted" },
-              (item.note ? "\u5907\u6CE8\uFF1A" + item.note + " \xB7 " : "") + "\u66F4\u65B0\u4E8E " + C.fmtTime(item.updatedAt, lang)
+              "\u5DE5\u8D44\u6240\u5C5E\u671F\uFF1A" + (item.incomePeriod ? F.monthLabel(item.incomePeriod) : "\u672A\u5F52\u5C5E") + " \xB7 " + (item.note ? "\u5907\u6CE8\uFF1A" + item.note + " \xB7 " : "") + "\u66F4\u65B0\u4E8E " + C.fmtTime(item.updatedAt, lang)
             ),
             h(
               "div",
@@ -4249,7 +4293,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.2.4",
+    version: "0.3.0",
     icon: (init_wallet(), __toCommonJS(wallet_exports)).default,
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },

@@ -6,7 +6,10 @@ module.exports = function Stats(props) {
   var F = require("../ui/fields.cjs");
   var yearState = React.useState(new Date().getFullYear());
   var year = yearState[0], setYear = yearState[1];
-  var load = C.useLoad(React, api, "salary.stats", { year: year }, [year]);
+  var basisState = React.useState("arrival");
+  var basis = basisState[0], setBasis = basisState[1];
+  var basisLabel = basis === "income" ? "按所属月" : "按到账月";
+  var load = C.useLoad(React, api, "salary.stats", { year: year, basis: basis }, [year, basis]);
   var data = load.data;
   // 柱状图口径：实发 / 基本 / 绩效 / 应发，交互方式与任务插件统计页的口径切换一致。
   var METRICS = [
@@ -218,7 +221,7 @@ module.exports = function Stats(props) {
   else if (load.error) body = h(C.Notice, { h: h, kind: "error", text: load.error });
   else if (!data || data.records === 0) {
     body = h("div", { className: "wbsal-empty" },
-      h("div", null, year + " 年还没有工资记录；换个年份，或先去工资记录页记一笔"));
+      h("div", null, year + " 年没有按当前口径归入的工资记录"));
   } else {
     var latestBreakdown = data.latestMonth && data.latestMonth.breakdown;
     var deductionTotal = latestBreakdown ? latestBreakdown.preTax + latestBreakdown.social + latestBreakdown.tax : 0;
@@ -266,7 +269,7 @@ module.exports = function Stats(props) {
         h("div", { className: "wbsal-axis" }, monthly.map(function (bucket) { return h("span", { key: bucket.month }, bucket.month); })),
         h("div", { className: "wbsal-chart-foot" },
           h("span", { className: "wbsal-legend" }, h("i", null), "有记录月份", h("i", { className: "soft" }), "其他月份"),
-          h("span", null, "单位：元 · 按发薪日期归属月份 · 当前口径 " + metricLabel))),
+          h("span", null, "单位：元 · " + basisLabel + " · " + metricLabel))),
 
       h("div", { className: "wbsal-card wbsal-section" },
         h("div", { className: "wbsal-section-head" },
@@ -319,9 +322,19 @@ module.exports = function Stats(props) {
   return h("div", { className: "wbsal-page" },
     h("div", { className: "wbsal-toolbar wbsal-toolbar-plain" },
       h("div", { className: "wbsal-toolbar-end" },
+        h("div", { className: "wbsal-metric", role: "group", "aria-label": "工资归月口径" },
+          [["arrival", "按到账月"], ["income", "按所属月"]].map(function (option) {
+            return h("button", {
+              key: option[0], type: "button", "aria-pressed": basis === option[0],
+              onClick: function () { setBasis(option[0]); setHover(null); setSocialHover(null); },
+            }, option[1]);
+          })),
         h("div", { className: "wbsal-seg" },
           h(C.Btn, { h: h, kind: "ghost", onClick: function () { setYear(Math.max(2000, year - 1)); } }, "‹"),
           h("span", { className: "wbsal-seg-year" }, year + " 年"),
           h(C.Btn, { h: h, kind: "ghost", onClick: function () { setYear(Math.min(2100, year + 1)); } }, "›")))),
+    basis === "income" && data && data.basis === basis && data.unassignedRecords > 0
+      ? h(C.Notice, { h: h, text: "全部年份共 " + data.unassignedRecords + " 笔工资未填写所属期，未计入所属月统计。" })
+      : null,
     body);
 };

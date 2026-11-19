@@ -28,7 +28,7 @@ export function apply(ctx) {
     id: "wb-addon-salary",
     title: "工资",
     description: "按日期记录日结/月结工资：收入项、税前扣款、社保公积金、个税与实发",
-    version: "0.2.4",
+    version: "0.3.0",
     tables: ["salary_record"],
     sync: { tables: [] },
     views: VIEWS,
@@ -45,6 +45,7 @@ export function apply(ctx) {
       }],
       fields: [
         { name: "payDate", type: "string", description: "发薪日期 YYYY-MM-DD；月结通常取当月 15 号" },
+        { name: "incomePeriod", type: "string", description: "工资所属期：YYYY-MM 或 YYYY-MM-DD，可独立修改" },
         { name: "cycle", type: "string", description: "monthly 月结（默认）/ daily 日结" },
         { name: "netPay", type: "number", description: "实发工资" },
         { name: "grossPay", type: "number", description: "应发税前工资" },
@@ -55,7 +56,7 @@ export function apply(ctx) {
       ],
       notFor: ["不做工资条 OCR", "不做多公司并行核算", "不存姓名等身份信息"],
       notes: [
-        "同名日期允许多笔（日结可能一天多笔），统计按发薪日期所属月份聚合。",
+        "同日允许多笔；统计可按到账月或所属月聚合，未归属的旧记录仅纳入到账口径。",
         "金额在本机 SQLite 保存，随宿主备份；不参与云同步。",
         "agent 可新增、修改、软删除工资记录；删除后不再出现在列表与统计。",
       ],
@@ -70,7 +71,7 @@ export function apply(ctx) {
       let imported = 0;
       let failed = 0;
       for (const item of records) {
-        try { engine.create(item); imported += 1; } catch { failed += 1; }
+        try { engine.create({ ...item, incomePeriod: item.incomePeriod ?? null }); imported += 1; } catch { failed += 1; }
       }
       return { imported, failed };
     },

@@ -145,3 +145,48 @@ test("status 返回最近一笔与今年累计", () => {
   assert.equal(s.currentYear, 2026);
   assert.equal(s.currentYearNetPay, 300);
 });
+
+test("所属期独立保存，跨年统计按选定口径归月", () => {
+  const sal = fresh();
+  const { item } = sal.create({ payDate: "2026-01-15", grossPay: 100, netPay: 90, note: "原备注" });
+  assert.equal(item.incomePeriod, "2025-12");
+  assert.equal(sal.create({ payDate: "2026-02-03", cycle: "daily", netPay: 20 }).item.incomePeriod, "2026-02-03");
+  assert.equal(sal.stats({ year: 2026 }).monthly[0].netPay, 90);
+  assert.equal(sal.stats({ year: 2025 }).records, 0);
+  const income = sal.stats({ year: 2025, basis: "income" });
+  assert.equal(income.monthly[11].netPay, 90);
+  assert.equal(income.netTotal, 90);
+  assert.equal(income.latestMonth.breakdown.fields.netPay, 90);
+  assert.equal(sal.stats({ year: 2026, basis: "income" }).netTotal, 20);
+  const changed = sal.update({ id: item.id, incomePeriod: "2025-11" }).item;
+  assert.equal(changed.payDate, item.payDate);
+  assert.equal(changed.note, item.note);
+  assert.equal(changed.netPay, item.netPay);
+  assert.equal(changed.grossPay, item.grossPay);
+  assert.equal(sal.get({ id: item.id }).item.incomePeriod, "2025-11");
+  assert.equal(sal.update({ id: item.id, incomePeriod: "" }).item.incomePeriod, null);
+  assert.throws(() => sal.update({ id: item.id, incomePeriod: "2026-13" }), /工资所属期/);
+  assert.throws(() => sal.stats({ basis: "invalid" }), /统计口径/);
+});
+
+test("旧库迁移只加列，不回填所属期或修改工资记录", () => {
+  const db = new DatabaseSync(":memory:");
+  ensureSchema(db);
+  const sal = createSalary({ db, log: () => {} });
+  const { item } = sal.create({ payDate: "2026-01-15", netPay: 80, note: "2025年12月工资" });
+  db.exec("DROP INDEX idx_salary_income_period; ALTER TABLE salary_record DROP COLUMN income_period");
+  const before = db.prepare("SELECT * FROM salary_record").get();
+  ensureSchema(db);
+  ensureSchema(db);
+  const { income_period: period, ...after } = db.prepare("SELECT * FROM salary_record").get();
+  assert.equal(period, null);
+  assert.deepEqual(after, { ...before });
+  assert.equal(sal.stats({ year: 2026 }).netTotal, 80);
+  const income = sal.stats({ year: 2025, basis: "income" });
+  assert.equal(income.records, 0);
+  assert.equal(income.unassignedRecords, 1);
+  assert.equal(sal.update({ id: item.id, note: "仅改备注" }).item.incomePeriod, null);
+  sal.remove({ id: item.id });
+  assert.equal(sal.stats({ year: 2025, basis: "income" }).unassignedRecords, 0);
+  db.close();
+});

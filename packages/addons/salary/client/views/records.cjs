@@ -59,7 +59,7 @@ module.exports = function Records(props) {
     setOpenId("");
     setMsg(null);
     var payDate = pickDate("monthly");
-    setForm({ mode: "create", id: "", payDate: payDate, cycle: "monthly", note: F.defaultNote(payDate, "monthly"), values: F.blankValues(), lockGross: false });
+    setForm({ mode: "create", id: "", payDate: payDate, incomePeriod: defaultPeriod(payDate, "monthly"), cycle: "monthly", note: F.defaultNote(payDate, "monthly"), values: F.blankValues(), lockGross: false });
   }
 
   function openEdit(item) {
@@ -69,7 +69,11 @@ module.exports = function Records(props) {
     setConfirmId("");
     setOpenId("");
     setMsg(null);
-    setForm({ mode: "edit", id: item.id, payDate: item.payDate, cycle: item.cycle || "monthly", note: item.note || "", values: values, lockGross: incomeZero && F.num(item.grossPay) > 0 });
+    setForm({ mode: "edit", id: item.id, payDate: item.payDate, incomePeriod: item.incomePeriod || "", cycle: item.cycle || "monthly", note: item.note || "", values: values, original: item, lockGross: incomeZero && F.num(item.grossPay) > 0 });
+  }
+
+  function defaultPeriod(payDate, cycle) {
+    return cycle === "daily" ? payDate : payDate === "" || payDate.startsWith("2000-01-") ? "" : F.incomePeriod(payDate);
   }
 
   function closeForm() {
@@ -79,15 +83,15 @@ module.exports = function Records(props) {
 
   function setField(key, value) {
     setForm(function (prev) {
-      var next = Object.assign({}, prev, { note: prev.note });
+      var next = Object.assign({}, prev);
       next[key] = value;
-      if (key === "payDate" && !prev.cycleLocked) {
-        var same = String(value).slice(5) === "15";
-        if (same) next.cycle = "monthly";
+      if (key === "incomePeriod") next.periodTouched = true;
+      if (key === "note") next.noteTouched = true;
+      if (prev.mode === "create" && (key === "payDate" || key === "cycle")) {
+        if (!prev.periodTouched) next.incomePeriod = defaultPeriod(next.payDate, next.cycle);
       }
-      // 备注没被手改过时，跟着发薪日自动填「所属月份工资」。
-      if (key === "payDate" && (!prev.note || prev.note === F.defaultNote(prev.payDate, prev.cycle))) {
-        next.note = F.defaultNote(value, next.cycle);
+      if (prev.mode === "create" && !next.noteTouched) {
+        next.note = next.cycle === "monthly" && next.incomePeriod ? F.monthLabel(next.incomePeriod.slice(0, 7)) + "工资" : "";
       }
       return next;
     });
@@ -115,9 +119,12 @@ module.exports = function Records(props) {
     var payload = {
       payDate: form.payDate,
       cycle: form.cycle,
+      incomePeriod: form.incomePeriod || "",
       note: form.note || "",
     };
-    F.KEYS.forEach(function (key) {
+    // 只改日期、所属期或备注时，不将金额重新提交给后端。
+    var moneyChanged = !form.original || F.KEYS.some(function (key) { return F.num(form.values[key]) !== F.num(form.original[key]); });
+    if (moneyChanged) F.KEYS.forEach(function (key) {
       if (key === "grossPay" && form.lockGross) { payload.grossPay = F.num(form.values.grossPay); return; }
       if (key === "grossPay" || key === "netPay") { payload[key] = F.num(form.values[key]) || computed[key === "grossPay" ? "gross" : "net"]; return; }
       payload[key] = F.num(form.values[key]);
@@ -181,11 +188,17 @@ module.exports = function Records(props) {
           h("h3", null, form.mode === "edit" ? "编辑工资" : "记一笔工资")),
         h(C.Btn, { h: h, kind: "ghost", onClick: closeForm }, "关闭")),
       h("div", { className: "wbsal-form-meta" },
-        h(C.Field, { h: h, label: "发薪日期", hint: F.incomeLabel(form.payDate) ? "对应 " + F.incomeLabel(form.payDate) + " 工资" : "月结" },
-          h(DP.DatePicker, { React: React, h: h, prefix: "wbsal", lang: lang, label: "发薪日期", value: form.payDate, onChange: function (next) { setField("payDate", next); } })),
-        h(C.Field, { h: h, label: "类型", hint: "月结" },
+        h(C.Field, { h: h, label: "到账日" },
+          h(DP.DatePicker, { React: React, h: h, prefix: "wbsal", lang: lang, label: "到账日", value: form.payDate, onChange: function (next) { setField("payDate", next); } })),
+        h(C.Field, { h: h, label: "类型" },
           h("select", { className: "wbsal-input", value: form.cycle, onChange: function (e) { setField("cycle", e.target.value); } },
             h("option", { value: "monthly" }, "月结"), h("option", { value: "daily" }, "日结"))),
+        h(C.Field, { h: h, label: "工资所属期" },
+          h(form.cycle === "daily" && !(form.incomePeriod && form.incomePeriod.length === 7) ? DP.DatePicker : DP.MonthPicker, {
+            React: React, h: h, prefix: "wbsal", lang: lang, label: "工资所属期",
+            placeholder: "未归属", value: form.cycle === "daily" ? form.incomePeriod : (form.incomePeriod || "").slice(0, 7),
+            onChange: function (next) { setField("incomePeriod", next); },
+          })),
         h(C.Field, { h: h, label: "备注" }, h("input", { className: "wbsal-input", value: form.note, onChange: function (e) { setField("note", e.target.value); } }))),
       sameDayCount > 0 ? h(C.Notice, { h: h, text: "该日已有 " + sameDayCount + " 笔记录；保存会新增一条，不会覆盖。" }) : null,
       F.GROUPS.map(function (group) {
@@ -251,6 +264,7 @@ module.exports = function Records(props) {
       blocks,
       h("div", { className: "wbsal-detail-foot" },
         h("div", { className: "wbsal-muted" },
+          "工资所属期：" + (item.incomePeriod ? F.monthLabel(item.incomePeriod) : "未归属") + " · " +
           (item.note ? "备注：" + item.note + " · " : "") + "更新于 " + C.fmtTime(item.updatedAt, lang)),
         h("div", { className: "wbsal-detail-actions" },
           h(C.Btn, { h: h, onClick: function () { openEdit(item); } }, "编辑"),
