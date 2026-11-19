@@ -381,15 +381,13 @@ module.exports = function createActionSchemaView(options) {
       }
       if (typeof action.agentEnabled !== "boolean") return null;
       var busy = saving === action.name;
-      return h("label", { className: P + "-toggle", "data-agent-row": action.name },
-        h("input", {
-          type: "checkbox",
-          checked: action.agentEnabled,
-          disabled: busy,
-          "data-agent-toggle": action.name,
-          "aria-label": t.agentSwitch + " · " + action.name,
-          onChange: function (e) { setAgent(action, !!e.target.checked); },
-        }),
+      return h("button", {
+        className: P + "-toggle", "data-agent-row": action.name,
+        type: "button", role: "switch", "aria-checked": action.agentEnabled,
+        disabled: busy, "data-agent-toggle": action.name,
+        "aria-label": t.agentSwitch + " · " + action.name,
+        onClick: function () { setAgent(action, !action.agentEnabled); },
+      }, h("span", { className: P + "-track", "aria-hidden": true }),
         h("span", null, busy ? t.agentSaving : t.agentSwitch));
     }
 

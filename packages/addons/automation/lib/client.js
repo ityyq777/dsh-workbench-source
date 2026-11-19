@@ -4270,11 +4270,15 @@ var require_action_schema_style = __commonJS({
         "." + P + "-cardhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
         "." + P + "-cardhead code{font-weight:640}",
         "." + P + "-hintline{margin:0;color:var(--dsw-alias-label-tertiary,inherit);font-size:11.5px;line-height:1.5}",
-        // agent 开关：紧贴卡片头，用 label 包住原生 checkbox，键盘可达、无需自定义控件。
-        "." + P + "-toggle{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--dsw-alias-label-secondary,inherit);cursor:pointer;user-select:none}",
-        "." + P + "-toggle input{width:14px;height:14px;margin:0;accent-color:var(--wb-accent,var(--dsw-alias-brand-primary,#4f6ef7));cursor:pointer}",
-        "." + P + "-toggle input:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
-        "." + P + "-toggle input:disabled{cursor:progress}",
+        "." + P + "-toggle{display:inline-flex;align-items:center;gap:6px;min-height:24px;padding:0 2px;border:0;background:transparent;font:inherit;font-size:11.5px;color:var(--wb-muted);cursor:pointer}",
+        "." + P + "-track{display:inline-flex;align-items:center;box-sizing:border-box;width:30px;height:18px;padding:2px;border:1px solid var(--wb-muted);border-radius:999px;background:var(--wb-surface);color:var(--wb-muted)}",
+        "." + P + "-track::before{content:'';width:12px;height:12px;border-radius:50%;background:currentColor;transition:transform .15s ease}",
+        "." + P + "-toggle[aria-checked=true] ." + P + "-track{background:var(--wb-accent);border-color:var(--wb-accent);color:var(--wb-card)}",
+        "." + P + "-toggle[aria-checked=true] ." + P + "-track::before{transform:translateX(12px)}",
+        "." + P + "-toggle:hover:not(:disabled) ." + P + "-track{outline:1px solid var(--wb-accent)}",
+        "." + P + "-toggle:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}",
+        "." + P + "-toggle:disabled{opacity:.6;cursor:progress}",
+        "@media(prefers-reduced-motion:reduce){." + P + "-track::before{transition:none}}",
         // 安全约束（不可放开）：用警示色描边，和可切换的开关区分开。
         "." + P + "-locked{border-color:var(--wb-warn,#b7791f);color:var(--wb-warn,#b7791f)}",
         "." + P + "-desc{margin:0;color:var(--dsw-alias-label-secondary,inherit);line-height:1.55;font-size:12.5px}",
@@ -4694,18 +4698,21 @@ var require_action_schema_view = __commonJS({
           if (typeof action.agentEnabled !== "boolean") return null;
           var busy = saving === action.name;
           return h(
-            "label",
-            { className: P + "-toggle", "data-agent-row": action.name },
-            h("input", {
-              type: "checkbox",
-              checked: action.agentEnabled,
+            "button",
+            {
+              className: P + "-toggle",
+              "data-agent-row": action.name,
+              type: "button",
+              role: "switch",
+              "aria-checked": action.agentEnabled,
               disabled: busy,
               "data-agent-toggle": action.name,
               "aria-label": t.agentSwitch + " \xB7 " + action.name,
-              onChange: function(e) {
-                setAgent(action, !!e.target.checked);
+              onClick: function() {
+                setAgent(action, !action.agentEnabled);
               }
-            }),
+            },
+            h("span", { className: P + "-track", "aria-hidden": true }),
             h("span", null, busy ? t.agentSaving : t.agentSwitch)
           );
         }

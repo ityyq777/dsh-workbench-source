@@ -73,8 +73,9 @@ const roster = {
 
   const toggles = findAll(tree, (n) => n.props && n.props["data-agent-toggle"]);
   assert.deepEqual(toggles.map((n) => n.props["data-agent-toggle"]), ["vault.status", "vault.secretList"], "只有宿主注入了 agentEnabled 的 action 才给开关");
-  assert.equal(toggles[0].props.checked, true);
-  assert.equal(toggles[1].props.checked, false);
+  assert.ok(toggles.every(n => n.type === "button" && n.props.role === "switch"));
+  assert.equal(toggles[0].props["aria-checked"], true);
+  assert.equal(toggles[1].props["aria-checked"], false);
   assert.ok(!text(tree).includes("vault.legacy") || !find(tree, (n) => n.props && n.props["data-agent-toggle"] === "vault.legacy"), "未注入 agentEnabled 时不给开关");
 
   const locked = find(tree, (n) => n.props && n.props["data-agent-locked"] === "vault.secretReveal");
@@ -86,18 +87,18 @@ const roster = {
   // 打开「vault.secretList」：只传 action + agentEnabled，宿主负责归属与校验。
   calls.length = 0;
   const write = toggles.find((n) => n.props["data-agent-toggle"] === "vault.secretList");
-  write.props.onChange({ target: { checked: true } });
+  write.props.onClick();
   await settle();
   tree = m.rerender();
   // 沙箱里的对象原型不同，按 JSON 比较（下同）。
   assert.equal(JSON.stringify(calls), JSON.stringify([{ name: "actions.setAgentAccess", args: { action: "vault.secretList", agentEnabled: true } }]));
   const after = find(tree, (n) => n.props && n.props["data-agent-toggle"] === "vault.secretList");
-  assert.equal(after.props.checked, true, "宿主返回后开关应就地变为打开");
+  assert.equal(after.props["aria-checked"], true, "宿主返回后开关应就地变为打开");
   assert.match(text(tree), /已允许 agent 调用/);
 
   // 关闭同一条：再点一次应写 false
   calls.length = 0;
-  after.props.onChange({ target: { checked: false } });
+  after.props.onClick();
   await settle();
   tree = m.rerender();
   assert.equal(JSON.stringify(calls), JSON.stringify([{ name: "actions.setAgentAccess", args: { action: "vault.secretList", agentEnabled: false } }]));
@@ -116,12 +117,12 @@ const roster = {
   const m = mount({ api }, { domain: "vault", prefix: "wbv" });
   await settle();
   let tree = m.rerender();
-  find(tree, (n) => n.props && n.props["data-agent-toggle"] === "vault.status").props.onChange({ target: { checked: false } });
+  find(tree, (n) => n.props && n.props["data-agent-toggle"] === "vault.status").props.onClick();
   await settle();
   tree = m.rerender();
   assert.match(text(tree), /切换 agent 开关失败/);
   assert.match(text(tree), /本机 meta 写失败/);
-  assert.equal(find(tree, (n) => n.props && n.props["data-agent-toggle"] === "vault.status").props.checked, true, "失败时开关保持原值");
+  assert.equal(find(tree, (n) => n.props && n.props["data-agent-toggle"] === "vault.status").props["aria-checked"], true, "失败时开关保持原值");
 }
 
 // ── 宿主页数据源：actions.list + wb-shell，域名原样保留 ──────────────
