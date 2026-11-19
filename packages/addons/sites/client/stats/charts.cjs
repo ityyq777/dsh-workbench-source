@@ -100,6 +100,7 @@ function css(prefix) {
     "@media (max-width:900px){.@-scard{grid-column:span 12}.@-span-3,.@-span-4,.@-span-6,.@-span-8{grid-column:span 12}.@-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}",
     "@media (max-width:600px){.@-stats{padding-bottom:16px}.@-hist{height:130px}.@-kpi-v{font-size:22px}}",
     "@media (prefers-reduced-motion:reduce){.@-sk{animation:none}}",
+    require("../../../lib/date-picker-styles.cjs")(prefix),
   ].join("\n").replace(/@-/g, prefix + "-");
 }
 

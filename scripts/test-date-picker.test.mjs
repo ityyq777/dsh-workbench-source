@@ -76,6 +76,23 @@ test("InlineCalendar 不渲染触发按钮，直接铺开月历", () => {
   assert.match(html, /data-day="2026-11-19"/);
 });
 
+test("直接进入统计页也会挂载本插件的共享日历样式", () => {
+  const sheets = [];
+  globalThis.document = {
+    getElementById: id => sheets.find(sheet => sheet.id === id),
+    createElement: () => ({}),
+    head: { appendChild: sheet => sheets.push(sheet) },
+  };
+  try {
+    for (const [addon, prefix] of [["tasks", "wbt"], ["tags", "wbg"], ["sites", "wbs"]]) {
+      require(`${ROOT}packages/addons/${addon}/client/stats/charts.cjs`).makeCharts(prefix);
+      assert.ok(document.getElementById(prefix + "-charts-css").textContent.includes(styles(prefix)), addon);
+    }
+  } finally {
+    delete globalThis.document;
+  }
+});
+
 test("样式只使用主题令牌，不写死颜色", () => {
   for (const prefix of ["wbsal", "wbt", "wbg", "wbs"]) {
     const css = styles(prefix);
