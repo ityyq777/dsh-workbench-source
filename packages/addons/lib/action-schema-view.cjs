@@ -396,12 +396,12 @@ module.exports = function createActionSchemaView(options) {
       var examples = Array.isArray(action.examples) ? action.examples : [];
       return h("div", { className: P + "-card", key: action.name },
         h("div", { className: P + "-cardhead" },
-          h("code", { className: P + "-mono" }, Highlight.hit(action.name, kw)),
-          // 域名在页头已展示一次，卡片内不再重复（所有条目必然同域，见 visible 过滤）。
-          h("span", { className: P + "-badge" }, rows.length ? t.paramCount(rows.length) : t.noParams),
-          rows.some(function (row) { return row.required; })
-            ? h("span", { className: P + "-badge " + P + "-req" }, t.required)
-            : null,
+          h("div", { className: P + "-cardmeta" },
+            h("code", { className: P + "-mono" }, Highlight.hit(action.name, kw)),
+            h("span", { className: P + "-badge" }, rows.length ? t.paramCount(rows.length) : t.noParams),
+            rows.some(function (row) { return row.required; })
+              ? h("span", { className: P + "-badge " + P + "-req" }, t.required)
+              : null),
           agentSwitch(action)),
         action.description ? h("p", { className: P + "-desc" }, Highlight.hit(action.description, kw)) : null,
         rows.length

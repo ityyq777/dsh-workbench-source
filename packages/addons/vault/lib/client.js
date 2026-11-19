@@ -4119,8 +4119,9 @@ var require_action_schema_style = __commonJS({
         "." + P + " select:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:1px}",
         "." + P + "-list{display:flex;flex-direction:column;gap:8px}",
         "." + P + "-card{border:1px solid var(--wb-border,#e3e5e9);border-radius:10px;padding:10px 12px;background:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));display:flex;flex-direction:column;gap:8px;min-width:0}",
-        "." + P + "-cardhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
-        "." + P + "-cardhead code{font-weight:640}",
+        "." + P + "-cardhead{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:8px}",
+        "." + P + "-cardmeta{display:flex;align-items:center;flex-wrap:wrap;gap:8px;min-width:0;min-height:24px}",
+        "." + P + "-cardhead code{font-weight:640;overflow-wrap:anywhere;min-width:0}",
         "." + P + "-hintline{margin:0;color:var(--dsw-alias-label-tertiary,inherit);font-size:11.5px;line-height:1.5}",
         "." + P + "-toggle{display:inline-flex;align-items:center;gap:6px;min-height:24px;padding:0 2px;border:0;background:transparent;font:inherit;font-size:11.5px;color:var(--wb-muted);cursor:pointer}",
         "." + P + "-track{display:inline-flex;align-items:center;box-sizing:border-box;width:30px;height:18px;padding:2px;border:1px solid var(--wb-muted);border-radius:999px;background:var(--wb-surface);color:var(--wb-muted)}",
@@ -4577,12 +4578,15 @@ var require_action_schema_view = __commonJS({
             h(
               "div",
               { className: P + "-cardhead" },
-              h("code", { className: P + "-mono" }, Highlight.hit(action.name, kw)),
-              // 域名在页头已展示一次，卡片内不再重复（所有条目必然同域，见 visible 过滤）。
-              h("span", { className: P + "-badge" }, rows.length ? t.paramCount(rows.length) : t.noParams),
-              rows.some(function(row) {
-                return row.required;
-              }) ? h("span", { className: P + "-badge " + P + "-req" }, t.required) : null,
+              h(
+                "div",
+                { className: P + "-cardmeta" },
+                h("code", { className: P + "-mono" }, Highlight.hit(action.name, kw)),
+                h("span", { className: P + "-badge" }, rows.length ? t.paramCount(rows.length) : t.noParams),
+                rows.some(function(row) {
+                  return row.required;
+                }) ? h("span", { className: P + "-badge " + P + "-req" }, t.required) : null
+              ),
               agentSwitch(action)
             ),
             action.description ? h("p", { className: P + "-desc" }, Highlight.hit(action.description, kw)) : null,
