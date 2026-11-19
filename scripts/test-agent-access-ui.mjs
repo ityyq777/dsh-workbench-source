@@ -10,8 +10,11 @@ import { createReact, loadCjs } from "./data-ui-harness.mjs";
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const VIEW_SRC = resolve(ROOT, "packages/addons/lib/action-schema-view.cjs");
 
+// 迷你 React 展开函数组件后会更新 node.children，但 props.children 仍是展开前的引用；
+// 取子节点时优先用 node.children，避免遍历到未展开的旧树。
 const kids = (node) => {
-  const c = node && node.props ? node.props.children : null;
+  const own = node && Array.isArray(node.children) && node.children.length ? node.children : null;
+  const c = own || (node && node.props ? node.props.children : null);
   return c == null ? [] : Array.isArray(c) ? c.flat(Infinity).filter((x) => x != null) : [c];
 };
 const walk = (n) => (n && typeof n === "object" ? [n, ...kids(n).flatMap(walk)] : []);
@@ -151,6 +154,48 @@ const roster = {
   assert.ok(findAll(tree, (n) => n.props && n.props["data-agent-toggle"]).length === 1);
   assert.ok(find(tree, (n) => n.props && n.props["data-agent-locked"] === "actions.setAgentAccess"), "宿主自身的改开关动作必须标成不可放开");
   assert.ok(!body.includes("v1.4.2"), "宿主页没有插件版本 badge");
+}
+
+// ── 宿主页模块：真实挂载 agentAccessPage，确认走 wb-shell 的 action 端点 ──
+{
+  const rt = createReact();
+  const pages = loadCjs(resolve(ROOT, "packages/shell/client/system-pages.cjs"), { react: rt.React });
+  const roster = {
+    ok: true,
+    shellVersion: "0.8.0",
+    domains: [{ id: "wb-shell", actionCount: 1 }],
+    actions: [{ name: "audit.list", domain: "wb-shell", description: "查审计", input: { type: "object", properties: {} }, agentEnabled: true }],
+  };
+  const posts = [];
+  const api = {
+    post(path, body) {
+      posts.push({ path, body });
+      return Promise.resolve({ ok: true, result: roster });
+    },
+  };
+  const t = (key) => ({ tab_agent: "Agent 权限", agent_desc: "开关只存本机，立即生效" }[key] || key);
+  // 真实客户端用 react/jsx-runtime：children 放在 props 里；迷你 React 的 createElement 只吃可变参数，这里转一下。
+  const jsxJsx = (type, props) => {
+    const p = Object.assign({}, props);
+    const kids = p.children;
+    delete p.children;
+    return rt.React.createElement(type, p, ...(Array.isArray(kids) ? kids : kids === undefined ? [] : [kids]));
+  };
+  const jsx = { jsx: jsxJsx, jsxs: jsxJsx };
+  const el = pages.agentAccessPage({ jsx, t, lang: "zh", api, head: (title, desc) => rt.React.createElement("div", { className: "head" }, title, desc) });
+  rt.mount(function HostPage() { return el; }, {});
+  await settle();
+  const tree = rt.rerender();
+  assert.equal(posts.length, 1, "宿主页只发一次 actions.list 请求");
+  assert.equal(posts[0].path, "/domains/wb-shell/actions/actions.list", "宿主页直接打 wb-shell 的 action 端点");
+  assert.equal(posts[0].body.domain, "wb-shell");
+  assert.equal(posts[0].body.detail, true);
+  const body = text(tree);
+  assert.match(body, /Agent 权限/);
+  assert.match(body, /audit\.list/);
+  const cards = pages.manageCards({ t, systemCard: (key, icon, title) => rt.React.createElement("b", { "data-card": key }, title) });
+  assert.equal(cards.length, 4, "首页管理区保留四个入口");
+  assert.equal(JSON.stringify(cards.map((c) => c.props["data-card"])), JSON.stringify(["agent", "backup", "audit", "account"]));
 }
 
 // ── 静态接线：宿主页面 / 文案 / 各插件声明 ───────────────────────────
