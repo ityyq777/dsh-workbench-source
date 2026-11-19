@@ -47,12 +47,36 @@ function load(file, id) {
 try {
   const hostMod = load("packages/shell/client/client.js", "dsh-workbench");
   if (!hostMod || hostMod.name !== "workbench") throw new Error("bad host module");
+  let mainSlot;
   const ctx = {
     effect: (fn) => { const d = fn(); if (typeof d === "function") return d; },
     locale: { register: () => () => {}, bind: () => (k) => k },
-    slots: { inject: (name, cb) => { if (cb) cb(); }, register: () => () => {} },
+    slots: { inject: (name, cb) => { if (cb) cb(); }, register: (slot, render) => { if (slot.name === "main") mainSlot = render; return () => {}; } },
   };
   hostMod.apply(ctx);
+  // 浅渲染实际主入口，保留路由 state，并执行首页和返回按钮真正的 onClick。
+  const states = [];
+  let cursor = 0;
+  react.useState = initial => {
+    const i = cursor++;
+    if (!(i in states)) states[i] = typeof initial === "function" ? initial() : initial;
+    return [states[i], value => { states[i] = typeof value === "function" ? value(states[i]) : value; }];
+  };
+  function renderPage() { cursor = 0; const el = mainSlot(); return el.type(el.props); }
+  function* nodes(node) {
+    if (!node || typeof node !== "object") return;
+    yield node;
+    for (const child of [node.props?.children].flat(Infinity)) yield* nodes(child);
+  }
+  for (const tab of ["tab_agent", "tab_backup", "tab_audit", "tab_account"]) {
+    const entry = [...nodes(renderPage())].find(n => n.type === "button" && [...nodes(n)].some(c => c.props?.children === tab));
+    if (!entry) throw new Error("missing home entry: " + tab);
+    entry.props.onClick();
+    const page = [...nodes(renderPage())];
+    if (!page.some(n => n.type === "h2" && n.props.children === tab)) throw new Error("missing heading: " + tab);
+    page.find(n => n.props?.className === "wb-back").props.onClick();
+    if (![...nodes(renderPage())].some(n => n.props?.className === "wb-hero")) throw new Error("return home failed: " + tab);
+  }
   const host = sandbox.__WB_HOST__;
   if (!host || typeof host.registerAddon !== "function") throw new Error("host bridge missing");
 

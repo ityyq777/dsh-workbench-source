@@ -396,7 +396,7 @@ function WorkbenchPage(props) {
         jsx.jsx("button", { className: "wb-back", onClick: function () { go("home"); }, children: "← " + t("back_home") }),
       ] }),
       jsx.jsxs("div", { className: "wb-page-title", children: [
-        jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(a.id, title) }),
+        jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(route, title) }),
         jsx.jsx("h2", { children: title }),
       ] }),
       desc ? jsx.jsx("div", { className: "wb-page-desc", children: desc }) : null,

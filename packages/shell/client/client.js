@@ -1107,9 +1107,9 @@ var require_action_schema_view = __commonJS({
             setSnap(function(prev) {
               if (!prev || !Array.isArray(prev.actions)) return prev;
               return Object.assign({}, prev, {
-                actions: prev.actions.map(function(a2) {
-                  if (!a2 || a2.name !== name) return a2;
-                  return Object.assign({}, a2, { agentEnabled: value });
+                actions: prev.actions.map(function(a) {
+                  if (!a || a.name !== name) return a;
+                  return Object.assign({}, a, { agentEnabled: value });
                 })
               });
             });
@@ -1121,15 +1121,15 @@ var require_action_schema_view = __commonJS({
           }
           Promise.resolve(api.call("actions.setAgentAccess", { action: name, agentEnabled: next })).then(done, fail);
         }
-        var all = snap && Array.isArray(snap.actions) ? snap.actions.filter(function(a2) {
-          return a2 && a2.domain === DOMAIN;
+        var all = snap && Array.isArray(snap.actions) ? snap.actions.filter(function(a) {
+          return a && a.domain === DOMAIN;
         }) : [];
         var info = snap && Array.isArray(snap.domains) ? snap.domains.filter(function(d) {
           return d && d.id === DOMAIN;
         })[0] || null : null;
         var typeOptions = [];
-        all.forEach(function(a2) {
-          paramRows(a2).forEach(function(row) {
+        all.forEach(function(a) {
+          paramRows(a).forEach(function(row) {
             row.types.forEach(function(name) {
               if (typeOptions.indexOf(name) < 0) typeOptions.push(name);
             });
@@ -1138,10 +1138,10 @@ var require_action_schema_view = __commonJS({
         typeOptions.sort();
         var kw = String(query || "").trim();
         var q = kw.toLowerCase();
-        var visible = all.filter(function(a2) {
-          var rows = paramRows(a2);
+        var visible = all.filter(function(a) {
+          var rows = paramRows(a);
           if (q) {
-            var hay = [a2.name || "", a2.description || ""].concat(rows.map(function(row) {
+            var hay = [a.name || "", a.description || ""].concat(rows.map(function(row) {
               return row.name + " " + row.type + " " + row.description;
             })).join(" ").toLowerCase();
             if (hay.indexOf(q) < 0) return false;
@@ -1539,11 +1539,11 @@ var require_system_tabs = __commonJS({
         var t = props.t;
         var lang = props.lang;
         var addons = props.addons || [];
-        var exportable = addons.filter(function(a2) {
-          return a2 && a2.backup && a2.backup.export;
+        var exportable = addons.filter(function(a) {
+          return a && a.backup && a.backup.export;
         });
-        var idsKey = exportable.map(function(a2) {
-          return a2.id;
+        var idsKey = exportable.map(function(a) {
+          return a.id;
         }).join(",");
         var st = react2.useState({});
         var selected = st[0];
@@ -1571,21 +1571,21 @@ var require_system_tabs = __commonJS({
           setSelected(function(prev) {
             var next = {};
             var changed = false;
-            exportable.forEach(function(a2) {
-              if (prev[a2.id]) next[a2.id] = true;
-              else next[a2.id] = true;
-              if (!prev[a2.id]) changed = true;
+            exportable.forEach(function(a) {
+              if (prev[a.id]) next[a.id] = true;
+              else next[a.id] = true;
+              if (!prev[a.id]) changed = true;
             });
             Object.keys(prev).forEach(function(id) {
-              if (!exportable.some(function(a2) {
-                return a2.id === id;
+              if (!exportable.some(function(a) {
+                return a.id === id;
               })) changed = true;
             });
             return changed ? next : prev;
           });
         }, [idsKey]);
-        var allSelected = exportable.length > 0 && exportable.every(function(a2) {
-          return selected[a2.id];
+        var allSelected = exportable.length > 0 && exportable.every(function(a) {
+          return selected[a.id];
         });
         function toggle(id) {
           var next = Object.assign({}, selected);
@@ -1594,8 +1594,8 @@ var require_system_tabs = __commonJS({
         }
         function selectAll(flag) {
           var next = {};
-          exportable.forEach(function(a2) {
-            next[a2.id] = flag;
+          exportable.forEach(function(a) {
+            next[a.id] = flag;
           });
           setSelected(next);
         }
@@ -1629,11 +1629,11 @@ var require_system_tabs = __commonJS({
         }
         function doExport() {
           if (busy) return;
-          var chosen = exportable.filter(function(a2) {
-            return selected[a2.id];
+          var chosen = exportable.filter(function(a) {
+            return selected[a.id];
           });
-          var ids = chosen.map(function(a2) {
-            return a2.id;
+          var ids = chosen.map(function(a) {
+            return a.id;
           });
           if (!ids.length) {
             setMsg(t("backup_select_required"));
@@ -1657,22 +1657,22 @@ var require_system_tabs = __commonJS({
             var name = m ? m[1] : "dsh-workbench-backup.zip";
             return r.blob().then(function(blob) {
               var href = URL.createObjectURL(blob);
-              var a2 = document.createElement("a");
-              a2.href = href;
-              a2.download = name;
-              document.body.appendChild(a2);
-              a2.click();
-              a2.remove();
+              var a = document.createElement("a");
+              a.href = href;
+              a.download = name;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
               setTimeout(function() {
                 URL.revokeObjectURL(href);
               }, 1500);
               setMsg(t("backup_download_started"));
               var rows = [];
-              chosen.forEach(function(a3) {
-                var tables = a3.tables || [];
-                if (!tables.length) rows.push({ id: a3.id + ":*", table: "\u2014", module: a3.title || a3.id, version: a3.version });
+              chosen.forEach(function(a2) {
+                var tables = a2.tables || [];
+                if (!tables.length) rows.push({ id: a2.id + ":*", table: "\u2014", module: a2.title || a2.id, version: a2.version });
                 tables.forEach(function(table) {
-                  rows.push({ id: a3.id + ":" + table, table, module: a3.title || a3.id, version: a3.version });
+                  rows.push({ id: a2.id + ":" + table, table, module: a2.title || a2.id, version: a2.version });
                 });
               });
               setExported(rows);
@@ -1691,8 +1691,8 @@ var require_system_tabs = __commonJS({
           setMsg("");
           setReport(null);
           var policyMap = {};
-          exportable.forEach(function(a2) {
-            policyMap[a2.id] = policyOf(a2.id);
+          exportable.forEach(function(a) {
+            policyMap[a.id] = policyOf(a.id);
           });
           fetch("/workbench/api/backup/import", { method: "POST", headers: { "content-type": "application/zip", "x-wb-backup-policy": JSON.stringify(policyMap) }, body: file }).then(function(r) {
             if (r.status === 422) {
@@ -1718,10 +1718,10 @@ var require_system_tabs = __commonJS({
             setBusy("");
           });
         }
-        function moduleCaps(a2) {
+        function moduleCaps(a) {
           var caps = [];
-          if (a2.backup && a2.backup.export) caps.push(t("backup_cap_export"));
-          if (a2.backup && a2.backup.import) caps.push(t("backup_cap_import"));
+          if (a.backup && a.backup.export) caps.push(t("backup_cap_export"));
+          if (a.backup && a.backup.import) caps.push(t("backup_cap_import"));
           return caps.join(" \xB7 ");
         }
         return jsx2.jsxs("div", { className: "wb-backup", children: [
@@ -1737,18 +1737,18 @@ var require_system_tabs = __commonJS({
                 }, children: t("backup_clear") })
               ] })
             ] }),
-            exportable.length ? jsx2.jsx("div", { className: "wb-stack", style: { marginTop: 10 }, children: exportable.map(function(a2) {
-              var open = !!openConfig[a2.id];
+            exportable.length ? jsx2.jsx("div", { className: "wb-stack", style: { marginTop: 10 }, children: exportable.map(function(a) {
+              var open = !!openConfig[a.id];
               return jsx2.jsxs(react2.Fragment, { children: [
                 jsx2.jsxs("div", { className: "wb-backup-row" + (open ? " open" : ""), children: [
                   jsx2.jsxs("label", { className: "wb-backup-row-main", children: [
-                    jsx2.jsx("input", { type: "checkbox", checked: !!selected[a2.id], onChange: function() {
-                      toggle(a2.id);
+                    jsx2.jsx("input", { type: "checkbox", checked: !!selected[a.id], onChange: function() {
+                      toggle(a.id);
                     } }),
                     jsx2.jsxs("span", { className: "wb-backup-main", children: [
-                      jsx2.jsxs("span", { className: "wb-backup-name", children: [a2.title || a2.id, jsx2.jsx("span", { className: "wb-badge", children: "v" + (a2.version || "?") })] }),
-                      jsx2.jsx("span", { className: "wb-backup-meta", children: moduleCaps(a2) }),
-                      a2.description ? jsx2.jsx("span", { className: "wb-backup-meta", children: a2.description }) : null
+                      jsx2.jsxs("span", { className: "wb-backup-name", children: [a.title || a.id, jsx2.jsx("span", { className: "wb-badge", children: "v" + (a.version || "?") })] }),
+                      jsx2.jsx("span", { className: "wb-backup-meta", children: moduleCaps(a) }),
+                      a.description ? jsx2.jsx("span", { className: "wb-backup-meta", children: a.description }) : null
                     ] })
                   ] }),
                   jsx2.jsx("button", {
@@ -1758,7 +1758,7 @@ var require_system_tabs = __commonJS({
                     "aria-label": t("backup_dup_policy"),
                     "aria-expanded": open,
                     onClick: function() {
-                      toggleConfig(a2.id);
+                      toggleConfig(a.id);
                     },
                     children: "\u2699"
                   })
@@ -1767,9 +1767,9 @@ var require_system_tabs = __commonJS({
                   jsx2.jsx("span", { className: "wb-backup-config-label", children: t("backup_dup_policy") }),
                   jsx2.jsx("select", {
                     className: "wb-select",
-                    value: policyOf(a2.id),
+                    value: policyOf(a.id),
                     onChange: function(e) {
-                      setPolicy(a2.id, e.target.value);
+                      setPolicy(a.id, e.target.value);
                     },
                     children: [
                       jsx2.jsx("option", { value: "newest", children: t("backup_dup_newest") }),
@@ -1779,7 +1779,7 @@ var require_system_tabs = __commonJS({
                   }),
                   jsx2.jsx("span", { className: "wb-backup-note", children: t("backup_dup_hint") })
                 ] }) : null
-              ] }, a2.id);
+              ] }, a.id);
             }) }) : jsx2.jsx("div", { className: "wb-msg", children: t("backup_no_modules") }),
             jsx2.jsxs("div", { className: "wb-backup-actions", style: { marginTop: 12 }, children: [
               jsx2.jsx("button", { className: "wb-btn", disabled: !!busy || !exportable.length, onClick: doExport, children: busy === "export" ? t("backup_exporting") : t("backup_export") }),
@@ -1796,11 +1796,11 @@ var require_system_tabs = __commonJS({
               jsx2.jsx("h3", { children: t("backup_export_result") }),
               jsx2.jsx("span", { className: "wb-hint", children: t("backup_download_started") })
             ] }),
-            jsx2.jsx("div", { className: "wb-stack", children: exported.map(function(a2) {
+            jsx2.jsx("div", { className: "wb-stack", children: exported.map(function(a) {
               return jsx2.jsxs("div", { className: "wb-backup-result-row", children: [
-                jsx2.jsx("span", { className: "wb-backup-table", children: a2.table }),
-                jsx2.jsxs("span", { className: "wb-backup-meta", children: [a2.module, jsx2.jsx("span", { className: "wb-badge", children: "v" + (a2.version || "?") })] })
-              ] }, a2.id);
+                jsx2.jsx("span", { className: "wb-backup-table", children: a.table }),
+                jsx2.jsxs("span", { className: "wb-backup-meta", children: [a.module, jsx2.jsx("span", { className: "wb-badge", children: "v" + (a.version || "?") })] })
+              ] }, a.id);
             }) })
           ] }) : null,
           report ? jsx2.jsxs("div", { className: "wb-card wb-backup-report", children: [
@@ -2267,8 +2267,8 @@ function setAddons(list) {
   addonState.addons = Array.isArray(list) ? list : [];
   addonState.loaded = true;
   var alive = {};
-  addonState.addons.forEach(function(a2) {
-    alive[a2.id] = a2;
+  addonState.addons.forEach(function(a) {
+    alive[a.id] = a;
   });
   registry.forEach(function(_m, id) {
     if (!alive[id]) registry.delete(id);
@@ -2530,8 +2530,8 @@ function SearchPanel(props) {
       window.open(hit.url, "_blank", "noopener,noreferrer");
       return;
     }
-    var addon = (props.addons || []).filter(function(a2) {
-      return a2.id === hit.domainId;
+    var addon = (props.addons || []).filter(function(a) {
+      return a.id === hit.domainId;
     })[0];
     if (addon) props.go("addon:" + addon.id + ":" + (hit.view || ""));
   }
@@ -2561,8 +2561,8 @@ function SearchPanel(props) {
       error ? jsx.jsx("div", { className: "wb-search-empty", children: error }) : null,
       !loading && !error && results.length === 0 ? jsx.jsx("div", { className: "wb-search-empty", children: t("search_none") }) : null,
       results.map(function(hit) {
-        var addon = (props.addons || []).filter(function(a2) {
-          return a2.id === hit.domainId;
+        var addon = (props.addons || []).filter(function(a) {
+          return a.id === hit.domainId;
         })[0];
         var title = addon ? addon.title || addon.id : hit.domainId;
         return jsx.jsxs("button", { type: "button", className: "wb-search-hit", onClick: function() {
@@ -2591,15 +2591,15 @@ function WorkbenchPage(props) {
   react.useEffect(function() {
     ensureCss();
   }, []);
-  var addons = (store.addons || []).filter(function(a2) {
-    return a2 && a2.enabled;
+  var addons = (store.addons || []).filter(function(a) {
+    return a && a.enabled;
   });
   var currentAddon = null;
   if (route.indexOf("addon:") === 0) {
     var parts = route.split(":");
     var wanted = parts[1] || "";
-    addons.forEach(function(a2) {
-      if (a2.id === wanted) currentAddon = a2;
+    addons.forEach(function(a) {
+      if (a.id === wanted) currentAddon = a;
     });
   }
   var mod = currentAddon ? registry.get(currentAddon.id) : null;
@@ -2628,15 +2628,15 @@ function WorkbenchPage(props) {
     if (m && m.icon) return h(m.icon, { size: 18, strokeWidth: 1.9, "aria-hidden": "true" });
     return String(title || "?").slice(0, 1);
   }
-  function openAddon(a2) {
-    var m = registry.get(a2.id);
-    var v = m && m.views && m.views[0] || a2.views && a2.views[0] || null;
-    go("addon:" + a2.id + ":" + (v && v.id ? v.id : ""));
+  function openAddon(a) {
+    var m = registry.get(a.id);
+    var v = m && m.views && m.views[0] || a.views && a.views[0] || null;
+    go("addon:" + a.id + ":" + (v && v.id ? v.id : ""));
   }
   react.useEffect(function() {
     navigateAddonHook = function(addonId) {
-      var t2 = addons.filter(function(a2) {
-        return a2 && a2.id === addonId;
+      var t2 = addons.filter(function(a) {
+        return a && a.id === addonId;
       })[0];
       if (t2) openAddon(t2);
       return !!t2;
@@ -2653,32 +2653,32 @@ function WorkbenchPage(props) {
         }, children: "\u2190 " + t("back_home") })
       ] }),
       jsx.jsxs("div", { className: "wb-page-title", children: [
-        jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(a.id, title) }),
+        jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(route, title) }),
         jsx.jsx("h2", { children: title })
       ] }),
       desc ? jsx.jsx("div", { className: "wb-page-desc", children: desc }) : null
     ] });
   }
-  function addonCard(a2) {
-    var m = registry.get(a2.id);
-    var v = m && m.views && m.views[0] || a2.views && a2.views[0] || null;
-    var title = a2.title || pickTitle(v && v.title, lang) || a2.id;
-    var count = m && m.views ? m.views.length : a2.views ? a2.views.length : 0;
-    return jsx.jsxs("button", { type: "button", className: "wb-home-card" + (a2.error ? " dim" : ""), onClick: function() {
-      openAddon(a2);
+  function addonCard(a) {
+    var m = registry.get(a.id);
+    var v = m && m.views && m.views[0] || a.views && a.views[0] || null;
+    var title = a.title || pickTitle(v && v.title, lang) || a.id;
+    var count = m && m.views ? m.views.length : a.views ? a.views.length : 0;
+    return jsx.jsxs("button", { type: "button", className: "wb-home-card" + (a.error ? " dim" : ""), onClick: function() {
+      openAddon(a);
     }, children: [
       jsx.jsxs("div", { className: "wb-home-top", children: [
-        jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(a2.id, a2.title || title) }),
-        jsx.jsx("span", { className: "wb-badge", children: "v" + (a2.version || "?") })
+        jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(a.id, a.title || title) }),
+        jsx.jsx("span", { className: "wb-badge", children: "v" + (a.version || "?") })
       ] }),
       jsx.jsx("div", { className: "wb-home-title", children: title }),
-      jsx.jsx("div", { className: "wb-home-desc", children: a2.description || (count > 1 ? count + " " + t("views") : "") }),
-      a2.error ? jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + a2.error }) : null,
+      jsx.jsx("div", { className: "wb-home-desc", children: a.description || (count > 1 ? count + " " + t("views") : "") }),
+      a.error ? jsx.jsx("div", { className: "wb-err", children: t("addon_error") + ": " + a.error }) : null,
       jsx.jsxs("div", { className: "wb-home-foot", children: [
         jsx.jsx("span", { children: count ? count + " " + t("views") : "" }),
         jsx.jsx("b", { children: t("open") + " \u2192" })
       ] })
-    ] }, a2.id);
+    ] }, a.id);
   }
   function systemCard(key, icon, title, desc) {
     return jsx.jsxs("button", { type: "button", className: "wb-home-card", onClick: function() {
