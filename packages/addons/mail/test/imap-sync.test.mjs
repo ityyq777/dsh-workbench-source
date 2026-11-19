@@ -133,6 +133,7 @@ test("两份本地数据库经同一 TLS 邮箱同步已读/移动/废纸篓；�
   function client() {
     const db = new DatabaseSync(":memory:");
     ensureSchema(db);
+    db.exec("INSERT INTO mail_account (id,name,email,imap_host,smtp_host,created_at,updated_at) VALUES ('a','A','a@local.test','localhost','localhost',0,0)");
     const api = createSync({
       db,
       account: () => ({ imap_host: acc.host, imap_port: acc.port, imap_tls: 1, username: acc.user }),

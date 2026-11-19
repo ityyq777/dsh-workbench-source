@@ -882,12 +882,135 @@ var require_compose_model = __commonJS({
   }
 });
 
+// packages/addons/mail/client/ui/send-attachments.cjs
+var require_send_attachments = __commonJS({
+  "packages/addons/mail/client/ui/send-attachments.cjs"(exports2, module2) {
+    "use strict";
+    var C = require_common();
+    var maxBytes = 8 * 1024 * 1024;
+    function fits(local, selected) {
+      return local.length + selected.length <= 10 && local.concat(selected).reduce((n, file) => n + (Number(file.size) || 0), 0) <= maxBytes;
+    }
+    function readFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reader.onabort = () => reject(new Error("\u65E0\u6CD5\u8BFB\u53D6\u9644\u4EF6\uFF1A" + file.name));
+        reader.onload = () => {
+          const result = String(reader.result || "");
+          const marker = result.indexOf(",");
+          if (marker < 0) return reject(new Error("\u65E0\u6CD5\u8BFB\u53D6\u9644\u4EF6\uFF1A" + file.name));
+          resolve({ filename: file.name, mime: file.type, secretBase64: result.slice(marker + 1) });
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    function useAttachments(R, api, value, original) {
+      const [files, setFiles] = R.useState([]), [ids, setIds] = R.useState([]), [error, setError] = R.useState("");
+      const origin = value?.mode === "forward" ? value.originId : "";
+      const [remote, setRemote] = R.useState({});
+      R.useEffect(() => {
+        if (!origin || original) return;
+        let active = true;
+        C.call(api, "mail.messageGet", { id: origin }).then((data) => {
+          if (active) setRemote({ data });
+        }, (e) => {
+          if (active) setRemote({ error: C.errText(e) });
+        });
+        return () => {
+          active = false;
+        };
+      }, [origin, original, api]);
+      const available = origin ? (original || remote.data?.attachments || []).filter((f) => f.section) : [];
+      const chosen = available.filter((f) => ids.includes(f.id));
+      const limit = "\u9644\u4EF6\u5408\u8BA1\u6700\u591A 10 \u4E2A\u30018 MiB";
+      return {
+        async read() {
+          if (chosen.length !== ids.length) throw new Error("\u9009\u4E2D\u7684\u539F\u9644\u4EF6\u5DF2\u53D8\u5316\uFF0C\u8BF7\u91CD\u65B0\u9009\u62E9");
+          if (!fits(files, chosen)) throw new Error(limit);
+          return { uploads: await Promise.all(files.map(readFile)), originalAttachmentIds: ids };
+        },
+        render(h, busy) {
+          return h(
+            "section",
+            null,
+            h(C.Field, { h, label: "\u6DFB\u52A0\u672C\u673A\u9644\u4EF6", hint: limit }, h("input", { type: "file", multiple: true, disabled: busy, onChange: (e) => {
+              const next = files.concat(Array.from(e.target.files || []));
+              e.target.value = "";
+              if (fits(next, chosen)) {
+                setFiles(next);
+                setError("");
+              } else setError(limit);
+            } })),
+            files.map((file, i) => h("div", { key: i, className: "wbml-actions" }, h("span", null, file.name), h(C.Btn, { h, disabled: busy, "aria-label": "\u79FB\u9664 " + file.name, onClick: () => {
+              setFiles(files.filter((_, j) => j !== i));
+              setError("");
+            } }, "\u79FB\u9664"))),
+            origin && available.length ? h("fieldset", { disabled: busy }, h("legend", null, "\u968F\u4FE1\u8F6C\u53D1\u7684\u539F\u9644\u4EF6"), available.map((f) => h("div", { key: f.id }, h("label", null, h("input", { type: "checkbox", checked: ids.includes(f.id), onChange: (e) => {
+              if (!e.target.checked) {
+                setIds(ids.filter((id) => id !== f.id));
+                setError("");
+              } else if (fits(files, chosen.concat(f))) {
+                setIds(ids.concat(f.id));
+                setError("");
+              } else setError(limit);
+            } }), " " + f.filename)))) : null,
+            h(C.Notice, { h, kind: "error", text: error || (origin && remote.error ? "\u65E0\u6CD5\u8BFB\u53D6\u539F\u4FE1\u9644\u4EF6\uFF1A" + remote.error : "") })
+          );
+        }
+      };
+    }
+    module2.exports = useAttachments;
+  }
+});
+
+// packages/addons/mail/client/ui/delivery-log.cjs
+var require_delivery_log = __commonJS({
+  "packages/addons/mail/client/ui/delivery-log.cjs"(exports2, module2) {
+    "use strict";
+    var C = require_common();
+    var labels = { sending: "\u6B63\u5728\u53D1\u9001", accepted: "\u670D\u52A1\u5668\u5DF2\u63A5\u6536\uFF0C\u5C1A\u672A\u7559\u6863", archived: "\u5DF2\u53D1\u9001\u5E76\u7559\u6863", rejected: "\u670D\u52A1\u5668\u660E\u786E\u62D2\u6536", not_sent: "\u672A\u63D0\u4EA4\u5230\u670D\u52A1\u5668", unknown: "\u6295\u9012\u7ED3\u679C\u672A\u77E5\uFF0C\u8BF7\u6838\u5BF9\u90AE\u7BB1\uFF0C\u52FF\u91CD\u53D1" };
+    function DeliveryLog({ h, React: R, api, refreshKey }) {
+      const rows = C.useLoad(R, api, "mail.deliveryList", {}, [refreshKey]);
+      const [busy, setBusy] = R.useState(""), [error, setError] = R.useState("");
+      async function archive(id) {
+        setBusy(id);
+        setError("");
+        try {
+          await C.call(api, "mail.deliveryArchive", { id });
+          rows.refresh();
+        } catch (e) {
+          setError(C.errText(e));
+        } finally {
+          setBusy("");
+        }
+      }
+      return h(
+        "details",
+        { className: "wbml-card" },
+        h("summary", null, "\u6295\u9012\u8BB0\u5F55"),
+        h(C.Notice, { h, kind: "error", text: error || rows.error }),
+        rows.loading ? h("p", { role: "status" }, "\u8BFB\u53D6\u4E2D\u2026") : rows.data?.items.length === 0 ? h("p", null, "\u6CA1\u6709\u5F85\u5904\u7406\u7684\u6295\u9012\u8BB0\u5F55") : null,
+        (rows.data?.items || []).map((r) => h(
+          "div",
+          { key: r.id, className: "wbml-actions" },
+          h("span", null, (r.subject || "(\u65E0\u4E3B\u9898)") + " \xB7 " + (labels[r.status] || r.status)),
+          h("small", null, r.messageId),
+          r.status === "accepted" ? h(C.Btn, { h, disabled: !!busy, onClick: () => archive(r.id) }, "\u8865\u8BB0\u672C\u5730\u5DF2\u53D1\u9001") : null
+        ))
+      );
+    }
+    module2.exports = { DeliveryLog, labels };
+  }
+});
+
 // packages/addons/mail/client/views/compose.cjs
 var require_compose = __commonJS({
   "packages/addons/mail/client/views/compose.cjs"(exports2, module2) {
     "use strict";
     var C = require_common();
     var M = require_compose_model();
+    var useAttachments = require_send_attachments();
+    var { DeliveryLog, labels } = require_delivery_log();
     var writes = /* @__PURE__ */ new Map();
     function queued(key, operation) {
       const prev = writes.get(key) || Promise.resolve();
@@ -904,6 +1027,7 @@ var require_compose = __commonJS({
       const { h, React: R, api, draftKey: key, accounts } = p;
       const [value, setValue] = R.useState(null), [notice, setNotice] = R.useState("");
       const [busy, setBusy] = R.useState(false), [status, setStatus] = R.useState("");
+      const attachments = useAttachments(R, api, value, p.originalAttachments);
       const latest = R.useRef(null), pending = R.useRef(null), timer = R.useRef(null), revision = R.useRef(0), locked = R.useRef(false), alive = R.useRef(false);
       function flush() {
         clearTimeout(timer.current);
@@ -959,7 +1083,7 @@ var require_compose = __commonJS({
       }
       async function send() {
         if (locked.current) return;
-        let sent = false;
+        let terminal = false;
         locked.current = true;
         setBusy(true);
         setNotice("");
@@ -969,14 +1093,22 @@ var require_compose = __commonJS({
           const to = M.unique(M.addresses(d.to, true), seen), cc = M.unique(M.addresses(d.cc, true), seen);
           if (!d.accountId || !to.length) throw new Error("\u8BF7\u9009\u62E9\u8D26\u6237\u5E76\u586B\u5199\u6536\u4EF6\u4EBA");
           await flush();
-          await C.call(api, "mail.messageSend", { accountId: d.accountId, to, cc, subject: d.subject, text: d.text, mode: d.mode, originId: d.originId });
-          sent = true;
+          const files = await attachments.read();
+          let r;
+          try {
+            r = await C.call(api, "mail.composeSend", { accountId: d.accountId, to, cc, subject: d.subject, text: d.text, mode: d.mode, originId: d.originId, ...files });
+          } catch (e) {
+            throw new Error(C.errText(e) + "\uFF1B\u672A\u53D6\u5F97\u6295\u9012\u7ED3\u679C\u65F6\u8BF7\u5148\u6838\u5BF9\u6295\u9012\u8BB0\u5F55");
+          }
+          p.onDelivery?.();
+          if (!r.sent && r.status !== "unknown") throw new Error((labels[r.status] || "\u53D1\u9001\u5931\u8D25") + "\uFF1A" + (r.reason || ""));
+          terminal = true;
           await queued(key, () => C.call(api, "mail.draftDelete", { key }));
-          p.onSent();
+          p.onSent(labels[r.status]);
         } catch (e) {
-          if (alive.current) setNotice((sent ? "\u90AE\u4EF6\u5DF2\u53D1\u9001\uFF0C\u4F46\u672A\u80FD\u6E05\u7406\u8349\u7A3F\uFF0C\u8BF7\u52FF\u91CD\u53D1\uFF1A" : "") + C.errText(e));
+          if (alive.current) setNotice((terminal ? "\u672C\u6B21\u6295\u9012\u8BF7\u52FF\u91CD\u53D1\uFF0C\u4F46\u672A\u80FD\u6E05\u7406\u8349\u7A3F\uFF1A" : "") + C.errText(e));
         } finally {
-          if (!sent) {
+          if (!terminal) {
             locked.current = false;
             if (alive.current) setBusy(false);
           }
@@ -993,6 +1125,7 @@ var require_compose = __commonJS({
         field("cc", "\u6284\u9001"),
         field("subject", "\u4E3B\u9898"),
         field("text", "\u6B63\u6587", true),
+        attachments.render(h, busy),
         h(C.Notice, { h, kind: "error", text: notice }),
         h(
           "div",
@@ -1007,19 +1140,21 @@ var require_compose = __commonJS({
     function Compose(p) {
       const { h, React: R, api } = p;
       const accounts = C.useLoad(R, api, "mail.accountList", {}, []), drafts = C.useLoad(R, api, "mail.draftList", {}, []);
+      const [deliveryRev, refreshDelivery] = R.useState(0);
       const [key, setKey] = R.useState("new"), [reset, setReset] = R.useState(0), [message, setMessage] = R.useState("");
       return h(
         "div",
         { className: "wbml-page" },
         h("h2", null, "\u5199\u4FE1"),
         h(C.Notice, { h, kind: "ok", text: message }),
+        h(DeliveryLog, { h, React: R, api, refreshKey: deliveryRev }),
         h(C.Notice, { h, kind: "error", text: accounts.error || drafts.error }),
         h(C.Field, { h, label: "\u672C\u5730\u8349\u7A3F" }, h("select", { className: "wbml-input", value: key, onChange: (e) => {
           setKey(e.target.value);
           setMessage("");
         } }, h("option", { value: "new" }, "\u65B0\u90AE\u4EF6\u8349\u7A3F"), (drafts.data && drafts.data.items || []).filter((d) => d.key !== "new").map((d) => h("option", { key: d.key, value: d.key }, M.labels[d.mode] + " \xB7 " + (d.subject || "(\u65E0\u4E3B\u9898)"))))),
-        h(Editor, Object.assign({}, p, { key: key + ":" + reset, draftKey: key, initial: key === "new" ? M.initial() : null, accounts: accounts.data && accounts.data.items || [], onSent: () => {
-          setMessage("\u5DF2\u53D1\u9001");
+        h(Editor, Object.assign({}, p, { key: key + ":" + reset, draftKey: key, initial: key === "new" ? M.initial() : null, accounts: accounts.data && accounts.data.items || [], onDelivery: () => refreshDelivery((n) => n + 1), onSent: (outcome) => {
+          setMessage(outcome);
           setKey("new");
           setReset((n) => n + 1);
           drafts.refresh();
@@ -1041,7 +1176,7 @@ var require_reply_tools = __commonJS({
     module2.exports = function ReplyTools(p) {
       const { React: R, h, api, message: m } = p;
       const accounts = C.useLoad(R, api, "mail.accountList", {}, []);
-      const [mode, setMode] = R.useState(""), [sent, setSent] = R.useState(false);
+      const [mode, setMode] = R.useState(""), [sent, setSent] = R.useState("");
       const rows = accounts.data && accounts.data.items || [];
       const owner = rows.some((a) => a.id === m.accountId);
       const initial = mode && M.initial(mode, m, p.body || "", rows);
@@ -1049,14 +1184,14 @@ var require_reply_tools = __commonJS({
         "section",
         null,
         h("div", { className: "wbml-actions" }, ["reply", "replyAll", "forward"].map((v) => h(C.Btn, { key: v, h, disabled: !owner || v === "forward" && !p.bodyReady, onClick: () => {
-          setSent(false);
+          setSent("");
           setMode(v);
         } }, M.labels[v])), mode ? h(C.Btn, { h, onClick: () => setMode("") }, "\u6536\u8D77\u8349\u7A3F") : null),
         h(C.Notice, { h, kind: "error", text: accounts.error }),
-        h(C.Notice, { h, kind: "ok", text: sent ? "\u5DF2\u53D1\u9001" : "" }),
-        initial ? h(Editor, Object.assign({}, p, { key: initial.key, draftKey: initial.key, initial, accounts: rows, onSent: () => {
+        h(C.Notice, { h, kind: "ok", text: sent }),
+        initial ? h(Editor, Object.assign({}, p, { key: initial.key, draftKey: initial.key, initial, accounts: rows, onSent: (outcome) => {
           setMode("");
-          setSent(true);
+          setSent(outcome);
         } })) : null
       );
     };
@@ -1081,6 +1216,7 @@ var require_messages = __commonJS({
       var accs = props.accounts.data && props.accounts.data.items || [];
       var boxes = C.useLoad(React, api, "mail.mailboxList", { accountId: accountId[0] || void 0 }, [accountId[0]]);
       var folders = boxes.data && boxes.data.items || [];
+      var unified = React.useState(true), server = React.useState(null), searchRev = React.useRef(0);
       var folder = React.useState(accountId[0] ? "INBOX" : "");
       var search = React.useState(""), q = React.useState(""), unseen = React.useState(false);
       var page = React.useState([]), tokens = page[0];
@@ -1091,12 +1227,13 @@ var require_messages = __commonJS({
         {
           accountId: accountId[0] || void 0,
           mailbox: folder[0] || void 0,
+          unifiedInbox: !accountId[0] && unified[0],
           q: q[0],
           unread: unseen[0],
           limit: 50,
           cursor: tokens.at(-1)
         },
-        [folder[0], q[0], unseen[0], tokens]
+        [folder[0], q[0], unseen[0], tokens, unified[0]]
       );
       var sel = React.useState(null), msg = React.useState(null), target = React.useState("");
       var bodyState = React.useState({}), busy = React.useState(false), remote = React.useState(null);
@@ -1105,6 +1242,7 @@ var require_messages = __commonJS({
         return function() {
           generation.current++;
           selected.current++;
+          searchRev.current++;
         };
       }, []);
       function close() {
@@ -1113,7 +1251,24 @@ var require_messages = __commonJS({
         target[1]("");
         bodyState[1]({});
       }
+      function clearServer() {
+        searchRev.current++;
+        server[1](null);
+      }
+      function searchServer() {
+        close();
+        var rev = ++searchRev.current;
+        server[1]({ loading: true });
+        C.call(api, "mail.serverSearch", { accountId: accountId[0], mailbox: folder[0], q: search[0].trim(), unread: unseen[0] }).then(function(r) {
+          if (rev !== searchRev.current) return;
+          server[1]({ data: r });
+          list.refresh();
+        }).catch(function(e) {
+          if (rev === searchRev.current) server[1]({ error: "\u670D\u52A1\u5668\u641C\u7D22\u5931\u8D25\uFF1A" + C.errText(e) });
+        });
+      }
       function reset() {
+        clearServer();
         close();
         page[1]([]);
         msg[1](null);
@@ -1229,7 +1384,8 @@ var require_messages = __commonJS({
         page[1](stack);
       }
       var current = sel[0], state = bodyState[0], data = state.data || {};
-      var items = list.data && list.data.items || [], canSync = !!accountId[0];
+      var result = server[0] || list;
+      var items = result.data && result.data.items || [], canSync = !!accountId[0];
       var localOnly = folders.some(function(f) {
         return f.name === folder[0] && f.localOnly;
       });
@@ -1265,12 +1421,12 @@ var require_messages = __commonJS({
           }) : null
         );
       }
-      var body = list.loading ? h("div", { className: "wbml-state" }, "\u52A0\u8F7D\u4E2D\u2026") : list.error ? h(C.Notice, { h, kind: "error", text: list.error }) : h(
+      var body = result.loading ? h("div", { className: "wbml-state" }, "\u52A0\u8F7D\u4E2D\u2026") : result.error ? h(C.Notice, { h, kind: "error", text: result.error }) : h(
         React.Fragment,
         null,
         !items.length ? h(C.Empty, {
           h,
-          text: !accs.length ? "\u8FD8\u6CA1\u6709\u8D26\u6237" : q[0] || unseen[0] ? "\u672A\u627E\u5230\u7B26\u5408\u6761\u4EF6\u7684\u672C\u5730\u90AE\u4EF6" : "\u6CA1\u6709\u672C\u5730\u90AE\u4EF6"
+          text: server[0] ? "\u670D\u52A1\u5668\u6CA1\u6709\u5339\u914D\u7684\u90AE\u4EF6" : !accs.length ? "\u8FD8\u6CA1\u6709\u8D26\u6237" : q[0] || unseen[0] ? "\u672A\u627E\u5230\u7B26\u5408\u6761\u4EF6\u7684\u672C\u5730\u90AE\u4EF6" : "\u6CA1\u6709\u672C\u5730\u90AE\u4EF6"
         }) : null,
         h(
           "div",
@@ -1287,7 +1443,7 @@ var require_messages = __commonJS({
                   open(m);
                 }
               },
-              h("span", { className: "wbml-who" }, sender(m)),
+              h("span", { className: "wbml-who" }, !accountId[0] && m.accountName ? sender(m) + " \xB7 " + m.accountName : sender(m)),
               h("span", { className: "wbml-time" }, C.fmtTime(m.dateAt, props.lang)),
               h(
                 "div",
@@ -1298,7 +1454,7 @@ var require_messages = __commonJS({
             );
           })
         ),
-        h(
+        !server[0] && h(
           "div",
           { className: "wbml-paging" },
           button(
@@ -1359,7 +1515,15 @@ var require_messages = __commonJS({
                   })
                 )
               ),
-              h(
+              !canSync && h(C.Field, { h, label: "\u90AE\u4EF6\u8303\u56F4" }, h("select", {
+                className: "wbml-input",
+                value: unified[0] ? "inbox" : "all",
+                onChange: function(e) {
+                  unified[1](e.target.value === "inbox");
+                  reset();
+                }
+              }, h("option", { value: "inbox" }, "\u7EDF\u4E00\u6536\u4EF6\u7BB1"), h("option", { value: "all" }, "\u5168\u90E8\u90AE\u4EF6"))),
+              canSync && h(
                 C.Field,
                 { h, label: "\u6587\u4EF6\u5939" },
                 h(
@@ -1423,11 +1587,18 @@ var require_messages = __commonJS({
                     type: "search",
                     value: search[0],
                     onChange: function(e) {
+                      clearServer();
+                      close();
                       search[1](e.target.value);
                     }
                   })
                 ),
-                h(C.Btn, { h, type: "submit" }, "\u641C\u7D22")
+                h(C.Btn, { h, type: "submit" }, "\u641C\u7D22"),
+                button("\u5728\u670D\u52A1\u5668\u641C\u7D22", searchServer, !canRemote || !folder[0] || !search[0].trim() || !!server[0]?.loading),
+                server[0] && button("\u8FD4\u56DE\u672C\u5730\u5217\u8868", function() {
+                  clearServer();
+                  close();
+                })
               ),
               h(
                 "label",
@@ -1450,11 +1621,11 @@ var require_messages = __commonJS({
             h(
               "div",
               { className: "wbml-pane-head" },
-              h("strong", null, folder[0] || "\u5168\u90E8\u8D26\u6237"),
+              h("strong", null, server[0] ? "\u670D\u52A1\u5668\u641C\u7D22 \xB7 " + folder[0] : folder[0] || (unified[0] ? "\u7EDF\u4E00\u6536\u4EF6\u7BB1" : "\u5168\u90E8\u90AE\u4EF6")),
               h(
                 "span",
                 { className: "wbml-muted" },
-                "\u672C\u9875 " + items.length + " \u5C01 \xB7 " + items.filter(isUnread).length + " \u672A\u8BFB"
+                result.error || result.loading ? null : (server[0] ? "\u663E\u793A " : "\u672C\u9875 ") + items.length + " \u5C01 \xB7 " + items.filter(isUnread).length + " \u672A\u8BFB" + (server[0]?.data?.truncated ? " \xB7 \u4EC5\u663E\u793A\u6700\u8FD1 50 \u5C01" : "")
               )
             ),
             h("div", { className: "wbml-state-box" }, body)
@@ -1540,7 +1711,8 @@ var require_messages = __commonJS({
                   key: current.id,
                   message: current,
                   body: data.body || current.body || "",
-                  bodyReady: !!state.data
+                  bodyReady: !!state.data,
+                  originalAttachments: data.attachments || current.attachments || []
                 })
               )
             )
@@ -4793,7 +4965,7 @@ var require_actions = __commonJS({
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.3.0",
+    version: "0.4.0",
     icon: (init_mail(), __toCommonJS(mail_exports)).default,
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },

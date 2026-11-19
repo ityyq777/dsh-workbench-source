@@ -1,5 +1,6 @@
 /** 邮件域数据层：账户、文件夹、邮件、附件；密码只存 vault secretId。 */
 import { ensureDraftSchema } from "./drafts.js";
+import { ensureDeliverySchema } from "./delivery.js";
 let clock = () => Date.now();
 export function bindClock(fn) { clock = typeof fn === "function" ? fn : () => Date.now(); }
 export function now() { return clock(); }
@@ -18,6 +19,7 @@ function hasColumn(db, table, column) {
 export function ensureSchema(db) {
   for (const sql of DDL) db.exec(sql);
   ensureDraftSchema(db);
+  ensureDeliverySchema(db);
   for (const [table, column, type] of [
     ["mail_message", "body_truncated", "INTEGER NOT NULL DEFAULT 0"],
     ["mail_message", "uid_validity", "INTEGER NOT NULL DEFAULT 0"],

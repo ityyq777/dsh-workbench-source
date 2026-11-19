@@ -1,5 +1,6 @@
 import { newId, now } from "../db/db.js";
-import { imapRecent, imapSeen, imapMove } from "../infra/imap.js";
+import { imapRecent, imapSeen, imapMove, imapSearchHeaders } from "../infra/imap.js";
+import { visibleMessage } from "../db/visibility.js";
 
 export function createSync({ db, account, password, message }) {
   const all = (sql, ...args) => db.prepare(sql).all(...args);
@@ -29,13 +30,10 @@ export function createSync({ db, account, password, message }) {
   async function login(id) {
     const a = account(id),
       p = await password(a);
+    if (account(id).rev !== a.rev) throw new Error("邮箱账户已变更，请重试");
     return [{ host: a.imap_host, port: a.imap_port, secure: !!a.imap_tls, user: p.user }, p.secret];
   }
-  function byId(id) {
-    const row = one("SELECT * FROM mail_message WHERE id=?", id);
-    if (!row) throw new Error("邮件不存在");
-    return row;
-  }
+  const byId = (id) => visibleMessage(db, id);
   function discard(id) {
     run("DELETE FROM mail_attachment WHERE message_id=?", id);
     run("DELETE FROM mail_message WHERE id=?", id);
@@ -141,6 +139,38 @@ export function createSync({ db, account, password, message }) {
       });
     });
   }
+  async function serverSearch({ accountId, mailbox: selection, q, unread } = {}) {
+    const mailbox = normalizeBox(selection);
+    q = String(q || '').trim();
+    if (!accountId || !mailbox || !q || q.length > 256 || /[\x00-\x1f\x7f]/.test(q))
+      throw new Error('请选择账户和远端文件夹，并输入 1–256 个字符的关键词');
+    return serial(accountId, async () => {
+      const a = account(accountId);
+      if (!a.enabled || (mailbox !== 'INBOX' && !one('SELECT id FROM mail_mailbox WHERE account_id=? AND name=?', accountId, mailbox)))
+        throw new Error('请选择启用的账户和已识别的远端文件夹');
+      const res = await imapSearchHeaders(...(await login(accountId)), mailbox, q, !!unread);
+      return tx(() => {
+        if (account(accountId).rev !== a.rev) throw new Error('邮箱账户已变更，请重新搜索');
+        const items = res.items.map(it => {
+          let old = one('SELECT id,uid_validity,body_at,length(body) body,account_id,mailbox FROM mail_message WHERE account_id=? AND mailbox=? AND uid=?', accountId, mailbox, it.uid);
+          if (old && old.uid_validity !== res.uidValidity) {
+            retire(old);
+            old = null;
+          }
+          const id = old?.id || newId('msg');
+          const stamp = now();
+          const dateAt = Date.parse(it.date) || stamp;
+          run(`INSERT INTO mail_message(id,account_id,mailbox,uid,uid_validity,message_id,subject,from_addr,from_name,to_addr,cc_addr,date_at,flags,created_at,updated_at,reply_to,thread_refs)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(account_id,mailbox,uid) DO UPDATE SET flags=excluded.flags,updated_at=excluded.updated_at`,
+          id, accountId, mailbox, it.uid, res.uidValidity, it.messageId, it.subject, it.from, it.fromName || '', it.to,
+          it.cc, dateAt, it.flags, stamp, stamp, it.replyTo, it.threadRefs);
+          return { id, accountId, accountName: a.name || a.email, mailbox, uid: it.uid, subject: it.subject, from: it.from,
+            fromName: it.fromName, dateAt, flags: it.flags };
+        });
+        return { source: 'server', items, truncated: res.truncated };
+      });
+    });
+  }
   function writable(row) {
     if (row.uid <= 0 || !row.uid_validity) throw new Error("本地副本没有可确认的远端身份，请先同步");
   }
@@ -153,6 +183,7 @@ export function createSync({ db, account, password, message }) {
         const row = byId(id);
         writable(row);
         const flags = await imapSeen(...(await login(row.account_id)), row, input.read !== false);
+        byId(id);
         run("UPDATE mail_message SET flags=?,updated_at=? WHERE id=?", flags, now(), id);
         updated++;
       });
@@ -169,6 +200,7 @@ export function createSync({ db, account, password, message }) {
       if (row.mailbox === dest) return message(id);
       const remote = await imapMove(...(await login(row.account_id)), row, dest);
       return tx(() => {
+        byId(id);
         const clash = one(
           "SELECT * FROM mail_message WHERE account_id=? AND mailbox=? AND uid=?",
           row.account_id,
@@ -198,5 +230,5 @@ export function createSync({ db, account, password, message }) {
     await move({ id: row.id, mailbox: trash.name });
     return { deleted: false, trashed: true, id: row.id };
   }
-  return { sync, markRead, move, remove };
+  return { sync, serverSearch, markRead, move, remove };
 }

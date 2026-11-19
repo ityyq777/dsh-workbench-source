@@ -18,6 +18,7 @@ function Inbox(props) {
   var accs = (props.accounts.data && props.accounts.data.items) || [];
   var boxes = C.useLoad(React, api, "mail.mailboxList", { accountId: accountId[0] || undefined }, [accountId[0]]);
   var folders = (boxes.data && boxes.data.items) || [];
+  var unified = React.useState(true), server = React.useState(null), searchRev = React.useRef(0);
   var folder = React.useState(accountId[0] ? "INBOX" : "");
   var search = React.useState(""),
     q = React.useState(""),
@@ -31,12 +32,13 @@ function Inbox(props) {
     {
       accountId: accountId[0] || undefined,
       mailbox: folder[0] || undefined,
+      unifiedInbox: !accountId[0] && unified[0],
       q: q[0],
       unread: unseen[0],
       limit: 50,
       cursor: tokens.at(-1),
     },
-    [folder[0], q[0], unseen[0], tokens],
+    [folder[0], q[0], unseen[0], tokens, unified[0]],
   );
   var sel = React.useState(null),
     msg = React.useState(null),
@@ -51,6 +53,7 @@ function Inbox(props) {
     return function () {
       generation.current++;
       selected.current++;
+      searchRev.current++;
     };
   }, []);
   function close() {
@@ -59,7 +62,22 @@ function Inbox(props) {
     target[1]("");
     bodyState[1]({});
   }
+  function clearServer() { searchRev.current++; server[1](null); }
+  function searchServer() {
+    close();
+    var rev = ++searchRev.current;
+    server[1]({ loading: true });
+    C.call(api, "mail.serverSearch", { accountId: accountId[0], mailbox: folder[0], q: search[0].trim(), unread: unseen[0] })
+      .then(function (r) {
+        if (rev !== searchRev.current) return;
+        server[1]({ data: r });
+        list.refresh();
+      }).catch(function (e) {
+        if (rev === searchRev.current) server[1]({ error: "服务器搜索失败：" + C.errText(e) });
+      });
+  }
   function reset() {
+    clearServer();
     close();
     page[1]([]);
     msg[1](null);
@@ -188,7 +206,8 @@ function Inbox(props) {
   var current = sel[0],
     state = bodyState[0],
     data = state.data || {};
-  var items = (list.data && list.data.items) || [],
+  var result = server[0] || list;
+  var items = (result.data && result.data.items) || [],
     canSync = !!accountId[0];
   var localOnly = folders.some(function (f) {
     return f.name === folder[0] && f.localOnly;
@@ -229,17 +248,17 @@ function Inbox(props) {
         : null,
     );
   }
-  var body = list.loading
+  var body = result.loading
     ? h("div", { className: "wbml-state" }, "加载中…")
-    : list.error
-      ? h(C.Notice, { h: h, kind: "error", text: list.error })
+    : result.error
+      ? h(C.Notice, { h: h, kind: "error", text: result.error })
       : h(
           React.Fragment,
           null,
           !items.length
             ? h(C.Empty, {
                 h: h,
-                text: !accs.length ? "还没有账户" : q[0] || unseen[0] ? "未找到符合条件的本地邮件" : "没有本地邮件",
+                text: server[0] ? "服务器没有匹配的邮件" : !accs.length ? "还没有账户" : q[0] || unseen[0] ? "未找到符合条件的本地邮件" : "没有本地邮件",
               })
             : null,
           h(
@@ -258,7 +277,7 @@ function Inbox(props) {
                     open(m);
                   },
                 },
-                h("span", { className: "wbml-who" }, sender(m)),
+                h("span", { className: "wbml-who" }, !accountId[0] && m.accountName ? sender(m) + " · " + m.accountName : sender(m)),
                 h("span", { className: "wbml-time" }, C.fmtTime(m.dateAt, props.lang)),
                 h(
                   "div",
@@ -269,7 +288,7 @@ function Inbox(props) {
               );
             }),
           ),
-          h(
+          !server[0] && h(
             "div",
             { className: "wbml-paging" },
             button(
@@ -330,7 +349,11 @@ function Inbox(props) {
               }),
             ),
           ),
-          h(
+          !canSync && h(C.Field, { h: h, label: "邮件范围" }, h("select", {
+            className: "wbml-input", value: unified[0] ? "inbox" : "all",
+            onChange: function (e) { unified[1](e.target.value === "inbox"); reset(); },
+          }, h("option", { value: "inbox" }, "统一收件箱"), h("option", { value: "all" }, "全部邮件"))),
+          canSync && h(
             C.Field,
             { h: h, label: "文件夹" },
             h(
@@ -400,11 +423,15 @@ function Inbox(props) {
                 type: "search",
                 value: search[0],
                 onChange: function (e) {
+                  clearServer();
+                  close();
                   search[1](e.target.value);
                 },
               }),
             ),
             h(C.Btn, { h: h, type: "submit" }, "搜索"),
+            button("在服务器搜索", searchServer, !canRemote || !folder[0] || !search[0].trim() || !!server[0]?.loading),
+            server[0] && button("返回本地列表", function () { clearServer(); close(); }),
           ),
           h(
             "label",
@@ -427,11 +454,11 @@ function Inbox(props) {
         h(
           "div",
           { className: "wbml-pane-head" },
-          h("strong", null, folder[0] || "全部账户"),
+          h("strong", null, server[0] ? "服务器搜索 · " + folder[0] : folder[0] || (unified[0] ? "统一收件箱" : "全部邮件")),
           h(
             "span",
             { className: "wbml-muted" },
-            "本页 " + items.length + " 封 · " + items.filter(isUnread).length + " 未读",
+            result.error || result.loading ? null : (server[0] ? "显示 " : "本页 ") + items.length + " 封 · " + items.filter(isUnread).length + " 未读" + (server[0]?.data?.truncated ? " · 仅显示最近 50 封" : ""),
           ),
         ),
         h("div", { className: "wbml-state-box" }, body),
@@ -523,6 +550,7 @@ function Inbox(props) {
                   message: current,
                   body: data.body || current.body || "",
                   bodyReady: !!state.data,
+                   originalAttachments: data.attachments || current.attachments || [],
                 }),
               ),
             ),

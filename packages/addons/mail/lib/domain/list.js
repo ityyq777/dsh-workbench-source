@@ -1,4 +1,5 @@
 import { messageRow } from '../db/db.js';
+import { activeAccount } from '../db/visibility.js';
 
 function decode(cursor, scope) {
   try {
@@ -9,9 +10,11 @@ function decode(cursor, scope) {
 }
 
 export function listMessages(db, input = {}) {
-  const { accountId = '', mailbox = '', q = '', unread = false } = input;
-  const scope = JSON.stringify([accountId, mailbox, q, !!unread]);
-  const cond = ['1=1'], args = [];
+  const { accountId = '', mailbox = '', q = '', unread = false, unifiedInbox = false } = input;
+  if (unifiedInbox && (accountId || mailbox)) throw new Error('统一收件箱不接受单独的账户或文件夹筛选');
+  const scope = JSON.stringify([accountId, mailbox, q, !!unread, !!unifiedInbox]);
+  const cond = [activeAccount('m.account_id')], args = [];
+  if (unifiedInbox) cond.push(`m.uid>0 AND m.mailbox='INBOX' COLLATE NOCASE AND EXISTS (SELECT 1 FROM mail_account a WHERE a.id=m.account_id AND a.enabled=1)`);
   const limit = Math.min(200, Math.max(1, Math.trunc(Number(input.limit) || 30)));
   if (accountId) { cond.push('account_id=?'); args.push(accountId); }
   if (mailbox) { cond.push('mailbox=?'); args.push(mailbox); }
@@ -21,10 +24,12 @@ export function listMessages(db, input = {}) {
     cond.push("(subject LIKE ? ESCAPE '\\' OR from_addr LIKE ? ESCAPE '\\')"); args.push(pattern, pattern);
   }
   if (input.cursor) { cond.push('(date_at,id)<(?,?)'); args.push(...decode(input.cursor, scope)); }
-  const rows = db.prepare(`SELECT id,account_id,mailbox,uid,message_id,subject,from_addr,from_name,to_addr,cc_addr,date_at,preview,body_at,flags,created_at FROM mail_message WHERE ${cond.join(' AND ')} ORDER BY date_at DESC,id DESC LIMIT ?`).all(...args, limit + 1);
+  const rows = db.prepare(`SELECT id,account_id,mailbox,uid,message_id,subject,from_addr,from_name,to_addr,cc_addr,date_at,preview,body_at,flags,created_at,
+    (SELECT a.name FROM mail_account a WHERE a.id=m.account_id) AS account_name
+    FROM mail_message m WHERE ${cond.join(' AND ')} ORDER BY date_at DESC,id DESC LIMIT ?`).all(...args, limit + 1);
   const hasMore = rows.length > limit;
   if (hasMore) rows.pop();
   const tail = rows.at(-1);
-  const items = rows.map(r => { const m = messageRow(r); delete m.body; return m; });
+  const items = rows.map(r => { const m = messageRow(r); delete m.body; return { ...m, accountName: r.account_name }; });
   return { items, hasMore, nextCursor: hasMore ? Buffer.from(JSON.stringify([tail.date_at,tail.id,scope])).toString('base64url') : null };
 }

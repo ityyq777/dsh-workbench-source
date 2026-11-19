@@ -1,3 +1,5 @@
+import { visibleDraft } from '../db/visibility.js';
+
 const modes = new Set(['new', 'reply', 'replyAll', 'forward']);
 function keyOf(input) {
   const key = String(input.key || '');
@@ -27,7 +29,7 @@ export function createComposer({ db, message, account }) {
     return { inReplyTo: id, references: [...new Set([...refs.filter(x => x !== id), id])].slice(-20).join(' ') };
   }
   function draftGet(input) {
-    const row = db.prepare('SELECT payload FROM mail_draft WHERE key=?').get(keyOf(input));
+    const row = db.prepare(`SELECT payload FROM mail_draft d WHERE key=? AND ${visibleDraft}`).get(keyOf(input));
     return { draft: row ? JSON.parse(row.payload) : null };
   }
   function draftSave(input) {
@@ -40,7 +42,7 @@ export function createComposer({ db, message, account }) {
     return { saved: true, key };
   }
   function draftList() {
-    return { items: db.prepare("SELECT key,json_extract(payload,'$.subject') AS subject,json_extract(payload,'$.mode') AS mode,updated_at AS updatedAt FROM mail_draft ORDER BY updated_at DESC,key").all() };
+    return { items: db.prepare(`SELECT key,json_extract(payload,'$.subject') AS subject,json_extract(payload,'$.mode') AS mode,updated_at AS updatedAt FROM mail_draft d WHERE ${visibleDraft} ORDER BY updated_at DESC,key`).all() };
   }
   function draftDelete(input) { const key = keyOf(input); db.prepare('DELETE FROM mail_draft WHERE key=?').run(key); return { deleted: true, key }; }
   return { thread, draftGet, draftSave, draftList, draftDelete };

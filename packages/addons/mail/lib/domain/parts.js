@@ -1,13 +1,10 @@
 import { newId, now } from "../db/db.js";
 import { readBodyParts, readAttachment } from "../infra/parts.js";
 import { classifyProbeError } from "./probe-error.js";
+import { visibleMessage } from "../db/visibility.js";
 
 export function createParts({ db, account, password }) {
-  const message = (id) => {
-    const row = db.prepare("SELECT * FROM mail_message WHERE id=?").get(id);
-    if (!row) throw new Error("邮件不存在：" + id);
-    return row;
-  };
+  const message = (id) => visibleMessage(db, id);
   const attachments = id => db.prepare("SELECT id,filename,mime,size,section FROM mail_attachment WHERE message_id=? ORDER BY rowid").all(id);
   function unchanged(row) {
     const current = message(row.id);
@@ -19,6 +16,8 @@ export function createParts({ db, account, password }) {
     let p;
     try { p = await password(a); }
     catch (e) { throw Object.assign(new Error(String(e.message || e)), { code: "EVAULT" }); }
+    unchanged(msg);
+    if (account(a.id).rev !== a.rev) throw new Error("账户配置已变更，请重试");
     return { account: { host: a.imap_host, port: a.imap_port, secure: !!a.imap_tls, user: p.user }, secret: p.secret };
   }
   async function messageBody(input = {}) {

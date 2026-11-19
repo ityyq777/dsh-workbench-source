@@ -5,9 +5,12 @@ import { createSync } from "./sync.js";
 import { createComposer } from "./compose.js";
 import { createParts } from "./parts.js";
 import { listMessages } from "./list.js";
-import { sendMail, probeSmtp } from "../infra/smtp.js";
+import { probeSmtp } from "../infra/smtp.js";
+import { createDelivery } from "./delivery.js";
+import { createAttachmentLoader } from "./send-attachments.js";
 import { classifyProbeError } from "./probe-error.js";
 import { decodeWords, parseAddress } from "../infra/mime-word.js";
+import { activeAccount, visibleMessage } from "../db/visibility.js";
 
 export function createMail({ db, host, log }) {
   const one = (sql, ...a) => db.prepare(sql).get(...a);
@@ -20,7 +23,15 @@ export function createMail({ db, host, log }) {
     const v = r && r.result !== undefined ? r.result : r;
     return { user: acc.username || acc.email, secret: v.secret };
   }
-  function status() { return { accounts: one("SELECT COUNT(*) n FROM mail_account WHERE deleted_at IS NULL").n, messages: one("SELECT COUNT(*) n FROM mail_message").n, unread: one("SELECT COUNT(*) n FROM mail_message WHERE flags NOT LIKE '%\\Seen%'").n, mailboxes: one("SELECT COUNT(*) n FROM mail_mailbox").n }; }
+  function status() {
+    const visible = activeAccount('m.account_id');
+    return {
+      accounts: one("SELECT COUNT(*) n FROM mail_account WHERE deleted_at IS NULL").n,
+      messages: one(`SELECT COUNT(*) n FROM mail_message m WHERE ${visible}`).n,
+      unread: one(`SELECT COUNT(*) n FROM mail_message m WHERE ${visible} AND flags NOT LIKE '%\\Seen%'`).n,
+      mailboxes: one(`SELECT COUNT(*) n FROM mail_mailbox m WHERE ${visible}`).n,
+    };
+  }
   // 账户卡片上的「最近来信」由本地邮件派生，不额外加列（见设计文档第 10 节）。
   function listAccounts() {
     const last = new Map(all("SELECT account_id, MAX(date_at) AS at FROM mail_message GROUP BY account_id").map((r) => [r.account_id, r.at]));
@@ -142,39 +153,35 @@ export function createMail({ db, host, log }) {
   }
   function mailboxes(id) {
     if (id) account(id);
-    const stored = all("SELECT id,account_id,name,delimiter,role FROM mail_mailbox WHERE (? IS NULL OR account_id=?) ORDER BY name", id || null, id || null);
+    const stored = all(`SELECT id,account_id,name,delimiter,role FROM mail_mailbox m WHERE ${activeAccount('m.account_id')} AND (? IS NULL OR account_id=?) ORDER BY name`, id || null, id || null);
     const local = all(`SELECT DISTINCT account_id, mailbox AS name FROM mail_message m
-      WHERE uid<=0 AND (? IS NULL OR account_id=?) AND NOT EXISTS
+      WHERE ${activeAccount('m.account_id')} AND uid<=0 AND (? IS NULL OR account_id=?) AND NOT EXISTS
       (SELECT 1 FROM mail_mailbox b WHERE b.account_id=m.account_id AND b.name=m.mailbox) ORDER BY mailbox`, id || null, id || null);
     return { items: [...stored, ...local.map(r => ({ ...r, id: `local:${r.account_id}:${r.name}`, localOnly: true, delimiter: "/", role: "" }))] };
   }
   const messages = (input) => listMessages(db, input);
   function message(id) {
-    const r = one("SELECT * FROM mail_message WHERE id=?", id); if (!r) throw new Error("邮件不存在：" + id);
+    const r = visibleMessage(db, id);
     const out = messageRow(r); out.attachments = all("SELECT id,filename,mime,size,section FROM mail_attachment WHERE message_id=?", id); return out;
   }
   const composer = createComposer({ db, message, account });
   const syncOps = createSync({ db, account, password, message });
   const parts = createParts({ db, account, password });
-  async function send(input = {}) {
-    const a = account(input.accountId); const p = await password(a);
-    const to = [].concat(input.to || []).map((s) => String(s).trim()).filter(Boolean);
-    if (!to.length) throw new Error("至少一个收件人");
-    const r = await sendMail({ host: a.smtp_host, port: a.smtp_port, secure: !!a.smtp_tls, user: a.username || a.email }, p.secret, { ...composer.thread(input, a.id), from: a.email, to, cc: input.cc || [], subject: input.subject, text: input.text });
-    const mb = one("SELECT name FROM mail_mailbox WHERE account_id=? AND role='sent'", a.id);
-    run("INSERT INTO mail_message (id,account_id,mailbox,uid,message_id,subject,from_addr,from_name,to_addr,cc_addr,date_at,preview,body,flags,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newId("msg"), a.id, mb ? mb.name : "Sent", -now(), r.messageId, String(input.subject || ""), a.email, a.name || "", to.join(", "), (input.cc || []).join(", "), now(), String(input.text || "").slice(0, 200), String(input.text || ""), "\\Seen", now(), now());
-    return { sent: true, messageId: r.messageId };
-  }
+  const loadAttachments = createAttachmentLoader({ message, attachmentDownload: parts.attachmentDownload });
+  const delivery = createDelivery({ db, account, password, thread: composer.thread, loadAttachments });
   function search(q, { limit = 10 } = {}) {
     const like = "%" + String(q || "").replace(/[\\%_]/g, "\\$&") + "%";
-    return all("SELECT id,subject,from_addr,date_at FROM mail_message WHERE subject LIKE ? ESCAPE '\\' OR from_addr LIKE ? ESCAPE '\\' ORDER BY date_at DESC LIMIT ?", like, like, limit).map((r) => ({ id: r.id, title: r.subject, snippet: r.from_addr, at: r.date_at, view: "messages" }));
+    return all(`SELECT id,subject,from_addr,date_at FROM mail_message m WHERE ${activeAccount('m.account_id')} AND (subject LIKE ? ESCAPE '\\' OR from_addr LIKE ? ESCAPE '\\') ORDER BY date_at DESC LIMIT ?`, like, like, limit).map((r) => ({ id: r.id, title: r.subject, snippet: r.from_addr, at: r.date_at, view: "messages" }));
   }
   function stats() { return status(); }
   function dataQuery(input = {}) {
     const allow = ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"];
     if (!allow.includes(input.table)) throw new Error("不允许查询该表");
     const limit = Math.min(Math.max(Number(input.limit) || 20, 1), 100);
-    return { table: input.table, rows: all("SELECT * FROM " + input.table + " LIMIT ?", limit) };
+    const where = input.table === 'mail_account' ? 'r.deleted_at IS NULL' : input.table === 'mail_attachment'
+      ? `EXISTS (SELECT 1 FROM mail_message m WHERE m.id=r.message_id AND ${activeAccount('m.account_id')})`
+      : activeAccount('r.account_id');
+    return { table: input.table, rows: all(`SELECT r.* FROM ${input.table} r WHERE ${where} LIMIT ?`, limit) };
   }
-  return { status, stats, backfillHeaders: backfillHeaderRows, listAccounts, createAccount, updateAccount, deleteAccount, testAccount, probeAccount, syncMailboxes, mailboxes, ...syncOps, messages, message, ...parts, ...composer, send, search, dataQuery };
+  return { status, stats, backfillHeaders: backfillHeaderRows, listAccounts, createAccount, updateAccount, deleteAccount, testAccount, probeAccount, syncMailboxes, mailboxes, ...syncOps, messages, message, ...parts, ...composer, ...delivery, search, dataQuery };
 }

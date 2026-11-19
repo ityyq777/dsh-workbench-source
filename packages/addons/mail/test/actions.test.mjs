@@ -13,7 +13,7 @@ function register() {
 
 const draft = { key: 'remember', accountId: 'a1', to: 'one@test', cc: 'two@test', subject: '主题', text: '正文', mode: 'replyAll', originId: 'origin' };
 const send = { accountId: 'a1', to: ['one@test'], cc: ['two@test'], subject: 'Re: 主题', text: '回复', mode: 'reply', originId: 'origin' };
-const list = { accountId: 'a1', mailbox: 'Archive', unread: false, q: '%', limit: 3, cursor: 'opaque' };
+const list = { accountId: 'a1', mailbox: 'Archive', unifiedInbox: false, unread: false, q: '%', limit: 3, cursor: 'opaque' };
 const page = { mailbox: 'Archive', limit: 4, beforeUid: 20, uidValidity: 42 };
 
 test('每个新参数显式声明并交给对应服务，未声明参数不透传', () => {

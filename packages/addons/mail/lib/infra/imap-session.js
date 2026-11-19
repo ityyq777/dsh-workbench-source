@@ -42,10 +42,11 @@ function channel(socket) {
     }
     return Buffer.concat(parts);
   }
-  async function command(cmd, { label = "请求", maxLiteralBytes = 1024 * 1024 } = {}) {
+  async function command(cmd, { label = "请求", maxLiteralBytes = 1024 * 1024, continuations = [] } = {}) {
     if (/[\r\n\0]/.test(cmd)) throw new Error("IMAP 命令格式错误");
     const tag = "a" + ++seq;
     socket.write(tag + " " + cmd + "\r\n");
+    let continuation = 0;
     const lines = [],
       literals = [];
     let total = 0,
@@ -55,8 +56,14 @@ function channel(socket) {
       lines.push(text);
       textBytes += text.length + 2;
       if (textBytes > 16 * 1024 * 1024) throw new Error("IMAP 响应过大");
+      if (/^\+(?: |$)/.test(text)) {
+        if (continuation >= continuations.length) throw new Error("IMAP 请求了意外续传");
+        socket.write(continuations[continuation++] + "\r\n");
+        continue;
+      }
       if (text.startsWith(tag + " ")) {
         if (!/^\S+ OK\b/i.test(text)) throw new Error("IMAP " + label + "失败");
+        if (continuation !== continuations.length) throw new Error("IMAP 搜索请求未完整发送");
         return { lines, literals };
       }
       if (/^\* BYE\b/i.test(text)) throw new Error("IMAP 服务器关闭连接");
@@ -117,9 +124,9 @@ export async function withSession(account, password, fn) {
     socket?.destroy();
   }
 }
-export function withMailbox(account, password, mailbox, fn, expectedUidValidity) {
+export function withMailbox(account, password, mailbox, fn, expectedUidValidity, readOnly = false) {
   return withSession(account, password, async (s) => {
-    const { lines } = await s.command("SELECT " + quote(mailbox), { label: "打开文件夹" });
+    const { lines } = await s.command((readOnly ? "EXAMINE " : "SELECT ") + quote(mailbox), { label: "打开文件夹" });
     const text = lines.join("\n");
     s.uidValidity = Number(/\[UIDVALIDITY (\d+)\]/i.exec(text)?.[1]);
     if (!s.uidValidity || (expectedUidValidity != null && s.uidValidity !== Number(expectedUidValidity)))

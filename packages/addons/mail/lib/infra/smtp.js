@@ -53,7 +53,7 @@ function code(batch) {
 async function expect(read, ok, label) {
   const batch = await read();
   const c = code(batch);
-  if (!ok.includes(c)) throw new Error(label + " 失败：" + (batch || []).join(" | "));
+  if (!ok.includes(c)) throw Object.assign(new Error(label + " 失败：" + (batch || []).join(" | ")), { smtpCode: c });
   return batch;
 }
 
@@ -92,7 +92,9 @@ export async function probeSmtp(account, password, timeout = 15000) {
   }
 }
 
-export async function sendMail(account, password, msg) {
+export async function sendMail(account, password, msg, beforeSubmit = () => {}) {
+  const from = msg.from || account.user;
+  const { data, messageId } = encodeMessage(from, msg);
   let socket = await connect(account.host, account.port, !!account.secure);
   let read = reader(socket);
   try {
@@ -114,22 +116,29 @@ export async function sendMail(account, password, msg) {
     await cmd(Buffer.from(account.user).toString("base64"), [334], "SMTP 用户名");
     await cmd(Buffer.from(password || "").toString("base64"), [235], "SMTP 密码");
   }
-  const from = msg.from || account.user;
   const addressOK = (addr) => /^[^\s<>,;@\x00-\x1f]+@[^\s<>,;@\x00-\x1f]+$/.test(addr);
   if (![from, ...msg.to, ...(msg.cc || [])].every(addressOK)) { socket.destroy(); throw new Error('邮箱地址格式无效'); }
   await cmd("MAIL FROM:<" + from + ">", [250], "MAIL FROM");
   for (const addr of [].concat(msg.to || [], msg.cc || []).filter(Boolean)) await cmd("RCPT TO:<" + addr + ">", [250, 251], "RCPT TO");
   await cmd("DATA", [354], "DATA");
-  const { data, messageId } = encodeMessage(from, msg);
-  socket.write(data + '.\r\n');
-  await expect(read, [250], "DATA 结束");
-  try { await cmd("QUIT", [221], "QUIT"); } catch { /* 忽略 */ }
+  beforeSubmit();
+  try {
+    socket.write(data + '.\r\n');
+    await expect(read, [250], "DATA 结束");
+  } catch (e) {
+    if (!(e.smtpCode >= 400 && e.smtpCode < 600)) e.deliveryUnknown = true;
+    throw e;
+  }
+  const quitTimeout = setTimeout(() => socket.destroy(), 1000);
+  try { await cmd('QUIT', [221], 'QUIT'); }
+  catch { /* 最终接收回执已收到，退出失败不改变投递结果 */ }
+  finally { clearTimeout(quitTimeout); }
   return { sent: true, messageId };
   } finally { socket.destroy(); }
 }
 
 export function encodeMessage(from, msg) {
-  const messageId = '<' + randomUUID() + '@dsh-workbench>';
+  const messageId = msg.messageId || '<' + randomUUID() + '@dsh-workbench>';
   const validId = /^<[^<>@\s\x00-\x1f]+@[^<>@\s\x00-\x1f]+>$/;
   const refs = String(msg.references || '').split(/ +/).filter(id => validId.test(id));
   const headers = [
@@ -138,8 +147,24 @@ export function encodeMessage(from, msg) {
     refs.length ? 'References: ' + refs.join('\r\n ') : '',
     'From: ' + from, 'To: ' + msg.to.join(', '), msg.cc && msg.cc.length ? 'Cc: ' + msg.cc.join(', ') : '',
     'Subject: =?UTF-8?B?' + Buffer.from(msg.subject || '(无主题)').toString('base64') + '?=',
-    'Date: ' + new Date().toUTCString(), 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: base64',
+    'Date: ' + new Date().toUTCString(), 'MIME-Version: 1.0',
   ];
-  const body = Buffer.from(msg.text || '').toString('base64').match(/.{1,76}/g) || [];
-  return { messageId, data: headers.filter(Boolean).join('\r\n') + '\r\n\r\n' + body.join('\r\n') + '\r\n' };
+  const wrap = (s) => (s.match(/.{1,76}/g) || []).join('\r\n');
+  const plain = ['Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: base64', '', wrap(Buffer.from(msg.text || '').toString('base64'))].join('\r\n');
+  const top = headers.filter(Boolean).join('\r\n');
+  if (!msg.attachments?.length) return { messageId, data: top + '\r\n' + plain + '\r\n' };
+  const boundary = 'dsh-' + randomUUID();
+  const parts = msg.attachments.map(({ filename, mime, base64 }) => {
+    const safe = filename.replace(/[^a-z\d._-]/gi, '_');
+    const encoded = encodeURIComponent(filename).replace(/['()*]/g, c => '%' + c.charCodeAt(0).toString(16));
+    return [
+      'Content-Type: ' + mime,
+      'Content-Disposition: attachment; filename="' + safe + '";',
+      " filename*=UTF-8''" + encoded,
+      'Content-Transfer-Encoding: base64', '', wrap(base64),
+    ].join('\r\n');
+  });
+  const data = top + '\r\nContent-Type: multipart/mixed; boundary="' + boundary + '"\r\n\r\n' +
+    [plain, ...parts].map(p => '--' + boundary + '\r\n' + p + '\r\n').join('') + '--' + boundary + '--\r\n';
+  return { messageId, data };
 }

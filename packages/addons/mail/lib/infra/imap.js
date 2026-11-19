@@ -110,6 +110,38 @@ export function imapFetchBody(account, password, mailbox = "INBOX", id, opts = {
     opts.uidValidity,
   );
 }
+export function imapSearchHeaders(account, password, mailbox, q, unread) {
+  return withMailbox(account, password, mailbox, async (s) => {
+    const label = '服务器搜索';
+    const scope = unread ? 'UNSEEN ' : '';
+    let search;
+    if (/^[\x20-\x7e]+$/.test(q)) {
+      const term = quote(q);
+      search = await s.command('UID SEARCH ' + scope + 'OR SUBJECT ' + term + ' FROM ' + term, { label });
+    } else {
+      const marker = '{' + Buffer.byteLength(q) + '}';
+      search = await s.command('UID SEARCH CHARSET UTF-8 ' + scope + 'OR SUBJECT ' + marker, {
+        label, continuations: [q + ' FROM ' + marker, q],
+      });
+    }
+    const found = search.lines.find(line => /^\* SEARCH(?: |$)/i.test(line));
+    if (found === undefined) throw new Error('IMAP 未返回检索结果');
+    const ids = [...new Set(found.slice(8).trim().split(/\s+/).filter(Boolean).map(uid))].sort((a,b) => b-a);
+    const page = ids.slice(0, 50);
+    if (!page.length) return { items: [], uidValidity: s.uidValidity, truncated: false };
+    const result = await s.command(
+      `UID FETCH ${page.join(',')} (UID FLAGS BODY.PEEK[HEADER.FIELDS (SUBJECT FROM TO CC DATE MESSAGE-ID REPLY-TO REFERENCES)])`,
+      { label: '读取匹配信头', maxLiteralBytes: 8 * 1024 * 1024 },
+    );
+    const rows = new Map(fetchRecords(result).filter(r => r.bytes && page.includes(r.uid)).map(r => [r.uid, r]));
+    const items = page.filter(id => rows.has(id)).map(id => {
+      const r = rows.get(id);
+      return { ...parseHeader(r.bytes), uid: r.uid, flags: r.flags || '' };
+    });
+    if (!items.length) throw new Error('服务器未返回匹配信头，请重新搜索');
+    return { items, uidValidity: s.uidValidity, truncated: ids.length > page.length };
+  }, undefined, true);
+}
 export function imapRecent(account, password, mailbox = "INBOX", limit = 20, opts = {}) {
   return withMailbox(
     account,
