@@ -2216,6 +2216,14 @@ var require_action_schema_style = __commonJS({
         "." + P + "-card{border:1px solid var(--wb-border,#e3e5e9);border-radius:10px;padding:10px 12px;background:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));display:flex;flex-direction:column;gap:8px;min-width:0}",
         "." + P + "-cardhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
         "." + P + "-cardhead code{font-weight:640}",
+        "." + P + "-hintline{margin:0;color:var(--dsw-alias-label-tertiary,inherit);font-size:11.5px;line-height:1.5}",
+        // agent 开关：紧贴卡片头，用 label 包住原生 checkbox，键盘可达、无需自定义控件。
+        "." + P + "-toggle{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--dsw-alias-label-secondary,inherit);cursor:pointer;user-select:none}",
+        "." + P + "-toggle input{width:14px;height:14px;margin:0;accent-color:var(--wb-accent,var(--dsw-alias-brand-primary,#4f6ef7));cursor:pointer}",
+        "." + P + "-toggle input:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
+        "." + P + "-toggle input:disabled{cursor:progress}",
+        // 安全约束（不可放开）：用警示色描边，和可切换的开关区分开。
+        "." + P + "-locked{border-color:var(--wb-warn,#b7791f);color:var(--wb-warn,#b7791f)}",
         "." + P + "-desc{margin:0;color:var(--dsw-alias-label-secondary,inherit);line-height:1.55;font-size:12.5px}",
         // 搜索命中：用品牌色透明度叠加而不是写死浅色，深浅主题都可读；继承文字颜色、不覆盖 ::selection。
         "." + P + " mark." + P + "-hit{background:color-mix(in oklab,var(--dsw-alias-brand-primary,#4f6ef7) 22%,transparent);color:inherit;border-radius:2px;padding:0;font:inherit;box-decoration-break:clone;-webkit-box-decoration-break:clone}",
@@ -2267,6 +2275,15 @@ var require_action_schema_view = __commonJS({
       zh: {
         title: "Action",
         hint: "\u8FD0\u884C\u65F6\u6CE8\u518C \xB7 \u53EA\u8BFB",
+        switchHint: "agent \u5F00\u5173\u843D\u672C\u673A\u3001\u5373\u6539\u5373\u751F\u6548\uFF1B\u754C\u9762\u64CD\u4F5C\u4E0D\u53D7\u5F71\u54CD\u3002",
+        hostHint: "\u5BBF\u4E3B action \u7684 agent \u5F00\u5173\uFF1B\u6807\u300C\u4EC5\u754C\u9762 \xB7 \u5B89\u5168\u7EA6\u675F\u300D\u7684\u4E0D\u53EF\u653E\u5F00\u3002",
+        agentSwitch: "agent \u53EF\u7528",
+        agentLocked: "\u4EC5\u754C\u9762 \xB7 \u5B89\u5168\u7EA6\u675F",
+        agentLockedHint: "\u8BE5 action \u53EA\u80FD\u5728\u754C\u9762\u6267\u884C\uFF08\u5B89\u5168\u7EA6\u675F\uFF09\uFF0Cagent \u5F00\u5173\u4E0D\u53EF\u653E\u5F00",
+        agentSaving: "\u4FDD\u5B58\u4E2D\u2026",
+        agentOnToast: "\u5DF2\u5141\u8BB8 agent \u8C03\u7528",
+        agentOffToast: "\u5DF2\u7981\u6B62 agent \u8C03\u7528",
+        agentFail: "\u5207\u6362 agent \u5F00\u5173\u5931\u8D25",
         domain: "\u57DF",
         versionLabel: "\u7248\u672C",
         shell: "\u5BBF\u4E3B",
@@ -2312,6 +2329,15 @@ var require_action_schema_view = __commonJS({
       en: {
         title: "Actions",
         hint: "runtime registry \xB7 read-only",
+        switchHint: "The agent switch is stored locally and applies immediately; UI actions are unaffected.",
+        hostHint: "Agent switch for host actions; items marked UI-only (security) cannot be opened up.",
+        agentSwitch: "Agent callable",
+        agentLocked: "UI only \xB7 security",
+        agentLockedHint: "This action can only run from the UI (security constraint); the agent switch cannot be opened",
+        agentSaving: "Saving\u2026",
+        agentOnToast: "Agent calls allowed",
+        agentOffToast: "Agent calls blocked",
+        agentFail: "Failed to change the agent switch",
         domain: "Domain",
         versionLabel: "Version",
         shell: "Host",
@@ -2424,7 +2450,9 @@ var require_action_schema_view = __commonJS({
     }
     module2.exports = function createActionSchemaView(options) {
       var raw = String(options.domain || "");
-      var DOMAIN = raw.indexOf("wb-addon-") === 0 ? raw : "wb-addon-" + raw;
+      var SOURCE = options.source === "actions.list" ? "actions.list" : "actionSchema";
+      var DOMAIN = SOURCE === "actions.list" ? raw : raw.indexOf("wb-addon-") === 0 ? raw : "wb-addon-" + raw;
+      var LIST_DOMAIN = options.listDomain ? String(options.listDomain) : DOMAIN;
       var prefix = options.prefix;
       var P = prefix + "-as";
       var Icon2 = options.Icon || null;
@@ -2468,6 +2496,8 @@ var require_action_schema_view = __commonJS({
         var typePick = typeState[0], setTypePick = typeState[1];
         var toastState = React.useState("");
         var toast = toastState[0], setToast = toastState[1];
+        var savingState = React.useState("");
+        var saving = savingState[0], setSaving = savingState[1];
         React.useEffect(function() {
           injectCss();
         }, []);
@@ -2476,9 +2506,10 @@ var require_action_schema_view = __commonJS({
           setLoading(true);
           setErr("");
           var pending;
-          var actionName = DOMAIN.replace(/^wb-addon-/, "") + ".actionSchema";
+          var actionName = SOURCE === "actions.list" ? "actions.list" : DOMAIN.replace(/^wb-addon-/, "") + ".actionSchema";
+          var callArgs = SOURCE === "actions.list" ? { detail: true, domain: LIST_DOMAIN } : void 0;
           if (api && typeof api.call === "function") {
-            pending = Promise.resolve(api.call(actionName)).then(function(r) {
+            pending = Promise.resolve(api.call(actionName, callArgs)).then(function(r) {
               if (r && r.ok === false) return r;
               return r && r.result || r;
             });
@@ -2517,6 +2548,39 @@ var require_action_schema_view = __commonJS({
           }
           plainCopy(text);
           done();
+        }
+        function setAgent(action, next) {
+          var name = action.name;
+          setSaving(name);
+          setToast("");
+          var fail = function(e) {
+            setSaving("");
+            setToast(t.agentFail + "\uFF1A" + String(e && e.message || e || ""));
+          };
+          var done = function(r) {
+            setSaving("");
+            var payload = r && typeof r === "object" && Object.prototype.hasOwnProperty.call(r, "result") ? r.result : r;
+            if (r && r.ok === false) {
+              setToast(t.agentFail + "\uFF1A" + String(r.error || r.text || ""));
+              return;
+            }
+            var value = payload && typeof payload.agentEnabled === "boolean" ? payload.agentEnabled : next;
+            setSnap(function(prev) {
+              if (!prev || !Array.isArray(prev.actions)) return prev;
+              return Object.assign({}, prev, {
+                actions: prev.actions.map(function(a) {
+                  if (!a || a.name !== name) return a;
+                  return Object.assign({}, a, { agentEnabled: value });
+                })
+              });
+            });
+            setToast(value ? t.agentOnToast : t.agentOffToast);
+          };
+          if (!api || typeof api.call !== "function") {
+            fail(new Error("no call api"));
+            return;
+          }
+          Promise.resolve(api.call("actions.setAgentAccess", { action: name, agentEnabled: next })).then(done, fail);
         }
         var all = snap && Array.isArray(snap.actions) ? snap.actions.filter(function(a) {
           return a && a.domain === DOMAIN;
@@ -2566,6 +2630,32 @@ var require_action_schema_view = __commonJS({
             h("td", null, Highlight.hit(row.description, kw))
           );
         }
+        function agentSwitch(action) {
+          if (action.agentLocked === true) {
+            return h("span", {
+              className: P + "-badge " + P + "-locked",
+              title: t.agentLockedHint,
+              "data-agent-locked": action.name
+            }, t.agentLocked);
+          }
+          if (typeof action.agentEnabled !== "boolean") return null;
+          var busy = saving === action.name;
+          return h(
+            "label",
+            { className: P + "-toggle", "data-agent-row": action.name },
+            h("input", {
+              type: "checkbox",
+              checked: action.agentEnabled,
+              disabled: busy,
+              "data-agent-toggle": action.name,
+              "aria-label": t.agentSwitch + " \xB7 " + action.name,
+              onChange: function(e) {
+                setAgent(action, !!e.target.checked);
+              }
+            }),
+            h("span", null, busy ? t.agentSaving : t.agentSwitch)
+          );
+        }
         function card(action) {
           var rows = paramRows(action);
           var examples = Array.isArray(action.examples) ? action.examples : [];
@@ -2580,7 +2670,8 @@ var require_action_schema_view = __commonJS({
               h("span", { className: P + "-badge" }, rows.length ? t.paramCount(rows.length) : t.noParams),
               rows.some(function(row) {
                 return row.required;
-              }) ? h("span", { className: P + "-badge " + P + "-req" }, t.required) : null
+              }) ? h("span", { className: P + "-badge " + P + "-req" }, t.required) : null,
+              agentSwitch(action)
             ),
             action.description ? h("p", { className: P + "-desc" }, Highlight.hit(action.description, kw)) : null,
             rows.length ? h(
@@ -2657,6 +2748,7 @@ var require_action_schema_view = __commonJS({
             h("span", { className: P + "-badge" }, t.count(visible.length, all.length)),
             h("span", { className: P + "-none" }, t.hint)
           ),
+          h("p", { className: P + "-hintline" }, SOURCE === "actions.list" ? t.hostHint : t.switchHint),
           snap ? h(
             "div",
             { className: P + "-toolbar" },
@@ -2770,7 +2862,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-contacts",
-    version: "0.1.1",
+    version: "0.1.2",
     icon: (init_users(), __toCommonJS(users_exports)).default,
     views: [
       { id: "contacts", icon: tabIcon("users"), title: { zh: "\u8054\u7CFB\u4EBA", en: "Contacts" }, component: withProps(require_contacts(), "\u8054\u7CFB\u4EBA") },

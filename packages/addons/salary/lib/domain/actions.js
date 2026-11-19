@@ -112,10 +112,11 @@ export function registerSalaryActions(api, salary) {
     }),
   });
   action("salary.dataQuery", {
+    agentEnabled: false,
     description: "只读：白名单表查询（仅 UI；limit ≤ 100）",
     input: obj({ table: { type: "string", enum: ["salary_record"] }, limit: num("1–100，默认 20") }, ["table"]),
     execute: (args, ctx) => {
-      if (ctx && ctx.origin && ctx.origin !== "ui") throw new Error("该操作只允许在界面中执行");
+      if (ctx && ctx.origin && ctx.origin !== "ui" && ctx.origin !== "agent") throw new Error("该操作只允许在界面中执行");
       return salary.dataQuery({ table: args.table, limit: args.limit });
     },
   });

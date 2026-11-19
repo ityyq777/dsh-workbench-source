@@ -1,6 +1,6 @@
 import { renderTaskTarget } from "./task-targets.js";
 import type { RegisteredDomain } from "../types/host-types.js";
-export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTargets }: any) {
+export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTargets, agentVisible }: any) {
   function findDomain(raw: string): RegisteredDomain | null {
     const key = String(raw ?? "").trim();
     if (!key) return null;
@@ -129,7 +129,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
   }
 
   /** capabilities.list：聚合各插件“记录什么、首选哪个 action”，给 agent 做统一发现。 */
-  async function capabilityListMeta(args: Record<string, unknown>) {
+  async function capabilityListMeta(args: Record<string, unknown>, origin: string = "ui") {
     const kind = args.kind === undefined || args.kind === null ? "" : String(args.kind).trim();
     const out: any[] = [];
     for (const rec of domains.values()) {
@@ -143,7 +143,10 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
         error: rec.error,
         summary: cap.summary,
         source: cap.source,
-        actionCount: rec.actions.size,
+        actionCount:
+          origin === "agent"
+            ? [...rec.actions].filter(([action, def]) => agentVisible(action, def)).length
+            : rec.actions.size,
         requires: (cap as any).requires ?? [],
         missingRequires: (cap as any).missingRequires ?? [],
         records: cap.records.map((r: any) => ({
@@ -184,7 +187,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
   }
 
   /** capabilities.get：单个业务域的完整能力清单 + action 摘要（字段细节仍走 actions.help）。 */
-  async function capabilityGetMeta(args: Record<string, unknown>) {
+  async function capabilityGetMeta(args: Record<string, unknown>, origin: string = "ui") {
     const name = String(args.domain ?? args.id ?? "").trim();
     if (!name) throw new Error("缺少 domain；先用 capabilities.list 查看可用业务域");
     const rec = findDomain(name);
@@ -211,7 +214,10 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
         missingRequires: (cap as any).missingRequires ?? [],
       },
       source: cap.source,
-      actions: [...rec.actions].map(([action, def]) => actionEntry(action, rec.def.id, def)),
+      // capabilities.get 也是 agent 的发现入口：被本机关闭的 action 不列给它（ui 仍看全量）。
+      actions: [...rec.actions]
+        .filter(([action, def]) => origin !== "agent" || agentVisible(action, def))
+        .map(([action, def]) => actionEntry(action, rec.def.id, def)),
       warnings: cap.warnings,
     };
   }

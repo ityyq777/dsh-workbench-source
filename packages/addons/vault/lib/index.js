@@ -31,7 +31,7 @@ export function createDomain(host) {
     id: "wb-addon-vault",
     title: "凭据保险箱",
     description: "集中保存密码、应用专用密码与 token；按分组授权给业务模块，加密落库、密文可同步。",
-    version: "0.3.6",
+    version: "0.3.7",
     tables: [
       "vault_header",
       "vault_device",

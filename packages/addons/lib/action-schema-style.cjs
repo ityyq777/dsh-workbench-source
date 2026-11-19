@@ -1,5 +1,5 @@
 "use strict";
-// Action 页的样式：只读清单，沿用工作台主题 token，深浅色自动适配。
+// Action 页的样式：清单 + agent 开关，沿用工作台主题 token，深浅色自动适配。
 module.exports = function (PREFIX, DOMAIN) {
   var P = PREFIX + "-as";
   var CSS = [
@@ -19,6 +19,14 @@ module.exports = function (PREFIX, DOMAIN) {
     "." + P + "-card{border:1px solid var(--wb-border,#e3e5e9);border-radius:10px;padding:10px 12px;background:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));display:flex;flex-direction:column;gap:8px;min-width:0}",
     "." + P + "-cardhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
     "." + P + "-cardhead code{font-weight:640}",
+    "." + P + "-hintline{margin:0;color:var(--dsw-alias-label-tertiary,inherit);font-size:11.5px;line-height:1.5}",
+    // agent 开关：紧贴卡片头，用 label 包住原生 checkbox，键盘可达、无需自定义控件。
+    "." + P + "-toggle{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--dsw-alias-label-secondary,inherit);cursor:pointer;user-select:none}",
+    "." + P + "-toggle input{width:14px;height:14px;margin:0;accent-color:var(--wb-accent,var(--dsw-alias-brand-primary,#4f6ef7));cursor:pointer}",
+    "." + P + "-toggle input:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
+    "." + P + "-toggle input:disabled{cursor:progress}",
+    // 安全约束（不可放开）：用警示色描边，和可切换的开关区分开。
+    "." + P + "-locked{border-color:var(--wb-warn,#b7791f);color:var(--wb-warn,#b7791f)}",
     "." + P + "-desc{margin:0;color:var(--dsw-alias-label-secondary,inherit);line-height:1.55;font-size:12.5px}",
     // 搜索命中：用品牌色透明度叠加而不是写死浅色，深浅主题都可读；继承文字颜色、不覆盖 ::selection。
     "." + P + " mark." + P + "-hit{background:color-mix(in oklab,var(--dsw-alias-brand-primary,#4f6ef7) 22%,transparent);color:inherit;border-radius:2px;padding:0;font:inherit;box-decoration-break:clone;-webkit-box-decoration-break:clone}",

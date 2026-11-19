@@ -108,11 +108,21 @@ try {
   const inventory = await host.invoke("storage.create", { name: "备份验收物品", stock: "1~2", tagIds: [tag.result.id] }, "agent");
   const inventoryId = inventory.result.storage.id;
 
+  async function setSitesAccess(agentEnabled) {
+    const response = await call('POST', '/workbench/api/domains/wb-shell/actions/actions.setAgentAccess',
+      Buffer.from(JSON.stringify({ action: 'sites.list', agentEnabled })));
+    if (response.status !== 200 || !parseJson(response)?.ok) throw new Error('无法配置测试权限：' + response.body);
+  }
+  await setSitesAccess(false);
   const exported = await call("GET", "/workbench/api/backup/export?modules=all");
   if (exported.status !== 200) throw new Error("export failed: " + exported.status + " " + exported.body.toString());
   if (!/application\/zip/.test(String(exported.headers["content-type"]))) throw new Error("export content-type is not zip");
   const zip = await import("../packages/shell/lib/infra/zip.js");
   const files = zip.zipRead(exported.body);
+  for (const [path, data] of files) {
+    if (data.includes(Buffer.from('config.wb-shell.actionAgent.'))) throw new Error('本地权限覆盖不应进入备份：' + path);
+  }
+  await setSitesAccess(true);
   const manifest = JSON.parse(files.get("manifest.json").toString("utf8"));
   if (manifest.kind !== "dsh-workbench-backup") throw new Error("bad manifest kind");
   if (manifest.formatVersion !== 1) throw new Error("bad manifest formatVersion");

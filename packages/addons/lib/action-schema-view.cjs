@@ -1,6 +1,8 @@
 "use strict";
-// 共享只读「Action」页视图：数据来自各插件自己注册的 <域>.actionSchema（插件自证清单，
-// 与 actions.list(detail=true) 同源同义），按当前插件域过滤后结构化渲染。只读：不提供执行入口、不写库、不做磁盘缓存；
+// 共享「Action」页视图：数据来自各插件自己注册的 <域>.actionSchema（插件自证清单，
+// 与 actions.list(detail=true) 同源同义），按当前插件域过滤后结构化渲染。本页不提供 action 执行入口；
+// 唯一写操作是 agent 可调用开关（actions.setAgentAccess），落本机 meta，不进云同步。
+// source:"actions.list" 是给宿主自己的页面用的：宿主 action 不属于任何业务域，只能从 actions.list 取。
 // 跨域 action（如任务页偶尔调用 tags.*）不算本域清单，也不改真实 schema。
 // 搜索采用「过滤 + 高亮同口径」：命中范围与过滤 haystack 完全一致（名称 / 描述 / 参数名 / 类型 / 说明），
 // 示例与原始 JSON Schema 只展示不高亮，避免在代码块里插标签破坏可复制性。
@@ -12,6 +14,15 @@ var COPY = {
   zh: {
     title: "Action",
     hint: "运行时注册 · 只读",
+    switchHint: "agent 开关落本机、即改即生效；界面操作不受影响。",
+    hostHint: "宿主 action 的 agent 开关；标「仅界面 · 安全约束」的不可放开。",
+    agentSwitch: "agent 可用",
+    agentLocked: "仅界面 · 安全约束",
+    agentLockedHint: "该 action 只能在界面执行（安全约束），agent 开关不可放开",
+    agentSaving: "保存中…",
+    agentOnToast: "已允许 agent 调用",
+    agentOffToast: "已禁止 agent 调用",
+    agentFail: "切换 agent 开关失败",
     domain: "域",
     versionLabel: "版本",
     shell: "宿主",
@@ -53,6 +64,15 @@ var COPY = {
   en: {
     title: "Actions",
     hint: "runtime registry · read-only",
+    switchHint: "The agent switch is stored locally and applies immediately; UI actions are unaffected.",
+    hostHint: "Agent switch for host actions; items marked UI-only (security) cannot be opened up.",
+    agentSwitch: "Agent callable",
+    agentLocked: "UI only · security",
+    agentLockedHint: "This action can only run from the UI (security constraint); the agent switch cannot be opened",
+    agentSaving: "Saving…",
+    agentOnToast: "Agent calls allowed",
+    agentOffToast: "Agent calls blocked",
+    agentFail: "Failed to change the agent switch",
     domain: "Domain",
     versionLabel: "Version",
     shell: "Host",
@@ -170,7 +190,11 @@ function paramRows(action) {
 
 module.exports = function createActionSchemaView(options) {
   var raw = String(options.domain || "");
-  var DOMAIN = raw.indexOf("wb-addon-") === 0 ? raw : "wb-addon-" + raw;
+  // source=actions.list 给宿主自己的页面用：宿主 action 归在 wb-shell 下，没有业务插件注册 <域>.actionSchema；
+  // 业务插件页面一律走默认的 actionSchema（插件自证数据源）。
+  var SOURCE = options.source === "actions.list" ? "actions.list" : "actionSchema";
+  var DOMAIN = SOURCE === "actions.list" ? raw : raw.indexOf("wb-addon-") === 0 ? raw : "wb-addon-" + raw;
+  var LIST_DOMAIN = options.listDomain ? String(options.listDomain) : DOMAIN;
   var prefix = options.prefix;
   var P = prefix + "-as";
   var Icon = options.Icon || null;
@@ -216,6 +240,8 @@ module.exports = function createActionSchemaView(options) {
     var typePick = typeState[0], setTypePick = typeState[1];
     var toastState = React.useState("");
     var toast = toastState[0], setToast = toastState[1];
+    var savingState = React.useState("");
+    var saving = savingState[0], setSaving = savingState[1];
 
     React.useEffect(function () { injectCss(); }, []);
 
@@ -224,10 +250,12 @@ module.exports = function createActionSchemaView(options) {
       setLoading(true);
       setErr("");
       var pending;
-      // 清单数据来自本插件自己注册的 <域>.actionSchema：页面归属插件，不经过宿主 schema 接口。
-      var actionName = DOMAIN.replace(/^wb-addon-/, "") + ".actionSchema";
+      // 业务插件页只读本插件自己注册的 <域>.actionSchema（页面归属插件，不经过宿主 schema 接口）；
+      // 宿主页没有归属插件，才走宿主自己的 actions.list。
+      var actionName = SOURCE === "actions.list" ? "actions.list" : DOMAIN.replace(/^wb-addon-/, "") + ".actionSchema";
+      var callArgs = SOURCE === "actions.list" ? { detail: true, domain: LIST_DOMAIN } : undefined;
       if (api && typeof api.call === "function") {
-        pending = Promise.resolve(api.call(actionName)).then(function (r) {
+        pending = Promise.resolve(api.call(actionName, callArgs)).then(function (r) {
           if (r && r.ok === false) return r;
           return (r && r.result) || r;
         });
@@ -260,6 +288,39 @@ module.exports = function createActionSchemaView(options) {
       }
       plainCopy(text);
       done();
+    }
+
+    /** 切换 agent 可调用：写宿主本机 meta（actions.setAgentAccess），只认 ui origin。 */
+    function setAgent(action, next) {
+      var name = action.name;
+      setSaving(name);
+      setToast("");
+      var fail = function (e) {
+        setSaving("");
+        setToast(t.agentFail + "：" + String((e && e.message) || e || ""));
+      };
+      var done = function (r) {
+        setSaving("");
+        var payload = r && typeof r === "object" && Object.prototype.hasOwnProperty.call(r, "result") ? r.result : r;
+        if (r && r.ok === false) {
+          setToast(t.agentFail + "：" + String(r.error || r.text || ""));
+          return;
+        }
+        var value = payload && typeof payload.agentEnabled === "boolean" ? payload.agentEnabled : next;
+        // 就地更新本条，避免整页重载闪一下；宿主返回的生效值优先。
+        setSnap(function (prev) {
+          if (!prev || !Array.isArray(prev.actions)) return prev;
+          return Object.assign({}, prev, {
+            actions: prev.actions.map(function (a) {
+              if (!a || a.name !== name) return a;
+              return Object.assign({}, a, { agentEnabled: value });
+            }),
+          });
+        });
+        setToast(value ? t.agentOnToast : t.agentOffToast);
+      };
+      if (!api || typeof api.call !== "function") { fail(new Error("no call api")); return; }
+      Promise.resolve(api.call("actions.setAgentAccess", { action: name, agentEnabled: next })).then(done, fail);
     }
 
     var all = snap && Array.isArray(snap.actions)
@@ -309,6 +370,29 @@ module.exports = function createActionSchemaView(options) {
         h("td", null, Highlight.hit(row.description, kw)));
     }
 
+    // agent 开关：宿主未注入 agentEnabled 时（老宿主 / agent 视角）不渲染，避免给出假的可用性。
+    function agentSwitch(action) {
+      if (action.agentLocked === true) {
+        return h("span", {
+          className: P + "-badge " + P + "-locked",
+          title: t.agentLockedHint,
+          "data-agent-locked": action.name,
+        }, t.agentLocked);
+      }
+      if (typeof action.agentEnabled !== "boolean") return null;
+      var busy = saving === action.name;
+      return h("label", { className: P + "-toggle", "data-agent-row": action.name },
+        h("input", {
+          type: "checkbox",
+          checked: action.agentEnabled,
+          disabled: busy,
+          "data-agent-toggle": action.name,
+          "aria-label": t.agentSwitch + " · " + action.name,
+          onChange: function (e) { setAgent(action, !!e.target.checked); },
+        }),
+        h("span", null, busy ? t.agentSaving : t.agentSwitch));
+    }
+
     function card(action) {
       var rows = paramRows(action);
       var examples = Array.isArray(action.examples) ? action.examples : [];
@@ -319,7 +403,8 @@ module.exports = function createActionSchemaView(options) {
           h("span", { className: P + "-badge" }, rows.length ? t.paramCount(rows.length) : t.noParams),
           rows.some(function (row) { return row.required; })
             ? h("span", { className: P + "-badge " + P + "-req" }, t.required)
-            : null),
+            : null,
+          agentSwitch(action)),
         action.description ? h("p", { className: P + "-desc" }, Highlight.hit(action.description, kw)) : null,
         rows.length
           ? h("table", { className: P + "-table" },
@@ -375,6 +460,7 @@ module.exports = function createActionSchemaView(options) {
         snap && snap.shellVersion ? h("span", { className: P + "-badge" }, t.shell + " v" + snap.shellVersion) : null,
         h("span", { className: P + "-badge" }, t.count(visible.length, all.length)),
         h("span", { className: P + "-none" }, t.hint)),
+      h("p", { className: P + "-hintline" }, SOURCE === "actions.list" ? t.hostHint : t.switchHint),
       snap
         ? h("div", { className: P + "-toolbar" },
           h("label", { className: P + "-search" },

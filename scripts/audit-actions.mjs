@@ -76,9 +76,10 @@ export async function loadActions() {
     mod.apply({ workbench: host, effect: fakeCtx.effect });
   }
 
-  const r = await host.invoke("actions.list", { detail: true }, "agent");
+  // 权限开关会把关闭的 action 从 agent 视图里过滤掉；契约审计必须看到全量，因此用 ui 入口。
+  const r = await host.invoke("actions.list", { detail: true }, "ui");
   const actions = (r.result && r.result.actions) || [];
-  const caps = await host.invoke("capabilities.list", {}, "agent");
+  const caps = await host.invoke("capabilities.list", {}, "ui");
   return { actions, capabilities: (caps.result && caps.result.domains) || [] };
 }
 

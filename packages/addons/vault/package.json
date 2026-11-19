@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbench-vault",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "个人工作台凭据保险箱：加密保存密码/token，agent 只见掩码",
   "type": "module",
   "main": "lib/index.js",
@@ -14,8 +14,8 @@
     "addon": {
       "id": "wb-addon-vault",
       "title": "凭据保险箱",
-      "version": "0.3.6",
-      "minShell": "0.6.7",
+      "version": "0.3.7",
+      "minShell": "0.8.0",
       "tables": [
         "vault_header",
         "vault_device",

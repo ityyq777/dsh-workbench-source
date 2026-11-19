@@ -34,7 +34,7 @@ for (const name of ["tasks", "tags", "sites", "storage", "message", "vault"]) {
   const mod = await import(pathToFileURL(join(ROOT, "packages/addons", name, "lib/index.js")).href);
   mod.apply({ workbench: host, effect: fakeCtx.effect });
 }
-const listed = await host.invoke("actions.list", { detail: true }, "agent");
+const listed = await host.invoke("actions.list", { detail: true }, "ui");
 const caps = await host.invoke("capabilities.list", {}, "agent");
 const actions = (listed.result && listed.result.actions) || [];
 const domains = (caps.result && caps.result.domains) || [];
@@ -79,7 +79,13 @@ import factory from ${JSON.stringify(join(ROOT, "packages/addons/lib/action-sche
 
 var api = {
   schema: function () { return Promise.resolve(window.__WB_SCHEMA__); },
-  call: function (name) {
+  call: function (name, args) {
+    if (name === 'actions.setAgentAccess') {
+      var entry = (window.__WB_PAYLOADS__[CURRENT].actions || []).find(x => x.name === args.action);
+      if (!entry || typeof args.agentEnabled !== 'boolean') return Promise.reject(new Error('Invalid preview action'));
+      entry.agentEnabled = args.agentEnabled;
+      return Promise.resolve({ result: { action: entry.name, agentEnabled: entry.agentEnabled } });
+    }
     var short = String(name || "").split(".")[0];
     var full = short.indexOf("wb-addon-") === 0 ? short : "wb-addon-" + short;
     return Promise.resolve({ result: window.__WB_PAYLOADS__[full] || window.__WB_SCHEMA__ });

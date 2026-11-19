@@ -1,3 +1,35 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { createContext, runInContext } from "node:vm";
+
+/**
+ * 在 vm 沙箱里加载浏览器侧 CJS（视图/样式），用 deps 顶替外部依赖（如 require("react")）。
+ * 相对路径依赖按需递归加载，与 esbuild 打包时的解析口径一致。
+ */
+export function loadCjs(entryFile, deps = {}) {
+  const sandbox = createContext({
+    console, Promise, Set, Map, WeakMap, JSON, Object, Array, String, Number, Boolean,
+    Error, RegExp, Date, Math, Symbol, parseInt, parseFloat, isNaN, isFinite, encodeURIComponent, decodeURIComponent,
+  });
+  const cache = new Map();
+  function load(file) {
+    if (cache.has(file)) return cache.get(file).exports;
+    const mod = { exports: {} };
+    cache.set(file, mod);
+    const stubRequire = (name) => {
+      if (Object.prototype.hasOwnProperty.call(deps, name)) return deps[name];
+      if (name.startsWith(".")) return load(resolve(dirname(file), name));
+      throw new Error("Unexpected runtime dependency: " + name);
+    };
+    runInContext(
+      "(function (module, exports, require) {" + readFileSync(file, "utf8") + "\n})",
+      sandbox,
+    )(mod, mod.exports, stubRequire);
+    return mod.exports;
+  }
+  return load(entryFile);
+}
+
 // Deterministic element renderer with hook/effect cleanup and explicit event handlers.
 export function createReact() {
   const rt = {

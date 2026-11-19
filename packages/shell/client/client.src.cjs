@@ -8,6 +8,8 @@ var NS = "workbench";
 var LOCALE = require("./locale.cjs");
 
 var CSS = require("./styles.cjs");
+// 共享 Action 页：宿主自己的「Agent 权限」页复用它，数据源是 actions.list（宿主 action 不属于任何业务域）。
+var SystemPages = require("./system-pages.cjs");
 
 // ── 子插件宿主桥（必须在任何 addon client.js 之前就位）──
 var registry = new Map();     // addonId -> AddonClientModule
@@ -433,6 +435,7 @@ function WorkbenchPage(props) {
     ] }, key);
   }
 
+  if (route === "agent") return SystemPages.agentAccessPage({ jsx: jsx, t: t, lang: lang, api: api, head: pageHead });
   if (route === "backup") {
     return jsx.jsxs("div", { className: "wb-root", children: [
       jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_backup"), t("backup_desc")), jsx.jsx(BackupTab, { t: t, lang: lang, addons: addons })] }),
@@ -491,11 +494,7 @@ function WorkbenchPage(props) {
         jsx.jsx("h3", { children: t("manage") }),
         jsx.jsx("span", { className: "wb-hint", children: t("home_hint") }),
       ] }),
-      jsx.jsxs("div", { className: "wb-home-grid manage", children: [
-        systemCard("backup", "backup", t("tab_backup"), t("backup_desc")),
-        systemCard("audit", "audit", t("tab_audit"), t("audit_desc")),
-        systemCard("account", "account", t("tab_account"), t("account_desc")),
-      ] }),
+      jsx.jsx("div", { className: "wb-home-grid manage", children: SystemPages.manageCards({ t: t, systemCard: systemCard }) }),
     ] }),
   ] });
 }

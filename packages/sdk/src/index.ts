@@ -41,6 +41,19 @@ export interface DomainActionDef<I = Record<string, unknown>, O = unknown> {
   render?(result: O): string;
   /** 可选调用示例；actions.help 会原样返回，便于 agent 自举 */
   examples?: Record<string, unknown>[];
+  /**
+   * agent 是否可调用：省略视为 true；声明 false 表示默认只给界面用。
+   * 宿主另有一份「本机 meta 覆盖」，界面可以按 action 单独打开/关闭，
+   * 关闭后 agent 在 actions.list / actions.help / capabilities.* / *.actionSchema 中都看不到它，
+   * 硬调会得到 ACTION_AGENT_DISABLED；origin=ui 的调用完全不受影响。
+   */
+  agentEnabled?: boolean;
+  /**
+   * 安全约束：agent 永远不可调用，界面也不能打开（不是默认值，是硬锁）。
+   * 用于发信、删除、凭据这类「本来就不该交给 agent」的 action；
+   * 与 agentEnabled:false 的区别是后者只是默认关闭、界面仍可开。
+   */
+  agentLocked?: boolean;
 }
 
 /**

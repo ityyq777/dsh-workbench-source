@@ -80,7 +80,7 @@ export interface AuditWriteInput {
   result?: unknown;
   durationMs?: number;
   at?: number;
-  /** 直接覆盖只读跳过逻辑（导入、迁移等需要强制留痕时用） */
+  /** 直接覆盖「只读跳过」与「自举 action 跳过」（导入、迁移、权限开关等需要强制留痕时用） */
   force?: boolean;
 }
 
@@ -293,8 +293,8 @@ export class AuditLog {
     try {
       const action = String(input.action || "").trim();
       if (!action) return null;
-      // 自举元 action 与审计自身不记
-      if (action.startsWith("audit.") || action.startsWith("actions.") || action.startsWith("capabilities.")) {
+      // 自举元 action 与审计自身不记；显式 force 的安全事件（如改权限开关、被策略拦截）例外。
+      if (!input.force && (action.startsWith("audit.") || action.startsWith("actions.") || action.startsWith("capabilities."))) {
         return null;
       }
       if (!input.force && isReadAction(action) && !this.recordsReads()) return null;
