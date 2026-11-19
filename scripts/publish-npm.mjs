@@ -4,12 +4,15 @@
  *
  * 默认只做 dry-run（npm publish --dry-run），确认无误后加 --publish。
  * 宿主必须先发布，业务包依赖它的版本。
+ * 发布前会比对发布树与源码版本；不一致说明 stage-release 之后源码又升了版本，
+ * 直接发布会把旧包当最新版发出去，因此默认拦截（确认要用旧快照时加 --allow-drift）。
  *
  * 例：
  *   node scripts/publish-npm.mjs
  *   node scripts/publish-npm.mjs --publish
  *   node scripts/publish-npm.mjs --publish --otp=123456
  *   node scripts/publish-npm.mjs --only=host --publish
+ *   node scripts/publish-npm.mjs --publish --allow-drift
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
@@ -22,6 +25,7 @@ const registry = argValue("--registry") ?? "https://registry.npmjs.org";
 const otp = argValue("--otp");
 const only = argValue("--only");
 const publish = process.argv.includes("--publish");
+const allowDrift = process.argv.includes("--allow-drift");
 const tag = argValue("--tag") ?? "latest";
 
 const order = releaseOrder();
@@ -29,6 +33,40 @@ const selected = only ? order.filter((x) => x === only) : order;
 if (only && selected.length === 0) {
   console.error(`unknown --only=${only}，可选：${order.join(", ")}`);
   process.exit(2);
+}
+
+// 发布树是 stage-release 时刻的快照：之后源码再升版本，这里就是旧包。
+// 发出去会变成「npm 上不是最新」，所以默认拦下来，要求先重建发布树。
+if (!allowDrift) {
+  const drift = versionDrift();
+  if (drift.length > 0) {
+    console.error("发布树与源码版本不一致，拒绝发布：");
+    for (const d of drift) console.error(`  ${d.name}：发布树 ${d.release} / 源码 ${d.source}`);
+    console.error("\n先重建发布树再发布：");
+    console.error("  pnpm build && pnpm dist:shell && pnpm stage:release");
+    console.error("确认要用这份旧快照时才加 --allow-drift。");
+    process.exit(3);
+  }
+}
+
+/** 逐个比对 dist/release/packages/<key> 与源码 package.json 的版本号。 */
+function versionDrift() {
+  const drift = [];
+  for (const key of selected) {
+    const releaseFile = join(releaseRoot, key, "package.json");
+    if (!existsSync(releaseFile)) continue;
+    const sourceFile =
+      key === "host"
+        ? join(root, "packages", "shell", "package.json")
+        : join(root, "packages", "addons", key, "package.json");
+    if (!existsSync(sourceFile)) continue;
+    const released = JSON.parse(readFileSync(releaseFile, "utf8"));
+    const source = JSON.parse(readFileSync(sourceFile, "utf8"));
+    if (released.version !== source.version) {
+      drift.push({ name: released.name ?? key, release: released.version, source: source.version });
+    }
+  }
+  return drift;
 }
 
 /** 发布顺序以 stage-release 生成的 release.json 为准；缺失时按目录回退，宿主仍排第一。 */
