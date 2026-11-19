@@ -123,9 +123,9 @@ const ADDON_META = {
     description: "个人工作台邮件插件：IMAP 收信头、SMTP 发信、保险箱托管密码",
     keywords: ["mail", "imap", "smtp", "email"],
     marketCategory: "tools",
-    marketEn: "Mail client for DSH: IMAP fetches recent headers only, SMTP sends plain-text mail, and account passwords live in the vault as secret ids.",
-    marketZh: "DSH 邮件：IMAP 只抓最近邮件头，SMTP 发纯文本，账户密码由保险箱托管（只存 secretId）。",
-    marketExtra: "不下载完整正文与附件；发信仅纯文本，需要先安装 dsh-workbench-vault 保存密码。",
+    marketEn: "Mail client for DSH: sync IMAP headers, read bodies on demand and send plain-text mail with SMTP. The credential vault is installed with mail.",
+    marketZh: "DSH 邮件：IMAP 同步信头、按需读正文、SMTP 发纯文本；安装邮件时自动安装凭据保险箱。",
+    marketExtra: "保险箱随邮件安装；首次使用仍需初始化、解锁并绑定邮箱授权码。邮件账户仅保存 secretId。",
   },
 };
 
@@ -223,7 +223,7 @@ function commonMeta(pkg, subdir, description, keywords) {
 }
 function rewritePatch(file, hostName) {
   const src = readFileSync(file, "utf8");
-  writeFileSync(file, src.replaceAll("name: 'dsh-workbench'", `name: '${hostName}'`));
+  writeFileSync(file, src.replace(/^(\s*(?:-\s+)?name:\s*)(['"]?)dsh-workbench\2(?=\s*(?:#.*)?$)/gm, (_match, key, quote) => `${key}${quote}${hostName}${quote}`));
 }
 function rewriteHostClient(file, hostName) {
   const src = readFileSync(file, "utf8");
@@ -268,6 +268,12 @@ for (const [key, meta] of Object.entries(ADDON_META)) {
   pkg.files = [...new Set([...(pkg.files ?? ["lib", "cordis.patch.yml"]), "README.md", "LICENSE"])];
   const deps = { ...(pkg.dependencies ?? {}) };
   delete deps["dsh-workbench"];
+  for (const [name, spec] of Object.entries(deps)) {
+    if (!/^(?:file|link|workspace):/.test(spec)) continue;
+    const provider = Object.values(built).find((dep) => dep.name === name);
+    if (!provider) throw new Error(`${pkg.name} 的本地依赖 ${name} 必须先进入发布清单`);
+    deps[name] = `^${provider.version}`;
+  }
   deps[HOST_NAME] = `^${hostVersion}`;
   pkg.dependencies = deps;
   if (pkg.dsh?.client?.inject) {

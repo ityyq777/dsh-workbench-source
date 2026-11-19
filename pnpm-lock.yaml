@@ -65,6 +65,9 @@ importers:
       dsh-workbench:
         specifier: file:../../shell-dist
         version: link:../../shell-dist
+      dsh-workbench-vault:
+        specifier: file:../vault
+        version: link:../vault
 
   packages/addons/message:
     dependencies:

@@ -27,7 +27,7 @@ export function apply(ctx) {
     id: "wb-addon-mail",
     title: "邮件",
     description: "IMAP 按需收正文 + SMTP 发信；密码存保险箱；本地副本与搜索",
-    version: "0.2.6",
+    version: "0.2.7",
     tables: ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"],
     sync: { tables: [] },
     views: [
@@ -38,6 +38,7 @@ export function apply(ctx) {
       { id: "actions", title: { zh: "Action", en: "Actions" } },
     ],
     capability: {
+      requires: ["wb-addon-vault"],
       taskOwnership: { boundary: "发信用 mail.messageSend；需要跟进的处理项用 tasks.create。", query: "mail" },
       summary: "本地邮件客户端：IMAP 抓最近信头、点开时下载并解码正文（纯文本/HTML），SMTP 发信，密码由保险箱托管。",
       records: [{ kind: "message", title: "邮件", description: "账户、文件夹、主题/发件人/日期、本地正文副本。", when: ["查看最近邮件", "发送纯文本邮件"], notFor: ["完整附件下载", "OAuth2 登录"], primaryAction: "mail.messageSend", keyArgs: ["accountId", "to", "subject", "text"] }],

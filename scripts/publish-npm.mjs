@@ -15,7 +15,7 @@
  *   node scripts/publish-npm.mjs --publish --allow-drift
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const root = join(import.meta.dirname, "..");
@@ -69,15 +69,14 @@ function versionDrift() {
   return drift;
 }
 
-/** 发布顺序以 stage-release 生成的 release.json 为准；缺失时按目录回退，宿主仍排第一。 */
+/** 发布顺序以 stage-release 校验的 release.json 为准；缺失时拒绝猜测依赖顺序。 */
 function releaseOrder() {
   const manifestFile = join(root, "dist", "release", "release.json");
   if (existsSync(manifestFile)) {
     const manifest = JSON.parse(readFileSync(manifestFile, "utf8"));
     if (Array.isArray(manifest.packages) && manifest.packages.length > 0) return manifest.packages;
   }
-  const dirs = readdirSync(releaseRoot).filter((name) => existsSync(join(releaseRoot, name, "package.json")));
-  return ["host", ...dirs.filter((name) => name !== "host").sort()];
+  throw new Error("缺少有效的 release.json 发布顺序，请先重新生成发布树");
 }
 
 function argValue(name) {

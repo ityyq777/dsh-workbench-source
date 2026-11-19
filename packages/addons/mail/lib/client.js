@@ -4257,7 +4257,7 @@ var require_actions = __commonJS({
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.2.6",
+    version: "0.2.7",
     icon: (init_mail(), __toCommonJS(mail_exports)).default,
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },
