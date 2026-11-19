@@ -89,6 +89,9 @@ module.exports = function Records(props) {
       if (key === "note") next.noteTouched = true;
       if (prev.mode === "create" && (key === "payDate" || key === "cycle")) {
         if (!prev.periodTouched) next.incomePeriod = defaultPeriod(next.payDate, next.cycle);
+        else if (key === "cycle" && next.cycle !== prev.cycle && prev.incomePeriod) {
+          next.incomePeriod = next.cycle === "monthly" ? prev.incomePeriod.slice(0, 7) : "";
+        }
       }
       if (prev.mode === "create" && !next.noteTouched) {
         next.note = next.cycle === "monthly" && next.incomePeriod ? F.monthLabel(next.incomePeriod.slice(0, 7)) + "工资" : "";
@@ -194,9 +197,9 @@ module.exports = function Records(props) {
           h("select", { className: "wbsal-input", value: form.cycle, onChange: function (e) { setField("cycle", e.target.value); } },
             h("option", { value: "monthly" }, "月结"), h("option", { value: "daily" }, "日结"))),
         h(C.Field, { h: h, label: "工资所属期" },
-          h(form.cycle === "daily" && !(form.incomePeriod && form.incomePeriod.length === 7) ? DP.DatePicker : DP.MonthPicker, {
+          h((form.incomePeriod ? form.incomePeriod.length === 10 : form.cycle === "daily") ? DP.DatePicker : DP.MonthPicker, {
             React: React, h: h, prefix: "wbsal", lang: lang, label: "工资所属期",
-            placeholder: "未归属", value: form.cycle === "daily" ? form.incomePeriod : (form.incomePeriod || "").slice(0, 7),
+            placeholder: "未归属", value: form.incomePeriod || "",
             onChange: function (next) { setField("incomePeriod", next); },
           })),
         h(C.Field, { h: h, label: "备注" }, h("input", { className: "wbsal-input", value: form.note, onChange: function (e) { setField("note", e.target.value); } }))),
@@ -284,7 +287,8 @@ module.exports = function Records(props) {
       onClick: function () { setOpenId(expanded ? "" : item.id); setConfirmId(""); },
     },
       h("td", { className: "left" }, h("span", { className: "wbsal-date" }, h("b", null, String(item.payDate).slice(5)), h("span", null, F.weekday(item.payDate)))),
-      h("td", { className: "left" }, h(C.Pill, { h: h, kind: item.cycle === "daily" ? "warn" : "ok" }, item.cycle === "daily" ? "日结" : "月结")),
+      h("td", { className: "left" }, h(C.Pill, { h: h, kind: item.cycle === "daily" ? "warn" : "ok" }, item.cycle === "daily" ? "日结" : "月结"),
+        h("div", { className: "wbsal-muted" }, item.incomePeriod ? F.monthLabel(item.incomePeriod) : "未归属")),
       h("td", null, h("span", { className: "wbsal-net" }, F.money(item.netPay))),
       h("td", { className: "wbsal-opt" }, F.money(item.grossPay)),
       h("td", { className: "wbsal-opt hide-md" }, F.money(F.sumValues(item, F.SOCIAL_KEYS))),

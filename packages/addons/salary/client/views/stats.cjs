@@ -217,8 +217,8 @@ module.exports = function Stats(props) {
   }
 
   var body;
-  if (load.loading) body = h(C.Empty, { h: h, text: "加载中…" });
-  else if (load.error) body = h(C.Notice, { h: h, kind: "error", text: load.error });
+  if (load.error) body = h(C.Notice, { h: h, kind: "error", text: load.error });
+  else if (load.loading || (data && (data.year !== year || data.basis !== basis))) body = h(C.Empty, { h: h, text: "加载中…" });
   else if (!data || data.records === 0) {
     body = h("div", { className: "wbsal-empty" },
       h("div", null, year + " 年没有按当前口径归入的工资记录"));
@@ -333,7 +333,7 @@ module.exports = function Stats(props) {
           h(C.Btn, { h: h, kind: "ghost", onClick: function () { setYear(Math.max(2000, year - 1)); } }, "‹"),
           h("span", { className: "wbsal-seg-year" }, year + " 年"),
           h(C.Btn, { h: h, kind: "ghost", onClick: function () { setYear(Math.min(2100, year + 1)); } }, "›")))),
-    basis === "income" && data && data.basis === basis && data.unassignedRecords > 0
+    basis === "income" && data && data.year === year && data.basis === basis && data.unassignedRecords > 0
       ? h(C.Notice, { h: h, text: "全部年份共 " + data.unassignedRecords + " 笔工资未填写所属期，未计入所属月统计。" })
       : null,
     body);

@@ -1269,8 +1269,8 @@ var require_stats = __commonJS({
         }));
       }
       var body;
-      if (load.loading) body = h(C.Empty, { h, text: "\u52A0\u8F7D\u4E2D\u2026" });
-      else if (load.error) body = h(C.Notice, { h, kind: "error", text: load.error });
+      if (load.error) body = h(C.Notice, { h, kind: "error", text: load.error });
+      else if (load.loading || data && (data.year !== year || data.basis !== basis)) body = h(C.Empty, { h, text: "\u52A0\u8F7D\u4E2D\u2026" });
       else if (!data || data.records === 0) {
         body = h(
           "div",
@@ -1480,7 +1480,7 @@ var require_stats = __commonJS({
             )
           )
         ),
-        basis === "income" && data && data.basis === basis && data.unassignedRecords > 0 ? h(C.Notice, { h, text: "\u5168\u90E8\u5E74\u4EFD\u5171 " + data.unassignedRecords + " \u7B14\u5DE5\u8D44\u672A\u586B\u5199\u6240\u5C5E\u671F\uFF0C\u672A\u8BA1\u5165\u6240\u5C5E\u6708\u7EDF\u8BA1\u3002" }) : null,
+        basis === "income" && data && data.year === year && data.basis === basis && data.unassignedRecords > 0 ? h(C.Notice, { h, text: "\u5168\u90E8\u5E74\u4EFD\u5171 " + data.unassignedRecords + " \u7B14\u5DE5\u8D44\u672A\u586B\u5199\u6240\u5C5E\u671F\uFF0C\u672A\u8BA1\u5165\u6240\u5C5E\u6708\u7EDF\u8BA1\u3002" }) : null,
         body
       );
     };
@@ -1986,6 +1986,9 @@ var require_records = __commonJS({
           if (key === "note") next.noteTouched = true;
           if (prev.mode === "create" && (key === "payDate" || key === "cycle")) {
             if (!prev.periodTouched) next.incomePeriod = defaultPeriod(next.payDate, next.cycle);
+            else if (key === "cycle" && next.cycle !== prev.cycle && prev.incomePeriod) {
+              next.incomePeriod = next.cycle === "monthly" ? prev.incomePeriod.slice(0, 7) : "";
+            }
           }
           if (prev.mode === "create" && !next.noteTouched) {
             next.note = next.cycle === "monthly" && next.incomePeriod ? F.monthLabel(next.incomePeriod.slice(0, 7)) + "\u5DE5\u8D44" : "";
@@ -2124,14 +2127,14 @@ var require_records = __commonJS({
             h(
               C.Field,
               { h, label: "\u5DE5\u8D44\u6240\u5C5E\u671F" },
-              h(form.cycle === "daily" && !(form.incomePeriod && form.incomePeriod.length === 7) ? DP.DatePicker : DP.MonthPicker, {
+              h((form.incomePeriod ? form.incomePeriod.length === 10 : form.cycle === "daily") ? DP.DatePicker : DP.MonthPicker, {
                 React,
                 h,
                 prefix: "wbsal",
                 lang,
                 label: "\u5DE5\u8D44\u6240\u5C5E\u671F",
                 placeholder: "\u672A\u5F52\u5C5E",
-                value: form.cycle === "daily" ? form.incomePeriod : (form.incomePeriod || "").slice(0, 7),
+                value: form.incomePeriod || "",
                 onChange: function(next) {
                   setField("incomePeriod", next);
                 }
@@ -2284,7 +2287,12 @@ var require_records = __commonJS({
               }
             },
             h("td", { className: "left" }, h("span", { className: "wbsal-date" }, h("b", null, String(item.payDate).slice(5)), h("span", null, F.weekday(item.payDate)))),
-            h("td", { className: "left" }, h(C.Pill, { h, kind: item.cycle === "daily" ? "warn" : "ok" }, item.cycle === "daily" ? "\u65E5\u7ED3" : "\u6708\u7ED3")),
+            h(
+              "td",
+              { className: "left" },
+              h(C.Pill, { h, kind: item.cycle === "daily" ? "warn" : "ok" }, item.cycle === "daily" ? "\u65E5\u7ED3" : "\u6708\u7ED3"),
+              h("div", { className: "wbsal-muted" }, item.incomePeriod ? F.monthLabel(item.incomePeriod) : "\u672A\u5F52\u5C5E")
+            ),
             h("td", null, h("span", { className: "wbsal-net" }, F.money(item.netPay))),
             h("td", { className: "wbsal-opt" }, F.money(item.grossPay)),
             h("td", { className: "wbsal-opt hide-md" }, F.money(F.sumValues(item, F.SOCIAL_KEYS))),

@@ -105,8 +105,7 @@ function makeReact(hooks) {
 }
 
 /** 两轮渲染：第一轮拿 loading 态，effect 里 api.call 完成后第二轮拿数据态。 */
-async function render(component, props, api) {
-  const hooks = new Hooks();
+async function render(component, props, api, hooks = new Hooks()) {
   const React = makeReact(hooks);
   let tree = null;
   for (let pass = 0; pass < 4; pass += 1) {
@@ -152,7 +151,9 @@ for (const klass of ["wbsal-page", "wbsal-kpi", "wbsal-record-row", "wbsal-chart
   if (!css.includes(klass)) problems.push("样式表缺少 " + klass);
 }
 
-const api = { call: async (action) => ({ ok: true, result: RESPONSES[action] !== undefined ? RESPONSES[action] : {} }) };
+const api = { call: async (action, args) => ({ ok: true, result: action === "salary.stats"
+  ? { ...salaryStats, year: args.year, basis: args.basis }
+  : RESPONSES[action] ?? {} }) };
 const checks = [
   ["records", "views/records.cjs", "工资记录", ["wbsal-record-row", "wbsal-toolbar", "wbsal-toolbar-end", "wbsal-month", "wbsal-mask"]],
   ["stats", "views/stats.cjs", "统计", ["wbsal-chart", "wbsal-comp", "wbsal-metric", "wbsal-linechart", "wbsal-series"]],
@@ -186,7 +187,49 @@ function polyClasses(tree, found = []) {
   return found;
 }
 const statsComp = require(ROOT + "packages/addons/salary/client/views/stats.cjs");
-const fixedApi = { call: async (action) => ({ ok: true, result: RESPONSES[action] !== undefined ? RESPONSES[action] : {} }) };
+const fixedApi = api;
+function locate(tree, predicate) {
+  if (Array.isArray(tree)) return tree.map((node) => locate(node, predicate)).find(Boolean);
+  if (!tree || typeof tree !== "object") return undefined;
+  return predicate(tree) ? tree : locate(tree.children, predicate);
+}
+
+// 切换统计时，在新请求返回前不展示上一口径的图表。
+const statsHooks = new Hooks();
+const statsProps = { lang: "zh", h: HOST.h };
+const arrivalTree = await render(statsComp, statsProps, api, statsHooks);
+locate(arrivalTree, (node) => node.type === "button" && node.children[0] === "按所属月").props.onClick();
+statsHooks.reset();
+const switchingTree = statsComp({ ...statsProps, React: makeReact(statsHooks), api });
+assert.equal(collect(switchingTree).has("wbsal-chart"), false);
+// 执行本次渲染排入的 effect，让所属口径请求完成。
+for (const effect of statsHooks.effects) effect();
+await new Promise((resolve) => setTimeout(resolve, 0));
+const incomeTree = await render(statsComp, statsProps, api, statsHooks);
+assert.equal(collect(incomeTree).has("wbsal-chart"), true);
+
+const recordsComp = require(ROOT + "packages/addons/salary/client/views/records.cjs");
+const DP = require(ROOT + "packages/addons/lib/date-picker.cjs");
+const formHooks = new Hooks();
+const formProps = { lang: "zh", h: HOST.h, initialForm: {
+  mode: "create", payDate: "2026-11-17", cycle: "daily", incomePeriod: "2026-11-17",
+  values: require(ROOT + "packages/addons/salary/client/ui/fields.cjs").blankValues(),
+} };
+const renderForm = () => render(recordsComp, formProps, api, formHooks);
+const picker = (tree) => locate(tree, (node) => node.props.label === "工资所属期" && (node.type === DP.DatePicker || node.type === DP.MonthPicker));
+const cycleSelect = (tree) => locate(tree, (node) => node.type === "select" && ["daily", "monthly"].includes(node.props.value));
+let formTree = await renderForm();
+assert.ok(locate(formTree, (node) => node.type === "div" && node.children[0] === "未归属"));
+picker(formTree).props.onChange("2026-11-12");
+formTree = await renderForm();
+cycleSelect(formTree).props.onChange({ target: { value: "monthly" } });
+formTree = await renderForm();
+assert.equal(picker(formTree).type, DP.MonthPicker);
+assert.equal(picker(formTree).props.value, "2026-11");
+cycleSelect(formTree).props.onChange({ target: { value: "daily" } });
+formTree = await renderForm();
+assert.equal(picker(formTree).type, DP.DatePicker);
+assert.equal(picker(formTree).props.value, "");
 function toneCount(list) {
   const count = { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, s6: 0 };
   for (const name of list) {
