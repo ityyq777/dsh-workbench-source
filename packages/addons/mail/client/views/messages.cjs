@@ -2,6 +2,17 @@
 var C = require("../ui/common.cjs");
 var Attachments = require("../ui/attachments.cjs");
 var ReplyTools = require("../ui/reply-tools.cjs");
+var iconLabel = require("../../../lib/icon-label.cjs");
+var Folder = require("lucide-react/icons/folder").default;
+var InboxIcon = require("lucide-react/icons/inbox").default;
+var Refresh = require("lucide-react/icons/refresh-cw").default;
+var Download = require("lucide-react/icons/download").default;
+var Search = require("lucide-react/icons/search").default;
+var Close = require("lucide-react/icons/x").default;
+var Mail = require("lucide-react/icons/mail").default;
+var MailOpen = require("lucide-react/icons/mail-open").default;
+var Move = require("lucide-react/icons/folder-input").default;
+var Trash = require("lucide-react/icons/trash-2").default;
 
 module.exports = function Messages(props) {
   var h = props.h,
@@ -93,8 +104,8 @@ function Inbox(props) {
   function report(e) {
     msg[1]({ kind: "error", text: C.errText(e) });
   }
-  function button(text, click, disabled, kind) {
-    return h(C.Btn, { h: h, onClick: click, disabled: disabled, kind: kind }, text);
+  function button(text, click, disabled, kind, Icon) {
+    return h(C.Btn, { h: h, onClick: click, disabled: disabled, kind: kind }, Icon ? iconLabel(h, Icon, text) : text);
   }
   function isUnread(m) {
     return !/\\Seen/.test(String(m.flags || ""));
@@ -318,7 +329,7 @@ function Inbox(props) {
       button("刷新本地列表", function () {
         reset();
         list.refresh();
-      }),
+      }, undefined, undefined, Refresh),
     ),
     h(C.Notice, { h: h, kind: "error", text: props.accounts.error || boxes.error }),
     h(C.Notice, { h: h, kind: msg[0] && msg[0].kind, text: msg[0] && msg[0].text }),
@@ -355,7 +366,7 @@ function Inbox(props) {
           }, h("option", { value: "inbox" }, "统一收件箱"), h("option", { value: "all" }, "全部邮件"))),
           canSync && h(
             C.Field,
-            { h: h, label: "文件夹" },
+            { h: h, label: iconLabel(h, Folder, "文件夹") },
             h(
               "select",
               {
@@ -381,6 +392,8 @@ function Inbox(props) {
                 sync(false, true);
               },
               !canSync || busy[0],
+              undefined,
+              Folder,
             ),
             button(
               "同步最新邮件",
@@ -389,6 +402,7 @@ function Inbox(props) {
               },
               !canRemote || busy[0],
               "primary",
+              Download,
             ),
           ),
           canRemote && remote[0]
@@ -429,8 +443,8 @@ function Inbox(props) {
                 },
               }),
             ),
-            h(C.Btn, { h: h, type: "submit" }, "搜索"),
-            button("在服务器搜索", searchServer, !canRemote || !folder[0] || !search[0].trim() || !!server[0]?.loading),
+            h(C.Btn, { h: h, type: "submit" }, iconLabel(h, Search, "搜索")),
+            button("在服务器搜索", searchServer, !canRemote || !folder[0] || !search[0].trim() || !!server[0]?.loading, undefined, Search),
             server[0] && button("返回本地列表", function () { clearServer(); close(); }),
           ),
           h(
@@ -454,7 +468,9 @@ function Inbox(props) {
         h(
           "div",
           { className: "wbml-pane-head" },
-          h("strong", null, server[0] ? "服务器搜索 · " + folder[0] : folder[0] || (unified[0] ? "统一收件箱" : "全部邮件")),
+          h("strong", null, iconLabel(h,
+            server[0] ? Search : folder[0] && folder[0] !== "INBOX" ? Folder : folder[0] || unified[0] ? InboxIcon : Mail,
+            server[0] ? "服务器搜索 · " + folder[0] : folder[0] || (unified[0] ? "统一收件箱" : "全部邮件"))),
           h(
             "span",
             { className: "wbml-muted" },
@@ -480,7 +496,7 @@ function Inbox(props) {
                   senderDetail(current) + " · " + C.fmtTime(current.dateAt, props.lang),
                 ),
               ),
-              button("关闭", close),
+              button("关闭", close, undefined, undefined, Close),
             ),
             h(
               "div",
@@ -503,6 +519,8 @@ function Inbox(props) {
                       );
                     },
                     busy[0],
+                    undefined,
+                    isUnread(current) ? MailOpen : Mail,
                   ),
                   h(
                     "select",
@@ -529,6 +547,8 @@ function Inbox(props) {
                       mutate("mail.messageMove", { id: current.id, mailbox: target[0] }, true, selected.current);
                     },
                     busy[0] || !target[0],
+                    undefined,
+                    Move,
                   ),
                   button(
                     "移入废纸篓",
@@ -536,6 +556,8 @@ function Inbox(props) {
                       mutate("mail.messageDelete", { id: current.id }, true, selected.current);
                     },
                     busy[0],
+                    undefined,
+                    Trash,
                   ),
                 )
               : null,

@@ -2,6 +2,13 @@
 /** 凭据库：全局列表 + 搜索/类型筛选 + 所属集合；明文只在 reveal 弹层里出现。 */
 var C = require("../ui/common.cjs");
 var AskPassphrase = require("../ui/ask-passphrase.cjs");
+var iconLabel = require("../../../lib/icon-label.cjs");
+var Refresh = require("lucide-react/icons/refresh-cw").default;
+var Unlock = require("lucide-react/icons/lock-open").default;
+var Plus = require("lucide-react/icons/plus").default;
+var Eye = require("lucide-react/icons/eye").default;
+var Pencil = require("lucide-react/icons/pencil").default;
+var Trash = require("lucide-react/icons/trash-2").default;
 var SecretField = require("../../../lib/secret-field.cjs");
 
 var K = require("../ui/kinds.cjs");
@@ -216,11 +223,11 @@ module.exports = function SecretsView(props) {
         onChange: function (e) { kindS[1](e.target.value); setTimeout(load, 0); },
       }, h("option", { value: "" }, "全部类型"),
         K.CREATABLE_KINDS.map(function (k) { return h("option", { key: k, value: k }, KIND_LABEL[k]); })),
-      h(C.Btn, { h: h, onClick: load }, "刷新"),
+      h(C.Btn, { h: h, onClick: load }, iconLabel(h, Refresh, "刷新")),
       statusS[0] && statusS[0].locked
-        ? h(C.Btn, { h: h, kind: "primary", onClick: function () { askUnlock(""); } }, "解锁")
+        ? h(C.Btn, { h: h, kind: "primary", onClick: function () { askUnlock(""); } }, iconLabel(h, Unlock, "解锁"))
         : null,
-      h(C.Btn, { h: h, kind: "primary", onClick: startCreate }, "新增凭据")),
+      h(C.Btn, { h: h, kind: "primary", onClick: startCreate }, iconLabel(h, Plus, "新增凭据"))),
     h("p", { className: "wbv-muted" }, "凭据按「集合」组织：一条凭据可以进多个集合，一个集合可以挂到多个分组。明文只在本机解锁后可见。"),
     statusS[0] && statusS[0].locked
       ? h(C.Notice, { h: h, kind: "error", text: "保险箱已锁定（" + (statusS[0].unlockMode || "A") + " 模式）：新增、编辑和查看明文都需要先解锁。点右上角「解锁」，或直接保存时按提示解锁。" })
@@ -230,8 +237,8 @@ module.exports = function SecretsView(props) {
       rows.length === 0 ? h("div", { className: "wbv-empty-card" },
         h("div", { className: "wbv-empty-title" }, qS[0] || kindS[0] ? "没有匹配的凭据" : "还没有凭据"),
         h("div", { className: "wbv-muted" }, qS[0] || kindS[0] ? "换个关键词或类型试试。" : "新增一条后，把它加入集合；站点账号会自动用账号 id 作为集合名。"),
-        h("div", { className: "wbv-row" }, h(C.Btn, { h: h, kind: "primary", onClick: startCreate }, "新增凭据"))) :
-      h("table", { className: "wbv-table" },
+        h("div", { className: "wbv-row" }, h(C.Btn, { h: h, kind: "primary", onClick: startCreate }, iconLabel(h, Plus, "新增凭据")))) :
+      h("div", { className: "wbv-table-scroll", role: "region", "aria-label": "凭据列表", tabIndex: 0 }, h("table", { className: "wbv-table" },
         h("thead", null, h("tr", null, ["名称", "类型", "所属集合", "备注", "最近使用", "操作"].map(function (x) { return h("th", { key: x }, x); }))),
         h("tbody", null, rows.map(function (row) {
           var meta = {};
@@ -246,10 +253,10 @@ module.exports = function SecretsView(props) {
             h("td", null, noteOf(meta) || "—"),
             h("td", null, C.fmtTime(row.lastUsedAt, lang)),
             h("td", null, h("div", { className: "wbv-inline" },
-              h(C.Btn, { h: h, kind: "ghost", onClick: function () { reveal(row); } }, "查看"),
-              h(C.Btn, { h: h, kind: "ghost", onClick: function () { startEdit(row); } }, "编辑"),
-              h(C.Btn, { h: h, kind: "ghost", onClick: function () { del(row); } }, "删除"))));
-        }))),
+              h(C.Btn, { h: h, kind: "ghost", onClick: function () { reveal(row); } }, iconLabel(h, Eye, "查看")),
+              h(C.Btn, { h: h, kind: "ghost", onClick: function () { startEdit(row); } }, iconLabel(h, Pencil, "编辑")),
+              h(C.Btn, { h: h, kind: "ghost wbv-delete", onClick: function () { del(row); } }, iconLabel(h, Trash, "删除")))));
+        })))),
     editingS[0] ? h("div", { className: "wbv-modal", onClick: function () { editingS[1](false); showSecretS[1](false); } },
       h("div", { className: "wbv-modal-box", onClick: function (e) { e.stopPropagation(); } },
         h("h3", null, formS[0].id ? "编辑凭据" : "新增凭据"),

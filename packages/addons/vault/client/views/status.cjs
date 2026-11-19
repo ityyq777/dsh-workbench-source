@@ -2,6 +2,10 @@
 /** 保险箱首页：初始化 / 解锁 / 状态 / 快速锁定。 */
 var C = require("../ui/common.cjs");
 var AskPassphrase = require("../ui/ask-passphrase.cjs");
+var iconLabel = require("../../../lib/icon-label.cjs");
+var Lock = require("lucide-react/icons/lock").default;
+var Unlock = require("lucide-react/icons/lock-open").default;
+var ShieldPlus = require("lucide-react/icons/shield-plus").default;
 var SecretField = require("../../../lib/secret-field.cjs");
 
 module.exports = function StatusView(props) {
@@ -132,7 +136,7 @@ module.exports = function StatusView(props) {
           if (pass[0].length < 12) return msg[1]("口令至少 12 个字符");
           if (pass[0] !== pass2[0]) return msg[1]("两次输入不一致");
           run(function () { return C.call(api, "vault.setup", { passphrase: pass[0], mode: mode[0] }); });
-        } }, busy[0] ? "初始化中…" : "创建保险箱")));
+        } }, iconLabel(h, ShieldPlus, busy[0] ? "初始化中…" : "创建保险箱"))));
   }
 
   if (status.locked) {
@@ -162,7 +166,7 @@ module.exports = function StatusView(props) {
   }) : null;
 
   return h("div", { className: "wbv" },
-      h("h2", null, "保险箱已锁定"),
+      h("h2", null, iconLabel(h, Lock, "保险箱已锁定")),
       h("p", { className: "wbv-muted" }, "输入主口令解锁。解锁状态只保存在当前进程内存，空闲超时会自动锁定。"),
       h("div", { className: "wbv-card wbv-row" },
         h(C.Field, { h: h, label: "主口令" },
@@ -174,7 +178,7 @@ module.exports = function StatusView(props) {
         h(C.Btn, { h: h, kind: "primary", disabled: busy[0], onClick: function () {
           if (!pass[0]) return msg[1]("请输入口令");
           run(function () { return C.call(api, "vault.unlock", { passphrase: pass[0] }); });
-        } }, busy[0] ? "解锁中…" : "解锁")),
+        } }, iconLabel(h, Unlock, busy[0] ? "解锁中…" : "解锁"))),
       h(C.Notice, { h: h, kind: "error", text: msg[0] }),
       h("p", { className: "wbv-muted" }, "模式：" + modeName(status.unlockMode) + "；连续失败 5 次会锁定 5 分钟。"));
   }
@@ -206,7 +210,7 @@ module.exports = function StatusView(props) {
   }) : null;
 
   return h("div", { className: "wbv" },
-    h("div", { className: "wbv-row" }, h("h2", { className: "wbv-grow" }, "凭据保险箱"), h("span", { className: "wbv-pill ok" }, "已解锁")),
+    h("div", { className: "wbv-row" }, h("h2", { className: "wbv-grow" }, "凭据保险箱"), h(C.Pill, { h: h, kind: "ok" }, iconLabel(h, Unlock, "已解锁"))),
     h("div", { className: "wbv-grid" },
       h("div", { className: "wbv-card" }, h("div", { className: "wbv-muted" }, "凭据数量"), h("div", { className: "wbv-kpi" }, status.secretCount || 0)),
       h("div", { className: "wbv-card" }, h("div", { className: "wbv-muted" }, "分组数量"), h("div", { className: "wbv-kpi" }, status.groupCount || 0)),
@@ -214,7 +218,7 @@ module.exports = function StatusView(props) {
       h("div", { className: "wbv-card" }, h("div", { className: "wbv-muted" }, "上次解锁"), h("div", null, C.fmtTime(status.lastUnlockAt, lang)))),
     h(C.Notice, { h: h, kind: "info", text: "agent 只能看到名称和备注；查看明文必须由你在界面上操作。" }),
     h("div", { className: "wbv-row" },
-      h(C.Btn, { h: h, onClick: function () { run(function () { return C.call(api, "vault.lock"); }); } }, "立即锁定"),
+      h(C.Btn, { h: h, onClick: function () { run(function () { return C.call(api, "vault.lock"); }); } }, iconLabel(h, Lock, "立即锁定")),
       h(C.Btn, { h: h, onClick: function () { askS[1]({ value: "", busy: false, error: "" }); } }, "切回 A 模式")),
     h(C.Notice, { h: h, kind: "error", text: msg[0] }),
     modal);

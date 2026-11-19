@@ -91,7 +91,8 @@ test("消息页：真实控件事件调用、三栏结构、切换和正文竞�
   });
   const walk = (n) => (typeof n === "object" && n ? [n, ...n.kids.flatMap(walk)] : []);
   const nodes = (n) => walk(tree).filter((x) => x.props.className?.includes(n));
-  const button = (s) => walk(tree).find((x) => x.type === common.Btn && x.kids.includes(s));
+  const text = (n) => typeof n === "string" ? n : n?.kids?.map(text).join("") || "";
+  const button = (s) => walk(tree).find((x) => x.type === common.Btn && text(x) === s);
   let idx = 0,
     slots = [],
     calls = [],
@@ -154,6 +155,9 @@ test("消息页：真实控件事件调用、三栏结构、切换和正文竞�
     };
     render();
     assert.ok(button("同步最新邮件").props.disabled);
+    const syncIcon = walk(button("同步最新邮件")).find((n) => n.props["aria-hidden"] === true);
+    assert.equal(syncIcon?.props.size, 14);
+    assert.equal(syncIcon?.props.focusable, false);
     account = "a";
     slots = [];
     render();

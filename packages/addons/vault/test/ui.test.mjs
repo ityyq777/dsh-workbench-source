@@ -237,7 +237,9 @@ function texts(tree) {
 }
 
 function button(tree, label) {
-  const hit = walk(tree, []).filter(function (n) { return n.type === "button" && n.props.children === label; });
+  const hit = walk(tree, []).filter(function (n) {
+    return n.type === "button" && (n.props.children === label || texts(n.props.children).split(" | ").filter(Boolean).join("") === label);
+  });
   return hit[hit.length - 1] || null;
 }
 

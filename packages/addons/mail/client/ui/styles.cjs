@@ -3,7 +3,7 @@
 module.exports = require("../../../lib/client-base-styles.cjs")("wbml").concat([
   ".wbml-page{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
   ".wbml-input{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:120px}",
-  ".wbml-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}",
+  ".wbml-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}",
   ".wbml-btn:disabled{opacity:1;background:color-mix(in srgb,var(--wb-muted,#6b7280) 14%,transparent);color:var(--wb-muted,#6b7280);border:1px solid var(--wb-border,#e5e7eb);cursor:not-allowed}",
   "/* 三栏工作区：账户栏 300px + 列表自适应 (+ 阅读栏 360–520px) */",
   ".wbml-page.is-split{height:100%;overflow:hidden;min-height:0}",
@@ -35,6 +35,7 @@ module.exports = require("../../../lib/client-base-styles.cjs")("wbml").concat([
   ".wbml-listpane{min-height:0}",
   ".wbml-detailpane{min-height:0}",
   ".wbml-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--wb-border,#eef0f3);background:var(--wb-surface,#fff)}",
+  ".wbml-detail-head>.wbml-btn{flex:none}",
   ".wbml-detail-title{display:flex;flex-direction:column;gap:4px;min-width:0}",
   ".wbml-detail-title strong{font-size:14px;line-height:1.45;overflow-wrap:anywhere}",
   ".wbml-muted{font-size:12px;color:var(--wb-muted,#6b7280);overflow-wrap:anywhere}",
@@ -111,4 +112,4 @@ module.exports = require("../../../lib/client-base-styles.cjs")("wbml").concat([
   ".wbml-picker-empty{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--wb-muted,#6b7280);padding:6px 2px 0}",
   ".wbml-picker-warn{margin:0;font-size:12px;color:var(--wb-warn,#b45309)}",
   ".wbml-picker-note{margin:0;font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280);border:1px dashed var(--wb-border,#d4d4d8);border-radius:8px;padding:8px 10px}",
-]).join("\n");
+]).concat(require("../../../lib/icon-label.cjs").styles).join("\n");

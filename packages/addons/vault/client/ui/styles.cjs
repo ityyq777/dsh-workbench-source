@@ -8,10 +8,12 @@ module.exports = [
   ".wbv-card{border:1px solid var(--wb-border);border-radius:10px;padding:12px;background:var(--wb-card)}",
   ".wbv-card h3{margin-bottom:6px}.wbv-kpi{font-size:22px;font-weight:650;line-height:1.2}",
   ".wbv-btn{border:1px solid var(--wb-border);background:var(--wb-card);color:inherit;border-radius:7px;padding:5px 10px;cursor:pointer;font-size:12px;line-height:1.4}",
-  ".wbv-btn:hover{border-color:var(--wb-accent)}.wbv-btn:disabled{opacity:.45;cursor:not-allowed}",
+  ".wbv-btn:hover:enabled{border-color:var(--wb-accent)}.wbv-btn:disabled{opacity:.45;cursor:not-allowed}",
+  ".wbv-btn:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}",
   ".wbv-btn.primary{background:var(--wb-accent);border-color:var(--wb-accent);color:var(--wb-on-accent,inherit)}",
   ".wbv-btn.danger{color:var(--wb-danger);border-color:color-mix(in srgb,var(--wb-danger) 45%,transparent)}",
   ".wbv-btn.ghost{background:transparent;border-color:transparent;color:var(--wb-accent);padding:2px 4px}",
+  ".wbv-btn.wbv-delete{color:var(--wb-danger)}",
   ".wbv-field{display:flex;flex-direction:column;gap:4px;min-width:180px;flex:1}",
   ".wbv-label{font-size:11px;font-weight:600;opacity:.75}.wbv-hint{font-size:11px;opacity:.55}",
   ".wbv input,.wbv select,.wbv textarea{border:1px solid var(--wb-border);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface);color:inherit;width:100%;box-sizing:border-box}",
@@ -20,6 +22,7 @@ module.exports = [
   ".wbv-notice.error{border-color:color-mix(in srgb,var(--wb-danger) 45%,transparent);background:color-mix(in srgb,var(--wb-danger) 10%,transparent);color:var(--wb-danger)}",
   ".wbv-notice.ok{border-color:color-mix(in srgb,var(--wb-ok) 45%,transparent);background:color-mix(in srgb,var(--wb-ok) 10%,transparent);color:var(--wb-ok)}",
   ".wbv-empty{padding:22px;text-align:center;opacity:.55;border:1px dashed var(--wb-border);border-radius:10px}",
+  ".wbv-table-scroll{max-width:100%;overflow-x:auto;padding:4px}.wbv-table-scroll:focus-visible{outline:2px solid var(--wb-accent);outline-offset:-2px}",
   ".wbv-table{width:100%;border-collapse:collapse;font-size:12px}",
   ".wbv-table th,.wbv-table td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--wb-line);vertical-align:top}",
   ".wbv-table th{font-weight:600;opacity:.65;white-space:nowrap}.wbv-table code{font-size:11px;opacity:.8}",
@@ -58,4 +61,4 @@ module.exports = [
   ".wbv-check-list{display:flex;flex-wrap:wrap;gap:6px 14px;margin:4px 0}",
   ".wbv-check{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}",
   ".wbv-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}",
-].concat(require("../../../lib/filter-checklist-styles.cjs")).concat(require("../../../lib/client-base-styles.cjs").secretFieldStyles);
+].concat(require("../../../lib/filter-checklist-styles.cjs")).concat(require("../../../lib/client-base-styles.cjs").secretFieldStyles, require("../../../lib/icon-label.cjs").styles);

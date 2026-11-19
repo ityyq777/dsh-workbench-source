@@ -85,6 +85,22 @@ var require_client_base_styles = __commonJS({
   }
 });
 
+// packages/addons/lib/icon-label.cjs
+var require_icon_label = __commonJS({
+  "packages/addons/lib/icon-label.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function iconLabel(h, Icon2, text) {
+      return h(
+        "span",
+        { className: "wb-icon-label" },
+        h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }),
+        h("span", null, text)
+      );
+    };
+    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}";
+  }
+});
+
 // packages/addons/mail/client/ui/styles.cjs
 var require_styles = __commonJS({
   "packages/addons/mail/client/ui/styles.cjs"(exports2, module2) {
@@ -92,7 +108,7 @@ var require_styles = __commonJS({
     module2.exports = require_client_base_styles()("wbml").concat([
       ".wbml-page{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
       ".wbml-input{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:120px}",
-      ".wbml-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}",
+      ".wbml-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}",
       ".wbml-btn:disabled{opacity:1;background:color-mix(in srgb,var(--wb-muted,#6b7280) 14%,transparent);color:var(--wb-muted,#6b7280);border:1px solid var(--wb-border,#e5e7eb);cursor:not-allowed}",
       "/* \u4E09\u680F\u5DE5\u4F5C\u533A\uFF1A\u8D26\u6237\u680F 300px + \u5217\u8868\u81EA\u9002\u5E94 (+ \u9605\u8BFB\u680F 360\u2013520px) */",
       ".wbml-page.is-split{height:100%;overflow:hidden;min-height:0}",
@@ -124,6 +140,7 @@ var require_styles = __commonJS({
       ".wbml-listpane{min-height:0}",
       ".wbml-detailpane{min-height:0}",
       ".wbml-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--wb-border,#eef0f3);background:var(--wb-surface,#fff)}",
+      ".wbml-detail-head>.wbml-btn{flex:none}",
       ".wbml-detail-title{display:flex;flex-direction:column;gap:4px;min-width:0}",
       ".wbml-detail-title strong{font-size:14px;line-height:1.45;overflow-wrap:anywhere}",
       ".wbml-muted{font-size:12px;color:var(--wb-muted,#6b7280);overflow-wrap:anywhere}",
@@ -200,7 +217,7 @@ var require_styles = __commonJS({
       ".wbml-picker-empty{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--wb-muted,#6b7280);padding:6px 2px 0}",
       ".wbml-picker-warn{margin:0;font-size:12px;color:var(--wb-warn,#b45309)}",
       ".wbml-picker-note{margin:0;font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280);border:1px dashed var(--wb-border,#d4d4d8);border-radius:8px;padding:8px 10px}"
-    ]).join("\n");
+    ]).concat(require_icon_label().styles).join("\n");
   }
 });
 
@@ -1166,6 +1183,76 @@ var require_compose = __commonJS({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/reply.mjs
+var reply_exports = {};
+__export(reply_exports, {
+  __iconData: () => __iconData6,
+  default: () => Reply
+});
+var __iconData6, Reply;
+var init_reply = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/reply.mjs"() {
+    init_createLucideIcon();
+    __iconData6 = {
+      name: "reply",
+      size: 24,
+      node: [
+        ["path", { d: "M20 18v-2a4 4 0 0 0-4-4H4", key: "5vmcpk" }],
+        ["path", { d: "m9 17-5-5 5-5", key: "nvlc11" }]
+      ]
+    };
+    __iconData6.node;
+    Reply = createLucideIcon(__iconData6);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/reply-all.mjs
+var reply_all_exports = {};
+__export(reply_all_exports, {
+  __iconData: () => __iconData7,
+  default: () => ReplyAll
+});
+var __iconData7, ReplyAll;
+var init_reply_all = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/reply-all.mjs"() {
+    init_createLucideIcon();
+    __iconData7 = {
+      name: "reply-all",
+      size: 24,
+      node: [
+        ["path", { d: "m12 17-5-5 5-5", key: "1s3y5u" }],
+        ["path", { d: "M22 18v-2a4 4 0 0 0-4-4H7", key: "1fcyog" }],
+        ["path", { d: "m7 17-5-5 5-5", key: "1ed8i2" }]
+      ]
+    };
+    __iconData7.node;
+    ReplyAll = createLucideIcon(__iconData7);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/forward.mjs
+var forward_exports = {};
+__export(forward_exports, {
+  __iconData: () => __iconData8,
+  default: () => Forward
+});
+var __iconData8, Forward;
+var init_forward = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/forward.mjs"() {
+    init_createLucideIcon();
+    __iconData8 = {
+      name: "forward",
+      size: 24,
+      node: [
+        ["path", { d: "m15 17 5-5-5-5", key: "nf172w" }],
+        ["path", { d: "M4 18v-2a4 4 0 0 1 4-4h12", key: "jmiej9" }]
+      ]
+    };
+    __iconData8.node;
+    Forward = createLucideIcon(__iconData8);
+  }
+});
+
 // packages/addons/mail/client/ui/reply-tools.cjs
 var require_reply_tools = __commonJS({
   "packages/addons/mail/client/ui/reply-tools.cjs"(exports2, module2) {
@@ -1173,6 +1260,12 @@ var require_reply_tools = __commonJS({
     var C = require_common();
     var M = require_compose_model();
     var Editor = require_compose().Editor;
+    var iconLabel = require_icon_label();
+    var icons = {
+      reply: (init_reply(), __toCommonJS(reply_exports)).default,
+      replyAll: (init_reply_all(), __toCommonJS(reply_all_exports)).default,
+      forward: (init_forward(), __toCommonJS(forward_exports)).default
+    };
     module2.exports = function ReplyTools(p) {
       const { React: R, h, api, message: m } = p;
       const accounts = C.useLoad(R, api, "mail.accountList", {}, []);
@@ -1183,10 +1276,10 @@ var require_reply_tools = __commonJS({
       return h(
         "section",
         null,
-        h("div", { className: "wbml-actions" }, ["reply", "replyAll", "forward"].map((v) => h(C.Btn, { key: v, h, disabled: !owner || v === "forward" && !p.bodyReady, onClick: () => {
+        h("div", { className: "wbml-actions" }, Object.keys(icons).map((v) => h(C.Btn, { key: v, h, disabled: !owner || v === "forward" && !p.bodyReady, onClick: () => {
           setSent("");
           setMode(v);
-        } }, M.labels[v])), mode ? h(C.Btn, { h, onClick: () => setMode("") }, "\u6536\u8D77\u8349\u7A3F") : null),
+        } }, iconLabel(h, icons[v], M.labels[v]))), mode ? h(C.Btn, { h, onClick: () => setMode("") }, "\u6536\u8D77\u8349\u7A3F") : null),
         h(C.Notice, { h, kind: "error", text: accounts.error }),
         h(C.Notice, { h, kind: "ok", text: sent }),
         initial ? h(Editor, Object.assign({}, p, { key: initial.key, draftKey: initial.key, initial, accounts: rows, onSent: (outcome) => {
@@ -1198,6 +1291,250 @@ var require_reply_tools = __commonJS({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder.mjs
+var folder_exports = {};
+__export(folder_exports, {
+  __iconData: () => __iconData9,
+  default: () => Folder
+});
+var __iconData9, Folder;
+var init_folder = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder.mjs"() {
+    init_createLucideIcon();
+    __iconData9 = {
+      name: "folder",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z",
+            key: "1kt360"
+          }
+        ]
+      ]
+    };
+    __iconData9.node;
+    Folder = createLucideIcon(__iconData9);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/inbox.mjs
+var inbox_exports = {};
+__export(inbox_exports, {
+  __iconData: () => __iconData10,
+  default: () => Inbox
+});
+var __iconData10, Inbox;
+var init_inbox = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/inbox.mjs"() {
+    init_createLucideIcon();
+    __iconData10 = {
+      name: "inbox",
+      size: 24,
+      node: [
+        ["polyline", { points: "22 12 16 12 14 15 10 15 8 12 2 12", key: "o97t9d" }],
+        [
+          "path",
+          {
+            d: "M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z",
+            key: "oot6mr"
+          }
+        ]
+      ]
+    };
+    __iconData10.node;
+    Inbox = createLucideIcon(__iconData10);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
+var refresh_cw_exports = {};
+__export(refresh_cw_exports, {
+  __iconData: () => __iconData11,
+  default: () => RefreshCw
+});
+var __iconData11, RefreshCw;
+var init_refresh_cw = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
+    init_createLucideIcon();
+    __iconData11 = {
+      name: "refresh-cw",
+      size: 24,
+      node: [
+        ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
+        ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
+        ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
+        ["path", { d: "M8 16H3v5", key: "1cv678" }]
+      ]
+    };
+    __iconData11.node;
+    RefreshCw = createLucideIcon(__iconData11);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/download.mjs
+var download_exports = {};
+__export(download_exports, {
+  __iconData: () => __iconData12,
+  default: () => Download
+});
+var __iconData12, Download;
+var init_download = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/download.mjs"() {
+    init_createLucideIcon();
+    __iconData12 = {
+      name: "download",
+      size: 24,
+      node: [
+        ["path", { d: "M12 15V3", key: "m9g1x1" }],
+        ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
+        ["path", { d: "m7 10 5 5 5-5", key: "brsn70" }]
+      ]
+    };
+    __iconData12.node;
+    Download = createLucideIcon(__iconData12);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/search.mjs
+var search_exports = {};
+__export(search_exports, {
+  __iconData: () => __iconData13,
+  default: () => Search
+});
+var __iconData13, Search;
+var init_search = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/search.mjs"() {
+    init_createLucideIcon();
+    __iconData13 = {
+      name: "search",
+      size: 24,
+      node: [
+        ["path", { d: "m21 21-4.34-4.34", key: "14j7rj" }],
+        ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }]
+      ]
+    };
+    __iconData13.node;
+    Search = createLucideIcon(__iconData13);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs
+var x_exports = {};
+__export(x_exports, {
+  __iconData: () => __iconData14,
+  default: () => X
+});
+var __iconData14, X;
+var init_x = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs"() {
+    init_createLucideIcon();
+    __iconData14 = {
+      name: "x",
+      size: 24,
+      node: [
+        ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
+        ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
+      ]
+    };
+    __iconData14.node;
+    X = createLucideIcon(__iconData14);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail-open.mjs
+var mail_open_exports = {};
+__export(mail_open_exports, {
+  __iconData: () => __iconData15,
+  default: () => MailOpen
+});
+var __iconData15, MailOpen;
+var init_mail_open = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail-open.mjs"() {
+    init_createLucideIcon();
+    __iconData15 = {
+      name: "mail-open",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M21.2 8.4c.5.38.8.97.8 1.6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10a2 2 0 0 1 .8-1.6l8-6a2 2 0 0 1 2.4 0l8 6Z",
+            key: "1jhwl8"
+          }
+        ],
+        ["path", { d: "m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10", key: "1qfld7" }]
+      ]
+    };
+    __iconData15.node;
+    MailOpen = createLucideIcon(__iconData15);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder-input.mjs
+var folder_input_exports = {};
+__export(folder_input_exports, {
+  __iconData: () => __iconData16,
+  default: () => FolderInput
+});
+var __iconData16, FolderInput;
+var init_folder_input = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder-input.mjs"() {
+    init_createLucideIcon();
+    __iconData16 = {
+      name: "folder-input",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M2 9V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1",
+            key: "fm4g5t"
+          }
+        ],
+        ["path", { d: "M2 13h10", key: "pgb2dq" }],
+        ["path", { d: "m9 16 3-3-3-3", key: "6m91ic" }]
+      ]
+    };
+    __iconData16.node;
+    FolderInput = createLucideIcon(__iconData16);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
+var __iconData17, Trash;
+var init_trash = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
+    init_createLucideIcon();
+    __iconData17 = {
+      name: "trash",
+      size: 24,
+      node: [
+        ["path", { d: "M10 11v6", key: "nco0om" }],
+        ["path", { d: "M14 11v6", key: "outv1u" }],
+        ["path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6", key: "miytrc" }],
+        ["path", { d: "M3 6h18", key: "d0wm0j" }],
+        ["path", { d: "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2", key: "e791ji" }]
+      ],
+      aliases: ["trash-2"]
+    };
+    __iconData17.node;
+    Trash = createLucideIcon(__iconData17);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash-2.mjs
+var trash_2_exports = {};
+__export(trash_2_exports, {
+  default: () => Trash
+});
+var init_trash_2 = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash-2.mjs"() {
+    init_trash();
+  }
+});
+
 // packages/addons/mail/client/views/messages.cjs
 var require_messages = __commonJS({
   "packages/addons/mail/client/views/messages.cjs"(exports2, module2) {
@@ -1205,13 +1542,24 @@ var require_messages = __commonJS({
     var C = require_common();
     var Attachments = require_attachments();
     var ReplyTools = require_reply_tools();
+    var iconLabel = require_icon_label();
+    var Folder2 = (init_folder(), __toCommonJS(folder_exports)).default;
+    var InboxIcon = (init_inbox(), __toCommonJS(inbox_exports)).default;
+    var Refresh = (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default;
+    var Download2 = (init_download(), __toCommonJS(download_exports)).default;
+    var Search2 = (init_search(), __toCommonJS(search_exports)).default;
+    var Close = (init_x(), __toCommonJS(x_exports)).default;
+    var Mail2 = (init_mail(), __toCommonJS(mail_exports)).default;
+    var MailOpen2 = (init_mail_open(), __toCommonJS(mail_open_exports)).default;
+    var Move = (init_folder_input(), __toCommonJS(folder_input_exports)).default;
+    var Trash2 = (init_trash_2(), __toCommonJS(trash_2_exports)).default;
     module2.exports = function Messages(props) {
       var h = props.h, React = props.React;
       var accounts = C.useLoad(React, props.api, "mail.accountList", {}, []);
       var account = React.useState("");
-      return h(Inbox, Object.assign({}, props, { key: account[0], accountId: account, accounts }));
+      return h(Inbox2, Object.assign({}, props, { key: account[0], accountId: account, accounts }));
     };
-    function Inbox(props) {
+    function Inbox2(props) {
       var h = props.h, React = props.React, api = props.api, accountId = props.accountId;
       var accs = props.accounts.data && props.accounts.data.items || [];
       var boxes = C.useLoad(React, api, "mail.mailboxList", { accountId: accountId[0] || void 0 }, [accountId[0]]);
@@ -1284,8 +1632,8 @@ var require_messages = __commonJS({
       function report(e) {
         msg[1]({ kind: "error", text: C.errText(e) });
       }
-      function button(text, click, disabled, kind) {
-        return h(C.Btn, { h, onClick: click, disabled, kind }, text);
+      function button(text, click, disabled, kind, Icon2) {
+        return h(C.Btn, { h, onClick: click, disabled, kind }, Icon2 ? iconLabel(h, Icon2, text) : text);
       }
       function isUnread(m) {
         return !/\\Seen/.test(String(m.flags || ""));
@@ -1484,7 +1832,7 @@ var require_messages = __commonJS({
           button("\u5237\u65B0\u672C\u5730\u5217\u8868", function() {
             reset();
             list.refresh();
-          })
+          }, void 0, void 0, Refresh)
         ),
         h(C.Notice, { h, kind: "error", text: props.accounts.error || boxes.error }),
         h(C.Notice, { h, kind: msg[0] && msg[0].kind, text: msg[0] && msg[0].text }),
@@ -1525,7 +1873,7 @@ var require_messages = __commonJS({
               }, h("option", { value: "inbox" }, "\u7EDF\u4E00\u6536\u4EF6\u7BB1"), h("option", { value: "all" }, "\u5168\u90E8\u90AE\u4EF6"))),
               canSync && h(
                 C.Field,
-                { h, label: "\u6587\u4EF6\u5939" },
+                { h, label: iconLabel(h, Folder2, "\u6587\u4EF6\u5939") },
                 h(
                   "select",
                   {
@@ -1550,7 +1898,9 @@ var require_messages = __commonJS({
                   function() {
                     sync(false, true);
                   },
-                  !canSync || busy[0]
+                  !canSync || busy[0],
+                  void 0,
+                  Folder2
                 ),
                 button(
                   "\u540C\u6B65\u6700\u65B0\u90AE\u4EF6",
@@ -1558,7 +1908,8 @@ var require_messages = __commonJS({
                     sync(false, false);
                   },
                   !canRemote || busy[0],
-                  "primary"
+                  "primary",
+                  Download2
                 )
               ),
               canRemote && remote[0] ? button(
@@ -1593,8 +1944,8 @@ var require_messages = __commonJS({
                     }
                   })
                 ),
-                h(C.Btn, { h, type: "submit" }, "\u641C\u7D22"),
-                button("\u5728\u670D\u52A1\u5668\u641C\u7D22", searchServer, !canRemote || !folder[0] || !search[0].trim() || !!server[0]?.loading),
+                h(C.Btn, { h, type: "submit" }, iconLabel(h, Search2, "\u641C\u7D22")),
+                button("\u5728\u670D\u52A1\u5668\u641C\u7D22", searchServer, !canRemote || !folder[0] || !search[0].trim() || !!server[0]?.loading, void 0, Search2),
                 server[0] && button("\u8FD4\u56DE\u672C\u5730\u5217\u8868", function() {
                   clearServer();
                   close();
@@ -1621,7 +1972,11 @@ var require_messages = __commonJS({
             h(
               "div",
               { className: "wbml-pane-head" },
-              h("strong", null, server[0] ? "\u670D\u52A1\u5668\u641C\u7D22 \xB7 " + folder[0] : folder[0] || (unified[0] ? "\u7EDF\u4E00\u6536\u4EF6\u7BB1" : "\u5168\u90E8\u90AE\u4EF6")),
+              h("strong", null, iconLabel(
+                h,
+                server[0] ? Search2 : folder[0] && folder[0] !== "INBOX" ? Folder2 : folder[0] || unified[0] ? InboxIcon : Mail2,
+                server[0] ? "\u670D\u52A1\u5668\u641C\u7D22 \xB7 " + folder[0] : folder[0] || (unified[0] ? "\u7EDF\u4E00\u6536\u4EF6\u7BB1" : "\u5168\u90E8\u90AE\u4EF6")
+              )),
               h(
                 "span",
                 { className: "wbml-muted" },
@@ -1646,7 +2001,7 @@ var require_messages = __commonJS({
                   senderDetail(current) + " \xB7 " + C.fmtTime(current.dateAt, props.lang)
                 )
               ),
-              button("\u5173\u95ED", close)
+              button("\u5173\u95ED", close, void 0, void 0, Close)
             ),
             h(
               "div",
@@ -1667,7 +2022,9 @@ var require_messages = __commonJS({
                     selected.current
                   );
                 },
-                busy[0]
+                busy[0],
+                void 0,
+                isUnread(current) ? MailOpen2 : Mail2
               ),
               h(
                 "select",
@@ -1691,14 +2048,18 @@ var require_messages = __commonJS({
                 function() {
                   mutate("mail.messageMove", { id: current.id, mailbox: target[0] }, true, selected.current);
                 },
-                busy[0] || !target[0]
+                busy[0] || !target[0],
+                void 0,
+                Move
               ),
               button(
                 "\u79FB\u5165\u5E9F\u7EB8\u7BD3",
                 function() {
                   mutate("mail.messageDelete", { id: current.id }, true, selected.current);
                 },
-                busy[0]
+                busy[0],
+                void 0,
+                Trash2
               )
             ) : null,
             h(
@@ -2836,14 +3197,14 @@ var require_account_card = __commonJS({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs
 var eye_exports = {};
 __export(eye_exports, {
-  __iconData: () => __iconData6,
+  __iconData: () => __iconData18,
   default: () => Eye
 });
-var __iconData6, Eye;
+var __iconData18, Eye;
 var init_eye = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs"() {
     init_createLucideIcon();
-    __iconData6 = {
+    __iconData18 = {
       name: "eye",
       size: 24,
       node: [
@@ -2857,22 +3218,22 @@ var init_eye = __esm({
         ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
       ]
     };
-    __iconData6.node;
-    Eye = createLucideIcon(__iconData6);
+    __iconData18.node;
+    Eye = createLucideIcon(__iconData18);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs
 var eye_off_exports = {};
 __export(eye_off_exports, {
-  __iconData: () => __iconData7,
+  __iconData: () => __iconData19,
   default: () => EyeOff
 });
-var __iconData7, EyeOff;
+var __iconData19, EyeOff;
 var init_eye_off = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs"() {
     init_createLucideIcon();
-    __iconData7 = {
+    __iconData19 = {
       name: "eye-off",
       size: 24,
       node: [
@@ -2894,8 +3255,8 @@ var init_eye_off = __esm({
         ["path", { d: "m2 2 20 20", key: "1ooewy" }]
       ]
     };
-    __iconData7.node;
-    EyeOff = createLucideIcon(__iconData7);
+    __iconData19.node;
+    EyeOff = createLucideIcon(__iconData19);
   }
 });
 
