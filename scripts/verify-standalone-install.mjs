@@ -309,10 +309,16 @@ async function verifyOne({ cli, spec, port, keep, timeoutMs }) {
   stopInstance(child);
 
   if (payload) {
-    const domain = payload.domains.find((item) => item.id === wb.id) || payload.domains[0];
+    const domain = payload.domains.find((item) => item.id === wb.id);
+    const expectedIds = [wb.id];
+    for (const dep of Object.keys(addonMeta?.dependencies || {})) {
+      if (!dep.startsWith('dsh-workbench-') || dep === 'dsh-workbench-host') continue;
+      const meta = readJson(join(nodeModules, dep, 'package.json')).wb?.addon;
+      if (meta?.id) expectedIds.push(meta.id);
+    }
     checks.push({
-      name: "域名已注册",
-      ok: payload.domains.length === 1 && !!domain && domain.id === wb.id,
+      name: "业务域及声明的硬依赖均已注册",
+      ok: payload.domains.length === expectedIds.length && expectedIds.every(id => payload.domains.some(item => item.id === id && item.enabled && !item.error)),
       detail: payload.domains.map((item) => `${item.id}@${item.version}`).join("，") || "无",
     });
     checks.push({
