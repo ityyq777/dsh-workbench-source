@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
+import { readFileSync } from "node:fs";
 import { setup, apply, storageSync } from "../packages/addons/storage/lib/index.js";
 import { exportStorageData, importStorageData } from "../packages/addons/storage/lib/infra/backup.js";
 import { ensureSchema as ensureTagsSchema } from "../packages/addons/tags/lib/db/db.js";
@@ -271,7 +272,8 @@ apply({
   effect: (fn) => fn(),
 });
 assert.equal(domain.id, "wb-addon-storage");
-assert.equal(domain.version, "1.5.5");
+const pkg = JSON.parse(readFileSync(new URL("../packages/addons/storage/package.json", import.meta.url), "utf8"));
+assert.equal(domain.version, pkg.version);
 assert.equal(domain.views.find((v) => v.id === "stats").title.zh, "统计");
 assert.deepEqual(domain.tables, ["storage"]);
 assert.deepEqual(domain.capability.requires, []);

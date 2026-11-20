@@ -3,7 +3,7 @@
  * 域注册契约（sync 为空、不参与备份）、发送与校验、幂等去重、收件箱过滤与分页、
  * 标记已读、未读计数、统计口径、数据页只读查询、Action 清单自证、保留期清理。
  */
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -54,7 +54,8 @@ try {
   const domains = host.listDomains();
   const domain = domains.find((d) => d.id === "wb-addon-message");
   assert(domain, "消息域应已注册");
-  assert(domain.version === "0.1.0", "版本应为 0.1.0");
+  const pkg = JSON.parse(readFileSync(new URL("../packages/addons/message/package.json", import.meta.url), "utf8"));
+  assert(domain.version === pkg.version, "域版本应与插件清单一致：" + pkg.version);
   assert(domain.tables.length === 1 && domain.tables[0] === "message", "只声明 message 一张表");
   assert(Array.isArray(domain.sync?.tables) && domain.sync.tables.length === 0, "sync.tables 必须显式为空的");
   assert(domain.backup?.export === false && domain.backup?.import === false, "消息不进备份");
