@@ -36,7 +36,7 @@
     set("--ok", theme.ok);
     set("--warn", theme.warn);
     set("--danger", theme.danger);
-    root.style.setProperty("--chip", dark ? "rgba(24,26,31,.86)" : "rgba(255,255,255,.9)");
+    root.style.setProperty("--chip", dark ? "rgba(24,26,31,.72)" : "rgba(255,255,255,.74)");
     root.style.setProperty("--op", String(clamp(num(cfg.opacity, 0.92), 0.2, 1)));
   }
 

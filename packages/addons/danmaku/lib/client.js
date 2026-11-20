@@ -85,6 +85,109 @@ var require_client_base_styles = __commonJS({
   }
 });
 
+// packages/addons/danmaku/client/styles.cjs
+var require_styles = __commonJS({
+  "packages/addons/danmaku/client/styles.cjs"(exports2, module2) {
+    "use strict";
+    var baseStyles = require_client_base_styles();
+    function pageStyles() {
+      return [
+        /* 页面骨架：hero 一行，下面是卡片 */
+        ".wbdm-wrap{display:flex;flex-direction:column;gap:14px;padding:18px 20px 28px;height:100%;box-sizing:border-box;overflow:auto}",
+        ".wbdm-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap}",
+        ".wbdm-hero-main{min-width:0}",
+        /* 右侧指标卡 */
+        ".wbdm-kpis{display:flex;gap:8px;flex-wrap:wrap}",
+        ".wbdm-kpi{min-width:82px;padding:8px 12px;border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-card,#fff)}",
+        ".wbdm-kpi-v{font-size:19px;font-weight:700;line-height:1.15;letter-spacing:-.01em}",
+        ".wbdm-kpi-l{margin-top:3px;font-size:11px;color:var(--wb-muted,#6b7280)}",
+        /* 卡片 */
+        ".wbdm-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:12px;background:var(--wb-card,#fff);padding:14px 16px}",
+        ".wbdm-card-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px}",
+        ".wbdm-card-t{font-size:13px;font-weight:650}",
+        ".wbdm-card-s{font-size:11px;color:var(--wb-muted,#6b7280)}",
+        /* 添加区 */
+        ".wbdm-compose{display:flex;flex-direction:column;gap:10px}",
+        ".wbdm-textarea{display:block;width:100%;box-sizing:border-box;min-height:62px;padding:10px 12px;border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);color:inherit;font:inherit;font-size:13px;line-height:1.55;resize:vertical}",
+        ".wbdm-textarea::placeholder{color:var(--wb-muted,#9ca3af)}",
+        ".wbdm-textarea:focus{outline:none;border-color:var(--wb-accent,#2563eb);box-shadow:0 0 0 3px rgba(37,99,235,.14)}",
+        ".wbdm-compose-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}",
+        ".wbdm-tones{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-right:auto}",
+        ".wbdm-tone-label{margin-right:2px;font-size:11px;color:var(--wb-muted,#6b7280)}",
+        ".wbdm-tone{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border:1px solid var(--wb-border,#e5e7eb);border-radius:999px;background:transparent;color:var(--wb-muted,#6b7280);font-size:11px;line-height:1.6;cursor:pointer}",
+        ".wbdm-tone:hover{border-color:var(--wb-accent,#2563eb);color:var(--wb-accent,#2563eb)}",
+        ".wbdm-tone.on{border-color:var(--wb-accent,#2563eb);color:var(--wb-accent,#2563eb);background:rgba(37,99,235,.08)}",
+        ".wbdm-dot{width:6px;height:6px;border-radius:50%;background:var(--wb-muted,#6b7280);flex:none}",
+        ".wbdm-dot.accent{background:var(--wb-accent,#2563eb)}",
+        ".wbdm-dot.success{background:var(--wb-ok,#16a34a)}",
+        ".wbdm-dot.warn{background:var(--wb-warn,#d97706)}",
+        ".wbdm-dot.danger{background:var(--wb-danger,#dc2626)}",
+        ".wbdm-counter{font-size:11px;color:var(--wb-muted,#6b7280);font-variant-numeric:tabular-nums}",
+        /* 按钮 */
+        ".wbdm-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:5px 12px;border:1px solid var(--wb-border,#e5e7eb);border-radius:8px;background:var(--wb-card,#fff);color:inherit;font-size:12px;line-height:1.6;cursor:pointer}",
+        ".wbdm-btn:hover{border-color:var(--wb-accent,#2563eb);color:var(--wb-accent,#2563eb)}",
+        ".wbdm-btn.primary{border-color:var(--wb-accent,#2563eb);background:var(--wb-accent,#2563eb);color:#fff}",
+        ".wbdm-btn.primary:hover{opacity:.9;color:#fff}",
+        ".wbdm-btn:disabled{opacity:.45;cursor:not-allowed}",
+        ".wbdm-btn.primary:disabled{background:var(--wb-border,#e5e7eb);border-color:var(--wb-border,#e5e7eb);color:var(--wb-muted,#6b7280)}",
+        ".wbdm-btn.ghost{border-color:transparent;background:transparent;color:var(--wb-muted,#6b7280)}",
+        /* 清单 */
+        ".wbdm-list{display:flex;flex-direction:column}",
+        ".wbdm-item{display:flex;align-items:center;gap:10px;padding:10px 8px;border-top:1px solid var(--wb-line,#eef0f3);min-width:0}",
+        ".wbdm-item:first-child{border-top:0}",
+        ".wbdm-item:hover{background:rgba(127,127,127,.06);border-radius:8px}",
+        ".wbdm-order{flex:none;width:18px;text-align:right;font-size:11px;color:var(--wb-muted,#9ca3af);font-variant-numeric:tabular-nums}",
+        ".wbdm-body{flex:1 1 auto;min-width:0;font-size:13px;line-height:1.45;overflow-wrap:anywhere}",
+        ".wbdm-item.off .wbdm-body{color:var(--wb-muted,#9ca3af);text-decoration:line-through}",
+        ".wbdm-tag{display:inline-flex;align-items:center;gap:4px;flex:none;padding:1px 8px;border:1px solid var(--wb-border,#e5e7eb);border-radius:999px;font-size:11px;color:var(--wb-muted,#6b7280)}",
+        ".wbdm-item-edit{flex:1 1 auto;min-width:0;padding:4px 8px;border:1px solid var(--wb-accent,#2563eb);border-radius:8px;background:var(--wb-surface,#fff);color:inherit;font:inherit;font-size:13px}",
+        ".wbdm-item-edit:focus{outline:none;box-shadow:0 0 0 3px rgba(37,99,235,.14)}",
+        ".wbdm-ops{display:flex;align-items:center;gap:2px;flex:none;opacity:.55;transition:opacity .15s}",
+        ".wbdm-item:hover .wbdm-ops,.wbdm-ops:focus-within{opacity:1}",
+        ".wbdm-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:0;border-radius:7px;background:transparent;color:var(--wb-muted,#6b7280);cursor:pointer}",
+        ".wbdm-icon-btn:hover{background:rgba(127,127,127,.12);color:var(--wb-accent,#2563eb)}",
+        ".wbdm-icon-btn.danger:hover{color:var(--wb-danger,#dc2626)}",
+        ".wbdm-icon-btn:disabled{opacity:.3;cursor:not-allowed}",
+        /* 开关 */
+        ".wbdm-switch{position:relative;display:inline-flex;flex:none;width:34px;height:20px;cursor:pointer}",
+        ".wbdm-switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}",
+        ".wbdm-track{display:block;width:100%;height:100%;border-radius:999px;background:var(--wb-line,#e5e7eb);transition:background .15s}",
+        ".wbdm-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--wb-card,#fff);box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .15s;pointer-events:none}",
+        ".wbdm-switch input:checked+.wbdm-track{background:var(--wb-accent,#2563eb)}",
+        ".wbdm-switch input:checked~.wbdm-knob{transform:translateX(14px)}",
+        ".wbdm-switch input:focus-visible+.wbdm-track{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+        /* 空态与提示 */
+        ".wbdm-empty-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:26px 16px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:10px;color:var(--wb-muted,#6b7280);font-size:12px;text-align:center}",
+        ".wbdm-empty-icon{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:rgba(37,99,235,.1);color:var(--wb-accent,#2563eb)}",
+        ".wbdm-notice{margin:0}",
+        /* 配置页：分组卡 + 行式布局 */
+        ".wbdm-crow{display:grid;grid-template-columns:minmax(150px,260px) minmax(0,1fr);align-items:center;gap:14px;padding:10px 0;border-top:1px solid var(--wb-line,#eef0f3)}",
+        ".wbdm-crow:first-child{border-top:0}",
+        ".wbdm-clabel{font-size:12px;font-weight:550}",
+        ".wbdm-chint{margin-top:2px;font-size:11px;color:var(--wb-muted,#6b7280);line-height:1.5}",
+        ".wbdm-ctl{display:flex;align-items:center;gap:8px;min-width:0}",
+        ".wbdm-input,.wbdm-select{box-sizing:border-box;padding:5px 9px;border:1px solid var(--wb-border,#e5e7eb);border-radius:8px;background:var(--wb-surface,#fff);color:inherit;font:inherit;font-size:12px}",
+        ".wbdm-input{width:100%;max-width:280px}",
+        ".wbdm-input[type=number]{width:96px}",
+        ".wbdm-select{min-width:140px;max-width:280px}",
+        ".wbdm-input:focus,.wbdm-select:focus{outline:none;border-color:var(--wb-accent,#2563eb);box-shadow:0 0 0 3px rgba(37,99,235,.14)}",
+        /* 桌面层状态 */
+        ".wbdm-status{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:2px 0 12px}",
+        ".wbdm-status-cell{padding:8px 10px;border:1px solid var(--wb-border,#e5e7eb);border-radius:9px;background:var(--wb-surface,#fff)}",
+        ".wbdm-status-k{font-size:11px;color:var(--wb-muted,#6b7280)}",
+        ".wbdm-status-v{margin-top:2px;font-size:12px;font-weight:550}",
+        ".wbdm-status-actions{display:flex;gap:8px;flex-wrap:wrap}",
+        /* 深色：卡片底色更贴近主题表面 */
+        "@media (prefers-color-scheme:dark){.wbdm-kpi,.wbdm-card,.wbdm-status-cell{background:var(--wb-surface,#16181d)}}"
+      ];
+    }
+    module2.exports = function styles2() {
+      return baseStyles("wbdm").concat(pageStyles());
+    };
+    module2.exports.pageStyles = pageStyles;
+  }
+});
+
 // packages/addons/danmaku/client/overlay/style.cjs
 var require_style = __commonJS({
   "packages/addons/danmaku/client/overlay/style.cjs"(exports2, module2) {
@@ -94,59 +197,21 @@ var require_style = __commonJS({
         ".wbdm-dm-root{position:fixed;inset:0;z-index:780;pointer-events:none;overflow:hidden;contain:layout paint;-webkit-app-region:no-drag}",
         ".wbdm-dm-root[data-layer=overlay]{position:absolute;inset:0;z-index:20}",
         ".wbdm-dm-field{position:absolute;inset:0;overflow:hidden}",
-        ".wbdm-dm-chip{position:absolute;left:0;top:0;display:inline-flex;align-items:center;gap:7px;padding:3px 11px;border-radius:999px;",
-        "border:1px solid var(--wbdm-border,rgba(0,0,0,.14));background:var(--wbdm-chip-bg,color-mix(in srgb, var(--wbdm-bg,#fff) 90%, transparent));",
-        "color:var(--wbdm-fg,#111827);font-size:var(--wbdm-font-size,15px);line-height:1.4;white-space:nowrap;letter-spacing:.01em;",
-        "opacity:var(--wbdm-opacity,1);box-shadow:0 1px 4px var(--wbdm-shadow,rgba(0,0,0,.12));will-change:transform;backface-visibility:hidden;",
-        "contain:layout style}",
-        ".wbdm-dm-chip .wbdm-dm-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.5;flex:0 0 auto}",
-        ".wbdm-dm-tone-normal{color:var(--wbdm-fg,#111827)}",
-        ".wbdm-dm-tone-accent{color:var(--wbdm-accent,#2563eb);border-color:var(--wbdm-accent,#2563eb)}",
-        ".wbdm-dm-tone-success{color:var(--wbdm-ok,#15803d);border-color:var(--wbdm-ok,#15803d)}",
-        ".wbdm-dm-tone-warn{color:var(--wbdm-warn,#b45309);border-color:var(--wbdm-warn,#b45309)}",
-        ".wbdm-dm-tone-danger{color:var(--wbdm-danger,#b91c1c);border-color:var(--wbdm-danger,#b91c1c)}",
+        ".wbdm-dm-chip{position:absolute;left:0;top:0;display:inline-flex;align-items:center;gap:7px;padding:4px 13px 4px 11px;border-radius:999px;",
+        "border:1px solid var(--wbdm-border,rgba(0,0,0,.10));background:var(--wbdm-chip-bg,rgba(255,255,255,.82));",
+        "color:var(--wbdm-fg,#1f2328);font-size:var(--wbdm-font-size,15px);font-weight:480;line-height:1.45;white-space:nowrap;letter-spacing:.012em;",
+        "opacity:var(--wbdm-opacity,1);box-shadow:0 3px 12px var(--wbdm-shadow,rgba(0,0,0,.10)),0 1px 2px rgba(0,0,0,.06);",
+        "backdrop-filter:blur(7px) saturate(1.15);-webkit-backdrop-filter:blur(7px) saturate(1.15);",
+        "will-change:transform;backface-visibility:hidden;contain:layout style}",
+        ".wbdm-dm-chip .wbdm-dm-dot{width:5px;height:5px;border-radius:50%;background:var(--dot,currentColor);opacity:.85;flex:0 0 auto}",
+        ".wbdm-dm-tone-normal{--dot:var(--wbdm-fg,#6b7280)}",
+        ".wbdm-dm-tone-accent{--dot:var(--wbdm-accent,#2563eb);color:var(--wbdm-accent,#1d4ed8)}",
+        ".wbdm-dm-tone-success{--dot:var(--wbdm-ok,#15803d);color:var(--wbdm-ok,#15803d)}",
+        ".wbdm-dm-tone-warn{--dot:var(--wbdm-warn,#b45309);color:var(--wbdm-warn,#b45309)}",
+        ".wbdm-dm-tone-danger{--dot:var(--wbdm-danger,#b91c1c);color:var(--wbdm-danger,#b91c1c)}",
         "@media (prefers-reduced-motion: reduce){.wbdm-dm-chip{transition:none}}"
       ];
     };
-  }
-});
-
-// packages/addons/danmaku/client/styles.cjs
-var require_styles = __commonJS({
-  "packages/addons/danmaku/client/styles.cjs"(exports2, module2) {
-    "use strict";
-    var baseStyles = require_client_base_styles();
-    var overlayStyle = require_style();
-    module2.exports = function styles2() {
-      return baseStyles("wbdm").concat(overlayStyle()).concat([
-        ".wbdm-lib{display:flex;flex-direction:column;gap:10px}",
-        ".wbdm-compose{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}",
-        ".wbdm-compose textarea{flex:1 1 320px;min-height:38px;resize:vertical;line-height:1.45}",
-        ".wbdm-counter{font-size:11px;color:var(--wb-muted,#6b7280);white-space:nowrap;align-self:center}",
-        ".wbdm-list{display:flex;flex-direction:column;border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;overflow:hidden;background:var(--wb-surface,#fff)}",
-        ".wbdm-item{display:flex;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--wb-border,#eef0f3);min-width:0}",
-        ".wbdm-item:last-child{border-bottom:0}",
-        ".wbdm-item.off .wbdm-body{color:var(--wb-muted,#6b7280);text-decoration:line-through}",
-        ".wbdm-order{font-size:11px;color:var(--wb-muted,#6b7280);min-width:22px;text-align:right}",
-        ".wbdm-body{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;font-size:13px}",
-        ".wbdm-body input{width:100%;font:inherit;padding:4px 6px;border-radius:6px;border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit}",
-        ".wbdm-actions{display:flex;gap:4px;align-items:center;flex-wrap:wrap}",
-        ".wbdm-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--wb-muted,#6b7280);cursor:pointer}",
-        ".wbdm-icon-btn:hover:not(:disabled){color:var(--wb-accent,#2563eb);border-color:var(--wb-border,#e5e7eb);background:color-mix(in srgb, var(--wb-accent,#2563eb) 8%, transparent)}",
-        ".wbdm-icon-btn:disabled{opacity:.35;cursor:default}",
-        ".wbdm-switch{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;user-select:none}",
-        ".wbdm-cfg{display:flex;flex-direction:column;gap:14px}",
-        ".wbdm-cfg-group{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}",
-        ".wbdm-cfg-title{font-size:12px;font-weight:650;color:var(--wb-muted,#6b7280);letter-spacing:.02em}",
-        ".wbdm-cfg-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
-        ".wbdm-status{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}",
-        ".wbdm-status-cell{border:1px solid var(--wb-border,#e5e7eb);border-radius:8px;padding:8px 10px;background:var(--wb-surface,#fff);min-width:0}",
-        ".wbdm-status-label{font-size:11px;color:var(--wb-muted,#6b7280)}",
-        ".wbdm-status-value{font-size:13px;font-weight:600;overflow-wrap:anywhere}",
-        ".wbdm-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}"
-      ]);
-    };
-    module2.exports.baseStyles = baseStyles;
   }
 });
 
@@ -315,7 +380,7 @@ var require_layer = __commonJS({
         setVar("--wbdm-warn", theme.warn);
         setVar("--wbdm-danger", theme.danger);
         if (theme.bg) {
-          setVar("--wbdm-chip-bg", "color-mix(in srgb, " + theme.bg + " 90%, transparent)");
+          setVar("--wbdm-chip-bg", "color-mix(in srgb, " + theme.bg + " 74%, transparent)");
         }
         if (theme.dark) setVar("--wbdm-shadow", "rgba(0,0,0,.45)");
         else setVar("--wbdm-shadow", "rgba(0,0,0,.12)");
@@ -1029,6 +1094,9 @@ var require_copy = __commonJS({
       tone: "\u989C\u8272",
       tones: { normal: "\u5E38\u89C4", accent: "\u4E3B\u9898\u8272", success: "\u6210\u529F", warn: "\u63D0\u9192", danger: "\u8B66\u793A" },
       stats: "\u5171 {total} \u6761 \xB7 \u542F\u7528 {enabled} \u6761 \xB7 \u505C\u7528 {paused} \u6761",
+      kpiTotal: "\u5168\u90E8",
+      kpiEnabled: "\u542F\u7528",
+      kpiPaused: "\u505C\u7528",
       charCount: "{n}/100",
       configTitle: "\u5F39\u5E55\u914D\u7F6E",
       configHint: "\u914D\u7F6E\u5B58\u5BBF\u4E3B meta \u8868\uFF0C\u968F\u5DE5\u4F5C\u53F0\u4E00\u8D77\u8D70\uFF1B\u4FEE\u6539\u5373\u751F\u6548\u3002",
@@ -1091,6 +1159,9 @@ var require_copy = __commonJS({
       tone: "Tone",
       tones: { normal: "Normal", accent: "Accent", success: "Success", warn: "Warn", danger: "Danger" },
       stats: "{total} total \xB7 {enabled} on \xB7 {paused} off",
+      kpiTotal: "Total",
+      kpiEnabled: "Live",
+      kpiPaused: "Paused",
       charCount: "{n}/100",
       configTitle: "Danmaku settings",
       configHint: "Stored in the host meta table; changes apply immediately.",
@@ -1134,6 +1205,209 @@ var require_copy = __commonJS({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/arrow-up.mjs
+var arrow_up_exports = {};
+__export(arrow_up_exports, {
+  __iconData: () => __iconData6,
+  default: () => ArrowUp
+});
+var __iconData6, ArrowUp;
+var init_arrow_up = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/arrow-up.mjs"() {
+    init_createLucideIcon();
+    __iconData6 = {
+      name: "arrow-up",
+      size: 24,
+      node: [
+        ["path", { d: "m5 12 7-7 7 7", key: "hav0vg" }],
+        ["path", { d: "M12 19V5", key: "x0mq9r" }]
+      ]
+    };
+    __iconData6.node;
+    ArrowUp = createLucideIcon(__iconData6);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/arrow-down.mjs
+var arrow_down_exports = {};
+__export(arrow_down_exports, {
+  __iconData: () => __iconData7,
+  default: () => ArrowDown
+});
+var __iconData7, ArrowDown;
+var init_arrow_down = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/arrow-down.mjs"() {
+    init_createLucideIcon();
+    __iconData7 = {
+      name: "arrow-down",
+      size: 24,
+      node: [
+        ["path", { d: "M12 5v14", key: "s699le" }],
+        ["path", { d: "m19 12-7 7-7-7", key: "1idqje" }]
+      ]
+    };
+    __iconData7.node;
+    ArrowDown = createLucideIcon(__iconData7);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs
+var eye_exports = {};
+__export(eye_exports, {
+  __iconData: () => __iconData8,
+  default: () => Eye
+});
+var __iconData8, Eye;
+var init_eye = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs"() {
+    init_createLucideIcon();
+    __iconData8 = {
+      name: "eye",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
+            key: "1nclc0"
+          }
+        ],
+        ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
+      ]
+    };
+    __iconData8.node;
+    Eye = createLucideIcon(__iconData8);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
+var __iconData9, Trash;
+var init_trash = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
+    init_createLucideIcon();
+    __iconData9 = {
+      name: "trash",
+      size: 24,
+      node: [
+        ["path", { d: "M10 11v6", key: "nco0om" }],
+        ["path", { d: "M14 11v6", key: "outv1u" }],
+        ["path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6", key: "miytrc" }],
+        ["path", { d: "M3 6h18", key: "d0wm0j" }],
+        ["path", { d: "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2", key: "e791ji" }]
+      ],
+      aliases: ["trash-2"]
+    };
+    __iconData9.node;
+    Trash = createLucideIcon(__iconData9);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash-2.mjs
+var trash_2_exports = {};
+__export(trash_2_exports, {
+  default: () => Trash
+});
+var init_trash_2 = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash-2.mjs"() {
+    init_trash();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/check.mjs
+var check_exports = {};
+__export(check_exports, {
+  __iconData: () => __iconData10,
+  default: () => Check
+});
+var __iconData10, Check;
+var init_check = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/check.mjs"() {
+    init_createLucideIcon();
+    __iconData10 = {
+      name: "check",
+      size: 24,
+      node: [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]]
+    };
+    __iconData10.node;
+    Check = createLucideIcon(__iconData10);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs
+var x_exports = {};
+__export(x_exports, {
+  __iconData: () => __iconData11,
+  default: () => X
+});
+var __iconData11, X;
+var init_x = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs"() {
+    init_createLucideIcon();
+    __iconData11 = {
+      name: "x",
+      size: 24,
+      node: [
+        ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
+        ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
+      ]
+    };
+    __iconData11.node;
+    X = createLucideIcon(__iconData11);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/plus.mjs
+var plus_exports = {};
+__export(plus_exports, {
+  __iconData: () => __iconData12,
+  default: () => Plus
+});
+var __iconData12, Plus;
+var init_plus = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/plus.mjs"() {
+    init_createLucideIcon();
+    __iconData12 = {
+      name: "plus",
+      size: 24,
+      node: [
+        ["path", { d: "M5 12h14", key: "1ays0h" }],
+        ["path", { d: "M12 5v14", key: "s699le" }]
+      ]
+    };
+    __iconData12.node;
+    Plus = createLucideIcon(__iconData12);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs
+var pencil_exports = {};
+__export(pencil_exports, {
+  __iconData: () => __iconData13,
+  default: () => Pencil
+});
+var __iconData13, Pencil;
+var init_pencil = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs"() {
+    init_createLucideIcon();
+    __iconData13 = {
+      name: "pencil",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
+            key: "1a8usu"
+          }
+        ],
+        ["path", { d: "m15 5 4 4", key: "1mk7zo" }]
+      ]
+    };
+    __iconData13.node;
+    Pencil = createLucideIcon(__iconData13);
+  }
+});
+
 // packages/addons/danmaku/client/views/library.cjs
 var require_library = __commonJS({
   "packages/addons/danmaku/client/views/library.cjs"(exports2, module2) {
@@ -1143,6 +1417,19 @@ var require_library = __commonJS({
     var copy = require_copy();
     var TONES = ["normal", "accent", "success", "warn", "danger"];
     var MAX_LEN = 100;
+    var ICONS = {
+      up: (init_arrow_up(), __toCommonJS(arrow_up_exports)).default,
+      down: (init_arrow_down(), __toCommonJS(arrow_down_exports)).default,
+      eye: (init_eye(), __toCommonJS(eye_exports)).default,
+      trash: (init_trash_2(), __toCommonJS(trash_2_exports)).default,
+      check: (init_check(), __toCommonJS(check_exports)).default,
+      x: (init_x(), __toCommonJS(x_exports)).default,
+      plus: (init_plus(), __toCommonJS(plus_exports)).default,
+      megaphone: (init_megaphone(), __toCommonJS(megaphone_exports)).default
+    };
+    function glyph(Icon2, size) {
+      return h(Icon2, { size: size || 14, strokeWidth: 1.8, "aria-hidden": "true" });
+    }
     function unwrap(r) {
       return r && r.result !== void 0 ? r.result : r;
     }
@@ -1271,70 +1558,105 @@ var require_library = __commonJS({
           notify(C.previewing);
         });
       }
-      var header = h(
+      function kpi(label, value) {
+        return h(
+          "div",
+          { className: "wbdm-kpi", key: label },
+          h("div", { className: "wbdm-kpi-v" }, String(value)),
+          h("div", { className: "wbdm-kpi-l" }, label)
+        );
+      }
+      var enabledCount = Math.max(0, list.total - list.paused);
+      var hero = h(
         "div",
-        { className: "wbdm-head" },
-        h("div", { className: "wbdm-title" }, C.title),
-        h("div", { className: "wbdm-sub" }, C.hint)
-      );
-      var stats = h(
-        "div",
-        { className: "wbdm-muted" },
-        copy.fmt(C.stats, { total: list.total, enabled: list.total - list.paused, paused: list.paused })
-      );
-      var compose = h(
-        "div",
-        { className: "wbdm-compose" },
-        h("textarea", {
-          className: "wbdm-field",
-          value: draft,
-          maxLength: MAX_LEN,
-          placeholder: C.addPlaceholder,
-          rows: 2,
-          onChange: function(e) {
-            setDraft(e.target.value);
-          },
-          onKeyDown: function(e) {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              if (!busy) submitCreate();
-            }
-          }
-        }),
+        { className: "wbdm-hero" },
         h(
           "div",
-          { className: "wbdm-actions" },
-          h("span", { className: "wbdm-counter" }, copy.fmt(C.charCount, { n: draft.length })),
-          h(
-            "select",
-            {
-              className: "wbdm-select",
-              value: tone,
-              "aria-label": C.tone,
-              onChange: function(e) {
-                setTone(e.target.value);
+          { className: "wbdm-hero-main" },
+          h("div", { className: "wbdm-title" }, C.title),
+          h("div", { className: "wbdm-sub" }, C.hint)
+        ),
+        h(
+          "div",
+          { className: "wbdm-kpis" },
+          kpi(C.kpiTotal, list.total),
+          kpi(C.kpiEnabled, enabledCount),
+          kpi(C.kpiPaused, list.paused)
+        )
+      );
+      function toneChip(key) {
+        return h(
+          "button",
+          {
+            key,
+            type: "button",
+            className: "wbdm-tone" + (tone === key ? " on" : ""),
+            onClick: function() {
+              setTone(key);
+            }
+          },
+          h("span", { className: "wbdm-dot " + key }),
+          C.tones[key]
+        );
+      }
+      var compose = h(
+        "div",
+        { className: "wbdm-card" },
+        h("div", { className: "wbdm-card-h" }, h("span", { className: "wbdm-card-t" }, C.add)),
+        h(
+          "div",
+          { className: "wbdm-compose" },
+          h("textarea", {
+            className: "wbdm-textarea",
+            value: draft,
+            maxLength: MAX_LEN,
+            placeholder: C.addPlaceholder,
+            rows: 2,
+            onChange: function(e) {
+              setDraft(e.target.value);
+            },
+            onKeyDown: function(e) {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                if (!busy) submitCreate();
               }
-            },
-            TONES.map(function(key) {
-              return h("option", { key, value: key }, C.tones[key]);
-            })
-          ),
+            }
+          }),
           h(
-            "button",
-            {
-              type: "button",
-              className: "wbdm-btn primary",
-              disabled: Boolean(busy) || !draft.trim(),
-              onClick: submitCreate
-            },
-            busy === "create" ? C.adding : C.add
+            "div",
+            { className: "wbdm-compose-bar" },
+            h(
+              "div",
+              { className: "wbdm-tones" },
+              h("span", { className: "wbdm-tone-label" }, C.tone),
+              TONES.map(toneChip)
+            ),
+            h("span", { className: "wbdm-counter" }, copy.fmt(C.charCount, { n: draft.length })),
+            h(
+              "button",
+              {
+                type: "button",
+                className: "wbdm-btn primary",
+                disabled: Boolean(busy) || !draft.trim(),
+                onClick: submitCreate
+              },
+              glyph(ICONS.plus),
+              busy === "create" ? C.adding : C.add
+            )
           )
         )
+      );
+      var empty = h(
+        "div",
+        { className: "wbdm-empty-card" },
+        h("span", { className: "wbdm-empty-icon" }, glyph(ICONS.megaphone, 17)),
+        h("div", null, C.empty),
+        h("div", null, C.addPlaceholder)
       );
       var rows = list.items.map(function(item, index) {
         var editing = edit.id === item.id;
         var bodyCell = editing ? h("input", {
-          className: "wbdm-input",
+          className: "wbdm-item-edit",
           value: edit.text,
           maxLength: MAX_LEN,
           autoFocus: true,
@@ -1346,6 +1668,109 @@ var require_library = __commonJS({
             if (e.key === "Escape") setEdit({ id: "", text: "" });
           }
         }) : h("span", { className: "wbdm-body", title: item.body }, item.body);
+        var ops = editing ? [
+          h(
+            "button",
+            {
+              key: "save",
+              type: "button",
+              className: "wbdm-icon-btn",
+              title: C.save,
+              "aria-label": C.save,
+              onClick: function() {
+                saveEdit(item);
+              }
+            },
+            glyph(ICONS.check)
+          ),
+          h(
+            "button",
+            {
+              key: "cancel",
+              type: "button",
+              className: "wbdm-icon-btn",
+              title: C.cancel,
+              "aria-label": C.cancel,
+              onClick: function() {
+                setEdit({ id: "", text: "" });
+              }
+            },
+            glyph(ICONS.x)
+          )
+        ] : [
+          h(
+            "button",
+            {
+              key: "up",
+              type: "button",
+              className: "wbdm-icon-btn",
+              title: C.moveUp,
+              "aria-label": C.moveUp,
+              disabled: index === 0,
+              onClick: function() {
+                move(index, -1);
+              }
+            },
+            glyph(ICONS.up)
+          ),
+          h(
+            "button",
+            {
+              key: "down",
+              type: "button",
+              className: "wbdm-icon-btn",
+              title: C.moveDown,
+              "aria-label": C.moveDown,
+              disabled: index === list.items.length - 1,
+              onClick: function() {
+                move(index, 1);
+              }
+            },
+            glyph(ICONS.down)
+          ),
+          h(
+            "button",
+            {
+              key: "eye",
+              type: "button",
+              className: "wbdm-icon-btn",
+              title: C.preview,
+              "aria-label": C.preview,
+              onClick: function() {
+                preview(item);
+              }
+            },
+            glyph(ICONS.eye)
+          ),
+          h(
+            "button",
+            {
+              key: "edit",
+              type: "button",
+              className: "wbdm-icon-btn",
+              title: C.edit,
+              "aria-label": C.edit,
+              onClick: function() {
+                startEdit(item);
+              }
+            },
+            glyph((init_pencil(), __toCommonJS(pencil_exports)).default)
+          ),
+          h(
+            "button",
+            {
+              key: "del",
+              type: "button",
+              className: "wbdm-icon-btn danger",
+              title: C.remove,
+              "aria-label": C.remove,
+              onClick: function() {
+                remove(item);
+              }
+            },
+            glyph(ICONS.trash)
+          )
+        ];
         return h(
           "div",
           { key: item.id, className: "wbdm-item" + (item.enabled ? "" : " off") },
@@ -1359,142 +1784,133 @@ var require_library = __commonJS({
               onChange: function() {
                 toggle(item);
               }
-            })
+            }),
+            h("span", { className: "wbdm-track" }),
+            h("span", { className: "wbdm-knob" })
           ),
-          h("span", { className: "wbdm-pill wbdm-tone-" + (item.tone || "normal") }, C.tones[item.tone] || item.tone),
-          bodyCell,
           h(
-            "div",
-            { className: "wbdm-actions" },
-            editing ? [
-              h(
-                "button",
-                {
-                  key: "save",
-                  type: "button",
-                  className: "wbdm-btn primary",
-                  onClick: function() {
-                    saveEdit(item);
-                  }
-                },
-                C.save
-              ),
-              h(
-                "button",
-                {
-                  key: "cancel",
-                  type: "button",
-                  className: "wbdm-btn",
-                  onClick: function() {
-                    setEdit({ id: "", text: "" });
-                  }
-                },
-                C.cancel
-              )
-            ] : [
-              h(
-                "button",
-                {
-                  key: "up",
-                  type: "button",
-                  className: "wbdm-icon-btn",
-                  title: C.moveUp,
-                  "aria-label": C.moveUp,
-                  disabled: index === 0 || Boolean(busy),
-                  onClick: function() {
-                    move(index, -1);
-                  }
-                },
-                "\u2191"
-              ),
-              h(
-                "button",
-                {
-                  key: "down",
-                  type: "button",
-                  className: "wbdm-icon-btn",
-                  title: C.moveDown,
-                  "aria-label": C.moveDown,
-                  disabled: index === list.items.length - 1 || Boolean(busy),
-                  onClick: function() {
-                    move(index, 1);
-                  }
-                },
-                "\u2193"
-              ),
-              h(
-                "button",
-                {
-                  key: "edit",
-                  type: "button",
-                  className: "wbdm-btn",
-                  onClick: function() {
-                    startEdit(item);
-                  }
-                },
-                C.edit
-              ),
-              h(
-                "button",
-                {
-                  key: "preview",
-                  type: "button",
-                  className: "wbdm-btn",
-                  disabled: Boolean(busy),
-                  onClick: function() {
-                    preview(item);
-                  }
-                },
-                C.preview
-              ),
-              h(
-                "button",
-                {
-                  key: "remove",
-                  type: "button",
-                  className: "wbdm-btn danger",
-                  disabled: Boolean(busy),
-                  onClick: function() {
-                    remove(item);
-                  }
-                },
-                C.remove
-              )
-            ]
-          )
+            "span",
+            { className: "wbdm-tag" },
+            h("span", { className: "wbdm-dot " + (item.tone || "normal") }),
+            C.tones[item.tone] || item.tone
+          ),
+          bodyCell,
+          h("div", { className: "wbdm-ops" }, ops)
         );
       });
-      var content;
-      if (list.loading) content = h("div", { className: "wbdm-empty" }, C.loading);
-      else if (list.error) {
-        content = h(
+      var listCard = h(
+        "div",
+        { className: "wbdm-card" },
+        h(
+          "div",
+          { className: "wbdm-card-h" },
+          h("span", { className: "wbdm-card-t" }, C.tabs.library),
+          h(
+            "span",
+            { className: "wbdm-card-s" },
+            copy.fmt(C.stats, { total: list.total, enabled: enabledCount, paused: list.paused })
+          )
+        ),
+        list.loading ? h("div", { className: "wbdm-empty" }, C.loading) : list.error ? h(
           "div",
           { className: "wbdm-notice error" },
           list.error,
+          " ",
           h(
             "button",
             {
               type: "button",
-              className: "wbdm-btn",
-              style: { marginLeft: 8 },
-              onClick: refresh
+              className: "wbdm-link",
+              onClick: function() {
+                refresh();
+              }
             },
             C.retry
           )
-        );
-      } else if (!list.items.length) content = h("div", { className: "wbdm-empty" }, C.empty);
-      else content = h("div", { className: "wbdm-list" }, rows);
+        ) : list.items.length ? h("div", { className: "wbdm-list" }, rows) : empty
+      );
       return h(
         "div",
-        { className: "wbdm-wrap wbdm-lib" },
-        header,
-        stats,
-        compose,
+        { className: "wbdm-wrap" },
+        hero,
         say ? h("div", { className: "wbdm-notice ok" }, say) : null,
-        content
+        compose,
+        listCard
       );
     }
     module2.exports = LibraryView;
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power.mjs
+var power_exports = {};
+__export(power_exports, {
+  __iconData: () => __iconData14,
+  default: () => Power
+});
+var __iconData14, Power;
+var init_power = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power.mjs"() {
+    init_createLucideIcon();
+    __iconData14 = {
+      name: "power",
+      size: 24,
+      node: [
+        ["path", { d: "M12 2v10", key: "mnfbl" }],
+        ["path", { d: "M18.4 6.6a9 9 0 1 1-12.77.04", key: "obofu9" }]
+      ]
+    };
+    __iconData14.node;
+    Power = createLucideIcon(__iconData14);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
+var refresh_cw_exports = {};
+__export(refresh_cw_exports, {
+  __iconData: () => __iconData15,
+  default: () => RefreshCw
+});
+var __iconData15, RefreshCw;
+var init_refresh_cw = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
+    init_createLucideIcon();
+    __iconData15 = {
+      name: "refresh-cw",
+      size: 24,
+      node: [
+        ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
+        ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
+        ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
+        ["path", { d: "M8 16H3v5", key: "1cv678" }]
+      ]
+    };
+    __iconData15.node;
+    RefreshCw = createLucideIcon(__iconData15);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/monitor.mjs
+var monitor_exports = {};
+__export(monitor_exports, {
+  __iconData: () => __iconData16,
+  default: () => Monitor
+});
+var __iconData16, Monitor;
+var init_monitor = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/monitor.mjs"() {
+    init_createLucideIcon();
+    __iconData16 = {
+      name: "monitor",
+      size: 24,
+      node: [
+        ["rect", { width: "20", height: "14", x: "2", y: "3", rx: "2", key: "48i651" }],
+        ["line", { x1: "8", x2: "16", y1: "21", y2: "21", key: "1svkeh" }],
+        ["line", { x1: "12", x2: "12", y1: "17", y2: "21", key: "vw1qmm" }]
+      ]
+    };
+    __iconData16.node;
+    Monitor = createLucideIcon(__iconData16);
   }
 });
 
@@ -1506,6 +1922,15 @@ var require_config = __commonJS({
     var h = React2.createElement;
     var copy = require_copy();
     var DOMAIN = "danmaku";
+    var ICONS = {
+      check: (init_check(), __toCommonJS(check_exports)).default,
+      power: (init_power(), __toCommonJS(power_exports)).default,
+      refresh: (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
+      monitor: (init_monitor(), __toCommonJS(monitor_exports)).default
+    };
+    function glyph(Icon2, size) {
+      return h(Icon2, { size: size || 14, strokeWidth: 1.8, "aria-hidden": "true" });
+    }
     function unwrap(r) {
       return r && r.result !== void 0 ? r.result : r;
     }
@@ -1587,6 +2012,14 @@ var require_config = __commonJS({
       }, [api, enabled]);
       return state;
     }
+    function statusCell(key, value) {
+      return h(
+        "div",
+        { className: "wbdm-status-cell", key },
+        h("div", { className: "wbdm-status-k" }, key),
+        h("div", { className: "wbdm-status-v" }, value)
+      );
+    }
     function DesktopCard(props) {
       var api = props.api;
       var lang = props.lang;
@@ -1613,42 +2046,48 @@ var require_config = __commonJS({
       }
       var phase = data.phase || "stopped";
       var phaseLabel = C.desktopPhase[phase] || phase;
-      var value = function(label, text) {
-        return h(
-          "div",
-          { className: "wbdm-status-cell", key: label },
-          h("div", { className: "wbdm-status-label" }, label),
-          h("div", { className: "wbdm-status-value" }, text)
-        );
-      };
       return h(
         "div",
-        { className: "wbdm-card", style: { marginTop: 14 } },
-        h("div", { className: "wbdm-title", style: { fontSize: 14 } }, C.desktopTitle),
-        h("div", { className: "wbdm-hint" }, C.desktopHint),
-        state.error ? h("div", { className: "wbdm-notice error" }, state.error) : null,
+        { className: "wbdm-card" },
+        h(
+          "div",
+          { className: "wbdm-card-h" },
+          h(
+            "span",
+            { className: "wbdm-card-t" },
+            glyph(ICONS.monitor),
+            " ",
+            C.desktopTitle
+          ),
+          h("span", { className: "wbdm-card-s" }, C.desktopHint)
+        ),
         h(
           "div",
           { className: "wbdm-status" },
-          value("\u72B6\u6001", phaseLabel + (data.suppressed ? " \xB7 " + C.desktopSuppressed : "")),
-          value("\u534F\u8BAE", copy.fmt(C.desktopProtocol, { n: data.protocol || 1 })),
-          value("\u5C4F\u5E55", copy.fmt(C.desktopDisplays, { n: data.displays || 0 })),
-          value("\u4E3B\u9898", data.themeSynced ? C.desktopTheme : C.desktopThemeMissing)
+          statusCell(lang === "en" ? "State" : "\u72B6\u6001", phaseLabel + (data.suppressed ? " \xB7 " + C.desktopSuppressed : "")),
+          statusCell(lang === "en" ? "Protocol" : "\u534F\u8BAE", copy.fmt(C.desktopProtocol, { n: data.protocol || 1 })),
+          statusCell(lang === "en" ? "Displays" : "\u5C4F\u5E55", copy.fmt(C.desktopDisplays, { n: data.displays || 0 })),
+          statusCell(
+            lang === "en" ? "Theme" : "\u4E3B\u9898",
+            data.themeSynced ? C.desktopTheme : C.desktopThemeMissing
+          )
         ),
-        data.error ? h("div", { className: "wbdm-notice error" }, data.error) : null,
+        state.error ? h("div", { className: "wbdm-notice error" }, state.error) : null,
+        say ? h("div", { className: "wbdm-notice error" }, say) : null,
         h(
           "div",
-          { className: "wbdm-cfg-actions", style: { marginTop: 8 } },
+          { className: "wbdm-status-actions" },
           h(
             "button",
             {
               type: "button",
-              className: "wbdm-btn primary",
+              className: "wbdm-btn",
               disabled: Boolean(busy),
               onClick: function() {
                 op("restart");
               }
             },
+            glyph(ICONS.refresh),
             C.desktopRestart
           ),
           h(
@@ -1667,15 +2106,15 @@ var require_config = __commonJS({
             "button",
             {
               type: "button",
-              className: "wbdm-btn",
+              className: "wbdm-btn primary",
               disabled: Boolean(busy),
               onClick: function() {
                 op("resume");
               }
             },
+            glyph(ICONS.power),
             C.desktopResume
-          ),
-          say ? h("span", { className: "wbdm-notice error" }, say) : null
+          )
         )
       );
     }
@@ -1694,6 +2133,7 @@ var require_config = __commonJS({
       var seqRef = React2.useRef(0);
       var aliveRef = React2.useRef(true);
       React2.useEffect(function() {
+        aliveRef.current = true;
         return function() {
           aliveRef.current = false;
         };
@@ -1742,18 +2182,25 @@ var require_config = __commonJS({
           toastOnce(String(e && e.message || e));
         });
       }
-      function control(item) {
-        var value = values()[item.id];
-        if (item.type === "bool") {
-          return h("input", {
+      function switchControl(item, value) {
+        return h(
+          "label",
+          { className: "wbdm-switch", title: labelOf(item, lang) },
+          h("input", {
             type: "checkbox",
             checked: value === true,
             "aria-label": labelOf(item, lang),
             onChange: function(e) {
               save(item.id, e.target.checked);
             }
-          });
-        }
+          }),
+          h("span", { className: "wbdm-track" }),
+          h("span", { className: "wbdm-knob" })
+        );
+      }
+      function control(item) {
+        var value = values()[item.id];
+        if (item.type === "bool") return switchControl(item, value);
         if (item.type === "enum") {
           return h(
             "select",
@@ -1803,6 +2250,21 @@ var require_config = __commonJS({
           }
         });
       }
+      var head = h(
+        "div",
+        { className: "wbdm-hero" },
+        h(
+          "div",
+          { className: "wbdm-hero-main" },
+          h("div", { className: "wbdm-title" }, C.configTitle),
+          h("div", { className: "wbdm-sub" }, C.configHint)
+        ),
+        h(
+          "button",
+          { type: "button", className: "wbdm-btn ghost", onClick: resetAll, disabled: !cfg.ready },
+          C.resetAll
+        )
+      );
       if (!cfg.ready) return h("div", { className: "wbdm-wrap" }, h("div", { className: "wbdm-empty" }, C.loading));
       if (cfg.error && !cfg.items.length) {
         return h("div", { className: "wbdm-wrap" }, h("div", { className: "wbdm-notice error" }, cfg.error));
@@ -1815,39 +2277,35 @@ var require_config = __commonJS({
         if (!items.length) return null;
         return h(
           "div",
-          { className: "wbdm-cfg", key: group.id },
-          h("div", { className: "wbdm-cfg-title" }, lang === "en" ? group.en || group.zh : group.zh || group.en),
+          { className: "wbdm-card", key: group.id },
           h(
             "div",
-            { className: "wbdm-cfg-group" },
-            items.map(function(item) {
-              return h(
+            { className: "wbdm-card-h" },
+            h("span", { className: "wbdm-card-t" }, lang === "en" ? group.en || group.zh : group.zh || group.en),
+            h("span", { className: "wbdm-card-s" }, String(items.length) + (lang === "en" ? " options" : " \u9879"))
+          ),
+          items.map(function(item) {
+            return h(
+              "div",
+              { className: "wbdm-crow", key: item.id },
+              h(
                 "div",
-                { className: "wbdm-field", key: item.id },
-                h("label", { className: "wbdm-label" }, labelOf(item, lang)),
-                control(item),
-                hintOf(item, lang) ? h("div", { className: "wbdm-hint" }, hintOf(item, lang)) : null
-              );
-            })
-          )
+                null,
+                h("div", { className: "wbdm-clabel" }, labelOf(item, lang)),
+                hintOf(item, lang) ? h("div", { className: "wbdm-chint" }, hintOf(item, lang)) : null
+              ),
+              h("div", { className: "wbdm-ctl" }, control(item))
+            );
+          })
         );
       });
       return h(
         "div",
         { className: "wbdm-wrap" },
-        h("div", { className: "wbdm-head" }, h("div", { className: "wbdm-title" }, C.configTitle), h("div", { className: "wbdm-sub" }, C.configHint)),
+        head,
         toast ? h("div", { className: "wbdm-notice ok" }, toast) : null,
         cfg.warnings && cfg.warnings.length ? h("div", { className: "wbdm-notice warn" }, cfg.warnings.join("\uFF1B")) : null,
         sections,
-        h(
-          "div",
-          { className: "wbdm-cfg-actions" },
-          h(
-            "button",
-            { type: "button", className: "wbdm-btn", onClick: resetAll },
-            C.resetAll
-          )
-        ),
         h(DesktopCard, { api, lang, t })
       );
     }
@@ -3613,7 +4071,10 @@ if (!host || !host.react) {
     play: (init_play(), __toCommonJS(play_exports)).default
   };
   tab = function(name) {
-    return icons[name];
+    var Icon2 = icons[name];
+    return function TabIcon(props) {
+      return React.createElement(Icon2, props);
+    };
   };
   host.registerAddon({
     id: "wb-addon-danmaku",

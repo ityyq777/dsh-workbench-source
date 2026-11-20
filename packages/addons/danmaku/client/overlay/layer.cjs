@@ -180,7 +180,7 @@ function createWebLayer(options) {
     setVar("--wbdm-warn", theme.warn);
     setVar("--wbdm-danger", theme.danger);
     if (theme.bg) {
-      setVar("--wbdm-chip-bg", "color-mix(in srgb, " + theme.bg + " 90%, transparent)");
+      setVar("--wbdm-chip-bg", "color-mix(in srgb, " + theme.bg + " 74%, transparent)");
     }
     if (theme.dark) setVar("--wbdm-shadow", "rgba(0,0,0,.45)");
     else setVar("--wbdm-shadow", "rgba(0,0,0,.12)");

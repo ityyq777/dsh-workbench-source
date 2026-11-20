@@ -1,7 +1,7 @@
 "use strict";
 /**
  * 配置视图：按 danmaku.configGet 的 groups/items 动态渲染，改动立即写入；
- * 下方附桌面弹幕的运行状态卡片（查询 danmaku.desktop）。
+ * 每个分组一张卡片、组内一行一个设置项；下方附桌面弹幕状态卡片。
  * useConfig 同时供数据页读取分页配置。
  */
 var React = require("react");
@@ -9,7 +9,17 @@ var h = React.createElement;
 var copy = require("../copy.cjs");
 
 var DOMAIN = "danmaku";
-var PHASES = ["stopped", "resolving", "installing", "starting", "running", "retrying", "error"];
+
+var ICONS = {
+  check: require("lucide-react/icons/check").default,
+  power: require("lucide-react/icons/power").default,
+  refresh: require("lucide-react/icons/refresh-cw").default,
+  monitor: require("lucide-react/icons/monitor").default,
+};
+
+function glyph(Icon, size) {
+  return h(Icon, { size: size || 14, strokeWidth: 1.8, "aria-hidden": "true" });
+}
 
 function unwrap(r) {
   return r && r.result !== undefined ? r.result : r;
@@ -106,6 +116,15 @@ function useDesktop(api, enabled) {
   return state;
 }
 
+function statusCell(key, value) {
+  return h(
+    "div",
+    { className: "wbdm-status-cell", key: key },
+    h("div", { className: "wbdm-status-k" }, key),
+    h("div", { className: "wbdm-status-v" }, value),
+  );
+}
+
 function DesktopCard(props) {
   var api = props.api;
   var lang = props.lang;
@@ -137,43 +156,49 @@ function DesktopCard(props) {
 
   var phase = data.phase || "stopped";
   var phaseLabel = C.desktopPhase[phase] || phase;
-  var value = function (label, text) {
-    return h(
-      "div",
-      { className: "wbdm-status-cell", key: label },
-      h("div", { className: "wbdm-status-label" }, label),
-      h("div", { className: "wbdm-status-value" }, text),
-    );
-  };
 
   return h(
     "div",
-    { className: "wbdm-card", style: { marginTop: 14 } },
-    h("div", { className: "wbdm-title", style: { fontSize: 14 } }, C.desktopTitle),
-    h("div", { className: "wbdm-hint" }, C.desktopHint),
-    state.error ? h("div", { className: "wbdm-notice error" }, state.error) : null,
+    { className: "wbdm-card" },
+    h(
+      "div",
+      { className: "wbdm-card-h" },
+      h(
+        "span",
+        { className: "wbdm-card-t" },
+        glyph(ICONS.monitor),
+        " ",
+        C.desktopTitle,
+      ),
+      h("span", { className: "wbdm-card-s" }, C.desktopHint),
+    ),
     h(
       "div",
       { className: "wbdm-status" },
-      value("状态", phaseLabel + (data.suppressed ? " · " + C.desktopSuppressed : "")),
-      value("协议", copy.fmt(C.desktopProtocol, { n: data.protocol || 1 })),
-      value("屏幕", copy.fmt(C.desktopDisplays, { n: data.displays || 0 })),
-      value("主题", data.themeSynced ? C.desktopTheme : C.desktopThemeMissing),
+      statusCell(lang === "en" ? "State" : "状态", phaseLabel + (data.suppressed ? " · " + C.desktopSuppressed : "")),
+      statusCell(lang === "en" ? "Protocol" : "协议", copy.fmt(C.desktopProtocol, { n: data.protocol || 1 })),
+      statusCell(lang === "en" ? "Displays" : "屏幕", copy.fmt(C.desktopDisplays, { n: data.displays || 0 })),
+      statusCell(
+        lang === "en" ? "Theme" : "主题",
+        data.themeSynced ? C.desktopTheme : C.desktopThemeMissing,
+      ),
     ),
-    data.error ? h("div", { className: "wbdm-notice error" }, data.error) : null,
+    state.error ? h("div", { className: "wbdm-notice error" }, state.error) : null,
+    say ? h("div", { className: "wbdm-notice error" }, say) : null,
     h(
       "div",
-      { className: "wbdm-cfg-actions", style: { marginTop: 8 } },
+      { className: "wbdm-status-actions" },
       h(
         "button",
         {
           type: "button",
-          className: "wbdm-btn primary",
+          className: "wbdm-btn",
           disabled: Boolean(busy),
           onClick: function () {
             op("restart");
           },
         },
+        glyph(ICONS.refresh),
         C.desktopRestart,
       ),
       h(
@@ -192,15 +217,15 @@ function DesktopCard(props) {
         "button",
         {
           type: "button",
-          className: "wbdm-btn",
+          className: "wbdm-btn primary",
           disabled: Boolean(busy),
           onClick: function () {
             op("resume");
           },
         },
+        glyph(ICONS.power),
         C.desktopResume,
       ),
-      say ? h("span", { className: "wbdm-notice error" }, say) : null,
     ),
   );
 }
@@ -211,6 +236,7 @@ function ConfigView(props) {
   var t = props.t;
   var C = copy.pick(lang);
   var cfg = useConfig(api, {});
+
   var localS = React.useState({});
   var local = localS[0];
   var setLocal = localS[1];
@@ -221,6 +247,7 @@ function ConfigView(props) {
   var aliveRef = React.useRef(true);
 
   React.useEffect(function () {
+    aliveRef.current = true;
     return function () {
       aliveRef.current = false;
     };
@@ -278,18 +305,26 @@ function ConfigView(props) {
       });
   }
 
-  function control(item) {
-    var value = values()[item.id];
-    if (item.type === "bool") {
-      return h("input", {
+  function switchControl(item, value) {
+    return h(
+      "label",
+      { className: "wbdm-switch", title: labelOf(item, lang) },
+      h("input", {
         type: "checkbox",
         checked: value === true,
         "aria-label": labelOf(item, lang),
         onChange: function (e) {
           save(item.id, e.target.checked);
         },
-      });
-    }
+      }),
+      h("span", { className: "wbdm-track" }),
+      h("span", { className: "wbdm-knob" }),
+    );
+  }
+
+  function control(item) {
+    var value = values()[item.id];
+    if (item.type === "bool") return switchControl(item, value);
     if (item.type === "enum") {
       return h(
         "select",
@@ -340,6 +375,22 @@ function ConfigView(props) {
     });
   }
 
+  var head = h(
+    "div",
+    { className: "wbdm-hero" },
+    h(
+      "div",
+      { className: "wbdm-hero-main" },
+      h("div", { className: "wbdm-title" }, C.configTitle),
+      h("div", { className: "wbdm-sub" }, C.configHint),
+    ),
+    h(
+      "button",
+      { type: "button", className: "wbdm-btn ghost", onClick: resetAll, disabled: !cfg.ready },
+      C.resetAll,
+    ),
+  );
+
   if (!cfg.ready) return h("div", { className: "wbdm-wrap" }, h("div", { className: "wbdm-empty" }, C.loading));
   if (cfg.error && !cfg.items.length) {
     return h("div", { className: "wbdm-wrap" }, h("div", { className: "wbdm-notice error" }, cfg.error));
@@ -353,42 +404,38 @@ function ConfigView(props) {
     if (!items.length) return null;
     return h(
       "div",
-      { className: "wbdm-cfg", key: group.id },
-      h("div", { className: "wbdm-cfg-title" }, lang === "en" ? group.en || group.zh : group.zh || group.en),
+      { className: "wbdm-card", key: group.id },
       h(
         "div",
-        { className: "wbdm-cfg-group" },
-        items.map(function (item) {
-          return h(
-            "div",
-            { className: "wbdm-field", key: item.id },
-            h("label", { className: "wbdm-label" }, labelOf(item, lang)),
-            control(item),
-            hintOf(item, lang) ? h("div", { className: "wbdm-hint" }, hintOf(item, lang)) : null,
-          );
-        }),
+        { className: "wbdm-card-h" },
+        h("span", { className: "wbdm-card-t" }, lang === "en" ? group.en || group.zh : group.zh || group.en),
+        h("span", { className: "wbdm-card-s" }, String(items.length) + (lang === "en" ? " options" : " 项")),
       ),
+      items.map(function (item) {
+        return h(
+          "div",
+          { className: "wbdm-crow", key: item.id },
+          h(
+            "div",
+            null,
+            h("div", { className: "wbdm-clabel" }, labelOf(item, lang)),
+            hintOf(item, lang) ? h("div", { className: "wbdm-chint" }, hintOf(item, lang)) : null,
+          ),
+          h("div", { className: "wbdm-ctl" }, control(item)),
+        );
+      }),
     );
   });
 
   return h(
     "div",
     { className: "wbdm-wrap" },
-    h("div", { className: "wbdm-head" }, h("div", { className: "wbdm-title" }, C.configTitle), h("div", { className: "wbdm-sub" }, C.configHint)),
+    head,
     toast ? h("div", { className: "wbdm-notice ok" }, toast) : null,
     cfg.warnings && cfg.warnings.length
       ? h("div", { className: "wbdm-notice warn" }, cfg.warnings.join("；"))
       : null,
     sections,
-    h(
-      "div",
-      { className: "wbdm-cfg-actions" },
-      h(
-        "button",
-        { type: "button", className: "wbdm-btn", onClick: resetAll },
-        C.resetAll,
-      ),
-    ),
     h(DesktopCard, { api: api, lang: lang, t: t }),
   );
 }

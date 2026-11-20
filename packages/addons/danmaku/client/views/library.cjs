@@ -1,7 +1,7 @@
 "use strict";
 /**
  * 弹幕库视图：增删改、启停、排序、预览。
- * 交互参考标签插件：行内编辑、二次确认删除、写入后重新拉取权威列表。
+ * 版式与其他插件对齐：顶部 hero + 指标卡，下面是「添加」和「清单」两张卡片。
  */
 var React = require("react");
 var h = React.createElement;
@@ -9,6 +9,21 @@ var copy = require("../copy.cjs");
 
 var TONES = ["normal", "accent", "success", "warn", "danger"];
 var MAX_LEN = 100;
+
+var ICONS = {
+  up: require("lucide-react/icons/arrow-up").default,
+  down: require("lucide-react/icons/arrow-down").default,
+  eye: require("lucide-react/icons/eye").default,
+  trash: require("lucide-react/icons/trash-2").default,
+  check: require("lucide-react/icons/check").default,
+  x: require("lucide-react/icons/x").default,
+  plus: require("lucide-react/icons/plus").default,
+  megaphone: require("lucide-react/icons/megaphone").default,
+};
+
+function glyph(Icon, size) {
+  return h(Icon, { size: size || 14, strokeWidth: 1.8, "aria-hidden": "true" });
+}
 
 function unwrap(r) {
   return r && r.result !== undefined ? r.result : r;
@@ -169,74 +184,112 @@ function LibraryView(props) {
     });
   }
 
-  var header = h(
+  function kpi(label, value) {
+    return h(
+      "div",
+      { className: "wbdm-kpi", key: label },
+      h("div", { className: "wbdm-kpi-v" }, String(value)),
+      h("div", { className: "wbdm-kpi-l" }, label),
+    );
+  }
+
+  var enabledCount = Math.max(0, list.total - list.paused);
+
+  var hero = h(
     "div",
-    { className: "wbdm-head" },
-    h("div", { className: "wbdm-title" }, C.title),
-    h("div", { className: "wbdm-sub" }, C.hint),
+    { className: "wbdm-hero" },
+    h(
+      "div",
+      { className: "wbdm-hero-main" },
+      h("div", { className: "wbdm-title" }, C.title),
+      h("div", { className: "wbdm-sub" }, C.hint),
+    ),
+    h(
+      "div",
+      { className: "wbdm-kpis" },
+      kpi(C.kpiTotal, list.total),
+      kpi(C.kpiEnabled, enabledCount),
+      kpi(C.kpiPaused, list.paused),
+    ),
   );
 
-  var stats = h(
-    "div",
-    { className: "wbdm-muted" },
-    copy.fmt(C.stats, { total: list.total, enabled: list.total - list.paused, paused: list.paused }),
-  );
+  function toneChip(key) {
+    return h(
+      "button",
+      {
+        key: key,
+        type: "button",
+        className: "wbdm-tone" + (tone === key ? " on" : ""),
+        onClick: function () {
+          setTone(key);
+        },
+      },
+      h("span", { className: "wbdm-dot " + key }),
+      C.tones[key],
+    );
+  }
 
   var compose = h(
     "div",
-    { className: "wbdm-compose" },
-    h("textarea", {
-      className: "wbdm-field",
-      value: draft,
-      maxLength: MAX_LEN,
-      placeholder: C.addPlaceholder,
-      rows: 2,
-      onChange: function (e) {
-        setDraft(e.target.value);
-      },
-      onKeyDown: function (e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          if (!busy) submitCreate();
-        }
-      },
-    }),
+    { className: "wbdm-card" },
+    h("div", { className: "wbdm-card-h" }, h("span", { className: "wbdm-card-t" }, C.add)),
     h(
       "div",
-      { className: "wbdm-actions" },
-      h("span", { className: "wbdm-counter" }, copy.fmt(C.charCount, { n: draft.length })),
+      { className: "wbdm-compose" },
+      h("textarea", {
+        className: "wbdm-textarea",
+        value: draft,
+        maxLength: MAX_LEN,
+        placeholder: C.addPlaceholder,
+        rows: 2,
+        onChange: function (e) {
+          setDraft(e.target.value);
+        },
+        onKeyDown: function (e) {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (!busy) submitCreate();
+          }
+        },
+      }),
       h(
-        "select",
-        {
-          className: "wbdm-select",
-          value: tone,
-          "aria-label": C.tone,
-          onChange: function (e) {
-            setTone(e.target.value);
+        "div",
+        { className: "wbdm-compose-bar" },
+        h(
+          "div",
+          { className: "wbdm-tones" },
+          h("span", { className: "wbdm-tone-label" }, C.tone),
+          TONES.map(toneChip),
+        ),
+        h("span", { className: "wbdm-counter" }, copy.fmt(C.charCount, { n: draft.length })),
+        h(
+          "button",
+          {
+            type: "button",
+            className: "wbdm-btn primary",
+            disabled: Boolean(busy) || !draft.trim(),
+            onClick: submitCreate,
           },
-        },
-        TONES.map(function (key) {
-          return h("option", { key: key, value: key }, C.tones[key]);
-        }),
-      ),
-      h(
-        "button",
-        {
-          type: "button",
-          className: "wbdm-btn primary",
-          disabled: Boolean(busy) || !draft.trim(),
-          onClick: submitCreate,
-        },
-        busy === "create" ? C.adding : C.add,
+          glyph(ICONS.plus),
+          busy === "create" ? C.adding : C.add,
+        ),
       ),
     ),
+  );
+
+  var empty = h(
+    "div",
+    { className: "wbdm-empty-card" },
+    h("span", { className: "wbdm-empty-icon" }, glyph(ICONS.megaphone, 17)),
+    h("div", null, C.empty),
+    h("div", null, C.addPlaceholder),
   );
 
   var rows = list.items.map(function (item, index) {
     var editing = edit.id === item.id;
     var bodyCell = editing
       ? h("input", {
-          className: "wbdm-input",
+          className: "wbdm-item-edit",
           value: edit.text,
           maxLength: MAX_LEN,
           autoFocus: true,
@@ -249,6 +302,112 @@ function LibraryView(props) {
           },
         })
       : h("span", { className: "wbdm-body", title: item.body }, item.body);
+
+    var ops = editing
+      ? [
+          h(
+            "button",
+            {
+              key: "save",
+              type: "button",
+              className: "wbdm-icon-btn",
+              title: C.save,
+              "aria-label": C.save,
+              onClick: function () {
+                saveEdit(item);
+              },
+            },
+            glyph(ICONS.check),
+          ),
+          h(
+            "button",
+            {
+              key: "cancel",
+              type: "button",
+              className: "wbdm-icon-btn",
+              title: C.cancel,
+              "aria-label": C.cancel,
+              onClick: function () {
+                setEdit({ id: "", text: "" });
+              },
+            },
+            glyph(ICONS.x),
+          ),
+        ]
+      : [
+          h(
+            "button",
+            {
+              key: "up",
+              type: "button",
+              className: "wbdm-icon-btn",
+              title: C.moveUp,
+              "aria-label": C.moveUp,
+              disabled: index === 0,
+              onClick: function () {
+                move(index, -1);
+              },
+            },
+            glyph(ICONS.up),
+          ),
+          h(
+            "button",
+            {
+              key: "down",
+              type: "button",
+              className: "wbdm-icon-btn",
+              title: C.moveDown,
+              "aria-label": C.moveDown,
+              disabled: index === list.items.length - 1,
+              onClick: function () {
+                move(index, 1);
+              },
+            },
+            glyph(ICONS.down),
+          ),
+          h(
+            "button",
+            {
+              key: "eye",
+              type: "button",
+              className: "wbdm-icon-btn",
+              title: C.preview,
+              "aria-label": C.preview,
+              onClick: function () {
+                preview(item);
+              },
+            },
+            glyph(ICONS.eye),
+          ),
+          h(
+            "button",
+            {
+              key: "edit",
+              type: "button",
+              className: "wbdm-icon-btn",
+              title: C.edit,
+              "aria-label": C.edit,
+              onClick: function () {
+                startEdit(item);
+              },
+            },
+            glyph(require("lucide-react/icons/pencil").default),
+          ),
+          h(
+            "button",
+            {
+              key: "del",
+              type: "button",
+              className: "wbdm-icon-btn danger",
+              title: C.remove,
+              "aria-label": C.remove,
+              onClick: function () {
+                remove(item);
+              },
+            },
+            glyph(ICONS.trash),
+          ),
+        ];
 
     return h(
       "div",
@@ -264,142 +423,65 @@ function LibraryView(props) {
             toggle(item);
           },
         }),
+        h("span", { className: "wbdm-track" }),
+        h("span", { className: "wbdm-knob" }),
       ),
-      h("span", { className: "wbdm-pill wbdm-tone-" + (item.tone || "normal") }, C.tones[item.tone] || item.tone),
-      bodyCell,
       h(
-        "div",
-        { className: "wbdm-actions" },
-        editing
-          ? [
-              h(
-                "button",
-                {
-                  key: "save",
-                  type: "button",
-                  className: "wbdm-btn primary",
-                  onClick: function () {
-                    saveEdit(item);
-                  },
-                },
-                C.save,
-              ),
-              h(
-                "button",
-                {
-                  key: "cancel",
-                  type: "button",
-                  className: "wbdm-btn",
-                  onClick: function () {
-                    setEdit({ id: "", text: "" });
-                  },
-                },
-                C.cancel,
-              ),
-            ]
-          : [
-              h(
-                "button",
-                {
-                  key: "up",
-                  type: "button",
-                  className: "wbdm-icon-btn",
-                  title: C.moveUp,
-                  "aria-label": C.moveUp,
-                  disabled: index === 0 || Boolean(busy),
-                  onClick: function () {
-                    move(index, -1);
-                  },
-                },
-                "\u2191",
-              ),
-              h(
-                "button",
-                {
-                  key: "down",
-                  type: "button",
-                  className: "wbdm-icon-btn",
-                  title: C.moveDown,
-                  "aria-label": C.moveDown,
-                  disabled: index === list.items.length - 1 || Boolean(busy),
-                  onClick: function () {
-                    move(index, 1);
-                  },
-                },
-                "\u2193",
-              ),
-              h(
-                "button",
-                {
-                  key: "edit",
-                  type: "button",
-                  className: "wbdm-btn",
-                  onClick: function () {
-                    startEdit(item);
-                  },
-                },
-                C.edit,
-              ),
-              h(
-                "button",
-                {
-                  key: "preview",
-                  type: "button",
-                  className: "wbdm-btn",
-                  disabled: Boolean(busy),
-                  onClick: function () {
-                    preview(item);
-                  },
-                },
-                C.preview,
-              ),
-              h(
-                "button",
-                {
-                  key: "remove",
-                  type: "button",
-                  className: "wbdm-btn danger",
-                  disabled: Boolean(busy),
-                  onClick: function () {
-                    remove(item);
-                  },
-                },
-                C.remove,
-              ),
-            ],
+        "span",
+        { className: "wbdm-tag" },
+        h("span", { className: "wbdm-dot " + (item.tone || "normal") }),
+        C.tones[item.tone] || item.tone,
       ),
+      bodyCell,
+      h("div", { className: "wbdm-ops" }, ops),
     );
   });
 
-  var content;
-  if (list.loading) content = h("div", { className: "wbdm-empty" }, C.loading);
-  else if (list.error) {
-    content = h(
+  var listCard = h(
+    "div",
+    { className: "wbdm-card" },
+    h(
       "div",
-      { className: "wbdm-notice error" },
-      list.error,
+      { className: "wbdm-card-h" },
+      h("span", { className: "wbdm-card-t" }, C.tabs.library),
       h(
-        "button",
-        {
-          type: "button",
-          className: "wbdm-btn",
-          style: { marginLeft: 8 },
-          onClick: refresh,
-        },
-        C.retry,
+        "span",
+        { className: "wbdm-card-s" },
+        copy.fmt(C.stats, { total: list.total, enabled: enabledCount, paused: list.paused }),
       ),
-    );
-  } else if (!list.items.length) content = h("div", { className: "wbdm-empty" }, C.empty);
-  else content = h("div", { className: "wbdm-list" }, rows);
+    ),
+    list.loading
+      ? h("div", { className: "wbdm-empty" }, C.loading)
+      : list.error
+        ? h(
+            "div",
+            { className: "wbdm-notice error" },
+            list.error,
+            " ",
+            h(
+              "button",
+              {
+                type: "button",
+                className: "wbdm-link",
+                onClick: function () {
+                  refresh();
+                },
+              },
+              C.retry,
+            ),
+          )
+        : list.items.length
+          ? h("div", { className: "wbdm-list" }, rows)
+          : empty,
+  );
 
   return h(
     "div",
-    { className: "wbdm-wrap wbdm-lib" },
-    header,
-    stats,
-    compose,
+    { className: "wbdm-wrap" },
+    hero,
     say ? h("div", { className: "wbdm-notice ok" }, say) : null,
-    content,
+    compose,
+    listCard,
   );
 }
 

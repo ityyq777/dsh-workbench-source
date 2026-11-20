@@ -38,8 +38,13 @@ if (!host || !host.react) {
     database: require("lucide-react/icons/database").default,
     play: require("lucide-react/icons/play").default,
   };
+  // 视图标签（view-tabs）只认 function 类型的图标，lucide 的默认导出是 forwardRef 对象，
+  // 这里包一层普通函数组件，标签才会显示图标。
   var tab = function (name) {
-    return icons[name];
+    var Icon = icons[name];
+    return function TabIcon(props) {
+      return React.createElement(Icon, props);
+    };
   };
 
   host.registerAddon({
