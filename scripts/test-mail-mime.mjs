@@ -98,6 +98,7 @@ test("历史行回填：解主题、把发件人拆成地址 + 名称，且重�
   ensureSchema(db);
   const host = { call: async () => ({ result: { secret: "pw" } }) };
   const m = createMail({ db, host, log: () => {} });
+  db.prepare("INSERT INTO mail_account (id,name,email,imap_host,smtp_host,created_at,updated_at) VALUES (?,?,?,?,?,?,?)").run("acc", "历史账户", "me@test", "imap.test", "smtp.test", 1, 1);
   db.prepare(
     "INSERT INTO mail_message (id,account_id,mailbox,uid,subject,from_addr,to_addr,date_at,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
   ).run("old1", "acc", "INBOX", 7, "=?gbk?B?" + gbkChinese + "?=", '"12306@rails.com.cn" <12306@rails.com.cn>', "=?gbk?B?" + gbkChinese + "?= <me@test>", 1000, 1000, 1000);
@@ -108,5 +109,8 @@ test("历史行回填：解主题、把发件人拆成地址 + 名称，且重�
   assert.equal(row.fromName, "12306@rails.com.cn");
   assert.ok(row.to.indexOf("中文") >= 0);
   assert.equal(m.backfillHeaders(), 0, "第二次不应再改");
+  assert.equal(m.messages({}).items[0].hasAttachment, null);
+  db.prepare("INSERT INTO mail_attachment (id,message_id,filename) VALUES (?,?,?)").run("att1", "old1", "report.pdf");
+  assert.equal(m.messages({}).items[0].hasAttachment, true);
   assert.equal(m.messages({}).items[0].fromName, "12306@rails.com.cn");
 });

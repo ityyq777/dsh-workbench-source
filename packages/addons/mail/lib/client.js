@@ -137,10 +137,16 @@ var require_styles = __commonJS({
       ".wbml-subject{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto;min-width:0}",
       ".wbml-snippet{font-size:12px;color:var(--wb-muted,#6b7280);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 0;min-width:0}",
       ".wbml-time{grid-area:time;font-size:11px;color:var(--wb-muted,#6b7280);white-space:nowrap}",
-      ".wbml-listpane{min-height:0}",
+      ".wbml-listpane{min-height:0;container:mail-list / inline-size}",
+      ".wbml-date-group{flex:none;margin:0;padding:6px 12px;font-size:11px;font-weight:650;color:var(--wb-muted);background:var(--wb-card);border-bottom:1px solid var(--wb-line)}",
+      ".wbml-list-row{flex:none;align-items:center;grid-template-columns:minmax(0,1fr) 18px 5ch;grid-template-areas:'who attachment time' 'line line line'}",
+      ".wbml-who{display:flex;align-items:center;gap:5px;min-width:0}.wbml-sender,.wbml-source{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}.wbml-source{max-width:45%;font-size:11px;font-weight:400;color:var(--wb-muted)}",
+      ".wbml-attachment{grid-area:attachment;justify-self:center;display:inline-flex;color:var(--wb-muted)}.wbml-time{text-align:right;font-variant-numeric:tabular-nums;font-weight:400}",
+      "@container mail-list (min-width:620px){.wbml-list-row{min-height:42px;grid-template-columns:clamp(148px,23%,240px) minmax(0,1fr) 18px 5ch;grid-template-areas:'who line attachment time'}}",
       ".wbml-detailpane{min-height:0}",
       ".wbml-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--wb-border,#eef0f3);background:var(--wb-surface,#fff)}",
-      ".wbml-detail-head>.wbml-btn{flex:none}",
+      ".wbml-detail-head{flex-direction:column}.wbml-reader-nav{display:flex;gap:6px;flex-wrap:wrap}.wbml-detail-meta{overflow-wrap:anywhere}",
+      "@media (max-width:900px){.wbml-layout.has-detail>.wbml-listpane,.wbml-layout.has-detail>.wbml-rail{display:none}}",
       ".wbml-detail-title{display:flex;flex-direction:column;gap:4px;min-width:0}",
       ".wbml-detail-title strong{font-size:14px;line-height:1.45;overflow-wrap:anywhere}",
       ".wbml-muted{font-size:12px;color:var(--wb-muted,#6b7280);overflow-wrap:anywhere}",
@@ -1420,26 +1426,115 @@ var init_search = __esm({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs
-var x_exports = {};
-__export(x_exports, {
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/paperclip.mjs
+var paperclip_exports = {};
+__export(paperclip_exports, {
   __iconData: () => __iconData14,
-  default: () => X
+  default: () => Paperclip
 });
-var __iconData14, X;
-var init_x = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs"() {
+var __iconData14, Paperclip;
+var init_paperclip = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/paperclip.mjs"() {
     init_createLucideIcon();
     __iconData14 = {
-      name: "x",
+      name: "paperclip",
       size: 24,
       node: [
-        ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
-        ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
+        [
+          "path",
+          {
+            d: "m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551",
+            key: "1miecu"
+          }
+        ]
       ]
     };
     __iconData14.node;
-    X = createLucideIcon(__iconData14);
+    Paperclip = createLucideIcon(__iconData14);
+  }
+});
+
+// packages/addons/mail/client/views/message-rows.cjs
+var require_message_rows = __commonJS({
+  "packages/addons/mail/client/views/message-rows.cjs"(exports2, module2) {
+    "use strict";
+    var Paperclip2 = (init_paperclip(), __toCommonJS(paperclip_exports)).default;
+    module2.exports = function messageRows(h, items, options) {
+      const { current, showSource, lang, attachmentUpdates, open, sender, senderDetail, isUnread } = options;
+      const locale = lang === "en" ? "en-GB" : "zh-CN";
+      const dayFormat = new Intl.DateTimeFormat(locale, { year: "numeric", month: "short", day: "numeric" });
+      const timeFormat = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+      const today = /* @__PURE__ */ new Date(), yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const rows = [];
+      let lastDay;
+      for (const m of items) {
+        const date = new Date(m.dateAt);
+        const valid = !!m.dateAt && Number.isFinite(date.getTime());
+        const day = valid ? dayFormat.format(date) : "\u672A\u77E5\u65E5\u671F";
+        if (day !== lastDay) {
+          let label = day;
+          if (day === dayFormat.format(today)) label = lang === "en" ? "Today" : "\u4ECA\u5929";
+          if (day === dayFormat.format(yesterday)) label = lang === "en" ? "Yesterday" : "\u6628\u5929";
+          rows.push(h("h3", { key: "day:" + m.id, className: "wbml-date-group", title: day }, label));
+          lastDay = day;
+        }
+        const active = current?.id === m.id;
+        const hasAttachment = attachmentUpdates.get(m.id) ?? m.hasAttachment;
+        rows.push(h(
+          "button",
+          {
+            type: "button",
+            key: m.id,
+            "data-mail-id": m.id,
+            "aria-current": active || void 0,
+            title: senderDetail(m) + " \xB7 " + (m.subject || "(\u65E0\u4E3B\u9898)"),
+            className: "wbml-list-row" + (active ? " on" : "") + (isUnread(m) ? " unread" : ""),
+            onClick: () => open(m)
+          },
+          h("span", { className: "wbml-who" }, h("span", { className: "wbml-sender", title: senderDetail(m) }, sender(m)), showSource && m.accountName ? h("span", { className: "wbml-source", title: m.accountName }, m.accountName) : null),
+          h("span", { className: "wbml-line" }, h("span", { className: "wbml-subject" }, m.subject || "(\u65E0\u4E3B\u9898)"), h("span", { className: "wbml-snippet" }, m.preview)),
+          hasAttachment === true ? h("span", { className: "wbml-attachment", title: "\u6709\u9644\u4EF6", role: "img", "aria-label": "\u6709\u9644\u4EF6" }, h(Paperclip2, { size: 14, "aria-hidden": true })) : null,
+          h("time", { className: "wbml-time", title: valid ? date.toLocaleString(locale) : day, dateTime: valid ? date.toISOString() : void 0 }, valid ? timeFormat.format(date) : "\u2014")
+        ));
+      }
+      return rows;
+    };
+  }
+});
+
+// packages/addons/mail/client/views/reader-context.cjs
+var require_reader_context = __commonJS({
+  "packages/addons/mail/client/views/reader-context.cjs"(exports2, module2) {
+    "use strict";
+    function neighbor(order, live, id, step) {
+      const start = order.indexOf(id);
+      if (start < 0) return null;
+      const byId = new Map(live.map((m) => [m.id, m]));
+      for (let i = start + step; i >= 0 && i < order.length; i += step) {
+        if (byId.has(order[i])) return byId.get(order[i]);
+      }
+      return null;
+    }
+    function capture(pane, items, id) {
+      const box = pane?.querySelector(".wbml-state-box"), list = pane?.querySelector(".wbml-list");
+      const host = pane?.closest(".wb-immersive-main");
+      return { order: items.map((m) => m.id), id, box: box?.scrollTop || 0, list: list?.scrollTop || 0, host: host?.scrollTop || 0 };
+    }
+    function restore(pane, saved) {
+      if (!pane) return;
+      const row = Array.from(pane.querySelectorAll("[data-mail-id]")).find((el) => el.dataset.mailId === String(saved.id));
+      (row || pane).focus({ preventScroll: true });
+      for (const [node, top] of [[pane.querySelector(".wbml-state-box"), saved.box], [pane.querySelector(".wbml-list"), saved.list], [pane.closest(".wb-immersive-main"), saved.host]]) {
+        if (node) node.scrollTop = top;
+      }
+    }
+    function accountLabel(accounts, m) {
+      const a = accounts.find((it) => it.id === m.accountId);
+      if (!a) return m.accountName || "\u672A\u77E5\u8D26\u6237";
+      return a.name && a.email && a.name !== a.email ? a.name + " <" + a.email + ">" : a.email || a.name || "\u672A\u77E5\u8D26\u6237";
+    }
+    module2.exports = { neighbor, capture, restore, accountLabel };
   }
 });
 
@@ -1548,7 +1643,8 @@ var require_messages = __commonJS({
     var Refresh = (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default;
     var Download2 = (init_download(), __toCommonJS(download_exports)).default;
     var Search2 = (init_search(), __toCommonJS(search_exports)).default;
-    var Close = (init_x(), __toCommonJS(x_exports)).default;
+    var messageRows = require_message_rows();
+    var Reader = require_reader_context();
     var Mail2 = (init_mail(), __toCommonJS(mail_exports)).default;
     var MailOpen2 = (init_mail_open(), __toCommonJS(mail_open_exports)).default;
     var Move = (init_folder_input(), __toCommonJS(folder_input_exports)).default;
@@ -1593,7 +1689,16 @@ var require_messages = __commonJS({
           searchRev.current++;
         };
       }, []);
+      var pane = React.useRef(null), reading = React.useRef(null), returning = React.useRef(null);
+      var attachmentUpdates = React.useRef(/* @__PURE__ */ new Map());
+      function back() {
+        var saved = reading.current;
+        close();
+        returning.current = saved;
+      }
       function close() {
+        reading.current = null;
+        returning.current = null;
         selected.current++;
         sel[1](null);
         target[1]("");
@@ -1649,19 +1754,22 @@ var require_messages = __commonJS({
         C.call(api, "mail.messageBody", { id: m.id, force: !!force }).then(function(r) {
           if (rev !== selected.current) return;
           if (!r || r.ok === false) throw new Error(r && r.message || "\u6B63\u6587\u4E0B\u8F7D\u5931\u8D25");
+          if (Array.isArray(r.attachments)) attachmentUpdates.current.set(m.id, r.attachments.length > 0);
           bodyState[1]({ data: r });
         }).catch(function(e) {
           if (rev === selected.current) bodyState[1]({ error: C.errText(e) });
         });
       }
-      function open(m) {
-        close();
-        var rev = selected.current;
+      function open(m, continuing) {
+        if (!continuing || !reading.current) reading.current = Reader.capture(pane.current, items, m.id);
+        returning.current = null;
+        target[1]("");
+        var rev = ++selected.current;
         sel[1](m);
         bodyState[1]({ loading: true });
         C.call(api, "mail.messageGet", { id: m.id }).then(function(d) {
           if (rev !== selected.current) return;
-          sel[1](d);
+          sel[1](Object.assign({}, m, d));
           loadBody(d, false, rev);
           if (isUnread(d) && d.uid > 0) mutate("mail.messageMarkRead", { id: d.id, read: true }, false, rev);
         }).catch(function(e) {
@@ -1677,7 +1785,7 @@ var require_messages = __commonJS({
           if (epoch !== generation.current) return;
           list.refresh();
           if (rev !== selected.current) return;
-          if (leave) close();
+          if (leave) back();
           else
             sel[1](function(m) {
               if (!m) return m;
@@ -1734,6 +1842,14 @@ var require_messages = __commonJS({
       var current = sel[0], state = bodyState[0], data = state.data || {};
       var result = server[0] || list;
       var items = result.data && result.data.items || [], canSync = !!accountId[0];
+      var order = reading.current?.order || [];
+      var previous = current && Reader.neighbor(order, items, current.id, -1);
+      var next = current && Reader.neighbor(order, items, current.id, 1);
+      (React.useLayoutEffect || React.useEffect)(function() {
+        if (current || !returning.current || result.loading) return;
+        Reader.restore(pane.current, returning.current);
+        if (!busy[0]) returning.current = null;
+      }, [current, result.data, result.loading, busy[0]]);
       var localOnly = folders.some(function(f) {
         return f.name === folder[0] && f.localOnly;
       });
@@ -1755,7 +1871,7 @@ var require_messages = __commonJS({
             { className: "wbml-body-fail" },
             "\u6B63\u6587\u4E0B\u8F7D\u5931\u8D25\uFF1A" + state.error,
             button("\u91CD\u8BD5", function() {
-              open(current);
+              open(current, true);
             })
           );
         return h(
@@ -1779,27 +1895,15 @@ var require_messages = __commonJS({
         h(
           "div",
           { className: "wbml-list" },
-          items.map(function(m) {
-            return h(
-              "button",
-              {
-                key: m.id,
-                type: "button",
-                title: senderDetail(m) + " \xB7 " + m.subject,
-                className: "wbml-list-row" + (current && current.id === m.id ? " on" : "") + (isUnread(m) ? " unread" : ""),
-                onClick: function() {
-                  open(m);
-                }
-              },
-              h("span", { className: "wbml-who" }, !accountId[0] && m.accountName ? sender(m) + " \xB7 " + m.accountName : sender(m)),
-              h("span", { className: "wbml-time" }, C.fmtTime(m.dateAt, props.lang)),
-              h(
-                "div",
-                { className: "wbml-line" },
-                h("span", { className: "wbml-subject" }, m.subject || "(\u65E0\u4E3B\u9898)"),
-                h("span", { className: "wbml-snippet" }, m.preview)
-              )
-            );
+          messageRows(h, items, {
+            current,
+            showSource: !accountId[0],
+            lang: props.lang,
+            attachmentUpdates: attachmentUpdates.current,
+            open,
+            sender,
+            senderDetail,
+            isUnread
           })
         ),
         !server[0] && h(
@@ -1968,7 +2072,7 @@ var require_messages = __commonJS({
           ),
           h(
             "section",
-            { className: "wbml-pane wbml-listpane" },
+            { className: "wbml-pane wbml-listpane", ref: pane, tabIndex: -1 },
             h(
               "div",
               { className: "wbml-pane-head" },
@@ -2001,11 +2105,22 @@ var require_messages = __commonJS({
                   senderDetail(current) + " \xB7 " + C.fmtTime(current.dateAt, props.lang)
                 )
               ),
-              button("\u5173\u95ED", close, void 0, void 0, Close)
+              h(
+                "div",
+                { className: "wbml-reader-nav", role: "group", "aria-label": "\u9605\u8BFB\u5BFC\u822A" },
+                button("\u8FD4\u56DE\u5217\u8868", back),
+                button("\u4E0A\u4E00\u5C01", function() {
+                  if (previous) open(previous, true);
+                }, !previous || busy[0]),
+                button("\u4E0B\u4E00\u5C01", function() {
+                  if (next) open(next, true);
+                }, !next || busy[0])
+              )
             ),
             h(
               "div",
               { className: "wbml-detail-meta" },
+              h("span", null, "\u6536\u4EF6\u8D26\u6237\uFF1A" + Reader.accountLabel(accs, current)),
               h("span", null, "\u6536\u4EF6\u4EBA\uFF1A" + (current.to || "\u2014")),
               h("span", null, "\u6587\u4EF6\u5939\uFF1A" + current.mailbox)
             ),
@@ -2064,7 +2179,7 @@ var require_messages = __commonJS({
             ) : null,
             h(
               "div",
-              { className: "wbml-detail-content" },
+              { className: "wbml-detail-content", key: current.id },
               bodyNode(),
               h(
                 ReplyTools,
@@ -5326,7 +5441,7 @@ var require_actions = __commonJS({
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.4.0",
+    version: "0.4.1",
     icon: (init_mail(), __toCommonJS(mail_exports)).default,
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },

@@ -59,6 +59,8 @@ test("样式表是三栏栅格 + 900px 单列降级", () => {
 test("本地游标跨三页，同日同秒与期间新到邮件不会造成漏信或重信", () => {
   const db = new DatabaseSync(":memory:");
   ensureSchema(db);
+  const account = db.prepare("INSERT INTO mail_account (id,name,email,imap_host,smtp_host,created_at,updated_at) VALUES(?,?,?,'imap.test','smtp.test',1,1)");
+  for (const id of ['a', 'b']) account.run(id, id, id + '@test');
   const insert = db.prepare(
     "INSERT INTO mail_message (id,account_id,mailbox,uid,date_at,flags,subject,created_at,updated_at) VALUES(?,?,?,?,?,?,?,1,1)",
   );
@@ -120,6 +122,9 @@ test("消息页：真实控件事件调用、三栏结构、切换和正文竞�
     flags: i === 1 ? "" : "\\Seen",
     fromName: "Alice",
     from: "a@test",
+    accountName: "工作邮箱",
+    dateAt: new Date(2026, 9, 20 - i, 9, 35).getTime(),
+    hasAttachment: i === 1 ? true : null,
   }));
   const api = {
     async call(n, a) {
@@ -155,6 +160,12 @@ test("消息页：真实控件事件调用、三栏结构、切换和正文竞�
     };
     render();
     assert.ok(button("同步最新邮件").props.disabled);
+    assert.deepEqual(nodes("wbml-list-row").map((row) => row.props["data-mail-id"]), ["m1", "m2"]);
+    assert.equal(nodes("wbml-date-group").length, 2, "跨本地日期分组");
+    assert.ok(nodes("wbml-list-row").every((row) => text(row).includes("工作邮箱")), "汇总列表标识来源");
+    assert.equal(nodes("wbml-time").length, 2);
+    assert.ok(nodes("wbml-time").every((node) => text(node).length <= 6), "列表时间不带完整日期");
+    assert.equal(calls.filter(([name]) => name === "mail.messageBody").length, 0, "列表不预下载正文");
     const syncIcon = walk(button("同步最新邮件")).find((n) => n.props["aria-hidden"] === true);
     assert.equal(syncIcon?.props.size, 14);
     assert.equal(syncIcon?.props.focusable, false);
@@ -162,6 +173,9 @@ test("消息页：真实控件事件调用、三栏结构、切换和正文竞�
     slots = [];
     render();
     assert.ok(!button("同步最新邮件").props.disabled);
+    assert.ok(nodes("wbml-list-row").every((row) => !text(row).includes("工作邮箱")), "指定账户隐藏重复来源");
+    const hasIcon = (row) => walk(row).some((node) => typeof node.type === "object" && node.type?.$$typeof === Symbol.for("react.forward_ref"));
+    assert.deepEqual(nodes("wbml-list-row").map(hasIcon), [true, false], "仅缓存确认有附件的邮件展示图标");
     button("同步最新邮件").props.onClick();
     await settle();
     render();
@@ -184,7 +198,9 @@ test("消息页：真实控件事件调用、三栏结构、切换和正文竞�
     assert.ok(layout.kids.includes(nodes("wbml-listpane")[0]) && layout.kids.includes(nodes("wbml-detailpane")[0]));
     await settle();
     render();
-    nodes("wbml-list-row")[1].props.onClick();
+    assert.ok(button("上一封").props.disabled);
+    assert.ok(!button("下一封").props.disabled);
+    button("下一封").props.onClick();
     await settle();
     release({ ok: true, body: "first" });
     await settle();

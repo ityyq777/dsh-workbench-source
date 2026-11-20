@@ -8,7 +8,8 @@ var InboxIcon = require("lucide-react/icons/inbox").default;
 var Refresh = require("lucide-react/icons/refresh-cw").default;
 var Download = require("lucide-react/icons/download").default;
 var Search = require("lucide-react/icons/search").default;
-var Close = require("lucide-react/icons/x").default;
+var messageRows = require("./message-rows.cjs");
+var Reader = require("./reader-context.cjs");
 var Mail = require("lucide-react/icons/mail").default;
 var MailOpen = require("lucide-react/icons/mail-open").default;
 var Move = require("lucide-react/icons/folder-input").default;
@@ -67,7 +68,16 @@ function Inbox(props) {
       searchRev.current++;
     };
   }, []);
+  var pane = React.useRef(null), reading = React.useRef(null), returning = React.useRef(null);
+  var attachmentUpdates = React.useRef(new Map());
+  function back() {
+    var saved = reading.current;
+    close();
+    returning.current = saved;
+  }
   function close() {
+    reading.current = null;
+    returning.current = null;
     selected.current++;
     sel[1](null);
     target[1]("");
@@ -122,21 +132,24 @@ function Inbox(props) {
       .then(function (r) {
         if (rev !== selected.current) return;
         if (!r || r.ok === false) throw new Error((r && r.message) || "正文下载失败");
+        if (Array.isArray(r.attachments)) attachmentUpdates.current.set(m.id, r.attachments.length > 0);
         bodyState[1]({ data: r });
       })
       .catch(function (e) {
         if (rev === selected.current) bodyState[1]({ error: C.errText(e) });
       });
   }
-  function open(m) {
-    close();
-    var rev = selected.current;
+  function open(m, continuing) {
+    if (!continuing || !reading.current) reading.current = Reader.capture(pane.current, items, m.id);
+    returning.current = null;
+    target[1]("");
+    var rev = ++selected.current;
     sel[1](m);
     bodyState[1]({ loading: true });
     C.call(api, "mail.messageGet", { id: m.id })
       .then(function (d) {
         if (rev !== selected.current) return;
-        sel[1](d);
+        sel[1](Object.assign({}, m, d));
         loadBody(d, false, rev);
         if (isUnread(d) && d.uid > 0) mutate("mail.messageMarkRead", { id: d.id, read: true }, false, rev);
       })
@@ -154,7 +167,7 @@ function Inbox(props) {
         if (epoch !== generation.current) return;
         list.refresh();
         if (rev !== selected.current) return;
-        if (leave) close();
+        if (leave) back();
         else
           sel[1](function (m) {
             if (!m) return m;
@@ -220,6 +233,14 @@ function Inbox(props) {
   var result = server[0] || list;
   var items = (result.data && result.data.items) || [],
     canSync = !!accountId[0];
+  var order = reading.current?.order || [];
+  var previous = current && Reader.neighbor(order, items, current.id, -1);
+  var next = current && Reader.neighbor(order, items, current.id, 1);
+  (React.useLayoutEffect || React.useEffect)(function () {
+    if (current || !returning.current || result.loading) return;
+    Reader.restore(pane.current, returning.current);
+    if (!busy[0]) returning.current = null;
+  }, [current, result.data, result.loading, busy[0]]);
   var localOnly = folders.some(function (f) {
     return f.name === folder[0] && f.localOnly;
   });
@@ -241,7 +262,7 @@ function Inbox(props) {
         { className: "wbml-body-fail" },
         "正文下载失败：" + state.error,
         button("重试", function () {
-          open(current);
+          open(current, true);
         }),
       );
     return h(
@@ -275,29 +296,8 @@ function Inbox(props) {
           h(
             "div",
             { className: "wbml-list" },
-            items.map(function (m) {
-              return h(
-                "button",
-                {
-                  key: m.id,
-                  type: "button",
-                  title: senderDetail(m) + " · " + m.subject,
-                  className:
-                    "wbml-list-row" + (current && current.id === m.id ? " on" : "") + (isUnread(m) ? " unread" : ""),
-                  onClick: function () {
-                    open(m);
-                  },
-                },
-                h("span", { className: "wbml-who" }, !accountId[0] && m.accountName ? sender(m) + " · " + m.accountName : sender(m)),
-                h("span", { className: "wbml-time" }, C.fmtTime(m.dateAt, props.lang)),
-                h(
-                  "div",
-                  { className: "wbml-line" },
-                  h("span", { className: "wbml-subject" }, m.subject || "(无主题)"),
-                  h("span", { className: "wbml-snippet" }, m.preview),
-                ),
-              );
-            }),
+            messageRows(h, items, { current, showSource: !accountId[0], lang: props.lang,
+              attachmentUpdates: attachmentUpdates.current, open, sender, senderDetail, isUnread }),
           ),
           !server[0] && h(
             "div",
@@ -464,7 +464,7 @@ function Inbox(props) {
       ),
       h(
         "section",
-        { className: "wbml-pane wbml-listpane" },
+        { className: "wbml-pane wbml-listpane", ref: pane, tabIndex: -1 },
         h(
           "div",
           { className: "wbml-pane-head" },
@@ -496,12 +496,17 @@ function Inbox(props) {
                   senderDetail(current) + " · " + C.fmtTime(current.dateAt, props.lang),
                 ),
               ),
-              button("关闭", close, undefined, undefined, Close),
+              h("div", { className: "wbml-reader-nav", role: "group", "aria-label": "阅读导航" },
+                 button("返回列表", back),
+                 button("上一封", function () { if (previous) open(previous, true); }, !previous || busy[0]),
+                 button("下一封", function () { if (next) open(next, true); }, !next || busy[0]),
+               ),
             ),
             h(
               "div",
               { className: "wbml-detail-meta" },
-              h("span", null, "收件人：" + (current.to || "—")),
+              h("span", null, "收件账户：" + Reader.accountLabel(accs, current)),
+               h("span", null, "收件人：" + (current.to || "—")),
               h("span", null, "文件夹：" + current.mailbox),
             ),
             current.uid > 0
@@ -563,7 +568,7 @@ function Inbox(props) {
               : null,
             h(
               "div",
-              { className: "wbml-detail-content" },
+              { className: "wbml-detail-content", key: current.id },
               bodyNode(),
               h(
                 ReplyTools,

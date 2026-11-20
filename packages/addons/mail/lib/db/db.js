@@ -11,6 +11,7 @@ const DDL = [
   `CREATE TABLE IF NOT EXISTS mail_message (id TEXT PRIMARY KEY, account_id TEXT NOT NULL, mailbox TEXT NOT NULL, uid INTEGER NOT NULL, message_id TEXT NOT NULL DEFAULT '', subject TEXT NOT NULL DEFAULT '', from_addr TEXT NOT NULL DEFAULT '', from_name TEXT NOT NULL DEFAULT '', to_addr TEXT NOT NULL DEFAULT '', cc_addr TEXT NOT NULL DEFAULT '', date_at INTEGER NOT NULL, preview TEXT NOT NULL DEFAULT '', body TEXT NOT NULL DEFAULT '', body_at INTEGER NOT NULL DEFAULT 0, flags TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE(account_id, mailbox, uid))`,
   `CREATE TABLE IF NOT EXISTS mail_attachment (id TEXT PRIMARY KEY, message_id TEXT NOT NULL, filename TEXT NOT NULL, mime TEXT NOT NULL DEFAULT '', size INTEGER NOT NULL DEFAULT 0)`,
   "CREATE INDEX IF NOT EXISTS idx_mail_msg_box ON mail_message(account_id, mailbox, date_at)",
+  "CREATE INDEX IF NOT EXISTS idx_mail_attachment_message ON mail_attachment(message_id)",
   "CREATE INDEX IF NOT EXISTS idx_mail_msg_search ON mail_message(subject)",
 ];
 function hasColumn(db, table, column) {
