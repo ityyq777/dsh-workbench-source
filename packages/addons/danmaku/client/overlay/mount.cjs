@@ -100,7 +100,8 @@ function mount() {
   var retries = 0;
   var themeTimer = null;
   var lastThemeKey = "";
-  var focusTimer = null;
+  var typingTimer = null;
+  var TYPING_IDLE_MS = 3000;
 
   function place(nextLayer) {
     var target = document.body;
@@ -160,19 +161,29 @@ function mount() {
     }, THEME_DEBOUNCE);
   }
 
-  function onFocusIn(event) {
-    if (!config.pauseOnInput) return;
-    var el = event.target;
-    if (!el || !el.closest) return;
-    if (!el.closest('input, textarea, [contenteditable=""], [contenteditable="true"], [contenteditable="plaintext-only"]')) return;
-    window.clearTimeout(focusTimer);
-    layer.pause(true);
+  function editableFrom(target) {
+    if (!target || !target.closest) return null;
+    return target.closest('input, textarea, [contenteditable=""], [contenteditable="true"], [contenteditable="plaintext-only"]');
   }
 
-  function onFocusOut() {
+  // 暂停只跟“正在打字”有关：点进输入框但没输入时不暂停，停手一段时间后自动继续。
+  function onTyping(event) {
     if (!config.pauseOnInput) return;
-    window.clearTimeout(focusTimer);
-    focusTimer = window.setTimeout(function () {
+    if (!editableFrom(event.target)) return;
+    window.clearTimeout(typingTimer);
+    layer.pause(true);
+    typingTimer = window.setTimeout(function () {
+      typingTimer = null;
+      layer.pause(false);
+    }, TYPING_IDLE_MS);
+  }
+
+  function onFocusOut(event) {
+    if (!config.pauseOnInput) return;
+    if (!editableFrom(event.target)) return;
+    window.clearTimeout(typingTimer);
+    typingTimer = null;
+    window.setTimeout(function () {
       layer.pause(false);
     }, 120);
   }
@@ -209,7 +220,7 @@ function mount() {
     };
   }
 
-  document.addEventListener("focusin", onFocusIn, true);
+  document.addEventListener("input", onTyping, true);
   document.addEventListener("focusout", onFocusOut, true);
   document.addEventListener("visibilitychange", onVisible);
   try {
@@ -226,7 +237,7 @@ function mount() {
     themeObserver.disconnect();
     layer.destroy();
     if (root.parentNode) root.parentNode.removeChild(root);
-    document.removeEventListener("focusin", onFocusIn, true);
+    document.removeEventListener("input", onTyping, true);
     document.removeEventListener("focusout", onFocusOut, true);
     document.removeEventListener("visibilitychange", onVisible);
     window.__WB_DANMAKU_MOUNTED__ = null;

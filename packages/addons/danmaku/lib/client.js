@@ -156,6 +156,20 @@ var require_styles = __commonJS({
         ".wbdm-switch input:checked+.wbdm-track{background:var(--wb-accent,#2563eb)}",
         ".wbdm-switch input:checked~.wbdm-knob{transform:translateX(14px)}",
         ".wbdm-switch input:focus-visible+.wbdm-track{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+        // 行内小开关（添加卡里的「卡片背景」）
+        ".wbdm-inline-switch{position:relative;display:inline-flex;align-items:center;gap:7px;flex:none;cursor:pointer;font-size:12px;color:var(--wb-muted,#6b7280)}",
+        ".wbdm-inline-switch input{position:absolute;left:0;top:0;width:30px;height:16px;margin:0;opacity:0;cursor:pointer}",
+        ".wbdm-inline-switch .wbdm-track{width:30px;height:16px;flex:none}",
+        ".wbdm-inline-switch .wbdm-knob{top:2px;left:2px;width:12px;height:12px;position:absolute}",
+        ".wbdm-inline-switch input:checked+.wbdm-track{background:var(--wb-accent,#2563eb)}",
+        ".wbdm-inline-switch input:checked~.wbdm-knob{transform:translateX(14px)}",
+        ".wbdm-inline-switch input:focus-visible+.wbdm-track{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+        ".wbdm-inline-label{white-space:nowrap}",
+        // 行内「卡片/纯文字」标签：点一下切换该条弹幕是否有底
+        ".wbdm-cardtag{flex:none;padding:1px 8px;border:1px solid var(--wb-border,#e5e7eb);border-radius:999px;background:none;",
+        "font:inherit;font-size:11px;color:var(--wb-muted,#6b7280);cursor:pointer;transition:color .12s,border-color .12s,background .12s}",
+        ".wbdm-cardtag:hover{color:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb)}",
+        ".wbdm-cardtag.plain{color:var(--wb-muted,#9ca3af);border-style:dashed}",
         /* 空态与提示 */
         ".wbdm-empty-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:26px 16px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:10px;color:var(--wb-muted,#6b7280);font-size:12px;text-align:center}",
         ".wbdm-empty-icon{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:rgba(37,99,235,.1);color:var(--wb-accent,#2563eb)}",
@@ -177,6 +191,34 @@ var require_styles = __commonJS({
         ".wbdm-status-k{font-size:11px;color:var(--wb-muted,#6b7280)}",
         ".wbdm-status-v{margin-top:2px;font-size:12px;font-weight:550}",
         ".wbdm-status-actions{display:flex;gap:8px;flex-wrap:wrap}",
+        /* 页面标题、指标卡数值（库页/配置页共用） */
+        ".wbdm-page-title{font-size:17px;font-weight:680;letter-spacing:-.01em}",
+        ".wbdm-page-sub{margin-top:3px;font-size:12px;color:var(--wb-muted,#6b7280)}",
+        ".wbdm-kpi-v,.wbdm-kpi-n{font-size:19px;font-weight:700;line-height:1.15;letter-spacing:-.01em}",
+        ".wbdm-kpi-n.ok{color:var(--wb-ok,#16a34a)}",
+        ".wbdm-kpi-n.warn{color:var(--wb-warn,#d97706)}",
+        /* 颜色胶囊（详情面板复用添加区样式） */
+        ".wbdm-tone-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border:1px solid var(--wb-border,#e5e7eb);border-radius:999px;background:transparent;color:var(--wb-muted,#6b7280);font-size:11px;line-height:1.6;cursor:pointer}",
+        ".wbdm-tone-chip:hover{border-color:var(--wb-accent,#2563eb);color:var(--wb-accent,#2563eb)}",
+        ".wbdm-tone-chip.on{border-color:var(--wb-accent,#2563eb);color:var(--wb-accent,#2563eb);background:rgba(37,99,235,.08)}",
+        /* 清单行：正文可点开详情 */
+        "button.wbdm-body{padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}",
+        "button.wbdm-body:hover{color:var(--wb-accent,#2563eb)}",
+        ".wbdm-meta{flex:none;font-size:10px;color:var(--wb-muted,#9ca3af);font-variant-numeric:tabular-nums}",
+        /* 详情面板 */
+        ".wbdm-modal{position:fixed;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(15,17,21,.42)}",
+        ".wbdm-modal-card{display:flex;flex-direction:column;width:min(620px,100%);max-height:min(86vh,820px);border:1px solid var(--wb-border,#e5e7eb);border-radius:14px;background:var(--wb-card,#fff);box-shadow:0 18px 60px rgba(0,0,0,.28);overflow:hidden}",
+        ".wbdm-modal-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 18px 12px;border-bottom:1px solid var(--wb-line,#eef0f3)}",
+        ".wbdm-modal-t{font-size:15px;font-weight:660}",
+        ".wbdm-modal-s{margin-top:2px;font-size:11px;color:var(--wb-muted,#6b7280)}",
+        ".wbdm-modal-body{padding:4px 18px 14px;overflow:auto}",
+        ".wbdm-modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--wb-line,#eef0f3);background:var(--wb-surface,#fff)}",
+        ".wbdm-section{padding:12px 0 6px;border-top:1px solid var(--wb-line,#eef0f3)}",
+        ".wbdm-section:first-child{border-top:0}",
+        ".wbdm-section-t{margin-bottom:6px;font-size:11px;font-weight:650;letter-spacing:.02em;color:var(--wb-muted,#6b7280)}",
+        ".wbdm-crow-label{display:block;min-width:0}",
+        ".wbdm-crow-t{display:block;font-size:12px;font-weight:550}",
+        ".wbdm-crow-h{display:block;margin-top:2px;font-size:10px;color:var(--wb-muted,#9ca3af);line-height:1.45}",
         /* 深色：卡片底色更贴近主题表面 */
         "@media (prefers-color-scheme:dark){.wbdm-kpi,.wbdm-card,.wbdm-status-cell{background:var(--wb-surface,#16181d)}}"
       ];
@@ -203,12 +245,13 @@ var require_style = __commonJS({
         "opacity:var(--wbdm-opacity,1);box-shadow:0 3px 12px var(--wbdm-shadow,rgba(0,0,0,.10)),0 1px 2px rgba(0,0,0,.06);",
         "backdrop-filter:blur(7px) saturate(1.15);-webkit-backdrop-filter:blur(7px) saturate(1.15);",
         "will-change:transform;backface-visibility:hidden;contain:layout style}",
-        ".wbdm-dm-chip .wbdm-dm-dot{width:5px;height:5px;border-radius:50%;background:var(--dot,currentColor);opacity:.85;flex:0 0 auto}",
-        ".wbdm-dm-tone-normal{--dot:var(--wbdm-fg,#6b7280)}",
-        ".wbdm-dm-tone-accent{--dot:var(--wbdm-accent,#2563eb);color:var(--wbdm-accent,#1d4ed8)}",
-        ".wbdm-dm-tone-success{--dot:var(--wbdm-ok,#15803d);color:var(--wbdm-ok,#15803d)}",
-        ".wbdm-dm-tone-warn{--dot:var(--wbdm-warn,#b45309);color:var(--wbdm-warn,#b45309)}",
-        ".wbdm-dm-tone-danger{--dot:var(--wbdm-danger,#b91c1c);color:var(--wbdm-danger,#b91c1c)}",
+        ".wbdm-dm-tone-normal{color:var(--wbdm-fg,#1f2328)}",
+        ".wbdm-dm-tone-accent{color:var(--wbdm-accent,#1d4ed8);border-color:var(--wbdm-accent,#2563eb)}",
+        ".wbdm-dm-tone-success{color:var(--wbdm-ok,#15803d);border-color:var(--wbdm-ok,#15803d)}",
+        ".wbdm-dm-tone-warn{color:var(--wbdm-warn,#b45309);border-color:var(--wbdm-warn,#b45309)}",
+        ".wbdm-dm-tone-danger{color:var(--wbdm-danger,#b91c1c);border-color:var(--wbdm-danger,#b91c1c)}",
+        ".wbdm-dm-chip.wbdm-dm-plain{background:none;border-color:transparent;box-shadow:none;padding:2px 3px;",
+        "backdrop-filter:none;-webkit-backdrop-filter:none;text-shadow:0 1px 3px var(--wbdm-shadow,rgba(0,0,0,.35))}",
         "@media (prefers-reduced-motion: reduce){.wbdm-dm-chip{transition:none}}"
       ];
     };
@@ -220,6 +263,11 @@ var require_layer = __commonJS({
   "packages/addons/danmaku/client/overlay/layer.cjs"(exports2, module2) {
     "use strict";
     var ACTIVE_LIMIT = 160;
+    var FAMILY = {
+      rounded: '"SF Pro Rounded", "PingFang SC", "Hiragino Sans GB", system-ui, sans-serif',
+      serif: 'Georgia, "Songti SC", "Noto Serif CJK SC", serif',
+      mono: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+    };
     var LATE_LIMIT = 2e3;
     function num(value, fallback) {
       var n = Number(value);
@@ -246,19 +294,20 @@ var require_layer = __commonJS({
       } catch (error) {
         reduced = false;
       }
-      function metrics() {
+      function metrics(bandOverride) {
         var vw = field.clientWidth || win.innerWidth || 1200;
         var vh = field.clientHeight || win.innerHeight || 800;
         var lanes = clamp(Math.round(num(config.lanes, 7)), 1, 12);
         var bandTop = 6;
         var bandBottom = vh * 0.92;
-        if (config.band === "upper") bandBottom = vh * 0.5;
-        else if (config.band === "lower") {
+        var band = bandOverride || config.band;
+        if (band === "upper") bandBottom = vh * 0.5;
+        else if (band === "lower") {
           bandTop = vh * 0.45;
           bandBottom = vh * 0.92;
         }
         var available = Math.max(120, bandBottom - bandTop);
-        return { vw, lanes, laneH: clamp(available / lanes, 30, 72), top: bandTop };
+        return { vw, lanes, laneH: clamp(available / lanes, 24, 4e3), top: bandTop };
       }
       function removeChip(el, anim) {
         if (anim) {
@@ -274,15 +323,18 @@ var require_layer = __commonJS({
         if (disposed || !config.enabled) return;
         if (!payload || !payload.body) return;
         if (anims.size >= ACTIVE_LIMIT) return;
-        var m = metrics();
+        var m = metrics(payload.band);
         var el = doc.createElement("span");
-        el.className = "wbdm-dm-chip wbdm-dm-tone-" + (payload.tone || "normal");
-        var dot = doc.createElement("i");
-        dot.className = "wbdm-dm-dot";
-        el.appendChild(dot);
+        el.className = "wbdm-dm-chip wbdm-dm-tone-" + (payload.tone || "normal") + (payload.card === false ? " wbdm-dm-plain" : "");
         var text = doc.createElement("span");
-        text.textContent = String(payload.body).slice(0, 140);
+        text.textContent = (payload.prefix ? payload.prefix + " " : "") + String(payload.body).slice(0, 140);
         el.appendChild(text);
+        var size = num(payload.fontSize, num(config.fontSize, 15));
+        if (size) el.style.fontSize = clamp(size, 10, 48) + "px";
+        var weight = num(payload.weight, 0);
+        if (weight) el.style.fontWeight = String(clamp(weight, 300, 800));
+        var family = FAMILY[payload.family] || "";
+        if (family) el.style.fontFamily = family;
         field.appendChild(el);
         var width = el.offsetWidth || 120;
         var lane = Math.abs(Math.floor(num(payload.lane, 0))) % m.lanes;
@@ -508,7 +560,8 @@ var require_mount = __commonJS({
       var retries = 0;
       var themeTimer = null;
       var lastThemeKey = "";
-      var focusTimer = null;
+      var typingTimer = null;
+      var TYPING_IDLE_MS = 3e3;
       function place(nextLayer) {
         var target = document.body;
         var mode = "body";
@@ -560,18 +613,26 @@ var require_mount = __commonJS({
           });
         }, THEME_DEBOUNCE);
       }
-      function onFocusIn(event) {
-        if (!config.pauseOnInput) return;
-        var el = event.target;
-        if (!el || !el.closest) return;
-        if (!el.closest('input, textarea, [contenteditable=""], [contenteditable="true"], [contenteditable="plaintext-only"]')) return;
-        window.clearTimeout(focusTimer);
-        layer.pause(true);
+      function editableFrom(target) {
+        if (!target || !target.closest) return null;
+        return target.closest('input, textarea, [contenteditable=""], [contenteditable="true"], [contenteditable="plaintext-only"]');
       }
-      function onFocusOut() {
+      function onTyping(event) {
         if (!config.pauseOnInput) return;
-        window.clearTimeout(focusTimer);
-        focusTimer = window.setTimeout(function() {
+        if (!editableFrom(event.target)) return;
+        window.clearTimeout(typingTimer);
+        layer.pause(true);
+        typingTimer = window.setTimeout(function() {
+          typingTimer = null;
+          layer.pause(false);
+        }, TYPING_IDLE_MS);
+      }
+      function onFocusOut(event) {
+        if (!config.pauseOnInput) return;
+        if (!editableFrom(event.target)) return;
+        window.clearTimeout(typingTimer);
+        typingTimer = null;
+        window.setTimeout(function() {
           layer.pause(false);
         }, 120);
       }
@@ -602,7 +663,7 @@ var require_mount = __commonJS({
         sse.onerror = function() {
         };
       }
-      document.addEventListener("focusin", onFocusIn, true);
+      document.addEventListener("input", onTyping, true);
       document.addEventListener("focusout", onFocusOut, true);
       document.addEventListener("visibilitychange", onVisible);
       try {
@@ -617,7 +678,7 @@ var require_mount = __commonJS({
         themeObserver.disconnect();
         layer.destroy();
         if (root.parentNode) root.parentNode.removeChild(root);
-        document.removeEventListener("focusin", onFocusIn, true);
+        document.removeEventListener("input", onTyping, true);
         document.removeEventListener("focusout", onFocusOut, true);
         document.removeEventListener("visibilitychange", onVisible);
         window.__WB_DANMAKU_MOUNTED__ = null;
@@ -1093,6 +1154,37 @@ var require_copy = __commonJS({
       moveDown: "\u4E0B\u79FB",
       tone: "\u989C\u8272",
       tones: { normal: "\u5E38\u89C4", accent: "\u4E3B\u9898\u8272", success: "\u6210\u529F", warn: "\u63D0\u9192", danger: "\u8B66\u793A" },
+      card: "\u5361\u7247\u80CC\u666F",
+      detailTitle: "\u5F39\u5E55\u8BE6\u60C5",
+      detailHint: "\u8FD9\u6761\u5F39\u5E55\u81EA\u5DF1\u7684\u5916\u89C2\uFF0C\u6539\u5B8C\u53EA\u5F71\u54CD\u5B83\u4E00\u6761\u3002",
+      sectionContent: "\u5185\u5BB9",
+      sectionLook: "\u5916\u89C2",
+      sectionMotion: "\u52A8\u6548",
+      sectionRotate: "\u8F6E\u64AD",
+      followGlobal: "\u8DDF\u968F\u5168\u5C40",
+      fontSize: "\u5B57\u53F7",
+      speed: "\u901F\u5EA6",
+      opacity: "\u4E0D\u900F\u660E\u5EA6",
+      weight: "\u5B57\u91CD",
+      family: "\u5B57\u4F53",
+      band: "\u6CF3\u9053\u533A\u57DF",
+      prefix: "\u524D\u7F00",
+      chance: "\u51FA\u73B0\u6743\u91CD",
+      chanceHint: "\u8D8A\u5927\u8D8A\u5E38\u51FA\u73B0",
+      weights: { 400: "\u5E38\u89C4", 500: "\u4E2D\u7B49", 600: "\u534A\u7C97", 700: "\u7C97" },
+      families: { "": "\u7CFB\u7EDF\u9ED8\u8BA4", rounded: "\u5706\u6DA6", serif: "\u886C\u7EBF", mono: "\u7B49\u5BBD" },
+      bands: { "": "\u8DDF\u968F\u5168\u5C40", full: "\u6574\u5C4F", upper: "\u4E0A\u534A\u5C4F", lower: "\u4E0B\u534A\u5C4F" },
+      saveDetail: "\u4FDD\u5B58",
+      saving: "\u4FDD\u5B58\u4E2D\u2026",
+      prefixHint: "\u53EF\u9009\uFF0C\u6BD4\u5982 emoji \u524D\u7F00",
+      bandHint: "\u8FD9\u6761\u5F39\u5E55\u8D70\u6574\u5C4F\u8FD8\u662F\u534A\u5C4F",
+      saveAndPreview: "\u4FDD\u5B58\u5E76\u9884\u89C8",
+      unitPx: "px",
+      unitSpeed: "px/s",
+      deleteLine: "\u5220\u9664\u8FD9\u6761",
+      cardOn: "\u5361\u7247",
+      cardOff: "\u7EAF\u6587\u5B57",
+      cardHint: "\u5E26\u80CC\u666F\u5361\u7247\uFF0C\u6216\u53EA\u4FDD\u7559\u6587\u5B57\uFF08\u9002\u5408\u538B\u5728\u56FE\u4E0A\u770B\uFF09",
       stats: "\u5171 {total} \u6761 \xB7 \u542F\u7528 {enabled} \u6761 \xB7 \u505C\u7528 {paused} \u6761",
       kpiTotal: "\u5168\u90E8",
       kpiEnabled: "\u542F\u7528",
@@ -1158,6 +1250,37 @@ var require_copy = __commonJS({
       moveDown: "Down",
       tone: "Tone",
       tones: { normal: "Normal", accent: "Accent", success: "Success", warn: "Warn", danger: "Danger" },
+      card: "Card background",
+      detailTitle: "Danmaku details",
+      detailHint: "Per-line look and motion; only this line changes.",
+      sectionContent: "Content",
+      sectionLook: "Look",
+      sectionMotion: "Motion",
+      sectionRotate: "Rotation",
+      followGlobal: "Follow global",
+      fontSize: "Font size",
+      speed: "Speed",
+      opacity: "Opacity",
+      weight: "Weight",
+      family: "Typeface",
+      band: "Lane area",
+      prefix: "Prefix",
+      chance: "Weight",
+      chanceHint: "Higher shows more often",
+      weights: { 400: "Regular", 500: "Medium", 600: "Semibold", 700: "Bold" },
+      families: { "": "System", rounded: "Rounded", serif: "Serif", mono: "Mono" },
+      bands: { "": "Follow global", full: "Full", upper: "Upper half", lower: "Lower half" },
+      saveDetail: "Save",
+      saving: "Saving\u2026",
+      prefixHint: "Optional emoji or tag prefix",
+      bandHint: "Lanes this line may use",
+      saveAndPreview: "Save & preview",
+      unitPx: "px",
+      unitSpeed: "px/s",
+      deleteLine: "Delete this line",
+      cardOn: "Card",
+      cardOff: "Text only",
+      cardHint: "Show a background card, or keep the text only",
       stats: "{total} total \xB7 {enabled} on \xB7 {paused} off",
       kpiTotal: "Total",
       kpiEnabled: "Live",
@@ -1408,6 +1531,297 @@ var init_pencil = __esm({
   }
 });
 
+// packages/addons/danmaku/client/views/detail.cjs
+var require_detail = __commonJS({
+  "packages/addons/danmaku/client/views/detail.cjs"(exports2, module2) {
+    "use strict";
+    var React2 = require("react");
+    var h = React2.createElement;
+    var TONES = ["normal", "accent", "success", "warn", "danger"];
+    var ICONS = {
+      x: (init_x(), __toCommonJS(x_exports)).default,
+      eye: (init_eye(), __toCommonJS(eye_exports)).default
+    };
+    function glyph(Icon2, size) {
+      return h(Icon2, { size: size || 14, strokeWidth: 1.8, "aria-hidden": "true" });
+    }
+    function numberOrText(value) {
+      return value === null || value === void 0 ? "" : String(value);
+    }
+    module2.exports = function renderDetail(props) {
+      var C = props.C;
+      var detail = props.detail;
+      var patch = props.patch;
+      var busy = props.busy;
+      function set(key, value) {
+        var next = {};
+        next[key] = value;
+        patch(next);
+      }
+      function toneChip(name) {
+        return h(
+          "button",
+          {
+            key: name,
+            type: "button",
+            className: "wbdm-tone-chip" + (detail.tone === name ? " on" : ""),
+            onClick: function() {
+              set("tone", name);
+            }
+          },
+          h("span", { className: "wbdm-dot " + name }),
+          C.tones[name]
+        );
+      }
+      function numField(key, label, hint, step, min, max) {
+        return h(
+          "label",
+          { className: "wbdm-crow" },
+          h(
+            "span",
+            { className: "wbdm-crow-label" },
+            h("span", { className: "wbdm-crow-t" }, label),
+            h("span", { className: "wbdm-crow-h" }, hint)
+          ),
+          h("input", {
+            className: "wbdm-input",
+            type: "number",
+            value: numberOrText(detail[key]),
+            min,
+            max,
+            step,
+            placeholder: C.followGlobal,
+            onChange: function(e) {
+              set(key, e.target.value);
+            }
+          })
+        );
+      }
+      function selectField(key, label, options, hint) {
+        return h(
+          "label",
+          { className: "wbdm-crow" },
+          h(
+            "span",
+            { className: "wbdm-crow-label" },
+            h("span", { className: "wbdm-crow-t" }, label),
+            hint ? h("span", { className: "wbdm-crow-h" }, hint) : null
+          ),
+          h(
+            "select",
+            {
+              className: "wbdm-select",
+              value: detail[key],
+              onChange: function(e) {
+                set(key, e.target.value);
+              }
+            },
+            options.map(function(option) {
+              return h("option", { key: option.value, value: option.value }, option.label);
+            })
+          )
+        );
+      }
+      function switchField(key, label) {
+        return h(
+          "label",
+          { className: "wbdm-crow" },
+          h("span", { className: "wbdm-crow-label" }, h("span", { className: "wbdm-crow-t" }, label)),
+          h(
+            "span",
+            { className: "wbdm-switch" },
+            h("input", {
+              type: "checkbox",
+              checked: Boolean(detail[key]),
+              onChange: function() {
+                set(key, !detail[key]);
+              }
+            }),
+            h("span", { className: "wbdm-track" }),
+            h("span", { className: "wbdm-knob" })
+          )
+        );
+      }
+      var weights = [{ value: "", label: C.followGlobal }];
+      [400, 500, 600, 700].forEach(function(value) {
+        weights.push({ value: String(value), label: C.weights[value] });
+      });
+      var families = Object.keys(C.families).map(function(value) {
+        return { value, label: C.families[value] };
+      });
+      var bands = ["", "full", "upper", "lower"].map(function(value) {
+        return { value, label: C.bands[value] };
+      });
+      var chances = [1, 2, 3, 4, 5].map(function(n) {
+        return { value: String(n), label: "\xD7" + n };
+      });
+      return h(
+        "div",
+        {
+          className: "wbdm-modal",
+          onClick: function(e) {
+            if (e.target === e.currentTarget) props.cancel();
+          }
+        },
+        h(
+          "div",
+          { className: "wbdm-modal-card", role: "dialog", "aria-label": C.detailTitle },
+          h(
+            "div",
+            { className: "wbdm-modal-h" },
+            h(
+              "div",
+              null,
+              h("div", { className: "wbdm-modal-t" }, C.detailTitle),
+              h("div", { className: "wbdm-modal-s" }, C.detailHint)
+            ),
+            h(
+              "button",
+              {
+                type: "button",
+                className: "wbdm-icon-btn",
+                title: C.cancel,
+                "aria-label": C.cancel,
+                onClick: props.cancel
+              },
+              glyph(ICONS.x, 15)
+            )
+          ),
+          h(
+            "div",
+            { className: "wbdm-modal-body" },
+            h(
+              "section",
+              { className: "wbdm-section" },
+              h("div", { className: "wbdm-section-t" }, C.sectionContent),
+              h("textarea", {
+                className: "wbdm-textarea",
+                value: detail.body,
+                maxLength: 100,
+                rows: 2,
+                onChange: function(e) {
+                  set("body", e.target.value);
+                }
+              }),
+              h("div", { className: "wbdm-counter" }, String(detail.body.length) + "/100")
+            ),
+            h(
+              "section",
+              { className: "wbdm-section" },
+              h("div", { className: "wbdm-section-t" }, C.sectionLook),
+              h(
+                "div",
+                { className: "wbdm-crow" },
+                h("span", { className: "wbdm-crow-label" }, h("span", { className: "wbdm-crow-t" }, C.tone)),
+                h("div", { className: "wbdm-tones" }, TONES.map(toneChip))
+              ),
+              h(
+                "label",
+                { className: "wbdm-crow" },
+                h(
+                  "span",
+                  { className: "wbdm-crow-label" },
+                  h("span", { className: "wbdm-crow-t" }, C.card),
+                  h("span", { className: "wbdm-crow-h" }, C.cardHint)
+                ),
+                h(
+                  "span",
+                  { className: "wbdm-switch" },
+                  h("input", {
+                    type: "checkbox",
+                    checked: Boolean(detail.card),
+                    onChange: function() {
+                      set("card", !detail.card);
+                    }
+                  }),
+                  h("span", { className: "wbdm-track" }),
+                  h("span", { className: "wbdm-knob" })
+                )
+              ),
+              numField("fontSize", C.fontSize, C.unitPx + " \xB7 " + C.followGlobal, 1, 10, 48),
+              selectField("fontWeight", C.weight, weights),
+              selectField("fontFamily", C.family, families),
+              numField("opacity", C.opacity, "0.15\u20131 \xB7 " + C.followGlobal, 0.02, 0.15, 1)
+            ),
+            h(
+              "section",
+              { className: "wbdm-section" },
+              h("div", { className: "wbdm-section-t" }, C.sectionMotion),
+              numField("speed", C.speed, C.unitSpeed + " \xB7 " + C.followGlobal, 10, 30, 800),
+              selectField("band", C.band, bands, C.bandHint)
+            ),
+            h(
+              "section",
+              { className: "wbdm-section" },
+              h("div", { className: "wbdm-section-t" }, C.sectionRotate),
+              h(
+                "label",
+                { className: "wbdm-crow" },
+                h(
+                  "span",
+                  { className: "wbdm-crow-label" },
+                  h("span", { className: "wbdm-crow-t" }, C.prefix),
+                  h("span", { className: "wbdm-crow-h" }, C.prefixHint)
+                ),
+                h("input", {
+                  className: "wbdm-input",
+                  type: "text",
+                  value: detail.prefix,
+                  maxLength: 8,
+                  placeholder: "\u2728",
+                  onChange: function(e) {
+                    set("prefix", e.target.value);
+                  }
+                })
+              ),
+              selectField("chance", C.chance, chances, C.chanceHint),
+              switchField("enabled", C.enable)
+            )
+          ),
+          h(
+            "div",
+            { className: "wbdm-modal-foot" },
+            h(
+              "button",
+              {
+                type: "button",
+                className: "wbdm-btn ghost",
+                onClick: props.cancel
+              },
+              C.cancel
+            ),
+            h(
+              "button",
+              {
+                type: "button",
+                className: "wbdm-btn",
+                disabled: Boolean(busy),
+                onClick: function() {
+                  props.save(true);
+                }
+              },
+              glyph(ICONS.eye),
+              C.saveAndPreview
+            ),
+            h(
+              "button",
+              {
+                type: "button",
+                className: "wbdm-btn primary",
+                disabled: Boolean(busy) || !detail.body.trim(),
+                onClick: function() {
+                  props.save(false);
+                }
+              },
+              busy ? C.saving : C.saveDetail
+            )
+          )
+        )
+      );
+    };
+  }
+});
+
 // packages/addons/danmaku/client/views/library.cjs
 var require_library = __commonJS({
   "packages/addons/danmaku/client/views/library.cjs"(exports2, module2) {
@@ -1425,6 +1839,7 @@ var require_library = __commonJS({
       check: (init_check(), __toCommonJS(check_exports)).default,
       x: (init_x(), __toCommonJS(x_exports)).default,
       plus: (init_plus(), __toCommonJS(plus_exports)).default,
+      pencil: (init_pencil(), __toCommonJS(pencil_exports)).default,
       megaphone: (init_megaphone(), __toCommonJS(megaphone_exports)).default
     };
     function glyph(Icon2, size) {
@@ -1441,6 +1856,28 @@ var require_library = __commonJS({
       if (r.ok === false) throw new Error(r.error || "request failed");
       return unwrap(r);
     }
+    function numberOrNull(raw) {
+      if (raw === "" || raw === null || raw === void 0) return null;
+      var n = Number(raw);
+      return isFinite(n) ? n : null;
+    }
+    function detailOf(item) {
+      return {
+        id: item.id,
+        body: item.body,
+        tone: item.tone || "normal",
+        card: item.card !== false,
+        enabled: item.enabled !== false,
+        fontSize: item.fontSize === null || item.fontSize === void 0 ? "" : String(item.fontSize),
+        speed: item.speed === null || item.speed === void 0 ? "" : String(item.speed),
+        opacity: item.opacity === null || item.opacity === void 0 ? "" : String(item.opacity),
+        fontWeight: item.fontWeight === null || item.fontWeight === void 0 ? "" : String(item.fontWeight),
+        fontFamily: item.fontFamily || "",
+        band: item.band || "",
+        prefix: item.prefix || "",
+        chance: String(item.chance || 1)
+      };
+    }
     function LibraryView(props) {
       var api = props.api;
       var lang = props.lang;
@@ -1454,12 +1891,15 @@ var require_library = __commonJS({
       var toneS = React2.useState("normal");
       var tone = toneS[0];
       var setTone = toneS[1];
+      var cardS = React2.useState(true);
+      var card = cardS[0];
+      var setCard = cardS[1];
       var busyS = React2.useState("");
       var busy = busyS[0];
       var setBusy = busyS[1];
-      var editS = React2.useState({ id: "", text: "" });
-      var edit = editS[0];
-      var setEdit = editS[1];
+      var detailS = React2.useState(null);
+      var detail = detailS[0];
+      var setDetail = detailS[1];
       var sayS = React2.useState("");
       var say = sayS[0];
       var setSay = sayS[1];
@@ -1515,24 +1955,19 @@ var require_library = __commonJS({
       function submitCreate() {
         var text = draft.trim();
         if (!text) return;
-        act("create", { body: text, tone }, function() {
+        act("create", { body: text, tone, card }, function() {
           setDraft("");
           notify(C.added);
         });
       }
-      function startEdit(item) {
-        setEdit({ id: item.id, text: item.body });
-      }
-      function saveEdit(item) {
-        var text = edit.text.trim();
-        if (!text) return;
-        act("update", { id: item.id, body: text }, function() {
-          setEdit({ id: "", text: "" });
-          notify(C.saved);
-        });
-      }
       function toggle(item) {
         act("update", { id: item.id, enabled: !item.enabled });
+      }
+      function toggleCard(item) {
+        act("update", { id: item.id, card: !item.card });
+      }
+      function preview(item) {
+        act("preview", { id: item.id });
       }
       function remove(item) {
         if (!window.confirm(C.confirmRemove)) return;
@@ -1553,50 +1988,53 @@ var require_library = __commonJS({
           })
         });
       }
-      function preview(item) {
-        act("preview", { id: item.id }, function() {
-          notify(C.previewing);
+      function openDetail(item) {
+        setDetail(detailOf(item));
+      }
+      function patchDetail(patch) {
+        setDetail(function(prev) {
+          return Object.assign({}, prev, patch);
         });
       }
-      function kpi(label, value) {
-        return h(
-          "div",
-          { className: "wbdm-kpi", key: label },
-          h("div", { className: "wbdm-kpi-v" }, String(value)),
-          h("div", { className: "wbdm-kpi-l" }, label)
-        );
+      function detailArgs() {
+        return {
+          id: detail.id,
+          body: detail.body.trim(),
+          tone: detail.tone,
+          card: Boolean(detail.card),
+          enabled: Boolean(detail.enabled),
+          fontSize: numberOrNull(detail.fontSize),
+          speed: numberOrNull(detail.speed),
+          opacity: numberOrNull(detail.opacity),
+          fontWeight: numberOrNull(detail.fontWeight),
+          fontFamily: detail.fontFamily,
+          band: detail.band,
+          prefix: detail.prefix,
+          chance: numberOrNull(detail.chance) || 1
+        };
       }
-      var enabledCount = Math.max(0, list.total - list.paused);
-      var hero = h(
-        "div",
-        { className: "wbdm-hero" },
-        h(
-          "div",
-          { className: "wbdm-hero-main" },
-          h("div", { className: "wbdm-title" }, C.title),
-          h("div", { className: "wbdm-sub" }, C.hint)
-        ),
-        h(
-          "div",
-          { className: "wbdm-kpis" },
-          kpi(C.kpiTotal, list.total),
-          kpi(C.kpiEnabled, enabledCount),
-          kpi(C.kpiPaused, list.paused)
-        )
-      );
-      function toneChip(key) {
+      function saveDetail(thenPreview) {
+        if (!detail || !detail.body.trim()) return;
+        act("update", detailArgs(), function() {
+          var id = detail.id;
+          setDetail(null);
+          notify(C.saved);
+          if (thenPreview) act("preview", { id });
+        });
+      }
+      function toneChip(name) {
         return h(
           "button",
           {
-            key,
+            key: name,
             type: "button",
-            className: "wbdm-tone" + (tone === key ? " on" : ""),
+            className: "wbdm-tone-chip" + (tone === name ? " on" : ""),
             onClick: function() {
-              setTone(key);
+              setTone(name);
             }
           },
-          h("span", { className: "wbdm-dot " + key }),
-          C.tones[key]
+          h("span", { className: "wbdm-dot " + name }),
+          C.tones[name]
         );
       }
       var compose = h(
@@ -1631,6 +2069,20 @@ var require_library = __commonJS({
               h("span", { className: "wbdm-tone-label" }, C.tone),
               TONES.map(toneChip)
             ),
+            h(
+              "label",
+              { className: "wbdm-inline-switch", title: C.cardHint },
+              h("input", {
+                type: "checkbox",
+                checked: card,
+                onChange: function() {
+                  setCard(!card);
+                }
+              }),
+              h("span", { className: "wbdm-track" }),
+              h("span", { className: "wbdm-knob" }),
+              h("span", { className: "wbdm-inline-label" }, C.card)
+            ),
             h("span", { className: "wbdm-counter" }, copy.fmt(C.charCount, { n: draft.length })),
             h(
               "button",
@@ -1654,50 +2106,7 @@ var require_library = __commonJS({
         h("div", null, C.addPlaceholder)
       );
       var rows = list.items.map(function(item, index) {
-        var editing = edit.id === item.id;
-        var bodyCell = editing ? h("input", {
-          className: "wbdm-item-edit",
-          value: edit.text,
-          maxLength: MAX_LEN,
-          autoFocus: true,
-          onChange: function(e) {
-            setEdit({ id: item.id, text: e.target.value });
-          },
-          onKeyDown: function(e) {
-            if (e.key === "Enter") saveEdit(item);
-            if (e.key === "Escape") setEdit({ id: "", text: "" });
-          }
-        }) : h("span", { className: "wbdm-body", title: item.body }, item.body);
-        var ops = editing ? [
-          h(
-            "button",
-            {
-              key: "save",
-              type: "button",
-              className: "wbdm-icon-btn",
-              title: C.save,
-              "aria-label": C.save,
-              onClick: function() {
-                saveEdit(item);
-              }
-            },
-            glyph(ICONS.check)
-          ),
-          h(
-            "button",
-            {
-              key: "cancel",
-              type: "button",
-              className: "wbdm-icon-btn",
-              title: C.cancel,
-              "aria-label": C.cancel,
-              onClick: function() {
-                setEdit({ id: "", text: "" });
-              }
-            },
-            glyph(ICONS.x)
-          )
-        ] : [
+        var ops = [
           h(
             "button",
             {
@@ -1748,13 +2157,13 @@ var require_library = __commonJS({
               key: "edit",
               type: "button",
               className: "wbdm-icon-btn",
-              title: C.edit,
-              "aria-label": C.edit,
+              title: C.detailTitle,
+              "aria-label": C.detailTitle,
               onClick: function() {
-                startEdit(item);
+                openDetail(item);
               }
             },
-            glyph((init_pencil(), __toCommonJS(pencil_exports)).default)
+            glyph(ICONS.pencil)
           ),
           h(
             "button",
@@ -1771,6 +2180,10 @@ var require_library = __commonJS({
             glyph(ICONS.trash)
           )
         ];
+        var meta = [];
+        if (item.fontSize) meta.push(item.fontSize + C.unitPx);
+        if (item.speed) meta.push(item.speed + C.unitSpeed);
+        if (item.chance > 1) meta.push("\xD7" + item.chance);
         return h(
           "div",
           { key: item.id, className: "wbdm-item" + (item.enabled ? "" : " off") },
@@ -1794,10 +2207,36 @@ var require_library = __commonJS({
             h("span", { className: "wbdm-dot " + (item.tone || "normal") }),
             C.tones[item.tone] || item.tone
           ),
-          bodyCell,
+          h(
+            "button",
+            {
+              type: "button",
+              className: "wbdm-cardtag" + (item.card === false ? " plain" : ""),
+              title: item.card === false ? C.cardOn : C.cardOff,
+              onClick: function() {
+                toggleCard(item);
+              }
+            },
+            item.card === false ? C.cardOff : C.cardOn
+          ),
+          h(
+            "button",
+            {
+              type: "button",
+              className: "wbdm-body",
+              title: C.detailTitle,
+              onClick: function() {
+                openDetail(item);
+              }
+            },
+            item.prefix ? item.prefix + " " : "",
+            item.body
+          ),
+          h("span", { className: "wbdm-meta" }, meta.join(" \xB7 ")),
           h("div", { className: "wbdm-ops" }, ops)
         );
       });
+      var enabledCount = list.total - list.paused;
       var listCard = h(
         "div",
         { className: "wbdm-card" },
@@ -1829,13 +2268,50 @@ var require_library = __commonJS({
           )
         ) : list.items.length ? h("div", { className: "wbdm-list" }, rows) : empty
       );
+      var hero = h(
+        "div",
+        { className: "wbdm-hero" },
+        h(
+          "div",
+          { className: "wbdm-hero-text" },
+          h("div", { className: "wbdm-page-title" }, C.title),
+          h("div", { className: "wbdm-page-sub" }, C.hint)
+        ),
+        h(
+          "div",
+          { className: "wbdm-kpis" },
+          kpi(C.kpiTotal, list.total, ""),
+          kpi(C.kpiEnabled, enabledCount, "ok"),
+          kpi(C.kpiPaused, list.paused, list.paused ? "warn" : "")
+        )
+      );
+      function kpi(label, value, toneName) {
+        return h(
+          "div",
+          { key: label, className: "wbdm-kpi" },
+          h("span", { className: "wbdm-kpi-n" + (toneName ? " " + toneName : "") }, String(value)),
+          h("span", { className: "wbdm-kpi-l" }, label)
+        );
+      }
+      var modal = detail ? require_detail()({
+        C,
+        lang,
+        detail,
+        patch: patchDetail,
+        save: saveDetail,
+        cancel: function() {
+          setDetail(null);
+        },
+        busy
+      }) : null;
       return h(
         "div",
         { className: "wbdm-wrap" },
         hero,
         say ? h("div", { className: "wbdm-notice ok" }, say) : null,
         compose,
-        listCard
+        listCard,
+        modal
       );
     }
     module2.exports = LibraryView;
@@ -4078,7 +4554,7 @@ if (!host || !host.react) {
   };
   host.registerAddon({
     id: "wb-addon-danmaku",
-    version: "0.1.0",
+    version: "0.2.0",
     icon: tab("megaphone"),
     views: [
       {

@@ -169,10 +169,10 @@ export const ITEMS = [
     surface: "ui",
     apply: "runtime",
     default: true,
-    zh: "输入时暂停",
+    zh: "打字时暂停",
     en: "Pause while typing",
-    hintZh: "焦点在输入框/编辑器时，正在飘的弹幕会暂停，移开继续。",
-    hintEn: "Pauses running lines while an input is focused.",
+    hintZh: "在输入框里打字时暂停，停手 3 秒或移开焦点后自动继续；只是点一下输入框不会暂停。",
+    hintEn: "Pauses while you type, resumes 3s after you stop or when focus leaves. Clicking an input alone does not pause.",
   },
   {
     id: "desktopDisplays",

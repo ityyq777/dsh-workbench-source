@@ -49,7 +49,7 @@ if (!host || !host.react) {
 
   host.registerAddon({
     id: "wb-addon-danmaku",
-    version: "0.1.0",
+    version: "0.2.0",
     icon: tab("megaphone"),
     views: [
       {

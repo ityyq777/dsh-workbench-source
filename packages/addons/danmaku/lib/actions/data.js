@@ -10,6 +10,15 @@ const COLUMN_LABELS = {
   body: { zh: "内容", en: "Body" },
   tone: { zh: "颜色", en: "Tone" },
   enabled: { zh: "启用", en: "Enabled" },
+  card: { zh: "卡片背景", en: "Card" },
+  font_size: { zh: "字号", en: "Font size" },
+  speed: { zh: "速度", en: "Speed" },
+  opacity: { zh: "不透明度", en: "Opacity" },
+  font_weight: { zh: "字重", en: "Weight" },
+  font_family: { zh: "字体", en: "Typeface" },
+  band: { zh: "泳道区域", en: "Lane area" },
+  prefix: { zh: "前缀", en: "Prefix" },
+  chance: { zh: "权重", en: "Chance" },
   sort_order: { zh: "顺序", en: "Sort order" },
   created_at: { zh: "创建时间", en: "Created at" },
   updated_at: { zh: "更新时间", en: "Updated at" },
@@ -30,6 +39,7 @@ function kindOf(name, declared) {
   const type = String(declared || "").toUpperCase();
   if (name === "id" || name.endsWith("_id")) return "id";
   if (name.endsWith("_at") && type === "INTEGER") return "timestamp";
+  if (name === "card" || name === "enabled") return "bool";
   if (type === "INTEGER" || type === "REAL") return "number";
   return "text";
 }

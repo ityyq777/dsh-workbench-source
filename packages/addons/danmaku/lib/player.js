@@ -34,8 +34,17 @@ export function createPlayer(options) {
       .filter((item) => item && item.enabled && item.body);
   }
 
+  function bagPool(rows) {
+    const pool = [];
+    for (const item of rows) {
+      const times = Math.min(5, Math.max(1, Number(item.chance) || 1));
+      for (let i = 0; i < times; i += 1) pool.push(item.id);
+    }
+    return pool;
+  }
+
   function rebuildBag(rows) {
-    const key = rows.map((item) => item.id).join(",");
+    const key = rows.map((item) => item.id + ":" + (item.chance || 1)).join(",");
     if (key === idsKey) return;
     idsKey = key;
     bag = [];
@@ -50,7 +59,7 @@ export function createPlayer(options) {
     }
     rebuildBag(rows);
     if (!bag.length) {
-      bag = shuffled(rows.map((item) => item.id));
+      bag = shuffled(bagPool(rows));
       if (bag.length > 1 && bag[0] === lastId) {
         bag.push(bag.shift());
       }
@@ -76,12 +85,17 @@ export function createPlayer(options) {
       id: item.id,
       body: item.body,
       tone: item.tone || "normal",
+      card: item.card !== false,
+      fontSize: item.fontSize || Number(config.fontSize) || 15,
+      opacity: item.opacity == null ? Number(config.opacity) || 0.92 : item.opacity,
+      weight: item.fontWeight || 0,
+      family: item.fontFamily || "",
+      band: item.band || "",
+      prefix: item.prefix || "",
       lane,
       at: preview ? 0 : Date.now() + LEAD_MS,
       preview: Boolean(preview),
-      speed: Number(config.speed) || 150,
-      fontSize: Number(config.fontSize) || 15,
-      opacity: Number(config.opacity) || 0.92,
+      speed: item.speed || Number(config.speed) || 150,
     };
   }
 

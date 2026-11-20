@@ -78,6 +78,20 @@ function pageStyles() {
     ".wbdm-switch input:checked+.wbdm-track{background:var(--wb-accent,#2563eb)}",
     ".wbdm-switch input:checked~.wbdm-knob{transform:translateX(14px)}",
     ".wbdm-switch input:focus-visible+.wbdm-track{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+    // 行内小开关（添加卡里的「卡片背景」）
+    ".wbdm-inline-switch{position:relative;display:inline-flex;align-items:center;gap:7px;flex:none;cursor:pointer;font-size:12px;color:var(--wb-muted,#6b7280)}",
+    ".wbdm-inline-switch input{position:absolute;left:0;top:0;width:30px;height:16px;margin:0;opacity:0;cursor:pointer}",
+    ".wbdm-inline-switch .wbdm-track{width:30px;height:16px;flex:none}",
+    ".wbdm-inline-switch .wbdm-knob{top:2px;left:2px;width:12px;height:12px;position:absolute}",
+    ".wbdm-inline-switch input:checked+.wbdm-track{background:var(--wb-accent,#2563eb)}",
+    ".wbdm-inline-switch input:checked~.wbdm-knob{transform:translateX(14px)}",
+    ".wbdm-inline-switch input:focus-visible+.wbdm-track{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+    ".wbdm-inline-label{white-space:nowrap}",
+    // 行内「卡片/纯文字」标签：点一下切换该条弹幕是否有底
+    ".wbdm-cardtag{flex:none;padding:1px 8px;border:1px solid var(--wb-border,#e5e7eb);border-radius:999px;background:none;",
+    "font:inherit;font-size:11px;color:var(--wb-muted,#6b7280);cursor:pointer;transition:color .12s,border-color .12s,background .12s}",
+    ".wbdm-cardtag:hover{color:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb)}",
+    ".wbdm-cardtag.plain{color:var(--wb-muted,#9ca3af);border-style:dashed}",
 
     /* 空态与提示 */
     ".wbdm-empty-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:26px 16px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:10px;color:var(--wb-muted,#6b7280);font-size:12px;text-align:center}",
@@ -102,6 +116,38 @@ function pageStyles() {
     ".wbdm-status-k{font-size:11px;color:var(--wb-muted,#6b7280)}",
     ".wbdm-status-v{margin-top:2px;font-size:12px;font-weight:550}",
     ".wbdm-status-actions{display:flex;gap:8px;flex-wrap:wrap}",
+
+    /* 页面标题、指标卡数值（库页/配置页共用） */
+    ".wbdm-page-title{font-size:17px;font-weight:680;letter-spacing:-.01em}",
+    ".wbdm-page-sub{margin-top:3px;font-size:12px;color:var(--wb-muted,#6b7280)}",
+    ".wbdm-kpi-v,.wbdm-kpi-n{font-size:19px;font-weight:700;line-height:1.15;letter-spacing:-.01em}",
+    ".wbdm-kpi-n.ok{color:var(--wb-ok,#16a34a)}",
+    ".wbdm-kpi-n.warn{color:var(--wb-warn,#d97706)}",
+
+    /* 颜色胶囊（详情面板复用添加区样式） */
+    ".wbdm-tone-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border:1px solid var(--wb-border,#e5e7eb);border-radius:999px;background:transparent;color:var(--wb-muted,#6b7280);font-size:11px;line-height:1.6;cursor:pointer}",
+    ".wbdm-tone-chip:hover{border-color:var(--wb-accent,#2563eb);color:var(--wb-accent,#2563eb)}",
+    ".wbdm-tone-chip.on{border-color:var(--wb-accent,#2563eb);color:var(--wb-accent,#2563eb);background:rgba(37,99,235,.08)}",
+
+    /* 清单行：正文可点开详情 */
+    "button.wbdm-body{padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}",
+    "button.wbdm-body:hover{color:var(--wb-accent,#2563eb)}",
+    ".wbdm-meta{flex:none;font-size:10px;color:var(--wb-muted,#9ca3af);font-variant-numeric:tabular-nums}",
+
+    /* 详情面板 */
+    ".wbdm-modal{position:fixed;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(15,17,21,.42)}",
+    ".wbdm-modal-card{display:flex;flex-direction:column;width:min(620px,100%);max-height:min(86vh,820px);border:1px solid var(--wb-border,#e5e7eb);border-radius:14px;background:var(--wb-card,#fff);box-shadow:0 18px 60px rgba(0,0,0,.28);overflow:hidden}",
+    ".wbdm-modal-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 18px 12px;border-bottom:1px solid var(--wb-line,#eef0f3)}",
+    ".wbdm-modal-t{font-size:15px;font-weight:660}",
+    ".wbdm-modal-s{margin-top:2px;font-size:11px;color:var(--wb-muted,#6b7280)}",
+    ".wbdm-modal-body{padding:4px 18px 14px;overflow:auto}",
+    ".wbdm-modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--wb-line,#eef0f3);background:var(--wb-surface,#fff)}",
+    ".wbdm-section{padding:12px 0 6px;border-top:1px solid var(--wb-line,#eef0f3)}",
+    ".wbdm-section:first-child{border-top:0}",
+    ".wbdm-section-t{margin-bottom:6px;font-size:11px;font-weight:650;letter-spacing:.02em;color:var(--wb-muted,#6b7280)}",
+    ".wbdm-crow-label{display:block;min-width:0}",
+    ".wbdm-crow-t{display:block;font-size:12px;font-weight:550}",
+    ".wbdm-crow-h{display:block;margin-top:2px;font-size:10px;color:var(--wb-muted,#9ca3af);line-height:1.45}",
 
     /* 深色：卡片底色更贴近主题表面 */
     "@media (prefers-color-scheme:dark){.wbdm-kpi,.wbdm-card,.wbdm-status-cell{background:var(--wb-surface,#16181d)}}",

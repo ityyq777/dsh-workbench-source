@@ -3,6 +3,11 @@
 // 只负责"把一条弹幕画出来"，节奏由宿主 lib/player.js 决定。
 
 var ACTIVE_LIMIT = 160;
+var FAMILY = {
+  rounded: '\"SF Pro Rounded\", \"PingFang SC\", \"Hiragino Sans GB\", system-ui, sans-serif',
+  serif: 'Georgia, \"Songti SC\", \"Noto Serif CJK SC\", serif',
+  mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+};
 var LATE_LIMIT = 2000;
 
 function num(value, fallback) {
@@ -35,19 +40,20 @@ function createWebLayer(options) {
     reduced = false;
   }
 
-  function metrics() {
+  function metrics(bandOverride) {
     var vw = field.clientWidth || win.innerWidth || 1200;
     var vh = field.clientHeight || win.innerHeight || 800;
     var lanes = clamp(Math.round(num(config.lanes, 7)), 1, 12);
     var bandTop = 6;
     var bandBottom = vh * 0.92;
-    if (config.band === "upper") bandBottom = vh * 0.5;
-    else if (config.band === "lower") {
+    var band = bandOverride || config.band;
+    if (band === "upper") bandBottom = vh * 0.5;
+    else if (band === "lower") {
       bandTop = vh * 0.45;
       bandBottom = vh * 0.92;
     }
     var available = Math.max(120, bandBottom - bandTop);
-    return { vw: vw, lanes: lanes, laneH: clamp(available / lanes, 30, 72), top: bandTop };
+    return { vw: vw, lanes: lanes, laneH: clamp(available / lanes, 24, 4000), top: bandTop };
   }
 
   function removeChip(el, anim) {
@@ -66,15 +72,18 @@ function createWebLayer(options) {
     if (disposed || !config.enabled) return;
     if (!payload || !payload.body) return;
     if (anims.size >= ACTIVE_LIMIT) return;
-    var m = metrics();
+    var m = metrics(payload.band);
     var el = doc.createElement("span");
-    el.className = "wbdm-dm-chip wbdm-dm-tone-" + (payload.tone || "normal");
-    var dot = doc.createElement("i");
-    dot.className = "wbdm-dm-dot";
-    el.appendChild(dot);
+    el.className = "wbdm-dm-chip wbdm-dm-tone-" + (payload.tone || "normal") + (payload.card === false ? " wbdm-dm-plain" : "");
     var text = doc.createElement("span");
-    text.textContent = String(payload.body).slice(0, 140);
+    text.textContent = (payload.prefix ? payload.prefix + " " : "") + String(payload.body).slice(0, 140);
     el.appendChild(text);
+    var size = num(payload.fontSize, num(config.fontSize, 15));
+    if (size) el.style.fontSize = clamp(size, 10, 48) + "px";
+    var weight = num(payload.weight, 0);
+    if (weight) el.style.fontWeight = String(clamp(weight, 300, 800));
+    var family = FAMILY[payload.family] || "";
+    if (family) el.style.fontFamily = family;
     field.appendChild(el);
 
     var width = el.offsetWidth || 120;

@@ -4,6 +4,11 @@
   var field = document.getElementById("field");
   var bridge = window.danmakuBridge || null;
   var cfg = { fontSize: 15, opacity: 0.92, lanes: 7, band: "full", speed: 150, motion: "auto" };
+  var FAMILY = {
+    rounded: '"SF Pro Rounded", "PingFang SC", system-ui, sans-serif',
+    serif: 'Georgia, "Songti SC", serif',
+    mono: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+  };
   var paused = false;
   var timers = new Set();
   var anims = new Set();
@@ -40,19 +45,20 @@
     root.style.setProperty("--op", String(clamp(num(cfg.opacity, 0.92), 0.2, 1)));
   }
 
-  function metrics() {
+  function metrics(bandOverride) {
     var vw = field.clientWidth || window.innerWidth;
     var vh = field.clientHeight || window.innerHeight;
     var lanes = clamp(Math.round(num(cfg.lanes, 7)), 1, 12);
     var top = 6;
     var bottom = vh * 0.92;
-    if (cfg.band === "upper") bottom = vh * 0.5;
-    else if (cfg.band === "lower") {
+    var band = bandOverride || cfg.band;
+    if (band === "upper") bottom = vh * 0.5;
+    else if (band === "lower") {
       top = vh * 0.45;
       bottom = vh * 0.92;
     }
     var available = Math.max(120, bottom - top);
-    return { vw: vw, lanes: lanes, laneH: clamp(available / lanes, 30, 72), top: top };
+    return { vw: vw, lanes: lanes, laneH: clamp(available / lanes, 24, 4000), top: top };
   }
 
   function removeChip(el, anim) {
@@ -68,16 +74,16 @@
   function spawn(payload) {
     if (paused) return;
     if (anims.size > 160) return;
-    var m = metrics();
+    var m = metrics(payload.band);
     var el = document.createElement("span");
-    el.className = "chip tone-" + (payload.tone || "normal");
-    var dot = document.createElement("i");
-    dot.className = "dot";
-    el.appendChild(dot);
+    el.className = "chip tone-" + (payload.tone || "normal") + (payload.card === false ? " plain" : "");
     var text = document.createElement("span");
-    text.textContent = String(payload.body || "").slice(0, 140);
+    text.textContent = (payload.prefix ? payload.prefix + " " : "") + String(payload.body || "").slice(0, 140);
     el.appendChild(text);
-    el.style.fontSize = clamp(num(cfg.fontSize, 15), 11, 28) + "px";
+    el.style.fontSize = clamp(num(payload.fontSize, num(cfg.fontSize, 15)), 10, 48) + "px";
+    if (num(payload.weight, 0)) el.style.fontWeight = String(clamp(num(payload.weight, 400), 300, 800));
+    var family = FAMILY[payload.family];
+    if (family) el.style.fontFamily = family;
     field.appendChild(el);
 
     var width = el.offsetWidth || 120;

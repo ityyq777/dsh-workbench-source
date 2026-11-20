@@ -7,6 +7,15 @@ export const DANMAKU_DDL = [
     body TEXT NOT NULL,
     tone TEXT NOT NULL DEFAULT 'normal',
     enabled INTEGER NOT NULL DEFAULT 1,
+    card INTEGER NOT NULL DEFAULT 1,
+    font_size INTEGER,
+    speed INTEGER,
+    opacity REAL,
+    font_weight INTEGER,
+    font_family TEXT,
+    band TEXT,
+    prefix TEXT,
+    chance INTEGER NOT NULL DEFAULT 1,
     sort_order INTEGER NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL,
@@ -46,8 +55,37 @@ export function tableExists(db, name) {
   }
 }
 
+export function hasColumn(db, table, column) {
+  try {
+    return db.prepare(`PRAGMA table_info(${table})`).all().some((row) => row.name === column);
+  } catch (error) {
+    return false;
+  }
+}
+
 export function ensureSchema(db, log) {
   for (const ddl of DANMAKU_DDL) db.exec(ddl);
+  // 每条弹幕可以有自己的外观与轮播参数；老库逐列补齐。
+  const extraColumns = [
+    "card INTEGER NOT NULL DEFAULT 1",
+    "font_size INTEGER",
+    "speed INTEGER",
+    "opacity REAL",
+    "font_weight INTEGER",
+    "font_family TEXT",
+    "band TEXT",
+    "prefix TEXT",
+    "chance INTEGER NOT NULL DEFAULT 1",
+  ];
+  for (const column of extraColumns) {
+    const name = column.split(" ")[0];
+    if (hasColumn(db, "danmaku", name)) continue;
+    try {
+      db.exec(`ALTER TABLE danmaku ADD COLUMN ${column}`);
+    } catch (error) {
+      if (log) log(`danmaku ${name} column skipped`, String((error && error.message) || error));
+    }
+  }
   for (const ddl of DANMAKU_INDEX_DDL) {
     try {
       db.exec(ddl);
@@ -73,6 +111,12 @@ export function tx(db, fn) {
   }
 }
 
+function numeric(value) {
+  if (value === undefined || value === null || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
 export function mapRow(row) {
   if (!row) return null;
   return {
@@ -80,6 +124,15 @@ export function mapRow(row) {
     body: row.body,
     tone: row.tone,
     enabled: row.enabled === 1,
+    card: row.card === undefined || row.card === null ? true : row.card === 1,
+    fontSize: numeric(row.font_size),
+    speed: numeric(row.speed),
+    opacity: numeric(row.opacity),
+    fontWeight: numeric(row.font_weight),
+    fontFamily: row.font_family || "",
+    band: row.band || "",
+    prefix: row.prefix || "",
+    chance: numeric(row.chance) || 1,
     sortOrder: Number(row.sort_order) || 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
