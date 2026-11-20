@@ -499,9 +499,10 @@ var require_date_picker_styles = __commonJS({
   }
 });
 
-// packages/addons/tags/client/stats/charts.cjs
-var require_charts = __commonJS({
-  "packages/addons/tags/client/stats/charts.cjs"(exports2, module2) {
+// packages/addons/lib/stats-charts.cjs
+var require_stats_charts = __commonJS({
+  "packages/addons/lib/stats-charts.cjs"(exports2, module2) {
+    "use strict";
     var React2 = require("react");
     var h2 = React2.createElement;
     var DP = require_date_picker();
@@ -513,7 +514,7 @@ var require_charts = __commonJS({
       "var(--dsw-alias-state-done-primary, #7c5cff)",
       "var(--dsw-alias-state-idle-primary, #8f959e)"
     ];
-    function css(prefix) {
+    function css(prefix, extra) {
       return [
         ".@-stats{display:flex;flex-direction:column;gap:14px;padding:4px 2px 24px;color:var(--dsw-alias-label-primary,#1f2329)}",
         ".@-stoolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
@@ -527,22 +528,13 @@ var require_charts = __commonJS({
         ".@-clear{appearance:none;border:0;background:transparent;color:var(--dsw-alias-label-tertiary,#8f959e);font-size:14px;line-height:1;padding:2px 4px;cursor:pointer;border-radius:4px}",
         ".@-clear:hover{color:var(--dsw-alias-state-error-primary,#d9534f);background:var(--dsw-alias-bg-skeleton,#f2f3f5)}",
         ".@-hint{font-size:11px;color:var(--dsw-alias-state-error-primary,#d9534f);white-space:nowrap}",
-        ".@-ghost{appearance:none;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-secondary,#646a73);border-radius:8px;font-size:12px;padding:6px 10px;cursor:pointer}",
+        ".@-ghost{appearance:none;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-secondary,#646a73);border-radius:8px;font-size:12px;padding:6px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-family:inherit}",
+        ".@-ghost:disabled{opacity:.6;cursor:progress}",
+        ".@-ico{display:block;flex:none}",
+        ".@-kpi-l .@-ico{opacity:.7}",
         ".@-ghost:hover{border-color:var(--dsw-alias-brand-primary,#4f6ef7);color:var(--dsw-alias-brand-primary,#4f6ef7)}",
         ".@-muted{color:var(--dsw-alias-label-tertiary,#8f959e);font-size:12px}",
         ".@-sgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}",
-        ".@-stats-columns{display:flex;gap:12px;align-items:flex-start}",
-        ".@-top-column{flex:0 0 32%;min-width:0}.@-stats-main{flex:1;min-width:0}",
-        ".@-top-scroll{max-height:min(64vh,720px);overflow-y:auto;overscroll-behavior:contain}",
-        ".@-top-head,.@-top-row{display:grid;grid-template-columns:28px minmax(0,1fr) 44px;gap:6px;align-items:center;height:28px;box-sizing:border-box;font-size:12px;text-align:left}",
-        ".@-top-head{position:sticky;top:0;z-index:1;background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-tertiary,#8f959e);border-bottom:1px solid var(--dsw-alias-border-l2,#e5e6eb)}",
-        ".@-top-row{appearance:none;width:100%;padding:0;border:0;background:transparent;color:inherit;cursor:pointer;font-family:inherit}",
-        ".@-top-row:hover{background:var(--dsw-alias-bg-skeleton,#f2f3f5)}.@-top-row:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:-2px}",
-        ".@-top-name{position:relative;min-width:0;height:24px;line-height:24px}.@-top-label{position:relative;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-        ".@-top-fill{position:absolute;left:0;top:3px;bottom:3px;border-radius:3px;background:color-mix(in srgb,var(--dsw-alias-brand-primary,#4f6ef7) 14%,transparent)}",
-        ".@-top-rank{color:var(--dsw-alias-label-tertiary,#8f959e);font-variant-numeric:tabular-nums}.@-top-count{text-align:right;font-variant-numeric:tabular-nums}",
-        ".@-stats-main>.@-span-6:first-child{grid-column:span 12}",
-        "@media(max-width:900px){.@-stats-columns{flex-direction:column}.@-top-column,.@-stats-main{width:100%;flex:auto}}",
         ".@-scard{grid-column:span 6;min-width:0;background:var(--dsw-alias-bg-layer-1,#fff);border:1px solid var(--dsw-alias-border-l2,#e5e6eb);border-radius:12px;padding:14px 16px}",
         ".@-span-3{grid-column:span 3}.@-span-4{grid-column:span 4}.@-span-6{grid-column:span 6}.@-span-8{grid-column:span 8}.@-span-12{grid-column:span 12}",
         ".@-chead{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;flex-wrap:wrap}",
@@ -562,7 +554,6 @@ var require_charts = __commonJS({
         ".@-legend{display:flex;flex-direction:column;gap:7px;min-width:120px;flex:1}",
         ".@-leg{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dsw-alias-label-secondary,#646a73)}",
         ".@-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}",
-        ".@-leg-note{font-style:normal;font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e);margin-left:2px}",
         ".@-leg b{margin-left:auto;font-weight:600;color:var(--dsw-alias-label-primary,#1f2329);font-variant-numeric:tabular-nums}",
         ".@-bars{display:flex;flex-direction:column;gap:9px}",
         ".@-bar{display:grid;grid-template-columns:minmax(72px,1.2fr) 3fr auto;gap:8px;align-items:center;font-size:12px}",
@@ -594,16 +585,17 @@ var require_charts = __commonJS({
         "@keyframes @-pulse{0%,100%{opacity:.55}50%{opacity:1}}",
         "@media (max-width:900px){.@-scard{grid-column:span 12}.@-span-3,.@-span-4,.@-span-6,.@-span-8{grid-column:span 12}.@-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}",
         "@media (max-width:600px){.@-stats{padding-bottom:16px}.@-hist{height:130px}.@-kpi-v{font-size:22px}}",
-        "@media (prefers-reduced-motion:reduce){.@-sk{animation:none}}",
-        require_date_picker_styles()(prefix)
-      ].join("\n").replace(/@-/g, prefix + "-");
+        "@media (prefers-reduced-motion:reduce){.@-sk{animation:none}}"
+      ].concat(extra || []).concat([require_date_picker_styles()(prefix)]).join("\n").replace(/@-/g, prefix + "-");
     }
-    function makeCharts(prefix) {
-      if (typeof document !== "undefined" && !document.getElementById(prefix + "-charts-css")) {
-        var el = document.createElement("style");
-        el.id = prefix + "-charts-css";
-        el.textContent = css(prefix);
-        document.head.appendChild(el);
+    function primitives(prefix, options) {
+      var opts = options || {};
+      var ICONS = opts.icons || {};
+      var showNote = !!opts.showNote;
+      function ico(name, size) {
+        var C = ICONS[name];
+        if (!C) return null;
+        return h2(C, { size: size || 13, strokeWidth: 2, "aria-hidden": "true", className: prefix + "-ico" });
       }
       function num(lang, n) {
         var v = Number(n);
@@ -654,7 +646,7 @@ var require_charts = __commonJS({
         return h2(
           "div",
           { className: prefix + "-kpi" + tone },
-          h2("div", { className: prefix + "-kpi-l" }, props.label),
+          h2("div", { className: prefix + "-kpi-l" }, ico(props.icon, 13), props.label),
           h2(
             "div",
             { className: prefix + "-kpi-v" },
@@ -663,9 +655,6 @@ var require_charts = __commonJS({
           ),
           props.hint ? h2("div", { className: prefix + "-kpi-h" }, props.hint) : null
         );
-      }
-      function donutTitle(d) {
-        return d.label + "\uFF1A" + d.count + (d.note ? "\uFF08" + d.note + "\uFF09" : "");
       }
       function Donut(props) {
         var data = (props.data || []).filter(function(d) {
@@ -700,7 +689,7 @@ var require_charts = __commonJS({
                 strokeDashoffset: -offset,
                 transform: "rotate(-90 " + size / 2 + " " + size / 2 + ")",
                 strokeLinecap: "butt"
-              }, h2("title", null, donutTitle(d)));
+              }, h2("title", null, d.label + "\uFF1A" + d.count + (showNote && d.note ? "\uFF08" + d.note + "\uFF09" : "")));
               offset += len;
               return seg;
             }) : null,
@@ -712,7 +701,7 @@ var require_charts = __commonJS({
               "div",
               { key: d.key || d.label || i, className: prefix + "-leg" },
               h2("span", { className: prefix + "-dot", style: { background: d.color || COLORS[i % COLORS.length] } }),
-              h2("span", null, d.label, d.note ? h2("i", { className: prefix + "-leg-note" }, "\xB7 " + d.note) : null),
+              h2("span", null, d.label, showNote && d.note ? h2("i", { className: prefix + "-leg-note" }, "\xB7 " + d.note) : null),
               h2("b", null, num(props.lang, d.count))
             );
           }))
@@ -925,7 +914,7 @@ var require_charts = __commonJS({
             }, "\xD7") : null
           ),
           props.customHint ? h2("span", { className: prefix + "-hint", role: "status" }, props.customHint) : null,
-          h2("button", { type: "button", className: prefix + "-ghost", disabled: !!props.loading, onClick: props.onRefresh }, props.refreshLabel || "\u5237\u65B0"),
+          h2("button", { type: "button", className: prefix + "-ghost", disabled: !!props.loading, onClick: props.onRefresh }, ico("refresh", 13), props.refreshLabel || "\u5237\u65B0"),
           h2("span", { className: prefix + "-muted" }, props.generatedAt ? (props.timeLabel || "\u622A\u81F3") + " " + timeText(props.generatedAt) : ""),
           props.right ? h2("span", { style: { marginLeft: "auto" } }, props.right) : null
         );
@@ -991,7 +980,48 @@ var require_charts = __commonJS({
         colors: COLORS
       };
     }
-    module2.exports = { makeCharts };
+    function makeCharts(prefix, options) {
+      var opts = options || {};
+      if (typeof document !== "undefined" && !document.getElementById(prefix + "-charts-css")) {
+        var el = document.createElement("style");
+        el.id = prefix + "-charts-css";
+        el.textContent = css(prefix, opts.styles);
+        document.head.appendChild(el);
+      }
+      return primitives(prefix, opts);
+    }
+    module2.exports = { makeCharts, primitives, css, colors: COLORS };
+  }
+});
+
+// packages/addons/tags/client/stats/charts.cjs
+var require_charts = __commonJS({
+  "packages/addons/tags/client/stats/charts.cjs"(exports2, module2) {
+    "use strict";
+    var lib = require_stats_charts();
+    var EXTRA_STYLES = [
+      ".@-ghost{appearance:none;border:1px solid var(--dsw-alias-border-l2,#e5e6eb);background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-secondary,#646a73);border-radius:8px;font-size:12px;padding:6px 10px;cursor:pointer}",
+      ".@-stats-columns{display:flex;gap:12px;align-items:flex-start}",
+      ".@-top-column{flex:0 0 32%;min-width:0}.@-stats-main{flex:1;min-width:0}",
+      ".@-top-scroll{max-height:min(64vh,720px);overflow-y:auto;overscroll-behavior:contain}",
+      ".@-top-head,.@-top-row{display:grid;grid-template-columns:28px minmax(0,1fr) 44px;gap:6px;align-items:center;height:28px;box-sizing:border-box;font-size:12px;text-align:left}",
+      ".@-top-head{position:sticky;top:0;z-index:1;background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-tertiary,#8f959e);border-bottom:1px solid var(--dsw-alias-border-l2,#e5e6eb)}",
+      ".@-top-row{appearance:none;width:100%;padding:0;border:0;background:transparent;color:inherit;cursor:pointer;font-family:inherit}",
+      ".@-top-row:hover{background:var(--dsw-alias-bg-skeleton,#f2f3f5)}.@-top-row:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:-2px}",
+      ".@-top-name{position:relative;min-width:0;height:24px;line-height:24px}.@-top-label{position:relative;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".@-top-fill{position:absolute;left:0;top:3px;bottom:3px;border-radius:3px;background:color-mix(in srgb,var(--dsw-alias-brand-primary,#4f6ef7) 14%,transparent)}",
+      ".@-top-rank{color:var(--dsw-alias-label-tertiary,#8f959e);font-variant-numeric:tabular-nums}.@-top-count{text-align:right;font-variant-numeric:tabular-nums}",
+      ".@-stats-main>.@-span-6:first-child{grid-column:span 12}",
+      ".@-leg-note{font-style:normal;font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e);margin-left:2px}",
+      // ghost 按钮在本页沿用原inline-block外观，避免基件的 inline-flex 改变基线对齐。
+      ".@-ghost{display:inline-block}"
+    ];
+    module2.exports = {
+      colors: lib.colors,
+      makeCharts: function(prefix) {
+        return lib.makeCharts(prefix, { styles: EXTRA_STYLES, showNote: true });
+      }
+    };
   }
 });
 

@@ -3,6 +3,7 @@
 var React = require("react");
 var h = React.createElement;
 var DP = require("../../../lib/date-picker.cjs");
+var LIB = require("../../../lib/stats-charts.cjs");
 
 // 全部取自 DSH 主题 token（--dsw-alias-*），深浅色主题下自动切换，不要写死色值。
 var COLORS = [
@@ -140,31 +141,12 @@ function makeCharts(prefix) {
     document.head.appendChild(el);
   }
 
-  function num(lang, n) {
-    var v = Number(n);
-    if (!isFinite(v)) return "—";
-    try {
-      return new Intl.NumberFormat(lang === "en" ? "en-US" : "zh-CN").format(v);
-    } catch (e) {
-      return String(v);
-    }
-  }
-  function pct(v, digits) {
-    if (v === null || v === undefined || !isFinite(Number(v))) return "—";
-    return (Number(v) * 100).toFixed(digits === undefined ? 1 : digits) + "%";
-  }
-  function timeText(ms) {
-    if (!ms) return "";
-    var d = new Date(Number(ms));
-    function p(n) { return String(n).padStart(2, "0"); }
-    return p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
-  }
-  function dateText(ms) {
-    if (!ms) return "—";
-    var d = new Date(Number(ms));
-    function p(n) { return String(n).padStart(2, "0"); }
-    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
-  }
+  // 与站点/标签统计页完全一致的基础图元，统一来自 lib/stats-charts.cjs，避免三处各改一遍。
+  var base = LIB.primitives(prefix);
+  var num = base.num, pct = base.pct, timeText = base.timeText, dateText = base.dateText;
+  var Donut = base.Donut, BarList = base.BarList, StackedRows = base.StackedRows;
+  var ErrorBar = base.ErrorBar, Empty = base.Empty, Skeleton = base.Skeleton;
+
 
   function Card(props) {
     var cls = prefix + "-scard" + (props.span ? " " + prefix + "-span-" + props.span : "");
@@ -206,75 +188,8 @@ function makeCharts(prefix) {
     );
   }
 
-  function Donut(props) {
-    var data = (props.data || []).filter(function (d) { return Number(d.count) > 0; });
-    var total = Number(props.total || 0);
-    var size = props.size || 168;
-    var r = size / 2 - 16;
-    var c = 2 * Math.PI * r;
-    var offset = 0;
-    var aria = props.aria || data.map(function (d) { return d.label + " " + d.count; }).join("，");
-    return h("div", { className: prefix + "-donut" },
-      h("svg", { width: size, height: size, viewBox: "0 0 " + size + " " + size, role: "img", "aria-label": aria },
-        h("circle", { cx: size / 2, cy: size / 2, r: r, fill: "none", stroke: "var(--dsw-alias-bg-skeleton,#f2f3f5)", strokeWidth: 18 }),
-        total > 0 ? data.map(function (d, i) {
-          var len = (Number(d.count) / total) * c;
-          var seg = h("circle", {
-            key: d.key || d.label || i,
-            cx: size / 2, cy: size / 2, r: r, fill: "none",
-            stroke: d.color || COLORS[i % COLORS.length], strokeWidth: 18,
-            strokeDasharray: len + " " + (c - len),
-            strokeDashoffset: -offset,
-            transform: "rotate(-90 " + size / 2 + " " + size / 2 + ")",
-            strokeLinecap: "butt",
-          }, h("title", null, d.label + "：" + d.count));
-          offset += len;
-          return seg;
-        }) : null,
-        h("text", { x: size / 2, y: size / 2 - 2, textAnchor: "middle", fill: "var(--dsw-alias-label-primary,#1f2329)", fontSize: 24, fontWeight: 650 }, num(props.lang, total)),
-        h("text", { x: size / 2, y: size / 2 + 18, textAnchor: "middle", fill: "var(--dsw-alias-label-tertiary,#8f959e)", fontSize: 11 }, props.centerLabel || ""),
-      ),
-      h("div", { className: prefix + "-legend" }, (props.data || []).map(function (d, i) {
-        return h("div", { key: d.key || d.label || i, className: prefix + "-leg" },
-          h("span", { className: prefix + "-dot", style: { background: d.color || COLORS[i % COLORS.length] } }),
-          h("span", null, d.label),
-          h("b", null, num(props.lang, d.count)),
-        );
-      })),
-    );
-  }
 
-  function BarList(props) {
-    var data = props.data || [];
-    var max = Number(props.max || 0) || data.reduce(function (m, d) { return Math.max(m, Number(d.value || 0)); }, 0) || 1;
-    return h("div", { className: prefix + "-bars" }, data.map(function (d, i) {
-      var v = Number(d.value || 0);
-      return h("div", { key: d.key || d.label || i, className: prefix + "-bar" },
-        h("span", { className: prefix + "-bar-l", title: d.title || d.label }, d.label),
-        h("span", { className: prefix + "-bar-t" }, h("span", { className: prefix + "-bar-f", style: { width: Math.max(2, (v / max) * 100) + "%", background: d.color || props.color || COLORS[0] } })),
-        h("span", { className: prefix + "-bar-v" }, props.format ? props.format(v) : num(props.lang, v)),
-      );
-    }));
-  }
 
-  function StackedRows(props) {
-    var rows = props.rows || [];
-    var keys = props.keys || [];
-    return h("div", { className: prefix + "-stack" }, rows.map(function (row, ri) {
-      var total = Number(row.total || 0) || 1;
-      return h("div", { key: row.key || ri },
-        h("div", { className: prefix + "-srow-l" }, h("span", null, row.label), h("b", null, num(props.lang, row.total))),
-        h("div", { className: prefix + "-strack" }, keys.map(function (k, i) {
-          var v = Number((row.parts && row.parts[k.key]) || 0);
-          if (v <= 0) return null;
-          return h("span", {
-            key: k.key, className: prefix + "-seg-f", title: k.label + " " + v,
-            style: { width: (v / total) * 100 + "%", background: k.color || COLORS[i % COLORS.length] },
-          });
-        })),
-      );
-    }));
-  }
 
   function Trend(props) {
     var data = props.data || [];
@@ -487,33 +402,8 @@ function makeCharts(prefix) {
     return h("div", { className: prefix + "-empty " + prefix + "-missing", role: "status" }, props.text || "暂无数据");
   }
 
-  function Empty(props) {
-    return h("div", { className: prefix + "-empty" }, props.text || "暂无数据");
-  }
 
-  function Skeleton() {
-    return h("div", { className: prefix + "-sgrid" },
-      h("div", { className: prefix + "-kpis" }, [0, 1, 2, 3].map(function (i) {
-        return h("div", { key: i, className: prefix + "-kpi" },
-          h("div", { className: prefix + "-sk", style: { width: "40%" } }),
-          h("div", { className: prefix + "-sk", style: { width: "65%", height: 26 } }),
-        );
-      })),
-      [0, 1].map(function (i) {
-        return h("div", { key: "c" + i, className: prefix + "-scard " + prefix + "-span-6" },
-          h("div", { className: prefix + "-sk", style: { width: "30%" } }),
-          h("div", { className: prefix + "-sk", style: { height: 120 } }),
-        );
-      }),
-    );
-  }
 
-  function ErrorBar(props) {
-    return h("div", { className: prefix + "-err", role: "alert" },
-      h("span", null, props.message),
-      props.onRetry ? h("button", { type: "button", className: prefix + "-ghost", onClick: props.onRetry }, props.retryLabel || "重试") : null,
-    );
-  }
 
   function Warnings(props) {
     var items = props.items || [];
