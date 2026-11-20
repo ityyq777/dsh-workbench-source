@@ -3076,6 +3076,42 @@ var require_data = __commonJS({
   }
 });
 
+// packages/addons/lib/icons.cjs
+var require_icons = __commonJS({
+  "packages/addons/lib/icons.cjs"(exports2, module2) {
+    "use strict";
+    var h2 = require("react").createElement;
+    function create(prefix, glyphs, options) {
+      var opts = options || {};
+      var ICONS = Object.assign({}, glyphs);
+      function Icon2(props) {
+        var C = ICONS[props.name] || (opts.fallback ? ICONS[opts.fallback] : null);
+        if (!C) return null;
+        var size = typeof opts.sizeOf === "function" ? opts.sizeOf(props) : props.size || 14;
+        var cls = prefix + "-svg" + (opts.classNameAppend && props.className ? " " + props.className : "");
+        var attrs = {
+          size,
+          strokeWidth: props.strokeWidth || 2,
+          "aria-hidden": "true",
+          className: cls
+        };
+        if (opts.focusable) attrs.focusable = false;
+        return h2(C, attrs);
+      }
+      var set = { ICONS, Icon: Icon2 };
+      if (opts.tabIcon) {
+        set.tabIcon = function(name) {
+          return function TabIcon() {
+            return h2(Icon2, { name, size: 14 });
+          };
+        };
+      }
+      return set;
+    }
+    module2.exports = { create };
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toKebabCase.mjs
 var toKebabCase;
 var init_toKebabCase = __esm({
@@ -3703,6 +3739,30 @@ var init_tag = __esm({
     };
     __iconData13.node;
     Tag = createLucideIcon(__iconData13);
+  }
+});
+
+// packages/addons/tags/client/ui/icons.cjs
+var require_icons2 = __commonJS({
+  "packages/addons/tags/client/ui/icons.cjs"(exports2, module2) {
+    "use strict";
+    var icons = require_icons();
+    var set = icons.create("wbg", {
+      search: (init_search(), __toCommonJS(search_exports)).default,
+      x: (init_x(), __toCommonJS(x_exports)).default,
+      plus: (init_plus(), __toCommonJS(plus_exports)).default,
+      trash: (init_trash_2(), __toCommonJS(trash_2_exports)).default,
+      pencil: (init_pencil(), __toCommonJS(pencil_exports)).default,
+      check: (init_check(), __toCommonJS(check_exports)).default,
+      refresh: (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
+      chart: (init_chart_column(), __toCommonJS(chart_column_exports)).default,
+      settings: (init_settings(), __toCommonJS(settings_exports)).default,
+      database: (init_database(), __toCommonJS(database_exports)).default,
+      tags: (init_tags(), __toCommonJS(tags_exports)).default,
+      "code-2": (init_code_xml(), __toCommonJS(code_xml_exports)).default,
+      tag: (init_tag(), __toCommonJS(tag_exports)).default
+    }, { tabIcon: true });
+    module2.exports = { ICONS: set.ICONS, Icon: set.Icon, tabIcon: set.tabIcon };
   }
 });
 
@@ -4401,30 +4461,7 @@ var h = React.createElement;
   var statsView = require_stats();
   var configView = require_config();
   var dataView = require_data();
-  var ICONS = {
-    "search": (init_search(), __toCommonJS(search_exports)).default,
-    "x": (init_x(), __toCommonJS(x_exports)).default,
-    "plus": (init_plus(), __toCommonJS(plus_exports)).default,
-    "trash": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
-    "pencil": (init_pencil(), __toCommonJS(pencil_exports)).default,
-    "check": (init_check(), __toCommonJS(check_exports)).default,
-    "refresh": (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
-    "chart": (init_chart_column(), __toCommonJS(chart_column_exports)).default,
-    "settings": (init_settings(), __toCommonJS(settings_exports)).default,
-    "database": (init_database(), __toCommonJS(database_exports)).default,
-    "tags": (init_tags(), __toCommonJS(tags_exports)).default,
-    "code-2": (init_code_xml(), __toCommonJS(code_xml_exports)).default
-  };
-  function tabIcon(name) {
-    return function TagsTabIcon() {
-      return h2(Icon2, { name, size: 14 });
-    };
-  }
-  function Icon2(props) {
-    var C = ICONS[props.name];
-    if (!C) return null;
-    return h2(C, { size: props.size || 14, strokeWidth: 2, "aria-hidden": "true", className: "wbg-svg" });
-  }
+  var icons = require_icons2(), ICONS = icons.ICONS, Icon2 = icons.Icon, tabIcon = icons.tabIcon;
   var COPY = {
     zh: {
       title: "\u6807\u7B7E",
@@ -5067,7 +5104,7 @@ var h = React.createElement;
   host.registerAddon({
     id: "wb-addon-tags",
     version: "1.7.3",
-    icon: (init_tag(), __toCommonJS(tag_exports)).default,
+    icon: ICONS.tag,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },
       { id: "tags", icon: tabIcon("tags"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TagsView },

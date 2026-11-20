@@ -39,6 +39,42 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// packages/addons/lib/icons.cjs
+var require_icons = __commonJS({
+  "packages/addons/lib/icons.cjs"(exports2, module2) {
+    "use strict";
+    var h = require("react").createElement;
+    function create(prefix, glyphs, options) {
+      var opts = options || {};
+      var ICONS = Object.assign({}, glyphs);
+      function Icon2(props) {
+        var C = ICONS[props.name] || (opts.fallback ? ICONS[opts.fallback] : null);
+        if (!C) return null;
+        var size = typeof opts.sizeOf === "function" ? opts.sizeOf(props) : props.size || 14;
+        var cls = prefix + "-svg" + (opts.classNameAppend && props.className ? " " + props.className : "");
+        var attrs = {
+          size,
+          strokeWidth: props.strokeWidth || 2,
+          "aria-hidden": "true",
+          className: cls
+        };
+        if (opts.focusable) attrs.focusable = false;
+        return h(C, attrs);
+      }
+      var set = { ICONS, Icon: Icon2 };
+      if (opts.tabIcon) {
+        set.tabIcon = function(name) {
+          return function TabIcon() {
+            return h(Icon2, { name, size: 14 });
+          };
+        };
+      }
+      return set;
+    }
+    module2.exports = { create };
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toKebabCase.mjs
 var toKebabCase;
 var init_toKebabCase = __esm({
@@ -963,6 +999,70 @@ var init_play = __esm({
     };
     __iconData24.node;
     Play = createLucideIcon(__iconData24);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/message-square.mjs
+var message_square_exports = {};
+__export(message_square_exports, {
+  __iconData: () => __iconData25,
+  default: () => MessageSquare
+});
+var __iconData25, MessageSquare;
+var init_message_square = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/message-square.mjs"() {
+    init_createLucideIcon();
+    __iconData25 = {
+      name: "message-square",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z",
+            key: "18887p"
+          }
+        ]
+      ]
+    };
+    __iconData25.node;
+    MessageSquare = createLucideIcon(__iconData25);
+  }
+});
+
+// packages/addons/message/client/ui/icons.cjs
+var require_icons2 = __commonJS({
+  "packages/addons/message/client/ui/icons.cjs"(exports2, module2) {
+    "use strict";
+    var icons = require_icons();
+    var set = icons.create("wbg", {
+      bell: (init_bell(), __toCommonJS(bell_exports)).default,
+      "bell-off": (init_bell_off(), __toCommonJS(bell_off_exports)).default,
+      inbox: (init_inbox(), __toCommonJS(inbox_exports)).default,
+      mail: (init_mail(), __toCommonJS(mail_exports)).default,
+      "mail-open": (init_mail_open(), __toCommonJS(mail_open_exports)).default,
+      chart: (init_chart_column(), __toCommonJS(chart_column_exports)).default,
+      settings: (init_settings(), __toCommonJS(settings_exports)).default,
+      database: (init_database(), __toCommonJS(database_exports)).default,
+      list: (init_list(), __toCommonJS(list_exports)).default,
+      check: (init_check(), __toCommonJS(check_exports)).default,
+      "check-check": (init_check_check(), __toCommonJS(check_check_exports)).default,
+      search: (init_search(), __toCommonJS(search_exports)).default,
+      refresh: (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
+      plus: (init_plus(), __toCommonJS(plus_exports)).default,
+      volume: (init_volume_2(), __toCommonJS(volume_2_exports)).default,
+      mute: (init_volume_x(), __toCommonJS(volume_x_exports)).default,
+      moon: (init_moon(), __toCommonJS(moon_exports)).default,
+      clock: (init_clock(), __toCommonJS(clock_exports)).default,
+      info: (init_info(), __toCommonJS(info_exports)).default,
+      success: (init_circle_check(), __toCommonJS(circle_check_exports)).default,
+      warning: (init_triangle_alert(), __toCommonJS(triangle_alert_exports)).default,
+      error: (init_circle_alert(), __toCommonJS(circle_alert_exports)).default,
+      reset: (init_rotate_ccw(), __toCommonJS(rotate_ccw_exports)).default,
+      play: (init_play(), __toCommonJS(play_exports)).default,
+      "message-square": (init_message_square(), __toCommonJS(message_square_exports)).default
+    }, { fallback: "info", tabIcon: true });
+    module2.exports = { ICONS: set.ICONS, Icon: set.Icon, tabIcon: set.tabIcon };
   }
 });
 
@@ -3762,34 +3862,6 @@ var require_actions = __commonJS({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/message-square.mjs
-var message_square_exports = {};
-__export(message_square_exports, {
-  __iconData: () => __iconData25,
-  default: () => MessageSquare
-});
-var __iconData25, MessageSquare;
-var init_message_square = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/message-square.mjs"() {
-    init_createLucideIcon();
-    __iconData25 = {
-      name: "message-square",
-      size: 24,
-      node: [
-        [
-          "path",
-          {
-            d: "M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z",
-            key: "18887p"
-          }
-        ]
-      ]
-    };
-    __iconData25.node;
-    MessageSquare = createLucideIcon(__iconData25);
-  }
-});
-
 // packages/addons/message/client/client.src.cjs
 (function() {
   var root = typeof window !== "undefined" ? window : null;
@@ -3802,41 +3874,7 @@ var init_message_square = __esm({
   }
   var React = host.react;
   var h = host.h;
-  var ICONS = {
-    bell: (init_bell(), __toCommonJS(bell_exports)).default,
-    "bell-off": (init_bell_off(), __toCommonJS(bell_off_exports)).default,
-    inbox: (init_inbox(), __toCommonJS(inbox_exports)).default,
-    mail: (init_mail(), __toCommonJS(mail_exports)).default,
-    "mail-open": (init_mail_open(), __toCommonJS(mail_open_exports)).default,
-    chart: (init_chart_column(), __toCommonJS(chart_column_exports)).default,
-    settings: (init_settings(), __toCommonJS(settings_exports)).default,
-    database: (init_database(), __toCommonJS(database_exports)).default,
-    list: (init_list(), __toCommonJS(list_exports)).default,
-    check: (init_check(), __toCommonJS(check_exports)).default,
-    "check-check": (init_check_check(), __toCommonJS(check_check_exports)).default,
-    search: (init_search(), __toCommonJS(search_exports)).default,
-    refresh: (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
-    plus: (init_plus(), __toCommonJS(plus_exports)).default,
-    volume: (init_volume_2(), __toCommonJS(volume_2_exports)).default,
-    mute: (init_volume_x(), __toCommonJS(volume_x_exports)).default,
-    moon: (init_moon(), __toCommonJS(moon_exports)).default,
-    clock: (init_clock(), __toCommonJS(clock_exports)).default,
-    info: (init_info(), __toCommonJS(info_exports)).default,
-    success: (init_circle_check(), __toCommonJS(circle_check_exports)).default,
-    warning: (init_triangle_alert(), __toCommonJS(triangle_alert_exports)).default,
-    error: (init_circle_alert(), __toCommonJS(circle_alert_exports)).default,
-    reset: (init_rotate_ccw(), __toCommonJS(rotate_ccw_exports)).default,
-    play: (init_play(), __toCommonJS(play_exports)).default
-  };
-  function Icon2(props) {
-    var C = ICONS[props.name] || ICONS.info;
-    return h(C, { size: props.size || 14, strokeWidth: 2, "aria-hidden": "true", className: "wbg-svg" });
-  }
-  function tabIcon(name) {
-    return function() {
-      return h(Icon2, { name, size: 14 });
-    };
-  }
+  var icons = require_icons2(), ICONS = icons.ICONS, Icon2 = icons.Icon, tabIcon = icons.tabIcon;
   var COPY = require_copy();
   var CSS = require_styles();
   var configView = require_config();
@@ -3875,7 +3913,7 @@ var init_message_square = __esm({
   host.registerAddon({
     id: "wb-addon-message",
     version: "0.1.1",
-    icon: (init_message_square(), __toCommonJS(message_square_exports)).default,
+    icon: ICONS["message-square"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: Stats },
       { id: "inbox", icon: tabIcon("inbox"), title: { zh: "\u6536\u4EF6\u7BB1", en: "Inbox" }, component: Inbox2 },

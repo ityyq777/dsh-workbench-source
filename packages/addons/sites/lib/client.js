@@ -495,6 +495,87 @@ var require_tagfilter = __commonJS({
   }
 });
 
+// packages/addons/lib/overlay.cjs
+var require_overlay = __commonJS({
+  "packages/addons/lib/overlay.cjs"(exports2, module2) {
+    "use strict";
+    var React2 = require("react");
+    var h2 = React2.createElement;
+    var FOCUSABLE = "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]";
+    module2.exports = function createOverlay2(options) {
+      var opts = options || {};
+      var tag = opts.tag || "section";
+      var maskClass = opts.maskClass;
+      var dialogClass = opts.dialogClass;
+      var dialogClassOf = opts.dialogClassOf || function() {
+        return "";
+      };
+      var ariaLabelOf = opts.ariaLabelOf || function(props) {
+        return props["aria-label"] || props.title;
+      };
+      var header = opts.header || null;
+      function Modal(props) {
+        var ref = React2.useRef(null);
+        React2.useEffect(function() {
+          var previous = typeof document !== "undefined" ? document.activeElement : null;
+          if (ref.current) ref.current.focus();
+          return function() {
+            if (previous && previous.isConnected) previous.focus();
+          };
+        }, []);
+        function onKeyDown(e) {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            if (props.onClose) props.onClose();
+            return;
+          }
+          if (e.key !== "Tab" || !ref.current) return;
+          var els = ref.current.querySelectorAll(FOCUSABLE);
+          if (!els.length) {
+            e.preventDefault();
+            return;
+          }
+          var first = els[0];
+          var last = els[els.length - 1];
+          if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) {
+            e.preventDefault();
+            last.focus();
+          }
+          if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+        return h2(
+          "div",
+          {
+            className: maskClass,
+            onMouseDown: function(e) {
+              if (e.target === e.currentTarget && props.onClose) props.onClose();
+            }
+          },
+          h2(
+            tag,
+            {
+              className: dialogClass + dialogClassOf(props),
+              role: "dialog",
+              "aria-modal": true,
+              "aria-label": ariaLabelOf(props),
+              ref,
+              tabIndex: -1,
+              onKeyDown
+            },
+            header ? header(props) : null,
+            props.children
+          )
+        );
+      }
+      return Modal;
+    };
+  }
+});
+
 // packages/addons/lib/date-picker.cjs
 var require_date_picker = __commonJS({
   "packages/addons/lib/date-picker.cjs"(exports2, module2) {
@@ -4035,6 +4116,42 @@ var require_data = __commonJS({
   }
 });
 
+// packages/addons/lib/icons.cjs
+var require_icons = __commonJS({
+  "packages/addons/lib/icons.cjs"(exports2, module2) {
+    "use strict";
+    var h2 = require("react").createElement;
+    function create(prefix, glyphs, options) {
+      var opts = options || {};
+      var ICONS = Object.assign({}, glyphs);
+      function Icon2(props) {
+        var C = ICONS[props.name] || (opts.fallback ? ICONS[opts.fallback] : null);
+        if (!C) return null;
+        var size = typeof opts.sizeOf === "function" ? opts.sizeOf(props) : props.size || 14;
+        var cls = prefix + "-svg" + (opts.classNameAppend && props.className ? " " + props.className : "");
+        var attrs = {
+          size,
+          strokeWidth: props.strokeWidth || 2,
+          "aria-hidden": "true",
+          className: cls
+        };
+        if (opts.focusable) attrs.focusable = false;
+        return h2(C, attrs);
+      }
+      var set = { ICONS, Icon: Icon2 };
+      if (opts.tabIcon) {
+        set.tabIcon = function(name) {
+          return function TabIcon() {
+            return h2(Icon2, { name, size: 14 });
+          };
+        };
+      }
+      return set;
+    }
+    module2.exports = { create };
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs
 var x_exports = {};
 __export(x_exports, {
@@ -4684,59 +4801,44 @@ var init_copy = __esm({
 });
 
 // packages/addons/sites/client/ui/icons.cjs
-var require_icons = __commonJS({
+var require_icons2 = __commonJS({
   "packages/addons/sites/client/ui/icons.cjs"(exports2, module2) {
     "use strict";
-    var h2 = require("react").createElement;
-    var ICONS = {
-      "x": (init_x(), __toCommonJS(x_exports)).default,
-      "plus": (init_plus(), __toCommonJS(plus_exports)).default,
-      "check": (init_check(), __toCommonJS(check_exports)).default,
-      "edit": (init_pencil(), __toCommonJS(pencil_exports)).default,
-      "trash": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
-      "folder": (init_folder(), __toCommonJS(folder_exports)).default,
+    var icons = require_icons();
+    var set = icons.create("wbs", {
+      x: (init_x(), __toCommonJS(x_exports)).default,
+      plus: (init_plus(), __toCommonJS(plus_exports)).default,
+      check: (init_check(), __toCommonJS(check_exports)).default,
+      edit: (init_pencil(), __toCommonJS(pencil_exports)).default,
+      trash: (init_trash_2(), __toCommonJS(trash_2_exports)).default,
+      folder: (init_folder(), __toCommonJS(folder_exports)).default,
       "folder-open": (init_folder_open(), __toCommonJS(folder_open_exports)).default,
       "folder-plus": (init_folder_plus(), __toCommonJS(folder_plus_exports)).default,
       "folder-tree": (init_folder_tree(), __toCommonJS(folder_tree_exports)).default,
-      "house": (init_house(), __toCommonJS(house_exports)).default,
-      "link": (init_link_2(), __toCommonJS(link_2_exports)).default,
-      "tag": (init_tag(), __toCommonJS(tag_exports)).default,
-      "star": (init_star(), __toCommonJS(star_exports)).default,
-      "search": (init_search(), __toCommonJS(search_exports)).default,
-      "refresh": (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
+      house: (init_house(), __toCommonJS(house_exports)).default,
+      link: (init_link_2(), __toCommonJS(link_2_exports)).default,
+      tag: (init_tag(), __toCommonJS(tag_exports)).default,
+      star: (init_star(), __toCommonJS(star_exports)).default,
+      search: (init_search(), __toCommonJS(search_exports)).default,
+      refresh: (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
       "chevron-left": (init_chevron_left(), __toCommonJS(chevron_left_exports)).default,
       "chevron-right": (init_chevron_right(), __toCommonJS(chevron_right_exports)).default,
       "chevron-down": (init_chevron_down(), __toCommonJS(chevron_down_exports)).default,
       "arrow-up": (init_arrow_up(), __toCommonJS(arrow_up_exports)).default,
       "arrow-down": (init_arrow_down(), __toCommonJS(arrow_down_exports)).default,
       "arrow-up-down": (init_arrow_up_down(), __toCommonJS(arrow_up_down_exports)).default,
-      "key": (init_key_round(), __toCommonJS(key_round_exports)).default,
-      "lock": (init_lock(), __toCommonJS(lock_exports)).default,
-      "eye": (init_eye(), __toCommonJS(eye_exports)).default,
+      key: (init_key_round(), __toCommonJS(key_round_exports)).default,
+      lock: (init_lock(), __toCommonJS(lock_exports)).default,
+      eye: (init_eye(), __toCommonJS(eye_exports)).default,
       "eye-off": (init_eye_off(), __toCommonJS(eye_off_exports)).default,
-      "chart": (init_chart_column(), __toCommonJS(chart_column_exports)).default,
-      "settings": (init_settings(), __toCommonJS(settings_exports)).default,
-      "database": (init_database(), __toCommonJS(database_exports)).default,
+      chart: (init_chart_column(), __toCommonJS(chart_column_exports)).default,
+      settings: (init_settings(), __toCommonJS(settings_exports)).default,
+      database: (init_database(), __toCommonJS(database_exports)).default,
       "code-2": (init_code_xml(), __toCommonJS(code_xml_exports)).default,
-      "globe": (init_globe(), __toCommonJS(globe_exports)).default,
-      "copy": (init_copy(), __toCommonJS(copy_exports)).default
-    };
-    function Icon2(props) {
-      var C = ICONS[props.name];
-      if (!C) return null;
-      return h2(C, {
-        size: props.size || 14,
-        strokeWidth: props.strokeWidth || 2,
-        "aria-hidden": "true",
-        className: "wbs-svg" + (props.className ? " " + props.className : "")
-      });
-    }
-    function tabIcon(name) {
-      return function SitesTabIcon() {
-        return h2(Icon2, { name, size: 14 });
-      };
-    }
-    module2.exports = { ICONS, Icon: Icon2, tabIcon };
+      globe: (init_globe(), __toCommonJS(globe_exports)).default,
+      copy: (init_copy(), __toCommonJS(copy_exports)).default
+    }, { classNameAppend: true, tabIcon: true });
+    module2.exports = { ICONS: set.ICONS, Icon: set.Icon, tabIcon: set.tabIcon };
   }
 });
 
@@ -5637,7 +5739,7 @@ var require_accounts_modal = __commonJS({
         }
         return h2(
           Modal,
-          { onClose: props.onClose },
+          { "aria-label": text(lang, "accountsTitle", { name: site.siteName }), onClose: props.onClose },
           h2(
             "div",
             { className: "wbs-modal-title" },
@@ -6437,6 +6539,7 @@ var require_actions = __commonJS({
 var React = require("react");
 var h = React.createElement;
 var TagFilter = require_tagfilter();
+var createOverlay = require_overlay();
 (function() {
   var host = window.__WB_HOST__;
   if (!host) {
@@ -6450,7 +6553,7 @@ var TagFilter = require_tagfilter();
   var statsView = require_stats();
   var configView = require_config();
   var dataView = require_data();
-  var icons = require_icons(), Icon2 = icons.Icon, tabIcon = icons.tabIcon;
+  var icons = require_icons2(), Icon2 = icons.Icon, tabIcon = icons.tabIcon;
   var useState = React2.useState;
   var useEffect = React2.useEffect;
   var useRef = React2.useRef;
@@ -6507,14 +6610,14 @@ var TagFilter = require_tagfilter();
     });
     return out;
   }
-  function Modal(props) {
-    return h2("div", {
-      className: "wbs-mask",
-      onMouseDown: function(e) {
-        if (e.target === e.currentTarget && props.onClose) props.onClose();
-      }
-    }, h2("div", { className: "wbs-modal" + (props.small ? " small" : "") }, props.children));
-  }
+  var Modal = createOverlay({
+    tag: "div",
+    maskClass: "wbs-mask",
+    dialogClass: "wbs-modal",
+    dialogClassOf: function(props) {
+      return props.small ? " small" : "";
+    }
+  });
   function SiteFormModal(props) {
     var api = props.api;
     var lang = props.lang || "zh";
@@ -6678,7 +6781,7 @@ var TagFilter = require_tagfilter();
     var title = mode === "edit" ? text(lang, "editTitle") : text(lang, "createTitle");
     return h2(
       Modal,
-      { onClose: saving ? null : props.onClose },
+      { "aria-label": title, onClose: saving ? null : props.onClose },
       h2(
         "div",
         { className: "wbs-modal-title" },
@@ -6869,7 +6972,7 @@ var TagFilter = require_tagfilter();
     }
     return h2(
       Modal,
-      { small: true, onClose: saving ? null : props.onClose },
+      { small: true, "aria-label": title, onClose: saving ? null : props.onClose },
       h2(
         "div",
         { className: "wbs-modal-title" },
@@ -6938,7 +7041,7 @@ var TagFilter = require_tagfilter();
     }
     return h2(
       Modal,
-      { small: true, onClose: saving ? null : props.onClose },
+      { small: true, "aria-label": text(lang, "deleteTitle"), onClose: saving ? null : props.onClose },
       h2(
         "div",
         { className: "wbs-modal-title" },

@@ -754,6 +754,42 @@ var require_styles = __commonJS({
   }
 });
 
+// packages/addons/lib/icons.cjs
+var require_icons = __commonJS({
+  "packages/addons/lib/icons.cjs"(exports2, module2) {
+    "use strict";
+    var h2 = require("react").createElement;
+    function create(prefix, glyphs, options) {
+      var opts = options || {};
+      var ICONS = Object.assign({}, glyphs);
+      function Icon3(props) {
+        var C = ICONS[props.name] || (opts.fallback ? ICONS[opts.fallback] : null);
+        if (!C) return null;
+        var size = typeof opts.sizeOf === "function" ? opts.sizeOf(props) : props.size || 14;
+        var cls = prefix + "-svg" + (opts.classNameAppend && props.className ? " " + props.className : "");
+        var attrs = {
+          size,
+          strokeWidth: props.strokeWidth || 2,
+          "aria-hidden": "true",
+          className: cls
+        };
+        if (opts.focusable) attrs.focusable = false;
+        return h2(C, attrs);
+      }
+      var set = { ICONS, Icon: Icon3 };
+      if (opts.tabIcon) {
+        set.tabIcon = function(name) {
+          return function TabIcon() {
+            return h2(Icon3, { name, size: 14 });
+          };
+        };
+      }
+      return set;
+    }
+    module2.exports = { create };
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/box.mjs
 var box_exports = {};
 __export(box_exports, {
@@ -1419,10 +1455,15 @@ var init_rotate_ccw = __esm({
 });
 
 // packages/addons/storage/client/ui/icons.cjs
-var require_icons = __commonJS({
+var require_icons2 = __commonJS({
   "packages/addons/storage/client/ui/icons.cjs"(exports2, module2) {
-    var React = require("react");
-    var ICONS = {
+    "use strict";
+    var icons = require_icons();
+    function sizeOf(props) {
+      if (props.name === "empty" && props.size === 48) return 48;
+      return [11, 14, 16].indexOf(props.size) >= 0 ? props.size : 14;
+    }
+    var set = icons.create("wbi", {
       box: (init_box(), __toCommonJS(box_exports)).default,
       plus: (init_plus(), __toCommonJS(plus_exports)).default,
       search: (init_search(), __toCommonJS(search_exports)).default,
@@ -1448,18 +1489,153 @@ var require_icons = __commonJS({
       close: (init_x(), __toCommonJS(x_exports)).default,
       table: (init_table(), __toCommonJS(table_exports)).default,
       reset: (init_rotate_ccw(), __toCommonJS(rotate_ccw_exports)).default
+    }, { fallback: "box", focusable: true, sizeOf });
+    module2.exports = { ICONS: set.ICONS, Icon: set.Icon };
+  }
+});
+
+// packages/addons/lib/button.cjs
+var require_button = __commonJS({
+  "packages/addons/lib/button.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h2 = React.createElement;
+    module2.exports = function createButton(options) {
+      var opts = options || {};
+      var prefix = opts.prefix;
+      var Icon3 = opts.Icon;
+      function Button(props) {
+        var attrs = Object.assign({ type: "button", className: prefix + "-btn" }, props);
+        delete attrs.icon;
+        delete attrs.iconOnly;
+        if (props.icon) {
+          attrs["aria-label"] = props["aria-label"] || props.children;
+          attrs.title = props.title || attrs["aria-label"];
+          attrs.className += props.iconOnly ? " " + prefix + "-icon-only" : " " + prefix + "-icon-text";
+        }
+        return h2(
+          "button",
+          attrs,
+          props.icon ? h2(Icon3, { name: props.icon }) : null,
+          props.iconOnly ? null : props.icon ? h2("span", { className: prefix + "-btn-label" }, props.children) : props.children
+        );
+      }
+      return Button;
     };
-    function Icon3(props) {
-      var size = props.name === "empty" && props.size === 48 ? 48 : [11, 14, 16].includes(props.size) ? props.size : 14;
-      return React.createElement(ICONS[props.name] || ICONS.box, {
-        size,
-        strokeWidth: 2,
-        "aria-hidden": true,
-        focusable: false,
-        className: "wbi-svg"
-      });
-    }
-    module2.exports = { ICONS, Icon: Icon3 };
+  }
+});
+
+// packages/addons/lib/skeleton.cjs
+var require_skeleton = __commonJS({
+  "packages/addons/lib/skeleton.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h2 = React.createElement;
+    module2.exports = function createSkeleton(options) {
+      var opts = options || {};
+      var prefix = opts.prefix;
+      var text = opts.text || function(lang) {
+        return lang === "en" ? "Loading\u2026" : "\u8BFB\u53D6\u4E2D\u2026";
+      };
+      return function Skeleton(props) {
+        var label = props.label || text(props.lang);
+        return h2(
+          "div",
+          { className: prefix + "-root " + prefix + "-grid " + prefix + "-skeleton", role: "status", "aria-label": label, "aria-busy": true },
+          h2("span", { className: prefix + "-sr" }, label),
+          [0, 1, 2].map(function(i) {
+            return h2(
+              "div",
+              { key: i, className: prefix + "-card " + prefix + "-skeleton-card", "aria-hidden": true },
+              h2("div", { className: prefix + "-sk" }),
+              h2("div", { className: prefix + "-sk" }),
+              h2("div", { className: prefix + "-sk" })
+            );
+          })
+        );
+      };
+    };
+  }
+});
+
+// packages/addons/lib/overlay.cjs
+var require_overlay = __commonJS({
+  "packages/addons/lib/overlay.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h2 = React.createElement;
+    var FOCUSABLE = "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]";
+    module2.exports = function createOverlay(options) {
+      var opts = options || {};
+      var tag = opts.tag || "section";
+      var maskClass = opts.maskClass;
+      var dialogClass = opts.dialogClass;
+      var dialogClassOf = opts.dialogClassOf || function() {
+        return "";
+      };
+      var ariaLabelOf = opts.ariaLabelOf || function(props) {
+        return props["aria-label"] || props.title;
+      };
+      var header = opts.header || null;
+      function Modal(props) {
+        var ref = React.useRef(null);
+        React.useEffect(function() {
+          var previous = typeof document !== "undefined" ? document.activeElement : null;
+          if (ref.current) ref.current.focus();
+          return function() {
+            if (previous && previous.isConnected) previous.focus();
+          };
+        }, []);
+        function onKeyDown(e) {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            if (props.onClose) props.onClose();
+            return;
+          }
+          if (e.key !== "Tab" || !ref.current) return;
+          var els = ref.current.querySelectorAll(FOCUSABLE);
+          if (!els.length) {
+            e.preventDefault();
+            return;
+          }
+          var first = els[0];
+          var last = els[els.length - 1];
+          if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) {
+            e.preventDefault();
+            last.focus();
+          }
+          if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+        return h2(
+          "div",
+          {
+            className: maskClass,
+            onMouseDown: function(e) {
+              if (e.target === e.currentTarget && props.onClose) props.onClose();
+            }
+          },
+          h2(
+            tag,
+            {
+              className: dialogClass + dialogClassOf(props),
+              role: "dialog",
+              "aria-modal": true,
+              "aria-label": ariaLabelOf(props),
+              ref,
+              tabIndex: -1,
+              onKeyDown
+            },
+            header ? header(props) : null,
+            props.children
+          )
+        );
+      }
+      return Modal;
+    };
   }
 });
 
@@ -1468,7 +1644,7 @@ var require_ui = __commonJS({
   "packages/addons/storage/client/ui/ui.cjs"(exports2, module2) {
     var React = require("react");
     var h2 = React.createElement;
-    var Icon3 = require_icons().Icon;
+    var Icon3 = require_icons2().Icon;
     function call(api, name, args) {
       return api.call(name, args || {}).then(function(r) {
         if (!r || r.ok !== true) throw new Error(r && r.error || "\u8BF7\u6C42\u5931\u8D25");
@@ -1478,39 +1654,16 @@ var require_ui = __commonJS({
     function tr(lang, zh, en) {
       return lang === "en" ? en : zh;
     }
-    function Button(props) {
-      var attrs = Object.assign({ type: "button", className: "wbi-btn" }, props);
-      delete attrs.icon;
-      delete attrs.iconOnly;
-      if (props.icon) {
-        attrs["aria-label"] = props["aria-label"] || props.children;
-        attrs.title = props.title || attrs["aria-label"];
-        attrs.className += props.iconOnly ? " wbi-icon-only" : " wbi-icon-text";
+    var createButton = require_button();
+    var createSkeleton = require_skeleton();
+    var createOverlay = require_overlay();
+    var Button = createButton({ prefix: "wbi", Icon: Icon3 });
+    var Skeleton = createSkeleton({
+      prefix: "wbi",
+      text: function(lang) {
+        return tr(lang, "\u8BFB\u53D6\u4E2D\u2026", "Loading\u2026");
       }
-      return h2(
-        "button",
-        attrs,
-        props.icon ? h2(Icon3, { name: props.icon }) : null,
-        props.iconOnly ? null : props.icon ? h2("span", { className: "wbi-btn-label" }, props.children) : props.children
-      );
-    }
-    function Skeleton(props) {
-      var label = props.label || tr(props.lang, "\u8BFB\u53D6\u4E2D\u2026", "Loading\u2026");
-      return h2(
-        "div",
-        { className: "wbi-root wbi-grid wbi-skeleton", role: "status", "aria-label": label, "aria-busy": true },
-        h2("span", { className: "wbi-sr" }, label),
-        [0, 1, 2].map(function(i) {
-          return h2(
-            "div",
-            { key: i, className: "wbi-card wbi-skeleton-card", "aria-hidden": true },
-            h2("div", { className: "wbi-sk" }),
-            h2("div", { className: "wbi-sk" }),
-            h2("div", { className: "wbi-sk" })
-          );
-        })
-      );
-    }
+    });
     function ErrorBox(props) {
       return props.error ? h2("div", { className: "wbi-error", role: "alert" }, String(props.error.message || props.error)) : null;
     }
@@ -1522,70 +1675,23 @@ var require_ui = __commonJS({
         return "";
       }
     }
-    function Modal(props) {
-      var ref = React.useRef(null);
-      React.useEffect(function() {
-        var previous = document.activeElement;
-        if (ref.current) ref.current.focus();
-        return function() {
-          if (previous && previous.isConnected) previous.focus();
-        };
-      }, []);
-      function key(e) {
-        if (e.key === "Escape") {
-          e.preventDefault();
-          e.stopPropagation();
-          if (props.onClose) props.onClose();
-          return;
-        }
-        if (e.key !== "Tab") return;
-        var els = ref.current.querySelectorAll(
-          "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]"
+    var Modal = createOverlay({
+      tag: "section",
+      maskClass: "wbi-mask",
+      dialogClass: "wbi-modal",
+      ariaLabelOf: function(props) {
+        return props.title;
+      },
+      header: function(props) {
+        return h2(
+          "header",
+          { className: "wbi-row" },
+          h2("h2", null, props.title),
+          h2("span", { className: "wbi-grow" }),
+          h2(Button, { icon: "close", iconOnly: true, onClick: props.onClose, disabled: !props.onClose, "aria-label": "\u5173\u95ED / Close" }, "\xD7")
         );
-        if (!els.length) {
-          e.preventDefault();
-          return;
-        }
-        var first = els[0], last = els[els.length - 1];
-        if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) {
-          e.preventDefault();
-          last.focus();
-        }
-        if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
       }
-      return h2(
-        "div",
-        {
-          className: "wbi-mask",
-          onMouseDown: function(e) {
-            if (e.target === e.currentTarget && props.onClose) props.onClose();
-          }
-        },
-        h2(
-          "section",
-          {
-            className: "wbi-modal",
-            role: "dialog",
-            "aria-modal": true,
-            "aria-label": props.title,
-            ref,
-            tabIndex: -1,
-            onKeyDown: key
-          },
-          h2(
-            "header",
-            { className: "wbi-row" },
-            h2("h2", null, props.title),
-            h2("span", { className: "wbi-grow" }),
-            h2(Button, { icon: "close", iconOnly: true, onClick: props.onClose, disabled: !props.onClose, "aria-label": "\u5173\u95ED / Close" }, "\xD7")
-          ),
-          props.children
-        )
-      );
-    }
+    });
     module2.exports = { Icon: Icon3, Skeleton, h: h2, call, tr, Button, ErrorBox, Modal, safeImage };
   }
 });
@@ -4783,7 +4889,7 @@ var require_data = __commonJS({
     "use strict";
     module2.exports = require_data_view()({
       domain: "storage",
-      Icon: require_icons().Icon,
+      Icon: require_icons2().Icon,
       Skeleton: require_ui().Skeleton,
       prefix: "wbi",
       tables: ["storage"],
@@ -5443,7 +5549,7 @@ if (host) {
     style.textContent = require_styles();
     document.head.appendChild(style);
   }
-  h = require("react").createElement, Icon2 = require_icons().Icon;
+  h = require("react").createElement, Icon2 = require_icons2().Icon;
   host.registerAddon({
     id: "wb-addon-storage",
     version: "1.5.6",
