@@ -144,6 +144,14 @@ const clientPath = ROOT + "packages/addons/salary/client/client.src.cjs";
 require(clientPath);
 
 const problems = [];
+// 记一笔/编辑工资的弹窗外壳由 lib/overlay.cjs 渲染（本测试的迷你 React 不展开函数组件，
+// 所以遮罩类名改成对源码契约的断言：外壳工厂 + 插件自己的 mask/dialog 类名）。
+{
+  const recordsSrc = require("node:fs").readFileSync(ROOT + "packages/addons/salary/client/views/records.cjs", "utf8");
+  for (const needle of ['lib/overlay.cjs', 'maskClass: "wbsal-mask"', 'dialogClass: "wbsal-modal"', "onClose: closeForm"]) {
+    if (!recordsSrc.includes(needle)) problems.push("records.cjs 没接入共享弹窗外壳：" + needle);
+  }
+}
 if (!HOST.addon || HOST.addon.id !== "wb-addon-salary") problems.push("client.src.cjs 没有注册 wb-addon-salary");
 if (!HOST.addon || !Array.isArray(HOST.addon.views) || HOST.addon.views.length !== 4) problems.push("views 数量不是 4");
 const css = styles.map((el) => el.textContent).join("\n");
@@ -155,7 +163,7 @@ const api = { call: async (action, args) => ({ ok: true, result: action === "sal
   ? { ...salaryStats, year: args.year, basis: args.basis }
   : RESPONSES[action] ?? {} }) };
 const checks = [
-  ["records", "views/records.cjs", "工资记录", ["wbsal-record-row", "wbsal-toolbar", "wbsal-toolbar-end", "wbsal-month", "wbsal-mask"]],
+  ["records", "views/records.cjs", "工资记录", ["wbsal-record-row", "wbsal-toolbar", "wbsal-toolbar-end", "wbsal-month"]],
   ["stats", "views/stats.cjs", "统计", ["wbsal-chart", "wbsal-comp", "wbsal-metric", "wbsal-linechart", "wbsal-series"]],
 ];
 for (const [id, file, title, expected] of checks) {

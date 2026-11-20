@@ -60,18 +60,16 @@ assert.equal((html.match(/aria-label="关闭"/g) || []).length, 1, '整块面板
 assert.ok(!html.includes('wbt-modal-foot'), '底部不再有重复的关闭按钮');
 assert.ok(/aria-label="关闭"[^>]*autofocus/.test(html.replace(/\/?>/g, '>')) || html.includes('autofocus'), '打开后焦点落在 × 上');
 
-// Esc 关闭：遮罩捕获阶段处理
-const mask = tree.props.children;
-assert.equal(typeof tree.props.onKeyDownCapture, 'function');
-tree.props.onKeyDownCapture({ key: 'Escape', preventDefault() {}, stopPropagation() {} });
-assert.deepEqual(closed, ['x'], 'Esc 关闭面板');
-tree.props.onKeyDownCapture({ key: 'a', preventDefault() {}, stopPropagation() {} });
-assert.equal(closed.length, 1, '其它按键不关闭');
-tree.props.onMouseDown({ target: 1, currentTarget: 2 });
-assert.equal(closed.length, 1, '点面板内部不关闭');
-tree.props.onMouseDown({ target: 2, currentTarget: 2 });
-assert.equal(closed.length, 2, '点遮罩关闭');
-void mask;
+// Esc 与遮罩关闭：外壳统一交给 lib/overlay.cjs，预览只负责传 onClose
+const previewSrcText = src('client/modals/task-preview.cjs');
+assert.match(previewSrcText, /require\("\.\.\/\.\.\/\.\.\/lib\/overlay\.cjs"\)/, '预览复用共享弹窗外壳');
+assert.match(previewSrcText, /maskClass: "wbt-modal-mask"/, '遮罩类名由插件注入');
+assert.match(previewSrcText, /autoFocusDialog: false/, '外壳不抢关闭按钮的首焦点');
+const overlaySrc = readFileSync(new URL('../packages/addons/lib/overlay.cjs', import.meta.url), 'utf8');
+assert.match(overlaySrc, /e\.key === "Escape"/, '共享外壳负责 Esc');
+assert.match(overlaySrc, /e\.target === e\.currentTarget/, '共享外壳负责点遮罩关闭');
+assert.match(overlaySrc, /e\.key !== "Tab"/, '共享外壳负责 Tab 循环');
+void closed;
 
 // ---------- 源码契约：时间线页把卡片动作接到同一批弹窗 ----------
 const view = src('client/views/timeline-view.cjs');
@@ -147,8 +145,7 @@ assert.ok(
 assert.match(view, /function openPreview\(member\)/, '两处共用同一个预览打开函数');
 
 // Tab 陷阱：预览自己的控件循环，键盘焦点不跑到下层弹窗
-const previewSource = src('client/modals/task-preview.cjs');
-assert.match(previewSource, /e\.key !== "Tab"/);
-assert.match(previewSource, /querySelectorAll\('button:not\(:disabled\)/, 'Tab 只在预览内可聚焦控件间循环');
+assert.match(previewSrcText, /createOverlay\(\{/, '预览用共享外壳工厂');
+assert.match(overlaySrc, /querySelectorAll\(focusableSelector\)/, 'Tab 只在当前对话框内可聚焦控件间循环');
 
 console.log('tasks timeline preview: ok');

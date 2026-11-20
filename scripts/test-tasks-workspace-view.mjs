@@ -64,7 +64,8 @@ function loadView(React) {
   runInContext("(function (module, exports, require) {" + viewSource + "\n})", sandbox)(
     mod, mod.exports, () => { throw new Error("view should not require anything"); },
   );
-  return mod.exports({ React }).WorkspaceView;
+  const createOverlay = require('../packages/addons/lib/overlay.cjs');
+  return mod.exports({ React, createOverlay }).WorkspaceView;
 }
 
 const kids = (node) => {

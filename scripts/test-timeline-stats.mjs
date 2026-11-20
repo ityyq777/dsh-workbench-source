@@ -156,7 +156,10 @@ const c1 = task('C1'); attach(c1, tC);
   assert.equal(r.trend.newTimelines, 0);
   assert.equal(r.trend.newTasks, 0);
   assert.equal(r.trend.doneTasks, 0);
-  const now = new Date().toISOString().slice(0, 10);
+  // 服务端按 localtime 切日（timeline-stats.js 用 date(...,'unixepoch','localtime')），
+  // 这里也必须用本地日期；否则在 UTC+8 的凌晨 00:00–08:00 会算成「昨天」而误报。
+  const today = new Date();
+  const now = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-");
   const r2 = stats({ from: now, to: now });
   assert.equal(r2.trend.newTasks >= 1, true);
   const reversed = stats({ from: now, to: '2000-01-01' });
