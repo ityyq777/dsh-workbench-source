@@ -12,41 +12,8 @@
   var React = host.react;
   var h = host.h;
 
-  var ICONS = {
-    bell: require("lucide-react/icons/bell").default,
-    "bell-off": require("lucide-react/icons/bell-off").default,
-    inbox: require("lucide-react/icons/inbox").default,
-    mail: require("lucide-react/icons/mail").default,
-    "mail-open": require("lucide-react/icons/mail-open").default,
-    chart: require("lucide-react/icons/chart-column").default,
-    settings: require("lucide-react/icons/settings").default,
-    database: require("lucide-react/icons/database").default,
-    list: require("lucide-react/icons/list").default,
-    check: require("lucide-react/icons/check").default,
-    "check-check": require("lucide-react/icons/check-check").default,
-    search: require("lucide-react/icons/search").default,
-    refresh: require("lucide-react/icons/refresh-cw").default,
-    plus: require("lucide-react/icons/plus").default,
-    volume: require("lucide-react/icons/volume-2").default,
-    mute: require("lucide-react/icons/volume-x").default,
-    moon: require("lucide-react/icons/moon").default,
-    clock: require("lucide-react/icons/clock").default,
-    info: require("lucide-react/icons/info").default,
-    success: require("lucide-react/icons/circle-check").default,
-    warning: require("lucide-react/icons/triangle-alert").default,
-    error: require("lucide-react/icons/circle-alert").default,
-    reset: require("lucide-react/icons/rotate-ccw").default,
-    play: require("lucide-react/icons/play").default,
-  };
-
-  function Icon(props) {
-    var C = ICONS[props.name] || ICONS.info;
-    return h(C, { size: props.size || 14, strokeWidth: 2, "aria-hidden": "true", className: "wbg-svg" });
-  }
-
-  function tabIcon(name) {
-    return function () { return h(Icon, { name: name, size: 14 }); };
-  }
+  // 图标与视图标签图标统一收在 ui/icons.cjs，与其它插件共用 lib/icons.cjs 的映射。
+  var icons = require("./ui/icons.cjs"), ICONS = icons.ICONS, Icon = icons.Icon, tabIcon = icons.tabIcon;
 
   var COPY = require("./ui/copy.cjs");
   var CSS = require("./ui/styles.cjs");
@@ -93,7 +60,7 @@
   host.registerAddon({
     id: "wb-addon-message",
     version: "0.1.1",
-    icon: require("lucide-react/icons/message-square").default,
+    icon: ICONS["message-square"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: Stats },
       { id: "inbox", icon: tabIcon("inbox"), title: { zh: "收件箱", en: "Inbox" }, component: Inbox },
