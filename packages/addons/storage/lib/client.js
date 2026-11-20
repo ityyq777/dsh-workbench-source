@@ -2301,190 +2301,320 @@ var require_filter_checklist = __commonJS({
   }
 });
 
+// packages/addons/lib/tag-filter.cjs
+var require_tag_filter = __commonJS({
+  "packages/addons/lib/tag-filter.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h2 = React.createElement;
+    var FilterChecklist = require_filter_checklist();
+    module2.exports = function createTagFilter(options) {
+      var conf = options || {};
+      var classes = conf.classes || {};
+      var pageSize = conf.pageSize || 20;
+      var debounce = conf.debounce === void 0 ? 200 : conf.debounce;
+      var dedupe = conf.dedupe !== false;
+      var mapPage = conf.mapPage || function(out, pageNumber) {
+        return {
+          rows: out.records || [],
+          total: out.total || 0,
+          page: out.current || pageNumber,
+          hasMore: !!out.hasNext
+        };
+      };
+      var items = conf.items || function(rows) {
+        return rows.map(function(x) {
+          return { id: x.id, name: x.name };
+        });
+      };
+      var text = conf.text || function() {
+        return {};
+      };
+      var icon = conf.icon || function() {
+        return null;
+      };
+      var caret = conf.caret === void 0 ? "\u25BE" : conf.caret;
+      var enabled = conf.enabled || function() {
+        return true;
+      };
+      var renderSelected = conf.renderSelected || null;
+      return function TagFilter(props) {
+        var api = props.api;
+        var ids = props.ids || [];
+        var onChange = props.onChange || function() {
+        };
+        var t = text(props);
+        var availS = React.useState(true);
+        var openS = React.useState(false);
+        var open = openS[0];
+        var setOpen = openS[1];
+        var queryS = React.useState("");
+        var query = queryS[0];
+        var setQuery = queryS[1];
+        var rowsS = React.useState([]);
+        var rows = rowsS[0];
+        var setRows = rowsS[1];
+        var totalS = React.useState(0);
+        var total = totalS[0];
+        var setTotal = totalS[1];
+        var pageS = React.useState(0);
+        var page = pageS[0];
+        var setPage = pageS[1];
+        var hasMoreS = React.useState(false);
+        var hasMore = hasMoreS[0];
+        var setHasMore = hasMoreS[1];
+        var loadingS = React.useState(false);
+        var loading = loadingS[0];
+        var setLoading = loadingS[1];
+        var namesS = React.useState({});
+        var names = namesS[0];
+        var setNames = namesS[1];
+        var seq = React.useRef(0);
+        var load = React.useCallback(
+          function(q, pageNumber, append) {
+            var mine = ++seq.current;
+            setLoading(true);
+            return api.call(conf.action, { text: q || "", pageNumber, pageSize }).then(function(r) {
+              if (mine !== seq.current) return;
+              setLoading(false);
+              if (!r || !r.ok) return;
+              var next = mapPage(r.result || {}, pageNumber);
+              setRows(function(prev) {
+                if (!append) return next.rows;
+                if (!dedupe) return prev.concat(next.rows);
+                var seen = {};
+                var out = [];
+                prev.concat(next.rows).forEach(function(x) {
+                  var key = String(x.id);
+                  if (seen[key]) return;
+                  seen[key] = true;
+                  out.push(x);
+                });
+                return out;
+              });
+              setTotal(next.total);
+              setPage(next.page);
+              setHasMore(next.hasMore);
+              setNames(function(prev) {
+                var map = Object.assign({}, prev);
+                next.rows.forEach(function(x) {
+                  map[String(x.id)] = x.name;
+                });
+                return map;
+              });
+            }).catch(function() {
+              if (mine === seq.current) setLoading(false);
+            });
+          },
+          [api]
+        );
+        React.useEffect(
+          function() {
+            if (!open) return void 0;
+            var timer = setTimeout(
+              function() {
+                load(query, 1, false);
+              },
+              query ? debounce : 0
+            );
+            return function() {
+              clearTimeout(timer);
+            };
+          },
+          [open, query, load, props.reloadKey]
+        );
+        React.useEffect(
+          function() {
+            if (!conf.probe) return;
+            api.call(conf.probe.action || conf.action, conf.probe.args || {}).then(function(r) {
+              if (r && r.ok) availS[1](!!(conf.probe.available && conf.probe.available(r.result)));
+            }).catch(function() {
+            });
+          },
+          [api]
+        );
+        React.useEffect(
+          function() {
+            if (!open || !ids.length || !conf.names) return;
+            var wanted = ids.filter(function(id) {
+              return !names[String(id)];
+            });
+            if (!wanted.length) return;
+            var args = conf.names.args ? conf.names.args(wanted) : { ids: wanted };
+            api.call(conf.names.action, args).then(function(r) {
+              if (!r || !r.ok) return;
+              var map = {};
+              (r.result && r.result.records || []).forEach(function(x) {
+                map[String(x.id)] = x.name;
+              });
+              if (!Object.keys(map).length) return;
+              setNames(function(prev) {
+                return Object.assign({}, prev, map);
+              });
+            }).catch(function() {
+            });
+          },
+          [open, ids.join(",")]
+        );
+        React.useEffect(
+          function() {
+            if (!open) return void 0;
+            function onKey(e) {
+              if (e.key === "Escape") setOpen(false);
+            }
+            document.addEventListener("keydown", onKey);
+            return function() {
+              document.removeEventListener("keydown", onKey);
+            };
+          },
+          [open]
+        );
+        function toggle(id) {
+          var key = String(id);
+          var next = ids.slice();
+          var i = next.indexOf(key);
+          if (i >= 0) next.splice(i, 1);
+          else next.push(key);
+          onChange(next);
+        }
+        if (!enabled(props)) return null;
+        var caretNode = typeof caret === "function" ? caret(props, t) : caret;
+        var selectedNode = renderSelected ? renderSelected({ ids, names, toggle, text: t, classes, h: h2 }) : null;
+        return h2(
+          "div",
+          { className: classes.root },
+          h2(
+            "button",
+            {
+              type: "button",
+              className: classes.btn + (ids.length ? " " + (classes.btnOn || "on") : ""),
+              "aria-expanded": open ? "true" : "false",
+              onClick: function(e) {
+                if (conf.stopPropagation) e.stopPropagation();
+                setOpen(!open);
+              }
+            },
+            icon(props, "tag", 13),
+            t.label + (ids.length ? " \xB7 " + ids.length : ""),
+            caretNode
+          ),
+          open ? h2(
+            "div",
+            {
+              className: classes.menu,
+              role: conf.menuRole,
+              style: conf.menuStyle,
+              onClick: conf.stopPropagation ? function(e) {
+                e.stopPropagation();
+              } : void 0
+            },
+            h2(FilterChecklist, {
+              beforeHead: selectedNode,
+              items: items(rows),
+              selected: ids,
+              onToggle: toggle,
+              query,
+              onQuery: setQuery,
+              title: t.all,
+              total,
+              selectedText: t.selected,
+              clearText: t.clear,
+              onClear: function() {
+                onChange([]);
+                setQuery("");
+              },
+              searchPlaceholder: t.searchPlaceholder,
+              loading,
+              hasMore,
+              onLoadMore: function() {
+                load(query, (page || 1) + 1, true);
+              },
+              emptyText: t.empty,
+              noMatchText: t.noMatch,
+              loadingText: t.loading,
+              noMoreText: t.noMore
+            })
+          ) : null
+        );
+      };
+    };
+  }
+});
+
 // packages/addons/storage/client/ui/tagfilter.cjs
 var require_tagfilter = __commonJS({
   "packages/addons/storage/client/ui/tagfilter.cjs"(exports2, module2) {
     var React = require("react");
-    var ui = require_ui();
-    var FilterChecklist = require_filter_checklist();
     var h2 = React.createElement;
-    var tr = ui.tr;
-    module2.exports = function TagFilter(props) {
-      var api = props.api, lang = props.lang, enabled = props.enabled !== false, ids = props.ids || [], onChange = props.onChange;
-      var openS = React.useState(false), open = openS[0], setOpen = openS[1];
-      var queryS = React.useState(""), query = queryS[0], setQuery = queryS[1];
-      var optsS = React.useState({ tags: [], total: 0, pageNumber: 0, hasMore: false }), opts = optsS[0], setOpts = optsS[1];
-      var loadingS = React.useState(false), loading = loadingS[0], setLoading = loadingS[1];
-      var namesS = React.useState({}), names = namesS[0], setNames = namesS[1];
-      var seq = React.useRef(0);
-      var load = React.useCallback(
-        function(text, pageNumber, append) {
-          var mine = ++seq.current;
-          setLoading(true);
-          return api.call("storageTags.search", { text: text || "", pageNumber, pageSize: 20 }).then(function(r) {
-            if (mine !== seq.current) return;
-            setLoading(false);
-            if (!r || !r.ok) return;
-            var out = r.result || {}, records = out.records || [], current = out.current || pageNumber, pages = out.pages || 0;
-            setOpts(function(prev) {
-              var list = append ? (prev.tags || []).slice() : [];
-              var seen = {};
-              list.forEach(function(x) {
-                seen[String(x.id)] = true;
-              });
-              records.forEach(function(x) {
-                if (!seen[String(x.id)]) list.push(x);
-              });
-              return { tags: list, total: out.total || 0, pageNumber: current, hasMore: current < pages };
-            });
-            setNames(function(prev) {
-              var next = Object.assign({}, prev);
-              records.forEach(function(x) {
-                next[String(x.id)] = x.name;
-              });
-              return next;
-            });
-          }).catch(function() {
-            if (mine === seq.current) setLoading(false);
-          });
-        },
-        [api]
-      );
-      React.useEffect(
-        function() {
-          if (!open) return void 0;
-          var timer = setTimeout(
-            function() {
-              load(query, 1, false);
-            },
-            query ? 200 : 0
-          );
-          return function() {
-            clearTimeout(timer);
-          };
-        },
-        [open, query, load, props.reloadKey]
-      );
-      React.useEffect(
-        function() {
-          if (!open || !ids.length) return;
-          var wanted = ids.filter(function(id) {
-            return !names[String(id)];
-          });
-          if (!wanted.length) return;
-          api.call("storageTags.byIds", { ids: wanted }).then(function(r) {
-            if (!r || !r.ok) return;
-            var next = {};
-            (r.result && r.result.records || []).forEach(function(x) {
-              next[String(x.id)] = x.name;
-            });
-            if (!Object.keys(next).length) return;
-            setNames(function(prev) {
-              return Object.assign({}, prev, next);
-            });
-          }).catch(function() {
-          });
-        },
-        [open, ids.join(",")]
-      );
-      React.useEffect(
-        function() {
-          if (!open) return void 0;
-          function onKey(e) {
-            if (e.key === "Escape") setOpen(false);
-          }
-          document.addEventListener("keydown", onKey);
-          return function() {
-            document.removeEventListener("keydown", onKey);
-          };
-        },
-        [open]
-      );
-      function toggle(id) {
-        var key = String(id), next = ids.slice(), i = next.indexOf(key);
-        if (i >= 0) next.splice(i, 1);
-        else next.push(key);
-        onChange(next);
-      }
-      if (!enabled) return null;
-      return h2(
-        "div",
-        { className: "wbi-tagfilter" },
-        h2(
-          "button",
-          {
-            type: "button",
-            className: "wbi-btn" + (ids.length ? " wbi-tagon" : ""),
-            "aria-expanded": open ? "true" : "false",
-            onClick: function(e) {
-              e.stopPropagation();
-              setOpen(!open);
-            }
-          },
-          h2(ui.Icon, { name: "tag", size: 13 }),
-          tr(lang, "\u6807\u7B7E\u7B5B\u9009", "Tag filter") + (ids.length ? " \xB7 " + ids.length : ""),
-          "\u25BE"
-        ),
-        open ? h2(
+    var ui = require_ui();
+    var createTagFilter = require_tag_filter();
+    module2.exports = createTagFilter({
+      action: "storageTags.search",
+      stopPropagation: true,
+      classes: { root: "wbi-tagfilter", btn: "wbi-btn", btnOn: "wbi-tagon", menu: "wbi-tagmenu" },
+      menuRole: "menu",
+      enabled: function(props) {
+        return props.enabled !== false;
+      },
+      // 已选标签可能不在当前页甚至不在当前搜索词里，按 id 补名字。
+      names: { action: "storageTags.byIds" },
+      text: function(props) {
+        var lang = props.lang;
+        return {
+          label: ui.tr(lang, "\u6807\u7B7E\u7B5B\u9009", "Tag filter"),
+          selected: ui.tr(lang, "\u5DF2\u9009", "Selected"),
+          all: ui.tr(lang, "\u5168\u90E8\u6807\u7B7E", "All tags"),
+          clear: ui.tr(lang, "\u6E05\u7A7A", "Clear"),
+          searchPlaceholder: ui.tr(lang, "\u641C\u7D22\u6807\u7B7E\u540D\u79F0", "Search tag names"),
+          empty: ui.tr(lang, "\u6682\u65E0\u6807\u7B7E", "No tags yet"),
+          noMatch: ui.tr(lang, "\u6CA1\u6709\u5339\u914D\u7684\u6807\u7B7E", "No matching tags"),
+          loading: ui.tr(lang, "\u52A0\u8F7D\u4E2D\u2026", "Loading\u2026"),
+          noMore: ui.tr(lang, "\u6CA1\u6709\u66F4\u591A", "No more"),
+          remove: ui.tr(lang, "\u79FB\u9664", "Remove")
+        };
+      },
+      icon: function(props, name, size) {
+        return h2(ui.Icon, { name, size });
+      },
+      caret: "\u25BE",
+      mapPage: function(out, pageNumber) {
+        var pages = out.pages || 0;
+        var current = out.current || pageNumber;
+        return { rows: out.records || [], total: out.total || 0, page: current, hasMore: current < pages };
+      },
+      renderSelected: function(ctx) {
+        if (!ctx.ids.length) return null;
+        return h2(
           "div",
-          { className: "wbi-tagmenu", role: "menu", onClick: function(e) {
-            e.stopPropagation();
-          } },
-          h2(FilterChecklist, {
-            beforeHead: ids.length ? h2(
-              "div",
-              { className: "wbi-tagsel" },
-              h2("div", { className: "wbi-tagmenu-head" }, h2("span", null, tr(lang, "\u5DF2\u9009", "Selected") + " " + ids.length)),
-              h2(
-                "div",
-                { className: "wbi-tagsel-list" },
-                ids.map(function(id) {
-                  return h2(
-                    "button",
-                    {
-                      key: id,
-                      type: "button",
-                      className: "wbi-tagselitem",
-                      title: tr(lang, "\u79FB\u9664", "Remove"),
-                      onClick: function() {
-                        toggle(id);
-                      }
-                    },
-                    h2("span", { className: "wbi-tagnm" }, names[String(id)] || "#" + id),
-                    h2("span", { className: "wbi-tagx" }, "\xD7")
-                  );
-                })
-              )
-            ) : null,
-            items: opts.tags.map(function(x) {
-              return { id: x.id, name: x.name };
-            }),
-            selected: ids,
-            onToggle: toggle,
-            query,
-            onQuery: setQuery,
-            title: tr(lang, "\u5168\u90E8\u6807\u7B7E", "All tags"),
-            total: opts.total,
-            selectedText: tr(lang, "\u5DF2\u9009", "Selected"),
-            clearText: tr(lang, "\u6E05\u7A7A", "Clear"),
-            onClear: function() {
-              onChange([]);
-              setQuery("");
-            },
-            searchPlaceholder: tr(lang, "\u641C\u7D22\u6807\u7B7E\u540D\u79F0", "Search tag names"),
-            loading,
-            hasMore: opts.hasMore,
-            onLoadMore: function() {
-              load(query, (opts.pageNumber || 1) + 1, true);
-            },
-            emptyText: tr(lang, "\u6682\u65E0\u6807\u7B7E", "No tags yet"),
-            noMatchText: tr(lang, "\u6CA1\u6709\u5339\u914D\u7684\u6807\u7B7E", "No matching tags"),
-            loadingText: tr(lang, "\u52A0\u8F7D\u4E2D\u2026", "Loading\u2026"),
-            noMoreText: tr(lang, "\u6CA1\u6709\u66F4\u591A", "No more")
-          })
-        ) : null
-      );
-    };
+          { className: "wbi-tagsel" },
+          h2(
+            "div",
+            { className: "wbi-tagmenu-head" },
+            h2("span", null, ctx.text.selected + " " + ctx.ids.length)
+          ),
+          h2(
+            "div",
+            { className: "wbi-tagsel-list" },
+            ctx.ids.map(function(id) {
+              return h2(
+                "button",
+                {
+                  key: id,
+                  type: "button",
+                  className: "wbi-tagselitem",
+                  title: ctx.text.remove,
+                  onClick: function() {
+                    ctx.toggle(id);
+                  }
+                },
+                h2("span", { className: "wbi-tagnm" }, ctx.names[String(id)] || "#" + id),
+                h2("span", { className: "wbi-tagx" }, "\xD7")
+              );
+            })
+          )
+        );
+      }
+    });
   }
 });
 
