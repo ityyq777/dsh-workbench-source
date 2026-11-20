@@ -1,0 +1,67 @@
+{
+  "name": "dsh-workbench-danmaku",
+  "version": "0.1.0",
+  "description": "个人工作台弹幕插件：把自建弹幕轮播在整个 DSH 界面，并可叠加到整个桌面",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib",
+    "runtime",
+    "cordis.patch.yml",
+    "package.json"
+  ],
+  "wb": {
+    "addon": {
+      "id": "wb-addon-danmaku",
+      "title": "弹幕",
+      "description": "在整个 DSH 界面（含工作台业务页与宿主弹窗之外的所有区域）与桌面透明层轮播自建弹幕；含弹幕库、配置、数据与 Action 四个视图",
+      "version": "0.1.0",
+      "minShell": "0.8.0",
+      "tables": [
+        "danmaku"
+      ],
+      "views": [
+        "library",
+        "config",
+        "data",
+        "actions"
+      ],
+      "toolActions": [
+        "danmaku.list",
+        "danmaku.create",
+        "danmaku.update",
+        "danmaku.remove",
+        "danmaku.reorder",
+        "danmaku.preview",
+        "danmaku.configGet",
+        "danmaku.configSet",
+        "danmaku.configReset",
+        "danmaku.theme",
+        "danmaku.desktop",
+        "danmaku.status",
+        "danmaku.dataTables",
+        "danmaku.dataQuery"
+      ],
+      "client": "lib/client.js"
+    }
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-workbench": "file:../../shell-dist"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "dsh-workbench"
+      ]
+    }
+  }
+}
