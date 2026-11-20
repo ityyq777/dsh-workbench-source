@@ -51,6 +51,10 @@
 - **schema 是契约**：声明了就必须真读，读到了就必须声明；agent 可见的 schema 变化要同步
   五处版本号、能力清单、文档与测试。见
   [`02-ActionSchema与页面数据.md`](docs/AGENTS规范/02-ActionSchema与页面数据.md)。
+- **共享控件全覆盖**：13 个插件的图标、对话框外壳、按钮、骨架屏、标签筛选、统计图表基件
+  必须走 `packages/addons/lib/`；图标表按插件保留（体积原因），但渲染逻辑只准一份。改控件后
+  跑 `pnpm test:shared-ui`，它会拦住回退到自研 `Button`/`Skeleton`/`Modal` 或内联 lucide
+  require 的改动。见 [`04-UI规范.md`](docs/AGENTS规范/04-UI规范.md)。
 - **单文件与目录**：手写源单文件目标 ≤600 行（>600 告警、>900 失败），每目录 ≤12 个文件、
   深度 ≤3，数据库基础层不得反向依赖业务层。见
   [`01-代码风格与目录.md`](docs/AGENTS规范/01-代码风格与目录.md)。
