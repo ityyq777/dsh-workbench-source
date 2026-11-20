@@ -32,10 +32,13 @@
    新增组件必须同时验证浅色、深色下的背景、文字、边框与 hover/focus/disabled。
 4. **先复用共享组件，不要复制**。新增或改造插件视图前，先查 `packages/addons/lib/`：
    数据页用 `data-view.cjs`，Action 页用 `action-schema-view.cjs`，按钮/字段/提示/空态/
-   加载用 `client-common.cjs`，基础样式用 `client-base-styles.cjs`。两个以上插件出现的
+   加载用 `client-common.cjs`，基础样式用 `client-base-styles.cjs`，标签筛选用
+   `tag-filter.cjs`，统计图表用 `stats-charts.cjs`，图标用 `icons.cjs`，对话框外壳用
+   `overlay.cjs`，图标按钮与骨架屏用 `button.cjs`/`skeleton.cjs`。两个以上插件出现的
    同类 UI 必须抽到 `packages/addons/lib/`，禁止整段复制后只改 CSS 前缀。共享组件用
-   `domain`、`prefix`、`tables` 等参数接收上下文，不得 import 具体业务域；业务专属布局
-   留在插件内，通过参数或样式追加扩展。
+   `domain`、`prefix`、`tables`、`Icon` 等参数接收上下文，不得 import 具体业务域；业务专属
+   布局留在插件内，通过参数或样式追加扩展。例外：lucide 图标必须由各插件自己 require，
+   不要合成一张总表，否则每个包都会打进所有插件的图标。
 
 详细实现、验证步骤和常见错误见
 [`04-UI规范.md`](docs/AGENTS规范/04-UI规范.md)。
