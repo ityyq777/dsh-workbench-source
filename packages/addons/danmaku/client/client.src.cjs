@@ -64,7 +64,7 @@ function definition(host) {
   var tab = makeTab(host.react);
   return {
     id: ADDON_ID,
-    version: "0.2.1",
+    version: "0.2.2",
     icon: tab("megaphone"),
     views: [
       {

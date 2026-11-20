@@ -11,7 +11,7 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
   function tab(n) { return function () { return h(Icon, { name: n }); }; }
   function withProps(Inner, title) { return function (p) { return h(Inner, { api: p.api, lang: p.lang === "en" ? "en" : "zh", h: h, React: React, title: title }); }; }
   if (typeof document !== "undefined" && document.head && !document.getElementById("wb-mail-style")) { var s = document.createElement("style"); s.id = "wb-mail-style"; s.textContent = CSS; document.head.appendChild(s); }
-  host.registerAddon({ id: "wb-addon-mail", version: "0.4.2",
+  host.registerAddon({ id: "wb-addon-mail", version: "0.4.3",
     icon: GLYPHS["mail"], views: [
     { id: "messages", icon: tab("mail"), title: { zh: "邮件", en: "Messages" }, component: withProps(require("./views/messages.cjs"), "邮件") },
     { id: "compose", icon: tab("send"), title: { zh: "写信", en: "Compose" }, component: withProps(require("./views/compose.cjs"), "写信") },
