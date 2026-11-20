@@ -2,6 +2,7 @@
 var React = require("react");
 var h = React.createElement;
 var TagFilter = require("./ui/tagfilter.cjs");
+var createOverlay = require("../../lib/overlay.cjs");
 
 (function () {
   var host = window.__WB_HOST__;
@@ -82,14 +83,15 @@ var TagFilter = require("./ui/tagfilter.cjs");
     return out;
   }
 
-  function Modal(props) {
-    return h("div", {
-      className: "wbs-mask",
-      onMouseDown: function (e) {
-        if (e.target === e.currentTarget && props.onClose) props.onClose();
-      },
-    }, h("div", { className: "wbs-modal" + (props.small ? " small" : "") }, props.children));
-  }
+  // 对话框外壳（遮罩点击关闭、Esc、Tab 焦点循环、关闭后焦点归位）来自 lib/overlay.cjs。
+  var Modal = createOverlay({
+    tag: "div",
+    maskClass: "wbs-mask",
+    dialogClass: "wbs-modal",
+    dialogClassOf: function (props) {
+      return props.small ? " small" : "";
+    },
+  });
 
   function SiteFormModal(props) {
     var api = props.api;
@@ -242,7 +244,7 @@ var TagFilter = require("./ui/tagfilter.cjs");
       : [text(lang, "step1"), text(lang, "step2")];
     var title = mode === "edit" ? text(lang, "editTitle") : text(lang, "createTitle");
 
-    return h(Modal, { onClose: saving ? null : props.onClose },
+    return h(Modal, { "aria-label": title, onClose: saving ? null : props.onClose },
       h("div", { className: "wbs-modal-title" },
         h(Icon, { name: mode === "edit" ? "edit" : "plus", size: 15 }),
         title,
@@ -390,7 +392,7 @@ var TagFilter = require("./ui/tagfilter.cjs");
       });
     }
 
-    return h(Modal, { small: true, onClose: saving ? null : props.onClose },
+    return h(Modal, { small: true, "aria-label": title, onClose: saving ? null : props.onClose },
       h("div", { className: "wbs-modal-title" },
         h(Icon, { name: isDelete ? "trash" : dlg.mode === "rename" ? "edit" : "folder-plus", size: 15 }),
         title,
@@ -443,7 +445,7 @@ var TagFilter = require("./ui/tagfilter.cjs");
       });
     }
 
-    return h(Modal, { small: true, onClose: saving ? null : props.onClose },
+    return h(Modal, { small: true, "aria-label": text(lang, "deleteTitle"), onClose: saving ? null : props.onClose },
       h("div", { className: "wbs-modal-title" },
         h(Icon, { name: "trash", size: 15 }),
         text(lang, "deleteTitle"),
