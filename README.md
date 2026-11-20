@@ -16,7 +16,7 @@
 | `dsh-workbench-automation` | 自动化：定时、域事件或手动触发白名单 action，含模板、条件、限频与运行记录 |
 | `dsh-workbench-contacts` | 联系人：本地通讯录、分组、多值字段与 vCard 导入导出 |
 | `dsh-workbench-calendar` | 日历：本地日历、事件、参与人与提醒 |
-| `dsh-workbench-mail` | [邮件 0.4.1](docs/邮件使用指南.md)：按日期分组浏览收件箱、在筛选结果中连续读信、搜索已同步邮件、按需下载附件、回复转发与本地草稿 |
+| `dsh-workbench-mail` | [邮件 0.4.2](docs/邮件使用指南.md)：按日期浏览、展开读信、本页批量处理、搜索已同步邮件、按需下载附件、回复转发与本地草稿 |
 | `dsh-workbench-salary` | 工资记录：按发薪日期记录构成、扣款与实发，含年度统计 |
 
 所有业务插件都声明 `dependencies: { "dsh-workbench-host": "^<宿主版本>" }`：安装任意业务插件时，

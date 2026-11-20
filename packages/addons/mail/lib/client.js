@@ -139,10 +139,11 @@ var require_styles = __commonJS({
       ".wbml-time{grid-area:time;font-size:11px;color:var(--wb-muted,#6b7280);white-space:nowrap}",
       ".wbml-listpane{min-height:0;container:mail-list / inline-size}",
       ".wbml-date-group{flex:none;margin:0;padding:6px 12px;font-size:11px;font-weight:650;color:var(--wb-muted);background:var(--wb-card);border-bottom:1px solid var(--wb-line)}",
-      ".wbml-list-row{flex:none;align-items:center;grid-template-columns:minmax(0,1fr) 18px 5ch;grid-template-areas:'who attachment time' 'line line line'}",
+      ".wbml-list-row{--wbml-date-width:8rem;flex:none;align-items:center;grid-template-columns:minmax(0,1fr) 18px var(--wbml-date-width);grid-template-areas:'who attachment time' 'line line line'}",
+      ".wbml-attachment-name{display:none;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wbml-attachment svg{flex:none}",
       ".wbml-who{display:flex;align-items:center;gap:5px;min-width:0}.wbml-sender,.wbml-source{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}.wbml-source{max-width:45%;font-size:11px;font-weight:400;color:var(--wb-muted)}",
       ".wbml-attachment{grid-area:attachment;justify-self:center;display:inline-flex;color:var(--wb-muted)}.wbml-time{text-align:right;font-variant-numeric:tabular-nums;font-weight:400}",
-      "@container mail-list (min-width:620px){.wbml-list-row{min-height:42px;grid-template-columns:clamp(148px,23%,240px) minmax(0,1fr) 18px 5ch;grid-template-areas:'who line attachment time'}}",
+      "@container mail-list (min-width:620px){.wbml-list-row{min-height:42px;grid-template-columns:clamp(132px,20%,240px) minmax(0,1fr) clamp(72px,16%,180px) var(--wbml-date-width);grid-template-areas:'who line attachment time'}.wbml-attachment{justify-self:start;max-width:100%;min-width:0;align-items:center;gap:4px}.wbml-attachment-name{display:block;font-size:11px}}",
       ".wbml-detailpane{min-height:0}",
       ".wbml-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--wb-border,#eef0f3);background:var(--wb-surface,#fff)}",
       ".wbml-detail-head{flex-direction:column}.wbml-reader-nav{display:flex;gap:6px;flex-wrap:wrap}.wbml-detail-meta{overflow-wrap:anywhere}",
@@ -174,6 +175,10 @@ var require_styles = __commonJS({
       ".wbml-rail input[type=checkbox]{accent-color:var(--wb-accent)}",
       ".wbml-page.is-split :is(button,input,select):focus-visible{outline:2px solid var(--wb-accent);outline-offset:-2px}",
       ".wbml-list-row:hover:not(.on){background:color-mix(in srgb,var(--wb-accent) 7%,var(--wb-surface))}",
+      ".wbml-bulk{flex:none;display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:6px 12px;color:inherit;background:var(--wb-card);border-bottom:1px solid var(--wb-line);font-size:12px}",
+      ".wbml-bulk-report{flex-basis:100%;display:flex;align-items:center;flex-wrap:wrap;gap:8px;overflow-wrap:anywhere}.wbml-bulk-report details{max-width:100%;max-height:8rem;overflow:auto}",
+      ".wbml-bulk-row{display:grid;flex:none;grid-template-columns:30px minmax(0,1fr);align-items:stretch}.wbml-bulk-row>input{justify-self:center;align-self:center;accent-color:var(--wb-accent)}",
+      ".wbml-bulk-row:has(>input:checked){background:color-mix(in srgb,var(--wb-accent) 9%,var(--wb-card))}",
       /* 服务商选择器 */
       ".wbml-chips{display:flex;flex-wrap:wrap;gap:6px}",
       ".wbml-chip{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer}",
@@ -1464,24 +1469,31 @@ var require_message_rows = __commonJS({
       const locale = lang === "en" ? "en-GB" : "zh-CN";
       const dayFormat = new Intl.DateTimeFormat(locale, { year: "numeric", month: "short", day: "numeric" });
       const timeFormat = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
-      const today = /* @__PURE__ */ new Date(), yesterday = new Date(today);
+      const today = options.now ?? /* @__PURE__ */ new Date(), yesterday = new Date(today);
       yesterday.setDate(today.getDate() - 1);
+      const todayKey = dayFormat.format(today), yesterdayKey = dayFormat.format(yesterday);
       const rows = [];
       let lastDay;
       for (const m of items) {
         const date = new Date(m.dateAt);
         const valid = !!m.dateAt && Number.isFinite(date.getTime());
         const day = valid ? dayFormat.format(date) : "\u672A\u77E5\u65E5\u671F";
+        const isToday = day === todayKey, isYesterday = day === yesterdayKey;
+        const yesterdayLabel = lang === "en" ? "Yesterday" : "\u6628\u5929";
         if (day !== lastDay) {
-          let label = day;
-          if (day === dayFormat.format(today)) label = lang === "en" ? "Today" : "\u4ECA\u5929";
-          if (day === dayFormat.format(yesterday)) label = lang === "en" ? "Yesterday" : "\u6628\u5929";
+          const label = isToday ? lang === "en" ? "Today" : "\u4ECA\u5929" : isYesterday ? yesterdayLabel : day;
           rows.push(h("h3", { key: "day:" + m.id, className: "wbml-date-group", title: day }, label));
           lastDay = day;
         }
+        let shortDate = "\u2014";
+        if (isToday || isYesterday) shortDate = (isYesterday ? yesterdayLabel + " " : "") + timeFormat.format(date);
+        else if (valid) {
+          const prefix = date.getFullYear() === today.getFullYear() ? "" : date.getFullYear() + "/";
+          shortDate = prefix + (date.getMonth() + 1) + "/" + date.getDate();
+        }
         const active = current?.id === m.id;
-        const hasAttachment = attachmentUpdates.get(m.id) ?? m.hasAttachment;
-        rows.push(h(
+        const { hasAttachment, attachmentName } = attachmentUpdates.get(m.id) ?? m;
+        const row = h(
           "button",
           {
             type: "button",
@@ -1494,9 +1506,15 @@ var require_message_rows = __commonJS({
           },
           h("span", { className: "wbml-who" }, h("span", { className: "wbml-sender", title: senderDetail(m) }, sender(m)), showSource && m.accountName ? h("span", { className: "wbml-source", title: m.accountName }, m.accountName) : null),
           h("span", { className: "wbml-line" }, h("span", { className: "wbml-subject" }, m.subject || "(\u65E0\u4E3B\u9898)"), h("span", { className: "wbml-snippet" }, m.preview)),
-          hasAttachment === true ? h("span", { className: "wbml-attachment", title: "\u6709\u9644\u4EF6", role: "img", "aria-label": "\u6709\u9644\u4EF6" }, h(Paperclip2, { size: 14, "aria-hidden": true })) : null,
-          h("time", { className: "wbml-time", title: valid ? date.toLocaleString(locale) : day, dateTime: valid ? date.toISOString() : void 0 }, valid ? timeFormat.format(date) : "\u2014")
-        ));
+          hasAttachment === true ? h(
+            "span",
+            { className: "wbml-attachment", title: attachmentName || "\u6709\u9644\u4EF6", role: "img", "aria-label": attachmentName ? "\u9644\u4EF6\uFF1A" + attachmentName : "\u6709\u9644\u4EF6" },
+            h(Paperclip2, { size: 14, "aria-hidden": true }),
+            attachmentName ? h("span", { className: "wbml-attachment-name" }, attachmentName) : null
+          ) : null,
+          h("time", { className: "wbml-time", title: valid ? date.toLocaleString(locale) : day, dateTime: valid ? date.toISOString() : void 0 }, shortDate)
+        );
+        rows.push(options.wrapRow ? options.wrapRow(m, row) : row);
       }
       return rows;
     };
@@ -1535,6 +1553,80 @@ var require_reader_context = __commonJS({
       return a.name && a.email && a.name !== a.email ? a.name + " <" + a.email + ">" : a.email || a.name || "\u672A\u77E5\u8D26\u6237";
     }
     module2.exports = { neighbor, capture, restore, accountLabel };
+  }
+});
+
+// packages/addons/mail/client/ui/reader-styles.cjs
+var require_reader_styles = __commonJS({
+  "packages/addons/mail/client/ui/reader-styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = `
+.wbml-read-bar{display:flex;flex:none;align-items:center;flex-wrap:wrap;gap:6px;padding:8px 12px;border-bottom:1px solid var(--wb-line)}
+.wbml-read-bar .wbml-reader-nav{margin-inline-start:auto}
+.wbml-read-scroll{min-height:0;overflow:auto;overscroll-behavior:contain}
+.wbml-read-header{padding:14px;display:grid;gap:6px;overflow-wrap:anywhere;font-size:13px}
+.wbml-read-header h3{font-size:1.2rem;line-height:1.45;margin:0 0 4px}
+.wbml-read-sender{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px}
+.wbml-read-sender span,.wbml-read-stamp{color:var(--wb-muted)}
+.wbml-read-header summary{cursor:pointer;color:var(--wb-accent);width:fit-content}
+.wbml-read-header summary:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
+.wbml-read-header details>div{padding-block:3px}
+@media (min-width:901px){.wbml-layout.has-detail:has(>.wbml-detailpane.is-expanded){grid-template-columns:clamp(200px,21%,300px) minmax(0,1fr)}.wbml-layout:has(>.wbml-detailpane.is-expanded)>.wbml-listpane{display:none}}
+@media (max-width:900px){.wbml-read-bar .wbml-expand{display:none}.wbml-layout.has-detail>.wbml-detailpane{max-height:none}.wbml-read-scroll{overflow:visible}.wbml-read-bar{position:sticky;top:0;z-index:1;background:var(--wb-surface)}}
+`;
+  }
+});
+
+// packages/addons/mail/client/views/detail-pane.cjs
+var require_detail_pane = __commonJS({
+  "packages/addons/mail/client/views/detail-pane.cjs"(exports2, module2) {
+    "use strict";
+    var C = require_common();
+    var styles = require_reader_styles();
+    module2.exports = function detailPane(h, options, tools, content) {
+      const { current, back, toggle, previous, next, expanded, accountLabel, time } = options;
+      const subject = current.subject || "(\u65E0\u4E3B\u9898)";
+      const sender = current.fromName || current.from || "\u672A\u77E5\u53D1\u4EF6\u4EBA";
+      const action = (label, onClick) => h(C.Btn, { h, onClick, disabled: !onClick }, label);
+      return h(
+        "section",
+        { className: "wbml-pane wbml-detailpane" + (expanded ? " is-expanded" : ""), "aria-label": "\u90AE\u4EF6\u8BE6\u60C5" },
+        h("style", null, styles),
+        h(
+          "nav",
+          { className: "wbml-read-bar", "aria-label": "\u9605\u8BFB\u5BFC\u822A" },
+          action("\u8FD4\u56DE\u5217\u8868", back),
+          h("button", { className: "wbml-btn wbml-expand", type: "button", onClick: toggle, "aria-pressed": expanded }, expanded ? "\u6536\u8D77\u9605\u8BFB" : "\u5C55\u5F00\u9605\u8BFB"),
+          h("div", { className: "wbml-reader-nav" }, action("\u4E0A\u4E00\u5C01", previous), action("\u4E0B\u4E00\u5C01", next))
+        ),
+        h(
+          "div",
+          { className: "wbml-read-scroll", key: current.id },
+          h(
+            "header",
+            { className: "wbml-read-header" },
+            h("h3", null, subject),
+            h(
+              "div",
+              { className: "wbml-read-sender" },
+              h("strong", null, sender),
+              current.from && current.from !== sender ? h("span", null, "<" + current.from + ">") : null
+            ),
+            h("div", null, "\u6536\u4EF6\u8D26\u6237\uFF1A" + accountLabel),
+            h("div", { className: "wbml-read-stamp" }, time, current.mailbox ? " \xB7 " + current.mailbox : ""),
+            current.to && !current.cc && current.to.length <= 64 && !/[,;\n]/.test(current.to.replace(/"(?:\\.|[^"\\])*"/g, "")) ? h("div", null, "\u6536\u4EF6\u4EBA\uFF1A" + current.to) : current.to || current.cc ? h(
+              "details",
+              null,
+              h("summary", null, current.cc ? "\u6536\u4EF6\u4EBA\u548C\u6284\u9001" : "\u6536\u4EF6\u4EBA"),
+              current.to ? h("div", null, "\u6536\u4EF6\u4EBA\uFF1A" + current.to) : null,
+              current.cc ? h("div", null, "\u6284\u9001\uFF1A" + current.cc) : null
+            ) : null
+          ),
+          tools,
+          content
+        )
+      );
+    };
   }
 });
 
@@ -1630,6 +1722,216 @@ var init_trash_2 = __esm({
   }
 });
 
+// packages/addons/mail/client/views/bulk.cjs
+var require_bulk = __commonJS({
+  "packages/addons/mail/client/views/bulk.cjs"(exports2, module2) {
+    "use strict";
+    var C = require_common();
+    var labels = { trash: "\u79FB\u5165\u5E9F\u7EB8\u7BD3", read: "\u6807\u4E3A\u5DF2\u8BFB" };
+    var remote = (m) => Boolean(m?.id && m.accountId && m.mailbox && m.uid > 0 && m.uidValidity > 0);
+    var unread = (m) => !/\\Seen\b/i.test(String(m.flags || ""));
+    function snapshot(items, kind, checked) {
+      const result = /* @__PURE__ */ new Map();
+      for (const m of items) {
+        if (!remote(m) || (kind === "trash" ? !checked.has(m.id) : !unread(m))) continue;
+        result.set(m.id, Object.freeze({
+          id: m.id,
+          accountId: m.accountId,
+          accountName: m.accountName || m.accountId,
+          subject: m.subject || "(\u65E0\u4E3B\u9898)",
+          mailbox: m.mailbox,
+          uid: m.uid,
+          uidValidity: m.uidValidity
+        }));
+      }
+      return [...result.values()];
+    }
+    async function executeBatch(api, kind, targets, active) {
+      const done = [], failed = [];
+      for (const item of targets) {
+        if (!active()) break;
+        try {
+          const m = await C.call(api, "mail.messageGet", { id: item.id });
+          if (!active()) break;
+          if (!remote(m) || ["id", "accountId", "mailbox", "uid", "uidValidity"].some((k) => m[k] !== item[k])) {
+            throw new Error("\u90AE\u4EF6\u4F4D\u7F6E\u6216\u8FDC\u7AEF\u8EAB\u4EFD\u5DF2\u53D8\u5316\uFF0C\u8BF7\u5237\u65B0\u5217\u8868");
+          }
+          if (kind === "read" && unread(m)) {
+            const ack = await C.call(api, "mail.messageMarkRead", { id: item.id, read: true });
+            if (ack?.updated !== 1) throw new Error("\u672A\u6536\u5230\u5DF2\u8BFB\u56DE\u6267");
+          } else if (kind === "trash") {
+            const ack = await C.call(api, "mail.messageDelete", { id: item.id });
+            if (ack?.trashed !== true) throw new Error("\u672A\u6536\u5230\u79FB\u5165\u5E9F\u7EB8\u7BD3\u56DE\u6267");
+          }
+          done.push(item.id);
+        } catch (error) {
+          failed.push({ item, error: C.errText(error) });
+        }
+      }
+      return { done, failed };
+    }
+    function accountCounts(targets, accounts) {
+      const counts = /* @__PURE__ */ new Map();
+      for (const m of targets) {
+        const name = accounts.find((a) => a.id === m.accountId)?.email || m.accountName;
+        const entry = counts.get(m.accountId) || { name, count: 0 };
+        counts.set(m.accountId, { name, count: entry.count + 1 });
+      }
+      return [...counts.values()].map(({ name, count }) => `${name} ${count} \u5C01`).join("\u3001");
+    }
+    function useBulk({ React, h, api, items, scope, accounts, blocked, refresh }) {
+      const [, setRev] = React.useState(0);
+      const ref = React.useRef(null), mounted = React.useRef(true);
+      React.useEffect(() => {
+        mounted.current = true;
+        return () => {
+          mounted.current = false;
+        };
+      }, []);
+      if (!ref.current || ref.current.scope !== scope) ref.current = { scope, checked: /* @__PURE__ */ new Set(), selecting: false };
+      const state = ref.current;
+      const active = () => mounted.current && ref.current === state;
+      const redraw = () => setRev((v) => v + 1);
+      const available = items.filter(remote);
+      const selected = available.filter((m) => state.checked.has(m.id));
+      const button = (text, onClick, disabled) => h(C.Btn, { h, onClick, disabled }, text);
+      function prepare(kind) {
+        if (blocked || state.running || ref.current !== state) return;
+        const targets = snapshot(items, kind, state.checked);
+        if (!targets.length) return;
+        state.plan = { kind, targets, done: 0 };
+        redraw();
+      }
+      async function run() {
+        const plan2 = state.plan;
+        if (!plan2 || blocked || state.running || ref.current !== state) return;
+        state.running = true;
+        redraw();
+        const result = await executeBatch(api, plan2.kind, plan2.targets, active);
+        if (!active()) return;
+        state.running = false;
+        state.checked.clear();
+        state.selecting = false;
+        state.plan = null;
+        state.report = { kind: plan2.kind, done: plan2.done + result.done.length, failed: result.failed };
+        if (result.done.length) refresh(plan2.kind, result.done);
+        redraw();
+      }
+      const plan = state.plan, report = state.report;
+      const controls = plan ? [
+        h("strong", null, `\u786E\u8BA4\u5C06 ${plan.targets.length} \u5C01\u90AE\u4EF6${labels[plan.kind]}\uFF1F`),
+        h("span", null, accountCounts(plan.targets, accounts)),
+        button(state.running ? "\u6B63\u5728\u5904\u7406\u2026" : "\u786E\u8BA4" + labels[plan.kind], run, blocked || state.running),
+        button("\u53D6\u6D88", () => {
+          state.plan = null;
+          redraw();
+        }, state.running)
+      ] : [
+        button(state.selecting ? "\u9000\u51FA\u9009\u62E9" : "\u9009\u62E9\u90AE\u4EF6", () => {
+          state.selecting = !state.selecting;
+          state.checked.clear();
+          redraw();
+        }, blocked || !available.length),
+        state.selecting && button(selected.length && selected.length === available.length ? "\u6E05\u9664\u9009\u62E9" : "\u672C\u9875\u5168\u9009", () => {
+          state.checked = selected.length === available.length ? /* @__PURE__ */ new Set() : new Set(available.map((m) => m.id));
+          redraw();
+        }, blocked || !available.length),
+        state.selecting && button(`\u9009\u4E2D\u90AE\u4EF6\u79FB\u5165\u5E9F\u7EB8\u7BD3\uFF08${selected.length}\uFF09`, () => prepare("trash"), blocked || !selected.length),
+        button("\u672C\u9875\u5168\u90E8\u6807\u4E3A\u5DF2\u8BFB", () => prepare("read"), blocked || !available.some(unread)),
+        state.selecting && items.length > available.length && h("span", null, "\u672C\u5730\u526F\u672C\u6216\u8FDC\u7AEF\u8EAB\u4EFD\u672A\u786E\u8BA4\u7684\u90AE\u4EF6\u4E0D\u53EF\u9009\u62E9")
+      ];
+      function wrapRow(m, row) {
+        if (!state.selecting) return row;
+        return h(
+          "div",
+          { className: "wbml-bulk-row", key: m.id },
+          h("input", {
+            type: "checkbox",
+            "aria-label": "\u9009\u62E9\u90AE\u4EF6\uFF1A" + (m.subject || "(\u65E0\u4E3B\u9898)"),
+            checked: state.checked.has(m.id),
+            disabled: blocked || !remote(m) || !!plan,
+            onChange: (e) => {
+              if (e.target.checked) state.checked.add(m.id);
+              else state.checked.delete(m.id);
+              redraw();
+            }
+          }),
+          row
+        );
+      }
+      return {
+        wrapRow,
+        locked: () => !!state.plan,
+        toolbar: h(
+          "div",
+          { className: "wbml-bulk" },
+          ...controls,
+          !plan && report && h(
+            "div",
+            { className: "wbml-bulk-report", role: "status" },
+            `${labels[report.kind]}\uFF1A\u6210\u529F ${report.done} \u5C01\uFF0C\u5931\u8D25 ${report.failed.length} \u5C01`,
+            report.failed.length > 0 && h(
+              "details",
+              null,
+              h("summary", null, "\u67E5\u770B\u5931\u8D25\u539F\u56E0"),
+              ...report.failed.map(({ item, error }) => h("div", { key: item.id }, `${item.accountName} \xB7 ${item.subject}\uFF1A${error}`))
+            ),
+            report.failed.length > 0 && button("\u4EC5\u91CD\u8BD5\u5931\u8D25\u9879", () => {
+              state.plan = { kind: report.kind, targets: report.failed.map((f) => f.item), done: report.done };
+              redraw();
+            }, blocked),
+            button("\u6536\u8D77\u7ED3\u679C", () => {
+              state.report = null;
+              redraw();
+            })
+          )
+        )
+      };
+    }
+    function updateSearch(server, kind, ids, unreadOnly) {
+      const done = new Set(ids);
+      const items = server.data.items.flatMap((m) => {
+        if (!done.has(m.id)) return [m];
+        if (kind === "trash" || unreadOnly) return [];
+        return [{ ...m, flags: unread(m) ? `${m.flags || ""} \\Seen`.trim() : m.flags }];
+      });
+      return { ...server, data: { ...server.data, items } };
+    }
+    module2.exports = { snapshot, executeBatch, useBulk, updateSearch };
+  }
+});
+
+// packages/addons/mail/client/views/folder-shortcuts.cjs
+var require_folder_shortcuts = __commonJS({
+  "packages/addons/mail/client/views/folder-shortcuts.cjs"(exports2, module2) {
+    "use strict";
+    var roleLabels = { inbox: "\u6536\u4EF6\u7BB1", drafts: "\u8349\u7A3F\u7BB1", sent: "\u5DF2\u53D1\u9001", trash: "\u5E9F\u7EB8\u7BD3" };
+    module2.exports = function FolderShortcuts({ h, folders, accountId, selected, onChange }) {
+      const entries = [];
+      for (const role of Object.keys(roleLabels)) {
+        const boxes = folders.filter((box) => box.account_id === accountId && box.name && (box.role === role || role === "sent" && box.localOnly && box.name === "Sent"));
+        for (const box of boxes) {
+          let label = roleLabels[role];
+          if (boxes.length > 1) label += " \xB7 " + box.name;
+          if (box.localOnly) label += "\uFF08\u4EC5\u672C\u5730\uFF09";
+          const active = box.name === selected;
+          entries.push(h("button", {
+            type: "button",
+            key: box.name,
+            title: box.name,
+            className: "wbml-btn" + (active ? " primary" : ""),
+            "aria-current": active ? "page" : void 0,
+            onClick: () => {
+              if (!active) onChange(box.name);
+            }
+          }, label));
+        }
+      }
+      return entries.length ? h("nav", { className: "wbml-body-tools", "aria-label": "\u5E38\u7528\u6587\u4EF6\u5939" }, entries) : null;
+    };
+  }
+});
+
 // packages/addons/mail/client/views/messages.cjs
 var require_messages = __commonJS({
   "packages/addons/mail/client/views/messages.cjs"(exports2, module2) {
@@ -1645,6 +1947,7 @@ var require_messages = __commonJS({
     var Search2 = (init_search(), __toCommonJS(search_exports)).default;
     var messageRows = require_message_rows();
     var Reader = require_reader_context();
+    var detailPane = require_detail_pane();
     var Mail2 = (init_mail(), __toCommonJS(mail_exports)).default;
     var MailOpen2 = (init_mail_open(), __toCommonJS(mail_open_exports)).default;
     var Move = (init_folder_input(), __toCommonJS(folder_input_exports)).default;
@@ -1696,7 +1999,9 @@ var require_messages = __commonJS({
         close();
         returning.current = saved;
       }
+      var expanded = React.useState(false);
       function close() {
+        expanded[1](false);
         reading.current = null;
         returning.current = null;
         selected.current++;
@@ -1754,13 +2059,17 @@ var require_messages = __commonJS({
         C.call(api, "mail.messageBody", { id: m.id, force: !!force }).then(function(r) {
           if (rev !== selected.current) return;
           if (!r || r.ok === false) throw new Error(r && r.message || "\u6B63\u6587\u4E0B\u8F7D\u5931\u8D25");
-          if (Array.isArray(r.attachments)) attachmentUpdates.current.set(m.id, r.attachments.length > 0);
+          if (Array.isArray(r.attachments)) attachmentUpdates.current.set(m.id, {
+            hasAttachment: r.attachments.length > 0,
+            attachmentName: r.attachments[0]?.filename || ""
+          });
           bodyState[1]({ data: r });
         }).catch(function(e) {
           if (rev === selected.current) bodyState[1]({ error: C.errText(e) });
         });
       }
       function open(m, continuing) {
+        if (bulk.locked()) return;
         if (!continuing || !reading.current) reading.current = Reader.capture(pane.current, items, m.id);
         returning.current = null;
         target[1]("");
@@ -1842,6 +2151,19 @@ var require_messages = __commonJS({
       var current = sel[0], state = bodyState[0], data = state.data || {};
       var result = server[0] || list;
       var items = result.data && result.data.items || [], canSync = !!accountId[0];
+      var bulk = require_bulk().useBulk({
+        React,
+        h,
+        api,
+        accounts: accs,
+        items,
+        scope: JSON.stringify([accountId[0], folder[0], unified[0], q[0], unseen[0], tokens, searchRev.current]),
+        blocked: !!(busy[0] || result.loading || result.error || current),
+        refresh: (kind, ids) => {
+          list.refresh();
+          if (server[0]?.data) server[1](require_bulk().updateSearch(server[0], kind, ids, unseen[0]));
+        }
+      });
       var order = reading.current?.order || [];
       var previous = current && Reader.neighbor(order, items, current.id, -1);
       var next = current && Reader.neighbor(order, items, current.id, 1);
@@ -1897,6 +2219,7 @@ var require_messages = __commonJS({
           { className: "wbml-list" },
           messageRows(h, items, {
             current,
+            wrapRow: bulk.wrapRow,
             showSource: !accountId[0],
             lang: props.lang,
             attachmentUpdates: attachmentUpdates.current,
@@ -1975,6 +2298,13 @@ var require_messages = __commonJS({
                   reset();
                 }
               }, h("option", { value: "inbox" }, "\u7EDF\u4E00\u6536\u4EF6\u7BB1"), h("option", { value: "all" }, "\u5168\u90E8\u90AE\u4EF6"))),
+              canSync && h(require_folder_shortcuts(), {
+                h,
+                folders,
+                accountId: accountId[0],
+                selected: folder[0],
+                onChange: changeFolder
+              }),
               canSync && h(
                 C.Field,
                 { h, label: iconLabel(h, Folder2, "\u6587\u4EF6\u5939") },
@@ -2087,43 +2417,21 @@ var require_messages = __commonJS({
                 result.error || result.loading ? null : (server[0] ? "\u663E\u793A " : "\u672C\u9875 ") + items.length + " \u5C01 \xB7 " + items.filter(isUnread).length + " \u672A\u8BFB" + (server[0]?.data?.truncated ? " \xB7 \u4EC5\u663E\u793A\u6700\u8FD1 50 \u5C01" : "")
               )
             ),
+            !current && bulk.toolbar,
             h("div", { className: "wbml-state-box" }, body)
           ),
-          current ? h(
-            "section",
-            { className: "wbml-pane wbml-detailpane" },
-            h(
-              "div",
-              { className: "wbml-detail-head" },
-              h(
-                "div",
-                { className: "wbml-detail-title" },
-                h("strong", null, current.subject || "(\u65E0\u4E3B\u9898)"),
-                h(
-                  "span",
-                  { className: "wbml-muted" },
-                  senderDetail(current) + " \xB7 " + C.fmtTime(current.dateAt, props.lang)
-                )
-              ),
-              h(
-                "div",
-                { className: "wbml-reader-nav", role: "group", "aria-label": "\u9605\u8BFB\u5BFC\u822A" },
-                button("\u8FD4\u56DE\u5217\u8868", back),
-                button("\u4E0A\u4E00\u5C01", function() {
-                  if (previous) open(previous, true);
-                }, !previous || busy[0]),
-                button("\u4E0B\u4E00\u5C01", function() {
-                  if (next) open(next, true);
-                }, !next || busy[0])
-              )
-            ),
-            h(
-              "div",
-              { className: "wbml-detail-meta" },
-              h("span", null, "\u6536\u4EF6\u8D26\u6237\uFF1A" + Reader.accountLabel(accs, current)),
-              h("span", null, "\u6536\u4EF6\u4EBA\uFF1A" + (current.to || "\u2014")),
-              h("span", null, "\u6587\u4EF6\u5939\uFF1A" + current.mailbox)
-            ),
+          current ? detailPane(
+            h,
+            {
+              current,
+              accountLabel: Reader.accountLabel(accs, current),
+              time: C.fmtTime(current.dateAt, props.lang),
+              back,
+              expanded: expanded[0],
+              toggle: () => expanded[1](!expanded[0]),
+              previous: previous && !busy[0] ? () => open(previous, true) : null,
+              next: next && !busy[0] ? () => open(next, true) : null
+            },
             current.uid > 0 ? h(
               "div",
               { className: "wbml-tools" },
@@ -5441,7 +5749,7 @@ var require_actions = __commonJS({
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.4.1",
+    version: "0.4.2",
     icon: (init_mail(), __toCommonJS(mail_exports)).default,
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },

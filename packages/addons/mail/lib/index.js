@@ -27,7 +27,7 @@ export function apply(ctx) {
     id: "wb-addon-mail",
     title: "邮件",
     description: "安全 IMAP 收信与文件夹同步，按需读正文、下载附件，保存本地草稿并通过 SMTP 回复或转发。",
-    version: "0.4.1",
+    version: "0.4.2",
     // mail_draft 含私有未发正文，不加入宿主通用表清单或同步回退。
     tables: ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"],
     sync: { tables: [] },
@@ -45,7 +45,7 @@ export function apply(ctx) {
       records: [{ kind: "message", title: "邮件", description: "账户、文件夹、信头和本地正文副本。", when: ["查看邮件", "发送纯文本邮件", "回复或转发原信"], notFor: ["附件上传", "OAuth2 登录"], primaryAction: "mail.messageSend", keyArgs: ["accountId", "to", "subject", "text"] }, { kind: "draft", title: "本地邮件草稿", description: "本机保存的待发邮件，只能从界面访问。", when: ["保存未发内容"], notFor: ["跨设备同步草稿"], primaryAction: "mail.draftSave", keyArgs: ["key", "text"] }],
       fields: [{ name: "accountId", type: "string", description: "账户 id" }, { name: "to", type: "array", description: "收件人邮箱数组" }, { name: "subject", type: "string", description: "主题" }, { name: "text", type: "string", description: "纯文本正文" }],
       notFor: ["不做 OAuth2", "agent 不可发送附件", "不永久删除远端邮件", "不参与工作台云同步"],
-      notes: ["密码由保险箱托管；IMAP 仅在隐式 TLS 或 STARTTLS 成功后认证。", "默认搜索本地已同步信头；界面可指定账户和远端文件夹搜索主题和发件人。", "打开邮件不会自动下载附件。草稿仅存本机；界面可显式选取附件，agent 的 mail.messageSend 只发送纯文本。"],
+      notes: ["密码由保险箱托管；IMAP 仅在隐式 TLS 或 STARTTLS 成功后认证。", "默认搜索本地已同步信头；界面可指定账户和远端文件夹搜索主题和发件人。", "列表展示本地已知附件名。批量移入废纸篓和本页全部已读按确认时列出的账户与邮件执行。打开邮件不会自动下载附件。草稿仅存本机；界面可显式选取附件，agent 的 mail.messageSend 只发送纯文本。"],
     },
     exportData: () => ({ accounts: engine.listAccounts().items, mailboxes: engine.mailboxes().items, messages: engine.messages({ limit: 200 }).items }),
     importData: (payload) => { const d = payload && typeof payload === "object" ? payload : {}; let imported = 0; for (const a of Array.isArray(d.accounts) ? d.accounts : []) { try { engine.createAccount(a); imported += 1; } catch { /* skip */ } } return { imported }; },

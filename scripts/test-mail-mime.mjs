@@ -110,7 +110,11 @@ test("历史行回填：解主题、把发件人拆成地址 + 名称，且重�
   assert.ok(row.to.indexOf("中文") >= 0);
   assert.equal(m.backfillHeaders(), 0, "第二次不应再改");
   assert.equal(m.messages({}).items[0].hasAttachment, null);
-  db.prepare("INSERT INTO mail_attachment (id,message_id,filename) VALUES (?,?,?)").run("att1", "old1", "report.pdf");
+  assert.equal(m.messages({}).items[0].attachmentName, "");
+  const addAttachment = db.prepare("INSERT INTO mail_attachment (id,message_id,filename) VALUES (?,?,?)");
+  addAttachment.run("att1", "old1", "report.pdf");
+  addAttachment.run("att2", "old1", "report.xlsx");
+  assert.equal(m.messages({}).items[0].attachmentName, "report.pdf");
   assert.equal(m.messages({}).items[0].hasAttachment, true);
   assert.equal(m.messages({}).items[0].fromName, "12306@rails.com.cn");
 });

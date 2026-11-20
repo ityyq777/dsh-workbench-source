@@ -56,6 +56,17 @@ test("样式表是三栏栅格 + 900px 单列降级", () => {
   assert.deepEqual(block.match(/#[0-9a-fA-F]{3,8}/g) || [], []);
 });
 
+test("邮件行按本地日历显示短日期并优先展示读信发现的附件名", () => {
+  const rows = require("../packages/addons/mail/client/views/message-rows.cjs");
+  const h = (type, props, ...kids) => ({type, props, kids});
+  const now = new Date(2026, 5, 2, 0, 1);
+  const items = [now, new Date(2026,5,1,23,59), new Date(2026,4,1), new Date(2025,11,31), NaN].map((date,id) => ({id, dateAt:+date}));
+  const opts = {lang:"zh", now, attachmentUpdates:new Map([[0,{hasAttachment:true,attachmentName:"车票.pdf"}]]), sender:()=>"", senderDetail:()=>"", isUnread:()=>false};
+  const buttons = rows(h, items, opts).filter(r => r.type === "button");
+  assert.deepEqual(buttons.map(r => r.kids.find(k => k?.type === "time").kids[0]), ["00:01", "昨天 23:59", "5/1", "2025/12/31", "—"]);
+  assert.equal(buttons[0].kids.find(k => k?.props?.className === "wbml-attachment").kids[1].kids[0], "车票.pdf");
+});
+
 test("本地游标跨三页，同日同秒与期间新到邮件不会造成漏信或重信", () => {
   const db = new DatabaseSync(":memory:");
   ensureSchema(db);
@@ -164,7 +175,7 @@ test("消息页：真实控件事件调用、三栏结构、切换和正文竞�
     assert.equal(nodes("wbml-date-group").length, 2, "跨本地日期分组");
     assert.ok(nodes("wbml-list-row").every((row) => text(row).includes("工作邮箱")), "汇总列表标识来源");
     assert.equal(nodes("wbml-time").length, 2);
-    assert.ok(nodes("wbml-time").every((node) => text(node).length <= 6), "列表时间不带完整日期");
+    assert.ok(nodes("wbml-time").every((node) => node.props.dateTime && node.props.title), "短日期保留完整时间");
     assert.equal(calls.filter(([name]) => name === "mail.messageBody").length, 0, "列表不预下载正文");
     const syncIcon = walk(button("同步最新邮件")).find((n) => n.props["aria-hidden"] === true);
     assert.equal(syncIcon?.props.size, 14);
@@ -198,6 +209,13 @@ test("消息页：真实控件事件调用、三栏结构、切换和正文竞�
     assert.ok(layout.kids.includes(nodes("wbml-listpane")[0]) && layout.kids.includes(nodes("wbml-detailpane")[0]));
     await settle();
     render();
+    const expandButton = () => walk(tree).find(n => n.type === "button" && n.props.className?.includes("wbml-expand"));
+    const oldBodyRequests = calls.filter(([name]) => name === "mail.messageBody").length;
+    expandButton().props.onClick();
+    render();
+    assert.equal(expandButton().props["aria-pressed"], true);
+    assert.match(nodes("wbml-detailpane")[0].props.className, /is-expanded/);
+    assert.equal(calls.filter(([name]) => name === "mail.messageBody").length, oldBodyRequests);
     assert.ok(button("上一封").props.disabled);
     assert.ok(!button("下一封").props.disabled);
     button("下一封").props.onClick();
@@ -206,6 +224,13 @@ test("消息页：真实控件事件调用、三栏结构、切换和正文竞�
     await settle();
     render();
     assert.deepEqual(nodes("wbml-body").find((x) => x.type === "pre").kids, ["second"]);
+    assert.equal(expandButton().props["aria-pressed"], true);
+    button("返回列表").props.onClick();
+    render();
+    assert.equal(nodes("wbml-detailpane").length, 0);
+    nodes("wbml-list-row")[1].props.onClick();
+    render();
+    assert.equal(expandButton().props["aria-pressed"], false);
     button("下一页").props.onClick();
     render();
     assert.equal(nodes("wbml-detailpane").length, 0);

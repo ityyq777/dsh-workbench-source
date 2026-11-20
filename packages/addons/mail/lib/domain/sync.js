@@ -164,7 +164,7 @@ export function createSync({ db, account, password, message }) {
             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(account_id,mailbox,uid) DO UPDATE SET flags=excluded.flags,updated_at=excluded.updated_at`,
           id, accountId, mailbox, it.uid, res.uidValidity, it.messageId, it.subject, it.from, it.fromName || '', it.to,
           it.cc, dateAt, it.flags, stamp, stamp, it.replyTo, it.threadRefs);
-          return { id, accountId, accountName: a.name || a.email, mailbox, uid: it.uid, subject: it.subject, from: it.from,
+          return { id, accountId, accountName: a.name || a.email, mailbox, uid: it.uid, uidValidity: res.uidValidity, subject: it.subject, from: it.from,
             fromName: it.fromName, dateAt, flags: it.flags };
         });
         return { source: 'server', items, truncated: res.truncated };

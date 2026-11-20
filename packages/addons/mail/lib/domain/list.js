@@ -24,13 +24,13 @@ export function listMessages(db, input = {}) {
     cond.push("(subject LIKE ? ESCAPE '\\' OR from_addr LIKE ? ESCAPE '\\')"); args.push(pattern, pattern);
   }
   if (input.cursor) { cond.push('(date_at,id)<(?,?)'); args.push(...decode(input.cursor, scope)); }
-  const rows = db.prepare(`SELECT id,account_id,mailbox,uid,message_id,subject,from_addr,from_name,to_addr,cc_addr,date_at,preview,body_at,flags,created_at,
-    EXISTS(SELECT 1 FROM mail_attachment att WHERE att.message_id=m.id) AS known_attachment,
+  const rows = db.prepare(`SELECT id,account_id,mailbox,uid,uid_validity,message_id,subject,from_addr,from_name,to_addr,cc_addr,date_at,preview,body_at,flags,created_at,
+    (SELECT att.filename FROM mail_attachment att WHERE att.message_id=m.id ORDER BY att.rowid LIMIT 1) AS attachment_name,
     (SELECT a.name FROM mail_account a WHERE a.id=m.account_id) AS account_name
     FROM mail_message m WHERE ${cond.join(' AND ')} ORDER BY date_at DESC,id DESC LIMIT ?`).all(...args, limit + 1);
   const hasMore = rows.length > limit;
   if (hasMore) rows.pop();
   const tail = rows.at(-1);
-  const items = rows.map(r => { const m = messageRow(r); delete m.body; return { ...m, accountName: r.account_name, hasAttachment: r.known_attachment ? true : null }; });
+  const items = rows.map(r => { const m = messageRow(r); delete m.body; return { ...m, accountName: r.account_name, hasAttachment: r.attachment_name != null ? true : null, attachmentName: r.attachment_name || '' }; });
   return { items, hasMore, nextCursor: hasMore ? Buffer.from(JSON.stringify([tail.date_at,tail.id,scope])).toString('base64url') : null };
 }
