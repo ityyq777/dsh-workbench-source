@@ -29,8 +29,17 @@ if (!host || !host.react) {
   module.exports = { name: "dsh-workbench-danmaku", inject: [], apply: function () {} };
 } else {
   var React = host.react;
+  // 必须逐个静态 require：构建脚本只内联静态依赖，动态拼接的 require 会留到浏览器里执行，
+  // 而浏览器端没有可用的模块解析器，会在 registerAddon 之前抛错，表现为视图一直加载不出来。
+  var icons = {
+    megaphone: require("lucide-react/icons/megaphone").default,
+    list: require("lucide-react/icons/list").default,
+    settings: require("lucide-react/icons/settings").default,
+    database: require("lucide-react/icons/database").default,
+    play: require("lucide-react/icons/play").default,
+  };
   var tab = function (name) {
-    return require("lucide-react/icons/" + name).default;
+    return icons[name];
   };
 
   host.registerAddon({

@@ -188,7 +188,9 @@ function mount() {
   function connect() {
     if (sse) return;
     sse = new EventSource("/workbench/api/events");
-    sse.onmessage = function (event) {
+    // 宿主用具名事件 domain-event 推送（不是默认 message），必须 addEventListener，
+    // 否则 onmessage 永远收不到 play/changed。
+    sse.addEventListener("domain-event", function (event) {
       var payload;
       try {
         payload = JSON.parse(event.data);
@@ -201,7 +203,7 @@ function mount() {
       } else if (payload.event === "changed") {
         refresh();
       }
-    };
+    });
     sse.onerror = function () {
       /* EventSource 自带重连 */
     };
