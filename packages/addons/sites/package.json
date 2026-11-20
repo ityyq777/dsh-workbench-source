@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbench-sites",
-  "version": "1.12.4",
+  "version": "1.12.5",
   "private": true,
   "type": "module",
   "description": "个人工作台站点插件：目录树、链接与标签",

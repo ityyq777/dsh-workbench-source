@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbench-message",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "个人工作台消息插件：统一消息发送入口（子插件与 agent 共用）、未读计数、提示音与保留期清理",
   "type": "module",
   "main": "lib/index.js",

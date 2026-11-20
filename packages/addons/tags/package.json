@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbench-tags",
-  "version": "1.7.3",
+  "version": "1.7.4",
   "description": "个人工作台标签插件：创建与管理标签，为站点等业务提供标签归类",
   "type": "module",
   "main": "lib/index.js",
