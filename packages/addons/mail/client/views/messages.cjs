@@ -1,20 +1,22 @@
 "use strict";
+var GLYPHS = require("../ui/icons.cjs").ICONS;
+
 var C = require("../ui/common.cjs");
 var Attachments = require("../ui/attachments.cjs");
 var ReplyTools = require("../ui/reply-tools.cjs");
 var iconLabel = require("../../../lib/icon-label.cjs");
-var Folder = require("lucide-react/icons/folder").default;
-var InboxIcon = require("lucide-react/icons/inbox").default;
-var Refresh = require("lucide-react/icons/refresh-cw").default;
-var Download = require("lucide-react/icons/download").default;
-var Search = require("lucide-react/icons/search").default;
+var Folder = GLYPHS["folder"];
+var InboxIcon = GLYPHS["inbox"];
+var Refresh = GLYPHS["refresh-cw"];
+var Download = GLYPHS["download"];
+var Search = GLYPHS["search"];
 var messageRows = require("./message-rows.cjs");
 var Reader = require("./reader-context.cjs");
 var detailPane = require("./detail-pane.cjs");
-var Mail = require("lucide-react/icons/mail").default;
-var MailOpen = require("lucide-react/icons/mail-open").default;
-var Move = require("lucide-react/icons/folder-input").default;
-var Trash = require("lucide-react/icons/trash-2").default;
+var Mail = GLYPHS["mail"];
+var MailOpen = GLYPHS["mail-open"];
+var Move = GLYPHS["folder-input"];
+var Trash = GLYPHS["trash-2"];
 
 module.exports = function Messages(props) {
   var h = props.h,

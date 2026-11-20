@@ -1,14 +1,16 @@
 "use strict";
+var GLYPHS = require("../ui/icons.cjs").ICONS;
+
 /** 凭据库：全局列表 + 搜索/类型筛选 + 所属集合；明文只在 reveal 弹层里出现。 */
 var C = require("../ui/common.cjs");
 var AskPassphrase = require("../ui/ask-passphrase.cjs");
 var iconLabel = require("../../../lib/icon-label.cjs");
-var Refresh = require("lucide-react/icons/refresh-cw").default;
-var Unlock = require("lucide-react/icons/lock-open").default;
-var Plus = require("lucide-react/icons/plus").default;
-var Eye = require("lucide-react/icons/eye").default;
-var Pencil = require("lucide-react/icons/pencil").default;
-var Trash = require("lucide-react/icons/trash-2").default;
+var Refresh = GLYPHS["refresh-cw"];
+var Unlock = GLYPHS["lock-open"];
+var Plus = GLYPHS["plus"];
+var Eye = GLYPHS["eye"];
+var Pencil = GLYPHS["pencil"];
+var Trash = GLYPHS["trash-2"];
 var SecretField = require("../../../lib/secret-field.cjs");
 
 var K = require("../ui/kinds.cjs");

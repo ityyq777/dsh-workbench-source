@@ -1,4 +1,6 @@
 "use strict";
+var GLYPHS = require("./ui/icons.cjs").ICONS;
+
 /**
  * 弹幕插件客户端入口：
  * 1) 立刻把整个 DSH 窗口的弹幕层挂到 body（不依赖 React、也不依赖工作台视图是否打开）；
@@ -40,11 +42,11 @@ function hasAddon(host) {
 // 必须逐个静态 require：构建脚本只内联静态依赖，动态拼接的 require 会留到浏览器里执行，
 // 而浏览器端没有可用的模块解析器，会在 registerAddon 之前抛错，表现为视图一直加载不出来。
 var icons = {
-  megaphone: require("lucide-react/icons/megaphone").default,
-  list: require("lucide-react/icons/list").default,
-  settings: require("lucide-react/icons/settings").default,
-  database: require("lucide-react/icons/database").default,
-  play: require("lucide-react/icons/play").default,
+  megaphone: GLYPHS["megaphone"],
+  list: GLYPHS["list"],
+  settings: GLYPHS["settings"],
+  database: GLYPHS["database"],
+  play: GLYPHS["play"],
 };
 
 // 视图标签（view-tabs）只认 function 类型的图标，lucide 的默认导出是 forwardRef 对象，

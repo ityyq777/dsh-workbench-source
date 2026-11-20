@@ -1,8 +1,19 @@
 // Explicit entity controls shared by task dialogs and the timeline navigation.
 "use strict";
+var createOverlay = require("../../../lib/overlay.cjs");
 function result(r) { if (!r || !r.ok) throw Error(r && r.error || "请求失败"); return r.result; }
 module.exports = function (React) {
   var h = React.createElement;
+  var EditorOverlay = createOverlay({
+    maskClass: "wbt-modal-mask",
+    dialogClass: "wbt-modal",
+    ariaLabelOf: function (p) {
+      var tr = require("./timeline-copy.cjs")(p.t);
+      return p.item ? tr("编辑时间线") : tr("新建时间线");
+    },
+    // 表单弹窗点遮罩容易误关，保持原有行为：只有 Esc 与取消按钮关闭。
+    closeOnMask: false,
+  });
   // 受控候选列表：不用原生 select，避免展开浮层越出弹窗；列表限高内部滚动，键盘可操作。
   function Picker(p) {
     var tr = require("./timeline-copy.cjs")(p.t);
@@ -75,12 +86,12 @@ module.exports = function (React) {
       if (item) args.timelineId = item.timelineId || item.timelineKey || item.id;
       p.api.call(item ? "taskTimelines.update" : "taskTimelines.create", args).then(result).then(function (r) { p.onSaved(r.timeline); }).catch(function (e) { pending.current = false; setError(String(e.message || e)); setBusy(false); });
     }
-    return h("div", { className: "wbt-modal-mask", onKeyDown: function (e) { if (e.key === "Escape" && !busy) { e.stopPropagation(); p.onClose(); } } }, h("div", { className: "wbt-modal", role: "dialog", "aria-modal": true, "aria-label": item ? tr("编辑时间线") : tr("新建时间线") },
+    return h(EditorOverlay, { onClose: p.onClose, closeOnEscape: !busy, closeOnMask: false, autoFocus: false },
       h("div", { className: "wbt-modal-head" }, h("h3", null, item ? tr("编辑时间线") : tr("新建时间线"))),
       h("label", { className: "wbt-field" }, tr("时间线标题"), h("input", { className: "wbt-input", autoFocus: true, value: title, placeholder: tr("未命名时间线"), onChange: function (e) { setTitle(e.target.value); } })),
       h("label", { className: "wbt-field" }, tr("时间线描述"), h("textarea", { className: "wbt-textarea", value: description, onChange: function (e) { setDescription(e.target.value); } })),
       error ? h("p", { role: "alert", className: "wbt-err" }, error) : null,
-      h("div", { className: "wbt-modal-foot" }, h("button", { className: "wbt-btn", disabled: busy, onClick: p.onClose }, tr("取消")), h("button", { className: "wbt-btn primary", disabled: busy, onClick: save }, busy ? tr("保存中…") : tr("保存时间线")))));
+      h("div", { className: "wbt-modal-foot" }, h("button", { className: "wbt-btn", disabled: busy, onClick: p.onClose }, tr("取消")), h("button", { className: "wbt-btn primary", disabled: busy, onClick: save }, busy ? tr("保存中…") : tr("保存时间线"))));
   }
   return { Picker: Picker, Editor: Editor, result: result };
 };

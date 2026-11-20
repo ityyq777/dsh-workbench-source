@@ -1,11 +1,13 @@
 "use strict";
+var GLYPHS = require("../ui/icons.cjs").ICONS;
+
 /** 保险箱首页：初始化 / 解锁 / 状态 / 快速锁定。 */
 var C = require("../ui/common.cjs");
 var AskPassphrase = require("../ui/ask-passphrase.cjs");
 var iconLabel = require("../../../lib/icon-label.cjs");
-var Lock = require("lucide-react/icons/lock").default;
-var Unlock = require("lucide-react/icons/lock-open").default;
-var ShieldPlus = require("lucide-react/icons/shield-plus").default;
+var Lock = GLYPHS["lock"];
+var Unlock = GLYPHS["lock-open"];
+var ShieldPlus = GLYPHS["shield-plus"];
 var SecretField = require("../../../lib/secret-field.cjs");
 
 module.exports = function StatusView(props) {

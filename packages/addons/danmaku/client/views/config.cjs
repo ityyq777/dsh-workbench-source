@@ -1,4 +1,6 @@
 "use strict";
+var GLYPHS = require("../ui/icons.cjs").ICONS;
+
 /**
  * 配置视图：按 danmaku.configGet 的 groups/items 动态渲染，改动立即写入；
  * 每个分组一张卡片、组内一行一个设置项；下方附桌面弹幕状态卡片。
@@ -11,10 +13,10 @@ var copy = require("../copy.cjs");
 var DOMAIN = "danmaku";
 
 var ICONS = {
-  check: require("lucide-react/icons/check").default,
-  power: require("lucide-react/icons/power").default,
-  refresh: require("lucide-react/icons/refresh-cw").default,
-  monitor: require("lucide-react/icons/monitor").default,
+  check: GLYPHS["check"],
+  power: GLYPHS["power"],
+  refresh: GLYPHS["refresh-cw"],
+  monitor: GLYPHS["monitor"],
 };
 
 function glyph(Icon, size) {

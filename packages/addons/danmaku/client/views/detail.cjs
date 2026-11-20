@@ -1,4 +1,6 @@
 "use strict";
+var GLYPHS = require("../ui/icons.cjs").ICONS;
+
 /**
  * 弹幕详情面板：单条弹幕自己的内容、外观、动效与轮播参数。
  * 由 library.cjs 调用，props 里带当前草稿与写回函数，本文件不直接访问 api。
@@ -6,6 +8,7 @@
 var React = require("react");
 var h = React.createElement;
 var chipStyle = require("../overlay/chip-style.cjs");
+var createOverlay = require("../../../lib/overlay.cjs");
 
 var REDUCED = false;
 try {
@@ -17,8 +20,8 @@ try {
 var TONES = ["normal", "accent", "success", "warn", "danger"];
 
 var ICONS = {
-  x: require("lucide-react/icons/x").default,
-  eye: require("lucide-react/icons/eye").default,
+  x: GLYPHS["x"],
+  eye: GLYPHS["eye"],
 };
 
 function glyph(Icon, size) {
@@ -105,6 +108,15 @@ function PreviewStage(props) {
     h("div", { className: "wbdm-preview-hint" }, hint),
   );
 }
+
+// 详情面板外壳：遮罩点击、Esc、Tab 循环与关闭后的焦点归还统一走 lib/overlay。
+var DetailOverlay = createOverlay({
+  maskClass: "wbdm-modal",
+  dialogClass: "wbdm-modal-card",
+  ariaLabelOf: function (props) {
+    return props["aria-label"];
+  },
+});
 
 module.exports = function renderDetail(props) {
   var C = props.C;
@@ -228,16 +240,8 @@ module.exports = function renderDetail(props) {
   });
 
   return h(
-    "div",
-    {
-      className: "wbdm-modal",
-      onClick: function (e) {
-        if (e.target === e.currentTarget) props.cancel();
-      },
-    },
-    h(
-      "div",
-      { className: "wbdm-modal-card", role: "dialog", "aria-label": title },
+    DetailOverlay,
+    { "aria-label": title, onClose: props.cancel },
       h(
         "div",
         { className: "wbdm-modal-h" },
@@ -389,6 +393,5 @@ module.exports = function renderDetail(props) {
           busy ? C.saving : saveLabel,
         ),
       ),
-    ),
   );
 };

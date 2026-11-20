@@ -3,6 +3,13 @@
  * 工资记录页：KPI、筛选、按月分组、表格行展开详情、内联表单。
  * 只调本插件 action；金额格式与汇总口径统一走 ui/fields.cjs。
  */
+var createOverlay = require("../../../lib/overlay.cjs");
+// 记一笔/编辑工资的弹窗外壳走共享实现：遮罩、Esc、Tab 循环、关闭后焦点归位。
+var FormOverlay = createOverlay({
+  maskClass: "wbsal-mask",
+  dialogClass: "wbsal-modal",
+});
+
 module.exports = function Records(props) {
   var h = props.h, React = props.React, api = props.api, lang = props.lang;
   var C = require("../ui/common.cjs");
@@ -237,15 +244,8 @@ module.exports = function Records(props) {
   }
 
   function renderModal() {
-    return h("div", {
-      className: "wbsal-mask",
-      onClick: function (event) { if (event.target === event.currentTarget) closeForm(); },
-    }, h("div", {
-      className: "wbsal-modal",
-      role: "dialog",
-      "aria-modal": "true",
-      "aria-label": form.mode === "edit" ? "编辑工资" : "记一笔工资",
-    }, renderForm()));
+    var label = form.mode === "edit" ? "编辑工资" : "记一笔工资";
+    return h(FormOverlay, { "aria-label": label, onClose: closeForm }, renderForm());
   }
 
   function renderDetail(item) {

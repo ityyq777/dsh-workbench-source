@@ -3,11 +3,8 @@ const C = require('./common.cjs');
 const M = require('./compose-model.cjs');
 const Editor = require('../views/compose.cjs').Editor;
 const iconLabel = require('../../../lib/icon-label.cjs');
-const icons = {
-  reply: require('lucide-react/icons/reply').default,
-  replyAll: require('lucide-react/icons/reply-all').default,
-  forward: require('lucide-react/icons/forward').default,
-};
+const GLYPHS = require('./icons.cjs').ICONS;
+const icons = { reply: GLYPHS.reply, replyAll: GLYPHS['reply-all'], forward: GLYPHS.forward };
 module.exports = function ReplyTools(p) {
   const {React:R,h,api,message:m} = p;
   const accounts = C.useLoad(R,api,'mail.accountList',{},[]);

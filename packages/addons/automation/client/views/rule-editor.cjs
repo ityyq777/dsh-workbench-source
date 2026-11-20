@@ -1,4 +1,18 @@
 "use strict";
+var createOverlay = require("../../../lib/overlay.cjs");
+// 对话框外壳与插件自己的字段/校验分离：外壳统一深浅主题下的遮罩、Esc、Tab 循环与焦点归还。
+var EditorOverlay = createOverlay({
+  maskClass: "wba-modal",
+  dialogClass: "wba-modal-box",
+  ariaLabelOf: function (props) {
+    var t = props.t;
+    return props.form && props.form.id ? t("editor.editTitle") : t("editor.newTitle");
+  },
+  // 有未保存改动时要先问一次，所以关掉「点遮罩直接关」的默认行为，交给 close()。
+  closeOnMask: false,
+  autoFocusDialog: false,
+});
+
 /** 规则编辑器（模态）：四段表单、JSON 实时校验、未保存关闭确认。 */
 var trig = require("./trigger-fields.cjs");
 var json = require("./json-editor.cjs");
@@ -100,16 +114,12 @@ function RuleEditor(props) {
   var actionName = actions.indexOf(form.actionName) === -1 ? [form.actionName].concat(actions) : actions;
   var example = EXAMPLES[form.actionName];
 
+  // Esc 与焦点归还由共享外壳负责；这里只锁背景滚动。
   React.useEffect(function () {
     var prev = typeof document !== "undefined" ? document.body.style.overflow : "";
     if (typeof document !== "undefined") document.body.style.overflow = "hidden";
-    function onKey(e) {
-      if (e.key === "Escape") close();
-    }
-    if (typeof window !== "undefined") window.addEventListener("keydown", onKey);
     return function () {
       if (typeof document !== "undefined") document.body.style.overflow = prev;
-      if (typeof window !== "undefined") window.removeEventListener("keydown", onKey);
     };
   });
 
@@ -121,8 +131,7 @@ function RuleEditor(props) {
     props.onClose();
   }
 
-  return h("div", { className: "wba-modal", onClick: function (e) { if (e.target === e.currentTarget) close(); } },
-    h("div", { className: "wba-modal-box", role: "dialog", "aria-modal": "true" },
+  return h(EditorOverlay, { t: t, form: form, onClose: close, closeOnMask: false, autoFocus: false },
       h("div", { className: "wba-modal-head" },
         h("h3", null, form.id ? t("editor.editTitle") : t("editor.newTitle")),
         h("button", { type: "button", className: "wba-icon-btn", title: t("common.close"), onClick: close }, icon ? icon("x", 15) : "×")),
@@ -202,7 +211,7 @@ function RuleEditor(props) {
         h("span", { className: "wba-sub wba-grow" }, validation.valid ? "" : errs.name || errs.actionArgs || errs.condition || t("editor.nameEmptySave")),
         h(C.Btn, { h: h, onClick: close }, t("common.cancel")),
         h(C.Btn, { h: h, kind: "primary", disabled: busy || !validation.valid, onClick: function () { props.onSave(buildPayload(form)); } },
-          busy ? t("common.loading") : t("common.save")))));
+          busy ? t("common.loading") : t("common.save"))));
 }
 
 module.exports = { RuleEditor: RuleEditor, buildPayload: buildPayload, validateForm: validateForm, EXAMPLES: EXAMPLES };

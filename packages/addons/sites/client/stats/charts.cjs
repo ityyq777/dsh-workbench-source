@@ -2,17 +2,18 @@
 "use strict";
 
 var lib = require("../../../lib/stats-charts.cjs");
+var G = require("../ui/icons.cjs").ICONS;
 
 var ICONS = {
-  "refresh": require("lucide-react/icons/refresh-cw").default,
-  "globe": require("lucide-react/icons/globe").default,
-  "link": require("lucide-react/icons/link-2").default,
-  "tag": require("lucide-react/icons/tag").default,
-  "pie": require("lucide-react/icons/pie-chart").default,
-  "folder": require("lucide-react/icons/folder-tree").default,
-  "unlink": require("lucide-react/icons/unlink").default,
-  "layers": require("lucide-react/icons/layers").default,
-  "plus": require("lucide-react/icons/plus").default,
+  "refresh": G["refresh"],
+  "globe": G["globe"],
+  "link": G["link"],
+  "tag": G["tag"],
+  "pie": G["pie-chart"],
+  "folder": G["folder-tree"],
+  "unlink": G["unlink"],
+  "layers": G["layers"],
+  "plus": G["plus"],
 };
 
 module.exports = {

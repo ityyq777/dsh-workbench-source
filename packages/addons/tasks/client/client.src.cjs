@@ -35,7 +35,8 @@
   };
 
   var icons = require("./ui/icons.cjs"), ICONS = icons.ICONS, Icon = icons.Icon;
-  var workspaceView = require("./views/workspace-view.cjs")({ React: React, Icon: Icon });
+  var createOverlay = require("../../lib/overlay.cjs");
+  var workspaceView = require("./views/workspace-view.cjs")({ React: React, Icon: Icon, createOverlay: createOverlay });
   // 命令页的模板正文复用描述/感受的渲染与切换控件，由入口注入；视图自身保持零 require。
   var commandsView = require("./views/commands.cjs")({
     React: React,
@@ -383,7 +384,7 @@
   host.registerAddon({
     id: "wb-addon-tasks",
     version: "5.2.28",
-    icon: require("lucide-react/icons/list-checks").default,
+    icon: ICONS["list-checks"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "记录", en: "Records" }, component: TasksView },

@@ -1,4 +1,6 @@
 "use strict";
+var GLYPHS = require("../ui/icons.cjs").ICONS;
+
 /**
  * 弹幕库视图：清单、快速添加，以及每条弹幕自己的详情面板（内容/外观/动效/轮播）。
  * 版式与其他插件对齐：hero + 指标卡，下面是「添加」和「清单」两张卡片。
@@ -11,15 +13,15 @@ var TONES = ["normal", "accent", "success", "warn", "danger"];
 var MAX_LEN = 100;
 
 var ICONS = {
-  up: require("lucide-react/icons/arrow-up").default,
-  down: require("lucide-react/icons/arrow-down").default,
-  eye: require("lucide-react/icons/eye").default,
-  trash: require("lucide-react/icons/trash-2").default,
-  check: require("lucide-react/icons/check").default,
-  x: require("lucide-react/icons/x").default,
-  plus: require("lucide-react/icons/plus").default,
-  pencil: require("lucide-react/icons/pencil").default,
-  megaphone: require("lucide-react/icons/megaphone").default,
+  up: GLYPHS["arrow-up"],
+  down: GLYPHS["arrow-down"],
+  eye: GLYPHS["eye"],
+  trash: GLYPHS["trash-2"],
+  check: GLYPHS["check"],
+  x: GLYPHS["x"],
+  plus: GLYPHS["plus"],
+  pencil: GLYPHS["pencil"],
+  megaphone: GLYPHS["megaphone"],
 };
 
 function glyph(Icon, size) {

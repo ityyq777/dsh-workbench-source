@@ -1,5 +1,7 @@
 "use strict";
-const Paperclip = require("lucide-react/icons/paperclip").default;
+var GLYPHS = require("../ui/icons.cjs").ICONS;
+
+const Paperclip = GLYPHS["paperclip"];
 
 module.exports = function messageRows(h, items, options) {
   const { current, showSource, lang, attachmentUpdates, open, sender, senderDetail, isUnread } = options;
