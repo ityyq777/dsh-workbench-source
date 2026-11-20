@@ -39,6 +39,451 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// packages/addons/lib/icons.cjs
+var require_icons = __commonJS({
+  "packages/addons/lib/icons.cjs"(exports2, module2) {
+    "use strict";
+    var h = require("react").createElement;
+    function create(prefix, glyphs, options) {
+      var opts = options || {};
+      var ICONS = Object.assign({}, glyphs);
+      function Icon2(props) {
+        var C = ICONS[props.name] || (opts.fallback ? ICONS[opts.fallback] : null);
+        if (!C) return null;
+        var size = typeof opts.sizeOf === "function" ? opts.sizeOf(props) : props.size || 14;
+        var cls = prefix + "-svg" + (opts.classNameAppend && props.className ? " " + props.className : "");
+        var attrs = {
+          size,
+          strokeWidth: props.strokeWidth || 2,
+          "aria-hidden": "true",
+          className: cls
+        };
+        if (opts.focusable) attrs.focusable = false;
+        return h(C, attrs);
+      }
+      var set = { ICONS, Icon: Icon2 };
+      if (opts.tabIcon) {
+        set.tabIcon = function(name) {
+          return function TabIcon() {
+            return h(Icon2, { name, size: 14 });
+          };
+        };
+      }
+      return set;
+    }
+    module2.exports = { create };
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toKebabCase.mjs
+var toKebabCase;
+var init_toKebabCase = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toKebabCase.mjs"() {
+    toKebabCase = (string) => string?.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toLucideIconData.mjs
+function toLucideIconData(iconName, iconNode, aliases = []) {
+  if (iconNode == null) {
+    throw new Error("[lucide]: iconNode is required when icon name is used");
+  }
+  return {
+    name: toKebabCase(iconName),
+    size: 24,
+    node: iconNode,
+    ...aliases.length > 0 ? { aliases } : {}
+  };
+}
+var init_toLucideIconData = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toLucideIconData.mjs"() {
+    init_toKebabCase();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toCamelCase.mjs
+var toCamelCase;
+var init_toCamelCase = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toCamelCase.mjs"() {
+    toCamelCase = (string) => {
+      let out = "";
+      let upperNext = false;
+      for (const ch of string) {
+        if (ch === "-" || ch === "_" || ch <= " ") {
+          upperNext = out.length > 0;
+          continue;
+        }
+        if (out.length === 0) {
+          out += ch.toLowerCase();
+        } else {
+          out += upperNext ? ch.toUpperCase() : ch;
+        }
+        upperNext = false;
+      }
+      return out;
+    };
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toPascalCase.mjs
+var toPascalCase;
+var init_toPascalCase = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toPascalCase.mjs"() {
+    init_toCamelCase();
+    toPascalCase = (string) => {
+      const camelCase = toCamelCase(string);
+      return camelCase.charAt(0).toUpperCase() + camelCase.slice(1);
+    };
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/mergeClasses.mjs
+var mergeClasses;
+var init_mergeClasses = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/mergeClasses.mjs"() {
+    mergeClasses = (...classes) => classes.filter((className, index, array) => {
+      return Boolean(className) && className.trim() !== "" && array.indexOf(className) === index;
+    }).join(" ").trim();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/defaultAttributes.mjs
+var defaultAttributes;
+var init_defaultAttributes = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/defaultAttributes.mjs"() {
+    defaultAttributes = {
+      xmlns: "http://www.w3.org/2000/svg",
+      width: 24,
+      height: 24,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": 2,
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round"
+    };
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/buildLucideIconNode.mjs
+function isDefined(value) {
+  return value !== null && value !== void 0;
+}
+function buildLucideIconNode(icon, params = {}) {
+  const attributeNames = params.attributeNames ?? {};
+  const getAttributeName = (attributeName) => attributeNames[attributeName] ?? attributeName;
+  const viewBoxWidth = icon.size ?? icon.width ?? defaultAttributes["width"];
+  const viewBoxHeight = icon.size ?? icon.height ?? defaultAttributes["height"];
+  const aliasClassNames = icon.aliases?.filter((alias) => typeof alias === "string" && alias.trim() !== "").map((alias) => `lucide-${alias}`) ?? [];
+  const iconClassNames = [...icon.name ? [`lucide-${icon.name}`] : [], ...aliasClassNames];
+  const classNamesFromClassName = params.className?.split(" ").filter(Boolean) ?? [];
+  const className = params.includeDefaultClasses === false ? mergeClasses(...classNamesFromClassName) : mergeClasses("lucide", ...iconClassNames, ...classNamesFromClassName);
+  const calculatedStrokeWidth = params.absoluteStrokeWidth ? Number(params.strokeWidth ?? defaultAttributes["stroke-width"]) * Number(icon.size ?? icon.width ?? defaultAttributes["width"]) / Number(params.size ?? params.width ?? defaultAttributes["width"]) : params.strokeWidth ?? defaultAttributes["stroke-width"];
+  const attributes = {
+    ...Object.entries(defaultAttributes).reduce((attrs, [attrName, value]) => {
+      attrs[getAttributeName(attrName)] = value;
+      return attrs;
+    }, {}),
+    ..."color" in params && params.color && {
+      [getAttributeName("stroke")]: params.color
+    },
+    ..."size" in params && isDefined(params.size) && {
+      [getAttributeName("width")]: params.size,
+      [getAttributeName("height")]: params.size
+    },
+    ..."width" in params && isDefined(params.width) && {
+      [getAttributeName("width")]: params.width
+    },
+    ..."height" in params && isDefined(params.height) && {
+      [getAttributeName("height")]: params.height
+    },
+    [getAttributeName("stroke-width")]: calculatedStrokeWidth,
+    ...className && {
+      [getAttributeName("class")]: className
+    },
+    [getAttributeName("viewBox")]: `0 0 ${viewBoxWidth} ${viewBoxHeight}`,
+    ...params.hasA11yProp === false ? {
+      [getAttributeName("aria-hidden")]: "true"
+    } : {},
+    ..."attributes" in params && params.attributes
+  };
+  return [
+    "svg",
+    attributes,
+    icon.node.map((child) => {
+      const [name, attrs, children] = child;
+      const nextAttrs = params.nonScalingStroke ? { [getAttributeName("vector-effect")]: "non-scaling-stroke", ...attrs } : attrs;
+      return children ? [name, nextAttrs, children] : [name, nextAttrs];
+    })
+  ];
+}
+var init_buildLucideIconNode = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/buildLucideIconNode.mjs"() {
+    init_defaultAttributes();
+    init_mergeClasses();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/buildLucideIconForReact.mjs
+function buildLucideIconForReact(icon, params = {}) {
+  return buildLucideIconNode(icon, {
+    ...params,
+    attributeNames: {
+      ...params.attributeNames,
+      class: "className",
+      "stroke-width": "strokeWidth",
+      "stroke-linecap": "strokeLinecap",
+      "stroke-linejoin": "strokeLinejoin",
+      "vector-effect": "vectorEffect"
+    }
+  });
+}
+var init_buildLucideIconForReact = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/buildLucideIconForReact.mjs"() {
+    init_buildLucideIconNode();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/hasA11yProp.mjs
+var hasA11yProp;
+var init_hasA11yProp = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/hasA11yProp.mjs"() {
+    hasA11yProp = (props) => {
+      for (const prop in props) {
+        if (prop.startsWith("aria-") || prop === "role" || prop === "title") {
+          return true;
+        }
+      }
+      return false;
+    };
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/context.mjs
+var import_react, LucideContext, useLucideContext;
+var init_context = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/context.mjs"() {
+    "use strict";
+    "use client";
+    import_react = require("react");
+    LucideContext = (0, import_react.createContext)({});
+    useLucideContext = () => (0, import_react.useContext)(LucideContext);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/Icon.mjs
+var import_react2, Icon;
+var init_Icon = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/Icon.mjs"() {
+    "use strict";
+    "use client";
+    import_react2 = require("react");
+    init_mergeClasses();
+    init_buildLucideIconForReact();
+    init_hasA11yProp();
+    init_context();
+    Icon = (0, import_react2.forwardRef)(
+      ({
+        color,
+        size,
+        width,
+        height,
+        strokeWidth,
+        absoluteStrokeWidth,
+        nonScalingStroke,
+        className = "",
+        children,
+        iconNode = [],
+        icon = {
+          node: iconNode,
+          aliases: [],
+          size: 24
+        },
+        ...rest
+      }, ref) => {
+        const {
+          size: contextSize = 24,
+          strokeWidth: contextStrokeWidth = 2,
+          absoluteStrokeWidth: contextAbsoluteStrokeWidth = false,
+          nonScalingStroke: contextNonScalingStroke = false,
+          color: contextColor = "currentColor",
+          className: contextClass = ""
+        } = useLucideContext() ?? {};
+        const hasAccessibleProp = Boolean(children) || hasA11yProp(rest);
+        const [name, svgAttributes, builtIconNode = []] = buildLucideIconForReact(icon, {
+          color: color ?? contextColor,
+          width: width ?? size ?? contextSize,
+          height: height ?? size ?? contextSize,
+          strokeWidth: strokeWidth ?? contextStrokeWidth,
+          absoluteStrokeWidth: absoluteStrokeWidth ?? contextAbsoluteStrokeWidth,
+          nonScalingStroke: nonScalingStroke ?? contextNonScalingStroke,
+          className: mergeClasses(contextClass, className),
+          hasA11yProp: hasAccessibleProp,
+          attributes: rest
+        });
+        return (0, import_react2.createElement)(
+          name,
+          {
+            ref,
+            ...svgAttributes
+          },
+          [
+            ...builtIconNode.map(([tag, attrs]) => (0, import_react2.createElement)(tag, attrs)),
+            ...Array.isArray(children) ? children : [children]
+          ]
+        );
+      }
+    );
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/createLucideIcon.mjs
+function createLucideIcon(iconDataOrName, iconNode = [], aliases = []) {
+  const iconData = typeof iconDataOrName === "string" ? toLucideIconData(iconDataOrName, iconNode, aliases) : iconDataOrName;
+  const Component = (0, import_react3.forwardRef)(
+    ({ className, ...props }, ref) => (0, import_react3.createElement)(Icon, {
+      ref,
+      icon: iconData,
+      className,
+      ...props
+    })
+  );
+  if (iconData.name) {
+    Component.displayName = toPascalCase(iconData.name);
+  }
+  return Component;
+}
+var import_react3;
+var init_createLucideIcon = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/createLucideIcon.mjs"() {
+    import_react3 = require("react");
+    init_toLucideIconData();
+    init_toPascalCase();
+    init_Icon();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chart-column.mjs
+var chart_column_exports = {};
+__export(chart_column_exports, {
+  __iconData: () => __iconData,
+  default: () => ChartColumn
+});
+var __iconData, ChartColumn;
+var init_chart_column = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chart-column.mjs"() {
+    init_createLucideIcon();
+    __iconData = {
+      name: "chart-column",
+      size: 24,
+      node: [
+        ["path", { d: "M3 3v16a2 2 0 0 0 2 2h16", key: "c24i48" }],
+        ["path", { d: "M18 17V9", key: "2bz60n" }],
+        ["path", { d: "M13 17V5", key: "1frdt8" }],
+        ["path", { d: "M8 17v-3", key: "17ska0" }]
+      ],
+      aliases: ["bar-chart-3"]
+    };
+    __iconData.node;
+    ChartColumn = createLucideIcon(__iconData);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs
+var database_exports = {};
+__export(database_exports, {
+  __iconData: () => __iconData2,
+  default: () => Database
+});
+var __iconData2, Database;
+var init_database = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs"() {
+    init_createLucideIcon();
+    __iconData2 = {
+      name: "database",
+      size: 24,
+      node: [
+        ["ellipse", { cx: "12", cy: "5", rx: "9", ry: "3", key: "msslwz" }],
+        ["path", { d: "M3 5V19A9 3 0 0 0 21 19V5", key: "1wlel7" }],
+        ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
+      ]
+    };
+    __iconData2.node;
+    Database = createLucideIcon(__iconData2);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs
+var list_exports = {};
+__export(list_exports, {
+  __iconData: () => __iconData3,
+  default: () => List
+});
+var __iconData3, List;
+var init_list = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs"() {
+    init_createLucideIcon();
+    __iconData3 = {
+      name: "list",
+      size: 24,
+      node: [
+        ["path", { d: "M3 5h.01", key: "18ugdj" }],
+        ["path", { d: "M3 12h.01", key: "nlz23k" }],
+        ["path", { d: "M3 19h.01", key: "noohij" }],
+        ["path", { d: "M8 5h13", key: "1pao27" }],
+        ["path", { d: "M8 12h13", key: "1za7za" }],
+        ["path", { d: "M8 19h13", key: "m83p4d" }]
+      ]
+    };
+    __iconData3.node;
+    List = createLucideIcon(__iconData3);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/wallet.mjs
+var wallet_exports = {};
+__export(wallet_exports, {
+  __iconData: () => __iconData4,
+  default: () => Wallet
+});
+var __iconData4, Wallet;
+var init_wallet = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/wallet.mjs"() {
+    init_createLucideIcon();
+    __iconData4 = {
+      name: "wallet",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1",
+            key: "18etb6"
+          }
+        ],
+        ["path", { d: "M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4", key: "xoc0q4" }]
+      ]
+    };
+    __iconData4.node;
+    Wallet = createLucideIcon(__iconData4);
+  }
+});
+
+// packages/addons/salary/client/ui/icons.cjs
+var require_icons2 = __commonJS({
+  "packages/addons/salary/client/ui/icons.cjs"(exports2, module2) {
+    "use strict";
+    var icons = require_icons();
+    var set = icons.create("wbsal", {
+      "chart-column": (init_chart_column(), __toCommonJS(chart_column_exports)).default,
+      "database": (init_database(), __toCommonJS(database_exports)).default,
+      "list": (init_list(), __toCommonJS(list_exports)).default,
+      "wallet": (init_wallet(), __toCommonJS(wallet_exports)).default
+    });
+    module2.exports = { ICONS: set.ICONS, Icon: set.Icon };
+  }
+});
+
 // packages/addons/lib/client-base-styles.cjs
 var require_client_base_styles = __commonJS({
   "packages/addons/lib/client-base-styles.cjs"(exports2, module2) {
@@ -364,400 +809,6 @@ var require_styles = __commonJS({
     ];
     var DATE = require_date_picker_styles()("wbsal");
     module2.exports = BASE.concat(PAGE, [DATE]).join("\n");
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toKebabCase.mjs
-var toKebabCase;
-var init_toKebabCase = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toKebabCase.mjs"() {
-    toKebabCase = (string) => string?.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toLucideIconData.mjs
-function toLucideIconData(iconName, iconNode, aliases = []) {
-  if (iconNode == null) {
-    throw new Error("[lucide]: iconNode is required when icon name is used");
-  }
-  return {
-    name: toKebabCase(iconName),
-    size: 24,
-    node: iconNode,
-    ...aliases.length > 0 ? { aliases } : {}
-  };
-}
-var init_toLucideIconData = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toLucideIconData.mjs"() {
-    init_toKebabCase();
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toCamelCase.mjs
-var toCamelCase;
-var init_toCamelCase = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toCamelCase.mjs"() {
-    toCamelCase = (string) => {
-      let out = "";
-      let upperNext = false;
-      for (const ch of string) {
-        if (ch === "-" || ch === "_" || ch <= " ") {
-          upperNext = out.length > 0;
-          continue;
-        }
-        if (out.length === 0) {
-          out += ch.toLowerCase();
-        } else {
-          out += upperNext ? ch.toUpperCase() : ch;
-        }
-        upperNext = false;
-      }
-      return out;
-    };
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toPascalCase.mjs
-var toPascalCase;
-var init_toPascalCase = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toPascalCase.mjs"() {
-    init_toCamelCase();
-    toPascalCase = (string) => {
-      const camelCase = toCamelCase(string);
-      return camelCase.charAt(0).toUpperCase() + camelCase.slice(1);
-    };
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/mergeClasses.mjs
-var mergeClasses;
-var init_mergeClasses = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/mergeClasses.mjs"() {
-    mergeClasses = (...classes) => classes.filter((className, index, array) => {
-      return Boolean(className) && className.trim() !== "" && array.indexOf(className) === index;
-    }).join(" ").trim();
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/defaultAttributes.mjs
-var defaultAttributes;
-var init_defaultAttributes = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/defaultAttributes.mjs"() {
-    defaultAttributes = {
-      xmlns: "http://www.w3.org/2000/svg",
-      width: 24,
-      height: 24,
-      viewBox: "0 0 24 24",
-      fill: "none",
-      stroke: "currentColor",
-      "stroke-width": 2,
-      "stroke-linecap": "round",
-      "stroke-linejoin": "round"
-    };
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/buildLucideIconNode.mjs
-function isDefined(value) {
-  return value !== null && value !== void 0;
-}
-function buildLucideIconNode(icon, params = {}) {
-  const attributeNames = params.attributeNames ?? {};
-  const getAttributeName = (attributeName) => attributeNames[attributeName] ?? attributeName;
-  const viewBoxWidth = icon.size ?? icon.width ?? defaultAttributes["width"];
-  const viewBoxHeight = icon.size ?? icon.height ?? defaultAttributes["height"];
-  const aliasClassNames = icon.aliases?.filter((alias) => typeof alias === "string" && alias.trim() !== "").map((alias) => `lucide-${alias}`) ?? [];
-  const iconClassNames = [...icon.name ? [`lucide-${icon.name}`] : [], ...aliasClassNames];
-  const classNamesFromClassName = params.className?.split(" ").filter(Boolean) ?? [];
-  const className = params.includeDefaultClasses === false ? mergeClasses(...classNamesFromClassName) : mergeClasses("lucide", ...iconClassNames, ...classNamesFromClassName);
-  const calculatedStrokeWidth = params.absoluteStrokeWidth ? Number(params.strokeWidth ?? defaultAttributes["stroke-width"]) * Number(icon.size ?? icon.width ?? defaultAttributes["width"]) / Number(params.size ?? params.width ?? defaultAttributes["width"]) : params.strokeWidth ?? defaultAttributes["stroke-width"];
-  const attributes = {
-    ...Object.entries(defaultAttributes).reduce((attrs, [attrName, value]) => {
-      attrs[getAttributeName(attrName)] = value;
-      return attrs;
-    }, {}),
-    ..."color" in params && params.color && {
-      [getAttributeName("stroke")]: params.color
-    },
-    ..."size" in params && isDefined(params.size) && {
-      [getAttributeName("width")]: params.size,
-      [getAttributeName("height")]: params.size
-    },
-    ..."width" in params && isDefined(params.width) && {
-      [getAttributeName("width")]: params.width
-    },
-    ..."height" in params && isDefined(params.height) && {
-      [getAttributeName("height")]: params.height
-    },
-    [getAttributeName("stroke-width")]: calculatedStrokeWidth,
-    ...className && {
-      [getAttributeName("class")]: className
-    },
-    [getAttributeName("viewBox")]: `0 0 ${viewBoxWidth} ${viewBoxHeight}`,
-    ...params.hasA11yProp === false ? {
-      [getAttributeName("aria-hidden")]: "true"
-    } : {},
-    ..."attributes" in params && params.attributes
-  };
-  return [
-    "svg",
-    attributes,
-    icon.node.map((child) => {
-      const [name, attrs, children] = child;
-      const nextAttrs = params.nonScalingStroke ? { [getAttributeName("vector-effect")]: "non-scaling-stroke", ...attrs } : attrs;
-      return children ? [name, nextAttrs, children] : [name, nextAttrs];
-    })
-  ];
-}
-var init_buildLucideIconNode = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/buildLucideIconNode.mjs"() {
-    init_defaultAttributes();
-    init_mergeClasses();
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/buildLucideIconForReact.mjs
-function buildLucideIconForReact(icon, params = {}) {
-  return buildLucideIconNode(icon, {
-    ...params,
-    attributeNames: {
-      ...params.attributeNames,
-      class: "className",
-      "stroke-width": "strokeWidth",
-      "stroke-linecap": "strokeLinecap",
-      "stroke-linejoin": "strokeLinejoin",
-      "vector-effect": "vectorEffect"
-    }
-  });
-}
-var init_buildLucideIconForReact = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/build/buildLucideIconForReact.mjs"() {
-    init_buildLucideIconNode();
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/hasA11yProp.mjs
-var hasA11yProp;
-var init_hasA11yProp = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/hasA11yProp.mjs"() {
-    hasA11yProp = (props) => {
-      for (const prop in props) {
-        if (prop.startsWith("aria-") || prop === "role" || prop === "title") {
-          return true;
-        }
-      }
-      return false;
-    };
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/context.mjs
-var import_react, LucideContext, useLucideContext;
-var init_context = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/context.mjs"() {
-    "use strict";
-    "use client";
-    import_react = require("react");
-    LucideContext = (0, import_react.createContext)({});
-    useLucideContext = () => (0, import_react.useContext)(LucideContext);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/Icon.mjs
-var import_react2, Icon;
-var init_Icon = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/Icon.mjs"() {
-    "use strict";
-    "use client";
-    import_react2 = require("react");
-    init_mergeClasses();
-    init_buildLucideIconForReact();
-    init_hasA11yProp();
-    init_context();
-    Icon = (0, import_react2.forwardRef)(
-      ({
-        color,
-        size,
-        width,
-        height,
-        strokeWidth,
-        absoluteStrokeWidth,
-        nonScalingStroke,
-        className = "",
-        children,
-        iconNode = [],
-        icon = {
-          node: iconNode,
-          aliases: [],
-          size: 24
-        },
-        ...rest
-      }, ref) => {
-        const {
-          size: contextSize = 24,
-          strokeWidth: contextStrokeWidth = 2,
-          absoluteStrokeWidth: contextAbsoluteStrokeWidth = false,
-          nonScalingStroke: contextNonScalingStroke = false,
-          color: contextColor = "currentColor",
-          className: contextClass = ""
-        } = useLucideContext() ?? {};
-        const hasAccessibleProp = Boolean(children) || hasA11yProp(rest);
-        const [name, svgAttributes, builtIconNode = []] = buildLucideIconForReact(icon, {
-          color: color ?? contextColor,
-          width: width ?? size ?? contextSize,
-          height: height ?? size ?? contextSize,
-          strokeWidth: strokeWidth ?? contextStrokeWidth,
-          absoluteStrokeWidth: absoluteStrokeWidth ?? contextAbsoluteStrokeWidth,
-          nonScalingStroke: nonScalingStroke ?? contextNonScalingStroke,
-          className: mergeClasses(contextClass, className),
-          hasA11yProp: hasAccessibleProp,
-          attributes: rest
-        });
-        return (0, import_react2.createElement)(
-          name,
-          {
-            ref,
-            ...svgAttributes
-          },
-          [
-            ...builtIconNode.map(([tag, attrs]) => (0, import_react2.createElement)(tag, attrs)),
-            ...Array.isArray(children) ? children : [children]
-          ]
-        );
-      }
-    );
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/createLucideIcon.mjs
-function createLucideIcon(iconDataOrName, iconNode = [], aliases = []) {
-  const iconData = typeof iconDataOrName === "string" ? toLucideIconData(iconDataOrName, iconNode, aliases) : iconDataOrName;
-  const Component = (0, import_react3.forwardRef)(
-    ({ className, ...props }, ref) => (0, import_react3.createElement)(Icon, {
-      ref,
-      icon: iconData,
-      className,
-      ...props
-    })
-  );
-  if (iconData.name) {
-    Component.displayName = toPascalCase(iconData.name);
-  }
-  return Component;
-}
-var import_react3;
-var init_createLucideIcon = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/createLucideIcon.mjs"() {
-    import_react3 = require("react");
-    init_toLucideIconData();
-    init_toPascalCase();
-    init_Icon();
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/wallet.mjs
-var wallet_exports = {};
-__export(wallet_exports, {
-  __iconData: () => __iconData,
-  default: () => Wallet
-});
-var __iconData, Wallet;
-var init_wallet = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/wallet.mjs"() {
-    init_createLucideIcon();
-    __iconData = {
-      name: "wallet",
-      size: 24,
-      node: [
-        [
-          "path",
-          {
-            d: "M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1",
-            key: "18etb6"
-          }
-        ],
-        ["path", { d: "M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4", key: "xoc0q4" }]
-      ]
-    };
-    __iconData.node;
-    Wallet = createLucideIcon(__iconData);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chart-column.mjs
-var chart_column_exports = {};
-__export(chart_column_exports, {
-  __iconData: () => __iconData2,
-  default: () => ChartColumn
-});
-var __iconData2, ChartColumn;
-var init_chart_column = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chart-column.mjs"() {
-    init_createLucideIcon();
-    __iconData2 = {
-      name: "chart-column",
-      size: 24,
-      node: [
-        ["path", { d: "M3 3v16a2 2 0 0 0 2 2h16", key: "c24i48" }],
-        ["path", { d: "M18 17V9", key: "2bz60n" }],
-        ["path", { d: "M13 17V5", key: "1frdt8" }],
-        ["path", { d: "M8 17v-3", key: "17ska0" }]
-      ],
-      aliases: ["bar-chart-3"]
-    };
-    __iconData2.node;
-    ChartColumn = createLucideIcon(__iconData2);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs
-var database_exports = {};
-__export(database_exports, {
-  __iconData: () => __iconData3,
-  default: () => Database
-});
-var __iconData3, Database;
-var init_database = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs"() {
-    init_createLucideIcon();
-    __iconData3 = {
-      name: "database",
-      size: 24,
-      node: [
-        ["ellipse", { cx: "12", cy: "5", rx: "9", ry: "3", key: "msslwz" }],
-        ["path", { d: "M3 5V19A9 3 0 0 0 21 19V5", key: "1wlel7" }],
-        ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
-      ]
-    };
-    __iconData3.node;
-    Database = createLucideIcon(__iconData3);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs
-var list_exports = {};
-__export(list_exports, {
-  __iconData: () => __iconData4,
-  default: () => List
-});
-var __iconData4, List;
-var init_list = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs"() {
-    init_createLucideIcon();
-    __iconData4 = {
-      name: "list",
-      size: 24,
-      node: [
-        ["path", { d: "M3 5h.01", key: "18ugdj" }],
-        ["path", { d: "M3 12h.01", key: "nlz23k" }],
-        ["path", { d: "M3 19h.01", key: "noohij" }],
-        ["path", { d: "M8 5h13", key: "1pao27" }],
-        ["path", { d: "M8 12h13", key: "1za7za" }],
-        ["path", { d: "M8 19h13", key: "m83p4d" }]
-      ]
-    };
-    __iconData4.node;
-    List = createLucideIcon(__iconData4);
   }
 });
 
@@ -1487,6 +1538,106 @@ var require_stats = __commonJS({
   }
 });
 
+// packages/addons/lib/overlay.cjs
+var require_overlay = __commonJS({
+  "packages/addons/lib/overlay.cjs"(exports2, module2) {
+    "use strict";
+    var defaultReact = require("react");
+    var FOCUSABLE = "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]";
+    module2.exports = function createOverlay(options) {
+      var opts = options || {};
+      var React = opts.React || defaultReact;
+      var h = React.createElement;
+      var tag = opts.tag || "section";
+      var maskClass = opts.maskClass;
+      var dialogClass = opts.dialogClass;
+      var dialogClassOf = opts.dialogClassOf || function() {
+        return "";
+      };
+      var ariaLabelOf = opts.ariaLabelOf || function(props) {
+        return props["aria-label"] || props.title;
+      };
+      var ariaLabelledByOf = opts.ariaLabelledByOf || function() {
+        return null;
+      };
+      var header = opts.header || null;
+      var closeOnEscape = opts.closeOnEscape || function() {
+        return true;
+      };
+      var closeOnMask = opts.closeOnMask || function() {
+        return true;
+      };
+      var extraKeyDown = opts.onKeyDown || null;
+      var autoFocusDialog = opts.autoFocusDialog !== false;
+      var focusableSelector = opts.focusableSelector || FOCUSABLE;
+      function Modal(props) {
+        var ref = React.useRef(null);
+        React.useEffect(function() {
+          var previous = typeof document !== "undefined" ? document.activeElement : null;
+          var focusIt = props.autoFocus !== void 0 ? props.autoFocus : autoFocusDialog;
+          if (focusIt && ref.current) ref.current.focus();
+          return function() {
+            if (previous && previous.isConnected) previous.focus();
+          };
+        }, []);
+        function onKeyDown(e) {
+          if (extraKeyDown && extraKeyDown(e, props, ref)) return;
+          if (e.key === "Escape") {
+            if (!(props.closeOnEscape !== void 0 ? props.closeOnEscape : closeOnEscape(props))) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (props.onClose) props.onClose();
+            return;
+          }
+          if (e.key !== "Tab" || !ref.current) return;
+          var els = ref.current.querySelectorAll(focusableSelector);
+          if (!els.length) {
+            e.preventDefault();
+            return;
+          }
+          var first = els[0];
+          var last = els[els.length - 1];
+          if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) {
+            e.preventDefault();
+            last.focus();
+          }
+          if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+        var labelledBy = ariaLabelledByOf(props);
+        return h(
+          "div",
+          {
+            className: maskClass,
+            onMouseDown: function(e) {
+              var allowed = props.closeOnMask !== void 0 ? props.closeOnMask : closeOnMask(props);
+              if (e.target === e.currentTarget && props.onClose && allowed) props.onClose();
+            }
+          },
+          h(
+            tag,
+            {
+              className: dialogClass + dialogClassOf(props),
+              role: "dialog",
+              "aria-modal": true,
+              "aria-label": labelledBy ? null : ariaLabelOf(props),
+              "aria-labelledby": labelledBy || null,
+              ref,
+              tabIndex: -1,
+              onKeyDown
+            },
+            header ? header(props) : null,
+            props.children
+          )
+        );
+      }
+      return Modal;
+    };
+  }
+});
+
 // packages/addons/lib/date-picker.cjs
 var require_date_picker = __commonJS({
   "packages/addons/lib/date-picker.cjs"(exports2, module2) {
@@ -1904,6 +2055,11 @@ var require_date_picker = __commonJS({
 var require_records = __commonJS({
   "packages/addons/salary/client/views/records.cjs"(exports2, module2) {
     "use strict";
+    var createOverlay = require_overlay();
+    var FormOverlay = createOverlay({
+      maskClass: "wbsal-mask",
+      dialogClass: "wbsal-modal"
+    });
     module2.exports = function Records(props) {
       var h = props.h, React = props.React, api = props.api, lang = props.lang;
       var C = require_common();
@@ -2202,17 +2358,8 @@ var require_records = __commonJS({
         );
       }
       function renderModal() {
-        return h("div", {
-          className: "wbsal-mask",
-          onClick: function(event) {
-            if (event.target === event.currentTarget) closeForm();
-          }
-        }, h("div", {
-          className: "wbsal-modal",
-          role: "dialog",
-          "aria-modal": "true",
-          "aria-label": form.mode === "edit" ? "\u7F16\u8F91\u5DE5\u8D44" : "\u8BB0\u4E00\u7B14\u5DE5\u8D44"
-        }, renderForm()));
+        var label = form.mode === "edit" ? "\u7F16\u8F91\u5DE5\u8D44" : "\u8BB0\u4E00\u7B14\u5DE5\u8D44";
+        return h(FormOverlay, { "aria-label": label, onClose: closeForm }, renderForm());
       }
       function renderDetail(item) {
         var blocks = F.GROUPS.map(function(group) {
@@ -4258,6 +4405,7 @@ var require_actions = __commonJS({
 });
 
 // packages/addons/salary/client/client.src.cjs
+var GLYPHS = require_icons2().ICONS;
 (function() {
   var root = typeof window !== "undefined" ? window : null;
   var host = root && root.__WB_HOST__;
@@ -4271,10 +4419,10 @@ var require_actions = __commonJS({
   var h = host.h;
   var CSS = require_styles();
   var ICONS = {
-    records: (init_wallet(), __toCommonJS(wallet_exports)).default,
-    stats: (init_chart_column(), __toCommonJS(chart_column_exports)).default,
-    data: (init_database(), __toCommonJS(database_exports)).default,
-    actions: (init_list(), __toCommonJS(list_exports)).default
+    records: GLYPHS["wallet"],
+    stats: GLYPHS["chart-column"],
+    data: GLYPHS["database"],
+    actions: GLYPHS["list"]
   };
   function Icon2(props) {
     var C = ICONS[props.name] || ICONS.records;
@@ -4301,8 +4449,8 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.3.0",
-    icon: (init_wallet(), __toCommonJS(wallet_exports)).default,
+    version: "0.3.1",
+    icon: GLYPHS["wallet"],
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },
       { id: "records", icon: tabIcon("records"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: withProps(require_records(), "\u8BB0\u5F55") },

@@ -39,196 +39,39 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// packages/addons/lib/client-base-styles.cjs
-var require_client_base_styles = __commonJS({
-  "packages/addons/lib/client-base-styles.cjs"(exports2, module2) {
+// packages/addons/lib/icons.cjs
+var require_icons = __commonJS({
+  "packages/addons/lib/icons.cjs"(exports2, module2) {
     "use strict";
-    var SECRET_FIELD = [
-      ".wb-secret-field{position:relative;display:flex;align-items:center;min-width:0}",
-      ".wb-secret-field input{flex:1 1 auto;min-width:0;padding-right:34px}",
-      ".wb-eye{position:absolute;right:4px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:6px;padding:4px;color:var(--wb-muted,#6b7280);cursor:pointer}",
-      ".wb-eye:hover:not(:disabled){color:var(--wb-accent,#2563eb);background:color-mix(in srgb, var(--wb-accent,#2563eb) 12%, transparent)}",
-      ".wb-eye:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:1px}",
-      ".wb-eye:disabled{opacity:.45;cursor:not-allowed}"
-    ];
-    module2.exports = function baseStyles(prefix) {
-      var p = String(prefix || "wb");
-      var s = "." + p;
-      return SECRET_FIELD.concat([
-        s + "-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
-        s + "-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
-        s + "-title{font-size:16px;font-weight:650;margin:0}",
-        s + "-sub{font-size:12px;color:var(--wb-muted,#6b7280);margin:2px 0 0}",
-        s + "-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
-        s + "-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
-        s + "-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
-        s + "-kpi{font-size:22px;font-weight:700;line-height:1.2}" + s + "-kpi-label{font-size:12px;color:var(--wb-muted,#6b7280)}",
-        s + "-table{width:100%;border-collapse:collapse;font-size:12px}" + s + "-table th," + s + "-table td{padding:7px 8px;border-bottom:1px solid var(--wb-border,#eef0f3);text-align:left;vertical-align:top}",
-        s + "-table th{font-weight:600;color:var(--wb-muted,#6b7280);white-space:nowrap}",
-        s + "-btn{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer}",
-        s + "-btn:hover:not(:disabled){border-color:var(--wb-accent,#2563eb)}" + s + "-btn:disabled{opacity:.5;cursor:default}",
-        s + "-btn.primary{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:#fff}",
-        s + "-btn.danger{color:#b91c1c;border-color:#fecaca}",
-        s + "-field{display:flex;flex-direction:column;gap:4px;font-size:12px}" + s + "-label{font-weight:600}",
-        s + "-field input," + s + "-field select," + s + "-field textarea{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:0}",
-        s + "-hint{color:var(--wb-muted,#6b7280);font-size:11px}" + s + "-notice{padding:8px 10px;border-radius:8px;font-size:12px;background:#eff6ff;color:#1e40af}",
-        s + "-notice.error{background:#fef2f2;color:#b91c1c}" + s + "-notice.ok{background:#ecfdf5;color:#047857}",
-        s + "-empty{padding:18px;text-align:center;color:var(--wb-muted,#6b7280);font-size:12px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:8px}",
-        s + "-pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;background:#f3f4f6;color:#374151}",
-        s + "-pill.ok{background:#ecfdf5;color:#047857}" + s + "-pill.error{background:#fef2f2;color:#b91c1c}" + s + "-pill.warn{background:#fffbeb;color:#b45309}",
-        s + "-json{margin:0;padding:8px;background:#f8fafc;border-radius:8px;font-size:11px;max-height:240px;overflow:auto}",
-        s + "-muted{color:var(--wb-muted,#6b7280)}" + s + "-link{color:var(--wb-accent,#2563eb);cursor:pointer;text-decoration:none}",
-        s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}"
-      ]);
-    };
-    module2.exports.secretFieldStyles = SECRET_FIELD;
-  }
-});
-
-// packages/addons/lib/icon-label.cjs
-var require_icon_label = __commonJS({
-  "packages/addons/lib/icon-label.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = function iconLabel(h, Icon2, text) {
-      return h(
-        "span",
-        { className: "wb-icon-label" },
-        h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }),
-        h("span", null, text)
-      );
-    };
-    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}";
-  }
-});
-
-// packages/addons/mail/client/ui/styles.cjs
-var require_styles = __commonJS({
-  "packages/addons/mail/client/ui/styles.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = require_client_base_styles()("wbml").concat([
-      ".wbml-page{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
-      ".wbml-input{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:120px}",
-      ".wbml-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}",
-      ".wbml-btn:disabled{opacity:1;background:color-mix(in srgb,var(--wb-muted,#6b7280) 14%,transparent);color:var(--wb-muted,#6b7280);border:1px solid var(--wb-border,#e5e7eb);cursor:not-allowed}",
-      "/* \u4E09\u680F\u5DE5\u4F5C\u533A\uFF1A\u8D26\u6237\u680F 300px + \u5217\u8868\u81EA\u9002\u5E94 (+ \u9605\u8BFB\u680F 360\u2013520px) */",
-      ".wbml-page.is-split{height:100%;overflow:hidden;min-height:0}",
-      ".wbml-layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:12px;flex:1;min-height:0;align-items:stretch}",
-      ".wbml-layout.has-detail{grid-template-columns:300px minmax(0,1fr) minmax(360px,520px)}",
-      ".wbml-rail{display:flex;flex-direction:column;gap:10px;min-height:0;overflow:auto}",
-      ".wbml-rail-card{display:flex;flex-direction:column;gap:10px}",
-      ".wbml-rail-title{font-size:12px;font-weight:600;color:var(--wb-muted,#6b7280)}",
-      ".wbml-rail-stats{display:flex;gap:16px;font-size:12px;color:var(--wb-muted,#6b7280)}",
-      ".wbml-rail-stats b{font-size:15px;font-weight:650;color:inherit;margin-right:2px}",
-      ".wbml-rail-tip{font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280);padding:0 2px}",
-      ".wbml-pane{display:flex;flex-direction:column;min-width:0;min-height:0;border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);overflow:hidden}",
-      ".wbml-pane-head{position:sticky;top:0;z-index:2;display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--wb-border,#eef0f3);background:var(--wb-surface,#fff)}",
-      ".wbml-pane-head strong{font-size:13px}",
-      ".wbml-state-box{display:flex;flex-direction:column;min-height:0;overflow:auto}",
-      ".wbml-state{padding:32px 16px;text-align:center;font-size:13px;color:var(--wb-muted,#6b7280)}",
-      ".wbml-state-error{color:var(--wb-danger,#b91c1c)}",
-      ".wbml-list{display:flex;flex-direction:column;overflow:auto;min-height:0}",
-      '.wbml-list-row{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"who time" "line line";gap:1px 10px;padding:8px 12px 8px 15px;border:0;border-bottom:1px solid var(--wb-line,#eef0f3);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;min-height:56px;box-sizing:border-box}',
-      ".wbml-list-row:hover{background:var(--wb-surface,#f8fafc)}",
-      ".wbml-list-row.on{background:color-mix(in srgb,var(--wb-accent,#2563eb) 12%,transparent)}",
-      ".wbml-list-row.unread{font-weight:600}",
-      '.wbml-list-row.unread::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:var(--wb-accent,#2563eb)}',
-      ".wbml-who{grid-area:who;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".wbml-line{grid-area:line;display:flex;align-items:baseline;gap:8px;min-width:0}",
-      ".wbml-subject{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto;min-width:0}",
-      ".wbml-snippet{font-size:12px;color:var(--wb-muted,#6b7280);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 0;min-width:0}",
-      ".wbml-time{grid-area:time;font-size:11px;color:var(--wb-muted,#6b7280);white-space:nowrap}",
-      ".wbml-listpane{min-height:0;container:mail-list / inline-size}",
-      ".wbml-date-group{flex:none;margin:0;padding:6px 12px;font-size:11px;font-weight:650;color:var(--wb-muted);background:var(--wb-card);border-bottom:1px solid var(--wb-line)}",
-      ".wbml-list-row{--wbml-date-width:8rem;flex:none;align-items:center;grid-template-columns:minmax(0,1fr) 18px var(--wbml-date-width);grid-template-areas:'who attachment time' 'line line line'}",
-      ".wbml-attachment-name{display:none;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wbml-attachment svg{flex:none}",
-      ".wbml-who{display:flex;align-items:center;gap:5px;min-width:0}.wbml-sender,.wbml-source{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}.wbml-source{max-width:45%;font-size:11px;font-weight:400;color:var(--wb-muted)}",
-      ".wbml-attachment{grid-area:attachment;justify-self:center;display:inline-flex;color:var(--wb-muted)}.wbml-time{text-align:right;font-variant-numeric:tabular-nums;font-weight:400}",
-      "@container mail-list (min-width:620px){.wbml-list-row{min-height:42px;grid-template-columns:clamp(132px,20%,240px) minmax(0,1fr) clamp(72px,16%,180px) var(--wbml-date-width);grid-template-areas:'who line attachment time'}.wbml-attachment{justify-self:start;max-width:100%;min-width:0;align-items:center;gap:4px}.wbml-attachment-name{display:block;font-size:11px}}",
-      ".wbml-detailpane{min-height:0}",
-      ".wbml-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--wb-border,#eef0f3);background:var(--wb-surface,#fff)}",
-      ".wbml-detail-head{flex-direction:column}.wbml-reader-nav{display:flex;gap:6px;flex-wrap:wrap}.wbml-detail-meta{overflow-wrap:anywhere}",
-      "@media (max-width:900px){.wbml-layout.has-detail>.wbml-listpane,.wbml-layout.has-detail>.wbml-rail{display:none}}",
-      ".wbml-detail-title{display:flex;flex-direction:column;gap:4px;min-width:0}",
-      ".wbml-detail-title strong{font-size:14px;line-height:1.45;overflow-wrap:anywhere}",
-      ".wbml-muted{font-size:12px;color:var(--wb-muted,#6b7280);overflow-wrap:anywhere}",
-      ".wbml-detail-meta{display:flex;flex-wrap:wrap;gap:14px;padding:8px 12px;border-bottom:1px solid var(--wb-line,#eef0f3);font-size:12px;color:var(--wb-muted,#6b7280)}",
-      ".wbml-body{flex:1;overflow:auto;min-height:0;white-space:pre-wrap;font:inherit;font-size:13px;line-height:1.7;margin:0;padding:12px}",
-      /* 正文按需下载：加载/失败/附件与重拉入口 */
-      ".wbml-detail-body{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}",
-      ".wbml-body-wrap{flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:auto;padding:12px}",
-      ".wbml-body-wrap .wbml-body{flex:0 1 auto;overflow:visible;padding:0}",
-      ".wbml-body-fail{display:flex;flex-direction:column;gap:8px;padding:8px 0}",
-      ".wbml-body-fail-text{margin:0;font-size:13px;line-height:1.6;color:var(--wb-danger,#b91c1c)}",
-      ".wbml-body-note{margin:0;font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280)}",
-      ".wbml-body-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
-      ".wbml-attach{display:flex;flex-direction:column;gap:4px;border:1px dashed var(--wb-border,#d4d4d8);border-radius:8px;padding:8px 10px}",
-      ".wbml-attach-title{font-size:12px;color:var(--wb-muted,#6b7280)}",
-      ".wbml-attach-list{display:flex;flex-wrap:wrap;gap:6px}",
-      ".wbml-attach-item{font-size:12px;line-height:1.5;padding:2px 8px;border-radius:999px;background:var(--wb-surface,#f8fafc);border:1px solid var(--wb-border,#e5e7eb);color:inherit;overflow-wrap:anywhere}",
-      "@media (max-width:1180px){.wbml-layout.has-detail{grid-template-columns:256px minmax(0,1fr) minmax(320px,420px)}}",
-      "@media (max-width:900px){.wbml-page.is-split{height:auto;overflow:visible}.wbml-layout,.wbml-layout.has-detail{display:flex;flex-direction:column;gap:12px;align-items:stretch;flex:0 0 auto}.wbml-rail{flex-direction:row;align-items:stretch;overflow:visible;flex:0 0 auto}.wbml-rail-card{flex:1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}.wbml-rail-card .wbml-rail-title{flex-basis:100%}.wbml-rail-tip{display:none}.wbml-rail-stats{flex:1 0 auto}.wbml-pane{flex:0 0 auto;max-height:none}.wbml-listpane{max-height:62vh}.wbml-detailpane{max-height:70vh}}",
-      ".wbml-icon-btn{border:0;background:transparent;color:var(--wb-muted,#6b7280);font-size:16px;cursor:pointer;padding:2px 6px}",
-      ".wbml-paging,.wbml-tools,.wbml-search{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
-      ".wbml-paging,.wbml-tools{padding:8px 12px;color:var(--wb-muted);border-top:1px solid var(--wb-line)}",
-      ".wbml-search .wbml-field{flex:1;min-width:0}.wbml-input{max-width:100%;box-sizing:border-box}",
-      ".wbml-detail-content{min-height:0;overflow:auto}.wbml-tools>.wbml-input{flex:1;min-width:100px}",
-      ".wbml-rail input[type=checkbox]{accent-color:var(--wb-accent)}",
-      ".wbml-page.is-split :is(button,input,select):focus-visible{outline:2px solid var(--wb-accent);outline-offset:-2px}",
-      ".wbml-list-row:hover:not(.on){background:color-mix(in srgb,var(--wb-accent) 7%,var(--wb-surface))}",
-      ".wbml-bulk{flex:none;display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:6px 12px;color:inherit;background:var(--wb-card);border-bottom:1px solid var(--wb-line);font-size:12px}",
-      ".wbml-bulk-report{flex-basis:100%;display:flex;align-items:center;flex-wrap:wrap;gap:8px;overflow-wrap:anywhere}.wbml-bulk-report details{max-width:100%;max-height:8rem;overflow:auto}",
-      ".wbml-bulk-row{display:grid;flex:none;grid-template-columns:30px minmax(0,1fr);align-items:stretch}.wbml-bulk-row>input{justify-self:center;align-self:center;accent-color:var(--wb-accent)}",
-      ".wbml-bulk-row:has(>input:checked){background:color-mix(in srgb,var(--wb-accent) 9%,var(--wb-card))}",
-      /* 服务商选择器 */
-      ".wbml-chips{display:flex;flex-wrap:wrap;gap:6px}",
-      ".wbml-chip{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer}",
-      ".wbml-chip:hover{border-color:var(--wb-accent,#2563eb)}",
-      ".wbml-chip:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:1px}",
-      ".wbml-chip.on{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:var(--wb-on-accent,#fff)}",
-      /* 账户表单 */
-      ".wbml-acct-form{display:flex;flex-direction:column;gap:10px;border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
-      ".wbml-acct-head{display:flex;align-items:center;justify-content:space-between;gap:8px}",
-      ".wbml-acct-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
-      ".wbml-acct-foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}",
-      ".wbml-check{display:flex;align-items:center;gap:6px;font-size:12px;padding-top:18px}",
-      ".wbml-hint-line{margin:0;font-size:11px;line-height:1.6;color:var(--wb-muted,#6b7280)}",
-      /* 保险箱门禁 */
-      ".wbml-gate-wrap{display:flex;flex-direction:column;gap:8px}",
-      ".wbml-gate{border:1px solid var(--wb-warn,#f59e0b);border-radius:9px;padding:10px;display:flex;flex-direction:column;gap:8px;background:color-mix(in srgb, var(--wb-warn,#f59e0b) 8%, transparent)}",
-      ".wbml-gate-title{font-size:13px;font-weight:650}",
-      ".wbml-gate-text{margin:0;font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280)}",
-      ".wbml-gate-row{max-width:320px}",
-      ".wbml-gate > .wbml-btn{align-self:flex-start;padding:0 14px}",
-      /* 账户卡片 */
-      ".wbml-cards{display:flex;flex-direction:column;gap:8px}",
-      ".wbml-cards .wbml-card{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}",
-      ".wbml-card-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}",
-      ".wbml-card-title{font-size:13px;font-weight:650}",
-      ".wbml-card-sub{font-size:12px}",
-      ".wbml-card-meta{font-size:11px;color:var(--wb-muted,#6b7280)}",
-      ".wbml-card-actions{display:flex;gap:6px;flex-wrap:wrap}",
-      ".wbml-card-result{display:flex;align-items:center;gap:6px;flex:1 0 100%;font-size:12px;line-height:1.6}",
-      ".wbml-acct-form > .wbml-btn{align-self:flex-start}",
-      /* 基础 pill / danger 按钮用固定浅色，深色主题下自己按主题 token 重算一次 */
-      ".wbml-card-result .wbml-pill.ok{background:color-mix(in srgb,var(--wb-ok,#047857) 16%,transparent);color:var(--wb-ok,#047857)}",
-      ".wbml-card-result .wbml-pill.error{background:color-mix(in srgb,var(--wb-danger,#b91c1c) 16%,transparent);color:var(--wb-danger,#b91c1c)}",
-      ".wbml-card-actions .wbml-btn.danger{color:var(--wb-danger,#b91c1c);border-color:color-mix(in srgb,var(--wb-danger,#b91c1c) 45%,transparent)}",
-      /* 凭据选择器：触发器 + 下拉面板（面板里的列表复用共享 .wbck* 样式） */
-      ".wbml-picker{position:relative;display:flex;flex-direction:column;gap:6px}",
-      ".wbml-picker-trigger{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--wb-border,#d4d4d8);border-radius:8px;background:var(--wb-surface);color:inherit;cursor:pointer;text-align:left}",
-      ".wbml-picker-trigger:hover:enabled{border-color:var(--wb-accent)}",
-      ".wbml-picker-trigger:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}",
-      ".wbml-picker-trigger.is-set{font-weight:560}",
-      ".wbml-picker-trigger.is-missing{border-color:var(--wb-warn,#b45309)}",
-      ".wbml-picker-trigger:disabled{opacity:.6;cursor:not-allowed}",
-      ".wbml-picker-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".wbml-picker-caret{flex:none;font-size:11px;color:var(--wb-muted,#6b7280)}",
-      ".wbml-picker-panel{margin-top:2px;padding:8px;max-height:320px;overflow:auto;border:1px solid var(--wb-border,#d4d4d8);border-radius:10px;background:var(--wb-card)}",
-      ".wbml-picker-foot{font-size:11px;color:var(--wb-muted,#6b7280);text-align:right;padding:4px 2px 0}",
-      ".wbml-picker-empty{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--wb-muted,#6b7280);padding:6px 2px 0}",
-      ".wbml-picker-warn{margin:0;font-size:12px;color:var(--wb-warn,#b45309)}",
-      ".wbml-picker-note{margin:0;font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280);border:1px dashed var(--wb-border,#d4d4d8);border-radius:8px;padding:8px 10px}"
-    ]).concat(require_icon_label().styles).join("\n");
+    var h = require("react").createElement;
+    function create(prefix, glyphs, options) {
+      var opts = options || {};
+      var ICONS = Object.assign({}, glyphs);
+      function Icon2(props) {
+        var C = ICONS[props.name] || (opts.fallback ? ICONS[opts.fallback] : null);
+        if (!C) return null;
+        var size = typeof opts.sizeOf === "function" ? opts.sizeOf(props) : props.size || 14;
+        var cls = prefix + "-svg" + (opts.classNameAppend && props.className ? " " + props.className : "");
+        var attrs = {
+          size,
+          strokeWidth: props.strokeWidth || 2,
+          "aria-hidden": "true",
+          className: cls
+        };
+        if (opts.focusable) attrs.focusable = false;
+        return h(C, attrs);
+      }
+      var set = { ICONS, Icon: Icon2 };
+      if (opts.tabIcon) {
+        set.tabIcon = function(name) {
+          return function TabIcon() {
+            return h(Icon2, { name, size: 14 });
+          };
+        };
+      }
+      return set;
+    }
+    module2.exports = { create };
   }
 });
 
@@ -520,17 +363,179 @@ var init_createLucideIcon = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs
+var database_exports = {};
+__export(database_exports, {
+  __iconData: () => __iconData,
+  default: () => Database
+});
+var __iconData, Database;
+var init_database = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs"() {
+    init_createLucideIcon();
+    __iconData = {
+      name: "database",
+      size: 24,
+      node: [
+        ["ellipse", { cx: "12", cy: "5", rx: "9", ry: "3", key: "msslwz" }],
+        ["path", { d: "M3 5V19A9 3 0 0 0 21 19V5", key: "1wlel7" }],
+        ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
+      ]
+    };
+    __iconData.node;
+    Database = createLucideIcon(__iconData);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/download.mjs
+var download_exports = {};
+__export(download_exports, {
+  __iconData: () => __iconData2,
+  default: () => Download
+});
+var __iconData2, Download;
+var init_download = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/download.mjs"() {
+    init_createLucideIcon();
+    __iconData2 = {
+      name: "download",
+      size: 24,
+      node: [
+        ["path", { d: "M12 15V3", key: "m9g1x1" }],
+        ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
+        ["path", { d: "m7 10 5 5 5-5", key: "brsn70" }]
+      ]
+    };
+    __iconData2.node;
+    Download = createLucideIcon(__iconData2);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder.mjs
+var folder_exports = {};
+__export(folder_exports, {
+  __iconData: () => __iconData3,
+  default: () => Folder
+});
+var __iconData3, Folder;
+var init_folder = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder.mjs"() {
+    init_createLucideIcon();
+    __iconData3 = {
+      name: "folder",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z",
+            key: "1kt360"
+          }
+        ]
+      ]
+    };
+    __iconData3.node;
+    Folder = createLucideIcon(__iconData3);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder-input.mjs
+var folder_input_exports = {};
+__export(folder_input_exports, {
+  __iconData: () => __iconData4,
+  default: () => FolderInput
+});
+var __iconData4, FolderInput;
+var init_folder_input = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder-input.mjs"() {
+    init_createLucideIcon();
+    __iconData4 = {
+      name: "folder-input",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M2 9V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1",
+            key: "fm4g5t"
+          }
+        ],
+        ["path", { d: "M2 13h10", key: "pgb2dq" }],
+        ["path", { d: "m9 16 3-3-3-3", key: "6m91ic" }]
+      ]
+    };
+    __iconData4.node;
+    FolderInput = createLucideIcon(__iconData4);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/inbox.mjs
+var inbox_exports = {};
+__export(inbox_exports, {
+  __iconData: () => __iconData5,
+  default: () => Inbox
+});
+var __iconData5, Inbox;
+var init_inbox = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/inbox.mjs"() {
+    init_createLucideIcon();
+    __iconData5 = {
+      name: "inbox",
+      size: 24,
+      node: [
+        ["polyline", { points: "22 12 16 12 14 15 10 15 8 12 2 12", key: "o97t9d" }],
+        [
+          "path",
+          {
+            d: "M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z",
+            key: "oot6mr"
+          }
+        ]
+      ]
+    };
+    __iconData5.node;
+    Inbox = createLucideIcon(__iconData5);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs
+var list_exports = {};
+__export(list_exports, {
+  __iconData: () => __iconData6,
+  default: () => List
+});
+var __iconData6, List;
+var init_list = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs"() {
+    init_createLucideIcon();
+    __iconData6 = {
+      name: "list",
+      size: 24,
+      node: [
+        ["path", { d: "M3 5h.01", key: "18ugdj" }],
+        ["path", { d: "M3 12h.01", key: "nlz23k" }],
+        ["path", { d: "M3 19h.01", key: "noohij" }],
+        ["path", { d: "M8 5h13", key: "1pao27" }],
+        ["path", { d: "M8 12h13", key: "1za7za" }],
+        ["path", { d: "M8 19h13", key: "m83p4d" }]
+      ]
+    };
+    __iconData6.node;
+    List = createLucideIcon(__iconData6);
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail.mjs
 var mail_exports = {};
 __export(mail_exports, {
-  __iconData: () => __iconData,
+  __iconData: () => __iconData7,
   default: () => Mail
 });
-var __iconData, Mail;
+var __iconData7, Mail;
 var init_mail = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail.mjs"() {
     init_createLucideIcon();
-    __iconData = {
+    __iconData7 = {
       name: "mail",
       size: 24,
       node: [
@@ -538,22 +543,127 @@ var init_mail = __esm({
         ["rect", { x: "2", y: "4", width: "20", height: "16", rx: "2", key: "izxlao" }]
       ]
     };
-    __iconData.node;
-    Mail = createLucideIcon(__iconData);
+    __iconData7.node;
+    Mail = createLucideIcon(__iconData7);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail-open.mjs
+var mail_open_exports = {};
+__export(mail_open_exports, {
+  __iconData: () => __iconData8,
+  default: () => MailOpen
+});
+var __iconData8, MailOpen;
+var init_mail_open = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail-open.mjs"() {
+    init_createLucideIcon();
+    __iconData8 = {
+      name: "mail-open",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M21.2 8.4c.5.38.8.97.8 1.6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10a2 2 0 0 1 .8-1.6l8-6a2 2 0 0 1 2.4 0l8 6Z",
+            key: "1jhwl8"
+          }
+        ],
+        ["path", { d: "m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10", key: "1qfld7" }]
+      ]
+    };
+    __iconData8.node;
+    MailOpen = createLucideIcon(__iconData8);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/paperclip.mjs
+var paperclip_exports = {};
+__export(paperclip_exports, {
+  __iconData: () => __iconData9,
+  default: () => Paperclip
+});
+var __iconData9, Paperclip;
+var init_paperclip = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/paperclip.mjs"() {
+    init_createLucideIcon();
+    __iconData9 = {
+      name: "paperclip",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551",
+            key: "1miecu"
+          }
+        ]
+      ]
+    };
+    __iconData9.node;
+    Paperclip = createLucideIcon(__iconData9);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
+var refresh_cw_exports = {};
+__export(refresh_cw_exports, {
+  __iconData: () => __iconData10,
+  default: () => RefreshCw
+});
+var __iconData10, RefreshCw;
+var init_refresh_cw = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
+    init_createLucideIcon();
+    __iconData10 = {
+      name: "refresh-cw",
+      size: 24,
+      node: [
+        ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
+        ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
+        ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
+        ["path", { d: "M8 16H3v5", key: "1cv678" }]
+      ]
+    };
+    __iconData10.node;
+    RefreshCw = createLucideIcon(__iconData10);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/search.mjs
+var search_exports = {};
+__export(search_exports, {
+  __iconData: () => __iconData11,
+  default: () => Search
+});
+var __iconData11, Search;
+var init_search = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/search.mjs"() {
+    init_createLucideIcon();
+    __iconData11 = {
+      name: "search",
+      size: 24,
+      node: [
+        ["path", { d: "m21 21-4.34-4.34", key: "14j7rj" }],
+        ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }]
+      ]
+    };
+    __iconData11.node;
+    Search = createLucideIcon(__iconData11);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/send.mjs
 var send_exports = {};
 __export(send_exports, {
-  __iconData: () => __iconData2,
+  __iconData: () => __iconData12,
   default: () => Send
 });
-var __iconData2, Send;
+var __iconData12, Send;
 var init_send = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/send.mjs"() {
     init_createLucideIcon();
-    __iconData2 = {
+    __iconData12 = {
       name: "send",
       size: 24,
       node: [
@@ -567,22 +677,55 @@ var init_send = __esm({
         ["path", { d: "m21.854 2.147-10.94 10.939", key: "12cjpa" }]
       ]
     };
-    __iconData2.node;
-    Send = createLucideIcon(__iconData2);
+    __iconData12.node;
+    Send = createLucideIcon(__iconData12);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
+var __iconData13, Trash;
+var init_trash = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
+    init_createLucideIcon();
+    __iconData13 = {
+      name: "trash",
+      size: 24,
+      node: [
+        ["path", { d: "M10 11v6", key: "nco0om" }],
+        ["path", { d: "M14 11v6", key: "outv1u" }],
+        ["path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6", key: "miytrc" }],
+        ["path", { d: "M3 6h18", key: "d0wm0j" }],
+        ["path", { d: "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2", key: "e791ji" }]
+      ],
+      aliases: ["trash-2"]
+    };
+    __iconData13.node;
+    Trash = createLucideIcon(__iconData13);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash-2.mjs
+var trash_2_exports = {};
+__export(trash_2_exports, {
+  default: () => Trash
+});
+var init_trash_2 = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash-2.mjs"() {
+    init_trash();
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/users.mjs
 var users_exports = {};
 __export(users_exports, {
-  __iconData: () => __iconData3,
+  __iconData: () => __iconData14,
   default: () => Users
 });
-var __iconData3, Users;
+var __iconData14, Users;
 var init_users = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/users.mjs"() {
     init_createLucideIcon();
-    __iconData3 = {
+    __iconData14 = {
       name: "users",
       size: 24,
       node: [
@@ -592,59 +735,226 @@ var init_users = __esm({
         ["circle", { cx: "9", cy: "7", r: "4", key: "nufk8" }]
       ]
     };
-    __iconData3.node;
-    Users = createLucideIcon(__iconData3);
+    __iconData14.node;
+    Users = createLucideIcon(__iconData14);
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs
-var database_exports = {};
-__export(database_exports, {
-  __iconData: () => __iconData4,
-  default: () => Database
-});
-var __iconData4, Database;
-var init_database = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs"() {
-    init_createLucideIcon();
-    __iconData4 = {
-      name: "database",
-      size: 24,
-      node: [
-        ["ellipse", { cx: "12", cy: "5", rx: "9", ry: "3", key: "msslwz" }],
-        ["path", { d: "M3 5V19A9 3 0 0 0 21 19V5", key: "1wlel7" }],
-        ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
-      ]
-    };
-    __iconData4.node;
-    Database = createLucideIcon(__iconData4);
+// packages/addons/mail/client/ui/icons.cjs
+var require_icons2 = __commonJS({
+  "packages/addons/mail/client/ui/icons.cjs"(exports2, module2) {
+    "use strict";
+    var icons = require_icons();
+    var set = icons.create("wbml", {
+      "database": (init_database(), __toCommonJS(database_exports)).default,
+      "download": (init_download(), __toCommonJS(download_exports)).default,
+      "folder": (init_folder(), __toCommonJS(folder_exports)).default,
+      "folder-input": (init_folder_input(), __toCommonJS(folder_input_exports)).default,
+      "inbox": (init_inbox(), __toCommonJS(inbox_exports)).default,
+      "list": (init_list(), __toCommonJS(list_exports)).default,
+      "mail": (init_mail(), __toCommonJS(mail_exports)).default,
+      "mail-open": (init_mail_open(), __toCommonJS(mail_open_exports)).default,
+      "paperclip": (init_paperclip(), __toCommonJS(paperclip_exports)).default,
+      "refresh-cw": (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
+      "search": (init_search(), __toCommonJS(search_exports)).default,
+      "send": (init_send(), __toCommonJS(send_exports)).default,
+      "trash-2": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
+      "users": (init_users(), __toCommonJS(users_exports)).default
+    });
+    module2.exports = { ICONS: set.ICONS, Icon: set.Icon };
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs
-var list_exports = {};
-__export(list_exports, {
-  __iconData: () => __iconData5,
-  default: () => List
-});
-var __iconData5, List;
-var init_list = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs"() {
-    init_createLucideIcon();
-    __iconData5 = {
-      name: "list",
-      size: 24,
-      node: [
-        ["path", { d: "M3 5h.01", key: "18ugdj" }],
-        ["path", { d: "M3 12h.01", key: "nlz23k" }],
-        ["path", { d: "M3 19h.01", key: "noohij" }],
-        ["path", { d: "M8 5h13", key: "1pao27" }],
-        ["path", { d: "M8 12h13", key: "1za7za" }],
-        ["path", { d: "M8 19h13", key: "m83p4d" }]
-      ]
+// packages/addons/lib/client-base-styles.cjs
+var require_client_base_styles = __commonJS({
+  "packages/addons/lib/client-base-styles.cjs"(exports2, module2) {
+    "use strict";
+    var SECRET_FIELD = [
+      ".wb-secret-field{position:relative;display:flex;align-items:center;min-width:0}",
+      ".wb-secret-field input{flex:1 1 auto;min-width:0;padding-right:34px}",
+      ".wb-eye{position:absolute;right:4px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:6px;padding:4px;color:var(--wb-muted,#6b7280);cursor:pointer}",
+      ".wb-eye:hover:not(:disabled){color:var(--wb-accent,#2563eb);background:color-mix(in srgb, var(--wb-accent,#2563eb) 12%, transparent)}",
+      ".wb-eye:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:1px}",
+      ".wb-eye:disabled{opacity:.45;cursor:not-allowed}"
+    ];
+    module2.exports = function baseStyles(prefix) {
+      var p = String(prefix || "wb");
+      var s = "." + p;
+      return SECRET_FIELD.concat([
+        s + "-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
+        s + "-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
+        s + "-title{font-size:16px;font-weight:650;margin:0}",
+        s + "-sub{font-size:12px;color:var(--wb-muted,#6b7280);margin:2px 0 0}",
+        s + "-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
+        s + "-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
+        s + "-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
+        s + "-kpi{font-size:22px;font-weight:700;line-height:1.2}" + s + "-kpi-label{font-size:12px;color:var(--wb-muted,#6b7280)}",
+        s + "-table{width:100%;border-collapse:collapse;font-size:12px}" + s + "-table th," + s + "-table td{padding:7px 8px;border-bottom:1px solid var(--wb-border,#eef0f3);text-align:left;vertical-align:top}",
+        s + "-table th{font-weight:600;color:var(--wb-muted,#6b7280);white-space:nowrap}",
+        s + "-btn{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer}",
+        s + "-btn:hover:not(:disabled){border-color:var(--wb-accent,#2563eb)}" + s + "-btn:disabled{opacity:.5;cursor:default}",
+        s + "-btn.primary{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:#fff}",
+        s + "-btn.danger{color:#b91c1c;border-color:#fecaca}",
+        s + "-field{display:flex;flex-direction:column;gap:4px;font-size:12px}" + s + "-label{font-weight:600}",
+        s + "-field input," + s + "-field select," + s + "-field textarea{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:0}",
+        s + "-hint{color:var(--wb-muted,#6b7280);font-size:11px}" + s + "-notice{padding:8px 10px;border-radius:8px;font-size:12px;background:#eff6ff;color:#1e40af}",
+        s + "-notice.error{background:#fef2f2;color:#b91c1c}" + s + "-notice.ok{background:#ecfdf5;color:#047857}",
+        s + "-empty{padding:18px;text-align:center;color:var(--wb-muted,#6b7280);font-size:12px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:8px}",
+        s + "-pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;background:#f3f4f6;color:#374151}",
+        s + "-pill.ok{background:#ecfdf5;color:#047857}" + s + "-pill.error{background:#fef2f2;color:#b91c1c}" + s + "-pill.warn{background:#fffbeb;color:#b45309}",
+        s + "-json{margin:0;padding:8px;background:#f8fafc;border-radius:8px;font-size:11px;max-height:240px;overflow:auto}",
+        s + "-muted{color:var(--wb-muted,#6b7280)}" + s + "-link{color:var(--wb-accent,#2563eb);cursor:pointer;text-decoration:none}",
+        s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}"
+      ]);
     };
-    __iconData5.node;
-    List = createLucideIcon(__iconData5);
+    module2.exports.secretFieldStyles = SECRET_FIELD;
+  }
+});
+
+// packages/addons/lib/icon-label.cjs
+var require_icon_label = __commonJS({
+  "packages/addons/lib/icon-label.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function iconLabel(h, Icon2, text) {
+      return h(
+        "span",
+        { className: "wb-icon-label" },
+        h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }),
+        h("span", null, text)
+      );
+    };
+    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}";
+  }
+});
+
+// packages/addons/mail/client/ui/styles.cjs
+var require_styles = __commonJS({
+  "packages/addons/mail/client/ui/styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = require_client_base_styles()("wbml").concat([
+      ".wbml-page{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
+      ".wbml-input{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:120px}",
+      ".wbml-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}",
+      ".wbml-btn:disabled{opacity:1;background:color-mix(in srgb,var(--wb-muted,#6b7280) 14%,transparent);color:var(--wb-muted,#6b7280);border:1px solid var(--wb-border,#e5e7eb);cursor:not-allowed}",
+      "/* \u4E09\u680F\u5DE5\u4F5C\u533A\uFF1A\u8D26\u6237\u680F 300px + \u5217\u8868\u81EA\u9002\u5E94 (+ \u9605\u8BFB\u680F 360\u2013520px) */",
+      ".wbml-page.is-split{height:100%;overflow:hidden;min-height:0}",
+      ".wbml-layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:12px;flex:1;min-height:0;align-items:stretch}",
+      ".wbml-layout.has-detail{grid-template-columns:300px minmax(0,1fr) minmax(360px,520px)}",
+      ".wbml-rail{display:flex;flex-direction:column;gap:10px;min-height:0;overflow:auto}",
+      ".wbml-rail-card{display:flex;flex-direction:column;gap:10px}",
+      ".wbml-rail-title{font-size:12px;font-weight:600;color:var(--wb-muted,#6b7280)}",
+      ".wbml-rail-stats{display:flex;gap:16px;font-size:12px;color:var(--wb-muted,#6b7280)}",
+      ".wbml-rail-stats b{font-size:15px;font-weight:650;color:inherit;margin-right:2px}",
+      ".wbml-rail-tip{font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280);padding:0 2px}",
+      ".wbml-pane{display:flex;flex-direction:column;min-width:0;min-height:0;border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);overflow:hidden}",
+      ".wbml-pane-head{position:sticky;top:0;z-index:2;display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--wb-border,#eef0f3);background:var(--wb-surface,#fff)}",
+      ".wbml-pane-head strong{font-size:13px}",
+      ".wbml-state-box{display:flex;flex-direction:column;min-height:0;overflow:auto}",
+      ".wbml-state{padding:32px 16px;text-align:center;font-size:13px;color:var(--wb-muted,#6b7280)}",
+      ".wbml-state-error{color:var(--wb-danger,#b91c1c)}",
+      ".wbml-list{display:flex;flex-direction:column;overflow:auto;min-height:0}",
+      '.wbml-list-row{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"who time" "line line";gap:1px 10px;padding:8px 12px 8px 15px;border:0;border-bottom:1px solid var(--wb-line,#eef0f3);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;min-height:56px;box-sizing:border-box}',
+      ".wbml-list-row:hover{background:var(--wb-surface,#f8fafc)}",
+      ".wbml-list-row.on{background:color-mix(in srgb,var(--wb-accent,#2563eb) 12%,transparent)}",
+      ".wbml-list-row.unread{font-weight:600}",
+      '.wbml-list-row.unread::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:var(--wb-accent,#2563eb)}',
+      ".wbml-who{grid-area:who;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbml-line{grid-area:line;display:flex;align-items:baseline;gap:8px;min-width:0}",
+      ".wbml-subject{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto;min-width:0}",
+      ".wbml-snippet{font-size:12px;color:var(--wb-muted,#6b7280);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 0;min-width:0}",
+      ".wbml-time{grid-area:time;font-size:11px;color:var(--wb-muted,#6b7280);white-space:nowrap}",
+      ".wbml-listpane{min-height:0;container:mail-list / inline-size}",
+      ".wbml-date-group{flex:none;margin:0;padding:6px 12px;font-size:11px;font-weight:650;color:var(--wb-muted);background:var(--wb-card);border-bottom:1px solid var(--wb-line)}",
+      ".wbml-list-row{--wbml-date-width:8rem;flex:none;align-items:center;grid-template-columns:minmax(0,1fr) 18px var(--wbml-date-width);grid-template-areas:'who attachment time' 'line line line'}",
+      ".wbml-attachment-name{display:none;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wbml-attachment svg{flex:none}",
+      ".wbml-who{display:flex;align-items:center;gap:5px;min-width:0}.wbml-sender,.wbml-source{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}.wbml-source{max-width:45%;font-size:11px;font-weight:400;color:var(--wb-muted)}",
+      ".wbml-attachment{grid-area:attachment;justify-self:center;display:inline-flex;color:var(--wb-muted)}.wbml-time{text-align:right;font-variant-numeric:tabular-nums;font-weight:400}",
+      "@container mail-list (min-width:620px){.wbml-list-row{min-height:42px;grid-template-columns:clamp(132px,20%,240px) minmax(0,1fr) clamp(72px,16%,180px) var(--wbml-date-width);grid-template-areas:'who line attachment time'}.wbml-attachment{justify-self:start;max-width:100%;min-width:0;align-items:center;gap:4px}.wbml-attachment-name{display:block;font-size:11px}}",
+      ".wbml-detailpane{min-height:0}",
+      ".wbml-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--wb-border,#eef0f3);background:var(--wb-surface,#fff)}",
+      ".wbml-detail-head{flex-direction:column}.wbml-reader-nav{display:flex;gap:6px;flex-wrap:wrap}.wbml-detail-meta{overflow-wrap:anywhere}",
+      "@media (max-width:900px){.wbml-layout.has-detail>.wbml-listpane,.wbml-layout.has-detail>.wbml-rail{display:none}}",
+      ".wbml-detail-title{display:flex;flex-direction:column;gap:4px;min-width:0}",
+      ".wbml-detail-title strong{font-size:14px;line-height:1.45;overflow-wrap:anywhere}",
+      ".wbml-muted{font-size:12px;color:var(--wb-muted,#6b7280);overflow-wrap:anywhere}",
+      ".wbml-detail-meta{display:flex;flex-wrap:wrap;gap:14px;padding:8px 12px;border-bottom:1px solid var(--wb-line,#eef0f3);font-size:12px;color:var(--wb-muted,#6b7280)}",
+      ".wbml-body{flex:1;overflow:auto;min-height:0;white-space:pre-wrap;font:inherit;font-size:13px;line-height:1.7;margin:0;padding:12px}",
+      /* 正文按需下载：加载/失败/附件与重拉入口 */
+      ".wbml-detail-body{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}",
+      ".wbml-body-wrap{flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:auto;padding:12px}",
+      ".wbml-body-wrap .wbml-body{flex:0 1 auto;overflow:visible;padding:0}",
+      ".wbml-body-fail{display:flex;flex-direction:column;gap:8px;padding:8px 0}",
+      ".wbml-body-fail-text{margin:0;font-size:13px;line-height:1.6;color:var(--wb-danger,#b91c1c)}",
+      ".wbml-body-note{margin:0;font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280)}",
+      ".wbml-body-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
+      ".wbml-attach{display:flex;flex-direction:column;gap:4px;border:1px dashed var(--wb-border,#d4d4d8);border-radius:8px;padding:8px 10px}",
+      ".wbml-attach-title{font-size:12px;color:var(--wb-muted,#6b7280)}",
+      ".wbml-attach-list{display:flex;flex-wrap:wrap;gap:6px}",
+      ".wbml-attach-item{font-size:12px;line-height:1.5;padding:2px 8px;border-radius:999px;background:var(--wb-surface,#f8fafc);border:1px solid var(--wb-border,#e5e7eb);color:inherit;overflow-wrap:anywhere}",
+      "@media (max-width:1180px){.wbml-layout.has-detail{grid-template-columns:256px minmax(0,1fr) minmax(320px,420px)}}",
+      "@media (max-width:900px){.wbml-page.is-split{height:auto;overflow:visible}.wbml-layout,.wbml-layout.has-detail{display:flex;flex-direction:column;gap:12px;align-items:stretch;flex:0 0 auto}.wbml-rail{flex-direction:row;align-items:stretch;overflow:visible;flex:0 0 auto}.wbml-rail-card{flex:1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}.wbml-rail-card .wbml-rail-title{flex-basis:100%}.wbml-rail-tip{display:none}.wbml-rail-stats{flex:1 0 auto}.wbml-pane{flex:0 0 auto;max-height:none}.wbml-listpane{max-height:62vh}.wbml-detailpane{max-height:70vh}}",
+      ".wbml-icon-btn{border:0;background:transparent;color:var(--wb-muted,#6b7280);font-size:16px;cursor:pointer;padding:2px 6px}",
+      ".wbml-paging,.wbml-tools,.wbml-search{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+      ".wbml-paging,.wbml-tools{padding:8px 12px;color:var(--wb-muted);border-top:1px solid var(--wb-line)}",
+      ".wbml-search .wbml-field{flex:1;min-width:0}.wbml-input{max-width:100%;box-sizing:border-box}",
+      ".wbml-detail-content{min-height:0;overflow:auto}.wbml-tools>.wbml-input{flex:1;min-width:100px}",
+      ".wbml-rail input[type=checkbox]{accent-color:var(--wb-accent)}",
+      ".wbml-page.is-split :is(button,input,select):focus-visible{outline:2px solid var(--wb-accent);outline-offset:-2px}",
+      ".wbml-list-row:hover:not(.on){background:color-mix(in srgb,var(--wb-accent) 7%,var(--wb-surface))}",
+      ".wbml-bulk{flex:none;display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:6px 12px;color:inherit;background:var(--wb-card);border-bottom:1px solid var(--wb-line);font-size:12px}",
+      ".wbml-bulk-report{flex-basis:100%;display:flex;align-items:center;flex-wrap:wrap;gap:8px;overflow-wrap:anywhere}.wbml-bulk-report details{max-width:100%;max-height:8rem;overflow:auto}",
+      ".wbml-bulk-row{display:grid;flex:none;grid-template-columns:30px minmax(0,1fr);align-items:stretch}.wbml-bulk-row>input{justify-self:center;align-self:center;accent-color:var(--wb-accent)}",
+      ".wbml-bulk-row:has(>input:checked){background:color-mix(in srgb,var(--wb-accent) 9%,var(--wb-card))}",
+      /* 服务商选择器 */
+      ".wbml-chips{display:flex;flex-wrap:wrap;gap:6px}",
+      ".wbml-chip{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer}",
+      ".wbml-chip:hover{border-color:var(--wb-accent,#2563eb)}",
+      ".wbml-chip:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:1px}",
+      ".wbml-chip.on{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:var(--wb-on-accent,#fff)}",
+      /* 账户表单 */
+      ".wbml-acct-form{display:flex;flex-direction:column;gap:10px;border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
+      ".wbml-acct-head{display:flex;align-items:center;justify-content:space-between;gap:8px}",
+      ".wbml-acct-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
+      ".wbml-acct-foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}",
+      ".wbml-check{display:flex;align-items:center;gap:6px;font-size:12px;padding-top:18px}",
+      ".wbml-hint-line{margin:0;font-size:11px;line-height:1.6;color:var(--wb-muted,#6b7280)}",
+      /* 保险箱门禁 */
+      ".wbml-gate-wrap{display:flex;flex-direction:column;gap:8px}",
+      ".wbml-gate{border:1px solid var(--wb-warn,#f59e0b);border-radius:9px;padding:10px;display:flex;flex-direction:column;gap:8px;background:color-mix(in srgb, var(--wb-warn,#f59e0b) 8%, transparent)}",
+      ".wbml-gate-title{font-size:13px;font-weight:650}",
+      ".wbml-gate-text{margin:0;font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280)}",
+      ".wbml-gate-row{max-width:320px}",
+      ".wbml-gate > .wbml-btn{align-self:flex-start;padding:0 14px}",
+      /* 账户卡片 */
+      ".wbml-cards{display:flex;flex-direction:column;gap:8px}",
+      ".wbml-cards .wbml-card{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}",
+      ".wbml-card-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}",
+      ".wbml-card-title{font-size:13px;font-weight:650}",
+      ".wbml-card-sub{font-size:12px}",
+      ".wbml-card-meta{font-size:11px;color:var(--wb-muted,#6b7280)}",
+      ".wbml-card-actions{display:flex;gap:6px;flex-wrap:wrap}",
+      ".wbml-card-result{display:flex;align-items:center;gap:6px;flex:1 0 100%;font-size:12px;line-height:1.6}",
+      ".wbml-acct-form > .wbml-btn{align-self:flex-start}",
+      /* 基础 pill / danger 按钮用固定浅色，深色主题下自己按主题 token 重算一次 */
+      ".wbml-card-result .wbml-pill.ok{background:color-mix(in srgb,var(--wb-ok,#047857) 16%,transparent);color:var(--wb-ok,#047857)}",
+      ".wbml-card-result .wbml-pill.error{background:color-mix(in srgb,var(--wb-danger,#b91c1c) 16%,transparent);color:var(--wb-danger,#b91c1c)}",
+      ".wbml-card-actions .wbml-btn.danger{color:var(--wb-danger,#b91c1c);border-color:color-mix(in srgb,var(--wb-danger,#b91c1c) 45%,transparent)}",
+      /* 凭据选择器：触发器 + 下拉面板（面板里的列表复用共享 .wbck* 样式） */
+      ".wbml-picker{position:relative;display:flex;flex-direction:column;gap:6px}",
+      ".wbml-picker-trigger{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--wb-border,#d4d4d8);border-radius:8px;background:var(--wb-surface);color:inherit;cursor:pointer;text-align:left}",
+      ".wbml-picker-trigger:hover:enabled{border-color:var(--wb-accent)}",
+      ".wbml-picker-trigger:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}",
+      ".wbml-picker-trigger.is-set{font-weight:560}",
+      ".wbml-picker-trigger.is-missing{border-color:var(--wb-warn,#b45309)}",
+      ".wbml-picker-trigger:disabled{opacity:.6;cursor:not-allowed}",
+      ".wbml-picker-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbml-picker-caret{flex:none;font-size:11px;color:var(--wb-muted,#6b7280)}",
+      ".wbml-picker-panel{margin-top:2px;padding:8px;max-height:320px;overflow:auto;border:1px solid var(--wb-border,#d4d4d8);border-radius:10px;background:var(--wb-card)}",
+      ".wbml-picker-foot{font-size:11px;color:var(--wb-muted,#6b7280);text-align:right;padding:4px 2px 0}",
+      ".wbml-picker-empty{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--wb-muted,#6b7280);padding:6px 2px 0}",
+      ".wbml-picker-warn{margin:0;font-size:12px;color:var(--wb-warn,#b45309)}",
+      ".wbml-picker-note{margin:0;font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280);border:1px dashed var(--wb-border,#d4d4d8);border-radius:8px;padding:8px 10px}"
+    ]).concat(require_icon_label().styles).join("\n");
   }
 });
 
@@ -1194,76 +1504,6 @@ var require_compose = __commonJS({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/reply.mjs
-var reply_exports = {};
-__export(reply_exports, {
-  __iconData: () => __iconData6,
-  default: () => Reply
-});
-var __iconData6, Reply;
-var init_reply = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/reply.mjs"() {
-    init_createLucideIcon();
-    __iconData6 = {
-      name: "reply",
-      size: 24,
-      node: [
-        ["path", { d: "M20 18v-2a4 4 0 0 0-4-4H4", key: "5vmcpk" }],
-        ["path", { d: "m9 17-5-5 5-5", key: "nvlc11" }]
-      ]
-    };
-    __iconData6.node;
-    Reply = createLucideIcon(__iconData6);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/reply-all.mjs
-var reply_all_exports = {};
-__export(reply_all_exports, {
-  __iconData: () => __iconData7,
-  default: () => ReplyAll
-});
-var __iconData7, ReplyAll;
-var init_reply_all = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/reply-all.mjs"() {
-    init_createLucideIcon();
-    __iconData7 = {
-      name: "reply-all",
-      size: 24,
-      node: [
-        ["path", { d: "m12 17-5-5 5-5", key: "1s3y5u" }],
-        ["path", { d: "M22 18v-2a4 4 0 0 0-4-4H7", key: "1fcyog" }],
-        ["path", { d: "m7 17-5-5 5-5", key: "1ed8i2" }]
-      ]
-    };
-    __iconData7.node;
-    ReplyAll = createLucideIcon(__iconData7);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/forward.mjs
-var forward_exports = {};
-__export(forward_exports, {
-  __iconData: () => __iconData8,
-  default: () => Forward
-});
-var __iconData8, Forward;
-var init_forward = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/forward.mjs"() {
-    init_createLucideIcon();
-    __iconData8 = {
-      name: "forward",
-      size: 24,
-      node: [
-        ["path", { d: "m15 17 5-5-5-5", key: "nf172w" }],
-        ["path", { d: "M4 18v-2a4 4 0 0 1 4-4h12", key: "jmiej9" }]
-      ]
-    };
-    __iconData8.node;
-    Forward = createLucideIcon(__iconData8);
-  }
-});
-
 // packages/addons/mail/client/ui/reply-tools.cjs
 var require_reply_tools = __commonJS({
   "packages/addons/mail/client/ui/reply-tools.cjs"(exports2, module2) {
@@ -1272,11 +1512,8 @@ var require_reply_tools = __commonJS({
     var M = require_compose_model();
     var Editor = require_compose().Editor;
     var iconLabel = require_icon_label();
-    var icons = {
-      reply: (init_reply(), __toCommonJS(reply_exports)).default,
-      replyAll: (init_reply_all(), __toCommonJS(reply_all_exports)).default,
-      forward: (init_forward(), __toCommonJS(forward_exports)).default
-    };
+    var GLYPHS2 = require_icons2().ICONS;
+    var icons = { reply: GLYPHS2.reply, replyAll: GLYPHS2["reply-all"], forward: GLYPHS2.forward };
     module2.exports = function ReplyTools(p) {
       const { React: R, h, api, message: m } = p;
       const accounts = C.useLoad(R, api, "mail.accountList", {}, []);
@@ -1302,168 +1539,12 @@ var require_reply_tools = __commonJS({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder.mjs
-var folder_exports = {};
-__export(folder_exports, {
-  __iconData: () => __iconData9,
-  default: () => Folder
-});
-var __iconData9, Folder;
-var init_folder = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder.mjs"() {
-    init_createLucideIcon();
-    __iconData9 = {
-      name: "folder",
-      size: 24,
-      node: [
-        [
-          "path",
-          {
-            d: "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z",
-            key: "1kt360"
-          }
-        ]
-      ]
-    };
-    __iconData9.node;
-    Folder = createLucideIcon(__iconData9);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/inbox.mjs
-var inbox_exports = {};
-__export(inbox_exports, {
-  __iconData: () => __iconData10,
-  default: () => Inbox
-});
-var __iconData10, Inbox;
-var init_inbox = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/inbox.mjs"() {
-    init_createLucideIcon();
-    __iconData10 = {
-      name: "inbox",
-      size: 24,
-      node: [
-        ["polyline", { points: "22 12 16 12 14 15 10 15 8 12 2 12", key: "o97t9d" }],
-        [
-          "path",
-          {
-            d: "M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z",
-            key: "oot6mr"
-          }
-        ]
-      ]
-    };
-    __iconData10.node;
-    Inbox = createLucideIcon(__iconData10);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
-var refresh_cw_exports = {};
-__export(refresh_cw_exports, {
-  __iconData: () => __iconData11,
-  default: () => RefreshCw
-});
-var __iconData11, RefreshCw;
-var init_refresh_cw = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
-    init_createLucideIcon();
-    __iconData11 = {
-      name: "refresh-cw",
-      size: 24,
-      node: [
-        ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
-        ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
-        ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
-        ["path", { d: "M8 16H3v5", key: "1cv678" }]
-      ]
-    };
-    __iconData11.node;
-    RefreshCw = createLucideIcon(__iconData11);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/download.mjs
-var download_exports = {};
-__export(download_exports, {
-  __iconData: () => __iconData12,
-  default: () => Download
-});
-var __iconData12, Download;
-var init_download = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/download.mjs"() {
-    init_createLucideIcon();
-    __iconData12 = {
-      name: "download",
-      size: 24,
-      node: [
-        ["path", { d: "M12 15V3", key: "m9g1x1" }],
-        ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
-        ["path", { d: "m7 10 5 5 5-5", key: "brsn70" }]
-      ]
-    };
-    __iconData12.node;
-    Download = createLucideIcon(__iconData12);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/search.mjs
-var search_exports = {};
-__export(search_exports, {
-  __iconData: () => __iconData13,
-  default: () => Search
-});
-var __iconData13, Search;
-var init_search = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/search.mjs"() {
-    init_createLucideIcon();
-    __iconData13 = {
-      name: "search",
-      size: 24,
-      node: [
-        ["path", { d: "m21 21-4.34-4.34", key: "14j7rj" }],
-        ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }]
-      ]
-    };
-    __iconData13.node;
-    Search = createLucideIcon(__iconData13);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/paperclip.mjs
-var paperclip_exports = {};
-__export(paperclip_exports, {
-  __iconData: () => __iconData14,
-  default: () => Paperclip
-});
-var __iconData14, Paperclip;
-var init_paperclip = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/paperclip.mjs"() {
-    init_createLucideIcon();
-    __iconData14 = {
-      name: "paperclip",
-      size: 24,
-      node: [
-        [
-          "path",
-          {
-            d: "m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551",
-            key: "1miecu"
-          }
-        ]
-      ]
-    };
-    __iconData14.node;
-    Paperclip = createLucideIcon(__iconData14);
-  }
-});
-
 // packages/addons/mail/client/views/message-rows.cjs
 var require_message_rows = __commonJS({
   "packages/addons/mail/client/views/message-rows.cjs"(exports2, module2) {
     "use strict";
-    var Paperclip2 = (init_paperclip(), __toCommonJS(paperclip_exports)).default;
+    var GLYPHS2 = require_icons2().ICONS;
+    var Paperclip2 = GLYPHS2["paperclip"];
     module2.exports = function messageRows(h, items, options) {
       const { current, showSource, lang, attachmentUpdates, open, sender, senderDetail, isUnread } = options;
       const locale = lang === "en" ? "en-GB" : "zh-CN";
@@ -1627,98 +1708,6 @@ var require_detail_pane = __commonJS({
         )
       );
     };
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail-open.mjs
-var mail_open_exports = {};
-__export(mail_open_exports, {
-  __iconData: () => __iconData15,
-  default: () => MailOpen
-});
-var __iconData15, MailOpen;
-var init_mail_open = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail-open.mjs"() {
-    init_createLucideIcon();
-    __iconData15 = {
-      name: "mail-open",
-      size: 24,
-      node: [
-        [
-          "path",
-          {
-            d: "M21.2 8.4c.5.38.8.97.8 1.6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10a2 2 0 0 1 .8-1.6l8-6a2 2 0 0 1 2.4 0l8 6Z",
-            key: "1jhwl8"
-          }
-        ],
-        ["path", { d: "m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10", key: "1qfld7" }]
-      ]
-    };
-    __iconData15.node;
-    MailOpen = createLucideIcon(__iconData15);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder-input.mjs
-var folder_input_exports = {};
-__export(folder_input_exports, {
-  __iconData: () => __iconData16,
-  default: () => FolderInput
-});
-var __iconData16, FolderInput;
-var init_folder_input = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder-input.mjs"() {
-    init_createLucideIcon();
-    __iconData16 = {
-      name: "folder-input",
-      size: 24,
-      node: [
-        [
-          "path",
-          {
-            d: "M2 9V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1",
-            key: "fm4g5t"
-          }
-        ],
-        ["path", { d: "M2 13h10", key: "pgb2dq" }],
-        ["path", { d: "m9 16 3-3-3-3", key: "6m91ic" }]
-      ]
-    };
-    __iconData16.node;
-    FolderInput = createLucideIcon(__iconData16);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
-var __iconData17, Trash;
-var init_trash = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
-    init_createLucideIcon();
-    __iconData17 = {
-      name: "trash",
-      size: 24,
-      node: [
-        ["path", { d: "M10 11v6", key: "nco0om" }],
-        ["path", { d: "M14 11v6", key: "outv1u" }],
-        ["path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6", key: "miytrc" }],
-        ["path", { d: "M3 6h18", key: "d0wm0j" }],
-        ["path", { d: "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2", key: "e791ji" }]
-      ],
-      aliases: ["trash-2"]
-    };
-    __iconData17.node;
-    Trash = createLucideIcon(__iconData17);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash-2.mjs
-var trash_2_exports = {};
-__export(trash_2_exports, {
-  default: () => Trash
-});
-var init_trash_2 = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash-2.mjs"() {
-    init_trash();
   }
 });
 
@@ -1936,22 +1925,23 @@ var require_folder_shortcuts = __commonJS({
 var require_messages = __commonJS({
   "packages/addons/mail/client/views/messages.cjs"(exports2, module2) {
     "use strict";
+    var GLYPHS2 = require_icons2().ICONS;
     var C = require_common();
     var Attachments = require_attachments();
     var ReplyTools = require_reply_tools();
     var iconLabel = require_icon_label();
-    var Folder2 = (init_folder(), __toCommonJS(folder_exports)).default;
-    var InboxIcon = (init_inbox(), __toCommonJS(inbox_exports)).default;
-    var Refresh = (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default;
-    var Download2 = (init_download(), __toCommonJS(download_exports)).default;
-    var Search2 = (init_search(), __toCommonJS(search_exports)).default;
+    var Folder2 = GLYPHS2["folder"];
+    var InboxIcon = GLYPHS2["inbox"];
+    var Refresh = GLYPHS2["refresh-cw"];
+    var Download2 = GLYPHS2["download"];
+    var Search2 = GLYPHS2["search"];
     var messageRows = require_message_rows();
     var Reader = require_reader_context();
     var detailPane = require_detail_pane();
-    var Mail2 = (init_mail(), __toCommonJS(mail_exports)).default;
-    var MailOpen2 = (init_mail_open(), __toCommonJS(mail_open_exports)).default;
-    var Move = (init_folder_input(), __toCommonJS(folder_input_exports)).default;
-    var Trash2 = (init_trash_2(), __toCommonJS(trash_2_exports)).default;
+    var Mail2 = GLYPHS2["mail"];
+    var MailOpen2 = GLYPHS2["mail-open"];
+    var Move = GLYPHS2["folder-input"];
+    var Trash2 = GLYPHS2["trash-2"];
     module2.exports = function Messages(props) {
       var h = props.h, React = props.React;
       var accounts = C.useLoad(React, props.api, "mail.accountList", {}, []);
@@ -3620,14 +3610,14 @@ var require_account_card = __commonJS({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs
 var eye_exports = {};
 __export(eye_exports, {
-  __iconData: () => __iconData18,
+  __iconData: () => __iconData15,
   default: () => Eye
 });
-var __iconData18, Eye;
+var __iconData15, Eye;
 var init_eye = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs"() {
     init_createLucideIcon();
-    __iconData18 = {
+    __iconData15 = {
       name: "eye",
       size: 24,
       node: [
@@ -3641,22 +3631,22 @@ var init_eye = __esm({
         ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
       ]
     };
-    __iconData18.node;
-    Eye = createLucideIcon(__iconData18);
+    __iconData15.node;
+    Eye = createLucideIcon(__iconData15);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs
 var eye_off_exports = {};
 __export(eye_off_exports, {
-  __iconData: () => __iconData19,
+  __iconData: () => __iconData16,
   default: () => EyeOff
 });
-var __iconData19, EyeOff;
+var __iconData16, EyeOff;
 var init_eye_off = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs"() {
     init_createLucideIcon();
-    __iconData19 = {
+    __iconData16 = {
       name: "eye-off",
       size: 24,
       node: [
@@ -3678,8 +3668,8 @@ var init_eye_off = __esm({
         ["path", { d: "m2 2 20 20", key: "1ooewy" }]
       ]
     };
-    __iconData19.node;
-    EyeOff = createLucideIcon(__iconData19);
+    __iconData16.node;
+    EyeOff = createLucideIcon(__iconData16);
   }
 });
 
@@ -5715,6 +5705,7 @@ var require_actions = __commonJS({
 });
 
 // packages/addons/mail/client/client.src.cjs
+var GLYPHS = require_icons2().ICONS;
 (function() {
   var root = typeof window !== "undefined" ? window : null;
   var host = root && root.__WB_HOST__;
@@ -5726,7 +5717,7 @@ var require_actions = __commonJS({
   var React = host.react;
   var h = host.h;
   var CSS = require_styles();
-  var I = { mail: (init_mail(), __toCommonJS(mail_exports)).default, send: (init_send(), __toCommonJS(send_exports)).default, users: (init_users(), __toCommonJS(users_exports)).default, db: (init_database(), __toCommonJS(database_exports)).default, list: (init_list(), __toCommonJS(list_exports)).default };
+  var I = { mail: GLYPHS["mail"], send: GLYPHS["send"], users: GLYPHS["users"], db: GLYPHS["database"], list: GLYPHS["list"] };
   function Icon2(p) {
     var C = I[p.name] || I.mail;
     return h(C, { size: 14, strokeWidth: 2, className: "wbg-svg" });
@@ -5749,8 +5740,8 @@ var require_actions = __commonJS({
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.4.2",
-    icon: (init_mail(), __toCommonJS(mail_exports)).default,
+    version: "0.4.3",
+    icon: GLYPHS["mail"],
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },
       { id: "compose", icon: tab("send"), title: { zh: "\u5199\u4FE1", en: "Compose" }, component: withProps(require_compose(), "\u5199\u4FE1") },

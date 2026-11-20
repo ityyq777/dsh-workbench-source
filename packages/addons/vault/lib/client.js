@@ -39,169 +39,39 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// packages/addons/lib/filter-checklist-styles.cjs
-var require_filter_checklist_styles = __commonJS({
-  "packages/addons/lib/filter-checklist-styles.cjs"(exports2, module2) {
+// packages/addons/lib/icons.cjs
+var require_icons = __commonJS({
+  "packages/addons/lib/icons.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = [
-      ".wbck{display:flex;flex-direction:column;min-width:0}",
-      ".wbck-search{padding:0 0 6px}",
-      ".wbck-input{width:100%;box-sizing:border-box;font:inherit;font-size:12.5px;padding:6px 9px;border:1px solid var(--wb-border);border-radius:8px;background:var(--wb-surface);color:inherit}",
-      ".wbck-input:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}",
-      ".wbck-input:disabled{opacity:.6;cursor:not-allowed}",
-      ".wbck-head{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--wb-muted);padding:2px 4px 7px}",
-      ".wbck-grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".wbck-sel{flex:none;color:var(--wb-accent)}",
-      ".wbck-clear{appearance:none;flex:none;border:0;background:transparent;color:inherit;border-radius:4px;margin:0;padding:3px 5px;font:inherit;font-size:11.5px;line-height:1;cursor:pointer;opacity:.75}",
-      ".wbck-clear:hover:enabled{opacity:1;background:color-mix(in srgb, currentColor 8%, transparent)}",
-      ".wbck-clear:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}",
-      ".wbck-clear:disabled{opacity:.4;cursor:not-allowed}",
-      ".wbck-list{max-height:220px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--wb-border);border-radius:10px;padding:2px}",
-      ".wbck-opt{display:flex;align-items:center;gap:7px;padding:6px;border-radius:6px;font-size:12.5px;cursor:pointer}",
-      ".wbck-opt:hover{background:color-mix(in srgb, currentColor 7%, transparent)}",
-      ".wbck-opt.is-on{background:color-mix(in srgb, var(--wb-accent) 10%, transparent)}",
-      ".wbck-opt input{margin:0;flex:none;accent-color:var(--wb-accent)}",
-      // 单选变体用 button 渲染（role="radio"），这里把浏览器默认按钮样式清掉，视觉与多选行一致。
-      '.wbck-opt[role="radio"]{appearance:none;width:100%;box-sizing:border-box;border:0;background:transparent;color:inherit;font:inherit;text-align:left}',
-      '.wbck-opt[role="radio"]:disabled{opacity:.55;cursor:not-allowed}',
-      '.wbck-opt[role="radio"]:focus-visible{outline:2px solid var(--wb-accent);outline-offset:-2px}',
-      ".wbck-nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".wbck-meta{margin-left:auto;flex:none;font-size:11.5px;color:var(--wb-muted)}",
-      ".wbck-note{font-size:12px;color:var(--wb-muted);padding:8px 6px}",
-      ".wbck-more{font-size:11px;color:var(--wb-muted);text-align:center;padding:6px 0 2px;opacity:.8}",
-      "@media (max-width:760px){.wbck-list{max-height:200px}}"
-    ];
-  }
-});
-
-// packages/addons/lib/client-base-styles.cjs
-var require_client_base_styles = __commonJS({
-  "packages/addons/lib/client-base-styles.cjs"(exports2, module2) {
-    "use strict";
-    var SECRET_FIELD = [
-      ".wb-secret-field{position:relative;display:flex;align-items:center;min-width:0}",
-      ".wb-secret-field input{flex:1 1 auto;min-width:0;padding-right:34px}",
-      ".wb-eye{position:absolute;right:4px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:6px;padding:4px;color:var(--wb-muted,#6b7280);cursor:pointer}",
-      ".wb-eye:hover:not(:disabled){color:var(--wb-accent,#2563eb);background:color-mix(in srgb, var(--wb-accent,#2563eb) 12%, transparent)}",
-      ".wb-eye:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:1px}",
-      ".wb-eye:disabled{opacity:.45;cursor:not-allowed}"
-    ];
-    module2.exports = function baseStyles(prefix) {
-      var p = String(prefix || "wb");
-      var s = "." + p;
-      return SECRET_FIELD.concat([
-        s + "-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
-        s + "-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
-        s + "-title{font-size:16px;font-weight:650;margin:0}",
-        s + "-sub{font-size:12px;color:var(--wb-muted,#6b7280);margin:2px 0 0}",
-        s + "-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
-        s + "-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
-        s + "-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
-        s + "-kpi{font-size:22px;font-weight:700;line-height:1.2}" + s + "-kpi-label{font-size:12px;color:var(--wb-muted,#6b7280)}",
-        s + "-table{width:100%;border-collapse:collapse;font-size:12px}" + s + "-table th," + s + "-table td{padding:7px 8px;border-bottom:1px solid var(--wb-border,#eef0f3);text-align:left;vertical-align:top}",
-        s + "-table th{font-weight:600;color:var(--wb-muted,#6b7280);white-space:nowrap}",
-        s + "-btn{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer}",
-        s + "-btn:hover:not(:disabled){border-color:var(--wb-accent,#2563eb)}" + s + "-btn:disabled{opacity:.5;cursor:default}",
-        s + "-btn.primary{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:#fff}",
-        s + "-btn.danger{color:#b91c1c;border-color:#fecaca}",
-        s + "-field{display:flex;flex-direction:column;gap:4px;font-size:12px}" + s + "-label{font-weight:600}",
-        s + "-field input," + s + "-field select," + s + "-field textarea{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:0}",
-        s + "-hint{color:var(--wb-muted,#6b7280);font-size:11px}" + s + "-notice{padding:8px 10px;border-radius:8px;font-size:12px;background:#eff6ff;color:#1e40af}",
-        s + "-notice.error{background:#fef2f2;color:#b91c1c}" + s + "-notice.ok{background:#ecfdf5;color:#047857}",
-        s + "-empty{padding:18px;text-align:center;color:var(--wb-muted,#6b7280);font-size:12px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:8px}",
-        s + "-pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;background:#f3f4f6;color:#374151}",
-        s + "-pill.ok{background:#ecfdf5;color:#047857}" + s + "-pill.error{background:#fef2f2;color:#b91c1c}" + s + "-pill.warn{background:#fffbeb;color:#b45309}",
-        s + "-json{margin:0;padding:8px;background:#f8fafc;border-radius:8px;font-size:11px;max-height:240px;overflow:auto}",
-        s + "-muted{color:var(--wb-muted,#6b7280)}" + s + "-link{color:var(--wb-accent,#2563eb);cursor:pointer;text-decoration:none}",
-        s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}"
-      ]);
-    };
-    module2.exports.secretFieldStyles = SECRET_FIELD;
-  }
-});
-
-// packages/addons/lib/icon-label.cjs
-var require_icon_label = __commonJS({
-  "packages/addons/lib/icon-label.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = function iconLabel(h, Icon2, text) {
-      return h(
-        "span",
-        { className: "wb-icon-label" },
-        h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }),
-        h("span", null, text)
-      );
-    };
-    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}";
-  }
-});
-
-// packages/addons/vault/client/ui/styles.cjs
-var require_styles = __commonJS({
-  "packages/addons/vault/client/ui/styles.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = [
-      ".wbv{display:flex;flex-direction:column;gap:14px;font-size:13px;min-height:100%;padding:2px}",
-      ".wbv h2{font-size:17px;margin:0}.wbv h3{font-size:14px;margin:0}",
-      ".wbv-muted{opacity:.62}.wbv-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
-      ".wbv-grow{flex:1}.wbv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
-      ".wbv-card{border:1px solid var(--wb-border);border-radius:10px;padding:12px;background:var(--wb-card)}",
-      ".wbv-card h3{margin-bottom:6px}.wbv-kpi{font-size:22px;font-weight:650;line-height:1.2}",
-      ".wbv-btn{border:1px solid var(--wb-border);background:var(--wb-card);color:inherit;border-radius:7px;padding:5px 10px;cursor:pointer;font-size:12px;line-height:1.4}",
-      ".wbv-btn:hover:enabled{border-color:var(--wb-accent)}.wbv-btn:disabled{opacity:.45;cursor:not-allowed}",
-      ".wbv-btn:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}",
-      ".wbv-btn.primary{background:var(--wb-accent);border-color:var(--wb-accent);color:var(--wb-on-accent,inherit)}",
-      ".wbv-btn.danger{color:var(--wb-danger);border-color:color-mix(in srgb,var(--wb-danger) 45%,transparent)}",
-      ".wbv-btn.ghost{background:transparent;border-color:transparent;color:var(--wb-accent);padding:2px 4px}",
-      ".wbv-btn.wbv-delete{color:var(--wb-danger)}",
-      ".wbv-field{display:flex;flex-direction:column;gap:4px;min-width:180px;flex:1}",
-      ".wbv-label{font-size:11px;font-weight:600;opacity:.75}.wbv-hint{font-size:11px;opacity:.55}",
-      ".wbv input,.wbv select,.wbv textarea{border:1px solid var(--wb-border);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface);color:inherit;width:100%;box-sizing:border-box}",
-      ".wbv input[type=checkbox]{width:auto}",
-      ".wbv textarea{min-height:70px;resize:vertical}",
-      ".wbv-notice{border-radius:8px;padding:8px 10px;font-size:12px;border:1px solid var(--wb-border);background:color-mix(in srgb,var(--wb-accent) 8%,transparent);color:inherit}",
-      ".wbv-notice.error{border-color:color-mix(in srgb,var(--wb-danger) 45%,transparent);background:color-mix(in srgb,var(--wb-danger) 10%,transparent);color:var(--wb-danger)}",
-      ".wbv-notice.ok{border-color:color-mix(in srgb,var(--wb-ok) 45%,transparent);background:color-mix(in srgb,var(--wb-ok) 10%,transparent);color:var(--wb-ok)}",
-      ".wbv-empty{padding:22px;text-align:center;opacity:.55;border:1px dashed var(--wb-border);border-radius:10px}",
-      ".wbv-table-scroll{max-width:100%;overflow-x:auto;padding:4px}.wbv-table-scroll:focus-visible{outline:2px solid var(--wb-accent);outline-offset:-2px}",
-      ".wbv-table{width:100%;border-collapse:collapse;font-size:12px}",
-      ".wbv-table th,.wbv-table td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--wb-line);vertical-align:top}",
-      ".wbv-table th{font-weight:600;opacity:.65;white-space:nowrap}.wbv-table code{font-size:11px;opacity:.8}",
-      ".wbv-table tbody tr:hover{background:color-mix(in srgb,var(--wb-muted) 8%,transparent)}",
-      ".wbv-pill{display:inline-block;border-radius:999px;padding:1px 8px;font-size:11px;background:color-mix(in srgb,var(--wb-muted) 14%,transparent);color:inherit}",
-      ".wbv-pill.ok{background:color-mix(in srgb,var(--wb-ok) 16%,transparent);color:var(--wb-ok)}",
-      ".wbv-pill.warn{background:color-mix(in srgb,var(--wb-warn) 18%,transparent);color:var(--wb-warn)}",
-      ".wbv-pill.bad{background:color-mix(in srgb,var(--wb-danger) 16%,transparent);color:var(--wb-danger)}",
-      ".wbv-tabs{display:flex;gap:6px;flex-wrap:wrap}.wbv-tab{border:none;background:transparent;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px}",
-      ".wbv-tab.on{background:color-mix(in srgb,var(--wb-accent) 12%,transparent);color:var(--wb-accent);font-weight:600}",
-      ".wbv-secret{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--wb-surface);border:1px solid var(--wb-border);border-radius:6px;padding:6px 8px;word-break:break-all}",
-      ".wbv-inline{display:flex;gap:6px;align-items:center;flex-wrap:wrap}",
-      ".wbv-modal{position:fixed;inset:0;background:color-mix(in srgb,var(--wb-muted) 45%,transparent);display:flex;align-items:center;justify-content:center;z-index:50;padding:18px}",
-      ".wbv-modal-box{background:var(--wb-card);border:1px solid var(--wb-border);border-radius:12px;padding:16px;width:min(520px,100%);max-height:88vh;overflow:auto;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 40px color-mix(in srgb,var(--wb-muted) 30%,transparent)}",
-      ".wbv-code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;white-space:pre-wrap;word-break:break-word;background:var(--wb-surface);border:1px solid var(--wb-border);border-radius:8px;padding:10px;max-height:320px;overflow:auto}",
-      ".wbv-split{display:grid;grid-template-columns:minmax(260px,1fr) minmax(320px,1.6fr);gap:12px;align-items:start}",
-      ".wbv-list{display:flex;flex-direction:column;gap:6px}",
-      ".wbv-item{border:1px solid var(--wb-border);border-radius:10px;padding:9px 10px;background:var(--wb-card);cursor:pointer}",
-      ".wbv-item:hover{border-color:var(--wb-accent)}",
-      ".wbv-item.on{border-color:var(--wb-accent);box-shadow:inset 3px 0 0 var(--wb-accent)}",
-      ".wbv-item-top{display:flex;gap:8px;align-items:center}",
-      ".wbv-dot{width:10px;height:10px;border-radius:999px;flex:none;background:var(--wb-accent)}",
-      ".wbv-chips{display:flex;gap:6px;flex-wrap:wrap}",
-      ".wbv-chip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--wb-border);border-radius:999px;padding:2px 8px;font-size:11px;background:var(--wb-surface)}",
-      ".wbv-check{display:flex;gap:6px;align-items:center;padding:3px 0;font-size:12px}",
-      ".wbv-scroll{max-height:220px;overflow:auto;border:1px solid var(--wb-border);border-radius:8px;padding:8px}",
-      "@media (max-width:820px){.wbv-split{grid-template-columns:1fr}}",
-      ".wbv-search{flex:0 0 220px;width:220px}",
-      ".wbv-row>input:not([type=checkbox]),.wbv-row>select{width:auto;flex:0 1 220px;min-width:120px}",
-      ".wbv-sub{font-size:12px;opacity:.65;margin-top:2px}",
-      ".wbv-table tbody tr:hover{background:color-mix(in srgb,var(--wb-accent) 6%,transparent)}",
-      ".wbv-table td{vertical-align:top}",
-      ".wbv-empty-card{border:1px dashed var(--wb-border);border-radius:10px;padding:28px 16px;display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center;background:var(--wb-card)}",
-      ".wbv-empty-title{font-size:14px;font-weight:600}",
-      ".wbv-check-list{display:flex;flex-wrap:wrap;gap:6px 14px;margin:4px 0}",
-      ".wbv-check{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}",
-      ".wbv-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}"
-    ].concat(require_filter_checklist_styles()).concat(require_client_base_styles().secretFieldStyles, require_icon_label().styles);
+    var h = require("react").createElement;
+    function create(prefix, glyphs, options) {
+      var opts = options || {};
+      var ICONS = Object.assign({}, glyphs);
+      function Icon2(props) {
+        var C = ICONS[props.name] || (opts.fallback ? ICONS[opts.fallback] : null);
+        if (!C) return null;
+        var size = typeof opts.sizeOf === "function" ? opts.sizeOf(props) : props.size || 14;
+        var cls = prefix + "-svg" + (opts.classNameAppend && props.className ? " " + props.className : "");
+        var attrs = {
+          size,
+          strokeWidth: props.strokeWidth || 2,
+          "aria-hidden": "true",
+          className: cls
+        };
+        if (opts.focusable) attrs.focusable = false;
+        return h(C, attrs);
+      }
+      var set = { ICONS, Icon: Icon2 };
+      if (opts.tabIcon) {
+        set.tabIcon = function(name) {
+          return function TabIcon() {
+            return h(Icon2, { name, size: 14 });
+          };
+        };
+      }
+      return set;
+    }
+    module2.exports = { create };
   }
 });
 
@@ -493,60 +363,56 @@ var init_createLucideIcon = __esm({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield.mjs
-var shield_exports = {};
-__export(shield_exports, {
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs
+var database_exports = {};
+__export(database_exports, {
   __iconData: () => __iconData,
-  default: () => Shield
+  default: () => Database
 });
-var __iconData, Shield;
-var init_shield = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield.mjs"() {
+var __iconData, Database;
+var init_database = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs"() {
     init_createLucideIcon();
     __iconData = {
-      name: "shield",
+      name: "database",
       size: 24,
       node: [
-        [
-          "path",
-          {
-            d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
-            key: "oel41y"
-          }
-        ]
+        ["ellipse", { cx: "12", cy: "5", rx: "9", ry: "3", key: "msslwz" }],
+        ["path", { d: "M3 5V19A9 3 0 0 0 21 19V5", key: "1wlel7" }],
+        ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
       ]
     };
     __iconData.node;
-    Shield = createLucideIcon(__iconData);
+    Database = createLucideIcon(__iconData);
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/key-round.mjs
-var key_round_exports = {};
-__export(key_round_exports, {
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs
+var eye_exports = {};
+__export(eye_exports, {
   __iconData: () => __iconData2,
-  default: () => KeyRound
+  default: () => Eye
 });
-var __iconData2, KeyRound;
-var init_key_round = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/key-round.mjs"() {
+var __iconData2, Eye;
+var init_eye = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs"() {
     init_createLucideIcon();
     __iconData2 = {
-      name: "key-round",
+      name: "eye",
       size: 24,
       node: [
         [
           "path",
           {
-            d: "M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z",
-            key: "1s6t7t"
+            d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
+            key: "1nclc0"
           }
         ],
-        ["circle", { cx: "16.5", cy: "7.5", r: ".5", fill: "currentColor", key: "w0ekpg" }]
+        ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
       ]
     };
     __iconData2.node;
-    KeyRound = createLucideIcon(__iconData2);
+    Eye = createLucideIcon(__iconData2);
   }
 });
 
@@ -578,57 +444,75 @@ var init_folder = __esm({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs
-var sliders_horizontal_exports = {};
-__export(sliders_horizontal_exports, {
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/key-round.mjs
+var key_round_exports = {};
+__export(key_round_exports, {
   __iconData: () => __iconData4,
-  default: () => SlidersHorizontal
+  default: () => KeyRound
 });
-var __iconData4, SlidersHorizontal;
-var init_sliders_horizontal = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs"() {
+var __iconData4, KeyRound;
+var init_key_round = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/key-round.mjs"() {
     init_createLucideIcon();
     __iconData4 = {
-      name: "sliders-horizontal",
+      name: "key-round",
       size: 24,
       node: [
-        ["path", { d: "M10 5H3", key: "1qgfaw" }],
-        ["path", { d: "M12 19H3", key: "yhmn1j" }],
-        ["path", { d: "M14 3v4", key: "1sua03" }],
-        ["path", { d: "M16 17v4", key: "1q0r14" }],
-        ["path", { d: "M21 12h-9", key: "1o4lsq" }],
-        ["path", { d: "M21 19h-5", key: "1rlt1p" }],
-        ["path", { d: "M21 5h-7", key: "1oszz2" }],
-        ["path", { d: "M8 10v4", key: "tgpxqk" }],
-        ["path", { d: "M8 12H3", key: "a7s4jb" }]
+        [
+          "path",
+          {
+            d: "M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z",
+            key: "1s6t7t"
+          }
+        ],
+        ["circle", { cx: "16.5", cy: "7.5", r: ".5", fill: "currentColor", key: "w0ekpg" }]
       ]
     };
     __iconData4.node;
-    SlidersHorizontal = createLucideIcon(__iconData4);
+    KeyRound = createLucideIcon(__iconData4);
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs
-var database_exports = {};
-__export(database_exports, {
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/layers.mjs
+var layers_exports = {};
+__export(layers_exports, {
   __iconData: () => __iconData5,
-  default: () => Database
+  default: () => Layers
 });
-var __iconData5, Database;
-var init_database = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs"() {
+var __iconData5, Layers;
+var init_layers = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/layers.mjs"() {
     init_createLucideIcon();
     __iconData5 = {
-      name: "database",
+      name: "layers",
       size: 24,
       node: [
-        ["ellipse", { cx: "12", cy: "5", rx: "9", ry: "3", key: "msslwz" }],
-        ["path", { d: "M3 5V19A9 3 0 0 0 21 19V5", key: "1wlel7" }],
-        ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
-      ]
+        [
+          "path",
+          {
+            d: "M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z",
+            key: "zw3jo"
+          }
+        ],
+        [
+          "path",
+          {
+            d: "M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12",
+            key: "1wduqc"
+          }
+        ],
+        [
+          "path",
+          {
+            d: "M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17",
+            key: "kqbvx6"
+          }
+        ]
+      ],
+      aliases: ["layers-3"]
     };
     __iconData5.node;
-    Database = createLucideIcon(__iconData5);
+    Layers = createLucideIcon(__iconData5);
   }
 });
 
@@ -659,60 +543,169 @@ var init_list = __esm({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/layers.mjs
-var layers_exports = {};
-__export(layers_exports, {
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/lock.mjs
+var lock_exports = {};
+__export(lock_exports, {
   __iconData: () => __iconData7,
-  default: () => Layers
+  default: () => Lock
 });
-var __iconData7, Layers;
-var init_layers = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/layers.mjs"() {
+var __iconData7, Lock;
+var init_lock = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/lock.mjs"() {
     init_createLucideIcon();
     __iconData7 = {
-      name: "layers",
+      name: "lock",
+      size: 24,
+      node: [
+        ["rect", { width: "18", height: "11", x: "3", y: "11", rx: "2", ry: "2", key: "1w4ew1" }],
+        ["path", { d: "M7 11V7a5 5 0 0 1 10 0v4", key: "fwvmzm" }]
+      ]
+    };
+    __iconData7.node;
+    Lock = createLucideIcon(__iconData7);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/lock-open.mjs
+var lock_open_exports = {};
+__export(lock_open_exports, {
+  __iconData: () => __iconData8,
+  default: () => LockOpen
+});
+var __iconData8, LockOpen;
+var init_lock_open = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/lock-open.mjs"() {
+    init_createLucideIcon();
+    __iconData8 = {
+      name: "lock-open",
+      size: 24,
+      node: [
+        ["rect", { width: "18", height: "11", x: "3", y: "11", rx: "2", ry: "2", key: "1w4ew1" }],
+        ["path", { d: "M7 11V7a5 5 0 0 1 9.9-1", key: "1mm8w8" }]
+      ],
+      aliases: ["unlock"]
+    };
+    __iconData8.node;
+    LockOpen = createLucideIcon(__iconData8);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs
+var pencil_exports = {};
+__export(pencil_exports, {
+  __iconData: () => __iconData9,
+  default: () => Pencil
+});
+var __iconData9, Pencil;
+var init_pencil = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs"() {
+    init_createLucideIcon();
+    __iconData9 = {
+      name: "pencil",
       size: 24,
       node: [
         [
           "path",
           {
-            d: "M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z",
-            key: "zw3jo"
+            d: "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
+            key: "1a8usu"
           }
         ],
+        ["path", { d: "m15 5 4 4", key: "1mk7zo" }]
+      ]
+    };
+    __iconData9.node;
+    Pencil = createLucideIcon(__iconData9);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/plus.mjs
+var plus_exports = {};
+__export(plus_exports, {
+  __iconData: () => __iconData10,
+  default: () => Plus
+});
+var __iconData10, Plus;
+var init_plus = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/plus.mjs"() {
+    init_createLucideIcon();
+    __iconData10 = {
+      name: "plus",
+      size: 24,
+      node: [
+        ["path", { d: "M5 12h14", key: "1ays0h" }],
+        ["path", { d: "M12 5v14", key: "s699le" }]
+      ]
+    };
+    __iconData10.node;
+    Plus = createLucideIcon(__iconData10);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
+var refresh_cw_exports = {};
+__export(refresh_cw_exports, {
+  __iconData: () => __iconData11,
+  default: () => RefreshCw
+});
+var __iconData11, RefreshCw;
+var init_refresh_cw = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
+    init_createLucideIcon();
+    __iconData11 = {
+      name: "refresh-cw",
+      size: 24,
+      node: [
+        ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
+        ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
+        ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
+        ["path", { d: "M8 16H3v5", key: "1cv678" }]
+      ]
+    };
+    __iconData11.node;
+    RefreshCw = createLucideIcon(__iconData11);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield.mjs
+var shield_exports = {};
+__export(shield_exports, {
+  __iconData: () => __iconData12,
+  default: () => Shield
+});
+var __iconData12, Shield;
+var init_shield = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield.mjs"() {
+    init_createLucideIcon();
+    __iconData12 = {
+      name: "shield",
+      size: 24,
+      node: [
         [
           "path",
           {
-            d: "M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12",
-            key: "1wduqc"
-          }
-        ],
-        [
-          "path",
-          {
-            d: "M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17",
-            key: "kqbvx6"
+            d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
+            key: "oel41y"
           }
         ]
-      ],
-      aliases: ["layers-3"]
+      ]
     };
-    __iconData7.node;
-    Layers = createLucideIcon(__iconData7);
+    __iconData12.node;
+    Shield = createLucideIcon(__iconData12);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs
 var shield_check_exports = {};
 __export(shield_check_exports, {
-  __iconData: () => __iconData8,
+  __iconData: () => __iconData13,
   default: () => ShieldCheck
 });
-var __iconData8, ShieldCheck;
+var __iconData13, ShieldCheck;
 var init_shield_check = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs"() {
     init_createLucideIcon();
-    __iconData8 = {
+    __iconData13 = {
       name: "shield-check",
       size: 24,
       node: [
@@ -726,8 +719,294 @@ var init_shield_check = __esm({
         ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
       ]
     };
-    __iconData8.node;
-    ShieldCheck = createLucideIcon(__iconData8);
+    __iconData13.node;
+    ShieldCheck = createLucideIcon(__iconData13);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-plus.mjs
+var shield_plus_exports = {};
+__export(shield_plus_exports, {
+  __iconData: () => __iconData14,
+  default: () => ShieldPlus
+});
+var __iconData14, ShieldPlus;
+var init_shield_plus = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-plus.mjs"() {
+    init_createLucideIcon();
+    __iconData14 = {
+      name: "shield-plus",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
+            key: "oel41y"
+          }
+        ],
+        ["path", { d: "M9 12h6", key: "1c52cq" }],
+        ["path", { d: "M12 9v6", key: "199k2o" }]
+      ]
+    };
+    __iconData14.node;
+    ShieldPlus = createLucideIcon(__iconData14);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs
+var sliders_horizontal_exports = {};
+__export(sliders_horizontal_exports, {
+  __iconData: () => __iconData15,
+  default: () => SlidersHorizontal
+});
+var __iconData15, SlidersHorizontal;
+var init_sliders_horizontal = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs"() {
+    init_createLucideIcon();
+    __iconData15 = {
+      name: "sliders-horizontal",
+      size: 24,
+      node: [
+        ["path", { d: "M10 5H3", key: "1qgfaw" }],
+        ["path", { d: "M12 19H3", key: "yhmn1j" }],
+        ["path", { d: "M14 3v4", key: "1sua03" }],
+        ["path", { d: "M16 17v4", key: "1q0r14" }],
+        ["path", { d: "M21 12h-9", key: "1o4lsq" }],
+        ["path", { d: "M21 19h-5", key: "1rlt1p" }],
+        ["path", { d: "M21 5h-7", key: "1oszz2" }],
+        ["path", { d: "M8 10v4", key: "tgpxqk" }],
+        ["path", { d: "M8 12H3", key: "a7s4jb" }]
+      ]
+    };
+    __iconData15.node;
+    SlidersHorizontal = createLucideIcon(__iconData15);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
+var __iconData16, Trash;
+var init_trash = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
+    init_createLucideIcon();
+    __iconData16 = {
+      name: "trash",
+      size: 24,
+      node: [
+        ["path", { d: "M10 11v6", key: "nco0om" }],
+        ["path", { d: "M14 11v6", key: "outv1u" }],
+        ["path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6", key: "miytrc" }],
+        ["path", { d: "M3 6h18", key: "d0wm0j" }],
+        ["path", { d: "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2", key: "e791ji" }]
+      ],
+      aliases: ["trash-2"]
+    };
+    __iconData16.node;
+    Trash = createLucideIcon(__iconData16);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash-2.mjs
+var trash_2_exports = {};
+__export(trash_2_exports, {
+  default: () => Trash
+});
+var init_trash_2 = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash-2.mjs"() {
+    init_trash();
+  }
+});
+
+// packages/addons/vault/client/ui/icons.cjs
+var require_icons2 = __commonJS({
+  "packages/addons/vault/client/ui/icons.cjs"(exports2, module2) {
+    "use strict";
+    var icons = require_icons();
+    var set = icons.create("wbv", {
+      "database": (init_database(), __toCommonJS(database_exports)).default,
+      "eye": (init_eye(), __toCommonJS(eye_exports)).default,
+      "folder": (init_folder(), __toCommonJS(folder_exports)).default,
+      "key-round": (init_key_round(), __toCommonJS(key_round_exports)).default,
+      "layers": (init_layers(), __toCommonJS(layers_exports)).default,
+      "list": (init_list(), __toCommonJS(list_exports)).default,
+      "lock": (init_lock(), __toCommonJS(lock_exports)).default,
+      "lock-open": (init_lock_open(), __toCommonJS(lock_open_exports)).default,
+      "pencil": (init_pencil(), __toCommonJS(pencil_exports)).default,
+      "plus": (init_plus(), __toCommonJS(plus_exports)).default,
+      "refresh-cw": (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
+      "shield": (init_shield(), __toCommonJS(shield_exports)).default,
+      "shield-check": (init_shield_check(), __toCommonJS(shield_check_exports)).default,
+      "shield-plus": (init_shield_plus(), __toCommonJS(shield_plus_exports)).default,
+      "sliders-horizontal": (init_sliders_horizontal(), __toCommonJS(sliders_horizontal_exports)).default,
+      "trash-2": (init_trash_2(), __toCommonJS(trash_2_exports)).default
+    });
+    module2.exports = { ICONS: set.ICONS, Icon: set.Icon };
+  }
+});
+
+// packages/addons/lib/filter-checklist-styles.cjs
+var require_filter_checklist_styles = __commonJS({
+  "packages/addons/lib/filter-checklist-styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = [
+      ".wbck{display:flex;flex-direction:column;min-width:0}",
+      ".wbck-search{padding:0 0 6px}",
+      ".wbck-input{width:100%;box-sizing:border-box;font:inherit;font-size:12.5px;padding:6px 9px;border:1px solid var(--wb-border);border-radius:8px;background:var(--wb-surface);color:inherit}",
+      ".wbck-input:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}",
+      ".wbck-input:disabled{opacity:.6;cursor:not-allowed}",
+      ".wbck-head{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--wb-muted);padding:2px 4px 7px}",
+      ".wbck-grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbck-sel{flex:none;color:var(--wb-accent)}",
+      ".wbck-clear{appearance:none;flex:none;border:0;background:transparent;color:inherit;border-radius:4px;margin:0;padding:3px 5px;font:inherit;font-size:11.5px;line-height:1;cursor:pointer;opacity:.75}",
+      ".wbck-clear:hover:enabled{opacity:1;background:color-mix(in srgb, currentColor 8%, transparent)}",
+      ".wbck-clear:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}",
+      ".wbck-clear:disabled{opacity:.4;cursor:not-allowed}",
+      ".wbck-list{max-height:220px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--wb-border);border-radius:10px;padding:2px}",
+      ".wbck-opt{display:flex;align-items:center;gap:7px;padding:6px;border-radius:6px;font-size:12.5px;cursor:pointer}",
+      ".wbck-opt:hover{background:color-mix(in srgb, currentColor 7%, transparent)}",
+      ".wbck-opt.is-on{background:color-mix(in srgb, var(--wb-accent) 10%, transparent)}",
+      ".wbck-opt input{margin:0;flex:none;accent-color:var(--wb-accent)}",
+      // 单选变体用 button 渲染（role="radio"），这里把浏览器默认按钮样式清掉，视觉与多选行一致。
+      '.wbck-opt[role="radio"]{appearance:none;width:100%;box-sizing:border-box;border:0;background:transparent;color:inherit;font:inherit;text-align:left}',
+      '.wbck-opt[role="radio"]:disabled{opacity:.55;cursor:not-allowed}',
+      '.wbck-opt[role="radio"]:focus-visible{outline:2px solid var(--wb-accent);outline-offset:-2px}',
+      ".wbck-nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbck-meta{margin-left:auto;flex:none;font-size:11.5px;color:var(--wb-muted)}",
+      ".wbck-note{font-size:12px;color:var(--wb-muted);padding:8px 6px}",
+      ".wbck-more{font-size:11px;color:var(--wb-muted);text-align:center;padding:6px 0 2px;opacity:.8}",
+      "@media (max-width:760px){.wbck-list{max-height:200px}}"
+    ];
+  }
+});
+
+// packages/addons/lib/client-base-styles.cjs
+var require_client_base_styles = __commonJS({
+  "packages/addons/lib/client-base-styles.cjs"(exports2, module2) {
+    "use strict";
+    var SECRET_FIELD = [
+      ".wb-secret-field{position:relative;display:flex;align-items:center;min-width:0}",
+      ".wb-secret-field input{flex:1 1 auto;min-width:0;padding-right:34px}",
+      ".wb-eye{position:absolute;right:4px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:6px;padding:4px;color:var(--wb-muted,#6b7280);cursor:pointer}",
+      ".wb-eye:hover:not(:disabled){color:var(--wb-accent,#2563eb);background:color-mix(in srgb, var(--wb-accent,#2563eb) 12%, transparent)}",
+      ".wb-eye:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:1px}",
+      ".wb-eye:disabled{opacity:.45;cursor:not-allowed}"
+    ];
+    module2.exports = function baseStyles(prefix) {
+      var p = String(prefix || "wb");
+      var s = "." + p;
+      return SECRET_FIELD.concat([
+        s + "-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
+        s + "-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
+        s + "-title{font-size:16px;font-weight:650;margin:0}",
+        s + "-sub{font-size:12px;color:var(--wb-muted,#6b7280);margin:2px 0 0}",
+        s + "-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
+        s + "-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
+        s + "-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
+        s + "-kpi{font-size:22px;font-weight:700;line-height:1.2}" + s + "-kpi-label{font-size:12px;color:var(--wb-muted,#6b7280)}",
+        s + "-table{width:100%;border-collapse:collapse;font-size:12px}" + s + "-table th," + s + "-table td{padding:7px 8px;border-bottom:1px solid var(--wb-border,#eef0f3);text-align:left;vertical-align:top}",
+        s + "-table th{font-weight:600;color:var(--wb-muted,#6b7280);white-space:nowrap}",
+        s + "-btn{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer}",
+        s + "-btn:hover:not(:disabled){border-color:var(--wb-accent,#2563eb)}" + s + "-btn:disabled{opacity:.5;cursor:default}",
+        s + "-btn.primary{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:#fff}",
+        s + "-btn.danger{color:#b91c1c;border-color:#fecaca}",
+        s + "-field{display:flex;flex-direction:column;gap:4px;font-size:12px}" + s + "-label{font-weight:600}",
+        s + "-field input," + s + "-field select," + s + "-field textarea{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:0}",
+        s + "-hint{color:var(--wb-muted,#6b7280);font-size:11px}" + s + "-notice{padding:8px 10px;border-radius:8px;font-size:12px;background:#eff6ff;color:#1e40af}",
+        s + "-notice.error{background:#fef2f2;color:#b91c1c}" + s + "-notice.ok{background:#ecfdf5;color:#047857}",
+        s + "-empty{padding:18px;text-align:center;color:var(--wb-muted,#6b7280);font-size:12px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:8px}",
+        s + "-pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;background:#f3f4f6;color:#374151}",
+        s + "-pill.ok{background:#ecfdf5;color:#047857}" + s + "-pill.error{background:#fef2f2;color:#b91c1c}" + s + "-pill.warn{background:#fffbeb;color:#b45309}",
+        s + "-json{margin:0;padding:8px;background:#f8fafc;border-radius:8px;font-size:11px;max-height:240px;overflow:auto}",
+        s + "-muted{color:var(--wb-muted,#6b7280)}" + s + "-link{color:var(--wb-accent,#2563eb);cursor:pointer;text-decoration:none}",
+        s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}"
+      ]);
+    };
+    module2.exports.secretFieldStyles = SECRET_FIELD;
+  }
+});
+
+// packages/addons/lib/icon-label.cjs
+var require_icon_label = __commonJS({
+  "packages/addons/lib/icon-label.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function iconLabel(h, Icon2, text) {
+      return h(
+        "span",
+        { className: "wb-icon-label" },
+        h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }),
+        h("span", null, text)
+      );
+    };
+    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}";
+  }
+});
+
+// packages/addons/vault/client/ui/styles.cjs
+var require_styles = __commonJS({
+  "packages/addons/vault/client/ui/styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = [
+      ".wbv{display:flex;flex-direction:column;gap:14px;font-size:13px;min-height:100%;padding:2px}",
+      ".wbv h2{font-size:17px;margin:0}.wbv h3{font-size:14px;margin:0}",
+      ".wbv-muted{opacity:.62}.wbv-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
+      ".wbv-grow{flex:1}.wbv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
+      ".wbv-card{border:1px solid var(--wb-border);border-radius:10px;padding:12px;background:var(--wb-card)}",
+      ".wbv-card h3{margin-bottom:6px}.wbv-kpi{font-size:22px;font-weight:650;line-height:1.2}",
+      ".wbv-btn{border:1px solid var(--wb-border);background:var(--wb-card);color:inherit;border-radius:7px;padding:5px 10px;cursor:pointer;font-size:12px;line-height:1.4}",
+      ".wbv-btn:hover:enabled{border-color:var(--wb-accent)}.wbv-btn:disabled{opacity:.45;cursor:not-allowed}",
+      ".wbv-btn:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}",
+      ".wbv-btn.primary{background:var(--wb-accent);border-color:var(--wb-accent);color:var(--wb-on-accent,inherit)}",
+      ".wbv-btn.danger{color:var(--wb-danger);border-color:color-mix(in srgb,var(--wb-danger) 45%,transparent)}",
+      ".wbv-btn.ghost{background:transparent;border-color:transparent;color:var(--wb-accent);padding:2px 4px}",
+      ".wbv-btn.wbv-delete{color:var(--wb-danger)}",
+      ".wbv-field{display:flex;flex-direction:column;gap:4px;min-width:180px;flex:1}",
+      ".wbv-label{font-size:11px;font-weight:600;opacity:.75}.wbv-hint{font-size:11px;opacity:.55}",
+      ".wbv input,.wbv select,.wbv textarea{border:1px solid var(--wb-border);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface);color:inherit;width:100%;box-sizing:border-box}",
+      ".wbv input[type=checkbox]{width:auto}",
+      ".wbv textarea{min-height:70px;resize:vertical}",
+      ".wbv-notice{border-radius:8px;padding:8px 10px;font-size:12px;border:1px solid var(--wb-border);background:color-mix(in srgb,var(--wb-accent) 8%,transparent);color:inherit}",
+      ".wbv-notice.error{border-color:color-mix(in srgb,var(--wb-danger) 45%,transparent);background:color-mix(in srgb,var(--wb-danger) 10%,transparent);color:var(--wb-danger)}",
+      ".wbv-notice.ok{border-color:color-mix(in srgb,var(--wb-ok) 45%,transparent);background:color-mix(in srgb,var(--wb-ok) 10%,transparent);color:var(--wb-ok)}",
+      ".wbv-empty{padding:22px;text-align:center;opacity:.55;border:1px dashed var(--wb-border);border-radius:10px}",
+      ".wbv-table-scroll{max-width:100%;overflow-x:auto;padding:4px}.wbv-table-scroll:focus-visible{outline:2px solid var(--wb-accent);outline-offset:-2px}",
+      ".wbv-table{width:100%;border-collapse:collapse;font-size:12px}",
+      ".wbv-table th,.wbv-table td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--wb-line);vertical-align:top}",
+      ".wbv-table th{font-weight:600;opacity:.65;white-space:nowrap}.wbv-table code{font-size:11px;opacity:.8}",
+      ".wbv-table tbody tr:hover{background:color-mix(in srgb,var(--wb-muted) 8%,transparent)}",
+      ".wbv-pill{display:inline-block;border-radius:999px;padding:1px 8px;font-size:11px;background:color-mix(in srgb,var(--wb-muted) 14%,transparent);color:inherit}",
+      ".wbv-pill.ok{background:color-mix(in srgb,var(--wb-ok) 16%,transparent);color:var(--wb-ok)}",
+      ".wbv-pill.warn{background:color-mix(in srgb,var(--wb-warn) 18%,transparent);color:var(--wb-warn)}",
+      ".wbv-pill.bad{background:color-mix(in srgb,var(--wb-danger) 16%,transparent);color:var(--wb-danger)}",
+      ".wbv-tabs{display:flex;gap:6px;flex-wrap:wrap}.wbv-tab{border:none;background:transparent;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px}",
+      ".wbv-tab.on{background:color-mix(in srgb,var(--wb-accent) 12%,transparent);color:var(--wb-accent);font-weight:600}",
+      ".wbv-secret{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--wb-surface);border:1px solid var(--wb-border);border-radius:6px;padding:6px 8px;word-break:break-all}",
+      ".wbv-inline{display:flex;gap:6px;align-items:center;flex-wrap:wrap}",
+      ".wbv-modal{position:fixed;inset:0;background:color-mix(in srgb,var(--wb-muted) 45%,transparent);display:flex;align-items:center;justify-content:center;z-index:50;padding:18px}",
+      ".wbv-modal-box{background:var(--wb-card);border:1px solid var(--wb-border);border-radius:12px;padding:16px;width:min(520px,100%);max-height:88vh;overflow:auto;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 40px color-mix(in srgb,var(--wb-muted) 30%,transparent)}",
+      ".wbv-code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;white-space:pre-wrap;word-break:break-word;background:var(--wb-surface);border:1px solid var(--wb-border);border-radius:8px;padding:10px;max-height:320px;overflow:auto}",
+      ".wbv-split{display:grid;grid-template-columns:minmax(260px,1fr) minmax(320px,1.6fr);gap:12px;align-items:start}",
+      ".wbv-list{display:flex;flex-direction:column;gap:6px}",
+      ".wbv-item{border:1px solid var(--wb-border);border-radius:10px;padding:9px 10px;background:var(--wb-card);cursor:pointer}",
+      ".wbv-item:hover{border-color:var(--wb-accent)}",
+      ".wbv-item.on{border-color:var(--wb-accent);box-shadow:inset 3px 0 0 var(--wb-accent)}",
+      ".wbv-item-top{display:flex;gap:8px;align-items:center}",
+      ".wbv-dot{width:10px;height:10px;border-radius:999px;flex:none;background:var(--wb-accent)}",
+      ".wbv-chips{display:flex;gap:6px;flex-wrap:wrap}",
+      ".wbv-chip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--wb-border);border-radius:999px;padding:2px 8px;font-size:11px;background:var(--wb-surface)}",
+      ".wbv-check{display:flex;gap:6px;align-items:center;padding:3px 0;font-size:12px}",
+      ".wbv-scroll{max-height:220px;overflow:auto;border:1px solid var(--wb-border);border-radius:8px;padding:8px}",
+      "@media (max-width:820px){.wbv-split{grid-template-columns:1fr}}",
+      ".wbv-search{flex:0 0 220px;width:220px}",
+      ".wbv-row>input:not([type=checkbox]),.wbv-row>select{width:auto;flex:0 1 220px;min-width:120px}",
+      ".wbv-sub{font-size:12px;opacity:.65;margin-top:2px}",
+      ".wbv-table tbody tr:hover{background:color-mix(in srgb,var(--wb-accent) 6%,transparent)}",
+      ".wbv-table td{vertical-align:top}",
+      ".wbv-empty-card{border:1px dashed var(--wb-border);border-radius:10px;padding:28px 16px;display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center;background:var(--wb-card)}",
+      ".wbv-empty-title{font-size:14px;font-weight:600}",
+      ".wbv-check-list{display:flex;flex-wrap:wrap;gap:6px 14px;margin:4px 0}",
+      ".wbv-check{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}",
+      ".wbv-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}"
+    ].concat(require_filter_checklist_styles()).concat(require_client_base_styles().secretFieldStyles, require_icon_label().styles);
   }
 });
 
@@ -857,46 +1136,17 @@ var require_common = __commonJS({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs
-var eye_exports = {};
-__export(eye_exports, {
-  __iconData: () => __iconData9,
-  default: () => Eye
-});
-var __iconData9, Eye;
-var init_eye = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs"() {
-    init_createLucideIcon();
-    __iconData9 = {
-      name: "eye",
-      size: 24,
-      node: [
-        [
-          "path",
-          {
-            d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
-            key: "1nclc0"
-          }
-        ],
-        ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
-      ]
-    };
-    __iconData9.node;
-    Eye = createLucideIcon(__iconData9);
-  }
-});
-
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs
 var eye_off_exports = {};
 __export(eye_off_exports, {
-  __iconData: () => __iconData10,
+  __iconData: () => __iconData17,
   default: () => EyeOff
 });
-var __iconData10, EyeOff;
+var __iconData17, EyeOff;
 var init_eye_off = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs"() {
     init_createLucideIcon();
-    __iconData10 = {
+    __iconData17 = {
       name: "eye-off",
       size: 24,
       node: [
@@ -918,8 +1168,8 @@ var init_eye_off = __esm({
         ["path", { d: "m2 2 20 20", key: "1ooewy" }]
       ]
     };
-    __iconData10.node;
-    EyeOff = createLucideIcon(__iconData10);
+    __iconData17.node;
+    EyeOff = createLucideIcon(__iconData17);
   }
 });
 
@@ -1035,93 +1285,17 @@ var require_ask_passphrase = __commonJS({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/lock.mjs
-var lock_exports = {};
-__export(lock_exports, {
-  __iconData: () => __iconData11,
-  default: () => Lock
-});
-var __iconData11, Lock;
-var init_lock = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/lock.mjs"() {
-    init_createLucideIcon();
-    __iconData11 = {
-      name: "lock",
-      size: 24,
-      node: [
-        ["rect", { width: "18", height: "11", x: "3", y: "11", rx: "2", ry: "2", key: "1w4ew1" }],
-        ["path", { d: "M7 11V7a5 5 0 0 1 10 0v4", key: "fwvmzm" }]
-      ]
-    };
-    __iconData11.node;
-    Lock = createLucideIcon(__iconData11);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/lock-open.mjs
-var lock_open_exports = {};
-__export(lock_open_exports, {
-  __iconData: () => __iconData12,
-  default: () => LockOpen
-});
-var __iconData12, LockOpen;
-var init_lock_open = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/lock-open.mjs"() {
-    init_createLucideIcon();
-    __iconData12 = {
-      name: "lock-open",
-      size: 24,
-      node: [
-        ["rect", { width: "18", height: "11", x: "3", y: "11", rx: "2", ry: "2", key: "1w4ew1" }],
-        ["path", { d: "M7 11V7a5 5 0 0 1 9.9-1", key: "1mm8w8" }]
-      ],
-      aliases: ["unlock"]
-    };
-    __iconData12.node;
-    LockOpen = createLucideIcon(__iconData12);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-plus.mjs
-var shield_plus_exports = {};
-__export(shield_plus_exports, {
-  __iconData: () => __iconData13,
-  default: () => ShieldPlus
-});
-var __iconData13, ShieldPlus;
-var init_shield_plus = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-plus.mjs"() {
-    init_createLucideIcon();
-    __iconData13 = {
-      name: "shield-plus",
-      size: 24,
-      node: [
-        [
-          "path",
-          {
-            d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
-            key: "oel41y"
-          }
-        ],
-        ["path", { d: "M9 12h6", key: "1c52cq" }],
-        ["path", { d: "M12 9v6", key: "199k2o" }]
-      ]
-    };
-    __iconData13.node;
-    ShieldPlus = createLucideIcon(__iconData13);
-  }
-});
-
 // packages/addons/vault/client/views/status.cjs
 var require_status = __commonJS({
   "packages/addons/vault/client/views/status.cjs"(exports2, module2) {
     "use strict";
+    var GLYPHS2 = require_icons2().ICONS;
     var C = require_common();
     var AskPassphrase = require_ask_passphrase();
     var iconLabel = require_icon_label();
-    var Lock2 = (init_lock(), __toCommonJS(lock_exports)).default;
-    var Unlock = (init_lock_open(), __toCommonJS(lock_open_exports)).default;
-    var ShieldPlus2 = (init_shield_plus(), __toCommonJS(shield_plus_exports)).default;
+    var Lock2 = GLYPHS2["lock"];
+    var Unlock = GLYPHS2["lock-open"];
+    var ShieldPlus2 = GLYPHS2["shield-plus"];
     var SecretField = require_secret_field();
     module2.exports = function StatusView(props) {
       var h = props.h;
@@ -1463,116 +1637,6 @@ var require_status = __commonJS({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
-var refresh_cw_exports = {};
-__export(refresh_cw_exports, {
-  __iconData: () => __iconData14,
-  default: () => RefreshCw
-});
-var __iconData14, RefreshCw;
-var init_refresh_cw = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
-    init_createLucideIcon();
-    __iconData14 = {
-      name: "refresh-cw",
-      size: 24,
-      node: [
-        ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
-        ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
-        ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
-        ["path", { d: "M8 16H3v5", key: "1cv678" }]
-      ]
-    };
-    __iconData14.node;
-    RefreshCw = createLucideIcon(__iconData14);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/plus.mjs
-var plus_exports = {};
-__export(plus_exports, {
-  __iconData: () => __iconData15,
-  default: () => Plus
-});
-var __iconData15, Plus;
-var init_plus = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/plus.mjs"() {
-    init_createLucideIcon();
-    __iconData15 = {
-      name: "plus",
-      size: 24,
-      node: [
-        ["path", { d: "M5 12h14", key: "1ays0h" }],
-        ["path", { d: "M12 5v14", key: "s699le" }]
-      ]
-    };
-    __iconData15.node;
-    Plus = createLucideIcon(__iconData15);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs
-var pencil_exports = {};
-__export(pencil_exports, {
-  __iconData: () => __iconData16,
-  default: () => Pencil
-});
-var __iconData16, Pencil;
-var init_pencil = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs"() {
-    init_createLucideIcon();
-    __iconData16 = {
-      name: "pencil",
-      size: 24,
-      node: [
-        [
-          "path",
-          {
-            d: "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
-            key: "1a8usu"
-          }
-        ],
-        ["path", { d: "m15 5 4 4", key: "1mk7zo" }]
-      ]
-    };
-    __iconData16.node;
-    Pencil = createLucideIcon(__iconData16);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
-var __iconData17, Trash;
-var init_trash = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
-    init_createLucideIcon();
-    __iconData17 = {
-      name: "trash",
-      size: 24,
-      node: [
-        ["path", { d: "M10 11v6", key: "nco0om" }],
-        ["path", { d: "M14 11v6", key: "outv1u" }],
-        ["path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6", key: "miytrc" }],
-        ["path", { d: "M3 6h18", key: "d0wm0j" }],
-        ["path", { d: "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2", key: "e791ji" }]
-      ],
-      aliases: ["trash-2"]
-    };
-    __iconData17.node;
-    Trash = createLucideIcon(__iconData17);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash-2.mjs
-var trash_2_exports = {};
-__export(trash_2_exports, {
-  default: () => Trash
-});
-var init_trash_2 = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash-2.mjs"() {
-    init_trash();
-  }
-});
-
 // packages/addons/vault/client/ui/kinds.cjs
 var require_kinds = __commonJS({
   "packages/addons/vault/client/ui/kinds.cjs"(exports2, module2) {
@@ -1598,15 +1662,16 @@ var require_kinds = __commonJS({
 var require_secrets = __commonJS({
   "packages/addons/vault/client/views/secrets.cjs"(exports2, module2) {
     "use strict";
+    var GLYPHS2 = require_icons2().ICONS;
     var C = require_common();
     var AskPassphrase = require_ask_passphrase();
     var iconLabel = require_icon_label();
-    var Refresh = (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default;
-    var Unlock = (init_lock_open(), __toCommonJS(lock_open_exports)).default;
-    var Plus2 = (init_plus(), __toCommonJS(plus_exports)).default;
-    var Eye2 = (init_eye(), __toCommonJS(eye_exports)).default;
-    var Pencil2 = (init_pencil(), __toCommonJS(pencil_exports)).default;
-    var Trash2 = (init_trash_2(), __toCommonJS(trash_2_exports)).default;
+    var Refresh = GLYPHS2["refresh-cw"];
+    var Unlock = GLYPHS2["lock-open"];
+    var Plus2 = GLYPHS2["plus"];
+    var Eye2 = GLYPHS2["eye"];
+    var Pencil2 = GLYPHS2["pencil"];
+    var Trash2 = GLYPHS2["trash-2"];
     var SecretField = require_secret_field();
     var K = require_kinds();
     var KIND_LABEL = K.KIND_LABEL;
@@ -4950,6 +5015,7 @@ var require_actions = __commonJS({
 });
 
 // packages/addons/vault/client/client.src.cjs
+var GLYPHS = require_icons2().ICONS;
 (function() {
   var root = typeof window !== "undefined" ? window : null;
   var host = root && root.__WB_HOST__;
@@ -4964,13 +5030,13 @@ var require_actions = __commonJS({
   var CSS_ARR = require_styles();
   var CSS = Array.isArray(CSS_ARR) ? CSS_ARR.join("\n") : String(CSS_ARR || "");
   var ICONS = {
-    shield: (init_shield(), __toCommonJS(shield_exports)).default,
-    key: (init_key_round(), __toCommonJS(key_round_exports)).default,
-    folder: (init_folder(), __toCommonJS(folder_exports)).default,
-    sliders: (init_sliders_horizontal(), __toCommonJS(sliders_horizontal_exports)).default,
-    database: (init_database(), __toCommonJS(database_exports)).default,
-    list: (init_list(), __toCommonJS(list_exports)).default,
-    layers: (init_layers(), __toCommonJS(layers_exports)).default
+    shield: GLYPHS["shield"],
+    key: GLYPHS["key-round"],
+    folder: GLYPHS["folder"],
+    sliders: GLYPHS["sliders-horizontal"],
+    database: GLYPHS["database"],
+    list: GLYPHS["list"],
+    layers: GLYPHS["layers"]
   };
   function Icon2(props) {
     var C = ICONS[props.name] || ICONS.shield;
@@ -5003,8 +5069,8 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.3.7",
-    icon: (init_shield_check(), __toCommonJS(shield_check_exports)).default,
+    version: "0.3.8",
+    icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },
       { id: "secrets", icon: tabIcon("key"), title: { zh: "\u51ED\u636E", en: "Secrets" }, component: withProps(require_secrets(), "\u51ED\u636E") },

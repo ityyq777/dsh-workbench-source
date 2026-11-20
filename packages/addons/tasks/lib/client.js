@@ -7543,12 +7543,122 @@ var require_icons2 = __commonJS({
   }
 });
 
+// packages/addons/lib/overlay.cjs
+var require_overlay = __commonJS({
+  "packages/addons/lib/overlay.cjs"(exports2, module2) {
+    "use strict";
+    var defaultReact = require("react");
+    var FOCUSABLE = "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]";
+    module2.exports = function createOverlay(options) {
+      var opts = options || {};
+      var React = opts.React || defaultReact;
+      var h = React.createElement;
+      var tag = opts.tag || "section";
+      var maskClass = opts.maskClass;
+      var dialogClass = opts.dialogClass;
+      var dialogClassOf = opts.dialogClassOf || function() {
+        return "";
+      };
+      var ariaLabelOf = opts.ariaLabelOf || function(props) {
+        return props["aria-label"] || props.title;
+      };
+      var ariaLabelledByOf = opts.ariaLabelledByOf || function() {
+        return null;
+      };
+      var header = opts.header || null;
+      var closeOnEscape = opts.closeOnEscape || function() {
+        return true;
+      };
+      var closeOnMask = opts.closeOnMask || function() {
+        return true;
+      };
+      var extraKeyDown = opts.onKeyDown || null;
+      var autoFocusDialog = opts.autoFocusDialog !== false;
+      var focusableSelector = opts.focusableSelector || FOCUSABLE;
+      function Modal(props) {
+        var ref = React.useRef(null);
+        React.useEffect(function() {
+          var previous = typeof document !== "undefined" ? document.activeElement : null;
+          var focusIt = props.autoFocus !== void 0 ? props.autoFocus : autoFocusDialog;
+          if (focusIt && ref.current) ref.current.focus();
+          return function() {
+            if (previous && previous.isConnected) previous.focus();
+          };
+        }, []);
+        function onKeyDown(e) {
+          if (extraKeyDown && extraKeyDown(e, props, ref)) return;
+          if (e.key === "Escape") {
+            if (!(props.closeOnEscape !== void 0 ? props.closeOnEscape : closeOnEscape(props))) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (props.onClose) props.onClose();
+            return;
+          }
+          if (e.key !== "Tab" || !ref.current) return;
+          var els = ref.current.querySelectorAll(focusableSelector);
+          if (!els.length) {
+            e.preventDefault();
+            return;
+          }
+          var first = els[0];
+          var last = els[els.length - 1];
+          if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) {
+            e.preventDefault();
+            last.focus();
+          }
+          if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+        var labelledBy = ariaLabelledByOf(props);
+        return h(
+          "div",
+          {
+            className: maskClass,
+            onMouseDown: function(e) {
+              var allowed = props.closeOnMask !== void 0 ? props.closeOnMask : closeOnMask(props);
+              if (e.target === e.currentTarget && props.onClose && allowed) props.onClose();
+            }
+          },
+          h(
+            tag,
+            {
+              className: dialogClass + dialogClassOf(props),
+              role: "dialog",
+              "aria-modal": true,
+              "aria-label": labelledBy ? null : ariaLabelOf(props),
+              "aria-labelledby": labelledBy || null,
+              ref,
+              tabIndex: -1,
+              onKeyDown
+            },
+            header ? header(props) : null,
+            props.children
+          )
+        );
+      }
+      return Modal;
+    };
+  }
+});
+
 // packages/addons/tasks/client/views/workspace-view.cjs
 var require_workspace_view = __commonJS({
   "packages/addons/tasks/client/views/workspace-view.cjs"(exports2, module2) {
     "use strict";
     module2.exports = function(deps) {
       var React = deps.React, h = React.createElement;
+      var createOverlay = deps.createOverlay;
+      var FormOverlay = createOverlay({
+        React,
+        maskClass: "wbt-modal-mask",
+        dialogClass: "wbt-modal",
+        ariaLabelOf: function(props) {
+          return props.mode === "edit" ? props.t.formEdit : props.t.formCreate;
+        },
+        closeOnMask: false
+      });
       var Icon2 = typeof deps.Icon === "function" ? deps.Icon : null;
       function icon(name, size) {
         return Icon2 ? h(Icon2, { name, size: size || 13 }) : null;
@@ -7724,27 +7834,23 @@ var require_workspace_view = __commonJS({
           });
         }
         return h(
-          "div",
-          { className: "wbt-modal-mask", role: "dialog", "aria-modal": "true", "aria-label": props.mode === "edit" ? t.formEdit : t.formCreate },
+          FormOverlay,
+          { t, mode: props.mode, onClose: props.onCancel, closeOnMask: false },
+          h("div", { className: "wbt-modal-head" }, h("h3", null, props.mode === "edit" ? t.formEdit : t.formCreate)),
           h(
             "div",
-            { className: "wbt-modal" },
-            h("div", { className: "wbt-modal-head" }, h("h3", null, props.mode === "edit" ? t.formEdit : t.formCreate)),
-            h(
-              "div",
-              { className: "wbt-ws-fields" },
-              h("input", { className: "wbt-input", value: draft.title, placeholder: t.fTitle, "aria-label": t.fTitle, onChange: field("title") }),
-              h("input", { className: "wbt-input", value: draft.name, placeholder: t.fName, "aria-label": t.fName, onChange: field("name") }),
-              h("input", { className: "wbt-input", value: draft.dir, placeholder: t.fDir, "aria-label": t.fDir, onChange: field("dir") }),
-              h("textarea", { className: "wbt-input", value: draft.description, placeholder: t.fDesc, "aria-label": t.fDesc, onChange: field("description") })
-            ),
-            err ? h("div", { className: "wbt-err", role: "alert" }, err) : null,
-            h(
-              "div",
-              { className: "wbt-modal-foot" },
-              h("button", { className: "wbt-btn primary", type: "button", disabled: busy, onClick: submit }, t.save),
-              h("button", { className: "wbt-btn ghost", type: "button", onClick: props.onCancel }, t.cancel)
-            )
+            { className: "wbt-ws-fields" },
+            h("input", { className: "wbt-input", value: draft.title, placeholder: t.fTitle, "aria-label": t.fTitle, onChange: field("title") }),
+            h("input", { className: "wbt-input", value: draft.name, placeholder: t.fName, "aria-label": t.fName, onChange: field("name") }),
+            h("input", { className: "wbt-input", value: draft.dir, placeholder: t.fDir, "aria-label": t.fDir, onChange: field("dir") }),
+            h("textarea", { className: "wbt-input", value: draft.description, placeholder: t.fDesc, "aria-label": t.fDesc, onChange: field("description") })
+          ),
+          err ? h("div", { className: "wbt-err", role: "alert" }, err) : null,
+          h(
+            "div",
+            { className: "wbt-modal-foot" },
+            h("button", { className: "wbt-btn primary", type: "button", disabled: busy, onClick: submit }, t.save),
+            h("button", { className: "wbt-btn ghost", type: "button", onClick: props.onCancel }, t.cancel)
           )
         );
       }
@@ -9051,12 +9157,23 @@ var require_timeline_copy = __commonJS({
 var require_timeline_controls = __commonJS({
   "packages/addons/tasks/client/timeline/timeline-controls.cjs"(exports2, module2) {
     "use strict";
+    var createOverlay = require_overlay();
     function result(r) {
       if (!r || !r.ok) throw Error(r && r.error || "\u8BF7\u6C42\u5931\u8D25");
       return r.result;
     }
     module2.exports = function(React) {
       var h = React.createElement;
+      var EditorOverlay = createOverlay({
+        maskClass: "wbt-modal-mask",
+        dialogClass: "wbt-modal",
+        ariaLabelOf: function(p) {
+          var tr = require_timeline_copy()(p.t);
+          return p.item ? tr("\u7F16\u8F91\u65F6\u95F4\u7EBF") : tr("\u65B0\u5EFA\u65F6\u95F4\u7EBF");
+        },
+        // 表单弹窗点遮罩容易误关，保持原有行为：只有 Esc 与取消按钮关闭。
+        closeOnMask: false
+      });
       function Picker(p) {
         var tr = require_timeline_copy()(p.t);
         var ds = React.useState({ records: [], total: 0 }), data = ds[0], setData = ds[1];
@@ -9196,14 +9313,9 @@ var require_timeline_controls = __commonJS({
             setBusy(false);
           });
         }
-        return h("div", { className: "wbt-modal-mask", onKeyDown: function(e) {
-          if (e.key === "Escape" && !busy) {
-            e.stopPropagation();
-            p.onClose();
-          }
-        } }, h(
-          "div",
-          { className: "wbt-modal", role: "dialog", "aria-modal": true, "aria-label": item ? tr("\u7F16\u8F91\u65F6\u95F4\u7EBF") : tr("\u65B0\u5EFA\u65F6\u95F4\u7EBF") },
+        return h(
+          EditorOverlay,
+          { onClose: p.onClose, closeOnEscape: !busy, closeOnMask: false, autoFocus: false },
           h("div", { className: "wbt-modal-head" }, h("h3", null, item ? tr("\u7F16\u8F91\u65F6\u95F4\u7EBF") : tr("\u65B0\u5EFA\u65F6\u95F4\u7EBF"))),
           h("label", { className: "wbt-field" }, tr("\u65F6\u95F4\u7EBF\u6807\u9898"), h("input", { className: "wbt-input", autoFocus: true, value: title, placeholder: tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF"), onChange: function(e) {
             setTitle(e.target.value);
@@ -9213,7 +9325,7 @@ var require_timeline_controls = __commonJS({
           } })),
           error ? h("p", { role: "alert", className: "wbt-err" }, error) : null,
           h("div", { className: "wbt-modal-foot" }, h("button", { className: "wbt-btn", disabled: busy, onClick: p.onClose }, tr("\u53D6\u6D88")), h("button", { className: "wbt-btn primary", disabled: busy, onClick: save }, busy ? tr("\u4FDD\u5B58\u4E2D\u2026") : tr("\u4FDD\u5B58\u65F6\u95F4\u7EBF")))
-        ));
+        );
       }
       return { Picker, Editor, result };
     };
@@ -11155,64 +11267,30 @@ var require_selection_bar = __commonJS({
 var require_task_preview = __commonJS({
   "packages/addons/tasks/client/modals/task-preview.cjs"(exports2, module2) {
     "use strict";
+    var createOverlay = require_overlay();
     module2.exports = function createTaskPreview(React, TaskItem) {
       var h = React.createElement;
+      var Overlay = createOverlay({
+        maskClass: "wbt-modal-mask",
+        dialogClass: "wbt-modal wide wbt-preview",
+        ariaLabelledByOf: function() {
+          return "wbt-preview-title";
+        },
+        // 关闭按钮自己带 autoFocus，外壳不要抢首焦点。
+        autoFocusDialog: false
+      });
       function TaskPreview(props) {
         var t = props.t, task = props.task;
-        var titleId = "wbt-preview-title";
-        function onKey(e) {
-          if (e.key === "Escape") {
-            e.preventDefault();
-            e.stopPropagation();
-            props.onClose();
-            return;
-          }
-          if (e.key !== "Tab") return;
-          var mask = e.currentTarget;
-          var box = mask && mask.querySelector ? mask.querySelector('[role="dialog"]') : null;
-          if (!box) return;
-          var nodes = Array.from(box.querySelectorAll('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href],[tabindex="0"]')).filter(function(node) {
-            return node.getClientRects().length > 0;
-          });
-          var first = nodes[0], last = nodes[nodes.length - 1];
-          if (!first) {
-            e.preventDefault();
-            if (box.focus) box.focus();
-          } else if (e.shiftKey && (document.activeElement === first || document.activeElement === box)) {
-            e.preventDefault();
-            last.focus();
-          } else if (!e.shiftKey && document.activeElement === last) {
-            e.preventDefault();
-            first.focus();
-          }
-        }
         return h(
-          "div",
-          {
-            className: "wbt-modal-mask",
-            onKeyDownCapture: onKey,
-            onMouseDown: function(e) {
-              if (e.target === e.currentTarget) props.onClose();
-            }
-          },
+          Overlay,
+          { onClose: props.onClose, autoFocus: false },
           h(
             "div",
-            {
-              tabIndex: -1,
-              className: "wbt-modal wide wbt-preview",
-              role: "dialog",
-              "aria-modal": "true",
-              "aria-labelledby": titleId,
-              "aria-label": t.previewLabel
-            },
-            h(
-              "div",
-              { className: "wbt-modal-head wbt-preview-head" },
-              h("h3", { id: titleId }, String(task.title || "").trim() || t.previewUntitled),
-              h("button", { type: "button", className: "wbt-icon", title: t.close, "aria-label": t.close, autoFocus: true, onClick: props.onClose }, "\xD7")
-            ),
-            h("div", { className: "wbt-preview-body" }, h(TaskItem, props.cardProps))
-          )
+            { className: "wbt-modal-head wbt-preview-head" },
+            h("h3", { id: "wbt-preview-title" }, String(task.title || "").trim() || t.previewUntitled),
+            h("button", { type: "button", className: "wbt-icon", title: t.close, "aria-label": t.close, autoFocus: true, onClick: props.onClose }, "\xD7")
+          ),
+          h("div", { className: "wbt-preview-body" }, h(TaskItem, props.cardProps))
         );
       }
       return TaskPreview;
@@ -12189,8 +12267,17 @@ var require_tasks_view = __commonJS({
 var require_timeline_add_members = __commonJS({
   "packages/addons/tasks/client/timeline/timeline-add-members.cjs"(exports2, module2) {
     "use strict";
+    var createOverlay = require_overlay();
     module2.exports = function(React) {
       var h = React.createElement, result = require_timeline_controls()(React).result;
+      var Overlay = createOverlay({
+        maskClass: "wbt-modal-mask",
+        dialogClass: "wbt-modal",
+        ariaLabelOf: function(props) {
+          return require_timeline_copy()(props.t)("\u6DFB\u52A0\u5DF2\u6709\u4EFB\u52A1");
+        },
+        closeOnMask: false
+      });
       return function AddMembers(p) {
         var tr = require_timeline_copy()(p.t);
         var qs = React.useState(""), query = qs[0], setQuery = qs[1];
@@ -12219,9 +12306,9 @@ var require_timeline_add_members = __commonJS({
             setBusy(false);
           });
         }
-        return h("div", { className: "wbt-modal-mask" }, h(
-          "div",
-          { className: "wbt-modal", role: "dialog", "aria-modal": true, "aria-label": tr("\u6DFB\u52A0\u5DF2\u6709\u4EFB\u52A1") },
+        return h(
+          Overlay,
+          { onClose: p.onClose, closeOnEscape: !busy, closeOnMask: false },
           h("h3", null, tr("\u6DFB\u52A0\u5DF2\u6709\u4EFB\u52A1")),
           h("p", null, tr("\u9009\u4E2D\u7684\u4EFB\u52A1\u5C06\u5173\u8054\u5230\u6B64\u65F6\u95F4\u7EBF\uFF1B\u539F\u6709\u5173\u8054\u4F1A\u88AB\u66FF\u6362\u3002")),
           h("input", { className: "wbt-input", "aria-label": tr("\u641C\u7D22\u5DF2\u6709\u4EFB\u52A1"), value: query, onChange: function(e) {
@@ -12242,7 +12329,7 @@ var require_timeline_add_members = __commonJS({
           } }, tr("\u4E0B\u4E00\u9875"))),
           error ? h("p", { role: "alert" }, error) : null,
           h("div", { className: "wbt-modal-foot" }, h("button", { className: "wbt-btn", disabled: busy, onClick: p.onClose }, tr("\u53D6\u6D88")), h("button", { className: "wbt-btn primary", disabled: busy || !selected.length, onClick: submit }, tr("\u5173\u8054\u4EFB\u52A1 (") + selected.length + ")"))
-        ));
+        );
       };
     };
   }
@@ -12252,14 +12339,24 @@ var require_timeline_add_members = __commonJS({
 var require_timeline_merge = __commonJS({
   "packages/addons/tasks/client/timeline/timeline-merge.cjs"(exports2, module2) {
     "use strict";
+    var createOverlay = require_overlay();
     module2.exports = function(React) {
       var h = React.createElement;
+      var Overlay = createOverlay({
+        maskClass: "wbt-modal-mask",
+        dialogClass: "wbt-modal",
+        ariaLabelOf: function(p) {
+          return p.t.timelineMerge;
+        },
+        // 合并是不可逆操作，点遮罩不关闭；保存中 Esc 也不关闭。
+        closeOnMask: false
+      });
       return function Merge(props) {
         var t = props.t, targetS = React.useState(props.items[0].timelineKey), target = targetS[0], setTarget = targetS[1];
         var previewS = React.useState(null), preview = previewS[0], setPreview = previewS[1];
         var busyS = React.useState(false), busy = busyS[0], setBusy = busyS[1];
         var errorS = React.useState(""), error = errorS[0], setError = errorS[1];
-        var pending = React.useRef(false), panel = React.useRef(null);
+        var pending = React.useRef(false);
         function submit(dryRun) {
           if (pending.current || !dryRun && preview === null) return;
           pending.current = true;
@@ -12279,26 +12376,9 @@ var require_timeline_merge = __commonJS({
             setBusy(false);
           });
         }
-        function keys(e) {
-          if (e.key === "Escape" && !busy) {
-            e.stopPropagation();
-            props.onClose();
-          }
-          if (e.key !== "Tab") return;
-          var nodes = panel.current.querySelectorAll("button:not(:disabled),select:not(:disabled)");
-          var first = nodes[0], last = nodes[nodes.length - 1];
-          if (e.shiftKey && document.activeElement === first) {
-            e.preventDefault();
-            last.focus();
-          }
-          if (!e.shiftKey && document.activeElement === last) {
-            e.preventDefault();
-            first.focus();
-          }
-        }
-        return h("div", { className: "wbt-modal-mask" }, h(
-          "div",
-          { ref: panel, className: "wbt-modal", role: "dialog", "aria-modal": true, "aria-label": t.timelineMerge, onKeyDown: keys },
+        return h(
+          Overlay,
+          { onClose: props.onClose, closeOnEscape: !busy, closeOnMask: false, autoFocus: false },
           h("h3", null, t.timelineMerge),
           h("p", null, t.timelineMergeHint),
           h(
@@ -12322,7 +12402,7 @@ var require_timeline_merge = __commonJS({
               submit(preview === null);
             } }, busy ? t.loading : preview === null ? t.timelinePreview : t.timelineConfirm)
           )
-        ));
+        );
       };
     };
   }
@@ -12863,32 +12943,6 @@ var require_timeline_view = __commonJS({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list-checks.mjs
-var list_checks_exports = {};
-__export(list_checks_exports, {
-  __iconData: () => __iconData35,
-  default: () => ListChecks
-});
-var __iconData35, ListChecks;
-var init_list_checks = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list-checks.mjs"() {
-    init_createLucideIcon();
-    __iconData35 = {
-      name: "list-checks",
-      size: 24,
-      node: [
-        ["path", { d: "M13 5h8", key: "a7qcls" }],
-        ["path", { d: "M13 12h8", key: "h98zly" }],
-        ["path", { d: "M13 19h8", key: "c3s6r1" }],
-        ["path", { d: "m3 17 2 2 4-4", key: "1jhpwq" }],
-        ["path", { d: "m3 7 2 2 4-4", key: "1obspn" }]
-      ]
-    };
-    __iconData35.node;
-    ListChecks = createLucideIcon(__iconData35);
-  }
-});
-
 // packages/addons/tasks/client/client.src.cjs
 (function() {
   "use strict";
@@ -12924,7 +12978,8 @@ var init_list_checks = __esm({
     "4": { zh: "\u5DF2\u63A5\u53D6", en: "Claimed", cls: "claimed" }
   };
   var icons = require_icons2(), ICONS = icons.ICONS, Icon2 = icons.Icon;
-  var workspaceView = require_workspace_view()({ React, Icon: Icon2 });
+  var createOverlay = require_overlay();
+  var workspaceView = require_workspace_view()({ React, Icon: Icon2, createOverlay });
   var commandsView = require_commands()({
     React,
     Icon: Icon2,
@@ -13361,8 +13416,8 @@ var init_list_checks = __esm({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.28",
-    icon: (init_list_checks(), __toCommonJS(list_checks_exports)).default,
+    version: "5.2.29",
+    icon: ICONS["list-checks"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

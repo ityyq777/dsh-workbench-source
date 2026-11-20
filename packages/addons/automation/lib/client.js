@@ -39,162 +39,39 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// packages/addons/lib/client-base-styles.cjs
-var require_client_base_styles = __commonJS({
-  "packages/addons/lib/client-base-styles.cjs"(exports2, module2) {
+// packages/addons/lib/icons.cjs
+var require_icons = __commonJS({
+  "packages/addons/lib/icons.cjs"(exports2, module2) {
     "use strict";
-    var SECRET_FIELD = [
-      ".wb-secret-field{position:relative;display:flex;align-items:center;min-width:0}",
-      ".wb-secret-field input{flex:1 1 auto;min-width:0;padding-right:34px}",
-      ".wb-eye{position:absolute;right:4px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:6px;padding:4px;color:var(--wb-muted,#6b7280);cursor:pointer}",
-      ".wb-eye:hover:not(:disabled){color:var(--wb-accent,#2563eb);background:color-mix(in srgb, var(--wb-accent,#2563eb) 12%, transparent)}",
-      ".wb-eye:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:1px}",
-      ".wb-eye:disabled{opacity:.45;cursor:not-allowed}"
-    ];
-    module2.exports = function baseStyles(prefix) {
-      var p = String(prefix || "wb");
-      var s = "." + p;
-      return SECRET_FIELD.concat([
-        s + "-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
-        s + "-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
-        s + "-title{font-size:16px;font-weight:650;margin:0}",
-        s + "-sub{font-size:12px;color:var(--wb-muted,#6b7280);margin:2px 0 0}",
-        s + "-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
-        s + "-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
-        s + "-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
-        s + "-kpi{font-size:22px;font-weight:700;line-height:1.2}" + s + "-kpi-label{font-size:12px;color:var(--wb-muted,#6b7280)}",
-        s + "-table{width:100%;border-collapse:collapse;font-size:12px}" + s + "-table th," + s + "-table td{padding:7px 8px;border-bottom:1px solid var(--wb-border,#eef0f3);text-align:left;vertical-align:top}",
-        s + "-table th{font-weight:600;color:var(--wb-muted,#6b7280);white-space:nowrap}",
-        s + "-btn{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer}",
-        s + "-btn:hover:not(:disabled){border-color:var(--wb-accent,#2563eb)}" + s + "-btn:disabled{opacity:.5;cursor:default}",
-        s + "-btn.primary{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:#fff}",
-        s + "-btn.danger{color:#b91c1c;border-color:#fecaca}",
-        s + "-field{display:flex;flex-direction:column;gap:4px;font-size:12px}" + s + "-label{font-weight:600}",
-        s + "-field input," + s + "-field select," + s + "-field textarea{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:0}",
-        s + "-hint{color:var(--wb-muted,#6b7280);font-size:11px}" + s + "-notice{padding:8px 10px;border-radius:8px;font-size:12px;background:#eff6ff;color:#1e40af}",
-        s + "-notice.error{background:#fef2f2;color:#b91c1c}" + s + "-notice.ok{background:#ecfdf5;color:#047857}",
-        s + "-empty{padding:18px;text-align:center;color:var(--wb-muted,#6b7280);font-size:12px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:8px}",
-        s + "-pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;background:#f3f4f6;color:#374151}",
-        s + "-pill.ok{background:#ecfdf5;color:#047857}" + s + "-pill.error{background:#fef2f2;color:#b91c1c}" + s + "-pill.warn{background:#fffbeb;color:#b45309}",
-        s + "-json{margin:0;padding:8px;background:#f8fafc;border-radius:8px;font-size:11px;max-height:240px;overflow:auto}",
-        s + "-muted{color:var(--wb-muted,#6b7280)}" + s + "-link{color:var(--wb-accent,#2563eb);cursor:pointer;text-decoration:none}",
-        s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}"
-      ]);
-    };
-    module2.exports.secretFieldStyles = SECRET_FIELD;
-  }
-});
-
-// packages/addons/automation/client/ui/layout-styles.cjs
-var require_layout_styles = __commonJS({
-  "packages/addons/automation/client/ui/layout-styles.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = [
-      // 页面分区
-      ".wba-panel{border:1px solid var(--wb-border);border-radius:12px;padding:16px;background:var(--wb-surface);display:flex;flex-direction:column;gap:12px}",
-      ".wba-panel-h{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}",
-      ".wba-panel-title{font-size:14px;font-weight:650;margin:0}",
-      ".wba-sub{font-size:12px;color:var(--wb-muted);margin:0;line-height:1.5}",
-      ".wba-sep{height:1px;background:var(--wb-border);border:0;margin:0}",
-      // 表格容器与行
-      ".wba-table-wrap{overflow-x:auto;border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-surface)}",
-      ".wba-table-wrap .wba-table{border-collapse:separate;border-spacing:0}",
-      ".wba-table tbody tr{transition:background 120ms ease}",
-      ".wba-table tbody tr:hover{background:var(--wb-line)}",
-      ".wba-table td{vertical-align:middle}",
-      ".wba-table code{font-size:11px;color:var(--wb-muted)}",
-      ".wba-table tr.wba-row-open{background:var(--wb-line)}",
-      ".wba-detail-cell{padding:12px 14px!important;background:color-mix(in oklab,var(--wb-line) 45%,transparent)}",
-      // KPI 卡片
-      ".wba-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}",
-      ".wba-card{border:1px solid var(--wb-border);border-radius:10px;padding:12px;background:var(--wb-surface);display:flex;flex-direction:column;gap:6px}",
-      ".wba-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--wb-muted)}",
-      ".wba-card-num{font-size:26px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}",
-      ".wba-card-ico{display:flex;color:var(--wb-accent)}",
-      ".wba-card-label{font-size:12px;font-weight:600}",
-      ".wba-card-hint{font-size:11px;color:var(--wb-muted);margin:0}",
-      // 键值 / chips
-      ".wba-kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 12px;font-size:12px;align-items:start}",
-      ".wba-kv b{font-weight:600;color:var(--wb-muted);white-space:nowrap}",
-      ".wba-kv span,.wba-kv code{min-width:0;overflow-wrap:anywhere}",
-      ".wba-pills{display:flex;flex-wrap:wrap;gap:6px}",
-      ".wba-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--wb-border);border-radius:999px;padding:2px 10px;font-size:12px;background:transparent;color:inherit;cursor:pointer;font-family:inherit}",
-      ".wba-chip[aria-pressed=true]{background:var(--wb-accent);border-color:var(--wb-accent);color:var(--wb-surface)}",
-      ".wba-chip.static{cursor:default}",
-      ".wba-chips{display:flex;flex-wrap:wrap;gap:6px}",
-      // JSON 编辑器
-      ".wba-code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.55;width:100%;min-height:160px;resize:vertical;tab-size:2;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid var(--wb-border);background:var(--wb-line);color:inherit}",
-      ".wba-code.sm{min-height:96px}",
-      ".wba-code:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}",
-      ".wba-code.err{border-color:var(--wb-danger)}",
-      ".wba-code-err{font-size:11px;color:var(--wb-danger);min-height:14px}",
-      ".wba-pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;line-height:1.55;margin:0;padding:10px;border-radius:8px;background:var(--wb-line);max-height:260px;overflow:auto;overflow-wrap:anywhere}",
-      // 输入与按钮
-      ".wba-input{width:100%;min-width:0;box-sizing:border-box;border:1px solid var(--wb-border);border-radius:8px;padding:6px 8px;font:inherit;font-size:12px;background:var(--wb-surface);color:inherit}",
-      ".wba-input.err{border-color:var(--wb-danger)}",
-      ".wba-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}",
-      ".wba-toolbar .wba-field{min-width:150px}",
-      ".wba-actions{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}",
-      ".wba-icon-btn{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:7px;background:transparent;color:inherit;cursor:pointer;padding:0}",
-      ".wba-icon-btn:hover{border-color:var(--wb-accent);color:var(--wb-accent)}",
-      ".wba-icon-btn.danger:hover{border-color:var(--wb-danger);color:var(--wb-danger)}",
-      ".wba-icon-btn:disabled{opacity:.45;cursor:default}",
-      // 空态与骨架
-      ".wba-empty-card{border:1px dashed var(--wb-border);border-radius:12px;padding:28px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;background:var(--wb-surface)}",
-      ".wba-empty-ico{color:var(--wb-muted);display:flex}",
-      ".wba-empty-title{font-size:14px;font-weight:650;margin:0}",
-      ".wba-empty-body{font-size:12px;color:var(--wb-muted);margin:0;max-width:52ch;line-height:1.55}",
-      ".wba-skel{height:12px;border-radius:6px;background:var(--wb-line);animation:wba-pulse 1.2s ease-in-out infinite}",
-      ".wba-skel-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:14px;padding:12px 14px;border-bottom:1px solid var(--wb-border)}",
-      "@keyframes wba-pulse{50%{opacity:.45}}",
-      // 模态
-      ".wba-modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;background:color-mix(in oklab,var(--wb-muted) 45%,transparent)}",
-      ".wba-modal-box{width:min(760px,calc(100vw - 32px));max-height:90vh;display:flex;flex-direction:column;background:var(--wb-surface);border:1px solid var(--wb-border);border-radius:14px;overflow:hidden;box-shadow:0 24px 64px color-mix(in oklab,var(--wb-muted) 40%,transparent)}",
-      ".wba-modal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-bottom:1px solid var(--wb-border)}",
-      ".wba-modal-head h3{font-size:15px;margin:0}",
-      ".wba-modal-body{padding:16px;overflow:auto;display:flex;flex-direction:column;gap:16px}",
-      ".wba-modal-foot{position:sticky;bottom:0;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid var(--wb-border);background:var(--wb-surface)}",
-      ".wba-modal-foot .wba-grow{flex:1}",
-      // 编辑器分段与栅格
-      ".wba-section{display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid var(--wb-border)}",
-      ".wba-section:first-child{border-top:0;padding-top:0}",
-      ".wba-section-title{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--wb-muted);margin:0;text-transform:uppercase}",
-      ".wba-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}",
-      ".wba-grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}",
-      ".wba-span-2{grid-column:span 2}",
-      ".wba-seg{display:inline-flex;gap:2px;padding:2px;border:1px solid var(--wb-border);border-radius:8px;background:var(--wb-line);align-self:flex-start}",
-      ".wba-seg button{border:0;background:transparent;color:inherit;border-radius:6px;padding:4px 12px;font-size:12px;font-family:inherit;cursor:pointer}",
-      ".wba-seg button[aria-pressed=true]{background:var(--wb-surface);box-shadow:0 0 0 1px var(--wb-border);font-weight:600}",
-      ".wba-switch{display:inline-flex;align-items:center;gap:8px;font-size:12px;cursor:pointer}",
-      ".wba-block{display:flex;flex-direction:column;gap:6px;min-width:0}",
-      ".wba-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}",
-      ".wba-grow{flex:1;min-width:0}",
-      ".wba-svg{display:inline-block;vertical-align:middle;flex:none}",
-      ".wba-w-120{width:120px;flex:none}",
-      ".wba-w-96{width:96px;flex:none}",
-      ".wba-list{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:12px;line-height:1.55}",
-      ".wba-clickable{cursor:pointer}",
-      ".wba-check{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}",
-      ".wba-check input{accent-color:var(--wb-accent);margin:0}",
-      // 文本与焦点
-      ".wba-ellipsis{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}",
-      ".wba-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;color:var(--wb-muted)}",
-      ".wba-nowrap{white-space:nowrap}",
-      ".wba-strong{font-weight:600}",
-      ".wba-warn{color:var(--wb-warn)}",
-      ".wba-err-text{color:var(--wb-danger);font-size:11px;margin:0}",
-      ".wba-wrap :focus-visible,.wba-modal :focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}",
-      // 响应式
-      "@media (max-width:720px){.wba-grid-2,.wba-grid-3{grid-template-columns:1fr}.wba-span-2{grid-column:auto}.wba-modal{padding:8px}.wba-modal-box{width:calc(100vw - 16px)}.wba-toolbar .wba-field{min-width:0;flex:1 1 140px}.wba-modal-body{padding:12px}.wba-modal-foot{flex-wrap:wrap}.wba-skel-row{grid-template-columns:1fr 1fr}}"
-    ].join("\n");
-  }
-});
-
-// packages/addons/automation/client/ui/styles.cjs
-var require_styles = __commonJS({
-  "packages/addons/automation/client/ui/styles.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = require_client_base_styles()("wba").join("\n") + "\n" + require_layout_styles();
+    var h = require("react").createElement;
+    function create(prefix, glyphs, options) {
+      var opts = options || {};
+      var ICONS = Object.assign({}, glyphs);
+      function Icon2(props) {
+        var C = ICONS[props.name] || (opts.fallback ? ICONS[opts.fallback] : null);
+        if (!C) return null;
+        var size = typeof opts.sizeOf === "function" ? opts.sizeOf(props) : props.size || 14;
+        var cls = prefix + "-svg" + (opts.classNameAppend && props.className ? " " + props.className : "");
+        var attrs = {
+          size,
+          strokeWidth: props.strokeWidth || 2,
+          "aria-hidden": "true",
+          className: cls
+        };
+        if (opts.focusable) attrs.focusable = false;
+        return h(C, attrs);
+      }
+      var set = { ICONS, Icon: Icon2 };
+      if (opts.tabIcon) {
+        set.tabIcon = function(name) {
+          return function TabIcon() {
+            return h(Icon2, { name, size: 14 });
+          };
+        };
+      }
+      return set;
+    }
+    module2.exports = { create };
   }
 });
 
@@ -514,92 +391,97 @@ var init_activity = __esm({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/zap.mjs
-var zap_exports = {};
-__export(zap_exports, {
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/alarm-clock.mjs
+var alarm_clock_exports = {};
+__export(alarm_clock_exports, {
   __iconData: () => __iconData2,
-  default: () => Zap
+  default: () => AlarmClock
 });
-var __iconData2, Zap;
-var init_zap = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/zap.mjs"() {
+var __iconData2, AlarmClock;
+var init_alarm_clock = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/alarm-clock.mjs"() {
     init_createLucideIcon();
     __iconData2 = {
-      name: "zap",
+      name: "alarm-clock",
+      size: 24,
+      node: [
+        ["circle", { cx: "12", cy: "13", r: "8", key: "3y4lt7" }],
+        ["path", { d: "M12 9v4l2 2", key: "1c63tq" }],
+        ["path", { d: "M5 3 2 6", key: "18tl5t" }],
+        ["path", { d: "m22 6-3-3", key: "1opdir" }],
+        ["path", { d: "M6.38 18.7 4 21", key: "17xu3x" }],
+        ["path", { d: "M17.64 18.67 20 21", key: "kv2oe2" }]
+      ]
+    };
+    __iconData2.node;
+    AlarmClock = createLucideIcon(__iconData2);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/triangle-exclamation-point.mjs
+var __iconData3, TriangleExclamationPoint;
+var init_triangle_exclamation_point = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/triangle-exclamation-point.mjs"() {
+    init_createLucideIcon();
+    __iconData3 = {
+      name: "triangle-exclamation-point",
       size: 24,
       node: [
         [
           "path",
           {
-            d: "M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z",
-            key: "1v7up4"
+            d: "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3",
+            key: "wmoenq"
           }
-        ]
-      ]
-    };
-    __iconData2.node;
-    Zap = createLucideIcon(__iconData2);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/rotate-ccw-clock.mjs
-var __iconData3, RotateCcwClock;
-var init_rotate_ccw_clock = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/rotate-ccw-clock.mjs"() {
-    init_createLucideIcon();
-    __iconData3 = {
-      name: "rotate-ccw-clock",
-      size: 24,
-      node: [
-        ["path", { d: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8", key: "1357e3" }],
-        ["path", { d: "M3 3v5h5", key: "1xhq8a" }],
-        ["path", { d: "M12 7v5l4 2", key: "1fdv2h" }]
+        ],
+        ["path", { d: "M12 9v4", key: "juzpu7" }],
+        ["path", { d: "M12 17h.01", key: "p32p05" }]
       ],
-      aliases: ["history"]
+      aliases: ["alert-triangle", "triangle-alert"]
     };
     __iconData3.node;
-    RotateCcwClock = createLucideIcon(__iconData3);
+    TriangleExclamationPoint = createLucideIcon(__iconData3);
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/history.mjs
-var history_exports = {};
-__export(history_exports, {
-  default: () => RotateCcwClock
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/alert-triangle.mjs
+var alert_triangle_exports = {};
+__export(alert_triangle_exports, {
+  default: () => TriangleExclamationPoint
 });
-var init_history = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/history.mjs"() {
-    init_rotate_ccw_clock();
+var init_alert_triangle = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/alert-triangle.mjs"() {
+    init_triangle_exclamation_point();
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs
-var sliders_horizontal_exports = {};
-__export(sliders_horizontal_exports, {
-  __iconData: () => __iconData4,
-  default: () => SlidersHorizontal
-});
-var __iconData4, SlidersHorizontal;
-var init_sliders_horizontal = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs"() {
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/circle-check-big.mjs
+var __iconData4, CircleCheckBig;
+var init_circle_check_big = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/circle-check-big.mjs"() {
     init_createLucideIcon();
     __iconData4 = {
-      name: "sliders-horizontal",
+      name: "circle-check-big",
       size: 24,
       node: [
-        ["path", { d: "M10 5H3", key: "1qgfaw" }],
-        ["path", { d: "M12 19H3", key: "yhmn1j" }],
-        ["path", { d: "M14 3v4", key: "1sua03" }],
-        ["path", { d: "M16 17v4", key: "1q0r14" }],
-        ["path", { d: "M21 12h-9", key: "1o4lsq" }],
-        ["path", { d: "M21 19h-5", key: "1rlt1p" }],
-        ["path", { d: "M21 5h-7", key: "1oszz2" }],
-        ["path", { d: "M8 10v4", key: "tgpxqk" }],
-        ["path", { d: "M8 12H3", key: "a7s4jb" }]
-      ]
+        ["path", { d: "M21.801 10A10 10 0 1 1 17 3.335", key: "yps3ct" }],
+        ["path", { d: "m9 11 3 3L22 4", key: "1pflzl" }]
+      ],
+      aliases: ["check-circle"]
     };
     __iconData4.node;
-    SlidersHorizontal = createLucideIcon(__iconData4);
+    CircleCheckBig = createLucideIcon(__iconData4);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/check-circle.mjs
+var check_circle_exports = {};
+__export(check_circle_exports, {
+  default: () => CircleCheckBig
+});
+var init_check_circle = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/check-circle.mjs"() {
+    init_circle_check_big();
   }
 });
 
@@ -627,121 +509,17 @@ var init_database = __esm({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs
-var list_exports = {};
-__export(list_exports, {
-  __iconData: () => __iconData6,
-  default: () => List
-});
-var __iconData6, List;
-var init_list = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs"() {
-    init_createLucideIcon();
-    __iconData6 = {
-      name: "list",
-      size: 24,
-      node: [
-        ["path", { d: "M3 5h.01", key: "18ugdj" }],
-        ["path", { d: "M3 12h.01", key: "nlz23k" }],
-        ["path", { d: "M3 19h.01", key: "noohij" }],
-        ["path", { d: "M8 5h13", key: "1pao27" }],
-        ["path", { d: "M8 12h13", key: "1za7za" }],
-        ["path", { d: "M8 19h13", key: "m83p4d" }]
-      ]
-    };
-    __iconData6.node;
-    List = createLucideIcon(__iconData6);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/timer.mjs
-var timer_exports = {};
-__export(timer_exports, {
-  __iconData: () => __iconData7,
-  default: () => Timer
-});
-var __iconData7, Timer;
-var init_timer = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/timer.mjs"() {
-    init_createLucideIcon();
-    __iconData7 = {
-      name: "timer",
-      size: 24,
-      node: [
-        ["line", { x1: "10", x2: "14", y1: "2", y2: "2", key: "14vaq8" }],
-        ["line", { x1: "12", x2: "15", y1: "14", y2: "11", key: "17fdiu" }],
-        ["circle", { cx: "12", cy: "14", r: "8", key: "1e1u0o" }]
-      ]
-    };
-    __iconData7.node;
-    Timer = createLucideIcon(__iconData7);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/alarm-clock.mjs
-var alarm_clock_exports = {};
-__export(alarm_clock_exports, {
-  __iconData: () => __iconData8,
-  default: () => AlarmClock
-});
-var __iconData8, AlarmClock;
-var init_alarm_clock = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/alarm-clock.mjs"() {
-    init_createLucideIcon();
-    __iconData8 = {
-      name: "alarm-clock",
-      size: 24,
-      node: [
-        ["circle", { cx: "12", cy: "13", r: "8", key: "3y4lt7" }],
-        ["path", { d: "M12 9v4l2 2", key: "1c63tq" }],
-        ["path", { d: "M5 3 2 6", key: "18tl5t" }],
-        ["path", { d: "m22 6-3-3", key: "1opdir" }],
-        ["path", { d: "M6.38 18.7 4 21", key: "17xu3x" }],
-        ["path", { d: "M17.64 18.67 20 21", key: "kv2oe2" }]
-      ]
-    };
-    __iconData8.node;
-    AlarmClock = createLucideIcon(__iconData8);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/radio.mjs
-var radio_exports = {};
-__export(radio_exports, {
-  __iconData: () => __iconData9,
-  default: () => Radio
-});
-var __iconData9, Radio;
-var init_radio = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/radio.mjs"() {
-    init_createLucideIcon();
-    __iconData9 = {
-      name: "radio",
-      size: 24,
-      node: [
-        ["path", { d: "M16.247 7.761a6 6 0 0 1 0 8.478", key: "1fwjs5" }],
-        ["path", { d: "M19.075 4.933a10 10 0 0 1 0 14.134", key: "ehdyv1" }],
-        ["path", { d: "M4.925 19.067a10 10 0 0 1 0-14.134", key: "1q22gi" }],
-        ["path", { d: "M7.753 16.239a6 6 0 0 1 0-8.478", key: "r2q7qm" }],
-        ["circle", { cx: "12", cy: "12", r: "2", key: "1c9p78" }]
-      ]
-    };
-    __iconData9.node;
-    Radio = createLucideIcon(__iconData9);
-  }
-});
-
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/hand.mjs
 var hand_exports = {};
 __export(hand_exports, {
-  __iconData: () => __iconData10,
+  __iconData: () => __iconData6,
   default: () => Hand
 });
-var __iconData10, Hand;
+var __iconData6, Hand;
 var init_hand = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/hand.mjs"() {
     init_createLucideIcon();
-    __iconData10 = {
+    __iconData6 = {
       name: "hand",
       size: 24,
       node: [
@@ -757,8 +535,138 @@ var init_hand = __esm({
         ]
       ]
     };
+    __iconData6.node;
+    Hand = createLucideIcon(__iconData6);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/rotate-ccw-clock.mjs
+var __iconData7, RotateCcwClock;
+var init_rotate_ccw_clock = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/rotate-ccw-clock.mjs"() {
+    init_createLucideIcon();
+    __iconData7 = {
+      name: "rotate-ccw-clock",
+      size: 24,
+      node: [
+        ["path", { d: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8", key: "1357e3" }],
+        ["path", { d: "M3 3v5h5", key: "1xhq8a" }],
+        ["path", { d: "M12 7v5l4 2", key: "1fdv2h" }]
+      ],
+      aliases: ["history"]
+    };
+    __iconData7.node;
+    RotateCcwClock = createLucideIcon(__iconData7);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/history.mjs
+var history_exports = {};
+__export(history_exports, {
+  default: () => RotateCcwClock
+});
+var init_history = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/history.mjs"() {
+    init_rotate_ccw_clock();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/layers.mjs
+var layers_exports = {};
+__export(layers_exports, {
+  __iconData: () => __iconData8,
+  default: () => Layers
+});
+var __iconData8, Layers;
+var init_layers = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/layers.mjs"() {
+    init_createLucideIcon();
+    __iconData8 = {
+      name: "layers",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z",
+            key: "zw3jo"
+          }
+        ],
+        [
+          "path",
+          {
+            d: "M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12",
+            key: "1wduqc"
+          }
+        ],
+        [
+          "path",
+          {
+            d: "M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17",
+            key: "kqbvx6"
+          }
+        ]
+      ],
+      aliases: ["layers-3"]
+    };
+    __iconData8.node;
+    Layers = createLucideIcon(__iconData8);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs
+var list_exports = {};
+__export(list_exports, {
+  __iconData: () => __iconData9,
+  default: () => List
+});
+var __iconData9, List;
+var init_list = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs"() {
+    init_createLucideIcon();
+    __iconData9 = {
+      name: "list",
+      size: 24,
+      node: [
+        ["path", { d: "M3 5h.01", key: "18ugdj" }],
+        ["path", { d: "M3 12h.01", key: "nlz23k" }],
+        ["path", { d: "M3 19h.01", key: "noohij" }],
+        ["path", { d: "M8 5h13", key: "1pao27" }],
+        ["path", { d: "M8 12h13", key: "1za7za" }],
+        ["path", { d: "M8 19h13", key: "m83p4d" }]
+      ]
+    };
+    __iconData9.node;
+    List = createLucideIcon(__iconData9);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs
+var pencil_exports = {};
+__export(pencil_exports, {
+  __iconData: () => __iconData10,
+  default: () => Pencil
+});
+var __iconData10, Pencil;
+var init_pencil = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs"() {
+    init_createLucideIcon();
+    __iconData10 = {
+      name: "pencil",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
+            key: "1a8usu"
+          }
+        ],
+        ["path", { d: "m15 5 4 4", key: "1mk7zo" }]
+      ]
+    };
     __iconData10.node;
-    Hand = createLucideIcon(__iconData10);
+    Pencil = createLucideIcon(__iconData10);
   }
 });
 
@@ -790,46 +698,17 @@ var init_play = __esm({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs
-var pencil_exports = {};
-__export(pencil_exports, {
-  __iconData: () => __iconData12,
-  default: () => Pencil
-});
-var __iconData12, Pencil;
-var init_pencil = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs"() {
-    init_createLucideIcon();
-    __iconData12 = {
-      name: "pencil",
-      size: 24,
-      node: [
-        [
-          "path",
-          {
-            d: "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
-            key: "1a8usu"
-          }
-        ],
-        ["path", { d: "m15 5 4 4", key: "1mk7zo" }]
-      ]
-    };
-    __iconData12.node;
-    Pencil = createLucideIcon(__iconData12);
-  }
-});
-
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power.mjs
 var power_exports = {};
 __export(power_exports, {
-  __iconData: () => __iconData13,
+  __iconData: () => __iconData12,
   default: () => Power
 });
-var __iconData13, Power;
+var __iconData12, Power;
 var init_power = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power.mjs"() {
     init_createLucideIcon();
-    __iconData13 = {
+    __iconData12 = {
       name: "power",
       size: 24,
       node: [
@@ -837,22 +716,22 @@ var init_power = __esm({
         ["path", { d: "M18.4 6.6a9 9 0 1 1-12.77.04", key: "obofu9" }]
       ]
     };
-    __iconData13.node;
-    Power = createLucideIcon(__iconData13);
+    __iconData12.node;
+    Power = createLucideIcon(__iconData12);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power-off.mjs
 var power_off_exports = {};
 __export(power_off_exports, {
-  __iconData: () => __iconData14,
+  __iconData: () => __iconData13,
   default: () => PowerOff
 });
-var __iconData14, PowerOff;
+var __iconData13, PowerOff;
 var init_power_off = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power-off.mjs"() {
     init_createLucideIcon();
-    __iconData14 = {
+    __iconData13 = {
       name: "power-off",
       size: 24,
       node: [
@@ -862,17 +741,155 @@ var init_power_off = __esm({
         ["path", { d: "m2 2 20 20", key: "1ooewy" }]
       ]
     };
+    __iconData13.node;
+    PowerOff = createLucideIcon(__iconData13);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/radio.mjs
+var radio_exports = {};
+__export(radio_exports, {
+  __iconData: () => __iconData14,
+  default: () => Radio
+});
+var __iconData14, Radio;
+var init_radio = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/radio.mjs"() {
+    init_createLucideIcon();
+    __iconData14 = {
+      name: "radio",
+      size: 24,
+      node: [
+        ["path", { d: "M16.247 7.761a6 6 0 0 1 0 8.478", key: "1fwjs5" }],
+        ["path", { d: "M19.075 4.933a10 10 0 0 1 0 14.134", key: "ehdyv1" }],
+        ["path", { d: "M4.925 19.067a10 10 0 0 1 0-14.134", key: "1q22gi" }],
+        ["path", { d: "M7.753 16.239a6 6 0 0 1 0-8.478", key: "r2q7qm" }],
+        ["circle", { cx: "12", cy: "12", r: "2", key: "1c9p78" }]
+      ]
+    };
     __iconData14.node;
-    PowerOff = createLucideIcon(__iconData14);
+    Radio = createLucideIcon(__iconData14);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs
+var shield_check_exports = {};
+__export(shield_check_exports, {
+  __iconData: () => __iconData15,
+  default: () => ShieldCheck
+});
+var __iconData15, ShieldCheck;
+var init_shield_check = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs"() {
+    init_createLucideIcon();
+    __iconData15 = {
+      name: "shield-check",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
+            key: "oel41y"
+          }
+        ],
+        ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
+      ]
+    };
+    __iconData15.node;
+    ShieldCheck = createLucideIcon(__iconData15);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/skip-forward.mjs
+var skip_forward_exports = {};
+__export(skip_forward_exports, {
+  __iconData: () => __iconData16,
+  default: () => SkipForward
+});
+var __iconData16, SkipForward;
+var init_skip_forward = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/skip-forward.mjs"() {
+    init_createLucideIcon();
+    __iconData16 = {
+      name: "skip-forward",
+      size: 24,
+      node: [
+        ["path", { d: "M21 4v16", key: "7j8fe9" }],
+        [
+          "path",
+          {
+            d: "M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z",
+            key: "zs4d6"
+          }
+        ]
+      ]
+    };
+    __iconData16.node;
+    SkipForward = createLucideIcon(__iconData16);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs
+var sliders_horizontal_exports = {};
+__export(sliders_horizontal_exports, {
+  __iconData: () => __iconData17,
+  default: () => SlidersHorizontal
+});
+var __iconData17, SlidersHorizontal;
+var init_sliders_horizontal = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs"() {
+    init_createLucideIcon();
+    __iconData17 = {
+      name: "sliders-horizontal",
+      size: 24,
+      node: [
+        ["path", { d: "M10 5H3", key: "1qgfaw" }],
+        ["path", { d: "M12 19H3", key: "yhmn1j" }],
+        ["path", { d: "M14 3v4", key: "1sua03" }],
+        ["path", { d: "M16 17v4", key: "1q0r14" }],
+        ["path", { d: "M21 12h-9", key: "1o4lsq" }],
+        ["path", { d: "M21 19h-5", key: "1rlt1p" }],
+        ["path", { d: "M21 5h-7", key: "1oszz2" }],
+        ["path", { d: "M8 10v4", key: "tgpxqk" }],
+        ["path", { d: "M8 12H3", key: "a7s4jb" }]
+      ]
+    };
+    __iconData17.node;
+    SlidersHorizontal = createLucideIcon(__iconData17);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/timer.mjs
+var timer_exports = {};
+__export(timer_exports, {
+  __iconData: () => __iconData18,
+  default: () => Timer
+});
+var __iconData18, Timer;
+var init_timer = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/timer.mjs"() {
+    init_createLucideIcon();
+    __iconData18 = {
+      name: "timer",
+      size: 24,
+      node: [
+        ["line", { x1: "10", x2: "14", y1: "2", y2: "2", key: "14vaq8" }],
+        ["line", { x1: "12", x2: "15", y1: "14", y2: "11", key: "17fdiu" }],
+        ["circle", { cx: "12", cy: "14", r: "8", key: "1e1u0o" }]
+      ]
+    };
+    __iconData18.node;
+    Timer = createLucideIcon(__iconData18);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
-var __iconData15, Trash;
+var __iconData19, Trash;
 var init_trash = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
     init_createLucideIcon();
-    __iconData15 = {
+    __iconData19 = {
       name: "trash",
       size: 24,
       node: [
@@ -884,8 +901,8 @@ var init_trash = __esm({
       ],
       aliases: ["trash-2"]
     };
-    __iconData15.node;
-    Trash = createLucideIcon(__iconData15);
+    __iconData19.node;
+    Trash = createLucideIcon(__iconData19);
   }
 });
 
@@ -903,14 +920,14 @@ var init_trash_2 = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs
 var x_exports = {};
 __export(x_exports, {
-  __iconData: () => __iconData16,
+  __iconData: () => __iconData20,
   default: () => X
 });
-var __iconData16, X;
+var __iconData20, X;
 var init_x = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs"() {
     init_createLucideIcon();
-    __iconData16 = {
+    __iconData20 = {
       name: "x",
       size: 24,
       node: [
@@ -918,176 +935,227 @@ var init_x = __esm({
         ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
       ]
     };
-    __iconData16.node;
-    X = createLucideIcon(__iconData16);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/circle-check-big.mjs
-var __iconData17, CircleCheckBig;
-var init_circle_check_big = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/circle-check-big.mjs"() {
-    init_createLucideIcon();
-    __iconData17 = {
-      name: "circle-check-big",
-      size: 24,
-      node: [
-        ["path", { d: "M21.801 10A10 10 0 1 1 17 3.335", key: "yps3ct" }],
-        ["path", { d: "m9 11 3 3L22 4", key: "1pflzl" }]
-      ],
-      aliases: ["check-circle"]
-    };
-    __iconData17.node;
-    CircleCheckBig = createLucideIcon(__iconData17);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/check-circle.mjs
-var check_circle_exports = {};
-__export(check_circle_exports, {
-  default: () => CircleCheckBig
-});
-var init_check_circle = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/check-circle.mjs"() {
-    init_circle_check_big();
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/triangle-exclamation-point.mjs
-var __iconData18, TriangleExclamationPoint;
-var init_triangle_exclamation_point = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/triangle-exclamation-point.mjs"() {
-    init_createLucideIcon();
-    __iconData18 = {
-      name: "triangle-exclamation-point",
-      size: 24,
-      node: [
-        [
-          "path",
-          {
-            d: "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3",
-            key: "wmoenq"
-          }
-        ],
-        ["path", { d: "M12 9v4", key: "juzpu7" }],
-        ["path", { d: "M12 17h.01", key: "p32p05" }]
-      ],
-      aliases: ["alert-triangle", "triangle-alert"]
-    };
-    __iconData18.node;
-    TriangleExclamationPoint = createLucideIcon(__iconData18);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/alert-triangle.mjs
-var alert_triangle_exports = {};
-__export(alert_triangle_exports, {
-  default: () => TriangleExclamationPoint
-});
-var init_alert_triangle = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/alert-triangle.mjs"() {
-    init_triangle_exclamation_point();
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/skip-forward.mjs
-var skip_forward_exports = {};
-__export(skip_forward_exports, {
-  __iconData: () => __iconData19,
-  default: () => SkipForward
-});
-var __iconData19, SkipForward;
-var init_skip_forward = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/skip-forward.mjs"() {
-    init_createLucideIcon();
-    __iconData19 = {
-      name: "skip-forward",
-      size: 24,
-      node: [
-        ["path", { d: "M21 4v16", key: "7j8fe9" }],
-        [
-          "path",
-          {
-            d: "M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z",
-            key: "zs4d6"
-          }
-        ]
-      ]
-    };
-    __iconData19.node;
-    SkipForward = createLucideIcon(__iconData19);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/layers.mjs
-var layers_exports = {};
-__export(layers_exports, {
-  __iconData: () => __iconData20,
-  default: () => Layers
-});
-var __iconData20, Layers;
-var init_layers = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/layers.mjs"() {
-    init_createLucideIcon();
-    __iconData20 = {
-      name: "layers",
-      size: 24,
-      node: [
-        [
-          "path",
-          {
-            d: "M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z",
-            key: "zw3jo"
-          }
-        ],
-        [
-          "path",
-          {
-            d: "M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12",
-            key: "1wduqc"
-          }
-        ],
-        [
-          "path",
-          {
-            d: "M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17",
-            key: "kqbvx6"
-          }
-        ]
-      ],
-      aliases: ["layers-3"]
-    };
     __iconData20.node;
-    Layers = createLucideIcon(__iconData20);
+    X = createLucideIcon(__iconData20);
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs
-var shield_check_exports = {};
-__export(shield_check_exports, {
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/zap.mjs
+var zap_exports = {};
+__export(zap_exports, {
   __iconData: () => __iconData21,
-  default: () => ShieldCheck
+  default: () => Zap
 });
-var __iconData21, ShieldCheck;
-var init_shield_check = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs"() {
+var __iconData21, Zap;
+var init_zap = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/zap.mjs"() {
     init_createLucideIcon();
     __iconData21 = {
-      name: "shield-check",
+      name: "zap",
       size: 24,
       node: [
         [
           "path",
           {
-            d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
-            key: "oel41y"
+            d: "M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z",
+            key: "1v7up4"
           }
-        ],
-        ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
+        ]
       ]
     };
     __iconData21.node;
-    ShieldCheck = createLucideIcon(__iconData21);
+    Zap = createLucideIcon(__iconData21);
+  }
+});
+
+// packages/addons/automation/client/ui/icons.cjs
+var require_icons2 = __commonJS({
+  "packages/addons/automation/client/ui/icons.cjs"(exports2, module2) {
+    "use strict";
+    var icons = require_icons();
+    var set = icons.create("wba", {
+      "activity": (init_activity(), __toCommonJS(activity_exports)).default,
+      "alarm-clock": (init_alarm_clock(), __toCommonJS(alarm_clock_exports)).default,
+      "alert-triangle": (init_alert_triangle(), __toCommonJS(alert_triangle_exports)).default,
+      "check-circle": (init_check_circle(), __toCommonJS(check_circle_exports)).default,
+      "database": (init_database(), __toCommonJS(database_exports)).default,
+      "hand": (init_hand(), __toCommonJS(hand_exports)).default,
+      "history": (init_history(), __toCommonJS(history_exports)).default,
+      "layers": (init_layers(), __toCommonJS(layers_exports)).default,
+      "list": (init_list(), __toCommonJS(list_exports)).default,
+      "pencil": (init_pencil(), __toCommonJS(pencil_exports)).default,
+      "play": (init_play(), __toCommonJS(play_exports)).default,
+      "power": (init_power(), __toCommonJS(power_exports)).default,
+      "power-off": (init_power_off(), __toCommonJS(power_off_exports)).default,
+      "radio": (init_radio(), __toCommonJS(radio_exports)).default,
+      "shield-check": (init_shield_check(), __toCommonJS(shield_check_exports)).default,
+      "skip-forward": (init_skip_forward(), __toCommonJS(skip_forward_exports)).default,
+      "sliders-horizontal": (init_sliders_horizontal(), __toCommonJS(sliders_horizontal_exports)).default,
+      "timer": (init_timer(), __toCommonJS(timer_exports)).default,
+      "trash-2": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
+      "x": (init_x(), __toCommonJS(x_exports)).default,
+      "zap": (init_zap(), __toCommonJS(zap_exports)).default
+    });
+    module2.exports = { ICONS: set.ICONS, Icon: set.Icon };
+  }
+});
+
+// packages/addons/lib/client-base-styles.cjs
+var require_client_base_styles = __commonJS({
+  "packages/addons/lib/client-base-styles.cjs"(exports2, module2) {
+    "use strict";
+    var SECRET_FIELD = [
+      ".wb-secret-field{position:relative;display:flex;align-items:center;min-width:0}",
+      ".wb-secret-field input{flex:1 1 auto;min-width:0;padding-right:34px}",
+      ".wb-eye{position:absolute;right:4px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:6px;padding:4px;color:var(--wb-muted,#6b7280);cursor:pointer}",
+      ".wb-eye:hover:not(:disabled){color:var(--wb-accent,#2563eb);background:color-mix(in srgb, var(--wb-accent,#2563eb) 12%, transparent)}",
+      ".wb-eye:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:1px}",
+      ".wb-eye:disabled{opacity:.45;cursor:not-allowed}"
+    ];
+    module2.exports = function baseStyles(prefix) {
+      var p = String(prefix || "wb");
+      var s = "." + p;
+      return SECRET_FIELD.concat([
+        s + "-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
+        s + "-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
+        s + "-title{font-size:16px;font-weight:650;margin:0}",
+        s + "-sub{font-size:12px;color:var(--wb-muted,#6b7280);margin:2px 0 0}",
+        s + "-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
+        s + "-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
+        s + "-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
+        s + "-kpi{font-size:22px;font-weight:700;line-height:1.2}" + s + "-kpi-label{font-size:12px;color:var(--wb-muted,#6b7280)}",
+        s + "-table{width:100%;border-collapse:collapse;font-size:12px}" + s + "-table th," + s + "-table td{padding:7px 8px;border-bottom:1px solid var(--wb-border,#eef0f3);text-align:left;vertical-align:top}",
+        s + "-table th{font-weight:600;color:var(--wb-muted,#6b7280);white-space:nowrap}",
+        s + "-btn{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer}",
+        s + "-btn:hover:not(:disabled){border-color:var(--wb-accent,#2563eb)}" + s + "-btn:disabled{opacity:.5;cursor:default}",
+        s + "-btn.primary{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:#fff}",
+        s + "-btn.danger{color:#b91c1c;border-color:#fecaca}",
+        s + "-field{display:flex;flex-direction:column;gap:4px;font-size:12px}" + s + "-label{font-weight:600}",
+        s + "-field input," + s + "-field select," + s + "-field textarea{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:0}",
+        s + "-hint{color:var(--wb-muted,#6b7280);font-size:11px}" + s + "-notice{padding:8px 10px;border-radius:8px;font-size:12px;background:#eff6ff;color:#1e40af}",
+        s + "-notice.error{background:#fef2f2;color:#b91c1c}" + s + "-notice.ok{background:#ecfdf5;color:#047857}",
+        s + "-empty{padding:18px;text-align:center;color:var(--wb-muted,#6b7280);font-size:12px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:8px}",
+        s + "-pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;background:#f3f4f6;color:#374151}",
+        s + "-pill.ok{background:#ecfdf5;color:#047857}" + s + "-pill.error{background:#fef2f2;color:#b91c1c}" + s + "-pill.warn{background:#fffbeb;color:#b45309}",
+        s + "-json{margin:0;padding:8px;background:#f8fafc;border-radius:8px;font-size:11px;max-height:240px;overflow:auto}",
+        s + "-muted{color:var(--wb-muted,#6b7280)}" + s + "-link{color:var(--wb-accent,#2563eb);cursor:pointer;text-decoration:none}",
+        s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}"
+      ]);
+    };
+    module2.exports.secretFieldStyles = SECRET_FIELD;
+  }
+});
+
+// packages/addons/automation/client/ui/layout-styles.cjs
+var require_layout_styles = __commonJS({
+  "packages/addons/automation/client/ui/layout-styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = [
+      // 页面分区
+      ".wba-panel{border:1px solid var(--wb-border);border-radius:12px;padding:16px;background:var(--wb-surface);display:flex;flex-direction:column;gap:12px}",
+      ".wba-panel-h{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}",
+      ".wba-panel-title{font-size:14px;font-weight:650;margin:0}",
+      ".wba-sub{font-size:12px;color:var(--wb-muted);margin:0;line-height:1.5}",
+      ".wba-sep{height:1px;background:var(--wb-border);border:0;margin:0}",
+      // 表格容器与行
+      ".wba-table-wrap{overflow-x:auto;border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-surface)}",
+      ".wba-table-wrap .wba-table{border-collapse:separate;border-spacing:0}",
+      ".wba-table tbody tr{transition:background 120ms ease}",
+      ".wba-table tbody tr:hover{background:var(--wb-line)}",
+      ".wba-table td{vertical-align:middle}",
+      ".wba-table code{font-size:11px;color:var(--wb-muted)}",
+      ".wba-table tr.wba-row-open{background:var(--wb-line)}",
+      ".wba-detail-cell{padding:12px 14px!important;background:color-mix(in oklab,var(--wb-line) 45%,transparent)}",
+      // KPI 卡片
+      ".wba-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}",
+      ".wba-card{border:1px solid var(--wb-border);border-radius:10px;padding:12px;background:var(--wb-surface);display:flex;flex-direction:column;gap:6px}",
+      ".wba-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--wb-muted)}",
+      ".wba-card-num{font-size:26px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}",
+      ".wba-card-ico{display:flex;color:var(--wb-accent)}",
+      ".wba-card-label{font-size:12px;font-weight:600}",
+      ".wba-card-hint{font-size:11px;color:var(--wb-muted);margin:0}",
+      // 键值 / chips
+      ".wba-kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 12px;font-size:12px;align-items:start}",
+      ".wba-kv b{font-weight:600;color:var(--wb-muted);white-space:nowrap}",
+      ".wba-kv span,.wba-kv code{min-width:0;overflow-wrap:anywhere}",
+      ".wba-pills{display:flex;flex-wrap:wrap;gap:6px}",
+      ".wba-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--wb-border);border-radius:999px;padding:2px 10px;font-size:12px;background:transparent;color:inherit;cursor:pointer;font-family:inherit}",
+      ".wba-chip[aria-pressed=true]{background:var(--wb-accent);border-color:var(--wb-accent);color:var(--wb-surface)}",
+      ".wba-chip.static{cursor:default}",
+      ".wba-chips{display:flex;flex-wrap:wrap;gap:6px}",
+      // JSON 编辑器
+      ".wba-code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.55;width:100%;min-height:160px;resize:vertical;tab-size:2;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid var(--wb-border);background:var(--wb-line);color:inherit}",
+      ".wba-code.sm{min-height:96px}",
+      ".wba-code:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}",
+      ".wba-code.err{border-color:var(--wb-danger)}",
+      ".wba-code-err{font-size:11px;color:var(--wb-danger);min-height:14px}",
+      ".wba-pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;line-height:1.55;margin:0;padding:10px;border-radius:8px;background:var(--wb-line);max-height:260px;overflow:auto;overflow-wrap:anywhere}",
+      // 输入与按钮
+      ".wba-input{width:100%;min-width:0;box-sizing:border-box;border:1px solid var(--wb-border);border-radius:8px;padding:6px 8px;font:inherit;font-size:12px;background:var(--wb-surface);color:inherit}",
+      ".wba-input.err{border-color:var(--wb-danger)}",
+      ".wba-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}",
+      ".wba-toolbar .wba-field{min-width:150px}",
+      ".wba-actions{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}",
+      ".wba-icon-btn{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:7px;background:transparent;color:inherit;cursor:pointer;padding:0}",
+      ".wba-icon-btn:hover{border-color:var(--wb-accent);color:var(--wb-accent)}",
+      ".wba-icon-btn.danger:hover{border-color:var(--wb-danger);color:var(--wb-danger)}",
+      ".wba-icon-btn:disabled{opacity:.45;cursor:default}",
+      // 空态与骨架
+      ".wba-empty-card{border:1px dashed var(--wb-border);border-radius:12px;padding:28px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;background:var(--wb-surface)}",
+      ".wba-empty-ico{color:var(--wb-muted);display:flex}",
+      ".wba-empty-title{font-size:14px;font-weight:650;margin:0}",
+      ".wba-empty-body{font-size:12px;color:var(--wb-muted);margin:0;max-width:52ch;line-height:1.55}",
+      ".wba-skel{height:12px;border-radius:6px;background:var(--wb-line);animation:wba-pulse 1.2s ease-in-out infinite}",
+      ".wba-skel-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:14px;padding:12px 14px;border-bottom:1px solid var(--wb-border)}",
+      "@keyframes wba-pulse{50%{opacity:.45}}",
+      // 模态
+      ".wba-modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;background:color-mix(in oklab,var(--wb-muted) 45%,transparent)}",
+      ".wba-modal-box{width:min(760px,calc(100vw - 32px));max-height:90vh;display:flex;flex-direction:column;background:var(--wb-surface);border:1px solid var(--wb-border);border-radius:14px;overflow:hidden;box-shadow:0 24px 64px color-mix(in oklab,var(--wb-muted) 40%,transparent)}",
+      ".wba-modal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-bottom:1px solid var(--wb-border)}",
+      ".wba-modal-head h3{font-size:15px;margin:0}",
+      ".wba-modal-body{padding:16px;overflow:auto;display:flex;flex-direction:column;gap:16px}",
+      ".wba-modal-foot{position:sticky;bottom:0;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid var(--wb-border);background:var(--wb-surface)}",
+      ".wba-modal-foot .wba-grow{flex:1}",
+      // 编辑器分段与栅格
+      ".wba-section{display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid var(--wb-border)}",
+      ".wba-section:first-child{border-top:0;padding-top:0}",
+      ".wba-section-title{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--wb-muted);margin:0;text-transform:uppercase}",
+      ".wba-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}",
+      ".wba-grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}",
+      ".wba-span-2{grid-column:span 2}",
+      ".wba-seg{display:inline-flex;gap:2px;padding:2px;border:1px solid var(--wb-border);border-radius:8px;background:var(--wb-line);align-self:flex-start}",
+      ".wba-seg button{border:0;background:transparent;color:inherit;border-radius:6px;padding:4px 12px;font-size:12px;font-family:inherit;cursor:pointer}",
+      ".wba-seg button[aria-pressed=true]{background:var(--wb-surface);box-shadow:0 0 0 1px var(--wb-border);font-weight:600}",
+      ".wba-switch{display:inline-flex;align-items:center;gap:8px;font-size:12px;cursor:pointer}",
+      ".wba-block{display:flex;flex-direction:column;gap:6px;min-width:0}",
+      ".wba-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}",
+      ".wba-grow{flex:1;min-width:0}",
+      ".wba-svg{display:inline-block;vertical-align:middle;flex:none}",
+      ".wba-w-120{width:120px;flex:none}",
+      ".wba-w-96{width:96px;flex:none}",
+      ".wba-list{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:12px;line-height:1.55}",
+      ".wba-clickable{cursor:pointer}",
+      ".wba-check{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}",
+      ".wba-check input{accent-color:var(--wb-accent);margin:0}",
+      // 文本与焦点
+      ".wba-ellipsis{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}",
+      ".wba-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;color:var(--wb-muted)}",
+      ".wba-nowrap{white-space:nowrap}",
+      ".wba-strong{font-weight:600}",
+      ".wba-warn{color:var(--wb-warn)}",
+      ".wba-err-text{color:var(--wb-danger);font-size:11px;margin:0}",
+      ".wba-wrap :focus-visible,.wba-modal :focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}",
+      // 响应式
+      "@media (max-width:720px){.wba-grid-2,.wba-grid-3{grid-template-columns:1fr}.wba-span-2{grid-column:auto}.wba-modal{padding:8px}.wba-modal-box{width:calc(100vw - 16px)}.wba-toolbar .wba-field{min-width:0;flex:1 1 140px}.wba-modal-body{padding:12px}.wba-modal-foot{flex-wrap:wrap}.wba-skel-row{grid-template-columns:1fr 1fr}}"
+    ].join("\n");
+  }
+});
+
+// packages/addons/automation/client/ui/styles.cjs
+var require_styles = __commonJS({
+  "packages/addons/automation/client/ui/styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = require_client_base_styles()("wba").join("\n") + "\n" + require_layout_styles();
   }
 });
 
@@ -1879,6 +1947,106 @@ var require_trigger_fields = __commonJS({
   }
 });
 
+// packages/addons/lib/overlay.cjs
+var require_overlay = __commonJS({
+  "packages/addons/lib/overlay.cjs"(exports2, module2) {
+    "use strict";
+    var defaultReact = require("react");
+    var FOCUSABLE = "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]";
+    module2.exports = function createOverlay(options) {
+      var opts = options || {};
+      var React = opts.React || defaultReact;
+      var h = React.createElement;
+      var tag = opts.tag || "section";
+      var maskClass = opts.maskClass;
+      var dialogClass = opts.dialogClass;
+      var dialogClassOf = opts.dialogClassOf || function() {
+        return "";
+      };
+      var ariaLabelOf = opts.ariaLabelOf || function(props) {
+        return props["aria-label"] || props.title;
+      };
+      var ariaLabelledByOf = opts.ariaLabelledByOf || function() {
+        return null;
+      };
+      var header = opts.header || null;
+      var closeOnEscape = opts.closeOnEscape || function() {
+        return true;
+      };
+      var closeOnMask = opts.closeOnMask || function() {
+        return true;
+      };
+      var extraKeyDown = opts.onKeyDown || null;
+      var autoFocusDialog = opts.autoFocusDialog !== false;
+      var focusableSelector = opts.focusableSelector || FOCUSABLE;
+      function Modal(props) {
+        var ref = React.useRef(null);
+        React.useEffect(function() {
+          var previous = typeof document !== "undefined" ? document.activeElement : null;
+          var focusIt = props.autoFocus !== void 0 ? props.autoFocus : autoFocusDialog;
+          if (focusIt && ref.current) ref.current.focus();
+          return function() {
+            if (previous && previous.isConnected) previous.focus();
+          };
+        }, []);
+        function onKeyDown(e) {
+          if (extraKeyDown && extraKeyDown(e, props, ref)) return;
+          if (e.key === "Escape") {
+            if (!(props.closeOnEscape !== void 0 ? props.closeOnEscape : closeOnEscape(props))) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (props.onClose) props.onClose();
+            return;
+          }
+          if (e.key !== "Tab" || !ref.current) return;
+          var els = ref.current.querySelectorAll(focusableSelector);
+          if (!els.length) {
+            e.preventDefault();
+            return;
+          }
+          var first = els[0];
+          var last = els[els.length - 1];
+          if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) {
+            e.preventDefault();
+            last.focus();
+          }
+          if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+        var labelledBy = ariaLabelledByOf(props);
+        return h(
+          "div",
+          {
+            className: maskClass,
+            onMouseDown: function(e) {
+              var allowed = props.closeOnMask !== void 0 ? props.closeOnMask : closeOnMask(props);
+              if (e.target === e.currentTarget && props.onClose && allowed) props.onClose();
+            }
+          },
+          h(
+            tag,
+            {
+              className: dialogClass + dialogClassOf(props),
+              role: "dialog",
+              "aria-modal": true,
+              "aria-label": labelledBy ? null : ariaLabelOf(props),
+              "aria-labelledby": labelledBy || null,
+              ref,
+              tabIndex: -1,
+              onKeyDown
+            },
+            header ? header(props) : null,
+            props.children
+          )
+        );
+      }
+      return Modal;
+    };
+  }
+});
+
 // packages/addons/automation/client/views/json-editor.cjs
 var require_json_editor = __commonJS({
   "packages/addons/automation/client/views/json-editor.cjs"(exports2, module2) {
@@ -1980,6 +2148,18 @@ var require_json_editor = __commonJS({
 var require_rule_editor = __commonJS({
   "packages/addons/automation/client/views/rule-editor.cjs"(exports2, module2) {
     "use strict";
+    var createOverlay = require_overlay();
+    var EditorOverlay = createOverlay({
+      maskClass: "wba-modal",
+      dialogClass: "wba-modal-box",
+      ariaLabelOf: function(props) {
+        var t = props.t;
+        return props.form && props.form.id ? t("editor.editTitle") : t("editor.newTitle");
+      },
+      // 有未保存改动时要先问一次，所以关掉「点遮罩直接关」的默认行为，交给 close()。
+      closeOnMask: false,
+      autoFocusDialog: false
+    });
     var trig = require_trigger_fields();
     var json = require_json_editor();
     var EXAMPLES = {
@@ -2076,13 +2256,8 @@ var require_rule_editor = __commonJS({
       React.useEffect(function() {
         var prev = typeof document !== "undefined" ? document.body.style.overflow : "";
         if (typeof document !== "undefined") document.body.style.overflow = "hidden";
-        function onKey(e) {
-          if (e.key === "Escape") close();
-        }
-        if (typeof window !== "undefined") window.addEventListener("keydown", onKey);
         return function() {
           if (typeof document !== "undefined") document.body.style.overflow = prev;
-          if (typeof window !== "undefined") window.removeEventListener("keydown", onKey);
         };
       });
       function dirty() {
@@ -2093,165 +2268,159 @@ var require_rule_editor = __commonJS({
         props.onClose();
       }
       return h(
-        "div",
-        { className: "wba-modal", onClick: function(e) {
-          if (e.target === e.currentTarget) close();
-        } },
+        EditorOverlay,
+        { t, form, onClose: close, closeOnMask: false, autoFocus: false },
         h(
           "div",
-          { className: "wba-modal-box", role: "dialog", "aria-modal": "true" },
+          { className: "wba-modal-head" },
+          h("h3", null, form.id ? t("editor.editTitle") : t("editor.newTitle")),
+          h("button", { type: "button", className: "wba-icon-btn", title: t("common.close"), onClick: close }, icon ? icon("x", 15) : "\xD7")
+        ),
+        h(
+          "div",
+          { className: "wba-modal-body" },
           h(
             "div",
-            { className: "wba-modal-head" },
-            h("h3", null, form.id ? t("editor.editTitle") : t("editor.newTitle")),
-            h("button", { type: "button", className: "wba-icon-btn", title: t("common.close"), onClick: close }, icon ? icon("x", 15) : "\xD7")
+            { className: "wba-section" },
+            h("p", { className: "wba-section-title" }, "\u2460 " + t("editor.section.basic")),
+            h(
+              "div",
+              { className: "wba-grid-3" },
+              h(
+                "label",
+                { className: "wba-field wba-span-2" },
+                h("span", { className: "wba-label" }, t("editor.name")),
+                h("input", {
+                  className: "wba-input" + (showNameErr ? " err" : ""),
+                  value: form.name,
+                  placeholder: t("editor.namePh"),
+                  onChange: function(e) {
+                    touchedS[1](true);
+                    set("name", e.target.value);
+                  }
+                }),
+                showNameErr ? h("span", { className: "wba-err-text" }, errs.name) : null
+              ),
+              h(
+                "div",
+                { className: "wba-field" },
+                h("span", { className: "wba-label" }, t("editor.enabled")),
+                h(
+                  "label",
+                  { className: "wba-switch" },
+                  h("input", { type: "checkbox", checked: form.enabled, onChange: function(e) {
+                    set("enabled", e.target.checked);
+                  } }),
+                  h("span", null, form.enabled ? t("rules.status.on") : t("rules.status.off"))
+                )
+              )
+            )
           ),
           h(
             "div",
-            { className: "wba-modal-body" },
+            { className: "wba-section" },
+            h("p", { className: "wba-section-title" }, "\u2461 " + t("editor.section.trigger")),
+            h(trig.TriggerFields, { h, t, form, set, errs, icon })
+          ),
+          h(
+            "div",
+            { className: "wba-section" },
+            h("p", { className: "wba-section-title" }, "\u2462 " + t("editor.section.run")),
             h(
               "div",
-              { className: "wba-section" },
-              h("p", { className: "wba-section-title" }, "\u2460 " + t("editor.section.basic")),
+              { className: "wba-inline" },
               h(
-                "div",
-                { className: "wba-grid-3" },
+                "label",
+                { className: "wba-field" },
+                h("span", { className: "wba-label" }, t("editor.action")),
                 h(
-                  "label",
-                  { className: "wba-field wba-span-2" },
-                  h("span", { className: "wba-label" }, t("editor.name")),
-                  h("input", {
-                    className: "wba-input" + (showNameErr ? " err" : ""),
-                    value: form.name,
-                    placeholder: t("editor.namePh"),
-                    onChange: function(e) {
-                      touchedS[1](true);
-                      set("name", e.target.value);
-                    }
-                  }),
-                  showNameErr ? h("span", { className: "wba-err-text" }, errs.name) : null
-                ),
-                h(
-                  "div",
-                  { className: "wba-field" },
-                  h("span", { className: "wba-label" }, t("editor.enabled")),
-                  h(
-                    "label",
-                    { className: "wba-switch" },
-                    h("input", { type: "checkbox", checked: form.enabled, onChange: function(e) {
-                      set("enabled", e.target.checked);
-                    } }),
-                    h("span", null, form.enabled ? t("rules.status.on") : t("rules.status.off"))
-                  )
+                  "select",
+                  { className: "wba-input", value: form.actionName, onChange: function(e) {
+                    set("actionName", e.target.value);
+                  } },
+                  actionName.map(function(a) {
+                    return h("option", { key: a, value: a }, a);
+                  })
                 )
-              )
+              ),
+              h("span", { className: "wba-grow" }),
+              example ? h(C.Btn, { h, onClick: function() {
+                exampleS[1](!exampleS[0]);
+              } }, t("editor.showExample")) : null
             ),
-            h(
+            exampleS[0] && example ? h(
               "div",
-              { className: "wba-section" },
-              h("p", { className: "wba-section-title" }, "\u2461 " + t("editor.section.trigger")),
-              h(trig.TriggerFields, { h, t, form, set, errs, icon })
-            ),
-            h(
-              "div",
-              { className: "wba-section" },
-              h("p", { className: "wba-section-title" }, "\u2462 " + t("editor.section.run")),
+              { className: "wba-block" },
+              h("span", { className: "wba-label" }, t("editor.exampleTitle")),
+              h("pre", { className: "wba-pre" }, JSON.stringify(example, null, 2)),
               h(
                 "div",
                 { className: "wba-inline" },
-                h(
-                  "label",
-                  { className: "wba-field" },
-                  h("span", { className: "wba-label" }, t("editor.action")),
-                  h(
-                    "select",
-                    { className: "wba-input", value: form.actionName, onChange: function(e) {
-                      set("actionName", e.target.value);
-                    } },
-                    actionName.map(function(a) {
-                      return h("option", { key: a, value: a }, a);
-                    })
-                  )
-                ),
-                h("span", { className: "wba-grow" }),
-                example ? h(C.Btn, { h, onClick: function() {
-                  exampleS[1](!exampleS[0]);
-                } }, t("editor.showExample")) : null
-              ),
-              exampleS[0] && example ? h(
-                "div",
-                { className: "wba-block" },
-                h("span", { className: "wba-label" }, t("editor.exampleTitle")),
-                h("pre", { className: "wba-pre" }, JSON.stringify(example, null, 2)),
-                h(
-                  "div",
-                  { className: "wba-inline" },
-                  h(C.Btn, { h, onClick: function() {
-                    if (typeof window !== "undefined" && !window.confirm(t("editor.exampleHint"))) return;
-                    set("actionArgs", JSON.stringify(example, null, 2));
-                  } }, t("editor.fillExample")),
-                  h("span", { className: "wba-grow" })
-                )
-              ) : null,
-              h(json.JsonEditor, {
-                h,
-                t,
-                React,
-                label: "actionArgs",
-                hint: t("editor.argsHint"),
-                value: form.actionArgs,
-                invalid: Boolean(errs.actionArgs),
-                error: errs.actionArgs,
-                onChange: function(v) {
-                  set("actionArgs", v);
-                },
-                action: h(C.Btn, { h, onClick: function() {
-                  var next = json.formatJson(form.actionArgs);
-                  if (next) set("actionArgs", next);
-                } }, t("editor.format"))
-              })
-            ),
-            h(
-              "div",
-              { className: "wba-section" },
-              h("p", { className: "wba-section-title" }, "\u2463 " + t("editor.section.condition")),
-              h(
-                "label",
-                { className: "wba-switch" },
-                h("input", { type: "checkbox", checked: Boolean(form.condOn), onChange: function(e) {
-                  set("condOn", e.target.checked);
-                } }),
-                h("span", null, t("editor.conditionOn"))
-              ),
-              h("p", { className: "wba-sub" }, t("editor.conditionHint")),
-              form.condOn ? h(json.JsonEditor, {
-                h,
-                t,
-                React,
-                small: true,
-                vars: false,
-                label: "condition",
-                value: form.condition,
-                invalid: Boolean(errs.condition),
-                error: errs.condition,
-                onChange: function(v) {
-                  set("condition", v);
-                }
-              }) : h("p", { className: "wba-sub" }, t("editor.conditionEmpty"))
-            )
+                h(C.Btn, { h, onClick: function() {
+                  if (typeof window !== "undefined" && !window.confirm(t("editor.exampleHint"))) return;
+                  set("actionArgs", JSON.stringify(example, null, 2));
+                } }, t("editor.fillExample")),
+                h("span", { className: "wba-grow" })
+              )
+            ) : null,
+            h(json.JsonEditor, {
+              h,
+              t,
+              React,
+              label: "actionArgs",
+              hint: t("editor.argsHint"),
+              value: form.actionArgs,
+              invalid: Boolean(errs.actionArgs),
+              error: errs.actionArgs,
+              onChange: function(v) {
+                set("actionArgs", v);
+              },
+              action: h(C.Btn, { h, onClick: function() {
+                var next = json.formatJson(form.actionArgs);
+                if (next) set("actionArgs", next);
+              } }, t("editor.format"))
+            })
           ),
           h(
             "div",
-            { className: "wba-modal-foot" },
-            h("span", { className: "wba-sub wba-grow" }, validation.valid ? "" : errs.name || errs.actionArgs || errs.condition || t("editor.nameEmptySave")),
-            h(C.Btn, { h, onClick: close }, t("common.cancel")),
+            { className: "wba-section" },
+            h("p", { className: "wba-section-title" }, "\u2463 " + t("editor.section.condition")),
             h(
-              C.Btn,
-              { h, kind: "primary", disabled: busy || !validation.valid, onClick: function() {
-                props.onSave(buildPayload(form));
-              } },
-              busy ? t("common.loading") : t("common.save")
-            )
+              "label",
+              { className: "wba-switch" },
+              h("input", { type: "checkbox", checked: Boolean(form.condOn), onChange: function(e) {
+                set("condOn", e.target.checked);
+              } }),
+              h("span", null, t("editor.conditionOn"))
+            ),
+            h("p", { className: "wba-sub" }, t("editor.conditionHint")),
+            form.condOn ? h(json.JsonEditor, {
+              h,
+              t,
+              React,
+              small: true,
+              vars: false,
+              label: "condition",
+              value: form.condition,
+              invalid: Boolean(errs.condition),
+              error: errs.condition,
+              onChange: function(v) {
+                set("condition", v);
+              }
+            }) : h("p", { className: "wba-sub" }, t("editor.conditionEmpty"))
+          )
+        ),
+        h(
+          "div",
+          { className: "wba-modal-foot" },
+          h("span", { className: "wba-sub wba-grow" }, validation.valid ? "" : errs.name || errs.actionArgs || errs.condition || t("editor.nameEmptySave")),
+          h(C.Btn, { h, onClick: close }, t("common.cancel")),
+          h(
+            C.Btn,
+            { h, kind: "primary", disabled: busy || !validation.valid, onClick: function() {
+              props.onSave(buildPayload(form));
+            } },
+            busy ? t("common.loading") : t("common.save")
           )
         )
       );
@@ -4881,6 +5050,7 @@ var require_actions = __commonJS({
 });
 
 // packages/addons/automation/client/client.src.cjs
+var GLYPHS = require_icons2().ICONS;
 (function() {
   var root = typeof window !== "undefined" ? window : null;
   var host = root && root.__WB_HOST__;
@@ -4894,27 +5064,27 @@ var require_actions = __commonJS({
   var h = host.h;
   var CSS = require_styles();
   var ICONS = {
-    activity: (init_activity(), __toCommonJS(activity_exports)).default,
-    zap: (init_zap(), __toCommonJS(zap_exports)).default,
-    history: (init_history(), __toCommonJS(history_exports)).default,
-    sliders: (init_sliders_horizontal(), __toCommonJS(sliders_horizontal_exports)).default,
-    database: (init_database(), __toCommonJS(database_exports)).default,
-    list: (init_list(), __toCommonJS(list_exports)).default,
-    timer: (init_timer(), __toCommonJS(timer_exports)).default,
-    "alarm-clock": (init_alarm_clock(), __toCommonJS(alarm_clock_exports)).default,
-    radio: (init_radio(), __toCommonJS(radio_exports)).default,
-    hand: (init_hand(), __toCommonJS(hand_exports)).default,
-    play: (init_play(), __toCommonJS(play_exports)).default,
-    pencil: (init_pencil(), __toCommonJS(pencil_exports)).default,
-    power: (init_power(), __toCommonJS(power_exports)).default,
-    "power-off": (init_power_off(), __toCommonJS(power_off_exports)).default,
-    "trash-2": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
-    x: (init_x(), __toCommonJS(x_exports)).default,
-    "check-circle": (init_check_circle(), __toCommonJS(check_circle_exports)).default,
-    "alert-triangle": (init_alert_triangle(), __toCommonJS(alert_triangle_exports)).default,
-    "skip-forward": (init_skip_forward(), __toCommonJS(skip_forward_exports)).default,
-    layers: (init_layers(), __toCommonJS(layers_exports)).default,
-    "shield-check": (init_shield_check(), __toCommonJS(shield_check_exports)).default
+    activity: GLYPHS["activity"],
+    zap: GLYPHS["zap"],
+    history: GLYPHS["history"],
+    sliders: GLYPHS["sliders-horizontal"],
+    database: GLYPHS["database"],
+    list: GLYPHS["list"],
+    timer: GLYPHS["timer"],
+    "alarm-clock": GLYPHS["alarm-clock"],
+    radio: GLYPHS["radio"],
+    hand: GLYPHS["hand"],
+    play: GLYPHS["play"],
+    pencil: GLYPHS["pencil"],
+    power: GLYPHS["power"],
+    "power-off": GLYPHS["power-off"],
+    "trash-2": GLYPHS["trash-2"],
+    x: GLYPHS["x"],
+    "check-circle": GLYPHS["check-circle"],
+    "alert-triangle": GLYPHS["alert-triangle"],
+    "skip-forward": GLYPHS["skip-forward"],
+    layers: GLYPHS["layers"],
+    "shield-check": GLYPHS["shield-check"]
   };
   function Icon2(props) {
     var C = ICONS[props.name] || ICONS.zap;
@@ -4953,8 +5123,8 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-automation",
-    version: "0.2.2",
-    icon: (init_zap(), __toCommonJS(zap_exports)).default,
+    version: "0.2.3",
+    icon: GLYPHS["zap"],
     views: [
       { id: "stats", icon: tabIcon("activity"), title: { zh: "\u6982\u89C8", en: "Overview" }, component: withProps(require_stats(), "\u6982\u89C8") },
       { id: "rules", icon: tabIcon("zap"), title: { zh: "\u89C4\u5219", en: "Rules" }, component: withProps(require_rules(), "\u89C4\u5219") },

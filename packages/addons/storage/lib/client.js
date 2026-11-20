@@ -1458,12 +1458,12 @@ var init_rotate_ccw = __esm({
 var require_icons2 = __commonJS({
   "packages/addons/storage/client/ui/icons.cjs"(exports2, module2) {
     "use strict";
-    var icons = require_icons();
+    var icons2 = require_icons();
     function sizeOf(props) {
       if (props.name === "empty" && props.size === 48) return 48;
       return [11, 14, 16].indexOf(props.size) >= 0 ? props.size : 14;
     }
-    var set = icons.create("wbi", {
+    var set = icons2.create("wbi", {
       box: (init_box(), __toCommonJS(box_exports)).default,
       plus: (init_plus(), __toCommonJS(plus_exports)).default,
       search: (init_search(), __toCommonJS(search_exports)).default,
@@ -1562,11 +1562,12 @@ var require_skeleton = __commonJS({
 var require_overlay = __commonJS({
   "packages/addons/lib/overlay.cjs"(exports2, module2) {
     "use strict";
-    var React = require("react");
-    var h2 = React.createElement;
+    var defaultReact = require("react");
     var FOCUSABLE = "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]";
     module2.exports = function createOverlay(options) {
       var opts = options || {};
+      var React = opts.React || defaultReact;
+      var h2 = React.createElement;
       var tag = opts.tag || "section";
       var maskClass = opts.maskClass;
       var dialogClass = opts.dialogClass;
@@ -1576,25 +1577,40 @@ var require_overlay = __commonJS({
       var ariaLabelOf = opts.ariaLabelOf || function(props) {
         return props["aria-label"] || props.title;
       };
+      var ariaLabelledByOf = opts.ariaLabelledByOf || function() {
+        return null;
+      };
       var header = opts.header || null;
+      var closeOnEscape = opts.closeOnEscape || function() {
+        return true;
+      };
+      var closeOnMask = opts.closeOnMask || function() {
+        return true;
+      };
+      var extraKeyDown = opts.onKeyDown || null;
+      var autoFocusDialog = opts.autoFocusDialog !== false;
+      var focusableSelector = opts.focusableSelector || FOCUSABLE;
       function Modal(props) {
         var ref = React.useRef(null);
         React.useEffect(function() {
           var previous = typeof document !== "undefined" ? document.activeElement : null;
-          if (ref.current) ref.current.focus();
+          var focusIt = props.autoFocus !== void 0 ? props.autoFocus : autoFocusDialog;
+          if (focusIt && ref.current) ref.current.focus();
           return function() {
             if (previous && previous.isConnected) previous.focus();
           };
         }, []);
         function onKeyDown(e) {
+          if (extraKeyDown && extraKeyDown(e, props, ref)) return;
           if (e.key === "Escape") {
+            if (!(props.closeOnEscape !== void 0 ? props.closeOnEscape : closeOnEscape(props))) return;
             e.preventDefault();
             e.stopPropagation();
             if (props.onClose) props.onClose();
             return;
           }
           if (e.key !== "Tab" || !ref.current) return;
-          var els = ref.current.querySelectorAll(FOCUSABLE);
+          var els = ref.current.querySelectorAll(focusableSelector);
           if (!els.length) {
             e.preventDefault();
             return;
@@ -1610,12 +1626,14 @@ var require_overlay = __commonJS({
             first.focus();
           }
         }
+        var labelledBy = ariaLabelledByOf(props);
         return h2(
           "div",
           {
             className: maskClass,
             onMouseDown: function(e) {
-              if (e.target === e.currentTarget && props.onClose) props.onClose();
+              var allowed = props.closeOnMask !== void 0 ? props.closeOnMask : closeOnMask(props);
+              if (e.target === e.currentTarget && props.onClose && allowed) props.onClose();
             }
           },
           h2(
@@ -1624,7 +1642,8 @@ var require_overlay = __commonJS({
               className: dialogClass + dialogClassOf(props),
               role: "dialog",
               "aria-modal": true,
-              "aria-label": ariaLabelOf(props),
+              "aria-label": labelledBy ? null : ariaLabelOf(props),
+              "aria-labelledby": labelledBy || null,
               ref,
               tabIndex: -1,
               onKeyDown
@@ -5549,11 +5568,11 @@ if (host) {
     style.textContent = require_styles();
     document.head.appendChild(style);
   }
-  h = require("react").createElement, Icon2 = require_icons2().Icon;
+  h = require("react").createElement, icons = require_icons2(), Icon2 = icons.Icon, GLYPHS = icons.ICONS;
   host.registerAddon({
     id: "wb-addon-storage",
-    version: "1.5.7",
-    icon: (init_package(), __toCommonJS(package_exports)).default,
+    version: "1.5.8",
+    icon: GLYPHS["package"],
     views: [
       { id: "stats", icon: tabIcon2("chart"), title: { zh: "\u7EDF\u8BA1", en: "Statistics" }, component: require_stats().Stats },
       { id: "storage", icon: tabIcon2("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: require_records().Records },
@@ -5566,7 +5585,9 @@ if (host) {
 var styleId;
 var style;
 var h;
+var icons;
 var Icon2;
+var GLYPHS;
 var tabIcon;
 module.exports = { name: "dsh-workbench-storage", inject: [], apply: function() {
 } };
