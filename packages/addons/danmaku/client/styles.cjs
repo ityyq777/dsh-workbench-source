@@ -26,13 +26,10 @@ function pageStyles() {
     ".wbdm-card-s{font-size:11px;color:var(--wb-muted,#6b7280)}",
 
     /* 添加区 */
-    ".wbdm-compose{display:flex;flex-direction:column;gap:10px}",
     ".wbdm-textarea{display:block;width:100%;box-sizing:border-box;min-height:62px;padding:10px 12px;border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);color:inherit;font:inherit;font-size:13px;line-height:1.55;resize:vertical}",
     ".wbdm-textarea::placeholder{color:var(--wb-muted,#9ca3af)}",
     ".wbdm-textarea:focus{outline:none;border-color:var(--wb-accent,#2563eb);box-shadow:0 0 0 3px rgba(37,99,235,.14)}",
-    ".wbdm-compose-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}",
     ".wbdm-tones{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-right:auto}",
-    ".wbdm-tone-label{margin-right:2px;font-size:11px;color:var(--wb-muted,#6b7280)}",
     ".wbdm-tone{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border:1px solid var(--wb-border,#e5e7eb);border-radius:999px;background:transparent;color:var(--wb-muted,#6b7280);font-size:11px;line-height:1.6;cursor:pointer}",
     ".wbdm-tone:hover{border-color:var(--wb-accent,#2563eb);color:var(--wb-accent,#2563eb)}",
     ".wbdm-tone.on{border-color:var(--wb-accent,#2563eb);color:var(--wb-accent,#2563eb);background:rgba(37,99,235,.08)}",
@@ -79,13 +76,6 @@ function pageStyles() {
     ".wbdm-switch input:checked~.wbdm-knob{transform:translateX(14px)}",
     ".wbdm-switch input:focus-visible+.wbdm-track{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
     // 行内小开关（添加卡里的「卡片背景」）
-    ".wbdm-inline-switch{position:relative;display:inline-flex;align-items:center;gap:7px;flex:none;cursor:pointer;font-size:12px;color:var(--wb-muted,#6b7280)}",
-    ".wbdm-inline-switch input{position:absolute;left:0;top:0;width:30px;height:16px;margin:0;opacity:0;cursor:pointer}",
-    ".wbdm-inline-switch .wbdm-track{width:30px;height:16px;flex:none}",
-    ".wbdm-inline-switch .wbdm-knob{top:2px;left:2px;width:12px;height:12px;position:absolute}",
-    ".wbdm-inline-switch input:checked+.wbdm-track{background:var(--wb-accent,#2563eb)}",
-    ".wbdm-inline-switch input:checked~.wbdm-knob{transform:translateX(14px)}",
-    ".wbdm-inline-switch input:focus-visible+.wbdm-track{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
     ".wbdm-inline-label{white-space:nowrap}",
     // 行内「卡片/纯文字」标签：点一下切换该条弹幕是否有底
     ".wbdm-cardtag{flex:none;padding:1px 8px;border:1px solid var(--wb-border,#e5e7eb);border-radius:999px;background:none;",
@@ -145,9 +135,15 @@ function pageStyles() {
     ".wbdm-section{padding:12px 0 6px;border-top:1px solid var(--wb-line,#eef0f3)}",
     ".wbdm-section:first-child{border-top:0}",
     ".wbdm-section-t{margin-bottom:6px;font-size:11px;font-weight:650;letter-spacing:.02em;color:var(--wb-muted,#6b7280)}",
+    ".wbdm-card-action{margin-left:auto}",
     ".wbdm-crow-label{display:block;min-width:0}",
     ".wbdm-crow-t{display:block;font-size:12px;font-weight:550}",
     ".wbdm-crow-h{display:block;margin-top:2px;font-size:10px;color:var(--wb-muted,#9ca3af);line-height:1.45}",
+
+    /* 详情面板顶部的实时预览舞台 */
+    ".wbdm-preview{position:relative;margin:12px 16px 0;border:1px solid var(--wb-border,#e5e7eb);border-radius:12px;background:var(--wb-surface,#f8fafc);overflow:hidden}",
+    ".wbdm-preview-stage{position:relative;height:132px;overflow:hidden}",
+    ".wbdm-preview-hint{position:absolute;right:12px;bottom:8px;font-size:10px;letter-spacing:.02em;color:var(--wb-muted,#9ca3af);pointer-events:none}",
 
     /* 深色：卡片底色更贴近主题表面 */
     "@media (prefers-color-scheme:dark){.wbdm-kpi,.wbdm-card,.wbdm-status-cell{background:var(--wb-surface,#16181d)}}",

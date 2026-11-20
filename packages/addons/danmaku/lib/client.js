@@ -107,13 +107,10 @@ var require_styles = __commonJS({
         ".wbdm-card-t{font-size:13px;font-weight:650}",
         ".wbdm-card-s{font-size:11px;color:var(--wb-muted,#6b7280)}",
         /* 添加区 */
-        ".wbdm-compose{display:flex;flex-direction:column;gap:10px}",
         ".wbdm-textarea{display:block;width:100%;box-sizing:border-box;min-height:62px;padding:10px 12px;border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);color:inherit;font:inherit;font-size:13px;line-height:1.55;resize:vertical}",
         ".wbdm-textarea::placeholder{color:var(--wb-muted,#9ca3af)}",
         ".wbdm-textarea:focus{outline:none;border-color:var(--wb-accent,#2563eb);box-shadow:0 0 0 3px rgba(37,99,235,.14)}",
-        ".wbdm-compose-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}",
         ".wbdm-tones{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-right:auto}",
-        ".wbdm-tone-label{margin-right:2px;font-size:11px;color:var(--wb-muted,#6b7280)}",
         ".wbdm-tone{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border:1px solid var(--wb-border,#e5e7eb);border-radius:999px;background:transparent;color:var(--wb-muted,#6b7280);font-size:11px;line-height:1.6;cursor:pointer}",
         ".wbdm-tone:hover{border-color:var(--wb-accent,#2563eb);color:var(--wb-accent,#2563eb)}",
         ".wbdm-tone.on{border-color:var(--wb-accent,#2563eb);color:var(--wb-accent,#2563eb);background:rgba(37,99,235,.08)}",
@@ -157,13 +154,6 @@ var require_styles = __commonJS({
         ".wbdm-switch input:checked~.wbdm-knob{transform:translateX(14px)}",
         ".wbdm-switch input:focus-visible+.wbdm-track{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
         // 行内小开关（添加卡里的「卡片背景」）
-        ".wbdm-inline-switch{position:relative;display:inline-flex;align-items:center;gap:7px;flex:none;cursor:pointer;font-size:12px;color:var(--wb-muted,#6b7280)}",
-        ".wbdm-inline-switch input{position:absolute;left:0;top:0;width:30px;height:16px;margin:0;opacity:0;cursor:pointer}",
-        ".wbdm-inline-switch .wbdm-track{width:30px;height:16px;flex:none}",
-        ".wbdm-inline-switch .wbdm-knob{top:2px;left:2px;width:12px;height:12px;position:absolute}",
-        ".wbdm-inline-switch input:checked+.wbdm-track{background:var(--wb-accent,#2563eb)}",
-        ".wbdm-inline-switch input:checked~.wbdm-knob{transform:translateX(14px)}",
-        ".wbdm-inline-switch input:focus-visible+.wbdm-track{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
         ".wbdm-inline-label{white-space:nowrap}",
         // 行内「卡片/纯文字」标签：点一下切换该条弹幕是否有底
         ".wbdm-cardtag{flex:none;padding:1px 8px;border:1px solid var(--wb-border,#e5e7eb);border-radius:999px;background:none;",
@@ -216,9 +206,14 @@ var require_styles = __commonJS({
         ".wbdm-section{padding:12px 0 6px;border-top:1px solid var(--wb-line,#eef0f3)}",
         ".wbdm-section:first-child{border-top:0}",
         ".wbdm-section-t{margin-bottom:6px;font-size:11px;font-weight:650;letter-spacing:.02em;color:var(--wb-muted,#6b7280)}",
+        ".wbdm-card-action{margin-left:auto}",
         ".wbdm-crow-label{display:block;min-width:0}",
         ".wbdm-crow-t{display:block;font-size:12px;font-weight:550}",
         ".wbdm-crow-h{display:block;margin-top:2px;font-size:10px;color:var(--wb-muted,#9ca3af);line-height:1.45}",
+        /* 详情面板顶部的实时预览舞台 */
+        ".wbdm-preview{position:relative;margin:12px 16px 0;border:1px solid var(--wb-border,#e5e7eb);border-radius:12px;background:var(--wb-surface,#f8fafc);overflow:hidden}",
+        ".wbdm-preview-stage{position:relative;height:132px;overflow:hidden}",
+        ".wbdm-preview-hint{position:absolute;right:12px;bottom:8px;font-size:10px;letter-spacing:.02em;color:var(--wb-muted,#9ca3af);pointer-events:none}",
         /* 深色：卡片底色更贴近主题表面 */
         "@media (prefers-color-scheme:dark){.wbdm-kpi,.wbdm-card,.wbdm-status-cell{background:var(--wb-surface,#16181d)}}"
       ];
@@ -258,16 +253,67 @@ var require_style = __commonJS({
   }
 });
 
-// packages/addons/danmaku/client/overlay/layer.cjs
-var require_layer = __commonJS({
-  "packages/addons/danmaku/client/overlay/layer.cjs"(exports2, module2) {
+// packages/addons/danmaku/client/overlay/chip-style.cjs
+var require_chip_style = __commonJS({
+  "packages/addons/danmaku/client/overlay/chip-style.cjs"(exports2, module2) {
     "use strict";
-    var ACTIVE_LIMIT = 160;
     var FAMILY = {
       rounded: '"SF Pro Rounded", "PingFang SC", "Hiragino Sans GB", system-ui, sans-serif',
       serif: 'Georgia, "Songti SC", "Noto Serif CJK SC", serif',
       mono: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
     };
+    var TEXT_LIMIT = 140;
+    function num(value, fallback) {
+      if (value === "" || value === null || value === void 0) return fallback;
+      var n = Number(value);
+      return isFinite(n) ? n : fallback;
+    }
+    function clamp(n, min, max) {
+      return Math.min(max, Math.max(min, n));
+    }
+    function textOf(payload) {
+      var prefix = payload && payload.prefix ? payload.prefix + " " : "";
+      return prefix + String(payload && payload.body || "").slice(0, TEXT_LIMIT);
+    }
+    function styleOf(payload, config) {
+      var base = config || {};
+      var p = payload || {};
+      return {
+        text: textOf(p),
+        plain: p.card === false,
+        fontSize: clamp(num(p.fontSize, num(base.fontSize, 15)), 10, 48),
+        fontWeight: clamp(num(p.weight, 0) || 480, 300, 800),
+        fontFamily: FAMILY[p.family] || "",
+        opacity: clamp(num(p.opacity, num(base.opacity, 1)), 0.15, 1),
+        speed: clamp(num(p.speed, num(base.speed, 150)), 30, 800)
+      };
+    }
+    function buildChip(doc, payload, config) {
+      var style = styleOf(payload, config);
+      var el = doc.createElement("span");
+      el.className = "wbdm-dm-chip wbdm-dm-tone-" + (payload && payload.tone ? payload.tone : "normal") + (style.plain ? " wbdm-dm-plain" : "");
+      el.style.fontSize = style.fontSize + "px";
+      el.style.fontWeight = String(style.fontWeight);
+      if (style.fontFamily) el.style.fontFamily = style.fontFamily;
+      el.style.opacity = String(style.opacity);
+      el.textContent = style.text;
+      return { el, style };
+    }
+    module2.exports = {
+      FAMILY,
+      textOf,
+      styleOf,
+      buildChip
+    };
+  }
+});
+
+// packages/addons/danmaku/client/overlay/layer.cjs
+var require_layer = __commonJS({
+  "packages/addons/danmaku/client/overlay/layer.cjs"(exports2, module2) {
+    "use strict";
+    var chipStyle = require_chip_style();
+    var ACTIVE_LIMIT = 160;
     var LATE_LIMIT = 2e3;
     function num(value, fallback) {
       var n = Number(value);
@@ -324,17 +370,8 @@ var require_layer = __commonJS({
         if (!payload || !payload.body) return;
         if (anims.size >= ACTIVE_LIMIT) return;
         var m = metrics(payload.band);
-        var el = doc.createElement("span");
-        el.className = "wbdm-dm-chip wbdm-dm-tone-" + (payload.tone || "normal") + (payload.card === false ? " wbdm-dm-plain" : "");
-        var text = doc.createElement("span");
-        text.textContent = (payload.prefix ? payload.prefix + " " : "") + String(payload.body).slice(0, 140);
-        el.appendChild(text);
-        var size = num(payload.fontSize, num(config.fontSize, 15));
-        if (size) el.style.fontSize = clamp(size, 10, 48) + "px";
-        var weight = num(payload.weight, 0);
-        if (weight) el.style.fontWeight = String(clamp(weight, 300, 800));
-        var family = FAMILY[payload.family] || "";
-        if (family) el.style.fontFamily = family;
+        var made = chipStyle.buildChip(doc, payload, config);
+        var el = made.el;
         field.appendChild(el);
         var width = el.offsetWidth || 120;
         var lane = Math.abs(Math.floor(num(payload.lane, 0))) % m.lanes;
@@ -347,14 +384,14 @@ var require_layer = __commonJS({
           anim = el.animate(
             [
               { opacity: 0, transform: "translateY(6px)" },
-              { opacity: num(payload.opacity, config.opacity), transform: "translateY(0)", offset: 0.12 },
-              { opacity: num(payload.opacity, config.opacity), offset: 0.82 },
+              { opacity: made.style.opacity, transform: "translateY(0)", offset: 0.12 },
+              { opacity: made.style.opacity, offset: 0.82 },
               { opacity: 0, transform: "translateY(-6px)" }
             ],
             { duration: 4200, easing: "ease-out", fill: "forwards" }
           );
         } else {
-          var speed = clamp(num(payload.speed, config.speed), 30, 600);
+          var speed = made.style.speed;
           var startX = m.vw + 8;
           var endX = -(width + 8);
           var duration = Math.max(1200, (startX - endX) / speed * 1e3);
@@ -566,9 +603,9 @@ var require_mount = __commonJS({
         var target = document.body;
         var mode = "body";
         if (nextLayer === "overlay") {
-          var host2 = document.querySelector("[data-shell-overlay]");
-          if (host2) {
-            target = host2;
+          var host = document.querySelector("[data-shell-overlay]");
+          if (host) {
+            target = host;
             mode = "overlay";
           }
         }
@@ -1155,8 +1192,13 @@ var require_copy = __commonJS({
       tone: "\u989C\u8272",
       tones: { normal: "\u5E38\u89C4", accent: "\u4E3B\u9898\u8272", success: "\u6210\u529F", warn: "\u63D0\u9192", danger: "\u8B66\u793A" },
       card: "\u5361\u7247\u80CC\u666F",
+      createTitle: "\u65B0\u5EFA\u5F39\u5E55",
+      createHint: "\u65B0\u5EFA\u4E00\u6761\u5F39\u5E55\uFF0C\u53EF\u9009\u914D\u7F6E\u5916\u89C2\uFF1B\u4FDD\u5B58\u540E\u7ACB\u5373\u8FDB\u5165\u8F6E\u64AD\u3002",
+      createSave: "\u6DFB\u52A0",
       detailTitle: "\u5F39\u5E55\u8BE6\u60C5",
       detailHint: "\u8FD9\u6761\u5F39\u5E55\u81EA\u5DF1\u7684\u5916\u89C2\uFF0C\u6539\u5B8C\u53EA\u5F71\u54CD\u5B83\u4E00\u6761\u3002",
+      previewStage: "\u5B9E\u65F6\u9884\u89C8 \xB7 \u6539\u53C2\u6570\u7ACB\u5373\u751F\u6548\uFF0C\u4E0D\u5199\u5E93\u4E0D\u53D1\u5C4F",
+      previewPlaceholder: "\u8F93\u5165\u5185\u5BB9\uFF0C\u8FD9\u91CC\u4F1A\u5B9E\u65F6\u9884\u89C8",
       sectionContent: "\u5185\u5BB9",
       sectionLook: "\u5916\u89C2",
       sectionMotion: "\u52A8\u6548",
@@ -1251,8 +1293,13 @@ var require_copy = __commonJS({
       tone: "Tone",
       tones: { normal: "Normal", accent: "Accent", success: "Success", warn: "Warn", danger: "Danger" },
       card: "Card background",
+      createTitle: "New danmaku",
+      createHint: "Create a danmaku with its own look; it joins the rotation right away.",
+      createSave: "Add",
       detailTitle: "Danmaku details",
       detailHint: "Per-line look and motion; only this line changes.",
+      previewStage: "Live preview \xB7 updates as you tweak, nothing is saved or sent",
+      previewPlaceholder: "Type something to preview it here",
       sectionContent: "Content",
       sectionLook: "Look",
       sectionMotion: "Motion",
@@ -1535,8 +1582,15 @@ var init_pencil = __esm({
 var require_detail = __commonJS({
   "packages/addons/danmaku/client/views/detail.cjs"(exports2, module2) {
     "use strict";
-    var React2 = require("react");
-    var h = React2.createElement;
+    var React = require("react");
+    var h = React.createElement;
+    var chipStyle = require_chip_style();
+    var REDUCED = false;
+    try {
+      REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    } catch (error) {
+      REDUCED = false;
+    }
     var TONES = ["normal", "accent", "success", "warn", "danger"];
     var ICONS = {
       x: (init_x(), __toCommonJS(x_exports)).default,
@@ -1548,11 +1602,84 @@ var require_detail = __commonJS({
     function numberOrText(value) {
       return value === null || value === void 0 ? "" : String(value);
     }
+    function PreviewStage(props) {
+      var stageRef = React.useRef(null);
+      var detail = props.detail;
+      var hint = props.hint;
+      var placeholder = props.placeholder || "";
+      React.useEffect(
+        function() {
+          var stage = stageRef.current;
+          if (!stage) return void 0;
+          stage.innerHTML = "";
+          var made = chipStyle.buildChip(
+            stage.ownerDocument,
+            {
+              body: detail.body || placeholder,
+              tone: detail.tone,
+              card: detail.card,
+              prefix: detail.prefix,
+              fontSize: detail.fontSize,
+              speed: detail.speed,
+              opacity: detail.opacity,
+              weight: detail.fontWeight,
+              family: detail.fontFamily
+            },
+            { fontSize: 15, opacity: 0.92, speed: 150 }
+          );
+          var chip = made.el;
+          chip.style.position = "absolute";
+          chip.style.left = "0";
+          chip.style.top = "50%";
+          chip.style.willChange = "transform";
+          stage.appendChild(chip);
+          var stageW = stage.clientWidth || 520;
+          var chipW = chip.offsetWidth || 120;
+          if (REDUCED) {
+            chip.style.transform = "translate3d(" + Math.round((stageW - chipW) / 2) + "px,-50%,0)";
+            return void 0;
+          }
+          var speed = made.style.speed;
+          var anim = chip.animate(
+            [
+              { transform: "translate3d(" + stageW + "px,-50%,0)" },
+              { transform: "translate3d(" + -(chipW + 10) + "px,-50%,0)" }
+            ],
+            { duration: Math.max(1400, (stageW + chipW) / speed * 1e3), easing: "linear", iterations: Infinity }
+          );
+          return function() {
+            anim.cancel();
+          };
+        },
+        [
+          placeholder,
+          detail.body,
+          detail.tone,
+          detail.card,
+          detail.prefix,
+          detail.fontSize,
+          detail.speed,
+          detail.opacity,
+          detail.fontWeight,
+          detail.fontFamily
+        ]
+      );
+      return h(
+        "div",
+        { className: "wbdm-preview" },
+        h("div", { className: "wbdm-preview-stage", ref: stageRef }),
+        h("div", { className: "wbdm-preview-hint" }, hint)
+      );
+    }
     module2.exports = function renderDetail(props) {
       var C = props.C;
       var detail = props.detail;
       var patch = props.patch;
       var busy = props.busy;
+      var mode = props.mode === "create" ? "create" : "edit";
+      var title = mode === "create" ? C.createTitle : C.detailTitle;
+      var subtitle = mode === "create" ? C.createHint : C.detailHint;
+      var saveLabel = mode === "create" ? C.createSave : C.saveDetail;
       function set(key, value) {
         var next = {};
         next[key] = value;
@@ -1665,15 +1792,15 @@ var require_detail = __commonJS({
         },
         h(
           "div",
-          { className: "wbdm-modal-card", role: "dialog", "aria-label": C.detailTitle },
+          { className: "wbdm-modal-card", role: "dialog", "aria-label": title },
           h(
             "div",
             { className: "wbdm-modal-h" },
             h(
               "div",
               null,
-              h("div", { className: "wbdm-modal-t" }, C.detailTitle),
-              h("div", { className: "wbdm-modal-s" }, C.detailHint)
+              h("div", { className: "wbdm-modal-t" }, title),
+              h("div", { className: "wbdm-modal-s" }, subtitle)
             ),
             h(
               "button",
@@ -1687,6 +1814,7 @@ var require_detail = __commonJS({
               glyph(ICONS.x, 15)
             )
           ),
+          h(PreviewStage, { detail, hint: C.previewStage, placeholder: C.previewPlaceholder }),
           h(
             "div",
             { className: "wbdm-modal-body" },
@@ -1813,7 +1941,7 @@ var require_detail = __commonJS({
                   props.save(false);
                 }
               },
-              busy ? C.saving : C.saveDetail
+              busy ? C.saving : saveLabel
             )
           )
         )
@@ -1826,11 +1954,9 @@ var require_detail = __commonJS({
 var require_library = __commonJS({
   "packages/addons/danmaku/client/views/library.cjs"(exports2, module2) {
     "use strict";
-    var React2 = require("react");
-    var h = React2.createElement;
+    var React = require("react");
+    var h = React.createElement;
     var copy = require_copy();
-    var TONES = ["normal", "accent", "success", "warn", "danger"];
-    var MAX_LEN = 100;
     var ICONS = {
       up: (init_arrow_up(), __toCommonJS(arrow_up_exports)).default,
       down: (init_arrow_down(), __toCommonJS(arrow_down_exports)).default,
@@ -1882,35 +2008,29 @@ var require_library = __commonJS({
       var api = props.api;
       var lang = props.lang;
       var C = copy.pick(lang);
-      var listS = React2.useState({ loading: true, error: "", items: [], total: 0, paused: 0 });
+      var listS = React.useState({ loading: true, error: "", items: [], total: 0, paused: 0 });
       var list = listS[0];
       var setList = listS[1];
-      var draftS = React2.useState("");
-      var draft = draftS[0];
-      var setDraft = draftS[1];
-      var toneS = React2.useState("normal");
-      var tone = toneS[0];
-      var setTone = toneS[1];
-      var cardS = React2.useState(true);
-      var card = cardS[0];
-      var setCard = cardS[1];
-      var busyS = React2.useState("");
+      var createS = React.useState(null);
+      var creating = createS[0];
+      var setCreating = createS[1];
+      var busyS = React.useState("");
       var busy = busyS[0];
       var setBusy = busyS[1];
-      var detailS = React2.useState(null);
+      var detailS = React.useState(null);
       var detail = detailS[0];
       var setDetail = detailS[1];
-      var sayS = React2.useState("");
+      var sayS = React.useState("");
       var say = sayS[0];
       var setSay = sayS[1];
-      var aliveRef = React2.useRef(true);
+      var aliveRef = React.useRef(true);
       function notify(text) {
         setSay(text);
         window.setTimeout(function() {
           if (aliveRef.current) setSay("");
         }, 2400);
       }
-      var refresh = React2.useCallback(function() {
+      var refresh = React.useCallback(function() {
         return api.call("danmaku.list", {}).then(payloadOf).then(function(body) {
           if (!aliveRef.current) return;
           setList({
@@ -1927,7 +2047,7 @@ var require_library = __commonJS({
           });
         });
       }, [api]);
-      React2.useEffect(function() {
+      React.useEffect(function() {
         aliveRef.current = true;
         refresh();
         var off = null;
@@ -1950,14 +2070,6 @@ var require_library = __commonJS({
           notify(errText(e, C.loadFail));
         }).then(function() {
           if (aliveRef.current) setBusy("");
-        });
-      }
-      function submitCreate() {
-        var text = draft.trim();
-        if (!text) return;
-        act("create", { body: text, tone, card }, function() {
-          setDraft("");
-          notify(C.added);
         });
       }
       function toggle(item) {
@@ -1986,6 +2098,58 @@ var require_library = __commonJS({
           ids: items.map(function(item) {
             return item.id;
           })
+        });
+      }
+      function defaultDraft() {
+        return {
+          id: "",
+          body: "",
+          tone: "normal",
+          card: false,
+          enabled: true,
+          fontSize: "",
+          speed: "",
+          opacity: "",
+          fontWeight: "",
+          fontFamily: "",
+          band: "",
+          prefix: "",
+          chance: "1"
+        };
+      }
+      function openCreate() {
+        setCreating(defaultDraft());
+      }
+      function patchCreating(patch) {
+        setCreating(function(prev) {
+          return Object.assign({}, prev, patch);
+        });
+      }
+      function createArgs() {
+        var d = creating;
+        return {
+          body: d.body.trim(),
+          tone: d.tone,
+          card: Boolean(d.card),
+          enabled: Boolean(d.enabled),
+          fontSize: numberOrNull(d.fontSize),
+          speed: numberOrNull(d.speed),
+          opacity: numberOrNull(d.opacity),
+          fontWeight: numberOrNull(d.fontWeight),
+          fontFamily: d.fontFamily,
+          band: d.band,
+          prefix: d.prefix,
+          chance: numberOrNull(d.chance) || 1
+        };
+      }
+      function submitCreate(thenPreview) {
+        if (!creating || !creating.body.trim()) return;
+        act("create", createArgs(), function(result) {
+          setCreating(null);
+          notify(C.added);
+          if (thenPreview && result && result.item && result.item.id) {
+            act("preview", { id: result.item.id });
+          }
         });
       }
       function openDetail(item) {
@@ -2022,82 +2186,6 @@ var require_library = __commonJS({
           if (thenPreview) act("preview", { id });
         });
       }
-      function toneChip(name) {
-        return h(
-          "button",
-          {
-            key: name,
-            type: "button",
-            className: "wbdm-tone-chip" + (tone === name ? " on" : ""),
-            onClick: function() {
-              setTone(name);
-            }
-          },
-          h("span", { className: "wbdm-dot " + name }),
-          C.tones[name]
-        );
-      }
-      var compose = h(
-        "div",
-        { className: "wbdm-card" },
-        h("div", { className: "wbdm-card-h" }, h("span", { className: "wbdm-card-t" }, C.add)),
-        h(
-          "div",
-          { className: "wbdm-compose" },
-          h("textarea", {
-            className: "wbdm-textarea",
-            value: draft,
-            maxLength: MAX_LEN,
-            placeholder: C.addPlaceholder,
-            rows: 2,
-            onChange: function(e) {
-              setDraft(e.target.value);
-            },
-            onKeyDown: function(e) {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                if (!busy) submitCreate();
-              }
-            }
-          }),
-          h(
-            "div",
-            { className: "wbdm-compose-bar" },
-            h(
-              "div",
-              { className: "wbdm-tones" },
-              h("span", { className: "wbdm-tone-label" }, C.tone),
-              TONES.map(toneChip)
-            ),
-            h(
-              "label",
-              { className: "wbdm-inline-switch", title: C.cardHint },
-              h("input", {
-                type: "checkbox",
-                checked: card,
-                onChange: function() {
-                  setCard(!card);
-                }
-              }),
-              h("span", { className: "wbdm-track" }),
-              h("span", { className: "wbdm-knob" }),
-              h("span", { className: "wbdm-inline-label" }, C.card)
-            ),
-            h("span", { className: "wbdm-counter" }, copy.fmt(C.charCount, { n: draft.length })),
-            h(
-              "button",
-              {
-                type: "button",
-                className: "wbdm-btn primary",
-                disabled: Boolean(busy) || !draft.trim(),
-                onClick: submitCreate
-              },
-              glyph(ICONS.plus),
-              busy === "create" ? C.adding : C.add
-            )
-          )
-        )
-      );
       var empty = h(
         "div",
         { className: "wbdm-empty-card" },
@@ -2248,6 +2336,17 @@ var require_library = __commonJS({
             "span",
             { className: "wbdm-card-s" },
             copy.fmt(C.stats, { total: list.total, enabled: enabledCount, paused: list.paused })
+          ),
+          h(
+            "button",
+            {
+              type: "button",
+              className: "wbdm-btn primary wbdm-card-action",
+              disabled: Boolean(busy),
+              onClick: openCreate
+            },
+            glyph(ICONS.plus, 13),
+            C.add
           )
         ),
         list.loading ? h("div", { className: "wbdm-empty" }, C.loading) : list.error ? h(
@@ -2293,15 +2392,31 @@ var require_library = __commonJS({
           h("span", { className: "wbdm-kpi-l" }, label)
         );
       }
-      var modal = detail ? require_detail()({
-        C,
-        lang,
-        detail,
+      var sheet = detail ? {
+        mode: "edit",
+        draft: detail,
         patch: patchDetail,
         save: saveDetail,
-        cancel: function() {
+        close: function() {
           setDetail(null);
-        },
+        }
+      } : creating ? {
+        mode: "create",
+        draft: creating,
+        patch: patchCreating,
+        save: submitCreate,
+        close: function() {
+          setCreating(null);
+        }
+      } : null;
+      var modal = sheet ? require_detail()({
+        C,
+        lang,
+        mode: sheet.mode,
+        detail: sheet.draft,
+        patch: sheet.patch,
+        save: sheet.save,
+        cancel: sheet.close,
         busy
       }) : null;
       return h(
@@ -2309,7 +2424,6 @@ var require_library = __commonJS({
         { className: "wbdm-wrap" },
         hero,
         say ? h("div", { className: "wbdm-notice ok" }, say) : null,
-        compose,
         listCard,
         modal
       );
@@ -2394,8 +2508,8 @@ var init_monitor = __esm({
 var require_config = __commonJS({
   "packages/addons/danmaku/client/views/config.cjs"(exports2, module2) {
     "use strict";
-    var React2 = require("react");
-    var h = React2.createElement;
+    var React = require("react");
+    var h = React.createElement;
     var copy = require_copy();
     var DOMAIN = "danmaku";
     var ICONS = {
@@ -2411,7 +2525,7 @@ var require_config = __commonJS({
       return r && r.result !== void 0 ? r.result : r;
     }
     function useConfig(api, fallback) {
-      var stateS = React2.useState({
+      var stateS = React.useState({
         ready: false,
         values: Object.assign({}, fallback || {}),
         items: [],
@@ -2422,7 +2536,7 @@ var require_config = __commonJS({
       });
       var state = stateS[0];
       var setState = stateS[1];
-      React2.useEffect(function() {
+      React.useEffect(function() {
         var alive = true;
         Promise.resolve(api.call(DOMAIN + ".configGet")).then(function(r) {
           if (!alive) return;
@@ -2463,10 +2577,10 @@ var require_config = __commonJS({
       return lang === "en" ? item.hintEn || "" : item.hintZh || "";
     }
     function useDesktop(api, enabled) {
-      var stateS = React2.useState({ data: null, error: "" });
+      var stateS = React.useState({ data: null, error: "" });
       var state = stateS[0];
       var setState = stateS[1];
-      React2.useEffect(function() {
+      React.useEffect(function() {
         if (!enabled) return void 0;
         var alive = true;
         function tick() {
@@ -2501,10 +2615,10 @@ var require_config = __commonJS({
       var lang = props.lang;
       var C = copy.pick(lang);
       var state = useDesktop(api, true);
-      var busyS = React2.useState("");
+      var busyS = React.useState("");
       var busy = busyS[0];
       var setBusy = busyS[1];
-      var sayS = React2.useState("");
+      var sayS = React.useState("");
       var say = sayS[0];
       var setSay = sayS[1];
       var data = state.data || {};
@@ -2600,15 +2714,15 @@ var require_config = __commonJS({
       var t = props.t;
       var C = copy.pick(lang);
       var cfg = useConfig(api, {});
-      var localS = React2.useState({});
+      var localS = React.useState({});
       var local = localS[0];
       var setLocal = localS[1];
-      var toastS = React2.useState("");
+      var toastS = React.useState("");
       var toast = toastS[0];
       var setToast = toastS[1];
-      var seqRef = React2.useRef(0);
-      var aliveRef = React2.useRef(true);
-      React2.useEffect(function() {
+      var seqRef = React.useRef(0);
+      var aliveRef = React.useRef(true);
+      React.useEffect(function() {
         aliveRef.current = true;
         return function() {
           aliveRef.current = false;
@@ -3073,8 +3187,8 @@ var require_data_style = __commonJS({
 var require_data_view = __commonJS({
   "packages/addons/lib/data-view.cjs"(exports2, module2) {
     "use strict";
-    var React2 = require("react");
-    var h = React2.createElement;
+    var React = require("react");
+    var h = React.createElement;
     var COPY = require_data_copy();
     module2.exports = function createDataView(options) {
       var DOMAIN = options.domain;
@@ -3127,56 +3241,56 @@ var require_data_view = __commonJS({
         var t = Object.assign({}, COPY[lang], { indexSub: fmt(COPY[lang].indexSub, { tables: options.tables.join(" / "), domain: DOMAIN }) });
         var cfgWrap = configView.useConfig(api, CFG_FALLBACK);
         var cfg = cfgWrap.values;
-        var tablesS = React2.useState(null);
+        var tablesS = React.useState(null);
         var tables = tablesS[0], setTables = tablesS[1];
-        var activeS = React2.useState("");
+        var activeS = React.useState("");
         var active = activeS[0], setActive = activeS[1];
-        var dataS = React2.useState(null);
+        var dataS = React.useState(null);
         var data = dataS[0], setData = dataS[1];
-        var loadingS = React2.useState(false);
+        var loadingS = React.useState(false);
         var loadingRows = loadingS[0], setLoadingRows = loadingS[1];
-        var loadingTablesS = React2.useState(true);
+        var loadingTablesS = React.useState(true);
         var loadingTables = loadingTablesS[0], setLoadingTables = loadingTablesS[1];
-        var errorS = React2.useState("");
+        var errorS = React.useState("");
         var error = errorS[0], setError = errorS[1];
-        var pageS = React2.useState(1);
+        var pageS = React.useState(1);
         var page = pageS[0], setPage = pageS[1];
-        var sizeS = React2.useState(0);
+        var sizeS = React.useState(0);
         var pageSize = sizeS[0], setPageSize = sizeS[1];
-        var sortS = React2.useState("");
+        var sortS = React.useState("");
         var sort = sortS[0], setSort = sortS[1];
-        var orderS = React2.useState("desc");
+        var orderS = React.useState("desc");
         var order = orderS[0], setOrder = orderS[1];
-        var searchDraftS = React2.useState("");
+        var searchDraftS = React.useState("");
         var searchDraft = searchDraftS[0], setSearchDraft = searchDraftS[1];
-        var searchS = React2.useState("");
+        var searchS = React.useState("");
         var search = searchS[0], setSearch = searchS[1];
-        var filterDraftS = React2.useState({});
+        var filterDraftS = React.useState({});
         var filterDraft = filterDraftS[0], setFilterDraft = filterDraftS[1];
-        var filtersS = React2.useState({});
+        var filtersS = React.useState({});
         var filters = filtersS[0], setFilters = filtersS[1];
-        var includeDeletedS = React2.useState(null);
+        var includeDeletedS = React.useState(null);
         var includeDeletedRaw = includeDeletedS[0], setIncludeDeleted = includeDeletedS[1];
-        var showSystemS = React2.useState(null);
+        var showSystemS = React.useState(null);
         var showSystemRaw = showSystemS[0], setShowSystem = showSystemS[1];
-        var drawerS = React2.useState(null);
+        var drawerS = React.useState(null);
         var drawer = drawerS[0], setDrawer = drawerS[1];
-        var toastS = React2.useState("");
+        var toastS = React.useState("");
         var toast = toastS[0], setToast = toastS[1];
         var filtersKey = JSON.stringify(filters);
-        var reqRef = React2.useRef(0);
-        var toastTimer = React2.useRef(null);
-        var refreshS = React2.useState(0);
+        var reqRef = React.useRef(0);
+        var toastTimer = React.useRef(null);
+        var refreshS = React.useState(0);
         function refresh() {
           loadTables();
           refreshS[1](function(n) {
             return n + 1;
           });
         }
-        var indexReqRef = React2.useRef(0);
-        var indexS = React2.useState(null);
+        var indexReqRef = React.useRef(0);
+        var indexS = React.useState(null);
         var index = indexS[0], setIndex = indexS[1];
-        var indexBusyS = React2.useState(false);
+        var indexBusyS = React.useState(false);
         var indexBusy = indexBusyS[0], setIndexBusy = indexBusyS[1];
         var cfgSize = Number(cfg["data.pageSize"]) || 50;
         var size = pageSize || (PAGE_SIZES.indexOf(cfgSize) >= 0 ? cfgSize : 50);
@@ -3206,7 +3320,7 @@ var require_data_view = __commonJS({
             setLoadingTables(false);
           });
         }
-        React2.useEffect(function() {
+        React.useEffect(function() {
           injectCss();
           loadTables();
           return function() {
@@ -3230,7 +3344,7 @@ var require_data_view = __commonJS({
           setFilterDraft({});
           setFilters({});
         }
-        React2.useEffect(function() {
+        React.useEffect(function() {
           if (searchDraft === search) return void 0;
           var timer = setTimeout(function() {
             setSearch(searchDraft);
@@ -3240,7 +3354,7 @@ var require_data_view = __commonJS({
             clearTimeout(timer);
           };
         }, [searchDraft]);
-        React2.useEffect(function() {
+        React.useEffect(function() {
           if (JSON.stringify(filterDraft) === JSON.stringify(filters)) return void 0;
           var timer = setTimeout(function() {
             setFilters(filterDraft);
@@ -3250,7 +3364,7 @@ var require_data_view = __commonJS({
             clearTimeout(timer);
           };
         }, [filterDraft]);
-        React2.useEffect(function() {
+        React.useEffect(function() {
           if (!active || !cfgWrap.ready || index) return void 0;
           var req = ++reqRef.current;
           setLoadingRows(true);
@@ -3278,7 +3392,7 @@ var require_data_view = __commonJS({
             reqRef.current++;
           };
         }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey, refreshS[0], !!index]);
-        React2.useEffect(function() {
+        React.useEffect(function() {
           if (!drawer) return void 0;
           function onKey(e) {
             if (e.key === "Escape") setDrawer(null);
@@ -3605,7 +3719,7 @@ var require_data_view = __commonJS({
                   cols.map(function(col) {
                     var cell = renderCell(row, col);
                     if (deleted && col.name === "id") {
-                      return React2.cloneElement(cell, { key: col.name }, cell.props.children, h("span", { className: P + "-delbadge" }, t.deleted));
+                      return React.cloneElement(cell, { key: col.name }, cell.props.children, h("span", { className: P + "-delbadge" }, t.deleted));
                     }
                     return cell;
                   })
@@ -3842,8 +3956,8 @@ var require_data = __commonJS({
 var require_highlight = __commonJS({
   "packages/addons/lib/highlight.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = function(React2) {
-      var h = React2.createElement;
+    module2.exports = function(React) {
+      var h = React.createElement;
       function sourceOf(keyword) {
         var pattern = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         return pattern.replace(/[a-zA-Z]/g, function(letter) {
@@ -3962,9 +4076,9 @@ var require_action_schema_style = __commonJS({
 var require_action_schema_view = __commonJS({
   "packages/addons/lib/action-schema-view.cjs"(exports2, module2) {
     "use strict";
-    var React2 = require("react");
-    var createHighlight = require_highlight()(React2);
-    var h = React2.createElement;
+    var React = require("react");
+    var createHighlight = require_highlight()(React);
+    var h = React.createElement;
     var COPY = {
       zh: {
         title: "Action",
@@ -4174,28 +4288,28 @@ var require_action_schema_view = __commonJS({
         var lang = props.lang === "en" ? "en" : "zh";
         var t = COPY[lang];
         var api = props.api;
-        var snapState = React2.useState(null);
+        var snapState = React.useState(null);
         var snap = snapState[0], setSnap = snapState[1];
-        var errState = React2.useState("");
+        var errState = React.useState("");
         var err = errState[0], setErr = errState[1];
-        var loadingState = React2.useState(true);
+        var loadingState = React.useState(true);
         var loading = loadingState[0], setLoading = loadingState[1];
-        var reloadState = React2.useState(0);
+        var reloadState = React.useState(0);
         var reload = reloadState[0], setReload = reloadState[1];
-        var queryState = React2.useState("");
+        var queryState = React.useState("");
         var query = queryState[0], setQuery = queryState[1];
-        var reqState = React2.useState("all");
+        var reqState = React.useState("all");
         var reqMode = reqState[0], setReqMode = reqState[1];
-        var typeState = React2.useState("");
+        var typeState = React.useState("");
         var typePick = typeState[0], setTypePick = typeState[1];
-        var toastState = React2.useState("");
+        var toastState = React.useState("");
         var toast = toastState[0], setToast = toastState[1];
-        var savingState = React2.useState("");
+        var savingState = React.useState("");
         var saving = savingState[0], setSaving = savingState[1];
-        React2.useEffect(function() {
+        React.useEffect(function() {
           injectCss();
         }, []);
-        React2.useEffect(function() {
+        React.useEffect(function() {
           var alive = true;
           setLoading(true);
           setErr("");
@@ -4532,29 +4646,38 @@ if (document.body) overlay.mount();
 else document.addEventListener("DOMContentLoaded", function() {
   overlay.mount();
 });
-var host = window.__WB_HOST__;
-if (!host || !host.react) {
-  console.error("[danmaku] workbench host \u672A\u5C31\u7EEA\uFF0C\u89C6\u56FE\u4E0D\u53EF\u7528");
-  module.exports = { name: "dsh-workbench-danmaku", inject: [], apply: function() {
-  } };
-} else {
-  React = host.react;
-  icons = {
-    megaphone: (init_megaphone(), __toCommonJS(megaphone_exports)).default,
-    list: (init_list(), __toCommonJS(list_exports)).default,
-    settings: (init_settings(), __toCommonJS(settings_exports)).default,
-    database: (init_database(), __toCommonJS(database_exports)).default,
-    play: (init_play(), __toCommonJS(play_exports)).default
-  };
-  tab = function(name) {
+var ADDON_ID = "wb-addon-danmaku";
+function hasAddon(host) {
+  try {
+    var list = host.addons || [];
+    for (var i = 0; i < list.length; i += 1) {
+      if (list[i] && list[i].id === ADDON_ID) return true;
+    }
+  } catch (error) {
+    return false;
+  }
+  return false;
+}
+var icons = {
+  megaphone: (init_megaphone(), __toCommonJS(megaphone_exports)).default,
+  list: (init_list(), __toCommonJS(list_exports)).default,
+  settings: (init_settings(), __toCommonJS(settings_exports)).default,
+  database: (init_database(), __toCommonJS(database_exports)).default,
+  play: (init_play(), __toCommonJS(play_exports)).default
+};
+function makeTab(React) {
+  return function tab(name) {
     var Icon2 = icons[name];
     return function TabIcon(props) {
       return React.createElement(Icon2, props);
     };
   };
-  host.registerAddon({
-    id: "wb-addon-danmaku",
-    version: "0.2.0",
+}
+function definition(host) {
+  var tab = makeTab(host.react);
+  return {
+    id: ADDON_ID,
+    version: "0.2.1",
     icon: tab("megaphone"),
     views: [
       {
@@ -4582,14 +4705,30 @@ if (!host || !host.react) {
         component: require_actions()
       }
     ]
-  });
-  void React;
-  module.exports = { name: "dsh-workbench-danmaku", inject: [], apply: function() {
-  } };
+  };
 }
-var React;
-var icons;
-var tab;
+var tries = 0;
+function boot() {
+  var host = window.__WB_HOST__;
+  if (!host || typeof host.registerAddon !== "function" || !host.react) {
+    if (tries < 120) {
+      tries += 1;
+      window.setTimeout(boot, 150);
+    }
+    return;
+  }
+  if (hasAddon(host)) return;
+  host.registerAddon(definition(host));
+  [300, 900, 1800, 3600].forEach(function(delay) {
+    window.setTimeout(function() {
+      var h = window.__WB_HOST__;
+      if (h && typeof h.registerAddon === "function" && !hasAddon(h)) h.registerAddon(definition(h));
+    }, delay);
+  });
+}
+boot();
+module.exports = { name: "dsh-workbench-danmaku", inject: [], apply: function() {
+} };
     return module.exports;
   },
 });

@@ -73,17 +73,9 @@ function LibraryView(props) {
   var list = listS[0];
   var setList = listS[1];
 
-  var draftS = React.useState("");
-  var draft = draftS[0];
-  var setDraft = draftS[1];
-
-  var toneS = React.useState("normal");
-  var tone = toneS[0];
-  var setTone = toneS[1];
-
-  var cardS = React.useState(true);
-  var card = cardS[0];
-  var setCard = cardS[1];
+  var createS = React.useState(null);
+  var creating = createS[0];
+  var setCreating = createS[1];
 
   var busyS = React.useState("");
   var busy = busyS[0];
@@ -160,15 +152,6 @@ function LibraryView(props) {
       });
   }
 
-  function submitCreate() {
-    var text = draft.trim();
-    if (!text) return;
-    act("create", { body: text, tone: tone, card: card }, function () {
-      setDraft("");
-      notify(C.added);
-    });
-  }
-
   function toggle(item) {
     act("update", { id: item.id, enabled: !item.enabled });
   }
@@ -199,6 +182,63 @@ function LibraryView(props) {
       ids: items.map(function (item) {
         return item.id;
       }),
+    });
+  }
+
+  function defaultDraft() {
+    return {
+      id: "",
+      body: "",
+      tone: "normal",
+      card: false,
+      enabled: true,
+      fontSize: "",
+      speed: "",
+      opacity: "",
+      fontWeight: "",
+      fontFamily: "",
+      band: "",
+      prefix: "",
+      chance: "1",
+    };
+  }
+
+  function openCreate() {
+    setCreating(defaultDraft());
+  }
+
+  function patchCreating(patch) {
+    setCreating(function (prev) {
+      return Object.assign({}, prev, patch);
+    });
+  }
+
+  function createArgs() {
+    var d = creating;
+    return {
+      body: d.body.trim(),
+      tone: d.tone,
+      card: Boolean(d.card),
+      enabled: Boolean(d.enabled),
+      fontSize: numberOrNull(d.fontSize),
+      speed: numberOrNull(d.speed),
+      opacity: numberOrNull(d.opacity),
+      fontWeight: numberOrNull(d.fontWeight),
+      fontFamily: d.fontFamily,
+      band: d.band,
+      prefix: d.prefix,
+      chance: numberOrNull(d.chance) || 1,
+    };
+  }
+
+  function submitCreate(thenPreview) {
+    if (!creating || !creating.body.trim()) return;
+    act("create", createArgs(), function (result) {
+      setCreating(null);
+      notify(C.added);
+      if (thenPreview && result && result.item && result.item.id) {
+        act("preview", { id: result.item.id });
+      }
     });
   }
 
@@ -239,98 +279,6 @@ function LibraryView(props) {
       if (thenPreview) act("preview", { id: id });
     });
   }
-
-  function toneChip(name) {
-    return h(
-      "button",
-      {
-        key: name,
-        type: "button",
-        className: "wbdm-tone-chip" + (tone === name ? " on" : ""),
-        onClick: function () {
-          setTone(name);
-        },
-      },
-      h("span", { className: "wbdm-dot " + name }),
-      C.tones[name],
-    );
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  var compose = h(
-    "div",
-    { className: "wbdm-card" },
-    h("div", { className: "wbdm-card-h" }, h("span", { className: "wbdm-card-t" }, C.add)),
-    h(
-      "div",
-      { className: "wbdm-compose" },
-      h("textarea", {
-        className: "wbdm-textarea",
-        value: draft,
-        maxLength: MAX_LEN,
-        placeholder: C.addPlaceholder,
-        rows: 2,
-        onChange: function (e) {
-          setDraft(e.target.value);
-        },
-        onKeyDown: function (e) {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            if (!busy) submitCreate();
-          }
-        },
-      }),
-      h(
-        "div",
-        { className: "wbdm-compose-bar" },
-        h(
-          "div",
-          { className: "wbdm-tones" },
-          h("span", { className: "wbdm-tone-label" }, C.tone),
-          TONES.map(toneChip),
-        ),
-        h(
-          "label",
-          { className: "wbdm-inline-switch", title: C.cardHint },
-          h("input", {
-            type: "checkbox",
-            checked: card,
-            onChange: function () {
-              setCard(!card);
-            },
-          }),
-          h("span", { className: "wbdm-track" }),
-          h("span", { className: "wbdm-knob" }),
-          h("span", { className: "wbdm-inline-label" }, C.card),
-        ),
-        h("span", { className: "wbdm-counter" }, copy.fmt(C.charCount, { n: draft.length })),
-        h(
-          "button",
-          {
-            type: "button",
-            className: "wbdm-btn primary",
-            disabled: Boolean(busy) || !draft.trim(),
-            onClick: submitCreate,
-          },
-          glyph(ICONS.plus),
-          busy === "create" ? C.adding : C.add,
-        ),
-      ),
-    ),
-  );
 
   var empty = h(
     "div",
@@ -488,6 +436,17 @@ function LibraryView(props) {
         { className: "wbdm-card-s" },
         copy.fmt(C.stats, { total: list.total, enabled: enabledCount, paused: list.paused }),
       ),
+      h(
+        "button",
+        {
+          type: "button",
+          className: "wbdm-btn primary wbdm-card-action",
+          disabled: Boolean(busy),
+          onClick: openCreate,
+        },
+        glyph(ICONS.plus, 13),
+        C.add,
+      ),
     ),
     list.loading
       ? h("div", { className: "wbdm-empty" }, C.loading)
@@ -541,16 +500,37 @@ function LibraryView(props) {
     );
   }
 
-  var modal = detail
+  var sheet = detail
+    ? {
+        mode: "edit",
+        draft: detail,
+        patch: patchDetail,
+        save: saveDetail,
+        close: function () {
+          setDetail(null);
+        },
+      }
+    : creating
+      ? {
+          mode: "create",
+          draft: creating,
+          patch: patchCreating,
+          save: submitCreate,
+          close: function () {
+            setCreating(null);
+          },
+        }
+      : null;
+
+  var modal = sheet
     ? require("./detail.cjs")({
         C: C,
         lang: lang,
-        detail: detail,
-        patch: patchDetail,
-        save: saveDetail,
-        cancel: function () {
-          setDetail(null);
-        },
+        mode: sheet.mode,
+        detail: sheet.draft,
+        patch: sheet.patch,
+        save: sheet.save,
+        cancel: sheet.close,
         busy: busy,
       })
     : null;
@@ -560,7 +540,6 @@ function LibraryView(props) {
     { className: "wbdm-wrap" },
     hero,
     say ? h("div", { className: "wbdm-notice ok" }, say) : null,
-    compose,
     listCard,
     modal,
   );

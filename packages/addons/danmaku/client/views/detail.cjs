@@ -5,6 +5,14 @@
  */
 var React = require("react");
 var h = React.createElement;
+var chipStyle = require("../overlay/chip-style.cjs");
+
+var REDUCED = false;
+try {
+  REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+} catch (error) {
+  REDUCED = false;
+}
 
 var TONES = ["normal", "accent", "success", "warn", "danger"];
 
@@ -21,11 +29,92 @@ function numberOrText(value) {
   return value === null || value === undefined ? "" : String(value);
 }
 
+/**
+ * 预览舞台：用当前草稿参数实时画一个和真实弹幕同构的气泡。
+ * 不写库、不发屏，纯本地演示；参数一变就重建并重新起播。
+ */
+function PreviewStage(props) {
+  var stageRef = React.useRef(null);
+  var detail = props.detail;
+  var hint = props.hint;
+  var placeholder = props.placeholder || "";
+
+  React.useEffect(
+    function () {
+      var stage = stageRef.current;
+      if (!stage) return undefined;
+      stage.innerHTML = "";
+      var made = chipStyle.buildChip(
+        stage.ownerDocument,
+        {
+          body: detail.body || placeholder,
+          tone: detail.tone,
+          card: detail.card,
+          prefix: detail.prefix,
+          fontSize: detail.fontSize,
+          speed: detail.speed,
+          opacity: detail.opacity,
+          weight: detail.fontWeight,
+          family: detail.fontFamily,
+        },
+        { fontSize: 15, opacity: 0.92, speed: 150 },
+      );
+      var chip = made.el;
+      chip.style.position = "absolute";
+      chip.style.left = "0";
+      chip.style.top = "50%";
+      chip.style.willChange = "transform";
+      stage.appendChild(chip);
+
+      var stageW = stage.clientWidth || 520;
+      var chipW = chip.offsetWidth || 120;
+      if (REDUCED) {
+        chip.style.transform = "translate3d(" + Math.round((stageW - chipW) / 2) + "px,-50%,0)";
+        return undefined;
+      }
+      var speed = made.style.speed;
+      var anim = chip.animate(
+        [
+          { transform: "translate3d(" + stageW + "px,-50%,0)" },
+          { transform: "translate3d(" + -(chipW + 10) + "px,-50%,0)" },
+        ],
+        { duration: Math.max(1400, ((stageW + chipW) / speed) * 1000), easing: "linear", iterations: Infinity },
+      );
+      return function () {
+        anim.cancel();
+      };
+    },
+    [
+      placeholder,
+      detail.body,
+      detail.tone,
+      detail.card,
+      detail.prefix,
+      detail.fontSize,
+      detail.speed,
+      detail.opacity,
+      detail.fontWeight,
+      detail.fontFamily,
+    ],
+  );
+
+  return h(
+    "div",
+    { className: "wbdm-preview" },
+    h("div", { className: "wbdm-preview-stage", ref: stageRef }),
+    h("div", { className: "wbdm-preview-hint" }, hint),
+  );
+}
+
 module.exports = function renderDetail(props) {
   var C = props.C;
   var detail = props.detail;
   var patch = props.patch;
   var busy = props.busy;
+  var mode = props.mode === "create" ? "create" : "edit";
+  var title = mode === "create" ? C.createTitle : C.detailTitle;
+  var subtitle = mode === "create" ? C.createHint : C.detailHint;
+  var saveLabel = mode === "create" ? C.createSave : C.saveDetail;
 
   function set(key, value) {
     var next = {};
@@ -148,15 +237,15 @@ module.exports = function renderDetail(props) {
     },
     h(
       "div",
-      { className: "wbdm-modal-card", role: "dialog", "aria-label": C.detailTitle },
+      { className: "wbdm-modal-card", role: "dialog", "aria-label": title },
       h(
         "div",
         { className: "wbdm-modal-h" },
         h(
           "div",
           null,
-          h("div", { className: "wbdm-modal-t" }, C.detailTitle),
-          h("div", { className: "wbdm-modal-s" }, C.detailHint),
+          h("div", { className: "wbdm-modal-t" }, title),
+          h("div", { className: "wbdm-modal-s" }, subtitle),
         ),
         h(
           "button",
@@ -170,6 +259,7 @@ module.exports = function renderDetail(props) {
           glyph(ICONS.x, 15),
         ),
       ),
+      h(PreviewStage, { detail: detail, hint: C.previewStage, placeholder: C.previewPlaceholder }),
       h(
         "div",
         { className: "wbdm-modal-body" },
@@ -296,7 +386,7 @@ module.exports = function renderDetail(props) {
               props.save(false);
             },
           },
-          busy ? C.saving : C.saveDetail,
+          busy ? C.saving : saveLabel,
         ),
       ),
     ),

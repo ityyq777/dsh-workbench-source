@@ -2,6 +2,8 @@
 // 宿主页面弹幕层：泳道调度 + CSS transform 动画。
 // 只负责"把一条弹幕画出来"，节奏由宿主 lib/player.js 决定。
 
+var chipStyle = require("./chip-style.cjs");
+
 var ACTIVE_LIMIT = 160;
 var FAMILY = {
   rounded: '\"SF Pro Rounded\", \"PingFang SC\", \"Hiragino Sans GB\", system-ui, sans-serif',
@@ -73,17 +75,8 @@ function createWebLayer(options) {
     if (!payload || !payload.body) return;
     if (anims.size >= ACTIVE_LIMIT) return;
     var m = metrics(payload.band);
-    var el = doc.createElement("span");
-    el.className = "wbdm-dm-chip wbdm-dm-tone-" + (payload.tone || "normal") + (payload.card === false ? " wbdm-dm-plain" : "");
-    var text = doc.createElement("span");
-    text.textContent = (payload.prefix ? payload.prefix + " " : "") + String(payload.body).slice(0, 140);
-    el.appendChild(text);
-    var size = num(payload.fontSize, num(config.fontSize, 15));
-    if (size) el.style.fontSize = clamp(size, 10, 48) + "px";
-    var weight = num(payload.weight, 0);
-    if (weight) el.style.fontWeight = String(clamp(weight, 300, 800));
-    var family = FAMILY[payload.family] || "";
-    if (family) el.style.fontFamily = family;
+    var made = chipStyle.buildChip(doc, payload, config);
+    var el = made.el;
     field.appendChild(el);
 
     var width = el.offsetWidth || 120;
@@ -98,14 +91,14 @@ function createWebLayer(options) {
       anim = el.animate(
         [
           { opacity: 0, transform: "translateY(6px)" },
-          { opacity: num(payload.opacity, config.opacity), transform: "translateY(0)", offset: 0.12 },
-          { opacity: num(payload.opacity, config.opacity), offset: 0.82 },
+          { opacity: made.style.opacity, transform: "translateY(0)", offset: 0.12 },
+          { opacity: made.style.opacity, offset: 0.82 },
           { opacity: 0, transform: "translateY(-6px)" },
         ],
         { duration: 4200, easing: "ease-out", fill: "forwards" },
       );
     } else {
-      var speed = clamp(num(payload.speed, config.speed), 30, 600);
+      var speed = made.style.speed;
       var startX = m.vw + 8;
       var endX = -(width + 8);
       var duration = Math.max(1200, ((startX - endX) / speed) * 1000);
