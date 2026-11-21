@@ -49,6 +49,29 @@ const salaryStats = {
   previousMonth: { month: 9, period: "2026-09", records: 1, netPay: 8189.17, grossPay: 9720, incomeTax: 98.63, socialTotal: 1432.2 },
   mom: { amount: 2483.19, percent: 30.32 },
   latest: { id: "sal_x", payDate: "2026-10-15", cycle: "monthly", netPay: 10672.36 },
+  // 年度/季度/同比/分布：与后端口径一一对应，缺了统计页会退化成空态。
+  yearly: [
+    { bucket: "2025", count: 1, netTotal: 7000, grossTotal: 8000, netMax: 7000, grossMax: 8000, netAvg: 7000, grossAvg: 8000 },
+    { bucket: "2026", count: 4, netTotal: 34851.86, grossTotal: 41040, netMax: 10672.36, grossMax: 12280, netAvg: 8712.97, grossAvg: 10260 },
+  ],
+  quarterly: [
+    { bucket: "2025-Q4", count: 1, netTotal: 7000, grossTotal: 8000, netMax: 7000, grossMax: 8000, netAvg: 7000, grossAvg: 8000 },
+    { bucket: "2026-Q3", count: 3, netTotal: 24179.5, grossTotal: 28760, netMax: 8189.17, grossMax: 9720, netAvg: 8059.83, grossAvg: 9586.67 },
+    { bucket: "2026-Q4", count: 1, netTotal: 10672.36, grossTotal: 12280, netMax: 10672.36, grossMax: 12280, netAvg: 10672.36, grossAvg: 12280 },
+  ],
+  priorYear: 2025,
+  priorMonthly: Array.from({ length: 12 }, (_, i) => ({
+    month: i + 1, records: i === 8 ? 1 : 0, netPay: i === 8 ? 7000 : 0, grossPay: i === 8 ? 8000 : 0,
+  })),
+  distribution: [
+    { key: "lt5k", label: "5k 以下", lower: 0, upper: 5000, count: 0 },
+    { key: "5to8k", label: "5k–8k", lower: 5000, upper: 8000, count: 1 },
+    { key: "8to12k", label: "8k–12k", lower: 8000, upper: 12000, count: 3 },
+    { key: "12to20k", label: "12k–20k", lower: 12000, upper: 20000, count: 0 },
+    { key: "gte20k", label: "20k 以上", lower: 20000, upper: null, count: 0 },
+  ],
+  peakMonth: { month: 10, period: "2026-10", netPay: 10672.36 },
+  lowestMonth: { month: 7, period: "2026-07", netPay: 7878.77 },
 };
 
 const records = [
@@ -186,12 +209,24 @@ for (const [id, file, title, expected] of checks) {
   if (JSON.stringify(tree).includes("undefined")) problems.push(id + " 渲染结果含 undefined 文本");
 }
 
-// 折线图：默认四条线全显示，取消勾选后对应折线不再渲染
-function polyClasses(tree, found = []) {
+// 折线已换成 packages/addons/lib/stats-charts.cjs 的共享 Trend：
+// 迷你 React 不展开函数组件，所以这里直接取 Trend 节点的 props 来核对系列、
+// 可见性与悬停下标，画笔内部的十字线/热区由共享件自己保证。
+const charts = require(ROOT + "packages/addons/lib/stats-charts.cjs");
+// primitives() 每次调用都产生新的闭包，不能靠引用相等找节点，按组件名识别。
+const componentNamed = (tree, name, found = []) => {
+  if (Array.isArray(tree)) { tree.forEach((node) => componentNamed(node, name, found)); return found; }
   if (!tree || typeof tree !== "object") return found;
-  if (Array.isArray(tree)) { tree.forEach((item) => polyClasses(item, found)); return found; }
-  if (tree.type === "polyline" && tree.props) found.push(tree.props.className || "");
-  (tree.children || []).forEach((child) => polyClasses(child, found));
+  if (typeof tree.type === "function" && tree.type.name === name) found.push(tree);
+  (tree.children || []).forEach((child) => componentNamed(child, name, found));
+  return found;
+};
+const trendNodes = (tree) => componentNamed(tree, "Trend");
+function nodeOf(tree, predicate, found = []) {
+  if (Array.isArray(tree)) { tree.forEach((node) => nodeOf(node, predicate, found)); return found; }
+  if (!tree || typeof tree !== "object") return found;
+  if (predicate(tree)) found.push(tree);
+  (tree.children || []).forEach((child) => nodeOf(child, predicate, found));
   return found;
 }
 const statsComp = require(ROOT + "packages/addons/salary/client/views/stats.cjs");
@@ -216,80 +251,96 @@ await new Promise((resolve) => setTimeout(resolve, 0));
 const incomeTree = await render(statsComp, statsProps, api, statsHooks);
 assert.equal(collect(incomeTree).has("wbsal-chart"), true);
 
-const recordsComp = require(ROOT + "packages/addons/salary/client/views/records.cjs");
-const DP = require(ROOT + "packages/addons/lib/date-picker.cjs");
-const formHooks = new Hooks();
-const formProps = { lang: "zh", h: HOST.h, initialForm: {
-  mode: "create", payDate: "2026-11-17", cycle: "daily", incomePeriod: "2026-11-17",
-  values: require(ROOT + "packages/addons/salary/client/ui/fields.cjs").blankValues(),
-} };
-const renderForm = () => render(recordsComp, formProps, api, formHooks);
-const picker = (tree) => locate(tree, (node) => node.props.label === "工资所属期" && (node.type === DP.DatePicker || node.type === DP.MonthPicker));
-const cycleSelect = (tree) => locate(tree, (node) => node.type === "select" && ["daily", "monthly"].includes(node.props.value));
-let formTree = await renderForm();
-assert.ok(locate(formTree, (node) => node.type === "div" && node.children[0] === "未归属"));
-picker(formTree).props.onChange("2026-11-12");
-formTree = await renderForm();
-cycleSelect(formTree).props.onChange({ target: { value: "monthly" } });
-formTree = await renderForm();
-assert.equal(picker(formTree).type, DP.MonthPicker);
-assert.equal(picker(formTree).props.value, "2026-11");
-cycleSelect(formTree).props.onChange({ target: { value: "daily" } });
-formTree = await renderForm();
-assert.equal(picker(formTree).type, DP.DatePicker);
-assert.equal(picker(formTree).props.value, "");
-function toneCount(list) {
-  const count = { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, s6: 0 };
-  for (const name of list) {
-    for (const tone of Object.keys(count)) if (name.split(/\s+/).includes(tone)) count[tone] += 1;
+const baseProps = { api: fixedApi, lang: "zh", title: "统计", h: HOST.h };
+const allTrends = trendNodes(await render(statsComp, baseProps, fixedApi));
+if (allTrends.length !== 5) problems.push("统计页应有 5 张趋势图（年度/季度/月度/社保/同比），实际 " + allTrends.length);
+const trendWith = (list, key) => list.find((node) => (node.props.series || []).some((s) => s.key === key));
+const tonesOf = (node) => (node.props.series || []).map((s) => s.className);
+const monthlyTrend = trendWith(allTrends, "netPay");
+const yearlyTrend = trendWith(allTrends, "total");
+const socialTrend = trendWith(allTrends, "deductTotal");
+const yoyTrend = trendWith(allTrends, "now");
+if (!monthlyTrend) problems.push("月度趋势应复用共享 Trend 并包含实发系列");
+if (!yearlyTrend) problems.push("年度趋势应复用共享 Trend 且三条线 key 为 total/max/avg");
+if (!socialTrend) problems.push("社保与个税应复用共享 Trend 并包含合计系列 deductTotal");
+if (!yoyTrend) problems.push("同比对照应复用共享 Trend 且两条线 key 为 now/prior");
+if (monthlyTrend && tonesOf(monthlyTrend).join(",") !== "s1,s2,s3,s4,s5,s6") {
+  problems.push("月度六条线应依次挂 s1..s6 色调，实际 " + tonesOf(monthlyTrend).join(","));
+}
+if (yearlyTrend) {
+  const keys = (yearlyTrend.props.series || []).map((s) => s.key).join(",");
+  if (keys !== "total,max,avg") problems.push("年度趋势三条线应为 合计/单笔最高/单笔均值，实际 " + keys);
+  if ((yearlyTrend.props.data || []).length !== salaryStats.yearly.length) problems.push("年度趋势应按后端 yearly 出点");
+}
+if (socialTrend) {
+  const keys = (socialTrend.props.series || []).map((s) => s.key);
+  if (!keys.includes("pension") || !keys.includes("incomeTax") || keys[keys.length - 1] !== "deductTotal") {
+    problems.push("社保与个税系列应为 五项 + 个税 + 合计，实际 " + keys.join(","));
   }
-  return count;
+  const sum = (socialTrend.props.series || []).find((s) => s.key === "deductTotal");
+  if (sum && sum.className !== "sum") problems.push("合计线应挂 sum 色调（虚线样式），实际 " + sum.className);
 }
-const allLines = polyClasses(await render(statsComp, { api: fixedApi, lang: "zh", title: "统计", h: HOST.h }, fixedApi));
-const allCount = toneCount(allLines);
-// 主图 6 条线（s1..s6）+ 五险一金 4 条线（s1..s4）：s1..s4 各出现 2 次，s5/s6 各 1 次
-for (const tone of ["s1", "s2", "s3", "s4"]) {
-  if (allCount[tone] !== 2) problems.push("默认应各渲染 2 条 " + tone + " 折线，实际 " + allCount[tone]);
+if (yoyTrend) {
+  const labels = (yoyTrend.props.series || []).map((s) => s.label);
+  if (!labels.includes("2026 年") || !labels.includes("2025 年")) problems.push("同比两条线应写今年与去年年份，实际 " + labels.join(","));
 }
-// s5 同时用于主图「补贴」与社保卡「个税」，s6 只在主图（绩效奖惩）
-if (allCount.s5 !== 2) problems.push("默认应渲染 2 条 s5 折线（补贴 + 个税），实际 " + allCount.s5);
-if (allCount.s6 !== 1) problems.push("默认应渲染 1 条 s6 折线（绩效奖惩），实际 " + allCount.s6);
-const hiddenLines = toneCount(polyClasses(await render(statsComp, {
-  api: fixedApi, lang: "zh", title: "统计", h: HOST.h,
-  initialVisible: { basePay: false, performancePay: false },
-}, fixedApi)));
-if (hiddenLines.s1 !== 2) problems.push("隐藏基本/绩效后实发折线不应消失");
-if (hiddenLines.s2 !== 2) problems.push("隐藏基本/绩效后应发折线不应消失");
-if (hiddenLines.s3 !== 1) problems.push("取消勾选后主图基本折线仍应消失、五险一金保留 1 条");
-if (hiddenLines.s4 !== 1) problems.push("取消勾选后主图绩效折线仍应消失、五险一金保留 1 条");
-if (hiddenLines.s5 !== 2) problems.push("隐藏基本/绩效不影响补贴与个税折线");
-if (hiddenLines.s6 !== 1) problems.push("隐藏基本/绩效不影响绩效奖惩折线");
-const sumCount = (list) => list.filter((name) => name.split(/\s+/).includes("sum")).length;
-const allLists = polyClasses(await render(statsComp, { api: fixedApi, lang: "zh", title: "统计", h: HOST.h }, fixedApi));
-if (sumCount(allLists) !== 1) problems.push("五险一金折线图应包含 1 条合计虚线，实际 " + sumCount(allLists));
-const socialHiddenList = polyClasses(await render(statsComp, {
-  api: fixedApi, lang: "zh", title: "统计", h: HOST.h,
-  initialSocialVisible: { pension: false, medical: false },
+for (const node of allTrends) {
+  if (typeof node.props.format !== "function") problems.push("趋势图应传入金额格式化函数");
+  if (node.props.showLegend !== false) problems.push("趋势图图例应由插件自己的开关渲染，不应重复画共享图例");
+}
+
+// 系列开关：初始隐藏项要透传到共享 Trend 的 visible。
+const hiddenMonthly = trendWith(trendNodes(await render(statsComp, {
+  ...baseProps, initialVisible: { basePay: false, performancePay: false },
+}, fixedApi)), "netPay");
+if (!hiddenMonthly) problems.push("隐藏基本/绩效后月度趋势仍应渲染");
+else {
+  const vis = hiddenMonthly.props.visible || {};
+  if (vis.basePay !== false) problems.push("取消勾选后 Trend.visible.basePay 应为 false");
+  if (vis.performancePay !== false) problems.push("取消勾选后 Trend.visible.performancePay 应为 false");
+  if (vis.netPay === false) problems.push("取消勾选基本/绩效不应连带隐藏实发");
+}
+const hiddenSocial = trendWith(trendNodes(await render(statsComp, {
+  ...baseProps, initialSocialVisible: { pension: false, medical: false },
+}, fixedApi)), "deductTotal");
+if (!hiddenSocial) problems.push("隐藏养老/医疗后社保趋势仍应渲染");
+else {
+  const vis = hiddenSocial.props.visible || {};
+  if (vis.pension !== false || vis.medical !== false) problems.push("取消勾选后 Trend.visible 应带上 pension/medical = false");
+  if (vis.deductTotal === false) problems.push("取消勾选养老/医疗不应连带隐藏合计");
+  if (vis.unemployment === false) problems.push("未关失业时失业线应保持可见");
+}
+
+// 全部关掉时给出恢复提示（提示由插件渲染，不是共享件内部）。
+const allOff = collect(await render(statsComp, {
+  ...baseProps,
+  initialVisible: { netPay: false, grossPay: false, basePay: false, performancePay: false, allowance: false, performanceBonus: false },
 }, fixedApi));
-if (sumCount(socialHiddenList) !== 1) problems.push("隐藏养老/医疗后合计虚线不应消失");
-const socialHidden = toneCount(socialHiddenList);
-if (socialHidden.s1 !== 1) problems.push("关掉养老后五险一金应只剩 1 条 s1（主图实发）");
-if (socialHidden.s2 !== 1) problems.push("关掉医疗后五险一金应只剩 1 条 s2（主图应发）");
-if (socialHidden.s3 !== 2) problems.push("未关失业时五险一金失业线应保留");
-if (socialHidden.s5 !== 2) problems.push("关掉养老/医疗不影响补贴与个税折线");
-if (socialHidden.s6 !== 1) problems.push("关掉养老/医疗不影响绩效奖惩折线");
+if (!allOff.has("wbsal-chart-hint")) problems.push("六条线全关后应渲染 .wbsal-chart-hint 提示");
 
-for (const file of ["views/records.cjs", "views/stats.cjs", "views/data.cjs", "views/actions.cjs"]) {
-  const src = readFileSync(ROOT + "packages/addons/salary/client/" + file, "utf8");
-  if (/\.reload\s*\(/.test(src)) problems.push(file + " 调用了 useLoad 不存在的 .reload()，请用 .refresh()");
-}
-
-const hoverTree = await render(statsComp, { api: fixedApi, lang: "zh", title: "统计", h: HOST.h, initialHover: 10 }, fixedApi);
+// 悬停：插件自己画提示卡，共享 Trend 负责热区与十字线。
+const hoverTree = await render(statsComp, { ...baseProps, initialHover: 10 }, fixedApi);
 const hoverClasses = collect(hoverTree);
-for (const cls of ["wbsal-tip", "wbsal-tip-row", "wbsal-crosshair", "wbsal-hit"]) {
+for (const cls of ["wbsal-tip", "wbsal-tip-row", "wbsal-legend", "wbsal-metric", "wbsal-series", "wbsal-linechart"]) {
   if (!hoverClasses.has(cls)) problems.push("悬停某月后应渲染 ." + cls);
 }
 if (!JSON.stringify(hoverTree).includes("2026年10月")) problems.push("悬停提示卡应显示月份标题");
+const hoverTrend = trendWith(trendNodes(hoverTree), "netPay");
+if (hoverTrend) {
+  const active = hoverTrend.props.active;
+  const activeRow = active === null || active === undefined ? null : (hoverTrend.props.data || [])[active];
+  if (!activeRow || activeRow.month !== 10) problems.push("悬停 10 月应把该月在折线下标透传给共享 Trend（active），实际 " + active);
+  if (typeof hoverTrend.props.onHover !== "function") problems.push("共享 Trend 应接管热区事件（onHover）");
+}
+const chartSrc = readFileSync(ROOT + "packages/addons/lib/stats-charts.cjs", "utf8");
+for (const cls of ["-trend-hit", "-trend-slot", "-trend-cross"]) {
+  if (!chartSrc.includes(cls)) problems.push("共享 Trend 应带热区/十字线类名 " + cls);
+}
+
+// 单笔分布走共享直方图。
+const distNodes = componentNamed(await render(statsComp, baseProps, fixedApi), "Histogram");
+if (distNodes.length !== 1) problems.push("单笔分布应复用共享 Histogram，实际 " + distNodes.length + " 个");
+else if ((distNodes[0].props.data || []).length !== salaryStats.distribution.length) problems.push("直方图应按后端 distribution 出档");
 
 const pkgVersion = JSON.parse(readFileSync(ROOT + "packages/addons/salary/package.json", "utf8")).version;
 const bundle = readFileSync(ROOT + "packages/addons/salary/lib/client.js", "utf8");

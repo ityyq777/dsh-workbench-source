@@ -9,9 +9,24 @@ import Module from "node:module";
 const require = createRequire(import.meta.url);
 const ROOT = new URL("../", import.meta.url).pathname;
 
+// 共享组件（packages/addons/lib/*.cjs）在模块顶层 require("react")，
+// 预览里没有真 React，会把它们的 hooks 调用打到真实 react 上直接抛 Invalid hook call。
+// 所以把 "react" 也接管掉，按当前正在渲染的迷你 hooks 实例转发。
+let ACTIVE = null;
+const reactStub = {
+  useState: (...args) => ACTIVE.useState(...args),
+  useEffect: (...args) => ACTIVE.useEffect(...args),
+  useMemo: (fn) => fn(),
+  useCallback: (fn) => fn,
+  useRef: (value) => ({ current: value }),
+  createElement: (type, props, ...children) => ({ type, props: props || {}, children }),
+  Fragment: "Fragment",
+};
+
 const origLoad = Module._load;
 Module._load = function (request, parent, isMain) {
   if (request.startsWith("lucide-react/icons/")) return { default: function StubIcon() { return null; } };
+  if (request === "react") return reactStub;
   return origLoad.call(this, request, parent, isMain);
 };
 
@@ -46,6 +61,38 @@ const stats = {
   previousMonth: { month: 9, period: "2026-09", records: 1, netPay: 8189.17, grossPay: 9720, incomeTax: 98.63, socialTotal: 1432.2 },
   mom: { amount: 2483.19, percent: 30.32 },
   latest: { id: "sal_4", payDate: "2026-10-15", cycle: "monthly", netPay: 10672.36 },
+  // 统计页新增的年度/季度/同比/分布：预览要与真实后端字段一致，否则新卡片全是空态。
+  yearly: [
+    { bucket: "2024", count: 2, netTotal: 13200.5, grossTotal: 15600, netMax: 7000, grossMax: 8200, netAvg: 6600.25, grossAvg: 7800 },
+    { bucket: "2025", count: 6, netTotal: 48210.77, grossTotal: 56100, netMax: 8189.17, grossMax: 9720, netAvg: 8035.13, grossAvg: 9350 },
+    { bucket: "2026", count: 4, netTotal: 34851.86, grossTotal: 41040, netMax: 10672.36, grossMax: 12280, netAvg: 8712.97, grossAvg: 10260 },
+  ],
+  quarterly: [
+    { bucket: "2025-Q1", count: 2, netTotal: 15757.54, grossTotal: 18800, netMax: 7878.77, grossMax: 9400, netAvg: 7878.77, grossAvg: 9400 },
+    { bucket: "2025-Q2", count: 1, netTotal: 8035.13, grossTotal: 9350, netMax: 8035.13, grossMax: 9350, netAvg: 8035.13, grossAvg: 9350 },
+    { bucket: "2025-Q3", count: 2, netTotal: 16000.86, grossTotal: 18640, netMax: 8111.56, grossMax: 9640, netAvg: 8000.43, grossAvg: 9320 },
+    { bucket: "2025-Q4", count: 1, netTotal: 8417.24, grossTotal: 9310, netMax: 8417.24, grossMax: 9310, netAvg: 8417.24, grossAvg: 9310 },
+    { bucket: "2026-Q1", count: 1, netTotal: 7620.4, grossTotal: 9000, netMax: 7620.4, grossMax: 9000, netAvg: 7620.4, grossAvg: 9000 },
+    { bucket: "2026-Q2", count: 1, netTotal: 8386.73, grossTotal: 9760, netMax: 8386.73, grossMax: 9760, netAvg: 8386.73, grossAvg: 9760 },
+    { bucket: "2026-Q3", count: 2, netTotal: 24179.5, grossTotal: 29160, netMax: 10672.36, grossMax: 12280, netAvg: 12089.75, grossAvg: 14580 },
+    { bucket: "2026-Q4", count: 0, netTotal: 0, grossTotal: 0, netMax: 0, grossMax: 0, netAvg: 0, grossAvg: 0 },
+  ].filter((item) => item.count > 0),
+  priorYear: 2025,
+  priorMonthly: [
+    { month: 7, records: 1, netPay: 7878.77, grossPay: 9400 },
+    { month: 8, records: 1, netPay: 8111.56, grossPay: 9640 },
+    { month: 9, records: 1, netPay: 8189.17, grossPay: 9720 },
+    { month: 10, records: 1, netPay: 7980.4, grossPay: 9500 },
+  ],
+  distribution: [
+    { key: "lt5k", label: "5k 以下", lower: 0, upper: 5000, count: 1 },
+    { key: "5to8k", label: "5k–8k", lower: 5000, upper: 8000, count: 4 },
+    { key: "8to12k", label: "8k–12k", lower: 8000, upper: 12000, count: 6 },
+    { key: "12to20k", label: "12k–20k", lower: 12000, upper: 20000, count: 1 },
+    { key: "gte20k", label: "20k 以上", lower: 20000, upper: null, count: 0 },
+  ],
+  peakMonth: { month: 10, period: "2026-10", netPay: 10672.36 },
+  lowestMonth: { month: 7, period: "2026-07", netPay: 7878.77 },
 };
 
 const RESPONSES = {
@@ -87,7 +134,15 @@ function makeReact(hooks) {
   };
 }
 
-const api = { call: async (action) => ({ ok: true, result: RESPONSES[action] !== undefined ? RESPONSES[action] : {} }) };
+// salary.stats 的结果要带上本次请求的 year/basis，否则统计页会判定「口径未落地」而不画图。
+const api = {
+  call: async (action, args) => ({
+    ok: true,
+    result: action === "salary.stats"
+      ? { ...(RESPONSES[action] || {}), year: (args && args.year) || 2026, basis: (args && args.basis) || "arrival" }
+      : (RESPONSES[action] !== undefined ? RESPONSES[action] : {}),
+  }),
+};
 
 async function renderView(file, extraProps) {
   const component = require(ROOT + "packages/addons/salary/client/" + file);
@@ -97,6 +152,7 @@ async function renderView(file, extraProps) {
   for (let pass = 0; pass < 5; pass += 1) {
     hooks.dirty = false;
     hooks.reset();
+    ACTIVE = React;
     tree = component({ api, lang: "zh", title: "", React, h: React.createElement, ...(extraProps || {}) });
     for (const effect of hooks.effects) effect();
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -119,6 +175,7 @@ function toHtml(tree) {
     try {
       const innerHooks = new Hooks();
       const innerReact = makeReact(innerHooks);
+      ACTIVE = innerReact;
       const out = Inner({ ...(tree.props || {}), React: innerReact, h: innerReact.createElement, children: tree.children });
       return toHtml(out);
     } catch (e) {
@@ -177,7 +234,10 @@ function toHtml(tree) {
 
 async function main() {
 const css = require(ROOT + "packages/addons/salary/client/ui/styles.cjs");
-const cssText = Array.isArray(css) ? css.join("\n") : String(css);
+// 共享图表样式的注入发生在渲染期（makeCharts），这里提前按同一前缀取一份，
+// 否则预览里热区 rect 没有 fill:transparent，会盖出一块黑底。
+const chartsCss = require(ROOT + "packages/addons/lib/stats-charts.cjs").css("wbsalc");
+const cssText = [Array.isArray(css) ? css.join("\n") : String(css), chartsCss].join("\n");
 
 const themeVars = {
   light: "--wb-card:#ffffff;--wb-surface:#ffffff;--wb-border:#e2e6ec;--wb-line:#eef0f4;--wb-muted:#6b7280;--wb-accent:#2563eb;--wb-ok:#15803d;--wb-warn:#b45309;--wb-danger:#b91c1c;--wb-text:#0f172a",
@@ -210,7 +270,7 @@ function pane(theme, title, body, extraClass) {
 }
 
 
-const paneList = [
+const base = [
   pane("light", "light · records", recordsHtml),
   pane("light", "light · detail", detailHtml),
   pane("light", "light · stats", statsHtml),
@@ -224,6 +284,12 @@ const paneList = [
   pane("dark", "dark · stats", statsHtml),
   pane("dark", "dark · stats · 应发口径", statsGrossHtml),
 ];
+const paneList = base.slice();
+if (process.env.THEME) {
+  const theme = process.env.THEME;
+  paneList.length = 0;
+  Array.prototype.push.apply(paneList, base.filter(function (html) { return html.indexOf('data-theme="' + theme + '"') >= 0; }));
+}
 if (process.env.PANE) {
   const want = process.env.PANE;
   const kept = paneList.filter(function (html) { return html.indexOf("· " + want) >= 0 || html.indexOf("· " + want + " ·") >= 0; });

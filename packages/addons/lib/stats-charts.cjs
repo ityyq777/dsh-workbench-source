@@ -78,6 +78,14 @@ function css(prefix, extra) {
     ".@-hbar-l{font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}",
     ".@-trend{width:100%;height:auto;display:block}",
     ".@-tlegend{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
+    ".@-trend-wrap{position:relative}",
+    ".@-trend-hit{fill:transparent}",
+    ".@-trend-slot{fill:transparent;cursor:crosshair}",
+    ".@-trend-cross{stroke:var(--dsw-alias-border-l2,#e5e6eb);stroke-width:1;stroke-dasharray:3 3}",
+    ".@-tlegend{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--dsw-alias-label-tertiary,#8f959e)}",
+    ".@-tleg-item{appearance:none;border:0;background:transparent;color:inherit;font:inherit;display:inline-flex;align-items:center;gap:5px;padding:2px 4px;border-radius:5px;cursor:pointer}",
+    ".@-tleg-item.off{opacity:.45;text-decoration:line-through}",
+    ".@-tleg-item:hover{background:var(--dsw-alias-bg-skeleton,#f2f3f5)}",
     ".@-table-scroll{max-width:100%;overflow-x:auto}.@-table{width:100%;border-collapse:collapse;font-size:12px}",
     ".@-table th{text-align:left;font-weight:500;color:var(--dsw-alias-label-tertiary,#8f959e);padding:6px 8px;border-bottom:1px solid var(--dsw-alias-border-l2,#e5e6eb);white-space:nowrap}",
     ".@-table td{padding:7px 8px;border-bottom:1px solid var(--dsw-alias-border-l1,#f2f3f5);color:var(--dsw-alias-label-secondary,#646a73);vertical-align:top}",
@@ -235,58 +243,115 @@ function primitives(prefix, options) {
     }));
   }
 
+  // 折线趋势：调用方给 data（每个点一个 bucket）与 series（每条线的 key/label）。
+  // 可选 props：
+  //   visible/onToggle  逐线开关（传 onToggle 时图例变成按钮，纵轴只按可见线取量级）
+  //   active/onHover    悬停某一点（图例不变，画十字线与热区）
+  //   format            刻度与提示的数值格式（金额类插件传自己的货币格式）
+  //   label             横轴文案，默认取 bucket 的后半段
+  //   note              每个点的补充说明（如「2 笔」），拼进点提示
+  //   emptyText         空数据文案
   function Trend(props) {
     var data = props.data || [];
     var series = props.series || [];
+    var lang = props.lang;
+    var fmt = typeof props.format === "function" ? props.format : function (v) { return num(lang, v); };
+    var visible = props.visible || null;
+    var shown = series.filter(function (s) { return !visible || visible[s.key] !== false; });
+    if (!data.length) return h("div", { className: prefix + "-empty" }, props.emptyText || "暂无数据");
     var width = 640;
     var height = props.height || 200;
-    var left = 30, right = 10, top = 12, bottom = 24;
+    var left = props.left || 52, right = 12, top = 14, bottom = 26;
     var pw = width - left - right, ph = height - top - bottom;
-    var max = 1;
-    data.forEach(function (d) { series.forEach(function (s) { max = Math.max(max, Number(d[s.key] || 0)); }); });
-    max = Math.ceil(max * 1.15) || 1;
+    var max = 0;
+    data.forEach(function (d) {
+      shown.forEach(function (s) { max = Math.max(max, Math.abs(Number(d[s.key] || 0))); });
+    });
+    // 刻度取 1/2/2.5/5×10^n，金额量级也能保持整刻度
+    var raw = Math.max(max, 1) / 4;
+    var exp = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
+    var norm = raw / exp;
+    var mult = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10;
+    var step = mult * exp;
+    var axisMax = step * 4;
     function x(i) { return left + (data.length <= 1 ? pw / 2 : (i / (data.length - 1)) * pw); }
-    function y(v) { return top + ph - (Number(v || 0) / max) * ph; }
-    var ticks = [];
-    for (var t = 0; t <= 3; t++) ticks.push(Math.round((max / 3) * t));
+    function y(v) { return top + ph - (Math.max(0, Number(v) || 0) / axisMax) * ph; }
+    var active = typeof props.active === "number" ? props.active : null;
+    var band = data.length > 1 ? pw / (data.length - 1) : pw;
     var labelIdx = [];
-    if (data.length) {
-      var step = Math.max(1, Math.floor(data.length / 5));
-      for (var i = 0; i < data.length; i += step) labelIdx.push(i);
-      if (labelIdx[labelIdx.length - 1] !== data.length - 1) labelIdx.push(data.length - 1);
-    }
-    var aria = series.map(function (s) {
+    var labelStep = Math.max(1, Math.ceil(data.length / 8));
+    for (var i = 0; i < data.length; i += labelStep) labelIdx.push(i);
+    if (labelIdx[labelIdx.length - 1] !== data.length - 1) labelIdx.push(data.length - 1);
+    var aria = props.aria || shown.map(function (s) {
       return s.label + " " + data.reduce(function (n, d) { return n + Number(d[s.key] || 0); }, 0);
     }).join("，");
-    return h("div", null,
-      h("svg", { className: prefix + "-trend", viewBox: "0 0 " + width + " " + height, role: "img", "aria-label": props.aria || aria },
-        ticks.map(function (v, i) {
-          return h("g", { key: "t" + i },
-            h("line", { x1: left, x2: width - right, y1: y(v), y2: y(v), stroke: "var(--dsw-alias-border-l1,#f2f3f5)", strokeWidth: 1 }),
-            h("text", { x: left - 5, y: y(v) + 3, textAnchor: "end", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, num(props.lang, v)),
-          );
-        }),
-        series.map(function (s, si) {
-          var pts = data.map(function (d, i) { return x(i) + "," + y(d[s.key]); }).join(" ");
-          return h("g", { key: s.key },
-            h("polyline", { points: pts, fill: "none", stroke: s.color || COLORS[si % COLORS.length], strokeWidth: 2, strokeLinejoin: "round", strokeLinecap: "round" }),
-            data.map(function (d, i) {
-              if (data.length > 40 && i % 3 !== 0) return null;
-              return h("circle", { key: i, cx: x(i), cy: y(d[s.key]), r: 2.4, fill: s.color || COLORS[si % COLORS.length] },
-                h("title", null, d.bucket + "：" + s.label + " " + (d[s.key] || 0)));
-            }),
-          );
-        }),
-        labelIdx.map(function (i) {
-          return h("text", { key: "x" + i, x: x(i), y: height - 6, textAnchor: "middle", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, String(data[i].bucket).slice(5));
-        }),
-      ),
-      h("div", { className: prefix + "-tlegend" }, series.map(function (s, i) {
-        return h("span", { key: s.key, style: { display: "inline-flex", alignItems: "center", gap: 5 } },
-          h("span", { className: prefix + "-dot", style: { background: s.color || COLORS[i % COLORS.length] } }),
-          s.label,
-        );
-      })),
+    var ticks = [];
+    for (var t = 0; t <= 4; t++) ticks.push(step * t);
+    var children = [];
+    if (typeof props.onHover === "function") {
+      children.push(h("rect", {
+        key: "hit-area", x: left, y: top, width: pw, height: ph, className: prefix + "-trend-hit",
+        onMouseLeave: function () { props.onHover(null); },
+      }));
+      data.forEach(function (d, di) {
+        children.push(h("rect", {
+          key: "hit" + di, x: x(di) - band / 2, y: top, width: band, height: ph, className: prefix + "-trend-slot",
+          onMouseEnter: function () { props.onHover(di); },
+        }));
+      });
+    }
+    ticks.forEach(function (v, ti) {
+      children.push(h("g", { key: "t" + ti },
+        h("line", { x1: left, x2: width - right, y1: y(v), y2: y(v), stroke: "var(--dsw-alias-border-l1,#f2f3f5)", strokeWidth: 1 }),
+        h("text", { x: left - 6, y: y(v) + 3, textAnchor: "end", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, fmt(v)),
+      ));
+    });
+    if (active !== null && data[active]) {
+      children.push(h("line", {
+        key: "cross", x1: x(active), y1: top, x2: x(active), y2: top + ph, className: prefix + "-trend-cross",
+      }));
+    }
+    shown.forEach(function (s, si) {
+      var color = s.color || COLORS[series.indexOf(s) % COLORS.length];
+      var pts = data.map(function (d, di) { return x(di) + "," + y(d[s.key]); }).join(" ");
+      if (data.length > 1) {
+        children.push(h("polyline", {
+          key: "line" + s.key, points: pts, fill: "none", stroke: color, strokeWidth: 2,
+          strokeLinejoin: "round", strokeLinecap: "round",
+          // className 供插件用自有色调样式挂靠，也方便测试按系列归类
+          className: prefix + "-trend-line" + (s.className ? " " + s.className : ""),
+        }));
+      }
+      data.forEach(function (d, di) {
+        children.push(h("circle", {
+          key: "dot" + s.key + di, cx: x(di), cy: y(d[s.key]), fill: color,
+          r: di === active ? 5 : 3, className: prefix + "-trend-dot" + (di === active ? " is-hot" : ""),
+        }, h("title", null, labelOf(d, di) + " · " + s.label + " " + fmt(d[s.key]) + (props.note ? " · " + props.note(d) : ""))));
+      });
+    });
+    function labelOf(d, di) {
+      if (typeof props.label === "function") return props.label(d, di);
+      return String(d.bucket === undefined ? di + 1 : d.bucket).slice(5);
+    }
+    labelIdx.forEach(function (di) {
+      children.push(h("text", { key: "x" + di, x: x(di), y: height - 8, textAnchor: "middle", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, labelOf(data[di], di)));
+    });
+    var legend = props.showLegend === false ? null : h("div", { className: prefix + "-tlegend" }, series.map(function (s, si) {
+      var off = !!(visible && visible[s.key] === false);
+      var color = s.color || COLORS[si % COLORS.length];
+      var inner = [h("span", { key: "d", className: prefix + "-dot", style: { background: color } }), s.label];
+      if (typeof props.onToggle !== "function") {
+        return h("span", { key: s.key, className: prefix + "-tleg-item" + (off ? " off" : "") }, inner);
+      }
+      return h("button", {
+        key: s.key, type: "button", className: prefix + "-tleg-item" + (off ? " off" : ""),
+        "aria-pressed": !off, title: (off ? "显示" : "隐藏") + s.label,
+        onClick: function () { props.onToggle(s.key); },
+      }, inner);
+    }));
+    return h("div", { className: prefix + "-trend-wrap" },
+      h("svg", { className: prefix + "-trend", viewBox: "0 0 " + width + " " + height, role: "img", "aria-label": aria }, children),
+      legend,
     );
   }
 

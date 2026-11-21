@@ -27,13 +27,13 @@ export function apply(ctx) {
   ctx.effect(() => host.registerDomain({
     id: "wb-addon-salary",
     title: "工资",
-    description: "按日期记录日结/月结工资：收入项、税前扣款、社保公积金、个税与实发",
-    version: "0.3.1",
+    description: "按日期记录日结/月结工资：用工类型、收入项、税前扣款、社保公积金、个税与实发",
+    version: "0.4.0",
     tables: ["salary_record"],
     sync: { tables: [] },
     views: VIEWS,
     capability: {
-      summary: "记录每一笔工资的日期、类型与全部金额明细，按年/按月统计实发、应发、个税与社保；不做报销与支出流水。",
+      summary: "记录每一笔工资的日期、用工类型（实习/试用/正式等）、结算方式与全部金额明细，按年/按月统计实发、应发、个税与社保；不做报销与支出流水。",
       records: [{
         kind: "record",
         title: "工资记录",

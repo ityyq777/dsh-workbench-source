@@ -178,6 +178,9 @@ var PAGE = [
   ".wbsal-tip-row i.sum{background:color-mix(in oklab,var(--wb-muted,#8b94a6) 45%,var(--wb-accent,#2563eb))}",
   ".wbsal-tip em{display:block;margin-top:5px;font-size:11px;font-style:normal;color:var(--wb-muted,#8b94a6)}",
 
+  ".wbsal-stack{display:flex;flex-direction:column;gap:16px}",
+  ".wbsal-section-note{font-size:11.5px;color:var(--wb-muted,#8b94a6);font-variant-numeric:tabular-nums}",
+  ".wbsal-linechart .wbsalc-trend-wrap{width:100%}",
   ".wbsal-chart-hint{margin-top:8px;padding:10px 12px;border-radius:8px;background:color-mix(in srgb,var(--wb-muted,#8b94a6) 10%,transparent);color:var(--wb-muted,#8b94a6);font-size:12px}",
   ".wbsal-social-foot{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:14px;flex-wrap:wrap}",
   ".wbsal-linechart svg{display:block;width:100%;height:auto;overflow:visible}",

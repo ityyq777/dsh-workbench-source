@@ -65,7 +65,7 @@ export function createSalary({ db, host, log }) {
     const latest = one("SELECT * FROM salary_record WHERE deleted_at IS NULL ORDER BY pay_date DESC, created_at DESC LIMIT 1");
     const y = one("SELECT COUNT(*) n, COALESCE(SUM(net_pay),0) net FROM salary_record WHERE deleted_at IS NULL AND substr(pay_date,1,4)=?", String(year));
     return {
-      version: "0.3.0",
+      version: "0.4.0",
       records: total,
       latestDate: latest ? latest.pay_date : "",
       latestNetPay: latest ? round2(latest.net_pay) : 0,
@@ -242,6 +242,66 @@ export function createSalary({ db, host, log }) {
       ? { amount: diff, percent: previousMonth.netPay ? round2((diff / previousMonth.netPay) * 100) : null }
       : null;
     const latestRows = latestMonth ? rows.filter((r) => MONTH_OF(groupDate(r)) === latestMonth.month) : [];
+    // 年度/季度跨期聚合：口径与 monthly 完全一致（arrival 用 pay_date、income 用 income_period），
+    // 只对真实存在的年份/季度出点，空年空季不补 0，避免把「还没到的季度」画成 0。
+    const datedRows = all(
+      `SELECT * FROM salary_record WHERE deleted_at IS NULL AND ${dateColumn} IS NOT NULL ORDER BY ${dateColumn}, id`,
+    ).map(salaryRow);
+    const quarterOf = (date) => `${String(date).slice(0, 4)}-Q${Math.floor((Number(String(date).slice(5, 7)) - 1) / 3) + 1}`;
+    const aggregate = (bucketOf) => {
+      const map = new Map();
+      for (const row of datedRows) {
+        const bucket = bucketOf(basis === "income" ? row.incomePeriod : row.payDate);
+        if (!bucket) continue;
+        const acc = map.get(bucket) || { bucket, count: 0, netTotal: 0, grossTotal: 0, netMax: 0, grossMax: 0 };
+        acc.count += 1;
+        acc.netTotal = round2(acc.netTotal + row.netPay);
+        acc.grossTotal = round2(acc.grossTotal + row.grossPay);
+        acc.netMax = round2(Math.max(acc.netMax, row.netPay));
+        acc.grossMax = round2(Math.max(acc.grossMax, row.grossPay));
+        map.set(bucket, acc);
+      }
+      return [...map.values()]
+        .sort((a, b) => (a.bucket < b.bucket ? -1 : a.bucket > b.bucket ? 1 : 0))
+        .map((item) => ({ ...item, netAvg: round2(item.netTotal / item.count), grossAvg: round2(item.grossTotal / item.count) }));
+    };
+    const yearly = aggregate((date) => String(date).slice(0, 4));
+    // 季度折线默认展示最近 8 个有记录的季度，数据不足时就是实际有几个画几个。
+    const quarterly = aggregate(quarterOf).slice(-8);
+    // 同比：上一年同期 12 个月的实发/应发，用于「今年 vs 去年」对照线。
+    const priorYear = year - 1;
+    const priorRows = all(
+      `SELECT * FROM salary_record WHERE deleted_at IS NULL AND ${dateColumn}>=? AND ${dateColumn}<? ORDER BY ${dateColumn}, id`,
+      `${priorYear}-01`,
+      `${priorYear + 1}-01`,
+    ).map(salaryRow);
+    const priorMonthly = Array.from({ length: 12 }, (_, i) => ({ month: i + 1, records: 0, netPay: 0, grossPay: 0 }));
+    for (const row of priorRows) {
+      const bucket = priorMonthly[MONTH_OF(groupDate(row)) - 1];
+      bucket.records += 1;
+      bucket.netPay = round2(bucket.netPay + row.netPay);
+      bucket.grossPay = round2(bucket.grossPay + row.grossPay);
+    }
+    // 单笔实发分布：按当前年份、当前口径的记录分档，档位边界写死便于核对。
+    const DIST_BUCKETS = [
+      { key: "lt5k", label: "5k 以下", upper: 5000 },
+      { key: "5to8k", label: "5k–8k", upper: 8000 },
+      { key: "8to12k", label: "8k–12k", upper: 12000 },
+      { key: "12to20k", label: "12k–20k", upper: 20000 },
+      { key: "gte20k", label: "20k 以上", upper: null },
+    ];
+    const distribution = DIST_BUCKETS.map((b, i) => ({ key: b.key, label: b.label, lower: i === 0 ? 0 : DIST_BUCKETS[i - 1].upper, upper: b.upper, count: 0 }));
+    for (const row of rows) {
+      const value = Math.max(0, row.netPay);
+      const hit = distribution.find((d) => d.upper === null || value < d.upper);
+      if (hit) hit.count += 1;
+    }
+    const peakMonth = monthsWithData.length
+      ? monthsWithData.reduce((best, b) => (b.netPay > best.netPay ? b : best), monthsWithData[0])
+      : null;
+    const lowestMonth = monthsWithData.length
+      ? monthsWithData.reduce((worst, b) => (b.netPay < worst.netPay ? b : worst), monthsWithData[0])
+      : null;
     return {
       year,
       basis,
@@ -260,6 +320,13 @@ export function createSalary({ db, host, log }) {
       latestMonth: latestMonth ? { ...latestMonth, breakdown: breakdown(latestRows) } : null,
       previousMonth,
       mom,
+      yearly,
+      quarterly,
+      priorYear,
+      priorMonthly,
+      distribution,
+      peakMonth: peakMonth ? { month: peakMonth.month, period: peakMonth.period, netPay: peakMonth.netPay } : null,
+      lowestMonth: lowestMonth ? { month: lowestMonth.month, period: lowestMonth.period, netPay: lowestMonth.netPay } : null,
     };
   }
 
