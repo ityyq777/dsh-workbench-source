@@ -23,6 +23,7 @@
   var DataView = require("./views/data.cjs").DataView;
   var ActionSchemaView = require("./views/actions.cjs").ActionSchemaView;
   var notifier = require("./notify/notifier.cjs");
+  var floatMount = require("./float/mount.cjs");
 
   var InboxView = inboxFactory({ React: React });
   var StatsView = statsFactory({ React: React });
@@ -59,7 +60,7 @@
 
   host.registerAddon({
     id: "wb-addon-message",
-    version: "0.1.3",
+    version: "0.1.4",
     icon: ICONS["message-square"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: Stats },
@@ -75,6 +76,14 @@
     notifier.start();
   } catch (e) {
     if (typeof console !== "undefined") console.warn("[dsh-workbench-message] 提示音启动失败", e);
+  }
+
+  // 全局消息悬浮入口：任意页面右下角的常驻按钮，与提示音共用同一条事件流。
+  // 挂在客户端加载时而不是某个视图里，切页面不重建；出错只降级，不能拖垮插件注册。
+  try {
+    floatMount.createMount({ doc: typeof document !== "undefined" ? document : null, win: root, host: host, notifier: notifier }).mount();
+  } catch (e) {
+    if (typeof console !== "undefined") console.warn("[dsh-workbench-message] 悬浮入口启动失败", e);
   }
 
   module.exports = {

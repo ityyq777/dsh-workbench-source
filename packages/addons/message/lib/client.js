@@ -1267,6 +1267,7 @@ var require_notifier = __commonJS({
     var state = {
       running: false,
       source: null,
+      listeners: /* @__PURE__ */ new Set(),
       cfg: { at: 0, values: null },
       audio: null,
       lastKey: "",
@@ -1385,8 +1386,32 @@ var require_notifier = __commonJS({
       if (isQuiet(values, /* @__PURE__ */ new Date()) && !passQuiet(values, level)) return false;
       return playTone(level, values["sound.volume"]);
     }
+    function subscribe(fn) {
+      if (typeof fn !== "function") return function() {
+      };
+      state.listeners.add(fn);
+      return function() {
+        state.listeners.delete(fn);
+      };
+    }
+    function broadcast(event, data) {
+      state.listeners.forEach(function(fn) {
+        try {
+          fn(event, data);
+        } catch (e) {
+        }
+      });
+    }
     function handleEvent(payload) {
-      if (!payload || payload.domainId !== DOMAIN || payload.event !== "message.created") return;
+      if (!payload || payload.domainId !== DOMAIN) return;
+      if (payload.event === "message.created") {
+        var created = payload.data && payload.data.message;
+        if (created && created.id) broadcast("message.created", { message: created });
+      } else if (payload.event === "message.read") {
+        broadcast("message.read", payload.data || {});
+        return;
+      }
+      if (payload.event !== "message.created") return;
       var message = payload.data && payload.data.message;
       if (!message || !message.id) return;
       var now = Date.now();
@@ -1426,9 +1451,18 @@ var require_notifier = __commonJS({
         return playTone(lv, values["sound.volume"] === void 0 ? 0.4 : values["sound.volume"]);
       });
     }
-    module2.exports = { start, stop, preview, refreshConfig: function() {
-      return loadConfig(true);
-    } };
+    module2.exports = {
+      start,
+      stop,
+      subscribe,
+      preview,
+      refreshConfig: function() {
+        return loadConfig(true).then(function(values) {
+          broadcast("config", { values: values || {} });
+          return values;
+        });
+      }
+    };
   }
 });
 
@@ -3862,6 +3896,333 @@ var require_actions = __commonJS({
   }
 });
 
+// packages/addons/message/client/float/style.cjs
+var require_style = __commonJS({
+  "packages/addons/message/client/float/style.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function floatStyles() {
+      return [
+        ".wbm-float-root{position:fixed;inset:0;z-index:860;pointer-events:none;-webkit-app-region:no-drag}",
+        ".wbm-float-btn{position:absolute;right:20px;bottom:20px;display:inline-flex;align-items:center;justify-content:center;",
+        "width:48px;height:48px;padding:0;border-radius:999px;cursor:pointer;pointer-events:auto;-webkit-app-region:no-drag;",
+        "border:1px solid var(--wb-border,rgba(0,0,0,.12));background:var(--wb-card,#fff);color:inherit;",
+        "box-shadow:0 6px 18px rgba(0,0,0,.14),0 1px 3px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .18s ease,background .18s ease}",
+        ".wbm-float-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(0,0,0,.18)}",
+        ".wbm-float-btn:active{transform:translateY(0)}",
+        ".wbm-float-btn:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+        ".wbm-float-btn[data-pos=bottom-left]{left:20px;right:auto}",
+        // 页面底部有输入框时抬到它上面，避免压在发送按钮上（没有输入框就贴右下角）。
+        ".wbm-float-btn[data-lift]{bottom:var(--wbm-float-lift,76px)}",
+        ".wbm-float-btn svg{display:block;width:22px;height:22px}",
+        ".wbm-float-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;",
+        "display:none;align-items:center;justify-content:center;background:var(--wb-danger,#dc2626);color:#fff;",
+        "font-size:11px;font-weight:650;line-height:1;font-variant-numeric:tabular-nums;box-shadow:0 0 0 2px var(--wb-card,#fff)}",
+        ".wbm-float-btn[data-unread] .wbm-float-badge{display:inline-flex}",
+        ".wbm-float-btn[data-pulse=1]{animation:wbm-float-bounce .6s cubic-bezier(.34,1.56,.64,1)}",
+        "@keyframes wbm-float-bounce{0%{transform:translateY(0)}35%{transform:translateY(-7px)}70%{transform:translateY(0)}100%{transform:translateY(0)}}",
+        "@media (max-width:640px){.wbm-float-btn{width:40px;height:40px;right:12px;bottom:12px}",
+        ".wbm-float-btn[data-pos=bottom-left]{left:12px;right:auto}.wbm-float-btn svg{width:19px;height:19px}}",
+        // 降低动态偏好：不做位移，只让角标与按钮描边闪一次颜色。
+        "@media (prefers-reduced-motion: reduce){.wbm-float-btn[data-pulse=1]{animation:none;border-color:var(--wb-accent,#2563eb)}",
+        ".wbm-float-btn{transition:none}}"
+      ];
+    };
+  }
+});
+
+// packages/addons/message/client/float/button.cjs
+var require_button = __commonJS({
+  "packages/addons/message/client/float/button.cjs"(exports2, module2) {
+    "use strict";
+    var ICON_PATH = "M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z";
+    var PULSE_MS = 600;
+    function label(lang, count) {
+      var n = count > 0 ? count : 0;
+      if (lang === "en") return n > 0 ? "Messages, " + n + " unread" : "Messages, no unread";
+      return n > 0 ? "\u6D88\u606F\uFF0C" + n + " \u6761\u672A\u8BFB" : "\u6D88\u606F\uFF0C\u65E0\u672A\u8BFB";
+    }
+    function text(count) {
+      return count > 99 ? "99+" : String(count);
+    }
+    function createButton(options) {
+      var doc = options.doc || document;
+      var lang = options.lang === "en" ? "en" : "zh";
+      var onActivate = typeof options.onActivate === "function" ? options.onActivate : function() {
+      };
+      var count = 0;
+      var pulseTimer = null;
+      var btn = doc.createElement("button");
+      btn.type = "button";
+      btn.className = "wbm-float-btn";
+      btn.setAttribute("data-pos", "bottom-right");
+      btn.setAttribute("aria-label", label(lang, 0));
+      btn.setAttribute("title", label(lang, 0));
+      var svg = doc.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("fill", "none");
+      svg.setAttribute("stroke", "currentColor");
+      svg.setAttribute("stroke-width", "1.7");
+      svg.setAttribute("stroke-linecap", "round");
+      svg.setAttribute("stroke-linejoin", "round");
+      svg.setAttribute("aria-hidden", "true");
+      var path = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", ICON_PATH);
+      svg.appendChild(path);
+      btn.appendChild(svg);
+      var badge = doc.createElement("span");
+      badge.className = "wbm-float-badge";
+      badge.setAttribute("aria-hidden", "true");
+      btn.appendChild(badge);
+      function announce(next) {
+        var text_ = label(lang, next);
+        btn.setAttribute("aria-label", text_);
+        btn.setAttribute("title", text_);
+      }
+      function setCount(next) {
+        var n = Number(next);
+        count = isFinite(n) && n > 0 ? Math.floor(n) : 0;
+        badge.textContent = text(count);
+        if (count > 0) btn.setAttribute("data-unread", "1");
+        else btn.removeAttribute("data-unread");
+        announce(count);
+        return count;
+      }
+      function pulse() {
+        if (!btn || typeof btn.setAttribute !== "function") return;
+        if (btn.getAttribute("data-pulse") === "1") return;
+        btn.setAttribute("data-pulse", "1");
+        if (typeof setTimeout !== "function") return;
+        pulseTimer = setTimeout(function() {
+          pulseTimer = null;
+          btn.removeAttribute("data-pulse");
+        }, PULSE_MS);
+      }
+      function setPosition(pos) {
+        btn.setAttribute("data-pos", pos === "bottom-left" ? "bottom-left" : "bottom-right");
+      }
+      function setLang(next) {
+        lang = next === "en" ? "en" : "zh";
+        announce(count);
+      }
+      btn.addEventListener("click", function(event) {
+        if (event && typeof event.preventDefault === "function") event.preventDefault();
+        onActivate();
+      });
+      function destroy() {
+        if (pulseTimer && typeof clearTimeout === "function") clearTimeout(pulseTimer);
+        pulseTimer = null;
+        if (btn.parentNode) btn.parentNode.removeChild(btn);
+      }
+      return { el: btn, setCount, pulse, setPosition, setLang, destroy };
+    }
+    module2.exports = { createButton, ICON_PATH, PULSE_MS };
+  }
+});
+
+// packages/addons/message/client/float/mount.cjs
+var require_mount = __commonJS({
+  "packages/addons/message/client/float/mount.cjs"(exports2, module2) {
+    "use strict";
+    var styles = require_style();
+    var buttons = require_button();
+    var DOMAIN = "wb-addon-message";
+    var BASE = "/workbench/api";
+    var STYLE_ID = "wb-message-float-style";
+    var ADDON_ID = "wb-addon-message";
+    var INBOX_VIEW = "inbox";
+    function readLang(doc) {
+      var attr = doc && doc.documentElement && doc.documentElement.getAttribute("lang");
+      return attr && attr.toLowerCase().indexOf("en") === 0 ? "en" : "zh";
+    }
+    function injectStyles(doc) {
+      if (!doc || !doc.head || doc.getElementById(STYLE_ID)) return;
+      var style = doc.createElement("style");
+      style.id = STYLE_ID;
+      style.textContent = styles().join("");
+      doc.head.appendChild(style);
+    }
+    function makeCall(fetchImpl) {
+      return function call(action, args) {
+        return fetchImpl(BASE + "/domains/" + DOMAIN + "/actions/" + action, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(args || {})
+        }).then(function(res) {
+          return res.json();
+        }).then(function(body) {
+          return body && body.result !== void 0 ? body.result : body;
+        });
+      };
+    }
+    function createMount(options) {
+      var opts = options || {};
+      var doc = opts.doc || (typeof document !== "undefined" ? document : null);
+      var win = opts.win || (typeof window !== "undefined" ? window : null);
+      var host = opts.host || win && win.__WB_HOST__ || null;
+      var notifier = opts.notifier || null;
+      var fetchImpl = opts.fetchImpl || (win && win.fetch ? win.fetch.bind(win) : null);
+      var call = fetchImpl ? makeCall(fetchImpl) : null;
+      var state = {
+        mounted: false,
+        root: null,
+        btn: null,
+        unsubscribe: null,
+        seen: /* @__PURE__ */ new Set(),
+        count: 0,
+        enabled: true,
+        position: "bottom-right",
+        onVisible: null
+      };
+      function hostOverlay() {
+        return doc && doc.querySelector ? doc.querySelector("[data-shell-overlay]") : null;
+      }
+      function liftAboveComposer() {
+        if (!state.btn || !doc || typeof doc.querySelector !== "function") return;
+        var composer = doc.querySelector("[data-shell-composer], .dsh-composer, [contenteditable=true], .wb-composer");
+        if (!composer || typeof composer.getBoundingClientRect !== "function") {
+          state.btn.el.removeAttribute("data-lift");
+          return;
+        }
+        var rect = composer.getBoundingClientRect();
+        var height = rect && rect.height > 0 ? rect.height : 0;
+        if (!height) {
+          state.btn.el.removeAttribute("data-lift");
+          return;
+        }
+        var lift = Math.min(Math.max(Math.round(height + 12), 48), 140);
+        state.btn.el.setAttribute("data-lift", "1");
+        state.btn.el.style.setProperty("--wbm-float-lift", lift + "px");
+      }
+      function place() {
+        if (!state.root || !doc) return;
+        var target = hostOverlay() || doc.body;
+        if (target && state.root.parentNode !== target) target.appendChild(state.root);
+      }
+      function applyConfig(values) {
+        if (!values) return;
+        if (values["float.enabled"] !== void 0) state.enabled = values["float.enabled"] !== false;
+        if (values["float.position"]) state.position = values["float.position"];
+        if (!state.btn) return;
+        state.btn.setPosition(state.position);
+        liftAboveComposer();
+        state.btn.el.style.display = state.enabled ? "" : "none";
+        if (!state.enabled) {
+          state.count = 0;
+          state.btn.setCount(0);
+        }
+        place();
+      }
+      function applyCount(next) {
+        state.count = next > 0 ? Math.floor(next) : 0;
+        if (state.btn) state.btn.setCount(state.count);
+        return state.count;
+      }
+      function activate() {
+        if (host && typeof host.navigateAddon === "function") {
+          try {
+            if (host.navigateAddon(ADDON_ID, INBOX_VIEW) !== false) return;
+          } catch (e) {
+          }
+        }
+        if (typeof console !== "undefined" && console.info) {
+          console.info("[dsh-workbench-message] \u5F53\u524D\u5BBF\u4E3B\u4E0D\u652F\u6301\u8DF3\u8F6C\u5230\u6D88\u606F\u6536\u4EF6\u7BB1\uFF0C\u8BF7\u5728\u5DE6\u4FA7\u5BFC\u822A\u6253\u5F00\u300C\u6D88\u606F\u300D");
+        }
+      }
+      function onEvent(event, data) {
+        if (!state.btn || !state.mounted) return;
+        if (event === "config") {
+          applyConfig(data && data.values);
+          return;
+        }
+        if (event === "message.read") {
+          if (data && typeof data.unread === "number") applyCount(data.unread);
+          return;
+        }
+        if (event !== "message.created") return;
+        var message = data && data.message;
+        if (!message || !message.id) return;
+        if (state.seen.has(message.id)) return;
+        state.seen.add(message.id);
+        if (state.seen.size > 500) state.seen.clear();
+        applyCount(state.count + 1);
+        if (state.btn) state.btn.pulse();
+      }
+      function refreshCount() {
+        if (!call) return Promise.resolve(state.count);
+        return call("message.unreadCount", {}).then(function(body) {
+          var unread = body && typeof body.unread === "number" ? body.unread : null;
+          return unread === null ? state.count : applyCount(unread);
+        }).catch(function() {
+          return state.count;
+        });
+      }
+      function loadConfig() {
+        if (!call) return Promise.resolve(state.enabled);
+        return call("message.configGet", {}).then(function(body) {
+          applyConfig(body && body.values);
+          return state.enabled;
+        }).catch(function() {
+          return state.enabled;
+        });
+      }
+      function mount() {
+        if (state.mounted || !doc) return state;
+        injectStyles(doc);
+        var root = doc.createElement("div");
+        root.className = "wbm-float-root";
+        root.setAttribute("data-message-float", "1");
+        var btn = buttons.createButton({ doc, lang: readLang(doc), onActivate: activate });
+        root.appendChild(btn.el);
+        state.root = root;
+        state.btn = btn;
+        state.mounted = true;
+        place();
+        liftAboveComposer();
+        if (notifier && typeof notifier.subscribe === "function") state.unsubscribe = notifier.subscribe(onEvent);
+        if (win && typeof win.addEventListener === "function") {
+          state.onVisible = function() {
+            if (doc.visibilityState === "visible") refreshCount();
+          };
+          win.addEventListener("visibilitychange", state.onVisible);
+        }
+        loadConfig().then(function() {
+          if (state.enabled) refreshCount();
+        });
+        return state;
+      }
+      function destroy() {
+        if (state.unsubscribe) state.unsubscribe();
+        state.unsubscribe = null;
+        if (win && state.onVisible && typeof win.removeEventListener === "function") {
+          win.removeEventListener("visibilitychange", state.onVisible);
+        }
+        state.onVisible = null;
+        if (state.btn) state.btn.destroy();
+        if (state.root && state.root.parentNode) state.root.parentNode.removeChild(state.root);
+        state.btn = null;
+        state.root = null;
+        state.mounted = false;
+      }
+      return {
+        mount,
+        destroy,
+        refreshCount,
+        applyConfig,
+        readState: function() {
+          return {
+            mounted: state.mounted,
+            count: state.count,
+            enabled: state.enabled,
+            position: state.position,
+            seen: state.seen.size
+          };
+        }
+      };
+    }
+    module2.exports = { createMount, STYLE_ID, DOMAIN };
+  }
+});
+
 // packages/addons/message/client/client.src.cjs
 (function() {
   var root = typeof window !== "undefined" ? window : null;
@@ -3883,6 +4244,7 @@ var require_actions = __commonJS({
   var DataView = require_data().DataView;
   var ActionSchemaView = require_actions().ActionSchemaView;
   var notifier = require_notifier();
+  var floatMount = require_mount();
   var InboxView = inboxFactory({ React });
   var StatsView = statsFactory({ React });
   function langOf(props) {
@@ -3912,7 +4274,7 @@ var require_actions = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-message",
-    version: "0.1.3",
+    version: "0.1.4",
     icon: ICONS["message-square"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: Stats },
@@ -3926,6 +4288,11 @@ var require_actions = __commonJS({
     notifier.start();
   } catch (e) {
     if (typeof console !== "undefined") console.warn("[dsh-workbench-message] \u63D0\u793A\u97F3\u542F\u52A8\u5931\u8D25", e);
+  }
+  try {
+    floatMount.createMount({ doc: typeof document !== "undefined" ? document : null, win: root, host, notifier }).mount();
+  } catch (e) {
+    if (typeof console !== "undefined") console.warn("[dsh-workbench-message] \u60AC\u6D6E\u5165\u53E3\u542F\u52A8\u5931\u8D25", e);
   }
   module.exports = {
     name: "dsh-workbench-message",

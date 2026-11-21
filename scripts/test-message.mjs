@@ -125,7 +125,9 @@ try {
   const cfg = (await call("message.configGet", {})).result;
   assert(cfg.values["sound.enabled"] === true, "提示音默认开");
   assert(cfg.values["retention.readDays"] === 30, "已读保留默认 30 天");
-  assert(cfg.items.length === 9, "配置项 9 条，实际 " + cfg.items.length);
+  assert(cfg.values["float.enabled"] === true, "悬浮入口默认开");
+  assert(cfg.values["float.position"] === "bottom-right", "悬浮入口默认右下角");
+  assert(cfg.items.length === 11, "配置项 11 条，实际 " + cfg.items.length);
   const set = (await call("message.configSet", { values: { "sound.enabled": false } })).result;
   assert(set.values["sound.enabled"] === false, "写入后回读为 false");
   assert(set.state.overrides["sound.enabled"] === false, "overrides 记录覆盖项");

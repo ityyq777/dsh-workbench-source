@@ -79,7 +79,7 @@
     "test:shell-immersive": "node scripts/test-shell-immersive.mjs",
     "test:home-categories": "node scripts/test-home-categories.mjs",
     "verify:standalone": "node scripts/verify-standalone-install.mjs",
-    "test:message": "node scripts/test-message.mjs",
+    "test:message": "node scripts/test-message.mjs && node scripts/test-message-config-state.mjs && node scripts/test-message-float.mjs",
     "test:vault": "node --test packages/addons/vault/test/vault.test.mjs packages/addons/vault/test/ui.test.mjs",
     "test:connector": "node --test packages/addons/connector/test/connector.test.mjs packages/addons/connector/test/ui.test.mjs",
     "test:automation": "node --test packages/addons/automation/test/automation.test.mjs packages/addons/automation/test/ui.test.mjs",
@@ -93,7 +93,8 @@
     "test:date-picker": "node --test scripts/test-date-picker.test.mjs",
     "test:message-config": "node scripts/test-message-config-state.mjs",
     "test:difficulty-dimensions": "node scripts/test-difficulty-dimensions.mjs",
-    "test:tag-source-adopt": "node scripts/test-tag-source-adopt.mjs"
+    "test:tag-source-adopt": "node scripts/test-tag-source-adopt.mjs",
+    "test:message-float": "node scripts/test-message-float.mjs"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.72.1",

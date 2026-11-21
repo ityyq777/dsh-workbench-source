@@ -16,6 +16,7 @@ const GROUPS = [
   { id: "quiet", zh: "免打扰", en: "Quiet hours" },
   { id: "retention", zh: "保留期", en: "Retention" },
   { id: "list", zh: "列表", en: "List" },
+  { id: "float", zh: "悬浮入口", en: "Floating button" },
 ];
 
 const ITEMS = [
@@ -64,6 +65,20 @@ const ITEMS = [
     id: "retention.readDays", group: "retention", type: "int", surface: "api", apply: "api", default: 30, min: 0, max: 3650,
     zh: "已读保留天数", en: "Keep read messages (days)",
     hintZh: "已读消息超过该天数自动清理；未读永不按时间清理，0 表示不按时间清理", hintEn: "Read messages older than this are pruned; unread never expires by time, 0 disables",
+  },
+  {
+    id: "float.enabled", group: "float", type: "bool", surface: "ui", apply: "mount", default: true,
+    zh: "显示消息悬浮入口", en: "Show floating message button",
+    hintZh: "任意页面右下角常驻消息按钮，带未读角标；关闭后该按钮立即隐藏", hintEn: "A persistent message button in the corner with unread badge; turning it off hides it",
+  },
+  {
+    id: "float.position", group: "float", type: "enum", surface: "ui", apply: "mount", default: "bottom-right",
+    zh: "悬浮入口位置", en: "Floating position",
+    hintZh: "右下角默认避开输入区；与其它浮层冲突时可换到左下角", hintEn: "Bottom right avoids the input area; switch to bottom left when it collides",
+    values: [
+      { value: "bottom-right", zh: "右下角", en: "Bottom right" },
+      { value: "bottom-left", zh: "左下角", en: "Bottom left" },
+    ],
   },
   {
     id: "list.pageSize", group: "list", type: "enum", surface: "ui", apply: "mount", default: 20,

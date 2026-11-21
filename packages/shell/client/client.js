@@ -2461,8 +2461,9 @@ window.__WB_HOST__ = {
   error: function() {
     return lastAddonError;
   },
-  navigateAddon: function(addonId) {
-    return typeof navigateAddonHook === "function" && !!addonId && navigateAddonHook(String(addonId)) !== false;
+  // 第二个参数是插件内的视图 id（如消息的 inbox）；不传保持落到 views[0]，旧插件不受影响。
+  navigateAddon: function(addonId, viewId) {
+    return typeof navigateAddonHook === "function" && !!addonId && navigateAddonHook(String(addonId), viewId ? String(viewId) : "") !== false;
   }
 };
 function useApi() {
@@ -2743,17 +2744,21 @@ function WorkbenchPage(props) {
     if (m && m.icon) return h(m.icon, { size: 18, strokeWidth: 1.9, "aria-hidden": "true" });
     return String(title || "?").slice(0, 1);
   }
-  function openAddon(a) {
+  function openAddon(a, viewId) {
     var m = registry.get(a.id);
-    var v = m && m.views && m.views[0] || a.views && a.views[0] || null;
+    var list = m && m.views || a.views || [];
+    var hit = viewId ? list.filter(function(v2) {
+      return v2 && v2.id === viewId;
+    })[0] : null;
+    var v = hit || list[0] || null;
     go("addon:" + a.id + ":" + (v && v.id ? v.id : ""));
   }
   react.useEffect(function() {
-    navigateAddonHook = function(addonId) {
+    navigateAddonHook = function(addonId, viewId) {
       var t2 = addons.filter(function(a) {
         return a && a.id === addonId;
       })[0];
-      if (t2) openAddon(t2);
+      if (t2) openAddon(t2, viewId);
       return !!t2;
     };
     return function() {
