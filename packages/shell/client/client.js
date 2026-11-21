@@ -703,6 +703,26 @@ var require_styles = __commonJS({
   }
 });
 
+// packages/shell/client/panellist-icon.cjs
+var require_panellist_icon = __commonJS({
+  "packages/shell/client/panellist-icon.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function PanellistIcon(h2) {
+      return function Icon(props) {
+        var size = props && props.size || 20;
+        return h2(
+          "svg",
+          { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": 1.5, "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" },
+          h2("rect", { x: 3, y: 3, width: 7, height: 9, rx: 1 }),
+          h2("rect", { x: 14, y: 3, width: 7, height: 5, rx: 1 }),
+          h2("rect", { x: 14, y: 12, width: 7, height: 9, rx: 1 }),
+          h2("rect", { x: 3, y: 16, width: 7, height: 5, rx: 1 })
+        );
+      };
+    };
+  }
+});
+
 // packages/addons/lib/highlight.cjs
 var require_highlight = __commonJS({
   "packages/addons/lib/highlight.cjs"(exports2, module2) {
@@ -2257,6 +2277,7 @@ var h = react.createElement;
 var NS = "workbench";
 var LOCALE = require_locale();
 var CSS = require_styles();
+var createPanellistIcon = require_panellist_icon();
 var SystemPages = require_system_pages();
 var registry = /* @__PURE__ */ new Map();
 var listeners = /* @__PURE__ */ new Set();
@@ -2919,16 +2940,7 @@ var exports_ = {
   apply: function(ctx) {
     try {
       ensureCss();
-      var PanellistIcon = function() {
-        return h(
-          "svg",
-          { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round" },
-          h("rect", { x: 3, y: 3, width: 7, height: 7, rx: 1 }),
-          h("rect", { x: 14, y: 3, width: 7, height: 7, rx: 1 }),
-          h("rect", { x: 3, y: 14, width: 7, height: 7, rx: 1 }),
-          h("rect", { x: 14, y: 14, width: 7, height: 7, rx: 1 })
-        );
-      };
+      var PanellistIcon = createPanellistIcon(h);
       ctx.effect(function() {
         return ctx.locale.register(NS, LOCALE);
       }, "wb-locale");
@@ -2938,8 +2950,8 @@ var exports_ = {
           { name: "sidebar.panellist", id: NS, order: 62, label: function() {
             return t("nav");
           } },
-          function() {
-            return h(PanellistIcon, {});
+          function(props) {
+            return h(PanellistIcon, props);
           }
         );
       });

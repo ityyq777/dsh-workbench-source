@@ -4,10 +4,10 @@ var react = require("react");
 var jsx = require("react/jsx-runtime");
 var h = react.createElement;
 var NS = "workbench";
-
 var LOCALE = require("./locale.cjs");
 
 var CSS = require("./styles.cjs");
+var createPanellistIcon = require("./panellist-icon.cjs");
 // 共享 Action 页：宿主自己的「Agent 权限」页复用它，数据源是 actions.list（宿主 action 不属于任何业务域）。
 var SystemPages = require("./system-pages.cjs");
 
@@ -559,20 +559,13 @@ var exports_ = {
   apply: function (ctx) {
     try {
       ensureCss();
-      var PanellistIcon = function () {
-        return h("svg", { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round" },
-          h("rect", { x: 3, y: 3, width: 7, height: 7, rx: 1 }),
-          h("rect", { x: 14, y: 3, width: 7, height: 7, rx: 1 }),
-          h("rect", { x: 3, y: 14, width: 7, height: 7, rx: 1 }),
-          h("rect", { x: 14, y: 14, width: 7, height: 7, rx: 1 })
-        );
-      };
+      var PanellistIcon = createPanellistIcon(h);
       ctx.effect(function () { return ctx.locale.register(NS, LOCALE); }, "wb-locale");
       var t = ctx.locale.bind(NS);
       ctx.slots.inject("sidebar.panellist", function () {
         return ctx.slots.register(
           { name: "sidebar.panellist", id: NS, order: 62, label: function () { return t("nav"); } },
-          function () { return h(PanellistIcon, {}); }
+          function (props) { return h(PanellistIcon, props); }
         );
       });
       ctx.slots.inject("main", function () {
