@@ -3,6 +3,56 @@
  * 与 actions.js 分文件只为把单个文件保持在 600 行以内；契约不拆。
  */
 export function registerSetActions({ api, sets, groups, vault, only, KINDS }) {
+  /** 保存集合时一并处理的凭据：{ id } 挂已有，{ name, kind, secret } 新建后挂上。 */
+  const SECRETS_INPUT = {
+    type: "array",
+    description:
+      "保存集合时一并处理的凭据：已有凭据传 { id } 直接挂上；新凭据传 { name, kind, secret, meta? } 在本机加密保存后挂上（同名视为更新）。",
+    items: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "已有凭据 id（与 name 二选一）" },
+        name: { type: "string", description: "新凭据名称，1–100 字（新凭据必填）" },
+        kind: { type: "string", enum: KINDS, description: "新凭据类型（新凭据必填）" },
+        secret: { type: "string", description: "新凭据明文，只在内存加密后落库" },
+        meta: { type: "object", description: "新凭据备注，如用户名" },
+      },
+      additionalProperties: false,
+    },
+  };
+
+  function attachSecrets(setId, items) {
+    if (!Array.isArray(items) || !items.length) return [];
+    const ids = [];
+    for (const item of items) {
+      if (!item || typeof item !== "object") throw new Error("secrets 的每一项必须是对象");
+      if (item.id) {
+        const exists = api.db
+          .prepare("SELECT 1 FROM vault_secret WHERE id = ? AND deleted_at IS NULL")
+          .get(String(item.id));
+        if (!exists) throw new Error("集合已保存，但凭据不存在：" + item.id);
+        sets.linkSecret(setId, String(item.id));
+        ids.push(String(item.id));
+        continue;
+      }
+      try {
+        const result = vault.writeSecretToSet({
+          setId,
+          name: item.name,
+          kind: item.kind,
+          secret: item.secret,
+          meta: item.meta,
+        });
+        ids.push(result.id);
+      } catch (error) {
+        throw new Error(
+          "集合已保存，但新建凭据「" + String(item.name || "") + "」失败：" + String((error && error.message) || error),
+        );
+      }
+    }
+    return ids;
+  }
+
   api.action("vault.setList", {
     description:
       "只读：凭据集合与账号列表，带凭据数与挂靠分组；可按集合名/账号/描述搜索、按分组或集合类型过滤。",
@@ -45,13 +95,16 @@ export function registerSetActions({ api, sets, groups, vault, only, KINDS }) {
         account: { type: "string", description: "账号，可空、可重复，最多 100 字；留空即普通集合" },
         description: { type: "string", description: "用途说明" },
         color: { type: "string", description: "主题色 token 名或色值，可空" },
+        secrets: SECRETS_INPUT,
       },
       required: ["name"],
       additionalProperties: false,
     },
     execute: (args, ctx) => {
       only(ctx, ["ui"], "vault.setCreate");
-      return sets.createSet(args);
+      const set = sets.createSet(args);
+      const ids = attachSecrets(set.id, args.secrets);
+      return ids.length ? Object.assign({}, set, { secrets: ids }) : set;
     },
   });
 
@@ -65,13 +118,16 @@ export function registerSetActions({ api, sets, groups, vault, only, KINDS }) {
         account: { type: "string", description: "账号，传空串即改为普通集合" },
         description: { type: "string" },
         color: { type: "string" },
+        secrets: SECRETS_INPUT,
       },
       required: ["id"],
       additionalProperties: false,
     },
     execute: (args, ctx) => {
       only(ctx, ["ui"], "vault.setUpdate");
-      return sets.updateSet(args);
+      const set = sets.updateSet(args);
+      const ids = attachSecrets(set.id, args.secrets);
+      return ids.length ? Object.assign({}, set, { secrets: ids }) : set;
     },
   });
 

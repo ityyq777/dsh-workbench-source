@@ -174,6 +174,19 @@ test("集合页：新建/编辑先选类型，只有账号集合才出现账号�
   assert.match(src, /账号集合需要填写账号；账号留空请改选普通集合/);
 });
 
+test("集合页：新建/编辑弹窗里可勾已有凭据，也可填明文新建一条随集合保存", () => {
+  const src = fs.readFileSync(path.join(dir, "views/sets.cjs"), "utf8");
+  assert.match(src, /新凭据名称/);
+  assert.match(src, /明文（只在本机加密保存）/);
+  assert.match(src, /function addNewSecret\(\)/);
+  assert.match(src, /newSecrets/);
+  assert.match(src, /if \(secrets\.length\) body\.secrets = secrets/);
+  assert.match(src, /"添加"/);
+  const actions = fs.readFileSync(path.join(dir, "../lib/domain/actions-sets.js"), "utf8");
+  assert.match(actions, /vault\.writeSecretToSet/);
+  assert.match(actions, /secrets: SECRETS_INPUT/);
+});
+
 test("弹层统一走共享 overlay：视图里不再手拼遮罩，外壳只保留一份", () => {
   const overlay = fs.readFileSync(path.join(process.cwd(), "packages/addons/lib/overlay.cjs"), "utf8");
   assert.match(overlay, /e\.key === "Escape"/);

@@ -462,6 +462,39 @@ test("集合与账号：账号可空、可重复，条目按 id 区分，类型�
   assert.throws(() => run("vault.setCreate", { name: "工作邮箱 A", account: "other@example.com" }), /已有同名集合/);
 });
 
+test("新建/编辑集合时一并处理凭据：勾已有的一条、填明文新建一条，保存后都挂上", () => {
+  const { run } = makeVault();
+  run("vault.setup", { passphrase: PASS, mode: "A" });
+  const existing = run("vault.secretCreate", { name: "旧授权码", kind: "app_password", secret: "old-code" });
+
+  const created = run("vault.setCreate", {
+    name: "工作邮箱 · 凭据",
+    account: "ops@example.com",
+    secrets: [
+      { id: existing.id },
+      { name: "新授权码", kind: "app_password", secret: "new-code" },
+    ],
+  });
+  assert.equal(created.secrets.length, 2, "保存集合时一并挂上两条凭据");
+  const detail = run("vault.setGet", { id: created.id });
+  assert.deepEqual(detail.secrets.map((s) => s.name).sort(), ["新授权码", "旧授权码"]);
+  assert.equal(run("vault.secretList", { setId: created.id }).items.length, 2);
+
+  // 编辑集合时追加：同名新凭据按名称幂等（更新后挂上），不会多出一条
+  const updated = run("vault.setUpdate", {
+    id: created.id,
+    secrets: [{ name: "新授权码", kind: "app_password", secret: "rotated" }],
+  });
+  assert.equal(updated.secrets.length, 1);
+  assert.equal(run("vault.setGet", { id: created.id }).secrets.length, 2);
+
+  assert.throws(() => run("vault.setCreate", { name: "坏集合", secrets: [{ id: "nope" }] }), /凭据不存在/);
+  assert.throws(
+    () => run("vault.setCreate", { name: "坏集合2", secrets: [{ name: "空值", kind: "other", secret: "" }] }),
+    /新建凭据「空值」失败/,
+  );
+});
+
 test("0.2.x → 0.3.0 迁移：分组直属凭据收进默认集合，site-account 收口为通用类型", async () => {
   const { db, run, vault } = makeVault();
   run("vault.setup", { passphrase: PASS, mode: "A" });

@@ -1,7 +1,8 @@
 "use strict";
 /**
  * 集合与账号页：集合可复用（挂多个分组、装多条凭据），并可标一个账号；
- * 新建/编辑时先选类型：「账号集合」才显示账号输入，「普通集合」不绑定账号，条目只按 id 区分。
+ * 新建/编辑时先选类型：「账号集合」才显示账号输入，「普通集合」不绑定账号，条目只按 id 区分；
+ * 弹窗里可顺手勾选已有凭据，或直接填名称/类型/明文新建一条，保存集合时一并挂上。
  * 页面骨架与弹层外壳分别来自 ui/page.cjs、ui/dialog.cjs。
  */
 var C = require("../ui/common.cjs");
@@ -29,7 +30,8 @@ module.exports = function SetsView(props) {
   var typeS = React.useState(""); // "" | account | common
   var msgS = React.useState("");
   var busyS = React.useState(false);
-  var draftS = React.useState(null); // { id?, name, account, description, color }
+  var draftS = React.useState(null); // { id?, name, type, account, description, color, secretIds, newSecrets }
+  var nsD = React.useState({ name: "", kind: "password", secret: "" }); // 弹窗里「新建凭据」的草稿行
   var pickS = React.useState([]); // 待加入集合的凭据 id
   var delS = React.useState(null); // { set } 删除确认
   // 未解锁守卫：锁定期间三个列表接口都不发；在途响应按序号作废，避免迟到的明文回填。
@@ -98,7 +100,8 @@ module.exports = function SetsView(props) {
   }
 
   function startCreate() {
-    draftS[1]({ name: "", type: "common", account: "", description: "", color: "" });
+    draftS[1]({ name: "", type: "common", account: "", description: "", color: "", secretIds: [], newSecrets: [] });
+    nsD[1]({ name: "", kind: "password", secret: "" });
     msgS[1]("");
   }
 
@@ -110,7 +113,22 @@ module.exports = function SetsView(props) {
       account: set.account || "",
       description: set.description || "",
       color: set.color || "",
+      secretIds: [],
+      newSecrets: [],
     });
+    nsD[1]({ name: "", kind: "password", secret: "" });
+    msgS[1]("");
+  }
+
+  // 弹窗里暂存一条待新建的凭据（明文只留在内存，保存时随集合一起提交）。
+  function addNewSecret() {
+    var row = nsD[0];
+    var name = String(row.name || "").trim();
+    if (!name) return msgS[1]("新凭据名称不能为空");
+    if (!String(row.secret || "")) return msgS[1]("新凭据需要填写明文");
+    var list = (draftS[0].newSecrets || []).concat([{ name: name, kind: row.kind || "other", secret: String(row.secret) }]);
+    draftS[1](Object.assign({}, draftS[0], { newSecrets: list }));
+    nsD[1]({ name: "", kind: "password", secret: "" });
     msgS[1]("");
   }
 
@@ -122,12 +140,19 @@ module.exports = function SetsView(props) {
     var account = isAccount ? String(d.account || "").trim() : "";
     if (isAccount && !account) return msgS[1]("账号集合需要填写账号；账号留空请改选普通集合");
     busyS[1](true); msgS[1]("");
+    var secrets = [];
+    (d.secretIds || []).forEach(function (id) { secrets.push({ id: id }); });
+    (d.newSecrets || []).forEach(function (s) {
+      if (!String(s.name || "").trim() || !String(s.secret || "")) return;
+      secrets.push({ name: String(s.name).trim(), kind: s.kind || "other", secret: String(s.secret) });
+    });
     var body = {
       name: String(d.name).trim(),
       account: account,
       description: d.description || "",
       color: d.color || "",
     };
+    if (secrets.length) body.secrets = secrets;
     var req = d.id
       ? C.call(api, "vault.setUpdate", Object.assign({ id: d.id }, body))
       : C.call(api, "vault.setCreate", body);
@@ -389,6 +414,62 @@ module.exports = function SetsView(props) {
             placeholder: "如 --wb-accent",
             onChange: function (e) { draftS[1](Object.assign({}, draftS[0], { color: e.target.value })); },
           })),
+        h("div", { className: "wbv-card-title", style: { marginTop: "4px" } }, "凭据"),
+        secretsS[0].length
+          ? h("div", { className: "wbv-chips" }, secretsS[0].map(function (sec) {
+              var on = draftS[0].secretIds.indexOf(sec.id) >= 0;
+              return h("label", { key: sec.id, className: "wbv-chip", style: { cursor: "pointer" } },
+                h("input", {
+                  type: "checkbox",
+                  checked: on,
+                  onChange: function (e) {
+                    var ids = draftS[0].secretIds.slice();
+                    if (e.target.checked) ids.push(sec.id);
+                    else ids = ids.filter(function (x) { return x !== sec.id; });
+                    draftS[1](Object.assign({}, draftS[0], { secretIds: ids }));
+                  },
+                }),
+                h("span", null, sec.name));
+            }))
+          : h("span", { className: "wbv-muted" }, "保险箱还没有凭据，可在下面直接新建一条。"),
+        h("div", { className: "wbv-inline" },
+          h(P.Input, {
+            h: h,
+            placeholder: "新凭据名称",
+            value: nsD[0].name,
+            onChange: function (e) { nsD[1](Object.assign({}, nsD[0], { name: e.target.value })); },
+          }),
+          h(P.Select, {
+            h: h,
+            "aria-label": "新凭据类型",
+            value: nsD[0].kind,
+            onChange: function (e) { nsD[1](Object.assign({}, nsD[0], { kind: e.target.value })); },
+          }, K.kindOptions("").map(function (kind) {
+            return h("option", { key: kind, value: kind }, K.KIND_LABEL[kind] || kind);
+          })),
+          h(P.Input, {
+            h: h,
+            type: "password",
+            placeholder: "明文（只在本机加密保存）",
+            value: nsD[0].secret,
+            onChange: function (e) { nsD[1](Object.assign({}, nsD[0], { secret: e.target.value })); },
+          }),
+          h(C.Btn, { h: h, disabled: !String(nsD[0].name || "").trim() || !String(nsD[0].secret || ""), onClick: addNewSecret }, "添加")),
+        (draftS[0].newSecrets || []).length
+          ? h("div", { className: "wbv-chips" }, draftS[0].newSecrets.map(function (sec, index) {
+              return h("span", { className: "wbv-chip", key: index },
+                h("span", null, sec.name + " · " + (K.KIND_LABEL[sec.kind] || sec.kind)),
+                h("button", {
+                  type: "button",
+                  className: "wbv-btn ghost",
+                  onClick: function () {
+                    var list = draftS[0].newSecrets.slice();
+                    list.splice(index, 1);
+                    draftS[1](Object.assign({}, draftS[0], { newSecrets: list }));
+                  },
+                }, "×"));
+            }))
+          : null,
         h(C.Notice, { h: h, kind: "error", text: msgS[0] })),
       h("div", { className: "wbv-modal-foot" },
         h("span", { className: "wbv-grow" }),

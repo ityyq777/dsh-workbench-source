@@ -3313,6 +3313,7 @@ var require_sets = __commonJS({
       var msgS = React.useState("");
       var busyS = React.useState(false);
       var draftS = React.useState(null);
+      var nsD = React.useState({ name: "", kind: "password", secret: "" });
       var pickS = React.useState([]);
       var delS = React.useState(null);
       var guard = Lock2.use({ api, C, React });
@@ -3377,7 +3378,8 @@ var require_sets = __commonJS({
         });
       }
       function startCreate() {
-        draftS[1]({ name: "", type: "common", account: "", description: "", color: "" });
+        draftS[1]({ name: "", type: "common", account: "", description: "", color: "", secretIds: [], newSecrets: [] });
+        nsD[1]({ name: "", kind: "password", secret: "" });
         msgS[1]("");
       }
       function startEdit(set) {
@@ -3387,8 +3389,21 @@ var require_sets = __commonJS({
           type: set.type === "account" ? "account" : "common",
           account: set.account || "",
           description: set.description || "",
-          color: set.color || ""
+          color: set.color || "",
+          secretIds: [],
+          newSecrets: []
         });
+        nsD[1]({ name: "", kind: "password", secret: "" });
+        msgS[1]("");
+      }
+      function addNewSecret() {
+        var row = nsD[0];
+        var name = String(row.name || "").trim();
+        if (!name) return msgS[1]("\u65B0\u51ED\u636E\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A");
+        if (!String(row.secret || "")) return msgS[1]("\u65B0\u51ED\u636E\u9700\u8981\u586B\u5199\u660E\u6587");
+        var list = (draftS[0].newSecrets || []).concat([{ name, kind: row.kind || "other", secret: String(row.secret) }]);
+        draftS[1](Object.assign({}, draftS[0], { newSecrets: list }));
+        nsD[1]({ name: "", kind: "password", secret: "" });
         msgS[1]("");
       }
       function saveDraft() {
@@ -3399,12 +3414,21 @@ var require_sets = __commonJS({
         if (isAccount && !account) return msgS[1]("\u8D26\u53F7\u96C6\u5408\u9700\u8981\u586B\u5199\u8D26\u53F7\uFF1B\u8D26\u53F7\u7559\u7A7A\u8BF7\u6539\u9009\u666E\u901A\u96C6\u5408");
         busyS[1](true);
         msgS[1]("");
+        var secrets = [];
+        (d.secretIds || []).forEach(function(id) {
+          secrets.push({ id });
+        });
+        (d.newSecrets || []).forEach(function(s) {
+          if (!String(s.name || "").trim() || !String(s.secret || "")) return;
+          secrets.push({ name: String(s.name).trim(), kind: s.kind || "other", secret: String(s.secret) });
+        });
         var body = {
           name: String(d.name).trim(),
           account,
           description: d.description || "",
           color: d.color || ""
         };
+        if (secrets.length) body.secrets = secrets;
         var req = d.id ? C.call(api, "vault.setUpdate", Object.assign({ id: d.id }, body)) : C.call(api, "vault.setCreate", body);
         req.then(function() {
           busyS[1](false);
@@ -3771,6 +3795,75 @@ var require_sets = __commonJS({
                 }
               })
             ),
+            h("div", { className: "wbv-card-title", style: { marginTop: "4px" } }, "\u51ED\u636E"),
+            secretsS[0].length ? h("div", { className: "wbv-chips" }, secretsS[0].map(function(sec) {
+              var on = draftS[0].secretIds.indexOf(sec.id) >= 0;
+              return h(
+                "label",
+                { key: sec.id, className: "wbv-chip", style: { cursor: "pointer" } },
+                h("input", {
+                  type: "checkbox",
+                  checked: on,
+                  onChange: function(e) {
+                    var ids = draftS[0].secretIds.slice();
+                    if (e.target.checked) ids.push(sec.id);
+                    else ids = ids.filter(function(x) {
+                      return x !== sec.id;
+                    });
+                    draftS[1](Object.assign({}, draftS[0], { secretIds: ids }));
+                  }
+                }),
+                h("span", null, sec.name)
+              );
+            })) : h("span", { className: "wbv-muted" }, "\u4FDD\u9669\u7BB1\u8FD8\u6CA1\u6709\u51ED\u636E\uFF0C\u53EF\u5728\u4E0B\u9762\u76F4\u63A5\u65B0\u5EFA\u4E00\u6761\u3002"),
+            h(
+              "div",
+              { className: "wbv-inline" },
+              h(P.Input, {
+                h,
+                placeholder: "\u65B0\u51ED\u636E\u540D\u79F0",
+                value: nsD[0].name,
+                onChange: function(e) {
+                  nsD[1](Object.assign({}, nsD[0], { name: e.target.value }));
+                }
+              }),
+              h(P.Select, {
+                h,
+                "aria-label": "\u65B0\u51ED\u636E\u7C7B\u578B",
+                value: nsD[0].kind,
+                onChange: function(e) {
+                  nsD[1](Object.assign({}, nsD[0], { kind: e.target.value }));
+                }
+              }, K.kindOptions("").map(function(kind) {
+                return h("option", { key: kind, value: kind }, K.KIND_LABEL[kind] || kind);
+              })),
+              h(P.Input, {
+                h,
+                type: "password",
+                placeholder: "\u660E\u6587\uFF08\u53EA\u5728\u672C\u673A\u52A0\u5BC6\u4FDD\u5B58\uFF09",
+                value: nsD[0].secret,
+                onChange: function(e) {
+                  nsD[1](Object.assign({}, nsD[0], { secret: e.target.value }));
+                }
+              }),
+              h(C.Btn, { h, disabled: !String(nsD[0].name || "").trim() || !String(nsD[0].secret || ""), onClick: addNewSecret }, "\u6DFB\u52A0")
+            ),
+            (draftS[0].newSecrets || []).length ? h("div", { className: "wbv-chips" }, draftS[0].newSecrets.map(function(sec, index) {
+              return h(
+                "span",
+                { className: "wbv-chip", key: index },
+                h("span", null, sec.name + " \xB7 " + (K.KIND_LABEL[sec.kind] || sec.kind)),
+                h("button", {
+                  type: "button",
+                  className: "wbv-btn ghost",
+                  onClick: function() {
+                    var list = draftS[0].newSecrets.slice();
+                    list.splice(index, 1);
+                    draftS[1](Object.assign({}, draftS[0], { newSecrets: list }));
+                  }
+                }, "\xD7")
+              );
+            })) : null,
             h(C.Notice, { h, kind: "error", text: msgS[0] })
           ),
           h(
@@ -6542,7 +6635,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.4.1",
+    version: "0.4.2",
     icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },
@@ -6557,6 +6650,7 @@ var GLYPHS = require_icons2().ICONS;
   module.exports = { name: "dsh-workbench-vault", inject: [], apply: function() {
   } };
 })();
+
     return module.exports;
   },
 });
