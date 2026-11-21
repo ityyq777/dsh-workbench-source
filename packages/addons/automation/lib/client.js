@@ -1907,8 +1907,6 @@ var require_copy = __commonJS({
         "editor.targetSession": "\u4F1A\u8BDD ID",
         "editor.targetSessionPh": "\u8981\u6295\u9012\u5230\u7684\u73B0\u6709\u4F1A\u8BDD id",
         "editor.targetSessionRequired": "\u6295\u9012\u5230\u73B0\u6709\u4F1A\u8BDD\u65F6\u9700\u8981\u586B\u5199\u4F1A\u8BDD ID",
-        "editor.section.conditionAgent": "\u6761\u4EF6\uFF08\u4EC5 action \u6A21\u5F0F\uFF09",
-        "editor.conditionAgentHint": "\u300C\u4EA4\u7ED9 AI\u300D\u7531\u5BBF\u4E3B\u76F4\u63A5\u6295\u9012\uFF0C\u672C\u5730\u6761\u4EF6\u4E0E\u53C2\u6570\u6A21\u677F\u4E0D\u53C2\u4E0E\u3002",
         "agent.every": "\u6BCF\u9694",
         "agent.after": "\u5EF6\u8FDF",
         "agent.daily": "\u6BCF\u5929",
@@ -2153,8 +2151,6 @@ var require_copy = __commonJS({
         "editor.targetSession": "Session id",
         "editor.targetSessionPh": "Existing session id to deliver into",
         "editor.targetSessionRequired": "A session id is required when delivering into an existing session",
-        "editor.section.conditionAgent": "Condition (action mode only)",
-        "editor.conditionAgentHint": '"Hand to AI" is delivered by the Host; local conditions and arg templates do not apply.',
         "agent.every": "Every",
         "agent.after": "Delay",
         "agent.daily": "Daily",
@@ -3569,37 +3565,34 @@ var require_rule_editor = __commonJS({
               } }, t("editor.format"))
             })
           ),
-          h(
+          // 「交给 AI」不参与本地条件与参数模板，条件段整段不渲染，避免给出「填了也没用」的字段
+          agentMode ? null : h(
             "div",
             { className: "wba-section" },
-            h("p", { className: "wba-section-title" }, "\u2464 " + (agentMode ? t("editor.section.conditionAgent") : t("editor.section.condition"))),
-            agentMode ? h("p", { className: "wba-sub" }, t("editor.conditionAgentHint")) : [
-              h(SW.Switch, {
-                key: "cond",
-                h,
-                checked: Boolean(form.condOn),
-                label: t("editor.conditionOn"),
-                onChange: function(next) {
-                  set("condOn", next);
-                }
-              }),
-              h("p", { key: "hint", className: "wba-sub" }, t("editor.conditionHint")),
-              form.condOn ? h(json.JsonEditor, {
-                key: "json",
-                h,
-                t,
-                React,
-                small: true,
-                vars: false,
-                label: "condition",
-                value: form.condition,
-                invalid: Boolean(errs.condition),
-                error: errs.condition,
-                onChange: function(v) {
-                  set("condition", v);
-                }
-              }) : h("p", { key: "empty", className: "wba-sub" }, t("editor.conditionEmpty"))
-            ]
+            h("p", { className: "wba-section-title" }, "\u2464 " + t("editor.section.condition")),
+            h(SW.Switch, {
+              h,
+              checked: Boolean(form.condOn),
+              label: t("editor.conditionOn"),
+              onChange: function(next) {
+                set("condOn", next);
+              }
+            }),
+            h("p", { className: "wba-sub" }, t("editor.conditionHint")),
+            form.condOn ? h(json.JsonEditor, {
+              h,
+              t,
+              React,
+              small: true,
+              vars: false,
+              label: "condition",
+              value: form.condition,
+              invalid: Boolean(errs.condition),
+              error: errs.condition,
+              onChange: function(v) {
+                set("condition", v);
+              }
+            }) : h("p", { className: "wba-sub" }, t("editor.conditionEmpty"))
           )
         ),
         h(

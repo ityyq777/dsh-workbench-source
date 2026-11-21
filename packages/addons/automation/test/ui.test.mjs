@@ -280,6 +280,23 @@ test("AI 规则编辑器：时间/提示词/目标齐备，payload 是宿主请�
   assert.deepEqual(payload.agent.target, { kind: "new_once" });
 });
 
+test("AI 规则不渲染条件段：不参与就不显示", () => {
+  const html = editorHtml({
+    form: Object.assign(Rules.emptyForm(), {
+      name: "早间摘要", execMode: "agent", prompt: "p", pKind: "every", targetKind: "new_once",
+    }),
+  });
+  assert.ok(!html.includes(t("editor.section.condition")), "agent 模式不显示条件段标题");
+  assert.ok(!html.includes(t("editor.conditionOn")), "agent 模式不显示条件开关");
+  assert.ok(!html.includes("由宿主直接投递"), "不显示「填了也没用」的说明");
+  for (const dict of [copy.DICT.zh, copy.DICT.en]) {
+    assert.equal(dict["editor.section.conditionAgent"], undefined, "不再保留仅 action 模式的条件标题");
+    assert.equal(dict["editor.conditionAgentHint"], undefined, "不再保留条件段说明文案");
+  }
+  const action = editorHtml({ form: Object.assign(Rules.emptyForm(), { name: "x", actionName: "message.send" }) });
+  assert.ok(action.includes(t("editor.section.condition")), "action 模式仍显示条件段");
+});
+
 test("AI 规则缺少提示词或时间非法时禁用保存", () => {
   const missing = editorHtml({ form: Object.assign(Rules.emptyForm(), { name: "x", execMode: "agent" }) });
   assert.ok(missing.includes(t("editor.promptRequired")));

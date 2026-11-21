@@ -341,33 +341,28 @@ function RuleEditor(props) {
               if (next) set("actionArgs", next);
             } }, t("editor.format")),
           })),
-        h("div", { className: "wba-section" },
-          h("p", { className: "wba-section-title" }, "⑤ " + (agentMode ? t("editor.section.conditionAgent") : t("editor.section.condition"))),
-          agentMode
-            ? h("p", { className: "wba-sub" }, t("editor.conditionAgentHint"))
-            : [
-                h(SW.Switch, {
-                  key: "cond",
-                  h: h,
-                  checked: Boolean(form.condOn),
-                  label: t("editor.conditionOn"),
-                  onChange: function (next) { set("condOn", next); },
-                }),
-                h("p", { key: "hint", className: "wba-sub" }, t("editor.conditionHint")),
-                form.condOn ? h(json.JsonEditor, {
-                  key: "json",
-                  h: h,
-                  t: t,
-                  React: React,
-                  small: true,
-                  vars: false,
-                  label: "condition",
-                  value: form.condition,
-                  invalid: Boolean(errs.condition),
-                  error: errs.condition,
-                  onChange: function (v) { set("condition", v); },
-                }) : h("p", { key: "empty", className: "wba-sub" }, t("editor.conditionEmpty")),
-              ])),
+        // 「交给 AI」不参与本地条件与参数模板，条件段整段不渲染，避免给出「填了也没用」的字段
+        agentMode ? null : h("div", { className: "wba-section" },
+          h("p", { className: "wba-section-title" }, "⑤ " + t("editor.section.condition")),
+          h(SW.Switch, {
+            h: h,
+            checked: Boolean(form.condOn),
+            label: t("editor.conditionOn"),
+            onChange: function (next) { set("condOn", next); },
+          }),
+          h("p", { className: "wba-sub" }, t("editor.conditionHint")),
+          form.condOn ? h(json.JsonEditor, {
+            h: h,
+            t: t,
+            React: React,
+            small: true,
+            vars: false,
+            label: "condition",
+            value: form.condition,
+            invalid: Boolean(errs.condition),
+            error: errs.condition,
+            onChange: function (v) { set("condition", v); },
+          }) : h("p", { className: "wba-sub" }, t("editor.conditionEmpty")))),
       h("div", { className: "wba-modal-foot" },
         h("span", { className: "wba-sub wba-grow" }, validation.valid
           ? (numOkS[0] ? "" : errs.pEvery || errs.pAfter || errs.everyMinutes || t("trigger.intervalHint"))
