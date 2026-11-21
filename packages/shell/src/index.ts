@@ -31,6 +31,7 @@ import {
 
 import type { WbState, RegisteredDomain } from "./types/host-types.js";
 import { createActions } from "./actions/actions.js";
+import { createAgentRun } from "./actions/agent-run.js";
 import { installNetwork } from "./infra/network.js";
 import { createSearch } from "./infra/search.js";
 import { FALLBACK_CATEGORY_ID, resolveCategory } from "./infra/categories.js";
@@ -43,7 +44,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.8.4";
+export const SHELL_VERSION = "0.9.0";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -201,6 +202,11 @@ export function apply(ctx: any): void {
     };
   }
 
+  // host.agentRun 要用 DSH 的会话服务，但服务是在后面 installService 才拿到的：
+  // 这里先给一个可写的持有者，action 定义通过闭包读它，拿到服务前后都能工作。
+  const sessionScope: { value: any } = { value: null };
+  const agentRun = createAgentRun({ getSessionController: () => sessionScope.value });
+
   const { invoke, actionNames, installTool, schemaSnapshot } = createActions({
     domains,
     SHELL_VERSION,
@@ -210,6 +216,7 @@ export function apply(ctx: any): void {
     emit,
     db: state.db,
     search,
+    extraMetaActions: [["host.agentRun", agentRun]],
   });
 
   function registerAction(rec: RegisteredDomain, action: string, def: DomainActionDef): void {
@@ -366,6 +373,12 @@ export function apply(ctx: any): void {
       log("安装会话记录模式失败", deps.join(","), e);
     }
   };
+
+  // 「新建 agent 会话」用的会话控制器：宿主没加载时为 null，action 调用会给明确报错。
+  installService(["sessionController"], (scope) => {
+    const controller = scope.sessionController;
+    sessionScope.value = controller && typeof controller.create === "function" ? controller : null;
+  });
 
   installService(["systemPrompt"], (scope) => {
     const sp = scope.systemPrompt;

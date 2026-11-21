@@ -121,7 +121,8 @@ export function registerSalaryActions(api, salary) {
     }),
   });
   action("salary.dataQuery", {
-    agentEnabled: false,
+    origins: ["ui", "agent"],
+    originsDefault: ["ui"],
     description: "只读：白名单表查询（仅 UI；limit ≤ 100）",
     input: obj({ table: { type: "string", enum: ["salary_record"] }, limit: num("1–100，默认 20") }, ["table"]),
     execute: (args, ctx) => {

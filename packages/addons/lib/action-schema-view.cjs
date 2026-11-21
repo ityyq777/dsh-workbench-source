@@ -1,7 +1,7 @@
 "use strict";
 // 共享「Action」页视图：数据来自各插件自己注册的 <域>.actionSchema（插件自证清单，
 // 与 actions.list(detail=true) 同源同义），按当前插件域过滤后结构化渲染。本页不提供 action 执行入口；
-// 唯一写操作是 agent 可调用开关（actions.setAgentAccess），落本机 meta，不进云同步。
+// 唯一写操作是「允许来源」多选（actions.setActionOrigins），落本机 meta，不进云同步。
 // source:"actions.list" 是给宿主自己的页面用的：宿主 action 不属于任何业务域，只能从 actions.list 取。
 // 跨域 action（如任务页偶尔调用 tags.*）不算本域清单，也不改真实 schema。
 // 搜索采用「过滤 + 高亮同口径」：命中范围与过滤 haystack 完全一致（名称 / 描述 / 参数名 / 类型 / 说明），
@@ -14,15 +14,20 @@ var COPY = {
   zh: {
     title: "Action",
     hint: "运行时注册 · 只读",
-    switchHint: "agent 开关落本机、即改即生效；界面操作不受影响。",
-    hostHint: "宿主 action 的 agent 开关；标「仅界面 · 安全约束」的不可放开。",
-    agentSwitch: "agent 可用",
-    agentLocked: "仅界面 · 安全约束",
-    agentLockedHint: "该 action 只能在界面执行（安全约束），agent 开关不可放开",
-    agentSaving: "保存中…",
-    agentOnToast: "已允许 agent 调用",
-    agentOffToast: "已禁止 agent 调用",
-    agentFail: "切换 agent 开关失败",
+    switchHint: "允许来源落本机、即改即生效：勾上的来源才能调用该 action，其余会被 ACTION_ORIGIN_DENIED 拦下。",
+    hostHint: "宿主 action 的允许来源；标「来源固定」的不可修改。",
+    originsLabel: "允许来源",
+    originUi: "界面",
+    originPlugin: "插件",
+    originAgent: "agent",
+    originSync: "同步",
+    originsSaving: "保存中…",
+    originsToast: "已更新允许来源",
+    originsFail: "更新允许来源失败",
+    originsEmpty: "至少要保留一个来源",
+    originsUnsupported: "该 action 本身不支持这个来源",
+    originsPinned: "来源固定",
+    originsPinnedHint: "该 action 的允许来源被固定（安全约束），不能修改",
     domain: "域",
     versionLabel: "版本",
     shell: "宿主",
@@ -34,6 +39,8 @@ var COPY = {
     onlyOptional: "无必填项",
     filterType: "参数类型",
     allTypes: "全部类型",
+    filterOrigin: "允许来源",
+    allOrigins: "全部来源",
     colName: "参数",
     colType: "类型",
     colReq: "必填",
@@ -64,15 +71,22 @@ var COPY = {
   en: {
     title: "Actions",
     hint: "runtime registry · read-only",
-    switchHint: "The agent switch is stored locally and applies immediately; UI actions are unaffected.",
-    hostHint: "Agent switch for host actions; items marked UI-only (security) cannot be opened up.",
-    agentSwitch: "Agent callable",
-    agentLocked: "UI only · security",
-    agentLockedHint: "This action can only run from the UI (security constraint); the agent switch cannot be opened",
-    agentSaving: "Saving…",
-    agentOnToast: "Agent calls allowed",
-    agentOffToast: "Agent calls blocked",
-    agentFail: "Failed to change the agent switch",
+    switchHint: "Allowed origins are stored locally and apply immediately: only checked origins may call the action; others get ACTION_ORIGIN_DENIED.",
+    hostHint: "Allowed origins for host actions; items marked pinned cannot be changed.",
+    originsLabel: "Origins",
+    originUi: "UI",
+    originPlugin: "Plugin",
+    originAgent: "Agent",
+    originSync: "Sync",
+    originsSaving: "Saving…",
+    originsToast: "Allowed origins updated",
+    originsFail: "Failed to update allowed origins",
+    originsEmpty: "Keep at least one origin",
+    originsUnsupported: "This action does not support this origin",
+    originsPinned: "Pinned",
+    originsPinnedHint: "Allowed origins are pinned for this action (security constraint) and cannot be changed",
+    originsDefaultOn: "Allowed by default",
+    originsDefaultOff: "Off by default, can be enabled",
     domain: "Domain",
     versionLabel: "Version",
     shell: "Host",
@@ -84,6 +98,8 @@ var COPY = {
     onlyOptional: "No required",
     filterType: "Param type",
     allTypes: "All types",
+    filterOrigin: "Origins",
+    allOrigins: "All origins",
     colName: "Param",
     colType: "Type",
     colReq: "Required",
@@ -238,6 +254,8 @@ module.exports = function createActionSchemaView(options) {
     var reqMode = reqState[0], setReqMode = reqState[1];
     var typeState = React.useState("");
     var typePick = typeState[0], setTypePick = typeState[1];
+    var originFilterState = React.useState("");
+    var originPick = originFilterState[0], setOriginPick = originFilterState[1];
     var toastState = React.useState("");
     var toast = toastState[0], setToast = toastState[1];
     var savingState = React.useState("");
@@ -290,37 +308,47 @@ module.exports = function createActionSchemaView(options) {
       done();
     }
 
-    /** 切换 agent 可调用：写宿主本机 meta（actions.setAgentAccess），只认 ui origin。 */
-    function setAgent(action, next) {
+    var ORIGINS = ["ui", "plugin", "agent", "sync"];
+    var originText = { ui: t.originUi, plugin: t.originPlugin, agent: t.originAgent, sync: t.originSync };
+
+    /** 切换某个来源：写宿主本机 meta（actions.setActionOrigins），只认 ui origin。 */
+    function setOrigins(action, origin) {
       var name = action.name;
+      var current = Array.isArray(action.origins) ? action.origins.slice() : [];
+      var index = current.indexOf(origin);
+      var next = index >= 0 ? current.filter(function (o) { return o !== origin; }) : current.concat([origin]);
+      if (next.length === 0) { setToast(t.originsEmpty); return; }
+      // 归一成 ui/plugin/agent/sync 的固定顺序，和宿主返回保持一致。
+      next = ORIGINS.filter(function (o) { return next.indexOf(o) >= 0; });
       setSaving(name);
       setToast("");
       var fail = function (e) {
         setSaving("");
-        setToast(t.agentFail + "：" + String((e && e.message) || e || ""));
+        setToast(t.originsFail + "：" + String((e && e.message) || e || ""));
       };
       var done = function (r) {
         setSaving("");
         var payload = r && typeof r === "object" && Object.prototype.hasOwnProperty.call(r, "result") ? r.result : r;
         if (r && r.ok === false) {
-          setToast(t.agentFail + "：" + String(r.error || r.text || ""));
+          setToast(t.originsFail + "：" + String(r.error || r.text || ""));
           return;
         }
-        var value = payload && typeof payload.agentEnabled === "boolean" ? payload.agentEnabled : next;
+        var value = payload && Array.isArray(payload.origins) ? payload.origins : next;
+        var source = payload && typeof payload.source === "string" ? payload.source : action.originsSource;
         // 就地更新本条，避免整页重载闪一下；宿主返回的生效值优先。
         setSnap(function (prev) {
           if (!prev || !Array.isArray(prev.actions)) return prev;
           return Object.assign({}, prev, {
             actions: prev.actions.map(function (a) {
               if (!a || a.name !== name) return a;
-              return Object.assign({}, a, { agentEnabled: value });
+              return Object.assign({}, a, { origins: value, originsSource: source });
             }),
           });
         });
-        setToast(value ? t.agentOnToast : t.agentOffToast);
+        setToast(t.originsToast);
       };
       if (!api || typeof api.call !== "function") { fail(new Error("no call api")); return; }
-      Promise.resolve(api.call("actions.setAgentAccess", { action: name, agentEnabled: next })).then(done, fail);
+      Promise.resolve(api.call("actions.setActionOrigins", { action: name, origins: next })).then(done, fail);
     }
 
     var all = snap && Array.isArray(snap.actions)
@@ -356,6 +384,8 @@ module.exports = function createActionSchemaView(options) {
       if (reqMode === "required" && !hasRequired) return false;
       if (reqMode === "optional" && hasRequired) return false;
       if (typePick && !rows.some(function (row) { return row.types.indexOf(typePick) >= 0; })) return false;
+      // 来源筛选：只列「允许该来源」的 action；宿主没注入 origins 时（老宿主 / agent 视角）不参与筛选。
+      if (originPick && (!Array.isArray(a.origins) || a.origins.indexOf(originPick) < 0)) return false;
       return true;
     });
 
@@ -370,25 +400,43 @@ module.exports = function createActionSchemaView(options) {
         h("td", null, Highlight.hit(row.description, kw)));
     }
 
-    // agent 开关：宿主未注入 agentEnabled 时（老宿主 / agent 视角）不渲染，避免给出假的可用性。
-    function agentSwitch(action) {
-      if (action.agentLocked === true) {
-        return h("span", {
-          className: P + "-badge " + P + "-locked",
-          title: t.agentLockedHint,
-          "data-agent-locked": action.name,
-        }, t.agentLocked);
+    // 允许来源多选（原生 checkbox）：声明是上界，不在声明里的来源直接 disabled。
+    function originsChips(action) {
+      if (!Array.isArray(action.origins)) return null;
+      if (action.originsSource === "invalid") {
+        return h("span", { className: P + "-badge " + P + "-locked", title: t.originsPinnedHint, "data-origins-invalid": action.name }, t.originsPinned);
       }
-      if (typeof action.agentEnabled !== "boolean") return null;
       var busy = saving === action.name;
-      return h("button", {
-        className: P + "-toggle", "data-agent-row": action.name,
-        type: "button", role: "switch", "aria-checked": action.agentEnabled,
-        disabled: busy, "data-agent-toggle": action.name,
-        "aria-label": t.agentSwitch + " · " + action.name,
-        onClick: function () { setAgent(action, !action.agentEnabled); },
-      }, h("span", { className: P + "-track", "aria-hidden": true }),
-        h("span", null, busy ? t.agentSaving : t.agentSwitch));
+      var pinned = action.name === "actions.setActionOrigins";
+      var supported = Array.isArray(action.originsDeclared) ? action.originsDeclared : action.origins;
+      return h("div", { className: P + "-origins", "data-origins-row": action.name },
+        h("span", { className: P + "-origins-label" }, t.originsLabel),
+        ORIGINS.map(function (origin) {
+          var on = action.origins.indexOf(origin) >= 0;
+          var allowed = supported.indexOf(origin) >= 0;
+          var preset = Array.isArray(action.originsDefault) ? action.originsDefault : supported;
+          var byDefault = preset.indexOf(origin) >= 0;
+          return h("label", {
+            key: origin,
+            className: P + "-origin" + (allowed ? "" : " " + P + "-origin-off"),
+            title: pinned
+              ? t.originsPinnedHint
+              : !allowed
+                ? t.originsUnsupported
+                : originText[origin] + " · " + action.name + " · " + (byDefault ? t.originsDefaultOn : t.originsDefaultOff),
+          },
+            h("input", {
+              type: "checkbox",
+              checked: on,
+              disabled: busy || pinned || !allowed,
+              "data-origin": origin,
+              "data-origin-row": action.name,
+              "data-origin-supported": allowed ? "1" : "0",
+              onChange: function () { setOrigins(action, origin); },
+            }),
+            h("span", null, originText[origin]));
+        }),
+        busy ? h("span", { className: P + "-origins-label" }, t.originsSaving) : null);
     }
 
     function card(action) {
@@ -402,7 +450,7 @@ module.exports = function createActionSchemaView(options) {
             rows.some(function (row) { return row.required; })
               ? h("span", { className: P + "-badge " + P + "-req" }, t.required)
               : null),
-          agentSwitch(action)),
+          originsChips(action)),
         action.description ? h("p", { className: P + "-desc" }, Highlight.hit(action.description, kw)) : null,
         rows.length
           ? h("table", { className: P + "-table" },
@@ -480,7 +528,12 @@ module.exports = function createActionSchemaView(options) {
             t.filterType + " ",
             h("select", { value: typePick, "aria-label": t.filterType, onChange: function (e) { setTypePick(e.target.value); } },
               h("option", { value: "" }, t.allTypes),
-              typeOptions.map(function (name) { return h("option", { value: name, key: name }, name); }))))
+              typeOptions.map(function (name) { return h("option", { value: name, key: name }, name); }))),
+          h("label", { className: P + "-none" },
+            t.filterOrigin + " ",
+            h("select", { value: originPick, "aria-label": t.filterOrigin, "data-origin-filter": "", onChange: function (e) { setOriginPick(e.target.value); } },
+              h("option", { value: "" }, t.allOrigins),
+              ORIGINS.map(function (origin) { return h("option", { value: origin, key: origin }, originText[origin]); }))))
         : null,
       body,
       toast ? h("div", { className: P + "-toast", role: "status" }, toast) : null);

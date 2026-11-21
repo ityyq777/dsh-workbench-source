@@ -28,6 +28,23 @@
 6. **能力清单（capabilities）要跟着走**。新增记录域或桌面卡片时，
    `records[].primaryAction` 必须指向真实存在的 action，`warnings` 必须为空。
 
+### 调用来源（origins）：唯一的权限字段
+
+每个 action 可以声明 `origins`，决定哪些来源能调用它：`ui`（界面）/ `plugin`（同进程插件）/
+`agent`（DSH agent 通过 Workbench tool）/ `sync`（云同步）。
+
+- **声明是上界**（`origins`）。省略时默认 `["ui", "plugin", "agent"]`；`sync` 必须显式声明才会出现。
+  用户在 Action 页只能在这个范围内增减，越界配置得到 `ACTION_ORIGIN_UNSUPPORTED`。
+- **默认启用另算**（`originsDefault`，⊆ `origins`，省略=上界）。「支持 agent 但默认不给」
+  写 `origins: ["ui", "agent"]` + `originsDefault: ["ui"]`。
+- **不给 agent 就写 `["ui", "plugin"]`**；**只给界面（安全约束）写 `["ui"]`**。
+  不要再引入 `agentEnabled` / `agentLocked` 之类的第二个开关——权限只用这两个字段。
+- **住宿主元 action 一律声明**：改权限的 `actions.setActionOrigins` 自身钉死 `["ui"]`；
+  能替 agent 发起会话的 `host.agentRun` 声明 `["plugin"]`（agent 不可调，避免自我放大）。
+- **执行期 guard 不删**。来源数组是宿主的统一第一道门，插件 `execute` 里的
+  `only()` / `deny()` 是第二道；两道都保留，放开数组不会削弱安全边界。
+- 新增 action 时顺手确认默认来源对不对：写操作一般 `["ui", "plugin"]`，读类可省略。
+
 ### 改完必跑
 
 ```sh

@@ -24,6 +24,9 @@ export interface DomainViewDecl {
 /** action 调用来源：plugin 是插件后台调用，不能伪装成 ui。 */
 export type ActionOrigin = "ui" | "agent" | "sync" | "plugin";
 
+/** 全部来源，供默认值与界面多选使用。 */
+export const ALL_ACTION_ORIGINS: readonly ActionOrigin[] = ["ui", "plugin", "agent", "sync"];
+
 /** action 执行上下文：宿主注入来源与事件通道。 */
 export interface DomainActionContext {
   /** ui/agent 本地写入需要进 change log；sync 回写不进；plugin 是插件后台 */
@@ -42,18 +45,20 @@ export interface DomainActionDef<I = Record<string, unknown>, O = unknown> {
   /** 可选调用示例；actions.help 会原样返回，便于 agent 自举 */
   examples?: Record<string, unknown>[];
   /**
-   * agent 是否可调用：省略视为 true；声明 false 表示默认只给界面用。
-   * 宿主另有一份「本机 meta 覆盖」，界面可以按 action 单独打开/关闭，
-   * 关闭后 agent 在 actions.list / actions.help / capabilities.* / *.actionSchema 中都看不到它，
-   * 硬调会得到 ACTION_AGENT_DISABLED；origin=ui 的调用完全不受影响。
+   * action **本身支持**的调用来源（上界，多选）：ui / plugin / agent / sync。
+   * 省略时为 ["ui", "plugin", "agent"]（sync 必须显式声明才会被允许）；
+   * 写了就只放行列出的来源，越界调用得到 ACTION_ORIGIN_DENIED，界面也无法开启。
+   * 常见写法：只给界面（安全约束）→ ["ui"]；支持 agent 但默认不给 → origins: ["ui", "agent"]
+   * 配合 originsDefault: ["ui"]。
+   * 界面可以在「Action 页」按 action 在上界内调整（落本机 meta，不进备份与云同步）。
    */
-  agentEnabled?: boolean;
+  origins?: ActionOrigin[];
   /**
-   * 安全约束：agent 永远不可调用，界面也不能打开（不是默认值，是硬锁）。
-   * 用于发信、删除、凭据这类「本来就不该交给 agent」的 action；
-   * 与 agentEnabled:false 的区别是后者只是默认关闭、界面仍可开。
+   * **默认启用**的来源（必须 ⊆ origins）：省略时等于 origins（支持即默认开启）。
+   * 用于「支持 agent 但默认不给 agent」这类策略：例如 origins: ["ui", "agent"]、
+   * originsDefault: ["ui"]，用户可在界面把 agent 打开。
    */
-  agentLocked?: boolean;
+  originsDefault?: ActionOrigin[];
 }
 
 /**

@@ -37,46 +37,74 @@ function boot() {
   }
   return { call, tool, close: () => cleanups.reverse().forEach(fn => fn()) };
 }
-const action = 'tags.create', setter = 'actions.setAgentAccess';
+const action = 'tags.create', contact = 'contacts.create', setter = 'actions.setActionOrigins';
 let env, db;
 try {
   env = boot();
   db = new DatabaseSync(join(home, 'workbench.db'));
   const count = () => db.prepare('SELECT COUNT(*) AS n FROM sync_change_log').get().n;
-  const set = (enabled, origin = 'ui') => env.call(setter, { action, agentEnabled: enabled }, origin);
+  const set = (origins, target = action, origin = 'ui') => env.call(setter, { action: target, origins }, origin);
   const entries = async (name, origin) => (await env.call(name, {}, origin)).actions;
-  assert.equal((await entries('actions.list', 'ui')).find(x => x.name === action).agentEnabled, true);
-  const contact = 'contacts.create';
-  assert.equal((await entries('contacts.actionSchema', 'ui')).find(x => x.name === contact).agentEnabled, false);
-  await assert.rejects(env.call(contact, { name: '默认禁止' }), /ACTION_AGENT_DISABLED/);
-  await env.call(setter, { action: contact, agentEnabled: true }, 'ui');
-  await env.call(contact, { name: '手动开放后可用' });
-  await assert.rejects(env.call(contact, { name: '其他来源不被放开' }, 'plugin'));
-  await env.call(setter, { action: contact, agentEnabled: false }, 'ui');
-  await assert.rejects(env.call(contact, { name: '恢复默认' }), /ACTION_AGENT_DISABLED/);
+  const find = (list, name) => list.find(x => x.name === name);
+  // 插件路径直接把 Error 抛出来（带 code），工具路径把 code 拼进文本：两种都认。
+  const denied = async (promise) => {
+    try { await promise; } catch (error) { return error; }
+    throw new Error('期望被 ACTION_ORIGIN_DENIED 拦下，但调用成功了');
+  };
+  const isDenied = (error) =>
+    !!error && (error.code === 'ACTION_ORIGIN_DENIED' || /ACTION_ORIGIN_DENIED/.test(String(error.message)));
+
+  // 1) 声明默认值：没写 origins 的默认放行 ui/plugin/agent（sync 要显式声明）；写了 ["ui"] 的只给界面。
+  assert.deepEqual(find(await entries('actions.list', 'ui'), action).origins, ['ui', 'plugin', 'agent']);
+  // contacts 这类「写操作」：本身支持 agent，但默认只给界面（originsDefault）。
+  const contactEntry = find(await entries('contacts.actionSchema', 'ui'), contact);
+  assert.deepEqual(contactEntry.origins, ['ui']);
+  assert.deepEqual(contactEntry.originsDeclared, ['ui', 'agent']);
+  assert.deepEqual(contactEntry.originsDefault, ['ui']);
+  assert.ok(isDenied(await denied(env.call(contact, { name: '默认禁止 agent' }))));
+  // 插件来源不在声明上界里：数组闸门先拦。
+  assert.ok(isDenied(await denied(env.call(contact, { name: '插件也调不动' }, 'plugin'))));
+
+  // 2) 支持 agent 但默认关闭：界面可以打开，打开后 agent 能过数组闸门（域内规则仍生效）。
+  await set(['ui', 'agent'], contact);
+  assert.deepEqual(find(await entries('contacts.actionSchema', 'ui'), contact).origins, ['ui', 'agent']);
+  // 上界之外仍然配不进去（contacts 只声明了 ui/agent，sync 越界）。
+  await assert.rejects(env.call(setter, { action: contact, origins: ['ui', 'sync'] }, 'ui'), /不支持/);
+  await set(['ui'], contact);
+  assert.deepEqual(find(await entries('contacts.actionSchema', 'ui'), contact).origins, ['ui']);
+
+  // 3) 收窄 tags.create：只给界面，agent 从此在发现与调用两条路上都看不到它；权限改动不写同步。
   const initial = count();
-  await set(false);
+  await set(['ui'], action);
   assert.equal(count(), initial);
-  assert.equal((await entries('tags.actionSchema', 'ui')).find(x => x.name === action).agentEnabled, false);
+  assert.deepEqual(find(await entries('tags.actionSchema', 'ui'), action).origins, ['ui']);
   for (const list of ['tags.actionSchema', 'actions.list']) assert(!(await env.call(list)).includes(action));
   await assert.rejects(env.call('actions.help', { action }));
-  await assert.rejects(env.call(action, { name: '不应创建' }), /ACTION_AGENT_DISABLED/);
-  assert.match((await env.tool.execute({ action, args: { name: '工具也不应创建' } })).text, /ACTION_AGENT_DISABLED/);
-  await assert.rejects(set(true, 'agent'));
-  await assert.rejects(env.call(setter, { action: setter, agentEnabled: true }, 'ui'));
-  await assert.rejects(env.call(setter, { action, agentEnabled: 'false' }, 'ui'));
+  // 默认声明里没有 sync：想放开同步同样越界。
+  await assert.rejects(env.call(setter, { action, origins: ['ui', 'sync'] }, 'ui'), /不支持/);
+  assert.ok(isDenied(await denied(env.call(action, { name: '不应创建' }))));
+  assert.match((await env.tool.execute({ action, args: { name: '工具也不应创建' } })).text, /ACTION_ORIGIN_DENIED/);
+
+  // 4) 权限不可自授：agent 改不了任何 action 的来源；来源设置自身的数组被钉死为 ui。
+  await assert.rejects(set(['ui', 'agent'], action, 'agent'));
+  await assert.rejects(set(['ui', 'agent'], setter));
+  await assert.rejects(set([], action));
   assert.equal(count(), initial);
+
+  // 5) 界面自身不受影响；被拦的调用留下审计。
   await env.call(action, { name: '界面可创建' }, 'ui');
   const audit = (await env.call('audit.list', { action }, 'ui')).records;
   assert(audit.some(x => x.actor === 'ui' && x.ok));
   assert(audit.some(x => x.actor === 'agent' && !x.ok));
+
+  // 6) 覆盖存在本机 meta：重启后仍生效。
   env.close(); env = boot();
-  await assert.rejects(env.call(action, { name: '跨重启仍关闭' }), /ACTION_AGENT_DISABLED/);
+  assert.ok(isDenied(await denied(env.call(action, { name: '跨重启仍关闭' }))));
   const beforeRestore = count();
-  await set(true);
+  await set(['ui', 'plugin', 'agent'], action);
   assert.equal(count(), beforeRestore);
   await env.call(action, { name: '恢复后可创建' });
-  console.log('PASS: 实际工具、宿主与本域发现、UI 不受限、权限不可自授、审计、重启持久化、无同步写入');
+  console.log('PASS: 来源数组默认值、工具与发现过滤、界面可放开/收窄、权限不可自授、审计、重启持久化、无同步写入');
 } finally {
   db?.close(); env?.close();
   if (dirname(home) === tmpdir() && home.split('/').pop().startsWith('wb-agent-access-')) rmSync(home, { recursive: true, force: true });

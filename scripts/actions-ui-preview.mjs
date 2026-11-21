@@ -80,11 +80,12 @@ import factory from ${JSON.stringify(join(ROOT, "packages/addons/lib/action-sche
 var api = {
   schema: function () { return Promise.resolve(window.__WB_SCHEMA__); },
   call: function (name, args) {
-    if (name === 'actions.setAgentAccess') {
+    if (name === 'actions.setActionOrigins') {
       var entry = (window.__WB_PAYLOADS__[CURRENT].actions || []).find(x => x.name === args.action);
-      if (!entry || typeof args.agentEnabled !== 'boolean') return Promise.reject(new Error('Invalid preview action'));
-      entry.agentEnabled = args.agentEnabled;
-      return Promise.resolve({ result: { action: entry.name, agentEnabled: entry.agentEnabled } });
+      if (!entry || !Array.isArray(args.origins)) return Promise.reject(new Error('Invalid preview action'));
+      entry.origins = args.origins;
+      entry.originsSource = 'meta';
+      return Promise.resolve({ result: { action: entry.name, origins: entry.origins, source: 'meta' } });
     }
     var short = String(name || "").split(".")[0];
     var full = short.indexOf("wb-addon-") === 0 ? short : "wb-addon-" + short;

@@ -40,7 +40,8 @@ export function registerActions(api, engine) {
   });
 
   action("automation.ruleCreate", {
-    agentEnabled: false,
+    origins: ["ui", "agent"],
+    originsDefault: ["ui"],
     description: "创建规则；写操作仅 UI。execMode=action 时直接调用白名单 action，execMode=agent 时由宿主「自动化任务」按时把提示词投给会话",
     input: {
       type: "object",
@@ -82,7 +83,8 @@ export function registerActions(api, engine) {
   });
 
   action("automation.ruleUpdate", {
-    agentEnabled: false,
+    origins: ["ui", "agent"],
+    originsDefault: ["ui"],
     description: "局部更新规则；写操作仅 UI。AI 规则的改动会同步到宿主任务；执行方式创建后不可修改",
     input: {
       type: "object",
@@ -126,7 +128,8 @@ export function registerActions(api, engine) {
   });
 
   action("automation.ruleDelete", {
-    agentEnabled: false,
+    origins: ["ui", "agent"],
+    originsDefault: ["ui"],
     description: "软删规则；仅 UI",
     input: { type: "object", properties: { id: { type: "string" } }, required: ["id"] },
     execute: (args, ctx) => {
@@ -136,7 +139,8 @@ export function registerActions(api, engine) {
   });
 
   action("automation.ruleRun", {
-    agentEnabled: false,
+    origins: ["ui", "agent"],
+    originsDefault: ["ui"],
     description: "立即执行一次规则；action 规则仍受白名单、条件和频率限制，AI 规则会请求宿主立即投递一次",
     input: { type: "object", properties: { id: { type: "string" } }, required: ["id"] },
     execute: (args, ctx) => {
@@ -195,7 +199,8 @@ export function registerActions(api, engine) {
   });
 
   action("automation.configSet", {
-    agentEnabled: false,
+    origins: ["ui", "agent"],
+    originsDefault: ["ui"],
     description: "修改最大规则数、每小时上限与允许调用的 action；仅 UI",
     input: {
       type: "object",
@@ -233,7 +238,7 @@ export function registerActions(api, engine) {
             name: String((row && row.name) || ""),
             domain: String((row && row.domain) || ""),
             description: String((row && row.description) || ""),
-            agentEnabled: !(row && row.agentEnabled === false),
+            origins: row && Array.isArray(row.origins) ? row.origins : [],
           }))
           .filter((row) => row.name && !isDenied(row.name))
           .sort((a, b) => a.name.localeCompare(b.name));
@@ -258,7 +263,8 @@ export function registerActions(api, engine) {
   });
 
   action("automation.dataQuery", {
-    agentEnabled: false,
+    origins: ["ui", "agent"],
+    originsDefault: ["ui"],
     description: "只读查询白名单表；仅 UI",
     input: {
       type: "object",

@@ -39,27 +39,28 @@ function mount(payload, options = {}, lang = "zh") {
   };
 }
 
+const ORIGINS = ["ui", "plugin", "agent", "sync"];
+
 const roster = {
   ok: true,
   shellVersion: "0.8.0",
   domains: [{ id: "wb-addon-vault", title: "保险箱", version: "1.4.2", actionCount: 3 }],
   actions: [
-    { name: "vault.status", domain: "wb-addon-vault", description: "只读状态", input: { type: "object", properties: {} }, agentEnabled: true },
-    { name: "vault.secretList", domain: "wb-addon-vault", description: "密钥列表", input: { type: "object", properties: {} }, agentEnabled: false },
-    { name: "vault.secretReveal", domain: "wb-addon-vault", description: "显示密钥明文", input: { type: "object", properties: {} }, agentEnabled: false, agentLocked: true },
-    // 老宿主 / agent 视角不带 agentEnabled：既不给开关，也不给「已关闭」的假象。
-    { name: "vault.legacy", domain: "wb-addon-vault", description: "未注入开关字段", input: { type: "object", properties: {} } },
+    { name: "vault.status", domain: "wb-addon-vault", description: "只读状态", input: { type: "object", properties: {} }, origins: ORIGINS.slice(), originsDeclared: ORIGINS.slice(), originsSource: "declared" },
+    { name: "vault.secretList", domain: "wb-addon-vault", description: "密钥列表", input: { type: "object", properties: {} }, origins: ["ui"], originsDeclared: ["ui", "plugin"], originsSource: "declared" },
+    // 老宿主 / agent 视角不带 origins：既不给多选，也不给「全部关闭」的假象。
+    { name: "vault.legacy", domain: "wb-addon-vault", description: "未注入来源字段", input: { type: "object", properties: {} } },
   ],
 };
 
-// ── 开关渲染：可切换、已关闭、安全约束锁定、未注入 ────────────────────
+// ── 来源多选：勾选状态、切换、固定来源 ────────────────────────────────
 {
   const calls = [];
   const api = {
     call(name, args) {
       calls.push({ name, args });
-      if (name === "actions.setAgentAccess") {
-        return Promise.resolve({ ok: true, result: { action: args.action, agentEnabled: args.agentEnabled, source: "meta", declared: true } });
+      if (name === "actions.setActionOrigins") {
+        return Promise.resolve({ ok: true, result: { action: args.action, origins: args.origins, source: "meta" } });
       }
       assert.equal(name, "vault.actionSchema", "业务插件页只能读本域 actionSchema");
       return Promise.resolve({ ok: true, result: roster });
@@ -71,43 +72,88 @@ const roster = {
   let tree = m.rerender();
   assert.equal(calls.length, 1);
 
-  const toggles = findAll(tree, (n) => n.props && n.props["data-agent-toggle"]);
-  assert.deepEqual(toggles.map((n) => n.props["data-agent-toggle"]), ["vault.status", "vault.secretList"], "只有宿主注入了 agentEnabled 的 action 才给开关");
-  assert.ok(toggles.every(n => n.type === "button" && n.props.role === "switch"));
-  assert.equal(toggles[0].props["aria-checked"], true);
-  assert.equal(toggles[1].props["aria-checked"], false);
-  assert.ok(!text(tree).includes("vault.legacy") || !find(tree, (n) => n.props && n.props["data-agent-toggle"] === "vault.legacy"), "未注入 agentEnabled 时不给开关");
+  const chips = findAll(tree, (n) => n.props && n.props["data-origin-row"]);
+  assert.equal(chips.length, 8, "两条带 origins 的 action 各四个来源 chip；未注入来源的不渲染");
+  assert.ok(chips.every((n) => n.type === "input" && n.props.type === "checkbox"), "来源多选用原生 checkbox");
+  const rows = [...new Set(chips.map((n) => n.props["data-origin-row"]))];
+  assert.deepEqual(rows, ["vault.status", "vault.secretList"]);
+  const pressed = chips.filter((n) => n.props.checked === true).map((n) => n.props["data-origin-row"] + ":" + n.props["data-origin"]);
+  assert.deepEqual(pressed, ["vault.status:ui", "vault.status:plugin", "vault.status:agent", "vault.status:sync", "vault.secretList:ui"]);
+  assert.ok(!find(tree, (n) => n.props && n.props["data-origin-row"] === "vault.legacy"), "未注入 origins 时不给多选");
+  // 声明是上界：secretList 只支持 ui/plugin，agent 与 sync 这两个 chip 必须点不动。
+  const bound = chips.filter((n) => n.props["data-origin-row"] === "vault.secretList");
+  assert.deepEqual(bound.map((n) => [n.props["data-origin"], n.props.disabled, n.props["data-origin-supported"]]),
+    [["ui", false, "1"], ["plugin", false, "1"], ["agent", true, "0"], ["sync", true, "0"]], "只有 action 声明支持的来源才可配置");
 
-  const locked = find(tree, (n) => n.props && n.props["data-agent-locked"] === "vault.secretReveal");
-  assert.ok(locked, "agentLocked 的 action 应有安全约束标记");
-  assert.match(text(locked), /仅界面/);
-  assert.equal(find(locked, (n) => n.type === "input"), undefined, "安全约束标记里不能再包一个开关");
-  assert.ok(!toggles.some((n) => n.props["data-agent-toggle"] === "vault.secretReveal"), "锁定 action 不渲染 checkbox");
-
-  // 打开「vault.secretList」：只传 action + agentEnabled，宿主负责归属与校验。
+  // 给「vault.secretList」加上 agent：只传 action + 归一后的数组，宿主负责归属与校验。
   calls.length = 0;
-  const write = toggles.find((n) => n.props["data-agent-toggle"] === "vault.secretList");
-  write.props.onClick();
+  const agentChip = chips.find((n) => n.props["data-origin-row"] === "vault.secretList" && n.props["data-origin"] === "agent");
+  agentChip.props.onChange();
   await settle();
   tree = m.rerender();
-  // 沙箱里的对象原型不同，按 JSON 比较（下同）。
-  assert.equal(JSON.stringify(calls), JSON.stringify([{ name: "actions.setAgentAccess", args: { action: "vault.secretList", agentEnabled: true } }]));
-  const after = find(tree, (n) => n.props && n.props["data-agent-toggle"] === "vault.secretList");
-  assert.equal(after.props["aria-checked"], true, "宿主返回后开关应就地变为打开");
-  assert.match(text(tree), /已允许 agent 调用/);
+  assert.equal(JSON.stringify(calls), JSON.stringify([{ name: "actions.setActionOrigins", args: { action: "vault.secretList", origins: ["ui", "agent"] } }]));
+  const after = find(tree, (n) => n.props && n.props["data-origin-row"] === "vault.secretList" && n.props["data-origin"] === "agent");
+  assert.equal(after.props.checked, true, "宿主返回后复选框应就地变为选中");
+  assert.match(text(tree), /已更新允许来源/);
 
-  // 关闭同一条：再点一次应写 false
+  // 再取消 ui 之外的最后一个来源：数组从 ["ui","agent"] 变 ["agent"]
   calls.length = 0;
-  after.props.onClick();
+  find(tree, (n) => n.props && n.props["data-origin-row"] === "vault.secretList" && n.props["data-origin"] === "ui").props.onChange();
   await settle();
-  tree = m.rerender();
-  assert.equal(JSON.stringify(calls), JSON.stringify([{ name: "actions.setAgentAccess", args: { action: "vault.secretList", agentEnabled: false } }]));
-  assert.match(text(tree), /已禁止 agent 调用/);
+  m.rerender();
+  assert.equal(JSON.stringify(calls), JSON.stringify([{ name: "actions.setActionOrigins", args: { action: "vault.secretList", origins: ["agent"] } }]));
 }
 
-// ── 切换失败：显示原因、开关回退（不假装成功） ─────────────────────
+// ── 来源筛选：子插件页与宿主页都能按来源过滤 ────────────────────────
 {
-  const fixture = { ok: true, shellVersion: "0.8.0", domains: [], actions: [{ name: "vault.status", domain: "wb-addon-vault", input: { type: "object", properties: {} }, agentEnabled: true }] };
+  const mixed = {
+    ok: true, shellVersion: "0.8.0", domains: [],
+    actions: [
+      { name: "vault.status", domain: "wb-addon-vault", input: { type: "object", properties: {} }, origins: ["ui", "plugin", "agent"], originsDeclared: ["ui", "plugin", "agent"], originsSource: "declared" },
+      { name: "vault.onlyUi", domain: "wb-addon-vault", input: { type: "object", properties: {} }, origins: ["ui"], originsDeclared: ["ui", "plugin"], originsSource: "declared" },
+      { name: "vault.noAgent", domain: "wb-addon-vault", input: { type: "object", properties: {} }, origins: ["ui", "plugin"], originsDeclared: ["ui", "plugin"], originsSource: "declared" },
+      { name: "vault.legacy", domain: "wb-addon-vault", input: { type: "object", properties: {} } },
+    ],
+  };
+  const api = { call() { return Promise.resolve({ ok: true, result: mixed }); } };
+  const m = mount({ api }, { domain: "vault", prefix: "wbv" });
+  await settle();
+  let tree = m.rerender();
+  const filter = find(tree, (n) => n.props && Object.prototype.hasOwnProperty.call(n.props, "data-origin-filter"));
+  assert.ok(filter, "工具栏应有一个来源筛选下拉");
+  assert.deepEqual(findAll(filter, (n) => n.type === "option").map((n) => n.props.value), ["", "ui", "plugin", "agent", "sync"], "筛选选项覆盖四个来源 + 全部");
+  const names = () => findAll(m.tree(), (n) => n.type === "code" && String(n.props.children || "").startsWith("vault.")).map((n) => String(n.props.children));
+  assert.equal(names().length, 4, "不筛选时四条都在");
+  filter.props.onChange({ target: { value: "agent" } });
+  await settle();
+  tree = m.rerender();
+  assert.deepEqual(names(), ["vault.status"], "按 agent 筛只剩允许 agent 的那条（未注入来源的不算）");
+  find(tree, (n) => n.props && Object.prototype.hasOwnProperty.call(n.props, "data-origin-filter")).props.onChange({ target: { value: "plugin" } });
+  await settle();
+  tree = m.rerender();
+  assert.deepEqual(names().sort(), ["vault.noAgent", "vault.status"], "按 plugin 筛得两条");
+}
+
+// ── 取消最后一个来源：拒绝并提示，不发请求 ───────────────────────────
+{
+  const one = { ok: true, shellVersion: "0.8.0", domains: [], actions: [{ name: "vault.only", domain: "wb-addon-vault", input: { type: "object", properties: {} }, origins: ["ui"], originsSource: "declared" }] };
+  const calls = [];
+  const api = {
+    call(name, args) { calls.push({ name, args }); return Promise.resolve({ ok: true, result: one }); },
+  };
+  const m = mount({ api }, { domain: "vault", prefix: "wbv" });
+  await settle();
+  let tree = m.rerender();
+  find(tree, (n) => n.props && n.props["data-origin"] === "ui" && n.props["data-origin-row"] === "vault.only").props.onChange();
+  await settle();
+  tree = m.rerender();
+  assert.equal(calls.length, 1, "只剩一个来源时不许清空，不发写请求");
+  assert.match(text(tree), /至少要保留一个来源/);
+}
+
+// ── 切换失败：显示原因、状态不变（不假装成功） ────────────────────────
+{
+  const fixture = { ok: true, shellVersion: "0.8.0", domains: [], actions: [{ name: "vault.status", domain: "wb-addon-vault", input: { type: "object", properties: {} }, origins: ["ui"], originsDeclared: ["ui", "agent"], originsSource: "declared" }] };
   const api = {
     call(name) {
       if (name === "vault.actionSchema") return Promise.resolve({ ok: true, result: fixture });
@@ -117,12 +163,12 @@ const roster = {
   const m = mount({ api }, { domain: "vault", prefix: "wbv" });
   await settle();
   let tree = m.rerender();
-  find(tree, (n) => n.props && n.props["data-agent-toggle"] === "vault.status").props.onClick();
+  find(tree, (n) => n.props && n.props["data-origin"] === "agent" && n.props["data-origin-row"] === "vault.status").props.onChange();
   await settle();
   tree = m.rerender();
-  assert.match(text(tree), /切换 agent 开关失败/);
+  assert.match(text(tree), /更新允许来源失败/);
   assert.match(text(tree), /本机 meta 写失败/);
-  assert.equal(find(tree, (n) => n.props && n.props["data-agent-toggle"] === "vault.status").props["aria-checked"], true, "失败时开关保持原值");
+  assert.equal(find(tree, (n) => n.props && n.props["data-origin"] === "agent").props.checked, false, "失败时来源保持原值");
 }
 
 // ── 宿主页数据源：actions.list + wb-shell，域名原样保留 ──────────────
@@ -132,8 +178,8 @@ const roster = {
     shellVersion: "0.8.0",
     domains: [{ id: "wb-shell", actionCount: 2 }],
     actions: [
-      { name: "audit.list", domain: "wb-shell", description: "查审计", input: { type: "object", properties: { action: { type: "string" } } }, agentEnabled: true },
-      { name: "actions.setAgentAccess", domain: "wb-shell", description: "改 agent 开关", input: { type: "object", properties: {} }, agentEnabled: false, agentLocked: true },
+      { name: "audit.list", domain: "wb-shell", description: "查审计", input: { type: "object", properties: { action: { type: "string" } } }, origins: ORIGINS.slice(), originsDeclared: ORIGINS.slice(), originsSource: "declared" },
+      { name: "actions.setActionOrigins", domain: "wb-shell", description: "改允许来源", input: { type: "object", properties: {} }, origins: ["ui"], originsDeclared: ["ui"], originsSource: "declared" },
     ],
   };
   const calls = [];
@@ -151,9 +197,11 @@ const roster = {
   assert.equal(m.view.DOMAIN, "wb-shell", "actions.list 模式下域名原样保留，不补 wb-addon-");
   const body = text(tree);
   assert.match(body, /audit\.list/);
-  assert.match(body, /宿主 action 的 agent 开关/);
-  assert.ok(findAll(tree, (n) => n.props && n.props["data-agent-toggle"]).length === 1);
-  assert.ok(find(tree, (n) => n.props && n.props["data-agent-locked"] === "actions.setAgentAccess"), "宿主自身的改开关动作必须标成不可放开");
+  assert.match(body, /宿主 action 的允许来源/);
+  assert.equal(findAll(tree, (n) => n.props && n.props["data-origin-row"]).length, 8);
+  const pinned = findAll(tree, (n) => n.props && n.props["data-origin-row"] === "actions.setActionOrigins");
+  assert.ok(pinned.length === 4 && pinned.every((n) => n.props.disabled === true), "权限设置自身的来源被钉死，界面改不动");
+  assert.ok(pinned.filter((n) => n.props["data-origin-supported"] === "0").length === 3, "只有 ui 在声明范围内，其余三个连开关都不该给");
   assert.ok(!body.includes("v1.4.2"), "宿主页没有插件版本 badge");
 }
 
@@ -161,26 +209,25 @@ const roster = {
 {
   const rt = createReact();
   const pages = loadCjs(resolve(ROOT, "packages/shell/client/system-pages.cjs"), { react: rt.React });
-  const roster = {
+  const hostRoster = {
     ok: true,
     shellVersion: "0.8.0",
     domains: [{ id: "wb-shell", actionCount: 1 }],
-    actions: [{ name: "audit.list", domain: "wb-shell", description: "查审计", input: { type: "object", properties: {} }, agentEnabled: true }],
+    actions: [{ name: "audit.list", domain: "wb-shell", description: "查审计", input: { type: "object", properties: {} }, origins: ORIGINS.slice(), originsDeclared: ORIGINS.slice(), originsSource: "declared" }],
   };
   const posts = [];
   const api = {
     post(path, body) {
       posts.push({ path, body });
-      return Promise.resolve({ ok: true, result: roster });
+      return Promise.resolve({ ok: true, result: hostRoster });
     },
   };
-  const t = (key) => ({ tab_agent: "Agent 权限", agent_desc: "开关只存本机，立即生效" }[key] || key);
-  // 真实客户端用 react/jsx-runtime：children 放在 props 里；迷你 React 的 createElement 只吃可变参数，这里转一下。
+  const t = (key) => ({ tab_agent: "Agent 权限", agent_desc: "允许来源只存本机，立即生效" }[key] || key);
   const jsxJsx = (type, props) => {
     const p = Object.assign({}, props);
-    const kids = p.children;
+    const kidsIn = p.children;
     delete p.children;
-    return rt.React.createElement(type, p, ...(Array.isArray(kids) ? kids : kids === undefined ? [] : [kids]));
+    return rt.React.createElement(type, p, ...(Array.isArray(kidsIn) ? kidsIn : kidsIn === undefined ? [] : [kidsIn]));
   };
   const jsx = { jsx: jsxJsx, jsxs: jsxJsx };
   const el = pages.agentAccessPage({ jsx, t, lang: "zh", api, head: (title, desc) => rt.React.createElement("div", { className: "head" }, title, desc) });
@@ -210,42 +257,45 @@ const roster = {
   const locale = readFileSync(resolve(ROOT, "packages/shell/client/locale.cjs"), "utf8");
   assert.equal((locale.match(/tab_agent:/g) || []).length, 2, "中英文都要有 Agent 权限文案");
 
+  // 声明层：权限只剩 origins 一个字段，agentEnabled / agentLocked 必须绝迹。
   const pluginFile = (id) => resolve(ROOT, "packages/addons", id, "lib/domain/actions.js");
-  const expectations = [
-    // 默认仅界面的 action：迁移后仍由宿主按 agentEnabled:false 拒绝 agent，但用户可以在 Action 页打开。
-    ["mail", ["mail.accountCreate", "mail.accountUpdate", "mail.accountDelete", "mail.accountTest", "mail.accountProbe", "mail.mailboxSync", "mail.messageSend", "mail.messageMarkRead", "mail.messageMove", "mail.messageDelete", "mail.sync", "mail.dataQuery"]],
-    ["contacts", ["contacts.create", "contacts.update", "contacts.delete", "contacts.groupCreate", "contacts.groupDelete", "contacts.importVcf"]],
-    ["calendar", ["calendar.calendarCreate", "calendar.calendarUpdate", "calendar.calendarDelete", "calendar.eventCreate", "calendar.eventUpdate", "calendar.eventDelete", "calendar.eventRemind", "calendar.dataQuery"]],
-    ["salary", ["salary.dataQuery"]],
-  ];
-  for (const [id, names] of expectations) {
+  // 口径：原 agentEnabled:false → origins: ["ui", "agent"] + originsDefault: ["ui"]
+  // （本身支持 agent、默认只给界面，用户可在界面打开）；原 agentLocked → origins: ["ui"]（不可放开）。
+  const expected = {
+    automation: { ui: 0, agentOff: 6 },
+    calendar: { ui: 0, agentOff: 8 },
+    contacts: { ui: 0, agentOff: 6 },
+    mail: { ui: 1, agentOff: 12 },
+    salary: { ui: 0, agentOff: 1 },
+    vault: { ui: 21, agentOff: 0 },
+  };
+  for (const [id, want] of Object.entries(expected)) {
     const src = readFileSync(pluginFile(id), "utf8");
-    const declared = [...src.matchAll(/action\("([\w.]+)", \{\n?\s*agentEnabled: false/g)].map((m) => m[1]).sort();
-    assert.deepEqual(declared, [...names].sort(), id + " 的 agentEnabled:false 清单应与迁移清单一致");
-    assert.match(src, /!== "ui" && (?:\w+\.)?origin !== "agent"/, id + " 的 origin guard 应放行 agent、继续拒绝 plugin/sync");
+    assert.equal((src.match(/origins: \["ui"\]/g) || []).length, want.ui, id + " 的 origins:[\"ui\"] 声明数量");
+    assert.equal((src.match(/origins: \["ui", "agent"\]/g) || []).length, want.agentOff, id + " 的 origins:[\"ui\", \"agent\"] 声明数量");
+    assert.equal((src.match(/originsDefault: \["ui"\]/g) || []).length, want.agentOff, id + " 的 originsDefault:[\"ui\"] 数量应与「支持但默认关闭」一致");
+    assert.ok(!/agentEnabled|agentLocked/.test(src), id + " 不得残留 agentEnabled / agentLocked（权限只用来源数组）");
   }
 
-  // automation 用白名单写法：deny 允许 ui/agent，plugin/sync 仍被拒。
+  // 插件自己的执行期 guard 原样保留：数组是第一道门，execute 里的 origin 判断是第二道。
+  const contacts = readFileSync(pluginFile("contacts"), "utf8");
+  assert.match(contacts, /origin !== "ui" && origin !== "agent"/, "contacts 的 origin guard 应放行 agent、继续拒绝 plugin/sync");
   const automation = readFileSync(pluginFile("automation"), "utf8");
-  const autoDeclared = [...automation.matchAll(/action\("([\w.]+)", \{\n?\s*agentEnabled: false/g)].map((m) => m[1]).sort();
-  assert.deepEqual(autoDeclared, ["automation.configSet", "automation.dataQuery", "automation.ruleCreate", "automation.ruleDelete", "automation.ruleRun", "automation.ruleUpdate"], "automation 的 agentEnabled:false 清单应与迁移清单一致");
   assert.equal((automation.match(/deny\(ctx\.origin, \["ui", "agent"\]\)/g) || []).length, 6, "automation 的 6 处写入口 guard 应放行 agent");
   assert.equal((automation.match(/deny\(ctx\.origin, \["ui"\]\)/g) || []).length, 0, "不得残留只允许 ui 的旧 guard");
-
-  // 保险箱：安全约束不可放开，guard 原样保留（不能用开关绕过）。
   const vault = readFileSync(pluginFile("vault"), "utf8");
-  const locked = [...vault.matchAll(/api\.action\("([\w.]+)", \{\n?\s*agentLocked: true/g)].map((m) => m[1]).sort();
-  assert.deepEqual(locked, [
-    "vault.bindingPurge", "vault.bind", "vault.changePassphrase", "vault.dataQuery", "vault.dataTables",
-    "vault.groupCreate", "vault.groupDelete", "vault.groupUpdate", "vault.lease", "vault.lock",
-    "vault.rotateDeviceKey", "vault.secretCreate", "vault.secretDelete", "vault.secretReveal",
-    "vault.secretUpdate", "vault.setUnlockMode", "vault.setup", "vault.subjectRegister",
-    "vault.subjectSecrets", "vault.unbind", "vault.unlock",
-  ].sort(), "vault 的 agentLocked 清单应覆盖所有当前不允许 agent 的 action");
-  for (const name of ["vault.setup", "vault.secretReveal", "vault.dataQuery", "vault.lease"]) {
-    assert.ok(vault.includes('], "' + name + '")'), name + " 的原 guard 必须保留");
-  }
   assert.equal((vault.match(/only\(ctx, \["ui", "agent"/g) || []).length, 6, "原本就允许 agent 的读类保持原样");
+  for (const name of ["vault.setup", "vault.secretReveal", "vault.dataQuery", "vault.lease"]) {
+    assert.ok(vault.includes('], "' + name + '")'), name + " 的原 guard 必须保留（来源数组放开也不能绕过它）");
+  }
+
+  // 共享 Action 页与宿主实现：不得再出现旧的开关协议。
+  const viewSrc = readFileSync(VIEW_SRC, "utf8");
+  assert.ok(!/setAgentAccess|agentEnabled|agentLocked/.test(viewSrc), "共享 Action 页不得残留 agent 开关协议");
+  const actionsSrc = readFileSync(resolve(ROOT, "packages/shell/src/actions/actions.ts"), "utf8");
+  assert.ok(!/setAgentAccess|createAgentAccess/.test(actionsSrc), "宿主不得再注册 agent 开关");
+  assert.match(actionsSrc, /actions\.setActionOrigins/, "宿主应提供来源设置 action");
+  assert.match(actionsSrc, /ACTION_ORIGIN_DENIED/, "越界来源应有独立错误码");
 }
 
 console.log("AGENT ACCESS UI TEST PASS");
