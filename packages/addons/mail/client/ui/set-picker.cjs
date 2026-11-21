@@ -4,7 +4,9 @@
  *
  * 0.6.0 起邮箱账户不再手填地址：先选一个账号集合（vault.setList({type:"account"})），
  * 邮箱地址由集合上的 account 带出，授权码再从同一个集合里的凭据里选。
- * 只读保险箱既有接口，不改它的契约；保险箱没装/锁定时退化成说明文案。
+ * 只读保险箱既有接口，不改它的契约；保险箱没装时退化成说明文案。
+ * 集合名与账号都是明文元数据（vault.setList 不要求解锁），所以锁定态照常可选，
+ * 只有集合里的凭据（明文）才需要解锁——那是 SecretPicker 的事。
  */
 var FilterChecklist = require("../../../lib/filter-checklist.cjs");
 
@@ -52,8 +54,11 @@ module.exports = function SetPicker(props) {
     }
 
     // 首次挂载先拉一次：既回显已绑定集合的名称，也用于判断「原集合已失效」。
+    // 锁定与未初始化都照常取数：setList 只回元数据，不碰密钥。
+    var canRead = vault !== "loading" && vault !== "missing";
+
     React.useEffect(function () {
-        if (vault !== "ready") return;
+        if (!canRead) return;
         var alive = true;
         loadS[1](true);
         call("")
@@ -69,7 +74,7 @@ module.exports = function SetPicker(props) {
                 errS[1](C.errText(e));
             });
         return function () { alive = false; };
-    }, [vault]);
+    }, [vault, canRead]);
 
     // 展开面板时按关键字取数：服务端 setList 的 q 会匹配集合名与账号。
     React.useEffect(function () {
@@ -134,13 +139,9 @@ module.exports = function SetPicker(props) {
                 t(lang, "没有检测到凭据保险箱，无法选择账号集合。安装并初始化保险箱后刷新本页。",
                     "No vault plugin detected. Install and initialise the vault, then reload.")));
     }
-    if (vault === "locked" || vault === "init" || vault === "loading") {
+    if (vault === "loading") {
         return h("div", { className: "wbml-picker" },
-            h("div", { className: "wbml-picker-note", role: "status" },
-                vault === "loading"
-                    ? t(lang, "正在检查保险箱状态…", "Checking the vault…")
-                    : t(lang, "保险箱已锁定或未初始化，先解锁再选账号集合。",
-                        "The vault is locked or uninitialised — unlock it to pick an account set.")));
+            h("div", { className: "wbml-picker-note", role: "status" }, t(lang, "正在检查保险箱状态…", "Checking the vault…")));
     }
 
     function pick(id) {

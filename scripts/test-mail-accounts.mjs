@@ -132,7 +132,9 @@ assert.ok(setPicker.includes('aria-haspopup="listbox"'), '集合选择器声明�
 const setPickerLocked = renderToStaticMarkup(h(SetPicker, {
   h, React, C, api: { call: async () => ({ items: [] }) }, lang: 'zh', vault: 'locked', value: '', onChange: () => {},
 }));
-assert.ok(setPickerLocked.includes('保险箱已锁定或未初始化'), '保险箱锁定时集合选择器退化成说明文案');
+// 0.6.x：集合名与账号是明文元数据（vault.setList 不要求解锁），锁定态照常可选。
+assert.ok(setPickerLocked.includes('aria-haspopup="listbox"'), '保险箱锁定时集合选择器仍可展开');
+assert.equal(setPickerLocked.includes('保险箱已锁定或未初始化'), false, '锁定态不再退化成说明文案');
 
 // 编辑老账户：邮箱账号从账户回填，并提示补选集合。
 const edit163 = renderToStaticMarkup(h(AccountForm, {

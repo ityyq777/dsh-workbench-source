@@ -4164,8 +4164,9 @@ var require_set_picker = __commonJS({
           return next;
         });
       }
+      var canRead = vault !== "loading" && vault !== "missing";
       React.useEffect(function() {
-        if (vault !== "ready") return;
+        if (!canRead) return;
         var alive = true;
         loadS[1](true);
         call("").then(function(items) {
@@ -4181,7 +4182,7 @@ var require_set_picker = __commonJS({
         return function() {
           alive = false;
         };
-      }, [vault]);
+      }, [vault, canRead]);
       React.useEffect(function() {
         if (!open) return;
         var alive = true;
@@ -4243,19 +4244,11 @@ var require_set_picker = __commonJS({
           )
         );
       }
-      if (vault === "locked" || vault === "init" || vault === "loading") {
+      if (vault === "loading") {
         return h(
           "div",
           { className: "wbml-picker" },
-          h(
-            "div",
-            { className: "wbml-picker-note", role: "status" },
-            vault === "loading" ? t(lang, "\u6B63\u5728\u68C0\u67E5\u4FDD\u9669\u7BB1\u72B6\u6001\u2026", "Checking the vault\u2026") : t(
-              lang,
-              "\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A\u6216\u672A\u521D\u59CB\u5316\uFF0C\u5148\u89E3\u9501\u518D\u9009\u8D26\u53F7\u96C6\u5408\u3002",
-              "The vault is locked or uninitialised \u2014 unlock it to pick an account set."
-            )
-          )
+          h("div", { className: "wbml-picker-note", role: "status" }, t(lang, "\u6B63\u5728\u68C0\u67E5\u4FDD\u9669\u7BB1\u72B6\u6001\u2026", "Checking the vault\u2026"))
         );
       }
       function pick(id) {
@@ -4764,8 +4757,7 @@ var require_account_form = __commonJS({
           imapTls: true,
           smtpHost: "",
           smtpPort: 465,
-          smtpTls: true,
-          username: ""
+          smtpTls: true
         };
         base.email = "";
         base.name = "";
@@ -4782,7 +4774,6 @@ var require_account_form = __commonJS({
           email: editing.email || "",
           name: editing.name || "",
           accountSetId: editing.accountSetId || "",
-          username: editing.username || editing.email || "",
           imapHost: editing.imapHost || "",
           imapPort: editing.imapPort || 993,
           imapTls: editing.imapTls !== false,
@@ -4863,7 +4854,7 @@ var require_account_form = __commonJS({
         var next = id === "other" ? String(email || "") : compose(local, dom);
         var p = util.presetFor(providers, id, next);
         if (!p) return;
-        upd({ provider: id, email: next, domain: id === "other" ? "" : dom, imapHost: p.imapHost, imapPort: p.imapPort, imapTls: p.imapTls, smtpHost: p.smtpHost, smtpPort: p.smtpPort, smtpTls: p.smtpTls, username: p.username, advanced: id === "other" });
+        upd({ provider: id, email: next, domain: id === "other" ? "" : dom, imapHost: p.imapHost, imapPort: p.imapPort, imapTls: p.imapTls, smtpHost: p.smtpHost, smtpPort: p.smtpPort, smtpTls: p.smtpTls, advanced: id === "other" });
         portS[1]({ imap: true, smtp: true });
       }
       function onPick(id) {
@@ -4888,11 +4879,9 @@ var require_account_form = __commonJS({
             patch.smtpHost = p.smtpHost;
             patch.smtpPort = p.smtpPort;
             patch.smtpTls = p.smtpTls;
-            patch.username = p.username || address;
             patch.advanced = false;
           } else {
             patch.provider = "other";
-            patch.username = address;
             patch.advanced = true;
           }
           portS[1]({ imap: true, smtp: true });
@@ -4904,7 +4893,6 @@ var require_account_form = __commonJS({
         if (!/^\S+@\S+\.\S+$/.test(String(f.email || "").trim())) return t(lang, "\u6240\u9009\u8D26\u53F7\u96C6\u5408\u6CA1\u6709\u53EF\u7528\u7684\u90AE\u7BB1\u8D26\u53F7\uFF0C\u8BF7\u5148\u5230\u4FDD\u9669\u7BB1\u586B\u5199", "The selected account set has no usable email account");
         if (!String(f.name || "").trim()) return t(lang, "\u8BF7\u586B\u5199\u8D26\u6237\u540D\u79F0", "Enter an account name");
         if (!String(f.imapHost || "").trim()) return t(lang, "\u8BF7\u586B\u5199 IMAP \u670D\u52A1\u5668", "Enter the IMAP server");
-        if (!String(f.username || "").trim()) return t(lang, "\u8BF7\u586B\u5199\u767B\u5F55\u540D", "Enter the login name");
         if (!String(f.secretId || "").trim()) {
           return t(lang, "\u8BF7\u5148\u5728\u4FDD\u9669\u7BB1\u65B0\u5EFA\u5E76\u9009\u62E9\u51ED\u636E", "Create a credential in the vault and pick it here");
         }
@@ -4928,7 +4916,7 @@ var require_account_form = __commonJS({
           smtpHost: String(f.smtpHost || "").trim(),
           smtpPort: Number(f.smtpPort),
           smtpTls: !!f.smtpTls,
-          username: String(f.username || "").trim() || String(f.email || "").trim(),
+          username: String(f.email || "").trim(),
           secretId: String(f.secretId || "").trim()
         };
         var step = editing ? C.call(api, "mail.accountUpdate", Object.assign({ id: editing.id }, payload)) : C.call(api, "mail.accountCreate", payload);
@@ -5001,7 +4989,7 @@ var require_account_form = __commonJS({
         setBusy("probe", true);
         C.call(api, "mail.accountProbe", {
           email: f.email,
-          username: f.username,
+          username: f.email,
           imapHost: f.imapHost,
           imapPort: Number(f.imapPort),
           imapTls: !!f.imapTls,
@@ -5145,10 +5133,9 @@ var require_account_form = __commonJS({
         !f.advanced && f.imapHost ? h("p", { className: "wbml-hint-line" }, "IMAP " + f.imapHost + ":" + f.imapPort + (f.imapTls ? " TLS" : "") + " \xB7 SMTP " + (f.smtpHost || "\u2014") + ":" + f.smtpPort + (f.smtpTls ? " TLS" : " STARTTLS")) : null,
         !f.advanced ? h("button", { type: "button", className: "wbml-btn", onClick: function() {
           upd({ advanced: true });
-        } }, t(lang, "\u5176\u4ED6\u8BBE\u7F6E\uFF08\u4E3B\u673A / \u7AEF\u53E3 / \u767B\u5F55\u540D\uFF09", "Advanced (hosts / ports / login name)")) : h(
+        } }, t(lang, "\u5176\u4ED6\u8BBE\u7F6E\uFF08\u4E3B\u673A / \u7AEF\u53E3\uFF09", "Advanced (hosts / ports)")) : h(
           "div",
           { className: "wbml-acct-grid" },
-          field(t(lang, "\u767B\u5F55\u540D", "Login name"), textInput("username", { placeholder: t(lang, "\u9ED8\u8BA4\u4E0E\u90AE\u7BB1\u76F8\u540C", "Defaults to the email") })),
           field(t(lang, "IMAP \u670D\u52A1\u5668", "IMAP server"), textInput("imapHost")),
           field(t(lang, "IMAP \u7AEF\u53E3", "IMAP port"), portField("imapPort", t(lang, "IMAP \u7AEF\u53E3", "IMAP port"))),
           field("", tlsRow("imapTls", t(lang, "IMAP \u9690\u5F0F TLS", "IMAP implicit TLS"))),

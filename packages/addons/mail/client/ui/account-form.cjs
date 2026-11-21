@@ -53,7 +53,6 @@ module.exports = function AccountForm(props) {
       smtpHost: "",
       smtpPort: 465,
       smtpTls: true,
-      username: "",
     };
     base.email = "";
     base.name = "";
@@ -71,7 +70,6 @@ module.exports = function AccountForm(props) {
       email: editing.email || "",
       name: editing.name || "",
       accountSetId: editing.accountSetId || "",
-      username: editing.username || editing.email || "",
       imapHost: editing.imapHost || "",
       imapPort: editing.imapPort || 993,
       imapTls: editing.imapTls !== false,
@@ -162,7 +160,7 @@ module.exports = function AccountForm(props) {
     var next = id === "other" ? String(email || "") : compose(local, dom);
     var p = util.presetFor(providers, id, next);
     if (!p) return;
-    upd({ provider: id, email: next, domain: id === "other" ? "" : dom, imapHost: p.imapHost, imapPort: p.imapPort, imapTls: p.imapTls, smtpHost: p.smtpHost, smtpPort: p.smtpPort, smtpTls: p.smtpTls, username: p.username, advanced: id === "other" });
+    upd({ provider: id, email: next, domain: id === "other" ? "" : dom, imapHost: p.imapHost, imapPort: p.imapPort, imapTls: p.imapTls, smtpHost: p.smtpHost, smtpPort: p.smtpPort, smtpTls: p.smtpTls, advanced: id === "other" });
     // 切换预设会整体换掉主机与端口，之前的非法草稿状态一并清掉。
     portS[1]({ imap: true, smtp: true });
   }
@@ -191,11 +189,9 @@ module.exports = function AccountForm(props) {
         patch.smtpHost = p.smtpHost;
         patch.smtpPort = p.smtpPort;
         patch.smtpTls = p.smtpTls;
-        patch.username = p.username || address;
         patch.advanced = false;
       } else {
         patch.provider = "other";
-        patch.username = address;
         patch.advanced = true;
       }
       portS[1]({ imap: true, smtp: true });
@@ -208,7 +204,6 @@ module.exports = function AccountForm(props) {
     if (!/^\S+@\S+\.\S+$/.test(String(f.email || "").trim())) return t(lang, "所选账号集合没有可用的邮箱账号，请先到保险箱填写", "The selected account set has no usable email account");
     if (!String(f.name || "").trim()) return t(lang, "请填写账户名称", "Enter an account name");
     if (!String(f.imapHost || "").trim()) return t(lang, "请填写 IMAP 服务器", "Enter the IMAP server");
-    if (!String(f.username || "").trim()) return t(lang, "请填写登录名", "Enter the login name");
     if (!String(f.secretId || "").trim()) {
       return t(lang, "请先在保险箱新建并选择凭据", "Create a credential in the vault and pick it here");
     }
@@ -233,7 +228,7 @@ module.exports = function AccountForm(props) {
       smtpHost: String(f.smtpHost || "").trim(),
       smtpPort: Number(f.smtpPort),
       smtpTls: !!f.smtpTls,
-      username: String(f.username || "").trim() || String(f.email || "").trim(),
+      username: String(f.email || "").trim(),
       secretId: String(f.secretId || "").trim(),
     };
     var step = editing
@@ -316,7 +311,7 @@ module.exports = function AccountForm(props) {
     setBusy("probe", true);
     C.call(api, "mail.accountProbe", {
       email: f.email,
-      username: f.username,
+      username: f.email,
       imapHost: f.imapHost,
       imapPort: Number(f.imapPort),
       imapTls: !!f.imapTls,
@@ -460,9 +455,8 @@ module.exports = function AccountForm(props) {
       ? h("p", { className: "wbml-hint-line" }, "IMAP " + f.imapHost + ":" + f.imapPort + (f.imapTls ? " TLS" : "") + " · SMTP " + (f.smtpHost || "—") + ":" + f.smtpPort + (f.smtpTls ? " TLS" : " STARTTLS"))
       : null,
     !f.advanced
-      ? h("button", { type: "button", className: "wbml-btn", onClick: function () { upd({ advanced: true }); } }, t(lang, "其他设置（主机 / 端口 / 登录名）", "Advanced (hosts / ports / login name)"))
+      ? h("button", { type: "button", className: "wbml-btn", onClick: function () { upd({ advanced: true }); } }, t(lang, "其他设置（主机 / 端口）", "Advanced (hosts / ports)"))
       : h("div", { className: "wbml-acct-grid" },
-          field(t(lang, "登录名", "Login name"), textInput("username", { placeholder: t(lang, "默认与邮箱相同", "Defaults to the email") })),
           field(t(lang, "IMAP 服务器", "IMAP server"), textInput("imapHost")),
           field(t(lang, "IMAP 端口", "IMAP port"), portField("imapPort", t(lang, "IMAP 端口", "IMAP port"))),
           field("", tlsRow("imapTls", t(lang, "IMAP 隐式 TLS", "IMAP implicit TLS"))),

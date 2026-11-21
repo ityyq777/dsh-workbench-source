@@ -178,13 +178,266 @@ var require_filter_checklist = __commonJS({
   }
 });
 
+// packages/addons/lib/search-picker.cjs
+var require_search_picker = __commonJS({
+  "packages/addons/lib/search-picker.cjs"(exports2, module2) {
+    "use strict";
+    var React2 = require("react");
+    var h2 = React2.createElement;
+    var FilterChecklist = require_filter_checklist();
+    var DEFAULT_TEXTS = {
+      all: "\u5168\u90E8",
+      selected: "\u5DF2\u9009",
+      clear: "\u6E05\u7A7A",
+      searchPlaceholder: "\u641C\u7D22",
+      empty: "\u6682\u65E0\u6570\u636E",
+      noMatch: "\u6CA1\u6709\u5339\u914D\u9879",
+      loading: "\u52A0\u8F7D\u4E2D\u2026",
+      noMore: "\u6CA1\u6709\u66F4\u591A"
+    };
+    function asText(x) {
+      return String(x == null ? "" : x).toLowerCase();
+    }
+    function filterLocal(items, query) {
+      var q = String(query || "").trim();
+      if (!q) return items;
+      var needle = asText(q);
+      return items.filter(function(x) {
+        return asText(x.name).indexOf(needle) >= 0 || asText(x.meta).indexOf(needle) >= 0;
+      });
+    }
+    function useRemoteSource(conf) {
+      var RT = conf.React || React2;
+      var open = conf.open;
+      var query = conf.query;
+      var fetchPage = conf.fetchPage;
+      var pageSize = conf.pageSize;
+      var debounce = conf.debounce;
+      var dedupe = conf.dedupe;
+      var mapPage = conf.mapPage;
+      var reloadKey = conf.reloadKey;
+      var rowsS = RT.useState([]);
+      var totalS = RT.useState(0);
+      var pageS = RT.useState(0);
+      var moreS = RT.useState(false);
+      var loadS = RT.useState(false);
+      var seq = RT.useRef ? RT.useRef(0) : { current: 0 };
+      function load(q, pageNumber, append) {
+        var mine = ++seq.current;
+        loadS[1](true);
+        return Promise.resolve(fetchPage(q, pageNumber)).then(function(raw) {
+          if (mine !== seq.current) return;
+          loadS[1](false);
+          var next = mapPage ? mapPage(raw, pageNumber) : raw || {};
+          var list = next.rows || [];
+          rowsS[1](function(prev) {
+            if (!append) return list;
+            var joined = dedupe === false ? prev.concat(list) : prev.concat(list);
+            if (dedupe === false) return joined;
+            var seen = {};
+            return joined.filter(function(x) {
+              var key = String(x.id);
+              if (seen[key]) return false;
+              seen[key] = true;
+              return true;
+            });
+          });
+          totalS[1](typeof next.total === "number" ? next.total : list.length);
+          pageS[1](next.page || pageNumber);
+          moreS[1](!!next.hasMore);
+        }).catch(function() {
+          if (mine === seq.current) loadS[1](false);
+        });
+      }
+      RT.useEffect(
+        function() {
+          if (!open) return void 0;
+          var timer = setTimeout(
+            function() {
+              load(query, 1, false);
+            },
+            query ? debounce : 0
+          );
+          return function() {
+            clearTimeout(timer);
+          };
+        },
+        [open, query, reloadKey]
+      );
+      return {
+        rows: rowsS[0],
+        total: totalS[0],
+        page: pageS[0],
+        hasMore: moreS[0],
+        loading: loadS[0],
+        loadQuery: load,
+        reset: function() {
+          seq.current += 1;
+          rowsS[1]([]);
+          totalS[1](0);
+          pageS[1](0);
+          moreS[1](false);
+          loadS[1](false);
+        }
+      };
+    }
+    function SearchPicker(props) {
+      var RT = props.React || React2;
+      var texts = Object.assign({}, DEFAULT_TEXTS, props.texts || {});
+      var classes = props.classes || {};
+      var mode = props.mode === "single" ? "single" : "multi";
+      var disabled = props.disabled === true;
+      var selected = (props.selected || []).map(String);
+      var items = props.items || null;
+      var fetchPage = props.fetchPage || null;
+      var pageSize = props.pageSize || 20;
+      var debounce = props.debounce === void 0 ? 200 : props.debounce;
+      var allItems = items || [];
+      var openS = RT.useState(false);
+      var open = openS[0];
+      var queryS = RT.useState("");
+      var query = queryS[0];
+      var boxRef = RT.useRef ? RT.useRef(null) : { current: null };
+      var remote = fetchPage ? useRemoteSource({
+        React: RT,
+        open,
+        query,
+        fetchPage,
+        pageSize,
+        debounce,
+        dedupe: props.dedupe,
+        mapPage: props.mapPage,
+        reloadKey: props.reloadKey
+      }) : null;
+      var rows = remote ? remote.rows : filterLocal(allItems, query);
+      var loading = remote ? remote.loading : false;
+      var total = remote ? remote.total : rows.length;
+      var hasMore = remote ? remote.hasMore : false;
+      RT.useEffect(function() {
+        if (!open || typeof document === "undefined") return void 0;
+        function onDown(e) {
+          var box = boxRef.current;
+          if (box && !box.contains(e.target)) openS[1](false);
+        }
+        function onKey(e) {
+          if (e.key === "Escape") openS[1](false);
+        }
+        document.addEventListener("mousedown", onDown);
+        document.addEventListener("keydown", onKey);
+        return function() {
+          document.removeEventListener("mousedown", onDown);
+          document.removeEventListener("keydown", onKey);
+        };
+      }, [open]);
+      function commit(next) {
+        if (props.onChange) props.onChange(next);
+      }
+      function toggle(id) {
+        if (disabled) return;
+        var key = String(id);
+        if (mode === "single") {
+          openS[1](false);
+          if (props.onPick) props.onPick(key, rowOf(key));
+          commit([key]);
+          return;
+        }
+        var next = selected.slice();
+        var i = next.indexOf(key);
+        if (i >= 0) next.splice(i, 1);
+        else next.push(key);
+        commit(next);
+      }
+      function rowOf(id) {
+        var hit = rows.filter(function(x) {
+          return String(x.id) === String(id);
+        })[0];
+        if (hit) return hit;
+        return (allItems || []).filter(function(x) {
+          return String(x.id) === String(id);
+        })[0] || null;
+      }
+      var label = props.label || texts.all;
+      var caret = props.caret === void 0 ? "\u25BE" : props.caret;
+      var count = selected.length;
+      var chips = props.renderSelected ? props.renderSelected({ ids: selected, toggle, nameOf: props.nameOf || rowOf, texts }) : null;
+      return h2(
+        "div",
+        { className: classes.root, ref: boxRef },
+        h2(
+          "button",
+          {
+            type: "button",
+            className: classes.btn + (count ? " " + (classes.btnOn || "is-on") : ""),
+            "aria-haspopup": "dialog",
+            "aria-expanded": open ? "true" : "false",
+            disabled,
+            onClick: function(e) {
+              if (props.stopPropagation) e.stopPropagation();
+              openS[1](!open);
+            }
+          },
+          props.icon ? props.icon : null,
+          label + (count ? " \xB7 " + count : ""),
+          typeof caret === "function" ? caret : caret
+        ),
+        chips,
+        open ? h2(
+          "div",
+          {
+            className: classes.menu,
+            role: props.menuRole,
+            style: props.menuStyle,
+            onClick: props.stopPropagation ? function(e) {
+              e.stopPropagation();
+            } : void 0
+          },
+          h2(FilterChecklist, {
+            mode,
+            items: rows,
+            selected,
+            onToggle: toggle,
+            onPick: toggle,
+            query,
+            onQuery: queryS[1],
+            title: props.title || label,
+            total,
+            selectedText: texts.selected,
+            clearText: texts.clear,
+            onClear: function() {
+              commit([]);
+              queryS[1]("");
+            },
+            searchPlaceholder: texts.searchPlaceholder,
+            loading,
+            hasMore,
+            onLoadMore: remote ? function() {
+              remote.loadQuery(query, (remote.page || 1) + 1, true);
+            } : void 0,
+            emptyText: texts.empty,
+            noMatchText: texts.noMatch,
+            loadingText: texts.loading,
+            noMoreText: texts.noMore,
+            groupLabel: props.title || label,
+            autoFocus: props.autoFocus,
+            beforeHead: props.beforeHead || null
+          }),
+          props.footer || null
+        ) : null
+      );
+    }
+    module2.exports = SearchPicker;
+    module2.exports.filterLocal = filterLocal;
+    module2.exports.DEFAULT_TEXTS = DEFAULT_TEXTS;
+  }
+});
+
 // packages/addons/lib/tag-filter.cjs
 var require_tag_filter = __commonJS({
   "packages/addons/lib/tag-filter.cjs"(exports2, module2) {
     "use strict";
     var React2 = require("react");
     var h2 = React2.createElement;
-    var FilterChecklist = require_filter_checklist();
+    var SearchPicker = require_search_picker();
     module2.exports = function createTagFilter(options) {
       var conf = options || {};
       var classes = conf.classes || {};
@@ -220,99 +473,26 @@ var require_tag_filter = __commonJS({
         var ids = props.ids || [];
         var onChange = props.onChange || function() {
         };
-        var t = text(props);
-        var availS = React2.useState(true);
-        var openS = React2.useState(false);
-        var open = openS[0];
-        var setOpen = openS[1];
-        var queryS = React2.useState("");
-        var query = queryS[0];
-        var setQuery = queryS[1];
-        var rowsS = React2.useState([]);
-        var rows = rowsS[0];
-        var setRows = rowsS[1];
-        var totalS = React2.useState(0);
-        var total = totalS[0];
-        var setTotal = totalS[1];
-        var pageS = React2.useState(0);
-        var page = pageS[0];
-        var setPage = pageS[1];
-        var hasMoreS = React2.useState(false);
-        var hasMore = hasMoreS[0];
-        var setHasMore = hasMoreS[1];
-        var loadingS = React2.useState(false);
-        var loading = loadingS[0];
-        var setLoading = loadingS[1];
+        var tx = text(props);
         var namesS = React2.useState({});
         var names = namesS[0];
-        var setNames = namesS[1];
-        var seq = React2.useRef(0);
-        var load = React2.useCallback(
-          function(q, pageNumber, append) {
-            var mine = ++seq.current;
-            setLoading(true);
-            return api.call(conf.action, { text: q || "", pageNumber, pageSize }).then(function(r) {
-              if (mine !== seq.current) return;
-              setLoading(false);
-              if (!r || !r.ok) return;
-              var next = mapPage(r.result || {}, pageNumber);
-              setRows(function(prev) {
-                if (!append) return next.rows;
-                if (!dedupe) return prev.concat(next.rows);
-                var seen = {};
-                var out = [];
-                prev.concat(next.rows).forEach(function(x) {
-                  var key = String(x.id);
-                  if (seen[key]) return;
-                  seen[key] = true;
-                  out.push(x);
-                });
-                return out;
-              });
-              setTotal(next.total);
-              setPage(next.page);
-              setHasMore(next.hasMore);
-              setNames(function(prev) {
-                var map = Object.assign({}, prev);
-                next.rows.forEach(function(x) {
-                  map[String(x.id)] = x.name;
-                });
-                return map;
-              });
-            }).catch(function() {
-              if (mine === seq.current) setLoading(false);
+        function mergeNames(rows) {
+          if (!rows || !rows.length) return;
+          namesS[1](function(prev) {
+            var next = Object.assign({}, prev);
+            var changed = false;
+            rows.forEach(function(x) {
+              if (next[String(x.id)] !== x.name) {
+                next[String(x.id)] = x.name;
+                changed = true;
+              }
             });
-          },
-          [api]
-        );
+            return changed ? next : prev;
+          });
+        }
         React2.useEffect(
           function() {
-            if (!open) return void 0;
-            var timer = setTimeout(
-              function() {
-                load(query, 1, false);
-              },
-              query ? debounce : 0
-            );
-            return function() {
-              clearTimeout(timer);
-            };
-          },
-          [open, query, load, props.reloadKey]
-        );
-        React2.useEffect(
-          function() {
-            if (!conf.probe) return;
-            api.call(conf.probe.action || conf.action, conf.probe.args || {}).then(function(r) {
-              if (r && r.ok) availS[1](!!(conf.probe.available && conf.probe.available(r.result)));
-            }).catch(function() {
-            });
-          },
-          [api]
-        );
-        React2.useEffect(
-          function() {
-            if (!open || !ids.length || !conf.names) return;
+            if (!ids.length || !conf.names) return;
             var wanted = ids.filter(function(id) {
               return !names[String(id)];
             });
@@ -320,99 +500,65 @@ var require_tag_filter = __commonJS({
             var args = conf.names.args ? conf.names.args(wanted) : { ids: wanted };
             api.call(conf.names.action, args).then(function(r) {
               if (!r || !r.ok) return;
-              var map = {};
-              (r.result && r.result.records || []).forEach(function(x) {
-                map[String(x.id)] = x.name;
-              });
-              if (!Object.keys(map).length) return;
-              setNames(function(prev) {
-                return Object.assign({}, prev, map);
-              });
+              mergeNames(r.result && r.result.records || []);
             }).catch(function() {
             });
           },
-          [open, ids.join(",")]
+          [ids.join(",")]
         );
-        React2.useEffect(
-          function() {
-            if (!open) return void 0;
-            function onKey(e) {
-              if (e.key === "Escape") setOpen(false);
-            }
-            document.addEventListener("keydown", onKey);
-            return function() {
-              document.removeEventListener("keydown", onKey);
-            };
-          },
-          [open]
-        );
-        function toggle(id) {
-          var key = String(id);
-          var next = ids.slice();
-          var i = next.indexOf(key);
-          if (i >= 0) next.splice(i, 1);
-          else next.push(key);
-          onChange(next);
+        function fetchPage(q, pageNumber) {
+          return api.call(conf.action, { text: q || "", pageNumber, pageSize }).then(function(r) {
+            if (!r || !r.ok) return { rows: [], total: 0, page: pageNumber, hasMore: false };
+            var next = mapPage(r.result || {}, pageNumber);
+            mergeNames(next.rows);
+            return { rows: items(next.rows), total: next.total, page: next.page, hasMore: next.hasMore };
+          });
+        }
+        function nameOf(id) {
+          return names[String(id)] || String(id).slice(0, 6);
         }
         if (!enabled(props)) return null;
-        var caretNode = typeof caret === "function" ? caret(props, t) : caret;
-        var selectedNode = renderSelected ? renderSelected({ ids, names, toggle, text: t, classes, h: h2 }) : null;
-        return h2(
-          "div",
-          { className: classes.root },
-          h2(
-            "button",
-            {
-              type: "button",
-              className: classes.btn + (ids.length ? " " + (classes.btnOn || "on") : ""),
-              "aria-expanded": open ? "true" : "false",
-              onClick: function(e) {
-                if (conf.stopPropagation) e.stopPropagation();
-                setOpen(!open);
-              }
-            },
-            icon(props, "tag", 13),
-            t.label + (ids.length ? " \xB7 " + ids.length : ""),
-            caretNode
-          ),
-          open ? h2(
-            "div",
-            {
-              className: classes.menu,
-              role: conf.menuRole,
-              style: conf.menuStyle,
-              onClick: conf.stopPropagation ? function(e) {
-                e.stopPropagation();
-              } : void 0
-            },
-            h2(FilterChecklist, {
-              beforeHead: selectedNode,
-              items: items(rows),
-              selected: ids,
-              onToggle: toggle,
-              query,
-              onQuery: setQuery,
-              title: t.all,
-              total,
-              selectedText: t.selected,
-              clearText: t.clear,
-              onClear: function() {
-                onChange([]);
-                setQuery("");
-              },
-              searchPlaceholder: t.searchPlaceholder,
-              loading,
-              hasMore,
-              onLoadMore: function() {
-                load(query, (page || 1) + 1, true);
-              },
-              emptyText: t.empty,
-              noMatchText: t.noMatch,
-              loadingText: t.loading,
-              noMoreText: t.noMore
-            })
-          ) : null
-        );
+        return h2(SearchPicker, {
+          h: h2,
+          React: React2,
+          mode: "multi",
+          label: tx.label,
+          title: tx.all,
+          fetchPage,
+          pageSize,
+          debounce,
+          dedupe,
+          classes,
+          menuRole: conf.menuRole,
+          menuStyle: conf.menuStyle,
+          stopPropagation: conf.stopPropagation,
+          reloadKey: props.reloadKey,
+          texts: {
+            all: tx.all,
+            selected: tx.selected,
+            clear: tx.clear,
+            searchPlaceholder: tx.searchPlaceholder,
+            empty: tx.empty,
+            noMatch: tx.noMatch,
+            loading: tx.loading,
+            noMore: tx.noMore
+          },
+          icon: icon(props, "tag", 13),
+          caret: typeof caret === "function" ? caret(props) : caret,
+          selected: ids,
+          onChange,
+          nameOf,
+          renderSelected: renderSelected ? function(ctx) {
+            return renderSelected({
+              ids: ctx.ids,
+              names,
+              toggle: ctx.toggle,
+              text: tx,
+              classes,
+              h: h2
+            });
+          } : null
+        });
       };
     };
   }

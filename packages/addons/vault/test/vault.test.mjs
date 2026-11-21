@@ -657,3 +657,41 @@ test("凭据列表关键字搜索：名称与备注都能命中，不再报 SQL 
   assert.equal(run("vault.secretList", { q: "ID", kind: "token" }, "agent").items.length, 0, "关键字与类型同时生效");
   assert.equal(run("vault.secretList", { q: "ID" }, "agent").items.length, 1);
 });
+
+test("锁定后集合与凭据元数据仍可读，只有明文与写操作要解锁", () => {
+  const { run, vault } = makeVault();
+  run("vault.setup", { passphrase: PASS, mode: "A" });
+  const set = run("vault.setCreate", { name: "工作邮箱", account: "ops@example.com" });
+  run("vault.secretCreate", {
+    name: "邮箱密码",
+    kind: "password",
+    secret: "p@ssw0rd",
+    setId: set.id,
+  });
+
+  vault.lock();
+  assert.equal(run("vault.status").locked, true);
+
+  // 集合与凭据名、账号都是明文元数据：锁定时界面照样要能列出。
+  const sets = run("vault.setList", {}).items;
+  assert.equal(sets.length, 1);
+  assert.equal(sets[0].name, "工作邮箱");
+  assert.equal(sets[0].account, "ops@example.com");
+  assert.equal(sets[0].secretCount, 1);
+
+  const detail = run("vault.setGet", { id: set.id });
+  assert.equal(detail.secrets.length, 1);
+  assert.equal(detail.secrets[0].name, "邮箱密码");
+
+  const secrets = run("vault.secretList", {}).items;
+  assert.equal(secrets.length, 1);
+  assert.equal(secrets[0].kind, "password");
+  assert.equal(secrets[0].secret, undefined, "列表不应带明文");
+
+  // 明文、新建与改密文仍然必须解锁。
+  assert.throws(() => run("vault.secretReveal", { id: secrets[0].id }), /锁定/);
+  assert.throws(
+    () => run("vault.secretCreate", { name: "另一条", kind: "password", secret: "x" }),
+    /锁定/,
+  );
+});

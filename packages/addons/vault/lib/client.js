@@ -1591,6 +1591,14 @@ var require_styles = __commonJS({
       ".wbv-chips{display:flex;align-items:center;gap:6px;flex-wrap:wrap}",
       ".wbv-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border:1px solid var(--wb-border);border-radius:999px;background:var(--wb-surface);font-size:11px;line-height:1.6;max-width:100%}",
       ".wbv-chip>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      /* ---------- 共享选择器（凭据多选，内核见 lib/search-picker.cjs） ---------- */
+      ".wbv-picker{position:relative;display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0;max-width:100%}",
+      ".wbv-picker-btn{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 10px;border:1px solid var(--wb-border);border-radius:8px;background:var(--wb-card);color:inherit;font:inherit;font-size:12.5px;max-width:100%;cursor:pointer;transition:background 140ms ease,border-color 140ms ease,color 140ms ease}",
+      ".wbv-picker-btn:hover:enabled{background:color-mix(in srgb,var(--wb-accent) 8%,var(--wb-card));border-color:color-mix(in srgb,var(--wb-accent) 52%,var(--wb-border))}",
+      ".wbv-picker-btn:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}",
+      ".wbv-picker-btn.on{border-color:color-mix(in srgb,var(--wb-accent) 60%,var(--wb-border));color:var(--wb-accent)}",
+      ".wbv-picker-btn:disabled{opacity:.45;cursor:not-allowed}",
+      ".wbv-picker-menu{position:absolute;z-index:40;top:calc(100% + 4px);left:0;box-sizing:border-box;min-width:300px;max-width:min(420px,88vw);padding:8px;border:1px solid var(--wb-border);border-radius:10px;background:var(--wb-card);box-shadow:0 14px 34px color-mix(in srgb,var(--wb-muted) 30%,transparent)}",
       ".wbv-pill{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:999px;font-size:11px;line-height:1.7;background:color-mix(in srgb,var(--wb-muted) 14%,transparent);color:inherit;white-space:nowrap}",
       ".wbv-pill.ok{background:color-mix(in srgb,var(--wb-ok) 16%,transparent);color:var(--wb-ok)}",
       ".wbv-pill.warn{background:color-mix(in srgb,var(--wb-warn) 18%,transparent);color:var(--wb-warn)}",
@@ -3286,6 +3294,399 @@ var require_secrets = __commonJS({
   }
 });
 
+// packages/addons/lib/filter-checklist.cjs
+var require_filter_checklist = __commonJS({
+  "packages/addons/lib/filter-checklist.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h = React.createElement;
+    var NEAR = 24;
+    function nearBottom(el, threshold) {
+      if (!el) return false;
+      var gap = Number(threshold);
+      if (!isFinite(gap) || gap < 0) gap = NEAR;
+      return el.scrollTop + el.clientHeight >= el.scrollHeight - gap;
+    }
+    function FilterChecklist(props) {
+      var items = props.items || [];
+      var selected = props.selected || [];
+      var disabled = props.disabled === true;
+      var loading = props.loading === true;
+      var hasMore = props.hasMore === true;
+      var query = props.query || "";
+      var total = typeof props.total === "number" ? props.total : items.length;
+      var title = props.title || "\u5168\u90E8";
+      var selectedText = props.selectedText || "\u5DF2\u9009";
+      var clearText = props.clearText || "\u6E05\u7A7A";
+      var searchPlaceholder = props.searchPlaceholder || "\u641C\u7D22";
+      var emptyText = props.emptyText || "\u6682\u65E0\u6570\u636E";
+      var noMatchText = props.noMatchText || "\u6CA1\u6709\u5339\u914D\u9879";
+      var loadingText = props.loadingText || "\u52A0\u8F7D\u4E2D\u2026";
+      var noMoreText = typeof props.noMoreText === "string" ? props.noMoreText : "\u6CA1\u6709\u66F4\u591A";
+      var onToggle = props.onToggle || function() {
+      };
+      var onQuery = props.onQuery || function() {
+      };
+      var onLoadMore = props.onLoadMore;
+      var onClear = props.onClear || function() {
+      };
+      var single = props.mode === "single";
+      var onPick = typeof props.onPick === "function" ? props.onPick : onToggle;
+      function toggle(id) {
+        if (disabled) return;
+        onToggle(id);
+      }
+      function scroll(e) {
+        if (disabled || loading || !hasMore || !onLoadMore) return;
+        if (nearBottom(e.currentTarget)) onLoadMore();
+      }
+      var head = h(
+        "div",
+        { className: "wbck-head" },
+        h("span", { className: "wbck-grow" }, title + (total ? " \xB7 " + total : "")),
+        !single && selected.length ? h("span", { className: "wbck-sel" }, selectedText + " " + selected.length) : null,
+        !single && (selected.length || query) ? h("button", {
+          type: "button",
+          className: "wbck-clear",
+          title: clearText,
+          disabled,
+          onClick: function() {
+            if (disabled) return;
+            onClear();
+          }
+        }, clearText) : null
+      );
+      var body;
+      if (!items.length) {
+        body = h("div", { className: "wbck-note", role: "status" }, loading ? loadingText : query ? noMatchText : emptyText);
+      } else {
+        body = items.map(function(x) {
+          var on = selected.indexOf(String(x.id)) >= 0;
+          if (single) {
+            return h(
+              "button",
+              {
+                key: x.id,
+                type: "button",
+                role: "radio",
+                "aria-checked": on ? "true" : "false",
+                className: "wbck-opt" + (on ? " is-on" : ""),
+                disabled,
+                onClick: function() {
+                  if (disabled) return;
+                  onPick(x.id);
+                }
+              },
+              h("span", { className: "wbck-nm", title: x.name }, x.name),
+              x.meta ? h("span", { className: "wbck-meta" }, x.meta) : null
+            );
+          }
+          return h(
+            "label",
+            { key: x.id, className: "wbck-opt" + (on ? " is-on" : "") },
+            h("input", {
+              type: "checkbox",
+              checked: on,
+              disabled,
+              onChange: function() {
+                toggle(x.id);
+              }
+            }),
+            h("span", { className: "wbck-nm", title: x.name }, x.name),
+            x.meta ? h("span", { className: "wbck-meta" }, x.meta) : null
+          );
+        });
+        var more = loading ? loadingText : hasMore ? "" : noMoreText;
+        if (more) body = body.concat([h("div", { key: "__more", className: "wbck-more", role: "status" }, more)]);
+      }
+      return h(
+        "div",
+        { className: "wbck", "data-role": "checklist" },
+        h(
+          "div",
+          { className: "wbck-search" },
+          h("input", {
+            type: "search",
+            autoFocus: props.autoFocus !== false,
+            className: "wbck-input",
+            placeholder: searchPlaceholder,
+            "aria-label": searchPlaceholder,
+            value: query,
+            disabled,
+            onChange: function(e) {
+              onQuery(e.target.value);
+            }
+          })
+        ),
+        props.beforeHead || null,
+        head,
+        h("div", {
+          className: "wbck-list",
+          onScroll: scroll,
+          role: single ? "radiogroup" : void 0,
+          "aria-label": single ? props.groupLabel || searchPlaceholder : void 0,
+          "aria-busy": loading ? "true" : "false"
+        }, body)
+      );
+    }
+    module2.exports = FilterChecklist;
+    module2.exports.nearBottom = nearBottom;
+  }
+});
+
+// packages/addons/lib/search-picker.cjs
+var require_search_picker = __commonJS({
+  "packages/addons/lib/search-picker.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h = React.createElement;
+    var FilterChecklist = require_filter_checklist();
+    var DEFAULT_TEXTS = {
+      all: "\u5168\u90E8",
+      selected: "\u5DF2\u9009",
+      clear: "\u6E05\u7A7A",
+      searchPlaceholder: "\u641C\u7D22",
+      empty: "\u6682\u65E0\u6570\u636E",
+      noMatch: "\u6CA1\u6709\u5339\u914D\u9879",
+      loading: "\u52A0\u8F7D\u4E2D\u2026",
+      noMore: "\u6CA1\u6709\u66F4\u591A"
+    };
+    function asText(x) {
+      return String(x == null ? "" : x).toLowerCase();
+    }
+    function filterLocal(items, query) {
+      var q = String(query || "").trim();
+      if (!q) return items;
+      var needle = asText(q);
+      return items.filter(function(x) {
+        return asText(x.name).indexOf(needle) >= 0 || asText(x.meta).indexOf(needle) >= 0;
+      });
+    }
+    function useRemoteSource(conf) {
+      var RT = conf.React || React;
+      var open = conf.open;
+      var query = conf.query;
+      var fetchPage = conf.fetchPage;
+      var pageSize = conf.pageSize;
+      var debounce = conf.debounce;
+      var dedupe = conf.dedupe;
+      var mapPage = conf.mapPage;
+      var reloadKey = conf.reloadKey;
+      var rowsS = RT.useState([]);
+      var totalS = RT.useState(0);
+      var pageS = RT.useState(0);
+      var moreS = RT.useState(false);
+      var loadS = RT.useState(false);
+      var seq = RT.useRef ? RT.useRef(0) : { current: 0 };
+      function load(q, pageNumber, append) {
+        var mine = ++seq.current;
+        loadS[1](true);
+        return Promise.resolve(fetchPage(q, pageNumber)).then(function(raw) {
+          if (mine !== seq.current) return;
+          loadS[1](false);
+          var next = mapPage ? mapPage(raw, pageNumber) : raw || {};
+          var list = next.rows || [];
+          rowsS[1](function(prev) {
+            if (!append) return list;
+            var joined = dedupe === false ? prev.concat(list) : prev.concat(list);
+            if (dedupe === false) return joined;
+            var seen = {};
+            return joined.filter(function(x) {
+              var key = String(x.id);
+              if (seen[key]) return false;
+              seen[key] = true;
+              return true;
+            });
+          });
+          totalS[1](typeof next.total === "number" ? next.total : list.length);
+          pageS[1](next.page || pageNumber);
+          moreS[1](!!next.hasMore);
+        }).catch(function() {
+          if (mine === seq.current) loadS[1](false);
+        });
+      }
+      RT.useEffect(
+        function() {
+          if (!open) return void 0;
+          var timer = setTimeout(
+            function() {
+              load(query, 1, false);
+            },
+            query ? debounce : 0
+          );
+          return function() {
+            clearTimeout(timer);
+          };
+        },
+        [open, query, reloadKey]
+      );
+      return {
+        rows: rowsS[0],
+        total: totalS[0],
+        page: pageS[0],
+        hasMore: moreS[0],
+        loading: loadS[0],
+        loadQuery: load,
+        reset: function() {
+          seq.current += 1;
+          rowsS[1]([]);
+          totalS[1](0);
+          pageS[1](0);
+          moreS[1](false);
+          loadS[1](false);
+        }
+      };
+    }
+    function SearchPicker(props) {
+      var RT = props.React || React;
+      var texts = Object.assign({}, DEFAULT_TEXTS, props.texts || {});
+      var classes = props.classes || {};
+      var mode = props.mode === "single" ? "single" : "multi";
+      var disabled = props.disabled === true;
+      var selected = (props.selected || []).map(String);
+      var items = props.items || null;
+      var fetchPage = props.fetchPage || null;
+      var pageSize = props.pageSize || 20;
+      var debounce = props.debounce === void 0 ? 200 : props.debounce;
+      var allItems = items || [];
+      var openS = RT.useState(false);
+      var open = openS[0];
+      var queryS = RT.useState("");
+      var query = queryS[0];
+      var boxRef = RT.useRef ? RT.useRef(null) : { current: null };
+      var remote = fetchPage ? useRemoteSource({
+        React: RT,
+        open,
+        query,
+        fetchPage,
+        pageSize,
+        debounce,
+        dedupe: props.dedupe,
+        mapPage: props.mapPage,
+        reloadKey: props.reloadKey
+      }) : null;
+      var rows = remote ? remote.rows : filterLocal(allItems, query);
+      var loading = remote ? remote.loading : false;
+      var total = remote ? remote.total : rows.length;
+      var hasMore = remote ? remote.hasMore : false;
+      RT.useEffect(function() {
+        if (!open || typeof document === "undefined") return void 0;
+        function onDown(e) {
+          var box = boxRef.current;
+          if (box && !box.contains(e.target)) openS[1](false);
+        }
+        function onKey(e) {
+          if (e.key === "Escape") openS[1](false);
+        }
+        document.addEventListener("mousedown", onDown);
+        document.addEventListener("keydown", onKey);
+        return function() {
+          document.removeEventListener("mousedown", onDown);
+          document.removeEventListener("keydown", onKey);
+        };
+      }, [open]);
+      function commit(next) {
+        if (props.onChange) props.onChange(next);
+      }
+      function toggle(id) {
+        if (disabled) return;
+        var key = String(id);
+        if (mode === "single") {
+          openS[1](false);
+          if (props.onPick) props.onPick(key, rowOf(key));
+          commit([key]);
+          return;
+        }
+        var next = selected.slice();
+        var i = next.indexOf(key);
+        if (i >= 0) next.splice(i, 1);
+        else next.push(key);
+        commit(next);
+      }
+      function rowOf(id) {
+        var hit = rows.filter(function(x) {
+          return String(x.id) === String(id);
+        })[0];
+        if (hit) return hit;
+        return (allItems || []).filter(function(x) {
+          return String(x.id) === String(id);
+        })[0] || null;
+      }
+      var label = props.label || texts.all;
+      var caret = props.caret === void 0 ? "\u25BE" : props.caret;
+      var count = selected.length;
+      var chips = props.renderSelected ? props.renderSelected({ ids: selected, toggle, nameOf: props.nameOf || rowOf, texts }) : null;
+      return h(
+        "div",
+        { className: classes.root, ref: boxRef },
+        h(
+          "button",
+          {
+            type: "button",
+            className: classes.btn + (count ? " " + (classes.btnOn || "is-on") : ""),
+            "aria-haspopup": "dialog",
+            "aria-expanded": open ? "true" : "false",
+            disabled,
+            onClick: function(e) {
+              if (props.stopPropagation) e.stopPropagation();
+              openS[1](!open);
+            }
+          },
+          props.icon ? props.icon : null,
+          label + (count ? " \xB7 " + count : ""),
+          typeof caret === "function" ? caret : caret
+        ),
+        chips,
+        open ? h(
+          "div",
+          {
+            className: classes.menu,
+            role: props.menuRole,
+            style: props.menuStyle,
+            onClick: props.stopPropagation ? function(e) {
+              e.stopPropagation();
+            } : void 0
+          },
+          h(FilterChecklist, {
+            mode,
+            items: rows,
+            selected,
+            onToggle: toggle,
+            onPick: toggle,
+            query,
+            onQuery: queryS[1],
+            title: props.title || label,
+            total,
+            selectedText: texts.selected,
+            clearText: texts.clear,
+            onClear: function() {
+              commit([]);
+              queryS[1]("");
+            },
+            searchPlaceholder: texts.searchPlaceholder,
+            loading,
+            hasMore,
+            onLoadMore: remote ? function() {
+              remote.loadQuery(query, (remote.page || 1) + 1, true);
+            } : void 0,
+            emptyText: texts.empty,
+            noMatchText: texts.noMatch,
+            loadingText: texts.loading,
+            noMoreText: texts.noMore,
+            groupLabel: props.title || label,
+            autoFocus: props.autoFocus,
+            beforeHead: props.beforeHead || null
+          }),
+          props.footer || null
+        ) : null
+      );
+    }
+    module2.exports = SearchPicker;
+    module2.exports.filterLocal = filterLocal;
+    module2.exports.DEFAULT_TEXTS = DEFAULT_TEXTS;
+  }
+});
+
 // packages/addons/vault/client/views/sets.cjs
 var require_sets = __commonJS({
   "packages/addons/vault/client/views/sets.cjs"(exports2, module2) {
@@ -3297,6 +3698,7 @@ var require_sets = __commonJS({
     var Dialog = require_dialog().Dialog;
     var ConfirmDialog = require_dialog().ConfirmDialog;
     var GLYPHS2 = require_icons2().ICONS;
+    var SearchPicker = require_search_picker();
     var Layers2 = GLYPHS2["layers"];
     module2.exports = function SetsView(props) {
       var h = props.h;
@@ -3319,10 +3721,6 @@ var require_sets = __commonJS({
       var guard = Lock2.use({ api, C, React });
       var inflight = React.useState({ seq: 0 })[0];
       function load() {
-        if (guard.locked) {
-          listS[1]({ loading: false, items: [], error: "" });
-          return;
-        }
         var seq = inflight.seq += 1;
         listS[1](function(old) {
           return Object.assign({}, old, { loading: true });
@@ -3347,16 +3745,10 @@ var require_sets = __commonJS({
         if (!guard.ready) return;
         inflight.seq += 1;
         if (guard.locked) {
-          listS[1]({ loading: false, items: [], error: "" });
-          secretsS[1]([]);
-          groupsS[1]([]);
-          activeS[1](null);
-          detailS[1]({ setId: "", secrets: [], groups: [], error: "" });
           draftS[1](null);
           pickS[1]([]);
           delS[1](null);
           msgS[1]("");
-          return;
         }
         load();
       }, [guard.ready, guard.locked]);
@@ -3365,7 +3757,6 @@ var require_sets = __commonJS({
         return id;
       }
       function open(row) {
-        if (guard.locked) return null;
         activeS[1](row);
         detailS[1]({ setId: row.id, secrets: [], groups: [], error: "" });
         var seq = inflight.seq += 1;
@@ -3513,7 +3904,12 @@ var require_sets = __commonJS({
         return !inSet[s.id];
       });
       if (!guard.ready) return h("div", { className: "wbv" }, h(C.Empty, { h, text: "\u6B63\u5728\u8BFB\u53D6\u4FDD\u9669\u7BB1\u72B6\u6001\u2026" }));
-      if (guard.locked) return h(Lock2.Panel, { h, C, lang, error: guard.error });
+      var readOnly = guard.locked;
+      var lockNote = readOnly ? h(C.Notice, {
+        h,
+        kind: "warn",
+        text: "\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A\uFF1A\u96C6\u5408\u3001\u8D26\u53F7\u4E0E\u51ED\u636E\u540D\u7167\u5E38\u53EF\u89C1\uFF1B\u65B0\u5EFA\u3001\u7F16\u8F91\u3001\u52A0\u5165\u51ED\u636E\u4E0E\u660E\u6587\u5F55\u5165\u9700\u5148\u5230\u300C\u4FDD\u9669\u7BB1\u300D\u9875\u89E3\u9501\u3002"
+      }) : null;
       var active = activeS[0];
       var secretColumns = [
         { key: "name", label: "\u540D\u79F0" },
@@ -3530,9 +3926,10 @@ var require_sets = __commonJS({
           sub: "\u4E00\u4E2A\u96C6\u5408\u53EF\u4EE5\u6807\u4E00\u4E2A\u8D26\u53F7\uFF08\u53EF\u91CD\u590D\u3001\u53EF\u7559\u7A7A\uFF09\uFF0C\u5E76\u6302\u5230\u591A\u4E2A\u5206\u7EC4\u3001\u88C5\u591A\u6761\u51ED\u636E\uFF1B\u5220\u9664\u96C6\u5408\u53EA\u65AD\u5173\u8054\uFF0C\u4E0D\u5220\u51ED\u636E\u3002",
           actions: [
             h(C.Btn, { h, key: "refresh", onClick: load }, "\u5237\u65B0"),
-            h(C.Btn, { h, key: "create", kind: "primary", onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408\u4E0E\u8D26\u53F7")
+            h(C.Btn, { h, key: "create", kind: "primary", disabled: readOnly, onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408\u4E0E\u8D26\u53F7")
           ]
         }),
+        lockNote,
         h(
           P.Toolbar,
           { h },
@@ -3576,7 +3973,7 @@ var require_sets = __commonJS({
               icon: Layers2,
               title: qS[0] || typeS[0] ? "\u6CA1\u6709\u5339\u914D\u7684\u96C6\u5408\u4E0E\u8D26\u53F7" : "\u8FD8\u6CA1\u6709\u96C6\u5408\u4E0E\u8D26\u53F7",
               hint: qS[0] || typeS[0] ? "\u6362\u4E2A\u5173\u952E\u8BCD\u6216\u7C7B\u578B\u8BD5\u8BD5\u3002" : "\u65B0\u5EFA\u4E00\u4E2A\u540E\uFF0C\u53EF\u4EE5\u628A\u8D26\u53F7\u3001\u51ED\u636E\u548C\u5206\u7EC4\u90FD\u6302\u8FDB\u6765\u3002"
-            }, h(C.Btn, { h, kind: "primary", onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408\u4E0E\u8D26\u53F7")) : items.map(function(set) {
+            }, h(C.Btn, { h, kind: "primary", disabled: readOnly, onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408\u4E0E\u8D26\u53F7")) : items.map(function(set) {
               var on = active && active.id === set.id;
               return h(
                 "button",
@@ -3618,10 +4015,10 @@ var require_sets = __commonJS({
                 h(
                   "div",
                   { className: "wbv-card-actions" },
-                  h(C.Btn, { h, onClick: function() {
+                  h(C.Btn, { h, disabled: readOnly, onClick: function() {
                     startEdit(active);
                   } }, "\u7F16\u8F91"),
-                  h(C.Btn, { h, kind: "danger", onClick: function() {
+                  h(C.Btn, { h, kind: "danger", disabled: readOnly, onClick: function() {
                     removeSet(active);
                   } }, "\u5220\u9664\u96C6\u5408")
                 )
@@ -3648,7 +4045,7 @@ var require_sets = __commonJS({
                     h("td", null, h(
                       "div",
                       { className: "wbv-actions" },
-                      h(C.Btn, { h, kind: "ghost", onClick: function() {
+                      h(C.Btn, { h, kind: "ghost", disabled: readOnly, onClick: function() {
                         detach(s.id);
                       } }, "\u79FB\u51FA")
                     ))
@@ -3656,38 +4053,45 @@ var require_sets = __commonJS({
                 }
               }),
               h("div", { className: "wbv-card-title", style: { marginTop: "14px" } }, "\u52A0\u5165\u51ED\u636E"),
-              h(
+              readOnly ? h("div", { className: "wbv-muted" }, "\u89E3\u9501\u540E\u53EF\u628A\u51ED\u636E\u52A0\u5165\u8FD9\u4E2A\u96C6\u5408\u3002") : h(
                 "div",
                 { className: "wbv-row" },
-                h(
-                  P.Select,
-                  {
-                    h,
-                    value: "",
-                    "aria-label": "\u9009\u62E9\u8981\u52A0\u5165\u7684\u51ED\u636E",
-                    onChange: function(e) {
-                      var v = e.target.value;
-                      if (v) pickS[1](pickS[0].concat([v]));
-                      e.target.value = "";
-                    }
+                h(SearchPicker, {
+                  h,
+                  React,
+                  mode: "multi",
+                  label: "\u51ED\u636E",
+                  title: "\u53EF\u52A0\u5165\u7684\u51ED\u636E",
+                  items: candidates.map(function(s) {
+                    return { id: s.id, name: s.name, meta: K.KIND_LABEL[s.kind] || s.kind };
+                  }),
+                  selected: pickS[0],
+                  onChange: function(ids) {
+                    pickS[1](ids);
                   },
-                  h("option", { value: "" }, candidates.length ? "\u9009\u62E9\u8981\u52A0\u5165\u7684\u51ED\u636E\u2026" : "\u6CA1\u6709\u53EF\u52A0\u5165\u7684\u51ED\u636E"),
-                  candidates.map(function(s) {
-                    return h("option", { key: s.id, value: s.id }, s.name + "\uFF08" + (K.KIND_LABEL[s.kind] || s.kind) + "\uFF09");
-                  })
-                ),
-                pickS[0].length ? h("span", { className: "wbv-chips" }, pickS[0].map(function(id) {
-                  return h(
-                    "span",
-                    { className: "wbv-chip", key: id },
-                    h("span", null, secretName(id)),
-                    h("button", { type: "button", className: "wbv-btn ghost", onClick: function() {
-                      pickS[1](pickS[0].filter(function(x) {
-                        return x !== id;
-                      }));
-                    } }, "\xD7")
-                  );
-                })) : null,
+                  disabled: busyS[0],
+                  classes: { root: "wbv-picker", btn: "wbv-picker-btn", btnOn: "on", menu: "wbv-picker-menu" },
+                  texts: {
+                    all: "\u9009\u62E9\u8981\u52A0\u5165\u7684\u51ED\u636E",
+                    selected: "\u5DF2\u9009",
+                    clear: "\u6E05\u7A7A",
+                    searchPlaceholder: "\u641C\u7D22\u51ED\u636E\u540D\u6216\u7C7B\u578B",
+                    empty: "\u6CA1\u6709\u53EF\u52A0\u5165\u7684\u51ED\u636E",
+                    noMatch: "\u6CA1\u6709\u5339\u914D\u7684\u51ED\u636E"
+                  },
+                  renderSelected: function(ctx) {
+                    return ctx.ids.length ? h("span", { className: "wbv-chips" }, ctx.ids.map(function(id) {
+                      return h(
+                        "span",
+                        { className: "wbv-chip", key: id },
+                        h("span", null, secretName(id)),
+                        h("button", { type: "button", className: "wbv-btn ghost", onClick: function() {
+                          ctx.toggle(id);
+                        } }, "\xD7")
+                      );
+                    })) : null;
+                  }
+                }),
                 h("span", { className: "wbv-grow" }),
                 h(C.Btn, { h, kind: "primary", disabled: !pickS[0].length || busyS[0], onClick: attachPicked }, "\u52A0\u5165 " + (pickS[0].length || ""))
               ),
@@ -3700,7 +4104,7 @@ var require_sets = __commonJS({
                   return h(
                     "label",
                     { key: g.id, className: "wbv-chip", style: { cursor: "pointer" } },
-                    h("input", { type: "checkbox", checked: on, disabled: busyS[0], onChange: function(e) {
+                    h("input", { type: "checkbox", checked: on, disabled: busyS[0] || readOnly, onChange: function(e) {
                       toggleGroup(g.id, e.target.checked);
                     } }),
                     h("span", null, g.name)
@@ -3795,27 +4199,52 @@ var require_sets = __commonJS({
                 }
               })
             ),
-            h("div", { className: "wbv-card-title", style: { marginTop: "4px" } }, "\u51ED\u636E"),
-            secretsS[0].length ? h("div", { className: "wbv-chips" }, secretsS[0].map(function(sec) {
-              var on = draftS[0].secretIds.indexOf(sec.id) >= 0;
-              return h(
-                "label",
-                { key: sec.id, className: "wbv-chip", style: { cursor: "pointer" } },
-                h("input", {
-                  type: "checkbox",
-                  checked: on,
-                  onChange: function(e) {
-                    var ids = draftS[0].secretIds.slice();
-                    if (e.target.checked) ids.push(sec.id);
-                    else ids = ids.filter(function(x) {
-                      return x !== sec.id;
-                    });
-                    draftS[1](Object.assign({}, draftS[0], { secretIds: ids }));
-                  }
+            h(
+              C.Field,
+              {
+                h,
+                label: "\u51ED\u636E",
+                hint: "\u641C\u7D22\u540E\u52FE\u9009\u8981\u6302\u5230\u8FD9\u4E2A\u96C6\u5408\u4E0A\u7684\u51ED\u636E\uFF1B\u4FDD\u5B58\u96C6\u5408\u65F6\u4E00\u5E76\u5EFA\u7ACB\u5173\u8054"
+              },
+              h(SearchPicker, {
+                h,
+                React,
+                mode: "multi",
+                label: "\u9009\u62E9\u51ED\u636E",
+                title: "\u4FDD\u9669\u7BB1\u91CC\u7684\u51ED\u636E",
+                items: secretsS[0].map(function(sec) {
+                  return { id: sec.id, name: sec.name, meta: K.KIND_LABEL[sec.kind] || sec.kind };
                 }),
-                h("span", null, sec.name)
-              );
-            })) : h("span", { className: "wbv-muted" }, "\u4FDD\u9669\u7BB1\u8FD8\u6CA1\u6709\u51ED\u636E\uFF0C\u53EF\u5728\u4E0B\u9762\u76F4\u63A5\u65B0\u5EFA\u4E00\u6761\u3002"),
+                selected: draftS[0].secretIds,
+                onChange: function(ids) {
+                  draftS[1](Object.assign({}, draftS[0], { secretIds: ids }));
+                },
+                disabled: busyS[0],
+                classes: { root: "wbv-picker", btn: "wbv-picker-btn", btnOn: "on", menu: "wbv-picker-menu" },
+                texts: {
+                  all: "\u9009\u62E9\u51ED\u636E",
+                  selected: "\u5DF2\u9009",
+                  clear: "\u6E05\u7A7A",
+                  searchPlaceholder: "\u641C\u7D22\u51ED\u636E\u540D\u6216\u7C7B\u578B",
+                  empty: "\u4FDD\u9669\u7BB1\u8FD8\u6CA1\u6709\u51ED\u636E",
+                  noMatch: "\u6CA1\u6709\u5339\u914D\u7684\u51ED\u636E"
+                },
+                renderSelected: function(ctx) {
+                  return ctx.ids.length ? h("span", { className: "wbv-chips" }, ctx.ids.map(function(id) {
+                    var sec = ctx.nameOf(id) || { name: id };
+                    return h(
+                      "span",
+                      { className: "wbv-chip", key: id },
+                      h("span", null, sec.name),
+                      h("button", { type: "button", className: "wbv-btn ghost", onClick: function() {
+                        ctx.toggle(id);
+                      } }, "\xD7")
+                    );
+                  })) : null;
+                }
+              })
+            ),
+            h("div", { className: "wbv-card-title", style: { marginTop: "10px" } }, "\u6216\u76F4\u63A5\u65B0\u5EFA\u4E00\u6761\u51ED\u636E"),
             h(
               "div",
               { className: "wbv-inline" },
@@ -3891,146 +4320,6 @@ var require_sets = __commonJS({
         }) : null
       );
     };
-  }
-});
-
-// packages/addons/lib/filter-checklist.cjs
-var require_filter_checklist = __commonJS({
-  "packages/addons/lib/filter-checklist.cjs"(exports2, module2) {
-    "use strict";
-    var React = require("react");
-    var h = React.createElement;
-    var NEAR = 24;
-    function nearBottom(el, threshold) {
-      if (!el) return false;
-      var gap = Number(threshold);
-      if (!isFinite(gap) || gap < 0) gap = NEAR;
-      return el.scrollTop + el.clientHeight >= el.scrollHeight - gap;
-    }
-    function FilterChecklist(props) {
-      var items = props.items || [];
-      var selected = props.selected || [];
-      var disabled = props.disabled === true;
-      var loading = props.loading === true;
-      var hasMore = props.hasMore === true;
-      var query = props.query || "";
-      var total = typeof props.total === "number" ? props.total : items.length;
-      var title = props.title || "\u5168\u90E8";
-      var selectedText = props.selectedText || "\u5DF2\u9009";
-      var clearText = props.clearText || "\u6E05\u7A7A";
-      var searchPlaceholder = props.searchPlaceholder || "\u641C\u7D22";
-      var emptyText = props.emptyText || "\u6682\u65E0\u6570\u636E";
-      var noMatchText = props.noMatchText || "\u6CA1\u6709\u5339\u914D\u9879";
-      var loadingText = props.loadingText || "\u52A0\u8F7D\u4E2D\u2026";
-      var noMoreText = typeof props.noMoreText === "string" ? props.noMoreText : "\u6CA1\u6709\u66F4\u591A";
-      var onToggle = props.onToggle || function() {
-      };
-      var onQuery = props.onQuery || function() {
-      };
-      var onLoadMore = props.onLoadMore;
-      var onClear = props.onClear || function() {
-      };
-      var single = props.mode === "single";
-      var onPick = typeof props.onPick === "function" ? props.onPick : onToggle;
-      function toggle(id) {
-        if (disabled) return;
-        onToggle(id);
-      }
-      function scroll(e) {
-        if (disabled || loading || !hasMore || !onLoadMore) return;
-        if (nearBottom(e.currentTarget)) onLoadMore();
-      }
-      var head = h(
-        "div",
-        { className: "wbck-head" },
-        h("span", { className: "wbck-grow" }, title + (total ? " \xB7 " + total : "")),
-        !single && selected.length ? h("span", { className: "wbck-sel" }, selectedText + " " + selected.length) : null,
-        !single && (selected.length || query) ? h("button", {
-          type: "button",
-          className: "wbck-clear",
-          title: clearText,
-          disabled,
-          onClick: function() {
-            if (disabled) return;
-            onClear();
-          }
-        }, clearText) : null
-      );
-      var body;
-      if (!items.length) {
-        body = h("div", { className: "wbck-note", role: "status" }, loading ? loadingText : query ? noMatchText : emptyText);
-      } else {
-        body = items.map(function(x) {
-          var on = selected.indexOf(String(x.id)) >= 0;
-          if (single) {
-            return h(
-              "button",
-              {
-                key: x.id,
-                type: "button",
-                role: "radio",
-                "aria-checked": on ? "true" : "false",
-                className: "wbck-opt" + (on ? " is-on" : ""),
-                disabled,
-                onClick: function() {
-                  if (disabled) return;
-                  onPick(x.id);
-                }
-              },
-              h("span", { className: "wbck-nm", title: x.name }, x.name),
-              x.meta ? h("span", { className: "wbck-meta" }, x.meta) : null
-            );
-          }
-          return h(
-            "label",
-            { key: x.id, className: "wbck-opt" + (on ? " is-on" : "") },
-            h("input", {
-              type: "checkbox",
-              checked: on,
-              disabled,
-              onChange: function() {
-                toggle(x.id);
-              }
-            }),
-            h("span", { className: "wbck-nm", title: x.name }, x.name),
-            x.meta ? h("span", { className: "wbck-meta" }, x.meta) : null
-          );
-        });
-        var more = loading ? loadingText : hasMore ? "" : noMoreText;
-        if (more) body = body.concat([h("div", { key: "__more", className: "wbck-more", role: "status" }, more)]);
-      }
-      return h(
-        "div",
-        { className: "wbck", "data-role": "checklist" },
-        h(
-          "div",
-          { className: "wbck-search" },
-          h("input", {
-            type: "search",
-            autoFocus: props.autoFocus !== false,
-            className: "wbck-input",
-            placeholder: searchPlaceholder,
-            "aria-label": searchPlaceholder,
-            value: query,
-            disabled,
-            onChange: function(e) {
-              onQuery(e.target.value);
-            }
-          })
-        ),
-        props.beforeHead || null,
-        head,
-        h("div", {
-          className: "wbck-list",
-          onScroll: scroll,
-          role: single ? "radiogroup" : void 0,
-          "aria-label": single ? props.groupLabel || searchPlaceholder : void 0,
-          "aria-busy": loading ? "true" : "false"
-        }, body)
-      );
-    }
-    module2.exports = FilterChecklist;
-    module2.exports.nearBottom = nearBottom;
   }
 });
 
@@ -6650,7 +6939,6 @@ var GLYPHS = require_icons2().ICONS;
   module.exports = { name: "dsh-workbench-vault", inject: [], apply: function() {
   } };
 })();
-
     return module.exports;
   },
 });

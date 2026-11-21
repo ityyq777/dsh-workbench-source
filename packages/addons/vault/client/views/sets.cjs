@@ -3,6 +3,10 @@
  * 集合与账号页：集合可复用（挂多个分组、装多条凭据），并可标一个账号；
  * 新建/编辑时先选类型：「账号集合」才显示账号输入，「普通集合」不绑定账号，条目只按 id 区分；
  * 弹窗里可顺手勾选已有凭据，或直接填名称/类型/明文新建一条，保存集合时一并挂上。
+ * 锁定时本页不再整页让位：集合名、账号、凭据名与类型都是明文元数据（vault.setList /
+ * vault.setGet / vault.secretList 都不需要 DEK），照常只读展示；新建、编辑、加入、移出、
+ * 挂靠分组与明文录入一律等解锁，因为那些动作才需要 DEK 或会改动数据。
+ * 凭据选择用共享的 lib/search-picker.cjs（关键字搜索 + 多选），替换原来的原生下拉与一长条复选框。
  * 页面骨架与弹层外壳分别来自 ui/page.cjs、ui/dialog.cjs。
  */
 var C = require("../ui/common.cjs");
@@ -12,6 +16,7 @@ var Lock = require("../ui/lock.cjs");
 var Dialog = require("../ui/dialog.cjs").Dialog;
 var ConfirmDialog = require("../ui/dialog.cjs").ConfirmDialog;
 var GLYPHS = require("../ui/icons.cjs").ICONS;
+var SearchPicker = require("../../../lib/search-picker.cjs");
 
 var Layers = GLYPHS["layers"];
 
@@ -39,10 +44,7 @@ module.exports = function SetsView(props) {
   var inflight = React.useState({ seq: 0 })[0];
 
   function load() {
-    if (guard.locked) {
-      listS[1]({ loading: false, items: [], error: "" });
-      return;
-    }
+    // 锁定时照常取数：三个接口都只返回明文元数据，不解 DEK，所以列表与详情不该跟着消失。
     var seq = (inflight.seq += 1);
     listS[1](function (old) { return Object.assign({}, old, { loading: true }); });
     Promise.all([
@@ -61,21 +63,16 @@ module.exports = function SetsView(props) {
     });
   }
 
-  // 锁定时清空列表、选中行、详情、草稿与待选凭据；解锁后自动重载。
+  // 锁定时只丢掉「带明文或待提交」的临时状态（弹窗草稿、待加入凭据、删除确认），
+  // 列表与详情保留只读；解锁后自动重载刷新。
   React.useEffect(function () {
     if (!guard.ready) return;
     inflight.seq += 1;
     if (guard.locked) {
-      listS[1]({ loading: false, items: [], error: "" });
-      secretsS[1]([]);
-      groupsS[1]([]);
-      activeS[1](null);
-      detailS[1]({ setId: "", secrets: [], groups: [], error: "" });
       draftS[1](null);
       pickS[1]([]);
       delS[1](null);
       msgS[1]("");
-      return;
     }
     load();
   }, [guard.ready, guard.locked]);
@@ -86,7 +83,6 @@ module.exports = function SetsView(props) {
   }
 
   function open(row) {
-    if (guard.locked) return null;
     activeS[1](row);
     detailS[1]({ setId: row.id, secrets: [], groups: [], error: "" });
     var seq = (inflight.seq += 1);
@@ -228,7 +224,17 @@ module.exports = function SetsView(props) {
   var candidates = secretsS[0].filter(function (s) { return !inSet[s.id]; });
 
   if (!guard.ready) return h("div", { className: "wbv" }, h(C.Empty, { h: h, text: "正在读取保险箱状态…" }));
-  if (guard.locked) return h(Lock.Panel, { h: h, C: C, lang: lang, error: guard.error });
+
+  // 锁定只读：集合、账号、凭据名与类型都是不需要 DEK 的明文元数据，照常展示；
+  // 新建/编辑/加入/移出/挂靠与明文录入全部挡在解锁之后。
+  var readOnly = guard.locked;
+  var lockNote = readOnly
+    ? h(C.Notice, {
+        h: h,
+        kind: "warn",
+        text: "保险箱已锁定：集合、账号与凭据名照常可见；新建、编辑、加入凭据与明文录入需先到「保险箱」页解锁。",
+      })
+    : null;
 
   var active = activeS[0];
   var secretColumns = [
@@ -245,9 +251,10 @@ module.exports = function SetsView(props) {
       sub: "一个集合可以标一个账号（可重复、可留空），并挂到多个分组、装多条凭据；删除集合只断关联，不删凭据。",
       actions: [
         h(C.Btn, { h: h, key: "refresh", onClick: load }, "刷新"),
-        h(C.Btn, { h: h, key: "create", kind: "primary", onClick: startCreate }, "新建集合与账号"),
+        h(C.Btn, { h: h, key: "create", kind: "primary", disabled: readOnly, onClick: startCreate }, "新建集合与账号"),
       ],
     }),
+    lockNote,
     h(P.Toolbar, { h: h },
       h(P.Input, {
         h: h,
@@ -280,7 +287,7 @@ module.exports = function SetsView(props) {
                 icon: Layers,
                 title: qS[0] || typeS[0] ? "没有匹配的集合与账号" : "还没有集合与账号",
                 hint: qS[0] || typeS[0] ? "换个关键词或类型试试。" : "新建一个后，可以把账号、凭据和分组都挂进来。",
-              }, h(C.Btn, { h: h, kind: "primary", onClick: startCreate }, "新建集合与账号"))
+              }, h(C.Btn, { h: h, kind: "primary", disabled: readOnly, onClick: startCreate }, "新建集合与账号"))
             : items.map(function (set) {
                 var on = active && active.id === set.id;
                 return h("button", {
@@ -308,8 +315,8 @@ module.exports = function SetsView(props) {
               h("div", { className: "wbv-card-head" },
                 h("h3", { className: "wbv-card-title" }, active.name),
                 h("div", { className: "wbv-card-actions" },
-                  h(C.Btn, { h: h, onClick: function () { startEdit(active); } }, "编辑"),
-                  h(C.Btn, { h: h, kind: "danger", onClick: function () { removeSet(active); } }, "删除集合"))),
+                  h(C.Btn, { h: h, disabled: readOnly, onClick: function () { startEdit(active); } }, "编辑"),
+                  h(C.Btn, { h: h, kind: "danger", disabled: readOnly, onClick: function () { removeSet(active); } }, "删除集合"))),
               h("div", { className: "wbv-muted", style: { marginBottom: "10px" } },
                 (active.type === "account" ? "账号集合" : "普通集合")
                   + " · 账号：" + (active.account || "未填")),
@@ -328,26 +335,46 @@ module.exports = function SetsView(props) {
                         h("td", null, h("span", { className: "wbv-pill" }, K.KIND_LABEL[s.kind] || s.kind)),
                         h("td", null, C.fmtTime(s.updatedAt, lang)),
                         h("td", null, h("div", { className: "wbv-actions" },
-                          h(C.Btn, { h: h, kind: "ghost", onClick: function () { detach(s.id); } }, "移出"))));
+                          h(C.Btn, { h: h, kind: "ghost", disabled: readOnly, onClick: function () { detach(s.id); } }, "移出"))));
                     },
                   }),
               h("div", { className: "wbv-card-title", style: { marginTop: "14px" } }, "加入凭据"),
-              h("div", { className: "wbv-row" },
-                h(P.Select, {
-                  h: h,
-                  value: "",
-                  "aria-label": "选择要加入的凭据",
-                  onChange: function (e) { var v = e.target.value; if (v) pickS[1](pickS[0].concat([v])); e.target.value = ""; },
-                },
-                  h("option", { value: "" }, candidates.length ? "选择要加入的凭据…" : "没有可加入的凭据"),
-                  candidates.map(function (s) { return h("option", { key: s.id, value: s.id }, s.name + "（" + (K.KIND_LABEL[s.kind] || s.kind) + "）"); })),
-                pickS[0].length ? h("span", { className: "wbv-chips" }, pickS[0].map(function (id) {
-                  return h("span", { className: "wbv-chip", key: id },
-                    h("span", null, secretName(id)),
-                    h("button", { type: "button", className: "wbv-btn ghost", onClick: function () { pickS[1](pickS[0].filter(function (x) { return x !== id; })); } }, "×"));
-                })) : null,
-                h("span", { className: "wbv-grow" }),
-                h(C.Btn, { h: h, kind: "primary", disabled: !pickS[0].length || busyS[0], onClick: attachPicked }, "加入 " + (pickS[0].length || ""))),
+              readOnly
+                ? h("div", { className: "wbv-muted" }, "解锁后可把凭据加入这个集合。")
+                : h("div", { className: "wbv-row" },
+                    h(SearchPicker, {
+                      h: h,
+                      React: React,
+                      mode: "multi",
+                      label: "凭据",
+                      title: "可加入的凭据",
+                      items: candidates.map(function (s) {
+                        return { id: s.id, name: s.name, meta: K.KIND_LABEL[s.kind] || s.kind };
+                      }),
+                      selected: pickS[0],
+                      onChange: function (ids) { pickS[1](ids); },
+                      disabled: busyS[0],
+                      classes: { root: "wbv-picker", btn: "wbv-picker-btn", btnOn: "on", menu: "wbv-picker-menu" },
+                      texts: {
+                        all: "选择要加入的凭据",
+                        selected: "已选",
+                        clear: "清空",
+                        searchPlaceholder: "搜索凭据名或类型",
+                        empty: "没有可加入的凭据",
+                        noMatch: "没有匹配的凭据",
+                      },
+                      renderSelected: function (ctx) {
+                        return ctx.ids.length
+                          ? h("span", { className: "wbv-chips" }, ctx.ids.map(function (id) {
+                              return h("span", { className: "wbv-chip", key: id },
+                                h("span", null, secretName(id)),
+                                h("button", { type: "button", className: "wbv-btn ghost", onClick: function () { ctx.toggle(id); } }, "×"));
+                            }))
+                          : null;
+                      },
+                    }),
+                    h("span", { className: "wbv-grow" }),
+                    h(C.Btn, { h: h, kind: "primary", disabled: !pickS[0].length || busyS[0], onClick: attachPicked }, "加入 " + (pickS[0].length || ""))),
 
               h("div", { className: "wbv-card-title", style: { marginTop: "14px" } }, "挂靠分组"),
               h("div", { className: "wbv-chips" },
@@ -355,7 +382,7 @@ module.exports = function SetsView(props) {
                   groupsS[0].map(function (g) {
                     var on = detail.groups.indexOf(g.id) >= 0;
                     return h("label", { key: g.id, className: "wbv-chip", style: { cursor: "pointer" } },
-                      h("input", { type: "checkbox", checked: on, disabled: busyS[0], onChange: function (e) { toggleGroup(g.id, e.target.checked); } }),
+                      h("input", { type: "checkbox", checked: on, disabled: busyS[0] || readOnly, onChange: function (e) { toggleGroup(g.id, e.target.checked); } }),
                       h("span", null, g.name));
                   }))))),
 
@@ -414,24 +441,44 @@ module.exports = function SetsView(props) {
             placeholder: "如 --wb-accent",
             onChange: function (e) { draftS[1](Object.assign({}, draftS[0], { color: e.target.value })); },
           })),
-        h("div", { className: "wbv-card-title", style: { marginTop: "4px" } }, "凭据"),
-        secretsS[0].length
-          ? h("div", { className: "wbv-chips" }, secretsS[0].map(function (sec) {
-              var on = draftS[0].secretIds.indexOf(sec.id) >= 0;
-              return h("label", { key: sec.id, className: "wbv-chip", style: { cursor: "pointer" } },
-                h("input", {
-                  type: "checkbox",
-                  checked: on,
-                  onChange: function (e) {
-                    var ids = draftS[0].secretIds.slice();
-                    if (e.target.checked) ids.push(sec.id);
-                    else ids = ids.filter(function (x) { return x !== sec.id; });
-                    draftS[1](Object.assign({}, draftS[0], { secretIds: ids }));
-                  },
-                }),
-                h("span", null, sec.name));
-            }))
-          : h("span", { className: "wbv-muted" }, "保险箱还没有凭据，可在下面直接新建一条。"),
+        h(C.Field, {
+          h: h,
+          label: "凭据",
+          hint: "搜索后勾选要挂到这个集合上的凭据；保存集合时一并建立关联",
+        },
+          h(SearchPicker, {
+            h: h,
+            React: React,
+            mode: "multi",
+            label: "选择凭据",
+            title: "保险箱里的凭据",
+            items: secretsS[0].map(function (sec) {
+              return { id: sec.id, name: sec.name, meta: K.KIND_LABEL[sec.kind] || sec.kind };
+            }),
+            selected: draftS[0].secretIds,
+            onChange: function (ids) { draftS[1](Object.assign({}, draftS[0], { secretIds: ids })); },
+            disabled: busyS[0],
+            classes: { root: "wbv-picker", btn: "wbv-picker-btn", btnOn: "on", menu: "wbv-picker-menu" },
+            texts: {
+              all: "选择凭据",
+              selected: "已选",
+              clear: "清空",
+              searchPlaceholder: "搜索凭据名或类型",
+              empty: "保险箱还没有凭据",
+              noMatch: "没有匹配的凭据",
+            },
+            renderSelected: function (ctx) {
+              return ctx.ids.length
+                ? h("span", { className: "wbv-chips" }, ctx.ids.map(function (id) {
+                    var sec = ctx.nameOf(id) || { name: id };
+                    return h("span", { className: "wbv-chip", key: id },
+                      h("span", null, sec.name),
+                      h("button", { type: "button", className: "wbv-btn ghost", onClick: function () { ctx.toggle(id); } }, "×"));
+                  }))
+                : null;
+            },
+          })),
+        h("div", { className: "wbv-card-title", style: { marginTop: "10px" } }, "或直接新建一条凭据"),
         h("div", { className: "wbv-inline" },
           h(P.Input, {
             h: h,
