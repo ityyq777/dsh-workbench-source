@@ -1,7 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DatabaseSync } from 'node:sqlite';
-import { createAgentAccess } from '../../../shell/lib/actions/agent-access.js';
 import { registerMailActions } from '../lib/domain/actions.js';
 
 // 服务端 action 现在统一过保险箱门禁（api.call("vault.status")），execute 一律是异步的。
@@ -47,28 +45,20 @@ test('每个新参数显式声明并交给对应服务，未声明参数不透�
   assert.equal(actions.get('mail.sync').input.properties.uidValidity.type, 'integer');
 });
 
-test('草稿与附件即使本机已有允许记录仍硬锁；原有发信仍遵守用户的开关', async () => {
-  const db = new DatabaseSync(':memory:');
-  try {
-    db.exec('CREATE TABLE meta (k TEXT PRIMARY KEY,v TEXT)');
-    const access = createAgentAccess(db);
-    const actions = register();
-    for (const suffix of ['attachmentDownload', 'draftList', 'draftGet', 'draftSave', 'draftDelete']) {
-      const name = `mail.${suffix}`, def = actions.get(name);
-      db.prepare('INSERT INTO meta(k,v) VALUES(?,?)').run(`config.wb-shell.actionAgent.${name}`, '1');
-      assert.equal(access.effective(name, def), false, name);
-      assert.throws(() => access.set(name, def, true), /永久禁止/);
-      for (const origin of ['agent', 'plugin', 'sync', undefined]) {
-        await assert.rejects(() => def.execute({ id: 'x', key: 'x', origin: 'ui' }, { origin }), /界面/, name);
-      }
+test('草稿与附件硬锁只留给界面；发信支持 agent 但默认不给', async () => {
+  const actions = register();
+  for (const suffix of ['attachmentDownload', 'draftList', 'draftGet', 'draftSave', 'draftDelete']) {
+    const name = `mail.${suffix}`, def = actions.get(name);
+    assert.deepEqual(def.origins, ['ui'], name);
+    for (const origin of ['agent', 'plugin', 'sync', undefined]) {
+      await assert.rejects(() => def.execute({ id: 'x', key: 'x', origin: 'ui' }, { origin }), /界面/, name);
     }
-    const name = 'mail.messageSend', def = actions.get(name);
-    assert.equal(access.effective(name, def), false);
-    access.set(name, def, true);
-    assert.equal(access.effective(name, def), true);
-    assert.deepEqual((await def.execute(send, { origin: 'agent' })).inputs, [send]);
-    await assert.rejects(() => def.execute(send, { origin: 'plugin' }), /界面/);
-  } finally { db.close(); }
+  }
+  const sendDef = actions.get('mail.messageSend');
+  assert.deepEqual(sendDef.origins, ['ui', 'agent']);
+  assert.deepEqual(sendDef.originsDefault, ['ui']);
+  assert.deepEqual((await sendDef.execute(send, { origin: 'agent' })).inputs, [send]);
+  await assert.rejects(() => sendDef.execute(send, { origin: 'plugin' }), /界面/);
 });
 
 test('保险箱锁定时读接口一律 VAULT_LOCKED，无隐私的动作仍放行', async () => {

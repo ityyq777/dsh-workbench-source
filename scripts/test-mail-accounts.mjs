@@ -138,6 +138,21 @@ const pickerLocked = renderToStaticMarkup(h(SecretPicker, {
 assert.ok(pickerLocked.includes('保险箱已锁定或未初始化'), '保险箱锁定时选择器退化成说明文案');
 assert.equal(form.includes('授权码 / 应用密码'), false, '表单里不再有授权码输入框');
 assert.equal(form.includes('wb-eye'), false, '表单不再渲染明文切换小眼睛（保险箱口令框除外，vault loading 时不渲染）');
+// 预设服务商只让填 @ 前面的本地部分，域名由预设提供；陌生域名才填整条地址。
+assert.ok(form.includes('wbml-addr'), '预设服务商把地址拆成本地部分 + 域名');
+assert.ok(form.includes('@</span>') || form.includes('wbml-addr-at'), '地址中间有 @ 分隔符');
+assert.ok(form.includes('qq.com'), 'QQ 预设直接给出域名');
+assert.equal(/placeholder="you@example\.com"/.test(form), false, '预设服务商不再让用户填整条地址');
+assert.ok(other.includes('placeholder="you@example.com"'), '「其他」仍填整条地址');
+// 编辑已有网易账户：拆出本地部分，域名落在 163.com
+const edit163 = renderToStaticMarkup(h(AccountForm, {
+  h, React, api: { call: async () => ({}) }, C, lang: 'zh', SecretField, providers: table,
+  account: { id: 'a3', name: '网易', email: 'QiSheng0417@163.com', imapHost: 'imap.163.com', imapPort: 993, smtpHost: 'smtp.163.com', smtpPort: 465, secretId: 'sec1' },
+  onCancel: () => {}, onSaved: () => {},
+}));
+assert.ok(edit163.includes('value="QiSheng0417"'), '编辑时本地部分回填到前面的输入框');
+assert.ok(edit163.includes('163.com'), '编辑时域名回填 163.com');
+
 assert.ok(form.includes('保存前自检'), '表单提供保存前自检');
 // 未选凭据时「保存」与「自检」都置灰，并给一句提示
 assert.match(form, /disabled=""[^>]*>保存<\/button>/, '未选凭据时保存按钮禁用');

@@ -1321,6 +1321,11 @@ var require_styles = __commonJS({
     module2.exports = require_client_base_styles()("wbml").concat(require_vault_lock().create({ prefix: "wbml" }).styles()).concat([
       ".wbml-page{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
       ".wbml-input{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:120px}",
+      ".wbml-addr{display:flex;align-items:stretch;min-width:0}",
+      ".wbml-addr .wbml-input{border-top-right-radius:0;border-bottom-right-radius:0;min-width:0;flex:1}",
+      ".wbml-addr-at{display:flex;align-items:center;padding:0 4px;color:var(--wb-muted,#6b7280);border:1px solid var(--wb-border,#d1d5db);border-left:0;border-right:0;background:var(--wb-surface,#fff)}",
+      ".wbml-addr-dom{border-top-left-radius:0;border-bottom-left-radius:0;border-left:0;min-width:96px}",
+      ".wbml-addr>span.wbml-addr-dom{display:flex;align-items:center;padding:0 8px;border:1px solid var(--wb-border,#d1d5db);border-top-right-radius:7px;border-bottom-right-radius:7px;background:var(--wb-surface,#fff);color:var(--wb-muted,#6b7280)}",
       ".wbml-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}",
       ".wbml-btn:disabled{opacity:1;background:color-mix(in srgb,var(--wb-muted,#6b7280) 14%,transparent);color:var(--wb-muted,#6b7280);border:1px solid var(--wb-border,#e5e7eb);cursor:not-allowed}",
       "/* \u4E09\u680F\u5DE5\u4F5C\u533A\uFF1A\u8D26\u6237\u680F 300px + \u5217\u8868\u81EA\u9002\u5E94 (+ \u9605\u8BFB\u680F 360\u2013520px) */",
@@ -4513,6 +4518,14 @@ var require_account_form = __commonJS({
       var providers = props.providers || { providers: [] };
       var editing = props.account || null;
       var S = React.useState;
+      function domainsOf(id) {
+        var p = util.providerById(providers, id);
+        return p && p.domains || [];
+      }
+      function compose(local, domain) {
+        var l = String(local || "").trim();
+        return l ? l + "@" + domain : "";
+      }
       function initial() {
         var base = util.presetFor(providers, "qq", "") || {
           provider: "qq",
@@ -4528,9 +4541,13 @@ var require_account_form = __commonJS({
         base.name = "";
         base.secretId = "";
         base.advanced = false;
+        var baseDoms = domainsOf("qq");
+        base.domain = baseDoms.length ? baseDoms[0] : "";
         if (!editing) return base;
+        var hitProvider = util.detect(providers, editing.email);
         return Object.assign(base, {
-          provider: util.detect(providers, editing.email) ? util.detect(providers, editing.email).id : "other",
+          provider: hitProvider ? hitProvider.id : "other",
+          domain: util.domainOf(editing.email) || base.domain,
           email: editing.email || "",
           name: editing.name || "",
           username: editing.username || editing.email || "",
@@ -4607,15 +4624,55 @@ var require_account_form = __commonJS({
         checkVault();
       }, []);
       function applyPreset(id, email) {
-        var p = util.presetFor(providers, id, email);
+        var doms = domainsOf(id);
+        var local = util.localOf(email);
+        var dom = util.domainOf(email);
+        if (id !== "other" && doms.length && doms.indexOf(dom) < 0) dom = doms[0];
+        var next = id === "other" ? String(email || "") : compose(local, dom);
+        var p = util.presetFor(providers, id, next);
         if (!p) return;
-        upd({ provider: id, imapHost: p.imapHost, imapPort: p.imapPort, imapTls: p.imapTls, smtpHost: p.smtpHost, smtpPort: p.smtpPort, smtpTls: p.smtpTls, username: p.username, advanced: id === "other" });
+        upd({ provider: id, email: next, domain: id === "other" ? "" : dom, imapHost: p.imapHost, imapPort: p.imapPort, imapTls: p.imapTls, smtpHost: p.smtpHost, smtpPort: p.smtpPort, smtpTls: p.smtpTls, username: p.username, advanced: id === "other" });
         portS[1]({ imap: true, smtp: true });
       }
       function onPick(id) {
         touchedS[1](true);
         setProbe(null);
         applyPreset(id, f.email);
+      }
+      function setLocal(value) {
+        var raw = String(value || "");
+        if (raw.indexOf("@") > 0) {
+          var hit = util.detect(providers, raw);
+          var id = hit ? hit.id : "other";
+          var doms = domainsOf(id);
+          var dom = util.domainOf(raw);
+          if (id !== "other" && doms.length && doms.indexOf(dom) < 0) dom = doms[0];
+          var local = util.localOf(raw);
+          var email = id === "other" ? raw : compose(local, dom);
+          var p = util.presetFor(providers, id, email);
+          upd({
+            provider: id,
+            domain: id === "other" ? "" : dom,
+            email,
+            imapHost: p ? p.imapHost : f.imapHost,
+            imapPort: p ? p.imapPort : f.imapPort,
+            imapTls: p ? p.imapTls : f.imapTls,
+            smtpHost: p ? p.smtpHost : f.smtpHost,
+            smtpPort: p ? p.smtpPort : f.smtpPort,
+            smtpTls: p ? p.smtpTls : f.smtpTls,
+            username: f.advanced ? f.username : email,
+            advanced: id === "other" ? true : f.advanced
+          });
+          portS[1]({ imap: true, smtp: true });
+          return;
+        }
+        var kept = f.domain || domainsOf(f.provider)[0] || "";
+        var composed = compose(raw, kept);
+        upd({ email: composed, username: f.advanced ? f.username : composed });
+      }
+      function setDomain(domain) {
+        var composed = compose(util.localOf(f.email), domain);
+        upd({ domain, email: composed, username: f.advanced ? f.username : composed });
       }
       function onEmailBlur() {
         if (touchedS[0] || !f.email) return;
@@ -4626,6 +4683,49 @@ var require_account_form = __commonJS({
         } else {
           upd({ provider: "other", advanced: true, username: f.username || f.email });
         }
+      }
+      function addressControl() {
+        var doms = domainsOf(f.provider);
+        if (f.provider === "other" || !doms.length) {
+          return h("input", {
+            className: "wbml-input",
+            type: "email",
+            value: f.email,
+            placeholder: "you@example.com",
+            autoComplete: "off",
+            onChange: function(e) {
+              upd({ email: e.target.value, username: f.advanced ? f.username : e.target.value });
+            },
+            onBlur: onEmailBlur
+          });
+        }
+        var dom = f.domain || doms[0];
+        return h(
+          "div",
+          { className: "wbml-addr" },
+          h("input", {
+            className: "wbml-input",
+            type: "text",
+            inputMode: "email",
+            value: util.localOf(f.email),
+            placeholder: t(lang, "\u8D26\u53F7", "account"),
+            autoComplete: "off",
+            onChange: function(e) {
+              setLocal(e.target.value);
+            }
+          }),
+          h("span", { className: "wbml-addr-at", "aria-hidden": "true" }, "@"),
+          doms.length > 1 ? h("select", {
+            className: "wbml-input wbml-addr-dom",
+            value: dom,
+            title: t(lang, "\u90AE\u7BB1\u57DF\u540D", "Mail domain"),
+            onChange: function(e) {
+              setDomain(e.target.value);
+            }
+          }, doms.map(function(d) {
+            return h("option", { key: d, value: d }, d);
+          })) : h("span", { className: "wbml-addr-dom" }, dom)
+        );
       }
       function validate() {
         if (!/^\S+@\S+\.\S+$/.test(String(f.email || "").trim())) return t(lang, "\u8BF7\u586B\u5199\u6B63\u786E\u7684\u90AE\u7BB1\u5730\u5740", "Enter a valid email address");
@@ -4816,17 +4916,7 @@ var require_account_form = __commonJS({
         h(
           "div",
           { className: "wbml-acct-grid" },
-          field(t(lang, "\u90AE\u7BB1\u5730\u5740", "Email address"), h("input", {
-            className: "wbml-input",
-            type: "email",
-            value: f.email,
-            placeholder: "you@example.com",
-            autoComplete: "off",
-            onChange: function(e) {
-              upd({ email: e.target.value });
-            },
-            onBlur: onEmailBlur
-          })),
+          field(t(lang, "\u90AE\u7BB1\u5730\u5740", "Email address"), addressControl()),
           field(t(lang, "\u8D26\u6237\u540D\u79F0", "Account name"), textInput("name", { placeholder: t(lang, "\u4F8B\u5982 \u5DE5\u4F5C\u90AE\u7BB1", "e.g. Work mail") }))
         ),
         field(
@@ -7154,7 +7244,7 @@ var GLYPHS = require_icons2().ICONS;
   var slotBackToMessage = require_slot_back_to_message()({ React, h, C, Icon: Icon2 });
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.5.9",
+    version: "0.5.10",
     icon: GLYPHS["mail"],
     slots: [{ slot: "item.actions", id: "mail.back-to-message", order: 100, component: slotBackToMessage }],
     views: [

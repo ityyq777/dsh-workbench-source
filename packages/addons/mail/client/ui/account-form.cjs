@@ -34,6 +34,15 @@ module.exports = function AccountForm(props) {
   var editing = props.account || null;
   var S = React.useState;
 
+  function domainsOf(id) {
+    var p = util.providerById(providers, id);
+    return (p && p.domains) || [];
+  }
+  function compose(local, domain) {
+    var l = String(local || "").trim();
+    return l ? l + "@" + domain : "";
+  }
+
   function initial() {
     var base = util.presetFor(providers, "qq", "") || {
       provider: "qq",
@@ -49,9 +58,14 @@ module.exports = function AccountForm(props) {
     base.name = "";
     base.secretId = "";
     base.advanced = false;
+    // 预设服务商的域名由预设提供，用户只填 @ 前面的本地部分；"other" 才填整条地址。
+    var baseDoms = domainsOf("qq");
+    base.domain = baseDoms.length ? baseDoms[0] : "";
     if (!editing) return base;
+    var hitProvider = util.detect(providers, editing.email);
     return Object.assign(base, {
-      provider: util.detect(providers, editing.email) ? util.detect(providers, editing.email).id : "other",
+      provider: hitProvider ? hitProvider.id : "other",
+      domain: util.domainOf(editing.email) || base.domain,
       email: editing.email || "",
       name: editing.name || "",
       username: editing.username || editing.email || "",
@@ -138,9 +152,14 @@ module.exports = function AccountForm(props) {
   }, []);
 
   function applyPreset(id, email) {
-    var p = util.presetFor(providers, id, email);
+    var doms = domainsOf(id);
+    var local = util.localOf(email);
+    var dom = util.domainOf(email);
+    if (id !== "other" && doms.length && doms.indexOf(dom) < 0) dom = doms[0];
+    var next = id === "other" ? String(email || "") : compose(local, dom);
+    var p = util.presetFor(providers, id, next);
     if (!p) return;
-    upd({ provider: id, imapHost: p.imapHost, imapPort: p.imapPort, imapTls: p.imapTls, smtpHost: p.smtpHost, smtpPort: p.smtpPort, smtpTls: p.smtpTls, username: p.username, advanced: id === "other" });
+    upd({ provider: id, email: next, domain: id === "other" ? "" : dom, imapHost: p.imapHost, imapPort: p.imapPort, imapTls: p.imapTls, smtpHost: p.smtpHost, smtpPort: p.smtpPort, smtpTls: p.smtpTls, username: p.username, advanced: id === "other" });
     // 切换预设会整体换掉主机与端口，之前的非法草稿状态一并清掉。
     portS[1]({ imap: true, smtp: true });
   }
@@ -149,6 +168,44 @@ module.exports = function AccountForm(props) {
     touchedS[1](true);
     setProbe(null);
     applyPreset(id, f.email);
+  }
+
+  function setLocal(value) {
+    var raw = String(value || "");
+    if (raw.indexOf("@") > 0) {
+      // 直接粘贴一整条地址：按域名认出服务商，拆成「本地部分 + 预设域名」。
+      var hit = util.detect(providers, raw);
+      var id = hit ? hit.id : "other";
+      var doms = domainsOf(id);
+      var dom = util.domainOf(raw);
+      if (id !== "other" && doms.length && doms.indexOf(dom) < 0) dom = doms[0];
+      var local = util.localOf(raw);
+      var email = id === "other" ? raw : compose(local, dom);
+      var p = util.presetFor(providers, id, email);
+      upd({
+        provider: id,
+        domain: id === "other" ? "" : dom,
+        email: email,
+        imapHost: p ? p.imapHost : f.imapHost,
+        imapPort: p ? p.imapPort : f.imapPort,
+        imapTls: p ? p.imapTls : f.imapTls,
+        smtpHost: p ? p.smtpHost : f.smtpHost,
+        smtpPort: p ? p.smtpPort : f.smtpPort,
+        smtpTls: p ? p.smtpTls : f.smtpTls,
+        username: f.advanced ? f.username : email,
+        advanced: id === "other" ? true : f.advanced,
+      });
+      portS[1]({ imap: true, smtp: true });
+      return;
+    }
+    var kept = f.domain || domainsOf(f.provider)[0] || "";
+    var composed = compose(raw, kept);
+    upd({ email: composed, username: f.advanced ? f.username : composed });
+  }
+
+  function setDomain(domain) {
+    var composed = compose(util.localOf(f.email), domain);
+    upd({ domain: domain, email: composed, username: f.advanced ? f.username : composed });
   }
 
   function onEmailBlur() {
@@ -160,6 +217,31 @@ module.exports = function AccountForm(props) {
     } else {
       upd({ provider: "other", advanced: true, username: f.username || f.email });
     }
+  }
+
+  function addressControl() {
+    var doms = domainsOf(f.provider);
+    if (f.provider === "other" || !doms.length) {
+      return h("input", {
+        className: "wbml-input", type: "email", value: f.email, placeholder: "you@example.com", autoComplete: "off",
+        onChange: function (e) { upd({ email: e.target.value, username: f.advanced ? f.username : e.target.value }); },
+        onBlur: onEmailBlur,
+      });
+    }
+    var dom = f.domain || doms[0];
+    return h("div", { className: "wbml-addr" },
+      h("input", {
+        className: "wbml-input", type: "text", inputMode: "email", value: util.localOf(f.email),
+        placeholder: t(lang, "账号", "account"), autoComplete: "off",
+        onChange: function (e) { setLocal(e.target.value); },
+      }),
+      h("span", { className: "wbml-addr-at", "aria-hidden": "true" }, "@"),
+      doms.length > 1
+        ? h("select", {
+            className: "wbml-input wbml-addr-dom", value: dom, title: t(lang, "邮箱域名", "Mail domain"),
+            onChange: function (e) { setDomain(e.target.value); },
+          }, doms.map(function (d) { return h("option", { key: d, value: d }, d); }))
+        : h("span", { className: "wbml-addr-dom" }, dom));
   }
 
   function validate() {
@@ -360,11 +442,7 @@ module.exports = function AccountForm(props) {
     ),
     h(require("./provider-chips.cjs"), { h: h, lang: lang, providers: providers, value: f.provider, onPick: onPick }),
     h("div", { className: "wbml-acct-grid" },
-      field(t(lang, "邮箱地址", "Email address"), h("input", {
-        className: "wbml-input", type: "email", value: f.email, placeholder: "you@example.com", autoComplete: "off",
-        onChange: function (e) { upd({ email: e.target.value }); },
-        onBlur: onEmailBlur,
-      })),
+      field(t(lang, "邮箱地址", "Email address"), addressControl()),
       field(t(lang, "账户名称", "Account name"), textInput("name", { placeholder: t(lang, "例如 工作邮箱", "e.g. Work mail") })),
     ),
     field(

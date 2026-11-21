@@ -7,6 +7,11 @@ var NF = require("../../../lib/number-field.cjs");
 module.exports = require("../../../lib/client-base-styles.cjs")("wbml").concat(require("../../../lib/vault-lock.cjs").create({ prefix: "wbml" }).styles()).concat([
   ".wbml-page{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
   ".wbml-input{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:120px}",
+  ".wbml-addr{display:flex;align-items:stretch;min-width:0}",
+  ".wbml-addr .wbml-input{border-top-right-radius:0;border-bottom-right-radius:0;min-width:0;flex:1}",
+  ".wbml-addr-at{display:flex;align-items:center;padding:0 4px;color:var(--wb-muted,#6b7280);border:1px solid var(--wb-border,#d1d5db);border-left:0;border-right:0;background:var(--wb-surface,#fff)}",
+  ".wbml-addr-dom{border-top-left-radius:0;border-bottom-left-radius:0;border-left:0;min-width:96px}",
+  ".wbml-addr>span.wbml-addr-dom{display:flex;align-items:center;padding:0 8px;border:1px solid var(--wb-border,#d1d5db);border-top-right-radius:7px;border-bottom-right-radius:7px;background:var(--wb-surface,#fff);color:var(--wb-muted,#6b7280)}",
   ".wbml-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}",
   ".wbml-btn:disabled{opacity:1;background:color-mix(in srgb,var(--wb-muted,#6b7280) 14%,transparent);color:var(--wb-muted,#6b7280);border:1px solid var(--wb-border,#e5e7eb);cursor:not-allowed}",
   "/* 三栏工作区：账户栏 300px + 列表自适应 (+ 阅读栏 360–520px) */",

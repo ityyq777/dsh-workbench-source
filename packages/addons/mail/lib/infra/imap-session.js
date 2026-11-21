@@ -70,7 +70,15 @@ function channel(socket) {
         continue;
       }
       if (text.startsWith(tag + " ")) {
-        if (!/^\S+ OK\b/i.test(text)) throw new Error("IMAP " + label + "失败");
+        if (!/^\S+ OK\b/i.test(text)) {
+          // 服务器原文必须带进错误：163 的「Unsafe Login. Please contact kefu@188.com」
+          // 之类只有原文才能判断原因，光一句「打开文件夹失败」谁也修不了。
+          const detail = text.replace(/^\S+\s+/, "").trim();
+          const error = new Error("IMAP " + label + "失败" + (detail ? "：" + detail : ""));
+          error.code = "EIMAP";
+          error.detail = detail;
+          throw error;
+        }
         if (continuation !== continuations.length) throw new Error("IMAP 搜索请求未完整发送");
         return { lines, literals };
       }
@@ -99,6 +107,38 @@ function channel(socket) {
       await iter.return();
     },
   };
+}
+
+/**
+ * 登录后声明客户端身份（RFC 2971 的 ID 命令）。
+ *
+ * 网易 163/126/yeah.net（Coremail）在 LOGIN 之后、任何 SELECT/EXAMINE 之前要求客户端先发 ID，
+ * 否则一律回 `Unsafe Login. Please contact kefu@188.com for help`，表现为「能登录、打不开文件夹」。
+ * 但先读 CAPABILITY 再决定发不发：有不支持 ID 的服务器把未知命令当成非法请求，直接 `* BYE` 断连。
+ * ID 被拒也不影响后续命令，交给各条命令自己报错。
+ */
+async function announceClient(s, account) {
+  let caps = "";
+  try {
+    const { lines } = await s.command("CAPABILITY", { label: "读取服务器能力" });
+    caps = lines.join(" ");
+  } catch {
+    return;
+  }
+  if (!/(?:^|\s)ID(?:\s|$)/.test(caps.replace(/^\* CAPABILITY\s+/im, " "))) return;
+  const fields = [
+    ["name", "DSH Workbench Mail"],
+    ["version", "1.0.0"],
+    ["vendor", "dsh-workbench"],
+    ["support-email", account.user || "workbench@localhost"],
+  ];
+  try {
+    await s.command("ID (" + fields.map(([k, v]) => quote(k) + " " + quote(v)).join(" ") + ")", {
+      label: "声明客户端身份",
+    });
+  } catch {
+    /* 服务器广告了 ID 却拒绝时，后续命令自己会给出真实错误 */
+  }
 }
 
 /**
@@ -146,6 +186,7 @@ export async function connectSession(account, password, opts = {}) {
     }
     if (!account.secure || !/^\* PREAUTH\b/i.test(greeting))
       await s.command("LOGIN " + quote(account.user) + " " + quote(password), { label: "登录" });
+    await announceClient(s, account);
     return {
       s,
       socket,
