@@ -181,6 +181,9 @@ function createMount(options) {
     var root = doc.createElement("div");
     root.className = "wbm-float-root";
     root.setAttribute("data-message-float", "1");
+    // 宿主浮层容器的 `.overlayLayer>*{pointer-events:auto}` 与样式表规则同权重，
+    // 谁后注入谁生效；内联压住，保证浮层容器永远不吃页面点击。
+    root.style.pointerEvents = "none";
 
     var btn = buttons.createButton({ doc: doc, lang: readLang(doc), onActivate: activate });
     root.appendChild(btn.el);

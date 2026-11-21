@@ -7,14 +7,18 @@
  * 只有在工作台插件页之外拿不到这些 token 时才退回 `--wb-*`，最后才是中性兜底——
  * 这样按钮在深色壁纸、浅色、自定义主题下都跟着应用走，不会出现白块。
  *
- * 容器 `pointer-events:none`、按钮 `auto`，保证常驻层不吃页面点击；
+ * 容器只占底部一条零高度定位带（`left/right:0;bottom:0;height:0`），不能用 `inset:0`
+ * 铺满全屏：宿主浮层容器对直接子元素写了 `.overlayLayer>*{pointer-events:auto}`，
+ * 与 `.wbm-float-root{pointer-events:none}` 同权重，样式注入顺序一变就会接管整页点击。
+ * 零高度容器即使被宿主规则改成 auto 也没有可命中的面积，按钮靠溢出继续可点。
+ * 按钮自身再写内联 `pointer-events:auto`，双重保证。
  * z-index 860：高于弹幕层（780）、低于弹窗（900），浮在内容之上但不盖对话框。
  * 选择器写成 `.wbm-float-root .wbm-float-btn`：外壳对 `button` 有全局圆角规则，
  * 单类选择器会被压成圆角方块，这里提高一级确保仍是圆形。
  */
 module.exports = function floatStyles() {
   return [
-    ".wbm-float-root{position:fixed;inset:0;z-index:860;pointer-events:none;-webkit-app-region:no-drag}",
+    ".wbm-float-root{position:fixed;left:0;right:0;bottom:0;height:0;z-index:860;pointer-events:none;-webkit-app-region:no-drag}",
     ".wbm-float-root .wbm-float-btn{position:absolute;right:20px;bottom:20px;display:inline-flex;align-items:center;justify-content:center;",
     "box-sizing:border-box;width:46px;height:46px;padding:0;flex:0 0 auto;border-radius:50%;",
     "--wbm-float-bg:var(--dsw-alias-button-floating-fill,var(--wb-card,#2c2c2e));",

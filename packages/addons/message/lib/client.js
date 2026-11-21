@@ -3902,7 +3902,7 @@ var require_style = __commonJS({
     "use strict";
     module2.exports = function floatStyles() {
       return [
-        ".wbm-float-root{position:fixed;inset:0;z-index:860;pointer-events:none;-webkit-app-region:no-drag}",
+        ".wbm-float-root{position:fixed;left:0;right:0;bottom:0;height:0;z-index:860;pointer-events:none;-webkit-app-region:no-drag}",
         ".wbm-float-root .wbm-float-btn{position:absolute;right:20px;bottom:20px;display:inline-flex;align-items:center;justify-content:center;",
         "box-sizing:border-box;width:46px;height:46px;padding:0;flex:0 0 auto;border-radius:50%;",
         "--wbm-float-bg:var(--dsw-alias-button-floating-fill,var(--wb-card,#2c2c2e));",
@@ -3966,6 +3966,7 @@ var require_button = __commonJS({
       btn.type = "button";
       btn.className = "wbm-float-btn";
       btn.style.borderRadius = "50%";
+      btn.style.pointerEvents = "auto";
       btn.setAttribute("data-pos", "bottom-right");
       btn.setAttribute("aria-label", label(lang, 0));
       btn.setAttribute("title", label(lang, 0));
@@ -4183,6 +4184,7 @@ var require_mount = __commonJS({
         var root = doc.createElement("div");
         root.className = "wbm-float-root";
         root.setAttribute("data-message-float", "1");
+        root.style.pointerEvents = "none";
         var btn = buttons.createButton({ doc, lang: readLang(doc), onActivate: activate });
         root.appendChild(btn.el);
         state.root = root;
@@ -4286,7 +4288,7 @@ var require_mount = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-message",
-    version: "0.1.5",
+    version: "0.1.6",
     icon: ICONS["message-square"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: Stats },

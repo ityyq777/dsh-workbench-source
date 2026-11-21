@@ -93,6 +93,13 @@ const mountModule = require("../packages/addons/message/client/float/mount.cjs")
   assert.ok(css.includes("z-index:860"), "浮层层级应为 860（高于弹幕 780、低于弹窗 900）");
   assert.ok(css.includes("pointer-events:none"), "容器不能挡住页面点击");
   assert.ok(css.includes("pointer-events:auto"), "按钮自身要可点");
+  // 宿主浮层容器对直接子元素有 `.overlayLayer>*{pointer-events:auto}`，与容器规则同权重；
+  // 容器一旦铺满全屏（inset:0）就可能在注入顺序变化时接管整页点击，只剩按钮可点。
+  assert.ok(
+    !/\.wbm-float-root\{[^}]*inset:0/.test(css),
+    "浮层容器不能铺满全屏，否则会吞掉页面其它位置的点击",
+  );
+  assert.ok(/\.wbm-float-root\{[^}]*height:0/.test(css), "浮层容器应缩成零高度定位带");
   assert.ok(css.includes("-webkit-app-region:no-drag"), "桌面端不能声明可拖拽区域");
   assert.ok(css.includes("var(--dsw-alias-button-floating-fill"), "底色优先取应用外壳的浮层 token");
   assert.ok(css.includes("var(--dsw-alias-label-primary"), "图标颜色必须取文字 token，不能继承任意主题色");
@@ -188,6 +195,9 @@ async function main() {
   await flush();
 
   assert.ok(doc.getElementById("wb-message-float-style"), "样式应注入一次");
+  // 内联兜底：宿主浮层规则可能把直接子元素改成 pointer-events:auto。
+  assert.equal(body.children[0].style.pointerEvents, "none", "浮层容器内联不吃页面点击");
+  assert.equal(body.children[0].children[0].style.pointerEvents, "auto", "按钮内联收点击");
   assert.equal(calls[0].action, "message.configGet");
   assert.equal(calls[1].action, "message.unreadCount");
   assert.equal(mount.readState().count, 2, "初始未读数来自 message.unreadCount");

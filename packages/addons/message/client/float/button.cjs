@@ -36,6 +36,8 @@ function createButton(options) {
   btn.className = "wbm-float-btn";
   // 外壳对全局 button 有圆角规则，内联再钉一次，保证始终是圆形按钮。
   btn.style.borderRadius = "50%";
+  // 容器整体不吃点击，但按钮本身必须收事件；内联避免被宿主浮层规则覆盖。
+  btn.style.pointerEvents = "auto";
   btn.setAttribute("data-pos", "bottom-right");
   btn.setAttribute("aria-label", label(lang, 0));
   btn.setAttribute("title", label(lang, 0));
