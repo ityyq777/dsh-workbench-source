@@ -42,10 +42,18 @@ function channel(socket) {
     }
     return Buffer.concat(parts);
   }
+  // 发一行原始命令：IDLE 这类「服务器先回续传、再由客户端结束」的交互要自己控标签与时机。
+  function write(text) {
+    if (/[\r\n\0]/.test(text)) throw new Error("IMAP 命令格式错误");
+    socket.write(text + "\r\n");
+  }
+  function nextTag() {
+    return "a" + ++seq;
+  }
   async function command(cmd, { label = "请求", maxLiteralBytes = 1024 * 1024, continuations = [] } = {}) {
     if (/[\r\n\0]/.test(cmd)) throw new Error("IMAP 命令格式错误");
-    const tag = "a" + ++seq;
-    socket.write(tag + " " + cmd + "\r\n");
+    const tag = nextTag();
+    write(tag + " " + cmd);
     let continuation = 0;
     const lines = [],
       literals = [];
@@ -58,7 +66,7 @@ function channel(socket) {
       if (textBytes > 16 * 1024 * 1024) throw new Error("IMAP 响应过大");
       if (/^\+(?: |$)/.test(text)) {
         if (continuation >= continuations.length) throw new Error("IMAP 请求了意外续传");
-        socket.write(continuations[continuation++] + "\r\n");
+        write(continuations[continuation++]);
         continue;
       }
       if (text.startsWith(tag + " ")) {
@@ -84,17 +92,26 @@ function channel(socket) {
   return {
     command,
     line,
+    nextTag,
+    write,
     release: async () => {
       if (buf.length) throw new Error("STARTTLS 响应异常");
       await iter.return();
     },
   };
 }
-export async function withSession(account, password, fn) {
+
+/**
+ * 建立一条已登录的 IMAP 连接并交回连接对象，调用方自己决定何时关闭。
+ *
+ * `idle: true` 用于 IMAP IDLE：不设 15 秒空闲超时（空等服务器推送是正常状态），
+ * 由调用方用 25 分钟重发与自己的超时控制兜底。
+ */
+export async function connectSession(account, password, opts = {}) {
   const host = account.host,
     port = account.port;
-  let socket;
-  const timeout = () => socket.destroy(new Error("IMAP 连接超时"));
+  const idle = opts.idle === true;
+  const timeoutMs = Number(opts.timeoutMs) > 0 ? Number(opts.timeoutMs) : 15000;
   const options = {
     host,
     port,
@@ -102,9 +119,19 @@ export async function withSession(account, password, fn) {
     rejectUnauthorized: true,
     minVersion: "TLSv1.2",
   };
+  let socket;
+  function arm() {
+    // IDLE 期间服务器可能长时间不发任何字节，超时会误杀；只保留 TCP 层的 keepalive。
+    if (idle) {
+      socket.setTimeout(0);
+      socket.setKeepAlive(true, 60000);
+      return;
+    }
+    socket.setTimeout(timeoutMs, () => socket.destroy(new Error("IMAP 连接超时")));
+  }
   try {
     socket = account.secure ? tls.connect(options) : net.connect({ host, port });
-    socket.setTimeout(15000, timeout);
+    arm();
     await once(socket, account.secure ? "secureConnect" : "connect");
     let s = channel(socket);
     const greeting = await s.line();
@@ -113,15 +140,38 @@ export async function withSession(account, password, fn) {
       await s.command("STARTTLS", { label: "STARTTLS 升级" });
       await s.release();
       socket = tls.connect({ ...options, socket });
-      socket.setTimeout(15000, timeout);
+      arm();
       await once(socket, "secureConnect");
       s = channel(socket);
     }
     if (!account.secure || !/^\* PREAUTH\b/i.test(greeting))
       await s.command("LOGIN " + quote(account.user) + " " + quote(password), { label: "登录" });
-    return await fn(s);
+    return {
+      s,
+      socket,
+      close: async () => {
+        try {
+          socket.destroy();
+        } catch {
+          /* 关闭失败不影响调用方 */
+        }
+      },
+    };
+  } catch (error) {
+    try {
+      socket?.destroy();
+    } catch {
+      /* ignore */
+    }
+    throw error;
+  }
+}
+export async function withSession(account, password, fn) {
+  const conn = await connectSession(account, password);
+  try {
+    return await fn(conn.s);
   } finally {
-    socket?.destroy();
+    await conn.close();
   }
 }
 export function withMailbox(account, password, mailbox, fn, expectedUidValidity, readOnly = false) {

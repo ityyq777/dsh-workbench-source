@@ -1135,6 +1135,7 @@ var require_styles = __commonJS({
       ".wbml-icon-btn{border:0;background:transparent;color:var(--wb-muted,#6b7280);font-size:16px;cursor:pointer;padding:2px 6px}",
       /* 插槽贡献：渲染在任务详情里，不能假设外层有 .wbml-tools 的间距 */
       ".wbml-slot-back{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}",
+      ".wbml-sync-status{margin:0 0 12px;padding:8px 10px;border:1px solid var(--wb-line);border-radius:8px;background:var(--wb-surface);color:var(--wb-muted);font-size:12px}",
       ".wbml-paging,.wbml-tools,.wbml-search{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
       ".wbml-paging,.wbml-tools{padding:8px 12px;color:var(--wb-muted);border-top:1px solid var(--wb-line)}",
       ".wbml-search .wbml-field{flex:1;min-width:0}.wbml-input{max-width:100%;box-sizing:border-box}",
@@ -2238,8 +2239,46 @@ var require_config = __commonJS({
       var local = localS[0];
       var setLocal = localS[1];
       var seqRef = React.useRef(0);
+      var syncS = React.useState(null);
+      var sync = syncS[0];
+      var setSync = syncS[1];
       function values() {
         return Object.assign({}, cfg.values, local);
+      }
+      React.useEffect(
+        function() {
+          if (!api) return void 0;
+          var alive = true;
+          C.call(api, "mail.autoSyncStatus", {}).then(function(r) {
+            if (alive) setSync(r);
+          }).catch(function() {
+            if (alive) setSync(null);
+          });
+          return function() {
+            alive = false;
+          };
+        },
+        [api]
+      );
+      function syncSummary() {
+        if (!sync) return "";
+        var en = lang === "en";
+        if (!sync.enabled) return en ? "Auto-sync is off; nothing is fetched in the background." : "\u81EA\u52A8\u540C\u6B65\u5DF2\u5173\u95ED\uFF0C\u540E\u53F0\u4E0D\u4F1A\u6536\u53D6\u65B0\u90AE\u4EF6\u3002";
+        var mode = sync.mode === "idle" ? en ? "IMAP push" : "IMAP \u63A8\u9001" : en ? "Interval" : "\u5B9A\u65F6\u5FAA\u73AF";
+        var head = (en ? "Running: " : "\u6B63\u5728\u8FD0\u884C\uFF1A") + mode;
+        if (sync.mode !== "idle") head += "\uFF0C" + sync.intervalSec + "s";
+        if (sync.lastAt) {
+          var when = new Date(sync.lastAt);
+          head += (en ? " \xB7 last " : " \xB7 \u4E0A\u6B21 ") + when.toLocaleTimeString(en ? "en-US" : "zh-CN");
+        }
+        if (sync.skippedLocked) {
+          head += en ? " \xB7 skipped " + sync.skippedLocked + " time(s) because the vault is locked" : " \xB7 \u56E0\u4FDD\u9669\u7BB1\u9501\u5B9A\u8DF3\u8FC7 " + sync.skippedLocked + " \u6B21";
+        }
+        var failed = (sync.accounts || []).filter(function(a) {
+          return a.lastError;
+        });
+        if (failed.length) head += (en ? " \xB7 " : " \xB7 ") + (en ? failed.length + " account(s) failing" : failed.length + " \u4E2A\u8D26\u6237\u540C\u6B65\u5931\u8D25");
+        return head;
       }
       function toastOnce(text) {
         setToast(text);
@@ -2371,6 +2410,7 @@ var require_config = __commonJS({
           ),
           h(C.Btn, { h, onClick: resetAll }, h(icons.Icon, { name: "refresh-cw", size: 13 }), h("span", null, lang === "en" ? "Restore defaults" : "\u5168\u90E8\u6062\u590D\u9ED8\u8BA4"))
         ),
+        syncSummary() ? h("p", { className: "wbml-sync-status", role: "status" }, syncSummary()) : null,
         groups.map(function(group) {
           var items = cfg.items.filter(function(item) {
             return item.group === group.id;
@@ -3005,6 +3045,23 @@ var require_messages = __commonJS({
           searchRev.current++;
         };
       }, []);
+      React.useEffect(
+        function() {
+          if (!api || typeof api.subscribe !== "function") return void 0;
+          var off = api.subscribe(function(payload) {
+            if (!payload || payload.event !== "mail.synced") return;
+            var data2 = payload.data || {};
+            if (data2.accountId && accountId[0] && data2.accountId !== accountId[0]) return;
+            var box = String(folder[0] || "INBOX").toUpperCase();
+            if (!unified[0] && data2.mailbox && String(data2.mailbox).toUpperCase() !== box) return;
+            list.refresh();
+          });
+          return function() {
+            if (typeof off === "function") off();
+          };
+        },
+        [api, accountId[0], folder[0], unified[0]]
+      );
       var pane = React.useRef(null), reading = React.useRef(null), returning = React.useRef(null);
       var attachmentUpdates = React.useRef(/* @__PURE__ */ new Map());
       function back() {
@@ -6764,7 +6821,7 @@ var GLYPHS = require_icons2().ICONS;
   var slotBackToMessage = require_slot_back_to_message()({ React, h, C, Icon: Icon2 });
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.5.5",
+    version: "0.5.6",
     icon: GLYPHS["mail"],
     slots: [{ slot: "item.actions", id: "mail.back-to-message", order: 100, component: slotBackToMessage }],
     views: [

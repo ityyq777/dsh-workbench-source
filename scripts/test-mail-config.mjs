@@ -1,7 +1,8 @@
 /** 邮件配置页回归：内存 API + vm 沙箱渲染，不接触生产库、不构建、不改 profile。
  *
- * 覆盖：配置页按分组渲染五项（含正文配色枚举）、改一项立即写入、写失败保留原值并提示、
- * 恢复默认调用 configReset、读不到配置时按默认值继续；远程图片默认加载/拦截两种正文提示。
+ * 覆盖：配置页按分组渲染十项（含正文配色、同步方式两个枚举）、改一项立即写入、写失败保留
+ * 原值并提示、恢复默认调用 configReset、读不到配置时按默认值继续、自动同步运行状态摘要；
+ * 远程图片默认加载/拦截两种正文提示。
  */
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -50,16 +51,23 @@ const ITEMS = [
   { id: 'display.mailTheme', group: 'display', type: 'multi', surface: 'ui', apply: 'mount', default: 'original', values: ['original', 'app'], zh: '正文配色', en: 'Mail colour scheme', hintZh: '按原信配色或跟随界面主题。', hintEn: 'Keep the sender palette or follow the app theme.' },
   { id: 'read.autoSeen', group: 'read', type: 'bool', surface: 'ui', apply: 'mount', default: true, zh: '打开即标为已读', en: 'Mark as read on open', hintZh: '打开即回写已读。', hintEn: 'Mark read.' },
   { id: 'list.pageSize', group: 'list', type: 'int', surface: 'ui', apply: 'mount', default: 20, min: 10, max: 50, zh: '每次加载封数', en: 'Messages per page', hintZh: '一次加载多少封。', hintEn: 'Page size.' },
+  { id: 'autosync.enabled', group: 'autosync', type: 'bool', surface: 'ui', apply: 'background', default: true, zh: '自动收取新邮件', en: 'Fetch new mail automatically', hintZh: '后台检查收件箱。', hintEn: 'Check in background.' },
+  { id: 'autosync.mode', group: 'autosync', type: 'multi', surface: 'ui', apply: 'background', default: 'interval', values: ['interval', 'idle'], valueLabels: { interval: { zh: '定时循环', en: 'Interval' }, idle: { zh: 'IMAP 推送', en: 'IMAP push (IDLE)' } }, zh: '同步方式', en: 'Sync method', hintZh: '定时连一次或让服务器推送。', hintEn: 'Poll or let the server push.' },
+  { id: 'autosync.intervalSec', group: 'autosync', type: 'int', surface: 'ui', apply: 'background', default: 300, min: 60, max: 1800, zh: '定时间隔（秒）', en: 'Interval (seconds)', hintZh: '60–1800 秒。', hintEn: '60–1800 seconds.' },
+  { id: 'autosync.notify', group: 'autosync', type: 'bool', surface: 'ui', apply: 'background', default: true, zh: '新邮件通知到消息中心', en: 'Notify new mail in messages', hintZh: '装了消息插件时提醒。', hintEn: 'Notify when installed.' },
 ];
 const GROUPS = [
   { id: 'images', zh: '图片', en: 'Images' },
   { id: 'display', zh: '显示', en: 'Display' },
   { id: 'read', zh: '阅读', en: 'Reading' },
   { id: 'list', zh: '列表', en: 'List' },
+  { id: 'autosync', zh: '自动同步', en: 'Auto-sync' },
 ];
 
 // A. 只读渲染：四项都在，值来自服务端；分组标题按语言。
-const state = { values: { 'images.remote': true, 'display.html': true, 'display.mailTheme': 'original', 'read.autoSeen': true, 'list.pageSize': 20 }, overrides: {}, fail: false, failSet: false, calls: [] };
+const defaults = { 'images.remote': true, 'display.html': true, 'display.mailTheme': 'original', 'read.autoSeen': true, 'list.pageSize': 20, 'autosync.enabled': true, 'autosync.mode': 'interval', 'autosync.intervalSec': 300, 'autosync.notify': true };
+const syncStatus = { enabled: true, mode: 'interval', intervalSec: 300, running: true, skippedLocked: 0, lastAt: Date.UTC(2026, 10, 21, 6, 30), accounts: [{ id: 'a1', name: '工作', mode: 'interval', connected: true, lastAt: Date.UTC(2026, 10, 21, 6, 30), lastInserted: 2, lastError: '' }] };
+const state = { values: Object.assign({}, defaults), overrides: {}, fail: false, failSet: false, calls: [] };
 const api = {
   call(name, args) {
     state.calls.push({ name, args });
@@ -73,8 +81,9 @@ const api = {
       Object.assign(state.overrides, args.values);
       return Promise.resolve({ changed: Object.keys(args.values), values: state.values });
     }
+    if (name === 'mail.autoSyncStatus') return Promise.resolve(syncStatus);
     if (name === 'mail.configReset') {
-      state.values = { 'images.remote': true, 'display.html': true, 'display.mailTheme': 'original', 'read.autoSeen': true, 'list.pageSize': 20 };
+      state.values = Object.assign({}, defaults);
       state.overrides = {};
       return Promise.resolve({ reset: ITEMS.map((i) => i.id), values: state.values });
     }
@@ -95,8 +104,9 @@ let txt = text(tree);
 for (const item of ITEMS) assert.ok(txt.includes(item.zh), '应列出配置项：' + item.id);
 for (const group of GROUPS) assert.ok(txt.includes(group.zh), '应有分组标题：' + group.id);
 assert.match(txt, /邮件设置/);
-assert.equal(walk(tree).filter((n) => n.props && n.props.type === 'checkbox').length, 3, '三个布尔项各一个开关');
-assert.equal(walk(tree).filter((n) => n.props && n.props.type === 'number').length, 1, '一个数字项');
+assert.equal(walk(tree).filter((n) => n.props && n.props.type === 'checkbox').length, 5, '五个布尔项各一个开关');
+assert.equal(walk(tree).filter((n) => n.props && n.props.type === 'number').length, 2, '两个数字项');
+assert.match(txt, /正在运行：定时循环，300s/, '应显示自动同步的运行状态，而不是只显示开关意愿');
 const sel = walk(tree).find((n) => n.type === 'select' && n.props['aria-label'] === '正文配色');
 assert.ok(sel, '正文配色应渲染成下拉');
 assert.equal(sel.props.value, 'original', '默认按原信配色');

@@ -2,11 +2,13 @@
 import { bindClock, ensureSchema } from "./db/db.js";
 import { createMail } from "./domain/mail.js";
 import { registerMailActions } from "./domain/actions.js";
-import { loadConfig, registerConfigActions } from "./infra/config.js";
+import { createAutoSync, registerAutoSyncActions } from "./domain/auto-sync.js";
+import { loadConfig, onConfigChange, registerConfigActions } from "./infra/config.js";
 import { setFetchDebug } from "./infra/parts.js";
 
 export const inject = ["workbench"];
 let engine = null;
+let autoSync = null;
 
 export function setup(api) {
   if (typeof api.now === "function") bindClock(api.now);
@@ -14,6 +16,11 @@ export function setup(api) {
   engine = createMail({ db: api.db, host: api, log: api.log });
   registerMailActions(api, engine);
   registerConfigActions(api);
+  autoSync = createAutoSync({ db: api.db, engine, api, log: api.log });
+  registerAutoSyncActions(api, autoSync);
+  // 改开关、方式或间隔后立刻重新排期：不必重启宿主，也不必等下一轮。
+  onConfigChange(() => autoSync.restart());
+  autoSync.start();
   // 正文字段诊断只看配置项 debug.fetch；读配置失败时按关闭处理，绝不因为诊断拖累阅读。
   setFetchDebug(() => {
     try {
@@ -29,6 +36,9 @@ export function setup(api) {
   }
   if (typeof api.registerSearchProvider === "function") api.registerSearchProvider({ domainId: "wb-addon-mail", search: (q, opts) => engine.search(q, opts) });
   api.log("mail domain ready", api.addon.version);
+  return () => {
+    if (autoSync) autoSync.stop();
+  };
 }
 
 export function apply(ctx) {
@@ -38,7 +48,7 @@ export function apply(ctx) {
     id: "wb-addon-mail",
     title: "邮件",
     description: "安全 IMAP 收信与文件夹同步，按需读正文、下载附件，保存本地草稿并通过 SMTP 回复或转发。",
-    version: "0.5.5",
+    version: "0.5.6",
     category: "comm",
     // mail_draft 含私有未发正文，不加入宿主通用表清单或同步回退。
     tables: ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"],

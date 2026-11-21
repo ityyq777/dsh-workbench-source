@@ -92,6 +92,32 @@ export function imapList(account, password) {
     return boxes;
   });
 }
+/**
+ * 只问文件夹状态，不读任何信头：自动同步用它判断"值不值得同步"。
+ *
+ * 一次 STATUS 比一次 UID SEARCH ALL + FETCH 便宜得多，后台每分钟一轮也不会给服务器压力。
+ * 有的服务器不实现 UIDNEXT，取不到时返回 0，调用方退回只比较 exists。
+ */
+export function imapProbe(account, password, mailbox = "INBOX") {
+  const box = /^inbox$/i.test(String(mailbox)) ? "INBOX" : String(mailbox);
+  return withSession(account, password, async (s) => {
+    const { lines } = await s.command("STATUS " + quote(box) + " (MESSAGES UIDNEXT UIDVALIDITY UNSEEN)", {
+      label: "查询文件夹状态",
+    });
+    const text = lines.join("\n");
+    const num = (key) => {
+      const m = new RegExp("\\b" + key + "\\s+(\\d+)", "i").exec(text);
+      return m ? Number(m[1]) : 0;
+    };
+    return {
+      mailbox: box,
+      exists: num("MESSAGES"),
+      uidNext: num("UIDNEXT"),
+      uidValidity: num("UIDVALIDITY"),
+      unseen: num("UNSEEN"),
+    };
+  });
+}
 export const MAX_MESSAGE_BYTES = 10 * 1024 * 1024;
 export function imapFetchBody(account, password, mailbox = "INBOX", id, opts = {}) {
   return withMailbox(

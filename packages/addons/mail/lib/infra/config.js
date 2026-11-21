@@ -5,6 +5,9 @@
  * meta 表（键 `config.mail.<id>`），不建新表、不进同步、不进备份。账户与密码类信息
  * 一律不进这里——凭据仍由保险箱托管。
  * 读取永远宽松（表缺失/JSON 坏/取值越界都回退默认值并给 warnings），只有写入会抛错。
+ *
+ * `apply` 声明生效时机：`mount` 要等视图重新挂载才生效；`background` 写完就由后台重新排期
+ * （自动同步用），界面不必刷新。
  */
 
 export const DOMAIN = "mail";
@@ -15,6 +18,7 @@ const GROUPS = [
   { id: "display", zh: "显示", en: "Display" },
   { id: "read", zh: "阅读", en: "Reading" },
   { id: "list", zh: "列表", en: "List" },
+  { id: "autosync", zh: "自动同步", en: "Auto-sync" },
   { id: "debug", zh: "诊断", en: "Diagnostics" },
 ];
 
@@ -51,6 +55,35 @@ const ITEMS = [
     hintEn: "How many mails load at a time and how many are fetched per sync (10–50).",
   },
   {
+    id: "autosync.enabled", group: "autosync", type: "bool", surface: "ui", apply: "background", default: true,
+    zh: "自动收取新邮件", en: "Fetch new mail automatically",
+    hintZh: "默认开启：邮件插件在后台按下面的方式检查收件箱，发现新信就抓取信头并提醒。保险箱锁着时不会执行——后台同步不需要、也不会保存你的密码明文。",
+    hintEn: "On by default: the mail add-on checks the inbox in the background and fetches new messages. Nothing runs while the credential vault is locked; the background never caches your password.",
+  },
+  {
+    id: "autosync.mode", group: "autosync", type: "multi", surface: "ui", apply: "background", default: "interval",
+    values: ["interval", "idle"],
+    valueLabels: {
+      interval: { zh: "定时循环", en: "Interval" },
+      idle: { zh: "IMAP 推送", en: "IMAP push (IDLE)" },
+    },
+    zh: "同步方式", en: "Sync method",
+    hintZh: "定时循环：每隔一段时间连一次服务器，兼容所有邮箱；IMAP 推送：保持一条长连接让服务器主动通知，收信更快，但少数服务商不支持或会掐断连接。",
+    hintEn: "Interval reconnects every few minutes and works everywhere; IMAP push keeps one long-lived connection so the server tells us immediately (a few providers do not support it).",
+  },
+  {
+    id: "autosync.intervalSec", group: "autosync", type: "int", surface: "ui", apply: "background", default: 300, min: 60, max: 1800,
+    zh: "定时间隔（秒）", en: "Interval (seconds)",
+    hintZh: "定时循环的间隔，60–1800 秒。太短会被服务商限流；IMAP 推送模式下它仍是兜底检查周期。",
+    hintEn: "Seconds between checks, 60–1800. Very short intervals may be throttled; in IMAP push mode this stays as a safety net.",
+  },
+  {
+    id: "autosync.notify", group: "autosync", type: "bool", surface: "ui", apply: "background", default: true,
+    zh: "新邮件通知到消息中心", en: "Notify new mail in messages",
+    hintZh: "装了消息插件时，自动抓到的新邮件会在消息中心留一条提醒（同一批新信只提醒一次）。",
+    hintEn: "When the messages add-on is installed, each batch of new mail leaves one notice there.",
+  },
+  {
     id: "debug.fetch", group: "debug", type: "bool", surface: "ui", apply: "mount", default: false,
     zh: "记录正文取数细节", en: "Log body fetch details",
     hintZh: "打开后，读取正文分段时会把 section、服务器声明尺寸、实际字节数与响应 key 打到宿主日志，用于排查「正文下载失败」。默认关闭。",
@@ -59,6 +92,35 @@ const ITEMS = [
 ];
 
 const BY_ID = new Map(ITEMS.map((item) => [item.id, item]));
+
+/** 枚举项的中文/英文标签：界面与回执都从这里取，避免两处各写一份。 */
+export function valueLabels(item, id) {
+  const labels = (item && item.valueLabels) || {};
+  return labels[id] || { zh: id, en: id };
+}
+
+// 配置写入后要让后台重新排期（例如把间隔从 5 分钟改成 15 分钟），
+// 由装配层注册回调，配置模块本身不反向依赖自动同步。
+const changeListeners = [];
+
+export function onConfigChange(fn) {
+  if (typeof fn !== "function") throw new Error("onConfigChange 需要函数");
+  changeListeners.push(fn);
+  return function () {
+    const index = changeListeners.indexOf(fn);
+    if (index >= 0) changeListeners.splice(index, 1);
+  };
+}
+
+function notifyChange(changed) {
+  for (const fn of changeListeners.slice()) {
+    try {
+      fn(changed);
+    } catch {
+      // 回调失败不影响配置已落盘的事实，丢弃异常即可。
+    }
+  }
+}
 
 function label(item) {
   return item.zh + "（" + item.id + "）";
@@ -184,6 +246,7 @@ function publicItem(item) {
     min: item.min,
     max: item.max,
     values: item.values,
+    valueLabels: item.valueLabels,
   };
 }
 
@@ -214,6 +277,7 @@ export function writeConfig(db, raw) {
   tx(db, function () {
     for (const row of prepared) metaSet(db, keyOf(row.id), JSON.stringify(row.value));
   });
+  notifyChange(prepared.map((row) => row.id));
   return {
     changed: prepared.map((row) => row.id),
     values: loadConfig(db).values,
@@ -230,13 +294,14 @@ export function resetConfig(db, ids) {
   tx(db, function () {
     for (const id of targets) metaDelete(db, keyOf(id));
   });
+  notifyChange(targets.slice());
   return { reset: targets.slice(), values: loadConfig(db).values, warnings: loadConfig(db).warnings, state: configState(db) };
 }
 
 export function registerConfigActions(api) {
   const action = api.action;
   action("mail.configGet", {
-    description: "只读：邮件插件的配置项定义与当前值（远程图片、HTML 排版、打开即已读、每次加载封数）",
+    description: "只读：邮件插件的配置项定义与当前值（远程图片、HTML 排版、打开即已读、每次加载封数、自动同步）",
     input: { type: "object", properties: {}, additionalProperties: false },
     execute: () => configState(api.db),
     render: (r) =>

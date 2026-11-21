@@ -75,6 +75,24 @@ function Inbox(props) {
       searchRev.current++;
     };
   }, []);
+  // 后台自动同步抓到新信时刷新列表：当前文件夹/账户匹配才刷，别打断正在读别的账户的人。
+  React.useEffect(
+    function () {
+      if (!api || typeof api.subscribe !== "function") return undefined;
+      var off = api.subscribe(function (payload) {
+        if (!payload || payload.event !== "mail.synced") return;
+        var data = payload.data || {};
+        if (data.accountId && accountId[0] && data.accountId !== accountId[0]) return;
+        var box = String(folder[0] || "INBOX").toUpperCase();
+        if (!unified[0] && data.mailbox && String(data.mailbox).toUpperCase() !== box) return;
+        list.refresh();
+      });
+      return function () {
+        if (typeof off === "function") off();
+      };
+    },
+    [api, accountId[0], folder[0], unified[0]],
+  );
   var pane = React.useRef(null), reading = React.useRef(null), returning = React.useRef(null);
   var attachmentUpdates = React.useRef(new Map());
   function back() {

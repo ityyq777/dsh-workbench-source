@@ -1,6 +1,6 @@
 /** 邮件域引擎：账户、文件夹、本地邮件、SMTP 发送、IMAP 抓信头。 */
 import { accountRow, messageRow, newId, now } from "../db/db.js";
-import { imapList } from "../infra/imap.js";
+import { imapList, imapProbe } from "../infra/imap.js";
 import { createSync } from "./sync.js";
 import { createComposer } from "./compose.js";
 import { createParts } from "./parts.js";
@@ -174,8 +174,29 @@ export function createMail({ db, host, log }) {
   const parts = createParts({ db, account, password });
   const loadAttachments = createAttachmentLoader({ message, attachmentDownload: parts.attachmentDownload });
   const delivery = createDelivery({ db, account, password, thread: composer.thread, loadAttachments });
-  function search(q, { limit = 10 } = {}) {
-    const like = "%" + String(q || "").replace(/[\\%_]/g, "\\$&") + "%";
+  // 后台自动同步要自己开连接（IDLE 常驻、定时探测）：这里把账户参数与一次租借到的明文
+  // 打包给调用方，用完即弃，不在内存里留密码。
+  async function sessionFor(id) {
+    const a = account(id);
+    const p = await password(a);
+    return { account: { host: a.imap_host, port: a.imap_port, secure: !!a.imap_tls, user: p.user }, secret: p.secret };
+  }
+  /**
+   * 轻量探测：只发一次 STATUS 判断远端有没有新信，不读任何信头。
+   * 与本地最大 uid 比较后，调用方才知道值不值得走一次完整 mail.sync。
+   */
+  async function probeRecent(id, mailbox = "INBOX") {
+    const box = /^inbox$/i.test(String(mailbox)) ? "INBOX" : String(mailbox);
+    const s = await sessionFor(id);
+    const remote = await imapProbe(s.account, s.secret, box);
+    const local = one(
+      "SELECT COUNT(*) n, COALESCE(MAX(uid),0) uid FROM mail_message WHERE account_id=? AND mailbox=? AND uid>0",
+      id,
+      box,
+    );
+    return { ...remote, localCount: local.n, localUid: local.uid };
+  }
+  function search(q, { limit = 10 } = {}) {    const like = "%" + String(q || "").replace(/[\\%_]/g, "\\$&") + "%";
     return all(`SELECT id,subject,from_addr,date_at FROM mail_message m WHERE ${activeAccount('m.account_id')} AND (subject LIKE ? ESCAPE '\\' OR from_addr LIKE ? ESCAPE '\\') ORDER BY date_at DESC LIMIT ?`, like, like, limit).map((r) => ({ id: r.id, title: r.subject, snippet: r.from_addr, at: r.date_at, view: "messages" }));
   }
   function stats() { return status(); }
@@ -188,5 +209,5 @@ export function createMail({ db, host, log }) {
       : activeAccount('r.account_id');
     return { table: input.table, rows: all(`SELECT r.* FROM ${input.table} r WHERE ${where} LIMIT ?`, limit) };
   }
-  return { status, stats, backfillHeaders: backfillHeaderRows, listAccounts, createAccount, updateAccount, deleteAccount, testAccount, probeAccount, syncMailboxes, mailboxes, ...syncOps, messages, message, ...parts, ...composer, ...delivery, search, dataQuery };
+  return { status, stats, backfillHeaders: backfillHeaderRows, listAccounts, createAccount, updateAccount, deleteAccount, testAccount, probeAccount, syncMailboxes, mailboxes, ...syncOps, messages, message, ...parts, ...composer, ...delivery, sessionFor, probeRecent, search, dataQuery };
 }

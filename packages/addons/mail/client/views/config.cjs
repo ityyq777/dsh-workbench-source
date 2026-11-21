@@ -20,9 +20,52 @@ module.exports = function Config(props) {
   var setLocal = localS[1];
   // 连续改动会产生并发写入：只让最后一次回包改写权威值。
   var seqRef = React.useRef(0);
+  // 自动同步的真实运行状态（开关只是意愿：保险箱锁着时它并不在跑），单独取一次展示。
+  var syncS = React.useState(null);
+  var sync = syncS[0];
+  var setSync = syncS[1];
 
   function values() {
     return Object.assign({}, cfg.values, local);
+  }
+  React.useEffect(
+    function () {
+      if (!api) return undefined;
+      var alive = true;
+      C.call(api, "mail.autoSyncStatus", {})
+        .then(function (r) {
+          if (alive) setSync(r);
+        })
+        .catch(function () {
+          if (alive) setSync(null);
+        });
+      return function () {
+        alive = false;
+      };
+    },
+    [api],
+  );
+  function syncSummary() {
+    if (!sync) return "";
+    var en = lang === "en";
+    if (!sync.enabled) return en ? "Auto-sync is off; nothing is fetched in the background." : "自动同步已关闭，后台不会收取新邮件。";
+    var mode = sync.mode === "idle" ? (en ? "IMAP push" : "IMAP 推送") : en ? "Interval" : "定时循环";
+    var head = (en ? "Running: " : "正在运行：") + mode;
+    if (sync.mode !== "idle") head += "，" + sync.intervalSec + "s";
+    if (sync.lastAt) {
+      var when = new Date(sync.lastAt);
+      head += (en ? " · last " : " · 上次 ") + when.toLocaleTimeString(en ? "en-US" : "zh-CN");
+    }
+    if (sync.skippedLocked) {
+      head += en
+        ? " · skipped " + sync.skippedLocked + " time(s) because the vault is locked"
+        : " · 因保险箱锁定跳过 " + sync.skippedLocked + " 次";
+    }
+    var failed = (sync.accounts || []).filter(function (a) {
+      return a.lastError;
+    });
+    if (failed.length) head += (en ? " · " : " · ") + (en ? failed.length + " account(s) failing" : failed.length + " 个账户同步失败");
+    return head;
   }
   function toastOnce(text) {
     setToast(text);
@@ -162,6 +205,7 @@ module.exports = function Config(props) {
       ),
       h(C.Btn, { h: h, onClick: resetAll }, h(icons.Icon, { name: "refresh-cw", size: 13 }), h("span", null, lang === "en" ? "Restore defaults" : "全部恢复默认")),
     ),
+    syncSummary() ? h("p", { className: "wbml-sync-status", role: "status" }, syncSummary()) : null,
     groups.map(function (group) {
       var items = cfg.items.filter(function (item) {
         return item.group === group.id;
