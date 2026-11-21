@@ -578,6 +578,406 @@ var require_date_picker_styles = __commonJS({
   }
 });
 
+// packages/addons/lib/stepper.cjs
+var require_stepper = __commonJS({
+  "packages/addons/lib/stepper.cjs"(exports2, module2) {
+    "use strict";
+    function stepState(index, current, maxVisited) {
+      if (index === current) return "current";
+      if (index < current) return "done";
+      if (index <= maxVisited) return "visited";
+      return "todo";
+    }
+    function Steps(props) {
+      var h = props.h;
+      var steps = props.steps || [];
+      var current = props.current || 0;
+      var maxVisited = props.maxVisited === void 0 ? current : props.maxVisited;
+      var invalid = props.invalid || {};
+      var disabled = !!props.disabled;
+      var label = props.label || "\u6B65\u9AA4";
+      return h(
+        "nav",
+        { className: "wbctl-steps" + (props.className ? " " + props.className : ""), "aria-label": label },
+        h(
+          "ol",
+          { className: "wbctl-step-list" },
+          steps.map(function(step, index) {
+            var state = stepState(index, current, maxVisited);
+            var canJump = !disabled && typeof props.onJump === "function" && state !== "current" && state !== "todo";
+            var isInvalid = !!invalid[index] || !!invalid[step.key];
+            return h(
+              "li",
+              { key: step.key || index, className: "wbctl-step-item" },
+              h(
+                "button",
+                {
+                  type: "button",
+                  className: "wbctl-step",
+                  "data-state": state,
+                  "data-invalid": isInvalid ? "true" : null,
+                  "aria-current": state === "current" ? "step" : void 0,
+                  "aria-label": index + 1 + " \xB7 " + step.label + (state === "done" ? "\uFF08\u5DF2\u5B8C\u6210\uFF09" : ""),
+                  disabled: disabled || state === "todo",
+                  title: step.hint || "",
+                  onClick: function() {
+                    if (canJump) props.onJump(index);
+                  }
+                },
+                h("span", { className: "wbctl-step-index", "aria-hidden": "true" }, state === "done" ? "\u2713" : String(index + 1)),
+                h("span", { className: "wbctl-step-label" }, step.label),
+                step.hint ? h("span", { className: "wbctl-step-hint" }, step.hint) : null,
+                step.optional ? h("span", { className: "wbctl-step-opt" }, "\u53EF\u9009") : null
+              )
+            );
+          })
+        )
+      );
+    }
+    var STYLES = [
+      ".wbctl-steps{display:block;min-width:0}",
+      ".wbctl-step-list{display:flex;align-items:stretch;gap:6px;list-style:none;margin:0 0 14px;padding:0;min-width:0}",
+      ".wbctl-step-item{display:flex;flex:1 1 0;min-width:0}",
+      ".wbctl-step{display:flex;align-items:center;gap:7px;flex:1 1 auto;min-width:0;padding:7px 9px;border:1px solid var(--wb-line,var(--wb-border));border-radius:10px;background:transparent;color:var(--wb-muted,inherit);font:inherit;font-size:12px;line-height:1.35;text-align:left;cursor:default;transition:background .14s ease,border-color .14s ease,color .14s ease}",
+      ".wbctl-step[data-state=done],.wbctl-step[data-state=visited]{color:inherit;cursor:pointer}",
+      ".wbctl-step[data-state=done]{border-color:color-mix(in oklab,var(--wb-ok,var(--wb-accent,#2563eb)) 36%,var(--wb-border))}",
+      ".wbctl-step[data-state=current]{border-color:color-mix(in oklab,var(--wb-accent,#2563eb) 58%,var(--wb-border));background:color-mix(in oklab,var(--wb-accent,#2563eb) 8%,transparent);color:inherit;font-weight:600}",
+      ".wbctl-step[data-state=visited]:hover,.wbctl-step[data-state=done]:hover{background:color-mix(in oklab,currentColor 7%,transparent)}",
+      ".wbctl-step[data-invalid=true]{border-color:var(--wb-danger,#d33)}",
+      ".wbctl-step:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+      ".wbctl-step:disabled{cursor:default;opacity:.72}",
+      ".wbctl-step-index{display:inline-flex;align-items:center;justify-content:center;flex:none;width:20px;height:20px;border-radius:50%;font-size:11px;font-variant-numeric:tabular-nums;background:color-mix(in oklab,currentColor 15%,transparent)}",
+      ".wbctl-step[data-state=current] .wbctl-step-index{background:var(--wb-accent,#2563eb);color:var(--wb-on-accent,#fff)}",
+      ".wbctl-step[data-state=done] .wbctl-step-index{background:color-mix(in oklab,var(--wb-ok,var(--wb-accent,#2563eb)) 20%,transparent);color:var(--wb-ok,var(--wb-accent,#2563eb))}",
+      ".wbctl-step-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbctl-step-hint{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:400;opacity:.62}",
+      ".wbctl-step-opt{flex:none;font-size:10px;font-weight:400;opacity:.55}",
+      "@media (max-width:760px){.wbctl-step{padding:6px 7px;font-size:11.5px}.wbctl-step-hint,.wbctl-step-opt{display:none}.wbctl-step-index{width:18px;height:18px;font-size:10px}}",
+      "@media (max-width:520px){.wbctl-step-list{gap:4px}.wbctl-step-label{white-space:normal}.wbctl-step{gap:5px}}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-step{transition:none}}"
+    ];
+    module2.exports = { Steps, stepState, styles: STYLES };
+  }
+});
+
+// packages/addons/lib/overlay.cjs
+var require_overlay = __commonJS({
+  "packages/addons/lib/overlay.cjs"(exports2, module2) {
+    "use strict";
+    var defaultReact = require("react");
+    var FOCUSABLE = "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]";
+    module2.exports = function createOverlay(options) {
+      var opts = options || {};
+      var React = opts.React || defaultReact;
+      var h = React.createElement;
+      var tag = opts.tag || "section";
+      var maskClass = opts.maskClass;
+      var dialogClass = opts.dialogClass;
+      var dialogClassOf = opts.dialogClassOf || function() {
+        return "";
+      };
+      var ariaLabelOf = opts.ariaLabelOf || function(props) {
+        return props["aria-label"] || props.title;
+      };
+      var ariaLabelledByOf = opts.ariaLabelledByOf || function() {
+        return null;
+      };
+      var header = opts.header || null;
+      var closeOnEscape = opts.closeOnEscape || function() {
+        return true;
+      };
+      var closeOnMask = opts.closeOnMask || function() {
+        return true;
+      };
+      var extraKeyDown = opts.onKeyDown || null;
+      var autoFocusDialog = opts.autoFocusDialog !== false;
+      var focusableSelector = opts.focusableSelector || FOCUSABLE;
+      function Modal(props) {
+        var R = props.React || React;
+        var ref = R.useRef(null);
+        R.useEffect(function() {
+          var previous = typeof document !== "undefined" ? document.activeElement : null;
+          var focusIt = props.autoFocus !== void 0 ? props.autoFocus : autoFocusDialog;
+          if (focusIt && ref.current) ref.current.focus();
+          return function() {
+            if (previous && previous.isConnected) previous.focus();
+          };
+        }, []);
+        function onKeyDown(e) {
+          if (extraKeyDown && extraKeyDown(e, props, ref)) return;
+          if (e.key === "Escape") {
+            if (!(props.closeOnEscape !== void 0 ? props.closeOnEscape : closeOnEscape(props))) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (props.onClose) props.onClose();
+            return;
+          }
+          if (e.key !== "Tab" || !ref.current) return;
+          var els = ref.current.querySelectorAll(focusableSelector);
+          if (!els.length) {
+            e.preventDefault();
+            return;
+          }
+          var first = els[0];
+          var last = els[els.length - 1];
+          if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) {
+            e.preventDefault();
+            last.focus();
+          }
+          if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+        var labelledBy = ariaLabelledByOf(props);
+        return h(
+          "div",
+          {
+            className: maskClass,
+            onMouseDown: function(e) {
+              var allowed = props.closeOnMask !== void 0 ? props.closeOnMask : closeOnMask(props);
+              if (e.target === e.currentTarget && props.onClose && allowed) props.onClose();
+            }
+          },
+          h(
+            tag,
+            {
+              className: dialogClass + dialogClassOf(props),
+              role: "dialog",
+              "aria-modal": true,
+              "aria-label": labelledBy ? null : ariaLabelOf(props),
+              "aria-labelledby": labelledBy || null,
+              ref,
+              tabIndex: -1,
+              onKeyDown
+            },
+            header ? header(props) : null,
+            props.children
+          )
+        );
+      }
+      return Modal;
+    };
+  }
+});
+
+// packages/addons/lib/staged-dialog.cjs
+var require_staged_dialog = __commonJS({
+  "packages/addons/lib/staged-dialog.cjs"(exports2, module2) {
+    "use strict";
+    var defaultReact = require("react");
+    var overlayFactory = require_overlay();
+    var stepper = require_stepper();
+    function validateStep(step) {
+      if (!step || typeof step.validate !== "function") return "";
+      var message = step.validate();
+      return message ? String(message) : "";
+    }
+    function firstFailing(steps) {
+      var list = steps || [];
+      for (var i = 0; i < list.length; i += 1) {
+        var message = validateStep(list[i]);
+        if (message) return { index: i, key: list[i] && list[i].key, message };
+      }
+      return null;
+    }
+    function createStagedDialog(options) {
+      var opts = options || {};
+      var React = opts.React || defaultReact;
+      var h = React.createElement;
+      var dialogClass = ((opts.dialogClass || "") + " wbctl-dialog").trim();
+      var Overlay = overlayFactory(
+        Object.assign({}, opts, {
+          React,
+          dialogClass,
+          // 首焦点由外壳送进对话框，字段由 focusStep 负责，避免打开瞬间落进第一个输入框。
+          autoFocusDialog: opts.autoFocusDialog !== false
+        })
+      );
+      function StagedDialog(props) {
+        var R = props.React || React;
+        var steps = props.steps || [];
+        var count = steps.length;
+        var busy = !!props.submitting || !!props.busy;
+        var indexState = R.useState(props.initialStep || 0);
+        var rawIndex = indexState[0];
+        var setIndex = indexState[1];
+        var index = count === 0 ? 0 : Math.min(Math.max(rawIndex, 0), count - 1);
+        var visitedState = R.useState(props.initialStep || 0);
+        var maxVisited = count === 0 ? 0 : Math.min(Math.max(visitedState[0], index), count - 1);
+        var setMaxVisited = visitedState[1];
+        var errorState = R.useState("");
+        var stepError = errorState[0];
+        var setStepError = errorState[1];
+        var invalidState = R.useState({});
+        var invalid = invalidState[0];
+        var setInvalid = invalidState[1];
+        var bodyRef = R.useRef(null);
+        var mounted = R.useRef(true);
+        function runValidate(step) {
+          return validateStep(step);
+        }
+        function markInvalid(i, bad) {
+          setInvalid(function(prev) {
+            var next2 = Object.assign({}, prev);
+            if (bad) next2[i] = true;
+            else delete next2[i];
+            return next2;
+          });
+        }
+        function focusBody() {
+          var el = bodyRef.current;
+          if (el && typeof el.focus === "function") el.focus();
+        }
+        R.useEffect(
+          function() {
+            if (!mounted.current) return;
+            focusBody();
+          },
+          [index]
+        );
+        R.useEffect(function() {
+          mounted.current = true;
+          return function() {
+            mounted.current = false;
+          };
+        }, []);
+        function goTo(i) {
+          if (busy || i < 0 || i >= count) return;
+          setIndex(i);
+          if (i > maxVisited) setMaxVisited(i);
+          setStepError("");
+        }
+        function fail(i, message) {
+          markInvalid(i, true);
+          goTo(i);
+          setStepError(message);
+          focusBody();
+        }
+        function next() {
+          if (busy) return;
+          var message = runValidate(steps[index]);
+          if (message) {
+            fail(index, message);
+            return;
+          }
+          markInvalid(index, false);
+          goTo(Math.min(index + 1, count - 1));
+        }
+        function back() {
+          if (busy || index === 0) return;
+          goTo(index - 1);
+        }
+        function jump(i) {
+          if (busy || i > maxVisited) return;
+          goTo(i);
+        }
+        function submit() {
+          if (busy) return;
+          var bad = firstFailing(steps);
+          if (bad) {
+            fail(bad.index, bad.message);
+            return;
+          }
+          for (var i = 0; i < count; i++) markInvalid(i, false);
+          setStepError("");
+          if (typeof props.onSubmit === "function") props.onSubmit();
+        }
+        function cancel() {
+          if (busy) return;
+          if (typeof props.onClose === "function") props.onClose();
+        }
+        var current = steps[index];
+        var isLast = index >= count - 1;
+        var saveText = props.submitText || "\u4FDD\u5B58";
+        var shownError = stepError || props.error || "";
+        return h(
+          Overlay,
+          props,
+          count > 1 ? h(stepper.Steps, {
+            h,
+            steps: steps.map(function(step) {
+              return { key: step.key, label: step.label, hint: step.hint, optional: step.optional };
+            }),
+            current: index,
+            maxVisited,
+            onJump: jump,
+            invalid,
+            disabled: busy,
+            label: props.stepsLabel || "\u521B\u5EFA\u6B65\u9AA4"
+          }) : null,
+          h(
+            "div",
+            {
+              className: "wbctl-dialog-body" + (props.bodyClassName ? " " + props.bodyClassName : ""),
+              ref: bodyRef,
+              tabIndex: -1
+            },
+            current ? current.render(h, props) : null
+          ),
+          props.footerExtra || null,
+          shownError ? h("div", { className: "wbctl-dialog-err", role: "alert" }, shownError) : null,
+          h(
+            "div",
+            { className: "wbctl-dialog-foot" },
+            count > 1 ? h("span", { className: "wbctl-dialog-progress" }, index + 1 + " / " + count) : null,
+            props.footerNote ? h("span", { className: "wbctl-dialog-note" }, props.footerNote) : null,
+            h("span", { className: "wbctl-dialog-spacer" }),
+            index > 0 ? h(
+              "button",
+              { type: "button", className: "wbctl-btn", onClick: back, disabled: busy },
+              props.backText || "\u4E0A\u4E00\u6B65"
+            ) : null,
+            h("button", { type: "button", className: "wbctl-btn", onClick: cancel, disabled: busy }, props.cancelText || "\u53D6\u6D88"),
+            h(
+              "button",
+              {
+                type: "button",
+                className: "wbctl-btn wbctl-btn-p",
+                onClick: isLast ? submit : next,
+                // submitDisabled 只作用于末步的保存：插件据此把「结构性不合法」（JSON 语法、无可选 action）
+                // 提前反映成禁用态，避免用户点到保存才被弹回第一步。
+                disabled: busy || isLast && !!props.submitDisabled
+              },
+              busy ? saveText + "\u4E2D\u2026" : isLast ? saveText : props.nextText || "\u4E0B\u4E00\u6B65"
+            )
+          )
+        );
+      }
+      StagedDialog.displayName = opts.displayName || "StagedDialog";
+      return StagedDialog;
+    }
+    var STYLES = [
+      // 宽表单：内容多时给足横向空间，窄屏留 16px 边距后铺满。
+      ".wbctl-dialog{width:min(880px,calc(100vw - 32px));max-height:min(92vh,760px);display:flex;flex-direction:column;overflow:hidden}",
+      ".wbctl-dialog-body{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;padding:2px 2px 10px;outline:none}",
+      ".wbctl-dialog-body:focus-visible{outline:none}",
+      ".wbctl-dialog-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-top:10px;margin-top:10px;border-top:1px solid var(--wb-line,var(--wb-border))}",
+      ".wbctl-dialog-progress{font-size:11.5px;color:var(--wb-muted,#666);font-variant-numeric:tabular-nums}",
+      ".wbctl-dialog-note{font-size:11.5px;color:var(--wb-muted,#666);min-width:0}",
+      ".wbctl-dialog-spacer{flex:1 1 auto}",
+      ".wbctl-dialog-err{margin-top:8px;padding:7px 10px;border-radius:8px;border:1px solid color-mix(in oklab,var(--wb-danger,#d33) 45%,transparent);background:color-mix(in oklab,var(--wb-danger,#d33) 8%,transparent);color:var(--wb-danger,#d33);font-size:12px}",
+      ".wbctl-btn{padding:6px 14px;border:1px solid var(--wb-border,#d0d5dd);border-radius:8px;background:var(--wb-card,#fff);color:inherit;font:inherit;font-size:12.5px;cursor:pointer}",
+      ".wbctl-btn:hover:not(:disabled){background:color-mix(in oklab,currentColor 7%,transparent)}",
+      ".wbctl-btn:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+      ".wbctl-btn:disabled{opacity:.55;cursor:default}",
+      ".wbctl-btn.wbctl-btn-p{background:var(--wb-accent,#2563eb);border-color:transparent;color:var(--wb-on-accent,#fff)}",
+      ".wbctl-btn.wbctl-btn-p:hover:not(:disabled){background:color-mix(in oklab,var(--wb-accent,#2563eb) 86%,#000)}",
+      // 确认步：键值对清单，各插件共用，避免再各写一套只读摘要。\n  ".wbctl-review{display:flex;flex-direction:column;border:1px solid var(--wb-line,var(--wb-border));border-radius:10px;overflow:hidden}",\n  ".wbctl-review-row{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;padding:8px 12px;font-size:12.5px;background:var(--wb-surface,transparent)}",\n  ".wbctl-review-row+.wbctl-review-row{border-top:1px solid var(--wb-line,var(--wb-border))}",\n  ".wbctl-review-k{color:var(--wb-muted,inherit);font-size:11.5px;line-height:1.6}",\n  ".wbctl-review-v{min-width:0;word-break:break-word;line-height:1.6}",\n  ".wbctl-note{margin:10px 0 0;font-size:11.5px;color:var(--wb-muted,inherit)}",\n  // 两列字段布局：内容多的弹窗不再单列拉长，窄屏回落单列。
+      ".wbctl-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px}",
+      ".wbctl-form>.full{grid-column:1/-1}",
+      "@media (max-width:760px){.wbctl-dialog{width:calc(100vw - 16px);max-height:94vh}.wbctl-form{grid-template-columns:1fr}.wbctl-form>.full{grid-column:auto}}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-btn{transition:none}}"
+    ];
+    module2.exports = {
+      createStagedDialog,
+      validateStep,
+      firstFailing,
+      styles: STYLES
+    };
+  }
+});
+
 // packages/addons/lib/number-field.cjs
 var require_number_field = __commonJS({
   "packages/addons/lib/number-field.cjs"(exports2, module2) {
@@ -1012,9 +1412,11 @@ var require_styles = __commonJS({
     var AMOUNT = [
       ".wbsal-form-grid .wbctl-num{width:100%}",
       ".wbsal-form-grid .wbctl-num-box{width:100%}",
-      ".wbsal-form-grid .wbctl-num-input{width:100%;box-sizing:border-box;text-align:right}"
+      ".wbsal-form-grid .wbctl-num-input{width:100%;box-sizing:border-box;text-align:right}",
+      // 分阶段表单：每组金额之间留出间距，步骤内容区不再被外层卡片裁切。
+      ".wbsal-steps-groups{display:flex;flex-direction:column;gap:16px}"
     ];
-    module2.exports = BASE.concat(PAGE, [DATE], AMOUNT, require_number_field().styles).join("\n");
+    module2.exports = BASE.concat(PAGE, [DATE], AMOUNT, require_stepper().styles, require_staged_dialog().styles, require_number_field().styles).join("\n");
   }
 });
 
@@ -3092,116 +3494,45 @@ var require_stats = __commonJS({
   }
 });
 
-// packages/addons/lib/overlay.cjs
-var require_overlay = __commonJS({
-  "packages/addons/lib/overlay.cjs"(exports2, module2) {
-    "use strict";
-    var defaultReact = require("react");
-    var FOCUSABLE = "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]";
-    module2.exports = function createOverlay(options) {
-      var opts = options || {};
-      var React = opts.React || defaultReact;
-      var h = React.createElement;
-      var tag = opts.tag || "section";
-      var maskClass = opts.maskClass;
-      var dialogClass = opts.dialogClass;
-      var dialogClassOf = opts.dialogClassOf || function() {
-        return "";
-      };
-      var ariaLabelOf = opts.ariaLabelOf || function(props) {
-        return props["aria-label"] || props.title;
-      };
-      var ariaLabelledByOf = opts.ariaLabelledByOf || function() {
-        return null;
-      };
-      var header = opts.header || null;
-      var closeOnEscape = opts.closeOnEscape || function() {
-        return true;
-      };
-      var closeOnMask = opts.closeOnMask || function() {
-        return true;
-      };
-      var extraKeyDown = opts.onKeyDown || null;
-      var autoFocusDialog = opts.autoFocusDialog !== false;
-      var focusableSelector = opts.focusableSelector || FOCUSABLE;
-      function Modal(props) {
-        var R = props.React || React;
-        var ref = R.useRef(null);
-        R.useEffect(function() {
-          var previous = typeof document !== "undefined" ? document.activeElement : null;
-          var focusIt = props.autoFocus !== void 0 ? props.autoFocus : autoFocusDialog;
-          if (focusIt && ref.current) ref.current.focus();
-          return function() {
-            if (previous && previous.isConnected) previous.focus();
-          };
-        }, []);
-        function onKeyDown(e) {
-          if (extraKeyDown && extraKeyDown(e, props, ref)) return;
-          if (e.key === "Escape") {
-            if (!(props.closeOnEscape !== void 0 ? props.closeOnEscape : closeOnEscape(props))) return;
-            e.preventDefault();
-            e.stopPropagation();
-            if (props.onClose) props.onClose();
-            return;
-          }
-          if (e.key !== "Tab" || !ref.current) return;
-          var els = ref.current.querySelectorAll(focusableSelector);
-          if (!els.length) {
-            e.preventDefault();
-            return;
-          }
-          var first = els[0];
-          var last = els[els.length - 1];
-          if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) {
-            e.preventDefault();
-            last.focus();
-          }
-          if (!e.shiftKey && document.activeElement === last) {
-            e.preventDefault();
-            first.focus();
-          }
-        }
-        var labelledBy = ariaLabelledByOf(props);
-        return h(
-          "div",
-          {
-            className: maskClass,
-            onMouseDown: function(e) {
-              var allowed = props.closeOnMask !== void 0 ? props.closeOnMask : closeOnMask(props);
-              if (e.target === e.currentTarget && props.onClose && allowed) props.onClose();
-            }
-          },
-          h(
-            tag,
-            {
-              className: dialogClass + dialogClassOf(props),
-              role: "dialog",
-              "aria-modal": true,
-              "aria-label": labelledBy ? null : ariaLabelOf(props),
-              "aria-labelledby": labelledBy || null,
-              ref,
-              tabIndex: -1,
-              onKeyDown
-            },
-            header ? header(props) : null,
-            props.children
-          )
-        );
-      }
-      return Modal;
-    };
-  }
-});
-
 // packages/addons/salary/client/views/records.cjs
 var require_records = __commonJS({
   "packages/addons/salary/client/views/records.cjs"(exports2, module2) {
     "use strict";
-    var createOverlay = require_overlay();
+    var staged = require_staged_dialog();
+    var salaryCommon = require_common();
     var NF = require_number_field();
-    var FormOverlay = createOverlay({
+    var FormDialog = staged.createStagedDialog({
       maskClass: "wbsal-mask",
-      dialogClass: "wbsal-modal"
+      dialogClass: "wbsal-modal",
+      displayName: "SalaryFormDialog",
+      ariaLabelOf: function(props) {
+        return props["aria-label"] || props.title;
+      },
+      header: function(props) {
+        var h = props.h;
+        var C = salaryCommon;
+        return h(
+          "div",
+          { className: "wbsal-form-head" },
+          h(
+            "div",
+            null,
+            h("div", { className: "wbsal-eyebrow" }, props.eyebrow || ""),
+            h("h3", null, props.title)
+          ),
+          h(
+            C.Btn,
+            { h, kind: "ghost", onClick: props.onClose, disabled: !!props.submitting },
+            "\u5173\u95ED"
+          )
+        );
+      },
+      closeOnEscape: function(props) {
+        return !props.submitting;
+      },
+      closeOnMask: function(props) {
+        return !props.submitting;
+      }
     });
     module2.exports = function Records(props) {
       var h = props.h, React = props.React, api = props.api, lang = props.lang;
@@ -3233,14 +3564,9 @@ var require_records = __commonJS({
       var modalOpen = !!form;
       React.useEffect(function() {
         if (!modalOpen || typeof document === "undefined" || typeof document.addEventListener !== "function" || !document.body) return void 0;
-        function onKey(event) {
-          if (event.key === "Escape") closeForm();
-        }
-        document.addEventListener("keydown", onKey);
         var previous = document.body.style.overflow;
         document.body.style.overflow = "hidden";
         return function() {
-          document.removeEventListener("keydown", onKey);
           document.body.style.overflow = previous;
         };
       }, [modalOpen, form && form.mode, form && form.id]);
@@ -3422,141 +3748,170 @@ var require_records = __commonJS({
           }
         });
       }
-      function renderForm() {
+      function renderModal() {
+        var label = form.mode === "edit" ? "\u7F16\u8F91\u5DE5\u8D44" : "\u8BB0\u4E00\u7B14\u5DE5\u8D44";
         var computed = F.totals(form.values);
         var lockedGross = form.lockGross;
         var sameDayCount = items.filter(function(item) {
           return item.payDate === form.payDate && item.id !== form.id;
         }).length;
-        return h(
-          "div",
-          { className: "wbsal-card wbsal-form wbsal-form-modal" },
-          h(
-            "div",
-            { className: "wbsal-form-head" },
-            h(
-              "div",
-              null,
-              h("div", { className: "wbsal-eyebrow" }, form.mode === "edit" ? "EDIT RECORD" : "NEW RECORD"),
-              h("h3", null, form.mode === "edit" ? "\u7F16\u8F91\u5DE5\u8D44" : "\u8BB0\u4E00\u7B14\u5DE5\u8D44")
-            ),
-            h(C.Btn, { h, kind: "ghost", onClick: closeForm }, "\u5173\u95ED")
-          ),
-          h(
-            "div",
-            { className: "wbsal-form-meta" },
-            h(
-              C.Field,
-              { h, label: "\u5230\u8D26\u65E5" },
-              h(DP.DatePicker, { React, h, prefix: "wbsal", lang, label: "\u5230\u8D26\u65E5", value: form.payDate, onChange: function(next) {
-                setField("payDate", next);
-              } })
-            ),
-            h(
-              C.Field,
-              { h, label: "\u7ED3\u7B97\u65B9\u5F0F" },
-              h(
-                "select",
-                { className: "wbsal-input", value: form.cycle, onChange: function(e) {
-                  setField("cycle", e.target.value);
-                } },
-                h("option", { value: "monthly" }, "\u6708\u7ED3"),
-                h("option", { value: "daily" }, "\u65E5\u7ED3")
-              )
-            ),
-            h(
-              C.Field,
-              { h, label: "\u7528\u5DE5\u7C7B\u578B" },
-              h(
-                "select",
-                { className: "wbsal-input", value: form.employmentType, onChange: function(e) {
-                  setField("employmentType", e.target.value);
-                } },
-                F.EMPLOYMENT_TYPES.map(function(t) {
-                  return h("option", { key: t.value || "none", value: t.value }, t.label);
-                })
-              )
-            ),
-            h(
-              C.Field,
-              { h, label: "\u5DE5\u8D44\u6240\u5C5E\u671F" },
-              h((form.incomePeriod ? form.incomePeriod.length === 10 : form.cycle === "daily") ? DP.DatePicker : DP.MonthPicker, {
-                React,
-                h,
-                prefix: "wbsal",
-                lang,
-                label: "\u5DE5\u8D44\u6240\u5C5E\u671F",
-                placeholder: "\u672A\u5F52\u5C5E",
-                value: form.incomePeriod || "",
-                onChange: function(next) {
-                  setField("incomePeriod", next);
-                }
-              })
-            ),
-            h(C.Field, { h, label: "\u5907\u6CE8" }, h("input", { className: "wbsal-input", value: form.note, onChange: function(e) {
-              setField("note", e.target.value);
-            } }))
-          ),
-          sameDayCount > 0 ? h(C.Notice, { h, text: "\u8BE5\u65E5\u5DF2\u6709 " + sameDayCount + " \u7B14\u8BB0\u5F55\uFF1B\u4FDD\u5B58\u4F1A\u65B0\u589E\u4E00\u6761\uFF0C\u4E0D\u4F1A\u8986\u76D6\u3002" }) : null,
-          F.GROUPS.map(function(group) {
-            return h(
+        function groupsBlock(hh, groups2) {
+          return hh("div", { className: "wbsal-steps-groups" }, groups2.map(function(group) {
+            return hh(
               "div",
               { key: group.id, className: "wbsal-form-group" },
-              h(
+              hh(
                 "div",
                 { className: "wbsal-group-head" },
-                h("div", { className: "wbsal-group-title" }, group.title),
-                h("span", null, group.hint)
+                hh("div", { className: "wbsal-group-title" }, group.title),
+                hh("span", null, group.hint)
               ),
-              h("div", { className: "wbsal-form-grid" }, group.keys.map(function(key) {
-                return h(C.Field, { key, h, label: F.LABELS[key] }, amountInput(key, false));
+              hh("div", { className: "wbsal-form-grid" }, group.keys.map(function(key) {
+                return hh(C.Field, { key, h: hh, label: F.LABELS[key] }, amountInput(key, false));
               }))
             );
-          }),
-          h(
-            "div",
-            { className: "wbsal-form-group" },
-            h(
-              "div",
-              { className: "wbsal-group-head" },
-              h("div", { className: "wbsal-group-title" }, "\u6C47\u603B"),
-              h("span", null, "\u9ED8\u8BA4\u6309\u660E\u7EC6\u5B9E\u65F6\u8BA1\u7B97\uFF0C\u4E5F\u53EF\u4EE5\u76F4\u63A5\u6539")
-            ),
-            h(
-              "div",
-              { className: "wbsal-form-grid" },
-              h(C.Field, { h, label: "\u5E94\u53D1\u7A0E\u524D\u5DE5\u8D44" }, amountInput("grossPay", lockedGross)),
-              h(C.Field, { h, label: "\u5B9E\u53D1\u5DE5\u8D44" }, amountInput("netPay", false))
-            )
-          ),
-          h(
-            "div",
-            { className: "wbsal-summary" },
-            h("div", null, h("span", null, "\u6536\u5165\u5408\u8BA1"), h("b", null, F.money(computed.income))),
-            h("div", null, h("span", null, "\u7A0E\u524D\u6263\u6B3E"), h("b", null, F.money(computed.preTax))),
-            h("div", null, h("span", null, "\u793E\u4FDD\u516C\u79EF\u91D1"), h("b", null, F.money(computed.social))),
-            h("div", null, h("span", null, "\u4E2A\u7A0E+\u7A0E\u540E"), h("b", null, F.money(computed.tax))),
-            h("div", null, h("span", null, "\u5E94\u53D1"), h("b", null, F.money(F.num(form.values.grossPay)))),
-            h("div", null, h("span", null, "\u5B9E\u53D1"), h("b", null, F.money(F.num(form.values.netPay)))),
-            lockedGross ? h(
-              "div",
-              { className: "wbsal-lock" },
-              h("span", { className: "wbsal-muted" }, "\u8FD9\u6761\u5386\u53F2\u8BB0\u5F55\u53EA\u6709\u6C47\u603B\u503C\uFF0C\u5E94\u53D1\u5DF2\u9501\u5B9A\uFF0C\u907F\u514D\u88AB\u660E\u7EC6\u91CD\u7B97\u6E05\u96F6\u3002"),
-              h(C.Btn, { h, onClick: recalcFromDetail }, "\u6309\u660E\u7EC6\u91CD\u7B97")
-            ) : null
-          ),
-          h(C.Notice, { h, kind: msg && msg.kind, text: msg && msg.text }),
-          h(
-            "div",
-            { className: "wbsal-form-actions" },
-            h(C.Btn, { h, kind: "primary", onClick: submit, disabled: saving || moneyInvalid }, saving ? "\u4FDD\u5B58\u4E2D\u2026" : form.mode === "edit" ? "\u4FDD\u5B58\u4FEE\u6539" : "\u4FDD\u5B58"),
-            h(C.Btn, { h, kind: "ghost", onClick: closeForm }, "\u53D6\u6D88")
-          )
-        );
-      }
-      function renderModal() {
-        var label = form.mode === "edit" ? "\u7F16\u8F91\u5DE5\u8D44" : "\u8BB0\u4E00\u7B14\u5DE5\u8D44";
-        return h(FormOverlay, { "aria-label": label, onClose: closeForm }, renderForm());
+          }));
+        }
+        return h(FormDialog, {
+          h,
+          React,
+          title: label,
+          eyebrow: form.mode === "edit" ? "EDIT RECORD" : "NEW RECORD",
+          // 测试按步渲染校验金额控件，正常打开仍从第一步开始。
+          initialStep: props.initialStep,
+          submitting: saving,
+          error: msg && msg.kind === "error" ? msg.text : "",
+          onClose: saving ? null : closeForm,
+          onSubmit: submit,
+          submitText: form.mode === "edit" ? "\u4FDD\u5B58\u4FEE\u6539" : "\u4FDD\u5B58",
+          cancelText: "\u53D6\u6D88",
+          nextText: "\u4E0B\u4E00\u6B65",
+          backText: "\u4E0A\u4E00\u6B65",
+          steps: [
+            {
+              key: "basic",
+              label: "\u57FA\u7840\u4FE1\u606F",
+              hint: "\u65E5\u671F\u4E0E\u5F52\u5C5E",
+              render: function(hh) {
+                return hh(
+                  "div",
+                  { className: "wbsal-form-meta" },
+                  hh(
+                    C.Field,
+                    { h: hh, label: "\u5230\u8D26\u65E5" },
+                    hh(DP.DatePicker, { React, h: hh, prefix: "wbsal", lang, label: "\u5230\u8D26\u65E5", value: form.payDate, onChange: function(next) {
+                      setField("payDate", next);
+                    } })
+                  ),
+                  hh(
+                    C.Field,
+                    { h: hh, label: "\u7ED3\u7B97\u65B9\u5F0F" },
+                    hh(
+                      "select",
+                      { className: "wbsal-input", value: form.cycle, onChange: function(e) {
+                        setField("cycle", e.target.value);
+                      } },
+                      hh("option", { value: "monthly" }, "\u6708\u7ED3"),
+                      hh("option", { value: "daily" }, "\u65E5\u7ED3")
+                    )
+                  ),
+                  hh(
+                    C.Field,
+                    { h: hh, label: "\u7528\u5DE5\u7C7B\u578B" },
+                    hh(
+                      "select",
+                      { className: "wbsal-input", value: form.employmentType, onChange: function(e) {
+                        setField("employmentType", e.target.value);
+                      } },
+                      F.EMPLOYMENT_TYPES.map(function(t) {
+                        return hh("option", { key: t.value || "none", value: t.value }, t.label);
+                      })
+                    )
+                  ),
+                  hh(
+                    C.Field,
+                    { h: hh, label: "\u5DE5\u8D44\u6240\u5C5E\u671F" },
+                    hh((form.incomePeriod ? form.incomePeriod.length === 10 : form.cycle === "daily") ? DP.DatePicker : DP.MonthPicker, {
+                      React,
+                      h: hh,
+                      prefix: "wbsal",
+                      lang,
+                      label: "\u5DE5\u8D44\u6240\u5C5E\u671F",
+                      placeholder: "\u672A\u5F52\u5C5E",
+                      value: form.incomePeriod || "",
+                      onChange: function(next) {
+                        setField("incomePeriod", next);
+                      }
+                    })
+                  ),
+                  hh(
+                    C.Field,
+                    { h: hh, label: "\u5907\u6CE8" },
+                    hh("input", { className: "wbsal-input", value: form.note, onChange: function(e) {
+                      setField("note", e.target.value);
+                    } })
+                  )
+                );
+              }
+            },
+            {
+              key: "amount",
+              label: "\u91D1\u989D\u660E\u7EC6",
+              hint: "\u6309\u5206\u7EC4\u586B\u6536\u5165\u4E0E\u6263\u6B3E",
+              render: function(hh) {
+                return groupsBlock(hh, F.GROUPS);
+              },
+              validate: function() {
+                var bad = firstBadAmount();
+                return bad ? F.LABELS[bad.key] + "\uFF1A" + bad.error : "";
+              }
+            },
+            {
+              key: "summary",
+              label: "\u6C47\u603B\u786E\u8BA4",
+              hint: "\u9ED8\u8BA4\u6309\u660E\u7EC6\u5B9E\u65F6\u8BA1\u7B97",
+              render: function(hh) {
+                return hh(
+                  "div",
+                  { className: "wbsal-steps-groups" },
+                  hh(
+                    "div",
+                    { className: "wbsal-form-group" },
+                    hh(
+                      "div",
+                      { className: "wbsal-group-head" },
+                      hh("div", { className: "wbsal-group-title" }, "\u6C47\u603B"),
+                      hh("span", null, "\u9ED8\u8BA4\u6309\u660E\u7EC6\u5B9E\u65F6\u8BA1\u7B97\uFF0C\u4E5F\u53EF\u4EE5\u76F4\u63A5\u6539")
+                    ),
+                    hh(
+                      "div",
+                      { className: "wbsal-form-grid" },
+                      hh(C.Field, { h: hh, label: "\u5E94\u53D1\u7A0E\u524D\u5DE5\u8D44" }, amountInput("grossPay", lockedGross)),
+                      hh(C.Field, { h: hh, label: "\u5B9E\u53D1\u5DE5\u8D44" }, amountInput("netPay", false))
+                    )
+                  ),
+                  sameDayCount > 0 ? hh(C.Notice, { h: hh, text: "\u8BE5\u65E5\u5DF2\u6709 " + sameDayCount + " \u7B14\u8BB0\u5F55\uFF1B\u4FDD\u5B58\u4F1A\u65B0\u589E\u4E00\u6761\uFF0C\u4E0D\u4F1A\u8986\u76D6\u3002" }) : null,
+                  hh(
+                    "div",
+                    { className: "wbsal-summary" },
+                    hh("div", null, hh("span", null, "\u6536\u5165\u5408\u8BA1"), hh("b", null, F.money(computed.income))),
+                    hh("div", null, hh("span", null, "\u7A0E\u524D\u6263\u6B3E"), hh("b", null, F.money(computed.preTax))),
+                    hh("div", null, hh("span", null, "\u793E\u4FDD\u516C\u79EF\u91D1"), hh("b", null, F.money(computed.social))),
+                    hh("div", null, hh("span", null, "\u4E2A\u7A0E+\u7A0E\u540E"), hh("b", null, F.money(computed.tax))),
+                    hh("div", null, hh("span", null, "\u5E94\u53D1"), hh("b", null, F.money(F.num(form.values.grossPay)))),
+                    hh("div", null, hh("span", null, "\u5B9E\u53D1"), hh("b", null, F.money(F.num(form.values.netPay)))),
+                    lockedGross ? hh(
+                      "div",
+                      { className: "wbsal-lock" },
+                      hh("span", { className: "wbsal-muted" }, "\u8FD9\u6761\u5386\u53F2\u8BB0\u5F55\u53EA\u6709\u6C47\u603B\u503C\uFF0C\u5E94\u53D1\u5DF2\u9501\u5B9A\uFF0C\u907F\u514D\u88AB\u660E\u7EC6\u91CD\u7B97\u6E05\u96F6\u3002"),
+                      hh(C.Btn, { h: hh, onClick: recalcFromDetail }, "\u6309\u660E\u7EC6\u91CD\u7B97")
+                    ) : null
+                  )
+                );
+              }
+            }
+          ]
+        });
       }
       function renderDetail(item) {
         var blocks = F.GROUPS.map(function(group) {

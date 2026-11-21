@@ -153,4 +153,4 @@ module.exports = [
 
   /* ---------- 窄屏 ---------- */
   "@media (max-width:900px){.wbv-split{grid-template-columns:1fr}.wbv-head{flex-direction:column;align-items:stretch}.wbv-head-actions{justify-content:flex-start}.wbv-toolbar>.wbv-search{flex:1 1 100%;width:100%}}",
-].concat(require("../../../lib/vault-lock.cjs").create({ prefix: "wbv" }).styles()).concat(require("../../../lib/filter-checklist-styles.cjs")).concat(require("../../../lib/client-base-styles.cjs").secretFieldStyles, require("../../../lib/icon-label.cjs").styles);
+].concat(require("../../../lib/stepper.cjs").styles, require("../../../lib/staged-dialog.cjs").styles).concat(require("../../../lib/vault-lock.cjs").create({ prefix: "wbv" }).styles()).concat(require("../../../lib/filter-checklist-styles.cjs")).concat(require("../../../lib/client-base-styles.cjs").secretFieldStyles, require("../../../lib/icon-label.cjs").styles);

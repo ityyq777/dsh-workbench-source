@@ -1,5 +1,8 @@
 // 创建/重启表单独立模块；宿主相关工具由入口注入，避免循环依赖。
+// 版式走共享分阶段外壳（lib/staged-dialog.cjs + lib/stepper.cjs）：
+// 内容 → 归属 → 计划 → 确认，四步各自校验，保存前再整体复核。
 var NF = require("../../../lib/number-field.cjs");
+var staged = require("../../../lib/staged-dialog.cjs");
 
 // 这里只是把「默认值」（配置/来源任务）归一成合法初值，不涉及用户键入；
 // 用户键入的值一律原样保留，只在提交时校验。
@@ -23,6 +26,27 @@ module.exports = function createModal(deps) {
   var DP = require("../../../lib/date-picker.cjs");
   var allTables = deps.allTables, tagNames = deps.tagNames, splitTags = deps.splitTags;
   var today = deps.today, addDays = deps.addDays, hostHasAddon = deps.hostHasAddon;
+  // 分阶段对话框：外壳换行、Esc/遮罩关闭与焦点循环都交给共享层，
+  // 忙时禁止关闭，避免保存中被 Esc 打断。
+  var StagedDialog = staged.createStagedDialog({
+    React: React, tag: "div", displayName: "TaskCreateDialog",
+    maskClass: "wbt-modal-mask", dialogClass: "wbt-modal",
+    header: function (p) {
+      return h("div", { className: "wbt-modal-head" },
+        h("h3", null, p.title),
+        h("button", { type: "button", className: "wbt-icon", disabled: !!p.submitting, onClick: p.onClose, "aria-label": p.closeLabel }, "×"));
+    },
+    closeOnEscape: function (p) { return !p.submitting; },
+    closeOnMask: function (p) { return !p.submitting; },
+    // 表选择器内部自己用 Esc 收面板，别把它一起关掉。
+    onKeyDown: function (e) {
+      if (e.key === "Escape" && e.target && e.target.closest && e.target.closest(".wbt-table-picker")) {
+        e.stopPropagation();
+        return true;
+      }
+      return false;
+    },
+  });
   function CreateModal(props) {
     var t = props.t, tr = require("../timeline/timeline-copy.cjs")(props.t);
     var source = String(props.source || "0");
@@ -49,10 +73,6 @@ module.exports = function createModal(deps) {
     var error = err[0], setError = err[1];
     var submission = React.useState({ pending: false })[0];
     function requestClose() { if (!submission.pending) props.onClose(); }
-    function onModalKey(e) {
-      if (e.key !== "Escape" || (e.target && e.target.closest && e.target.closest(".wbt-table-picker"))) return;
-      e.preventDefault(); e.stopPropagation(); requestClose();
-    }
     var active = source === "2" || form.status === "0";
     var priorityError = active ? validatePriority(form.priority, source, t) : "";
     // 难度沿用「留空=未设置」，但非法键入（越界/非数字）只提示、不允许保存。
@@ -120,47 +140,120 @@ module.exports = function createModal(deps) {
     }
 
     var title = source === "2" ? t.restartTitle : source === "1" ? tr("向已有时间线添加任务") : t.newTask;
-    // 时间线是"可选归属"，排在标题/描述之后：先让用户填内容，再决定挂到哪条线。
     var timelineSection = source !== "2" ? h("div", { className: "wbt-create-tl full" },
       h("div", { className: "wbt-create-tl-head" },
         h("span", null, t.timeline),
         source === "1" ? h("span", { className: "wbt-create-tl-hint" }, tr("向已有时间线添加任务")) : null),
       h(TimelinePicker, { api: props.api, t: t, value: form.timelineId, onChange: function (value) { set("timelineId", value); }, disabled: isBusy })
     ) : null;
-    return h("div", { className: "wbt-modal-mask", onKeyDownCapture: onModalKey, onMouseDown: function (e) { if (e.target === e.currentTarget) requestClose(); } },
-      h("div", { className: "wbt-modal" },
-        h("div", { className: "wbt-modal-head" }, h("h3", null, title), h("button", { className: "wbt-icon", disabled: isBusy, onClick: requestClose }, "×")),
-        source === "2" ? h("div", { className: "wbt-mhint" }, t.restartPriorityHint) : null,
-        source !== "0" && origin ? h("div", { className: "wbt-mhint" }, "来源：" + (origin.title || origin.id) + (source === "2" ? tr(" · 自动继承原时间线") : "")) : null,
-        source === "2" && !(origin && origin.timelineId) ? h("p", { className: "wbt-err", role: "alert" }, tr("请先手动建立并关联时间线，再重启")) : null,
-        h("div", { className: "wbt-form" },
-          h("label", { className: "wbt-field full" }, h("span", null, t.titleField + " *"), h("input", { className: "wbt-input", value: form.title, onChange: function (e) { set("title", e.target.value); }, autoFocus: true })),
-          h("label", { className: "wbt-field full" }, h("span", null, t.desc), h("textarea", { className: "wbt-textarea", rows: 2, value: form.description, onChange: function (e) { set("description", e.target.value); } })),
-          hostHasAddon("wb-addon-tags") ? h("label", { className: "wbt-field full" }, h("span", null, t.tags), h("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function (e) { set("tags", e.target.value); } })) : null,
-          timelineSection,
-          h(WorkspaceSelect, { api: props.api, lang: props.lang, value: form.workspaceIds, onChange: function (ids) { set("workspaceIds", ids); } }),
-          h("label", { className: "wbt-field" }, h("span", null, t.status), h("select", { className: "wbt-select", value: source === "2" ? "0" : form.status, disabled: source === "2", onChange: function (e) { set("status", e.target.value); } },
-            h("option", { value: "0" }, "已开启"), h("option", { value: "2" }, "已完成"), h("option", { value: "1" }, "已关闭"))),
-          h("div", { className: "wbt-field" }, h("span", { className: "wbt-field-label" }, t.priority + "（1–10）"),
-            h(NF.NumberField, { h: h, lang: props.lang, value: form.priority, min: 1, max: 10, integer: true, disabled: !active, hint: false, ariaLabel: t.priority,
-              // 键入即写入草稿；合法性由下面的 priorityError 实时判定，绝不回写夹取后的值。
-              onDraft: function (raw) { set("priority", raw); },
-              onCommit: function (next) { set("priority", String(next)); } })),
-          fields({ form: form, set: set, setMany: setMany, tree: props.tree, recommended: props.defaultTableId || (origin && origin.tableId) }),
-          h("label", { className: "wbt-field" }, h("span", null, t.publishDate), h(DP.DatePicker, { React: React, h: h, prefix: "wbt", lang: props.lang, label: t.publishDate, value: form.publishDate, onChange: function (next) { set("publishDate", next); } })),
-          h("label", { className: "wbt-field" }, h("span", null, t.targetDate), h(DP.DatePicker, { React: React, h: h, prefix: "wbt", lang: props.lang, label: t.targetDate, value: form.targetDate, onChange: function (next) { set("targetDate", next); } })),
-          (source !== "2" && form.status === "2") ? h("label", { className: "wbt-field" }, h("span", null, t.doneDate), h(DP.DatePicker, { React: React, h: h, prefix: "wbt", lang: props.lang, label: t.doneDate, value: form.doneDate, onChange: function (next) { set("doneDate", next); } })) : null,
-          difficultyField(t, form.difficulty, function (value) { set("difficulty", value); }, "wbt-create-difficulty", props.lang),
-          (source !== "2" && form.status === "1") ? h("label", { className: "wbt-field" }, h("span", null, t.shutdownDate), h(DP.DatePicker, { React: React, h: h, prefix: "wbt", lang: props.lang, label: t.shutdownDate, value: form.shutdownDate, onChange: function (next) { set("shutdownDate", next); } })) : null
-        ),
-        priorityError ? h("div", { id: "wbt-create-priority-error", className: "wbt-err", role: "alert" }, priorityError) : null,
-        error ? h("div", { className: "wbt-err" }, error) : null,
-        h("div", { className: "wbt-modal-foot" },
-          h("button", { className: "wbt-btn ghost", disabled: isBusy, onClick: requestClose }, t.cancel),
-          h("button", { className: "wbt-btn primary", disabled: isBusy || !!priorityError || !difficultyCheck.ok || !targetValid || (source === "2" && !(origin && origin.timelineId)), onClick: submit }, isBusy ? "…" : t.create)
-        )
-      )
-    );
+
+    function stepContent(h2) {
+      return h2("div", { className: "wbctl-form" },
+        h2("label", { className: "wbt-field full" }, h2("span", null, t.titleField + " *"),
+          h2("input", { className: "wbt-input", value: form.title, onChange: function (e) { set("title", e.target.value); } })),
+        h2("label", { className: "wbt-field full" }, h2("span", null, t.desc),
+          h2("textarea", { className: "wbt-textarea", rows: 3, value: form.description, onChange: function (e) { set("description", e.target.value); } })),
+        hostHasAddon("wb-addon-tags") ? h2("label", { className: "wbt-field full" }, h2("span", null, t.tags),
+          h2("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function (e) { set("tags", e.target.value); } })) : null);
+    }
+    function stepBelong(h2) {
+      return h2("div", { className: "wbctl-form" },
+        source === "2" && origin ? h2("div", { className: "wbt-mhint full" }, "来源：" + (origin.title || origin.id) + tr(" · 自动继承原时间线")) : null,
+        source !== "0" && source !== "2" && origin ? h2("div", { className: "wbt-mhint full" }, "来源：" + (origin.title || origin.id)) : null,
+        source === "2" && !(origin && origin.timelineId) ? h2("p", { className: "wbt-err full", role: "alert" }, tr("请先手动建立并关联时间线，再重启")) : null,
+        timelineSection,
+        h2(WorkspaceSelect, { api: props.api, lang: props.lang, value: form.workspaceIds, onChange: function (ids) { set("workspaceIds", ids); } }),
+        h2("div", { className: "full" },
+          fields({ form: form, set: set, setMany: setMany, tree: props.tree, recommended: props.defaultTableId || (origin && origin.tableId) })));
+    }
+    function stepPlan(h2) {
+      return h2("div", { className: "wbctl-form" },
+        source === "2" ? h2("div", { className: "wbt-mhint full" }, t.restartPriorityHint) : null,
+        h2("label", { className: "wbt-field" }, h2("span", null, t.status),
+          h2("select", { className: "wbt-select", value: source === "2" ? "0" : form.status, disabled: source === "2", onChange: function (e) { set("status", e.target.value); } },
+            h2("option", { value: "0" }, "已开启"), h2("option", { value: "2" }, "已完成"), h2("option", { value: "1" }, "已关闭"))),
+        h2("div", { className: "wbt-field" }, h2("span", { className: "wbt-field-label" }, t.priority + "（1–10）"),
+          h2(NF.NumberField, { h: h2, lang: props.lang, value: form.priority, min: 1, max: 10, integer: true, disabled: !active, hint: false, ariaLabel: t.priority,
+            // 键入即写入草稿；合法性由下面的 priorityError 实时判定，绝不回写夹取后的值。
+            onDraft: function (raw) { set("priority", raw); },
+            onCommit: function (next) { set("priority", String(next)); } })),
+        priorityError ? h2("div", { className: "wbt-err full", role: "alert" }, priorityError) : null,
+        difficultyField(t, form.difficulty, function (value) { set("difficulty", value); }, "wbt-create-difficulty", props.lang),
+        h2("label", { className: "wbt-field" }, h2("span", null, t.publishDate),
+          h2(DP.DatePicker, { React: React, h: h2, prefix: "wbt", lang: props.lang, label: t.publishDate, value: form.publishDate, onChange: function (next) { set("publishDate", next); } })),
+        h2("label", { className: "wbt-field" }, h2("span", null, t.targetDate),
+          h2(DP.DatePicker, { React: React, h: h2, prefix: "wbt", lang: props.lang, label: t.targetDate, value: form.targetDate, onChange: function (next) { set("targetDate", next); } })),
+        (source !== "2" && form.status === "2") ? h2("label", { className: "wbt-field" }, h2("span", null, t.doneDate),
+          h2(DP.DatePicker, { React: React, h: h2, prefix: "wbt", lang: props.lang, label: t.doneDate, value: form.doneDate, onChange: function (next) { set("doneDate", next); } })) : null,
+        (source !== "2" && form.status === "1") ? h2("label", { className: "wbt-field" }, h2("span", null, t.shutdownDate),
+          h2(DP.DatePicker, { React: React, h: h2, prefix: "wbt", lang: props.lang, label: t.shutdownDate, value: form.shutdownDate, onChange: function (next) { set("shutdownDate", next); } })) : null);
+    }
+    function reviewRow(h2, key, value) {
+      return h2("div", { className: "wbctl-review-row" },
+        h2("span", { className: "wbctl-review-k" }, key),
+        h2("span", { className: "wbctl-review-v" }, value));
+    }
+    function stepConfirm(h2) {
+      var tableText = form.newPath ? plan.parts.join(" / ") : (tables.filter(function (x) { return x.id === form.tableId; })[0] || {}).name || t.needTable;
+      var statusText = (source === "2" ? "0" : form.status) === "2" ? "已完成" : (source === "2" ? "0" : form.status) === "1" ? "已关闭" : "已开启";
+      var rows = [
+        [t.titleField, String(form.title || "").trim() || "（空）"],
+        [t.desc, String(form.description || "").trim() || "—"],
+        [t.tags, form.tags || "—"],
+        [t.timeline, form.timelineId ? form.timelineId : (source === "2" && origin && origin.timelineId ? tr("继承来源任务的时间线") : "无")],
+        [t.workspace || "工作区", String((form.workspaceIds || []).length) + " 个"],
+        [t.table, tableText],
+        [t.status, statusText],
+        [t.priority, active ? String(form.priority) : "0（已完成/已关闭清零）"],
+        [t.difficulty, String(form.difficulty || 0)],
+        [t.publishDate, form.publishDate],
+        [t.targetDate, form.targetDate],
+      ];
+      if ((source === "2" ? "0" : form.status) === "2") rows.push([t.doneDate, form.doneDate || today()]);
+      if ((source === "2" ? "0" : form.status) === "1") rows.push([t.shutdownDate, form.shutdownDate || today()]);
+      return h2("div", null,
+        h2("div", { className: "wbctl-review" }, rows.map(function (row, i) { return reviewRow(h2, row[0], row[1]); })),
+        h2("p", { className: "wbctl-note" }, t.confirmHint));
+    }
+
+    var steps = [
+      {
+        key: "content", label: t.stepContent, hint: t.stepContentHint, render: stepContent,
+        validate: function () { return String(form.title).trim() ? "" : t.needTitle; },
+      },
+      {
+        key: "belong", label: t.stepBelong, hint: t.stepBelongHint, render: stepBelong,
+        validate: function () {
+          if (source === "2" && !(origin && origin.timelineId)) return tr("请先手动建立并关联时间线，再重启");
+          if (source === "1" && !form.timelineId) return tr("请选择已有时间线");
+          if (!targetValid) return form.newPath ? plan.error || "请确认新建路径" : t.needTable;
+          return "";
+        },
+      },
+      {
+        key: "plan", label: t.stepPlan, hint: t.stepPlanHint, render: stepPlan,
+        validate: function () {
+          if (priorityError) return priorityError;
+          if (!difficultyCheck.ok) return difficultyCheck.error;
+          if (!form.publishDate || !form.targetDate) return t.needDate;
+          return "";
+        },
+      },
+      { key: "confirm", label: t.stepConfirm, hint: t.stepConfirmHint, render: stepConfirm },
+    ];
+
+    // 结构性不合法（缺标题/缺归属/优先级或难度非法/缺日期）提前反映成末步保存禁用，
+    // 别让用户点到最后一步才被弹回去。
+    var blocked = !String(form.title).trim() || !targetValid || !!priorityError || !difficultyCheck.ok ||
+      !form.publishDate || !form.targetDate;
+
+    return h(StagedDialog, {
+      title: title, closeLabel: t.cancel, steps: steps,
+      submitting: isBusy, error: error, submitDisabled: blocked,
+      onClose: requestClose, onSubmit: submit,
+      submitText: t.create, cancelText: t.cancel, nextText: t.nextStep || "下一步", backText: t.prevStep || "上一步",
+      stepsLabel: t.createSteps || "创建步骤",
+    });
   }
 
   return CreateModal;

@@ -167,11 +167,11 @@ const clientPath = ROOT + "packages/addons/salary/client/client.src.cjs";
 require(clientPath);
 
 const problems = [];
-// 记一笔/编辑工资的弹窗外壳由 lib/overlay.cjs 渲染（本测试的迷你 React 不展开函数组件，
-// 所以遮罩类名改成对源码契约的断言：外壳工厂 + 插件自己的 mask/dialog 类名）。
+// 记一笔/编辑工资的弹窗外壳由 lib/staged-dialog.cjs（内含 overlay.cjs）渲染（本测试的迷你 React
+// 不展开函数组件，所以改成对源码契约的断言：外壳工厂 + 插件自己的 mask/dialog 类名）。
 {
   const recordsSrc = require("node:fs").readFileSync(ROOT + "packages/addons/salary/client/views/records.cjs", "utf8");
-  for (const needle of ['lib/overlay.cjs', 'maskClass: "wbsal-mask"', 'dialogClass: "wbsal-modal"', "onClose: closeForm"]) {
+  for (const needle of ['lib/staged-dialog.cjs', 'createStagedDialog({', 'maskClass: "wbsal-mask"', 'dialogClass: "wbsal-modal"', 'onClose: saving ? null : closeForm']) {
     if (!recordsSrc.includes(needle)) problems.push("records.cjs 没接入共享弹窗外壳：" + needle);
   }
 }
@@ -194,10 +194,11 @@ for (const [id, file, title, expected] of checks) {
   if (!view) { problems.push("缺少视图 " + id); continue; }
   const component = require(ROOT + "packages/addons/salary/client/" + file);
   let tree;
+  // 用例参数在分步渲染复核时要复用，提到 try 外面。
+  const extra = id === "records"
+    ? { initialForm: { mode: "create", id: "", payDate: "2026-11-17", cycle: "monthly", note: "2026年10月工资", values: require(ROOT + "packages/addons/salary/client/ui/fields.cjs").blankValues(), lockGross: false } }
+    : {};
   try {
-    const extra = id === "records"
-      ? { initialForm: { mode: "create", id: "", payDate: "2026-11-17", cycle: "monthly", note: "2026年10月工资", values: require(ROOT + "packages/addons/salary/client/ui/fields.cjs").blankValues(), lockGross: false } }
-      : {};
     tree = await render(component, Object.assign({ api, lang: "zh", title, h: HOST.h }, extra), api);
   } catch (e) {
     problems.push(id + " 渲染抛错：" + (e && e.stack ? e.stack.split("\n")[0] : e));
@@ -209,13 +210,26 @@ for (const [id, file, title, expected] of checks) {
     // 金额输入已统一走共享数字控件：按分步进、留空表示不填、只有绩效奖惩允许负数。
     const NF = require(ROOT + "packages/addons/lib/number-field.cjs");
     const F = require(ROOT + "packages/addons/salary/client/ui/fields.cjs");
+    // 弹窗已改成分步：金额项分布在「金额明细」第 2 步与「汇总」第 3 步，
+    // 所以按步逐个渲染再合并统计，仍是「每个金额项都换成共享数字控件」的同一断言。
     const nodes = [];
-    (function walk(node) {
+    const walkNodes = function (node) {
       if (!node || typeof node !== "object") return;
-      if (Array.isArray(node)) { node.forEach(walk); return; }
+      if (Array.isArray(node)) { node.forEach(walkNodes); return; }
       if (node.type === NF.NumberField) nodes.push(node);
-      (node.children || []).forEach(walk);
-    })(tree);
+      (node.children || []).forEach(walkNodes);
+    };
+    // 弹窗正文由步骤自由函数提供，不渲染就看不到金额控件，这里直接把金额步的 render(hh) 调出来统计。
+    const findStaged = function (node) {
+      if (!node || typeof node !== "object") return null;
+      if (Array.isArray(node)) { for (const item of node) { const hit = findStaged(item); if (hit) return hit; } return null; }
+      if (node.props && Array.isArray(node.props.steps)) return node;
+      for (const child of node.children || []) { const hit = findStaged(child); if (hit) return hit; }
+      return null;
+    };
+    const staged = findStaged(tree);
+    assert.ok(staged, "工资弹窗走共享分阶段外壳");
+    for (const stepIndex of [1, 2]) walkNodes(staged.props.steps[stepIndex].render(HOST.h));
     assert.equal(nodes.length, F.KEYS.length, "每个金额项都换成共享数字控件");
     for (const node of nodes) {
       assert.equal(node.props.step, 0.01, "金额按分步进");

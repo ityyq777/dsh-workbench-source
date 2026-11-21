@@ -283,4 +283,4 @@ module.exports = [
     ".wbtx-slot-note{color:var(--wbt-muted,var(--wb-muted))}",
     ".wbtx-slot-link{border:0;background:transparent;padding:0;font:inherit;font-size:12px;color:var(--wbt-accent,var(--wb-accent));cursor:pointer;text-decoration:underline}",
     ".wbt-mailback{font-size:11.5px;padding:2px 7px}",
-].concat(require("../../../lib/filter-checklist-styles.cjs"), require("../../../lib/date-picker-styles.cjs")("wbt"), require("../../../lib/switch.cjs").styles, require("../../../lib/number-field.cjs").styles).join("\n");
+].concat(require("../../../lib/filter-checklist-styles.cjs"), require("../../../lib/date-picker-styles.cjs")("wbt"), require("../../../lib/switch.cjs").styles, require("../../../lib/number-field.cjs").styles, require("../../../lib/stepper.cjs").styles, require("../../../lib/staged-dialog.cjs").styles).join("\n");

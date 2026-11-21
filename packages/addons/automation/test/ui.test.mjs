@@ -135,26 +135,26 @@ test("切换触发类型保留已填内容：payload 只取当前类型但其它
 
 test("JSON 非法：红框、错误文案、保存禁用", () => {
   const form = Object.assign(Rules.emptyForm(), { actionArgs: '{"title": ' });
-  const html = renderToStaticMarkup(h(Editor.RuleEditor, {
-    h, C, t, React, form, initial: form, set: noop, busy: false, actions: ["message.send"], onClose: noop, onSave: noop,
-  }));
+  // 编辑器分步后只在当前步渲染字段：直接落到「动作参数」步（第 4 步）校验红框与禁用态。
+  const html = editorHtml({ form, initialStep: 3 });
   assert.ok(html.includes('aria-invalid="true"'));
   assert.ok(html.includes("wba-code err"));
   assert.ok(html.includes(t("editor.jsonInvalid", { msg: "x" }).split("：")[0]));
-  assert.ok(html.includes('disabled=""'), "非法 JSON 时保存按钮应禁用");
+  // 保存按钮在最后一步（条件步）才出现：那里的禁用态才是「不能提交」。
+  assert.ok(primaryBtn(editorHtml({ form, initialStep: 4 })).includes('disabled=""'), "非法 JSON 时保存按钮应禁用");
 });
 
 test("合法表单保存按钮可用，条件关闭时 payload.condition 为 null", () => {
   const form = Object.assign(Rules.emptyForm(), { name: "每日提醒", actionName: "message.send", actionArgs: '{"title":"hi"}' });
-  const html = renderToStaticMarkup(h(Editor.RuleEditor, {
-    h, C, t, React, form, initial: form, set: noop, busy: false, actions: ["message.send"], onClose: noop, onSave: noop,
-  }));
-  assert.ok(!html.includes('disabled=""'));
-  // 编辑器的布尔项改走共享开关：用 role="switch" + aria-checked 表达状态，不再渲染原生 checkbox。
-  assert.ok(html.includes('role="switch"'));
-  assert.ok(html.includes('aria-checked="true"'));
-  assert.ok(html.includes('aria-checked="false"'));
-  assert.ok(!html.includes('type="checkbox"'), "布尔项不应再是原生复选框");
+  const html = editorHtml({ form, initialStep: 3 });
+  assert.ok(!primaryBtn(editorHtml({ form, initialStep: 4 })).includes('disabled=""'));
+  // 布尔项在第 1 步（基础信息）：改走共享开关，用 role="switch" + aria-checked 表达状态。
+  const basicHtml = editorHtml({ form, initialStep: 0 });
+  assert.ok(basicHtml.includes('role="switch"'));
+  assert.ok(basicHtml.includes('aria-checked="true"'));
+  // 条件开关（默认关闭）在条件步，取那里的 aria-checked="false"。
+  assert.ok(editorHtml({ form, initialStep: 4 }).includes('aria-checked="false"'));
+  assert.ok(!basicHtml.includes('type="checkbox"'), "布尔项不应再是原生复选框");
   const payload = Editor.buildPayload(form);
   assert.equal(payload.condition, null);
   assert.equal(payload.triggerType, "schedule");
@@ -163,11 +163,9 @@ test("合法表单保存按钮可用，条件关闭时 payload.condition 为 nul
 
 test("未选 action 时保存禁用，空清单下拉给出提示", () => {
   const form = Object.assign(Rules.emptyForm(), { name: "缺 action" });
-  const html = renderToStaticMarkup(h(Editor.RuleEditor, {
-    h, C, t, React, form, initial: form, set: noop, busy: false, actions: [], onClose: noop, onSave: noop,
-  }));
+  const html = editorHtml({ form, actions: [], initialStep: 3 });
   assert.ok(html.includes(t("editor.noActions")));
-  assert.ok(html.includes('disabled=""'));
+  assert.ok(primaryBtn(editorHtml({ form, actions: [], initialStep: 4 })).includes('disabled=""'));
 });
 
 test("action 多选：搜索过滤与按域分组", () => {
@@ -191,11 +189,9 @@ test("action 多选：搜索过滤与按域分组", () => {
 
 test("条件开启但 JSON 非法时同样禁用保存", () => {
   const form = Object.assign(Rules.emptyForm(), { condOn: true, condition: "[]" });
-  const html = renderToStaticMarkup(h(Editor.RuleEditor, {
-    h, C, t, React, form, initial: form, set: noop, busy: false, actions: ["message.send"], onClose: noop, onSave: noop,
-  }));
+  const html = editorHtml({ form, initialStep: 4 });
   assert.ok(html.includes(t("editor.conditionObject")));
-  assert.ok(html.includes('disabled=""'));
+  assert.ok(primaryBtn(html).includes('disabled=""'));
 });
 
 test("编辑器是模态盒子，宽度用 min(760px, calc(100vw - 32px))", () => {
@@ -259,20 +255,27 @@ function editorHtml(over) {
   }, rest, { form })));
 }
 
+// 步骤条里未访问的步骤天生带 disabled，判断「能不能保存」必须只看页脚主按钮。
+function primaryBtn(html) {
+  return (html.match(/<button[^>]*wbctl-btn-p[^>]*>/g) || []).join("");
+}
+
 test("AI 规则编辑器：时间/提示词/目标齐备，payload 是宿主请求结构", () => {
   const form = Object.assign(Rules.emptyForm(), {
     name: "早间摘要", execMode: "agent", prompt: "汇总今天的任务与消息",
     pKind: "daily", pTime: "08:30", pTz: "Asia/Shanghai", targetKind: "new_once",
   });
-  const html = editorHtml({ form });
-  const modeBtns = html.match(/<button[^>]*data-mode="[^"]+"[^>]*>/g) || [];
+  const modeHtml = editorHtml({ form, initialStep: 1 });
+  const modeBtns = modeHtml.match(/<button[^>]*data-mode="[^"]+"[^>]*>/g) || [];
   assert.equal(modeBtns.length, 2, "执行方式两个按钮");
   assert.equal(modeBtns.filter((b) => b.includes('aria-pressed="true"')).length, 1, "只能选中一个");
-  assert.ok(html.includes(t("editor.mode.agent")));
-  assert.ok(html.includes(t("editor.prompt")));
-  assert.ok(html.includes('type="time"'));
-  assert.ok(html.includes(t("editor.target.new_once")));
-  assert.ok(!html.includes('disabled=""'), "合法 AI 表单应可保存");
+  assert.ok(modeHtml.includes(t("editor.mode.agent")));
+  const timingHtml = editorHtml({ form, initialStep: 2 });
+  assert.ok(timingHtml.includes('type="time"'));
+  const promptHtml = editorHtml({ form, initialStep: 3 });
+  assert.ok(promptHtml.includes(t("editor.prompt")));
+  assert.ok(promptHtml.includes(t("editor.target.new_once")));
+  assert.ok(!primaryBtn(promptHtml).includes('disabled=""'), "合法 AI 表单应可保存");
   const payload = Editor.buildPayload(form);
   assert.equal(payload.execMode, "agent");
   assert.equal(payload.actionName, undefined);
@@ -298,18 +301,18 @@ test("AI 规则不渲染条件段：不参与就不显示", () => {
 });
 
 test("AI 规则缺少提示词或时间非法时禁用保存", () => {
-  const missing = editorHtml({ form: Object.assign(Rules.emptyForm(), { name: "x", execMode: "agent" }) });
+  const missing = editorHtml({ form: Object.assign(Rules.emptyForm(), { name: "x", execMode: "agent" }), initialStep: 3 });
   assert.ok(missing.includes(t("editor.promptRequired")));
-  assert.ok(missing.includes('disabled=""'));
+  assert.ok(primaryBtn(missing).includes('disabled=""'));
   const badCron = Object.assign(Rules.emptyForm(), { name: "x", execMode: "agent", prompt: "p", pKind: "cron", pCron: "0 9 * *" });
-  assert.ok(editorHtml({ form: badCron }).includes(t("agent.cronHint")));
+  assert.ok(editorHtml({ form: badCron, initialStep: 2 }).includes(t("agent.cronHint")));
   assert.equal(Editor.validateForm(badCron, t).valid, false);
   const badRrule = Object.assign(Rules.emptyForm(), { name: "x", execMode: "agent", prompt: "p", pKind: "rrule", pRrule: "FREQ=DAILY" });
-  assert.ok(editorHtml({ form: badRrule }).includes(t("agent.rruleHint")));
+  assert.ok(editorHtml({ form: badRrule, initialStep: 2 }).includes(t("agent.rruleHint")));
 });
 
 test("执行方式创建后不可切换：已有规则只读", () => {
-  const html = editorHtml({ form: Object.assign(Rules.emptyForm(), { id: "rule_1", name: "x", actionName: "message.send" }) });
+  const html = editorHtml({ form: Object.assign(Rules.emptyForm(), { id: "rule_1", name: "x", actionName: "message.send" }), initialStep: 1 });
   const modeBtns = html.match(/<button[^>]*data-mode="[^"]+"[^>]*>/g) || [];
   assert.equal(modeBtns.filter((b) => b.includes('aria-pressed="true"')).length, 1);
   assert.ok(modeBtns.every((b) => b.includes("disabled")), "执行方式按钮全部禁用");
@@ -318,7 +321,7 @@ test("执行方式创建后不可切换：已有规则只读", () => {
 });
 
 test("宿主没有 schedule 服务时「交给 AI」不可选并说明原因", () => {
-  const html = editorHtml({ form: Object.assign(Rules.emptyForm(), { name: "x", actionName: "message.send" }), agentAvailable: false });
+  const html = editorHtml({ form: Object.assign(Rules.emptyForm(), { name: "x", actionName: "message.send" }), agentAvailable: false, initialStep: 1 });
   assert.ok(html.includes(t("editor.mode.agentUnavailable")));
   assert.ok(html.includes(t("editor.mode.locked")) === false, "新规则不显示锁定说明");
 });

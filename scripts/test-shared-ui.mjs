@@ -36,6 +36,8 @@ const SHARED = {
   'lib/number-field.cjs': '数字输入',
   'lib/data-view.cjs': '数据页',
   'lib/action-schema-view.cjs': 'Action 页',
+  'lib/stepper.cjs': '步骤条',
+  'lib/staged-dialog.cjs': '分阶段对话框外壳',
 };
 
 // 允许保留自研对话框的四处，理由写在 docs/AGENTS规范/04-UI规范.md「控件复用审计」里。

@@ -1772,6 +1772,8 @@ var require_copy = __commonJS({
         "common.save": "\u4FDD\u5B58",
         "common.cancel": "\u53D6\u6D88",
         "common.close": "\u5173\u95ED",
+        "common.next": "\u4E0B\u4E00\u6B65",
+        "common.back": "\u4E0A\u4E00\u6B65",
         "common.more": "\u52A0\u8F7D\u66F4\u65E9\u7684\u8BB0\u5F55",
         "common.refresh": "\u5237\u65B0",
         "common.retry": "\u91CD\u8BD5",
@@ -2016,6 +2018,8 @@ var require_copy = __commonJS({
         "common.save": "Save",
         "common.cancel": "Cancel",
         "common.close": "Close",
+        "common.next": "Next",
+        "common.back": "Back",
         "common.more": "Load older deliveries",
         "common.refresh": "Refresh",
         "common.retry": "Retry",
@@ -3042,6 +3046,305 @@ var require_overlay = __commonJS({
   }
 });
 
+// packages/addons/lib/stepper.cjs
+var require_stepper = __commonJS({
+  "packages/addons/lib/stepper.cjs"(exports2, module2) {
+    "use strict";
+    function stepState(index, current, maxVisited) {
+      if (index === current) return "current";
+      if (index < current) return "done";
+      if (index <= maxVisited) return "visited";
+      return "todo";
+    }
+    function Steps(props) {
+      var h = props.h;
+      var steps = props.steps || [];
+      var current = props.current || 0;
+      var maxVisited = props.maxVisited === void 0 ? current : props.maxVisited;
+      var invalid = props.invalid || {};
+      var disabled = !!props.disabled;
+      var label = props.label || "\u6B65\u9AA4";
+      return h(
+        "nav",
+        { className: "wbctl-steps" + (props.className ? " " + props.className : ""), "aria-label": label },
+        h(
+          "ol",
+          { className: "wbctl-step-list" },
+          steps.map(function(step, index) {
+            var state = stepState(index, current, maxVisited);
+            var canJump = !disabled && typeof props.onJump === "function" && state !== "current" && state !== "todo";
+            var isInvalid = !!invalid[index] || !!invalid[step.key];
+            return h(
+              "li",
+              { key: step.key || index, className: "wbctl-step-item" },
+              h(
+                "button",
+                {
+                  type: "button",
+                  className: "wbctl-step",
+                  "data-state": state,
+                  "data-invalid": isInvalid ? "true" : null,
+                  "aria-current": state === "current" ? "step" : void 0,
+                  "aria-label": index + 1 + " \xB7 " + step.label + (state === "done" ? "\uFF08\u5DF2\u5B8C\u6210\uFF09" : ""),
+                  disabled: disabled || state === "todo",
+                  title: step.hint || "",
+                  onClick: function() {
+                    if (canJump) props.onJump(index);
+                  }
+                },
+                h("span", { className: "wbctl-step-index", "aria-hidden": "true" }, state === "done" ? "\u2713" : String(index + 1)),
+                h("span", { className: "wbctl-step-label" }, step.label),
+                step.hint ? h("span", { className: "wbctl-step-hint" }, step.hint) : null,
+                step.optional ? h("span", { className: "wbctl-step-opt" }, "\u53EF\u9009") : null
+              )
+            );
+          })
+        )
+      );
+    }
+    var STYLES = [
+      ".wbctl-steps{display:block;min-width:0}",
+      ".wbctl-step-list{display:flex;align-items:stretch;gap:6px;list-style:none;margin:0 0 14px;padding:0;min-width:0}",
+      ".wbctl-step-item{display:flex;flex:1 1 0;min-width:0}",
+      ".wbctl-step{display:flex;align-items:center;gap:7px;flex:1 1 auto;min-width:0;padding:7px 9px;border:1px solid var(--wb-line,var(--wb-border));border-radius:10px;background:transparent;color:var(--wb-muted,inherit);font:inherit;font-size:12px;line-height:1.35;text-align:left;cursor:default;transition:background .14s ease,border-color .14s ease,color .14s ease}",
+      ".wbctl-step[data-state=done],.wbctl-step[data-state=visited]{color:inherit;cursor:pointer}",
+      ".wbctl-step[data-state=done]{border-color:color-mix(in oklab,var(--wb-ok,var(--wb-accent,#2563eb)) 36%,var(--wb-border))}",
+      ".wbctl-step[data-state=current]{border-color:color-mix(in oklab,var(--wb-accent,#2563eb) 58%,var(--wb-border));background:color-mix(in oklab,var(--wb-accent,#2563eb) 8%,transparent);color:inherit;font-weight:600}",
+      ".wbctl-step[data-state=visited]:hover,.wbctl-step[data-state=done]:hover{background:color-mix(in oklab,currentColor 7%,transparent)}",
+      ".wbctl-step[data-invalid=true]{border-color:var(--wb-danger,#d33)}",
+      ".wbctl-step:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+      ".wbctl-step:disabled{cursor:default;opacity:.72}",
+      ".wbctl-step-index{display:inline-flex;align-items:center;justify-content:center;flex:none;width:20px;height:20px;border-radius:50%;font-size:11px;font-variant-numeric:tabular-nums;background:color-mix(in oklab,currentColor 15%,transparent)}",
+      ".wbctl-step[data-state=current] .wbctl-step-index{background:var(--wb-accent,#2563eb);color:var(--wb-on-accent,#fff)}",
+      ".wbctl-step[data-state=done] .wbctl-step-index{background:color-mix(in oklab,var(--wb-ok,var(--wb-accent,#2563eb)) 20%,transparent);color:var(--wb-ok,var(--wb-accent,#2563eb))}",
+      ".wbctl-step-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbctl-step-hint{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:400;opacity:.62}",
+      ".wbctl-step-opt{flex:none;font-size:10px;font-weight:400;opacity:.55}",
+      "@media (max-width:760px){.wbctl-step{padding:6px 7px;font-size:11.5px}.wbctl-step-hint,.wbctl-step-opt{display:none}.wbctl-step-index{width:18px;height:18px;font-size:10px}}",
+      "@media (max-width:520px){.wbctl-step-list{gap:4px}.wbctl-step-label{white-space:normal}.wbctl-step{gap:5px}}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-step{transition:none}}"
+    ];
+    module2.exports = { Steps, stepState, styles: STYLES };
+  }
+});
+
+// packages/addons/lib/staged-dialog.cjs
+var require_staged_dialog = __commonJS({
+  "packages/addons/lib/staged-dialog.cjs"(exports2, module2) {
+    "use strict";
+    var defaultReact = require("react");
+    var overlayFactory = require_overlay();
+    var stepper = require_stepper();
+    function validateStep(step) {
+      if (!step || typeof step.validate !== "function") return "";
+      var message = step.validate();
+      return message ? String(message) : "";
+    }
+    function firstFailing(steps) {
+      var list = steps || [];
+      for (var i = 0; i < list.length; i += 1) {
+        var message = validateStep(list[i]);
+        if (message) return { index: i, key: list[i] && list[i].key, message };
+      }
+      return null;
+    }
+    function createStagedDialog(options) {
+      var opts = options || {};
+      var React = opts.React || defaultReact;
+      var h = React.createElement;
+      var dialogClass = ((opts.dialogClass || "") + " wbctl-dialog").trim();
+      var Overlay = overlayFactory(
+        Object.assign({}, opts, {
+          React,
+          dialogClass,
+          // 首焦点由外壳送进对话框，字段由 focusStep 负责，避免打开瞬间落进第一个输入框。
+          autoFocusDialog: opts.autoFocusDialog !== false
+        })
+      );
+      function StagedDialog(props) {
+        var R = props.React || React;
+        var steps = props.steps || [];
+        var count = steps.length;
+        var busy = !!props.submitting || !!props.busy;
+        var indexState = R.useState(props.initialStep || 0);
+        var rawIndex = indexState[0];
+        var setIndex = indexState[1];
+        var index = count === 0 ? 0 : Math.min(Math.max(rawIndex, 0), count - 1);
+        var visitedState = R.useState(props.initialStep || 0);
+        var maxVisited = count === 0 ? 0 : Math.min(Math.max(visitedState[0], index), count - 1);
+        var setMaxVisited = visitedState[1];
+        var errorState = R.useState("");
+        var stepError = errorState[0];
+        var setStepError = errorState[1];
+        var invalidState = R.useState({});
+        var invalid = invalidState[0];
+        var setInvalid = invalidState[1];
+        var bodyRef = R.useRef(null);
+        var mounted = R.useRef(true);
+        function runValidate(step) {
+          return validateStep(step);
+        }
+        function markInvalid(i, bad) {
+          setInvalid(function(prev) {
+            var next2 = Object.assign({}, prev);
+            if (bad) next2[i] = true;
+            else delete next2[i];
+            return next2;
+          });
+        }
+        function focusBody() {
+          var el = bodyRef.current;
+          if (el && typeof el.focus === "function") el.focus();
+        }
+        R.useEffect(
+          function() {
+            if (!mounted.current) return;
+            focusBody();
+          },
+          [index]
+        );
+        R.useEffect(function() {
+          mounted.current = true;
+          return function() {
+            mounted.current = false;
+          };
+        }, []);
+        function goTo(i) {
+          if (busy || i < 0 || i >= count) return;
+          setIndex(i);
+          if (i > maxVisited) setMaxVisited(i);
+          setStepError("");
+        }
+        function fail(i, message) {
+          markInvalid(i, true);
+          goTo(i);
+          setStepError(message);
+          focusBody();
+        }
+        function next() {
+          if (busy) return;
+          var message = runValidate(steps[index]);
+          if (message) {
+            fail(index, message);
+            return;
+          }
+          markInvalid(index, false);
+          goTo(Math.min(index + 1, count - 1));
+        }
+        function back() {
+          if (busy || index === 0) return;
+          goTo(index - 1);
+        }
+        function jump(i) {
+          if (busy || i > maxVisited) return;
+          goTo(i);
+        }
+        function submit() {
+          if (busy) return;
+          var bad = firstFailing(steps);
+          if (bad) {
+            fail(bad.index, bad.message);
+            return;
+          }
+          for (var i = 0; i < count; i++) markInvalid(i, false);
+          setStepError("");
+          if (typeof props.onSubmit === "function") props.onSubmit();
+        }
+        function cancel() {
+          if (busy) return;
+          if (typeof props.onClose === "function") props.onClose();
+        }
+        var current = steps[index];
+        var isLast = index >= count - 1;
+        var saveText = props.submitText || "\u4FDD\u5B58";
+        var shownError = stepError || props.error || "";
+        return h(
+          Overlay,
+          props,
+          count > 1 ? h(stepper.Steps, {
+            h,
+            steps: steps.map(function(step) {
+              return { key: step.key, label: step.label, hint: step.hint, optional: step.optional };
+            }),
+            current: index,
+            maxVisited,
+            onJump: jump,
+            invalid,
+            disabled: busy,
+            label: props.stepsLabel || "\u521B\u5EFA\u6B65\u9AA4"
+          }) : null,
+          h(
+            "div",
+            {
+              className: "wbctl-dialog-body" + (props.bodyClassName ? " " + props.bodyClassName : ""),
+              ref: bodyRef,
+              tabIndex: -1
+            },
+            current ? current.render(h, props) : null
+          ),
+          props.footerExtra || null,
+          shownError ? h("div", { className: "wbctl-dialog-err", role: "alert" }, shownError) : null,
+          h(
+            "div",
+            { className: "wbctl-dialog-foot" },
+            count > 1 ? h("span", { className: "wbctl-dialog-progress" }, index + 1 + " / " + count) : null,
+            props.footerNote ? h("span", { className: "wbctl-dialog-note" }, props.footerNote) : null,
+            h("span", { className: "wbctl-dialog-spacer" }),
+            index > 0 ? h(
+              "button",
+              { type: "button", className: "wbctl-btn", onClick: back, disabled: busy },
+              props.backText || "\u4E0A\u4E00\u6B65"
+            ) : null,
+            h("button", { type: "button", className: "wbctl-btn", onClick: cancel, disabled: busy }, props.cancelText || "\u53D6\u6D88"),
+            h(
+              "button",
+              {
+                type: "button",
+                className: "wbctl-btn wbctl-btn-p",
+                onClick: isLast ? submit : next,
+                // submitDisabled 只作用于末步的保存：插件据此把「结构性不合法」（JSON 语法、无可选 action）
+                // 提前反映成禁用态，避免用户点到保存才被弹回第一步。
+                disabled: busy || isLast && !!props.submitDisabled
+              },
+              busy ? saveText + "\u4E2D\u2026" : isLast ? saveText : props.nextText || "\u4E0B\u4E00\u6B65"
+            )
+          )
+        );
+      }
+      StagedDialog.displayName = opts.displayName || "StagedDialog";
+      return StagedDialog;
+    }
+    var STYLES = [
+      // 宽表单：内容多时给足横向空间，窄屏留 16px 边距后铺满。
+      ".wbctl-dialog{width:min(880px,calc(100vw - 32px));max-height:min(92vh,760px);display:flex;flex-direction:column;overflow:hidden}",
+      ".wbctl-dialog-body{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;padding:2px 2px 10px;outline:none}",
+      ".wbctl-dialog-body:focus-visible{outline:none}",
+      ".wbctl-dialog-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-top:10px;margin-top:10px;border-top:1px solid var(--wb-line,var(--wb-border))}",
+      ".wbctl-dialog-progress{font-size:11.5px;color:var(--wb-muted,#666);font-variant-numeric:tabular-nums}",
+      ".wbctl-dialog-note{font-size:11.5px;color:var(--wb-muted,#666);min-width:0}",
+      ".wbctl-dialog-spacer{flex:1 1 auto}",
+      ".wbctl-dialog-err{margin-top:8px;padding:7px 10px;border-radius:8px;border:1px solid color-mix(in oklab,var(--wb-danger,#d33) 45%,transparent);background:color-mix(in oklab,var(--wb-danger,#d33) 8%,transparent);color:var(--wb-danger,#d33);font-size:12px}",
+      ".wbctl-btn{padding:6px 14px;border:1px solid var(--wb-border,#d0d5dd);border-radius:8px;background:var(--wb-card,#fff);color:inherit;font:inherit;font-size:12.5px;cursor:pointer}",
+      ".wbctl-btn:hover:not(:disabled){background:color-mix(in oklab,currentColor 7%,transparent)}",
+      ".wbctl-btn:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+      ".wbctl-btn:disabled{opacity:.55;cursor:default}",
+      ".wbctl-btn.wbctl-btn-p{background:var(--wb-accent,#2563eb);border-color:transparent;color:var(--wb-on-accent,#fff)}",
+      ".wbctl-btn.wbctl-btn-p:hover:not(:disabled){background:color-mix(in oklab,var(--wb-accent,#2563eb) 86%,#000)}",
+      // 确认步：键值对清单，各插件共用，避免再各写一套只读摘要。\n  ".wbctl-review{display:flex;flex-direction:column;border:1px solid var(--wb-line,var(--wb-border));border-radius:10px;overflow:hidden}",\n  ".wbctl-review-row{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;padding:8px 12px;font-size:12.5px;background:var(--wb-surface,transparent)}",\n  ".wbctl-review-row+.wbctl-review-row{border-top:1px solid var(--wb-line,var(--wb-border))}",\n  ".wbctl-review-k{color:var(--wb-muted,inherit);font-size:11.5px;line-height:1.6}",\n  ".wbctl-review-v{min-width:0;word-break:break-word;line-height:1.6}",\n  ".wbctl-note{margin:10px 0 0;font-size:11.5px;color:var(--wb-muted,inherit)}",\n  // 两列字段布局：内容多的弹窗不再单列拉长，窄屏回落单列。
+      ".wbctl-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px}",
+      ".wbctl-form>.full{grid-column:1/-1}",
+      "@media (max-width:760px){.wbctl-dialog{width:calc(100vw - 16px);max-height:94vh}.wbctl-form{grid-template-columns:1fr}.wbctl-form>.full{grid-column:auto}}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-btn{transition:none}}"
+    ];
+    module2.exports = {
+      createStagedDialog,
+      validateStep,
+      firstFailing,
+      styles: STYLES
+    };
+  }
+});
+
 // packages/addons/automation/client/views/json-editor.cjs
 var require_json_editor = __commonJS({
   "packages/addons/automation/client/views/json-editor.cjs"(exports2, module2) {
@@ -3143,18 +3446,37 @@ var require_json_editor = __commonJS({
 var require_rule_editor = __commonJS({
   "packages/addons/automation/client/views/rule-editor.cjs"(exports2, module2) {
     "use strict";
-    var createOverlay = require_overlay();
+    var staged = require_staged_dialog();
     var SW = require_switch();
-    var EditorOverlay = createOverlay({
+    var EditorDialog = staged.createStagedDialog({
       maskClass: "wba-modal",
       dialogClass: "wba-modal-box",
+      displayName: "AutomationRuleDialog",
       ariaLabelOf: function(props) {
         var t = props.t;
         return props.form && props.form.id ? t("editor.editTitle") : t("editor.newTitle");
       },
+      header: function(props) {
+        var hh = props.h;
+        return hh(
+          "div",
+          { className: "wba-modal-head" },
+          hh("h3", null, props.form && props.form.id ? props.t("editor.editTitle") : props.t("editor.newTitle")),
+          hh("button", {
+            type: "button",
+            className: "wba-icon-btn",
+            title: props.t("common.close"),
+            "aria-label": props.t("common.close"),
+            disabled: !!props.submitting,
+            onClick: props.onClose
+          }, props.icon ? props.icon("x", 15) : "\xD7")
+        );
+      },
       // 有未保存改动时要先问一次，所以关掉「点遮罩直接关」的默认行为，交给 close()。
       closeOnMask: false,
-      autoFocusDialog: false
+      closeOnEscape: function(props) {
+        return !props.submitting;
+      }
     });
     var trig = require_trigger_fields();
     var atiming = require_agent_timing();
@@ -3313,303 +3635,349 @@ var require_rule_editor = __commonJS({
         ["action", t("editor.mode.action")],
         ["agent", t("editor.mode.agent")]
       ];
-      return h(
-        EditorOverlay,
-        { t, form, onClose: close, closeOnMask: false, autoFocus: false },
-        h(
+      function renderBasic(hh) {
+        return hh(
           "div",
-          { className: "wba-modal-head" },
-          h("h3", null, form.id ? t("editor.editTitle") : t("editor.newTitle")),
-          h("button", { type: "button", className: "wba-icon-btn", title: t("common.close"), onClick: close }, icon ? icon("x", 15) : "\xD7")
-        ),
-        h(
-          "div",
-          { className: "wba-modal-body" },
-          h(
+          { className: "wba-section" },
+          hh(
             "div",
-            { className: "wba-section" },
-            h("p", { className: "wba-section-title" }, "\u2460 " + t("editor.section.basic")),
-            h(
+            { className: "wba-grid-3" },
+            hh(
+              "label",
+              { className: "wba-field wba-span-2" },
+              hh("span", { className: "wba-label" }, t("editor.name")),
+              hh("input", {
+                className: "wba-input" + (showNameErr ? " err" : ""),
+                value: form.name,
+                placeholder: t("editor.namePh"),
+                onChange: function(e) {
+                  touchedS[1](true);
+                  set("name", e.target.value);
+                }
+              }),
+              showNameErr ? hh("span", { className: "wba-err-text" }, errs.name) : null
+            ),
+            hh(
               "div",
-              { className: "wba-grid-3" },
-              h(
-                "label",
-                { className: "wba-field wba-span-2" },
-                h("span", { className: "wba-label" }, t("editor.name")),
-                h("input", {
-                  className: "wba-input" + (showNameErr ? " err" : ""),
-                  value: form.name,
-                  placeholder: t("editor.namePh"),
+              { className: "wba-field" },
+              hh("span", { className: "wba-label" }, t("editor.enabled")),
+              hh(SW.Switch, {
+                h: hh,
+                checked: Boolean(form.enabled),
+                showState: true,
+                onText: t("rules.status.on"),
+                offText: t("rules.status.off"),
+                onChange: function(next) {
+                  set("enabled", next);
+                }
+              })
+            )
+          )
+        );
+      }
+      function renderMode(hh) {
+        return hh(
+          "div",
+          { className: "wba-section" },
+          hh(
+            "div",
+            { className: "wba-seg", role: "group" },
+            modeButtons.map(function(m) {
+              var off = locked || m[0] === "agent" && !agentAvailable;
+              return hh("button", {
+                key: m[0],
+                type: "button",
+                "data-mode": m[0],
+                "aria-pressed": (agentMode ? "agent" : "action") === m[0],
+                disabled: off,
+                title: m[0] === "agent" && !agentAvailable ? t("editor.mode.agentUnavailable") : "",
+                onClick: function() {
+                  pickMode(m[0]);
+                }
+              }, m[1]);
+            })
+          ),
+          hh("p", { className: "wba-sub" }, agentMode ? t("editor.mode.agentHint") : t("editor.mode.actionHint")),
+          locked ? hh("p", { className: "wba-hint" }, t("editor.mode.locked")) : null
+        );
+      }
+      function renderTiming(hh) {
+        return hh(
+          "div",
+          { className: "wba-section" },
+          agentMode ? hh(atiming.TimingFields, {
+            h: hh,
+            t,
+            lang,
+            form,
+            set,
+            errs,
+            icon,
+            onValidChange: function(ok) {
+              numOkS[1](ok);
+            }
+          }) : hh(trig.TriggerFields, {
+            h: hh,
+            t,
+            lang,
+            form,
+            set,
+            errs,
+            icon,
+            onValidChange: function(ok) {
+              numOkS[1](ok);
+            }
+          })
+        );
+      }
+      function renderPrompt(hh) {
+        return hh(
+          "div",
+          { className: "wba-section" },
+          hh(
+            "label",
+            { className: "wba-field" },
+            hh("span", { className: "wba-label" }, t("editor.prompt")),
+            hh("textarea", {
+              className: "wba-code sm" + (errs.prompt ? " err" : ""),
+              value: form.prompt,
+              placeholder: t("editor.promptPh"),
+              onChange: function(e) {
+                set("prompt", e.target.value);
+              }
+            }),
+            errs.prompt ? hh("span", { className: "wba-err-text" }, errs.prompt) : hh("span", { className: "wba-hint" }, t("editor.promptHint"))
+          ),
+          hh("p", { className: "wba-section-title" }, t("editor.section.target")),
+          hh(
+            "div",
+            { className: "wba-grid-3" },
+            hh(
+              "label",
+              { className: "wba-field" },
+              hh("span", { className: "wba-label" }, t("editor.target")),
+              hh(
+                "select",
+                {
+                  className: "wba-input",
+                  value: form.targetKind || "new_once",
                   onChange: function(e) {
-                    touchedS[1](true);
-                    set("name", e.target.value);
+                    set("targetKind", e.target.value);
                   }
-                }),
-                showNameErr ? h("span", { className: "wba-err-text" }, errs.name) : null
+                },
+                ["new_once", "new", "session"].map(function(k) {
+                  return hh("option", { key: k, value: k }, t("editor.target." + k));
+                })
+              )
+            ),
+            (form.targetKind || "new_once") === "session" ? hh(
+              "label",
+              { className: "wba-field wba-span-2" },
+              hh("span", { className: "wba-label" }, t("editor.targetSession")),
+              hh("input", {
+                className: "wba-input" + (errs.targetSession ? " err" : ""),
+                value: form.targetSession || "",
+                placeholder: t("editor.targetSessionPh"),
+                onChange: function(e) {
+                  set("targetSession", e.target.value);
+                }
+              }),
+              errs.targetSession ? hh("span", { className: "wba-err-text" }, errs.targetSession) : null
+            ) : [
+              hh(
+                "label",
+                { key: "cwd", className: "wba-field" },
+                hh("span", { className: "wba-label" }, t("editor.targetCwd")),
+                hh("input", {
+                  className: "wba-input",
+                  value: form.targetCwd || "",
+                  placeholder: "/Users/me/work",
+                  onChange: function(e) {
+                    set("targetCwd", e.target.value);
+                  }
+                })
               ),
-              h(
-                "div",
-                { className: "wba-field" },
-                h("span", { className: "wba-label" }, t("editor.enabled")),
-                h(SW.Switch, {
-                  h,
-                  checked: Boolean(form.enabled),
-                  showState: true,
-                  onText: t("rules.status.on"),
-                  offText: t("rules.status.off"),
-                  onChange: function(next) {
-                    set("enabled", next);
+              hh(
+                "label",
+                { key: "preset", className: "wba-field" },
+                hh("span", { className: "wba-label" }, t("editor.targetPreset")),
+                hh("input", {
+                  className: "wba-input",
+                  value: form.targetPreset || "",
+                  placeholder: t("editor.targetPresetPh"),
+                  onChange: function(e) {
+                    set("targetPreset", e.target.value);
                   }
                 })
               )
-            )
+            ]
           ),
-          h(
+          hh("p", { className: "wba-hint" }, t("editor.targetHint"))
+        );
+      }
+      function renderAction(hh) {
+        return hh(
+          "div",
+          { className: "wba-section" },
+          hh(
             "div",
-            { className: "wba-section" },
-            h("p", { className: "wba-section-title" }, "\u2461 " + t("editor.section.mode")),
-            h(
-              "div",
-              { className: "wba-seg", role: "group" },
-              modeButtons.map(function(m) {
-                var off = locked || m[0] === "agent" && !agentAvailable;
-                return h("button", {
-                  key: m[0],
-                  type: "button",
-                  "data-mode": m[0],
-                  "aria-pressed": (agentMode ? "agent" : "action") === m[0],
-                  disabled: off,
-                  title: m[0] === "agent" && !agentAvailable ? t("editor.mode.agentUnavailable") : "",
-                  onClick: function() {
-                    pickMode(m[0]);
-                  }
-                }, m[1]);
-              })
-            ),
-            h("p", { className: "wba-sub" }, agentMode ? t("editor.mode.agentHint") : t("editor.mode.actionHint")),
-            locked ? h("p", { className: "wba-hint" }, t("editor.mode.locked")) : null
-          ),
-          h(
-            "div",
-            { className: "wba-section" },
-            h("p", { className: "wba-section-title" }, "\u2462 " + (agentMode ? t("editor.section.timing") : t("editor.section.trigger"))),
-            agentMode ? h(atiming.TimingFields, {
-              h,
-              t,
-              lang,
-              form,
-              set,
-              errs,
-              icon,
-              onValidChange: function(ok) {
-                numOkS[1](ok);
-              }
-            }) : h(trig.TriggerFields, {
-              h,
-              t,
-              lang,
-              form,
-              set,
-              errs,
-              icon,
-              onValidChange: function(ok) {
-                numOkS[1](ok);
-              }
-            })
-          ),
-          agentMode ? h(
-            "div",
-            { className: "wba-section" },
-            h("p", { className: "wba-section-title" }, "\u2463 " + t("editor.section.prompt")),
-            h(
+            { className: "wba-inline" },
+            hh(
               "label",
               { className: "wba-field" },
-              h("span", { className: "wba-label" }, t("editor.prompt")),
-              h("textarea", {
-                className: "wba-code sm" + (errs.prompt ? " err" : ""),
-                value: form.prompt,
-                placeholder: t("editor.promptPh"),
-                onChange: function(e) {
-                  set("prompt", e.target.value);
-                }
-              }),
-              errs.prompt ? h("span", { className: "wba-err-text" }, errs.prompt) : h("span", { className: "wba-hint" }, t("editor.promptHint"))
-            ),
-            h("div", { className: "wba-section-title" }, t("editor.section.target")),
-            h(
-              "div",
-              { className: "wba-grid-3" },
-              h(
-                "label",
-                { className: "wba-field" },
-                h("span", { className: "wba-label" }, t("editor.target")),
-                h(
-                  "select",
-                  {
-                    className: "wba-input",
-                    value: form.targetKind || "new_once",
-                    onChange: function(e) {
-                      set("targetKind", e.target.value);
-                    }
-                  },
-                  ["new_once", "new", "session"].map(function(k) {
-                    return h("option", { key: k, value: k }, t("editor.target." + k));
-                  })
-                )
-              ),
-              (form.targetKind || "new_once") === "session" ? h(
-                "label",
-                { className: "wba-field wba-span-2" },
-                h("span", { className: "wba-label" }, t("editor.targetSession")),
-                h("input", {
-                  className: "wba-input" + (errs.targetSession ? " err" : ""),
-                  value: form.targetSession || "",
-                  placeholder: t("editor.targetSessionPh"),
+              hh("span", { className: "wba-label" }, t("editor.action")),
+              hh(
+                "select",
+                {
+                  className: "wba-input",
+                  value: form.actionName,
+                  disabled: !hasActions,
                   onChange: function(e) {
-                    set("targetSession", e.target.value);
+                    set("actionName", e.target.value);
                   }
-                }),
-                errs.targetSession ? h("span", { className: "wba-err-text" }, errs.targetSession) : null
-              ) : [
-                h(
-                  "label",
-                  { key: "cwd", className: "wba-field" },
-                  h("span", { className: "wba-label" }, t("editor.targetCwd")),
-                  h("input", {
-                    className: "wba-input",
-                    value: form.targetCwd || "",
-                    placeholder: "/Users/me/work",
-                    onChange: function(e) {
-                      set("targetCwd", e.target.value);
-                    }
-                  })
-                ),
-                h(
-                  "label",
-                  { key: "preset", className: "wba-field" },
-                  h("span", { className: "wba-label" }, t("editor.targetPreset")),
-                  h("input", {
-                    className: "wba-input",
-                    value: form.targetPreset || "",
-                    placeholder: t("editor.targetPresetPh"),
-                    onChange: function(e) {
-                      set("targetPreset", e.target.value);
-                    }
-                  })
-                )
-              ]
+                },
+                hasActions ? actionName.map(function(a) {
+                  return hh("option", { key: a, value: a }, a);
+                }) : hh("option", { value: "" }, t("editor.noActions"))
+              ),
+              !hasActions || actionMissing ? hh("span", { className: "wba-err-text" }, hasActions ? t("rules.actionDisabled") : t("editor.noActionsHint")) : null
             ),
-            h("p", { className: "wba-hint" }, t("editor.targetHint"))
-          ) : null,
-          agentMode ? null : h(
+            hh("span", { className: "wba-grow" }),
+            example ? hh(C.Btn, { h: hh, onClick: function() {
+              exampleS[1](!exampleS[0]);
+            } }, t("editor.showExample")) : null
+          ),
+          exampleS[0] && example ? hh(
             "div",
-            { className: "wba-section" },
-            h("p", { className: "wba-section-title" }, "\u2463 " + t("editor.section.run")),
-            h(
+            { className: "wba-block" },
+            hh("span", { className: "wba-label" }, t("editor.exampleTitle")),
+            hh("pre", { className: "wba-pre" }, JSON.stringify(example, null, 2)),
+            hh(
               "div",
               { className: "wba-inline" },
-              h(
-                "label",
-                { className: "wba-field" },
-                h("span", { className: "wba-label" }, t("editor.action")),
-                h(
-                  "select",
-                  {
-                    className: "wba-input",
-                    value: form.actionName,
-                    disabled: !hasActions,
-                    onChange: function(e) {
-                      set("actionName", e.target.value);
-                    }
-                  },
-                  hasActions ? actionName.map(function(a) {
-                    return h("option", { key: a, value: a }, a);
-                  }) : h("option", { value: "" }, t("editor.noActions"))
-                ),
-                !hasActions || actionMissing ? h("span", { className: "wba-err-text" }, hasActions ? t("rules.actionDisabled") : t("editor.noActionsHint")) : null
-              ),
-              h("span", { className: "wba-grow" }),
-              example ? h(C.Btn, { h, onClick: function() {
-                exampleS[1](!exampleS[0]);
-              } }, t("editor.showExample")) : null
-            ),
-            exampleS[0] && example ? h(
-              "div",
-              { className: "wba-block" },
-              h("span", { className: "wba-label" }, t("editor.exampleTitle")),
-              h("pre", { className: "wba-pre" }, JSON.stringify(example, null, 2)),
-              h(
-                "div",
-                { className: "wba-inline" },
-                h(C.Btn, { h, onClick: function() {
-                  if (typeof window !== "undefined" && !window.confirm(t("editor.exampleHint"))) return;
-                  set("actionArgs", JSON.stringify(example, null, 2));
-                } }, t("editor.fillExample")),
-                h("span", { className: "wba-grow" })
-              )
-            ) : null,
-            h(json.JsonEditor, {
-              h,
-              t,
-              React,
-              label: "actionArgs",
-              hint: t("editor.argsHint"),
-              value: form.actionArgs,
-              invalid: Boolean(errs.actionArgs),
-              error: errs.actionArgs,
-              onChange: function(v) {
-                set("actionArgs", v);
-              },
-              action: h(C.Btn, { h, onClick: function() {
-                var next = json.formatJson(form.actionArgs);
-                if (next) set("actionArgs", next);
-              } }, t("editor.format"))
-            })
-          ),
-          // 「交给 AI」不参与本地条件与参数模板，条件段整段不渲染，避免给出「填了也没用」的字段
-          agentMode ? null : h(
-            "div",
-            { className: "wba-section" },
-            h("p", { className: "wba-section-title" }, "\u2464 " + t("editor.section.condition")),
-            h(SW.Switch, {
-              h,
-              checked: Boolean(form.condOn),
-              label: t("editor.conditionOn"),
-              onChange: function(next) {
-                set("condOn", next);
-              }
-            }),
-            h("p", { className: "wba-sub" }, t("editor.conditionHint")),
-            form.condOn ? h(json.JsonEditor, {
-              h,
-              t,
-              React,
-              small: true,
-              vars: false,
-              label: "condition",
-              value: form.condition,
-              invalid: Boolean(errs.condition),
-              error: errs.condition,
-              onChange: function(v) {
-                set("condition", v);
-              }
-            }) : h("p", { className: "wba-sub" }, t("editor.conditionEmpty"))
-          )
-        ),
-        h(
+              hh(C.Btn, { h: hh, onClick: function() {
+                if (typeof window !== "undefined" && !window.confirm(t("editor.exampleHint"))) return;
+                set("actionArgs", JSON.stringify(example, null, 2));
+              } }, t("editor.fillExample")),
+              hh("span", { className: "wba-grow" })
+            )
+          ) : null,
+          hh(json.JsonEditor, {
+            h: hh,
+            t,
+            React,
+            label: "actionArgs",
+            hint: t("editor.argsHint"),
+            value: form.actionArgs,
+            invalid: Boolean(errs.actionArgs),
+            error: errs.actionArgs,
+            onChange: function(v) {
+              set("actionArgs", v);
+            },
+            action: hh(C.Btn, { h: hh, onClick: function() {
+              var next = json.formatJson(form.actionArgs);
+              if (next) set("actionArgs", next);
+            } }, t("editor.format"))
+          })
+        );
+      }
+      function renderCondition(hh) {
+        return hh(
           "div",
-          { className: "wba-modal-foot" },
-          h("span", { className: "wba-sub wba-grow" }, validation.valid ? numOkS[0] ? "" : errs.pEvery || errs.pAfter || errs.everyMinutes || t("trigger.intervalHint") : errs.name || errs.prompt || errs.actionArgs || errs.condition || errs.pCron || errs.pRrule || errs.pDate || errs.pTime || errs.pWeekdays || t("editor.nameEmptySave")),
-          h(C.Btn, { h, onClick: close }, t("common.cancel")),
-          h(
-            C.Btn,
-            { h, kind: "primary", disabled: busy || !validation.valid || !numOkS[0], onClick: function() {
-              props.onSave(buildPayload(form));
-            } },
-            busy ? t("common.loading") : t("common.save")
-          )
-        )
-      );
+          { className: "wba-section" },
+          hh(SW.Switch, {
+            h: hh,
+            checked: Boolean(form.condOn),
+            label: t("editor.conditionOn"),
+            onChange: function(next) {
+              set("condOn", next);
+            }
+          }),
+          hh("p", { className: "wba-sub" }, t("editor.conditionHint")),
+          form.condOn ? hh(json.JsonEditor, {
+            h: hh,
+            t,
+            React,
+            small: true,
+            vars: false,
+            label: "condition",
+            value: form.condition,
+            invalid: Boolean(errs.condition),
+            error: errs.condition,
+            onChange: function(v) {
+              set("condition", v);
+            }
+          }) : hh("p", { className: "wba-sub" }, t("editor.conditionEmpty"))
+        );
+      }
+      var steps = [
+        {
+          key: "basic",
+          label: t("editor.section.basic"),
+          hint: t("editor.name"),
+          render: renderBasic,
+          validate: function() {
+            return String(form.name || "").trim() ? "" : t("editor.nameRequired");
+          }
+        },
+        {
+          key: "mode",
+          label: t("editor.section.mode"),
+          render: renderMode
+        },
+        {
+          key: agentMode ? "timing" : "trigger",
+          label: agentMode ? t("editor.section.timing") : t("editor.section.trigger"),
+          render: renderTiming,
+          validate: function() {
+            if (numOkS[0]) return "";
+            return errs.pEvery || errs.pAfter || errs.everyMinutes || errs.pCron || errs.pRrule || errs.pDate || errs.pTime || errs.pWeekdays || t("trigger.intervalHint");
+          }
+        },
+        {
+          key: agentMode ? "prompt" : "action",
+          label: agentMode ? t("editor.section.prompt") : t("editor.section.run"),
+          render: agentMode ? renderPrompt : renderAction,
+          validate: function() {
+            if (agentMode) return String(form.prompt || "").trim() ? "" : t("editor.promptRequired");
+            if (!hasActions || actionMissing) return hasActions ? t("rules.actionDisabled") : t("editor.noActionsHint");
+            return errs.actionArgs || "";
+          }
+        }
+      ];
+      if (!agentMode) {
+        steps.push({
+          key: "condition",
+          label: t("editor.section.condition"),
+          optional: true,
+          render: renderCondition,
+          validate: function() {
+            return errs.condition || "";
+          }
+        });
+      }
+      return h(EditorDialog, {
+        h,
+        React,
+        t,
+        form,
+        icon,
+        steps,
+        // 测试与深链接需要直接落到某一步；正常打开都从第一步开始。
+        initialStep: props.initialStep,
+        submitting: busy,
+        submitDisabled: !validation.valid || !numOkS[0],
+        onClose: close,
+        onSubmit: function() {
+          if (!validation.valid || !numOkS[0]) return;
+          props.onSave(buildPayload(form));
+        },
+        submitText: t("common.save"),
+        cancelText: t("common.cancel"),
+        nextText: t("common.next"),
+        backText: t("common.back"),
+        footerNote: validation.valid ? numOkS[0] ? "" : errs.pEvery || errs.pAfter || errs.everyMinutes || t("trigger.intervalHint") : errs.name || errs.prompt || errs.actionArgs || errs.condition || errs.pCron || errs.pRrule || errs.pDate || errs.pTime || errs.pWeekdays || t("editor.nameEmptySave")
+      });
     }
     module2.exports = {
       RuleEditor,

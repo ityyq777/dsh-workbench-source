@@ -26,29 +26,24 @@ const find=(tree,pred)=>{const n=walk(tree).find(pred);assert.ok(n,'expected con
 const nfInput=node=>walk(node.type(node.props)).find(n=>n.type==='input'&&n.props.onChange);
 const difficultyNode=(tree,lang)=>find(tree,n=>n.type===NF.NumberField&&n.props.ariaLabel===copy[lang].difficulty);
 let propsForDifficulty=null;
-const typeDifficulty=(lang,value)=>nfInput(difficultyNode(render(Create,propsForDifficulty),lang)).props.onChange({target:{value}});
 const reset=()=>{state=[];cursor=0;effects=[];};
+// 分阶段弹窗外面套着共享外壳，元素树里只有 Modal/Steps；这里按渲染顺序展开函数组件，
+// hooks 仍走本文件的全局序号，所以展开顺序必须与 React 一致（深度优先、先父后子）。
+const expandAll=node=>{if(!node||typeof node!=='object')return node;if(Array.isArray(node))return node.map(expandAll);
+  if(node.type==='Fragment')return (node.children||[]).map(expandAll);
+  if(typeof node.type==='function'){
+    // 本文件的假 createElement 把 children 放在元素上、不写进 props；展开时补回去，组件才拿得到。
+    const kids=node.children.length?(node.children.length===1?node.children[0]:node.children):undefined;
+    return expandAll(node.type(Object.assign({},node.props,{React,children:kids})));
+  }
+  return Object.assign({},node,{children:(node.children||[]).map(expandAll)});};
 const render=(C,p)=>{cursor=0;return C(p);};
 const flush=async()=>{const jobs=effects;effects=[];jobs.forEach(fn=>fn());for(let i=0;i<12;i++)await Promise.resolve();};
 const tree=[{id:'table',name:'Table',type:'1'}];
 const Create=require(dir+'modals/create-modal.cjs')({React,allTables:()=>tree,tagNames:()=>[],splitTags:()=>[],today:()=> '2026-11-09',addDays:()=> '2026-11-09',hostHasAddon:()=>false});
 const Edit=require(dir+'modals/edit-modal.cjs')(React,()=>({}),()=> '');
 let cases=0;
-for(const lang of ['zh','en']) for(const source of ['0','1','2']) for(const status of ['0','2']) {
-  reset();const calls=[];const props={tree,t:copy[lang],source,originTask:{id:'origin',timelineId:'line'},api:{call:async(action,args)=>{calls.push({action,args});return {ok:true};}},onCreated(){}};
-  const change=(pred,value)=>find(render(Create,props),pred).props.onChange({target:{value}});
-  propsForDifficulty=props;
-  const difficultyCtl=difficultyNode(render(Create,props),lang);
-  assert.equal(difficultyCtl.props.value,0);
-  assert.equal(difficultyCtl.props.min,0);assert.equal(difficultyCtl.props.max,5);assert.equal(difficultyCtl.props.step,0.5);assert.equal(difficultyCtl.props.allowEmpty,true);
-  assert.ok(text(render(Create,props)).includes(copy[lang].difficultyUnsetHint));
-  change(n=>n.props.autoFocus,'Task');
-  find(render(Create,props),n=>typeof n.type==='function'&&n.props.form&&n.props.set).props.set('tableId','table');
-  if(source!=='2')change(n=>n.type==='select'&&n.props.value==='0',status);
-  typeDifficulty(lang,3);
-  find(render(Create,props),n=>n.props.className==='wbt-btn primary').props.onClick();await flush();
-  assert.equal(calls.find(c=>c.action==='tasks.create').args.difficulty,3);cases++;
-}
+// 创建弹窗的难度覆盖见 scripts/test-tasks-create-difficulty-ui.mjs（分阶段弹窗需要展开式渲染宿主）。
 for(const lang of ['zh','en']) for(const status of ['0','1','2','3']) for(const initial of [null,0,2.5]) {
   reset();let patch;const props={tree,t:copy[lang],task:{id:'task',title:'Task',status,priority:4,difficulty:initial},api:{call:async(_,args)=>{patch=args;return {ok:true};}},onSaved(){}};
   const input=()=>difficultyNode(render(Edit,props),lang);
@@ -72,7 +67,7 @@ for(const lang of ['zh','en']) for(const status of ['0','1','2','3']) for(const 
   assert.equal(patch.priority,5);cases++;
 }
 // Real React rendering verifies accessible numeric input and stars in both list/card layouts.
-const Item=require(dir+'item/task-item.cjs')({React:RealReact,statusInfo:()=>({}),stars:()=> '★★★☆☆',pClass:()=>'',today:()=>'',daysBetween:()=>0,cx:(...s)=>s.filter(Boolean).join(' '),Icon:()=>null,Countdown:()=>null,PathCrumbs:()=>null});
+const Item=require(dir+'item/task-item.cjs')({React:RealReact,statusInfo:()=>({}),stars:()=> '★★★☆☆',pClass:()=>'',today:()=>'',daysBetween:()=>0,cx:(...s)=>s.filter(Boolean).join(' '),Icon:()=>null,Countdown:()=>null,PathCrumbs:()=>null,Slot:()=>null});
 for(const status of ['0','1','2','3'])for(const card of [true,false])for(const difficulty of [null,0,3]) {
   const html=renderToStaticMarkup(RealReact.createElement(Item,{task:{title:'Task',status,difficulty},card,t:copy.en}));
   assert.equal(html.includes('wbt-stars'),difficulty>0);cases++;

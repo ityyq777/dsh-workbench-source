@@ -28,7 +28,7 @@ assert.ok(literal.includes('<pre><code>**raw**\n---</code></pre>'));assert.ok(!l
 const inspect = node => { if (!React.isValidElement(node)) return; if (node.type === 'br' || node.type === 'hr') assert.equal(Object.hasOwn(node.props,'children'),false); React.Children.forEach(node.props.children, inspect); };
 inspect(Body({text:fixture}));
 const copy = require('../packages/addons/tasks/client/ui/copy.cjs');
-const Task = require('../packages/addons/tasks/client/item/task-item.cjs')({React,statusInfo:()=>({zh:'开启',en:'Active',cls:'active'}),stars:()=>'',pClass:()=> 'low',today:()=> '2026-11-09',daysBetween:()=>1,cx:(...x)=>x.filter(Boolean).join(' '),Icon:()=>null,Countdown:()=>null,PathCrumbs:()=>null});
+const Task = require('../packages/addons/tasks/client/item/task-item.cjs')({React,statusInfo:()=>({zh:'开启',en:'Active',cls:'active'}),stars:()=>'',pClass:()=> 'low',today:()=> '2026-11-09',daysBetween:()=>1,cx:(...x)=>x.filter(Boolean).join(' '),Icon:()=>null,Countdown:()=>null,PathCrumbs:()=>null,Slot:()=>null});
 for (const card of [true,false]) for (const lang of ['zh','en']) {
   const output=renderToStaticMarkup(h(Task,{card,lang,t:copy[lang],keyword:'needle',task:{id:'fixture',title:'Title',description:fixture,review:'reflection needle\nnext line\n\n---',status:'0',tags:[]},update(){}}));
   assert.equal((output.match(/<br\/>/g)||[]).length,2);

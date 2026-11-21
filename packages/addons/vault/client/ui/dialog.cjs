@@ -7,6 +7,7 @@
  * 与「处理中不关闭」的默认行为。业务内容（字段、校验、保存流程）仍留在各视图里。
  */
 var createOverlay = require("../../../lib/overlay.cjs");
+var stagedFactory = require("../../../lib/staged-dialog.cjs");
 var GLYPHS = require("./icons.cjs").ICONS;
 
 var Dialog = createOverlay({
@@ -80,4 +81,44 @@ function ConfirmDialog(props) {
   );
 }
 
-module.exports = { Dialog: Dialog, ConfirmDialog: ConfirmDialog };
+/**
+ * 分阶段的表单对话框：遮罩/键盘契约仍走 overlay.cjs，步骤条与「上一页/下一页/保存」
+ * 走 lib/staged-dialog.cjs。窄小的确认类弹层继续用上面的 Dialog，不要为此拉长表单。
+ */
+var FormDialog = stagedFactory.createStagedDialog({
+  tag: "div",
+  maskClass: "wbv-modal",
+  dialogClass: "wbv-modal-box",
+  displayName: "VaultFormDialog",
+  ariaLabelledByOf: function (props) {
+    return props.titleId || null;
+  },
+  header: function (props) {
+    var h = props.h;
+    if (!props.title && !props.onClose) return null;
+    var Close = GLYPHS["x"];
+    return h(
+      "div",
+      { className: "wbv-modal-head" },
+      props.title ? h("h3", { className: "wbv-modal-title", id: props.titleId }, props.title) : h("span", null),
+      props.onClose
+        ? h(
+            "button",
+            {
+              type: "button",
+              className: "wbv-icon-btn",
+              "aria-label": props.closeLabel || "关闭",
+              title: props.closeLabel || "关闭",
+              disabled: !!props.submitting,
+              onClick: props.onClose,
+            },
+            Close ? h(Close, { size: 15, strokeWidth: 2, "aria-hidden": true, focusable: false }) : "×",
+          )
+        : null,
+    );
+  },
+  closeOnEscape: function (props) { return !props.submitting; },
+  closeOnMask: function (props) { return !props.submitting; },
+});
+
+module.exports = { Dialog: Dialog, ConfirmDialog: ConfirmDialog, FormDialog: FormDialog };

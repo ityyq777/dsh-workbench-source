@@ -253,6 +253,8 @@ var AMOUNT = [
   ".wbsal-form-grid .wbctl-num{width:100%}",
   ".wbsal-form-grid .wbctl-num-box{width:100%}",
   ".wbsal-form-grid .wbctl-num-input{width:100%;box-sizing:border-box;text-align:right}",
+  // 分阶段表单：每组金额之间留出间距，步骤内容区不再被外层卡片裁切。
+  ".wbsal-steps-groups{display:flex;flex-direction:column;gap:16px}",
 ];
 
-module.exports = BASE.concat(PAGE, [DATE], AMOUNT, require("../../../lib/number-field.cjs").styles).join("\n");
+module.exports = BASE.concat(PAGE, [DATE], AMOUNT, require("../../../lib/stepper.cjs").styles, require("../../../lib/staged-dialog.cjs").styles, require("../../../lib/number-field.cjs").styles).join("\n");

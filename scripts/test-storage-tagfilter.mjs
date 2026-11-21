@@ -201,7 +201,8 @@ assert.match(text(nodesOf("wbck-note")[0]), /没有匹配的标签/);
 // 8) 编辑弹窗：标签每页 20，已选置顶，搜索与翻页都不丢已选。
 calls.length = 0;
 const item = { id: "s1", name: "物品一", tags: [{ id: "g0", name: "标签0" }], imgList: [] };
-current = React.createElement(Editor, { api, lang: "zh", tagsEnabled: true, item, config: {}, onClose() {}, onSaved() {} });
+// 弹窗已分阶段：标签是最后一步，直接落到该步再断言（等价于用户点两下「下一步」）。
+current = React.createElement(Editor, { api, lang: "zh", tagsEnabled: true, item, config: {}, initialStep: 2, onClose() {}, onSaved() {} });
 render(current);
 flushTimers();
 await settle();
@@ -220,8 +221,8 @@ flushTimers();
 await settle();
 assert.equal(searchCalls().at(-1).args.pageNumber, 1, "搜索回第一页");
 assert.equal(checkedNow().length, 1, "搜索后已选仍保留");
-const form = all().find(n => n.type === "form");
-form.props.onSubmit({ preventDefault() {} });
+// 分阶段弹窗没有 form 元素，保存走页脚按钮（末步即「保存」）。
+all().find(n => n.type === "button" && n.children.join("") === "保存").props.onClick();
 await settle();
 const saved = calls.filter(c => c.name === "storage.update").at(-1);
 assert.equal(JSON.stringify(saved.args.tagIds), JSON.stringify(["g0"]), "保存标签口径不变");

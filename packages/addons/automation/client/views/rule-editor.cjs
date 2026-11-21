@@ -1,18 +1,34 @@
 "use strict";
-var createOverlay = require("../../../lib/overlay.cjs");
+var staged = require("../../../lib/staged-dialog.cjs");
 // 布尔项统一走共享开关控件（lib/switch.cjs）。
 var SW = require("../../../lib/switch.cjs");
-// 对话框外壳与插件自己的字段/校验分离：外壳统一深浅主题下的遮罩、Esc、Tab 循环与焦点归还。
-var EditorOverlay = createOverlay({
+// 对话框外壳与插件自己的字段/校验分离：遮罩、Esc、Tab 循环、焦点归位来自 lib/overlay.cjs，
+// 步骤条与逐步校验来自 lib/staged-dialog.cjs；规则编辑器拆成「基本信息 / 执行方式 / 触发 /
+// 执行 / 条件」五步，宽度统一 880px，窄屏单列。
+var EditorDialog = staged.createStagedDialog({
   maskClass: "wba-modal",
   dialogClass: "wba-modal-box",
+  displayName: "AutomationRuleDialog",
   ariaLabelOf: function (props) {
     var t = props.t;
     return props.form && props.form.id ? t("editor.editTitle") : t("editor.newTitle");
   },
+  header: function (props) {
+    var hh = props.h;
+    return hh("div", { className: "wba-modal-head" },
+      hh("h3", null, props.form && props.form.id ? props.t("editor.editTitle") : props.t("editor.newTitle")),
+      hh("button", {
+        type: "button",
+        className: "wba-icon-btn",
+        title: props.t("common.close"),
+        "aria-label": props.t("common.close"),
+        disabled: !!props.submitting,
+        onClick: props.onClose,
+      }, props.icon ? props.icon("x", 15) : "×"));
+  },
   // 有未保存改动时要先问一次，所以关掉「点遮罩直接关」的默认行为，交给 close()。
   closeOnMask: false,
-  autoFocusDialog: false,
+  closeOnEscape: function (props) { return !props.submitting; },
 });
 
 /** 规则编辑器（模态）：执行方式 + 四段表单、JSON 实时校验、未保存关闭确认。 */
@@ -191,185 +207,254 @@ function RuleEditor(props) {
     ["agent", t("editor.mode.agent")],
   ];
 
-  return h(EditorOverlay, { t: t, form: form, onClose: close, closeOnMask: false, autoFocus: false },
-      h("div", { className: "wba-modal-head" },
-        h("h3", null, form.id ? t("editor.editTitle") : t("editor.newTitle")),
-        h("button", { type: "button", className: "wba-icon-btn", title: t("common.close"), onClick: close }, icon ? icon("x", 15) : "×")),
-      h("div", { className: "wba-modal-body" },
-        h("div", { className: "wba-section" },
-          h("p", { className: "wba-section-title" }, "① " + t("editor.section.basic")),
-          h("div", { className: "wba-grid-3" },
-            h("label", { className: "wba-field wba-span-2" },
-              h("span", { className: "wba-label" }, t("editor.name")),
-              h("input", {
-                className: "wba-input" + (showNameErr ? " err" : ""),
-                value: form.name,
-                placeholder: t("editor.namePh"),
-                onChange: function (e) { touchedS[1](true); set("name", e.target.value); },
-              }),
-              showNameErr ? h("span", { className: "wba-err-text" }, errs.name) : null),
-            h("div", { className: "wba-field" },
-              h("span", { className: "wba-label" }, t("editor.enabled")),
-              h(SW.Switch, {
-                h: h,
-                checked: Boolean(form.enabled),
-                showState: true,
-                onText: t("rules.status.on"),
-                offText: t("rules.status.off"),
-                onChange: function (next) { set("enabled", next); },
-              })))),
-        h("div", { className: "wba-section" },
-          h("p", { className: "wba-section-title" }, "② " + t("editor.section.mode")),
-          h("div", { className: "wba-seg", role: "group" },
-            modeButtons.map(function (m) {
-              var off = locked || (m[0] === "agent" && !agentAvailable);
-              return h("button", {
-                key: m[0],
-                type: "button",
-                "data-mode": m[0],
-                "aria-pressed": (agentMode ? "agent" : "action") === m[0],
-                disabled: off,
-                title: m[0] === "agent" && !agentAvailable ? t("editor.mode.agentUnavailable") : "",
-                onClick: function () { pickMode(m[0]); },
-              }, m[1]);
-            })),
-          h("p", { className: "wba-sub" }, agentMode ? t("editor.mode.agentHint") : t("editor.mode.actionHint")),
-          locked ? h("p", { className: "wba-hint" }, t("editor.mode.locked")) : null),
-        h("div", { className: "wba-section" },
-          h("p", { className: "wba-section-title" }, "③ " + (agentMode ? t("editor.section.timing") : t("editor.section.trigger"))),
-          agentMode
-            ? h(atiming.TimingFields, {
-                h: h, t: t, lang: lang, form: form, set: set, errs: errs, icon: icon,
-                onValidChange: function (ok) { numOkS[1](ok); },
-              })
-            : h(trig.TriggerFields, {
-                h: h, t: t, lang: lang, form: form, set: set, errs: errs, icon: icon,
-                onValidChange: function (ok) { numOkS[1](ok); },
-              })),
-        agentMode ? h("div", { className: "wba-section" },
-          h("p", { className: "wba-section-title" }, "④ " + t("editor.section.prompt")),
-          h("label", { className: "wba-field" },
-            h("span", { className: "wba-label" }, t("editor.prompt")),
-            h("textarea", {
-              className: "wba-code sm" + (errs.prompt ? " err" : ""),
-              value: form.prompt,
-              placeholder: t("editor.promptPh"),
-              onChange: function (e) { set("prompt", e.target.value); },
-            }),
-            errs.prompt ? h("span", { className: "wba-err-text" }, errs.prompt) : h("span", { className: "wba-hint" }, t("editor.promptHint"))),
-          h("div", { className: "wba-section-title" }, t("editor.section.target")),
-          h("div", { className: "wba-grid-3" },
-            h("label", { className: "wba-field" },
-              h("span", { className: "wba-label" }, t("editor.target")),
-              h("select", {
-                className: "wba-input",
-                value: form.targetKind || "new_once",
-                onChange: function (e) { set("targetKind", e.target.value); },
-              },
-                ["new_once", "new", "session"].map(function (k) {
-                  return h("option", { key: k, value: k }, t("editor.target." + k));
-                }))),
-            (form.targetKind || "new_once") === "session"
-              ? h("label", { className: "wba-field wba-span-2" },
-                  h("span", { className: "wba-label" }, t("editor.targetSession")),
-                  h("input", {
-                    className: "wba-input" + (errs.targetSession ? " err" : ""),
-                    value: form.targetSession || "",
-                    placeholder: t("editor.targetSessionPh"),
-                    onChange: function (e) { set("targetSession", e.target.value); },
-                  }),
-                  errs.targetSession ? h("span", { className: "wba-err-text" }, errs.targetSession) : null)
-              : [
-                  h("label", { key: "cwd", className: "wba-field" },
-                    h("span", { className: "wba-label" }, t("editor.targetCwd")),
-                    h("input", {
-                      className: "wba-input",
-                      value: form.targetCwd || "",
-                      placeholder: "/Users/me/work",
-                      onChange: function (e) { set("targetCwd", e.target.value); },
-                    })),
-                  h("label", { key: "preset", className: "wba-field" },
-                    h("span", { className: "wba-label" }, t("editor.targetPreset")),
-                    h("input", {
-                      className: "wba-input",
-                      value: form.targetPreset || "",
-                      placeholder: t("editor.targetPresetPh"),
-                      onChange: function (e) { set("targetPreset", e.target.value); },
-                    })),
-                ]),
-          h("p", { className: "wba-hint" }, t("editor.targetHint"))) : null,
-        agentMode ? null : h("div", { className: "wba-section" },
-          h("p", { className: "wba-section-title" }, "④ " + t("editor.section.run")),
-          h("div", { className: "wba-inline" },
-            h("label", { className: "wba-field" },
-              h("span", { className: "wba-label" }, t("editor.action")),
-              h("select", {
-                className: "wba-input",
-                value: form.actionName,
-                disabled: !hasActions,
-                onChange: function (e) { set("actionName", e.target.value); },
-              },
-                hasActions
-                  ? actionName.map(function (a) { return h("option", { key: a, value: a }, a); })
-                  : h("option", { value: "" }, t("editor.noActions"))),
-              !hasActions || actionMissing
-                ? h("span", { className: "wba-err-text" }, hasActions ? t("rules.actionDisabled") : t("editor.noActionsHint"))
-                : null),
-            h("span", { className: "wba-grow" }),
-            example ? h(C.Btn, { h: h, onClick: function () { exampleS[1](!exampleS[0]); } }, t("editor.showExample")) : null),
-          exampleS[0] && example ? h("div", { className: "wba-block" },
-            h("span", { className: "wba-label" }, t("editor.exampleTitle")),
-            h("pre", { className: "wba-pre" }, JSON.stringify(example, null, 2)),
-            h("div", { className: "wba-inline" },
-              h(C.Btn, { h: h, onClick: function () {
-                if (typeof window !== "undefined" && !window.confirm(t("editor.exampleHint"))) return;
-                set("actionArgs", JSON.stringify(example, null, 2));
-              } }, t("editor.fillExample")),
-              h("span", { className: "wba-grow" }))) : null,
-          h(json.JsonEditor, {
-            h: h,
-            t: t,
-            React: React,
-            label: "actionArgs",
-            hint: t("editor.argsHint"),
-            value: form.actionArgs,
-            invalid: Boolean(errs.actionArgs),
-            error: errs.actionArgs,
-            onChange: function (v) { set("actionArgs", v); },
-            action: h(C.Btn, { h: h, onClick: function () {
-              var next = json.formatJson(form.actionArgs);
-              if (next) set("actionArgs", next);
-            } }, t("editor.format")),
-          })),
-        // 「交给 AI」不参与本地条件与参数模板，条件段整段不渲染，避免给出「填了也没用」的字段
-        agentMode ? null : h("div", { className: "wba-section" },
-          h("p", { className: "wba-section-title" }, "⑤ " + t("editor.section.condition")),
-          h(SW.Switch, {
-            h: h,
-            checked: Boolean(form.condOn),
-            label: t("editor.conditionOn"),
-            onChange: function (next) { set("condOn", next); },
+  // 每段的字段渲染都接 hh：分阶段外壳按 steps[i].render(h) 传入 React.createElement，
+  // 这样同一份字段代码既能进步骤，也不会各自持有入口引用。
+  function renderBasic(hh) {
+    return hh("div", { className: "wba-section" },
+      hh("div", { className: "wba-grid-3" },
+        hh("label", { className: "wba-field wba-span-2" },
+          hh("span", { className: "wba-label" }, t("editor.name")),
+          hh("input", {
+            className: "wba-input" + (showNameErr ? " err" : ""),
+            value: form.name,
+            placeholder: t("editor.namePh"),
+            onChange: function (e) { touchedS[1](true); set("name", e.target.value); },
           }),
-          h("p", { className: "wba-sub" }, t("editor.conditionHint")),
-          form.condOn ? h(json.JsonEditor, {
-            h: h,
-            t: t,
-            React: React,
-            small: true,
-            vars: false,
-            label: "condition",
-            value: form.condition,
-            invalid: Boolean(errs.condition),
-            error: errs.condition,
-            onChange: function (v) { set("condition", v); },
-          }) : h("p", { className: "wba-sub" }, t("editor.conditionEmpty")))),
-      h("div", { className: "wba-modal-foot" },
-        h("span", { className: "wba-sub wba-grow" }, validation.valid
-          ? (numOkS[0] ? "" : errs.pEvery || errs.pAfter || errs.everyMinutes || t("trigger.intervalHint"))
-          : (errs.name || errs.prompt || errs.actionArgs || errs.condition || errs.pCron || errs.pRrule || errs.pDate || errs.pTime || errs.pWeekdays || t("editor.nameEmptySave"))),
-        h(C.Btn, { h: h, onClick: close }, t("common.cancel")),
-        h(C.Btn, { h: h, kind: "primary", disabled: busy || !validation.valid || !numOkS[0], onClick: function () { props.onSave(buildPayload(form)); } },
-          busy ? t("common.loading") : t("common.save"))));
+          showNameErr ? hh("span", { className: "wba-err-text" }, errs.name) : null),
+        hh("div", { className: "wba-field" },
+          hh("span", { className: "wba-label" }, t("editor.enabled")),
+          hh(SW.Switch, {
+            h: hh,
+            checked: Boolean(form.enabled),
+            showState: true,
+            onText: t("rules.status.on"),
+            offText: t("rules.status.off"),
+            onChange: function (next) { set("enabled", next); },
+          }))));
+  }
+
+  function renderMode(hh) {
+    return hh("div", { className: "wba-section" },
+      hh("div", { className: "wba-seg", role: "group" },
+        modeButtons.map(function (m) {
+          var off = locked || (m[0] === "agent" && !agentAvailable);
+          return hh("button", {
+            key: m[0],
+            type: "button",
+            "data-mode": m[0],
+            "aria-pressed": (agentMode ? "agent" : "action") === m[0],
+            disabled: off,
+            title: m[0] === "agent" && !agentAvailable ? t("editor.mode.agentUnavailable") : "",
+            onClick: function () { pickMode(m[0]); },
+          }, m[1]);
+        })),
+      hh("p", { className: "wba-sub" }, agentMode ? t("editor.mode.agentHint") : t("editor.mode.actionHint")),
+      locked ? hh("p", { className: "wba-hint" }, t("editor.mode.locked")) : null);
+  }
+
+  function renderTiming(hh) {
+    return hh("div", { className: "wba-section" },
+      agentMode
+        ? hh(atiming.TimingFields, {
+            h: hh, t: t, lang: lang, form: form, set: set, errs: errs, icon: icon,
+            onValidChange: function (ok) { numOkS[1](ok); },
+          })
+        : hh(trig.TriggerFields, {
+            h: hh, t: t, lang: lang, form: form, set: set, errs: errs, icon: icon,
+            onValidChange: function (ok) { numOkS[1](ok); },
+          }));
+  }
+
+  function renderPrompt(hh) {
+    return hh("div", { className: "wba-section" },
+      hh("label", { className: "wba-field" },
+        hh("span", { className: "wba-label" }, t("editor.prompt")),
+        hh("textarea", {
+          className: "wba-code sm" + (errs.prompt ? " err" : ""),
+          value: form.prompt,
+          placeholder: t("editor.promptPh"),
+          onChange: function (e) { set("prompt", e.target.value); },
+        }),
+        errs.prompt ? hh("span", { className: "wba-err-text" }, errs.prompt) : hh("span", { className: "wba-hint" }, t("editor.promptHint"))),
+      hh("p", { className: "wba-section-title" }, t("editor.section.target")),
+      hh("div", { className: "wba-grid-3" },
+        hh("label", { className: "wba-field" },
+          hh("span", { className: "wba-label" }, t("editor.target")),
+          hh("select", {
+            className: "wba-input",
+            value: form.targetKind || "new_once",
+            onChange: function (e) { set("targetKind", e.target.value); },
+          },
+            ["new_once", "new", "session"].map(function (k) {
+              return hh("option", { key: k, value: k }, t("editor.target." + k));
+            }))),
+        (form.targetKind || "new_once") === "session"
+          ? hh("label", { className: "wba-field wba-span-2" },
+              hh("span", { className: "wba-label" }, t("editor.targetSession")),
+              hh("input", {
+                className: "wba-input" + (errs.targetSession ? " err" : ""),
+                value: form.targetSession || "",
+                placeholder: t("editor.targetSessionPh"),
+                onChange: function (e) { set("targetSession", e.target.value); },
+              }),
+              errs.targetSession ? hh("span", { className: "wba-err-text" }, errs.targetSession) : null)
+          : [
+              hh("label", { key: "cwd", className: "wba-field" },
+                hh("span", { className: "wba-label" }, t("editor.targetCwd")),
+                hh("input", {
+                  className: "wba-input",
+                  value: form.targetCwd || "",
+                  placeholder: "/Users/me/work",
+                  onChange: function (e) { set("targetCwd", e.target.value); },
+                })),
+              hh("label", { key: "preset", className: "wba-field" },
+                hh("span", { className: "wba-label" }, t("editor.targetPreset")),
+                hh("input", {
+                  className: "wba-input",
+                  value: form.targetPreset || "",
+                  placeholder: t("editor.targetPresetPh"),
+                  onChange: function (e) { set("targetPreset", e.target.value); },
+                })),
+            ]),
+      hh("p", { className: "wba-hint" }, t("editor.targetHint")));
+  }
+
+  function renderAction(hh) {
+    return hh("div", { className: "wba-section" },
+      hh("div", { className: "wba-inline" },
+        hh("label", { className: "wba-field" },
+          hh("span", { className: "wba-label" }, t("editor.action")),
+          hh("select", {
+            className: "wba-input",
+            value: form.actionName,
+            disabled: !hasActions,
+            onChange: function (e) { set("actionName", e.target.value); },
+          },
+            hasActions
+              ? actionName.map(function (a) { return hh("option", { key: a, value: a }, a); })
+              : hh("option", { value: "" }, t("editor.noActions"))),
+          !hasActions || actionMissing
+            ? hh("span", { className: "wba-err-text" }, hasActions ? t("rules.actionDisabled") : t("editor.noActionsHint"))
+            : null),
+        hh("span", { className: "wba-grow" }),
+        example ? hh(C.Btn, { h: hh, onClick: function () { exampleS[1](!exampleS[0]); } }, t("editor.showExample")) : null),
+      exampleS[0] && example ? hh("div", { className: "wba-block" },
+        hh("span", { className: "wba-label" }, t("editor.exampleTitle")),
+        hh("pre", { className: "wba-pre" }, JSON.stringify(example, null, 2)),
+        hh("div", { className: "wba-inline" },
+          hh(C.Btn, { h: hh, onClick: function () {
+            if (typeof window !== "undefined" && !window.confirm(t("editor.exampleHint"))) return;
+            set("actionArgs", JSON.stringify(example, null, 2));
+          } }, t("editor.fillExample")),
+          hh("span", { className: "wba-grow" }))) : null,
+      hh(json.JsonEditor, {
+        h: hh,
+        t: t,
+        React: React,
+        label: "actionArgs",
+        hint: t("editor.argsHint"),
+        value: form.actionArgs,
+        invalid: Boolean(errs.actionArgs),
+        error: errs.actionArgs,
+        onChange: function (v) { set("actionArgs", v); },
+        action: hh(C.Btn, { h: hh, onClick: function () {
+          var next = json.formatJson(form.actionArgs);
+          if (next) set("actionArgs", next);
+        } }, t("editor.format")),
+      }));
+  }
+
+  function renderCondition(hh) {
+    return hh("div", { className: "wba-section" },
+      hh(SW.Switch, {
+        h: hh,
+        checked: Boolean(form.condOn),
+        label: t("editor.conditionOn"),
+        onChange: function (next) { set("condOn", next); },
+      }),
+      hh("p", { className: "wba-sub" }, t("editor.conditionHint")),
+      form.condOn ? hh(json.JsonEditor, {
+        h: hh,
+        t: t,
+        React: React,
+        small: true,
+        vars: false,
+        label: "condition",
+        value: form.condition,
+        invalid: Boolean(errs.condition),
+        error: errs.condition,
+        onChange: function (v) { set("condition", v); },
+      }) : hh("p", { className: "wba-sub" }, t("editor.conditionEmpty")));
+  }
+
+  // 步骤随执行方式变化：交给 AI 时不渲染「动作参数」与「条件」两步，避免填了没用的字段。
+  var steps = [
+    {
+      key: "basic",
+      label: t("editor.section.basic"),
+      hint: t("editor.name"),
+      render: renderBasic,
+      validate: function () { return String(form.name || "").trim() ? "" : t("editor.nameRequired"); },
+    },
+    {
+      key: "mode",
+      label: t("editor.section.mode"),
+      render: renderMode,
+    },
+    {
+      key: agentMode ? "timing" : "trigger",
+      label: agentMode ? t("editor.section.timing") : t("editor.section.trigger"),
+      render: renderTiming,
+      validate: function () {
+        if (numOkS[0]) return "";
+        return errs.pEvery || errs.pAfter || errs.everyMinutes || errs.pCron || errs.pRrule || errs.pDate || errs.pTime || errs.pWeekdays || t("trigger.intervalHint");
+      },
+    },
+    {
+      key: agentMode ? "prompt" : "action",
+      label: agentMode ? t("editor.section.prompt") : t("editor.section.run"),
+      render: agentMode ? renderPrompt : renderAction,
+      validate: function () {
+        if (agentMode) return String(form.prompt || "").trim() ? "" : t("editor.promptRequired");
+        if (!hasActions || actionMissing) return hasActions ? t("rules.actionDisabled") : t("editor.noActionsHint");
+        return errs.actionArgs || "";
+      },
+    },
+  ];
+  if (!agentMode) {
+    steps.push({
+      key: "condition",
+      label: t("editor.section.condition"),
+      optional: true,
+      render: renderCondition,
+      validate: function () { return errs.condition || ""; },
+    });
+  }
+
+  return h(EditorDialog, {
+    h: h,
+    React: React,
+    t: t,
+    form: form,
+    icon: icon,
+    steps: steps,
+    // 测试与深链接需要直接落到某一步；正常打开都从第一步开始。
+    initialStep: props.initialStep,
+    submitting: busy,
+    submitDisabled: !validation.valid || !numOkS[0],
+    onClose: close,
+    onSubmit: function () {
+      if (!validation.valid || !numOkS[0]) return;
+      props.onSave(buildPayload(form));
+    },
+    submitText: t("common.save"),
+    cancelText: t("common.cancel"),
+    nextText: t("common.next"),
+    backText: t("common.back"),
+    footerNote: validation.valid
+      ? (numOkS[0] ? "" : errs.pEvery || errs.pAfter || errs.everyMinutes || t("trigger.intervalHint"))
+      : (errs.name || errs.prompt || errs.actionArgs || errs.condition || errs.pCron || errs.pRrule || errs.pDate || errs.pTime || errs.pWeekdays || t("editor.nameEmptySave")),
+  });
 }
 
 module.exports = {

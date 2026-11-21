@@ -683,6 +683,406 @@ var require_visual_tokens = __commonJS({
   }
 });
 
+// packages/addons/lib/stepper.cjs
+var require_stepper = __commonJS({
+  "packages/addons/lib/stepper.cjs"(exports2, module2) {
+    "use strict";
+    function stepState(index, current, maxVisited) {
+      if (index === current) return "current";
+      if (index < current) return "done";
+      if (index <= maxVisited) return "visited";
+      return "todo";
+    }
+    function Steps(props) {
+      var h2 = props.h;
+      var steps = props.steps || [];
+      var current = props.current || 0;
+      var maxVisited = props.maxVisited === void 0 ? current : props.maxVisited;
+      var invalid = props.invalid || {};
+      var disabled = !!props.disabled;
+      var label = props.label || "\u6B65\u9AA4";
+      return h2(
+        "nav",
+        { className: "wbctl-steps" + (props.className ? " " + props.className : ""), "aria-label": label },
+        h2(
+          "ol",
+          { className: "wbctl-step-list" },
+          steps.map(function(step, index) {
+            var state = stepState(index, current, maxVisited);
+            var canJump = !disabled && typeof props.onJump === "function" && state !== "current" && state !== "todo";
+            var isInvalid = !!invalid[index] || !!invalid[step.key];
+            return h2(
+              "li",
+              { key: step.key || index, className: "wbctl-step-item" },
+              h2(
+                "button",
+                {
+                  type: "button",
+                  className: "wbctl-step",
+                  "data-state": state,
+                  "data-invalid": isInvalid ? "true" : null,
+                  "aria-current": state === "current" ? "step" : void 0,
+                  "aria-label": index + 1 + " \xB7 " + step.label + (state === "done" ? "\uFF08\u5DF2\u5B8C\u6210\uFF09" : ""),
+                  disabled: disabled || state === "todo",
+                  title: step.hint || "",
+                  onClick: function() {
+                    if (canJump) props.onJump(index);
+                  }
+                },
+                h2("span", { className: "wbctl-step-index", "aria-hidden": "true" }, state === "done" ? "\u2713" : String(index + 1)),
+                h2("span", { className: "wbctl-step-label" }, step.label),
+                step.hint ? h2("span", { className: "wbctl-step-hint" }, step.hint) : null,
+                step.optional ? h2("span", { className: "wbctl-step-opt" }, "\u53EF\u9009") : null
+              )
+            );
+          })
+        )
+      );
+    }
+    var STYLES = [
+      ".wbctl-steps{display:block;min-width:0}",
+      ".wbctl-step-list{display:flex;align-items:stretch;gap:6px;list-style:none;margin:0 0 14px;padding:0;min-width:0}",
+      ".wbctl-step-item{display:flex;flex:1 1 0;min-width:0}",
+      ".wbctl-step{display:flex;align-items:center;gap:7px;flex:1 1 auto;min-width:0;padding:7px 9px;border:1px solid var(--wb-line,var(--wb-border));border-radius:10px;background:transparent;color:var(--wb-muted,inherit);font:inherit;font-size:12px;line-height:1.35;text-align:left;cursor:default;transition:background .14s ease,border-color .14s ease,color .14s ease}",
+      ".wbctl-step[data-state=done],.wbctl-step[data-state=visited]{color:inherit;cursor:pointer}",
+      ".wbctl-step[data-state=done]{border-color:color-mix(in oklab,var(--wb-ok,var(--wb-accent,#2563eb)) 36%,var(--wb-border))}",
+      ".wbctl-step[data-state=current]{border-color:color-mix(in oklab,var(--wb-accent,#2563eb) 58%,var(--wb-border));background:color-mix(in oklab,var(--wb-accent,#2563eb) 8%,transparent);color:inherit;font-weight:600}",
+      ".wbctl-step[data-state=visited]:hover,.wbctl-step[data-state=done]:hover{background:color-mix(in oklab,currentColor 7%,transparent)}",
+      ".wbctl-step[data-invalid=true]{border-color:var(--wb-danger,#d33)}",
+      ".wbctl-step:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+      ".wbctl-step:disabled{cursor:default;opacity:.72}",
+      ".wbctl-step-index{display:inline-flex;align-items:center;justify-content:center;flex:none;width:20px;height:20px;border-radius:50%;font-size:11px;font-variant-numeric:tabular-nums;background:color-mix(in oklab,currentColor 15%,transparent)}",
+      ".wbctl-step[data-state=current] .wbctl-step-index{background:var(--wb-accent,#2563eb);color:var(--wb-on-accent,#fff)}",
+      ".wbctl-step[data-state=done] .wbctl-step-index{background:color-mix(in oklab,var(--wb-ok,var(--wb-accent,#2563eb)) 20%,transparent);color:var(--wb-ok,var(--wb-accent,#2563eb))}",
+      ".wbctl-step-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbctl-step-hint{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:400;opacity:.62}",
+      ".wbctl-step-opt{flex:none;font-size:10px;font-weight:400;opacity:.55}",
+      "@media (max-width:760px){.wbctl-step{padding:6px 7px;font-size:11.5px}.wbctl-step-hint,.wbctl-step-opt{display:none}.wbctl-step-index{width:18px;height:18px;font-size:10px}}",
+      "@media (max-width:520px){.wbctl-step-list{gap:4px}.wbctl-step-label{white-space:normal}.wbctl-step{gap:5px}}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-step{transition:none}}"
+    ];
+    module2.exports = { Steps, stepState, styles: STYLES };
+  }
+});
+
+// packages/addons/lib/overlay.cjs
+var require_overlay = __commonJS({
+  "packages/addons/lib/overlay.cjs"(exports2, module2) {
+    "use strict";
+    var defaultReact = require("react");
+    var FOCUSABLE = "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]";
+    module2.exports = function createOverlay(options) {
+      var opts = options || {};
+      var React = opts.React || defaultReact;
+      var h2 = React.createElement;
+      var tag = opts.tag || "section";
+      var maskClass = opts.maskClass;
+      var dialogClass = opts.dialogClass;
+      var dialogClassOf = opts.dialogClassOf || function() {
+        return "";
+      };
+      var ariaLabelOf = opts.ariaLabelOf || function(props) {
+        return props["aria-label"] || props.title;
+      };
+      var ariaLabelledByOf = opts.ariaLabelledByOf || function() {
+        return null;
+      };
+      var header = opts.header || null;
+      var closeOnEscape = opts.closeOnEscape || function() {
+        return true;
+      };
+      var closeOnMask = opts.closeOnMask || function() {
+        return true;
+      };
+      var extraKeyDown = opts.onKeyDown || null;
+      var autoFocusDialog = opts.autoFocusDialog !== false;
+      var focusableSelector = opts.focusableSelector || FOCUSABLE;
+      function Modal(props) {
+        var R = props.React || React;
+        var ref = R.useRef(null);
+        R.useEffect(function() {
+          var previous = typeof document !== "undefined" ? document.activeElement : null;
+          var focusIt = props.autoFocus !== void 0 ? props.autoFocus : autoFocusDialog;
+          if (focusIt && ref.current) ref.current.focus();
+          return function() {
+            if (previous && previous.isConnected) previous.focus();
+          };
+        }, []);
+        function onKeyDown(e) {
+          if (extraKeyDown && extraKeyDown(e, props, ref)) return;
+          if (e.key === "Escape") {
+            if (!(props.closeOnEscape !== void 0 ? props.closeOnEscape : closeOnEscape(props))) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (props.onClose) props.onClose();
+            return;
+          }
+          if (e.key !== "Tab" || !ref.current) return;
+          var els = ref.current.querySelectorAll(focusableSelector);
+          if (!els.length) {
+            e.preventDefault();
+            return;
+          }
+          var first = els[0];
+          var last = els[els.length - 1];
+          if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) {
+            e.preventDefault();
+            last.focus();
+          }
+          if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+        var labelledBy = ariaLabelledByOf(props);
+        return h2(
+          "div",
+          {
+            className: maskClass,
+            onMouseDown: function(e) {
+              var allowed = props.closeOnMask !== void 0 ? props.closeOnMask : closeOnMask(props);
+              if (e.target === e.currentTarget && props.onClose && allowed) props.onClose();
+            }
+          },
+          h2(
+            tag,
+            {
+              className: dialogClass + dialogClassOf(props),
+              role: "dialog",
+              "aria-modal": true,
+              "aria-label": labelledBy ? null : ariaLabelOf(props),
+              "aria-labelledby": labelledBy || null,
+              ref,
+              tabIndex: -1,
+              onKeyDown
+            },
+            header ? header(props) : null,
+            props.children
+          )
+        );
+      }
+      return Modal;
+    };
+  }
+});
+
+// packages/addons/lib/staged-dialog.cjs
+var require_staged_dialog = __commonJS({
+  "packages/addons/lib/staged-dialog.cjs"(exports2, module2) {
+    "use strict";
+    var defaultReact = require("react");
+    var overlayFactory = require_overlay();
+    var stepper = require_stepper();
+    function validateStep(step) {
+      if (!step || typeof step.validate !== "function") return "";
+      var message = step.validate();
+      return message ? String(message) : "";
+    }
+    function firstFailing(steps) {
+      var list = steps || [];
+      for (var i = 0; i < list.length; i += 1) {
+        var message = validateStep(list[i]);
+        if (message) return { index: i, key: list[i] && list[i].key, message };
+      }
+      return null;
+    }
+    function createStagedDialog(options) {
+      var opts = options || {};
+      var React = opts.React || defaultReact;
+      var h2 = React.createElement;
+      var dialogClass = ((opts.dialogClass || "") + " wbctl-dialog").trim();
+      var Overlay = overlayFactory(
+        Object.assign({}, opts, {
+          React,
+          dialogClass,
+          // 首焦点由外壳送进对话框，字段由 focusStep 负责，避免打开瞬间落进第一个输入框。
+          autoFocusDialog: opts.autoFocusDialog !== false
+        })
+      );
+      function StagedDialog(props) {
+        var R = props.React || React;
+        var steps = props.steps || [];
+        var count = steps.length;
+        var busy = !!props.submitting || !!props.busy;
+        var indexState = R.useState(props.initialStep || 0);
+        var rawIndex = indexState[0];
+        var setIndex = indexState[1];
+        var index = count === 0 ? 0 : Math.min(Math.max(rawIndex, 0), count - 1);
+        var visitedState = R.useState(props.initialStep || 0);
+        var maxVisited = count === 0 ? 0 : Math.min(Math.max(visitedState[0], index), count - 1);
+        var setMaxVisited = visitedState[1];
+        var errorState = R.useState("");
+        var stepError = errorState[0];
+        var setStepError = errorState[1];
+        var invalidState = R.useState({});
+        var invalid = invalidState[0];
+        var setInvalid = invalidState[1];
+        var bodyRef = R.useRef(null);
+        var mounted = R.useRef(true);
+        function runValidate(step) {
+          return validateStep(step);
+        }
+        function markInvalid(i, bad) {
+          setInvalid(function(prev) {
+            var next2 = Object.assign({}, prev);
+            if (bad) next2[i] = true;
+            else delete next2[i];
+            return next2;
+          });
+        }
+        function focusBody() {
+          var el = bodyRef.current;
+          if (el && typeof el.focus === "function") el.focus();
+        }
+        R.useEffect(
+          function() {
+            if (!mounted.current) return;
+            focusBody();
+          },
+          [index]
+        );
+        R.useEffect(function() {
+          mounted.current = true;
+          return function() {
+            mounted.current = false;
+          };
+        }, []);
+        function goTo(i) {
+          if (busy || i < 0 || i >= count) return;
+          setIndex(i);
+          if (i > maxVisited) setMaxVisited(i);
+          setStepError("");
+        }
+        function fail(i, message) {
+          markInvalid(i, true);
+          goTo(i);
+          setStepError(message);
+          focusBody();
+        }
+        function next() {
+          if (busy) return;
+          var message = runValidate(steps[index]);
+          if (message) {
+            fail(index, message);
+            return;
+          }
+          markInvalid(index, false);
+          goTo(Math.min(index + 1, count - 1));
+        }
+        function back() {
+          if (busy || index === 0) return;
+          goTo(index - 1);
+        }
+        function jump(i) {
+          if (busy || i > maxVisited) return;
+          goTo(i);
+        }
+        function submit() {
+          if (busy) return;
+          var bad = firstFailing(steps);
+          if (bad) {
+            fail(bad.index, bad.message);
+            return;
+          }
+          for (var i = 0; i < count; i++) markInvalid(i, false);
+          setStepError("");
+          if (typeof props.onSubmit === "function") props.onSubmit();
+        }
+        function cancel() {
+          if (busy) return;
+          if (typeof props.onClose === "function") props.onClose();
+        }
+        var current = steps[index];
+        var isLast = index >= count - 1;
+        var saveText = props.submitText || "\u4FDD\u5B58";
+        var shownError = stepError || props.error || "";
+        return h2(
+          Overlay,
+          props,
+          count > 1 ? h2(stepper.Steps, {
+            h: h2,
+            steps: steps.map(function(step) {
+              return { key: step.key, label: step.label, hint: step.hint, optional: step.optional };
+            }),
+            current: index,
+            maxVisited,
+            onJump: jump,
+            invalid,
+            disabled: busy,
+            label: props.stepsLabel || "\u521B\u5EFA\u6B65\u9AA4"
+          }) : null,
+          h2(
+            "div",
+            {
+              className: "wbctl-dialog-body" + (props.bodyClassName ? " " + props.bodyClassName : ""),
+              ref: bodyRef,
+              tabIndex: -1
+            },
+            current ? current.render(h2, props) : null
+          ),
+          props.footerExtra || null,
+          shownError ? h2("div", { className: "wbctl-dialog-err", role: "alert" }, shownError) : null,
+          h2(
+            "div",
+            { className: "wbctl-dialog-foot" },
+            count > 1 ? h2("span", { className: "wbctl-dialog-progress" }, index + 1 + " / " + count) : null,
+            props.footerNote ? h2("span", { className: "wbctl-dialog-note" }, props.footerNote) : null,
+            h2("span", { className: "wbctl-dialog-spacer" }),
+            index > 0 ? h2(
+              "button",
+              { type: "button", className: "wbctl-btn", onClick: back, disabled: busy },
+              props.backText || "\u4E0A\u4E00\u6B65"
+            ) : null,
+            h2("button", { type: "button", className: "wbctl-btn", onClick: cancel, disabled: busy }, props.cancelText || "\u53D6\u6D88"),
+            h2(
+              "button",
+              {
+                type: "button",
+                className: "wbctl-btn wbctl-btn-p",
+                onClick: isLast ? submit : next,
+                // submitDisabled 只作用于末步的保存：插件据此把「结构性不合法」（JSON 语法、无可选 action）
+                // 提前反映成禁用态，避免用户点到保存才被弹回第一步。
+                disabled: busy || isLast && !!props.submitDisabled
+              },
+              busy ? saveText + "\u4E2D\u2026" : isLast ? saveText : props.nextText || "\u4E0B\u4E00\u6B65"
+            )
+          )
+        );
+      }
+      StagedDialog.displayName = opts.displayName || "StagedDialog";
+      return StagedDialog;
+    }
+    var STYLES = [
+      // 宽表单：内容多时给足横向空间，窄屏留 16px 边距后铺满。
+      ".wbctl-dialog{width:min(880px,calc(100vw - 32px));max-height:min(92vh,760px);display:flex;flex-direction:column;overflow:hidden}",
+      ".wbctl-dialog-body{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;padding:2px 2px 10px;outline:none}",
+      ".wbctl-dialog-body:focus-visible{outline:none}",
+      ".wbctl-dialog-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-top:10px;margin-top:10px;border-top:1px solid var(--wb-line,var(--wb-border))}",
+      ".wbctl-dialog-progress{font-size:11.5px;color:var(--wb-muted,#666);font-variant-numeric:tabular-nums}",
+      ".wbctl-dialog-note{font-size:11.5px;color:var(--wb-muted,#666);min-width:0}",
+      ".wbctl-dialog-spacer{flex:1 1 auto}",
+      ".wbctl-dialog-err{margin-top:8px;padding:7px 10px;border-radius:8px;border:1px solid color-mix(in oklab,var(--wb-danger,#d33) 45%,transparent);background:color-mix(in oklab,var(--wb-danger,#d33) 8%,transparent);color:var(--wb-danger,#d33);font-size:12px}",
+      ".wbctl-btn{padding:6px 14px;border:1px solid var(--wb-border,#d0d5dd);border-radius:8px;background:var(--wb-card,#fff);color:inherit;font:inherit;font-size:12.5px;cursor:pointer}",
+      ".wbctl-btn:hover:not(:disabled){background:color-mix(in oklab,currentColor 7%,transparent)}",
+      ".wbctl-btn:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+      ".wbctl-btn:disabled{opacity:.55;cursor:default}",
+      ".wbctl-btn.wbctl-btn-p{background:var(--wb-accent,#2563eb);border-color:transparent;color:var(--wb-on-accent,#fff)}",
+      ".wbctl-btn.wbctl-btn-p:hover:not(:disabled){background:color-mix(in oklab,var(--wb-accent,#2563eb) 86%,#000)}",
+      // 确认步：键值对清单，各插件共用，避免再各写一套只读摘要。\n  ".wbctl-review{display:flex;flex-direction:column;border:1px solid var(--wb-line,var(--wb-border));border-radius:10px;overflow:hidden}",\n  ".wbctl-review-row{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;padding:8px 12px;font-size:12.5px;background:var(--wb-surface,transparent)}",\n  ".wbctl-review-row+.wbctl-review-row{border-top:1px solid var(--wb-line,var(--wb-border))}",\n  ".wbctl-review-k{color:var(--wb-muted,inherit);font-size:11.5px;line-height:1.6}",\n  ".wbctl-review-v{min-width:0;word-break:break-word;line-height:1.6}",\n  ".wbctl-note{margin:10px 0 0;font-size:11.5px;color:var(--wb-muted,inherit)}",\n  // 两列字段布局：内容多的弹窗不再单列拉长，窄屏回落单列。
+      ".wbctl-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px}",
+      ".wbctl-form>.full{grid-column:1/-1}",
+      "@media (max-width:760px){.wbctl-dialog{width:calc(100vw - 16px);max-height:94vh}.wbctl-form{grid-template-columns:1fr}.wbctl-form>.full{grid-column:auto}}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-btn{transition:none}}"
+    ];
+    module2.exports = {
+      createStagedDialog,
+      validateStep,
+      firstFailing,
+      styles: STYLES
+    };
+  }
+});
+
 // packages/addons/lib/filter-checklist-styles.cjs
 var require_filter_checklist_styles = __commonJS({
   "packages/addons/lib/filter-checklist-styles.cjs"(exports2, module2) {
@@ -750,7 +1150,7 @@ var require_styles = __commonJS({
 @container storage (max-width:480px){.wbi-toolbar{gap:8px}.wbi-toolbar input[type=search]{flex-basis:100%;min-width:0}.wbi-toolbar select{flex:1;min-width:0}.wbi-root>.wbi-row>.wbi-icon-text .wbi-btn-label,.wbi-toolbar>.wbi-icon-text .wbi-btn-label,.wbi-cfg-head>.wbi-icon-text .wbi-btn-label{display:none}.wbi-root>.wbi-row>.wbi-icon-text,.wbi-toolbar>.wbi-icon-text,.wbi-cfg-head>.wbi-icon-text{width:32px;height:32px;padding:0}}
 .wbi-tagfilter{position:relative;display:flex;align-items:center;gap:5px;min-width:0}.wbi-tagfilter .wbi-btn.wbi-tagon{border:1px solid var(--accent);color:var(--accent);background:color-mix(in oklab,var(--accent) 12%,transparent)}.wbi-tagmenu{position:absolute;z-index:60;top:calc(100% + 6px);left:0;width:260px;max-width:min(260px,calc(100vw - 40px));max-height:320px;overflow:auto;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--surface);box-shadow:0 10px 34px #0004}.wbi-tagmenu-head{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);padding:2px 4px 7px}.wbi-tagsearch{padding:0 0 6px}.wbi-tagsearch input{width:100%;box-sizing:border-box;font-size:12.5px;padding:6px 9px}.wbi-tagsel{border-bottom:1px dashed var(--line);margin-bottom:6px;padding-bottom:5px}.wbi-tagsel-list{display:flex;flex-wrap:wrap;gap:4px;padding:0 2px 2px}.wbi-tagselitem{display:inline-flex;align-items:center;gap:4px;max-width:100%;border:1px solid color-mix(in oklab,var(--accent) 40%,transparent);background:color-mix(in oklab,var(--accent) 10%,transparent);color:var(--accent);border-radius:999px;padding:2px 7px;font-size:11.5px;cursor:pointer;font-family:inherit}.wbi-tagselitem .wbi-tagnm{max-width:150px}.wbi-tagnm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.wbi-tagx{opacity:.7;font-size:12px;line-height:1}.wbi-taglist{max-height:236px;overflow:auto;overscroll-behavior:contain}.wbi-tagopt{display:flex;align-items:center;gap:7px;padding:6px;border-radius:6px;cursor:pointer;font-size:12.5px}.wbi-tagopt:hover{background:color-mix(in oklab,currentColor 7%,transparent)}.wbi-tagopt input{margin:0;accent-color:var(--accent)}.wbi-tagmore{font-size:11px;opacity:.5;text-align:center;padding:6px 0 2px}.wbi-note{color:var(--muted);font-size:12px;padding:6px 4px}.wbi-mini{appearance:none;border:0;background:transparent;color:inherit;border-radius:4px;cursor:pointer;font-size:11.5px;line-height:1;padding:3px 5px;font-family:inherit;opacity:.7}.wbi-mini:hover{opacity:1}@container storage (max-width:480px){.wbi-toolbar{position:relative}.wbi-tagfilter{position:static}.wbi-tagmenu{left:8px;right:8px;width:auto;max-width:none;top:calc(100% + 6px)}}
 @media(prefers-reduced-motion:reduce){.wbi-root *,.wbi-root *::after{transition:none!important;animation:none!important}.wbi-card:hover{transform:none}}
-` + require_filter_checklist_styles().join("\n");
+` + require_stepper().styles.join("\n") + require_staged_dialog().styles.join("\n") + require_filter_checklist_styles().join("\n");
   }
 });
 
@@ -1558,107 +1958,6 @@ var require_skeleton = __commonJS({
   }
 });
 
-// packages/addons/lib/overlay.cjs
-var require_overlay = __commonJS({
-  "packages/addons/lib/overlay.cjs"(exports2, module2) {
-    "use strict";
-    var defaultReact = require("react");
-    var FOCUSABLE = "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]";
-    module2.exports = function createOverlay(options) {
-      var opts = options || {};
-      var React = opts.React || defaultReact;
-      var h2 = React.createElement;
-      var tag = opts.tag || "section";
-      var maskClass = opts.maskClass;
-      var dialogClass = opts.dialogClass;
-      var dialogClassOf = opts.dialogClassOf || function() {
-        return "";
-      };
-      var ariaLabelOf = opts.ariaLabelOf || function(props) {
-        return props["aria-label"] || props.title;
-      };
-      var ariaLabelledByOf = opts.ariaLabelledByOf || function() {
-        return null;
-      };
-      var header = opts.header || null;
-      var closeOnEscape = opts.closeOnEscape || function() {
-        return true;
-      };
-      var closeOnMask = opts.closeOnMask || function() {
-        return true;
-      };
-      var extraKeyDown = opts.onKeyDown || null;
-      var autoFocusDialog = opts.autoFocusDialog !== false;
-      var focusableSelector = opts.focusableSelector || FOCUSABLE;
-      function Modal(props) {
-        var R = props.React || React;
-        var ref = R.useRef(null);
-        R.useEffect(function() {
-          var previous = typeof document !== "undefined" ? document.activeElement : null;
-          var focusIt = props.autoFocus !== void 0 ? props.autoFocus : autoFocusDialog;
-          if (focusIt && ref.current) ref.current.focus();
-          return function() {
-            if (previous && previous.isConnected) previous.focus();
-          };
-        }, []);
-        function onKeyDown(e) {
-          if (extraKeyDown && extraKeyDown(e, props, ref)) return;
-          if (e.key === "Escape") {
-            if (!(props.closeOnEscape !== void 0 ? props.closeOnEscape : closeOnEscape(props))) return;
-            e.preventDefault();
-            e.stopPropagation();
-            if (props.onClose) props.onClose();
-            return;
-          }
-          if (e.key !== "Tab" || !ref.current) return;
-          var els = ref.current.querySelectorAll(focusableSelector);
-          if (!els.length) {
-            e.preventDefault();
-            return;
-          }
-          var first = els[0];
-          var last = els[els.length - 1];
-          if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) {
-            e.preventDefault();
-            last.focus();
-          }
-          if (!e.shiftKey && document.activeElement === last) {
-            e.preventDefault();
-            first.focus();
-          }
-        }
-        var labelledBy = ariaLabelledByOf(props);
-        return h2(
-          "div",
-          {
-            className: maskClass,
-            onMouseDown: function(e) {
-              var allowed = props.closeOnMask !== void 0 ? props.closeOnMask : closeOnMask(props);
-              if (e.target === e.currentTarget && props.onClose && allowed) props.onClose();
-            }
-          },
-          h2(
-            tag,
-            {
-              className: dialogClass + dialogClassOf(props),
-              role: "dialog",
-              "aria-modal": true,
-              "aria-label": labelledBy ? null : ariaLabelOf(props),
-              "aria-labelledby": labelledBy || null,
-              ref,
-              tabIndex: -1,
-              onKeyDown
-            },
-            header ? header(props) : null,
-            props.children
-          )
-        );
-      }
-      return Modal;
-    };
-  }
-});
-
 // packages/addons/storage/client/ui/ui.cjs
 var require_ui = __commonJS({
   "packages/addons/storage/client/ui/ui.cjs"(exports2, module2) {
@@ -1826,8 +2125,38 @@ var require_editor = __commonJS({
   "packages/addons/storage/client/modals/editor.cjs"(exports2, module2) {
     var React = require("react");
     var ui = require_ui();
+    var staged = require_staged_dialog();
     var h2 = ui.h;
     var tr = ui.tr;
+    var StagedModal = staged.createStagedDialog({
+      React,
+      tag: "section",
+      displayName: "StorageEditorDialog",
+      maskClass: "wbi-mask",
+      dialogClass: "wbi-modal",
+      ariaLabelOf: function(props) {
+        return props.title;
+      },
+      header: function(props) {
+        return h2(
+          "header",
+          { className: "wbi-row" },
+          h2("h2", null, props.title),
+          h2("span", { className: "wbi-grow" }),
+          h2(
+            ui.Button,
+            { icon: "close", iconOnly: true, onClick: props.onClose, disabled: !!props.submitting || !props.onClose, "aria-label": "\u5173\u95ED / Close" },
+            "\xD7"
+          )
+        );
+      },
+      closeOnEscape: function(props) {
+        return !props.submitting;
+      },
+      closeOnMask: function(props) {
+        return !props.submitting;
+      }
+    });
     function Editor(props) {
       var item = props.item || {}, lang = props.lang;
       var state = React.useState(function() {
@@ -1953,8 +2282,7 @@ var require_editor = __commonJS({
           })
         );
       }
-      function save(e) {
-        e.preventDefault();
+      function save() {
         if (busy[0]) return;
         var images = form.images.split(/\r?\n/).map(function(s) {
           return s.trim();
@@ -1998,34 +2326,60 @@ var require_editor = __commonJS({
         if (el.scrollTop + el.clientHeight >= el.scrollHeight - 24) load(query[0], (page[0] || 1) + 1, true);
       }
       var tagsNote = loading[0] ? tr(lang, "\u52A0\u8F7D\u4E2D\u2026", "Loading\u2026") : !candidates.size ? query[0] ? tr(lang, "\u6CA1\u6709\u5339\u914D\u7684\u6807\u7B7E", "No matching tags") : tr(lang, "\u6682\u65E0\u6807\u7B7E\uFF0C\u53EF\u5728\u6807\u7B7E\u63D2\u4EF6\u4E2D\u521B\u5EFA", "No tags. Create them in the Tags plugin.") : hasMore[0] ? "" : tr(lang, "\u6CA1\u6709\u66F4\u591A", "No more");
-      return h2(
-        ui.Modal,
+      var steps = [
         {
-          title: item.id ? tr(lang, "\u7F16\u8F91\u7269\u54C1", "Edit item") : tr(lang, "\u65B0\u589E\u7269\u54C1", "New item"),
-          onClose: busy[0] ? null : props.onClose
+          key: "basic",
+          label: tr(lang, "\u57FA\u672C\u4FE1\u606F", "Basics"),
+          render: function(hh) {
+            return hh(
+              "div",
+              { className: "wbctl-form" },
+              field("name", "\u540D\u79F0 *", "Name *", true),
+              field("brand", "\u54C1\u724C", "Brand"),
+              field("unit", "\u5355\u4F4D", "Unit"),
+              field("stock", "\u5E93\u5B58\uFF08\u53EF\u586B\u5199 1~2 \u7B49\u6587\u5B57\uFF09", "Stock (text such as 1\u20132)", true)
+            );
+          },
+          validate: function() {
+            return form.name.trim() ? "" : tr(lang, "\u8BF7\u586B\u5199\u7269\u54C1\u540D\u79F0", "Enter an item name");
+          }
         },
-        h2(ui.ErrorBox, { error: err[0] }),
-        h2(
-          "form",
-          { onSubmit: save },
-          h2(
-            "div",
-            { className: "wbi-form" },
-            field("name", "\u540D\u79F0 *", "Name *", true),
-            field("brand", "\u54C1\u724C", "Brand"),
-            field("unit", "\u5355\u4F4D", "Unit"),
-            field("stock", "\u5E93\u5B58\uFF08\u53EF\u586B\u5199 1~2 \u7B49\u6587\u5B57\uFF09", "Stock (text such as 1\u20132)", true),
-            field("location", "\u5B58\u653E\u4F4D\u7F6E", "Location"),
-            field("remark", "\u5907\u6CE8", "Notes", true, true),
-            field("images", "\u56FE\u7247 URL\uFF08\u6BCF\u884C\u4E00\u4E2A\uFF09", "Image URLs (one per line)", true, true),
-            h2(
+        {
+          key: "place",
+          label: tr(lang, "\u5B58\u653E\u4E0E\u56FE\u7247", "Place & images"),
+          render: function(hh) {
+            return hh(
+              "div",
+              { className: "wbctl-form" },
+              field("location", "\u5B58\u653E\u4F4D\u7F6E", "Location", true),
+              field("remark", "\u5907\u6CE8", "Notes", true, true),
+              field("images", "\u56FE\u7247 URL\uFF08\u6BCF\u884C\u4E00\u4E2A\uFF09", "Image URLs (one per line)", true, true)
+            );
+          },
+          validate: function() {
+            var images = form.images.split(/\r?\n/).map(function(s) {
+              return s.trim();
+            }).filter(Boolean);
+            return images.some(function(s) {
+              return !ui.safeImage(s);
+            }) ? tr(lang, "\u56FE\u7247\u5730\u5740\u5FC5\u987B\u662F\u5B8C\u6574\u7684 HTTP(S) URL", "Images must use full HTTP(S) URLs") : "";
+          }
+        }
+      ];
+      if (props.tagsEnabled) {
+        steps.push({
+          key: "tags",
+          label: tr(lang, "\u6807\u7B7E", "Tags"),
+          optional: true,
+          render: function(hh) {
+            return hh(
               "div",
               { className: "wbi-field wbi-wide" },
-              h2("span", null, tr(lang, "\u6807\u7B7E", "Tags")),
-              props.tagsEnabled ? h2(
+              hh("span", null, tr(lang, "\u6807\u7B7E", "Tags")),
+              hh(
                 React.Fragment,
                 null,
-                h2("input", {
+                hh("input", {
                   type: "search",
                   placeholder: tr(lang, "\u641C\u7D22\u5DF2\u6709\u6807\u7B7E", "Search existing tags"),
                   "aria-label": tr(lang, "\u641C\u7D22\u5DF2\u6709\u6807\u7B7E", "Search existing tags"),
@@ -2035,14 +2389,14 @@ var require_editor = __commonJS({
                     query[1](e.target.value);
                   }
                 }),
-                h2(
+                hh(
                   "div",
                   { className: "wbi-tagoptions", onScroll: onListScroll },
                   Array.from(candidates.values()).map(function(t) {
-                    return h2(
+                    return hh(
                       "label",
                       { key: t.id },
-                      h2("input", {
+                      hh("input", {
                         type: "checkbox",
                         checked: form.tagIds.includes(t.id),
                         disabled: busy[0],
@@ -2067,26 +2421,28 @@ var require_editor = __commonJS({
                     );
                   })
                 ),
-                h2("div", { className: "wbi-tagmore" }, tagsNote)
-              ) : h2(
-                "span",
-                { className: "wbi-muted" },
-                tr(lang, "\u6807\u7B7E\u63D2\u4EF6\u4E0D\u53EF\u7528\uFF0C\u4FDD\u5B58\u65F6\u4FDD\u7559\u539F\u6709\u5173\u8054", "Tags unavailable; existing links are preserved.")
+                hh("div", { className: "wbi-tagmore" }, tagsNote)
               )
-            )
-          ),
-          h2(
-            "div",
-            { className: "wbi-formfoot" },
-            h2(ui.Button, { onClick: props.onClose, disabled: busy[0] }, tr(lang, "\u53D6\u6D88", "Cancel")),
-            h2(
-              ui.Button,
-              { type: "submit", disabled: busy[0], className: "wbi-btn wbi-primary" },
-              busy[0] ? tr(lang, "\u4FDD\u5B58\u4E2D\u2026", "Saving\u2026") : tr(lang, "\u4FDD\u5B58", "Save")
-            )
-          )
-        )
-      );
+            );
+          }
+        });
+      }
+      return h2(StagedModal, {
+        title: item.id ? tr(lang, "\u7F16\u8F91\u7269\u54C1", "Edit item") : tr(lang, "\u65B0\u589E\u7269\u54C1", "New item"),
+        // 打开时的起始步：正常从基本信息开始，测试可直达标签步。
+        initialStep: props.initialStep,
+        steps,
+        submitting: busy[0],
+        error: err[0] ? String(err[0].message || err[0]) : "",
+        onClose: props.onClose,
+        onSubmit: function() {
+          save();
+        },
+        submitText: tr(lang, "\u4FDD\u5B58", "Save"),
+        cancelText: tr(lang, "\u53D6\u6D88", "Cancel"),
+        nextText: tr(lang, "\u4E0B\u4E00\u6B65", "Next"),
+        backText: tr(lang, "\u4E0A\u4E00\u6B65", "Back")
+      });
     }
     module2.exports = { Editor };
   }

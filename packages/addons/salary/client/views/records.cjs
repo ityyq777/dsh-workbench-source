@@ -3,13 +3,39 @@
  * 工资记录页：KPI、筛选、按月分组、表格行展开详情、内联表单。
  * 只调本插件 action；金额格式与汇总口径统一走 ui/fields.cjs。
  */
-var createOverlay = require("../../../lib/overlay.cjs");
+var staged = require("../../../lib/staged-dialog.cjs");
+var salaryCommon = require("../ui/common.cjs");
 // 金额输入统一走校验型控件：键入不被改写，非法只红字提示并禁止保存。
 var NF = require("../../../lib/number-field.cjs");
-// 记一笔/编辑工资的弹窗外壳走共享实现：遮罩、Esc、Tab 循环、关闭后焦点归位。
-var FormOverlay = createOverlay({
+// 记一笔/编辑工资改为分三步：基础信息 → 金额明细 → 汇总确认。
+// 遮罩、Esc、Tab 循环、关闭后焦点归位仍来自 lib/overlay.cjs（经由分阶段外壳），
+// 步骤条与逐步校验来自 lib/staged-dialog.cjs，宽度统一 880px，窄屏回落单列。
+var FormDialog = staged.createStagedDialog({
   maskClass: "wbsal-mask",
   dialogClass: "wbsal-modal",
+  displayName: "SalaryFormDialog",
+  ariaLabelOf: function (props) { return props["aria-label"] || props.title; },
+  header: function (props) {
+    var h = props.h;
+    var C = salaryCommon;
+    return h(
+      "div",
+      { className: "wbsal-form-head" },
+      h(
+        "div",
+        null,
+        h("div", { className: "wbsal-eyebrow" }, props.eyebrow || ""),
+        h("h3", null, props.title),
+      ),
+      h(
+        C.Btn,
+        { h: h, kind: "ghost", onClick: props.onClose, disabled: !!props.submitting },
+        "关闭",
+      ),
+    );
+  },
+  closeOnEscape: function (props) { return !props.submitting; },
+  closeOnMask: function (props) { return !props.submitting; },
 });
 
 module.exports = function Records(props) {
@@ -46,12 +72,9 @@ module.exports = function Records(props) {
   var modalOpen = !!form;
   React.useEffect(function () {
     if (!modalOpen || typeof document === "undefined" || typeof document.addEventListener !== "function" || !document.body) return undefined;
-    function onKey(event) { if (event.key === "Escape") closeForm(); }
-    document.addEventListener("keydown", onKey);
     var previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return function () {
-      document.removeEventListener("keydown", onKey);
       document.body.style.overflow = previous;
     };
   }, [modalOpen, form && form.mode, form && form.id]);
@@ -226,68 +249,100 @@ module.exports = function Records(props) {
     });
   }
 
-  function renderForm() {
+  function renderModal() {
+    var label = form.mode === "edit" ? "编辑工资" : "记一笔工资";
     var computed = F.totals(form.values);
     var lockedGross = form.lockGross;
     var sameDayCount = items.filter(function (item) { return item.payDate === form.payDate && item.id !== form.id; }).length;
-    return h("div", { className: "wbsal-card wbsal-form wbsal-form-modal" },
-      h("div", { className: "wbsal-form-head" },
-        h("div", null,
-          h("div", { className: "wbsal-eyebrow" }, form.mode === "edit" ? "EDIT RECORD" : "NEW RECORD"),
-          h("h3", null, form.mode === "edit" ? "编辑工资" : "记一笔工资")),
-        h(C.Btn, { h: h, kind: "ghost", onClick: closeForm }, "关闭")),
-      h("div", { className: "wbsal-form-meta" },
-        h(C.Field, { h: h, label: "到账日" },
-          h(DP.DatePicker, { React: React, h: h, prefix: "wbsal", lang: lang, label: "到账日", value: form.payDate, onChange: function (next) { setField("payDate", next); } })),
-        h(C.Field, { h: h, label: "结算方式" },
-          h("select", { className: "wbsal-input", value: form.cycle, onChange: function (e) { setField("cycle", e.target.value); } },
-            h("option", { value: "monthly" }, "月结"), h("option", { value: "daily" }, "日结"))),
-        h(C.Field, { h: h, label: "用工类型" },
-          h("select", { className: "wbsal-input", value: form.employmentType, onChange: function (e) { setField("employmentType", e.target.value); } },
-            F.EMPLOYMENT_TYPES.map(function (t) { return h("option", { key: t.value || "none", value: t.value }, t.label); }))),
-        h(C.Field, { h: h, label: "工资所属期" },
-          h((form.incomePeriod ? form.incomePeriod.length === 10 : form.cycle === "daily") ? DP.DatePicker : DP.MonthPicker, {
-            React: React, h: h, prefix: "wbsal", lang: lang, label: "工资所属期",
-            placeholder: "未归属", value: form.incomePeriod || "",
-            onChange: function (next) { setField("incomePeriod", next); },
-          })),
-        h(C.Field, { h: h, label: "备注" }, h("input", { className: "wbsal-input", value: form.note, onChange: function (e) { setField("note", e.target.value); } }))),
-      sameDayCount > 0 ? h(C.Notice, { h: h, text: "该日已有 " + sameDayCount + " 笔记录；保存会新增一条，不会覆盖。" }) : null,
-      F.GROUPS.map(function (group) {
-        return h("div", { key: group.id, className: "wbsal-form-group" },
-          h("div", { className: "wbsal-group-head" },
-            h("div", { className: "wbsal-group-title" }, group.title),
-            h("span", null, group.hint)),
-          h("div", { className: "wbsal-form-grid" }, group.keys.map(function (key) {
-            return h(C.Field, { key: key, h: h, label: F.LABELS[key] }, amountInput(key, false));
+    function groupsBlock(hh, groups) {
+      return hh("div", { className: "wbsal-steps-groups" }, groups.map(function (group) {
+        return hh("div", { key: group.id, className: "wbsal-form-group" },
+          hh("div", { className: "wbsal-group-head" },
+            hh("div", { className: "wbsal-group-title" }, group.title),
+            hh("span", null, group.hint)),
+          hh("div", { className: "wbsal-form-grid" }, group.keys.map(function (key) {
+            return hh(C.Field, { key: key, h: hh, label: F.LABELS[key] }, amountInput(key, false));
           })));
-      }),
-      h("div", { className: "wbsal-form-group" },
-        h("div", { className: "wbsal-group-head" },
-          h("div", { className: "wbsal-group-title" }, "汇总"),
-          h("span", null, "默认按明细实时计算，也可以直接改")),
-        h("div", { className: "wbsal-form-grid" },
-          h(C.Field, { h: h, label: "应发税前工资" }, amountInput("grossPay", lockedGross)),
-          h(C.Field, { h: h, label: "实发工资" }, amountInput("netPay", false)))),
-      h("div", { className: "wbsal-summary" },
-        h("div", null, h("span", null, "收入合计"), h("b", null, F.money(computed.income))),
-        h("div", null, h("span", null, "税前扣款"), h("b", null, F.money(computed.preTax))),
-        h("div", null, h("span", null, "社保公积金"), h("b", null, F.money(computed.social))),
-        h("div", null, h("span", null, "个税+税后"), h("b", null, F.money(computed.tax))),
-        h("div", null, h("span", null, "应发"), h("b", null, F.money(F.num(form.values.grossPay)))),
-        h("div", null, h("span", null, "实发"), h("b", null, F.money(F.num(form.values.netPay)))),
-        lockedGross ? h("div", { className: "wbsal-lock" },
-          h("span", { className: "wbsal-muted" }, "这条历史记录只有汇总值，应发已锁定，避免被明细重算清零。"),
-          h(C.Btn, { h: h, onClick: recalcFromDetail }, "按明细重算")) : null),
-      h(C.Notice, { h: h, kind: msg && msg.kind, text: msg && msg.text }),
-      h("div", { className: "wbsal-form-actions" },
-        h(C.Btn, { h: h, kind: "primary", onClick: submit, disabled: saving || moneyInvalid }, saving ? "保存中…" : (form.mode === "edit" ? "保存修改" : "保存")),
-        h(C.Btn, { h: h, kind: "ghost", onClick: closeForm }, "取消")));
-  }
-
-  function renderModal() {
-    var label = form.mode === "edit" ? "编辑工资" : "记一笔工资";
-    return h(FormOverlay, { "aria-label": label, onClose: closeForm }, renderForm());
+      }));
+    }
+    return h(FormDialog, {
+      h: h,
+      React: React,
+      title: label,
+      eyebrow: form.mode === "edit" ? "EDIT RECORD" : "NEW RECORD",
+      // 测试按步渲染校验金额控件，正常打开仍从第一步开始。
+      initialStep: props.initialStep,
+      submitting: saving,
+      error: msg && msg.kind === "error" ? msg.text : "",
+      onClose: saving ? null : closeForm,
+      onSubmit: submit,
+      submitText: form.mode === "edit" ? "保存修改" : "保存",
+      cancelText: "取消",
+      nextText: "下一步",
+      backText: "上一步",
+      steps: [
+        {
+          key: "basic",
+          label: "基础信息",
+          hint: "日期与归属",
+          render: function (hh) {
+            return hh("div", { className: "wbsal-form-meta" },
+              hh(C.Field, { h: hh, label: "到账日" },
+                hh(DP.DatePicker, { React: React, h: hh, prefix: "wbsal", lang: lang, label: "到账日", value: form.payDate, onChange: function (next) { setField("payDate", next); } })),
+              hh(C.Field, { h: hh, label: "结算方式" },
+                hh("select", { className: "wbsal-input", value: form.cycle, onChange: function (e) { setField("cycle", e.target.value); } },
+                  hh("option", { value: "monthly" }, "月结"), hh("option", { value: "daily" }, "日结"))),
+              hh(C.Field, { h: hh, label: "用工类型" },
+                hh("select", { className: "wbsal-input", value: form.employmentType, onChange: function (e) { setField("employmentType", e.target.value); } },
+                  F.EMPLOYMENT_TYPES.map(function (t) { return hh("option", { key: t.value || "none", value: t.value }, t.label); }))),
+              hh(C.Field, { h: hh, label: "工资所属期" },
+                hh((form.incomePeriod ? form.incomePeriod.length === 10 : form.cycle === "daily") ? DP.DatePicker : DP.MonthPicker, {
+                  React: React, h: hh, prefix: "wbsal", lang: lang, label: "工资所属期",
+                  placeholder: "未归属", value: form.incomePeriod || "",
+                  onChange: function (next) { setField("incomePeriod", next); },
+                })),
+              hh(C.Field, { h: hh, label: "备注" },
+                hh("input", { className: "wbsal-input", value: form.note, onChange: function (e) { setField("note", e.target.value); } })));
+          },
+        },
+        {
+          key: "amount",
+          label: "金额明细",
+          hint: "按分组填收入与扣款",
+          render: function (hh) { return groupsBlock(hh, F.GROUPS); },
+          validate: function () {
+            var bad = firstBadAmount();
+            return bad ? F.LABELS[bad.key] + "：" + bad.error : "";
+          },
+        },
+        {
+          key: "summary",
+          label: "汇总确认",
+          hint: "默认按明细实时计算",
+          render: function (hh) {
+            return hh("div", { className: "wbsal-steps-groups" },
+              hh("div", { className: "wbsal-form-group" },
+                hh("div", { className: "wbsal-group-head" },
+                  hh("div", { className: "wbsal-group-title" }, "汇总"),
+                  hh("span", null, "默认按明细实时计算，也可以直接改")),
+                hh("div", { className: "wbsal-form-grid" },
+                  hh(C.Field, { h: hh, label: "应发税前工资" }, amountInput("grossPay", lockedGross)),
+                  hh(C.Field, { h: hh, label: "实发工资" }, amountInput("netPay", false)))),
+              sameDayCount > 0 ? hh(C.Notice, { h: hh, text: "该日已有 " + sameDayCount + " 笔记录；保存会新增一条，不会覆盖。" }) : null,
+              hh("div", { className: "wbsal-summary" },
+                hh("div", null, hh("span", null, "收入合计"), hh("b", null, F.money(computed.income))),
+                hh("div", null, hh("span", null, "税前扣款"), hh("b", null, F.money(computed.preTax))),
+                hh("div", null, hh("span", null, "社保公积金"), hh("b", null, F.money(computed.social))),
+                hh("div", null, hh("span", null, "个税+税后"), hh("b", null, F.money(computed.tax))),
+                hh("div", null, hh("span", null, "应发"), hh("b", null, F.money(F.num(form.values.grossPay)))),
+                hh("div", null, hh("span", null, "实发"), hh("b", null, F.money(F.num(form.values.netPay)))),
+                lockedGross ? hh("div", { className: "wbsal-lock" },
+                  hh("span", { className: "wbsal-muted" }, "这条历史记录只有汇总值，应发已锁定，避免被明细重算清零。"),
+                  hh(C.Btn, { h: hh, onClick: recalcFromDetail }, "按明细重算")) : null));
+          },
+        },
+      ],
+    });
   }
 
   function renderDetail(item) {
