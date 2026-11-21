@@ -9,7 +9,7 @@ import { createRequire } from "node:module";
 
 process.env.WB_HOME = mkdtempSync(join(tmpdir(), "wb-vault-test-"));
 
-const { ensureSchema, headerGet, headerSet, deviceGet, deviceSet } = await import("../lib/db/db.js");
+const { ensureSchema, hasColumn, headerGet, headerSet, deviceGet, deviceSet } = await import("../lib/db/db.js");
 const { createVault } = await import("../lib/domain/vault.js");
 const { createGroups } = await import("../lib/domain/groups.js");
 const { createSets } = await import("../lib/domain/sets.js");
@@ -40,7 +40,7 @@ test("A 模式初始化、加密落库、解锁/失败锁", () => {
   assert.equal(st.initialized, true);
   assert.equal(st.locked, false);
   assert.equal(st.unlockMode, "A");
-  assert.equal(st.schemaVersion, 3);
+  assert.equal(st.schemaVersion, 4);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_header").get().n, 1);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_device").get().n, 1);
 
@@ -256,6 +256,37 @@ test("集合 action：增删改、挂载/摘除与权限", () => {
   assert.ok(Array.isArray(run("vault.setList", {}, "plugin").items), "集合读取对 plugin 开放");
 });
 
+test("plugin 写入带账号：setAccount 建账号集合，pluginSetAccount 改账号", () => {
+  const { run } = makeVault();
+  run("vault.setup", { passphrase: PASS, mode: "A" });
+  const groupId = run("vault.groupCreate", { name: "邮件账户" }).id;
+  run("vault.subjectRegister", { type: "mail", title: "邮箱" }, "plugin");
+  run("vault.bind", { subjectType: "mail", subjectId: "mb_1", groupId }, "plugin");
+
+  const base = { subjectType: "mail", subjectId: "mb_1", setName: "me@example.com" };
+  const created = run(
+    "vault.pluginSecretUpsert",
+    { ...base, setAccount: "me@example.com", name: "me@example.com · 密码", kind: "app_password", secret: "pw", meta: { field: "password" } },
+    "plugin",
+  );
+  const set = run("vault.pluginSetGet", base, "plugin").set;
+  assert.equal(set.id, created.setId);
+  assert.equal(set.account, "me@example.com");
+  assert.equal(set.type, "account");
+
+  const renamed = run("vault.pluginSetAccount", { ...base, account: "alias@example.com" }, "plugin");
+  assert.equal(renamed.set.account, "alias@example.com");
+  assert.equal(run("vault.pluginSetGet", base, "plugin").set.type, "account");
+  const cleared = run("vault.pluginSetAccount", { ...base, account: "" }, "plugin");
+  assert.equal(cleared.set.type, "common");
+
+  assert.throws(
+    () => run("vault.pluginSetAccount", { ...base, subjectId: "mb_missing", account: "x" }, "plugin"),
+    /未绑定任何凭据组/,
+  );
+  assert.throws(() => run("vault.pluginSetAccount", { ...base, account: "y" }, "ui"), /不允许 ui/);
+});
+
 test("并发改口令：LWW + 提示", () => {
   const { db, run } = makeVault();
   run("vault.setup", { passphrase: PASS, mode: "A" });
@@ -380,6 +411,57 @@ test("集合层：一条凭据进多个集合、一个集合挂多个分组、�
   assert.equal(sets.secretCountOfSet(setB.id), 0, "删凭据后集合不再显示它");
 });
 
+test("0.3.x → 0.4.0：启动补 account 列并把 schema_version 升到 4", () => {
+  const { db } = makeVault();
+  // 还原成 0.3.x 形态：vault_set 没有 account 列，header 停在 3。
+  db.exec("DROP TABLE vault_set");
+  db.exec(
+    "CREATE TABLE vault_set (id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', " +
+      "color TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, deleted_at INTEGER, " +
+      "rev INTEGER NOT NULL DEFAULT 1)",
+  );
+  db.prepare(
+    "INSERT INTO vault_header(id, schema_version, salt, kdf, wrapped_dek, passphrase_rev, created_at, updated_at, rev) " +
+      "VALUES(1, 3, 'salt', '{}', 'wrapped', 1, 1, 1, 1)",
+  ).run();
+
+  ensureSchema(db);
+  assert.equal(headerGet(db).schema_version, 4);
+  assert.equal(hasColumn(db, "vault_set", "account"), true);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_set").get().n, 0);
+});
+
+test("集合与账号：账号可空、可重复，条目按 id 区分，类型与搜索过滤生效", () => {
+  const { run } = makeVault();
+  run("vault.setup", { passphrase: PASS, mode: "A" });
+
+  const a = run("vault.setCreate", { name: "工作邮箱 A", account: "ops@example.com" });
+  const b = run("vault.setCreate", { name: "工作邮箱 B", account: "ops@example.com" });
+  const c = run("vault.setCreate", { name: "临时归档" });
+  assert.notEqual(a.id, b.id, "账号重复的集合仍是两条独立条目");
+  assert.equal(a.account, "ops@example.com");
+  assert.equal(a.type, "account");
+  assert.equal(b.type, "account");
+  assert.equal(c.account, "");
+  assert.equal(c.type, "common");
+
+  assert.equal(run("vault.setList", {}).items.length, 3);
+  const byAccount = run("vault.setList", { q: "ops@example.com" });
+  assert.deepEqual(byAccount.items.map((item) => item.id).sort(), [a.id, b.id].sort());
+  assert.deepEqual(run("vault.setList", { type: "account" }).items.map((item) => item.id).sort(), [a.id, b.id].sort());
+  assert.deepEqual(run("vault.setList", { type: "common" }).items.map((item) => item.id), [c.id]);
+
+  // 账号可改可清空，类型跟着推导变化
+  assert.equal(run("vault.setUpdate", { id: b.id, account: "" }).type, "common");
+  const back = run("vault.setUpdate", { id: b.id, account: "team@example.com" });
+  assert.equal(back.type, "account");
+  assert.equal(back.account, "team@example.com");
+  assert.equal(run("vault.setGet", { id: b.id }).account, "team@example.com");
+
+  assert.throws(() => run("vault.setCreate", { name: "超长账号", account: "x".repeat(101) }), /账号最多 100 字/);
+  assert.throws(() => run("vault.setCreate", { name: "工作邮箱 A", account: "other@example.com" }), /已有同名集合/);
+});
+
 test("0.2.x → 0.3.0 迁移：分组直属凭据收进默认集合，site-account 收口为通用类型", async () => {
   const { db, run, vault } = makeVault();
   run("vault.setup", { passphrase: PASS, mode: "A" });
@@ -407,8 +489,8 @@ test("0.2.x → 0.3.0 迁移：分组直属凭据收进默认集合，site-accou
 
   vault.lock();
   const res = run("vault.unlock", { passphrase: PASS });
-  assert.match(String(res.notice || ""), /集合层/);
-  assert.equal(headerGet(db).schema_version, 3);
+  assert.match(String(res.notice || ""), /集合与账号/);
+  assert.equal(headerGet(db).schema_version, 4);
   assert.equal(
     db.prepare("SELECT COUNT(*) AS n FROM pragma_table_info('vault_secret') WHERE name = 'group_id'").get().n,
     0,

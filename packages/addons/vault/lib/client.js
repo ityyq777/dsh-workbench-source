@@ -868,6 +868,406 @@ var require_icons2 = __commonJS({
   }
 });
 
+// packages/addons/lib/stepper.cjs
+var require_stepper = __commonJS({
+  "packages/addons/lib/stepper.cjs"(exports2, module2) {
+    "use strict";
+    function stepState(index, current, maxVisited) {
+      if (index === current) return "current";
+      if (index < current) return "done";
+      if (index <= maxVisited) return "visited";
+      return "todo";
+    }
+    function Steps(props) {
+      var h = props.h;
+      var steps = props.steps || [];
+      var current = props.current || 0;
+      var maxVisited = props.maxVisited === void 0 ? current : props.maxVisited;
+      var invalid = props.invalid || {};
+      var disabled = !!props.disabled;
+      var label = props.label || "\u6B65\u9AA4";
+      return h(
+        "nav",
+        { className: "wbctl-steps" + (props.className ? " " + props.className : ""), "aria-label": label },
+        h(
+          "ol",
+          { className: "wbctl-step-list" },
+          steps.map(function(step, index) {
+            var state = stepState(index, current, maxVisited);
+            var canJump = !disabled && typeof props.onJump === "function" && state !== "current" && state !== "todo";
+            var isInvalid = !!invalid[index] || !!invalid[step.key];
+            return h(
+              "li",
+              { key: step.key || index, className: "wbctl-step-item" },
+              h(
+                "button",
+                {
+                  type: "button",
+                  className: "wbctl-step",
+                  "data-state": state,
+                  "data-invalid": isInvalid ? "true" : null,
+                  "aria-current": state === "current" ? "step" : void 0,
+                  "aria-label": index + 1 + " \xB7 " + step.label + (state === "done" ? "\uFF08\u5DF2\u5B8C\u6210\uFF09" : ""),
+                  disabled: disabled || state === "todo",
+                  title: step.hint || "",
+                  onClick: function() {
+                    if (canJump) props.onJump(index);
+                  }
+                },
+                h("span", { className: "wbctl-step-index", "aria-hidden": "true" }, state === "done" ? "\u2713" : String(index + 1)),
+                h("span", { className: "wbctl-step-label" }, step.label),
+                step.hint ? h("span", { className: "wbctl-step-hint" }, step.hint) : null,
+                step.optional ? h("span", { className: "wbctl-step-opt" }, "\u53EF\u9009") : null
+              )
+            );
+          })
+        )
+      );
+    }
+    var STYLES = [
+      ".wbctl-steps{display:block;min-width:0}",
+      ".wbctl-step-list{display:flex;align-items:stretch;gap:6px;list-style:none;margin:0 0 14px;padding:0;min-width:0}",
+      ".wbctl-step-item{display:flex;flex:1 1 0;min-width:0}",
+      ".wbctl-step{display:flex;align-items:center;gap:7px;flex:1 1 auto;min-width:0;padding:7px 9px;border:1px solid var(--wb-line,var(--wb-border));border-radius:10px;background:transparent;color:var(--wb-muted,inherit);font:inherit;font-size:12px;line-height:1.35;text-align:left;cursor:default;transition:background .14s ease,border-color .14s ease,color .14s ease}",
+      ".wbctl-step[data-state=done],.wbctl-step[data-state=visited]{color:inherit;cursor:pointer}",
+      ".wbctl-step[data-state=done]{border-color:color-mix(in oklab,var(--wb-ok,var(--wb-accent,#2563eb)) 36%,var(--wb-border))}",
+      ".wbctl-step[data-state=current]{border-color:color-mix(in oklab,var(--wb-accent,#2563eb) 58%,var(--wb-border));background:color-mix(in oklab,var(--wb-accent,#2563eb) 8%,transparent);color:inherit;font-weight:600}",
+      ".wbctl-step[data-state=visited]:hover,.wbctl-step[data-state=done]:hover{background:color-mix(in oklab,currentColor 7%,transparent)}",
+      ".wbctl-step[data-invalid=true]{border-color:var(--wb-danger,#d33)}",
+      ".wbctl-step:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+      ".wbctl-step:disabled{cursor:default;opacity:.72}",
+      ".wbctl-step-index{display:inline-flex;align-items:center;justify-content:center;flex:none;width:20px;height:20px;border-radius:50%;font-size:11px;font-variant-numeric:tabular-nums;background:color-mix(in oklab,currentColor 15%,transparent)}",
+      ".wbctl-step[data-state=current] .wbctl-step-index{background:var(--wb-accent,#2563eb);color:var(--wb-on-accent,#fff)}",
+      ".wbctl-step[data-state=done] .wbctl-step-index{background:color-mix(in oklab,var(--wb-ok,var(--wb-accent,#2563eb)) 20%,transparent);color:var(--wb-ok,var(--wb-accent,#2563eb))}",
+      ".wbctl-step-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbctl-step-hint{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:400;opacity:.62}",
+      ".wbctl-step-opt{flex:none;font-size:10px;font-weight:400;opacity:.55}",
+      "@media (max-width:760px){.wbctl-step{padding:6px 7px;font-size:11.5px}.wbctl-step-hint,.wbctl-step-opt{display:none}.wbctl-step-index{width:18px;height:18px;font-size:10px}}",
+      "@media (max-width:520px){.wbctl-step-list{gap:4px}.wbctl-step-label{white-space:normal}.wbctl-step{gap:5px}}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-step{transition:none}}"
+    ];
+    module2.exports = { Steps, stepState, styles: STYLES };
+  }
+});
+
+// packages/addons/lib/overlay.cjs
+var require_overlay = __commonJS({
+  "packages/addons/lib/overlay.cjs"(exports2, module2) {
+    "use strict";
+    var defaultReact = require("react");
+    var FOCUSABLE = "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]";
+    module2.exports = function createOverlay(options) {
+      var opts = options || {};
+      var React = opts.React || defaultReact;
+      var h = React.createElement;
+      var tag = opts.tag || "section";
+      var maskClass = opts.maskClass;
+      var dialogClass = opts.dialogClass;
+      var dialogClassOf = opts.dialogClassOf || function() {
+        return "";
+      };
+      var ariaLabelOf = opts.ariaLabelOf || function(props) {
+        return props["aria-label"] || props.title;
+      };
+      var ariaLabelledByOf = opts.ariaLabelledByOf || function() {
+        return null;
+      };
+      var header = opts.header || null;
+      var closeOnEscape = opts.closeOnEscape || function() {
+        return true;
+      };
+      var closeOnMask = opts.closeOnMask || function() {
+        return true;
+      };
+      var extraKeyDown = opts.onKeyDown || null;
+      var autoFocusDialog = opts.autoFocusDialog !== false;
+      var focusableSelector = opts.focusableSelector || FOCUSABLE;
+      function Modal(props) {
+        var R = props.React || React;
+        var ref = R.useRef(null);
+        R.useEffect(function() {
+          var previous = typeof document !== "undefined" ? document.activeElement : null;
+          var focusIt = props.autoFocus !== void 0 ? props.autoFocus : autoFocusDialog;
+          if (focusIt && ref.current) ref.current.focus();
+          return function() {
+            if (previous && previous.isConnected) previous.focus();
+          };
+        }, []);
+        function onKeyDown(e) {
+          if (extraKeyDown && extraKeyDown(e, props, ref)) return;
+          if (e.key === "Escape") {
+            if (!(props.closeOnEscape !== void 0 ? props.closeOnEscape : closeOnEscape(props))) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (props.onClose) props.onClose();
+            return;
+          }
+          if (e.key !== "Tab" || !ref.current) return;
+          var els = ref.current.querySelectorAll(focusableSelector);
+          if (!els.length) {
+            e.preventDefault();
+            return;
+          }
+          var first = els[0];
+          var last = els[els.length - 1];
+          if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) {
+            e.preventDefault();
+            last.focus();
+          }
+          if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+        var labelledBy = ariaLabelledByOf(props);
+        return h(
+          "div",
+          {
+            className: maskClass,
+            onMouseDown: function(e) {
+              var allowed = props.closeOnMask !== void 0 ? props.closeOnMask : closeOnMask(props);
+              if (e.target === e.currentTarget && props.onClose && allowed) props.onClose();
+            }
+          },
+          h(
+            tag,
+            {
+              className: dialogClass + dialogClassOf(props),
+              role: "dialog",
+              "aria-modal": true,
+              "aria-label": labelledBy ? null : ariaLabelOf(props),
+              "aria-labelledby": labelledBy || null,
+              ref,
+              tabIndex: -1,
+              onKeyDown
+            },
+            header ? header(props) : null,
+            props.children
+          )
+        );
+      }
+      return Modal;
+    };
+  }
+});
+
+// packages/addons/lib/staged-dialog.cjs
+var require_staged_dialog = __commonJS({
+  "packages/addons/lib/staged-dialog.cjs"(exports2, module2) {
+    "use strict";
+    var defaultReact = require("react");
+    var overlayFactory = require_overlay();
+    var stepper = require_stepper();
+    function validateStep(step) {
+      if (!step || typeof step.validate !== "function") return "";
+      var message = step.validate();
+      return message ? String(message) : "";
+    }
+    function firstFailing(steps) {
+      var list = steps || [];
+      for (var i = 0; i < list.length; i += 1) {
+        var message = validateStep(list[i]);
+        if (message) return { index: i, key: list[i] && list[i].key, message };
+      }
+      return null;
+    }
+    function createStagedDialog(options) {
+      var opts = options || {};
+      var React = opts.React || defaultReact;
+      var h = React.createElement;
+      var dialogClass = ((opts.dialogClass || "") + " wbctl-dialog").trim();
+      var Overlay = overlayFactory(
+        Object.assign({}, opts, {
+          React,
+          dialogClass,
+          // 首焦点由外壳送进对话框，字段由 focusStep 负责，避免打开瞬间落进第一个输入框。
+          autoFocusDialog: opts.autoFocusDialog !== false
+        })
+      );
+      function StagedDialog(props) {
+        var R = props.React || React;
+        var steps = props.steps || [];
+        var count = steps.length;
+        var busy = !!props.submitting || !!props.busy;
+        var indexState = R.useState(props.initialStep || 0);
+        var rawIndex = indexState[0];
+        var setIndex = indexState[1];
+        var index = count === 0 ? 0 : Math.min(Math.max(rawIndex, 0), count - 1);
+        var visitedState = R.useState(props.initialStep || 0);
+        var maxVisited = count === 0 ? 0 : Math.min(Math.max(visitedState[0], index), count - 1);
+        var setMaxVisited = visitedState[1];
+        var errorState = R.useState("");
+        var stepError = errorState[0];
+        var setStepError = errorState[1];
+        var invalidState = R.useState({});
+        var invalid = invalidState[0];
+        var setInvalid = invalidState[1];
+        var bodyRef = R.useRef(null);
+        var mounted = R.useRef(true);
+        function runValidate(step) {
+          return validateStep(step);
+        }
+        function markInvalid(i, bad) {
+          setInvalid(function(prev) {
+            var next2 = Object.assign({}, prev);
+            if (bad) next2[i] = true;
+            else delete next2[i];
+            return next2;
+          });
+        }
+        function focusBody() {
+          var el = bodyRef.current;
+          if (el && typeof el.focus === "function") el.focus();
+        }
+        R.useEffect(
+          function() {
+            if (!mounted.current) return;
+            focusBody();
+          },
+          [index]
+        );
+        R.useEffect(function() {
+          mounted.current = true;
+          return function() {
+            mounted.current = false;
+          };
+        }, []);
+        function goTo(i) {
+          if (busy || i < 0 || i >= count) return;
+          setIndex(i);
+          if (i > maxVisited) setMaxVisited(i);
+          setStepError("");
+        }
+        function fail(i, message) {
+          markInvalid(i, true);
+          goTo(i);
+          setStepError(message);
+          focusBody();
+        }
+        function next() {
+          if (busy) return;
+          var message = runValidate(steps[index]);
+          if (message) {
+            fail(index, message);
+            return;
+          }
+          markInvalid(index, false);
+          goTo(Math.min(index + 1, count - 1));
+        }
+        function back() {
+          if (busy || index === 0) return;
+          goTo(index - 1);
+        }
+        function jump(i) {
+          if (busy || i > maxVisited) return;
+          goTo(i);
+        }
+        function submit() {
+          if (busy) return;
+          var bad = firstFailing(steps);
+          if (bad) {
+            fail(bad.index, bad.message);
+            return;
+          }
+          for (var i = 0; i < count; i++) markInvalid(i, false);
+          setStepError("");
+          if (typeof props.onSubmit === "function") props.onSubmit();
+        }
+        function cancel() {
+          if (busy) return;
+          if (typeof props.onClose === "function") props.onClose();
+        }
+        var current = steps[index];
+        var isLast = index >= count - 1;
+        var saveText = props.submitText || "\u4FDD\u5B58";
+        var shownError = stepError || props.error || "";
+        return h(
+          Overlay,
+          props,
+          count > 1 ? h(stepper.Steps, {
+            h,
+            steps: steps.map(function(step) {
+              return { key: step.key, label: step.label, hint: step.hint, optional: step.optional };
+            }),
+            current: index,
+            maxVisited,
+            onJump: jump,
+            invalid,
+            disabled: busy,
+            label: props.stepsLabel || "\u521B\u5EFA\u6B65\u9AA4"
+          }) : null,
+          h(
+            "div",
+            {
+              className: "wbctl-dialog-body" + (props.bodyClassName ? " " + props.bodyClassName : ""),
+              ref: bodyRef,
+              tabIndex: -1
+            },
+            current ? current.render(h, props) : null
+          ),
+          props.footerExtra || null,
+          shownError ? h("div", { className: "wbctl-dialog-err", role: "alert" }, shownError) : null,
+          h(
+            "div",
+            { className: "wbctl-dialog-foot" },
+            count > 1 ? h("span", { className: "wbctl-dialog-progress" }, index + 1 + " / " + count) : null,
+            props.footerNote ? h("span", { className: "wbctl-dialog-note" }, props.footerNote) : null,
+            h("span", { className: "wbctl-dialog-spacer" }),
+            index > 0 ? h(
+              "button",
+              { type: "button", className: "wbctl-btn", onClick: back, disabled: busy },
+              props.backText || "\u4E0A\u4E00\u6B65"
+            ) : null,
+            h("button", { type: "button", className: "wbctl-btn", onClick: cancel, disabled: busy }, props.cancelText || "\u53D6\u6D88"),
+            h(
+              "button",
+              {
+                type: "button",
+                className: "wbctl-btn wbctl-btn-p",
+                onClick: isLast ? submit : next,
+                // submitDisabled 只作用于末步的保存：插件据此把「结构性不合法」（JSON 语法、无可选 action）
+                // 提前反映成禁用态，避免用户点到保存才被弹回第一步。
+                disabled: busy || isLast && !!props.submitDisabled
+              },
+              busy ? saveText + "\u4E2D\u2026" : isLast ? saveText : props.nextText || "\u4E0B\u4E00\u6B65"
+            )
+          )
+        );
+      }
+      StagedDialog.displayName = opts.displayName || "StagedDialog";
+      return StagedDialog;
+    }
+    var STYLES = [
+      // 宽表单：内容多时给足横向空间，窄屏留 16px 边距后铺满。
+      ".wbctl-dialog{width:min(880px,calc(100vw - 32px));max-height:min(92vh,760px);display:flex;flex-direction:column;overflow:hidden}",
+      ".wbctl-dialog-body{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;padding:2px 2px 10px;outline:none}",
+      ".wbctl-dialog-body:focus-visible{outline:none}",
+      ".wbctl-dialog-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-top:10px;margin-top:10px;border-top:1px solid var(--wb-line,var(--wb-border))}",
+      ".wbctl-dialog-progress{font-size:11.5px;color:var(--wb-muted,#666);font-variant-numeric:tabular-nums}",
+      ".wbctl-dialog-note{font-size:11.5px;color:var(--wb-muted,#666);min-width:0}",
+      ".wbctl-dialog-spacer{flex:1 1 auto}",
+      ".wbctl-dialog-err{margin-top:8px;padding:7px 10px;border-radius:8px;border:1px solid color-mix(in oklab,var(--wb-danger,#d33) 45%,transparent);background:color-mix(in oklab,var(--wb-danger,#d33) 8%,transparent);color:var(--wb-danger,#d33);font-size:12px}",
+      ".wbctl-btn{padding:6px 14px;border:1px solid var(--wb-border,#d0d5dd);border-radius:8px;background:var(--wb-card,#fff);color:inherit;font:inherit;font-size:12.5px;cursor:pointer}",
+      ".wbctl-btn:hover:not(:disabled){background:color-mix(in oklab,currentColor 7%,transparent)}",
+      ".wbctl-btn:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+      ".wbctl-btn:disabled{opacity:.55;cursor:default}",
+      ".wbctl-btn.wbctl-btn-p{background:var(--wb-accent,#2563eb);border-color:transparent;color:var(--wb-on-accent,#fff)}",
+      ".wbctl-btn.wbctl-btn-p:hover:not(:disabled){background:color-mix(in oklab,var(--wb-accent,#2563eb) 86%,#000)}",
+      // 确认步：键值对清单，各插件共用，避免再各写一套只读摘要。\n  ".wbctl-review{display:flex;flex-direction:column;border:1px solid var(--wb-line,var(--wb-border));border-radius:10px;overflow:hidden}",\n  ".wbctl-review-row{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;padding:8px 12px;font-size:12.5px;background:var(--wb-surface,transparent)}",\n  ".wbctl-review-row+.wbctl-review-row{border-top:1px solid var(--wb-line,var(--wb-border))}",\n  ".wbctl-review-k{color:var(--wb-muted,inherit);font-size:11.5px;line-height:1.6}",\n  ".wbctl-review-v{min-width:0;word-break:break-word;line-height:1.6}",\n  ".wbctl-note{margin:10px 0 0;font-size:11.5px;color:var(--wb-muted,inherit)}",\n  // 两列字段布局：内容多的弹窗不再单列拉长，窄屏回落单列。
+      ".wbctl-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px}",
+      ".wbctl-form>.full{grid-column:1/-1}",
+      "@media (max-width:760px){.wbctl-dialog{width:calc(100vw - 16px);max-height:94vh}.wbctl-form{grid-template-columns:1fr}.wbctl-form>.full{grid-column:auto}}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-btn{transition:none}}"
+    ];
+    module2.exports = {
+      createStagedDialog,
+      validateStep,
+      firstFailing,
+      styles: STYLES
+    };
+  }
+});
+
 // packages/addons/lib/vault-lock.cjs
 var require_vault_lock = __commonJS({
   "packages/addons/lib/vault-lock.cjs"(exports2, module2) {
@@ -1201,7 +1601,7 @@ var require_styles = __commonJS({
       ".wbv-scroll{max-height:220px;overflow:auto;padding:8px;border:1px solid var(--wb-border);border-radius:9px}",
       /* ---------- 窄屏 ---------- */
       "@media (max-width:900px){.wbv-split{grid-template-columns:1fr}.wbv-head{flex-direction:column;align-items:stretch}.wbv-head-actions{justify-content:flex-start}.wbv-toolbar>.wbv-search{flex:1 1 100%;width:100%}}"
-    ].concat(require_vault_lock().create({ prefix: "wbv" }).styles()).concat(require_filter_checklist_styles()).concat(require_client_base_styles().secretFieldStyles, require_icon_label().styles);
+    ].concat(require_stepper().styles, require_staged_dialog().styles).concat(require_vault_lock().create({ prefix: "wbv" }).styles()).concat(require_filter_checklist_styles()).concat(require_client_base_styles().secretFieldStyles, require_icon_label().styles);
   }
 });
 
@@ -1802,112 +2202,12 @@ var require_secret_field = __commonJS({
   }
 });
 
-// packages/addons/lib/overlay.cjs
-var require_overlay = __commonJS({
-  "packages/addons/lib/overlay.cjs"(exports2, module2) {
-    "use strict";
-    var defaultReact = require("react");
-    var FOCUSABLE = "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]";
-    module2.exports = function createOverlay(options) {
-      var opts = options || {};
-      var React = opts.React || defaultReact;
-      var h = React.createElement;
-      var tag = opts.tag || "section";
-      var maskClass = opts.maskClass;
-      var dialogClass = opts.dialogClass;
-      var dialogClassOf = opts.dialogClassOf || function() {
-        return "";
-      };
-      var ariaLabelOf = opts.ariaLabelOf || function(props) {
-        return props["aria-label"] || props.title;
-      };
-      var ariaLabelledByOf = opts.ariaLabelledByOf || function() {
-        return null;
-      };
-      var header = opts.header || null;
-      var closeOnEscape = opts.closeOnEscape || function() {
-        return true;
-      };
-      var closeOnMask = opts.closeOnMask || function() {
-        return true;
-      };
-      var extraKeyDown = opts.onKeyDown || null;
-      var autoFocusDialog = opts.autoFocusDialog !== false;
-      var focusableSelector = opts.focusableSelector || FOCUSABLE;
-      function Modal(props) {
-        var R = props.React || React;
-        var ref = R.useRef(null);
-        R.useEffect(function() {
-          var previous = typeof document !== "undefined" ? document.activeElement : null;
-          var focusIt = props.autoFocus !== void 0 ? props.autoFocus : autoFocusDialog;
-          if (focusIt && ref.current) ref.current.focus();
-          return function() {
-            if (previous && previous.isConnected) previous.focus();
-          };
-        }, []);
-        function onKeyDown(e) {
-          if (extraKeyDown && extraKeyDown(e, props, ref)) return;
-          if (e.key === "Escape") {
-            if (!(props.closeOnEscape !== void 0 ? props.closeOnEscape : closeOnEscape(props))) return;
-            e.preventDefault();
-            e.stopPropagation();
-            if (props.onClose) props.onClose();
-            return;
-          }
-          if (e.key !== "Tab" || !ref.current) return;
-          var els = ref.current.querySelectorAll(focusableSelector);
-          if (!els.length) {
-            e.preventDefault();
-            return;
-          }
-          var first = els[0];
-          var last = els[els.length - 1];
-          if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) {
-            e.preventDefault();
-            last.focus();
-          }
-          if (!e.shiftKey && document.activeElement === last) {
-            e.preventDefault();
-            first.focus();
-          }
-        }
-        var labelledBy = ariaLabelledByOf(props);
-        return h(
-          "div",
-          {
-            className: maskClass,
-            onMouseDown: function(e) {
-              var allowed = props.closeOnMask !== void 0 ? props.closeOnMask : closeOnMask(props);
-              if (e.target === e.currentTarget && props.onClose && allowed) props.onClose();
-            }
-          },
-          h(
-            tag,
-            {
-              className: dialogClass + dialogClassOf(props),
-              role: "dialog",
-              "aria-modal": true,
-              "aria-label": labelledBy ? null : ariaLabelOf(props),
-              "aria-labelledby": labelledBy || null,
-              ref,
-              tabIndex: -1,
-              onKeyDown
-            },
-            header ? header(props) : null,
-            props.children
-          )
-        );
-      }
-      return Modal;
-    };
-  }
-});
-
 // packages/addons/vault/client/ui/dialog.cjs
 var require_dialog = __commonJS({
   "packages/addons/vault/client/ui/dialog.cjs"(exports2, module2) {
     "use strict";
     var createOverlay = require_overlay();
+    var stagedFactory = require_staged_dialog();
     var GLYPHS2 = require_icons2().ICONS;
     var Dialog = createOverlay({
       tag: "div",
@@ -1972,7 +2272,44 @@ var require_dialog = __commonJS({
         )
       );
     }
-    module2.exports = { Dialog, ConfirmDialog };
+    var FormDialog = stagedFactory.createStagedDialog({
+      tag: "div",
+      maskClass: "wbv-modal",
+      dialogClass: "wbv-modal-box",
+      displayName: "VaultFormDialog",
+      ariaLabelledByOf: function(props) {
+        return props.titleId || null;
+      },
+      header: function(props) {
+        var h = props.h;
+        if (!props.title && !props.onClose) return null;
+        var Close = GLYPHS2["x"];
+        return h(
+          "div",
+          { className: "wbv-modal-head" },
+          props.title ? h("h3", { className: "wbv-modal-title", id: props.titleId }, props.title) : h("span", null),
+          props.onClose ? h(
+            "button",
+            {
+              type: "button",
+              className: "wbv-icon-btn",
+              "aria-label": props.closeLabel || "\u5173\u95ED",
+              title: props.closeLabel || "\u5173\u95ED",
+              disabled: !!props.submitting,
+              onClick: props.onClose
+            },
+            Close ? h(Close, { size: 15, strokeWidth: 2, "aria-hidden": true, focusable: false }) : "\xD7"
+          ) : null
+        );
+      },
+      closeOnEscape: function(props) {
+        return !props.submitting;
+      },
+      closeOnMask: function(props) {
+        return !props.submitting;
+      }
+    });
+    module2.exports = { Dialog, ConfirmDialog, FormDialog };
   }
 });
 
@@ -2353,6 +2690,7 @@ var require_secrets = __commonJS({
     var AskPassphrase = require_ask_passphrase();
     var Dialog = require_dialog().Dialog;
     var ConfirmDialog = require_dialog().ConfirmDialog;
+    var FormDialog = require_dialog().FormDialog;
     var iconLabel = require_icon_label();
     var SecretField = require_secret_field();
     var Lock2 = require_lock();
@@ -2654,7 +2992,7 @@ var require_secrets = __commonJS({
         h(P.PageHead, {
           h,
           title: "\u51ED\u636E\u5E93",
-          sub: "\u51ED\u636E\u6309\u300C\u96C6\u5408\u300D\u7EC4\u7EC7\uFF1A\u4E00\u6761\u51ED\u636E\u53EF\u4EE5\u8FDB\u591A\u4E2A\u96C6\u5408\uFF0C\u4E00\u4E2A\u96C6\u5408\u53EF\u4EE5\u6302\u5230\u591A\u4E2A\u5206\u7EC4\u3002\u660E\u6587\u53EA\u5728\u672C\u673A\u89E3\u9501\u540E\u53EF\u89C1\u3002",
+          sub: "\u51ED\u636E\u6309\u300C\u96C6\u5408\u4E0E\u8D26\u53F7\u300D\u7EC4\u7EC7\uFF1A\u4E00\u6761\u51ED\u636E\u53EF\u4EE5\u8FDB\u591A\u4E2A\u96C6\u5408\uFF0C\u4E00\u4E2A\u96C6\u5408\u53EF\u4EE5\u6807\u4E00\u4E2A\u8D26\u53F7\u3001\u6302\u5230\u591A\u4E2A\u5206\u7EC4\u3002\u660E\u6587\u53EA\u5728\u672C\u673A\u89E3\u9501\u540E\u53EF\u89C1\u3002",
           actions: [
             h(C.Btn, { h, key: "refresh", onClick: load }, iconLabel(h, Refresh, "\u5237\u65B0")),
             locked ? h(C.Btn, { h, key: "unlock", kind: "primary", onClick: function() {
@@ -2669,7 +3007,7 @@ var require_secrets = __commonJS({
           h(P.Input, {
             h,
             className: "wbv-search",
-            placeholder: "\u641C\u7D22\u540D\u79F0\u3001\u5907\u6CE8\u6216\u96C6\u5408",
+            placeholder: "\u641C\u7D22\u540D\u79F0\u3001\u5907\u6CE8\u6216\u96C6\u5408\u4E0E\u8D26\u53F7",
             "aria-label": "\u641C\u7D22\u51ED\u636E",
             value: qS[0],
             onChange: function(e) {
@@ -2706,109 +3044,150 @@ var require_secrets = __commonJS({
             h,
             icon: KeyIcon,
             title: filtered ? "\u6CA1\u6709\u5339\u914D\u7684\u51ED\u636E" : "\u8FD8\u6CA1\u6709\u51ED\u636E",
-            hint: filtered ? "\u6362\u4E2A\u5173\u952E\u8BCD\u6216\u7C7B\u578B\u8BD5\u8BD5\u3002" : "\u65B0\u589E\u4E00\u6761\u540E\uFF0C\u628A\u5B83\u52A0\u5165\u96C6\u5408\uFF1B\u7AD9\u70B9\u8D26\u53F7\u4F1A\u81EA\u52A8\u7528\u8D26\u53F7 id \u4F5C\u4E3A\u96C6\u5408\u540D\u3002"
+            hint: filtered ? "\u6362\u4E2A\u5173\u952E\u8BCD\u6216\u7C7B\u578B\u8BD5\u8BD5\u3002" : "\u65B0\u589E\u4E00\u6761\u540E\uFF0C\u628A\u5B83\u52A0\u5165\u96C6\u5408\uFF1B\u7AD9\u70B9\u8D26\u53F7\u4F1A\u81EA\u52A8\u7528\u8D26\u53F7 id \u4F5C\u4E3A\u96C6\u5408\u540D\uFF0C\u5E76\u628A\u767B\u5F55\u540D\u5199\u8FDB\u8D26\u53F7\u3002"
           },
           filtered ? null : h(C.Btn, { h, kind: "primary", onClick: startCreate }, iconLabel(h, Plus2, "\u65B0\u589E\u51ED\u636E"))
         ) : h(P.DataTable, { h, label: "\u51ED\u636E\u5217\u8868", columns, rows, renderRow }),
-        editingS[0] ? h(
-          Dialog,
-          {
-            h,
-            React,
-            title: formS[0].id ? "\u7F16\u8F91\u51ED\u636E" : "\u65B0\u589E\u51ED\u636E",
-            titleId: "wbv-secret-form-title",
-            busy: busyS[0],
-            onClose: busyS[0] ? null : closeForm,
-            closeOnEscape: !busyS[0],
-            closeOnMask: !busyS[0],
-            autoFocus: false
-          },
-          h(
-            "div",
-            { className: "wbv-modal-body" },
-            h(
-              C.Field,
-              { h, label: "\u540D\u79F0" },
-              h(P.Input, {
-                h,
-                value: formS[0].name,
-                autoFocus: true,
-                placeholder: "\u5982 \u5DE5\u4F5C\u90AE\u7BB1 / GitHub",
-                onChange: function(e) {
-                  formS[1](Object.assign({}, formS[0], { name: e.target.value }));
-                }
-              })
-            ),
-            h(
-              C.Field,
-              { h, label: "\u7C7B\u578B" },
-              h(P.Select, {
-                h,
-                value: formS[0].kind,
-                onChange: function(e) {
-                  formS[1](Object.assign({}, formS[0], { kind: e.target.value }));
-                }
-              }, K.CREATABLE_KINDS.map(function(k) {
-                return h("option", { key: k, value: k }, KIND_LABEL[k]);
-              }))
-            ),
-            h(
-              C.Field,
-              { h, label: formS[0].id ? "\u65B0\u660E\u6587\uFF08\u7559\u7A7A\u4E0D\u8F6E\u6362\uFF09" : "\u660E\u6587" },
-              h(SecretField, {
-                h,
-                show: showSecretS[0],
-                value: formS[0].secret,
-                placeholder: formS[0].id ? "\u4E0D\u4FEE\u6539\u8BF7\u7559\u7A7A" : "\u5BC6\u7801 / \u624B\u673A\u53F7 / \u8BC1\u4EF6\u53F7 / token",
-                onChange: function(v) {
-                  formS[1](Object.assign({}, formS[0], { secret: v }));
-                },
-                onToggle: function() {
-                  showSecretS[1](!showSecretS[0]);
-                }
-              })
-            ),
-            h(
-              C.Field,
-              { h, label: "\u6240\u5C5E\u96C6\u5408\uFF08\u53EF\u591A\u9009\uFF09", hint: setsS[0].length ? "\u52FE\u9009\u540E\u4FDD\u5B58\u65F6\u540C\u6B65\u6302\u8F7D/\u6458\u9664" : "\u8FD8\u6CA1\u6709\u96C6\u5408\uFF0C\u53EF\u5148\u5728\u300C\u96C6\u5408\u300D\u9875\u65B0\u5EFA" },
-              setsS[0].length ? h("div", { className: "wbv-check-list" }, setsS[0].map(function(s) {
-                var on = (formS[0].setIds || []).indexOf(s.id) >= 0;
-                return h(
-                  "label",
-                  { key: s.id, className: "wbv-check" },
-                  h("input", { type: "checkbox", checked: on, onChange: function() {
-                    toggleSet(s.id);
-                  } }),
-                  h("span", { className: "wbv-dot", style: { background: s.color || "var(--wb-accent)" } }),
-                  h("span", null, s.name),
-                  h("span", { className: "wbv-muted" }, " \xB7 " + (s.secretCount || 0) + " \u6761")
+        editingS[0] ? h(FormDialog, {
+          h,
+          React,
+          title: formS[0].id ? "\u7F16\u8F91\u51ED\u636E" : "\u65B0\u589E\u51ED\u636E",
+          titleId: "wbv-secret-form-title",
+          bodyClassName: "wbv-modal-body",
+          steps: [
+            {
+              key: "basic",
+              label: "\u57FA\u672C\u4FE1\u606F",
+              hint: "\u540D\u79F0\u4E0E\u7C7B\u578B",
+              render: function(hh) {
+                return hh(
+                  "div",
+                  { className: "wbctl-form" },
+                  hh(
+                    C.Field,
+                    { h: hh, label: "\u540D\u79F0" },
+                    hh(P.Input, {
+                      h: hh,
+                      value: formS[0].name,
+                      placeholder: "\u5982 \u5DE5\u4F5C\u90AE\u7BB1 / GitHub",
+                      onChange: function(e) {
+                        formS[1](Object.assign({}, formS[0], { name: e.target.value }));
+                      }
+                    })
+                  ),
+                  hh(
+                    C.Field,
+                    { h: hh, label: "\u7C7B\u578B" },
+                    hh(P.Select, {
+                      h: hh,
+                      value: formS[0].kind,
+                      onChange: function(e) {
+                        formS[1](Object.assign({}, formS[0], { kind: e.target.value }));
+                      }
+                    }, K.CREATABLE_KINDS.map(function(k) {
+                      return hh("option", { key: k, value: k }, KIND_LABEL[k]);
+                    }))
+                  )
                 );
-              })) : h("span", { className: "wbv-muted" }, "\u2014")
-            ),
-            h(
-              C.Field,
-              { h, label: "\u5907\u6CE8", hint: "\u975E\u654F\u611F\u4FE1\u606F\uFF08\u7528\u6237\u540D\u3001URL\u3001\u8FC7\u671F\u63D0\u9192\uFF09" },
-              h(P.Input, {
-                h,
-                value: formS[0].note || "",
-                placeholder: "\u4F8B\u5982\uFF1A\u7528\u6237\u540D\u3001URL\u3001\u8FC7\u671F\u63D0\u9192",
-                onChange: function(e) {
-                  formS[1](Object.assign({}, formS[0], { note: e.target.value }));
-                }
-              })
-            ),
-            h(C.Notice, { h, kind: "error", text: msgS[0] })
-          ),
-          h(
-            "div",
-            { className: "wbv-modal-foot" },
-            h("span", { className: "wbv-grow" }),
-            h(C.Btn, { h, disabled: busyS[0], onClick: closeForm }, "\u53D6\u6D88"),
-            h(C.Btn, { h, kind: "primary", disabled: busyS[0], onClick: function() {
-              save(false);
-            } }, busyS[0] ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58")
-          )
-        ) : null,
+              },
+              validate: function() {
+                return formS[0].name.trim() ? "" : "\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A";
+              }
+            },
+            {
+              key: "secret",
+              label: "\u660E\u6587",
+              hint: formS[0].id ? "\u7559\u7A7A\u4E0D\u8F6E\u6362" : "\u5FC5\u586B",
+              render: function(hh) {
+                return hh(
+                  "div",
+                  { className: "wbctl-form" },
+                  hh(
+                    "div",
+                    { className: "full" },
+                    hh(
+                      C.Field,
+                      { h: hh, label: formS[0].id ? "\u65B0\u660E\u6587\uFF08\u7559\u7A7A\u4E0D\u8F6E\u6362\uFF09" : "\u660E\u6587", hint: "\u660E\u6587\u53EA\u5728\u4FDD\u5B58\u65F6\u53D1\u7ED9\u4FDD\u9669\u7BB1\uFF0C\u754C\u9762\u4E0D\u56DE\u663E\u5DF2\u5B58\u503C" },
+                      hh(SecretField, {
+                        h: hh,
+                        show: showSecretS[0],
+                        value: formS[0].secret,
+                        placeholder: formS[0].id ? "\u4E0D\u4FEE\u6539\u8BF7\u7559\u7A7A" : "\u5BC6\u7801 / \u624B\u673A\u53F7 / \u8BC1\u4EF6\u53F7 / token",
+                        onChange: function(v) {
+                          formS[1](Object.assign({}, formS[0], { secret: v }));
+                        },
+                        onToggle: function() {
+                          showSecretS[1](!showSecretS[0]);
+                        }
+                      })
+                    )
+                  )
+                );
+              },
+              validate: function() {
+                return formS[0].id || formS[0].secret ? "" : "\u65B0\u589E\u51ED\u636E\u5FC5\u987B\u586B\u5199\u660E\u6587";
+              }
+            },
+            {
+              key: "meta",
+              label: "\u96C6\u5408\u4E0E\u5907\u6CE8",
+              optional: true,
+              render: function(hh) {
+                return hh(
+                  "div",
+                  { className: "wbctl-form" },
+                  hh(
+                    "div",
+                    { className: "full" },
+                    hh(
+                      C.Field,
+                      { h: hh, label: "\u6240\u5C5E\u96C6\u5408\uFF08\u53EF\u591A\u9009\uFF09", hint: setsS[0].length ? "\u52FE\u9009\u540E\u4FDD\u5B58\u65F6\u540C\u6B65\u6302\u8F7D/\u6458\u9664" : "\u8FD8\u6CA1\u6709\u96C6\u5408\uFF0C\u53EF\u5148\u5728\u300C\u96C6\u5408\u300D\u9875\u65B0\u5EFA" },
+                      setsS[0].length ? hh("div", { className: "wbv-check-list" }, setsS[0].map(function(s) {
+                        var on = (formS[0].setIds || []).indexOf(s.id) >= 0;
+                        return hh(
+                          "label",
+                          { key: s.id, className: "wbv-check" },
+                          hh("input", { type: "checkbox", checked: on, onChange: function() {
+                            toggleSet(s.id);
+                          } }),
+                          hh("span", { className: "wbv-dot", style: { background: s.color || "var(--wb-accent)" } }),
+                          hh("span", null, s.name),
+                          hh("span", { className: "wbv-muted" }, " \xB7 " + (s.secretCount || 0) + " \u6761")
+                        );
+                      })) : hh("span", { className: "wbv-muted" }, "\u2014")
+                    )
+                  ),
+                  hh(
+                    "div",
+                    { className: "full" },
+                    hh(
+                      C.Field,
+                      { h: hh, label: "\u5907\u6CE8", hint: "\u975E\u654F\u611F\u4FE1\u606F\uFF08\u7528\u6237\u540D\u3001URL\u3001\u8FC7\u671F\u63D0\u9192\uFF09" },
+                      hh(P.Input, {
+                        h: hh,
+                        value: formS[0].note || "",
+                        placeholder: "\u4F8B\u5982\uFF1A\u7528\u6237\u540D\u3001URL\u3001\u8FC7\u671F\u63D0\u9192",
+                        onChange: function(e) {
+                          formS[1](Object.assign({}, formS[0], { note: e.target.value }));
+                        }
+                      })
+                    )
+                  )
+                );
+              }
+            }
+          ],
+          submitting: busyS[0],
+          error: msgS[0],
+          onClose: busyS[0] ? null : closeForm,
+          onSubmit: function() {
+            save(false);
+          },
+          submitText: "\u4FDD\u5B58",
+          cancelText: "\u53D6\u6D88",
+          nextText: "\u4E0B\u4E00\u6B65",
+          backText: "\u4E0A\u4E00\u6B65"
+        }) : null,
         unlockS[0] ? h(AskPassphrase, {
           h,
           React,
@@ -2930,6 +3309,7 @@ var require_sets = __commonJS({
       var activeS = React.useState(null);
       var detailS = React.useState({ setId: "", secrets: [], groups: [], error: "" });
       var qS = React.useState("");
+      var typeS = React.useState("");
       var msgS = React.useState("");
       var busyS = React.useState(false);
       var draftS = React.useState(null);
@@ -2947,7 +3327,7 @@ var require_sets = __commonJS({
           return Object.assign({}, old, { loading: true });
         });
         Promise.all([
-          C.call(api, "vault.setList", { q: qS[0] }),
+          C.call(api, "vault.setList", { q: qS[0], type: typeS[0] || void 0 }),
           C.call(api, "vault.secretList", {}),
           C.call(api, "vault.groupList", {})
         ]).then(function(r) {
@@ -2997,11 +3377,11 @@ var require_sets = __commonJS({
         });
       }
       function startCreate() {
-        draftS[1]({ name: "", description: "", color: "" });
+        draftS[1]({ name: "", account: "", description: "", color: "" });
         msgS[1]("");
       }
       function startEdit(set) {
-        draftS[1]({ id: set.id, name: set.name, description: set.description || "", color: set.color || "" });
+        draftS[1]({ id: set.id, name: set.name, account: set.account || "", description: set.description || "", color: set.color || "" });
         msgS[1]("");
       }
       function saveDraft() {
@@ -3009,7 +3389,12 @@ var require_sets = __commonJS({
         if (!d || !String(d.name || "").trim()) return msgS[1]("\u96C6\u5408\u540D\u4E0D\u80FD\u4E3A\u7A7A");
         busyS[1](true);
         msgS[1]("");
-        var body = { name: String(d.name).trim(), description: d.description || "", color: d.color || "" };
+        var body = {
+          name: String(d.name).trim(),
+          account: String(d.account || "").trim(),
+          description: d.description || "",
+          color: d.color || ""
+        };
         var req = d.id ? C.call(api, "vault.setUpdate", Object.assign({ id: d.id }, body)) : C.call(api, "vault.setCreate", body);
         req.then(function() {
           busyS[1](false);
@@ -3083,7 +3468,7 @@ var require_sets = __commonJS({
       var items = listS[0].items.filter(function(set) {
         var q = qS[0].trim();
         if (!q) return true;
-        return (set.name || "").indexOf(q) >= 0 || (set.description || "").indexOf(q) >= 0;
+        return (set.name || "").indexOf(q) >= 0 || (set.account || "").indexOf(q) >= 0 || (set.description || "").indexOf(q) >= 0;
       });
       var detail = detailS[0];
       var inSet = {};
@@ -3107,11 +3492,11 @@ var require_sets = __commonJS({
         { className: "wbv" },
         h(P.PageHead, {
           h,
-          title: "\u51ED\u636E\u96C6\u5408",
-          sub: "\u4E00\u4E2A\u96C6\u5408\u53EF\u4EE5\u6302\u5230\u591A\u4E2A\u5206\u7EC4\u3001\u88C5\u591A\u6761\u51ED\u636E\uFF1B\u5220\u9664\u96C6\u5408\u53EA\u65AD\u5173\u8054\uFF0C\u4E0D\u5220\u51ED\u636E\u3002",
+          title: "\u96C6\u5408\u4E0E\u8D26\u53F7",
+          sub: "\u4E00\u4E2A\u96C6\u5408\u53EF\u4EE5\u6807\u4E00\u4E2A\u8D26\u53F7\uFF08\u53EF\u91CD\u590D\u3001\u53EF\u7559\u7A7A\uFF09\uFF0C\u5E76\u6302\u5230\u591A\u4E2A\u5206\u7EC4\u3001\u88C5\u591A\u6761\u51ED\u636E\uFF1B\u5220\u9664\u96C6\u5408\u53EA\u65AD\u5173\u8054\uFF0C\u4E0D\u5220\u51ED\u636E\u3002",
           actions: [
             h(C.Btn, { h, key: "refresh", onClick: load }, "\u5237\u65B0"),
-            h(C.Btn, { h, key: "create", kind: "primary", onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408")
+            h(C.Btn, { h, key: "create", kind: "primary", onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408\u4E0E\u8D26\u53F7")
           ]
         }),
         h(
@@ -3120,13 +3505,28 @@ var require_sets = __commonJS({
           h(P.Input, {
             h,
             className: "wbv-search",
-            placeholder: "\u641C\u7D22\u96C6\u5408\u540D\u6216\u63CF\u8FF0",
-            "aria-label": "\u641C\u7D22\u96C6\u5408",
+            placeholder: "\u641C\u7D22\u96C6\u5408\u540D\u3001\u8D26\u53F7\u6216\u63CF\u8FF0",
+            "aria-label": "\u641C\u7D22\u96C6\u5408\u4E0E\u8D26\u53F7",
             value: qS[0],
             onChange: function(e) {
               qS[1](e.target.value);
             }
           }),
+          h(
+            P.Select,
+            {
+              h,
+              "aria-label": "\u6309\u96C6\u5408\u7C7B\u578B\u7B5B\u9009",
+              value: typeS[0],
+              onChange: function(e) {
+                typeS[1](e.target.value);
+                load();
+              }
+            },
+            h("option", { value: "" }, "\u5168\u90E8\u7C7B\u578B"),
+            h("option", { value: "account" }, "\u8D26\u53F7\u96C6\u5408"),
+            h("option", { value: "common" }, "\u666E\u901A\u96C6\u5408")
+          ),
           h("span", { className: "wbv-toolbar-tail" }),
           h("span", { className: "wbv-muted" }, listS[0].loading ? "\u8BFB\u53D6\u4E2D\u2026" : items.length + " \u4E2A\u96C6\u5408")
         ),
@@ -3140,9 +3540,9 @@ var require_sets = __commonJS({
             listS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u96C6\u5408\u2026" }) : items.length === 0 ? h(P.EmptyState, {
               h,
               icon: Layers2,
-              title: qS[0] ? "\u6CA1\u6709\u5339\u914D\u7684\u96C6\u5408" : "\u8FD8\u6CA1\u6709\u96C6\u5408",
-              hint: qS[0] ? "\u6362\u4E2A\u5173\u952E\u8BCD\u8BD5\u8BD5\u3002" : "\u65B0\u5EFA\u4E00\u4E2A\u540E\uFF0C\u53EF\u4EE5\u628A\u51ED\u636E\u548C\u5206\u7EC4\u90FD\u6302\u8FDB\u6765\u3002"
-            }, h(C.Btn, { h, kind: "primary", onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408")) : items.map(function(set) {
+              title: qS[0] || typeS[0] ? "\u6CA1\u6709\u5339\u914D\u7684\u96C6\u5408\u4E0E\u8D26\u53F7" : "\u8FD8\u6CA1\u6709\u96C6\u5408\u4E0E\u8D26\u53F7",
+              hint: qS[0] || typeS[0] ? "\u6362\u4E2A\u5173\u952E\u8BCD\u6216\u7C7B\u578B\u8BD5\u8BD5\u3002" : "\u65B0\u5EFA\u4E00\u4E2A\u540E\uFF0C\u53EF\u4EE5\u628A\u8D26\u53F7\u3001\u51ED\u636E\u548C\u5206\u7EC4\u90FD\u6302\u8FDB\u6765\u3002"
+            }, h(C.Btn, { h, kind: "primary", onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408\u4E0E\u8D26\u53F7")) : items.map(function(set) {
               var on = active && active.id === set.id;
               return h(
                 "button",
@@ -3159,13 +3559,14 @@ var require_sets = __commonJS({
                   { className: "wbv-item-top" },
                   h("span", { className: "wbv-dot", style: set.color ? { background: set.color } : null }),
                   h("span", { className: "wbv-item-title" }, set.name),
+                  h("span", { className: "wbv-pill" }, set.type === "account" ? "\u8D26\u53F7\u96C6\u5408" : "\u666E\u901A\u96C6\u5408"),
                   h("span", { className: "wbv-grow" }),
                   h("span", { className: "wbv-pill" }, (set.secretCount || 0) + " \u6761")
                 ),
                 h(
                   "div",
                   { className: "wbv-item-sub" },
-                  (set.description || "\u2014") + " \xB7 " + (set.groupIds || []).length + " \u4E2A\u5206\u7EC4"
+                  (set.account ? "\u8D26\u53F7 " + set.account : "\u672A\u586B\u8D26\u53F7") + " \xB7 " + (set.description || "\u2014") + " \xB7 " + (set.groupIds || []).length + " \u4E2A\u5206\u7EC4"
                 )
               );
             })
@@ -3190,6 +3591,11 @@ var require_sets = __commonJS({
                     removeSet(active);
                   } }, "\u5220\u9664\u96C6\u5408")
                 )
+              ),
+              h(
+                "div",
+                { className: "wbv-muted", style: { marginBottom: "10px" } },
+                (active.type === "account" ? "\u8D26\u53F7\u96C6\u5408" : "\u666E\u901A\u96C6\u5408") + " \xB7 \u8D26\u53F7\uFF1A" + (active.account || "\u672A\u586B")
               ),
               detail.error ? h(C.Notice, { h, kind: "error", text: detail.error }) : null,
               h("div", { className: "wbv-label" }, "\u96C6\u5408\u5185\u51ED\u636E"),
@@ -3275,7 +3681,7 @@ var require_sets = __commonJS({
           {
             h,
             React,
-            title: draftS[0].id ? "\u7F16\u8F91\u96C6\u5408" : "\u65B0\u5EFA\u96C6\u5408",
+            title: draftS[0].id ? "\u7F16\u8F91\u96C6\u5408\u4E0E\u8D26\u53F7" : "\u65B0\u5EFA\u96C6\u5408\u4E0E\u8D26\u53F7",
             titleId: "wbv-set-form-title",
             busy: busyS[0],
             onClose: busyS[0] ? null : function() {
@@ -3298,6 +3704,18 @@ var require_sets = __commonJS({
                 placeholder: "\u5982 acc_1 / \u5DE5\u4F5C\u90AE\u7BB1",
                 onChange: function(e) {
                   draftS[1](Object.assign({}, draftS[0], { name: e.target.value }));
+                }
+              })
+            ),
+            h(
+              C.Field,
+              { h, label: "\u8D26\u53F7\uFF08\u53EF\u9009\uFF09", hint: "\u53EF\u91CD\u590D\u3001\u53EF\u7559\u7A7A\uFF1B\u7559\u7A7A\u5373\u666E\u901A\u96C6\u5408\uFF0C\u6709\u503C\u5373\u8D26\u53F7\u96C6\u5408\uFF0C\u6761\u76EE\u53EA\u6309 id \u533A\u5206" },
+              h(P.Input, {
+                h,
+                value: draftS[0].account,
+                placeholder: "\u5982 ops@example.com",
+                onChange: function(e) {
+                  draftS[1](Object.assign({}, draftS[0], { account: e.target.value }));
                 }
               })
             ),
@@ -3643,7 +4061,7 @@ var require_groups = __commonJS({
               return !ok;
             }).length;
             createS[1](null);
-            msgS[1](failed ? "\u5206\u7EC4\u5DF2\u521B\u5EFA\uFF0C" + failed + " \u4E2A\u96C6\u5408\u6302\u8F7D\u5931\u8D25\uFF0C\u53EF\u5728\u300C\u67E5\u770B\u5173\u8054\u300D\u91CC\u8865\u6302" : "");
+            msgS[1](failed ? "\u5206\u7EC4\u5DF2\u521B\u5EFA\uFF0C" + failed + " \u4E2A\u96C6\u5408\u4E0E\u8D26\u53F7\u6302\u8F7D\u5931\u8D25\uFF0C\u53EF\u5728\u300C\u67E5\u770B\u5173\u8054\u300D\u91CC\u8865\u6302" : "");
             load();
           });
         }).catch(function(e) {
@@ -3712,7 +4130,7 @@ var require_groups = __commonJS({
       var columns = [
         { key: "name", label: "\u5206\u7EC4" },
         { key: "description", label: "\u63CF\u8FF0" },
-        { key: "sets", label: "\u96C6\u5408" },
+        { key: "sets", label: "\u96C6\u5408\u4E0E\u8D26\u53F7" },
         { key: "secrets", label: "\u51ED\u636E", align: "right" },
         { key: "bindings", label: "\u5173\u8054\u5BF9\u8C61", align: "right" },
         { key: "ops", label: "\u64CD\u4F5C", align: "right" }
@@ -3726,7 +4144,7 @@ var require_groups = __commonJS({
           h("td", null, row.description || "\u2014"),
           h("td", null, sets.length ? h("div", { className: "wbv-chips" }, sets.map(function(set) {
             return h("span", { key: set.id, className: "wbv-chip" }, set.name);
-          })) : h("span", { className: "wbv-muted" }, "\u672A\u6302\u96C6\u5408")),
+          })) : h("span", { className: "wbv-muted" }, "\u672A\u6302\u96C6\u5408\u4E0E\u8D26\u53F7")),
           h("td", { className: "wbv-right" }, row.secretCount || 0),
           h("td", { className: "wbv-right" }, row.bindingCount || 0),
           h("td", null, h(
@@ -3806,7 +4224,7 @@ var require_groups = __commonJS({
             ),
             h(
               C.Field,
-              { h, label: "\u96C6\u5408\uFF08\u53EF\u591A\u9009\uFF09", hint: "\u52FE\u9009\u7684\u96C6\u5408\u4F1A\u4E00\u5E76\u6302\u5230\u8FD9\u4E2A\u5206\u7EC4" },
+              { h, label: "\u96C6\u5408\u4E0E\u8D26\u53F7\uFF08\u53EF\u591A\u9009\uFF09", hint: "\u52FE\u9009\u7684\u96C6\u5408\u4F1A\u4E00\u5E76\u6302\u5230\u8FD9\u4E2A\u5206\u7EC4" },
               h(FilterChecklist, {
                 items: pickS[0].rows.slice(0, pickS[0].page * PICK_PAGE).map(function(set) {
                   return { id: set.id, name: set.name, meta: (set.secretCount || 0) + " \u6761" };
@@ -3815,17 +4233,17 @@ var require_groups = __commonJS({
                 onToggle: toggleCreateSet,
                 query: pickS[0].q,
                 onQuery: pickQuery,
-                title: "\u5168\u90E8\u96C6\u5408",
+                title: "\u5168\u90E8\u96C6\u5408\u4E0E\u8D26\u53F7",
                 total: pickS[0].rows.length,
                 selectedText: "\u5DF2\u9009",
                 clearText: "\u6E05\u7A7A",
                 onClear: pickClear,
-                searchPlaceholder: "\u641C\u7D22\u96C6\u5408\u540D\u79F0\u6216\u63CF\u8FF0",
+                searchPlaceholder: "\u641C\u7D22\u96C6\u5408\u540D\u3001\u8D26\u53F7\u6216\u63CF\u8FF0",
                 loading: pickS[0].loading,
                 hasMore: pickS[0].page * PICK_PAGE < pickS[0].rows.length,
                 onLoadMore: pickMore,
-                emptyText: "\u8FD8\u6CA1\u6709\u96C6\u5408\uFF0C\u53EF\u5148\u5EFA\u7EC4\uFF0C\u518D\u5230\u300C\u96C6\u5408\u300D\u9875\u65B0\u5EFA",
-                noMatchText: "\u6CA1\u6709\u5339\u914D\u7684\u96C6\u5408",
+                emptyText: "\u8FD8\u6CA1\u6709\u96C6\u5408\u4E0E\u8D26\u53F7\uFF0C\u53EF\u5148\u5EFA\u7EC4\uFF0C\u518D\u5230\u300C\u96C6\u5408\u4E0E\u8D26\u53F7\u300D\u9875\u65B0\u5EFA",
+                noMatchText: "\u6CA1\u6709\u5339\u914D\u7684\u96C6\u5408\u4E0E\u8D26\u53F7",
                 noMoreText: pickS[0].rows.length > PICK_PAGE ? "\u6CA1\u6709\u66F4\u591A" : "",
                 loadingText: "\u52A0\u8F7D\u4E2D\u2026",
                 disabled: createS[0].busy,
@@ -3906,7 +4324,7 @@ var require_groups = __commonJS({
                 h("span", null, set.name),
                 h("span", { className: "wbv-muted" }, " \xB7 " + (set.secretCount || 0) + " \u6761")
               );
-            }) : h("span", { className: "wbv-muted" }, "\u8FD8\u6CA1\u6709\u96C6\u5408")),
+            }) : h("span", { className: "wbv-muted" }, "\u8FD8\u6CA1\u6709\u96C6\u5408\u4E0E\u8D26\u53F7")),
             openS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u4E2D\u2026" }) : openS[0].error ? h(C.Notice, { h, kind: "error", text: openS[0].error }) : openS[0].items.length === 0 ? h(P.EmptyState, { h, title: "\u8FD8\u6CA1\u6709\u6A21\u5757\u5173\u8054\u5230\u8FD9\u4E2A\u5206\u7EC4", hint: "\u5173\u8054\u7531\u4E1A\u52A1\u6A21\u5757\u901A\u8FC7 vault.bind \u6CE8\u518C\uFF0C\u8FD9\u91CC\u53EA\u8BFB\u3002" }) : h(P.DataTable, {
               h,
               label: "\u5173\u8054\u5BF9\u8C61",
@@ -6096,12 +6514,12 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.3.15",
+    version: "0.4.0",
     icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },
       { id: "secrets", icon: tabIcon("key"), title: { zh: "\u51ED\u636E", en: "Secrets" }, component: withProps(require_secrets(), "\u51ED\u636E") },
-      { id: "sets", icon: tabIcon("layers"), title: { zh: "\u96C6\u5408", en: "Sets" }, component: withProps(require_sets(), "\u96C6\u5408") },
+      { id: "sets", icon: tabIcon("layers"), title: { zh: "\u96C6\u5408\u4E0E\u8D26\u53F7", en: "Sets & Accounts" }, component: withProps(require_sets(), "\u96C6\u5408\u4E0E\u8D26\u53F7") },
       { id: "groups", icon: tabIcon("folder"), title: { zh: "\u5206\u7EC4\u4E0E\u5173\u8054", en: "Groups" }, component: withProps(require_groups(), "\u5206\u7EC4\u4E0E\u5173\u8054") },
       { id: "config", icon: tabIcon("sliders"), title: { zh: "\u8BBE\u7F6E", en: "Settings" }, component: withProps(require_config(), "\u8BBE\u7F6E") },
       { id: "data", icon: tabIcon("database"), title: { zh: "\u6570\u636E", en: "Data" }, component: withProps(require_data(), "\u6570\u636E") },

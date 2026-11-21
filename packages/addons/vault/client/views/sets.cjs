@@ -1,6 +1,7 @@
 "use strict";
 /**
- * 集合页：集合可复用（挂多个分组、装多条凭据）；这里做列表、详情与关联管理。
+ * 集合与账号页：集合可复用（挂多个分组、装多条凭据），并可标一个账号；
+ * 有账号的是「账号集合」，留空的是「普通集合」，条目只按 id 区分。
  * 页面骨架与弹层外壳分别来自 ui/page.cjs、ui/dialog.cjs。
  */
 var C = require("../ui/common.cjs");
@@ -25,9 +26,10 @@ module.exports = function SetsView(props) {
   var activeS = React.useState(null); // { set, loading }
   var detailS = React.useState({ setId: "", secrets: [], groups: [], error: "" });
   var qS = React.useState("");
+  var typeS = React.useState(""); // "" | account | common
   var msgS = React.useState("");
   var busyS = React.useState(false);
-  var draftS = React.useState(null); // { id?, name, description, color }
+  var draftS = React.useState(null); // { id?, name, account, description, color }
   var pickS = React.useState([]); // 待加入集合的凭据 id
   var delS = React.useState(null); // { set } 删除确认
   // 未解锁守卫：锁定期间三个列表接口都不发；在途响应按序号作废，避免迟到的明文回填。
@@ -42,7 +44,7 @@ module.exports = function SetsView(props) {
     var seq = (inflight.seq += 1);
     listS[1](function (old) { return Object.assign({}, old, { loading: true }); });
     Promise.all([
-      C.call(api, "vault.setList", { q: qS[0] }),
+      C.call(api, "vault.setList", { q: qS[0], type: typeS[0] || undefined }),
       C.call(api, "vault.secretList", {}),
       C.call(api, "vault.groupList", {}),
     ]).then(function (r) {
@@ -96,12 +98,12 @@ module.exports = function SetsView(props) {
   }
 
   function startCreate() {
-    draftS[1]({ name: "", description: "", color: "" });
+    draftS[1]({ name: "", account: "", description: "", color: "" });
     msgS[1]("");
   }
 
   function startEdit(set) {
-    draftS[1]({ id: set.id, name: set.name, description: set.description || "", color: set.color || "" });
+    draftS[1]({ id: set.id, name: set.name, account: set.account || "", description: set.description || "", color: set.color || "" });
     msgS[1]("");
   }
 
@@ -109,7 +111,12 @@ module.exports = function SetsView(props) {
     var d = draftS[0];
     if (!d || !String(d.name || "").trim()) return msgS[1]("集合名不能为空");
     busyS[1](true); msgS[1]("");
-    var body = { name: String(d.name).trim(), description: d.description || "", color: d.color || "" };
+    var body = {
+      name: String(d.name).trim(),
+      account: String(d.account || "").trim(),
+      description: d.description || "",
+      color: d.color || "",
+    };
     var req = d.id
       ? C.call(api, "vault.setUpdate", Object.assign({ id: d.id }, body))
       : C.call(api, "vault.setCreate", body);
@@ -175,7 +182,9 @@ module.exports = function SetsView(props) {
   var items = listS[0].items.filter(function (set) {
     var q = qS[0].trim();
     if (!q) return true;
-    return (set.name || "").indexOf(q) >= 0 || (set.description || "").indexOf(q) >= 0;
+    return (set.name || "").indexOf(q) >= 0
+      || (set.account || "").indexOf(q) >= 0
+      || (set.description || "").indexOf(q) >= 0;
   });
   var detail = detailS[0];
   var inSet = {};
@@ -196,22 +205,31 @@ module.exports = function SetsView(props) {
   return h("div", { className: "wbv" },
     h(P.PageHead, {
       h: h,
-      title: "凭据集合",
-      sub: "一个集合可以挂到多个分组、装多条凭据；删除集合只断关联，不删凭据。",
+      title: "集合与账号",
+      sub: "一个集合可以标一个账号（可重复、可留空），并挂到多个分组、装多条凭据；删除集合只断关联，不删凭据。",
       actions: [
         h(C.Btn, { h: h, key: "refresh", onClick: load }, "刷新"),
-        h(C.Btn, { h: h, key: "create", kind: "primary", onClick: startCreate }, "新建集合"),
+        h(C.Btn, { h: h, key: "create", kind: "primary", onClick: startCreate }, "新建集合与账号"),
       ],
     }),
     h(P.Toolbar, { h: h },
       h(P.Input, {
         h: h,
         className: "wbv-search",
-        placeholder: "搜索集合名或描述",
-        "aria-label": "搜索集合",
+        placeholder: "搜索集合名、账号或描述",
+        "aria-label": "搜索集合与账号",
         value: qS[0],
         onChange: function (e) { qS[1](e.target.value); },
       }),
+      h(P.Select, {
+        h: h,
+        "aria-label": "按集合类型筛选",
+        value: typeS[0],
+        onChange: function (e) { typeS[1](e.target.value); load(); },
+      },
+        h("option", { value: "" }, "全部类型"),
+        h("option", { value: "account" }, "账号集合"),
+        h("option", { value: "common" }, "普通集合")),
       h("span", { className: "wbv-toolbar-tail" }),
       h("span", { className: "wbv-muted" }, listS[0].loading ? "读取中…" : items.length + " 个集合")),
     h(C.Notice, { h: h, kind: "error", text: listS[0].error || msgS[0] }),
@@ -224,9 +242,9 @@ module.exports = function SetsView(props) {
             ? h(P.EmptyState, {
                 h: h,
                 icon: Layers,
-                title: qS[0] ? "没有匹配的集合" : "还没有集合",
-                hint: qS[0] ? "换个关键词试试。" : "新建一个后，可以把凭据和分组都挂进来。",
-              }, h(C.Btn, { h: h, kind: "primary", onClick: startCreate }, "新建集合"))
+                title: qS[0] || typeS[0] ? "没有匹配的集合与账号" : "还没有集合与账号",
+                hint: qS[0] || typeS[0] ? "换个关键词或类型试试。" : "新建一个后，可以把账号、凭据和分组都挂进来。",
+              }, h(C.Btn, { h: h, kind: "primary", onClick: startCreate }, "新建集合与账号"))
             : items.map(function (set) {
                 var on = active && active.id === set.id;
                 return h("button", {
@@ -238,10 +256,13 @@ module.exports = function SetsView(props) {
                   h("div", { className: "wbv-item-top" },
                     h("span", { className: "wbv-dot", style: set.color ? { background: set.color } : null }),
                     h("span", { className: "wbv-item-title" }, set.name),
+                    h("span", { className: "wbv-pill" }, set.type === "account" ? "账号集合" : "普通集合"),
                     h("span", { className: "wbv-grow" }),
                     h("span", { className: "wbv-pill" }, (set.secretCount || 0) + " 条")),
                   h("div", { className: "wbv-item-sub" },
-                    (set.description || "—") + " · " + (set.groupIds || []).length + " 个分组"));
+                    (set.account ? "账号 " + set.account : "未填账号")
+                      + " · " + (set.description || "—")
+                      + " · " + (set.groupIds || []).length + " 个分组"));
               })),
 
       h(P.Card, { h: h },
@@ -253,6 +274,9 @@ module.exports = function SetsView(props) {
                 h("div", { className: "wbv-card-actions" },
                   h(C.Btn, { h: h, onClick: function () { startEdit(active); } }, "编辑"),
                   h(C.Btn, { h: h, kind: "danger", onClick: function () { removeSet(active); } }, "删除集合"))),
+              h("div", { className: "wbv-muted", style: { marginBottom: "10px" } },
+                (active.type === "account" ? "账号集合" : "普通集合")
+                  + " · 账号：" + (active.account || "未填")),
               detail.error ? h(C.Notice, { h: h, kind: "error", text: detail.error }) : null,
               h("div", { className: "wbv-label" }, "集合内凭据"),
               detail.secrets.length === 0
@@ -302,7 +326,7 @@ module.exports = function SetsView(props) {
     draftS[0] ? h(Dialog, {
       h: h,
       React: React,
-      title: draftS[0].id ? "编辑集合" : "新建集合",
+      title: draftS[0].id ? "编辑集合与账号" : "新建集合与账号",
       titleId: "wbv-set-form-title",
       busy: busyS[0],
       onClose: busyS[0] ? null : function () { draftS[1](null); },
@@ -318,6 +342,13 @@ module.exports = function SetsView(props) {
             value: draftS[0].name,
             placeholder: "如 acc_1 / 工作邮箱",
             onChange: function (e) { draftS[1](Object.assign({}, draftS[0], { name: e.target.value })); },
+          })),
+        h(C.Field, { h: h, label: "账号（可选）", hint: "可重复、可留空；留空即普通集合，有值即账号集合，条目只按 id 区分" },
+          h(P.Input, {
+            h: h,
+            value: draftS[0].account,
+            placeholder: "如 ops@example.com",
+            onChange: function (e) { draftS[1](Object.assign({}, draftS[0], { account: e.target.value })); },
           })),
         h(C.Field, { h: h, label: "描述" },
           h(P.Input, {

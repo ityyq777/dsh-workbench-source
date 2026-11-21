@@ -132,7 +132,7 @@ module.exports = function GroupsView(props) {
       })).then(function (results) {
         var failed = results.filter(function (ok) { return !ok; }).length;
         createS[1](null);
-        msgS[1](failed ? "分组已创建，" + failed + " 个集合挂载失败，可在「查看关联」里补挂" : "");
+        msgS[1](failed ? "分组已创建，" + failed + " 个集合与账号挂载失败，可在「查看关联」里补挂" : "");
         load();
       });
     }).catch(function (e) { patchCreate({ busy: false, error: C.errText(e) }); });
@@ -194,7 +194,7 @@ module.exports = function GroupsView(props) {
   var columns = [
     { key: "name", label: "分组" },
     { key: "description", label: "描述" },
-    { key: "sets", label: "集合" },
+    { key: "sets", label: "集合与账号" },
     { key: "secrets", label: "凭据", align: "right" },
     { key: "bindings", label: "关联对象", align: "right" },
     { key: "ops", label: "操作", align: "right" },
@@ -207,7 +207,7 @@ module.exports = function GroupsView(props) {
       h("td", null, row.description || "—"),
       h("td", null, sets.length
         ? h("div", { className: "wbv-chips" }, sets.map(function (set) { return h("span", { key: set.id, className: "wbv-chip" }, set.name); }))
-        : h("span", { className: "wbv-muted" }, "未挂集合")),
+        : h("span", { className: "wbv-muted" }, "未挂集合与账号")),
       h("td", { className: "wbv-right" }, row.secretCount || 0),
       h("td", { className: "wbv-right" }, row.bindingCount || 0),
       h("td", null, h("div", { className: "wbv-actions" },
@@ -267,7 +267,7 @@ module.exports = function GroupsView(props) {
             disabled: createS[0].busy,
             onChange: function (e) { patchCreate({ description: e.target.value }); },
           })),
-        h(C.Field, { h: h, label: "集合（可多选）", hint: "勾选的集合会一并挂到这个分组" },
+        h(C.Field, { h: h, label: "集合与账号（可多选）", hint: "勾选的集合会一并挂到这个分组" },
           h(FilterChecklist, {
             items: pickS[0].rows.slice(0, pickS[0].page * PICK_PAGE).map(function (set) {
               return { id: set.id, name: set.name, meta: (set.secretCount || 0) + " 条" };
@@ -276,17 +276,17 @@ module.exports = function GroupsView(props) {
             onToggle: toggleCreateSet,
             query: pickS[0].q,
             onQuery: pickQuery,
-            title: "全部集合",
+            title: "全部集合与账号",
             total: pickS[0].rows.length,
             selectedText: "已选",
             clearText: "清空",
             onClear: pickClear,
-            searchPlaceholder: "搜索集合名称或描述",
+            searchPlaceholder: "搜索集合名、账号或描述",
             loading: pickS[0].loading,
             hasMore: pickS[0].page * PICK_PAGE < pickS[0].rows.length,
             onLoadMore: pickMore,
-            emptyText: "还没有集合，可先建组，再到「集合」页新建",
-            noMatchText: "没有匹配的集合",
+            emptyText: "还没有集合与账号，可先建组，再到「集合与账号」页新建",
+            noMatchText: "没有匹配的集合与账号",
             noMoreText: pickS[0].rows.length > PICK_PAGE ? "没有更多" : "",
             loadingText: "加载中…",
             disabled: createS[0].busy,
@@ -337,7 +337,7 @@ module.exports = function GroupsView(props) {
             h("span", { className: "wbv-dot", style: { background: set.color || "var(--wb-accent)" } }),
             h("span", null, set.name),
             h("span", { className: "wbv-muted" }, " · " + (set.secretCount || 0) + " 条"));
-        }) : h("span", { className: "wbv-muted" }, "还没有集合")),
+        }) : h("span", { className: "wbv-muted" }, "还没有集合与账号")),
         openS[0].loading ? h(C.Empty, { h: h, text: "读取中…" })
           : openS[0].error ? h(C.Notice, { h: h, kind: "error", text: openS[0].error })
           : openS[0].items.length === 0 ? h(P.EmptyState, { h: h, title: "还没有模块关联到这个分组", hint: "关联由业务模块通过 vault.bind 注册，这里只读。" })

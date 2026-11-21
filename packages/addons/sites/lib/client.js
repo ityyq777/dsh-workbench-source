@@ -596,6 +596,305 @@ var require_overlay = __commonJS({
   }
 });
 
+// packages/addons/lib/stepper.cjs
+var require_stepper = __commonJS({
+  "packages/addons/lib/stepper.cjs"(exports2, module2) {
+    "use strict";
+    function stepState(index, current, maxVisited) {
+      if (index === current) return "current";
+      if (index < current) return "done";
+      if (index <= maxVisited) return "visited";
+      return "todo";
+    }
+    function Steps(props) {
+      var h2 = props.h;
+      var steps = props.steps || [];
+      var current = props.current || 0;
+      var maxVisited = props.maxVisited === void 0 ? current : props.maxVisited;
+      var invalid = props.invalid || {};
+      var disabled = !!props.disabled;
+      var label = props.label || "\u6B65\u9AA4";
+      return h2(
+        "nav",
+        { className: "wbctl-steps" + (props.className ? " " + props.className : ""), "aria-label": label },
+        h2(
+          "ol",
+          { className: "wbctl-step-list" },
+          steps.map(function(step, index) {
+            var state = stepState(index, current, maxVisited);
+            var canJump = !disabled && typeof props.onJump === "function" && state !== "current" && state !== "todo";
+            var isInvalid = !!invalid[index] || !!invalid[step.key];
+            return h2(
+              "li",
+              { key: step.key || index, className: "wbctl-step-item" },
+              h2(
+                "button",
+                {
+                  type: "button",
+                  className: "wbctl-step",
+                  "data-state": state,
+                  "data-invalid": isInvalid ? "true" : null,
+                  "aria-current": state === "current" ? "step" : void 0,
+                  "aria-label": index + 1 + " \xB7 " + step.label + (state === "done" ? "\uFF08\u5DF2\u5B8C\u6210\uFF09" : ""),
+                  disabled: disabled || state === "todo",
+                  title: step.hint || "",
+                  onClick: function() {
+                    if (canJump) props.onJump(index);
+                  }
+                },
+                h2("span", { className: "wbctl-step-index", "aria-hidden": "true" }, state === "done" ? "\u2713" : String(index + 1)),
+                h2("span", { className: "wbctl-step-label" }, step.label),
+                step.hint ? h2("span", { className: "wbctl-step-hint" }, step.hint) : null,
+                step.optional ? h2("span", { className: "wbctl-step-opt" }, "\u53EF\u9009") : null
+              )
+            );
+          })
+        )
+      );
+    }
+    var STYLES = [
+      ".wbctl-steps{display:block;min-width:0}",
+      ".wbctl-step-list{display:flex;align-items:stretch;gap:6px;list-style:none;margin:0 0 14px;padding:0;min-width:0}",
+      ".wbctl-step-item{display:flex;flex:1 1 0;min-width:0}",
+      ".wbctl-step{display:flex;align-items:center;gap:7px;flex:1 1 auto;min-width:0;padding:7px 9px;border:1px solid var(--wb-line,var(--wb-border));border-radius:10px;background:transparent;color:var(--wb-muted,inherit);font:inherit;font-size:12px;line-height:1.35;text-align:left;cursor:default;transition:background .14s ease,border-color .14s ease,color .14s ease}",
+      ".wbctl-step[data-state=done],.wbctl-step[data-state=visited]{color:inherit;cursor:pointer}",
+      ".wbctl-step[data-state=done]{border-color:color-mix(in oklab,var(--wb-ok,var(--wb-accent,#2563eb)) 36%,var(--wb-border))}",
+      ".wbctl-step[data-state=current]{border-color:color-mix(in oklab,var(--wb-accent,#2563eb) 58%,var(--wb-border));background:color-mix(in oklab,var(--wb-accent,#2563eb) 8%,transparent);color:inherit;font-weight:600}",
+      ".wbctl-step[data-state=visited]:hover,.wbctl-step[data-state=done]:hover{background:color-mix(in oklab,currentColor 7%,transparent)}",
+      ".wbctl-step[data-invalid=true]{border-color:var(--wb-danger,#d33)}",
+      ".wbctl-step:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+      ".wbctl-step:disabled{cursor:default;opacity:.72}",
+      ".wbctl-step-index{display:inline-flex;align-items:center;justify-content:center;flex:none;width:20px;height:20px;border-radius:50%;font-size:11px;font-variant-numeric:tabular-nums;background:color-mix(in oklab,currentColor 15%,transparent)}",
+      ".wbctl-step[data-state=current] .wbctl-step-index{background:var(--wb-accent,#2563eb);color:var(--wb-on-accent,#fff)}",
+      ".wbctl-step[data-state=done] .wbctl-step-index{background:color-mix(in oklab,var(--wb-ok,var(--wb-accent,#2563eb)) 20%,transparent);color:var(--wb-ok,var(--wb-accent,#2563eb))}",
+      ".wbctl-step-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbctl-step-hint{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:400;opacity:.62}",
+      ".wbctl-step-opt{flex:none;font-size:10px;font-weight:400;opacity:.55}",
+      "@media (max-width:760px){.wbctl-step{padding:6px 7px;font-size:11.5px}.wbctl-step-hint,.wbctl-step-opt{display:none}.wbctl-step-index{width:18px;height:18px;font-size:10px}}",
+      "@media (max-width:520px){.wbctl-step-list{gap:4px}.wbctl-step-label{white-space:normal}.wbctl-step{gap:5px}}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-step{transition:none}}"
+    ];
+    module2.exports = { Steps, stepState, styles: STYLES };
+  }
+});
+
+// packages/addons/lib/staged-dialog.cjs
+var require_staged_dialog = __commonJS({
+  "packages/addons/lib/staged-dialog.cjs"(exports2, module2) {
+    "use strict";
+    var defaultReact = require("react");
+    var overlayFactory = require_overlay();
+    var stepper = require_stepper();
+    function validateStep(step) {
+      if (!step || typeof step.validate !== "function") return "";
+      var message = step.validate();
+      return message ? String(message) : "";
+    }
+    function firstFailing(steps) {
+      var list = steps || [];
+      for (var i = 0; i < list.length; i += 1) {
+        var message = validateStep(list[i]);
+        if (message) return { index: i, key: list[i] && list[i].key, message };
+      }
+      return null;
+    }
+    function createStagedDialog(options) {
+      var opts = options || {};
+      var React2 = opts.React || defaultReact;
+      var h2 = React2.createElement;
+      var dialogClass = ((opts.dialogClass || "") + " wbctl-dialog").trim();
+      var Overlay = overlayFactory(
+        Object.assign({}, opts, {
+          React: React2,
+          dialogClass,
+          // 首焦点由外壳送进对话框，字段由 focusStep 负责，避免打开瞬间落进第一个输入框。
+          autoFocusDialog: opts.autoFocusDialog !== false
+        })
+      );
+      function StagedDialog(props) {
+        var R = props.React || React2;
+        var steps = props.steps || [];
+        var count = steps.length;
+        var busy = !!props.submitting || !!props.busy;
+        var indexState = R.useState(props.initialStep || 0);
+        var rawIndex = indexState[0];
+        var setIndex = indexState[1];
+        var index = count === 0 ? 0 : Math.min(Math.max(rawIndex, 0), count - 1);
+        var visitedState = R.useState(props.initialStep || 0);
+        var maxVisited = count === 0 ? 0 : Math.min(Math.max(visitedState[0], index), count - 1);
+        var setMaxVisited = visitedState[1];
+        var errorState = R.useState("");
+        var stepError = errorState[0];
+        var setStepError = errorState[1];
+        var invalidState = R.useState({});
+        var invalid = invalidState[0];
+        var setInvalid = invalidState[1];
+        var bodyRef = R.useRef(null);
+        var mounted = R.useRef(true);
+        function runValidate(step) {
+          return validateStep(step);
+        }
+        function markInvalid(i, bad) {
+          setInvalid(function(prev) {
+            var next2 = Object.assign({}, prev);
+            if (bad) next2[i] = true;
+            else delete next2[i];
+            return next2;
+          });
+        }
+        function focusBody() {
+          var el = bodyRef.current;
+          if (el && typeof el.focus === "function") el.focus();
+        }
+        R.useEffect(
+          function() {
+            if (!mounted.current) return;
+            focusBody();
+          },
+          [index]
+        );
+        R.useEffect(function() {
+          mounted.current = true;
+          return function() {
+            mounted.current = false;
+          };
+        }, []);
+        function goTo(i) {
+          if (busy || i < 0 || i >= count) return;
+          setIndex(i);
+          if (i > maxVisited) setMaxVisited(i);
+          setStepError("");
+        }
+        function fail(i, message) {
+          markInvalid(i, true);
+          goTo(i);
+          setStepError(message);
+          focusBody();
+        }
+        function next() {
+          if (busy) return;
+          var message = runValidate(steps[index]);
+          if (message) {
+            fail(index, message);
+            return;
+          }
+          markInvalid(index, false);
+          goTo(Math.min(index + 1, count - 1));
+        }
+        function back() {
+          if (busy || index === 0) return;
+          goTo(index - 1);
+        }
+        function jump(i) {
+          if (busy || i > maxVisited) return;
+          goTo(i);
+        }
+        function submit() {
+          if (busy) return;
+          var bad = firstFailing(steps);
+          if (bad) {
+            fail(bad.index, bad.message);
+            return;
+          }
+          for (var i = 0; i < count; i++) markInvalid(i, false);
+          setStepError("");
+          if (typeof props.onSubmit === "function") props.onSubmit();
+        }
+        function cancel() {
+          if (busy) return;
+          if (typeof props.onClose === "function") props.onClose();
+        }
+        var current = steps[index];
+        var isLast = index >= count - 1;
+        var saveText = props.submitText || "\u4FDD\u5B58";
+        var shownError = stepError || props.error || "";
+        return h2(
+          Overlay,
+          props,
+          count > 1 ? h2(stepper.Steps, {
+            h: h2,
+            steps: steps.map(function(step) {
+              return { key: step.key, label: step.label, hint: step.hint, optional: step.optional };
+            }),
+            current: index,
+            maxVisited,
+            onJump: jump,
+            invalid,
+            disabled: busy,
+            label: props.stepsLabel || "\u521B\u5EFA\u6B65\u9AA4"
+          }) : null,
+          h2(
+            "div",
+            {
+              className: "wbctl-dialog-body" + (props.bodyClassName ? " " + props.bodyClassName : ""),
+              ref: bodyRef,
+              tabIndex: -1
+            },
+            current ? current.render(h2, props) : null
+          ),
+          props.footerExtra || null,
+          shownError ? h2("div", { className: "wbctl-dialog-err", role: "alert" }, shownError) : null,
+          h2(
+            "div",
+            { className: "wbctl-dialog-foot" },
+            count > 1 ? h2("span", { className: "wbctl-dialog-progress" }, index + 1 + " / " + count) : null,
+            props.footerNote ? h2("span", { className: "wbctl-dialog-note" }, props.footerNote) : null,
+            h2("span", { className: "wbctl-dialog-spacer" }),
+            index > 0 ? h2(
+              "button",
+              { type: "button", className: "wbctl-btn", onClick: back, disabled: busy },
+              props.backText || "\u4E0A\u4E00\u6B65"
+            ) : null,
+            h2("button", { type: "button", className: "wbctl-btn", onClick: cancel, disabled: busy }, props.cancelText || "\u53D6\u6D88"),
+            h2(
+              "button",
+              {
+                type: "button",
+                className: "wbctl-btn wbctl-btn-p",
+                onClick: isLast ? submit : next,
+                // submitDisabled 只作用于末步的保存：插件据此把「结构性不合法」（JSON 语法、无可选 action）
+                // 提前反映成禁用态，避免用户点到保存才被弹回第一步。
+                disabled: busy || isLast && !!props.submitDisabled
+              },
+              busy ? saveText + "\u4E2D\u2026" : isLast ? saveText : props.nextText || "\u4E0B\u4E00\u6B65"
+            )
+          )
+        );
+      }
+      StagedDialog.displayName = opts.displayName || "StagedDialog";
+      return StagedDialog;
+    }
+    var STYLES = [
+      // 宽表单：内容多时给足横向空间，窄屏留 16px 边距后铺满。
+      ".wbctl-dialog{width:min(880px,calc(100vw - 32px));max-height:min(92vh,760px);display:flex;flex-direction:column;overflow:hidden}",
+      ".wbctl-dialog-body{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;padding:2px 2px 10px;outline:none}",
+      ".wbctl-dialog-body:focus-visible{outline:none}",
+      ".wbctl-dialog-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-top:10px;margin-top:10px;border-top:1px solid var(--wb-line,var(--wb-border))}",
+      ".wbctl-dialog-progress{font-size:11.5px;color:var(--wb-muted,#666);font-variant-numeric:tabular-nums}",
+      ".wbctl-dialog-note{font-size:11.5px;color:var(--wb-muted,#666);min-width:0}",
+      ".wbctl-dialog-spacer{flex:1 1 auto}",
+      ".wbctl-dialog-err{margin-top:8px;padding:7px 10px;border-radius:8px;border:1px solid color-mix(in oklab,var(--wb-danger,#d33) 45%,transparent);background:color-mix(in oklab,var(--wb-danger,#d33) 8%,transparent);color:var(--wb-danger,#d33);font-size:12px}",
+      ".wbctl-btn{padding:6px 14px;border:1px solid var(--wb-border,#d0d5dd);border-radius:8px;background:var(--wb-card,#fff);color:inherit;font:inherit;font-size:12.5px;cursor:pointer}",
+      ".wbctl-btn:hover:not(:disabled){background:color-mix(in oklab,currentColor 7%,transparent)}",
+      ".wbctl-btn:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+      ".wbctl-btn:disabled{opacity:.55;cursor:default}",
+      ".wbctl-btn.wbctl-btn-p{background:var(--wb-accent,#2563eb);border-color:transparent;color:var(--wb-on-accent,#fff)}",
+      ".wbctl-btn.wbctl-btn-p:hover:not(:disabled){background:color-mix(in oklab,var(--wb-accent,#2563eb) 86%,#000)}",
+      // 确认步：键值对清单，各插件共用，避免再各写一套只读摘要。\n  ".wbctl-review{display:flex;flex-direction:column;border:1px solid var(--wb-line,var(--wb-border));border-radius:10px;overflow:hidden}",\n  ".wbctl-review-row{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;padding:8px 12px;font-size:12.5px;background:var(--wb-surface,transparent)}",\n  ".wbctl-review-row+.wbctl-review-row{border-top:1px solid var(--wb-line,var(--wb-border))}",\n  ".wbctl-review-k{color:var(--wb-muted,inherit);font-size:11.5px;line-height:1.6}",\n  ".wbctl-review-v{min-width:0;word-break:break-word;line-height:1.6}",\n  ".wbctl-note{margin:10px 0 0;font-size:11.5px;color:var(--wb-muted,inherit)}",\n  // 两列字段布局：内容多的弹窗不再单列拉长，窄屏回落单列。
+      ".wbctl-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px}",
+      ".wbctl-form>.full{grid-column:1/-1}",
+      "@media (max-width:760px){.wbctl-dialog{width:calc(100vw - 16px);max-height:94vh}.wbctl-form{grid-template-columns:1fr}.wbctl-form>.full{grid-column:auto}}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-btn{transition:none}}"
+    ];
+    module2.exports = {
+      createStagedDialog,
+      validateStep,
+      firstFailing,
+      styles: STYLES
+    };
+  }
+});
+
 // packages/addons/lib/date-picker.cjs
 var require_date_picker = __commonJS({
   "packages/addons/lib/date-picker.cjs"(exports2, module2) {
@@ -5496,7 +5795,7 @@ var require_styles = __commonJS({
       ".wbs-toast{position:fixed;left:50%;bottom:38px;transform:translateX(-50%);z-index:1200;background:var(--dsw-alias-toast-bg,#26302d);color:var(--dsw-alias-toast-label,#fff);border-radius:8px;padding:8px 14px;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.22);max-width:80vw}",
       ".wbs-toast.err{background:var(--dsw-alias-state-error-primary,#9d332b)}",
       ".wbs-mask{position:fixed;inset:0;z-index:900;background:rgba(24,28,26,.34);display:flex;align-items:center;justify-content:center;padding:22px}",
-      ".wbs-modal{width:min(700px,96vw);max-height:88vh;overflow:auto;background:var(--dsw-alias-bg-layer-1,#fffdf7);border:1px solid var(--wbs-line);border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.24);padding:18px}",
+      // 分步表单的字段容器：两列排布，窄屏回落单列（宽度与步骤条来自 lib/staged-dialog.cjs）。\n    ".wbs-field{display:flex;flex-direction:column;gap:5px;min-width:0}",\n    ".wbs-field.full{grid-column:1 / -1}",\n    ".wbs-field .wbs-label{margin:0}",\n    ".wbs-modal{width:min(700px,96vw);max-height:88vh;overflow:auto;background:var(--dsw-alias-bg-layer-1,#fffdf7);border:1px solid var(--wbs-line);border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.24);padding:18px}",
       ".wbs-modal.small{width:min(430px,94vw)}",
       ".wbs-modal-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:650;margin-bottom:4px}",
       ".wbs-modal-title .wbs-svg{color:var(--wbs-accent);opacity:.85;flex:none}",
@@ -5528,7 +5827,7 @@ var require_styles = __commonJS({
       ".wbs-note{font-size:11px;color:var(--wbs-muted);line-height:1.6}",
       "@media(max-width:860px){.wbs-body{flex-direction:column}.wbs-tree{width:100%;max-height:220px}.wbs-table{min-width:760px}.wbs-root{min-height:0}}",
       "@media(max-width:600px){.wbs-head h2{font-size:18px}.wbs-linkrow{grid-template-columns:1fr 1fr}.wbs-modal{padding:14px}}"
-    ].concat(require_filter_checklist_styles()).concat(require_client_base_styles().secretFieldStyles).concat([require_date_picker_styles()("wbs")]).concat(require_switch().styles).join("\n");
+    ].concat(require_stepper().styles, require_staged_dialog().styles).concat(require_filter_checklist_styles()).concat(require_client_base_styles().secretFieldStyles).concat([require_date_picker_styles()("wbs")]).concat(require_switch().styles).join("\n");
   }
 });
 
@@ -6810,6 +7109,7 @@ var React = require("react");
 var h = React.createElement;
 var TagFilter = require_tagfilter();
 var createOverlay = require_overlay();
+var staged = require_staged_dialog();
 (function() {
   var host = window.__WB_HOST__;
   if (!host) {
@@ -6888,6 +7188,28 @@ var createOverlay = require_overlay();
       return props.small ? " small" : "";
     }
   });
+  var SiteFormDialog = staged.createStagedDialog({
+    React: React2,
+    tag: "div",
+    displayName: "SiteFormDialog",
+    maskClass: "wbs-mask",
+    dialogClass: "wbs-modal",
+    header: function(p) {
+      return h2(
+        "div",
+        { className: "wbs-modal-title" },
+        h2(Icon2, { name: p.mode === "edit" ? "edit" : "plus", size: 15 }),
+        p.title,
+        h2("button", { type: "button", className: "wbs-mini wbs-modal-x", title: p.cancelLabel, disabled: !!p.submitting, onClick: p.onClose }, h2(Icon2, { name: "x", size: 15 }))
+      );
+    },
+    closeOnEscape: function(p) {
+      return !p.submitting;
+    },
+    closeOnMask: function(p) {
+      return !p.submitting;
+    }
+  });
   function SiteFormModal(props) {
     var api = props.api;
     var lang = props.lang || "zh";
@@ -6895,8 +7217,6 @@ var createOverlay = require_overlay();
     var site = props.site;
     var current = props.current || { id: "0", path: [] };
     var tagOn = !!props.tagOn;
-    var maxStep = tagOn ? 2 : 1;
-    var [step, setStep] = useState(0);
     var [name, setName] = useState(site ? site.siteName : "");
     var [desc, setDesc] = useState(site ? site.description : "");
     var [links, setLinks] = useState(function() {
@@ -6990,33 +7310,23 @@ var createOverlay = require_overlay();
     }
     function removeLink(index) {
       setLinks(function(prev) {
-        var next2 = prev.filter(function(_, i) {
+        var next = prev.filter(function(_, i) {
           return i !== index;
         });
-        return next2.length ? next2 : [{ description: "", link: "" }];
+        return next.length ? next : [{ description: "", link: "" }];
       });
       if (defaultIdx === index) setDefaultIdx(0);
       else if (defaultIdx > index) setDefaultIdx(defaultIdx - 1);
     }
-    function validate(toStep) {
-      if (toStep >= 1 && !String(name).trim()) {
-        setError(text(lang, "requiredName"));
-        return false;
-      }
-      if (toStep >= 2 && !dirIds.length) {
-        setError(text(lang, "requiredDirs"));
-        return false;
-      }
-      setError("");
-      return true;
-    }
-    function next() {
-      if (step >= maxStep) return;
-      if (!validate(step + 1)) return;
-      setStep(step + 1);
-    }
     function save() {
-      if (!validate(2)) return;
+      if (!String(name).trim()) {
+        setError(text(lang, "requiredName"));
+        return;
+      }
+      if (!dirIds.length) {
+        setError(text(lang, "requiredDirs"));
+        return;
+      }
       setSaving(true);
       setError("");
       var siteLinks = links.filter(function(l) {
@@ -7047,170 +7357,199 @@ var createOverlay = require_overlay();
         setError(errText(e));
       });
     }
-    var steps = tagOn ? [text(lang, "step1"), text(lang, "step2"), text(lang, "step3")] : [text(lang, "step1"), text(lang, "step2")];
     var title = mode === "edit" ? text(lang, "editTitle") : text(lang, "createTitle");
-    return h2(
-      Modal,
-      { "aria-label": title, onClose: saving ? null : props.onClose },
-      h2(
-        "div",
-        { className: "wbs-modal-title" },
-        h2(Icon2, { name: mode === "edit" ? "edit" : "plus", size: 15 }),
-        title,
-        h2("button", { type: "button", className: "wbs-mini wbs-modal-x", title: text(lang, "cancel"), onClick: props.onClose }, h2(Icon2, { name: "x", size: 15 }))
-      ),
-      h2("div", { className: "wbs-steps" }, steps.map(function(s, i) {
-        return h2("span", { key: i, className: "wbs-step" + (i === step ? " on" : "") }, i + 1 + " \xB7 " + s);
-      })),
-      step === 0 ? h2(
-        "div",
-        null,
-        h2("label", { className: "wbs-label" }, text(lang, "siteName")),
-        h2("input", {
-          className: "wbs-input",
-          value: name,
-          autoFocus: true,
-          placeholder: text(lang, "siteNamePh"),
-          onChange: function(e) {
-            setName(e.target.value);
-          }
-        }),
-        h2("label", { className: "wbs-label" }, text(lang, "desc")),
-        h2("textarea", {
-          className: "wbs-textarea",
-          value: desc,
-          placeholder: text(lang, "descPh"),
-          onChange: function(e) {
-            setDesc(e.target.value);
-          }
-        }),
-        h2("label", { className: "wbs-label" }, text(lang, "linkList")),
-        links.map(function(l, i) {
-          return h2(
+    var steps = [
+      {
+        key: "basic",
+        label: text(lang, "step1"),
+        render: function(hh) {
+          return hh(
             "div",
-            { className: "wbs-linkrow", key: i },
-            h2("input", {
-              className: "wbs-input",
-              value: l.description,
-              placeholder: text(lang, "linkDesc"),
-              onChange: function(e) {
-                updateLink(i, "description", e.target.value);
-              }
-            }),
-            h2("input", {
-              className: "wbs-input",
-              value: l.link,
-              placeholder: text(lang, "linkUrl"),
-              onChange: function(e) {
-                updateLink(i, "link", e.target.value);
-              }
-            }),
-            h2(
-              "label",
-              { className: "wbs-radio", title: text(lang, "setDefault") },
-              h2("input", {
-                type: "radio",
-                name: "wbs-default-link",
-                checked: defaultIdx === i,
-                onChange: function() {
-                  setDefaultIdx(i);
+            { className: "wbctl-form" },
+            hh(
+              "div",
+              { className: "wbs-field" },
+              hh("label", { className: "wbs-label" }, text(lang, "siteName")),
+              hh("input", {
+                className: "wbs-input",
+                value: name,
+                placeholder: text(lang, "siteNamePh"),
+                onChange: function(e) {
+                  setName(e.target.value);
                 }
-              }),
-              text(lang, "default")
+              })
             ),
-            h2("button", { type: "button", className: "wbs-mini", title: text(lang, "removeLink"), onClick: function() {
-              removeLink(i);
-            } }, h2(Icon2, { name: "x", size: 13 }))
-          );
-        }),
-        h2("button", { type: "button", className: "wbs-btn sm", onClick: addLink }, h2(Icon2, { name: "plus", size: 13 }), text(lang, "addLink"))
-      ) : null,
-      step === 1 ? h2(
-        "div",
-        null,
-        h2("div", { className: "wbs-label" }, text(lang, "chooseDirs")),
-        !flatDirs.length ? h2("div", { className: "wbs-note" }, text(lang, "noDirs")) : h2(
-          "div",
-          { className: "wbs-dirlist" },
-          flatDirs.map(function(item) {
-            var id = String(item.node.id);
-            return h2(
-              "label",
-              {
-                key: id,
-                className: "wbs-dircheck",
-                style: { paddingLeft: 6 + item.depth * 16 }
-              },
-              h2("input", {
-                type: "checkbox",
-                checked: dirIds.indexOf(id) >= 0,
-                onChange: function() {
-                  toggleDir(id);
+            hh(
+              "div",
+              { className: "wbs-field" },
+              hh("label", { className: "wbs-label" }, text(lang, "desc")),
+              hh("textarea", {
+                className: "wbs-textarea",
+                rows: 3,
+                value: desc,
+                placeholder: text(lang, "descPh"),
+                onChange: function(e) {
+                  setDesc(e.target.value);
                 }
+              })
+            ),
+            hh(
+              "div",
+              { className: "wbs-field full" },
+              hh("label", { className: "wbs-label" }, text(lang, "linkList")),
+              links.map(function(l, i) {
+                return hh(
+                  "div",
+                  { className: "wbs-linkrow", key: i },
+                  hh("input", {
+                    className: "wbs-input",
+                    value: l.description,
+                    placeholder: text(lang, "linkDesc"),
+                    onChange: function(e) {
+                      updateLink(i, "description", e.target.value);
+                    }
+                  }),
+                  hh("input", {
+                    className: "wbs-input",
+                    value: l.link,
+                    placeholder: text(lang, "linkUrl"),
+                    onChange: function(e) {
+                      updateLink(i, "link", e.target.value);
+                    }
+                  }),
+                  hh(
+                    "label",
+                    { className: "wbs-radio", title: text(lang, "setDefault") },
+                    hh("input", {
+                      type: "radio",
+                      name: "wbs-default-link",
+                      checked: defaultIdx === i,
+                      onChange: function() {
+                        setDefaultIdx(i);
+                      }
+                    }),
+                    text(lang, "default")
+                  ),
+                  hh("button", { type: "button", className: "wbs-mini", title: text(lang, "removeLink"), onClick: function() {
+                    removeLink(i);
+                  } }, hh(Icon2, { name: "x", size: 13 }))
+                );
               }),
-              h2("span", null, item.node.name)
-            );
-          })
-        ),
-        h2("div", { className: "wbs-note", style: { marginTop: 8 } }, "\u7AD9\u70B9\u53EF\u540C\u65F6\u6302\u5728\u591A\u4E2A\u76EE\u5F55\u4E0B\uFF1B\u5217\u8868\u4F1A\u6309\u76EE\u5F55\u5B50\u6811\u8FC7\u6EE4\u3002")
-      ) : null,
-      tagOn && step === 2 ? h2(
-        "div",
-        null,
-        h2("div", { className: "wbs-label" }, text(lang, "chooseTags")),
-        tags.length ? h2("div", { className: "wbs-chips" }, tags.map(function(t) {
-          return h2(
-            "span",
-            { className: "wbs-chip", key: t.id },
-            t.name,
-            h2("button", { type: "button", onClick: function() {
-              toggleTag(t);
-            }, title: "\u79FB\u9664" }, h2(Icon2, { name: "x", size: 12 }))
+              hh("button", { type: "button", className: "wbs-btn sm", onClick: addLink }, hh(Icon2, { name: "plus", size: 13 }), text(lang, "addLink"))
+            )
           );
-        })) : h2("div", { className: "wbs-note" }, "\u6682\u672A\u9009\u62E9\u6807\u7B7E"),
-        h2(
-          "div",
-          { className: "wbs-tagsearch", style: { marginTop: 10 } },
-          h2("input", {
-            className: "wbs-input",
-            value: tagQuery,
-            placeholder: text(lang, "tagSearch"),
-            onChange: function(e) {
-              setTagQuery(e.target.value);
-            }
-          })
-        ),
-        h2("div", { className: "wbs-tagresults" }, tagResults.length ? tagResults.map(function(t) {
-          var on = tags.some(function(x) {
-            return x.id === t.id;
-          });
-          return h2(
-            "button",
-            {
-              key: t.id,
-              type: "button",
-              className: "wbs-tagresult" + (on ? " on" : ""),
-              onClick: function() {
-                toggleTag(t);
-              }
-            },
-            h2(Icon2, { name: on ? "check" : "plus", size: 12 }),
-            h2("span", null, t.name)
+        },
+        validate: function() {
+          return String(name).trim() ? "" : text(lang, "requiredName");
+        }
+      },
+      {
+        key: "dirs",
+        label: text(lang, "step2"),
+        render: function(hh) {
+          return hh(
+            "div",
+            { className: "wbs-field" },
+            hh("div", { className: "wbs-label" }, text(lang, "chooseDirs")),
+            !flatDirs.length ? hh("div", { className: "wbs-note" }, text(lang, "noDirs")) : hh(
+              "div",
+              { className: "wbs-dirlist" },
+              flatDirs.map(function(item) {
+                var id = String(item.node.id);
+                return hh(
+                  "label",
+                  {
+                    key: id,
+                    className: "wbs-dircheck",
+                    style: { paddingLeft: 6 + item.depth * 16 }
+                  },
+                  hh("input", {
+                    type: "checkbox",
+                    checked: dirIds.indexOf(id) >= 0,
+                    onChange: function() {
+                      toggleDir(id);
+                    }
+                  }),
+                  hh("span", null, item.node.name)
+                );
+              })
+            ),
+            hh("div", { className: "wbs-note", style: { marginTop: 8 } }, "\u7AD9\u70B9\u53EF\u540C\u65F6\u6302\u5728\u591A\u4E2A\u76EE\u5F55\u4E0B\uFF1B\u5217\u8868\u4F1A\u6309\u76EE\u5F55\u5B50\u6811\u8FC7\u6EE4\u3002")
           );
-        }) : h2("div", { className: "wbs-note", style: { padding: 6 } }, text(lang, "noTags"))),
-        h2("div", { className: "wbs-note", style: { marginTop: 8 } }, "\u6807\u7B7E\u7531\u6807\u7B7E\u5B50\u63D2\u4EF6\u63D0\u4F9B\uFF0C\u53EF\u591A\u9009\u3002")
-      ) : null,
-      h2(
-        "div",
-        { className: "wbs-formfoot" },
-        h2("div", { className: "wbs-formerr" }, error || ""),
-        step > 0 ? h2("button", { type: "button", className: "wbs-btn", disabled: saving, onClick: function() {
-          setStep(step - 1);
-        } }, h2(Icon2, { name: "chevron-left", size: 13 }), text(lang, "back")) : null,
-        h2("button", { type: "button", className: "wbs-btn", disabled: saving, onClick: props.onClose }, text(lang, "cancel")),
-        step < maxStep ? h2("button", { type: "button", className: "wbs-btn primary", onClick: next }, text(lang, "nextStep"), h2(Icon2, { name: "chevron-right", size: 13 })) : h2("button", { type: "button", className: "wbs-btn primary", disabled: saving, onClick: save }, h2(Icon2, { name: "check", size: 13 }), saving ? text(lang, "saving") : text(lang, "save"))
-      )
-    );
+        },
+        validate: function() {
+          return dirIds.length ? "" : text(lang, "requiredDirs");
+        }
+      },
+      tagOn ? {
+        key: "tags",
+        label: text(lang, "step3"),
+        optional: true,
+        render: function(hh) {
+          return hh(
+            "div",
+            { className: "wbs-field" },
+            hh("div", { className: "wbs-label" }, text(lang, "chooseTags")),
+            tags.length ? hh("div", { className: "wbs-chips" }, tags.map(function(t) {
+              return hh(
+                "span",
+                { className: "wbs-chip", key: t.id },
+                t.name,
+                hh("button", { type: "button", onClick: function() {
+                  toggleTag(t);
+                }, title: "\u79FB\u9664" }, hh(Icon2, { name: "x", size: 12 }))
+              );
+            })) : hh("div", { className: "wbs-note" }, "\u6682\u672A\u9009\u62E9\u6807\u7B7E"),
+            hh(
+              "div",
+              { className: "wbs-tagsearch", style: { marginTop: 10 } },
+              hh("input", {
+                className: "wbs-input",
+                value: tagQuery,
+                placeholder: text(lang, "tagSearch"),
+                onChange: function(e) {
+                  setTagQuery(e.target.value);
+                }
+              })
+            ),
+            hh("div", { className: "wbs-tagresults" }, tagResults.length ? tagResults.map(function(t) {
+              var on = tags.some(function(x) {
+                return x.id === t.id;
+              });
+              return hh(
+                "button",
+                {
+                  key: t.id,
+                  type: "button",
+                  className: "wbs-tagresult" + (on ? " on" : ""),
+                  onClick: function() {
+                    toggleTag(t);
+                  }
+                },
+                hh(Icon2, { name: on ? "check" : "plus", size: 12 }),
+                hh("span", null, t.name)
+              );
+            }) : hh("div", { className: "wbs-note", style: { padding: 6 } }, text(lang, "noTags"))),
+            hh("div", { className: "wbs-note", style: { marginTop: 8 } }, "\u6807\u7B7E\u7531\u6807\u7B7E\u5B50\u63D2\u4EF6\u63D0\u4F9B\uFF0C\u53EF\u591A\u9009\u3002")
+          );
+        }
+      } : null
+    ].filter(Boolean);
+    return h2(SiteFormDialog, {
+      title,
+      mode,
+      cancelLabel: text(lang, "cancel"),
+      steps,
+      submitting: saving,
+      error,
+      onClose: props.onClose,
+      onSubmit: save,
+      submitText: text(lang, "save"),
+      cancelText: text(lang, "cancel"),
+      nextText: text(lang, "nextStep"),
+      backText: text(lang, "back"),
+      stepsLabel: text(lang, "createTitle")
+    });
   }
   function DirModal(props) {
     var api = props.api;
@@ -8037,7 +8376,7 @@ var createOverlay = require_overlay();
   injectCss();
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.12.9",
+    version: "1.12.10",
     icon: icons.ICONS["globe"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },

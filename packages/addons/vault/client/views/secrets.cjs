@@ -12,6 +12,7 @@ var P = require("../ui/page.cjs");
 var AskPassphrase = require("../ui/ask-passphrase.cjs");
 var Dialog = require("../ui/dialog.cjs").Dialog;
 var ConfirmDialog = require("../ui/dialog.cjs").ConfirmDialog;
+var FormDialog = require("../ui/dialog.cjs").FormDialog;
 var iconLabel = require("../../../lib/icon-label.cjs");
 var SecretField = require("../../../lib/secret-field.cjs");
 var Lock = require("../ui/lock.cjs");
@@ -308,7 +309,7 @@ module.exports = function SecretsView(props) {
     h(P.PageHead, {
       h: h,
       title: "凭据库",
-      sub: "凭据按「集合」组织：一条凭据可以进多个集合，一个集合可以挂到多个分组。明文只在本机解锁后可见。",
+      sub: "凭据按「集合与账号」组织：一条凭据可以进多个集合，一个集合可以标一个账号、挂到多个分组。明文只在本机解锁后可见。",
       actions: [
         h(C.Btn, { h: h, key: "refresh", onClick: load }, iconLabel(h, Refresh, "刷新")),
         locked ? h(C.Btn, { h: h, key: "unlock", kind: "primary", onClick: function () { askUnlock(""); } }, iconLabel(h, Unlock, "解锁")) : null,
@@ -319,7 +320,7 @@ module.exports = function SecretsView(props) {
       h(P.Input, {
         h: h,
         className: "wbv-search",
-        placeholder: "搜索名称、备注或集合",
+        placeholder: "搜索名称、备注或集合与账号",
         "aria-label": "搜索凭据",
         value: qS[0],
         onChange: function (e) { qS[1](e.target.value); },
@@ -349,67 +350,89 @@ module.exports = function SecretsView(props) {
             title: filtered ? "没有匹配的凭据" : "还没有凭据",
             hint: filtered
               ? "换个关键词或类型试试。"
-              : "新增一条后，把它加入集合；站点账号会自动用账号 id 作为集合名。",
+              : "新增一条后，把它加入集合；站点账号会自动用账号 id 作为集合名，并把登录名写进账号。",
           },
             filtered ? null : h(C.Btn, { h: h, kind: "primary", onClick: startCreate }, iconLabel(h, Plus, "新增凭据")))
         : h(P.DataTable, { h: h, label: "凭据列表", columns: columns, rows: rows, renderRow: renderRow }),
 
-    editingS[0] ? h(Dialog, {
+    editingS[0] ? h(FormDialog, {
       h: h,
       React: React,
       title: formS[0].id ? "编辑凭据" : "新增凭据",
       titleId: "wbv-secret-form-title",
-      busy: busyS[0],
+      bodyClassName: "wbv-modal-body",
+      steps: [
+        {
+          key: "basic", label: "基本信息", hint: "名称与类型",
+          render: function (hh) {
+            return hh("div", { className: "wbctl-form" },
+              hh(C.Field, { h: hh, label: "名称" },
+                hh(P.Input, {
+                  h: hh,
+                  value: formS[0].name,
+                  placeholder: "如 工作邮箱 / GitHub",
+                  onChange: function (e) { formS[1](Object.assign({}, formS[0], { name: e.target.value })); },
+                })),
+              hh(C.Field, { h: hh, label: "类型" },
+                hh(P.Select, {
+                  h: hh,
+                  value: formS[0].kind,
+                  onChange: function (e) { formS[1](Object.assign({}, formS[0], { kind: e.target.value })); },
+                }, K.CREATABLE_KINDS.map(function (k) { return hh("option", { key: k, value: k }, KIND_LABEL[k]); }))));
+          },
+          validate: function () { return formS[0].name.trim() ? "" : "名称不能为空"; },
+        },
+        {
+          key: "secret", label: "明文", hint: formS[0].id ? "留空不轮换" : "必填",
+          render: function (hh) {
+            return hh("div", { className: "wbctl-form" },
+              hh("div", { className: "full" },
+                hh(C.Field, { h: hh, label: formS[0].id ? "新明文（留空不轮换）" : "明文", hint: "明文只在保存时发给保险箱，界面不回显已存值" },
+                  hh(SecretField, {
+                    h: hh,
+                    show: showSecretS[0],
+                    value: formS[0].secret,
+                    placeholder: formS[0].id ? "不修改请留空" : "密码 / 手机号 / 证件号 / token",
+                    onChange: function (v) { formS[1](Object.assign({}, formS[0], { secret: v })); },
+                    onToggle: function () { showSecretS[1](!showSecretS[0]); },
+                  }))));
+          },
+          validate: function () { return formS[0].id || formS[0].secret ? "" : "新增凭据必须填写明文"; },
+        },
+        {
+          key: "meta", label: "集合与备注", optional: true,
+          render: function (hh) {
+            return hh("div", { className: "wbctl-form" },
+              hh("div", { className: "full" },
+                hh(C.Field, { h: hh, label: "所属集合（可多选）", hint: setsS[0].length ? "勾选后保存时同步挂载/摘除" : "还没有集合，可先在「集合」页新建" },
+                  setsS[0].length ? hh("div", { className: "wbv-check-list" }, setsS[0].map(function (s) {
+                    var on = (formS[0].setIds || []).indexOf(s.id) >= 0;
+                    return hh("label", { key: s.id, className: "wbv-check" },
+                      hh("input", { type: "checkbox", checked: on, onChange: function () { toggleSet(s.id); } }),
+                      hh("span", { className: "wbv-dot", style: { background: s.color || "var(--wb-accent)" } }),
+                      hh("span", null, s.name),
+                      hh("span", { className: "wbv-muted" }, " · " + (s.secretCount || 0) + " 条"));
+                  })) : hh("span", { className: "wbv-muted" }, "—"))),
+              hh("div", { className: "full" },
+                hh(C.Field, { h: hh, label: "备注", hint: "非敏感信息（用户名、URL、过期提醒）" },
+                  hh(P.Input, {
+                    h: hh,
+                    value: formS[0].note || "",
+                    placeholder: "例如：用户名、URL、过期提醒",
+                    onChange: function (e) { formS[1](Object.assign({}, formS[0], { note: e.target.value })); },
+                  }))));
+          },
+        },
+      ],
+      submitting: busyS[0],
+      error: msgS[0],
       onClose: busyS[0] ? null : closeForm,
-      closeOnEscape: !busyS[0],
-      closeOnMask: !busyS[0],
-      autoFocus: false,
-    },
-      h("div", { className: "wbv-modal-body" },
-        h(C.Field, { h: h, label: "名称" },
-          h(P.Input, {
-            h: h,
-            value: formS[0].name,
-            autoFocus: true,
-            placeholder: "如 工作邮箱 / GitHub",
-            onChange: function (e) { formS[1](Object.assign({}, formS[0], { name: e.target.value })); },
-          })),
-        h(C.Field, { h: h, label: "类型" },
-          h(P.Select, {
-            h: h,
-            value: formS[0].kind,
-            onChange: function (e) { formS[1](Object.assign({}, formS[0], { kind: e.target.value })); },
-          }, K.CREATABLE_KINDS.map(function (k) { return h("option", { key: k, value: k }, KIND_LABEL[k]); }))),
-        h(C.Field, { h: h, label: formS[0].id ? "新明文（留空不轮换）" : "明文" },
-          h(SecretField, {
-            h: h,
-            show: showSecretS[0],
-            value: formS[0].secret,
-            placeholder: formS[0].id ? "不修改请留空" : "密码 / 手机号 / 证件号 / token",
-            onChange: function (v) { formS[1](Object.assign({}, formS[0], { secret: v })); },
-            onToggle: function () { showSecretS[1](!showSecretS[0]); },
-          })),
-        h(C.Field, { h: h, label: "所属集合（可多选）", hint: setsS[0].length ? "勾选后保存时同步挂载/摘除" : "还没有集合，可先在「集合」页新建" },
-          setsS[0].length ? h("div", { className: "wbv-check-list" }, setsS[0].map(function (s) {
-            var on = (formS[0].setIds || []).indexOf(s.id) >= 0;
-            return h("label", { key: s.id, className: "wbv-check" },
-              h("input", { type: "checkbox", checked: on, onChange: function () { toggleSet(s.id); } }),
-              h("span", { className: "wbv-dot", style: { background: s.color || "var(--wb-accent)" } }),
-              h("span", null, s.name),
-              h("span", { className: "wbv-muted" }, " · " + (s.secretCount || 0) + " 条"));
-          })) : h("span", { className: "wbv-muted" }, "—")),
-        h(C.Field, { h: h, label: "备注", hint: "非敏感信息（用户名、URL、过期提醒）" },
-          h(P.Input, {
-            h: h,
-            value: formS[0].note || "",
-            placeholder: "例如：用户名、URL、过期提醒",
-            onChange: function (e) { formS[1](Object.assign({}, formS[0], { note: e.target.value })); },
-          })),
-        h(C.Notice, { h: h, kind: "error", text: msgS[0] })),
-      h("div", { className: "wbv-modal-foot" },
-        h("span", { className: "wbv-grow" }),
-        h(C.Btn, { h: h, disabled: busyS[0], onClick: closeForm }, "取消"),
-        h(C.Btn, { h: h, kind: "primary", disabled: busyS[0], onClick: function () { save(false); } }, busyS[0] ? "保存中…" : "保存"))) : null,
+      onSubmit: function () { save(false); },
+      submitText: "保存",
+      cancelText: "取消",
+      nextText: "下一步",
+      backText: "上一步",
+    }) : null,
 
     unlockS[0] ? h(AskPassphrase, {
       h: h,

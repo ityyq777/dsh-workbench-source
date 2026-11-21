@@ -132,7 +132,7 @@ test("分组页：建组走弹窗，顶部不再有内联建组表单", () => {
   assert.doesNotMatch(src, /className: "wbv-modal-box"/);
   assert.match(src, /require\("\.\.\/ui\/dialog\.cjs"\)/);
   assert.match(src, /h\(Dialog, \{/);
-  assert.match(src, /label: "集合（可多选）"/);
+  assert.match(src, /label: "集合与账号（可多选）"/);
   assert.match(src, /kind: "primary", onClick: openCreate/);
 });
 
@@ -140,8 +140,8 @@ test("分组页：集合选择器复用共享清单，搜索走后端、本地�
   const src = fs.readFileSync(path.join(dir, "views/groups.cjs"), "utf8");
   assert.match(src, /require\("\.\.\/\.\.\/\.\.\/lib\/filter-checklist\.cjs"\)/);
   assert.match(src, /h\(FilterChecklist, \{/);
-  assert.match(src, /title: "全部集合"/);
-  assert.match(src, /searchPlaceholder: "搜索集合名称或描述"/);
+  assert.match(src, /title: "全部集合与账号"/);
+  assert.match(src, /searchPlaceholder: "搜索集合名、账号或描述"/);
   assert.match(src, /"vault\.setList", pickQ \? \{ q: pickQ \} : \{\}/);
   assert.match(src, /var PICK_PAGE = 20;/);
   assert.match(src, /slice\(0, pickS\[0\]\.page \* PICK_PAGE\)/);
@@ -160,7 +160,7 @@ test("分组页：创建时先 groupCreate 再逐个 groupAttachSet，Esc 可关
   assert.doesNotMatch(src, /window\.addEventListener\("keydown"/);
   assert.match(src, /closeOnEscape: !createS\[0\]\.busy/);
   assert.match(src, /if \(createS\[0\] && createS\[0\]\.busy\) return;/);
-  assert.match(src, /个集合挂载失败/);
+  assert.match(src, /个集合与账号挂载失败/);
 });
 
 test("弹层统一走共享 overlay：视图里不再手拼遮罩，外壳只保留一份", () => {
@@ -237,11 +237,21 @@ test("凭据页：锁定态有提示和解锁入口，失败时保留弹窗", ()
   assert.match(src, /if \(isLockedText\(text\)\) askUnlock\("保险箱已锁定，输入主口令后会自动继续保存。"\);/);
 });
 
-/** 极简 hook 宿主：让视图函数能被反复调用（重绘），便于验证 save() 的真实行为。 */
+/**
+ * 极简 hook 宿主：按「组件在树里的路径」分配槽位，让视图函数能被反复调用（重绘）。
+ * 分步弹窗把弹窗树拆成多个组件（外壳 + 步骤条 + 页脚），全局序号会随弹窗开合漂移，
+ * 所以这里像 React 一样按组件实例隔离状态：同一路径的组件共享槽位，不同路径互不干扰。
+ */
 function mountSecrets(api) {
-  const slots = [];
-  const effects = [];
-  let idx = 0;
+  const frames = new Map();
+  let frame = null;
+  let epoch = 0;
+  function frameOf(key) {
+    let f = frames.get(key);
+    if (!f) { f = { slots: [], effects: [], idx: 0 }; frames.set(key, f); }
+    f.epoch = epoch;
+    return f;
+  }
   // 0.3.9 起视图的 effect 带依赖（guard.ready / guard.locked），假 React 必须像真 React 一样
   // 在依赖变化时重跑，否则解锁守卫永远停在「读取中」。
   function depsChanged(slot, deps) {
@@ -252,28 +262,61 @@ function mountSecrets(api) {
   }
   const FakeReact = {
     useState(init) {
-      const i = idx;
-      idx += 1;
-      if (slots.length <= i) slots.push(typeof init === "function" ? init() : init);
-      return [slots[i], function (v) { slots[i] = typeof v === "function" ? v(slots[i]) : v; }, i];
+      const f = frame;
+      const i = f.idx;
+      f.idx += 1;
+      if (!(i in f.slots)) f.slots[i] = typeof init === "function" ? init() : init;
+      return [f.slots[i], function (v) { f.slots[i] = typeof v === "function" ? v(f.slots[i]) : v; }, i];
     },
     useRef(init) {
-      const i = idx;
-      idx += 1;
-      if (slots.length <= i) slots.push({ current: init });
-      return slots[i];
+      const f = frame;
+      const i = f.idx;
+      f.idx += 1;
+      if (!(i in f.slots) || !f.slots[i] || typeof f.slots[i] !== "object" || !("current" in f.slots[i])) {
+        f.slots[i] = { current: init };
+      }
+      return f.slots[i];
     },
     useEffect(fn, deps) {
-      const i = idx;
-      idx += 1;
-      if (!depsChanged(effects[i], deps)) return;
-      if (effects[i] && typeof effects[i].cleanup === "function") effects[i].cleanup();
-      effects[i] = { deps: deps ? deps.slice() : null, first: false, cleanup: fn() };
+      const f = frame;
+      const i = f.idx;
+      f.idx += 1;
+      if (!depsChanged(f.effects[i], deps)) return;
+      if (f.effects[i] && typeof f.effects[i].cleanup === "function") f.effects[i].cleanup();
+      f.effects[i] = { deps: deps ? deps.slice() : null, first: false, cleanup: fn() };
     },
+    useMemo(fn) { return fn(); },
+    useCallback(fn) { return fn; },
   };
+  // 展开组件函数：每层按路径建帧，宿主元素的 children 递归展开，测试拿到的就是纯元素树。
+  function expand(node, path) {
+    if (!node || typeof node !== "object") return node;
+    if (Array.isArray(node)) return node.map(function (n, i) { return expand(n, path + "[" + i + "]"); });
+    if (typeof node.type === "function") {
+      const key = path + "|" + (node.type.displayName || node.type.name || "anon");
+      const prev = frame;
+      const f = frameOf(key);
+      f.idx = 0;
+      frame = f;
+      let out;
+      try { out = node.type(node.props); } finally { frame = prev; }
+      return expand(out, key);
+    }
+    if (!node.props || node.props.children === undefined) return node;
+    return { type: node.type, props: Object.assign({}, node.props, { children: expand(node.props.children, path + "/kids") }) };
+  }
   function paint() {
-    idx = 0;
-    return SecretsView({ h, api, lang: "zh", React: FakeReact });
+    epoch += 1;
+    const prev = frame;
+    const f = frameOf("root");
+    f.idx = 0;
+    frame = f;
+    let tree;
+    try { tree = SecretsView({ h, api, lang: "zh", React: FakeReact }); } finally { frame = prev; }
+    const out = expand(tree, "root");
+    // 真 React 里弹窗关闭就是卸载、状态清零；这一轮没出现的组件帧直接丢掉，模拟卸载。
+    for (const [key, slot] of frames) if (slot.epoch !== epoch) frames.delete(key);
+    return out;
   }
   return { paint };
 }
@@ -306,6 +349,16 @@ function button(tree, label) {
 
 function fieldInput(tree, i) {
   return walk(tree, []).filter(function (n) { return n.type === "input"; })[i];
+}
+
+// 分步弹窗：按 placeholder / type 定位输入框，不依赖字段在整棵树里的绝对序号。
+function inputBy(tree, match) {
+  return walk(tree, []).filter(function (n) {
+    if (n.type !== "input") return false;
+    if (match.type && n.props.type !== match.type) return false;
+    if (match.placeholder && String(n.props.placeholder || "").indexOf(match.placeholder) < 0) return false;
+    return true;
+  })[0];
 }
 
 async function flush() {
@@ -342,9 +395,14 @@ test("保存成功后弹窗关闭、列表出现新凭据；失败时保留弹�
 
   button(tree, "新增凭据").props.onClick();
   tree = view.paint();
-  fieldInput(tree, 1).props.onChange({ target: { value: "ID_CARD" } });
+  // 第 1 步：名称 → 第 2 步：明文 → 第 3 步：保存
+  inputBy(tree, { placeholder: "工作邮箱" }).props.onChange({ target: { value: "ID_CARD" } });
   tree = view.paint();
-  fieldInput(tree, 2).props.onChange({ target: { value: "123456789012345678" } });
+  button(tree, "下一步").props.onClick();
+  tree = view.paint();
+  inputBy(tree, { type: "password" }).props.onChange({ target: { value: "123456789012345678" } });
+  tree = view.paint();
+  button(tree, "下一步").props.onClick();
   tree = view.paint();
   button(tree, "保存").props.onClick();
 
@@ -364,9 +422,13 @@ test("保存成功后弹窗关闭、列表出现新凭据；失败时保留弹�
   // 失败：保留弹窗、显示服务端原文、并弹出解锁框
   button(tree, "新增凭据").props.onClick();
   tree = view.paint();
-  fieldInput(tree, 1).props.onChange({ target: { value: "ID_CARD2" } });
+  inputBy(tree, { placeholder: "工作邮箱" }).props.onChange({ target: { value: "ID_CARD2" } });
   tree = view.paint();
-  fieldInput(tree, 2).props.onChange({ target: { value: "123456789012345678" } });
+  button(tree, "下一步").props.onClick();
+  tree = view.paint();
+  inputBy(tree, { type: "password" }).props.onChange({ target: { value: "123456789012345678" } });
+  tree = view.paint();
+  button(tree, "下一步").props.onClick();
   tree = view.paint();
   button(tree, "保存").props.onClick();
   await flush();

@@ -4,12 +4,14 @@
  */
 export function registerSetActions({ api, sets, groups, vault, only, KINDS }) {
   api.action("vault.setList", {
-    description: "只读：凭据集合列表，带凭据数与挂靠分组；可按名称/描述搜索、按分组过滤。",
+    description:
+      "只读：凭据集合与账号列表，带凭据数与挂靠分组；可按集合名/账号/描述搜索、按分组或集合类型过滤。",
     input: {
       type: "object",
       properties: {
-        q: { type: "string", description: "按集合名或描述模糊搜索" },
+        q: { type: "string", description: "按集合名、账号或描述模糊搜索" },
         groupId: { type: "string", description: "只看某个分组下的集合" },
+        type: { type: "string", enum: ["account", "common"], description: "account=账号集合，common=普通集合" },
       },
       additionalProperties: false,
     },
@@ -34,11 +36,13 @@ export function registerSetActions({ api, sets, groups, vault, only, KINDS }) {
   });
 
   api.action("vault.setCreate", {
-    description: "新建凭据集合；名称全局唯一。",
+    description:
+      "新建凭据集合；集合名全局唯一，账号可重复、可留空（留空即普通集合，有值即账号集合）。",
     input: {
       type: "object",
       properties: {
         name: { type: "string", description: "集合名，1–100 字，全局唯一" },
+        account: { type: "string", description: "账号，可空、可重复，最多 100 字；留空即普通集合" },
         description: { type: "string", description: "用途说明" },
         color: { type: "string", description: "主题色 token 名或色值，可空" },
       },
@@ -52,12 +56,13 @@ export function registerSetActions({ api, sets, groups, vault, only, KINDS }) {
   });
 
   api.action("vault.setUpdate", {
-    description: "改集合的名称/描述/颜色；改名不影响已有凭据（归属不进 AAD）。",
+    description: "改集合的名称/账号/描述/颜色；改名不影响已有凭据（归属不进 AAD）。",
     input: {
       type: "object",
       properties: {
         id: { type: "string" },
         name: { type: "string" },
+        account: { type: "string", description: "账号，传空串即改为普通集合" },
         description: { type: "string" },
         color: { type: "string" },
       },
@@ -180,7 +185,10 @@ export function registerSetActions({ api, sets, groups, vault, only, KINDS }) {
     return items;
   }
 
-  /** 在 subject 已绑定组内按名称找集合；找不到就建并把集合挂到唯一的绑定组上。 */
+  /**
+   * 在 subject 已绑定组内按名称找集合；找不到就建并把集合挂到唯一的绑定组上。
+   * setAccount 只写进新建集合的账号展示值，幂等键仍是 setName（站点传 accountId）。
+   */
   function ensureSetForSubject(args) {
     const setName = String(args.setName || "").trim();
     if (!setName) throw new Error("setName 必填");
@@ -190,25 +198,31 @@ export function registerSetActions({ api, sets, groups, vault, only, KINDS }) {
     }
     for (const item of items) {
       const existing = sets.setsOfGroup(item.groupId).find((set) => set.name === setName);
-      if (existing) return existing;
+      if (existing) {
+        if (args.setAccount !== undefined && String(args.setAccount).trim() !== String(existing.account || "")) {
+          return sets.updateSetAccount(existing.id, args.setAccount);
+        }
+        return existing;
+      }
     }
     const groupId = args.groupId ? String(args.groupId) : items.length === 1 ? items[0].groupId : "";
     if (!groupId) throw new Error("对象绑定了多个凭据组，需指定 groupId");
     if (!items.some((item) => item.groupId === groupId)) throw new Error("该凭据组未绑定到此对象");
-    const created = sets.ensureSet(setName);
+    const created = sets.ensureSet(setName, { account: args.setAccount });
     sets.linkGroupSet(groupId, created.id);
     return created;
   }
 
   api.action("vault.pluginSecretUpsert", {
     description:
-      "后台插件写：在自己 subject 已绑定的凭据组内按 setName 幂等建/取集合，再全局按 name 幂等写一条凭据并加入集合；不返回明文。",
+      "后台插件写：在自己 subject 已绑定的凭据组内按 setName 幂等建/取集合（新建时可用 setAccount 填账号），再全局按 name 幂等写一条凭据并加入集合；不返回明文。",
     input: {
       type: "object",
       properties: {
         subjectType: { type: "string", description: "业务对象类型，如 site" },
         subjectId: { type: "string", description: "业务对象 id" },
         setName: { type: "string", description: "集合名（业务侧账号 id），组内幂等" },
+        setAccount: { type: "string", description: "新建集合时写入的账号展示值，可空、可重复" },
         groupId: { type: "string", description: "绑定多个组时指定挂靠组，可省略" },
         name: { type: "string", description: "凭据名（全局唯一），如 <accountId> · 密码" },
         kind: { type: "string", enum: KINDS },
@@ -245,8 +259,34 @@ export function registerSetActions({ api, sets, groups, vault, only, KINDS }) {
     },
   });
 
+  api.action("vault.pluginSetAccount", {
+    description:
+      "后台插件写：在自己 subject 已绑定的组内按 setName 找到集合并更新账号展示值（传空串即清成普通集合）；集合不存在返回空。",
+    input: {
+      type: "object",
+      properties: {
+        subjectType: { type: "string" },
+        subjectId: { type: "string" },
+        setName: { type: "string", description: "集合名（业务侧账号 id）" },
+        account: { type: "string", description: "新的账号展示值，可空、可重复" },
+      },
+      required: ["subjectType", "subjectId", "setName"],
+      additionalProperties: false,
+    },
+    execute: (args, ctx) => {
+      only(ctx, ["plugin"], "vault.pluginSetAccount");
+      const setName = String(args.setName || "").trim();
+      if (!setName) throw new Error("setName 必填");
+      for (const item of boundGroups(args)) {
+        const found = sets.setsOfGroup(item.groupId).find((set) => set.name === setName);
+        if (found) return { set: sets.updateSetAccount(found.id, args.account), groupId: item.groupId };
+      }
+      return { set: null };
+    },
+  });
+
   api.action("vault.pluginSetGet", {
-    description: "后台插件读：取业务侧的集合（按 setName 在自己已绑定的组内查找），不存在返回空。",
+    description: "后台插件读：取业务侧的集合（按 setName 在自己已绑定的组内查找，返回值含 account 与 type），不存在返回空。",
     input: {
       type: "object",
       properties: {
