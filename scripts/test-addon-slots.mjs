@@ -271,4 +271,61 @@ console.log("C2 PASS 宿主桥：贡献注册、归属正确、重复注册幂�
 }
 console.log("C3 PASS 宿主桥：独立 registerSlot 生效");
 
-console.log("\nADDON SLOTS TEST PASS { 用例: 目录/校验/排序/卸载/空槽/props/隔离/桥接 }");
+// ── D. 回链由来源贡献：属主不解析来源 ─────────────────────────────
+{
+  const React = reactStub();
+  const h = React.createElement;
+  const C = { Btn: (p) => h("button", { onClick: p.onClick, kind: p.kind }, p.children) };
+  const Icon = () => null;
+  const MailBack = require(`${root}packages/addons/mail/client/views/slot-back-to-message.cjs`)({ React, h, C, Icon });
+
+  // 非任务条目、任务但没有邮件标记 → 都不渲染（不同来源的贡献各自认自己的标记）。
+  assert.equal(MailBack({ item: { kind: "mail.message", id: "m1" } }), null, "邮件条目上不该出现回链");
+  assert.equal(MailBack({ item: { kind: "task", id: "t1", description: "普通任务" } }), null, "没有标记时不占位");
+
+  let navigated = null;
+  const tree = MailBack({
+    item: { kind: "task", id: "t1", description: "由邮件创建。\n来源邮件：wb-mail:msg-42" },
+    lang: "zh",
+    onNavigate: (viewId, params) => { navigated = { viewId, params }; },
+  });
+  assert.ok(tree && tree.props, "带标记时应该渲染按钮");
+  tree.props.onClick({ stopPropagation() {} });
+  assert.deepEqual(navigated, { viewId: "messages", params: { messageId: "msg-42" } }, "点击应带着 messageId 跳回邮件视图");
+}
+console.log("D1 PASS 回链贡献：只认自己的标记，点击带 messageId 跳回来源视图");
+
+{
+  // 属主侧不出现任何来源专属解析：新增来源不需要改任务。
+  const item = readFileSync(`${root}packages/addons/tasks/client/item/task-item.cjs`, "utf8");
+  assert.equal(/wb-mail/.test(item), false, "任务组件不应认识具体来源标记");
+  assert.equal(/MAIL_REF|openOriginalMail|mailAddonInstalled/.test(item), false, "任务不应保留来源解析函数");
+  assert.ok(/kind:\s*"task"/.test(item), "任务应把 item.kind 传给落点");
+  assert.ok(/description:\s*String\(task\.description/.test(item), "任务应透传描述原文给贡献方");
+  const icons = readFileSync(`${root}packages/addons/tasks/client/ui/icons.cjs`, "utf8");
+  assert.equal(/mail:\s*require/.test(icons), false, "回链专用的 mail 图标应随来源代码一起移除");
+  const copy = readFileSync(`${root}packages/addons/tasks/client/ui/copy.cjs`, "utf8");
+  assert.equal(/backToMail/.test(copy), false, "回链文案应移到来源插件");
+}
+console.log("D2 PASS 任务侧零来源代码：标记、跳转、图标、文案都不在任务里");
+
+{
+  // 双向：任务贡献到邮件，邮件也贡献到任务，同一个槽上两条贡献互不影响。
+  const registry = createSlotRegistry(catalog, () => {});
+  const stub = (name) => () => name;
+  registry.add({ slot: "item.actions", id: "tasks.create-from-mail", order: 100, component: stub("a") }, "wb-addon-tasks");
+  registry.add({ slot: "item.actions", id: "mail.back-to-message", order: 100, component: stub("b") }, "wb-addon-mail");
+  const entries = registry.get("item.actions");
+  assert.equal(entries.length, 2, "同一个槽上应能同时挂两个方向的贡献");
+  assert.deepEqual(entries.map((e) => e.id), ["mail.back-to-message", "tasks.create-from-mail"], "order 相同时按 id 稳定排序");
+  assert.deepEqual(entries.map((e) => e.addonId), ["wb-addon-mail", "wb-addon-tasks"], "归属各自记在贡献方");
+
+  // 新来源（比如日历）只加一条贡献即可接入，任务侧不需要再注册任何东西。
+  registry.add({ slot: "item.actions", id: "calendar.back-to-event", order: 100, component: stub("c") }, "wb-addon-calendar");
+  assert.equal(registry.get("item.actions").length, 3, "第三个来源接入不需要改属主");
+  registry.removeAddon("wb-addon-calendar");
+  assert.equal(registry.get("item.actions").length, 2, "来源卸载后只撤销它自己那条");
+}
+console.log("D3 PASS 双向贡献：同槽两条互不影响，新来源零改属主");
+
+console.log("\nADDON SLOTS TEST PASS { 用例: 目录/校验/排序/卸载/空槽/props/隔离/桥接/回链/双向 }");

@@ -1133,6 +1133,8 @@ var require_styles = __commonJS({
       "@media (max-width:1180px){.wbml-layout.has-detail{grid-template-columns:256px minmax(0,1fr) minmax(320px,420px)}}",
       "@media (max-width:900px){.wbml-page.is-split{height:auto;overflow:visible}.wbml-layout,.wbml-layout.has-detail{display:flex;flex-direction:column;gap:12px;align-items:stretch;flex:0 0 auto}.wbml-rail{flex-direction:row;align-items:stretch;overflow:visible;flex:0 0 auto}.wbml-rail-card{flex:1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}.wbml-rail-card .wbml-rail-title{flex-basis:100%}.wbml-rail-tip{display:none}.wbml-rail-stats{flex:1 0 auto}.wbml-pane{flex:0 0 auto;max-height:none}.wbml-listpane{max-height:62vh}.wbml-detailpane{max-height:70vh}}",
       ".wbml-icon-btn{border:0;background:transparent;color:var(--wb-muted,#6b7280);font-size:16px;cursor:pointer;padding:2px 6px}",
+      /* 插槽贡献：渲染在任务详情里，不能假设外层有 .wbml-tools 的间距 */
+      ".wbml-slot-back{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}",
       ".wbml-paging,.wbml-tools,.wbml-search{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
       ".wbml-paging,.wbml-tools{padding:8px 12px;color:var(--wb-muted);border-top:1px solid var(--wb-line)}",
       ".wbml-search .wbml-field{flex:1;min-width:0}.wbml-input{max-width:100%;box-sizing:border-box}",
@@ -1363,6 +1365,45 @@ var require_lock_gate = __commonJS({
       };
     }
     module2.exports = { lock: Lock2, gate };
+  }
+});
+
+// packages/addons/mail/client/views/slot-back-to-message.cjs
+var require_slot_back_to_message = __commonJS({
+  "packages/addons/mail/client/views/slot-back-to-message.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(deps) {
+      var React = deps.React;
+      var h = deps.h || React.createElement;
+      var C = deps.C;
+      var Icon2 = deps.Icon;
+      var REF = /wb-mail:([A-Za-z0-9_.:-]+)/;
+      return function MailBackToMessage(props) {
+        var item = props.item;
+        if (!item || item.kind !== "task") return null;
+        var m = REF.exec(String(item.description || ""));
+        if (!m) return null;
+        var messageId = m[1];
+        var en = props.lang === "en";
+        return h(
+          C.Btn,
+          {
+            h,
+            kind: "ghost",
+            onClick: function(e) {
+              if (e && e.stopPropagation) e.stopPropagation();
+              props.onNavigate("messages", { messageId });
+            }
+          },
+          h(
+            "span",
+            { className: "wbml-slot-back", title: en ? "Back to the message this task came from" : "\u56DE\u5230\u521B\u5EFA\u8FD9\u6761\u4EFB\u52A1\u7684\u90AE\u4EF6" },
+            h(Icon2, { name: "mail" }),
+            en ? "Original mail" : "\u539F\u90AE\u4EF6"
+          )
+        );
+      };
+    };
   }
 });
 
@@ -6720,10 +6761,12 @@ var GLYPHS = require_icons2().ICONS;
     s.textContent = CSS;
     document.head.appendChild(s);
   }
+  var slotBackToMessage = require_slot_back_to_message()({ React, h, C, Icon: Icon2 });
   host.registerAddon({
     id: "wb-addon-mail",
     version: "0.5.5",
     icon: GLYPHS["mail"],
+    slots: [{ slot: "item.actions", id: "mail.back-to-message", order: 100, component: slotBackToMessage }],
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: gated(require_messages(), "\u90AE\u4EF6") },
       { id: "compose", icon: tab("send"), title: { zh: "\u5199\u4FE1", en: "Compose" }, component: gated(require_compose(), "\u5199\u4FE1") },

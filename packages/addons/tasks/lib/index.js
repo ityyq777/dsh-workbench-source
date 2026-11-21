@@ -136,6 +136,7 @@ export function apply(ctx) {
         // 贡献声明：任务往「条目操作」插槽里挂「从邮件建任务」。
         // 与 mail 的 slotHosts 配对；对方没装时 capabilities 会写明"暂无落点"。
         slots: ["item.actions"],
+        slotHosts: ["item.actions"],
         views: [
           { id: "stats", title: { zh: "统计", en: "Stats" } },
           { id: "tasks", title: { zh: "记录", en: "Records" } },

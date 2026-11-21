@@ -44,6 +44,7 @@ export function apply(ctx) {
     tables: ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"],
     sync: { tables: [] },
     // 提供落点：邮件详情动作条渲染 item.actions，别的插件可以把按钮挂进来。
+    slots: ["item.actions"],
     slotHosts: ["item.actions"],
     views: [
       { id: "messages", title: { zh: "邮件", en: "Messages" } },

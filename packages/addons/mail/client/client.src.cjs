@@ -15,8 +15,13 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
   var C = require("./ui/common.cjs"); var Gate = require("./ui/lock-gate.cjs");
   function gated(Inner, title) { return Gate.gate(withProps(Inner, title), h, React, C); }
   if (typeof document !== "undefined" && document.head && !document.getElementById("wb-mail-style")) { var s = document.createElement("style"); s.id = "wb-mail-style"; s.textContent = CSS; document.head.appendChild(s); }
+  // 贡献声明写在 registerAddon 里：卸载邮件时宿主按 addonId 一起撤销。
+  // 「原邮件」回链由邮件自己提供——任务只给描述原文，不解析任何来源标记。
+  var slotBackToMessage = require("./views/slot-back-to-message.cjs")({ React: React, h: h, C: C, Icon: Icon });
   host.registerAddon({ id: "wb-addon-mail", version: "0.5.5",
-    icon: GLYPHS["mail"], views: [
+    icon: GLYPHS["mail"],
+    slots: [{ slot: "item.actions", id: "mail.back-to-message", order: 100, component: slotBackToMessage }],
+    views: [
     { id: "messages", icon: tab("mail"), title: { zh: "邮件", en: "Messages" }, component: gated(require("./views/messages.cjs"), "邮件") },
     { id: "compose", icon: tab("send"), title: { zh: "写信", en: "Compose" }, component: gated(require("./views/compose.cjs"), "写信") },
     { id: "accounts", icon: tab("users"), title: { zh: "账户", en: "Accounts" }, component: gated(require("./views/accounts.cjs"), "账户") },

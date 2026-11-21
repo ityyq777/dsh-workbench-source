@@ -66,6 +66,8 @@ module.exports = require("../../../lib/client-base-styles.cjs")("wbml").concat(r
   "@media (max-width:1180px){.wbml-layout.has-detail{grid-template-columns:256px minmax(0,1fr) minmax(320px,420px)}}",
   "@media (max-width:900px){.wbml-page.is-split{height:auto;overflow:visible}.wbml-layout,.wbml-layout.has-detail{display:flex;flex-direction:column;gap:12px;align-items:stretch;flex:0 0 auto}.wbml-rail{flex-direction:row;align-items:stretch;overflow:visible;flex:0 0 auto}.wbml-rail-card{flex:1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}.wbml-rail-card .wbml-rail-title{flex-basis:100%}.wbml-rail-tip{display:none}.wbml-rail-stats{flex:1 0 auto}.wbml-pane{flex:0 0 auto;max-height:none}.wbml-listpane{max-height:62vh}.wbml-detailpane{max-height:70vh}}",
   ".wbml-icon-btn{border:0;background:transparent;color:var(--wb-muted,#6b7280);font-size:16px;cursor:pointer;padding:2px 6px}",
+  /* 插槽贡献：渲染在任务详情里，不能假设外层有 .wbml-tools 的间距 */
+  ".wbml-slot-back{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}",
   ".wbml-paging,.wbml-tools,.wbml-search{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
   ".wbml-paging,.wbml-tools{padding:8px 12px;color:var(--wb-muted);border-top:1px solid var(--wb-line)}",
   ".wbml-search .wbml-field{flex:1;min-width:0}.wbml-input{max-width:100%;box-sizing:border-box}",

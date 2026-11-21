@@ -6118,9 +6118,6 @@ var require_copy = __commonJS({
         create: "\u521B\u5EFA",
         close: "\u5173\u95ED",
         taskId: "\u4EFB\u52A1 ID",
-        backToMail: "\u539F\u90AE\u4EF6",
-        backToMailHint: "\u56DE\u5230\u521B\u5EFA\u8FD9\u6761\u4EFB\u52A1\u7684\u90AE\u4EF6",
-        backToMailMissing: "\u90AE\u4EF6\u63D2\u4EF6\u672A\u5B89\u88C5",
         addGroup: "\u65B0\u5EFA\u7EC4",
         addTable: "\u65B0\u5EFA\u8868",
         rename: "\u91CD\u547D\u540D",
@@ -6287,9 +6284,6 @@ var require_copy = __commonJS({
         create: "Create",
         close: "Close",
         taskId: "Task ID",
-        backToMail: "Original mail",
-        backToMailHint: "Back to the message this task came from",
-        backToMailMissing: "Mail add-on is not installed",
         addGroup: "New group",
         addTable: "New table",
         rename: "Rename",
@@ -7616,29 +7610,6 @@ var init_refresh_cw = __esm({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail.mjs
-var mail_exports = {};
-__export(mail_exports, {
-  __iconData: () => __iconData35,
-  default: () => Mail
-});
-var __iconData35, Mail;
-var init_mail = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail.mjs"() {
-    init_createLucideIcon();
-    __iconData35 = {
-      name: "mail",
-      size: 24,
-      node: [
-        ["path", { d: "m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7", key: "132q7q" }],
-        ["rect", { x: "2", y: "4", width: "20", height: "16", rx: "2", key: "izxlao" }]
-      ]
-    };
-    __iconData35.node;
-    Mail = createLucideIcon(__iconData35);
-  }
-});
-
 // packages/addons/tasks/client/ui/icons.cjs
 var require_icons2 = __commonJS({
   "packages/addons/tasks/client/ui/icons.cjs"(exports2, module2) {
@@ -7678,9 +7649,8 @@ var require_icons2 = __commonJS({
       down: (init_chevron_down(), __toCommonJS(chevron_down_exports)).default,
       tag: (init_tag(), __toCommonJS(tag_exports)).default,
       clock: (init_clock(), __toCommonJS(clock_exports)).default,
-      refresh: (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
+      refresh: (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default
       // 「原邮件」回链：从邮件建出来的任务要能跳回去看一眼原文。
-      mail: (init_mail(), __toCommonJS(mail_exports)).default
     }, {});
     module2.exports = { ICONS: set.ICONS, Icon: set.Icon };
   }
@@ -9062,6 +9032,7 @@ var require_styles = __commonJS({
       "@media (max-width:640px){.wbt-form{grid-template-columns:1fr}.wbt-drawer{width:94vw}.wbt-search{width:100%}.wbt-item{padding:9px}.wbt-ops{width:100%;justify-content:flex-end}}",
       // ── 插槽贡献：渲染在别的插件的界面里（如邮件详情动作条） ──
       // 那里没有 .wbt-root，--wbt-* 变量不存在，所以每个变量都带主题变量兜底。
+      ".wbt-metazone:empty{display:none}",
       ".wbtx-slot{position:relative;display:inline-flex;align-items:center;gap:6px}",
       ".wbtx-slot-btn{font-size:12.5px;white-space:nowrap}",
       ".wbtx-slot-btn[aria-expanded=true]{border-color:var(--wbt-accent,var(--wb-accent));color:var(--wbt-accent,var(--wb-accent))}",
@@ -9157,23 +9128,7 @@ var require_task_item = __commonJS({
       var statusInfo = deps.statusInfo, stars = deps.stars, pClass = deps.pClass;
       var today = deps.today, daysBetween = deps.daysBetween, cx = deps.cx;
       var Icon2 = deps.Icon, Countdown = deps.Countdown, PathCrumbs = deps.PathCrumbs;
-      var MAIL_REF = /wb-mail:([A-Za-z0-9_.:-]+)/;
-      function hostBridge() {
-        return typeof window !== "undefined" && window.__WB_HOST__ ? window.__WB_HOST__ : null;
-      }
-      function mailAddonInstalled() {
-        var host = hostBridge();
-        var list = host && host.addons;
-        if (!Array.isArray(list)) return false;
-        return list.some(function(a) {
-          return a && a.id === "wb-addon-mail" && a.enabled !== false;
-        });
-      }
-      function openOriginalMail(messageId) {
-        var host = hostBridge();
-        if (!host || typeof host.navigateAddon !== "function") return;
-        host.navigateAddon("wb-addon-mail", "messages", { messageId });
-      }
+      var Slot = deps.Slot;
       function TaskItem(props) {
         var t = props.t;
         var initialMode = props.bodyMode === "text" ? "text" : "markdown";
@@ -9289,26 +9244,25 @@ var require_task_item = __commonJS({
         );
         var opsNode = h("div", { className: "wbt-ops", key: "ops" }, ops);
         var tagBlock = tagNodes.length ? h("div", { className: "wbt-tags", key: "tags" }, tagNodes) : null;
-        var mailMatch = MAIL_REF.exec(String(task.description || ""));
-        var mailReady = mailMatch ? mailAddonInstalled() : false;
-        var mailBlock = mailMatch ? h("button", {
-          className: "wbt-btn ghost wbt-mailback",
-          key: "mailback",
-          type: "button",
-          title: mailReady ? t.backToMailHint : t.backToMailMissing,
-          disabled: !mailReady,
-          onClick: function(e) {
-            e.stopPropagation();
-            openOriginalMail(mailMatch[1]);
+        var sourceBlock = h(Slot, {
+          slot: "item.actions",
+          ownerId: "wb-addon-tasks",
+          lang: props.lang,
+          key: "source",
+          item: {
+            kind: "task",
+            id: String(task.id || ""),
+            title: String(task.title || ""),
+            description: String(task.description || "")
           }
-        }, h(Icon2, { name: "mail", size: 13 }), t.backToMail) : null;
+        });
         var wsList = Array.isArray(task.workspaces) ? task.workspaces : [];
         var wsBlock = wsList.length ? h("div", { className: "wbt-wschips", key: "workspaces" }, wsList.map(function(w) {
           return h("span", { className: "wbt-wschip wbt-wschip-ro", key: String(w.id), title: w.dir || "" }, (w.dir ? "" : "\u25E6 ") + (w.title || w.id));
         })) : null;
         var metaBlock = meta.length ? h("div", { className: "wbt-foot", key: "meta" }, h("div", { className: "wbt-meta" }, meta)) : null;
         var pathBlock = task.path && task.path.length ? h("div", { className: "wbt-taskpath", key: "path" }, h(PathCrumbs, { path: task.path, t, onPick: props.onPathPick })) : null;
-        var metaZone = tagBlock || mailBlock || wsBlock || metaBlock || pathBlock ? h("div", { className: "wbt-metazone", key: "metazone" }, tagBlock, mailBlock, wsBlock, metaBlock, pathBlock) : null;
+        var metaZone = tagBlock || sourceBlock || wsBlock || metaBlock || pathBlock ? h("div", { className: "wbt-metazone", key: "metazone" }, tagBlock, sourceBlock, wsBlock, metaBlock, pathBlock) : null;
         var idNode = String(task.id || "") ? h("div", {
           className: "wbt-item-id",
           key: "taskid",
@@ -13555,7 +13509,9 @@ var require_timeline_view = __commonJS({
     cx,
     Icon: Icon2,
     Countdown,
-    PathCrumbs
+    PathCrumbs,
+    // 任务详情也开 item.actions 落点：来源插件把「回到原处」挂进来。
+    Slot: host.Slot
   });
   function TreeNode(props) {
     var node = props.node;
@@ -13821,7 +13777,7 @@ var require_timeline_view = __commonJS({
     icon: ICONS["list-checks"],
     // 贡献声明写在 registerAddon 里：卸载任务插件时宿主按 addonId 一起撤销，
     // 不会在邮件里留一个渲染即报错的孤儿按钮。
-    slots: slotTaskFromMessage ? [{ slot: "item.actions", id: "tasks.create-from-mail", order: 100, component: slotTaskFromMessage }] : [],
+    slots: [{ slot: "item.actions", id: "tasks.create-from-mail", order: 100, component: slotTaskFromMessage }],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

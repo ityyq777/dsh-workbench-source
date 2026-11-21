@@ -62,7 +62,8 @@
   见 [`02-ActionSchema与页面数据.md`](docs/AGENTS规范/02-ActionSchema与页面数据.md)。
 - **跨插件界面只能走插槽**：想让别的插件界面出现入口，用 `registerAddon({ slots: [...] })`
   贡献到宿主白名单插槽（`item.actions` / `view.toolbar` / `settings.sections` / `home.card.footer`），
-  禁止改对方代码或整页嵌套；改完跑 `pnpm test:slots`（插槽 id 打错不会报错，只会永不显示）。
+  禁止改对方代码或整页嵌套；属主**不得内建来源解析**（不许写 `MAIL_REF`/`SITE_REF` 这类分支，
+  来源一方贡献自己的「回到原处」）；改完跑 `pnpm test:slots`（插槽 id 打错不会报错，只会永不显示）。
   见 [`04-UI规范.md`](docs/AGENTS规范/04-UI规范.md) 与 [`跨插件界面插槽设计.md`](docs/跨插件界面插槽设计.md)。
 - **发布用官方 npm registry**，发布顺序 host → tasks → tags → sites；GitHub token、npm token
   只存本机 0600 私有文件。见

@@ -270,7 +270,8 @@ module.exports = [
     "@media (max-width:640px){.wbt-form{grid-template-columns:1fr}.wbt-drawer{width:94vw}.wbt-search{width:100%}.wbt-item{padding:9px}.wbt-ops{width:100%;justify-content:flex-end}}",
     // ── 插槽贡献：渲染在别的插件的界面里（如邮件详情动作条） ──
     // 那里没有 .wbt-root，--wbt-* 变量不存在，所以每个变量都带主题变量兜底。
-    ".wbtx-slot{position:relative;display:inline-flex;align-items:center;gap:6px}",
+    ".wbt-metazone:empty{display:none}",
+  ".wbtx-slot{position:relative;display:inline-flex;align-items:center;gap:6px}",
     ".wbtx-slot-btn{font-size:12.5px;white-space:nowrap}",
     ".wbtx-slot-btn[aria-expanded=true]{border-color:var(--wbt-accent,var(--wb-accent));color:var(--wbt-accent,var(--wb-accent))}",
     ".wbtx-slot-panel{position:absolute;top:calc(100% + 6px);right:0;z-index:40;display:flex;flex-direction:column;gap:8px;width:264px;padding:10px;border-radius:10px;border:1px solid var(--wbt-line,var(--wb-border));background:var(--dsw-alias-bg-layer-1,var(--wb-card,transparent));box-shadow:0 12px 28px color-mix(in oklab,var(--wbt-line,var(--wb-border)) 60%,transparent);text-align:left}",

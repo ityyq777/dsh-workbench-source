@@ -8,7 +8,8 @@
  *
  * 创建时写入两条信息：
  *  - dedupeKey = "mail.message:<id>"：同一封信重复点不会建出两个任务；
- *  - 描述里写一行 `来源邮件：wb-mail:<id>`：任务侧据此渲染「原邮件」回链（见 tasks/client/item/task-item.cjs）。
+ *  - 描述里写一行 `来源邮件：wb-mail:<id>`：由邮件自己的插槽贡献渲染「原邮件」回链
+ *    （见 mail/client/views/slot-back-to-message.cjs），任务侧不解析这个标记。
  */
 module.exports = function (deps) {
   var React = deps.React;
