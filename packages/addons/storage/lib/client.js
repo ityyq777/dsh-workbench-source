@@ -6190,7 +6190,7 @@ if (host) {
   h = require("react").createElement, icons = require_icons2(), Icon2 = icons.Icon, GLYPHS = icons.ICONS;
   host.registerAddon({
     id: "wb-addon-storage",
-    version: "1.5.12",
+    version: "1.5.13",
     icon: GLYPHS["stock"],
     views: [
       { id: "stats", icon: tabIcon2("chart"), title: { zh: "\u7EDF\u8BA1", en: "Statistics" }, component: require_stats().Stats },

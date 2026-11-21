@@ -1,6 +1,7 @@
 // 创建/重启表单独立模块；宿主相关工具由入口注入，避免循环依赖。
 // 版式走共享分阶段外壳（lib/staged-dialog.cjs + lib/stepper.cjs）：
-// 内容 → 归属 → 计划 → 确认，四步各自校验，保存前再整体复核。
+// 内容（含计划字段）→ 标签 → 任务表 → 时间线 → 工作区 → 确认，
+// 每一步只放一组信息，保存前再整体复核。
 var NF = require("../../../lib/number-field.cjs");
 var staged = require("../../../lib/staged-dialog.cjs");
 
@@ -140,34 +141,22 @@ module.exports = function createModal(deps) {
     }
 
     var title = source === "2" ? t.restartTitle : source === "1" ? tr("向已有时间线添加任务") : t.newTask;
-    var timelineSection = source !== "2" ? h("div", { className: "wbt-create-tl full" },
+    var timelineSection = h("div", { className: "wbt-create-tl full" },
       h("div", { className: "wbt-create-tl-head" },
         h("span", null, t.timeline),
         source === "1" ? h("span", { className: "wbt-create-tl-hint" }, tr("向已有时间线添加任务")) : null),
       h(TimelinePicker, { api: props.api, t: t, value: form.timelineId, onChange: function (value) { set("timelineId", value); }, disabled: isBusy })
-    ) : null;
+    );
 
+    // 第一步同时承担「内容」与「计划」：标题、描述、状态、优先级、难度与日期都在这屏。
     function stepContent(h2) {
       return h2("div", { className: "wbctl-form" },
+        origin ? h2("div", { className: "wbt-mhint full" },
+          "来源：" + (origin.title || origin.id) + (source === "2" ? tr(" · 自动继承原时间线") : "")) : null,
         h2("label", { className: "wbt-field full" }, h2("span", null, t.titleField + " *"),
           h2("input", { className: "wbt-input", value: form.title, onChange: function (e) { set("title", e.target.value); } })),
         h2("label", { className: "wbt-field full" }, h2("span", null, t.desc),
           h2("textarea", { className: "wbt-textarea", rows: 3, value: form.description, onChange: function (e) { set("description", e.target.value); } })),
-        hostHasAddon("wb-addon-tags") ? h2("label", { className: "wbt-field full" }, h2("span", null, t.tags),
-          h2("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function (e) { set("tags", e.target.value); } })) : null);
-    }
-    function stepBelong(h2) {
-      return h2("div", { className: "wbctl-form" },
-        source === "2" && origin ? h2("div", { className: "wbt-mhint full" }, "来源：" + (origin.title || origin.id) + tr(" · 自动继承原时间线")) : null,
-        source !== "0" && source !== "2" && origin ? h2("div", { className: "wbt-mhint full" }, "来源：" + (origin.title || origin.id)) : null,
-        source === "2" && !(origin && origin.timelineId) ? h2("p", { className: "wbt-err full", role: "alert" }, tr("请先手动建立并关联时间线，再重启")) : null,
-        timelineSection,
-        h2(WorkspaceSelect, { api: props.api, lang: props.lang, value: form.workspaceIds, onChange: function (ids) { set("workspaceIds", ids); } }),
-        h2("div", { className: "full" },
-          fields({ form: form, set: set, setMany: setMany, tree: props.tree, recommended: props.defaultTableId || (origin && origin.tableId) })));
-    }
-    function stepPlan(h2) {
-      return h2("div", { className: "wbctl-form" },
         source === "2" ? h2("div", { className: "wbt-mhint full" }, t.restartPriorityHint) : null,
         h2("label", { className: "wbt-field" }, h2("span", null, t.status),
           h2("select", { className: "wbt-select", value: source === "2" ? "0" : form.status, disabled: source === "2", onChange: function (e) { set("status", e.target.value); } },
@@ -187,6 +176,30 @@ module.exports = function createModal(deps) {
           h2(DP.DatePicker, { React: React, h: h2, prefix: "wbt", lang: props.lang, label: t.doneDate, value: form.doneDate, onChange: function (next) { set("doneDate", next); } })) : null,
         (source !== "2" && form.status === "1") ? h2("label", { className: "wbt-field" }, h2("span", null, t.shutdownDate),
           h2(DP.DatePicker, { React: React, h: h2, prefix: "wbt", lang: props.lang, label: t.shutdownDate, value: form.shutdownDate, onChange: function (next) { set("shutdownDate", next); } })) : null);
+    }
+    // 标签单独一步：草稿仍是一行逗号分隔文本，提交时才 splitTags。
+    function stepTags(h2) {
+      return h2("div", { className: "wbctl-form" },
+        h2("label", { className: "wbt-field full" }, h2("span", null, t.tags),
+          h2("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function (e) { set("tags", e.target.value); } })),
+        h2("p", { className: "wbctl-note" }, t.stepTagsHint));
+    }
+    function stepTable(h2) {
+      return h2("div", { className: "wbctl-form" },
+        h2("div", { className: "full" },
+          fields({ form: form, set: set, setMany: setMany, tree: props.tree, recommended: props.defaultTableId || (origin && origin.tableId) })));
+    }
+    function stepTimeline(h2) {
+      if (source === "2") {
+        return h2("div", { className: "wbctl-form" },
+          h2("p", { className: "wbt-mhint full" }, tr("继承来源任务的时间线")),
+          !(origin && origin.timelineId) ? h2("p", { className: "wbt-err full", role: "alert" }, tr("请先手动建立并关联时间线，再重启")) : null);
+      }
+      return h2("div", { className: "wbctl-form" }, timelineSection);
+    }
+    function stepWorkspace(h2) {
+      return h2("div", { className: "wbctl-form" },
+        h2(WorkspaceSelect, { api: props.api, lang: props.lang, value: form.workspaceIds, onChange: function (ids) { set("workspaceIds", ids); } }));
     }
     function reviewRow(h2, key, value) {
       return h2("div", { className: "wbctl-review-row" },
@@ -219,28 +232,32 @@ module.exports = function createModal(deps) {
     var steps = [
       {
         key: "content", label: t.stepContent, hint: t.stepContentHint, render: stepContent,
-        validate: function () { return String(form.title).trim() ? "" : t.needTitle; },
-      },
-      {
-        key: "belong", label: t.stepBelong, hint: t.stepBelongHint, render: stepBelong,
         validate: function () {
-          if (source === "2" && !(origin && origin.timelineId)) return tr("请先手动建立并关联时间线，再重启");
-          if (source === "1" && !form.timelineId) return tr("请选择已有时间线");
-          if (!targetValid) return form.newPath ? plan.error || "请确认新建路径" : t.needTable;
-          return "";
-        },
-      },
-      {
-        key: "plan", label: t.stepPlan, hint: t.stepPlanHint, render: stepPlan,
-        validate: function () {
+          if (!String(form.title).trim()) return t.needTitle;
           if (priorityError) return priorityError;
           if (!difficultyCheck.ok) return difficultyCheck.error;
           if (!form.publishDate || !form.targetDate) return t.needDate;
           return "";
         },
       },
-      { key: "confirm", label: t.stepConfirm, hint: t.stepConfirmHint, render: stepConfirm },
     ];
+    if (hostHasAddon("wb-addon-tags")) {
+      steps.push({ key: "tags", label: t.stepTags, hint: t.stepTagsHint, render: stepTags });
+    }
+    steps.push({
+      key: "table", label: t.stepTable, hint: t.stepTableHint, render: stepTable,
+      validate: function () { return targetValid ? "" : (form.newPath ? plan.error || "请确认新建路径" : t.needTable); },
+    });
+    steps.push({
+      key: "timeline", label: t.stepTimeline, hint: t.stepTimelineHint, render: stepTimeline,
+      validate: function () {
+        if (source === "2" && !(origin && origin.timelineId)) return tr("请先手动建立并关联时间线，再重启");
+        if (source === "1" && !form.timelineId) return tr("请选择已有时间线");
+        return "";
+      },
+    });
+    steps.push({ key: "workspace", label: t.stepWorkspace, hint: t.stepWorkspaceHint, render: stepWorkspace });
+    steps.push({ key: "confirm", label: t.stepConfirm, hint: t.stepConfirmHint, render: stepConfirm });
 
     // 结构性不合法（缺标题/缺归属/优先级或难度非法/缺日期）提前反映成末步保存禁用，
     // 别让用户点到最后一步才被弹回去。

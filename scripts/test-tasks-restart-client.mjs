@@ -28,17 +28,27 @@ function mount(priority, fallback = 1, source = '2', lang = 'zh', timelineId = '
   const priorityInput = tree => find(tree, n => n.type === 'input' && n.props['aria-label'] === copy[lang].priority, '优先级');
   const type = value => priorityInput(render()).props.onChange({ target: { value } });
   const submit = tree => find(tree, n => n.type === 'button' && /wbctl-btn-p|wbt-btn primary/.test(klass(n)), '保存');
-  // 内容 → 归属（选表）→ 计划
+  // 计划字段（状态/优先级/难度/日期）现在和标题同在第一屏，填好标题就能直接断言优先级。
   function toPlan() {
     title('Restart');
-    next();
-    findByText(render(), '选择目标任务表').props.onClick();
-    find(render(), n => n.props && n.props.role === 'option' && String(n.props['aria-label'] || '').startsWith('Table'), 'Table 选项').props.onClick();
-    next();
   }
   const errorText = () => { const node = all(render()).find(n => klass(n) === 'wbctl-dialog-err'); return node ? textOf(node) : ''; };
   return { props, calls, render, title, next, priorityInput, submit, type, toPlan, errorText,
-    toConfirm() { next(); }, change(test, value) { find(render(), test).props.onChange({ target: { value } }); } };
+    // 一路点到「创建」：中途遇到任务表选择器就选表，之后自动跳过。
+    toConfirm() {
+      let picked = false;
+      for (let i = 0; i < 12; i += 1) {
+        if (textOf(submit(render())) === copy[lang].create) return;
+        const pick = all(render()).find(n => n.type === 'button' && textOf(n) === '选择目标任务表');
+        if (pick && !picked) {
+          pick.props.onClick();
+          find(render(), n => n.props && n.props.role === 'option' && String(n.props['aria-label'] || '').startsWith('Table'), 'Table 选项').props.onClick();
+          picked = true;
+          continue;
+        }
+        next();
+      }
+    }, change(test, value) { find(render(), test).props.onChange({ target: { value } }); } };
 }
 for (const [original, fallback, expected] of [[7, 1, 7], [0, 1, 1], [0, 6, 6], [0, 0, 1], [0, 99, 10], [0, 'bad', 1]]) {
   const ui = mount(original, fallback);

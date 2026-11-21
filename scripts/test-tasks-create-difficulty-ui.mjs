@@ -29,14 +29,9 @@ for (const lang of ['zh', 'en']) for (const source of ['0', '1', '2']) for (cons
     onCreated() {}, onClose() {},
   };
   const render = () => paint(Create, props);
-  // 内容步：填标题
+  // 内容步：填标题；计划字段（状态/优先级/难度/日期）也在这一屏。
   find(render(), n => n.type === 'input' && klass(n) === 'wbt-input', '标题').props.onChange({ target: { value: 'Task' } });
-  byText(render(), copy[lang].nextStep).props.onClick();
-  // 归属步：打开选择器选表
-  byText(render(), '选择目标任务表').props.onClick();
-  find(render(), n => n.props && n.props.role === 'option' && String(n.props['aria-label'] || '').startsWith('Table'), 'Table 选项').props.onClick();
-  byText(render(), copy[lang].nextStep).props.onClick();
-  // 计划步：难度控件在，未设置时显示提示
+  // 内容步里就有难度控件，未设置时显示提示
   const difficulty = () => find(render(), n => n.type === 'input' && n.props['aria-label'] === copy[lang].difficulty, '难度');
   assert.equal(difficulty().props.value, '0', '新任务难度默认 0');
   assert.ok(textOf(render()).includes(copy[lang].difficultyUnsetHint), '未设置提示可见');
@@ -46,7 +41,20 @@ for (const lang of ['zh', 'en']) for (const source of ['0', '1', '2']) for (cons
     find(render(), n => n.type === 'select' && n.props.value === '0', '状态').props.onChange({ target: { value: status } });
   }
   difficulty().props.onChange({ target: { value: '3' } });
-  byText(render(), copy[lang].nextStep).props.onClick();
+  // 一路点「下一步」：遇到任务表选择器就选一次表，走到确认步再点创建。
+  let picked = false;
+  for (let i = 0; i < 12; i += 1) {
+    const primary = find(render(), n => n.type === 'button' && /wbctl-btn-p/.test(klass(n)), '主按钮');
+    if (textOf(primary) === copy[lang].create) break;
+    const pick = all(render()).find(n => n.type === 'button' && textOf(n) === '选择目标任务表');
+    if (pick && !picked) {
+      pick.props.onClick();
+      find(render(), n => n.props && n.props.role === 'option' && String(n.props['aria-label'] || '').startsWith('Table'), 'Table 选项').props.onClick();
+      picked = true;
+      continue;
+    }
+    primary.props.onClick();
+  }
   find(render(), n => n.type === 'button' && /wbctl-btn-p/.test(klass(n)), '创建').props.onClick();
   for (let i = 0; i < 8; i += 1) await new Promise(r => setTimeout(r, 0));
   const created = calls.find(c => c.action === 'tasks.create');

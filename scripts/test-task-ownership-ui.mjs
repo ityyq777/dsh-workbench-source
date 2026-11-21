@@ -148,6 +148,15 @@ function mount(opts = {}) {
     title(value) { findByTextless(paint(), 'input', 'wbt-input').props.onChange({ target: { value } }); },
     description(value) { findByTextless(paint(), 'textarea').props.onChange({ target: { value } }); },
     next() { findByText(paint(), copy.zh.nextStep || '下一步').props.onClick(); },
+    // 步骤数随开关（标签步是否出现）变化，测试一律「点到主按钮变成创建为止」。
+    toConfirm() {
+      for (let i = 0; i < 12; i += 1) {
+        const btn = ui.primary();
+        if (textOf(btn) === copy.zh.create) return;
+        btn.props.onClick();
+      }
+      throw new Error('没能走到确认步');
+    },
     primary() { return find(paint(), n => n.type === 'button' && /wbctl-btn-p|wbt-btn primary/.test(klass(n)), '主按钮'); },
     submit() { return ui.primary().props.onClick(); },
     stepper() { return find(paint(), n => klass(n) === 'wbctl-steps', '步骤条'); },
@@ -182,8 +191,7 @@ for (const source of ['0', '1', '2']) {
   assert.equal(ownership.tables(ui.props.tree)[0].path, '任务根 / 插件 / storage');
   ui.openTablePicker();
   ui.chooseTable('storage，');
-  ui.next();
-  ui.next();
+  ui.toConfirm();
   assert.equal(ui.primary().props.disabled, false);
   ui.submit();
   await new Promise(resolve => setImmediate(resolve));
@@ -199,8 +207,7 @@ for (const source of ['0', '1', '2']) {
   ui.next();
   ui.openTablePicker();
   ui.chooseTable('storage，');
-  ui.next();
-  ui.next();
+  ui.toConfirm();
   ui.props.tree = [];
   const rendered = ui.paint();
   assert.equal(ui.primary().props.disabled, true);
@@ -219,8 +226,7 @@ for (const cancel of [true, false]) {
   ui.next();
   assert.match(ui.error(), /路径|确认|表/, '未确认新建路径时停在归属步');
   ui.switchByText('确认以上路径与职责').props.onChange(true);
-  ui.next();
-  ui.next();
+  ui.toConfirm();
   assert.equal(ui.calls.length, 0, '预览与确认都不写节点');
   if (cancel) {
     ui.cancel();
@@ -244,8 +250,7 @@ for (const cancel of [true, false]) {
   ui.next();
   ui.openTablePicker();
   ui.chooseTable('storage，');
-  ui.next();
-  ui.next();
+  ui.toConfirm();
   ui.submit();
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(ui.saved(), 0);

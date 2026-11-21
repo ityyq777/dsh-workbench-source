@@ -6380,13 +6380,21 @@ var require_copy = __commonJS({
         close: "\u5173\u95ED",
         taskId: "\u4EFB\u52A1 ID",
         stepContent: "\u5185\u5BB9",
-        stepContentHint: "\u6807\u9898\u3001\u63CF\u8FF0\u4E0E\u6807\u7B7E",
+        stepContentHint: "\u6807\u9898\u3001\u63CF\u8FF0\u4E0E\u8BA1\u5212",
+        stepTags: "\u6807\u7B7E",
+        stepTagsHint: "\u7ED9\u4EFB\u52A1\u6253\u6807\u7B7E\uFF0C\u591A\u4E2A\u7528\u9017\u53F7\u5206\u9694",
+        stepTable: "\u4EFB\u52A1\u8868",
+        stepTableHint: "\u9009\u62E9\u4EFB\u52A1\u5F52\u5230\u54EA\u5F20\u8868",
+        stepTimeline: "\u65F6\u95F4\u7EBF",
+        stepTimelineHint: "\u5173\u8054\u73B0\u6709\u65F6\u95F4\u7EBF\u6216\u65B0\u5EFA",
+        stepWorkspace: "\u5DE5\u4F5C\u533A",
+        stepWorkspaceHint: "\u5173\u8054\u5230\u5DE5\u4F5C\u533A\uFF08\u53EF\u9009\uFF09",
+        stepConfirm: "\u786E\u8BA4",
+        stepConfirmHint: "\u6838\u5BF9\u540E\u521B\u5EFA",
         stepBelong: "\u5F52\u5C5E",
         stepBelongHint: "\u65F6\u95F4\u7EBF\u3001\u5DE5\u4F5C\u533A\u4E0E\u4EFB\u52A1\u8868",
         stepPlan: "\u8BA1\u5212",
         stepPlanHint: "\u72B6\u6001\u3001\u4F18\u5148\u7EA7\u4E0E\u65E5\u671F",
-        stepConfirm: "\u786E\u8BA4",
-        stepConfirmHint: "\u6838\u5BF9\u540E\u521B\u5EFA",
         confirmHint: "\u786E\u8BA4\u65E0\u8BEF\u540E\u70B9\u300C\u521B\u5EFA\u300D\uFF1B\u521B\u5EFA\u540E\u4ECD\u53EF\u7F16\u8F91\u6807\u9898\u3001\u63CF\u8FF0\u4E0E\u5F52\u5C5E\u3002",
         createSteps: "\u521B\u5EFA\u6B65\u9AA4",
         nextStep: "\u4E0B\u4E00\u6B65",
@@ -6559,13 +6567,21 @@ var require_copy = __commonJS({
         close: "Close",
         taskId: "Task ID",
         stepContent: "Content",
-        stepContentHint: "Title, description, tags",
+        stepContentHint: "Title, description, schedule",
+        stepTags: "Tags",
+        stepTagsHint: "Tag the task, separate several with commas",
+        stepTable: "Table",
+        stepTableHint: "Pick the table this task belongs to",
+        stepTimeline: "Timeline",
+        stepTimelineHint: "Attach to an existing timeline or create one",
+        stepWorkspace: "Workspace",
+        stepWorkspaceHint: "Link to a workspace (optional)",
+        stepConfirm: "Review",
+        stepConfirmHint: "Check before creating",
         stepBelong: "Placement",
         stepBelongHint: "Timeline, workspace, table",
         stepPlan: "Schedule",
         stepPlanHint: "Status, priority, dates",
-        stepConfirm: "Review",
-        stepConfirmHint: "Check before creating",
         confirmHint: "Review the summary, then Create. Title, description and placement stay editable afterwards.",
         createSteps: "Create steps",
         nextStep: "Next",
@@ -10903,7 +10919,7 @@ var require_create_modal = __commonJS({
           });
         }
         var title = source === "2" ? t.restartTitle : source === "1" ? tr("\u5411\u5DF2\u6709\u65F6\u95F4\u7EBF\u6DFB\u52A0\u4EFB\u52A1") : t.newTask;
-        var timelineSection = source !== "2" ? h(
+        var timelineSection = h(
           "div",
           { className: "wbt-create-tl full" },
           h(
@@ -10915,11 +10931,16 @@ var require_create_modal = __commonJS({
           h(TimelinePicker, { api: props.api, t, value: form.timelineId, onChange: function(value) {
             set("timelineId", value);
           }, disabled: isBusy })
-        ) : null;
+        );
         function stepContent(h2) {
           return h2(
             "div",
             { className: "wbctl-form" },
+            origin ? h2(
+              "div",
+              { className: "wbt-mhint full" },
+              "\u6765\u6E90\uFF1A" + (origin.title || origin.id) + (source === "2" ? tr(" \xB7 \u81EA\u52A8\u7EE7\u627F\u539F\u65F6\u95F4\u7EBF") : "")
+            ) : null,
             h2(
               "label",
               { className: "wbt-field full" },
@@ -10936,38 +10957,6 @@ var require_create_modal = __commonJS({
                 set("description", e.target.value);
               } })
             ),
-            hostHasAddon("wb-addon-tags") ? h2(
-              "label",
-              { className: "wbt-field full" },
-              h2("span", null, t.tags),
-              h2("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function(e) {
-                set("tags", e.target.value);
-              } })
-            ) : null
-          );
-        }
-        function stepBelong(h2) {
-          return h2(
-            "div",
-            { className: "wbctl-form" },
-            source === "2" && origin ? h2("div", { className: "wbt-mhint full" }, "\u6765\u6E90\uFF1A" + (origin.title || origin.id) + tr(" \xB7 \u81EA\u52A8\u7EE7\u627F\u539F\u65F6\u95F4\u7EBF")) : null,
-            source !== "0" && source !== "2" && origin ? h2("div", { className: "wbt-mhint full" }, "\u6765\u6E90\uFF1A" + (origin.title || origin.id)) : null,
-            source === "2" && !(origin && origin.timelineId) ? h2("p", { className: "wbt-err full", role: "alert" }, tr("\u8BF7\u5148\u624B\u52A8\u5EFA\u7ACB\u5E76\u5173\u8054\u65F6\u95F4\u7EBF\uFF0C\u518D\u91CD\u542F")) : null,
-            timelineSection,
-            h2(WorkspaceSelect, { api: props.api, lang: props.lang, value: form.workspaceIds, onChange: function(ids) {
-              set("workspaceIds", ids);
-            } }),
-            h2(
-              "div",
-              { className: "full" },
-              fields({ form, set, setMany, tree: props.tree, recommended: props.defaultTableId || origin && origin.tableId })
-            )
-          );
-        }
-        function stepPlan(h2) {
-          return h2(
-            "div",
-            { className: "wbctl-form" },
             source === "2" ? h2("div", { className: "wbt-mhint full" }, t.restartPriorityHint) : null,
             h2(
               "label",
@@ -11044,6 +11033,52 @@ var require_create_modal = __commonJS({
             ) : null
           );
         }
+        function stepTags(h2) {
+          return h2(
+            "div",
+            { className: "wbctl-form" },
+            h2(
+              "label",
+              { className: "wbt-field full" },
+              h2("span", null, t.tags),
+              h2("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function(e) {
+                set("tags", e.target.value);
+              } })
+            ),
+            h2("p", { className: "wbctl-note" }, t.stepTagsHint)
+          );
+        }
+        function stepTable(h2) {
+          return h2(
+            "div",
+            { className: "wbctl-form" },
+            h2(
+              "div",
+              { className: "full" },
+              fields({ form, set, setMany, tree: props.tree, recommended: props.defaultTableId || origin && origin.tableId })
+            )
+          );
+        }
+        function stepTimeline(h2) {
+          if (source === "2") {
+            return h2(
+              "div",
+              { className: "wbctl-form" },
+              h2("p", { className: "wbt-mhint full" }, tr("\u7EE7\u627F\u6765\u6E90\u4EFB\u52A1\u7684\u65F6\u95F4\u7EBF")),
+              !(origin && origin.timelineId) ? h2("p", { className: "wbt-err full", role: "alert" }, tr("\u8BF7\u5148\u624B\u52A8\u5EFA\u7ACB\u5E76\u5173\u8054\u65F6\u95F4\u7EBF\uFF0C\u518D\u91CD\u542F")) : null
+            );
+          }
+          return h2("div", { className: "wbctl-form" }, timelineSection);
+        }
+        function stepWorkspace(h2) {
+          return h2(
+            "div",
+            { className: "wbctl-form" },
+            h2(WorkspaceSelect, { api: props.api, lang: props.lang, value: form.workspaceIds, onChange: function(ids) {
+              set("workspaceIds", ids);
+            } })
+          );
+        }
         function reviewRow(h2, key, value) {
           return h2(
             "div",
@@ -11088,35 +11123,39 @@ var require_create_modal = __commonJS({
             hint: t.stepContentHint,
             render: stepContent,
             validate: function() {
-              return String(form.title).trim() ? "" : t.needTitle;
-            }
-          },
-          {
-            key: "belong",
-            label: t.stepBelong,
-            hint: t.stepBelongHint,
-            render: stepBelong,
-            validate: function() {
-              if (source === "2" && !(origin && origin.timelineId)) return tr("\u8BF7\u5148\u624B\u52A8\u5EFA\u7ACB\u5E76\u5173\u8054\u65F6\u95F4\u7EBF\uFF0C\u518D\u91CD\u542F");
-              if (source === "1" && !form.timelineId) return tr("\u8BF7\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF");
-              if (!targetValid) return form.newPath ? plan.error || "\u8BF7\u786E\u8BA4\u65B0\u5EFA\u8DEF\u5F84" : t.needTable;
-              return "";
-            }
-          },
-          {
-            key: "plan",
-            label: t.stepPlan,
-            hint: t.stepPlanHint,
-            render: stepPlan,
-            validate: function() {
+              if (!String(form.title).trim()) return t.needTitle;
               if (priorityError) return priorityError;
               if (!difficultyCheck.ok) return difficultyCheck.error;
               if (!form.publishDate || !form.targetDate) return t.needDate;
               return "";
             }
-          },
-          { key: "confirm", label: t.stepConfirm, hint: t.stepConfirmHint, render: stepConfirm }
+          }
         ];
+        if (hostHasAddon("wb-addon-tags")) {
+          steps.push({ key: "tags", label: t.stepTags, hint: t.stepTagsHint, render: stepTags });
+        }
+        steps.push({
+          key: "table",
+          label: t.stepTable,
+          hint: t.stepTableHint,
+          render: stepTable,
+          validate: function() {
+            return targetValid ? "" : form.newPath ? plan.error || "\u8BF7\u786E\u8BA4\u65B0\u5EFA\u8DEF\u5F84" : t.needTable;
+          }
+        });
+        steps.push({
+          key: "timeline",
+          label: t.stepTimeline,
+          hint: t.stepTimelineHint,
+          render: stepTimeline,
+          validate: function() {
+            if (source === "2" && !(origin && origin.timelineId)) return tr("\u8BF7\u5148\u624B\u52A8\u5EFA\u7ACB\u5E76\u5173\u8054\u65F6\u95F4\u7EBF\uFF0C\u518D\u91CD\u542F");
+            if (source === "1" && !form.timelineId) return tr("\u8BF7\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF");
+            return "";
+          }
+        });
+        steps.push({ key: "workspace", label: t.stepWorkspace, hint: t.stepWorkspaceHint, render: stepWorkspace });
+        steps.push({ key: "confirm", label: t.stepConfirm, hint: t.stepConfirmHint, render: stepConfirm });
         var blocked = !String(form.title).trim() || !targetValid || !!priorityError || !difficultyCheck.ok || !form.publishDate || !form.targetDate;
         return h(StagedDialog, {
           title,
@@ -14572,7 +14611,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.36",
+    version: "5.2.37",
     icon: ICONS["list-checks"],
     // 贡献声明写在 registerAddon 里：卸载任务插件时宿主按 addonId 一起撤销，
     // 不会在邮件里留一个渲染即报错的孤儿按钮。
