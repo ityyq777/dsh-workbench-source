@@ -2,6 +2,7 @@
 /** 集合页：集合可复用（挂多个分组、装多条凭据）；这里做列表、详情与关联管理。 */
 var C = require("../ui/common.cjs");
 var K = require("../ui/kinds.cjs");
+var Lock = require("../ui/lock.cjs");
 
 module.exports = function SetsView(props) {
   var h = props.h;
@@ -19,24 +20,50 @@ module.exports = function SetsView(props) {
   var busyS = React.useState(false);
   var draftS = React.useState(null); // { id?, name, description, color }
   var pickS = React.useState([]); // 待加入集合的凭据 id
+  // 未解锁守卫：锁定期间三个列表接口都不发；在途响应按序号作废，避免迟到的明文回填。
+  var guard = Lock.use({ api: api, C: C, React: React });
+  var inflight = React.useState({ seq: 0 })[0];
 
   function load() {
+    if (guard.locked) {
+      listS[1]({ loading: false, items: [], error: "" });
+      return;
+    }
+    var seq = (inflight.seq += 1);
     listS[1](function (old) { return Object.assign({}, old, { loading: true }); });
     Promise.all([
       C.call(api, "vault.setList", { q: qS[0] }),
       C.call(api, "vault.secretList", {}),
       C.call(api, "vault.groupList", {}),
     ]).then(function (r) {
+      if (inflight.seq !== seq) return;
       listS[1]({ loading: false, items: (r[0] && r[0].items) || [], error: "" });
       secretsS[1]((r[1] && (r[1].items || r[1].secrets)) || []);
       groupsS[1]((r[2] && r[2].items) || []);
       if (activeS[0]) return open(activeS[0]).then(null, function () {});
     }).catch(function (e) {
+      if (inflight.seq !== seq) return;
       listS[1]({ loading: false, items: [], error: C.errText(e) });
     });
   }
 
-  React.useEffect(function () { load(); }, []);
+  // 锁定时清空列表、选中行、详情、草稿与待选凭据；解锁后自动重载。
+  React.useEffect(function () {
+    if (!guard.ready) return;
+    inflight.seq += 1;
+    if (guard.locked) {
+      listS[1]({ loading: false, items: [], error: "" });
+      secretsS[1]([]);
+      groupsS[1]([]);
+      activeS[1](null);
+      detailS[1]({ setId: "", secrets: [], groups: [], error: "" });
+      draftS[1](null);
+      pickS[1]([]);
+      msgS[1]("");
+      return;
+    }
+    load();
+  }, [guard.ready, guard.locked]);
 
   function secretName(id) {
     for (var i = 0; i < secretsS[0].length; i += 1) if (secretsS[0][i].id === id) return secretsS[0][i].name;
@@ -44,11 +71,15 @@ module.exports = function SetsView(props) {
   }
 
   function open(row) {
+    if (guard.locked) return null;
     activeS[1](row);
     detailS[1]({ setId: row.id, secrets: [], groups: [], error: "" });
+    var seq = (inflight.seq += 1);
     return C.call(api, "vault.setGet", { id: row.id }).then(function (r) {
+      if (inflight.seq !== seq) return;
       detailS[1]({ setId: row.id, secrets: (r && r.secrets) || [], groups: (r && r.groupIds) || [], error: "" });
     }).catch(function (e) {
+      if (inflight.seq !== seq) return;
       detailS[1]({ setId: row.id, secrets: [], groups: [], error: C.errText(e) });
     });
   }
@@ -119,6 +150,9 @@ module.exports = function SetsView(props) {
   var inSet = {};
   detail.secrets.forEach(function (s) { inSet[s.id] = true; });
   var candidates = secretsS[0].filter(function (s) { return !inSet[s.id]; });
+
+  if (!guard.ready) return h("div", { className: "wbv" }, h(C.Empty, { h: h, text: "正在读取保险箱状态…" }));
+  if (guard.locked) return h(Lock.Panel, { h: h, C: C, lang: lang, error: guard.error });
 
   return h("div", { className: "wbv" },
     h("div", { className: "wbv-row" },

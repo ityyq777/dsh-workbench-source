@@ -61,4 +61,7 @@ module.exports = [
   ".wbv-check-list{display:flex;flex-wrap:wrap;gap:6px 14px;margin:4px 0}",
   ".wbv-check{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}",
   ".wbv-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}",
+  ".wbv-lock-card{max-width:560px;margin:28px auto;padding:26px 24px;border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-card);display:flex;flex-direction:column;gap:8px;align-items:flex-start}",
+  ".wbv-lock-ico{color:var(--wb-muted)}",
+  ".wbv-lock-title{font-size:15px;font-weight:600}",
 ].concat(require("../../../lib/filter-checklist-styles.cjs")).concat(require("../../../lib/client-base-styles.cjs").secretFieldStyles, require("../../../lib/icon-label.cjs").styles);

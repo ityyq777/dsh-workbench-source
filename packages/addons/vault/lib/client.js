@@ -1005,7 +1005,10 @@ var require_styles = __commonJS({
       ".wbv-empty-title{font-size:14px;font-weight:600}",
       ".wbv-check-list{display:flex;flex-wrap:wrap;gap:6px 14px;margin:4px 0}",
       ".wbv-check{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}",
-      ".wbv-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}"
+      ".wbv-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}",
+      ".wbv-lock-card{max-width:560px;margin:28px auto;padding:26px 24px;border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-card);display:flex;flex-direction:column;gap:8px;align-items:flex-start}",
+      ".wbv-lock-ico{color:var(--wb-muted)}",
+      ".wbv-lock-title{font-size:15px;font-weight:600}"
     ].concat(require_filter_checklist_styles()).concat(require_client_base_styles().secretFieldStyles, require_icon_label().styles);
   }
 });
@@ -1637,6 +1640,82 @@ var require_status = __commonJS({
   }
 });
 
+// packages/addons/vault/client/ui/lock.cjs
+var require_lock = __commonJS({
+  "packages/addons/vault/client/ui/lock.cjs"(exports2, module2) {
+    "use strict";
+    var GLYPHS2 = require_icons2().ICONS;
+    var POLL_MS = 4e3;
+    function useVaultLock(options) {
+      var React = options.React;
+      var api = options.api;
+      var C = options.C;
+      var every = Number(options.pollMs) > 0 ? Number(options.pollMs) : Number(obj.POLL_MS) || POLL_MS;
+      var st = React.useState({ ready: false, locked: true, initialized: false, error: "" });
+      var tick = React.useState(0);
+      function read() {
+        return C.call(api, "vault.status").then(function(data) {
+          st[1](function(old) {
+            var next = {
+              ready: true,
+              locked: !(data && data.locked === false),
+              initialized: !!(data && data.initialized),
+              error: ""
+            };
+            if (old.ready === next.ready && old.locked === next.locked && old.initialized === next.initialized && !old.error) return old;
+            return next;
+          });
+        }).catch(function(e) {
+          st[1](function(old) {
+            return Object.assign({}, old, { ready: true, locked: true, error: C.errText(e) });
+          });
+        });
+      }
+      React.useEffect(function() {
+        var alive = true;
+        function poll() {
+          if (alive) read();
+        }
+        poll();
+        var timer = setInterval(poll, every);
+        if (timer && typeof timer.unref === "function") timer.unref();
+        return function() {
+          alive = false;
+          clearInterval(timer);
+        };
+      }, [tick[0]]);
+      return {
+        ready: st[0].ready,
+        locked: st[0].locked,
+        initialized: st[0].initialized,
+        error: st[0].error,
+        refresh: function() {
+          tick[1](tick[0] + 1);
+        }
+      };
+    }
+    function Panel(props) {
+      var h = props.h;
+      var C = props.C;
+      var en = props.lang === "en";
+      return h(
+        "div",
+        { className: "wbv" },
+        h(
+          "div",
+          { className: "wbv-lock-card", role: "status", "aria-live": "polite" },
+          h(GLYPHS2.lock, { size: 22, strokeWidth: 2, "aria-hidden": "true", className: "wbv-lock-ico" }),
+          h("div", { className: "wbv-lock-title" }, en ? "Vault is locked" : "\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A"),
+          h("div", { className: "wbv-muted" }, en ? "Unlock it on the Vault page first; this page recovers automatically once unlocked." : "\u8BF7\u5148\u5728\u300C\u4FDD\u9669\u7BB1\u300D\u9875\u89E3\u9501\uFF1B\u89E3\u9501\u540E\u672C\u9875\u4F1A\u81EA\u52A8\u6062\u590D\u5217\u8868\u4E0E\u8BE6\u60C5\u3002"),
+          props.error ? h(C.Notice, { h, kind: "error", text: props.error }) : null
+        )
+      );
+    }
+    var obj = { use: useVaultLock, Panel, POLL_MS };
+    module2.exports = obj;
+  }
+});
+
 // packages/addons/vault/client/ui/kinds.cjs
 var require_kinds = __commonJS({
   "packages/addons/vault/client/ui/kinds.cjs"(exports2, module2) {
@@ -1673,6 +1752,7 @@ var require_secrets = __commonJS({
     var Pencil2 = GLYPHS2["pencil"];
     var Trash2 = GLYPHS2["trash-2"];
     var SecretField = require_secret_field();
+    var Lock2 = require_lock();
     var K = require_kinds();
     var KIND_LABEL = K.KIND_LABEL;
     module2.exports = function SecretsView(props) {
@@ -1693,8 +1773,15 @@ var require_secrets = __commonJS({
       var revealS = React.useState(null);
       var askS = React.useState(null);
       var unlockS = React.useState(null);
+      var guard = Lock2.use({ api, C, React });
+      var inflight = React.useState({ seq: 0 })[0];
       var rows = listS[0].rows;
       function load() {
+        if (guard.locked) {
+          listS[1]({ loading: false, rows: [], error: "" });
+          return;
+        }
+        var seq = inflight.seq += 1;
         listS[1](function(old) {
           return Object.assign({}, old, { loading: true });
         });
@@ -1707,16 +1794,31 @@ var require_secrets = __commonJS({
             return { items: [] };
           })
         ]).then(function(r) {
+          if (inflight.seq !== seq) return;
           listS[1]({ loading: false, rows: r[0] && (r[0].items || r[0].secrets) || [], error: "" });
           statusS[1](r[1]);
           setsS[1](r[2] && r[2].items || []);
         }).catch(function(e) {
+          if (inflight.seq !== seq) return;
           listS[1]({ loading: false, rows: [], error: C.errText(e) });
         });
       }
       React.useEffect(function() {
+        if (!guard.ready) return;
+        inflight.seq += 1;
+        if (guard.locked) {
+          listS[1]({ loading: false, rows: [], error: "" });
+          revealS[1](null);
+          askS[1](null);
+          unlockS[1](null);
+          formS[1](emptyForm());
+          editingS[1](false);
+          showSecretS[1](false);
+          msgS[1]("");
+          return;
+        }
         load();
-      }, []);
+      }, [guard.ready, guard.locked]);
       function startCreate() {
         formS[1](emptyForm());
         showSecretS[1](false);
@@ -1872,6 +1974,8 @@ var require_secrets = __commonJS({
       setsS[0].forEach(function(s) {
         setIndex[s.id] = s.name;
       });
+      if (!guard.ready) return h("div", { className: "wbv" }, h(C.Empty, { h, text: "\u6B63\u5728\u8BFB\u53D6\u4FDD\u9669\u7BB1\u72B6\u6001\u2026" }));
+      if (guard.locked) return h(Lock2.Panel, { h, C, lang, error: guard.error });
       return h(
         "div",
         { className: "wbv" },
@@ -2121,6 +2225,7 @@ var require_sets = __commonJS({
     "use strict";
     var C = require_common();
     var K = require_kinds();
+    var Lock2 = require_lock();
     module2.exports = function SetsView(props) {
       var h = props.h;
       var api = props.api;
@@ -2136,7 +2241,14 @@ var require_sets = __commonJS({
       var busyS = React.useState(false);
       var draftS = React.useState(null);
       var pickS = React.useState([]);
+      var guard = Lock2.use({ api, C, React });
+      var inflight = React.useState({ seq: 0 })[0];
       function load() {
+        if (guard.locked) {
+          listS[1]({ loading: false, items: [], error: "" });
+          return;
+        }
+        var seq = inflight.seq += 1;
         listS[1](function(old) {
           return Object.assign({}, old, { loading: true });
         });
@@ -2145,28 +2257,47 @@ var require_sets = __commonJS({
           C.call(api, "vault.secretList", {}),
           C.call(api, "vault.groupList", {})
         ]).then(function(r) {
+          if (inflight.seq !== seq) return;
           listS[1]({ loading: false, items: r[0] && r[0].items || [], error: "" });
           secretsS[1](r[1] && (r[1].items || r[1].secrets) || []);
           groupsS[1](r[2] && r[2].items || []);
           if (activeS[0]) return open(activeS[0]).then(null, function() {
           });
         }).catch(function(e) {
+          if (inflight.seq !== seq) return;
           listS[1]({ loading: false, items: [], error: C.errText(e) });
         });
       }
       React.useEffect(function() {
+        if (!guard.ready) return;
+        inflight.seq += 1;
+        if (guard.locked) {
+          listS[1]({ loading: false, items: [], error: "" });
+          secretsS[1]([]);
+          groupsS[1]([]);
+          activeS[1](null);
+          detailS[1]({ setId: "", secrets: [], groups: [], error: "" });
+          draftS[1](null);
+          pickS[1]([]);
+          msgS[1]("");
+          return;
+        }
         load();
-      }, []);
+      }, [guard.ready, guard.locked]);
       function secretName(id) {
         for (var i = 0; i < secretsS[0].length; i += 1) if (secretsS[0][i].id === id) return secretsS[0][i].name;
         return id;
       }
       function open(row) {
+        if (guard.locked) return null;
         activeS[1](row);
         detailS[1]({ setId: row.id, secrets: [], groups: [], error: "" });
+        var seq = inflight.seq += 1;
         return C.call(api, "vault.setGet", { id: row.id }).then(function(r) {
+          if (inflight.seq !== seq) return;
           detailS[1]({ setId: row.id, secrets: r && r.secrets || [], groups: r && r.groupIds || [], error: "" });
         }).catch(function(e) {
+          if (inflight.seq !== seq) return;
           detailS[1]({ setId: row.id, secrets: [], groups: [], error: C.errText(e) });
         });
       }
@@ -2262,6 +2393,8 @@ var require_sets = __commonJS({
       var candidates = secretsS[0].filter(function(s) {
         return !inSet[s.id];
       });
+      if (!guard.ready) return h("div", { className: "wbv" }, h(C.Empty, { h, text: "\u6B63\u5728\u8BFB\u53D6\u4FDD\u9669\u7BB1\u72B6\u6001\u2026" }));
+      if (guard.locked) return h(Lock2.Panel, { h, C, lang, error: guard.error });
       return h(
         "div",
         { className: "wbv" },
@@ -2605,6 +2738,7 @@ var require_groups = __commonJS({
     "use strict";
     var C = require_common();
     var FilterChecklist = require_filter_checklist();
+    var Lock2 = require_lock();
     module2.exports = function GroupsView(props) {
       var h = props.h;
       var api = props.api;
@@ -2618,7 +2752,14 @@ var require_groups = __commonJS({
       var setsS = React.useState([]);
       var delS = React.useState(null);
       var pickS = React.useState({ q: "", rows: [], page: 1, loading: false });
+      var guard = Lock2.use({ api, C, React });
+      var inflight = React.useState({ seq: 0 })[0];
       function load() {
+        if (guard.locked) {
+          listS[1]({ loading: false, rows: [], error: "" });
+          return;
+        }
+        var seq = inflight.seq += 1;
         listS[1](function(old) {
           return Object.assign({}, old, { loading: true });
         });
@@ -2628,15 +2769,29 @@ var require_groups = __commonJS({
             return { items: [] };
           })
         ]).then(function(r) {
+          if (inflight.seq !== seq) return;
           listS[1]({ loading: false, rows: r[0] && r[0].items || [], error: "" });
           setsS[1](r[1] && r[1].items || []);
         }).catch(function(e) {
+          if (inflight.seq !== seq) return;
           listS[1]({ loading: false, rows: [], error: C.errText(e) });
         });
       }
       React.useEffect(function() {
+        if (!guard.ready) return;
+        inflight.seq += 1;
+        if (guard.locked) {
+          listS[1]({ loading: false, rows: [], error: "" });
+          setsS[1]([]);
+          openS[1](null);
+          createS[1](null);
+          delS[1](null);
+          pickS[1]({ q: "", rows: [], page: 1, loading: false });
+          msgS[1]("");
+          return;
+        }
         load();
-      }, []);
+      }, [guard.ready, guard.locked]);
       function openCreate() {
         createS[1]({ name: "", description: "", setIds: [], error: "", busy: false });
       }
@@ -2755,10 +2910,14 @@ var require_groups = __commonJS({
         });
       }
       function open(row) {
+        if (guard.locked) return;
         openS[1]({ group: row, items: [], loading: true, error: "" });
+        var seq = inflight.seq += 1;
         C.call(api, "vault.subjectsOf", { groupId: row.id }).then(function(r) {
+          if (inflight.seq !== seq) return;
           openS[1]({ group: row, items: r && r.items || [], loading: false, error: "" });
         }).catch(function(e) {
+          if (inflight.seq !== seq) return;
           openS[1]({ group: row, items: [], loading: false, error: C.errText(e) });
         });
       }
@@ -2790,6 +2949,8 @@ var require_groups = __commonJS({
           msgS[1](C.errText(e));
         });
       }
+      if (!guard.ready) return h("div", { className: "wbv" }, h(C.Empty, { h, text: "\u6B63\u5728\u8BFB\u53D6\u4FDD\u9669\u7BB1\u72B6\u6001\u2026" }));
+      if (guard.locked) return h(Lock2.Panel, { h, C, lang, error: guard.error });
       return h(
         "div",
         { className: "wbv" },
@@ -5069,7 +5230,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.3.8",
+    version: "0.3.9",
     icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },

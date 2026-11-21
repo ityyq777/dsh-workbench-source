@@ -12,6 +12,7 @@ var Eye = GLYPHS["eye"];
 var Pencil = GLYPHS["pencil"];
 var Trash = GLYPHS["trash-2"];
 var SecretField = require("../../../lib/secret-field.cjs");
+var Lock = require("../ui/lock.cjs");
 
 var K = require("../ui/kinds.cjs");
 var KIND_LABEL = K.KIND_LABEL;
@@ -35,25 +36,52 @@ module.exports = function SecretsView(props) {
   var revealS = React.useState(null);
   var askS = React.useState(null); // { row, value, busy, error }
   var unlockS = React.useState(null); // { value, busy, error } 解锁弹层
+  // 未解锁守卫：锁定期间不请求列表；在途请求用序号作废，返回时若已锁定/已重载就丢弃。
+  var guard = Lock.use({ api: api, C: C, React: React });
+  var inflight = React.useState({ seq: 0 })[0];
 
   var rows = listS[0].rows;
 
   function load() {
+    if (guard.locked) {
+      listS[1]({ loading: false, rows: [], error: "" });
+      return;
+    }
+    var seq = (inflight.seq += 1);
     listS[1](function (old) { return Object.assign({}, old, { loading: true }); });
     Promise.all([
       C.call(api, "vault.secretList", { q: qS[0], kind: kindS[0] || undefined }),
       C.call(api, "vault.status").catch(function () { return null; }),
       C.call(api, "vault.setList", {}).catch(function () { return { items: [] }; }),
     ]).then(function (r) {
+      if (inflight.seq !== seq) return; // 已被锁定或重新加载，旧响应不许回填
       listS[1]({ loading: false, rows: (r[0] && (r[0].items || r[0].secrets)) || [], error: "" });
       statusS[1](r[1]);
       setsS[1]((r[2] && r[2].items) || []);
     }).catch(function (e) {
+      if (inflight.seq !== seq) return;
       listS[1]({ loading: false, rows: [], error: C.errText(e) });
     });
   }
 
-  React.useEffect(function () { load(); }, []);
+  // 锁定 -> 清空所有可能残留明文的展示面（列表、明文弹层、解锁弹层、编辑表单）；
+  // 解锁 -> 自动重载，用户不用手动点刷新。
+  React.useEffect(function () {
+    if (!guard.ready) return;
+    inflight.seq += 1;
+    if (guard.locked) {
+      listS[1]({ loading: false, rows: [], error: "" });
+      revealS[1](null);
+      askS[1](null);
+      unlockS[1](null);
+      formS[1](emptyForm());
+      editingS[1](false);
+      showSecretS[1](false);
+      msgS[1]("");
+      return;
+    }
+    load();
+  }, [guard.ready, guard.locked]);
 
   function startCreate() {
     formS[1](emptyForm());
@@ -209,6 +237,9 @@ module.exports = function SecretsView(props) {
 
   var setIndex = {};
   setsS[0].forEach(function (s) { setIndex[s.id] = s.name; });
+
+  if (!guard.ready) return h("div", { className: "wbv" }, h(C.Empty, { h: h, text: "正在读取保险箱状态…" }));
+  if (guard.locked) return h(Lock.Panel, { h: h, C: C, lang: lang, error: guard.error });
 
   return h("div", { className: "wbv" },
     h("div", { className: "wbv-row" },

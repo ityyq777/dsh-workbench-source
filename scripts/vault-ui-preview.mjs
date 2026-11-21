@@ -3,7 +3,8 @@
  * 凭据保险箱的浏览器预览：把凭据库 / 集合 / 分组三个视图打成静态页面，
  * 用于核对浅色、深色下的版面与交互；数据为固定 mock，不连宿主，样式取自 client/ui/styles.cjs。
  *
- * 用法：node scripts/vault-ui-preview.mjs [端口]
+ * 用法：node scripts/vault-ui-preview.mjs [端口] [--locked]
+ *   加 --locked 时把 vault.status 固定成未解锁，用于核对锁定提示卡与「列表不渲染」。
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -13,6 +14,7 @@ import { build } from "esbuild";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = Number(process.argv[2] || 4621);
+const LOCKED = process.argv.includes("--locked");
 const CLIENT = join(ROOT, "packages/addons/vault/client");
 
 const outDir = join(ROOT, ".tmp-vault-preview");
@@ -54,7 +56,8 @@ var GROUPS = [
   { id: "g_1", name: "站点账号 · 少数派", description: "少数派站点", secretCount: 5, bindingCount: 1, setCount: 2 },
   { id: "g_2", name: "工作邮箱", description: "", secretCount: 2, bindingCount: 0, setCount: 1 },
 ];
-var STATUS = { unlocked: true, unlockMode: "A", deviceKey: true, createdAt: now };
+// 字段与真实的 vault.status 对齐（locked 由 DEK 决定），否则视图会一直按锁定渲染。
+var STATUS = { initialized: true, locked: ${LOCKED}, unlockMode: "A", revealPolicy: "session", autoUnlock: false, idleTimeoutSec: 900, secretCount: SECRETS.length, groupCount: GROUPS.length, lastUnlockAt: now, passphraseRev: 1, schemaVersion: 2 };
 var api = { call: function (action, args) {
   if (action === "vault.secretList") return Promise.resolve({ result: { items: SECRETS } });
   if (action === "vault.setList") {

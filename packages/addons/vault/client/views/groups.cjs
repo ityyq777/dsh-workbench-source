@@ -2,6 +2,7 @@
 /** 分组与关联：vault 持有引用，业务模块用自身标识注册；这里只做管理与查看。 */
 var C = require("../ui/common.cjs");
 var FilterChecklist = require("../../../lib/filter-checklist.cjs");
+var Lock = require("../ui/lock.cjs");
 
 module.exports = function GroupsView(props) {
   var h = props.h;
@@ -17,21 +18,46 @@ module.exports = function GroupsView(props) {
   var setsS = React.useState([]);
   var delS = React.useState(null); // { row, moveTo }
   var pickS = React.useState({ q: "", rows: [], page: 1, loading: false });
+  // 未解锁守卫：锁定期间不发列表/关联查询，也不渲染列表与弹窗；在途响应按序号丢弃。
+  var guard = Lock.use({ api: api, C: C, React: React });
+  var inflight = React.useState({ seq: 0 })[0];
 
   function load() {
+    if (guard.locked) {
+      listS[1]({ loading: false, rows: [], error: "" });
+      return;
+    }
+    var seq = (inflight.seq += 1);
     listS[1](function (old) { return Object.assign({}, old, { loading: true }); });
     Promise.all([
       C.call(api, "vault.groupList"),
       C.call(api, "vault.setList", {}).catch(function () { return { items: [] }; }),
     ]).then(function (r) {
+      if (inflight.seq !== seq) return;
       listS[1]({ loading: false, rows: (r[0] && r[0].items) || [], error: "" });
       setsS[1]((r[1] && r[1].items) || []);
     }).catch(function (e) {
+      if (inflight.seq !== seq) return;
       listS[1]({ loading: false, rows: [], error: C.errText(e) });
     });
   }
 
-  React.useEffect(function () { load(); }, []);
+  // 锁定时收起新建/删除/查看关联等全部弹窗并清空列表；解锁后自动重载。
+  React.useEffect(function () {
+    if (!guard.ready) return;
+    inflight.seq += 1;
+    if (guard.locked) {
+      listS[1]({ loading: false, rows: [], error: "" });
+      setsS[1]([]);
+      openS[1](null);
+      createS[1](null);
+      delS[1](null);
+      pickS[1]({ q: "", rows: [], page: 1, loading: false });
+      msgS[1]("");
+      return;
+    }
+    load();
+  }, [guard.ready, guard.locked]);
 
   function openCreate() {
     createS[1]({ name: "", description: "", setIds: [], error: "", busy: false });
@@ -127,10 +153,14 @@ module.exports = function GroupsView(props) {
   }
 
   function open(row) {
+    if (guard.locked) return;
     openS[1]({ group: row, items: [], loading: true, error: "" });
+    var seq = (inflight.seq += 1);
     C.call(api, "vault.subjectsOf", { groupId: row.id }).then(function (r) {
+      if (inflight.seq !== seq) return;
       openS[1]({ group: row, items: (r && r.items) || [], loading: false, error: "" });
     }).catch(function (e) {
+      if (inflight.seq !== seq) return;
       openS[1]({ group: row, items: [], loading: false, error: C.errText(e) });
     });
   }
@@ -160,6 +190,9 @@ module.exports = function GroupsView(props) {
       load();
     }).catch(function (e) { busyS[1](false); msgS[1](C.errText(e)); });
   }
+
+  if (!guard.ready) return h("div", { className: "wbv" }, h(C.Empty, { h: h, text: "正在读取保险箱状态…" }));
+  if (guard.locked) return h(Lock.Panel, { h: h, C: C, lang: lang, error: guard.error });
 
   return h("div", { className: "wbv" },
     h("div", { className: "wbv-row" },

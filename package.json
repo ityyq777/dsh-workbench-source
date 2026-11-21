@@ -37,6 +37,7 @@
     "test:storage-visual": "node scripts/test-storage-visual.mjs",
     "test:clients": "node scripts/test-clients.mjs",
     "test:shared-ui": "node scripts/test-shared-ui.mjs",
+    "test:vault-lock": "node scripts/test-vault-lock.mjs",
     "test:task-stats-bars": "node scripts/test-task-stats-bars-ui.mjs",
     "test:addon-actions": "node scripts/test-addon-action-schema-view.mjs",
     "test:action-schema": "node scripts/test-addon-action-schema-actions.mjs && node scripts/test-addon-action-schema-view.mjs && node scripts/test-agent-access-ui.mjs",

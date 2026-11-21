@@ -197,6 +197,14 @@ function mountSecrets(api) {
   const slots = [];
   const effects = [];
   let idx = 0;
+  // 0.3.9 起视图的 effect 带依赖（guard.ready / guard.locked），假 React 必须像真 React 一样
+  // 在依赖变化时重跑，否则解锁守卫永远停在「读取中」。
+  function depsChanged(slot, deps) {
+    if (!slot) return true;
+    if (!deps) return !!slot.first;
+    if (!slot.deps || slot.deps.length !== deps.length) return true;
+    return deps.some(function (d, k) { return d !== slot.deps[k]; });
+  }
   const FakeReact = {
     useState(init) {
       const i = idx;
@@ -204,10 +212,12 @@ function mountSecrets(api) {
       if (slots.length <= i) slots.push(typeof init === "function" ? init() : init);
       return [slots[i], function (v) { slots[i] = typeof v === "function" ? v(slots[i]) : v; }, i];
     },
-    useEffect(fn) {
+    useEffect(fn, deps) {
       const i = idx;
       idx += 1;
-      if (!effects[i]) { effects[i] = true; fn(); }
+      if (!depsChanged(effects[i], deps)) return;
+      if (effects[i] && typeof effects[i].cleanup === "function") effects[i].cleanup();
+      effects[i] = { deps: deps ? deps.slice() : null, first: false, cleanup: fn() };
     },
   };
   function paint() {
@@ -272,6 +282,9 @@ test("保存成功后弹窗关闭、列表出现新凭据；失败时保留弹�
 
   const view = mountSecrets(api);
   let tree = view.paint();
+  // 解锁守卫要等 vault.status 落地并重渲染，然后才发 vault.secretList。
+  await flush();
+  tree = view.paint();
   await flush();
   tree = view.paint();
   assert.match(texts(tree), /还没有凭据/);

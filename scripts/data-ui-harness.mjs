@@ -10,6 +10,7 @@ export function loadCjs(entryFile, deps = {}) {
   const sandbox = createContext({
     console, Promise, Set, Map, WeakMap, JSON, Object, Array, String, Number, Boolean,
     Error, RegExp, Date, Math, Symbol, parseInt, parseFloat, isNaN, isFinite, encodeURIComponent, decodeURIComponent,
+    setTimeout, clearTimeout, setInterval, clearInterval,
   });
   const cache = new Map();
   function load(file) {
