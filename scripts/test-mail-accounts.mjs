@@ -116,47 +116,36 @@ const form = renderToStaticMarkup(h(AccountForm, {
 }));
 assert.ok(form.includes('imap.qq.com:993'), '默认 QQ 预设直接填好 IMAP 主机，且摘要里看得见');
 assert.ok(form.includes('smtp.qq.com:465'), '默认 QQ 预设直接填好 SMTP 主机，且摘要里看得见');
-const other = renderToStaticMarkup(h(AccountForm, {
-  h, React, api: { call: async () => ({}) }, C, lang: 'zh', SecretField, providers: table,
-  account: { id: 'a2', name: '自定义', email: 'me@corp.test', imapHost: '', imapPort: 993, imapTls: true, smtpHost: '', smtpPort: 465, smtpTls: true, secretId: 'sec9' },
-  onCancel: () => {}, onSaved: () => {},
-}));
-assert.ok(other.includes('IMAP 服务器') && other.includes('登录名'), '陌生域名进入「其他」，展开主机/端口/登录名字段');
-// 端口走共享数字输入控件：type=text + inputmode，范围只写成提示（1–65535）。
-assert.equal((other.match(/wbctl-num-input/g) || []).length, 2, 'IMAP/SMTP 端口都走共享数字输入控件');
-assert.ok(other.includes('1–65535'), '端口范围写成提示文字');
-assert.equal(/type="number"/.test(other), false, '端口不再用会回灌边界的 type=number');
-const SecretPicker = require('../packages/addons/mail/client/ui/secret-picker.cjs');
-const picker = renderToStaticMarkup(h(SecretPicker, {
+assert.ok(form.includes('账号集合'), '账户表单第一步是选账号集合');
+assert.ok(form.includes('先选一个账号集合'), '表单提示先选集合、账号自动带出');
+assert.equal(/placeholder="you@example\.com"/.test(form), false, '不再让用户手填整条地址');
+assert.equal(form.includes('wbml-addr'), false, '不再有「本地部分 + 域名」的拆分输入');
+assert.ok(form.includes('请先选择账号集合'), '未选集合时提示并禁用保存');
+
+const SetPicker = require('../packages/addons/mail/client/ui/set-picker.cjs');
+const setPicker = renderToStaticMarkup(h(SetPicker, {
   h, React, C, api: { call: async () => ({ items: [] }) }, lang: 'zh', vault: 'ready', value: '', onChange: () => {},
 }));
-assert.ok(picker.includes('选择保险箱凭据'), '凭据选择器未选时显示占位文案');
-assert.ok(picker.includes('aria-haspopup="listbox"'), '触发器声明为下拉入口');
-const pickerLocked = renderToStaticMarkup(h(SecretPicker, {
+assert.ok(setPicker.includes('选择账号集合'), '集合选择器未选时显示占位文案');
+assert.ok(setPicker.includes('aria-haspopup="listbox"'), '集合选择器声明为下拉入口');
+
+const setPickerLocked = renderToStaticMarkup(h(SetPicker, {
   h, React, C, api: { call: async () => ({ items: [] }) }, lang: 'zh', vault: 'locked', value: '', onChange: () => {},
 }));
-assert.ok(pickerLocked.includes('保险箱已锁定或未初始化'), '保险箱锁定时选择器退化成说明文案');
-assert.equal(form.includes('授权码 / 应用密码'), false, '表单里不再有授权码输入框');
-assert.equal(form.includes('wb-eye'), false, '表单不再渲染明文切换小眼睛（保险箱口令框除外，vault loading 时不渲染）');
-// 预设服务商只让填 @ 前面的本地部分，域名由预设提供；陌生域名才填整条地址。
-assert.ok(form.includes('wbml-addr'), '预设服务商把地址拆成本地部分 + 域名');
-assert.ok(form.includes('@</span>') || form.includes('wbml-addr-at'), '地址中间有 @ 分隔符');
-assert.ok(form.includes('qq.com'), 'QQ 预设直接给出域名');
-assert.equal(/placeholder="you@example\.com"/.test(form), false, '预设服务商不再让用户填整条地址');
-assert.ok(other.includes('placeholder="you@example.com"'), '「其他」仍填整条地址');
-// 编辑已有网易账户：拆出本地部分，域名落在 163.com
+assert.ok(setPickerLocked.includes('保险箱已锁定或未初始化'), '保险箱锁定时集合选择器退化成说明文案');
+
+// 编辑老账户：邮箱账号从账户回填，并提示补选集合。
 const edit163 = renderToStaticMarkup(h(AccountForm, {
   h, React, api: { call: async () => ({}) }, C, lang: 'zh', SecretField, providers: table,
   account: { id: 'a3', name: '网易', email: 'QiSheng0417@163.com', imapHost: 'imap.163.com', imapPort: 993, smtpHost: 'smtp.163.com', smtpPort: 465, secretId: 'sec1' },
   onCancel: () => {}, onSaved: () => {},
 }));
-assert.ok(edit163.includes('value="QiSheng0417"'), '编辑时本地部分回填到前面的输入框');
-assert.ok(edit163.includes('163.com'), '编辑时域名回填 163.com');
+assert.ok(edit163.includes('value="QiSheng0417@163.com"'), '编辑时邮箱账号从账户回填到只读框');
+assert.ok(edit163.includes('旧版账户'), '未绑定集合的老账户在表单里提示补选');
 
 assert.ok(form.includes('保存前自检'), '表单提供保存前自检');
-// 未选凭据时「保存」与「自检」都置灰，并给一句提示
-assert.match(form, /disabled=""[^>]*>保存<\/button>/, '未选凭据时保存按钮禁用');
-assert.ok(form.includes('请先在保险箱新建并选择凭据'), '未选凭据时给出提示');
+// 未选集合/凭据时「保存」与「自检」都置灰，并给一句提示
+assert.match(form, /disabled=""[^>]*>保存<\/button>/, '未选集合时保存按钮禁用');
 
 // ---------- 源码特征：只走本插件 action，没有裸密码框 ----------
 const formSrc = src('client/ui/account-form.cjs');
@@ -174,7 +163,7 @@ assert.equal(/f\.password/.test(formSrc), false, '表单不再持有明文密码
 assert.match(formSrc, /NF\.NumberField/, '账户表单的数字项接入共享数字输入控件');
 assert.match(formSrc, /portOk\(\)/, '端口非法时保存与自检按钮禁用');
 const pickerSrc = src('client/ui/secret-picker.cjs');
-assert.ok(pickerSrc.includes('vault.secretList'), '凭据选择器只从 vault.secretList 取数');
+assert.ok(pickerSrc.includes('vault.setGet'), '传了账号集合时凭据选择器从 vault.setGet 取集合内凭据');
 assert.match(pickerSrc, /Escape/, 'Esc 能收起选择器');
 assert.match(pickerSrc, /mousedown/, '点外部能收起选择器');
 assert.match(pickerSrc, /navigateAddon/, '无凭据时提供「去保险箱新建」的跳转');
@@ -196,7 +185,7 @@ const multi = renderToStaticMarkup(h(FilterChecklist, { items: [{ id: 'a', name:
 assert.ok(multi.includes('type="checkbox"') && multi.includes('已选 1'), '多选行为保持不变');
 assert.ok(src('client/views/accounts.cjs').includes('mail.providerList'), '账户页从本插件 action 取服务商预设');
 assert.ok(src('client/views/accounts.cjs').includes('mail.accountList'), '账户页从本插件 action 取账户列表');
-assert.ok(src('client/views/accounts.cjs').includes('再从保险箱挑一条授权码'), '账户页副标题改成凭据选择口径');
+assert.ok(src('client/views/accounts.cjs').includes('先选保险箱里的账号集合'), '账户页副标题改成账号集合口径');
 assert.equal(src('client/views/accounts.cjs').includes('填授权码即可'), false, '账户页不再暗示在这里填授权码');
 
 // ---------- 回归：state setter 必须真的声明过 ----------

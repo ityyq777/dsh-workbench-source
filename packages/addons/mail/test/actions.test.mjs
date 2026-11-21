@@ -3,13 +3,16 @@ import assert from 'node:assert/strict';
 import { registerMailActions } from '../lib/domain/actions.js';
 
 // 服务端 action 现在统一过保险箱门禁（api.call("vault.status")），execute 一律是异步的。
-function register(vaultStatus = { locked: false, initialized: true }) {
+function register(vaultStatus = { locked: false, initialized: true }, set = { id: 'set1', account: 'me@test', secrets: [{ id: 'sec1' }] }) {
   const actions = new Map();
   const handlers = new Proxy({}, { get: (_, method) => (...inputs) => ({ method, inputs }) });
   const call = async (name) => {
-    if (name !== 'vault.status') throw new Error('unexpected action ' + name);
-    if (vaultStatus instanceof Error) throw vaultStatus;
-    return { result: vaultStatus };
+    if (name === 'vault.status') {
+      if (vaultStatus instanceof Error) throw vaultStatus;
+      return { result: vaultStatus };
+    }
+    if (name === 'vault.setGet') return { result: set };
+    throw new Error('unexpected action ' + name);
   };
   registerMailActions({ action: (name, def) => actions.set(name, def), call }, handlers);
   return actions;
@@ -82,4 +85,23 @@ test('保险箱锁定时读接口一律 VAULT_LOCKED，无隐私的动作仍放�
   await assert.rejects(() => broken.get('mail.status').execute({}, { origin: 'ui' }), (e) => e.code === 'VAULT_LOCKED');
   const empty = register({});
   await assert.rejects(() => empty.get('mail.status').execute({}, { origin: 'ui' }), (e) => e.code === 'VAULT_LOCKED');
+});
+
+test('账户先选账号集合：集合必填，邮箱由集合账号带出，凭据必须属于该集合', async () => {
+  const actions = register();
+  const create = actions.get('mail.accountCreate');
+  await assert.rejects(() => create.execute({ name: 'A', email: 'x@test' }, { origin: 'ui' }), /账号集合/);
+  await assert.rejects(() => create.execute({ name: 'A', email: 'x@test', accountSetId: 'set1', secretId: 'nope' }, { origin: 'ui' }), /不在这个账号集合/);
+  const ok = await create.execute({ name: 'A', email: 'x@test', accountSetId: 'set1', secretId: 'sec1' }, { origin: 'ui' });
+  assert.equal(ok.inputs[0].email, 'me@test', '邮箱地址由集合账号覆盖');
+  assert.equal(ok.inputs[0].accountSetId, 'set1');
+  assert.equal(ok.inputs[0].secretId, 'sec1');
+
+  const emptySet = register({ locked: false, initialized: true }, { id: 'set2', account: '', secrets: [] });
+  await assert.rejects(() => emptySet.get('mail.accountCreate').execute({ name: 'A', email: 'x@test', accountSetId: 'set2' }, { origin: 'ui' }), /没有填写账号/);
+
+  const missing = register({ locked: false, initialized: true }, {});
+  await assert.rejects(() => missing.get('mail.accountCreate').execute({ name: 'A', email: 'x@test', accountSetId: 'set3' }, { origin: 'ui' }), /所选账号集合不存在/);
+  assert.equal(actions.get('mail.accountCreate').input.properties.accountSetId.type, 'string');
+  assert.deepEqual(actions.get('mail.accountCreate').input.required, ['name', 'email', 'accountSetId']);
 });

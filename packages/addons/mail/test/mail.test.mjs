@@ -25,6 +25,15 @@ test("账户 CRUD 与状态", () => {
   assert.equal(m.listAccounts().items.length, 0);
 });
 
+test("账户绑定账号集合：account_set_id 落库、回显，改其它字段不清集合", () => {
+  const { m } = make();
+  const a = m.createAccount({ name: "A", email: "a@test", accountSetId: "set_1", imapHost: "i", smtpHost: "s" });
+  assert.equal(a.accountSetId, "set_1");
+  assert.equal(m.updateAccount({ id: a.id, accountSetId: "set_2" }).accountSetId, "set_2");
+  assert.equal(m.updateAccount({ id: a.id, name: "改名" }).accountSetId, "set_2");
+  assert.equal(m.listAccounts().items[0].accountSetId, "set_2");
+});
+
 test("远端邮件不能在没有凭据时假装已读、移动或删除", async () => {
   const { m, db } = make();
   const a = m.createAccount({ name: "A", email: "a@test", imapHost: "i", smtpHost: "s" });

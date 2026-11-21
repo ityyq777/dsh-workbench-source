@@ -31,6 +31,26 @@ export function registerMailActions(api, mail) {
     const v = st && st.result !== undefined ? st.result : st;
     if (!v || v.locked !== false) throw lockedError();
   }
+  // 0.6.0：账户先选保险箱里的「账号集合」，邮箱地址与授权码都从集合来。
+  // 集合由保险箱插件提供，这里只做只读校验；保险箱锁定/未安装时先被 requireVaultUnlocked 拦下。
+  async function readAccountSet(accountSetId, secretId) {
+    const id = String(accountSetId || "").trim();
+    if (!id) throw new Error("请先选择账号集合（保险箱「集合与账号」里的账号集合）");
+    let raw;
+    try {
+      raw = await api.call("vault.setGet", { id }, "plugin");
+    } catch (e) {
+      throw new Error("读取账号集合失败：" + (e && e.message ? e.message : "保险箱不可用"));
+    }
+    const set = raw && raw.result !== undefined ? raw.result : raw;
+    if (!set || !set.id) throw new Error("所选账号集合不存在，请重新选择");
+    const account = String(set.account || "").trim();
+    if (!account) throw new Error("所选集合没有填写账号，请先到保险箱给它填上账号");
+    const secrets = Array.isArray(set.secrets) ? set.secrets : [];
+    const sid = String(secretId || "").trim();
+    if (sid && !secrets.some((x) => x && x.id === sid)) throw new Error("所选凭据不在这个账号集合里，请重新选择");
+    return { id: set.id, account };
+  }
   const action = (name, def) => {
     const run = def.execute;
     const execute = PUBLIC_ACTIONS.has(name) ? run : (args, ctx) => requireVaultUnlocked().then(() => run(args, ctx));
@@ -62,9 +82,9 @@ export function registerMailActions(api, mail) {
   action("mail.accountList", { description: "只读：邮箱账户列表（不含密码，含 lastMessageAt）", input: obj({}), execute: () => mail.listAccounts() });
   action("mail.providerList", { description: "只读：邮箱服务商预设（QQ/网易/微软/Gmail/iCloud/其他）与域名识别规则；客户端选服务商、自动填主机都读这份表", input: obj({}), execute: () => providerTable() });
   action("mail.accountCreate", { origins: ["ui", "agent"],
-    originsDefault: ["ui"], description: "新建邮箱账户（仅 UI）；secretId 为保险箱凭据 id", input: obj({ name: S("账户名，必填"), email: S("邮箱地址，必填"), imapHost: S("IMAP 主机"), imapPort: N("IMAP 端口，默认 993"), imapTls: B("IMAP 是否 TLS"), smtpHost: S("SMTP 主机"), smtpPort: N("SMTP 端口，默认 465"), smtpTls: B("SMTP 是否 TLS"), username: S("登录名，默认邮箱地址"), secretId: S("保险箱 secret id"), enabled: B("是否启用") }, ["name", "email"]), execute: (args, ctx) => { deny(ctx.origin); return mail.createAccount({ name: args.name, email: args.email, imapHost: args.imapHost, imapPort: args.imapPort, imapTls: args.imapTls, smtpHost: args.smtpHost, smtpPort: args.smtpPort, smtpTls: args.smtpTls, username: args.username, secretId: args.secretId, enabled: args.enabled }); } });
+    originsDefault: ["ui"], description: "新建邮箱账户（仅 UI）：先选保险箱「集合与账号」里的账号集合，邮箱地址由集合账号带出；secretId 必须是该集合里的凭据", input: obj({ name: S("账户名，必填"), email: S("邮箱地址，由所选集合的账号带出，界面不手填"), accountSetId: S("保险箱账号集合 id，必填"), imapHost: S("IMAP 主机"), imapPort: N("IMAP 端口，默认 993"), imapTls: B("IMAP 是否 TLS"), smtpHost: S("SMTP 主机"), smtpPort: N("SMTP 端口，默认 465"), smtpTls: B("SMTP 是否 TLS"), username: S("登录名，默认集合账号"), secretId: S("账号集合内的保险箱凭据 id"), enabled: B("是否启用") }, ["name", "email", "accountSetId"]), execute: async (args, ctx) => { deny(ctx.origin); const set = await readAccountSet(args.accountSetId, args.secretId); return mail.createAccount({ name: args.name, email: set.account, accountSetId: set.id, imapHost: args.imapHost, imapPort: args.imapPort, imapTls: args.imapTls, smtpHost: args.smtpHost, smtpPort: args.smtpPort, smtpTls: args.smtpTls, username: args.username, secretId: args.secretId, enabled: args.enabled }); } });
   action("mail.accountUpdate", { origins: ["ui", "agent"],
-    originsDefault: ["ui"], description: "更新邮箱账户（仅 UI）", input: obj({ id: S("账户 id"), name: S("名称"), email: S("邮箱"), imapHost: S("IMAP 主机"), imapPort: N("IMAP 端口"), imapTls: B("IMAP TLS"), smtpHost: S("SMTP 主机"), smtpPort: N("SMTP 端口"), smtpTls: B("SMTP TLS"), username: S("登录名"), secretId: S("secret id"), enabled: B("是否启用") }, ["id"]), execute: (args, ctx) => { deny(ctx.origin); return mail.updateAccount({ id: args.id, name: args.name, email: args.email, imapHost: args.imapHost, imapPort: args.imapPort, imapTls: args.imapTls, smtpHost: args.smtpHost, smtpPort: args.smtpPort, smtpTls: args.smtpTls, username: args.username, secretId: args.secretId, enabled: args.enabled }); } });
+    originsDefault: ["ui"], description: "更新邮箱账户（仅 UI）：账号集合必填，邮箱地址由所选集合的账号带出；secretId 必须是该集合里的凭据", input: obj({ id: S("账户 id"), name: S("名称"), email: S("邮箱，由所选集合的账号带出"), accountSetId: S("保险箱账号集合 id，必填"), imapHost: S("IMAP 主机"), imapPort: N("IMAP 端口"), imapTls: B("IMAP TLS"), smtpHost: S("SMTP 主机"), smtpPort: N("SMTP 端口"), smtpTls: B("SMTP TLS"), username: S("登录名"), secretId: S("账号集合内的凭据 id"), enabled: B("是否启用") }, ["id", "accountSetId"]), execute: async (args, ctx) => { deny(ctx.origin); const set = await readAccountSet(args.accountSetId, args.secretId); return mail.updateAccount({ id: args.id, name: args.name, email: set.account, accountSetId: set.id, imapHost: args.imapHost, imapPort: args.imapPort, imapTls: args.imapTls, smtpHost: args.smtpHost, smtpPort: args.smtpPort, smtpTls: args.smtpTls, username: args.username, secretId: args.secretId, enabled: args.enabled }); } });
   action("mail.accountDelete", { origins: ["ui", "agent"],
     originsDefault: ["ui"], description: "软删除邮箱账户并隐藏其本地数据，不清除缓存或修改远端邮箱（仅 UI）", input: obj({ id: S("账户 id") }, ["id"]), execute: (args, ctx) => { deny(ctx.origin); return mail.deleteAccount(args.id); } });
   action("mail.accountTest", { origins: ["ui", "agent"],

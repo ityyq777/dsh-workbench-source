@@ -4120,6 +4120,221 @@ var require_filter_checklist = __commonJS({
   }
 });
 
+// packages/addons/mail/client/ui/set-picker.cjs
+var require_set_picker = __commonJS({
+  "packages/addons/mail/client/ui/set-picker.cjs"(exports2, module2) {
+    "use strict";
+    var FilterChecklist = require_filter_checklist();
+    function t(lang, zh, en) {
+      return lang === "en" ? en : zh;
+    }
+    module2.exports = function SetPicker(props) {
+      var h = props.h;
+      var C = props.C;
+      var api = props.api;
+      var lang = props.lang || "zh";
+      var React = props.React || require("react");
+      var vault = props.vault || "ready";
+      var disabled = props.disabled === true;
+      var S = React.useState;
+      var openS = S(false);
+      var qS = S("");
+      var rowsS = S([]);
+      var loadS = S(false);
+      var errS = S("");
+      var knownS = S({});
+      var boxRef = React.useRef ? React.useRef(null) : { current: null };
+      var open = openS[0];
+      var rows = rowsS[0];
+      var value = String(props.value || "");
+      function call(query) {
+        return C.call(api, "vault.setList", { type: "account", q: query || "" }).then(function(r) {
+          var items = (r && Array.isArray(r.items) ? r.items : []).map(function(x) {
+            return { id: x.id, name: x.name, account: x.account || "", type: x.type || "account" };
+          });
+          return items;
+        });
+      }
+      function remember(items) {
+        knownS[1](function(prev) {
+          var next = Object.assign({}, prev);
+          items.forEach(function(x) {
+            next[x.id] = x;
+          });
+          return next;
+        });
+      }
+      React.useEffect(function() {
+        if (vault !== "ready") return;
+        var alive = true;
+        loadS[1](true);
+        call("").then(function(items) {
+          if (!alive) return;
+          rowsS[1](items);
+          remember(items);
+          loadS[1](false);
+        }).catch(function(e) {
+          if (!alive) return;
+          loadS[1](false);
+          errS[1](C.errText(e));
+        });
+        return function() {
+          alive = false;
+        };
+      }, [vault]);
+      React.useEffect(function() {
+        if (!open) return;
+        var alive = true;
+        loadS[1](true);
+        errS[1]("");
+        var timer = setTimeout(function() {
+          call(qS[0]).then(function(items) {
+            if (!alive) return;
+            rowsS[1](items);
+            remember(items);
+            loadS[1](false);
+          }).catch(function(e) {
+            if (!alive) return;
+            rowsS[1]([]);
+            loadS[1](false);
+            errS[1](C.errText(e));
+          });
+        }, 180);
+        return function() {
+          alive = false;
+          clearTimeout(timer);
+        };
+      }, [open, qS[0]]);
+      React.useEffect(function() {
+        if (!open) return;
+        function onDown(e) {
+          var box = boxRef.current;
+          if (box && !box.contains(e.target)) openS[1](false);
+        }
+        function onKey(e) {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            openS[1](false);
+          }
+        }
+        document.addEventListener("mousedown", onDown);
+        document.addEventListener("keydown", onKey);
+        return function() {
+          document.removeEventListener("mousedown", onDown);
+          document.removeEventListener("keydown", onKey);
+        };
+      }, [open]);
+      var picked = knownS[0][value] || null;
+      var missing = !!value && !picked && !loadS[0];
+      var label = !value ? t(lang, "\u9009\u62E9\u8D26\u53F7\u96C6\u5408", "Choose an account set") : picked ? picked.name + (picked.account ? " \xB7 @" + picked.account : "") : t(lang, "\u96C6\u5408 " + value.slice(0, 8), "Set " + value.slice(0, 8));
+      if (vault === "missing") {
+        return h(
+          "div",
+          { className: "wbml-picker" },
+          h(
+            "div",
+            { className: "wbml-picker-note", role: "status" },
+            t(
+              lang,
+              "\u6CA1\u6709\u68C0\u6D4B\u5230\u51ED\u636E\u4FDD\u9669\u7BB1\uFF0C\u65E0\u6CD5\u9009\u62E9\u8D26\u53F7\u96C6\u5408\u3002\u5B89\u88C5\u5E76\u521D\u59CB\u5316\u4FDD\u9669\u7BB1\u540E\u5237\u65B0\u672C\u9875\u3002",
+              "No vault plugin detected. Install and initialise the vault, then reload."
+            )
+          )
+        );
+      }
+      if (vault === "locked" || vault === "init" || vault === "loading") {
+        return h(
+          "div",
+          { className: "wbml-picker" },
+          h(
+            "div",
+            { className: "wbml-picker-note", role: "status" },
+            vault === "loading" ? t(lang, "\u6B63\u5728\u68C0\u67E5\u4FDD\u9669\u7BB1\u72B6\u6001\u2026", "Checking the vault\u2026") : t(
+              lang,
+              "\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A\u6216\u672A\u521D\u59CB\u5316\uFF0C\u5148\u89E3\u9501\u518D\u9009\u8D26\u53F7\u96C6\u5408\u3002",
+              "The vault is locked or uninitialised \u2014 unlock it to pick an account set."
+            )
+          )
+        );
+      }
+      function pick(id) {
+        var item = knownS[0][id] || rows.filter(function(x) {
+          return x.id === id;
+        })[0] || null;
+        openS[1](false);
+        if (props.onChange) props.onChange(id, item);
+      }
+      function goVault() {
+        openS[1](false);
+        var host = typeof window !== "undefined" ? window.__WB_HOST__ : null;
+        if (host && typeof host.navigateAddon === "function") host.navigateAddon("wb-addon-vault");
+      }
+      var emptyText = qS[0] ? t(lang, "\u6CA1\u6709\u5339\u914D\u7684\u8D26\u53F7\u96C6\u5408", "No matching account set") : t(lang, "\u8FD8\u6CA1\u6709\u8D26\u53F7\u96C6\u5408", "No account sets yet");
+      return h(
+        "div",
+        { className: "wbml-picker", ref: boxRef },
+        h(
+          "button",
+          {
+            type: "button",
+            className: "wbml-picker-trigger" + (value && !missing ? " is-set" : "") + (missing ? " is-missing" : ""),
+            disabled,
+            "aria-haspopup": "listbox",
+            "aria-expanded": open ? "true" : "false",
+            onClick: function() {
+              openS[1](!open);
+            }
+          },
+          h("span", { className: "wbml-picker-label" }, label),
+          h("span", { className: "wbml-picker-caret", "aria-hidden": "true" }, "\u25BE")
+        ),
+        missing ? h(
+          "p",
+          { className: "wbml-picker-warn" },
+          t(lang, "\u539F\u8D26\u53F7\u96C6\u5408\u5DF2\u5931\u6548\uFF0C\u8BF7\u91CD\u65B0\u9009\u62E9", "The bound account set is gone \u2014 pick another one")
+        ) : null,
+        open ? h(
+          "div",
+          { className: "wbml-picker-panel", role: "listbox", "aria-label": t(lang, "\u9009\u62E9\u8D26\u53F7\u96C6\u5408", "Choose an account set") },
+          h(FilterChecklist, {
+            mode: "single",
+            items: rows.map(function(x) {
+              return { id: x.id, name: x.name, meta: x.account ? "@" + x.account : t(lang, "\u672A\u586B\u8D26\u53F7", "No account") };
+            }),
+            selected: value ? [value] : [],
+            onPick: pick,
+            query: qS[0],
+            onQuery: function(v) {
+              qS[1](v);
+            },
+            title: t(lang, "\u8D26\u53F7\u96C6\u5408", "Account sets"),
+            total: rows.length,
+            searchPlaceholder: t(lang, "\u641C\u7D22\u96C6\u5408\u540D\u6216\u8D26\u53F7", "Search by set name or account"),
+            groupLabel: t(lang, "\u8D26\u53F7\u96C6\u5408", "Account sets"),
+            loading: loadS[0],
+            emptyText,
+            noMatchText: t(lang, "\u6CA1\u6709\u5339\u914D\u7684\u8D26\u53F7\u96C6\u5408", "No matching account set"),
+            loadingText: t(lang, "\u52A0\u8F7D\u4E2D\u2026", "Loading\u2026"),
+            disabled
+          }),
+          errS[0] ? h(C.Notice, { h, kind: "error", text: errS[0] }) : null,
+          !rows.length && !loadS[0] ? h(
+            "div",
+            { className: "wbml-picker-empty" },
+            h("span", null, t(lang, "\u8FD8\u6CA1\u6709\u8D26\u53F7\u96C6\u5408\uFF0C\u53BB\u4FDD\u9669\u7BB1\u65B0\u5EFA\u4E00\u4E2A\u5E76\u586B\u4E0A\u8D26\u53F7", "No account sets yet \u2014 create one in the vault and fill in its account")),
+            h(
+              "button",
+              { type: "button", className: "wbml-btn", onClick: goVault },
+              t(lang, "\u53BB\u4FDD\u9669\u7BB1", "Open vault")
+            )
+          ) : null
+        ) : null
+      );
+    };
+  }
+});
+
 // packages/addons/mail/client/ui/secret-picker.cjs
 var require_secret_picker = __commonJS({
   "packages/addons/mail/client/ui/secret-picker.cjs"(exports2, module2) {
@@ -4165,6 +4380,7 @@ var require_secret_picker = __commonJS({
       var React = props.React || require("react");
       var vault = props.vault || "ready";
       var disabled = props.disabled === true;
+      var accountSetId = String(props.accountSetId || "").trim();
       var S = React.useState;
       var openS = S(false);
       var qS = S("");
@@ -4180,6 +4396,19 @@ var require_secret_picker = __commonJS({
       var all = allS[0];
       var value = String(props.value || "");
       function call(query) {
+        if (accountSetId) {
+          return C.call(api, "vault.setGet", { id: accountSetId }).then(function(r) {
+            var set = r && r.result !== void 0 ? r.result : r;
+            var secrets = set && Array.isArray(set.secrets) ? set.secrets : [];
+            var q = String(query || "").trim().toLowerCase();
+            return secrets.filter(function(x) {
+              if (!q) return true;
+              return (String(x.name || "") + " " + String(x.kind || "")).toLowerCase().indexOf(q) >= 0;
+            }).map(function(x) {
+              return { id: x.id, name: x.name, kind: x.kind, meta: x.meta };
+            });
+          });
+        }
         return C.call(api, "vault.secretList", { q: query || "" }).then(function(r) {
           var items = (r && Array.isArray(r.items) ? r.items : []).map(function(x) {
             return { id: x.id, name: x.name, kind: x.kind, meta: x.meta };
@@ -4213,7 +4442,7 @@ var require_secret_picker = __commonJS({
         return function() {
           alive = false;
         };
-      }, [vault]);
+      }, [vault, accountSetId]);
       React.useEffect(function() {
         if (!open) return;
         var alive = true;
@@ -4237,7 +4466,7 @@ var require_secret_picker = __commonJS({
           alive = false;
           clearTimeout(timer);
         };
-      }, [open, qS[0]]);
+      }, [open, qS[0], accountSetId]);
       React.useEffect(function() {
         if (!open) return;
         function onDown(e) {
@@ -4261,7 +4490,7 @@ var require_secret_picker = __commonJS({
       var known = knownS[0];
       var picked = known[value] || null;
       var missing = !!value && !picked && !loadS[0];
-      var label = !value ? t(lang, "\u9009\u62E9\u4FDD\u9669\u7BB1\u51ED\u636E", "Choose a vault credential") : picked ? picked.name + " \xB7 " + kindText(lang, picked.kind) : t(lang, "\u51ED\u636E " + value.slice(0, 8), "Credential " + value.slice(0, 8));
+      var label = !value ? accountSetId ? t(lang, "\u9009\u62E9\u96C6\u5408\u91CC\u7684\u6388\u6743\u7801", "Choose a credential in this set") : t(lang, "\u9009\u62E9\u4FDD\u9669\u7BB1\u51ED\u636E", "Choose a vault credential") : picked ? picked.name + " \xB7 " + kindText(lang, picked.kind) : t(lang, "\u51ED\u636E " + value.slice(0, 8), "Credential " + value.slice(0, 8));
       if (vault === "missing") {
         return h(
           "div",
@@ -4352,7 +4581,7 @@ var require_secret_picker = __commonJS({
             onLoadMore: function() {
               pageS[1](pageS[0] + 1);
             },
-            emptyText: t(lang, "\u8FD8\u6CA1\u6709\u51ED\u636E", "No credentials yet"),
+            emptyText: accountSetId ? t(lang, "\u8FD9\u4E2A\u8D26\u53F7\u96C6\u5408\u91CC\u8FD8\u6CA1\u6709\u51ED\u636E", "This account set has no credentials yet") : t(lang, "\u8FD8\u6CA1\u6709\u51ED\u636E", "No credentials yet"),
             noMatchText: t(lang, "\u6CA1\u6709\u5339\u914D\u7684\u51ED\u636E", "No matching credential"),
             noMoreText: rows.length > PAGE ? t(lang, "\u6CA1\u6709\u66F4\u591A", "No more") : "",
             loadingText: t(lang, "\u52A0\u8F7D\u4E2D\u2026", "Loading\u2026"),
@@ -4368,7 +4597,7 @@ var require_secret_picker = __commonJS({
               "Loaded " + shown.length + " of " + rows.length
             )
           ) : null,
-          noRows && !qS[0] ? h(
+          noRows && !qS[0] && !accountSetId ? h(
             "div",
             { className: "wbml-picker-empty" },
             h("span", null, t(lang, "\u8FD8\u6CA1\u6709\u51ED\u636E\uFF0C\u53BB\u4FDD\u9669\u7BB1\u65B0\u5EFA", "No credentials yet \u2014 create one in the vault")),
@@ -4500,6 +4729,7 @@ var require_account_form = __commonJS({
     "use strict";
     var util = require_provider_util();
     var VaultGate = require_vault_gate();
+    var SetPicker = require_set_picker();
     var SecretPicker = require_secret_picker();
     var probe = (init_probe_error(), __toCommonJS(probe_error_exports));
     var SW = require_switch();
@@ -4539,6 +4769,7 @@ var require_account_form = __commonJS({
         };
         base.email = "";
         base.name = "";
+        base.accountSetId = "";
         base.secretId = "";
         base.advanced = false;
         var baseDoms = domainsOf("qq");
@@ -4550,6 +4781,7 @@ var require_account_form = __commonJS({
           domain: util.domainOf(editing.email) || base.domain,
           email: editing.email || "",
           name: editing.name || "",
+          accountSetId: editing.accountSetId || "",
           username: editing.username || editing.email || "",
           imapHost: editing.imapHost || "",
           imapPort: editing.imapPort || 993,
@@ -4639,96 +4871,37 @@ var require_account_form = __commonJS({
         setProbe(null);
         applyPreset(id, f.email);
       }
-      function setLocal(value) {
-        var raw = String(value || "");
-        if (raw.indexOf("@") > 0) {
-          var hit = util.detect(providers, raw);
-          var id = hit ? hit.id : "other";
-          var doms = domainsOf(id);
-          var dom = util.domainOf(raw);
-          if (id !== "other" && doms.length && doms.indexOf(dom) < 0) dom = doms[0];
-          var local = util.localOf(raw);
-          var email = id === "other" ? raw : compose(local, dom);
-          var p = util.presetFor(providers, id, email);
-          upd({
-            provider: id,
-            domain: id === "other" ? "" : dom,
-            email,
-            imapHost: p ? p.imapHost : f.imapHost,
-            imapPort: p ? p.imapPort : f.imapPort,
-            imapTls: p ? p.imapTls : f.imapTls,
-            smtpHost: p ? p.smtpHost : f.smtpHost,
-            smtpPort: p ? p.smtpPort : f.smtpPort,
-            smtpTls: p ? p.smtpTls : f.smtpTls,
-            username: f.advanced ? f.username : email,
-            advanced: id === "other" ? true : f.advanced
-          });
+      function onPickSet(id, set) {
+        var address = String(set && set.account || "").trim();
+        touchedS[1](true);
+        setProbe(null);
+        var patch = { accountSetId: id, secretId: "", secretName: "" };
+        if (address) {
+          var hit = util.detect(providers, address);
+          var p = hit ? util.presetFor(providers, hit.id, address) : null;
+          patch.email = address;
+          if (p) {
+            patch.provider = hit.id;
+            patch.imapHost = p.imapHost;
+            patch.imapPort = p.imapPort;
+            patch.imapTls = p.imapTls;
+            patch.smtpHost = p.smtpHost;
+            patch.smtpPort = p.smtpPort;
+            patch.smtpTls = p.smtpTls;
+            patch.username = p.username || address;
+            patch.advanced = false;
+          } else {
+            patch.provider = "other";
+            patch.username = address;
+            patch.advanced = true;
+          }
           portS[1]({ imap: true, smtp: true });
-          return;
         }
-        var kept = f.domain || domainsOf(f.provider)[0] || "";
-        var composed = compose(raw, kept);
-        upd({ email: composed, username: f.advanced ? f.username : composed });
-      }
-      function setDomain(domain) {
-        var composed = compose(util.localOf(f.email), domain);
-        upd({ domain, email: composed, username: f.advanced ? f.username : composed });
-      }
-      function onEmailBlur() {
-        if (touchedS[0] || !f.email) return;
-        var hit = util.detect(providers, f.email);
-        if (hit) {
-          if (hit.id !== f.provider) applyPreset(hit.id, f.email);
-          else upd({ username: f.username || f.email });
-        } else {
-          upd({ provider: "other", advanced: true, username: f.username || f.email });
-        }
-      }
-      function addressControl() {
-        var doms = domainsOf(f.provider);
-        if (f.provider === "other" || !doms.length) {
-          return h("input", {
-            className: "wbml-input",
-            type: "email",
-            value: f.email,
-            placeholder: "you@example.com",
-            autoComplete: "off",
-            onChange: function(e) {
-              upd({ email: e.target.value, username: f.advanced ? f.username : e.target.value });
-            },
-            onBlur: onEmailBlur
-          });
-        }
-        var dom = f.domain || doms[0];
-        return h(
-          "div",
-          { className: "wbml-addr" },
-          h("input", {
-            className: "wbml-input",
-            type: "text",
-            inputMode: "email",
-            value: util.localOf(f.email),
-            placeholder: t(lang, "\u8D26\u53F7", "account"),
-            autoComplete: "off",
-            onChange: function(e) {
-              setLocal(e.target.value);
-            }
-          }),
-          h("span", { className: "wbml-addr-at", "aria-hidden": "true" }, "@"),
-          doms.length > 1 ? h("select", {
-            className: "wbml-input wbml-addr-dom",
-            value: dom,
-            title: t(lang, "\u90AE\u7BB1\u57DF\u540D", "Mail domain"),
-            onChange: function(e) {
-              setDomain(e.target.value);
-            }
-          }, doms.map(function(d) {
-            return h("option", { key: d, value: d }, d);
-          })) : h("span", { className: "wbml-addr-dom" }, dom)
-        );
+        upd(patch);
       }
       function validate() {
-        if (!/^\S+@\S+\.\S+$/.test(String(f.email || "").trim())) return t(lang, "\u8BF7\u586B\u5199\u6B63\u786E\u7684\u90AE\u7BB1\u5730\u5740", "Enter a valid email address");
+        if (!String(f.accountSetId || "").trim()) return t(lang, "\u8BF7\u5148\u9009\u62E9\u8D26\u53F7\u96C6\u5408\uFF08\u4FDD\u9669\u7BB1\u300C\u96C6\u5408\u4E0E\u8D26\u53F7\u300D\uFF09", "Pick an account set in the vault first");
+        if (!/^\S+@\S+\.\S+$/.test(String(f.email || "").trim())) return t(lang, "\u6240\u9009\u8D26\u53F7\u96C6\u5408\u6CA1\u6709\u53EF\u7528\u7684\u90AE\u7BB1\u8D26\u53F7\uFF0C\u8BF7\u5148\u5230\u4FDD\u9669\u7BB1\u586B\u5199", "The selected account set has no usable email account");
         if (!String(f.name || "").trim()) return t(lang, "\u8BF7\u586B\u5199\u8D26\u6237\u540D\u79F0", "Enter an account name");
         if (!String(f.imapHost || "").trim()) return t(lang, "\u8BF7\u586B\u5199 IMAP \u670D\u52A1\u5668", "Enter the IMAP server");
         if (!String(f.username || "").trim()) return t(lang, "\u8BF7\u586B\u5199\u767B\u5F55\u540D", "Enter the login name");
@@ -4748,6 +4921,7 @@ var require_account_form = __commonJS({
         var payload = {
           name: String(f.name || "").trim(),
           email: String(f.email || "").trim(),
+          accountSetId: String(f.accountSetId || "").trim(),
           imapHost: String(f.imapHost || "").trim(),
           imapPort: Number(f.imapPort),
           imapTls: !!f.imapTls,
@@ -4913,14 +5087,36 @@ var require_account_form = __commonJS({
           h("button", { type: "button", className: "wbml-icon-btn", onClick: props.onCancel, title: t(lang, "\u5173\u95ED", "Close") }, "\xD7")
         ),
         h(require_provider_chips(), { h, lang, providers, value: f.provider, onPick }),
+        !f.accountSetId && editing ? h("p", { className: "wbml-hint-line" }, t(lang, "\u8FD9\u4E2A\u8D26\u6237\u662F\u65E7\u7248\u8D26\u6237\uFF0C\u8FD8\u6CA1\u6709\u7ED1\u5B9A\u8D26\u53F7\u96C6\u5408\uFF1B\u4FDD\u5B58\u524D\u8BF7\u5148\u9009\u62E9\u4E00\u4E2A\u3002", "This legacy account has no account set yet \u2014 pick one before saving.")) : null,
         h(
           "div",
           { className: "wbml-acct-grid" },
-          field(t(lang, "\u90AE\u7BB1\u5730\u5740", "Email address"), addressControl()),
+          field(t(lang, "\u8D26\u53F7\u96C6\u5408", "Account set"), h(SetPicker, {
+            h,
+            C,
+            api,
+            React,
+            lang,
+            vault,
+            value: f.accountSetId,
+            disabled: busy.save,
+            onChange: onPickSet
+          }), t(lang, "\u5148\u9009\u4E00\u4E2A\u8D26\u53F7\u96C6\u5408\uFF1B\u90AE\u7BB1\u5730\u5740\u7531\u5B83\u4E0A\u9762\u7684\u8D26\u53F7\u81EA\u52A8\u5E26\u51FA\u3002", "Pick an account set; the email address comes from its account.")),
           field(t(lang, "\u8D26\u6237\u540D\u79F0", "Account name"), textInput("name", { placeholder: t(lang, "\u4F8B\u5982 \u5DE5\u4F5C\u90AE\u7BB1", "e.g. Work mail") }))
         ),
         field(
-          t(lang, "\u4FDD\u9669\u7BB1\u51ED\u636E", "Vault credential"),
+          t(lang, "\u90AE\u7BB1\u8D26\u53F7\uFF08\u81EA\u52A8\u5E26\u51FA\uFF09", "Email account (auto)"),
+          h("input", {
+            className: "wbml-input",
+            type: "text",
+            value: f.email,
+            readOnly: true,
+            placeholder: t(lang, "\u9009\u62E9\u8D26\u53F7\u96C6\u5408\u540E\u81EA\u52A8\u586B\u5165", "Filled after picking an account set")
+          }),
+          f.accountSetId ? t(lang, "\u8D26\u53F7\u6765\u81EA\u6240\u9009\u96C6\u5408\uFF0C\u8981\u6539\u5730\u5740\u8BF7\u53BB\u4FDD\u9669\u7BB1\u6539\u96C6\u5408\u8D26\u53F7\u3002", "The address comes from the selected set \u2014 change the set account in the vault.") : null
+        ),
+        f.accountSetId ? field(
+          t(lang, "\u6388\u6743\u7801\uFF08\u96C6\u5408\u5185\u51ED\u636E\uFF09", "App password (in this set)"),
           h(SecretPicker, {
             h,
             React,
@@ -4928,8 +5124,9 @@ var require_account_form = __commonJS({
             api,
             lang,
             vault,
+            accountSetId: f.accountSetId,
             value: f.secretId,
-            disabled: busy.save,
+            disabled: busy.save || !f.accountSetId,
             onChange: function(id, item) {
               upd({ secretId: id, secretName: item ? item.name : "" });
               setProbe(null);
@@ -4937,9 +5134,12 @@ var require_account_form = __commonJS({
           }),
           t(
             lang,
-            "\u5148\u5728\u4FDD\u9669\u7BB1\u65B0\u5EFA\u4E00\u6761\u300C\u6388\u6743\u7801\u300D\uFF0C\u518D\u5728\u8FD9\u91CC\u9009\u7528\uFF1B\u90AE\u4EF6\u9875\u53EA\u4FDD\u5B58\u5B83\u7684 id\u3002",
-            "Create an app-password entry in the vault first, then pick it here \u2014 this page only stores its id."
+            "\u53EA\u5217\u8FD9\u4E2A\u8D26\u53F7\u96C6\u5408\u91CC\u7684\u51ED\u636E\uFF1B\u5148\u628A\u6388\u6743\u7801\u653E\u8FDB\u8FD9\u4E2A\u96C6\u5408\u3002",
+            "Only credentials in this set are listed here."
           )
+        ) : field(
+          t(lang, "\u6388\u6743\u7801\uFF08\u96C6\u5408\u5185\u51ED\u636E\uFF09", "App password (in this set)"),
+          h("p", { className: "wbml-hint-line" }, t(lang, "\u8BF7\u5148\u9009\u62E9\u8D26\u53F7\u96C6\u5408\uFF0C\u518D\u4ECE\u96C6\u5408\u91CC\u9009\u6388\u6743\u7801\u3002", "Pick an account set first, then choose a credential."))
         ),
         provider && util.hintOf(provider, lang) ? h("p", { className: "wbml-hint-line" }, util.hintOf(provider, lang)) : null,
         !f.advanced && f.imapHost ? h("p", { className: "wbml-hint-line" }, "IMAP " + f.imapHost + ":" + f.imapPort + (f.imapTls ? " TLS" : "") + " \xB7 SMTP " + (f.smtpHost || "\u2014") + ":" + f.smtpPort + (f.smtpTls ? " TLS" : " STARTTLS")) : null,
@@ -4988,12 +5188,12 @@ var require_account_form = __commonJS({
         probeS[0] ? h(C.Notice, { h, text: probeText, kind: probeS[0].ok ? "ok" : "warn" }) : null,
         errS[0] ? h(C.Notice, { h, text: errS[0], kind: "warn" }) : null,
         noticeS[0] ? h(C.Notice, { h, text: noticeS[0], kind: "ok" }) : null,
-        !f.secretId ? h("p", { className: "wbml-hint-line" }, t(lang, "\u8BF7\u5148\u5728\u4FDD\u9669\u7BB1\u65B0\u5EFA\u5E76\u9009\u62E9\u51ED\u636E\uFF0C\u672A\u9009\u65F6\u4E0D\u80FD\u4FDD\u5B58\u3002", "Pick a vault credential before saving.")) : null,
+        !f.accountSetId ? h("p", { className: "wbml-hint-line" }, t(lang, "\u8BF7\u5148\u9009\u62E9\u8D26\u53F7\u96C6\u5408\uFF0C\u672A\u9009\u65F6\u4E0D\u80FD\u4FDD\u5B58\u3002", "Pick an account set before saving.")) : !f.secretId ? h("p", { className: "wbml-hint-line" }, t(lang, "\u8BF7\u4ECE\u6240\u9009\u96C6\u5408\u91CC\u9009\u4E00\u6761\u6388\u6743\u7801\uFF0C\u672A\u9009\u65F6\u4E0D\u80FD\u4FDD\u5B58\u3002", "Pick a credential from the selected set before saving.")) : null,
         h(
           "div",
           { className: "wbml-acct-foot" },
-          h(C.Btn, { h, onClick: runProbe, disabled: busy.probe || busy.save || !f.secretId || !portOk() }, busy.probe ? t(lang, "\u81EA\u68C0\u4E2D\u2026", "Checking\u2026") : t(lang, "\u4FDD\u5B58\u524D\u81EA\u68C0", "Check connection")),
-          h(C.Btn, { h, kind: "primary", onClick: submit, disabled: busy.save || !f.secretId || !portOk() }, busy.save ? t(lang, "\u4FDD\u5B58\u4E2D\u2026", "Saving\u2026") : t(lang, "\u4FDD\u5B58", "Save")),
+          h(C.Btn, { h, onClick: runProbe, disabled: busy.probe || busy.save || !f.accountSetId || !f.secretId || !portOk() }, busy.probe ? t(lang, "\u81EA\u68C0\u4E2D\u2026", "Checking\u2026") : t(lang, "\u4FDD\u5B58\u524D\u81EA\u68C0", "Check connection")),
+          h(C.Btn, { h, kind: "primary", onClick: submit, disabled: busy.save || !f.accountSetId || !f.secretId || !portOk() }, busy.save ? t(lang, "\u4FDD\u5B58\u4E2D\u2026", "Saving\u2026") : t(lang, "\u4FDD\u5B58", "Save")),
           h(C.Btn, { h, onClick: props.onCancel }, t(lang, "\u53D6\u6D88", "Cancel"))
         )
       );
@@ -5032,6 +5232,11 @@ var require_account_card = __commonJS({
           { className: "wbml-card-main" },
           h("div", { className: "wbml-card-title" }, a.name || a.email),
           h("div", { className: "wbml-card-sub" }, a.email, a.username && a.username !== a.email ? " \xB7 " + a.username : ""),
+          h(
+            "div",
+            { className: "wbml-card-meta" },
+            a.accountSetName ? t(lang, "\u8D26\u53F7\u96C6\u5408\uFF1A", "Account set: ") + a.accountSetName : a.accountSetId ? t(lang, "\u8D26\u53F7\u96C6\u5408\u5DF2\u5931\u6548\uFF0C\u8BF7\u91CD\u9009", "The account set is gone \u2014 pick another one") : t(lang, "\u672A\u7ED1\u5B9A\u8D26\u53F7\u96C6\u5408", "No account set bound")
+          ),
           h("div", { className: "wbml-card-meta" }, (a.imapHost || "\u2014") + ":" + a.imapPort + " \xB7 " + (a.smtpHost || "\u2014") + ":" + a.smtpPort),
           h("div", { className: "wbml-card-meta" }, t(lang, "\u6700\u8FD1\u6765\u4FE1\uFF1A", "Last mail: ") + last)
         ),
@@ -5201,6 +5406,18 @@ var require_accounts = __commonJS({
       var testS = React.useState({});
       var busyS = React.useState("");
       var msgS = React.useState(null);
+      var setNameS = React.useState({});
+      React.useEffect(function() {
+        C.call(api, "vault.setList", { type: "account", q: "" }).then(function(r) {
+          var map = {};
+          (r && r.items || []).forEach(function(x) {
+            map[x.id] = x.name;
+          });
+          setNameS[1](map);
+        }).catch(function() {
+          setNameS[1]({});
+        });
+      }, []);
       React.useEffect(function() {
         if (tableS[0]) return;
         C.call(api, "mail.providerList", {}).then(function(r) {
@@ -5245,7 +5462,7 @@ var require_accounts = __commonJS({
         h(
           "div",
           { className: "wbml-head" },
-          h("div", null, h("h2", null, lang === "en" ? "Mail accounts" : "\u90AE\u7BB1\u8D26\u6237"), h("p", { className: "wbml-sub" }, lang === "en" ? "Pick a provider, then choose an app-password credential from the vault; this page only stores its id." : "\u9009\u670D\u52A1\u5546\u3001\u518D\u4ECE\u4FDD\u9669\u7BB1\u6311\u4E00\u6761\u6388\u6743\u7801\u5373\u53EF\uFF0C\u90AE\u4EF6\u9875\u53EA\u4FDD\u5B58\u51ED\u636E id\u3002")),
+          h("div", null, h("h2", null, lang === "en" ? "Mail accounts" : "\u90AE\u7BB1\u8D26\u6237"), h("p", { className: "wbml-sub" }, lang === "en" ? "Pick a provider, then choose an app-password credential from the vault; this page only stores its id." : "\u5148\u9009\u4FDD\u9669\u7BB1\u91CC\u7684\u8D26\u53F7\u96C6\u5408\uFF0C\u8D26\u53F7\u81EA\u52A8\u5E26\u51FA\uFF0C\u518D\u4ECE\u96C6\u5408\u91CC\u6311\u4E00\u6761\u6388\u6743\u7801\uFF1B\u90AE\u4EF6\u9875\u53EA\u4FDD\u5B58\u51ED\u636E id\u3002")),
           h(C.Btn, { h, kind: "primary", onClick: function() {
             openS[1]({});
           } }, lang === "en" ? "Add account" : "\u6DFB\u52A0\u8D26\u6237")
@@ -5276,6 +5493,7 @@ var require_accounts = __commonJS({
               C,
               lang,
               account: a,
+              accountSetName: setNameS[0][a.accountSetId] || "",
               test: testS[0][a.id] || null,
               busy: busyS[0] === a.id,
               onEdit: function() {
@@ -7244,7 +7462,7 @@ var GLYPHS = require_icons2().ICONS;
   var slotBackToMessage = require_slot_back_to_message()({ React, h, C, Icon: Icon2 });
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.5.11",
+    version: "0.6.0",
     icon: GLYPHS["mail"],
     slots: [{ slot: "item.actions", id: "mail.back-to-message", order: 100, component: slotBackToMessage }],
     views: [
