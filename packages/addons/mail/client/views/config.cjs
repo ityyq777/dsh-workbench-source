@@ -75,6 +75,15 @@ module.exports = function Config(props) {
         toastOnce(C.errText(e));
       });
   }
+  function multiLabel(item, v) {
+    var table = item.valueLabels || {};
+    var hit = table[v];
+    if (hit) return lang === "en" ? hit.en || hit.zh : hit.zh;
+    if (v === "original") return lang === "en" ? "Original design" : "按原信配色";
+    if (v === "app") return lang === "en" ? "Follow app theme" : "跟随界面主题";
+    return v;
+  }
+
   function control(item) {
     var value = values()[item.id];
     if (item.type === "bool") {
@@ -113,6 +122,21 @@ module.exports = function Config(props) {
         item.min !== undefined || item.max !== undefined
           ? h("span", { className: "wbml-muted" }, (item.min === undefined ? "" : item.min) + "–" + (item.max === undefined ? "" : item.max))
           : null,
+      );
+    }
+    if (item.type === "multi" && Array.isArray(item.values)) {
+      // 枚举项（例如正文配色 original/app）用下拉，改一项立即写入。
+      return h(
+        "select",
+        {
+          className: "wbml-input wbml-select",
+          value: value === undefined ? item.default : value,
+          "aria-label": labelOf(item),
+          onChange: function (e) { save(item.id, e.target.value); },
+        },
+        item.values.map(function (v) {
+          return h("option", { key: v, value: v }, multiLabel(item, v));
+        }),
       );
     }
     return h("span", { className: "wbml-muted" }, String(value === undefined ? "" : value));

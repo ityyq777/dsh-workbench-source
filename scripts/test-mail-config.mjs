@@ -1,6 +1,6 @@
 /** 邮件配置页回归：内存 API + vm 沙箱渲染，不接触生产库、不构建、不改 profile。
  *
- * 覆盖：配置页按分组渲染四项、改一项立即写入、写失败保留原值并提示、
+ * 覆盖：配置页按分组渲染五项（含正文配色枚举）、改一项立即写入、写失败保留原值并提示、
  * 恢复默认调用 configReset、读不到配置时按默认值继续；远程图片默认加载/拦截两种正文提示。
  */
 import assert from 'node:assert/strict';
@@ -47,6 +47,7 @@ async function settle(page, rounds = 5) {
 const ITEMS = [
   { id: 'images.remote', group: 'images', type: 'bool', surface: 'ui', apply: 'mount', default: true, zh: '默认加载远程图片', en: 'Show remote images', hintZh: '打开即按原信显示图片。', hintEn: 'Images load.' },
   { id: 'display.html', group: 'display', type: 'bool', surface: 'ui', apply: 'mount', default: true, zh: '优先原信排版', en: 'Prefer HTML layout', hintZh: '用原文的 HTML 排版显示。', hintEn: 'Render HTML.' },
+  { id: 'display.mailTheme', group: 'display', type: 'multi', surface: 'ui', apply: 'mount', default: 'original', values: ['original', 'app'], zh: '正文配色', en: 'Mail colour scheme', hintZh: '按原信配色或跟随界面主题。', hintEn: 'Keep the sender palette or follow the app theme.' },
   { id: 'read.autoSeen', group: 'read', type: 'bool', surface: 'ui', apply: 'mount', default: true, zh: '打开即标为已读', en: 'Mark as read on open', hintZh: '打开即回写已读。', hintEn: 'Mark read.' },
   { id: 'list.pageSize', group: 'list', type: 'int', surface: 'ui', apply: 'mount', default: 20, min: 10, max: 50, zh: '每次加载封数', en: 'Messages per page', hintZh: '一次加载多少封。', hintEn: 'Page size.' },
 ];
@@ -58,7 +59,7 @@ const GROUPS = [
 ];
 
 // A. 只读渲染：四项都在，值来自服务端；分组标题按语言。
-const state = { values: { 'images.remote': true, 'display.html': true, 'read.autoSeen': true, 'list.pageSize': 20 }, overrides: {}, fail: false, failSet: false, calls: [] };
+const state = { values: { 'images.remote': true, 'display.html': true, 'display.mailTheme': 'original', 'read.autoSeen': true, 'list.pageSize': 20 }, overrides: {}, fail: false, failSet: false, calls: [] };
 const api = {
   call(name, args) {
     state.calls.push({ name, args });
@@ -73,7 +74,7 @@ const api = {
       return Promise.resolve({ changed: Object.keys(args.values), values: state.values });
     }
     if (name === 'mail.configReset') {
-      state.values = { 'images.remote': true, 'display.html': true, 'read.autoSeen': true, 'list.pageSize': 20 };
+      state.values = { 'images.remote': true, 'display.html': true, 'display.mailTheme': 'original', 'read.autoSeen': true, 'list.pageSize': 20 };
       state.overrides = {};
       return Promise.resolve({ reset: ITEMS.map((i) => i.id), values: state.values });
     }
@@ -96,6 +97,11 @@ for (const group of GROUPS) assert.ok(txt.includes(group.zh), '应有分组标�
 assert.match(txt, /邮件设置/);
 assert.equal(walk(tree).filter((n) => n.props && n.props.type === 'checkbox').length, 3, '三个布尔项各一个开关');
 assert.equal(walk(tree).filter((n) => n.props && n.props.type === 'number').length, 1, '一个数字项');
+const sel = walk(tree).find((n) => n.type === 'select' && n.props['aria-label'] === '正文配色');
+assert.ok(sel, '正文配色应渲染成下拉');
+assert.equal(sel.props.value, 'original', '默认按原信配色');
+assert.equal(JSON.stringify(walk(sel).filter((n) => n.type === 'option').map((n) => n.props.value)), JSON.stringify(['original', 'app']), '两个取值');
+assert.match(text(sel), /按原信配色/, '选项用中文标签');
 
 // B. 改一项立即写入：开关走 configSet，成功后台账同步、没有「已改」标记残留错误。
 const box = walk(tree).find((n) => n.props && n.props.type === 'checkbox' && n.props['aria-label'] === '默认加载远程图片');
@@ -106,6 +112,13 @@ assert.equal(JSON.stringify(setCall.args), JSON.stringify({ values: { 'images.re
 assert.equal(state.values['images.remote'], false);
 assert.match(text(tree), /已保存/, '写入成功后给一次提示');
 assert.match(text(tree), /已改/, '改动过的项要能看出来');
+
+// B2. 正文配色下拉的改动也要立即落库。
+sel.props.onChange({ target: { value: 'app' } });
+tree = await settle(page);
+const themeCall = state.calls.filter((c) => c.name === 'mail.configSet').at(-1);
+assert.equal(JSON.stringify(themeCall.args), JSON.stringify({ values: { 'display.mailTheme': 'app' } }), '配色选择要立刻落库');
+assert.equal(state.values['display.mailTheme'], 'app');
 
 // C. 写失败：保留原值（不静默改成新值），提示错误原因。
 state.failSet = true;

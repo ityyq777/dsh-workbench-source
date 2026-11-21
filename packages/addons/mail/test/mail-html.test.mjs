@@ -53,7 +53,9 @@ test('文档：CSP 默认禁一切外链，允许远程图片时只放开图片�
   const blocked = buildDoc('<img src="https://e/a.png">', { allowRemote: false, theme: { paper: '#101010', ink: '#eee', link: '#0af', line: '#333' } });
   assert.match(blocked, /default-src 'none'/);
   assert.match(blocked, /img-src data:;/);
-  assert.match(blocked, /color:#eee/);
+  // 纸面深就用深色纸面配浅字，文字色由纸面亮度决定，不再直接抄主题 ink。
+  assert.match(blocked, /color-scheme:dark/);
+  assert.match(blocked, /color:#e6e8ec/);
   const allowed = buildDoc('<img src="https://e/a.png">', { allowRemote: true });
   assert.match(allowed, /img-src data: https: http:;/);
   assert.equal(/@import/.test(allowed), false);
@@ -96,6 +98,8 @@ test('组件：HTML 正文渲染在沙箱 iframe 里，正文标签可见且不�
 
 test('组件：纯文本邮件不出现图片提示，无远程图时只说明按原信排版', () => {
   const node = MailHtml({ h, React: fakeReact(), api: null, html: '<p>只有文字</p>', attachments: [] });
-  assert.equal(text(node), '已按原信排版显示，图片来自本地附件。');
-  assert.equal(walk(node).some(n => n.type === 'button'), false);
+  assert.equal(text(node).startsWith('已按原信排版显示，图片来自本地附件。'), true);
+  assert.equal(text(node).includes('远程图片'), false);
+  // 页头始终提供配色切换按钮（此处无图，只剩它一个）。
+  assert.equal(text(node).includes('跟随界面主题'), true);
 });

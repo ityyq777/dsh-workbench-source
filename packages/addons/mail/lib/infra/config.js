@@ -31,6 +31,13 @@ const ITEMS = [
     hintEn: "Render the original HTML inside a sandbox; turn off to always show plain text.",
   },
   {
+    id: "display.mailTheme", group: "display", type: "multi", surface: "ui", apply: "mount", default: "original",
+    values: ["original", "app"],
+    zh: "正文配色", en: "Mail colour scheme",
+    hintZh: "original 表示按发件方原设计配色（浅色邮件用浅纸面、深色邮件用深色纸面）；app 表示正文跟随界面主题。单封邮件也可以在阅读区页头临时切换。",
+    hintEn: "original keeps the sender's own colour scheme; app follows the app theme. Each mail can also be toggled in the reader header.",
+  },
+  {
     id: "read.autoSeen", group: "read", type: "bool", surface: "ui", apply: "mount", default: true,
     zh: "打开即标为已读", en: "Mark as read on open",
     hintZh: "打开一封信即回写已读；关闭后需要手动点「标为已读」。",
@@ -54,6 +61,13 @@ function coerceValue(item, raw) {
   if (item.type === "bool") {
     if (typeof raw !== "boolean") throw new Error(label(item) + " 需要 true/false");
     return raw;
+  }
+  if (item.type === "multi") {
+    const value = String(raw == null ? "" : raw);
+    if (!Array.isArray(item.values) || !item.values.includes(value)) {
+      throw new Error(label(item) + " 只能是 " + (item.values || []).join(" / "));
+    }
+    return value;
   }
   if (item.type === "int" || item.type === "number") {
     const value = Number(raw);

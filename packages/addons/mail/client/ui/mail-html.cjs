@@ -42,9 +42,45 @@ function cssSafe(css, allowRemote) {
   if (!allowRemote) out = out.replace(/url\s*\(\s*['"]?(?:https?:)?\/\/[^)]*\)/gi, "none");
   return out;
 }
-function cleanStyleBlocks(html, allowRemote) {
+/** 从 `{` 起做括号配平，返回闭合 `}` 的下标（找不到返回 -1）；跳过注释与字符串里的括号。 */
+function matchBrace(css, open) {
+  var depth = 0, quote = "", i;
+  for (i = open; i < css.length; i += 1) {
+    var ch = css[i];
+    if (quote) { if (ch === "\\") i += 1; else if (ch === quote) quote = ""; continue; }
+    if (ch === "/" && css[i + 1] === "*") { var end = css.indexOf("*/", i + 2); i = end < 0 ? css.length : end + 1; continue; }
+    if (ch === '"' || ch === "'") { quote = ch; continue; }
+    if (ch === "{") depth += 1;
+    else if (ch === "}") { depth -= 1; if (!depth) return i; }
+  }
+  return -1;
+}
+
+/**
+ * 把邮件自带的 prefers-color-scheme 适配块按**应用主题**求值，而不是操作系统：
+ * 与当前主题一致的分支直接内联（去掉媒体查询），不一致的整块丢弃。
+ * @media 里还嵌着 @media 时递归处理。
+ */
+function rewriteScheme(css, scheme) {
+  var out = "", rest = String(css || ""), re = /@media\s*([^{]*prefers-color-scheme[^{]*)\{/gi, m;
+  re.lastIndex = 0;
+  while ((m = re.exec(rest))) {
+    var open = re.lastIndex - 1, close = matchBrace(rest, open);
+    if (close < 0) break;
+    var query = m[1].toLowerCase(), body = rest.slice(open + 1, close);
+    var wants = query.indexOf("dark") >= 0 && query.indexOf("light") < 0 ? "dark" : query.indexOf("light") >= 0 && query.indexOf("dark") < 0 ? "light" : "";
+    var keep = wants ? wants === scheme : true;
+    out += rest.slice(0, m.index) + (keep ? rewriteScheme(body, scheme) : "");
+    rest = rest.slice(close + 1);
+    re.lastIndex = 0;
+  }
+  return out + rest;
+}
+
+function cleanStyleBlocks(html, allowRemote, scheme) {
   return String(html).replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi, function (all, open, body, close) {
     var css = body.replace(/@import[^;]*;?/gi, "");
+    if (scheme) css = rewriteScheme(css, scheme);
     return open + cssSafe(css, allowRemote) + close;
   });
 }
@@ -55,7 +91,7 @@ function cleanStyleBlocks(html, allowRemote) {
  */
 function sanitize(html, opts) {
   var allowRemote = !!(opts && opts.allowRemote);
-  var src = cleanStyleBlocks(String(html == null ? "" : html), allowRemote);
+  var src = cleanStyleBlocks(String(html == null ? "" : html), allowRemote, opts && opts.scheme);
   var out = [], remoteCount = 0, cidIds = [], last = 0, m, skipUntil = null;
   TOKEN.lastIndex = 0;
   while ((m = TOKEN.exec(src))) {
@@ -125,6 +161,63 @@ function replaceCid(html, cidMap) {
   });
 }
 
+/** 颜色解析：只认 #rgb/#rrggbb/rgb()/rgba()，够判纸面明暗，不必支持全部 CSS 颜色。 */
+function parseColor(value) {
+  var v = String(value || "").trim().toLowerCase();
+  var m = /^#([0-9a-f]{3})$/.exec(v);
+  if (m) return [0, 1, 2].map(function (i) { return parseInt(m[1][i] + m[1][i], 16); });
+  m = /^#([0-9a-f]{6})$/.exec(v);
+  if (m) return [0, 1, 2].map(function (i) { return parseInt(m[1].slice(i * 2, i * 2 + 2), 16); });
+  m = /^rgba?\(([^)]*)\)$/.exec(v);
+  if (m) {
+    var parts = m[1].split(/[,\s/]+/).filter(Boolean).map(Number);
+    if (parts.length >= 3 && parts.every(function (n) { return isFinite(n); })) return parts.slice(0, 3).map(function (n) { return Math.max(0, Math.min(255, Math.round(n))); });
+  }
+  return null;
+}
+
+/** sRGB 相对亮度（WCAG），0 全黑、1 全白。 */
+function luminance(rgb) {
+  if (!rgb) return 0.5;
+  var channel = function (n) {
+    var c = n / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * channel(rgb[0]) + 0.7152 * channel(rgb[1]) + 0.0722 * channel(rgb[2]);
+}
+
+function luminanceOf(color) {
+  return luminance(parseColor(color));
+}
+
+/** 纸面配色：浅底配深字、深底配浅字，两套都用固定的近白/近黑，不跟界面主题混。 */
+var PAPER = { light: { paper: "#ffffff", ink: "#1f2328" }, dark: { paper: "#16181d", ink: "#e6e8ec" } };
+
+function inkFor(color) {
+  return luminanceOf(color) < 0.5 ? PAPER.dark.ink : PAPER.light.ink;
+}
+
+/**
+ * 判断这封邮件是给什么纸面设计的：看 html/body/首个 table/首个 div 的 bgcolor 或
+ * style 里的 background(-color)。判不出来（unknown）就跟随界面主题。
+ * @returns {{kind:'light'|'dark'|'unknown', paper:string, ink:string}}
+ */
+function detectPaper(html, theme) {
+  var source = String(html == null ? "" : html), re = /<(html|body|table|div)\b([^>]*)>/gi, m;
+  while ((m = re.exec(source))) {
+    var attrs = m[2] || "";
+    var raw = (/bgcolor\s*=\s*["']?([^"'\s>]+)/i.exec(attrs) || []).pop() ||
+      (/background-color\s*:\s*([^;"'}]+)/i.exec(attrs) || []).pop() ||
+      (/(?:^|[;"'\s])background\s*:\s*([^;"'}]+)/i.exec(attrs) || []).pop();
+    var rgb = raw ? parseColor(raw) : null;
+    if (!rgb) continue;
+    var l = luminance(rgb);
+    if (l >= 0.55) return { kind: "light", paper: PAPER.light.paper, ink: PAPER.light.ink };
+    if (l <= 0.28) return { kind: "dark", paper: PAPER.dark.paper, ink: PAPER.dark.ink };
+  }
+  return { kind: "unknown", paper: (theme && theme.paper) || PAPER.light.paper, ink: (theme && theme.ink) || PAPER.light.ink };
+}
+
 /** 宿主主题色，透传给 iframe，避免在邮件视图里另立色板。 */
 function themeVars() {
   if (typeof document === "undefined" || !document.documentElement) return {};
@@ -148,12 +241,31 @@ function buildDoc(html, opts) {
   var allowRemote = !!(opts && opts.allowRemote), theme = (opts && opts.theme) || {};
   var csp = "default-src 'none'; img-src data:" + (allowRemote ? " https: http:" : "") +
     "; style-src 'unsafe-inline'; font-src data:; media-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
-  var paper = theme.paper || "#fff", ink = theme.ink || "#1f2328", link = theme.link || "#0a66c2";
-  return "<!doctype html><html><head><meta charset=\"utf-8\">" +
+  var source = String(html || "");
+  // 应用主题（决定邮件自适配走哪一支）；mode=original 时纸面按原信设计，mode=app 时跟随界面。
+  var scheme = (opts && opts.scheme) || (luminanceOf(theme.paper) < 0.5 ? "dark" : "light");
+  var mode = (opts && opts.mode) === "app" ? "app" : "original";
+  var detected = detectPaper(source, theme);
+  var follow = mode === "app" || detected.kind === "unknown";
+  var paper = follow ? theme.paper || PAPER.light.paper : detected.paper;
+  var ink = follow ? inkFor(paper) : detected.ink;
+  var link = theme.link || "#0a66c2", line = follow ? theme.line || "#e5e7eb" : "rgba(0,0,0,.12)";
+  var tone = luminanceOf(paper) < 0.5 ? "dark" : "light";
+  return "<!doctype html><html class=\"wbml-" + scheme + "\"><head><meta charset=\"utf-8\">" +
     "<meta http-equiv=\"Content-Security-Policy\" content=\"" + csp + "\">" +
-    "<style>html{color-scheme:light}html,body{margin:0;padding:0}body{padding:2px;font:13px/1.65 -apple-system,BlinkMacSystemFont,\"Segoe UI\",\"PingFang SC\",\"Hiragino Sans GB\",\"Microsoft YaHei\",sans-serif;color:" + ink + ";background:" + paper + ";overflow-x:hidden;word-break:break-word;overflow-wrap:anywhere}" +
+    "<style>html{color-scheme:" + tone + "}html,body{margin:0;padding:0}body{padding:2px;font:13px/1.65 -apple-system,BlinkMacSystemFont,\"Segoe UI\",\"PingFang SC\",\"Hiragino Sans GB\",\"Microsoft YaHei\",sans-serif;color:" + ink + ";background:" + paper + ";overflow-x:hidden;word-break:break-word;overflow-wrap:anywhere}" +
     "img{max-width:100%;height:auto}a{color:" + link + "}table{max-width:100%;border-collapse:collapse}td,th{vertical-align:top}pre{white-space:pre-wrap;overflow-wrap:anywhere}" +
-    "blockquote{margin:0 0 0 12px;padding-left:10px;border-left:2px solid " + (theme.line || "#e5e7eb") + ";color:inherit}</style></head><body>" + String(html || "") + "</body></html>";
+    "blockquote{margin:0 0 0 12px;padding-left:10px;border-left:2px solid " + line + ";color:inherit}</style></head><body>" + source + "</body></html>";
+}
+
+/** 每封邮件记住配色选择：重开同一封时沿用上次的「按原信配色 / 跟随界面主题」。 */
+var modeByMail = {};
+
+function initialMode(props) {
+  var key = String(props.mailId || "");
+  if (modeByMail[key]) return modeByMail[key];
+  // 配置项 display.mailTheme 给默认值，单封邮件上的切换优先。
+  return props.mailTheme === "app" ? "app" : "original";
 }
 
 module.exports = function MailHtml(props) {
@@ -163,7 +275,11 @@ module.exports = function MailHtml(props) {
   var expanded = React.useState(allowDefault);
   var images = React.useState({});
   var frame = React.useRef(null);
-  var meta = React.useMemo(function () { return sanitize(props.html, { allowRemote: expanded[0] }); }, [props.html, expanded[0]]);
+  var theme = React.useMemo(themeVars, []);
+  // 应用主题（不是操作系统主题）：决定邮件自带 prefers-color-scheme 走哪一支。
+  var scheme = luminanceOf(theme.paper) < 0.5 ? "dark" : "light";
+  var mode = React.useState(function () { return initialMode(props); });
+  var meta = React.useMemo(function () { return sanitize(props.html, { allowRemote: expanded[0], scheme: scheme }); }, [props.html, expanded[0], scheme]);
   var byCid = React.useMemo(function () {
     var map = {};
     (props.attachments || []).forEach(function (a) {
@@ -173,8 +289,8 @@ module.exports = function MailHtml(props) {
     return map;
   }, [props.attachments]);
   var hasRemote = React.useMemo(function () {
-    return sanitize(props.html, { allowRemote: true }).remoteCount;
-  }, [props.html]);
+    return sanitize(props.html, { allowRemote: true, scheme: scheme }).remoteCount;
+  }, [props.html, scheme]);
   React.useEffect(function () {
     if (!api) return;
     var alive = true, want = [];
@@ -195,8 +311,13 @@ module.exports = function MailHtml(props) {
     return function () { alive = false; };
   }, [meta.cidIds, byCid, api]);
   var doc = React.useMemo(function () {
-    return buildDoc(replaceCid(meta.html, images[0]), { allowRemote: expanded[0], theme: themeVars() });
-  }, [meta.html, images[0], expanded[0]]);
+    return buildDoc(replaceCid(meta.html, images[0]), { allowRemote: expanded[0], theme: theme, scheme: scheme, mode: mode[0] });
+  }, [meta.html, images[0], expanded[0], theme, scheme, mode[0]]);
+  function toggleMode() {
+    var next = mode[0] === "app" ? "original" : "app";
+    modeByMail[String(props.mailId || "")] = next;
+    mode[1](next);
+  }
   function measure() {
     var f = frame.current;
     if (!f) return;
@@ -211,23 +332,28 @@ module.exports = function MailHtml(props) {
   return h("div", { className: "wbml-htmwrap" },
     h("div", { className: "wbml-htmlbar" },
       h("span", { className: "wbml-muted" }, expanded[0] ? (hasRemote ? "已加载远程图片，内容由发件方服务器提供。" : "已按原信排版显示，图片来自本地附件。") : "此邮件含 " + hasRemote + " 个远程图片，已按设置拦截。"),
+      h(C.Btn, { h: h, onClick: toggleMode }, mode[0] === "app" ? "按原信配色" : "跟随界面主题"),
       hasRemote
         ? h(C.Btn, { h: h, onClick: function () { expanded[1](!expanded[0]); } }, expanded[0] ? "本次不加载" : "显示图片")
         : null,
     ),
-    h("iframe", {
-      ref: frame,
-      className: "wbml-htmlframe",
-      title: props.title || "邮件正文",
-      sandbox: "allow-same-origin allow-popups allow-popups-to-escape-sandbox",
-      referrerPolicy: "no-referrer",
-      srcDoc: doc,
-      onLoad: measure,
-    }),
+    // 纸面与界面主题不同色时，外面这层 --wb-card 内边距把白块/暗块与边框隔开，避免贴边。
+    h("div", { className: "wbml-htmlpad" },
+      h("iframe", {
+        ref: frame,
+        className: "wbml-htmlframe",
+        title: props.title || "邮件正文",
+        sandbox: "allow-same-origin allow-popups allow-popups-to-escape-sandbox",
+        referrerPolicy: "no-referrer",
+        srcDoc: doc,
+        onLoad: measure,
+      })),
   );
 };
 
 module.exports.sanitize = sanitize;
+module.exports.detectPaper = detectPaper;
+module.exports.rewriteScheme = rewriteScheme;
 module.exports.buildDoc = buildDoc;
 module.exports.replaceCid = replaceCid;
 module.exports.PLACEHOLDER = PLACEHOLDER;

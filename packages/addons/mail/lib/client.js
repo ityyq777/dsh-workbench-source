@@ -1855,15 +1855,57 @@ var require_mail_html = __commonJS({
       if (!allowRemote) out = out.replace(/url\s*\(\s*['"]?(?:https?:)?\/\/[^)]*\)/gi, "none");
       return out;
     }
-    function cleanStyleBlocks(html, allowRemote) {
+    function matchBrace(css, open) {
+      var depth = 0, quote = "", i;
+      for (i = open; i < css.length; i += 1) {
+        var ch = css[i];
+        if (quote) {
+          if (ch === "\\") i += 1;
+          else if (ch === quote) quote = "";
+          continue;
+        }
+        if (ch === "/" && css[i + 1] === "*") {
+          var end = css.indexOf("*/", i + 2);
+          i = end < 0 ? css.length : end + 1;
+          continue;
+        }
+        if (ch === '"' || ch === "'") {
+          quote = ch;
+          continue;
+        }
+        if (ch === "{") depth += 1;
+        else if (ch === "}") {
+          depth -= 1;
+          if (!depth) return i;
+        }
+      }
+      return -1;
+    }
+    function rewriteScheme(css, scheme) {
+      var out = "", rest = String(css || ""), re = /@media\s*([^{]*prefers-color-scheme[^{]*)\{/gi, m;
+      re.lastIndex = 0;
+      while (m = re.exec(rest)) {
+        var open = re.lastIndex - 1, close = matchBrace(rest, open);
+        if (close < 0) break;
+        var query = m[1].toLowerCase(), body = rest.slice(open + 1, close);
+        var wants = query.indexOf("dark") >= 0 && query.indexOf("light") < 0 ? "dark" : query.indexOf("light") >= 0 && query.indexOf("dark") < 0 ? "light" : "";
+        var keep = wants ? wants === scheme : true;
+        out += rest.slice(0, m.index) + (keep ? rewriteScheme(body, scheme) : "");
+        rest = rest.slice(close + 1);
+        re.lastIndex = 0;
+      }
+      return out + rest;
+    }
+    function cleanStyleBlocks(html, allowRemote, scheme) {
       return String(html).replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi, function(all, open, body, close) {
         var css = body.replace(/@import[^;]*;?/gi, "");
+        if (scheme) css = rewriteScheme(css, scheme);
         return open + cssSafe(css, allowRemote) + close;
       });
     }
     function sanitize(html, opts) {
       var allowRemote = !!(opts && opts.allowRemote);
-      var src = cleanStyleBlocks(String(html == null ? "" : html), allowRemote);
+      var src = cleanStyleBlocks(String(html == null ? "" : html), allowRemote, opts && opts.scheme);
       var out = [], remoteCount = 0, cidIds = [], last = 0, m, skipUntil = null;
       TOKEN.lastIndex = 0;
       while (m = TOKEN.exec(src)) {
@@ -1941,6 +1983,55 @@ var require_mail_html = __commonJS({
         return open + (url || PLACEHOLDER) + close;
       });
     }
+    function parseColor(value) {
+      var v = String(value || "").trim().toLowerCase();
+      var m = /^#([0-9a-f]{3})$/.exec(v);
+      if (m) return [0, 1, 2].map(function(i) {
+        return parseInt(m[1][i] + m[1][i], 16);
+      });
+      m = /^#([0-9a-f]{6})$/.exec(v);
+      if (m) return [0, 1, 2].map(function(i) {
+        return parseInt(m[1].slice(i * 2, i * 2 + 2), 16);
+      });
+      m = /^rgba?\(([^)]*)\)$/.exec(v);
+      if (m) {
+        var parts = m[1].split(/[,\s/]+/).filter(Boolean).map(Number);
+        if (parts.length >= 3 && parts.every(function(n) {
+          return isFinite(n);
+        })) return parts.slice(0, 3).map(function(n) {
+          return Math.max(0, Math.min(255, Math.round(n)));
+        });
+      }
+      return null;
+    }
+    function luminance(rgb) {
+      if (!rgb) return 0.5;
+      var channel = function(n) {
+        var c = n / 255;
+        return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+      };
+      return 0.2126 * channel(rgb[0]) + 0.7152 * channel(rgb[1]) + 0.0722 * channel(rgb[2]);
+    }
+    function luminanceOf(color) {
+      return luminance(parseColor(color));
+    }
+    var PAPER = { light: { paper: "#ffffff", ink: "#1f2328" }, dark: { paper: "#16181d", ink: "#e6e8ec" } };
+    function inkFor(color) {
+      return luminanceOf(color) < 0.5 ? PAPER.dark.ink : PAPER.light.ink;
+    }
+    function detectPaper(html, theme) {
+      var source = String(html == null ? "" : html), re = /<(html|body|table|div)\b([^>]*)>/gi, m;
+      while (m = re.exec(source)) {
+        var attrs = m[2] || "";
+        var raw = (/bgcolor\s*=\s*["']?([^"'\s>]+)/i.exec(attrs) || []).pop() || (/background-color\s*:\s*([^;"'}]+)/i.exec(attrs) || []).pop() || (/(?:^|[;"'\s])background\s*:\s*([^;"'}]+)/i.exec(attrs) || []).pop();
+        var rgb = raw ? parseColor(raw) : null;
+        if (!rgb) continue;
+        var l = luminance(rgb);
+        if (l >= 0.55) return { kind: "light", paper: PAPER.light.paper, ink: PAPER.light.ink };
+        if (l <= 0.28) return { kind: "dark", paper: PAPER.dark.paper, ink: PAPER.dark.ink };
+      }
+      return { kind: "unknown", paper: theme && theme.paper || PAPER.light.paper, ink: theme && theme.ink || PAPER.light.ink };
+    }
     function themeVars() {
       if (typeof document === "undefined" || !document.documentElement) return {};
       var cs = typeof getComputedStyle === "function" ? getComputedStyle(document.documentElement) : null;
@@ -1960,8 +2051,22 @@ var require_mail_html = __commonJS({
     function buildDoc(html, opts) {
       var allowRemote = !!(opts && opts.allowRemote), theme = opts && opts.theme || {};
       var csp = "default-src 'none'; img-src data:" + (allowRemote ? " https: http:" : "") + "; style-src 'unsafe-inline'; font-src data:; media-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
-      var paper = theme.paper || "#fff", ink = theme.ink || "#1f2328", link = theme.link || "#0a66c2";
-      return '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="' + csp + '"><style>html{color-scheme:light}html,body{margin:0;padding:0}body{padding:2px;font:13px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:' + ink + ";background:" + paper + ";overflow-x:hidden;word-break:break-word;overflow-wrap:anywhere}img{max-width:100%;height:auto}a{color:" + link + "}table{max-width:100%;border-collapse:collapse}td,th{vertical-align:top}pre{white-space:pre-wrap;overflow-wrap:anywhere}blockquote{margin:0 0 0 12px;padding-left:10px;border-left:2px solid " + (theme.line || "#e5e7eb") + ";color:inherit}</style></head><body>" + String(html || "") + "</body></html>";
+      var source = String(html || "");
+      var scheme = opts && opts.scheme || (luminanceOf(theme.paper) < 0.5 ? "dark" : "light");
+      var mode = (opts && opts.mode) === "app" ? "app" : "original";
+      var detected = detectPaper(source, theme);
+      var follow = mode === "app" || detected.kind === "unknown";
+      var paper = follow ? theme.paper || PAPER.light.paper : detected.paper;
+      var ink = follow ? inkFor(paper) : detected.ink;
+      var link = theme.link || "#0a66c2", line = follow ? theme.line || "#e5e7eb" : "rgba(0,0,0,.12)";
+      var tone = luminanceOf(paper) < 0.5 ? "dark" : "light";
+      return '<!doctype html><html class="wbml-' + scheme + '"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="' + csp + '"><style>html{color-scheme:' + tone + '}html,body{margin:0;padding:0}body{padding:2px;font:13px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:' + ink + ";background:" + paper + ";overflow-x:hidden;word-break:break-word;overflow-wrap:anywhere}img{max-width:100%;height:auto}a{color:" + link + "}table{max-width:100%;border-collapse:collapse}td,th{vertical-align:top}pre{white-space:pre-wrap;overflow-wrap:anywhere}blockquote{margin:0 0 0 12px;padding-left:10px;border-left:2px solid " + line + ";color:inherit}</style></head><body>" + source + "</body></html>";
+    }
+    var modeByMail = {};
+    function initialMode(props) {
+      var key = String(props.mailId || "");
+      if (modeByMail[key]) return modeByMail[key];
+      return props.mailTheme === "app" ? "app" : "original";
     }
     module2.exports = function MailHtml(props) {
       var h = props.h, React = props.React, api = props.api;
@@ -1969,9 +2074,14 @@ var require_mail_html = __commonJS({
       var expanded = React.useState(allowDefault);
       var images = React.useState({});
       var frame = React.useRef(null);
+      var theme = React.useMemo(themeVars, []);
+      var scheme = luminanceOf(theme.paper) < 0.5 ? "dark" : "light";
+      var mode = React.useState(function() {
+        return initialMode(props);
+      });
       var meta = React.useMemo(function() {
-        return sanitize(props.html, { allowRemote: expanded[0] });
-      }, [props.html, expanded[0]]);
+        return sanitize(props.html, { allowRemote: expanded[0], scheme });
+      }, [props.html, expanded[0], scheme]);
       var byCid = React.useMemo(function() {
         var map = {};
         (props.attachments || []).forEach(function(a) {
@@ -1981,8 +2091,8 @@ var require_mail_html = __commonJS({
         return map;
       }, [props.attachments]);
       var hasRemote = React.useMemo(function() {
-        return sanitize(props.html, { allowRemote: true }).remoteCount;
-      }, [props.html]);
+        return sanitize(props.html, { allowRemote: true, scheme }).remoteCount;
+      }, [props.html, scheme]);
       React.useEffect(function() {
         if (!api) return;
         var alive = true, want = [];
@@ -2012,8 +2122,13 @@ var require_mail_html = __commonJS({
         };
       }, [meta.cidIds, byCid, api]);
       var doc = React.useMemo(function() {
-        return buildDoc(replaceCid(meta.html, images[0]), { allowRemote: expanded[0], theme: themeVars() });
-      }, [meta.html, images[0], expanded[0]]);
+        return buildDoc(replaceCid(meta.html, images[0]), { allowRemote: expanded[0], theme, scheme, mode: mode[0] });
+      }, [meta.html, images[0], expanded[0], theme, scheme, mode[0]]);
+      function toggleMode() {
+        var next = mode[0] === "app" ? "original" : "app";
+        modeByMail[String(props.mailId || "")] = next;
+        mode[1](next);
+      }
       function measure() {
         var f = frame.current;
         if (!f) return;
@@ -2033,22 +2148,30 @@ var require_mail_html = __commonJS({
           "div",
           { className: "wbml-htmlbar" },
           h("span", { className: "wbml-muted" }, expanded[0] ? hasRemote ? "\u5DF2\u52A0\u8F7D\u8FDC\u7A0B\u56FE\u7247\uFF0C\u5185\u5BB9\u7531\u53D1\u4EF6\u65B9\u670D\u52A1\u5668\u63D0\u4F9B\u3002" : "\u5DF2\u6309\u539F\u4FE1\u6392\u7248\u663E\u793A\uFF0C\u56FE\u7247\u6765\u81EA\u672C\u5730\u9644\u4EF6\u3002" : "\u6B64\u90AE\u4EF6\u542B " + hasRemote + " \u4E2A\u8FDC\u7A0B\u56FE\u7247\uFF0C\u5DF2\u6309\u8BBE\u7F6E\u62E6\u622A\u3002"),
+          h(C.Btn, { h, onClick: toggleMode }, mode[0] === "app" ? "\u6309\u539F\u4FE1\u914D\u8272" : "\u8DDF\u968F\u754C\u9762\u4E3B\u9898"),
           hasRemote ? h(C.Btn, { h, onClick: function() {
             expanded[1](!expanded[0]);
           } }, expanded[0] ? "\u672C\u6B21\u4E0D\u52A0\u8F7D" : "\u663E\u793A\u56FE\u7247") : null
         ),
-        h("iframe", {
-          ref: frame,
-          className: "wbml-htmlframe",
-          title: props.title || "\u90AE\u4EF6\u6B63\u6587",
-          sandbox: "allow-same-origin allow-popups allow-popups-to-escape-sandbox",
-          referrerPolicy: "no-referrer",
-          srcDoc: doc,
-          onLoad: measure
-        })
+        // 纸面与界面主题不同色时，外面这层 --wb-card 内边距把白块/暗块与边框隔开，避免贴边。
+        h(
+          "div",
+          { className: "wbml-htmlpad" },
+          h("iframe", {
+            ref: frame,
+            className: "wbml-htmlframe",
+            title: props.title || "\u90AE\u4EF6\u6B63\u6587",
+            sandbox: "allow-same-origin allow-popups allow-popups-to-escape-sandbox",
+            referrerPolicy: "no-referrer",
+            srcDoc: doc,
+            onLoad: measure
+          })
+        )
       );
     };
     module2.exports.sanitize = sanitize;
+    module2.exports.detectPaper = detectPaper;
+    module2.exports.rewriteScheme = rewriteScheme;
     module2.exports.buildDoc = buildDoc;
     module2.exports.replaceCid = replaceCid;
     module2.exports.PLACEHOLDER = PLACEHOLDER;
@@ -2124,6 +2247,14 @@ var require_config = __commonJS({
           toastOnce(C.errText(e));
         });
       }
+      function multiLabel(item, v) {
+        var table = item.valueLabels || {};
+        var hit = table[v];
+        if (hit) return lang === "en" ? hit.en || hit.zh : hit.zh;
+        if (v === "original") return lang === "en" ? "Original design" : "\u6309\u539F\u4FE1\u914D\u8272";
+        if (v === "app") return lang === "en" ? "Follow app theme" : "\u8DDF\u968F\u754C\u9762\u4E3B\u9898";
+        return v;
+      }
       function control(item) {
         var value = values()[item.id];
         if (item.type === "bool") {
@@ -2160,6 +2291,22 @@ var require_config = __commonJS({
               }
             }),
             item.min !== void 0 || item.max !== void 0 ? h("span", { className: "wbml-muted" }, (item.min === void 0 ? "" : item.min) + "\u2013" + (item.max === void 0 ? "" : item.max)) : null
+          );
+        }
+        if (item.type === "multi" && Array.isArray(item.values)) {
+          return h(
+            "select",
+            {
+              className: "wbml-input wbml-select",
+              value: value === void 0 ? item.default : value,
+              "aria-label": labelOf(item),
+              onChange: function(e) {
+                save(item.id, e.target.value);
+              }
+            },
+            item.values.map(function(v) {
+              return h("option", { key: v, value: v }, multiLabel(item, v));
+            })
           );
         }
         return h("span", { className: "wbml-muted" }, String(value === void 0 ? "" : value));
@@ -2258,7 +2405,7 @@ var require_prefs = __commonJS({
   "packages/addons/mail/client/views/prefs.cjs"(exports2, module2) {
     "use strict";
     var useConfig = require_config().useConfig;
-    var PREFS = { "images.remote": true, "display.html": true, "read.autoSeen": true, "list.pageSize": 20 };
+    var PREFS = { "images.remote": true, "display.html": true, "read.autoSeen": true, "list.pageSize": 20, "display.mailTheme": "original" };
     function clampPageSize(value) {
       var n = Math.round(Number(value));
       if (!Number.isFinite(n)) n = PREFS["list.pageSize"];
@@ -2396,8 +2543,9 @@ var require_reader_styles = __commonJS({
 .wbml-htmwrap{display:grid;gap:8px;margin:10px 0}
 .wbml-htmlbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px}
 .wbml-htmlbar .wbml-muted{flex:1 1 220px;min-width:0}
-.wbml-htmlframe{display:block;width:100%;min-height:120px;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card)}
-@media (max-width:760px){.wbml-htmlframe{border-radius:8px}}
+.wbml-htmlpad{padding:12px;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card)}
+.wbml-htmlframe{display:block;width:100%;min-height:120px;border:0;border-radius:8px;background:var(--wb-card)}
+@media (max-width:760px){.wbml-htmlpad{padding:8px;border-radius:8px}.wbml-htmlframe{border-radius:6px}}
 .wbml-read-bar{display:flex;flex:none;align-items:center;flex-wrap:wrap;gap:6px;padding:8px 12px;border-bottom:1px solid var(--wb-line)}
 .wbml-read-bar .wbml-reader-nav{margin-inline-start:auto}
 .wbml-read-scroll{min-height:0;overflow:auto;overscroll-behavior:contain}
@@ -2954,7 +3102,7 @@ var require_messages = __commonJS({
         return h(
           "div",
           { className: "wbml-body-wrap" },
-          html ? h(MailHtml, { h, React, api, html, attachments: data.attachments || current.attachments || [], title: current.subject, remoteDefault: prefs["images.remote"] !== false }) : h("pre", { className: "wbml-body" }, data.body || current.body || "\u6B64\u90AE\u4EF6\u65E0\u6587\u5B57\u6B63\u6587"),
+          html ? h(MailHtml, { h, React, api, html, attachments: data.attachments || current.attachments || [], title: current.subject, mailId: current.id, remoteDefault: prefs["images.remote"] !== false, mailTheme: prefs["display.mailTheme"] }) : h("pre", { className: "wbml-body" }, data.body || current.body || "\u6B64\u90AE\u4EF6\u65E0\u6587\u5B57\u6B63\u6587"),
           h(Attachments, { h, React, api, localOnly: current.uid <= 0 || !current.uidValidity, items: files }),
           data.truncated || current.bodyTruncated ? h("p", { className: "wbml-body-note" }, "\u6B63\u6587\u8F83\u957F\uFF0C\u5DF2\u622A\u65AD\u663E\u793A\u3002") : null,
           current.uid > 0 ? button("\u91CD\u65B0\u4E0B\u8F7D\u6B63\u6587", function() {
@@ -6510,7 +6658,7 @@ var GLYPHS = require_icons2().ICONS;
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.5.3",
+    version: "0.5.4",
     icon: GLYPHS["mail"],
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: gated(require_messages(), "\u90AE\u4EF6") },

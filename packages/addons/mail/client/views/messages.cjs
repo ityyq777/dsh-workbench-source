@@ -296,7 +296,7 @@ function Inbox(props) {
       "div",
       { className: "wbml-body-wrap" },
       html
-        ? h(MailHtml, { h: h, React: React, api: api, html: html, attachments: data.attachments || current.attachments || [], title: current.subject, remoteDefault: prefs["images.remote"] !== false })
+        ? h(MailHtml, { h: h, React: React, api: api, html: html, attachments: data.attachments || current.attachments || [], title: current.subject, mailId: current.id, remoteDefault: prefs["images.remote"] !== false, mailTheme: prefs["display.mailTheme"] })
         : h("pre", { className: "wbml-body" }, data.body || current.body || "此邮件无文字正文"),
       h(Attachments, { h: h, React: React, api: api, localOnly: current.uid <= 0 || !current.uidValidity, items: files }),
       data.truncated || current.bodyTruncated

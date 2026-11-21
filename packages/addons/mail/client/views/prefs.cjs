@@ -7,7 +7,7 @@
 var useConfig = require("./config.cjs").useConfig;
 
 /** 与 lib/infra/config.js 的默认值保持一致。 */
-var PREFS = { "images.remote": true, "display.html": true, "read.autoSeen": true, "list.pageSize": 20 };
+var PREFS = { "images.remote": true, "display.html": true, "read.autoSeen": true, "list.pageSize": 20, "display.mailTheme": "original" };
 
 function clampPageSize(value) {
   var n = Math.round(Number(value));
