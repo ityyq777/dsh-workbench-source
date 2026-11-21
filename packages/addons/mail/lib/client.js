@@ -3095,8 +3095,9 @@ var require_messages = __commonJS({
             "div",
             { className: "wbml-body-fail" },
             "\u6B63\u6587\u4E0B\u8F7D\u5931\u8D25\uFF1A" + state.error,
-            button("\u91CD\u8BD5", function() {
-              open(current, true);
+            // 失败多半是服务器声明的分段尺寸与真实字节不一致，重新同步会整段重抓并重新解析结构。
+            button("\u91CD\u65B0\u540C\u6B65", function() {
+              loadBody(current, true, selected.current);
             })
           );
         return h(
@@ -4002,12 +4003,13 @@ function classifyProbeError(e) {
   if (REFUSED_CODE.has(code) || /econnrefused|连接被拒绝|connection refused/i.test(s)) return "refused";
   if (code === "ETIMEDOUT" || /超时|timed?\s?out/i.test(s)) return "timeout";
   if (AUTH_RE.test(s)) return "auth";
+  if (code === "EFRAME" || /分段长度与服务器声明不符|尺寸与声明|分段不存在|邮件结构(?:已改变|不完整)|无法解析 IMAP 分段/.test(msg)) return "eframe";
   return "unknown";
 }
 var ERROR_CLASSES, AUTH_RE, TLS_CODE, REFUSED_CODE, DNS_CODE, ERROR_TEXT;
 var init_probe_error = __esm({
   "packages/addons/mail/lib/domain/probe-error.js"() {
-    ERROR_CLASSES = ["auth", "dns", "refused", "timeout", "tls", "starttls", "unknown"];
+    ERROR_CLASSES = ["auth", "dns", "refused", "timeout", "tls", "starttls", "eframe", "unknown"];
     AUTH_RE = /authenticationfailed|invalid credentials|login failed|imap 登录失败|smtp (用户名|密码) 失败|\b535\b|\b5\.7\.8\b|\bauth(?:entication)? failed\b/i;
     TLS_CODE = /* @__PURE__ */ new Set([
       "ERR_TLS_CERT_ALTNAME_INVALID",
@@ -4045,6 +4047,10 @@ var init_probe_error = __esm({
       starttls: {
         zh: "\u670D\u52A1\u5668\u4E0D\u652F\u6301 STARTTLS\uFF0C\u8BF7\u6539\u7528 993/465 \u7684\u9690\u5F0F TLS \u7AEF\u53E3\u3002",
         en: "The server does not support STARTTLS; use an implicit-TLS port such as 993 or 465."
+      },
+      eframe: {
+        zh: "\u670D\u52A1\u5668\u8FD4\u56DE\u7684\u6B63\u6587\u5C3A\u5BF8\u4E0E\u5B83\u58F0\u660E\u7684\u7ED3\u6784\u4E0D\u4E00\u81F4\uFF0C\u8FD9\u5C01\u90AE\u4EF6\u9700\u8981\u91CD\u65B0\u540C\u6B65\u4E00\u6B21\u3002",
+        en: "The server returned body bytes that do not match the declared structure; re-sync this mail."
       },
       unknown: {
         zh: "\u8FDE\u63A5\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u670D\u52A1\u5668\u5730\u5740\u3001\u7AEF\u53E3\u4E0E\u6388\u6743\u7801\u3002",
@@ -6658,7 +6664,7 @@ var GLYPHS = require_icons2().ICONS;
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.5.4",
+    version: "0.5.5",
     icon: GLYPHS["mail"],
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: gated(require_messages(), "\u90AE\u4EF6") },

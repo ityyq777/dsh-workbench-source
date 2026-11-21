@@ -103,10 +103,11 @@ test('本地副本只列附件信息，下载不申请保险箱租约或发出�
   assert.equal(leases.length,1); assert.equal(requests.length,1);
 });
 
-test('声明长度与字面量不符：失败可读，不把半截正文写入缓存',async t=>{
+test('声明长度与字面量不符：不再整封失败，按实际字节读入并标截断',async t=>{
   const {m} = await fixture(t,textPart,{1:'AAAA'});
-  const r = await m.messageBody({id:'m1'}); assert.equal(r.ok,false); assert.match(r.message,/长度/);
-  assert.equal(m.message('m1').bodyAt,0);
+  const r = await m.messageBody({id:'m1'}); assert.equal(r.ok,true,r.message);
+  assert.equal(r.truncated,true,'声明比实际长要留截断标记');
+  assert.ok(m.message('m1').bodyAt>0,'正文已落库，重复打开读缓存');
 });
 
 test('截断标记随正文缓存持久化，重新打开不伪报完整',async t=>{

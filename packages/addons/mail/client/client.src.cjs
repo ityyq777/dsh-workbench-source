@@ -14,7 +14,7 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
   var C = require("./ui/common.cjs"); var Gate = require("./ui/lock-gate.cjs");
   function gated(Inner, title) { return Gate.gate(withProps(Inner, title), h, React, C); }
   if (typeof document !== "undefined" && document.head && !document.getElementById("wb-mail-style")) { var s = document.createElement("style"); s.id = "wb-mail-style"; s.textContent = CSS; document.head.appendChild(s); }
-  host.registerAddon({ id: "wb-addon-mail", version: "0.5.4",
+  host.registerAddon({ id: "wb-addon-mail", version: "0.5.5",
     icon: GLYPHS["mail"], views: [
     { id: "messages", icon: tab("mail"), title: { zh: "邮件", en: "Messages" }, component: gated(require("./views/messages.cjs"), "邮件") },
     { id: "compose", icon: tab("send"), title: { zh: "写信", en: "Compose" }, component: gated(require("./views/compose.cjs"), "写信") },

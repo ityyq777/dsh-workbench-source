@@ -26,7 +26,7 @@ function register(database) {
   return actions;
 }
 
-test('未配置时五项都取默认值，且没有任何覆盖项', () => {
+test('未配置时六项都取默认值，且没有任何覆盖项', () => {
   const d = db();
   const state = configState(d);
   assert.deepEqual(state.values, {
@@ -35,16 +35,17 @@ test('未配置时五项都取默认值，且没有任何覆盖项', () => {
     'display.mailTheme': 'original',
     'read.autoSeen': true,
     'list.pageSize': 20,
+    'debug.fetch': false,
   });
   assert.deepEqual(state.overrides, {});
   assert.deepEqual(state.warnings, []);
   assert.equal(state.table, 'meta');
-  assert.equal(state.items.length, 5);
+  assert.equal(state.items.length, 6);
   const theme = state.items.find((item) => item.id === 'display.mailTheme');
   assert.equal(theme.type, 'multi');
   assert.deepEqual(theme.values, ['original', 'app']);
   assert.equal(theme.default, 'original');
-  assert.deepEqual(state.groups.map((g) => g.id), ['images', 'display', 'read', 'list']);
+  assert.deepEqual(state.groups.map((g) => g.id), ['images', 'display', 'read', 'list', 'debug']);
   // 声明了 surface/apply，客户端据此决定什么时候生效。
   for (const item of state.items) {
     assert.equal(item.surface, 'ui');
@@ -98,7 +99,7 @@ test('重置回默认值，可按单项重置', () => {
   assert.equal(one.values['images.remote'], true);
   assert.equal(one.values['list.pageSize'], 40);
   const all = resetConfig(d, []);
-  assert.equal(all.reset.length, 5);
+  assert.equal(all.reset.length, 6);
   assert.deepEqual(all.values, configValues(d));
   assert.deepEqual(configState(d).overrides, {});
   assert.throws(() => resetConfig(d, ['nope']), /未知配置项/);
@@ -110,7 +111,7 @@ test('三个 action 可注册并返回 agent 可读的结果', async () => {
   assert.deepEqual([...actions.keys()].sort(), ['mail.configGet', 'mail.configReset', 'mail.configSet']);
   const got = await actions.get('mail.configGet').execute();
   assert.equal(got.values['images.remote'], true);
-  assert.match(actions.get('mail.configGet').render(got), /邮件配置 5 项/);
+  assert.match(actions.get('mail.configGet').render(got), /邮件配置 6 项/);
 
   const set = await actions.get('mail.configSet').execute({ values: { 'images.remote': false } });
   assert.deepEqual(set.changed, ['images.remote']);

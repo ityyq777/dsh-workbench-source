@@ -288,8 +288,9 @@ function Inbox(props) {
         "div",
         { className: "wbml-body-fail" },
         "正文下载失败：" + state.error,
-        button("重试", function () {
-          open(current, true);
+        // 失败多半是服务器声明的分段尺寸与真实字节不一致，重新同步会整段重抓并重新解析结构。
+        button("重新同步", function () {
+          loadBody(current, true, selected.current);
         }),
       );
     return h(

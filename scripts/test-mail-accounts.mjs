@@ -11,7 +11,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { createRequire } from 'node:module';
 import { DatabaseSync } from 'node:sqlite';
 import { PROVIDERS, detectProvider, presetFor } from '../packages/addons/mail/lib/domain/providers.js';
-import { classifyProbeError } from '../packages/addons/mail/lib/domain/probe-error.js';
+import { ERROR_TEXT, classifyProbeError } from '../packages/addons/mail/lib/domain/probe-error.js';
 import { ensureSchema } from '../packages/addons/mail/lib/db/db.js';
 import { createMail } from '../packages/addons/mail/lib/domain/mail.js';
 
@@ -56,6 +56,10 @@ assert.equal(classifyProbeError(err('IMAP 连接超时')), 'timeout');
 assert.equal(classifyProbeError(err('unable to verify the first certificate', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE')), 'tls');
 assert.equal(classifyProbeError(err('服务器不支持 STARTTLS')), 'starttls');
 assert.equal(classifyProbeError(err('莫名其妙的问题')), 'unknown');
+// 分段尺寸不一致是结构问题，不是网络问题：要给出「重新同步这封信」这一动作。
+assert.equal(classifyProbeError(err('分段长度与服务器声明不符，请重新下载')), 'eframe');
+assert.equal(classifyProbeError(Object.assign(new Error('x'), { code: 'EFRAME' })), 'eframe');
+assert.ok(ERROR_TEXT.eframe && ERROR_TEXT.eframe.zh && ERROR_TEXT.eframe.en, 'eframe 要有中英文案');
 
 // ---------- 后端：lastMessageAt 由本地邮件派生，testAccount 不再整条抛错 ----------
 const db = new DatabaseSync(':memory:');

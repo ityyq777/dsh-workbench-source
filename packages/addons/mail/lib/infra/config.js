@@ -15,6 +15,7 @@ const GROUPS = [
   { id: "display", zh: "显示", en: "Display" },
   { id: "read", zh: "阅读", en: "Reading" },
   { id: "list", zh: "列表", en: "List" },
+  { id: "debug", zh: "诊断", en: "Diagnostics" },
 ];
 
 const ITEMS = [
@@ -48,6 +49,12 @@ const ITEMS = [
     zh: "每次加载封数", en: "Messages per page",
     hintZh: "列表一次加载多少封，也作为每次抓取新信的封数（10–50）。",
     hintEn: "How many mails load at a time and how many are fetched per sync (10–50).",
+  },
+  {
+    id: "debug.fetch", group: "debug", type: "bool", surface: "ui", apply: "mount", default: false,
+    zh: "记录正文取数细节", en: "Log body fetch details",
+    hintZh: "打开后，读取正文分段时会把 section、服务器声明尺寸、实际字节数与响应 key 打到宿主日志，用于排查「正文下载失败」。默认关闭。",
+    hintEn: "When on, every body segment logs its section, declared size, actual bytes and response key. Off by default.",
   },
 ];
 
