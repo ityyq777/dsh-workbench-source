@@ -254,9 +254,10 @@ module.exports = function createModal(deps) {
           h2("button", { type: "button", className: "wbt-btn", disabled: !splitTags(draft).length, onClick: addDraft }, t.tagAdd || "添加")));
     }
     function stepTags(h2) {
+      // 标签步只放选择器本身：顶上已经写了「标签」标题，再加一行「多个用逗号分隔」的旧说明
+      // 既跟现在的勾选清单对不上，也白占一屏高度。
       return h2("div", { className: "wbctl-form" },
-        h2("div", { className: "full" }, h2(TagPicker, { h: h2, api: props.api, t: t, value: form.tags, onChange: function (next) { set("tags", next); } })),
-        h2("p", { className: "wbctl-note" }, t.stepTagsHint));
+        h2("div", { className: "full" }, h2(TagPicker, { h: h2, api: props.api, t: t, value: form.tags, onChange: function (next) { set("tags", next); } })));
     }
     function stepTable(h2) {
       return h2("div", { className: "wbctl-form" },

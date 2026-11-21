@@ -6382,7 +6382,7 @@ var require_copy = __commonJS({
         stepContent: "\u5185\u5BB9",
         stepContentHint: "\u6807\u9898\u3001\u63CF\u8FF0\u4E0E\u8BA1\u5212",
         stepTags: "\u6807\u7B7E",
-        stepTagsHint: "\u7ED9\u4EFB\u52A1\u6253\u6807\u7B7E\uFF0C\u591A\u4E2A\u7528\u9017\u53F7\u5206\u9694",
+        stepTagsHint: "\u641C\u7D22\u5DF2\u6709\u6807\u7B7E\uFF0C\u6216\u8F93\u5165\u65B0\u6807\u7B7E\u56DE\u8F66\u6DFB\u52A0",
         stepTable: "\u4EFB\u52A1\u8868",
         stepTableHint: "\u9009\u62E9\u4EFB\u52A1\u5F52\u5230\u54EA\u5F20\u8868",
         stepTimeline: "\u65F6\u95F4\u7EBF",
@@ -6573,7 +6573,7 @@ var require_copy = __commonJS({
         stepContent: "Content",
         stepContentHint: "Title, description, schedule",
         stepTags: "Tags",
-        stepTagsHint: "Tag the task, separate several with commas",
+        stepTagsHint: "Search existing tags, or type a new one and press Enter",
         stepTable: "Table",
         stepTableHint: "Pick the table this task belongs to",
         stepTimeline: "Timeline",
@@ -11198,8 +11198,7 @@ var require_create_modal = __commonJS({
             { className: "wbctl-form" },
             h2("div", { className: "full" }, h2(TagPicker, { h: h2, api: props.api, t, value: form.tags, onChange: function(next) {
               set("tags", next);
-            } })),
-            h2("p", { className: "wbctl-note" }, t.stepTagsHint)
+            } }))
           );
         }
         function stepTable(h2) {
@@ -14725,7 +14724,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.39",
+    version: "5.2.40",
     icon: ICONS["list-checks"],
     // 贡献声明写在 registerAddon 里：卸载任务插件时宿主按 addonId 一起撤销，
     // 不会在邮件里留一个渲染即报错的孤儿按钮。
