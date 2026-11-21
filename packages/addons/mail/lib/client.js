@@ -548,17 +548,40 @@ var init_list = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/lock.mjs
+var lock_exports = {};
+__export(lock_exports, {
+  __iconData: () => __iconData8,
+  default: () => Lock
+});
+var __iconData8, Lock;
+var init_lock = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/lock.mjs"() {
+    init_createLucideIcon();
+    __iconData8 = {
+      name: "lock",
+      size: 24,
+      node: [
+        ["rect", { width: "18", height: "11", x: "3", y: "11", rx: "2", ry: "2", key: "1w4ew1" }],
+        ["path", { d: "M7 11V7a5 5 0 0 1 10 0v4", key: "fwvmzm" }]
+      ]
+    };
+    __iconData8.node;
+    Lock = createLucideIcon(__iconData8);
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail.mjs
 var mail_exports = {};
 __export(mail_exports, {
-  __iconData: () => __iconData8,
+  __iconData: () => __iconData9,
   default: () => Mail
 });
-var __iconData8, Mail;
+var __iconData9, Mail;
 var init_mail = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail.mjs"() {
     init_createLucideIcon();
-    __iconData8 = {
+    __iconData9 = {
       name: "mail",
       size: 24,
       node: [
@@ -566,22 +589,22 @@ var init_mail = __esm({
         ["rect", { x: "2", y: "4", width: "20", height: "16", rx: "2", key: "izxlao" }]
       ]
     };
-    __iconData8.node;
-    Mail = createLucideIcon(__iconData8);
+    __iconData9.node;
+    Mail = createLucideIcon(__iconData9);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail-open.mjs
 var mail_open_exports = {};
 __export(mail_open_exports, {
-  __iconData: () => __iconData9,
+  __iconData: () => __iconData10,
   default: () => MailOpen
 });
-var __iconData9, MailOpen;
+var __iconData10, MailOpen;
 var init_mail_open = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail-open.mjs"() {
     init_createLucideIcon();
-    __iconData9 = {
+    __iconData10 = {
       name: "mail-open",
       size: 24,
       node: [
@@ -595,22 +618,22 @@ var init_mail_open = __esm({
         ["path", { d: "m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10", key: "1qfld7" }]
       ]
     };
-    __iconData9.node;
-    MailOpen = createLucideIcon(__iconData9);
+    __iconData10.node;
+    MailOpen = createLucideIcon(__iconData10);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/paperclip.mjs
 var paperclip_exports = {};
 __export(paperclip_exports, {
-  __iconData: () => __iconData10,
+  __iconData: () => __iconData11,
   default: () => Paperclip
 });
-var __iconData10, Paperclip;
+var __iconData11, Paperclip;
 var init_paperclip = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/paperclip.mjs"() {
     init_createLucideIcon();
-    __iconData10 = {
+    __iconData11 = {
       name: "paperclip",
       size: 24,
       node: [
@@ -623,22 +646,22 @@ var init_paperclip = __esm({
         ]
       ]
     };
-    __iconData10.node;
-    Paperclip = createLucideIcon(__iconData10);
+    __iconData11.node;
+    Paperclip = createLucideIcon(__iconData11);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
 var refresh_cw_exports = {};
 __export(refresh_cw_exports, {
-  __iconData: () => __iconData11,
+  __iconData: () => __iconData12,
   default: () => RefreshCw
 });
-var __iconData11, RefreshCw;
+var __iconData12, RefreshCw;
 var init_refresh_cw = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
     init_createLucideIcon();
-    __iconData11 = {
+    __iconData12 = {
       name: "refresh-cw",
       size: 24,
       node: [
@@ -648,22 +671,22 @@ var init_refresh_cw = __esm({
         ["path", { d: "M8 16H3v5", key: "1cv678" }]
       ]
     };
-    __iconData11.node;
-    RefreshCw = createLucideIcon(__iconData11);
+    __iconData12.node;
+    RefreshCw = createLucideIcon(__iconData12);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/reply.mjs
 var reply_exports = {};
 __export(reply_exports, {
-  __iconData: () => __iconData12,
+  __iconData: () => __iconData13,
   default: () => Reply
 });
-var __iconData12, Reply;
+var __iconData13, Reply;
 var init_reply = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/reply.mjs"() {
     init_createLucideIcon();
-    __iconData12 = {
+    __iconData13 = {
       name: "reply",
       size: 24,
       node: [
@@ -671,22 +694,22 @@ var init_reply = __esm({
         ["path", { d: "m9 17-5-5 5-5", key: "nvlc11" }]
       ]
     };
-    __iconData12.node;
-    Reply = createLucideIcon(__iconData12);
+    __iconData13.node;
+    Reply = createLucideIcon(__iconData13);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/reply-all.mjs
 var reply_all_exports = {};
 __export(reply_all_exports, {
-  __iconData: () => __iconData13,
+  __iconData: () => __iconData14,
   default: () => ReplyAll
 });
-var __iconData13, ReplyAll;
+var __iconData14, ReplyAll;
 var init_reply_all = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/reply-all.mjs"() {
     init_createLucideIcon();
-    __iconData13 = {
+    __iconData14 = {
       name: "reply-all",
       size: 24,
       node: [
@@ -695,22 +718,22 @@ var init_reply_all = __esm({
         ["path", { d: "m7 17-5-5 5-5", key: "1ed8i2" }]
       ]
     };
-    __iconData13.node;
-    ReplyAll = createLucideIcon(__iconData13);
+    __iconData14.node;
+    ReplyAll = createLucideIcon(__iconData14);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/search.mjs
 var search_exports = {};
 __export(search_exports, {
-  __iconData: () => __iconData14,
+  __iconData: () => __iconData15,
   default: () => Search
 });
-var __iconData14, Search;
+var __iconData15, Search;
 var init_search = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/search.mjs"() {
     init_createLucideIcon();
-    __iconData14 = {
+    __iconData15 = {
       name: "search",
       size: 24,
       node: [
@@ -718,22 +741,22 @@ var init_search = __esm({
         ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }]
       ]
     };
-    __iconData14.node;
-    Search = createLucideIcon(__iconData14);
+    __iconData15.node;
+    Search = createLucideIcon(__iconData15);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/send.mjs
 var send_exports = {};
 __export(send_exports, {
-  __iconData: () => __iconData15,
+  __iconData: () => __iconData16,
   default: () => Send
 });
-var __iconData15, Send;
+var __iconData16, Send;
 var init_send = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/send.mjs"() {
     init_createLucideIcon();
-    __iconData15 = {
+    __iconData16 = {
       name: "send",
       size: 24,
       node: [
@@ -747,17 +770,17 @@ var init_send = __esm({
         ["path", { d: "m21.854 2.147-10.94 10.939", key: "12cjpa" }]
       ]
     };
-    __iconData15.node;
-    Send = createLucideIcon(__iconData15);
+    __iconData16.node;
+    Send = createLucideIcon(__iconData16);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
-var __iconData16, Trash;
+var __iconData17, Trash;
 var init_trash = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
     init_createLucideIcon();
-    __iconData16 = {
+    __iconData17 = {
       name: "trash",
       size: 24,
       node: [
@@ -769,8 +792,8 @@ var init_trash = __esm({
       ],
       aliases: ["trash-2"]
     };
-    __iconData16.node;
-    Trash = createLucideIcon(__iconData16);
+    __iconData17.node;
+    Trash = createLucideIcon(__iconData17);
   }
 });
 
@@ -788,14 +811,14 @@ var init_trash_2 = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/users.mjs
 var users_exports = {};
 __export(users_exports, {
-  __iconData: () => __iconData17,
+  __iconData: () => __iconData18,
   default: () => Users
 });
-var __iconData17, Users;
+var __iconData18, Users;
 var init_users = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/users.mjs"() {
     init_createLucideIcon();
-    __iconData17 = {
+    __iconData18 = {
       name: "users",
       size: 24,
       node: [
@@ -805,8 +828,8 @@ var init_users = __esm({
         ["circle", { cx: "9", cy: "7", r: "4", key: "nufk8" }]
       ]
     };
-    __iconData17.node;
-    Users = createLucideIcon(__iconData17);
+    __iconData18.node;
+    Users = createLucideIcon(__iconData18);
   }
 });
 
@@ -823,6 +846,7 @@ var require_icons2 = __commonJS({
       "forward": (init_forward(), __toCommonJS(forward_exports)).default,
       "inbox": (init_inbox(), __toCommonJS(inbox_exports)).default,
       "list": (init_list(), __toCommonJS(list_exports)).default,
+      "lock": (init_lock(), __toCommonJS(lock_exports)).default,
       "mail": (init_mail(), __toCommonJS(mail_exports)).default,
       "mail-open": (init_mail_open(), __toCommonJS(mail_open_exports)).default,
       "paperclip": (init_paperclip(), __toCommonJS(paperclip_exports)).default,
@@ -884,6 +908,107 @@ var require_client_base_styles = __commonJS({
   }
 });
 
+// packages/addons/lib/vault-lock.cjs
+var require_vault_lock = __commonJS({
+  "packages/addons/lib/vault-lock.cjs"(exports2, module2) {
+    "use strict";
+    var POLL_MS = 4e3;
+    function create(options) {
+      var cfg = options || {};
+      var prefix = String(cfg.prefix || "wb");
+      var wrapClass = String(cfg.wrapClass || prefix);
+      var lock = {
+        POLL_MS: Number(cfg.pollMs) > 0 ? Number(cfg.pollMs) : POLL_MS,
+        prefix,
+        use,
+        Panel,
+        styles
+      };
+      function use(opts) {
+        var React = opts.React;
+        var api = opts.api;
+        var C = opts.C;
+        var every = Number(opts.pollMs) > 0 ? Number(opts.pollMs) : Number(lock.POLL_MS) || POLL_MS;
+        var action = opts.action || "vault.status";
+        var st = React.useState({ ready: false, locked: true, initialized: false, error: "" });
+        var tick = React.useState(0);
+        function read() {
+          return C.call(api, action).then(function(data) {
+            st[1](function(old) {
+              var next = {
+                ready: true,
+                locked: !(data && data.locked === false),
+                initialized: !!(data && data.initialized),
+                error: ""
+              };
+              if (old.ready === next.ready && old.locked === next.locked && old.initialized === next.initialized && !old.error) return old;
+              return next;
+            });
+          }).catch(function(e) {
+            st[1](function(old) {
+              return Object.assign({}, old, { ready: true, locked: true, error: C.errText(e) });
+            });
+          });
+        }
+        React.useEffect(function() {
+          var alive = true;
+          function poll() {
+            if (alive) read();
+          }
+          poll();
+          var timer = setInterval(poll, every);
+          if (timer && typeof timer.unref === "function") timer.unref();
+          return function() {
+            alive = false;
+            clearInterval(timer);
+          };
+        }, [tick[0]]);
+        return {
+          ready: st[0].ready,
+          locked: st[0].locked,
+          initialized: st[0].initialized,
+          error: st[0].error,
+          refresh: function() {
+            tick[1](tick[0] + 1);
+          }
+        };
+      }
+      function Panel(props) {
+        var h = props.h;
+        var C = props.C;
+        var lang = props.lang === "en" ? "en" : "zh";
+        var Icon2 = props.Icon || cfg.Icon || null;
+        function pick(custom, fallback) {
+          var v = custom !== void 0 ? custom : fallback;
+          if (v && typeof v === "object") return v[lang] || v.zh || v.en || "";
+          return v || "";
+        }
+        return h(
+          "div",
+          { className: props.wrapClass || wrapClass },
+          h(
+            "div",
+            { className: prefix + "-lock-card", role: "status", "aria-live": "polite" },
+            Icon2 ? h(Icon2, { size: 22, strokeWidth: 2, "aria-hidden": "true", className: prefix + "-lock-ico" }) : null,
+            h("div", { className: prefix + "-lock-title" }, pick(props.title, cfg.title)),
+            h("div", { className: prefix + "-muted" }, pick(props.hint, cfg.hint)),
+            props.error ? h(C.Notice, { h, kind: "error", text: props.error }) : null
+          )
+        );
+      }
+      function styles() {
+        return [
+          "." + prefix + "-lock-card{max-width:560px;margin:28px auto;padding:26px 24px;border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-card);display:flex;flex-direction:column;gap:8px;align-items:flex-start}",
+          "." + prefix + "-lock-ico{color:var(--wb-muted)}",
+          "." + prefix + "-lock-title{font-size:15px;font-weight:600}"
+        ];
+      }
+      return lock;
+    }
+    module2.exports = { create, POLL_MS };
+  }
+});
+
 // packages/addons/lib/icon-label.cjs
 var require_icon_label = __commonJS({
   "packages/addons/lib/icon-label.cjs"(exports2, module2) {
@@ -904,7 +1029,7 @@ var require_icon_label = __commonJS({
 var require_styles = __commonJS({
   "packages/addons/mail/client/ui/styles.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = require_client_base_styles()("wbml").concat([
+    module2.exports = require_client_base_styles()("wbml").concat(require_vault_lock().create({ prefix: "wbml" }).styles()).concat([
       ".wbml-page{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
       ".wbml-input{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:120px}",
       ".wbml-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}",
@@ -1154,6 +1279,31 @@ var require_common = __commonJS({
   "packages/addons/mail/client/ui/common.cjs"(exports2, module2) {
     "use strict";
     module2.exports = require_client_common()("wbml");
+  }
+});
+
+// packages/addons/mail/client/ui/lock-gate.cjs
+var require_lock_gate = __commonJS({
+  "packages/addons/mail/client/ui/lock-gate.cjs"(exports2, module2) {
+    "use strict";
+    var Lock2 = require_vault_lock().create({
+      prefix: "wbml",
+      wrapClass: "wbml-page",
+      Icon: require_icons2().ICONS.lock,
+      title: { zh: "\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A\uFF0C\u90AE\u4EF6\u6682\u4E0D\u53EF\u67E5\u770B", en: "The vault is locked" },
+      hint: {
+        zh: "\u9501\u5B9A\u671F\u95F4\u4E0D\u663E\u793A\u53D1\u4EF6\u4EBA\u3001\u4E3B\u9898\u3001\u6B63\u6587\u4E0E\u9644\u4EF6\u3002\u8BF7\u5148\u5728\u300C\u4FDD\u9669\u7BB1\u300D\u9875\u89E3\u9501\uFF1B\u89E3\u9501\u540E\u672C\u9875\u4F1A\u81EA\u52A8\u6062\u590D\u3002",
+        en: "Sender, subject, body and attachments stay hidden while the vault is locked. Unlock it on the Vault page and this page recovers automatically."
+      }
+    });
+    function gate(Inner, h, React, C) {
+      return function Guarded(props) {
+        var guard = Lock2.use({ React, api: props.api, C });
+        if (guard.locked) return h(Lock2.Panel, { h, C, lang: props.lang, error: guard.error });
+        return h(Inner, props);
+      };
+    }
+    module2.exports = { lock: Lock2, gate };
   }
 });
 
@@ -3933,14 +4083,14 @@ var require_account_card = __commonJS({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs
 var eye_exports = {};
 __export(eye_exports, {
-  __iconData: () => __iconData18,
+  __iconData: () => __iconData19,
   default: () => Eye
 });
-var __iconData18, Eye;
+var __iconData19, Eye;
 var init_eye = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs"() {
     init_createLucideIcon();
-    __iconData18 = {
+    __iconData19 = {
       name: "eye",
       size: 24,
       node: [
@@ -3954,22 +4104,22 @@ var init_eye = __esm({
         ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
       ]
     };
-    __iconData18.node;
-    Eye = createLucideIcon(__iconData18);
+    __iconData19.node;
+    Eye = createLucideIcon(__iconData19);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs
 var eye_off_exports = {};
 __export(eye_off_exports, {
-  __iconData: () => __iconData19,
+  __iconData: () => __iconData20,
   default: () => EyeOff
 });
-var __iconData19, EyeOff;
+var __iconData20, EyeOff;
 var init_eye_off = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs"() {
     init_createLucideIcon();
-    __iconData19 = {
+    __iconData20 = {
       name: "eye-off",
       size: 24,
       node: [
@@ -3991,8 +4141,8 @@ var init_eye_off = __esm({
         ["path", { d: "m2 2 20 20", key: "1ooewy" }]
       ]
     };
-    __iconData19.node;
-    EyeOff = createLucideIcon(__iconData19);
+    __iconData20.node;
+    EyeOff = createLucideIcon(__iconData20);
   }
 });
 
@@ -6042,8 +6192,8 @@ var GLYPHS = require_icons2().ICONS;
   var CSS = require_styles();
   var I = { mail: GLYPHS["mail"], send: GLYPHS["send"], users: GLYPHS["users"], db: GLYPHS["database"], list: GLYPHS["list"] };
   function Icon2(p) {
-    var C = I[p.name] || I.mail;
-    return h(C, { size: 14, strokeWidth: 2, className: "wbg-svg" });
+    var C2 = I[p.name] || I.mail;
+    return h(C2, { size: 14, strokeWidth: 2, className: "wbg-svg" });
   }
   function tab(n) {
     return function() {
@@ -6055,6 +6205,11 @@ var GLYPHS = require_icons2().ICONS;
       return h(Inner, { api: p.api, lang: p.lang === "en" ? "en" : "zh", h, React, title });
     };
   }
+  var C = require_common();
+  var Gate = require_lock_gate();
+  function gated(Inner, title) {
+    return Gate.gate(withProps(Inner, title), h, React, C);
+  }
   if (typeof document !== "undefined" && document.head && !document.getElementById("wb-mail-style")) {
     var s = document.createElement("style");
     s.id = "wb-mail-style";
@@ -6063,13 +6218,13 @@ var GLYPHS = require_icons2().ICONS;
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.5.0",
+    version: "0.5.1",
     icon: GLYPHS["mail"],
     views: [
-      { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },
-      { id: "compose", icon: tab("send"), title: { zh: "\u5199\u4FE1", en: "Compose" }, component: withProps(require_compose(), "\u5199\u4FE1") },
-      { id: "accounts", icon: tab("users"), title: { zh: "\u8D26\u6237", en: "Accounts" }, component: withProps(require_accounts(), "\u8D26\u6237") },
-      { id: "data", icon: tab("db"), title: { zh: "\u6570\u636E", en: "Data" }, component: withProps(require_data(), "\u6570\u636E") },
+      { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: gated(require_messages(), "\u90AE\u4EF6") },
+      { id: "compose", icon: tab("send"), title: { zh: "\u5199\u4FE1", en: "Compose" }, component: gated(require_compose(), "\u5199\u4FE1") },
+      { id: "accounts", icon: tab("users"), title: { zh: "\u8D26\u6237", en: "Accounts" }, component: gated(require_accounts(), "\u8D26\u6237") },
+      { id: "data", icon: tab("db"), title: { zh: "\u6570\u636E", en: "Data" }, component: gated(require_data(), "\u6570\u636E") },
       { id: "actions", icon: tab("list"), title: { zh: "Action", en: "Actions" }, component: withProps(require_actions(), "Action") }
     ]
   });

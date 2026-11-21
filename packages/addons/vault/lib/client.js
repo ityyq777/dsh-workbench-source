@@ -844,6 +844,107 @@ var require_icons2 = __commonJS({
   }
 });
 
+// packages/addons/lib/vault-lock.cjs
+var require_vault_lock = __commonJS({
+  "packages/addons/lib/vault-lock.cjs"(exports2, module2) {
+    "use strict";
+    var POLL_MS = 4e3;
+    function create(options) {
+      var cfg = options || {};
+      var prefix = String(cfg.prefix || "wb");
+      var wrapClass = String(cfg.wrapClass || prefix);
+      var lock = {
+        POLL_MS: Number(cfg.pollMs) > 0 ? Number(cfg.pollMs) : POLL_MS,
+        prefix,
+        use,
+        Panel,
+        styles
+      };
+      function use(opts) {
+        var React = opts.React;
+        var api = opts.api;
+        var C = opts.C;
+        var every = Number(opts.pollMs) > 0 ? Number(opts.pollMs) : Number(lock.POLL_MS) || POLL_MS;
+        var action = opts.action || "vault.status";
+        var st = React.useState({ ready: false, locked: true, initialized: false, error: "" });
+        var tick = React.useState(0);
+        function read() {
+          return C.call(api, action).then(function(data) {
+            st[1](function(old) {
+              var next = {
+                ready: true,
+                locked: !(data && data.locked === false),
+                initialized: !!(data && data.initialized),
+                error: ""
+              };
+              if (old.ready === next.ready && old.locked === next.locked && old.initialized === next.initialized && !old.error) return old;
+              return next;
+            });
+          }).catch(function(e) {
+            st[1](function(old) {
+              return Object.assign({}, old, { ready: true, locked: true, error: C.errText(e) });
+            });
+          });
+        }
+        React.useEffect(function() {
+          var alive = true;
+          function poll() {
+            if (alive) read();
+          }
+          poll();
+          var timer = setInterval(poll, every);
+          if (timer && typeof timer.unref === "function") timer.unref();
+          return function() {
+            alive = false;
+            clearInterval(timer);
+          };
+        }, [tick[0]]);
+        return {
+          ready: st[0].ready,
+          locked: st[0].locked,
+          initialized: st[0].initialized,
+          error: st[0].error,
+          refresh: function() {
+            tick[1](tick[0] + 1);
+          }
+        };
+      }
+      function Panel(props) {
+        var h = props.h;
+        var C = props.C;
+        var lang = props.lang === "en" ? "en" : "zh";
+        var Icon2 = props.Icon || cfg.Icon || null;
+        function pick(custom, fallback) {
+          var v = custom !== void 0 ? custom : fallback;
+          if (v && typeof v === "object") return v[lang] || v.zh || v.en || "";
+          return v || "";
+        }
+        return h(
+          "div",
+          { className: props.wrapClass || wrapClass },
+          h(
+            "div",
+            { className: prefix + "-lock-card", role: "status", "aria-live": "polite" },
+            Icon2 ? h(Icon2, { size: 22, strokeWidth: 2, "aria-hidden": "true", className: prefix + "-lock-ico" }) : null,
+            h("div", { className: prefix + "-lock-title" }, pick(props.title, cfg.title)),
+            h("div", { className: prefix + "-muted" }, pick(props.hint, cfg.hint)),
+            props.error ? h(C.Notice, { h, kind: "error", text: props.error }) : null
+          )
+        );
+      }
+      function styles() {
+        return [
+          "." + prefix + "-lock-card{max-width:560px;margin:28px auto;padding:26px 24px;border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-card);display:flex;flex-direction:column;gap:8px;align-items:flex-start}",
+          "." + prefix + "-lock-ico{color:var(--wb-muted)}",
+          "." + prefix + "-lock-title{font-size:15px;font-weight:600}"
+        ];
+      }
+      return lock;
+    }
+    module2.exports = { create, POLL_MS };
+  }
+});
+
 // packages/addons/lib/filter-checklist-styles.cjs
 var require_filter_checklist_styles = __commonJS({
   "packages/addons/lib/filter-checklist-styles.cjs"(exports2, module2) {
@@ -1005,11 +1106,8 @@ var require_styles = __commonJS({
       ".wbv-empty-title{font-size:14px;font-weight:600}",
       ".wbv-check-list{display:flex;flex-wrap:wrap;gap:6px 14px;margin:4px 0}",
       ".wbv-check{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}",
-      ".wbv-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}",
-      ".wbv-lock-card{max-width:560px;margin:28px auto;padding:26px 24px;border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-card);display:flex;flex-direction:column;gap:8px;align-items:flex-start}",
-      ".wbv-lock-ico{color:var(--wb-muted)}",
-      ".wbv-lock-title{font-size:15px;font-weight:600}"
-    ].concat(require_filter_checklist_styles()).concat(require_client_base_styles().secretFieldStyles, require_icon_label().styles);
+      ".wbv-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}"
+    ].concat(require_vault_lock().create({ prefix: "wbv" }).styles()).concat(require_filter_checklist_styles()).concat(require_client_base_styles().secretFieldStyles, require_icon_label().styles);
   }
 });
 
@@ -1644,75 +1742,15 @@ var require_status = __commonJS({
 var require_lock = __commonJS({
   "packages/addons/vault/client/ui/lock.cjs"(exports2, module2) {
     "use strict";
-    var GLYPHS2 = require_icons2().ICONS;
-    var POLL_MS = 4e3;
-    function useVaultLock(options) {
-      var React = options.React;
-      var api = options.api;
-      var C = options.C;
-      var every = Number(options.pollMs) > 0 ? Number(options.pollMs) : Number(obj.POLL_MS) || POLL_MS;
-      var st = React.useState({ ready: false, locked: true, initialized: false, error: "" });
-      var tick = React.useState(0);
-      function read() {
-        return C.call(api, "vault.status").then(function(data) {
-          st[1](function(old) {
-            var next = {
-              ready: true,
-              locked: !(data && data.locked === false),
-              initialized: !!(data && data.initialized),
-              error: ""
-            };
-            if (old.ready === next.ready && old.locked === next.locked && old.initialized === next.initialized && !old.error) return old;
-            return next;
-          });
-        }).catch(function(e) {
-          st[1](function(old) {
-            return Object.assign({}, old, { ready: true, locked: true, error: C.errText(e) });
-          });
-        });
+    module2.exports = require_vault_lock().create({
+      prefix: "wbv",
+      Icon: require_icons2().ICONS.lock,
+      title: { zh: "\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A", en: "Vault is locked" },
+      hint: {
+        zh: "\u8BF7\u5148\u5728\u300C\u4FDD\u9669\u7BB1\u300D\u9875\u89E3\u9501\uFF1B\u89E3\u9501\u540E\u672C\u9875\u4F1A\u81EA\u52A8\u6062\u590D\u5217\u8868\u4E0E\u8BE6\u60C5\u3002",
+        en: "Unlock it on the Vault page first; this page recovers automatically once unlocked."
       }
-      React.useEffect(function() {
-        var alive = true;
-        function poll() {
-          if (alive) read();
-        }
-        poll();
-        var timer = setInterval(poll, every);
-        if (timer && typeof timer.unref === "function") timer.unref();
-        return function() {
-          alive = false;
-          clearInterval(timer);
-        };
-      }, [tick[0]]);
-      return {
-        ready: st[0].ready,
-        locked: st[0].locked,
-        initialized: st[0].initialized,
-        error: st[0].error,
-        refresh: function() {
-          tick[1](tick[0] + 1);
-        }
-      };
-    }
-    function Panel(props) {
-      var h = props.h;
-      var C = props.C;
-      var en = props.lang === "en";
-      return h(
-        "div",
-        { className: "wbv" },
-        h(
-          "div",
-          { className: "wbv-lock-card", role: "status", "aria-live": "polite" },
-          h(GLYPHS2.lock, { size: 22, strokeWidth: 2, "aria-hidden": "true", className: "wbv-lock-ico" }),
-          h("div", { className: "wbv-lock-title" }, en ? "Vault is locked" : "\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A"),
-          h("div", { className: "wbv-muted" }, en ? "Unlock it on the Vault page first; this page recovers automatically once unlocked." : "\u8BF7\u5148\u5728\u300C\u4FDD\u9669\u7BB1\u300D\u9875\u89E3\u9501\uFF1B\u89E3\u9501\u540E\u672C\u9875\u4F1A\u81EA\u52A8\u6062\u590D\u5217\u8868\u4E0E\u8BE6\u60C5\u3002"),
-          props.error ? h(C.Notice, { h, kind: "error", text: props.error }) : null
-        )
-      );
-    }
-    var obj = { use: useVaultLock, Panel, POLL_MS };
-    module2.exports = obj;
+    });
   }
 });
 
@@ -5230,7 +5268,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.3.10",
+    version: "0.3.11",
     icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },

@@ -1,6 +1,6 @@
 "use strict";
 /** 基础样式 + 邮件列表/阅读面板/账户卡片专属规则。 */
-module.exports = require("../../../lib/client-base-styles.cjs")("wbml").concat([
+module.exports = require("../../../lib/client-base-styles.cjs")("wbml").concat(require("../../../lib/vault-lock.cjs").create({ prefix: "wbml" }).styles()).concat([
   ".wbml-page{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
   ".wbml-input{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:120px}",
   ".wbml-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}",

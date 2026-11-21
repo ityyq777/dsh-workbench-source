@@ -10,6 +10,7 @@ var set = icons.create("wbml", {
   "forward": require("lucide-react/icons/forward").default,
   "inbox": require("lucide-react/icons/inbox").default,
   "list": require("lucide-react/icons/list").default,
+  "lock": require("lucide-react/icons/lock").default,
   "mail": require("lucide-react/icons/mail").default,
   "mail-open": require("lucide-react/icons/mail-open").default,
   "paperclip": require("lucide-react/icons/paperclip").default,

@@ -4,10 +4,16 @@ import { DatabaseSync } from 'node:sqlite';
 import { createAgentAccess } from '../../../shell/lib/actions/agent-access.js';
 import { registerMailActions } from '../lib/domain/actions.js';
 
-function register() {
+// 服务端 action 现在统一过保险箱门禁（api.call("vault.status")），execute 一律是异步的。
+function register(vaultStatus = { locked: false, initialized: true }) {
   const actions = new Map();
   const handlers = new Proxy({}, { get: (_, method) => (...inputs) => ({ method, inputs }) });
-  registerMailActions({ action: (name, def) => actions.set(name, def) }, handlers);
+  const call = async (name) => {
+    if (name !== 'vault.status') throw new Error('unexpected action ' + name);
+    if (vaultStatus instanceof Error) throw vaultStatus;
+    return { result: vaultStatus };
+  };
+  registerMailActions({ action: (name, def) => actions.set(name, def), call }, handlers);
   return actions;
 }
 
@@ -16,7 +22,7 @@ const send = { accountId: 'a1', to: ['one@test'], cc: ['two@test'], subject: 'Re
 const list = { accountId: 'a1', mailbox: 'Archive', unifiedInbox: false, unread: false, q: '%', limit: 3, cursor: 'opaque' };
 const page = { mailbox: 'Archive', limit: 4, beforeUid: 20, uidValidity: 42 };
 
-test('每个新参数显式声明并交给对应服务，未声明参数不透传', () => {
+test('每个新参数显式声明并交给对应服务，未声明参数不透传', async () => {
   const actions = register();
   const cases = [
     ['mail.messageList', 'messages', list, [list]],
@@ -35,13 +41,13 @@ test('每个新参数显式声明并交给对应服务，未声明参数不透�
   for (const [name, method, args, inputs = [args]] of cases) {
     const def = actions.get(name);
     assert.deepEqual(Object.keys(def.input.properties).sort(), Object.keys(args).sort(), name);
-    assert.deepEqual(def.execute({ ...args, extra: 'ignored' }, { origin: 'ui' }), { method, inputs }, name);
+    assert.deepEqual(await def.execute({ ...args, extra: 'ignored' }, { origin: 'ui' }), { method, inputs }, name);
   }
   assert.deepEqual(actions.get('mail.messageSend').input.properties.mode.enum, ['new', 'reply', 'replyAll', 'forward']);
   assert.equal(actions.get('mail.sync').input.properties.uidValidity.type, 'integer');
 });
 
-test('草稿与附件即使本机已有允许记录仍硬锁；原有发信仍遵守用户的开关', () => {
+test('草稿与附件即使本机已有允许记录仍硬锁；原有发信仍遵守用户的开关', async () => {
   const db = new DatabaseSync(':memory:');
   try {
     db.exec('CREATE TABLE meta (k TEXT PRIMARY KEY,v TEXT)');
@@ -53,14 +59,37 @@ test('草稿与附件即使本机已有允许记录仍硬锁；原有发信仍�
       assert.equal(access.effective(name, def), false, name);
       assert.throws(() => access.set(name, def, true), /永久禁止/);
       for (const origin of ['agent', 'plugin', 'sync', undefined]) {
-        assert.throws(() => def.execute({ id: 'x', key: 'x', origin: 'ui' }, { origin }), /界面/, name);
+        await assert.rejects(() => def.execute({ id: 'x', key: 'x', origin: 'ui' }, { origin }), /界面/, name);
       }
     }
     const name = 'mail.messageSend', def = actions.get(name);
     assert.equal(access.effective(name, def), false);
     access.set(name, def, true);
     assert.equal(access.effective(name, def), true);
-    assert.deepEqual(def.execute(send, { origin: 'agent' }).inputs, [send]);
-    assert.throws(() => def.execute(send, { origin: 'plugin' }), /界面/);
+    assert.deepEqual((await def.execute(send, { origin: 'agent' })).inputs, [send]);
+    await assert.rejects(() => def.execute(send, { origin: 'plugin' }), /界面/);
   } finally { db.close(); }
+});
+
+test('保险箱锁定时读接口一律 VAULT_LOCKED，无隐私的动作仍放行', async () => {
+  const locked = register({ locked: true, initialized: true });
+  for (const name of ['mail.status', 'mail.accountList', 'mail.mailboxList', 'mail.messageList', 'mail.messageGet', 'mail.messageBody', 'mail.attachmentDownload', 'mail.draftList', 'mail.draftGet', 'mail.dataQuery', 'mail.dataTables', 'mail.serverSearch', 'mail.sync', 'mail.messageDelete']) {
+    const def = locked.get(name);
+    await assert.rejects(
+      () => def.execute({ id: 'm', key: 'k', q: 'x', accountId: 'a', mailbox: 'INBOX', table: 'mail_message', force: false }, { origin: 'ui' }),
+      (e) => e.code === 'VAULT_LOCKED' && /保险箱已锁定/.test(e.message) && /解锁/.test(e.message),
+      name,
+    );
+  }
+  // 服务商预设表与本域 action 清单不含邮件内容，锁定态下照常可用。
+  for (const name of ['mail.providerList', 'mail.actionSchema']) {
+    const def = locked.get(name);
+    const out = await def.execute({}, { origin: 'ui' });
+    assert.ok(out && typeof out === 'object', name);
+  }
+  // 保险箱未安装（api.call 抛错）与状态读不到都按锁定处理。
+  const broken = register(new Error('业务插件未注册该 action：vault.status'));
+  await assert.rejects(() => broken.get('mail.status').execute({}, { origin: 'ui' }), (e) => e.code === 'VAULT_LOCKED');
+  const empty = register({});
+  await assert.rejects(() => empty.get('mail.status').execute({}, { origin: 'ui' }), (e) => e.code === 'VAULT_LOCKED');
 });

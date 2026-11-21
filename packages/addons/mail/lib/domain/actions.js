@@ -6,12 +6,37 @@ const B = (d) => ({ type: "boolean", description: d });
 const A = (d) => ({ type: "array", description: d });
 const obj = (p, r = []) => ({ type: "object", properties: p, required: r, additionalProperties: false });
 const deny = (origin) => { if (origin && origin !== "ui" && origin !== "agent") throw new Error("该操作只允许在界面中执行"); };
+// 保险箱锁定门禁：本地缓存里的发件人、主题、正文同样是隐私数据，锁定期间读写一律拒绝。
+// 只有不含邮件内容的动作（服务商预设表、本域 action 清单）放行。
+const VAULT_LOCKED = "VAULT_LOCKED";
+const PUBLIC_ACTIONS = new Set(["mail.providerList", "mail.actionSchema"]);
+const lockedError = () => {
+  const e = new Error("保险箱已锁定，邮件内容不可查看；请先在「保险箱」页解锁后重试");
+  e.code = VAULT_LOCKED;
+  return e;
+};
 // 预设表是服务端唯一一份数据：客户端选服务商、识别域名、填主机都读 mail.providerList。
 const providerTable = () => ({ schema: PROVIDER_SCHEMA, providers: PROVIDERS });
 
 export function registerMailActions(api, mail) {
   const defs = [];
-  const action = (name, def) => { defs.push({ name, description: def.description, input: def.input }); api.action(name, def); };
+  // 保险箱未安装、状态读不到或明确 locked，都按锁定处理（fail-closed）。
+  async function requireVaultUnlocked() {
+    let st;
+    try {
+      st = await api.call("vault.status", {}, "plugin");
+    } catch {
+      throw lockedError();
+    }
+    const v = st && st.result !== undefined ? st.result : st;
+    if (!v || v.locked !== false) throw lockedError();
+  }
+  const action = (name, def) => {
+    const run = def.execute;
+    const execute = PUBLIC_ACTIONS.has(name) ? run : (args, ctx) => requireVaultUnlocked().then(() => run(args, ctx));
+    defs.push({ name, description: def.description, input: def.input });
+    api.action(name, { ...def, execute });
+  };
   // 原有动作保留宿主的本机访问开关；草稿与附件使用不可解锁的策略。
   const uiOnly = (name, description, input, run) => action(name, {
     agentLocked: true, agentEnabled: false, description, input,
