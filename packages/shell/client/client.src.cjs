@@ -8,6 +8,7 @@ var LOCALE = require("./locale.cjs");
 
 var CSS = require("./styles.cjs");
 var createPanellistIcon = require("./panellist-icon.cjs");
+var addonNav = require("./addon-nav.cjs")();
 // 共享 Action 页：宿主自己的「Agent 权限」页复用它，数据源是 actions.list（宿主 action 不属于任何业务域）。
 var SystemPages = require("./system-pages.cjs");
 
@@ -130,8 +131,7 @@ function useAddonStore() {
   return addonState;
 }
 
-// 跨插件跳转钩子：路由是本地 state，没有深链锚点，由 WorkbenchPage 登记；返回是否真的跳了。
-var navigateAddonHook = null;
+// 跨插件跳转（页面内路由 / 切面板后补跳）统一在 addon-nav.cjs：路由是局部 state，没有深链锚点。
 
 window.__WB_HOST__ = {
   react: react,
@@ -141,9 +141,7 @@ window.__WB_HOST__ = {
   get addons() { return addonState.addons; },
   error: function () { return lastAddonError; },
   // 第二个参数是插件内的视图 id（如消息的 inbox）；不传保持落到 views[0]，旧插件不受影响。
-  navigateAddon: function (addonId, viewId) {
-    return typeof navigateAddonHook === "function" && !!addonId && navigateAddonHook(String(addonId), viewId ? String(viewId) : "") !== false;
-  },
+  navigateAddon: function (addonId, viewId) { return addonNav.navigate(NS, addonId, viewId); },
 };
 
 function useApi() {
@@ -391,13 +389,16 @@ function WorkbenchPage(props) {
     var v = hit || list[0] || null;
     go("addon:" + a.id + ":" + (v && v.id ? v.id : ""));
   }
-  react.useEffect(function () {
-    navigateAddonHook = function (addonId, viewId) {
+  react.useEffect(function () { // 登记页面内跳转钩子，并消费「切面板前暂存的目标」直达插件视图
+    var off = addonNav.setHook(function (addonId, viewId) {
       var t = addons.filter(function (a) { return a && a.id === addonId; })[0];
-      if (t) openAddon(t, viewId);
+      if (t) openAddon(t, viewId); // 命中插件就跳它，交给它自己兜第一视图
       return !!t;
-    };
-    return function () { navigateAddonHook = null; };
+    });
+    var want = addons.length ? addonNav.takePending() : null; // 列表没到前先别取，否则会丢待办
+    var hit = want ? addons.filter(function (a) { return a && a.id === want.addonId; })[0] : null;
+    if (hit) openAddon(hit, want.viewId);
+    return off;
   }, [addons]);
   function pageHead(title, desc) {
     return jsx.jsxs("div", { className: "wb-page-head", children: [
@@ -558,10 +559,13 @@ var RecordToggle = function (props) {
 
 var exports_ = {
   name: NS,
-  inject: ["slots", "locale", "theme"],
+  // layout：跨页跳转需要把工作台面板切到前台（见 __WB_HOST__.navigateAddon 的第 2 条分支）。
+  inject: ["slots", "locale", "theme", "layout"],
   apply: function (ctx) {
     try {
       ensureCss();
+      addonNav.setLayout(ctx && ctx.layout);
+      ctx.effect(function () { return function () { addonNav.setLayout(null); }; }, "wb-layout-api");
       var PanellistIcon = createPanellistIcon(h);
       ctx.effect(function () { return ctx.locale.register(NS, LOCALE); }, "wb-locale");
       var t = ctx.locale.bind(NS);

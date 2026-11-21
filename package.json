@@ -35,7 +35,7 @@
     "test:tasks-restart": "node scripts/test-tasks-restart.mjs",
     "test:tasks-restart-client": "node scripts/test-tasks-restart-client.mjs",
     "test:storage-visual": "node scripts/test-storage-visual.mjs",
-    "test:clients": "node scripts/test-clients.mjs",
+    "test:clients": "node scripts/test-clients.mjs && node scripts/test-workbench-navigation.mjs",
     "test:shared-ui": "node scripts/test-shared-ui.mjs",
     "test:vault-lock": "node scripts/test-vault-lock.mjs",
     "test:task-stats-bars": "node scripts/test-task-stats-bars-ui.mjs",
@@ -94,7 +94,8 @@
     "test:message-config": "node scripts/test-message-config-state.mjs",
     "test:difficulty-dimensions": "node scripts/test-difficulty-dimensions.mjs",
     "test:tag-source-adopt": "node scripts/test-tag-source-adopt.mjs",
-    "test:message-float": "node scripts/test-message-float.mjs"
+    "test:message-float": "node scripts/test-message-float.mjs",
+    "test:workbench-navigation": "node scripts/test-workbench-navigation.mjs"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.72.1",
