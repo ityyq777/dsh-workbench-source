@@ -2862,8 +2862,8 @@ var require_heatmap_model = __commonJS({
     var TYPES = FILTER_TYPES.concat(["target"]);
     var LEVELS = [{ min: 1, max: 1, label: "1" }, { min: 2, max: 3, label: "2\u20133" }, { min: 4, max: 6, label: "4\u20136" }, { min: 7, max: null, label: "7+" }];
     var COPY = {
-      zh: { title: "\u5E74\u5EA6\u6D3B\u52A8", previous: "\u4E0A\u4E00\u5E74", next: "\u4E0B\u4E00\u5E74", done: "\u5B8C\u6210", publish: "\u53D1\u5E03", shutdown: "\u5173\u95ED", claimed: "\u63A5\u53D6", target: "\u76EE\u6807", empty: { done: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5B8C\u6210\u8BB0\u5F55", publish: "\u672C\u5E74\u5EA6\u6CA1\u6709\u53D1\u5E03\u8BB0\u5F55", shutdown: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5173\u95ED\u8BB0\u5F55", claimed: "\u672C\u5E74\u5EA6\u6CA1\u6709\u63A5\u53D6\u8BB0\u5F55", target: "\u672C\u5E74\u5EA6\u6CA1\u6709\u76EE\u6807\u8BA1\u5212" }, loading: "\u6B63\u5728\u52A0\u8F7D\u5E74\u5EA6\u6D3B\u52A8", error: "\u5E74\u5EA6\u6D3B\u52A8\u52A0\u8F7D\u5931\u8D25", retry: "\u91CD\u8BD5", future: "\u672A\u6765\u65E5\u671F", none: "\u65E0\u6D3B\u52A8", clear: "\u6E05\u9664\u6D3B\u52A8\u7B5B\u9009", filter: "\u6D3B\u52A8\u7B5B\u9009", total: "\u6D3B\u52A8\u603B\u6570", dailyCount: "\u6BCF\u65E5\u6B21\u6570", weekdays: ["\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D", "\u65E5"], claimedNote: "\u5DF2\u63A5\u53D6/\u5DF2\u5B8C\u6210\u4EFB\u52A1\uFF1B\u5386\u53F2\u4EFB\u52A1\u672A\u8BB0\u5F55\u63A5\u53D6\u65F6\u95F4\uFF0C\u6309\u53D1\u5E03\u65E5\u671F\u8BA1", targetNote: "\u6309\u76EE\u6807\u8BA1\u5212\u65E5\u671F\u7EDF\u8BA1\uFF0C\u5C5E\u4E8E\u8BA1\u5212\u53E3\u5F84\uFF0C\u4E0D\u8BA1\u5165\u6D3B\u52A8\u603B\u6570", targetTotal: "\u76EE\u6807\u603B\u6570" },
-      en: { title: "Annual task activity", previous: "Previous year", next: "Next year", done: "Done", publish: "Published", shutdown: "Closed", claimed: "Claimed", target: "Target", empty: { done: "No completed tasks this year", publish: "No published tasks this year", shutdown: "No closed tasks this year", claimed: "No claimed tasks this year", target: "No target dates this year" }, loading: "Loading annual activity", error: "Could not load annual activity", retry: "Retry", future: "Future date", none: "No activity", clear: "Clear activity filter", filter: "Activity filter", total: "Total events", dailyCount: "Daily count", weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], claimedNote: "claimed or completed tasks; historical tasks without a claim time use the publish date", targetNote: "counted by target plan date; planning scope, not included in total events", targetTotal: "Planned" }
+      zh: { title: "\u5E74\u5EA6\u6D3B\u52A8", previous: "\u4E0A\u4E00\u5E74", next: "\u4E0B\u4E00\u5E74", done: "\u5B8C\u6210", publish: "\u53D1\u5E03", shutdown: "\u5173\u95ED", claimed: "\u63A5\u53D6", target: "\u76EE\u6807", empty: { done: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5B8C\u6210\u8BB0\u5F55", publish: "\u672C\u5E74\u5EA6\u6CA1\u6709\u53D1\u5E03\u8BB0\u5F55", shutdown: "\u672C\u5E74\u5EA6\u6CA1\u6709\u5173\u95ED\u8BB0\u5F55", claimed: "\u672C\u5E74\u5EA6\u6CA1\u6709\u63A5\u53D6\u8BB0\u5F55", target: "\u672C\u5E74\u5EA6\u6CA1\u6709\u76EE\u6807\u8BA1\u5212" }, loading: "\u6B63\u5728\u52A0\u8F7D\u5E74\u5EA6\u6D3B\u52A8", error: "\u5E74\u5EA6\u6D3B\u52A8\u52A0\u8F7D\u5931\u8D25", retry: "\u91CD\u8BD5", future: "\u672A\u6765\u65E5\u671F", none: "\u65E0\u6D3B\u52A8", nonePlan: "\u65E0\u8BA1\u5212", clear: "\u6E05\u9664\u6D3B\u52A8\u7B5B\u9009", filter: "\u6D3B\u52A8\u7B5B\u9009", total: "\u6D3B\u52A8\u603B\u6570", dailyCount: "\u6BCF\u65E5\u6B21\u6570", weekdays: ["\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D", "\u65E5"], claimedNote: "\u5DF2\u63A5\u53D6/\u5DF2\u5B8C\u6210\u4EFB\u52A1\uFF1B\u5386\u53F2\u4EFB\u52A1\u672A\u8BB0\u5F55\u63A5\u53D6\u65F6\u95F4\uFF0C\u6309\u53D1\u5E03\u65E5\u671F\u8BA1", targetNote: "\u6309\u76EE\u6807\u8BA1\u5212\u65E5\u671F\u7EDF\u8BA1\uFF0C\u5C5E\u4E8E\u8BA1\u5212\u53E3\u5F84\uFF0C\u4E0D\u8BA1\u5165\u6D3B\u52A8\u603B\u6570", targetTotal: "\u76EE\u6807\u603B\u6570" },
+      en: { title: "Annual task activity", previous: "Previous year", next: "Next year", done: "Done", publish: "Published", shutdown: "Closed", claimed: "Claimed", target: "Target", empty: { done: "No completed tasks this year", publish: "No published tasks this year", shutdown: "No closed tasks this year", claimed: "No claimed tasks this year", target: "No target dates this year" }, loading: "Loading annual activity", error: "Could not load annual activity", retry: "Retry", future: "Future date", none: "No activity", nonePlan: "No plan", clear: "Clear activity filter", filter: "Activity filter", total: "Total events", dailyCount: "Daily count", weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], claimedNote: "claimed or completed tasks; historical tasks without a claim time use the publish date", targetNote: "counted by target plan date; planning scope, not included in total events", targetTotal: "Planned" }
     };
     function localDay(d) {
       return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
@@ -2890,6 +2890,12 @@ var require_heatmap_model = __commonJS({
     function count(day, type) {
       return Number(day[type]) || 0;
     }
+    function suppressFuture(type) {
+      return FILTER_TYPES.indexOf(type) >= 0;
+    }
+    function isFuture(date, today, type) {
+      return !!suppressFuture(type) && date > today;
+    }
     function background(day, type) {
       return count(day, type) ? "var(--hm-" + type + "-" + level(count(day, type)) + ")" : "var(--hm-empty)";
     }
@@ -2900,7 +2906,7 @@ var require_heatmap_model = __commonJS({
       if (!params || !/^\d{4}-\d{2}-\d{2}$/.test(params.activityDate || "")) return null;
       return { activityDate: params.activityDate, activityType: FILTER_TYPES.indexOf(params.activityType) >= 0 ? params.activityType : "done" };
     }
-    module2.exports = { TYPES, FILTER_TYPES, LEVELS, COPY, legendLabel, localDay, calendar, level, count, background, label, activityParams };
+    module2.exports = { TYPES, FILTER_TYPES, LEVELS, COPY, legendLabel, localDay, calendar, level, count, suppressFuture, isFuture, background, label, activityParams };
   }
 });
 
@@ -3081,10 +3087,10 @@ var require_heatmap = __commonJS({
               return h("span", { key: d.date, style: { gridColumn: d.column } }, new Date(Date.UTC(year, d.month, 1)).toLocaleString(lang === "en" ? "en-US" : "zh-CN", { month: "short", timeZone: "UTC" }));
             })),
             h("div", { className: "wbt-hm-grid" }, geometry.days.map(function(d) {
-              var day = byDate[d.date] || {}, future = d.date > today, n = future ? 0 : model.count(day, type), enabled = !future && n > 0;
+              var day = byDate[d.date] || {}, future = model.isFuture(d.date, today, type), n = future ? 0 : model.count(day, type), enabled = !future && n > 0;
               var clickable = enabled && type !== "target";
               var text = !future && n > 0 ? n >= 100 ? "99+" : String(n) : "";
-              var title = model.label(d.date, day, t, type) + (future ? " \xB7 " + t.future : !n ? " \xB7 " + t.none : "");
+              var title = model.label(d.date, day, t, type) + (future ? " \xB7 " + t.future : !n ? " \xB7 " + (type === "target" ? t.nonePlan : t.none) : "");
               return h("button", {
                 key: d.date,
                 type: "button",
@@ -13416,7 +13422,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.29",
+    version: "5.2.30",
     icon: ICONS["list-checks"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },

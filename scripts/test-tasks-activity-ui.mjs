@@ -16,6 +16,12 @@ assert.deepEqual([1,2,3,4,6,7,99].map(model.level),[1,2,2,3,3,4,4]);
 assert.deepEqual(model.TYPES,['done','publish','shutdown','claimed','target'],'目标排在四类事件之后');
 assert.deepEqual(model.FILTER_TYPES,['done','publish','shutdown','claimed'],'活动筛选只认四类事件');
 assert.deepEqual(model.activityParams({activityDate:'2024-01-01',activityType:'target'}),{activityDate:'2024-01-01',activityType:'done'},'目标不进活动筛选');
+// 未来日期留空只针对四类事件；target 是计划口径，未来日期正是计划的主要形态。
+for(const type of model.FILTER_TYPES)assert.equal(model.suppressFuture(type),true,'事件维度抑制未来日期：'+type);
+assert.equal(model.suppressFuture('target'),false,'目标维度不抑制未来日期');
+assert.equal(model.isFuture('2026-12-01','2026-11-21','done'),true);
+assert.equal(model.isFuture('2026-12-01','2026-11-21','target'),false,'目标当前日期之后仍照常显示');
+assert.equal(model.isFuture('2026-11-21','2026-11-21','done'),false,'当天不算未来');
 assert.deepEqual(model.LEVELS.map(v=>v.label),['1','2–3','4–6','7+']);
 for(const [index,entry] of model.LEVELS.entries()){
  assert.equal(model.level(entry.min),index+1);
@@ -43,10 +49,10 @@ const walk=n=>n&&typeof n==='object'?[n,...n.children.flatMap(walk)]:[];
 const text=n=>n&&typeof n==='object'?n.children.map(text).join(''):String(n??'');
 const find=(tree,pred)=>{const n=walk(tree).find(pred);assert.ok(n,'control exists');return n;};
 const mod={exports:{}};runInNewContext(readFileSync('packages/addons/tasks/client/stats/heatmap.cjs','utf8'),{module:mod,require:n=>n==='react'?React:createRequire(require.resolve(dir+'stats/heatmap.cjs'))(n),Date,Map});
-const Heatmap=mod.exports,y=new Date().getFullYear(),date=y+'-01-01',big=y+'-02-02',zero=y+'-03-03';
+const Heatmap=mod.exports,y=new Date().getFullYear(),date=y+'-01-01',big=y+'-02-02',zero=y+'-03-03',plan=y+'-12-20',today=model.localDay(new Date());
 for(const lang of ['zh','en']){
  reset();let navigation,fail=false;const calls=[];
- const p={lang,onNavigate:(...v)=>navigation=v,api:{call:async(action,args)=>{calls.push(args);if(fail){fail=false;return {ok:false};}return {ok:true,result:{year:args.year,days:args.year===y?[{date,done:2,publish:4,shutdown:7,claimed:3,target:5},{date:big,done:150,publish:4,shutdown:7,claimed:3,target:150}]:[]}};}}};
+ const p={lang,onNavigate:(...v)=>navigation=v,api:{call:async(action,args)=>{calls.push(args);if(fail){fail=false;return {ok:false};}return {ok:true,result:{year:args.year,days:args.year===y?[{date,done:2,publish:4,shutdown:7,claimed:3,target:5},{date:big,done:150,publish:4,shutdown:7,claimed:3,target:150},{date:plan,done:1,publish:1,shutdown:1,claimed:1,target:2}]:[]}};}}};
  let v=render(Heatmap,p);assert.ok(text(v).includes(model.COPY[lang].loading));await flush();v=render(Heatmap,p);
  const day=()=>find(render(Heatmap,p),n=>n.props['data-date']===date);
  assert.equal(day().props.title,date+' · '+model.COPY[lang].done+' 2');
@@ -63,6 +69,7 @@ for(const lang of ['zh','en']){
   assert.ok(text(legend).startsWith(model.COPY[lang].dailyCount));
   const items=walk(legend).filter(n=>n.props.className==='wbt-hm-intensity-item');assert.equal(items.length,4);
   items.forEach((item,index)=>{assert.equal(text(item),model.LEVELS[index].label);const swatch=find(item,n=>n.props.className==='wbt-hm-swatch');assert.equal(swatch.props['aria-hidden'],true);assert.equal(swatch.props.style.background,`var(--hm-${type}-${index+1})`);});
+  if(plan>today){const planCell=find(v,n=>n.props['data-date']===plan);assert.equal(planCell.children.length,0,'事件维度的未来日期仍留空');assert.equal(planCell.props['data-level'],0);assert.ok(planCell.props.title.endsWith(model.COPY[lang].future));assert.equal(planCell.props.className,'wbt-hm-day wbt-hm-future');}
   const tabs=find(v,n=>n.props.role==='tablist');assert.equal(tabs.children.length,5);assert.ok(!walk(tabs).includes(legend));
  }
  // 目标维度：可切、显示数字与图例，但格子不可点、不拼活动筛选，总数换标签。
@@ -73,7 +80,16 @@ for(const lang of ['zh','en']){
  navigation=null;day().props.onClick();assert.equal(navigation,null,'点目标格不跳转');
  assert.equal(numCell(big).props['data-level'],4,'目标强度档位复用到第四档');
  assert.equal(numCell(big).props.style.background,'var(--hm-target-4)');
- assert.ok(text(v).includes(model.COPY[lang].targetTotal+' · 155'),'目标总数单独统计（5+150）');
+ assert.ok(text(v).includes(model.COPY[lang].targetTotal+' · 157'),'目标总数单独统计（5+150+2）');
+ if(plan>today){const planCell=find(v,n=>n.props['data-date']===plan);
+  assert.equal(text(planCell),'2','目标维度的未来计划日照常显示数字');
+  assert.equal(planCell.props['data-level'],2,'目标未来格子仍按强度上色档');
+  assert.equal(planCell.props.style.background,'var(--hm-target-2)');
+  assert.ok(!planCell.props.className.includes('wbt-hm-future'),'目标未来格子不再标记为留空格');
+  assert.equal(planCell.props.title,plan+' · '+model.COPY[lang].target+' 2','目标 tooltip 不追加「未来日期」');
+  assert.equal(planCell.props['aria-disabled'],true,'目标格仍不可点击');
+  navigation=null;planCell.props.onClick();assert.equal(navigation,null,'点目标未来格不跳转');
+ }
  assert.ok(text(v).includes(model.COPY[lang].targetNote),'目标维度给出计划口径说明');
  assert.equal(walk(v).filter(n=>n.props.role==='tab').length,5);
  const claimedTab=walk(v).find(n=>n.props.role==='tab'&&text(n)===model.COPY[lang].claimed);if(claimedTab){claimedTab.props.onClick();await flush();render(Heatmap,p);assert.equal(text(find(render(Heatmap,p),n=>n.props['data-date']===date)),'3');}
@@ -92,4 +108,4 @@ for(const activityType of model.FILTER_TYPES){
  assert.equal(args[activityType+'From'],date);assert.equal(args[activityType+'To'],date);assert.deepEqual(args.statuses,activityType==='done'?[2]:activityType==='shutdown'?[1]:[]);assert.ok(!('urgent' in args),'the panel never sends the legacy urgent flag');assert.equal(args.filterRestarted,undefined);assert.equal(args.tableId,null);assert.equal(args.difficultyMissing,false);assert.equal(args.titleKey,'');assert.deepEqual(args.tagIds,[]);
  find(render(Body,outer.props),n=>n.props.kind===activityType&&n.props.value).props.onChange({from:'',to:''});render(Body,outer.props);await flush();args=calls.filter(c=>c.action==='tasks.list').at(-1).args;assert.ok(!('activityDate' in args));assert.ok(!('activityType' in args));
 }
-console.log('TASK ACTIVITY UI PASS: 501 years, leap/54-week geometry, 5 legend tabs with target plan dimension, in-cell counts (2, 99+, empty 0/future), zh/en, cache/retry/empty, accessible non-clickable target cells, list drilldown and clear');
+console.log('TASK ACTIVITY UI PASS: 501 years, leap/54-week geometry, 5 legend tabs with target plan dimension, in-cell counts (2, 99+, empty 0/future events), future target plans kept visible by type, zh/en, cache/retry/empty, accessible non-clickable target cells, list drilldown and clear');
