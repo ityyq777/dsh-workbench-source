@@ -383,7 +383,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.30",
+    version: "5.2.31",
     icon: ICONS["list-checks"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
