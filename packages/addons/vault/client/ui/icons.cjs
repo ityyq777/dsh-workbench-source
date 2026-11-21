@@ -19,6 +19,7 @@ var set = icons.create("wbv", {
   "shield-plus": require("lucide-react/icons/shield-plus").default,
   "sliders-horizontal": require("lucide-react/icons/sliders-horizontal").default,
   "trash-2": require("lucide-react/icons/trash-2").default,
+  "x": require("lucide-react/icons/x").default,
 });
 
 module.exports = { ICONS: set.ICONS, Icon: set.Icon };

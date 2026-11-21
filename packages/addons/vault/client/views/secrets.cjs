@@ -1,18 +1,28 @@
 "use strict";
+/**
+ * 凭据库：全局列表 + 搜索/类型筛选 + 所属集合；明文只在 reveal 弹层里出现。
+ *
+ * 页面结构走 ui/page.cjs（页头 / 工具条 / 表格 / 空态），弹层走 ui/dialog.cjs
+ * （共享 overlay 的键盘契约），删除改成应用内二次确认——桌面端 webview 没有可用的
+ * window.confirm。
+ */
 var GLYPHS = require("../ui/icons.cjs").ICONS;
-
-/** 凭据库：全局列表 + 搜索/类型筛选 + 所属集合；明文只在 reveal 弹层里出现。 */
 var C = require("../ui/common.cjs");
+var P = require("../ui/page.cjs");
 var AskPassphrase = require("../ui/ask-passphrase.cjs");
+var Dialog = require("../ui/dialog.cjs").Dialog;
+var ConfirmDialog = require("../ui/dialog.cjs").ConfirmDialog;
 var iconLabel = require("../../../lib/icon-label.cjs");
+var SecretField = require("../../../lib/secret-field.cjs");
+var Lock = require("../ui/lock.cjs");
+
 var Refresh = GLYPHS["refresh-cw"];
 var Unlock = GLYPHS["lock-open"];
 var Plus = GLYPHS["plus"];
 var Eye = GLYPHS["eye"];
 var Pencil = GLYPHS["pencil"];
 var Trash = GLYPHS["trash-2"];
-var SecretField = require("../../../lib/secret-field.cjs");
-var Lock = require("../ui/lock.cjs");
+var KeyIcon = GLYPHS["key-round"];
 
 var K = require("../ui/kinds.cjs");
 var KIND_LABEL = K.KIND_LABEL;
@@ -36,6 +46,7 @@ module.exports = function SecretsView(props) {
   var revealS = React.useState(null);
   var askS = React.useState(null); // { row, value, busy, error }
   var unlockS = React.useState(null); // { value, busy, error } 解锁弹层
+  var delS = React.useState(null); // { row } 删除确认弹层
   // 未解锁守卫：锁定期间不请求列表；在途请求用序号作废，返回时若已锁定/已重载就丢弃。
   var guard = Lock.use({ api: api, C: C, React: React });
   var inflight = React.useState({ seq: 0 })[0];
@@ -64,7 +75,7 @@ module.exports = function SecretsView(props) {
     });
   }
 
-  // 锁定 -> 清空所有可能残留明文的展示面（列表、明文弹层、解锁弹层、编辑表单）；
+  // 锁定 -> 清空所有可能残留明文的展示面（列表、明文弹层、解锁弹层、编辑表单、删除确认）；
   // 解锁 -> 自动重载，用户不用手动点刷新。
   React.useEffect(function () {
     if (!guard.ready) return;
@@ -74,6 +85,7 @@ module.exports = function SecretsView(props) {
       revealS[1](null);
       askS[1](null);
       unlockS[1](null);
+      delS[1](null);
       formS[1](emptyForm());
       editingS[1](false);
       showSecretS[1](false);
@@ -104,6 +116,11 @@ module.exports = function SecretsView(props) {
     });
     editingS[1](true);
     msgS[1]("");
+  }
+
+  function closeForm() {
+    editingS[1](false);
+    showSecretS[1](false);
   }
 
   function toggleSet(id) {
@@ -202,12 +219,20 @@ module.exports = function SecretsView(props) {
     return Promise.all(jobs);
   }
 
-  function del(row) {
-    if (!window.confirm("删除凭据「" + row.name + "」？绑定它的连接器会失效。")) return;
+  function remove(row) {
+    delS[1]({ row: row });
+  }
+
+  function confirmRemove() {
+    var d = delS[0];
+    if (!d) return;
     busyS[1](true); msgS[1]("");
-    C.call(api, "vault.secretDelete", { id: row.id }).then(function () {
-      busyS[1](false); load();
-    }).catch(function (e) { busyS[1](false); msgS[1](C.errText(e)); });
+    C.call(api, "vault.secretDelete", { id: d.row.id }).then(function () {
+      busyS[1](false); delS[1](null); load();
+    }).catch(function (e) {
+      busyS[1](false);
+      msgS[1](C.errText(e));
+    });
   }
 
   function reveal(row) {
@@ -235,68 +260,126 @@ module.exports = function SecretsView(props) {
     doReveal(a.row, a.value);
   }
 
+  function copyRevealed() {
+    if (!revealS[0] || !navigator.clipboard) return;
+    navigator.clipboard.writeText(revealS[0].secret).then(function () {
+      msgS[1]("已复制");
+    }, function () {
+      msgS[1]("复制失败，请手动选中复制");
+    });
+  }
+
   var setIndex = {};
   setsS[0].forEach(function (s) { setIndex[s.id] = s.name; });
 
   if (!guard.ready) return h("div", { className: "wbv" }, h(C.Empty, { h: h, text: "正在读取保险箱状态…" }));
   if (guard.locked) return h(Lock.Panel, { h: h, C: C, lang: lang, error: guard.error });
 
+  var locked = statusS[0] && statusS[0].locked;
+  var filtered = Boolean(qS[0] || kindS[0]);
+  var columns = [
+    { key: "name", label: "名称" },
+    { key: "kind", label: "类型" },
+    { key: "sets", label: "所属集合" },
+    { key: "note", label: "备注" },
+    { key: "used", label: "最近使用" },
+    { key: "ops", label: "操作", align: "right" },
+  ];
+
+  function renderRow(row) {
+    var meta = {};
+    try { meta = JSON.parse(row.meta || "{}"); } catch (e) { meta = {}; }
+    var chips = (row.setIds || []).map(function (id) {
+      return h("span", { key: id, className: "wbv-chip" }, h("span", null, setIndex[id] || id));
+    });
+    return h("tr", { key: row.id },
+      h("td", null, h("div", { className: "wbv-cell-main" }, row.name), h("div", { className: "wbv-cell-sub" }, row.id)),
+      h("td", null, h("span", { className: "wbv-pill" }, KIND_LABEL[row.kind] || row.kind)),
+      h("td", null, chips.length ? h("div", { className: "wbv-chips" }, chips) : h("span", { className: "wbv-muted" }, "未加入集合")),
+      h("td", null, noteOf(meta) || "—"),
+      h("td", null, C.fmtTime(row.lastUsedAt, lang)),
+      h("td", null, h("div", { className: "wbv-actions" },
+        h(C.Btn, { h: h, kind: "ghost", onClick: function () { reveal(row); } }, iconLabel(h, Eye, "查看")),
+        h(C.Btn, { h: h, kind: "ghost", onClick: function () { startEdit(row); } }, iconLabel(h, Pencil, "编辑")),
+        h(C.Btn, { h: h, kind: "ghost wbv-delete", onClick: function () { remove(row); } }, iconLabel(h, Trash, "删除")))));
+  }
+
   return h("div", { className: "wbv" },
-    h("div", { className: "wbv-row" },
-      h("h2", { className: "wbv-grow" }, "凭据库"),
-      h("input", {
+    h(P.PageHead, {
+      h: h,
+      title: "凭据库",
+      sub: "凭据按「集合」组织：一条凭据可以进多个集合，一个集合可以挂到多个分组。明文只在本机解锁后可见。",
+      actions: [
+        h(C.Btn, { h: h, key: "refresh", onClick: load }, iconLabel(h, Refresh, "刷新")),
+        locked ? h(C.Btn, { h: h, key: "unlock", kind: "primary", onClick: function () { askUnlock(""); } }, iconLabel(h, Unlock, "解锁")) : null,
+        h(C.Btn, { h: h, key: "create", kind: "primary", onClick: startCreate }, iconLabel(h, Plus, "新增凭据")),
+      ],
+    }),
+    h(P.Toolbar, { h: h },
+      h(P.Input, {
+        h: h,
         className: "wbv-search",
         placeholder: "搜索名称、备注或集合",
+        "aria-label": "搜索凭据",
         value: qS[0],
         onChange: function (e) { qS[1](e.target.value); },
         onKeyDown: function (e) { if (e.key === "Enter") load(); },
       }),
-      h("select", {
+      h(P.Select, {
+        h: h,
         value: kindS[0],
+        "aria-label": "按类型筛选",
         onChange: function (e) { kindS[1](e.target.value); setTimeout(load, 0); },
       }, h("option", { value: "" }, "全部类型"),
         K.CREATABLE_KINDS.map(function (k) { return h("option", { key: k, value: k }, KIND_LABEL[k]); })),
-      h(C.Btn, { h: h, onClick: load }, iconLabel(h, Refresh, "刷新")),
-      statusS[0] && statusS[0].locked
-        ? h(C.Btn, { h: h, kind: "primary", onClick: function () { askUnlock(""); } }, iconLabel(h, Unlock, "解锁"))
-        : null,
-      h(C.Btn, { h: h, kind: "primary", onClick: startCreate }, iconLabel(h, Plus, "新增凭据"))),
-    h("p", { className: "wbv-muted" }, "凭据按「集合」组织：一条凭据可以进多个集合，一个集合可以挂到多个分组。明文只在本机解锁后可见。"),
-    statusS[0] && statusS[0].locked
+      h("span", { className: "wbv-toolbar-tail" }),
+      h("span", { className: "wbv-muted" }, listS[0].loading ? "读取中…" : rows.length + " 条")),
+
+    locked
       ? h(C.Notice, { h: h, kind: "error", text: "保险箱已锁定（" + (statusS[0].unlockMode || "A") + " 模式）：新增、编辑和查看明文都需要先解锁。点右上角「解锁」，或直接保存时按提示解锁。" })
       : null,
     h(C.Notice, { h: h, kind: "error", text: listS[0].error || msgS[0] }),
-    listS[0].loading ? h(C.Empty, { h: h, text: "读取中…" }) :
-      rows.length === 0 ? h("div", { className: "wbv-empty-card" },
-        h("div", { className: "wbv-empty-title" }, qS[0] || kindS[0] ? "没有匹配的凭据" : "还没有凭据"),
-        h("div", { className: "wbv-muted" }, qS[0] || kindS[0] ? "换个关键词或类型试试。" : "新增一条后，把它加入集合；站点账号会自动用账号 id 作为集合名。"),
-        h("div", { className: "wbv-row" }, h(C.Btn, { h: h, kind: "primary", onClick: startCreate }, iconLabel(h, Plus, "新增凭据")))) :
-      h("div", { className: "wbv-table-scroll", role: "region", "aria-label": "凭据列表", tabIndex: 0 }, h("table", { className: "wbv-table" },
-        h("thead", null, h("tr", null, ["名称", "类型", "所属集合", "备注", "最近使用", "操作"].map(function (x) { return h("th", { key: x }, x); }))),
-        h("tbody", null, rows.map(function (row) {
-          var meta = {};
-          try { meta = JSON.parse(row.meta || "{}"); } catch (e) { meta = {}; }
-          var chips = (row.setIds || []).map(function (id) {
-            return h("span", { key: id, className: "wbv-chip" }, setIndex[id] || id);
-          });
-          return h("tr", { key: row.id },
-            h("td", null, h("strong", null, row.name), h("div", { className: "wbv-muted" }, row.id)),
-            h("td", null, h("span", { className: "wbv-pill" }, KIND_LABEL[row.kind] || row.kind)),
-            h("td", null, chips.length ? h("div", { className: "wbv-chips" }, chips) : h("span", { className: "wbv-muted" }, "未加入集合")),
-            h("td", null, noteOf(meta) || "—"),
-            h("td", null, C.fmtTime(row.lastUsedAt, lang)),
-            h("td", null, h("div", { className: "wbv-inline" },
-              h(C.Btn, { h: h, kind: "ghost", onClick: function () { reveal(row); } }, iconLabel(h, Eye, "查看")),
-              h(C.Btn, { h: h, kind: "ghost", onClick: function () { startEdit(row); } }, iconLabel(h, Pencil, "编辑")),
-              h(C.Btn, { h: h, kind: "ghost wbv-delete", onClick: function () { del(row); } }, iconLabel(h, Trash, "删除")))));
-        })))),
-    editingS[0] ? h("div", { className: "wbv-modal", onClick: function () { editingS[1](false); showSecretS[1](false); } },
-      h("div", { className: "wbv-modal-box", onClick: function (e) { e.stopPropagation(); } },
-        h("h3", null, formS[0].id ? "编辑凭据" : "新增凭据"),
-        h(C.Field, { h: h, label: "名称" }, h("input", { value: formS[0].name, onChange: function (e) { formS[1](Object.assign({}, formS[0], { name: e.target.value })); } })),
+
+    listS[0].loading
+      ? h(C.Empty, { h: h, text: "读取中…" })
+      : rows.length === 0
+        ? h(P.EmptyState, {
+            h: h,
+            icon: KeyIcon,
+            title: filtered ? "没有匹配的凭据" : "还没有凭据",
+            hint: filtered
+              ? "换个关键词或类型试试。"
+              : "新增一条后，把它加入集合；站点账号会自动用账号 id 作为集合名。",
+          },
+            filtered ? null : h(C.Btn, { h: h, kind: "primary", onClick: startCreate }, iconLabel(h, Plus, "新增凭据")))
+        : h(P.DataTable, { h: h, label: "凭据列表", columns: columns, rows: rows, renderRow: renderRow }),
+
+    editingS[0] ? h(Dialog, {
+      h: h,
+      React: React,
+      title: formS[0].id ? "编辑凭据" : "新增凭据",
+      titleId: "wbv-secret-form-title",
+      busy: busyS[0],
+      onClose: busyS[0] ? null : closeForm,
+      closeOnEscape: !busyS[0],
+      closeOnMask: !busyS[0],
+      autoFocus: false,
+    },
+      h("div", { className: "wbv-modal-body" },
+        h(C.Field, { h: h, label: "名称" },
+          h(P.Input, {
+            h: h,
+            value: formS[0].name,
+            autoFocus: true,
+            placeholder: "如 工作邮箱 / GitHub",
+            onChange: function (e) { formS[1](Object.assign({}, formS[0], { name: e.target.value })); },
+          })),
         h(C.Field, { h: h, label: "类型" },
-          h("select", { value: formS[0].kind, onChange: function (e) { formS[1](Object.assign({}, formS[0], { kind: e.target.value })); } },
-            K.CREATABLE_KINDS.map(function (k) { return h("option", { key: k, value: k }, KIND_LABEL[k]); }))),
+          h(P.Select, {
+            h: h,
+            value: formS[0].kind,
+            onChange: function (e) { formS[1](Object.assign({}, formS[0], { kind: e.target.value })); },
+          }, K.CREATABLE_KINDS.map(function (k) { return h("option", { key: k, value: k }, KIND_LABEL[k]); }))),
         h(C.Field, { h: h, label: formS[0].id ? "新明文（留空不轮换）" : "明文" },
           h(SecretField, {
             h: h,
@@ -316,39 +399,78 @@ module.exports = function SecretsView(props) {
               h("span", { className: "wbv-muted" }, " · " + (s.secretCount || 0) + " 条"));
           })) : h("span", { className: "wbv-muted" }, "—")),
         h(C.Field, { h: h, label: "备注", hint: "非敏感信息（用户名、URL、过期提醒）" },
-          h("input", {
+          h(P.Input, {
+            h: h,
             value: formS[0].note || "",
             placeholder: "例如：用户名、URL、过期提醒",
             onChange: function (e) { formS[1](Object.assign({}, formS[0], { note: e.target.value })); },
           })),
-        h(C.Notice, { h: h, kind: "error", text: msgS[0] }),
-        h("div", { className: "wbv-row" },
-          h("span", { className: "wbv-grow" }),
-          h(C.Btn, { h: h, onClick: function () { editingS[1](false); showSecretS[1](false); } }, "取消"),
-          h(C.Btn, { h: h, kind: "primary", disabled: busyS[0], onClick: function () { save(false); } }, busyS[0] ? "保存中…" : "保存")))) : null,
+        h(C.Notice, { h: h, kind: "error", text: msgS[0] })),
+      h("div", { className: "wbv-modal-foot" },
+        h("span", { className: "wbv-grow" }),
+        h(C.Btn, { h: h, disabled: busyS[0], onClick: closeForm }, "取消"),
+        h(C.Btn, { h: h, kind: "primary", disabled: busyS[0], onClick: function () { save(false); } }, busyS[0] ? "保存中…" : "保存"))) : null,
+
     unlockS[0] ? h(AskPassphrase, {
-      h: h, C: C,
+      h: h,
+      React: React,
+      C: C,
       title: "解锁保险箱",
       hint: "解锁状态只保存在当前进程内存，空闲超时会自动锁定。",
       label: "主口令",
-      value: unlockS[0].value, busy: unlockS[0].busy, error: unlockS[0].error,
+      value: unlockS[0].value,
+      busy: unlockS[0].busy,
+      error: unlockS[0].error,
+      show: unlockS[0].show,
       onChange: function (v) { unlockS[1](Object.assign({}, unlockS[0], { value: v })); },
-    show: unlockS[0].show, onToggle: function () { unlockS[1](Object.assign({}, unlockS[0], { show: !unlockS[0].show })); },
+      onToggle: function () { unlockS[1](Object.assign({}, unlockS[0], { show: !unlockS[0].show })); },
       onCancel: function () { if (!unlockS[0].busy) unlockS[1](null); },
       onConfirm: confirmUnlock,
     }) : null,
-    askS[0] ? h(AskPassphrase, { h: h, C: C, title: "查看凭据明文", hint: "当前是 B 模式，查看明文需要再次输入主口令。", label: "主口令（" + askS[0].row.name + "）", value: askS[0].value, busy: askS[0].busy, error: askS[0].error, onChange: function (v) { askS[1](Object.assign({}, askS[0], { value: v })); }, show: askS[0].show, onToggle: function () { askS[1](Object.assign({}, askS[0], { show: !askS[0].show })); }, onCancel: function () { if (!askS[0].busy) askS[1](null); }, onConfirm: confirmPassphrase }) : null,
 
-    revealS[0] ? h("div", { className: "wbv-modal", onClick: function () { revealS[1](null); } },
-      h("div", { className: "wbv-modal-box", onClick: function (e) { e.stopPropagation(); } },
-        h("h3", null, "凭据明文 · " + revealS[0].name),
+    askS[0] ? h(AskPassphrase, {
+      h: h,
+      React: React,
+      C: C,
+      title: "查看凭据明文",
+      hint: "当前是 B 模式，查看明文需要再次输入主口令。",
+      label: "主口令（" + askS[0].row.name + "）",
+      value: askS[0].value,
+      busy: askS[0].busy,
+      error: askS[0].error,
+      show: askS[0].show,
+      onChange: function (v) { askS[1](Object.assign({}, askS[0], { value: v })); },
+      onToggle: function () { askS[1](Object.assign({}, askS[0], { show: !askS[0].show })); },
+      onCancel: function () { if (!askS[0].busy) askS[1](null); },
+      onConfirm: confirmPassphrase,
+    }) : null,
+
+    revealS[0] ? h(Dialog, {
+      h: h,
+      React: React,
+      title: "凭据明文 · " + revealS[0].name,
+      titleId: "wbv-reveal-title",
+      onClose: function () { revealS[1](null); },
+    },
+      h("div", { className: "wbv-modal-body" },
         h("div", { className: "wbv-secret" }, revealS[0].secret),
-        h("div", { className: "wbv-row" },
-          h(C.Btn, { h: h, onClick: function () {
-            if (navigator.clipboard) navigator.clipboard.writeText(revealS[0].secret).then(function () { msgS[1]("已复制"); });
-          } }, "复制"),
-          h("span", { className: "wbv-grow" }),
-          h(C.Btn, { h: h, onClick: function () { revealS[1](null); } }, "关闭")))) : null);
+        h("p", { className: "wbv-modal-sub" }, "明文不会写入日志；复制后请尽快用到目标处。")),
+      h("div", { className: "wbv-modal-foot" },
+        h(C.Btn, { h: h, onClick: copyRevealed }, "复制"),
+        h("span", { className: "wbv-grow" }),
+        h(C.Btn, { h: h, onClick: function () { revealS[1](null); } }, "关闭"))) : null,
+
+    delS[0] ? h(ConfirmDialog, {
+      h: h,
+      React: React,
+      title: "删除凭据「" + delS[0].row.name + "」？",
+      message: "绑定它的连接器会失效；删除后明文无法恢复。",
+      confirmText: "确认删除",
+      busyText: "删除中…",
+      busy: busyS[0],
+      onCancel: function () { if (!busyS[0]) delS[1](null); },
+      onConfirm: confirmRemove,
+    }) : null);
 };
 
 /** 备注：新数据统一用 meta.note；旧数据回退「用户名 · URL」。 */

@@ -1,8 +1,17 @@
 "use strict";
-/** 集合页：集合可复用（挂多个分组、装多条凭据）；这里做列表、详情与关联管理。 */
+/**
+ * 集合页：集合可复用（挂多个分组、装多条凭据）；这里做列表、详情与关联管理。
+ * 页面骨架与弹层外壳分别来自 ui/page.cjs、ui/dialog.cjs。
+ */
 var C = require("../ui/common.cjs");
+var P = require("../ui/page.cjs");
 var K = require("../ui/kinds.cjs");
 var Lock = require("../ui/lock.cjs");
+var Dialog = require("../ui/dialog.cjs").Dialog;
+var ConfirmDialog = require("../ui/dialog.cjs").ConfirmDialog;
+var GLYPHS = require("../ui/icons.cjs").ICONS;
+
+var Layers = GLYPHS["layers"];
 
 module.exports = function SetsView(props) {
   var h = props.h;
@@ -20,6 +29,7 @@ module.exports = function SetsView(props) {
   var busyS = React.useState(false);
   var draftS = React.useState(null); // { id?, name, description, color }
   var pickS = React.useState([]); // 待加入集合的凭据 id
+  var delS = React.useState(null); // { set } 删除确认
   // 未解锁守卫：锁定期间三个列表接口都不发；在途响应按序号作废，避免迟到的明文回填。
   var guard = Lock.use({ api: api, C: C, React: React });
   var inflight = React.useState({ seq: 0 })[0];
@@ -59,6 +69,7 @@ module.exports = function SetsView(props) {
       detailS[1]({ setId: "", secrets: [], groups: [], error: "" });
       draftS[1](null);
       pickS[1]([]);
+      delS[1](null);
       msgS[1]("");
       return;
     }
@@ -104,22 +115,36 @@ module.exports = function SetsView(props) {
       : C.call(api, "vault.setCreate", body);
     req.then(function () {
       busyS[1](false); draftS[1](null); load();
-    }).catch(function (e) { busyS[1](false); msgS[1](C.errText(e)); });
+    }).catch(function (e) {
+      busyS[1](false);
+      msgS[1](C.errText(e));
+    });
   }
 
   function removeSet(set) {
-    if (!window.confirm("删除集合「" + set.name + "」？只解除关联，凭据本身保留。")) return;
+    delS[1]({ set: set });
+  }
+
+  function confirmRemoveSet() {
+    var d = delS[0];
+    if (!d) return;
     busyS[1](true); msgS[1]("");
-    C.call(api, "vault.setDelete", { id: set.id }).then(function () {
-      busyS[1](false); activeS[1](null); load();
-    }).catch(function (e) { busyS[1](false); msgS[1](C.errText(e)); });
+    C.call(api, "vault.setDelete", { id: d.set.id }).then(function () {
+      busyS[1](false); delS[1](null); activeS[1](null); load();
+    }).catch(function (e) {
+      busyS[1](false);
+      msgS[1](C.errText(e));
+    });
   }
 
   function detach(secretId) {
     busyS[1](true); msgS[1]("");
     C.call(api, "vault.setDetachSecret", { setId: activeS[0].id, secretId: secretId }).then(function () {
       busyS[1](false); open(activeS[0]); load();
-    }).catch(function (e) { busyS[1](false); msgS[1](C.errText(e)); });
+    }).catch(function (e) {
+      busyS[1](false);
+      msgS[1](C.errText(e));
+    });
   }
 
   function attachPicked() {
@@ -130,7 +155,10 @@ module.exports = function SetsView(props) {
     });
     Promise.all(jobs).then(function () {
       busyS[1](false); pickS[1]([]); open(activeS[0]); load();
-    }).catch(function (e) { busyS[1](false); msgS[1](C.errText(e)); });
+    }).catch(function (e) {
+      busyS[1](false);
+      msgS[1](C.errText(e));
+    });
   }
 
   function toggleGroup(groupId, on) {
@@ -138,7 +166,10 @@ module.exports = function SetsView(props) {
     var action = on ? "vault.groupAttachSet" : "vault.groupDetachSet";
     C.call(api, action, { groupId: groupId, setId: activeS[0].id }).then(function () {
       busyS[1](false); open(activeS[0]); load();
-    }).catch(function (e) { busyS[1](false); msgS[1](C.errText(e)); });
+    }).catch(function (e) {
+      busyS[1](false);
+      msgS[1](C.errText(e));
+    });
   }
 
   var items = listS[0].items.filter(function (set) {
@@ -154,92 +185,169 @@ module.exports = function SetsView(props) {
   if (!guard.ready) return h("div", { className: "wbv" }, h(C.Empty, { h: h, text: "正在读取保险箱状态…" }));
   if (guard.locked) return h(Lock.Panel, { h: h, C: C, lang: lang, error: guard.error });
 
+  var active = activeS[0];
+  var secretColumns = [
+    { key: "name", label: "名称" },
+    { key: "kind", label: "类型" },
+    { key: "updated", label: "更新时间" },
+    { key: "ops", label: "操作", align: "right" },
+  ];
+
   return h("div", { className: "wbv" },
-    h("div", { className: "wbv-row" },
-      h("h2", { className: "wbv-grow" }, "凭据集合"),
-      h("input", { style: { maxWidth: "200px" }, placeholder: "搜索集合名/描述", value: qS[0], onChange: function (e) { qS[1](e.target.value); } }),
-      h(C.Btn, { h: h, onClick: load }, "刷新"),
-      h(C.Btn, { h: h, kind: "primary", onClick: startCreate }, "新建集合")),
-    h("p", { className: "wbv-muted" }, "一个集合可以挂到多个分组、装多条凭据；删除集合只断关联，不删凭据。"),
+    h(P.PageHead, {
+      h: h,
+      title: "凭据集合",
+      sub: "一个集合可以挂到多个分组、装多条凭据；删除集合只断关联，不删凭据。",
+      actions: [
+        h(C.Btn, { h: h, key: "refresh", onClick: load }, "刷新"),
+        h(C.Btn, { h: h, key: "create", kind: "primary", onClick: startCreate }, "新建集合"),
+      ],
+    }),
+    h(P.Toolbar, { h: h },
+      h(P.Input, {
+        h: h,
+        className: "wbv-search",
+        placeholder: "搜索集合名或描述",
+        "aria-label": "搜索集合",
+        value: qS[0],
+        onChange: function (e) { qS[1](e.target.value); },
+      }),
+      h("span", { className: "wbv-toolbar-tail" }),
+      h("span", { className: "wbv-muted" }, listS[0].loading ? "读取中…" : items.length + " 个集合")),
     h(C.Notice, { h: h, kind: "error", text: listS[0].error || msgS[0] }),
 
     h("div", { className: "wbv-split" },
       h("div", { className: "wbv-list" },
-        listS[0].loading ? h(C.Empty, { h: h, text: "读取集合…" }) :
-          items.length === 0 ? h("div", { className: "wbv-card" },
-            h("div", { className: "wbv-muted" }, qS[0] ? "没有匹配的集合。" : "还没有集合。新建一个后，可以把凭据和分组都挂进来。"),
-            h("div", { className: "wbv-row", style: { marginTop: "8px" } },
-              h(C.Btn, { h: h, kind: "primary", onClick: startCreate }, "新建集合"))) :
-          items.map(function (set) {
-            var on = activeS[0] && activeS[0].id === set.id;
-            return h("div", {
-              key: set.id, className: "wbv-item" + (on ? " on" : ""), onClick: function () { open(set); },
-            },
-              h("div", { className: "wbv-item-top" },
-                h("span", { className: "wbv-dot", style: set.color ? { background: set.color } : null }),
-                h("strong", null, set.name),
+        listS[0].loading
+          ? h(C.Empty, { h: h, text: "读取集合…" })
+          : items.length === 0
+            ? h(P.EmptyState, {
+                h: h,
+                icon: Layers,
+                title: qS[0] ? "没有匹配的集合" : "还没有集合",
+                hint: qS[0] ? "换个关键词试试。" : "新建一个后，可以把凭据和分组都挂进来。",
+              }, h(C.Btn, { h: h, kind: "primary", onClick: startCreate }, "新建集合"))
+            : items.map(function (set) {
+                var on = active && active.id === set.id;
+                return h("button", {
+                  key: set.id,
+                  type: "button",
+                  className: "wbv-item" + (on ? " on" : ""),
+                  onClick: function () { open(set); },
+                },
+                  h("div", { className: "wbv-item-top" },
+                    h("span", { className: "wbv-dot", style: set.color ? { background: set.color } : null }),
+                    h("span", { className: "wbv-item-title" }, set.name),
+                    h("span", { className: "wbv-grow" }),
+                    h("span", { className: "wbv-pill" }, (set.secretCount || 0) + " 条")),
+                  h("div", { className: "wbv-item-sub" },
+                    (set.description || "—") + " · " + (set.groupIds || []).length + " 个分组"));
+              })),
+
+      h(P.Card, { h: h },
+        !active
+          ? h(C.Empty, { h: h, text: "左侧选一个集合，查看凭据与分组。" })
+          : h(React.Fragment, null,
+              h("div", { className: "wbv-card-head" },
+                h("h3", { className: "wbv-card-title" }, active.name),
+                h("div", { className: "wbv-card-actions" },
+                  h(C.Btn, { h: h, onClick: function () { startEdit(active); } }, "编辑"),
+                  h(C.Btn, { h: h, kind: "danger", onClick: function () { removeSet(active); } }, "删除集合"))),
+              detail.error ? h(C.Notice, { h: h, kind: "error", text: detail.error }) : null,
+              h("div", { className: "wbv-label" }, "集合内凭据"),
+              detail.secrets.length === 0
+                ? h("div", { className: "wbv-muted" }, "还没有凭据。")
+                : h(P.DataTable, {
+                    h: h,
+                    label: "集合内凭据",
+                    columns: secretColumns,
+                    rows: detail.secrets,
+                    renderRow: function (s) {
+                      return h("tr", { key: s.id },
+                        h("td", null, h("div", { className: "wbv-cell-main" }, s.name)),
+                        h("td", null, h("span", { className: "wbv-pill" }, K.KIND_LABEL[s.kind] || s.kind)),
+                        h("td", null, C.fmtTime(s.updatedAt, lang)),
+                        h("td", null, h("div", { className: "wbv-actions" },
+                          h(C.Btn, { h: h, kind: "ghost", onClick: function () { detach(s.id); } }, "移出"))));
+                    },
+                  }),
+              h("div", { className: "wbv-card-title", style: { marginTop: "14px" } }, "加入凭据"),
+              h("div", { className: "wbv-row" },
+                h(P.Select, {
+                  h: h,
+                  value: "",
+                  "aria-label": "选择要加入的凭据",
+                  onChange: function (e) { var v = e.target.value; if (v) pickS[1](pickS[0].concat([v])); e.target.value = ""; },
+                },
+                  h("option", { value: "" }, candidates.length ? "选择要加入的凭据…" : "没有可加入的凭据"),
+                  candidates.map(function (s) { return h("option", { key: s.id, value: s.id }, s.name + "（" + (K.KIND_LABEL[s.kind] || s.kind) + "）"); })),
+                pickS[0].length ? h("span", { className: "wbv-chips" }, pickS[0].map(function (id) {
+                  return h("span", { className: "wbv-chip", key: id },
+                    h("span", null, secretName(id)),
+                    h("button", { type: "button", className: "wbv-btn ghost", onClick: function () { pickS[1](pickS[0].filter(function (x) { return x !== id; })); } }, "×"));
+                })) : null,
                 h("span", { className: "wbv-grow" }),
-                h("span", { className: "wbv-pill" }, (set.secretCount || 0) + " 条凭据")),
-              h("div", { className: "wbv-muted", style: { fontSize: "11px", marginTop: "2px" } },
-                (set.description || "—") + " · " + (set.groupIds || []).length + " 个分组"));
+                h(C.Btn, { h: h, kind: "primary", disabled: !pickS[0].length || busyS[0], onClick: attachPicked }, "加入 " + (pickS[0].length || ""))),
+
+              h("div", { className: "wbv-card-title", style: { marginTop: "14px" } }, "挂靠分组"),
+              h("div", { className: "wbv-chips" },
+                groupsS[0].length === 0 ? h("span", { className: "wbv-muted" }, "还没有分组。") :
+                  groupsS[0].map(function (g) {
+                    var on = detail.groups.indexOf(g.id) >= 0;
+                    return h("label", { key: g.id, className: "wbv-chip", style: { cursor: "pointer" } },
+                      h("input", { type: "checkbox", checked: on, disabled: busyS[0], onChange: function (e) { toggleGroup(g.id, e.target.checked); } }),
+                      h("span", null, g.name));
+                  }))))),
+
+    draftS[0] ? h(Dialog, {
+      h: h,
+      React: React,
+      title: draftS[0].id ? "编辑集合" : "新建集合",
+      titleId: "wbv-set-form-title",
+      busy: busyS[0],
+      onClose: busyS[0] ? null : function () { draftS[1](null); },
+      closeOnEscape: !busyS[0],
+      closeOnMask: !busyS[0],
+      autoFocus: false,
+    },
+      h("div", { className: "wbv-modal-body" },
+        h(C.Field, { h: h, label: "集合名" },
+          h(P.Input, {
+            h: h,
+            autoFocus: true,
+            value: draftS[0].name,
+            placeholder: "如 acc_1 / 工作邮箱",
+            onChange: function (e) { draftS[1](Object.assign({}, draftS[0], { name: e.target.value })); },
           })),
+        h(C.Field, { h: h, label: "描述" },
+          h(P.Input, {
+            h: h,
+            value: draftS[0].description,
+            placeholder: "可选",
+            onChange: function (e) { draftS[1](Object.assign({}, draftS[0], { description: e.target.value })); },
+          })),
+        h(C.Field, { h: h, label: "颜色（可选，主题 token 名或色值）", hint: "留空使用主题强调色；建议填 --wb-accent 一类 token" },
+          h(P.Input, {
+            h: h,
+            value: draftS[0].color,
+            placeholder: "如 --wb-accent",
+            onChange: function (e) { draftS[1](Object.assign({}, draftS[0], { color: e.target.value })); },
+          })),
+        h(C.Notice, { h: h, kind: "error", text: msgS[0] })),
+      h("div", { className: "wbv-modal-foot" },
+        h("span", { className: "wbv-grow" }),
+        h(C.Btn, { h: h, disabled: busyS[0], onClick: function () { draftS[1](null); } }, "取消"),
+        h(C.Btn, { h: h, kind: "primary", disabled: busyS[0], onClick: saveDraft }, busyS[0] ? "保存中…" : "保存"))) : null,
 
-      h("div", { className: "wbv-card" },
-        !activeS[0] ? h(C.Empty, { h: h, text: "左侧选一个集合，查看凭据与分组。" }) :
-          h(React.Fragment, null,
-            h("div", { className: "wbv-row" },
-              h("h3", { className: "wbv-grow" }, activeS[0].name),
-              h(C.Btn, { h: h, onClick: function () { startEdit(activeS[0]); } }, "编辑"),
-              h(C.Btn, { h: h, kind: "danger", onClick: function () { removeSet(activeS[0]); } }, "删除集合")),
-            detail.error ? h(C.Notice, { h: h, kind: "error", text: detail.error }) : null,
-
-            h("div", { className: "wbv-label" }, "集合内凭据"),
-            detail.secrets.length === 0 ? h("div", { className: "wbv-muted" }, "还没有凭据。") :
-              h("table", { className: "wbv-table" },
-                h("thead", null, h("tr", null, ["名称", "类型", "更新时间", "操作"].map(function (x) { return h("th", { key: x }, x); }))),
-                h("tbody", null, detail.secrets.map(function (s) {
-                  return h("tr", { key: s.id },
-                    h("td", null, h("strong", null, s.name)),
-                    h("td", null, h("span", { className: "wbv-pill" }, K.KIND_LABEL[s.kind] || s.kind)),
-                    h("td", null, C.fmtTime(s.updatedAt, lang)),
-                    h("td", null, h(C.Btn, { h: h, kind: "ghost", onClick: function () { detach(s.id); } }, "移出")));
-                }))),
-            h("div", { className: "wbv-row" },
-              h("select", {
-                style: { maxWidth: "260px" }, value: "",
-                onChange: function (e) { var v = e.target.value; if (v) pickS[1](pickS[0].concat([v])); e.target.value = ""; },
-              },
-                h("option", { value: "" }, candidates.length ? "选择要加入的凭据…" : "没有可加入的凭据"),
-                candidates.map(function (s) { return h("option", { key: s.id, value: s.id }, s.name + "（" + (K.KIND_LABEL[s.kind] || s.kind) + "）"); })),
-              pickS[0].length ? h("span", { className: "wbv-chips" }, pickS[0].map(function (id) {
-                return h("span", { className: "wbv-chip", key: id }, secretName(id),
-                  h("button", { className: "wbv-btn ghost", onClick: function () { pickS[1](pickS[0].filter(function (x) { return x !== id; })); } }, "×"));
-              })) : null,
-              h("span", { className: "wbv-grow" }),
-              h(C.Btn, { h: h, kind: "primary", disabled: !pickS[0].length || busyS[0], onClick: attachPicked }, "加入 " + (pickS[0].length || ""))),
-
-            h("div", { className: "wbv-label" }, "挂靠分组"),
-            h("div", { className: "wbv-chips" },
-              groupsS[0].length === 0 ? h("span", { className: "wbv-muted" }, "还没有分组。") :
-                groupsS[0].map(function (g) {
-                  var on = detail.groups.indexOf(g.id) >= 0;
-                  return h("label", { key: g.id, className: "wbv-chip", style: { cursor: "pointer" } },
-                    h("input", { type: "checkbox", checked: on, disabled: busyS[0], onChange: function (e) { toggleGroup(g.id, e.target.checked); } }),
-                    g.name);
-                }))),
-
-        draftS[0] ? h("div", { className: "wbv-modal", onClick: function () { draftS[1](null); } },
-          h("div", { className: "wbv-modal-box", onClick: function (e) { e.stopPropagation(); } },
-            h("h3", null, draftS[0].id ? "编辑集合" : "新建集合"),
-            h(C.Field, { h: h, label: "集合名" },
-              h("input", { value: draftS[0].name, placeholder: "如 acc_1 / 工作邮箱", onChange: function (e) { draftS[1](Object.assign({}, draftS[0], { name: e.target.value })); } })),
-            h(C.Field, { h: h, label: "描述" },
-              h("input", { value: draftS[0].description, placeholder: "可选", onChange: function (e) { draftS[1](Object.assign({}, draftS[0], { description: e.target.value })); } })),
-            h(C.Field, { h: h, label: "颜色（可选，主题 token 名或色值）" },
-              h("input", { value: draftS[0].color, placeholder: "如 --wb-accent", onChange: function (e) { draftS[1](Object.assign({}, draftS[0], { color: e.target.value })); } })),
-            h(C.Notice, { h: h, kind: "error", text: msgS[0] }),
-            h("div", { className: "wbv-row" },
-              h("span", { className: "wbv-grow" }),
-              h(C.Btn, { h: h, onClick: function () { draftS[1](null); } }, "取消"),
-              h(C.Btn, { h: h, kind: "primary", disabled: busyS[0], onClick: saveDraft }, busyS[0] ? "保存中…" : "保存")))) : null)));
+    delS[0] ? h(ConfirmDialog, {
+      h: h,
+      React: React,
+      title: "删除集合「" + delS[0].set.name + "」？",
+      message: "只解除与凭据、分组的关联，凭据本身保留。",
+      confirmText: "确认删除",
+      busyText: "删除中…",
+      busy: busyS[0],
+      onCancel: function () { if (!busyS[0]) delS[1](null); },
+      onConfirm: confirmRemoveSet,
+    }) : null);
 };

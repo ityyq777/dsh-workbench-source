@@ -2974,8 +2974,9 @@ var require_overlay = __commonJS({
       var autoFocusDialog = opts.autoFocusDialog !== false;
       var focusableSelector = opts.focusableSelector || FOCUSABLE;
       function Modal(props) {
-        var ref = React.useRef(null);
-        React.useEffect(function() {
+        var R = props.React || React;
+        var ref = R.useRef(null);
+        R.useEffect(function() {
           var previous = typeof document !== "undefined" ? document.activeElement : null;
           var focusIt = props.autoFocus !== void 0 ? props.autoFocus : autoFocusDialog;
           if (focusIt && ref.current) ref.current.focus();

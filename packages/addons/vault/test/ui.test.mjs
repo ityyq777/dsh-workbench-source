@@ -127,7 +127,11 @@ test("分组页：建组走弹窗，顶部不再有内联建组表单", () => {
   const src = fs.readFileSync(path.join(dir, "views/groups.cjs"), "utf8");
   assert.doesNotMatch(src, /新分组名称/);
   assert.doesNotMatch(src, /wbv-card wbv-row/);
-  assert.match(src, /className: "wbv-modal-box"/);
+  // 弹层外壳改成共享 overlay（ui/dialog.cjs），不再手拼遮罩 + 弹窗容器
+  assert.doesNotMatch(src, /className: "wbv-modal"/);
+  assert.doesNotMatch(src, /className: "wbv-modal-box"/);
+  assert.match(src, /require\("\.\.\/ui\/dialog\.cjs"\)/);
+  assert.match(src, /h\(Dialog, \{/);
   assert.match(src, /label: "集合（可多选）"/);
   assert.match(src, /kind: "primary", onClick: openCreate/);
 });
@@ -151,9 +155,50 @@ test("分组页：创建时先 groupCreate 再逐个 groupAttachSet，Esc 可关
   const src = fs.readFileSync(path.join(dir, "views/groups.cjs"), "utf8");
   assert.match(src, /vault\.groupCreate/);
   assert.match(src, /vault\.groupAttachSet/);
-  assert.match(src, /e\.key === "Escape"/);
+  // Esc 不再由视图自写 window 监听，改由共享 overlay 的 closeOnEscape 收口
+  assert.doesNotMatch(src, /e\.key === "Escape"/);
+  assert.doesNotMatch(src, /window\.addEventListener\("keydown"/);
+  assert.match(src, /closeOnEscape: !createS\[0\]\.busy/);
   assert.match(src, /if \(createS\[0\] && createS\[0\]\.busy\) return;/);
   assert.match(src, /个集合挂载失败/);
+});
+
+test("弹层统一走共享 overlay：视图里不再手拼遮罩，外壳只保留一份", () => {
+  const overlay = fs.readFileSync(path.join(process.cwd(), "packages/addons/lib/overlay.cjs"), "utf8");
+  assert.match(overlay, /e\.key === "Escape"/);
+  assert.match(overlay, /querySelectorAll\(focusableSelector\)/);
+
+  const dialog = fs.readFileSync(path.join(dir, "ui/dialog.cjs"), "utf8");
+  assert.match(dialog, /lib\/overlay\.cjs/);
+  assert.match(dialog, /maskClass: "wbv-modal"/);
+  assert.match(dialog, /dialogClass: "wbv-modal-box"/);
+
+  for (const f of ["views/secrets.cjs", "views/sets.cjs", "views/groups.cjs", "views/status.cjs", "ui/ask-passphrase.cjs"]) {
+    const src = fs.readFileSync(path.join(dir, f), "utf8");
+    assert.doesNotMatch(src, /className: "wbv-modal"/, `${f} 仍在手拼遮罩`);
+    assert.doesNotMatch(src, /className: "wbv-modal-box"/, `${f} 仍在手拼弹窗容器`);
+    assert.doesNotMatch(src, /stopPropagation\(\)/, `${f} 仍靠阻止冒泡实现「点遮罩不关闭」`);
+  }
+});
+
+test("危险操作不再用 window.confirm，改应用内二次确认", () => {
+  for (const f of ["views/secrets.cjs", "views/sets.cjs", "views/groups.cjs"]) {
+    const src = fs.readFileSync(path.join(dir, f), "utf8");
+    assert.doesNotMatch(src, /window\.confirm\(/, `${f} 仍在用 window.confirm`);
+  }
+  const secrets = fs.readFileSync(path.join(dir, "views/secrets.cjs"), "utf8");
+  assert.match(secrets, /ConfirmDialog/);
+  assert.match(secrets, /"vault\.secretDelete"/);
+});
+
+test("样式只用主题 token：var() 之外不出现写死颜色", () => {
+  const src = fs.readFileSync(path.join(dir, "ui/styles.cjs"), "utf8");
+  const withoutVars = src.replace(/var\([^)]*\)/g, "");
+  assert.doesNotMatch(withoutVars, /#[0-9a-fA-F]{3,8}\b/, "styles.cjs 在 var() 之外出现了写死颜色");
+  assert.doesNotMatch(withoutVars, /\b(?:rgba?|hsla?)\(/, "styles.cjs 在 var() 之外出现了字面色值");
+  // 主按钮前景色必须是主题 token：曾误用未定义的 --wb-on-accent，深色下会退回继承色
+  assert.doesNotMatch(src, /--wb-on-accent/);
+  assert.match(src, /--dsw-alias-label-primary-inverted/);
 });
 
 test("共享 call：服务端 ok:false 必须 reject，不能当成功返回", async () => {
@@ -211,6 +256,12 @@ function mountSecrets(api) {
       idx += 1;
       if (slots.length <= i) slots.push(typeof init === "function" ? init() : init);
       return [slots[i], function (v) { slots[i] = typeof v === "function" ? v(slots[i]) : v; }, i];
+    },
+    useRef(init) {
+      const i = idx;
+      idx += 1;
+      if (slots.length <= i) slots.push({ current: init });
+      return slots[i];
     },
     useEffect(fn, deps) {
       const i = idx;

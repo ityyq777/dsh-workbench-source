@@ -35,10 +35,12 @@ module.exports = function createOverlay(options) {
   var focusableSelector = opts.focusableSelector || FOCUSABLE;
 
   function Modal(props) {
-    var ref = React.useRef(null);
+    // 调用方可以在元素上带 React：插件视图里传宿主 React，测试里的迷你渲染器也据此展开本组件。
+    var R = props.React || React;
+    var ref = R.useRef(null);
 
     // 打开时把焦点送进对话框，关闭时还给原来的触发元素（与原生 dialog 一致）。
-    React.useEffect(function () {
+    R.useEffect(function () {
       var previous = typeof document !== "undefined" ? document.activeElement : null;
       var focusIt = props.autoFocus !== undefined ? props.autoFocus : autoFocusDialog;
       if (focusIt && ref.current) ref.current.focus();
