@@ -7451,17 +7451,43 @@ var init_list = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list-checks.mjs
+var list_checks_exports = {};
+__export(list_checks_exports, {
+  __iconData: () => __iconData19,
+  default: () => ListChecks
+});
+var __iconData19, ListChecks;
+var init_list_checks = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list-checks.mjs"() {
+    init_createLucideIcon();
+    __iconData19 = {
+      name: "list-checks",
+      size: 24,
+      node: [
+        ["path", { d: "M13 5h8", key: "a7qcls" }],
+        ["path", { d: "M13 12h8", key: "h98zly" }],
+        ["path", { d: "M13 19h8", key: "c3s6r1" }],
+        ["path", { d: "m3 17 2 2 4-4", key: "1jhpwq" }],
+        ["path", { d: "m3 7 2 2 4-4", key: "1obspn" }]
+      ]
+    };
+    __iconData19.node;
+    ListChecks = createLucideIcon(__iconData19);
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/square-check-big.mjs
 var square_check_big_exports = {};
 __export(square_check_big_exports, {
-  __iconData: () => __iconData19,
+  __iconData: () => __iconData20,
   default: () => SquareCheckBig
 });
-var __iconData19, SquareCheckBig;
+var __iconData20, SquareCheckBig;
 var init_square_check_big = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/square-check-big.mjs"() {
     init_createLucideIcon();
-    __iconData19 = {
+    __iconData20 = {
       name: "square-check-big",
       size: 24,
       node: [
@@ -7473,62 +7499,62 @@ var init_square_check_big = __esm({
       ],
       aliases: ["check-square"]
     };
-    __iconData19.node;
-    SquareCheckBig = createLucideIcon(__iconData19);
+    __iconData20.node;
+    SquareCheckBig = createLucideIcon(__iconData20);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-left.mjs
 var chevron_left_exports = {};
 __export(chevron_left_exports, {
-  __iconData: () => __iconData20,
+  __iconData: () => __iconData21,
   default: () => ChevronLeft
 });
-var __iconData20, ChevronLeft;
+var __iconData21, ChevronLeft;
 var init_chevron_left = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-left.mjs"() {
     init_createLucideIcon();
-    __iconData20 = {
+    __iconData21 = {
       name: "chevron-left",
       size: 24,
       node: [["path", { d: "m15 18-6-6 6-6", key: "1wnfg3" }]]
     };
-    __iconData20.node;
-    ChevronLeft = createLucideIcon(__iconData20);
+    __iconData21.node;
+    ChevronLeft = createLucideIcon(__iconData21);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-right.mjs
 var chevron_right_exports = {};
 __export(chevron_right_exports, {
-  __iconData: () => __iconData21,
+  __iconData: () => __iconData22,
   default: () => ChevronRight
 });
-var __iconData21, ChevronRight;
+var __iconData22, ChevronRight;
 var init_chevron_right = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-right.mjs"() {
     init_createLucideIcon();
-    __iconData21 = {
+    __iconData22 = {
       name: "chevron-right",
       size: 24,
       node: [["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]]
     };
-    __iconData21.node;
-    ChevronRight = createLucideIcon(__iconData21);
+    __iconData22.node;
+    ChevronRight = createLucideIcon(__iconData22);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder.mjs
 var folder_exports = {};
 __export(folder_exports, {
-  __iconData: () => __iconData22,
+  __iconData: () => __iconData23,
   default: () => Folder
 });
-var __iconData22, Folder;
+var __iconData23, Folder;
 var init_folder = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder.mjs"() {
     init_createLucideIcon();
-    __iconData22 = {
+    __iconData23 = {
       name: "folder",
       size: 24,
       node: [
@@ -7541,22 +7567,22 @@ var init_folder = __esm({
         ]
       ]
     };
-    __iconData22.node;
-    Folder = createLucideIcon(__iconData22);
+    __iconData23.node;
+    Folder = createLucideIcon(__iconData23);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder-open.mjs
 var folder_open_exports = {};
 __export(folder_open_exports, {
-  __iconData: () => __iconData23,
+  __iconData: () => __iconData24,
   default: () => FolderOpen
 });
-var __iconData23, FolderOpen;
+var __iconData24, FolderOpen;
 var init_folder_open = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder-open.mjs"() {
     init_createLucideIcon();
-    __iconData23 = {
+    __iconData24 = {
       name: "folder-open",
       size: 24,
       node: [
@@ -7569,22 +7595,22 @@ var init_folder_open = __esm({
         ]
       ]
     };
-    __iconData23.node;
-    FolderOpen = createLucideIcon(__iconData23);
+    __iconData24.node;
+    FolderOpen = createLucideIcon(__iconData24);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/table-2.mjs
 var table_2_exports = {};
 __export(table_2_exports, {
-  __iconData: () => __iconData24,
+  __iconData: () => __iconData25,
   default: () => Table2
 });
-var __iconData24, Table2;
+var __iconData25, Table2;
 var init_table_2 = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/table-2.mjs"() {
     init_createLucideIcon();
-    __iconData24 = {
+    __iconData25 = {
       name: "table-2",
       size: 24,
       node: [
@@ -7593,22 +7619,22 @@ var init_table_2 = __esm({
         ["rect", { x: "3", y: "3", width: "18", height: "18", rx: "2", key: "h1oib" }]
       ]
     };
-    __iconData24.node;
-    Table2 = createLucideIcon(__iconData24);
+    __iconData25.node;
+    Table2 = createLucideIcon(__iconData25);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/house.mjs
 var house_exports = {};
 __export(house_exports, {
-  __iconData: () => __iconData25,
+  __iconData: () => __iconData26,
   default: () => House
 });
-var __iconData25, House;
+var __iconData26, House;
 var init_house = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/house.mjs"() {
     init_createLucideIcon();
-    __iconData25 = {
+    __iconData26 = {
       name: "house",
       size: 24,
       node: [
@@ -7623,22 +7649,22 @@ var init_house = __esm({
       ],
       aliases: ["home"]
     };
-    __iconData25.node;
-    House = createLucideIcon(__iconData25);
+    __iconData26.node;
+    House = createLucideIcon(__iconData26);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder-plus.mjs
 var folder_plus_exports = {};
 __export(folder_plus_exports, {
-  __iconData: () => __iconData26,
+  __iconData: () => __iconData27,
   default: () => FolderPlus
 });
-var __iconData26, FolderPlus;
+var __iconData27, FolderPlus;
 var init_folder_plus = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/folder-plus.mjs"() {
     init_createLucideIcon();
-    __iconData26 = {
+    __iconData27 = {
       name: "folder-plus",
       size: 24,
       node: [
@@ -7653,22 +7679,22 @@ var init_folder_plus = __esm({
         ]
       ]
     };
-    __iconData26.node;
-    FolderPlus = createLucideIcon(__iconData26);
+    __iconData27.node;
+    FolderPlus = createLucideIcon(__iconData27);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/file-plus.mjs
 var file_plus_exports = {};
 __export(file_plus_exports, {
-  __iconData: () => __iconData27,
+  __iconData: () => __iconData28,
   default: () => FilePlus
 });
-var __iconData27, FilePlus;
+var __iconData28, FilePlus;
 var init_file_plus = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/file-plus.mjs"() {
     init_createLucideIcon();
-    __iconData27 = {
+    __iconData28 = {
       name: "file-plus",
       size: 24,
       node: [
@@ -7684,22 +7710,22 @@ var init_file_plus = __esm({
         ["path", { d: "M12 18v-6", key: "17g6i2" }]
       ]
     };
-    __iconData27.node;
-    FilePlus = createLucideIcon(__iconData27);
+    __iconData28.node;
+    FilePlus = createLucideIcon(__iconData28);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs
 var pencil_exports = {};
 __export(pencil_exports, {
-  __iconData: () => __iconData28,
+  __iconData: () => __iconData29,
   default: () => Pencil
 });
-var __iconData28, Pencil;
+var __iconData29, Pencil;
 var init_pencil = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs"() {
     init_createLucideIcon();
-    __iconData28 = {
+    __iconData29 = {
       name: "pencil",
       size: 24,
       node: [
@@ -7713,17 +7739,17 @@ var init_pencil = __esm({
         ["path", { d: "m15 5 4 4", key: "1mk7zo" }]
       ]
     };
-    __iconData28.node;
-    Pencil = createLucideIcon(__iconData28);
+    __iconData29.node;
+    Pencil = createLucideIcon(__iconData29);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
-var __iconData29, Trash;
+var __iconData30, Trash;
 var init_trash = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
     init_createLucideIcon();
-    __iconData29 = {
+    __iconData30 = {
       name: "trash",
       size: 24,
       node: [
@@ -7735,8 +7761,8 @@ var init_trash = __esm({
       ],
       aliases: ["trash-2"]
     };
-    __iconData29.node;
-    Trash = createLucideIcon(__iconData29);
+    __iconData30.node;
+    Trash = createLucideIcon(__iconData30);
   }
 });
 
@@ -7754,14 +7780,14 @@ var init_trash_2 = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs
 var x_exports = {};
 __export(x_exports, {
-  __iconData: () => __iconData30,
+  __iconData: () => __iconData31,
   default: () => X
 });
-var __iconData30, X;
+var __iconData31, X;
 var init_x = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs"() {
     init_createLucideIcon();
-    __iconData30 = {
+    __iconData31 = {
       name: "x",
       size: 24,
       node: [
@@ -7769,42 +7795,42 @@ var init_x = __esm({
         ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
       ]
     };
-    __iconData30.node;
-    X = createLucideIcon(__iconData30);
+    __iconData31.node;
+    X = createLucideIcon(__iconData31);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-down.mjs
 var chevron_down_exports = {};
 __export(chevron_down_exports, {
-  __iconData: () => __iconData31,
+  __iconData: () => __iconData32,
   default: () => ChevronDown
 });
-var __iconData31, ChevronDown;
+var __iconData32, ChevronDown;
 var init_chevron_down = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-down.mjs"() {
     init_createLucideIcon();
-    __iconData31 = {
+    __iconData32 = {
       name: "chevron-down",
       size: 24,
       node: [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]]
     };
-    __iconData31.node;
-    ChevronDown = createLucideIcon(__iconData31);
+    __iconData32.node;
+    ChevronDown = createLucideIcon(__iconData32);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/tag.mjs
 var tag_exports = {};
 __export(tag_exports, {
-  __iconData: () => __iconData32,
+  __iconData: () => __iconData33,
   default: () => Tag
 });
-var __iconData32, Tag;
+var __iconData33, Tag;
 var init_tag = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/tag.mjs"() {
     init_createLucideIcon();
-    __iconData32 = {
+    __iconData33 = {
       name: "tag",
       size: 24,
       node: [
@@ -7818,22 +7844,22 @@ var init_tag = __esm({
         ["circle", { cx: "7.5", cy: "7.5", r: ".5", fill: "currentColor", key: "kqv944" }]
       ]
     };
-    __iconData32.node;
-    Tag = createLucideIcon(__iconData32);
+    __iconData33.node;
+    Tag = createLucideIcon(__iconData33);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/clock.mjs
 var clock_exports = {};
 __export(clock_exports, {
-  __iconData: () => __iconData33,
+  __iconData: () => __iconData34,
   default: () => Clock
 });
-var __iconData33, Clock;
+var __iconData34, Clock;
 var init_clock = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/clock.mjs"() {
     init_createLucideIcon();
-    __iconData33 = {
+    __iconData34 = {
       name: "clock",
       size: 24,
       node: [
@@ -7841,22 +7867,22 @@ var init_clock = __esm({
         ["path", { d: "M12 6v6l4 2", key: "mmk7yg" }]
       ]
     };
-    __iconData33.node;
-    Clock = createLucideIcon(__iconData33);
+    __iconData34.node;
+    Clock = createLucideIcon(__iconData34);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
 var refresh_cw_exports = {};
 __export(refresh_cw_exports, {
-  __iconData: () => __iconData34,
+  __iconData: () => __iconData35,
   default: () => RefreshCw
 });
-var __iconData34, RefreshCw;
+var __iconData35, RefreshCw;
 var init_refresh_cw = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
     init_createLucideIcon();
-    __iconData34 = {
+    __iconData35 = {
       name: "refresh-cw",
       size: 24,
       node: [
@@ -7866,8 +7892,8 @@ var init_refresh_cw = __esm({
         ["path", { d: "M8 16H3v5", key: "1cv678" }]
       ]
     };
-    __iconData34.node;
-    RefreshCw = createLucideIcon(__iconData34);
+    __iconData35.node;
+    RefreshCw = createLucideIcon(__iconData35);
   }
 });
 
@@ -7895,6 +7921,7 @@ var require_icons2 = __commonJS({
       search: (init_search(), __toCommonJS(search_exports)).default,
       grid: (init_layout_grid(), __toCommonJS(layout_grid_exports)).default,
       list: (init_list(), __toCommonJS(list_exports)).default,
+      "list-checks": (init_list_checks(), __toCommonJS(list_checks_exports)).default,
       select: (init_square_check_big(), __toCommonJS(square_check_big_exports)).default,
       left: (init_chevron_left(), __toCommonJS(chevron_left_exports)).default,
       right: (init_chevron_right(), __toCommonJS(chevron_right_exports)).default,
@@ -14065,7 +14092,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.35",
+    version: "5.2.36",
     icon: ICONS["list-checks"],
     // 贡献声明写在 registerAddon 里：卸载任务插件时宿主按 addonId 一起撤销，
     // 不会在邮件里留一个渲染即报错的孤儿按钮。

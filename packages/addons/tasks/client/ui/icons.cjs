@@ -21,6 +21,7 @@ var set = icons.create("wbt", {
   search: require("lucide-react/icons/search").default,
   grid: require("lucide-react/icons/layout-grid").default,
   list: require("lucide-react/icons/list").default,
+  "list-checks": require("lucide-react/icons/list-checks").default,
   select: require("lucide-react/icons/square-check-big").default,
   left: require("lucide-react/icons/chevron-left").default,
   right: require("lucide-react/icons/chevron-right").default,

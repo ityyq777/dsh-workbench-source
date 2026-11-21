@@ -84,6 +84,19 @@ for (const plugin of PLUGINS) {
     }
   }
 
+  // 图标表里的键必须真实存在：`ICONS["list-checks"]` 引用一个没定义的键会静默变成首字回退，
+  // 首页就只剩一个字（2026-11-21 任务 / 储物两处就是这么丢图标的）。
+  if (existsSync(iconEntry)) {
+    const table = readFileSync(iconEntry, 'utf8');
+    const keys = new Set([...table.matchAll(/^\s*"?([\w-]+)"?\s*:/gm)].map((m) => m[1]));
+    for (const s of sources) {
+      if (s.file === iconEntry) continue;
+      for (const m of s.text.matchAll(/(?:ICONS|GLYPHS)\[["']([\w-]+)["']\]/g)) {
+        if (!keys.has(m[1])) problems.push(s.rel + '：引用了图标表里不存在的键 "' + m[1] + '"');
+      }
+    }
+  }
+
   rows.push({ plugin, files: files.length, shared: used });
 }
 
