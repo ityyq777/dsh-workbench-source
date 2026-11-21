@@ -1,9 +1,10 @@
 // 创建/重启表单独立模块；宿主相关工具由入口注入，避免循环依赖。
 // 版式走共享分阶段外壳（lib/staged-dialog.cjs + lib/stepper.cjs）：
-// 内容（含计划字段）→ 标签 → 任务表 → 时间线 → 工作区 → 确认，
+// 内容（含计划字段）→ 标签 → 任务表 → 时间线 → 工作区，
 // 每一步只放一组信息，保存前再整体复核。
 var NF = require("../../../lib/number-field.cjs");
 var staged = require("../../../lib/staged-dialog.cjs");
+var FilterChecklist = require("../../../lib/filter-checklist.cjs");
 
 // 这里只是把「默认值」（配置/来源任务）归一成合法初值，不涉及用户键入；
 // 用户键入的值一律原样保留，只在提交时校验。
@@ -177,11 +178,84 @@ module.exports = function createModal(deps) {
         (source !== "2" && form.status === "1") ? h2("label", { className: "wbt-field" }, h2("span", null, t.shutdownDate),
           h2(DP.DatePicker, { React: React, h: h2, prefix: "wbt", lang: props.lang, label: t.shutdownDate, value: form.shutdownDate, onChange: function (next) { set("shutdownDate", next); } })) : null);
     }
-    // 标签单独一步：草稿仍是一行逗号分隔文本，提交时才 splitTags。
+    // 标签选择：搜索走 tasks.tagOptions（200ms 防抖 + 触底加载），清单用共享 FilterChecklist；
+    // 草稿仍是一行逗号分隔文本，提交时才 splitTags，所以新建标签直接输名字即可。
+    function TagPicker(p2) {
+      var h2 = p2.h;
+      var names = splitTags(p2.value);
+      var qs = React.useState(""), query = qs[0], setQuery = qs[1];
+      var rs = React.useState([]), rows = rs[0], setRows = rs[1];
+      var ts = React.useState(0), total = ts[0], setTotal = ts[1];
+      var ps = React.useState(1), page = ps[0], setPage = ps[1];
+      var hs = React.useState(false), hasMore = hs[0], setHasMore = hs[1];
+      var ls = React.useState(false), loading = ls[0], setLoading = ls[1];
+      var ds = React.useState(""), draft = ds[0], setDraft = ds[1];
+      var seq = React.useRef(0);
+      React.useEffect(function () {
+        var mine = ++seq.current;
+        setLoading(true);
+        var timer = setTimeout(function () {
+          p2.api.call("tasks.tagOptions", { query: query, pageNumber: 1, pageSize: 30 }).then(function (r) {
+            if (mine !== seq.current) return;
+            var out = r && r.ok ? r.result : {};
+            var list = out.tags || [];
+            setRows(list); setTotal(out.total || list.length); setPage(1); setHasMore(!!out.hasMore); setLoading(false);
+          }).catch(function () {
+            if (mine !== seq.current) return;
+            setRows([]); setTotal(0); setHasMore(false); setLoading(false);
+          });
+        }, 200);
+        return function () { clearTimeout(timer); };
+      }, [p2.api, query]);
+      function loadMore() {
+        if (loading || !hasMore) return;
+        var mine = seq.current, next = page + 1;
+        setLoading(true);
+        p2.api.call("tasks.tagOptions", { query: query, pageNumber: next, pageSize: 30 }).then(function (r) {
+          if (mine !== seq.current) return;
+          var out = r && r.ok ? r.result : {};
+          setRows(rows.concat(out.tags || [])); setPage(next); setHasMore(!!out.hasMore); setLoading(false);
+        }).catch(function () { if (mine === seq.current) setLoading(false); });
+      }
+      function emit(next) { p2.onChange(next.join(", ")); }
+      function toggle(name) {
+        emit(names.indexOf(name) >= 0 ? names.filter(function (x) { return x !== name; }) : names.concat([name]));
+      }
+      function toggleId(id) {
+        var row = rows.filter(function (x) { return String(x.id) === String(id); })[0];
+        if (row) toggle(String(row.name));
+      }
+      function addDraft() {
+        var parts = splitTags(draft);
+        if (!parts.length) return;
+        var next = names.slice();
+        parts.forEach(function (name2) { if (next.indexOf(name2) < 0) next.push(name2); });
+        emit(next); setDraft("");
+      }
+      var selectedIds = rows.filter(function (x) { return names.indexOf(String(x.name)) >= 0; }).map(function (x) { return String(x.id); });
+      return h2("div", { className: "wbt-tagpick" },
+        names.length ? h2("div", { className: "wbt-tagchips", role: "group", "aria-label": t.tagSelected }, names.map(function (name2) {
+          return h2("button", { key: name2, type: "button", className: "wbt-tagchip", title: t.tagRemove, onClick: function () { toggle(name2); } },
+            h2("span", null, name2), h2("span", { className: "wbt-tagchip-x", "aria-hidden": true }, "×"));
+        })) : h2("p", { className: "wbctl-note" }, t.tagNoPick),
+        h2(FilterChecklist, {
+          items: rows.map(function (x) { return { id: String(x.id), name: x.name, meta: x.total }; }),
+          selected: selectedIds, onToggle: toggleId, onClear: function () { emit([]); },
+          query: query, onQuery: setQuery, loading: loading, hasMore: hasMore, onLoadMore: loadMore, total: total,
+          title: t.allTags || "全部标签", selectedText: t.tagSelected || "已选", clearText: t.clear || "清空",
+          searchPlaceholder: t.tagSearchExisting || "搜索已有标签", emptyText: t.noTags || "暂无标签",
+          noMatchText: t.tagNoMatch || "没有匹配的标签", loadingText: t.loadingMore || "加载中…", noMoreText: t.noMore || "没有更多",
+          autoFocus: false,
+        }),
+        h2("div", { className: "wbt-tagnew" },
+          h2("input", { className: "wbt-input", value: draft, placeholder: t.tagNewPlaceholder, "aria-label": t.tagNewPlaceholder,
+            onChange: function (e) { setDraft(e.target.value); },
+            onKeyDown: function (e) { if (e.key === "Enter") { e.preventDefault(); addDraft(); } } }),
+          h2("button", { type: "button", className: "wbt-btn", disabled: !splitTags(draft).length, onClick: addDraft }, t.tagAdd || "添加")));
+    }
     function stepTags(h2) {
       return h2("div", { className: "wbctl-form" },
-        h2("label", { className: "wbt-field full" }, h2("span", null, t.tags),
-          h2("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function (e) { set("tags", e.target.value); } })),
+        h2("div", { className: "full" }, h2(TagPicker, { h: h2, api: props.api, t: t, value: form.tags, onChange: function (next) { set("tags", next); } })),
         h2("p", { className: "wbctl-note" }, t.stepTagsHint));
     }
     function stepTable(h2) {
@@ -201,34 +275,6 @@ module.exports = function createModal(deps) {
       return h2("div", { className: "wbctl-form" },
         h2(WorkspaceSelect, { api: props.api, lang: props.lang, value: form.workspaceIds, onChange: function (ids) { set("workspaceIds", ids); } }));
     }
-    function reviewRow(h2, key, value) {
-      return h2("div", { className: "wbctl-review-row" },
-        h2("span", { className: "wbctl-review-k" }, key),
-        h2("span", { className: "wbctl-review-v" }, value));
-    }
-    function stepConfirm(h2) {
-      var tableText = form.newPath ? plan.parts.join(" / ") : (tables.filter(function (x) { return x.id === form.tableId; })[0] || {}).name || t.needTable;
-      var statusText = (source === "2" ? "0" : form.status) === "2" ? "已完成" : (source === "2" ? "0" : form.status) === "1" ? "已关闭" : "已开启";
-      var rows = [
-        [t.titleField, String(form.title || "").trim() || "（空）"],
-        [t.desc, String(form.description || "").trim() || "—"],
-        [t.tags, form.tags || "—"],
-        [t.timeline, form.timelineId ? form.timelineId : (source === "2" && origin && origin.timelineId ? tr("继承来源任务的时间线") : "无")],
-        [t.workspace || "工作区", String((form.workspaceIds || []).length) + " 个"],
-        [t.table, tableText],
-        [t.status, statusText],
-        [t.priority, active ? String(form.priority) : "0（已完成/已关闭清零）"],
-        [t.difficulty, String(form.difficulty || 0)],
-        [t.publishDate, form.publishDate],
-        [t.targetDate, form.targetDate],
-      ];
-      if ((source === "2" ? "0" : form.status) === "2") rows.push([t.doneDate, form.doneDate || today()]);
-      if ((source === "2" ? "0" : form.status) === "1") rows.push([t.shutdownDate, form.shutdownDate || today()]);
-      return h2("div", null,
-        h2("div", { className: "wbctl-review" }, rows.map(function (row, i) { return reviewRow(h2, row[0], row[1]); })),
-        h2("p", { className: "wbctl-note" }, t.confirmHint));
-    }
-
     var steps = [
       {
         key: "content", label: t.stepContent, hint: t.stepContentHint, render: stepContent,
@@ -257,16 +303,10 @@ module.exports = function createModal(deps) {
       },
     });
     steps.push({ key: "workspace", label: t.stepWorkspace, hint: t.stepWorkspaceHint, render: stepWorkspace });
-    steps.push({ key: "confirm", label: t.stepConfirm, hint: t.stepConfirmHint, render: stepConfirm });
-
-    // 结构性不合法（缺标题/缺归属/优先级或难度非法/缺日期）提前反映成末步保存禁用，
-    // 别让用户点到最后一步才被弹回去。
-    var blocked = !String(form.title).trim() || !targetValid || !!priorityError || !difficultyCheck.ok ||
-      !form.publishDate || !form.targetDate;
 
     return h(StagedDialog, {
       title: title, closeLabel: t.cancel, steps: steps,
-      submitting: isBusy, error: error, submitDisabled: blocked,
+      submitting: isBusy, error: error,
       onClose: requestClose, onSubmit: submit,
       submitText: t.create, cancelText: t.cancel, nextText: t.nextStep || "下一步", backText: t.prevStep || "上一步",
       stepsLabel: t.createSteps || "创建步骤",

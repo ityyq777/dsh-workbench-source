@@ -21,7 +21,7 @@
     "test:ownership-ui": "node scripts/test-task-ownership-ui.mjs",
     "test:ownership-host": "node scripts/test-ownership-host.mjs",
     "test:tasks-review": "node scripts/test-tasks-review.mjs",
-    "test:task-difficulty": "node scripts/test-task-difficulty-backend.mjs && node scripts/test-tasks-difficulty-ui.mjs && node scripts/test-tasks-create-difficulty-ui.mjs",
+    "test:task-difficulty": "node scripts/test-task-difficulty-backend.mjs && node scripts/test-tasks-difficulty-ui.mjs && node scripts/test-tasks-create-difficulty-ui.mjs && node scripts/test-tasks-create-tags-ui.mjs",
     "test:task-presets": "node scripts/test-task-presets.mjs",
     "test:tasks-search": "node scripts/test-tasks-search.mjs",
     "test:task-multi-keyword": "node scripts/test-task-multi-keyword.mjs",

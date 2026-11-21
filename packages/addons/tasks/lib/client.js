@@ -6438,6 +6438,10 @@ var require_copy = __commonJS({
         noMore: "\u6CA1\u6709\u66F4\u591A",
         tagSelected: "\u5DF2\u9009",
         tagRemove: "\u79FB\u9664",
+        tagSearchExisting: "\u641C\u7D22\u5DF2\u6709\u6807\u7B7E",
+        tagNewPlaceholder: "\u65B0\u5EFA\u6807\u7B7E\uFF0C\u56DE\u8F66\u6DFB\u52A0\uFF0C\u591A\u4E2A\u7528\u9017\u53F7\u5206\u9694",
+        tagAdd: "\u6DFB\u52A0",
+        tagNoPick: "\u8FD8\u6CA1\u6709\u9009\u6807\u7B7E\uFF0C\u4ECE\u4E0B\u9762\u70B9\u4E00\u4E2A\u6216\u76F4\u63A5\u8F93\u5165\u65B0\u6807\u7B7E\u540D",
         workspaceFilter: "\u5DE5\u4F5C\u533A\u7B5B\u9009",
         allWorkspaces: "\u5168\u90E8\u5DE5\u4F5C\u533A",
         noWorkspaces: "\u6682\u65E0\u5DE5\u4F5C\u533A",
@@ -6625,6 +6629,10 @@ var require_copy = __commonJS({
         noMore: "No more",
         tagSelected: "Selected",
         tagRemove: "Remove",
+        tagSearchExisting: "Search existing tags",
+        tagNewPlaceholder: "New tag \u2014 press Enter to add, comma for several",
+        tagAdd: "Add",
+        tagNoPick: "No tags picked yet \u2014 click one below or type a new name",
         workspaceFilter: "Filter by workspace",
         allWorkspaces: "All workspaces",
         noWorkspaces: "No workspaces",
@@ -9600,6 +9608,15 @@ var require_styles = __commonJS({
       ".wbt-create-tl .wbt-timeline-picker{display:flex;flex-direction:column;gap:6px;min-width:0}",
       ".wbt-create-tl .wbt-picker-list{max-height:180px;scrollbar-gutter:stable}",
       ".wbt-create-tl .wbt-timeline-pager{margin-top:4px;font-size:11.5px}",
+      // 标签步：已选 chip + 共享勾选清单 + 新标签输入，清单限高内部滚动。
+      ".wbt-tagpick{display:flex;flex-direction:column;gap:8px;min-width:0}",
+      ".wbt-tagchips{display:flex;flex-wrap:wrap;gap:6px}",
+      ".wbt-tagchip{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid var(--wbt-line);border-radius:999px;background:color-mix(in oklab,var(--wbt-accent) 10%,transparent);color:inherit;font:inherit;font-size:12px;cursor:pointer}",
+      ".wbt-tagchip:hover{border-color:var(--wbt-accent)}",
+      ".wbt-tagchip-x{opacity:.55;font-size:12px}",
+      ".wbt-tagpick .wbck-list{max-height:220px}",
+      ".wbt-tagnew{display:flex;gap:8px;align-items:center}",
+      ".wbt-tagnew .wbt-input{flex:1;min-width:0}",
       ".wbt-field>span{opacity:.62;font-size:11.5px}.wbt-field>span.wbctl-num{opacity:1;font-size:12px;align-self:stretch}.wbt-field .wbt-difficulty-num{width:110px}",
       ".wbt-modal-foot{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:2px}",
       // 预览面板：只让内容区滚动，头部标题与右上角 × 固定不动（滚动壳限定在 .wbt-preview，不影响其它弹窗）。
@@ -10727,6 +10744,7 @@ var require_create_modal = __commonJS({
   "packages/addons/tasks/client/modals/create-modal.cjs"(exports2, module2) {
     var NF = require_number_field();
     var staged = require_staged_dialog();
+    var FilterChecklist = require_filter_checklist();
     function initialPriority(source, origin, fallback) {
       var original = Number(origin && origin.priority);
       if (source === "2" && Number.isInteger(original) && original >= 1 && original <= 10) return original;
@@ -11034,18 +11052,153 @@ var require_create_modal = __commonJS({
             ) : null
           );
         }
+        function TagPicker(p2) {
+          var h2 = p2.h;
+          var names = splitTags(p2.value);
+          var qs = React.useState(""), query = qs[0], setQuery = qs[1];
+          var rs = React.useState([]), rows = rs[0], setRows = rs[1];
+          var ts = React.useState(0), total = ts[0], setTotal = ts[1];
+          var ps = React.useState(1), page = ps[0], setPage = ps[1];
+          var hs = React.useState(false), hasMore = hs[0], setHasMore = hs[1];
+          var ls = React.useState(false), loading = ls[0], setLoading = ls[1];
+          var ds = React.useState(""), draft = ds[0], setDraft = ds[1];
+          var seq = React.useRef(0);
+          React.useEffect(function() {
+            var mine = ++seq.current;
+            setLoading(true);
+            var timer = setTimeout(function() {
+              p2.api.call("tasks.tagOptions", { query, pageNumber: 1, pageSize: 30 }).then(function(r) {
+                if (mine !== seq.current) return;
+                var out = r && r.ok ? r.result : {};
+                var list = out.tags || [];
+                setRows(list);
+                setTotal(out.total || list.length);
+                setPage(1);
+                setHasMore(!!out.hasMore);
+                setLoading(false);
+              }).catch(function() {
+                if (mine !== seq.current) return;
+                setRows([]);
+                setTotal(0);
+                setHasMore(false);
+                setLoading(false);
+              });
+            }, 200);
+            return function() {
+              clearTimeout(timer);
+            };
+          }, [p2.api, query]);
+          function loadMore() {
+            if (loading || !hasMore) return;
+            var mine = seq.current, next = page + 1;
+            setLoading(true);
+            p2.api.call("tasks.tagOptions", { query, pageNumber: next, pageSize: 30 }).then(function(r) {
+              if (mine !== seq.current) return;
+              var out = r && r.ok ? r.result : {};
+              setRows(rows.concat(out.tags || []));
+              setPage(next);
+              setHasMore(!!out.hasMore);
+              setLoading(false);
+            }).catch(function() {
+              if (mine === seq.current) setLoading(false);
+            });
+          }
+          function emit(next) {
+            p2.onChange(next.join(", "));
+          }
+          function toggle(name) {
+            emit(names.indexOf(name) >= 0 ? names.filter(function(x) {
+              return x !== name;
+            }) : names.concat([name]));
+          }
+          function toggleId(id) {
+            var row = rows.filter(function(x) {
+              return String(x.id) === String(id);
+            })[0];
+            if (row) toggle(String(row.name));
+          }
+          function addDraft() {
+            var parts = splitTags(draft);
+            if (!parts.length) return;
+            var next = names.slice();
+            parts.forEach(function(name2) {
+              if (next.indexOf(name2) < 0) next.push(name2);
+            });
+            emit(next);
+            setDraft("");
+          }
+          var selectedIds = rows.filter(function(x) {
+            return names.indexOf(String(x.name)) >= 0;
+          }).map(function(x) {
+            return String(x.id);
+          });
+          return h2(
+            "div",
+            { className: "wbt-tagpick" },
+            names.length ? h2("div", { className: "wbt-tagchips", role: "group", "aria-label": t.tagSelected }, names.map(function(name2) {
+              return h2(
+                "button",
+                { key: name2, type: "button", className: "wbt-tagchip", title: t.tagRemove, onClick: function() {
+                  toggle(name2);
+                } },
+                h2("span", null, name2),
+                h2("span", { className: "wbt-tagchip-x", "aria-hidden": true }, "\xD7")
+              );
+            })) : h2("p", { className: "wbctl-note" }, t.tagNoPick),
+            h2(FilterChecklist, {
+              items: rows.map(function(x) {
+                return { id: String(x.id), name: x.name, meta: x.total };
+              }),
+              selected: selectedIds,
+              onToggle: toggleId,
+              onClear: function() {
+                emit([]);
+              },
+              query,
+              onQuery: setQuery,
+              loading,
+              hasMore,
+              onLoadMore: loadMore,
+              total,
+              title: t.allTags || "\u5168\u90E8\u6807\u7B7E",
+              selectedText: t.tagSelected || "\u5DF2\u9009",
+              clearText: t.clear || "\u6E05\u7A7A",
+              searchPlaceholder: t.tagSearchExisting || "\u641C\u7D22\u5DF2\u6709\u6807\u7B7E",
+              emptyText: t.noTags || "\u6682\u65E0\u6807\u7B7E",
+              noMatchText: t.tagNoMatch || "\u6CA1\u6709\u5339\u914D\u7684\u6807\u7B7E",
+              loadingText: t.loadingMore || "\u52A0\u8F7D\u4E2D\u2026",
+              noMoreText: t.noMore || "\u6CA1\u6709\u66F4\u591A",
+              autoFocus: false
+            }),
+            h2(
+              "div",
+              { className: "wbt-tagnew" },
+              h2("input", {
+                className: "wbt-input",
+                value: draft,
+                placeholder: t.tagNewPlaceholder,
+                "aria-label": t.tagNewPlaceholder,
+                onChange: function(e) {
+                  setDraft(e.target.value);
+                },
+                onKeyDown: function(e) {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addDraft();
+                  }
+                }
+              }),
+              h2("button", { type: "button", className: "wbt-btn", disabled: !splitTags(draft).length, onClick: addDraft }, t.tagAdd || "\u6DFB\u52A0")
+            )
+          );
+        }
         function stepTags(h2) {
           return h2(
             "div",
             { className: "wbctl-form" },
-            h2(
-              "label",
-              { className: "wbt-field full" },
-              h2("span", null, t.tags),
-              h2("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function(e) {
-                set("tags", e.target.value);
-              } })
-            ),
+            h2("div", { className: "full" }, h2(TagPicker, { h: h2, api: props.api, t, value: form.tags, onChange: function(next) {
+              set("tags", next);
+            } })),
             h2("p", { className: "wbctl-note" }, t.stepTagsHint)
           );
         }
@@ -11078,43 +11231,6 @@ var require_create_modal = __commonJS({
             h2(WorkspaceSelect, { api: props.api, lang: props.lang, value: form.workspaceIds, onChange: function(ids) {
               set("workspaceIds", ids);
             } })
-          );
-        }
-        function reviewRow(h2, key, value) {
-          return h2(
-            "div",
-            { className: "wbctl-review-row" },
-            h2("span", { className: "wbctl-review-k" }, key),
-            h2("span", { className: "wbctl-review-v" }, value)
-          );
-        }
-        function stepConfirm(h2) {
-          var tableText = form.newPath ? plan.parts.join(" / ") : (tables.filter(function(x) {
-            return x.id === form.tableId;
-          })[0] || {}).name || t.needTable;
-          var statusText = (source === "2" ? "0" : form.status) === "2" ? "\u5DF2\u5B8C\u6210" : (source === "2" ? "0" : form.status) === "1" ? "\u5DF2\u5173\u95ED" : "\u5DF2\u5F00\u542F";
-          var rows = [
-            [t.titleField, String(form.title || "").trim() || "\uFF08\u7A7A\uFF09"],
-            [t.desc, String(form.description || "").trim() || "\u2014"],
-            [t.tags, form.tags || "\u2014"],
-            [t.timeline, form.timelineId ? form.timelineId : source === "2" && origin && origin.timelineId ? tr("\u7EE7\u627F\u6765\u6E90\u4EFB\u52A1\u7684\u65F6\u95F4\u7EBF") : "\u65E0"],
-            [t.workspace || "\u5DE5\u4F5C\u533A", String((form.workspaceIds || []).length) + " \u4E2A"],
-            [t.table, tableText],
-            [t.status, statusText],
-            [t.priority, active ? String(form.priority) : "0\uFF08\u5DF2\u5B8C\u6210/\u5DF2\u5173\u95ED\u6E05\u96F6\uFF09"],
-            [t.difficulty, String(form.difficulty || 0)],
-            [t.publishDate, form.publishDate],
-            [t.targetDate, form.targetDate]
-          ];
-          if ((source === "2" ? "0" : form.status) === "2") rows.push([t.doneDate, form.doneDate || today()]);
-          if ((source === "2" ? "0" : form.status) === "1") rows.push([t.shutdownDate, form.shutdownDate || today()]);
-          return h2(
-            "div",
-            null,
-            h2("div", { className: "wbctl-review" }, rows.map(function(row, i) {
-              return reviewRow(h2, row[0], row[1]);
-            })),
-            h2("p", { className: "wbctl-note" }, t.confirmHint)
           );
         }
         var steps = [
@@ -11156,15 +11272,12 @@ var require_create_modal = __commonJS({
           }
         });
         steps.push({ key: "workspace", label: t.stepWorkspace, hint: t.stepWorkspaceHint, render: stepWorkspace });
-        steps.push({ key: "confirm", label: t.stepConfirm, hint: t.stepConfirmHint, render: stepConfirm });
-        var blocked = !String(form.title).trim() || !targetValid || !!priorityError || !difficultyCheck.ok || !form.publishDate || !form.targetDate;
         return h(StagedDialog, {
           title,
           closeLabel: t.cancel,
           steps,
           submitting: isBusy,
           error,
-          submitDisabled: blocked,
           onClose: requestClose,
           onSubmit: submit,
           submitText: t.create,
@@ -14612,7 +14725,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.38",
+    version: "5.2.39",
     icon: ICONS["list-checks"],
     // 贡献声明写在 registerAddon 里：卸载任务插件时宿主按 addonId 一起撤销，
     // 不会在邮件里留一个渲染即报错的孤儿按钮。

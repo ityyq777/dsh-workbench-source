@@ -208,6 +208,15 @@ module.exports = [
     ".wbt-create-tl .wbt-timeline-picker{display:flex;flex-direction:column;gap:6px;min-width:0}",
     ".wbt-create-tl .wbt-picker-list{max-height:180px;scrollbar-gutter:stable}",
     ".wbt-create-tl .wbt-timeline-pager{margin-top:4px;font-size:11.5px}",
+    // 标签步：已选 chip + 共享勾选清单 + 新标签输入，清单限高内部滚动。
+    ".wbt-tagpick{display:flex;flex-direction:column;gap:8px;min-width:0}",
+    ".wbt-tagchips{display:flex;flex-wrap:wrap;gap:6px}",
+    ".wbt-tagchip{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid var(--wbt-line);border-radius:999px;background:color-mix(in oklab,var(--wbt-accent) 10%,transparent);color:inherit;font:inherit;font-size:12px;cursor:pointer}",
+    ".wbt-tagchip:hover{border-color:var(--wbt-accent)}",
+    ".wbt-tagchip-x{opacity:.55;font-size:12px}",
+    ".wbt-tagpick .wbck-list{max-height:220px}",
+    ".wbt-tagnew{display:flex;gap:8px;align-items:center}",
+    ".wbt-tagnew .wbt-input{flex:1;min-width:0}",
     ".wbt-field>span{opacity:.62;font-size:11.5px}.wbt-field>span.wbctl-num{opacity:1;font-size:12px;align-self:stretch}.wbt-field .wbt-difficulty-num{width:110px}",
     ".wbt-modal-foot{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:2px}",
     // 预览面板：只让内容区滚动，头部标题与右上角 × 固定不动（滚动壳限定在 .wbt-preview，不影响其它弹窗）。

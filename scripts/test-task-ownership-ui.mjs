@@ -206,8 +206,14 @@ for (const source of ['0', '1', '2']) {
   ui.toConfirm();
   ui.props.tree = [];
   const rendered = ui.paint();
-  assert.equal(ui.primary().props.disabled, true);
-  assert.ok(JSON.stringify(rendered).includes('Keep text'));
+  // 标题在内容步，转到那一步读回输入框，确认内容没被清掉。
+  find(rendered, n => n.type === 'button' && klass(n) === 'wbctl-step' && String(textOf(n)).includes(copy.zh.stepContent), '内容步').props.onClick();
+  assert.equal(find(ui.paint(), n => n.type === 'input' && klass(n) === 'wbt-input', '标题输入').props.value, 'Keep text');
+  // 去掉了确认步，末步直接「创建」：失效归属不会被提交，点创建会弹回任务表步并报错。
+  ui.submit();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(ui.calls.length, 0);
+  assert.match(ui.error(), /表/);
   cases++;
 }
 // 3) 新建节点路径：预览与确认后才提交，取消关闭
@@ -250,7 +256,8 @@ for (const cancel of [true, false]) {
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(ui.saved(), 0);
   assert.match(ui.error(), /TABLE_NOT_FOUND/);
-  assert.ok(JSON.stringify(ui.paint()).includes('Failure keeps body'));
+  find(ui.paint(), n => n.type === 'button' && klass(n) === 'wbctl-step' && String(textOf(n)).includes(copy.zh.stepContent), '内容步').props.onClick();
+  assert.ok(all(ui.paint()).some(n => n.type === 'textarea' && String(n.props.value || '').includes('Failure keeps body')));
   cases++;
 }
 // 5) 编辑弹窗仍是单页表单：换表走选择器，提交 tasks.update
