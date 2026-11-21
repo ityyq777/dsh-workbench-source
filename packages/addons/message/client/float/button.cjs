@@ -34,6 +34,8 @@ function createButton(options) {
   var btn = doc.createElement("button");
   btn.type = "button";
   btn.className = "wbm-float-btn";
+  // 外壳对全局 button 有圆角规则，内联再钉一次，保证始终是圆形按钮。
+  btn.style.borderRadius = "50%";
   btn.setAttribute("data-pos", "bottom-right");
   btn.setAttribute("aria-label", label(lang, 0));
   btn.setAttribute("title", label(lang, 0));

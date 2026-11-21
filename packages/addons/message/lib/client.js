@@ -3903,28 +3903,39 @@ var require_style = __commonJS({
     module2.exports = function floatStyles() {
       return [
         ".wbm-float-root{position:fixed;inset:0;z-index:860;pointer-events:none;-webkit-app-region:no-drag}",
-        ".wbm-float-btn{position:absolute;right:20px;bottom:20px;display:inline-flex;align-items:center;justify-content:center;",
-        "width:48px;height:48px;padding:0;border-radius:999px;cursor:pointer;pointer-events:auto;-webkit-app-region:no-drag;",
-        "border:1px solid var(--wb-border,rgba(0,0,0,.12));background:var(--wb-card,#fff);color:inherit;",
-        "box-shadow:0 6px 18px rgba(0,0,0,.14),0 1px 3px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .18s ease,background .18s ease}",
-        ".wbm-float-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(0,0,0,.18)}",
-        ".wbm-float-btn:active{transform:translateY(0)}",
-        ".wbm-float-btn:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
-        ".wbm-float-btn[data-pos=bottom-left]{left:20px;right:auto}",
+        ".wbm-float-root .wbm-float-btn{position:absolute;right:20px;bottom:20px;display:inline-flex;align-items:center;justify-content:center;",
+        "box-sizing:border-box;width:46px;height:46px;padding:0;flex:0 0 auto;border-radius:50%;",
+        "--wbm-float-bg:var(--dsw-alias-button-floating-fill,var(--wb-card,#2c2c2e));",
+        "--wbm-float-ink:var(--dsw-alias-label-primary,var(--wb-muted,currentColor));",
+        "--wbm-float-line:var(--dsw-alias-border-l2,var(--wb-border,rgba(255,255,255,.14)));",
+        "--wbm-float-danger:var(--dsw-alias-state-error-primary,var(--wb-danger,#dc2626));",
+        "border:1px solid var(--wbm-float-line);background:var(--wbm-float-bg);color:var(--wbm-float-ink);",
+        "cursor:pointer;pointer-events:auto;-webkit-app-region:no-drag;overflow:visible;",
+        "box-shadow:0 8px 22px rgba(0,0,0,.24),0 1px 3px rgba(0,0,0,.18);",
+        "transition:transform .18s ease,box-shadow .18s ease,background .18s ease,border-color .18s ease}",
+        ".wbm-float-root .wbm-float-btn:hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(0,0,0,.28),0 1px 3px rgba(0,0,0,.2);",
+        "background:var(--dsw-alias-button-floating-hover,var(--wbm-float-bg))}",
+        ".wbm-float-root .wbm-float-btn:active{transform:translateY(0)}",
+        ".wbm-float-root .wbm-float-btn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,var(--wb-accent,#2563eb));outline-offset:2px}",
+        ".wbm-float-root .wbm-float-btn[data-pos=bottom-left]{left:20px;right:auto}",
         // 页面底部有输入框时抬到它上面，避免压在发送按钮上（没有输入框就贴右下角）。
-        ".wbm-float-btn[data-lift]{bottom:var(--wbm-float-lift,76px)}",
-        ".wbm-float-btn svg{display:block;width:22px;height:22px}",
-        ".wbm-float-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;",
-        "display:none;align-items:center;justify-content:center;background:var(--wb-danger,#dc2626);color:#fff;",
-        "font-size:11px;font-weight:650;line-height:1;font-variant-numeric:tabular-nums;box-shadow:0 0 0 2px var(--wb-card,#fff)}",
-        ".wbm-float-btn[data-unread] .wbm-float-badge{display:inline-flex}",
-        ".wbm-float-btn[data-pulse=1]{animation:wbm-float-bounce .6s cubic-bezier(.34,1.56,.64,1)}",
+        ".wbm-float-root .wbm-float-btn[data-lift]{bottom:var(--wbm-float-lift,76px)}",
+        ".wbm-float-root .wbm-float-btn svg{display:block;width:21px;height:21px;flex:0 0 auto}",
+        ".wbm-float-root .wbm-float-badge{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 5px;",
+        "box-sizing:border-box;border-radius:999px;display:none;align-items:center;justify-content:center;",
+        "background:var(--wbm-float-danger,#dc2626);color:var(--dsw-alias-label-on-color,#fff);",
+        "font-size:11px;font-weight:650;line-height:1;font-variant-numeric:tabular-nums;",
+        "box-shadow:0 0 0 2px var(--wbm-float-bg)}",
+        ".wbm-float-root .wbm-float-btn[data-unread] .wbm-float-badge{display:inline-flex}",
+        ".wbm-float-root .wbm-float-btn[data-pulse=1]{animation:wbm-float-bounce .6s cubic-bezier(.34,1.56,.64,1)}",
         "@keyframes wbm-float-bounce{0%{transform:translateY(0)}35%{transform:translateY(-7px)}70%{transform:translateY(0)}100%{transform:translateY(0)}}",
-        "@media (max-width:640px){.wbm-float-btn{width:40px;height:40px;right:12px;bottom:12px}",
-        ".wbm-float-btn[data-pos=bottom-left]{left:12px;right:auto}.wbm-float-btn svg{width:19px;height:19px}}",
-        // 降低动态偏好：不做位移，只让角标与按钮描边闪一次颜色。
-        "@media (prefers-reduced-motion: reduce){.wbm-float-btn[data-pulse=1]{animation:none;border-color:var(--wb-accent,#2563eb)}",
-        ".wbm-float-btn{transition:none}}"
+        "@media (max-width:640px){.wbm-float-root .wbm-float-btn{width:40px;height:40px;right:12px;bottom:12px}",
+        ".wbm-float-root .wbm-float-btn[data-pos=bottom-left]{left:12px;right:auto}",
+        ".wbm-float-root .wbm-float-btn svg{width:18px;height:18px}}",
+        // 降低动态偏好：不做位移，只让描边闪一次颜色。
+        "@media (prefers-reduced-motion: reduce){.wbm-float-root .wbm-float-btn[data-pulse=1]{animation:none;",
+        "border-color:var(--dsw-alias-brand-primary,var(--wb-accent,#2563eb))}",
+        ".wbm-float-root .wbm-float-btn{transition:none}}"
       ];
     };
   }
@@ -3954,6 +3965,7 @@ var require_button = __commonJS({
       var btn = doc.createElement("button");
       btn.type = "button";
       btn.className = "wbm-float-btn";
+      btn.style.borderRadius = "50%";
       btn.setAttribute("data-pos", "bottom-right");
       btn.setAttribute("aria-label", label(lang, 0));
       btn.setAttribute("title", label(lang, 0));
@@ -4274,7 +4286,7 @@ var require_mount = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-message",
-    version: "0.1.4",
+    version: "0.1.5",
     icon: ICONS["message-square"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: Stats },

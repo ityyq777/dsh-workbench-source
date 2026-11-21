@@ -94,11 +94,16 @@ const mountModule = require("../packages/addons/message/client/float/mount.cjs")
   assert.ok(css.includes("pointer-events:none"), "容器不能挡住页面点击");
   assert.ok(css.includes("pointer-events:auto"), "按钮自身要可点");
   assert.ok(css.includes("-webkit-app-region:no-drag"), "桌面端不能声明可拖拽区域");
-  assert.ok(css.includes("var(--wb-card") && css.includes("var(--wb-border") && css.includes("var(--wb-danger"), "颜色必须来自主题 token");
-  // 允许 var(--wb-x, #hex) 里的兜底色（仓库既有写法），其余位置只许 danger 角标上的白字。
+  assert.ok(css.includes("var(--dsw-alias-button-floating-fill"), "底色优先取应用外壳的浮层 token");
+  assert.ok(css.includes("var(--dsw-alias-label-primary"), "图标颜色必须取文字 token，不能继承任意主题色");
+  assert.ok(css.includes("var(--dsw-alias-border-l2"), "描边取外壳边框 token");
+  assert.ok(css.includes("var(--dsw-alias-state-error-primary"), "角标取外壳错误色 token");
+  assert.ok(css.includes("var(--wb-card") && css.includes("var(--wb-border"), "--wb-* 只作为拿不到外壳 token 时的兜底");
+  // 颜色只允许出现在 var(--token, 兜底) 的兜底位置，不允许裸写色值。
   const bare = css.replace(/var\([^)]*\)/g, "VAR");
   const hex = (bare.match(/#[0-9a-f]{3,8}\b/gi) || []).map((x) => x.toLowerCase());
-  assert.deepEqual(hex, ["#fff"], "除危险角标上的白字外不允许写死颜色，实际：" + hex.join(" "));
+  assert.deepEqual(hex, [], "除 var() 兜底外不允许写死颜色，实际：" + hex.join(" "));
+  assert.ok(css.includes("border-radius:50%"), "按钮是圆形，不能退化成圆角方块");
   assert.ok(css.includes("@media (max-width:640px)"), "窄屏要缩尺寸");
   assert.ok(/prefers-reduced-motion: reduce[\s\S]*animation:none/.test(css), "reduced-motion 下不做位移");
 }
