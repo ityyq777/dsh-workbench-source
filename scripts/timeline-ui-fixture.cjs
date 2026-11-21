@@ -36,7 +36,7 @@ const api={async call(action,args){
  throw Error('Unexpected fixture action: '+action);
 }};
 const root=createRoot(document.getElementById('root'));
-function render(){const t=copy[language],task=projected(tasks.find(x=>x.id===target));document.documentElement.dataset.theme=dark?'dark':'light';root.render(h('div',{className:'wbt-root'},h('style',null,require('../packages/addons/tasks/client/ui/styles.cjs')),
+function render(){const t=copy[language],task=projected(tasks.find(x=>x.id===target));document.documentElement.dataset.theme=dark?'dark':'light';root.render(h('div',{className:'wbt-root'},h('style',null,require('../packages/addons/tasks/client/ui/styles.cjs')+'\n'+require('../packages/addons/tasks/client/timeline/timeline-styles.cjs')),
  h('nav',{id:'view-tabs'},addon.views.map(v=>h('span',{key:v.id},v.title[language]))),
  h('nav',{id:'fixture-tools'},h('button',{onClick:()=>show('task','ordinary')},'Fixture ordinary'),h('button',{onClick:()=>show('restart','ordinary')},'Fixture restart'),h('button',{onClick:()=>show('timeline')},'Fixture timelines')),
  mode==='timeline'?h(addon.views.find(x=>x.id==='timeline').component,{key:'timeline-'+language,api,lang:language}):

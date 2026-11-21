@@ -201,6 +201,13 @@ module.exports = [
     ".wbt-form{display:grid;grid-template-columns:1fr 1fr;gap:9px}",
     ".wbt-field{display:flex;flex-direction:column;gap:4px;font-size:12px;min-width:0}",
     ".wbt-field.full{grid-column:1 / -1}",
+    ".wbt-create-tl{grid-column:1 / -1;display:flex;flex-direction:column;gap:6px;min-width:0;padding:9px 10px;border:1px solid var(--wbt-line);border-radius:10px;background:color-mix(in oklab,var(--wbt-accent) 4%,transparent);box-sizing:border-box}",
+    ".wbt-create-tl-head{display:flex;align-items:baseline;gap:8px;min-width:0;font-size:12px}",
+    ".wbt-create-tl-head>span:first-child{font-weight:600}",
+    ".wbt-create-tl-hint{font-size:11px;opacity:.55;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    ".wbt-create-tl .wbt-timeline-picker{display:flex;flex-direction:column;gap:6px;min-width:0}",
+    ".wbt-create-tl .wbt-picker-list{max-height:180px;scrollbar-gutter:stable}",
+    ".wbt-create-tl .wbt-timeline-pager{margin-top:4px;font-size:11.5px}",
     ".wbt-field>span{opacity:.62;font-size:11.5px}",
     ".wbt-modal-foot{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:2px}",
     // 预览面板：只让内容区滚动，头部标题与右上角 × 固定不动（滚动壳限定在 .wbt-preview，不影响其它弹窗）。

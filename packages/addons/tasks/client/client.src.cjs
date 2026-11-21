@@ -70,7 +70,9 @@
     }, h(Icon, { name: "clock", size: 11 }), h("span", { className: "wbt-cd-num" }, text));
   }
 
-  var CSS = require("./ui/styles.cjs");
+  // 时间线样式并入插件全局样式：时间线页、时间线弹窗与「新建任务」弹窗共用一份，
+  // 避免只在某个视图里 <style> 注入、其他入口退回浏览器默认按钮。
+  var CSS = require("./ui/styles.cjs") + "\n" + require("./timeline/timeline-styles.cjs");
 
   function injectCss() {
     if (typeof document === "undefined") return;
@@ -383,7 +385,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.31",
+    version: "5.2.32",
     icon: ICONS["list-checks"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },

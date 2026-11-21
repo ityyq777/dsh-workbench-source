@@ -116,17 +116,24 @@ module.exports = function createModal(deps) {
     }
 
     var title = source === "2" ? t.restartTitle : source === "1" ? tr("向已有时间线添加任务") : t.newTask;
+    // 时间线是"可选归属"，排在标题/描述之后：先让用户填内容，再决定挂到哪条线。
+    var timelineSection = source !== "2" ? h("div", { className: "wbt-create-tl full" },
+      h("div", { className: "wbt-create-tl-head" },
+        h("span", null, t.timeline),
+        source === "1" ? h("span", { className: "wbt-create-tl-hint" }, tr("向已有时间线添加任务")) : null),
+      h(TimelinePicker, { api: props.api, t: t, value: form.timelineId, onChange: function (value) { set("timelineId", value); }, disabled: isBusy })
+    ) : null;
     return h("div", { className: "wbt-modal-mask", onKeyDownCapture: onModalKey, onMouseDown: function (e) { if (e.target === e.currentTarget) requestClose(); } },
       h("div", { className: "wbt-modal" },
         h("div", { className: "wbt-modal-head" }, h("h3", null, title), h("button", { className: "wbt-icon", disabled: isBusy, onClick: requestClose }, "×")),
         source === "2" ? h("div", { className: "wbt-mhint" }, t.restartPriorityHint) : null,
         source !== "0" && origin ? h("div", { className: "wbt-mhint" }, "来源：" + (origin.title || origin.id) + (source === "2" ? tr(" · 自动继承原时间线") : "")) : null,
         source === "2" && !(origin && origin.timelineId) ? h("p", { className: "wbt-err", role: "alert" }, tr("请先手动建立并关联时间线，再重启")) : null,
-        source !== "2" ? h(TimelinePicker, { api: props.api, t: t, value: form.timelineId, onChange: function (value) { set("timelineId", value); }, disabled: isBusy }) : null,
         h("div", { className: "wbt-form" },
           h("label", { className: "wbt-field full" }, h("span", null, t.titleField + " *"), h("input", { className: "wbt-input", value: form.title, onChange: function (e) { set("title", e.target.value); }, autoFocus: true })),
           h("label", { className: "wbt-field full" }, h("span", null, t.desc), h("textarea", { className: "wbt-textarea", rows: 2, value: form.description, onChange: function (e) { set("description", e.target.value); } })),
           hostHasAddon("wb-addon-tags") ? h("label", { className: "wbt-field full" }, h("span", null, t.tags), h("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function (e) { set("tags", e.target.value); } })) : null,
+          timelineSection,
           h(WorkspaceSelect, { api: props.api, lang: props.lang, value: form.workspaceIds, onChange: function (ids) { set("workspaceIds", ids); } }),
           h("label", { className: "wbt-field" }, h("span", null, t.status), h("select", { className: "wbt-select", value: source === "2" ? "0" : form.status, disabled: source === "2", onChange: function (e) { set("status", e.target.value); } },
             h("option", { value: "0" }, "已开启"), h("option", { value: "2" }, "已完成"), h("option", { value: "1" }, "已关闭"))),

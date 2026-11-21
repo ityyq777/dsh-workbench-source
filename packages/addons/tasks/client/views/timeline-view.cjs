@@ -4,7 +4,6 @@ module.exports = function (deps) {
   var React = deps.React, h = React.createElement, COPY = deps.COPY;
   var controls = require("../timeline/timeline-controls.cjs")(React), AddMembers = require("../timeline/timeline-add-members.cjs")(React);
   var Merge = require("../timeline/timeline-merge.cjs")(React);
-  var CSS = require("../timeline/timeline-styles.cjs");
   var MemberRows = require("../timeline/timeline-member-rows.cjs")(React, deps.statusInfo);
   var TaskPreview = require("../modals/task-preview.cjs")(React, deps.TaskItem);
   var receipts = require("../modals/ownership.cjs");
@@ -124,7 +123,7 @@ module.exports = function (deps) {
     }
     function savedTask(result) { if (result) say(receipts.receipt(result)); }
     function closeMerge() { setMerge(false); if (mergeButton.current) mergeButton.current.focus({ preventScroll: true }); }
-    return h("div", { className: "wbt-root wbt-timeline-view" }, h("style", null, CSS),
+    return h("div", { className: "wbt-root wbt-timeline-view" },
       h("div", { className: "wbt-timeline-toolbar" },
         h("div", { className: "wbt-timeline-toolbar-main" },
           h("form", { className: "wbt-timeline-search", onSubmit: function (e) { e.preventDefault(); setPage(1); setQuery(draft.trim()); } },
