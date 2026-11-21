@@ -127,6 +127,15 @@ const ADDON_META = {
     marketZh: "DSH 邮件：通过加密 IMAP 浏览文件夹与历史邮件，同步已读、移动和废纸篓；按需下载附件，从本地草稿回复或转发。",
     marketExtra: "保险箱随邮件安装；首次使用仍需初始化、解锁并绑定邮箱授权码。邮件账户仅保存 secretId。",
   },
+  danmaku: {
+    description: "个人工作台弹幕插件：把自建弹幕轮播在整个 DSH 界面，并可叠加到整个桌面",
+    keywords: ["danmaku", "overlay", "desktop", "electron", "fun"],
+    marketCategory: "ui",
+    marketEn:
+      "Danmaku for DSH: play your own bullet comments across the whole interface, or layer them over the desktop itself, with a local library, per-item styles and weighted rotation.",
+    marketZh: "DSH 弹幕：把自建弹幕轮播在整个界面，也可叠加到整个桌面，含弹幕库、逐条样式与权重轮播。",
+    marketExtra: "桌面透明层依赖 Electron 外壳；弹幕库只存本机，不上传也不参与云同步。",
+  },
 };
 
 const addonNames = readdirSync(addonsRoot)
