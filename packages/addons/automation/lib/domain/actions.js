@@ -40,8 +40,8 @@ export function registerActions(api, engine) {
   });
 
   action("automation.ruleCreate", {
-    origins: ["ui", "agent"],
-    originsDefault: ["ui"],
+    origins: ["ui", "agent", "plugin"],
+    originsDefault: ["ui", "agent", "plugin"],
     description: "创建规则；写操作仅 UI。execMode=action 时直接调用白名单 action，execMode=agent 时由宿主「自动化任务」按时把提示词投给会话",
     input: {
       type: "object",
