@@ -3377,21 +3377,31 @@ var require_sets = __commonJS({
         });
       }
       function startCreate() {
-        draftS[1]({ name: "", account: "", description: "", color: "" });
+        draftS[1]({ name: "", type: "common", account: "", description: "", color: "" });
         msgS[1]("");
       }
       function startEdit(set) {
-        draftS[1]({ id: set.id, name: set.name, account: set.account || "", description: set.description || "", color: set.color || "" });
+        draftS[1]({
+          id: set.id,
+          name: set.name,
+          type: set.type === "account" ? "account" : "common",
+          account: set.account || "",
+          description: set.description || "",
+          color: set.color || ""
+        });
         msgS[1]("");
       }
       function saveDraft() {
         var d = draftS[0];
         if (!d || !String(d.name || "").trim()) return msgS[1]("\u96C6\u5408\u540D\u4E0D\u80FD\u4E3A\u7A7A");
+        var isAccount = d.type === "account";
+        var account = isAccount ? String(d.account || "").trim() : "";
+        if (isAccount && !account) return msgS[1]("\u8D26\u53F7\u96C6\u5408\u9700\u8981\u586B\u5199\u8D26\u53F7\uFF1B\u8D26\u53F7\u7559\u7A7A\u8BF7\u6539\u9009\u666E\u901A\u96C6\u5408");
         busyS[1](true);
         msgS[1]("");
         var body = {
           name: String(d.name).trim(),
-          account: String(d.account || "").trim(),
+          account,
           description: d.description || "",
           color: d.color || ""
         };
@@ -3709,7 +3719,25 @@ var require_sets = __commonJS({
             ),
             h(
               C.Field,
-              { h, label: "\u8D26\u53F7\uFF08\u53EF\u9009\uFF09", hint: "\u53EF\u91CD\u590D\u3001\u53EF\u7559\u7A7A\uFF1B\u7559\u7A7A\u5373\u666E\u901A\u96C6\u5408\uFF0C\u6709\u503C\u5373\u8D26\u53F7\u96C6\u5408\uFF0C\u6761\u76EE\u53EA\u6309 id \u533A\u5206" },
+              { h, label: "\u96C6\u5408\u7C7B\u578B", hint: "\u8D26\u53F7\u96C6\u5408\u53EF\u6807\u4E00\u4E2A\u8D26\u53F7\uFF1B\u666E\u901A\u96C6\u5408\u4E0D\u7ED1\u5B9A\u8D26\u53F7" },
+              h(
+                P.Select,
+                {
+                  h,
+                  "aria-label": "\u9009\u62E9\u96C6\u5408\u7C7B\u578B",
+                  value: draftS[0].type,
+                  onChange: function(e) {
+                    var type = e.target.value === "account" ? "account" : "common";
+                    draftS[1](Object.assign({}, draftS[0], { type, account: type === "common" ? "" : draftS[0].account }));
+                  }
+                },
+                h("option", { value: "account" }, "\u8D26\u53F7\u96C6\u5408"),
+                h("option", { value: "common" }, "\u666E\u901A\u96C6\u5408")
+              )
+            ),
+            draftS[0].type === "account" ? h(
+              C.Field,
+              { h, label: "\u8D26\u53F7", hint: "\u53EF\u91CD\u590D\uFF0C\u4E0D\u540C\u6761\u76EE\u53EA\u6309 id \u533A\u5206\uFF1B\u4E00\u4E2A\u96C6\u5408\u53EA\u6807\u4E00\u4E2A\u8D26\u53F7" },
               h(P.Input, {
                 h,
                 value: draftS[0].account,
@@ -3718,7 +3746,7 @@ var require_sets = __commonJS({
                   draftS[1](Object.assign({}, draftS[0], { account: e.target.value }));
                 }
               })
-            ),
+            ) : null,
             h(
               C.Field,
               { h, label: "\u63CF\u8FF0" },
@@ -6514,7 +6542,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.4.0",
+    version: "0.4.1",
     icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },

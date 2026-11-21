@@ -1,7 +1,7 @@
 "use strict";
 /**
  * 集合与账号页：集合可复用（挂多个分组、装多条凭据），并可标一个账号；
- * 有账号的是「账号集合」，留空的是「普通集合」，条目只按 id 区分。
+ * 新建/编辑时先选类型：「账号集合」才显示账号输入，「普通集合」不绑定账号，条目只按 id 区分。
  * 页面骨架与弹层外壳分别来自 ui/page.cjs、ui/dialog.cjs。
  */
 var C = require("../ui/common.cjs");
@@ -98,22 +98,33 @@ module.exports = function SetsView(props) {
   }
 
   function startCreate() {
-    draftS[1]({ name: "", account: "", description: "", color: "" });
+    draftS[1]({ name: "", type: "common", account: "", description: "", color: "" });
     msgS[1]("");
   }
 
   function startEdit(set) {
-    draftS[1]({ id: set.id, name: set.name, account: set.account || "", description: set.description || "", color: set.color || "" });
+    draftS[1]({
+      id: set.id,
+      name: set.name,
+      type: set.type === "account" ? "account" : "common",
+      account: set.account || "",
+      description: set.description || "",
+      color: set.color || "",
+    });
     msgS[1]("");
   }
 
+  // 类型决定是否需要账号：账号集合必须填账号，普通集合保存时清空账号。
   function saveDraft() {
     var d = draftS[0];
     if (!d || !String(d.name || "").trim()) return msgS[1]("集合名不能为空");
+    var isAccount = d.type === "account";
+    var account = isAccount ? String(d.account || "").trim() : "";
+    if (isAccount && !account) return msgS[1]("账号集合需要填写账号；账号留空请改选普通集合");
     busyS[1](true); msgS[1]("");
     var body = {
       name: String(d.name).trim(),
-      account: String(d.account || "").trim(),
+      account: account,
       description: d.description || "",
       color: d.color || "",
     };
@@ -343,13 +354,27 @@ module.exports = function SetsView(props) {
             placeholder: "如 acc_1 / 工作邮箱",
             onChange: function (e) { draftS[1](Object.assign({}, draftS[0], { name: e.target.value })); },
           })),
-        h(C.Field, { h: h, label: "账号（可选）", hint: "可重复、可留空；留空即普通集合，有值即账号集合，条目只按 id 区分" },
-          h(P.Input, {
+        h(C.Field, { h: h, label: "集合类型", hint: "账号集合可标一个账号；普通集合不绑定账号" },
+          h(P.Select, {
             h: h,
-            value: draftS[0].account,
-            placeholder: "如 ops@example.com",
-            onChange: function (e) { draftS[1](Object.assign({}, draftS[0], { account: e.target.value })); },
-          })),
+            "aria-label": "选择集合类型",
+            value: draftS[0].type,
+            onChange: function (e) {
+              var type = e.target.value === "account" ? "account" : "common";
+              draftS[1](Object.assign({}, draftS[0], { type: type, account: type === "common" ? "" : draftS[0].account }));
+            },
+          },
+            h("option", { value: "account" }, "账号集合"),
+            h("option", { value: "common" }, "普通集合"))),
+        draftS[0].type === "account"
+          ? h(C.Field, { h: h, label: "账号", hint: "可重复，不同条目只按 id 区分；一个集合只标一个账号" },
+              h(P.Input, {
+                h: h,
+                value: draftS[0].account,
+                placeholder: "如 ops@example.com",
+                onChange: function (e) { draftS[1](Object.assign({}, draftS[0], { account: e.target.value })); },
+              }))
+          : null,
         h(C.Field, { h: h, label: "描述" },
           h(P.Input, {
             h: h,

@@ -163,6 +163,17 @@ test("分组页：创建时先 groupCreate 再逐个 groupAttachSet，Esc 可关
   assert.match(src, /个集合与账号挂载失败/);
 });
 
+test("集合页：新建/编辑先选类型，只有账号集合才出现账号输入", () => {
+  const src = fs.readFileSync(path.join(dir, "views/sets.cjs"), "utf8");
+  assert.match(src, /label: "集合类型"/);
+  assert.match(src, /"option", \{ value: "account" \}, "账号集合"/);
+  assert.match(src, /"option", \{ value: "common" \}, "普通集合"/);
+  // 账号输入只在账号集合时渲染，普通集合保存时账号清空
+  assert.match(src, /draftS\[0\]\.type === "account"/);
+  assert.match(src, /account: type === "common" \? "" : draftS\[0\]\.account/);
+  assert.match(src, /账号集合需要填写账号；账号留空请改选普通集合/);
+});
+
 test("弹层统一走共享 overlay：视图里不再手拼遮罩，外壳只保留一份", () => {
   const overlay = fs.readFileSync(path.join(process.cwd(), "packages/addons/lib/overlay.cjs"), "utf8");
   assert.match(overlay, /e\.key === "Escape"/);
