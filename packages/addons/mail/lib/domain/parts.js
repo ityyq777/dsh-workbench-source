@@ -5,7 +5,9 @@ import { visibleMessage } from "../db/visibility.js";
 
 export function createParts({ db, account, password }) {
   const message = (id) => visibleMessage(db, id);
-  const attachments = id => db.prepare("SELECT id,filename,mime,size,section FROM mail_attachment WHERE message_id=? ORDER BY rowid").all(id);
+  // 对外统一驼峰字段：inline 表示正文内联图，contentId 用于把 cid: 引用映射回本地附件。
+  const attachments = id => db.prepare("SELECT id,filename,mime,size,section,content_id,inline FROM mail_attachment WHERE message_id=? ORDER BY rowid").all(id)
+    .map(a => ({ id: a.id, filename: a.filename, mime: a.mime, size: a.size, section: a.section, contentId: a.content_id || "", inline: !!a.inline }));
   function unchanged(row) {
     const current = message(row.id);
     if (current.uid !== row.uid || current.uid_validity !== row.uid_validity || current.mailbox !== row.mailbox || current.account_id !== row.account_id) throw new Error("邮件位置已改变，请重新打开");
@@ -22,8 +24,10 @@ export function createParts({ db, account, password }) {
   }
   async function messageBody(input = {}) {
     const id = String(input.id || ""), row = message(id), existing = attachments(id);
+    // 缓存命中只看正文：老版本（html_at=0）先按纯文本返回，同时用 htmlStale 提示客户端后台补拉一次富文本，
+    // 补拉成功后重复打开就完全读本地；这样已缓存邮件不会因为升级而卡住或重复联网。
     if (row.uid <= 0 || (!input.force && row.body_at && (!row.uid_validity || existing.every(a => a.section)))) {
-      return { ok: true, cached: true, body: row.body, preview: row.preview, html: "", attachments: existing, truncated: !!row.body_truncated };
+      return { ok: true, cached: true, body: row.body, preview: row.preview, html: row.html || "", htmlStale: !row.html_at, attachments: existing, truncated: !!row.body_truncated };
     }
     try {
       const parsed = await readBodyParts(await connection(row), row);
@@ -31,13 +35,14 @@ export function createParts({ db, account, password }) {
       const preview = parsed.text.replace(/\s+/g, " ").trim().slice(0, 120);
       db.exec("SAVEPOINT mail_body_parts");
       try {
-        db.prepare("UPDATE mail_message SET body=?,preview=?,body_truncated=?,body_at=?,updated_at=? WHERE id=?").run(parsed.text, preview, Number(parsed.truncated), now(), now(), id);
+        db.prepare("UPDATE mail_message SET body=?,html=?,preview=?,body_truncated=?,body_at=?,html_at=?,updated_at=? WHERE id=?").run(parsed.text, parsed.html || "", preview, Number(parsed.truncated), now(), now(), now(), id);
         const prior = new Map(attachments(id).map(a => [a.section, a]));
         db.prepare("DELETE FROM mail_attachment WHERE message_id=?").run(id);
-        const insert = db.prepare("INSERT INTO mail_attachment(id,message_id,filename,mime,size,section) VALUES(?,?,?,?,?,?)");
+        const insert = db.prepare("INSERT INTO mail_attachment(id,message_id,filename,mime,size,section,content_id,inline) VALUES(?,?,?,?,?,?,?,?)");
         for (const a of parsed.attachments) {
           const old = prior.get(a.section);
-          insert.run(old?.filename === a.filename && old.mime === a.mime && old.size === a.size ? old.id : newId("att"), id, a.filename, a.mime, a.size, a.section);
+          const same = old?.filename === a.filename && old.mime === a.mime && old.size === a.size;
+          insert.run(same ? old.id : newId("att"), id, a.filename, a.mime, a.size, a.section, a.contentId || "", a.inline ? 1 : 0);
         }
         db.exec("RELEASE mail_body_parts");
       } catch (e) { db.exec("ROLLBACK TO mail_body_parts; RELEASE mail_body_parts"); throw e; }

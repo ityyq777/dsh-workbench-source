@@ -4,6 +4,7 @@ var GLYPHS = require("../ui/icons.cjs").ICONS;
 var C = require("../ui/common.cjs");
 var Attachments = require("../ui/attachments.cjs");
 var ReplyTools = require("../ui/reply-tools.cjs");
+var MailHtml = require("../ui/mail-html.cjs");
 var iconLabel = require("../../../lib/icon-label.cjs");
 var Folder = GLYPHS["folder"];
 var InboxIcon = GLYPHS["inbox"];
@@ -131,6 +132,7 @@ function Inbox(props) {
   function senderDetail(m) {
     return m.from && m.fromName && m.from !== m.fromName ? m.fromName + " <" + m.from + ">" : sender(m);
   }
+  var upgraded = React.useRef(new Set());
   function loadBody(m, force, rev) {
     bodyState[1]({ loading: true });
     C.call(api, "mail.messageBody", { id: m.id, force: !!force })
@@ -141,6 +143,11 @@ function Inbox(props) {
           hasAttachment: r.attachments.length > 0, attachmentName: r.attachments[0]?.filename || "",
         });
         bodyState[1]({ data: r });
+        // 老缓存只有纯文本（htmlStale）：静默补拉一次富文本，失败时保留已显示的纯文本。
+        if (!force && r && r.htmlStale && !upgraded.current.has(m.id)) {
+          upgraded.current.add(m.id);
+          loadBody(m, true, rev);
+        }
       })
       .catch(function (e) {
         if (rev === selected.current) bodyState[1]({ error: C.errText(e) });
@@ -271,8 +278,13 @@ function Inbox(props) {
     ),
   );
   function bodyNode() {
-    if (state.loading) return h("div", { className: "wbml-state" }, "正文下载中…");
-    if (state.error)
+    // HTML 邮件（含详情里缓存的富文本）优先按原信渲染，纯文本邮件仍走 <pre>。
+    var html = data.html || current.html || "";
+    var list = data.attachments || current.attachments || [];
+    var files = list.filter(function (a) { return !a.inline; });
+    var hasText = !!(data.body || current.body);
+    if (state.loading && !html && !hasText) return h("div", { className: "wbml-state" }, "正文下载中…");
+    if (state.error && !html && !hasText)
       return h(
         "div",
         { className: "wbml-body-fail" },
@@ -284,8 +296,10 @@ function Inbox(props) {
     return h(
       "div",
       { className: "wbml-body-wrap" },
-      h("pre", { className: "wbml-body" }, data.body || current.body || "此邮件无文字正文"),
-      h(Attachments, { h: h, React: React, api: api, localOnly: current.uid <= 0 || !current.uidValidity, items: data.attachments || current.attachments || [] }),
+      html
+        ? h(MailHtml, { h: h, React: React, api: api, html: html, attachments: list, title: current.subject })
+        : h("pre", { className: "wbml-body" }, data.body || current.body || "此邮件无文字正文"),
+      h(Attachments, { h: h, React: React, api: api, localOnly: current.uid <= 0 || !current.uidValidity, items: files }),
       data.truncated || current.bodyTruncated
         ? h("p", { className: "wbml-body-note" }, "正文较长，已截断显示。")
         : null,

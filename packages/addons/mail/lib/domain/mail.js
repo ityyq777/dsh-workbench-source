@@ -162,7 +162,12 @@ export function createMail({ db, host, log }) {
   const messages = (input) => listMessages(db, input);
   function message(id) {
     const r = visibleMessage(db, id);
-    const out = messageRow(r); out.attachments = all("SELECT id,filename,mime,size,section FROM mail_attachment WHERE message_id=?", id); return out;
+    const out = messageRow(r);
+    // 详情直接带富文本正文与内联图标记：打开邮件即可按原信渲染，不必等正文分段下载。
+    out.html = r.html || ""; out.htmlAt = r.html_at || 0;
+    out.attachments = all("SELECT id,filename,mime,size,section,content_id,inline FROM mail_attachment WHERE message_id=?", id)
+      .map(a => ({ id: a.id, filename: a.filename, mime: a.mime, size: a.size, section: a.section, contentId: a.content_id || "", inline: !!a.inline }));
+    return out;
   }
   const composer = createComposer({ db, message, account });
   const syncOps = createSync({ db, account, password, message });

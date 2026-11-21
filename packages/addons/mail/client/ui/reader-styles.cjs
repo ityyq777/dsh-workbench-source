@@ -1,5 +1,10 @@
 "use strict";
 module.exports = `
+.wbml-htmwrap{display:grid;gap:8px;margin:10px 0}
+.wbml-htmlbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px}
+.wbml-htmlbar .wbml-muted{flex:1 1 220px;min-width:0}
+.wbml-htmlframe{display:block;width:100%;min-height:120px;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card)}
+@media (max-width:760px){.wbml-htmlframe{border-radius:8px}}
 .wbml-read-bar{display:flex;flex:none;align-items:center;flex-wrap:wrap;gap:6px;padding:8px 12px;border-bottom:1px solid var(--wb-line)}
 .wbml-read-bar .wbml-reader-nav{margin-inline-start:auto}
 .wbml-read-scroll{min-height:0;overflow:auto;overscroll-behavior:contain}

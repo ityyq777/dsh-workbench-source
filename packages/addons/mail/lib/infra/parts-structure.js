@@ -66,12 +66,16 @@ export function describeParts(root) {
     const params = parameters(node[2]);
     const disposition = node[type === "text" ? 9 : mime === "message/rfc822" ? 11 : 8];
     const dp = parameters(disposition?.[1]);
+    const dispositionType = String(disposition?.[0] || "").toLowerCase();
     const name = decodeWords(decodeRfc2231(dp['filename*'] || dp.filename || params['name*'] || params.name || ""));
     const section = path || "1";
-    const text = !name && String(disposition?.[0]).toLowerCase() !== "attachment" && ["text/plain", "text/html"].includes(mime);
+    const text = !name && dispositionType !== "attachment" && ["text/plain", "text/html"].includes(mime);
     const size = Number(node[6]);
     if (!Number.isSafeInteger(size) || size < 0) throw new Error("邮件分段大小无效");
-    leaves.push({ section, mime, text, filename: name || `附件 ${section}`, size, encoding: String(node[5] || "7bit"), charset: params.charset });
+    // Content-ID 是必然字段（body-fld-id），内联图靠它把正文里的 cid: 映射回本地分段。
+    const contentId = String(node[3] == null ? "" : node[3]).trim().replace(/^</, "").replace(/>$/, "");
+    const inline = !!contentId || dispositionType === "inline";
+    leaves.push({ section, mime, text, inline, contentId, filename: name || (contentId ? `内联图片 ${section}` : `附件 ${section}`), size, encoding: String(node[5] || "7bit"), charset: params.charset });
   }
   visit(root, ""); return leaves;
 }

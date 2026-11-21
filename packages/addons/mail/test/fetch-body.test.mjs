@@ -67,6 +67,25 @@ test('16 MiB 附件不影响短正文；GBK、嵌套多版本和读取缓存', a
   assert.deepEqual(requests.slice(3),['UID FETCH 1 (UID BODYSTRUCTURE)','UID FETCH 1 (UID BODY.PEEK[3])']);
 });
 
+test('内联图片：解析 Content-ID 与 disposition，html 落库后重复打开只读本地', async t => {
+  const png = Buffer.from([0x89, 0x50, 0x4e, 0x47]).toString('base64');
+  const inline = `("IMAGE" "PNG" ("NAME" "logo.png") "<logo@example.org>" NIL "BASE64" ${png.length} NIL ("INLINE" ("FILENAME" "logo.png")))`;
+  const {m,requests} = await fixture(t, `(${htmlPart}${inline} "MIXED")`, {'1': html, '2': png});
+  const r = await m.messageBody({id:'m1'});
+  assert.equal(r.ok,true,r.message);
+  assert.equal(r.html,html.toString());
+  assert.equal(r.htmlStale, undefined);
+  const image = r.attachments.find(a => a.mime === 'image/png');
+  assert.equal(image.contentId,'logo@example.org');
+  assert.equal(m.message('m1').html, html.toString());
+  assert.equal(m.message('m1').attachments.find(a => a.id === image.id).contentId, 'logo@example.org');
+  assert.equal(image.inline, true);
+  const before = requests.length;
+  const again = await m.messageBody({id:'m1'});
+  assert.equal(again.cached,true); assert.equal(again.html, html.toString()); assert.equal(again.htmlStale,false);
+  assert.equal(requests.length,before,'命中缓存不得再连 IMAP');
+});
+
 test('纯附件：正文为空，读信仅列元信息；UIDVALIDITY 改变禁止保存',async t=>{
   const {m,requests,state} = await fixture(t,pdf,{1:sample.toString('base64')});
   const r = await m.messageBody({id:'m1'}); assert.equal(r.ok,true,r.message);

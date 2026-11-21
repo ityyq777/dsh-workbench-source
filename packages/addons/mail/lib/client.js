@@ -1612,6 +1612,239 @@ var require_reply_tools = __commonJS({
   }
 });
 
+// packages/addons/mail/client/ui/mail-html.cjs
+var require_mail_html = __commonJS({
+  "packages/addons/mail/client/ui/mail-html.cjs"(exports2, module2) {
+    "use strict";
+    var C = require_common();
+    var SKIP_CONTENT = ["script", "iframe", "object", "applet", "svg", "math", "template", "noscript", "canvas", "audio", "video", "form", "select", "textarea", "button"];
+    var SKIP_VOID = ["input", "embed", "keygen"];
+    var VOID_DROP = ["link", "meta", "base", "frame", "frameset", "area", "source", "track", "col", "colgroup"];
+    var VOID_KEEP = ["br", "hr", "img", "wbr"];
+    var PLACEHOLDER = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+    var MAX_INLINE_BYTES = 8 * 1024 * 1024;
+    var TOKEN = /<!--[\s\S]*?-->|<![^>]*>|<\?[^>]*\?>|<\/?([a-zA-Z][a-zA-Z0-9]*)((?:[^>"']|"[^"]*"|'[^']*')*?)\/?>/g;
+    var ATTR = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g;
+    function attrValue(m) {
+      return m[3] != null ? m[3] : m[4] != null ? m[4] : m[5] != null ? m[5] : "";
+    }
+    function isHttp(url) {
+      return /^\s*(?:https?|\/\/)/i.test(url);
+    }
+    function safeUrl(url, kind) {
+      var v = String(url || "").replace(/[\u0000-\u001f\u007f]/g, "").trim();
+      if (!v) return "";
+      if (/^javascript:/i.test(v) || /^data:/i.test(v) && !/^data:image\//i.test(v) && kind !== "href") return "";
+      if (/^(?:https?:|mailto:)/i.test(v)) return v;
+      if (/^cid:/i.test(v)) return v;
+      if (/^data:image\//i.test(v)) return v;
+      if (/^\.{0,2}\//.test(v) || /^#/.test(v)) return "";
+      return "";
+    }
+    function cssSafe(css, allowRemote) {
+      var out = String(css || "").replace(/expression\s*\(/gi, "").replace(/behavior\s*:/gi, "").replace(/url\s*\(\s*['"]?\s*(?:javascript|vbscript|data:text\/html)[^)]*\)/gi, "none");
+      if (!allowRemote) out = out.replace(/url\s*\(\s*['"]?(?:https?:)?\/\/[^)]*\)/gi, "none");
+      return out;
+    }
+    function cleanStyleBlocks(html, allowRemote) {
+      return String(html).replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi, function(all, open, body, close) {
+        var css = body.replace(/@import[^;]*;?/gi, "");
+        return open + cssSafe(css, allowRemote) + close;
+      });
+    }
+    function sanitize(html, opts) {
+      var allowRemote = !!(opts && opts.allowRemote);
+      var src = cleanStyleBlocks(String(html == null ? "" : html), allowRemote);
+      var out = [], remoteCount = 0, cidIds = [], last = 0, m, skipUntil = null;
+      TOKEN.lastIndex = 0;
+      while (m = TOKEN.exec(src)) {
+        if (!skipUntil) out.push(src.slice(last, m.index));
+        last = m.index + m[0].length;
+        if (m[0].slice(0, 4) === "<!--" || m[0].slice(0, 2) === "<!") continue;
+        var name = String(m[1] || "").toLowerCase(), closing = m[0].charAt(1) === "/", attrs = m[2] || "";
+        if (!name) continue;
+        if (skipUntil) {
+          if (closing && name === skipUntil) skipUntil = null;
+          continue;
+        }
+        if (!closing && SKIP_VOID.indexOf(name) >= 0) continue;
+        if (!closing && SKIP_CONTENT.indexOf(name) >= 0) {
+          skipUntil = /\/>$/.test(m[0]) ? null : name;
+          continue;
+        }
+        if (VOID_DROP.indexOf(name) >= 0) continue;
+        if (closing) {
+          out.push("</" + name + ">");
+          continue;
+        }
+        var keep = [];
+        ATTR.lastIndex = 0;
+        var a;
+        while (a = ATTR.exec(attrs)) {
+          var attr = a[1].toLowerCase(), value = attrValue(a);
+          if (!attr || attr.slice(0, 2) === "on") continue;
+          if (attr === "srcset") continue;
+          if (attr === "style") {
+            value = cssSafe(value, allowRemote);
+            if (value) keep.push('style="' + escapeAttr(value) + '"');
+            continue;
+          }
+          if (attr === "href") {
+            value = safeUrl(value, "href");
+            if (!value) continue;
+            keep.push('href="' + escapeAttr(value) + '"');
+            continue;
+          }
+          if (attr === "src") {
+            if (/^cid:/i.test(value)) {
+              var cid = value.slice(4).replace(/^<|>$/g, "").toLowerCase();
+              if (cid && cidIds.indexOf(cid) < 0) cidIds.push(cid);
+              keep.push('src="cid:' + escapeAttr(cid) + '"');
+              continue;
+            }
+            value = safeUrl(value, "src");
+            if (!value) continue;
+            if (isHttp(value)) {
+              remoteCount++;
+              if (!allowRemote) value = PLACEHOLDER;
+            }
+            keep.push('src="' + escapeAttr(value) + '"');
+            continue;
+          }
+          if (attr === "background" || attr === "poster" || attr === "data") continue;
+          if (attr === "class" || attr === "id" || attr === "width" || attr === "height" || attr === "alt" || attr === "title" || attr === "colspan" || attr === "rowspan" || attr === "align" || attr === "valign" || attr === "dir" || attr === "lang" || attr === "border" || attr === "cellpadding" || attr === "cellspacing" || attr === "bgcolor") {
+            keep.push(attr + '="' + escapeAttr(value) + '"');
+          }
+        }
+        var tagName = name === "a" ? 'a target="_blank" rel="noopener noreferrer nofollow"' : name;
+        var tail = VOID_KEEP.indexOf(name) >= 0 ? " />" : ">";
+        out.push("<" + tagName + (keep.length ? " " + keep.join(" ") : "") + tail);
+      }
+      out.push(src.slice(last));
+      return { html: out.join(""), remoteCount, cidIds };
+    }
+    function escapeAttr(v) {
+      return String(v).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    function replaceCid(html, cidMap) {
+      return String(html || "").replace(/(src\s*=\s*["'])cid:([^"']*)(["'])/gi, function(all, open, cid, close) {
+        var key = String(cid).toLowerCase(), url = cidMap && cidMap[key];
+        return open + (url || PLACEHOLDER) + close;
+      });
+    }
+    function themeVars() {
+      if (typeof document === "undefined" || !document.documentElement) return {};
+      var cs = typeof getComputedStyle === "function" ? getComputedStyle(document.documentElement) : null;
+      var root = document.querySelector ? document.querySelector(".wb-root") : null;
+      var rs = root && typeof getComputedStyle === "function" ? getComputedStyle(root) : null;
+      var pick = function(name, fallback) {
+        var v = cs && cs.getPropertyValue(name) || rs && rs.getPropertyValue(name) || "";
+        return String(v).trim() || fallback;
+      };
+      return {
+        paper: pick("--wb-surface", "#fff"),
+        line: pick("--wb-line", "#e5e7eb"),
+        link: pick("--wb-accent", "#0a66c2"),
+        ink: rs && String(rs.color || "").trim() || cs && String(cs.color || "").trim() || "#1f2328"
+      };
+    }
+    function buildDoc(html, opts) {
+      var allowRemote = !!(opts && opts.allowRemote), theme = opts && opts.theme || {};
+      var csp = "default-src 'none'; img-src data:" + (allowRemote ? " https: http:" : "") + "; style-src 'unsafe-inline'; font-src data:; media-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
+      var paper = theme.paper || "#fff", ink = theme.ink || "#1f2328", link = theme.link || "#0a66c2";
+      return '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="' + csp + '"><style>html{color-scheme:light}html,body{margin:0;padding:0}body{padding:2px;font:13px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:' + ink + ";background:" + paper + ";overflow-x:hidden;word-break:break-word;overflow-wrap:anywhere}img{max-width:100%;height:auto}a{color:" + link + "}table{max-width:100%;border-collapse:collapse}td,th{vertical-align:top}pre{white-space:pre-wrap;overflow-wrap:anywhere}blockquote{margin:0 0 0 12px;padding-left:10px;border-left:2px solid " + (theme.line || "#e5e7eb") + ";color:inherit}</style></head><body>" + String(html || "") + "</body></html>";
+    }
+    module2.exports = function MailHtml(props) {
+      var h = props.h, React = props.React, api = props.api;
+      var expanded = React.useState(false);
+      var images = React.useState({});
+      var frame = React.useRef(null);
+      var meta = React.useMemo(function() {
+        return sanitize(props.html, { allowRemote: expanded[0] });
+      }, [props.html, expanded[0]]);
+      var byCid = React.useMemo(function() {
+        var map = {};
+        (props.attachments || []).forEach(function(a) {
+          if (a && a.contentId) map[String(a.contentId).toLowerCase()] = a;
+          else if (a && a.content_id) map[String(a.content_id).toLowerCase()] = a;
+        });
+        return map;
+      }, [props.attachments]);
+      var hasRemote = React.useMemo(function() {
+        return sanitize(props.html, { allowRemote: true }).remoteCount;
+      }, [props.html]);
+      React.useEffect(function() {
+        if (!api) return;
+        var alive = true, want = [];
+        meta.cidIds.forEach(function(cid) {
+          var item = byCid[cid];
+          if (!item || images[0][cid] || want.some(function(w) {
+            return w.cid === cid;
+          })) return;
+          if (item.size > MAX_INLINE_BYTES) return;
+          want.push({ cid, item });
+        });
+        if (!want.length) return;
+        want.forEach(function(w) {
+          C.call(api, "mail.attachmentDownload", { id: w.item.id }).then(function(file) {
+            if (!alive || !file || !file.base64) return;
+            var url = "data:" + String(file.mime || w.item.mime || "image/png") + ";base64," + file.base64;
+            images[1](function(prev) {
+              var next = Object.assign({}, prev);
+              next[w.cid] = url;
+              return next;
+            });
+          }).catch(function() {
+          });
+        });
+        return function() {
+          alive = false;
+        };
+      }, [meta.cidIds, byCid, api]);
+      var doc = React.useMemo(function() {
+        return buildDoc(replaceCid(meta.html, images[0]), { allowRemote: expanded[0], theme: themeVars() });
+      }, [meta.html, images[0], expanded[0]]);
+      function measure() {
+        var f = frame.current;
+        if (!f) return;
+        try {
+          var d = f.contentDocument;
+          if (!d) return;
+          var height = Math.max(d.documentElement ? d.documentElement.scrollHeight : 0, d.body ? d.body.scrollHeight : 0);
+          f.style.height = Math.max(height + 2, 72) + "px";
+        } catch (e) {
+        }
+      }
+      React.useEffect(measure, [doc]);
+      return h(
+        "div",
+        { className: "wbml-htmwrap" },
+        h(
+          "div",
+          { className: "wbml-htmlbar" },
+          h("span", { className: "wbml-muted" }, expanded[0] ? "\u5DF2\u52A0\u8F7D\u8FDC\u7A0B\u56FE\u7247\uFF0C\u5185\u5BB9\u7531\u53D1\u4EF6\u65B9\u670D\u52A1\u5668\u63D0\u4F9B\u3002" : hasRemote ? "\u6B64\u90AE\u4EF6\u542B " + hasRemote + " \u4E2A\u8FDC\u7A0B\u56FE\u7247\uFF0C\u9ED8\u8BA4\u4E0D\u52A0\u8F7D\u3002" : "\u5DF2\u6309\u539F\u4FE1\u6392\u7248\u663E\u793A\uFF0C\u56FE\u7247\u6765\u81EA\u672C\u5730\u9644\u4EF6\u3002"),
+          hasRemote ? h(C.Btn, { h, onClick: function() {
+            expanded[1](!expanded[0]);
+          } }, expanded[0] ? "\u4E0D\u663E\u793A\u8FDC\u7A0B\u56FE\u7247" : "\u663E\u793A\u56FE\u7247") : null
+        ),
+        h("iframe", {
+          ref: frame,
+          className: "wbml-htmlframe",
+          title: props.title || "\u90AE\u4EF6\u6B63\u6587",
+          sandbox: "allow-same-origin allow-popups allow-popups-to-escape-sandbox",
+          referrerPolicy: "no-referrer",
+          srcDoc: doc,
+          onLoad: measure
+        })
+      );
+    };
+    module2.exports.sanitize = sanitize;
+    module2.exports.buildDoc = buildDoc;
+    module2.exports.replaceCid = replaceCid;
+    module2.exports.PLACEHOLDER = PLACEHOLDER;
+  }
+});
+
 // packages/addons/mail/client/views/message-rows.cjs
 var require_message_rows = __commonJS({
   "packages/addons/mail/client/views/message-rows.cjs"(exports2, module2) {
@@ -1715,6 +1948,11 @@ var require_reader_styles = __commonJS({
   "packages/addons/mail/client/ui/reader-styles.cjs"(exports2, module2) {
     "use strict";
     module2.exports = `
+.wbml-htmwrap{display:grid;gap:8px;margin:10px 0}
+.wbml-htmlbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px}
+.wbml-htmlbar .wbml-muted{flex:1 1 220px;min-width:0}
+.wbml-htmlframe{display:block;width:100%;min-height:120px;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card)}
+@media (max-width:760px){.wbml-htmlframe{border-radius:8px}}
 .wbml-read-bar{display:flex;flex:none;align-items:center;flex-wrap:wrap;gap:6px;padding:8px 12px;border-bottom:1px solid var(--wb-line)}
 .wbml-read-bar .wbml-reader-nav{margin-inline-start:auto}
 .wbml-read-scroll{min-height:0;overflow:auto;overscroll-behavior:contain}
@@ -2002,6 +2240,7 @@ var require_messages = __commonJS({
     var C = require_common();
     var Attachments = require_attachments();
     var ReplyTools = require_reply_tools();
+    var MailHtml = require_mail_html();
     var iconLabel = require_icon_label();
     var Folder2 = GLYPHS2["folder"];
     var InboxIcon = GLYPHS2["inbox"];
@@ -2117,6 +2356,7 @@ var require_messages = __commonJS({
       function senderDetail(m) {
         return m.from && m.fromName && m.from !== m.fromName ? m.fromName + " <" + m.from + ">" : sender(m);
       }
+      var upgraded = React.useRef(/* @__PURE__ */ new Set());
       function loadBody(m, force, rev) {
         bodyState[1]({ loading: true });
         C.call(api, "mail.messageBody", { id: m.id, force: !!force }).then(function(r) {
@@ -2127,6 +2367,10 @@ var require_messages = __commonJS({
             attachmentName: r.attachments[0]?.filename || ""
           });
           bodyState[1]({ data: r });
+          if (!force && r && r.htmlStale && !upgraded.current.has(m.id)) {
+            upgraded.current.add(m.id);
+            loadBody(m, true, rev);
+          }
         }).catch(function(e) {
           if (rev === selected.current) bodyState[1]({ error: C.errText(e) });
         });
@@ -2249,8 +2493,14 @@ var require_messages = __commonJS({
         )
       );
       function bodyNode() {
-        if (state.loading) return h("div", { className: "wbml-state" }, "\u6B63\u6587\u4E0B\u8F7D\u4E2D\u2026");
-        if (state.error)
+        var html = data.html || current.html || "";
+        var list2 = data.attachments || current.attachments || [];
+        var files = list2.filter(function(a) {
+          return !a.inline;
+        });
+        var hasText = !!(data.body || current.body);
+        if (state.loading && !html && !hasText) return h("div", { className: "wbml-state" }, "\u6B63\u6587\u4E0B\u8F7D\u4E2D\u2026");
+        if (state.error && !html && !hasText)
           return h(
             "div",
             { className: "wbml-body-fail" },
@@ -2262,8 +2512,8 @@ var require_messages = __commonJS({
         return h(
           "div",
           { className: "wbml-body-wrap" },
-          h("pre", { className: "wbml-body" }, data.body || current.body || "\u6B64\u90AE\u4EF6\u65E0\u6587\u5B57\u6B63\u6587"),
-          h(Attachments, { h, React, api, localOnly: current.uid <= 0 || !current.uidValidity, items: data.attachments || current.attachments || [] }),
+          html ? h(MailHtml, { h, React, api, html, attachments: list2, title: current.subject }) : h("pre", { className: "wbml-body" }, data.body || current.body || "\u6B64\u90AE\u4EF6\u65E0\u6587\u5B57\u6B63\u6587"),
+          h(Attachments, { h, React, api, localOnly: current.uid <= 0 || !current.uidValidity, items: files }),
           data.truncated || current.bodyTruncated ? h("p", { className: "wbml-body-note" }, "\u6B63\u6587\u8F83\u957F\uFF0C\u5DF2\u622A\u65AD\u663E\u793A\u3002") : null,
           current.uid > 0 ? button("\u91CD\u65B0\u4E0B\u8F7D\u6B63\u6587", function() {
             loadBody(current, true, ++selected.current);
@@ -5813,7 +6063,7 @@ var GLYPHS = require_icons2().ICONS;
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.4.5",
+    version: "0.5.0",
     icon: GLYPHS["mail"],
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },
