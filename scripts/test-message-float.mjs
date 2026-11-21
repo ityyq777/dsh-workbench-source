@@ -1,7 +1,9 @@
 /**
  * 全局消息悬浮入口回归测试（不启动 DSH）：
  * 角标计数（初始拉取、created 去重 +1、read 覆写）、弹跳合并、配置开关与换边、
- * 点击跳转与旧宿主降级、样式契约（层级/主题 token/reduced-motion/窄屏）。
+ * 点击跳转与旧宿主降级、样式契约（层级/主题 token/reduced-motion/窄屏）、
+ * 自由拖拽与归一化坐标持久化、边缘空闲半隐藏、收起态来消息临时展开、
+ * 恢复默认位置、半隐藏态单击只展开不跳转。
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -86,6 +88,9 @@ function createDom() {
 const style = require("../packages/addons/message/client/float/style.cjs");
 const buttons = require("../packages/addons/message/client/float/button.cjs");
 const mountModule = require("../packages/addons/message/client/float/mount.cjs");
+const geo = require("../packages/addons/message/client/float/geometry.cjs");
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // 1. 样式契约：层级夹在弹幕与弹窗之间、只用 token、窄屏与 reduced-motion 有兜底。
 {
@@ -301,6 +306,194 @@ async function main() {
   assert.ok(client.includes('require("./float/mount.cjs")'), "客户端入口应引入浮层模块");
   assert.ok(client.indexOf("notifier.start()") < client.indexOf("floatMount.createMount"), "浮层在提示音之后启动");
   assert.ok(/try \{\s*floatMount\.createMount[\s\S]*?catch/.test(client), "浮层启动失败不能拖垮插件注册");
+
+  // 9. 几何：归一化坐标解析、边缘判定、半隐点位
+  {
+    assert.equal(geo.parsePos("0.25,0.75").rx, 0.25, "解析 rx");
+    assert.equal(geo.parsePos(" 0.5 , 0 ").ry, 0, "允许空格与端点 0");
+    assert.equal(geo.parsePos(""), null, "空串回退默认角");
+    assert.equal(geo.parsePos("0.5"), null, "缺逗号视为非法");
+    assert.equal(geo.parsePos("1.2,0.5"), null, "越界视为非法");
+    assert.equal(geo.parsePos("a,b"), null, "非数字视为非法");
+    assert.equal(geo.formatPos(0.12345, 0.98765), "0.1235,0.9877", "位置保留 4 位小数");
+    assert.equal(geo.nearEdge(10, 46, 1280), true, "左侧 10px 算边缘");
+    assert.equal(geo.nearEdge(600, 46, 1280), false, "中间不算边缘");
+    assert.equal(geo.nearEdge(1240, 46, 1280), true, "右侧 6px 算边缘");
+    assert.equal(geo.sideOf(10, 46, 1280), "left");
+    assert.equal(geo.sideOf(1240, 46, 1280), "right");
+    assert.deepEqual(geo.collapsedPoint("left", 46, 1280, 300), { x: -23, y: 300 });
+    assert.deepEqual(geo.collapsedPoint("right", 46, 1280, 300), { x: 1257, y: 300 });
+    assert.deepEqual(geo.clampPoint(-40, 900, 46, 1280, 800), { x: 0, y: 754 });
+  }
+
+  // 10. 自定义位置与拖拽：读配置落点、松手写回 float.customPos
+  {
+    const { doc, body } = createDom();
+    const sets = [];
+    const values = {
+      "float.enabled": true,
+      "float.position": "bottom-right",
+      "float.customPos": "0.25,0.75",
+      "float.idleSeconds": 0,
+      "float.edgeSnap": true,
+    };
+    const mountCustom = mountModule.createMount({
+      doc,
+      win: { addEventListener: () => {}, removeEventListener: () => {} },
+      fetchImpl: (url, init) => {
+        const action = url.split("/actions/")[1];
+        if (action === "message.configSet") sets.push(JSON.parse(init.body).values);
+        const table = {
+          "message.configGet": { values },
+          "message.unreadCount": { unread: 0 },
+          "message.configSet": { changed: ["float.customPos"], values },
+        };
+        return Promise.resolve({ json: () => Promise.resolve({ ok: true, result: table[action] || {} }) });
+      },
+      host: {},
+      notifier: { subscribe: () => () => {} },
+    });
+    mountCustom.mount();
+    await flush();
+    const el = body.children[0].children[0];
+    assert.equal(el.style.left, "297px", "0.25 的中心落在 297px");
+    assert.equal(el.style.top, "577px", "0.75 的中心落在 577px");
+    assert.equal(mountCustom.readState().custom, true, "自定义位置生效");
+
+    // 位移小于 5px 仍算点击：不写配置、照常跳转
+    const created = [];
+    const clickMount = mountModule.createMount({
+      doc,
+      win: { addEventListener: () => {}, removeEventListener: () => {} },
+      fetchImpl: (url, init) => {
+        const action = url.split("/actions/")[1];
+        if (action === "message.configSet") sets.push(JSON.parse(init.body).values);
+        return Promise.resolve({
+          json: () => Promise.resolve({ ok: true, result: action === "message.configGet" ? { values } : { unread: 0 } }),
+        });
+      },
+      host: { navigateAddon: (id, view) => { created.push(view); return true; } },
+      notifier: { subscribe: () => () => {} },
+    });
+    clickMount.mount();
+    await flush();
+    const el2 = body.children[body.children.length - 1].children[0];
+    const before = sets.length;
+    el2.dispatch("pointerdown", { clientX: 320, clientY: 600, pointerId: 1 });
+    el2.dispatch("pointermove", { clientX: 323, clientY: 602, pointerId: 1 });
+    el2.dispatch("pointerup", { clientX: 323, clientY: 602, pointerId: 1 });
+    el2.dispatch("click", { preventDefault() {} });
+    assert.equal(sets.length, before, "小于 5px 的位移不写位置配置");
+    assert.deepEqual(created, ["inbox"], "小于 5px 仍视为点击并跳转");
+    clickMount.destroy();
+
+    // 真拖拽：松手写归一化中心，且点击被吃掉
+    const created2 = [];
+    const dragMount = mountModule.createMount({
+      doc,
+      win: { addEventListener: () => {}, removeEventListener: () => {} },
+      fetchImpl: (url, init) => {
+        const action = url.split("/actions/")[1];
+        if (action === "message.configSet") sets.push(JSON.parse(init.body).values);
+        return Promise.resolve({
+          json: () => Promise.resolve({ ok: true, result: action === "message.configGet" ? { values } : { unread: 0 } }),
+        });
+      },
+      host: { navigateAddon: () => { created2.push(1); return true; } },
+      notifier: { subscribe: () => () => {} },
+    });
+    dragMount.mount();
+    await flush();
+    const el3 = body.children[body.children.length - 1].children[0];
+    const beforeDrag = sets.length;
+    el3.dispatch("pointerdown", { clientX: 320, clientY: 600, pointerId: 2 });
+    el3.dispatch("pointermove", { clientX: 500, clientY: 400, pointerId: 2 });
+    assert.equal(el3.getAttribute("data-dragging"), "1", "超过阈值进入拖拽态");
+    el3.dispatch("pointerup", { clientX: 500, clientY: 400, pointerId: 2 });
+    assert.equal(el3.getAttribute("data-dragging"), null, "松手退出拖拽态");
+    assert.equal(sets.length, beforeDrag + 1, "松手只写一次位置配置");
+    assert.deepEqual(sets[sets.length - 1], { "float.customPos": "0.3906,0.5000" }, "写入归一化中心");
+    el3.dispatch("click", { preventDefault() {} });
+    assert.deepEqual(created2, [], "拖拽后的 click 不应跳转");
+    dragMount.destroy();
+    mountCustom.destroy();
+  }
+
+  // 11. 边缘空闲半隐藏 + 收起态来消息临时展开 + 恢复默认位置
+  {
+    const { doc, body } = createDom();
+    const values = {
+      "float.enabled": true,
+      "float.position": "bottom-right",
+      "float.customPos": "0.02,0.5",
+      "float.idleSeconds": 1,
+      "float.edgeSnap": true,
+    };
+    let handler = null;
+    const idleMount = mountModule.createMount({
+      doc,
+      win: { addEventListener: () => {}, removeEventListener: () => {} },
+      fetchImpl: () => Promise.resolve({ json: () => Promise.resolve({ ok: true, result: { values, unread: 0 } }) }),
+      host: {},
+      notifier: { subscribe: (fn) => { handler = fn; return () => { handler = null; }; } },
+    });
+    idleMount.mount();
+    await flush();
+    const el = body.children[0].children[0];
+    assert.equal(el.getAttribute("data-collapsed"), null, "刚挂载时完整显示");
+    assert.equal(el.style.left, "3px", "0.02 的中心贴近左边缘");
+
+    await sleep(1100);
+    assert.equal(el.getAttribute("data-collapsed"), "1", "空闲 1s 后贴边半隐藏");
+    assert.equal(el.style.left, "-23px", "半隐藏只留半个圆");
+    assert.equal(idleMount.readState().side, "left", "就近贴左边缘");
+
+    handler("message.created", { message: { id: "n1" } });
+    assert.equal(el.getAttribute("data-collapsed"), null, "收起态来消息立即展开");
+    assert.equal(el.style.left, "3px", "展开后回到自定义位置");
+
+    // 连续消息只顺延：不重复展开、位置不变
+    handler("message.created", { message: { id: "n2" } });
+    assert.equal(el.getAttribute("data-collapsed"), null, "连续消息仍保持展开");
+    assert.equal(el.style.left, "3px");
+
+    handler("config", { values: { "float.customPos": "" } });
+    assert.equal(idleMount.readState().custom, false, "恢复默认位置后不再用自定义坐标");
+    assert.equal(el.style.left, "1214px", "回到右下角默认位置");
+    idleMount.destroy();
+  }
+
+  // 12. 半隐藏态单击只展开、不跳转；展开后再点才进收件箱
+  {
+    const { doc, body } = createDom();
+    const created = [];
+    const values = {
+      "float.enabled": true,
+      "float.position": "bottom-right",
+      "float.customPos": "0.99,0.5",
+      "float.idleSeconds": 1,
+      "float.edgeSnap": true,
+    };
+    const edgeMount = mountModule.createMount({
+      doc,
+      win: { addEventListener: () => {}, removeEventListener: () => {} },
+      fetchImpl: () => Promise.resolve({ json: () => Promise.resolve({ ok: true, result: { values, unread: 0 } }) }),
+      host: { navigateAddon: () => { created.push(1); return true; } },
+      notifier: { subscribe: () => () => {} },
+    });
+    edgeMount.mount();
+    await flush();
+    const el = body.children[0].children[0];
+    await sleep(1100);
+    assert.equal(el.getAttribute("data-collapsed"), "1", "右侧同样会半隐藏");
+    el.dispatch("pointerdown", { clientX: 1260, clientY: 400, pointerId: 3 });
+    el.dispatch("pointerup", { clientX: 1260, clientY: 400, pointerId: 3 });
+    el.dispatch("click", { preventDefault() {} });
+    assert.deepEqual(created, [], "半隐藏态第一次点击只展开");
+    el.dispatch("click", { preventDefault() {} });
+    assert.deepEqual(created, [1], "展开后再次点击才进收件箱");
+    edgeMount.destroy();
+  }
 
   console.log("MESSAGE FLOAT TEST PASS", JSON.stringify({ count: mount.readState().count, position: mount.readState().position, head: head.children.length }));
 }

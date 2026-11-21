@@ -21,13 +21,16 @@ function text(count) {
 }
 
 /**
- * @param {{doc?: Document, lang?: string, onActivate?: Function}} options
- * @returns {{el: HTMLElement, setCount: Function, pulse: Function, setPosition: Function, setLang: Function, destroy: Function}}
+ * @param {{doc?: Document, lang?: string, onActivate?: Function, onClick?: Function}} options
+ * @returns {{el: HTMLElement, setCount: Function, pulse: Function, setPosition: Function, setLang: Function,
+ *   setPoint: Function, setCollapsed: Function, setDragging: Function, setReady: Function, destroy: Function}}
  */
 function createButton(options) {
   var doc = options.doc || document;
   var lang = options.lang === "en" ? "en" : "zh";
   var onActivate = typeof options.onActivate === "function" ? options.onActivate : function () {};
+  // 挂载层要自己判断「这次点击该展开还是跳转」，所以允许覆盖默认的点击行为。
+  var onClick = typeof options.onClick === "function" ? options.onClick : null;
   var count = 0;
   var pulseTimer = null;
 
@@ -97,8 +100,34 @@ function createButton(options) {
     announce(count);
   }
 
+  // 位置一律由挂载层算好像素坐标传进来：样式不再写死 right/bottom，
+  // 这样自由拖拽、贴边半隐、窗口缩放都只是改 left/top。
+  function setPoint(x, y) {
+    btn.style.left = Math.round(x) + "px";
+    btn.style.top = Math.round(y) + "px";
+  }
+
+  function setCollapsed(on) {
+    if (on) btn.setAttribute("data-collapsed", "1");
+    else btn.removeAttribute("data-collapsed");
+  }
+
+  function setDragging(on) {
+    if (on) btn.setAttribute("data-dragging", "1");
+    else btn.removeAttribute("data-dragging");
+  }
+
+  // 首次定位后打开 left/top 过渡，避免从 (0,0) 滑到目标位置。
+  function setReady() {
+    btn.setAttribute("data-ready", "1");
+  }
+
   btn.addEventListener("click", function (event) {
     if (event && typeof event.preventDefault === "function") event.preventDefault();
+    if (onClick) {
+      onClick(event);
+      return;
+    }
     onActivate();
   });
 
@@ -108,7 +137,18 @@ function createButton(options) {
     if (btn.parentNode) btn.parentNode.removeChild(btn);
   }
 
-  return { el: btn, setCount: setCount, pulse: pulse, setPosition: setPosition, setLang: setLang, destroy: destroy };
+  return {
+    el: btn,
+    setCount: setCount,
+    pulse: pulse,
+    setPosition: setPosition,
+    setLang: setLang,
+    setPoint: setPoint,
+    setCollapsed: setCollapsed,
+    setDragging: setDragging,
+    setReady: setReady,
+    destroy: destroy,
+  };
 }
 
 module.exports = { createButton: createButton, ICON_PATH: ICON_PATH, PULSE_MS: PULSE_MS };

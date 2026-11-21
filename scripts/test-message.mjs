@@ -127,7 +127,12 @@ try {
   assert(cfg.values["retention.readDays"] === 30, "已读保留默认 30 天");
   assert(cfg.values["float.enabled"] === true, "悬浮入口默认开");
   assert(cfg.values["float.position"] === "bottom-right", "悬浮入口默认右下角");
-  assert(cfg.items.length === 11, "配置项 11 条，实际 " + cfg.items.length);
+  assert(cfg.values["float.customPos"] === "", "自定义位置默认空（走默认角）");
+  assert(cfg.values["float.idleSeconds"] === 3, "空闲收起默认 3 秒");
+  assert(cfg.values["float.edgeSnap"] === true, "贴边收起默认开");
+  assert(cfg.items.length === 14, "配置项 14 条，实际 " + cfg.items.length);
+  const badPos = (await call("message.configGet", {})).result;
+  assert(badPos.values["float.customPos"] === "", "非法位置读取时回退空串");
   const set = (await call("message.configSet", { values: { "sound.enabled": false } })).result;
   assert(set.values["sound.enabled"] === false, "写入后回读为 false");
   assert(set.state.overrides["sound.enabled"] === false, "overrides 记录覆盖项");

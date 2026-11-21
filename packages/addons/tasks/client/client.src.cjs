@@ -188,7 +188,9 @@
   }
 
   var TaskItem = require("./item/task-item.cjs")({ React: React, statusInfo: statusInfo, stars: stars, pClass: pClass,
-    today: today, daysBetween: daysBetween, cx: cx, Icon: Icon, Countdown: Countdown, PathCrumbs: PathCrumbs });
+    today: today, daysBetween: daysBetween, cx: cx, Icon: Icon, Countdown: Countdown, PathCrumbs: PathCrumbs,
+    // 任务详情也开 item.actions 落点：来源插件把「回到原处」挂进来。
+    Slot: host.Slot });
 
   function TreeNode(props) {
     var node = props.node;
@@ -382,9 +384,7 @@
     icon: ICONS["list-checks"],
     // 贡献声明写在 registerAddon 里：卸载任务插件时宿主按 addonId 一起撤销，
     // 不会在邮件里留一个渲染即报错的孤儿按钮。
-    slots: slotTaskFromMessage
-      ? [{ slot: "item.actions", id: "tasks.create-from-mail", order: 100, component: slotTaskFromMessage }]
-      : [],
+    slots: [{ slot: "item.actions", id: "tasks.create-from-mail", order: 100, component: slotTaskFromMessage }],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "记录", en: "Records" }, component: TasksView },

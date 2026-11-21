@@ -142,6 +142,32 @@ function ConfigView(props) {
         .catch(function (e) { toastOnce(String((e && e.message) || e)); });
     }
 
+    // 悬浮入口的「恢复默认位置」不是配置项本身，而是清空 float.customPos，
+    // 所以单独渲染一行（配置项定义仍由服务端 configGet 提供）。
+    function resetPositionRow() {
+      var custom = values()["float.customPos"];
+      return h(
+        "div",
+        { className: "wbm-field", key: "float.resetPos" },
+        h(
+          "div",
+          { className: "wbm-field-main" },
+          h("span", { className: "wbm-field-label" }, t.resetPos),
+          h("span", { className: "wbm-field-hint" }, t.resetPosHint),
+        ),
+        h(
+          "div",
+          { className: "wbm-field-ctl" },
+          h(
+            "button",
+            { type: "button", className: "wbm-btn", disabled: !custom, onClick: function () { save("float.customPos", ""); } },
+            props.Icon ? h(props.Icon, { name: "reset", size: 12 }) : null,
+            h("span", null, t.resetPos),
+          ),
+        ),
+      );
+    }
+
     function control(item) {
       var value = values()[item.id];
       if (item.type === "bool") {
@@ -298,6 +324,7 @@ function ConfigView(props) {
               ),
             );
           }),
+          group.id === "float" ? resetPositionRow() : null,
         );
       }),
       h("div", { className: "wbm-note" }, t.quietNote),

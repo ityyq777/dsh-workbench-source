@@ -81,6 +81,22 @@ const ITEMS = [
     ],
   },
   {
+    id: "float.customPos", group: "float", type: "string", surface: "ui", apply: "mount", default: "", maxLength: 32,
+    zh: "自定义位置", en: "Custom position",
+    hintZh: "拖拽后自动写入「rx,ry」归一化中心；清空即回到默认角，一般无需手改",
+    hintEn: "Written after a drag as normalized center \"rx,ry\"; clear it to return to the default corner",
+  },
+  {
+    id: "float.idleSeconds", group: "float", type: "int", surface: "ui", apply: "mount", default: 3, min: 0, max: 60,
+    zh: "空闲多久贴边收起（秒）", en: "Idle seconds before edge collapse",
+    hintZh: "0 表示不自动收起；只在按钮靠近左右边缘时生效", hintEn: "0 disables; only applies near the left or right edge",
+  },
+  {
+    id: "float.edgeSnap", group: "float", type: "bool", surface: "ui", apply: "mount", default: true,
+    zh: "靠近边缘自动半隐藏", en: "Auto collapse at the edge",
+    hintZh: "关闭后空闲也不会贴边，按钮始终完整显示", hintEn: "When off the button never collapses at the edge",
+  },
+  {
     id: "list.pageSize", group: "list", type: "enum", surface: "ui", apply: "mount", default: 20,
     zh: "每页条数", en: "Page size",
     hintZh: "收件箱每页显示多少条", hintEn: "Messages per page in Inbox",
@@ -263,7 +279,7 @@ export function resetConfig(db, ids) {
 export function registerConfigActions(api) {
   const action = api.action;
   action("message.configGet", {
-    description: "只读：消息插件的配置项定义、当前值与覆盖项（含提示音、免打扰、保留期、列表分页）",
+    description: "只读：消息插件的配置项定义、当前值与覆盖项（含提示音、免打扰、保留期、悬浮入口与列表分页）",
     input: { type: "object", properties: {}, additionalProperties: false },
     execute: () => configState(api.db),
     render: (r) =>

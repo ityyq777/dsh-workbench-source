@@ -1119,6 +1119,8 @@ var require_copy = __commonJS({
         saved: "\u5DF2\u4FDD\u5B58",
         resetAll: "\u5168\u90E8\u6062\u590D\u9ED8\u8BA4",
         resetOne: "\u6062\u590D\u9ED8\u8BA4",
+        resetPos: "\u6062\u590D\u9ED8\u8BA4\u4F4D\u7F6E",
+        resetPosHint: "\u6E05\u7A7A\u81EA\u5B9A\u4E49\u4F4D\u7F6E\uFF0C\u56DE\u5230\u300C\u60AC\u6D6E\u5165\u53E3\u4F4D\u7F6E\u300D\u9009\u5B9A\u7684\u89D2\uFF1B\u672A\u62D6\u62FD\u8FC7\u65F6\u4E0D\u53EF\u7528",
         preview: "\u8BD5\u542C",
         quietNote: "\u514D\u6253\u6270\u65F6\u95F4\u6BB5\u5185\u4E0D\u53D1\u58F0\uFF0C\u6D88\u606F\u7167\u5E38\u5165\u5E93\uFF1B\u300C\u514D\u6253\u6270\u4ECD\u54CD\u7684\u7EA7\u522B\u300D\u53EF\u4EE5\u653E\u884C\u91CD\u8981\u6D88\u606F",
         readDaysNote: "\u5DF2\u8BFB\u6D88\u606F\u8D85\u8FC7\u4FDD\u7559\u5929\u6570\u4F1A\u88AB\u6E05\u7406\uFF1B\u672A\u8BFB\u6D88\u606F\u6C38\u4E0D\u6309\u65F6\u95F4\u6E05\u7406",
@@ -1175,6 +1177,8 @@ var require_copy = __commonJS({
         saved: "Saved",
         resetAll: "Reset all",
         resetOne: "Reset",
+        resetPos: "Reset position",
+        resetPosHint: "Clears the custom position and returns to the corner chosen above; unavailable until dragged",
         preview: "Preview",
         quietNote: "Inside quiet hours nothing plays, but messages are still stored. Levels above can pass through.",
         readDaysNote: "Read messages older than the retention window are pruned; unread ones never expire by time.",
@@ -1597,6 +1601,31 @@ var require_config = __commonJS({
           toastOnce(String(e && e.message || e));
         });
       }
+      function resetPositionRow() {
+        var custom = values()["float.customPos"];
+        return h(
+          "div",
+          { className: "wbm-field", key: "float.resetPos" },
+          h(
+            "div",
+            { className: "wbm-field-main" },
+            h("span", { className: "wbm-field-label" }, t.resetPos),
+            h("span", { className: "wbm-field-hint" }, t.resetPosHint)
+          ),
+          h(
+            "div",
+            { className: "wbm-field-ctl" },
+            h(
+              "button",
+              { type: "button", className: "wbm-btn", disabled: !custom, onClick: function() {
+                save("float.customPos", "");
+              } },
+              props.Icon ? h(props.Icon, { name: "reset", size: 12 }) : null,
+              h("span", null, t.resetPos)
+            )
+          )
+        );
+      }
       function control(item) {
         var value = values()[item.id];
         if (item.type === "bool") {
@@ -1765,7 +1794,8 @@ var require_config = __commonJS({
                   ) : null
                 )
               );
-            })
+            }),
+            group.id === "float" ? resetPositionRow() : null
           );
         }),
         h("div", { className: "wbm-note" }, t.quietNote),
@@ -3902,24 +3932,30 @@ var require_style = __commonJS({
     "use strict";
     module2.exports = function floatStyles() {
       return [
-        ".wbm-float-root{position:fixed;left:0;right:0;bottom:0;height:0;z-index:860;pointer-events:none;-webkit-app-region:no-drag}",
-        ".wbm-float-root .wbm-float-btn{position:absolute;right:20px;bottom:20px;display:inline-flex;align-items:center;justify-content:center;",
+        ".wbm-float-root{position:fixed;left:0;top:0;width:0;height:0;z-index:860;pointer-events:none;-webkit-app-region:no-drag}",
+        ".wbm-float-root .wbm-float-btn{position:absolute;left:0;top:0;right:auto;bottom:auto;display:inline-flex;align-items:center;justify-content:center;",
         "box-sizing:border-box;width:46px;height:46px;padding:0;flex:0 0 auto;border-radius:50%;",
         "--wbm-float-bg:var(--dsw-alias-button-floating-fill,var(--wb-card,#2c2c2e));",
         "--wbm-float-ink:var(--dsw-alias-label-primary,var(--wb-muted,currentColor));",
         "--wbm-float-line:var(--dsw-alias-border-l2,var(--wb-border,rgba(255,255,255,.14)));",
         "--wbm-float-danger:var(--dsw-alias-state-error-primary,var(--wb-danger,#dc2626));",
         "border:1px solid var(--wbm-float-line);background:var(--wbm-float-bg);color:var(--wbm-float-ink);",
-        "cursor:pointer;pointer-events:auto;-webkit-app-region:no-drag;overflow:visible;",
+        "cursor:grab;pointer-events:auto;-webkit-app-region:no-drag;overflow:visible;",
+        // 触屏拖动时不要被页面滚动抢走指针，文字也不要被选中。
+        "touch-action:none;-webkit-user-select:none;user-select:none;",
         "box-shadow:0 8px 22px rgba(0,0,0,.24),0 1px 3px rgba(0,0,0,.18);",
         "transition:transform .18s ease,box-shadow .18s ease,background .18s ease,border-color .18s ease}",
+        // 首次定位完成后才允许 left/top 过渡（挂载瞬间不要从左上角滑过来）。
+        ".wbm-float-root .wbm-float-btn[data-ready]{transition:left .18s ease,top .18s ease,transform .18s ease,",
+        "box-shadow .18s ease,background .18s ease,border-color .18s ease}",
+        // 拖拽中必须跟手：关掉过渡，hover 的位移也一并取消。
+        ".wbm-float-root .wbm-float-btn[data-dragging=1]{cursor:grabbing;transition:none}",
+        ".wbm-float-root .wbm-float-btn[data-dragging=1]:hover{transform:none;",
+        "box-shadow:0 8px 22px rgba(0,0,0,.24),0 1px 3px rgba(0,0,0,.18)}",
         ".wbm-float-root .wbm-float-btn:hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(0,0,0,.28),0 1px 3px rgba(0,0,0,.2);",
         "background:var(--dsw-alias-button-floating-hover,var(--wbm-float-bg))}",
         ".wbm-float-root .wbm-float-btn:active{transform:translateY(0)}",
         ".wbm-float-root .wbm-float-btn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,var(--wb-accent,#2563eb));outline-offset:2px}",
-        ".wbm-float-root .wbm-float-btn[data-pos=bottom-left]{left:20px;right:auto}",
-        // 页面底部有输入框时抬到它上面，避免压在发送按钮上（没有输入框就贴右下角）。
-        ".wbm-float-root .wbm-float-btn[data-lift]{bottom:var(--wbm-float-lift,76px)}",
         ".wbm-float-root .wbm-float-btn svg{display:block;width:21px;height:21px;flex:0 0 auto}",
         ".wbm-float-root .wbm-float-badge{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 5px;",
         "box-sizing:border-box;border-radius:999px;display:none;align-items:center;justify-content:center;",
@@ -3927,10 +3963,11 @@ var require_style = __commonJS({
         "font-size:11px;font-weight:650;line-height:1;font-variant-numeric:tabular-nums;",
         "box-shadow:0 0 0 2px var(--wbm-float-bg)}",
         ".wbm-float-root .wbm-float-btn[data-unread] .wbm-float-badge{display:inline-flex}",
+        // 半隐藏时角标会有一半在视口外，直接收起角标；来新消息会先临时展开再显示。
+        ".wbm-float-root .wbm-float-btn[data-collapsed=1] .wbm-float-badge{display:none}",
         ".wbm-float-root .wbm-float-btn[data-pulse=1]{animation:wbm-float-bounce .6s cubic-bezier(.34,1.56,.64,1)}",
         "@keyframes wbm-float-bounce{0%{transform:translateY(0)}35%{transform:translateY(-7px)}70%{transform:translateY(0)}100%{transform:translateY(0)}}",
-        "@media (max-width:640px){.wbm-float-root .wbm-float-btn{width:40px;height:40px;right:12px;bottom:12px}",
-        ".wbm-float-root .wbm-float-btn[data-pos=bottom-left]{left:12px;right:auto}",
+        "@media (max-width:640px){.wbm-float-root .wbm-float-btn{width:40px;height:40px}",
         ".wbm-float-root .wbm-float-btn svg{width:18px;height:18px}}",
         // 降低动态偏好：不做位移，只让描边闪一次颜色。
         "@media (prefers-reduced-motion: reduce){.wbm-float-root .wbm-float-btn[data-pulse=1]{animation:none;",
@@ -3960,6 +3997,7 @@ var require_button = __commonJS({
       var lang = options.lang === "en" ? "en" : "zh";
       var onActivate = typeof options.onActivate === "function" ? options.onActivate : function() {
       };
+      var onClick = typeof options.onClick === "function" ? options.onClick : null;
       var count = 0;
       var pulseTimer = null;
       var btn = doc.createElement("button");
@@ -4017,8 +4055,27 @@ var require_button = __commonJS({
         lang = next === "en" ? "en" : "zh";
         announce(count);
       }
+      function setPoint(x, y) {
+        btn.style.left = Math.round(x) + "px";
+        btn.style.top = Math.round(y) + "px";
+      }
+      function setCollapsed(on) {
+        if (on) btn.setAttribute("data-collapsed", "1");
+        else btn.removeAttribute("data-collapsed");
+      }
+      function setDragging(on) {
+        if (on) btn.setAttribute("data-dragging", "1");
+        else btn.removeAttribute("data-dragging");
+      }
+      function setReady() {
+        btn.setAttribute("data-ready", "1");
+      }
       btn.addEventListener("click", function(event) {
         if (event && typeof event.preventDefault === "function") event.preventDefault();
+        if (onClick) {
+          onClick(event);
+          return;
+        }
         onActivate();
       });
       function destroy() {
@@ -4026,9 +4083,140 @@ var require_button = __commonJS({
         pulseTimer = null;
         if (btn.parentNode) btn.parentNode.removeChild(btn);
       }
-      return { el: btn, setCount, pulse, setPosition, setLang, destroy };
+      return {
+        el: btn,
+        setCount,
+        pulse,
+        setPosition,
+        setLang,
+        setPoint,
+        setCollapsed,
+        setDragging,
+        setReady,
+        destroy
+      };
     }
     module2.exports = { createButton, ICON_PATH, PULSE_MS };
+  }
+});
+
+// packages/addons/message/client/float/geometry.cjs
+var require_geometry = __commonJS({
+  "packages/addons/message/client/float/geometry.cjs"(exports2, module2) {
+    "use strict";
+    var MIN_VISIBLE = 24;
+    var EDGE_ZONE = 48;
+    var EDGE_INSET = 20;
+    var EDGE_INSET_NARROW = 12;
+    var NARROW_WIDTH = 640;
+    var SIZE = 46;
+    var SIZE_NARROW = 40;
+    var FALLBACK_WIDTH = 1280;
+    var FALLBACK_HEIGHT = 800;
+    function clamp(value, min, max) {
+      if (!isFinite(value)) return min;
+      if (max < min) return min;
+      return Math.min(Math.max(value, min), max);
+    }
+    function viewport(doc, win) {
+      var el = doc && doc.documentElement;
+      var width = Number(el && el.clientWidth) || Number(win && win.innerWidth) || FALLBACK_WIDTH;
+      var height = Number(el && el.clientHeight) || Number(win && win.innerHeight) || FALLBACK_HEIGHT;
+      return { width: width > 0 ? width : FALLBACK_WIDTH, height: height > 0 ? height : FALLBACK_HEIGHT };
+    }
+    function sizeOf(el, viewportWidth) {
+      var rect = null;
+      if (el && typeof el.getBoundingClientRect === "function") {
+        try {
+          rect = el.getBoundingClientRect();
+        } catch (e) {
+          rect = null;
+        }
+      }
+      var size = rect && Number(rect.width) > 0 ? Number(rect.width) : 0;
+      if (!size) size = viewportWidth <= NARROW_WIDTH ? SIZE_NARROW : SIZE;
+      return size;
+    }
+    function marginOf(viewportWidth) {
+      return viewportWidth <= NARROW_WIDTH ? EDGE_INSET_NARROW : EDGE_INSET;
+    }
+    function cornerPoint(corner, viewportWidth, viewportHeight, size, lift, margin) {
+      var inset = margin === void 0 ? marginOf(viewportWidth) : margin;
+      var x = corner === "bottom-left" ? inset : viewportWidth - inset - size;
+      var y = viewportHeight - inset - size - (Number(lift) || 0);
+      return { x: clamp(x, 0, Math.max(0, viewportWidth - size)), y: clamp(y, 0, Math.max(0, viewportHeight - size)) };
+    }
+    function parsePos(text) {
+      if (typeof text !== "string") return null;
+      var raw = text.trim();
+      if (!raw) return null;
+      var parts = raw.split(",");
+      if (parts.length !== 2) return null;
+      var rx = Number(parts[0]);
+      var ry = Number(parts[1]);
+      if (!isFinite(rx) || !isFinite(ry)) return null;
+      if (rx < 0 || rx > 1 || ry < 0 || ry > 1) return null;
+      return { rx, ry };
+    }
+    function formatPos(rx, ry) {
+      return Number(rx).toFixed(4) + "," + Number(ry).toFixed(4);
+    }
+    function pointOf(rx, ry, viewportWidth, viewportHeight, size) {
+      return {
+        x: clamp(Number(rx) * viewportWidth - size / 2, 0, Math.max(0, viewportWidth - size)),
+        y: clamp(Number(ry) * viewportHeight - size / 2, 0, Math.max(0, viewportHeight - size))
+      };
+    }
+    function ratioOf(x, y, viewportWidth, viewportHeight, size) {
+      var p = clampPoint(x, y, size, viewportWidth, viewportHeight);
+      return {
+        rx: clamp((p.x + size / 2) / viewportWidth, 0, 1),
+        ry: clamp((p.y + size / 2) / viewportHeight, 0, 1)
+      };
+    }
+    function clampPoint(x, y, size, viewportWidth, viewportHeight) {
+      return {
+        x: clamp(x, 0, Math.max(0, viewportWidth - size)),
+        y: clamp(y, 0, Math.max(0, viewportHeight - size))
+      };
+    }
+    function gaps(left, size, viewportWidth) {
+      return { left, right: viewportWidth - left - size };
+    }
+    function nearEdge(left, size, viewportWidth) {
+      var g = gaps(left, size, viewportWidth);
+      return g.left <= EDGE_ZONE || g.right <= EDGE_ZONE;
+    }
+    function sideOf(left, size, viewportWidth) {
+      var g = gaps(left, size, viewportWidth);
+      return g.left <= g.right ? "left" : "right";
+    }
+    function collapsedPoint(side, size, viewportWidth, y) {
+      return {
+        x: side === "left" ? -size / 2 : viewportWidth - size / 2,
+        y
+      };
+    }
+    module2.exports = {
+      MIN_VISIBLE,
+      EDGE_ZONE,
+      NARROW_WIDTH,
+      SIZE,
+      SIZE_NARROW,
+      clamp,
+      viewport,
+      sizeOf,
+      marginOf,
+      cornerPoint,
+      parsePos,
+      formatPos,
+      pointOf,
+      ratioOf,
+      clampPoint,
+      nearEdge,
+      sideOf,
+      collapsedPoint
+    };
   }
 });
 
@@ -4038,11 +4226,16 @@ var require_mount = __commonJS({
     "use strict";
     var styles = require_style();
     var buttons = require_button();
+    var geo = require_geometry();
     var DOMAIN = "wb-addon-message";
     var BASE = "/workbench/api";
     var STYLE_ID = "wb-message-float-style";
     var ADDON_ID = "wb-addon-message";
     var INBOX_VIEW = "inbox";
+    var HOLD_MS = 2e3;
+    var DRAG_THRESHOLD = 5;
+    var JUST_DRAGGED_MS = 120;
+    var POS_EPSILON = 1e-3;
     function readLang(doc) {
       var attr = doc && doc.documentElement && doc.documentElement.getAttribute("lang");
       return attr && attr.toLowerCase().indexOf("en") === 0 ? "en" : "zh";
@@ -4083,14 +4276,74 @@ var require_mount = __commonJS({
         seen: /* @__PURE__ */ new Set(),
         count: 0,
         enabled: true,
-        position: "bottom-right",
-        onVisible: null
+        corner: "bottom-right",
+        idleSeconds: 3,
+        edgeSnap: true,
+        customText: "",
+        hasCustom: false,
+        rx: 0.5,
+        ry: 0.5,
+        lift: 0,
+        size: geo.SIZE,
+        collapsed: false,
+        side: "right",
+        x: 0,
+        y: 0,
+        hovered: false,
+        focused: false,
+        dragging: false,
+        pressed: false,
+        pressX: 0,
+        pressY: 0,
+        startX: 0,
+        startY: 0,
+        expandedByPress: false,
+        justDraggedUntil: 0,
+        holdUntil: 0,
+        idleTimer: null,
+        onVisible: null,
+        onResize: null,
+        onWindowUp: null
       };
+      function now() {
+        return Date.now ? Date.now() : (/* @__PURE__ */ new Date()).getTime();
+      }
+      function later(fn, ms) {
+        var setter = win && typeof win.setTimeout === "function" ? win.setTimeout.bind(win) : setTimeout;
+        var timer = setter(fn, Math.max(0, ms || 0));
+        if (timer && typeof timer.unref === "function") timer.unref();
+        return timer;
+      }
+      function cancel(timer) {
+        if (timer === null || timer === void 0) return;
+        var clearer = win && typeof win.clearTimeout === "function" ? win.clearTimeout.bind(win) : clearTimeout;
+        clearer(timer);
+      }
+      function disarm() {
+        cancel(state.idleTimer);
+        state.idleTimer = null;
+      }
       function hostOverlay() {
         return doc && doc.querySelector ? doc.querySelector("[data-shell-overlay]") : null;
       }
+      function metrics() {
+        var vp = geo.viewport(doc, win);
+        var size = geo.sizeOf(state.btn && state.btn.el, vp.width);
+        var origin = { x: 0, y: 0 };
+        if (state.root && typeof state.root.getBoundingClientRect === "function") {
+          var rect = state.root.getBoundingClientRect();
+          origin.x = Number(rect && rect.left) || 0;
+          origin.y = Number(rect && rect.top) || 0;
+        }
+        return { width: vp.width, height: vp.height, size, origin };
+      }
       function liftAboveComposer() {
-        if (!state.btn || !doc || typeof doc.querySelector !== "function") return;
+        if (!state.btn) return;
+        state.lift = 0;
+        if (!doc || typeof doc.querySelector !== "function") {
+          state.btn.el.removeAttribute("data-lift");
+          return;
+        }
         var composer = doc.querySelector("[data-shell-composer], .dsh-composer, [contenteditable=true], .wb-composer");
         if (!composer || typeof composer.getBoundingClientRect !== "function") {
           state.btn.el.removeAttribute("data-lift");
@@ -4103,6 +4356,7 @@ var require_mount = __commonJS({
           return;
         }
         var lift = Math.min(Math.max(Math.round(height + 12), 48), 140);
+        state.lift = lift;
         state.btn.el.setAttribute("data-lift", "1");
         state.btn.el.style.setProperty("--wbm-float-lift", lift + "px");
       }
@@ -4111,19 +4365,112 @@ var require_mount = __commonJS({
         var target = hostOverlay() || doc.body;
         if (target && state.root.parentNode !== target) target.appendChild(state.root);
       }
+      function basePoint(m) {
+        if (state.hasCustom) return geo.pointOf(state.rx, state.ry, m.width, m.height, m.size);
+        return geo.cornerPoint(state.corner, m.width, m.height, m.size, state.lift, geo.marginOf(m.width));
+      }
+      function paint(point, m) {
+        state.x = point.x;
+        state.y = point.y;
+        state.size = m.size;
+        if (!state.btn) return;
+        state.btn.setPoint(point.x - m.origin.x, point.y - m.origin.y);
+      }
+      function render() {
+        if (!state.btn) return;
+        var m = metrics();
+        if (state.collapsed) {
+          var base = basePoint(m);
+          var top = geo.clamp(base.y, 0, Math.max(0, m.height - m.size));
+          paint(geo.collapsedPoint(state.side, m.size, m.width, top), m);
+        } else {
+          paint(basePoint(m), m);
+        }
+        state.btn.setCollapsed(state.collapsed);
+        if (!state.dragging) state.btn.setReady();
+      }
+      function expand() {
+        if (!state.collapsed) return;
+        state.collapsed = false;
+        render();
+      }
+      function collapse() {
+        if (!state.enabled || state.collapsed || !state.edgeSnap || state.idleSeconds <= 0) return;
+        if (state.hovered || state.focused || state.dragging || state.pressed) return;
+        var m = metrics();
+        var base = basePoint(m);
+        if (!geo.nearEdge(base.x, m.size, m.width)) return;
+        state.side = geo.sideOf(base.x, m.size, m.width);
+        state.collapsed = true;
+        render();
+        disarm();
+      }
+      function arm(ms) {
+        disarm();
+        if (!state.enabled || !state.edgeSnap || state.idleSeconds <= 0) return;
+        var delay = ms === void 0 ? state.idleSeconds * 1e3 : ms;
+        state.idleTimer = later(function() {
+          state.idleTimer = null;
+          tick();
+        }, delay);
+      }
+      function tick() {
+        if (!state.mounted) return;
+        var wait = state.holdUntil - now();
+        if (wait > 0) {
+          arm(wait);
+          return;
+        }
+        if (state.hovered || state.focused || state.dragging || state.pressed) return;
+        collapse();
+      }
+      function persist() {
+        if (!call) return;
+        var last = geo.parsePos(state.customText);
+        if (last && Math.abs(last.rx - state.rx) < POS_EPSILON && Math.abs(last.ry - state.ry) < POS_EPSILON) return;
+        var text = geo.formatPos(state.rx, state.ry);
+        state.customText = text;
+        state.hasCustom = true;
+        Promise.resolve(call("message.configSet", { values: { "float.customPos": text } })).catch(function() {
+        });
+      }
       function applyConfig(values) {
         if (!values) return;
         if (values["float.enabled"] !== void 0) state.enabled = values["float.enabled"] !== false;
-        if (values["float.position"]) state.position = values["float.position"];
+        if (values["float.position"]) {
+          state.corner = values["float.position"];
+          if (!state.hasCustom) state.collapsed = false;
+        }
+        if (values["float.idleSeconds"] !== void 0) {
+          state.idleSeconds = geo.clamp(Number(values["float.idleSeconds"]) || 0, 0, 60);
+        }
+        if (values["float.edgeSnap"] !== void 0) state.edgeSnap = values["float.edgeSnap"] !== false;
+        if (values["float.customPos"] !== void 0) {
+          var text = values["float.customPos"] === null || values["float.customPos"] === void 0 ? "" : String(values["float.customPos"]);
+          var parsed = geo.parsePos(text);
+          state.customText = text;
+          state.hasCustom = !!parsed;
+          if (parsed) {
+            state.rx = parsed.rx;
+            state.ry = parsed.ry;
+          } else {
+            state.collapsed = false;
+          }
+        }
         if (!state.btn) return;
-        state.btn.setPosition(state.position);
+        state.btn.setPosition(state.corner);
         liftAboveComposer();
         state.btn.el.style.display = state.enabled ? "" : "none";
         if (!state.enabled) {
           state.count = 0;
           state.btn.setCount(0);
+          state.collapsed = false;
+          disarm();
         }
         place();
+        render();
+        if (state.enabled) arm();
+        else disarm();
       }
       function applyCount(next) {
         state.count = next > 0 ? Math.floor(next) : 0;
@@ -4140,6 +4487,129 @@ var require_mount = __commonJS({
         if (typeof console !== "undefined" && console.info) {
           console.info("[dsh-workbench-message] \u5F53\u524D\u5BBF\u4E3B\u4E0D\u652F\u6301\u8DF3\u8F6C\u5230\u6D88\u606F\u6536\u4EF6\u7BB1\uFF0C\u8BF7\u5728\u5DE6\u4FA7\u5BFC\u822A\u6253\u5F00\u300C\u6D88\u606F\u300D");
         }
+      }
+      function detachWindowUp() {
+        if (!state.onWindowUp || !win || typeof win.removeEventListener !== "function") return;
+        win.removeEventListener("mouseup", state.onWindowUp);
+        state.onWindowUp = null;
+      }
+      function eventPoint(event) {
+        return {
+          x: event && typeof event.clientX === "number" ? event.clientX : 0,
+          y: event && typeof event.clientY === "number" ? event.clientY : 0
+        };
+      }
+      function onDown(event) {
+        if (!state.enabled || !state.btn) return;
+        if (event && typeof event.button === "number" && event.button !== 0) return;
+        var m = metrics();
+        var point = eventPoint(event);
+        state.pressed = true;
+        state.dragging = false;
+        state.pressX = point.x;
+        state.pressY = point.y;
+        state.startX = state.x;
+        state.startY = state.y;
+        state.size = m.size;
+        disarm();
+        if (state.collapsed) {
+          expand();
+          state.expandedByPress = true;
+          state.startX = state.x;
+          state.startY = state.y;
+        }
+        if (typeof state.btn.el.setPointerCapture === "function" && event && event.pointerId !== void 0) {
+          try {
+            state.btn.el.setPointerCapture(event.pointerId);
+          } catch (err) {
+          }
+        }
+        if (win && typeof win.addEventListener === "function" && !state.onWindowUp) {
+          state.onWindowUp = function() {
+            endPress();
+          };
+          win.addEventListener("mouseup", state.onWindowUp);
+        }
+      }
+      function onMove(event) {
+        if (!state.pressed) return;
+        var point = eventPoint(event);
+        var dx = point.x - state.pressX;
+        var dy = point.y - state.pressY;
+        if (!state.dragging) {
+          if (Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return;
+          state.dragging = true;
+          state.expandedByPress = false;
+          state.holdUntil = 0;
+          disarm();
+          if (state.btn) state.btn.setDragging(true);
+        }
+        var m = metrics();
+        paint(geo.clampPoint(state.startX + dx, state.startY + dy, m.size, m.width, m.height), m);
+      }
+      function endPress() {
+        if (!state.pressed) return;
+        state.pressed = false;
+        detachWindowUp();
+        if (!state.dragging) return;
+        state.dragging = false;
+        if (state.btn) state.btn.setDragging(false);
+        var m = metrics();
+        var ratio = geo.ratioOf(state.x, state.y, m.width, m.height, m.size);
+        state.rx = ratio.rx;
+        state.ry = ratio.ry;
+        state.hasCustom = true;
+        state.collapsed = false;
+        render();
+        persist();
+        state.justDraggedUntil = now() + JUST_DRAGGED_MS;
+        arm();
+      }
+      function onClick() {
+        if (!state.enabled) return;
+        if (now() < state.justDraggedUntil) return;
+        if (state.expandedByPress) {
+          state.expandedByPress = false;
+          expand();
+          arm();
+          return;
+        }
+        if (state.collapsed) {
+          expand();
+          arm();
+          return;
+        }
+        activate();
+      }
+      function onEnter() {
+        state.hovered = true;
+        expand();
+        disarm();
+      }
+      function onLeave() {
+        state.hovered = false;
+        var wait = state.holdUntil - now();
+        arm(wait > 0 ? wait : state.idleSeconds * 1e3);
+      }
+      function onFocus() {
+        state.focused = true;
+        expand();
+        disarm();
+      }
+      function onBlur() {
+        state.focused = false;
+        arm();
+      }
+      function onResize() {
+        if (!state.mounted) return;
+        var m = metrics();
+        if (state.hasCustom && !state.collapsed) {
+          var ratio = geo.ratioOf(state.x, state.y, m.width, m.height, m.size);
+          state.rx = ratio.rx;
+          state.ry = ratio.ry;
+        }
+        if (state.collapsed) state.side = geo.sideOf(basePoint(m).x, m.size, m.width);
+        render();
       }
       function onEvent(event, data) {
         if (!state.btn || !state.mounted) return;
@@ -4159,6 +4629,12 @@ var require_mount = __commonJS({
         if (state.seen.size > 500) state.seen.clear();
         applyCount(state.count + 1);
         if (state.btn) state.btn.pulse();
+        if (state.collapsed) {
+          state.collapsed = false;
+          render();
+        }
+        state.holdUntil = now() + HOLD_MS;
+        if (!state.hovered && !state.focused && !state.dragging) arm(HOLD_MS);
       }
       function refreshCount() {
         if (!call) return Promise.resolve(state.count);
@@ -4178,6 +4654,25 @@ var require_mount = __commonJS({
           return state.enabled;
         });
       }
+      function bind() {
+        var el = state.btn.el;
+        el.addEventListener("pointerdown", onDown);
+        el.addEventListener("pointermove", onMove);
+        el.addEventListener("pointerup", endPress);
+        el.addEventListener("pointercancel", endPress);
+        el.addEventListener("pointerenter", onEnter);
+        el.addEventListener("pointerleave", onLeave);
+        el.addEventListener("focus", onFocus);
+        el.addEventListener("blur", onBlur);
+        if (win && typeof win.addEventListener === "function") {
+          state.onResize = onResize;
+          win.addEventListener("resize", state.onResize);
+          state.onVisible = function() {
+            if (doc.visibilityState === "visible") refreshCount();
+          };
+          win.addEventListener("visibilitychange", state.onVisible);
+        }
+      }
       function mount() {
         if (state.mounted || !doc) return state;
         injectStyles(doc);
@@ -4185,20 +4680,20 @@ var require_mount = __commonJS({
         root.className = "wbm-float-root";
         root.setAttribute("data-message-float", "1");
         root.style.pointerEvents = "none";
-        var btn = buttons.createButton({ doc, lang: readLang(doc), onActivate: activate });
+        var btn = buttons.createButton({
+          doc,
+          lang: readLang(doc),
+          onClick
+        });
         root.appendChild(btn.el);
         state.root = root;
         state.btn = btn;
         state.mounted = true;
         place();
         liftAboveComposer();
+        render();
+        bind();
         if (notifier && typeof notifier.subscribe === "function") state.unsubscribe = notifier.subscribe(onEvent);
-        if (win && typeof win.addEventListener === "function") {
-          state.onVisible = function() {
-            if (doc.visibilityState === "visible") refreshCount();
-          };
-          win.addEventListener("visibilitychange", state.onVisible);
-        }
         loadConfig().then(function() {
           if (state.enabled) refreshCount();
         });
@@ -4207,9 +4702,14 @@ var require_mount = __commonJS({
       function destroy() {
         if (state.unsubscribe) state.unsubscribe();
         state.unsubscribe = null;
-        if (win && state.onVisible && typeof win.removeEventListener === "function") {
-          win.removeEventListener("visibilitychange", state.onVisible);
+        disarm();
+        state.holdUntil = 0;
+        detachWindowUp();
+        if (win && typeof win.removeEventListener === "function") {
+          if (state.onResize) win.removeEventListener("resize", state.onResize);
+          if (state.onVisible) win.removeEventListener("visibilitychange", state.onVisible);
         }
+        state.onResize = null;
         state.onVisible = null;
         if (state.btn) state.btn.destroy();
         if (state.root && state.root.parentNode) state.root.parentNode.removeChild(state.root);
@@ -4227,13 +4727,19 @@ var require_mount = __commonJS({
             mounted: state.mounted,
             count: state.count,
             enabled: state.enabled,
-            position: state.position,
+            position: state.corner,
+            collapsed: state.collapsed,
+            side: state.side,
+            custom: state.hasCustom,
+            customText: state.customText,
+            idleSeconds: state.idleSeconds,
+            edgeSnap: state.edgeSnap,
             seen: state.seen.size
           };
         }
       };
     }
-    module2.exports = { createMount, STYLE_ID, DOMAIN };
+    module2.exports = { createMount, STYLE_ID, DOMAIN, HOLD_MS };
   }
 });
 
@@ -4288,7 +4794,7 @@ var require_mount = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-message",
-    version: "0.1.6",
+    version: "0.1.7",
     icon: ICONS["message-square"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: Stats },
