@@ -86,7 +86,22 @@ var require_locale = __commonJS({
         search_none: "\u6CA1\u6709\u547D\u4E2D",
         search_partial: "\u90E8\u5206\u57DF\u641C\u7D22\u5931\u8D25",
         account_desc: "\u767B\u5F55\u4E91\u7AEF\u8D26\u53F7\uFF0C\u5907\u4EFD\u4E0E\u540C\u6B65\u6570\u636E",
-        tab_agent: "\u6765\u6E90\u6743\u9650",
+        tab_agent: "\u5BBF\u4E3B action \u6743\u9650",
+        tab_agent_list: "Agent \u6743\u9650\u6E05\u5355",
+        agent_list_desc: "\u53EA\u8BFB\uFF1A\u5F53\u524D\u6240\u6709\u5BF9 agent \u5F00\u653E\u7684 action\uFF0C\u6309\u57DF\u6C47\u603B\uFF0C\u4FBF\u4E8E\u4E00\u773C\u770B\u6E05 agent \u80FD\u505A\u4EC0\u4E48\u3002",
+        agent_list_count: "{n} \u4E2A action \u5BF9 agent \u5F00\u653E\uFF08\u5171 {all} \u4E2A\uFF0C\u8986\u76D6 {d} \u4E2A\u57DF\uFF09",
+        agent_list_readonly: "\u53EA\u8BFB\u9875\uFF1B\u8981\u6539\u6765\u6E90\u8BF7\u5230\u5BF9\u5E94\u63D2\u4EF6\u7684 Action \u9875\u6216\u300C\u5BBF\u4E3B action \u6743\u9650\u300D\u9875",
+        agent_list_search: "\u641C\u7D22",
+        agent_list_search_ph: "action \u540D\u79F0 / \u57DF / \u8BF4\u660E",
+        agent_list_domain: "\u57DF",
+        agent_list_all_domains: "\u5168\u90E8\u57DF",
+        agent_list_col_action: "action",
+        agent_list_col_domain: "\u57DF",
+        agent_list_col_desc: "\u8BF4\u660E",
+        agent_list_col_origins: "\u751F\u6548\u6765\u6E90",
+        agent_list_narrow: "\u58F0\u660E\u4E0A\u754C",
+        agent_list_empty: "\u6CA1\u6709\u5BF9 agent \u5F00\u653E\u7684 action",
+        agent_list_loading: "\u8BFB\u53D6\u4E2D\u2026",
         agent_desc: "\u9010\u4E2A action \u9009\u62E9\u5141\u8BB8\u7684\u8C03\u7528\u6765\u6E90\uFF08\u754C\u9762 / \u63D2\u4EF6 / agent / \u540C\u6B65\uFF09\uFF1B\u8BBE\u7F6E\u53EA\u5B58\u672C\u673A\u3001\u7ACB\u5373\u751F\u6548\uFF0C\u4E0D\u8FDB\u5907\u4EFD\u4E0E\u4E91\u540C\u6B65",
         tab_audit: "\u5BA1\u8BA1\u65E5\u5FD7",
         audit_desc: "\u672C\u673A\u884C\u4E3A\u8D26\u672C\uFF1A\u8C01\u5728\u4F55\u65F6\u8C03\u7528\u4E86\u54EA\u4E2A action\u3001\u6210\u529F\u4E0E\u5426\uFF1B\u5BC6\u7801\u4E0E token \u7B49\u53C2\u6570\u5DF2\u8131\u654F",
@@ -267,7 +282,22 @@ var require_locale = __commonJS({
         search_none: "No matches",
         search_partial: "Some domains failed",
         account_desc: "Sign in to back up and sync your data",
-        tab_agent: "Origins",
+        tab_agent: "Host action origins",
+        tab_agent_list: "Agent access list",
+        agent_list_desc: "Read-only: every action the agent can currently call, grouped by domain.",
+        agent_list_count: "{n} actions open to the agent ({all} total across {d} domains)",
+        agent_list_readonly: "Read-only; change origins on the plugin's Action page or the Host action origins page",
+        agent_list_search: "Search",
+        agent_list_search_ph: "action name / domain / description",
+        agent_list_domain: "Domain",
+        agent_list_all_domains: "All domains",
+        agent_list_col_action: "Action",
+        agent_list_col_domain: "Domain",
+        agent_list_col_desc: "Description",
+        agent_list_col_origins: "Effective origins",
+        agent_list_narrow: "declared upper bound",
+        agent_list_empty: "No action is open to the agent",
+        agent_list_loading: "Loading\u2026",
         agent_desc: "Pick which origins may call each action (UI / plugin / agent / sync); settings stay on this machine, apply immediately, and are never backed up or synced",
         tab_audit: "Audit log",
         audit_desc: "A local ledger of who called which action and how it went; passwords and tokens are redacted",
@@ -1572,17 +1602,124 @@ var require_system_pages = __commonJS({
         ] })
       ] });
     }
+    function agentListPage(deps) {
+      var jsx2 = deps.jsx;
+      var React = deps.React;
+      var t = deps.t;
+      var lang = deps.lang;
+      var api = deps.api;
+      var hostApi = {
+        call: function(action, args) {
+          return api.post("/domains/wb-shell/actions/" + encodeURIComponent(action), args || {});
+        }
+      };
+      function AgentListBody() {
+        var state = React.useState({ loading: true, error: "", actions: [] });
+        var snap = state[0], setSnap = state[1];
+        var qState = React.useState("");
+        var q = qState[0], setQ = qState[1];
+        var domainState = React.useState("");
+        var domainPick = domainState[0], setDomainPick = domainState[1];
+        React.useEffect(function() {
+          var alive = true;
+          hostApi.call("actions.list", {}).then(function(result) {
+            if (!alive) return;
+            var list = result && Array.isArray(result.actions) ? result.actions : [];
+            setSnap({ loading: false, error: "", actions: list });
+          }, function(error) {
+            if (!alive) return;
+            setSnap({ loading: false, error: error && error.message || String(error), actions: [] });
+          });
+          return function() {
+            alive = false;
+          };
+        }, []);
+        var opened = snap.actions.filter(function(a) {
+          return Array.isArray(a.origins) && a.origins.indexOf("agent") >= 0;
+        });
+        var domains = [];
+        opened.forEach(function(a) {
+          if (a.domain && domains.indexOf(a.domain) < 0) domains.push(a.domain);
+        });
+        domains.sort();
+        if (domainPick && domains.indexOf(domainPick) < 0) domains.unshift(domainPick);
+        var rows = opened.filter(function(a) {
+          if (domainPick && a.domain !== domainPick) return false;
+          if (!q.trim()) return true;
+          var text = [a.name, a.domain, a.description].join(" ").toLowerCase();
+          return text.indexOf(q.trim().toLowerCase()) >= 0;
+        });
+        var head = jsx2.jsx("div", { className: "wb-audit-summary", role: "status", "aria-live": "polite", children: [
+          jsx2.jsx("span", { children: t("agent_list_count").replace("{n}", String(rows.length)).replace("{all}", String(opened.length)).replace("{d}", String(domains.length)) }),
+          jsx2.jsx("span", { className: "wb-audit-dim", children: t("agent_list_readonly") })
+        ] });
+        var filters = jsx2.jsxs("div", { className: "wb-audit-filters", children: [
+          jsx2.jsxs("label", { className: "wb-audit-field", children: [
+            jsx2.jsx("span", { children: t("agent_list_search") }),
+            jsx2.jsx("input", { className: "wb-input", type: "search", "data-agent-search": "1", placeholder: t("agent_list_search_ph"), value: q, onChange: function(e) {
+              setQ(e.target.value);
+            } })
+          ] }),
+          jsx2.jsxs("label", { className: "wb-audit-field", children: [
+            jsx2.jsx("span", { children: t("agent_list_domain") }),
+            jsx2.jsxs("select", { className: "wb-select", "data-agent-domain": "1", value: domainPick, onChange: function(e) {
+              setDomainPick(e.target.value);
+            }, children: [
+              jsx2.jsx("option", { value: "", children: t("agent_list_all_domains") }),
+              domains.map(function(d) {
+                return jsx2.jsx("option", { value: d, children: d }, d);
+              })
+            ] })
+          ] })
+        ] });
+        var body;
+        if (snap.loading) body = jsx2.jsx("div", { className: "wb-msg", role: "status", children: t("agent_list_loading") });
+        else if (snap.error) body = jsx2.jsx("div", { className: "wb-err", role: "alert", children: snap.error });
+        else if (!rows.length) body = jsx2.jsx("div", { className: "wb-msg wb-empty-cta", children: t("agent_list_empty") });
+        else {
+          body = jsx2.jsx("div", { style: { overflowX: "auto" }, children: jsx2.jsxs("table", { className: "wb-audit-table", "data-agent-list": "1", children: [
+            jsx2.jsx("thead", { children: jsx2.jsx("tr", { children: [
+              jsx2.jsx("th", { children: t("agent_list_col_action") }),
+              jsx2.jsx("th", { children: t("agent_list_col_domain") }),
+              jsx2.jsx("th", { children: t("agent_list_col_desc") }),
+              jsx2.jsx("th", { children: t("agent_list_col_origins") })
+            ] }) }),
+            jsx2.jsx("tbody", { children: rows.map(function(a) {
+              var declared = Array.isArray(a.originsDeclared) ? a.originsDeclared : a.origins;
+              var narrow = Array.isArray(declared) && declared.length < 4;
+              return jsx2.jsxs("tr", { "data-agent-row": a.name, children: [
+                jsx2.jsx("td", { className: "wb-audit-mono", children: a.name }),
+                jsx2.jsx("td", { className: "wb-audit-dim", children: a.domain || "\u2014" }),
+                jsx2.jsx("td", { children: a.description || "\u2014" }),
+                jsx2.jsx("td", { children: jsx2.jsxs("span", { className: "wb-audit-mono", children: [
+                  (a.origins || []).join(" \xB7 "),
+                  narrow ? jsx2.jsx("span", { className: "wb-audit-dim", children: "  (" + t("agent_list_narrow") + " " + declared.join("/") + ")" }) : null
+                ] }) })
+              ] }, a.name);
+            }) })
+          ] }) });
+        }
+        return jsx2.jsxs("div", { children: [filters, head, body] });
+      }
+      return jsx2.jsxs("div", { className: "wb-root", children: [
+        jsx2.jsxs("div", { className: "wb-inner wb-wide", children: [
+          deps.head(t("tab_agent_list"), t("agent_list_desc")),
+          jsx2.jsx(AgentListBody, {})
+        ] })
+      ] });
+    }
     function manageCards(deps) {
       var t = deps.t;
       var card = deps.systemCard;
       return [
         card("agent", "agent", t("tab_agent"), t("agent_desc")),
+        card("agentList", "agent", t("tab_agent_list"), t("agent_list_desc")),
         card("backup", "backup", t("tab_backup"), t("backup_desc")),
         card("audit", "audit", t("tab_audit"), t("audit_desc")),
         card("account", "account", t("tab_account"), t("account_desc"))
       ];
     }
-    module2.exports = { agentAccessPage, manageCards };
+    module2.exports = { agentAccessPage, agentListPage, manageCards };
   }
 });
 
@@ -3252,6 +3389,7 @@ function WorkbenchPage(props) {
     ] }, key);
   }
   if (route === "agent") return SystemPages.agentAccessPage({ jsx, t, lang, api, head: pageHead });
+  if (route === "agentList") return SystemPages.agentListPage({ jsx, React: react, t, lang, api, head: pageHead });
   if (route === "backup") {
     return jsx.jsxs("div", { className: "wb-root", children: [
       jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_backup"), t("backup_desc")), jsx.jsx(BackupTab, { t, lang, addons })] })

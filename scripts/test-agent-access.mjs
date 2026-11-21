@@ -10,6 +10,7 @@ process.env.WB_HOME = home;
 const shell = await import('../packages/shell/lib/index.js');
 const tags = await import('../packages/addons/tags/lib/index.js');
 const contacts = await import('../packages/addons/contacts/lib/index.js');
+const vault = await import('../packages/addons/vault/lib/index.js');
 function boot() {
   const cleanups = [];
   let host, tool, route;
@@ -19,7 +20,7 @@ function boot() {
     effect: fn => { const d = fn(); if (typeof d === 'function') cleanups.push(d); },
   };
   shell.apply(ctx);
-  for (const addon of [tags, contacts]) addon.apply({ workbench: host, effect: ctx.effect });
+  for (const addon of [tags, contacts, vault]) addon.apply({ workbench: host, effect: ctx.effect, log: () => {} });
   async function call(name, args = {}, origin = 'agent') {
     if (origin === 'plugin') return (await host.invoke(name, args)).result;
     if (origin === 'agent') {
@@ -104,6 +105,14 @@ try {
   await set(['ui', 'plugin', 'agent'], action);
   assert.equal(count(), beforeRestore);
   await env.call(action, { name: '恢复后可创建' });
+  // 7) 跨插件后台调用：保险箱的后台动作必须对 plugin 开放（邮件同步取凭据走的就是这条路径）。
+  const leaseEntry = find(await entries('vault.actionSchema', 'ui'), 'vault.lease');
+  assert.deepEqual(leaseEntry.origins, ['plugin']);
+  assert.deepEqual(leaseEntry.originsDeclared, ['plugin']);
+  const leaseError = await denied(env.call('vault.lease', { id: 'sec_missing', purpose: 'test' }, 'plugin'));
+  assert.ok(leaseError, 'vault.lease 在 plugin 来源下应进入实现');
+  assert.ok(!isDenied(leaseError), 'vault.lease 不应被来源闸门拦下：' + (leaseError && leaseError.message));
+
   console.log('PASS: 来源数组默认值、工具与发现过滤、界面可放开/收窄、权限不可自授、审计、重启持久化、无同步写入');
 } finally {
   db?.close(); env?.close();

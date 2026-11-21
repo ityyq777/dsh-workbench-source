@@ -67,6 +67,8 @@ pnpm test:native && pnpm test:tags && pnpm test:sites
 并在注释里写清原因，不要为了让脚本变绿而放宽规则。
 
 
+声明必须 ⊇ 执行期 guard：`execute` 里写着 `only(ctx, ["ui", "plugin"])` 却在 `origins` 里只声明 `["ui"]`，那条 guard 的分支永远调不通（2026-11-21 的教训：`vault.lease` 声明缺 plugin，邮件同步报「不允许 plugin 来源调用」）。跨插件的后台调用（如邮件取保险箱凭据）走的就是 plugin 来源，后台专用动作要显式声明 `["plugin"]`。`node scripts/test-origin-decls.mjs` 会静态比对两者，已挂进 `pnpm test:native`。
+
 ## 文档同步
 
 `docs/插件功能清单.md` 是给人看的 action 清单，含版本表与 action 表；改 schema 时

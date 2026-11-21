@@ -57,7 +57,7 @@ export function registerVaultActions(api, vault, groups) {
   });
 
   api.action("vault.lock", {
-    origins: ["ui"],
+    origins: ["ui", "plugin"],
     description: "立即清除内存中的 DEK；插件后台可用它主动锁定。",
     input: { type: "object", properties: {}, additionalProperties: false },
     execute: (_args, ctx) => {
@@ -203,7 +203,7 @@ export function registerVaultActions(api, vault, groups) {
   });
 
   api.action("vault.lease", {
-    origins: ["ui"],
+    origins: ["plugin"],
     description: "后台插件租用凭据明文，ttl 30–300 秒；只允许 plugin origin，传 subject 时校验绑定。",
     input: {
       type: "object",
@@ -309,7 +309,7 @@ export function registerVaultActions(api, vault, groups) {
   });
 
   api.action("vault.subjectRegister", {
-    origins: ["ui"],
+    origins: ["plugin"],
     description: "业务插件注册自己的关联类型（幂等），供组详情页显示可读标题。",
     input: {
       type: "object",
@@ -328,7 +328,7 @@ export function registerVaultActions(api, vault, groups) {
   });
 
   api.action("vault.bind", {
-    origins: ["ui"],
+    origins: ["ui", "plugin"],
     description: "把业务对象关联到凭据分组（重复绑定幂等）；vault 不校验对象是否存在。",
     input: {
       type: "object",
@@ -347,7 +347,7 @@ export function registerVaultActions(api, vault, groups) {
   });
 
   api.action("vault.unbind", {
-    origins: ["ui"],
+    origins: ["ui", "plugin"],
     description: "解除一个业务对象与分组的关联（软删）。",
     input: {
       type: "object",
@@ -398,7 +398,7 @@ export function registerVaultActions(api, vault, groups) {
   });
 
   api.action("vault.subjectSecrets", {
-    origins: ["ui"],
+    origins: ["plugin"],
     description: "后台插件只读：某个业务对象经分组可见的凭据清单（不含明文），拿到 id 后再 lease。",
     input: {
       type: "object",
@@ -413,7 +413,7 @@ export function registerVaultActions(api, vault, groups) {
   });
 
   api.action("vault.bindingPurge", {
-    origins: ["ui"],
+    origins: ["plugin"],
     description: "插件卸载/业务对象删除时清理自己的绑定引用（硬删）。",
     input: {
       type: "object",

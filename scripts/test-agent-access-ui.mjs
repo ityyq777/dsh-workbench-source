@@ -272,7 +272,7 @@ const roster = {
     contacts: { ui: 0, agentOff: 6 },
     mail: { ui: 1, agentOff: 12 },
     salary: { ui: 0, agentOff: 1 },
-    vault: { ui: 21, agentOff: 0 },
+    vault: { ui: 14, agentOff: 0 },
   };
   for (const [id, want] of Object.entries(expected)) {
     const src = readFileSync(pluginFile(id), "utf8");
@@ -290,6 +290,14 @@ const roster = {
   assert.equal((automation.match(/deny\(ctx\.origin, \["ui"\]\)/g) || []).length, 0, "不得残留只允许 ui 的旧 guard");
   const vault = readFileSync(pluginFile("vault"), "utf8");
   assert.equal((vault.match(/only\(ctx, \["ui", "agent"/g) || []).length, 6, "原本就允许 agent 的读类保持原样");
+  // 只给插件的后台动作必须声明 plugin，否则邮件同步这类跨插件调用会被来源闸门拦下
+  // （2026-11-21 的教训：vault.lease 写成 ["ui"] 后邮件同步报「不允许 plugin 来源调用」）。
+  assert.equal((vault.match(/origins: \["plugin"\]/g) || []).length, 4, "后台专用动作应声明只给 plugin");
+  assert.equal((vault.match(/origins: \["ui", "plugin"\]/g) || []).length, 3, "界面与后台都能调的应声明 ui+plugin");
+  for (const name of ["vault.lease", "vault.subjectRegister", "vault.subjectSecrets", "vault.bindingPurge"]) {
+    const at = vault.indexOf('api.action("' + name + '"');
+    assert.ok(vault.slice(at, at + 120).includes('origins: ["plugin"]'), name + " 必须声明 plugin 来源");
+  }
   for (const name of ["vault.setup", "vault.secretReveal", "vault.dataQuery", "vault.lease"]) {
     assert.ok(vault.includes('], "' + name + '")'), name + " 的原 guard 必须保留（来源数组放开也不能绕过它）");
   }
