@@ -3,8 +3,9 @@ var staged = require("../../../lib/staged-dialog.cjs");
 // 布尔项统一走共享开关控件（lib/switch.cjs）。
 var SW = require("../../../lib/switch.cjs");
 // 对话框外壳与插件自己的字段/校验分离：遮罩、Esc、Tab 循环、焦点归位来自 lib/overlay.cjs，
-// 步骤条与逐步校验来自 lib/staged-dialog.cjs；规则编辑器拆成「基本信息 / 执行方式 / 触发 /
-// 执行 / 条件」五步，宽度统一 880px，窄屏单列。
+// 步骤条与逐步校验来自 lib/staged-dialog.cjs；规则编辑器收敛成「基本信息（含执行方式）/
+// 触发（或时间）/ 执行（含条件）」三步，宽度统一 880px，窄屏单列。
+// 曾经把执行方式、条件各拆一步，但这两步都只有一个控件，步骤条被切得很碎，2026-11 合并。
 var EditorDialog = staged.createStagedDialog({
   maskClass: "wba-modal",
   dialogClass: "wba-modal-box",
@@ -209,6 +210,7 @@ function RuleEditor(props) {
 
   // 每段的字段渲染都接 hh：分阶段外壳按 steps[i].render(h) 传入 React.createElement，
   // 这样同一份字段代码既能进步骤，也不会各自持有入口引用。
+  // 基本信息 = 名称 + 启用 + 执行方式：执行方式整步只有一个二选一控件，单独成步显得碎。
   function renderBasic(hh) {
     return hh("div", { className: "wba-section" },
       hh("div", { className: "wba-grid-3" },
@@ -230,11 +232,14 @@ function RuleEditor(props) {
             onText: t("rules.status.on"),
             offText: t("rules.status.off"),
             onChange: function (next) { set("enabled", next); },
-          }))));
+          }))),
+      hh("p", { className: "wba-section-title" }, t("editor.section.mode")),
+      renderModeBody(hh));
   }
 
-  function renderMode(hh) {
-    return hh("div", { className: "wba-section" },
+  // 执行方式的选择器本体，供基本信息步内联渲染（不再单独占一格步骤）。
+  function renderModeBody(hh) {
+    return hh("div", null,
       hh("div", { className: "wba-seg", role: "group" },
         modeButtons.map(function (m) {
           var off = locked || (m[0] === "agent" && !agentAvailable);
@@ -364,8 +369,10 @@ function RuleEditor(props) {
       }));
   }
 
+  // 条件不再单独成步，作为「执行」步里的可选子块出现。
   function renderCondition(hh) {
     return hh("div", { className: "wba-section" },
+      hh("p", { className: "wba-section-title" }, t("editor.section.condition")),
       hh(SW.Switch, {
         h: hh,
         checked: Boolean(form.condOn),
@@ -387,19 +394,21 @@ function RuleEditor(props) {
       }) : hh("p", { className: "wba-sub" }, t("editor.conditionEmpty")));
   }
 
-  // 步骤随执行方式变化：交给 AI 时不渲染「动作参数」与「条件」两步，避免填了没用的字段。
+  // 「执行」步：动作或提示词 + 条件（条件原本是独立一步，并进来少一格）。
+  function renderRun(hh) {
+    return hh("div", null,
+      agentMode ? renderPrompt(hh) : renderAction(hh),
+      agentMode ? null : renderCondition(hh));
+  }
+
+  // 三步：基本信息（含执行方式）/ 触发（或时间）/ 执行（含条件）。
+  // 交给 AI 时不渲染「动作参数」与「条件」，避免填了没用的字段。
   var steps = [
     {
       key: "basic",
       label: t("editor.section.basic"),
-      hint: t("editor.name"),
       render: renderBasic,
       validate: function () { return String(form.name || "").trim() ? "" : t("editor.nameRequired"); },
-    },
-    {
-      key: "mode",
-      label: t("editor.section.mode"),
-      render: renderMode,
     },
     {
       key: agentMode ? "timing" : "trigger",
@@ -411,25 +420,16 @@ function RuleEditor(props) {
       },
     },
     {
-      key: agentMode ? "prompt" : "action",
+      key: agentMode ? "prompt" : "run",
       label: agentMode ? t("editor.section.prompt") : t("editor.section.run"),
-      render: agentMode ? renderPrompt : renderAction,
+      render: renderRun,
       validate: function () {
         if (agentMode) return String(form.prompt || "").trim() ? "" : t("editor.promptRequired");
         if (!hasActions || actionMissing) return hasActions ? t("rules.actionDisabled") : t("editor.noActionsHint");
-        return errs.actionArgs || "";
+        return errs.actionArgs || errs.condition || "";
       },
     },
   ];
-  if (!agentMode) {
-    steps.push({
-      key: "condition",
-      label: t("editor.section.condition"),
-      optional: true,
-      render: renderCondition,
-      validate: function () { return errs.condition || ""; },
-    });
-  }
 
   return h(EditorDialog, {
     h: h,
@@ -451,9 +451,13 @@ function RuleEditor(props) {
     cancelText: t("common.cancel"),
     nextText: t("common.next"),
     backText: t("common.back"),
-    footerNote: validation.valid
-      ? (numOkS[0] ? "" : errs.pEvery || errs.pAfter || errs.everyMinutes || t("trigger.intervalHint"))
-      : (errs.name || errs.prompt || errs.actionArgs || errs.condition || errs.pCron || errs.pRrule || errs.pDate || errs.pTime || errs.pWeekdays || t("editor.nameEmptySave")),
+    // 页脚只在用户动过字段之后给一行说明（也是「保存」禁用时的原因）；
+    // 空表单首屏不再先红一片——此前一打开就显示「名称不能为空」。
+    footerNote: !touchedS[0]
+      ? ""
+      : validation.valid
+        ? (numOkS[0] ? "" : errs.pEvery || errs.pAfter || errs.everyMinutes || t("trigger.intervalHint"))
+        : (errs.name || errs.prompt || errs.actionArgs || errs.condition || errs.pCron || errs.pRrule || errs.pDate || errs.pTime || errs.pWeekdays || t("editor.nameEmptySave")),
   });
 }
 

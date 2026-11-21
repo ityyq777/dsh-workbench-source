@@ -3672,13 +3672,15 @@ var require_rule_editor = __commonJS({
                 }
               })
             )
-          )
+          ),
+          hh("p", { className: "wba-section-title" }, t("editor.section.mode")),
+          renderModeBody(hh)
         );
       }
-      function renderMode(hh) {
+      function renderModeBody(hh) {
         return hh(
           "div",
-          { className: "wba-section" },
+          null,
           hh(
             "div",
             { className: "wba-seg", role: "group" },
@@ -3885,6 +3887,7 @@ var require_rule_editor = __commonJS({
         return hh(
           "div",
           { className: "wba-section" },
+          hh("p", { className: "wba-section-title" }, t("editor.section.condition")),
           hh(SW.Switch, {
             h: hh,
             checked: Boolean(form.condOn),
@@ -3910,20 +3913,22 @@ var require_rule_editor = __commonJS({
           }) : hh("p", { className: "wba-sub" }, t("editor.conditionEmpty"))
         );
       }
+      function renderRun(hh) {
+        return hh(
+          "div",
+          null,
+          agentMode ? renderPrompt(hh) : renderAction(hh),
+          agentMode ? null : renderCondition(hh)
+        );
+      }
       var steps = [
         {
           key: "basic",
           label: t("editor.section.basic"),
-          hint: t("editor.name"),
           render: renderBasic,
           validate: function() {
             return String(form.name || "").trim() ? "" : t("editor.nameRequired");
           }
-        },
-        {
-          key: "mode",
-          label: t("editor.section.mode"),
-          render: renderMode
         },
         {
           key: agentMode ? "timing" : "trigger",
@@ -3935,27 +3940,16 @@ var require_rule_editor = __commonJS({
           }
         },
         {
-          key: agentMode ? "prompt" : "action",
+          key: agentMode ? "prompt" : "run",
           label: agentMode ? t("editor.section.prompt") : t("editor.section.run"),
-          render: agentMode ? renderPrompt : renderAction,
+          render: renderRun,
           validate: function() {
             if (agentMode) return String(form.prompt || "").trim() ? "" : t("editor.promptRequired");
             if (!hasActions || actionMissing) return hasActions ? t("rules.actionDisabled") : t("editor.noActionsHint");
-            return errs.actionArgs || "";
+            return errs.actionArgs || errs.condition || "";
           }
         }
       ];
-      if (!agentMode) {
-        steps.push({
-          key: "condition",
-          label: t("editor.section.condition"),
-          optional: true,
-          render: renderCondition,
-          validate: function() {
-            return errs.condition || "";
-          }
-        });
-      }
       return h(EditorDialog, {
         h,
         React,
@@ -3976,7 +3970,9 @@ var require_rule_editor = __commonJS({
         cancelText: t("common.cancel"),
         nextText: t("common.next"),
         backText: t("common.back"),
-        footerNote: validation.valid ? numOkS[0] ? "" : errs.pEvery || errs.pAfter || errs.everyMinutes || t("trigger.intervalHint") : errs.name || errs.prompt || errs.actionArgs || errs.condition || errs.pCron || errs.pRrule || errs.pDate || errs.pTime || errs.pWeekdays || t("editor.nameEmptySave")
+        // 页脚只在用户动过字段之后给一行说明（也是「保存」禁用时的原因）；
+        // 空表单首屏不再先红一片——此前一打开就显示「名称不能为空」。
+        footerNote: !touchedS[0] ? "" : validation.valid ? numOkS[0] ? "" : errs.pEvery || errs.pAfter || errs.everyMinutes || t("trigger.intervalHint") : errs.name || errs.prompt || errs.actionArgs || errs.condition || errs.pCron || errs.pRrule || errs.pDate || errs.pTime || errs.pWeekdays || t("editor.nameEmptySave")
       });
     }
     module2.exports = {
