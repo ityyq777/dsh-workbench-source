@@ -578,6 +578,204 @@ var require_date_picker_styles = __commonJS({
   }
 });
 
+// packages/addons/lib/number-field.cjs
+var require_number_field = __commonJS({
+  "packages/addons/lib/number-field.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var NUM = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
+    var TEXT = {
+      zh: {
+        required: "\u8BF7\u586B\u5199\u6570\u5B57",
+        invalid: "\u8BF7\u8F93\u5165\u6570\u5B57",
+        integer: "\u9700\u8981\u662F\u6574\u6570",
+        min: "\u4E0D\u80FD\u5C0F\u4E8E {min}",
+        max: "\u4E0D\u80FD\u5927\u4E8E {max}",
+        range: "\u9700\u8981\u5728 {min}\u2013{max} \u4E4B\u95F4",
+        step: "\u9700\u8981\u662F {step} \u7684\u500D\u6570",
+        unit: "\u5355\u4F4D"
+      },
+      en: {
+        required: "Please enter a number",
+        invalid: "Please enter a number",
+        integer: "Must be a whole number",
+        min: "Must be at least {min}",
+        max: "Must be at most {max}",
+        range: "Must be between {min} and {max}",
+        step: "Must be a multiple of {step}",
+        unit: "unit"
+      }
+    };
+    function messages(lang) {
+      return lang === "en" ? TEXT.en : TEXT.zh;
+    }
+    function fill(text, vars) {
+      return String(text).replace(/\{(\w+)\}/g, function(m, key) {
+        return vars && vars[key] !== void 0 ? String(vars[key]) : m;
+      });
+    }
+    function validateNumber(raw, opts) {
+      var o = opts || {};
+      var M = messages(o.lang);
+      var text = raw === null || raw === void 0 ? "" : String(raw).trim();
+      if (text === "") {
+        return o.allowEmpty ? { ok: true, value: null, error: "" } : { ok: false, value: null, error: M.required };
+      }
+      if (!NUM.test(text)) return { ok: false, value: null, error: M.invalid };
+      var n = Number(text);
+      if (!isFinite(n)) return { ok: false, value: null, error: M.invalid };
+      if (o.integer && Math.round(n) !== n) return { ok: false, value: null, error: M.integer };
+      var hasMin = o.min !== void 0 && o.min !== null && o.min !== "";
+      var hasMax = o.max !== void 0 && o.max !== null && o.max !== "";
+      if (hasMin && hasMax && n >= o.min && n <= o.max) {
+      } else if (hasMin && hasMax) {
+        return { ok: false, value: null, error: fill(M.range, { min: o.min, max: o.max }) };
+      } else if (hasMin && n < o.min) {
+        return { ok: false, value: null, error: fill(M.min, { min: o.min }) };
+      } else if (hasMax && n > o.max) {
+        return { ok: false, value: null, error: fill(M.max, { max: o.max }) };
+      }
+      if (o.step && Number(o.step) > 0) {
+        var q = n / Number(o.step);
+        if (Math.abs(q - Math.round(q)) > 1e-9) {
+          return { ok: false, value: null, error: fill(M.step, { step: o.step }) };
+        }
+      }
+      return { ok: true, value: n, error: "" };
+    }
+    function rangeHint(opts, lang) {
+      var o = opts || {};
+      var M = messages(lang);
+      var en = lang === "en";
+      var hasMin = o.min !== void 0 && o.min !== null && o.min !== "";
+      var hasMax = o.max !== void 0 && o.max !== null && o.max !== "";
+      var parts = [];
+      if (hasMin && hasMax) parts.push(String(o.min) + "\u2013" + String(o.max));
+      else if (hasMin) parts.push((en ? "\u2265 " : "\u2265 ") + String(o.min));
+      else if (hasMax) parts.push((en ? "\u2264 " : "\u2264 ") + String(o.max));
+      if (o.integer) parts.push(en ? "whole numbers" : "\u6574\u6570");
+      else if (o.step && Number(o.step) > 0) parts.push((en ? "step " : "\u6B65\u957F ") + String(o.step));
+      return parts.join(en ? ", " : "\uFF0C");
+    }
+    function NumberField(props) {
+      var h = props.h || React.createElement;
+      var lang = props.lang;
+      var M = messages(lang);
+      var text = props.value === null || props.value === void 0 ? "" : String(props.value);
+      var draftS = React.useState(text);
+      var draft = draftS[0];
+      var setDraft = draftS[1];
+      var focusS = React.useState(false);
+      var focused = focusS[0];
+      var setFocused = focusS[1];
+      var errS = React.useState("");
+      var err = errS[0];
+      var setErr = errS[1];
+      var lastRef = React.useRef(text);
+      var skipBlurRef = React.useRef(false);
+      React.useEffect(
+        function() {
+          if (focused) return;
+          if (lastRef.current === text) return;
+          lastRef.current = text;
+          setDraft(text);
+          setErr("");
+        },
+        [text, focused]
+      );
+      function commit(raw) {
+        var r = validateNumber(raw, props);
+        if (!r.ok) {
+          setErr(r.error);
+          if (typeof props.onValidChange === "function") props.onValidChange(false, r.error);
+          return false;
+        }
+        setErr("");
+        if (typeof props.onValidChange === "function") props.onValidChange(true, "");
+        var cur = props.value === null || props.value === void 0 ? null : Number(props.value);
+        if (r.value !== cur) {
+          lastRef.current = r.value === null ? "" : String(r.value);
+          if (typeof props.onCommit === "function") props.onCommit(r.value);
+        }
+        return true;
+      }
+      var hint = props.hint !== void 0 ? props.hint : rangeHint(props, lang);
+      var shown = props.hint === false ? "" : hint;
+      return h(
+        "span",
+        { className: "wbctl-num" + (props.wide ? " is-wide" : "") + (props.className ? " " + props.className : "") },
+        h(
+          "span",
+          { className: "wbctl-num-box" },
+          h("input", {
+            className: "wbctl-num-input" + (err ? " is-invalid" : ""),
+            type: "text",
+            inputMode: props.integer || Number(props.step) === 1 ? "numeric" : "decimal",
+            value: draft,
+            disabled: !!props.disabled,
+            placeholder: props.placeholder,
+            title: props.title,
+            "aria-label": props.ariaLabel,
+            "aria-invalid": err ? "true" : void 0,
+            onFocus: function() {
+              setFocused(true);
+            },
+            onChange: function(e) {
+              setDraft(e.target.value);
+              if (err) setErr("");
+              if (typeof props.onDraft === "function") props.onDraft(e.target.value);
+            },
+            onBlur: function() {
+              setFocused(false);
+              if (skipBlurRef.current) {
+                skipBlurRef.current = false;
+                return;
+              }
+              commit(draft);
+            },
+            onKeyDown: function(e) {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (e.target && e.target.blur) e.target.blur();
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                skipBlurRef.current = true;
+                setDraft(text);
+                setErr("");
+                if (e.target && e.target.blur) e.target.blur();
+              }
+            }
+          }),
+          props.unit ? h("span", { className: "wbctl-num-unit" }, props.unit) : null
+        ),
+        err ? h("span", { className: "wbctl-num-err", role: "alert" }, err) : shown ? h("span", { className: "wbctl-num-hint" }, shown) : null
+      );
+    }
+    var NUMBER_STYLES = [
+      ".wbctl-num{display:inline-flex;flex-direction:column;gap:3px;min-width:0;max-width:100%}",
+      ".wbctl-num.is-wide{display:flex;width:100%}",
+      ".wbctl-num-box{display:inline-flex;align-items:center;gap:6px;min-width:0}",
+      ".wbctl-num-input{box-sizing:border-box;width:96px;min-width:0;padding:6px 9px;border:1px solid var(--wb-line,rgba(127,127,127,.35));border-radius:6px;background:var(--wb-surface,var(--wb-card,transparent));color:inherit;font:inherit;font-size:13px;font-variant-numeric:tabular-nums;transition:border-color .14s ease,outline-color .14s ease}",
+      ".wbctl-num-input:hover:not(:disabled){border-color:var(--wb-border,var(--wb-line))}",
+      ".wbctl-num-input:focus{outline:2px solid color-mix(in oklab,var(--wb-accent,#2563eb) 55%,transparent);outline-offset:1px;border-color:var(--wb-accent,#2563eb)}",
+      ".wbctl-num-input.is-invalid{border-color:var(--wb-danger,#dc2626)}",
+      ".wbctl-num-input.is-invalid:focus{outline-color:color-mix(in oklab,var(--wb-danger,#dc2626) 55%,transparent)}",
+      ".wbctl-num-input:disabled{opacity:.5;cursor:not-allowed}",
+      ".wbctl-num-unit{color:var(--wb-muted,inherit);font-size:12px;white-space:nowrap}",
+      ".wbctl-num-hint{color:var(--wb-muted,inherit);font-size:11px;line-height:1.4}",
+      ".wbctl-num-err{color:var(--wb-danger,#dc2626);font-size:11px;line-height:1.4}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-num-input{transition:none}}"
+    ];
+    module2.exports = {
+      NumberField,
+      validateNumber,
+      rangeHint,
+      messages,
+      styles: NUMBER_STYLES
+    };
+  }
+});
+
 // packages/addons/salary/client/ui/styles.cjs
 var require_styles = __commonJS({
   "packages/addons/salary/client/ui/styles.cjs"(exports2, module2) {
@@ -811,7 +1009,12 @@ var require_styles = __commonJS({
       "@media (max-width:760px){.wbsal-detail{grid-template-columns:minmax(0,1fr)}.wbsal-page{padding:16px 14px 36px}.wbsal-table th,.wbsal-table td{padding:9px 10px}.wbsal-opt,.wbsal-table th.opt{display:none}.wbsal-comp-row{grid-template-columns:80px minmax(50px,1fr) 112px}.wbsal-chart{height:170px}}"
     ];
     var DATE = require_date_picker_styles()("wbsal");
-    module2.exports = BASE.concat(PAGE, [DATE]).join("\n");
+    var AMOUNT = [
+      ".wbsal-form-grid .wbctl-num{width:100%}",
+      ".wbsal-form-grid .wbctl-num-box{width:100%}",
+      ".wbsal-form-grid .wbctl-num-input{width:100%;box-sizing:border-box;text-align:right}"
+    ];
+    module2.exports = BASE.concat(PAGE, [DATE], AMOUNT, require_number_field().styles).join("\n");
   }
 });
 
@@ -974,6 +1177,9 @@ var require_client_common = __commonJS({
         fmtTime,
         Switch: require_switch().Switch,
         switchStyles: require_switch().styles,
+        NumberField: require_number_field().NumberField,
+        numberFieldStyles: require_number_field().styles,
+        validateNumber: require_number_field().validateNumber,
         Btn,
         Field,
         Notice,
@@ -2991,6 +3197,7 @@ var require_records = __commonJS({
   "packages/addons/salary/client/views/records.cjs"(exports2, module2) {
     "use strict";
     var createOverlay = require_overlay();
+    var NF = require_number_field();
     var FormOverlay = createOverlay({
       maskClass: "wbsal-mask",
       dialogClass: "wbsal-modal"
@@ -3019,6 +3226,9 @@ var require_records = __commonJS({
       var msg = msgState[0], setMsg = msgState[1];
       var savingState = React.useState(false);
       var saving = savingState[0], setSaving = savingState[1];
+      var badState = React.useState({});
+      var badKeys = badState[0], setBadKeys = badState[1];
+      var moneyInvalid = Object.keys(badKeys).length > 0;
       var modalOpen = !!form;
       React.useEffect(function() {
         if (!modalOpen || typeof document === "undefined" || typeof document.addEventListener !== "function" || !document.body) return void 0;
@@ -3047,6 +3257,7 @@ var require_records = __commonJS({
         setConfirmId("");
         setOpenId("");
         setMsg(null);
+        setBadKeys({});
         var payDate = pickDate("monthly");
         setForm({ mode: "create", id: "", payDate, incomePeriod: defaultPeriod(payDate, "monthly"), cycle: "monthly", employmentType: "", note: F.defaultNote(payDate, "monthly"), values: F.blankValues(), lockGross: false });
       }
@@ -3058,6 +3269,7 @@ var require_records = __commonJS({
         var incomeZero = F.INCOME_KEYS.every(function(key) {
           return !F.num(item[key]);
         });
+        setBadKeys({});
         setConfirmId("");
         setOpenId("");
         setMsg(null);
@@ -3069,6 +3281,7 @@ var require_records = __commonJS({
       function closeForm() {
         setForm(null);
         setMsg(null);
+        setBadKeys({});
       }
       function setField(key, value) {
         setForm(function(prev) {
@@ -3095,6 +3308,24 @@ var require_records = __commonJS({
           return Object.assign({}, prev, { values });
         });
       }
+      function markAmount(key, ok) {
+        setBadKeys(function(prev) {
+          var known = !!prev[key];
+          if (known === !ok) return prev;
+          var next = Object.assign({}, prev);
+          if (ok) delete next[key];
+          else next[key] = true;
+          return next;
+        });
+      }
+      function firstBadAmount() {
+        var keys = F.KEYS;
+        for (var i = 0; i < keys.length; i += 1) {
+          var check = NF.validateNumber(form.values[keys[i]], amountRules(keys[i]));
+          if (!check.ok) return { key: keys[i], error: check.error };
+        }
+        return null;
+      }
       function recalcFromDetail() {
         setForm(function(prev) {
           var computed = F.totals(prev.values);
@@ -3104,6 +3335,11 @@ var require_records = __commonJS({
       }
       function submit() {
         if (!form) return;
+        var bad = firstBadAmount();
+        if (bad) {
+          setMsg({ kind: "error", text: F.LABELS[bad.key] + "\uFF1A" + bad.error });
+          return;
+        }
         var computed = F.totals(form.values);
         var payload = {
           payDate: form.payDate,
@@ -3159,19 +3395,29 @@ var require_records = __commonJS({
       var currentYear = (/* @__PURE__ */ new Date()).getFullYear();
       var yearOptions = ["", String(currentYear + 1), String(currentYear), String(currentYear - 1), String(currentYear - 2)];
       var latest = status.data || {};
+      function amountRules(key) {
+        return { min: key === "performanceBonus" ? void 0 : 0, step: 0.01, allowEmpty: true, lang };
+      }
       function amountInput(key, disabled) {
-        return h("input", {
-          className: "wbsal-input",
-          type: "number",
-          step: "0.01",
-          min: key === "performanceBonus" ? void 0 : "0",
+        return h(NF.NumberField, {
+          h,
+          lang,
+          wide: true,
+          className: "wbsal-amount",
           value: form.values[key],
           disabled,
-          onChange: function(e) {
-            setValue(key, e.target.value);
+          hint: false,
+          min: amountRules(key).min,
+          step: 0.01,
+          allowEmpty: true,
+          ariaLabel: F.LABELS[key],
+          onDraft: function(raw) {
+            setValue(key, raw);
+            markAmount(key, NF.validateNumber(raw, amountRules(key)).ok);
           },
-          onBlur: function() {
-            setValue(key, F.fmtAmount(F.num(form.values[key])));
+          onCommit: function(next) {
+            setValue(key, next === null ? "" : String(next));
+            markAmount(key, true);
           }
         });
       }
@@ -3302,7 +3548,7 @@ var require_records = __commonJS({
           h(
             "div",
             { className: "wbsal-form-actions" },
-            h(C.Btn, { h, kind: "primary", onClick: submit, disabled: saving }, saving ? "\u4FDD\u5B58\u4E2D\u2026" : form.mode === "edit" ? "\u4FDD\u5B58\u4FEE\u6539" : "\u4FDD\u5B58"),
+            h(C.Btn, { h, kind: "primary", onClick: submit, disabled: saving || moneyInvalid }, saving ? "\u4FDD\u5B58\u4E2D\u2026" : form.mode === "edit" ? "\u4FDD\u5B58\u4FEE\u6539" : "\u4FDD\u5B58"),
             h(C.Btn, { h, kind: "ghost", onClick: closeForm }, "\u53D6\u6D88")
           )
         );
@@ -3845,8 +4091,8 @@ var require_data_style = __commonJS({
         "." + P + "-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px;font-size:11.5px;color:var(--cfg-muted)}",
         "." + P + "-grow{flex:1}",
         "." + P + "-pageinfo{font-variant-numeric:tabular-nums}",
-        "." + P + "-jump{width:56px;border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:7px;padding:4px 7px;font:inherit;font-size:11.5px;text-align:right;outline:none}",
-        "." + P + "-jump:focus{border-color:var(--dsw-alias-brand-primary,currentColor)}",
+        "." + P + "-jump .wbctl-num-input{width:56px;padding:4px 7px;font-size:11.5px;text-align:right}",
+        "." + P + "-jump .wbctl-num-hint{display:none}",
         "." + P + "-empty{border:1px dashed var(--cfg-line);border-radius:11px;padding:44px 16px;text-align:center;font-size:12.5px;color:var(--cfg-muted)}",
         "." + P + "-err{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid color-mix(in oklab,var(--dsw-alias-state-error-primary,currentColor) 32%,var(--cfg-line));border-radius:10px;padding:9px 12px;color:var(--dsw-alias-state-error-primary,inherit);font-size:12px;line-height:1.5}",
         "." + P + "-skwrap{display:flex;flex-direction:column;gap:1px;padding:2px}",
@@ -3884,7 +4130,7 @@ var require_data_style = __commonJS({
         "." + P + "-images img{width:36px;height:36px;object-fit:cover;border-radius:5px}",
         "." + P + "-gallery{display:flex;flex-direction:column;gap:12px;overflow:auto;flex:1}",
         "." + P + "-gallery img{width:100%;height:auto;object-fit:contain;border-radius:8px}"
-      ].concat(require_switch().styles).join("\n");
+      ].concat(require_switch().styles).concat(require_number_field().styles).join("\n");
       if (DOMAIN === "storage") {
         var buttons = "." + P + " :is(button)";
         CSS += buttons + "{border:none;background:var(--wb-btn-bg);min-height:var(--wb-btn-size-sm);min-width:var(--wb-btn-size-sm)}" + buttons + ":enabled:hover{background:var(--wb-btn-hover-bg)}" + buttons + ":enabled:active{background:var(--wb-btn-active-bg)}" + buttons + ":disabled{background:var(--wb-btn-bg);color:var(--cfg-muted)}" + buttons + ":focus-visible{outline:var(--wb-btn-focus);outline-offset:var(--wb-btn-focus-offset)}." + P + "-fcell:has(button) input{padding-right:34px}";
@@ -3912,6 +4158,7 @@ var require_data_view = __commonJS({
   "packages/addons/lib/data-view.cjs"(exports2, module2) {
     "use strict";
     var React = require("react");
+    var NF = require_number_field();
     var h = React.createElement;
     var COPY = require_data_copy();
     var SW = require_switch();
@@ -4468,17 +4715,18 @@ var require_data_view = __commonJS({
             h("button", { type: "button", className: P + "-btn", disabled: !data || page >= pages, onClick: function() {
               setPage(Math.min(pages, page + 1));
             } }, t.next + " \u203A"),
-            h("input", {
+            h(NF.NumberField, {
+              h,
+              lang,
               className: P + "-jump",
-              type: "number",
+              value: page,
               min: 1,
               max: pages,
-              "aria-label": t.jump,
-              onKeyDown: function(e) {
-                if (e.key === "Enter") {
-                  var n = Math.floor(Number(e.target.value));
-                  if (n >= 1) setPage(Math.min(pages, n));
-                }
+              integer: true,
+              ariaLabel: t.jump,
+              hint: false,
+              onCommit: function(next) {
+                if (next !== null) setPage(next);
               }
             }),
             data && data.queryMs !== void 0 ? h("span", null, fmt(t.queryTime, { n: data.queryMs })) : null
@@ -5403,7 +5651,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.4.2",
+    version: "0.4.3",
     icon: GLYPHS["wallet"],
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },

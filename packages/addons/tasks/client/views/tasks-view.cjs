@@ -636,7 +636,7 @@ module.exports = function createTasksView(deps) {
         onSaved: function (result) { setEditTask(null); refreshList(); bumpTimeline(); say(require("../modals/ownership.cjs").receipt(result)); },
       }) : null,
       doneTask ? h(DoneModal, {
-        key: doneTask.id, t: t, api: api, task: doneTask,
+        key: doneTask.id, t: t, api: api, task: doneTask, lang: props.lang,
         onClose: function () { setDoneTask(null); },
         onDone: function () { setDoneTask(null); refreshList(); bumpTimeline(); say(t.doneSuccess); },
         onError: function (e) { setDoneTask(null); say(e); },

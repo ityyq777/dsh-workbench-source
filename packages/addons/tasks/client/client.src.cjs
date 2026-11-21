@@ -340,7 +340,7 @@
       h("div", { className: "wbt-modal", style: { width: "420px" } },
         h("div", { className: "wbt-modal-head" }, h("h3", null, t.complete + " · " + props.task.title), h("button", { className: "wbt-icon", onClick: props.onClose }, "×")),
         h("div", { className: "wbt-mhint" }, t.difficultyHint),
-        require("./item/difficulty-field.cjs")(React)(t, value, setValue, "wbt-done-difficulty"),
+        require("./item/difficulty-field.cjs")(React)(t, value, setValue, "wbt-done-difficulty", props.lang),
         h("label", { className: "wbt-field", style: { marginTop: "12px" } },
           h("span", null, t.review + " · " + t.reviewHint),
           h("textarea", { className: "wbt-textarea", rows: 3, placeholder: t.reviewPlaceholder, value: review, onChange: function (e) { setReview(e.target.value); } })
@@ -380,7 +380,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.34",
+    version: "5.2.35",
     icon: ICONS["list-checks"],
     // 贡献声明写在 registerAddon 里：卸载任务插件时宿主按 addonId 一起撤销，
     // 不会在邮件里留一个渲染即报错的孤儿按钮。

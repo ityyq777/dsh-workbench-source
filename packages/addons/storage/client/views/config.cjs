@@ -9,6 +9,8 @@ var PREFIX = "wbi";
 var COPY = require("../ui/config-copy.cjs");
 // 布尔项统一使用共享开关控件（lib/switch.cjs），不再自绘滑轨。
 var SW = require("../../../lib/switch.cjs");
+// 数字项统一使用共享数字输入控件（输入自由、失焦校验）。
+var NF = require("../../../lib/number-field.cjs");
 
 var CSS = [
   ".__P__-cfg{--cfg-line:var(--wb-line,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent)));--cfg-surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));--cfg-muted:var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 62%,transparent));--cfg-faint:var(--dsw-alias-label-tertiary,color-mix(in oklab,currentColor 42%,transparent));--cfg-hover:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent));display:flex;flex-direction:column;gap:16px;width:100%;min-width:0;padding-bottom:6px;color:inherit;font-size:13.5px}",
@@ -63,6 +65,7 @@ var CSS = [
   "@media (prefers-reduced-motion:reduce){.__P__-cfg-sk{animation:none;transition:none}}",
 ]
   .concat(SW.styles)
+  .concat(NF.styles)
   .join("\n")
   .split("__P__")
   .join(PREFIX);
@@ -169,9 +172,6 @@ function ConfigView(props) {
   var savingS = React.useState("");
   var savingId = savingS[0],
     setSavingId = savingS[1];
-  var draftsS = React.useState({});
-  var drafts = draftsS[0],
-    setDrafts = draftsS[1];
   var busyS = React.useState(false);
   var busy = busyS[0],
     setBusy = busyS[1];
@@ -284,22 +284,6 @@ function ConfigView(props) {
       });
   }
 
-  function commitDraft(item) {
-    var raw = drafts[item.id];
-    if (raw === undefined) return;
-    var next = String(raw).trim();
-    setDrafts(function (prev) {
-      var copy = Object.assign({}, prev);
-      delete copy[item.id];
-      return copy;
-    });
-    if (next === "") return;
-    var value = Number(next);
-    if (!Number.isFinite(value)) return;
-    if (sameValue(value, state.values[item.id])) return;
-    save(item.id, value);
-  }
-
   function renderControl(item) {
     var value = state.values[item.id];
     var label = lang === "en" ? item.en : item.zh;
@@ -335,30 +319,16 @@ function ConfigView(props) {
       );
     }
     if (item.type === "int") {
-      var draft = drafts[item.id] !== undefined ? drafts[item.id] : String(value);
-      return h("input", {
-        className: PREFIX + "-cfg-input",
-        type: "number",
-        value: draft,
+      return h(NF.NumberField, {
+        h: h,
+        lang: lang,
+        value: value === undefined ? "" : value,
         min: item.min,
         max: item.max,
-        "aria-label": label,
-        onChange: function (e) {
-          var v = e.target.value;
-          setDrafts(function (prev) {
-            var c = Object.assign({}, prev);
-            c[item.id] = v;
-            return c;
-          });
-        },
-        onBlur: function () {
-          commitDraft(item);
-        },
-        onKeyDown: function (e) {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            commitDraft(item);
-          }
+        integer: true,
+        ariaLabel: label,
+        onCommit: function (next) {
+          save(item.id, next);
         },
       });
     }

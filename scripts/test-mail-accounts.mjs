@@ -122,6 +122,10 @@ const other = renderToStaticMarkup(h(AccountForm, {
   onCancel: () => {}, onSaved: () => {},
 }));
 assert.ok(other.includes('IMAP 服务器') && other.includes('登录名'), '陌生域名进入「其他」，展开主机/端口/登录名字段');
+// 端口走共享数字输入控件：type=text + inputmode，范围只写成提示（1–65535）。
+assert.equal((other.match(/wbctl-num-input/g) || []).length, 2, 'IMAP/SMTP 端口都走共享数字输入控件');
+assert.ok(other.includes('1–65535'), '端口范围写成提示文字');
+assert.equal(/type="number"/.test(other), false, '端口不再用会回灌边界的 type=number');
 const SecretPicker = require('../packages/addons/mail/client/ui/secret-picker.cjs');
 const picker = renderToStaticMarkup(h(SecretPicker, {
   h, React, C, api: { call: async () => ({ items: [] }) }, lang: 'zh', vault: 'ready', value: '', onChange: () => {},
@@ -152,6 +156,8 @@ for (const gone of ['vault.secretCreate', 'vault.secretUpdate', 'vault.secretDel
 assert.match(formSrc, /secretId: f\.secretId/, '自检与保存都把选中的 secretId 透传给后端');
 assert.equal(/type:\s*"password"/.test(formSrc), false, '表单不再出现裸密码框');
 assert.equal(/f\.password/.test(formSrc), false, '表单不再持有明文密码字段');
+assert.match(formSrc, /NF\.NumberField/, '账户表单的数字项接入共享数字输入控件');
+assert.match(formSrc, /portOk\(\)/, '端口非法时保存与自检按钮禁用');
 const pickerSrc = src('client/ui/secret-picker.cjs');
 assert.ok(pickerSrc.includes('vault.secretList'), '凭据选择器只从 vault.secretList 取数');
 assert.match(pickerSrc, /Escape/, 'Esc 能收起选择器');

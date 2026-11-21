@@ -9,6 +9,8 @@ var h = React.createElement;
 var notifier = require("../notify/notifier.cjs");
 // 布尔项统一使用共享开关控件。
 var SW = require("../../../lib/switch.cjs");
+// 整数项统一使用共享数字输入控件（输入自由、失焦校验）。
+var NF = require("../../../lib/number-field.cjs");
 var DOMAIN = "message";
 
   function unwrap(r) {
@@ -200,14 +202,15 @@ function ConfigView(props) {
         );
       }
       if (item.type === "int") {
-        return h("input", {
-          className: "wbm-num",
-          type: "number",
+        return h(NF.NumberField, {
+          h: h,
+          lang: lang,
+          value: value === undefined ? "" : value,
           min: item.min,
           max: item.max,
-          value: value === undefined ? "" : value,
-          "aria-label": labelOf(item, lang),
-          onChange: function (e) { save(item.id, Number(e.target.value)); },
+          integer: true,
+          ariaLabel: labelOf(item, lang),
+          onCommit: function (next) { save(item.id, next); },
         });
       }
       if (item.type === "time") {

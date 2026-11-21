@@ -32,6 +32,8 @@ const SHARED = {
   'lib/filter-checklist.cjs': '筛选清单',
   'lib/date-picker.cjs': '日期控件',
   'lib/date-picker-styles.cjs': '日期控件样式',
+  'lib/switch.cjs': '布尔开关',
+  'lib/number-field.cjs': '数字输入',
   'lib/data-view.cjs': '数据页',
   'lib/action-schema-view.cjs': 'Action 页',
 };

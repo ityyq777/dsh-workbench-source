@@ -205,6 +205,31 @@ for (const [id, file, title, expected] of checks) {
   }
   const found = collect(tree);
   if (process.env.SALARY_DEBUG) console.error(id, [...found].join(" "));
+  if (id === "records") {
+    // 金额输入已统一走共享数字控件：按分步进、留空表示不填、只有绩效奖惩允许负数。
+    const NF = require(ROOT + "packages/addons/lib/number-field.cjs");
+    const F = require(ROOT + "packages/addons/salary/client/ui/fields.cjs");
+    const nodes = [];
+    (function walk(node) {
+      if (!node || typeof node !== "object") return;
+      if (Array.isArray(node)) { node.forEach(walk); return; }
+      if (node.type === NF.NumberField) nodes.push(node);
+      (node.children || []).forEach(walk);
+    })(tree);
+    assert.equal(nodes.length, F.KEYS.length, "每个金额项都换成共享数字控件");
+    for (const node of nodes) {
+      assert.equal(node.props.step, 0.01, "金额按分步进");
+      assert.equal(node.props.allowEmpty, true, "留空表示不填");
+      assert.equal(node.props.hint, false, "金额格不重复显示范围提示");
+      assert.ok(node.props.ariaLabel, "金额格保留无障碍标签");
+      if (node.props.ariaLabel === F.LABELS.performanceBonus) assert.equal(node.props.min, undefined, "绩效奖惩允许负数");
+      else assert.equal(node.props.min, 0, "其余金额不允许负数");
+    }
+    const recordsSrc = readFileSync(ROOT + "packages/addons/salary/client/views/records.cjs", "utf8");
+    assert.ok(!/type:\s*"number"/.test(recordsSrc), "records.cjs 不再用原生 number 输入");
+    assert.ok(recordsSrc.includes("firstBadAmount"), "保存前逐项复核金额合法性");
+    assert.ok(recordsSrc.includes("moneyInvalid"), "存在非法金额时禁用保存");
+  }
   for (const klass of expected) if (!found.has(klass)) problems.push(id + " 没渲染出 ." + klass);
   if (JSON.stringify(tree).includes("undefined")) problems.push(id + " 渲染结果含 undefined 文本");
 }

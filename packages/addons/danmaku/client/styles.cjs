@@ -7,6 +7,8 @@
 var baseStyles = require("../../lib/client-base-styles.cjs");
 // 共享开关控件的样式（wbctl-*），随本插件样式表一起注入。
 var SW = require("../../lib/switch.cjs");
+// 共享数字输入控件的样式（wbctl-num*），同样随本插件样式表注入。
+var NF = require("../../lib/number-field.cjs");
 
 function pageStyles() {
   return [
@@ -91,7 +93,8 @@ function pageStyles() {
     ".wbdm-ctl{display:flex;align-items:center;gap:8px;min-width:0}",
     ".wbdm-input,.wbdm-select{box-sizing:border-box;padding:5px 9px;border:1px solid var(--wb-border,#e5e7eb);border-radius:8px;background:var(--wb-surface,#fff);color:inherit;font:inherit;font-size:12px}",
     ".wbdm-input{width:100%;max-width:280px}",
-    ".wbdm-input[type=number]{width:96px}",
+    /* 数字项改用共享控件（wbctl-num*）后，这里只给它一个与其它控件一致的窄宽度。 */
+    ".wbdm-crow .wbctl-num .wbctl-num-input{width:120px}",
     ".wbdm-select{min-width:140px;max-width:280px}",
     ".wbdm-input:focus,.wbdm-select:focus{outline:none;border-color:var(--wb-accent,#2563eb);box-shadow:0 0 0 3px rgba(37,99,235,.14)}",
 
@@ -146,7 +149,7 @@ function pageStyles() {
 }
 
 module.exports = function styles() {
-  // 共享开关样式追加在页面样式之后，重复追加无害（规则完全一致）。
-  return baseStyles("wbdm").concat(pageStyles(), SW.styles);
+  // 共享开关与数字输入样式追加在页面样式之后，重复追加无害（规则完全一致）。
+  return baseStyles("wbdm").concat(pageStyles(), SW.styles, NF.styles);
 };
 module.exports.pageStyles = pageStyles;

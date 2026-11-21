@@ -22,7 +22,15 @@ for (const dir of ['packages/addons/mail/client/ui', 'packages/addons/lib']) {
   }
 }
 deps['lucide-react'] = { icons: {} };
-deps.react = createReact().React;
+// 共享数字输入控件内部用 useState/useRef/useEffect，而迷你 React 的 hook 槽位按运行时实例记账，
+// 所以视图与共享控件必须落在同一个运行时上；这里用代理把 react 调用转发给「当前挂载的运行时」，
+// 否则两次渲染会各自新建槽位，控件永远读回初值。
+let activeReact = null;
+const reactProxy = { Fragment: 'Fragment' };
+for (const key of ['createElement', 'cloneElement', 'forwardRef', 'createContext', 'useContext', 'useId', 'useState', 'useRef', 'useMemo', 'useCallback', 'useEffect']) {
+  reactProxy[key] = (...args) => activeReact[key](...args);
+}
+deps.react = reactProxy;
 
 const Config = loadCjs(resolve(root, 'packages/addons/mail/client/views/config.cjs'), deps);
 const MailHtml = loadCjs(resolve(root, 'packages/addons/mail/client/ui/mail-html.cjs'), deps);
@@ -76,7 +84,7 @@ const api = {
       return Promise.resolve({ domain: 'mail', groups: GROUPS, items: ITEMS, values: state.values, overrides: state.overrides, warnings: [] });
     }
     if (name === 'mail.configSet') {
-      if (state.failSet) return Promise.reject(new Error('list.pageSize 需要在 10–50 之间'));
+      if (state.failSet) return Promise.reject(new Error('写库失败：list.pageSize 被拒绝'));
       Object.assign(state.values, args.values);
       Object.assign(state.overrides, args.values);
       return Promise.resolve({ changed: Object.keys(args.values), values: state.values });
@@ -95,7 +103,13 @@ const api = {
 // 复用会串味（上一次的 ready/values 会被当成新挂载的初值）。
 function mountConfig(lang) {
   const rt = createReact();
-  return { render: () => rt.mount(Config, { api, lang: lang || 'zh', h: rt.React.createElement, React: rt.React }) };
+  activeReact = rt.React;
+  return {
+    render: () => {
+      activeReact = rt.React;
+      return rt.mount(Config, { api, lang: lang || 'zh', h: rt.React.createElement, React: rt.React });
+    },
+  };
 }
 
 const page = mountConfig('zh');
@@ -105,7 +119,11 @@ for (const item of ITEMS) assert.ok(txt.includes(item.zh), '应列出配置项�
 for (const group of GROUPS) assert.ok(txt.includes(group.zh), '应有分组标题：' + group.id);
 assert.match(txt, /邮件设置/);
 assert.equal(walk(tree).filter((n) => n.props && n.props.role === 'switch').length, 5, '五个布尔项各一个开关');
-assert.equal(walk(tree).filter((n) => n.props && n.props.type === 'number').length, 2, '两个数字项');
+// 数字项统一走共享数字输入控件：文本框 + 数字键盘，范围只作提示，不再用原生 number。
+const numInputs = (t) => walk(t).filter((n) => n.type === 'input' && String(n.props.className || '').includes('wbctl-num-input'));
+assert.equal(numInputs(tree).length, 2, '两个数字项各一个共享数字输入');
+assert.ok(numInputs(tree).every((n) => n.props.type === 'text' && n.props.inputMode === 'numeric'), '数字项用文本框 + 数字键盘');
+assert.match(txt, /10–50/, '范围只作提示文字');
 assert.match(txt, /正在运行：定时循环，300s/, '应显示自动同步的运行状态，而不是只显示开关意愿');
 const sel = walk(tree).find((n) => n.type === 'select' && n.props['aria-label'] === '正文配色');
 assert.ok(sel, '正文配色应渲染成下拉');
@@ -134,13 +152,26 @@ const themeCall = state.calls.filter((c) => c.name === 'mail.configSet').at(-1);
 assert.equal(JSON.stringify(themeCall.args), JSON.stringify({ values: { 'display.mailTheme': 'app' } }), '配色选择要立刻落库');
 assert.equal(state.values['display.mailTheme'], 'app');
 
-// C. 写失败：保留原值（不静默改成新值），提示错误原因。
-state.failSet = true;
-const num = walk(tree).find((n) => n.props && n.props.type === 'number');
-num.props.onChange({ target: { value: '60' } });
+// C. 数字项输入自由：越界只在失焦时红字提示，不提交、不改写用户输入。
+numInputs(tree)[0].props.onFocus();
+numInputs(tree)[0].props.onChange({ target: { value: '999' } });
 tree = await settle(page);
-assert.equal(walk(tree).find((n) => n.props && n.props.type === 'number').props.value, 20, '写失败要回退到落库值');
-assert.match(text(tree), /10–50/, '要说明失败原因');
+numInputs(tree)[0].props.onBlur();
+tree = await settle(page);
+assert.equal(state.values['list.pageSize'], 20, '越界不提交');
+assert.equal(numInputs(tree)[0].props.value, '999', '越界不改写用户输入');
+assert.ok(walk(tree).some((n) => String((n.props && n.props.className) || '').includes('wbctl-num-err')), '越界要红字提示');
+assert.ok(String(numInputs(tree)[0].props.className).includes('is-invalid'), '越界输入框标红');
+
+// C2. 写失败：保留原值（不静默改成新值），提示错误原因。
+state.failSet = true;
+numInputs(tree)[0].props.onFocus();
+numInputs(tree)[0].props.onChange({ target: { value: '30' } });
+tree = await settle(page);
+numInputs(tree)[0].props.onBlur();
+tree = await settle(page);
+assert.equal(walk(tree).filter((n) => n.type === 'input' && String(n.props.className || '').includes('wbctl-num-input'))[0].props.value, '20', '写失败要回退到落库值');
+assert.match(text(tree), /写库失败：list.pageSize 被拒绝/, '要说明失败原因');
 state.failSet = false;
 
 // D. 恢复默认：调 configReset 并把值同步回来。
@@ -170,6 +201,7 @@ assert.match(text(tree), /Remote|remote|Show remote images/);
 const html = '<p>正文</p><img src="https://img.example.com/logo.png" alt="logo">';
 function mountHtml(remoteDefault) {
   const rt = createReact();
+  activeReact = rt.React;
   return { render: () => rt.mount(MailHtml, { api, h: rt.React.createElement, React: rt.React, html, attachments: [], title: 't', remoteDefault }) };
 }
 const onPage = mountHtml(true);

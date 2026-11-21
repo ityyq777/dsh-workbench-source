@@ -1,13 +1,13 @@
 // 创建/重启表单独立模块；宿主相关工具由入口注入，避免循环依赖。
+var NF = require("../../../lib/number-field.cjs");
+
+// 这里只是把「默认值」（配置/来源任务）归一成合法初值，不涉及用户键入；
+// 用户键入的值一律原样保留，只在提交时校验。
 function initialPriority(source, origin, fallback) {
   var original = Number(origin && origin.priority);
   if (source === "2" && Number.isInteger(original) && original >= 1 && original <= 10) return original;
   var n = Number(fallback);
   return Number.isFinite(n) ? Math.min(10, Math.max(1, Math.floor(n))) : 1;
-}
-function clampInputPriority(value) {
-  if (String(value).trim() === "" || Number(value) === 0 || !Number.isFinite(Number(value))) return value;
-  return Math.min(10, Math.max(1, Math.floor(Number(value))));
 }
 function validatePriority(value, source, t) {
   var n = Number(value);
@@ -32,6 +32,7 @@ module.exports = function createModal(deps) {
     // 每次打开都重新确认，来源任务及树选择仅作建议。
     var defaults = props.defaults || {};
     var initPriority = initialPriority(source, origin, defaults.priority);
+    // 配置里的默认难度同样只做初值归一，用户之后键入的值不再夹取。
     var initDifficulty = Math.max(0, Math.min(5, Number(defaults.difficulty) || 0));
     var initOffset = Math.floor(Number(defaults.targetOffset));
     if (!(initOffset >= 0)) initOffset = 0;
@@ -54,6 +55,8 @@ module.exports = function createModal(deps) {
     }
     var active = source === "2" || form.status === "0";
     var priorityError = active ? validatePriority(form.priority, source, t) : "";
+    // 难度沿用「留空=未设置」，但非法键入（越界/非数字）只提示、不允许保存。
+    var difficultyCheck = NF.validateNumber(form.difficulty, { min: 0, max: 5, step: 0.5, allowEmpty: true, lang: props.lang });
 
     var plan = ownership.preview(props.tree, form.tablePath, form.pathDescriptions);
     var targetValid = form.newPath ? !plan.error && form.confirmed : tables.some(function (x) { return x.id === form.tableId; });
@@ -66,7 +69,7 @@ module.exports = function createModal(deps) {
     function setMany(patch) { setForm(function (prev) { return Object.assign({}, prev, patch); }); }
     function set(k, v) {
       var next = Object.assign({}, form);
-      next[k] = k === "priority" ? clampInputPriority(v) : v;
+      next[k] = v;
       setForm(next);
     }
     function failed(message) {
@@ -81,6 +84,7 @@ module.exports = function createModal(deps) {
     }
     function submit() {
       if (priorityError || isBusy || submission.pending) return;
+      if (!difficultyCheck.ok) { setError(difficultyCheck.error); return; }
       if (source === "2" && !(origin && origin.timelineId)) { setError(tr("请先手动建立并关联时间线，再重启")); return; }
       if (source === "1" && !form.timelineId) { setError(tr("请选择已有时间线")); return; }
       if (!String(form.title).trim()) { setError(t.needTitle); return; }
@@ -92,7 +96,7 @@ module.exports = function createModal(deps) {
         description: String(form.description || ""),
         tags: splitTags(form.tags), status: source === "2" ? "0" : String(form.status),
         priority: active ? Number(form.priority) : 0,
-        difficulty: Number(form.difficulty) || 0,
+        difficulty: difficultyCheck.value || 0,
         publishDate: form.publishDate,
         targetDate: form.targetDate,
         source: source === "2" ? "2" : form.timelineId ? "1" : "0",
@@ -137,19 +141,23 @@ module.exports = function createModal(deps) {
           h(WorkspaceSelect, { api: props.api, lang: props.lang, value: form.workspaceIds, onChange: function (ids) { set("workspaceIds", ids); } }),
           h("label", { className: "wbt-field" }, h("span", null, t.status), h("select", { className: "wbt-select", value: source === "2" ? "0" : form.status, disabled: source === "2", onChange: function (e) { set("status", e.target.value); } },
             h("option", { value: "0" }, "已开启"), h("option", { value: "2" }, "已完成"), h("option", { value: "1" }, "已关闭"))),
-          h("label", { className: "wbt-field" }, h("span", null, t.priority + "（1–10）"), h("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, disabled: !active, "aria-invalid": !!priorityError, "aria-describedby": priorityError ? "wbt-create-priority-error" : undefined, value: form.priority, onChange: function (e) { set("priority", e.target.value); } })),
+          h("div", { className: "wbt-field" }, h("span", { className: "wbt-field-label" }, t.priority + "（1–10）"),
+            h(NF.NumberField, { h: h, lang: props.lang, value: form.priority, min: 1, max: 10, integer: true, disabled: !active, hint: false, ariaLabel: t.priority,
+              // 键入即写入草稿；合法性由下面的 priorityError 实时判定，绝不回写夹取后的值。
+              onDraft: function (raw) { set("priority", raw); },
+              onCommit: function (next) { set("priority", String(next)); } })),
           fields({ form: form, set: set, setMany: setMany, tree: props.tree, recommended: props.defaultTableId || (origin && origin.tableId) }),
           h("label", { className: "wbt-field" }, h("span", null, t.publishDate), h(DP.DatePicker, { React: React, h: h, prefix: "wbt", lang: props.lang, label: t.publishDate, value: form.publishDate, onChange: function (next) { set("publishDate", next); } })),
           h("label", { className: "wbt-field" }, h("span", null, t.targetDate), h(DP.DatePicker, { React: React, h: h, prefix: "wbt", lang: props.lang, label: t.targetDate, value: form.targetDate, onChange: function (next) { set("targetDate", next); } })),
           (source !== "2" && form.status === "2") ? h("label", { className: "wbt-field" }, h("span", null, t.doneDate), h(DP.DatePicker, { React: React, h: h, prefix: "wbt", lang: props.lang, label: t.doneDate, value: form.doneDate, onChange: function (next) { set("doneDate", next); } })) : null,
-          difficultyField(t, form.difficulty, function (value) { set("difficulty", value); }, "wbt-create-difficulty"),
+          difficultyField(t, form.difficulty, function (value) { set("difficulty", value); }, "wbt-create-difficulty", props.lang),
           (source !== "2" && form.status === "1") ? h("label", { className: "wbt-field" }, h("span", null, t.shutdownDate), h(DP.DatePicker, { React: React, h: h, prefix: "wbt", lang: props.lang, label: t.shutdownDate, value: form.shutdownDate, onChange: function (next) { set("shutdownDate", next); } })) : null
         ),
         priorityError ? h("div", { id: "wbt-create-priority-error", className: "wbt-err", role: "alert" }, priorityError) : null,
         error ? h("div", { className: "wbt-err" }, error) : null,
         h("div", { className: "wbt-modal-foot" },
           h("button", { className: "wbt-btn ghost", disabled: isBusy, onClick: requestClose }, t.cancel),
-          h("button", { className: "wbt-btn primary", disabled: isBusy || !!priorityError || !targetValid || (source === "2" && !(origin && origin.timelineId)), onClick: submit }, isBusy ? "…" : t.create)
+          h("button", { className: "wbt-btn primary", disabled: isBusy || !!priorityError || !difficultyCheck.ok || !targetValid || (source === "2" && !(origin && origin.timelineId)), onClick: submit }, isBusy ? "…" : t.create)
         )
       )
     );

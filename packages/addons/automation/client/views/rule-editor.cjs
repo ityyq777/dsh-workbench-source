@@ -106,12 +106,15 @@ function RuleEditor(props) {
   var form = props.form;
   var set = props.set;
   var busy = props.busy;
+  var lang = props.lang;
   var actions = props.actions || [];
   var icon = props.icon;
   var initial = props.initial;
   var validation = validateForm(form, t);
   var errs = validation.errs;
   var exampleS = React.useState(false);
+  // 间隔分钟数字框的草稿合法性（非法草稿不进 form，所以要单独记一份来禁用保存）。
+  var numOkS = React.useState(true);
   var touchedS = React.useState(Boolean(form.name));
   var showNameErr = touchedS[0] && Boolean(errs.name);
   var hasActions = actions.length > 0;
@@ -168,7 +171,10 @@ function RuleEditor(props) {
               })))),
         h("div", { className: "wba-section" },
           h("p", { className: "wba-section-title" }, "② " + t("editor.section.trigger")),
-          h(trig.TriggerFields, { h: h, t: t, form: form, set: set, errs: errs, icon: icon })),
+          h(trig.TriggerFields, {
+            h: h, t: t, lang: lang, form: form, set: set, errs: errs, icon: icon,
+            onValidChange: function (ok) { numOkS[1](ok); },
+          })),
         h("div", { className: "wba-section" },
           h("p", { className: "wba-section-title" }, "③ " + t("editor.section.run")),
           h("div", { className: "wba-inline" },
@@ -234,9 +240,9 @@ function RuleEditor(props) {
             onChange: function (v) { set("condition", v); },
           }) : h("p", { className: "wba-sub" }, t("editor.conditionEmpty")))),
       h("div", { className: "wba-modal-foot" },
-        h("span", { className: "wba-sub wba-grow" }, validation.valid ? "" : errs.name || errs.actionArgs || errs.condition || t("editor.nameEmptySave")),
+        h("span", { className: "wba-sub wba-grow" }, validation.valid ? (numOkS[0] ? "" : errs.everyMinutes || t("trigger.intervalHint")) : errs.name || errs.actionArgs || errs.condition || t("editor.nameEmptySave")),
         h(C.Btn, { h: h, onClick: close }, t("common.cancel")),
-        h(C.Btn, { h: h, kind: "primary", disabled: busy || !validation.valid, onClick: function () { props.onSave(buildPayload(form)); } },
+        h(C.Btn, { h: h, kind: "primary", disabled: busy || !validation.valid || !numOkS[0], onClick: function () { props.onSave(buildPayload(form)); } },
           busy ? t("common.loading") : t("common.save"))));
 }
 

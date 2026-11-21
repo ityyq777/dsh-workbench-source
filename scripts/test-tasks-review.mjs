@@ -7,6 +7,7 @@ import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 const require = createRequire(import.meta.url);
 const copy = require('../packages/addons/tasks/client/ui/copy.cjs');
+const NF = require('../packages/addons/lib/number-field.cjs');
 let state = [], cursor = 0;
 const React = {
   createElement: (type, props, ...children) => ({ type, props: props || {}, children: children.flat(Infinity).filter(x => x != null) }),
@@ -17,7 +18,7 @@ const render = (C, props) => { cursor = 0; return C(props); };
 const all = node => node && typeof node === 'object' ? [node, ...node.children.flatMap(all)] : [];
 const find = (node, predicate) => { const hit = all(node).find(predicate); assert.ok(hit, 'expected UI control'); return hit; };
 const sandbox = { window: { __WB_HOST__: { registerAddon() {} } }, module: {}, console,
-  require: name => name === 'react' ? React : name.startsWith('../../lib/') ? require('../packages/addons/lib/' + name.slice('../../lib/'.length)) : name === './ui/body-mode.cjs' ? require('../packages/addons/tasks/client/ui/body-mode.cjs') : ['./ui/icons.cjs', './modals/edit-modal.cjs', './modals/create-modal.cjs', './item/task-item.cjs', './views/tasks-view.cjs', './item/difficulty-field.cjs', './modals/batch-modal.cjs', './views/timeline-view.cjs', './views/commands.cjs', './views/workspace-view.cjs', './timeline/task-timeline-modal.cjs'].includes(name) ? require('../packages/addons/tasks/client/' + name.slice(2)) : {},
+  require: name => name === 'react' ? React : name.startsWith('../../lib/') ? require('../packages/addons/lib/' + name.slice('../../lib/'.length)) : name === './ui/body-mode.cjs' ? require('../packages/addons/tasks/client/ui/body-mode.cjs') : ['./ui/icons.cjs', './modals/edit-modal.cjs', './modals/create-modal.cjs', './item/task-item.cjs', './views/tasks-view.cjs', './item/difficulty-field.cjs', './modals/batch-modal.cjs', './views/timeline-view.cjs', './views/commands.cjs', './views/workspace-view.cjs', './timeline/task-timeline-modal.cjs', './views/slot-task-from-message.cjs'].includes(name) ? require('../packages/addons/tasks/client/' + name.slice(2)) : {},
 };
 const source = readFileSync('packages/addons/tasks/client/client.src.cjs', 'utf8');
 runInNewContext(source.replace('  host.registerAddon({', '  window.test = { TaskItem, DoneModal, EditModal }; host.registerAddon({'), sandbox);
@@ -31,8 +32,10 @@ for (const lang of ['zh', 'en']) for (const status of ['0', '1', '2', '3']) {
     let tree = render(EditModal, props);
     const textareas = all(tree).filter(n => n.type === 'textarea');
     assert.equal(textareas.length, 2); assert.equal(textareas[0].props.value, 'Description'); assert.equal(textareas[1].props.value, 'existing');
-    assert.equal(find(tree, n => n.props['aria-label'] === copy[lang].difficulty).props.value, 2);
-    assert.equal(all(tree).some(n => n.props.type === 'number' && n.props.max === 10), status !== '2');
+    // 难度与优先级都换成共享数字控件：断言控件参数（范围/步长/初值），不再依赖 type="number"。
+    const difficulty = find(tree, n => n.type === NF.NumberField && n.props.ariaLabel === copy[lang].difficulty);
+    assert.equal(difficulty.props.value, 2); assert.equal(difficulty.props.min, 0); assert.equal(difficulty.props.max, 5); assert.equal(difficulty.props.step, 0.5);
+    assert.equal(all(tree).some(n => n.type === NF.NumberField && n.props.max === 10 && n.props.min === 1), status !== '2');
     find(tree, n => n.type === 'input' && n.props.value === task.title).props.onChange({target:{value:'Raw <title>'}});
     textareas[0].props.onChange({target:{value:'**raw description** <script>literal</script>'}});
     textareas[1].props.onChange({ target: { value: next } }); tree = render(EditModal, props);

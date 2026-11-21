@@ -248,4 +248,11 @@ var PAGE = [
 
 var DATE = require("../../../lib/date-picker-styles.cjs")("wbsal");
 
-module.exports = BASE.concat(PAGE, [DATE]).join("\n");
+// 金额格子用共享数字控件：占满栅格列，数字右对齐更像账目。
+var AMOUNT = [
+  ".wbsal-form-grid .wbctl-num{width:100%}",
+  ".wbsal-form-grid .wbctl-num-box{width:100%}",
+  ".wbsal-form-grid .wbctl-num-input{width:100%;box-sizing:border-box;text-align:right}",
+];
+
+module.exports = BASE.concat(PAGE, [DATE], AMOUNT, require("../../../lib/number-field.cjs").styles).join("\n");

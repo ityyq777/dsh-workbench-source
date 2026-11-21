@@ -87,12 +87,17 @@ test("四类触发只渲染各自的字段", () => {
   const base = Rules.emptyForm();
   const render = (kind) => renderToStaticMarkup(h(Trigger.TriggerFields, { h, t, form: Object.assign({}, base, { kind }), set: noop, errs: {} }));
   const interval = render("interval");
-  assert.ok(interval.includes('type="number"'));
+  // 数字项走共享数字输入控件：type="text" + inputmode，范围只写在提示里，不在输入期回灌。
+  assert.ok(interval.includes("wbctl-num-input"), "间隔分钟用共享数字输入控件");
+  assert.match(interval, /inputmode="numeric"/i);
+  assert.ok(!interval.includes('type="number"'), "不再使用会回灌边界的 type=number");
+  assert.ok(interval.includes(t("trigger.intervalHint")), "范围写成提示文字");
   assert.ok(!interval.includes('type="time"'));
   const daily = render("dailyAt");
   assert.ok(daily.includes('type="time"'));
   assert.ok(daily.includes("wba-chips"));
   assert.ok(!daily.includes('type="number"'));
+  assert.ok(!daily.includes("wbctl-num-input"));
   const event = render("event");
   assert.ok(event.includes("wba-domain-hints"));
   assert.ok(event.includes('list="wba-event-hints"'));
@@ -100,6 +105,7 @@ test("四类触发只渲染各自的字段", () => {
   const manual = render("manual");
   assert.ok(manual.includes(t("trigger.manualHint")));
   assert.ok(!manual.includes('type="number"'));
+  assert.ok(!manual.includes("wbctl-num-input"));
   assert.ok(!manual.includes('type="time"'));
   // 分段器四选一，当前类型 aria-pressed=true
   [["interval", 0], ["dailyAt", 0], ["event", 0], ["manual", 1]].forEach(() => {});

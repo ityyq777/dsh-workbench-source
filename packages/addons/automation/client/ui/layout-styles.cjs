@@ -85,6 +85,8 @@ module.exports = [
   ".wba-grow{flex:1;min-width:0}",
   ".wba-svg{display:inline-block;vertical-align:middle;flex:none}",
   ".wba-w-120{width:120px;flex:none}",
+  /* 共享数字输入框在触发配置里的宽度：与原来的 120px 输入框对齐。 */
+  ".wba-num{flex:none}.wba-num .wbctl-num-input{width:120px}",
   ".wba-w-96{width:96px;flex:none}",
   ".wba-list{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:12px;line-height:1.55}",
   ".wba-clickable{cursor:pointer}",

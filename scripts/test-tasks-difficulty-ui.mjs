@@ -1,6 +1,6 @@
 /** Real component event regressions; API calls are isolated spies, never production writes. */
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
+import Module, { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import RealReact from 'react';
@@ -15,9 +15,18 @@ const React={
   useId:()=>"filter-test",useRef:v=>{const i=cursor++;return state[i] ||= {current:v};}, useMemo:memo,
   useCallback:(fn,deps)=>memo(()=>fn,deps), useEffect:(fn,deps)=>memo(()=>{effects.push(fn);},deps),
 };
+// 共享数字控件在模块顶层 require('react')，这里用同一套假 React 顶替，避免真 hooks 冲突。
+const loadModule=Module._load;
+Module._load=function(request,parent){if(request==='react'&&parent&&/number-field\.cjs$/.test(parent.filename||''))return React;return loadModule.apply(this,arguments);};
+const NF=require('../packages/addons/lib/number-field.cjs');
 const walk=n=>n&&typeof n==='object'?[n,...n.children.flatMap(walk)]:[];
 const text=n=>n&&typeof n==='object'?n.children.map(text).join(''):String(n??'');
 const find=(tree,pred)=>{const n=walk(tree).find(pred);assert.ok(n,'expected control');return n;};
+// 真正的 input 在数字控件内部；取出它来驱动键入（控件负责校验与提交，绝不夹取）。
+const nfInput=node=>walk(node.type(node.props)).find(n=>n.type==='input'&&n.props.onChange);
+const difficultyNode=(tree,lang)=>find(tree,n=>n.type===NF.NumberField&&n.props.ariaLabel===copy[lang].difficulty);
+let propsForDifficulty=null;
+const typeDifficulty=(lang,value)=>nfInput(difficultyNode(render(Create,propsForDifficulty),lang)).props.onChange({target:{value}});
 const reset=()=>{state=[];cursor=0;effects=[];};
 const render=(C,p)=>{cursor=0;return C(p);};
 const flush=async()=>{const jobs=effects;effects=[];jobs.forEach(fn=>fn());for(let i=0;i<12;i++)await Promise.resolve();};
@@ -28,22 +37,39 @@ let cases=0;
 for(const lang of ['zh','en']) for(const source of ['0','1','2']) for(const status of ['0','2']) {
   reset();const calls=[];const props={tree,t:copy[lang],source,originTask:{id:'origin',timelineId:'line'},api:{call:async(action,args)=>{calls.push({action,args});return {ok:true};}},onCreated(){}};
   const change=(pred,value)=>find(render(Create,props),pred).props.onChange({target:{value}});
-  assert.equal(find(render(Create,props),n=>n.props['aria-label']===copy[lang].difficulty).props.value,0);
+  propsForDifficulty=props;
+  const difficultyCtl=difficultyNode(render(Create,props),lang);
+  assert.equal(difficultyCtl.props.value,0);
+  assert.equal(difficultyCtl.props.min,0);assert.equal(difficultyCtl.props.max,5);assert.equal(difficultyCtl.props.step,0.5);assert.equal(difficultyCtl.props.allowEmpty,true);
   assert.ok(text(render(Create,props)).includes(copy[lang].difficultyUnsetHint));
   change(n=>n.props.autoFocus,'Task');
   find(render(Create,props),n=>typeof n.type==='function'&&n.props.form&&n.props.set).props.set('tableId','table');
   if(source!=='2')change(n=>n.type==='select'&&n.props.value==='0',status);
-  change(n=>n.props['aria-label']===copy[lang].difficulty,3);
+  typeDifficulty(lang,3);
   find(render(Create,props),n=>n.props.className==='wbt-btn primary').props.onClick();await flush();
   assert.equal(calls.find(c=>c.action==='tasks.create').args.difficulty,3);cases++;
 }
 for(const lang of ['zh','en']) for(const status of ['0','1','2','3']) for(const initial of [null,0,2.5]) {
-  reset();let patch;const props={tree,t:copy[lang],task:{id:'task',title:'Task',status,difficulty:initial},api:{call:async(_,args)=>{patch=args;return {ok:true};}},onSaved(){}};
-  const input=()=>find(render(Edit,props),n=>n.props['aria-label']===copy[lang].difficulty);
-  assert.equal(input().props.value,initial||0); input().props.onChange({target:{value:4}});
+  reset();let patch;const props={tree,t:copy[lang],task:{id:'task',title:'Task',status,priority:4,difficulty:initial},api:{call:async(_,args)=>{patch=args;return {ok:true};}},onSaved(){}};
+  const input=()=>difficultyNode(render(Edit,props),lang);
+  const typeIn=value=>nfInput(input()).props.onChange({target:{value}});
+  assert.equal(input().props.value,initial||0); typeIn(4);
   assert.ok(text(render(Edit,props)).includes('★★★★☆'));assert.ok(text(render(Edit,props)).includes('4.0'));
   find(render(Edit,props),n=>n.props.className==='wbt-btn primary').props.onClick();await flush();assert.equal(patch.difficulty,4);
-  reset();input().props.onChange({target:{value:''}});find(render(Edit,props),n=>n.props.className==='wbt-btn primary').props.onClick();await flush();assert.equal(patch.difficulty,0);cases++;
+  reset();typeIn('');find(render(Edit,props),n=>n.props.className==='wbt-btn primary').props.onClick();await flush();assert.equal(patch.difficulty,0);cases++;
+  // 优先级越界只保留原样并禁用保存，绝不夹取后再提交。
+  if(status==='2')continue;
+  reset();patch=undefined;typeIn(2);
+  const prio=()=>find(render(Edit,props),n=>n.type===NF.NumberField&&n.props.max===10);
+  nfInput(prio()).props.onChange({target:{value:'11'}});
+  assert.equal(prio().props.value,'11');
+  assert.equal(find(render(Edit,props),n=>n.props.className==='wbt-btn primary').props.disabled,true);
+  find(render(Edit,props),n=>n.props.className==='wbt-btn primary').props.onClick();await flush();
+  assert.equal(patch,undefined,'越界优先级不得提交');
+  nfInput(prio()).props.onChange({target:{value:'5'}});
+  find(render(Edit,props),n=>n.props.className==='wbt-btn primary').props.onClick();await flush();
+  if(0){console.log('DBG',JSON.stringify(text(render(Edit,props)).slice(0,400)));}
+  assert.equal(patch.priority,5);cases++;
 }
 // Real React rendering verifies accessible numeric input and stars in both list/card layouts.
 const Item=require(dir+'item/task-item.cjs')({React:RealReact,statusInfo:()=>({}),stars:()=> '★★★☆☆',pClass:()=>'',today:()=>'',daysBetween:()=>0,cx:(...s)=>s.filter(Boolean).join(' '),Icon:()=>null,Countdown:()=>null,PathCrumbs:()=>null});

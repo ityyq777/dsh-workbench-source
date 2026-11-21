@@ -1,6 +1,8 @@
 "use strict";
 // Shared read-only data browser. Adapters supply only domain, config and column hooks.
 var React = require("react");
+// 数字输入统一走共享控件：分页跳转也不再是 type="number"。
+var NF = require("./number-field.cjs");
 var h = React.createElement;
 var COPY = require("./data-copy.cjs");
 var SW = require("./switch.cjs");
@@ -464,9 +466,10 @@ function DataView(props) {
       h("button", { type: "button", className: P + "-btn", disabled: !data || page <= 1, onClick: function () { setPage(Math.max(1, page - 1)); } }, "‹ " + t.prev),
       h("span", { className: P + "-pageinfo" }, fmt(t.pageInfo, { page: data ? data.page : 1, pages: pages })),
       h("button", { type: "button", className: P + "-btn", disabled: !data || page >= pages, onClick: function () { setPage(Math.min(pages, page + 1)); } }, t.next + " ›"),
-      h("input", {
-        className: P + "-jump", type: "number", min: 1, max: pages, "aria-label": t.jump,
-        onKeyDown: function (e) { if (e.key === "Enter") { var n = Math.floor(Number(e.target.value)); if (n >= 1) setPage(Math.min(pages, n)); } },
+      h(NF.NumberField, {
+        h: h, lang: lang, className: P + "-jump", value: page, min: 1, max: pages, integer: true,
+        ariaLabel: t.jump, hint: false,
+        onCommit: function (next) { if (next !== null) setPage(next); },
       }),
       data && data.queryMs !== undefined ? h("span", null, fmt(t.queryTime, { n: data.queryMs })) : null);
   }

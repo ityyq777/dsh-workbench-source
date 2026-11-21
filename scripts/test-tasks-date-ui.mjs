@@ -1,6 +1,6 @@
 /** Real component event regressions; API calls are isolated spies, never production writes. */
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
+import Module, { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import RealReact from 'react';
@@ -15,6 +15,11 @@ const React={
   useId:()=>"date-test", useRef:v=>{const i=cursor++;return state[i] ||= {current:v};}, useMemo:memo,
   useCallback:(fn,deps)=>memo(()=>fn,deps), useEffect:(fn,deps)=>memo(()=>{effects.push(fn);},deps),
 };
+// 共享数字控件在模块顶层 require("react")，假 React 测试必须先拦截，否则会走到真 React 的 hook 报错。
+const loadModule=Module._load;
+Module._load=function(request,parent){if(request==='react'&&parent&&/number-field\.cjs$/.test(parent.filename||''))return React;return loadModule.apply(this,arguments);};
+const NF=require('../packages/addons/lib/number-field.cjs');
+const SW=require('../packages/addons/lib/switch.cjs');
 const walk=n=>n&&typeof n==='object'?[n,...n.children.flatMap(walk)]:[];
 const text=n=>n&&typeof n==='object'?n.children.map(text).join(''):String(n??'');
 const find=(tree,pred)=>{const n=walk(tree).find(pred);assert.ok(n,'expected control');return n;};
@@ -122,36 +127,41 @@ const rangeOuter=View(rangeProps),RangeBody=rangeOuter.type;
 const rangeDraw=()=>render(RangeBody,rangeOuter.props);
 const rangeList=()=>rangeCalls.filter(c=>c.action==='tasks.list').at(-1).args;
 rangeDraw();await flush();
-const limitInputs=()=>walk(rangeDraw()).filter(n=>n.type&&n.type.name==='NumberInput');
-const priorityMin=()=>limitInputs().find(n=>n.props.label==='Minimum Priority');
-const priorityMax=()=>limitInputs().find(n=>n.props.label==='Maximum Priority');
-const difficultyMax=()=>limitInputs().find(n=>n.props.label==='Maximum Difficulty');
+const limitInputs=()=>walk(rangeDraw()).filter(n=>n.type===NF.NumberField);
+const priorityMin=()=>limitInputs().find(n=>n.props.ariaLabel==='Minimum Priority');
+const priorityMax=()=>limitInputs().find(n=>n.props.ariaLabel==='Maximum Priority');
+const difficultyMax=()=>limitInputs().find(n=>n.props.ariaLabel==='Maximum Difficulty');
 assert.equal(limitInputs().length,4,'two endpoints for each dimension');
 assert.equal(priorityMin().props.max,10);assert.equal(difficultyMax().props.max,5);
 assert.equal(priorityMin().props.step,1);assert.equal(difficultyMax().props.step,0.5,'difficulty steps by half');
-assert.equal(difficultyMax().props.min,0);assert.equal(limitInputs().find(n=>n.props.label==='Minimum Difficulty').props.step,0.5,'both difficulty endpoints step by half');
-assert.equal(priorityMin().props.value,'0');
-const inputNode=n=>n.type(n.props);
-const typeInto=(node,text)=>{const el=inputNode(node);el.props.onChange({target:{value:text}});return el;};
+assert.equal(difficultyMax().props.min,0);assert.equal(limitInputs().find(n=>n.props.ariaLabel==='Minimum Difficulty').props.step,0.5,'both difficulty endpoints step by half');
+assert.equal(priorityMin().props.value,'0');assert.equal(priorityMin().props.allowEmpty,true,'清空端点即取消该边界');
+assert.equal(priorityMin().props.integer,true);assert.equal(difficultyMax().props.integer,false);
+const nfInput=node=>walk(node.type(node.props)).find(n=>n.type==='input'&&n.props.onChange);
+const typeInto=(node,text)=>{const el=nfInput(node);el.props.onChange({target:{value:text}});};
+// 共享控件只在失焦/回车时提交，必须重新渲染拿到新的闭包再失焦，否则提交的是旧草稿。
+const commit=node=>{nfInput(node).props.onBlur();};
 typeInto(priorityMin(),'6');assert.equal(rangeList().priorityMin,undefined,'draft is not committed while typing');
-render(RangeBody,rangeOuter.props);
-let el=inputNode(priorityMin());el.props.onBlur({currentTarget:{validity:{}}});
+rangeDraw();commit(priorityMin());
 rangeDraw();await flush();
 assert.equal(rangeList().priorityMin,6);assert.equal(rangeList().priorityMax,10);
-typeInto(priorityMax(),'10');
-rangeDraw();el=inputNode(priorityMax());el.props.onBlur({currentTarget:{validity:{}}});
+typeInto(priorityMax(),'10');commit(priorityMax());
 rangeDraw();await flush();
 assert.equal(rangeList().priorityMax,10);
 assert.equal(find(rangeDraw(),n=>n.props['data-preset']==='urgent').props['aria-pressed'],false,'P6–10 is no longer a preset signature');
-typeInto(priorityMin(),'11');rangeDraw();el=inputNode(priorityMin());el.props.onBlur({currentTarget:{validity:{}}});
-rangeDraw();await flush();
+typeInto(priorityMin(),'11');commit(priorityMin());
+const invalidOut=priorityMin().type(priorityMin().props);
 assert.equal(rangeList().priorityMin,6,'invalid input keeps the previous range');
-assert.ok(text(rangeDraw()).includes('whole number'));
+assert.ok(text(invalidOut).includes('between 0 and 10'),'越界只红字提示，不改写也不提交');
+assert.equal(nfInput(priorityMin()).props.value,'11','草稿保留用户键入值，不被夹取');
+rangeDraw();await flush();
 // 设置难度区间会取消「仅未填难度」；勾选它又会清空难度区间。
-typeInto(difficultyMax(),'3');rangeDraw();el=inputNode(difficultyMax());el.props.onBlur({currentTarget:{validity:{}}});
+typeInto(difficultyMax(),'3');commit(difficultyMax());
 rangeDraw();await flush();
 assert.equal(rangeList().difficultyMax,3);
-const missingLabel=find(rangeDraw(),n=>n.type==='label'&&/difficulty/i.test(text(n)));find(missingLabel,n=>n.props&&n.props.role==='switch').props.onClick({preventDefault(){}});
+// 「仅未填难度」是共享开关组件，渲染前只是元素，需调用一次拿到 role="switch" 的按钮。
+const missingSwitch=find(rangeDraw(),n=>n.type===SW.Switch);
+missingSwitch.type(missingSwitch.props).props.onClick({preventDefault(){}});
 rangeDraw();await flush();
 assert.equal(rangeList().difficultyMax,undefined,'checking the missing filter clears the difficulty range');
 assert.equal(find(rangeDraw(),n=>n.props['data-status']==='all').props.checked,false);

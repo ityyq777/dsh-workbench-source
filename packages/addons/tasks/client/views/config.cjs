@@ -3,6 +3,8 @@
 var React = require("react");
 var h = React.createElement;
 var SW = require("../../../lib/switch.cjs");
+// 数字项统一使用共享数字输入控件（输入自由、失焦校验）。
+var NF = require("../../../lib/number-field.cjs");
 
 var DOMAIN = "tasks";
 var PREFIX = "wbt";
@@ -79,7 +81,7 @@ var CSS = [
   ".__P__-cfg-error{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid color-mix(in oklab,var(--dsw-alias-state-error-primary,currentColor) 32%,var(--cfg-line));border-radius:10px;padding:10px 13px;color:var(--dsw-alias-state-error-primary,inherit);font-size:12.5px;line-height:1.5}",
   "@media (max-width:820px){.__P__-cfg-row{grid-template-columns:1fr;gap:10px;padding:13px 16px}.__P__-cfg-control{justify-content:flex-start}.__P__-cfg-multi{justify-content:flex-start}.__P__-cfg-gtitle{padding:11px 16px}}",
   "@media (prefers-reduced-motion:reduce){.__P__-cfg-sk{animation:none;transition:none}}",
-].concat(SW.styles).join("\n").split("__P__").join(PREFIX);
+].concat(SW.styles).concat(NF.styles).join("\n").split("__P__").join(PREFIX);
 
 function injectCss() {
   if (typeof document === "undefined") return;
@@ -153,8 +155,6 @@ function ConfigView(props) {
   var notice = noticeS[0], setNotice = noticeS[1];
   var savingS = React.useState("");
   var savingId = savingS[0], setSavingId = savingS[1];
-  var draftsS = React.useState({});
-  var drafts = draftsS[0], setDrafts = draftsS[1];
   var busyS = React.useState(false);
   var busy = busyS[0], setBusy = busyS[1];
   // State disables controls after render; the ref also rejects same-render stale handlers.
@@ -259,23 +259,6 @@ function ConfigView(props) {
       }).finally(release);
   }
 
-  function commitDraft(item) {
-    if (requestLock.current) return;
-    var raw = drafts[item.id];
-    if (raw === undefined) return;
-    var next = String(raw).trim();
-    setDrafts(function (prev) {
-      var copy = Object.assign({}, prev);
-      delete copy[item.id];
-      return copy;
-    });
-    if (next === "") return;
-    var value = Number(next);
-    if (!Number.isFinite(value)) return;
-    if (sameValue(value, state.values[item.id])) return;
-    save(item.id, value);
-  }
-
   function renderControl(item) {
     var value = state.values[item.id];
     var label = lang === "en" ? item.en : item.zh;
@@ -298,16 +281,11 @@ function ConfigView(props) {
       }));
     }
     if (item.type === "int") {
-      var draft = drafts[item.id] !== undefined ? drafts[item.id] : String(value);
-      return h("input", {
-        className: PREFIX + "-cfg-input", disabled: locked, type: "number", value: draft,
-        min: item.min, max: item.max, "aria-label": label,
-        onChange: function (e) {
-          var v = e.target.value;
-          setDrafts(function (prev) { var c = Object.assign({}, prev); c[item.id] = v; return c; });
-        },
-        onBlur: function () { commitDraft(item); },
-        onKeyDown: function (e) { if (e.key === "Enter") { e.preventDefault(); commitDraft(item); } },
+      return h(NF.NumberField, {
+        h: h, lang: lang, value: value === undefined ? "" : value,
+        min: item.min, max: item.max, integer: true, disabled: locked,
+        ariaLabel: label,
+        onCommit: function (next) { save(item.id, next); },
       });
     }
     if (item.type === "multi") {

@@ -8,8 +8,9 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 
-// 共享开关控件的模块，供沙箱里的 config.cjs 解析 require 用。
+// 共享开关控件与共享数字输入控件的模块，供沙箱里的 config.cjs 解析 require 用。
 const SW = createRequire(import.meta.url)('../packages/addons/lib/switch.cjs');
+const NF = createRequire(import.meta.url)('../packages/addons/lib/number-field.cjs');
 
 const file = 'packages/addons/message/client/views/config.cjs';
 let state = [];
@@ -70,8 +71,9 @@ const configView = (() => {
     require: (name) => {
       if (name === 'react') return React;
       if (name.includes('notifier')) return { refreshConfig() {}, preview() {} };
-      // 布尔项改用共享开关控件后，config.cjs 会 require 它。
+      // 布尔项改用共享开关控件、整数项改用共享数字输入控件后，config.cjs 会 require 它们。
       if (name === '../../../lib/switch.cjs') return SW;
+      if (name === '../../../lib/number-field.cjs') return NF;
       throw new Error('unexpected require: ' + name);
     },
     document: { addEventListener() {}, removeEventListener() {} },

@@ -13,6 +13,11 @@ var SecretPicker = require("./secret-picker.cjs");
 var probe = require("../../lib/domain/probe-error.js");
 // 布尔项统一使用共享开关控件。
 var SW = require("../../../lib/switch.cjs");
+// 端口这类数字项统一使用共享数字输入控件（输入自由、失焦校验、非法红字不提交）。
+var NF = require("../../../lib/number-field.cjs");
+
+/** 端口的合法范围；只作提示与校验，不夹取键入值。 */
+var PORT = { min: 1, max: 65535, integer: true };
 
 function t(lang, zh, en) {
   return lang === "en" ? en : zh;
@@ -75,6 +80,8 @@ module.exports = function AccountForm(props) {
   var busyS = S({ save: false, probe: false, vault: false });
   var errS = S("");
   var noticeS = S("");
+  // 端口数字框的草稿合法性：非法草稿不会写进 form，所以要单独记一份来禁用保存。
+  var portS = S({ imap: true, smtp: true });
 
   var vault = vaultS[0];
   var busy = busyS[0];
@@ -102,6 +109,16 @@ module.exports = function AccountForm(props) {
   function setNotice(value) {
     noticeS[1](value);
   }
+  function setPortOk(key, ok) {
+    var field = key === "imapPort" ? "imap" : "smtp";
+    if (portS[0][field] === ok) return;
+    var next = Object.assign({}, portS[0]);
+    next[field] = ok;
+    portS[1](next);
+  }
+  function portOk() {
+    return portS[0].imap !== false && portS[0].smtp !== false;
+  }
 
   function checkVault() {
     return C.call(api, "vault.status")
@@ -124,6 +141,8 @@ module.exports = function AccountForm(props) {
     var p = util.presetFor(providers, id, email);
     if (!p) return;
     upd({ provider: id, imapHost: p.imapHost, imapPort: p.imapPort, imapTls: p.imapTls, smtpHost: p.smtpHost, smtpPort: p.smtpPort, smtpTls: p.smtpTls, username: p.username, advanced: id === "other" });
+    // 切换预设会整体换掉主机与端口，之前的非法草稿状态一并清掉。
+    portS[1]({ imap: true, smtp: true });
   }
 
   function onPick(id) {
@@ -190,6 +209,11 @@ module.exports = function AccountForm(props) {
   }
 
   function submit() {
+    // 端口框里可能还是非法草稿（没提交进 form），这里再挡一次，避免把旧端口存下去。
+    if (!portOk()) {
+      setErr(t(lang, "端口需在 1–65535 之间", "Port must be between 1 and 65535"));
+      return;
+    }
     var msg = validate();
     if (msg) {
       setErr(msg);
@@ -236,6 +260,10 @@ module.exports = function AccountForm(props) {
   }
 
   function runProbe() {
+    if (!portOk()) {
+      setErr(t(lang, "端口需在 1–65535 之间", "Port must be between 1 and 65535"));
+      return;
+    }
     var msg = validate();
     if (msg) {
       setErr(msg);
@@ -276,8 +304,25 @@ module.exports = function AccountForm(props) {
       placeholder: o.placeholder || "",
       autoComplete: o.autoComplete || "off",
       onChange: function (e) {
-        upd(key === "imapPort" || key === "smtpPort" ? { [key]: e.target.value } : { [key]: e.target.value });
+        upd({ [key]: e.target.value });
       },
+    });
+  }
+  function portField(key, label) {
+    return h(NF.NumberField, {
+      h: h,
+      lang: lang,
+      value: f[key],
+      min: PORT.min,
+      max: PORT.max,
+      integer: PORT.integer,
+      wide: true,
+      ariaLabel: label,
+      hint: t(lang, "1–65535", "1–65535"),
+      onCommit: function (next) { upd({ [key]: next }); },
+      // 键入过程中就判断草稿合法性，非法时立刻禁用保存/自检。
+      onDraft: function (raw) { setPortOk(key, NF.validateNumber(raw, { min: PORT.min, max: PORT.max, integer: PORT.integer, lang: lang }).ok); },
+      onValidChange: function (ok) { setPortOk(key, ok); },
     });
   }
   function tlsRow(key, label) {
@@ -350,10 +395,10 @@ module.exports = function AccountForm(props) {
       : h("div", { className: "wbml-acct-grid" },
           field(t(lang, "登录名", "Login name"), textInput("username", { placeholder: t(lang, "默认与邮箱相同", "Defaults to the email") })),
           field(t(lang, "IMAP 服务器", "IMAP server"), textInput("imapHost")),
-          field(t(lang, "IMAP 端口", "IMAP port"), textInput("imapPort", { type: "number" })),
+          field(t(lang, "IMAP 端口", "IMAP port"), portField("imapPort", t(lang, "IMAP 端口", "IMAP port"))),
           field("", tlsRow("imapTls", t(lang, "IMAP 隐式 TLS", "IMAP implicit TLS"))),
           field(t(lang, "SMTP 服务器", "SMTP server"), textInput("smtpHost")),
-          field(t(lang, "SMTP 端口", "SMTP port"), textInput("smtpPort", { type: "number" })),
+          field(t(lang, "SMTP 端口", "SMTP port"), portField("smtpPort", t(lang, "SMTP 端口", "SMTP port"))),
           field("", tlsRow("smtpTls", t(lang, "SMTP 隐式 TLS（关掉走 STARTTLS）", "SMTP implicit TLS (off = STARTTLS)"))),
         ),
     h(VaultGate, {
@@ -378,8 +423,8 @@ module.exports = function AccountForm(props) {
     h(
       "div",
       { className: "wbml-acct-foot" },
-      h(C.Btn, { h: h, onClick: runProbe, disabled: busy.probe || busy.save || !f.secretId }, busy.probe ? t(lang, "自检中…", "Checking…") : t(lang, "保存前自检", "Check connection")),
-      h(C.Btn, { h: h, kind: "primary", onClick: submit, disabled: busy.save || !f.secretId }, busy.save ? t(lang, "保存中…", "Saving…") : t(lang, "保存", "Save")),
+      h(C.Btn, { h: h, onClick: runProbe, disabled: busy.probe || busy.save || !f.secretId || !portOk() }, busy.probe ? t(lang, "自检中…", "Checking…") : t(lang, "保存前自检", "Check connection")),
+      h(C.Btn, { h: h, kind: "primary", onClick: submit, disabled: busy.save || !f.secretId || !portOk() }, busy.save ? t(lang, "保存中…", "Saving…") : t(lang, "保存", "Save")),
       h(C.Btn, { h: h, onClick: props.onCancel }, t(lang, "取消", "Cancel")),
     ),
   );

@@ -13,6 +13,8 @@ module.exports = function Config(props) {
   var icons = require("../ui/icons.cjs");
   // 布尔项统一使用共享开关控件。
   var SW = require("../../../lib/switch.cjs");
+  // 数字项统一使用共享数字输入控件（范围只作提示，非法红字且不提交）。
+  var NF = require("../../../lib/number-field.cjs");
   var cfg = module.exports.useConfig(React, api);
   var toastS = React.useState("");
   var toast = toastS[0];
@@ -145,27 +147,19 @@ module.exports = function Config(props) {
       });
     }
     if (item.type === "int" || item.type === "number") {
-      return h(
-        "span",
-        { className: "wbml-numwrap" },
-        h("input", {
-          className: "wbml-input wbml-num",
-          type: "number",
-          min: item.min,
-          max: item.max,
-          step: 1,
-          value: value === undefined ? "" : value,
-          "aria-label": labelOf(item),
-          onChange: function (e) {
-            var next = Number(e.target.value);
-            if (!Number.isFinite(next) || next === value) return;
-            save(item.id, next);
-          },
-        }),
-        item.min !== undefined || item.max !== undefined
-          ? h("span", { className: "wbml-muted" }, (item.min === undefined ? "" : item.min) + "–" + (item.max === undefined ? "" : item.max))
-          : null,
-      );
+      // int 要求整数，number 允许小数（如不透明度）；范围交给控件提示文字。
+      return h(NF.NumberField, {
+        h: h,
+        lang: lang,
+        value: value === undefined ? "" : value,
+        min: item.min,
+        max: item.max,
+        integer: item.type === "int",
+        ariaLabel: labelOf(item),
+        onCommit: function (next) {
+          save(item.id, next);
+        },
+      });
     }
     if (item.type === "multi" && Array.isArray(item.values)) {
       // 枚举项（例如正文配色 original/app）用下拉，改一项立即写入。

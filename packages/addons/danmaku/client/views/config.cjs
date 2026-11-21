@@ -11,6 +11,8 @@ var h = React.createElement;
 var copy = require("../copy.cjs");
 // 布尔项统一走共享开关控件（lib/switch.cjs）。
 var SW = require("../../../lib/switch.cjs");
+// 数字项统一走共享数字输入控件（范围只作提示，非法红字且不提交）。
+var NF = require("../../../lib/number-field.cjs");
 
 var DOMAIN = "danmaku";
 
@@ -348,17 +350,16 @@ function ConfigView(props) {
       );
     }
     if (item.type === "int" || item.type === "number") {
-      return h("input", {
-        className: "wbdm-input",
-        type: "number",
-        step: item.type === "number" ? 0.05 : 1,
+      // int 要求整数；number（不透明度等）允许小数，不传 step 以免 0.93 被判非法。
+      return h(NF.NumberField, {
+        h: h,
+        lang: lang,
+        value: value === undefined ? "" : value,
         min: item.min,
         max: item.max,
-        value: value === undefined ? "" : value,
-        "aria-label": labelOf(item, lang),
-        onChange: function (e) {
-          var next = Number(e.target.value);
-          if (!isFinite(next)) return;
+        integer: item.type === "int",
+        ariaLabel: labelOf(item, lang),
+        onCommit: function (next) {
           save(item.id, next);
         },
       });

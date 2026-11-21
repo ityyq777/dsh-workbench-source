@@ -11,6 +11,8 @@ var chipStyle = require("../overlay/chip-style.cjs");
 var createOverlay = require("../../../lib/overlay.cjs");
 // 布尔项统一走共享开关控件（lib/switch.cjs），不再自绘 track/knob。
 var SW = require("../../../lib/switch.cjs");
+// 数字项统一走共享数字输入控件（lib/number-field.cjs）：范围只提示，非法红字且不写回草稿。
+var NF = require("../../../lib/number-field.cjs");
 
 var REDUCED = false;
 try {
@@ -152,7 +154,13 @@ module.exports = function renderDetail(props) {
     );
   }
 
+  /**
+   * 数字项：min/max/step 只转成提示文字，不交给控件做输入期夹取；
+   * 空串表示跟随全局，所以允许留空。
+   */
   function numField(key, label, hint, step, min, max) {
+    // 行左右两处各给一句：左侧标签下是单位/跟随全局，输入框下是范围与步长。
+    var showHint = min + "–" + max + (step === 1 ? "，整数" : "，步长 " + step);
     return h(
       "label",
       { className: "wbdm-crow" },
@@ -162,16 +170,18 @@ module.exports = function renderDetail(props) {
         h("span", { className: "wbdm-crow-t" }, label),
         h("span", { className: "wbdm-crow-h" }, hint),
       ),
-      h("input", {
-        className: "wbdm-input",
-        type: "number",
+      h(NF.NumberField, {
+        h: h,
         value: numberOrText(detail[key]),
         min: min,
         max: max,
-        step: step,
+        integer: Math.round(step) === step,
+        allowEmpty: true,
+        ariaLabel: label,
         placeholder: C.followGlobal,
-        onChange: function (e) {
-          set(key, e.target.value);
+        hint: showHint,
+        onCommit: function (next) {
+          set(key, next === null ? "" : String(next));
         },
       }),
     );
@@ -311,7 +321,7 @@ module.exports = function renderDetail(props) {
           numField("fontSize", C.fontSize, C.unitPx + " · " + C.followGlobal, 1, 10, 48),
           selectField("fontWeight", C.weight, weights),
           selectField("fontFamily", C.family, families),
-          numField("opacity", C.opacity, "0.15–1 · " + C.followGlobal, 0.02, 0.15, 1),
+          numField("opacity", C.opacity, C.followGlobal, 0.02, 0.15, 1),
         ),
         h(
           "section",

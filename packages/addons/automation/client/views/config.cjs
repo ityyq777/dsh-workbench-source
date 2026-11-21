@@ -3,6 +3,8 @@
 var C = require("../ui/common.cjs");
 var copy = require("../ui/copy.cjs");
 var picker = require("./action-picker.cjs");
+// 数字项统一使用共享数字输入控件（范围只作提示，非法红字且不提交）。
+var NF = require("../../../lib/number-field.cjs");
 
 var CONSTRAINTS = ["strategy", "concurrency", "event", "condition", "backup", "safety"];
 
@@ -20,25 +22,27 @@ function ConfigBody(props) {
     h("div", { className: "wba-grid-2" },
       h("label", { className: "wba-field" },
         h("span", { className: "wba-label" }, t("config.limit.maxRules")),
-        h("input", {
-          className: "wba-input",
-          type: "number",
+        h(NF.NumberField, {
+          h: h,
+          lang: props.lang,
+          value: form.maxRules === undefined ? "" : form.maxRules,
           min: 1,
           max: 500,
-          value: form.maxRules,
-          "aria-label": t("config.limit.maxRules"),
-          onChange: function (e) { props.onChange("maxRules", e.target.value); },
+          integer: true,
+          ariaLabel: t("config.limit.maxRules"),
+          onCommit: function (next) { props.onChange("maxRules", next); },
         })),
       h("label", { className: "wba-field" },
         h("span", { className: "wba-label" }, t("config.limit.perHour")),
-        h("input", {
-          className: "wba-input",
-          type: "number",
+        h(NF.NumberField, {
+          h: h,
+          lang: props.lang,
+          value: form.perHour === undefined ? "" : form.perHour,
           min: 1,
           max: 600,
-          value: form.perHour,
-          "aria-label": t("config.limit.perHour"),
-          onChange: function (e) { props.onChange("perHour", e.target.value); },
+          integer: true,
+          ariaLabel: t("config.limit.perHour"),
+          onCommit: function (next) { props.onChange("perHour", next); },
         }))),
     h("p", { className: "wba-sub" }, t("config.limit.hint")),
     h("div", { className: "wba-inline" },
@@ -127,6 +131,7 @@ module.exports = function ConfigView(props) {
       ? h("div", { className: "wba-panel" }, h("div", { className: "wba-skel" }), h("div", { className: "wba-skel" }))
       : h(ConfigBody, {
           h: h,
+          lang: lang,
           t: t,
           icon: props.icon,
           form: form,

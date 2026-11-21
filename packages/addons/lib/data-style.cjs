@@ -59,8 +59,8 @@ var CSS = [
   "." + P + "-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px;font-size:11.5px;color:var(--cfg-muted)}",
   "." + P + "-grow{flex:1}",
   "." + P + "-pageinfo{font-variant-numeric:tabular-nums}",
-  "." + P + "-jump{width:56px;border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:7px;padding:4px 7px;font:inherit;font-size:11.5px;text-align:right;outline:none}",
-  "." + P + "-jump:focus{border-color:var(--dsw-alias-brand-primary,currentColor)}",
+  "." + P + "-jump .wbctl-num-input{width:56px;padding:4px 7px;font-size:11.5px;text-align:right}",
+  "." + P + "-jump .wbctl-num-hint{display:none}",
   "." + P + "-empty{border:1px dashed var(--cfg-line);border-radius:11px;padding:44px 16px;text-align:center;font-size:12.5px;color:var(--cfg-muted)}",
   "." + P + "-err{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid color-mix(in oklab,var(--dsw-alias-state-error-primary,currentColor) 32%,var(--cfg-line));border-radius:10px;padding:9px 12px;color:var(--dsw-alias-state-error-primary,inherit);font-size:12px;line-height:1.5}",
   "." + P + "-skwrap{display:flex;flex-direction:column;gap:1px;padding:2px}",
@@ -98,7 +98,7 @@ var CSS = [
   "." + P + "-images img{width:36px;height:36px;object-fit:cover;border-radius:5px}",
   "." + P + "-gallery{display:flex;flex-direction:column;gap:12px;overflow:auto;flex:1}",
   "." + P + "-gallery img{width:100%;height:auto;object-fit:contain;border-radius:8px}",
-].concat(require("./switch.cjs").styles).join("\n");
+].concat(require("./switch.cjs").styles).concat(require("./number-field.cjs").styles).join("\n");
 // Keep other domains unchanged; inventory consumes the common light-button contract.
 if (DOMAIN === "storage") {
   var buttons = "." + P + " :is(button)";

@@ -4,6 +4,8 @@
  * 只调本插件 action；金额格式与汇总口径统一走 ui/fields.cjs。
  */
 var createOverlay = require("../../../lib/overlay.cjs");
+// 金额输入统一走校验型控件：键入不被改写，非法只红字提示并禁止保存。
+var NF = require("../../../lib/number-field.cjs");
 // 记一笔/编辑工资的弹窗外壳走共享实现：遮罩、Esc、Tab 循环、关闭后焦点归位。
 var FormOverlay = createOverlay({
   maskClass: "wbsal-mask",
@@ -35,6 +37,10 @@ module.exports = function Records(props) {
   var msg = msgState[0], setMsg = msgState[1];
   var savingState = React.useState(false);
   var saving = savingState[0], setSaving = savingState[1];
+  // 记录哪些金额项当前不合法：只要有一项非法就禁止保存，避免提交半截数据。
+  var badState = React.useState({});
+  var badKeys = badState[0], setBadKeys = badState[1];
+  var moneyInvalid = Object.keys(badKeys).length > 0;
 
   // 编辑/新增改为弹层：Esc 关闭、禁止背景滚动；document 不存在时（脚本渲染测试）跳过。
   var modalOpen = !!form;
@@ -66,6 +72,7 @@ module.exports = function Records(props) {
     setConfirmId("");
     setOpenId("");
     setMsg(null);
+    setBadKeys({});
     var payDate = pickDate("monthly");
     setForm({ mode: "create", id: "", payDate: payDate, incomePeriod: defaultPeriod(payDate, "monthly"), cycle: "monthly", employmentType: "", note: F.defaultNote(payDate, "monthly"), values: F.blankValues(), lockGross: false });
   }
@@ -74,6 +81,7 @@ module.exports = function Records(props) {
     var values = F.blankValues();
     F.KEYS.forEach(function (key) { values[key] = key === "grossPay" || key === "netPay" ? F.fmtAmount(item[key]) : item[key] ? F.fmtAmount(item[key]) : ""; });
     var incomeZero = F.INCOME_KEYS.every(function (key) { return !F.num(item[key]); });
+    setBadKeys({});
     setConfirmId("");
     setOpenId("");
     setMsg(null);
@@ -87,6 +95,7 @@ module.exports = function Records(props) {
   function closeForm() {
     setForm(null);
     setMsg(null);
+    setBadKeys({});
   }
 
   function setField(key, value) {
@@ -116,6 +125,28 @@ module.exports = function Records(props) {
     });
   }
 
+  // 失焦/回车校验后维护非法集合；键入期也算一次，保证按钮即时反映。
+  function markAmount(key, ok) {
+    setBadKeys(function (prev) {
+      var known = !!prev[key];
+      if (known === !ok) return prev;
+      var next = Object.assign({}, prev);
+      if (ok) delete next[key];
+      else next[key] = true;
+      return next;
+    });
+  }
+
+  // 提交前逐项复核，任何一项非法都只提示、不写库。
+  function firstBadAmount() {
+    var keys = F.KEYS;
+    for (var i = 0; i < keys.length; i += 1) {
+      var check = NF.validateNumber(form.values[keys[i]], amountRules(keys[i]));
+      if (!check.ok) return { key: keys[i], error: check.error };
+    }
+    return null;
+  }
+
   function recalcFromDetail() {
     setForm(function (prev) {
       var computed = F.totals(prev.values);
@@ -126,6 +157,8 @@ module.exports = function Records(props) {
 
   function submit() {
     if (!form) return;
+    var bad = firstBadAmount();
+    if (bad) { setMsg({ kind: "error", text: F.LABELS[bad.key] + "：" + bad.error }); return; }
     var computed = F.totals(form.values);
     var payload = {
       payDate: form.payDate,
@@ -178,14 +211,18 @@ module.exports = function Records(props) {
   var latest = status.data || {};
 
 
+  // 绩效奖惩允许负数，其余金额不能为负（与后端校验口径一致）；空值表示不填。
+  function amountRules(key) {
+    return { min: key === "performanceBonus" ? undefined : 0, step: 0.01, allowEmpty: true, lang: lang };
+  }
+
   function amountInput(key, disabled) {
-    return h("input", {
-      className: "wbsal-input", type: "number", step: "0.01",
-      min: key === "performanceBonus" ? undefined : "0",
-      value: form.values[key],
-      disabled: disabled,
-      onChange: function (e) { setValue(key, e.target.value); },
-      onBlur: function () { setValue(key, F.fmtAmount(F.num(form.values[key]))); },
+    return h(NF.NumberField, {
+      h: h, lang: lang, wide: true, className: "wbsal-amount",
+      value: form.values[key], disabled: disabled, hint: false,
+      min: amountRules(key).min, step: 0.01, allowEmpty: true, ariaLabel: F.LABELS[key],
+      onDraft: function (raw) { setValue(key, raw); markAmount(key, NF.validateNumber(raw, amountRules(key)).ok); },
+      onCommit: function (next) { setValue(key, next === null ? "" : String(next)); markAmount(key, true); },
     });
   }
 
@@ -244,7 +281,7 @@ module.exports = function Records(props) {
           h(C.Btn, { h: h, onClick: recalcFromDetail }, "按明细重算")) : null),
       h(C.Notice, { h: h, kind: msg && msg.kind, text: msg && msg.text }),
       h("div", { className: "wbsal-form-actions" },
-        h(C.Btn, { h: h, kind: "primary", onClick: submit, disabled: saving }, saving ? "保存中…" : (form.mode === "edit" ? "保存修改" : "保存")),
+        h(C.Btn, { h: h, kind: "primary", onClick: submit, disabled: saving || moneyInvalid }, saving ? "保存中…" : (form.mode === "edit" ? "保存修改" : "保存")),
         h(C.Btn, { h: h, kind: "ghost", onClick: closeForm }, "取消")));
   }
 

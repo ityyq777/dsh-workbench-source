@@ -2367,12 +2367,211 @@ var require_switch = __commonJS({
   }
 });
 
+// packages/addons/lib/number-field.cjs
+var require_number_field = __commonJS({
+  "packages/addons/lib/number-field.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var NUM = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
+    var TEXT = {
+      zh: {
+        required: "\u8BF7\u586B\u5199\u6570\u5B57",
+        invalid: "\u8BF7\u8F93\u5165\u6570\u5B57",
+        integer: "\u9700\u8981\u662F\u6574\u6570",
+        min: "\u4E0D\u80FD\u5C0F\u4E8E {min}",
+        max: "\u4E0D\u80FD\u5927\u4E8E {max}",
+        range: "\u9700\u8981\u5728 {min}\u2013{max} \u4E4B\u95F4",
+        step: "\u9700\u8981\u662F {step} \u7684\u500D\u6570",
+        unit: "\u5355\u4F4D"
+      },
+      en: {
+        required: "Please enter a number",
+        invalid: "Please enter a number",
+        integer: "Must be a whole number",
+        min: "Must be at least {min}",
+        max: "Must be at most {max}",
+        range: "Must be between {min} and {max}",
+        step: "Must be a multiple of {step}",
+        unit: "unit"
+      }
+    };
+    function messages(lang) {
+      return lang === "en" ? TEXT.en : TEXT.zh;
+    }
+    function fill(text, vars) {
+      return String(text).replace(/\{(\w+)\}/g, function(m, key) {
+        return vars && vars[key] !== void 0 ? String(vars[key]) : m;
+      });
+    }
+    function validateNumber(raw, opts) {
+      var o = opts || {};
+      var M = messages(o.lang);
+      var text = raw === null || raw === void 0 ? "" : String(raw).trim();
+      if (text === "") {
+        return o.allowEmpty ? { ok: true, value: null, error: "" } : { ok: false, value: null, error: M.required };
+      }
+      if (!NUM.test(text)) return { ok: false, value: null, error: M.invalid };
+      var n = Number(text);
+      if (!isFinite(n)) return { ok: false, value: null, error: M.invalid };
+      if (o.integer && Math.round(n) !== n) return { ok: false, value: null, error: M.integer };
+      var hasMin = o.min !== void 0 && o.min !== null && o.min !== "";
+      var hasMax = o.max !== void 0 && o.max !== null && o.max !== "";
+      if (hasMin && hasMax && n >= o.min && n <= o.max) {
+      } else if (hasMin && hasMax) {
+        return { ok: false, value: null, error: fill(M.range, { min: o.min, max: o.max }) };
+      } else if (hasMin && n < o.min) {
+        return { ok: false, value: null, error: fill(M.min, { min: o.min }) };
+      } else if (hasMax && n > o.max) {
+        return { ok: false, value: null, error: fill(M.max, { max: o.max }) };
+      }
+      if (o.step && Number(o.step) > 0) {
+        var q = n / Number(o.step);
+        if (Math.abs(q - Math.round(q)) > 1e-9) {
+          return { ok: false, value: null, error: fill(M.step, { step: o.step }) };
+        }
+      }
+      return { ok: true, value: n, error: "" };
+    }
+    function rangeHint(opts, lang) {
+      var o = opts || {};
+      var M = messages(lang);
+      var en = lang === "en";
+      var hasMin = o.min !== void 0 && o.min !== null && o.min !== "";
+      var hasMax = o.max !== void 0 && o.max !== null && o.max !== "";
+      var parts = [];
+      if (hasMin && hasMax) parts.push(String(o.min) + "\u2013" + String(o.max));
+      else if (hasMin) parts.push((en ? "\u2265 " : "\u2265 ") + String(o.min));
+      else if (hasMax) parts.push((en ? "\u2264 " : "\u2264 ") + String(o.max));
+      if (o.integer) parts.push(en ? "whole numbers" : "\u6574\u6570");
+      else if (o.step && Number(o.step) > 0) parts.push((en ? "step " : "\u6B65\u957F ") + String(o.step));
+      return parts.join(en ? ", " : "\uFF0C");
+    }
+    function NumberField(props) {
+      var h = props.h || React.createElement;
+      var lang = props.lang;
+      var M = messages(lang);
+      var text = props.value === null || props.value === void 0 ? "" : String(props.value);
+      var draftS = React.useState(text);
+      var draft = draftS[0];
+      var setDraft = draftS[1];
+      var focusS = React.useState(false);
+      var focused = focusS[0];
+      var setFocused = focusS[1];
+      var errS = React.useState("");
+      var err = errS[0];
+      var setErr = errS[1];
+      var lastRef = React.useRef(text);
+      var skipBlurRef = React.useRef(false);
+      React.useEffect(
+        function() {
+          if (focused) return;
+          if (lastRef.current === text) return;
+          lastRef.current = text;
+          setDraft(text);
+          setErr("");
+        },
+        [text, focused]
+      );
+      function commit(raw) {
+        var r = validateNumber(raw, props);
+        if (!r.ok) {
+          setErr(r.error);
+          if (typeof props.onValidChange === "function") props.onValidChange(false, r.error);
+          return false;
+        }
+        setErr("");
+        if (typeof props.onValidChange === "function") props.onValidChange(true, "");
+        var cur = props.value === null || props.value === void 0 ? null : Number(props.value);
+        if (r.value !== cur) {
+          lastRef.current = r.value === null ? "" : String(r.value);
+          if (typeof props.onCommit === "function") props.onCommit(r.value);
+        }
+        return true;
+      }
+      var hint = props.hint !== void 0 ? props.hint : rangeHint(props, lang);
+      var shown = props.hint === false ? "" : hint;
+      return h(
+        "span",
+        { className: "wbctl-num" + (props.wide ? " is-wide" : "") + (props.className ? " " + props.className : "") },
+        h(
+          "span",
+          { className: "wbctl-num-box" },
+          h("input", {
+            className: "wbctl-num-input" + (err ? " is-invalid" : ""),
+            type: "text",
+            inputMode: props.integer || Number(props.step) === 1 ? "numeric" : "decimal",
+            value: draft,
+            disabled: !!props.disabled,
+            placeholder: props.placeholder,
+            title: props.title,
+            "aria-label": props.ariaLabel,
+            "aria-invalid": err ? "true" : void 0,
+            onFocus: function() {
+              setFocused(true);
+            },
+            onChange: function(e) {
+              setDraft(e.target.value);
+              if (err) setErr("");
+              if (typeof props.onDraft === "function") props.onDraft(e.target.value);
+            },
+            onBlur: function() {
+              setFocused(false);
+              if (skipBlurRef.current) {
+                skipBlurRef.current = false;
+                return;
+              }
+              commit(draft);
+            },
+            onKeyDown: function(e) {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (e.target && e.target.blur) e.target.blur();
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                skipBlurRef.current = true;
+                setDraft(text);
+                setErr("");
+                if (e.target && e.target.blur) e.target.blur();
+              }
+            }
+          }),
+          props.unit ? h("span", { className: "wbctl-num-unit" }, props.unit) : null
+        ),
+        err ? h("span", { className: "wbctl-num-err", role: "alert" }, err) : shown ? h("span", { className: "wbctl-num-hint" }, shown) : null
+      );
+    }
+    var NUMBER_STYLES = [
+      ".wbctl-num{display:inline-flex;flex-direction:column;gap:3px;min-width:0;max-width:100%}",
+      ".wbctl-num.is-wide{display:flex;width:100%}",
+      ".wbctl-num-box{display:inline-flex;align-items:center;gap:6px;min-width:0}",
+      ".wbctl-num-input{box-sizing:border-box;width:96px;min-width:0;padding:6px 9px;border:1px solid var(--wb-line,rgba(127,127,127,.35));border-radius:6px;background:var(--wb-surface,var(--wb-card,transparent));color:inherit;font:inherit;font-size:13px;font-variant-numeric:tabular-nums;transition:border-color .14s ease,outline-color .14s ease}",
+      ".wbctl-num-input:hover:not(:disabled){border-color:var(--wb-border,var(--wb-line))}",
+      ".wbctl-num-input:focus{outline:2px solid color-mix(in oklab,var(--wb-accent,#2563eb) 55%,transparent);outline-offset:1px;border-color:var(--wb-accent,#2563eb)}",
+      ".wbctl-num-input.is-invalid{border-color:var(--wb-danger,#dc2626)}",
+      ".wbctl-num-input.is-invalid:focus{outline-color:color-mix(in oklab,var(--wb-danger,#dc2626) 55%,transparent)}",
+      ".wbctl-num-input:disabled{opacity:.5;cursor:not-allowed}",
+      ".wbctl-num-unit{color:var(--wb-muted,inherit);font-size:12px;white-space:nowrap}",
+      ".wbctl-num-hint{color:var(--wb-muted,inherit);font-size:11px;line-height:1.4}",
+      ".wbctl-num-err{color:var(--wb-danger,#dc2626);font-size:11px;line-height:1.4}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-num-input{transition:none}}"
+    ];
+    module2.exports = {
+      NumberField,
+      validateNumber,
+      rangeHint,
+      messages,
+      styles: NUMBER_STYLES
+    };
+  }
+});
+
 // packages/addons/tasks/client/views/config.cjs
 var require_config = __commonJS({
   "packages/addons/tasks/client/views/config.cjs"(exports2, module2) {
     var React = require("react");
     var h = React.createElement;
     var SW = require_switch();
+    var NF = require_number_field();
     var DOMAIN = "tasks";
     var PREFIX = "wbt";
     var COPY = {
@@ -2472,7 +2671,7 @@ var require_config = __commonJS({
       ".__P__-cfg-error{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid color-mix(in oklab,var(--dsw-alias-state-error-primary,currentColor) 32%,var(--cfg-line));border-radius:10px;padding:10px 13px;color:var(--dsw-alias-state-error-primary,inherit);font-size:12.5px;line-height:1.5}",
       "@media (max-width:820px){.__P__-cfg-row{grid-template-columns:1fr;gap:10px;padding:13px 16px}.__P__-cfg-control{justify-content:flex-start}.__P__-cfg-multi{justify-content:flex-start}.__P__-cfg-gtitle{padding:11px 16px}}",
       "@media (prefers-reduced-motion:reduce){.__P__-cfg-sk{animation:none;transition:none}}"
-    ].concat(SW.styles).join("\n").split("__P__").join(PREFIX);
+    ].concat(SW.styles).concat(NF.styles).join("\n").split("__P__").join(PREFIX);
     function injectCss() {
       if (typeof document === "undefined") return;
       var old = document.getElementById("wb-addon-" + DOMAIN + "-config-css");
@@ -2555,8 +2754,6 @@ var require_config = __commonJS({
       var notice = noticeS[0], setNotice = noticeS[1];
       var savingS = React.useState("");
       var savingId = savingS[0], setSavingId = savingS[1];
-      var draftsS = React.useState({});
-      var drafts = draftsS[0], setDrafts = draftsS[1];
       var busyS = React.useState(false);
       var busy = busyS[0], setBusy = busyS[1];
       var requestLock = React.useRef(false), mounted = React.useRef(true);
@@ -2671,22 +2868,6 @@ var require_config = __commonJS({
           setNotice({ id: "", text: String(e && e.message || e), error: true });
         }).finally(release);
       }
-      function commitDraft(item) {
-        if (requestLock.current) return;
-        var raw = drafts[item.id];
-        if (raw === void 0) return;
-        var next = String(raw).trim();
-        setDrafts(function(prev) {
-          var copy = Object.assign({}, prev);
-          delete copy[item.id];
-          return copy;
-        });
-        if (next === "") return;
-        var value = Number(next);
-        if (!Number.isFinite(value)) return;
-        if (sameValue(value, state.values[item.id])) return;
-        save(item.id, value);
-      }
       function renderControl(item) {
         var value = state.values[item.id];
         var label = lang === "en" ? item.en : item.zh;
@@ -2719,31 +2900,17 @@ var require_config = __commonJS({
           }));
         }
         if (item.type === "int") {
-          var draft = drafts[item.id] !== void 0 ? drafts[item.id] : String(value);
-          return h("input", {
-            className: PREFIX + "-cfg-input",
-            disabled: locked,
-            type: "number",
-            value: draft,
+          return h(NF.NumberField, {
+            h,
+            lang,
+            value: value === void 0 ? "" : value,
             min: item.min,
             max: item.max,
-            "aria-label": label,
-            onChange: function(e) {
-              var v = e.target.value;
-              setDrafts(function(prev) {
-                var c = Object.assign({}, prev);
-                c[item.id] = v;
-                return c;
-              });
-            },
-            onBlur: function() {
-              commitDraft(item);
-            },
-            onKeyDown: function(e) {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                commitDraft(item);
-              }
+            integer: true,
+            disabled: locked,
+            ariaLabel: label,
+            onCommit: function(next) {
+              save(item.id, next);
             }
           });
         }
@@ -4584,8 +4751,8 @@ var require_data_style = __commonJS({
         "." + P + "-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px;font-size:11.5px;color:var(--cfg-muted)}",
         "." + P + "-grow{flex:1}",
         "." + P + "-pageinfo{font-variant-numeric:tabular-nums}",
-        "." + P + "-jump{width:56px;border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:7px;padding:4px 7px;font:inherit;font-size:11.5px;text-align:right;outline:none}",
-        "." + P + "-jump:focus{border-color:var(--dsw-alias-brand-primary,currentColor)}",
+        "." + P + "-jump .wbctl-num-input{width:56px;padding:4px 7px;font-size:11.5px;text-align:right}",
+        "." + P + "-jump .wbctl-num-hint{display:none}",
         "." + P + "-empty{border:1px dashed var(--cfg-line);border-radius:11px;padding:44px 16px;text-align:center;font-size:12.5px;color:var(--cfg-muted)}",
         "." + P + "-err{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid color-mix(in oklab,var(--dsw-alias-state-error-primary,currentColor) 32%,var(--cfg-line));border-radius:10px;padding:9px 12px;color:var(--dsw-alias-state-error-primary,inherit);font-size:12px;line-height:1.5}",
         "." + P + "-skwrap{display:flex;flex-direction:column;gap:1px;padding:2px}",
@@ -4623,7 +4790,7 @@ var require_data_style = __commonJS({
         "." + P + "-images img{width:36px;height:36px;object-fit:cover;border-radius:5px}",
         "." + P + "-gallery{display:flex;flex-direction:column;gap:12px;overflow:auto;flex:1}",
         "." + P + "-gallery img{width:100%;height:auto;object-fit:contain;border-radius:8px}"
-      ].concat(require_switch().styles).join("\n");
+      ].concat(require_switch().styles).concat(require_number_field().styles).join("\n");
       if (DOMAIN === "storage") {
         var buttons = "." + P + " :is(button)";
         CSS += buttons + "{border:none;background:var(--wb-btn-bg);min-height:var(--wb-btn-size-sm);min-width:var(--wb-btn-size-sm)}" + buttons + ":enabled:hover{background:var(--wb-btn-hover-bg)}" + buttons + ":enabled:active{background:var(--wb-btn-active-bg)}" + buttons + ":disabled{background:var(--wb-btn-bg);color:var(--cfg-muted)}" + buttons + ":focus-visible{outline:var(--wb-btn-focus);outline-offset:var(--wb-btn-focus-offset)}." + P + "-fcell:has(button) input{padding-right:34px}";
@@ -4651,6 +4818,7 @@ var require_data_view = __commonJS({
   "packages/addons/lib/data-view.cjs"(exports2, module2) {
     "use strict";
     var React = require("react");
+    var NF = require_number_field();
     var h = React.createElement;
     var COPY = require_data_copy();
     var SW = require_switch();
@@ -5207,17 +5375,18 @@ var require_data_view = __commonJS({
             h("button", { type: "button", className: P + "-btn", disabled: !data || page >= pages, onClick: function() {
               setPage(Math.min(pages, page + 1));
             } }, t.next + " \u203A"),
-            h("input", {
+            h(NF.NumberField, {
+              h,
+              lang,
               className: P + "-jump",
-              type: "number",
+              value: page,
               min: 1,
               max: pages,
-              "aria-label": t.jump,
-              onKeyDown: function(e) {
-                if (e.key === "Enter") {
-                  var n = Math.floor(Number(e.target.value));
-                  if (n >= 1) setPage(Math.min(pages, n));
-                }
+              integer: true,
+              ariaLabel: t.jump,
+              hint: false,
+              onCommit: function(next) {
+                if (next !== null) setPage(next);
               }
             }),
             data && data.queryMs !== void 0 ? h("span", null, fmt(t.queryTime, { n: data.queryMs })) : null
@@ -8829,7 +8998,7 @@ var require_styles = __commonJS({
       ".wbt-body{display:flex;gap:14px;align-items:stretch;min-height:0;flex:1;overflow:hidden}",
       ".wbt-filter-panel{flex:0 0 248px;width:248px;min-width:0;max-height:100%;overflow-y:auto;overscroll-behavior:contain;border:1px solid var(--wbt-line);border-radius:10px;background:var(--wbt-bg);box-sizing:border-box;padding:12px}",
       ".wbt-filter-content{display:flex;flex-direction:column;gap:12px}.wbt-filter-toggle{display:none}.wbt-filter-group{display:flex;flex-direction:column;gap:8px;min-width:0;margin:0;padding:10px 0;border:0;border-bottom:1px solid var(--wbt-line)}.wbt-filter-group legend{font-weight:600;padding:0}.wbt-filter-search{display:flex;gap:4px}.wbt-filter-search input{width:100%;min-width:0}.wbt-filter-panel .wbt-check{white-space:normal}.wbt-filter-panel .wbt-tagmenu{position:static;width:100%;box-sizing:border-box;max-height:240px}.wbt-filter-panel .wbt-tagfilter{flex-wrap:wrap}.wbt-filter-panel input:disabled{opacity:.45;cursor:not-allowed}.wbt-filter-panel .wbt-mhint{margin:0;line-height:1.6}.wbt-filter-panel .wbt-field input{width:100%;box-sizing:border-box}",
-      ".wbt-limit-row{display:flex;flex-direction:column;gap:4px;min-width:0}.wbt-limit-head{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;min-width:0}.wbt-limit-hint{margin:0;font-size:11.5px;line-height:1.6;opacity:.65;overflow-wrap:anywhere}.wbt-limit-head>strong{font-weight:560;font-size:12.5px;flex:none}.wbt-limit-fields{display:flex;align-items:center;gap:4px;min-width:0}.wbt-limit-fields input{flex:1 1 0;width:0;min-width:0;box-sizing:border-box;text-align:center;padding-left:6px;padding-right:6px}.wbt-limit-fields .wbt-limit-input{background-color:var(--wbt-surface);border:1px solid var(--wbt-line);border-radius:8px;padding:6px 4px;font-size:13px;color:inherit;font-variant-numeric:tabular-nums;-moz-appearance:textfield;appearance:textfield}.wbt-limit-fields .wbt-limit-input:focus{border-color:var(--wbt-accent);outline:none;box-shadow:0 0 0 3px color-mix(in oklab,var(--wbt-accent) 18%,transparent)}.wbt-limit-fields .wbt-limit-input::-webkit-outer-spin-button,.wbt-limit-fields .wbt-limit-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}.wbt-limit-fields>span{flex:none;opacity:.55;font-size:11.5px}.wbt-limit-clear{flex:none;padding:2px 6px;line-height:1.2}.wbt-limit-unit{font-size:11px;opacity:.55;overflow-wrap:anywhere;min-width:0}",
+      ".wbt-limit-row{display:flex;flex-direction:column;gap:4px;min-width:0}.wbt-limit-head{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;min-width:0}.wbt-limit-hint{margin:0;font-size:11.5px;line-height:1.6;opacity:.65;overflow-wrap:anywhere}.wbt-limit-head>strong{font-weight:560;font-size:12.5px;flex:none}.wbt-limit-fields{display:flex;align-items:flex-start;gap:4px;min-width:0}.wbt-limit-fields .wbctl-num{flex:1 1 0;min-width:0;width:0}.wbt-limit-fields .wbctl-num-box{width:100%}.wbt-limit-fields .wbctl-num-input{width:100%;box-sizing:border-box;text-align:center;padding:6px 4px;border-radius:8px;border-color:var(--wbt-line);background-color:var(--wbt-surface)}.wbt-limit-fields>span{flex:none;opacity:.55;font-size:11.5px}.wbt-limit-fields .wbt-limit-join{padding-top:7px}.wbt-limit-fields .wbt-limit-clear{margin-top:1px}.wbt-limit-clear{flex:none;padding:2px 6px;line-height:1.2}.wbt-limit-fields .wbctl-num-err{overflow-wrap:anywhere}.wbt-limit-unit{font-size:11px;opacity:.55;overflow-wrap:anywhere;min-width:0}",
       ".wbt-presets{gap:6px}.wbt-preset-list{display:flex;flex-wrap:wrap;gap:6px}.wbt-preset{padding:4px 9px;border:1px solid var(--wbt-line);border-radius:999px;background:var(--wbt-surface);color:inherit;font-size:12px;line-height:1.5;white-space:normal}.wbt-preset:hover{border-color:var(--wbt-accent)}.wbt-preset.active{background:var(--wbt-accent);border-color:var(--wbt-accent);color:#fff}.wbt-preset:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:2px}.wbt-target-group{gap:8px}",
       ".wbt-status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 8px}.wbt-status-grid .wbt-check{min-width:0;overflow-wrap:anywhere}.wbt-pathrow>.wbt-sum{flex:none;white-space:nowrap}",
       ".wbt-nav{display:flex;flex-direction:column;gap:2px;flex:0 0 138px;width:138px;padding:3px 0;border-right:1px solid var(--wbt-line)}",
@@ -9004,7 +9173,7 @@ var require_styles = __commonJS({
       ".wbt-create-tl .wbt-timeline-picker{display:flex;flex-direction:column;gap:6px;min-width:0}",
       ".wbt-create-tl .wbt-picker-list{max-height:180px;scrollbar-gutter:stable}",
       ".wbt-create-tl .wbt-timeline-pager{margin-top:4px;font-size:11.5px}",
-      ".wbt-field>span{opacity:.62;font-size:11.5px}",
+      ".wbt-field>span{opacity:.62;font-size:11.5px}.wbt-field>span.wbctl-num{opacity:1;font-size:12px;align-self:stretch}.wbt-field .wbt-difficulty-num{width:110px}",
       ".wbt-modal-foot{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:2px}",
       // 预览面板：只让内容区滚动，头部标题与右上角 × 固定不动（滚动壳限定在 .wbt-preview，不影响其它弹窗）。
       ".wbt-preview{overflow:hidden}",
@@ -9079,7 +9248,7 @@ var require_styles = __commonJS({
       ".wbtx-slot-note{color:var(--wbt-muted,var(--wb-muted))}",
       ".wbtx-slot-link{border:0;background:transparent;padding:0;font:inherit;font-size:12px;color:var(--wbt-accent,var(--wb-accent));cursor:pointer;text-decoration:underline}",
       ".wbt-mailback{font-size:11.5px;padding:2px 7px}"
-    ].concat(require_filter_checklist_styles(), require_date_picker_styles()("wbt"), require_switch().styles).join("\n");
+    ].concat(require_filter_checklist_styles(), require_date_picker_styles()("wbt"), require_switch().styles, require_number_field().styles).join("\n");
   }
 });
 
@@ -9754,32 +9923,37 @@ var require_workspace_select = __commonJS({
 var require_difficulty_field = __commonJS({
   "packages/addons/tasks/client/item/difficulty-field.cjs"(exports2, module2) {
     "use strict";
+    var NF = require_number_field();
     module2.exports = function(React) {
       var h = React.createElement;
-      return function difficultyField(t, value, onChange, id) {
+      return function difficultyField(t, value, onChange, id, lang) {
         var n = Number(value) || 0, full = Math.floor(n), half = n - full >= 0.5;
         var stars = "\u2605".repeat(full) + (half ? "\u2BEA" : "") + "\u2606".repeat(Math.max(0, 5 - full - (half ? 1 : 0)));
         return h(
           "div",
           { className: "wbt-field full" },
-          h("label", { htmlFor: id }, t.difficulty + " (0\u20135)"),
+          h("span", { className: "wbt-field-label" }, t.difficulty + " (0\u20135)"),
           h(
             "div",
             { className: "wbt-row" },
-            h("input", {
-              id,
-              className: "wbt-input",
-              type: "number",
+            h(NF.NumberField, {
+              h,
+              lang,
+              value,
               min: 0,
               max: 5,
               step: 0.5,
-              "aria-label": t.difficulty,
-              "aria-describedby": id + "-hint",
+              allowEmpty: true,
+              ariaLabel: t.difficulty,
               placeholder: t.difficultyUnsetHint,
-              value,
-              onChange: function(e) {
-                var raw = e.target.value;
-                onChange(raw === "" ? "" : Math.max(0, Math.min(5, Number(raw) || 0)));
+              hint: false,
+              className: "wbt-difficulty-num",
+              // 键入期同步草稿，让 ★ 预览即时更新；提交只在失焦/回车且合法时发生。
+              onDraft: function(raw) {
+                onChange(raw);
+              },
+              onCommit: function(next) {
+                onChange(next === null ? "" : String(next));
               }
             }),
             h("span", { className: "wbt-stars", "aria-hidden": true }, n > 0 ? stars : t.difficultyUnset),
@@ -10123,15 +10297,12 @@ var require_ownership_fields = __commonJS({
 // packages/addons/tasks/client/modals/create-modal.cjs
 var require_create_modal = __commonJS({
   "packages/addons/tasks/client/modals/create-modal.cjs"(exports2, module2) {
+    var NF = require_number_field();
     function initialPriority(source, origin, fallback) {
       var original = Number(origin && origin.priority);
       if (source === "2" && Number.isInteger(original) && original >= 1 && original <= 10) return original;
       var n = Number(fallback);
       return Number.isFinite(n) ? Math.min(10, Math.max(1, Math.floor(n))) : 1;
-    }
-    function clampInputPriority(value) {
-      if (String(value).trim() === "" || Number(value) === 0 || !Number.isFinite(Number(value))) return value;
-      return Math.min(10, Math.max(1, Math.floor(Number(value))));
     }
     function validatePriority(value, source, t) {
       var n = Number(value);
@@ -10193,6 +10364,7 @@ var require_create_modal = __commonJS({
         }
         var active = source === "2" || form.status === "0";
         var priorityError = active ? validatePriority(form.priority, source, t) : "";
+        var difficultyCheck = NF.validateNumber(form.difficulty, { min: 0, max: 5, step: 0.5, allowEmpty: true, lang: props.lang });
         var plan = ownership.preview(props.tree, form.tablePath, form.pathDescriptions);
         var targetValid = form.newPath ? !plan.error && form.confirmed : tables.some(function(x) {
           return x.id === form.tableId;
@@ -10214,7 +10386,7 @@ var require_create_modal = __commonJS({
         }
         function set(k, v) {
           var next = Object.assign({}, form);
-          next[k] = k === "priority" ? clampInputPriority(v) : v;
+          next[k] = v;
           setForm(next);
         }
         function failed(message) {
@@ -10231,6 +10403,10 @@ var require_create_modal = __commonJS({
         }
         function submit() {
           if (priorityError || isBusy || submission.pending) return;
+          if (!difficultyCheck.ok) {
+            setError(difficultyCheck.error);
+            return;
+          }
           if (source === "2" && !(origin && origin.timelineId)) {
             setError(tr("\u8BF7\u5148\u624B\u52A8\u5EFA\u7ACB\u5E76\u5173\u8054\u65F6\u95F4\u7EBF\uFF0C\u518D\u91CD\u542F"));
             return;
@@ -10260,7 +10436,7 @@ var require_create_modal = __commonJS({
             tags: splitTags(form.tags),
             status: source === "2" ? "0" : String(form.status),
             priority: active ? Number(form.priority) : 0,
-            difficulty: Number(form.difficulty) || 0,
+            difficulty: difficultyCheck.value || 0,
             publishDate: form.publishDate,
             targetDate: form.targetDate,
             source: source === "2" ? "2" : form.timelineId ? "1" : "0"
@@ -10342,9 +10518,29 @@ var require_create_modal = __commonJS({
                 h("option", { value: "2" }, "\u5DF2\u5B8C\u6210"),
                 h("option", { value: "1" }, "\u5DF2\u5173\u95ED")
               )),
-              h("label", { className: "wbt-field" }, h("span", null, t.priority + "\uFF081\u201310\uFF09"), h("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, disabled: !active, "aria-invalid": !!priorityError, "aria-describedby": priorityError ? "wbt-create-priority-error" : void 0, value: form.priority, onChange: function(e) {
-                set("priority", e.target.value);
-              } })),
+              h(
+                "div",
+                { className: "wbt-field" },
+                h("span", { className: "wbt-field-label" }, t.priority + "\uFF081\u201310\uFF09"),
+                h(NF.NumberField, {
+                  h,
+                  lang: props.lang,
+                  value: form.priority,
+                  min: 1,
+                  max: 10,
+                  integer: true,
+                  disabled: !active,
+                  hint: false,
+                  ariaLabel: t.priority,
+                  // 键入即写入草稿；合法性由下面的 priorityError 实时判定，绝不回写夹取后的值。
+                  onDraft: function(raw) {
+                    set("priority", raw);
+                  },
+                  onCommit: function(next) {
+                    set("priority", String(next));
+                  }
+                })
+              ),
               fields({ form, set, setMany, tree: props.tree, recommended: props.defaultTableId || origin && origin.tableId }),
               h("label", { className: "wbt-field" }, h("span", null, t.publishDate), h(DP.DatePicker, { React, h, prefix: "wbt", lang: props.lang, label: t.publishDate, value: form.publishDate, onChange: function(next) {
                 set("publishDate", next);
@@ -10357,7 +10553,7 @@ var require_create_modal = __commonJS({
               } })) : null,
               difficultyField(t, form.difficulty, function(value) {
                 set("difficulty", value);
-              }, "wbt-create-difficulty"),
+              }, "wbt-create-difficulty", props.lang),
               source !== "2" && form.status === "1" ? h("label", { className: "wbt-field" }, h("span", null, t.shutdownDate), h(DP.DatePicker, { React, h, prefix: "wbt", lang: props.lang, label: t.shutdownDate, value: form.shutdownDate, onChange: function(next) {
                 set("shutdownDate", next);
               } })) : null
@@ -10368,7 +10564,7 @@ var require_create_modal = __commonJS({
               "div",
               { className: "wbt-modal-foot" },
               h("button", { className: "wbt-btn ghost", disabled: isBusy, onClick: requestClose }, t.cancel),
-              h("button", { className: "wbt-btn primary", disabled: isBusy || !!priorityError || !targetValid || source === "2" && !(origin && origin.timelineId), onClick: submit }, isBusy ? "\u2026" : t.create)
+              h("button", { className: "wbt-btn primary", disabled: isBusy || !!priorityError || !difficultyCheck.ok || !targetValid || source === "2" && !(origin && origin.timelineId), onClick: submit }, isBusy ? "\u2026" : t.create)
             )
           )
         );
@@ -10852,6 +11048,7 @@ var require_task_timeline_modal = __commonJS({
 var require_edit_modal = __commonJS({
   "packages/addons/tasks/client/modals/edit-modal.cjs"(exports2, module2) {
     "use strict";
+    var NF = require_number_field();
     module2.exports = function createEditModal(React, statusInfo, stars) {
       var h = React.createElement;
       var difficultyField = require_difficulty_field()(React);
@@ -10915,10 +11112,20 @@ var require_edit_modal = __commonJS({
           });
         }
         var titleOk = String(form.title).trim().length > 0;
+        var priorityCheck = canPriority ? NF.validateNumber(form.priority, { min: String(task.status) === "1" ? 0 : 1, max: 10, integer: true, lang: props.lang }) : { ok: true, value: 0, error: "" };
+        var difficultyCheck = NF.validateNumber(form.difficulty, { min: 0, max: 5, step: 0.5, allowEmpty: true, lang: props.lang });
         function submit() {
           if (isBusy || submission.pending) return;
           if (!titleOk) {
             setErr(t.needTitle);
+            return;
+          }
+          if (!priorityCheck.ok) {
+            setErr(priorityCheck.error);
+            return;
+          }
+          if (!difficultyCheck.ok) {
+            setErr(difficultyCheck.error);
             return;
           }
           var patch = { id: task.id, title: String(form.title).trim(), description: String(form.description || "") };
@@ -10932,13 +11139,10 @@ var require_edit_modal = __commonJS({
             patch.tableId = form.tableId;
           }
           if (canPriority) {
-            var p = Math.round(Number(form.priority));
-            if (!isFinite(p)) p = 1;
-            if (!Number.isFinite(p)) p = 0;
-            patch.priority = Math.max(1, Math.min(10, p));
+            patch.priority = priorityCheck.value;
             if (String(form.targetDate || "").trim()) patch.targetDate = String(form.targetDate).trim();
           }
-          patch.difficulty = Math.max(0, Math.min(5, Number(form.difficulty) || 0));
+          patch.difficulty = difficultyCheck.value || 0;
           patch.workspaceIds = (form.workspaceIds || []).slice();
           if (String(form.review) !== String(task.review || "")) patch.review = String(form.review);
           submission.pending = true;
@@ -11007,16 +11211,30 @@ var require_edit_modal = __commonJS({
               } })
             ) : null,
             canPriority ? h(
-              "label",
+              "div",
               { className: "wbt-field" },
-              h("span", null, t.priority + "\uFF081\u201310\uFF09"),
-              h("input", { className: "wbt-input", type: "number", min: 1, max: 10, step: 1, value: form.priority, onChange: function(e) {
-                set("priority", e.target.value);
-              } })
+              h("span", { className: "wbt-field-label" }, t.priority + "\uFF081\u201310\uFF09"),
+              h(NF.NumberField, {
+                h,
+                lang: props.lang,
+                value: form.priority,
+                min: 1,
+                max: 10,
+                integer: true,
+                hint: false,
+                ariaLabel: t.priority,
+                // 键入即写草稿，合法性交给 priorityCheck（保存按钮据此禁用），绝不夹取。
+                onDraft: function(raw) {
+                  set("priority", raw);
+                },
+                onCommit: function(next) {
+                  set("priority", String(next));
+                }
+              })
             ) : null,
             difficultyField(t, form.difficulty, function(value) {
               set("difficulty", value);
-            }, "wbt-edit-difficulty"),
+            }, "wbt-edit-difficulty", props.lang),
             h(WorkspaceSelect, { api: props.api, lang: props.lang, value: form.workspaceIds, onChange: function(ids) {
               set("workspaceIds", ids);
             } }),
@@ -11025,7 +11243,7 @@ var require_edit_modal = __commonJS({
               "div",
               { className: "wbt-modal-foot" },
               h("button", { className: "wbt-btn ghost", disabled: isBusy, onClick: requestClose }, t.cancel),
-              h("button", { className: "wbt-btn primary", disabled: isBusy || !titleOk, onClick: submit }, isBusy ? "\u2026" : t.save)
+              h("button", { className: "wbt-btn primary", disabled: isBusy || !titleOk || !priorityCheck.ok || !difficultyCheck.ok, onClick: submit }, isBusy ? "\u2026" : t.save)
             )
           )
         );
@@ -11415,43 +11633,7 @@ var require_task_filter_panel = __commonJS({
     var model = require_task_filter_model();
     var DateFilter = require_date_filter().DateFilter;
     var WorkspaceFilter = require_workspacefilter();
-    function NumberInput(p) {
-      var React = p.React, draftState = React.useState(String(p.value)), draft = draftState[0], setDraft = draftState[1];
-      React.useEffect(function() {
-        setDraft(String(p.value));
-      }, [p.value]);
-      function commit(node) {
-        var result = p.commit(node.validity && node.validity.badInput ? "invalid" : draft);
-        setDraft(result === void 0 ? String(p.value) : result);
-      }
-      return React.createElement("input", {
-        type: "number",
-        className: "wbt-input wbt-limit-input",
-        min: p.min,
-        max: p.max,
-        step: p.step,
-        inputMode: p.step === 1 ? "numeric" : "decimal",
-        value: draft,
-        "aria-label": p.label,
-        placeholder: p.placeholder,
-        onChange: function(e) {
-          setDraft(e.target.value);
-        },
-        onBlur: function(e) {
-          commit(e.currentTarget);
-        },
-        onKeyDown: function(e) {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            e.currentTarget.blur();
-          }
-          if (e.key === "Escape") {
-            e.preventDefault();
-            setDraft(String(p.value));
-          }
-        }
-      });
-    }
+    var NF = require_number_field();
     module2.exports = function renderFilterPanel(React, p) {
       var h = React.createElement, en = p.lang === "en", value = p.value;
       var title = en ? "Filters" : "\u7B5B\u9009";
@@ -11481,7 +11663,8 @@ var require_task_filter_panel = __commonJS({
         p.onHint(hints.join(" \xB7 "));
         change(result.value);
       }
-      function setLimit(key, end, text) {
+      function setLimit(key, end, next) {
+        var text = next === null || next === void 0 ? "" : String(next);
         var result = model.limit(value, key, end, text);
         if (!result) {
           p.onHint(en ? key === "difficulty" ? "Difficulty takes 0.5 steps from 0 to 5" : "Priority takes whole numbers 0\u201310" : key === "difficulty" ? "\u96BE\u5EA6\u4EC5\u63A5\u53D7 0\u20135 \u4E4B\u95F4\u7684\u534A\u6863\u6570\u503C" : "\u4F18\u5148\u7EA7\u4EC5\u63A5\u53D7 0\u201310 \u7684\u6574\u6570");
@@ -11493,15 +11676,28 @@ var require_task_filter_panel = __commonJS({
         p.onHint(hints.join(" \xB7 "));
         if (result.clearsMissing && p.onMissingChange) p.onMissingChange(false);
         change(result.value);
-        return result.value[key][end];
       }
       function limitRow(key, label) {
         var box = value[key], spec = model.limits[key];
         function field(end) {
           var labelText = en ? (end === "min" ? "Minimum " : "Maximum ") + label : (end === "min" ? "\u6700\u4F4E" : "\u6700\u9AD8") + label;
-          return h(NumberInput, { React, value: box[end], min: spec.min, max: spec.max, step: spec.step, label: labelText, placeholder: String(end === "min" ? spec.min : spec.max), commit: function(text) {
-            return setLimit(key, end, text);
-          } });
+          return h(NF.NumberField, {
+            h,
+            lang: p.lang,
+            value: box[end],
+            min: spec.min,
+            max: spec.max,
+            step: spec.step,
+            integer: spec.step === 1,
+            allowEmpty: true,
+            hint: false,
+            className: "wbt-limit-field",
+            ariaLabel: labelText,
+            placeholder: String(end === "min" ? spec.min : spec.max),
+            onCommit: function(next) {
+              setLimit(key, end, next);
+            }
+          });
         }
         function clear() {
           p.onHint("");
@@ -12633,6 +12829,7 @@ var require_tasks_view = __commonJS({
             t,
             api,
             task: doneTask,
+            lang: props.lang,
             onClose: function() {
               setDoneTask(null);
             },
@@ -13760,7 +13957,7 @@ var require_timeline_view = __commonJS({
         { className: "wbt-modal", style: { width: "420px" } },
         h("div", { className: "wbt-modal-head" }, h("h3", null, t.complete + " \xB7 " + props.task.title), h("button", { className: "wbt-icon", onClick: props.onClose }, "\xD7")),
         h("div", { className: "wbt-mhint" }, t.difficultyHint),
-        require_difficulty_field()(React)(t, value, setValue, "wbt-done-difficulty"),
+        require_difficulty_field()(React)(t, value, setValue, "wbt-done-difficulty", props.lang),
         h(
           "label",
           { className: "wbt-field", style: { marginTop: "12px" } },
@@ -13810,7 +14007,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.34",
+    version: "5.2.35",
     icon: ICONS["list-checks"],
     // 贡献声明写在 registerAddon 里：卸载任务插件时宿主按 addonId 一起撤销，
     // 不会在邮件里留一个渲染即报错的孤儿按钮。
