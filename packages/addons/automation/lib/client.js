@@ -5123,7 +5123,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-automation",
-    version: "0.2.3",
+    version: "0.2.4",
     icon: GLYPHS["zap"],
     views: [
       { id: "stats", icon: tabIcon("activity"), title: { zh: "\u6982\u89C8", en: "Overview" }, component: withProps(require_stats(), "\u6982\u89C8") },

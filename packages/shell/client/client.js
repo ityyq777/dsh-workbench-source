@@ -73,6 +73,13 @@ var require_locale = __commonJS({
         back_home: "\u8FD4\u56DE\u9996\u9875",
         open: "\u6253\u5F00",
         manage: "\u5DE5\u4F5C\u53F0\u7BA1\u7406",
+        // 首页栏目名：与宿主 packages/shell/src/infra/categories.ts 的 id 一一对应；宿主没下发文案时的兜底。
+        cat_work: "\u5DE5\u4F5C\u4E0E\u8BA1\u5212",
+        cat_comm: "\u6C9F\u901A\u4E0E\u6D88\u606F",
+        cat_assets: "\u8D44\u4EA7\u4E0E\u8D44\u6599",
+        cat_finance: "\u8D22\u52A1",
+        cat_auto: "\u81EA\u52A8\u5316\u4E0E\u96C6\u6210",
+        cat_other: "\u5176\u4ED6",
         home_hint: "\u70B9\u5F00\u5361\u7247\u8FDB\u5165\u4E1A\u52A1\u63D2\u4EF6\uFF1B\u5B89\u88C5\u4E0E\u5378\u8F7D\u5728 DSH \u63D2\u4EF6\u7BA1\u7406\u91CC",
         search_placeholder: "\u641C\u7D22\u4EFB\u52A1\u3001\u6807\u7B7E\u3001\u7AD9\u70B9\u3001\u8FDE\u63A5\u5668\u5185\u5BB9\u2026\uFF08\u2318K\uFF09",
         searching: "\u641C\u7D22\u4E2D\u2026",
@@ -247,6 +254,13 @@ var require_locale = __commonJS({
         back_home: "Back to home",
         open: "Open",
         manage: "Manage",
+        // Home category names; ids match packages/shell/src/infra/categories.ts.
+        cat_work: "Work & Planning",
+        cat_comm: "Communication",
+        cat_assets: "Assets & Docs",
+        cat_finance: "Finance",
+        cat_auto: "Automation & Integrations",
+        cat_other: "Other",
         home_hint: "Open a card to enter a domain; install or remove plugins in DSH",
         search_placeholder: "Search tasks, tags, sites, connector items\u2026 (\u2318K)",
         searching: "Searching\u2026",
@@ -425,6 +439,12 @@ var require_styles = __commonJS({
       ".wb-empty-cta{padding:26px 14px}",
       ".wb-stack{display:flex;flex-direction:column;gap:10px}",
       ".wb-home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));gap:12px}",
+      // 首页栏目分组：宿主栏目表定顺序，每个栏目一段标题 + 网格；空栏目不渲染。
+      ".wb-home-cats{display:flex;flex-direction:column;gap:20px}",
+      ".wb-home-cat{display:flex;flex-direction:column;gap:10px;min-width:0}",
+      ".wb-home-cat-head{display:flex;align-items:center;gap:8px;min-height:20px}",
+      ".wb-home-cat-head h3{margin:0;font-size:13px;font-weight:650;letter-spacing:.2px;opacity:.82}",
+      ".wb-home-cat-count{min-width:20px;padding:0 6px;border-radius:999px;border:1px solid var(--wb-line);background:var(--wb-surface);font-size:11px;line-height:18px;text-align:center;opacity:.62;font-variant-numeric:tabular-nums}",
       ".wb-home-card{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--wb-surface);border:1px solid var(--wb-line);border-radius:14px;padding:16px 16px 14px;color:inherit;font:inherit;cursor:pointer;transition:transform .12s ease,border-color .12s ease,background .12s ease}",
       ".wb-home-card:hover{border-color:var(--dsw-alias-brand-primary,#11a89b);transform:translateY(-1px)}",
       ".wb-home-card:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#11a89b);outline-offset:2px}",
@@ -461,7 +481,7 @@ var require_styles = __commonJS({
       ".wb-immersive-main:has(.wb-fill)>.wb-inner{height:100%}",
       ".wb-inner>div:has(>.wb-fill){display:flex;flex-direction:column;height:100%;min-height:0}",
       ".wb-fill{flex:1 1 auto;min-height:0}",
-      "@media (max-width:760px){.wb-root{padding:16px}.wb-home-grid{grid-template-columns:1fr}.wb-page-title h2{font-size:17px}.wb-immersive-bar{padding:calc(8px + var(--dsh-frame-top-clearance,0px)) 14px 8px}.wb-immersive-main{padding:14px 16px 20px}.wb-immersive-title span:not(.wb-home-icon):not(.wb-badge){display:none}}",
+      "@media (max-width:760px){.wb-root{padding:16px}.wb-home-grid{grid-template-columns:1fr}.wb-home-cats{gap:16px}.wb-page-title h2{font-size:17px}.wb-immersive-bar{padding:calc(8px + var(--dsh-frame-top-clearance,0px)) 14px 8px}.wb-immersive-main{padding:14px 16px 20px}.wb-immersive-title span:not(.wb-home-icon):not(.wb-badge){display:none}}",
       ".wb-backup{display:flex;flex-direction:column;gap:14px}",
       ".wb-backup-item{display:flex;flex-direction:column}",
       ".wb-backup-row{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border:1px solid var(--wb-line);border-radius:10px;background:var(--wb-surface)}",
@@ -2074,6 +2094,79 @@ var require_system_tabs = __commonJS({
   }
 });
 
+// packages/shell/client/home-categories.cjs
+var require_home_categories = __commonJS({
+  "packages/shell/client/home-categories.cjs"(exports2, module2) {
+    "use strict";
+    function pickTitle2(title, lang) {
+      if (!title) return "";
+      if (typeof title === "string") return title;
+      return title[lang] || title.zh || title.en || "";
+    }
+    function categoryTitle(cat, t, lang) {
+      var key = "cat_" + String(cat && cat.id);
+      var text = typeof t === "function" ? t(key) : key;
+      if (text && text !== key) return text;
+      return pickTitle2(cat && cat.title, lang) || String(cat && cat.id || "");
+    }
+    function homeGroups(categories, list, t, lang) {
+      var cats = Array.isArray(categories) ? categories : null;
+      if (!cats || !cats.length) return null;
+      var known = {};
+      var fallbackId = "";
+      cats.forEach(function(c) {
+        if (!c || !c.id) return;
+        known[c.id] = true;
+        if (c.fallback && !fallbackId) fallbackId = c.id;
+      });
+      if (!fallbackId) fallbackId = cats[cats.length - 1].id;
+      var bucket = {};
+      cats.forEach(function(c) {
+        if (c && c.id) bucket[c.id] = [];
+      });
+      (Array.isArray(list) ? list : []).forEach(function(a) {
+        var id = a && typeof a.category === "string" && known[a.category] ? a.category : fallbackId;
+        (bucket[id] || (bucket[id] = [])).push(a);
+      });
+      var groups = [];
+      cats.forEach(function(c) {
+        var items = bucket[c.id] || [];
+        if (!items.length) return;
+        groups.push({ id: c.id, title: categoryTitle(c, t, lang), count: items.length, items });
+      });
+      return groups;
+    }
+    function homeSection(jsx2, categories, list, opts) {
+      var groups = homeGroups(categories, list, opts.t, opts.lang);
+      if (!groups) return jsx2.jsx("div", { className: "wb-home-grid", children: list.map(opts.addonCard) });
+      return jsx2.jsx("div", {
+        className: "wb-home-cats",
+        children: groups.map(function(g) {
+          return jsx2.jsxs("section", {
+            className: "wb-home-cat",
+            children: [
+              jsx2.jsxs("div", {
+                className: "wb-home-cat-head",
+                children: [
+                  jsx2.jsx("h3", { children: g.title }),
+                  jsx2.jsx("span", { className: "wb-home-cat-count", children: g.count })
+                ]
+              }),
+              jsx2.jsx("div", { className: "wb-home-grid", children: g.items.map(opts.addonCard) })
+            ]
+          }, g.id);
+        })
+      });
+    }
+    module2.exports = {
+      homeGroups,
+      categoryTitle,
+      pickTitle: pickTitle2,
+      homeSection
+    };
+  }
+});
+
 // packages/shell/client/view-tabs.cjs
 var require_view_tabs = __commonJS({
   "packages/shell/client/view-tabs.cjs"(exports2, module2) {
@@ -2168,7 +2261,7 @@ var SystemPages = require_system_pages();
 var registry = /* @__PURE__ */ new Map();
 var listeners = /* @__PURE__ */ new Set();
 var apiCache = /* @__PURE__ */ new Map();
-var addonState = { addons: [], loaded: false, shellVersion: "" };
+var addonState = { addons: [], categories: null, loaded: false, shellVersion: "" };
 var storeListeners = /* @__PURE__ */ new Set();
 var cloudStatusListeners = /* @__PURE__ */ new Set();
 var recordModes = {};
@@ -2279,10 +2372,10 @@ function refreshAddons() {
   return fetch("/workbench/api/domains").then(function(r) {
     return r.json();
   }).then(function(j) {
-    if (j && j.domains) {
-      addonState.shellVersion = j.shellVersion || addonState.shellVersion;
-      setAddons(j.domains);
-    }
+    if (!j || !j.domains) return j;
+    addonState.shellVersion = j.shellVersion || addonState.shellVersion;
+    addonState.categories = Array.isArray(j.categories) && j.categories.length ? j.categories : null;
+    setAddons(j.domains);
     return j;
   }).catch(function(e) {
     console.warn("[dsh-workbench] \u8BFB\u53D6\u4E1A\u52A1\u63D2\u4EF6\u5931\u8D25", e);
@@ -2455,6 +2548,7 @@ var systemTabs = require_system_tabs()(react, jsx, useApi);
 var AccountTab = systemTabs.AccountTab;
 var BackupTab = systemTabs.BackupTab;
 var AuditTab = systemTabs.AuditTab;
+var homeCategory = require_home_categories();
 var ViewTabs = require_view_tabs()(react, pickTitle);
 var ViewOutlet = require_view_outlet();
 function ensureCss() {
@@ -2739,7 +2833,7 @@ function WorkbenchPage(props) {
         } })
       ] }),
       jsx.jsx(SearchPanel, { api, addons, go, t }),
-      addons.length ? jsx.jsx("div", { className: "wb-home-grid", children: addons.map(addonCard) }) : jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg wb-empty-cta", children: t("no_installed") }) }),
+      addons.length ? homeCategory.homeSection(jsx, addonState.categories, addons, { t, lang, addonCard }) : jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg wb-empty-cta", children: t("no_installed") }) }),
       jsx.jsxs("div", { className: "wb-sec", children: [
         jsx.jsx("h3", { children: t("manage") }),
         jsx.jsx("span", { className: "wb-hint", children: t("home_hint") })

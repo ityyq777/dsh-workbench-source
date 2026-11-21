@@ -7776,7 +7776,7 @@ var createOverlay = require_overlay();
   injectCss();
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.12.6",
+    version: "1.12.7",
     icon: icons.ICONS["globe"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },

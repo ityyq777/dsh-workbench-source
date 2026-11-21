@@ -20,6 +20,9 @@ var LOCALE = {
     backup_dup_policy: "重复 ID 时", backup_dup_newest: "以时间最新为主", backup_dup_skip: "保留本地（跳过）",
     backup_dup_overwrite: "用备份覆盖", backup_dup_hint: "导入时对同 ID 记录的处理方式", backup_policy: "策略",
     back_home: "返回首页", open: "打开", manage: "工作台管理",
+    // 首页栏目名：与宿主 packages/shell/src/infra/categories.ts 的 id 一一对应；宿主没下发文案时的兜底。
+    cat_work: "工作与计划", cat_comm: "沟通与消息", cat_assets: "资产与资料",
+    cat_finance: "财务", cat_auto: "自动化与集成", cat_other: "其他",
     home_hint: "点开卡片进入业务插件；安装与卸载在 DSH 插件管理里",
     search_placeholder: "搜索任务、标签、站点、连接器内容…（⌘K）",
     searching: "搜索中…",
@@ -93,6 +96,9 @@ var LOCALE = {
     backup_dup_policy: "On duplicate ID", backup_dup_newest: "Keep newest by time", backup_dup_skip: "Keep local (skip)",
     backup_dup_overwrite: "Overwrite with backup", backup_dup_hint: "How to handle rows with the same ID on import", backup_policy: "Policy",
     back_home: "Back to home", open: "Open", manage: "Manage",
+    // Home category names; ids match packages/shell/src/infra/categories.ts.
+    cat_work: "Work & Planning", cat_comm: "Communication", cat_assets: "Assets & Docs",
+    cat_finance: "Finance", cat_auto: "Automation & Integrations", cat_other: "Other",
     home_hint: "Open a card to enter a domain; install or remove plugins in DSH",
     search_placeholder: "Search tasks, tags, sites, connector items… (⌘K)",
     searching: "Searching…",

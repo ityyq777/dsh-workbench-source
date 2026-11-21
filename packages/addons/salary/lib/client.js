@@ -5358,7 +5358,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.4.0",
+    version: "0.4.1",
     icon: GLYPHS["wallet"],
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },

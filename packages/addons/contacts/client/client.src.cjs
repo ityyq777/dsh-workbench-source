@@ -35,7 +35,7 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-contacts",
-    version: "0.1.3",
+    version: "0.1.4",
     icon: GLYPHS["users"],
     views: [
       { id: "contacts", icon: tabIcon("users"), title: { zh: "联系人", en: "Contacts" }, component: withProps(require("./views/contacts.cjs"), "联系人") },

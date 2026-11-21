@@ -33,6 +33,7 @@ import type { WbState, RegisteredDomain } from "./types/host-types.js";
 import { createActions } from "./actions/actions.js";
 import { installNetwork } from "./infra/network.js";
 import { createSearch } from "./infra/search.js";
+import { FALLBACK_CATEGORY_ID, resolveCategory } from "./infra/categories.js";
 
 export const name = "dsh-workbench";
 export const inject = ["webServer", "tools", "connection"];
@@ -42,7 +43,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.8.1";
+export const SHELL_VERSION = "0.8.2";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -179,6 +180,7 @@ export function apply(ctx: any): void {
     return {
       id: rec.def.id,
       title: rec.def.title,
+      category: rec.category,
       description: rec.def.description,
       version: rec.def.version,
       enabled: rec.error === null,
@@ -224,7 +226,14 @@ export function apply(ctx: any): void {
       log("业务域已注册，忽略重复注册", def.id);
       return () => {};
     }
-    const rec: RegisteredDomain = { def, actions: new Map(), hooks: new Map(), error: null, dispose: null };
+    // 栏目只做归组：未声明 / 空串 / 未知 id 落兜底栏目并打一条日志，不阻断注册。
+    const category = resolveCategory(def.category);
+    if (category.status === "missing") {
+      log("业务域未声明首页栏目，已归入兜底栏目", def.id, FALLBACK_CATEGORY_ID);
+    } else if (category.status === "unknown") {
+      log("业务域声明了未知栏目 id，已归入兜底栏目", def.id, category.declared, "→", FALLBACK_CATEGORY_ID);
+    }
+    const rec: RegisteredDomain = { def, category: category.id, actions: new Map(), hooks: new Map(), error: null, dispose: null };
     domains.set(def.id, rec);
 
     const setupApi: DomainSetupApi = {

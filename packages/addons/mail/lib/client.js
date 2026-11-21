@@ -5813,7 +5813,7 @@ var GLYPHS = require_icons2().ICONS;
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.4.4",
+    version: "0.4.5",
     icon: GLYPHS["mail"],
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },

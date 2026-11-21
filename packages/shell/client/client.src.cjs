@@ -15,7 +15,7 @@ var SystemPages = require("./system-pages.cjs");
 var registry = new Map();     // addonId -> AddonClientModule
 var listeners = new Set();    // 子插件事件订阅者
 var apiCache = new Map();
-var addonState = { addons: [], loaded: false, shellVersion: "" };
+var addonState = { addons: [], categories: null, loaded: false, shellVersion: "" };
 var storeListeners = new Set();
 var cloudStatusListeners = new Set();
 var recordModes = {};         // sessionId -> enabled
@@ -91,7 +91,12 @@ function setAddons(list) {
 function refreshAddons() {
   return fetch("/workbench/api/domains")
     .then(function (r) { return r.json(); })
-    .then(function (j) { if (j && j.domains) { addonState.shellVersion = j.shellVersion || addonState.shellVersion; setAddons(j.domains); } return j; })
+    .then(function (j) {
+      if (!j || !j.domains) return j;
+      addonState.shellVersion = j.shellVersion || addonState.shellVersion;
+      addonState.categories = Array.isArray(j.categories) && j.categories.length ? j.categories : null;
+      setAddons(j.domains); return j;
+    })
     .catch(function (e) { console.warn("[dsh-workbench] 读取业务插件失败", e); return null; });
 }
 function ensureStream() {
@@ -235,6 +240,7 @@ var systemTabs = require("./system-tabs.cjs")(react, jsx, useApi);
 var AccountTab = systemTabs.AccountTab;
 var BackupTab = systemTabs.BackupTab;
 var AuditTab = systemTabs.AuditTab;
+var homeCategory = require("./home-categories.cjs");
 var ViewTabs = require("./view-tabs.cjs")(react, pickTitle);
 var ViewOutlet = require("./view-outlet.cjs");
 
@@ -483,7 +489,7 @@ function WorkbenchPage(props) {
       ] }),
       jsx.jsx(SearchPanel, { api: api, addons: addons, go: go, t: t }),
       addons.length
-        ? jsx.jsx("div", { className: "wb-home-grid", children: addons.map(addonCard) })
+        ? homeCategory.homeSection(jsx, addonState.categories, addons, { t: t, lang: lang, addonCard: addonCard })
         : jsx.jsx("div", { className: "wb-card", children: jsx.jsx("div", { className: "wb-msg wb-empty-cta", children: t("no_installed") }) }),
       jsx.jsxs("div", { className: "wb-sec", children: [
         jsx.jsx("h3", { children: t("manage") }),

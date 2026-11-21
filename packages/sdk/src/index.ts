@@ -280,6 +280,11 @@ export interface DomainDef {
   sync?: DomainSyncDef;
   /** UI 视图贡献点：客户端模块注册同名 view 后出现在工作台首页 */
   views?: DomainViewDecl[];
+  /**
+   * 首页栏目 id（宿主定义的枚举，见 /workbench/api/domains 返回的 categories）。
+   * 未声明、空串或未知 id 一律落兜底栏目「其他」，宿主打一条日志，不影响注册。
+   */
+  category?: string;
   /** 能力清单：声明本域记录什么、首选 action；缺省时宿主回退到 description + action 列表 */
   capability?: DomainCapability;
   /** 业务插件自己的建表/注册逻辑；宿主调用并保存返回值作为清理函数 */
@@ -319,9 +324,19 @@ export interface WorkbenchHost {
   log(...args: unknown[]): void;
 }
 
+/** 首页栏目定义：由宿主给出顺序与中英文名，插件只声明 id。 */
+export interface DomainCategoryInfo {
+  id: string;
+  title: DomainViewTitle;
+  /** 兜底栏目：未声明或未知栏目的插件都归入这里 */
+  fallback: boolean;
+}
+
 export interface DomainPublicInfo {
   id: string;
   title: string;
+  /** 宿主解析后的栏目 id；插件未声明或声明未知 id 时是兜底栏目 id */
+  category: string;
   description?: string;
   version: string;
   enabled: boolean;
