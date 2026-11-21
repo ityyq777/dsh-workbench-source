@@ -17,13 +17,14 @@ module.exports = function Records(props) {
   var F = require("../ui/fields.cjs");
 
   var status = C.useLoad(React, api, "salary.status", {}, []);
-  var filterState = React.useState({ year: String(new Date().getFullYear()), cycle: "" });
+  var filterState = React.useState({ year: String(new Date().getFullYear()), cycle: "", employmentType: "" });
   var filter = filterState[0], setFilter = filterState[1];
   var list = C.useLoad(React, api, "salary.recordList", {
     year: filter.year ? Number(filter.year) : undefined,
     cycle: filter.cycle || undefined,
+    employmentType: filter.employmentType || undefined,
     limit: 400,
-  }, [filter.year, filter.cycle]);
+  }, [filter.year, filter.cycle, filter.employmentType]);
   var openState = React.useState(props.initialOpenId || "");
   var openId = openState[0], setOpenId = openState[1];
   var confirmState = React.useState("");
@@ -66,7 +67,7 @@ module.exports = function Records(props) {
     setOpenId("");
     setMsg(null);
     var payDate = pickDate("monthly");
-    setForm({ mode: "create", id: "", payDate: payDate, incomePeriod: defaultPeriod(payDate, "monthly"), cycle: "monthly", note: F.defaultNote(payDate, "monthly"), values: F.blankValues(), lockGross: false });
+    setForm({ mode: "create", id: "", payDate: payDate, incomePeriod: defaultPeriod(payDate, "monthly"), cycle: "monthly", employmentType: "", note: F.defaultNote(payDate, "monthly"), values: F.blankValues(), lockGross: false });
   }
 
   function openEdit(item) {
@@ -76,7 +77,7 @@ module.exports = function Records(props) {
     setConfirmId("");
     setOpenId("");
     setMsg(null);
-    setForm({ mode: "edit", id: item.id, payDate: item.payDate, incomePeriod: item.incomePeriod || "", cycle: item.cycle || "monthly", note: item.note || "", values: values, original: item, lockGross: incomeZero && F.num(item.grossPay) > 0 });
+    setForm({ mode: "edit", id: item.id, payDate: item.payDate, incomePeriod: item.incomePeriod || "", cycle: item.cycle || "monthly", employmentType: item.employmentType || "", note: item.note || "", values: values, original: item, lockGross: incomeZero && F.num(item.grossPay) > 0 });
   }
 
   function defaultPeriod(payDate, cycle) {
@@ -130,6 +131,7 @@ module.exports = function Records(props) {
       payDate: form.payDate,
       cycle: form.cycle,
       incomePeriod: form.incomePeriod || "",
+      employmentType: form.employmentType || "",
       note: form.note || "",
     };
     // 只改日期、所属期或备注时，不将金额重新提交给后端。
@@ -200,9 +202,12 @@ module.exports = function Records(props) {
       h("div", { className: "wbsal-form-meta" },
         h(C.Field, { h: h, label: "到账日" },
           h(DP.DatePicker, { React: React, h: h, prefix: "wbsal", lang: lang, label: "到账日", value: form.payDate, onChange: function (next) { setField("payDate", next); } })),
-        h(C.Field, { h: h, label: "类型" },
+        h(C.Field, { h: h, label: "结算方式" },
           h("select", { className: "wbsal-input", value: form.cycle, onChange: function (e) { setField("cycle", e.target.value); } },
             h("option", { value: "monthly" }, "月结"), h("option", { value: "daily" }, "日结"))),
+        h(C.Field, { h: h, label: "用工类型" },
+          h("select", { className: "wbsal-input", value: form.employmentType, onChange: function (e) { setField("employmentType", e.target.value); } },
+            F.EMPLOYMENT_TYPES.map(function (t) { return h("option", { key: t.value || "none", value: t.value }, t.label); }))),
         h(C.Field, { h: h, label: "工资所属期" },
           h((form.incomePeriod ? form.incomePeriod.length === 10 : form.cycle === "daily") ? DP.DatePicker : DP.MonthPicker, {
             React: React, h: h, prefix: "wbsal", lang: lang, label: "工资所属期",
@@ -267,7 +272,7 @@ module.exports = function Records(props) {
       blocks,
       h("div", { className: "wbsal-detail-foot" },
         h("div", { className: "wbsal-muted" },
-          "工资所属期：" + (item.incomePeriod ? F.monthLabel(item.incomePeriod) : "未归属") + " · " +
+          "用工类型：" + F.employmentLabel(item.employmentType) + " · 结算方式：" + (item.cycle === "daily" ? "日结" : "月结") + " · 工资所属期：" + (item.incomePeriod ? F.monthLabel(item.incomePeriod) : "未归属") + " · " +
           (item.note ? "备注：" + item.note + " · " : "") + "更新于 " + C.fmtTime(item.updatedAt, lang)),
         h("div", { className: "wbsal-detail-actions" },
           h(C.Btn, { h: h, onClick: function () { openEdit(item); } }, "编辑"),
@@ -289,12 +294,13 @@ module.exports = function Records(props) {
       h("td", { className: "left" }, h("span", { className: "wbsal-date" }, h("b", null, String(item.payDate).slice(5)), h("span", null, F.weekday(item.payDate)))),
       h("td", { className: "left" }, h(C.Pill, { h: h, kind: item.cycle === "daily" ? "warn" : "ok" }, item.cycle === "daily" ? "日结" : "月结"),
         h("div", { className: "wbsal-muted" }, item.incomePeriod ? F.monthLabel(item.incomePeriod) : "未归属")),
+      h("td", { className: "left" }, h(C.Pill, { h: h, kind: item.employmentType === "regular" ? "ok" : item.employmentType === "probation" ? "warn" : "" }, F.employmentLabel(item.employmentType))),
       h("td", null, h("span", { className: "wbsal-net" }, F.money(item.netPay))),
       h("td", { className: "wbsal-opt" }, F.money(item.grossPay)),
       h("td", { className: "wbsal-opt hide-md" }, F.money(F.sumValues(item, F.SOCIAL_KEYS))),
       h("td", { className: "wbsal-opt hide-md" }, F.money(item.incomeTax)),
       h("td", null, h("span", { className: "wbsal-caret" }, "›"))),
-    expanded ? h("tr", { key: item.id + "-detail" }, h("td", { className: "wbsal-detail-cell", colSpan: 7 }, renderDetail(item))) : null];
+    expanded ? h("tr", { key: item.id + "-detail" }, h("td", { className: "wbsal-detail-cell", colSpan: 8 }, renderDetail(item))) : null];
     return rows;
   }
 
@@ -303,10 +309,10 @@ module.exports = function Records(props) {
   else if (list.error) body = h(C.Notice, { h: h, kind: "error", text: list.error });
   else if (items.length === 0) {
     body = h("div", { className: "wbsal-empty" },
-      h("div", null, filter.year || filter.cycle ? "这个筛选条件下没有记录" : "还没有工资记录，先记一笔"),
+      h("div", null, filter.year || filter.cycle || filter.employmentType ? "这个筛选条件下没有记录" : "还没有工资记录，先记一笔"),
       h("div", { className: "wbsal-empty-actions" },
-        filter.year || filter.cycle
-          ? h(C.Btn, { h: h, onClick: function () { setFilter({ year: "", cycle: "" }); } }, "清除筛选")
+        filter.year || filter.cycle || filter.employmentType
+          ? h(C.Btn, { h: h, onClick: function () { setFilter({ year: "", cycle: "", employmentType: "" }); } }, "清除筛选")
           : null,
         h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, "＋ 记一笔")));
   } else {
@@ -323,7 +329,8 @@ module.exports = function Records(props) {
           h("table", { className: "wbsal-table" },
             h("thead", null, h("tr", null,
               h("th", { className: "left" }, "发薪日"),
-              h("th", { className: "left" }, "类型"),
+              h("th", { className: "left" }, "结算"),
+              h("th", { className: "left" }, "用工类型"),
               h("th", null, "实发"),
               h("th", null, "应发"),
               h("th", { className: "hide-md" }, "社保公积金"),
@@ -337,8 +344,10 @@ module.exports = function Records(props) {
     h("div", { className: "wbsal-toolbar" },
       h(C.Field, { h: h, label: "年份" }, h("select", { className: "wbsal-input", value: filter.year, onChange: function (e) { setFilter(Object.assign({}, filter, { year: e.target.value })); } },
         yearOptions.map(function (value) { return h("option", { key: value || "all", value: value }, value ? value + " 年" : "全部年份"); }))),
-      h(C.Field, { h: h, label: "类型" }, h("select", { className: "wbsal-input", value: filter.cycle, onChange: function (e) { setFilter(Object.assign({}, filter, { cycle: e.target.value })); } },
+      h(C.Field, { h: h, label: "结算方式" }, h("select", { className: "wbsal-input", value: filter.cycle, onChange: function (e) { setFilter(Object.assign({}, filter, { cycle: e.target.value })); } },
         h("option", { value: "" }, "全部"), h("option", { value: "monthly" }, "月结"), h("option", { value: "daily" }, "日结"))),
+      h(C.Field, { h: h, label: "用工类型" }, h("select", { className: "wbsal-input", value: filter.employmentType, onChange: function (e) { setFilter(Object.assign({}, filter, { employmentType: e.target.value })); } },
+        h("option", { value: "" }, "全部"), F.EMPLOYMENT_TYPES.slice(1).map(function (t) { return h("option", { key: t.value, value: t.value }, t.label); }))),
       h("div", { className: "wbsal-toolbar-end" },
         h("span", { className: "wbsal-toolbar-count" }, "共 ", h("b", null, total), " 笔"),
         h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, "＋ 记一笔"))),

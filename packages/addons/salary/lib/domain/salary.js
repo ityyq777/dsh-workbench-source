@@ -7,6 +7,7 @@ import {
   hasValue,
   netFromGross,
   normalizeCycle,
+  normalizeEmploymentType,
   requireDate,
   round2,
   sumKeys,
@@ -93,6 +94,10 @@ export function createSalary({ db, host, log }) {
       where.push("cycle=?");
       params.push(normalizeCycle(input.cycle));
     }
+    if (hasValue(input.employmentType)) {
+      where.push("employment_type=?");
+      params.push(normalizeEmploymentType(input.employmentType));
+    }
     const clause = where.join(" AND ");
     const limit = Math.min(Math.max(Number(input.limit) || 200, 1), 500);
     const rows = all(`SELECT * FROM salary_record WHERE ${clause} ORDER BY pay_date DESC, created_at DESC LIMIT ?`, ...params, limit);
@@ -107,6 +112,7 @@ export function createSalary({ db, host, log }) {
   function create(input = {}) {
     const payDate = requireDate(input.payDate, "发薪日期");
     const cycle = normalizeCycle(input.cycle);
+    const employmentType = normalizeEmploymentType(input.employmentType);
     const period = incomePeriod(input.incomePeriod, payDate, cycle);
     const money = moneyInput(input);
     const gross = hasValue(input.grossPay) ? money.grossPay : derivedTotals(money).gross;
@@ -114,13 +120,14 @@ export function createSalary({ db, host, log }) {
     const id = newId("sal");
     const columns = MONEY_FIELDS.map((f) => f.column);
     const values = MONEY_FIELDS.map((f) => (f.key === "grossPay" ? gross : f.key === "netPay" ? net : money[f.key]));
-    const placeholders = Array.from({ length: columns.length + 7 }, () => "?").join(", ");
+    const placeholders = Array.from({ length: columns.length + 8 }, () => "?").join(", ");
     run(
-      `INSERT INTO salary_record (id, pay_date, income_period, cycle, ${columns.join(", ")}, note, created_at, updated_at) VALUES (${placeholders})`,
+      `INSERT INTO salary_record (id, pay_date, income_period, cycle, employment_type, ${columns.join(", ")}, note, created_at, updated_at) VALUES (${placeholders})`,
       id,
       payDate,
       period,
       cycle,
+      employmentType,
       ...values,
       String(input.note === undefined ? "" : input.note).trim(),
       now(),
@@ -136,6 +143,7 @@ export function createSalary({ db, host, log }) {
     if (input.payDate !== undefined) patch.payDate = requireDate(input.payDate, "发薪日期");
     if (input.incomePeriod !== undefined) patch.incomePeriod = incomePeriod(input.incomePeriod);
     if (input.cycle !== undefined) patch.cycle = normalizeCycle(input.cycle);
+    if (input.employmentType !== undefined) patch.employmentType = normalizeEmploymentType(input.employmentType);
     if (input.note !== undefined) patch.note = String(input.note || "").trim();
     let moneyChanged = false;
     for (const field of MONEY_FIELDS) {
@@ -149,10 +157,11 @@ export function createSalary({ db, host, log }) {
     if (!hasValue(input.netPay) && (moneyChanged || hasValue(input.grossPay))) merged.netPay = netFromGross(merged);
     const assignments = MONEY_FIELDS.map((f) => f.column + "=?");
     run(
-      `UPDATE salary_record SET pay_date=?, income_period=?, cycle=?, ${assignments.join(", ")}, note=?, updated_at=?, rev=rev+1 WHERE id=? AND deleted_at IS NULL`,
+      `UPDATE salary_record SET pay_date=?, income_period=?, cycle=?, employment_type=?, ${assignments.join(", ")}, note=?, updated_at=?, rev=rev+1 WHERE id=? AND deleted_at IS NULL`,
       merged.payDate,
       merged.incomePeriod,
       merged.cycle,
+      merged.employmentType ?? null,
       ...MONEY_FIELDS.map((f) => merged[f.key]),
       merged.note,
       now(),
