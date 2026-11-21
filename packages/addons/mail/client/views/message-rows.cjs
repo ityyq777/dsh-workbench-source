@@ -2,6 +2,8 @@
 var GLYPHS = require("../ui/icons.cjs").ICONS;
 
 const Paperclip = GLYPHS["paperclip"];
+const MailNew = GLYPHS["mail"];
+const MailSeen = GLYPHS["mail-open"];
 
 module.exports = function messageRows(h, items, options) {
   const { current, showSource, lang, attachmentUpdates, open, sender, senderDetail, isUnread } = options;
@@ -31,13 +33,17 @@ module.exports = function messageRows(h, items, options) {
       shortDate = prefix + (date.getMonth() + 1) + "/" + date.getDate();
     }
     const active = current?.id === m.id;
+    const unread = isUnread(m);
+    const statusText = unread ? (lang === "en" ? "Unread" : "未读") : (lang === "en" ? "Read" : "已读");
     const { hasAttachment, attachmentName } = attachmentUpdates.get(m.id) ?? m;
     const row = h("button", {
       type: "button", key: m.id, "data-mail-id": m.id, "aria-current": active || undefined,
       title: senderDetail(m) + " · " + (m.subject || "(无主题)"),
-      className: "wbml-list-row" + (active ? " on" : "") + (isUnread(m) ? " unread" : ""),
+      className: "wbml-list-row" + (active ? " on" : "") + (unread ? " unread" : " read"),
       onClick: () => open(m),
     },
+    h("span", { className: "wbml-st", role: "img", "aria-label": statusText, title: statusText },
+      h(unread ? MailNew : MailSeen, { size: 14, "aria-hidden": true })),
     h("span", { className: "wbml-who" }, h("span", { className: "wbml-sender", title: senderDetail(m) }, sender(m)), showSource && m.accountName ? h("span", { className: "wbml-source", title: m.accountName }, m.accountName) : null),
     h("span", { className: "wbml-line" }, h("span", { className: "wbml-subject" }, m.subject || "(无主题)"), h("span", { className: "wbml-snippet" }, m.preview)),
     hasAttachment === true ? h("span", { className: "wbml-attachment", title: attachmentName || "有附件", role: "img", "aria-label": attachmentName ? "附件：" + attachmentName : "有附件" },

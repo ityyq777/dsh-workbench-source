@@ -15,7 +15,9 @@ import { listMessages } from "../packages/addons/mail/lib/domain/list.js";
 const require = createRequire(import.meta.url);
 const root = process.cwd();
 const viewFile = path.join(root, "packages/addons/mail/client/views/messages.cjs");
+const rowFile = path.join(root, "packages/addons/mail/client/views/message-rows.cjs");
 const view = fs.readFileSync(viewFile, "utf8");
+const rowView = fs.readFileSync(rowFile, "utf8");
 const css = require(path.join(root, "packages/addons/mail/client/ui/styles.cjs"));
 const styleText = Array.isArray(css) ? css.join("\n") : String(css);
 
@@ -35,8 +37,8 @@ function selectorsIn(cssText) {
   return out;
 }
 
-test("messages.cjs 用到的 wbml-* 类都有样式规则", () => {
-  const used = [...classesIn(view)].sort();
+test("messages.cjs 与 message-rows.cjs 用到的 wbml-* 类都有样式规则", () => {
+  const used = [...classesIn(view + "\n" + rowView)].sort();
   const styled = selectorsIn(styleText);
   const missing = used.filter((c) => !styled.has(c));
   assert.deepEqual(missing, [], "缺样式的类：" + missing.join(", "));
@@ -47,7 +49,14 @@ test("样式表是三栏栅格 + 900px 单列降级", () => {
   assert.match(styleText, /\.wbml-layout\.has-detail\{[^}]*minmax\(360px,520px\)/);
   assert.match(styleText, /@media \(max-width:900px\)\{[\s\S]{0,600}?\.wbml-layout/);
   assert.match(styleText, /\.wbml-pane-head\{[^}]*position:sticky/);
-  assert.match(styleText, /\.wbml-list-row\.unread::before\{[^}]*var\(--wb-accent/);
+  // 未读/已读不再靠左侧色条，改由状态图标 + 字重 + 颜色三重线索区分
+  assert.match(styleText, /\.wbml-st\{[^}]*color:var\(--wb-accent/);
+  assert.match(styleText, /\.wbml-list-row\.read \.wbml-st\{[^}]*var\(--wb-muted/);
+  assert.match(styleText, /\.wbml-list-row\.unread \.wbml-sender,\.wbml-list-row\.unread \.wbml-subject\{[^}]*font-weight:650/);
+  assert.match(styleText, /\.wbml-list-row\.read \.wbml-sender,\.wbml-list-row\.read \.wbml-subject\{[^}]*font-weight:400[^}]*color-mix\(in srgb,currentColor 72%,transparent\)/);
+  // 三套行栅格（窄屏两行、中等三列、≥620px 四列）都留出了图标列
+  const grids = styleText.match(/grid-template-areas:("{1}|')st /g) || [];
+  assert.equal(grids.length, 3, "三套行栅格都要有 st 图标区");
   // 新增的布局块只走 --wb-* token：掐出这一段，去掉 var() 的兜底色后不应再有硬编码色
   const start = styleText.indexOf(".wbml-layout{");
   const end = styleText.indexOf("@media (max-width:1180px)");
@@ -185,8 +194,10 @@ test("消息页：真实控件事件调用、三栏结构、切换和正文竞�
     render();
     assert.ok(!button("同步最新邮件").props.disabled);
     assert.ok(nodes("wbml-list-row").every((row) => !text(row).includes("工作邮箱")), "指定账户隐藏重复来源");
-    const hasIcon = (row) => walk(row).some((node) => typeof node.type === "object" && node.type?.$$typeof === Symbol.for("react.forward_ref"));
-    assert.deepEqual(nodes("wbml-list-row").map(hasIcon), [true, false], "仅缓存确认有附件的邮件展示图标");
+    // 行首的状态图标每行都有，这里的「附件图标」只看 wbml-attachment 内的 lucide 组件
+    const hasClip = (row) => walk(row).some((node) => node.props?.className === "wbml-attachment" &&
+      walk(node).some((kid) => typeof kid.type === "object" && kid.type?.$$typeof === Symbol.for("react.forward_ref")));
+    assert.deepEqual(nodes("wbml-list-row").map(hasClip), [true, false], "仅缓存确认有附件的邮件展示图标");
     button("同步最新邮件").props.onClick();
     await settle();
     render();
@@ -245,4 +256,39 @@ test("消息页：真实控件事件调用、三栏结构、切换和正文竞�
   } finally {
     common.useLoad = prev;
   }
+});
+
+test("未读行用闭合信封强调色、已读行用开启信封淡色，图标自带可读语义", () => {
+  const rows = require("../packages/addons/mail/client/views/message-rows.cjs");
+  const ICONS = require("../packages/addons/mail/client/ui/icons.cjs").ICONS;
+  const h = (type, props, ...kids) => ({type, props, kids});
+  const now = new Date(2026, 5, 2, 9, 0);
+  const items = [
+    {id: "u1", dateAt: +now, subject: "未读的主题", preview: "摘要", accountName: "工作邮箱"},
+    {id: "r1", dateAt: +now - 60000, subject: "已读的主题", preview: "摘要", accountName: "工作邮箱"},
+  ];
+  const render = (lang) => rows(h, items, {
+    now, lang, showSource: true, attachmentUpdates: new Map(), open() {},
+    sender: (m) => m.id === "u1" ? "未读发件人" : "已读发件人", senderDetail: () => "",
+    isUnread: (m) => m.id === "u1",
+  }).filter((r) => r.type === "button");
+
+  const zh = render("zh");
+  assert.equal(zh[0].props.className, "wbml-list-row unread");
+  assert.equal(zh[1].props.className, "wbml-list-row read");
+  const st = (row) => row.kids[0];
+  assert.equal(st(zh[0]).props.className, "wbml-st");
+  assert.equal(st(zh[0]).props.role, "img");
+  assert.equal(st(zh[0]).props["aria-label"], "未读");
+  assert.equal(st(zh[0]).props.title, "未读");
+  assert.equal(st(zh[0]).kids[0].type, ICONS.mail, "未读用闭合信封");
+  assert.equal(st(zh[1]).props["aria-label"], "已读");
+  assert.equal(st(zh[1]).kids[0].type, ICONS["mail-open"], "已读用开启信封");
+  // 状态图标与按钮里其他 lucide 图标一样是装饰性的，不能被 Tab 单独聚焦
+  assert.equal(st(zh[0]).kids[0].props["aria-hidden"], true);
+  assert.equal(st(zh[0]).kids[0].props.size, 14);
+
+  const en = render("en");
+  assert.equal(st(en[0]).props["aria-label"], "Unread");
+  assert.equal(st(en[1]).props["aria-label"], "Read");
 });

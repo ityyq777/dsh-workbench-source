@@ -1051,11 +1051,14 @@ var require_styles = __commonJS({
       ".wbml-state{padding:32px 16px;text-align:center;font-size:13px;color:var(--wb-muted,#6b7280)}",
       ".wbml-state-error{color:var(--wb-danger,#b91c1c)}",
       ".wbml-list{display:flex;flex-direction:column;overflow:auto;min-height:0}",
-      '.wbml-list-row{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"who time" "line line";gap:1px 10px;padding:8px 12px 8px 15px;border:0;border-bottom:1px solid var(--wb-line,#eef0f3);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;min-height:56px;box-sizing:border-box}',
+      '.wbml-list-row{position:relative;display:grid;grid-template-columns:18px minmax(0,1fr) auto;grid-template-areas:"st who time" "st line line";gap:1px 10px;padding:8px 12px;align-items:center;border:0;border-bottom:1px solid var(--wb-line,#eef0f3);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;min-height:56px;box-sizing:border-box}',
       ".wbml-list-row:hover{background:var(--wb-surface,#f8fafc)}",
       ".wbml-list-row.on{background:color-mix(in srgb,var(--wb-accent,#2563eb) 12%,transparent)}",
-      ".wbml-list-row.unread{font-weight:600}",
-      '.wbml-list-row.unread::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:var(--wb-accent,#2563eb)}',
+      ".wbml-st{grid-area:st;justify-self:center;align-self:center;display:inline-flex;color:var(--wb-accent,#2563eb)}",
+      ".wbml-st svg{display:block}",
+      ".wbml-list-row.unread .wbml-sender,.wbml-list-row.unread .wbml-subject{font-weight:650;color:inherit}",
+      ".wbml-list-row.read .wbml-st{color:var(--wb-muted,#6b7280);opacity:.7}",
+      ".wbml-list-row.read .wbml-sender,.wbml-list-row.read .wbml-subject{font-weight:400;color:color-mix(in srgb,currentColor 72%,transparent)}",
       ".wbml-who{grid-area:who;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".wbml-line{grid-area:line;display:flex;align-items:baseline;gap:8px;min-width:0}",
       ".wbml-subject{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto;min-width:0}",
@@ -1063,11 +1066,11 @@ var require_styles = __commonJS({
       ".wbml-time{grid-area:time;font-size:11px;color:var(--wb-muted,#6b7280);white-space:nowrap}",
       ".wbml-listpane{min-height:0;container:mail-list / inline-size}",
       ".wbml-date-group{flex:none;margin:0;padding:6px 12px;font-size:11px;font-weight:650;color:var(--wb-muted);background:var(--wb-card);border-bottom:1px solid var(--wb-line)}",
-      ".wbml-list-row{--wbml-date-width:8rem;flex:none;align-items:center;grid-template-columns:minmax(0,1fr) 18px var(--wbml-date-width);grid-template-areas:'who attachment time' 'line line line'}",
+      ".wbml-list-row{--wbml-date-width:8rem;flex:none;align-items:center;grid-template-columns:18px minmax(0,1fr) 18px var(--wbml-date-width);grid-template-areas:'st who attachment time' 'st line line line'}",
       ".wbml-attachment-name{display:none;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wbml-attachment svg{flex:none}",
       ".wbml-who{display:flex;align-items:center;gap:5px;min-width:0}.wbml-sender,.wbml-source{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}.wbml-source{max-width:45%;font-size:11px;font-weight:400;color:var(--wb-muted)}",
       ".wbml-attachment{grid-area:attachment;justify-self:center;display:inline-flex;color:var(--wb-muted)}.wbml-time{text-align:right;font-variant-numeric:tabular-nums;font-weight:400}",
-      "@container mail-list (min-width:620px){.wbml-list-row{min-height:42px;grid-template-columns:clamp(132px,20%,240px) minmax(0,1fr) clamp(72px,16%,180px) var(--wbml-date-width);grid-template-areas:'who line attachment time'}.wbml-attachment{justify-self:start;max-width:100%;min-width:0;align-items:center;gap:4px}.wbml-attachment-name{display:block;font-size:11px}}",
+      "@container mail-list (min-width:620px){.wbml-list-row{min-height:42px;grid-template-columns:18px clamp(132px,20%,240px) minmax(0,1fr) clamp(72px,16%,180px) var(--wbml-date-width);grid-template-areas:'st who line attachment time'}.wbml-attachment{justify-self:start;max-width:100%;min-width:0;align-items:center;gap:4px}.wbml-attachment-name{display:block;font-size:11px}}",
       ".wbml-detailpane{min-height:0}",
       ".wbml-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--wb-border,#eef0f3);background:var(--wb-surface,#fff)}",
       ".wbml-detail-head{flex-direction:column}.wbml-reader-nav{display:flex;gap:6px;flex-wrap:wrap}.wbml-detail-meta{overflow-wrap:anywhere}",
@@ -2001,6 +2004,8 @@ var require_message_rows = __commonJS({
     "use strict";
     var GLYPHS2 = require_icons2().ICONS;
     var Paperclip2 = GLYPHS2["paperclip"];
+    var MailNew = GLYPHS2["mail"];
+    var MailSeen = GLYPHS2["mail-open"];
     module2.exports = function messageRows(h, items, options) {
       const { current, showSource, lang, attachmentUpdates, open, sender, senderDetail, isUnread } = options;
       const locale = lang === "en" ? "en-GB" : "zh-CN";
@@ -2029,6 +2034,8 @@ var require_message_rows = __commonJS({
           shortDate = prefix + (date.getMonth() + 1) + "/" + date.getDate();
         }
         const active = current?.id === m.id;
+        const unread = isUnread(m);
+        const statusText = unread ? lang === "en" ? "Unread" : "\u672A\u8BFB" : lang === "en" ? "Read" : "\u5DF2\u8BFB";
         const { hasAttachment, attachmentName } = attachmentUpdates.get(m.id) ?? m;
         const row = h(
           "button",
@@ -2038,9 +2045,14 @@ var require_message_rows = __commonJS({
             "data-mail-id": m.id,
             "aria-current": active || void 0,
             title: senderDetail(m) + " \xB7 " + (m.subject || "(\u65E0\u4E3B\u9898)"),
-            className: "wbml-list-row" + (active ? " on" : "") + (isUnread(m) ? " unread" : ""),
+            className: "wbml-list-row" + (active ? " on" : "") + (unread ? " unread" : " read"),
             onClick: () => open(m)
           },
+          h(
+            "span",
+            { className: "wbml-st", role: "img", "aria-label": statusText, title: statusText },
+            h(unread ? MailNew : MailSeen, { size: 14, "aria-hidden": true })
+          ),
           h("span", { className: "wbml-who" }, h("span", { className: "wbml-sender", title: senderDetail(m) }, sender(m)), showSource && m.accountName ? h("span", { className: "wbml-source", title: m.accountName }, m.accountName) : null),
           h("span", { className: "wbml-line" }, h("span", { className: "wbml-subject" }, m.subject || "(\u65E0\u4E3B\u9898)"), h("span", { className: "wbml-snippet" }, m.preview)),
           hasAttachment === true ? h(
@@ -6218,7 +6230,7 @@ var GLYPHS = require_icons2().ICONS;
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.5.1",
+    version: "0.5.2",
     icon: GLYPHS["mail"],
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: gated(require_messages(), "\u90AE\u4EF6") },
