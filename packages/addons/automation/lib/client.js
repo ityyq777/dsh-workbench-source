@@ -1137,6 +1137,16 @@ var require_layout_styles = __commonJS({
       ".wba-clickable{cursor:pointer}",
       ".wba-check{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}",
       ".wba-check input{accent-color:var(--wb-accent);margin:0}",
+      // 设置页：纵向堆叠的卡片与 action 多选
+      ".wba-stack{display:flex;flex-direction:column;gap:12px}",
+      ".wba-notice.warn{background:var(--wb-surface);color:var(--wb-warn);border:1px solid var(--wb-warn)}",
+      ".wba-empty-inline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0}",
+      ".wba-picker{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow:auto;border:1px solid var(--wb-border);border-radius:8px;padding:8px;background:var(--wb-surface)}",
+      ".wba-picker-group{display:flex;flex-direction:column;gap:2px}",
+      ".wba-picker-domain{margin:4px 0 2px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--wb-muted)}",
+      ".wba-picker-row{padding:3px 4px;border-radius:6px;gap:8px;min-width:0}",
+      ".wba-picker-row:hover{background:var(--wb-card)}",
+      ".wba-picker-row .wba-hint{flex:1;min-width:0}",
       // 文本与焦点
       ".wba-ellipsis{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}",
       ".wba-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;color:var(--wb-muted)}",
@@ -1328,6 +1338,11 @@ var require_copy = __commonJS({
         "rules.empty.backup": "\u89C4\u5219\u53EF\u4EE5\u968F\u5907\u4EFD\u5BFC\u5165\u5BFC\u51FA\uFF1B\u8FD0\u884C\u8BB0\u5F55\u53EA\u4FDD\u7559\u5728\u672C\u673A\u3002",
         "rules.empty.filtered": "\u6CA1\u6709\u5339\u914D\u7684\u89C4\u5219",
         "rules.empty.filteredBody": "\u6362\u4E2A\u5173\u952E\u8BCD\uFF0C\u6216\u6E05\u9664\u8FC7\u6EE4\u6761\u4EF6\u3002",
+        "rules.empty.noActionTitle": "\u8FD8\u6CA1\u6709\u542F\u7528\u4EFB\u4F55 action",
+        "rules.empty.noActionBody": "\u81EA\u52A8\u5316\u9ED8\u8BA4\u4E0D\u5141\u8BB8\u8C03\u7528\u4EFB\u4F55 action\u3002\u5148\u5230\u8BBE\u7F6E\u9875\u52FE\u9009\u9700\u8981\u7684 action\uFF0C\u518D\u521B\u5EFA\u89C4\u5219\u3002",
+        "rules.empty.noActionCta": "\u53BB\u8BBE\u7F6E",
+        "rules.empty.noActionHint": "\u52FE\u9009\u540E\u7ACB\u5373\u751F\u6548\uFF0C\u4E0D\u9700\u8981\u91CD\u542F\u3002",
+        "rules.actionDisabled": "\u672A\u542F\u7528",
         "rules.confirm.delete": "\u5220\u9664\u89C4\u5219\u300C{name}\u300D\uFF1F\u5220\u9664\u540E\u4E0D\u53EF\u6062\u590D\u3002",
         "rules.running": "\u8FD0\u884C\u4E2D\u2026",
         "trigger.interval": "\u95F4\u9694",
@@ -1369,6 +1384,9 @@ var require_copy = __commonJS({
         "editor.nameRequired": "\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A",
         "editor.enabled": "\u542F\u7528",
         "editor.action": "Action",
+        "editor.actionRequired": "\u8BF7\u9009\u62E9\u4E00\u4E2A action",
+        "editor.noActions": "\u672A\u542F\u7528\u4EFB\u4F55 action",
+        "editor.noActionsHint": "\u5148\u5230\u8BBE\u7F6E\u9875\u52FE\u9009 action\uFF0C\u624D\u80FD\u4FDD\u5B58\u89C4\u5219\u3002",
         "editor.showExample": "\u67E5\u770B\u53C2\u6570\u793A\u4F8B",
         "editor.fillExample": "\u586B\u5165\u793A\u4F8B",
         "editor.exampleHint": "\u793A\u4F8B\u4F1A\u8986\u76D6\u5F53\u524D JSON\uFF0C\u786E\u8BA4\u540E\u586B\u5165\u3002",
@@ -1411,7 +1429,7 @@ var require_copy = __commonJS({
         "runs.empty.title": "\u8FD8\u6CA1\u6709\u8FD0\u884C\u8BB0\u5F55",
         "runs.empty.body": "\u89C4\u5219\u8FD0\u884C\u540E\uFF0C\u8FD9\u91CC\u4FDD\u7559\u6700\u8FD1 200 \u6761\u8BB0\u5F55\u4E0E\u9519\u8BEF\u4FE1\u606F\u3002",
         "stats.title": "\u81EA\u52A8\u5316",
-        "stats.subtitle": "\u628A\u5B9A\u65F6\u3001\u57DF\u4E8B\u4EF6\u6216\u624B\u52A8\u64CD\u4F5C\u63A5\u5230\u767D\u540D\u5355 action\uFF1A\u6A21\u677F\u3001\u6761\u4EF6\u3001\u9650\u9891\u4E0E\u8FD0\u884C\u8BB0\u5F55\u3002",
+        "stats.subtitle": "\u628A\u5B9A\u65F6\u3001\u57DF\u4E8B\u4EF6\u6216\u624B\u52A8\u64CD\u4F5C\u63A5\u5230\u5DF2\u542F\u7528\u7684 action\uFF1A\u6A21\u677F\u3001\u6761\u4EF6\u3001\u9650\u9891\u4E0E\u8FD0\u884C\u8BB0\u5F55\u3002",
         "stats.kpi.total": "\u89C4\u5219\u603B\u6570",
         "stats.kpi.totalHint": "\u672A\u5220\u9664\u7684\u89C4\u5219",
         "stats.kpi.enabled": "\u5DF2\u542F\u7528",
@@ -1423,16 +1441,19 @@ var require_copy = __commonJS({
         "stats.kpi.skipped": "\u4ECA\u65E5\u8DF3\u8FC7",
         "stats.kpi.skippedHint": "\u6761\u4EF6\u4E0D\u6EE1\u8DB3\u3001\u8D85\u9650\u6216\u5E76\u53D1\u5DF2\u6EE1",
         "stats.allowed": "\u5141\u8BB8\u8C03\u7528",
-        "stats.allowedHint": "\u540E\u7AEF\u767D\u540D\u5355\uFF0C\u5171 5 \u4E2A action",
+        "stats.allowedHint": "\u5728\u8BBE\u7F6E\u9875\u52FE\u9009\uFF0C\u9ED8\u8BA4\u7A7A",
+        "stats.allowedEmpty": "\u5C1A\u672A\u542F\u7528\u4EFB\u4F55 action\uFF1B\u52FE\u9009\u540E\u624D\u80FD\u521B\u5EFA\u89C4\u5219\u3002",
+        "stats.gotoSettings": "\u53BB\u8BBE\u7F6E",
+        "stats.staleWarning": "{n} \u6761\u89C4\u5219\u7684 action \u672A\u542F\u7528\uFF0C\u8FD0\u884C\u4F1A\u88AB\u8DF3\u8FC7\u3002",
         "stats.denied": "\u4E0D\u5141\u8BB8\u8C03\u7528",
         "stats.deniedHint": "vault / automation / audit \u4E0E\u4EFB\u4F55\u5220\u9664\u3001\u5907\u4EFD\u7C7B action",
         "stats.triggers": "\u89E6\u53D1\u65B9\u5F0F",
         "stats.trigger.interval": "\u6BCF N \u5206\u949F\u6309 next_run_at \u5230\u671F\u6267\u884C\u3002",
         "stats.trigger.dailyAt": "\u6309\u65F6\u95F4\u4E0E\u65F6\u533A\u8BA1\u7B97\u4E0B\u4E00\u6B21\uFF0C\u53EF\u9009\u661F\u671F\u3002",
         "stats.trigger.event": "\u5BBF\u4E3B domain-event \u547D\u4E2D domainId + event \u65F6\u6267\u884C\u3002",
-        "stats.trigger.manual": "\u5728\u89C4\u5219\u9875\u70B9\u300C\u8FD0\u884C\u300D\uFF0C\u4ECD\u53D7\u767D\u540D\u5355\u3001\u6761\u4EF6\u4E0E\u9650\u9891\u7EA6\u675F\u3002",
+        "stats.trigger.manual": "\u5728\u89C4\u5219\u9875\u70B9\u300C\u8FD0\u884C\u300D\uFF0C\u4ECD\u53D7\u5DF2\u542F\u7528\u6E05\u5355\u3001\u6761\u4EF6\u4E0E\u9650\u9891\u7EA6\u675F\u3002",
         "config.title": "\u8BBE\u7F6E",
-        "config.subtitle": "\u9650\u6D41\u53C2\u6570\u4FDD\u5B58\u5728\u672C\u673A meta\uFF1B\u89C4\u5219\u4E0E\u5176\u5B83\u4E1A\u52A1\u6570\u636E\u4E00\u8D77\u53C2\u4E0E\u5907\u4EFD\u3002",
+        "config.subtitle": "\u9650\u6D41\u53C2\u6570\u4E0E\u5141\u8BB8\u8C03\u7528\u7684 action \u90FD\u5B58\u5728\u672C\u673A\uFF1B\u89C4\u5219\u4E0E\u5176\u5B83\u4E1A\u52A1\u6570\u636E\u4E00\u8D77\u53C2\u4E0E\u5907\u4EFD\u3002",
         "config.limit.title": "\u9650\u6D41",
         "config.limit.maxRules": "\u89C4\u5219\u6570\u91CF\u4E0A\u9650",
         "config.limit.perHour": "\u6BCF\u89C4\u5219\u6BCF\u5C0F\u65F6\u4E0A\u9650",
@@ -1443,8 +1464,18 @@ var require_copy = __commonJS({
         "config.c.concurrency": "\u5168\u5C40\u5E76\u53D1 2\uFF1B\u5E76\u53D1\u5DF2\u6EE1\u65F6\u5B9A\u65F6\u89E6\u53D1\u8BB0 skipped\uFF0C\u4E0D\u6392\u961F\u91CD\u8BD5\u3002",
         "config.c.event": "\u4E8B\u4EF6\u89E6\u53D1\u7531\u5BBF\u4E3B domain-event \u9A71\u52A8\uFF0Cpayload \u4E3A {domainId,event,data}\u3002",
         "config.c.condition": "\u6761\u4EF6\u4E0D\u6EE1\u8DB3\u8BB0 skipped\uFF0C\u4E0D\u8C03\u7528 action\u3002",
-        "config.c.backup": "\u89C4\u5219\u968F\u5907\u4EFD\u8FC1\u79FB\uFF1B\u8FD0\u884C\u8BB0\u5F55\u53EA\u5728\u672C\u673A\uFF0C\u4E0D\u53C2\u4E0E\u4E91\u540C\u6B65\u3002",
-        "config.c.safety": "\u4E0D\u5141\u8BB8\u8C03\u7528 vault.*\u3001automation.*\u3001audit.* \u6216\u4EFB\u4F55 delete/backup action\u3002"
+        "config.c.backup": "\u89C4\u5219\u968F\u5907\u4EFD\u8FC1\u79FB\uFF1B\u5141\u8BB8\u6E05\u5355\u4E0E\u8FD0\u884C\u8BB0\u5F55\u53EA\u5728\u672C\u673A\uFF0C\u4E0D\u53C2\u4E0E\u4E91\u540C\u6B65\u3002",
+        "config.c.safety": "\u786C\u5E95\u7EBF\u4E0D\u53EF\u914D\u7F6E\uFF1Avault.*\u3001automation.*\u3001audit.* \u4E0E\u4EFB\u4F55 delete/backup action \u6C38\u8FDC\u4E0D\u5141\u8BB8\u88AB\u81EA\u52A8\u5316\u8C03\u7528\u3002",
+        "config.allowed.title": "\u5141\u8BB8\u8C03\u7528\u7684 action",
+        "config.allowed.hint": "\u9ED8\u8BA4\u7A7A\u3002\u53EA\u6709\u52FE\u9009\u540E\u7684 action \u624D\u80FD\u88AB\u89C4\u5219\u8C03\u7528\uFF1B\u786C\u5E95\u7EBF\u4E0D\u53D7\u6B64\u5904\u5F71\u54CD\u3002",
+        "config.allowed.search": "\u641C\u7D22 action \u6216\u6240\u5C5E\u57DF",
+        "config.allowed.selected": "\u5DF2\u9009 {n} \u4E2A",
+        "config.allowed.empty": "\u6CA1\u6709\u5339\u914D\u7684 action\uFF0C\u53EF\u5728\u4E0B\u65B9\u624B\u52A8\u6DFB\u52A0\u3002",
+        "config.allowed.extra": "\u5DF2\u9009\u4F46\u4E0D\u5728\u5019\u9009",
+        "config.allowed.manual": "\u624B\u52A8\u6DFB\u52A0 action",
+        "config.allowed.add": "\u6DFB\u52A0",
+        "config.allowed.invalid": "\u8BF7\u8F93\u5165 namespace.action\uFF0C\u4E14\u4E0D\u80FD\u662F vault / automation / audit \u6216 delete / backup\u3002",
+        "config.allowed.deniedNote": "vault / automation / audit \u4E0E\u5220\u9664\u3001\u5907\u4EFD\u7C7B action \u6C38\u8FDC\u4E0D\u53EF\u542F\u7528\u3002"
       },
       en: {
         "common.save": "Save",
@@ -1483,6 +1514,11 @@ var require_copy = __commonJS({
         "rules.empty.backup": "Rules travel with backups; run history stays on this device.",
         "rules.empty.filtered": "No matching rules",
         "rules.empty.filteredBody": "Try another keyword, or clear the filters.",
+        "rules.empty.noActionTitle": "No actions enabled yet",
+        "rules.empty.noActionBody": "Automation cannot call any action by default. Pick the ones you need in Settings first.",
+        "rules.empty.noActionCta": "Open settings",
+        "rules.empty.noActionHint": "Changes take effect immediately; no restart needed.",
+        "rules.actionDisabled": "Disabled",
         "rules.confirm.delete": 'Delete rule "{name}"? This cannot be undone.',
         "rules.running": "Running\u2026",
         "trigger.interval": "Interval",
@@ -1524,6 +1560,9 @@ var require_copy = __commonJS({
         "editor.nameRequired": "Name is required",
         "editor.enabled": "Enabled",
         "editor.action": "Action",
+        "editor.actionRequired": "Pick an action",
+        "editor.noActions": "No actions enabled",
+        "editor.noActionsHint": "Enable actions in Settings before saving a rule.",
         "editor.showExample": "View example args",
         "editor.fillExample": "Fill example",
         "editor.exampleHint": "The example replaces the current JSON after confirmation.",
@@ -1578,7 +1617,10 @@ var require_copy = __commonJS({
         "stats.kpi.skipped": "Skipped today",
         "stats.kpi.skippedHint": "Condition, rate limit or concurrency",
         "stats.allowed": "Allowed",
-        "stats.allowedHint": "Backend whitelist, 5 actions",
+        "stats.allowedHint": "Chosen in Settings; empty by default",
+        "stats.allowedEmpty": "No actions enabled yet; enable some before creating rules.",
+        "stats.gotoSettings": "Open settings",
+        "stats.staleWarning": "{n} rule(s) use actions that are not enabled and will be skipped.",
         "stats.denied": "Denied",
         "stats.deniedHint": "vault / automation / audit and any delete or backup action",
         "stats.triggers": "Triggers",
@@ -1587,7 +1629,7 @@ var require_copy = __commonJS({
         "stats.trigger.event": "A host domain-event matching domainId + event.",
         "stats.trigger.manual": '"Run now" on the rules page, still subject to whitelist, conditions and limits.',
         "config.title": "Settings",
-        "config.subtitle": "Limits are stored in local meta; rules are part of regular backups.",
+        "config.subtitle": "Limits and allowed actions stay on this device; rules are part of regular backups.",
         "config.limit.title": "Rate limits",
         "config.limit.maxRules": "Max rules",
         "config.limit.perHour": "Runs per rule per hour",
@@ -1598,8 +1640,18 @@ var require_copy = __commonJS({
         "config.c.concurrency": "Global concurrency 2; when full, scheduled triggers are recorded as skipped without retry.",
         "config.c.event": "Events come from the host domain-event bus; payload is {domainId,event,data}.",
         "config.c.condition": "A false condition records skipped and does not call the action.",
-        "config.c.backup": "Rules travel with backups; run history stays on this device and is not synced.",
-        "config.c.safety": "vault.*, automation.*, audit.* and any delete/backup action are refused."
+        "config.c.backup": "Rules travel with backups; the allowed list and run history stay on this device.",
+        "config.c.safety": "Hard limits are not configurable: vault.*, automation.*, audit.* and any delete/backup action can never be called.",
+        "config.allowed.title": "Allowed actions",
+        "config.allowed.hint": "Empty by default. Only checked actions can be called by rules; hard limits always apply.",
+        "config.allowed.search": "Search action or domain",
+        "config.allowed.selected": "{n} selected",
+        "config.allowed.empty": "No matching action; add one manually below.",
+        "config.allowed.extra": "Selected but not in catalog",
+        "config.allowed.manual": "Add action manually",
+        "config.allowed.add": "Add",
+        "config.allowed.invalid": "Use namespace.action, and avoid vault / automation / audit or delete / backup.",
+        "config.allowed.deniedNote": "vault / automation / audit and delete/backup actions can never be enabled."
       }
     };
     function t(lang, key, vars) {
@@ -1663,9 +1715,14 @@ var require_stats = __commonJS({
             h("p", { className: "wba-panel-title" }, t("stats.allowed")),
             h("span", { className: "wba-hint" }, t("stats.allowedHint"))
           ),
-          h("div", { className: "wba-pills" }, (props.actions || []).map(function(a) {
+          (props.actions || []).length ? h("div", { className: "wba-pills" }, (props.actions || []).map(function(a) {
             return h("span", { key: a, className: "wba-chip static" }, h("code", null, a));
-          }))
+          })) : h(
+            "div",
+            { className: "wba-empty-inline" },
+            h("p", { className: "wba-hint" }, t("stats.allowedEmpty")),
+            h(C.Btn, { h, onClick: props.onSettings }, t("stats.gotoSettings"))
+          )
         ),
         h(
           "div",
@@ -1676,7 +1733,7 @@ var require_stats = __commonJS({
             h("p", { className: "wba-panel-title" }, t("stats.denied")),
             h("span", { className: "wba-hint" }, t("stats.deniedHint"))
           ),
-          h("div", { className: "wba-pills" }, DENIED.map(function(a) {
+          h("div", { className: "wba-pills" }, (props.denied || DENIED).map(function(a) {
             return h("span", { key: a, className: "wba-chip static wba-mono" }, a);
           }))
         ),
@@ -1726,9 +1783,20 @@ var require_stats = __commonJS({
           )
         ),
         stats.error ? h(C.Notice, { h, kind: "error", text: stats.error }) : null,
+        s.staleCount ? h(C.Notice, { h, kind: "warn", text: t("stats.staleWarning", { n: s.staleCount }) }) : null,
         stats.loading ? h("div", { className: "wba-cards" }, [0, 1, 2, 3, 4].map(function(i) {
           return h("div", { key: i, className: "wba-card" }, h("div", { className: "wba-skel" }));
-        })) : h(StatsBody, { h, t, icon: props.icon, s, actions: opts.data && opts.data.actions || [] })
+        })) : h(StatsBody, {
+          h,
+          t,
+          icon: props.icon,
+          s,
+          actions: opts.data && opts.data.actions || [],
+          denied: opts.data && opts.data.denied || DENIED,
+          onSettings: function() {
+            if (props.onNavigate) props.onNavigate("config");
+          }
+        })
       );
     };
     module2.exports.StatsBody = StatsBody;
@@ -2179,6 +2247,7 @@ var require_rule_editor = __commonJS({
     function validateForm(form, t) {
       var errs = {};
       if (!String(form.name || "").trim()) errs.name = t("editor.nameRequired");
+      if (!String(form.actionName || "").trim()) errs.actionName = t("editor.actionRequired");
       var args = plain(form.actionArgs);
       if (!args.ok) errs.actionArgs = args.error === "object" ? t("editor.argsObject") : t("editor.jsonInvalid", { msg: args.error });
       var cond = null;
@@ -2251,7 +2320,9 @@ var require_rule_editor = __commonJS({
       var exampleS = React.useState(false);
       var touchedS = React.useState(Boolean(form.name));
       var showNameErr = touchedS[0] && Boolean(errs.name);
-      var actionName = actions.indexOf(form.actionName) === -1 ? [form.actionName].concat(actions) : actions;
+      var hasActions = actions.length > 0;
+      var actionName = !form.actionName || actions.indexOf(form.actionName) !== -1 ? actions : [form.actionName].concat(actions);
+      var actionMissing = hasActions && Boolean(form.actionName) && actions.indexOf(form.actionName) === -1;
       var example = EXAMPLES[form.actionName];
       React.useEffect(function() {
         var prev = typeof document !== "undefined" ? document.body.style.overflow : "";
@@ -2335,13 +2406,19 @@ var require_rule_editor = __commonJS({
                 h("span", { className: "wba-label" }, t("editor.action")),
                 h(
                   "select",
-                  { className: "wba-input", value: form.actionName, onChange: function(e) {
-                    set("actionName", e.target.value);
-                  } },
-                  actionName.map(function(a) {
+                  {
+                    className: "wba-input",
+                    value: form.actionName,
+                    disabled: !hasActions,
+                    onChange: function(e) {
+                      set("actionName", e.target.value);
+                    }
+                  },
+                  hasActions ? actionName.map(function(a) {
                     return h("option", { key: a, value: a }, a);
-                  })
-                )
+                  }) : h("option", { value: "" }, t("editor.noActions"))
+                ),
+                !hasActions || actionMissing ? h("span", { className: "wba-err-text" }, hasActions ? t("rules.actionDisabled") : t("editor.noActionsHint")) : null
               ),
               h("span", { className: "wba-grow" }),
               example ? h(C.Btn, { h, onClick: function() {
@@ -2450,8 +2527,8 @@ var require_rules = __commonJS({
         weekdays: "1,2,3,4,5",
         domainId: "",
         event: "",
-        actionName: "message.send",
-        actionArgs: '{\n  "title": "\u81EA\u52A8\u5316\u63D0\u9192",\n  "body": "\u89C4\u5219 {{rule.name}} \u5DF2\u8FD0\u884C"\n}',
+        actionName: "",
+        actionArgs: "{}",
         condOn: false,
         condition: '{\n  "field": "event.item.title",\n  "op": "contains",\n  "value": ""\n}'
       };
@@ -2510,9 +2587,9 @@ var require_rules = __commonJS({
         h(
           "div",
           { className: "wba-inline" },
-          h(C.Btn, { h, kind: "primary", onClick: props.onNew }, t("common.create"))
+          props.noActions ? h(C.Btn, { h, kind: "primary", onClick: props.onSettings }, t("rules.empty.noActionCta")) : h(C.Btn, { h, kind: "primary", onClick: props.onNew }, t("common.create"))
         ),
-        h("p", { className: "wba-empty-body" }, t("rules.empty.backup"))
+        h("p", { className: "wba-empty-body" }, props.noActions ? t("rules.empty.noActionHint") : t("rules.empty.backup"))
       );
     }
     function RulesBody(props) {
@@ -2521,6 +2598,7 @@ var require_rules = __commonJS({
       var icon = props.icon;
       var rows = props.rows;
       var filters = props.filters || {};
+      var allowed = props.allowed || [];
       return h(
         "div",
         { className: "wba-panel" },
@@ -2590,9 +2668,11 @@ var require_rules = __commonJS({
           h,
           t,
           icon,
-          title: props.hasRules ? t("rules.empty.filtered") : t("rules.empty.title"),
-          body: props.hasRules ? t("rules.empty.filteredBody") : t("rules.empty.body"),
-          onNew: props.onNew
+          title: props.hasRules ? t("rules.empty.filtered") : props.noActions ? t("rules.empty.noActionTitle") : t("rules.empty.title"),
+          body: props.hasRules ? t("rules.empty.filteredBody") : props.noActions ? t("rules.empty.noActionBody") : t("rules.empty.body"),
+          noActions: !props.hasRules && props.noActions,
+          onNew: props.onNew,
+          onSettings: props.onSettings
         }) : h(
           "div",
           { className: "wba-table-wrap" },
@@ -2626,7 +2706,12 @@ var require_rules = __commonJS({
                     trig.triggerText(r, t)
                   )
                 ),
-                h("td", null, h("code", { className: "wba-ellipsis", title: r.actionName }, r.actionName)),
+                h(
+                  "td",
+                  null,
+                  h("code", { className: "wba-ellipsis", title: r.actionName }, r.actionName),
+                  allowed.indexOf(r.actionName) === -1 ? h(C.Pill, { h, kind: "warn" }, t("rules.actionDisabled")) : null
+                ),
                 h("td", null, h(C.Pill, { h, kind: r.enabled ? "ok" : "" }, r.enabled ? t("rules.status.on") : t("rules.status.off"))),
                 h(
                   "td",
@@ -2679,7 +2764,7 @@ var require_rules = __commonJS({
       var runningS = React.useState("");
       var all = list.data && list.data.items || [];
       var rows = filterRules(all, filterS[0]);
-      var actions = opts.data && opts.data.actions || ["message.send"];
+      var actions = opts.data && opts.data.actions || [];
       var form = formS[0];
       React.useEffect(function() {
         if (props.viewParams && props.viewParams.new && !formS[0]) openNew();
@@ -2764,6 +2849,11 @@ var require_rules = __commonJS({
           hasRules: all.length > 0,
           loading: list.loading,
           error: list.error,
+          allowed: actions,
+          noActions: actions.length === 0,
+          onSettings: function() {
+            if (props.onNavigate) props.onNavigate("config");
+          },
           filters: filterS[0],
           runningId: runningS[0],
           onFilter: function(patch) {
@@ -3037,87 +3127,260 @@ var require_runs = __commonJS({
   }
 });
 
-// packages/addons/automation/client/views/config.cjs
-var require_config = __commonJS({
-  "packages/addons/automation/client/views/config.cjs"(exports2, module2) {
+// packages/addons/automation/client/views/action-picker.cjs
+var require_action_picker = __commonJS({
+  "packages/addons/automation/client/views/action-picker.cjs"(exports2, module2) {
     "use strict";
     var C = require_common();
     var copy = require_copy();
-    var CONSTRAINTS = ["strategy", "concurrency", "event", "condition", "backup", "safety"];
-    function ConfigBody(props) {
+    var DENIED = /^(vault|automation|audit)\.|\.(delete|backup)$/i;
+    var NAME = /^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){1,2}$/;
+    function filterCatalog(items, q) {
+      var text = String(q || "").trim().toLowerCase();
+      if (!text) return items || [];
+      return (items || []).filter(function(row) {
+        return String(row.name).toLowerCase().indexOf(text) !== -1 || String(row.domain || "").toLowerCase().indexOf(text) !== -1 || String(row.description || "").toLowerCase().indexOf(text) !== -1;
+      });
+    }
+    function groupByDomain(items) {
+      var order = [];
+      var map = {};
+      (items || []).forEach(function(row) {
+        var key = String(row.domain || "other");
+        if (!map[key]) {
+          map[key] = [];
+          order.push(key);
+        }
+        map[key].push(row);
+      });
+      return order.map(function(key) {
+        return { domain: key, items: map[key] };
+      });
+    }
+    function ActionPicker(props) {
       var h = props.h;
       var t = props.t;
       var icon = props.icon;
-      var form = props.form || {};
+      var React = props.React;
+      var qS = React.useState("");
+      var manualS = React.useState("");
+      var items = props.items || [];
+      var selected = props.selected || [];
+      var loading = Boolean(props.loading);
+      var error = props.error || "";
+      var rows = filterCatalog(items, qS[0]);
+      var groups = groupByDomain(rows);
+      var known = {};
+      items.forEach(function(row) {
+        known[row.name] = true;
+      });
+      var extra = selected.filter(function(name) {
+        return !known[name];
+      });
+      if (extra.length) groups.push({ domain: "__extra", items: extra.map(function(name) {
+        return { name, domain: "", description: "" };
+      }) });
+      function has(name) {
+        return selected.indexOf(name) !== -1;
+      }
+      function toggle(name, on) {
+        var next = selected.filter(function(x) {
+          return x !== name;
+        });
+        if (on) next.push(name);
+        next.sort();
+        props.onChange(next);
+      }
+      function addManual() {
+        var name = manualS[0].trim();
+        if (!name) return;
+        if (!NAME.test(name) || DENIED.test(name)) {
+          manualS[1](name);
+          return;
+        }
+        if (!has(name)) toggle(name, true);
+        manualS[1]("");
+      }
+      var manualBad = manualS[0].trim() ? !NAME.test(manualS[0].trim()) || DENIED.test(manualS[0].trim()) : false;
       return h(
         "div",
         { className: "wba-panel" },
         h(
           "div",
           { className: "wba-panel-h" },
-          h("p", { className: "wba-panel-title" }, t("config.limit.title")),
-          props.saved && !props.dirty ? h(C.Pill, { h, kind: "ok" }, t("common.saved")) : null
+          h("p", { className: "wba-panel-title" }, t("config.allowed.title")),
+          icon ? h("span", { className: "wba-card-ico" }, icon("list-checks", 16)) : null
         ),
-        h(
-          "div",
-          { className: "wba-grid-2" },
-          h(
-            "label",
-            { className: "wba-field" },
-            h("span", { className: "wba-label" }, t("config.limit.maxRules")),
-            h("input", {
-              className: "wba-input",
-              type: "number",
-              min: 1,
-              max: 500,
-              value: form.maxRules,
-              "aria-label": t("config.limit.maxRules"),
-              onChange: function(e) {
-                props.onChange("maxRules", e.target.value);
-              }
-            })
-          ),
-          h(
-            "label",
-            { className: "wba-field" },
-            h("span", { className: "wba-label" }, t("config.limit.perHour")),
-            h("input", {
-              className: "wba-input",
-              type: "number",
-              min: 1,
-              max: 600,
-              value: form.perHour,
-              "aria-label": t("config.limit.perHour"),
-              onChange: function(e) {
-                props.onChange("perHour", e.target.value);
-              }
-            })
-          )
-        ),
-        h("p", { className: "wba-sub" }, t("config.limit.hint")),
+        h("p", { className: "wba-sub" }, t("config.allowed.hint")),
         h(
           "div",
           { className: "wba-inline" },
-          h(C.Btn, {
-            h,
-            kind: "primary",
-            disabled: props.busy || !props.dirty,
-            onClick: function() {
-              props.onSave({ maxRules: Number(form.maxRules), perHour: Number(form.perHour) });
-            }
-          }, props.busy ? t("common.loading") : t("common.save")),
-          props.dirty ? null : h("span", { className: "wba-hint" }, t("config.limit.unchanged"))
+          h(
+            "label",
+            { className: "wba-field wba-grow" },
+            h("span", { className: "wba-label" }, t("common.search")),
+            h("input", {
+              className: "wba-input",
+              type: "search",
+              value: qS[0],
+              placeholder: t("config.allowed.search"),
+              "aria-label": t("config.allowed.search"),
+              onChange: function(e) {
+                qS[1](e.target.value);
+              }
+            })
+          ),
+          h("span", { className: "wba-hint" }, t("config.allowed.selected", { n: selected.length })),
+          h(C.Btn, { h, disabled: !selected.length, onClick: function() {
+            props.onChange([]);
+          } }, t("common.clear"))
         ),
-        h("hr", { className: "wba-sep" }),
+        error ? h(C.Notice, { h, kind: "error", text: error }) : null,
+        loading ? h("div", { className: "wba-skel" }) : groups.length === 0 ? h("p", { className: "wba-hint" }, t("config.allowed.empty")) : h("div", { className: "wba-picker" }, groups.map(function(group) {
+          return h(
+            "div",
+            { key: group.domain, className: "wba-picker-group" },
+            h("p", { className: "wba-picker-domain" }, group.domain === "__extra" ? t("config.allowed.extra") : group.domain),
+            group.items.map(function(row) {
+              return h(
+                "label",
+                { key: row.name, className: "wba-check wba-picker-row", title: row.description || row.name },
+                h("input", { type: "checkbox", checked: has(row.name), onChange: function(e) {
+                  toggle(row.name, e.target.checked);
+                } }),
+                h("code", null, row.name),
+                row.description ? h("span", { className: "wba-hint wba-ellipsis" }, row.description) : null
+              );
+            })
+          );
+        })),
         h(
           "div",
-          { className: "wba-panel-h" },
-          h("p", { className: "wba-panel-title" }, t("config.constraints.title")),
-          icon ? h("span", { className: "wba-card-ico" }, icon("shield-check", 16)) : null
+          { className: "wba-inline" },
+          h(
+            "label",
+            { className: "wba-field wba-grow" },
+            h("span", { className: "wba-label" }, t("config.allowed.manual")),
+            h("input", {
+              className: "wba-input" + (manualBad ? " err" : ""),
+              value: manualS[0],
+              placeholder: "namespace.action",
+              "aria-label": t("config.allowed.manual"),
+              onChange: function(e) {
+                manualS[1](e.target.value);
+              }
+            })
+          ),
+          h(C.Btn, { h, disabled: !manualS[0].trim() || manualBad, onClick: addManual }, t("config.allowed.add"))
         ),
-        h("ul", { className: "wba-list" }, CONSTRAINTS.map(function(k) {
-          return h("li", { key: k }, t("config.c." + k));
-        }))
+        manualBad ? h("span", { className: "wba-err-text" }, t("config.allowed.invalid")) : null,
+        h("p", { className: "wba-hint" }, t("config.allowed.deniedNote"))
+      );
+    }
+    module2.exports = { ActionPicker, filterCatalog, groupByDomain };
+  }
+});
+
+// packages/addons/automation/client/views/config.cjs
+var require_config = __commonJS({
+  "packages/addons/automation/client/views/config.cjs"(exports2, module2) {
+    "use strict";
+    var C = require_common();
+    var copy = require_copy();
+    var picker = require_action_picker();
+    var CONSTRAINTS = ["strategy", "concurrency", "event", "condition", "backup", "safety"];
+    function ConfigBody(props) {
+      var h = props.h;
+      var t = props.t;
+      var icon = props.icon;
+      var form = props.form || {};
+      var catalog = props.catalog || { items: [], error: "", loading: false };
+      return h(
+        "div",
+        { className: "wba-stack" },
+        h(
+          "div",
+          { className: "wba-panel" },
+          h(
+            "div",
+            { className: "wba-panel-h" },
+            h("p", { className: "wba-panel-title" }, t("config.limit.title")),
+            props.saved && !props.dirty ? h(C.Pill, { h, kind: "ok" }, t("common.saved")) : null
+          ),
+          h(
+            "div",
+            { className: "wba-grid-2" },
+            h(
+              "label",
+              { className: "wba-field" },
+              h("span", { className: "wba-label" }, t("config.limit.maxRules")),
+              h("input", {
+                className: "wba-input",
+                type: "number",
+                min: 1,
+                max: 500,
+                value: form.maxRules,
+                "aria-label": t("config.limit.maxRules"),
+                onChange: function(e) {
+                  props.onChange("maxRules", e.target.value);
+                }
+              })
+            ),
+            h(
+              "label",
+              { className: "wba-field" },
+              h("span", { className: "wba-label" }, t("config.limit.perHour")),
+              h("input", {
+                className: "wba-input",
+                type: "number",
+                min: 1,
+                max: 600,
+                value: form.perHour,
+                "aria-label": t("config.limit.perHour"),
+                onChange: function(e) {
+                  props.onChange("perHour", e.target.value);
+                }
+              })
+            )
+          ),
+          h("p", { className: "wba-sub" }, t("config.limit.hint")),
+          h(
+            "div",
+            { className: "wba-inline" },
+            h(C.Btn, {
+              h,
+              kind: "primary",
+              disabled: props.busy || !props.dirty,
+              onClick: function() {
+                props.onSave({ maxRules: Number(form.maxRules), perHour: Number(form.perHour), allowedActions: form.allowedActions || [] });
+              }
+            }, props.busy ? t("common.loading") : t("common.save")),
+            props.dirty ? null : h("span", { className: "wba-hint" }, t("config.limit.unchanged"))
+          ),
+          h("hr", { className: "wba-sep" }),
+          h(
+            "div",
+            { className: "wba-panel-h" },
+            h("p", { className: "wba-panel-title" }, t("config.constraints.title")),
+            icon ? h("span", { className: "wba-card-ico" }, icon("shield-check", 16)) : null
+          ),
+          h("ul", { className: "wba-list" }, CONSTRAINTS.map(function(k) {
+            return h("li", { key: k }, t("config.c." + k));
+          }))
+        ),
+        h(picker.ActionPicker, {
+          h,
+          t,
+          icon,
+          React: props.React,
+          items: catalog.items,
+          error: catalog.error,
+          loading: catalog.loading,
+          selected: form.allowedActions || [],
+          onChange: function(list) {
+            props.onChange("allowedActions", list);
+          }
+        })
       );
     }
     module2.exports = function ConfigView(props) {
@@ -3129,18 +3392,23 @@ var require_config = __commonJS({
         return copy.t(lang, key, vars);
       };
       var cfg = C.useLoad(React, api, "automation.configGet", {}, []);
+      var catalog = C.useLoad(React, api, "automation.actionCatalog", {}, []);
       var formS = React.useState(null);
       var busyS = React.useState(false);
       var msgS = React.useState(null);
       var savedS = React.useState(false);
       React.useEffect(function() {
         if (cfg.data && !formS[0]) {
-          formS[1]({ maxRules: String(cfg.data.maxRules), perHour: String(cfg.data.perHour) });
+          formS[1]({
+            maxRules: String(cfg.data.maxRules),
+            perHour: String(cfg.data.perHour),
+            allowedActions: (cfg.data.allowedActions || []).slice()
+          });
         }
       }, [cfg.data]);
-      var form = formS[0] || { maxRules: "", perHour: "" };
+      var form = formS[0] || { maxRules: "", perHour: "", allowedActions: [] };
       var base = cfg.data || {};
-      var dirty = String(form.maxRules) !== String(base.maxRules) || String(form.perHour) !== String(base.perHour);
+      var dirty = String(form.maxRules) !== String(base.maxRules) || String(form.perHour) !== String(base.perHour) || (form.allowedActions || []).join(",") !== (base.allowedActions || []).join(",");
       function save(payload) {
         busyS[1](true);
         msgS[1](null);
@@ -3169,7 +3437,10 @@ var require_config = __commonJS({
           h(
             "div",
             { className: "wba-row" },
-            h(C.Btn, { h, onClick: cfg.refresh }, t("common.refresh"))
+            h(C.Btn, { h, onClick: function() {
+              cfg.refresh();
+              catalog.refresh();
+            } }, t("common.refresh"))
           )
         ),
         msgS[0] ? h(C.Notice, { h, kind: msgS[0].kind, text: msgS[0].text }) : null,
@@ -3179,9 +3450,11 @@ var require_config = __commonJS({
           t,
           icon: props.icon,
           form,
+          React,
           busy: busyS[0],
           dirty,
           saved: savedS[0],
+          catalog: { items: catalog.data && catalog.data.items || [], error: catalog.data && catalog.data.error || (catalog.error || ""), loading: catalog.loading && !catalog.data },
           onChange: function(k, v) {
             formS[1](Object.assign({}, form, { [k]: v }));
           },
@@ -5123,7 +5396,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-automation",
-    version: "0.2.4",
+    version: "0.3.0",
     icon: GLYPHS["zap"],
     views: [
       { id: "stats", icon: tabIcon("activity"), title: { zh: "\u6982\u89C8", en: "Overview" }, component: withProps(require_stats(), "\u6982\u89C8") },

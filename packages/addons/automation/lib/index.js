@@ -1,9 +1,8 @@
 /**
  * 自动化业务插件：定时、域事件或手动触发白名单 action。
  *
- * 规则只允许调用 message.send / tasks.create / tags.create / sites.create /
- * connector.sourceRun，禁止 vault、automation、audit 与任何删除/备份类 action。
- * 规则参与备份导入导出，运行记录只在本机。
+ * 允许调用的 action 由用户在设置页勾选（默认空），vault、automation、audit 与任何
+ * 删除/备份类 action 是硬底线，永远不可启用。规则参与备份导入导出，运行记录只在本机。
  */
 
 import { bindClock, ensureSchema } from "./db/db.js";
@@ -37,8 +36,8 @@ export function apply(ctx) {
       host.registerDomain({
         id: "wb-addon-automation",
         title: "自动化",
-        description: "把定时、域事件或手动操作接到工作台 action：白名单、模板、条件、限频与运行记录",
-        version: "0.2.4",
+        description: "把定时、域事件或手动操作接到工作台 action：可配置白名单、模板、条件、限频与运行记录",
+        version: "0.3.0",
         category: "auto",
         tables: ["automation_rule", "automation_run", "automation_meta"],
         // 规则可随备份迁移；运行记录只在本机，因此不参与云同步。
@@ -53,12 +52,12 @@ export function apply(ctx) {
         ],
         capability: {
           taskOwnership: { boundary: "真正的定时/事件触发用 automation；需要人跟进的事项仍用 tasks.create。", query: "automation" },
-          summary: "工作台内的轻量自动化：按时间或域事件调用白名单 action，不执行任意代码。",
+          summary: "工作台内的轻量自动化：按时间或域事件调用用户勾选的 action，不执行任意代码。",
           records: [
             {
               kind: "rule",
               title: "自动化规则",
-              description: "一条“触发条件 + 白名单 action + 参数模板”的规则。",
+              description: "一条“触发条件 + 已启用 action + 参数模板”的规则。",
               when: [
                 "每天固定时间汇总或提醒",
                 "某个域事件发生后调用另一个域的 action",
@@ -73,11 +72,12 @@ export function apply(ctx) {
             { name: "name", type: "string", description: "规则名称，1–80 字" },
             { name: "triggerConfig", type: "object", description: "kind=interval(everyMinutes) / dailyAt(time,tz,weekdays) / event(domainId,event) / manual" },
             { name: "condition", type: "object", description: "{field,op,value}，op=eq/neq/contains/gt/lt；不满足记 skipped" },
-            { name: "actionName", type: "string", description: "白名单 action，如 message.send、tasks.create" },
+            { name: "actionName", type: "string", description: "已在设置中启用的 action，如 message.send、tasks.create；默认未启用任何 action" },
             { name: "actionArgs", type: "object", description: "参数模板，支持 {{event.field}} 与 {{item.field}}" },
           ],
-          notFor: ["不允许调用 vault.*、automation.*、audit.* 或 delete/backup 类 action"],
+          notFor: ["不允许调用 vault.*、automation.*、audit.* 或 delete/backup 类 action（硬底线，不可配置）"],
           notes: [
+            "允许调用的 action 在设置页勾选，默认空；只对本机生效，不随备份迁移。",
             "规则参与备份导入导出；运行记录只在本机，不参与云同步。",
             "每规则每小时默认最多 60 次，全局并发 2；超限记 skipped。",
             "定时规则由插件内 30 秒定时器驱动，不依赖宿主调度器。",

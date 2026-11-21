@@ -16,6 +16,7 @@ const Rules = require("../client/views/rules.cjs");
 const Editor = require("../client/views/rule-editor.cjs");
 const Trigger = require("../client/views/trigger-fields.cjs");
 const Runs = require("../client/views/runs.cjs");
+const Picker = require("../client/views/action-picker.cjs");
 
 const dir = path.join(process.cwd(), "packages/addons/automation/client");
 const t = (key, vars) => copy.t("zh", key, vars);
@@ -24,6 +25,7 @@ const noop = () => {};
 function rulesBody(over) {
   return renderToStaticMarkup(h(Rules.RulesBody, Object.assign({
     h, t, lang: "zh", rows: [], hasRules: false, loading: false, error: "",
+    allowed: ["message.send", "tasks.create"], noActions: false, onSettings: noop,
     filters: {}, onFilter: noop, onClear: noop, onNew: noop, onRun: noop,
     onEdit: noop, onToggle: noop, onDelete: noop,
   }, over)));
@@ -34,6 +36,13 @@ test("规则页空态只渲染一张空态卡，不渲染表格", () => {
   assert.ok(html.includes("wba-empty-card"));
   assert.ok(!html.includes("<table"), "空态不应渲染表格");
   assert.ok(html.includes(t("rules.empty.title")));
+});
+
+test("没有启用任何 action 时，空态引导去设置", () => {
+  const html = rulesBody({ allowed: [], noActions: true });
+  assert.ok(html.includes(t("rules.empty.noActionTitle")));
+  assert.ok(html.includes(t("rules.empty.noActionCta")));
+  assert.ok(!html.includes(t("rules.empty.body")));
 });
 
 test("过滤后为空显示“没有匹配的规则”且仍不渲染表格", () => {
@@ -62,6 +71,16 @@ test("规则列表渲染六列与图标操作", () => {
   assert.ok(html.includes("事件 wb-addon-tags/tag.created"));
   assert.ok(html.includes("wba-icon-btn"));
   assert.ok(html.includes(t("rules.status.off")));
+});
+
+test("规则引用的 action 未启用时标记「未启用」", () => {
+  const html = rulesBody({
+    hasRules: true,
+    allowed: ["tasks.create"],
+    rows: [{ id: "rule_9", name: "旧规则", enabled: true, triggerType: "manual", triggerConfig: { kind: "manual" }, actionName: "message.send", lastRun: null }],
+  });
+  assert.ok(html.includes(t("rules.actionDisabled")));
+  assert.ok(html.includes("wba-pill warn"));
 });
 
 test("四类触发只渲染各自的字段", () => {
@@ -120,7 +139,7 @@ test("JSON 非法：红框、错误文案、保存禁用", () => {
 });
 
 test("合法表单保存按钮可用，条件关闭时 payload.condition 为 null", () => {
-  const form = Object.assign(Rules.emptyForm(), { name: "每日提醒" });
+  const form = Object.assign(Rules.emptyForm(), { name: "每日提醒", actionName: "message.send", actionArgs: '{"title":"hi"}' });
   const html = renderToStaticMarkup(h(Editor.RuleEditor, {
     h, C, t, React, form, initial: form, set: noop, busy: false, actions: ["message.send"], onClose: noop, onSave: noop,
   }));
@@ -128,7 +147,35 @@ test("合法表单保存按钮可用，条件关闭时 payload.condition 为 nul
   const payload = Editor.buildPayload(form);
   assert.equal(payload.condition, null);
   assert.equal(payload.triggerType, "schedule");
-  assert.deepEqual(payload.actionArgs, { title: "自动化提醒", body: "规则 {{rule.name}} 已运行" });
+  assert.deepEqual(payload.actionArgs, { title: "hi" });
+});
+
+test("未选 action 时保存禁用，空清单下拉给出提示", () => {
+  const form = Object.assign(Rules.emptyForm(), { name: "缺 action" });
+  const html = renderToStaticMarkup(h(Editor.RuleEditor, {
+    h, C, t, React, form, initial: form, set: noop, busy: false, actions: [], onClose: noop, onSave: noop,
+  }));
+  assert.ok(html.includes(t("editor.noActions")));
+  assert.ok(html.includes('disabled=""'));
+});
+
+test("action 多选：搜索过滤与按域分组", () => {
+  const items = [
+    { name: "message.send", domain: "wb-addon-message", description: "发消息" },
+    { name: "tasks.create", domain: "wb-addon-tasks", description: "建任务" },
+    { name: "sites.create", domain: "wb-addon-sites", description: "建站点" },
+  ];
+  assert.equal(Picker.filterCatalog(items, "task").length, 1);
+  assert.equal(Picker.filterCatalog(items, "建").length, 2);
+  assert.equal(Picker.filterCatalog(items, "").length, 3);
+  const groups = Picker.groupByDomain(items);
+  assert.deepEqual(groups.map((g) => g.domain), ["wb-addon-message", "wb-addon-tasks", "wb-addon-sites"]);
+  const html = renderToStaticMarkup(h(Picker.ActionPicker, {
+    h, t, React, icon: null, items, selected: ["message.send"], loading: false, error: "", onChange: noop,
+  }));
+  assert.ok(html.includes("wb-addon-message"));
+  assert.ok(html.includes('type="checkbox"'));
+  assert.ok(html.includes(t("config.allowed.deniedNote")));
 });
 
 test("条件开启但 JSON 非法时同样禁用保存", () => {

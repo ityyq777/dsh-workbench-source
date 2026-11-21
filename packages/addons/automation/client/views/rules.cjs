@@ -19,8 +19,8 @@ function emptyForm() {
     weekdays: "1,2,3,4,5",
     domainId: "",
     event: "",
-    actionName: "message.send",
-    actionArgs: '{\n  "title": "自动化提醒",\n  "body": "规则 {{rule.name}} 已运行"\n}',
+    actionName: "",
+    actionArgs: "{}",
     condOn: false,
     condition: '{\n  "field": "event.item.title",\n  "op": "contains",\n  "value": ""\n}',
   };
@@ -80,8 +80,10 @@ function EmptyCard(props) {
     h("p", { className: "wba-empty-title" }, props.title),
     h("p", { className: "wba-empty-body" }, props.body),
     h("div", { className: "wba-inline" },
-      h(C.Btn, { h: h, kind: "primary", onClick: props.onNew }, t("common.create"))),
-    h("p", { className: "wba-empty-body" }, t("rules.empty.backup")));
+      props.noActions
+        ? h(C.Btn, { h: h, kind: "primary", onClick: props.onSettings }, t("rules.empty.noActionCta"))
+        : h(C.Btn, { h: h, kind: "primary", onClick: props.onNew }, t("common.create"))),
+    h("p", { className: "wba-empty-body" }, props.noActions ? t("rules.empty.noActionHint") : t("rules.empty.backup")));
 }
 
 function RulesBody(props) {
@@ -90,6 +92,7 @@ function RulesBody(props) {
   var icon = props.icon;
   var rows = props.rows;
   var filters = props.filters || {};
+  var allowed = props.allowed || [];
   return h("div", { className: "wba-panel" },
     h("div", { className: "wba-toolbar" },
       h("label", { className: "wba-field" },
@@ -127,9 +130,11 @@ function RulesBody(props) {
             h: h,
             t: t,
             icon: icon,
-            title: props.hasRules ? t("rules.empty.filtered") : t("rules.empty.title"),
-            body: props.hasRules ? t("rules.empty.filteredBody") : t("rules.empty.body"),
+            title: props.hasRules ? t("rules.empty.filtered") : (props.noActions ? t("rules.empty.noActionTitle") : t("rules.empty.title")),
+            body: props.hasRules ? t("rules.empty.filteredBody") : (props.noActions ? t("rules.empty.noActionBody") : t("rules.empty.body")),
+            noActions: !props.hasRules && props.noActions,
             onNew: props.onNew,
+            onSettings: props.onSettings,
           })
         : h("div", { className: "wba-table-wrap" },
             h("table", { className: "wba-table" },
@@ -148,7 +153,9 @@ function RulesBody(props) {
                     h("span", { className: "wba-inline" },
                       icon ? icon(TRIGGER_ICON[kind] || "zap", 13) : null,
                       trig.triggerText(r, t))),
-                  h("td", null, h("code", { className: "wba-ellipsis", title: r.actionName }, r.actionName)),
+                  h("td", null,
+                    h("code", { className: "wba-ellipsis", title: r.actionName }, r.actionName),
+                    allowed.indexOf(r.actionName) === -1 ? h(C.Pill, { h: h, kind: "warn" }, t("rules.actionDisabled")) : null),
                   h("td", null, h(C.Pill, { h: h, kind: r.enabled ? "ok" : "" }, r.enabled ? t("rules.status.on") : t("rules.status.off"))),
                   h("td", { className: "wba-nowrap" },
                     h("div", { className: "wba-inline" },
@@ -180,7 +187,7 @@ module.exports = function RulesView(props) {
   var runningS = React.useState("");
   var all = (list.data && list.data.items) || [];
   var rows = filterRules(all, filterS[0]);
-  var actions = (opts.data && opts.data.actions) || ["message.send"];
+  var actions = (opts.data && opts.data.actions) || [];
   var form = formS[0];
 
   React.useEffect(function () {
@@ -257,6 +264,9 @@ module.exports = function RulesView(props) {
       hasRules: all.length > 0,
       loading: list.loading,
       error: list.error,
+      allowed: actions,
+      noActions: actions.length === 0,
+      onSettings: function () { if (props.onNavigate) props.onNavigate("config"); },
       filters: filterS[0],
       runningId: runningS[0],
       onFilter: function (patch) { filterS[1](Object.assign({}, filterS[0], patch)); },

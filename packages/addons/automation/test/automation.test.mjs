@@ -5,7 +5,10 @@ import { DatabaseSync } from "node:sqlite";
 const { ensureSchema } = await import("../lib/db/db.js");
 const { createAutomation } = await import("../lib/domain/rules.js");
 
-function make() {
+const DEFAULT_ALLOW = ["message.send", "tasks.create", "tags.create", "sites.create", "connector.sourceRun"];
+
+// 允许清单默认空，测试按需显式启用，避免依赖隐式授权。
+function make(allow = DEFAULT_ALLOW) {
   const db = new DatabaseSync(":memory:");
   ensureSchema(db);
   const calls = [];
@@ -16,6 +19,7 @@ function make() {
     },
   };
   const engine = createAutomation({ db, host });
+  if (allow.length) engine.saveConfig({ allowedActions: allow });
   return { db, engine, calls };
 }
 
@@ -73,7 +77,38 @@ test("拒绝 vault 与删除类 action", () => {
   const { engine } = make();
   assert.throws(() => engine.createRule({ name: "坏", actionName: "vault.secretReveal" }), /不允许/);
   assert.throws(() => engine.createRule({ name: "坏", actionName: "tasks.delete" }), /不允许/);
-  assert.throws(() => engine.createRule({ name: "坏", actionName: "unknown.action" }), /白名单/);
+  assert.throws(() => engine.createRule({ name: "坏", actionName: "unknown.action" }), /未在设置中启用/);
+});
+
+test("默认不允许任何 action，勾选后才能创建规则", () => {
+  const { engine } = make([]);
+  assert.deepEqual(engine.config().allowedActions, []);
+  assert.throws(() => engine.createRule({ name: "空", actionName: "message.send" }), /未在设置中启用/);
+  engine.saveConfig({ allowedActions: ["message.send"] });
+  const rule = engine.createRule({ name: "勾选后", triggerType: "manual", actionName: "message.send" });
+  assert.equal(rule.actionName, "message.send");
+});
+
+test("允许清单去重排序，硬底线与非法名写入被拒", () => {
+  const { engine } = make([]);
+  const saved = engine.saveConfig({ allowedActions: ["tasks.create", "message.send", "tasks.create"] });
+  assert.deepEqual(saved.allowedActions, ["message.send", "tasks.create"]);
+  assert.throws(() => engine.saveConfig({ allowedActions: ["vault.secretReveal"] }), /不允许/);
+  assert.throws(() => engine.saveConfig({ allowedActions: ["automation.ruleRun"] }), /不允许/);
+  assert.throws(() => engine.saveConfig({ allowedActions: ["not a name"] }), /不合法/);
+  assert.throws(() => engine.saveConfig({ allowedActions: ["tasks.delete"] }), /不允许/);
+});
+
+test("收紧配置后老规则执行记 skipped 且不调用 action", async () => {
+  const { engine, calls } = make();
+  const rule = engine.createRule({ name: "老规则", triggerType: "manual", actionName: "message.send", actionArgs: { title: "x" } });
+  engine.saveConfig({ allowedActions: [] });
+  const out = await engine.runRule(rule.id);
+  assert.equal(out.skipped, true);
+  assert.equal(out.reason, "disabled");
+  assert.equal(calls.length, 0);
+  assert.equal(engine.runList({})[0].status, "skipped");
+  assert.equal(engine.stats().staleCount, 1);
 });
 
 test("导出只含规则，导入按 id 跳过", () => {

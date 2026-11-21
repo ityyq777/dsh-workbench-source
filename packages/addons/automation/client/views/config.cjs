@@ -1,7 +1,8 @@
 "use strict";
-/** 设置：限流编辑卡 + 运行约束列表卡。 */
+/** 设置：限流编辑卡 + 允许调用的 action 多选 + 运行约束列表卡。 */
 var C = require("../ui/common.cjs");
 var copy = require("../ui/copy.cjs");
+var picker = require("./action-picker.cjs");
 
 var CONSTRAINTS = ["strategy", "concurrency", "event", "condition", "backup", "safety"];
 
@@ -10,7 +11,9 @@ function ConfigBody(props) {
   var t = props.t;
   var icon = props.icon;
   var form = props.form || {};
-  return h("div", { className: "wba-panel" },
+  var catalog = props.catalog || { items: [], error: "", loading: false };
+  return h("div", { className: "wba-stack" },
+    h("div", { className: "wba-panel" },
     h("div", { className: "wba-panel-h" },
       h("p", { className: "wba-panel-title" }, t("config.limit.title")),
       props.saved && !props.dirty ? h(C.Pill, { h: h, kind: "ok" }, t("common.saved")) : null),
@@ -43,7 +46,7 @@ function ConfigBody(props) {
         h: h,
         kind: "primary",
         disabled: props.busy || !props.dirty,
-        onClick: function () { props.onSave({ maxRules: Number(form.maxRules), perHour: Number(form.perHour) }); },
+        onClick: function () { props.onSave({ maxRules: Number(form.maxRules), perHour: Number(form.perHour), allowedActions: form.allowedActions || [] }); },
       }, props.busy ? t("common.loading") : t("common.save")),
       props.dirty ? null : h("span", { className: "wba-hint" }, t("config.limit.unchanged"))),
     h("hr", { className: "wba-sep" }),
@@ -52,7 +55,18 @@ function ConfigBody(props) {
       icon ? h("span", { className: "wba-card-ico" }, icon("shield-check", 16)) : null),
     h("ul", { className: "wba-list" }, CONSTRAINTS.map(function (k) {
       return h("li", { key: k }, t("config.c." + k));
-    })));
+    }))),
+    h(picker.ActionPicker, {
+      h: h,
+      t: t,
+      icon: icon,
+      React: props.React,
+      items: catalog.items,
+      error: catalog.error,
+      loading: catalog.loading,
+      selected: form.allowedActions || [],
+      onChange: function (list) { props.onChange("allowedActions", list); },
+    }));
 }
 
 module.exports = function ConfigView(props) {
@@ -62,6 +76,7 @@ module.exports = function ConfigView(props) {
   var lang = props.lang === "en" ? "en" : "zh";
   var t = function (key, vars) { return copy.t(lang, key, vars); };
   var cfg = C.useLoad(React, api, "automation.configGet", {}, []);
+  var catalog = C.useLoad(React, api, "automation.actionCatalog", {}, []);
   var formS = React.useState(null);
   var busyS = React.useState(false);
   var msgS = React.useState(null);
@@ -69,13 +84,19 @@ module.exports = function ConfigView(props) {
 
   React.useEffect(function () {
     if (cfg.data && !formS[0]) {
-      formS[1]({ maxRules: String(cfg.data.maxRules), perHour: String(cfg.data.perHour) });
+      formS[1]({
+        maxRules: String(cfg.data.maxRules),
+        perHour: String(cfg.data.perHour),
+        allowedActions: (cfg.data.allowedActions || []).slice(),
+      });
     }
   }, [cfg.data]);
 
-  var form = formS[0] || { maxRules: "", perHour: "" };
+  var form = formS[0] || { maxRules: "", perHour: "", allowedActions: [] };
   var base = cfg.data || {};
-  var dirty = String(form.maxRules) !== String(base.maxRules) || String(form.perHour) !== String(base.perHour);
+  var dirty = String(form.maxRules) !== String(base.maxRules) ||
+    String(form.perHour) !== String(base.perHour) ||
+    (form.allowedActions || []).join(",") !== (base.allowedActions || []).join(",");
 
   function save(payload) {
     busyS[1](true);
@@ -99,7 +120,7 @@ module.exports = function ConfigView(props) {
         h("h2", { className: "wba-title" }, t("config.title")),
         h("p", { className: "wba-sub" }, t("config.subtitle"))),
       h("div", { className: "wba-row" },
-        h(C.Btn, { h: h, onClick: cfg.refresh }, t("common.refresh")))),
+        h(C.Btn, { h: h, onClick: function () { cfg.refresh(); catalog.refresh(); } }, t("common.refresh")))),
     msgS[0] ? h(C.Notice, { h: h, kind: msgS[0].kind, text: msgS[0].text }) : null,
     cfg.error ? h(C.Notice, { h: h, kind: "error", text: cfg.error }) : null,
     cfg.loading && !cfg.data
@@ -109,9 +130,11 @@ module.exports = function ConfigView(props) {
           t: t,
           icon: props.icon,
           form: form,
+          React: React,
           busy: busyS[0],
           dirty: dirty,
           saved: savedS[0],
+          catalog: { items: (catalog.data && catalog.data.items) || [], error: (catalog.data && catalog.data.error) || (catalog.error || ""), loading: catalog.loading && !catalog.data },
           onChange: function (k, v) { formS[1](Object.assign({}, form, { [k]: v })); },
           onSave: save,
         }));

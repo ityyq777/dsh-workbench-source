@@ -90,6 +90,16 @@ module.exports = [
   ".wba-clickable{cursor:pointer}",
   ".wba-check{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}",
   ".wba-check input{accent-color:var(--wb-accent);margin:0}",
+  // 设置页：纵向堆叠的卡片与 action 多选
+  ".wba-stack{display:flex;flex-direction:column;gap:12px}",
+  ".wba-notice.warn{background:var(--wb-surface);color:var(--wb-warn);border:1px solid var(--wb-warn)}",
+  ".wba-empty-inline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0}",
+  ".wba-picker{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow:auto;border:1px solid var(--wb-border);border-radius:8px;padding:8px;background:var(--wb-surface)}",
+  ".wba-picker-group{display:flex;flex-direction:column;gap:2px}",
+  ".wba-picker-domain{margin:4px 0 2px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--wb-muted)}",
+  ".wba-picker-row{padding:3px 4px;border-radius:6px;gap:8px;min-width:0}",
+  ".wba-picker-row:hover{background:var(--wb-card)}",
+  ".wba-picker-row .wba-hint{flex:1;min-width:0}",
   // 文本与焦点
   ".wba-ellipsis{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}",
   ".wba-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;color:var(--wb-muted)}",

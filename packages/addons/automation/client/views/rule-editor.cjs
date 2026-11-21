@@ -36,6 +36,7 @@ function plain(text) {
 function validateForm(form, t) {
   var errs = {};
   if (!String(form.name || "").trim()) errs.name = t("editor.nameRequired");
+  if (!String(form.actionName || "").trim()) errs.actionName = t("editor.actionRequired");
   var args = plain(form.actionArgs);
   if (!args.ok) errs.actionArgs = args.error === "object" ? t("editor.argsObject") : t("editor.jsonInvalid", { msg: args.error });
   var cond = null;
@@ -111,7 +112,12 @@ function RuleEditor(props) {
   var exampleS = React.useState(false);
   var touchedS = React.useState(Boolean(form.name));
   var showNameErr = touchedS[0] && Boolean(errs.name);
-  var actionName = actions.indexOf(form.actionName) === -1 ? [form.actionName].concat(actions) : actions;
+  var hasActions = actions.length > 0;
+  // 编辑老规则时，已停用的 action 仍要出现在下拉里，否则打开就是空值。
+  var actionName = !form.actionName || actions.indexOf(form.actionName) !== -1
+    ? actions
+    : [form.actionName].concat(actions);
+  var actionMissing = hasActions && Boolean(form.actionName) && actions.indexOf(form.actionName) === -1;
   var example = EXAMPLES[form.actionName];
 
   // Esc 与焦点归还由共享外壳负责；这里只锁背景滚动。
@@ -161,8 +167,18 @@ function RuleEditor(props) {
           h("div", { className: "wba-inline" },
             h("label", { className: "wba-field" },
               h("span", { className: "wba-label" }, t("editor.action")),
-              h("select", { className: "wba-input", value: form.actionName, onChange: function (e) { set("actionName", e.target.value); } },
-                actionName.map(function (a) { return h("option", { key: a, value: a }, a); }))),
+              h("select", {
+                className: "wba-input",
+                value: form.actionName,
+                disabled: !hasActions,
+                onChange: function (e) { set("actionName", e.target.value); },
+              },
+                hasActions
+                  ? actionName.map(function (a) { return h("option", { key: a, value: a }, a); })
+                  : h("option", { value: "" }, t("editor.noActions"))),
+              !hasActions || actionMissing
+                ? h("span", { className: "wba-err-text" }, hasActions ? t("rules.actionDisabled") : t("editor.noActionsHint"))
+                : null),
             h("span", { className: "wba-grow" }),
             example ? h(C.Btn, { h: h, onClick: function () { exampleS[1](!exampleS[0]); } }, t("editor.showExample")) : null),
           exampleS[0] && example ? h("div", { className: "wba-block" },

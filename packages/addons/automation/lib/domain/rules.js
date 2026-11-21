@@ -1,18 +1,11 @@
 /** 自动化规则：单触发 + 单动作 + 可选条件；不做循环与分支。 */
 import { newId, now, parseJson, ruleRow, runRow, metaGet, metaSet } from "../db/db.js";
 import { nextDailyAt, validTimeZone } from "./time.js";
+import { checkAction, normalizeAllowedList } from "./whitelist.js";
 
-export const ALLOWED_ACTIONS = [
-  "message.send",
-  "tasks.create",
-  "tags.create",
-  "sites.create",
-  "connector.sourceRun",
-];
-const DENIED = /^(vault|automation|audit)\.|\.(delete|backup)/i;
 const OPS = new Set(["eq", "neq", "contains", "gt", "lt"]);
 const SEGMENT = /^[A-Za-z_][A-Za-z0-9_]*$/;
-const DEFAULT_CONFIG = { maxRules: 50, perHour: 60 };
+const DEFAULT_CONFIG = { maxRules: 50, perHour: 60, allowedActions: [] };
 
 function bad(message) {
   const error = new Error(message);
@@ -123,11 +116,10 @@ function normalizeCondition(input) {
   return { field: String(input.field), op: String(input.op), value: input.value };
 }
 
-function normalizeAction(name, args) {
+function normalizeAction(name, args, allowed) {
   const action = String(name || "").trim();
-  if (!action) throw bad("缺少 actionName");
-  if (DENIED.test(action)) throw bad("该 action 不允许被自动化调用：" + action);
-  if (!ALLOWED_ACTIONS.includes(action)) throw bad("action 不在白名单：" + action);
+  const problem = checkAction(action, allowed);
+  if (problem) throw bad(problem);
   const actionArgs = args == null ? {} : args;
   if (!plainObject(actionArgs)) throw bad("actionArgs 必须是对象");
   const json = JSON.stringify(actionArgs);
@@ -151,13 +143,19 @@ export function createAutomation({ db, host, log = () => {} }) {
   function config() {
     const raw = metaGet(db, "config");
     const parsed = raw ? parseJson(raw, {}) : {};
-    return Object.assign({}, DEFAULT_CONFIG, plainObject(parsed) ? parsed : {});
+    const next = Object.assign({}, DEFAULT_CONFIG, plainObject(parsed) ? parsed : {});
+    // 读取时静默清洗，保证老数据或手改配置不会让页面直接报错。
+    next.allowedActions = normalizeAllowedList(next.allowedActions, false);
+    return next;
   }
 
   function saveConfig(patch) {
     const next = Object.assign({}, config(), patch);
     next.maxRules = Math.max(1, Math.min(500, Number(next.maxRules) || DEFAULT_CONFIG.maxRules));
     next.perHour = Math.max(1, Math.min(600, Number(next.perHour) || DEFAULT_CONFIG.perHour));
+    if (patch && Object.prototype.hasOwnProperty.call(patch, "allowedActions")) {
+      next.allowedActions = normalizeAllowedList(patch.allowedActions, true);
+    }
     metaSet(db, "config", JSON.stringify(next));
     return next;
   }
@@ -181,7 +179,7 @@ export function createAutomation({ db, host, log = () => {} }) {
     if (!name) throw bad("规则名称不能为空");
     if (listRules().length >= config().maxRules) throw bad("规则数量已达上限");
     const trigger = normalizeTrigger(data);
-    const action = normalizeAction(data.actionName, data.actionArgs);
+    const action = normalizeAction(data.actionName, data.actionArgs, config().allowedActions);
     const condition = normalizeCondition(data.condition);
     const id = newId("rule");
     const ts = now();
@@ -200,7 +198,7 @@ export function createAutomation({ db, host, log = () => {} }) {
     const name = String(merged.name || "").trim().slice(0, 80);
     if (!name) throw bad("规则名称不能为空");
     const trigger = normalizeTrigger({ triggerType: merged.triggerType, triggerConfig: merged.triggerConfig });
-    const action = normalizeAction(merged.actionName, merged.actionArgs);
+    const action = normalizeAction(merged.actionName, merged.actionArgs, config().allowedActions);
     const condition = normalizeCondition(merged.condition);
     const enabled = merged.enabled !== false;
     const ts = now();
@@ -255,6 +253,13 @@ export function createAutomation({ db, host, log = () => {} }) {
       if (trigger === "schedule") setNext(rule);
       return { skipped: true, reason: "busy" };
     }
+    // 执行时复核：配置收紧后，老规则立即停跑而不是继续调用。
+    const allowedNow = config().allowedActions;
+    if (checkAction(rule.actionName, allowedNow)) {
+      record(rule, trigger, "skipped", "", "action 未启用：" + rule.actionName, now());
+      if (trigger === "schedule") setNext(rule);
+      return { skipped: true, reason: "disabled" };
+    }
     active += 1;
     const started = now();
     try {
@@ -301,7 +306,10 @@ export function createAutomation({ db, host, log = () => {} }) {
     const runs = db.prepare("SELECT status, COUNT(*) AS n FROM automation_run WHERE started_at>=? GROUP BY status").all(today);
     const map = {};
     for (const row of runs) map[row.status] = row.n;
-    return { total, enabled, today: map, config: config() };
+    const cfg = config();
+    const stale = db.prepare("SELECT action_name FROM automation_rule WHERE deleted_at IS NULL").all()
+      .filter((row) => checkAction(row.action_name, cfg.allowedActions)).length;
+    return { total, enabled, today: map, config: cfg, staleCount: stale };
   }
 
   async function tick() {

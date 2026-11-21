@@ -1,5 +1,5 @@
 /** automation action 注册：写操作仅 UI，读操作允许 agent。 */
-import { ALLOWED_ACTIONS } from "./rules.js";
+import { DENIED_PATTERNS, isDenied } from "./whitelist.js";
 
 const TABLE_WHITELIST = {
   automation_rule: ["id", "name", "enabled", "trigger_type", "last_status", "run_count", "error_count", "next_run_at", "updated_at"],
@@ -147,21 +147,53 @@ export function registerActions(api, engine) {
 
   action("automation.configSet", {
     agentEnabled: false,
-    description: "修改最大规则数与每小时上限；仅 UI",
+    description: "修改最大规则数、每小时上限与允许调用的 action；仅 UI",
     input: {
       type: "object",
-      properties: { maxRules: { type: "number" }, perHour: { type: "number" } },
+      properties: {
+        maxRules: { type: "number" },
+        perHour: { type: "number" },
+        allowedActions: { type: "array", items: { type: "string" } },
+      },
     },
     execute: (args, ctx) => {
       deny(ctx.origin, ["ui", "agent"]);
-      return engine.saveConfig({ maxRules: args.maxRules, perHour: args.perHour });
+      const patch = {};
+      if (args && args.maxRules !== undefined) patch.maxRules = args.maxRules;
+      if (args && args.perHour !== undefined) patch.perHour = args.perHour;
+      if (args && args.allowedActions !== undefined) patch.allowedActions = args.allowedActions;
+      return engine.saveConfig(patch);
     },
   });
 
   action("automation.actionOptions", {
-    description: "可被自动化调用的 action 白名单与触发类型",
+    description: "本机已启用的 action 清单、硬底线与触发类型",
     input: { type: "object", properties: {} },
-    execute: () => ({ actions: ALLOWED_ACTIONS, triggers: ["interval", "dailyAt", "event", "manual"] }),
+    execute: () => ({ actions: engine.config().allowedActions, denied: DENIED_PATTERNS, triggers: ["interval", "dailyAt", "event", "manual"] }),
+  });
+
+  action("automation.actionCatalog", {
+    description: "列出宿主全部可被自动化调用的 action（过滤硬底线与 automation 自身）",
+    input: { type: "object", properties: {} },
+    execute: async () => {
+      try {
+        const res = await api.call("actions.list", {}, "plugin");
+        const rows = Array.isArray(res && res.actions) ? res.actions : [];
+        const items = rows
+          .map((row) => ({
+            name: String((row && row.name) || ""),
+            domain: String((row && row.domain) || ""),
+            description: String((row && row.description) || ""),
+            agentEnabled: !(row && row.agentEnabled === false),
+          }))
+          .filter((row) => row.name && !isDenied(row.name))
+          .sort((a, b) => a.name.localeCompare(b.name));
+        return { items, error: "" };
+      } catch (error) {
+        // actions.list 不可用时退化为空候选，设置页仍可手动添加。
+        return { items: [], error: String((error && error.message) || error) };
+      }
+    },
   });
 
   action("automation.actionSchema", {
