@@ -236,7 +236,20 @@ async function main() {
 const css = require(ROOT + "packages/addons/salary/client/ui/styles.cjs");
 // 共享图表样式的注入发生在渲染期（makeCharts），这里提前按同一前缀取一份，
 // 否则预览里热区 rect 没有 fill:transparent，会盖出一块黑底。
-const chartsCss = require(ROOT + "packages/addons/lib/stats-charts.cjs").css("wbsalc");
+const chartsLib = require(ROOT + "packages/addons/lib/stats-charts.cjs");
+// 预览在 Node 里渲染，量不到容器宽度；用 WB_CHART_WIDTH 模拟真实宽度，
+// 让截图与浏览器里「按容器像素宽 1:1 画」的效果一致（否则会退回 640 被放大）。
+const CHART_WIDTH = Number(process.env.WB_CHART_WIDTH) || 0;
+if (CHART_WIDTH > 0) {
+  const makeChartsOrig = chartsLib.makeCharts;
+  chartsLib.makeCharts = function (prefix, options) {
+    const api = makeChartsOrig(prefix, options);
+    const TrendOrig = api.Trend;
+    api.Trend = function (props) { return TrendOrig({ ...props, width: CHART_WIDTH }); };
+    return api;
+  };
+}
+const chartsCss = chartsLib.css("wbsalc");
 const cssText = [Array.isArray(css) ? css.join("\n") : String(css), chartsCss].join("\n");
 
 const themeVars = {

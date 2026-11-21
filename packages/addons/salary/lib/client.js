@@ -1952,6 +1952,29 @@ var require_stats_charts = __commonJS({
           );
         }));
       }
+      function useWidth() {
+        if (typeof React.useRef !== "function" || typeof React.useEffect !== "function") return [null, 0];
+        var state = React.useState(0);
+        var ref = React.useRef(null);
+        var setWidth = state[1];
+        var useIso = React.useLayoutEffect || React.useEffect;
+        useIso(function() {
+          var node = ref.current;
+          if (!node) return void 0;
+          function read() {
+            var w = node.clientWidth || 0;
+            if (w > 0) setWidth(w);
+          }
+          read();
+          if (typeof ResizeObserver === "undefined") return void 0;
+          var ro = new ResizeObserver(read);
+          ro.observe(node);
+          return function() {
+            ro.disconnect();
+          };
+        }, []);
+        return [ref, state[0]];
+      }
       function Trend(props) {
         var data = props.data || [];
         var series = props.series || [];
@@ -1964,9 +1987,10 @@ var require_stats_charts = __commonJS({
           return !visible || visible[s.key] !== false;
         });
         if (!data.length) return h("div", { className: prefix + "-empty" }, props.emptyText || "\u6682\u65E0\u6570\u636E");
-        var width = 640;
+        var size = useWidth();
+        var width = Math.max(260, size[1] || props.width || 640);
         var height = props.height || 200;
-        var left = props.left || 52, right = 12, top = 14, bottom = 26;
+        var left = props.left || 60, right = 12, top = 14, bottom = 26;
         var pw = width - left - right, ph = height - top - bottom;
         var max = 0;
         data.forEach(function(d) {
@@ -2031,7 +2055,7 @@ var require_stats_charts = __commonJS({
             "g",
             { key: "t" + ti },
             h("line", { x1: left, x2: width - right, y1: y(v), y2: y(v), stroke: "var(--dsw-alias-border-l1,#f2f3f5)", strokeWidth: 1 }),
-            h("text", { x: left - 6, y: y(v) + 3, textAnchor: "end", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, fmt(v))
+            h("text", { x: left - 8, y: y(v) + 3, textAnchor: "end", fontSize: 11, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, fmt(v))
           ));
         });
         if (active !== null && data[active]) {
@@ -2078,7 +2102,7 @@ var require_stats_charts = __commonJS({
           return String(d.bucket === void 0 ? di + 1 : d.bucket).slice(5);
         }
         labelIdx.forEach(function(di) {
-          children.push(h("text", { key: "x" + di, x: x(di), y: height - 8, textAnchor: "middle", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, labelOf(data[di], di)));
+          children.push(h("text", { key: "x" + di, x: x(di), y: height - 8, textAnchor: "middle", fontSize: 11, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, labelOf(data[di], di)));
         });
         var legend = props.showLegend === false ? null : h("div", { className: prefix + "-tlegend" }, series.map(function(s, si) {
           var off = !!(visible && visible[s.key] === false);
@@ -2100,8 +2124,8 @@ var require_stats_charts = __commonJS({
         }));
         return h(
           "div",
-          { className: prefix + "-trend-wrap" },
-          h("svg", { className: prefix + "-trend", viewBox: "0 0 " + width + " " + height, role: "img", "aria-label": aria }, children),
+          { className: prefix + "-trend-wrap", ref: size[0] },
+          h("svg", { className: prefix + "-trend", viewBox: "0 0 " + width + " " + height, width, height, role: "img", "aria-label": aria }, children),
           legend
         );
       }
@@ -2258,7 +2282,8 @@ var require_stats_charts = __commonJS({
         pct,
         timeText,
         dateText,
-        colors: COLORS
+        colors: COLORS,
+        useWidth
       };
     }
     function makeCharts(prefix, options) {

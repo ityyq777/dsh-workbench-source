@@ -194,7 +194,9 @@ function makeCharts(prefix) {
   function Trend(props) {
     var data = props.data || [];
     var series = props.series || [];
-    var width = 640;
+    // 与共享 Trend 同口径：按容器真实像素宽做 viewBox，避免 SVG 整体放大坐标轴文字。
+    var size = base.useWidth();
+    var width = Math.max(260, size[1] || 640);
     var height = props.height || 200;
     var left = 30, right = 10, top = 12, bottom = 24;
     var pw = width - left - right, ph = height - top - bottom;
@@ -237,7 +239,7 @@ function makeCharts(prefix) {
           h("span", { className: prefix + "-tip-name" }, r.label),
           h("b", null, num(props.lang, r.value)));
       })) : null;
-    return h("div", { className: prefix + "-trend-wrap" },
+    return h("div", { className: prefix + "-trend-wrap", ref: size[0] },
       h("div", {
         className: prefix + "-trend-box",
         role: "group",
@@ -254,11 +256,11 @@ function makeCharts(prefix) {
           }
         },
       },
-      h("svg", { className: prefix + "-trend", viewBox: "0 0 " + width + " " + height, "aria-hidden": "true" },
+      h("svg", { className: prefix + "-trend", viewBox: "0 0 " + width + " " + height, width: width, height: height, "aria-hidden": "true" },
         ticks.map(function (v, i) {
           return h("g", { key: "t" + i },
             h("line", { x1: left, x2: width - right, y1: y(v), y2: y(v), stroke: "var(--dsw-alias-border-l1,#f2f3f5)", strokeWidth: 1 }),
-            h("text", { x: left - 5, y: y(v) + 3, textAnchor: "end", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, num(props.lang, v)),
+            h("text", { x: left - 6, y: y(v) + 3, textAnchor: "end", fontSize: 11, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, num(props.lang, v)),
           );
         }),
         activeRow ? h("line", {

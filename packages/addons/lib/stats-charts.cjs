@@ -251,6 +251,32 @@ function primitives(prefix, options) {
   //   label             横轴文案，默认取 bucket 的后半段
   //   note              每个点的补充说明（如「2 笔」），拼进点提示
   //   emptyText         空数据文案
+  // 图表按容器真实像素宽做 viewBox：SVG 不再整体缩放，坐标轴字号才和界面文字一致。
+  // 量不到宽（mini React / SSR）时退回 640，与旧输出保持一致。
+  function useWidth() {
+    // 精简渲染环境（测试里的迷你 hooks）可能没有 useRef：退回固定宽度，不抛错。
+    if (typeof React.useRef !== "function" || typeof React.useEffect !== "function") return [null, 0];
+    var state = React.useState(0);
+    var ref = React.useRef(null);
+    var setWidth = state[1];
+    // 优先在绘制前量到宽度，避免宽屏首帧先按 640 画一次再跳变。
+    var useIso = React.useLayoutEffect || React.useEffect;
+    useIso(function () {
+      var node = ref.current;
+      if (!node) return undefined;
+      function read() {
+        var w = node.clientWidth || 0;
+        if (w > 0) setWidth(w);
+      }
+      read();
+      if (typeof ResizeObserver === "undefined") return undefined;
+      var ro = new ResizeObserver(read);
+      ro.observe(node);
+      return function () { ro.disconnect(); };
+    }, []);
+    return [ref, state[0]];
+  }
+
   function Trend(props) {
     var data = props.data || [];
     var series = props.series || [];
@@ -259,9 +285,10 @@ function primitives(prefix, options) {
     var visible = props.visible || null;
     var shown = series.filter(function (s) { return !visible || visible[s.key] !== false; });
     if (!data.length) return h("div", { className: prefix + "-empty" }, props.emptyText || "暂无数据");
-    var width = 640;
+    var size = useWidth();
+    var width = Math.max(260, size[1] || props.width || 640);
     var height = props.height || 200;
-    var left = props.left || 52, right = 12, top = 14, bottom = 26;
+    var left = props.left || 60, right = 12, top = 14, bottom = 26;
     var pw = width - left - right, ph = height - top - bottom;
     var max = 0;
     data.forEach(function (d) {
@@ -303,7 +330,7 @@ function primitives(prefix, options) {
     ticks.forEach(function (v, ti) {
       children.push(h("g", { key: "t" + ti },
         h("line", { x1: left, x2: width - right, y1: y(v), y2: y(v), stroke: "var(--dsw-alias-border-l1,#f2f3f5)", strokeWidth: 1 }),
-        h("text", { x: left - 6, y: y(v) + 3, textAnchor: "end", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, fmt(v)),
+        h("text", { x: left - 8, y: y(v) + 3, textAnchor: "end", fontSize: 11, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, fmt(v)),
       ));
     });
     if (active !== null && data[active]) {
@@ -334,7 +361,7 @@ function primitives(prefix, options) {
       return String(d.bucket === undefined ? di + 1 : d.bucket).slice(5);
     }
     labelIdx.forEach(function (di) {
-      children.push(h("text", { key: "x" + di, x: x(di), y: height - 8, textAnchor: "middle", fontSize: 9, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, labelOf(data[di], di)));
+      children.push(h("text", { key: "x" + di, x: x(di), y: height - 8, textAnchor: "middle", fontSize: 11, fill: "var(--dsw-alias-label-tertiary,#8f959e)" }, labelOf(data[di], di)));
     });
     var legend = props.showLegend === false ? null : h("div", { className: prefix + "-tlegend" }, series.map(function (s, si) {
       var off = !!(visible && visible[s.key] === false);
@@ -349,8 +376,8 @@ function primitives(prefix, options) {
         onClick: function () { props.onToggle(s.key); },
       }, inner);
     }));
-    return h("div", { className: prefix + "-trend-wrap" },
-      h("svg", { className: prefix + "-trend", viewBox: "0 0 " + width + " " + height, role: "img", "aria-label": aria }, children),
+    return h("div", { className: prefix + "-trend-wrap", ref: size[0] },
+      h("svg", { className: prefix + "-trend", viewBox: "0 0 " + width + " " + height, width: width, height: height, role: "img", "aria-label": aria }, children),
       legend,
     );
   }
@@ -462,7 +489,7 @@ function primitives(prefix, options) {
     Card: Card, Kpi: Kpi, Donut: Donut, BarList: BarList, StackedRows: StackedRows,
     Trend: Trend, Histogram: Histogram, DataTable: DataTable, RangeSwitch: RangeSwitch,
     Empty: Empty, Skeleton: Skeleton, ErrorBar: ErrorBar, Warnings: Warnings,
-    num: num, pct: pct, timeText: timeText, dateText: dateText, colors: COLORS,
+    num: num, pct: pct, timeText: timeText, dateText: dateText, colors: COLORS, useWidth: useWidth,
   };
 }
 
