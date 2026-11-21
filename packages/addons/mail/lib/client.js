@@ -469,17 +469,40 @@ var init_folder_input = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/forward.mjs
+var forward_exports = {};
+__export(forward_exports, {
+  __iconData: () => __iconData5,
+  default: () => Forward
+});
+var __iconData5, Forward;
+var init_forward = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/forward.mjs"() {
+    init_createLucideIcon();
+    __iconData5 = {
+      name: "forward",
+      size: 24,
+      node: [
+        ["path", { d: "m15 17 5-5-5-5", key: "nf172w" }],
+        ["path", { d: "M4 18v-2a4 4 0 0 1 4-4h12", key: "jmiej9" }]
+      ]
+    };
+    __iconData5.node;
+    Forward = createLucideIcon(__iconData5);
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/inbox.mjs
 var inbox_exports = {};
 __export(inbox_exports, {
-  __iconData: () => __iconData5,
+  __iconData: () => __iconData6,
   default: () => Inbox
 });
-var __iconData5, Inbox;
+var __iconData6, Inbox;
 var init_inbox = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/inbox.mjs"() {
     init_createLucideIcon();
-    __iconData5 = {
+    __iconData6 = {
       name: "inbox",
       size: 24,
       node: [
@@ -493,22 +516,22 @@ var init_inbox = __esm({
         ]
       ]
     };
-    __iconData5.node;
-    Inbox = createLucideIcon(__iconData5);
+    __iconData6.node;
+    Inbox = createLucideIcon(__iconData6);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs
 var list_exports = {};
 __export(list_exports, {
-  __iconData: () => __iconData6,
+  __iconData: () => __iconData7,
   default: () => List
 });
-var __iconData6, List;
+var __iconData7, List;
 var init_list = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs"() {
     init_createLucideIcon();
-    __iconData6 = {
+    __iconData7 = {
       name: "list",
       size: 24,
       node: [
@@ -520,22 +543,22 @@ var init_list = __esm({
         ["path", { d: "M8 19h13", key: "m83p4d" }]
       ]
     };
-    __iconData6.node;
-    List = createLucideIcon(__iconData6);
+    __iconData7.node;
+    List = createLucideIcon(__iconData7);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail.mjs
 var mail_exports = {};
 __export(mail_exports, {
-  __iconData: () => __iconData7,
+  __iconData: () => __iconData8,
   default: () => Mail
 });
-var __iconData7, Mail;
+var __iconData8, Mail;
 var init_mail = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail.mjs"() {
     init_createLucideIcon();
-    __iconData7 = {
+    __iconData8 = {
       name: "mail",
       size: 24,
       node: [
@@ -543,22 +566,22 @@ var init_mail = __esm({
         ["rect", { x: "2", y: "4", width: "20", height: "16", rx: "2", key: "izxlao" }]
       ]
     };
-    __iconData7.node;
-    Mail = createLucideIcon(__iconData7);
+    __iconData8.node;
+    Mail = createLucideIcon(__iconData8);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail-open.mjs
 var mail_open_exports = {};
 __export(mail_open_exports, {
-  __iconData: () => __iconData8,
+  __iconData: () => __iconData9,
   default: () => MailOpen
 });
-var __iconData8, MailOpen;
+var __iconData9, MailOpen;
 var init_mail_open = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail-open.mjs"() {
     init_createLucideIcon();
-    __iconData8 = {
+    __iconData9 = {
       name: "mail-open",
       size: 24,
       node: [
@@ -572,22 +595,22 @@ var init_mail_open = __esm({
         ["path", { d: "m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10", key: "1qfld7" }]
       ]
     };
-    __iconData8.node;
-    MailOpen = createLucideIcon(__iconData8);
+    __iconData9.node;
+    MailOpen = createLucideIcon(__iconData9);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/paperclip.mjs
 var paperclip_exports = {};
 __export(paperclip_exports, {
-  __iconData: () => __iconData9,
+  __iconData: () => __iconData10,
   default: () => Paperclip
 });
-var __iconData9, Paperclip;
+var __iconData10, Paperclip;
 var init_paperclip = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/paperclip.mjs"() {
     init_createLucideIcon();
-    __iconData9 = {
+    __iconData10 = {
       name: "paperclip",
       size: 24,
       node: [
@@ -600,22 +623,22 @@ var init_paperclip = __esm({
         ]
       ]
     };
-    __iconData9.node;
-    Paperclip = createLucideIcon(__iconData9);
+    __iconData10.node;
+    Paperclip = createLucideIcon(__iconData10);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
 var refresh_cw_exports = {};
 __export(refresh_cw_exports, {
-  __iconData: () => __iconData10,
+  __iconData: () => __iconData11,
   default: () => RefreshCw
 });
-var __iconData10, RefreshCw;
+var __iconData11, RefreshCw;
 var init_refresh_cw = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
     init_createLucideIcon();
-    __iconData10 = {
+    __iconData11 = {
       name: "refresh-cw",
       size: 24,
       node: [
@@ -625,22 +648,69 @@ var init_refresh_cw = __esm({
         ["path", { d: "M8 16H3v5", key: "1cv678" }]
       ]
     };
-    __iconData10.node;
-    RefreshCw = createLucideIcon(__iconData10);
+    __iconData11.node;
+    RefreshCw = createLucideIcon(__iconData11);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/reply.mjs
+var reply_exports = {};
+__export(reply_exports, {
+  __iconData: () => __iconData12,
+  default: () => Reply
+});
+var __iconData12, Reply;
+var init_reply = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/reply.mjs"() {
+    init_createLucideIcon();
+    __iconData12 = {
+      name: "reply",
+      size: 24,
+      node: [
+        ["path", { d: "M20 18v-2a4 4 0 0 0-4-4H4", key: "5vmcpk" }],
+        ["path", { d: "m9 17-5-5 5-5", key: "nvlc11" }]
+      ]
+    };
+    __iconData12.node;
+    Reply = createLucideIcon(__iconData12);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/reply-all.mjs
+var reply_all_exports = {};
+__export(reply_all_exports, {
+  __iconData: () => __iconData13,
+  default: () => ReplyAll
+});
+var __iconData13, ReplyAll;
+var init_reply_all = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/reply-all.mjs"() {
+    init_createLucideIcon();
+    __iconData13 = {
+      name: "reply-all",
+      size: 24,
+      node: [
+        ["path", { d: "m12 17-5-5 5-5", key: "1s3y5u" }],
+        ["path", { d: "M22 18v-2a4 4 0 0 0-4-4H7", key: "1fcyog" }],
+        ["path", { d: "m7 17-5-5 5-5", key: "1ed8i2" }]
+      ]
+    };
+    __iconData13.node;
+    ReplyAll = createLucideIcon(__iconData13);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/search.mjs
 var search_exports = {};
 __export(search_exports, {
-  __iconData: () => __iconData11,
+  __iconData: () => __iconData14,
   default: () => Search
 });
-var __iconData11, Search;
+var __iconData14, Search;
 var init_search = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/search.mjs"() {
     init_createLucideIcon();
-    __iconData11 = {
+    __iconData14 = {
       name: "search",
       size: 24,
       node: [
@@ -648,22 +718,22 @@ var init_search = __esm({
         ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }]
       ]
     };
-    __iconData11.node;
-    Search = createLucideIcon(__iconData11);
+    __iconData14.node;
+    Search = createLucideIcon(__iconData14);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/send.mjs
 var send_exports = {};
 __export(send_exports, {
-  __iconData: () => __iconData12,
+  __iconData: () => __iconData15,
   default: () => Send
 });
-var __iconData12, Send;
+var __iconData15, Send;
 var init_send = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/send.mjs"() {
     init_createLucideIcon();
-    __iconData12 = {
+    __iconData15 = {
       name: "send",
       size: 24,
       node: [
@@ -677,17 +747,17 @@ var init_send = __esm({
         ["path", { d: "m21.854 2.147-10.94 10.939", key: "12cjpa" }]
       ]
     };
-    __iconData12.node;
-    Send = createLucideIcon(__iconData12);
+    __iconData15.node;
+    Send = createLucideIcon(__iconData15);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
-var __iconData13, Trash;
+var __iconData16, Trash;
 var init_trash = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
     init_createLucideIcon();
-    __iconData13 = {
+    __iconData16 = {
       name: "trash",
       size: 24,
       node: [
@@ -699,8 +769,8 @@ var init_trash = __esm({
       ],
       aliases: ["trash-2"]
     };
-    __iconData13.node;
-    Trash = createLucideIcon(__iconData13);
+    __iconData16.node;
+    Trash = createLucideIcon(__iconData16);
   }
 });
 
@@ -718,14 +788,14 @@ var init_trash_2 = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/users.mjs
 var users_exports = {};
 __export(users_exports, {
-  __iconData: () => __iconData14,
+  __iconData: () => __iconData17,
   default: () => Users
 });
-var __iconData14, Users;
+var __iconData17, Users;
 var init_users = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/users.mjs"() {
     init_createLucideIcon();
-    __iconData14 = {
+    __iconData17 = {
       name: "users",
       size: 24,
       node: [
@@ -735,8 +805,8 @@ var init_users = __esm({
         ["circle", { cx: "9", cy: "7", r: "4", key: "nufk8" }]
       ]
     };
-    __iconData14.node;
-    Users = createLucideIcon(__iconData14);
+    __iconData17.node;
+    Users = createLucideIcon(__iconData17);
   }
 });
 
@@ -750,12 +820,15 @@ var require_icons2 = __commonJS({
       "download": (init_download(), __toCommonJS(download_exports)).default,
       "folder": (init_folder(), __toCommonJS(folder_exports)).default,
       "folder-input": (init_folder_input(), __toCommonJS(folder_input_exports)).default,
+      "forward": (init_forward(), __toCommonJS(forward_exports)).default,
       "inbox": (init_inbox(), __toCommonJS(inbox_exports)).default,
       "list": (init_list(), __toCommonJS(list_exports)).default,
       "mail": (init_mail(), __toCommonJS(mail_exports)).default,
       "mail-open": (init_mail_open(), __toCommonJS(mail_open_exports)).default,
       "paperclip": (init_paperclip(), __toCommonJS(paperclip_exports)).default,
       "refresh-cw": (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
+      "reply": (init_reply(), __toCommonJS(reply_exports)).default,
+      "reply-all": (init_reply_all(), __toCommonJS(reply_all_exports)).default,
       "search": (init_search(), __toCommonJS(search_exports)).default,
       "send": (init_send(), __toCommonJS(send_exports)).default,
       "trash-2": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
@@ -819,7 +892,7 @@ var require_icon_label = __commonJS({
       return h(
         "span",
         { className: "wb-icon-label" },
-        h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }),
+        Icon2 ? h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }) : null,
         h("span", null, text)
       );
     };
@@ -3610,14 +3683,14 @@ var require_account_card = __commonJS({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs
 var eye_exports = {};
 __export(eye_exports, {
-  __iconData: () => __iconData15,
+  __iconData: () => __iconData18,
   default: () => Eye
 });
-var __iconData15, Eye;
+var __iconData18, Eye;
 var init_eye = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs"() {
     init_createLucideIcon();
-    __iconData15 = {
+    __iconData18 = {
       name: "eye",
       size: 24,
       node: [
@@ -3631,22 +3704,22 @@ var init_eye = __esm({
         ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
       ]
     };
-    __iconData15.node;
-    Eye = createLucideIcon(__iconData15);
+    __iconData18.node;
+    Eye = createLucideIcon(__iconData18);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs
 var eye_off_exports = {};
 __export(eye_off_exports, {
-  __iconData: () => __iconData16,
+  __iconData: () => __iconData19,
   default: () => EyeOff
 });
-var __iconData16, EyeOff;
+var __iconData19, EyeOff;
 var init_eye_off = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs"() {
     init_createLucideIcon();
-    __iconData16 = {
+    __iconData19 = {
       name: "eye-off",
       size: 24,
       node: [
@@ -3668,8 +3741,8 @@ var init_eye_off = __esm({
         ["path", { d: "m2 2 20 20", key: "1ooewy" }]
       ]
     };
-    __iconData16.node;
-    EyeOff = createLucideIcon(__iconData16);
+    __iconData19.node;
+    EyeOff = createLucideIcon(__iconData19);
   }
 });
 
@@ -5740,7 +5813,7 @@ var GLYPHS = require_icons2().ICONS;
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.4.3",
+    version: "0.4.4",
     icon: GLYPHS["mail"],
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: withProps(require_messages(), "\u90AE\u4EF6") },

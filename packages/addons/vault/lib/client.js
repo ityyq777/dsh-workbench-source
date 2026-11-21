@@ -933,7 +933,7 @@ var require_icon_label = __commonJS({
       return h(
         "span",
         { className: "wb-icon-label" },
-        h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }),
+        Icon2 ? h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }) : null,
         h("span", null, text)
       );
     };
