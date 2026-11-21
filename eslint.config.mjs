@@ -50,6 +50,8 @@ export default [
       // error 使检查失败，--fix 执行自动清理；类型导入同样参与引用分析。
       // 不额外开启 no-unused-vars，避免重复报告同一个 import。
       "unused-imports/no-unused-imports": "error",
+      // 同一对象字面量里重复声明键时后者会静默覆盖前者（文案表最容易踩），交给 lint 拦住。
+      "no-dupe-keys": "error",
     },
   },
 ];
