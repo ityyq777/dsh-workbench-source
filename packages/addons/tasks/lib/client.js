@@ -8964,6 +8964,13 @@ var require_styles = __commonJS({
       ".wbt-form{display:grid;grid-template-columns:1fr 1fr;gap:9px}",
       ".wbt-field{display:flex;flex-direction:column;gap:4px;font-size:12px;min-width:0}",
       ".wbt-field.full{grid-column:1 / -1}",
+      ".wbt-create-tl{grid-column:1 / -1;display:flex;flex-direction:column;gap:6px;min-width:0;padding:9px 10px;border:1px solid var(--wbt-line);border-radius:10px;background:color-mix(in oklab,var(--wbt-accent) 4%,transparent);box-sizing:border-box}",
+      ".wbt-create-tl-head{display:flex;align-items:baseline;gap:8px;min-width:0;font-size:12px}",
+      ".wbt-create-tl-head>span:first-child{font-weight:600}",
+      ".wbt-create-tl-hint{font-size:11px;opacity:.55;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbt-create-tl .wbt-timeline-picker{display:flex;flex-direction:column;gap:6px;min-width:0}",
+      ".wbt-create-tl .wbt-picker-list{max-height:180px;scrollbar-gutter:stable}",
+      ".wbt-create-tl .wbt-timeline-pager{margin-top:4px;font-size:11.5px}",
       ".wbt-field>span{opacity:.62;font-size:11.5px}",
       ".wbt-modal-foot{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:2px}",
       // 预览面板：只让内容区滚动，头部标题与右上角 × 固定不动（滚动壳限定在 .wbt-preview，不影响其它弹窗）。
@@ -9025,6 +9032,42 @@ var require_styles = __commonJS({
       "@media (max-width:760px){.wbt-filter-panel{width:100%;flex:0 0 auto;padding:8px;max-height:40%}.wbt-filter-toggle{display:inline-flex}.wbt-filter-panel:not(.expanded) .wbt-filter-content{display:none}.wbt-filter-panel.expanded .wbt-filter-content{padding-top:10px}.wbt-content{width:100%;box-sizing:border-box}}",
       "@media (max-width:640px){.wbt-form{grid-template-columns:1fr}.wbt-drawer{width:94vw}.wbt-search{width:100%}.wbt-item{padding:9px}.wbt-ops{width:100%;justify-content:flex-end}}"
     ].concat(require_filter_checklist_styles(), require_date_picker_styles()("wbt")).join("\n");
+  }
+});
+
+// packages/addons/tasks/client/timeline/timeline-styles.cjs
+var require_timeline_styles = __commonJS({
+  "packages/addons/tasks/client/timeline/timeline-styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = [
+      ".wbt-timeline-view{padding:0;color:inherit;box-sizing:border-box;overflow:auto}",
+      ".wbt-timeline-toolbar,.wbt-timeline-search,.wbt-timeline-pager,.wbt-timeline-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+      ".wbt-timeline-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px}",
+      ".wbt-timeline-toolbar-main{display:flex;align-items:center;gap:8px;flex:1 1 320px;min-width:0;flex-wrap:wrap}",
+      ".wbt-timeline-toolbar-main .wbt-timeline-search{flex:1 1 220px;min-width:0}",
+      ".wbt-timeline-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto}",
+      ".wbt-timeline-columns{display:grid;grid-template-columns:minmax(240px,32%) minmax(0,1fr);gap:12px;align-items:start}",
+      ".wbt-timeline-left,.wbt-timeline-right{min-width:0;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);padding:12px}",
+      ".wbt-timeline-single{display:flex;align-items:center;gap:8px;margin:0;font-size:13px;white-space:nowrap}.wbt-timeline-search input{min-width:0;flex:1}",
+      ".wbt-timeline-list{max-height:840px;overflow:auto;overscroll-behavior:contain}.wbt-timeline-left>.wbt-timeline-list,.wbt-timeline-left>.wbt-err{margin-top:2px}.wbt-timeline-view .wbt-timeline-option{position:relative;box-sizing:border-box;min-height:56px;padding:10px 12px;border:0;border-bottom:1px solid var(--wbt-line);border-radius:var(--wb-radius-sm,6px);display:flex;flex-direction:column;gap:4px;cursor:pointer;color:inherit;background:transparent;background-image:none}",
+      ".wbt-timeline-option-title{display:flex;gap:8px;align-items:center;min-width:0}.wbt-timeline-option-title strong{font-size:13px;font-weight:560;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}.wbt-timeline-option>span{font-size:11.5px;opacity:.6;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}",
+      ".wbt-timeline-option>.wbt-timeline-excerpt{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".wbt-timeline-view .wbt-timeline-option.current{box-shadow:inset 3px 0 var(--wbt-accent),inset 0 0 0 1px var(--wbt-line);background:color-mix(in oklab,var(--wbt-accent) 8%,transparent);background-image:none}.wbt-timeline-view .wbt-timeline-option:hover{background:color-mix(in oklab,var(--wbt-accent) 12%,transparent)}",
+      ".wbt-timeline-option:focus-visible,.wbt-timeline-view button:focus-visible,.wbt-timeline-modal button:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:2px}.wbt-timeline-option input[type=checkbox],.wbt-timeline-single input{appearance:auto;width:15px;height:15px;flex:none;accent-color:var(--wbt-accent)}",
+      ".wbt-timeline-pager{justify-content:space-between;font-size:12px;margin-top:12px}.wbt-timeline-right h3,.wbt-timeline-summary h4{font-size:15px;font-weight:600;margin:0 0 8px;overflow-wrap:anywhere}.wbt-timeline-eyebrow{font-size:11.5px;opacity:.55;margin-bottom:4px;overflow-wrap:anywhere}",
+      ".wbt-timeline-summary{min-width:0}.wbt-timeline-desc{max-height:64px;overflow:hidden;margin:0 0 8px;white-space:pre-wrap;overflow-wrap:anywhere}.wbt-timeline-actions{margin:8px 0}.wbt-timeline-actions>.wbt-act-del{margin-left:auto}",
+      ".wbt-timeline-right>.wbt-timeline-members{min-height:0;max-height:65vh;overflow-y:auto;overscroll-behavior-y:contain;scrollbar-gutter:stable}",
+      // Scoped reset defeats ordinary host button surfaces without touching unrelated task controls.
+      ":is(.wbt-timeline-view,.wbt-timeline-modal) button:is(.wbt-timeline-member,.wbt-timeline-remove,.wbt-timeline-id){appearance:none;background:transparent;background-image:none;color:inherit;border:0;box-shadow:none;border-radius:var(--wb-radius-sm,6px);font:inherit;cursor:pointer;min-width:0;min-height:0;width:auto;margin:0}",
+      ":is(.wbt-timeline-view,.wbt-timeline-modal) .wbt-timeline-id{display:inline-flex;align-items:center;gap:4px;padding:4px;max-width:180px}.wbt-timeline-id code{font-size:11.5px;opacity:.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ":is(.wbt-timeline-view,.wbt-timeline-modal) .wbt-act-del{color:var(--dsw-alias-state-error-primary,var(--wbt-accent));background:transparent;border-color:var(--wbt-line)}",
+      '.wbt-timeline-members{list-style:none;padding:0;margin:8px 0;min-width:0}.wbt-timeline-member-row{display:grid;grid-template-columns:92px 14px minmax(0,1fr) auto 28px;gap:8px;align-items:center;min-height:40px;position:relative;padding:0;margin:0}.wbt-timeline-date{font-size:11.5px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;opacity:.7}.wbt-timeline-node{align-self:stretch;position:relative}.wbt-timeline-node:before{content:"";position:absolute;width:1px;left:50%;top:0;bottom:0;background:var(--wbt-line)}.wbt-timeline-node:after{content:"";position:absolute;width:6px;height:6px;left:calc(50% - 2.5px);top:calc(50% - 3px);border-radius:50%;background:var(--wbt-accent)}',
+      ":is(.wbt-timeline-view,.wbt-timeline-modal) button.wbt-timeline-member{padding:8px 0;text-align:left;font-size:13px;line-height:1.5;overflow-wrap:anywhere;white-space:normal}:is(.wbt-timeline-view,.wbt-timeline-modal) button.wbt-timeline-member:hover{text-decoration:underline;text-underline-offset:3px}:is(.wbt-timeline-view,.wbt-timeline-modal) button.wbt-timeline-remove{display:flex;justify-content:center;align-items:center;width:28px;height:28px;padding:4px;opacity:.35}:is(.wbt-timeline-view,.wbt-timeline-modal) button.wbt-timeline-remove:is(:hover,:focus-visible){opacity:.9;background:var(--wbt-surface)}.wbt-timeline-member-row>.wbt-badge{white-space:nowrap;margin:0}.wbt-timeline-remove:disabled{cursor:default}",
+      ".wbt-timeline-member-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;border-top:1px solid var(--wbt-line);padding-top:8px}.wbt-timeline-member-footer>span{font-size:11.5px;opacity:.65}.wbt-timeline-member-footer .wbt-timeline-pager{margin:0}",
+      ".wbt-modal.wide.wbt-timeline-modal{display:flex;flex-direction:column;max-height:90vh;overflow:hidden}.wbt-timeline-modal-body{min-height:0;overflow:auto;flex:1;padding:12px}.wbt-timeline-member-section{min-width:0;margin-top:12px}.wbt-timeline-member-scroll{max-height:40vh;overflow:auto;overscroll-behavior:contain}.wbt-timeline-pick{border-top:1px solid var(--wbt-line);padding-top:12px;margin-top:12px}.wbt-timeline-empty{padding:12px 0}.wbt-picker-selected{font-size:12px;margin:6px 0;min-height:16px}.wbt-picker-list{max-height:220px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-sm,6px);padding:4px;background:var(--wbt-surface)}.wbt-picker-note{margin:6px;font-size:12px;opacity:.7}.wbt-picker-opt{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:6px 8px;border:0;border-radius:var(--wb-radius-sm,6px);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}.wbt-picker-opt:hover,.wbt-picker-opt:focus-visible{background:color-mix(in oklab,var(--wbt-accent) 12%,transparent)}.wbt-picker-opt:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:-2px}.wbt-picker-opt.selected{background:color-mix(in oklab,var(--wbt-accent) 16%,transparent);font-weight:600}.wbt-picker-opt-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wbt-picker-opt-count{font-size:11px;opacity:.6;white-space:nowrap}.wbt-timeline-confirm{padding:12px;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);margin:8px 0;line-height:1.6;background:var(--wbt-surface)}.wbt-timeline-confirm .wbt-btn{margin:8px 8px 0 0}",
+      ".wbt-timeline-desc.expanded{max-height:none}.wbt-timeline-selected{min-width:0;overflow-wrap:anywhere;flex:1}.wbt-modal-foot.wbt-timeline-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:none}.wbt-timeline-modal .wbt-empty{padding:12px;margin:8px 0;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);background:var(--wbt-surface);line-height:1.6}",
+      "@media(max-width:720px){.wbt-timeline-selected{flex:1 1 100%}.wbt-picker-list{max-height:180px}.wbt-timeline-columns{grid-template-columns:1fr}.wbt-timeline-toolbar-main{flex:1 1 100%}.wbt-timeline-toolbar-actions{flex:1 1 100%;justify-content:flex-end;margin-left:0}.wbt-timeline-list{max-height:320px}.wbt-timeline-toolbar{flex-wrap:wrap}.wbt-timeline-member-row{grid-template-columns:76px 8px minmax(0,1fr) auto 28px;gap:4px}.wbt-timeline-left,.wbt-timeline-right{padding:12px}.wbt-timeline-date{font-size:10.5px}.wbt-timeline-member-row>.wbt-badge{font-size:10.5px;padding:2px 4px}.wbt-timeline-actions>.wbt-act-del{margin-left:0}.wbt-timeline-id{max-width:140px}}"
+    ].join("\n");
   }
 });
 
@@ -10166,6 +10209,19 @@ var require_create_modal = __commonJS({
           });
         }
         var title = source === "2" ? t.restartTitle : source === "1" ? tr("\u5411\u5DF2\u6709\u65F6\u95F4\u7EBF\u6DFB\u52A0\u4EFB\u52A1") : t.newTask;
+        var timelineSection = source !== "2" ? h(
+          "div",
+          { className: "wbt-create-tl full" },
+          h(
+            "div",
+            { className: "wbt-create-tl-head" },
+            h("span", null, t.timeline),
+            source === "1" ? h("span", { className: "wbt-create-tl-hint" }, tr("\u5411\u5DF2\u6709\u65F6\u95F4\u7EBF\u6DFB\u52A0\u4EFB\u52A1")) : null
+          ),
+          h(TimelinePicker, { api: props.api, t, value: form.timelineId, onChange: function(value) {
+            set("timelineId", value);
+          }, disabled: isBusy })
+        ) : null;
         return h(
           "div",
           { className: "wbt-modal-mask", onKeyDownCapture: onModalKey, onMouseDown: function(e) {
@@ -10178,9 +10234,6 @@ var require_create_modal = __commonJS({
             source === "2" ? h("div", { className: "wbt-mhint" }, t.restartPriorityHint) : null,
             source !== "0" && origin ? h("div", { className: "wbt-mhint" }, "\u6765\u6E90\uFF1A" + (origin.title || origin.id) + (source === "2" ? tr(" \xB7 \u81EA\u52A8\u7EE7\u627F\u539F\u65F6\u95F4\u7EBF") : "")) : null,
             source === "2" && !(origin && origin.timelineId) ? h("p", { className: "wbt-err", role: "alert" }, tr("\u8BF7\u5148\u624B\u52A8\u5EFA\u7ACB\u5E76\u5173\u8054\u65F6\u95F4\u7EBF\uFF0C\u518D\u91CD\u542F")) : null,
-            source !== "2" ? h(TimelinePicker, { api: props.api, t, value: form.timelineId, onChange: function(value) {
-              set("timelineId", value);
-            }, disabled: isBusy }) : null,
             h(
               "div",
               { className: "wbt-form" },
@@ -10193,6 +10246,7 @@ var require_create_modal = __commonJS({
               hostHasAddon("wb-addon-tags") ? h("label", { className: "wbt-field full" }, h("span", null, t.tags), h("input", { className: "wbt-input", value: form.tags, placeholder: t.tagPlaceholder, onChange: function(e) {
                 set("tags", e.target.value);
               } })) : null,
+              timelineSection,
               h(WorkspaceSelect, { api: props.api, lang: props.lang, value: form.workspaceIds, onChange: function(ids) {
                 set("workspaceIds", ids);
               } }),
@@ -10283,42 +10337,6 @@ var require_timeline_title = __commonJS({
   }
 });
 
-// packages/addons/tasks/client/timeline/timeline-styles.cjs
-var require_timeline_styles = __commonJS({
-  "packages/addons/tasks/client/timeline/timeline-styles.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = [
-      ".wbt-timeline-view{padding:0;color:inherit;box-sizing:border-box;overflow:auto}",
-      ".wbt-timeline-toolbar,.wbt-timeline-search,.wbt-timeline-pager,.wbt-timeline-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
-      ".wbt-timeline-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px}",
-      ".wbt-timeline-toolbar-main{display:flex;align-items:center;gap:8px;flex:1 1 320px;min-width:0;flex-wrap:wrap}",
-      ".wbt-timeline-toolbar-main .wbt-timeline-search{flex:1 1 220px;min-width:0}",
-      ".wbt-timeline-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto}",
-      ".wbt-timeline-columns{display:grid;grid-template-columns:minmax(240px,32%) minmax(0,1fr);gap:12px;align-items:start}",
-      ".wbt-timeline-left,.wbt-timeline-right{min-width:0;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);padding:12px}",
-      ".wbt-timeline-single{display:flex;align-items:center;gap:8px;margin:0;font-size:13px;white-space:nowrap}.wbt-timeline-search input{min-width:0;flex:1}",
-      ".wbt-timeline-list{max-height:840px;overflow:auto;overscroll-behavior:contain}.wbt-timeline-left>.wbt-timeline-list,.wbt-timeline-left>.wbt-err{margin-top:2px}.wbt-timeline-view .wbt-timeline-option{position:relative;box-sizing:border-box;min-height:56px;padding:10px 12px;border:0;border-bottom:1px solid var(--wbt-line);border-radius:var(--wb-radius-sm,6px);display:flex;flex-direction:column;gap:4px;cursor:pointer;color:inherit;background:transparent;background-image:none}",
-      ".wbt-timeline-option-title{display:flex;gap:8px;align-items:center;min-width:0}.wbt-timeline-option-title strong{font-size:13px;font-weight:560;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}.wbt-timeline-option>span{font-size:11.5px;opacity:.6;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}",
-      ".wbt-timeline-option>.wbt-timeline-excerpt{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-      ".wbt-timeline-view .wbt-timeline-option.current{box-shadow:inset 3px 0 var(--wbt-accent),inset 0 0 0 1px var(--wbt-line);background:color-mix(in oklab,var(--wbt-accent) 8%,transparent);background-image:none}.wbt-timeline-view .wbt-timeline-option:hover{background:color-mix(in oklab,var(--wbt-accent) 12%,transparent)}",
-      ".wbt-timeline-option:focus-visible,.wbt-timeline-view button:focus-visible,.wbt-timeline-modal button:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:2px}.wbt-timeline-option input[type=checkbox],.wbt-timeline-single input{appearance:auto;width:15px;height:15px;flex:none;accent-color:var(--wbt-accent)}",
-      ".wbt-timeline-pager{justify-content:space-between;font-size:12px;margin-top:12px}.wbt-timeline-right h3,.wbt-timeline-summary h4{font-size:15px;font-weight:600;margin:0 0 8px;overflow-wrap:anywhere}.wbt-timeline-eyebrow{font-size:11.5px;opacity:.55;margin-bottom:4px;overflow-wrap:anywhere}",
-      ".wbt-timeline-summary{min-width:0}.wbt-timeline-desc{max-height:64px;overflow:hidden;margin:0 0 8px;white-space:pre-wrap;overflow-wrap:anywhere}.wbt-timeline-actions{margin:8px 0}.wbt-timeline-actions>.wbt-act-del{margin-left:auto}",
-      ".wbt-timeline-right>.wbt-timeline-members{min-height:0;max-height:65vh;overflow-y:auto;overscroll-behavior-y:contain;scrollbar-gutter:stable}",
-      // Scoped reset defeats ordinary host button surfaces without touching unrelated task controls.
-      ":is(.wbt-timeline-view,.wbt-timeline-modal) button:is(.wbt-timeline-member,.wbt-timeline-remove,.wbt-timeline-id){appearance:none;background:transparent;background-image:none;color:inherit;border:0;box-shadow:none;border-radius:var(--wb-radius-sm,6px);font:inherit;cursor:pointer;min-width:0;min-height:0;width:auto;margin:0}",
-      ":is(.wbt-timeline-view,.wbt-timeline-modal) .wbt-timeline-id{display:inline-flex;align-items:center;gap:4px;padding:4px;max-width:180px}.wbt-timeline-id code{font-size:11.5px;opacity:.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ":is(.wbt-timeline-view,.wbt-timeline-modal) .wbt-act-del{color:var(--dsw-alias-state-error-primary,var(--wbt-accent));background:transparent;border-color:var(--wbt-line)}",
-      '.wbt-timeline-members{list-style:none;padding:0;margin:8px 0;min-width:0}.wbt-timeline-member-row{display:grid;grid-template-columns:92px 14px minmax(0,1fr) auto 28px;gap:8px;align-items:center;min-height:40px;position:relative;padding:0;margin:0}.wbt-timeline-date{font-size:11.5px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;opacity:.7}.wbt-timeline-node{align-self:stretch;position:relative}.wbt-timeline-node:before{content:"";position:absolute;width:1px;left:50%;top:0;bottom:0;background:var(--wbt-line)}.wbt-timeline-node:after{content:"";position:absolute;width:6px;height:6px;left:calc(50% - 2.5px);top:calc(50% - 3px);border-radius:50%;background:var(--wbt-accent)}',
-      ":is(.wbt-timeline-view,.wbt-timeline-modal) button.wbt-timeline-member{padding:8px 0;text-align:left;font-size:13px;line-height:1.5;overflow-wrap:anywhere;white-space:normal}:is(.wbt-timeline-view,.wbt-timeline-modal) button.wbt-timeline-member:hover{text-decoration:underline;text-underline-offset:3px}:is(.wbt-timeline-view,.wbt-timeline-modal) button.wbt-timeline-remove{display:flex;justify-content:center;align-items:center;width:28px;height:28px;padding:4px;opacity:.35}:is(.wbt-timeline-view,.wbt-timeline-modal) button.wbt-timeline-remove:is(:hover,:focus-visible){opacity:.9;background:var(--wbt-surface)}.wbt-timeline-member-row>.wbt-badge{white-space:nowrap;margin:0}.wbt-timeline-remove:disabled{cursor:default}",
-      ".wbt-timeline-member-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;border-top:1px solid var(--wbt-line);padding-top:8px}.wbt-timeline-member-footer>span{font-size:11.5px;opacity:.65}.wbt-timeline-member-footer .wbt-timeline-pager{margin:0}",
-      ".wbt-modal.wide.wbt-timeline-modal{display:flex;flex-direction:column;max-height:90vh;overflow:hidden}.wbt-timeline-modal-body{min-height:0;overflow:auto;flex:1;padding:12px}.wbt-timeline-member-section{min-width:0;margin-top:12px}.wbt-timeline-member-scroll{max-height:40vh;overflow:auto;overscroll-behavior:contain}.wbt-timeline-pick{border-top:1px solid var(--wbt-line);padding-top:12px;margin-top:12px}.wbt-timeline-empty{padding:12px 0}.wbt-picker-selected{font-size:12px;margin:6px 0;min-height:16px}.wbt-picker-list{max-height:220px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-sm,6px);padding:4px;background:var(--wbt-surface)}.wbt-picker-note{margin:6px;font-size:12px;opacity:.7}.wbt-picker-opt{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:6px 8px;border:0;border-radius:var(--wb-radius-sm,6px);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}.wbt-picker-opt:hover,.wbt-picker-opt:focus-visible{background:color-mix(in oklab,var(--wbt-accent) 12%,transparent)}.wbt-picker-opt:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:-2px}.wbt-picker-opt.selected{background:color-mix(in oklab,var(--wbt-accent) 16%,transparent);font-weight:600}.wbt-picker-opt-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wbt-picker-opt-count{font-size:11px;opacity:.6;white-space:nowrap}.wbt-timeline-confirm{padding:12px;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);margin:8px 0;line-height:1.6;background:var(--wbt-surface)}.wbt-timeline-confirm .wbt-btn{margin:8px 8px 0 0}",
-      ".wbt-timeline-desc.expanded{max-height:none}.wbt-timeline-selected{min-width:0;overflow-wrap:anywhere;flex:1}.wbt-modal-foot.wbt-timeline-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:none}.wbt-timeline-modal .wbt-empty{padding:12px;margin:8px 0;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);background:var(--wbt-surface);line-height:1.6}",
-      "@media(max-width:720px){.wbt-timeline-selected{flex:1 1 100%}.wbt-picker-list{max-height:180px}.wbt-timeline-columns{grid-template-columns:1fr}.wbt-timeline-toolbar-main{flex:1 1 100%}.wbt-timeline-toolbar-actions{flex:1 1 100%;justify-content:flex-end;margin-left:0}.wbt-timeline-list{max-height:320px}.wbt-timeline-toolbar{flex-wrap:wrap}.wbt-timeline-member-row{grid-template-columns:76px 8px minmax(0,1fr) auto 28px;gap:4px}.wbt-timeline-left,.wbt-timeline-right{padding:12px}.wbt-timeline-date{font-size:10.5px}.wbt-timeline-member-row>.wbt-badge{font-size:10.5px;padding:2px 4px}.wbt-timeline-actions>.wbt-act-del{margin-left:0}.wbt-timeline-id{max-width:140px}}"
-    ].join("\n");
-  }
-});
-
 // packages/addons/tasks/client/timeline/timeline-members.cjs
 var require_timeline_members = __commonJS({
   "packages/addons/tasks/client/timeline/timeline-members.cjs"(exports2, module2) {
@@ -10341,7 +10359,6 @@ var require_task_timeline_modal = __commonJS({
       var h = React.createElement, controls = require_timeline_controls()(React);
       var MemberRows = require_timeline_member_rows()(React, statusInfo);
       var splitTitle = require_timeline_title();
-      var CSS = require_timeline_styles();
       return function TaskTimelineModal(p) {
         var tr = require_timeline_copy()(p.t), lang = p.t && p.t.timeline === "Timeline" ? "en" : "zh";
         var ts = React.useState(p.task), task = ts[0], setTask = ts[1];
@@ -10513,7 +10530,6 @@ var require_task_timeline_modal = __commonJS({
         return h(
           "div",
           { className: "wbt-modal-mask", onKeyDown },
-          h("style", null, CSS),
           h(
             "div",
             { ref: dialog, tabIndex: -1, className: "wbt-modal wide wbt-timeline-modal", role: "dialog", "aria-modal": true, "aria-label": tr("\u4EFB\u52A1\u65F6\u95F4\u7EBF") },
@@ -12530,7 +12546,6 @@ var require_timeline_view = __commonJS({
       var React = deps.React, h = React.createElement, COPY = deps.COPY;
       var controls = require_timeline_controls()(React), AddMembers = require_timeline_add_members()(React);
       var Merge = require_timeline_merge()(React);
-      var CSS = require_timeline_styles();
       var MemberRows = require_timeline_member_rows()(React, deps.statusInfo);
       var TaskPreview = require_task_preview()(React, deps.TaskItem);
       var receipts = require_ownership();
@@ -12756,7 +12771,6 @@ var require_timeline_view = __commonJS({
         return h(
           "div",
           { className: "wbt-root wbt-timeline-view" },
-          h("style", null, CSS),
           h(
             "div",
             { className: "wbt-timeline-toolbar" },
@@ -13132,7 +13146,7 @@ var require_timeline_view = __commonJS({
       title: over ? "\u5DF2\u8D85\u8FC7\u8BA1\u5212\u5B8C\u6210\u65F6\u95F4" : "\u8DDD\u8BA1\u5212\u5B8C\u6210"
     }, h(Icon2, { name: "clock", size: 11 }), h("span", { className: "wbt-cd-num" }, text));
   }
-  var CSS = require_styles();
+  var CSS = require_styles() + "\n" + require_timeline_styles();
   function injectCss() {
     if (typeof document === "undefined") return;
     var old = document.getElementById("wb-addon-tasks-v2-css");
@@ -13530,7 +13544,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.31",
+    version: "5.2.32",
     icon: ICONS["list-checks"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
