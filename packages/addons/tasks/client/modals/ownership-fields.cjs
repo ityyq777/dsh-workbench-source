@@ -6,18 +6,16 @@ var SW = require("../../../lib/switch.cjs");
 module.exports = function (React) {
   var h = React.createElement;
   var Picker = require("./table-picker.cjs")(React);
+  // 选择器直接内嵌在步骤里：不再需要「选择目标任务表」按钮先展开，
+  // 搜索框与任务表树一进来就在，少一次点击。
   function Selection(props) {
-    var state = React.useState(false), open = state[0], setOpen = state[1], trigger = React.useRef(null);
     var chosen = ownership.tables(props.tree).find(function (x) { return x.id === props.form.tableId; });
-    function close() { setOpen(false); if (trigger.current) trigger.current.focus(); }
     return h("div", null,
       h("div", { className: "wbt-picker-detail" }, props.edit ? "当前归属：" + props.current : "目标任务表 *"),
-      h("button", { ref: trigger, type: "button", className: "wbt-btn", disabled: !!props.form.newPath, "aria-expanded": open,
-        onClick: function () { setOpen(!open); } }, props.edit ? "更换任务表" : "选择目标任务表"),
-      open && !props.form.newPath ? h(Picker, { tree: props.tree, value: props.form.tableId, recommended: props.recommended,
-        onChange: function (id) { props.set("tableId", props.edit && id === String(props.currentId) ? "" : id); }, onClose: close }) : null,
+      props.form.newPath ? null : h(Picker, { tree: props.tree, value: props.form.tableId, recommended: props.recommended, onClose: null,
+        onChange: function (id) { props.set("tableId", props.edit && id === String(props.currentId) ? "" : id); } }),
       chosen ? h("div", { className: "wbt-picker-detail", role: "status" }, (props.edit ? "将移动到：" : "已选择：") + chosen.path,
-        props.edit ? h("button", { type: "button", className: "wbt-btn ghost", onClick: function () { props.set("tableId", ""); close(); } }, "撤销，保留原位") : null) :
+        props.edit ? h("button", { type: "button", className: "wbt-btn ghost", onClick: function () { props.set("tableId", ""); } }, "撤销，保留原位") : null) :
         h("div", { className: "wbt-mhint" }, props.edit ? "未更换，保留当前归属。" : props.form.newPath ? "请确认新建路径。" : "请先选择目标任务表，再确认提交。"));
   }
   return function fields(props) {

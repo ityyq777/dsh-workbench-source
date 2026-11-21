@@ -39,10 +39,9 @@ function mount(priority, fallback = 1, source = '2', lang = 'zh', timelineId = '
       let picked = false;
       for (let i = 0; i < 12; i += 1) {
         if (textOf(submit(render())) === copy[lang].create) return;
-        const pick = all(render()).find(n => n.type === 'button' && textOf(n) === '选择目标任务表');
-        if (pick && !picked) {
-          pick.props.onClick();
-          find(render(), n => n.props && n.props.role === 'option' && String(n.props['aria-label'] || '').startsWith('Table'), 'Table 选项').props.onClick();
+        const opt = picked ? null : all(render()).find(n => n.props && n.props.role === 'option' && String(n.props['aria-label'] || '').startsWith('Table'));
+        if (opt) {
+          opt.props.onClick();
           picked = true;
           continue;
         }

@@ -10011,35 +10011,45 @@ var require_timeline_controls = __commonJS({
       });
       function Picker(p) {
         var tr = require_timeline_copy()(p.t);
+        var PAGE_SIZE = 20;
         var ds = React.useState({ records: [], total: 0 }), data = ds[0], setData = ds[1];
         var ps = React.useState(1), page = ps[0], setPage = ps[1];
         var qs = React.useState(""), query = qs[0], setQuery = qs[1];
         var es = React.useState(""), error = es[0], setError = es[1];
         var bs = React.useState(false), busy = bs[0], setBusy = bs[1];
+        var ms = React.useState(false), more = ms[0], setMore = ms[1];
         var rs = React.useState(0), retry = rs[0], setRetry = rs[1];
         var as = React.useState(-1), active = as[0], setActive = as[1];
         var list = React.useRef(null);
+        var loading = React.useRef(false);
         React.useEffect(function() {
-          var cancelled = false;
-          setBusy(true);
+          var cancelled = false, first = page <= 1;
+          if (first) setBusy(true);
+          else setMore(true);
           setError("");
-          p.api.call("tasks.timelines", { includeSingletons: true, titleKey: query, pageNumber: page, pageSize: 20 }).then(result).then(function(r) {
-            if (!cancelled) {
-              setData(r);
-              setActive(-1);
-              setBusy(false);
-            }
+          loading.current = true;
+          p.api.call("tasks.timelines", { includeSingletons: true, titleKey: query, pageNumber: page, pageSize: PAGE_SIZE }).then(result).then(function(r) {
+            if (cancelled) return;
+            loading.current = false;
+            setData(function(prev) {
+              if (first) return r;
+              return { records: (prev.records || []).concat(r.records || []), total: r.total };
+            });
+            setActive(-1);
+            setBusy(false);
+            setMore(false);
           }).catch(function(e) {
-            if (!cancelled) {
-              setError(String(e.message || e));
-              setBusy(false);
-            }
+            if (cancelled) return;
+            loading.current = false;
+            setError(String(e.message || e));
+            setBusy(false);
+            setMore(false);
           });
           return function() {
             cancelled = true;
           };
         }, [p.api, page, query, retry]);
-        var rows = data.records || [], pages = Math.max(1, Math.ceil(data.total / 20));
+        var rows = data.records || [], pages = Math.max(1, Math.ceil(data.total / PAGE_SIZE));
         function choose(row) {
           if (row) p.onChange(row.timelineId || row.timelineKey, row.title || "");
         }
@@ -10058,11 +10068,21 @@ var require_timeline_controls = __commonJS({
           var nodes = list.current ? list.current.querySelectorAll('[role="option"]') : [];
           return Array.prototype.indexOf.call(nodes, document.activeElement);
         }
+        function loadMore() {
+          if (loading.current || busy || more || page >= pages) return;
+          setPage(page + 1);
+        }
+        function onScroll(e) {
+          var el = e.currentTarget;
+          if (!el || !el.scrollHeight) return;
+          if (el.scrollTop + el.clientHeight >= el.scrollHeight - 48) loadMore();
+        }
         function onKeyDown(e) {
           var base = focusedIndex() >= 0 ? focusedIndex() : active;
           if (e.key === "ArrowDown") {
             e.preventDefault();
             move(base + 1);
+            loadMore();
           } else if (e.key === "ArrowUp") {
             e.preventDefault();
             move(base <= 0 ? 0 : base - 1);
@@ -10072,6 +10092,7 @@ var require_timeline_controls = __commonJS({
           } else if (e.key === "End") {
             e.preventDefault();
             move(rows.length - 1);
+            loadMore();
           } else if (e.key === "Enter") {
             if (document.activeElement && document.activeElement.getAttribute("role") === "option") return;
             e.preventDefault();
@@ -10085,15 +10106,20 @@ var require_timeline_controls = __commonJS({
             "label",
             { className: "wbt-field" },
             tr("\u641C\u7D22\u5DF2\u6709\u65F6\u95F4\u7EBF"),
-            h("input", { className: "wbt-input", "aria-label": tr("\u641C\u7D22\u5DF2\u6709\u65F6\u95F4\u7EBF"), value: query, onChange: function(e) {
-              setQuery(e.target.value);
-              setPage(1);
-            } })
+            h("input", {
+              className: "wbt-input",
+              "aria-label": tr("\u641C\u7D22\u5DF2\u6709\u65F6\u95F4\u7EBF"),
+              value: query,
+              onChange: function(e) {
+                setQuery(e.target.value);
+                setPage(1);
+              }
+            })
           ),
           h("div", { className: "wbt-picker-selected", role: "status" }, p.value ? tr("\u5DF2\u9009\u65F6\u95F4\u7EBF") + "\uFF1A" + (p.title || p.value) : tr("\u5C1A\u672A\u9009\u62E9\u65F6\u95F4\u7EBF")),
           h(
             "div",
-            { ref: list, className: "wbt-picker-list", role: "listbox", "aria-label": tr("\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF"), "aria-busy": busy ? "true" : "false", onKeyDown },
+            { ref: list, className: "wbt-picker-list", role: "listbox", "aria-label": tr("\u9009\u62E9\u5DF2\u6709\u65F6\u95F4\u7EBF"), "aria-busy": busy ? "true" : "false", onKeyDown, onScroll },
             busy ? h("p", { className: "wbt-picker-note" }, tr("\u52A0\u8F7D\u4E2D\u2026")) : null,
             error ? h("div", { className: "wbt-picker-note wbt-err", role: "alert" }, error, h("button", { type: "button", className: "wbt-btn", onClick: function() {
               setRetry(retry + 1);
@@ -10111,18 +10137,9 @@ var require_timeline_controls = __commonJS({
                 h("span", { className: "wbt-picker-opt-title" }, row.title || tr("\u672A\u547D\u540D\u65F6\u95F4\u7EBF")),
                 h("span", { className: "wbt-picker-opt-count" }, row.taskCount + tr(" \u4E2A\u4EFB\u52A1"))
               );
-            }) : null
-          ),
-          h(
-            "div",
-            { className: "wbt-timeline-pager" },
-            h("button", { type: "button", className: "wbt-btn", disabled: busy || page <= 1, onClick: function() {
-              setPage(page - 1);
-            } }, tr("\u4E0A\u4E00\u9875")),
-            h("span", null, page + " / " + pages),
-            h("button", { type: "button", className: "wbt-btn", disabled: busy || page >= pages, onClick: function() {
-              setPage(page + 1);
-            } }, tr("\u4E0B\u4E00\u9875"))
+            }) : null,
+            more ? h("p", { className: "wbt-picker-note" }, tr("\u52A0\u8F7D\u66F4\u591A\u2026")) : null,
+            !busy && !error && rows.length && page >= pages ? h("p", { className: "wbt-picker-note" }, tr("\u5DF2\u5230\u6700\u540E\u4E00\u6761")) : null
           )
         );
       }
@@ -10616,44 +10633,28 @@ var require_ownership_fields = __commonJS({
       var h = React.createElement;
       var Picker = require_table_picker()(React);
       function Selection(props) {
-        var state = React.useState(false), open = state[0], setOpen = state[1], trigger = React.useRef(null);
         var chosen = ownership.tables(props.tree).find(function(x) {
           return x.id === props.form.tableId;
         });
-        function close() {
-          setOpen(false);
-          if (trigger.current) trigger.current.focus();
-        }
         return h(
           "div",
           null,
           h("div", { className: "wbt-picker-detail" }, props.edit ? "\u5F53\u524D\u5F52\u5C5E\uFF1A" + props.current : "\u76EE\u6807\u4EFB\u52A1\u8868 *"),
-          h("button", {
-            ref: trigger,
-            type: "button",
-            className: "wbt-btn",
-            disabled: !!props.form.newPath,
-            "aria-expanded": open,
-            onClick: function() {
-              setOpen(!open);
-            }
-          }, props.edit ? "\u66F4\u6362\u4EFB\u52A1\u8868" : "\u9009\u62E9\u76EE\u6807\u4EFB\u52A1\u8868"),
-          open && !props.form.newPath ? h(Picker, {
+          props.form.newPath ? null : h(Picker, {
             tree: props.tree,
             value: props.form.tableId,
             recommended: props.recommended,
+            onClose: null,
             onChange: function(id) {
               props.set("tableId", props.edit && id === String(props.currentId) ? "" : id);
-            },
-            onClose: close
-          }) : null,
+            }
+          }),
           chosen ? h(
             "div",
             { className: "wbt-picker-detail", role: "status" },
             (props.edit ? "\u5C06\u79FB\u52A8\u5230\uFF1A" : "\u5DF2\u9009\u62E9\uFF1A") + chosen.path,
             props.edit ? h("button", { type: "button", className: "wbt-btn ghost", onClick: function() {
               props.set("tableId", "");
-              close();
             } }, "\u64A4\u9500\uFF0C\u4FDD\u7559\u539F\u4F4D") : null
           ) : h("div", { className: "wbt-mhint" }, props.edit ? "\u672A\u66F4\u6362\uFF0C\u4FDD\u7559\u5F53\u524D\u5F52\u5C5E\u3002" : props.form.newPath ? "\u8BF7\u786E\u8BA4\u65B0\u5EFA\u8DEF\u5F84\u3002" : "\u8BF7\u5148\u9009\u62E9\u76EE\u6807\u4EFB\u52A1\u8868\uFF0C\u518D\u786E\u8BA4\u63D0\u4EA4\u3002")
         );
@@ -14611,7 +14612,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.37",
+    version: "5.2.38",
     icon: ICONS["list-checks"],
     // 贡献声明写在 registerAddon 里：卸载任务插件时宿主按 addonId 一起撤销，
     // 不会在邮件里留一个渲染即报错的孤儿按钮。

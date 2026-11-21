@@ -160,8 +160,6 @@ function mount(opts = {}) {
     primary() { return find(paint(), n => n.type === 'button' && /wbctl-btn-p|wbt-btn primary/.test(klass(n)), '主按钮'); },
     submit() { return ui.primary().props.onClick(); },
     stepper() { return find(paint(), n => klass(n) === 'wbctl-steps', '步骤条'); },
-    openTablePicker() { findByText(paint(), '选择目标任务表').props.onClick(); },
-    changeTablePicker() { findByText(paint(), '更换任务表').props.onClick(); },
     chooseTable(prefix) {
       find(paint(), n => n.props && n.props.role === 'option' && String(n.props['aria-label'] || '').startsWith(prefix), '任务表选项 ' + prefix).props.onClick();
     },
@@ -189,7 +187,6 @@ for (const source of ['0', '1', '2']) {
   assert.match(ui.error(), /表/);
   assert.equal(ui.calls.length, 0);
   assert.equal(ownership.tables(ui.props.tree)[0].path, '任务根 / 插件 / storage');
-  ui.openTablePicker();
   ui.chooseTable('storage，');
   ui.toConfirm();
   assert.equal(ui.primary().props.disabled, false);
@@ -205,7 +202,6 @@ for (const source of ['0', '1', '2']) {
   const ui = mount();
   ui.title('Keep text');
   ui.next();
-  ui.openTablePicker();
   ui.chooseTable('storage，');
   ui.toConfirm();
   ui.props.tree = [];
@@ -248,7 +244,6 @@ for (const cancel of [true, false]) {
   ui.title('Failure keeps title');
   ui.description('Failure keeps body');
   ui.next();
-  ui.openTablePicker();
   ui.chooseTable('storage，');
   ui.toConfirm();
   ui.submit();
@@ -261,7 +256,7 @@ for (const cancel of [true, false]) {
 // 5) 编辑弹窗仍是单页表单：换表走选择器，提交 tasks.update
 for (const target of ['', 'tasks，']) {
   const ui = mount({ component: Edit });
-  if (target) { ui.changeTablePicker(); ui.chooseTable(target); }
+  if (target) ui.chooseTable(target);
   ui.submit();
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(ui.calls[0].action, 'tasks.update');

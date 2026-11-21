@@ -46,10 +46,9 @@ for (const lang of ['zh', 'en']) for (const source of ['0', '1', '2']) for (cons
   for (let i = 0; i < 12; i += 1) {
     const primary = find(render(), n => n.type === 'button' && /wbctl-btn-p/.test(klass(n)), '主按钮');
     if (textOf(primary) === copy[lang].create) break;
-    const pick = all(render()).find(n => n.type === 'button' && textOf(n) === '选择目标任务表');
-    if (pick && !picked) {
-      pick.props.onClick();
-      find(render(), n => n.props && n.props.role === 'option' && String(n.props['aria-label'] || '').startsWith('Table'), 'Table 选项').props.onClick();
+    const opt = picked ? null : all(render()).find(n => n.props && n.props.role === 'option' && String(n.props['aria-label'] || '').startsWith('Table'));
+    if (opt) {
+      opt.props.onClick();
       picked = true;
       continue;
     }
