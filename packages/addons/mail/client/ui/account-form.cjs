@@ -461,7 +461,7 @@ module.exports = function AccountForm(props) {
           setProbe(null);
         },
       }),
-      t(lang, "先在保险箱新建一条「应用专用密码」，再在这里选用；邮件页只保存它的 id。",
+      t(lang, "先在保险箱新建一条「授权码」，再在这里选用；邮件页只保存它的 id。",
         "Create an app-password entry in the vault first, then pick it here — this page only stores its id."),
     ),
     provider && util.hintOf(provider, lang) ? h("p", { className: "wbml-hint-line" }, util.hintOf(provider, lang)) : null,

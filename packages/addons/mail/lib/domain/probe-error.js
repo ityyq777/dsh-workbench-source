@@ -40,7 +40,7 @@ export function classifyProbeError(e) {
 /** 归类 → 中英文案；客户端只用这份表，避免两处各写一套说法。 */
 export const ERROR_TEXT = {
   auth: {
-    zh: "账号或授权码不对。QQ/网易/Gmail/iCloud 需要「授权码 / App 专用密码」，不是网页登录密码。",
+    zh: "账号或授权码不对。QQ/网易/Gmail/iCloud 需要「授权码」，不是网页登录密码。",
     en: "Wrong account or password. QQ/NetEase/Gmail/iCloud need an app password, not your web login password.",
   },
   dns: {

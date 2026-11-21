@@ -4131,7 +4131,7 @@ var require_secret_picker = __commonJS({
       phone: "\u624B\u673A\u53F7",
       id_card: "\u8EAB\u4EFD\u8BC1\u53F7",
       token: "Token",
-      app_password: "\u5E94\u7528\u4E13\u7528\u5BC6\u7801",
+      app_password: "\u6388\u6743\u7801",
       api_key: "API Key",
       other: "\u5176\u5B83"
     };
@@ -4425,7 +4425,7 @@ var init_probe_error = __esm({
     DNS_CODE = /* @__PURE__ */ new Set(["ENOTFOUND", "EAI_AGAIN", "EAI_FAIL"]);
     ERROR_TEXT = {
       auth: {
-        zh: "\u8D26\u53F7\u6216\u6388\u6743\u7801\u4E0D\u5BF9\u3002QQ/\u7F51\u6613/Gmail/iCloud \u9700\u8981\u300C\u6388\u6743\u7801 / App \u4E13\u7528\u5BC6\u7801\u300D\uFF0C\u4E0D\u662F\u7F51\u9875\u767B\u5F55\u5BC6\u7801\u3002",
+        zh: "\u8D26\u53F7\u6216\u6388\u6743\u7801\u4E0D\u5BF9\u3002QQ/\u7F51\u6613/Gmail/iCloud \u9700\u8981\u300C\u6388\u6743\u7801\u300D\uFF0C\u4E0D\u662F\u7F51\u9875\u767B\u5F55\u5BC6\u7801\u3002",
         en: "Wrong account or password. QQ/NetEase/Gmail/iCloud need an app password, not your web login password."
       },
       dns: {
@@ -4937,7 +4937,7 @@ var require_account_form = __commonJS({
           }),
           t(
             lang,
-            "\u5148\u5728\u4FDD\u9669\u7BB1\u65B0\u5EFA\u4E00\u6761\u300C\u5E94\u7528\u4E13\u7528\u5BC6\u7801\u300D\uFF0C\u518D\u5728\u8FD9\u91CC\u9009\u7528\uFF1B\u90AE\u4EF6\u9875\u53EA\u4FDD\u5B58\u5B83\u7684 id\u3002",
+            "\u5148\u5728\u4FDD\u9669\u7BB1\u65B0\u5EFA\u4E00\u6761\u300C\u6388\u6743\u7801\u300D\uFF0C\u518D\u5728\u8FD9\u91CC\u9009\u7528\uFF1B\u90AE\u4EF6\u9875\u53EA\u4FDD\u5B58\u5B83\u7684 id\u3002",
             "Create an app-password entry in the vault first, then pick it here \u2014 this page only stores its id."
           )
         ),
@@ -7244,7 +7244,7 @@ var GLYPHS = require_icons2().ICONS;
   var slotBackToMessage = require_slot_back_to_message()({ React, h, C, Icon: Icon2 });
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.5.10",
+    version: "0.5.11",
     icon: GLYPHS["mail"],
     slots: [{ slot: "item.actions", id: "mail.back-to-message", order: 100, component: slotBackToMessage }],
     views: [

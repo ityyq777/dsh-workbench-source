@@ -182,7 +182,7 @@ assert.match(pickerSrc, /navigateAddon/, '无凭据时提供「去保险箱新�
 // ---------- 共享清单：单选变体 ----------
 const FilterChecklist = require('../packages/addons/lib/filter-checklist.cjs');
 const single = renderToStaticMarkup(h(FilterChecklist, {
-  mode: 'single', items: [{ id: 's1', name: 'QQ 授权码', meta: '应用专用密码' }, { id: 's2', name: '网易授权码' }],
+  mode: 'single', items: [{ id: 's1', name: 'QQ 授权码', meta: '授权码' }, { id: 's2', name: '网易授权码' }],
   selected: ['s1'], onPick: () => {}, title: '保险箱凭据', total: 2, autoFocus: false, query: 'qq',
 }));
 assert.ok(single.includes('role="radiogroup"'), '单选变体用 radiogroup 容器');

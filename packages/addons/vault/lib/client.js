@@ -2017,7 +2017,7 @@ var require_kinds = __commonJS({
       phone: "\u624B\u673A\u53F7",
       id_card: "\u8EAB\u4EFD\u8BC1\u53F7",
       token: "Token",
-      app_password: "\u5E94\u7528\u4E13\u7528\u5BC6\u7801",
+      app_password: "\u6388\u6743\u7801",
       api_key: "API Key",
       other: "\u5176\u5B83"
     };
@@ -5574,7 +5574,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.3.13",
+    version: "0.3.14",
     icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },

@@ -30,8 +30,8 @@ export function createDomain(host) {
   return {
     id: "wb-addon-vault",
     title: "凭据保险箱",
-    description: "集中保存密码、应用专用密码与 token；按分组授权给业务模块，加密落库、密文可同步。",
-    version: "0.3.13",
+    description: "集中保存密码、授权码与 token；按分组授权给业务模块，加密落库、密文可同步。",
+    version: "0.3.14",
     category: "assets",
     tables: [
       "vault_header",
@@ -97,7 +97,7 @@ export function createDomain(host) {
           table: "vault_secret",
           title: "凭据",
           description: "一条加密凭据（密码/手机号/证件号/token），可加入多个集合，列表只显示名称与备注。",
-          when: ["需要保存邮箱密码或应用专用密码", "连接器要绑定一个 token", "想在 agent 面前隐藏明文"],
+          when: ["需要保存邮箱密码或授权码", "连接器要绑定一个 token", "想在 agent 面前隐藏明文"],
           primaryAction: "vault.secretCreate",
         },
         {
@@ -114,7 +114,7 @@ export function createDomain(host) {
         {
           name: "kind",
           type: "password|phone|id_card|token|app_password|api_key|other",
-          description: "凭据类型；密码/手机号/证件号/Token/应用专用密码/API Key/其它",
+          description: "凭据类型；密码/手机号/证件号/Token/授权码/API Key/其它",
         },
         { name: "groupId", type: "string", description: "所属分组，可空；写入时自动挂到该组的默认集合" },
         { name: "setId", type: "string", description: "直接指定所属集合，优先于 groupId" },
