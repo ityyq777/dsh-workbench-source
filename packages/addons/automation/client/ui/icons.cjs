@@ -4,6 +4,13 @@ var icons = require("../../../lib/icons.cjs");
 
 var set = icons.create("wba", {
   "activity": require("lucide-react/icons/activity").default,
+  "bot": require("lucide-react/icons/bot").default,
+  "calendar-clock": require("lucide-react/icons/calendar-clock").default,
+  "clock": require("lucide-react/icons/clock").default,
+  "hourglass": require("lucide-react/icons/hourglass").default,
+  "repeat": require("lucide-react/icons/repeat").default,
+  "send": require("lucide-react/icons/send").default,
+  "sparkles": require("lucide-react/icons/sparkles").default,
   "alarm-clock": require("lucide-react/icons/alarm-clock").default,
   "alert-triangle": require("lucide-react/icons/alert-triangle").default,
   "check-circle": require("lucide-react/icons/check-circle").default,

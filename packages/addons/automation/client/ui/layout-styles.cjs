@@ -95,6 +95,9 @@ module.exports = [
   // 设置页：纵向堆叠的卡片与 action 多选
   ".wba-stack{display:flex;flex-direction:column;gap:12px}",
   ".wba-notice.warn{background:var(--wb-surface);color:var(--wb-warn);border:1px solid var(--wb-warn)}",
+  ".wba-hist{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto}",
+  ".wba-hist-row{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border:1px solid var(--wb-line);border-radius:8px;background:var(--wb-surface)}",
+  ".wba-hist-row .wba-pre{max-height:120px}",
   ".wba-empty-inline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0}",
   ".wba-picker{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow:auto;border:1px solid var(--wb-border);border-radius:8px;padding:8px;background:var(--wb-surface)}",
   ".wba-picker-group{display:flex;flex-direction:column;gap:2px}",

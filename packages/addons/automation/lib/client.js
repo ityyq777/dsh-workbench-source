@@ -391,17 +391,217 @@ var init_activity = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/bot.mjs
+var bot_exports = {};
+__export(bot_exports, {
+  __iconData: () => __iconData2,
+  default: () => Bot
+});
+var __iconData2, Bot;
+var init_bot = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/bot.mjs"() {
+    init_createLucideIcon();
+    __iconData2 = {
+      name: "bot",
+      size: 24,
+      node: [
+        ["path", { d: "M12 8V4H8", key: "hb8ula" }],
+        ["rect", { width: "16", height: "12", x: "4", y: "8", rx: "2", key: "enze0r" }],
+        ["path", { d: "M2 14h2", key: "vft8re" }],
+        ["path", { d: "M20 14h2", key: "4cs60a" }],
+        ["path", { d: "M15 13v2", key: "1xurst" }],
+        ["path", { d: "M9 13v2", key: "rq6x2g" }]
+      ]
+    };
+    __iconData2.node;
+    Bot = createLucideIcon(__iconData2);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/calendar-clock.mjs
+var calendar_clock_exports = {};
+__export(calendar_clock_exports, {
+  __iconData: () => __iconData3,
+  default: () => CalendarClock
+});
+var __iconData3, CalendarClock;
+var init_calendar_clock = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/calendar-clock.mjs"() {
+    init_createLucideIcon();
+    __iconData3 = {
+      name: "calendar-clock",
+      size: 24,
+      node: [
+        ["path", { d: "M16 14v2.2l1.6 1", key: "fo4ql5" }],
+        ["path", { d: "M16 2v3", key: "otl347" }],
+        ["path", { d: "M21 7.338V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h2.338", key: "7hb8p4" }],
+        ["path", { d: "M3 9h5.859", key: "numkqi" }],
+        ["path", { d: "M8 2v3", key: "1ioesn" }],
+        ["circle", { cx: "16", cy: "16", r: "6", key: "qoo3c4" }]
+      ]
+    };
+    __iconData3.node;
+    CalendarClock = createLucideIcon(__iconData3);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/clock.mjs
+var clock_exports = {};
+__export(clock_exports, {
+  __iconData: () => __iconData4,
+  default: () => Clock
+});
+var __iconData4, Clock;
+var init_clock = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/clock.mjs"() {
+    init_createLucideIcon();
+    __iconData4 = {
+      name: "clock",
+      size: 24,
+      node: [
+        ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+        ["path", { d: "M12 6v6l4 2", key: "mmk7yg" }]
+      ]
+    };
+    __iconData4.node;
+    Clock = createLucideIcon(__iconData4);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/hourglass.mjs
+var hourglass_exports = {};
+__export(hourglass_exports, {
+  __iconData: () => __iconData5,
+  default: () => Hourglass
+});
+var __iconData5, Hourglass;
+var init_hourglass = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/hourglass.mjs"() {
+    init_createLucideIcon();
+    __iconData5 = {
+      name: "hourglass",
+      size: 24,
+      node: [
+        ["path", { d: "M5 22h14", key: "ehvnwv" }],
+        ["path", { d: "M5 2h14", key: "pdyrp9" }],
+        [
+          "path",
+          {
+            d: "M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22",
+            key: "1d314k"
+          }
+        ],
+        [
+          "path",
+          {
+            d: "M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2",
+            key: "1vvvr6"
+          }
+        ]
+      ]
+    };
+    __iconData5.node;
+    Hourglass = createLucideIcon(__iconData5);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/repeat.mjs
+var repeat_exports = {};
+__export(repeat_exports, {
+  __iconData: () => __iconData6,
+  default: () => Repeat
+});
+var __iconData6, Repeat;
+var init_repeat = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/repeat.mjs"() {
+    init_createLucideIcon();
+    __iconData6 = {
+      name: "repeat",
+      size: 24,
+      node: [
+        ["path", { d: "m17 2 4 4-4 4", key: "nntrym" }],
+        ["path", { d: "M3 11v-1a4 4 0 0 1 4-4h14", key: "84bu3i" }],
+        ["path", { d: "m7 22-4-4 4-4", key: "1wqhfi" }],
+        ["path", { d: "M21 13v1a4 4 0 0 1-4 4H3", key: "1rx37r" }]
+      ]
+    };
+    __iconData6.node;
+    Repeat = createLucideIcon(__iconData6);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/send.mjs
+var send_exports = {};
+__export(send_exports, {
+  __iconData: () => __iconData7,
+  default: () => Send
+});
+var __iconData7, Send;
+var init_send = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/send.mjs"() {
+    init_createLucideIcon();
+    __iconData7 = {
+      name: "send",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z",
+            key: "1ffxy3"
+          }
+        ],
+        ["path", { d: "m21.854 2.147-10.94 10.939", key: "12cjpa" }]
+      ]
+    };
+    __iconData7.node;
+    Send = createLucideIcon(__iconData7);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sparkles.mjs
+var sparkles_exports = {};
+__export(sparkles_exports, {
+  __iconData: () => __iconData8,
+  default: () => Sparkles
+});
+var __iconData8, Sparkles;
+var init_sparkles = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sparkles.mjs"() {
+    init_createLucideIcon();
+    __iconData8 = {
+      name: "sparkles",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z",
+            key: "1s2grr"
+          }
+        ],
+        ["path", { d: "M20 2v4", key: "1rf3ol" }],
+        ["path", { d: "M22 4h-4", key: "gwowj6" }],
+        ["circle", { cx: "4", cy: "20", r: "2", key: "6kqj1y" }]
+      ],
+      aliases: ["stars"]
+    };
+    __iconData8.node;
+    Sparkles = createLucideIcon(__iconData8);
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/alarm-clock.mjs
 var alarm_clock_exports = {};
 __export(alarm_clock_exports, {
-  __iconData: () => __iconData2,
+  __iconData: () => __iconData9,
   default: () => AlarmClock
 });
-var __iconData2, AlarmClock;
+var __iconData9, AlarmClock;
 var init_alarm_clock = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/alarm-clock.mjs"() {
     init_createLucideIcon();
-    __iconData2 = {
+    __iconData9 = {
       name: "alarm-clock",
       size: 24,
       node: [
@@ -413,17 +613,17 @@ var init_alarm_clock = __esm({
         ["path", { d: "M17.64 18.67 20 21", key: "kv2oe2" }]
       ]
     };
-    __iconData2.node;
-    AlarmClock = createLucideIcon(__iconData2);
+    __iconData9.node;
+    AlarmClock = createLucideIcon(__iconData9);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/triangle-exclamation-point.mjs
-var __iconData3, TriangleExclamationPoint;
+var __iconData10, TriangleExclamationPoint;
 var init_triangle_exclamation_point = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/triangle-exclamation-point.mjs"() {
     init_createLucideIcon();
-    __iconData3 = {
+    __iconData10 = {
       name: "triangle-exclamation-point",
       size: 24,
       node: [
@@ -439,8 +639,8 @@ var init_triangle_exclamation_point = __esm({
       ],
       aliases: ["alert-triangle", "triangle-alert"]
     };
-    __iconData3.node;
-    TriangleExclamationPoint = createLucideIcon(__iconData3);
+    __iconData10.node;
+    TriangleExclamationPoint = createLucideIcon(__iconData10);
   }
 });
 
@@ -456,11 +656,11 @@ var init_alert_triangle = __esm({
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/circle-check-big.mjs
-var __iconData4, CircleCheckBig;
+var __iconData11, CircleCheckBig;
 var init_circle_check_big = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/circle-check-big.mjs"() {
     init_createLucideIcon();
-    __iconData4 = {
+    __iconData11 = {
       name: "circle-check-big",
       size: 24,
       node: [
@@ -469,8 +669,8 @@ var init_circle_check_big = __esm({
       ],
       aliases: ["check-circle"]
     };
-    __iconData4.node;
-    CircleCheckBig = createLucideIcon(__iconData4);
+    __iconData11.node;
+    CircleCheckBig = createLucideIcon(__iconData11);
   }
 });
 
@@ -488,14 +688,14 @@ var init_check_circle = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs
 var database_exports = {};
 __export(database_exports, {
-  __iconData: () => __iconData5,
+  __iconData: () => __iconData12,
   default: () => Database
 });
-var __iconData5, Database;
+var __iconData12, Database;
 var init_database = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs"() {
     init_createLucideIcon();
-    __iconData5 = {
+    __iconData12 = {
       name: "database",
       size: 24,
       node: [
@@ -504,22 +704,22 @@ var init_database = __esm({
         ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
       ]
     };
-    __iconData5.node;
-    Database = createLucideIcon(__iconData5);
+    __iconData12.node;
+    Database = createLucideIcon(__iconData12);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/hand.mjs
 var hand_exports = {};
 __export(hand_exports, {
-  __iconData: () => __iconData6,
+  __iconData: () => __iconData13,
   default: () => Hand
 });
-var __iconData6, Hand;
+var __iconData13, Hand;
 var init_hand = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/hand.mjs"() {
     init_createLucideIcon();
-    __iconData6 = {
+    __iconData13 = {
       name: "hand",
       size: 24,
       node: [
@@ -535,17 +735,17 @@ var init_hand = __esm({
         ]
       ]
     };
-    __iconData6.node;
-    Hand = createLucideIcon(__iconData6);
+    __iconData13.node;
+    Hand = createLucideIcon(__iconData13);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/rotate-ccw-clock.mjs
-var __iconData7, RotateCcwClock;
+var __iconData14, RotateCcwClock;
 var init_rotate_ccw_clock = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/rotate-ccw-clock.mjs"() {
     init_createLucideIcon();
-    __iconData7 = {
+    __iconData14 = {
       name: "rotate-ccw-clock",
       size: 24,
       node: [
@@ -555,8 +755,8 @@ var init_rotate_ccw_clock = __esm({
       ],
       aliases: ["history"]
     };
-    __iconData7.node;
-    RotateCcwClock = createLucideIcon(__iconData7);
+    __iconData14.node;
+    RotateCcwClock = createLucideIcon(__iconData14);
   }
 });
 
@@ -574,14 +774,14 @@ var init_history = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/layers.mjs
 var layers_exports = {};
 __export(layers_exports, {
-  __iconData: () => __iconData8,
+  __iconData: () => __iconData15,
   default: () => Layers
 });
-var __iconData8, Layers;
+var __iconData15, Layers;
 var init_layers = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/layers.mjs"() {
     init_createLucideIcon();
-    __iconData8 = {
+    __iconData15 = {
       name: "layers",
       size: 24,
       node: [
@@ -609,22 +809,22 @@ var init_layers = __esm({
       ],
       aliases: ["layers-3"]
     };
-    __iconData8.node;
-    Layers = createLucideIcon(__iconData8);
+    __iconData15.node;
+    Layers = createLucideIcon(__iconData15);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs
 var list_exports = {};
 __export(list_exports, {
-  __iconData: () => __iconData9,
+  __iconData: () => __iconData16,
   default: () => List
 });
-var __iconData9, List;
+var __iconData16, List;
 var init_list = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs"() {
     init_createLucideIcon();
-    __iconData9 = {
+    __iconData16 = {
       name: "list",
       size: 24,
       node: [
@@ -636,22 +836,22 @@ var init_list = __esm({
         ["path", { d: "M8 19h13", key: "m83p4d" }]
       ]
     };
-    __iconData9.node;
-    List = createLucideIcon(__iconData9);
+    __iconData16.node;
+    List = createLucideIcon(__iconData16);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs
 var pencil_exports = {};
 __export(pencil_exports, {
-  __iconData: () => __iconData10,
+  __iconData: () => __iconData17,
   default: () => Pencil
 });
-var __iconData10, Pencil;
+var __iconData17, Pencil;
 var init_pencil = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs"() {
     init_createLucideIcon();
-    __iconData10 = {
+    __iconData17 = {
       name: "pencil",
       size: 24,
       node: [
@@ -665,22 +865,22 @@ var init_pencil = __esm({
         ["path", { d: "m15 5 4 4", key: "1mk7zo" }]
       ]
     };
-    __iconData10.node;
-    Pencil = createLucideIcon(__iconData10);
+    __iconData17.node;
+    Pencil = createLucideIcon(__iconData17);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/play.mjs
 var play_exports = {};
 __export(play_exports, {
-  __iconData: () => __iconData11,
+  __iconData: () => __iconData18,
   default: () => Play
 });
-var __iconData11, Play;
+var __iconData18, Play;
 var init_play = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/play.mjs"() {
     init_createLucideIcon();
-    __iconData11 = {
+    __iconData18 = {
       name: "play",
       size: 24,
       node: [
@@ -693,22 +893,22 @@ var init_play = __esm({
         ]
       ]
     };
-    __iconData11.node;
-    Play = createLucideIcon(__iconData11);
+    __iconData18.node;
+    Play = createLucideIcon(__iconData18);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power.mjs
 var power_exports = {};
 __export(power_exports, {
-  __iconData: () => __iconData12,
+  __iconData: () => __iconData19,
   default: () => Power
 });
-var __iconData12, Power;
+var __iconData19, Power;
 var init_power = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power.mjs"() {
     init_createLucideIcon();
-    __iconData12 = {
+    __iconData19 = {
       name: "power",
       size: 24,
       node: [
@@ -716,22 +916,22 @@ var init_power = __esm({
         ["path", { d: "M18.4 6.6a9 9 0 1 1-12.77.04", key: "obofu9" }]
       ]
     };
-    __iconData12.node;
-    Power = createLucideIcon(__iconData12);
+    __iconData19.node;
+    Power = createLucideIcon(__iconData19);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power-off.mjs
 var power_off_exports = {};
 __export(power_off_exports, {
-  __iconData: () => __iconData13,
+  __iconData: () => __iconData20,
   default: () => PowerOff
 });
-var __iconData13, PowerOff;
+var __iconData20, PowerOff;
 var init_power_off = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power-off.mjs"() {
     init_createLucideIcon();
-    __iconData13 = {
+    __iconData20 = {
       name: "power-off",
       size: 24,
       node: [
@@ -741,22 +941,22 @@ var init_power_off = __esm({
         ["path", { d: "m2 2 20 20", key: "1ooewy" }]
       ]
     };
-    __iconData13.node;
-    PowerOff = createLucideIcon(__iconData13);
+    __iconData20.node;
+    PowerOff = createLucideIcon(__iconData20);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/radio.mjs
 var radio_exports = {};
 __export(radio_exports, {
-  __iconData: () => __iconData14,
+  __iconData: () => __iconData21,
   default: () => Radio
 });
-var __iconData14, Radio;
+var __iconData21, Radio;
 var init_radio = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/radio.mjs"() {
     init_createLucideIcon();
-    __iconData14 = {
+    __iconData21 = {
       name: "radio",
       size: 24,
       node: [
@@ -767,22 +967,22 @@ var init_radio = __esm({
         ["circle", { cx: "12", cy: "12", r: "2", key: "1c9p78" }]
       ]
     };
-    __iconData14.node;
-    Radio = createLucideIcon(__iconData14);
+    __iconData21.node;
+    Radio = createLucideIcon(__iconData21);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs
 var shield_check_exports = {};
 __export(shield_check_exports, {
-  __iconData: () => __iconData15,
+  __iconData: () => __iconData22,
   default: () => ShieldCheck
 });
-var __iconData15, ShieldCheck;
+var __iconData22, ShieldCheck;
 var init_shield_check = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs"() {
     init_createLucideIcon();
-    __iconData15 = {
+    __iconData22 = {
       name: "shield-check",
       size: 24,
       node: [
@@ -796,22 +996,22 @@ var init_shield_check = __esm({
         ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
       ]
     };
-    __iconData15.node;
-    ShieldCheck = createLucideIcon(__iconData15);
+    __iconData22.node;
+    ShieldCheck = createLucideIcon(__iconData22);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/skip-forward.mjs
 var skip_forward_exports = {};
 __export(skip_forward_exports, {
-  __iconData: () => __iconData16,
+  __iconData: () => __iconData23,
   default: () => SkipForward
 });
-var __iconData16, SkipForward;
+var __iconData23, SkipForward;
 var init_skip_forward = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/skip-forward.mjs"() {
     init_createLucideIcon();
-    __iconData16 = {
+    __iconData23 = {
       name: "skip-forward",
       size: 24,
       node: [
@@ -825,22 +1025,22 @@ var init_skip_forward = __esm({
         ]
       ]
     };
-    __iconData16.node;
-    SkipForward = createLucideIcon(__iconData16);
+    __iconData23.node;
+    SkipForward = createLucideIcon(__iconData23);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs
 var sliders_horizontal_exports = {};
 __export(sliders_horizontal_exports, {
-  __iconData: () => __iconData17,
+  __iconData: () => __iconData24,
   default: () => SlidersHorizontal
 });
-var __iconData17, SlidersHorizontal;
+var __iconData24, SlidersHorizontal;
 var init_sliders_horizontal = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs"() {
     init_createLucideIcon();
-    __iconData17 = {
+    __iconData24 = {
       name: "sliders-horizontal",
       size: 24,
       node: [
@@ -855,22 +1055,22 @@ var init_sliders_horizontal = __esm({
         ["path", { d: "M8 12H3", key: "a7s4jb" }]
       ]
     };
-    __iconData17.node;
-    SlidersHorizontal = createLucideIcon(__iconData17);
+    __iconData24.node;
+    SlidersHorizontal = createLucideIcon(__iconData24);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/timer.mjs
 var timer_exports = {};
 __export(timer_exports, {
-  __iconData: () => __iconData18,
+  __iconData: () => __iconData25,
   default: () => Timer
 });
-var __iconData18, Timer;
+var __iconData25, Timer;
 var init_timer = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/timer.mjs"() {
     init_createLucideIcon();
-    __iconData18 = {
+    __iconData25 = {
       name: "timer",
       size: 24,
       node: [
@@ -879,17 +1079,17 @@ var init_timer = __esm({
         ["circle", { cx: "12", cy: "14", r: "8", key: "1e1u0o" }]
       ]
     };
-    __iconData18.node;
-    Timer = createLucideIcon(__iconData18);
+    __iconData25.node;
+    Timer = createLucideIcon(__iconData25);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
-var __iconData19, Trash;
+var __iconData26, Trash;
 var init_trash = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
     init_createLucideIcon();
-    __iconData19 = {
+    __iconData26 = {
       name: "trash",
       size: 24,
       node: [
@@ -901,8 +1101,8 @@ var init_trash = __esm({
       ],
       aliases: ["trash-2"]
     };
-    __iconData19.node;
-    Trash = createLucideIcon(__iconData19);
+    __iconData26.node;
+    Trash = createLucideIcon(__iconData26);
   }
 });
 
@@ -920,14 +1120,14 @@ var init_trash_2 = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs
 var x_exports = {};
 __export(x_exports, {
-  __iconData: () => __iconData20,
+  __iconData: () => __iconData27,
   default: () => X
 });
-var __iconData20, X;
+var __iconData27, X;
 var init_x = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs"() {
     init_createLucideIcon();
-    __iconData20 = {
+    __iconData27 = {
       name: "x",
       size: 24,
       node: [
@@ -935,22 +1135,22 @@ var init_x = __esm({
         ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
       ]
     };
-    __iconData20.node;
-    X = createLucideIcon(__iconData20);
+    __iconData27.node;
+    X = createLucideIcon(__iconData27);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/zap.mjs
 var zap_exports = {};
 __export(zap_exports, {
-  __iconData: () => __iconData21,
+  __iconData: () => __iconData28,
   default: () => Zap
 });
-var __iconData21, Zap;
+var __iconData28, Zap;
 var init_zap = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/zap.mjs"() {
     init_createLucideIcon();
-    __iconData21 = {
+    __iconData28 = {
       name: "zap",
       size: 24,
       node: [
@@ -963,8 +1163,8 @@ var init_zap = __esm({
         ]
       ]
     };
-    __iconData21.node;
-    Zap = createLucideIcon(__iconData21);
+    __iconData28.node;
+    Zap = createLucideIcon(__iconData28);
   }
 });
 
@@ -975,6 +1175,13 @@ var require_icons2 = __commonJS({
     var icons = require_icons();
     var set = icons.create("wba", {
       "activity": (init_activity(), __toCommonJS(activity_exports)).default,
+      "bot": (init_bot(), __toCommonJS(bot_exports)).default,
+      "calendar-clock": (init_calendar_clock(), __toCommonJS(calendar_clock_exports)).default,
+      "clock": (init_clock(), __toCommonJS(clock_exports)).default,
+      "hourglass": (init_hourglass(), __toCommonJS(hourglass_exports)).default,
+      "repeat": (init_repeat(), __toCommonJS(repeat_exports)).default,
+      "send": (init_send(), __toCommonJS(send_exports)).default,
+      "sparkles": (init_sparkles(), __toCommonJS(sparkles_exports)).default,
       "alarm-clock": (init_alarm_clock(), __toCommonJS(alarm_clock_exports)).default,
       "alert-triangle": (init_alert_triangle(), __toCommonJS(alert_triangle_exports)).default,
       "check-circle": (init_check_circle(), __toCommonJS(check_circle_exports)).default,
@@ -1390,6 +1597,9 @@ var require_layout_styles = __commonJS({
       // 设置页：纵向堆叠的卡片与 action 多选
       ".wba-stack{display:flex;flex-direction:column;gap:12px}",
       ".wba-notice.warn{background:var(--wb-surface);color:var(--wb-warn);border:1px solid var(--wb-warn)}",
+      ".wba-hist{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto}",
+      ".wba-hist-row{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border:1px solid var(--wb-line);border-radius:8px;background:var(--wb-surface)}",
+      ".wba-hist-row .wba-pre{max-height:120px}",
       ".wba-empty-inline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0}",
       ".wba-picker{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow:auto;border:1px solid var(--wb-border);border-radius:8px;padding:8px;background:var(--wb-surface)}",
       ".wba-picker-group{display:flex;flex-direction:column;gap:2px}",
@@ -1562,6 +1772,7 @@ var require_copy = __commonJS({
         "common.save": "\u4FDD\u5B58",
         "common.cancel": "\u53D6\u6D88",
         "common.close": "\u5173\u95ED",
+        "common.more": "\u52A0\u8F7D\u66F4\u65E9\u7684\u8BB0\u5F55",
         "common.refresh": "\u5237\u65B0",
         "common.retry": "\u91CD\u8BD5",
         "common.delete": "\u5220\u9664",
@@ -1602,6 +1813,18 @@ var require_copy = __commonJS({
         "rules.actionDisabled": "\u672A\u542F\u7528",
         "rules.confirm.delete": "\u5220\u9664\u89C4\u5219\u300C{name}\u300D\uFF1F\u5220\u9664\u540E\u4E0D\u53EF\u6062\u590D\u3002",
         "rules.running": "\u8FD0\u884C\u4E2D\u2026",
+        "rules.exec.mode": "\u6267\u884C\u65B9\u5F0F",
+        "rules.exec.action": "\u8C03\u7528 Action",
+        "rules.exec.agent": "\u4EA4\u7ED9 AI",
+        "rules.agentAction": "\u4EA4\u7ED9 AI \u6267\u884C",
+        "rules.schedule.active": "\u8FD0\u884C\u4E2D",
+        "rules.schedule.paused": "\u5DF2\u6682\u505C",
+        "rules.schedule.ended": "\u5DF2\u7ED3\u675F",
+        "rules.schedule.missing": "\u5BBF\u4E3B\u4EFB\u52A1\u5DF2\u5220\u9664",
+        "rules.lastDelivery": "\u4E0A\u6B21\u6295\u9012",
+        "rules.history": "\u6295\u9012\u5386\u53F2",
+        "rules.agentOffline": "\u5F53\u524D\u5BBF\u4E3B\u6CA1\u6709\u52A0\u8F7D\u300C\u81EA\u52A8\u5316\u4EFB\u52A1\u300D\u670D\u52A1\uFF0CAI \u89C4\u5219\u6682\u65F6\u53EA\u80FD\u67E5\u770B\uFF0C\u4E0D\u80FD\u521B\u5EFA\u6216\u4FEE\u6539\u3002",
+        "rules.orphans": "\u5BBF\u4E3B\u91CC\u8FD8\u6709 {n} \u4E2A\u81EA\u52A8\u5316\u4EFB\u52A1\u6CA1\u6709\u7EB3\u5165\u5DE5\u4F5C\u53F0\u89C4\u5219\uFF0C\u53EF\u5728\u300C\u81EA\u52A8\u5316\u4EFB\u52A1\u300D\u9762\u677F\u7BA1\u7406\u3002",
         "trigger.interval": "\u95F4\u9694",
         "trigger.dailyAt": "\u6BCF\u5929",
         "trigger.event": "\u4E8B\u4EF6",
@@ -1660,6 +1883,63 @@ var require_copy = __commonJS({
         "editor.conditionObject": "\u6761\u4EF6\u5FC5\u987B\u662F JSON \u5BF9\u8C61",
         "editor.exampleTitle": "\u53C2\u6570\u793A\u4F8B",
         "editor.ruleFallbackHint": "\u89E6\u53D1\u5668\u6BCF 30 \u79D2\u626B\u63CF\u4E00\u6B21\uFF0C\u5355\u6B21\u6700\u591A\u6267\u884C 3 \u6761\u3002",
+        "editor.section.mode": "\u6267\u884C\u65B9\u5F0F",
+        "editor.mode.action": "\u8C03\u7528 Action",
+        "editor.mode.actionHint": "\u6309\u65F6\u95F4\u6216\u57DF\u4E8B\u4EF6\u76F4\u63A5\u8C03\u7528\u5DF2\u542F\u7528\u7684 action\uFF1A\u786E\u5B9A\u6027\u6267\u884C\uFF0C\u4E0D\u6D88\u8017 token\u3002",
+        "editor.mode.agent": "\u4EA4\u7ED9 AI",
+        "editor.mode.agentHint": "\u628A\u63D0\u793A\u8BCD\u4EA4\u7ED9\u5BBF\u4E3B\u300C\u81EA\u52A8\u5316\u4EFB\u52A1\u300D\uFF0C\u6309\u65F6\u6295\u8FDB\u4F1A\u8BDD\u7531 AI \u6267\u884C\uFF1A\u6BCF\u6B21\u6295\u9012\u90FD\u4F1A\u4EA7\u751F\u4E00\u6B21\u6A21\u578B\u8BF7\u6C42\uFF0C\u7ED3\u679C\u4E0D\u786E\u5B9A\u3002",
+        "editor.mode.locked": "\u6267\u884C\u65B9\u5F0F\u521B\u5EFA\u540E\u4E0D\u53EF\u4FEE\u6539\uFF1B\u8981\u6362\u65B9\u5F0F\u8BF7\u65B0\u5EFA\u4E00\u6761\u89C4\u5219\u3002",
+        "editor.mode.agentUnavailable": "\u5F53\u524D\u5BBF\u4E3B\u6CA1\u6709\u300C\u81EA\u52A8\u5316\u4EFB\u52A1\u300D\u670D\u52A1\uFF0C\u65E0\u6CD5\u9009\u62E9\u300C\u4EA4\u7ED9 AI\u300D\u3002",
+        "editor.section.prompt": "\u63D0\u793A\u8BCD",
+        "editor.prompt": "\u63D0\u793A\u8BCD",
+        "editor.promptPh": "\u4F8B\u5982\uFF1A\u8BFB\u4ECA\u5929\u7684\u4EFB\u52A1\u4E0E\u6D88\u606F\uFF0C\u6C47\u603B\u6210\u4E00\u6BB5\u6458\u8981\u53D1\u7ED9\u6211\u3002",
+        "editor.promptHint": "\u539F\u6837\u6295\u9012\u7ED9 agent\uFF0C\u5199\u6E05\u8981\u505A\u4EC0\u4E48\u3001\u770B\u54EA\u4E9B\u6570\u636E\u3001\u8F93\u51FA\u6210\u4EC0\u4E48\u6837\u3002",
+        "editor.promptRequired": "AI \u89C4\u5219\u9700\u8981\u586B\u5199\u63D0\u793A\u8BCD",
+        "editor.section.timing": "\u65F6\u95F4\uFF08\u7531\u5BBF\u4E3B\u8C03\u5EA6\uFF09",
+        "editor.section.target": "\u6295\u9012\u76EE\u6807",
+        "editor.target": "\u76EE\u6807",
+        "editor.target.new_once": "\u65B0\u5EFA\u4F1A\u8BDD\uFF08\u4E4B\u540E\u590D\u7528\u540C\u4E00\u4E2A\uFF09",
+        "editor.target.new": "\u6BCF\u6B21\u65B0\u5EFA\u4F1A\u8BDD",
+        "editor.targetHint": "\u300C\u65B0\u5EFA\u4F1A\u8BDD\u300D\u7531\u5BBF\u4E3B\u628A\u63D0\u793A\u8BCD\u6295\u8FDB\u4E00\u4E2A\u7A7A\u4F1A\u8BDD\u518D\u4EA4\u7ED9 AI\uFF1B\u300C\u6BCF\u6B21\u65B0\u5EFA\u300D\u53EF\u4EE5\u5E76\u53D1\uFF0C\u4E92\u4E0D\u5F71\u54CD\u3002",
+        "editor.targetCwd": "\u5DE5\u4F5C\u533A\u8DEF\u5F84\uFF08\u53EF\u9009\uFF09",
+        "editor.targetPreset": "Agent \u9884\u8BBE\uFF08\u53EF\u9009\uFF09",
+        "editor.targetPresetPh": "\u7559\u7A7A\u4F7F\u7528\u5BBF\u4E3B\u9ED8\u8BA4\u9884\u8BBE",
+        "editor.targetSession": "\u4F1A\u8BDD ID",
+        "editor.targetSessionPh": "\u8981\u6295\u9012\u5230\u7684\u73B0\u6709\u4F1A\u8BDD id",
+        "editor.targetSessionRequired": "\u6295\u9012\u5230\u73B0\u6709\u4F1A\u8BDD\u65F6\u9700\u8981\u586B\u5199\u4F1A\u8BDD ID",
+        "editor.section.conditionAgent": "\u6761\u4EF6\uFF08\u4EC5 action \u6A21\u5F0F\uFF09",
+        "editor.conditionAgentHint": "\u300C\u4EA4\u7ED9 AI\u300D\u7531\u5BBF\u4E3B\u76F4\u63A5\u6295\u9012\uFF0C\u672C\u5730\u6761\u4EF6\u4E0E\u53C2\u6570\u6A21\u677F\u4E0D\u53C2\u4E0E\u3002",
+        "agent.every": "\u6BCF\u9694",
+        "agent.after": "\u5EF6\u8FDF",
+        "agent.daily": "\u6BCF\u5929",
+        "agent.weekly": "\u6BCF\u5468",
+        "agent.cron": "cron \u8868\u8FBE\u5F0F",
+        "agent.rrule": "RRULE",
+        "agent.at": "\u4E00\u6B21\u6027",
+        "agent.everyHint": "\u4E0D\u80FD\u5C0F\u4E8E 1 \u5206\u949F\uFF0C\u6700\u957F 30 \u5929\u3002",
+        "agent.afterHint": "\u4ECE\u4FDD\u5B58\u65F6\u8D77\u5EF6\u8FDF N \u5206\u949F\u540E\u6267\u884C\u4E00\u6B21\u3002",
+        "agent.cronPh": "0 9 * * 1-5",
+        "agent.cronHint": "5 \u6BB5\uFF1A\u5206 \u65F6 \u65E5 \u6708 \u5468\u3002",
+        "agent.rrulePh": "DTSTART;TZID=Asia/Shanghai:20260101T090000\nRRULE:FREQ=DAILY",
+        "agent.rruleHint": "\u4E24\u884C\uFF1A\u4E00\u884C DTSTART\uFF0C\u4E00\u884C RRULE\u3002",
+        "agent.date": "\u65E5\u671F",
+        "agent.text.every": "\u6BCF {n} \u5206\u949F",
+        "agent.text.everyHours": "\u6BCF {n} \u5C0F\u65F6",
+        "agent.text.daily": "\u6BCF\u5929 {time}\uFF08{tz}\uFF09",
+        "agent.text.weekly": "\u6BCF\u5468 {days} {time}\uFF08{tz}\uFF09",
+        "agent.text.cron": "cron {expr}\uFF08{tz}\uFF09",
+        "agent.text.rrule": "RRULE {expr}",
+        "agent.text.at": "\u4E00\u6B21\u6027 {at}",
+        "agent.text.after": "{n} \u5206\u949F\u540E\u6267\u884C\u4E00\u6B21",
+        "agent.text.missing": "\u672A\u8BBE\u7F6E\u65F6\u95F4",
+        "hist.title": "\u6295\u9012\u5386\u53F2",
+        "hist.subtitle": "\u7531\u5BBF\u4E3B\u8BB0\u5F55\uFF1B\u56DE\u6267\u53EA\u4EE3\u8868\u63D0\u793A\u8BCD\u8FDB\u5165\u4E86\u76EE\u6807\u4F1A\u8BDD\uFF0C\u4E0D\u4EE3\u8868 agent \u6267\u884C\u6210\u529F\u3002",
+        "hist.records": "\u6700\u8FD1 {n} \u6761",
+        "hist.empty": "\u8FD8\u6CA1\u6709\u6295\u9012\u8BB0\u5F55\u3002",
+        "hist.pruned": "\u66F4\u65E9\u7684\u8BB0\u5F55\u5DF2\u88AB\u5BBF\u4E3B\u6E05\u7406\u3002",
+        "hist.missing": "\u5BBF\u4E3B\u4EFB\u52A1\u5DF2\u4E0D\u5B58\u5728\uFF0C\u65E0\u6CD5\u8BFB\u53D6\u6295\u9012\u8BB0\u5F55\u3002",
+        "hist.col.time": "\u6295\u9012\u65F6\u95F4",
+        "hist.col.detail": "\u8BE6\u60C5",
         "runs.title": "\u8FD0\u884C\u8BB0\u5F55",
         "runs.subtitle": "\u53EA\u5728\u672C\u673A\u4FDD\u7559\uFF0C\u4E0D\u968F\u5907\u4EFD\u540C\u6B65\uFF1B\u70B9\u51FB\u884C\u67E5\u770B\u8BE6\u60C5\u3002",
         "runs.limitNote": "\u6700\u8FD1 200 \u6761",
@@ -1738,6 +2018,7 @@ var require_copy = __commonJS({
         "common.save": "Save",
         "common.cancel": "Cancel",
         "common.close": "Close",
+        "common.more": "Load older deliveries",
         "common.refresh": "Refresh",
         "common.retry": "Retry",
         "common.delete": "Delete",
@@ -1778,6 +2059,18 @@ var require_copy = __commonJS({
         "rules.actionDisabled": "Disabled",
         "rules.confirm.delete": 'Delete rule "{name}"? This cannot be undone.',
         "rules.running": "Running\u2026",
+        "rules.exec.mode": "Mode",
+        "rules.exec.action": "Run action",
+        "rules.exec.agent": "Hand to AI",
+        "rules.agentAction": "Handed to AI",
+        "rules.schedule.active": "Active",
+        "rules.schedule.paused": "Paused",
+        "rules.schedule.ended": "Ended",
+        "rules.schedule.missing": "Schedule deleted",
+        "rules.lastDelivery": "Last delivery",
+        "rules.history": "Delivery history",
+        "rules.agentOffline": "This Host does not expose the Schedule service, so AI rules are read-only for now.",
+        "rules.orphans": "{n} schedule task(s) in the Host are not registered as rules; manage them in the Schedule panel.",
         "trigger.interval": "Interval",
         "trigger.dailyAt": "Daily",
         "trigger.event": "Event",
@@ -1836,6 +2129,63 @@ var require_copy = __commonJS({
         "editor.conditionObject": "Condition must be a JSON object",
         "editor.exampleTitle": "Example args",
         "editor.ruleFallbackHint": "The trigger scans every 30 seconds, at most 3 rules per scan.",
+        "editor.section.mode": "Mode",
+        "editor.mode.action": "Run action",
+        "editor.mode.actionHint": "Call an enabled action directly on a schedule or domain event: deterministic, no tokens.",
+        "editor.mode.agent": "Hand to AI",
+        "editor.mode.agentHint": "Register the prompt with the Host Schedule service; each delivery starts a model request and the result is not deterministic.",
+        "editor.mode.locked": "The mode cannot change after creation; create a new rule instead.",
+        "editor.mode.agentUnavailable": 'This Host does not expose the Schedule service, so "Hand to AI" is unavailable.',
+        "editor.section.prompt": "Prompt",
+        "editor.prompt": "Prompt",
+        "editor.promptPh": "e.g. Read today's tasks and messages, then send me a short digest.",
+        "editor.promptHint": "Delivered verbatim to the agent; state the goal, the data to read and the expected output.",
+        "editor.promptRequired": "AI rules need a prompt",
+        "editor.section.timing": "Timing (driven by the Host)",
+        "editor.section.target": "Delivery target",
+        "editor.target": "Target",
+        "editor.target.new_once": "New session (reused afterwards)",
+        "editor.target.new": "New session each time",
+        "editor.targetHint": 'The Host delivers the prompt into an empty session; "each time" may run concurrently.',
+        "editor.targetCwd": "Workspace path (optional)",
+        "editor.targetPreset": "Agent preset (optional)",
+        "editor.targetPresetPh": "Leave empty for the Host default",
+        "editor.targetSession": "Session id",
+        "editor.targetSessionPh": "Existing session id to deliver into",
+        "editor.targetSessionRequired": "A session id is required when delivering into an existing session",
+        "editor.section.conditionAgent": "Condition (action mode only)",
+        "editor.conditionAgentHint": '"Hand to AI" is delivered by the Host; local conditions and arg templates do not apply.',
+        "agent.every": "Every",
+        "agent.after": "Delay",
+        "agent.daily": "Daily",
+        "agent.weekly": "Weekly",
+        "agent.cron": "cron expression",
+        "agent.rrule": "RRULE",
+        "agent.at": "One-off",
+        "agent.everyHint": "At least 1 minute, at most 30 days.",
+        "agent.afterHint": "Runs once, N minutes after saving.",
+        "agent.cronPh": "0 9 * * 1-5",
+        "agent.cronHint": "Five fields: minute hour day month weekday.",
+        "agent.rrulePh": "DTSTART;TZID=Asia/Shanghai:20260101T090000\nRRULE:FREQ=DAILY",
+        "agent.rruleHint": "Two lines: DTSTART then RRULE.",
+        "agent.date": "Date",
+        "agent.text.every": "Every {n} min",
+        "agent.text.everyHours": "Every {n} h",
+        "agent.text.daily": "Daily at {time} ({tz})",
+        "agent.text.weekly": "Every {days} at {time} ({tz})",
+        "agent.text.cron": "cron {expr} ({tz})",
+        "agent.text.rrule": "RRULE {expr}",
+        "agent.text.at": "Once at {at}",
+        "agent.text.after": "Once in {n} minutes",
+        "agent.text.missing": "No timing set",
+        "hist.title": "Delivery history",
+        "hist.subtitle": "Recorded by the Host; a receipt only means the prompt reached the session, not that the agent succeeded.",
+        "hist.records": "Latest {n}",
+        "hist.empty": "No deliveries yet.",
+        "hist.pruned": "Earlier records were pruned by the Host.",
+        "hist.missing": "The schedule task no longer exists; history is unavailable.",
+        "hist.col.time": "Delivered at",
+        "hist.col.detail": "Detail",
         "runs.title": "Run history",
         "runs.subtitle": "Local only, not synced with backups; click a row for details.",
         "runs.limitNote": "Latest 200",
@@ -2292,6 +2642,309 @@ var require_trigger_fields = __commonJS({
   }
 });
 
+// packages/addons/automation/client/views/agent-timing.cjs
+var require_agent_timing = __commonJS({
+  "packages/addons/automation/client/views/agent-timing.cjs"(exports2, module2) {
+    "use strict";
+    var NF = require_number_field();
+    var copy = require_copy();
+    var trig = require_trigger_fields();
+    var EVERY = { min: 1, max: 43200, integer: true };
+    var AFTER = { min: 1, max: 525600, integer: true };
+    var KINDS = [
+      ["every", "repeat", "agent.every"],
+      ["daily", "alarm-clock", "agent.daily"],
+      ["weekly", "calendar-clock", "agent.weekly"],
+      ["cron", "clock", "agent.cron"],
+      ["rrule", "repeat", "agent.rrule"],
+      ["at", "calendar-clock", "agent.at"],
+      ["after", "hourglass", "agent.after"]
+    ];
+    function hhmm(value) {
+      var s = String(value || "").trim();
+      return /^\d{2}:\d{2}$/.test(s) ? s + ":00" : s;
+    }
+    function buildTiming(form) {
+      var kind = form.pKind || "daily";
+      var tz = form.pTz || "Asia/Shanghai";
+      if (kind === "every") return { kind: "every", every_seconds: (Number(form.pEvery) || 60) * 60 };
+      if (kind === "after") return { kind: "after", after_seconds: (Number(form.pAfter) || 60) * 60 };
+      if (kind === "daily") return { kind: "daily", daily: { time: hhmm(form.pTime), time_zone: tz } };
+      if (kind === "weekly") {
+        return { kind: "weekly", weekly: { time: hhmm(form.pTime), time_zone: tz, weekdays: trig.daysOf(form.pWeekdays) } };
+      }
+      if (kind === "cron") return { kind: "cron", cron: { expression: String(form.pCron || "").trim().replace(/\s+/g, " "), time_zone: tz } };
+      if (kind === "at") return { kind: "at", at: { date: String(form.pDate || "").trim(), time: hhmm(form.pTime), time_zone: tz } };
+      return { kind: "rrule", rrule: String(form.pRrule || "").replace(/\r\n/g, "\n") };
+    }
+    function validateTiming(form, t) {
+      var errs = {};
+      var kind = form.pKind || "daily";
+      if (kind === "every") {
+        var every = Number(form.pEvery);
+        if (!isFinite(every) || every < EVERY.min || every > EVERY.max) errs.pEvery = t("agent.everyHint");
+      }
+      if (kind === "after") {
+        var after = Number(form.pAfter);
+        if (!isFinite(after) || after < AFTER.min || after > AFTER.max) errs.pAfter = t("agent.afterHint");
+      }
+      if (kind === "daily" || kind === "weekly" || kind === "at") {
+        if (!/^\d{2}:\d{2}$/.test(String(form.pTime || ""))) errs.pTime = t("trigger.time");
+      }
+      if (kind === "weekly" && trig.daysOf(form.pWeekdays).length === 0) errs.pWeekdays = t("trigger.weekdaysHint");
+      if (kind === "at" && !/^\d{4}-\d{2}-\d{2}$/.test(String(form.pDate || ""))) errs.pDate = t("agent.date");
+      if (kind === "cron") {
+        var expr = String(form.pCron || "").trim();
+        if (expr.split(/\s+/).filter(Boolean).length !== 5) errs.pCron = t("agent.cronHint");
+      }
+      if (kind === "rrule" && !/^DTSTART[^\n]*\nRRULE:/i.test(String(form.pRrule || "").replace(/\r\n/g, "\n"))) {
+        errs.pRrule = t("agent.rruleHint");
+      }
+      return errs;
+    }
+    function timingText(timing, t) {
+      var c = timing || {};
+      if (c.kind === "every") {
+        var mins = Math.round((Number(c.every_seconds) || 60) / 60);
+        return mins % 60 === 0 && mins >= 60 ? t("agent.text.everyHours", { n: mins / 60 }) : t("agent.text.every", { n: mins });
+      }
+      if (c.kind === "after") {
+        return t("agent.text.after", { n: Math.round((Number(c.after_seconds) || 60) / 60) });
+      }
+      if (c.kind === "daily" && c.daily) return t("agent.text.daily", { time: String(c.daily.time || "").slice(0, 5), tz: c.daily.time_zone || "" });
+      if (c.kind === "weekly" && c.weekly) {
+        var days = (Array.isArray(c.weekly.weekdays) ? c.weekly.weekdays : []).map(function(d) {
+          return t("trigger.wd." + d);
+        }).join("\u3001");
+        return t("agent.text.weekly", { days, time: String(c.weekly.time || "").slice(0, 5), tz: c.weekly.time_zone || "" });
+      }
+      if (c.kind === "cron" && c.cron) return t("agent.text.cron", { expr: c.cron.expression || "", tz: c.cron.time_zone || "" });
+      if (c.kind === "rrule") {
+        var m = String(c.rrule || "").match(/RRULE:([^\n]*)/i);
+        return t("agent.text.rrule", { expr: m ? m[1] : "" });
+      }
+      if (c.kind === "at") {
+        var at = c.at;
+        if (typeof at === "string") return t("agent.text.at", { at });
+        if (at && at.date) return t("agent.text.at", { at: at.date + " " + String(at.time || "").slice(0, 5) + "\uFF08" + (at.time_zone || "") + "\uFF09" });
+      }
+      return t("agent.text.missing");
+    }
+    function TimingFields(props) {
+      var h = props.h;
+      var t = props.t;
+      var icon = props.icon;
+      var lang = props.lang;
+      var form = props.form;
+      var set = props.set;
+      var errs = props.errs || {};
+      var kind = form.pKind || "daily";
+      var days = trig.daysOf(form.pWeekdays);
+      function reportValid(ok) {
+        if (typeof props.onValidChange === "function") props.onValidChange(ok);
+      }
+      function toggleDay(day) {
+        var list = trig.daysOf(form.pWeekdays);
+        var i = list.indexOf(day);
+        if (i === -1) list.push(day);
+        else list.splice(i, 1);
+        list.sort(function(a, b) {
+          return a - b;
+        });
+        set("pWeekdays", list.join(","));
+      }
+      var tzOptions = trig.TZ_LIST.indexOf(form.pTz) === -1 ? [form.pTz].concat(trig.TZ_LIST) : trig.TZ_LIST;
+      return h(
+        "div",
+        { className: "wba-block" },
+        h(
+          "div",
+          { className: "wba-seg", role: "group" },
+          KINDS.map(function(k) {
+            return h("button", {
+              key: k[0],
+              type: "button",
+              "aria-pressed": kind === k[0],
+              onClick: function() {
+                reportValid(true);
+                set("pKind", k[0]);
+              }
+            }, icon ? h("span", { className: "wba-inline" }, icon(k[1], 12), t(k[2])) : t(k[2]));
+          })
+        ),
+        kind === "every" ? h(
+          "label",
+          { className: "wba-field" },
+          h("span", { className: "wba-label" }, t("agent.every")),
+          h(NF.NumberField, {
+            h,
+            lang,
+            value: form.pEvery,
+            min: EVERY.min,
+            max: EVERY.max,
+            integer: EVERY.integer,
+            className: "wba-num",
+            hint: false,
+            ariaLabel: t("agent.every"),
+            onCommit: function(next) {
+              set("pEvery", next);
+            },
+            onValidChange: function(ok) {
+              reportValid(ok);
+            }
+          }),
+          errs.pEvery ? h("span", { className: "wba-err-text" }, errs.pEvery) : h("span", { className: "wba-hint" }, t("agent.everyHint"))
+        ) : null,
+        kind === "after" ? h(
+          "label",
+          { className: "wba-field" },
+          h("span", { className: "wba-label" }, t("agent.after")),
+          h(NF.NumberField, {
+            h,
+            lang,
+            value: form.pAfter,
+            min: AFTER.min,
+            max: AFTER.max,
+            integer: AFTER.integer,
+            className: "wba-num",
+            hint: false,
+            ariaLabel: t("agent.after"),
+            onCommit: function(next) {
+              set("pAfter", next);
+            },
+            onValidChange: function(ok) {
+              reportValid(ok);
+            }
+          }),
+          errs.pAfter ? h("span", { className: "wba-err-text" }, errs.pAfter) : h("span", { className: "wba-hint" }, t("agent.afterHint"))
+        ) : null,
+        kind === "daily" || kind === "weekly" || kind === "at" ? h(
+          "div",
+          { className: kind === "at" ? "wba-grid-3" : "wba-grid-2" },
+          kind === "at" ? h(
+            "label",
+            { className: "wba-field" },
+            h("span", { className: "wba-label" }, t("agent.date")),
+            h("input", {
+              className: "wba-input" + (errs.pDate ? " err" : ""),
+              type: "date",
+              value: form.pDate,
+              onChange: function(e) {
+                set("pDate", e.target.value);
+              }
+            }),
+            errs.pDate ? h("span", { className: "wba-err-text" }, errs.pDate) : null
+          ) : null,
+          h(
+            "label",
+            { className: "wba-field" },
+            h("span", { className: "wba-label" }, t("trigger.time")),
+            h("input", {
+              className: "wba-input" + (errs.pTime ? " err" : ""),
+              type: "time",
+              value: form.pTime,
+              onChange: function(e) {
+                set("pTime", e.target.value);
+              }
+            }),
+            errs.pTime ? h("span", { className: "wba-err-text" }, errs.pTime) : null
+          ),
+          h(
+            "label",
+            { className: "wba-field" },
+            h("span", { className: "wba-label" }, t("trigger.tz")),
+            h(
+              "select",
+              { className: "wba-input", value: form.pTz, onChange: function(e) {
+                set("pTz", e.target.value);
+              } },
+              tzOptions.map(function(z) {
+                return h("option", { key: z, value: z }, z);
+              })
+            )
+          ),
+          kind === "weekly" ? h(
+            "div",
+            { className: "wba-field wba-span-2" },
+            h("span", { className: "wba-label" }, t("trigger.weekdays")),
+            h(
+              "div",
+              { className: "wba-chips" },
+              copy.WEEKDAYS.map(function(d) {
+                return h("button", {
+                  key: d,
+                  type: "button",
+                  className: "wba-chip",
+                  "aria-pressed": days.indexOf(d) !== -1,
+                  onClick: function() {
+                    toggleDay(d);
+                  }
+                }, t("trigger.wd." + d));
+              })
+            ),
+            h("span", { className: "wba-hint" }, t("trigger.weekdaysHint"))
+          ) : null
+        ) : null,
+        kind === "cron" ? h(
+          "div",
+          { className: "wba-grid-2" },
+          h(
+            "label",
+            { className: "wba-field" },
+            h("span", { className: "wba-label" }, t("agent.cron")),
+            h("input", {
+              className: "wba-input" + (errs.pCron ? " err" : ""),
+              value: form.pCron,
+              placeholder: t("agent.cronPh"),
+              spellCheck: false,
+              onChange: function(e) {
+                set("pCron", e.target.value);
+              }
+            }),
+            errs.pCron ? h("span", { className: "wba-err-text" }, errs.pCron) : h("span", { className: "wba-hint" }, t("agent.cronHint"))
+          ),
+          h(
+            "label",
+            { className: "wba-field" },
+            h("span", { className: "wba-label" }, t("trigger.tz")),
+            h(
+              "select",
+              { className: "wba-input", value: form.pTz, onChange: function(e) {
+                set("pTz", e.target.value);
+              } },
+              tzOptions.map(function(z) {
+                return h("option", { key: z, value: z }, z);
+              })
+            )
+          )
+        ) : null,
+        kind === "rrule" ? h(
+          "label",
+          { className: "wba-field" },
+          h("span", { className: "wba-label" }, t("agent.rrule")),
+          h("textarea", {
+            className: "wba-code sm" + (errs.pRrule ? " err" : ""),
+            value: form.pRrule,
+            placeholder: t("agent.rrulePh"),
+            spellCheck: false,
+            onChange: function(e) {
+              set("pRrule", e.target.value);
+            }
+          }),
+          errs.pRrule ? h("span", { className: "wba-err-text" }, errs.pRrule) : h("span", { className: "wba-hint" }, t("agent.rruleHint"))
+        ) : null
+      );
+    }
+    module2.exports = {
+      KINDS,
+      buildTiming,
+      validateTiming,
+      timingText,
+      TimingFields
+    };
+  }
+});
+
 // packages/addons/lib/overlay.cjs
 var require_overlay = __commonJS({
   "packages/addons/lib/overlay.cjs"(exports2, module2) {
@@ -2507,6 +3160,7 @@ var require_rule_editor = __commonJS({
       autoFocusDialog: false
     });
     var trig = require_trigger_fields();
+    var atiming = require_agent_timing();
     var json = require_json_editor();
     var EXAMPLES = {
       "message.send": { title: "\u81EA\u52A8\u5316\u63D0\u9192", body: "\u89C4\u5219 {{rule.name}} \u5DF2\u8FD0\u884C" },
@@ -2522,15 +3176,33 @@ var require_rule_editor = __commonJS({
       if (!r.value || typeof r.value !== "object" || Array.isArray(r.value)) return { ok: false, error: "object" };
       return { ok: true, value: r.value };
     }
+    function buildTarget(form) {
+      var kind = form.targetKind || "new_once";
+      if (kind === "session") return { kind: "session", sessionId: String(form.targetSession || "").trim() };
+      var create = {};
+      if (String(form.targetCwd || "").trim()) create.cwd = String(form.targetCwd).trim();
+      if (String(form.targetPreset || "").trim()) create.agentPreset = String(form.targetPreset).trim();
+      return Object.keys(create).length ? { kind, create } : { kind };
+    }
+    function isAgent(form) {
+      return Boolean(form) && form.execMode === "agent";
+    }
     function validateForm(form, t) {
       var errs = {};
       if (!String(form.name || "").trim()) errs.name = t("editor.nameRequired");
+      if (isAgent(form)) {
+        if (!String(form.prompt || "").trim()) errs.prompt = t("editor.promptRequired");
+        Object.assign(errs, atiming.validateTiming(form, t));
+        if (String(form.targetKind || "new_once") === "session" && !String(form.targetSession || "").trim()) {
+          errs.targetSession = t("editor.targetSessionRequired");
+        }
+        return { errs, valid: Object.keys(errs).length === 0 };
+      }
       if (!String(form.actionName || "").trim()) errs.actionName = t("editor.actionRequired");
       var args = plain(form.actionArgs);
       if (!args.ok) errs.actionArgs = args.error === "object" ? t("editor.argsObject") : t("editor.jsonInvalid", { msg: args.error });
-      var cond = null;
       if (form.condOn) {
-        cond = plain(form.condition);
+        var cond = plain(form.condition);
         if (!cond.ok) errs.condition = cond.error === "object" ? t("editor.conditionObject") : t("editor.jsonInvalid", { msg: cond.error });
       }
       if (form.kind === "interval") {
@@ -2545,6 +3217,20 @@ var require_rule_editor = __commonJS({
       return { errs, valid: Object.keys(errs).length === 0 };
     }
     function buildPayload(form) {
+      var name = String(form.name || "").trim();
+      if (isAgent(form)) {
+        return {
+          id: form.id || void 0,
+          name,
+          enabled: Boolean(form.enabled),
+          execMode: "agent",
+          agent: {
+            prompt: String(form.prompt || "").trim(),
+            timing: atiming.buildTiming(form),
+            target: buildTarget(form)
+          }
+        };
+      }
       var triggerConfig = { kind: form.kind };
       if (form.kind === "interval") triggerConfig.everyMinutes = Number(form.everyMinutes) || 60;
       if (form.kind === "dailyAt") {
@@ -2566,8 +3252,9 @@ var require_rule_editor = __commonJS({
       }
       return {
         id: form.id || void 0,
-        name: String(form.name || "").trim(),
+        name,
         enabled: Boolean(form.enabled),
+        execMode: "action",
         triggerType: form.kind === "event" ? "event" : form.kind === "manual" ? "manual" : "schedule",
         triggerConfig,
         actionName: form.actionName,
@@ -2579,7 +3266,7 @@ var require_rule_editor = __commonJS({
       try {
         return JSON.stringify(buildPayload(form));
       } catch (e) {
-        return JSON.stringify({ name: form.name, actionArgs: form.actionArgs, condition: form.condition, kind: form.kind });
+        return JSON.stringify({ name: form.name, actionArgs: form.actionArgs, condition: form.condition, kind: form.kind, prompt: form.prompt });
       }
     }
     function RuleEditor(props) {
@@ -2594,6 +3281,9 @@ var require_rule_editor = __commonJS({
       var actions = props.actions || [];
       var icon = props.icon;
       var initial = props.initial;
+      var agentMode = isAgent(form);
+      var locked = Boolean(form.id);
+      var agentAvailable = props.agentAvailable !== false;
       var validation = validateForm(form, t);
       var errs = validation.errs;
       var exampleS = React.useState(false);
@@ -2618,6 +3308,14 @@ var require_rule_editor = __commonJS({
         if (dirty() && typeof window !== "undefined" && !window.confirm(t("editor.discard"))) return;
         props.onClose();
       }
+      function pickMode(mode) {
+        if (locked || mode === (agentMode ? "agent" : "action")) return;
+        set("execMode", mode);
+      }
+      var modeButtons = [
+        ["action", t("editor.mode.action")],
+        ["agent", t("editor.mode.agent")]
+      ];
       return h(
         EditorOverlay,
         { t, form, onClose: close, closeOnMask: false, autoFocus: false },
@@ -2672,8 +3370,44 @@ var require_rule_editor = __commonJS({
           h(
             "div",
             { className: "wba-section" },
-            h("p", { className: "wba-section-title" }, "\u2461 " + t("editor.section.trigger")),
-            h(trig.TriggerFields, {
+            h("p", { className: "wba-section-title" }, "\u2461 " + t("editor.section.mode")),
+            h(
+              "div",
+              { className: "wba-seg", role: "group" },
+              modeButtons.map(function(m) {
+                var off = locked || m[0] === "agent" && !agentAvailable;
+                return h("button", {
+                  key: m[0],
+                  type: "button",
+                  "data-mode": m[0],
+                  "aria-pressed": (agentMode ? "agent" : "action") === m[0],
+                  disabled: off,
+                  title: m[0] === "agent" && !agentAvailable ? t("editor.mode.agentUnavailable") : "",
+                  onClick: function() {
+                    pickMode(m[0]);
+                  }
+                }, m[1]);
+              })
+            ),
+            h("p", { className: "wba-sub" }, agentMode ? t("editor.mode.agentHint") : t("editor.mode.actionHint")),
+            locked ? h("p", { className: "wba-hint" }, t("editor.mode.locked")) : null
+          ),
+          h(
+            "div",
+            { className: "wba-section" },
+            h("p", { className: "wba-section-title" }, "\u2462 " + (agentMode ? t("editor.section.timing") : t("editor.section.trigger"))),
+            agentMode ? h(atiming.TimingFields, {
+              h,
+              t,
+              lang,
+              form,
+              set,
+              errs,
+              icon,
+              onValidChange: function(ok) {
+                numOkS[1](ok);
+              }
+            }) : h(trig.TriggerFields, {
               h,
               t,
               lang,
@@ -2686,10 +3420,94 @@ var require_rule_editor = __commonJS({
               }
             })
           ),
-          h(
+          agentMode ? h(
             "div",
             { className: "wba-section" },
-            h("p", { className: "wba-section-title" }, "\u2462 " + t("editor.section.run")),
+            h("p", { className: "wba-section-title" }, "\u2463 " + t("editor.section.prompt")),
+            h(
+              "label",
+              { className: "wba-field" },
+              h("span", { className: "wba-label" }, t("editor.prompt")),
+              h("textarea", {
+                className: "wba-code sm" + (errs.prompt ? " err" : ""),
+                value: form.prompt,
+                placeholder: t("editor.promptPh"),
+                onChange: function(e) {
+                  set("prompt", e.target.value);
+                }
+              }),
+              errs.prompt ? h("span", { className: "wba-err-text" }, errs.prompt) : h("span", { className: "wba-hint" }, t("editor.promptHint"))
+            ),
+            h("div", { className: "wba-section-title" }, t("editor.section.target")),
+            h(
+              "div",
+              { className: "wba-grid-3" },
+              h(
+                "label",
+                { className: "wba-field" },
+                h("span", { className: "wba-label" }, t("editor.target")),
+                h(
+                  "select",
+                  {
+                    className: "wba-input",
+                    value: form.targetKind || "new_once",
+                    onChange: function(e) {
+                      set("targetKind", e.target.value);
+                    }
+                  },
+                  ["new_once", "new", "session"].map(function(k) {
+                    return h("option", { key: k, value: k }, t("editor.target." + k));
+                  })
+                )
+              ),
+              (form.targetKind || "new_once") === "session" ? h(
+                "label",
+                { className: "wba-field wba-span-2" },
+                h("span", { className: "wba-label" }, t("editor.targetSession")),
+                h("input", {
+                  className: "wba-input" + (errs.targetSession ? " err" : ""),
+                  value: form.targetSession || "",
+                  placeholder: t("editor.targetSessionPh"),
+                  onChange: function(e) {
+                    set("targetSession", e.target.value);
+                  }
+                }),
+                errs.targetSession ? h("span", { className: "wba-err-text" }, errs.targetSession) : null
+              ) : [
+                h(
+                  "label",
+                  { key: "cwd", className: "wba-field" },
+                  h("span", { className: "wba-label" }, t("editor.targetCwd")),
+                  h("input", {
+                    className: "wba-input",
+                    value: form.targetCwd || "",
+                    placeholder: "/Users/me/work",
+                    onChange: function(e) {
+                      set("targetCwd", e.target.value);
+                    }
+                  })
+                ),
+                h(
+                  "label",
+                  { key: "preset", className: "wba-field" },
+                  h("span", { className: "wba-label" }, t("editor.targetPreset")),
+                  h("input", {
+                    className: "wba-input",
+                    value: form.targetPreset || "",
+                    placeholder: t("editor.targetPresetPh"),
+                    onChange: function(e) {
+                      set("targetPreset", e.target.value);
+                    }
+                  })
+                )
+              ]
+            ),
+            h("p", { className: "wba-hint" }, t("editor.targetHint"))
+          ) : null,
+          agentMode ? null : h(
+            "div",
+            { className: "wba-section" },
+            h("p", { className: "wba-section-title" }, "\u2463 " + t("editor.section.run")),
             h(
               "div",
               { className: "wba-inline" },
@@ -2754,36 +3572,40 @@ var require_rule_editor = __commonJS({
           h(
             "div",
             { className: "wba-section" },
-            h("p", { className: "wba-section-title" }, "\u2463 " + t("editor.section.condition")),
-            h(SW.Switch, {
-              h,
-              checked: Boolean(form.condOn),
-              label: t("editor.conditionOn"),
-              onChange: function(next) {
-                set("condOn", next);
-              }
-            }),
-            h("p", { className: "wba-sub" }, t("editor.conditionHint")),
-            form.condOn ? h(json.JsonEditor, {
-              h,
-              t,
-              React,
-              small: true,
-              vars: false,
-              label: "condition",
-              value: form.condition,
-              invalid: Boolean(errs.condition),
-              error: errs.condition,
-              onChange: function(v) {
-                set("condition", v);
-              }
-            }) : h("p", { className: "wba-sub" }, t("editor.conditionEmpty"))
+            h("p", { className: "wba-section-title" }, "\u2464 " + (agentMode ? t("editor.section.conditionAgent") : t("editor.section.condition"))),
+            agentMode ? h("p", { className: "wba-sub" }, t("editor.conditionAgentHint")) : [
+              h(SW.Switch, {
+                key: "cond",
+                h,
+                checked: Boolean(form.condOn),
+                label: t("editor.conditionOn"),
+                onChange: function(next) {
+                  set("condOn", next);
+                }
+              }),
+              h("p", { key: "hint", className: "wba-sub" }, t("editor.conditionHint")),
+              form.condOn ? h(json.JsonEditor, {
+                key: "json",
+                h,
+                t,
+                React,
+                small: true,
+                vars: false,
+                label: "condition",
+                value: form.condition,
+                invalid: Boolean(errs.condition),
+                error: errs.condition,
+                onChange: function(v) {
+                  set("condition", v);
+                }
+              }) : h("p", { key: "empty", className: "wba-sub" }, t("editor.conditionEmpty"))
+            ]
           )
         ),
         h(
           "div",
           { className: "wba-modal-foot" },
-          h("span", { className: "wba-sub wba-grow" }, validation.valid ? numOkS[0] ? "" : errs.everyMinutes || t("trigger.intervalHint") : errs.name || errs.actionArgs || errs.condition || t("editor.nameEmptySave")),
+          h("span", { className: "wba-sub wba-grow" }, validation.valid ? numOkS[0] ? "" : errs.pEvery || errs.pAfter || errs.everyMinutes || t("trigger.intervalHint") : errs.name || errs.prompt || errs.actionArgs || errs.condition || errs.pCron || errs.pRrule || errs.pDate || errs.pTime || errs.pWeekdays || t("editor.nameEmptySave")),
           h(C.Btn, { h, onClick: close }, t("common.cancel")),
           h(
             C.Btn,
@@ -2795,7 +3617,106 @@ var require_rule_editor = __commonJS({
         )
       );
     }
-    module2.exports = { RuleEditor, buildPayload, validateForm, EXAMPLES };
+    module2.exports = {
+      RuleEditor,
+      buildPayload,
+      validateForm,
+      buildTarget,
+      EXAMPLES
+    };
+  }
+});
+
+// packages/addons/automation/client/views/agent-history.cjs
+var require_agent_history = __commonJS({
+  "packages/addons/automation/client/views/agent-history.cjs"(exports2, module2) {
+    "use strict";
+    var createOverlay = require_overlay();
+    var C = require_common();
+    var copy = require_copy();
+    var HistoryOverlay = createOverlay({
+      maskClass: "wba-modal",
+      dialogClass: "wba-modal-box",
+      ariaLabelOf: function(props) {
+        return props.t("hist.title");
+      },
+      closeOnMask: true,
+      autoFocusDialog: false
+    });
+    var LIMIT = 20;
+    function when(rec, lang) {
+      var ts = rec && (rec.deliveredAt || rec.scheduledAt);
+      if (!ts) return "";
+      var ms = Date.parse(ts);
+      return isNaN(ms) ? String(ts) : C.fmtTime(ms, lang);
+    }
+    function AgentHistory(props) {
+      var h = props.h;
+      var api = props.api;
+      var React = props.React;
+      var icon = props.icon;
+      var lang = props.lang === "en" ? "en" : "zh";
+      var t = function(key, vars) {
+        return copy.t(lang, key, vars);
+      };
+      var rule = props.rule;
+      var cursorS = React.useState("");
+      var state = C.useLoad(React, api, "automation.ruleHistory", { id: rule.id, limit: LIMIT, before: cursorS[0] || void 0 }, [rule.id, cursorS[0]]);
+      var data = state.data || {};
+      var records = data.records || [];
+      var missing = Boolean(rule.scheduleMissing) || data.earlierRecordsUnavailable && records.length === 0;
+      var oldest = records.length ? records[records.length - 1].messageId : "";
+      var canOlder = records.length === LIMIT && Boolean(oldest);
+      return h(
+        HistoryOverlay,
+        { t, onClose: props.onClose },
+        h(
+          "div",
+          { className: "wba-modal-head" },
+          h("h3", null, t("hist.title") + " \xB7 " + rule.name),
+          h("button", { type: "button", className: "wba-icon-btn", title: t("common.close"), onClick: props.onClose }, icon ? icon("x", 15) : "\xD7")
+        ),
+        h(
+          "div",
+          { className: "wba-modal-body" },
+          h("p", { className: "wba-sub" }, t("hist.subtitle")),
+          state.error ? h(C.Notice, { h, kind: "error", text: state.error }) : null,
+          missing ? h("p", { className: "wba-sub" }, t("hist.missing")) : state.loading && records.length === 0 ? h("div", { className: "wba-hist" }, [1, 2, 3].map(function(i) {
+            return h("div", { key: i, className: "wba-skel" });
+          })) : records.length === 0 ? h("p", { className: "wba-sub" }, t("hist.empty")) : h(
+            "div",
+            { className: "wba-hist" },
+            h("p", { className: "wba-sub" }, t("hist.records", { n: records.length })),
+            records.map(function(rec, i) {
+              return h(
+                "div",
+                { key: rec.messageId || i, className: "wba-hist-row" },
+                h(
+                  "div",
+                  { className: "wba-inline" },
+                  icon ? icon("send", 13) : null,
+                  h("span", { className: "wba-nowrap" }, when(rec, lang)),
+                  h("code", { className: "wba-mono wba-ellipsis", title: rec.targetSessionId }, rec.targetSessionId || "")
+                ),
+                rec.prompt ? h("pre", { className: "wba-pre" }, rec.prompt) : null
+              );
+            }),
+            data.earlierRecordsPruned ? h("p", { className: "wba-sub" }, t("hist.pruned")) : null,
+            canOlder ? h(C.Btn, { h, onClick: function() {
+              cursorS[1](oldest);
+            } }, t("common.more")) : null
+          )
+        ),
+        h(
+          "div",
+          { className: "wba-modal-foot" },
+          h("span", { className: "wba-grow" }),
+          h(C.Btn, { h, onClick: props.onClose }, t("common.close"))
+        )
+      );
+    }
+    module2.exports = AgentHistory;
+    module2.exports.AgentHistory = AgentHistory;
   }
 });
 
@@ -2806,13 +3727,17 @@ var require_rules = __commonJS({
     var C = require_common();
     var copy = require_copy();
     var trig = require_trigger_fields();
+    var atiming = require_agent_timing();
     var editor = require_rule_editor();
+    var AgentHistory = require_agent_history();
     var TRIGGER_ICON = { interval: "timer", dailyAt: "alarm-clock", event: "radio", manual: "hand" };
     function emptyForm() {
       return {
         id: "",
         name: "",
         enabled: true,
+        execMode: "action",
+        // action 模式
         kind: "interval",
         everyMinutes: 60,
         time: "09:00",
@@ -2823,14 +3748,73 @@ var require_rules = __commonJS({
         actionName: "",
         actionArgs: "{}",
         condOn: false,
-        condition: '{\n  "field": "event.item.title",\n  "op": "contains",\n  "value": ""\n}'
+        condition: '{\n  "field": "event.item.title",\n  "op": "contains",\n  "value": ""\n}',
+        // agent 模式
+        prompt: "",
+        pKind: "every",
+        pEvery: 60,
+        pAfter: 60,
+        pTime: "09:00",
+        pTz: "Asia/Shanghai",
+        pWeekdays: "1,2,3,4,5",
+        pCron: "0 9 * * *",
+        pRrule: "DTSTART;TZID=Asia/Shanghai:20260101T090000\nRRULE:FREQ=DAILY",
+        pDate: "",
+        targetKind: "new_once",
+        targetCwd: "",
+        targetPreset: "",
+        targetSession: ""
       };
+    }
+    function timingToForm(f, timing) {
+      var ti = timing && typeof timing === "object" ? timing : {};
+      f.pKind = ti.kind || "every";
+      if (ti.kind === "every") f.pEvery = Math.max(1, Math.round((ti.every_seconds || 3600) / 60));
+      if (ti.kind === "after") f.pAfter = Math.max(1, Math.round((ti.after_seconds || 60) / 60));
+      if (ti.kind === "daily" && ti.daily) {
+        f.pTime = String(ti.daily.time || "09:00").slice(0, 5);
+        f.pTz = ti.daily.time_zone || "Asia/Shanghai";
+      }
+      if (ti.kind === "weekly" && ti.weekly) {
+        f.pTime = String(ti.weekly.time || "09:00").slice(0, 5);
+        f.pTz = ti.weekly.time_zone || "Asia/Shanghai";
+        f.pWeekdays = (ti.weekly.weekdays || [1, 2, 3, 4, 5]).join(",");
+      }
+      if (ti.kind === "cron" && ti.cron) {
+        f.pCron = ti.cron.expression || f.pCron;
+        f.pTz = ti.cron.time_zone || "Asia/Shanghai";
+      }
+      if (ti.kind === "rrule") f.pRrule = ti.rrule || f.pRrule;
+      if (ti.kind === "at") {
+        var at = ti.at;
+        if (typeof at === "string") {
+          f.pDate = at.slice(0, 10);
+          f.pTime = at.slice(11, 16) || f.pTime;
+        } else if (at && typeof at === "object") {
+          f.pDate = at.date || "";
+          f.pTime = String(at.time || "09:00").slice(0, 5);
+          f.pTz = at.time_zone || f.pTz;
+        }
+      }
     }
     function formFromRule(rule) {
       var f = emptyForm();
       f.id = rule.id;
       f.name = rule.name;
       f.enabled = rule.enabled;
+      f.execMode = rule.execMode === "agent" ? "agent" : "action";
+      if (f.execMode === "agent") {
+        var snap = rule.agent && typeof rule.agent === "object" ? rule.agent : {};
+        f.prompt = String(snap.prompt || "");
+        timingToForm(f, snap.timing);
+        var target = snap.target && typeof snap.target === "object" ? snap.target : {};
+        f.targetKind = target.kind || "new_once";
+        f.targetSession = target.sessionId || "";
+        var create = target.create && typeof target.create === "object" ? target.create : {};
+        f.targetCwd = create.cwd || "";
+        f.targetPreset = create.agentPreset || "";
+        return f;
+      }
       f.actionName = rule.actionName;
       f.actionArgs = JSON.stringify(rule.actionArgs || {}, null, 2);
       f.condOn = Boolean(rule.condition);
@@ -2853,11 +3837,20 @@ var require_rules = __commonJS({
       var q = String(filters && filters.q || "").trim().toLowerCase();
       var status = filters && filters.status || "";
       var trigger = filters && filters.trigger || "";
+      var mode = filters && filters.mode || "";
       return rows.filter(function(r) {
-        if (q && !(String(r.name).toLowerCase().indexOf(q) !== -1 || String(r.actionName).toLowerCase().indexOf(q) !== -1)) return false;
+        if (q) {
+          var hit = String(r.name).toLowerCase().indexOf(q) !== -1 || String(r.actionName || "").toLowerCase().indexOf(q) !== -1 || String(r.agent && r.agent.prompt || "").toLowerCase().indexOf(q) !== -1;
+          if (!hit) return false;
+        }
         if (status === "on" && !r.enabled) return false;
         if (status === "off" && r.enabled) return false;
-        if (trigger && (r.triggerConfig && r.triggerConfig.kind ? r.triggerConfig.kind : r.triggerType) !== trigger) return false;
+        if (mode === "agent" && r.execMode !== "agent") return false;
+        if (mode === "action" && r.execMode === "agent") return false;
+        if (trigger) {
+          var kind = r.execMode === "agent" ? "agent" : r.triggerConfig && r.triggerConfig.kind || r.triggerType;
+          if (kind !== trigger) return false;
+        }
         return true;
       });
     }
@@ -2865,6 +3858,11 @@ var require_rules = __commonJS({
       if (status === "ok") return "ok";
       if (status === "error") return "error";
       if (status === "skipped") return "warn";
+      return "";
+    }
+    function scheduleKind(status) {
+      if (status === "active") return "ok";
+      if (status === "paused") return "warn";
       return "";
     }
     function EmptyCard(props) {
@@ -2885,6 +3883,74 @@ var require_rules = __commonJS({
         h("p", { className: "wba-empty-body" }, props.noActions ? t("rules.empty.noActionHint") : t("rules.empty.backup"))
       );
     }
+    function RuleRow(props) {
+      var h = props.h;
+      var t = props.t;
+      var icon = props.icon;
+      var r = props.rule;
+      var agentRule = r.execMode === "agent";
+      var snap = r.agent && typeof r.agent === "object" ? r.agent : {};
+      var kind = agentRule ? "agent" : r.triggerConfig && r.triggerConfig.kind || r.triggerType || "manual";
+      var last = r.lastRun;
+      var deliveredAt = snap.lastDeliveryAt;
+      return h(
+        "tr",
+        null,
+        h(
+          "td",
+          null,
+          h("div", { className: "wba-strong wba-ellipsis", title: r.name }, r.name),
+          h("div", { className: "wba-mono" }, r.id)
+        ),
+        h(
+          "td",
+          { className: "wba-nowrap" },
+          h(
+            "span",
+            { className: "wba-inline" },
+            icon ? icon(agentRule ? "bot" : TRIGGER_ICON[kind] || "zap", 13) : null,
+            agentRule ? atiming.timingText(snap.timing, t) : trig.triggerText(r, t)
+          )
+        ),
+        h("td", null, agentRule ? h(
+          "span",
+          { className: "wba-inline" },
+          h(C.Pill, { h, kind: "" }, t("rules.agentAction")),
+          h("span", { className: "wba-ellipsis", title: snap.prompt || "" }, String(snap.prompt || "").slice(0, 48))
+        ) : h(
+          "span",
+          { className: "wba-inline" },
+          h("code", { className: "wba-ellipsis", title: r.actionName }, r.actionName),
+          props.allowed.indexOf(r.actionName) === -1 ? h(C.Pill, { h, kind: "warn" }, t("rules.actionDisabled")) : null
+        )),
+        h("td", null, agentRule ? h(C.Pill, { h, kind: r.scheduleMissing ? "error" : scheduleKind(r.scheduleStatus) }, t("rules.schedule." + (r.scheduleMissing ? "missing" : r.scheduleStatus || "paused"))) : h(C.Pill, { h, kind: r.enabled ? "ok" : "" }, r.enabled ? t("rules.status.on") : t("rules.status.off"))),
+        h("td", { className: "wba-nowrap" }, agentRule ? h("span", null, deliveredAt ? C.fmtTime(deliveredAt, props.lang) : t("common.none")) : h(
+          "div",
+          { className: "wba-inline" },
+          h("span", null, last ? C.fmtTime(last.startedAt, props.lang) : t("common.none")),
+          last ? h(C.Pill, { h, kind: resultKind(last.status) }, t("run.status." + last.status) || last.status) : null
+        )),
+        h("td", null, h(
+          "div",
+          { className: "wba-actions" },
+          agentRule ? h("button", { type: "button", className: "wba-icon-btn", title: t("rules.history"), onClick: function() {
+            props.onHistory(r);
+          } }, icon ? icon("send", 14) : "\u2709") : null,
+          h("button", { type: "button", className: "wba-icon-btn", title: t("common.run"), disabled: props.runningId === r.id || agentRule && r.scheduleMissing, onClick: function() {
+            props.onRun(r);
+          } }, icon ? icon("play", 14) : "\u25B6"),
+          h("button", { type: "button", className: "wba-icon-btn", title: t("common.edit"), onClick: function() {
+            props.onEdit(r);
+          } }, icon ? icon("pencil", 14) : "\u270E"),
+          h("button", { type: "button", className: "wba-icon-btn", title: r.enabled ? t("common.disable") : t("common.enable"), onClick: function() {
+            props.onToggle(r);
+          } }, icon ? icon(r.enabled ? "power-off" : "power", 14) : "\u23FB"),
+          h("button", { type: "button", className: "wba-icon-btn danger", title: t("common.delete"), onClick: function() {
+            props.onDelete(r);
+          } }, icon ? icon("trash-2", 14) : "\u{1F5D1}")
+        ))
+      );
+    }
     function RulesBody(props) {
       var h = props.h;
       var t = props.t;
@@ -2892,6 +3958,8 @@ var require_rules = __commonJS({
       var rows = props.rows;
       var filters = props.filters || {};
       var allowed = props.allowed || [];
+      var orphans = Number(props.agentStatus && props.agentStatus.orphans && props.agentStatus.orphans.length || 0);
+      var offline = props.agentStatus && props.agentStatus.available === false;
       return h(
         "div",
         { className: "wba-panel" },
@@ -2938,13 +4006,30 @@ var require_rules = __commonJS({
               h("option", { value: "" }, t("common.all")),
               ["interval", "dailyAt", "event", "manual"].map(function(k) {
                 return h("option", { key: k, value: k }, t("trigger." + k));
-              })
+              }),
+              h("option", { value: "agent" }, t("rules.agentAction"))
+            )
+          ),
+          h(
+            "label",
+            { className: "wba-field" },
+            h("span", { className: "wba-label" }, t("rules.exec.mode")),
+            h(
+              "select",
+              { className: "wba-input", value: filters.mode || "", onChange: function(e) {
+                props.onFilter({ mode: e.target.value });
+              } },
+              h("option", { value: "" }, t("common.all")),
+              h("option", { value: "action" }, t("editor.mode.action")),
+              h("option", { value: "agent" }, t("editor.mode.agent"))
             )
           ),
           h("span", { className: "wba-grow" }),
           h(C.Btn, { h, onClick: props.onClear }, t("common.clear"))
         ),
         props.error ? h(C.Notice, { h, kind: "error", text: props.error }) : null,
+        offline ? h(C.Notice, { h, kind: "warn", text: t("rules.agentOffline") }) : null,
+        orphans > 0 ? h(C.Notice, { h, kind: "warn", text: t("rules.orphans", { n: orphans }) }) : null,
         props.loading ? h(
           "div",
           { className: "wba-table-wrap" },
@@ -2980,60 +4065,21 @@ var require_rules = __commonJS({
               })
             )),
             h("tbody", null, rows.map(function(r) {
-              var kind = r.triggerConfig && r.triggerConfig.kind || r.triggerType || "manual";
-              var last = r.lastRun;
-              var cells = [
-                h(
-                  "td",
-                  null,
-                  h("div", { className: "wba-strong wba-ellipsis", title: r.name }, r.name),
-                  h("div", { className: "wba-mono" }, r.id)
-                ),
-                h(
-                  "td",
-                  { className: "wba-nowrap" },
-                  h(
-                    "span",
-                    { className: "wba-inline" },
-                    icon ? icon(TRIGGER_ICON[kind] || "zap", 13) : null,
-                    trig.triggerText(r, t)
-                  )
-                ),
-                h(
-                  "td",
-                  null,
-                  h("code", { className: "wba-ellipsis", title: r.actionName }, r.actionName),
-                  allowed.indexOf(r.actionName) === -1 ? h(C.Pill, { h, kind: "warn" }, t("rules.actionDisabled")) : null
-                ),
-                h("td", null, h(C.Pill, { h, kind: r.enabled ? "ok" : "" }, r.enabled ? t("rules.status.on") : t("rules.status.off"))),
-                h(
-                  "td",
-                  { className: "wba-nowrap" },
-                  h(
-                    "div",
-                    { className: "wba-inline" },
-                    h("span", null, last ? C.fmtTime(last.startedAt, props.lang) : t("common.none")),
-                    last ? h(C.Pill, { h, kind: resultKind(last.status) }, t("run.status." + last.status) || last.status) : null
-                  )
-                ),
-                h("td", null, h(
-                  "div",
-                  { className: "wba-actions" },
-                  h("button", { type: "button", className: "wba-icon-btn", title: t("common.run"), disabled: props.runningId === r.id, onClick: function() {
-                    props.onRun(r);
-                  } }, icon ? icon("play", 14) : "\u25B6"),
-                  h("button", { type: "button", className: "wba-icon-btn", title: t("common.edit"), onClick: function() {
-                    props.onEdit(r);
-                  } }, icon ? icon("pencil", 14) : "\u270E"),
-                  h("button", { type: "button", className: "wba-icon-btn", title: r.enabled ? t("common.disable") : t("common.enable"), onClick: function() {
-                    props.onToggle(r);
-                  } }, icon ? icon(r.enabled ? "power-off" : "power", 14) : "\u23FB"),
-                  h("button", { type: "button", className: "wba-icon-btn danger", title: t("common.delete"), onClick: function() {
-                    props.onDelete(r);
-                  } }, icon ? icon("trash-2", 14) : "\u{1F5D1}")
-                ))
-              ];
-              return h("tr", { key: r.id }, cells);
+              return h(RuleRow, {
+                key: r.id,
+                h,
+                t,
+                icon,
+                lang: props.lang,
+                rule: r,
+                allowed,
+                runningId: props.runningId,
+                onRun: props.onRun,
+                onEdit: props.onEdit,
+                onToggle: props.onToggle,
+                onDelete: props.onDelete,
+                onHistory: props.onHistory
+              });
             }))
           )
         )
@@ -3049,15 +4095,18 @@ var require_rules = __commonJS({
       };
       var list = C.useLoad(React, api, "automation.ruleList", {}, []);
       var opts = C.useLoad(React, api, "automation.actionOptions", {}, []);
+      var status = C.useLoad(React, api, "automation.agentStatus", {}, []);
       var formS = React.useState(null);
       var initS = React.useState(null);
       var busyS = React.useState(false);
       var msgS = React.useState("");
-      var filterS = React.useState({ q: "", status: "", trigger: "" });
+      var filterS = React.useState({ q: "", status: "", trigger: "", mode: "" });
       var runningS = React.useState("");
+      var historyS = React.useState(null);
       var all = list.data && list.data.items || [];
       var rows = filterRules(all, filterS[0]);
       var actions = opts.data && opts.data.actions || [];
+      var agentStatus = status.data || null;
       var form = formS[0];
       React.useEffect(function() {
         if (props.viewParams && props.viewParams.new && !formS[0]) openNew();
@@ -3065,8 +4114,13 @@ var require_rules = __commonJS({
       function fail(e) {
         msgS[1](C.errText(e));
       }
+      function reload() {
+        list.refresh();
+        status.refresh();
+      }
       function openNew() {
         var f = emptyForm();
+        if (agentStatus && agentStatus.available === false) f.execMode = "action";
         initS[1](f);
         formS[1](f);
         msgS[1]("");
@@ -3078,7 +4132,7 @@ var require_rules = __commonJS({
         C.call(api, action, payload).then(function() {
           busyS[1](false);
           formS[1](null);
-          list.refresh();
+          reload();
           msgS[1](t("common.saved"));
         }).catch(function(e) {
           busyS[1](false);
@@ -3087,9 +4141,7 @@ var require_rules = __commonJS({
       }
       function remove(rule) {
         if (typeof window !== "undefined" && !window.confirm(t("rules.confirm.delete", { name: rule.name }))) return;
-        C.call(api, "automation.ruleDelete", { id: rule.id }).then(function() {
-          list.refresh();
-        }).catch(fail);
+        C.call(api, "automation.ruleDelete", { id: rule.id }).then(reload).catch(fail);
       }
       function run(rule) {
         runningS[1](rule.id);
@@ -3097,16 +4149,14 @@ var require_rules = __commonJS({
         C.call(api, "automation.ruleRun", { id: rule.id }).then(function(r) {
           runningS[1]("");
           msgS[1](r && r.skipped ? "skipped: " + (r.reason || "") : t("common.saved"));
-          list.refresh();
+          reload();
         }).catch(function(e) {
           runningS[1]("");
           fail(e);
         });
       }
       function toggle(rule) {
-        C.call(api, "automation.ruleUpdate", { id: rule.id, enabled: !rule.enabled }).then(function() {
-          list.refresh();
-        }).catch(fail);
+        C.call(api, "automation.ruleUpdate", { id: rule.id, enabled: !rule.enabled }).then(reload).catch(fail);
       }
       function setForm(k, v) {
         var next = Object.assign({}, formS[0]);
@@ -3128,7 +4178,7 @@ var require_rules = __commonJS({
           h(
             "div",
             { className: "wba-row" },
-            h(C.Btn, { h, onClick: list.refresh }, t("common.refresh")),
+            h(C.Btn, { h, onClick: reload }, t("common.refresh")),
             h(C.Btn, { h, kind: "primary", onClick: openNew }, t("common.create"))
           )
         ),
@@ -3143,6 +4193,7 @@ var require_rules = __commonJS({
           loading: list.loading,
           error: list.error,
           allowed: actions,
+          agentStatus,
           noActions: actions.length === 0,
           onSettings: function() {
             if (props.onNavigate) props.onNavigate("config");
@@ -3153,7 +4204,7 @@ var require_rules = __commonJS({
             filterS[1](Object.assign({}, filterS[0], patch));
           },
           onClear: function() {
-            filterS[1]({ q: "", status: "", trigger: "" });
+            filterS[1]({ q: "", status: "", trigger: "", mode: "" });
           },
           onNew: openNew,
           onRun: run,
@@ -3163,7 +4214,10 @@ var require_rules = __commonJS({
             formS[1](f);
           },
           onToggle: toggle,
-          onDelete: remove
+          onDelete: remove,
+          onHistory: function(r) {
+            historyS[1](r);
+          }
         }),
         form ? h(editor.RuleEditor, {
           h,
@@ -3177,17 +4231,32 @@ var require_rules = __commonJS({
           set: setForm,
           busy: busyS[0],
           actions,
+          agentAvailable: !(agentStatus && agentStatus.available === false),
           onClose: function() {
             formS[1](null);
           },
           onSave: save
+        }) : null,
+        historyS[0] ? h(AgentHistory, {
+          h,
+          api,
+          React,
+          t,
+          lang,
+          icon: props.icon,
+          rule: historyS[0],
+          onClose: function() {
+            historyS[1](null);
+          }
         }) : null
       );
     };
     module2.exports.filterRules = filterRules;
     module2.exports.RulesBody = RulesBody;
+    module2.exports.RuleRow = RuleRow;
     module2.exports.emptyForm = emptyForm;
     module2.exports.formFromRule = formFromRule;
+    module2.exports.timingToForm = timingToForm;
   }
 });
 
@@ -5648,6 +6717,13 @@ var GLYPHS = require_icons2().ICONS;
     "alert-triangle": GLYPHS["alert-triangle"],
     "skip-forward": GLYPHS["skip-forward"],
     layers: GLYPHS["layers"],
+    bot: GLYPHS["bot"],
+    sparkles: GLYPHS["sparkles"],
+    repeat: GLYPHS["repeat"],
+    "calendar-clock": GLYPHS["calendar-clock"],
+    hourglass: GLYPHS["hourglass"],
+    clock: GLYPHS["clock"],
+    send: GLYPHS["send"],
     "shield-check": GLYPHS["shield-check"]
   };
   function Icon2(props) {
@@ -5687,7 +6763,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-automation",
-    version: "0.3.2",
+    version: "0.4.0",
     icon: GLYPHS["zap"],
     views: [
       { id: "stats", icon: tabIcon("activity"), title: { zh: "\u6982\u89C8", en: "Overview" }, component: withProps(require_stats(), "\u6982\u89C8") },

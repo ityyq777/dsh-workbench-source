@@ -248,3 +248,118 @@ test("样式：版式层无字面色值，源码用到的每个 wba-* 类都有�
   const missing = [...used].filter((c) => !styles.includes("." + c));
   assert.deepEqual(missing, [], "未定义的样式类：" + missing.join(", "));
 });
+
+function editorHtml(over) {
+  const form = Object.assign(Rules.emptyForm(), over.form || {});
+  const rest = Object.assign({}, over);
+  delete rest.form;
+  return renderToStaticMarkup(h(Editor.RuleEditor, Object.assign({
+    h, C, t, React, form, initial: form, set: noop, busy: false,
+    actions: ["message.send"], onClose: noop, onSave: noop,
+  }, rest, { form })));
+}
+
+test("AI 规则编辑器：时间/提示词/目标齐备，payload 是宿主请求结构", () => {
+  const form = Object.assign(Rules.emptyForm(), {
+    name: "早间摘要", execMode: "agent", prompt: "汇总今天的任务与消息",
+    pKind: "daily", pTime: "08:30", pTz: "Asia/Shanghai", targetKind: "new_once",
+  });
+  const html = editorHtml({ form });
+  const modeBtns = html.match(/<button[^>]*data-mode="[^"]+"[^>]*>/g) || [];
+  assert.equal(modeBtns.length, 2, "执行方式两个按钮");
+  assert.equal(modeBtns.filter((b) => b.includes('aria-pressed="true"')).length, 1, "只能选中一个");
+  assert.ok(html.includes(t("editor.mode.agent")));
+  assert.ok(html.includes(t("editor.prompt")));
+  assert.ok(html.includes('type="time"'));
+  assert.ok(html.includes(t("editor.target.new_once")));
+  assert.ok(!html.includes('disabled=""'), "合法 AI 表单应可保存");
+  const payload = Editor.buildPayload(form);
+  assert.equal(payload.execMode, "agent");
+  assert.equal(payload.actionName, undefined);
+  assert.deepEqual(payload.agent.timing, { kind: "daily", daily: { time: "08:30:00", time_zone: "Asia/Shanghai" } });
+  assert.deepEqual(payload.agent.target, { kind: "new_once" });
+});
+
+test("AI 规则缺少提示词或时间非法时禁用保存", () => {
+  const missing = editorHtml({ form: Object.assign(Rules.emptyForm(), { name: "x", execMode: "agent" }) });
+  assert.ok(missing.includes(t("editor.promptRequired")));
+  assert.ok(missing.includes('disabled=""'));
+  const badCron = Object.assign(Rules.emptyForm(), { name: "x", execMode: "agent", prompt: "p", pKind: "cron", pCron: "0 9 * *" });
+  assert.ok(editorHtml({ form: badCron }).includes(t("agent.cronHint")));
+  assert.equal(Editor.validateForm(badCron, t).valid, false);
+  const badRrule = Object.assign(Rules.emptyForm(), { name: "x", execMode: "agent", prompt: "p", pKind: "rrule", pRrule: "FREQ=DAILY" });
+  assert.ok(editorHtml({ form: badRrule }).includes(t("agent.rruleHint")));
+});
+
+test("执行方式创建后不可切换：已有规则只读", () => {
+  const html = editorHtml({ form: Object.assign(Rules.emptyForm(), { id: "rule_1", name: "x", actionName: "message.send" }) });
+  const modeBtns = html.match(/<button[^>]*data-mode="[^"]+"[^>]*>/g) || [];
+  assert.equal(modeBtns.filter((b) => b.includes('aria-pressed="true"')).length, 1);
+  assert.ok(modeBtns.every((b) => b.includes("disabled")), "执行方式按钮全部禁用");
+  assert.ok(html.includes(t("editor.mode.locked")));
+  assert.ok(html.includes('disabled=""'), "切换按钮应禁用");
+});
+
+test("宿主没有 schedule 服务时「交给 AI」不可选并说明原因", () => {
+  const html = editorHtml({ form: Object.assign(Rules.emptyForm(), { name: "x", actionName: "message.send" }), agentAvailable: false });
+  assert.ok(html.includes(t("editor.mode.agentUnavailable")));
+  assert.ok(html.includes(t("editor.mode.locked")) === false, "新规则不显示锁定说明");
+});
+
+test("列表里的 AI 规则展示执行方式、宿主状态与投递历史入口", () => {
+  const html = rulesBody({
+    hasRules: true,
+    rows: [{
+      id: "rule_a", name: "早间摘要", enabled: true, execMode: "agent", scheduleStatus: "active",
+      agent: {
+        prompt: "汇总今天的任务",
+        timing: { kind: "daily", daily: { time: "08:30:00", time_zone: "Asia/Shanghai" } },
+        lastDeliveryAt: 1700000000000,
+      },
+    }],
+  });
+  assert.ok(html.includes(t("rules.agentAction")));
+  assert.ok(html.includes(t("rules.schedule.active")));
+  assert.ok(html.includes("08:30"));
+  assert.ok(html.includes(t("rules.history")));
+});
+
+test("宿主任务被删的 AI 规则标「宿主任务已删除」且不能立即执行", () => {
+  const html = rulesBody({
+    hasRules: true,
+    rows: [{ id: "rule_m", name: "孤儿规则", enabled: false, execMode: "agent", scheduleMissing: true, agent: { timing: { kind: "every", every_seconds: 3600 } } }],
+  });
+  assert.ok(html.includes(t("rules.schedule.missing")));
+  assert.ok(html.includes('disabled=""'));
+});
+
+test("宿主服务不可用或有游离任务时给出提示", () => {
+  const offline = rulesBody({ hasRules: true, agentStatus: { available: false } });
+  assert.ok(offline.includes(t("rules.agentOffline")));
+  const orphans = rulesBody({ hasRules: true, agentStatus: { available: true, orphans: [{ id: "s1" }] } });
+  assert.ok(orphans.includes(t("rules.orphans", { n: 1 })));
+});
+
+test("AI 规则表单往返：宿主快照能还原字段并拼回请求", () => {
+  const rule = {
+    id: "rule_a", name: "周报", enabled: true, execMode: "agent",
+    agent: {
+      prompt: "写本周周报",
+      timing: { kind: "weekly", weekly: { time: "18:00:00", time_zone: "Asia/Tokyo", weekdays: [1, 5] } },
+      target: { kind: "new", create: { cwd: "/tmp/work", agentPreset: "coder" } },
+    },
+  };
+  const form = Rules.formFromRule(rule);
+  assert.equal(form.execMode, "agent");
+  assert.equal(form.pKind, "weekly");
+  assert.equal(form.pTime, "18:00");
+  assert.equal(form.pWeekdays, "1,5");
+  assert.equal(form.targetKind, "new");
+  const payload = Editor.buildPayload(form);
+  assert.equal(payload.id, "rule_a");
+  assert.deepEqual(payload.agent.timing.weekly.weekdays, [1, 5]);
+  assert.deepEqual(payload.agent.target, { kind: "new", create: { cwd: "/tmp/work", agentPreset: "coder" } });
+  // 过滤维度：按执行方式筛
+  assert.equal(Rules.filterRules([Object.assign({}, rule)], { mode: "agent" }).length, 1);
+  assert.equal(Rules.filterRules([Object.assign({}, rule)], { mode: "action" }).length, 0);
+});

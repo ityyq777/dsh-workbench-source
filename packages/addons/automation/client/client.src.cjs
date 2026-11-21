@@ -34,6 +34,13 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
     "alert-triangle": GLYPHS["alert-triangle"],
     "skip-forward": GLYPHS["skip-forward"],
     layers: GLYPHS["layers"],
+    bot: GLYPHS["bot"],
+    sparkles: GLYPHS["sparkles"],
+    repeat: GLYPHS["repeat"],
+    "calendar-clock": GLYPHS["calendar-clock"],
+    hourglass: GLYPHS["hourglass"],
+    clock: GLYPHS["clock"],
+    send: GLYPHS["send"],
     "shield-check": GLYPHS["shield-check"],
   };
   function Icon(props) { var C = ICONS[props.name] || ICONS.zap; return h(C, { size: props.size || 14, strokeWidth: 2, "aria-hidden": "true", className: "wba-svg" }); }
@@ -64,7 +71,7 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-automation",
-    version: "0.3.2",
+    version: "0.4.0",
     icon: GLYPHS["zap"],
     views: [
       { id: "stats", icon: tabIcon("activity"), title: { zh: "概览", en: "Overview" }, component: withProps(require("./views/stats.cjs"), "概览") },
