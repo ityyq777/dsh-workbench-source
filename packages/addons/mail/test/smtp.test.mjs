@@ -9,7 +9,10 @@ async function smtpFixture(t, refuse=false) {
   const sessions=[];
   const server=tls.createServer(testTls(), socket=>{
     socket.setNoDelay(true);
-    const s={commands:[],data:[],closed:once(socket,'close')}; sessions.push(s);
+    // 客户端主动断链时 socket 可能 emit ECONNRESET：这里吞掉错误，避免 once() 的
+    // rejected promise 变成进程级 unhandledRejection（并行跑整个目录时曾因此偶发失败）。
+    socket.on('error',()=>{});
+    const s={commands:[],data:[],closed:once(socket,'close').catch(()=>undefined)}; sessions.push(s);
     let buffer='', body=false;
     socket.setEncoding('utf8'); socket.write('220 local smtp ready\r\n');
     socket.on('data',chunk=>{

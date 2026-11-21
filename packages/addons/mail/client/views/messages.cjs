@@ -5,6 +5,7 @@ var C = require("../ui/common.cjs");
 var Attachments = require("../ui/attachments.cjs");
 var ReplyTools = require("../ui/reply-tools.cjs");
 var MailHtml = require("../ui/mail-html.cjs");
+var prefsApi = require("./prefs.cjs");
 var iconLabel = require("../../../lib/icon-label.cjs");
 var Folder = GLYPHS["folder"];
 var InboxIcon = GLYPHS["inbox"];
@@ -32,6 +33,7 @@ function Inbox(props) {
     api = props.api,
     accountId = props.accountId;
   var accs = (props.accounts.data && props.accounts.data.items) || [];
+  var prefs = prefsApi.usePrefs(React, api), pageSize = prefs.pageSize; // 配置只影响呈现策略
   var boxes = C.useLoad(React, api, "mail.mailboxList", { accountId: accountId[0] || undefined }, [accountId[0]]);
   var folders = (boxes.data && boxes.data.items) || [];
   var unified = React.useState(true), server = React.useState(null), searchRev = React.useRef(0);
@@ -51,10 +53,10 @@ function Inbox(props) {
       unifiedInbox: !accountId[0] && unified[0],
       q: q[0],
       unread: unseen[0],
-      limit: 50,
+      limit: pageSize,
       cursor: tokens.at(-1),
     },
-    [folder[0], q[0], unseen[0], tokens, unified[0]],
+    [folder[0], q[0], unseen[0], tokens, unified[0], pageSize],
   );
   var sel = React.useState(null),
     msg = React.useState(null),
@@ -166,7 +168,7 @@ function Inbox(props) {
         if (rev !== selected.current) return;
         sel[1](Object.assign({}, m, d));
         loadBody(d, false, rev);
-        if (isUnread(d) && d.uid > 0) mutate("mail.messageMarkRead", { id: d.id, read: true }, false, rev);
+        if (prefs["read.autoSeen"] !== false && isUnread(d) && d.uid > 0) mutate("mail.messageMarkRead", { id: d.id, read: true }, false, rev);
       })
       .catch(function (e) {
         if (rev === selected.current) bodyState[1]({ error: C.errText(e) });
@@ -207,7 +209,7 @@ function Inbox(props) {
       args = { id: accountId[0] };
     if (!onlyFolders) {
       args.mailbox = folder[0];
-      args.limit = 50;
+      args.limit = pageSize;
       if (older) {
         if (!remote[0] || !remote[0].nextBeforeUid) return;
         args.beforeUid = remote[0].nextBeforeUid;
@@ -279,10 +281,7 @@ function Inbox(props) {
   );
   function bodyNode() {
     // HTML 邮件（含详情里缓存的富文本）优先按原信渲染，纯文本邮件仍走 <pre>。
-    var html = data.html || current.html || "";
-    var list = data.attachments || current.attachments || [];
-    var files = list.filter(function (a) { return !a.inline; });
-    var hasText = !!(data.body || current.body);
+    var picked = prefsApi.readBody(prefs, data, current), html = picked.html, files = picked.files, hasText = picked.hasText;
     if (state.loading && !html && !hasText) return h("div", { className: "wbml-state" }, "正文下载中…");
     if (state.error && !html && !hasText)
       return h(
@@ -297,7 +296,7 @@ function Inbox(props) {
       "div",
       { className: "wbml-body-wrap" },
       html
-        ? h(MailHtml, { h: h, React: React, api: api, html: html, attachments: list, title: current.subject })
+        ? h(MailHtml, { h: h, React: React, api: api, html: html, attachments: data.attachments || current.attachments || [], title: current.subject, remoteDefault: prefs["images.remote"] !== false })
         : h("pre", { className: "wbml-body" }, data.body || current.body || "此邮件无文字正文"),
       h(Attachments, { h: h, React: React, api: api, localOnly: current.uid <= 0 || !current.uidValidity, items: files }),
       data.truncated || current.bodyTruncated

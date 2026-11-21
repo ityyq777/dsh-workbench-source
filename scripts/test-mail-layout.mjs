@@ -153,6 +153,9 @@ test("消息页：真实控件事件调用、三栏结构、切换和正文竞�
       if (n === "mail.messageBody")
         return a.id === "m1" ? new Promise((r) => (release = r)) : { ok: true, body: "second", attachments: [] };
       if (n === "mail.sync") return { nextBeforeUid: 33, uidValidity: 99, fetched: 2, inserted: 1 };
+      // 配置决定每次抓取封数与「打开即标已读」：默认 20 封、自动已读开着。
+      if (n === "mail.configGet")
+        return { domain: "mail", items: [], groups: [], values: { "images.remote": true, "display.html": true, "read.autoSeen": true, "list.pageSize": 20 }, overrides: {} };
       return {};
     },
   };
@@ -207,7 +210,7 @@ test("消息页：真实控件事件调用、三栏结构、切换和正文竞�
     assert.deepEqual(calls.filter(([n]) => n === "mail.sync").at(-1)[1], {
       id: "a",
       mailbox: "INBOX",
-      limit: 50,
+      limit: 20, // 配置默认每次 20 封
       beforeUid: 33,
       uidValidity: 99,
     });

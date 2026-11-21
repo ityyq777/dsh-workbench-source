@@ -158,7 +158,9 @@ function buildDoc(html, opts) {
 
 module.exports = function MailHtml(props) {
   var h = props.h, React = props.React, api = props.api;
-  var expanded = React.useState(false);
+  // 远程图片默认是否加载由配置（images.remote，默认加载）决定；个别邮件仍可临时切换。
+  var allowDefault = props.remoteDefault !== false;
+  var expanded = React.useState(allowDefault);
   var images = React.useState({});
   var frame = React.useRef(null);
   var meta = React.useMemo(function () { return sanitize(props.html, { allowRemote: expanded[0] }); }, [props.html, expanded[0]]);
@@ -208,9 +210,9 @@ module.exports = function MailHtml(props) {
   React.useEffect(measure, [doc]);
   return h("div", { className: "wbml-htmwrap" },
     h("div", { className: "wbml-htmlbar" },
-      h("span", { className: "wbml-muted" }, expanded[0] ? "已加载远程图片，内容由发件方服务器提供。" : hasRemote ? "此邮件含 " + hasRemote + " 个远程图片，默认不加载。" : "已按原信排版显示，图片来自本地附件。"),
+      h("span", { className: "wbml-muted" }, expanded[0] ? (hasRemote ? "已加载远程图片，内容由发件方服务器提供。" : "已按原信排版显示，图片来自本地附件。") : "此邮件含 " + hasRemote + " 个远程图片，已按设置拦截。"),
       hasRemote
-        ? h(C.Btn, { h: h, onClick: function () { expanded[1](!expanded[0]); } }, expanded[0] ? "不显示远程图片" : "显示图片")
+        ? h(C.Btn, { h: h, onClick: function () { expanded[1](!expanded[0]); } }, expanded[0] ? "本次不加载" : "显示图片")
         : null,
     ),
     h("iframe", {

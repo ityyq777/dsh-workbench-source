@@ -2,6 +2,7 @@
 import { bindClock, ensureSchema } from "./db/db.js";
 import { createMail } from "./domain/mail.js";
 import { registerMailActions } from "./domain/actions.js";
+import { registerConfigActions } from "./infra/config.js";
 
 export const inject = ["workbench"];
 let engine = null;
@@ -11,6 +12,7 @@ export function setup(api) {
   ensureSchema(api.db);
   engine = createMail({ db: api.db, host: api, log: api.log });
   registerMailActions(api, engine);
+  registerConfigActions(api);
   try {
     engine.backfillHeaders();
   } catch (e) {
@@ -27,7 +29,7 @@ export function apply(ctx) {
     id: "wb-addon-mail",
     title: "邮件",
     description: "安全 IMAP 收信与文件夹同步，按需读正文、下载附件，保存本地草稿并通过 SMTP 回复或转发。",
-    version: "0.5.2",
+    version: "0.5.3",
     category: "comm",
     // mail_draft 含私有未发正文，不加入宿主通用表清单或同步回退。
     tables: ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"],

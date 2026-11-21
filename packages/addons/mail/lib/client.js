@@ -746,17 +746,54 @@ var init_search = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-vertical.mjs
+var __iconData16, SlidersVertical;
+var init_sliders_vertical = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-vertical.mjs"() {
+    init_createLucideIcon();
+    __iconData16 = {
+      name: "sliders-vertical",
+      size: 24,
+      node: [
+        ["path", { d: "M10 8h4", key: "1sr2af" }],
+        ["path", { d: "M12 21v-9", key: "17s77i" }],
+        ["path", { d: "M12 8V3", key: "13r4qs" }],
+        ["path", { d: "M17 16h4", key: "h1uq16" }],
+        ["path", { d: "M19 12V3", key: "o1uvq1" }],
+        ["path", { d: "M19 21v-5", key: "qua636" }],
+        ["path", { d: "M3 14h4", key: "bcjad9" }],
+        ["path", { d: "M5 10V3", key: "cb8scm" }],
+        ["path", { d: "M5 21v-7", key: "1w1uti" }]
+      ],
+      aliases: ["sliders"]
+    };
+    __iconData16.node;
+    SlidersVertical = createLucideIcon(__iconData16);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders.mjs
+var sliders_exports = {};
+__export(sliders_exports, {
+  default: () => SlidersVertical
+});
+var init_sliders = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders.mjs"() {
+    init_sliders_vertical();
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/send.mjs
 var send_exports = {};
 __export(send_exports, {
-  __iconData: () => __iconData16,
+  __iconData: () => __iconData17,
   default: () => Send
 });
-var __iconData16, Send;
+var __iconData17, Send;
 var init_send = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/send.mjs"() {
     init_createLucideIcon();
-    __iconData16 = {
+    __iconData17 = {
       name: "send",
       size: 24,
       node: [
@@ -770,17 +807,17 @@ var init_send = __esm({
         ["path", { d: "m21.854 2.147-10.94 10.939", key: "12cjpa" }]
       ]
     };
-    __iconData16.node;
-    Send = createLucideIcon(__iconData16);
+    __iconData17.node;
+    Send = createLucideIcon(__iconData17);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
-var __iconData17, Trash;
+var __iconData18, Trash;
 var init_trash = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
     init_createLucideIcon();
-    __iconData17 = {
+    __iconData18 = {
       name: "trash",
       size: 24,
       node: [
@@ -792,8 +829,8 @@ var init_trash = __esm({
       ],
       aliases: ["trash-2"]
     };
-    __iconData17.node;
-    Trash = createLucideIcon(__iconData17);
+    __iconData18.node;
+    Trash = createLucideIcon(__iconData18);
   }
 });
 
@@ -811,14 +848,14 @@ var init_trash_2 = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/users.mjs
 var users_exports = {};
 __export(users_exports, {
-  __iconData: () => __iconData18,
+  __iconData: () => __iconData19,
   default: () => Users
 });
-var __iconData18, Users;
+var __iconData19, Users;
 var init_users = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/users.mjs"() {
     init_createLucideIcon();
-    __iconData18 = {
+    __iconData19 = {
       name: "users",
       size: 24,
       node: [
@@ -828,8 +865,8 @@ var init_users = __esm({
         ["circle", { cx: "9", cy: "7", r: "4", key: "nufk8" }]
       ]
     };
-    __iconData18.node;
-    Users = createLucideIcon(__iconData18);
+    __iconData19.node;
+    Users = createLucideIcon(__iconData19);
   }
 });
 
@@ -854,6 +891,7 @@ var require_icons2 = __commonJS({
       "reply": (init_reply(), __toCommonJS(reply_exports)).default,
       "reply-all": (init_reply_all(), __toCommonJS(reply_all_exports)).default,
       "search": (init_search(), __toCommonJS(search_exports)).default,
+      "sliders": (init_sliders(), __toCommonJS(sliders_exports)).default,
       "send": (init_send(), __toCommonJS(send_exports)).default,
       "trash-2": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
       "users": (init_users(), __toCommonJS(users_exports)).default
@@ -1154,7 +1192,25 @@ var require_styles = __commonJS({
       ".wbml-picker-foot{font-size:11px;color:var(--wb-muted,#6b7280);text-align:right;padding:4px 2px 0}",
       ".wbml-picker-empty{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--wb-muted,#6b7280);padding:6px 2px 0}",
       ".wbml-picker-warn{margin:0;font-size:12px;color:var(--wb-warn,#b45309)}",
-      ".wbml-picker-note{margin:0;font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280);border:1px dashed var(--wb-border,#d4d4d8);border-radius:8px;padding:8px 10px}"
+      ".wbml-picker-note{margin:0;font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280);border:1px dashed var(--wb-border,#d4d4d8);border-radius:8px;padding:8px 10px}",
+      // 配置页：分组卡片 + 行内控件，颜色全部取自主题 token。
+      ".wbml-config{display:grid;gap:14px}",
+      ".wbml-cfg-group{border:1px solid var(--wb-line,#e5e7eb);border-radius:12px;background:var(--wb-card,#fff);padding:4px 14px}",
+      ".wbml-cfg-group h3{margin:10px 0 2px;font-size:12px;font-weight:650;letter-spacing:.02em;color:var(--wb-muted,#6b7280);text-transform:none}",
+      ".wbml-cfg-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px;align-items:center;padding:11px 0;border-top:1px solid var(--wb-line,#e5e7eb)}",
+      ".wbml-cfg-group h3+.wbml-cfg-row{border-top:0}",
+      ".wbml-cfg-main{display:grid;gap:3px;min-width:0}",
+      ".wbml-cfg-label{display:flex;align-items:center;gap:6px;font-size:13px}",
+      ".wbml-cfg-badge{font-size:10px;padding:1px 6px;border-radius:999px;border:1px solid var(--wb-line,#e5e7eb);color:var(--wb-accent,#2563eb)}",
+      ".wbml-cfg-hint{font-size:11px;line-height:1.55;color:var(--wb-muted,#6b7280)}",
+      ".wbml-cfg-ctl{display:flex;align-items:center;justify-content:flex-end;gap:8px}",
+      ".wbml-switch{display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:12px}",
+      ".wbml-switch input{width:16px;height:16px;accent-color:var(--wb-accent,#2563eb);cursor:pointer}",
+      ".wbml-switch-text{color:var(--wb-muted,#6b7280);min-width:2.5em}",
+      ".wbml-numwrap{display:inline-flex;align-items:center;gap:6px}",
+      ".wbml-num{width:76px;min-width:0;text-align:right}",
+      ".wbml-toast{position:sticky;bottom:8px;justify-self:start;font-size:12px;padding:6px 12px;border-radius:999px;border:1px solid var(--wb-line,#e5e7eb);background:var(--wb-card,#fff);box-shadow:0 6px 18px rgba(0,0,0,.08)}",
+      "@media(max-width:760px){.wbml-cfg-row{grid-template-columns:1fr}.wbml-cfg-ctl{justify-content:flex-start}.wbml-cfg-group{padding:4px 10px}}"
     ]).concat(require_icon_label().styles).join("\n");
   }
 });
@@ -1909,7 +1965,8 @@ var require_mail_html = __commonJS({
     }
     module2.exports = function MailHtml(props) {
       var h = props.h, React = props.React, api = props.api;
-      var expanded = React.useState(false);
+      var allowDefault = props.remoteDefault !== false;
+      var expanded = React.useState(allowDefault);
       var images = React.useState({});
       var frame = React.useRef(null);
       var meta = React.useMemo(function() {
@@ -1975,10 +2032,10 @@ var require_mail_html = __commonJS({
         h(
           "div",
           { className: "wbml-htmlbar" },
-          h("span", { className: "wbml-muted" }, expanded[0] ? "\u5DF2\u52A0\u8F7D\u8FDC\u7A0B\u56FE\u7247\uFF0C\u5185\u5BB9\u7531\u53D1\u4EF6\u65B9\u670D\u52A1\u5668\u63D0\u4F9B\u3002" : hasRemote ? "\u6B64\u90AE\u4EF6\u542B " + hasRemote + " \u4E2A\u8FDC\u7A0B\u56FE\u7247\uFF0C\u9ED8\u8BA4\u4E0D\u52A0\u8F7D\u3002" : "\u5DF2\u6309\u539F\u4FE1\u6392\u7248\u663E\u793A\uFF0C\u56FE\u7247\u6765\u81EA\u672C\u5730\u9644\u4EF6\u3002"),
+          h("span", { className: "wbml-muted" }, expanded[0] ? hasRemote ? "\u5DF2\u52A0\u8F7D\u8FDC\u7A0B\u56FE\u7247\uFF0C\u5185\u5BB9\u7531\u53D1\u4EF6\u65B9\u670D\u52A1\u5668\u63D0\u4F9B\u3002" : "\u5DF2\u6309\u539F\u4FE1\u6392\u7248\u663E\u793A\uFF0C\u56FE\u7247\u6765\u81EA\u672C\u5730\u9644\u4EF6\u3002" : "\u6B64\u90AE\u4EF6\u542B " + hasRemote + " \u4E2A\u8FDC\u7A0B\u56FE\u7247\uFF0C\u5DF2\u6309\u8BBE\u7F6E\u62E6\u622A\u3002"),
           hasRemote ? h(C.Btn, { h, onClick: function() {
             expanded[1](!expanded[0]);
-          } }, expanded[0] ? "\u4E0D\u663E\u793A\u8FDC\u7A0B\u56FE\u7247" : "\u663E\u793A\u56FE\u7247") : null
+          } }, expanded[0] ? "\u672C\u6B21\u4E0D\u52A0\u8F7D" : "\u663E\u793A\u56FE\u7247") : null
         ),
         h("iframe", {
           ref: frame,
@@ -1995,6 +2052,232 @@ var require_mail_html = __commonJS({
     module2.exports.buildDoc = buildDoc;
     module2.exports.replaceCid = replaceCid;
     module2.exports.PLACEHOLDER = PLACEHOLDER;
+  }
+});
+
+// packages/addons/mail/client/views/config.cjs
+var require_config = __commonJS({
+  "packages/addons/mail/client/views/config.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function Config(props) {
+      var h = props.h;
+      var React = props.React;
+      var api = props.api;
+      var lang = props.lang === "en" ? "en" : "zh";
+      var C = require_common();
+      var icons = require_icons2();
+      var cfg = module2.exports.useConfig(React, api);
+      var toastS = React.useState("");
+      var toast = toastS[0];
+      var setToast = toastS[1];
+      var localS = React.useState({});
+      var local = localS[0];
+      var setLocal = localS[1];
+      var seqRef = React.useRef(0);
+      function values() {
+        return Object.assign({}, cfg.values, local);
+      }
+      function toastOnce(text) {
+        setToast(text);
+        setTimeout(function() {
+          setToast("");
+        }, 2e3);
+      }
+      function labelOf(item) {
+        return lang === "en" ? item.en || item.zh || item.id : item.zh || item.en || item.id;
+      }
+      function hintOf(item) {
+        return lang === "en" ? item.hintEn || "" : item.hintZh || "";
+      }
+      function dropLocal(id, value) {
+        setLocal(function(prev) {
+          if (!(id in prev) || JSON.stringify(prev[id]) !== JSON.stringify(value)) return prev;
+          var next = Object.assign({}, prev);
+          delete next[id];
+          return next;
+        });
+      }
+      function save(id, value) {
+        var seq = ++seqRef.current;
+        var patch = {};
+        patch[id] = value;
+        setLocal(function(prev) {
+          return Object.assign({}, prev, patch);
+        });
+        return C.call(api, "mail.configSet", { values: patch }).then(function(r) {
+          if (seq !== seqRef.current) return r;
+          if (r && r.values) cfg.setValues(r.values);
+          setLocal({});
+          toastOnce(lang === "en" ? "Saved" : "\u5DF2\u4FDD\u5B58");
+        }).catch(function(e) {
+          dropLocal(id, value);
+          toastOnce(C.errText(e));
+        });
+      }
+      function resetAll() {
+        C.call(api, "mail.configReset", {}).then(function(r) {
+          if (r && r.values) cfg.setValues(r.values);
+          seqRef.current += 1;
+          setLocal({});
+          toastOnce(lang === "en" ? "Restored defaults" : "\u5DF2\u6062\u590D\u9ED8\u8BA4");
+        }).catch(function(e) {
+          toastOnce(C.errText(e));
+        });
+      }
+      function control(item) {
+        var value = values()[item.id];
+        if (item.type === "bool") {
+          return h(
+            "label",
+            { className: "wbml-switch" },
+            h("input", {
+              type: "checkbox",
+              checked: value === true,
+              "aria-label": labelOf(item),
+              onChange: function(e) {
+                save(item.id, e.target.checked);
+              }
+            }),
+            h("span", { className: "wbml-switch-text" }, value === true ? lang === "en" ? "On" : "\u5F00\u542F" : lang === "en" ? "Off" : "\u5173\u95ED")
+          );
+        }
+        if (item.type === "int" || item.type === "number") {
+          return h(
+            "span",
+            { className: "wbml-numwrap" },
+            h("input", {
+              className: "wbml-input wbml-num",
+              type: "number",
+              min: item.min,
+              max: item.max,
+              step: 1,
+              value: value === void 0 ? "" : value,
+              "aria-label": labelOf(item),
+              onChange: function(e) {
+                var next = Number(e.target.value);
+                if (!Number.isFinite(next) || next === value) return;
+                save(item.id, next);
+              }
+            }),
+            item.min !== void 0 || item.max !== void 0 ? h("span", { className: "wbml-muted" }, (item.min === void 0 ? "" : item.min) + "\u2013" + (item.max === void 0 ? "" : item.max)) : null
+          );
+        }
+        return h("span", { className: "wbml-muted" }, String(value === void 0 ? "" : value));
+      }
+      if (cfg.error) return h("div", { className: "wbml-page" }, h(C.Notice, { h, kind: "warn", text: cfg.error }));
+      if (!cfg.ready) return h("div", { className: "wbml-page" }, h(C.Empty, { h, text: lang === "en" ? "Loading settings\u2026" : "\u6B63\u5728\u8BFB\u53D6\u914D\u7F6E\u2026" }));
+      if (!cfg.items.length) return h("div", { className: "wbml-page" }, h(C.Empty, { h, text: lang === "en" ? "No settings available." : "\u6682\u65E0\u53EF\u914D\u7F6E\u9879\u3002" }));
+      var groups = cfg.groups.length ? cfg.groups : [{ id: "", zh: "", en: "" }];
+      var overrides = cfg.overrides || {};
+      return h(
+        "div",
+        { className: "wbml-page wbml-config" },
+        h(
+          "div",
+          { className: "wbml-head" },
+          h(
+            "div",
+            null,
+            h("h2", null, lang === "en" ? "Mail settings" : "\u90AE\u4EF6\u8BBE\u7F6E"),
+            h("p", { className: "wbml-sub" }, lang === "en" ? "Changes apply immediately and are stored on this machine only (not synced, not backed up)." : "\u6539\u52A8\u5373\u65F6\u751F\u6548\uFF0C\u53EA\u5B58\u5728\u672C\u673A meta \u8868\uFF08\u4E0D\u8FDB\u540C\u6B65\u3001\u4E0D\u8FDB\u5907\u4EFD\uFF09\u3002")
+          ),
+          h(C.Btn, { h, onClick: resetAll }, h(icons.Icon, { name: "refresh-cw", size: 13 }), h("span", null, lang === "en" ? "Restore defaults" : "\u5168\u90E8\u6062\u590D\u9ED8\u8BA4"))
+        ),
+        groups.map(function(group) {
+          var items = cfg.items.filter(function(item) {
+            return item.group === group.id;
+          });
+          if (!items.length) return null;
+          return h(
+            "section",
+            { className: "wbml-cfg-group", key: group.id || "all" },
+            group.zh || group.en ? h("h3", null, lang === "en" ? group.en || group.zh : group.zh || group.en) : null,
+            items.map(function(item) {
+              var overridden = Object.prototype.hasOwnProperty.call(overrides, item.id);
+              return h(
+                "div",
+                { className: "wbml-cfg-row", key: item.id, "data-config": item.id },
+                h(
+                  "div",
+                  { className: "wbml-cfg-main" },
+                  h(
+                    "span",
+                    { className: "wbml-cfg-label" },
+                    labelOf(item),
+                    overridden ? h("span", { className: "wbml-cfg-badge", title: lang === "en" ? "Changed from default" : "\u5DF2\u6539\u52A8" }, lang === "en" ? "changed" : "\u5DF2\u6539") : null
+                  ),
+                  hintOf(item) ? h("span", { className: "wbml-cfg-hint" }, hintOf(item)) : null
+                ),
+                h("div", { className: "wbml-cfg-ctl" }, control(item))
+              );
+            })
+          );
+        }),
+        toast ? h("div", { className: "wbml-toast", role: "status" }, toast) : null
+      );
+    };
+    module2.exports.useConfig = function useConfig(React, api, fallback) {
+      var fb = fallback || {};
+      var s = React.useState({ ready: false, values: Object.assign({}, fb), items: [], groups: [], overrides: {}, error: "", seq: 0 });
+      var state = s[0];
+      React.useEffect(function() {
+        var alive = true;
+        require_common().call(api, "mail.configGet").then(function(body) {
+          if (!alive) return;
+          var values = Object.assign({}, fb, body && body.values || {});
+          s[1]({
+            ready: true,
+            values,
+            items: body && body.items || [],
+            groups: body && body.groups || [],
+            overrides: body && body.overrides || {},
+            error: "",
+            seq: 0
+          });
+        }).catch(function(e) {
+          if (!alive) return;
+          s[1]({ ready: true, values: Object.assign({}, fb), items: [], groups: [], overrides: {}, error: require_common().errText(e), seq: 0 });
+        });
+        return function() {
+          alive = false;
+        };
+      }, []);
+      function setValues(next) {
+        if (!next || typeof next !== "object") return;
+        s[1](function(prev) {
+          return Object.assign({}, prev, { values: Object.assign({}, prev.values, next) });
+        });
+      }
+      return Object.assign({}, state, { setValues });
+    };
+  }
+});
+
+// packages/addons/mail/client/views/prefs.cjs
+var require_prefs = __commonJS({
+  "packages/addons/mail/client/views/prefs.cjs"(exports2, module2) {
+    "use strict";
+    var useConfig = require_config().useConfig;
+    var PREFS = { "images.remote": true, "display.html": true, "read.autoSeen": true, "list.pageSize": 20 };
+    function clampPageSize(value) {
+      var n = Math.round(Number(value));
+      if (!Number.isFinite(n)) n = PREFS["list.pageSize"];
+      return Math.min(Math.max(n, 10), 50);
+    }
+    function usePrefs(React, api) {
+      var cfg = useConfig(React, api, PREFS);
+      var prefs = Object.assign({}, PREFS, cfg.values || {});
+      prefs.pageSize = clampPageSize(prefs["list.pageSize"]);
+      return prefs;
+    }
+    function readBody(prefs, data, current) {
+      var html = prefs["display.html"] === false ? "" : data.html || current.html || "";
+      var all = data.attachments || current.attachments || [];
+      return { html, files: all.filter(function(a) {
+        return !a.inline;
+      }), hasText: !!(data.body || current.body) };
+    }
+    module2.exports = { PREFS, clampPageSize, usePrefs, readBody };
   }
 });
 
@@ -2403,6 +2686,7 @@ var require_messages = __commonJS({
     var Attachments = require_attachments();
     var ReplyTools = require_reply_tools();
     var MailHtml = require_mail_html();
+    var prefsApi = require_prefs();
     var iconLabel = require_icon_label();
     var Folder2 = GLYPHS2["folder"];
     var InboxIcon = GLYPHS2["inbox"];
@@ -2425,6 +2709,7 @@ var require_messages = __commonJS({
     function Inbox2(props) {
       var h = props.h, React = props.React, api = props.api, accountId = props.accountId;
       var accs = props.accounts.data && props.accounts.data.items || [];
+      var prefs = prefsApi.usePrefs(React, api), pageSize = prefs.pageSize;
       var boxes = C.useLoad(React, api, "mail.mailboxList", { accountId: accountId[0] || void 0 }, [accountId[0]]);
       var folders = boxes.data && boxes.data.items || [];
       var unified = React.useState(true), server = React.useState(null), searchRev = React.useRef(0);
@@ -2441,10 +2726,10 @@ var require_messages = __commonJS({
           unifiedInbox: !accountId[0] && unified[0],
           q: q[0],
           unread: unseen[0],
-          limit: 50,
+          limit: pageSize,
           cursor: tokens.at(-1)
         },
-        [folder[0], q[0], unseen[0], tokens, unified[0]]
+        [folder[0], q[0], unseen[0], tokens, unified[0], pageSize]
       );
       var sel = React.useState(null), msg = React.useState(null), target = React.useState("");
       var bodyState = React.useState({}), busy = React.useState(false), remote = React.useState(null);
@@ -2549,7 +2834,7 @@ var require_messages = __commonJS({
           if (rev !== selected.current) return;
           sel[1](Object.assign({}, m, d));
           loadBody(d, false, rev);
-          if (isUnread(d) && d.uid > 0) mutate("mail.messageMarkRead", { id: d.id, read: true }, false, rev);
+          if (prefs["read.autoSeen"] !== false && isUnread(d) && d.uid > 0) mutate("mail.messageMarkRead", { id: d.id, read: true }, false, rev);
         }).catch(function(e) {
           if (rev === selected.current) bodyState[1]({ error: C.errText(e) });
         });
@@ -2585,7 +2870,7 @@ var require_messages = __commonJS({
         var epoch = generation.current, args = { id: accountId[0] };
         if (!onlyFolders) {
           args.mailbox = folder[0];
-          args.limit = 50;
+          args.limit = pageSize;
           if (older) {
             if (!remote[0] || !remote[0].nextBeforeUid) return;
             args.beforeUid = remote[0].nextBeforeUid;
@@ -2655,12 +2940,7 @@ var require_messages = __commonJS({
         )
       );
       function bodyNode() {
-        var html = data.html || current.html || "";
-        var list2 = data.attachments || current.attachments || [];
-        var files = list2.filter(function(a) {
-          return !a.inline;
-        });
-        var hasText = !!(data.body || current.body);
+        var picked = prefsApi.readBody(prefs, data, current), html = picked.html, files = picked.files, hasText = picked.hasText;
         if (state.loading && !html && !hasText) return h("div", { className: "wbml-state" }, "\u6B63\u6587\u4E0B\u8F7D\u4E2D\u2026");
         if (state.error && !html && !hasText)
           return h(
@@ -2674,7 +2954,7 @@ var require_messages = __commonJS({
         return h(
           "div",
           { className: "wbml-body-wrap" },
-          html ? h(MailHtml, { h, React, api, html, attachments: list2, title: current.subject }) : h("pre", { className: "wbml-body" }, data.body || current.body || "\u6B64\u90AE\u4EF6\u65E0\u6587\u5B57\u6B63\u6587"),
+          html ? h(MailHtml, { h, React, api, html, attachments: data.attachments || current.attachments || [], title: current.subject, remoteDefault: prefs["images.remote"] !== false }) : h("pre", { className: "wbml-body" }, data.body || current.body || "\u6B64\u90AE\u4EF6\u65E0\u6587\u5B57\u6B63\u6587"),
           h(Attachments, { h, React, api, localOnly: current.uid <= 0 || !current.uidValidity, items: files }),
           data.truncated || current.bodyTruncated ? h("p", { className: "wbml-body-note" }, "\u6B63\u6587\u8F83\u957F\uFF0C\u5DF2\u622A\u65AD\u663E\u793A\u3002") : null,
           current.uid > 0 ? button("\u91CD\u65B0\u4E0B\u8F7D\u6B63\u6587", function() {
@@ -4095,14 +4375,14 @@ var require_account_card = __commonJS({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs
 var eye_exports = {};
 __export(eye_exports, {
-  __iconData: () => __iconData19,
+  __iconData: () => __iconData20,
   default: () => Eye
 });
-var __iconData19, Eye;
+var __iconData20, Eye;
 var init_eye = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs"() {
     init_createLucideIcon();
-    __iconData19 = {
+    __iconData20 = {
       name: "eye",
       size: 24,
       node: [
@@ -4116,22 +4396,22 @@ var init_eye = __esm({
         ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
       ]
     };
-    __iconData19.node;
-    Eye = createLucideIcon(__iconData19);
+    __iconData20.node;
+    Eye = createLucideIcon(__iconData20);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs
 var eye_off_exports = {};
 __export(eye_off_exports, {
-  __iconData: () => __iconData20,
+  __iconData: () => __iconData21,
   default: () => EyeOff
 });
-var __iconData20, EyeOff;
+var __iconData21, EyeOff;
 var init_eye_off = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs"() {
     init_createLucideIcon();
-    __iconData20 = {
+    __iconData21 = {
       name: "eye-off",
       size: 24,
       node: [
@@ -4153,8 +4433,8 @@ var init_eye_off = __esm({
         ["path", { d: "m2 2 20 20", key: "1ooewy" }]
       ]
     };
-    __iconData20.node;
-    EyeOff = createLucideIcon(__iconData20);
+    __iconData21.node;
+    EyeOff = createLucideIcon(__iconData21);
   }
 });
 
@@ -6202,7 +6482,7 @@ var GLYPHS = require_icons2().ICONS;
   var React = host.react;
   var h = host.h;
   var CSS = require_styles();
-  var I = { mail: GLYPHS["mail"], send: GLYPHS["send"], users: GLYPHS["users"], db: GLYPHS["database"], list: GLYPHS["list"] };
+  var I = { mail: GLYPHS["mail"], send: GLYPHS["send"], users: GLYPHS["users"], db: GLYPHS["database"], list: GLYPHS["list"], sliders: GLYPHS["sliders"] };
   function Icon2(p) {
     var C2 = I[p.name] || I.mail;
     return h(C2, { size: 14, strokeWidth: 2, className: "wbg-svg" });
@@ -6230,14 +6510,16 @@ var GLYPHS = require_icons2().ICONS;
   }
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.5.2",
+    version: "0.5.3",
     icon: GLYPHS["mail"],
     views: [
       { id: "messages", icon: tab("mail"), title: { zh: "\u90AE\u4EF6", en: "Messages" }, component: gated(require_messages(), "\u90AE\u4EF6") },
       { id: "compose", icon: tab("send"), title: { zh: "\u5199\u4FE1", en: "Compose" }, component: gated(require_compose(), "\u5199\u4FE1") },
       { id: "accounts", icon: tab("users"), title: { zh: "\u8D26\u6237", en: "Accounts" }, component: gated(require_accounts(), "\u8D26\u6237") },
       { id: "data", icon: tab("db"), title: { zh: "\u6570\u636E", en: "Data" }, component: gated(require_data(), "\u6570\u636E") },
-      { id: "actions", icon: tab("list"), title: { zh: "Action", en: "Actions" }, component: withProps(require_actions(), "Action") }
+      { id: "actions", icon: tab("list"), title: { zh: "Action", en: "Actions" }, component: withProps(require_actions(), "Action") },
+      // 配置页排在最后：它是策略入口，不该挡在每天要用的邮件前面。锁定时仍可进入（不涉及邮件内容）。
+      { id: "config", icon: tab("sliders"), title: { zh: "\u914D\u7F6E", en: "Settings" }, component: withProps(require_config(), "\u914D\u7F6E") }
     ]
   });
   module.exports = { name: "dsh-workbench-mail", inject: [], apply: function() {
