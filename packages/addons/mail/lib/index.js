@@ -43,6 +43,8 @@ export function apply(ctx) {
     // mail_draft 含私有未发正文，不加入宿主通用表清单或同步回退。
     tables: ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"],
     sync: { tables: [] },
+    // 提供落点：邮件详情动作条渲染 item.actions，别的插件可以把按钮挂进来。
+    slotHosts: ["item.actions"],
     views: [
       { id: "messages", title: { zh: "邮件", en: "Messages" } },
       { id: "compose", title: { zh: "写信", en: "Compose" } },

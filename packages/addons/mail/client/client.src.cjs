@@ -9,7 +9,8 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
   var I = { mail: GLYPHS["mail"], send: GLYPHS["send"], users: GLYPHS["users"], db: GLYPHS["database"], list: GLYPHS["list"], sliders: GLYPHS["sliders"] };
   function Icon(p) { var C = I[p.name] || I.mail; return h(C, { size: 14, strokeWidth: 2, className: "wbg-svg" }); }
   function tab(n) { return function () { return h(Icon, { name: n }); }; }
-  function withProps(Inner, title) { return function (p) { return h(Inner, { api: p.api, lang: p.lang === "en" ? "en" : "zh", h: h, React: React, title: title }); }; }
+  // Slot：宿主插槽落点（别的插件往邮件界面挂的按钮）；viewParams：跨插件跳转带来的视图参数（如回链的原信 id）。
+  function withProps(Inner, title) { return function (p) { return h(Inner, { api: p.api, lang: p.lang === "en" ? "en" : "zh", h: h, React: React, title: title, Slot: host.Slot, viewParams: p.viewParams }); }; }
   // 邮件数据视图统一过保险箱门禁：锁定期间不挂载视图，切页与轮询都拿不到任何邮件字段。
   var C = require("./ui/common.cjs"); var Gate = require("./ui/lock-gate.cjs");
   function gated(Inner, title) { return Gate.gate(withProps(Inner, title), h, React, C); }

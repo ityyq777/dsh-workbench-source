@@ -133,6 +133,9 @@ export function apply(ctx) {
         category: "work",
         tables: ["task", "task_node", "task_timeline", "task_timeline_link", "task_workspace", "task_workspace_link"],
         sync: taskSync,
+        // 贡献声明：任务往「条目操作」插槽里挂「从邮件建任务」。
+        // 与 mail 的 slotHosts 配对；对方没装时 capabilities 会写明"暂无落点"。
+        slots: ["item.actions"],
         views: [
           { id: "stats", title: { zh: "统计", en: "Stats" } },
           { id: "tasks", title: { zh: "记录", en: "Records" } },

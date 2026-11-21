@@ -43,7 +43,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.8.3";
+export const SHELL_VERSION = "0.8.4";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -187,6 +187,8 @@ export function apply(ctx: any): void {
       error: rec.error,
       tables: rec.def.tables ?? [],
       views: rec.def.views ?? [],
+      slots: rec.def.slots ?? [],
+      slotHosts: rec.def.slotHosts ?? [],
       sync: {
         tables:
           rec.def.sync?.tables?.map((t) => ({ name: t.name, mode: t.mode })) ??

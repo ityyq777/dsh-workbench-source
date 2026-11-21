@@ -37,6 +37,8 @@ var set = icons.create("wbt", {
   tag: require("lucide-react/icons/tag").default,
   clock: require("lucide-react/icons/clock").default,
   refresh: require("lucide-react/icons/refresh-cw").default,
+  // 「原邮件」回链：从邮件建出来的任务要能跳回去看一眼原文。
+  mail: require("lucide-react/icons/mail").default,
 }, {});
 
 module.exports = { ICONS: set.ICONS, Icon: set.Icon };

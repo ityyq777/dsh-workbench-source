@@ -268,4 +268,18 @@ module.exports = [
     "@media (max-width:760px){.wbt-body{flex-direction:column;gap:8px}.wbt-nav{flex-direction:row;width:100%;flex:0 0 auto;overflow-x:auto;border-right:none;border-bottom:1px solid var(--wbt-line);padding:0 0 6px}.wbt-tab{width:auto;white-space:nowrap;padding:6px 9px}.wbt-tab.on{box-shadow:inset 0 -2px 0 var(--wbt-accent)}.wbt-nav-sep{width:1px;height:18px;flex:none;margin:auto 4px}.wbt-tree-slot{flex:0 0 auto;width:auto;margin-right:0}.wbt-pathrow .wbt-search{flex:1 1 160px;max-width:none}}",
     "@media (max-width:760px){.wbt-filter-panel{width:100%;flex:0 0 auto;padding:8px;max-height:40%}.wbt-filter-toggle{display:inline-flex}.wbt-filter-panel:not(.expanded) .wbt-filter-content{display:none}.wbt-filter-panel.expanded .wbt-filter-content{padding-top:10px}.wbt-content{width:100%;box-sizing:border-box}}",
     "@media (max-width:640px){.wbt-form{grid-template-columns:1fr}.wbt-drawer{width:94vw}.wbt-search{width:100%}.wbt-item{padding:9px}.wbt-ops{width:100%;justify-content:flex-end}}",
+    // ── 插槽贡献：渲染在别的插件的界面里（如邮件详情动作条） ──
+    // 那里没有 .wbt-root，--wbt-* 变量不存在，所以每个变量都带主题变量兜底。
+    ".wbtx-slot{position:relative;display:inline-flex;align-items:center;gap:6px}",
+    ".wbtx-slot-btn{font-size:12.5px;white-space:nowrap}",
+    ".wbtx-slot-btn[aria-expanded=true]{border-color:var(--wbt-accent,var(--wb-accent));color:var(--wbt-accent,var(--wb-accent))}",
+    ".wbtx-slot-panel{position:absolute;top:calc(100% + 6px);right:0;z-index:40;display:flex;flex-direction:column;gap:8px;width:264px;padding:10px;border-radius:10px;border:1px solid var(--wbt-line,var(--wb-border));background:var(--dsw-alias-bg-layer-1,var(--wb-card,transparent));box-shadow:0 12px 28px color-mix(in oklab,var(--wbt-line,var(--wb-border)) 60%,transparent);text-align:left}",
+    ".wbtx-slot-row{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--wbt-muted,var(--wb-muted))}",
+    ".wbtx-slot-input{width:100%;box-sizing:border-box;font-size:12.5px}",
+    ".wbtx-slot-muted{font-size:12px;color:var(--wbt-muted,var(--wb-muted))}",
+    ".wbtx-slot-foot{display:flex;justify-content:flex-end;gap:8px}",
+    ".wbtx-slot-done{display:inline-flex;align-items:center;gap:8px;font-size:12px}",
+    ".wbtx-slot-note{color:var(--wbt-muted,var(--wb-muted))}",
+    ".wbtx-slot-link{border:0;background:transparent;padding:0;font:inherit;font-size:12px;color:var(--wbt-accent,var(--wb-accent));cursor:pointer;text-decoration:underline}",
+    ".wbt-mailback{font-size:11.5px;padding:2px 7px}",
 ].concat(require("../../../lib/filter-checklist-styles.cjs"), require("../../../lib/date-picker-styles.cjs")("wbt")).join("\n");

@@ -23,14 +23,16 @@ module.exports = function createAddonNav() {
     takePending: function () { var want = pending; pending = null; return want; },
 
     /// 返回是否真的跳了。addonId 必填，viewId 为空时落到插件首页视图。
-    navigate: function (panelId, addonId, viewId) {
+    /// params 是视图参数（如 {messageId}），面板未挂载时一并暂存。
+    navigate: function (panelId, addonId, viewId, params) {
       if (!addonId) return false;
       var id = String(addonId);
       var vid = viewId ? String(viewId) : "";
+      var extra = params && typeof params === "object" ? params : null;
       // 1) 工作台页面已挂载：页面内路由即可，不折腾面板。
-      if (hook && hook(id, vid) !== false) return true;
+      if (hook && hook(id, vid, extra) !== false) return true;
       // 2) 未挂载：记待办 + 切面板；面板挂载后由 WorkbenchPage 消费。
-      pending = { addonId: id, viewId: vid };
+      pending = { addonId: id, viewId: vid, params: extra };
       if (layout) {
         try { layout.selectPanel(panelId); return true; } catch (e) { /* 面板未注册：保持原地 */ }
       }

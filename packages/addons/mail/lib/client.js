@@ -2535,6 +2535,80 @@ var require_reader_context = __commonJS({
   }
 });
 
+// packages/addons/mail/client/views/detail-tools.cjs
+var require_detail_tools = __commonJS({
+  "packages/addons/mail/client/views/detail-tools.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function detailTools(o) {
+      var h = o.h;
+      var button = o.button;
+      var current = o.current;
+      var unread = o.unread;
+      return h(
+        "div",
+        { className: "wbml-tools" },
+        button(
+          unread ? "\u6807\u4E3A\u5DF2\u8BFB" : "\u6807\u4E3A\u672A\u8BFB",
+          function() {
+            o.mutate("mail.messageMarkRead", { id: current.id, read: unread }, false, o.selected);
+          },
+          o.busy,
+          void 0,
+          unread ? o.MailOpen : o.Mail
+        ),
+        h(
+          "select",
+          {
+            "aria-label": "\u76EE\u6807\u6587\u4EF6\u5939",
+            className: "wbml-input",
+            value: o.target,
+            onChange: function(e) {
+              o.setTarget(e.target.value);
+            }
+          },
+          h("option", { value: "" }, "\u9009\u62E9\u76EE\u6807\u6587\u4EF6\u5939"),
+          o.folders.filter(function(f) {
+            return !f.localOnly && f.account_id === current.accountId && f.name !== current.mailbox;
+          }).map(function(f) {
+            return h("option", { key: f.id, value: f.name }, f.name);
+          })
+        ),
+        button(
+          "\u79FB\u52A8",
+          function() {
+            o.mutate("mail.messageMove", { id: current.id, mailbox: o.target }, true, o.selected);
+          },
+          o.busy || !o.target,
+          void 0,
+          o.Move
+        ),
+        button(
+          "\u79FB\u5165\u5E9F\u7EB8\u7BD3",
+          function() {
+            o.mutate("mail.messageDelete", { id: current.id }, true, o.selected);
+          },
+          o.busy,
+          void 0,
+          o.Trash
+        ),
+        // 跨插件插槽：别的插件（目前是任务）把按钮挂到邮件详情动作条上。
+        // 没装贡献方时落点自己渲染 null，不占位。
+        h(o.Slot, {
+          slot: "item.actions",
+          ownerId: "wb-addon-mail",
+          lang: o.lang,
+          item: {
+            kind: "mail.message",
+            id: String(current.id),
+            title: String(current.subject || ""),
+            subtitle: o.senderDetail(current)
+          }
+        })
+      );
+    };
+  }
+});
+
 // packages/addons/mail/client/ui/reader-styles.cjs
 var require_reader_styles = __commonJS({
   "packages/addons/mail/client/ui/reader-styles.cjs"(exports2, module2) {
@@ -2843,6 +2917,7 @@ var require_messages = __commonJS({
     var Search2 = GLYPHS2["search"];
     var messageRows = require_message_rows();
     var Reader = require_reader_context();
+    var detailTools = require_detail_tools();
     var detailPane = require_detail_pane();
     var Mail2 = GLYPHS2["mail"];
     var MailOpen2 = GLYPHS2["mail-open"];
@@ -2987,6 +3062,21 @@ var require_messages = __commonJS({
           if (rev === selected.current) bodyState[1]({ error: C.errText(e) });
         });
       }
+      var deepId = props.viewParams && props.viewParams.messageId ? String(props.viewParams.messageId) : "";
+      var deepDone = React.useRef("");
+      React.useEffect(function() {
+        if (!deepId || deepDone.current === deepId) return;
+        deepDone.current = deepId;
+        var rev = ++selected.current;
+        bodyState[1]({ loading: true });
+        C.call(api, "mail.messageGet", { id: deepId }).then(function(d) {
+          if (rev !== selected.current) return;
+          sel[1](d);
+          loadBody(d, false, rev);
+        }).catch(function(e) {
+          if (rev !== selected.current) bodyState[1]({ error: "\u6253\u5F00\u6765\u6E90\u90AE\u4EF6\u5931\u8D25\uFF1A" + C.errText(e) });
+        });
+      }, [deepId]);
       function mutate(action, args, leave, rev) {
         if (busyRef.current) return;
         var epoch = generation.current;
@@ -3336,59 +3426,27 @@ var require_messages = __commonJS({
               previous: previous && !busy[0] ? () => open(previous, true) : null,
               next: next && !busy[0] ? () => open(next, true) : null
             },
-            current.uid > 0 ? h(
-              "div",
-              { className: "wbml-tools" },
-              button(
-                isUnread(current) ? "\u6807\u4E3A\u5DF2\u8BFB" : "\u6807\u4E3A\u672A\u8BFB",
-                function() {
-                  mutate(
-                    "mail.messageMarkRead",
-                    { id: current.id, read: isUnread(current) },
-                    false,
-                    selected.current
-                  );
-                },
-                busy[0],
-                void 0,
-                isUnread(current) ? MailOpen2 : Mail2
-              ),
-              h(
-                "select",
-                {
-                  "aria-label": "\u76EE\u6807\u6587\u4EF6\u5939",
-                  className: "wbml-input",
-                  value: target[0],
-                  onChange: function(e) {
-                    target[1](e.target.value);
-                  }
-                },
-                h("option", { value: "" }, "\u9009\u62E9\u76EE\u6807\u6587\u4EF6\u5939"),
-                folders.filter(function(f) {
-                  return !f.localOnly && f.account_id === current.accountId && f.name !== current.mailbox;
-                }).map(function(f) {
-                  return h("option", { key: f.id, value: f.name }, f.name);
-                })
-              ),
-              button(
-                "\u79FB\u52A8",
-                function() {
-                  mutate("mail.messageMove", { id: current.id, mailbox: target[0] }, true, selected.current);
-                },
-                busy[0] || !target[0],
-                void 0,
-                Move
-              ),
-              button(
-                "\u79FB\u5165\u5E9F\u7EB8\u7BD3",
-                function() {
-                  mutate("mail.messageDelete", { id: current.id }, true, selected.current);
-                },
-                busy[0],
-                void 0,
-                Trash2
-              )
-            ) : null,
+            current.uid > 0 ? detailTools({
+              h,
+              button,
+              current,
+              unread: isUnread(current),
+              busy: busy[0],
+              target: target[0],
+              setTarget: function(v) {
+                target[1](v);
+              },
+              folders,
+              mutate,
+              selected: selected.current,
+              lang: props.lang,
+              senderDetail,
+              Slot: props.Slot,
+              Mail: Mail2,
+              MailOpen: MailOpen2,
+              Move,
+              Trash: Trash2
+            }) : null,
             h(
               "div",
               { className: "wbml-detail-content", key: current.id },
@@ -6648,7 +6706,7 @@ var GLYPHS = require_icons2().ICONS;
   }
   function withProps(Inner, title) {
     return function(p) {
-      return h(Inner, { api: p.api, lang: p.lang === "en" ? "en" : "zh", h, React, title });
+      return h(Inner, { api: p.api, lang: p.lang === "en" ? "en" : "zh", h, React, title, Slot: host.Slot, viewParams: p.viewParams });
     };
   }
   var C = require_common();

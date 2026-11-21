@@ -281,6 +281,18 @@ export interface DomainDef {
   /** UI 视图贡献点：客户端模块注册同名 view 后出现在工作台首页 */
   views?: DomainViewDecl[];
   /**
+   * 声明本插件会往哪些界面插槽贡献组件（宿主白名单内的 id，见 WbSlotCatalogEntry）。
+   * 只用于能力清单说明缺口：声明了贡献但落点属主没装时，capabilities 会明确写出"无落点"。
+   * 真正的渲染由客户端插槽注册表负责，这里不承载组件。
+   */
+  slots?: string[];
+  /**
+   * 声明本插件的界面**渲染**哪些插槽（即它会放 <Slot> 落点）。
+   * 与 slots 合起来才能回答「谁贡献、谁提供落点」：贡献方声明了但没有任何已启用域提供落点，
+   * capabilities 会明确写出"暂无落点，该贡献不会显示"。
+   */
+  slotHosts?: string[];
+  /**
    * 首页栏目 id（宿主定义的枚举，见 /workbench/api/domains 返回的 categories）。
    * 未声明、空串或未知 id 一律落兜底栏目「其他」，宿主打一条日志，不影响注册。
    */
@@ -345,8 +357,70 @@ export interface DomainPublicInfo {
   views: DomainViewDecl[];
   /** 是否实现数据导出/导入，客户端据此启用备份选项 */
   backup: { export: boolean; import: boolean };
+  /** 声明贡献的界面插槽 id（未声明为空数组） */
+  slots: string[];
+  /** 声明渲染的界面插槽 id（即它提供落点） */
+  slotHosts: string[];
   /** 同步参与方式（给 UI/诊断用） */
   sync: { tables: { name: string; mode: SyncMode }[] };
+}
+
+/** 宿主声明的界面插槽 id；插件只能往这些槽贡献组件。 */
+export type WbSlotId = "item.actions" | "view.toolbar" | "settings.sections" | "home.card.footer";
+
+/** 插槽目录项：宿主给出 id、中英文名、说明与 props 契约。 */
+export interface WbSlotCatalogEntry {
+  id: WbSlotId | string;
+  title: DomainViewTitle;
+  description: string;
+  /** 渲染时传给贡献组件的 props 形状说明（给人看） */
+  props: Record<string, string>;
+}
+
+/**
+ * 条目引用：item.actions 这类"针对单条对象"的插槽统一用它。
+ * 定义在宿主而不是属主，是为了贡献方可移植——同一个按钮能挂到邮件、站点、连接器条目上。
+ */
+export interface WbItemRef {
+  /** 带命名空间的对象类型，如 "mail.message" */
+  kind: string;
+  id: string;
+  title?: string;
+  subtitle?: string;
+  url?: string;
+  /** 属主自用字段；贡献方不得依赖，只可原样透传 */
+  [key: string]: unknown;
+}
+
+/** 一条插槽贡献：插件向别的插件的界面挂一个组件。 */
+export interface WbSlotContribution {
+  slot: WbSlotId | string;
+  /** 同一插槽内唯一；重复注册后到者被拒，不覆盖 */
+  id: string;
+  /** 升序；缺省 100。相同 order 按 id 字典序，保证与安装顺序无关 */
+  order?: number;
+  title?: string | DomainViewTitle;
+  icon?: any;
+  component: any;
+  /** 单独调用 registerSlot 时的归属插件；写在 registerAddon.slots 里可省略 */
+  addonId?: string;
+}
+
+/** 贡献组件收到的 props。 */
+export interface WbSlotRenderProps {
+  slot: string;
+  ownerId: string | null;
+  contributorId: string;
+  lang: "zh" | "en";
+  t(key: string): string;
+  /** 贡献方自己域的 api（跨域写入仍走它自己的 action 与审计） */
+  api: any;
+  /** 跳到贡献方自己的视图 */
+  onNavigate(viewId?: string, params?: Record<string, unknown>): boolean;
+  /** item.actions 专用 */
+  item?: WbItemRef;
+  /** 其它插槽的载荷，按 WbSlotCatalogEntry.props 约定 */
+  [key: string]: unknown;
 }
 
 /** 浏览器侧宿主桥（宿主注入到 window.__WB_HOST__）。 */
@@ -360,6 +434,17 @@ export interface WbHostBridge {
   readonly addons: WbClientModule[];
   /** 最近一次客户端加载错误 */
   error(): string | null;
+  /** 跨插件跳转：跳到某个插件的某个视图，可带视图参数 */
+  navigateAddon(addonId: string, viewId?: string, params?: Record<string, unknown>): boolean;
+  /** 插槽落点组件：属主插件在自己界面里渲染它 */
+  Slot: any;
+  /** 宿主插槽目录（白名单） */
+  readonly slots: WbSlotCatalogEntry[];
+  /** 单独注册贡献；推荐用 registerAddon.slots（卸载插件时能按 addonId 撤销） */
+  registerSlot(addonId: string, contrib: WbSlotContribution): boolean;
+  registerSlot(contrib: WbSlotContribution): boolean;
+  /** 诊断快照 */
+  slotContributions(slotId: string): { slot: string; id: string; addonId: string; order: number; title: string | DomainViewTitle | null; ok: boolean; error: string | null }[];
 }
 
 /** 业务客户端模块注册的视图。 */
@@ -375,4 +460,6 @@ export interface WbClientModule {
     /** 可选函数组件；宿主传 size=14、strokeWidth=2、aria-hidden=true。非函数忽略；lucide forwardRef 请包函数。 */
     icon?: any;
   }[];
+  /** 往别的插件界面贡献的组件；声明在这里才能随插件卸载一起撤销。 */
+  slots?: WbSlotContribution[];
 }

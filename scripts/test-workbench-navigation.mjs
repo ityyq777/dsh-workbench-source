@@ -29,7 +29,11 @@ const DOMAINS = [
 
 function reactStub() {
   const createElement = (type, props, ...children) => ({ type, props: props || {}, children });
+  // 插槽落点用 Component 继承出错误边界，stub 必须提供可用 .call 的构造器。
+  function Component(props) { this.props = props; this.state = {}; }
+  Component.prototype.setState = function (next) { this.state = Object.assign({}, this.state, next); };
   return {
+    Component,
     createElement,
     useState: (v) => [typeof v === "function" ? v() : v, () => {}],
     useEffect: () => {},

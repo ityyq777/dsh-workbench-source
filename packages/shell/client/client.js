@@ -749,12 +749,14 @@ var require_addon_nav = __commonJS({
           return want;
         },
         /// 返回是否真的跳了。addonId 必填，viewId 为空时落到插件首页视图。
-        navigate: function(panelId, addonId, viewId) {
+        /// params 是视图参数（如 {messageId}），面板未挂载时一并暂存。
+        navigate: function(panelId, addonId, viewId, params) {
           if (!addonId) return false;
           var id = String(addonId);
           var vid = viewId ? String(viewId) : "";
-          if (hook && hook(id, vid) !== false) return true;
-          pending = { addonId: id, viewId: vid };
+          var extra = params && typeof params === "object" ? params : null;
+          if (hook && hook(id, vid, extra) !== false) return true;
+          pending = { addonId: id, viewId: vid, params: extra };
           if (layout) {
             try {
               layout.selectPanel(panelId);
@@ -1471,6 +1473,250 @@ var require_system_pages = __commonJS({
       ];
     }
     module2.exports = { agentAccessPage, manageCards };
+  }
+});
+
+// packages/shell/client/slot-catalog.cjs
+var require_slot_catalog = __commonJS({
+  "packages/shell/client/slot-catalog.cjs"(exports2, module2) {
+    "use strict";
+    var SLOTS = [
+      {
+        id: "item.actions",
+        title: { zh: "\u6761\u76EE\u64CD\u4F5C", en: "Item actions" },
+        description: "\u5217\u8868\u6216\u8BE6\u60C5\u91CC\u9488\u5BF9\u5355\u6761\u5BF9\u8C61\u7684\u64CD\u4F5C\u6309\u94AE\uFF0C\u5982\u628A\u4E00\u5C01\u90AE\u4EF6\u53D8\u6210\u4EFB\u52A1\u3002",
+        props: { item: "WbItemRef\uFF1A{kind,id,title?,subtitle?,url?}\uFF0C\u7531\u5C5E\u4E3B\u586B\u5199\uFF1Bkind \u5E26\u547D\u540D\u7A7A\u95F4\uFF0C\u5982 mail.message" }
+      },
+      {
+        id: "view.toolbar",
+        title: { zh: "\u89C6\u56FE\u5DE5\u5177\u6761", en: "View toolbar" },
+        description: "\u63D2\u4EF6\u89C6\u56FE\u9876\u90E8\u5DE5\u5177\u6761\u4E0A\u7684\u8FFD\u52A0\u6309\u94AE\u3002",
+        props: { view: "{addonId, viewId}\uFF1A\u5F53\u524D\u6B63\u5728\u770B\u7684\u63D2\u4EF6\u89C6\u56FE" }
+      },
+      {
+        id: "settings.sections",
+        title: { zh: "\u8BBE\u7F6E\u5206\u533A", en: "Settings sections" },
+        description: "\u914D\u7F6E\u9875\u4E0A\u8FFD\u52A0\u7684\u4E00\u6BB5\u8BBE\u7F6E\u5757\u3002",
+        props: { owner: "string\uFF1A\u843D\u70B9\u6240\u5C5E\u63D2\u4EF6 id" }
+      },
+      {
+        id: "home.card.footer",
+        title: { zh: "\u9996\u9875\u5361\u7247\u5E95\u90E8", en: "Home card footer" },
+        description: "\u5DE5\u4F5C\u53F0\u9996\u9875\u63D2\u4EF6\u5361\u7247\u5E95\u90E8\u7684\u4E00\u884C\u6587\u5B57\u6216\u6309\u94AE\u3002",
+        props: { card: "{addonId,title}\uFF1A\u5361\u7247\u5BF9\u5E94\u7684\u63D2\u4EF6" }
+      }
+    ];
+    var INDEX = {};
+    SLOTS.forEach(function(slot) {
+      INDEX[slot.id] = slot;
+    });
+    module2.exports = {
+      slots: SLOTS,
+      has: function(id) {
+        return Object.prototype.hasOwnProperty.call(INDEX, String(id || ""));
+      },
+      get: function(id) {
+        return INDEX[String(id || "")] || null;
+      },
+      ids: function() {
+        return SLOTS.map(function(s) {
+          return s.id;
+        });
+      }
+    };
+  }
+});
+
+// packages/shell/client/slot-registry.cjs
+var require_slot_registry = __commonJS({
+  "packages/shell/client/slot-registry.cjs"(exports2, module2) {
+    "use strict";
+    var DEFAULT_ORDER = 100;
+    var UNKNOWN_OWNER = "unknown";
+    function idCompare(a, b) {
+      return a < b ? -1 : a > b ? 1 : 0;
+    }
+    module2.exports = function createSlotRegistry(catalog, onChange) {
+      var bySlot = {};
+      var problems = [];
+      function notify() {
+        if (typeof onChange === "function") {
+          try {
+            onChange();
+          } catch (e) {
+            console.error("[dsh-workbench] \u63D2\u69FD\u53D8\u66F4\u901A\u77E5\u5931\u8D25", e);
+          }
+        }
+      }
+      function reject(reason, detail) {
+        problems.push(Object.assign({ reason }, detail || {}));
+        console.error("[dsh-workbench] \u63D2\u69FD\u8D21\u732E\u88AB\u62D2\u7EDD\uFF08" + reason + "\uFF09", detail && (detail.slot || "") + "/" + (detail && detail.id || ""), detail && detail.addonId || "");
+        return false;
+      }
+      function add(contrib, addonId) {
+        var owner = typeof addonId === "string" && addonId ? addonId : UNKNOWN_OWNER;
+        if (!contrib || typeof contrib !== "object") return reject("invalid-contribution", { addonId: owner });
+        var slotId = String(contrib.slot || "");
+        var id = String(contrib.id || "");
+        if (!id) return reject("invalid-id", { slot: slotId, addonId: owner });
+        if (typeof contrib.component !== "function") return reject("invalid-component", { slot: slotId, id, addonId: owner });
+        if (!catalog.has(slotId)) return reject("unknown-slot", { slot: slotId, id, addonId: owner });
+        var bucket = bySlot[slotId] || (bySlot[slotId] = {});
+        if (Object.prototype.hasOwnProperty.call(bucket, id)) return reject("duplicate-id", { slot: slotId, id, addonId: owner });
+        var order = Number(contrib.order);
+        bucket[id] = {
+          slot: slotId,
+          id,
+          addonId: owner,
+          order: Number.isFinite(order) ? order : DEFAULT_ORDER,
+          title: contrib.title === void 0 ? null : contrib.title,
+          icon: typeof contrib.icon === "function" ? contrib.icon : null,
+          component: contrib.component,
+          error: null
+        };
+        notify();
+        return true;
+      }
+      function addAll(list, addonId) {
+        if (!Array.isArray(list)) return 0;
+        var accepted = 0;
+        for (var i = 0; i < list.length; i += 1) if (add(list[i], addonId)) accepted += 1;
+        return accepted;
+      }
+      function removeAddon(addonId) {
+        var removed = 0;
+        Object.keys(bySlot).forEach(function(slotId) {
+          var bucket = bySlot[slotId];
+          Object.keys(bucket).forEach(function(id) {
+            if (bucket[id].addonId !== addonId) return;
+            delete bucket[id];
+            removed += 1;
+          });
+          if (!Object.keys(bucket).length) delete bySlot[slotId];
+        });
+        if (removed) notify();
+        return removed;
+      }
+      function markError(slotId, id, error) {
+        var bucket = bySlot[slotId];
+        if (!bucket || !bucket[id]) return;
+        bucket[id].error = String(error && error.message || error || "unknown");
+      }
+      function get(slotId) {
+        var bucket = bySlot[String(slotId || "")];
+        if (!bucket) return [];
+        return Object.keys(bucket).map(function(id) {
+          return bucket[id];
+        }).sort(function(a, b) {
+          return a.order === b.order ? idCompare(a.id, b.id) : a.order - b.order;
+        });
+      }
+      function describe(slotId) {
+        return get(slotId).map(function(entry) {
+          return { slot: entry.slot, id: entry.id, addonId: entry.addonId, order: entry.order, title: entry.title, ok: entry.error === null, error: entry.error };
+        });
+      }
+      return {
+        add,
+        addAll,
+        removeAddon,
+        markError,
+        get,
+        describe,
+        problems: function() {
+          return problems.slice();
+        },
+        clearProblems: function() {
+          problems.length = 0;
+        },
+        size: function(slotId) {
+          return get(slotId).length;
+        }
+      };
+    };
+  }
+});
+
+// packages/shell/client/slot-outlet.cjs
+var require_slot_outlet = __commonJS({
+  "packages/shell/client/slot-outlet.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function createSlotOutlet(react2, deps) {
+      var h2 = react2.createElement;
+      var Component = react2.Component;
+      function pickLang(value) {
+        return value === "en" ? "en" : "zh";
+      }
+      function payloadOf(props) {
+        var out = {};
+        Object.keys(props || {}).forEach(function(key) {
+          if (key === "slot" || key === "lang" || key === "t" || key === "ownerId" || key === "children" || key === "key") return;
+          out[key] = props[key];
+        });
+        return out;
+      }
+      function makeBoundary() {
+        function Boundary(props) {
+          Component.call(this, props);
+          this.state = { failed: false };
+          this.componentDidCatch = function(error) {
+            this.setState({ failed: true });
+            deps.registry.markError(props.slot, props.contribution.id, error);
+            console.error("[dsh-workbench] \u63D2\u69FD\u8D21\u732E\u6E32\u67D3\u5931\u8D25\uFF1A" + props.slot + "/" + props.contribution.id, error);
+          };
+        }
+        Boundary.prototype = Object.create(Component.prototype);
+        Boundary.prototype.constructor = Boundary;
+        Boundary.prototype.render = function() {
+          return this.state.failed ? null : this.props.children;
+        };
+        return Boundary;
+      }
+      var SlotBoundary = makeBoundary();
+      function Slot(props) {
+        var bump = react2.useState(0);
+        react2.useEffect(function() {
+          var off = deps.subscribe(function() {
+            bump[1](function(x) {
+              return x + 1;
+            });
+          });
+          return typeof off === "function" ? off : function() {
+          };
+        }, []);
+        var entries = deps.registry.get(props.slot);
+        if (!entries.length) return null;
+        var lang = pickLang(props.lang);
+        var t = typeof props.t === "function" ? props.t : function(key) {
+          return key;
+        };
+        var payload = payloadOf(props);
+        var ownerId = typeof props.ownerId === "string" ? props.ownerId : null;
+        return h2(
+          "span",
+          { className: "wb-slot", "data-slot": props.slot, style: { display: "contents" } },
+          entries.map(function(entry) {
+            var childProps = Object.assign({}, payload, {
+              slot: props.slot,
+              ownerId,
+              contributorId: entry.addonId,
+              lang,
+              t,
+              api: deps.apiFor(entry.addonId),
+              onNavigate: function(viewId, params) {
+                return deps.navigate(entry.addonId, viewId, params);
+              }
+            });
+            return h2(
+              SlotBoundary,
+              { key: entry.id, slot: props.slot, contribution: entry },
+              h2(entry.component, childProps)
+            );
+          })
+        );
+      }
+      return { Slot, SlotBoundary, payloadOf };
+    };
   }
 });
 
@@ -2327,6 +2573,10 @@ var CSS = require_styles();
 var createPanellistIcon = require_panellist_icon();
 var addonNav = require_addon_nav()();
 var SystemPages = require_system_pages();
+var slotCatalog = require_slot_catalog();
+var slotRegistry = require_slot_registry()(slotCatalog, function() {
+  notifyStore();
+});
 var registry = /* @__PURE__ */ new Map();
 var listeners = /* @__PURE__ */ new Set();
 var apiCache = /* @__PURE__ */ new Map();
@@ -2417,12 +2667,27 @@ function apiFor(id) {
   apiCache.set(id, api);
   return api;
 }
+var slotOutlet = require_slot_outlet()(react, {
+  registry: slotRegistry,
+  apiFor,
+  navigate: function(addonId, viewId, params) {
+    return addonNav.navigate(NS, addonId, viewId, params);
+  },
+  subscribe: function(fn) {
+    storeListeners.add(fn);
+    return function() {
+      storeListeners.delete(fn);
+    };
+  }
+});
 function registerAddon(mod) {
   if (!mod || typeof mod.id !== "string" || !Array.isArray(mod.views)) {
     console.error("[dsh-workbench] registerAddon \u53C2\u6570\u4E0D\u5408\u6CD5", mod);
     return;
   }
+  if (registry.has(mod.id)) slotRegistry.removeAddon(mod.id);
   registry.set(mod.id, mod);
+  if (Array.isArray(mod.slots) && mod.slots.length) slotRegistry.addAll(mod.slots, mod.id);
   notifyStore();
 }
 function setAddons(list) {
@@ -2433,7 +2698,9 @@ function setAddons(list) {
     alive[a.id] = a;
   });
   registry.forEach(function(_m, id) {
-    if (!alive[id]) registry.delete(id);
+    if (alive[id]) return;
+    registry.delete(id);
+    slotRegistry.removeAddon(id);
   });
   notifyStore();
 }
@@ -2509,8 +2776,25 @@ window.__WB_HOST__ = {
     return lastAddonError;
   },
   // 第二个参数是插件内的视图 id（如消息的 inbox）；不传保持落到 views[0]，旧插件不受影响。
-  navigateAddon: function(addonId, viewId) {
-    return addonNav.navigate(NS, addonId, viewId);
+  // 第三个参数是视图参数（如 {messageId}），由宿主路由带过去，插件用 viewParams 读。
+  navigateAddon: function(addonId, viewId, params) {
+    return addonNav.navigate(NS, addonId, viewId, params);
+  },
+  // ── 跨插件界面插槽 ──
+  // 落点组件：属主插件在自己界面里 h(host.Slot, {slot, item, lang, t, ownerId})。
+  Slot: slotOutlet.Slot,
+  // 宿主目录（白名单），插件可据此判断某个插槽是否存在。
+  slots: slotCatalog.slots,
+  // 单独注册一个贡献：registerSlot({slot,id,order,component,addonId}) 或 registerSlot(addonId, contrib)。
+  // 推荐写在 registerAddon 的 slots 数组里——那样卸载插件时宿主能按 addonId 一起撤销。
+  registerSlot: function(a, b) {
+    var addonId = typeof a === "string" ? a : a && a.addonId ? String(a.addonId) : "unknown";
+    var contrib = typeof a === "string" ? b : a;
+    return slotRegistry.add(contrib, addonId);
+  },
+  // 诊断快照（可 JSON 化）：[{slot,id,addonId,order,title,ok,error}]
+  slotContributions: function(slotId) {
+    return slotRegistry.describe(slotId);
   }
 };
 function useApi() {
@@ -2791,28 +3075,28 @@ function WorkbenchPage(props) {
     if (m && m.icon) return h(m.icon, { size: 18, strokeWidth: 1.9, "aria-hidden": "true" });
     return String(title || "?").slice(0, 1);
   }
-  function openAddon(a, viewId) {
+  function openAddon(a, viewId, params) {
     var m = registry.get(a.id);
     var list = m && m.views || a.views || [];
     var hit = viewId ? list.filter(function(v2) {
       return v2 && v2.id === viewId;
     })[0] : null;
     var v = hit || list[0] || null;
-    go("addon:" + a.id + ":" + (v && v.id ? v.id : ""));
+    go("addon:" + a.id + ":" + (v && v.id ? v.id : ""), params);
   }
   react.useEffect(function() {
-    var off = addonNav.setHook(function(addonId, viewId) {
+    var off = addonNav.setHook(function(addonId, viewId, params) {
       var t2 = addons.filter(function(a) {
         return a && a.id === addonId;
       })[0];
-      if (t2) openAddon(t2, viewId);
+      if (t2) openAddon(t2, viewId, params);
       return !!t2;
     });
     var want = addons.length ? addonNav.takePending() : null;
     var hit = want ? addons.filter(function(a) {
       return a && a.id === want.addonId;
     })[0] : null;
-    if (hit) openAddon(hit, want.viewId);
+    if (hit) openAddon(hit, want.viewId, want.params);
     return off;
   }, [addons]);
   function pageHead(title, desc) {

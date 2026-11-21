@@ -14,6 +14,7 @@ var Download = GLYPHS["download"];
 var Search = GLYPHS["search"];
 var messageRows = require("./message-rows.cjs");
 var Reader = require("./reader-context.cjs");
+var detailTools = require("./detail-tools.cjs");
 var detailPane = require("./detail-pane.cjs");
 var Mail = GLYPHS["mail"];
 var MailOpen = GLYPHS["mail-open"];
@@ -174,6 +175,26 @@ function Inbox(props) {
         if (rev === selected.current) bodyState[1]({ error: C.errText(e) });
       });
   }
+  // 跨插件跳转（任务里的「原邮件」）：带 messageId 进来就直接打开那封信。
+  // 不要求它在当前列表里——messageGet 按 id 取，跨账户、跨文件夹都能读到。
+  var deepId = props.viewParams && props.viewParams.messageId ? String(props.viewParams.messageId) : "";
+  var deepDone = React.useRef("");
+  React.useEffect(function () {
+    if (!deepId || deepDone.current === deepId) return;
+    deepDone.current = deepId;
+    var rev = ++selected.current;
+    bodyState[1]({ loading: true });
+    C.call(api, "mail.messageGet", { id: deepId })
+      .then(function (d) {
+        if (rev !== selected.current) return;
+        sel[1](d);
+        loadBody(d, false, rev);
+      })
+      .catch(function (e) {
+        if (rev !== selected.current) bodyState[1]({ error: "打开来源邮件失败：" + C.errText(e) });
+      });
+  }, [deepId]);
+
   function mutate(action, args, leave, rev) {
     if (busyRef.current) return;
     var epoch = generation.current;
@@ -521,61 +542,13 @@ function Inbox(props) {
             next: next && !busy[0] ? () => open(next, true) : null,
           },
             current.uid > 0
-              ? h(
-                  "div",
-                  { className: "wbml-tools" },
-                  button(
-                    isUnread(current) ? "标为已读" : "标为未读",
-                    function () {
-                      mutate(
-                        "mail.messageMarkRead",
-                        { id: current.id, read: isUnread(current) },
-                        false,
-                        selected.current,
-                      );
-                    },
-                    busy[0],
-                    undefined,
-                    isUnread(current) ? MailOpen : Mail,
-                  ),
-                  h(
-                    "select",
-                    {
-                      "aria-label": "目标文件夹",
-                      className: "wbml-input",
-                      value: target[0],
-                      onChange: function (e) {
-                        target[1](e.target.value);
-                      },
-                    },
-                    h("option", { value: "" }, "选择目标文件夹"),
-                    folders
-                      .filter(function (f) {
-                        return !f.localOnly && f.account_id === current.accountId && f.name !== current.mailbox;
-                      })
-                      .map(function (f) {
-                        return h("option", { key: f.id, value: f.name }, f.name);
-                      }),
-                  ),
-                  button(
-                    "移动",
-                    function () {
-                      mutate("mail.messageMove", { id: current.id, mailbox: target[0] }, true, selected.current);
-                    },
-                    busy[0] || !target[0],
-                    undefined,
-                    Move,
-                  ),
-                  button(
-                    "移入废纸篓",
-                    function () {
-                      mutate("mail.messageDelete", { id: current.id }, true, selected.current);
-                    },
-                    busy[0],
-                    undefined,
-                    Trash,
-                  ),
-                )
+              ? detailTools({
+                  h, button, current, unread: isUnread(current), busy: busy[0],
+                  target: target[0], setTarget: function (v) { target[1](v); },
+                  folders: folders, mutate: mutate, selected: selected.current,
+                  lang: props.lang, senderDetail: senderDetail, Slot: props.Slot,
+                  Mail: Mail, MailOpen: MailOpen, Move: Move, Trash: Trash,
+                })
               : null,
             h(
               "div",

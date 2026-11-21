@@ -11,6 +11,9 @@ var createPanellistIcon = require("./panellist-icon.cjs");
 var addonNav = require("./addon-nav.cjs")();
 // 共享 Action 页：宿主自己的「Agent 权限」页复用它，数据源是 actions.list（宿主 action 不属于任何业务域）。
 var SystemPages = require("./system-pages.cjs");
+// 跨插件界面插槽：目录（白名单）+ 注册表（纯逻辑）。贡献变更要通知页面重渲染。
+var slotCatalog = require("./slot-catalog.cjs");
+var slotRegistry = require("./slot-registry.cjs")(slotCatalog, function () { notifyStore(); });
 
 // ── 子插件宿主桥（必须在任何 addon client.js 之前就位）──
 var registry = new Map();     // addonId -> AddonClientModule
@@ -73,12 +76,23 @@ function apiFor(id) {
   apiCache.set(id, api);
   return api;
 }
+// 插槽落点：贡献者拿到的 api 是它自己域的（跨域写入仍走它自己的 action 与审计）；
+// 贡献变更沿用 store 通知链，注册晚于渲染也能补上。
+var slotOutlet = require("./slot-outlet.cjs")(react, {
+  registry: slotRegistry,
+  apiFor: apiFor,
+  navigate: function (addonId, viewId, params) { return addonNav.navigate(NS, addonId, viewId, params); },
+  subscribe: function (fn) { storeListeners.add(fn); return function () { storeListeners.delete(fn); }; },
+});
 function registerAddon(mod) {
   if (!mod || typeof mod.id !== "string" || !Array.isArray(mod.views)) {
     console.error("[dsh-workbench] registerAddon 参数不合法", mod);
     return;
   }
+  // 同一个 id 重复注册（热重载）先撤掉旧贡献，否则新声明会被判成重复 id 而整批丢失。
+  if (registry.has(mod.id)) slotRegistry.removeAddon(mod.id);
   registry.set(mod.id, mod);
+  if (Array.isArray(mod.slots) && mod.slots.length) slotRegistry.addAll(mod.slots, mod.id);
   notifyStore();
 }
 function setAddons(list) {
@@ -86,7 +100,12 @@ function setAddons(list) {
   addonState.loaded = true;
   var alive = {};
   addonState.addons.forEach(function (a) { alive[a.id] = a; });
-  registry.forEach(function (_m, id) { if (!alive[id]) registry.delete(id); });
+  registry.forEach(function (_m, id) {
+    if (alive[id]) return;
+    registry.delete(id);
+    // 插件被卸掉，它对别的插件界面的贡献必须一起消失，不能留一个渲染即报错的孤儿。
+    slotRegistry.removeAddon(id);
+  });
   notifyStore();
 }
 function refreshAddons() {
@@ -141,7 +160,22 @@ window.__WB_HOST__ = {
   get addons() { return addonState.addons; },
   error: function () { return lastAddonError; },
   // 第二个参数是插件内的视图 id（如消息的 inbox）；不传保持落到 views[0]，旧插件不受影响。
-  navigateAddon: function (addonId, viewId) { return addonNav.navigate(NS, addonId, viewId); },
+  // 第三个参数是视图参数（如 {messageId}），由宿主路由带过去，插件用 viewParams 读。
+  navigateAddon: function (addonId, viewId, params) { return addonNav.navigate(NS, addonId, viewId, params); },
+  // ── 跨插件界面插槽 ──
+  // 落点组件：属主插件在自己界面里 h(host.Slot, {slot, item, lang, t, ownerId})。
+  Slot: slotOutlet.Slot,
+  // 宿主目录（白名单），插件可据此判断某个插槽是否存在。
+  slots: slotCatalog.slots,
+  // 单独注册一个贡献：registerSlot({slot,id,order,component,addonId}) 或 registerSlot(addonId, contrib)。
+  // 推荐写在 registerAddon 的 slots 数组里——那样卸载插件时宿主能按 addonId 一起撤销。
+  registerSlot: function (a, b) {
+    var addonId = typeof a === "string" ? a : (a && a.addonId ? String(a.addonId) : "unknown");
+    var contrib = typeof a === "string" ? b : a;
+    return slotRegistry.add(contrib, addonId);
+  },
+  // 诊断快照（可 JSON 化）：[{slot,id,addonId,order,title,ok,error}]
+  slotContributions: function (slotId) { return slotRegistry.describe(slotId); },
 };
 
 function useApi() {
@@ -382,22 +416,22 @@ function WorkbenchPage(props) {
     if (m && m.icon) return h(m.icon, { size: 18, strokeWidth: 1.9, "aria-hidden": "true" });
     return String(title || "?").slice(0, 1);
   }
-  function openAddon(a, viewId) {
+  function openAddon(a, viewId, params) {
     var m = registry.get(a.id);
     var list = (m && m.views) || (a.views) || [];
     var hit = viewId ? list.filter(function (v) { return v && v.id === viewId; })[0] : null;
     var v = hit || list[0] || null;
-    go("addon:" + a.id + ":" + (v && v.id ? v.id : ""));
+    go("addon:" + a.id + ":" + (v && v.id ? v.id : ""), params);
   }
   react.useEffect(function () { // 登记页面内跳转钩子，并消费「切面板前暂存的目标」直达插件视图
-    var off = addonNav.setHook(function (addonId, viewId) {
+    var off = addonNav.setHook(function (addonId, viewId, params) {
       var t = addons.filter(function (a) { return a && a.id === addonId; })[0];
-      if (t) openAddon(t, viewId); // 命中插件就跳它，交给它自己兜第一视图
+      if (t) openAddon(t, viewId, params); // 命中插件就跳它，交给它自己兜第一视图
       return !!t;
     });
     var want = addons.length ? addonNav.takePending() : null; // 列表没到前先别取，否则会丢待办
     var hit = want ? addons.filter(function (a) { return a && a.id === want.addonId; })[0] : null;
-    if (hit) openAddon(hit, want.viewId);
+    if (hit) openAddon(hit, want.viewId, want.params);
     return off;
   }, [addons]);
   function pageHead(title, desc) {

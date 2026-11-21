@@ -15,7 +15,7 @@
       "id": "wb-addon-mail",
       "title": "邮件",
       "version": "0.5.5",
-      "minShell": "0.8.0",
+      "minShell": "0.8.4",
       "tables": [
         "mail_account",
         "mail_mailbox",

@@ -72,18 +72,8 @@
 
   // 时间线样式并入插件全局样式：时间线页、时间线弹窗与「新建任务」弹窗共用一份，
   // 避免只在某个视图里 <style> 注入、其他入口退回浏览器默认按钮。
-  var CSS = require("./ui/styles.cjs") + "\n" + require("./timeline/timeline-styles.cjs");
-
-  function injectCss() {
-    if (typeof document === "undefined") return;
-    var old = document.getElementById("wb-addon-tasks-v2-css");
-    if (old) { old.textContent = CSS; return; }
-    var s = document.createElement("style");
-    s.id = "wb-addon-tasks-v2-css";
-    s.setAttribute("data-wb-addon", "wb-addon-tasks");
-    s.textContent = CSS;
-    document.head.appendChild(s);
-  }
+  // 抽到 ui/inject-css.cjs 是因为插槽贡献组件渲染在别的插件界面里，也要能自己保证样式到位。
+  var injectCss = require("./ui/inject-css.cjs");
 
   function cx() {
     return Array.prototype.filter.call(arguments, Boolean).join(" ");
@@ -331,6 +321,9 @@
 
   var CreateModal = require("./modals/create-modal.cjs")({ React: React, allTables: allTables, tagNames: tagNames, splitTags: splitTags, today: today, addDays: addDays, hostHasAddon: hostHasAddon });
 
+  // 插槽贡献：把「从邮件建任务」挂进邮件视图的动作条。
+  var slotTaskFromMessage = require("./views/slot-task-from-message.cjs")({ React: React, Icon: Icon, injectCss: injectCss });
+
   var TimelineModal = require("./timeline/task-timeline-modal.cjs")(React, statusInfo);
 
   function DoneModal(props) {
@@ -387,6 +380,11 @@
     id: "wb-addon-tasks",
     version: "5.2.33",
     icon: ICONS["list-checks"],
+    // 贡献声明写在 registerAddon 里：卸载任务插件时宿主按 addonId 一起撤销，
+    // 不会在邮件里留一个渲染即报错的孤儿按钮。
+    slots: slotTaskFromMessage
+      ? [{ slot: "item.actions", id: "tasks.create-from-mail", order: 100, component: slotTaskFromMessage }]
+      : [],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "记录", en: "Records" }, component: TasksView },

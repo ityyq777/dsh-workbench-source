@@ -6118,6 +6118,9 @@ var require_copy = __commonJS({
         create: "\u521B\u5EFA",
         close: "\u5173\u95ED",
         taskId: "\u4EFB\u52A1 ID",
+        backToMail: "\u539F\u90AE\u4EF6",
+        backToMailHint: "\u56DE\u5230\u521B\u5EFA\u8FD9\u6761\u4EFB\u52A1\u7684\u90AE\u4EF6",
+        backToMailMissing: "\u90AE\u4EF6\u63D2\u4EF6\u672A\u5B89\u88C5",
         addGroup: "\u65B0\u5EFA\u7EC4",
         addTable: "\u65B0\u5EFA\u8868",
         rename: "\u91CD\u547D\u540D",
@@ -6284,6 +6287,9 @@ var require_copy = __commonJS({
         create: "Create",
         close: "Close",
         taskId: "Task ID",
+        backToMail: "Original mail",
+        backToMailHint: "Back to the message this task came from",
+        backToMailMissing: "Mail add-on is not installed",
         addGroup: "New group",
         addTable: "New table",
         rename: "Rename",
@@ -7610,6 +7616,29 @@ var init_refresh_cw = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail.mjs
+var mail_exports = {};
+__export(mail_exports, {
+  __iconData: () => __iconData35,
+  default: () => Mail
+});
+var __iconData35, Mail;
+var init_mail = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/mail.mjs"() {
+    init_createLucideIcon();
+    __iconData35 = {
+      name: "mail",
+      size: 24,
+      node: [
+        ["path", { d: "m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7", key: "132q7q" }],
+        ["rect", { x: "2", y: "4", width: "20", height: "16", rx: "2", key: "izxlao" }]
+      ]
+    };
+    __iconData35.node;
+    Mail = createLucideIcon(__iconData35);
+  }
+});
+
 // packages/addons/tasks/client/ui/icons.cjs
 var require_icons2 = __commonJS({
   "packages/addons/tasks/client/ui/icons.cjs"(exports2, module2) {
@@ -7649,7 +7678,9 @@ var require_icons2 = __commonJS({
       down: (init_chevron_down(), __toCommonJS(chevron_down_exports)).default,
       tag: (init_tag(), __toCommonJS(tag_exports)).default,
       clock: (init_clock(), __toCommonJS(clock_exports)).default,
-      refresh: (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default
+      refresh: (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
+      // 「原邮件」回链：从邮件建出来的任务要能跳回去看一眼原文。
+      mail: (init_mail(), __toCommonJS(mail_exports)).default
     }, {});
     module2.exports = { ICONS: set.ICONS, Icon: set.Icon };
   }
@@ -9028,7 +9059,21 @@ var require_styles = __commonJS({
       ".wbt-countdown.overdue{color:var(--dsw-alias-label-primary-inverted,#fff);background:var(--dsw-alias-state-error-primary,#e5484d);border-color:transparent}",
       "@media (max-width:760px){.wbt-body{flex-direction:column;gap:8px}.wbt-nav{flex-direction:row;width:100%;flex:0 0 auto;overflow-x:auto;border-right:none;border-bottom:1px solid var(--wbt-line);padding:0 0 6px}.wbt-tab{width:auto;white-space:nowrap;padding:6px 9px}.wbt-tab.on{box-shadow:inset 0 -2px 0 var(--wbt-accent)}.wbt-nav-sep{width:1px;height:18px;flex:none;margin:auto 4px}.wbt-tree-slot{flex:0 0 auto;width:auto;margin-right:0}.wbt-pathrow .wbt-search{flex:1 1 160px;max-width:none}}",
       "@media (max-width:760px){.wbt-filter-panel{width:100%;flex:0 0 auto;padding:8px;max-height:40%}.wbt-filter-toggle{display:inline-flex}.wbt-filter-panel:not(.expanded) .wbt-filter-content{display:none}.wbt-filter-panel.expanded .wbt-filter-content{padding-top:10px}.wbt-content{width:100%;box-sizing:border-box}}",
-      "@media (max-width:640px){.wbt-form{grid-template-columns:1fr}.wbt-drawer{width:94vw}.wbt-search{width:100%}.wbt-item{padding:9px}.wbt-ops{width:100%;justify-content:flex-end}}"
+      "@media (max-width:640px){.wbt-form{grid-template-columns:1fr}.wbt-drawer{width:94vw}.wbt-search{width:100%}.wbt-item{padding:9px}.wbt-ops{width:100%;justify-content:flex-end}}",
+      // ── 插槽贡献：渲染在别的插件的界面里（如邮件详情动作条） ──
+      // 那里没有 .wbt-root，--wbt-* 变量不存在，所以每个变量都带主题变量兜底。
+      ".wbtx-slot{position:relative;display:inline-flex;align-items:center;gap:6px}",
+      ".wbtx-slot-btn{font-size:12.5px;white-space:nowrap}",
+      ".wbtx-slot-btn[aria-expanded=true]{border-color:var(--wbt-accent,var(--wb-accent));color:var(--wbt-accent,var(--wb-accent))}",
+      ".wbtx-slot-panel{position:absolute;top:calc(100% + 6px);right:0;z-index:40;display:flex;flex-direction:column;gap:8px;width:264px;padding:10px;border-radius:10px;border:1px solid var(--wbt-line,var(--wb-border));background:var(--dsw-alias-bg-layer-1,var(--wb-card,transparent));box-shadow:0 12px 28px color-mix(in oklab,var(--wbt-line,var(--wb-border)) 60%,transparent);text-align:left}",
+      ".wbtx-slot-row{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--wbt-muted,var(--wb-muted))}",
+      ".wbtx-slot-input{width:100%;box-sizing:border-box;font-size:12.5px}",
+      ".wbtx-slot-muted{font-size:12px;color:var(--wbt-muted,var(--wb-muted))}",
+      ".wbtx-slot-foot{display:flex;justify-content:flex-end;gap:8px}",
+      ".wbtx-slot-done{display:inline-flex;align-items:center;gap:8px;font-size:12px}",
+      ".wbtx-slot-note{color:var(--wbt-muted,var(--wb-muted))}",
+      ".wbtx-slot-link{border:0;background:transparent;padding:0;font:inherit;font-size:12px;color:var(--wbt-accent,var(--wb-accent));cursor:pointer;text-decoration:underline}",
+      ".wbt-mailback{font-size:11.5px;padding:2px 7px}"
     ].concat(require_filter_checklist_styles(), require_date_picker_styles()("wbt")).join("\n");
   }
 });
@@ -9069,6 +9114,27 @@ var require_timeline_styles = __commonJS({
   }
 });
 
+// packages/addons/tasks/client/ui/inject-css.cjs
+var require_inject_css = __commonJS({
+  "packages/addons/tasks/client/ui/inject-css.cjs"(exports2, module2) {
+    "use strict";
+    var CSS = require_styles() + "\n" + require_timeline_styles();
+    module2.exports = function injectTasksCss() {
+      if (typeof document === "undefined") return;
+      var old = document.getElementById("wb-addon-tasks-v2-css");
+      if (old) {
+        old.textContent = CSS;
+        return;
+      }
+      var s = document.createElement("style");
+      s.id = "wb-addon-tasks-v2-css";
+      s.setAttribute("data-wb-addon", "wb-addon-tasks");
+      s.textContent = CSS;
+      document.head.appendChild(s);
+    };
+  }
+});
+
 // packages/addons/tasks/client/ui/highlight.cjs
 var require_highlight2 = __commonJS({
   "packages/addons/tasks/client/ui/highlight.cjs"(exports2, module2) {
@@ -9091,6 +9157,23 @@ var require_task_item = __commonJS({
       var statusInfo = deps.statusInfo, stars = deps.stars, pClass = deps.pClass;
       var today = deps.today, daysBetween = deps.daysBetween, cx = deps.cx;
       var Icon2 = deps.Icon, Countdown = deps.Countdown, PathCrumbs = deps.PathCrumbs;
+      var MAIL_REF = /wb-mail:([A-Za-z0-9_.:-]+)/;
+      function hostBridge() {
+        return typeof window !== "undefined" && window.__WB_HOST__ ? window.__WB_HOST__ : null;
+      }
+      function mailAddonInstalled() {
+        var host = hostBridge();
+        var list = host && host.addons;
+        if (!Array.isArray(list)) return false;
+        return list.some(function(a) {
+          return a && a.id === "wb-addon-mail" && a.enabled !== false;
+        });
+      }
+      function openOriginalMail(messageId) {
+        var host = hostBridge();
+        if (!host || typeof host.navigateAddon !== "function") return;
+        host.navigateAddon("wb-addon-mail", "messages", { messageId });
+      }
       function TaskItem(props) {
         var t = props.t;
         var initialMode = props.bodyMode === "text" ? "text" : "markdown";
@@ -9206,13 +9289,26 @@ var require_task_item = __commonJS({
         );
         var opsNode = h("div", { className: "wbt-ops", key: "ops" }, ops);
         var tagBlock = tagNodes.length ? h("div", { className: "wbt-tags", key: "tags" }, tagNodes) : null;
+        var mailMatch = MAIL_REF.exec(String(task.description || ""));
+        var mailReady = mailMatch ? mailAddonInstalled() : false;
+        var mailBlock = mailMatch ? h("button", {
+          className: "wbt-btn ghost wbt-mailback",
+          key: "mailback",
+          type: "button",
+          title: mailReady ? t.backToMailHint : t.backToMailMissing,
+          disabled: !mailReady,
+          onClick: function(e) {
+            e.stopPropagation();
+            openOriginalMail(mailMatch[1]);
+          }
+        }, h(Icon2, { name: "mail", size: 13 }), t.backToMail) : null;
         var wsList = Array.isArray(task.workspaces) ? task.workspaces : [];
         var wsBlock = wsList.length ? h("div", { className: "wbt-wschips", key: "workspaces" }, wsList.map(function(w) {
           return h("span", { className: "wbt-wschip wbt-wschip-ro", key: String(w.id), title: w.dir || "" }, (w.dir ? "" : "\u25E6 ") + (w.title || w.id));
         })) : null;
         var metaBlock = meta.length ? h("div", { className: "wbt-foot", key: "meta" }, h("div", { className: "wbt-meta" }, meta)) : null;
         var pathBlock = task.path && task.path.length ? h("div", { className: "wbt-taskpath", key: "path" }, h(PathCrumbs, { path: task.path, t, onPick: props.onPathPick })) : null;
-        var metaZone = tagBlock || wsBlock || metaBlock || pathBlock ? h("div", { className: "wbt-metazone", key: "metazone" }, tagBlock, wsBlock, metaBlock, pathBlock) : null;
+        var metaZone = tagBlock || mailBlock || wsBlock || metaBlock || pathBlock ? h("div", { className: "wbt-metazone", key: "metazone" }, tagBlock, mailBlock, wsBlock, metaBlock, pathBlock) : null;
         var idNode = String(task.id || "") ? h("div", {
           className: "wbt-item-id",
           key: "taskid",
@@ -10289,6 +10385,197 @@ var require_create_modal = __commonJS({
         );
       }
       return CreateModal;
+    };
+  }
+});
+
+// packages/addons/tasks/client/views/slot-task-from-message.cjs
+var require_slot_task_from_message = __commonJS({
+  "packages/addons/tasks/client/views/slot-task-from-message.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(deps) {
+      var React = deps.React;
+      var h = React.createElement;
+      var Icon2 = deps.Icon;
+      var injectCss = deps.injectCss;
+      var KIND = "mail.message";
+      function flattenTables(nodes, out) {
+        var list = out || [];
+        (nodes || []).forEach(function(node) {
+          if (!node) return;
+          if (String(node.type) === "1") list.push({ id: String(node.id), name: String(node.name || node.path || node.id) });
+          if (node.children && node.children.length) flattenTables(node.children, list);
+        });
+        return list;
+      }
+      function defaultTitle(item, en) {
+        var subject = String(item && item.title || "").trim();
+        if (subject) return subject;
+        return en ? "Follow up: (no subject)" : "\u8DDF\u8FDB\uFF1A\uFF08\u65E0\u4E3B\u9898\uFF09";
+      }
+      function buildDescription(item, en) {
+        var lines = [en ? "Created from a mail message." : "\u7531\u90AE\u4EF6\u521B\u5EFA\u3002"];
+        if (item.subtitle) lines.push((en ? "From: " : "\u53D1\u4EF6\u4EBA\uFF1A") + item.subtitle);
+        if (item.title) lines.push((en ? "Subject: " : "\u4E3B\u9898\uFF1A") + item.title);
+        lines.push((en ? "Source mail: " : "\u6765\u6E90\u90AE\u4EF6\uFF1A") + "wb-mail:" + item.id);
+        return lines.join("\n");
+      }
+      return function TaskFromMessage(props) {
+        React.useEffect(function() {
+          injectCss();
+        }, []);
+        var item = props.item;
+        var en = props.lang === "en";
+        var api = props.api;
+        var open = React.useState(false);
+        var tables = React.useState(null);
+        var tableId = React.useState("");
+        var title = React.useState("");
+        var busy = React.useState(false);
+        var error = React.useState("");
+        var created = React.useState(null);
+        if (!item || item.kind !== KIND || !item.id) return null;
+        function loadTables() {
+          if (tables[0] !== null) return;
+          tables[1](void 0);
+          api.call("taskNodes.tree").then(function(r) {
+            if (!r || !r.ok) throw new Error(r && r.error || "tree load failed");
+            var list = flattenTables(Array.isArray(r.result) ? r.result : []);
+            tables[1](list);
+            if (list.length === 1) tableId[1](list[0].id);
+          }).catch(function(e) {
+            tables[1]([]);
+            error[1](String(e && e.message || e));
+          });
+        }
+        function toggle() {
+          if (!open[0]) {
+            title[1](defaultTitle(item, en));
+            loadTables();
+          }
+          open[1](!open[0]);
+        }
+        function submit() {
+          if (busy[0]) return;
+          var name = String(title[0] || "").trim();
+          if (!name) {
+            error[1](en ? "Title is required" : "\u6807\u9898\u4E0D\u80FD\u4E3A\u7A7A");
+            return;
+          }
+          if (!tableId[0]) {
+            error[1](en ? "Pick a target table" : "\u8BF7\u9009\u62E9\u76EE\u6807\u8868");
+            return;
+          }
+          busy[1](true);
+          error[1]("");
+          api.call("tasks.create", {
+            title: name,
+            description: buildDescription(item, en),
+            tableId: tableId[0],
+            dedupeKey: KIND + ":" + item.id
+          }).then(function(r) {
+            if (!r || !r.ok) throw new Error(r && r.error || "create failed");
+            created[1](r.result || {});
+            open[1](false);
+          }).catch(function(e) {
+            error[1](String(e && e.message || e));
+          }).finally(function() {
+            busy[1](false);
+          });
+        }
+        if (created[0]) {
+          var task = created[0];
+          var shortId = String(task.id || "").slice(0, 8);
+          return h(
+            "span",
+            { className: "wbtx-slot-done" },
+            h("span", { className: "wbtx-slot-note" }, (en ? "Task created" : "\u5DF2\u5EFA\u4EFB\u52A1") + (shortId ? " \xB7 " + shortId : "")),
+            h("button", {
+              type: "button",
+              className: "wbtx-slot-link",
+              onClick: function(e) {
+                e.stopPropagation();
+                props.onNavigate("tasks");
+              }
+            }, en ? "Open tasks" : "\u53BB\u4EFB\u52A1\u9875")
+          );
+        }
+        var loading = tables[0] === void 0;
+        var options = Array.isArray(tables[0]) ? tables[0] : [];
+        return h(
+          "span",
+          { className: "wbtx-slot" },
+          h("button", {
+            type: "button",
+            className: "wbt-btn wbtx-slot-btn",
+            "aria-expanded": !!open[0],
+            disabled: busy[0],
+            title: en ? "Create a task from this message" : "\u628A\u8FD9\u5C01\u90AE\u4EF6\u53D8\u6210\u4EFB\u52A1",
+            onClick: function(e) {
+              e.stopPropagation();
+              toggle();
+            }
+          }, h(Icon2, { name: "plus", size: 13 }), en ? "New task" : "\u5EFA\u4EFB\u52A1"),
+          open[0] ? h(
+            "span",
+            { className: "wbtx-slot-panel" },
+            h(
+              "label",
+              { className: "wbtx-slot-row" },
+              h("span", null, en ? "Title" : "\u6807\u9898"),
+              h("input", {
+                className: "wbt-input wbtx-slot-input",
+                value: title[0],
+                autoFocus: true,
+                onChange: function(e) {
+                  title[1](e.target.value);
+                },
+                onKeyDown: function(e) {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    submit();
+                  }
+                  if (e.key === "Escape") open[1](false);
+                }
+              })
+            ),
+            h(
+              "label",
+              { className: "wbtx-slot-row" },
+              h("span", null, en ? "Table" : "\u76EE\u6807\u8868"),
+              loading ? h("span", { className: "wbtx-slot-muted" }, en ? "Loading\u2026" : "\u8BFB\u53D6\u4E2D\u2026") : options.length ? h("select", {
+                className: "wbt-input wbtx-slot-input",
+                value: tableId[0],
+                onChange: function(e) {
+                  tableId[1](e.target.value);
+                }
+              }, [h("option", { key: "", value: "" }, en ? "Pick a table" : "\u9009\u62E9\u76EE\u6807\u8868")].concat(
+                options.map(function(o) {
+                  return h("option", { key: o.id, value: o.id }, o.name);
+                })
+              )) : h("span", { className: "wbtx-slot-muted" }, en ? "No task table yet" : "\u8FD8\u6CA1\u6709\u4EFB\u52A1\u8868")
+            ),
+            error[0] ? h("span", { className: "wbt-err", role: "alert" }, error[0]) : null,
+            h(
+              "span",
+              { className: "wbtx-slot-foot" },
+              h("button", { type: "button", className: "wbt-btn ghost", onClick: function(e) {
+                e.stopPropagation();
+                open[1](false);
+              } }, en ? "Cancel" : "\u53D6\u6D88"),
+              h("button", {
+                type: "button",
+                className: "wbt-btn primary",
+                disabled: busy[0] || loading || !options.length,
+                onClick: function(e) {
+                  e.stopPropagation();
+                  submit();
+                }
+              }, busy[0] ? "\u2026" : en ? "Create" : "\u521B\u5EFA")
+            )
+          ) : null
+        );
+      };
     };
   }
 });
@@ -13144,20 +13431,7 @@ var require_timeline_view = __commonJS({
       title: over ? "\u5DF2\u8D85\u8FC7\u8BA1\u5212\u5B8C\u6210\u65F6\u95F4" : "\u8DDD\u8BA1\u5212\u5B8C\u6210"
     }, h(Icon2, { name: "clock", size: 11 }), h("span", { className: "wbt-cd-num" }, text));
   }
-  var CSS = require_styles() + "\n" + require_timeline_styles();
-  function injectCss() {
-    if (typeof document === "undefined") return;
-    var old = document.getElementById("wb-addon-tasks-v2-css");
-    if (old) {
-      old.textContent = CSS;
-      return;
-    }
-    var s = document.createElement("style");
-    s.id = "wb-addon-tasks-v2-css";
-    s.setAttribute("data-wb-addon", "wb-addon-tasks");
-    s.textContent = CSS;
-    document.head.appendChild(s);
-  }
+  var injectCss = require_inject_css();
   function cx() {
     return Array.prototype.filter.call(arguments, Boolean).join(" ");
   }
@@ -13473,6 +13747,7 @@ var require_timeline_view = __commonJS({
     );
   }
   var CreateModal = require_create_modal()({ React, allTables, tagNames, splitTags, today, addDays, hostHasAddon });
+  var slotTaskFromMessage = require_slot_task_from_message()({ React, Icon: Icon2, injectCss });
   var TimelineModal = require_task_timeline_modal()(React, statusInfo);
   function DoneModal(props) {
     var t = props.t;
@@ -13544,6 +13819,9 @@ var require_timeline_view = __commonJS({
     id: "wb-addon-tasks",
     version: "5.2.33",
     icon: ICONS["list-checks"],
+    // 贡献声明写在 registerAddon 里：卸载任务插件时宿主按 addonId 一起撤销，
+    // 不会在邮件里留一个渲染即报错的孤儿按钮。
+    slots: slotTaskFromMessage ? [{ slot: "item.actions", id: "tasks.create-from-mail", order: 100, component: slotTaskFromMessage }] : [],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TasksStatsView, keepAlive: true },
       { id: "tasks", icon: tabIcon("list"), title: { zh: "\u8BB0\u5F55", en: "Records" }, component: TasksView },

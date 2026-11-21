@@ -60,6 +60,10 @@
   [`01-代码风格与目录.md`](docs/AGENTS规范/01-代码风格与目录.md)。
 - **插件页面自证数据源**：业务页面只用本插件注册的 action 取数，不走宿主统一接口。
   见 [`02-ActionSchema与页面数据.md`](docs/AGENTS规范/02-ActionSchema与页面数据.md)。
+- **跨插件界面只能走插槽**：想让别的插件界面出现入口，用 `registerAddon({ slots: [...] })`
+  贡献到宿主白名单插槽（`item.actions` / `view.toolbar` / `settings.sections` / `home.card.footer`），
+  禁止改对方代码或整页嵌套；改完跑 `pnpm test:slots`（插槽 id 打错不会报错，只会永不显示）。
+  见 [`04-UI规范.md`](docs/AGENTS规范/04-UI规范.md) 与 [`跨插件界面插槽设计.md`](docs/跨插件界面插槽设计.md)。
 - **发布用官方 npm registry**，发布顺序 host → tasks → tags → sites；GitHub token、npm token
   只存本机 0600 私有文件。见
   [`05-发布与插件市场.md`](docs/AGENTS规范/05-发布与插件市场.md)。
@@ -71,6 +75,6 @@
 | [`01-代码风格与目录.md`](docs/AGENTS规范/01-代码风格与目录.md)           | ESLint/格式化、目录分层与纯路径迁移、单文件规模与拆分                | 写代码、迁目录、拆文件前           |
 | [`02-ActionSchema与页面数据.md`](docs/AGENTS规范/02-ActionSchema与页面数据.md) | Action schema 硬规则、改完必跑、文档同步、插件页面自证数据源    | 增删改 action、写插件页面时        |
 | [`03-安装与交付.md`](docs/AGENTS规范/03-安装与交付.md)                   | profile 版本核对、本地重装、桌面端 CLI、避免手工拷一半                | 交付插件、改客户端、准备重启前     |
-| [`04-UI规范.md`](docs/AGENTS规范/04-UI规范.md)                           | 全宽、桌面端顶栏、主题跟随、共享组件复用、响应式与实机验证          | 改布局、样式、图标、主题、写插件视图时 |
+| [`04-UI规范.md`](docs/AGENTS规范/04-UI规范.md)                           | 全宽、桌面端顶栏、主题跟随、共享组件复用、跨插件插槽、响应式与实机验证 | 改布局、样式、图标、主题、写插件视图、加跨插件入口时 |
 | [`05-发布与插件市场.md`](docs/AGENTS规范/05-发布与插件市场.md)           | 版本升级、构建发布树、npm 发布、GitHub 镜像、市场收录                | 发版、更新市场条目时               |
 | [`06-仓库结构与cloud子模块.md`](docs/AGENTS规范/06-仓库结构与cloud子模块.md) | 宿主与 cloud 子模块的提交、构建、部署关系                        | 改云端代码、更新子模块时           |
