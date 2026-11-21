@@ -6,6 +6,9 @@ var overlayStyle = require("./style.cjs");
 var layerModule = require("./layer.cjs");
 
 var DOMAIN = "wb-addon-danmaku";
+// 宿主 /domains/:id/actions/:action 的 action 段要完整 action 名（danmaku.configGet），
+// 只写短名 configGet 会 404，导致弹幕层永远读不到用户配置、退回内置默认值。
+var ACTION_PREFIX = "danmaku.";
 var STYLE_ID = "wbdm-dm-styles";
 var THEME_DEBOUNCE = 700;
 
@@ -41,7 +44,7 @@ function injectStyles() {
 }
 
 function call(action, args) {
-  return fetch("/workbench/api/domains/" + DOMAIN + "/actions/" + action, {
+  return fetch("/workbench/api/domains/" + DOMAIN + "/actions/" + encodeURIComponent(ACTION_PREFIX + action), {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(args || {}),
@@ -98,6 +101,7 @@ function mount() {
   var surface = null;
   var sse = null;
   var retries = 0;
+  var configLoaded = false;
   var themeTimer = null;
   var lastThemeKey = "";
   var typingTimer = null;
@@ -134,6 +138,7 @@ function mount() {
         var result = res && res.result ? res.result : res;
         if (res && res.ok && result && result.values) {
           retries = 0;
+          configLoaded = true;
           apply(result.values);
           return;
         }
@@ -168,7 +173,7 @@ function mount() {
 
   // 暂停只跟“正在打字”有关：点进输入框但没输入时不暂停，停手一段时间后自动继续。
   function onTyping(event) {
-    if (!config.pauseOnInput) return;
+    if (!configLoaded || !config.pauseOnInput) return;
     if (!editableFrom(event.target)) return;
     window.clearTimeout(typingTimer);
     layer.pause(true);
@@ -179,7 +184,7 @@ function mount() {
   }
 
   function onFocusOut(event) {
-    if (!config.pauseOnInput) return;
+    if (!configLoaded || !config.pauseOnInput) return;
     if (!editableFrom(event.target)) return;
     window.clearTimeout(typingTimer);
     typingTimer = null;
@@ -215,6 +220,12 @@ function mount() {
         refresh();
       }
     });
+    sse.onopen = function () {
+      if (!configLoaded) {
+        retries = 0;
+        refresh();
+      }
+    };
     sse.onerror = function () {
       /* EventSource 自带重连 */
     };

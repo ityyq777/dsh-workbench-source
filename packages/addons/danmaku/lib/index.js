@@ -110,7 +110,7 @@ export function apply(ctx) {
         title: "弹幕",
         description:
           "把自建弹幕轮播在整个 DSH 界面，并可叠加到整个桌面；单一宿主调度、SSE 与 Electron helper 双投递，含弹幕库/配置/数据/Action 四个视图",
-        version: "0.2.2",
+        version: "0.2.3",
         tables: TABLES,
         sync: { tables: [] },
         views: [

@@ -1275,6 +1275,7 @@ var require_mount = __commonJS({
     var overlayStyle = require_style();
     var layerModule = require_layer();
     var DOMAIN = "wb-addon-danmaku";
+    var ACTION_PREFIX = "danmaku.";
     var STYLE_ID2 = "wbdm-dm-styles";
     var THEME_DEBOUNCE = 700;
     var DEFAULTS = {
@@ -1306,7 +1307,7 @@ var require_mount = __commonJS({
       (document.head || document.documentElement).appendChild(style);
     }
     function call(action, args) {
-      return fetch("/workbench/api/domains/" + DOMAIN + "/actions/" + action, {
+      return fetch("/workbench/api/domains/" + DOMAIN + "/actions/" + encodeURIComponent(ACTION_PREFIX + action), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(args || {})
@@ -1359,6 +1360,7 @@ var require_mount = __commonJS({
       var surface = null;
       var sse = null;
       var retries = 0;
+      var configLoaded = false;
       var themeTimer = null;
       var lastThemeKey = "";
       var typingTimer = null;
@@ -1391,6 +1393,7 @@ var require_mount = __commonJS({
           var result = res && res.result ? res.result : res;
           if (res && res.ok && result && result.values) {
             retries = 0;
+            configLoaded = true;
             apply(result.values);
             return;
           }
@@ -1419,7 +1422,7 @@ var require_mount = __commonJS({
         return target.closest('input, textarea, [contenteditable=""], [contenteditable="true"], [contenteditable="plaintext-only"]');
       }
       function onTyping(event) {
-        if (!config.pauseOnInput) return;
+        if (!configLoaded || !config.pauseOnInput) return;
         if (!editableFrom(event.target)) return;
         window.clearTimeout(typingTimer);
         layer.pause(true);
@@ -1429,7 +1432,7 @@ var require_mount = __commonJS({
         }, TYPING_IDLE_MS);
       }
       function onFocusOut(event) {
-        if (!config.pauseOnInput) return;
+        if (!configLoaded || !config.pauseOnInput) return;
         if (!editableFrom(event.target)) return;
         window.clearTimeout(typingTimer);
         typingTimer = null;
@@ -1461,6 +1464,12 @@ var require_mount = __commonJS({
             refresh();
           }
         });
+        sse.onopen = function() {
+          if (!configLoaded) {
+            retries = 0;
+            refresh();
+          }
+        };
         sse.onerror = function() {
         };
       }
@@ -4843,7 +4852,7 @@ function definition(host) {
   var tab = makeTab(host.react);
   return {
     id: ADDON_ID,
-    version: "0.2.2",
+    version: "0.2.3",
     icon: tab("megaphone"),
     views: [
       {
