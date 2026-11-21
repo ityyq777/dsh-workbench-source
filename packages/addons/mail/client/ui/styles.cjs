@@ -1,5 +1,7 @@
 "use strict";
 /** 基础样式 + 邮件列表/阅读面板/账户卡片专属规则。 */
+// 布尔开关的统一外观来自共享控件。
+var SW = require("../../../lib/switch.cjs");
 module.exports = require("../../../lib/client-base-styles.cjs")("wbml").concat(require("../../../lib/vault-lock.cjs").create({ prefix: "wbml" }).styles()).concat([
   ".wbml-page{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
   ".wbml-input{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:120px}",
@@ -91,7 +93,6 @@ module.exports = require("../../../lib/client-base-styles.cjs")("wbml").concat(r
   ".wbml-acct-head{display:flex;align-items:center;justify-content:space-between;gap:8px}",
   ".wbml-acct-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
   ".wbml-acct-foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}",
-  ".wbml-check{display:flex;align-items:center;gap:6px;font-size:12px;padding-top:18px}",
   ".wbml-hint-line{margin:0;font-size:11px;line-height:1.6;color:var(--wb-muted,#6b7280)}",
   /* 保险箱门禁 */
   ".wbml-gate-wrap{display:flex;flex-direction:column;gap:8px}",
@@ -140,11 +141,8 @@ module.exports = require("../../../lib/client-base-styles.cjs")("wbml").concat(r
   ".wbml-cfg-badge{font-size:10px;padding:1px 6px;border-radius:999px;border:1px solid var(--wb-line,#e5e7eb);color:var(--wb-accent,#2563eb)}",
   ".wbml-cfg-hint{font-size:11px;line-height:1.55;color:var(--wb-muted,#6b7280)}",
   ".wbml-cfg-ctl{display:flex;align-items:center;justify-content:flex-end;gap:8px}",
-  ".wbml-switch{display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:12px}",
-  ".wbml-switch input{width:16px;height:16px;accent-color:var(--wb-accent,#2563eb);cursor:pointer}",
-  ".wbml-switch-text{color:var(--wb-muted,#6b7280);min-width:2.5em}",
   ".wbml-numwrap{display:inline-flex;align-items:center;gap:6px}",
   ".wbml-num{width:76px;min-width:0;text-align:right}",
   ".wbml-toast{position:sticky;bottom:8px;justify-self:start;font-size:12px;padding:6px 12px;border-radius:999px;border:1px solid var(--wb-line,#e5e7eb);background:var(--wb-card,#fff);box-shadow:0 6px 18px rgba(0,0,0,.08)}",
   "@media(max-width:760px){.wbml-cfg-row{grid-template-columns:1fr}.wbml-cfg-ctl{justify-content:flex-start}.wbml-cfg-group{padding:4px 10px}}",
-]).concat(require("../../../lib/icon-label.cjs").styles).join("\n");
+]).concat(SW.styles).concat(require("../../../lib/icon-label.cjs").styles).join("\n");

@@ -7,6 +7,8 @@
 var React = require("react");
 var h = React.createElement;
 var notifier = require("../notify/notifier.cjs");
+// 布尔项统一使用共享开关控件。
+var SW = require("../../../lib/switch.cjs");
 var DOMAIN = "message";
 
   function unwrap(r) {
@@ -171,11 +173,12 @@ function ConfigView(props) {
     function control(item) {
       var value = values()[item.id];
       if (item.type === "bool") {
-        return h("input", {
-          type: "checkbox",
-          "aria-label": labelOf(item, lang),
+        // 开关文本就是原 aria-label 的文案，标签与可读名称保持一致。
+        return h(SW.Switch, {
+          h: h,
           checked: value === true,
-          onChange: function (e) { save(item.id, e.target.checked); },
+          label: labelOf(item, lang),
+          onChange: function (next) { save(item.id, next); },
         });
       }
       if (item.type === "number") {

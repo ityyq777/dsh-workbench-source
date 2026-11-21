@@ -3,6 +3,7 @@
 var React = require("react");
 var h = React.createElement;
 var COPY = require("./data-copy.cjs");
+var SW = require("./switch.cjs");
 module.exports = function createDataView(options) {
 var DOMAIN = options.domain;
 function icon(name) { return options.Icon ? h(options.Icon, { name: name }) : null; }
@@ -515,12 +516,10 @@ function DataView(props) {
             type: "search", value: searchDraft, placeholder: t.search, "aria-label": t.search,
             onChange: function (e) { setSearchDraft(e.target.value); },
           })),
-        h("label", { className: P + "-switch" },
-          h("input", { type: "checkbox", checked: includeDeleted, onChange: function (e) { setIncludeDeleted(e.target.checked); setPage(1); } }),
-          h("span", { className: P + "-track" }), h("span", null, t.includeDeleted)),
-        h("label", { className: P + "-switch" },
-          h("input", { type: "checkbox", checked: showSystem, onChange: function (e) { setShowSystem(e.target.checked); } }),
-          h("span", { className: P + "-track" }), h("span", null, t.showSystem)),
+        h(SW.Switch, { h: h, checked: includeDeleted, label: t.includeDeleted,
+          onChange: function (next) { setIncludeDeleted(next); setPage(1); } }),
+        h(SW.Switch, { h: h, checked: showSystem, label: t.showSystem,
+          onChange: function (next) { setShowSystem(next); } }),
         h("span", { className: P + "-grow" }),
         h("label", { style: { display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11.5px", color: "var(--cfg-muted)" } },
           h("span", null, t.pageSize),

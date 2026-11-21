@@ -11,6 +11,8 @@ module.exports = function Config(props) {
   var lang = props.lang === "en" ? "en" : "zh";
   var C = require("../ui/common.cjs");
   var icons = require("../ui/icons.cjs");
+  // 布尔项统一使用共享开关控件。
+  var SW = require("../../../lib/switch.cjs");
   var cfg = module.exports.useConfig(React, api);
   var toastS = React.useState("");
   var toast = toastS[0];
@@ -130,19 +132,17 @@ module.exports = function Config(props) {
   function control(item) {
     var value = values()[item.id];
     if (item.type === "bool") {
-      return h(
-        "label",
-        { className: "wbml-switch" },
-        h("input", {
-          type: "checkbox",
-          checked: value === true,
-          "aria-label": labelOf(item),
-          onChange: function (e) {
-            save(item.id, e.target.checked);
-          },
-        }),
-        h("span", { className: "wbml-switch-text" }, value === true ? (lang === "en" ? "On" : "开启") : lang === "en" ? "Off" : "关闭"),
-      );
+      // 开关自带状态文案：中文「开启/关闭」，英文 On/Off。
+      return h(SW.Switch, {
+        h: h,
+        checked: value === true,
+        showState: true,
+        onText: lang === "en" ? "On" : "开启",
+        offText: lang === "en" ? "Off" : "关闭",
+        onChange: function (next) {
+          save(item.id, next);
+        },
+      });
     }
     if (item.type === "int" || item.type === "number") {
       return h(

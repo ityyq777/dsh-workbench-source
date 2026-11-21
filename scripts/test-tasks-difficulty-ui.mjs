@@ -83,7 +83,7 @@ const View=require(dir+'views/tasks-view.cjs')({React,configView:config,COPY:cop
 reset();const calls=[];const props={lang:'en',viewParams:{difficultyMissing:true},api:{subscribe:()=>noop,call:async(action,args)=>{calls.push({action,args});return {ok:true,result:action==='tasks.list'?{records:[],total:0}:[]};}}};
 const outer=View(props), Body=outer.type;render(Body,outer.props);await flush();
 let list=calls.find(c=>c.action==='tasks.list');assert.deepEqual(list.args.statuses,[]);assert.ok(!('urgent' in list.args),'urgent is no longer sent');assert.equal(list.args.difficultyMissing,true);assert.equal(list.args.filterRestarted,undefined);
-let rendered=render(Body,outer.props);const filter=find(rendered,n=>n.type==='label'&&text(n).includes(copy.en.difficultyMissing));find(filter,n=>n.type==='input').props.onChange({target:{checked:false}});
+let rendered=render(Body,outer.props);find(rendered,n=>n.props&&n.props.label===copy.en.difficultyMissing&&typeof n.props.onChange==='function').props.onChange(false);
 render(Body,outer.props);await flush();list=calls.filter(c=>c.action==='tasks.list').at(-1);assert.equal(list.args.difficultyMissing,false);assert.equal(list.args.pageNumber,1);
 // 统计柱形跳转：只带优先级/难度区间时按「全局范围」清空表、组、搜索词、标签与状态，分页回第 1 页。
 for(const viewParams of [{priorityMin:9,priorityMax:9},{difficultyMin:0.5,difficultyMax:0.5}]) {

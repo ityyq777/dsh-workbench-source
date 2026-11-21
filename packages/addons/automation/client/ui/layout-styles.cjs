@@ -3,6 +3,7 @@
  * 自动化插件版式层：只补 client-base-styles.cjs 没有的容器/卡片/模态/骨架类。
  * 颜色一律取主题 token（--wb-* / --dsw-alias-*），插件内不写字面色值。
  */
+// 共享开关控件的样式（wbctl-*）由 ./styles.cjs 统一追加，见该文件。
 module.exports = [
   // 页面分区
   ".wba-panel{border:1px solid var(--wb-border);border-radius:12px;padding:16px;background:var(--wb-surface);display:flex;flex-direction:column;gap:12px}",
@@ -79,7 +80,6 @@ module.exports = [
   ".wba-seg{display:inline-flex;gap:2px;padding:2px;border:1px solid var(--wb-border);border-radius:8px;background:var(--wb-line);align-self:flex-start}",
   ".wba-seg button{border:0;background:transparent;color:inherit;border-radius:6px;padding:4px 12px;font-size:12px;font-family:inherit;cursor:pointer}",
   ".wba-seg button[aria-pressed=true]{background:var(--wb-surface);box-shadow:0 0 0 1px var(--wb-border);font-weight:600}",
-  ".wba-switch{display:inline-flex;align-items:center;gap:8px;font-size:12px;cursor:pointer}",
   ".wba-block{display:flex;flex-direction:column;gap:6px;min-width:0}",
   ".wba-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}",
   ".wba-grow{flex:1;min-width:0}",

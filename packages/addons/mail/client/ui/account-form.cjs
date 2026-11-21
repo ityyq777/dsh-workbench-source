@@ -11,6 +11,8 @@ var util = require("./provider-util.cjs");
 var VaultGate = require("./vault-gate.cjs");
 var SecretPicker = require("./secret-picker.cjs");
 var probe = require("../../lib/domain/probe-error.js");
+// 布尔项统一使用共享开关控件。
+var SW = require("../../../lib/switch.cjs");
 
 function t(lang, zh, en) {
   return lang === "en" ? en : zh;
@@ -279,18 +281,15 @@ module.exports = function AccountForm(props) {
     });
   }
   function tlsRow(key, label) {
-    return h(
-      "label",
-      { className: "wbml-check" },
-      h("input", {
-        type: "checkbox",
-        checked: !!f[key],
-        onChange: function (e) {
-          upd({ [key]: e.target.checked });
-        },
-      }),
-      h("span", null, label),
-    );
+    // 开关文本即字段名，改动仍写回同一个键。
+    return h(SW.Switch, {
+      h: h,
+      checked: !!f[key],
+      label: label,
+      onChange: function (next) {
+        upd({ [key]: next });
+      },
+    });
   }
 
   var provider = util.providerById(providers, f.provider);

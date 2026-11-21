@@ -19,6 +19,7 @@ const rowFile = path.join(root, "packages/addons/mail/client/views/message-rows.
 const view = fs.readFileSync(viewFile, "utf8");
 const rowView = fs.readFileSync(rowFile, "utf8");
 const css = require(path.join(root, "packages/addons/mail/client/ui/styles.cjs"));
+const SW = require(path.join(root, "packages/addons/lib/switch.cjs"));
 const styleText = Array.isArray(css) ? css.join("\n") : String(css);
 
 function classesIn(text) {
@@ -249,8 +250,11 @@ test("消息页：真实控件事件调用、三栏结构、切换和正文竞�
     render();
     assert.equal(nodes("wbml-detailpane").length, 0);
     assert.equal(calls.filter(([n]) => n === "mail.messageList").at(-1)[1].cursor, "next");
-    const checkbox = walk(tree).find((x) => x.props.type === "checkbox");
-    checkbox.props.onChange({ target: { checked: true } });
+    // 「只看未读」是共享开关组件：这个轻量渲染器不展函数组件，
+    // 先取出组件节点再渲染成按钮，然后触发按钮的 onClick。
+    const sw = walk(tree).find((x) => x.type === SW.Switch);
+    assert.ok(sw, "只看未读应渲染成共享开关");
+    SW.Switch(sw.props).props.onClick({ preventDefault: function () {} });
     render();
     const args = calls.filter(([n]) => n === "mail.messageList").at(-1)[1];
     assert.equal(args.unread, true);

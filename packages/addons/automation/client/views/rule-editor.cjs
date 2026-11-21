@@ -1,5 +1,7 @@
 "use strict";
 var createOverlay = require("../../../lib/overlay.cjs");
+// 布尔项统一走共享开关控件（lib/switch.cjs）。
+var SW = require("../../../lib/switch.cjs");
 // 对话框外壳与插件自己的字段/校验分离：外壳统一深浅主题下的遮罩、Esc、Tab 循环与焦点归还。
 var EditorOverlay = createOverlay({
   maskClass: "wba-modal",
@@ -156,9 +158,14 @@ function RuleEditor(props) {
               showNameErr ? h("span", { className: "wba-err-text" }, errs.name) : null),
             h("div", { className: "wba-field" },
               h("span", { className: "wba-label" }, t("editor.enabled")),
-              h("label", { className: "wba-switch" },
-                h("input", { type: "checkbox", checked: form.enabled, onChange: function (e) { set("enabled", e.target.checked); } }),
-                h("span", null, form.enabled ? t("rules.status.on") : t("rules.status.off")))))),
+              h(SW.Switch, {
+                h: h,
+                checked: Boolean(form.enabled),
+                showState: true,
+                onText: t("rules.status.on"),
+                offText: t("rules.status.off"),
+                onChange: function (next) { set("enabled", next); },
+              })))),
         h("div", { className: "wba-section" },
           h("p", { className: "wba-section-title" }, "② " + t("editor.section.trigger")),
           h(trig.TriggerFields, { h: h, t: t, form: form, set: set, errs: errs, icon: icon })),
@@ -207,9 +214,12 @@ function RuleEditor(props) {
           })),
         h("div", { className: "wba-section" },
           h("p", { className: "wba-section-title" }, "④ " + t("editor.section.condition")),
-          h("label", { className: "wba-switch" },
-            h("input", { type: "checkbox", checked: Boolean(form.condOn), onChange: function (e) { set("condOn", e.target.checked); } }),
-            h("span", null, t("editor.conditionOn"))),
+          h(SW.Switch, {
+            h: h,
+            checked: Boolean(form.condOn),
+            label: t("editor.conditionOn"),
+            onChange: function (next) { set("condOn", next); },
+          }),
           h("p", { className: "wba-sub" }, t("editor.conditionHint")),
           form.condOn ? h(json.JsonEditor, {
             h: h,

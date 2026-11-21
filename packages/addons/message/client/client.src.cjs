@@ -60,7 +60,7 @@
 
   host.registerAddon({
     id: "wb-addon-message",
-    version: "0.1.7",
+    version: "0.1.8",
     icon: ICONS["message-square"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: Stats },

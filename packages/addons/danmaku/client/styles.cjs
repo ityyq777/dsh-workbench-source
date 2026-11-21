@@ -5,6 +5,8 @@
  * 颜色一律走主题 token，浅色/深色都由 DSH 主题驱动。
  */
 var baseStyles = require("../../lib/client-base-styles.cjs");
+// 共享开关控件的样式（wbctl-*），随本插件样式表一起注入。
+var SW = require("../../lib/switch.cjs");
 
 function pageStyles() {
   return [
@@ -67,14 +69,7 @@ function pageStyles() {
     ".wbdm-icon-btn.danger:hover{color:var(--wb-danger,#dc2626)}",
     ".wbdm-icon-btn:disabled{opacity:.3;cursor:not-allowed}",
 
-    /* 开关 */
-    ".wbdm-switch{position:relative;display:inline-flex;flex:none;width:34px;height:20px;cursor:pointer}",
-    ".wbdm-switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}",
-    ".wbdm-track{display:block;width:100%;height:100%;border-radius:999px;background:var(--wb-line,#e5e7eb);transition:background .15s}",
-    ".wbdm-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--wb-card,#fff);box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .15s;pointer-events:none}",
-    ".wbdm-switch input:checked+.wbdm-track{background:var(--wb-accent,#2563eb)}",
-    ".wbdm-switch input:checked~.wbdm-knob{transform:translateX(14px)}",
-    ".wbdm-switch input:focus-visible+.wbdm-track{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+    /* 开关外观统一由 lib/switch.cjs 的 wbctl-* 规则提供，见文件末尾追加 */
     // 行内小开关（添加卡里的「卡片背景」）
     ".wbdm-inline-label{white-space:nowrap}",
     // 行内「卡片/纯文字」标签：点一下切换该条弹幕是否有底
@@ -151,6 +146,7 @@ function pageStyles() {
 }
 
 module.exports = function styles() {
-  return baseStyles("wbdm").concat(pageStyles());
+  // 共享开关样式追加在页面样式之后，重复追加无害（规则完全一致）。
+  return baseStyles("wbdm").concat(pageStyles(), SW.styles);
 };
 module.exports.pageStyles = pageStyles;

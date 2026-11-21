@@ -982,7 +982,7 @@ var createOverlay = require("../../lib/overlay.cjs");
 
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.12.7",
+    version: "1.12.8",
     icon: icons.ICONS["globe"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.SitesStatsView },

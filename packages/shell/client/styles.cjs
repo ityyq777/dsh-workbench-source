@@ -1,5 +1,7 @@
 // 宿主静态样式；只用既有主题 token。
 // 样式：只用宿主 --dsw-* token，深浅主题自适应（03 文档）
+// 布尔开关控件（wbctl-*）与业务插件共用 lib/switch.cjs，避免宿主再写一套私有开关样式。
+var SW = require("../../addons/lib/switch.cjs");
 var CSS = [
   ".wb-root{--wb-line:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wb-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));display:flex;flex-direction:column;height:100%;box-sizing:border-box;overflow:auto;color:inherit;font-size:13px;background:var(--dsw-alias-bg-base,var(--dsw-alias-bg-layer-2,color-mix(in oklab,currentColor 4%,transparent)));padding:24px 28px}",
   ".wb-inner{display:flex;flex-direction:column;gap:16px;width:100%;max-width:1040px;margin:0 auto}",
@@ -308,4 +310,5 @@ var CSS = [
   ".wb-root .wb-immersive-bar .wb-page-tabs{margin:0;flex:0 1 auto;min-width:0;max-width:none;justify-content:flex-start;gap:4px}",
   ".wb-root .wb-immersive-bar .wb-tab{flex:0 0 auto;min-width:0;justify-content:center;text-align:center;padding:6px 10px}",
 ].join("\n");
-module.exports = CSS;
+// 共享开关样式追加在宿主样式末尾：ensureCss() 是唯一注入点，重复追加无害。
+module.exports = CSS + "\n" + SW.styles.join("\n");

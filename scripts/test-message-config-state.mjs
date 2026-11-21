@@ -5,7 +5,11 @@
  */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
+
+// 共享开关控件的模块，供沙箱里的 config.cjs 解析 require 用。
+const SW = createRequire(import.meta.url)('../packages/addons/lib/switch.cjs');
 
 const file = 'packages/addons/message/client/views/config.cjs';
 let state = [];
@@ -66,6 +70,8 @@ const configView = (() => {
     require: (name) => {
       if (name === 'react') return React;
       if (name.includes('notifier')) return { refreshConfig() {}, preview() {} };
+      // 布尔项改用共享开关控件后，config.cjs 会 require 它。
+      if (name === '../../../lib/switch.cjs') return SW;
       throw new Error('unexpected require: ' + name);
     },
     document: { addEventListener() {}, removeEventListener() {} },

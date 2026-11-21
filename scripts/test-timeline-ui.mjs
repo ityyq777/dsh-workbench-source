@@ -16,7 +16,7 @@ assert.ok(!copy.zh.timelineEmpty.includes('暂未提供'));
  const toolbar=view.slice(view.indexOf('wbt-timeline-toolbar'),view.indexOf('wbt-timeline-columns'));
  assert.equal(toolbar.includes('h2'),false,'工具栏不应再渲染重复的「时间线」H2');
  assert.ok(toolbar.includes('wbt-timeline-search'),'搜索框应在顶部工具栏');
- assert.ok(toolbar.includes('wbt-timeline-single'),'单任务线开关应在顶部工具栏');
+ assert.ok(toolbar.includes('SW.Switch')&&toolbar.includes('t.timelineSingletons'),'单任务线开关应使用共享开关并留在顶部工具栏');
  assert.ok(toolbar.includes('wbt-timeline-toolbar-actions'),'操作按钮应成组靠右');
  const left=view.slice(view.indexOf('wbt-timeline-left'));
  assert.equal(left.slice(0,left.indexOf('wbt-timeline-list')).includes('wbt-timeline-search'),false,'左侧卡片不应再包含搜索框');

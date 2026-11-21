@@ -8,6 +8,8 @@ var GLYPHS = require("../ui/icons.cjs").ICONS;
 var React = require("react");
 var h = React.createElement;
 var copy = require("../copy.cjs");
+// 布尔项统一走共享开关控件（lib/switch.cjs）。
+var SW = require("../../../lib/switch.cjs");
 
 var TONES = ["normal", "accent", "success", "warn", "danger"];
 var MAX_LEN = 100;
@@ -375,19 +377,16 @@ function LibraryView(props) {
       "div",
       { key: item.id, className: "wbdm-item" + (item.enabled ? "" : " off") },
       h("span", { className: "wbdm-order" }, String(index + 1)),
-      h(
-        "label",
-        { className: "wbdm-switch", title: item.enabled ? C.disable : C.enable },
-        h("input", {
-          type: "checkbox",
-          checked: Boolean(item.enabled),
-          onChange: function () {
-            toggle(item);
-          },
-        }),
-        h("span", { className: "wbdm-track" }),
-        h("span", { className: "wbdm-knob" }),
-      ),
+      h(SW.Switch, {
+        h: h,
+        checked: Boolean(item.enabled),
+        title: item.enabled ? C.disable : C.enable,
+        // 开关的可访问名称用「启用」这个设置名；title 只作为点击后的动作提示。
+        ariaLabel: C.enable,
+        onChange: function () {
+          toggle(item);
+        },
+      }),
       h(
         "span",
         { className: "wbdm-tag" },

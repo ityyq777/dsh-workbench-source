@@ -130,6 +130,8 @@ module.exports = function createCommon(prefix) {
     call: call,
     errText: errText,
     fmtTime: fmtTime,
+    Switch: require("./switch.cjs").Switch,
+    switchStyles: require("./switch.cjs").styles,
     Btn: Btn,
     Field: Field,
     Notice: Notice,

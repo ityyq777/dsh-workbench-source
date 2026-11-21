@@ -144,6 +144,11 @@ test("合法表单保存按钮可用，条件关闭时 payload.condition 为 nul
     h, C, t, React, form, initial: form, set: noop, busy: false, actions: ["message.send"], onClose: noop, onSave: noop,
   }));
   assert.ok(!html.includes('disabled=""'));
+  // 编辑器的布尔项改走共享开关：用 role="switch" + aria-checked 表达状态，不再渲染原生 checkbox。
+  assert.ok(html.includes('role="switch"'));
+  assert.ok(html.includes('aria-checked="true"'));
+  assert.ok(html.includes('aria-checked="false"'));
+  assert.ok(!html.includes('type="checkbox"'), "布尔项不应再是原生复选框");
   const payload = Editor.buildPayload(form);
   assert.equal(payload.condition, null);
   assert.equal(payload.triggerType, "schedule");

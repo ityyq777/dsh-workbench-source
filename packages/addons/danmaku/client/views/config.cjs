@@ -9,6 +9,8 @@ var GLYPHS = require("../ui/icons.cjs").ICONS;
 var React = require("react");
 var h = React.createElement;
 var copy = require("../copy.cjs");
+// 布尔项统一走共享开关控件（lib/switch.cjs）。
+var SW = require("../../../lib/switch.cjs");
 
 var DOMAIN = "danmaku";
 
@@ -308,20 +310,15 @@ function ConfigView(props) {
   }
 
   function switchControl(item, value) {
-    return h(
-      "label",
-      { className: "wbdm-switch", title: labelOf(item, lang) },
-      h("input", {
-        type: "checkbox",
-        checked: value === true,
-        "aria-label": labelOf(item, lang),
-        onChange: function (e) {
-          save(item.id, e.target.checked);
-        },
-      }),
-      h("span", { className: "wbdm-track" }),
-      h("span", { className: "wbdm-knob" }),
-    );
+    return h(SW.Switch, {
+      h: h,
+      checked: value === true,
+      title: labelOf(item, lang),
+      ariaLabel: labelOf(item, lang),
+      onChange: function (next) {
+        save(item.id, next);
+      },
+    });
   }
 
   function control(item) {

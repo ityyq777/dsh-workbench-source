@@ -9,6 +9,7 @@ module.exports = function (deps) {
   var receipts = require("../modals/ownership.cjs");
   var splitTitle = require("../timeline/timeline-title.cjs");
   var Highlight = require("../ui/highlight.cjs")(React);
+  var SW = require("../../../lib/switch.cjs");
   function result(r) { if (!r || !r.ok) throw new Error(r && r.error || "Request failed"); return r.result; }
   function pageData(r) { return { records: r.records || [], total: Number(r.total) || 0 }; }
   function Pager(p) {
@@ -129,7 +130,7 @@ module.exports = function (deps) {
           h("form", { className: "wbt-timeline-search", onSubmit: function (e) { e.preventDefault(); setPage(1); setQuery(draft.trim()); } },
             h("input", { className: "wbt-input", value: draft, "aria-label": t.timelineSearch, placeholder: t.timelineSearch, onChange: function (e) { setDraft(e.target.value); } }),
             h("button", { className: "wbt-btn", type: "submit" }, t.timelineSearchButton)),
-          h("label", { className: "wbt-timeline-single" }, h("input", { type: "checkbox", "aria-label": t.timelineSingletons, checked: single, onChange: function (e) { setSingle(e.target.checked); setPage(1); } }), t.timelineSingletons)),
+          h(SW.Switch, { h: h, checked: !!single, label: t.timelineSingletons, onChange: function (next) { setSingle(next); setPage(1); } })),
         h("div", { className: "wbt-timeline-toolbar-actions" },
           h("button", { className: "wbt-btn primary", onClick: function () { setEditor({}); } }, tr("新建时间线")),
           h("button", { className: "wbt-btn", onClick: function () { setMulti(!multi); setSelected([]); }, "aria-pressed": multi }, multi ? t.cancelSelect : t.select),

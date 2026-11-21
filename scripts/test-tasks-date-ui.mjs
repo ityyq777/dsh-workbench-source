@@ -151,7 +151,7 @@ assert.ok(text(rangeDraw()).includes('whole number'));
 typeInto(difficultyMax(),'3');rangeDraw();el=inputNode(difficultyMax());el.props.onBlur({currentTarget:{validity:{}}});
 rangeDraw();await flush();
 assert.equal(rangeList().difficultyMax,3);
-const missingLabel=find(rangeDraw(),n=>n.type==='label'&&/difficulty/i.test(text(n)));find(missingLabel,n=>n.props.type==='checkbox').props.onChange({target:{checked:true}});
+const missingLabel=find(rangeDraw(),n=>n.type==='label'&&/difficulty/i.test(text(n)));find(missingLabel,n=>n.props&&n.props.role==='switch').props.onClick({preventDefault(){}});
 rangeDraw();await flush();
 assert.equal(rangeList().difficultyMax,undefined,'checking the missing filter clears the difficulty range');
 assert.equal(find(rangeDraw(),n=>n.props['data-status']==='all').props.checked,false);

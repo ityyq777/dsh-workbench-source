@@ -9,6 +9,8 @@ var React = require("react");
 var h = React.createElement;
 var chipStyle = require("../overlay/chip-style.cjs");
 var createOverlay = require("../../../lib/overlay.cjs");
+// 布尔项统一走共享开关控件（lib/switch.cjs），不再自绘 track/knob。
+var SW = require("../../../lib/switch.cjs");
 
 var REDUCED = false;
 try {
@@ -203,22 +205,18 @@ module.exports = function renderDetail(props) {
 
   function switchField(key, label) {
     return h(
-      "label",
+      "div",
       { className: "wbdm-crow" },
       h("span", { className: "wbdm-crow-label" }, h("span", { className: "wbdm-crow-t" }, label)),
-      h(
-        "span",
-        { className: "wbdm-switch" },
-        h("input", {
-          type: "checkbox",
-          checked: Boolean(detail[key]),
-          onChange: function () {
-            set(key, !detail[key]);
-          },
-        }),
-        h("span", { className: "wbdm-track" }),
-        h("span", { className: "wbdm-knob" }),
-      ),
+      // 共享开关自带 role="switch"/aria-checked；左侧已有文案，这里不再重复显示状态。
+      h(SW.Switch, {
+        h: h,
+        checked: Boolean(detail[key]),
+        ariaLabel: label,
+        onChange: function (next) {
+          set(key, next);
+        },
+      }),
     );
   }
 
@@ -293,7 +291,7 @@ module.exports = function renderDetail(props) {
             h("div", { className: "wbdm-tones" }, TONES.map(toneChip)),
           ),
           h(
-            "label",
+            "div",
             { className: "wbdm-crow" },
             h(
               "span",
@@ -301,19 +299,14 @@ module.exports = function renderDetail(props) {
               h("span", { className: "wbdm-crow-t" }, C.card),
               h("span", { className: "wbdm-crow-h" }, C.cardHint),
             ),
-            h(
-              "span",
-              { className: "wbdm-switch" },
-              h("input", {
-                type: "checkbox",
-                checked: Boolean(detail.card),
-                onChange: function () {
-                  set("card", !detail.card);
-                },
-              }),
-              h("span", { className: "wbdm-track" }),
-              h("span", { className: "wbdm-knob" }),
-            ),
+            h(SW.Switch, {
+              h: h,
+              checked: Boolean(detail.card),
+              ariaLabel: C.card,
+              onChange: function (next) {
+                set("card", next);
+              },
+            }),
           ),
           numField("fontSize", C.fontSize, C.unitPx + " · " + C.followGlobal, 1, 10, 48),
           selectField("fontWeight", C.weight, weights),

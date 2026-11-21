@@ -900,6 +900,57 @@ var require_icons2 = __commonJS({
   }
 });
 
+// packages/addons/lib/switch.cjs
+var require_switch = __commonJS({
+  "packages/addons/lib/switch.cjs"(exports2, module2) {
+    "use strict";
+    var SWITCH_STYLES = [
+      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
+      ".wbctl-switch-track{position:relative;display:inline-flex;align-items:center;box-sizing:border-box;width:34px;height:20px;padding:2px;border-radius:999px;background:color-mix(in oklab,currentColor 22%,transparent);transition:background .16s ease;flex:none}",
+      ".wbctl-switch-knob{display:block;width:16px;height:16px;border-radius:50%;background:var(--wb-card,#fff);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .16s ease}",
+      ".wbctl-switch[aria-checked=true]{color:var(--wb-accent,#2563eb)}",
+      ".wbctl-switch[aria-checked=true] .wbctl-switch-track{background:var(--wb-accent,#2563eb)}",
+      ".wbctl-switch[aria-checked=true] .wbctl-switch-knob{transform:translateX(14px)}",
+      ".wbctl-switch:hover:not(:disabled) .wbctl-switch-track{outline:1px solid var(--wb-accent,#2563eb)}",
+      ".wbctl-switch:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+      ".wbctl-switch:disabled{opacity:.45;cursor:not-allowed}",
+      ".wbctl-switch-text{white-space:nowrap}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-switch-track,.wbctl-switch-knob{transition:none}}"
+    ];
+    function Switch(props) {
+      var h = props.h;
+      var on = props.checked === true || props.checked === "true";
+      var disabled = !!props.disabled;
+      var text = props.label;
+      if (props.showState) text = on ? props.onText || "\u5F00" : props.offText || "\u5173";
+      return h(
+        "button",
+        {
+          type: "button",
+          role: "switch",
+          "aria-checked": on ? "true" : "false",
+          className: "wbctl-switch" + (props.className ? " " + props.className : ""),
+          disabled,
+          title: props.title,
+          "aria-label": text ? void 0 : props.ariaLabel,
+          onClick: function(e) {
+            e.preventDefault();
+            if (disabled) return;
+            if (typeof props.onChange === "function") props.onChange(!on);
+          }
+        },
+        h(
+          "span",
+          { className: "wbctl-switch-track", "aria-hidden": "true" },
+          h("span", { className: "wbctl-switch-knob" })
+        ),
+        text ? h("span", { className: "wbctl-switch-text" }, text) : null
+      );
+    }
+    module2.exports = { Switch, styles: SWITCH_STYLES };
+  }
+});
+
 // packages/addons/lib/client-base-styles.cjs
 var require_client_base_styles = __commonJS({
   "packages/addons/lib/client-base-styles.cjs"(exports2, module2) {
@@ -1067,6 +1118,7 @@ var require_icon_label = __commonJS({
 var require_styles = __commonJS({
   "packages/addons/mail/client/ui/styles.cjs"(exports2, module2) {
     "use strict";
+    var SW = require_switch();
     module2.exports = require_client_base_styles()("wbml").concat(require_vault_lock().create({ prefix: "wbml" }).styles()).concat([
       ".wbml-page{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
       ".wbml-input{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:120px}",
@@ -1158,7 +1210,6 @@ var require_styles = __commonJS({
       ".wbml-acct-head{display:flex;align-items:center;justify-content:space-between;gap:8px}",
       ".wbml-acct-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
       ".wbml-acct-foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}",
-      ".wbml-check{display:flex;align-items:center;gap:6px;font-size:12px;padding-top:18px}",
       ".wbml-hint-line{margin:0;font-size:11px;line-height:1.6;color:var(--wb-muted,#6b7280)}",
       /* 保险箱门禁 */
       ".wbml-gate-wrap{display:flex;flex-direction:column;gap:8px}",
@@ -1207,14 +1258,11 @@ var require_styles = __commonJS({
       ".wbml-cfg-badge{font-size:10px;padding:1px 6px;border-radius:999px;border:1px solid var(--wb-line,#e5e7eb);color:var(--wb-accent,#2563eb)}",
       ".wbml-cfg-hint{font-size:11px;line-height:1.55;color:var(--wb-muted,#6b7280)}",
       ".wbml-cfg-ctl{display:flex;align-items:center;justify-content:flex-end;gap:8px}",
-      ".wbml-switch{display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:12px}",
-      ".wbml-switch input{width:16px;height:16px;accent-color:var(--wb-accent,#2563eb);cursor:pointer}",
-      ".wbml-switch-text{color:var(--wb-muted,#6b7280);min-width:2.5em}",
       ".wbml-numwrap{display:inline-flex;align-items:center;gap:6px}",
       ".wbml-num{width:76px;min-width:0;text-align:right}",
       ".wbml-toast{position:sticky;bottom:8px;justify-self:start;font-size:12px;padding:6px 12px;border-radius:999px;border:1px solid var(--wb-line,#e5e7eb);background:var(--wb-card,#fff);box-shadow:0 6px 18px rgba(0,0,0,.08)}",
       "@media(max-width:760px){.wbml-cfg-row{grid-template-columns:1fr}.wbml-cfg-ctl{justify-content:flex-start}.wbml-cfg-group{padding:4px 10px}}"
-    ]).concat(require_icon_label().styles).join("\n");
+    ]).concat(SW.styles).concat(require_icon_label().styles).join("\n");
   }
 });
 
@@ -1324,6 +1372,8 @@ var require_client_common = __commonJS({
         call,
         errText,
         fmtTime,
+        Switch: require_switch().Switch,
+        switchStyles: require_switch().styles,
         Btn,
         Field,
         Notice,
@@ -2231,6 +2281,7 @@ var require_config = __commonJS({
       var lang = props.lang === "en" ? "en" : "zh";
       var C = require_common();
       var icons = require_icons2();
+      var SW = require_switch();
       var cfg = module2.exports.useConfig(React, api);
       var toastS = React.useState("");
       var toast = toastS[0];
@@ -2338,19 +2389,16 @@ var require_config = __commonJS({
       function control(item) {
         var value = values()[item.id];
         if (item.type === "bool") {
-          return h(
-            "label",
-            { className: "wbml-switch" },
-            h("input", {
-              type: "checkbox",
-              checked: value === true,
-              "aria-label": labelOf(item),
-              onChange: function(e) {
-                save(item.id, e.target.checked);
-              }
-            }),
-            h("span", { className: "wbml-switch-text" }, value === true ? lang === "en" ? "On" : "\u5F00\u542F" : lang === "en" ? "Off" : "\u5173\u95ED")
-          );
+          return h(SW.Switch, {
+            h,
+            checked: value === true,
+            showState: true,
+            onText: lang === "en" ? "On" : "\u5F00\u542F",
+            offText: lang === "en" ? "Off" : "\u5173\u95ED",
+            onChange: function(next) {
+              save(item.id, next);
+            }
+          });
         }
         if (item.type === "int" || item.type === "number") {
           return h(
@@ -2991,6 +3039,7 @@ var require_messages = __commonJS({
     var MailHtml = require_mail_html();
     var prefsApi = require_prefs();
     var iconLabel = require_icon_label();
+    var SW = require_switch();
     var Folder2 = GLYPHS2["folder"];
     var InboxIcon = GLYPHS2["inbox"];
     var Refresh = GLYPHS2["refresh-cw"];
@@ -3477,19 +3526,15 @@ var require_messages = __commonJS({
                   close();
                 })
               ),
-              h(
-                "label",
-                null,
-                h("input", {
-                  type: "checkbox",
-                  checked: unseen[0],
-                  onChange: function(e) {
-                    unseen[1](e.target.checked);
-                    reset();
-                  }
-                }),
-                " \u53EA\u770B\u672A\u8BFB"
-              )
+              h(SW.Switch, {
+                h,
+                checked: unseen[0],
+                label: "\u53EA\u770B\u672A\u8BFB",
+                onChange: function(next2) {
+                  unseen[1](next2);
+                  reset();
+                }
+              })
             )
           ),
           h(
@@ -4258,6 +4303,7 @@ var require_account_form = __commonJS({
     var VaultGate = require_vault_gate();
     var SecretPicker = require_secret_picker();
     var probe = (init_probe_error(), __toCommonJS(probe_error_exports));
+    var SW = require_switch();
     function t(lang, zh, en) {
       return lang === "en" ? en : zh;
     }
@@ -4498,18 +4544,14 @@ var require_account_form = __commonJS({
         });
       }
       function tlsRow(key, label) {
-        return h(
-          "label",
-          { className: "wbml-check" },
-          h("input", {
-            type: "checkbox",
-            checked: !!f[key],
-            onChange: function(e) {
-              upd({ [key]: e.target.checked });
-            }
-          }),
-          h("span", null, label)
-        );
+        return h(SW.Switch, {
+          h,
+          checked: !!f[key],
+          label,
+          onChange: function(next) {
+            upd({ [key]: next });
+          }
+        });
       }
       var provider = util.providerById(providers, f.provider);
       var probeText = "";
@@ -5230,13 +5272,6 @@ var require_data_style = __commonJS({
         "." + P + "-search input:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
         "." + P + "-select{border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:9px;padding:7px 10px;font:inherit;font-size:12px;outline:none}",
         "." + P + "-select:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
-        "." + P + "-switch{position:relative;display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:var(--cfg-muted);user-select:none;padding:4px 2px}",
-        "." + P + "-switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}",
-        "." + P + "-track{position:relative;width:34px;height:20px;border-radius:999px;background:color-mix(in oklab,currentColor 18%,transparent);transition:background .16s ease;flex:none}",
-        "." + P + "-track::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--dsw-alias-label-primary,currentColor);transition:transform .16s ease,background .16s ease}",
-        "." + P + "-switch input:checked+." + P + "-track{background:var(--dsw-alias-brand-primary,currentColor)}",
-        "." + P + "-switch input:checked+." + P + "-track::after{transform:translateX(14px);background:var(--dsw-alias-label-primary-inverted,var(--dsw-alias-bg-base))}",
-        "." + P + "-switch input:focus-visible+." + P + "-track{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
         "." + P + "-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--cfg-line);background:transparent;color:var(--cfg-muted);border-radius:8px;padding:6px 10px;font:inherit;font-size:11.5px;cursor:pointer;white-space:nowrap;transition:background .12s ease,color .12s ease}",
         "." + P + "-btn:hover{background:var(--cfg-hover);color:var(--dsw-alias-label-primary,inherit)}",
         "." + P + "-btn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
@@ -5304,7 +5339,7 @@ var require_data_style = __commonJS({
         "." + P + "-images img{width:36px;height:36px;object-fit:cover;border-radius:5px}",
         "." + P + "-gallery{display:flex;flex-direction:column;gap:12px;overflow:auto;flex:1}",
         "." + P + "-gallery img{width:100%;height:auto;object-fit:contain;border-radius:8px}"
-      ].join("\n");
+      ].concat(require_switch().styles).join("\n");
       if (DOMAIN === "storage") {
         var buttons = "." + P + " :is(button)";
         CSS += buttons + "{border:none;background:var(--wb-btn-bg);min-height:var(--wb-btn-size-sm);min-width:var(--wb-btn-size-sm)}" + buttons + ":enabled:hover{background:var(--wb-btn-hover-bg)}" + buttons + ":enabled:active{background:var(--wb-btn-active-bg)}" + buttons + ":disabled{background:var(--wb-btn-bg);color:var(--cfg-muted)}" + buttons + ":focus-visible{outline:var(--wb-btn-focus);outline-offset:var(--wb-btn-focus-offset)}." + P + "-fcell:has(button) input{padding-right:34px}";
@@ -5334,6 +5369,7 @@ var require_data_view = __commonJS({
     var React = require("react");
     var h = React.createElement;
     var COPY = require_data_copy();
+    var SW = require_switch();
     module2.exports = function createDataView(options) {
       var DOMAIN = options.domain;
       function icon(name) {
@@ -5994,25 +6030,23 @@ var require_data_view = __commonJS({
                     }
                   })
                 ),
-                h(
-                  "label",
-                  { className: P + "-switch" },
-                  h("input", { type: "checkbox", checked: includeDeleted, onChange: function(e) {
-                    setIncludeDeleted(e.target.checked);
+                h(SW.Switch, {
+                  h,
+                  checked: includeDeleted,
+                  label: t.includeDeleted,
+                  onChange: function(next) {
+                    setIncludeDeleted(next);
                     setPage(1);
-                  } }),
-                  h("span", { className: P + "-track" }),
-                  h("span", null, t.includeDeleted)
-                ),
-                h(
-                  "label",
-                  { className: P + "-switch" },
-                  h("input", { type: "checkbox", checked: showSystem, onChange: function(e) {
-                    setShowSystem(e.target.checked);
-                  } }),
-                  h("span", { className: P + "-track" }),
-                  h("span", null, t.showSystem)
-                ),
+                  }
+                }),
+                h(SW.Switch, {
+                  h,
+                  checked: showSystem,
+                  label: t.showSystem,
+                  onChange: function(next) {
+                    setShowSystem(next);
+                  }
+                }),
                 h("span", { className: P + "-grow" }),
                 h(
                   "label",
@@ -6821,7 +6855,7 @@ var GLYPHS = require_icons2().ICONS;
   var slotBackToMessage = require_slot_back_to_message()({ React, h, C, Icon: Icon2 });
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.5.6",
+    version: "0.5.7",
     icon: GLYPHS["mail"],
     slots: [{ slot: "item.actions", id: "mail.back-to-message", order: 100, component: slotBackToMessage }],
     views: [

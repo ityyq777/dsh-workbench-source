@@ -2,6 +2,7 @@
 "use strict";
 var limits = require('../../shared/tree/limits.cjs');
 var ownership = require("./ownership.cjs");
+var SW = require("../../../lib/switch.cjs");
 module.exports = function (React) {
   var h = React.createElement;
   var Picker = require("./table-picker.cjs")(React);
@@ -24,8 +25,8 @@ module.exports = function (React) {
     var plan = ownership.preview(props.tree, form.tablePath, form.pathDescriptions || []);
     return h("div", { className: "wbt-field full" },
       h(Selection, { form: form, set: set, tree: props.tree, recommended: props.recommended, edit: props.edit, current: props.current, currentId: props.currentId }),
-      !props.edit ? h("label", { className: "wbt-check" }, h("input", { type: "checkbox", "aria-label": "没有合适的表？新建节点", checked: !!form.newPath,
-        onChange: function (e) { props.setMany({ newPath: e.target.checked, tableId: "", confirmed: false }); } }), "没有合适的表？新建节点") : null,
+      !props.edit ? h(SW.Switch, { h: h, checked: !!form.newPath, label: "没有合适的表？新建节点",
+        onChange: function (next) { props.setMany({ newPath: next, tableId: "", confirmed: false }); } }) : null,
       form.newPath ? h("div", null,
         h("label", { className: "wbt-field full" }, "新路径（相对于根；以 / 分隔）", h("input", { className: "wbt-input", "aria-label": "新路径", value: form.tablePath, maxLength: limits.PATH_LEN_MAX,
           onChange: function (e) { props.setMany({ tablePath: e.target.value, pathDescriptions: [], confirmed: false }); } })),
@@ -35,8 +36,8 @@ module.exports = function (React) {
           !node.existing ? h("textarea", { className: "wbt-textarea", "aria-label": "节点职责 " + (i + 1), maxLength: 2000, value: form.pathDescriptions[i] || "",
             onChange: function (e) { var values = form.pathDescriptions.slice(); values[i] = e.target.value; props.setMany({ pathDescriptions: values, confirmed: false }); } }) : null); }),
         plan.error ? h("div", { className: "wbt-err", role: "alert" }, plan.error) : null,
-        h("label", { className: "wbt-check" }, h("input", { type: "checkbox", "aria-label": "确认新建路径", checked: !!form.confirmed, disabled: !!plan.error,
-          onChange: function (e) { set("confirmed", e.target.checked); } }), "确认以上路径与职责，随任务一起提交")) : null
+        h(SW.Switch, { h: h, checked: !!form.confirmed, disabled: !!plan.error, label: "确认以上路径与职责，随任务一起提交",
+          onChange: function (next) { set("confirmed", next); } })) : null
     );
   };
 };

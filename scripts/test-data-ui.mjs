@@ -117,11 +117,11 @@ async function exercise(domain, prefix, table) {
   assert(text(rt.tree).includes("没有匹配的行")); assert.equal(cls("tr").length, 0);
   assert(filter("stock"), "empty result must keep filters available");
   filter("stock").props.onChange({ target: { value: "" } }); await debounce();
-  nodes(n => n.type === "input" && n.props.type === "checkbox")[0].props.onChange({ target: { checked: true } }); await settle();
+  nodes(n => n.props && n.props.role === "switch")[0].props.onClick({ preventDefault: function () {} }); await settle();
   button("下一页 ›").props.onClick(); await settle();
   assert.equal(cls("tr").length, 2); assert(text(rt.tree).includes("已删物品"));
   assert(cls("tr").some(n => n.props.className.includes("deleted")));
-  nodes(n => n.type === "input" && n.props.type === "checkbox")[1].props.onChange({ target: { checked: true } }); await settle();
+  nodes(n => n.props && n.props.role === "switch")[1].props.onClick({ preventDefault: function () {} }); await settle();
   assert(filter("deleted_at"));
   const queryCount = () => calls.filter(c => c.action.endsWith("dataQuery")).length;
   let before = queryCount(); button("刷新").props.onClick(); await settle(); assert(queryCount() > before);

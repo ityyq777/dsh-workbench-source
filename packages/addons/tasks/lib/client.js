@@ -2316,11 +2316,63 @@ var require_charts = __commonJS({
   }
 });
 
+// packages/addons/lib/switch.cjs
+var require_switch = __commonJS({
+  "packages/addons/lib/switch.cjs"(exports2, module2) {
+    "use strict";
+    var SWITCH_STYLES = [
+      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
+      ".wbctl-switch-track{position:relative;display:inline-flex;align-items:center;box-sizing:border-box;width:34px;height:20px;padding:2px;border-radius:999px;background:color-mix(in oklab,currentColor 22%,transparent);transition:background .16s ease;flex:none}",
+      ".wbctl-switch-knob{display:block;width:16px;height:16px;border-radius:50%;background:var(--wb-card,#fff);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .16s ease}",
+      ".wbctl-switch[aria-checked=true]{color:var(--wb-accent,#2563eb)}",
+      ".wbctl-switch[aria-checked=true] .wbctl-switch-track{background:var(--wb-accent,#2563eb)}",
+      ".wbctl-switch[aria-checked=true] .wbctl-switch-knob{transform:translateX(14px)}",
+      ".wbctl-switch:hover:not(:disabled) .wbctl-switch-track{outline:1px solid var(--wb-accent,#2563eb)}",
+      ".wbctl-switch:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+      ".wbctl-switch:disabled{opacity:.45;cursor:not-allowed}",
+      ".wbctl-switch-text{white-space:nowrap}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-switch-track,.wbctl-switch-knob{transition:none}}"
+    ];
+    function Switch(props) {
+      var h = props.h;
+      var on = props.checked === true || props.checked === "true";
+      var disabled = !!props.disabled;
+      var text = props.label;
+      if (props.showState) text = on ? props.onText || "\u5F00" : props.offText || "\u5173";
+      return h(
+        "button",
+        {
+          type: "button",
+          role: "switch",
+          "aria-checked": on ? "true" : "false",
+          className: "wbctl-switch" + (props.className ? " " + props.className : ""),
+          disabled,
+          title: props.title,
+          "aria-label": text ? void 0 : props.ariaLabel,
+          onClick: function(e) {
+            e.preventDefault();
+            if (disabled) return;
+            if (typeof props.onChange === "function") props.onChange(!on);
+          }
+        },
+        h(
+          "span",
+          { className: "wbctl-switch-track", "aria-hidden": "true" },
+          h("span", { className: "wbctl-switch-knob" })
+        ),
+        text ? h("span", { className: "wbctl-switch-text" }, text) : null
+      );
+    }
+    module2.exports = { Switch, styles: SWITCH_STYLES };
+  }
+});
+
 // packages/addons/tasks/client/views/config.cjs
 var require_config = __commonJS({
   "packages/addons/tasks/client/views/config.cjs"(exports2, module2) {
     var React = require("react");
     var h = React.createElement;
+    var SW = require_switch();
     var DOMAIN = "tasks";
     var PREFIX = "wbt";
     var COPY = {
@@ -2395,13 +2447,6 @@ var require_config = __commonJS({
       ".__P__-cfg-select:focus,.__P__-cfg-input:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
       ".__P__-cfg-select{min-width:152px;padding-right:10px}",
       ".__P__-cfg-input{width:132px}",
-      ".__P__-cfg-switch{position:relative;display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-size:12.5px;color:var(--cfg-muted);user-select:none}",
-      ".__P__-cfg-switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}",
-      ".__P__-cfg-track{position:relative;width:38px;height:22px;border-radius:999px;background:color-mix(in oklab,currentColor 18%,transparent);transition:background .16s ease;flex:none}",
-      ".__P__-cfg-track::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--dsw-alias-label-primary,currentColor);transition:transform .16s ease,background .16s ease}",
-      ".__P__-cfg-switch input:checked+.__P__-cfg-track{background:var(--dsw-alias-brand-primary,currentColor)}",
-      ".__P__-cfg-switch input:checked+.__P__-cfg-track::after{transform:translateX(16px);background:var(--dsw-alias-label-primary-inverted,var(--dsw-alias-bg-base))}",
-      ".__P__-cfg-switch input:focus-visible+.__P__-cfg-track{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
       ".__P__-cfg-multi{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:100%}",
       ".__P__-cfg-multi label{position:relative;display:inline-flex;align-items:center;padding:5px 11px;border:1px solid var(--cfg-line);border-radius:999px;font-size:12px;color:var(--cfg-muted);cursor:pointer;line-height:1.4;transition:color .12s ease,border-color .12s ease,background .12s ease}",
       ".__P__-cfg-multi label:hover{background:var(--cfg-hover);color:var(--dsw-alias-label-primary,inherit)}",
@@ -2426,8 +2471,8 @@ var require_config = __commonJS({
       ".__P__-cfg-empty{border:1px dashed var(--cfg-line);border-radius:14px;padding:40px 16px;text-align:center;font-size:12.5px;color:var(--cfg-muted)}",
       ".__P__-cfg-error{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid color-mix(in oklab,var(--dsw-alias-state-error-primary,currentColor) 32%,var(--cfg-line));border-radius:10px;padding:10px 13px;color:var(--dsw-alias-state-error-primary,inherit);font-size:12.5px;line-height:1.5}",
       "@media (max-width:820px){.__P__-cfg-row{grid-template-columns:1fr;gap:10px;padding:13px 16px}.__P__-cfg-control{justify-content:flex-start}.__P__-cfg-multi{justify-content:flex-start}.__P__-cfg-gtitle{padding:11px 16px}}",
-      "@media (prefers-reduced-motion:reduce){.__P__-cfg-track,.__P__-cfg-track::after,.__P__-cfg-sk{animation:none;transition:none}}"
-    ].join("\n").split("__P__").join(PREFIX);
+      "@media (prefers-reduced-motion:reduce){.__P__-cfg-sk{animation:none;transition:none}}"
+    ].concat(SW.styles).join("\n").split("__P__").join(PREFIX);
     function injectCss() {
       if (typeof document === "undefined") return;
       var old = document.getElementById("wb-addon-" + DOMAIN + "-config-css");
@@ -2646,20 +2691,17 @@ var require_config = __commonJS({
         var value = state.values[item.id];
         var label = lang === "en" ? item.en : item.zh;
         if (item.type === "bool") {
-          return h(
-            "label",
-            { className: PREFIX + "-cfg-switch" },
-            h("input", {
-              type: "checkbox",
-              disabled: locked,
-              checked: value === true,
-              onChange: function(e) {
-                save(item.id, e.target.checked);
-              }
-            }),
-            h("span", { className: PREFIX + "-cfg-track", "aria-hidden": "true" }),
-            h("span", { className: PREFIX + "-cfg-switchstate" }, value === true ? t.on : t.off)
-          );
+          return h(SW.Switch, {
+            h,
+            checked: value === true,
+            disabled: locked,
+            showState: true,
+            onText: t.on,
+            offText: t.off,
+            onChange: function(next) {
+              save(item.id, next);
+            }
+          });
         }
         if (item.type === "enum") {
           return h("select", {
@@ -4514,13 +4556,6 @@ var require_data_style = __commonJS({
         "." + P + "-search input:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
         "." + P + "-select{border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:9px;padding:7px 10px;font:inherit;font-size:12px;outline:none}",
         "." + P + "-select:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
-        "." + P + "-switch{position:relative;display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:var(--cfg-muted);user-select:none;padding:4px 2px}",
-        "." + P + "-switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}",
-        "." + P + "-track{position:relative;width:34px;height:20px;border-radius:999px;background:color-mix(in oklab,currentColor 18%,transparent);transition:background .16s ease;flex:none}",
-        "." + P + "-track::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--dsw-alias-label-primary,currentColor);transition:transform .16s ease,background .16s ease}",
-        "." + P + "-switch input:checked+." + P + "-track{background:var(--dsw-alias-brand-primary,currentColor)}",
-        "." + P + "-switch input:checked+." + P + "-track::after{transform:translateX(14px);background:var(--dsw-alias-label-primary-inverted,var(--dsw-alias-bg-base))}",
-        "." + P + "-switch input:focus-visible+." + P + "-track{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
         "." + P + "-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--cfg-line);background:transparent;color:var(--cfg-muted);border-radius:8px;padding:6px 10px;font:inherit;font-size:11.5px;cursor:pointer;white-space:nowrap;transition:background .12s ease,color .12s ease}",
         "." + P + "-btn:hover{background:var(--cfg-hover);color:var(--dsw-alias-label-primary,inherit)}",
         "." + P + "-btn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
@@ -4588,7 +4623,7 @@ var require_data_style = __commonJS({
         "." + P + "-images img{width:36px;height:36px;object-fit:cover;border-radius:5px}",
         "." + P + "-gallery{display:flex;flex-direction:column;gap:12px;overflow:auto;flex:1}",
         "." + P + "-gallery img{width:100%;height:auto;object-fit:contain;border-radius:8px}"
-      ].join("\n");
+      ].concat(require_switch().styles).join("\n");
       if (DOMAIN === "storage") {
         var buttons = "." + P + " :is(button)";
         CSS += buttons + "{border:none;background:var(--wb-btn-bg);min-height:var(--wb-btn-size-sm);min-width:var(--wb-btn-size-sm)}" + buttons + ":enabled:hover{background:var(--wb-btn-hover-bg)}" + buttons + ":enabled:active{background:var(--wb-btn-active-bg)}" + buttons + ":disabled{background:var(--wb-btn-bg);color:var(--cfg-muted)}" + buttons + ":focus-visible{outline:var(--wb-btn-focus);outline-offset:var(--wb-btn-focus-offset)}." + P + "-fcell:has(button) input{padding-right:34px}";
@@ -4618,6 +4653,7 @@ var require_data_view = __commonJS({
     var React = require("react");
     var h = React.createElement;
     var COPY = require_data_copy();
+    var SW = require_switch();
     module2.exports = function createDataView(options) {
       var DOMAIN = options.domain;
       function icon(name) {
@@ -5278,25 +5314,23 @@ var require_data_view = __commonJS({
                     }
                   })
                 ),
-                h(
-                  "label",
-                  { className: P + "-switch" },
-                  h("input", { type: "checkbox", checked: includeDeleted, onChange: function(e) {
-                    setIncludeDeleted(e.target.checked);
+                h(SW.Switch, {
+                  h,
+                  checked: includeDeleted,
+                  label: t.includeDeleted,
+                  onChange: function(next) {
+                    setIncludeDeleted(next);
                     setPage(1);
-                  } }),
-                  h("span", { className: P + "-track" }),
-                  h("span", null, t.includeDeleted)
-                ),
-                h(
-                  "label",
-                  { className: P + "-switch" },
-                  h("input", { type: "checkbox", checked: showSystem, onChange: function(e) {
-                    setShowSystem(e.target.checked);
-                  } }),
-                  h("span", { className: P + "-track" }),
-                  h("span", null, t.showSystem)
-                ),
+                  }
+                }),
+                h(SW.Switch, {
+                  h,
+                  checked: showSystem,
+                  label: t.showSystem,
+                  onChange: function(next) {
+                    setShowSystem(next);
+                  }
+                }),
                 h("span", { className: P + "-grow" }),
                 h(
                   "label",
@@ -9045,7 +9079,7 @@ var require_styles = __commonJS({
       ".wbtx-slot-note{color:var(--wbt-muted,var(--wb-muted))}",
       ".wbtx-slot-link{border:0;background:transparent;padding:0;font:inherit;font-size:12px;color:var(--wbt-accent,var(--wb-accent));cursor:pointer;text-decoration:underline}",
       ".wbt-mailback{font-size:11.5px;padding:2px 7px}"
-    ].concat(require_filter_checklist_styles(), require_date_picker_styles()("wbt")).join("\n");
+    ].concat(require_filter_checklist_styles(), require_date_picker_styles()("wbt"), require_switch().styles).join("\n");
   }
 });
 
@@ -9062,12 +9096,12 @@ var require_timeline_styles = __commonJS({
       ".wbt-timeline-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto}",
       ".wbt-timeline-columns{display:grid;grid-template-columns:minmax(240px,32%) minmax(0,1fr);gap:12px;align-items:start}",
       ".wbt-timeline-left,.wbt-timeline-right{min-width:0;border:1px solid var(--wbt-line);border-radius:var(--wb-radius-card,10px);padding:12px}",
-      ".wbt-timeline-single{display:flex;align-items:center;gap:8px;margin:0;font-size:13px;white-space:nowrap}.wbt-timeline-search input{min-width:0;flex:1}",
+      ".wbt-timeline-search input{min-width:0;flex:1}",
       ".wbt-timeline-list{max-height:840px;overflow:auto;overscroll-behavior:contain}.wbt-timeline-left>.wbt-timeline-list,.wbt-timeline-left>.wbt-err{margin-top:2px}.wbt-timeline-view .wbt-timeline-option{position:relative;box-sizing:border-box;min-height:56px;padding:10px 12px;border:0;border-bottom:1px solid var(--wbt-line);border-radius:var(--wb-radius-sm,6px);display:flex;flex-direction:column;gap:4px;cursor:pointer;color:inherit;background:transparent;background-image:none}",
       ".wbt-timeline-option-title{display:flex;gap:8px;align-items:center;min-width:0}.wbt-timeline-option-title strong{font-size:13px;font-weight:560;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}.wbt-timeline-option>span{font-size:11.5px;opacity:.6;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}",
       ".wbt-timeline-option>.wbt-timeline-excerpt{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
       ".wbt-timeline-view .wbt-timeline-option.current{box-shadow:inset 3px 0 var(--wbt-accent),inset 0 0 0 1px var(--wbt-line);background:color-mix(in oklab,var(--wbt-accent) 8%,transparent);background-image:none}.wbt-timeline-view .wbt-timeline-option:hover{background:color-mix(in oklab,var(--wbt-accent) 12%,transparent)}",
-      ".wbt-timeline-option:focus-visible,.wbt-timeline-view button:focus-visible,.wbt-timeline-modal button:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:2px}.wbt-timeline-option input[type=checkbox],.wbt-timeline-single input{appearance:auto;width:15px;height:15px;flex:none;accent-color:var(--wbt-accent)}",
+      ".wbt-timeline-option:focus-visible,.wbt-timeline-view button:focus-visible,.wbt-timeline-modal button:focus-visible{outline:2px solid var(--wbt-accent);outline-offset:2px}.wbt-timeline-option input[type=checkbox]{appearance:auto;width:15px;height:15px;flex:none;accent-color:var(--wbt-accent)}",
       ".wbt-timeline-pager{justify-content:space-between;font-size:12px;margin-top:12px}.wbt-timeline-right h3,.wbt-timeline-summary h4{font-size:15px;font-weight:600;margin:0 0 8px;overflow-wrap:anywhere}.wbt-timeline-eyebrow{font-size:11.5px;opacity:.55;margin-bottom:4px;overflow-wrap:anywhere}",
       ".wbt-timeline-summary{min-width:0}.wbt-timeline-desc{max-height:64px;overflow:hidden;margin:0 0 8px;white-space:pre-wrap;overflow-wrap:anywhere}.wbt-timeline-actions{margin:8px 0}.wbt-timeline-actions>.wbt-act-del{margin-left:auto}",
       ".wbt-timeline-right>.wbt-timeline-members{min-height:0;max-height:65vh;overflow-y:auto;overscroll-behavior-y:contain;scrollbar-gutter:stable}",
@@ -9976,6 +10010,7 @@ var require_ownership_fields = __commonJS({
     "use strict";
     var limits = require_limits();
     var ownership = require_ownership();
+    var SW = require_switch();
     module2.exports = function(React) {
       var h = React.createElement;
       var Picker = require_table_picker()(React);
@@ -10029,14 +10064,14 @@ var require_ownership_fields = __commonJS({
           "div",
           { className: "wbt-field full" },
           h(Selection, { form, set, tree: props.tree, recommended: props.recommended, edit: props.edit, current: props.current, currentId: props.currentId }),
-          !props.edit ? h("label", { className: "wbt-check" }, h("input", {
-            type: "checkbox",
-            "aria-label": "\u6CA1\u6709\u5408\u9002\u7684\u8868\uFF1F\u65B0\u5EFA\u8282\u70B9",
+          !props.edit ? h(SW.Switch, {
+            h,
             checked: !!form.newPath,
-            onChange: function(e) {
-              props.setMany({ newPath: e.target.checked, tableId: "", confirmed: false });
+            label: "\u6CA1\u6709\u5408\u9002\u7684\u8868\uFF1F\u65B0\u5EFA\u8282\u70B9",
+            onChange: function(next) {
+              props.setMany({ newPath: next, tableId: "", confirmed: false });
             }
-          }), "\u6CA1\u6709\u5408\u9002\u7684\u8868\uFF1F\u65B0\u5EFA\u8282\u70B9") : null,
+          }) : null,
           form.newPath ? h(
             "div",
             null,
@@ -10069,15 +10104,15 @@ var require_ownership_fields = __commonJS({
               );
             }),
             plan.error ? h("div", { className: "wbt-err", role: "alert" }, plan.error) : null,
-            h("label", { className: "wbt-check" }, h("input", {
-              type: "checkbox",
-              "aria-label": "\u786E\u8BA4\u65B0\u5EFA\u8DEF\u5F84",
+            h(SW.Switch, {
+              h,
               checked: !!form.confirmed,
               disabled: !!plan.error,
-              onChange: function(e) {
-                set("confirmed", e.target.checked);
+              label: "\u786E\u8BA4\u4EE5\u4E0A\u8DEF\u5F84\u4E0E\u804C\u8D23\uFF0C\u968F\u4EFB\u52A1\u4E00\u8D77\u63D0\u4EA4",
+              onChange: function(next) {
+                set("confirmed", next);
               }
-            }), "\u786E\u8BA4\u4EE5\u4E0A\u8DEF\u5F84\u4E0E\u804C\u8D23\uFF0C\u968F\u4EFB\u52A1\u4E00\u8D77\u63D0\u4EA4")
+            })
           ) : null
         );
       };
@@ -11674,6 +11709,7 @@ var require_tasks_view = __commonJS({
       var React = deps.React, configView = deps.configView, CFG_FALLBACK = deps.CFG_FALLBACK, COPY = deps.COPY, injectCss = deps.injectCss, allTables = deps.allTables, findFirstTable = deps.findFirstTable, treeWalk = deps.treeWalk, treeFlat = deps.treeFlat, cx = deps.cx, Icon2 = deps.Icon, TaskItem = deps.TaskItem, PathCrumbs = deps.PathCrumbs, TagFilter = deps.TagFilter, TreeNode = deps.TreeNode, CreateModal = deps.CreateModal, TimelineModal = deps.TimelineModal, NodeModal = deps.NodeModal, EditModal = deps.EditModal, DoneModal = deps.DoneModal, BatchModal = deps.BatchModal;
       var h = React.createElement, filters = require_task_filter_model(), renderFilters = require_task_filter_panel(), claimBatch = require_claim_batch(), renderSelectionBar = require_selection_bar();
       var TaskPreview = require_task_preview()(React, TaskItem);
+      var SW = require_switch();
       function TasksView(props) {
         var lang = props.lang === "en" ? "en" : "zh";
         var cfg = configView.useConfig(props.api, CFG_FALLBACK);
@@ -12264,16 +12300,16 @@ var require_tasks_view = __commonJS({
           api,
           t,
           Icon: Icon2,
-          missing: h("label", { className: "wbt-check" }, h("input", {
-            type: "checkbox",
-            checked: difficultyMissing,
-            onChange: function(e) {
-              var next = e.target.checked;
+          missing: h(SW.Switch, {
+            h,
+            checked: !!difficultyMissing,
+            label: t.difficultyMissing,
+            onChange: function(next) {
               setDifficultyMissing(next);
               if (next) setFilterValue(filters.clearDifficulty(filterValue));
               setPageNumber(1);
             }
-          }), t.difficultyMissing)
+          })
         });
         var listBody = loading ? h("div", { className: "wbt-empty" }, t.loading) : error ? h("div", { className: "wbt-err" }, t.error + error) : data.records.length === 0 ? h("div", { className: "wbt-empty" }, t.empty) : h("div", { className: "wbt-list" }, data.records.map(function(task) {
           return h(TaskItem, {
@@ -12790,6 +12826,7 @@ var require_timeline_view = __commonJS({
       var receipts = require_ownership();
       var splitTitle = require_timeline_title();
       var Highlight = require_highlight2()(React);
+      var SW = require_switch();
       function result(r) {
         if (!r || !r.ok) throw new Error(r && r.error || "Request failed");
         return r.result;
@@ -13028,10 +13065,10 @@ var require_timeline_view = __commonJS({
                 } }),
                 h("button", { className: "wbt-btn", type: "submit" }, t.timelineSearchButton)
               ),
-              h("label", { className: "wbt-timeline-single" }, h("input", { type: "checkbox", "aria-label": t.timelineSingletons, checked: single, onChange: function(e) {
-                setSingle(e.target.checked);
+              h(SW.Switch, { h, checked: !!single, label: t.timelineSingletons, onChange: function(next) {
+                setSingle(next);
                 setPage(1);
-              } }), t.timelineSingletons)
+              } })
             ),
             h(
               "div",
@@ -13773,7 +13810,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.33",
+    version: "5.2.34",
     icon: ICONS["list-checks"],
     // 贡献声明写在 registerAddon 里：卸载任务插件时宿主按 addonId 一起撤销，
     // 不会在邮件里留一个渲染即报错的孤儿按钮。

@@ -849,11 +849,63 @@ var require_client_base_styles = __commonJS({
   }
 });
 
+// packages/addons/lib/switch.cjs
+var require_switch = __commonJS({
+  "packages/addons/lib/switch.cjs"(exports2, module2) {
+    "use strict";
+    var SWITCH_STYLES = [
+      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
+      ".wbctl-switch-track{position:relative;display:inline-flex;align-items:center;box-sizing:border-box;width:34px;height:20px;padding:2px;border-radius:999px;background:color-mix(in oklab,currentColor 22%,transparent);transition:background .16s ease;flex:none}",
+      ".wbctl-switch-knob{display:block;width:16px;height:16px;border-radius:50%;background:var(--wb-card,#fff);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .16s ease}",
+      ".wbctl-switch[aria-checked=true]{color:var(--wb-accent,#2563eb)}",
+      ".wbctl-switch[aria-checked=true] .wbctl-switch-track{background:var(--wb-accent,#2563eb)}",
+      ".wbctl-switch[aria-checked=true] .wbctl-switch-knob{transform:translateX(14px)}",
+      ".wbctl-switch:hover:not(:disabled) .wbctl-switch-track{outline:1px solid var(--wb-accent,#2563eb)}",
+      ".wbctl-switch:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+      ".wbctl-switch:disabled{opacity:.45;cursor:not-allowed}",
+      ".wbctl-switch-text{white-space:nowrap}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-switch-track,.wbctl-switch-knob{transition:none}}"
+    ];
+    function Switch(props) {
+      var h = props.h;
+      var on = props.checked === true || props.checked === "true";
+      var disabled = !!props.disabled;
+      var text = props.label;
+      if (props.showState) text = on ? props.onText || "\u5F00" : props.offText || "\u5173";
+      return h(
+        "button",
+        {
+          type: "button",
+          role: "switch",
+          "aria-checked": on ? "true" : "false",
+          className: "wbctl-switch" + (props.className ? " " + props.className : ""),
+          disabled,
+          title: props.title,
+          "aria-label": text ? void 0 : props.ariaLabel,
+          onClick: function(e) {
+            e.preventDefault();
+            if (disabled) return;
+            if (typeof props.onChange === "function") props.onChange(!on);
+          }
+        },
+        h(
+          "span",
+          { className: "wbctl-switch-track", "aria-hidden": "true" },
+          h("span", { className: "wbctl-switch-knob" })
+        ),
+        text ? h("span", { className: "wbctl-switch-text" }, text) : null
+      );
+    }
+    module2.exports = { Switch, styles: SWITCH_STYLES };
+  }
+});
+
 // packages/addons/danmaku/client/styles.cjs
 var require_styles = __commonJS({
   "packages/addons/danmaku/client/styles.cjs"(exports2, module2) {
     "use strict";
     var baseStyles = require_client_base_styles();
+    var SW = require_switch();
     function pageStyles() {
       return [
         /* 页面骨架：hero 一行，下面是卡片 */
@@ -909,14 +961,7 @@ var require_styles = __commonJS({
         ".wbdm-icon-btn:hover{background:rgba(127,127,127,.12);color:var(--wb-accent,#2563eb)}",
         ".wbdm-icon-btn.danger:hover{color:var(--wb-danger,#dc2626)}",
         ".wbdm-icon-btn:disabled{opacity:.3;cursor:not-allowed}",
-        /* 开关 */
-        ".wbdm-switch{position:relative;display:inline-flex;flex:none;width:34px;height:20px;cursor:pointer}",
-        ".wbdm-switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}",
-        ".wbdm-track{display:block;width:100%;height:100%;border-radius:999px;background:var(--wb-line,#e5e7eb);transition:background .15s}",
-        ".wbdm-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--wb-card,#fff);box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .15s;pointer-events:none}",
-        ".wbdm-switch input:checked+.wbdm-track{background:var(--wb-accent,#2563eb)}",
-        ".wbdm-switch input:checked~.wbdm-knob{transform:translateX(14px)}",
-        ".wbdm-switch input:focus-visible+.wbdm-track{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+        /* 开关外观统一由 lib/switch.cjs 的 wbctl-* 规则提供，见文件末尾追加 */
         // 行内小开关（添加卡里的「卡片背景」）
         ".wbdm-inline-label{white-space:nowrap}",
         // 行内「卡片/纯文字」标签：点一下切换该条弹幕是否有底
@@ -983,7 +1028,7 @@ var require_styles = __commonJS({
       ];
     }
     module2.exports = function styles2() {
-      return baseStyles("wbdm").concat(pageStyles());
+      return baseStyles("wbdm").concat(pageStyles(), SW.styles);
     };
     module2.exports.pageStyles = pageStyles;
   }
@@ -1831,6 +1876,7 @@ var require_detail = __commonJS({
     var h = React.createElement;
     var chipStyle = require_chip_style();
     var createOverlay = require_overlay();
+    var SW = require_switch();
     var REDUCED = false;
     try {
       REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -2004,22 +2050,18 @@ var require_detail = __commonJS({
       }
       function switchField(key, label) {
         return h(
-          "label",
+          "div",
           { className: "wbdm-crow" },
           h("span", { className: "wbdm-crow-label" }, h("span", { className: "wbdm-crow-t" }, label)),
-          h(
-            "span",
-            { className: "wbdm-switch" },
-            h("input", {
-              type: "checkbox",
-              checked: Boolean(detail[key]),
-              onChange: function() {
-                set(key, !detail[key]);
-              }
-            }),
-            h("span", { className: "wbdm-track" }),
-            h("span", { className: "wbdm-knob" })
-          )
+          // 共享开关自带 role="switch"/aria-checked；左侧已有文案，这里不再重复显示状态。
+          h(SW.Switch, {
+            h,
+            checked: Boolean(detail[key]),
+            ariaLabel: label,
+            onChange: function(next) {
+              set(key, next);
+            }
+          })
         );
       }
       var weights = [{ value: "", label: C.followGlobal }];
@@ -2089,7 +2131,7 @@ var require_detail = __commonJS({
               h("div", { className: "wbdm-tones" }, TONES.map(toneChip))
             ),
             h(
-              "label",
+              "div",
               { className: "wbdm-crow" },
               h(
                 "span",
@@ -2097,19 +2139,14 @@ var require_detail = __commonJS({
                 h("span", { className: "wbdm-crow-t" }, C.card),
                 h("span", { className: "wbdm-crow-h" }, C.cardHint)
               ),
-              h(
-                "span",
-                { className: "wbdm-switch" },
-                h("input", {
-                  type: "checkbox",
-                  checked: Boolean(detail.card),
-                  onChange: function() {
-                    set("card", !detail.card);
-                  }
-                }),
-                h("span", { className: "wbdm-track" }),
-                h("span", { className: "wbdm-knob" })
-              )
+              h(SW.Switch, {
+                h,
+                checked: Boolean(detail.card),
+                ariaLabel: C.card,
+                onChange: function(next) {
+                  set("card", next);
+                }
+              })
             ),
             numField("fontSize", C.fontSize, C.unitPx + " \xB7 " + C.followGlobal, 1, 10, 48),
             selectField("fontWeight", C.weight, weights),
@@ -2202,6 +2239,7 @@ var require_library = __commonJS({
     var React = require("react");
     var h = React.createElement;
     var copy = require_copy();
+    var SW = require_switch();
     var ICONS = {
       up: GLYPHS2["arrow-up"],
       down: GLYPHS2["arrow-down"],
@@ -2521,19 +2559,16 @@ var require_library = __commonJS({
           "div",
           { key: item.id, className: "wbdm-item" + (item.enabled ? "" : " off") },
           h("span", { className: "wbdm-order" }, String(index + 1)),
-          h(
-            "label",
-            { className: "wbdm-switch", title: item.enabled ? C.disable : C.enable },
-            h("input", {
-              type: "checkbox",
-              checked: Boolean(item.enabled),
-              onChange: function() {
-                toggle(item);
-              }
-            }),
-            h("span", { className: "wbdm-track" }),
-            h("span", { className: "wbdm-knob" })
-          ),
+          h(SW.Switch, {
+            h,
+            checked: Boolean(item.enabled),
+            title: item.enabled ? C.disable : C.enable,
+            // 开关的可访问名称用「启用」这个设置名；title 只作为点击后的动作提示。
+            ariaLabel: C.enable,
+            onChange: function() {
+              toggle(item);
+            }
+          }),
           h(
             "span",
             { className: "wbdm-tag" },
@@ -2685,6 +2720,7 @@ var require_config = __commonJS({
     var React = require("react");
     var h = React.createElement;
     var copy = require_copy();
+    var SW = require_switch();
     var DOMAIN = "danmaku";
     var ICONS = {
       check: GLYPHS2["check"],
@@ -2947,20 +2983,15 @@ var require_config = __commonJS({
         });
       }
       function switchControl(item, value) {
-        return h(
-          "label",
-          { className: "wbdm-switch", title: labelOf(item, lang) },
-          h("input", {
-            type: "checkbox",
-            checked: value === true,
-            "aria-label": labelOf(item, lang),
-            onChange: function(e) {
-              save(item.id, e.target.checked);
-            }
-          }),
-          h("span", { className: "wbdm-track" }),
-          h("span", { className: "wbdm-knob" })
-        );
+        return h(SW.Switch, {
+          h,
+          checked: value === true,
+          title: labelOf(item, lang),
+          ariaLabel: labelOf(item, lang),
+          onChange: function(next) {
+            save(item.id, next);
+          }
+        });
       }
       function control(item) {
         var value = values()[item.id];
@@ -3260,13 +3291,6 @@ var require_data_style = __commonJS({
         "." + P + "-search input:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
         "." + P + "-select{border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:9px;padding:7px 10px;font:inherit;font-size:12px;outline:none}",
         "." + P + "-select:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
-        "." + P + "-switch{position:relative;display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:var(--cfg-muted);user-select:none;padding:4px 2px}",
-        "." + P + "-switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}",
-        "." + P + "-track{position:relative;width:34px;height:20px;border-radius:999px;background:color-mix(in oklab,currentColor 18%,transparent);transition:background .16s ease;flex:none}",
-        "." + P + "-track::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--dsw-alias-label-primary,currentColor);transition:transform .16s ease,background .16s ease}",
-        "." + P + "-switch input:checked+." + P + "-track{background:var(--dsw-alias-brand-primary,currentColor)}",
-        "." + P + "-switch input:checked+." + P + "-track::after{transform:translateX(14px);background:var(--dsw-alias-label-primary-inverted,var(--dsw-alias-bg-base))}",
-        "." + P + "-switch input:focus-visible+." + P + "-track{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
         "." + P + "-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--cfg-line);background:transparent;color:var(--cfg-muted);border-radius:8px;padding:6px 10px;font:inherit;font-size:11.5px;cursor:pointer;white-space:nowrap;transition:background .12s ease,color .12s ease}",
         "." + P + "-btn:hover{background:var(--cfg-hover);color:var(--dsw-alias-label-primary,inherit)}",
         "." + P + "-btn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
@@ -3334,7 +3358,7 @@ var require_data_style = __commonJS({
         "." + P + "-images img{width:36px;height:36px;object-fit:cover;border-radius:5px}",
         "." + P + "-gallery{display:flex;flex-direction:column;gap:12px;overflow:auto;flex:1}",
         "." + P + "-gallery img{width:100%;height:auto;object-fit:contain;border-radius:8px}"
-      ].join("\n");
+      ].concat(require_switch().styles).join("\n");
       if (DOMAIN === "storage") {
         var buttons = "." + P + " :is(button)";
         CSS += buttons + "{border:none;background:var(--wb-btn-bg);min-height:var(--wb-btn-size-sm);min-width:var(--wb-btn-size-sm)}" + buttons + ":enabled:hover{background:var(--wb-btn-hover-bg)}" + buttons + ":enabled:active{background:var(--wb-btn-active-bg)}" + buttons + ":disabled{background:var(--wb-btn-bg);color:var(--cfg-muted)}" + buttons + ":focus-visible{outline:var(--wb-btn-focus);outline-offset:var(--wb-btn-focus-offset)}." + P + "-fcell:has(button) input{padding-right:34px}";
@@ -3364,6 +3388,7 @@ var require_data_view = __commonJS({
     var React = require("react");
     var h = React.createElement;
     var COPY = require_data_copy();
+    var SW = require_switch();
     module2.exports = function createDataView(options) {
       var DOMAIN = options.domain;
       function icon(name) {
@@ -4024,25 +4049,23 @@ var require_data_view = __commonJS({
                     }
                   })
                 ),
-                h(
-                  "label",
-                  { className: P + "-switch" },
-                  h("input", { type: "checkbox", checked: includeDeleted, onChange: function(e) {
-                    setIncludeDeleted(e.target.checked);
+                h(SW.Switch, {
+                  h,
+                  checked: includeDeleted,
+                  label: t.includeDeleted,
+                  onChange: function(next) {
+                    setIncludeDeleted(next);
                     setPage(1);
-                  } }),
-                  h("span", { className: P + "-track" }),
-                  h("span", null, t.includeDeleted)
-                ),
-                h(
-                  "label",
-                  { className: P + "-switch" },
-                  h("input", { type: "checkbox", checked: showSystem, onChange: function(e) {
-                    setShowSystem(e.target.checked);
-                  } }),
-                  h("span", { className: P + "-track" }),
-                  h("span", null, t.showSystem)
-                ),
+                  }
+                }),
+                h(SW.Switch, {
+                  h,
+                  checked: showSystem,
+                  label: t.showSystem,
+                  onChange: function(next) {
+                    setShowSystem(next);
+                  }
+                }),
                 h("span", { className: P + "-grow" }),
                 h(
                   "label",
@@ -4852,7 +4875,7 @@ function definition(host) {
   var tab = makeTab(host.react);
   return {
     id: ADDON_ID,
-    version: "0.2.4",
+    version: "0.2.5",
     icon: tab("megaphone"),
     views: [
       {

@@ -104,7 +104,7 @@ let txt = text(tree);
 for (const item of ITEMS) assert.ok(txt.includes(item.zh), '应列出配置项：' + item.id);
 for (const group of GROUPS) assert.ok(txt.includes(group.zh), '应有分组标题：' + group.id);
 assert.match(txt, /邮件设置/);
-assert.equal(walk(tree).filter((n) => n.props && n.props.type === 'checkbox').length, 5, '五个布尔项各一个开关');
+assert.equal(walk(tree).filter((n) => n.props && n.props.role === 'switch').length, 5, '五个布尔项各一个开关');
 assert.equal(walk(tree).filter((n) => n.props && n.props.type === 'number').length, 2, '两个数字项');
 assert.match(txt, /正在运行：定时循环，300s/, '应显示自动同步的运行状态，而不是只显示开关意愿');
 const sel = walk(tree).find((n) => n.type === 'select' && n.props['aria-label'] === '正文配色');
@@ -114,8 +114,12 @@ assert.equal(JSON.stringify(walk(sel).filter((n) => n.type === 'option').map((n)
 assert.match(text(sel), /按原信配色/, '选项用中文标签');
 
 // B. 改一项立即写入：开关走 configSet，成功后台账同步、没有「已改」标记残留错误。
-const box = walk(tree).find((n) => n.props && n.props.type === 'checkbox' && n.props['aria-label'] === '默认加载远程图片');
-box.props.onChange({ target: { checked: false } });
+// 共享开关自带「开启/关闭」文案，没有 aria-label 与 onChange 事件：按行上的
+// data-config 定位到对应布尔项，再直接触发开关的 onClick。
+const switchOf = (id) => walk(walk(tree).find((n) => n.props && n.props['data-config'] === id)).find((n) => n.props && n.props.role === 'switch');
+const box = switchOf('images.remote');
+assert.ok(box, '默认加载远程图片应渲染成共享开关');
+box.props.onClick({ preventDefault: function () {} });
 tree = await settle(page);
 const setCall = state.calls.filter((c) => c.name === 'mail.configSet').at(-1);
 assert.equal(JSON.stringify(setCall.args), JSON.stringify({ values: { 'images.remote': false } }), '开关要立刻落库'); // vm 跨域对象用序列化比较

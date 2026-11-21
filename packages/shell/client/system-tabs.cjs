@@ -1,3 +1,6 @@
+// 布尔开关走共享控件（wbctl-*），样式由 shell/client/styles.cjs 统一注入。
+var SW = require("../../addons/lib/switch.cjs");
+
 // 管理页面组件；注入既有宿主依赖，无顶层副作用或循环依赖。
 module.exports = function createSystemTabs(react, jsx, useApi) {
 function AccountTab(props) {
@@ -47,8 +50,7 @@ function AccountTab(props) {
       jsx.jsxs("div", { className: "wb-form", children: [
         jsx.jsx("input", { className: "wb-input", placeholder: t("email"), value: form.email, onChange: function (e) { setForm(Object.assign({}, form, { email: e.target.value })); } }),
         jsx.jsx("input", { className: "wb-input", type: "password", placeholder: t("password"), value: form.password, onChange: function (e) { setForm(Object.assign({}, form, { password: e.target.value })); }, onKeyDown: function (e) { if (e.key === "Enter") submit(); } }),
-        jsx.jsx("label", { className: "wb-msg", children: jsx.jsxs("span", { children: [
-          jsx.jsx("input", { type: "checkbox", checked: form.signup, onChange: function (e) { setForm(Object.assign({}, form, { signup: e.target.checked })); } }), " ", t("signup") ] }) }),
+        jsx.jsx(SW.Switch, { h: jsx.jsx, checked: !!form.signup, label: t("signup"), onChange: function (next) { setForm(Object.assign({}, form, { signup: next })); } }),
         jsx.jsx("button", { className: "wb-btn", onClick: submit, children: form.signup ? t("signup") : t("login") }),
       ] }),
       msg ? jsx.jsx("div", { className: "wb-err", style: { marginTop: 8 }, children: msg }) : null,

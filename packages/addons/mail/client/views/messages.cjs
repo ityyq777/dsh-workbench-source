@@ -7,6 +7,8 @@ var ReplyTools = require("../ui/reply-tools.cjs");
 var MailHtml = require("../ui/mail-html.cjs");
 var prefsApi = require("./prefs.cjs");
 var iconLabel = require("../../../lib/icon-label.cjs");
+// 「只看未读」布尔筛选用共享开关控件。
+var SW = require("../../../lib/switch.cjs");
 var Folder = GLYPHS["folder"];
 var InboxIcon = GLYPHS["inbox"];
 var Refresh = GLYPHS["refresh-cw"];
@@ -519,19 +521,15 @@ function Inbox(props) {
             button("在服务器搜索", searchServer, !canRemote || !folder[0] || !search[0].trim() || !!server[0]?.loading, undefined, Search),
             server[0] && button("返回本地列表", function () { clearServer(); close(); }),
           ),
-          h(
-            "label",
-            null,
-            h("input", {
-              type: "checkbox",
-              checked: unseen[0],
-              onChange: function (e) {
-                unseen[1](e.target.checked);
-                reset();
-              },
-            }),
-            " 只看未读",
-          ),
+          h(SW.Switch, {
+            h: h,
+            checked: unseen[0],
+            label: "只看未读",
+            onChange: function (next) {
+              unseen[1](next);
+              reset();
+            },
+          }),
         ),
       ),
       h(
