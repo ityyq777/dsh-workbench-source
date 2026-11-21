@@ -475,6 +475,7 @@ function WorkbenchPage(props) {
   }
 
   if (route === "agent") return SystemPages.agentAccessPage({ jsx: jsx, t: t, lang: lang, api: api, head: pageHead });
+  if (route === "agentList") return SystemPages.agentListPage({ jsx: jsx, React: react, t: t, lang: lang, api: api, head: pageHead });
   if (route === "backup") {
     return jsx.jsxs("div", { className: "wb-root", children: [
       jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_backup"), t("backup_desc")), jsx.jsx(BackupTab, { t: t, lang: lang, addons: addons })] }),

@@ -27,6 +27,11 @@ const hasClass = (n, cls) => String((n.props && n.props.className) || "").split(
 const find = (tree, fn) => walk(tree).find(fn);
 const findAll = (tree, fn) => walk(tree).filter(fn);
 const settle = async () => { await new Promise((r) => setImmediate(r)); };
+// jsx 工厂的 children 归一化：harness 的 expand 只接受数组。
+const kidsOf = (props) => {
+  const c = props ? props.children : null;
+  return c == null || typeof c === "boolean" ? [] : Array.isArray(c) ? c.flat(Infinity).filter((x) => x != null) : [c];
+};
 
 function mount(payload, options = {}, lang = "zh") {
   const rt = createReact();
@@ -242,8 +247,8 @@ const roster = {
   assert.match(body, /Agent 权限/);
   assert.match(body, /audit\.list/);
   const cards = pages.manageCards({ t, systemCard: (key, icon, title) => rt.React.createElement("b", { "data-card": key }, title) });
-  assert.equal(cards.length, 4, "首页管理区保留四个入口");
-  assert.equal(JSON.stringify(cards.map((c) => c.props["data-card"])), JSON.stringify(["agent", "backup", "audit", "account"]));
+  assert.equal(cards.length, 5, "首页管理区新增「Agent 权限清单」入口");
+  assert.equal(JSON.stringify(cards.map((c) => c.props["data-card"])), JSON.stringify(["agent", "agentList", "backup", "audit", "account"]));
 }
 
 // ── 静态接线：宿主页面 / 文案 / 各插件声明 ───────────────────────────
@@ -296,6 +301,45 @@ const roster = {
   assert.ok(!/setAgentAccess|createAgentAccess/.test(actionsSrc), "宿主不得再注册 agent 开关");
   assert.match(actionsSrc, /actions\.setActionOrigins/, "宿主应提供来源设置 action");
   assert.match(actionsSrc, /ACTION_ORIGIN_DENIED/, "越界来源应有独立错误码");
+}
+
+// 宿主两页：宿主 action 页（可配来源）与 Agent 权限清单（只读、跨域）。
+{
+  const PAGES = resolve(ROOT, "packages/shell/client/system-pages.cjs");
+  const locale = loadCjs(resolve(ROOT, "packages/shell/client/locale.cjs"), {});
+  const t = (key) => (locale.zh && locale.zh[key]) || key;
+  const rt = createReact();
+  const jsxRt = {
+    jsx: (type, props) => ({ type, props: props || {}, children: kidsOf(props) }),
+    jsxs: (type, props) => ({ type, props: props || {}, children: kidsOf(props) }),
+  };
+  const pages = loadCjs(PAGES, { react: rt.React, "react/jsx-runtime": jsxRt });
+  // system-pages 只接受 jsx 工厂：用最小工厂把 {type,props,children} 交给 harness 遍历。
+  const jsxFrom = () => ({
+    jsx: (type, props) => ({ type, props: props || {}, children: kidsOf(props) }),
+    jsxs: (type, props) => ({ type, props: props || {}, children: kidsOf(props) }),
+  });
+  const calls = [];
+  const api = {
+    post(path, args) {
+      calls.push([path, args]);
+      return Promise.resolve({
+        actions: [
+          { name: "host.agentRun", domain: "wb-shell", description: "新建会话", origins: ["plugin"], originsDeclared: ["plugin"] },
+          { name: "tags.create", domain: "wb-addon-tags", description: "建标签", origins: ["ui", "plugin", "agent"], originsDeclared: ["ui", "plugin", "agent", "sync"] },
+          { name: "vault.secretReveal", domain: "wb-addon-vault", description: "显形", origins: ["ui"], originsDeclared: ["ui"] },
+        ],
+      });
+    },
+  };
+  let tree = rt.mount(pages.agentListPage, { jsx: jsxFrom(rt), React: rt.React, t, lang: "zh", api, head: () => null });
+  await settle();
+  tree = rt.rerender();
+  const rows = findAll(tree, (n) => n.props && n.props["data-agent-row"]);
+  assert.deepEqual(rows.map((n) => n.props["data-agent-row"]), ["tags.create"], "只列出生效来源含 agent 的 action");
+  assert.match(text(tree), /1 个 action 对 agent 开放/, "清单页显示对 agent 开放的条数");
+  assert.ok(!calls.some(([path]) => /setActionOrigins|setAgentAccess/.test(path)), "清单页只读，不得调用改权限的 action");
+  assert.ok(!find(tree, (n) => n.props && n.props["data-origins-row"]), "清单页不渲染可改的来源控件");
 }
 
 console.log("AGENT ACCESS UI TEST PASS");
