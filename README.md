@@ -62,6 +62,17 @@ pnpm cloud:build
 子模块提交指针变化时，宿主仓库要单独提交 `cloud` 的 gitlink；云端代码仍在
 `dsh-workbench-cloud` 仓库提交、推送和部署。
 
+私人云端（单用户、多设备同步）是另一个子模块 `cloud-private/`，Node.js + SQLite 单进程服务：
+
+```sh
+git submodule update --init cloud-private
+pnpm cloud-private:test     # 跑服务端测试
+WB_PRIVATE_SECRET=至少16位的访问密钥 pnpm cloud-private:start   # 默认监听 0.0.0.0:8792
+```
+
+在「账号与同步」页把云端类型切到「私人云端」，填服务端地址与同一访问密钥即可开始同步；
+共享云端（`cloud/`）仍使用账号登录，两种云端不会同时启用。
+
 ## 安装
 
 从插件市场或 DSH 设置 → 插件安装；命令行（业务包任选其一即可，宿主会被自动带入，默认装最新版）：

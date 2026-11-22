@@ -5,7 +5,7 @@ import { SyncEngine, SyncHttpError, listConflicts, resolveConflict, type SyncTra
 import { BackupError, createBackup, importBackup, normalizeImportPolicy } from "./backup.js";
 import type { Subscriber } from "../types/host-types.js";
 import { publicCategories } from "./categories.js";
-export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionModeOf, setSessionMode, audit, backupDomains, actionNames, invoke, log, schemaSnapshot }: any) {
+export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionModeOf, setSessionMode, audit, backupDomains, actionNames, invoke, log, schemaSnapshot, applyCloudConfig, publicCloudConfig }: any) {
   /** 云端 fetch 封装（带 access token；401 时尝试 refresh 一次）。 */
   async function cloudFetch(path: string, init?: RequestInit & { json?: unknown }, retry = true): Promise<any> {
     const headers: Record<string, string> = {
@@ -428,12 +428,67 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
                 const ok = resolveConflict(state.db, Number(conflictM[1]), action, clock.now(), syncDomains());
                 return send(ok ? 200 : 404, { ok });
               }
+              if (p === "/cloud/config" && m === "GET") {
+                return send(200, {
+                  ok: true,
+                  ...publicCloudConfig(state.cloudConfig),
+                  cloud_url: state.cloudUrl,
+                  logged_in: Boolean(state.creds),
+                });
+              }
+              if (p === "/cloud/config" && m === "POST") {
+                const b = await bodyOf();
+                try {
+                  const cfg = applyCloudConfig(b);
+                  cloudHealthCache = null;
+                  return send(200, { ok: true, ...cfg });
+                } catch (e) {
+                  return send(400, { ok: false, error: actionErrorText(e) });
+                }
+              }
+              if (p === "/cloud/test" && m === "POST") {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 3_000);
+                const started = Date.now();
+                let health: Record<string, unknown>;
+                try {
+                  const res = await fetch(state.cloudUrl + "/v1/health", { signal: controller.signal });
+                  health = { reachable: res.ok, status: res.status, ...(res.ok ? await res.json() : {}) };
+                } catch (e) {
+                  health = { reachable: false, status: 0, error: String((e && (e as Error).message) || e) };
+                } finally {
+                  clearTimeout(timer);
+                }
+                let account: any = null;
+                if (state.creds) {
+                  try {
+                    const res = await fetch(state.cloudUrl + "/v1/me", {
+                      headers: { authorization: "Bearer " + state.creds.accessToken },
+                    });
+                    if (res.ok) account = await res.json();
+                  } catch {
+                    account = null;
+                  }
+                }
+                return send(200, {
+                  ok: true,
+                  ...health,
+                  latency_ms: Date.now() - started,
+                  authorized: Boolean(account),
+                  user: account ? account.user : null,
+                  devices: account && Array.isArray(account.devices) ? account.devices : [],
+                  mode: state.cloudConfig.mode,
+                });
+              }
               if (p === "/account" && m === "GET") {
-                if (!state.creds) return send(200, { ok: true, logged_in: false });
+                if (!state.creds) return send(200, { ok: true, logged_in: false, mode: state.cloudConfig.mode });
                 const me = await cloudFetch("/v1/me");
-                return send(200, { ok: true, logged_in: true, user: me.user, devices: me.devices });
+                return send(200, { ok: true, logged_in: true, mode: state.cloudConfig.mode, user: me.user, devices: me.devices });
               }
               if (p === "/account/login" && m === "POST") {
+                if (state.cloudConfig.mode !== "shared") {
+                  return send(400, { ok: false, error: "当前云端类型不是共享云端" });
+                }
                 const b = await bodyOf();
                 const deviceId = state.creds?.deviceId ?? "shell-" + Math.random().toString(36).slice(2, 10);
                 const r = await cloudFetch(b.signup ? "/v1/auth/signup" : "/v1/auth/login", {
@@ -455,6 +510,9 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
                 return send(r.ok ? 200 : 401, r);
               }
               if (p === "/account/logout" && m === "POST") {
+                if (state.cloudConfig.mode === "private") {
+                  return send(400, { ok: false, error: "私人云端不需要退出登录，请在云端设置中停用" });
+                }
                 state.creds = null;
                 saveCreds(null);
                 cloudHealthCache = null;

@@ -2,3 +2,6 @@
 	path = cloud
 	url = https://gitee.com/yang7it/dsh-workbench-cloud.git
 	branch = main
+[submodule "cloud-private"]
+	path = cloud-private
+	url = https://github.com/ityyq777/dsh-workbench-private-cloud.git

@@ -3,6 +3,7 @@ var SW = require("../../addons/lib/switch.cjs");
 
 // 管理页面组件；注入既有宿主依赖，无顶层副作用或循环依赖。
 module.exports = function createSystemTabs(react, jsx, useApi) {
+var CloudSettings = require("./cloud-settings.cjs")(react, jsx).CloudSettings;
 function AccountTab(props) {
   var t = props.t;
   var api = useApi();
@@ -44,22 +45,28 @@ function AccountTab(props) {
     });
   }
   if (!me) return jsx.jsx("div", { className: "wb-card", children: jsx.jsx("span", { className: "wb-msg", children: "…" }) });
+  var mode = me.mode || "shared";
+  var settingsCard = jsx.jsx(CloudSettings, { t: t, api: api, onChanged: refresh });
   if (!me.logged_in) {
-    return jsx.jsxs("div", { className: "wb-card", children: [
-      jsx.jsx("div", { className: "wb-msg", style: { marginBottom: 10 }, children: t("not_logged_in") }),
-      jsx.jsxs("div", { className: "wb-form", children: [
-        jsx.jsx("input", { className: "wb-input", placeholder: t("email"), value: form.email, onChange: function (e) { setForm(Object.assign({}, form, { email: e.target.value })); } }),
-        jsx.jsx("input", { className: "wb-input", type: "password", placeholder: t("password"), value: form.password, onChange: function (e) { setForm(Object.assign({}, form, { password: e.target.value })); }, onKeyDown: function (e) { if (e.key === "Enter") submit(); } }),
-        jsx.jsx(SW.Switch, { h: jsx.jsx, checked: !!form.signup, label: t("signup"), onChange: function (next) { setForm(Object.assign({}, form, { signup: next })); } }),
-        jsx.jsx("button", { className: "wb-btn", onClick: submit, children: form.signup ? t("signup") : t("login") }),
+    return jsx.jsxs("div", { className: "wb-stack", children: [
+      settingsCard,
+      jsx.jsxs("div", { className: "wb-card", children: [
+        jsx.jsx("div", { className: "wb-msg", style: { marginBottom: 10 }, children: mode === "shared" ? t("not_logged_in") : t("cloud_mode_" + mode + "_hint") }),
+        mode === "shared" ? jsx.jsxs("div", { className: "wb-form", children: [
+          jsx.jsx("input", { className: "wb-input", placeholder: t("email"), value: form.email, onChange: function (e) { setForm(Object.assign({}, form, { email: e.target.value })); } }),
+          jsx.jsx("input", { className: "wb-input", type: "password", placeholder: t("password"), value: form.password, onChange: function (e) { setForm(Object.assign({}, form, { password: e.target.value })); }, onKeyDown: function (e) { if (e.key === "Enter") submit(); } }),
+          jsx.jsx(SW.Switch, { h: jsx.jsx, checked: !!form.signup, label: t("signup"), onChange: function (next) { setForm(Object.assign({}, form, { signup: next })); } }),
+          jsx.jsx("button", { className: "wb-btn", onClick: submit, children: form.signup ? t("signup") : t("login") }),
+        ] }) : null,
+        msg ? jsx.jsx("div", { className: "wb-err", style: { marginTop: 8 }, children: msg }) : null,
       ] }),
-      msg ? jsx.jsx("div", { className: "wb-err", style: { marginTop: 8 }, children: msg }) : null,
     ] });
   }
   var failed = syncStatus && Array.isArray(syncStatus.failed_tables) ? syncStatus.failed_tables : [];
   return jsx.jsxs("div", { className: "wb-stack", children: [
+    settingsCard,
     jsx.jsxs("div", { className: "wb-card", children: [
-      jsx.jsxs("div", { children: [t("logged_in_as"), " ", me.user ? me.user.email : "", " (", t("device_name"), ")"] }),
+      jsx.jsxs("div", { children: [t("logged_in_as"), " ", mode === "private" ? t("cloud_mode_private") : (me.user ? me.user.email : ""), " (", t("device_name"), ")"] }),
       jsx.jsxs("div", { className: "wb-form", style: { marginTop: 10 }, children: [
         jsx.jsx("button", { className: "wb-btn", disabled: syncing, onClick: function () {
           setSyncing(true);
@@ -73,7 +80,7 @@ function AccountTab(props) {
             refreshSync();
           });
         }, children: syncing ? "…" : t("sync_now") }),
-        jsx.jsx("button", { className: "wb-btn ghost", onClick: function () { api.post("/account/logout").then(refresh); }, children: t("logout") }),
+        mode === "shared" ? jsx.jsx("button", { className: "wb-btn ghost", onClick: function () { api.post("/account/logout").then(refresh); }, children: t("logout") }) : null,
       ] }),
       msg ? jsx.jsx("div", { className: "wb-msg", style: { marginTop: 8 }, children: msg }) : null,
       syncStatus ? jsx.jsxs("div", { className: "wb-sync-status", children: [

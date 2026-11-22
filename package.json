@@ -8,6 +8,8 @@
     "build:clients": "node scripts/build-addon-clients.mjs",
     "cloud:update": "git submodule update --remote --merge cloud",
     "cloud:build": "mvn -f cloud/pom.xml -DskipTests package",
+    "cloud-private:start": "node cloud-private/src/index.js",
+    "cloud-private:test": "node --test cloud-private/test/*.test.mjs",
     "dist:shell": "node scripts/dist-shell.mjs",
     "test:native": "node scripts/test-native.mjs && node scripts/test-agent-access.mjs && node scripts/test-origin-decls.mjs",
     "test:workspace-stats": "node scripts/test-workspace-stats.mjs",

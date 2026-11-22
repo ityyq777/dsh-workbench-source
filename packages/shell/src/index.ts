@@ -35,6 +35,17 @@ import { createAgentRun } from "./actions/agent-run.js";
 import { installNetwork } from "./infra/network.js";
 import { createSearch } from "./infra/search.js";
 import { FALLBACK_CATEGORY_ID, resolveCategory } from "./infra/categories.js";
+import {
+  applyCloudConfigPatch,
+  cloudConfigFingerprint,
+  cloudUrlForConfig,
+  credsForConfig,
+  loadCloudConfig,
+  publicCloudConfig,
+  resetCloudSync,
+  saveCloudConfig,
+  type CloudConfig,
+} from "./infra/cloud-config.js";
 
 export const name = "dsh-workbench";
 export const inject = ["webServer", "tools", "connection"];
@@ -44,7 +55,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.9.1";
+export const SHELL_VERSION = "0.10.0";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -126,7 +137,15 @@ function recordPrompt(sessionId: string): string {
 }
 
 export function apply(ctx: any): void {
-  const state: WbState = { db: openDb(join(WB_HOME, "workbench.db")), creds: loadCreds(), cloudUrl: CLOUD_DEFAULT };
+  // 云端类型先于同步：私人云端用配置里的密钥合成凭据，共享云端沿用登录令牌。
+  const sharedCreds = loadCreds();
+  const initialConfig = loadCloudConfig(WB_HOME, CLOUD_DEFAULT, sharedCreds);
+  const state: WbState = {
+    db: openDb(join(WB_HOME, "workbench.db")),
+    creds: credsForConfig(initialConfig, sharedCreds),
+    cloudUrl: cloudUrlForConfig(initialConfig),
+    cloudConfig: initialConfig,
+  };
   const subscribers = new Set<Subscriber>();
   const domains = new Map<string, RegisteredDomain>();
   const clock = new SyncClock();
@@ -439,7 +458,32 @@ export function apply(ctx: any): void {
 
 
 
-  const { runSync } = installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionModeOf, setSessionMode, audit, backupDomains, actionNames, invoke, log, schemaSnapshot });
+  // 切换云端后要立刻首轮同步，但 runSync 由 installNetwork 返回，用占位函数打破循环引用。
+  let runSyncHolder: (() => Promise<unknown>) | null = null;
+  /** 应用界面提交的云端配置：保存、重建凭据、目标变化时清空同步进度。 */
+  function applyCloudConfig(body: any): Record<string, unknown> {
+    const next: CloudConfig = applyCloudConfigPatch(state.cloudConfig, body);
+    const changed = cloudConfigFingerprint(next) !== cloudConfigFingerprint(state.cloudConfig);
+    saveCloudConfig(WB_HOME, next);
+    state.cloudConfig = next;
+    state.cloudUrl = cloudUrlForConfig(next);
+    state.creds = credsForConfig(next, loadCreds());
+    if (changed) {
+      try {
+        resetCloudSync(state.db);
+      } catch (e) {
+        log("清空同步进度失败", e);
+      }
+    }
+    emit("account-changed", { logged_in: Boolean(state.creds), mode: next.mode });
+    if (changed && state.creds && runSyncHolder) {
+      void runSyncHolder().catch((e) => log("切换云端后首轮同步失败", e));
+    }
+    return publicCloudConfig(next);
+  }
+
+  const { runSync } = installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionModeOf, setSessionMode, audit, backupDomains, actionNames, invoke, log, schemaSnapshot, applyCloudConfig, publicCloudConfig });
+  runSyncHolder = runSync;
   installTool(ctx);
 
   // ── 后台同步循环：30s 周期；登录后立即一轮；离线静默 ──

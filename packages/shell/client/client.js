@@ -207,6 +207,31 @@ var require_locale = __commonJS({
         cloud_sync_failed: "\u540C\u6B65\u5F02\u5E38",
         cloud_sync_failed_hint: "\u4E91\u7AEF\u53EF\u8FDE\u63A5\uFF0C\u4F46\u4E0A\u6B21\u540C\u6B65\u672A\u5B8C\u5168\u6210\u529F",
         cloud_open: "\u6253\u5F00\u8D26\u53F7\u4E0E\u540C\u6B65",
+        cloud_settings: "\u4E91\u7AEF\u7C7B\u578B",
+        cloud_mode_none: "\u4EC5\u672C\u673A",
+        cloud_mode_private: "\u79C1\u4EBA\u4E91\u7AEF",
+        cloud_mode_shared: "\u5171\u4EAB\u4E91\u7AEF",
+        cloud_mode_none_hint: "\u4E0D\u8FDE\u63A5\u4E91\u7AEF\uFF0C\u6570\u636E\u53EA\u4FDD\u5B58\u5728\u672C\u673A",
+        cloud_mode_private_hint: "\u5355\u7528\u6237\uFF0C\u591A\u53F0\u8BBE\u5907\u4E4B\u95F4\u540C\u6B65\u81EA\u5DF1\u7684\u6570\u636E",
+        cloud_mode_shared_hint: "\u591A\u7528\u6237\u8D26\u53F7\u4F53\u7CFB\uFF0C\u767B\u5F55\u540E\u540C\u6B65",
+        cloud_switch_hint: "\u5207\u6362\u4E91\u7AEF\u4F1A\u6E05\u7A7A\u672C\u673A\u540C\u6B65\u6E38\u6807\u5E76\u91CD\u65B0\u5168\u91CF\u540C\u6B65\uFF0C\u4E1A\u52A1\u6570\u636E\u4E0D\u53D7\u5F71\u54CD",
+        cloud_url_ph: "\u670D\u52A1\u7AEF\u5730\u5740\uFF0C\u5982 https://cloud.example.com",
+        cloud_secret_ph: "\u8BBF\u95EE\u5BC6\u94A5\uFF0C\u81F3\u5C11 16 \u4F4D",
+        cloud_secret_keep: "\u5DF2\u8BBE\u7F6E\u8BBF\u95EE\u5BC6\u94A5\uFF1B\u7559\u7A7A\u8868\u793A\u4E0D\u4FEE\u6539",
+        cloud_device_label: "\u672C\u8BBE\u5907\u540D\u79F0\uFF08\u4FBF\u4E8E\u5728\u8BBE\u5907\u5217\u8868\u91CC\u533A\u5206\uFF09",
+        cloud_save: "\u4FDD\u5B58",
+        cloud_saving: "\u4FDD\u5B58\u4E2D\u2026",
+        cloud_saved: "\u5DF2\u4FDD\u5B58\uFF0C\u6B63\u5728\u9996\u6B21\u540C\u6B65",
+        cloud_save_failed: "\u4FDD\u5B58\u5931\u8D25",
+        cloud_test: "\u6D4B\u8BD5\u8FDE\u63A5",
+        cloud_testing: "\u6D4B\u8BD5\u4E2D\u2026",
+        cloud_ok: "\u8FDE\u63A5\u6B63\u5E38",
+        cloud_test_fail: "\u8FDE\u63A5\u5931\u8D25",
+        cloud_auth_ok: "\u8BBF\u95EE\u5BC6\u94A5\u6709\u6548",
+        cloud_auth_bad: "\u5DF2\u8FDE\u63A5\uFF0C\u4F46\u8BBF\u95EE\u5BC6\u94A5\u65E0\u6548",
+        cloud_server: "\u670D\u52A1\u7AEF",
+        cloud_devices_count: "\u8BBE\u5907\u6570",
+        cloud_shared_hint: "\u5171\u4EAB\u4E91\u7AEF\u8BF7\u4F7F\u7528\u4E0B\u9762\u7684\u8D26\u53F7\u767B\u5F55",
         record_label: "\u8BB0\u5F55\u6A21\u5F0F",
         record_on: "\u8BB0\u5F55\u4E2D",
         record_off: "\u8BB0\u5F55",
@@ -403,6 +428,31 @@ var require_locale = __commonJS({
         cloud_sync_failed: "Sync issue",
         cloud_sync_failed_hint: "Cloud is reachable but the last sync did not fully succeed",
         cloud_open: "Open Account & Sync",
+        cloud_settings: "Cloud type",
+        cloud_mode_none: "Local only",
+        cloud_mode_private: "Private cloud",
+        cloud_mode_shared: "Shared cloud",
+        cloud_mode_none_hint: "Do not connect a cloud; data stays on this device",
+        cloud_mode_private_hint: "Single user syncing your own data across devices",
+        cloud_mode_shared_hint: "Multi-user accounts; sync after signing in",
+        cloud_switch_hint: "Switching cloud clears local sync cursors and starts a full sync; business data is untouched",
+        cloud_url_ph: "Server URL, e.g. https://cloud.example.com",
+        cloud_secret_ph: "Access secret, at least 16 characters",
+        cloud_secret_keep: "Secret already set; leave empty to keep it",
+        cloud_device_label: "Device name (to tell devices apart)",
+        cloud_save: "Save",
+        cloud_saving: "Saving\u2026",
+        cloud_saved: "Saved, starting the first sync",
+        cloud_save_failed: "Save failed",
+        cloud_test: "Test connection",
+        cloud_testing: "Testing\u2026",
+        cloud_ok: "Connection OK",
+        cloud_test_fail: "Connection failed",
+        cloud_auth_ok: "Secret accepted",
+        cloud_auth_bad: "Reachable, but the secret is rejected",
+        cloud_server: "Server",
+        cloud_devices_count: "Devices",
+        cloud_shared_hint: "Use the account login below for the shared cloud",
         record_label: "Record mode",
         record_on: "Recording",
         record_off: "Record",
@@ -1967,12 +2017,158 @@ var require_slot_outlet = __commonJS({
   }
 });
 
+// packages/shell/client/cloud-settings.cjs
+var require_cloud_settings = __commonJS({
+  "packages/shell/client/cloud-settings.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function createCloudSettings(react2, jsx2) {
+      var MODES = ["none", "private", "shared"];
+      function CloudSettings(props) {
+        var t = props.t;
+        var api = props.api;
+        var st = react2.useState(null);
+        var cfg = st[0];
+        var setCfg = st[1];
+        var st2 = react2.useState("");
+        var draftMode = st2[0];
+        var setDraftMode = st2[1];
+        var st3 = react2.useState({ url: "", secret: "", deviceName: "" });
+        var form = st3[0];
+        var setForm = st3[1];
+        var st4 = react2.useState(false);
+        var saving = st4[0];
+        var setSaving = st4[1];
+        var st5 = react2.useState(false);
+        var testing = st5[0];
+        var setTesting = st5[1];
+        var st6 = react2.useState("");
+        var msg = st6[0];
+        var setMsg = st6[1];
+        var st7 = react2.useState(null);
+        var probe = st7[0];
+        var setProbe = st7[1];
+        function load() {
+          api.get("/cloud/config").then(function(r) {
+            if (!r || !r.ok) return;
+            setCfg(r);
+            setDraftMode(r.mode || "shared");
+            setForm({
+              url: r.private && r.private.url || "",
+              secret: "",
+              deviceName: r.private && r.private.device_name || ""
+            });
+          });
+        }
+        react2.useEffect(function() {
+          load();
+        }, []);
+        function save() {
+          setSaving(true);
+          setMsg("");
+          var body = { mode: draftMode };
+          if (draftMode === "private") {
+            body.private = { url: form.url, secret: form.secret, deviceName: form.deviceName };
+          }
+          api.post("/cloud/config", body).then(function(r) {
+            setSaving(false);
+            if (!r || !r.ok) {
+              setMsg(r && r.error || t("cloud_save_failed"));
+              return;
+            }
+            setCfg(r);
+            setDraftMode(r.mode || draftMode);
+            setForm({
+              url: r.private && r.private.url || "",
+              secret: "",
+              deviceName: r.private && r.private.device_name || ""
+            });
+            setMsg(t("cloud_saved"));
+            if (props.onChanged) props.onChanged();
+          });
+        }
+        function test() {
+          setTesting(true);
+          setProbe(null);
+          api.post("/cloud/test").then(function(r) {
+            setTesting(false);
+            setProbe(r || { reachable: false });
+          });
+        }
+        var mode = draftMode || cfg && cfg.mode || "shared";
+        var hasSecret = Boolean(cfg && cfg.private && cfg.private.has_secret);
+        var hintKey = "cloud_mode_" + mode + "_hint";
+        return jsx2.jsxs("div", { className: "wb-card", children: [
+          jsx2.jsxs("div", { className: "wb-sec", children: [
+            jsx2.jsx("h3", { children: t("cloud_settings") }),
+            jsx2.jsx("span", { className: "wb-hint", children: t("cloud_switch_hint") })
+          ] }),
+          jsx2.jsx("div", { className: "wb-tabs", children: MODES.map(function(m) {
+            return jsx2.jsx("button", {
+              key: m,
+              className: "wb-tab" + (mode === m ? " on" : ""),
+              onClick: function() {
+                setDraftMode(m);
+                setMsg("");
+              },
+              children: t("cloud_mode_" + m)
+            }, m);
+          }) }),
+          jsx2.jsx("div", { className: "wb-hint", style: { marginTop: 6 }, children: t(hintKey) }),
+          mode === "private" ? jsx2.jsxs("div", { className: "wb-form", style: { marginTop: 10 }, children: [
+            jsx2.jsx("input", {
+              className: "wb-input",
+              placeholder: t("cloud_url_ph"),
+              value: form.url,
+              onChange: function(e) {
+                setForm(Object.assign({}, form, { url: e.target.value }));
+              }
+            }),
+            jsx2.jsx("input", {
+              className: "wb-input",
+              type: "password",
+              placeholder: hasSecret ? t("cloud_secret_keep") : t("cloud_secret_ph"),
+              value: form.secret,
+              onChange: function(e) {
+                setForm(Object.assign({}, form, { secret: e.target.value }));
+              }
+            }),
+            jsx2.jsx("input", {
+              className: "wb-input",
+              placeholder: t("cloud_device_label"),
+              value: form.deviceName,
+              onChange: function(e) {
+                setForm(Object.assign({}, form, { deviceName: e.target.value }));
+              }
+            })
+          ] }) : null,
+          mode === "shared" ? jsx2.jsx("div", { className: "wb-hint", style: { marginTop: 8 }, children: t("cloud_shared_hint") }) : null,
+          jsx2.jsxs("div", { className: "wb-form", style: { marginTop: 10 }, children: [
+            jsx2.jsx("button", { className: "wb-btn", disabled: saving, onClick: save, children: saving ? t("cloud_saving") : t("cloud_save") }),
+            jsx2.jsx("button", { className: "wb-btn ghost", disabled: testing, onClick: test, children: testing ? t("cloud_testing") : t("cloud_test") })
+          ] }),
+          msg ? jsx2.jsx("div", { className: "wb-msg", style: { marginTop: 8 }, children: msg }) : null,
+          probe ? jsx2.jsxs("div", { className: "wb-hint", style: { marginTop: 8 }, children: [
+            probe.reachable ? jsx2.jsxs("div", { children: [
+              t("cloud_ok"),
+              probe.server_name ? " \xB7 " + t("cloud_server") + " " + probe.server_name : "",
+              " \xB7 " + (probe.latency_ms != null ? probe.latency_ms + "ms" : "")
+            ] }) : jsx2.jsx("div", { children: t("cloud_test_fail") + (probe.error ? " \xB7 " + probe.error : "") }),
+            probe.reachable ? jsx2.jsx("div", { children: probe.authorized ? t("cloud_auth_ok") + (probe.devices && probe.devices.length ? " \xB7 " + t("cloud_devices_count") + " " + probe.devices.length : "") : t("cloud_auth_bad") }) : null
+          ] }) : null
+        ] });
+      }
+      return { CloudSettings };
+    };
+  }
+});
+
 // packages/shell/client/system-tabs.cjs
 var require_system_tabs = __commonJS({
   "packages/shell/client/system-tabs.cjs"(exports2, module2) {
     "use strict";
     var SW = require_switch();
     module2.exports = function createSystemTabs(react2, jsx2, useApi2) {
+      var CloudSettings = require_cloud_settings()(react2, jsx2).CloudSettings;
       function AccountTab2(props) {
         var t = props.t;
         var api = useApi2();
@@ -2036,30 +2232,36 @@ var require_system_tabs = __commonJS({
           });
         }
         if (!me) return jsx2.jsx("div", { className: "wb-card", children: jsx2.jsx("span", { className: "wb-msg", children: "\u2026" }) });
+        var mode = me.mode || "shared";
+        var settingsCard = jsx2.jsx(CloudSettings, { t, api, onChanged: refresh });
         if (!me.logged_in) {
-          return jsx2.jsxs("div", { className: "wb-card", children: [
-            jsx2.jsx("div", { className: "wb-msg", style: { marginBottom: 10 }, children: t("not_logged_in") }),
-            jsx2.jsxs("div", { className: "wb-form", children: [
-              jsx2.jsx("input", { className: "wb-input", placeholder: t("email"), value: form.email, onChange: function(e) {
-                setForm(Object.assign({}, form, { email: e.target.value }));
-              } }),
-              jsx2.jsx("input", { className: "wb-input", type: "password", placeholder: t("password"), value: form.password, onChange: function(e) {
-                setForm(Object.assign({}, form, { password: e.target.value }));
-              }, onKeyDown: function(e) {
-                if (e.key === "Enter") submit();
-              } }),
-              jsx2.jsx(SW.Switch, { h: jsx2.jsx, checked: !!form.signup, label: t("signup"), onChange: function(next) {
-                setForm(Object.assign({}, form, { signup: next }));
-              } }),
-              jsx2.jsx("button", { className: "wb-btn", onClick: submit, children: form.signup ? t("signup") : t("login") })
-            ] }),
-            msg ? jsx2.jsx("div", { className: "wb-err", style: { marginTop: 8 }, children: msg }) : null
+          return jsx2.jsxs("div", { className: "wb-stack", children: [
+            settingsCard,
+            jsx2.jsxs("div", { className: "wb-card", children: [
+              jsx2.jsx("div", { className: "wb-msg", style: { marginBottom: 10 }, children: mode === "shared" ? t("not_logged_in") : t("cloud_mode_" + mode + "_hint") }),
+              mode === "shared" ? jsx2.jsxs("div", { className: "wb-form", children: [
+                jsx2.jsx("input", { className: "wb-input", placeholder: t("email"), value: form.email, onChange: function(e) {
+                  setForm(Object.assign({}, form, { email: e.target.value }));
+                } }),
+                jsx2.jsx("input", { className: "wb-input", type: "password", placeholder: t("password"), value: form.password, onChange: function(e) {
+                  setForm(Object.assign({}, form, { password: e.target.value }));
+                }, onKeyDown: function(e) {
+                  if (e.key === "Enter") submit();
+                } }),
+                jsx2.jsx(SW.Switch, { h: jsx2.jsx, checked: !!form.signup, label: t("signup"), onChange: function(next) {
+                  setForm(Object.assign({}, form, { signup: next }));
+                } }),
+                jsx2.jsx("button", { className: "wb-btn", onClick: submit, children: form.signup ? t("signup") : t("login") })
+              ] }) : null,
+              msg ? jsx2.jsx("div", { className: "wb-err", style: { marginTop: 8 }, children: msg }) : null
+            ] })
           ] });
         }
         var failed = syncStatus && Array.isArray(syncStatus.failed_tables) ? syncStatus.failed_tables : [];
         return jsx2.jsxs("div", { className: "wb-stack", children: [
+          settingsCard,
           jsx2.jsxs("div", { className: "wb-card", children: [
-            jsx2.jsxs("div", { children: [t("logged_in_as"), " ", me.user ? me.user.email : "", " (", t("device_name"), ")"] }),
+            jsx2.jsxs("div", { children: [t("logged_in_as"), " ", mode === "private" ? t("cloud_mode_private") : me.user ? me.user.email : "", " (", t("device_name"), ")"] }),
             jsx2.jsxs("div", { className: "wb-form", style: { marginTop: 10 }, children: [
               jsx2.jsx("button", { className: "wb-btn", disabled: syncing, onClick: function() {
                 setSyncing(true);
@@ -2073,9 +2275,9 @@ var require_system_tabs = __commonJS({
                   refreshSync();
                 });
               }, children: syncing ? "\u2026" : t("sync_now") }),
-              jsx2.jsx("button", { className: "wb-btn ghost", onClick: function() {
+              mode === "shared" ? jsx2.jsx("button", { className: "wb-btn ghost", onClick: function() {
                 api.post("/account/logout").then(refresh);
-              }, children: t("logout") })
+              }, children: t("logout") }) : null
             ] }),
             msg ? jsx2.jsx("div", { className: "wb-msg", style: { marginTop: 8 }, children: msg }) : null,
             syncStatus ? jsx2.jsxs("div", { className: "wb-sync-status", children: [
