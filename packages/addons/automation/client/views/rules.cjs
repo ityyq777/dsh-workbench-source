@@ -220,7 +220,7 @@ function RulesBody(props) {
   var orphans = Number((props.agentStatus && props.agentStatus.orphans && props.agentStatus.orphans.length) || 0);
   var offline = props.agentStatus && props.agentStatus.available === false;
   return h("div", { className: "wba-panel" },
-    h("div", { className: "wba-toolbar" },
+    h("div", { className: "wba-toolbar wba-toolbar-filters" },
       h("label", { className: "wba-field" },
         h("span", { className: "wba-label" }, t("common.search")),
         h("input", {

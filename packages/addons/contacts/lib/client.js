@@ -593,14 +593,24 @@ var require_styles = __commonJS({
     "use strict";
     var BASE = require_client_base_styles()("wbct");
     var OWN = `
+/* \u8054\u7CFB\u65B9\u5F0F\uFF1A\u684C\u9762\u7AEF\u4E00\u884C\u591A\u6BB5\uFF0C\u7A84\u5C4F\u4E00\u9879\u4E00\u884C\u3002 */
+.wbct-fields { display: flex; flex-wrap: wrap; gap: 2px 10px; }
+.wbct-field { overflow-wrap: break-word; }
+
 /* \u7A84\u5C4F\uFF1A\u8054\u7CFB\u65B9\u5F0F\u5217\u53EF\u6362\u884C\uFF0C\u7EC4\u7EC7/\u5206\u7EC4/\u66F4\u65B0\u65F6\u95F4\u6309\u5217\u88C1\u526A\uFF0C\u64CD\u4F5C\u6309\u94AE\u6362\u884C\u4E0D\u6491\u5BBD\u3002 */
 @media (max-width:600px) {
   /* \u57FA\u7840\u8868\u683C\u662F width:max-content\uFF0C\u7A84\u5C4F\u4E09\u5217\u8981\u538B\u56DE 100%\uFF0C\u5426\u5219\u64CD\u4F5C\u5217\u88AB\u63A8\u5230\u5C4F\u5E55\u5916\u3002 */
   .wbct-table { width: 100%; min-width: 0; }
   .wbct-c-org, .wbct-c-groups, .wbct-c-updated { display: none; }
   .wbct-table th, .wbct-table td { padding-left: 8px; padding-right: 8px; }
-  .wbct-c-contact .wbct-muted { overflow-wrap: anywhere; }
+  .wbct-c-contact .wbct-muted { overflow-wrap: break-word; }
+  /* \u8054\u7CFB\u65B9\u5F0F\u4E00\u9879\u4E00\u884C\uFF0C\u957F\u90AE\u7BB1\u624D\u4E0D\u4F1A\u88AB\u62C6\u6210\u4E24\u622A\u3002 */
+  .wbct-fields { flex-direction: column; gap: 2px; }
   .wbct-row { flex-wrap: wrap; gap: 4px; }
+  /* \u59D3\u540D\u5217\u4E0D\u6362\u884C\uFF0C\u907F\u514D\u300C\u5F20\u4F1F\u300D\u88AB\u62C6\u6210\u7AD6\u6392\uFF1B\u64CD\u4F5C\u6309\u94AE\u4FDD\u6301\u4E00\u884C\u5E76\u6536\u7A84\u5185\u8FB9\u8DDD\u3002 */
+  .wbct-c-name { white-space: nowrap; padding-right: 10px; }
+  .wbct-c-act .wbct-row { flex-wrap: nowrap; gap: 4px; }
+  .wbct-c-act .wbct-btn { padding-left: 8px; padding-right: 8px; }
 }
 `;
     module2.exports = (Array.isArray(BASE) ? BASE.join("\n") : String(BASE)) + OWN;
@@ -1107,23 +1117,27 @@ var require_contacts = __commonJS({
           "table",
           { className: "wbct-table" },
           // 窄屏按列裁剪：组织/职位、分组、更新时间三列在 ≤600px 隐藏，只留姓名/联系方式/操作。
-          h("thead", null, h("tr", null, [["\u59D3\u540D", ""], ["\u7EC4\u7EC7 / \u804C\u4F4D", "wbct-c-org"], ["\u8054\u7CFB\u65B9\u5F0F", "wbct-c-contact"], ["\u5206\u7EC4", "wbct-c-groups"], ["\u66F4\u65B0\u65F6\u95F4", "wbct-c-updated"], ["\u64CD\u4F5C", ""]].map(function(x) {
+          h("thead", null, h("tr", null, [["\u59D3\u540D", "wbct-c-name"], ["\u7EC4\u7EC7 / \u804C\u4F4D", "wbct-c-org"], ["\u8054\u7CFB\u65B9\u5F0F", "wbct-c-contact"], ["\u5206\u7EC4", "wbct-c-groups"], ["\u66F4\u65B0\u65F6\u95F4", "wbct-c-updated"], ["\u64CD\u4F5C", ""]].map(function(x) {
             return h("th", { key: x[0], className: x[1] || void 0 }, x[0]);
           }))),
           h("tbody", null, rows.map(function(c) {
             return h(
               "tr",
               { key: c.id },
-              h("td", null, h("b", null, c.name)),
+              h("td", { className: "wbct-c-name" }, h("b", null, c.name)),
               h("td", { className: "wbct-c-org" }, [c.org, c.title].filter(Boolean).join(" / ") || "\u2014"),
-              h("td", { className: "wbct-c-contact" }, h("div", { className: "wbct-muted" }, (c.fields || []).map(function(x) {
-                return x.kind + ": " + x.value;
-              }).join("\uFF1B") || "\u2014")),
+              h("td", { className: "wbct-c-contact" }, h(
+                "div",
+                { className: "wbct-muted wbct-fields" },
+                (c.fields || []).length ? c.fields.map(function(x, i) {
+                  return h("span", { className: "wbct-field", key: i }, x.kind + ": " + x.value);
+                }) : "\u2014"
+              )),
               h("td", { className: "wbct-c-groups" }, (c.groups || []).map(function(g) {
                 return h(C.Pill, { h, key: g.id }, g.name);
               })),
               h("td", { className: "wbct-c-updated" }, C.fmtTime(c.updatedAt, props.lang)),
-              h("td", null, h(
+              h("td", { className: "wbct-c-act" }, h(
                 "div",
                 { className: "wbct-row" },
                 h(C.Btn, { h, onClick: function() {
@@ -3286,7 +3300,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-contacts",
-    version: "0.1.9",
+    version: "0.1.10",
     icon: GLYPHS["users"],
     views: [
       { id: "contacts", icon: tabIcon("users"), title: { zh: "\u8054\u7CFB\u4EBA", en: "Contacts" }, component: withProps(require_contacts(), "\u8054\u7CFB\u4EBA") },

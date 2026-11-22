@@ -115,4 +115,6 @@ module.exports = [
   ".wba-wrap :focus-visible,.wba-modal :focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}",
   // 响应式
   "@media (max-width:720px){.wba-grid-2,.wba-grid-3{grid-template-columns:1fr}.wba-span-2{grid-column:auto}.wba-modal{padding:8px}.wba-modal-box{width:calc(100vw - 16px)}.wba-toolbar .wba-field{min-width:0;flex:1 1 140px}.wba-modal-body{padding:12px}.wba-modal-foot{flex-wrap:wrap}.wba-skel-row{grid-template-columns:1fr 1fr}}",
+  // 窄屏筛选条：搜索与三个下拉各占整行，清除按钮同样整行，避免和下拉挤在一格里。
+  "@media (max-width:600px){.wba-toolbar-filters .wba-field{min-width:0;flex:1 1 100%}.wba-toolbar-filters .wba-grow{display:none}.wba-toolbar-filters .wba-btn{flex:1 1 100%}}",
 ].join("\n");

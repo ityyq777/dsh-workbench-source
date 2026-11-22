@@ -120,7 +120,11 @@ window.__WB_HOST__ = {
     call: function (action, args) {
       var v = hostApi[action];
       if (typeof v === "function") v = v(args);
-      if (v === undefined) return Promise.resolve({});
+      if (v === undefined) {
+        // 预览缺数据时记一行日志，便于用 err.mjs 查出这个视图到底要哪些 action。
+        console.log("[fixture-missing] " + action + " " + JSON.stringify(args || null));
+        return Promise.resolve({});
+      }
       return Promise.resolve(v);
     },
   };

@@ -171,7 +171,7 @@ module.exports = function (deps) {
       { className: "wbm-root wbm-inbox" },
       h(
         "div",
-        { className: "wbm-toolbar" },
+        { className: "wbm-toolbar wbm-toolbar-inbox" },
         h(SW.Switch, {
           h: h,
           checked: unreadOnly,

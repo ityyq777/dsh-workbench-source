@@ -1506,7 +1506,7 @@ var require_styles = __commonJS({
       ".wbm-multis{display:flex;gap:6px;flex-wrap:wrap}",
       "@media (max-width:760px){.wbm-toolbar{gap:6px}.wbm-input{max-width:none}.wbm-bar{grid-template-columns:70px 1fr 38px}}",
       // 窄屏：搜索框独占一行、统计与批量按钮分两段，避免缩成一条窄缝。
-      "@media (max-width:600px){.wbm-toolbar{gap:6px 8px}.wbm-toolbar .wbm-input{flex:1 1 100%;width:100%}.wbm-toolbar .wbm-select{flex:1 1 auto;min-width:0}.wbm-sumbox{flex:1 1 100%;font-size:12px}.wbm-toolbar .wbm-grow{display:none}}"
+      "@media (max-width:600px){.wbm-toolbar{gap:6px 8px}.wbm-toolbar .wbm-input{flex:1 1 100%;width:100%}.wbm-toolbar .wbm-select{flex:1 1 auto;min-width:0}.wbm-sumbox{flex:1 1 100%;font-size:12px}.wbm-toolbar .wbm-grow{display:none}/* \u6536\u4EF6\u7BB1\u7B5B\u9009\u6761\uFF1A\u7A84\u5C4F\u4E24\u5217\u6805\u683C\uFF0C\u641C\u7D22/\u7EDF\u8BA1\u5404\u5360\u6574\u884C\uFF0C\u4E24\u4E2A\u6309\u94AE\u5404\u5360\u4E00\u5217 */.wbm-toolbar-inbox{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:8px}.wbm-toolbar-inbox .wbm-input,.wbm-toolbar-inbox .wbm-sumbox{grid-column:1/-1;flex:none;width:100%}.wbm-toolbar-inbox .wbm-select{width:100%}.wbm-toolbar-inbox .wbm-btn{width:100%;justify-content:center}}"
     ].concat(SW.styles).concat(NF.styles).join("");
   }
 });
@@ -2234,7 +2234,7 @@ var require_inbox = __commonJS({
           { className: "wbm-root wbm-inbox" },
           h(
             "div",
-            { className: "wbm-toolbar" },
+            { className: "wbm-toolbar wbm-toolbar-inbox" },
             h(SW.Switch, {
               h,
               checked: unreadOnly,
@@ -5139,7 +5139,7 @@ var require_inject_styles = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-message",
-    version: "0.1.12",
+    version: "0.1.13",
     icon: ICONS["message-square"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: Stats },

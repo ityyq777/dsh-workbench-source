@@ -43,15 +43,18 @@ module.exports = function ContactsView(props) {
     rows.length === 0 && !list.loading ? h(C.Empty, { h: h, text: "还没有联系人；新建一个或从 vCard 导入。" }) : null,
     h("div", { className: "wbct-table-wrap" }, h("table", { className: "wbct-table" },
       // 窄屏按列裁剪：组织/职位、分组、更新时间三列在 ≤600px 隐藏，只留姓名/联系方式/操作。
-      h("thead", null, h("tr", null, [["姓名", ""], ["组织 / 职位", "wbct-c-org"], ["联系方式", "wbct-c-contact"], ["分组", "wbct-c-groups"], ["更新时间", "wbct-c-updated"], ["操作", ""]].map(function (x) { return h("th", { key: x[0], className: x[1] || undefined }, x[0]); }))),
+      h("thead", null, h("tr", null, [["姓名", "wbct-c-name"], ["组织 / 职位", "wbct-c-org"], ["联系方式", "wbct-c-contact"], ["分组", "wbct-c-groups"], ["更新时间", "wbct-c-updated"], ["操作", ""]].map(function (x) { return h("th", { key: x[0], className: x[1] || undefined }, x[0]); }))),
       h("tbody", null, rows.map(function (c) {
         return h("tr", { key: c.id },
-          h("td", null, h("b", null, c.name)),
+          h("td", { className: "wbct-c-name" }, h("b", null, c.name)),
           h("td", { className: "wbct-c-org" }, [c.org, c.title].filter(Boolean).join(" / ") || "—"),
-          h("td", { className: "wbct-c-contact" }, h("div", { className: "wbct-muted" }, (c.fields || []).map(function (x) { return x.kind + ": " + x.value; }).join("；") || "—")),
+          h("td", { className: "wbct-c-contact" }, h("div", { className: "wbct-muted wbct-fields" },
+            (c.fields || []).length
+              ? c.fields.map(function (x, i) { return h("span", { className: "wbct-field", key: i }, x.kind + ": " + x.value); })
+              : "—")),
           h("td", { className: "wbct-c-groups" }, (c.groups || []).map(function (g) { return h(C.Pill, { h: h, key: g.id }, g.name); })),
           h("td", { className: "wbct-c-updated" }, C.fmtTime(c.updatedAt, props.lang)),
-          h("td", null, h("div", { className: "wbct-row" },
+          h("td", { className: "wbct-c-act" }, h("div", { className: "wbct-row" },
             h(C.Btn, { h: h, onClick: function () { form[1](fromContact(c)); } }, "编辑"),
             h(C.Btn, { h: h, kind: "danger", onClick: function () { remove(c); } }, "删除"))));
       })))),
