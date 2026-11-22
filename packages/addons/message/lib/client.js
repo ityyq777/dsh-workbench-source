@@ -5110,7 +5110,7 @@ var require_mount = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-message",
-    version: "0.1.10",
+    version: "0.1.11",
     icon: ICONS["message-square"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: Stats },

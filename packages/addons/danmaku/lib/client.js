@@ -845,7 +845,7 @@ var require_client_base_styles = __commonJS({
         s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}",
         // 窄屏：页面容器不再自带左右内边距（宿主的 .wb-immersive-main 已经给过），
         // 卡片与栅格收紧，把宽度尽量留给内容——窄屏下两侧留白比桌面更影响可读性。
-        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
+        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}" + s + "-table-wrap{overflow-x:auto;max-width:100%}" + s + "-table{width:max-content;min-width:100%}}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
       ]);
     };
     module2.exports.secretFieldStyles = SECRET_FIELD;
@@ -1227,7 +1227,9 @@ var require_styles = __commonJS({
         ".wbdm-preview-stage{position:relative;height:132px;overflow:hidden}",
         ".wbdm-preview-hint{position:absolute;right:12px;bottom:8px;font-size:10px;letter-spacing:.02em;color:var(--wb-muted,#9ca3af);pointer-events:none}",
         /* 深色：卡片底色更贴近主题表面 */
-        "@media (prefers-color-scheme:dark){.wbdm-kpi,.wbdm-card,.wbdm-status-cell{background:var(--wb-surface,#16181d)}}"
+        "@media (prefers-color-scheme:dark){.wbdm-kpi,.wbdm-card,.wbdm-status-cell{background:var(--wb-surface,#16181d)}}",
+        /* 窄屏：配置行从「标签 + 控件」两列改成上下单列，输入框不再固定 280px 宽。 */
+        "@media (max-width:600px){.wbdm-crow{grid-template-columns:minmax(0,1fr);gap:8px;padding:10px 0}.wbdm-ctl{flex-wrap:wrap}.wbdm-input,.wbdm-select{max-width:none;width:100%}.wbdm-crow .wbctl-num .wbctl-num-input{width:100%}.wbdm-preview{margin:10px 12px 0}.wbdm-page-title{font-size:16px}}"
       ];
     }
     module2.exports = function styles2() {
@@ -5152,7 +5154,7 @@ function definition(host) {
   var tab = makeTab(host.react);
   return {
     id: ADDON_ID,
-    version: "0.2.7",
+    version: "0.2.8",
     icon: tab("megaphone"),
     views: [
       {

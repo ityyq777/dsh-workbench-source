@@ -513,7 +513,7 @@ var h = React.createElement;
 
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.7.8",
+    version: "1.7.9",
     icon: ICONS.tag,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TagsStatsView },

@@ -50,7 +50,7 @@ var PAGE = [
   ".wbsal-field{display:flex;flex-direction:column;gap:4px;font-size:12px;min-width:0}",
   ".wbsal-label{font-size:11.5px;font-weight:600;color:var(--wb-muted,#8b94a6)}",
   ".wbsal-hint{font-size:11px;color:var(--wb-muted,#8b94a6)}",
-  ".wbsal-muted{font-size:12px;color:var(--wb-muted,#8b94a6)}",
+  ".wbsal-muted{font-size:12px;color:var(--wb-muted,#8b94a6);min-width:0;overflow-wrap:anywhere}",
   ".wbsal-danger{color:var(--wb-danger,#b91c1c);font-size:12px}",
 
   /* 月份分组 + 记录表 */
@@ -243,7 +243,10 @@ var PAGE = [
   /* 响应式 */
   "@media (max-width:1100px){.wbsal-detail{grid-template-columns:repeat(2,minmax(0,1fr))}}",
   "@media (max-width:900px){.wbsal-table th.hide-md,.wbsal-table td.hide-md{display:none}}",
-  "@media (max-width:760px){.wbsal-detail{grid-template-columns:minmax(0,1fr)}.wbsal-page{padding:16px 14px 36px}.wbsal-table th,.wbsal-table td{padding:9px 10px}.wbsal-opt,.wbsal-table th.opt{display:none}.wbsal-comp-row{grid-template-columns:80px minmax(50px,1fr) 112px}.wbsal-chart{height:170px}}",
+  "@media (max-width:760px){.wbsal-detail{grid-template-columns:minmax(0,1fr)}.wbsal-page{padding:0 0 32px}.wbsal-table th,.wbsal-table td{padding:9px 10px}.wbsal-opt,.wbsal-table th.opt{display:none}.wbsal-comp-row{grid-template-columns:80px minmax(50px,1fr) 112px}.wbsal-chart{height:170px}.wbsal-month{flex-wrap:wrap;gap:2px}.wbsal-toolbar{padding:10px 12px}}",
+  // 手机宽度：记录表只留「发薪日 / 实发 / 展开」三列。结算方式与用工类型在展开详情里已有，
+  // 不再和金额抢宽度；表格外层允许横向滚动兜底，避免列被直接裁掉。
+  "@media (max-width:600px){.wbsal-c-cycle,.wbsal-c-emp{display:none}.wbsal-table-wrap{overflow-x:auto}.wbsal-toolbar{flex-direction:column;align-items:stretch;gap:10px}.wbsal-toolbar .wbsal-field{width:100%}.wbsal-toolbar .wbsal-input{width:100%;box-sizing:border-box}.wbsal-toolbar-end{margin-left:0;justify-content:space-between}.wbsal-month-total{font-size:11.5px}.wbsal-record-row td{padding-top:8px;padding-bottom:8px}}",
 ];
 
 var DATE = require("../../../lib/date-picker-styles.cjs")("wbsal");

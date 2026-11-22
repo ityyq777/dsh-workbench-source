@@ -526,7 +526,7 @@ var require_client_base_styles = __commonJS({
         s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}",
         // 窄屏：页面容器不再自带左右内边距（宿主的 .wb-immersive-main 已经给过），
         // 卡片与栅格收紧，把宽度尽量留给内容——窄屏下两侧留白比桌面更影响可读性。
-        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
+        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}" + s + "-table-wrap{overflow-x:auto;max-width:100%}" + s + "-table{width:max-content;min-width:100%}}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
       ]);
     };
     module2.exports.secretFieldStyles = SECRET_FIELD;
@@ -1226,7 +1226,7 @@ var require_styles = __commonJS({
       ".wbsal-field{display:flex;flex-direction:column;gap:4px;font-size:12px;min-width:0}",
       ".wbsal-label{font-size:11.5px;font-weight:600;color:var(--wb-muted,#8b94a6)}",
       ".wbsal-hint{font-size:11px;color:var(--wb-muted,#8b94a6)}",
-      ".wbsal-muted{font-size:12px;color:var(--wb-muted,#8b94a6)}",
+      ".wbsal-muted{font-size:12px;color:var(--wb-muted,#8b94a6);min-width:0;overflow-wrap:anywhere}",
       ".wbsal-danger{color:var(--wb-danger,#b91c1c);font-size:12px}",
       /* 月份分组 + 记录表 */
       ".wbsal-months{display:flex;flex-direction:column;gap:10px}",
@@ -1409,7 +1409,10 @@ var require_styles = __commonJS({
       /* 响应式 */
       "@media (max-width:1100px){.wbsal-detail{grid-template-columns:repeat(2,minmax(0,1fr))}}",
       "@media (max-width:900px){.wbsal-table th.hide-md,.wbsal-table td.hide-md{display:none}}",
-      "@media (max-width:760px){.wbsal-detail{grid-template-columns:minmax(0,1fr)}.wbsal-page{padding:16px 14px 36px}.wbsal-table th,.wbsal-table td{padding:9px 10px}.wbsal-opt,.wbsal-table th.opt{display:none}.wbsal-comp-row{grid-template-columns:80px minmax(50px,1fr) 112px}.wbsal-chart{height:170px}}"
+      "@media (max-width:760px){.wbsal-detail{grid-template-columns:minmax(0,1fr)}.wbsal-page{padding:0 0 32px}.wbsal-table th,.wbsal-table td{padding:9px 10px}.wbsal-opt,.wbsal-table th.opt{display:none}.wbsal-comp-row{grid-template-columns:80px minmax(50px,1fr) 112px}.wbsal-chart{height:170px}.wbsal-month{flex-wrap:wrap;gap:2px}.wbsal-toolbar{padding:10px 12px}}",
+      // 手机宽度：记录表只留「发薪日 / 实发 / 展开」三列。结算方式与用工类型在展开详情里已有，
+      // 不再和金额抢宽度；表格外层允许横向滚动兜底，避免列被直接裁掉。
+      "@media (max-width:600px){.wbsal-c-cycle,.wbsal-c-emp{display:none}.wbsal-table-wrap{overflow-x:auto}.wbsal-toolbar{flex-direction:column;align-items:stretch;gap:10px}.wbsal-toolbar .wbsal-field{width:100%}.wbsal-toolbar .wbsal-input{width:100%;box-sizing:border-box}.wbsal-toolbar-end{margin-left:0;justify-content:space-between}.wbsal-month-total{font-size:11.5px}.wbsal-record-row td{padding-top:8px;padding-bottom:8px}}"
     ];
     var DATE = require_date_picker_styles()("wbsal");
     var AMOUNT = [
@@ -3991,12 +3994,12 @@ var require_records = __commonJS({
             h("td", { className: "left" }, h("span", { className: "wbsal-date" }, h("b", null, String(item.payDate).slice(5)), h("span", null, F.weekday(item.payDate)))),
             h(
               "td",
-              { className: "left" },
+              { className: "left wbsal-c-cycle" },
               h(C.Pill, { h, kind: item.cycle === "daily" ? "warn" : "ok" }, item.cycle === "daily" ? "\u65E5\u7ED3" : "\u6708\u7ED3"),
               h("div", { className: "wbsal-muted" }, item.incomePeriod ? F.monthLabel(item.incomePeriod) : "\u672A\u5F52\u5C5E")
             ),
-            h("td", { className: "left" }, h(C.Pill, { h, kind: item.employmentType === "regular" ? "ok" : item.employmentType === "probation" ? "warn" : "" }, F.employmentLabel(item.employmentType))),
-            h("td", null, h("span", { className: "wbsal-net" }, F.money(item.netPay))),
+            h("td", { className: "left wbsal-c-emp" }, h(C.Pill, { h, kind: item.employmentType === "regular" ? "ok" : item.employmentType === "probation" ? "warn" : "" }, F.employmentLabel(item.employmentType))),
+            h("td", { className: "wbsal-c-net" }, h("span", { className: "wbsal-net" }, F.money(item.netPay))),
             h("td", { className: "wbsal-opt" }, F.money(item.grossPay)),
             h("td", { className: "wbsal-opt hide-md" }, F.money(F.sumValues(item, F.SOCIAL_KEYS))),
             h("td", { className: "wbsal-opt hide-md" }, F.money(item.incomeTax)),
@@ -4053,10 +4056,10 @@ var require_records = __commonJS({
                   "tr",
                   null,
                   h("th", { className: "left" }, "\u53D1\u85AA\u65E5"),
-                  h("th", { className: "left" }, "\u7ED3\u7B97"),
-                  h("th", { className: "left" }, "\u7528\u5DE5\u7C7B\u578B"),
-                  h("th", null, "\u5B9E\u53D1"),
-                  h("th", null, "\u5E94\u53D1"),
+                  h("th", { className: "left wbsal-c-cycle" }, "\u7ED3\u7B97"),
+                  h("th", { className: "left wbsal-c-emp" }, "\u7528\u5DE5\u7C7B\u578B"),
+                  h("th", { className: "wbsal-c-net" }, "\u5B9E\u53D1"),
+                  h("th", { className: "wbsal-opt" }, "\u5E94\u53D1"),
                   h("th", { className: "hide-md" }, "\u793E\u4FDD\u516C\u79EF\u91D1"),
                   h("th", { className: "hide-md" }, "\u4E2A\u7A0E"),
                   h("th", null, "")
@@ -6078,7 +6081,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.4.6",
+    version: "0.4.7",
     icon: GLYPHS["wallet"],
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },

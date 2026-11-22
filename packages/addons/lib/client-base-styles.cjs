@@ -53,6 +53,9 @@ module.exports = function baseStyles(prefix) {
       + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}"
       + s + "-form{grid-template-columns:minmax(0,1fr)}"
       + s + "-title{font-size:15px}"
+      // 基础表格在窄屏改成「按内容宽度 + 外层横向滚动」，避免多列表格被压成一列两个字。
+      + s + "-table-wrap{overflow-x:auto;max-width:100%}"
+      + s + "-table{width:max-content;min-width:100%}"
       + "}"
       // 手机宽度：再压一档内边距，横向零浪费。
       + "@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}"
