@@ -118,6 +118,12 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
   }
 
   let syncBusy = false;
+  // 进度快照：engine 每轮都新建，进度只能留在模块里，/sync/status 与顶栏才有同一份。
+  let syncProgress: Record<string, unknown> | null = null;
+  const onSyncEvent = (event: string, data: unknown): void => {
+    if (event === "sync-status") syncProgress = data as Record<string, unknown>;
+    emit(event, data);
+  };
 
   async function runSync(): Promise<Record<string, unknown>> {
     if (syncBusy) return { ok: false, error: "sync already running", skipped: true };
@@ -132,7 +138,7 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
         userId: identity.userId,
         deviceId: identity.deviceId,
         epoch: identity.epoch,
-        onEvent: emit,
+        onEvent: onSyncEvent,
       });
       const report = await engine.run();
       return report as unknown as Record<string, unknown>;
@@ -428,7 +434,7 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
                   userId: identity?.userId ?? "",
                   deviceId: identity?.deviceId ?? "",
                   epoch: identity?.epoch ?? "",
-                  onEvent: emit,
+                  onEvent: onSyncEvent,
                 });
                 const cloud = state.creds
                   ? await cloudHealth()
@@ -438,6 +444,7 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
                   logged_in: Boolean(state.creds),
                   ...engine.status(),
                   running: syncBusy,
+                  progress: syncProgress,
                   cloud,
                 });
               }

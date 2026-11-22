@@ -112,7 +112,10 @@ test("消息页：真实控件事件调用、三栏结构、切换和正文竞�
     props: props || {},
     kids: kids.flat(Infinity).filter((x) => x != null),
   });
-  const walk = (n) => (typeof n === "object" && n ? [n, ...n.kids.flatMap(walk)] : []);
+  // 共享控件（icons.label）内部的 h 来自 react，children 在 props 上而不是 kids；
+  // 边走边把两种形状都摊平，否则 walk 会在 .flatMap 上抛错（历史遗留的假失败）。
+  const kidsOf = (n) => Array.isArray(n.kids) ? n.kids : Array.isArray(n.props?.children) ? n.props.children : n.props?.children != null ? [n.props.children] : [];
+  const walk = (n) => (typeof n === "object" && n ? [n, ...kidsOf(n).flatMap(walk)] : []);
   const nodes = (n) => walk(tree).filter((x) => x.props.className?.includes(n));
   const text = (n) => typeof n === "string" ? n : n?.kids?.map(text).join("") || "";
   const button = (s) => walk(tree).find((x) => x.type === common.Btn && text(x) === s);

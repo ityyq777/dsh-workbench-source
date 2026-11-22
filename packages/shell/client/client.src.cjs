@@ -11,6 +11,7 @@ var createPanellistIcon = require("./panellist-icon.cjs");
 var addonNav = require("./addon-nav.cjs")();
 // 共享 Action 页：宿主自己的「Agent 权限」页复用它，数据源是 actions.list（宿主 action 不属于任何业务域）。
 var SystemPages = require("./system-pages.cjs");
+var HostPages = require("./host-pages.cjs");
 // 跨插件界面插槽：目录（白名单）+ 注册表（纯逻辑）。贡献变更要通知页面重渲染。
 var slotCatalog = require("./slot-catalog.cjs");
 var slotRegistry = require("./slot-registry.cjs")(slotCatalog, function () { notifyStore(); });
@@ -135,6 +136,8 @@ function ensureStream() {
     } catch (err) { console.warn(err); }
   });
   stream.addEventListener("sync-done", notifyCloudStatus);
+  // 同步过程中每一步都要让顶栏与账号页立即动起来，而不是等 15s 轮询。
+  stream.addEventListener("sync-status", notifyCloudStatus);
   stream.addEventListener("account-changed", notifyCloudStatus);
 }
 function useAddonStore() {
@@ -220,7 +223,14 @@ function cloudView(status, t) {
   if (!status) return { kind: "local", label: t("cloud_checking"), hint: t("cloud_checking_hint") };
   var failed = Array.isArray(status.failed_tables) ? status.failed_tables : [];
   if (!status.logged_in) return { kind: "local", label: t("cloud_local"), hint: t("cloud_local_hint") };
-  if (status.running) return { kind: "syncing", label: t("cloud_syncing"), hint: t("cloud_syncing_hint") };
+  if (status.running || (status.progress && status.progress.running)) {
+    var pg = status.progress || null;
+    var done = pg && pg.total ? Math.min(pg.index || 0, pg.total) : 0;
+    var pct = pg && pg.total ? Math.round((done / pg.total) * 100) : 0;
+    var label = pg && pg.total ? t("cloud_syncing") + " " + done + "/" + pg.total : t("cloud_syncing");
+    var hint = pg && pg.current ? t("sync_current_table") + "：" + pg.current : t("cloud_syncing_hint");
+    return { kind: "syncing", label: label, hint: hint, pct: pct, progress: pg };
+  }
   if (status.cloud && status.cloud.reachable === false) return { kind: "off", label: t("cloud_offline"), hint: t("cloud_offline_hint") };
   if (!status.last_sync_at) return { kind: "warn", label: t("cloud_never"), hint: t("cloud_never_hint") };
   if (status.last_sync_ok === false || failed.length) return { kind: "warn", label: t("cloud_sync_failed"), hint: t("cloud_sync_failed_hint") };
@@ -255,6 +265,9 @@ function CloudStatusPill(props) {
     children: [
       jsx.jsx("span", { className: "wb-cloud-dot" }),
       jsx.jsx("span", { className: "wb-cloud-label", children: view.label }),
+      view.kind === "syncing"
+        ? jsx.jsx("span", { className: "wb-cloud-bar", "aria-hidden": "true", children: jsx.jsx("span", { style: { width: (view.pct || 0) + "%" } }) })
+        : null,
     ],
   });
 }
@@ -481,6 +494,12 @@ function WorkbenchPage(props) {
     return jsx.jsxs("div", { className: "wb-root", children: [
       jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_audit"), t("audit_desc")), jsx.jsx(AuditTab, { t: t })] }),
     ] });
+  }
+  if (route === "data") {
+    return HostPages.dataPage({ jsx: jsx, api: api, lang: lang, t: t, head: pageHead });
+  }
+  if (route === "config") {
+    return HostPages.configPage({ jsx: jsx, React: react, api: api, lang: lang, t: t, head: pageHead });
   }
   if (route === "account") {
     return jsx.jsxs("div", { className: "wb-root", children: [

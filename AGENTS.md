@@ -67,6 +67,12 @@
   禁止改对方代码或整页嵌套；属主**不得内建来源解析**（不许写 `MAIL_REF`/`SITE_REF` 这类分支，
   来源一方贡献自己的「回到原处」）；改完跑 `pnpm test:slots`（插槽 id 打错不会报错，只会永不显示）。
   见 [`04-UI规范.md`](docs/AGENTS规范/04-UI规范.md) 与 [`跨插件界面插槽设计.md`](docs/跨插件界面插槽设计.md)。
+- **子插件共享行必须流式**：`cordis.patch.yml` 里指向宿主/保险箱的共享行（`workbench`、
+  `workbench-host`、`workbench-vault`）必须写成 `- { id: workbench, name: 'dsh-workbench' }`
+  这种流式单行，不能写成块式、也不能删掉；块式会被插件市场算进该子插件的 insertedIds，
+  装第二个 workbench 系插件时就判「和已安装的插件冲突」并整次回滚（先装 vault 再装 mail
+  同样会踩）。改完跑 `node scripts/test-market-conflict.mjs`，安装顺序见
+  [`03-安装与交付.md`](docs/AGENTS规范/03-安装与交付.md)。
 - **发布用官方 npm registry**，发布顺序 host → tasks → tags → sites；GitHub token、npm token
   只存本机 0600 私有文件。见
   [`05-发布与插件市场.md`](docs/AGENTS规范/05-发布与插件市场.md)。

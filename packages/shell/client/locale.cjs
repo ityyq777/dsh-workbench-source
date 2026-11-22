@@ -3,6 +3,10 @@ var LOCALE = {
   zh: {
     nav: "工作台", title: "工作台", tagline: "离线优先 · 业务插件由 DSH 安装",
     tab_account: "账号与同步", tab_addons: "子插件", tab_backup: "数据备份",
+    tab_data: "数据", data_desc: "浏览宿主自己维护的平台表（meta、同步日志/死信/水位、会话记录模式、审计日志）：只读、可搜索、可分页",
+    tab_config: "配置", config_desc: "宿主的本机配置：审计记录范围与保留天数；只存本机，不同步、不进备份",
+    loading: "读取中…", reset_default: "恢复默认",
+    sync_progress: "同步进度", sync_current_table: "当前表", sync_mode_tree: "整表", sync_mode_row: "逐行",
     backup_desc: "按模块导出或导入本地数据；导入只合并，不删除已有数据",
     backup_modules: "选择要导出的模块", backup_export_result: "导出结果", backup_select_all: "全选", backup_clear: "清空",
     backup_export: "导出备份", backup_import: "导入备份", backup_exporting: "正在导出…", backup_importing: "正在导入…",
@@ -138,6 +142,10 @@ var LOCALE = {
   en: {
     nav: "Workbench", title: "Workbench", tagline: "Offline-first · addons installed by DSH",
     tab_account: "Account & Sync", tab_addons: "Addons", tab_backup: "Data backup",
+    tab_data: "Data", data_desc: "Browse the platform tables the host itself owns (meta, sync log/dead letters/state, session modes, audit log): read-only, searchable, paged",
+    tab_config: "Settings", config_desc: "Host settings stored on this machine: what the audit ledger records and how long it is kept; never synced or backed up",
+    loading: "Loading…", reset_default: "Reset to default",
+    sync_progress: "Sync progress", sync_current_table: "Current table", sync_mode_tree: "tree", sync_mode_row: "row",
     backup_desc: "Export or import local data per module; import merges and never deletes existing rows",
     backup_modules: "Modules to export", backup_export_result: "Export result", backup_select_all: "Select all", backup_clear: "Clear",
     backup_export: "Export backup", backup_import: "Import backup", backup_exporting: "Exporting…", backup_importing: "Importing…",

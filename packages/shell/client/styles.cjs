@@ -2,6 +2,7 @@
 // 样式：只用宿主 --dsw-* token，深浅主题自适应（03 文档）
 // 布尔开关控件（wbctl-*）与业务插件共用 lib/switch.cjs，避免宿主再写一套私有开关样式。
 var SW = require("../../addons/lib/switch.cjs");
+var NF = require("../../addons/lib/number-field.cjs");
 var CSS = [
   ".wb-root{--wb-line:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wb-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));display:flex;flex-direction:column;height:100%;box-sizing:border-box;overflow:auto;color:inherit;font-size:13px;background:var(--dsw-alias-bg-base,var(--dsw-alias-bg-layer-2,color-mix(in oklab,currentColor 4%,transparent)));padding:24px 28px}",
   ".wb-inner{display:flex;flex-direction:column;gap:16px;width:100%;max-width:1040px;margin:0 auto}",
@@ -376,6 +377,32 @@ var CSS = [
   // 只要没有精确指针，就按窄屏的留白处理，避免手机上又出现桌面端 24px 的两侧留白。
   "@media (pointer:coarse){.wb-root .wb-immersive-main{padding:10px 10px 16px}.wb-root .wb-immersive-bar{padding:calc(8px + var(--dsh-frame-top-clearance,0px)) 12px 8px}.wb-root :is(.wbc-wrap,.wbv,.wba-wrap,.wbct-wrap,.wbca-wrap,.wbm-wrap,.wbml-wrap,.wbm-page,.wbml-page){padding:0 0 16px}.wb-root .wb-inner{gap:12px}.wb-root input[type=checkbox],.wb-root input[type=radio]{width:16px;height:16px}}",
   "@media (pointer:coarse) and (max-width:520px){.wb-root .wb-immersive-main{padding:8px 8px 12px}.wb-root .wb-inner{gap:10px}}",
+  // 宿主「配置」页：分组卡片 + 每项一行（说明在左、控件在右），窄屏自动换行。
+  ".wb-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}",
+  ".wb-card-head h3{margin:0;font-size:13px;font-weight:650}",
+  ".wbh-config-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--wb-line)}",
+  ".wbh-config-row:first-of-type{border-top:0}",
+  ".wbh-config-text{min-width:200px;flex:1 1 240px}",
+  ".wbh-config-label{font-size:13px;line-height:1.5}",
+  ".wbh-config-ctl{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}",
+  ".wb-link{border:0;background:transparent;color:var(--wb-accent,var(--dsw-alias-brand-primary,#11a89b));font:inherit;font-size:12px;cursor:pointer;padding:2px 4px;border-radius:6px}",
+  ".wb-link:hover{text-decoration:underline}",
+  ".wb-link:disabled{opacity:.5;cursor:not-allowed;text-decoration:none}",
+  // 同步进度：顶栏胶囊里的细进度条 + 账号页的步骤列表。
+  ".wb-cloud-bar{display:block;width:46px;height:3px;border-radius:999px;background:color-mix(in oklab,currentColor 22%,transparent);overflow:hidden}",
+  ".wb-cloud-bar>span{display:block;height:100%;background:var(--dsw-alias-brand-primary,#11a89b);transition:width .2s ease}",
+  ".wb-sync-progress{margin-top:10px;padding-top:10px;border-top:1px solid var(--wb-line)}",
+  ".wb-sync-progress-head{display:flex;align-items:center;gap:10px;font-size:12px;flex-wrap:wrap}",
+  ".wb-sync-progress-head b{font-weight:600}",
+  ".wb-sync-count{margin-left:auto;opacity:.72}",
+  ".wb-sync-bar{margin-top:6px;height:5px;border-radius:999px;background:color-mix(in oklab,currentColor 14%,transparent);overflow:hidden}",
+  ".wb-sync-bar>span{display:block;height:100%;background:var(--dsw-alias-brand-primary,#11a89b);transition:width .2s ease}",
+  ".wb-sync-tables{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:12px}",
+  ".wb-sync-tables li{display:flex;align-items:center;gap:8px;flex-wrap:wrap;line-height:1.5}",
+  ".wb-sync-tables li.fail{color:var(--wb-danger,inherit)}",
+  ".wb-sync-table-name{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}",
+  ".wb-sync-table-state{margin-left:auto;opacity:.8;overflow-wrap:anywhere}",
+  ".wb-toast{position:sticky;bottom:12px;align-self:center;padding:7px 14px;border-radius:999px;border:1px solid var(--wb-line);background:var(--wb-surface);font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.12)}",
 ].join("\n");
 // 共享开关样式追加在宿主样式末尾：ensureCss() 是唯一注入点，重复追加无害。
-module.exports = CSS + "\n" + SW.styles.join("\n");
+module.exports = CSS + "\n" + SW.styles.join("\n") + "\n" + NF.styles.join("\n");

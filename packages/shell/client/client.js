@@ -27,6 +27,16 @@ var require_locale = __commonJS({
         tab_account: "\u8D26\u53F7\u4E0E\u540C\u6B65",
         tab_addons: "\u5B50\u63D2\u4EF6",
         tab_backup: "\u6570\u636E\u5907\u4EFD",
+        tab_data: "\u6570\u636E",
+        data_desc: "\u6D4F\u89C8\u5BBF\u4E3B\u81EA\u5DF1\u7EF4\u62A4\u7684\u5E73\u53F0\u8868\uFF08meta\u3001\u540C\u6B65\u65E5\u5FD7/\u6B7B\u4FE1/\u6C34\u4F4D\u3001\u4F1A\u8BDD\u8BB0\u5F55\u6A21\u5F0F\u3001\u5BA1\u8BA1\u65E5\u5FD7\uFF09\uFF1A\u53EA\u8BFB\u3001\u53EF\u641C\u7D22\u3001\u53EF\u5206\u9875",
+        tab_config: "\u914D\u7F6E",
+        config_desc: "\u5BBF\u4E3B\u7684\u672C\u673A\u914D\u7F6E\uFF1A\u5BA1\u8BA1\u8BB0\u5F55\u8303\u56F4\u4E0E\u4FDD\u7559\u5929\u6570\uFF1B\u53EA\u5B58\u672C\u673A\uFF0C\u4E0D\u540C\u6B65\u3001\u4E0D\u8FDB\u5907\u4EFD",
+        loading: "\u8BFB\u53D6\u4E2D\u2026",
+        reset_default: "\u6062\u590D\u9ED8\u8BA4",
+        sync_progress: "\u540C\u6B65\u8FDB\u5EA6",
+        sync_current_table: "\u5F53\u524D\u8868",
+        sync_mode_tree: "\u6574\u8868",
+        sync_mode_row: "\u9010\u884C",
         backup_desc: "\u6309\u6A21\u5757\u5BFC\u51FA\u6216\u5BFC\u5165\u672C\u5730\u6570\u636E\uFF1B\u5BFC\u5165\u53EA\u5408\u5E76\uFF0C\u4E0D\u5220\u9664\u5DF2\u6709\u6570\u636E",
         backup_modules: "\u9009\u62E9\u8981\u5BFC\u51FA\u7684\u6A21\u5757",
         backup_export_result: "\u5BFC\u51FA\u7ED3\u679C",
@@ -287,6 +297,16 @@ var require_locale = __commonJS({
         tab_account: "Account & Sync",
         tab_addons: "Addons",
         tab_backup: "Data backup",
+        tab_data: "Data",
+        data_desc: "Browse the platform tables the host itself owns (meta, sync log/dead letters/state, session modes, audit log): read-only, searchable, paged",
+        tab_config: "Settings",
+        config_desc: "Host settings stored on this machine: what the audit ledger records and how long it is kept; never synced or backed up",
+        loading: "Loading\u2026",
+        reset_default: "Reset to default",
+        sync_progress: "Sync progress",
+        sync_current_table: "Current table",
+        sync_mode_tree: "tree",
+        sync_mode_row: "row",
         backup_desc: "Export or import local data per module; import merges and never deletes existing rows",
         backup_modules: "Modules to export",
         backup_export_result: "Export result",
@@ -595,11 +615,210 @@ var require_switch = __commonJS({
   }
 });
 
+// packages/addons/lib/number-field.cjs
+var require_number_field = __commonJS({
+  "packages/addons/lib/number-field.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var NUM = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
+    var TEXT = {
+      zh: {
+        required: "\u8BF7\u586B\u5199\u6570\u5B57",
+        invalid: "\u8BF7\u8F93\u5165\u6570\u5B57",
+        integer: "\u9700\u8981\u662F\u6574\u6570",
+        min: "\u4E0D\u80FD\u5C0F\u4E8E {min}",
+        max: "\u4E0D\u80FD\u5927\u4E8E {max}",
+        range: "\u9700\u8981\u5728 {min}\u2013{max} \u4E4B\u95F4",
+        step: "\u9700\u8981\u662F {step} \u7684\u500D\u6570",
+        unit: "\u5355\u4F4D"
+      },
+      en: {
+        required: "Please enter a number",
+        invalid: "Please enter a number",
+        integer: "Must be a whole number",
+        min: "Must be at least {min}",
+        max: "Must be at most {max}",
+        range: "Must be between {min} and {max}",
+        step: "Must be a multiple of {step}",
+        unit: "unit"
+      }
+    };
+    function messages(lang) {
+      return lang === "en" ? TEXT.en : TEXT.zh;
+    }
+    function fill(text, vars) {
+      return String(text).replace(/\{(\w+)\}/g, function(m, key) {
+        return vars && vars[key] !== void 0 ? String(vars[key]) : m;
+      });
+    }
+    function validateNumber(raw, opts) {
+      var o = opts || {};
+      var M = messages(o.lang);
+      var text = raw === null || raw === void 0 ? "" : String(raw).trim();
+      if (text === "") {
+        return o.allowEmpty ? { ok: true, value: null, error: "" } : { ok: false, value: null, error: M.required };
+      }
+      if (!NUM.test(text)) return { ok: false, value: null, error: M.invalid };
+      var n = Number(text);
+      if (!isFinite(n)) return { ok: false, value: null, error: M.invalid };
+      if (o.integer && Math.round(n) !== n) return { ok: false, value: null, error: M.integer };
+      var hasMin = o.min !== void 0 && o.min !== null && o.min !== "";
+      var hasMax = o.max !== void 0 && o.max !== null && o.max !== "";
+      if (hasMin && hasMax && n >= o.min && n <= o.max) {
+      } else if (hasMin && hasMax) {
+        return { ok: false, value: null, error: fill(M.range, { min: o.min, max: o.max }) };
+      } else if (hasMin && n < o.min) {
+        return { ok: false, value: null, error: fill(M.min, { min: o.min }) };
+      } else if (hasMax && n > o.max) {
+        return { ok: false, value: null, error: fill(M.max, { max: o.max }) };
+      }
+      if (o.step && Number(o.step) > 0) {
+        var q = n / Number(o.step);
+        if (Math.abs(q - Math.round(q)) > 1e-9) {
+          return { ok: false, value: null, error: fill(M.step, { step: o.step }) };
+        }
+      }
+      return { ok: true, value: n, error: "" };
+    }
+    function rangeHint(opts, lang) {
+      var o = opts || {};
+      var M = messages(lang);
+      var en = lang === "en";
+      var hasMin = o.min !== void 0 && o.min !== null && o.min !== "";
+      var hasMax = o.max !== void 0 && o.max !== null && o.max !== "";
+      var parts = [];
+      if (hasMin && hasMax) parts.push(String(o.min) + "\u2013" + String(o.max));
+      else if (hasMin) parts.push((en ? "\u2265 " : "\u2265 ") + String(o.min));
+      else if (hasMax) parts.push((en ? "\u2264 " : "\u2264 ") + String(o.max));
+      if (o.integer) parts.push(en ? "whole numbers" : "\u6574\u6570");
+      else if (o.step && Number(o.step) > 0) parts.push((en ? "step " : "\u6B65\u957F ") + String(o.step));
+      return parts.join(en ? ", " : "\uFF0C");
+    }
+    function NumberField(props) {
+      var h2 = props.h || React.createElement;
+      var lang = props.lang;
+      var M = messages(lang);
+      var text = props.value === null || props.value === void 0 ? "" : String(props.value);
+      var draftS = React.useState(text);
+      var draft = draftS[0];
+      var setDraft = draftS[1];
+      var focusS = React.useState(false);
+      var focused = focusS[0];
+      var setFocused = focusS[1];
+      var errS = React.useState("");
+      var err = errS[0];
+      var setErr = errS[1];
+      var lastRef = React.useRef(text);
+      var skipBlurRef = React.useRef(false);
+      React.useEffect(
+        function() {
+          if (focused) return;
+          if (lastRef.current === text) return;
+          lastRef.current = text;
+          setDraft(text);
+          setErr("");
+        },
+        [text, focused]
+      );
+      function commit(raw) {
+        var r = validateNumber(raw, props);
+        if (!r.ok) {
+          setErr(r.error);
+          if (typeof props.onValidChange === "function") props.onValidChange(false, r.error);
+          return false;
+        }
+        setErr("");
+        if (typeof props.onValidChange === "function") props.onValidChange(true, "");
+        var cur = props.value === null || props.value === void 0 ? null : Number(props.value);
+        if (r.value !== cur) {
+          lastRef.current = r.value === null ? "" : String(r.value);
+          if (typeof props.onCommit === "function") props.onCommit(r.value);
+        }
+        return true;
+      }
+      var hint = props.hint !== void 0 ? props.hint : rangeHint(props, lang);
+      var shown = props.hint === false ? "" : hint;
+      return h2(
+        "span",
+        { className: "wbctl-num" + (props.wide ? " is-wide" : "") + (props.className ? " " + props.className : "") },
+        h2(
+          "span",
+          { className: "wbctl-num-box" },
+          h2("input", {
+            className: "wbctl-num-input" + (err ? " is-invalid" : ""),
+            type: "text",
+            inputMode: props.integer || Number(props.step) === 1 ? "numeric" : "decimal",
+            value: draft,
+            disabled: !!props.disabled,
+            placeholder: props.placeholder,
+            title: props.title,
+            "aria-label": props.ariaLabel,
+            "aria-invalid": err ? "true" : void 0,
+            onFocus: function() {
+              setFocused(true);
+            },
+            onChange: function(e) {
+              setDraft(e.target.value);
+              if (err) setErr("");
+              if (typeof props.onDraft === "function") props.onDraft(e.target.value);
+            },
+            onBlur: function() {
+              setFocused(false);
+              if (skipBlurRef.current) {
+                skipBlurRef.current = false;
+                return;
+              }
+              commit(draft);
+            },
+            onKeyDown: function(e) {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (e.target && e.target.blur) e.target.blur();
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                skipBlurRef.current = true;
+                setDraft(text);
+                setErr("");
+                if (e.target && e.target.blur) e.target.blur();
+              }
+            }
+          }),
+          props.unit ? h2("span", { className: "wbctl-num-unit" }, props.unit) : null
+        ),
+        err ? h2("span", { className: "wbctl-num-err", role: "alert" }, err) : shown ? h2("span", { className: "wbctl-num-hint" }, shown) : null
+      );
+    }
+    var NUMBER_STYLES = [
+      ".wbctl-num{display:inline-flex;flex-direction:column;gap:3px;min-width:0;max-width:100%}",
+      ".wbctl-num.is-wide{display:flex;width:100%}",
+      ".wbctl-num-box{display:inline-flex;align-items:center;gap:6px;min-width:0}",
+      ".wbctl-num-input{box-sizing:border-box;width:96px;min-width:0;padding:6px 9px;border:1px solid var(--wb-line,rgba(127,127,127,.35));border-radius:6px;background:var(--wb-surface,var(--wb-card,transparent));color:inherit;font:inherit;font-size:13px;font-variant-numeric:tabular-nums;transition:border-color .14s ease,outline-color .14s ease}",
+      ".wbctl-num-input:hover:not(:disabled){border-color:var(--wb-border,var(--wb-line))}",
+      ".wbctl-num-input:focus{outline:2px solid color-mix(in oklab,var(--wb-accent,#2563eb) 55%,transparent);outline-offset:1px;border-color:var(--wb-accent,#2563eb)}",
+      ".wbctl-num-input.is-invalid{border-color:var(--wb-danger,#dc2626)}",
+      ".wbctl-num-input.is-invalid:focus{outline-color:color-mix(in oklab,var(--wb-danger,#dc2626) 55%,transparent)}",
+      ".wbctl-num-input:disabled{opacity:.5;cursor:not-allowed}",
+      ".wbctl-num-unit{color:var(--wb-muted,inherit);font-size:12px;white-space:nowrap}",
+      ".wbctl-num-hint{color:var(--wb-muted,inherit);font-size:11px;line-height:1.4}",
+      ".wbctl-num-err{color:var(--wb-danger,#dc2626);font-size:11px;line-height:1.4}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-num-input{transition:none}}"
+    ];
+    module2.exports = {
+      NumberField,
+      validateNumber,
+      rangeHint,
+      messages,
+      styles: NUMBER_STYLES
+    };
+  }
+});
+
 // packages/shell/client/styles.cjs
 var require_styles = __commonJS({
   "packages/shell/client/styles.cjs"(exports2, module2) {
     "use strict";
     var SW = require_switch();
+    var NF = require_number_field();
     var CSS2 = [
       ".wb-root{--wb-line:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wb-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));display:flex;flex-direction:column;height:100%;box-sizing:border-box;overflow:auto;color:inherit;font-size:13px;background:var(--dsw-alias-bg-base,var(--dsw-alias-bg-layer-2,color-mix(in oklab,currentColor 4%,transparent)));padding:24px 28px}",
       ".wb-inner{display:flex;flex-direction:column;gap:16px;width:100%;max-width:1040px;margin:0 auto}",
@@ -973,9 +1192,35 @@ var require_styles = __commonJS({
       // 有的会把页面按 ~980px 布局再缩小，媒体查询就落在桌面档。用 pointer:coarse 兜一层：
       // 只要没有精确指针，就按窄屏的留白处理，避免手机上又出现桌面端 24px 的两侧留白。
       "@media (pointer:coarse){.wb-root .wb-immersive-main{padding:10px 10px 16px}.wb-root .wb-immersive-bar{padding:calc(8px + var(--dsh-frame-top-clearance,0px)) 12px 8px}.wb-root :is(.wbc-wrap,.wbv,.wba-wrap,.wbct-wrap,.wbca-wrap,.wbm-wrap,.wbml-wrap,.wbm-page,.wbml-page){padding:0 0 16px}.wb-root .wb-inner{gap:12px}.wb-root input[type=checkbox],.wb-root input[type=radio]{width:16px;height:16px}}",
-      "@media (pointer:coarse) and (max-width:520px){.wb-root .wb-immersive-main{padding:8px 8px 12px}.wb-root .wb-inner{gap:10px}}"
+      "@media (pointer:coarse) and (max-width:520px){.wb-root .wb-immersive-main{padding:8px 8px 12px}.wb-root .wb-inner{gap:10px}}",
+      // 宿主「配置」页：分组卡片 + 每项一行（说明在左、控件在右），窄屏自动换行。
+      ".wb-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}",
+      ".wb-card-head h3{margin:0;font-size:13px;font-weight:650}",
+      ".wbh-config-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--wb-line)}",
+      ".wbh-config-row:first-of-type{border-top:0}",
+      ".wbh-config-text{min-width:200px;flex:1 1 240px}",
+      ".wbh-config-label{font-size:13px;line-height:1.5}",
+      ".wbh-config-ctl{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}",
+      ".wb-link{border:0;background:transparent;color:var(--wb-accent,var(--dsw-alias-brand-primary,#11a89b));font:inherit;font-size:12px;cursor:pointer;padding:2px 4px;border-radius:6px}",
+      ".wb-link:hover{text-decoration:underline}",
+      ".wb-link:disabled{opacity:.5;cursor:not-allowed;text-decoration:none}",
+      // 同步进度：顶栏胶囊里的细进度条 + 账号页的步骤列表。
+      ".wb-cloud-bar{display:block;width:46px;height:3px;border-radius:999px;background:color-mix(in oklab,currentColor 22%,transparent);overflow:hidden}",
+      ".wb-cloud-bar>span{display:block;height:100%;background:var(--dsw-alias-brand-primary,#11a89b);transition:width .2s ease}",
+      ".wb-sync-progress{margin-top:10px;padding-top:10px;border-top:1px solid var(--wb-line)}",
+      ".wb-sync-progress-head{display:flex;align-items:center;gap:10px;font-size:12px;flex-wrap:wrap}",
+      ".wb-sync-progress-head b{font-weight:600}",
+      ".wb-sync-count{margin-left:auto;opacity:.72}",
+      ".wb-sync-bar{margin-top:6px;height:5px;border-radius:999px;background:color-mix(in oklab,currentColor 14%,transparent);overflow:hidden}",
+      ".wb-sync-bar>span{display:block;height:100%;background:var(--dsw-alias-brand-primary,#11a89b);transition:width .2s ease}",
+      ".wb-sync-tables{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:12px}",
+      ".wb-sync-tables li{display:flex;align-items:center;gap:8px;flex-wrap:wrap;line-height:1.5}",
+      ".wb-sync-tables li.fail{color:var(--wb-danger,inherit)}",
+      ".wb-sync-table-name{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}",
+      ".wb-sync-table-state{margin-left:auto;opacity:.8;overflow-wrap:anywhere}",
+      ".wb-toast{position:sticky;bottom:12px;align-self:center;padding:7px 14px;border-radius:999px;border:1px solid var(--wb-line);background:var(--wb-surface);font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.12)}"
     ].join("\n");
-    module2.exports = CSS2 + "\n" + SW.styles.join("\n");
+    module2.exports = CSS2 + "\n" + SW.styles.join("\n") + "\n" + NF.styles.join("\n");
   }
 });
 
@@ -1968,12 +2213,1216 @@ var require_system_pages = __commonJS({
       return [
         card("agent", "agent", t("tab_agent"), t("agent_desc")),
         card("agentList", "agent", t("tab_agent_list"), t("agent_list_desc")),
+        card("data", "\u6570", t("tab_data"), t("data_desc")),
+        card("config", "\u914D", t("tab_config"), t("config_desc")),
         card("backup", "backup", t("tab_backup"), t("backup_desc")),
         card("audit", "audit", t("tab_audit"), t("audit_desc")),
         card("account", "account", t("tab_account"), t("account_desc"))
       ];
     }
     module2.exports = { agentAccessPage, agentListPage, manageCards };
+  }
+});
+
+// packages/addons/lib/data-copy.cjs
+var require_data_copy = __commonJS({
+  "packages/addons/lib/data-copy.cjs"(exports2, module2) {
+    "use strict";
+    var COPY = {
+      zh: {
+        title: "\u6570\u636E",
+        subtitle: "\u53EA\u8BFB\u6D4F\u89C8\u672C\u63D2\u4EF6\u8D1F\u8D23\u7684\u8868\uFF1B\u7CFB\u7EDF\u5217\u4E0E\u5DF2\u5220\u9664\u884C\u9ED8\u8BA4\u9690\u85CF",
+        tables: "\u8868",
+        rows: "\u884C",
+        deleted: "\u5DF2\u5220\u9664",
+        rowCount: "\u5171 {n} \u884C",
+        deletedCount: "\u5176\u4E2D {n} \u884C\u5DF2\u5220\u9664",
+        search: "\u641C\u7D22\u6240\u6709\u6587\u672C\u5217\u2026",
+        pageSize: "\u6BCF\u9875",
+        includeDeleted: "\u542B\u5DF2\u5220\u9664",
+        showSystem: "\u7CFB\u7EDF\u5217",
+        refresh: "\u5237\u65B0",
+        loading: "\u8F7D\u5165\u4E2D\u2026",
+        empty: "\u8FD9\u5F20\u8868\u8FD8\u6CA1\u6709\u6570\u636E",
+        emptyTable: "\u6CA1\u6709\u53EF\u5C55\u793A\u7684\u8868",
+        loadFail: "\u6570\u636E\u670D\u52A1\u4E0D\u53EF\u7528\uFF08\u63D2\u4EF6\u7248\u672C\u8FC7\u65E7\uFF1F\uFF09",
+        retry: "\u91CD\u8BD5",
+        queryFail: "\u67E5\u8BE2\u5931\u8D25\uFF1A",
+        noRows: "\u6CA1\u6709\u5339\u914D\u7684\u884C",
+        prev: "\u4E0A\u4E00\u9875",
+        next: "\u4E0B\u4E00\u9875",
+        pageInfo: "\u7B2C {page} / {pages} \u9875",
+        jump: "\u8DF3\u8F6C",
+        total: "\u5171 {n} \u884C",
+        copied: "\u5DF2\u590D\u5236",
+        copy: "\u590D\u5236",
+        close: "\u5173\u95ED",
+        drawerTitle: "{column} \xB7 \u7B2C {row} \u884C",
+        nullText: "NULL",
+        emptyText: "\u7A7A",
+        yes: "\u662F",
+        no: "\u5426",
+        json: "JSON",
+        queryTime: "{n} ms",
+        sortAsc: "\u5347\u5E8F",
+        sortDesc: "\u964D\u5E8F",
+        filterCol: "\u7B5B\u9009\u2026",
+        filterClear: "\u6E05\u9664\u7B5B\u9009",
+        index: "\u8868\u7D22\u5F15",
+        indexSub: "\u5F53\u524D\u9009\u4E2D\u8868\u7684\u7D22\u5F15\uFF08\u53EA\u8BFB\uFF09\uFF1B\u884C\u6570\u4E3A\u6240\u5C5E\u8868\u603B\u884C\u6570\uFF0C\u4E0D\u662F\u7D22\u5F15\u6761\u76EE\u6570",
+        idxName: "\u7D22\u5F15\u540D",
+        idxColumns: "\u5217",
+        idxType: "\u7C7B\u578B",
+        idxSource: "\u6765\u6E90",
+        idxUnique: "\u552F\u4E00",
+        idxNormal: "\u666E\u901A",
+        idxAuto: "\u81EA\u52A8",
+        idxCreated: "\u663E\u5F0F\u521B\u5EFA",
+        idxCount: "\u5171 {n} \u4E2A\u7D22\u5F15",
+        idxNoExtra: "\u8BE5\u8868\u9664\u4E3B\u952E\u5916\u6CA1\u6709\u989D\u5916\u7D22\u5F15",
+        idxRowsHelp: "\u6240\u5C5E\u8868\u603B\u884C\u6570\uFF08\u542B\u5DF2\u5220\u9664\u884C\uFF09\uFF0C\u4E0D\u662F\u7D22\u5F15\u6761\u76EE\u6570",
+        idxTable: "\u8868",
+        idxRows: "\u884C\u6570",
+        idxCols: "\u5217\u6570",
+        idxKey: "\u4E3B\u952E",
+        idxIndexes: "\u7D22\u5F15",
+        idxLastWrite: "\u6700\u8FD1\u5199\u5165",
+        idxNone: "\u65E0",
+        idxEmpty: "\u5F53\u524D\u8868\u6CA1\u6709\u53EF\u7528\u7684\u7D22\u5F15\u7EDF\u8BA1",
+        idxTables: "\u8868",
+        idxAt: "\u7EDF\u8BA1\u65F6\u95F4"
+      },
+      en: {
+        title: "Data",
+        subtitle: "Read-only view of this plugin's tables; system and deleted rows are hidden by default",
+        tables: "Tables",
+        rows: "rows",
+        deleted: "deleted",
+        rowCount: "{n} rows",
+        deletedCount: "{n} deleted",
+        search: "Search all text columns\u2026",
+        pageSize: "Rows",
+        includeDeleted: "Deleted",
+        showSystem: "System",
+        refresh: "Refresh",
+        loading: "Loading\u2026",
+        empty: "This table has no rows yet",
+        emptyTable: "No tables to show",
+        loadFail: "Data service unavailable (plugin too old?)",
+        retry: "Retry",
+        queryFail: "Query failed: ",
+        noRows: "No matching rows",
+        prev: "Previous",
+        next: "Next",
+        pageInfo: "Page {page} / {pages}",
+        jump: "Jump",
+        total: "{n} rows",
+        copied: "Copied",
+        copy: "Copy",
+        close: "Close",
+        drawerTitle: "{column} \xB7 row {row}",
+        nullText: "NULL",
+        emptyText: "empty",
+        yes: "Yes",
+        no: "No",
+        json: "JSON",
+        queryTime: "{n} ms",
+        sortAsc: "ascending",
+        sortDesc: "descending",
+        filterCol: "Filter\u2026",
+        filterClear: "Clear filter",
+        index: "Table index",
+        indexSub: "Indexes of the selected table (read-only); rows are the table total, not index entries",
+        idxName: "Index name",
+        idxColumns: "Columns",
+        idxType: "Type",
+        idxSource: "Source",
+        idxUnique: "Unique",
+        idxNormal: "Normal",
+        idxAuto: "Automatic",
+        idxCreated: "Explicit",
+        idxCount: "{n} indexes",
+        idxNoExtra: "This table has no indexes other than its primary key",
+        idxRowsHelp: "Total table rows (including deleted rows), not index entries",
+        idxTable: "Table",
+        idxRows: "Rows",
+        idxCols: "Cols",
+        idxKey: "Primary key",
+        idxIndexes: "Indexes",
+        idxLastWrite: "Last write",
+        idxNone: "\u2014",
+        idxEmpty: "No index statistics available for this table",
+        idxTables: "Tables",
+        idxAt: "Generated"
+      }
+    };
+    module2.exports = COPY;
+  }
+});
+
+// packages/addons/lib/visual-tokens.cjs
+var require_visual_tokens = __commonJS({
+  "packages/addons/lib/visual-tokens.cjs"(exports2, module2) {
+    module2.exports = `
+:where(.wbt-root,.wbi-root,.wbi-cfg,.wbt-data,.wbs-data,.wbg-data,.wbi-data,.wb-desc){--wb-radius-sm:8px;--wb-radius-card:12px;--wb-space-sm:8px;--wb-space-md:14px;--wb-border:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wb-description-bg:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 7%,transparent);--wb-description-line:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 34%,transparent);--wb-motion:140ms;--wb-btn-bg:transparent;--wb-btn-hover-bg:color-mix(in oklab,currentColor 6%,transparent);--wb-btn-active-bg:color-mix(in oklab,currentColor 11%,transparent);--wb-btn-primary-bg:var(--dsw-alias-brand-primary,#2563eb);--wb-btn-primary-fg:var(--dsw-alias-label-primary-inverted,#fff);--wb-btn-danger-fg:var(--dsw-alias-state-error-primary,#b91c1c);--wb-btn-size-sm:32px;--wb-btn-focus:2px solid var(--dsw-alias-brand-primary,#2563eb);--wb-btn-focus-offset:2px}
+.wb-desc{background:var(--wb-description-bg);border-left-color:var(--wb-description-line);border-radius:0 var(--wb-radius-sm) var(--wb-radius-sm) 0}
+`;
+  }
+});
+
+// packages/addons/lib/data-style.cjs
+var require_data_style = __commonJS({
+  "packages/addons/lib/data-style.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(DOMAIN, PREFIX) {
+      var P = PREFIX + "-data";
+      var CSS2 = [
+        require_visual_tokens(),
+        "." + P + "-search:has(.wbi-svg) input{padding-left:30px}." + P + "-search>.wbi-svg{position:absolute;left:10px;top:50%;transform:translateY(-50%)}",
+        "." + P + "-btn{transition:background var(--wb-motion),border-color var(--wb-motion)}",
+        "@media(max-width:480px){." + P + "-head>." + P + "-btn:has(.wbi-svg){width:32px;height:32px;padding:0;justify-content:center}." + P + "-head>." + P + "-btn:has(.wbi-svg) ." + P + "-btnlabel{display:none}}",
+        "." + P + "{--cfg-line:var(--wb-border);--cfg-surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));--cfg-muted:var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 62%,transparent));--cfg-faint:var(--dsw-alias-label-tertiary,color-mix(in oklab,currentColor 42%,transparent));--cfg-hover:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent));display:grid;grid-template-columns:216px minmax(0,1fr);gap:16px;width:100%;min-width:0;color:inherit;font-size:13px;align-items:start}",
+        "." + P + "-side{position:sticky;top:12px;display:flex;flex-direction:column;gap:3px;border:1px solid var(--cfg-line);border-radius:var(--wb-radius-card);background:var(--cfg-surface);padding:8px;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
+        "." + P + "-sidetitle{display:flex;align-items:center;justify-content:space-between;padding:6px 10px 8px;font-size:11px;font-weight:660;letter-spacing:.6px;text-transform:uppercase;color:var(--cfg-faint)}",
+        "." + P + "-stab{display:flex;flex-direction:column;gap:3px;align-items:stretch;border:1px solid transparent;background:transparent;border-radius:9px;padding:8px 10px;font:inherit;color:inherit;text-align:left;cursor:pointer;position:relative;transition:background .12s ease,border-color .12s ease}",
+        "." + P + "-stab:hover{background:var(--cfg-hover)}",
+        "." + P + "-stab:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
+        "." + P + "-stab.on{background:color-mix(in oklab,currentColor 6%,transparent);border-color:var(--cfg-line)}",
+        "." + P + "-stab.on::before{content:'';position:absolute;left:-1px;top:9px;bottom:9px;width:2px;border-radius:2px;background:var(--dsw-alias-brand-primary,currentColor)}",
+        "." + P + "-stabname{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;line-height:1.4;min-width:0}",
+        "." + P + "-stabname span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+        "." + P + "-sidetable{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;color:var(--cfg-muted);margin-top:3px;letter-spacing:.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+        "." + P + "-sidecount{margin-left:auto;font-size:10.5px;font-variant-numeric:tabular-nums;color:var(--cfg-muted);background:color-mix(in oklab,currentColor 8%,transparent);border-radius:999px;padding:1px 7px;flex:none}",
+        "." + P + "-main{display:flex;flex-direction:column;gap:10px;min-width:0;border:1px solid var(--cfg-line);border-radius:var(--wb-radius-card);background:var(--cfg-surface);padding:14px 16px 12px;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
+        "." + P + "-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}",
+        "." + P + "-headmain{min-width:0;flex:1}",
+        "." + P + "-head h2{margin:0;font-size:16px;font-weight:660;letter-spacing:.1px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+        "." + P + "-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;font-weight:500;color:var(--cfg-muted);background:color-mix(in oklab,currentColor 6%,transparent);border-radius:6px;padding:2px 6px}",
+        "." + P + "-sub{font-size:11.5px;color:var(--cfg-muted);line-height:1.55;margin-top:4px}",
+        "." + P + "-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:2px 0 4px}",
+        "." + P + "-search{position:relative;flex:1;min-width:180px;max-width:340px}",
+        "." + P + "-search input{width:100%;border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:9px;padding:8px 11px;font:inherit;font-size:12.5px;outline:none;transition:border-color .15s ease,box-shadow .15s ease}",
+        "." + P + "-search input:hover{border-color:color-mix(in oklab,currentColor 28%,var(--cfg-line))}",
+        "." + P + "-search input:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
+        "." + P + "-select{border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:9px;padding:7px 10px;font:inherit;font-size:12px;outline:none}",
+        "." + P + "-select:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
+        "." + P + "-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--cfg-line);background:transparent;color:var(--cfg-muted);border-radius:8px;padding:6px 10px;font:inherit;font-size:11.5px;cursor:pointer;white-space:nowrap;transition:background .12s ease,color .12s ease}",
+        "." + P + "-btn:hover{background:var(--cfg-hover);color:var(--dsw-alias-label-primary,inherit)}",
+        "." + P + "-btn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px}",
+        "." + P + "-btn:disabled{opacity:.45;cursor:not-allowed}",
+        "." + P + "-btn[aria-busy='true']{opacity:.6}",
+        "." + P + "-tablewrap{overflow:auto;max-height:calc(100vh - 300px);border:1px solid var(--cfg-line);border-radius:11px;background:var(--dsw-alias-bg-base,transparent)}",
+        "." + P + "-table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:12.5px}",
+        "." + P + "-table th{position:sticky;top:0;z-index:2;background:var(--cfg-surface);border-bottom:1px solid var(--cfg-line);padding:0;text-align:left;font-weight:600;white-space:nowrap}",
+        "." + P + "-thbtn{display:flex;align-items:baseline;gap:6px;width:100%;border:0;background:transparent;color:inherit;font:inherit;font-size:11.5px;font-weight:660;letter-spacing:.2px;padding:9px 12px;cursor:pointer;text-align:left;white-space:nowrap}",
+        "." + P + "-thbtn:hover{background:var(--cfg-hover)}",
+        "." + P + "-thbtn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:-2px}",
+        "." + P + "-coltype{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9.5px;font-weight:500;color:var(--cfg-faint);letter-spacing:.3px}",
+        "." + P + "-sortmark{color:var(--dsw-alias-brand-primary,currentColor);font-size:10px}",
+        "." + P + "-rownum{position:sticky;left:0;z-index:1;background:var(--cfg-surface);color:var(--cfg-faint);text-align:right;font-variant-numeric:tabular-nums;font-size:10.5px;padding:0 8px;width:1%;white-space:nowrap;border-right:1px solid color-mix(in oklab,currentColor 7%,transparent)}",
+        "." + P + "-table thead ." + P + "-rownum{z-index:3}",
+        "." + P + "-cell{padding:7px 12px;border-bottom:1px solid color-mix(in oklab,currentColor 6%,transparent);max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default;vertical-align:top}",
+        "." + P + "-table tbody tr:hover ." + P + "-cell{background:var(--cfg-hover)}",
+        "." + P + "-table tbody tr:nth-child(even) ." + P + "-cell,." + P + "-table tbody tr:nth-child(even) ." + P + "-rownum{background:color-mix(in oklab,currentColor 2.5%,transparent)}",
+        "." + P + "-cell.num{text-align:right;font-variant-numeric:tabular-nums}",
+        "." + P + "-cell.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}",
+        "." + P + "-cell.null{color:var(--cfg-faint);font-style:italic}",
+        "." + P + "-cell.json .v{color:var(--dsw-alias-brand-primary,inherit)}",
+        "." + P + "-tr.deleted ." + P + "-cell,." + P + "-tr.deleted ." + P + "-rownum{opacity:.55}",
+        "." + P + "-tr.deleted ." + P + "-cell .v{text-decoration:line-through;text-decoration-color:color-mix(in oklab,currentColor 35%,transparent)}",
+        "." + P + "-delbadge{display:inline-block;margin-left:6px;font-size:9.5px;line-height:1.5;padding:0 5px;border-radius:999px;background:color-mix(in oklab,var(--dsw-alias-state-error-primary,currentColor) 14%,transparent);color:var(--dsw-alias-state-error-primary,inherit);vertical-align:middle}",
+        "." + P + "-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px;font-size:11.5px;color:var(--cfg-muted)}",
+        "." + P + "-grow{flex:1}",
+        "." + P + "-pageinfo{font-variant-numeric:tabular-nums}",
+        "." + P + "-jump .wbctl-num-input{width:56px;padding:4px 7px;font-size:11.5px;text-align:right}",
+        "." + P + "-jump .wbctl-num-hint{display:none}",
+        "." + P + "-empty{border:1px dashed var(--cfg-line);border-radius:11px;padding:44px 16px;text-align:center;font-size:12.5px;color:var(--cfg-muted)}",
+        "." + P + "-err{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid color-mix(in oklab,var(--dsw-alias-state-error-primary,currentColor) 32%,var(--cfg-line));border-radius:10px;padding:9px 12px;color:var(--dsw-alias-state-error-primary,inherit);font-size:12px;line-height:1.5}",
+        "." + P + "-skwrap{display:flex;flex-direction:column;gap:1px;padding:2px}",
+        "." + P + "-sk{height:26px;border-radius:4px;background:var(--dsw-alias-bg-skeleton,color-mix(in oklab,currentColor 6%,transparent));animation:" + PREFIX + "-data-pulse 1.4s ease-in-out infinite}",
+        "@keyframes " + PREFIX + "-data-pulse{0%,100%{opacity:.6}50%{opacity:1}}",
+        "." + P + "-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:40;background:var(--dsw-alias-bg-layer-1,var(--cfg-surface));border:1px solid var(--cfg-line);border-radius:999px;padding:7px 14px;font-size:12px;color:var(--dsw-alias-label-primary,inherit);box-shadow:0 6px 24px color-mix(in oklab,currentColor 18%,transparent)}",
+        "." + P + "-mask{position:fixed;inset:0;z-index:30;background:color-mix(in oklab,currentColor 26%,transparent)}",
+        "." + P + "-drawer{position:fixed;top:0;right:0;bottom:0;z-index:31;width:min(520px,92vw);display:flex;flex-direction:column;gap:12px;background:var(--dsw-alias-bg-layer-1,var(--cfg-surface));border-left:1px solid var(--cfg-line);box-shadow:-8px 0 28px color-mix(in oklab,currentColor 16%,transparent);padding:18px 20px}",
+        "." + P + "-drawer h3{margin:0;font-size:14px;font-weight:660;display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+        "." + P + "-drawer pre{margin:0;flex:1;overflow:auto;border:1px solid var(--cfg-line);border-radius:10px;background:var(--dsw-alias-bg-base,transparent);padding:12px 14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.65;white-space:pre-wrap;word-break:break-word}",
+        "." + P + "-drawerfoot{display:flex;gap:8px;justify-content:flex-end}",
+        "." + P + "-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}",
+        "@media (max-width:900px){." + P + "{grid-template-columns:minmax(0,1fr)}." + P + "-side{position:static;flex-direction:row;flex-wrap:wrap;gap:6px;padding:6px}." + P + "-sidetitle{display:none}." + P + "-stab{padding:6px 10px;flex:none}." + P + "-sidecount{display:none}." + P + "-tablewrap{max-height:calc(100vh - 260px)}}",
+        "@media (prefers-reduced-motion:reduce){." + P + " *,." + P + "-track,." + P + "-track::after,." + P + "-sk,." + P + "-drawer{transition:none;animation:none}}",
+        "." + P + "-idxsub{font-size:11.5px;color:var(--cfg-muted);line-height:1.55}",
+        "." + P + "-idxsum{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--cfg-muted)}",
+        "." + P + "-idxsum b{font-weight:660;color:var(--dsw-alias-label-primary,inherit);font-variant-numeric:tabular-nums}",
+        "." + P + "-idxtable{width:100%;table-layout:fixed}." + P + "-idxtable ." + P + "-cell{white-space:normal;overflow-wrap:anywhere;max-width:none}." + P + "-idxtable th:first-child{width:30%}." + P + "-idxtable th:nth-child(2){width:28%}",
+        "." + P + "-idxtags{display:flex;flex-wrap:wrap;gap:4px;max-width:280px}",
+        "." + P + "-idxchip{display:inline-block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;line-height:1.6;border-radius:999px;padding:0 7px;background:color-mix(in oklab,currentColor 7%,transparent);color:var(--cfg-muted);white-space:nowrap}",
+        "." + P + "-idxchip.u{background:color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 15%,transparent);color:var(--dsw-alias-brand-primary,inherit)}",
+        "." + P + "-idxnone{color:var(--cfg-faint)}",
+        "." + P + "-frow th{padding:0 8px 6px;border-bottom:1px solid var(--cfg-line)}",
+        "." + P + "-fcell{position:relative;display:block;min-width:96px}",
+        "." + P + "-finput{width:100%;box-sizing:border-box;border:1px solid transparent;border-radius:6px;background:color-mix(in oklab,currentColor 4%,transparent);color:inherit;font:inherit;font-size:11.5px;padding:3px 18px 3px 6px;min-width:0}",
+        "." + P + "-finput:hover{background:color-mix(in oklab,currentColor 7%,transparent)}",
+        "." + P + "-finput:focus{outline:none;border-color:var(--dsw-alias-brand-primary,currentColor);background:var(--cfg-surface)}",
+        "." + P + "-fclear{position:absolute;right:2px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--cfg-muted);cursor:pointer;font-size:13px;line-height:1;padding:2px 4px;border-radius:4px}",
+        "." + P + "-fclear:hover{color:inherit;background:var(--cfg-hover)}",
+        "." + P + "-emptycell{padding:22px 12px;text-align:center;color:var(--cfg-muted)}",
+        "." + P + " *{box-sizing:border-box}",
+        "." + P + "-tabs{display:flex;gap:6px;border-bottom:1px solid var(--cfg-line);padding-bottom:9px}",
+        "." + P + "-tabs [aria-selected=true]{background:var(--cfg-hover);color:inherit;font-weight:660}",
+        "." + P + "-images{display:flex;gap:5px;align-items:center}",
+        "." + P + "-images img{width:36px;height:36px;object-fit:cover;border-radius:5px}",
+        "." + P + "-gallery{display:flex;flex-direction:column;gap:12px;overflow:auto;flex:1}",
+        "." + P + "-gallery img{width:100%;height:auto;object-fit:contain;border-radius:8px}"
+      ].concat(require_switch().styles).concat(require_number_field().styles).join("\n");
+      if (DOMAIN === "storage") {
+        var buttons = "." + P + " :is(button)";
+        CSS2 += buttons + "{border:none;background:var(--wb-btn-bg);min-height:var(--wb-btn-size-sm);min-width:var(--wb-btn-size-sm)}" + buttons + ":enabled:hover{background:var(--wb-btn-hover-bg)}" + buttons + ":enabled:active{background:var(--wb-btn-active-bg)}" + buttons + ":disabled{background:var(--wb-btn-bg);color:var(--cfg-muted)}" + buttons + ":focus-visible{outline:var(--wb-btn-focus);outline-offset:var(--wb-btn-focus-offset)}." + P + "-fcell:has(button) input{padding-right:34px}";
+      }
+      function injectCss() {
+        if (typeof document === "undefined") return;
+        var old = document.getElementById("wb-addon-" + DOMAIN + "-data-css");
+        if (old) {
+          old.textContent = CSS2;
+          return;
+        }
+        var style = document.createElement("style");
+        style.id = "wb-addon-" + DOMAIN + "-data-css";
+        style.setAttribute("data-wb-addon", "wb-addon-" + DOMAIN);
+        style.textContent = CSS2;
+        document.head.appendChild(style);
+      }
+      return injectCss;
+    };
+  }
+});
+
+// packages/addons/lib/data-view.cjs
+var require_data_view = __commonJS({
+  "packages/addons/lib/data-view.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var NF = require_number_field();
+    var h2 = React.createElement;
+    var COPY = require_data_copy();
+    var SW = require_switch();
+    module2.exports = function createDataView(options) {
+      var DOMAIN = options.domain;
+      function icon(name) {
+        return options.Icon ? h2(options.Icon, { name }) : null;
+      }
+      var P = options.prefix + "-data";
+      var configView = { useConfig: options.useConfig };
+      var columnHooks = options.columns || {};
+      var injectCss = require_data_style()(DOMAIN, options.prefix);
+      var CFG_FALLBACK = {
+        "data.pageSize": 50,
+        "data.showSystemColumns": false,
+        "data.includeDeleted": false
+      };
+      var PAGE_SIZES = [10, 25, 50, 100, 200];
+      function unwrap(r) {
+        return r && r.result !== void 0 ? r.result : r;
+      }
+      function fmt(template, vars) {
+        return String(template).replace(/\{(\w+)\}/g, function(m, key) {
+          return vars[key] === void 0 ? m : String(vars[key]);
+        });
+      }
+      function pad2(n) {
+        return n < 10 ? "0" + n : String(n);
+      }
+      function timeText(ms) {
+        var d = new Date(Number(ms));
+        if (!Number.isFinite(d.getTime())) return String(ms);
+        return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+      }
+      function looksJson(value) {
+        var text = String(value).trim();
+        if (!text || text[0] !== "{" && text[0] !== "[") return false;
+        try {
+          JSON.parse(text);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+      function rawText(value, col) {
+        if (value === null || value === void 0) return "";
+        return String(value);
+      }
+      function DataView(props) {
+        var api = props.api;
+        var lang = props.lang === "en" ? "en" : "zh";
+        var t = Object.assign({}, COPY[lang], { indexSub: fmt(COPY[lang].indexSub, { tables: options.tables.join(" / "), domain: DOMAIN }) });
+        var cfgWrap = configView.useConfig(api, CFG_FALLBACK);
+        var cfg = cfgWrap.values;
+        var tablesS = React.useState(null);
+        var tables = tablesS[0], setTables = tablesS[1];
+        var activeS = React.useState("");
+        var active = activeS[0], setActive = activeS[1];
+        var dataS = React.useState(null);
+        var data = dataS[0], setData = dataS[1];
+        var loadingS = React.useState(false);
+        var loadingRows = loadingS[0], setLoadingRows = loadingS[1];
+        var loadingTablesS = React.useState(true);
+        var loadingTables = loadingTablesS[0], setLoadingTables = loadingTablesS[1];
+        var errorS = React.useState("");
+        var error = errorS[0], setError = errorS[1];
+        var pageS = React.useState(1);
+        var page = pageS[0], setPage = pageS[1];
+        var sizeS = React.useState(0);
+        var pageSize = sizeS[0], setPageSize = sizeS[1];
+        var sortS = React.useState("");
+        var sort = sortS[0], setSort = sortS[1];
+        var orderS = React.useState("desc");
+        var order = orderS[0], setOrder = orderS[1];
+        var searchDraftS = React.useState("");
+        var searchDraft = searchDraftS[0], setSearchDraft = searchDraftS[1];
+        var searchS = React.useState("");
+        var search = searchS[0], setSearch = searchS[1];
+        var filterDraftS = React.useState({});
+        var filterDraft = filterDraftS[0], setFilterDraft = filterDraftS[1];
+        var filtersS = React.useState({});
+        var filters = filtersS[0], setFilters = filtersS[1];
+        var includeDeletedS = React.useState(null);
+        var includeDeletedRaw = includeDeletedS[0], setIncludeDeleted = includeDeletedS[1];
+        var showSystemS = React.useState(null);
+        var showSystemRaw = showSystemS[0], setShowSystem = showSystemS[1];
+        var drawerS = React.useState(null);
+        var drawer = drawerS[0], setDrawer = drawerS[1];
+        var toastS = React.useState("");
+        var toast = toastS[0], setToast = toastS[1];
+        var filtersKey = JSON.stringify(filters);
+        var reqRef = React.useRef(0);
+        var toastTimer = React.useRef(null);
+        var refreshS = React.useState(0);
+        function refresh() {
+          loadTables();
+          refreshS[1](function(n) {
+            return n + 1;
+          });
+        }
+        var indexReqRef = React.useRef(0);
+        var indexS = React.useState(null);
+        var index = indexS[0], setIndex = indexS[1];
+        var indexBusyS = React.useState(false);
+        var indexBusy = indexBusyS[0], setIndexBusy = indexBusyS[1];
+        var cfgSize = Number(cfg["data.pageSize"]) || 50;
+        var size = pageSize || (PAGE_SIZES.indexOf(cfgSize) >= 0 ? cfgSize : 50);
+        var includeDeleted = includeDeletedRaw === null ? cfg["data.includeDeleted"] === true : includeDeletedRaw;
+        var showSystem = showSystemRaw === null ? cfg["data.showSystemColumns"] === true : showSystemRaw;
+        function say(text) {
+          setToast(text);
+          if (toastTimer.current) clearTimeout(toastTimer.current);
+          toastTimer.current = setTimeout(function() {
+            setToast("");
+          }, 1600);
+        }
+        function loadTables() {
+          setLoadingTables(true);
+          Promise.resolve((options.tablesLoader || function(a) {
+            return a.call(DOMAIN + ".dataTables");
+          })(api)).then(function(r) {
+            if (r && r.ok === false) throw new Error(r && r.error || t.loadFail);
+            var body = unwrap(r);
+            if (!body || !Array.isArray(body.tables)) throw new Error(t.loadFail);
+            setTables(body.tables);
+            setError("");
+            if (!active && body.tables.length) setActive(body.tables[0].name);
+          }).catch(function(e) {
+            setError(String(e && e.message || e) || t.loadFail);
+          }).then(function() {
+            setLoadingTables(false);
+          });
+        }
+        React.useEffect(function() {
+          injectCss();
+          loadTables();
+          return function() {
+            indexReqRef.current++;
+            if (toastTimer.current) clearTimeout(toastTimer.current);
+          };
+        }, []);
+        function selectTable(name) {
+          if (name === active) return;
+          reqRef.current++;
+          setActive(name);
+          setData(null);
+          setDrawer(null);
+          setError("");
+          setLoadingRows(true);
+          setPage(1);
+          setSort("");
+          setOrder("desc");
+          setSearch("");
+          setSearchDraft("");
+          setFilterDraft({});
+          setFilters({});
+        }
+        React.useEffect(function() {
+          if (searchDraft === search) return void 0;
+          var timer = setTimeout(function() {
+            setSearch(searchDraft);
+            setPage(1);
+          }, 280);
+          return function() {
+            clearTimeout(timer);
+          };
+        }, [searchDraft]);
+        React.useEffect(function() {
+          if (JSON.stringify(filterDraft) === JSON.stringify(filters)) return void 0;
+          var timer = setTimeout(function() {
+            setFilters(filterDraft);
+            setPage(1);
+          }, 280);
+          return function() {
+            clearTimeout(timer);
+          };
+        }, [filterDraft]);
+        React.useEffect(function() {
+          if (!active || !cfgWrap.ready || index) return void 0;
+          var req = ++reqRef.current;
+          setLoadingRows(true);
+          var args = { table: active, page, pageSize: size, order, includeDeleted };
+          if (sort) args.sort = sort;
+          if (search) args.search = search;
+          if (Object.keys(filters).length) args.filters = filters;
+          Promise.resolve((options.query || function(a, q) {
+            return a.call(DOMAIN + ".dataQuery", q);
+          })(api, args)).then(function(r) {
+            if (req !== reqRef.current) return;
+            if (r && r.ok === false) throw new Error(r && r.error || t.queryFail);
+            var body = unwrap(r);
+            if (!body) throw new Error(t.queryFail);
+            setData(body);
+            setError("");
+            if (body.page !== page) setPage(body.page);
+          }).catch(function(e) {
+            if (req !== reqRef.current) return;
+            setError(String(e && e.message || e) || t.queryFail);
+          }).then(function() {
+            if (req === reqRef.current) setLoadingRows(false);
+          });
+          return function() {
+            reqRef.current++;
+          };
+        }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey, refreshS[0], !!index]);
+        React.useEffect(function() {
+          if (!drawer) return void 0;
+          function onKey(e) {
+            if (e.key === "Escape") setDrawer(null);
+          }
+          document.addEventListener("keydown", onKey);
+          return function() {
+            document.removeEventListener("keydown", onKey);
+          };
+        }, [drawer]);
+        var current = null;
+        if (tables) {
+          for (var i = 0; i < tables.length; i++) if (tables[i].name === active) current = tables[i];
+        }
+        function leaveIndex() {
+          indexReqRef.current++;
+          setIndex(null);
+          setIndexBusy(false);
+          setError("");
+        }
+        function loadIndex() {
+          reqRef.current++;
+          setError("");
+          var req = ++indexReqRef.current;
+          setIndex([]);
+          setIndexBusy(true);
+          Promise.resolve(api.call(DOMAIN + ".dataTables", { stats: true })).then(function(r) {
+            if (req !== indexReqRef.current) return;
+            if (r && r.ok === false) throw new Error(r.error || t.loadFail);
+            var payload = unwrap(r) || {};
+            var rows = (payload.tables || []).map(function(tb) {
+              return { table: tb, stats: tb.stats || null };
+            });
+            setIndex(rows);
+            setError("");
+            setIndexBusy(false);
+          }).catch(function(e) {
+            if (req !== indexReqRef.current) return;
+            setError(String(e.message || e));
+            setIndex([]);
+            setIndexBusy(false);
+          });
+        }
+        function renderIndex() {
+          var row = (index || []).filter(function(r) {
+            return r.table.name === active;
+          })[0];
+          var tb = row ? row.table : current;
+          var st = row && row.stats;
+          var indexes = st ? st.indexes || [] : [];
+          var hasExtra = indexes.some(function(ix) {
+            return ix.origin !== "pk";
+          });
+          var count = st && st.rows !== void 0 ? st.rows : tb && tb.count;
+          return h2(
+            "div",
+            { className: P + "-idx" },
+            h2(
+              "div",
+              { className: P + "-head" },
+              h2(
+                "div",
+                { className: P + "-headmain" },
+                h2("h2", null, icon("database"), tableLabel(tb), h2("span", { className: P + "-code" }, active)),
+                h2("div", { className: P + "-idxsub" }, t.indexSub)
+              ),
+              h2("button", {
+                type: "button",
+                className: P + "-btn",
+                "aria-label": t.refresh,
+                title: t.refresh,
+                "aria-busy": indexBusy ? "true" : "false",
+                onClick: function() {
+                  loadIndex();
+                }
+              }, icon("refresh"), h2("span", { className: P + "-btnlabel" }, t.refresh))
+            ),
+            st ? h2(
+              "div",
+              { className: P + "-idxsum" },
+              h2("span", null, t.idxRows, " ", h2("b", null, String(count))),
+              h2("span", null, t.idxCols, " ", h2("b", null, String(st.columnCount === void 0 ? (tb.columns || []).length : st.columnCount))),
+              h2("span", null, fmt(t.idxCount, { n: indexes.length }))
+            ) : null,
+            indexBusy ? options.Skeleton ? h2(options.Skeleton, { lang, label: t.loading }) : h2("div", { className: P + "-empty", role: "status", "aria-busy": "true" }, t.loading) : !st ? h2("div", { className: P + "-empty" }, t.idxEmpty) : !hasExtra ? h2("div", { className: P + "-empty" }, t.idxNoExtra) : h2(
+              "div",
+              { className: P + "-tablewrap" },
+              h2(
+                "table",
+                { className: P + "-table " + P + "-idxtable" },
+                h2("thead", null, h2(
+                  "tr",
+                  null,
+                  [t.idxName, t.idxColumns, t.idxType, t.idxSource, t.idxRows].map(function(label) {
+                    return h2("th", { scope: "col", key: label }, h2("span", { className: P + "-thbtn" }, label));
+                  })
+                )),
+                h2("tbody", null, indexes.map(function(ix) {
+                  return h2(
+                    "tr",
+                    { className: P + "-tr", key: ix.name },
+                    h2("td", { className: P + "-cell mono" }, ix.name),
+                    h2("td", { className: P + "-cell mono" }, (ix.columns || []).join(", ") || t.idxNone),
+                    h2("td", { className: P + "-cell" }, ix.origin === "pk" ? t.idxKey : ix.unique ? t.idxUnique : t.idxNormal),
+                    h2("td", { className: P + "-cell" }, /^sqlite_autoindex_/.test(ix.name) ? t.idxAuto : t.idxCreated),
+                    h2("td", { className: P + "-cell num", title: t.idxRowsHelp }, String(count))
+                  );
+                }))
+              )
+            )
+          );
+        }
+        function tableLabel(tb) {
+          if (!tb || !tb.label) return "";
+          return lang === "en" ? tb.label.en || tb.label.zh : tb.label.zh || tb.label.en;
+        }
+        function colLabel(col) {
+          if (!col.label) return col.name;
+          return lang === "en" ? col.label.en || col.label.zh : col.label.zh || col.label.en;
+        }
+        function visibleColumns() {
+          var cols = data && data.columns ? data.columns.map(function(col) {
+            var hook = columnHooks[col.name];
+            return hook && hook.kind ? Object.assign({}, col, { kind: hook.kind, type: hook.type || col.type }) : col;
+          }) : [];
+          return cols.filter(function(c) {
+            return showSystem || !c.system;
+          });
+        }
+        function toggleSort(name) {
+          if (sort !== name) {
+            setSort(name);
+            setOrder("desc");
+            return;
+          }
+          if (order === "desc") {
+            setOrder("asc");
+            return;
+          }
+          setSort("");
+          setOrder("desc");
+        }
+        function ariaSort(name) {
+          if (sort !== name) return "none";
+          return order === "asc" ? "ascending" : "descending";
+        }
+        function copyCell(value) {
+          var text = value === null || value === void 0 ? "" : String(value);
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text);
+            else {
+              var ta = document.createElement("textarea");
+              ta.value = text;
+              ta.style.position = "fixed";
+              ta.style.opacity = "0";
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand("copy");
+              document.body.removeChild(ta);
+            }
+            say(t.copied);
+          } catch (e) {
+          }
+        }
+        function cellText(col, value) {
+          if (value === null || value === void 0) return null;
+          if (col.kind === "bool") return value ? t.yes : t.no;
+          if (col.kind === "timestamp") return timeText(value);
+          return String(value);
+        }
+        function cellClass(col, value) {
+          var cls = P + "-cell";
+          if (value === null || value === void 0) return cls + " null";
+          if (col.kind === "number") return cls + " num";
+          if (col.kind === "id" || col.kind === "path") return cls + " mono";
+          if (col.kind === "text" && looksJson(value)) return cls + " json";
+          return cls;
+        }
+        function cellTitle(col, value) {
+          if (value === null || value === void 0) return t.nullText;
+          if (col.kind === "timestamp") return String(value);
+          if (col.kind === "bool") return value ? "1" : "0";
+          return String(value);
+        }
+        function renderCell(row, col) {
+          var value = row[col.name];
+          var hook = columnHooks[col.name];
+          function openDetail() {
+            setDrawer({ column: colLabel(col), name: col.name, row: (data.page - 1) * data.pageSize + row.__i + 1, value });
+          }
+          var text = cellText(col, value);
+          var content;
+          if (text === null) content = h2("span", { className: "v" }, t.nullText);
+          else if (text === "") content = h2("span", { className: "v" }, '""');
+          else content = h2("span", { className: "v" }, text);
+          if (hook && hook.render) content = hook.render({ value, row, col, lang, prefix: P, openDetail });
+          return h2("td", {
+            key: col.name,
+            className: cellClass(col, value),
+            title: cellTitle(col, value),
+            onClick: function() {
+              copyCell(value);
+            },
+            onDoubleClick: openDetail
+          }, content);
+        }
+        function activeFilterCount() {
+          var n = 0;
+          for (var k in filters) if (Object.prototype.hasOwnProperty.call(filters, k)) n++;
+          return n;
+        }
+        function filterCell(col) {
+          var val = filterDraft[col.name] === void 0 ? "" : filterDraft[col.name];
+          return h2(
+            "th",
+            { key: col.name, scope: "col", className: P + "-fth" },
+            h2(
+              "span",
+              { className: P + "-fcell" },
+              h2("input", {
+                className: P + "-finput",
+                type: "search",
+                value: val,
+                placeholder: t.filterCol,
+                "aria-label": t.filterCol + " " + colLabel(col),
+                title: colLabel(col) + " \xB7 " + t.filterCol,
+                onChange: function(e) {
+                  var v = e.target.value;
+                  setFilterDraft(function(prev) {
+                    var next = Object.assign({}, prev);
+                    if (v) next[col.name] = v;
+                    else delete next[col.name];
+                    return next;
+                  });
+                }
+              }),
+              val ? h2("button", {
+                type: "button",
+                className: P + "-fclear",
+                title: t.filterClear,
+                "aria-label": t.filterClear + " " + colLabel(col),
+                onClick: function() {
+                  setFilterDraft(function(prev) {
+                    var next = Object.assign({}, prev);
+                    delete next[col.name];
+                    return next;
+                  });
+                }
+              }, "\xD7") : null
+            )
+          );
+        }
+        function renderRows() {
+          if (loadingRows && !data && options.Skeleton) return h2(options.Skeleton, { lang, label: t.loading });
+          if (loadingRows && !data) {
+            return h2(
+              "div",
+              { className: P + "-skwrap", "aria-busy": "true" },
+              h2("span", { className: P + "-sr" }, t.loading),
+              [0, 1, 2, 3, 4, 5, 6, 7].map(function(i2) {
+                return h2("div", { key: i2, className: P + "-sk" });
+              })
+            );
+          }
+          if (error) {
+            return h2(
+              "div",
+              { className: P + "-err", role: "alert" },
+              h2("span", null, t.queryFail + error),
+              h2("button", { type: "button", className: P + "-btn", onClick: refresh }, t.retry)
+            );
+          }
+          if (!data) return h2("div", { className: P + "-empty" }, t.empty);
+          var cols = visibleColumns();
+          var rows = data.rows || [];
+          var narrowing = !!search || activeFilterCount() > 0;
+          return h2(
+            "div",
+            { className: P + "-tablewrap" },
+            h2(
+              "table",
+              { className: P + "-table" },
+              h2(
+                "thead",
+                null,
+                h2(
+                  "tr",
+                  null,
+                  h2("th", { className: P + "-rownum", scope: "col" }, "#"),
+                  cols.map(function(col) {
+                    return h2(
+                      "th",
+                      { key: col.name, scope: "col", "aria-sort": ariaSort(col.name) },
+                      h2(
+                        "button",
+                        {
+                          type: "button",
+                          className: P + "-thbtn",
+                          title: colLabel(col) + " \xB7 " + col.type,
+                          onClick: function() {
+                            toggleSort(col.name);
+                          }
+                        },
+                        h2("span", null, colLabel(col)),
+                        h2("span", { className: P + "-coltype" }, String(col.type || "").toLowerCase()),
+                        sort === col.name ? h2("span", { className: P + "-sortmark", "aria-hidden": "true" }, order === "asc" ? "\u25B2" : "\u25BC") : null
+                      )
+                    );
+                  })
+                ),
+                h2(
+                  "tr",
+                  { className: P + "-frow" },
+                  h2("th", { className: P + "-rownum", scope: "col" }, ""),
+                  cols.map(filterCell)
+                )
+              ),
+              h2("tbody", null, rows.length ? rows.map(function(row, idx) {
+                row.__i = idx;
+                var deleted = row.deleted_at !== null && row.deleted_at !== void 0;
+                return h2(
+                  "tr",
+                  { key: row.id || idx, className: P + "-tr" + (deleted ? " deleted" : "") },
+                  h2("td", { className: P + "-rownum" }, (data.page - 1) * data.pageSize + idx + 1),
+                  cols.map(function(col) {
+                    var cell = renderCell(row, col);
+                    if (deleted && col.name === "id") {
+                      return React.cloneElement(cell, { key: col.name }, cell.props.children, h2("span", { className: P + "-delbadge" }, t.deleted));
+                    }
+                    return cell;
+                  })
+                );
+              }) : h2("tr", null, h2("td", { className: P + "-emptycell", colSpan: cols.length + 1 }, narrowing ? t.noRows : t.empty)))
+            )
+          );
+        }
+        function renderFoot() {
+          var pages = data ? data.pages : 1;
+          var total = data ? data.total : 0;
+          return h2(
+            "div",
+            { className: P + "-foot" },
+            h2("span", null, fmt(t.total, { n: total })),
+            h2("span", { className: P + "-grow" }),
+            h2("button", { type: "button", className: P + "-btn", disabled: !data || page <= 1, onClick: function() {
+              setPage(Math.max(1, page - 1));
+            } }, "\u2039 " + t.prev),
+            h2("span", { className: P + "-pageinfo" }, fmt(t.pageInfo, { page: data ? data.page : 1, pages })),
+            h2("button", { type: "button", className: P + "-btn", disabled: !data || page >= pages, onClick: function() {
+              setPage(Math.min(pages, page + 1));
+            } }, t.next + " \u203A"),
+            h2(NF.NumberField, {
+              h: h2,
+              lang,
+              className: P + "-jump",
+              value: page,
+              min: 1,
+              max: pages,
+              integer: true,
+              ariaLabel: t.jump,
+              hint: false,
+              onCommit: function(next) {
+                if (next !== null) setPage(next);
+              }
+            }),
+            data && data.queryMs !== void 0 ? h2("span", null, fmt(t.queryTime, { n: data.queryMs })) : null
+          );
+        }
+        if (!tables && loadingTables && options.Skeleton) return h2(options.Skeleton, { lang, label: t.loading });
+        if (!tables && loadingTables) {
+          return h2("div", { className: P + "-skwrap", "aria-busy": "true" }, h2("span", { className: P + "-sr" }, t.loading), [0, 1, 2, 3].map(function(i2) {
+            return h2("div", { key: i2, className: P + "-sk" });
+          }));
+        }
+        if (!tables) {
+          return h2("div", { className: P + "-err", role: "alert" }, h2("span", null, t.loadFail), h2("button", { type: "button", className: P + "-btn", onClick: loadTables }, t.retry));
+        }
+        if (!tables.length) return h2("div", { className: P + "-empty" }, t.emptyTable);
+        return h2(
+          "div",
+          { className: P },
+          h2(
+            "div",
+            { className: P + "-side" },
+            h2("div", { className: P + "-sidetitle" }, h2("span", null, icon("table"), t.tables), h2("span", null, String(tables.length))),
+            tables.map(function(tb) {
+              return h2(
+                "button",
+                {
+                  key: tb.name,
+                  type: "button",
+                  className: P + "-stab" + (tb.name === active ? " on" : ""),
+                  "aria-pressed": tb.name === active,
+                  onClick: function() {
+                    selectTable(tb.name);
+                  }
+                },
+                h2(
+                  "span",
+                  { className: P + "-stabname" },
+                  h2("span", null, tableLabel(tb)),
+                  h2("span", { className: P + "-sidecount" }, tb.count === void 0 || tb.count === null ? "" : String(tb.count))
+                ),
+                h2("span", { className: P + "-sidetable" }, tb.name)
+              );
+            })
+          ),
+          h2(
+            "div",
+            { className: P + "-main" },
+            h2(
+              "div",
+              { className: P + "-tabs", role: "tablist", "aria-label": t.title },
+              h2("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !index, onClick: leaveIndex }, icon("list"), lang === "en" ? "Row data" : "\u884C\u6570\u636E"),
+              h2("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !!index, onClick: loadIndex }, icon("database"), t.index)
+            ),
+            index && error ? h2("div", { className: P + "-err", role: "alert" }, error) : null,
+            index ? renderIndex() : [
+              h2(
+                "div",
+                { className: P + "-head" },
+                h2(
+                  "div",
+                  { className: P + "-headmain" },
+                  h2("h2", null, icon("database"), tableLabel(current), h2("span", { className: P + "-code" }, active)),
+                  h2(
+                    "div",
+                    { className: P + "-sub" },
+                    current && data && data.total !== void 0 ? fmt(t.rowCount, { n: data.total }) : "",
+                    current && current.deletedCount ? " \xB7 " + fmt(t.deletedCount, { n: current.deletedCount }) : "",
+                    " \xB7 " + t.subtitle
+                  )
+                ),
+                h2("button", {
+                  type: "button",
+                  className: P + "-btn",
+                  "aria-label": t.refresh,
+                  title: t.refresh,
+                  "aria-busy": loadingRows ? "true" : "false",
+                  onClick: refresh
+                }, icon("refresh"), h2("span", { className: P + "-btnlabel" }, t.refresh))
+              ),
+              h2(
+                "div",
+                { className: P + "-toolbar" },
+                h2(
+                  "div",
+                  { className: P + "-search" },
+                  icon("search"),
+                  h2("input", {
+                    type: "search",
+                    value: searchDraft,
+                    placeholder: t.search,
+                    "aria-label": t.search,
+                    onChange: function(e) {
+                      setSearchDraft(e.target.value);
+                    }
+                  })
+                ),
+                h2(SW.Switch, {
+                  h: h2,
+                  checked: includeDeleted,
+                  label: t.includeDeleted,
+                  onChange: function(next) {
+                    setIncludeDeleted(next);
+                    setPage(1);
+                  }
+                }),
+                h2(SW.Switch, {
+                  h: h2,
+                  checked: showSystem,
+                  label: t.showSystem,
+                  onChange: function(next) {
+                    setShowSystem(next);
+                  }
+                }),
+                h2("span", { className: P + "-grow" }),
+                h2(
+                  "label",
+                  { style: { display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11.5px", color: "var(--cfg-muted)" } },
+                  h2("span", null, t.pageSize),
+                  h2("select", {
+                    className: P + "-select",
+                    value: size,
+                    onChange: function(e) {
+                      setPageSize(Number(e.target.value));
+                      setPage(1);
+                    }
+                  }, PAGE_SIZES.map(function(n) {
+                    return h2("option", { key: n, value: n }, String(n));
+                  }))
+                )
+              ),
+              renderRows(),
+              renderFoot()
+            ]
+          ),
+          drawer ? h2(
+            "div",
+            null,
+            h2("div", { className: P + "-mask", onClick: function() {
+              setDrawer(null);
+            } }),
+            h2(
+              "aside",
+              { className: P + "-drawer", role: "dialog", "aria-modal": "true", "aria-label": drawer.column },
+              h2("h3", null, fmt(t.drawerTitle, { column: drawer.column, row: drawer.row }), h2("span", { className: P + "-code" }, drawer.name)),
+              columnHooks[drawer.name] && columnHooks[drawer.name].detail ? columnHooks[drawer.name].detail({ value: drawer.value, lang, prefix: P }) : h2("pre", null, drawerText(drawer.value)),
+              h2(
+                "div",
+                { className: P + "-drawerfoot" },
+                h2("button", { type: "button", className: P + "-btn", onClick: function() {
+                  copyCell(drawer.value);
+                } }, t.copy),
+                h2("button", { type: "button", className: P + "-btn", onClick: function() {
+                  setDrawer(null);
+                } }, t.close)
+              )
+            )
+          ) : null,
+          toast ? h2("div", { className: P + "-toast", role: "status" }, toast) : null
+        );
+      }
+      function drawerText(value) {
+        if (value === null || value === void 0) return "NULL";
+        if (typeof value === "string" && looksJson(value)) {
+          try {
+            return JSON.stringify(JSON.parse(value), null, 2);
+          } catch (e) {
+            return value;
+          }
+        }
+        if (typeof value === "object") {
+          try {
+            return JSON.stringify(value, null, 2);
+          } catch (e) {
+            return String(value);
+          }
+        }
+        return String(value);
+      }
+      return { DataView, DOMAIN };
+    };
+  }
+});
+
+// packages/shell/client/host-pages.cjs
+var require_host_pages = __commonJS({
+  "packages/shell/client/host-pages.cjs"(exports2, module2) {
+    "use strict";
+    var createDataView = require_data_view();
+    var SW = require_switch();
+    var NF = require_number_field();
+    var HOST_TABLES = ["meta", "sync_change_log", "conflict_shadow", "sync_dead_letter", "sync_state", "session_mode", "audit_log"];
+    function useHostDisplayConfig() {
+      return { values: { "data.pageSize": 50, "data.showSystemColumns": false, "data.includeDeleted": false }, ready: true };
+    }
+    var HostDataView = createDataView({
+      domain: "wb",
+      prefix: "wbh",
+      tables: HOST_TABLES,
+      useConfig: useHostDisplayConfig
+    });
+    function hostApi(api) {
+      return {
+        call: function(action, args) {
+          return api.post("/domains/wb-shell/actions/" + encodeURIComponent(action), args || {});
+        }
+      };
+    }
+    function dataPage(deps) {
+      var jsx2 = deps.jsx;
+      var api = deps.api;
+      var lang = deps.lang;
+      var head = deps.head;
+      var t = deps.t;
+      return jsx2.jsxs("div", { className: "wb-root", children: [
+        jsx2.jsxs("div", { className: "wb-inner wb-wide", children: [
+          head(t("tab_data"), t("data_desc")),
+          jsx2.jsx(HostDataView, { api: hostApi(api), lang })
+        ] })
+      ] });
+    }
+    function configPage(deps) {
+      var jsx2 = deps.jsx;
+      var React = deps.React;
+      var api = deps.api;
+      var t = deps.t;
+      var head = deps.head;
+      var h2 = deps.React.createElement;
+      var stateS = React.useState({ ready: false, items: [], values: {}, overrides: {}, error: "" });
+      var state = stateS[0], setState = stateS[1];
+      var busyS = React.useState(false);
+      var busy = busyS[0], setBusy = busyS[1];
+      var toastS = React.useState("");
+      var toast = toastS[0], setToast = toastS[1];
+      var host = hostApi(api);
+      function load() {
+        Promise.resolve(host.call("wb.configGet")).then(function(r) {
+          var body2 = r && r.result !== void 0 ? r.result : r;
+          if (r && r.ok === false) throw new Error(r && r.error || "\u8BFB\u53D6\u914D\u7F6E\u5931\u8D25");
+          if (!body2 || !body2.values) throw new Error("\u8BFB\u53D6\u914D\u7F6E\u5931\u8D25");
+          setState({ ready: true, items: body2.items || [], values: body2.values, overrides: body2.overrides || {}, error: "" });
+        }).catch(function(e) {
+          setState({ ready: true, items: [], values: {}, overrides: {}, error: String(e && e.message || e) });
+        });
+      }
+      React.useEffect(function() {
+        load();
+      }, []);
+      function save(id, value) {
+        setBusy(true);
+        var patch = {};
+        patch[id] = value;
+        Promise.resolve(host.call("wb.configSet", { values: patch })).then(function(r) {
+          if (r && r.ok === false) throw new Error(r && r.error || "\u4FDD\u5B58\u5931\u8D25");
+          var body2 = r && r.result !== void 0 ? r.result : r;
+          setState(function(prev) {
+            return Object.assign({}, prev, { values: body2.values, overrides: body2.overrides });
+          });
+          setToast("\u5DF2\u4FDD\u5B58\uFF1A" + id);
+          setTimeout(function() {
+            setToast("");
+          }, 1600);
+        }).catch(function(e) {
+          setToast("\u4FDD\u5B58\u5931\u8D25\uFF1A" + String(e && e.message || e));
+        }).then(function() {
+          setBusy(false);
+        });
+      }
+      function reset(id) {
+        setBusy(true);
+        Promise.resolve(host.call("wb.configReset", { ids: [id] })).then(function(r) {
+          if (r && r.ok === false) throw new Error(r && r.error || "\u91CD\u7F6E\u5931\u8D25");
+          var body2 = r && r.result !== void 0 ? r.result : r;
+          setState(function(prev) {
+            return Object.assign({}, prev, { values: body2.values, overrides: body2.overrides });
+          });
+          setToast("\u5DF2\u6062\u590D\u9ED8\u8BA4\uFF1A" + id);
+          setTimeout(function() {
+            setToast("");
+          }, 1600);
+        }).catch(function(e) {
+          setToast("\u91CD\u7F6E\u5931\u8D25\uFF1A" + String(e && e.message || e));
+        }).then(function() {
+          setBusy(false);
+        });
+      }
+      var body;
+      if (state.error) body = jsx2.jsx("div", { className: "wb-err", children: state.error });
+      else if (!state.ready) body = jsx2.jsx("div", { className: "wb-msg", children: t("loading") });
+      else {
+        var groups = [];
+        state.items.forEach(function(item) {
+          var group = item.group || "\u901A\u7528";
+          if (groups.indexOf(group) < 0) groups.push(group);
+        });
+        body = groups.map(function(group) {
+          return jsx2.jsxs("div", { className: "wb-card", children: [
+            jsx2.jsx("div", { className: "wb-card-head", children: jsx2.jsx("h3", { children: group }) }),
+            state.items.filter(function(item) {
+              return (item.group || "\u901A\u7528") === group;
+            }).map(function(item) {
+              var overridden = state.overrides[item.id] !== void 0;
+              var control;
+              if (item.type === "boolean") {
+                control = jsx2.jsx(SW.Switch, {
+                  h: h2,
+                  checked: state.values[item.id] === true,
+                  disabled: busy,
+                  label: item.label,
+                  onChange: function(next) {
+                    save(item.id, !!next);
+                  }
+                });
+              } else {
+                control = jsx2.jsx(NF.NumberField, {
+                  h: h2,
+                  lang: deps.lang,
+                  integer: true,
+                  value: state.values[item.id],
+                  min: item.min,
+                  max: item.max,
+                  step: item.step || 1,
+                  disabled: busy,
+                  label: item.label,
+                  onCommit: function(next) {
+                    save(item.id, next);
+                  }
+                });
+              }
+              return jsx2.jsxs("div", { className: "wbh-config-row", children: [
+                jsx2.jsxs("div", { className: "wbh-config-text", children: [
+                  jsx2.jsx("div", { className: "wbh-config-label", children: item.label }),
+                  jsx2.jsx("div", { className: "wb-hint", children: item.description || "" })
+                ] }),
+                jsx2.jsxs("div", { className: "wbh-config-ctl", children: [
+                  control,
+                  overridden ? jsx2.jsx("button", { type: "button", className: "wb-link", disabled: busy, onClick: function() {
+                    reset(item.id);
+                  }, children: t("reset_default") }) : null
+                ] })
+              ] }, item.id);
+            })
+          ] }, group);
+        });
+      }
+      return jsx2.jsxs("div", { className: "wb-root", children: [
+        jsx2.jsxs("div", { className: "wb-inner wb-wide", children: [
+          head(t("tab_config"), t("config_desc")),
+          body,
+          toast ? jsx2.jsx("div", { className: "wb-toast", children: toast }) : null
+        ] })
+      ] });
+    }
+    module2.exports = { dataPage, configPage };
   }
 });
 
@@ -3018,6 +4467,26 @@ var require_system_tabs = __commonJS({
               }, children: t("logout") }) : null
             ] }),
             msg ? jsx2.jsx("div", { className: "wb-msg", style: { marginTop: 8 }, children: msg }) : null,
+            syncStatus && syncStatus.progress ? (function() {
+              var pg = syncStatus.progress;
+              var done = pg.total ? Math.min(pg.index || 0, pg.total) : 0;
+              var pct = pg.total ? Math.round(done / pg.total * 100) : 0;
+              return jsx2.jsxs("div", { className: "wb-sync-progress", children: [
+                jsx2.jsxs("div", { className: "wb-sync-progress-head", children: [
+                  jsx2.jsx("b", { children: t("sync_progress") }),
+                  jsx2.jsx("span", { children: pg.running ? t("cloud_syncing") : pg.ok ? t("sync_ok") : t("sync_partial") }),
+                  jsx2.jsx("span", { className: "wb-sync-count", children: done + "/" + (pg.total || 0) })
+                ] }),
+                jsx2.jsx("div", { className: "wb-sync-bar", children: jsx2.jsx("span", { style: { width: pct + "%" } }) }),
+                pg.current ? jsx2.jsx("div", { className: "wb-hint", children: t("sync_current_table") + "\uFF1A" + pg.current }) : null,
+                (pg.tables || []).length ? jsx2.jsx("ul", { className: "wb-sync-tables", children: pg.tables.map(function(x) {
+                  return jsx2.jsxs("li", { className: x.ok ? "ok" : "fail", children: [
+                    jsx2.jsx("span", { className: "wb-sync-table-name", children: x.name }),
+                    jsx2.jsx("span", { className: "wb-sync-table-state", children: x.ok ? "\u2713 " + (x.mode === "tree" ? t("sync_mode_tree") : t("sync_mode_row")) : "\u2717 " + (x.error || "") })
+                  ] }, x.name + ":" + (x.ok ? "ok" : "fail"));
+                }) }) : null
+              ] });
+            })() : null,
             syncStatus ? jsx2.jsxs("div", { className: "wb-sync-status", children: [
               jsx2.jsxs("span", { children: [t("sync_last"), ": ", jsx2.jsx("b", { children: syncStatus.last_sync_at ? new Date(syncStatus.last_sync_at).toLocaleString() : t("sync_never") })] }),
               jsx2.jsxs("span", { children: [t("sync_conflicts"), ": ", jsx2.jsx("b", { children: syncStatus.conflicts || 0 })] }),
@@ -3444,6 +4913,7 @@ var CSS = require_styles();
 var createPanellistIcon = require_panellist_icon();
 var addonNav = require_addon_nav()();
 var SystemPages = require_system_pages();
+var HostPages = require_host_pages();
 var slotCatalog = require_slot_catalog();
 var slotRegistry = require_slot_registry()(slotCatalog, function() {
   notifyStore();
@@ -3615,6 +5085,7 @@ function ensureStream() {
     }
   });
   stream.addEventListener("sync-done", notifyCloudStatus);
+  stream.addEventListener("sync-status", notifyCloudStatus);
   stream.addEventListener("account-changed", notifyCloudStatus);
 }
 function useAddonStore() {
@@ -3723,7 +5194,14 @@ function cloudView(status, t) {
   if (!status) return { kind: "local", label: t("cloud_checking"), hint: t("cloud_checking_hint") };
   var failed = Array.isArray(status.failed_tables) ? status.failed_tables : [];
   if (!status.logged_in) return { kind: "local", label: t("cloud_local"), hint: t("cloud_local_hint") };
-  if (status.running) return { kind: "syncing", label: t("cloud_syncing"), hint: t("cloud_syncing_hint") };
+  if (status.running || status.progress && status.progress.running) {
+    var pg = status.progress || null;
+    var done = pg && pg.total ? Math.min(pg.index || 0, pg.total) : 0;
+    var pct = pg && pg.total ? Math.round(done / pg.total * 100) : 0;
+    var label = pg && pg.total ? t("cloud_syncing") + " " + done + "/" + pg.total : t("cloud_syncing");
+    var hint = pg && pg.current ? t("sync_current_table") + "\uFF1A" + pg.current : t("cloud_syncing_hint");
+    return { kind: "syncing", label, hint, pct, progress: pg };
+  }
   if (status.cloud && status.cloud.reachable === false) return { kind: "off", label: t("cloud_offline"), hint: t("cloud_offline_hint") };
   if (!status.last_sync_at) return { kind: "warn", label: t("cloud_never"), hint: t("cloud_never_hint") };
   if (status.last_sync_ok === false || failed.length) return { kind: "warn", label: t("cloud_sync_failed"), hint: t("cloud_sync_failed_hint") };
@@ -3755,7 +5233,8 @@ function CloudStatusPill(props) {
     "data-cloud-state": view.kind,
     children: [
       jsx.jsx("span", { className: "wb-cloud-dot" }),
-      jsx.jsx("span", { className: "wb-cloud-label", children: view.label })
+      jsx.jsx("span", { className: "wb-cloud-label", children: view.label }),
+      view.kind === "syncing" ? jsx.jsx("span", { className: "wb-cloud-bar", "aria-hidden": "true", children: jsx.jsx("span", { style: { width: (view.pct || 0) + "%" } }) }) : null
     ]
   });
 }
@@ -4022,6 +5501,12 @@ function WorkbenchPage(props) {
     return jsx.jsxs("div", { className: "wb-root", children: [
       jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_audit"), t("audit_desc")), jsx.jsx(AuditTab, { t })] })
     ] });
+  }
+  if (route === "data") {
+    return HostPages.dataPage({ jsx, api, lang, t, head: pageHead });
+  }
+  if (route === "config") {
+    return HostPages.configPage({ jsx, React: react, api, lang, t, head: pageHead });
   }
   if (route === "account") {
     return jsx.jsxs("div", { className: "wb-root", children: [

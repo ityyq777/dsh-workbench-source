@@ -90,6 +90,26 @@ function AccountTab(props) {
         mode === "shared" ? jsx.jsx("button", { className: "wb-btn ghost", onClick: function () { api.post("/account/logout").then(refresh); }, children: t("logout") }) : null,
       ] }),
       msg ? jsx.jsx("div", { className: "wb-msg", style: { marginTop: 8 }, children: msg }) : null,
+      syncStatus && syncStatus.progress ? (function () {
+        var pg = syncStatus.progress;
+        var done = pg.total ? Math.min(pg.index || 0, pg.total) : 0;
+        var pct = pg.total ? Math.round((done / pg.total) * 100) : 0;
+        return jsx.jsxs("div", { className: "wb-sync-progress", children: [
+          jsx.jsxs("div", { className: "wb-sync-progress-head", children: [
+            jsx.jsx("b", { children: t("sync_progress") }),
+            jsx.jsx("span", { children: pg.running ? t("cloud_syncing") : (pg.ok ? t("sync_ok") : t("sync_partial")) }),
+            jsx.jsx("span", { className: "wb-sync-count", children: done + "/" + (pg.total || 0) }),
+          ] }),
+          jsx.jsx("div", { className: "wb-sync-bar", children: jsx.jsx("span", { style: { width: pct + "%" } }) }),
+          pg.current ? jsx.jsx("div", { className: "wb-hint", children: t("sync_current_table") + "：" + pg.current }) : null,
+          (pg.tables || []).length ? jsx.jsx("ul", { className: "wb-sync-tables", children: pg.tables.map(function (x) {
+            return jsx.jsxs("li", { className: x.ok ? "ok" : "fail", children: [
+              jsx.jsx("span", { className: "wb-sync-table-name", children: x.name }),
+              jsx.jsx("span", { className: "wb-sync-table-state", children: x.ok ? "✓ " + (x.mode === "tree" ? t("sync_mode_tree") : t("sync_mode_row")) : "✗ " + (x.error || "") }),
+            ] }, x.name + ":" + (x.ok ? "ok" : "fail"));
+          }) }) : null,
+        ] });
+      })() : null,
       syncStatus ? jsx.jsxs("div", { className: "wb-sync-status", children: [
         jsx.jsxs("span", { children: [t("sync_last"), ": ", jsx.jsx("b", { children: syncStatus.last_sync_at ? new Date(syncStatus.last_sync_at).toLocaleString() : t("sync_never") })] }),
         jsx.jsxs("span", { children: [t("sync_conflicts"), ": ", jsx.jsx("b", { children: syncStatus.conflicts || 0 })] }),

@@ -64,6 +64,32 @@ export interface SyncReport {
   finished_at: number;
 }
 
+/** 单表进度：界面据此显示「哪些表好了、哪张在跑、哪张失败」。 */
+export interface SyncTableProgress {
+  name: string;
+  mode: string;
+  ok: boolean;
+  pushed?: number;
+  pulled?: number;
+  ms: number;
+  error?: string;
+}
+
+/** 一轮同步的进度快照；顶栏与账号页只读这一份，不再各自猜。 */
+export interface SyncProgress {
+  phase: string;
+  running: boolean;
+  total: number;
+  index: number;
+  current: string | null;
+  tables: SyncTableProgress[];
+  pushed: number;
+  pulled: number;
+  failed: string[];
+  ok?: boolean;
+  finished_at?: number;
+}
+
 /** 宿主 v2 同步引擎。所有业务差异都在 DomainSyncTable.reconcile 中，引擎只做协议与平台语义。 */
 export class SyncEngine {
   private db: DatabaseSync;
@@ -76,6 +102,8 @@ export class SyncEngine {
   private onEvent?: (event: string, data: unknown) => void;
   private running = false;
   private sessionId = "";
+  /** 最近一轮同步的进度快照，供 /sync/status 与界面读取。 */
+  progress: SyncProgress | null = null;
 
   constructor(opts: {
     db: DatabaseSync;
@@ -241,6 +269,7 @@ export class SyncEngine {
       failed_tables: failed,
       conflicts: conflicts.n,
       dead_letters: dead.n,
+      progress: this.progress,
     };
   }
 
@@ -282,7 +311,24 @@ export class SyncEngine {
       started_at: startedAt,
       finished_at: startedAt,
     };
-    this.emit("sync-status", { phase: "open", running: true });
+    // 进度快照：顶栏与账号页都只读这一份，避免界面各自猜「同步到哪了」。
+    const progress: SyncProgress = {
+      phase: "open",
+      running: true,
+      total: tables.size,
+      index: 0,
+      current: null,
+      tables: [],
+      pushed: 0,
+      pulled: 0,
+      failed: [],
+    };
+    this.progress = progress;
+    const setProgress = (patch: Partial<SyncProgress>): void => {
+      Object.assign(progress, patch);
+      this.emit("sync-status", { ...progress });
+    };
+    this.emit("sync-status", { ...progress });
     try {
       this.ensureAccount();
       const t1 = Date.now();
@@ -300,28 +346,44 @@ export class SyncEngine {
 
       // B 类先做整表收敛，再处理 A 类行；避免树节点引用尚未同步的行。
       for (const [name, binding] of treeTables) {
+        const t0 = Date.now();
+        setProgress({ current: name });
         try {
           await this.syncTreeTable(name, binding, versions[name]?.version ?? 0);
-          this.emit("sync-status", { phase: "table", table: name, mode: "tree" });
+          progress.index += 1;
+          progress.tables.push({ name, mode: "tree", ok: true, ms: Date.now() - t0 });
+          setProgress({});
         } catch (e) {
           const msg = String((e && (e as Error).message) || e);
           report.failed_tables.push(name);
+          progress.index += 1;
+          progress.failed.push(name);
+          progress.tables.push({ name, mode: "tree", ok: false, error: msg, ms: Date.now() - t0 });
           recordDeadLetter(this.db, name, "*", "table", null, msg);
-          this.emit("sync-status", { phase: "table-error", table: name, error: msg });
+          setProgress({});
         }
       }
       for (const [name, binding] of rowTables) {
+        const t0 = Date.now();
+        setProgress({ current: name });
         try {
           const r = await this.syncRowTable(name, binding);
           report.pushed += r.pushed;
           report.pulled += r.pulled;
           report.repaired += r.repaired;
-          this.emit("sync-status", { phase: "table", table: name, mode: "row" });
+          progress.index += 1;
+          progress.pushed = report.pushed;
+          progress.pulled = report.pulled;
+          progress.tables.push({ name, mode: "row", ok: true, pushed: r.pushed, pulled: r.pulled, ms: Date.now() - t0 });
+          setProgress({});
         } catch (e) {
           const msg = String((e && (e as Error).message) || e);
           report.failed_tables.push(name);
+          progress.index += 1;
+          progress.failed.push(name);
+          progress.tables.push({ name, mode: "row", ok: false, error: msg, ms: Date.now() - t0 });
           recordDeadLetter(this.db, name, "*", "table", null, msg);
-          this.emit("sync-status", { phase: "table-error", table: name, error: msg });
+          setProgress({});
         }
       }
       report.ok = report.failed_tables.length === 0;
@@ -332,12 +394,21 @@ export class SyncEngine {
     } finally {
       report.finished_at = this.clock.now();
       this.report(report);
-      this.emit("sync-status", {
+      this.progress = {
         phase: "done",
         running: false,
         ok: report.ok,
+        total: progress.total,
+        index: progress.index,
+        current: null,
         pushed: report.pushed,
         pulled: report.pulled,
+        failed: progress.failed.slice(),
+        tables: progress.tables.slice(),
+        finished_at: report.finished_at,
+      };
+      this.emit("sync-status", {
+        ...this.progress,
         failed_tables: report.failed_tables,
         error: report.error ?? "",
       });

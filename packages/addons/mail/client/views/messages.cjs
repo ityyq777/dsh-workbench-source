@@ -394,15 +394,8 @@ function Inbox(props) {
   return h(
     "div",
     { className: "wbml-page is-split wb-fill" },
-    h(
-      "div",
-      { className: "wbml-head" },
-      h("h2", null, "邮件"),
-      button("刷新本地列表", function () {
-        reset();
-        list.refresh();
-      }, undefined, undefined, Refresh),
-    ),
+    // 页内不再重复渲染「邮件」大标题：宿主顶栏已有视图名，这里只保留一个可访问名。
+    h("h2", { className: "wbml-sr-only" }, "邮件"),
     h(C.Notice, { h: h, kind: "error", text: props.accounts.error || boxes.error }),
     h(C.Notice, { h: h, kind: msg[0] && msg[0].kind, text: msg[0] && msg[0].text }),
     h(
@@ -539,13 +532,26 @@ function Inbox(props) {
         h(
           "div",
           { className: "wbml-pane-head" },
-          h("strong", null, iconLabel(h,
-            server[0] ? Search : folder[0] && folder[0] !== "INBOX" ? Folder : folder[0] || unified[0] ? InboxIcon : Mail,
-            server[0] ? "服务器搜索 · " + folder[0] : folder[0] || (unified[0] ? "统一收件箱" : "全部邮件"))),
           h(
-            "span",
-            { className: "wbml-muted" },
-            result.error || result.loading ? null : (server[0] ? "显示 " : "本页 ") + items.length + " 封 · " + items.filter(isUnread).length + " 未读" + (server[0]?.data?.truncated ? " · 仅显示最近 50 封" : ""),
+            "div",
+            { className: "wbml-pane-title" },
+            h("strong", null, iconLabel(h,
+              server[0] ? Search : folder[0] && folder[0] !== "INBOX" ? Folder : folder[0] || unified[0] ? InboxIcon : Mail,
+              server[0] ? "服务器搜索 · " + folder[0] : folder[0] || (unified[0] ? "统一收件箱" : "全部邮件"))),
+            h(
+              "span",
+              { className: "wbml-muted" },
+              result.error || result.loading ? null : (server[0] ? "显示 " : "本页 ") + items.length + " 封 · " + items.filter(isUnread).length + " 未读" + (server[0]?.data?.truncated ? " · 仅显示最近 50 封" : ""),
+            ),
+          ),
+          h(
+            "div",
+            { className: "wbml-pane-tools" },
+            !current ? bulk.tools : null,
+            button("刷新本地列表", function () {
+              reset();
+              list.refresh();
+            }, undefined, undefined, Refresh),
           ),
         ),
         !current && bulk.toolbar,

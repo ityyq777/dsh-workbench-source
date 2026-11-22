@@ -82,20 +82,35 @@ function useBulk({ React, h, api, items, scope, accounts, blocked, refresh }) {
     redraw();
   }
   const plan = state.plan, report = state.report;
-  const controls = plan ? [
-    h("strong", null, `确认将 ${plan.targets.length} 封邮件${labels[plan.kind]}？`),
-    h("span", null, accountCounts(plan.targets, accounts)),
-    button(state.running ? "正在处理…" : "确认" + labels[plan.kind], run, blocked || state.running),
-    button("取消", () => { state.plan = null; redraw(); }, state.running),
-  ] : [
-    h(C.Btn, { h: h, disabled: blocked || !available.length, onClick: () => { state.selecting = !state.selecting; state.checked.clear(); redraw(); } }, icons.label("square-check", state.selecting ? "退出选择" : "选择邮件")),
+  // 说明/确认类内容才占整行；日常按钮交给列表头同一行渲染（tools），不再整行独占。
+  const confirm = plan ? [
+    h("strong", { key: "ask" }, `确认将 ${plan.targets.length} 封邮件${labels[plan.kind]}？`),
+    h("span", { key: "who" }, accountCounts(plan.targets, accounts)),
+    h(C.Btn, { key: "go", h: h, onClick: run, disabled: blocked || state.running },
+      state.running ? "正在处理…" : "确认" + labels[plan.kind]),
+    h(C.Btn, { key: "cancel", h: h, onClick: () => { state.plan = null; redraw(); }, disabled: state.running }, "取消"),
+  ] : null;
+  const tools = plan ? null : [
+    h(C.Btn, { key: "pick", h: h, disabled: blocked || !available.length, onClick: () => { state.selecting = !state.selecting; state.checked.clear(); redraw(); } },
+      icons.label("square-check", state.selecting ? "退出选择" : "选择邮件")),
     state.selecting && button(selected.length && selected.length === available.length ? "清除选择" : "本页全选", () => {
       state.checked = selected.length === available.length ? new Set() : new Set(available.map(m => m.id)); redraw();
     }, blocked || !available.length),
-    state.selecting && h(C.Btn, { h: h, disabled: blocked || !selected.length, onClick: () => prepare("trash") }, icons.label("trash-2", `移入废纸篓（${selected.length}）`)),
-    h(C.Btn, { h: h, disabled: blocked || !available.some(unread), onClick: () => prepare("read") }, icons.label("check-check", "全部标为已读")),
-    state.selecting && items.length > available.length && h("span", null, "本地副本或远端身份未确认的邮件不可选择"),
+    state.selecting && h(C.Btn, { key: "trash", h: h, disabled: blocked || !selected.length, onClick: () => prepare("trash") },
+      icons.label("trash-2", `移入废纸篓（${selected.length}）`)),
+    h(C.Btn, { key: "read", h: h, disabled: blocked || !available.some(unread), onClick: () => prepare("read") },
+      icons.label("check-check", "全部标为已读")),
+    state.selecting && items.length > available.length
+      ? h("span", { key: "hint", className: "wbml-muted" }, "本地副本或远端身份未确认的邮件不可选择")
+      : null,
   ];
+  const reportNode = report ? h("div", { className: "wbml-bulk-report", role: "status" },
+    `${labels[report.kind]}：成功 ${report.done} 封，失败 ${report.failed.length} 封`,
+    report.failed.length > 0 && h("details", null, h("summary", null, "查看失败原因"),
+      ...report.failed.map(({item, error}) => h("div", { key: item.id }, `${item.accountName} · ${item.subject}：${error}`))),
+    report.failed.length > 0 && button("仅重试失败项", () => { state.plan = { kind: report.kind, targets: report.failed.map(f => f.item), done: report.done }; redraw(); }, blocked),
+    button("收起结果", () => { state.report = null; redraw(); })) : null;
+  const toolbar = (confirm || reportNode) ? h("div", { className: "wbml-bulk" }, ...(confirm || []), reportNode) : null;
   function wrapRow(m, row) {
     if (!state.selecting) return row;
     return h("div", { className: "wbml-bulk-row", key: m.id },
@@ -105,14 +120,7 @@ function useBulk({ React, h, api, items, scope, accounts, blocked, refresh }) {
           redraw();
         } }), row);
   }
-  return { wrapRow, locked: () => !!state.plan,
-    toolbar: h("div", { className: "wbml-bulk" }, ...controls,
-      !plan && report && h("div", { className: "wbml-bulk-report", role: "status" },
-        `${labels[report.kind]}：成功 ${report.done} 封，失败 ${report.failed.length} 封`,
-        report.failed.length > 0 && h("details", null, h("summary", null, "查看失败原因"),
-          ...report.failed.map(({item, error}) => h("div", { key: item.id }, `${item.accountName} · ${item.subject}：${error}`))),
-        report.failed.length > 0 && button("仅重试失败项", () => { state.plan = { kind: report.kind, targets: report.failed.map(f => f.item), done: report.done }; redraw(); }, blocked),
-        button("收起结果", () => { state.report = null; redraw(); }))) };
+  return { wrapRow, locked: () => !!state.plan, tools, toolbar };
 }
 function updateSearch(server, kind, ids, unreadOnly) {
   const done = new Set(ids);

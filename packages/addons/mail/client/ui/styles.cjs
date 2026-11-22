@@ -25,7 +25,11 @@ module.exports = require("../../../lib/client-base-styles.cjs")("wbml").concat(r
   ".wbml-rail-stats b{font-size:15px;font-weight:650;color:inherit;margin-right:2px}",
   ".wbml-rail-tip{font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280);padding:0 2px}",
   ".wbml-pane{display:flex;flex-direction:column;min-width:0;min-height:0;border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);overflow:hidden}",
-  ".wbml-pane-head{position:sticky;top:0;z-index:2;display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--wb-border,#eef0f3);background:var(--wb-surface,#fff)}",
+  // 列表头：标题/计数一行，刷新与批量操作靠右同一行；窄屏整体换行，不再整行独占一个工具条。
+  ".wbml-pane-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 10px;padding:10px 12px;border-bottom:1px solid var(--wb-border,#eef0f3);background:var(--wb-surface,#fff)}",
+  ".wbml-pane-title{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}",
+  ".wbml-pane-tools{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-left:auto;flex-wrap:wrap}",
+  ".wbml-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}",
   ".wbml-pane-head strong{font-size:13px}",
   ".wbml-state-box{display:flex;flex-direction:column;min-height:0;overflow:auto}",
   ".wbml-state{padding:32px 16px;text-align:center;font-size:13px;color:var(--wb-muted,#6b7280)}",

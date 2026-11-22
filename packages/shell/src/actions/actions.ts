@@ -5,6 +5,7 @@ import { createTaskTargets } from "./task-targets.js";
 import { createCapabilities } from "./capabilities.js";
 import { createOriginAccess } from "./origin-access.js";
 import { BUILTIN_ACTIONS } from "./builtin-actions.js";
+import { createHostDataActions } from "./host-data.js";
 export function createActions({
   domains,
   SHELL_VERSION,
@@ -611,6 +612,8 @@ function schemaSnapshot(domain?: string) {
       return result.items.map((x: any) => "[" + x.domainId + "] " + x.title + (x.snippet ? " — " + String(x.snippet).slice(0, 120) : "")).join("\n");
     },
   });
+  // 宿主自己的「数据」「配置」两个视图：与业务域同构，但挂在 wb-shell 元 action 下。
+  for (const [name, def] of createHostDataActions(db)) META_ACTIONS.set(name, def);
   META_ACTIONS.set("search.providers", {
     description: "列出已注册的跨域搜索提供者，供 UI 做域筛选。",
     input: { type: "object", properties: {}, additionalProperties: false },

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * 复现并验证「安装顺序」不再触发冲突：在全新 profile 里按用户踩坑的顺序装
- * 先宿主、再子插件、再第二个子插件，每步都读 profile 与 dump-config 断言结果。
+ * 先宿主、再子插件、再第二个子插件（含 vault → mail 这条踩坑顺序），每步都读
+ * profile 与 dump-config 断言结果。
  *
  * 背景：宿主 `dsh-workbench` 是子包的传递依赖，DSH 只把 profile 的直接依赖选进
  * `dsh.profile.bundles`，所以单独装子插件时宿主不会被自动选入，必须由子插件的 patch
@@ -101,6 +102,20 @@ async function main() {
       spec: specOf("sites", opts),
       expectBundles: ["host", "tasks", "sites"],
       expectRows: ["workbench", "workbench-tasks", "workbench-sites"],
+    },
+    // 用户踩过的第二个坑：mail 的 patch 里还有一行保险箱（workbench-vault），
+    // 先装 vault 再装 mail 时两行共享行不能互相判冲突。
+    {
+      title: "再装 vault",
+      spec: specOf("vault", opts),
+      expectBundles: ["host", "tasks", "sites", "vault"],
+      expectRows: ["workbench", "workbench-tasks", "workbench-sites", "workbench-vault"],
+    },
+    {
+      title: "再装 mail",
+      spec: specOf("mail", opts),
+      expectBundles: ["host", "tasks", "sites", "vault", "mail"],
+      expectRows: ["workbench", "workbench-tasks", "workbench-sites", "workbench-vault", "workbench-mail"],
     },
   ];
 

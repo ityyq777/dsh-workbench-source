@@ -1,5 +1,5 @@
 import { DatabaseSync } from "node:sqlite";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -250,6 +250,23 @@ assert(!dataTables.tables.some(function (t) { return t.name === "site_account"; 
 accErr = null;
 try { call("sites.dataQuery", { table: "site_account", pageSize: 50 }); } catch (e) { accErr = e; }
 assert(accErr && accErr.message.indexOf("未知数据表") >= 0, "dataQuery rejects removed table: " + (accErr && accErr.message));
+
+// 声明表：DomainDef.tables 与 package.json 只能列本域自建的表，tag_mapping 归标签域独占
+const domainDefs = [];
+mod.apply({
+  workbench: { registerDomain: function (def) { domainDefs.push(def); return function () {}; } },
+  effect: function (fn) { fn(); },
+});
+assert(domainDefs.length === 1, "registerDomain called once");
+assert(
+  domainDefs[0].tables.join(",") === "site,site_node,site_node_mapping",
+  "DomainDef.tables 不含 tag_mapping: " + domainDefs[0].tables.join(","),
+);
+const sitesPkg = JSON.parse(readFileSync(new URL("../packages/addons/sites/package.json", import.meta.url), "utf8"));
+assert(
+  sitesPkg.wb.addon.tables.join(",") === "site,site_node,site_node_mapping",
+  "package.json wb.addon.tables 同步收敛: " + sitesPkg.wb.addon.tables.join(","),
+);
 
 // 校验
 let err = null;

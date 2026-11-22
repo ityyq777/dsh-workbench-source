@@ -108,7 +108,8 @@ export function apply(ctx) {
         description: "站点收藏：目录树、链接与标签（标签需安装标签插件）；含统计/记录/配置/数据四个视图",
         version: ADDON_VERSION,
         category: "assets",
-        tables: ["site", "site_node", "site_node_mapping", "tag_mapping"],
+        // 只声明本域自建的表：tag_mapping 归标签域（tags）独占，站点仅读写 item_type='site' 的行。
+        tables: ["site", "site_node", "site_node_mapping"],
         sync: siteSync,
         views: [
           { id: "stats", title: { zh: "统计", en: "Stats" } },

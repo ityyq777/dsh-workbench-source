@@ -1449,7 +1449,11 @@ var require_styles = __commonJS({
       ".wbml-rail-stats b{font-size:15px;font-weight:650;color:inherit;margin-right:2px}",
       ".wbml-rail-tip{font-size:12px;line-height:1.6;color:var(--wb-muted,#6b7280);padding:0 2px}",
       ".wbml-pane{display:flex;flex-direction:column;min-width:0;min-height:0;border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);overflow:hidden}",
-      ".wbml-pane-head{position:sticky;top:0;z-index:2;display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--wb-border,#eef0f3);background:var(--wb-surface,#fff)}",
+      // 列表头：标题/计数一行，刷新与批量操作靠右同一行；窄屏整体换行，不再整行独占一个工具条。
+      ".wbml-pane-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 10px;padding:10px 12px;border-bottom:1px solid var(--wb-border,#eef0f3);background:var(--wb-surface,#fff)}",
+      ".wbml-pane-title{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}",
+      ".wbml-pane-tools{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-left:auto;flex-wrap:wrap}",
+      ".wbml-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}",
       ".wbml-pane-head strong{font-size:13px}",
       ".wbml-state-box{display:flex;flex-direction:column;min-height:0;overflow:auto}",
       ".wbml-state{padding:32px 16px;text-align:center;font-size:13px;color:var(--wb-muted,#6b7280)}",
@@ -3500,28 +3504,65 @@ var require_bulk = __commonJS({
         redraw();
       }
       const plan = state.plan, report = state.report;
-      const controls = plan ? [
-        h("strong", null, `\u786E\u8BA4\u5C06 ${plan.targets.length} \u5C01\u90AE\u4EF6${labels[plan.kind]}\uFF1F`),
-        h("span", null, accountCounts(plan.targets, accounts)),
-        button(state.running ? "\u6B63\u5728\u5904\u7406\u2026" : "\u786E\u8BA4" + labels[plan.kind], run, blocked || state.running),
-        button("\u53D6\u6D88", () => {
+      const confirm = plan ? [
+        h("strong", { key: "ask" }, `\u786E\u8BA4\u5C06 ${plan.targets.length} \u5C01\u90AE\u4EF6${labels[plan.kind]}\uFF1F`),
+        h("span", { key: "who" }, accountCounts(plan.targets, accounts)),
+        h(
+          C.Btn,
+          { key: "go", h, onClick: run, disabled: blocked || state.running },
+          state.running ? "\u6B63\u5728\u5904\u7406\u2026" : "\u786E\u8BA4" + labels[plan.kind]
+        ),
+        h(C.Btn, { key: "cancel", h, onClick: () => {
           state.plan = null;
           redraw();
-        }, state.running)
-      ] : [
-        h(C.Btn, { h, disabled: blocked || !available.length, onClick: () => {
-          state.selecting = !state.selecting;
-          state.checked.clear();
-          redraw();
-        } }, icons.label("square-check", state.selecting ? "\u9000\u51FA\u9009\u62E9" : "\u9009\u62E9\u90AE\u4EF6")),
+        }, disabled: state.running }, "\u53D6\u6D88")
+      ] : null;
+      const tools = plan ? null : [
+        h(
+          C.Btn,
+          { key: "pick", h, disabled: blocked || !available.length, onClick: () => {
+            state.selecting = !state.selecting;
+            state.checked.clear();
+            redraw();
+          } },
+          icons.label("square-check", state.selecting ? "\u9000\u51FA\u9009\u62E9" : "\u9009\u62E9\u90AE\u4EF6")
+        ),
         state.selecting && button(selected.length && selected.length === available.length ? "\u6E05\u9664\u9009\u62E9" : "\u672C\u9875\u5168\u9009", () => {
           state.checked = selected.length === available.length ? /* @__PURE__ */ new Set() : new Set(available.map((m) => m.id));
           redraw();
         }, blocked || !available.length),
-        state.selecting && h(C.Btn, { h, disabled: blocked || !selected.length, onClick: () => prepare("trash") }, icons.label("trash-2", `\u79FB\u5165\u5E9F\u7EB8\u7BD3\uFF08${selected.length}\uFF09`)),
-        h(C.Btn, { h, disabled: blocked || !available.some(unread), onClick: () => prepare("read") }, icons.label("check-check", "\u5168\u90E8\u6807\u4E3A\u5DF2\u8BFB")),
-        state.selecting && items.length > available.length && h("span", null, "\u672C\u5730\u526F\u672C\u6216\u8FDC\u7AEF\u8EAB\u4EFD\u672A\u786E\u8BA4\u7684\u90AE\u4EF6\u4E0D\u53EF\u9009\u62E9")
+        state.selecting && h(
+          C.Btn,
+          { key: "trash", h, disabled: blocked || !selected.length, onClick: () => prepare("trash") },
+          icons.label("trash-2", `\u79FB\u5165\u5E9F\u7EB8\u7BD3\uFF08${selected.length}\uFF09`)
+        ),
+        h(
+          C.Btn,
+          { key: "read", h, disabled: blocked || !available.some(unread), onClick: () => prepare("read") },
+          icons.label("check-check", "\u5168\u90E8\u6807\u4E3A\u5DF2\u8BFB")
+        ),
+        state.selecting && items.length > available.length ? h("span", { key: "hint", className: "wbml-muted" }, "\u672C\u5730\u526F\u672C\u6216\u8FDC\u7AEF\u8EAB\u4EFD\u672A\u786E\u8BA4\u7684\u90AE\u4EF6\u4E0D\u53EF\u9009\u62E9") : null
       ];
+      const reportNode = report ? h(
+        "div",
+        { className: "wbml-bulk-report", role: "status" },
+        `${labels[report.kind]}\uFF1A\u6210\u529F ${report.done} \u5C01\uFF0C\u5931\u8D25 ${report.failed.length} \u5C01`,
+        report.failed.length > 0 && h(
+          "details",
+          null,
+          h("summary", null, "\u67E5\u770B\u5931\u8D25\u539F\u56E0"),
+          ...report.failed.map(({ item, error }) => h("div", { key: item.id }, `${item.accountName} \xB7 ${item.subject}\uFF1A${error}`))
+        ),
+        report.failed.length > 0 && button("\u4EC5\u91CD\u8BD5\u5931\u8D25\u9879", () => {
+          state.plan = { kind: report.kind, targets: report.failed.map((f) => f.item), done: report.done };
+          redraw();
+        }, blocked),
+        button("\u6536\u8D77\u7ED3\u679C", () => {
+          state.report = null;
+          redraw();
+        })
+      ) : null;
+      const toolbar = confirm || reportNode ? h("div", { className: "wbml-bulk" }, ...confirm || [], reportNode) : null;
       function wrapRow(m, row) {
         if (!state.selecting) return row;
         return h(
@@ -3541,34 +3582,7 @@ var require_bulk = __commonJS({
           row
         );
       }
-      return {
-        wrapRow,
-        locked: () => !!state.plan,
-        toolbar: h(
-          "div",
-          { className: "wbml-bulk" },
-          ...controls,
-          !plan && report && h(
-            "div",
-            { className: "wbml-bulk-report", role: "status" },
-            `${labels[report.kind]}\uFF1A\u6210\u529F ${report.done} \u5C01\uFF0C\u5931\u8D25 ${report.failed.length} \u5C01`,
-            report.failed.length > 0 && h(
-              "details",
-              null,
-              h("summary", null, "\u67E5\u770B\u5931\u8D25\u539F\u56E0"),
-              ...report.failed.map(({ item, error }) => h("div", { key: item.id }, `${item.accountName} \xB7 ${item.subject}\uFF1A${error}`))
-            ),
-            report.failed.length > 0 && button("\u4EC5\u91CD\u8BD5\u5931\u8D25\u9879", () => {
-              state.plan = { kind: report.kind, targets: report.failed.map((f) => f.item), done: report.done };
-              redraw();
-            }, blocked),
-            button("\u6536\u8D77\u7ED3\u679C", () => {
-              state.report = null;
-              redraw();
-            })
-          )
-        )
-      };
+      return { wrapRow, locked: () => !!state.plan, tools, toolbar };
     }
     function updateSearch(server, kind, ids, unreadOnly) {
       const done = new Set(ids);
@@ -3980,15 +3994,8 @@ var require_messages = __commonJS({
       return h(
         "div",
         { className: "wbml-page is-split wb-fill" },
-        h(
-          "div",
-          { className: "wbml-head" },
-          h("h2", null, "\u90AE\u4EF6"),
-          button("\u5237\u65B0\u672C\u5730\u5217\u8868", function() {
-            reset();
-            list.refresh();
-          }, void 0, void 0, Refresh)
-        ),
+        // 页内不再重复渲染「邮件」大标题：宿主顶栏已有视图名，这里只保留一个可访问名。
+        h("h2", { className: "wbml-sr-only" }, "\u90AE\u4EF6"),
         h(C.Notice, { h, kind: "error", text: props.accounts.error || boxes.error }),
         h(C.Notice, { h, kind: msg[0] && msg[0].kind, text: msg[0] && msg[0].text }),
         h(
@@ -4130,15 +4137,28 @@ var require_messages = __commonJS({
             h(
               "div",
               { className: "wbml-pane-head" },
-              h("strong", null, iconLabel(
-                h,
-                server[0] ? Search2 : folder[0] && folder[0] !== "INBOX" ? Folder2 : folder[0] || unified[0] ? InboxIcon : Mail2,
-                server[0] ? "\u670D\u52A1\u5668\u641C\u7D22 \xB7 " + folder[0] : folder[0] || (unified[0] ? "\u7EDF\u4E00\u6536\u4EF6\u7BB1" : "\u5168\u90E8\u90AE\u4EF6")
-              )),
               h(
-                "span",
-                { className: "wbml-muted" },
-                result.error || result.loading ? null : (server[0] ? "\u663E\u793A " : "\u672C\u9875 ") + items.length + " \u5C01 \xB7 " + items.filter(isUnread).length + " \u672A\u8BFB" + (server[0]?.data?.truncated ? " \xB7 \u4EC5\u663E\u793A\u6700\u8FD1 50 \u5C01" : "")
+                "div",
+                { className: "wbml-pane-title" },
+                h("strong", null, iconLabel(
+                  h,
+                  server[0] ? Search2 : folder[0] && folder[0] !== "INBOX" ? Folder2 : folder[0] || unified[0] ? InboxIcon : Mail2,
+                  server[0] ? "\u670D\u52A1\u5668\u641C\u7D22 \xB7 " + folder[0] : folder[0] || (unified[0] ? "\u7EDF\u4E00\u6536\u4EF6\u7BB1" : "\u5168\u90E8\u90AE\u4EF6")
+                )),
+                h(
+                  "span",
+                  { className: "wbml-muted" },
+                  result.error || result.loading ? null : (server[0] ? "\u663E\u793A " : "\u672C\u9875 ") + items.length + " \u5C01 \xB7 " + items.filter(isUnread).length + " \u672A\u8BFB" + (server[0]?.data?.truncated ? " \xB7 \u4EC5\u663E\u793A\u6700\u8FD1 50 \u5C01" : "")
+                )
+              ),
+              h(
+                "div",
+                { className: "wbml-pane-tools" },
+                !current ? bulk.tools : null,
+                button("\u5237\u65B0\u672C\u5730\u5217\u8868", function() {
+                  reset();
+                  list.refresh();
+                }, void 0, void 0, Refresh)
               )
             ),
             !current && bulk.toolbar,
@@ -7897,7 +7917,7 @@ var GLYPHS = require_icons2().ICONS;
   var slotBackToMessage = require_slot_back_to_message()({ React, h, C, Icon: Icon2 });
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.8.0",
+    version: "0.8.1",
     icon: GLYPHS["mail"],
     slots: [{ slot: "item.actions", id: "mail.back-to-message", order: 100, component: slotBackToMessage }],
     views: [
