@@ -199,4 +199,12 @@ function configPage(deps) {
   return configBody(deps, { state: state, busy: busy, toast: toast, onSave: save, onReset: reset });
 }
 
-module.exports = { dataPage: dataPage, configPage: configPage, configBody: configBody, DataView: HostDataView, HOST_TABLES: HOST_TABLES };
+/**
+ * 组件外壳：路由分支渲染 ConfigView，而不是直接调用 configPage()，
+ * 否则页面 hooks 会挂到 WorkbenchPage 上，切路由时抛 React #310。
+ */
+function ConfigView(props) {
+  return configPage(props);
+}
+
+module.exports = { dataPage: dataPage, configPage: configPage, configBody: configBody, ConfigView: ConfigView, DataView: HostDataView, HOST_TABLES: HOST_TABLES };

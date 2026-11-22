@@ -3552,7 +3552,10 @@ var require_host_pages = __commonJS({
       }
       return configBody(deps, { state, busy, toast, onSave: save, onReset: reset });
     }
-    module2.exports = { dataPage, configPage, configBody, DataView: HostDataView, HOST_TABLES };
+    function ConfigView(props) {
+      return configPage(props);
+    }
+    module2.exports = { dataPage, configPage, configBody, ConfigView, DataView: HostDataView, HOST_TABLES };
   }
 });
 
@@ -3840,7 +3843,10 @@ var require_event_queue_page = __commonJS({
         ] })
       ] });
     }
-    module2.exports = { queuePage };
+    function QueueView(props) {
+      return queuePage(props);
+    }
+    module2.exports = { queuePage, QueueView };
   }
 });
 
@@ -5922,13 +5928,13 @@ function WorkbenchPage(props) {
     ] });
   }
   if (route === "queue") {
-    return QueuePage.queuePage({ jsx, React: react, api, lang, t, head: pageHead });
+    return jsx.jsx(QueuePage.QueueView, { jsx, React: react, api, lang, t, head: pageHead });
   }
   if (route === "data") {
     return HostPages.dataPage({ jsx, api, lang, t, head: pageHead });
   }
   if (route === "config") {
-    return HostPages.configPage({ jsx, React: react, api, lang, t, head: pageHead });
+    return jsx.jsx(HostPages.ConfigView, { jsx, React: react, api, lang, t, head: pageHead });
   }
   if (route === "account") {
     return jsx.jsxs("div", { className: "wb-root", children: [

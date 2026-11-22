@@ -498,13 +498,13 @@ function WorkbenchPage(props) {
     ] });
   }
   if (route === "queue") {
-    return QueuePage.queuePage({ jsx: jsx, React: react, api: api, lang: lang, t: t, head: pageHead });
+    return jsx.jsx(QueuePage.QueueView, { jsx: jsx, React: react, api: api, lang: lang, t: t, head: pageHead });
   }
   if (route === "data") {
     return HostPages.dataPage({ jsx: jsx, api: api, lang: lang, t: t, head: pageHead });
   }
   if (route === "config") {
-    return HostPages.configPage({ jsx: jsx, React: react, api: api, lang: lang, t: t, head: pageHead });
+    return jsx.jsx(HostPages.ConfigView, { jsx: jsx, React: react, api: api, lang: lang, t: t, head: pageHead });
   }
   if (route === "account") {
     return jsx.jsxs("div", { className: "wb-root", children: [

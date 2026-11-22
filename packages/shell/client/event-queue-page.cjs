@@ -317,4 +317,13 @@ function queuePage(deps) {
   ] });
 }
 
-module.exports = { queuePage: queuePage };
+/**
+ * 组件外壳：路由分支必须渲染这个组件，而不是直接调用 queuePage()。
+ * 直接调用会把页面自己的 hooks 挂到 WorkbenchPage 的 hook 链上，切路由时
+ * hook 数量前后不一致，React 抛 #310（Rendered more hooks than during the previous render）。
+ */
+function QueueView(props) {
+  return queuePage(props);
+}
+
+module.exports = { queuePage: queuePage, QueueView: QueueView };

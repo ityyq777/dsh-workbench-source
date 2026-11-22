@@ -5,7 +5,7 @@
  * 3. wb.eventCleanup 只删已终结且早于保留天数的事件；
  * 4. 页面组件能在 SSR 下渲染（不白屏、不把对象当组件）。
  */
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -189,6 +189,14 @@ try {
   assert(html.includes("wbq-stats"), "应渲染统计条，实际：" + html.slice(0, 200));
   assert(html.includes("wbq-tabs"), "应渲染页签");
   assert(!html.includes("React error"), "不应出现 React 报错");
+
+  // 路由必须渲染组件外壳而不是直接调用页面函数，否则页面 hooks 会挂到
+  // WorkbenchPage 的 hook 链上，切路由时 React 抛 #310（曾经的线上白屏）。
+  const clientSrc = readFileSync(new URL("../packages/shell/client/client.src.cjs", import.meta.url), "utf8");
+  assert(/jsx\.jsx\(QueuePage\.QueueView/.test(clientSrc), "队列路由必须用 jsx.jsx(QueuePage.QueueView, …) 渲染组件");
+  assert(!/return QueuePage\.queuePage\(/.test(clientSrc), "队列路由不得直接调用 queuePage()");
+  assert(/jsx\.jsx\(HostPages\.ConfigView/.test(clientSrc), "配置路由必须用 jsx.jsx(HostPages.ConfigView, …) 渲染组件");
+  assert(!/return HostPages\.configPage\(/.test(clientSrc), "配置路由不得直接调用 configPage()");
 
   console.log("EVENT QUEUE PAGE TEST PASS");
 } catch (error) {

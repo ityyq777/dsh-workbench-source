@@ -122,4 +122,11 @@ const errorHtml = renderToString(
 );
 assert.ok(errorHtml.includes("读取配置失败"), "错误态应显示错误文案");
 
+// 配置页必须以组件外壳交给路由渲染，直接调用会污染 WorkbenchPage 的 hook 链（React #310）。
+assert(typeof HostPages.ConfigView === "function", "host-pages 应导出 ConfigView 组件外壳");
+assert(
+  jsxRuntime.jsx(HostPages.ConfigView, {}).type === HostPages.ConfigView,
+  "ConfigView 应能作为组件类型交给 jsx 渲染",
+);
+
 console.log("HOST PAGES TEST PASS：结构检查 + 真 React 渲染（加载/就绪/错误态）");
