@@ -14,7 +14,7 @@ export function registerVaultActions(api, vault, groups) {
   // 复用 vault 里那份带 getDek 的集合实例：账号读写要 DEK，另建一份会永远判定为锁定。
   const sets = vault.sets;
   api.action("vault.status", {
-    description: "只读：保险箱是否初始化、是否锁定、解锁模式、凭据/分组数量与同步状态；不含任何密文。",
+    description: "只读：保险箱是否初始化、是否锁定、主口令指纹、凭据/分组数量与同步状态；不含任何密文。",
     input: { type: "object", properties: {}, additionalProperties: false },
     execute: (_args, ctx) => {
       only(ctx, ["ui", "agent", "plugin"], "vault.status");
@@ -24,17 +24,18 @@ export function registerVaultActions(api, vault, groups) {
 
   api.action("vault.setup", {
     origins: ["ui"],
-    description: "首次初始化保险箱：设置口令与解锁模式 A/B/C，默认 A（每次启动锁定）。口令包裹会上云。",
+    description:
+      "首次初始化保险箱：设置主口令。主口令是全保险箱唯一的解锁因子，所有设备必须用同一个；" +
+      "口令本身不落库、不上云，上云的只是用它包裹后的 DEK。",
     input: {
       type: "object",
       properties: {
-        passphrase: { type: "string", description: "主口令，至少 12 个字符" },
-        mode: { type: "string", enum: ["A", "B", "C"], description: "解锁模式，默认 A" },
+        passphrase: { type: "string", description: "主口令，至少 12 个字符；请在所有设备上使用同一个" },
       },
       required: ["passphrase"],
       additionalProperties: false,
     },
-    examples: [{ passphrase: "correct horse battery", mode: "A" }],
+    examples: [{ passphrase: "correct horse battery staple" }],
     execute: (args, ctx) => {
       only(ctx, ["ui"], "vault.setup");
       return vault.setup(args);
@@ -64,24 +65,6 @@ export function registerVaultActions(api, vault, groups) {
       only(ctx, ["ui", "plugin"], "vault.lock");
       vault.lock();
       return { ok: true };
-    },
-  });
-
-  api.action("vault.setUnlockMode", {
-    origins: ["ui"],
-    description: "切换解锁模式：A 全锁 / B 自动解锁但查看需口令 / C 自动解锁且查看免口令。",
-    input: {
-      type: "object",
-      properties: {
-        mode: { type: "string", enum: ["A", "B", "C"] },
-        passphrase: { type: "string", description: "锁定状态下切换 B/C 需要主口令" },
-      },
-      required: ["mode"],
-      additionalProperties: false,
-    },
-    execute: (args, ctx) => {
-      only(ctx, ["ui"], "vault.setUnlockMode");
-      return vault.setUnlockMode(args);
     },
   });
 
@@ -194,13 +177,10 @@ export function registerVaultActions(api, vault, groups) {
 
   api.action("vault.secretReveal", {
     origins: ["ui"],
-    description: "在界面上显示一条凭据明文；B 模式必须再输口令，agent/plugin 一律拒绝。",
+    description: "在界面上显示一条凭据明文；必须已用主口令解锁，agent/plugin 一律拒绝。",
     input: {
       type: "object",
-      properties: {
-        id: { type: "string" },
-        passphrase: { type: "string", description: "B 模式必需" },
-      },
+      properties: { id: { type: "string" } },
       required: ["id"],
       additionalProperties: false,
     },
@@ -228,21 +208,6 @@ export function registerVaultActions(api, vault, groups) {
     execute: (args, ctx) => {
       only(ctx, ["plugin"], "vault.lease");
       return vault.lease(args);
-    },
-  });
-
-  api.action("vault.rotateDeviceKey", {
-    origins: ["ui"],
-    description: "重写自动解锁的 device key 包裹；B/C 模式可用，需要主口令。",
-    input: {
-      type: "object",
-      properties: { passphrase: { type: "string" } },
-      required: ["passphrase"],
-      additionalProperties: false,
-    },
-    execute: (args, ctx) => {
-      only(ctx, ["ui"], "vault.rotateDeviceKey");
-      return vault.rotateDeviceKey(args);
     },
   });
 
@@ -449,7 +414,7 @@ export function registerVaultActions(api, vault, groups) {
         localOnly: ["vault_device", "vault_secret_usage"],
         pending: null,
         conflicts: null,
-        note: "同步状态与冲突在宿主的同步页查看；device key 与使用记录不上云。",
+        note: "同步状态与冲突在宿主的同步页查看；设备本地状态与使用记录不上云，主口令本身永不上云。",
       };
     },
   });

@@ -405,7 +405,7 @@ test("保存成功后弹窗关闭、列表出现新凭据；失败时保留弹�
       if (action === "vault.secretList") {
         return Promise.resolve({ ok: true, result: { items: created ? [created] : [] } });
       }
-      if (action === "vault.status") return Promise.resolve({ ok: true, result: { locked: false, unlockMode: "B" } });
+      if (action === "vault.status") return Promise.resolve({ ok: true, result: { locked: false, passphraseHint: "a1b2c3d4" } });
       return Promise.resolve({ ok: true, result: { items: [] } });
     },
   };

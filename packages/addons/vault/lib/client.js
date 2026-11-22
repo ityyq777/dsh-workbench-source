@@ -2259,6 +2259,208 @@ var require_secret_field = __commonJS({
   }
 });
 
+// packages/addons/vault/client/views/status.cjs
+var require_status = __commonJS({
+  "packages/addons/vault/client/views/status.cjs"(exports2, module2) {
+    "use strict";
+    var GLYPHS2 = require_icons2().ICONS;
+    var C = require_common();
+    var P = require_page();
+    var iconLabel = require_icon_label();
+    var SecretField = require_secret_field();
+    var Lock2 = GLYPHS2["lock"];
+    var Unlock = GLYPHS2["lock-open"];
+    var ShieldPlus2 = GLYPHS2["shield-plus"];
+    module2.exports = function StatusView(props) {
+      var h = props.h;
+      var api = props.api;
+      var lang = props.lang || "zh";
+      var React = props.React;
+      var st = React.useState({ loading: true, data: null, error: "" });
+      var status = st[0].data;
+      var error = st[0].error;
+      var busy = React.useState(false);
+      var pass = React.useState("");
+      var pass2 = React.useState("");
+      var msg = React.useState("");
+      var showMainS = React.useState(false);
+      var showConfirmS = React.useState(false);
+      var showUnlockS = React.useState(false);
+      var refreshTick = React.useState(0);
+      var refresh = function() {
+        refreshTick[1](refreshTick[0] + 1);
+      };
+      React.useEffect(function() {
+        var alive = true;
+        C.call(api, "vault.status").then(function(data) {
+          if (alive) st[1]({ loading: false, data, error: "" });
+        }).catch(function(e) {
+          if (alive) st[1]({ loading: false, data: null, error: C.errText(e) });
+        });
+        return function() {
+          alive = false;
+        };
+      }, [refreshTick[0]]);
+      function run(fn) {
+        busy[1](true);
+        msg[1]("");
+        return fn().then(function() {
+          pass[1]("");
+          pass2[1]("");
+          busy[1](false);
+          refresh();
+        }).catch(function(e) {
+          msg[1](C.errText(e));
+          busy[1](false);
+        });
+      }
+      function pageHead(title, sub, extra) {
+        return h(P.PageHead, { h, title, sub, actions: extra });
+      }
+      if (st[0].loading) {
+        return h(
+          "div",
+          { className: "wbv" },
+          pageHead("\u51ED\u636E\u4FDD\u9669\u7BB1", "\u6B63\u5728\u8BFB\u53D6\u4FDD\u9669\u7BB1\u72B6\u6001\u2026"),
+          h(C.Empty, { h, text: "\u6B63\u5728\u8BFB\u53D6\u4FDD\u9669\u7BB1\u72B6\u6001\u2026" })
+        );
+      }
+      if (error) {
+        return h(
+          "div",
+          { className: "wbv" },
+          pageHead("\u51ED\u636E\u4FDD\u9669\u7BB1", "\u8BFB\u53D6\u72B6\u6001\u5931\u8D25\uFF0C\u53EF\u4EE5\u91CD\u8BD5\uFF1B\u53E3\u4EE4\u4E0E\u51ED\u636E\u4E0D\u4F1A\u56E0\u6B64\u4E22\u5931\u3002"),
+          h(C.Notice, { h, kind: "error", text: error }),
+          h("div", { className: "wbv-row" }, h(C.Btn, { h, onClick: refresh }, iconLabel(h, GLYPHS2["refresh-cw"], "\u91CD\u8BD5")))
+        );
+      }
+      if (!status || !status.initialized) {
+        return h(
+          "div",
+          { className: "wbv" },
+          pageHead("\u521D\u59CB\u5316\u51ED\u636E\u4FDD\u9669\u7BB1", "\u53E3\u4EE4\u53EA\u7528\u4E8E\u6D3E\u751F\u5BC6\u94A5\uFF0C\u4E0D\u4F1A\u843D\u5E93\uFF1B\u5FD8\u8BB0\u53E3\u4EE4\u65E0\u6CD5\u6062\u590D\u5DF2\u4FDD\u5B58\u7684\u51ED\u636E\u3002"),
+          h(C.Notice, { h, kind: "info", text: "\u4E3B\u53E3\u4EE4\u662F\u4FDD\u9669\u7BB1\u552F\u4E00\u7684\u94A5\u5319\uFF1A\u4E0D\u843D\u5E93\u3001\u4E0D\u4E0A\u4E91\uFF0C\u5FD8\u8BB0\u540E\u65E0\u6CD5\u6062\u590D\u5DF2\u4FDD\u5B58\u7684\u51ED\u636E\uFF1B\u521B\u5EFA\u540E\u8BF7\u5728\u6240\u6709\u8BBE\u5907\u4E0A\u4F7F\u7528\u540C\u4E00\u4E2A\u4E3B\u53E3\u4EE4\u3002" }),
+          h(
+            P.Card,
+            { h, title: "\u521B\u5EFA\u4FDD\u9669\u7BB1" },
+            h(
+              "div",
+              { className: "wbv-form-grid" },
+              h(
+                C.Field,
+                { h, label: "\u4E3B\u53E3\u4EE4\uFF08\u81F3\u5C11 12 \u4F4D\uFF09", hint: "\u7528\u4E8E\u6D3E\u751F\u5BC6\u94A5\uFF0C\u8BF7\u81EA\u884C\u59A5\u5584\u4FDD\u5B58" },
+                h(SecretField, {
+                  h,
+                  autoComplete: "new-password",
+                  ariaLabel: "\u4E3B\u53E3\u4EE4",
+                  value: pass[0],
+                  show: showMainS[0],
+                  onChange: pass[1],
+                  onToggle: function() {
+                    showMainS[1](!showMainS[0]);
+                  }
+                })
+              ),
+              h(
+                C.Field,
+                { h, label: "\u786E\u8BA4\u53E3\u4EE4" },
+                h(SecretField, {
+                  h,
+                  autoComplete: "new-password",
+                  ariaLabel: "\u786E\u8BA4\u53E3\u4EE4",
+                  value: pass2[0],
+                  show: showConfirmS[0],
+                  onChange: pass2[1],
+                  onToggle: function() {
+                    showConfirmS[1](!showConfirmS[0]);
+                  }
+                })
+              )
+            ),
+            h(C.Notice, { h, kind: "error", text: msg[0] }),
+            h(
+              "div",
+              { className: "wbv-form-actions" },
+              h("span", { className: "wbv-grow" }),
+              h(C.Btn, { h, kind: "primary", disabled: busy[0], onClick: function() {
+                if (pass[0].length < 12) return msg[1]("\u53E3\u4EE4\u81F3\u5C11 12 \u4E2A\u5B57\u7B26");
+                if (pass[0] !== pass2[0]) return msg[1]("\u4E24\u6B21\u8F93\u5165\u4E0D\u4E00\u81F4");
+                run(function() {
+                  return C.call(api, "vault.setup", { passphrase: pass[0] });
+                });
+              } }, iconLabel(h, ShieldPlus2, busy[0] ? "\u521D\u59CB\u5316\u4E2D\u2026" : "\u521B\u5EFA\u4FDD\u9669\u7BB1"))
+            )
+          )
+        );
+      }
+      if (status.locked) {
+        return h(
+          "div",
+          { className: "wbv" },
+          pageHead("\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A", "\u8F93\u5165\u4E3B\u53E3\u4EE4\u89E3\u9501\u3002\u89E3\u9501\u72B6\u6001\u53EA\u4FDD\u5B58\u5728\u5F53\u524D\u8FDB\u7A0B\u5185\u5B58\uFF0C\u7A7A\u95F2\u8D85\u65F6\u4F1A\u81EA\u52A8\u9501\u5B9A\u3002"),
+          h(
+            P.Card,
+            { h, title: "\u89E3\u9501" },
+            h(
+              "div",
+              { className: "wbv-form-grid" },
+              h(
+                C.Field,
+                { h, label: "\u4E3B\u53E3\u4EE4" },
+                h(SecretField, {
+                  h,
+                  autoComplete: "current-password",
+                  ariaLabel: "\u4E3B\u53E3\u4EE4",
+                  value: pass[0],
+                  show: showUnlockS[0],
+                  onChange: pass[1],
+                  onToggle: function() {
+                    showUnlockS[1](!showUnlockS[0]);
+                  }
+                })
+              )
+            ),
+            h(
+              "div",
+              { className: "wbv-form-actions" },
+              h("span", { className: "wbv-grow wbv-muted" }, "\u8FDE\u7EED\u5931\u8D25 5 \u6B21\u4F1A\u9501\u5B9A 5 \u5206\u949F\uFF1B\u4E3B\u53E3\u4EE4\u4E0E\u5176\u5B83\u8BBE\u5907\u4E0D\u4E00\u81F4\u65F6\u540C\u6837\u62A5\u300C\u53E3\u4EE4\u9519\u8BEF\u300D\u3002"),
+              h(C.Btn, { h, kind: "primary", disabled: busy[0], onClick: function() {
+                if (!pass[0]) return msg[1]("\u8BF7\u8F93\u5165\u53E3\u4EE4");
+                run(function() {
+                  return C.call(api, "vault.unlock", { passphrase: pass[0] });
+                });
+              } }, iconLabel(h, Unlock, busy[0] ? "\u89E3\u9501\u4E2D\u2026" : "\u89E3\u9501"))
+            )
+          ),
+          h(C.Notice, { h, kind: "error", text: msg[0] })
+        );
+      }
+      return h(
+        "div",
+        { className: "wbv" },
+        pageHead("\u51ED\u636E\u4FDD\u9669\u7BB1", "\u660E\u6587\u53EA\u5728\u672C\u673A\u89E3\u9501\u540E\u53EF\u89C1\uFF1B\u4E0B\u65B9\u662F\u6982\u51B5\u4E0E\u5FEB\u6377\u64CD\u4F5C\u3002", [
+          h(C.Pill, { h, kind: "ok", key: "state" }, iconLabel(h, Unlock, "\u5DF2\u89E3\u9501")),
+          h(C.Btn, { h, key: "lock", onClick: function() {
+            run(function() {
+              return C.call(api, "vault.lock");
+            });
+          } }, iconLabel(h, Lock2, "\u7ACB\u5373\u9501\u5B9A"))
+        ]),
+        h(
+          "div",
+          { className: "wbv-stats" },
+          h(P.Stat, { h, label: "\u51ED\u636E\u6570\u91CF", value: status.secretCount || 0 }),
+          h(P.Stat, { h, label: "\u5206\u7EC4\u6570\u91CF", value: status.groupCount || 0 }),
+          h(P.Stat, { h, label: "\u4E3B\u53E3\u4EE4\u6307\u7EB9", value: status.passphraseHint || "\u2014", hint: "\u5404\u8BBE\u5907\u663E\u793A\u4E00\u81F4\u5373\u540C\u4E00\u4E2A\u4E3B\u53E3\u4EE4" }),
+          h(P.Stat, { h, label: "\u4E0A\u6B21\u89E3\u9501", value: C.fmtTime(status.lastUnlockAt, lang) })
+        ),
+        h(C.Notice, { h, kind: "info", text: "\u4E3B\u53E3\u4EE4\u6307\u7EB9 " + (status.passphraseHint || "\u2014") + "\uFF1A\u7531\u4E3B\u53E3\u4EE4\u6D3E\u751F\uFF0C\u7528\u6765\u6838\u5BF9\u5404\u8BBE\u5907\u662F\u5426\u540C\u4E00\u4E2A\u53E3\u4EE4\uFF1Bagent \u53EA\u80FD\u770B\u5230\u540D\u79F0\u548C\u5907\u6CE8\uFF0C\u67E5\u770B\u660E\u6587\u5FC5\u987B\u7531\u4F60\u5728\u754C\u9762\u4E0A\u64CD\u4F5C\u3002" }),
+        h(C.Notice, { h, kind: "error", text: msg[0] })
+      );
+    };
+  }
+});
+
 // packages/addons/vault/client/ui/dialog.cjs
 var require_dialog = __commonJS({
   "packages/addons/vault/client/ui/dialog.cjs"(exports2, module2) {
@@ -2428,278 +2630,6 @@ var require_ask_passphrase = __commonJS({
   }
 });
 
-// packages/addons/vault/client/views/status.cjs
-var require_status = __commonJS({
-  "packages/addons/vault/client/views/status.cjs"(exports2, module2) {
-    "use strict";
-    var GLYPHS2 = require_icons2().ICONS;
-    var C = require_common();
-    var P = require_page();
-    var iconLabel = require_icon_label();
-    var SecretField = require_secret_field();
-    var AskPassphrase = require_ask_passphrase();
-    var Lock2 = GLYPHS2["lock"];
-    var Unlock = GLYPHS2["lock-open"];
-    var ShieldPlus2 = GLYPHS2["shield-plus"];
-    module2.exports = function StatusView(props) {
-      var h = props.h;
-      var api = props.api;
-      var lang = props.lang || "zh";
-      var React = props.React;
-      var st = React.useState({ loading: true, data: null, error: "" });
-      var status = st[0].data;
-      var error = st[0].error;
-      var busy = React.useState(false);
-      var pass = React.useState("");
-      var pass2 = React.useState("");
-      var mode = React.useState("A");
-      var msg = React.useState("");
-      var askS = React.useState(null);
-      var showMainS = React.useState(false);
-      var showConfirmS = React.useState(false);
-      var showUnlockS = React.useState(false);
-      var refreshTick = React.useState(0);
-      var refresh = function() {
-        refreshTick[1](refreshTick[0] + 1);
-      };
-      React.useEffect(function() {
-        var alive = true;
-        C.call(api, "vault.status").then(function(data) {
-          if (alive) st[1]({ loading: false, data, error: "" });
-        }).catch(function(e) {
-          if (alive) st[1]({ loading: false, data: null, error: C.errText(e) });
-        });
-        return function() {
-          alive = false;
-        };
-      }, [refreshTick[0]]);
-      function run(fn) {
-        busy[1](true);
-        msg[1]("");
-        return fn().then(function() {
-          pass[1]("");
-          pass2[1]("");
-          busy[1](false);
-          refresh();
-        }).catch(function(e) {
-          msg[1](C.errText(e));
-          busy[1](false);
-        });
-      }
-      function confirmAsk() {
-        var a = askS[0];
-        if (!a || !a.value) return;
-        askS[1](Object.assign({}, a, { busy: true, error: "" }));
-        busy[1](true);
-        msg[1]("");
-        C.call(api, "vault.unlock", { passphrase: a.value }).then(function() {
-          return C.call(api, "vault.setUnlockMode", { mode: "A" });
-        }).then(function() {
-          askS[1](null);
-          busy[1](false);
-          refresh();
-        }).catch(function(e) {
-          askS[1](Object.assign({}, a, { busy: false, error: C.errText(e) }));
-        });
-      }
-      var askModal = askS[0] ? h(AskPassphrase, {
-        h,
-        React,
-        C,
-        title: "\u5207\u56DE A \u6A21\u5F0F",
-        hint: "\u5207\u6362\u540E\u4E0B\u6B21\u542F\u52A8\u9700\u8981\u91CD\u65B0\u89E3\u9501\uFF0C\u8BF7\u9A8C\u8BC1\u4E3B\u53E3\u4EE4\u3002",
-        value: askS[0].value,
-        busy: askS[0].busy,
-        error: askS[0].error,
-        show: askS[0].show,
-        onChange: function(v) {
-          askS[1](Object.assign({}, askS[0], { value: v }));
-        },
-        onToggle: function() {
-          askS[1](Object.assign({}, askS[0], { show: !askS[0].show }));
-        },
-        onCancel: function() {
-          if (!askS[0].busy) askS[1](null);
-        },
-        onConfirm: confirmAsk
-      }) : null;
-      function pageHead(title, sub, extra) {
-        return h(P.PageHead, { h, title, sub, actions: extra });
-      }
-      if (st[0].loading) {
-        return h(
-          "div",
-          { className: "wbv" },
-          pageHead("\u51ED\u636E\u4FDD\u9669\u7BB1", "\u6B63\u5728\u8BFB\u53D6\u4FDD\u9669\u7BB1\u72B6\u6001\u2026"),
-          h(C.Empty, { h, text: "\u6B63\u5728\u8BFB\u53D6\u4FDD\u9669\u7BB1\u72B6\u6001\u2026" })
-        );
-      }
-      if (error) {
-        return h(
-          "div",
-          { className: "wbv" },
-          pageHead("\u51ED\u636E\u4FDD\u9669\u7BB1", "\u8BFB\u53D6\u72B6\u6001\u5931\u8D25\uFF0C\u53EF\u4EE5\u91CD\u8BD5\uFF1B\u53E3\u4EE4\u4E0E\u51ED\u636E\u4E0D\u4F1A\u56E0\u6B64\u4E22\u5931\u3002"),
-          h(C.Notice, { h, kind: "error", text: error }),
-          h("div", { className: "wbv-row" }, h(C.Btn, { h, onClick: refresh }, iconLabel(h, GLYPHS2["refresh-cw"], "\u91CD\u8BD5"))),
-          askModal
-        );
-      }
-      if (!status || !status.initialized) {
-        return h(
-          "div",
-          { className: "wbv" },
-          pageHead("\u521D\u59CB\u5316\u51ED\u636E\u4FDD\u9669\u7BB1", "\u53E3\u4EE4\u53EA\u7528\u4E8E\u6D3E\u751F\u5BC6\u94A5\uFF0C\u4E0D\u4F1A\u843D\u5E93\uFF1B\u5FD8\u8BB0\u53E3\u4EE4\u65E0\u6CD5\u6062\u590D\u5DF2\u4FDD\u5B58\u7684\u51ED\u636E\u3002"),
-          h(C.Notice, { h, kind: "info", text: "\u9ED8\u8BA4 A \u6A21\u5F0F\uFF1A\u6BCF\u6B21\u542F\u52A8\u540E\u9700\u8981\u91CD\u65B0\u89E3\u9501\u3002\u53EF\u7A0D\u540E\u5728\u8BBE\u7F6E\u91CC\u6539\u6210\u81EA\u52A8\u89E3\u9501\u3002" }),
-          h(
-            P.Card,
-            { h, title: "\u521B\u5EFA\u4FDD\u9669\u7BB1" },
-            h(
-              "div",
-              { className: "wbv-form-grid" },
-              h(
-                C.Field,
-                { h, label: "\u4E3B\u53E3\u4EE4\uFF08\u81F3\u5C11 12 \u4F4D\uFF09", hint: "\u7528\u4E8E\u6D3E\u751F\u5BC6\u94A5\uFF0C\u8BF7\u81EA\u884C\u59A5\u5584\u4FDD\u5B58" },
-                h(SecretField, {
-                  h,
-                  autoComplete: "new-password",
-                  ariaLabel: "\u4E3B\u53E3\u4EE4",
-                  value: pass[0],
-                  show: showMainS[0],
-                  onChange: pass[1],
-                  onToggle: function() {
-                    showMainS[1](!showMainS[0]);
-                  }
-                })
-              ),
-              h(
-                C.Field,
-                { h, label: "\u786E\u8BA4\u53E3\u4EE4" },
-                h(SecretField, {
-                  h,
-                  autoComplete: "new-password",
-                  ariaLabel: "\u786E\u8BA4\u53E3\u4EE4",
-                  value: pass2[0],
-                  show: showConfirmS[0],
-                  onChange: pass2[1],
-                  onToggle: function() {
-                    showConfirmS[1](!showConfirmS[0]);
-                  }
-                })
-              ),
-              h(
-                C.Field,
-                { h, label: "\u89E3\u9501\u6A21\u5F0F", hint: "\u4E4B\u540E\u53EF\u5728\u300C\u8BBE\u7F6E\u300D\u9875\u8C03\u6574" },
-                h(
-                  P.Select,
-                  {
-                    h,
-                    value: mode[0],
-                    onChange: function(e) {
-                      mode[1](e.target.value);
-                    }
-                  },
-                  h("option", { value: "A" }, "A \u5168\u9501\uFF08\u63A8\u8350\uFF09"),
-                  h("option", { value: "B" }, "B \u81EA\u52A8\u89E3\u9501\uFF0C\u67E5\u770B\u51ED\u636E\u518D\u8F93\u53E3\u4EE4"),
-                  h("option", { value: "C" }, "C \u81EA\u52A8\u89E3\u9501\uFF0C\u67E5\u770B\u514D\u53E3\u4EE4\uFF08\u4E0D\u5EFA\u8BAE\uFF09")
-                )
-              )
-            ),
-            h(C.Notice, { h, kind: "error", text: msg[0] }),
-            h(
-              "div",
-              { className: "wbv-form-actions" },
-              h("span", { className: "wbv-grow" }),
-              h(C.Btn, { h, kind: "primary", disabled: busy[0], onClick: function() {
-                if (pass[0].length < 12) return msg[1]("\u53E3\u4EE4\u81F3\u5C11 12 \u4E2A\u5B57\u7B26");
-                if (pass[0] !== pass2[0]) return msg[1]("\u4E24\u6B21\u8F93\u5165\u4E0D\u4E00\u81F4");
-                run(function() {
-                  return C.call(api, "vault.setup", { passphrase: pass[0], mode: mode[0] });
-                });
-              } }, iconLabel(h, ShieldPlus2, busy[0] ? "\u521D\u59CB\u5316\u4E2D\u2026" : "\u521B\u5EFA\u4FDD\u9669\u7BB1"))
-            )
-          ),
-          askModal
-        );
-      }
-      if (status.locked) {
-        return h(
-          "div",
-          { className: "wbv" },
-          pageHead("\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A", "\u8F93\u5165\u4E3B\u53E3\u4EE4\u89E3\u9501\u3002\u89E3\u9501\u72B6\u6001\u53EA\u4FDD\u5B58\u5728\u5F53\u524D\u8FDB\u7A0B\u5185\u5B58\uFF0C\u7A7A\u95F2\u8D85\u65F6\u4F1A\u81EA\u52A8\u9501\u5B9A\u3002"),
-          h(
-            P.Card,
-            { h, title: "\u89E3\u9501" },
-            h(
-              "div",
-              { className: "wbv-form-grid" },
-              h(
-                C.Field,
-                { h, label: "\u4E3B\u53E3\u4EE4" },
-                h(SecretField, {
-                  h,
-                  autoComplete: "current-password",
-                  ariaLabel: "\u4E3B\u53E3\u4EE4",
-                  value: pass[0],
-                  show: showUnlockS[0],
-                  onChange: pass[1],
-                  onToggle: function() {
-                    showUnlockS[1](!showUnlockS[0]);
-                  }
-                })
-              )
-            ),
-            h(
-              "div",
-              { className: "wbv-form-actions" },
-              h("span", { className: "wbv-grow wbv-muted" }, "\u6A21\u5F0F\uFF1A" + modeName(status.unlockMode) + "\uFF1B\u8FDE\u7EED\u5931\u8D25 5 \u6B21\u4F1A\u9501\u5B9A 5 \u5206\u949F\u3002"),
-              h(C.Btn, { h, kind: "primary", disabled: busy[0], onClick: function() {
-                if (!pass[0]) return msg[1]("\u8BF7\u8F93\u5165\u53E3\u4EE4");
-                run(function() {
-                  return C.call(api, "vault.unlock", { passphrase: pass[0] });
-                });
-              } }, iconLabel(h, Unlock, busy[0] ? "\u89E3\u9501\u4E2D\u2026" : "\u89E3\u9501"))
-            )
-          ),
-          h(C.Notice, { h, kind: "error", text: msg[0] }),
-          askModal
-        );
-      }
-      var modeText = modeName(status.unlockMode);
-      return h(
-        "div",
-        { className: "wbv" },
-        pageHead("\u51ED\u636E\u4FDD\u9669\u7BB1", "\u660E\u6587\u53EA\u5728\u672C\u673A\u89E3\u9501\u540E\u53EF\u89C1\uFF1B\u4E0B\u65B9\u662F\u6982\u51B5\u4E0E\u5FEB\u6377\u64CD\u4F5C\u3002", [
-          h(C.Pill, { h, kind: "ok", key: "state" }, iconLabel(h, Unlock, "\u5DF2\u89E3\u9501")),
-          h(C.Btn, { h, key: "lock", onClick: function() {
-            run(function() {
-              return C.call(api, "vault.lock");
-            });
-          } }, iconLabel(h, Lock2, "\u7ACB\u5373\u9501\u5B9A")),
-          h(C.Btn, { h, key: "mode", onClick: function() {
-            askS[1]({ value: "", busy: false, error: "", show: false });
-          } }, "\u5207\u56DE A \u6A21\u5F0F")
-        ]),
-        h(
-          "div",
-          { className: "wbv-stats" },
-          h(P.Stat, { h, label: "\u51ED\u636E\u6570\u91CF", value: status.secretCount || 0 }),
-          h(P.Stat, { h, label: "\u5206\u7EC4\u6570\u91CF", value: status.groupCount || 0 }),
-          h(P.Stat, { h, label: "\u89E3\u9501\u6A21\u5F0F", value: status.unlockMode, hint: modeText }),
-          h(P.Stat, { h, label: "\u4E0A\u6B21\u89E3\u9501", value: C.fmtTime(status.lastUnlockAt, lang) })
-        ),
-        h(C.Notice, { h, kind: "info", text: "agent \u53EA\u80FD\u770B\u5230\u540D\u79F0\u548C\u5907\u6CE8\uFF1B\u67E5\u770B\u660E\u6587\u5FC5\u987B\u7531\u4F60\u5728\u754C\u9762\u4E0A\u64CD\u4F5C\u3002" }),
-        h(C.Notice, { h, kind: "error", text: msg[0] }),
-        askModal
-      );
-    };
-    function modeName(mode) {
-      if (mode === "B") return "\u542F\u52A8\u81EA\u52A8\u89E3\u9501\uFF0C\u67E5\u770B\u51ED\u636E\u9700\u53E3\u4EE4";
-      if (mode === "C") return "\u542F\u52A8\u81EA\u52A8\u89E3\u9501\uFF0C\u67E5\u770B\u514D\u53E3\u4EE4";
-      return "\u5168\u9501\uFF1A\u6BCF\u6B21\u542F\u52A8\u9700\u89E3\u9501";
-    }
-  }
-});
-
 // packages/addons/vault/client/ui/lock.cjs
 var require_lock = __commonJS({
   "packages/addons/vault/client/ui/lock.cjs"(exports2, module2) {
@@ -2817,7 +2747,6 @@ var require_secrets = __commonJS({
       var busyS = React.useState(false);
       var msgS = React.useState("");
       var revealS = React.useState(null);
-      var askS = React.useState(null);
       var unlockS = React.useState(null);
       var delS = React.useState(null);
       var guard = Lock2.use({ api, C, React });
@@ -2856,7 +2785,6 @@ var require_secrets = __commonJS({
         if (guard.locked) {
           listS[1]({ loading: false, rows: [], error: "" });
           revealS[1](null);
-          askS[1](null);
           unlockS[1](null);
           delS[1](null);
           formS[1](emptyForm());
@@ -3002,30 +2930,17 @@ var require_secrets = __commonJS({
       }
       function reveal(row) {
         msgS[1]("");
-        var mode = statusS[0] && statusS[0].unlockMode;
-        if (mode === "B") {
-          askS[1]({ row, value: "", busy: false, error: "" });
-          return;
-        }
-        doReveal(row, void 0);
+        doReveal(row);
       }
-      function doReveal(row, passphrase) {
+      function doReveal(row) {
         busyS[1](true);
-        C.call(api, "vault.secretReveal", { id: row.id, passphrase }).then(function(r) {
+        C.call(api, "vault.secretReveal", { id: row.id }).then(function(r) {
           busyS[1](false);
-          askS[1](null);
           revealS[1]({ name: row.name, secret: r.secret });
         }).catch(function(e) {
           busyS[1](false);
-          if (askS[0]) askS[1](Object.assign({}, askS[0], { busy: false, error: C.errText(e) }));
-          else msgS[1](C.errText(e));
+          msgS[1](C.errText(e));
         });
-      }
-      function confirmPassphrase() {
-        var a = askS[0];
-        if (!a || !a.value) return;
-        askS[1](Object.assign({}, a, { busy: true, error: "" }));
-        doReveal(a.row, a.value);
       }
       function copyRevealed() {
         if (!revealS[0] || !navigator.clipboard) return;
@@ -3134,7 +3049,7 @@ var require_secrets = __commonJS({
           h("span", { className: "wbv-toolbar-tail" }),
           h("span", { className: "wbv-muted" }, listS[0].loading ? "\u8BFB\u53D6\u4E2D\u2026" : rows.length + " \u6761")
         ),
-        locked ? h(C.Notice, { h, kind: "error", text: "\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A\uFF08" + (statusS[0].unlockMode || "A") + " \u6A21\u5F0F\uFF09\uFF1A\u65B0\u589E\u3001\u7F16\u8F91\u548C\u67E5\u770B\u660E\u6587\u90FD\u9700\u8981\u5148\u89E3\u9501\u3002\u70B9\u53F3\u4E0A\u89D2\u300C\u89E3\u9501\u300D\uFF0C\u6216\u76F4\u63A5\u4FDD\u5B58\u65F6\u6309\u63D0\u793A\u89E3\u9501\u3002" }) : null,
+        locked ? h(C.Notice, { h, kind: "error", text: "\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A\uFF1A\u65B0\u589E\u3001\u7F16\u8F91\u548C\u67E5\u770B\u660E\u6587\u90FD\u9700\u8981\u5148\u7528\u4E3B\u53E3\u4EE4\u89E3\u9501\u3002\u70B9\u53F3\u4E0A\u89D2\u300C\u89E3\u9501\u300D\uFF0C\u6216\u76F4\u63A5\u4FDD\u5B58\u65F6\u6309\u63D0\u793A\u89E3\u9501\u3002" }) : null,
         h(C.Notice, { h, kind: "error", text: listS[0].error || msgS[0] }),
         listS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u4E2D\u2026" }) : rows.length === 0 ? h(
           P.EmptyState,
@@ -3302,28 +3217,6 @@ var require_secrets = __commonJS({
             if (!unlockS[0].busy) unlockS[1](null);
           },
           onConfirm: confirmUnlock
-        }) : null,
-        askS[0] ? h(AskPassphrase, {
-          h,
-          React,
-          C,
-          title: "\u67E5\u770B\u51ED\u636E\u660E\u6587",
-          hint: "\u5F53\u524D\u662F B \u6A21\u5F0F\uFF0C\u67E5\u770B\u660E\u6587\u9700\u8981\u518D\u6B21\u8F93\u5165\u4E3B\u53E3\u4EE4\u3002",
-          label: "\u4E3B\u53E3\u4EE4\uFF08" + askS[0].row.name + "\uFF09",
-          value: askS[0].value,
-          busy: askS[0].busy,
-          error: askS[0].error,
-          show: askS[0].show,
-          onChange: function(v) {
-            askS[1](Object.assign({}, askS[0], { value: v }));
-          },
-          onToggle: function() {
-            askS[1](Object.assign({}, askS[0], { show: !askS[0].show }));
-          },
-          onCancel: function() {
-            if (!askS[0].busy) askS[1](null);
-          },
-          onConfirm: confirmPassphrase
         }) : null,
         revealS[0] ? h(
           Dialog,
@@ -4798,30 +4691,22 @@ var require_config = __commonJS({
     "use strict";
     var C = require_common();
     var P = require_page();
-    var AskPassphrase = require_ask_passphrase();
     var SecretField = require_secret_field();
-    var MODES = [
-      { id: "A", title: "A \u5168\u9501\uFF08\u63A8\u8350\uFF09", desc: "\u6BCF\u6B21 DSH \u542F\u52A8\u540E\u9700\u8981\u8F93\u5165\u4E3B\u53E3\u4EE4\uFF1B\u660E\u6587\u53EA\u5728\u5F53\u524D\u8FDB\u7A0B\u5185\u5B58\u3002" },
-      { id: "B", title: "B \u81EA\u52A8\u89E3\u9501\uFF0C\u67E5\u770B\u9700\u53E3\u4EE4", desc: "\u542F\u52A8\u65F6\u7528\u672C\u673A device key \u81EA\u52A8\u89E3\u9501\uFF1B\u6BCF\u6B21\u67E5\u770B/\u7F16\u8F91\u51ED\u636E\u518D\u8F93\u4E3B\u53E3\u4EE4\u3002" },
-      { id: "C", title: "C \u81EA\u52A8\u89E3\u9501\uFF0C\u67E5\u770B\u514D\u53E3\u4EE4", desc: "\u542F\u52A8\u81EA\u52A8\u89E3\u9501\uFF0C\u754C\u9762\u4E0A\u53EF\u76F4\u63A5\u67E5\u770B\u660E\u6587\uFF1B\u9002\u5408\u5355\u4EBA\u53D7\u63A7\u673A\u5668\u3002" }
-    ];
     module2.exports = function ConfigView(props) {
       var h = props.h;
       var api = props.api;
       var React = props.React;
       var st = React.useState(null);
-      var mode = React.useState("A");
       var oldPass = React.useState("");
       var newPass = React.useState("");
+      var newPass2 = React.useState("");
       var msg = React.useState("");
       var busy = React.useState(false);
       var tick = React.useState(0);
-      var askS = React.useState(null);
-      var show = React.useState({ old: false, next: false });
+      var show = React.useState({ old: false, next: false, again: false });
       React.useEffect(function() {
         C.call(api, "vault.status").then(function(s) {
           st[1](s);
-          if (s && s.unlockMode) mode[1](s.unlockMode);
         }).catch(function(e) {
           msg[1](C.errText(e));
         });
@@ -4837,99 +4722,55 @@ var require_config = __commonJS({
           msg[1](C.errText(e));
         });
       }
-      function applyMode() {
-        var target = mode[0];
-        if (target === "B" || target === "C") {
-          if (!st[0] || st[0].locked) {
-            askS[1]({ kind: "mode", value: "", busy: false, error: "" });
-            return;
-          }
-        }
-        run(C.call(api, "vault.setUnlockMode", { mode: target }));
-      }
-      function confirmAsk() {
-        var a = askS[0];
-        if (!a || !a.value) return;
-        askS[1](Object.assign({}, a, { busy: true, error: "" }));
-        var p = a.kind === "mode" ? C.call(api, "vault.setUnlockMode", { mode: mode[0], passphrase: a.value }) : C.call(api, "vault.rotateDeviceKey", { passphrase: a.value });
-        p.then(function() {
-          askS[1](null);
-          busy[1](false);
-          tick[1](tick[0] + 1);
-        }).catch(function(e) {
-          askS[1](Object.assign({}, a, { busy: false, error: C.errText(e) }));
-        });
-      }
       function changePass() {
-        if (newPass[0].length < 10) return msg[1]("\u65B0\u53E3\u4EE4\u81F3\u5C11 10 \u4E2A\u5B57\u7B26");
+        if (newPass[0].length < 12) return msg[1]("\u65B0\u53E3\u4EE4\u81F3\u5C11 12 \u4E2A\u5B57\u7B26");
+        if (newPass[0] !== newPass2[0]) return msg[1]("\u4E24\u6B21\u8F93\u5165\u7684\u65B0\u53E3\u4EE4\u4E0D\u4E00\u81F4");
         run(C.call(api, "vault.changePassphrase", { oldPassphrase: oldPass[0], newPassphrase: newPass[0] }));
         oldPass[1]("");
         newPass[1]("");
-      }
-      function rotate() {
-        askS[1]({ kind: "rotate", value: "", busy: false, error: "" });
+        newPass2[1]("");
       }
       var status = st[0];
-      var modal = askS[0] ? h(AskPassphrase, {
-        h,
-        React,
-        C,
-        title: askS[0].kind === "mode" ? "\u5207\u6362\u5230 " + mode[0] + " \u6A21\u5F0F" : "\u8F6E\u6362 device key",
-        hint: askS[0].kind === "mode" ? "\u5207\u6362\u89E3\u9501\u6A21\u5F0F\u9700\u8981\u9A8C\u8BC1\u4E3B\u53E3\u4EE4\u3002" : "\u65E7 device key \u6587\u4EF6\u4F1A\u88AB\u8986\u76D6\uFF0C\u4E4B\u540E\u7528\u65B0 key \u81EA\u52A8\u89E3\u9501\u3002",
-        value: askS[0].value,
-        busy: askS[0].busy,
-        error: askS[0].error,
-        onChange: function(v) {
-          askS[1](Object.assign({}, askS[0], { value: v }));
-        },
-        show: askS[0].show,
-        onToggle: function() {
-          askS[1](Object.assign({}, askS[0], { show: !askS[0].show }));
-        },
-        onCancel: function() {
-          if (!askS[0].busy) askS[1](null);
-        },
-        onConfirm: confirmAsk
-      }) : null;
+      var hint = status && status.passphraseHint ? status.passphraseHint : "\u5C1A\u672A\u751F\u6210";
       return h(
         "div",
         { className: "wbv" },
         h(P.PageHead, {
           h,
           title: "\u4FDD\u9669\u7BB1\u8BBE\u7F6E",
-          sub: "\u89E3\u9501\u6A21\u5F0F\u51B3\u5B9A\u542F\u52A8\u65F6\u8981\u4E0D\u8981\u8F93\u4E3B\u53E3\u4EE4\u3001\u67E5\u770B\u660E\u6587\u8981\u4E0D\u8981\u518D\u9A8C\u8BC1\uFF1B\u6539\u4E3B\u53E3\u4EE4\u53EA\u91CD\u5305 DEK\u3002",
+          sub: "\u4E3B\u53E3\u4EE4\u662F\u5168\u4FDD\u9669\u7BB1\u552F\u4E00\u7684\u89E3\u9501\u56E0\u5B50\uFF1A\u6539\u53E3\u4EE4\u53EA\u91CD\u5305 DEK\uFF0C\u4E0D\u91CD\u65B0\u52A0\u5BC6\u51ED\u636E\u3002",
           pill: status ? h("span", { className: "wbv-pill" + (status.locked ? " warn" : " ok") }, status.locked ? "\u5DF2\u9501\u5B9A" : "\u5DF2\u89E3\u9501") : null
         }),
         h(C.Notice, { h, kind: "error", text: msg[0] }),
         h(
           P.Card,
-          { h, title: "\u89E3\u9501\u6A21\u5F0F" },
-          h("div", { className: "wbv-check-list" }, MODES.map(function(m) {
-            return h(
-              "label",
-              { key: m.id, className: "wbv-choice" },
-              h("input", { type: "radio", name: "vault-mode", checked: mode[0] === m.id, onChange: function() {
-                mode[1](m.id);
-              } }),
-              h(
-                "span",
-                { className: "wbv-choice-text" },
-                h("span", { className: "wbv-choice-title" }, m.title),
-                h("span", { className: "wbv-choice-desc" }, m.desc)
-              )
-            );
-          })),
+          { h, title: "\u4E3B\u53E3\u4EE4\u662F\u4EC0\u4E48" },
+          h(
+            "p",
+            { className: "wbv-sub" },
+            "\u4E3B\u53E3\u4EE4\u662F\u4F60\u81EA\u5DF1\u8BB0\u4F4F\u7684\u90A3\u4E32\u53E3\u4EE4\uFF0C\u7528\u6765\u6D3E\u751F\u5BC6\u94A5\u5305\u88F9\u4FDD\u9669\u7BB1\u7684 DEK\uFF08\u771F\u6B63\u52A0\u5BC6\u51ED\u636E\u7684\u5BC6\u94A5\uFF09\u3002\u53E3\u4EE4\u672C\u8EAB\u65E2\u4E0D\u843D\u5E93\u4E5F\u4E0D\u4E0A\u4E91\uFF0C\u4E91\u7AEF\u53EA\u6709 KDF \u53C2\u6570\u3001\u5305\u88F9\u540E\u7684 DEK \u4E0E\u5BC6\u6587\uFF0C\u6240\u4EE5\u5FD8\u8BB0\u53E3\u4EE4\u65E0\u6CD5\u627E\u56DE\u3002\u540C\u4E00\u4FDD\u9669\u7BB1\u5728\u6240\u6709\u8BBE\u5907\u4E0A\u5FC5\u987B\u4F7F\u7528\u540C\u4E00\u4E2A\u4E3B\u53E3\u4EE4\u2014\u2014\u6362\u8BBE\u5907\u3001\u91CD\u88C5\u3001\u6362\u673A\u90FD\u662F\u8F93\u5165\u5B83\uFF0C\u800C\u4E0D\u662F\u300C\u91CD\u65B0\u521D\u59CB\u5316\u300D\u3002\u5982\u679C\u67D0\u53F0\u8BBE\u5907\u663E\u793A\u300C\u53E3\u4EE4\u9519\u8BEF\u300D\uFF0C99% \u662F\u8FD9\u53F0\u8BBE\u5907\u4E0A\u8F93\u5165\u7684\u4E3B\u53E3\u4EE4\u4E0E\u6700\u65E9\u7684\u8BBE\u5907\u4E0D\u4E00\u81F4\u3002"
+          ),
           h(
             "div",
             { className: "wbv-form-actions" },
-            h("span", { className: "wbv-muted wbv-grow" }, status ? "\u5F53\u524D\uFF1A" + status.unlockMode + (status.locked ? "\uFF08\u5DF2\u9501\u5B9A\uFF09" : "\uFF08\u5DF2\u89E3\u9501\uFF09") : "\u8BFB\u53D6\u4E2D\u2026"),
-            h(C.Btn, { h, kind: "primary", disabled: busy[0], onClick: applyMode }, busy[0] ? "\u5E94\u7528\u4E2D\u2026" : "\u5E94\u7528\u6A21\u5F0F")
+            h(
+              "span",
+              { className: "wbv-muted wbv-grow" },
+              "\u4E3B\u53E3\u4EE4\u6307\u7EB9\uFF1A" + hint + "\uFF08\u7531\u53E3\u4EE4\u6D3E\u751F\u7684\u5BC6\u94A5\u7B97\u51FA\uFF0C\u4E0D\u542B\u53E3\u4EE4\u672C\u8EAB\uFF1B\u5404\u8BBE\u5907\u663E\u793A\u4E00\u81F4\u5373\u8868\u793A\u662F\u540C\u4E00\u4E2A\u4E3B\u53E3\u4EE4\uFF09"
+            ),
+            h(C.Btn, { h, disabled: busy[0] || !status || status.locked, onClick: function() {
+              tick[1](tick[0] + 1);
+            } }, "\u5237\u65B0\u6307\u7EB9")
           )
         ),
         h(
           P.Card,
           { h, title: "\u4FEE\u6539\u4E3B\u53E3\u4EE4" },
-          h("p", { className: "wbv-sub" }, "\u53EA\u91CD\u5305 DEK\uFF0C\u4E0D\u4F1A\u91CD\u65B0\u52A0\u5BC6\u6240\u6709\u51ED\u636E\uFF1Bdevice key \u4E0D\u53D7\u5F71\u54CD\u3002"),
+          h(
+            "p",
+            { className: "wbv-sub" },
+            "\u53EA\u91CD\u5305 DEK \u5E76\u66F4\u65B0\u6307\u7EB9\uFF0C\u4E0D\u4F1A\u91CD\u65B0\u52A0\u5BC6\u5DF2\u6709\u51ED\u636E\uFF1B\u6539\u5B8C\u540E\u5176\u5B83\u8BBE\u5907\u4E0B\u6B21\u89E3\u9501\u65F6\u7528\u65B0\u53E3\u4EE4\uFF0C\u4ECD\u7528\u65E7\u53E3\u4EE4\u4F1A\u63D0\u793A\u300C\u4E3B\u53E3\u4EE4\u5DF2\u5728\u5176\u5B83\u8BBE\u5907\u4FEE\u6539\u300D\u3002"
+          ),
           h(
             "div",
             { className: "wbv-form-grid" },
@@ -4951,7 +4792,7 @@ var require_config = __commonJS({
             ),
             h(
               C.Field,
-              { h, label: "\u65B0\u53E3\u4EE4\uFF08\u81F3\u5C11 10 \u4F4D\uFF09" },
+              { h, label: "\u65B0\u53E3\u4EE4\uFF08\u81F3\u5C11 12 \u4F4D\uFF09" },
               h(SecretField, {
                 h,
                 show: show[0].next,
@@ -4964,26 +4805,31 @@ var require_config = __commonJS({
                   show[1](Object.assign({}, show[0], { next: !show[0].next }));
                 }
               })
+            ),
+            h(
+              C.Field,
+              { h, label: "\u518D\u8F93\u4E00\u6B21\u65B0\u53E3\u4EE4" },
+              h(SecretField, {
+                h,
+                show: show[0].again,
+                value: newPass2[0],
+                autoComplete: "new-password",
+                onChange: function(v) {
+                  newPass2[1](v);
+                },
+                onToggle: function() {
+                  show[1](Object.assign({}, show[0], { again: !show[0].again }));
+                }
+              })
             )
           ),
           h(
             "div",
             { className: "wbv-form-actions" },
+            h("span", { className: "wbv-grow" }),
             h(C.Btn, { h, kind: "primary", disabled: busy[0], onClick: changePass }, "\u4FEE\u6539\u53E3\u4EE4")
           )
-        ),
-        h(
-          P.Card,
-          { h, title: "Device key" },
-          h("p", { className: "wbv-sub" }, "B/C \u6A21\u5F0F\u7528\u6765\u5728\u542F\u52A8\u65F6\u81EA\u52A8\u89E3\u9501\u3002key \u6587\u4EF6\u4F4D\u4E8E $WB_HOME/vault-device.key\uFF0C\u6743\u9650 0600\uFF1B\u5220\u9664\u5B83\u7B49\u540C\u56DE\u5230\u9501\u5B9A\u72B6\u6001\u3002"),
-          h(
-            "div",
-            { className: "wbv-form-actions" },
-            h("span", { className: "wbv-muted wbv-grow" }, status && status.unlockMode === "A" ? "A \u6A21\u5F0F\u4E0B\u4E0D\u4F7F\u7528 device key" : ""),
-            h(C.Btn, { h, disabled: busy[0] || !status || status.unlockMode === "A", onClick: rotate }, "\u8F6E\u6362 device key")
-          )
-        ),
-        modal
+        )
       );
     };
   }
@@ -7016,7 +6862,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.6.1",
+    version: "0.7.0",
     icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },

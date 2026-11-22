@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
-import { mkdtempSync, existsSync, statSync } from "node:fs";
+import { mkdtempSync, existsSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -14,7 +14,7 @@ const { createVault } = await import("../lib/domain/vault.js");
 const { createGroups } = await import("../lib/domain/groups.js");
 const { createSets } = await import("../lib/domain/sets.js");
 const { registerVaultActions } = await import("../lib/domain/actions.js");
-const { KDF_DEFAULT, deriveKey, legacySecretAad, sealAccount, open, seal, secretAad } = await import("../lib/infra/crypto.js");
+const { KDF_DEFAULT, deriveKey, legacySecretAad, passphraseFingerprint, sealAccount, open, seal, secretAad } = await import("../lib/infra/crypto.js");
 
 function makeVault() {
   const db = new DatabaseSync(":memory:");
@@ -35,12 +35,12 @@ const PASS = "correct-horse-1";
 
 test("A 模式初始化、加密落库、解锁/失败锁", () => {
   const { db, run } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.setup", { passphrase: PASS });
   const st = run("vault.status");
   assert.equal(st.initialized, true);
   assert.equal(st.locked, false);
-  assert.equal(st.unlockMode, "A");
-  assert.equal(st.schemaVersion, 6);
+  assert.match(String(st.passphraseHint || ""), /^[0-9a-f]{8}$/);
+  assert.equal(st.schemaVersion, 7);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_header").get().n, 1);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_device").get().n, 1);
 
@@ -67,25 +67,40 @@ test("A 模式初始化、加密落库、解锁/失败锁", () => {
   assert.equal(run("vault.status").locked, false);
 });
 
-test("B 模式 device key 自动解锁，reveal 仍要口令", () => {
-  process.env.WB_HOME = mkdtempSync(join(tmpdir(), "wb-vault-test-b-"));
-  const { run } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "B" });
+test("主口令是唯一解锁因子：不落 device key，指纹可核对，锁定后必须重新输入", () => {
+  process.env.WB_HOME = mkdtempSync(join(tmpdir(), "wb-vault-test-p-"));
+  const a = makeVault();
+  a.run("vault.setup", { passphrase: PASS });
   const keyPath = join(process.env.WB_HOME, "vault-device.key");
-  assert.equal(existsSync(keyPath), true);
-  assert.equal(statSync(keyPath).mode & 0o777, 0o600);
+  assert.equal(existsSync(keyPath), false, "0.7.0 起不再生成 device key 文件");
+  const hint = a.run("vault.status").passphraseHint;
+  assert.match(String(hint), /^[0-9a-f]{8}$/);
 
-  run("vault.secretCreate", { name: "imap", kinds: ["app_password"], secret: "app-pass" });
-  run("vault.lock");
-  assert.equal(run("vault.status").locked, false, "B 模式 status 应自动解锁");
-  const id = run("vault.secretList").items[0].id;
-  assert.throws(() => run("vault.secretReveal", { id }), /需要口令/);
-  assert.equal(run("vault.secretReveal", { id, passphrase: PASS }).secret, "app-pass");
+  a.run("vault.secretCreate", { name: "imap", kinds: ["app_password"], secret: "app-pass" });
+  a.run("vault.lock");
+  assert.equal(a.run("vault.status").locked, true, "没有自动解锁：锁定后 status 仍是锁定");
+
+  // 另一台设备同步到同一份 header（同一 salt 与口令包裹）后，必须能用同一主口令解锁，指纹一致。
+  const b = makeVault();
+  ensureSchema(b.db);
+  const head = headerGet(a.db);
+  b.db.prepare(
+    "INSERT INTO vault_header(id, schema_version, salt, kdf, wrapped_dek, passphrase_fp, passphrase_rev, created_at, updated_at, rev) " +
+      "VALUES(1, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  ).run(head.schema_version, head.salt, head.kdf, head.wrapped_dek, head.passphrase_fp, head.passphrase_rev, head.created_at, head.updated_at, head.rev);
+  assert.throws(() => b.run("vault.unlock", { passphrase: "another-pass-9" }), /口令错误/);
+  assert.equal(b.run("vault.unlock", { passphrase: PASS }).ok, true, "同一主口令必须能打开同步过来的 header");
+  assert.equal(b.run("vault.status").passphraseHint, hint, "同一主口令 + 同一 header 的指纹应一致");
+  assert.notEqual(passphraseFingerprint(Buffer.alloc(32, 1)), hint, "不同 KEK 的指纹必须不同");
+
+  a.run("vault.unlock", { passphrase: PASS });
+  const id = a.run("vault.secretList").items[0].id;
+  assert.equal(a.run("vault.secretReveal", { id }).secret, "app-pass");
 });
 
 test("plugin lease 可用，ui/agent 不可用；改口令后可解锁", () => {
   const { run, vault } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.setup", { passphrase: PASS });
   run("vault.secretCreate", { name: "token1", kinds: ["token"], secret: "tok-123" });
   const id = run("vault.secretList").items[0].id;
   assert.equal(run("vault.lease", { id, purpose: "test" }, "plugin").secret, "tok-123");
@@ -102,7 +117,7 @@ test("plugin lease 可用，ui/agent 不可用；改口令后可解锁", () => {
 
 test("分组、关联与按组可见凭据", () => {
   const { db, run } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.setup", { passphrase: PASS });
   const groupId = run("vault.groupCreate", { name: "sspai", description: "少数派账号" }).id;
   const otherId = run("vault.groupCreate", { name: "mail" }).id;
   assert.throws(() => run("vault.groupCreate", { name: "sspai" }), /同名分组/);
@@ -158,7 +173,7 @@ test("分组、关联与按组可见凭据", () => {
 
 test("plugin 写入受绑定约束：按 setName 建集合、按 name 幂等写凭据", () => {
   const { db, run } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.setup", { passphrase: PASS });
   const groupId = run("vault.groupCreate", { name: "站点账号 · 少数派" }).id;
   const otherId = run("vault.groupCreate", { name: "别的组" }).id;
   run("vault.subjectRegister", { type: "site", title: "站点" }, "plugin");
@@ -218,7 +233,7 @@ test("plugin 写入受绑定约束：按 setName 建集合、按 name 幂等写�
 
 test("集合 action：增删改、挂载/摘除与权限", () => {
   const { db, run } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.setup", { passphrase: PASS });
   const g1 = run("vault.groupCreate", { name: "组一" }).id;
   const g2 = run("vault.groupCreate", { name: "组二" }).id;
   const set = run("vault.setCreate", { name: "共享集合", description: "给两个组用" });
@@ -258,7 +273,7 @@ test("集合 action：增删改、挂载/摘除与权限", () => {
 
 test("plugin 写入多类型：按 name 幂等、kinds 原样回读，账号只是普通凭据类型", () => {
   const { run } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.setup", { passphrase: PASS });
   const groupId = run("vault.groupCreate", { name: "邮件账户" }).id;
   run("vault.subjectRegister", { type: "mail", title: "邮箱" }, "plugin");
   run("vault.bind", { subjectType: "mail", subjectId: "mb_1", groupId }, "plugin");
@@ -296,16 +311,58 @@ test("plugin 写入多类型：按 name 幂等、kinds 原样回读，账号只�
 
 test("并发改口令：LWW + 提示", () => {
   const { db, run } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.setup", { passphrase: PASS });
   run("vault.changePassphrase", { oldPassphrase: PASS, newPassphrase: "second-pass-2" });
   // 模拟另一台设备已用新口令、而本机 device 记录还停在第 1 版
   deviceSet(db, { passphrase_rev_seen: 1 });
   run("vault.lock");
-  assert.throws(() => run("vault.unlock", { passphrase: PASS }), /口令已在其他设备修改/);
+  assert.throws(() => run("vault.unlock", { passphrase: PASS }), /主口令已在其它设备修改/);
   const ok = run("vault.unlock", { passphrase: "second-pass-2" });
-  assert.match(String(ok.notice || ""), /口令已在其他设备修改/);
+  assert.match(String(ok.notice || ""), /主口令已在其它设备修改/);
   assert.equal(headerGet(db).passphrase_rev, 2);
   assert.equal(deviceGet(db).passphrase_rev_seen, 2);
+});
+
+test("6.x → 7.0 结构迁移：header 补主口令指纹、device 表丢掉 device key 与模式列", () => {
+  const db = new DatabaseSync(":memory:");
+  db.exec(
+    "CREATE TABLE vault_header (id INTEGER PRIMARY KEY CHECK (id = 1), schema_version INTEGER NOT NULL DEFAULT 3, " +
+      "salt TEXT NOT NULL, kdf TEXT NOT NULL, wrapped_dek TEXT NOT NULL, passphrase_rev INTEGER NOT NULL DEFAULT 1, " +
+      "created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, rev INTEGER NOT NULL DEFAULT 1)",
+  );
+  db.exec(
+    "CREATE TABLE vault_device (id TEXT PRIMARY KEY, wrapped_dek_device TEXT, unlock_mode TEXT NOT NULL DEFAULT 'A', " +
+      "auto_unlock INTEGER NOT NULL DEFAULT 0, reveal_policy TEXT NOT NULL DEFAULT 'session', " +
+      "idle_timeout_sec INTEGER NOT NULL DEFAULT 900, last_unlock_at INTEGER, " +
+      "passphrase_rev_seen INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, " +
+      "rev INTEGER NOT NULL DEFAULT 1)",
+  );
+  const salt = randomBytes(16);
+  const dek = randomBytes(32);
+  const kek = deriveKey(PASS, salt.toString("base64"), KDF_DEFAULT);
+  const ts = 1700000000000;
+  db.prepare(
+    "INSERT INTO vault_header(id, schema_version, salt, kdf, wrapped_dek, passphrase_rev, created_at, updated_at, rev) " +
+      "VALUES(1, 6, ?, ?, ?, 1, ?, ?, 1)",
+  ).run(salt.toString("base64"), JSON.stringify(KDF_DEFAULT), seal(kek, dek, "vault:dek"), ts, ts);
+  db.prepare(
+    "INSERT INTO vault_device(id, wrapped_dek_device, unlock_mode, auto_unlock, reveal_policy, idle_timeout_sec, " +
+      "last_unlock_at, passphrase_rev_seen, created_at, updated_at, rev) VALUES('local', 'x', 'B', 1, 'passphrase', 900, ?, 1, ?, ?, 1)",
+  ).run(ts, ts, ts);
+
+  ensureSchema(db);
+  assert.equal(headerGet(db).schema_version, 7);
+  assert.equal(hasColumn(db, "vault_header", "passphrase_fp"), true);
+  assert.equal(hasColumn(db, "vault_device", "wrapped_dek_device"), false);
+  assert.equal(hasColumn(db, "vault_device", "unlock_mode"), false);
+  assert.equal(deviceGet(db).idle_timeout_sec, 900);
+  assert.equal(deviceGet(db).last_unlock_at, ts);
+
+  // 旧库没有指纹：解锁后按主口令回填，且能正常读出凭据。
+  const vault = createVault({ db });
+  vault.unlock({ passphrase: PASS });
+  assert.match(String(headerGet(db).passphrase_fp), /^[0-9a-f]{8}$/);
+  assert.equal(hasColumn(db, "vault_header", "passphrase_fp"), true);
 });
 
 test("0.1.0 的 vault_meta 迁移到 header/device/usage", () => {
@@ -341,7 +398,8 @@ test("0.1.0 的 vault_meta 迁移到 header/device/usage", () => {
 
   ensureSchema(db);
   assert.equal(headerGet(db).salt, salt.toString("base64"));
-  assert.equal(deviceGet(db).unlock_mode, "A");
+  assert.equal(deviceGet(db).idle_timeout_sec, 900);
+  assert.equal(deviceGet(db).passphrase_rev_seen, 1);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_secret_usage").get().n, 1);
   assert.equal(db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'vault_meta'").get(), undefined);
   assert.ok(db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'vault_meta_legacy'").get());
@@ -390,7 +448,7 @@ test("kinds 契约：schema、能力清单与界面标签三处同口径 8 种",
 
 test("集合层：一条凭据进多个集合、一个集合挂多个分组、删除只断关联", () => {
   const { db, run } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.setup", { passphrase: PASS });
   const g1 = run("vault.groupCreate", { name: "组一" }).id;
   const g2 = run("vault.groupCreate", { name: "组二" }).id;
   const created = run("vault.secretCreate", { name: "共用密码", kinds: ["password"], secret: "shared-pw", groupId: g1 });
@@ -441,7 +499,7 @@ test("0.3.x → 0.4.0：启动补 account 列并把 schema_version 升到 4", ()
 
 test("集合：不再区分类型，账号只是一条 kind=account 的凭据", () => {
   const { run } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.setup", { passphrase: PASS });
 
   const a = run("vault.setCreate", { name: "工作邮箱 A" });
   const b = run("vault.setCreate", { name: "工作邮箱 B" });
@@ -466,7 +524,7 @@ test("集合：不再区分类型，账号只是一条 kind=account 的凭据", 
 
 test("新建/编辑集合时一并处理凭据：勾已有的一条、填明文新建一条，保存后都挂上", () => {
   const { run } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.setup", { passphrase: PASS });
   const existing = run("vault.secretCreate", { name: "旧授权码", kinds: ["app_password"], secret: "old-code" });
 
   const created = run("vault.setCreate", {
@@ -499,7 +557,7 @@ test("新建/编辑集合时一并处理凭据：勾已有的一条、填明文�
 
 test("0.2.x → 0.3.0 迁移：分组直属凭据收进默认集合，site-account 收口为通用类型", async () => {
   const { db, run, vault } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.setup", { passphrase: PASS });
   const groupId = run("vault.groupCreate", { name: "站点账号 · 少数派" }).id;
 
   const head = headerGet(db);
@@ -527,7 +585,7 @@ test("0.2.x → 0.3.0 迁移：分组直属凭据收进默认集合，site-accou
   const res = run("vault.unlock", { passphrase: PASS });
   assert.match(String(res.notice || ""), /集合与账号/);
   assert.match(String(res.notice || ""), /凭据类型拆表/);
-  assert.equal(headerGet(db).schema_version, 6);
+  assert.equal(headerGet(db).schema_version, 7);
   assert.equal(hasColumn(db, "vault_secret", "group_id"), false, "迁移后应删掉 group_id 列");
   assert.equal(hasColumn(db, "vault_secret", "kind"), false, "0.6.0 起类型拆到 vault_secret_kind");
 
@@ -561,7 +619,7 @@ test("0.2.x → 0.3.0 迁移：分组直属凭据收进默认集合，site-accou
 
 test("迁移失败整批回滚，schema_version 停在迁移前", async () => {
   const { db, run, vault } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.setup", { passphrase: PASS });
   const secret = run("vault.secretCreate", { name: "会被卡住的凭据", kinds: ["password"], secret: "pw" });
   // 还原成 0.5.x：类型还没拆表，header 停在 5；预先塞一行同 (secret_id, kind) 的类型行，
   // 迁移回填时撞唯一索引，事务回滚。
@@ -590,7 +648,7 @@ test("两设备同步：复制同步表后集合、关联与凭据一致", () =>
     "vault_subject_type",
   ];
   const a = makeVault();
-  a.run("vault.setup", { passphrase: PASS, mode: "A" });
+  a.run("vault.setup", { passphrase: PASS });
   const groupId = a.run("vault.groupCreate", { name: "同步组" }).id;
   const setId = a.run("vault.setCreate", { name: "同步集合", description: "跨设备" }).id;
   a.run("vault.groupAttachSet", { groupId, setId });
@@ -600,7 +658,7 @@ test("两设备同步：复制同步表后集合、关联与凭据一致", () =>
 
   // 设备 B：先建空库，再把 A 的同步表整表拷过去（等价宿主同步后的状态）
   const b = makeVault();
-  b.run("vault.setup", { passphrase: PASS, mode: "A" });
+  b.run("vault.setup", { passphrase: PASS });
   b.vault.lock();
   for (const table of TABLES) {
     b.db.exec("DELETE FROM " + table);
@@ -628,7 +686,7 @@ test("两设备同步：复制同步表后集合、关联与凭据一致", () =>
 
 test("凭据列表关键字搜索：名称与备注都能命中，不再报 SQL 语法错误", () => {
   const { run } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.setup", { passphrase: PASS });
   run("vault.secretCreate", {
     name: "ID_CARD",
     kinds: ["id_card"],
@@ -653,7 +711,7 @@ test("凭据列表关键字搜索：名称与备注都能命中，不再报 SQL 
 
 test("锁定后集合与凭据元数据仍可读，只有明文与写操作要解锁", () => {
   const { run, vault } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.setup", { passphrase: PASS });
   const set = run("vault.setCreate", { name: "工作邮箱" });
   run("vault.secretCreate", {
     name: "邮箱密码",
@@ -687,7 +745,7 @@ test("锁定后集合与凭据元数据仍可读，只有明文与写操作要�
 
 test("凭据多类型：一条凭据可属于多个类型，改类型不重加密、改名才重加密", () => {
   const { db, run } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.setup", { passphrase: PASS });
 
   const created = run("vault.secretCreate", { name: "邮箱", kinds: ["password", "account"], secret: "ops@example.com" });
   assert.deepEqual(created.kinds, ["password", "account"], "按 KINDS 固定顺序回读");
@@ -716,7 +774,7 @@ test("凭据多类型：一条凭据可属于多个类型，改类型不重加�
 
 test("5.x → 6.0 迁移：单值类型拆表、旧 AAD 重封装、集合账号转成账号凭据", () => {
   const { db, run, vault } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
+  run("vault.setup", { passphrase: PASS });
   const set = run("vault.setCreate", { name: "工作邮箱" });
   const secret = run("vault.secretCreate", { name: "邮箱密码", kinds: ["password"], secret: "pw-old", setId: set.id });
 
@@ -737,7 +795,7 @@ test("5.x → 6.0 迁移：单值类型拆表、旧 AAD 重封装、集合账号
   vault.lock();
   const res = run("vault.unlock", { passphrase: PASS });
   assert.match(String(res.notice || ""), /凭据类型拆表/);
-  assert.equal(headerGet(db).schema_version, 6);
+  assert.equal(headerGet(db).schema_version, 7);
   assert.equal(hasColumn(db, "vault_secret", "kind"), false);
   assert.equal(hasColumn(db, "vault_set", "account"), false);
 

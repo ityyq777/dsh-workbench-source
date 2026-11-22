@@ -45,7 +45,7 @@ const GROUPS = [
 ];
 
 const RESPONSES = {
-  "vault.status": { initialized: true, locked: false, unlockMode: "A", secretCount: 3, groupCount: 2, lastUnlockAt: Date.now() - 600_000 },
+  "vault.status": { initialized: true, locked: false, passphraseHint: "a1b2c3d4", secretCount: 3, groupCount: 2, lastUnlockAt: Date.now() - 600_000 },
   "vault.secretList": { items: SECRETS },
   "vault.setList": { items: SETS },
   "vault.groupList": { items: GROUPS },

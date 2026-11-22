@@ -20,8 +20,11 @@ export const VAULT_META_LEGACY = "vault_meta_legacy";
  * 0.4.0 起：集合加可选 account 列；0.5.0 起该列改为密文；二者都已在 0.6.0 下线。
  * 0.6.0 起：凭据类型改为多值（vault_secret_kind），集合不再区分账号/普通；schema_version 6。
  *           vault_secret 去掉单值 kind 列、vault_set 去掉 account 列，都需要 DEK 在解锁后迁移。
+ * 0.7.0 起：只保留主口令一种解锁因子，设备 key 与 A/B/C 模式下线；schema_version 7。
+ *           vault_header 增 passphrase_fp（主口令一致性指纹，不含口令与密钥）；
+ *           vault_device 去掉 device key 与模式的四列，只留本机空闲超时与解锁时间。
  */
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 export const VAULT_DDL = [
   "CREATE TABLE IF NOT EXISTS vault_header (" +
@@ -30,6 +33,7 @@ export const VAULT_DDL = [
     "salt TEXT NOT NULL," +
     "kdf TEXT NOT NULL," +
     "wrapped_dek TEXT NOT NULL," +
+    "passphrase_fp TEXT NOT NULL DEFAULT ''," +
     "passphrase_rev INTEGER NOT NULL DEFAULT 1," +
     "created_at INTEGER NOT NULL," +
     "updated_at INTEGER NOT NULL," +
@@ -37,10 +41,6 @@ export const VAULT_DDL = [
     ");",
   "CREATE TABLE IF NOT EXISTS vault_device (" +
     "id TEXT PRIMARY KEY," +
-    "wrapped_dek_device TEXT," +
-    "unlock_mode TEXT NOT NULL DEFAULT 'A'," +
-    "auto_unlock INTEGER NOT NULL DEFAULT 0," +
-    "reveal_policy TEXT NOT NULL DEFAULT 'session'," +
     "idle_timeout_sec INTEGER NOT NULL DEFAULT 900," +
     "last_unlock_at INTEGER," +
     "passphrase_rev_seen INTEGER NOT NULL DEFAULT 0," +
@@ -180,6 +180,46 @@ export function ensureSchema(db) {
   for (const sql of VAULT_DDL) db.exec(sql);
   migrateV1(db);
   migrateV4(db);
+  migrateV7(db);
+}
+
+/**
+ * 0.6.x → 0.7.0：主口令成为唯一解锁因子（纯结构升级，不需要 DEK）。
+ * - vault_header 补 passphrase_fp；旧库解一次锁后由 unlock 回填。
+ * - vault_device 只剩本机空闲超时与解锁时间：设备 key、unlock_mode、auto_unlock、
+ *   reveal_policy 四列重建表时丢弃；device key 密文随之消失，不影响已同步的密文。
+ * 只处理已经到 6 的库；更旧的库先走解锁时的数据迁移，由 runMigration 末尾再补这一步。
+ */
+export function migrateV7(db) {
+  const head = headerGet(db);
+  if (!head) return;
+  const version = Number(head.schema_version || 0);
+  if (version < 6 || version >= 7) return;
+  tx(db, () => {
+    if (!hasColumn(db, "vault_header", "passphrase_fp")) {
+      db.exec("ALTER TABLE vault_header ADD COLUMN passphrase_fp TEXT NOT NULL DEFAULT ''");
+    }
+    if (tableExists(db, "vault_device")) {
+      db.exec(
+        "CREATE TABLE vault_device_next (" +
+          "id TEXT PRIMARY KEY," +
+          "idle_timeout_sec INTEGER NOT NULL DEFAULT 900," +
+          "last_unlock_at INTEGER," +
+          "passphrase_rev_seen INTEGER NOT NULL DEFAULT 0," +
+          "created_at INTEGER NOT NULL," +
+          "updated_at INTEGER NOT NULL," +
+          "rev INTEGER NOT NULL DEFAULT 1" +
+          ")",
+      );
+      db.exec(
+        "INSERT INTO vault_device_next(id, idle_timeout_sec, last_unlock_at, passphrase_rev_seen, created_at, updated_at, rev) " +
+          "SELECT id, idle_timeout_sec, last_unlock_at, passphrase_rev_seen, created_at, updated_at, rev FROM vault_device",
+      );
+      db.exec("DROP TABLE vault_device");
+      db.exec("ALTER TABLE vault_device_next RENAME TO vault_device");
+    }
+    headerSet(db, { schema_version: 7 });
+  });
 }
 
 /**
@@ -219,19 +259,11 @@ export function migrateV1(db) {
       "INSERT INTO vault_header(id, schema_version, salt, kdf, wrapped_dek, passphrase_rev, created_at, updated_at, rev) " +
         "VALUES(1, 2, ?, ?, ?, 1, ?, ?, 1)",
     ).run(meta.salt, meta.kdf || "{}", meta.wrapped_dek, ts, now());
+    // 0.7.0 起设备行只保留本机解锁时间与空闲超时；旧 meta 里的 device key 与模式字段直接丢弃。
     db.prepare(
-      "INSERT INTO vault_device(id, wrapped_dek_device, unlock_mode, auto_unlock, reveal_policy, idle_timeout_sec, " +
-        "last_unlock_at, passphrase_rev_seen, created_at, updated_at, rev) VALUES('local', ?, ?, ?, ?, ?, ?, 1, ?, ?, 1)",
-    ).run(
-      meta.wrapped_dek_device || null,
-      meta.unlock_mode || "A",
-      meta.auto_unlock === "1" ? 1 : 0,
-      meta.reveal_policy || "session",
-      Number(meta.idle_timeout_sec) || 900,
-      Number(meta.last_unlock_at) || null,
-      ts,
-      now(),
-    );
+      "INSERT INTO vault_device(id, idle_timeout_sec, last_unlock_at, passphrase_rev_seen, created_at, updated_at, rev) " +
+        "VALUES('local', ?, ?, 1, ?, ?, 1)",
+    ).run(Number(meta.idle_timeout_sec) || 900, Number(meta.last_unlock_at) || null, ts, now());
     db.exec(
       "INSERT INTO vault_secret_usage(secret_id, last_used_at) " +
         "SELECT id, last_used_at FROM vault_secret WHERE last_used_at IS NOT NULL",
@@ -258,22 +290,24 @@ export function headerSet(db, patch = {}) {
     salt: patch.salt ?? cur.salt,
     kdf: patch.kdf ?? cur.kdf,
     wrapped_dek: patch.wrapped_dek ?? cur.wrapped_dek,
+    passphrase_fp: patch.passphrase_fp ?? cur.passphrase_fp ?? "",
     passphrase_rev: patch.passphrase_rev ?? cur.passphrase_rev ?? 1,
     created_at: cur.created_at ?? patch.created_at ?? now(),
     updated_at: now(),
     rev: Number(cur.rev || 0) + 1,
   };
   db.prepare(
-    "INSERT INTO vault_header(id, schema_version, salt, kdf, wrapped_dek, passphrase_rev, created_at, updated_at, rev) " +
-      "VALUES(1, ?, ?, ?, ?, ?, ?, ?, ?) " +
+    "INSERT INTO vault_header(id, schema_version, salt, kdf, wrapped_dek, passphrase_fp, passphrase_rev, created_at, updated_at, rev) " +
+      "VALUES(1, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
       "ON CONFLICT(id) DO UPDATE SET schema_version = excluded.schema_version, salt = excluded.salt, " +
-      "kdf = excluded.kdf, wrapped_dek = excluded.wrapped_dek, passphrase_rev = excluded.passphrase_rev, " +
-      "updated_at = excluded.updated_at, rev = excluded.rev",
+      "kdf = excluded.kdf, wrapped_dek = excluded.wrapped_dek, passphrase_fp = excluded.passphrase_fp, " +
+      "passphrase_rev = excluded.passphrase_rev, updated_at = excluded.updated_at, rev = excluded.rev",
   ).run(
     next.schema_version,
     next.salt,
     next.kdf,
     next.wrapped_dek,
+    next.passphrase_fp,
     next.passphrase_rev,
     next.created_at,
     next.updated_at,
@@ -289,10 +323,6 @@ export function deviceGet(db) {
 export function deviceSet(db, patch = {}) {
   const cur = deviceGet(db) || {};
   const next = {
-    wrapped_dek_device: patch.wrapped_dek_device !== undefined ? patch.wrapped_dek_device : cur.wrapped_dek_device ?? null,
-    unlock_mode: patch.unlock_mode ?? cur.unlock_mode ?? "A",
-    auto_unlock: patch.auto_unlock !== undefined ? Number(patch.auto_unlock ? 1 : 0) : Number(cur.auto_unlock || 0),
-    reveal_policy: patch.reveal_policy ?? cur.reveal_policy ?? "session",
     idle_timeout_sec: patch.idle_timeout_sec ?? cur.idle_timeout_sec ?? 900,
     last_unlock_at: patch.last_unlock_at !== undefined ? patch.last_unlock_at : cur.last_unlock_at ?? null,
     passphrase_rev_seen: patch.passphrase_rev_seen ?? cur.passphrase_rev_seen ?? 0,
@@ -301,19 +331,12 @@ export function deviceSet(db, patch = {}) {
     rev: Number(cur.rev || 0) + 1,
   };
   db.prepare(
-    "INSERT INTO vault_device(id, wrapped_dek_device, unlock_mode, auto_unlock, reveal_policy, idle_timeout_sec, " +
-      "last_unlock_at, passphrase_rev_seen, created_at, updated_at, rev) " +
-      "VALUES('local', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
-      "ON CONFLICT(id) DO UPDATE SET wrapped_dek_device = excluded.wrapped_dek_device, " +
-      "unlock_mode = excluded.unlock_mode, auto_unlock = excluded.auto_unlock, " +
-      "reveal_policy = excluded.reveal_policy, idle_timeout_sec = excluded.idle_timeout_sec, " +
+    "INSERT INTO vault_device(id, idle_timeout_sec, last_unlock_at, passphrase_rev_seen, created_at, updated_at, rev) " +
+      "VALUES('local', ?, ?, ?, ?, ?, ?) " +
+      "ON CONFLICT(id) DO UPDATE SET idle_timeout_sec = excluded.idle_timeout_sec, " +
       "last_unlock_at = excluded.last_unlock_at, passphrase_rev_seen = excluded.passphrase_rev_seen, " +
       "updated_at = excluded.updated_at, rev = excluded.rev",
   ).run(
-    next.wrapped_dek_device,
-    next.unlock_mode,
-    next.auto_unlock,
-    next.reveal_policy,
     next.idle_timeout_sec,
     next.last_unlock_at,
     next.passphrase_rev_seen,

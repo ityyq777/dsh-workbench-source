@@ -45,7 +45,6 @@ module.exports = function SecretsView(props) {
   var busyS = React.useState(false);
   var msgS = React.useState("");
   var revealS = React.useState(null);
-  var askS = React.useState(null); // { row, value, busy, error }
   var unlockS = React.useState(null); // { value, busy, error } 解锁弹层
   var delS = React.useState(null); // { row } 删除确认弹层
   // 未解锁守卫：锁定期间不请求列表；在途请求用序号作废，返回时若已锁定/已重载就丢弃。
@@ -84,7 +83,6 @@ module.exports = function SecretsView(props) {
     if (guard.locked) {
       listS[1]({ loading: false, rows: [], error: "" });
       revealS[1](null);
-      askS[1](null);
       unlockS[1](null);
       delS[1](null);
       formS[1](emptyForm());
@@ -237,28 +235,19 @@ module.exports = function SecretsView(props) {
   }
 
   function reveal(row) {
+    // 0.7.0 起只有主口令一种解锁因子：已解锁即可直接查看明文，不再二次验证。
     msgS[1]("");
-    var mode = statusS[0] && statusS[0].unlockMode;
-    if (mode === "B") { askS[1]({ row: row, value: "", busy: false, error: "" }); return; }
-    doReveal(row, undefined);
+    doReveal(row);
   }
 
-  function doReveal(row, passphrase) {
+  function doReveal(row) {
     busyS[1](true);
-    C.call(api, "vault.secretReveal", { id: row.id, passphrase: passphrase }).then(function (r) {
-      busyS[1](false); askS[1](null); revealS[1]({ name: row.name, secret: r.secret });
+    C.call(api, "vault.secretReveal", { id: row.id }).then(function (r) {
+      busyS[1](false); revealS[1]({ name: row.name, secret: r.secret });
     }).catch(function (e) {
       busyS[1](false);
-      if (askS[0]) askS[1](Object.assign({}, askS[0], { busy: false, error: C.errText(e) }));
-      else msgS[1](C.errText(e));
+      msgS[1](C.errText(e));
     });
-  }
-
-  function confirmPassphrase() {
-    var a = askS[0];
-    if (!a || !a.value) return;
-    askS[1](Object.assign({}, a, { busy: true, error: "" }));
-    doReveal(a.row, a.value);
   }
 
   function copyRevealed() {
@@ -337,7 +326,7 @@ module.exports = function SecretsView(props) {
       h("span", { className: "wbv-muted" }, listS[0].loading ? "读取中…" : rows.length + " 条")),
 
     locked
-      ? h(C.Notice, { h: h, kind: "error", text: "保险箱已锁定（" + (statusS[0].unlockMode || "A") + " 模式）：新增、编辑和查看明文都需要先解锁。点右上角「解锁」，或直接保存时按提示解锁。" })
+      ? h(C.Notice, { h: h, kind: "error", text: "保险箱已锁定：新增、编辑和查看明文都需要先用主口令解锁。点右上角「解锁」，或直接保存时按提示解锁。" })
       : null,
     h(C.Notice, { h: h, kind: "error", text: listS[0].error || msgS[0] }),
 
@@ -450,23 +439,6 @@ module.exports = function SecretsView(props) {
       onToggle: function () { unlockS[1](Object.assign({}, unlockS[0], { show: !unlockS[0].show })); },
       onCancel: function () { if (!unlockS[0].busy) unlockS[1](null); },
       onConfirm: confirmUnlock,
-    }) : null,
-
-    askS[0] ? h(AskPassphrase, {
-      h: h,
-      React: React,
-      C: C,
-      title: "查看凭据明文",
-      hint: "当前是 B 模式，查看明文需要再次输入主口令。",
-      label: "主口令（" + askS[0].row.name + "）",
-      value: askS[0].value,
-      busy: askS[0].busy,
-      error: askS[0].error,
-      show: askS[0].show,
-      onChange: function (v) { askS[1](Object.assign({}, askS[0], { value: v })); },
-      onToggle: function () { askS[1](Object.assign({}, askS[0], { show: !askS[0].show })); },
-      onCancel: function () { if (!askS[0].busy) askS[1](null); },
-      onConfirm: confirmPassphrase,
     }) : null,
 
     revealS[0] ? h(Dialog, {

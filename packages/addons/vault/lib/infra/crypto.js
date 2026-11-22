@@ -5,12 +5,13 @@
 import {
   createCipheriv,
   createDecipheriv,
+  createHash,
   randomBytes,
   scryptSync,
 } from "node:crypto";
-import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, rmSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 
 export const KDF_DEFAULT = { N: 32768, r: 8, p: 1, keylen: 32 };
 
@@ -89,25 +90,21 @@ export function wbHome() {
   return process.env.WB_HOME || join(homedir(), ".dsh", "workbench");
 }
 
-export function deviceKeyPath() {
-  return join(wbHome(), "vault-device.key");
+/**
+ * 主口令一致性指纹：由 KEK 派生的 8 位十六进制，只用来核对两台设备是不是同一个主口令。
+ * 不含口令本身，也不能反推 KEK 或 DEK；换了口令指纹自然变化。
+ */
+export function passphraseFingerprint(kek) {
+  return createHash("sha256").update(kek).update("vault:passphrase-fingerprint").digest("hex").slice(0, 8);
 }
 
-export function readDeviceKey() {
-  const path = deviceKeyPath();
-  if (!existsSync(path)) return null;
-  const buf = readFileSync(path);
-  return buf.length === 32 ? buf : null;
-}
-
-export function writeDeviceKey(key) {
-  const path = deviceKeyPath();
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, key, { mode: 0o600 });
-  chmodSync(path, 0o600);
-}
-
-export function removeDeviceKey() {
-  const path = deviceKeyPath();
-  if (existsSync(path)) rmSync(path);
+/**
+ * 0.6.x 及更早版本会在本机落一把 device key（$WB_HOME/vault-device.key）。
+ * 0.7.0 起设备 key 下线，旧文件留着等于多一份无用密钥，启动时清掉。
+ */
+export function removeLegacyDeviceKey() {
+  const path = join(wbHome(), "vault-device.key");
+  if (!existsSync(path)) return false;
+  rmSync(path, { force: true });
+  return true;
 }

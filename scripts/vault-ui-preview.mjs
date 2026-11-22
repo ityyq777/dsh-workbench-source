@@ -57,7 +57,7 @@ var GROUPS = [
   { id: "g_2", name: "工作邮箱", description: "", secretCount: 2, bindingCount: 0, setCount: 1 },
 ];
 // 字段与真实的 vault.status 对齐（locked 由 DEK 决定），否则视图会一直按锁定渲染。
-var STATUS = { initialized: true, locked: ${LOCKED}, unlockMode: "A", revealPolicy: "session", autoUnlock: false, idleTimeoutSec: 900, secretCount: SECRETS.length, groupCount: GROUPS.length, lastUnlockAt: now, passphraseRev: 1, schemaVersion: 2 };
+var STATUS = { initialized: true, locked: ${LOCKED}, passphraseHint: "a1b2c3d4", idleTimeoutSec: 900, secretCount: SECRETS.length, groupCount: GROUPS.length, lastUnlockAt: now, passphraseRev: 1, schemaVersion: 2 };
 var api = { call: function (action, args) {
   if (action === "vault.secretList") return Promise.resolve({ result: { items: SECRETS } });
   if (action === "vault.setList") {

@@ -1,18 +1,19 @@
 /**
  * 保险箱核心：KDF 包裹 DEK、DEK 加密 secret，DEK 只在内存。
- * 0.2.0：口令包裹存单行 vault_header（随云同步），device key 与使用记录留本机。
- * A/B/C 三种 unlock_mode 共用同一套表；切换失败保持原模式。
+ * 0.2.0：口令包裹存单行 vault_header（随云同步），使用记录留本机。
+ * 0.7.0：主口令是唯一的解锁因子——不再有 device key 与 A/B/C 模式。
+ *        所有设备必须用同一个主口令；header 里的同一份包裹决定密文能否解开，
+ *        因此换设备、换机器都不需要换钥匙，只需输入同一个主口令。
  */
 import { randomBytes } from "node:crypto";
 import {
   KDF_DEFAULT,
   deriveKey,
   open,
-  readDeviceKey,
-  removeDeviceKey,
+  passphraseFingerprint,
+  removeLegacyDeviceKey,
   seal,
   secretAad,
-  writeDeviceKey,
 } from "../infra/crypto.js";
 import {
   SCHEMA_VERSION,
@@ -28,14 +29,14 @@ import {
   usageMap,
 } from "../db/db.js";
 import { createSets } from "./sets.js";
+import { migrateV7 } from "../db/db.js";
 import { migrateAccountsToV5, migrateToV3, migrateToV6 } from "./migrate.js";
 import { assertKinds, assertMeta, assertSecretName } from "./secret-input.js";
 import { attachKinds, kindsMap, kindsOf, replaceKinds } from "./kinds.js";
 
-const MODES = new Set(["A", "B", "C"]);
 const SYNC_NOTE =
-  "vault_header（口令包裹）与 vault_secret/vault_group/vault_binding 的结构和密文会随云同步上传；" +
-  "device key 与 last_used_at 只留本机。";
+  "vault_header（主口令包裹与指纹）与 vault_secret/vault_group/vault_binding 的结构和密文会随云同步上传；" +
+  "last_used_at 与空闲超时只留本机。主口令本身永不落库、永不上云。";
 
 function parseKdf(raw) {
   try {
@@ -52,12 +53,6 @@ function parseJson(raw, fallback) {
   } catch {
     return fallback;
   }
-}
-
-function validateMode(mode) {
-  const value = String(mode || "").toUpperCase();
-  if (!MODES.has(value)) throw new Error("unlockMode 必须是 A/B/C");
-  return value;
 }
 
 function assertPassphrase(passphrase) {
@@ -119,25 +114,6 @@ export function createVault({ db, log = () => {} }) {
     return Boolean(db.prepare("SELECT 1 FROM vault_group WHERE id = ? AND deleted_at IS NULL").get(String(groupId)));
   }
 
-  function tryAutoUnlock() {
-    if (state.dek || !initialized()) return false;
-    const device = deviceGet(db);
-    if (!device || Number(device.auto_unlock) !== 1) return false;
-    if (device.unlock_mode !== "B" && device.unlock_mode !== "C") return false;
-    const deviceKey = readDeviceKey();
-    if (!device.wrapped_dek_device || !deviceKey) return false;
-    const head = headerGet(db);
-    try {
-      state.dek = open(deviceKey, device.wrapped_dek_device, "vault:device");
-      state.lastActivity = now();
-      deviceSet(db, { last_unlock_at: now(), passphrase_rev_seen: head.passphrase_rev });
-      return true;
-    } catch (error) {
-      log("自动解锁失败", String(error && error.message));
-      return false;
-    }
-  }
-
   /**
    * 解锁后检查 schema_version：2 → 3 搬家、4 → 5 加密集合账号、5 → 6 类型拆表
    * 并把集合账号转成凭据；失败回滚停在原版本。
@@ -155,6 +131,7 @@ export function createVault({ db, log = () => {} }) {
       if (accounts.migrated) notes.push("账号加密");
       const kinds = migrateToV6({ db, dek: state.dek, log });
       if (kinds.migrated) notes.push("凭据类型拆表");
+      migrateV7(db);
       return notes.length ? "保险箱已升级（schema " + SCHEMA_VERSION + "）：" + notes.join("、") + "。" : "";
     } catch (error) {
       log("保险箱迁移失败，已回滚", String(error && error.message));
@@ -164,7 +141,6 @@ export function createVault({ db, log = () => {} }) {
 
   function status() {
     if (initialized()) {
-      tryAutoUnlock();
       if (state.dek) {
         try {
           touch();
@@ -184,9 +160,7 @@ export function createVault({ db, log = () => {} }) {
     return {
       initialized: initialized(),
       locked: !state.dek,
-      unlockMode: device.unlock_mode || "A",
-      revealPolicy: device.reveal_policy || "session",
-      autoUnlock: Number(device.auto_unlock) === 1,
+      passphraseHint: head ? String(head.passphrase_fp || "") : "",
       idleTimeoutSec: Number(device.idle_timeout_sec || 900),
       secretCount: count,
       groupCount,
@@ -201,15 +175,12 @@ export function createVault({ db, log = () => {} }) {
   function setup(args = {}) {
     if (initialized()) throw new Error("保险箱已初始化");
     const passphrase = assertPassphrase(args.passphrase);
-    const mode = validateMode(args.mode || "A");
     const salt = randomBytes(16);
     const dek = randomBytes(32);
     const kdf = { ...KDF_DEFAULT };
     const kek = deriveKey(passphrase, salt.toString("base64"), kdf);
     const wrapped = seal(kek, dek, "vault:dek");
     const ts = now();
-    const deviceKey = mode === "A" ? null : randomBytes(32);
-    const wrappedDevice = deviceKey ? seal(deviceKey, dek, "vault:device") : null;
 
     tx(db, () => {
       headerSet(db, {
@@ -217,24 +188,20 @@ export function createVault({ db, log = () => {} }) {
         salt: salt.toString("base64"),
         kdf: JSON.stringify(kdf),
         wrapped_dek: wrapped,
+        passphrase_fp: passphraseFingerprint(kek),
         passphrase_rev: 1,
         created_at: ts,
       });
       deviceSet(db, {
-        wrapped_dek_device: wrappedDevice,
-        unlock_mode: mode,
-        auto_unlock: mode === "A" ? 0 : 1,
-        reveal_policy: mode === "B" ? "passphrase" : "session",
         idle_timeout_sec: 900,
         last_unlock_at: ts,
         passphrase_rev_seen: 1,
         created_at: ts,
       });
     });
-    if (deviceKey) writeDeviceKey(deviceKey);
     state.dek = dek;
     state.lastActivity = ts;
-    return { ok: true, unlockMode: mode, cloudSync: true, syncNote: SYNC_NOTE };
+    return { ok: true, passphraseHint: passphraseFingerprint(kek), cloudSync: true, syncNote: SYNC_NOTE };
   }
 
   function unlock(args = {}) {
@@ -255,11 +222,13 @@ export function createVault({ db, log = () => {} }) {
       state.dek = open(kek, head.wrapped_dek, "vault:dek");
       state.failures = 0;
       state.lastActivity = now();
+      // 指纹只用于核对各设备是否同一个主口令；旧库首次解锁时补上。
+      if (!head.passphrase_fp) headerSet(db, { passphrase_fp: passphraseFingerprint(kek) });
+      if (removeLegacyDeviceKey()) log("已删除不再使用的 vault-device.key（0.7.0 起只用主口令）");
       deviceSet(db, { last_unlock_at: now(), passphrase_rev_seen: head.passphrase_rev });
-      const notice = runMigration();
-      if (Number(head.passphrase_rev) > Number(device.passphrase_rev_seen || 0)) {
-        return { ok: true, notice: "口令已在其他设备修改，本机已采用新口令。" + (notice ? " " + notice : "") };
-      }
+      const migrated = runMigration();
+      const changed = Number(head.passphrase_rev) > Number(device.passphrase_rev_seen || 0);
+      const notice = [changed ? "主口令已在其它设备修改，本机已按云端的口令包裹重新解锁。" : "", migrated].filter(Boolean).join(" ");
       return notice ? { ok: true, notice } : { ok: true };
     } catch (error) {
       state.failures += 1;
@@ -268,7 +237,7 @@ export function createVault({ db, log = () => {} }) {
         state.lockUntil = now() + 5 * 60 * 1000;
       }
       if (Number(head.passphrase_rev) > Number(device.passphrase_rev_seen || 0)) {
-        throw new Error("口令已在其他设备修改，请使用新口令");
+        throw new Error("主口令已在其它设备修改，请使用新口令");
       }
       throw new Error("口令错误");
     }
@@ -404,16 +373,9 @@ export function createVault({ db, log = () => {} }) {
   }
 
   function reveal(args = {}) {
+    // 0.7.0 起只有主口令一种解锁因子：能解锁就代表握有主口令，查看明文不再二次验证。
     const dek = requireUnlocked();
     const id = String(args.id || "");
-    const device = deviceGet(db) || {};
-    const mode = device.unlock_mode || "A";
-    const policy = device.reveal_policy || "session";
-    if (mode === "B" || policy === "passphrase") {
-      const passphrase = String(args.passphrase || "");
-      if (!passphrase) throw new Error("当前模式查看凭据需要口令");
-      checkPassphrase(passphrase);
-    }
     const row = db.prepare("SELECT * FROM vault_secret WHERE id = ? AND deleted_at IS NULL").get(id);
     if (!row) throw new Error("secret 不存在：" + id);
     const secret = open(dek, row.ciphertext, secretAad(row.id, row.name)).toString("utf8");
@@ -464,54 +426,12 @@ export function createVault({ db, log = () => {} }) {
         salt: salt.toString("base64"),
         kdf: JSON.stringify(KDF_DEFAULT),
         wrapped_dek: wrapped,
+        passphrase_fp: passphraseFingerprint(kek),
         passphrase_rev: passphraseRev,
       });
       deviceSet(db, { passphrase_rev_seen: passphraseRev });
     });
     return { ok: true, passphraseRev };
-  }
-
-  function setUnlockMode(args = {}) {
-    if (!initialized()) throw new Error("保险箱未初始化");
-    const mode = validateMode(args.mode);
-    const before = deviceGet(db);
-    try {
-      if (!state.dek) {
-        if (!args.passphrase) throw new Error("保险箱已锁定，切换模式需要口令");
-        unlock({ passphrase: args.passphrase });
-      }
-      if (mode === "A") {
-        removeDeviceKey();
-        deviceSet(db, { wrapped_dek_device: null, unlock_mode: "A", auto_unlock: 0, reveal_policy: "session" });
-      } else {
-        const deviceKey = readDeviceKey() || randomBytes(32);
-        const wrapped = seal(deviceKey, state.dek, "vault:device");
-        writeDeviceKey(deviceKey);
-        deviceSet(db, {
-          wrapped_dek_device: wrapped,
-          unlock_mode: mode,
-          auto_unlock: 1,
-          reveal_policy: mode === "B" ? "passphrase" : "session",
-        });
-      }
-      return { ok: true, unlockMode: mode };
-    } catch (error) {
-      if (before) deviceSet(db, before);
-      throw error;
-    }
-  }
-
-  function rotateDeviceKey(args = {}) {
-    if (!initialized()) throw new Error("保险箱未初始化");
-    const device = deviceGet(db) || {};
-    if ((device.unlock_mode || "A") === "A") throw new Error("A 模式没有 device key");
-    if (!state.dek) throw new Error("保险箱已锁定");
-    checkPassphrase(String(args.passphrase || ""));
-    const deviceKey = randomBytes(32);
-    const wrapped = seal(deviceKey, state.dek, "vault:device");
-    writeDeviceKey(deviceKey);
-    deviceSet(db, { wrapped_dek_device: wrapped });
-    return { ok: true };
   }
 
   /**
@@ -602,11 +522,8 @@ export function createVault({ db, log = () => {} }) {
     reveal,
     lease,
     changePassphrase,
-    setUnlockMode,
-    rotateDeviceKey,
     exportData,
     importData,
     initialized,
-    mode: () => (deviceGet(db) || {}).unlock_mode || "A",
   };
 }

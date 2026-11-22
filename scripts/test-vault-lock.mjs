@@ -188,7 +188,7 @@ const dataCode = readFileSync(resolve(root, 'packages/addons/vault/client/views/
 assert.match(dataCode, /if \(guard\.locked\) return h\(Lock\.Panel/, '数据页锁定只渲染提示卡');
 assert.match(dataCode, /return h\(Inner, props\);/, '数据页解锁后才渲染共享数据浏览器');
 const secretsCode = readFileSync(resolve(root, 'packages/addons/vault/client/views/secrets.cjs'), 'utf8');
-for (const clear of ['revealS[1](null)', 'askS[1](null)', 'unlockS[1](null)', 'editingS[1](false)', 'showSecretS[1](false)']) {
+for (const clear of ['revealS[1](null)', 'unlockS[1](null)', 'editingS[1](false)', 'showSecretS[1](false)']) {
   assert.ok(secretsCode.includes(clear), '锁定时必须清空：' + clear);
 }
 const groupsCode = readFileSync(resolve(root, 'packages/addons/vault/client/views/groups.cjs'), 'utf8');

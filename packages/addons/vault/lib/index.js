@@ -1,7 +1,7 @@
 /**
  * wb-addon-vault：独立凭据保险箱域。
  * 明文只在 UI reveal 或 plugin lease 时短暂出现；agent 永远拿不到。
- * 0.3.0：集合层（分组 ⊃ 集合 ⊃ 凭据）+ 七种通用凭据类型；密文与口令包裹上云，device key 与使用记录留本机。
+ * 0.3.0：集合层（分组 ⊃ 集合 ⊃ 凭据）+ 七种通用凭据类型；密文与口令包裹上云，使用记录留本机。
  * 0.3.1：凭据表单明文支持小眼睛临时显示；主口令/删除确认改用应用内弹层（桌面端不支持 window.prompt）。
  * 0.3.3：备注两栏合并为单个「备注」（meta.note）；新建分组改弹窗并可直接勾选集合。
  * 0.3.4：集合选择改用共享 filter-checklist（关键字搜索 + 滚动分页），任务/站点/储物标签筛选同步复用。
@@ -10,6 +10,8 @@
  * 0.5.0：集合账号也加密——vault_set.account 改成 DEK 加密的 `va1:` 密文（AAD 绑定集合 id），本地库、同步与备份里都不再有登录名明文；锁定态读不到账号，写入账号需先解锁；schema_version 4 → 5 在解锁后迁移。
  * 0.6.0：账号本身也是一种凭据（kind=account），类型从 vault_secret.kind 单列拆到 vault_secret_kind 关联表，一条凭据可同时有多种类型；集合不再区分账号/普通，存量集合账号在解锁后转成 kind=account 的凭据；AAD 只绑 id 与名称，改类型不再重加密。
  * 0.6.1：标签页「集合与账号」改名「集合」；「集合」与「数据」页在锁定态整页让位（只留锁定提示卡，不渲染集合/凭据/表清单，也不发起列表与取数请求）。
+ * 0.7.0：主口令成为唯一解锁因子——device key 与 A/B/C 解锁模式下线；header 增 passphrase_fp 指纹，
+ *        便于各设备核对是否同一个主口令；schema_version 7（vault_device 去掉 device key 与模式列）。
  */
 import { ensureSchema, bindClock } from "./db/db.js";
 import { createRequire } from "node:module";
@@ -138,13 +140,15 @@ export function createDomain(host) {
       ],
       notFor: ["浏览器密码自动填充", "跨设备同步明文", "给 agent 读取明文"],
       notes: [
-        "vault_header/vault_secret/vault_group/vault_set/vault_group_set/vault_set_secret/vault_binding/vault_subject_type 随云同步；device key 与 last_used_at 只留本机。",
-        "同步上去的是 KDF 参数与密文，云端没有口令也解不开；换机重新输入口令即可解锁。",
+        "主口令是保险箱唯一的解锁因子：口令本身不落库、不上云，上云的只是用它包裹后的 DEK；所有设备都必须输入同一个主口令，指纹（passphraseHint）可用来核对。",
+        "vault_header/vault_secret/vault_group/vault_set/vault_group_set/vault_set_secret/vault_binding/vault_subject_type 随云同步；last_used_at 与空闲超时只留本机。",
+        "同步上去的是 KDF 参数与密文，云端没有口令也解不开；换机重新输入同一个主口令即可解锁。",
         "备份仍不导出密文，换机靠同步或重新录入。",
         "旧版分组的直属凭据在首次解锁时迁移进「<组名> · 默认」集合；站点专属类型收口为通用类型。",
         "0.5.0 起集合账号曾用 DEK 加密在 vault_set.account；0.6.0 起该列取消，存量账号在解锁后转成 kind=account 的凭据。",
         "0.6.0 起类型存在 vault_secret_kind 关联表，一条凭据可多类型；AAD 只绑 id 与名称，改类型/归属不重加密，改名称才重加密；schema_version 升到 6 时在解锁后自动迁移，两端插件都升到 0.6.0 才能正确读写。",
         "0.6.1 起界面上标签页只叫「集合」；「集合」与「数据」页在保险箱未解锁时不显示任何集合、凭据或表数据，只显示锁定提示卡。",
+        "0.7.0 起只用主口令解锁（不再有 device key 与自动解锁模式）；忘记主口令无法恢复，只能重新录入凭据；各设备的主口令必须一致，状态页显示的 8 位指纹可用来核对。",
       ],
     },
     setup(api) {
