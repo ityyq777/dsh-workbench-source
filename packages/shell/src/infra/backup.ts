@@ -228,8 +228,8 @@ export async function createBackup(opts: {
   }
   const manifest: BackupManifest = skipped.length ? { ...manifestBase, modules, skipped } : { ...manifestBase, modules };
   if (format !== "zip") {
-    // 表都没有时明确报错：产出只有表头的空文件比报错更难排查。
-    if (format === "csv" && !entries.some((m) => exportTablesOf(m.data).length)) {
+    // 表都没有时明确报错：产出只有 metadata.json 的空包比报错更难排查。
+    if (!entries.some((m) => exportTablesOf(m.data).length)) {
       throw new BackupError("选中的模块没有可导出的表格数据", "invalid");
     }
     return {

@@ -1,8 +1,9 @@
 /**
- * 备份的可读导出：把各模块 exportData 的结果转成 json / csv / txt。
+ * 备份的可读导出：把各模块 exportData 的结果按表拆成 json / csv / txt 文件。
  *
+ * 产物始终是 zip：`metadata.json` 放元数据，每张表一个文件（表级导出）。
  * zip 仍是唯一可回导的形态；这三种格式只解决「看得懂、能直接进表格」。
- * CSV/TXT 把模块数据拆成表：顶层数组算一张表，对象里每个「对象数组」字段算一张表，
+ * 「表」的判定：顶层数组算一张表，对象里每个「对象数组」字段算一张表，
  * 纯配置对象（没有数组字段）整体当作一行。
  */
 import { zipCreate } from "./zip.js";
@@ -114,39 +115,16 @@ function txtTable(table: ExportTable): string {
   return lines.join("\n");
 }
 
-function buildTxt(opts: {
-  modules: BackupExportModule[];
-  shellVersion: string;
-  formatVersion: number;
-  exportedAt: Date;
-}): string {
-  const blocks: string[] = [
-    [
-      "# 个人工作台数据导出",
-      "# 导出时间：" + opts.exportedAt.toISOString(),
-      "# 壳版本：" + opts.shellVersion,
-      "# 格式版本：" + opts.formatVersion,
-      "# 说明：只读导出，不能导入恢复；需要恢复数据请导出 zip 备份包。",
-    ].join("\n"),
-  ];
-  for (const m of opts.modules) {
-    blocks.push([
-      "",
-      "═".repeat(68),
-      "模块：" + m.title + "（" + m.id + "） · 版本 " + (m.version || "?"),
-      "═".repeat(68),
-    ].join("\n"));
-    const tables = exportTablesOf(m.data);
-    if (!tables.length) {
-      blocks.push("（该模块暂无数据）");
-      continue;
-    }
-    for (const table of tables) blocks.push("", txtTable(table));
-  }
-  return blocks.join("\n") + "\n";
-}
-
-/** 产出可读导出文件；CSV 多表时打包成 zip，文件名与 MIME 随格式变化。 */
+/**
+ * 产出可读导出包：始终是 zip，元数据固定为 metadata.json，每张表一个文件。
+ *
+ * - json：`<模块id>.<表名>.json`，内容是行对象数组；
+ * - csv：`<模块id>.<表名>.csv`，UTF-8 BOM + RFC4180；
+ * - txt：`<模块id>.<表名>.txt`，列用 ` | ` 分隔的纯文本表。
+ *
+ * metadata.json 记录 kind / format / 版本 / 导出时间与每张表的文件、行数、列名；
+ * 没有 manifest.json，所以导入接口会把它当无效备份拒绝。
+ */
 export function buildReadableExport(opts: {
   format: Exclude<BackupExportFormat, "zip">;
   modules: BackupExportModule[];
@@ -155,39 +133,39 @@ export function buildReadableExport(opts: {
   exportedAt: Date;
 }): ReadableExportFile {
   const stamp = backupStamp(opts.exportedAt);
-  if (opts.format === "json") {
-    const payload = {
-      kind: READABLE_EXPORT_KIND,
-      formatVersion: opts.formatVersion,
-      shellVersion: opts.shellVersion,
-      exportedAt: opts.exportedAt.toISOString(),
-      note: "可读导出，不能导入恢复；需要恢复数据请使用 zip 备份包。",
-      modules: opts.modules,
-    };
-    return {
-      filename: "dsh-workbench-export-" + stamp + ".json",
-      contentType: "application/json; charset=utf-8",
-      buffer: Buffer.from(JSON.stringify(payload, null, 2), "utf8"),
-    };
-  }
-  if (opts.format === "txt") {
-    return {
-      filename: "dsh-workbench-export-" + stamp + ".txt",
-      contentType: "text/plain; charset=utf-8",
-      buffer: Buffer.from(buildTxt(opts), "utf8"),
-    };
-  }
   const files: { name: string; data: Buffer }[] = [];
+  const modules: {
+    id: string;
+    title: string;
+    version: string;
+    tables: { name: string; file: string; rows: number; columns: string[] }[];
+  }[] = [];
   for (const m of opts.modules) {
-    for (const table of exportTablesOf(m.data)) {
-      files.push({ name: m.id + "." + table.name + ".csv", data: Buffer.from(toCsv(table), "utf8") });
-    }
+    const tables = exportTablesOf(m.data).map((table) => {
+      const file = m.id + "." + table.name + "." + opts.format;
+      const text =
+        opts.format === "json"
+          ? JSON.stringify(table.rows, null, 2) + "\n"
+          : opts.format === "csv"
+            ? toCsv(table)
+            : txtTable(table) + "\n";
+      files.push({ name: file, data: Buffer.from(text, "utf8") });
+      return { name: table.name, file, rows: table.rows.length, columns: columnsOf(table.rows) };
+    });
+    modules.push({ id: m.id, title: m.title, version: m.version, tables });
   }
-  if (files.length === 1) {
-    return { filename: "dsh-workbench-export-" + stamp + ".csv", contentType: "text/csv; charset=utf-8", buffer: files[0].data };
-  }
+  const metadata = {
+    kind: READABLE_EXPORT_KIND,
+    format: opts.format,
+    formatVersion: opts.formatVersion,
+    shellVersion: opts.shellVersion,
+    exportedAt: opts.exportedAt.toISOString(),
+    note: "只读导出，按表拆分，元数据在 metadata.json；不能导入恢复，需要恢复数据请导出 zip 备份包。",
+    modules,
+  };
+  files.unshift({ name: "metadata.json", data: Buffer.from(JSON.stringify(metadata, null, 2), "utf8") });
   return {
-    filename: "dsh-workbench-export-" + stamp + ".zip",
+    filename: "dsh-workbench-export-" + stamp + "-" + opts.format + ".zip",
     contentType: "application/zip",
     buffer: zipCreate(files),
   };
