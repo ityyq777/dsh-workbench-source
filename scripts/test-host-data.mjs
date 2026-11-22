@@ -1,7 +1,7 @@
 /**
  * 宿主「数据」「配置」两页的自测：不启动 DSH，直接以原生插件形态加载宿主，
  * 走真实 UI 入口 POST /workbench/api/domains/wb-shell/actions/<action>。
- * 覆盖：7 张平台表、白名单拦截、分页与关键字、配置读写与恢复默认。
+ * 覆盖：10 张平台表、白名单拦截、分页与关键字、配置读写与恢复默认。
  */
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -58,10 +58,21 @@ try {
   if (!probe.payload || !probe.payload.result) {
     throw new Error("wb.dataTables 未返回 result，HTTP " + probe.status + "：" + JSON.stringify(probe.payload));
   }
-  // 1. 表清单：7 张平台表，带列信息
+  // 1. 表清单：10 张平台表（含事件队列三张），带列信息
   const tables = (await uiCall("wb.dataTables", {})).payload.result.tables;
   const names = tables.map((t) => t.name);
-  for (const name of ["meta", "sync_change_log", "conflict_shadow", "sync_dead_letter", "sync_state", "session_mode", "audit_log"]) {
+  for (const name of [
+    "meta",
+    "sync_change_log",
+    "conflict_shadow",
+    "sync_dead_letter",
+    "sync_state",
+    "session_mode",
+    "audit_log",
+    "host_event",
+    "host_event_delivery",
+    "host_event_subscription",
+  ]) {
     assert(names.includes(name), "缺少平台表 " + name + "（实际 " + names.join(",") + "）");
   }
   assert(!names.includes("task"), "业务表不应出现在宿主数据页");

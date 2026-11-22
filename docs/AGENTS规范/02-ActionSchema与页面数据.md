@@ -69,6 +69,19 @@ pnpm test:native && pnpm test:tags && pnpm test:sites
 
 声明必须 ⊇ 执行期 guard：`execute` 里写着 `only(ctx, ["ui", "plugin"])` 却在 `origins` 里只声明 `["ui"]`，那条 guard 的分支永远调不通（2026-11-21 的教训：`vault.lease` 声明缺 plugin，邮件同步报「不允许 plugin 来源调用」）。跨插件的后台调用（如邮件取保险箱凭据）走的就是 plugin 来源，后台专用动作要显式声明 `["plugin"]`。`node scripts/test-origin-decls.mjs` 会静态比对两者，已挂进 `pnpm test:native`。
 
+### 事件队列的消费 action：只能声明 `["plugin"]`
+
+宿主事件队列（`api.events.subscribe(type, action)`）要求消费 action **只允许插件后台调用**：
+
+- `origins` 必须恰好是 `["plugin"]`，省略或包含 `ui`/`agent`/`sync` 时 `subscribe` 直接抛错；
+  这样推送过来的消息不会被界面或 agent 顺手消费/伪造。
+- 消费 action 的入参由宿主固定为 `{ eventId, deliveryId, type, source, payload, createdAt }`，
+  schema 里按事件体声明（至少 `eventId`/`type`/`payload`），并在描述里写清是队列投递。
+- 注册顺序：同一个 `setup(api)` 里先 `api.action("域.onEvent", {...})`，再
+  `api.events.subscribe("xxx.created", "域.onEvent")`；宿主按当前已注册的 action 校验来源声明。
+- push 与消费必须解耦：`push` 里不要等下游返回值，也不要把下游异常重新抛给业务写路径；
+  投递失败由队列自己重试/进死信（`host_event_delivery.last_error`），可在宿主数据页查看。
+
 ## 文档同步
 
 `docs/插件功能清单.md` 是给人看的 action 清单，含版本表与 action 表；改 schema 时

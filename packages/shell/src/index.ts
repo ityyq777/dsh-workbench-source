@@ -31,6 +31,7 @@ import {
 
 import type { WbState, RegisteredDomain } from "./types/host-types.js";
 import { createActions } from "./actions/actions.js";
+import { createEventQueue } from "./infra/event-queue.js";
 import { createAgentRun } from "./actions/agent-run.js";
 import { installNetwork } from "./infra/network.js";
 import { clearDatabase, clearHostFiles } from "./infra/data-clear.js";
@@ -56,7 +57,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.10.7";
+export const SHELL_VERSION = "0.10.9";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -239,6 +240,14 @@ export function apply(ctx: any): void {
     extraMetaActions: [["host.agentRun", agentRun]],
   });
 
+  // 宿主事件队列：push 写库即返回，订阅方的消费 action 由后台 drain 异步分发。
+  // 必须在 createActions 之后建，因为分发要用它固定 plugin 来源的 invoke。
+  const eventQueue = createEventQueue({ db: state.db, invoke, log });
+  const hostEvents = {
+    push: (type: string, payload?: unknown) => eventQueue.push(type, payload, "host"),
+    stats: () => eventQueue.stats(),
+  };
+
   function registerAction(rec: RegisteredDomain, action: string, def: DomainActionDef): void {
     if (!ACTION_RE.test(action)) {
       throw new Error("非法 action 名（应形如 tasks.list）：" + action);
@@ -295,6 +304,12 @@ export function apply(ctx: any): void {
       },
       registerSearchProvider,
       emit: (event: string, data?: unknown) => emit("domain-event", { domainId: def.id, event, data: data ?? null }),
+      events: {
+        push: (type: string, payload?: unknown) => eventQueue.push(type, payload, def.id),
+        subscribe: (type: string, action: string) =>
+          eventQueue.subscribe(def.id, type, action, rec.actions.get(action)),
+        stats: () => eventQueue.stats(),
+      },
       now: () => clock.now(),
       markSyncDirty: (table?: string) => {
         if (table) setSyncStateText(state.db, "dirty:" + def.id + ":" + table, String(clock.now()));
@@ -370,9 +385,15 @@ export function apply(ctx: any): void {
     registerSearchProvider,
     actionNames,
     emit,
+    events: hostEvents,
     log,
   };
   ctx.provide?.("workbench", host);
+  eventQueue.start();
+  ctx.effect?.(
+    () => () => eventQueue.stop(),
+    "wb-event-queue",
+  );
 
   // ── 会话记录模式：命令开关 + 动态 prompt section + 客户端 HTTP 状态 ──
   const trackOn = (scope: any, dispose: unknown) => {

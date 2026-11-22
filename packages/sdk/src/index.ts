@@ -35,6 +35,52 @@ export interface DomainActionContext {
   emit(event: string, data?: unknown): void;
 }
 
+/**
+ * 一条已入队事件：宿主/插件 push 后由队列异步投递给订阅方的消费 action。
+ * 消费 action 的入参就是这个形状（另加 deliveryId 便于幂等处理）。
+ */
+export interface DomainEvent {
+  eventId: string;
+  type: string;
+  /** 推事件的来源：业务域 id，宿主自己推的是 "host" */
+  source: string;
+  payload: unknown;
+  createdAt: number;
+}
+
+/** 消费 action 的实际入参：事件本身 + 本次投递 id。 */
+export interface DomainEventDeliveryArgs extends DomainEvent {
+  deliveryId: string;
+}
+
+/**
+ * 事件总线：push 是「写库即返回」的主 push 模式，不等订阅方执行；
+ * 订阅方必须提供一个 `origins: ["plugin"]` 的 action 来消费。
+ */
+export interface DomainEventBus {
+  /** 推一条事件：同步落库后立刻返回，不等任何订阅方执行。 */
+  push(type: string, payload?: unknown): { id: string; deliveries: number };
+  /**
+   * 订阅事件类型（"*" 表示全部）。action 必须是本域已注册的 action，
+   * 且 `origins` 只能声明 ["plugin"]；否则立即抛错说明原因。
+   */
+  subscribe(type: string, action: string): () => void;
+  /** 队列现状（事件/投递/订阅计数），给诊断与测试用。 */
+  stats(): EventQueueStats;
+}
+
+/** 宿主侧队列句柄：宿主只负责 push，不给自己登记消费 action。 */
+export interface HostEventPublisher {
+  push(type: string, payload?: unknown): { id: string; deliveries: number };
+  stats(): EventQueueStats;
+}
+
+export interface EventQueueStats {
+  subscriptions: number;
+  events: Record<string, number>;
+  deliveries: Record<string, number>;
+}
+
 export interface DomainActionDef<I = Record<string, unknown>, O = unknown> {
   description?: string;
   /** JSON Schema（给 Workbench tool / 文档用） */
@@ -172,6 +218,11 @@ export interface DomainSetupApi {
   readonly shellVersion: string;
   /** 本地写入时钟：已做服务端时钟校准并保证单调递增 */
   now(): number;
+  /**
+   * 宿主事件队列：push 立即返回（不等任何订阅方），订阅方由宿主以 plugin 来源
+   * 调用登记过的消费 action。订阅与 action 的注册顺序：先注册 action，再 subscribe。
+   */
+  readonly events: DomainEventBus;
   /** 手动标记某张表为脏（可选；一般由 change log 自动判定） */
   markSyncDirty?(table?: string): void;
   /** 某个业务域是否已注册（用于跨插件能力探测，如站点检测标签） */
@@ -335,6 +386,11 @@ export interface WorkbenchHost {
   on(event: string, listener: (data: unknown) => void): () => void;
   /** 注册跨域搜索提供者；不注册就不参与聚合。返回注销函数。 */
   registerSearchProvider(provider: SearchProvider): () => void;
+  /**
+   * 宿主事件队列（只推不收）：宿主自己产生的事件也走同一条队列，
+   * 与业务插件 push 的事件共用持久化、重试与死信策略。push 立即返回。
+   */
+  readonly events: HostEventPublisher;
   /** action -> 所属 domain */
   actionNames(): { name: string; domainId: string; description?: string }[];
   emit(event: string, data?: unknown): void;

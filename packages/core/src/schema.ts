@@ -62,4 +62,38 @@ CREATE TABLE IF NOT EXISTS session_mode (
   enabled INTEGER NOT NULL DEFAULT 0,
   updated_at INTEGER NOT NULL
 );
+
+-- 宿主事件队列：push 方只写一行就返回，订阅方的消费 action 由后台 drain 异步分发。
+-- 三张表都是平台表，业务插件不建、也不参与云同步。
+CREATE TABLE IF NOT EXISTS host_event (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL,
+  source TEXT NOT NULL,
+  payload TEXT,
+  status TEXT NOT NULL DEFAULT 'queued',
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_host_event_status ON host_event(status, created_at);
+
+CREATE TABLE IF NOT EXISTS host_event_delivery (
+  id TEXT PRIMARY KEY,
+  event_id TEXT NOT NULL,
+  domain TEXT NOT NULL,
+  action TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  attempts INTEGER NOT NULL DEFAULT 0,
+  next_at INTEGER NOT NULL,
+  started_at INTEGER,
+  last_error TEXT,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_host_event_delivery_pending ON host_event_delivery(status, next_at);
+
+CREATE TABLE IF NOT EXISTS host_event_subscription (
+  domain TEXT NOT NULL,
+  type TEXT NOT NULL,
+  action TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (domain, type, action)
+);
 `;
