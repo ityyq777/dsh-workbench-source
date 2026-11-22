@@ -232,7 +232,14 @@ function commonMeta(pkg, subdir, description, keywords) {
 }
 function rewritePatch(file, hostName) {
   const src = readFileSync(file, "utf8");
-  writeFileSync(file, src.replace(/^(\s*(?:-\s+)?name:\s*)(['"]?)dsh-workbench\2(?=\s*(?:#.*)?$)/gm, (_match, key, quote) => `${key}${quote}${hostName}${quote}`));
+  // 块式（`name: 'dsh-workbench'` 独占一行）与流式（`{ id: workbench, name: 'dsh-workbench' }`）
+  // 两种写法都要换成发布名。子插件的宿主行故意写成流式（见 docs/AGENTS规范/03-安装与交付.md），
+  // 只按行首匹配的旧正则改不到它，发布出去会指向源码里才有的包名。
+  const next = src.replace(/(\bname:\s*)(['"]?)dsh-workbench\2(?=\s*(?:[,}#]|$))/gm, (_match, key, quote) => `${key}${quote}${hostName}${quote}`);
+  if (/name:\s*['"]?dsh-workbench(?![-.\w])/u.test(next)) {
+    throw new Error(`patch 里的宿主名没有全部改写：${file}`);
+  }
+  writeFileSync(file, next);
 }
 function rewriteHostClient(file, hostName) {
   const src = readFileSync(file, "utf8");

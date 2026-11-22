@@ -99,7 +99,9 @@
     "test:difficulty-dimensions": "node scripts/test-difficulty-dimensions.mjs",
     "test:tag-source-adopt": "node scripts/test-tag-source-adopt.mjs",
     "test:message-float": "node scripts/test-message-float.mjs",
-    "test:workbench-navigation": "node scripts/test-workbench-navigation.mjs"
+    "test:workbench-navigation": "node scripts/test-workbench-navigation.mjs",
+    "test:market": "node scripts/test-market-conflict.mjs",
+    "verify:install-order": "node scripts/verify-install-order.mjs"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.72.1",
