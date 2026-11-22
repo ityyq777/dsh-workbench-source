@@ -19,6 +19,7 @@ module.exports = function createCloudSettings(react, jsx) {
         if (!r || !r.ok) return;
         setCfg(r);
         setDraftMode(r.mode || "shared");
+        if (props.onModeChange) props.onModeChange(r.mode || "shared");
         setForm({
           url: (r.private && r.private.url) || "",
           secret: "",
@@ -43,6 +44,7 @@ module.exports = function createCloudSettings(react, jsx) {
         }
         setCfg(r);
         setDraftMode(r.mode || draftMode);
+        if (props.onModeChange) props.onModeChange(r.mode || draftMode);
         setForm({
           url: (r.private && r.private.url) || "",
           secret: "",
@@ -75,7 +77,7 @@ module.exports = function createCloudSettings(react, jsx) {
         return jsx.jsx("button", {
           key: m,
           className: "wb-tab" + (mode === m ? " on" : ""),
-          onClick: function () { setDraftMode(m); setMsg(""); },
+          onClick: function () { setDraftMode(m); setMsg(""); if (props.onModeChange) props.onModeChange(m); },
           children: t("cloud_mode_" + m),
         }, m);
       }) }),

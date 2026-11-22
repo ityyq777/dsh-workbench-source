@@ -2052,6 +2052,7 @@ var require_cloud_settings = __commonJS({
             if (!r || !r.ok) return;
             setCfg(r);
             setDraftMode(r.mode || "shared");
+            if (props.onModeChange) props.onModeChange(r.mode || "shared");
             setForm({
               url: r.private && r.private.url || "",
               secret: "",
@@ -2077,6 +2078,7 @@ var require_cloud_settings = __commonJS({
             }
             setCfg(r);
             setDraftMode(r.mode || draftMode);
+            if (props.onModeChange) props.onModeChange(r.mode || draftMode);
             setForm({
               url: r.private && r.private.url || "",
               secret: "",
@@ -2109,6 +2111,7 @@ var require_cloud_settings = __commonJS({
               onClick: function() {
                 setDraftMode(m);
                 setMsg("");
+                if (props.onModeChange) props.onModeChange(m);
               },
               children: t("cloud_mode_" + m)
             }, m);
@@ -2190,6 +2193,9 @@ var require_system_tabs = __commonJS({
         var st6 = react2.useState([]);
         var conflicts = st6[0];
         var setConflicts = st6[1];
+        var st8 = react2.useState("");
+        var pickedMode = st8[0];
+        var setPickedMode = st8[1];
         function refreshSync() {
           api.get("/sync/status").then(function(r) {
             if (r && r.ok) setSyncStatus(r);
@@ -2232,14 +2238,16 @@ var require_system_tabs = __commonJS({
           });
         }
         if (!me) return jsx2.jsx("div", { className: "wb-card", children: jsx2.jsx("span", { className: "wb-msg", children: "\u2026" }) });
-        var mode = me.mode || "shared";
-        var settingsCard = jsx2.jsx(CloudSettings, { t, api, onChanged: refresh });
+        var savedMode = me && me.mode || "shared";
+        var mode = pickedMode || savedMode;
+        var settingsCard = jsx2.jsx(CloudSettings, { t, api, onChanged: refresh, onModeChange: setPickedMode });
         if (!me.logged_in) {
+          if (mode !== "shared") return jsx2.jsx("div", { className: "wb-stack", children: settingsCard });
           return jsx2.jsxs("div", { className: "wb-stack", children: [
             settingsCard,
             jsx2.jsxs("div", { className: "wb-card", children: [
-              jsx2.jsx("div", { className: "wb-msg", style: { marginBottom: 10 }, children: mode === "shared" ? t("not_logged_in") : t("cloud_mode_" + mode + "_hint") }),
-              mode === "shared" ? jsx2.jsxs("div", { className: "wb-form", children: [
+              jsx2.jsx("div", { className: "wb-msg", style: { marginBottom: 10 }, children: t("not_logged_in") }),
+              jsx2.jsxs("div", { className: "wb-form", children: [
                 jsx2.jsx("input", { className: "wb-input", placeholder: t("email"), value: form.email, onChange: function(e) {
                   setForm(Object.assign({}, form, { email: e.target.value }));
                 } }),
@@ -2252,7 +2260,7 @@ var require_system_tabs = __commonJS({
                   setForm(Object.assign({}, form, { signup: next }));
                 } }),
                 jsx2.jsx("button", { className: "wb-btn", onClick: submit, children: form.signup ? t("signup") : t("login") })
-              ] }) : null,
+              ] }),
               msg ? jsx2.jsx("div", { className: "wb-err", style: { marginTop: 8 }, children: msg }) : null
             ] })
           ] });

@@ -13,6 +13,8 @@ function AccountTab(props) {
   var st4 = react.useState(false); var syncing = st4[0]; var setSyncing = st4[1];
   var st5 = react.useState(null); var syncStatus = st5[0]; var setSyncStatus = st5[1];
   var st6 = react.useState([]); var conflicts = st6[0]; var setConflicts = st6[1];
+  // 设置卡里刚点选的云端类型（未保存也立即生效），避免账号区还停留在旧的“共享云端”形态。
+  var st8 = react.useState(""); var pickedMode = st8[0]; var setPickedMode = st8[1];
   function refreshSync() {
     api.get("/sync/status").then(function (r) { if (r && r.ok) setSyncStatus(r); });
     api.get("/sync/conflicts?limit=20").then(function (r) { setConflicts(r && Array.isArray(r.conflicts) ? r.conflicts : []); });
@@ -45,19 +47,22 @@ function AccountTab(props) {
     });
   }
   if (!me) return jsx.jsx("div", { className: "wb-card", children: jsx.jsx("span", { className: "wb-msg", children: "…" }) });
-  var mode = me.mode || "shared";
-  var settingsCard = jsx.jsx(CloudSettings, { t: t, api: api, onChanged: refresh });
+  var savedMode = (me && me.mode) || "shared";
+  var mode = pickedMode || savedMode;
+  var settingsCard = jsx.jsx(CloudSettings, { t: t, api: api, onChanged: refresh, onModeChange: setPickedMode });
   if (!me.logged_in) {
+    // 只有共享云端才需要账号登录；私人云端与仅本机模式不出现登录表单。
+    if (mode !== "shared") return jsx.jsx("div", { className: "wb-stack", children: settingsCard });
     return jsx.jsxs("div", { className: "wb-stack", children: [
       settingsCard,
       jsx.jsxs("div", { className: "wb-card", children: [
-        jsx.jsx("div", { className: "wb-msg", style: { marginBottom: 10 }, children: mode === "shared" ? t("not_logged_in") : t("cloud_mode_" + mode + "_hint") }),
-        mode === "shared" ? jsx.jsxs("div", { className: "wb-form", children: [
+        jsx.jsx("div", { className: "wb-msg", style: { marginBottom: 10 }, children: t("not_logged_in") }),
+        jsx.jsxs("div", { className: "wb-form", children: [
           jsx.jsx("input", { className: "wb-input", placeholder: t("email"), value: form.email, onChange: function (e) { setForm(Object.assign({}, form, { email: e.target.value })); } }),
           jsx.jsx("input", { className: "wb-input", type: "password", placeholder: t("password"), value: form.password, onChange: function (e) { setForm(Object.assign({}, form, { password: e.target.value })); }, onKeyDown: function (e) { if (e.key === "Enter") submit(); } }),
           jsx.jsx(SW.Switch, { h: jsx.jsx, checked: !!form.signup, label: t("signup"), onChange: function (next) { setForm(Object.assign({}, form, { signup: next })); } }),
           jsx.jsx("button", { className: "wb-btn", onClick: submit, children: form.signup ? t("signup") : t("login") }),
-        ] }) : null,
+        ] }),
         msg ? jsx.jsx("div", { className: "wb-err", style: { marginTop: 8 }, children: msg }) : null,
       ] }),
     ] });
