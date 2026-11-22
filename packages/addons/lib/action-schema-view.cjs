@@ -50,6 +50,8 @@ var COPY = {
     optional: "可选",
     noParams: "无参数",
     paramCount: function (n) { return n + " 个参数"; },
+    params: "参数",
+    requiredCount: function (n) { return "必填 " + n; },
     examples: "示例",
     noExamples: "无示例",
     copy: "复制",
@@ -109,6 +111,8 @@ var COPY = {
     optional: "optional",
     noParams: "No parameters",
     paramCount: function (n) { return n + " params"; },
+    params: "Parameters",
+    requiredCount: function (n) { return n + " required"; },
     examples: "Examples",
     noExamples: "No examples",
     copy: "Copy",
@@ -260,6 +264,10 @@ module.exports = function createActionSchemaView(options) {
     var toast = toastState[0], setToast = toastState[1];
     var savingState = React.useState("");
     var saving = savingState[0], setSaving = savingState[1];
+    // 参数折叠面板：action 名 → 是否展开（只记用户手动点过的，未点过的按筛选状态取默认）。
+    // 默认收起让卡片列表更紧凑；一旦搜索/筛选生效就默认展开，否则命中的参数被折起来看不见。
+    var foldsState = React.useState({});
+    var folds = foldsState[0], setFolds = foldsState[1];
 
     React.useEffect(function () { injectCss(); }, []);
 
@@ -349,6 +357,19 @@ module.exports = function createActionSchemaView(options) {
       };
       if (!api || typeof api.call !== "function") { fail(new Error("no call api")); return; }
       Promise.resolve(api.call("actions.setActionOrigins", { action: name, origins: next })).then(done, fail);
+    }
+
+    /** 参数区是否展开：用户手动开合优先，否则搜索/筛选生效时展开、平时收起。 */
+    function paramsOpen(action) {
+      if (Object.prototype.hasOwnProperty.call(folds, action.name)) return folds[action.name] === true;
+      return Boolean(String(query || "").trim()) || reqMode !== "all" || Boolean(typePick);
+    }
+
+    /** 搜索 / 筛选条件一变就清掉手动状态：新条件回到「有筛选即展开」的默认，避免命中被藏住。 */
+    function resetFolds() {
+      setFolds(function (prev) {
+        return Object.keys(prev).length ? {} : prev;
+      });
     }
 
     var all = snap && Array.isArray(snap.actions)
@@ -444,6 +465,8 @@ module.exports = function createActionSchemaView(options) {
 
     function card(action) {
       var rows = paramRows(action);
+      var required = rows.filter(function (row) { return row.required; }).length;
+      var open = paramsOpen(action);
       var examples = Array.isArray(action.examples) ? action.examples : [];
       return h("div", { className: P + "-card", key: action.name },
         h("div", { className: P + "-cardhead" },
@@ -456,14 +479,31 @@ module.exports = function createActionSchemaView(options) {
           originsChips(action)),
         action.description ? h("p", { className: P + "-desc" }, Highlight.hit(action.description, kw)) : null,
         rows.length
-          ? h("table", { className: P + "-table" },
-            h("thead", null, h("tr", null,
-              h("th", null, t.colName),
-              h("th", null, t.colType),
-              h("th", null, t.colReq),
-              h("th", null, t.colExtra),
-              h("th", null, t.colDesc))),
-            h("tbody", null, rows.map(paramRow)))
+          ? h("details", {
+            className: P + "-params",
+            "data-params-fold": action.name,
+            open: open,
+            // 原生 details 自带键盘与无障碍语义，这里只记下用户的开合；
+            // 筛选变化引起的程序性开合也会触发 toggle，记下的值与当次默认一致，随后由 resetFolds 清掉。
+            onToggle: function (e) {
+              var next = !!(e && e.currentTarget && e.currentTarget.open);
+              setFolds(function (prev) {
+                if (prev[action.name] === next) return prev;
+                var out = Object.assign({}, prev);
+                out[action.name] = next;
+                return out;
+              });
+            },
+          },
+            h("summary", null, t.params + (required ? " · " + t.requiredCount(required) : "")),
+            h("table", { className: P + "-table" },
+              h("thead", null, h("tr", null,
+                h("th", null, t.colName),
+                h("th", null, t.colType),
+                h("th", null, t.colReq),
+                h("th", null, t.colExtra),
+                h("th", null, t.colDesc))),
+              h("tbody", null, rows.map(paramRow))))
           : h("div", { className: P + "-none" }, t.noParams),
         h("div", { className: P + "-example" },
           h("div", { className: P + "-examplehead" },
@@ -519,17 +559,17 @@ module.exports = function createActionSchemaView(options) {
               value: query,
               placeholder: t.search,
               "aria-label": t.search,
-              onChange: function (e) { setQuery(e.target.value); },
+              onChange: function (e) { setQuery(e.target.value); resetFolds(); },
             })),
           h("label", { className: P + "-none" },
             t.filterReq + " ",
-            h("select", { value: reqMode, "aria-label": t.filterReq, onChange: function (e) { setReqMode(e.target.value); } },
+            h("select", { value: reqMode, "aria-label": t.filterReq, onChange: function (e) { setReqMode(e.target.value); resetFolds(); } },
               h("option", { value: "all" }, t.all),
               h("option", { value: "required" }, t.onlyRequired),
               h("option", { value: "optional" }, t.onlyOptional))),
           h("label", { className: P + "-none" },
             t.filterType + " ",
-            h("select", { value: typePick, "aria-label": t.filterType, onChange: function (e) { setTypePick(e.target.value); } },
+            h("select", { value: typePick, "aria-label": t.filterType, onChange: function (e) { setTypePick(e.target.value); resetFolds(); } },
               h("option", { value: "" }, t.allTypes),
               typeOptions.map(function (name) { return h("option", { value: name, key: name }, name); }))),
           h("label", { className: P + "-none" },

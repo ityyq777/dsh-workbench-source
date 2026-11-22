@@ -5702,6 +5702,10 @@ var require_action_schema_style = __commonJS({
         "." + P + "-copy:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
         "." + P + " details>summary{cursor:pointer;font-size:11.5px;color:var(--dsw-alias-label-secondary,inherit);width:max-content}",
         "." + P + " details>summary:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
+        // 参数折叠面板：折叠时只留一行「参数 · 必填 n」，展开后与表格之间留一点气口。
+        "." + P + "-params{min-width:0}",
+        "." + P + "-params>summary{user-select:none;max-width:100%}",
+        "." + P + "-params[open]>summary{margin-bottom:6px}",
         "." + P + "-empty{padding:24px;text-align:center;border:1px dashed var(--wb-border,#e3e5e9);border-radius:10px;color:var(--dsw-alias-label-tertiary,inherit)}",
         "." + P + "-error{padding:12px;border:1px solid var(--dsw-alias-state-error-primary,#d9534f);border-radius:10px;color:var(--dsw-alias-state-error-primary,#d9534f);display:flex;gap:10px;align-items:center;flex-wrap:wrap;overflow-wrap:anywhere}",
         "." + P + "-toast{position:sticky;bottom:8px;align-self:flex-start;border-radius:999px;padding:3px 10px;background:var(--dsw-alias-bg-skeleton,#f2f3f5);font-size:11.5px;max-width:100%}",
@@ -5781,6 +5785,10 @@ var require_action_schema_view = __commonJS({
         paramCount: function(n) {
           return n + " \u4E2A\u53C2\u6570";
         },
+        params: "\u53C2\u6570",
+        requiredCount: function(n) {
+          return "\u5FC5\u586B " + n;
+        },
         examples: "\u793A\u4F8B",
         noExamples: "\u65E0\u793A\u4F8B",
         copy: "\u590D\u5236",
@@ -5843,6 +5851,10 @@ var require_action_schema_view = __commonJS({
         noParams: "No parameters",
         paramCount: function(n) {
           return n + " params";
+        },
+        params: "Parameters",
+        requiredCount: function(n) {
+          return n + " required";
         },
         examples: "Examples",
         noExamples: "No examples",
@@ -5982,6 +5994,8 @@ var require_action_schema_view = __commonJS({
         var toast = toastState[0], setToast = toastState[1];
         var savingState = React.useState("");
         var saving = savingState[0], setSaving = savingState[1];
+        var foldsState = React.useState({});
+        var folds = foldsState[0], setFolds = foldsState[1];
         React.useEffect(function() {
           injectCss();
         }, []);
@@ -6081,6 +6095,15 @@ var require_action_schema_view = __commonJS({
           }
           Promise.resolve(api.call("actions.setActionOrigins", { action: name, origins: next })).then(done, fail);
         }
+        function paramsOpen(action) {
+          if (Object.prototype.hasOwnProperty.call(folds, action.name)) return folds[action.name] === true;
+          return Boolean(String(query || "").trim()) || reqMode !== "all" || Boolean(typePick);
+        }
+        function resetFolds() {
+          setFolds(function(prev) {
+            return Object.keys(prev).length ? {} : prev;
+          });
+        }
         var all = snap && Array.isArray(snap.actions) ? snap.actions.filter(function(a) {
           return a && a.domain === DOMAIN;
         }) : [];
@@ -6177,6 +6200,10 @@ var require_action_schema_view = __commonJS({
         }
         function card(action) {
           var rows = paramRows(action);
+          var required = rows.filter(function(row) {
+            return row.required;
+          }).length;
+          var open = paramsOpen(action);
           var examples = Array.isArray(action.examples) ? action.examples : [];
           return h2(
             "div",
@@ -6197,18 +6224,38 @@ var require_action_schema_view = __commonJS({
             ),
             action.description ? h2("p", { className: P + "-desc" }, Highlight.hit(action.description, kw)) : null,
             rows.length ? h2(
-              "table",
-              { className: P + "-table" },
-              h2("thead", null, h2(
-                "tr",
-                null,
-                h2("th", null, t.colName),
-                h2("th", null, t.colType),
-                h2("th", null, t.colReq),
-                h2("th", null, t.colExtra),
-                h2("th", null, t.colDesc)
-              )),
-              h2("tbody", null, rows.map(paramRow))
+              "details",
+              {
+                className: P + "-params",
+                "data-params-fold": action.name,
+                open,
+                // 原生 details 自带键盘与无障碍语义，这里只记下用户的开合；
+                // 筛选变化引起的程序性开合也会触发 toggle，记下的值与当次默认一致，随后由 resetFolds 清掉。
+                onToggle: function(e) {
+                  var next = !!(e && e.currentTarget && e.currentTarget.open);
+                  setFolds(function(prev) {
+                    if (prev[action.name] === next) return prev;
+                    var out = Object.assign({}, prev);
+                    out[action.name] = next;
+                    return out;
+                  });
+                }
+              },
+              h2("summary", null, t.params + (required ? " \xB7 " + t.requiredCount(required) : "")),
+              h2(
+                "table",
+                { className: P + "-table" },
+                h2("thead", null, h2(
+                  "tr",
+                  null,
+                  h2("th", null, t.colName),
+                  h2("th", null, t.colType),
+                  h2("th", null, t.colReq),
+                  h2("th", null, t.colExtra),
+                  h2("th", null, t.colDesc)
+                )),
+                h2("tbody", null, rows.map(paramRow))
+              )
             ) : h2("div", { className: P + "-none" }, t.noParams),
             h2(
               "div",
@@ -6285,6 +6332,7 @@ var require_action_schema_view = __commonJS({
                 "aria-label": t.search,
                 onChange: function(e) {
                   setQuery(e.target.value);
+                  resetFolds();
                 }
               })
             ),
@@ -6296,6 +6344,7 @@ var require_action_schema_view = __commonJS({
                 "select",
                 { value: reqMode, "aria-label": t.filterReq, onChange: function(e) {
                   setReqMode(e.target.value);
+                  resetFolds();
                 } },
                 h2("option", { value: "all" }, t.all),
                 h2("option", { value: "required" }, t.onlyRequired),
@@ -6310,6 +6359,7 @@ var require_action_schema_view = __commonJS({
                 "select",
                 { value: typePick, "aria-label": t.filterType, onChange: function(e) {
                   setTypePick(e.target.value);
+                  resetFolds();
                 } },
                 h2("option", { value: "" }, t.allTypes),
                 typeOptions.map(function(name) {
@@ -6372,7 +6422,7 @@ if (host) {
   h = require("react").createElement, icons = require_icons2(), Icon2 = icons.Icon, GLYPHS = icons.ICONS;
   host.registerAddon({
     id: "wb-addon-storage",
-    version: "1.5.19",
+    version: "1.5.20",
     icon: GLYPHS["stock"],
     views: [
       { id: "stats", icon: tabIcon2("chart"), title: { zh: "\u7EDF\u8BA1", en: "Statistics" }, component: require_stats().Stats },

@@ -165,15 +165,31 @@ assert.match(text(keyRow), /可选/);
 assert.match(text(keyRow), /长度 0–120/);
 assert.match(text(keyRow), /枚举 "a" \/ "b"/);
 
+// ── 参数折叠面板：默认收起、摘要带必填数，表格仍在面板内可展开 ────────
+const foldOf = (t) => find(t, (n) => n.type === "details" && hasClass(n, "wbt-as-params"));
+const paramFold = foldOf(tree);
+assert.ok(paramFold, "有参数的 action 应渲染参数折叠面板");
+assert.equal(paramFold.props.open, false, "没有搜索/筛选时参数区默认收起");
+assert.equal(paramFold.props["data-params-fold"], "tasks.list", "折叠面板应带 action 名标记");
+assert.equal(text(find(paramFold, (n) => n.type === "summary")).trim(), "参数 · 必填 1", "摘要只写参数与必填数");
+assert.ok(find(paramFold, (n) => n.type === "table"), "折叠面板内部仍是完整参数表");
+assert.equal(findAll(tree, (n) => n.type === "details" && hasClass(n, "wbt-as-params")).length, 1, "无参数 action 不渲染折叠面板");
+// 手动开合：点了就记住，不被普通重渲染重置。
+paramFold.props.onToggle({ currentTarget: { open: true } });
+tree = m.rerender();
+assert.equal(foldOf(tree).props.open, true, "手动展开后应保持展开");
+foldOf(tree).props.onToggle({ currentTarget: { open: false } });
+tree = m.rerender();
+assert.equal(foldOf(tree).props.open, false, "手动收起后应保持收起");
+
 // 示例与原始 schema
 const copyBtn = find(tree, (n) => n.props && n.props["data-copy-example"] === "tasks.list");
 assert.ok(copyBtn, "有示例时应提供复制按钮");
 copyBtn.props.onClick({ preventDefault() {} });
 tree = m.rerender();
 assert.match(text(tree), /已复制/);
-const raws = findAll(tree, (n) => n.type === "details");
-assert.ok(raws.length >= 2, "每个 action 都应能展开原始 schema");
-assert.match(text(raws[0]), /原始 JSON Schema/);
+const rawFolds = findAll(tree, (n) => n.type === "details" && text(n).includes("原始 JSON Schema"));
+assert.equal(rawFolds.length, 2, "每个 action 都应能展开原始 schema");
 
 // 无参数 action：明确写「无参数」，不能编造参数行
 const createCard = findAll(tree, (n) => hasClass(n, "wbt-as-card")).find((c) => text(c).includes("tasks.create"));
@@ -189,6 +205,7 @@ tree = m.rerender();
 assert.match(text(tree), /1 \/ 2 个 action/);
 assert.match(text(tree), /tasks\.list/);
 assert.ok(!text(tree).includes("tasks.create"), "不匹配的 action 应被搜索过滤");
+assert.equal(foldOf(tree).props.open, true, "搜索生效时参数区自动展开，命中的参数才看得见");
 
 // ── 搜索命中高亮：与过滤同口径，类名带页面前缀，示例/原始 JSON 不插标签 ──
 input.props.onChange({ target: { value: "TITLEKEY" } });
@@ -214,6 +231,7 @@ assert.equal(findAll(tree, (n) => n.type === "mark").length, 0, "没有命中就
 input.props.onChange({ target: { value: "" } });
 tree = m.rerender();
 assert.equal(findAll(tree, (n) => n.type === "mark").length, 0, "清空搜索后不应残留 mark");
+assert.equal(foldOf(tree).props.open, false, "清空搜索后参数区回到默认收起");
 const selects = findAll(tree, (n) => n.type === "select");
 // 工具栏三个下拉：必填筛选、参数类型、允许来源（来源筛选靠 actions.setActionOrigins 的 origins 生效）。
 assert.equal(selects.length, 3, "应有必填筛选、参数类型与允许来源三个下拉");
@@ -224,6 +242,7 @@ assert.ok(
 selects[0].props.onChange({ target: { value: "required" } });
 tree = m.rerender();
 assert.match(text(tree), /1 \/ 2 个 action/, "仅必填筛选命中 tasks.list");
+assert.equal(foldOf(tree).props.open, true, "必填筛选生效时参数区自动展开");
 selects[0].props.onChange({ target: { value: "optional" } });
 tree = m.rerender();
 assert.match(text(tree), /1 \/ 2 个 action/, "无必填筛选命中 tasks.create");
@@ -237,6 +256,7 @@ assert.ok(typeOptions.includes("number") && typeOptions.includes("string"), "类
 typeSelect.props.onChange({ target: { value: "string" } });
 tree = m.rerender();
 assert.match(text(tree), /1 \/ 2 个 action/, "只命中带 string 参数的 tasks.list");
+assert.equal(foldOf(tree).props.open, true, "类型筛选生效时参数区自动展开");
 typeSelect.props.onChange({ target: { value: "boolean" } });
 tree = m.rerender();
 assert.match(text(tree), /没有匹配的 action/);
@@ -273,6 +293,7 @@ assert.match(text(tree), /Actions/);
 assert.match(text(tree), /read-only/);
 assert.match(text(tree), /2 \/ 2 actions/);
 assert.match(text(tree), /No parameters/);
+assert.match(text(tree), /Parameters/, "英文摘要应是 Parameters");
 
 // ── 窄屏样式契约：≤760px 参数表换成带语义类名的字段网格，不能退回无标签的竖向堆叠 ──
 // 参数单元格带 pname/ptype/pneed/pextra/pdesc 类名，样式靠它们把五列压成
@@ -299,6 +320,7 @@ delete globalThis.document;
 const css = styleEls[0].textContent;
 assert.match(css, /@media\(max-width:760px\)/, "应有窄屏断点");
 assert.match(css, /grid-template-areas:"name type need"/, "窄屏参数行应按名称/类型/必填排成一行");
+assert.ok(css.includes(".wbt-as-params[open]>summary{"), "展开后的参数摘要应留出与表格的间距");
 assert.ok(!/\.wbt-as-table td\{display:block;border-top:0/.test(css), "不能退回丢掉列名的纯竖向堆叠");
 ["pname", "ptype", "pneed", "pextra", "pdesc"].forEach((name) => {
   assert.ok(css.includes(".wbt-as-" + name + "{"), "窄屏样式应覆盖 .wbt-as-" + name);
