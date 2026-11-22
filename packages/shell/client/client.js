@@ -90,6 +90,25 @@ var require_locale = __commonJS({
         backup_import_drop: "\u9009\u62E9\u6216\u62D6\u5165 .zip \u5907\u4EFD\u5305",
         backup_import_drop_sub: "\u5BFC\u5165\u53EA\u5408\u5E76\uFF0C\u4E0D\u5220\u9664\u5DF2\u6709\u6570\u636E",
         backup_import_hint: "\u540C\u4E00 ID \u7684\u8BB0\u5F55\u6309\u5404\u6A21\u5757\u300C\u91CD\u590D ID \u65F6\u300D\u7684\u7B56\u7565\u5904\u7406",
+        // 数据清空：确认词必须与宿主 packages/shell/src/infra/data-clear.ts 的 CLEAR_CONFIRM 一致。
+        clear_title: "\u6E05\u7A7A\u672C\u673A\u6570\u636E",
+        clear_scope_hint: "\u4E0D\u53EF\u64A4\u9500\uFF0C\u5EFA\u8BAE\u5148\u5BFC\u51FA zip \u5907\u4EFD",
+        clear_desc: "\u628A\u672C\u673A\u5DE5\u4F5C\u53F0\u6062\u590D\u5230\u521A\u5B89\u88C5\u63D2\u4EF6\u65F6\u7684\u72B6\u6001\u3002\u53EA\u5F71\u54CD\u8FD9\u53F0\u8BBE\u5907\uFF0C\u79C1\u4EBA\u4E91\u7AEF\u7684\u6570\u636E\u4E0D\u53D7\u5F71\u54CD\uFF1B\u4E3A\u514D\u4E0B\u6B21\u540C\u6B65\u628A\u6570\u636E\u62C9\u56DE\u6765\uFF0C\u4E91\u7AEF\u8FDE\u63A5\u4F1A\u4E00\u5E76\u65AD\u5F00\u3002",
+        clear_scope_data: "\u5168\u90E8\u4E1A\u52A1\u6570\u636E\uFF1A\u4EFB\u52A1\u3001\u6807\u7B7E\u3001\u7AD9\u70B9\u3001\u50A8\u7269\u3001\u90AE\u4EF6\u3001\u65E5\u5386\u3001\u8054\u7CFB\u4EBA\u3001\u8FDE\u63A5\u5668\u3001\u81EA\u52A8\u5316\u7B49",
+        clear_scope_config: "\u5404\u63D2\u4EF6\u7684\u672C\u673A\u914D\u7F6E\u65B9\u6848\u4E0E\u754C\u9762\u504F\u597D",
+        clear_scope_sync: "\u540C\u6B65\u6E38\u6807\u3001\u53D8\u66F4\u65E5\u5FD7\u3001\u51B2\u7A81\u5F85\u529E\u4E0E\u5F85\u91CD\u8BD5\u961F\u5217",
+        clear_scope_cloud: "\u4E91\u7AEF\u8FDE\u63A5\u914D\u7F6E\u4E0E\u767B\u5F55\u51ED\u636E\uFF08\u6E05\u7A7A\u540E\u9700\u8981\u91CD\u65B0\u8FDE\u63A5\u6216\u767B\u5F55\uFF09",
+        clear_confirm_label: "\u8F93\u5165\u786E\u8BA4\u8BCD\u4EE5\u542F\u7528\u6309\u94AE\uFF1A",
+        clear_phrase_placeholder: "\u6E05\u7A7A\u5168\u90E8\u6570\u636E",
+        clear_action: "\u6E05\u7A7A\u5168\u90E8\u6570\u636E",
+        clear_running: "\u6B63\u5728\u6E05\u7A7A\u2026",
+        clear_sync_busy: "\u6B63\u5728\u540C\u6B65\uFF0C\u7B49\u672C\u8F6E\u540C\u6B65\u7ED3\u675F\u540E\u518D\u8BD5",
+        clear_failed: "\u6E05\u7A7A\u5931\u8D25",
+        clear_done: "\u5DF2\u6E05\u7A7A",
+        clear_done_counts: "{tables} \u5F20\u8868\u3001{rows} \u884C\u6570\u636E",
+        clear_done_sub: "\u4E91\u7AEF\u8FDE\u63A5\u5DF2\u65AD\u5F00\uFF0C\u540E\u53F0\u540C\u6B65\u5DF2\u505C\u6B62\uFF1B\u5237\u65B0\u9875\u9762\u540E\u4F60\u4F1A\u770B\u5230\u5E72\u51C0\u7684\u521D\u59CB\u72B6\u6001\u3002",
+        clear_reload: "\u5237\u65B0\u5DE5\u4F5C\u53F0",
+        clear_note: "\u5BFC\u51FA\u7684\u5907\u4EFD\u6587\u4EF6\u4E0D\u53D7\u5F71\u54CD\uFF0C\u9700\u8981\u6062\u590D\u65F6\u4ECD\u53EF\u4ECE\u5907\u4EFD\u5BFC\u5165\u3002",
         back_home: "\u8FD4\u56DE\u9996\u9875",
         open: "\u6253\u5F00",
         manage: "\u5DE5\u4F5C\u53F0\u7BA1\u7406",
@@ -331,6 +350,24 @@ var require_locale = __commonJS({
         backup_import_drop: "Choose or drop a .zip backup",
         backup_import_drop_sub: "Import merges and never deletes existing rows",
         backup_import_hint: "Rows with the same ID follow each module's duplicate-ID policy",
+        clear_title: "Clear local data",
+        clear_scope_hint: "Cannot be undone; export a zip backup first",
+        clear_desc: "Restores this workbench to the state right after installing the plugins. Only this device is affected; data in your private cloud is untouched, and the cloud connection is disconnected so the next sync cannot pull it back.",
+        clear_scope_data: "All business data: tasks, tags, sites, storage, mail, calendar, contacts, connectors, automations",
+        clear_scope_config: "Local configuration schemes and UI preferences of every plugin",
+        clear_scope_sync: "Sync cursors, change log, conflict queue and retry queue",
+        clear_scope_cloud: "Cloud connection settings and login credentials (reconnect or sign in again afterwards)",
+        clear_confirm_label: "Type the confirmation phrase to enable the button:",
+        clear_phrase_placeholder: "\u6E05\u7A7A\u5168\u90E8\u6570\u636E",
+        clear_action: "Clear all data",
+        clear_running: "Clearing\u2026",
+        clear_sync_busy: "A sync is running; try again when it finishes",
+        clear_failed: "Clear failed",
+        clear_done: "Cleared",
+        clear_done_counts: "{tables} tables, {rows} rows",
+        clear_done_sub: "The cloud connection is disconnected and background sync has stopped. Refresh to see the clean initial state.",
+        clear_reload: "Reload workbench",
+        clear_note: "Exported backup files are untouched and can still be imported later.",
         back_home: "Back to home",
         open: "Open",
         manage: "Manage",
@@ -610,6 +647,21 @@ var require_styles = __commonJS({
       ".wb-msg{font-size:12.5px;opacity:.55;padding:20px 0;text-align:center;line-height:1.6}",
       ".wb-empty-cta{padding:26px 14px}",
       ".wb-stack{display:flex;flex-direction:column;gap:10px}",
+      // 数据清空危险区：只借用主题的状态错误色做描边与浅底，避免在备份页另建色板。
+      ".wb-danger{border-color:color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 34%,var(--wb-line));background:linear-gradient(180deg,color-mix(in oklab,var(--dsw-alias-state-error-primary,#e5484d) 5%,var(--wb-surface)),var(--wb-surface) 72%)}",
+      ".wb-danger .wb-sec h3{color:var(--dsw-alias-state-error-primary,#e5484d)}",
+      ".wb-danger-desc{font-size:12.5px;line-height:1.65;opacity:.72;margin:10px 0 0}",
+      ".wb-danger-scope{margin:8px 0 0;padding-left:18px;font-size:12px;line-height:1.7;opacity:.66}",
+      ".wb-danger-action{display:flex;flex-direction:column;gap:8px;margin-top:12px;max-width:540px}",
+      ".wb-danger-label{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;opacity:.72}",
+      ".wb-danger-phrase{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;padding:2px 6px;border-radius:6px;border:1px solid var(--wb-line);background:var(--wb-card);opacity:.92}",
+      ".wb-danger-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}",
+      ".wb-danger-row .wb-input{flex:1 1 220px;min-width:0}",
+      ".wb-danger-msg{font-size:12px;line-height:1.5;color:var(--dsw-alias-state-error-primary,#e5484d)}",
+      ".wb-danger-note{font-size:11.5px;line-height:1.55;opacity:.55;margin:0}",
+      ".wb-danger-done{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:12px}",
+      ".wb-danger-done-text{font-size:14px;font-weight:650}",
+      ".wb-danger-done-sub{font-size:12px;line-height:1.6;opacity:.66}",
       ".wb-home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));gap:12px}",
       // 首页栏目分组：宿主栏目表定顺序，每个栏目一段标题 + 网格；空栏目不渲染。
       ".wb-home-cats{display:flex;flex-direction:column;gap:20px}",
@@ -2388,6 +2440,15 @@ var require_backup_tab = __commonJS({
         var stDrag = react2.useState(false);
         var dragging = stDrag[0];
         var setDragging = stDrag[1];
+        var stClearPhrase = react2.useState("");
+        var clearPhrase = stClearPhrase[0];
+        var setClearPhrase = stClearPhrase[1];
+        var stClearMsg = react2.useState(null);
+        var clearMsg = stClearMsg[0];
+        var setClearMsg = stClearMsg[1];
+        var stClearDone = react2.useState(null);
+        var clearDone = stClearDone[0];
+        var setClearDone = stClearDone[1];
         var fileRef = react2.useRef(null);
         react2.useEffect(function() {
           setSelected(function(prev) {
@@ -2441,6 +2502,37 @@ var require_backup_tab = __commonJS({
             var next = Object.assign({}, prev);
             next[id] = !next[id];
             return next;
+          });
+        }
+        var CLEAR_PHRASE = "\u6E05\u7A7A\u5168\u90E8\u6570\u636E";
+        var clearArmed = clearPhrase.trim() === CLEAR_PHRASE;
+        function doClear() {
+          if (!clearArmed || busy) return;
+          setBusy("clear");
+          setClearMsg(null);
+          fetch("/workbench/api/data/clear", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ confirm: clearPhrase.trim() })
+          }).then(function(res) {
+            return res.json().catch(function() {
+              return null;
+            }).then(function(data) {
+              return { status: res.status, data };
+            });
+          }).then(function(r) {
+            setBusy("");
+            var d = r.data || {};
+            if (r.status === 200 && d.ok) {
+              setClearDone(d);
+              setClearPhrase("");
+              return;
+            }
+            var text = d.code === "sync_running" ? t("clear_sync_busy") : d.error || t("clear_failed");
+            setClearMsg(text);
+          }).catch(function(e) {
+            setBusy("");
+            setClearMsg(String(e && e.message || e));
           });
         }
         function statusLabel(status) {
@@ -2743,7 +2835,58 @@ var require_backup_tab = __commonJS({
                 ] }, r.id);
               }) })
             ] }) })
-          ] }) : null
+          ] }) : null,
+          jsx2.jsxs("section", { className: "wb-card wb-danger", children: [
+            jsx2.jsxs("div", { className: "wb-sec", children: [
+              jsx2.jsx("h3", { children: t("clear_title") }),
+              jsx2.jsx("span", { className: "wb-hint", children: t("clear_scope_hint") })
+            ] }),
+            jsx2.jsx("p", { className: "wb-danger-desc", children: t("clear_desc") }),
+            jsx2.jsx("ul", { className: "wb-danger-scope", children: [
+              jsx2.jsx("li", { children: t("clear_scope_data") }),
+              jsx2.jsx("li", { children: t("clear_scope_config") }),
+              jsx2.jsx("li", { children: t("clear_scope_sync") }),
+              jsx2.jsx("li", { children: t("clear_scope_cloud") })
+            ] }),
+            clearDone ? jsx2.jsxs("div", { className: "wb-danger-done", role: "status", "aria-live": "polite", children: [
+              jsx2.jsxs("div", { className: "wb-danger-done-text", children: [
+                t("clear_done") + "\uFF1A" + t("clear_done_counts").replace("{tables}", String(clearDone.tables || 0)).replace("{rows}", String(clearDone.rows || 0))
+              ] }),
+              jsx2.jsx("div", { className: "wb-danger-done-sub", children: t("clear_done_sub") }),
+              jsx2.jsx("button", { type: "button", className: "wb-btn", onClick: function() {
+                window.location.reload();
+              }, children: t("clear_reload") })
+            ] }) : jsx2.jsxs("div", { className: "wb-danger-action", children: [
+              jsx2.jsxs("label", { className: "wb-danger-label", children: [
+                t("clear_confirm_label"),
+                jsx2.jsx("code", { className: "wb-danger-phrase", children: CLEAR_PHRASE })
+              ] }),
+              jsx2.jsxs("div", { className: "wb-danger-row", children: [
+                jsx2.jsx("input", {
+                  className: "wb-input",
+                  value: clearPhrase,
+                  placeholder: t("clear_phrase_placeholder"),
+                  autoComplete: "off",
+                  onChange: function(e) {
+                    setClearPhrase(e.target.value);
+                    if (clearMsg) setClearMsg(null);
+                  },
+                  onKeyDown: function(e) {
+                    if (e.key === "Enter") doClear();
+                  }
+                }),
+                jsx2.jsxs("button", {
+                  type: "button",
+                  className: "wb-btn danger",
+                  disabled: !clearArmed || busy === "clear",
+                  onClick: doClear,
+                  children: busy === "clear" ? t("clear_running") : t("clear_action")
+                })
+              ] }),
+              clearMsg ? jsx2.jsx("div", { className: "wb-danger-msg", role: "alert", children: clearMsg }) : null,
+              jsx2.jsx("p", { className: "wb-danger-note", children: t("clear_note") })
+            ] })
+          ] })
         ] });
       }
       return { BackupTab: BackupTab2 };

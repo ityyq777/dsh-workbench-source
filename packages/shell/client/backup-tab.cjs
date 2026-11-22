@@ -44,6 +44,9 @@ module.exports = function createBackupTab(react, jsx) {
     var stOpen = react.useState({}); var openConfig = stOpen[0]; var setOpenConfig = stOpen[1];
     var stFormat = react.useState("zip"); var format = stFormat[0]; var setFormat = stFormat[1];
     var stDrag = react.useState(false); var dragging = stDrag[0]; var setDragging = stDrag[1];
+    var stClearPhrase = react.useState(""); var clearPhrase = stClearPhrase[0]; var setClearPhrase = stClearPhrase[1];
+    var stClearMsg = react.useState(null); var clearMsg = stClearMsg[0]; var setClearMsg = stClearMsg[1];
+    var stClearDone = react.useState(null); var clearDone = stClearDone[0]; var setClearDone = stClearDone[1];
     var fileRef = react.useRef(null);
 
     react.useEffect(function () {
@@ -85,7 +88,36 @@ module.exports = function createBackupTab(react, jsx) {
     function toggleConfig(id) {
       setOpenConfig(function (prev) { var next = Object.assign({}, prev); next[id] = !next[id]; return next; });
     }
-    function statusLabel(status) {
+    // 清空确认词必须与宿主 CLEAR_CONFIRM 完全一致，服务端还会再校验一次。
+  var CLEAR_PHRASE = "清空全部数据";
+  var clearArmed = clearPhrase.trim() === CLEAR_PHRASE;
+  function doClear() {
+    if (!clearArmed || busy) return;
+    setBusy("clear");
+    setClearMsg(null);
+    fetch("/workbench/api/data/clear", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ confirm: clearPhrase.trim() }),
+    }).then(function (res) {
+      return res.json().catch(function () { return null; }).then(function (data) { return { status: res.status, data: data }; });
+    }).then(function (r) {
+      setBusy("");
+      var d = r.data || {};
+      if (r.status === 200 && d.ok) {
+        setClearDone(d);
+        setClearPhrase("");
+        return;
+      }
+      var text = d.code === "sync_running" ? t("clear_sync_busy") : (d.error || t("clear_failed"));
+      setClearMsg(text);
+    }).catch(function (e) {
+      setBusy("");
+      setClearMsg(String((e && e.message) || e));
+    });
+  }
+
+  function statusLabel(status) {
       if (status === "ok") return t("backup_ok");
       if (status === "partial") return t("backup_partial");
       if (status === "skipped") return t("backup_skipped_status");
@@ -362,6 +394,51 @@ module.exports = function createBackupTab(react, jsx) {
           }) }),
         ] }) }),
       ] }) : null,
+
+      jsx.jsxs("section", { className: "wb-card wb-danger", children: [
+        jsx.jsxs("div", { className: "wb-sec", children: [
+          jsx.jsx("h3", { children: t("clear_title") }),
+          jsx.jsx("span", { className: "wb-hint", children: t("clear_scope_hint") }),
+        ] }),
+        jsx.jsx("p", { className: "wb-danger-desc", children: t("clear_desc") }),
+        jsx.jsx("ul", { className: "wb-danger-scope", children: [
+          jsx.jsx("li", { children: t("clear_scope_data") }),
+          jsx.jsx("li", { children: t("clear_scope_config") }),
+          jsx.jsx("li", { children: t("clear_scope_sync") }),
+          jsx.jsx("li", { children: t("clear_scope_cloud") }),
+        ] }),
+        clearDone ? jsx.jsxs("div", { className: "wb-danger-done", role: "status", "aria-live": "polite", children: [
+          jsx.jsxs("div", { className: "wb-danger-done-text", children: [
+            t("clear_done") + "：" + t("clear_done_counts").replace("{tables}", String(clearDone.tables || 0)).replace("{rows}", String(clearDone.rows || 0)),
+          ] }),
+          jsx.jsx("div", { className: "wb-danger-done-sub", children: t("clear_done_sub") }),
+          jsx.jsx("button", { type: "button", className: "wb-btn", onClick: function () { window.location.reload(); }, children: t("clear_reload") }),
+        ] }) : jsx.jsxs("div", { className: "wb-danger-action", children: [
+          jsx.jsxs("label", { className: "wb-danger-label", children: [
+            t("clear_confirm_label"),
+            jsx.jsx("code", { className: "wb-danger-phrase", children: CLEAR_PHRASE }),
+          ] }),
+          jsx.jsxs("div", { className: "wb-danger-row", children: [
+            jsx.jsx("input", {
+              className: "wb-input",
+              value: clearPhrase,
+              placeholder: t("clear_phrase_placeholder"),
+              autoComplete: "off",
+              onChange: function (e) { setClearPhrase(e.target.value); if (clearMsg) setClearMsg(null); },
+              onKeyDown: function (e) { if (e.key === "Enter") doClear(); },
+            }),
+            jsx.jsxs("button", {
+              type: "button",
+              className: "wb-btn danger",
+              disabled: !clearArmed || busy === "clear",
+              onClick: doClear,
+              children: busy === "clear" ? t("clear_running") : t("clear_action"),
+            }),
+          ] }),
+          clearMsg ? jsx.jsx("div", { className: "wb-danger-msg", role: "alert", children: clearMsg }) : null,
+          jsx.jsx("p", { className: "wb-danger-note", children: t("clear_note") }),
+        ] }),
+      ] }),
     ] });
   }
 

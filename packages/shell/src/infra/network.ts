@@ -6,7 +6,8 @@ import { BackupError, createBackup, importBackup, normalizeBackupFormat, normali
 import type { Subscriber } from "../types/host-types.js";
 import { publicCategories } from "./categories.js";
 import { normalizeUrl } from "./cloud-config.js";
-export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionModeOf, setSessionMode, audit, backupDomains, actionNames, invoke, log, schemaSnapshot, applyCloudConfig, publicCloudConfig }: any) {
+import { CLEAR_CONFIRM } from "./data-clear.js";
+export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionModeOf, setSessionMode, audit, backupDomains, actionNames, invoke, log, schemaSnapshot, applyCloudConfig, publicCloudConfig, clearAllData }: any) {
   /** 云端 fetch 封装（带 access token；401 时尝试 refresh 一次）。 */
   async function cloudFetch(path: string, init?: RequestInit & { json?: unknown }, retry = true): Promise<any> {
     const headers: Record<string, string> = {
@@ -373,6 +374,29 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
                     code,
                     error: String((e && (e as Error).message) || e),
                   });
+                }
+              }
+
+              if (p === "/data/clear" && m === "POST") {
+                const body = await bodyOf();
+                const confirm = String((body && body.confirm) || "").trim();
+                if (confirm !== CLEAR_CONFIRM) {
+                  return send(400, {
+                    ok: false,
+                    code: "confirm_required",
+                    error: "请先输入「" + CLEAR_CONFIRM + "」确认",
+                    confirm: CLEAR_CONFIRM,
+                  });
+                }
+                if (syncBusy) {
+                  return send(409, { ok: false, code: "sync_running", error: "正在同步，请稍后再试" });
+                }
+                try {
+                  const result = clearAllData();
+                  return send(200, { ok: true, ...result });
+                } catch (e) {
+                  log("数据清空失败", String((e && (e as Error).message) || e));
+                  return send(500, { ok: false, code: "clear_failed", error: String((e && (e as Error).message) || e) });
                 }
               }
 

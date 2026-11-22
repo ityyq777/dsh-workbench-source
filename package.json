@@ -70,6 +70,7 @@
     "test:data-ui": "node scripts/test-data-ui.mjs",
     "test:nodeps": "node scripts/test-nodeps.mjs",
     "test:backup": "node scripts/test-backup.mjs",
+    "test:data-clear": "node scripts/test-data-clear.mjs",
     "test:e2e": "node scripts/e2e.mjs",
     "stage:release": "node scripts/stage-release.mjs",
     "publish:npm": "node scripts/publish-npm.mjs",

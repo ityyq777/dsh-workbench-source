@@ -33,6 +33,7 @@ import type { WbState, RegisteredDomain } from "./types/host-types.js";
 import { createActions } from "./actions/actions.js";
 import { createAgentRun } from "./actions/agent-run.js";
 import { installNetwork } from "./infra/network.js";
+import { clearDatabase, clearHostFiles } from "./infra/data-clear.js";
 import { createSearch } from "./infra/search.js";
 import { FALLBACK_CATEGORY_ID, resolveCategory } from "./infra/categories.js";
 import {
@@ -55,7 +56,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.10.1";
+export const SHELL_VERSION = "0.10.7";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -482,7 +483,26 @@ export function apply(ctx: any): void {
     return publicCloudConfig(next);
   }
 
-  const { runSync } = installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionModeOf, setSessionMode, audit, backupDomains, actionNames, invoke, log, schemaSnapshot, applyCloudConfig, publicCloudConfig });
+  /**
+   * 清空本机数据：业务表、插件配置、同步游标与云端连接全部重置到初始状态。
+   * 只删行不删表，业务域持有的是同一个 DatabaseSync 句柄，清空后仍可继续写入；
+   * 云端连接文件删除后回到默认「共享云端 + 未登录」，后台同步循环因 creds 为空自动停摆。
+   */
+  function clearAllData(): Record<string, unknown> {
+    const result = clearDatabase(state.db);
+    const files = clearHostFiles(WB_HOME);
+    const next = loadCloudConfig(WB_HOME, CLOUD_DEFAULT, null);
+    state.cloudConfig = next;
+    state.cloudUrl = cloudUrlForConfig(next);
+    state.creds = null;
+    emit("account-changed", { logged_in: false, mode: next.mode });
+    emit("domains-changed", listDomains());
+    emit("data-cleared", { tables: result.tables, rows: result.rows });
+    log("已清空本机数据", result.tables + " 张表 / " + result.rows + " 行", files.join(",") || "无状态文件");
+    return { ...result, files, cloud: publicCloudConfig(next) };
+  }
+
+  const { runSync } = installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionModeOf, setSessionMode, audit, backupDomains, actionNames, invoke, log, schemaSnapshot, applyCloudConfig, publicCloudConfig, clearAllData });
   runSyncHolder = runSync;
   installTool(ctx);
 
