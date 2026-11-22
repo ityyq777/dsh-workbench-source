@@ -1611,7 +1611,9 @@ var require_styles = __commonJS({
       ".wbv-code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;white-space:pre-wrap;word-break:break-word;padding:10px;border:1px solid var(--wb-border);border-radius:9px;background:var(--wb-surface);max-height:320px;overflow:auto}",
       ".wbv-scroll{max-height:220px;overflow:auto;padding:8px;border:1px solid var(--wb-border);border-radius:9px}",
       /* ---------- 窄屏 ---------- */
-      "@media (max-width:900px){.wbv-split{grid-template-columns:1fr}.wbv-head{flex-direction:column;align-items:stretch}.wbv-head-actions{justify-content:flex-start}.wbv-toolbar>.wbv-search{flex:1 1 100%;width:100%}}"
+      "@media (max-width:900px){.wbv-split{grid-template-columns:1fr}.wbv-head{flex-direction:column;align-items:stretch}.wbv-head-actions{justify-content:flex-start}.wbv-toolbar>.wbv-search{flex:1 1 100%;width:100%}}",
+      /* 窄屏：凭据/集合表只保留主列与操作列，类型、所属集合、最近使用下放到详情。 */
+      "@media (max-width:600px){.wbv-c-kind,.wbv-c-sets,.wbv-c-used{display:none}.wbv-table th,.wbv-table td{padding:8px 9px}.wbv-table td{overflow-wrap:anywhere}.wbv-actions{flex-wrap:wrap;gap:2px}.wbv-toolbar>.wbv-search{flex:1 1 100%;width:100%}.wbv-form-grid{grid-template-columns:minmax(0,1fr)}.wbv-stats{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
     ].concat(require_stepper().styles, require_staged_dialog().styles).concat(require_vault_lock().create({ prefix: "wbv" }).styles()).concat(require_filter_checklist_styles()).concat(require_client_base_styles().secretFieldStyles, require_icon_label().styles);
   }
 });
@@ -2073,7 +2075,12 @@ var require_page = __commonJS({
               cols.map(function(c) {
                 return h(
                   "th",
-                  { key: c.key, scope: "col", className: c.align === "right" ? "wbv-right" : void 0, style: c.width ? { width: c.width } : null },
+                  {
+                    key: c.key,
+                    scope: "col",
+                    className: [c.align === "right" ? "wbv-right" : "", c.className || ""].filter(Boolean).join(" ") || void 0,
+                    style: c.width ? { width: c.width } : null
+                  },
                   c.label
                 );
               })
@@ -2958,10 +2965,10 @@ var require_secrets = __commonJS({
       var filtered = Boolean(qS[0] || kindS[0]);
       var columns = [
         { key: "name", label: "\u540D\u79F0" },
-        { key: "kind", label: "\u7C7B\u578B" },
-        { key: "sets", label: "\u6240\u5C5E\u96C6\u5408" },
+        { key: "kind", label: "\u7C7B\u578B", className: "wbv-c-kind" },
+        { key: "sets", label: "\u6240\u5C5E\u96C6\u5408", className: "wbv-c-sets" },
         { key: "note", label: "\u5907\u6CE8" },
-        { key: "used", label: "\u6700\u8FD1\u4F7F\u7528" },
+        { key: "used", label: "\u6700\u8FD1\u4F7F\u7528", className: "wbv-c-used" },
         { key: "ops", label: "\u64CD\u4F5C", align: "right" }
       ];
       function renderRow(row) {
@@ -2978,10 +2985,10 @@ var require_secrets = __commonJS({
           "tr",
           { key: row.id },
           h("td", null, h("div", { className: "wbv-cell-main" }, row.name), h("div", { className: "wbv-cell-sub" }, row.id)),
-          h("td", null, h("span", { className: "wbv-pill" }, KIND_LABEL[row.kind] || row.kind)),
-          h("td", null, chips.length ? h("div", { className: "wbv-chips" }, chips) : h("span", { className: "wbv-muted" }, "\u672A\u52A0\u5165\u96C6\u5408")),
+          h("td", { className: "wbv-c-kind" }, h("span", { className: "wbv-pill" }, KIND_LABEL[row.kind] || row.kind)),
+          h("td", { className: "wbv-c-sets" }, chips.length ? h("div", { className: "wbv-chips" }, chips) : h("span", { className: "wbv-muted" }, "\u672A\u52A0\u5165\u96C6\u5408")),
           h("td", null, noteOf(meta) || "\u2014"),
-          h("td", null, C.fmtTime(row.lastUsedAt, lang)),
+          h("td", { className: "wbv-c-used" }, C.fmtTime(row.lastUsedAt, lang)),
           h("td", null, h(
             "div",
             { className: "wbv-actions" },
@@ -6937,7 +6944,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.4.5",
+    version: "0.4.6",
     icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },

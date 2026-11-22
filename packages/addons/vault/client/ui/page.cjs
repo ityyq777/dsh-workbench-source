@@ -91,7 +91,12 @@ function DataTable(props) {
           cols.map(function (c) {
             return h(
               "th",
-              { key: c.key, scope: "col", className: c.align === "right" ? "wbv-right" : undefined, style: c.width ? { width: c.width } : null },
+              {
+                key: c.key,
+                scope: "col",
+                className: [c.align === "right" ? "wbv-right" : "", c.className || ""].filter(Boolean).join(" ") || undefined,
+                style: c.width ? { width: c.width } : null,
+              },
               c.label,
             );
           }),

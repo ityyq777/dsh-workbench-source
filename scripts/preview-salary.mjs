@@ -313,7 +313,8 @@ if (process.env.PANE) {
 const html = `<!doctype html><html lang="zh"><head><meta charset="utf-8"><title>salary preview</title>
 <style>
   html,body{margin:0;padding:0;background:#070a12;color:#e8ecf4;font-family:-apple-system,"PingFang SC","Segoe UI",sans-serif}
-  .wrap{display:grid;grid-template-columns:1fr;gap:0}
+  .wrap{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+  .pane{min-width:0}
   .pane{padding:18px 22px;border-bottom:1px solid #1d2330;background:var(--wb-bg,#0b1020)}
   .pane[data-theme="light"]{--wb-bg:#f5f7fa;color:#0f172a}
   .pane[data-theme="dark"]{--wb-bg:#0b1020;color:#e8ecf4}

@@ -161,4 +161,12 @@ module.exports = [
 
   /* ---------- 窄屏 ---------- */
   "@media (max-width:900px){.wbv-split{grid-template-columns:1fr}.wbv-head{flex-direction:column;align-items:stretch}.wbv-head-actions{justify-content:flex-start}.wbv-toolbar>.wbv-search{flex:1 1 100%;width:100%}}",
+  /* 窄屏：凭据/集合表只保留主列与操作列，类型、所属集合、最近使用下放到详情。 */
+  "@media (max-width:600px){.wbv-c-kind,.wbv-c-sets,.wbv-c-used{display:none}"
+    + ".wbv-table th,.wbv-table td{padding:8px 9px}"
+    + ".wbv-table td{overflow-wrap:anywhere}"
+    + ".wbv-actions{flex-wrap:wrap;gap:2px}"
+    + ".wbv-toolbar>.wbv-search{flex:1 1 100%;width:100%}"
+    + ".wbv-form-grid{grid-template-columns:minmax(0,1fr)}"
+    + ".wbv-stats{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}",
 ].concat(require("../../../lib/stepper.cjs").styles, require("../../../lib/staged-dialog.cjs").styles).concat(require("../../../lib/vault-lock.cjs").create({ prefix: "wbv" }).styles()).concat(require("../../../lib/filter-checklist-styles.cjs")).concat(require("../../../lib/client-base-styles.cjs").secretFieldStyles, require("../../../lib/icon-label.cjs").styles);

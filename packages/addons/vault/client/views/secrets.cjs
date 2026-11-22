@@ -280,10 +280,10 @@ module.exports = function SecretsView(props) {
   var filtered = Boolean(qS[0] || kindS[0]);
   var columns = [
     { key: "name", label: "名称" },
-    { key: "kind", label: "类型" },
-    { key: "sets", label: "所属集合" },
+    { key: "kind", label: "类型", className: "wbv-c-kind" },
+    { key: "sets", label: "所属集合", className: "wbv-c-sets" },
     { key: "note", label: "备注" },
-    { key: "used", label: "最近使用" },
+    { key: "used", label: "最近使用", className: "wbv-c-used" },
     { key: "ops", label: "操作", align: "right" },
   ];
 
@@ -295,10 +295,10 @@ module.exports = function SecretsView(props) {
     });
     return h("tr", { key: row.id },
       h("td", null, h("div", { className: "wbv-cell-main" }, row.name), h("div", { className: "wbv-cell-sub" }, row.id)),
-      h("td", null, h("span", { className: "wbv-pill" }, KIND_LABEL[row.kind] || row.kind)),
-      h("td", null, chips.length ? h("div", { className: "wbv-chips" }, chips) : h("span", { className: "wbv-muted" }, "未加入集合")),
+      h("td", { className: "wbv-c-kind" }, h("span", { className: "wbv-pill" }, KIND_LABEL[row.kind] || row.kind)),
+      h("td", { className: "wbv-c-sets" }, chips.length ? h("div", { className: "wbv-chips" }, chips) : h("span", { className: "wbv-muted" }, "未加入集合")),
       h("td", null, noteOf(meta) || "—"),
-      h("td", null, C.fmtTime(row.lastUsedAt, lang)),
+      h("td", { className: "wbv-c-used" }, C.fmtTime(row.lastUsedAt, lang)),
       h("td", null, h("div", { className: "wbv-actions" },
         h(C.Btn, { h: h, kind: "ghost", onClick: function () { reveal(row); } }, iconLabel(h, Eye, "查看")),
         h(C.Btn, { h: h, kind: "ghost", onClick: function () { startEdit(row); } }, iconLabel(h, Pencil, "编辑")),
