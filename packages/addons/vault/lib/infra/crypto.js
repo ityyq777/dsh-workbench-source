@@ -51,6 +51,32 @@ export function secretAad(id, name, kind) {
   return "vault:" + String(id) + ":" + String(name) + ":" + String(kind);
 }
 
+/**
+ * 集合账号（vault_set.account）：0.5.0 起与凭据一样用 DEK 加密落库，
+ * 云端与本地库都不再出现登录名/邮箱明文。
+ * 空账号仍存空串——集合类型（账号集合 / 普通集合）靠它是否为空推导。
+ * 前缀独立于 `v1:`，旧明文字段即便以 "v1:" 开头也不会被误判成密文。
+ */
+export const ACCOUNT_PREFIX = "va1:";
+
+export function setAccountAad(setId) {
+  return "vault:set:account:" + String(setId);
+}
+
+export function sealAccount(dek, plaintext, setId) {
+  return ACCOUNT_PREFIX + seal(dek, plaintext, setAccountAad(setId));
+}
+
+export function openAccount(dek, payload, setId) {
+  const raw = String(payload || "");
+  if (!raw.startsWith(ACCOUNT_PREFIX)) throw new Error("账号密文格式不支持");
+  return open(dek, raw.slice(ACCOUNT_PREFIX.length), setAccountAad(setId));
+}
+
+export function isSealedAccount(value) {
+  return String(value || "").startsWith(ACCOUNT_PREFIX);
+}
+
 export function wbHome() {
   return process.env.WB_HOME || join(homedir(), ".dsh", "workbench");
 }

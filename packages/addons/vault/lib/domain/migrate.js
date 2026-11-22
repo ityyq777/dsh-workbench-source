@@ -1,11 +1,13 @@
 /**
- * 0.2.x → 0.3.0 数据迁移：把「分组直属凭据」收进集合，并把站点专属 kind 收口。
+ * 解锁后数据迁移：
+ * - 0.2.x → 0.3.0：把「分组直属凭据」收进集合，并把站点专属 kind 收口；
+ * - 0.4.x → 0.5.0：把 vault_set.account 的明文全部加密。
  * 只有解锁拿到 DEK 后才能重加密，因此入口是 unlock() 成功之后。
- * 整批一个事务：任一步失败回滚，schema_version 保持 2，下次解锁重试。
- * 0.4.0 起迁移完成直接标 SCHEMA_VERSION（4）：account 列已由 ensureSchema 的 migrateV4 补齐。
+ * 每批一个事务：任一步失败回滚、版本号停在原位，下次解锁重试。
+ * 0.4.0 起结构升级（account 列）由 ensureSchema 的 migrateV4 补齐，本文件只管数据。
  */
 import { SCHEMA_VERSION, hasColumn, headerGet, headerSet, now, tx } from "../db/db.js";
-import { open, seal, secretAad } from "../infra/crypto.js";
+import { isSealedAccount, open, seal, sealAccount, secretAad } from "../infra/crypto.js";
 import { createSets } from "./sets.js";
 
 const SITE_NAME = /^site\.[^.]+\.([^.]+)\.([^.]+)$/;
@@ -121,9 +123,39 @@ export function migrateToV3({ db, dek, log = () => {} }) {
 
     // 3) 收口：去掉凭据上的单列归属
     if (hasGroupColumn) db.exec("ALTER TABLE vault_secret DROP COLUMN group_id");
-    headerSet(db, { schema_version: SCHEMA_VERSION });
+    // 只标到 3：账号加密是独立一步（4 → 5），由 migrateAccountsToV5 推进版本。
+    headerSet(db, { schema_version: 3 });
   });
 
-  log("保险箱已迁移到 schema " + SCHEMA_VERSION, JSON.stringify(stats));
+  log("保险箱已迁移到 schema 3", JSON.stringify(stats));
   return { migrated: true, ...stats };
+}
+
+/**
+ * 0.4.x → 0.5.0：把 vault_set.account 的明文加密成 `va1:` 密文。
+ * 空账号保持空串（集合类型靠它推导）；已是密文的行跳过，可重复执行。
+ * 失败整批回滚，schema_version 停在 4，下次解锁重试。
+ */
+export function migrateAccountsToV5({ db, dek, log = () => {} }) {
+  const head = headerGet(db);
+  if (!head) return { migrated: false, reason: "uninitialized" };
+  if (Number(head.schema_version || 0) >= SCHEMA_VERSION) return { migrated: false, reason: "current" };
+  if (!dek) return { migrated: false, reason: "locked" };
+  let encrypted = 0;
+  tx(db, () => {
+    const rows = db.prepare("SELECT id, account FROM vault_set WHERE account <> ''").all();
+    for (const row of rows) {
+      const raw = String(row.account || "");
+      if (!raw || isSealedAccount(raw)) continue;
+      db.prepare("UPDATE vault_set SET account = ?, updated_at = ?, rev = rev + 1 WHERE id = ?").run(
+        sealAccount(dek, raw, row.id),
+        now(),
+        row.id,
+      );
+      encrypted += 1;
+    }
+    headerSet(db, { schema_version: SCHEMA_VERSION });
+  });
+  if (encrypted) log("集合账号已加密", encrypted + " 条");
+  return { migrated: true, encrypted };
 }

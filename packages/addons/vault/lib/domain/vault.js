@@ -28,7 +28,7 @@ import {
   usageMap,
 } from "../db/db.js";
 import { createSets } from "./sets.js";
-import { migrateToV3 } from "./migrate.js";
+import { migrateAccountsToV5, migrateToV3 } from "./migrate.js";
 import { assertKind, assertMeta, assertSecretName } from "./secret-input.js";
 
 const MODES = new Set(["A", "B", "C"]);
@@ -66,13 +66,14 @@ function assertPassphrase(passphrase) {
 }
 
 export function createVault({ db, log = () => {} }) {
-  const sets = createSets({ db });
   const state = {
     dek: null,
     lastActivity: 0,
     failures: 0,
     lockUntil: 0,
   };
+  // 集合账号的加解密要 DEK：解锁前返回空，锁定态读不到账号明文。
+  const sets = createSets({ db, getDek: () => state.dek });
 
   function initialized() {
     return Boolean(headerGet(db));
@@ -136,13 +137,19 @@ export function createVault({ db, log = () => {} }) {
     }
   }
 
-  /** 解锁后检查 schema_version：2 → 当前版本一次性迁移；失败回滚并保持 2。 */
+  /** 解锁后检查 schema_version：2 → 3 搬家、4 → 5 加密集合账号；失败回滚停在原版本。 */
   function runMigration() {
     const head = headerGet(db);
     if (!head || Number(head.schema_version || 0) >= SCHEMA_VERSION) return "";
     try {
-      const result = migrateToV3({ db, dek: state.dek, log });
-      return result.migrated ? "保险箱已升级到「集合与账号」（schema " + SCHEMA_VERSION + "）。" : "";
+      const notes = [];
+      if (Number(head.schema_version || 0) < 3) {
+        const result = migrateToV3({ db, dek: state.dek, log });
+        if (result.migrated) notes.push("集合与账号");
+      }
+      const accounts = migrateAccountsToV5({ db, dek: state.dek, log });
+      if (accounts.migrated) notes.push("账号加密");
+      return notes.length ? "保险箱已升级（schema " + SCHEMA_VERSION + "）：" + notes.join("、") + "。" : "";
     } catch (error) {
       log("保险箱迁移失败，已回滚", String(error && error.message));
       return "保险箱升级失败，已回滚；下次解锁会重试。";
@@ -567,6 +574,9 @@ export function createVault({ db, log = () => {} }) {
 
   return {
     status,
+    // 集合实例带 DEK 访问器：action 层必须复用这一份，不能另建 createSets（否则拿不到 DEK）。
+    sets,
+    dek: () => state.dek,
     setup,
     unlock,
     lock,

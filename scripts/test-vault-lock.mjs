@@ -90,7 +90,7 @@ assert.equal(text(tree).includes('p1'), false, '锁定后不再渲染任何凭�
 assert.equal(classes(tree).some(c => c.includes('wbv-table')), false, '锁定后不渲染表格');
 assert.match(text(tree), /请先在「保险箱」页解锁/);
 
-// C. 未解锁就打开集合页与分组页：直接是提示卡，不发列表请求。
+// C. 未解锁就打开分组页：直接是提示卡，不发列表请求。
 let listedWhileLocked = 0;
 const countingApi = {
   call(name, args) {
@@ -98,13 +98,22 @@ const countingApi = {
     return api.call(name, args);
   },
 };
-for (const file of ['packages/addons/vault/client/views/sets.cjs', 'packages/addons/vault/client/views/groups.cjs']) {
-  const page = mountView(file, { api: countingApi });
+{
+  const page = mountView('packages/addons/vault/client/views/groups.cjs', { api: countingApi });
   const lockedTree = await settle(page);
-  assert.match(text(lockedTree), /保险箱已锁定/, file + ' 锁定时给提示卡');
-  assert.equal(classes(lockedTree).some(c => c.includes('wbv-table') || c.includes('wbv-split')), false, file + ' 锁定时不渲染列表/分栏');
+  assert.match(text(lockedTree), /保险箱已锁定/, '分组页锁定时给提示卡');
+  assert.equal(classes(lockedTree).some(c => c.includes('wbv-table') || c.includes('wbv-split')), false, '分组页锁定时不渲染列表/分栏');
 }
 assert.equal(listedWhileLocked, 0, '锁定期间不请求列表接口');
+
+// C2. 集合页 0.4.2 起锁定时改只读列表：照常请求 setList（集合名/账号/凭据名都是明文元数据），
+// 但账号已是密文、写入口全部禁用。
+{
+  const page = mountView('packages/addons/vault/client/views/sets.cjs');
+  const lockedTree = await settle(page);
+  assert.match(text(lockedTree), /保险箱已锁定/, '集合页锁定时给只读提示');
+  assert.ok(classes(lockedTree).some(c => c.includes('wbv-split')), '集合页锁定时仍渲染只读分栏');
+}
 
 // D. 迟到的响应不许回填：集合页请求发出后立刻锁定，响应晚到也要被丢弃。
 rawCall('vault.unlock', { passphrase: pass });
@@ -138,12 +147,21 @@ assert.equal(text(recovered).includes('迟到的集合'), false, '丢弃的那�
 assert.match(text(recovered), /还没有集合/, '解锁后展示的是真实后端结果');
 
 // F. 源码契约：三页都接守卫，且锁定时不保留明文/弹窗状态。
-for (const file of ['secrets', 'sets', 'groups']) {
+// 凭据页与分组页锁定整页让位；集合页自 0.4.2 起是只读列表，所以不要求 Lock.Panel。
+for (const file of ['secrets', 'groups']) {
   const code = readFileSync(resolve(root, 'packages/addons/vault/client/views/' + file + '.cjs'), 'utf8');
   assert.match(code, /require\("\.\.\/ui\/lock\.cjs"\)/, file + ' 必须接入 ui/lock.cjs');
   assert.match(code, /if \(!guard\.ready\)/, file + ' 状态未就绪先给占位');
   assert.match(code, /if \(guard\.locked\) return h\(Lock\.Panel/, file + ' 锁定只渲染提示卡');
   assert.match(code, /inflight\.seq !== seq/, file + ' 在途响应必须能作废');
+}
+const setsCode = readFileSync(resolve(root, 'packages/addons/vault/client/views/sets.cjs'), 'utf8');
+assert.match(setsCode, /require\("\.\.\/ui\/lock\.cjs"\)/, '集合页必须接入 ui/lock.cjs');
+assert.match(setsCode, /if \(!guard\.ready\)/, '集合页状态未就绪先给占位');
+assert.match(setsCode, /var readOnly = guard\.locked;/, '集合页锁定时转只读');
+assert.match(setsCode, /inflight\.seq !== seq/, '集合页在途响应必须能作废');
+for (const clear of ['draftS[1](null)', 'pickS[1]([])', 'delS[1](null)']) {
+  assert.ok(setsCode.includes(clear), '集合页锁定时必须清空：' + clear);
 }
 const secretsCode = readFileSync(resolve(root, 'packages/addons/vault/client/views/secrets.cjs'), 'utf8');
 for (const clear of ['revealS[1](null)', 'askS[1](null)', 'unlockS[1](null)', 'editingS[1](false)', 'showSecretS[1](false)']) {
@@ -153,5 +171,5 @@ const groupsCode = readFileSync(resolve(root, 'packages/addons/vault/client/view
 for (const clear of ['openS[1](null)', 'createS[1](null)', 'delS[1](null)']) assert.ok(groupsCode.includes(clear), '锁定时必须收起：' + clear);
 
 // 页面里的 10ms 轮询在测试结束前仍会触发，直接结束进程，避免关库后再被轮询读到。
-console.log('VAULT LOCK PASS: 未解锁只给提示卡且不发列表请求、轮询锁定后清空列表/详情/弹窗、迟到响应不回填、重新解锁自动恢复');
+console.log('VAULT LOCK PASS: 凭据/分组页未解锁只给提示卡、集合页锁定只读、轮询锁定后清空列表/详情/弹窗、迟到响应不回填、重新解锁自动恢复');
 process.exit(0);

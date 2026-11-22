@@ -14,7 +14,7 @@ const { createVault } = await import("../lib/domain/vault.js");
 const { createGroups } = await import("../lib/domain/groups.js");
 const { createSets } = await import("../lib/domain/sets.js");
 const { registerVaultActions } = await import("../lib/domain/actions.js");
-const { KDF_DEFAULT, deriveKey, open, seal, secretAad } = await import("../lib/infra/crypto.js");
+const { KDF_DEFAULT, deriveKey, isSealedAccount, open, seal, secretAad } = await import("../lib/infra/crypto.js");
 
 function makeVault() {
   const db = new DatabaseSync(":memory:");
@@ -40,7 +40,7 @@ test("A 模式初始化、加密落库、解锁/失败锁", () => {
   assert.equal(st.initialized, true);
   assert.equal(st.locked, false);
   assert.equal(st.unlockMode, "A");
-  assert.equal(st.schemaVersion, 4);
+  assert.equal(st.schemaVersion, 5);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_header").get().n, 1);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_device").get().n, 1);
 
@@ -523,7 +523,7 @@ test("0.2.x → 0.3.0 迁移：分组直属凭据收进默认集合，site-accou
   vault.lock();
   const res = run("vault.unlock", { passphrase: PASS });
   assert.match(String(res.notice || ""), /集合与账号/);
-  assert.equal(headerGet(db).schema_version, 4);
+  assert.equal(headerGet(db).schema_version, 5);
   assert.equal(
     db.prepare("SELECT COUNT(*) AS n FROM pragma_table_info('vault_secret') WHERE name = 'group_id'").get().n,
     0,
@@ -672,11 +672,12 @@ test("锁定后集合与凭据元数据仍可读，只有明文与写操作要�
   vault.lock();
   assert.equal(run("vault.status").locked, true);
 
-  // 集合与凭据名、账号都是明文元数据：锁定时界面照样要能列出。
+  // 集合与凭据名是明文元数据，锁定时照样能列出；0.5.0 起账号是密文，锁定态读不到。
   const sets = run("vault.setList", {}).items;
   assert.equal(sets.length, 1);
   assert.equal(sets[0].name, "工作邮箱");
-  assert.equal(sets[0].account, "ops@example.com");
+  assert.equal(sets[0].account, "");
+  assert.equal(sets[0].accountLocked, true);
   assert.equal(sets[0].secretCount, 1);
 
   const detail = run("vault.setGet", { id: set.id });
@@ -694,4 +695,83 @@ test("锁定后集合与凭据元数据仍可读，只有明文与写操作要�
     () => run("vault.secretCreate", { name: "另一条", kind: "password", secret: "x" }),
     /锁定/,
   );
+});
+
+test("集合账号加密落库：库里只有 va1: 密文，解锁后可读、可搜、可改", () => {
+  const { db, run } = makeVault();
+  run("vault.setup", { passphrase: PASS, mode: "A" });
+  const set = run("vault.setCreate", { name: "工作邮箱", account: "ops@example.com" });
+  const row = db.prepare("SELECT * FROM vault_set WHERE id = ?").get(set.id);
+  assert.ok(isSealedAccount(row.account), "账号列应是 va1: 密文");
+  assert.ok(!row.account.includes("ops@example.com"));
+  assert.ok(!JSON.stringify(row).includes("ops@example.com"), "整行都不该出现明文账号");
+
+  assert.equal(set.account, "ops@example.com");
+  assert.equal(set.accountLocked, false);
+  assert.equal(run("vault.setGet", { id: set.id }).account, "ops@example.com");
+  assert.equal(run("vault.setList", { q: "ops@" }).items.length, 1, "账号搜索走解密后内存匹配");
+  assert.equal(run("vault.setList", { type: "account" }).items.length, 1);
+
+  // 改名不重加密（account 未传时保留原密文），账号照常解密
+  run("vault.setUpdate", { id: set.id, name: "工作邮箱 2" });
+  assert.equal(run("vault.setGet", { id: set.id }).account, "ops@example.com");
+
+  // 换账号重新加密
+  run("vault.setUpdate", { id: set.id, account: "ops2@example.com" });
+  const row2 = db.prepare("SELECT account FROM vault_set WHERE id = ?").get(set.id);
+  assert.ok(isSealedAccount(row2.account));
+  assert.ok(!row2.account.includes("ops2@example.com"));
+  assert.equal(run("vault.setGet", { id: set.id }).account, "ops2@example.com");
+
+  // 改为普通集合：账号列清空，类型回到 common
+  run("vault.setUpdate", { id: set.id, account: "" });
+  assert.equal(db.prepare("SELECT account FROM vault_set WHERE id = ?").get(set.id).account, "");
+  assert.equal(run("vault.setGet", { id: set.id }).type, "common");
+});
+
+test("集合账号锁定态：读不到账号、写账号报锁定，普通集合不受影响", () => {
+  const { db, run, vault } = makeVault();
+  run("vault.setup", { passphrase: PASS, mode: "A" });
+  const set = run("vault.setCreate", { name: "工作邮箱", account: "ops@example.com" });
+  vault.lock();
+
+  const item = run("vault.setList").items[0];
+  assert.equal(item.account, "");
+  assert.equal(item.accountLocked, true);
+  assert.equal(item.type, "account", "类型仍按密文列是否为空推导");
+  assert.equal(run("vault.setGet", { id: set.id }).account, "");
+
+  assert.throws(() => run("vault.setCreate", { name: "新号", account: "a@b.c" }), /锁定/);
+  assert.throws(() => run("vault.setUpdate", { id: set.id, account: "x@y.z" }), /锁定/);
+  assert.throws(() => run("vault.setUpdate", { id: set.id, account: "" }), /锁定/, "清空已有账号也要解锁");
+
+  // 只有普通集合（空账号）在锁定态仍能建：不需要 DEK
+  const plain = run("vault.setCreate", { name: "临时归档" });
+  assert.equal(plain.account, "");
+  assert.equal(plain.type, "common");
+  assert.equal(plain.accountLocked, false);
+  const raw = db.prepare("SELECT account FROM vault_set WHERE id = ?").get(set.id).account;
+  assert.ok(raw.startsWith("va1:"), "锁定态写入失败不应破坏原密文");
+});
+
+test("0.4.x → 0.5.0：解锁时把明文集合账号加密并升到 schema 5", () => {
+  const { db, run, vault } = makeVault();
+  run("vault.setup", { passphrase: PASS, mode: "A" });
+  const set = run("vault.setCreate", { name: "工作邮箱", account: "ops@example.com" });
+  // 还原成 0.4.x 形态：账号退回明文，header 停在 4
+  db.prepare("UPDATE vault_set SET account = ? WHERE id = ?").run("ops@example.com", set.id);
+  headerSet(db, { schema_version: 4 });
+
+  vault.lock();
+  const res = run("vault.unlock", { passphrase: PASS });
+  assert.match(String(res.notice || ""), /账号加密/);
+  assert.equal(headerGet(db).schema_version, 5);
+  const row = db.prepare("SELECT account FROM vault_set WHERE id = ?").get(set.id);
+  assert.ok(row.account.startsWith("va1:"));
+  assert.equal(run("vault.setGet", { id: set.id }).account, "ops@example.com");
+
+  // 幂等：已经到 5 的库再次解锁不再提示迁移
+  vault.lock();
+  const again = run("vault.unlock", { passphrase: PASS });
+  assert.equal(String(again.notice || ""), "");
 });

@@ -211,6 +211,15 @@ module.exports = function SetsView(props) {
     });
   }
 
+  // 集合账号 0.5.0 起是密文：锁定/未解锁时服务端只回空串并标记 accountLocked，
+  // 这里明确告诉用户「有账号但看不到」，避免误以为集合是普通集合。
+  function accountText(set, withPrefix) {
+    var label = set.accountLocked
+      ? "账号已加密 · 解锁后可见"
+      : (set.account ? "账号 " + set.account : "未填账号");
+    return withPrefix ? label : label.replace(/^账号\s*/, "");
+  }
+
   var items = listS[0].items.filter(function (set) {
     var q = qS[0].trim();
     if (!q) return true;
@@ -303,7 +312,7 @@ module.exports = function SetsView(props) {
                     h("span", { className: "wbv-grow" }),
                     h("span", { className: "wbv-pill" }, (set.secretCount || 0) + " 条")),
                   h("div", { className: "wbv-item-sub" },
-                    (set.account ? "账号 " + set.account : "未填账号")
+                    accountText(set, true)
                       + " · " + (set.description || "—")
                       + " · " + (set.groupIds || []).length + " 个分组"));
               })),
@@ -319,7 +328,7 @@ module.exports = function SetsView(props) {
                   h(C.Btn, { h: h, kind: "danger", disabled: readOnly, onClick: function () { removeSet(active); } }, "删除集合"))),
               h("div", { className: "wbv-muted", style: { marginBottom: "10px" } },
                 (active.type === "account" ? "账号集合" : "普通集合")
-                  + " · 账号：" + (active.account || "未填")),
+                  + " · 账号：" + accountText(active, false)),
               detail.error ? h(C.Notice, { h: h, kind: "error", text: detail.error }) : null,
               h("div", { className: "wbv-label" }, "集合内凭据"),
               detail.secrets.length === 0

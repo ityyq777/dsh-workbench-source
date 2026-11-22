@@ -224,7 +224,11 @@ assert(
 const vaultSetId = db.prepare("SELECT vault_set_id FROM site_account WHERE id=?").get(accA1).vault_set_id;
 const accountSet = db.prepare("SELECT * FROM vault_set WHERE id=?").get(vaultSetId);
 assert(accountSet && accountSet.name === accA1, "account backed by a set named after accountId");
-assert(accountSet.account === "admin", "set account filled from site login name");
+assert(
+  String(accountSet.account).indexOf("va1:") === 0 && String(accountSet.account).indexOf("admin") < 0,
+  "set account stored as ciphertext",
+);
+assert((await call("vault.setGet", { id: vaultSetId })).account === "admin", "set account decrypts to site login name");
 assert(
   db.prepare("SELECT COUNT(*) AS n FROM vault_set_secret WHERE set_id=? AND deleted_at IS NULL").get(vaultSetId).n === 3,
   "account set holds three secrets",

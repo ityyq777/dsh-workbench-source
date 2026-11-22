@@ -7,6 +7,7 @@
  * 0.3.4：集合选择改用共享 filter-checklist（关键字搜索 + 滚动分页），任务/站点/储物标签筛选同步复用。
  * 0.3.6：口令输入框统一用共享的明文切换控件（lib/secret-field.cjs），初始化页主/确认口令、解锁页与口令弹层都能点小眼睛看明文，各自独立切换。
  * 0.3.5：修复「保存凭据后列表不新增」——客户端 unwrap 对 ok:false 抛错、锁定态在凭据页提示并可内联解锁、写成功后无条件刷新列表。
+ * 0.5.0：集合账号也加密——vault_set.account 改成 DEK 加密的 `va1:` 密文（AAD 绑定集合 id），本地库、同步与备份里都不再有登录名明文；锁定态读不到账号，写入账号需先解锁；schema_version 4 → 5 在解锁后迁移。
  */
 import { ensureSchema, bindClock } from "./db/db.js";
 import { createRequire } from "node:module";
@@ -124,7 +125,7 @@ export function createDomain(host) {
         },
         { name: "groupId", type: "string", description: "所属分组，可空；写入时自动挂到该组的默认集合" },
         { name: "setId", type: "string", description: "直接指定所属集合，优先于 groupId" },
-        { name: "account", type: "string", description: "集合上的账号，可空、可重复；留空即普通集合" },
+        { name: "account", type: "string", description: "集合上的账号，加密落库，可空、可重复；留空即普通集合" },
         { name: "meta", type: "object", description: "非敏感备注（用户名、URL、过期提醒）" },
       ],
       notFor: ["浏览器密码自动填充", "跨设备同步明文", "给 agent 读取明文"],
@@ -134,6 +135,7 @@ export function createDomain(host) {
         "备份仍不导出密文，换机靠同步或重新录入。",
         "旧版分组的直属凭据在首次解锁时迁移进「<组名> · 默认」集合；站点专属类型收口为通用类型。",
         "0.4.0 起集合带可空账号：有账号的是账号集合，留空的是普通集合；账号允许重复，条目身份只由集合 id 承担。",
+        "0.5.0 起集合账号用 DEK 加密落库（va1: 密文，AAD 绑定集合 id）：本地库与云端都看不到登录名明文；未解锁时读到的账号为空（accountLocked 为 true），新增或修改账号必须先解锁；schema_version 升到 5 时在解锁后自动加密存量账号，两端插件都升到 0.5.0 才能正确读写。",
       ],
     },
     setup(api) {

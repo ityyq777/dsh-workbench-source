@@ -2,7 +2,7 @@
  * 集合与账号页的锁定态与凭据选择回归。
  *
  * 覆盖：
- * - 锁定时不再整页让位：集合名、账号、集合内凭据名照常展示，并给出「已锁定」说明；
+ * - 锁定时不再整页让位：集合名、集合内凭据名照常展示，账号来自密文因而显示「已加密」提示；
  * - 锁定时写操作全部禁用（新建/编辑/删除/移出），详情里「加入凭据」退化成一句解锁提示；
  * - 解锁后「加入凭据」是共享 SearchPicker（关键字搜索 + 多选 + chip 回显），不再是原生下拉；
  * - 弹窗里的凭据选择同样是 SearchPicker。
@@ -154,14 +154,16 @@ const ITEMS = {
 
 function makeApi(locked) {
   const calls = [];
+  // 0.5.0 起账号是密文：锁定态服务端只回空串 + accountLocked 标记。
+  const sets = locked ? ITEMS.sets.map((set) => Object.assign({}, set, { account: "", accountLocked: true })) : ITEMS.sets;
   return {
     calls,
     call(action, args) {
       calls.push({ action, args });
       if (action === "vault.status") return Promise.resolve({ locked, initialized: true });
-      if (action === "vault.setList") return Promise.resolve({ items: ITEMS.sets });
+      if (action === "vault.setList") return Promise.resolve({ items: sets });
       if (action === "vault.setGet") {
-        return Promise.resolve({ set: ITEMS.sets[0], secrets: [ITEMS.secrets[0]], groupIds: ["grp_1"] });
+        return Promise.resolve({ set: sets[0], secrets: [ITEMS.secrets[0]], groupIds: ["grp_1"] });
       }
       if (action === "vault.secretList") return Promise.resolve({ items: ITEMS.secrets });
       if (action === "vault.groupList") return Promise.resolve({ items: ITEMS.groups });
@@ -177,9 +179,9 @@ test("锁定态：集合与凭据名照常可见，写操作全禁用，加入�
 
   const body = texts(tree);
   assert.match(body, /工作邮箱/, "锁定时集合名仍应可见");
-  assert.match(body, /ops@example\.com/, "锁定时账号仍应可见");
+  assert.match(body, /账号已加密 · 解锁后可见/, "锁定时账号是密文，应提示解锁后可见");
   assert.match(body, /保险箱已锁定/, "应给出只读说明");
-  assert.ok(api.calls.some((c) => c.action === "vault.setList"), "锁定时仍应请求集合列表（该接口不需要 DEK）");
+  assert.ok(api.calls.some((c) => c.action === "vault.setList"), "锁定时仍应请求集合列表（该接口可调，只是账号为空）");
 
   // 打开集合详情：凭据名来自 vault.setGet，同样不需要 DEK
   const row = byClass(tree, "wbv-item")[0];

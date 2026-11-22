@@ -18,8 +18,9 @@ export const VAULT_META_LEGACY = "vault_meta_legacy";
 /**
  * 0.3.0 起：集合层（set）与两张多对多关联表；schema_version 3。
  * 0.4.0 起：集合加可选 account 列（账号集合 / 普通集合由它是否为空区分）；schema_version 4。
+ * 0.5.0 起：account 非空值改为 DEK 加密的 `va1:` 密文；schema_version 5（解锁后迁移）。
  */
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export const VAULT_DDL = [
   "CREATE TABLE IF NOT EXISTS vault_header (" +
@@ -176,6 +177,7 @@ export function ensureSchema(db) {
  * 0.3.x → 0.4.0：给 vault_set 补 account 列（纯结构升级，不需要 DEK）。
  * 只把已经到 3 的库升到 4；schema_version=2 的旧库仍由解锁后的 migrateToV3 整批迁移，
  * 否则会跳过 0.3.0 的数据搬家，只剩空壳结构。
+ * 4 → 5 需要 DEK 才能把明文账号加密，因此不在启动时升版本，交给解锁后的账号迁移。
  */
 export function migrateV4(db) {
   if (tableExists(db, "vault_set") && !hasColumn(db, "vault_set", "account")) {
@@ -184,7 +186,7 @@ export function migrateV4(db) {
   const head = headerGet(db);
   if (!head) return;
   const version = Number(head.schema_version || 0);
-  if (version >= 3 && version < SCHEMA_VERSION) headerSet(db, { schema_version: SCHEMA_VERSION });
+  if (version >= 3 && version < 4) headerSet(db, { schema_version: 4 });
 }
 
 /**

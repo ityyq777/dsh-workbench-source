@@ -3939,6 +3939,10 @@ var require_sets = __commonJS({
           msgS[1](C.errText(e));
         });
       }
+      function accountText(set, withPrefix) {
+        var label = set.accountLocked ? "\u8D26\u53F7\u5DF2\u52A0\u5BC6 \xB7 \u89E3\u9501\u540E\u53EF\u89C1" : set.account ? "\u8D26\u53F7 " + set.account : "\u672A\u586B\u8D26\u53F7";
+        return withPrefix ? label : label.replace(/^账号\s*/, "");
+      }
       var items = listS[0].items.filter(function(set) {
         var q = qS[0].trim();
         if (!q) return true;
@@ -4046,7 +4050,7 @@ var require_sets = __commonJS({
                 h(
                   "div",
                   { className: "wbv-item-sub" },
-                  (set.account ? "\u8D26\u53F7 " + set.account : "\u672A\u586B\u8D26\u53F7") + " \xB7 " + (set.description || "\u2014") + " \xB7 " + (set.groupIds || []).length + " \u4E2A\u5206\u7EC4"
+                  accountText(set, true) + " \xB7 " + (set.description || "\u2014") + " \xB7 " + (set.groupIds || []).length + " \u4E2A\u5206\u7EC4"
                 )
               );
             })
@@ -4075,7 +4079,7 @@ var require_sets = __commonJS({
               h(
                 "div",
                 { className: "wbv-muted", style: { marginBottom: "10px" } },
-                (active.type === "account" ? "\u8D26\u53F7\u96C6\u5408" : "\u666E\u901A\u96C6\u5408") + " \xB7 \u8D26\u53F7\uFF1A" + (active.account || "\u672A\u586B")
+                (active.type === "account" ? "\u8D26\u53F7\u96C6\u5408" : "\u666E\u901A\u96C6\u5408") + " \xB7 \u8D26\u53F7\uFF1A" + accountText(active, false)
               ),
               detail.error ? h(C.Notice, { h, kind: "error", text: detail.error }) : null,
               h("div", { className: "wbv-label" }, "\u96C6\u5408\u5185\u51ED\u636E"),
@@ -6979,7 +6983,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.4.11",
+    version: "0.5.0",
     icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },

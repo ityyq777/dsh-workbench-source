@@ -3,7 +3,6 @@
  * 分组与关联对 plugin 开放，业务模块用自身标识注册，不需要依赖 sites。
  */
 import { KINDS } from "./secret-input.js";
-import { createSets } from "./sets.js";
 import { registerSetActions } from "./actions-sets.js";
 
 function only(ctx, allowed, action) {
@@ -12,7 +11,8 @@ function only(ctx, allowed, action) {
 }
 
 export function registerVaultActions(api, vault, groups) {
-  const sets = createSets({ db: api.db });
+  // 复用 vault 里那份带 getDek 的集合实例：账号读写要 DEK，另建一份会永远判定为锁定。
+  const sets = vault.sets;
   api.action("vault.status", {
     description: "只读：保险箱是否初始化、是否锁定、解锁模式、凭据/分组数量与同步状态；不含任何密文。",
     input: { type: "object", properties: {}, additionalProperties: false },
@@ -465,7 +465,17 @@ export function registerVaultActions(api, vault, groups) {
           },
           {
             name: "vault_set",
-            columns: ["id", "name", "description", "color", "created_at", "updated_at", "deleted_at", "rev"],
+            columns: [
+              "id",
+              "name",
+              "account",
+              "description",
+              "color",
+              "created_at",
+              "updated_at",
+              "deleted_at",
+              "rev",
+            ],
           },
           {
             name: "vault_group_set",
@@ -482,7 +492,7 @@ export function registerVaultActions(api, vault, groups) {
 
   api.action("vault.dataQuery", {
     origins: ["ui"],
-    description: "只读：数据页查询；密文列一律掩码。",
+    description: "只读：数据页查询；密文列（含集合账号）一律掩码。",
     input: {
       type: "object",
       properties: {
@@ -526,6 +536,15 @@ export function registerVaultActions(api, vault, groups) {
       const rows = api.db
         .prepare("SELECT * FROM " + safe + " ORDER BY updated_at DESC LIMIT ? OFFSET ?")
         .all(limit, offset);
+      // 集合账号 0.5.0 起是密文：数据页只看得到掩码，与 vault_secret.ciphertext 一致。
+      if (table === "vault_set") {
+        return {
+          table,
+          rows: rows.map((row) => ({ ...row, account: String(row.account || "") ? "***" : "" })),
+          limit,
+          offset,
+        };
+      }
       return { table, rows, limit, offset };
     },
   });
