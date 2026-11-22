@@ -79,6 +79,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "audit:lines": "node scripts/audit-lines.mjs",
+    "audit:narrow": "node scripts/audit-narrow-ui.mjs",
     "audit:profile": "node scripts/check-profile-sync.mjs",
     "audit:structure": "node scripts/audit-structure.mjs",
     "test:structure": "node scripts/test-structure.mjs",
