@@ -92,7 +92,7 @@ var CSS = [
   ".wb-immersive-main:has(.wb-fill)>.wb-inner{height:100%}",
   ".wb-inner>div:has(>.wb-fill){display:flex;flex-direction:column;height:100%;min-height:0}",
   ".wb-fill{flex:1 1 auto;min-height:0}",
-  "@media (max-width:760px){.wb-root{padding:16px}.wb-home-grid{grid-template-columns:1fr}.wb-home-cats{gap:16px}.wb-page-title h2{font-size:17px}.wb-immersive-bar{padding:calc(8px + var(--dsh-frame-top-clearance,0px)) 14px 8px}.wb-immersive-main{padding:14px 16px 20px}.wb-immersive-title span:not(.wb-home-icon):not(.wb-badge){display:none}}",
+  "@media (max-width:760px){.wb-root{padding:16px}.wb-home-grid{grid-template-columns:1fr}.wb-home-cats{gap:16px}.wb-page-title h2{font-size:17px}.wb-immersive-bar{padding:calc(8px + var(--dsh-frame-top-clearance,0px)) 14px 8px}.wb-immersive-main{padding:10px 10px 18px}.wb-inner{gap:12px}.wb-immersive-title span:not(.wb-home-icon):not(.wb-badge){display:none}}",
   ".wb-backup{display:flex;flex-direction:column;gap:14px}",
   ".wb-backup-overview{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:linear-gradient(120deg,color-mix(in oklab,var(--wb-accent) 7%,var(--wb-card)),var(--wb-card) 65%)}",
   ".wb-backup-overview-main{min-width:0;display:flex;flex-direction:column;gap:3px}",
@@ -285,8 +285,6 @@ var CSS = [
   ".wb-root .wb-home-title{font-size:15px;font-weight:660;margin-top:8px}",
   ".wb-root .wb-home-desc{font-size:12px;line-height:1.55;opacity:.62;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;min-height:56px}",
   ".wb-root .wb-home-card .wb-badge{background:color-mix(in oklab,currentColor 5%,transparent);border:1px solid color-mix(in oklab,currentColor 8%,transparent);opacity:.72;font-variant-numeric:tabular-nums}",
-  ".wb-root .wb-home-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:8px;font-size:11.5px;color:var(--wb-muted);border-top:1px solid color-mix(in oklab,var(--wb-border) 65%,transparent)}",
-  ".wb-root .wb-home-foot b{font-weight:600;color:var(--wb-accent)}",
   ".wb-root .wb-immersive-bar{background:color-mix(in oklab,var(--wb-card) 86%,transparent);backdrop-filter:saturate(1.15) blur(14px);box-shadow:0 1px 0 var(--wb-line)}",
   ".wb-root .wb-page-tabs{gap:2px;padding:2px 0}",
   ".wb-root .wb-tab{border-radius:8px 8px 0 0;padding:9px 13px;font-weight:500}",
@@ -320,7 +318,7 @@ var CSS = [
   ".wb-root .wbm-detail-meta{display:flex;gap:16px;flex-wrap:wrap;padding:10px 16px;font-size:11.5px;color:var(--wb-muted);border-bottom:1px solid color-mix(in oklab,var(--wb-border) 65%,transparent)}",
   ".wb-root .wbm-detailpane .wbm-body{padding:0 16px 18px;margin:0}",
   "@media (max-width:980px){.wb-root .wbm-layout,.wbml-layout,.wb-root .wbm-layout.has-detail{grid-template-columns:180px minmax(0,1fr)}.wb-root .wbm-layout.has-detail .wbm-detailpane{grid-column:1/-1;max-height:none}}",
-  "@media (max-width:760px){.wb-root :is(.wbc-wrap,.wbv,.wba-wrap,.wbct-wrap,.wbca-wrap,.wbm-wrap,.wbml-wrap,.wbm-page,.wbml-page){padding:16px 14px 28px;gap:14px}.wb-root .wb-hero h2{font-size:20px}.wb-root .wb-home-card{min-height:0;padding:16px}.wb-root :is(.wbc-card,.wbv-card,.wba-card,.wbct-card,.wbca-card,.wbm-card,.wbml-card,.wbct-panel){padding:14px;border-radius:12px}.wb-root .wbm-layout,.wbml-layout,.wb-root .wbm-layout.has-detail{grid-template-columns:1fr}.wb-root .wbm-pane{max-height:none}.wb-root .wbm-rail{order:2}}",
+  "@media (max-width:760px){.wb-root :is(.wbc-wrap,.wbv,.wba-wrap,.wbct-wrap,.wbca-wrap,.wbm-wrap,.wbml-wrap,.wbm-page,.wbml-page){padding:2px 0 18px;gap:12px}.wb-root .wb-hero h2{font-size:20px}.wb-root .wb-home-card{min-height:0;padding:16px}.wb-root :is(.wbc-card,.wbv-card,.wba-card,.wbct-card,.wbca-card,.wbm-card,.wbml-card,.wbct-panel){padding:14px;border-radius:12px}.wb-root .wbm-layout,.wbml-layout,.wb-root .wbm-layout.has-detail{grid-template-columns:1fr}.wb-root .wbm-pane{max-height:none}.wb-root .wbm-rail{order:2}}",
   // 全宽模块页：去掉两侧留白，并把视图标签并入唯一的一层顶栏。
   ".wb-root .wb-inner{max-width:none}",
   ".wb-root .wb-immersive-main{padding:16px 22px 24px}",
@@ -344,6 +342,10 @@ var CSS = [
   ".wb-root .wb-immersive-bar .wb-immersive-title>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
   ".wb-root .wb-immersive-bar .wb-page-tabs{margin:0;flex:0 1 auto;min-width:0;max-width:none;justify-content:flex-start;gap:4px}",
   ".wb-root .wb-immersive-bar .wb-tab{flex:0 0 auto;min-width:0;justify-content:center;text-align:center;padding:6px 10px}",
+  // 窄屏收口：上面这些 .wb-root 前缀的规则优先级高于文件开头的 @media，必须放到最后覆盖，
+  // 否则窄屏仍在用桌面内边距。窄屏两侧留白直接从 22px 降到 10px，插件页容器不再自带左右边距。
+  "@media (max-width:760px){.wb-root .wb-immersive-main{padding:10px 10px 16px}.wb-root .wb-immersive-bar{padding:calc(8px + var(--dsh-frame-top-clearance,0px)) 12px 8px}.wb-root :is(.wbc-wrap,.wbv,.wba-wrap,.wbct-wrap,.wbca-wrap,.wbm-wrap,.wbml-wrap,.wbm-page,.wbml-page){padding:0 0 16px}.wb-root .wb-inner{gap:12px}.wb-root .wb-immersive-main>.wb-inner{gap:12px}}",
+  "@media (max-width:420px){.wb-root .wb-immersive-main{padding:8px 8px 12px}.wb-root .wb-immersive-bar{padding:calc(6px + var(--dsh-frame-top-clearance,0px)) 10px 6px}}",
 ].join("\n");
 // 共享开关样式追加在宿主样式末尾：ensureCss() 是唯一注入点，重复追加无害。
 module.exports = CSS + "\n" + SW.styles.join("\n");

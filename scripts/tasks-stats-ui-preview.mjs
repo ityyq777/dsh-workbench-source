@@ -14,6 +14,7 @@ const { createRoot } = require('react-dom/client');
 const statsView = require('./packages/addons/tasks/client/views/stats.cjs');
 const copy = require('./packages/addons/tasks/client/ui/copy.cjs');
 const styles = require('./packages/addons/tasks/client/ui/styles.cjs');
+const shellCss = require('./packages/shell/client/styles.cjs');
 
 var DAY = 86400000;
 function day(offset) {
@@ -104,7 +105,7 @@ var api = {
 };
 
 var style = document.createElement('style');
-style.textContent = styles + [
+style.textContent = [styles, shellCss].join('\n') + [
   'html,body{margin:0;padding:0}',
   'body{background:var(--wb-bg,#f6f7f9);color:var(--wb-fg,#1f2329);font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}',
   '.preview{max-width:none;padding:0 20px 40px}',
@@ -145,10 +146,21 @@ function paint(theme) {
   Object.keys(tokens).forEach(function (key) { document.documentElement.style.setProperty(key, tokens[key]); });
 }
 
+var FRAME = new URLSearchParams(location.search).get('frame') === 'shell';
+
 function App() {
   var [lang, setLang] = React.useState(new URLSearchParams(location.search).get('lang') || 'zh');
   var [theme, setTheme] = React.useState(new URLSearchParams(location.search).get('theme') || 'light');
   React.useEffect(function () { paint(theme); }, [theme]);
+  var view = h(statsView.TasksStatsView, { key: lang, api: api, lang: lang, active: true, onNavigate: function () {} });
+  // ?frame=shell：套上宿主的 .wb-root/.wb-immersive-main/.wb-inner 外框，按真实页面内边距核对窄屏留白。
+  if (FRAME) {
+    return h('div', { className: 'wb-root' },
+      h('div', { className: 'wb-immersive' },
+        h('div', { className: 'wb-immersive-bar' }, h('strong', { style: { fontSize: 13 } }, '任务统计')),
+        h('div', { className: 'wb-immersive-main' },
+          h('div', { className: 'wb-inner wb-wide' }, view))));
+  }
   return h('div', { className: 'preview' },
     h('div', { className: 'preview-bar' },
       h('strong', { style: { fontWeight: 600 } }, '任务统计页版面预览'),
@@ -158,7 +170,7 @@ function App() {
       h('button', { type: 'button', 'aria-pressed': theme === 'light', onClick: function () { setTheme('light'); } }, '浅色'),
       h('button', { type: 'button', 'aria-pressed': theme === 'dark', onClick: function () { setTheme('dark'); } }, '深色'),
     ),
-    h(statsView.TasksStatsView, { key: lang, api: api, lang: lang, active: true, onNavigate: function () {} }),
+    view,
   );
 }
 // ?debug=1 时把溢出诊断写进 DOM，供无头浏览器 --dump-dom 读取。
