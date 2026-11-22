@@ -1,5 +1,5 @@
 // storage 配置页与配置读取辅助。构建：node scripts/build-addon-clients.mjs
-// 配置存在本机 meta 表，不参与云端同步，也不进入备份。
+// 配置值存配置方案表，方案参与云端同步与备份；当前选中的方案只存本机。
 var React = require("react");
 var h = React.createElement, ui = require("../ui/ui.cjs");
 
@@ -7,10 +7,15 @@ var DOMAIN = "storage";
 var PREFIX = "wbi";
 
 var COPY = require("../ui/config-copy.cjs");
+// 配置方案说明在视图内覆盖：方案随云端同步与备份，当前选中的方案只留在本机。
+COPY.zh.note = "配置方案会随云端同步与备份；当前选中哪个方案只保存在本机";
+COPY.en.note = "Schemes sync to the cloud and travel with backups; which scheme this device uses stays local";
 // 布尔项统一使用共享开关控件（lib/switch.cjs），不再自绘滑轨。
 var SW = require("../../../lib/switch.cjs");
 // 数字项统一使用共享数字输入控件（输入自由、失焦校验）。
 var NF = require("../../../lib/number-field.cjs");
+// 配置方案选择条。
+var SB = require("../../../lib/config-scheme-bar.cjs");
 
 var CSS = [
   ".__P__-cfg{--cfg-line:var(--wb-line,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent)));--cfg-surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));--cfg-muted:var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 62%,transparent));--cfg-faint:var(--dsw-alias-label-tertiary,color-mix(in oklab,currentColor 42%,transparent));--cfg-hover:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent));display:flex;flex-direction:column;gap:16px;width:100%;min-width:0;padding-bottom:6px;color:inherit;font-size:13.5px}",
@@ -66,6 +71,7 @@ var CSS = [
 ]
   .concat(SW.styles)
   .concat(NF.styles)
+  .concat(SB.styles)
   .join("\n")
   .split("__P__")
   .join(PREFIX);
@@ -175,6 +181,11 @@ function ConfigView(props) {
   var busyS = React.useState(false);
   var busy = busyS[0],
     setBusy = busyS[1];
+  // 请求锁：渲染后的 disabled 只能挡住下一次点击，ref 还能挡住同一次渲染里的陈旧回调。
+  var requestLock = React.useRef(false), mounted = React.useRef(true);
+  React.useEffect(function () { mounted.current = true; return function () { mounted.current = false; }; }, []);
+  function acquire() { if (requestLock.current) return false; requestLock.current = true; return true; }
+  function release() { requestLock.current = false; }
 
   React.useEffect(function () {
     injectCss();
@@ -243,6 +254,25 @@ function ConfigView(props) {
         if (prevState) setState(prevState);
         setNotice({ id: id, text: t.saveFail + String((e && e.message) || e), error: true });
       });
+  }
+
+  // 方案操作：请求锁防止重复提交；成功后用服务端返回的 state 整体覆盖，失败只提示，不做乐观更新。
+  function schemeCall(action, args) {
+    if (!acquire()) return;
+    setBusy(true);
+    setNotice({ id: "", text: t.saving, error: false });
+    return Promise.resolve()
+      .then(function () { return api.call(DOMAIN + "." + action, args || {}); })
+      .then(function (r) {
+        var body = unwrap(r);
+        if (r && r.ok === false) throw new Error((r && r.error) || "scheme failed");
+        if (mounted.current && body && body.state) setState(body.state);
+        setNotice({ id: "", text: t.saved, error: false });
+      })
+      .catch(function (e) {
+        setNotice({ id: "", text: t.saveFail + String((e && e.message) || e), error: true });
+      })
+      .finally(function () { setBusy(false); release(); });
   }
 
   function resetItem(id) {
@@ -387,6 +417,16 @@ function ConfigView(props) {
     );
   }
   if (state) {
+    body.push(h(SB.SchemeBar, {
+      key: "schemes", lang: lang, prefix: PREFIX,
+      schemes: state.schemes || [],
+      activeId: state.scheme ? state.scheme.id : "",
+      busy: busy,
+      onActivate: function (id) { schemeCall("configSchemeActivate", { id: id || "" }); },
+      onCreate: function (name, from) { schemeCall("configSchemeCreate", { name: name, from: from || "current" }); },
+      onRename: function (id, name) { schemeCall("configSchemeRename", { id: id, name: name }); },
+      onDelete: function (id) { schemeCall("configSchemeDelete", { id: id }); },
+    }));
     var items = state.items || [];
     var groups = state.groups || [];
     var byGroup = {};

@@ -2,6 +2,7 @@
 export const tagSync = {
   tables: [
     { name: "tag", mode: "row" },
+    { name: "tag_config_scheme", mode: "row" },
     {
       name: "tag_mapping",
       mode: "row",

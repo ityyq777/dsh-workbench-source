@@ -116,6 +116,7 @@ export function reconcileSiteTree(remoteRows, localRows) {
 export const siteSync = {
   tables: [
     { name: "site", mode: "row" },
+    { name: "site_config_scheme", mode: "row" },
     {
       name: "site_node_mapping",
       mode: "row",

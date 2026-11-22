@@ -13,8 +13,14 @@ var copy = require("../copy.cjs");
 var SW = require("../../../lib/switch.cjs");
 // 数字项统一走共享数字输入控件（范围只作提示，非法红字且不提交）。
 var NF = require("../../../lib/number-field.cjs");
+// 配置方案选择条。
+var SB = require("../../../lib/config-scheme-bar.cjs");
 
 var DOMAIN = "danmaku";
+// 方案条复用共享样式；补齐它依赖的 --cfg-* 变量，取值全部来自主题 token。
+var SCHEME_CSS = [
+  ".wbdm-wrap{--cfg-line:var(--wb-border,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent)));--cfg-surface:var(--wb-card,var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent)));--cfg-muted:var(--wb-muted,var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 62%,transparent)));--cfg-hover:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent))}",
+].concat(SB.styles).join("\n").split("__P__").join("wbdm");
 
 var ICONS = {
   check: GLYPHS["check"],
@@ -54,12 +60,13 @@ function useConfig(api, fallback) {
         if (!body || !body.values) throw new Error("empty config");
         setState({
           ready: true,
-          values: Object.assign({}, fallback || {}, body.values),
+          values: Object.assign({}, fallback || {}, body.values || {}),
           items: body.items || [],
           groups: body.groups || [],
           overrides: body.overrides || {},
           warnings: body.warnings || [],
           error: "",
+          state: body,
         });
       })
       .catch(function (e) {
@@ -80,7 +87,21 @@ function useConfig(api, fallback) {
     });
   }
 
-  return Object.assign({}, state, { setValues: setValues });
+  function setBody(body) {
+    if (!body) return;
+    setState({
+      ready: true,
+      values: Object.assign({}, fallback || {}, body.values || {}),
+      items: body.items || [],
+      groups: body.groups || [],
+      overrides: body.overrides || {},
+      warnings: body.warnings || [],
+      error: "",
+      state: body,
+    });
+  }
+
+  return Object.assign({}, state, { setValues: setValues, setBody: setBody });
 }
 
 function labelOf(item, lang) {
@@ -249,10 +270,28 @@ function ConfigView(props) {
   var toastS = React.useState("");
   var toast = toastS[0];
   var setToast = toastS[1];
+  // 方案操作期间锁住方案条，避免连续点击产生并发写入。
+  var schemeBusyS = React.useState(false);
+  var schemeBusy = schemeBusyS[0];
+  var setSchemeBusy = schemeBusyS[1];
+  var schemeNote = lang === "en"
+    ? "Schemes sync to the cloud and travel with backups; which scheme this device uses stays local"
+    : "配置方案会随云端同步与备份；当前选中哪个方案只保存在本机";
   var seqRef = React.useRef(0);
   var aliveRef = React.useRef(true);
 
   React.useEffect(function () {
+    if (typeof document !== "undefined") {
+      var old = document.getElementById("wb-addon-danmaku-config-scheme-css");
+      if (old) {
+        old.textContent = SCHEME_CSS;
+      } else {
+        var el = document.createElement("style");
+        el.id = "wb-addon-danmaku-config-scheme-css";
+        el.textContent = SCHEME_CSS;
+        document.head.appendChild(el);
+      }
+    }
     aliveRef.current = true;
     return function () {
       aliveRef.current = false;
@@ -294,6 +333,26 @@ function ConfigView(props) {
         });
         toastOnce(String((e && e.message) || e));
       });
+  }
+
+  // 方案操作：不做乐观更新，成功后用服务端返回的 state 整体替换。
+  function schemeCall(action, args) {
+    setSchemeBusy(true);
+    return Promise.resolve(api.call(DOMAIN + "." + action, args || {}))
+      .then(function (r) {
+        if (r && r.ok === false) throw new Error((r && r.error) || C.saveFail);
+        var body = unwrap(r) || {};
+        var next = body.state || body;
+        if (next && typeof cfg.setBody === "function") {
+          cfg.setBody(next);
+          // 方案已换，作废还没落地的单条写入，避免旧回包盖回新方案的值。
+          seqRef.current += 1;
+          setLocal({});
+        }
+        toastOnce(C.saved);
+      })
+      .catch(function (e) { toastOnce(String((e && e.message) || e)); })
+      .then(function () { setSchemeBusy(false); });
   }
 
   function resetAll() {
@@ -382,7 +441,7 @@ function ConfigView(props) {
       "div",
       { className: "wbdm-hero-main" },
       h("div", { className: "wbdm-title" }, C.configTitle),
-      h("div", { className: "wbdm-sub" }, C.configHint),
+      h("div", { className: "wbdm-sub" }, schemeNote),
     ),
     h(
       "button",
@@ -431,6 +490,16 @@ function ConfigView(props) {
     "div",
     { className: "wbdm-wrap" },
     head,
+    h(SB.SchemeBar, {
+      key: "schemes", lang: lang, prefix: "wbdm",
+      schemes: (cfg.state && cfg.state.schemes) || [],
+      activeId: cfg.state && cfg.state.scheme ? cfg.state.scheme.id : "",
+      busy: schemeBusy,
+      onActivate: function (id) { schemeCall("configSchemeActivate", { id: id || "" }); },
+      onCreate: function (name, from) { schemeCall("configSchemeCreate", { name: name, from: from || "current" }); },
+      onRename: function (id, name) { schemeCall("configSchemeRename", { id: id, name: name }); },
+      onDelete: function (id) { schemeCall("configSchemeDelete", { id: id }); },
+    }),
     toast ? h("div", { className: "wbdm-notice ok" }, toast) : null,
     cfg.warnings && cfg.warnings.length
       ? h("div", { className: "wbdm-notice warn" }, cfg.warnings.join("；"))

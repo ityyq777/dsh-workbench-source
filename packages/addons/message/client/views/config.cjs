@@ -11,7 +11,13 @@ var notifier = require("../notify/notifier.cjs");
 var SW = require("../../../lib/switch.cjs");
 // 整数项统一使用共享数字输入控件（输入自由、失焦校验）。
 var NF = require("../../../lib/number-field.cjs");
+// 配置方案选择条。
+var SB = require("../../../lib/config-scheme-bar.cjs");
 var DOMAIN = "message";
+// 方案条复用共享样式；补齐它依赖的 --cfg-* 变量，取值全部来自主题 token。
+var SCHEME_CSS = [
+  ".wbm-config{--cfg-line:var(--wbm-line,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent)));--cfg-surface:var(--wbm-surface,var(--dsw-alias-bg-layer-1,transparent));--cfg-muted:var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 62%,transparent));--cfg-hover:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent))}",
+].concat(SB.styles).join("\n").split("__P__").join("wbm");
 
   function unwrap(r) {
     return r && r.result !== undefined ? r.result : r;
@@ -59,7 +65,20 @@ var DOMAIN = "message";
         return Object.assign({}, prev, { values: values, state: body });
       });
     }
-    return Object.assign({}, state, { setValues: setValues });
+    // 方案操作后整体替换服务端状态（items/groups/values/scheme 一起换）。
+    function setBody(body) {
+      if (!body) return;
+      setState({
+        ready: true,
+        values: Object.assign({}, fb, body.values || {}),
+        items: body.items || [],
+        groups: body.groups || [],
+        overrides: body.overrides || {},
+        error: "",
+        state: body,
+      });
+    }
+    return Object.assign({}, state, { setValues: setValues, setBody: setBody });
   }
 
   function labelOf(item, lang) {
@@ -75,12 +94,31 @@ function ConfigView(props) {
     var t = props.t;
     var lang = props.lang;
     var cfg = useConfig(api, {});
+    React.useEffect(function () {
+      if (typeof document === "undefined") return;
+      var old = document.getElementById("wb-addon-message-config-scheme-css");
+      if (old) {
+        old.textContent = SCHEME_CSS;
+        return;
+      }
+      var el = document.createElement("style");
+      el.id = "wb-addon-message-config-scheme-css";
+      el.textContent = SCHEME_CSS;
+      document.head.appendChild(el);
+    }, []);
     var toastS = React.useState("");
     var toast = toastS[0];
     var setToast = toastS[1];
     var localS = React.useState({});
     var local = localS[0];
     var setLocal = localS[1];
+    // 方案操作期间锁住方案条，避免连续点击产生并发写入。
+    var schemeBusyS = React.useState(false);
+    var schemeBusy = schemeBusyS[0];
+    var setSchemeBusy = schemeBusyS[1];
+    var schemeNote = lang === "en"
+      ? "Schemes sync to the cloud and travel with backups; which scheme this device uses stays local"
+      : "配置方案会随云端同步与备份；当前选中哪个方案只保存在本机";
 
     function values() {
       return Object.assign({}, cfg.values, local);
@@ -130,6 +168,27 @@ function ConfigView(props) {
           dropLocal(id, value);
           toastOnce(String((e && e.message) || e));
         });
+    }
+
+    // 方案操作：不做乐观更新，成功后用服务端返回的 state 整体替换。
+    function schemeCall(action, args) {
+      setSchemeBusy(true);
+      return Promise.resolve(api.call(DOMAIN + "." + action, args || {}))
+        .then(function (r) {
+          if (r && r.ok === false) throw new Error((r && r.error) || t.loadFail);
+          var body = unwrap(r) || {};
+          var next = body.state || body;
+          if (next && typeof cfg.setBody === "function") {
+            cfg.setBody(next);
+            // 方案已换，作废还没落地的单条写入，避免旧回包盖回新方案的值。
+            seqRef.current += 1;
+            setLocal({});
+          }
+          toastOnce(t.saved);
+          if (notifier && typeof notifier.refreshConfig === "function") notifier.refreshConfig();
+        })
+        .catch(function (e) { toastOnce(String((e && e.message) || e)); })
+        .then(function () { setSchemeBusy(false); });
     }
 
     function resetAll() {
@@ -273,9 +332,29 @@ function ConfigView(props) {
       });
     }
 
+    function schemeBar() {
+      return h(SB.SchemeBar, {
+        key: "schemes", lang: lang, prefix: "wbm",
+        schemes: (cfg.state && cfg.state.schemes) || [],
+        activeId: cfg.state && cfg.state.scheme ? cfg.state.scheme.id : "",
+        busy: schemeBusy,
+        onActivate: function (id) { schemeCall("configSchemeActivate", { id: id || "" }); },
+        onCreate: function (name, from) { schemeCall("configSchemeCreate", { name: name, from: from || "current" }); },
+        onRename: function (id, name) { schemeCall("configSchemeRename", { id: id, name: name }); },
+        onDelete: function (id) { schemeCall("configSchemeDelete", { id: id }); },
+      });
+    }
+
     if (cfg.error) return h("div", { className: "wbm-err", role: "alert" }, h("span", null, cfg.error));
     if (!cfg.ready) return h("div", { className: "wbm-empty", role: "status", "aria-busy": "true" }, t.loading);
-    if (!cfg.items.length) return h("div", { className: "wbm-empty" }, t.noData);
+    if (!cfg.items.length) {
+      // 没有可配置项时仍给出方案条，避免配置页整块消失。
+      return h("div", { className: "wbm-root wbm-config" },
+        h("div", { className: "wbm-note" }, schemeNote),
+        schemeBar(),
+        h("div", { className: "wbm-empty" }, t.noData),
+        toast ? h("div", { className: "wbm-toast", role: "status" }, toast) : null);
+    }
 
     var groups = cfg.groups.length ? cfg.groups : [{ id: "", zh: "", en: "" }];
 
@@ -296,8 +375,9 @@ function ConfigView(props) {
       h(
         "div",
         { className: "wbm-note" },
-        t.configHint,
+        schemeNote,
       ),
+      schemeBar(),
       groups.map(function (group) {
         var items = cfg.items.filter(function (item) { return item.group === group.id; });
         if (!items.length) return null;

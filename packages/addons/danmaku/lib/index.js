@@ -108,8 +108,50 @@ export function apply(ctx) {
   const host = ctx.workbench;
   if (!host) throw new Error("dsh-workbench 未加载：缺少 workbench 服务");
   ctx.effect(
-    () =>
-      host.registerDomain({
+    () => {
+      const exportSchemes = () => {
+        let rows = [];
+        try {
+          rows = api.db.prepare("SELECT * FROM danmaku_config_scheme ORDER BY created_at ASC, id ASC").all();
+        } catch {
+          rows = [];
+        }
+        return { schemaVersion: 1, configSchemes: rows };
+      };
+      const importSchemes = (raw, options) => {
+        let data = raw;
+        if (typeof raw === "string") {
+          try { data = JSON.parse(raw); } catch { return { ok: false, imported: 0, skipped: 0, failed: 1, message: "配置方案不是有效 JSON" }; }
+        }
+        const rows = data && Array.isArray(data.configSchemes) ? data.configSchemes : [];
+        const policy = options && options.policy === "skip" ? "skip" : "newest";
+        let imported = 0;
+        let skipped = 0;
+        let failed = 0;
+        try {
+          api.db.exec("CREATE TABLE IF NOT EXISTS danmaku_config_scheme (id TEXT PRIMARY KEY, name TEXT NOT NULL, data TEXT NOT NULL, created_at INTEGER, updated_at INTEGER, deleted_at INTEGER, rev INTEGER)");
+          api.db.exec("BEGIN IMMEDIATE");
+          for (const row of rows) {
+            try {
+              if (!row || typeof row !== "object" || !row.id || !row.name) throw new Error("方案行缺少 id/name");
+              const old = api.db.prepare("SELECT updated_at FROM danmaku_config_scheme WHERE id=?").get(String(row.id));
+              if (old && (policy === "skip" || old.updated_at >= Number(row.updated_at || 0))) { skipped += 1; continue; }
+              const values = [String(row.id), String(row.name), typeof row.data === "string" ? row.data : JSON.stringify(row.data || {}), Number(row.created_at) || Date.now(), Number(row.updated_at) || Date.now(), row.deleted_at == null ? null : Number(row.deleted_at), Math.max(1, Number(row.rev) || 1)];
+              api.db.prepare("INSERT INTO danmaku_config_scheme(id,name,data,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,data=excluded.data,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev").run(...values);
+              api.db.prepare("INSERT INTO sync_change_log(table_name,row_id,op,payload,origin,updated_at) VALUES(?,?,?,?,?,?)").run("danmaku_config_scheme", values[0], row.deleted_at == null ? "upsert" : "delete", JSON.stringify(row), "import", values[4]);
+              imported += 1;
+            } catch { failed += 1; }
+          }
+          api.db.exec("COMMIT");
+        } catch (error) {
+          try { api.db.exec("ROLLBACK"); } catch { /* ignore */ }
+          return { ok: false, imported: 0, skipped, failed: 1, message: String((error && error.message) || error) };
+        }
+        if (imported) api.emit("danmaku-changed", { source: "import" });
+        return { ok: failed === 0, imported, skipped, failed };
+      };
+
+      return host.registerDomain({
         id: DOMAIN,
         title: "弹幕",
         description:
@@ -117,7 +159,10 @@ export function apply(ctx) {
         version: ADDON_VERSION,
         category: "comm",
         tables: TABLES,
-        sync: { tables: [] },
+        // 只同步配置方案表，业务数据仍只在本机。
+        sync: { tables: [{ name: "danmaku_config_scheme", mode: "row" }] },
+        exportData: () => exportSchemes(),
+        importData: (payload, options) => importSchemes(payload, options),
         views: [
           { id: "library", title: { zh: "弹幕库", en: "Library" } },
           { id: "config", title: { zh: "配置", en: "Config" } },
@@ -155,7 +200,8 @@ export function apply(ctx) {
           notes: ["轮播节奏与是否显示桌面层由配置决定；预览不会写库。"],
         },
         setup,
-      }),
+      });
+    },
     "danmaku-domain",
   );
 }

@@ -4,6 +4,13 @@
  * 改一项立即写入（mail.configSet），失败保留原值并提示；「全部恢复默认」调
  * mail.configReset。useConfig 同时给邮件视图读「默认加载远程图片」等策略。
  */
+// 配置方案选择条与它的样式：useConfig 在模块级也要用，故放在模块作用域。
+var SB = require("../../../lib/config-scheme-bar.cjs");
+// 方案条复用共享样式；补齐它依赖的 --cfg-* 变量，取值全部来自主题 token。
+var SCHEME_CSS = [
+  ".wbml-page{--cfg-line:var(--wb-border,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent)));--cfg-surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));--cfg-muted:var(--wb-muted,var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 62%,transparent)));--cfg-hover:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent))}",
+].concat(SB.styles).join("\n").split("__P__").join("wbml");
+
 module.exports = function Config(props) {
   var h = props.h;
   var React = props.React;
@@ -22,6 +29,14 @@ module.exports = function Config(props) {
   var localS = React.useState({});
   var local = localS[0];
   var setLocal = localS[1];
+  // 方案操作期间锁住方案条，避免连续点击产生并发写入。
+  var schemeBusyS = React.useState(false);
+  var schemeBusy = schemeBusyS[0];
+  var setSchemeBusy = schemeBusyS[1];
+  var schemeNote =
+    lang === "en"
+      ? "Schemes sync with the cloud and travel with backups; which scheme this device uses stays local."
+      : "配置方案会随云端同步与备份；当前选中哪个方案只保存在本机。";
   // 连续改动会产生并发写入：只让最后一次回包改写权威值。
   var seqRef = React.useRef(0);
   // 自动同步的真实运行状态（开关只是意愿：保险箱锁着时它并不在跑），单独取一次展示。
@@ -110,6 +125,23 @@ module.exports = function Config(props) {
         toastOnce(C.errText(e));
       });
   }
+  // 方案操作：不做乐观更新，成功后用服务端返回的 state 整体替换。
+  function schemeCall(action, args) {
+    setSchemeBusy(true);
+    return C.call(api, "mail." + action, args || {})
+      .then(function (body) {
+        var next = (body && body.state) || body;
+        if (next && typeof cfg.setBody === "function") {
+          cfg.setBody(next);
+          // 方案已换，作废还没落地的单条写入，避免旧回包盖回新方案的值。
+          seqRef.current += 1;
+          setLocal({});
+        }
+        toastOnce(lang === "en" ? "Saved" : "已保存");
+      })
+      .catch(function (e) { toastOnce(C.errText(e)); })
+      .then(function () { setSchemeBusy(false); });
+  }
   function resetAll() {
     C.call(api, "mail.configReset", {})
       .then(function (r) {
@@ -179,9 +211,31 @@ module.exports = function Config(props) {
     return h("span", { className: "wbml-muted" }, String(value === undefined ? "" : value));
   }
 
+  // 方案条：标题说明之后、分组之前。
+  function schemeBar() {
+    return h(SB.SchemeBar, {
+      key: "schemes", lang: lang, prefix: "wbml",
+      schemes: (cfg.state && cfg.state.schemes) || [],
+      activeId: cfg.state && cfg.state.scheme ? cfg.state.scheme.id : "",
+      busy: schemeBusy,
+      onActivate: function (id) { schemeCall("configSchemeActivate", { id: id || "" }); },
+      onCreate: function (name, from) { schemeCall("configSchemeCreate", { name: name, from: from || "current" }); },
+      onRename: function (id, name) { schemeCall("configSchemeRename", { id: id, name: name }); },
+      onDelete: function (id) { schemeCall("configSchemeDelete", { id: id }); },
+    });
+  }
+
   if (cfg.error) return h("div", { className: "wbml-page" }, h(C.Notice, { h: h, kind: "warn", text: cfg.error }));
   if (!cfg.ready) return h("div", { className: "wbml-page" }, h(C.Empty, { h: h, text: lang === "en" ? "Loading settings…" : "正在读取配置…" }));
-  if (!cfg.items.length) return h("div", { className: "wbml-page" }, h(C.Empty, { h: h, text: lang === "en" ? "No settings available." : "暂无可配置项。" }));
+  if (!cfg.items.length) {
+    return h(
+      "div",
+      { className: "wbml-page" },
+      h("h2", null, lang === "en" ? "Mail settings" : "邮件设置"),
+      schemeBar(),
+      h(C.Empty, { h: h, text: lang === "en" ? "No settings available." : "暂无可配置项。" }),
+    );
+  }
 
   var groups = cfg.groups.length ? cfg.groups : [{ id: "", zh: "", en: "" }];
   var overrides = cfg.overrides || {};
@@ -195,11 +249,13 @@ module.exports = function Config(props) {
         "div",
         null,
         h("h2", null, lang === "en" ? "Mail settings" : "邮件设置"),
-        h("p", { className: "wbml-sub" }, lang === "en" ? "Changes apply immediately and are stored on this machine only (not synced, not backed up)." : "改动即时生效，只存在本机 meta 表（不进同步、不进备份）。"),
+        h("p", { className: "wbml-sub" }, schemeNote),
       ),
       h(C.Btn, { h: h, onClick: resetAll }, h(icons.Icon, { name: "refresh-cw", size: 13 }), h("span", null, lang === "en" ? "Restore defaults" : "全部恢复默认")),
     ),
     syncSummary() ? h("p", { className: "wbml-sync-status", role: "status" }, syncSummary()) : null,
+    schemeBar(),
+
     groups.map(function (group) {
       var items = cfg.items.filter(function (item) {
         return item.group === group.id;
@@ -239,6 +295,18 @@ module.exports.useConfig = function useConfig(React, api, fallback) {
   var s = React.useState({ ready: false, values: Object.assign({}, fb), items: [], groups: [], overrides: {}, error: "", seq: 0 });
   var state = s[0];
   React.useEffect(function () {
+    if (typeof document !== "undefined") {
+      var old = document.getElementById("wb-addon-mail-config-scheme-css");
+      if (old) {
+        // 热更新时同步新样式，避免旧样式残留。
+        old.textContent = SCHEME_CSS;
+      } else {
+        var el = document.createElement("style");
+        el.id = "wb-addon-mail-config-scheme-css";
+        el.textContent = SCHEME_CSS;
+        document.head.appendChild(el);
+      }
+    }
     var alive = true;
     require("../ui/common.cjs")
       .call(api, "mail.configGet")
@@ -252,6 +320,7 @@ module.exports.useConfig = function useConfig(React, api, fallback) {
           groups: (body && body.groups) || [],
           overrides: (body && body.overrides) || {},
           error: "",
+          state: body,
           seq: 0,
         });
       })
@@ -270,5 +339,17 @@ module.exports.useConfig = function useConfig(React, api, fallback) {
       return Object.assign({}, prev, { values: Object.assign({}, prev.values, next) });
     });
   }
-  return Object.assign({}, state, { setValues: setValues });
+  function setBody(body) {
+    if (!body) return;
+    s[1]({
+      ready: true,
+      values: Object.assign({}, fb, body.values || {}),
+      items: body.items || [],
+      groups: body.groups || [],
+      overrides: body.overrides || {},
+      error: "",
+      state: body,
+    });
+  }
+  return Object.assign({}, state, { setValues: setValues, setBody: setBody });
 };

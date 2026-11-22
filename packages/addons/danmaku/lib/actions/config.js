@@ -1,6 +1,6 @@
 "use strict";
 
-import { configState, loadConfig, resetConfig, writeConfig } from "../config.js";
+import { configState, loadConfig, resetConfig, schemeActivate, schemeCreate, schemeDelete, schemeRename, writeConfig } from "../config.js";
 
 export function registerConfigActions(api, deps) {
   const db = api.db;
@@ -13,7 +13,7 @@ export function registerConfigActions(api, deps) {
   });
 
   api.action("danmaku.configSet", {
-    description: "写入弹幕配置；值会做类型与范围校验，写入后立即影响调度节奏与显示层",
+    description: "把弹幕配置写入当前方案；值会做类型与范围校验，写入后立即影响调度节奏与显示层",
     input: {
       type: "object",
       properties: {
@@ -22,8 +22,8 @@ export function registerConfigActions(api, deps) {
       required: ["values"],
       additionalProperties: false,
     },
-    execute: (args) => {
-      const out = writeConfig(db, args.values);
+    execute: (args, ctx) => {
+      const out = writeConfig(db, args.values, ctx && ctx.origin);
       if (out.changed.length) deps.changed("config", out.changed.join(","));
       return { changed: out.changed, values: out.state.values, overrides: out.state.overrides };
     },
@@ -45,6 +45,34 @@ export function registerConfigActions(api, deps) {
       return { values: state.values, overrides: state.overrides };
     },
     render: () => "弹幕配置已恢复默认",
+  });
+
+  api.action("danmaku.configSchemeCreate", {
+    description: "新建配置方案并立即切换过去；from=current 复制当前值，from=default 从插件默认值开始",
+    input: { type: "object", properties: { name: { type: "string", description: "方案名称，1–64 个字符" }, from: { type: "string", enum: ["current", "default"] } }, required: ["name"], additionalProperties: false },
+    execute: (args, ctx) => schemeCreate(db, args.name, args.from, ctx && ctx.origin),
+    render: (r) => `已新建并启用配置方案：${r.state.scheme.name}`,
+  });
+
+  api.action("danmaku.configSchemeRename", {
+    description: "重命名配置方案",
+    input: { type: "object", properties: { id: { type: "string" }, name: { type: "string" } }, required: ["id", "name"], additionalProperties: false },
+    execute: (args) => schemeRename(db, args.id, args.name),
+    render: (r) => `配置方案已改名：${r.state.scheme.name}`,
+  });
+
+  api.action("danmaku.configSchemeDelete", {
+    description: "软删除配置方案；删除的是当前方案时回到「不使用方案」",
+    input: { type: "object", properties: { id: { type: "string" } }, required: ["id"], additionalProperties: false },
+    execute: (args) => schemeDelete(db, args.id),
+    render: () => "配置方案已删除",
+  });
+
+  api.action("danmaku.configSchemeActivate", {
+    description: "切换当前设备的配置方案；id 传空表示不使用方案、回到插件默认配置",
+    input: { type: "object", properties: { id: { type: "string" } }, additionalProperties: false },
+    execute: (args) => schemeActivate(db, args.id),
+    render: (r) => (r.id ? "已切换配置方案" : "已改为不使用方案（插件默认配置）"),
   });
 
   api.action("danmaku.theme", {

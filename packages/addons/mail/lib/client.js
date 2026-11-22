@@ -2618,10 +2618,178 @@ var require_mail_html = __commonJS({
   }
 });
 
+// packages/addons/lib/config-scheme-bar.cjs
+var require_config_scheme_bar = __commonJS({
+  "packages/addons/lib/config-scheme-bar.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h = React.createElement;
+    var COPY = {
+      zh: {
+        title: "\u914D\u7F6E\u65B9\u6848",
+        none: "\u4E0D\u4F7F\u7528\u65B9\u6848\uFF08\u63D2\u4EF6\u9ED8\u8BA4\u914D\u7F6E\uFF09",
+        create: "\u65B0\u5EFA\u65B9\u6848",
+        rename: "\u91CD\u547D\u540D",
+        remove: "\u5220\u9664",
+        namePlaceholder: "\u65B9\u6848\u540D\u79F0",
+        ok: "\u786E\u5B9A",
+        cancel: "\u53D6\u6D88",
+        current: "\u5F53\u524D\u65B9\u6848",
+        defaultHint: "\u672A\u9009\u62E9\u65B9\u6848\u65F6\u4F7F\u7528\u63D2\u4EF6\u9ED8\u8BA4\u914D\u7F6E\uFF1B\u4FEE\u6539\u4EFB\u610F\u8BBE\u7F6E\u4F1A\u81EA\u52A8\u65B0\u5EFA\u300C\u672C\u673A\u914D\u7F6E\u300D\u65B9\u6848\u3002",
+        syncedHint: "\u65B9\u6848\u4F1A\u968F\u4E91\u7AEF\u540C\u6B65\u4E0E\u5907\u4EFD\u4E00\u8D77\u8D70\uFF1B\u5F53\u524D\u9009\u4E2D\u54EA\u4E2A\u65B9\u6848\u53EA\u4FDD\u5B58\u5728\u672C\u673A\u3002",
+        confirmDelete: "\u5220\u9664\u5F53\u524D\u65B9\u6848\u540E\u4F1A\u56DE\u5230\u63D2\u4EF6\u9ED8\u8BA4\u914D\u7F6E\uFF0C\u786E\u5B9A\u5220\u9664\uFF1F",
+        createTitle: "\u65B0\u5EFA\u914D\u7F6E\u65B9\u6848",
+        renameTitle: "\u91CD\u547D\u540D\u914D\u7F6E\u65B9\u6848",
+        fromCurrent: "\u4ECE\u5F53\u524D\u65B9\u6848\u590D\u5236",
+        fromDefault: "\u4ECE\u63D2\u4EF6\u9ED8\u8BA4\u5F00\u59CB"
+      },
+      en: {
+        title: "Config scheme",
+        none: "No scheme (plugin defaults)",
+        create: "New scheme",
+        rename: "Rename",
+        remove: "Delete",
+        namePlaceholder: "Scheme name",
+        ok: "OK",
+        cancel: "Cancel",
+        current: "Active scheme",
+        defaultHint: 'With no scheme selected the plugin defaults apply. Editing any setting creates a local "My config" scheme automatically.',
+        syncedHint: "Schemes sync to the cloud and travel with backups; which scheme this device uses stays local.",
+        confirmDelete: "Deleting the active scheme returns to plugin defaults. Delete it?",
+        createTitle: "New config scheme",
+        renameTitle: "Rename config scheme",
+        fromCurrent: "Copy active scheme",
+        fromDefault: "Start from plugin defaults"
+      }
+    };
+    var styles = [
+      ".__P__-cfg-schemes{display:flex;flex-direction:column;gap:10px;padding:13px 16px;border:1px solid var(--cfg-line);border-radius:12px;background:var(--cfg-surface)}",
+      ".__P__-cfg-schemes-main{display:flex;align-items:center;gap:10px;flex-wrap:wrap}",
+      ".__P__-cfg-schemes-label{font-size:12.5px;font-weight:660;white-space:nowrap}",
+      ".__P__-cfg-schemes-select{border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:9px;padding:7px 11px;font:inherit;font-size:13px;line-height:1.4;outline:none;min-width:190px;max-width:100%}",
+      ".__P__-cfg-schemes-select:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
+      ".__P__-cfg-schemes-actions{display:flex;gap:7px;flex-wrap:wrap}",
+      ".__P__-cfg-sbtn{appearance:none;border:1px solid var(--cfg-line);background:transparent;color:inherit;border-radius:8px;padding:5px 11px;font:inherit;font-size:12px;line-height:1.5;cursor:pointer;transition:background .12s ease,border-color .12s ease}",
+      ".__P__-cfg-sbtn:hover:not(:disabled){background:var(--cfg-hover);border-color:color-mix(in oklab,currentColor 28%,var(--cfg-line))}",
+      ".__P__-cfg-sbtn:disabled{opacity:.5;cursor:default}",
+      ".__P__-cfg-sbtn.danger{color:var(--dsw-alias-state-error-primary,inherit)}",
+      ".__P__-cfg-schemes-form{display:flex;align-items:center;gap:7px;flex-wrap:wrap}",
+      ".__P__-cfg-schemes-input{flex:1 1 180px;min-width:120px;border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:8px;padding:6px 10px;font:inherit;font-size:13px;outline:none}",
+      ".__P__-cfg-schemes-input:focus{border-color:var(--dsw-alias-brand-primary,currentColor)}",
+      ".__P__-cfg-schemes-hint{font-size:11.5px;color:var(--cfg-muted);line-height:1.6}"
+    ];
+    function SchemeBar(props) {
+      var lang = props.lang === "en" ? "en" : "zh";
+      var c = COPY[lang];
+      var prefix = props.prefix || "wb";
+      var cls = function(suffix) {
+        return "." + prefix + "-cfg-" + suffix;
+      };
+      var schemes = Array.isArray(props.schemes) ? props.schemes : [];
+      var activeId = props.activeId || "";
+      var busy = Boolean(props.busy);
+      var [editing, setEditing] = React.useState(null);
+      var [name, setName] = React.useState("");
+      var [from, setFrom] = React.useState("current");
+      function begin(mode) {
+        var current = schemes.filter(function(s) {
+          return s.id === activeId;
+        })[0];
+        setName(mode === "rename" && current ? current.name : "");
+        setFrom(current ? "current" : "default");
+        setEditing(mode);
+      }
+      function submit(event) {
+        if (event && event.preventDefault) event.preventDefault();
+        var value = String(name || "").trim();
+        if (!value || busy) return;
+        if (editing === "rename") props.onRename(activeId, value);
+        else props.onCreate(value, from);
+        setEditing(null);
+        setName("");
+      }
+      function remove() {
+        if (typeof window !== "undefined" && window.confirm && !window.confirm(c.confirmDelete)) return;
+        props.onDelete(activeId);
+      }
+      return h(
+        "div",
+        { className: prefix + "-cfg-schemes" },
+        h(
+          "div",
+          { className: prefix + "-cfg-schemes-main" },
+          h("span", { className: prefix + "-cfg-schemes-label" }, c.title),
+          h(
+            "select",
+            {
+              className: prefix + "-cfg-schemes-select",
+              value: activeId,
+              disabled: busy,
+              onChange: function(event) {
+                props.onActivate(event.target.value || null);
+              },
+              "aria-label": c.title
+            },
+            h("option", { value: "" }, c.none),
+            schemes.map(function(s) {
+              return h("option", { key: s.id, value: s.id }, s.name);
+            })
+          ),
+          h("span", { className: prefix + "-cfg-schemes-hint" }, activeId ? c.current : "")
+        ),
+        editing ? h(
+          "form",
+          { className: prefix + "-cfg-schemes-form", onSubmit: submit },
+          h("span", { className: prefix + "-cfg-schemes-label" }, editing === "rename" ? c.renameTitle : c.createTitle),
+          h("input", {
+            className: prefix + "-cfg-schemes-input",
+            value: name,
+            placeholder: c.namePlaceholder,
+            maxLength: 64,
+            autoFocus: true,
+            disabled: busy,
+            onChange: function(event) {
+              setName(event.target.value);
+            }
+          }),
+          editing === "create" && activeId ? h(
+            "select",
+            { className: prefix + "-cfg-schemes-select", value: from, disabled: busy, onChange: function(event) {
+              setFrom(event.target.value);
+            }, "aria-label": c.createTitle },
+            h("option", { value: "current" }, c.fromCurrent),
+            h("option", { value: "default" }, c.fromDefault)
+          ) : null,
+          h("button", { className: prefix + "-cfg-sbtn", type: "submit", disabled: busy || !String(name || "").trim() }, c.ok),
+          h("button", { className: prefix + "-cfg-sbtn", type: "button", disabled: busy, onClick: function() {
+            setEditing(null);
+          } }, c.cancel)
+        ) : h(
+          "div",
+          { className: prefix + "-cfg-schemes-actions" },
+          h("button", { className: prefix + "-cfg-sbtn", type: "button", disabled: busy, onClick: function() {
+            begin("create");
+          } }, c.create),
+          activeId ? h("button", { className: prefix + "-cfg-sbtn", type: "button", disabled: busy, onClick: function() {
+            begin("rename");
+          } }, c.rename) : null,
+          activeId ? h("button", { className: prefix + "-cfg-sbtn danger", type: "button", disabled: busy, onClick: remove }, c.remove) : null
+        ),
+        h("div", { className: prefix + "-cfg-schemes-hint" }, activeId ? c.syncedHint : c.defaultHint)
+      );
+    }
+    module2.exports = { SchemeBar, styles, COPY };
+  }
+});
+
 // packages/addons/mail/client/views/config.cjs
 var require_config = __commonJS({
   "packages/addons/mail/client/views/config.cjs"(exports2, module2) {
     "use strict";
+    var SB = require_config_scheme_bar();
+    var SCHEME_CSS = [
+      ".wbml-page{--cfg-line:var(--wb-border,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent)));--cfg-surface:var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent));--cfg-muted:var(--wb-muted,var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 62%,transparent)));--cfg-hover:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent))}"
+    ].concat(SB.styles).join("\n").split("__P__").join("wbml");
     module2.exports = function Config(props) {
       var h = props.h;
       var React = props.React;
@@ -2638,6 +2806,10 @@ var require_config = __commonJS({
       var localS = React.useState({});
       var local = localS[0];
       var setLocal = localS[1];
+      var schemeBusyS = React.useState(false);
+      var schemeBusy = schemeBusyS[0];
+      var setSchemeBusy = schemeBusyS[1];
+      var schemeNote = lang === "en" ? "Schemes sync with the cloud and travel with backups; which scheme this device uses stays local." : "\u914D\u7F6E\u65B9\u6848\u4F1A\u968F\u4E91\u7AEF\u540C\u6B65\u4E0E\u5907\u4EFD\uFF1B\u5F53\u524D\u9009\u4E2D\u54EA\u4E2A\u65B9\u6848\u53EA\u4FDD\u5B58\u5728\u672C\u673A\u3002";
       var seqRef = React.useRef(0);
       var syncS = React.useState(null);
       var sync = syncS[0];
@@ -2717,6 +2889,22 @@ var require_config = __commonJS({
           toastOnce(C.errText(e));
         });
       }
+      function schemeCall(action, args) {
+        setSchemeBusy(true);
+        return C.call(api, "mail." + action, args || {}).then(function(body) {
+          var next = body && body.state || body;
+          if (next && typeof cfg.setBody === "function") {
+            cfg.setBody(next);
+            seqRef.current += 1;
+            setLocal({});
+          }
+          toastOnce(lang === "en" ? "Saved" : "\u5DF2\u4FDD\u5B58");
+        }).catch(function(e) {
+          toastOnce(C.errText(e));
+        }).then(function() {
+          setSchemeBusy(false);
+        });
+      }
       function resetAll() {
         C.call(api, "mail.configReset", {}).then(function(r) {
           if (r && r.values) cfg.setValues(r.values);
@@ -2781,9 +2969,39 @@ var require_config = __commonJS({
         }
         return h("span", { className: "wbml-muted" }, String(value === void 0 ? "" : value));
       }
+      function schemeBar() {
+        return h(SB.SchemeBar, {
+          key: "schemes",
+          lang,
+          prefix: "wbml",
+          schemes: cfg.state && cfg.state.schemes || [],
+          activeId: cfg.state && cfg.state.scheme ? cfg.state.scheme.id : "",
+          busy: schemeBusy,
+          onActivate: function(id) {
+            schemeCall("configSchemeActivate", { id: id || "" });
+          },
+          onCreate: function(name, from) {
+            schemeCall("configSchemeCreate", { name, from: from || "current" });
+          },
+          onRename: function(id, name) {
+            schemeCall("configSchemeRename", { id, name });
+          },
+          onDelete: function(id) {
+            schemeCall("configSchemeDelete", { id });
+          }
+        });
+      }
       if (cfg.error) return h("div", { className: "wbml-page" }, h(C.Notice, { h, kind: "warn", text: cfg.error }));
       if (!cfg.ready) return h("div", { className: "wbml-page" }, h(C.Empty, { h, text: lang === "en" ? "Loading settings\u2026" : "\u6B63\u5728\u8BFB\u53D6\u914D\u7F6E\u2026" }));
-      if (!cfg.items.length) return h("div", { className: "wbml-page" }, h(C.Empty, { h, text: lang === "en" ? "No settings available." : "\u6682\u65E0\u53EF\u914D\u7F6E\u9879\u3002" }));
+      if (!cfg.items.length) {
+        return h(
+          "div",
+          { className: "wbml-page" },
+          h("h2", null, lang === "en" ? "Mail settings" : "\u90AE\u4EF6\u8BBE\u7F6E"),
+          schemeBar(),
+          h(C.Empty, { h, text: lang === "en" ? "No settings available." : "\u6682\u65E0\u53EF\u914D\u7F6E\u9879\u3002" })
+        );
+      }
       var groups = cfg.groups.length ? cfg.groups : [{ id: "", zh: "", en: "" }];
       var overrides = cfg.overrides || {};
       return h(
@@ -2796,11 +3014,12 @@ var require_config = __commonJS({
             "div",
             null,
             h("h2", null, lang === "en" ? "Mail settings" : "\u90AE\u4EF6\u8BBE\u7F6E"),
-            h("p", { className: "wbml-sub" }, lang === "en" ? "Changes apply immediately and are stored on this machine only (not synced, not backed up)." : "\u6539\u52A8\u5373\u65F6\u751F\u6548\uFF0C\u53EA\u5B58\u5728\u672C\u673A meta \u8868\uFF08\u4E0D\u8FDB\u540C\u6B65\u3001\u4E0D\u8FDB\u5907\u4EFD\uFF09\u3002")
+            h("p", { className: "wbml-sub" }, schemeNote)
           ),
           h(C.Btn, { h, onClick: resetAll }, h(icons.Icon, { name: "refresh-cw", size: 13 }), h("span", null, lang === "en" ? "Restore defaults" : "\u5168\u90E8\u6062\u590D\u9ED8\u8BA4"))
         ),
         syncSummary() ? h("p", { className: "wbml-sync-status", role: "status" }, syncSummary()) : null,
+        schemeBar(),
         groups.map(function(group) {
           var items = cfg.items.filter(function(item) {
             return item.group === group.id;
@@ -2839,6 +3058,17 @@ var require_config = __commonJS({
       var s = React.useState({ ready: false, values: Object.assign({}, fb), items: [], groups: [], overrides: {}, error: "", seq: 0 });
       var state = s[0];
       React.useEffect(function() {
+        if (typeof document !== "undefined") {
+          var old = document.getElementById("wb-addon-mail-config-scheme-css");
+          if (old) {
+            old.textContent = SCHEME_CSS;
+          } else {
+            var el = document.createElement("style");
+            el.id = "wb-addon-mail-config-scheme-css";
+            el.textContent = SCHEME_CSS;
+            document.head.appendChild(el);
+          }
+        }
         var alive = true;
         require_common().call(api, "mail.configGet").then(function(body) {
           if (!alive) return;
@@ -2850,6 +3080,7 @@ var require_config = __commonJS({
             groups: body && body.groups || [],
             overrides: body && body.overrides || {},
             error: "",
+            state: body,
             seq: 0
           });
         }).catch(function(e) {
@@ -2866,7 +3097,19 @@ var require_config = __commonJS({
           return Object.assign({}, prev, { values: Object.assign({}, prev.values, next) });
         });
       }
-      return Object.assign({}, state, { setValues });
+      function setBody(body) {
+        if (!body) return;
+        s[1]({
+          ready: true,
+          values: Object.assign({}, fb, body.values || {}),
+          items: body.items || [],
+          groups: body.groups || [],
+          overrides: body.overrides || {},
+          error: "",
+          state: body
+        });
+      }
+      return Object.assign({}, state, { setValues, setBody });
     };
   }
 });
@@ -7654,7 +7897,7 @@ var GLYPHS = require_icons2().ICONS;
   var slotBackToMessage = require_slot_back_to_message()({ React, h, C, Icon: Icon2 });
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.7.0",
+    version: "0.8.0",
     icon: GLYPHS["mail"],
     slots: [{ slot: "item.actions", id: "mail.back-to-message", order: 100, component: slotBackToMessage }],
     views: [

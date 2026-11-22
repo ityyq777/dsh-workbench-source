@@ -10,6 +10,12 @@ import { tableExists, tx } from "../db/db.js";
 
 export const DOMAIN = "message";
 export const SCHEMA_VERSION = 1;
+export const SCHEME_TABLE = "message_config_scheme";
+const ACTIVE_KEY = "configScheme.message.active";
+function ensureMeta(db) {
+  if (!tableExists(db, "meta")) db.exec("CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT NOT NULL);");
+}
+const DEFAULT_SCHEME_NAME = "本机配置";
 
 const GROUPS = [
   { id: "sound", zh: "提示音", en: "Sound" },
@@ -177,40 +183,183 @@ function keyOf(id) {
   return "config." + DOMAIN + "." + id;
 }
 
-export function loadConfig(db) {
-  const overrides = Object.create(null);
-  const values = Object.create(null);
+
+/** 当前设备选中的方案 id（只存 meta，不同步）。 */
+function activeSchemeId(db) {
+  if (!tableExists(db, "meta")) return "";
+  const row = db.prepare("SELECT v FROM meta WHERE k=?").get("configScheme.message.active");
+  return row ? String(row.v) : "";
+}
+
+function ensureSchemeTable(db) {
+  db.exec("CREATE TABLE IF NOT EXISTS message_config_scheme (id TEXT PRIMARY KEY, name TEXT NOT NULL, data TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, deleted_at INTEGER, rev INTEGER NOT NULL DEFAULT 1)");
+}
+
+function newSchemeId() {
+  return "cs_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function schemeRow(db, id) {
+  if (!id || !tableExists(db, "message_config_scheme")) return null;
+  return db.prepare("SELECT * FROM message_config_scheme WHERE id=? AND deleted_at IS NULL").get(String(id)) || null;
+}
+
+function listSchemes(db) {
+  if (!tableExists(db, "message_config_scheme")) return [];
+  return db.prepare("SELECT id,name,created_at,updated_at,rev FROM message_config_scheme WHERE deleted_at IS NULL ORDER BY created_at ASC, id ASC").all().map(function (r) {
+    return { id: String(r.id), name: String(r.name), createdAt: r.created_at, updatedAt: r.updated_at, rev: r.rev };
+  });
+}
+
+function normalizeSchemeName(name) {
+  const s = String(name === undefined || name === null ? "" : name).trim();
+  if (!s) throw new Error("方案名称不能为空");
+  if (s.length > 64) throw new Error("方案名称不能超过 64 个字符");
+  return s;
+}
+
+/** 方案 data 只存覆盖项；坏 JSON/未知项/越界都退化为 warning。 */
+function parseSchemeData(row) {
+  const data = Object.create(null);
   const warnings = [];
-  for (const item of ITEMS) values[item.id] = item.default;
-  const rows = metaRows(db);
-  const prefix = "config." + DOMAIN + ".";
-  for (const row of rows) {
-    const id = String(row.k).slice(prefix.length);
+  let raw;
+  try {
+    raw = JSON.parse(String((row && row.data) || "{}"));
+  } catch (e) {
+    warnings.push({ code: "config_bad_json", message: "配置方案内容不是合法 JSON，已回退默认" });
+    return { data: data, warnings: warnings };
+  }
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    warnings.push({ code: "config_bad_json", message: "配置方案内容不是对象，已回退默认" });
+    return { data: data, warnings: warnings };
+  }
+  for (const id of Object.keys(raw)) {
     const item = BY_ID.get(id);
     if (!item) {
       warnings.push({ code: "config_unknown_key", id: id, message: "未知配置项已忽略：" + id });
       continue;
     }
-    let parsed = null;
-    try {
-      parsed = JSON.parse(String(row.v));
-    } catch {
-      warnings.push({ code: "config_bad_json", id: id, message: "配置值不是合法 JSON，已回退默认：" + id });
-      continue;
-    }
-    try {
-      const value = coerceValue(item, parsed);
-      overrides[id] = value;
-      values[id] = value;
-    } catch (error) {
-      warnings.push({ code: "config_invalid", id: id, message: String((error && error.message) || error) + "，已回退默认" });
-    }
+    try { data[id] = coerceValue(item, raw[id]); }
+    catch (e) { warnings.push({ code: "config_invalid", id: id, message: String((e && e.message) || e) + "，已回退默认" }); }
   }
-  return { values: values, overrides: overrides, warnings: warnings };
+  return { data: data, warnings: warnings };
+}
+
+function logScheme(db, id, origin, ts) {
+  if (!tableExists(db, "sync_change_log")) return;
+  const row = db.prepare("SELECT * FROM message_config_scheme WHERE id=?").get(String(id));
+  if (!row) return;
+  const op = row.deleted_at === null || row.deleted_at === undefined ? "upsert" : "delete";
+  db.prepare("INSERT INTO sync_change_log(table_name,row_id,op,payload,origin,updated_at) VALUES(?,?,?,?,?,?)").run("message_config_scheme", String(id), op, JSON.stringify(row), origin || "ui", Number(ts) || Date.now());
+}
+
+function insertScheme(db, id, name, data, ts) {
+  db.prepare("INSERT INTO message_config_scheme (id,name,data,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,NULL,1)").run(String(id), String(name), JSON.stringify(data || {}), ts, ts);
+}
+
+function writeSchemeData(db, id, data, ts) {
+  db.prepare("UPDATE message_config_scheme SET data=?, updated_at=?, rev=rev+1 WHERE id=? AND deleted_at IS NULL").run(JSON.stringify(data || {}), ts, String(id));
+}
+
+function createScheme(db, name, data, origin) {
+  const ts = Date.now();
+  const id = newSchemeId();
+  tx(db, function () {
+    insertScheme(db, id, name, data, ts);
+    metaSet(db, "configScheme.message.active", id);
+    logScheme(db, id, origin, ts);
+  });
+  return id;
+}
+
+/** 旧版本直接写在 meta 里的覆盖项，首次加载时收进一个方案，避免升级丢设置。 */
+function ensureConfigSchemes(db) {
+  ensureMeta(db);
+  ensureSchemeTable(db);
+  const active = activeSchemeId(db);
+  if (active) {
+    if (schemeRow(db, active)) return active;
+    metaDelete(db, "configScheme.message.active");
+  }
+  const overrides = Object.create(null);
+  const keys = [];
+  for (const row of metaRows(db)) {
+    const id = String(row.k).slice(("config." + DOMAIN + ".").length);
+    const item = BY_ID.get(id);
+    if (!item) continue;
+    try {
+      overrides[id] = coerceValue(item, JSON.parse(String(row.v)));
+      keys.push(row.k);
+    } catch (e) { /* 坏值留给读取阶段报 warning */ }
+  }
+  if (!keys.length) return "";
+  const ts = Date.now();
+  const id = newSchemeId();
+  tx(db, function () {
+    insertScheme(db, id, "本机原有配置", overrides, ts);
+    metaSet(db, "configScheme.message.active", id);
+    for (const k of keys) metaDelete(db, k);
+    logScheme(db, id, "migration", ts);
+  });
+  return id;
+}
+
+function ensureActiveScheme(db, name) {
+  ensureSchemeTable(db);
+  const active = activeSchemeId(db);
+  if (active && schemeRow(db, active)) return active;
+  return createScheme(db, name || "本机配置", {}, "ui");
+}
+
+
+/**
+ * 读取配置：默认值 ← 当前方案的覆盖项，再附 warnings。
+ * 坏 JSON、非法值、未知/已废弃 id 都不会抛错。
+ */
+export function loadConfig(db) {
+  const overrides = Object.create(null);
+  const values = Object.create(null);
+  const warnings = [];
+  for (const item of ITEMS) values[item.id] = item.default;
+  const active = activeSchemeId(db);
+  if (!active) return { values: values, overrides: overrides, warnings: warnings, scheme: null };
+  const row = schemeRow(db, active);
+  if (!row) {
+    metaDelete(db, "configScheme.message.active");
+    return { values: values, overrides: overrides, warnings: warnings, scheme: null };
+  }
+  const parsed = parseSchemeData(row);
+  for (const id of Object.keys(parsed.data)) {
+    overrides[id] = parsed.data[id];
+    values[id] = parsed.data[id];
+  }
+  for (const warning of parsed.warnings) warnings.push(warning);
+  return {
+    values: values,
+    overrides: overrides,
+    warnings: warnings,
+    scheme: { id: String(row.id), name: String(row.name), updatedAt: row.updated_at },
+  };
 }
 
 export function configValues(db) {
   return loadConfig(db).values;
+}
+
+export function configState(db) {
+  const loaded = loadConfig(db);
+  return {
+    domain: DOMAIN,
+    schemaVersion: SCHEMA_VERSION,
+    groups: GROUPS,
+    items: ITEMS.map(publicItem),
+    values: loaded.values,
+    overrides: loaded.overrides,
+    warnings: loaded.warnings,
+    table: "message_config_scheme",
+    scheme: loaded.scheme,
+    schemes: listSchemes(db),
+  };
 }
 
 function publicItem(item) {
@@ -231,21 +380,7 @@ function publicItem(item) {
   };
 }
 
-export function configState(db) {
-  const loaded = loadConfig(db);
-  return {
-    domain: DOMAIN,
-    schemaVersion: SCHEMA_VERSION,
-    groups: GROUPS,
-    items: ITEMS.map(publicItem),
-    values: loaded.values,
-    overrides: loaded.overrides,
-    warnings: loaded.warnings,
-    table: "meta",
-  };
-}
-
-export function writeConfig(db, raw) {
+export function writeConfig(db, raw, origin) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("values 需要 { 配置项: 值 } 形式");
   const ids = Object.keys(raw);
   if (!ids.length) throw new Error("没有要保存的配置项");
@@ -255,13 +390,19 @@ export function writeConfig(db, raw) {
     if (!item) throw new Error("未知配置项：" + id + "（可用 message.configGet 查看全部）");
     prepared.push({ id: id, value: coerceValue(item, raw[id]) });
   }
-  tx(db, function () {
-    for (const row of prepared) metaSet(db, keyOf(row.id), JSON.stringify(row.value));
-  });
+  const ts = Date.now();
+  const schemeId = ensureActiveScheme(db, "本机配置");
+  const row = schemeRow(db, schemeId);
+  if (!row) throw new Error("配置方案不存在，请重新选择方案");
+  const data = parseSchemeData(row).data;
+  for (const item of prepared) data[item.id] = item.value;
+  writeSchemeData(db, schemeId, data, ts);
+  logScheme(db, schemeId, origin, ts);
   return {
     changed: prepared.map((row) => row.id),
     values: loadConfig(db).values,
     state: configState(db),
+    schemeId: schemeId,
   };
 }
 
@@ -270,16 +411,63 @@ export function resetConfig(db, ids) {
   for (const id of targets) {
     if (!BY_ID.has(id)) throw new Error("未知配置项：" + id);
   }
-  tx(db, function () {
-    for (const id of targets) metaDelete(db, keyOf(id));
-  });
+  const active = activeSchemeId(db);
+  const row = active ? schemeRow(db, active) : null;
+  if (!row) return { reset: targets.slice(), values: loadConfig(db).values, state: configState(db) };
+  const data = parseSchemeData(row).data;
+  for (const id of targets) delete data[id];
+  const ts = Date.now();
+  writeSchemeData(db, active, data, ts);
+  logScheme(db, active, "ui", ts);
   return { reset: targets.slice(), values: loadConfig(db).values, state: configState(db) };
 }
 
+function schemeCreate(db, name, from, origin) {
+  const source = from === "default" ? {} : loadConfig(db).overrides;
+  const id = createScheme(db, name, source, origin);
+  return { id: id, state: configState(db) };
+}
+
+function schemeRename(db, id, name) {
+  if (!id) throw new Error("缺少方案 id");
+  const row = schemeRow(db, id);
+  if (!row) throw new Error("配置方案不存在：" + id);
+  const ts = Date.now();
+  db.prepare("UPDATE message_config_scheme SET name=?, updated_at=?, rev=rev+1 WHERE id=?").run(normalizeSchemeName(name), ts, String(id));
+  logScheme(db, id, "ui", ts);
+  return { id: String(id), state: configState(db) };
+}
+
+function schemeDelete(db, id) {
+  if (!id) throw new Error("缺少方案 id");
+  const row = schemeRow(db, id);
+  if (!row) throw new Error("配置方案不存在：" + id);
+  const ts = Date.now();
+  tx(db, function () {
+    db.prepare("UPDATE message_config_scheme SET deleted_at=?, updated_at=?, rev=rev+1 WHERE id=?").run(ts, ts, String(id));
+    if (activeSchemeId(db) === String(id)) metaDelete(db, "configScheme.message.active");
+    logScheme(db, id, "ui", ts);
+  });
+  return { id: String(id), state: configState(db) };
+}
+
+function schemeActivate(db, id) {
+  if (id === undefined || id === null || id === "") {
+    metaDelete(db, "configScheme.message.active");
+    return { id: null, state: configState(db) };
+  }
+  const row = schemeRow(db, id);
+  if (!row) throw new Error("配置方案不存在：" + id);
+  metaSet(db, "configScheme.message.active", String(id));
+  return { id: String(id), state: configState(db) };
+}
+
 export function registerConfigActions(api) {
+  const db = api.db;
+  ensureConfigSchemes(db);
   const action = api.action;
   action("message.configGet", {
-    description: "只读：消息插件的配置项定义、当前值与覆盖项（含提示音、免打扰、保留期、悬浮入口与列表分页）",
+    description: "只读：消息插件的配置项定义、当前值、覆盖项、当前方案与全部方案（含提示音、免打扰、保留期、悬浮入口与列表分页）",
     input: { type: "object", properties: {}, additionalProperties: false },
     execute: () => configState(api.db),
     render: (r) =>
@@ -287,7 +475,7 @@ export function registerConfigActions(api) {
       (r.warnings && r.warnings.length ? "；warnings " + r.warnings.length : "") + "。",
   });
   action("message.configSet", {
-    description: "写入配置覆盖项（值会做类型与范围校验，越界抛错）；配置存本地 meta 表，不进同步与备份",
+    description: "写入配置覆盖项（值会做类型与范围校验，越界抛错）；配置写入当前方案，方案参与云端同步与备份",
     input: {
       type: "object",
       properties: {
@@ -296,11 +484,11 @@ export function registerConfigActions(api) {
       required: ["values"],
     },
     examples: [{ purpose: "关闭提示音并设置免打扰", args: { values: { "sound.enabled": false, "quiet.enabled": true, "quiet.from": "22:30" } } }],
-    execute: (args) => writeConfig(api.db, args.values),
+    execute: (args, ctx) => writeConfig(api.db, args.values, ctx && ctx.origin),
     render: (r) => "已更新消息配置：" + (r.changed || []).join("、"),
   });
   action("message.configReset", {
-    description: "清除配置覆盖项，回退默认值；不传 ids 表示全部重置",
+    description: "从当前方案里清除配置覆盖项；不传 ids 表示全部重置",
     input: {
       type: "object",
       properties: { ids: { type: "array", items: { type: "string" }, description: "要重置的配置项 id 列表" } },
@@ -308,4 +496,35 @@ export function registerConfigActions(api) {
     execute: (args) => resetConfig(api.db, args.ids),
     render: (r) => "已重置 " + (r.reset || []).length + " 个配置项。",
   });
+
+
+  api.action("message.configSchemeCreate", {
+    description: "新建配置方案并立即切换过去；from=current 复制当前值，from=default 从插件默认值开始",
+    input: { type: "object", properties: { name: { type: "string", description: "方案名称，1–64 个字符" }, from: { type: "string", enum: ["current", "default"] } }, required: ["name"] },
+    execute: function (args, ctx) { return schemeCreate(db, args && args.name, args && args.from, ctx && ctx.origin); },
+    render: function (r) { return "已新建并启用配置方案：" + r.state.scheme.name; },
+  });
+
+  api.action("message.configSchemeRename", {
+    description: "重命名配置方案",
+    input: { type: "object", properties: { id: { type: "string" }, name: { type: "string" } }, required: ["id", "name"] },
+    execute: function (args) { return schemeRename(db, args && args.id, args && args.name); },
+    render: function (r) { return "配置方案已改名：" + r.state.scheme.name; },
+  });
+
+  api.action("message.configSchemeDelete", {
+    description: "软删除配置方案；删除的是当前方案时回到「不使用方案」",
+    input: { type: "object", properties: { id: { type: "string" } }, required: ["id"] },
+    execute: function (args) { return schemeDelete(db, args && args.id); },
+    render: function () { return "配置方案已删除"; },
+  });
+
+  api.action("message.configSchemeActivate", {
+    description: "切换当前设备的配置方案；id 传空表示不使用方案、回到插件默认配置",
+    input: { type: "object", properties: { id: { type: "string" } } },
+    execute: function (args) { return schemeActivate(db, args && args.id); },
+    render: function (r) { return r.id ? "已切换配置方案" : "已改为不使用方案（插件默认配置）"; },
+  });
+
+
 }

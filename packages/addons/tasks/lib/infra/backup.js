@@ -9,7 +9,7 @@
 import { logChange, tableExists, tx } from "../db/db.js";
 import { LEGACY_TYPE_TAGS, addTaskTagByName, tagsAvailable } from "../tagging/tagging.js";
 
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 
 function asText(value, fallback) {
   if (value === undefined || value === null) return fallback === undefined ? "" : fallback;
@@ -97,6 +97,18 @@ function workspaceLinkValues(row) {
   return [expected, workspaceId, taskId, ...stamps(row)];
 }
 
+function schemeValues(row) {
+  const id = identity(row.id, "task_config_scheme.id");
+  const name = asText(row.name).trim();
+  if (!name) throw new Error("配置方案名称为空：" + id);
+  let data = row.data;
+  if (typeof data === "string") {
+    try { data = JSON.parse(data); } catch { throw new Error("配置方案 JSON 损坏：" + id); }
+  }
+  if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("配置方案内容不是对象：" + id);
+  return [id, name, JSON.stringify(data), ...stamps(row)];
+}
+
 const DEFINITIONS = [
   ["task_node", "taskNodes", "id,name,description,type,parent_id,path,sort,depth,created_at,updated_at,deleted_at,rev", nodeValues],
   ["task_timeline", "taskTimelines", "id,title,description,created_at,updated_at,deleted_at,rev", timelineValues],
@@ -104,6 +116,7 @@ const DEFINITIONS = [
   ["task_timeline_link", "taskTimelineLinks", "id,task_id,timeline_id,created_at,updated_at,deleted_at,rev", linkValues],
   ["task_workspace", "taskWorkspaces", "id,title,name,description,dir,created_at,updated_at,deleted_at,rev", workspaceValues],
   ["task_workspace_link", "taskWorkspaceLinks", "id,workspace_id,task_id,created_at,updated_at,deleted_at,rev", workspaceLinkValues],
+  ["task_config_scheme", "configSchemes", "id,name,data,created_at,updated_at,deleted_at,rev", schemeValues],
 ];
 
 function identity(value, field) {
@@ -138,14 +151,15 @@ export function exportTasksData(api) {
 }
 
 function prepareBackup(data) {
-  if (!data || ![1, 2, 3, 4, 5].includes(Number(data.schemaVersion))) throw new Error("任务备份版本不兼容：需要 1、2、3、4 或 5");
+  if (!data || ![1, 2, 3, 4, 5, 6].includes(Number(data.schemaVersion))) throw new Error("任务备份版本不兼容：需要 1 到 6");
   const droppedDeps = !Array.isArray(data.taskDeps) ? 0 : data.taskDeps.length;
   const legacy = Number(data.schemaVersion) === 1;
   const prepared = [];
   for (const [table, key, columnText, convert] of DEFINITIONS) {
     if (legacy && (table === "task_timeline" || table === "task_timeline_link")) continue;
-    // 5 之前的备份没有工作区两张表，缺键按空数组处理，不阻断恢复。
-    const rows = key === "taskDeps" ? [] : (data[key] === undefined && table === "task_workspace" || data[key] === undefined && table === "task_workspace_link" ? [] : data[key]);
+    // 旧版备份没有后来新增的表（工作区两张、配置方案），缺键按空数组处理，不阻断恢复。
+    const optional = table === "task_workspace" || table === "task_workspace_link" || table === "task_config_scheme";
+    const rows = key === "taskDeps" ? [] : (data[key] === undefined && optional ? [] : data[key]);
     if (!Array.isArray(rows)) throw new Error("任务备份结构不完整：" + key);
     const columns = columnText.split(",");
     const ids = new Set();

@@ -13,10 +13,12 @@ import { setFetchDebug } from "./infra/parts.js";
 export const inject = ["workbench"];
 let engine = null;
 let autoSync = null;
+let mailDb = null;
 
 export function setup(api) {
   if (typeof api.now === "function") bindClock(api.now);
   ensureSchema(api.db);
+  mailDb = api.db;
   engine = createMail({ db: api.db, host: api, log: api.log });
   registerMailActions(api, engine);
   registerConfigActions(api);
@@ -56,7 +58,8 @@ export function apply(ctx) {
     category: "comm",
     // mail_draft 含私有未发正文，不加入宿主通用表清单或同步回退。
     tables: ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"],
-    sync: { tables: [] },
+    // 只同步配置方案表，业务数据仍只在本机。
+        sync: { tables: [{ name: "mail_config_scheme", mode: "row" }] },
     // 提供落点：邮件详情动作条渲染 item.actions，别的插件可以把按钮挂进来。
     slots: ["item.actions"],
     slotHosts: ["item.actions"],
@@ -76,8 +79,32 @@ export function apply(ctx) {
       notFor: ["不做 OAuth2", "agent 不可发送附件", "不永久删除远端邮件", "不参与工作台云同步"],
       notes: ["0.6.0 起账户先选保险箱「集合与账号」里的账号集合：邮箱地址由集合账号带出，授权码只能从同一个集合里选，账户行只存 account_set_id 与 secret_id。", "密码由保险箱托管；IMAP 仅在隐式 TLS 或 STARTTLS 成功后认证。", "默认搜索本地已同步信头；界面可指定账户和远端文件夹搜索主题和发件人。", "列表展示本地已知附件名。批量移入废纸篓和本页全部已读按确认时列出的账户与邮件执行。打开邮件不会自动下载附件。草稿仅存本机；界面可显式选取附件，agent 的 mail.messageSend 只发送纯文本。"],
     },
-    exportData: () => ({ accounts: engine.listAccounts().items, mailboxes: engine.mailboxes().items, messages: engine.messages({ limit: 200 }).items }),
-    importData: (payload) => { const d = payload && typeof payload === "object" ? payload : {}; let imported = 0; for (const a of Array.isArray(d.accounts) ? d.accounts : []) { try { engine.createAccount(a); imported += 1; } catch { /* skip */ } } return { imported }; },
+    exportData: () => {
+      let configSchemes = [];
+      try { configSchemes = mailDb.prepare("SELECT * FROM mail_config_scheme ORDER BY created_at ASC, id ASC").all(); } catch { configSchemes = []; }
+      return { schemaVersion: 2, accounts: engine.listAccounts().items, mailboxes: engine.mailboxes().items, messages: engine.messages({ limit: 200 }).items, configSchemes };
+    },
+    importData: (payload, options) => {
+      const d = payload && typeof payload === "object" ? payload : {};
+      let imported = 0;
+      for (const a of Array.isArray(d.accounts) ? d.accounts : []) {
+        try { engine.createAccount(a); imported += 1; } catch { /* skip */ }
+      }
+      const policy = options && options.policy === "skip" ? "skip" : "newest";
+      let schemes = 0;
+      let failed = 0;
+      for (const row of Array.isArray(d.configSchemes) ? d.configSchemes : []) {
+        try {
+          const old = mailDb.prepare("SELECT updated_at FROM mail_config_scheme WHERE id=?").get(String(row.id));
+          if (old && (policy === "skip" || old.updated_at >= Number(row.updated_at || 0))) continue;
+          const values = [String(row.id), String(row.name), typeof row.data === "string" ? row.data : JSON.stringify(row.data || {}), Number(row.created_at) || Date.now(), Number(row.updated_at) || Date.now(), row.deleted_at == null ? null : Number(row.deleted_at), Math.max(1, Number(row.rev) || 1)];
+          mailDb.prepare("INSERT INTO mail_config_scheme(id,name,data,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,data=excluded.data,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev").run(...values);
+          mailDb.prepare("INSERT INTO sync_change_log(table_name,row_id,op,payload,origin,updated_at) VALUES(?,?,?,?,?,?)").run("mail_config_scheme", values[0], row.deleted_at == null ? "upsert" : "delete", JSON.stringify(row), "import", values[4]);
+          schemes += 1;
+        } catch { failed += 1; }
+      }
+      return { imported: imported + schemes, failed };
+    },
     setup,
   }), "mail-domain");
 }

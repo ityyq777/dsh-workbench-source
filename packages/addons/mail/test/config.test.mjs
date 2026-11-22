@@ -1,6 +1,7 @@
 /**
  * 邮件配置项：默认值、读写容错、action 契约。
- * 配置存宿主 meta 表（键 config.mail.<id>），读永远宽松、写严格报错。
+ * 配置值存配置方案表（mail_config_scheme），当前方案指针存 meta；没有方案时用插件默认值。
+ * 读永远宽松、写严格报错。
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -17,6 +18,7 @@ import {
 function db() {
   const d = new DatabaseSync(':memory:');
   d.exec('CREATE TABLE meta(k TEXT PRIMARY KEY, v TEXT NOT NULL)');
+  d.exec('CREATE TABLE sync_change_log(seq INTEGER PRIMARY KEY AUTOINCREMENT, table_name TEXT, row_id TEXT, op TEXT, payload TEXT, origin TEXT, updated_at INTEGER)');
   return d;
 }
 
@@ -43,7 +45,8 @@ test('未配置时十项都取默认值，且没有任何覆盖项', () => {
   });
   assert.deepEqual(state.overrides, {});
   assert.deepEqual(state.warnings, []);
-  assert.equal(state.table, 'meta');
+  assert.equal(state.table, 'mail_config_scheme');
+  assert.equal(state.scheme, null);
   assert.equal(state.items.length, 10);
   const theme = state.items.find((item) => item.id === 'display.mailTheme');
   assert.equal(theme.type, 'multi');
@@ -65,18 +68,18 @@ test('未配置时十项都取默认值，且没有任何覆盖项', () => {
 
 test('坏了的值不炸：未知键、非法 JSON、越界数字都回退默认并给 warnings', () => {
   const d = db();
-  const put = d.prepare('INSERT INTO meta(k,v) VALUES(?,?)');
-  put.run('config.mail.images.remote', 'false');
-  put.run('config.mail.list.pageSize', '999');
-  put.run('config.mail.read.autoSeen', 'not-json');
-  put.run('config.mail.nope', 'true');
+  d.exec('CREATE TABLE mail_config_scheme (id TEXT PRIMARY KEY, name TEXT NOT NULL, data TEXT NOT NULL, created_at INTEGER, updated_at INTEGER, deleted_at INTEGER, rev INTEGER)');
+  d.prepare('INSERT INTO mail_config_scheme(id,name,data,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?)').run(
+    'cs_bad', '坏方案', JSON.stringify({ 'images.remote': false, 'list.pageSize': 999, 'read.autoSeen': 'not-json', nope: true }), Date.now(), Date.now(), null, 1,
+  );
+  d.prepare('INSERT INTO meta(k,v) VALUES(?,?)').run('configScheme.mail.active', 'cs_bad');
   const loaded = loadConfig(d);
   assert.equal(loaded.values['images.remote'], false);
   assert.equal(loaded.values['list.pageSize'], 20);
   assert.equal(loaded.values['read.autoSeen'], true);
   assert.deepEqual(Object.keys(loaded.overrides), ['images.remote']);
   const codes = loaded.warnings.map((w) => w.code).sort();
-  assert.deepEqual(codes, ['config_bad_json', 'config_invalid', 'config_unknown_key']);
+  assert.deepEqual(codes, ['config_invalid', 'config_invalid', 'config_unknown_key']);
 });
 
 test('meta 表不存在时按默认值继续（老库/未初始化）', () => {
@@ -114,10 +117,10 @@ test('重置回默认值，可按单项重置', () => {
   assert.throws(() => resetConfig(d, ['nope']), /未知配置项/);
 });
 
-test('三个 action 可注册并返回 agent 可读的结果', async () => {
+test('配置 action 可注册并返回 agent 可读的结果', async () => {
   const d = db();
   const actions = register(d);
-  assert.deepEqual([...actions.keys()].sort(), ['mail.configGet', 'mail.configReset', 'mail.configSet']);
+  assert.deepEqual([...actions.keys()].sort(), ['mail.configGet', 'mail.configReset', 'mail.configSchemeActivate', 'mail.configSchemeCreate', 'mail.configSchemeDelete', 'mail.configSchemeRename', 'mail.configSet']);
   const got = await actions.get('mail.configGet').execute();
   assert.equal(got.values['images.remote'], true);
   assert.match(actions.get('mail.configGet').render(got), /邮件配置 10 项/);

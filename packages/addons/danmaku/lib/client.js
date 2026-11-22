@@ -2946,6 +2946,170 @@ var require_library = __commonJS({
   }
 });
 
+// packages/addons/lib/config-scheme-bar.cjs
+var require_config_scheme_bar = __commonJS({
+  "packages/addons/lib/config-scheme-bar.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h = React.createElement;
+    var COPY = {
+      zh: {
+        title: "\u914D\u7F6E\u65B9\u6848",
+        none: "\u4E0D\u4F7F\u7528\u65B9\u6848\uFF08\u63D2\u4EF6\u9ED8\u8BA4\u914D\u7F6E\uFF09",
+        create: "\u65B0\u5EFA\u65B9\u6848",
+        rename: "\u91CD\u547D\u540D",
+        remove: "\u5220\u9664",
+        namePlaceholder: "\u65B9\u6848\u540D\u79F0",
+        ok: "\u786E\u5B9A",
+        cancel: "\u53D6\u6D88",
+        current: "\u5F53\u524D\u65B9\u6848",
+        defaultHint: "\u672A\u9009\u62E9\u65B9\u6848\u65F6\u4F7F\u7528\u63D2\u4EF6\u9ED8\u8BA4\u914D\u7F6E\uFF1B\u4FEE\u6539\u4EFB\u610F\u8BBE\u7F6E\u4F1A\u81EA\u52A8\u65B0\u5EFA\u300C\u672C\u673A\u914D\u7F6E\u300D\u65B9\u6848\u3002",
+        syncedHint: "\u65B9\u6848\u4F1A\u968F\u4E91\u7AEF\u540C\u6B65\u4E0E\u5907\u4EFD\u4E00\u8D77\u8D70\uFF1B\u5F53\u524D\u9009\u4E2D\u54EA\u4E2A\u65B9\u6848\u53EA\u4FDD\u5B58\u5728\u672C\u673A\u3002",
+        confirmDelete: "\u5220\u9664\u5F53\u524D\u65B9\u6848\u540E\u4F1A\u56DE\u5230\u63D2\u4EF6\u9ED8\u8BA4\u914D\u7F6E\uFF0C\u786E\u5B9A\u5220\u9664\uFF1F",
+        createTitle: "\u65B0\u5EFA\u914D\u7F6E\u65B9\u6848",
+        renameTitle: "\u91CD\u547D\u540D\u914D\u7F6E\u65B9\u6848",
+        fromCurrent: "\u4ECE\u5F53\u524D\u65B9\u6848\u590D\u5236",
+        fromDefault: "\u4ECE\u63D2\u4EF6\u9ED8\u8BA4\u5F00\u59CB"
+      },
+      en: {
+        title: "Config scheme",
+        none: "No scheme (plugin defaults)",
+        create: "New scheme",
+        rename: "Rename",
+        remove: "Delete",
+        namePlaceholder: "Scheme name",
+        ok: "OK",
+        cancel: "Cancel",
+        current: "Active scheme",
+        defaultHint: 'With no scheme selected the plugin defaults apply. Editing any setting creates a local "My config" scheme automatically.',
+        syncedHint: "Schemes sync to the cloud and travel with backups; which scheme this device uses stays local.",
+        confirmDelete: "Deleting the active scheme returns to plugin defaults. Delete it?",
+        createTitle: "New config scheme",
+        renameTitle: "Rename config scheme",
+        fromCurrent: "Copy active scheme",
+        fromDefault: "Start from plugin defaults"
+      }
+    };
+    var styles2 = [
+      ".__P__-cfg-schemes{display:flex;flex-direction:column;gap:10px;padding:13px 16px;border:1px solid var(--cfg-line);border-radius:12px;background:var(--cfg-surface)}",
+      ".__P__-cfg-schemes-main{display:flex;align-items:center;gap:10px;flex-wrap:wrap}",
+      ".__P__-cfg-schemes-label{font-size:12.5px;font-weight:660;white-space:nowrap}",
+      ".__P__-cfg-schemes-select{border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:9px;padding:7px 11px;font:inherit;font-size:13px;line-height:1.4;outline:none;min-width:190px;max-width:100%}",
+      ".__P__-cfg-schemes-select:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
+      ".__P__-cfg-schemes-actions{display:flex;gap:7px;flex-wrap:wrap}",
+      ".__P__-cfg-sbtn{appearance:none;border:1px solid var(--cfg-line);background:transparent;color:inherit;border-radius:8px;padding:5px 11px;font:inherit;font-size:12px;line-height:1.5;cursor:pointer;transition:background .12s ease,border-color .12s ease}",
+      ".__P__-cfg-sbtn:hover:not(:disabled){background:var(--cfg-hover);border-color:color-mix(in oklab,currentColor 28%,var(--cfg-line))}",
+      ".__P__-cfg-sbtn:disabled{opacity:.5;cursor:default}",
+      ".__P__-cfg-sbtn.danger{color:var(--dsw-alias-state-error-primary,inherit)}",
+      ".__P__-cfg-schemes-form{display:flex;align-items:center;gap:7px;flex-wrap:wrap}",
+      ".__P__-cfg-schemes-input{flex:1 1 180px;min-width:120px;border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:8px;padding:6px 10px;font:inherit;font-size:13px;outline:none}",
+      ".__P__-cfg-schemes-input:focus{border-color:var(--dsw-alias-brand-primary,currentColor)}",
+      ".__P__-cfg-schemes-hint{font-size:11.5px;color:var(--cfg-muted);line-height:1.6}"
+    ];
+    function SchemeBar(props) {
+      var lang = props.lang === "en" ? "en" : "zh";
+      var c = COPY[lang];
+      var prefix = props.prefix || "wb";
+      var cls = function(suffix) {
+        return "." + prefix + "-cfg-" + suffix;
+      };
+      var schemes = Array.isArray(props.schemes) ? props.schemes : [];
+      var activeId = props.activeId || "";
+      var busy = Boolean(props.busy);
+      var [editing, setEditing] = React.useState(null);
+      var [name, setName] = React.useState("");
+      var [from, setFrom] = React.useState("current");
+      function begin(mode) {
+        var current = schemes.filter(function(s) {
+          return s.id === activeId;
+        })[0];
+        setName(mode === "rename" && current ? current.name : "");
+        setFrom(current ? "current" : "default");
+        setEditing(mode);
+      }
+      function submit(event) {
+        if (event && event.preventDefault) event.preventDefault();
+        var value = String(name || "").trim();
+        if (!value || busy) return;
+        if (editing === "rename") props.onRename(activeId, value);
+        else props.onCreate(value, from);
+        setEditing(null);
+        setName("");
+      }
+      function remove() {
+        if (typeof window !== "undefined" && window.confirm && !window.confirm(c.confirmDelete)) return;
+        props.onDelete(activeId);
+      }
+      return h(
+        "div",
+        { className: prefix + "-cfg-schemes" },
+        h(
+          "div",
+          { className: prefix + "-cfg-schemes-main" },
+          h("span", { className: prefix + "-cfg-schemes-label" }, c.title),
+          h(
+            "select",
+            {
+              className: prefix + "-cfg-schemes-select",
+              value: activeId,
+              disabled: busy,
+              onChange: function(event) {
+                props.onActivate(event.target.value || null);
+              },
+              "aria-label": c.title
+            },
+            h("option", { value: "" }, c.none),
+            schemes.map(function(s) {
+              return h("option", { key: s.id, value: s.id }, s.name);
+            })
+          ),
+          h("span", { className: prefix + "-cfg-schemes-hint" }, activeId ? c.current : "")
+        ),
+        editing ? h(
+          "form",
+          { className: prefix + "-cfg-schemes-form", onSubmit: submit },
+          h("span", { className: prefix + "-cfg-schemes-label" }, editing === "rename" ? c.renameTitle : c.createTitle),
+          h("input", {
+            className: prefix + "-cfg-schemes-input",
+            value: name,
+            placeholder: c.namePlaceholder,
+            maxLength: 64,
+            autoFocus: true,
+            disabled: busy,
+            onChange: function(event) {
+              setName(event.target.value);
+            }
+          }),
+          editing === "create" && activeId ? h(
+            "select",
+            { className: prefix + "-cfg-schemes-select", value: from, disabled: busy, onChange: function(event) {
+              setFrom(event.target.value);
+            }, "aria-label": c.createTitle },
+            h("option", { value: "current" }, c.fromCurrent),
+            h("option", { value: "default" }, c.fromDefault)
+          ) : null,
+          h("button", { className: prefix + "-cfg-sbtn", type: "submit", disabled: busy || !String(name || "").trim() }, c.ok),
+          h("button", { className: prefix + "-cfg-sbtn", type: "button", disabled: busy, onClick: function() {
+            setEditing(null);
+          } }, c.cancel)
+        ) : h(
+          "div",
+          { className: prefix + "-cfg-schemes-actions" },
+          h("button", { className: prefix + "-cfg-sbtn", type: "button", disabled: busy, onClick: function() {
+            begin("create");
+          } }, c.create),
+          activeId ? h("button", { className: prefix + "-cfg-sbtn", type: "button", disabled: busy, onClick: function() {
+            begin("rename");
+          } }, c.rename) : null,
+          activeId ? h("button", { className: prefix + "-cfg-sbtn danger", type: "button", disabled: busy, onClick: remove }, c.remove) : null
+        ),
+        h("div", { className: prefix + "-cfg-schemes-hint" }, activeId ? c.syncedHint : c.defaultHint)
+      );
+    }
+    module2.exports = { SchemeBar, styles: styles2, COPY };
+  }
+});
+
 // packages/addons/danmaku/client/views/config.cjs
 var require_config = __commonJS({
   "packages/addons/danmaku/client/views/config.cjs"(exports2, module2) {
@@ -2956,7 +3120,11 @@ var require_config = __commonJS({
     var copy = require_copy();
     var SW = require_switch();
     var NF = require_number_field();
+    var SB = require_config_scheme_bar();
     var DOMAIN = "danmaku";
+    var SCHEME_CSS = [
+      ".wbdm-wrap{--cfg-line:var(--wb-border,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent)));--cfg-surface:var(--wb-card,var(--wb-surface,var(--dsw-alias-bg-layer-1,transparent)));--cfg-muted:var(--wb-muted,var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 62%,transparent)));--cfg-hover:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent))}"
+    ].concat(SB.styles).join("\n").split("__P__").join("wbdm");
     var ICONS = {
       check: GLYPHS2["check"],
       power: GLYPHS2["power"],
@@ -2990,12 +3158,13 @@ var require_config = __commonJS({
           if (!body || !body.values) throw new Error("empty config");
           setState({
             ready: true,
-            values: Object.assign({}, fallback || {}, body.values),
+            values: Object.assign({}, fallback || {}, body.values || {}),
             items: body.items || [],
             groups: body.groups || [],
             overrides: body.overrides || {},
             warnings: body.warnings || [],
-            error: ""
+            error: "",
+            state: body
           });
         }).catch(function(e) {
           if (!alive) return;
@@ -3013,7 +3182,20 @@ var require_config = __commonJS({
           return Object.assign({}, prev, { values: Object.assign({}, prev.values, next) });
         });
       }
-      return Object.assign({}, state, { setValues });
+      function setBody(body) {
+        if (!body) return;
+        setState({
+          ready: true,
+          values: Object.assign({}, fallback || {}, body.values || {}),
+          items: body.items || [],
+          groups: body.groups || [],
+          overrides: body.overrides || {},
+          warnings: body.warnings || [],
+          error: "",
+          state: body
+        });
+      }
+      return Object.assign({}, state, { setValues, setBody });
     }
     function labelOf(item, lang) {
       return lang === "en" ? item.en || item.zh || item.id : item.zh || item.en || item.id;
@@ -3165,9 +3347,24 @@ var require_config = __commonJS({
       var toastS = React.useState("");
       var toast = toastS[0];
       var setToast = toastS[1];
+      var schemeBusyS = React.useState(false);
+      var schemeBusy = schemeBusyS[0];
+      var setSchemeBusy = schemeBusyS[1];
+      var schemeNote = lang === "en" ? "Schemes sync to the cloud and travel with backups; which scheme this device uses stays local" : "\u914D\u7F6E\u65B9\u6848\u4F1A\u968F\u4E91\u7AEF\u540C\u6B65\u4E0E\u5907\u4EFD\uFF1B\u5F53\u524D\u9009\u4E2D\u54EA\u4E2A\u65B9\u6848\u53EA\u4FDD\u5B58\u5728\u672C\u673A";
       var seqRef = React.useRef(0);
       var aliveRef = React.useRef(true);
       React.useEffect(function() {
+        if (typeof document !== "undefined") {
+          var old = document.getElementById("wb-addon-danmaku-config-scheme-css");
+          if (old) {
+            old.textContent = SCHEME_CSS;
+          } else {
+            var el = document.createElement("style");
+            el.id = "wb-addon-danmaku-config-scheme-css";
+            el.textContent = SCHEME_CSS;
+            document.head.appendChild(el);
+          }
+        }
         aliveRef.current = true;
         return function() {
           aliveRef.current = false;
@@ -3203,6 +3400,24 @@ var require_config = __commonJS({
             return next;
           });
           toastOnce(String(e && e.message || e));
+        });
+      }
+      function schemeCall(action, args) {
+        setSchemeBusy(true);
+        return Promise.resolve(api.call(DOMAIN + "." + action, args || {})).then(function(r) {
+          if (r && r.ok === false) throw new Error(r && r.error || C.saveFail);
+          var body = unwrap(r) || {};
+          var next = body.state || body;
+          if (next && typeof cfg.setBody === "function") {
+            cfg.setBody(next);
+            seqRef.current += 1;
+            setLocal({});
+          }
+          toastOnce(C.saved);
+        }).catch(function(e) {
+          toastOnce(String(e && e.message || e));
+        }).then(function() {
+          setSchemeBusy(false);
         });
       }
       function resetAll() {
@@ -3285,7 +3500,7 @@ var require_config = __commonJS({
           "div",
           { className: "wbdm-hero-main" },
           h("div", { className: "wbdm-title" }, C.configTitle),
-          h("div", { className: "wbdm-sub" }, C.configHint)
+          h("div", { className: "wbdm-sub" }, schemeNote)
         ),
         h(
           "button",
@@ -3331,6 +3546,26 @@ var require_config = __commonJS({
         "div",
         { className: "wbdm-wrap" },
         head,
+        h(SB.SchemeBar, {
+          key: "schemes",
+          lang,
+          prefix: "wbdm",
+          schemes: cfg.state && cfg.state.schemes || [],
+          activeId: cfg.state && cfg.state.scheme ? cfg.state.scheme.id : "",
+          busy: schemeBusy,
+          onActivate: function(id) {
+            schemeCall("configSchemeActivate", { id: id || "" });
+          },
+          onCreate: function(name, from) {
+            schemeCall("configSchemeCreate", { name, from: from || "current" });
+          },
+          onRename: function(id, name) {
+            schemeCall("configSchemeRename", { id, name });
+          },
+          onDelete: function(id) {
+            schemeCall("configSchemeDelete", { id });
+          }
+        }),
         toast ? h("div", { className: "wbdm-notice ok" }, toast) : null,
         cfg.warnings && cfg.warnings.length ? h("div", { className: "wbdm-notice warn" }, cfg.warnings.join("\uFF1B")) : null,
         sections,
@@ -5228,7 +5463,7 @@ function definition(host) {
   var tab = makeTab(host.react);
   return {
     id: ADDON_ID,
-    version: "0.2.13",
+    version: "0.3.0",
     icon: tab("megaphone"),
     views: [
       {

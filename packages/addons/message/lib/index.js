@@ -2,7 +2,7 @@
  * 消息业务插件（DSH 原生插件）。
  *
  * 定位：工作台内统一的「消息发送入口」——agent、子插件、界面都调用 message.send；
- * 消息只落本机 SQLite（显式 sync:{tables:[]}，也不提供备份导入导出），
+ * 消息只落本机 SQLite（业务表不同步）；配置方案表例外，随云端同步并进入备份，
  * 有新消息时由客户端 notifier 播放提示音。
  *
  * 与其他插件保持弱耦合：本插件不 import 任何业务插件；其他插件调用本域只能走
@@ -77,6 +77,54 @@ export function setup(api) {
   api.log("message domain ready", api.addon.version);
 }
 
+const SCHEME_BACKUP_VERSION = 1;
+
+function schemeRows() {
+  const db = requireApi().db;
+  try {
+    return db.prepare("SELECT * FROM message_config_scheme ORDER BY created_at ASC, id ASC").all();
+  } catch {
+    return [];
+  }
+}
+
+function exportSchemes() {
+  return { schemaVersion: SCHEME_BACKUP_VERSION, configSchemes: schemeRows() };
+}
+
+function importSchemes(raw, options) {
+  const db = requireApi().db;
+  let data = raw;
+  if (typeof raw === "string") {
+    try { data = JSON.parse(raw); } catch { return { ok: false, imported: 0, skipped: 0, failed: 1, message: "配置方案不是有效 JSON" }; }
+  }
+  const rows = data && Array.isArray(data.configSchemes) ? data.configSchemes : [];
+  const policy = options && options.policy === "skip" ? "skip" : "newest";
+  let imported = 0;
+  let skipped = 0;
+  let failed = 0;
+  try {
+    db.exec("CREATE TABLE IF NOT EXISTS message_config_scheme (id TEXT PRIMARY KEY, name TEXT NOT NULL, data TEXT NOT NULL, created_at INTEGER, updated_at INTEGER, deleted_at INTEGER, rev INTEGER)");
+    db.exec("BEGIN IMMEDIATE");
+    for (const row of rows) {
+      try {
+        if (!row || typeof row !== "object" || !row.id || !row.name) throw new Error("方案行缺少 id/name");
+        const old = db.prepare("SELECT updated_at FROM message_config_scheme WHERE id=?").get(String(row.id));
+        if (old && (policy === "skip" || old.updated_at >= Number(row.updated_at || 0))) { skipped += 1; continue; }
+        const values = [String(row.id), String(row.name), typeof row.data === "string" ? row.data : JSON.stringify(row.data || {}), Number(row.created_at) || Date.now(), Number(row.updated_at) || Date.now(), row.deleted_at == null ? null : Number(row.deleted_at), Math.max(1, Number(row.rev) || 1)];
+        db.prepare("INSERT INTO message_config_scheme(id,name,data,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,data=excluded.data,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev").run(...values);
+        db.prepare("INSERT INTO sync_change_log(table_name,row_id,op,payload,origin,updated_at) VALUES(?,?,?,?,?,?)").run("message_config_scheme", values[0], row.deleted_at == null ? "upsert" : "delete", JSON.stringify(row), "import", values[4]);
+        imported += 1;
+      } catch { failed += 1; }
+    }
+    db.exec("COMMIT");
+  } catch (error) {
+    try { db.exec("ROLLBACK"); } catch { /* ignore */ }
+    return { ok: false, imported: 0, skipped, failed: 1, message: String((error && error.message) || error) };
+  }
+  return { ok: failed === 0, imported, skipped, failed };
+}
+
 export function apply(ctx) {
   const host = ctx.workbench;
   if (!host) throw new Error("dsh-workbench 未加载：缺少 workbench 服务");
@@ -90,7 +138,10 @@ export function apply(ctx) {
         category: "comm",
         tables: ["message"],
         // 只在本机保存：显式声明不同步任何表（不写 sync 时宿主默认按行同步）。
-        sync: { tables: [] },
+        // 只同步配置方案表，业务数据仍只在本机。
+        sync: { tables: [{ name: "message_config_scheme", mode: "row" }] },
+        exportData: () => exportSchemes(),
+        importData: (payload, options) => importSchemes(payload, options),
         views: [
           { id: "stats", title: { zh: "统计", en: "Stats" } },
           { id: "inbox", title: { zh: "收件箱", en: "Inbox" } },

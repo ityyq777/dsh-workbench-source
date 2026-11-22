@@ -13,7 +13,7 @@ import { registerConfigActions } from "./infra/config.js";
 import { registerDataActions } from "./infra/data.js";
 import { exportStorageData, importStorageData } from "./infra/backup.js";
 export const inject = ["workbench"];
-export const storageSync = { tables: [{ name: "storage", mode: "row" }] };
+export const storageSync = { tables: [{ name: "storage", mode: "row" }, { name: "storage_config_scheme", mode: "row" }] };
 /**
  * 只读「Action」页的数据源完全由插件自己维护：注册时记录 action 定义，
  * 再由本插件注册的 <域>.actionSchema 返回，不经过宿主 schema 接口。

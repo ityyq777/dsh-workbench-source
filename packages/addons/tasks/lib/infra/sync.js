@@ -185,5 +185,7 @@ export const taskSync = {
     { name: "task_workspace", mode: "row" },
     { name: "task_workspace_link", mode: "row", normalizeIncoming: normalizeWorkspaceLink },
     { name: "task_node", mode: "tree", reconcile: reconcileTaskTree },
+    // 配置方案参与同步：只同步方案行，本机选哪个方案由 meta 指针决定，不跨设备。
+    { name: "task_config_scheme", mode: "row" },
   ],
 };

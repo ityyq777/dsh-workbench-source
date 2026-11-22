@@ -1,6 +1,6 @@
 import { fieldsOf, tableExists, tx, logChange } from "../db/db.js";
 import { TAG_SOURCE, TAG_SOURCE_OWNER, TAG_SOURCE_TITLE, ensureTagSource, tagSourceReady, tagSourceError } from "../tagging/source.js";
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 export function exportStorageData(api) {
   const db = api.db;
   const tagMappings = tableExists(db, "tag_mapping")
@@ -19,6 +19,9 @@ export function exportStorageData(api) {
     storage: db.prepare("SELECT * FROM storage ORDER BY created_at,id").all(),
     tagMappings,
     tagReferences,
+    configSchemes: tableExists(db, "storage_config_scheme")
+      ? db.prepare("SELECT * FROM storage_config_scheme ORDER BY created_at,id").all()
+      : [],
   };
 }
 function stamp(value, label, nullable = false) {
@@ -50,7 +53,7 @@ export function importStorageData(api, raw, options = {}) {
     const data = JSON.parse(String(raw));
     if (
       !data ||
-      data.schemaVersion !== SCHEMA_VERSION ||
+      (data.schemaVersion !== 1 && data.schemaVersion !== SCHEMA_VERSION) ||
       !Array.isArray(data.storage) ||
       !Array.isArray(data.tagMappings)
     )
@@ -66,6 +69,19 @@ export function importStorageData(api, raw, options = {}) {
         if (references.has(id)) throw new Error("标签快照 id 重复");
         references.set(id, name);
       }
+    }
+    if (data.configSchemes !== undefined && !Array.isArray(data.configSchemes)) throw new Error("配置方案必须是数组");
+    const schemes = (data.configSchemes || []).map((row) => {
+      if (!row || typeof row !== "object") throw new Error("配置方案行无效");
+      const id = identity(row.id, "配置方案 id");
+      const name = identity(row.name, "配置方案名称");
+      const data = typeof row.data === "string" ? row.data : JSON.stringify(row.data || {});
+      return { ...system({ ...row, id }), name, data };
+    });
+    const schemeIds = new Set();
+    for (const row of schemes) {
+      if (schemeIds.has(row.id)) throw new Error("备份含重复配置方案 id");
+      schemeIds.add(row.id);
     }
     const rows = data.storage.map((row) => {
       if (!row || typeof row !== "object") throw new Error("物品行无效");
@@ -139,6 +155,10 @@ export function importStorageData(api, raw, options = {}) {
         imported++;
       }
       for (const row of rows) apply("storage", row);
+      if (schemes.length) {
+        db.exec("CREATE TABLE IF NOT EXISTS storage_config_scheme (id TEXT PRIMARY KEY, name TEXT NOT NULL, data TEXT NOT NULL, created_at INTEGER, updated_at INTEGER, deleted_at INTEGER, rev INTEGER)");
+        for (const row of schemes) apply("storage_config_scheme", row);
+      }
       for (const row of mappings) {
         const item = db.prepare("SELECT * FROM storage WHERE id=?").get(row.item_id);
         let tag = db.prepare("SELECT * FROM tag WHERE id=?").get(row.tag_id);

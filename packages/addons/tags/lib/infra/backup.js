@@ -8,7 +8,7 @@
 import { MAPPING_TABLE, TAG_TABLE, logChange, tableExists } from "../db/db.js";
 import { ensureSourceRegistered } from "../domain/sources.js";
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 function asText(value, fallback) {
   if (value === undefined || value === null) return fallback === undefined ? "" : fallback;
@@ -29,6 +29,24 @@ function tagValues(row) {
   return [
     id,
     name,
+    asInt(row.created_at, updated),
+    updated,
+    row.deleted_at === null || row.deleted_at === undefined ? null : asInt(row.deleted_at, updated),
+    Math.max(1, asInt(row.rev, 1)),
+  ];
+}
+
+function schemeValues(row) {
+  const id = asText(row && row.id).trim();
+  if (!id) throw new Error("config_scheme.id 为空");
+  const name = asText(row && row.name).trim();
+  if (!name) throw new Error("config_scheme.name 为空：" + id);
+  const data = row && row.data !== undefined && row.data !== null ? String(row.data) : "{}";
+  const updated = asInt(row.updated_at, Date.now());
+  return [
+    id,
+    name,
+    data,
     asInt(row.created_at, updated),
     updated,
     row.deleted_at === null || row.deleted_at === undefined ? null : asInt(row.deleted_at, updated),
@@ -63,7 +81,10 @@ export function exportTagsData(api) {
         .prepare("SELECT * FROM tag_mapping WHERE item_type NOT IN ('site','storage') ORDER BY created_at ASC, id ASC")
         .all()
     : [];
-  return { schemaVersion: SCHEMA_VERSION, tags, mappings };
+  const configSchemes = tableExists(db, "tag_config_scheme")
+    ? db.prepare("SELECT * FROM tag_config_scheme ORDER BY created_at ASC, id ASC").all()
+    : [];
+  return { schemaVersion: SCHEMA_VERSION, tags, mappings, configSchemes };
 }
 
 function policyOf(options) {
@@ -144,12 +165,14 @@ export function importTagsData(api, raw, options) {
   } catch {
     return { ok: false, imported: 0, skipped: 0, failed: 0, message: "标签备份不是有效 JSON" };
   }
-  if (!data || Number(data.schemaVersion) !== SCHEMA_VERSION) {
-    return { ok: false, imported: 0, skipped: 0, failed: 0, message: "标签备份版本不兼容：需要 " + SCHEMA_VERSION };
+  const version = data && Number(data.schemaVersion);
+  if (version !== 1 && version !== SCHEMA_VERSION) {
+    return { ok: false, imported: 0, skipped: 0, failed: 0, message: "标签备份版本不兼容：支持 1–" + SCHEMA_VERSION };
   }
   if (!Array.isArray(data.tags) || !Array.isArray(data.mappings)) {
     return { ok: false, imported: 0, skipped: 0, failed: 0, message: "标签备份结构不完整" };
   }
+  if (!Array.isArray(data.configSchemes)) data.configSchemes = [];
   const normalized = canonicalizeTagNames(db, data);
   data = Object.assign({}, data, { tags: normalized.tags, mappings: normalized.mappings });
 
@@ -209,6 +232,33 @@ export function importTagsData(api, raw, options) {
       if (result.changes > 0) {
         imported += 1;
         logChange(db, MAPPING_TABLE, values[0], "upsert", row, "import", values[5]);
+      } else {
+        skipped += 1;
+      }
+    } catch (e) {
+      failed += 1;
+      if (errors.length < 5) errors.push(String((e && e.message) || e));
+    }
+  }
+
+  // 配置方案：独立于标签行，按同一 LWW 规则并写 change log。
+  const schemeUpsert = db.prepare(
+    "INSERT INTO tag_config_scheme(id,name,data,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?) " +
+      "ON CONFLICT(id) DO UPDATE SET name=excluded.name,data=excluded.data,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
+      "WHERE ? = 1 OR excluded.updated_at > tag_config_scheme.updated_at",
+  );
+  const schemeExists = db.prepare("SELECT 1 FROM tag_config_scheme WHERE id = ?");
+  for (const row of data.configSchemes) {
+    try {
+      const values = schemeValues(row);
+      if (policy === "skip" && schemeExists.get(values[0])) {
+        skipped += 1;
+        continue;
+      }
+      const result = schemeUpsert.run(...values, force);
+      if (result.changes > 0) {
+        imported += 1;
+        logChange(db, "tag_config_scheme", values[0], "upsert", row, "import", values[4]);
       } else {
         skipped += 1;
       }

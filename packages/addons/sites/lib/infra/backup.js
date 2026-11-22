@@ -14,7 +14,7 @@ import {
 } from "../db/db.js";
 import { TAG_SOURCE, TAG_SOURCE_OWNER, TAG_SOURCE_TITLE, ensureTagSource, tagSourceReady, tagSourceError } from "../tagging/source.js";
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 const TAG_MAPPING_TABLE = "tag_mapping";
 
 function asText(value, fallback) {
@@ -25,6 +25,24 @@ function asText(value, fallback) {
 function asInt(value, fallback) {
   const n = Number(value);
   return Number.isFinite(n) ? Math.trunc(n) : fallback;
+}
+
+function schemeValues(row) {
+  const id = asText(row && row.id).trim();
+  if (!id) throw new Error("config_scheme.id 为空");
+  const name = asText(row && row.name).trim();
+  if (!name) throw new Error("config_scheme.name 为空：" + id);
+  const data = row && row.data !== undefined && row.data !== null ? String(row.data) : "{}";
+  const updated = asInt(row.updated_at, Date.now());
+  return [
+    id,
+    name,
+    data,
+    asInt(row.created_at, updated),
+    updated,
+    row.deleted_at === null || row.deleted_at === undefined ? null : asInt(row.deleted_at, updated),
+    Math.max(1, asInt(row.rev, 1)),
+  ];
 }
 
 function siteValues(row) {
@@ -112,6 +130,9 @@ export function exportSitesData(api) {
     tagMappings: hasTagMapping
       ? db.prepare("SELECT * FROM tag_mapping WHERE item_type='site' ORDER BY created_at ASC, id ASC").all()
       : [],
+    configSchemes: tableExists(db, "site_config_scheme")
+      ? db.prepare("SELECT * FROM site_config_scheme ORDER BY created_at ASC, id ASC").all()
+      : [],
   };
 }
 
@@ -129,9 +150,11 @@ export function importSitesData(api, raw, options) {
   } catch {
     return { ok: false, imported: 0, skipped: 0, failed: 0, message: "站点备份不是有效 JSON" };
   }
-  if (!data || Number(data.schemaVersion) !== SCHEMA_VERSION) {
-    return { ok: false, imported: 0, skipped: 0, failed: 0, message: "站点备份版本不兼容：需要 " + SCHEMA_VERSION };
+  const version = data && Number(data.schemaVersion);
+  if (version !== 1 && version !== SCHEMA_VERSION) {
+    return { ok: false, imported: 0, skipped: 0, failed: 0, message: "站点备份版本不兼容：支持 1–" + SCHEMA_VERSION };
   }
+  if (!Array.isArray(data.configSchemes)) data.configSchemes = [];
   if (!Array.isArray(data.sites) || !Array.isArray(data.nodes) || !Array.isArray(data.nodeMappings) || !Array.isArray(data.tagMappings)) {
     return { ok: false, imported: 0, skipped: 0, failed: 0, message: "站点备份结构不完整" };
   }
@@ -178,6 +201,12 @@ export function importSitesData(api, raw, options) {
   };
   if (hasTagMapping) exists[TAG_MAPPING_TABLE] = db.prepare("SELECT 1 FROM tag_mapping WHERE id = ?");
   const force = policy === "overwrite" ? 1 : 0;
+  const schemeUpsert = db.prepare(
+    "INSERT INTO site_config_scheme(id,name,data,created_at,updated_at,deleted_at,rev) VALUES(?,?,?,?,?,?,?) " +
+      "ON CONFLICT(id) DO UPDATE SET name=excluded.name,data=excluded.data,created_at=excluded.created_at,updated_at=excluded.updated_at,deleted_at=excluded.deleted_at,rev=excluded.rev " +
+      "WHERE ? = 1 OR excluded.updated_at > site_config_scheme.updated_at",
+  );
+  exists.site_config_scheme = db.prepare("SELECT 1 FROM site_config_scheme WHERE id = ?");
 
   function apply(stmt, table, values, tsIndex, row) {
     if (!stmt) {
@@ -228,6 +257,15 @@ export function importSitesData(api, raw, options) {
         continue;
       }
       apply(tagMappingUpsert, TAG_MAPPING_TABLE, tagMappingValues(row), 5, row);
+    } catch (e) {
+      failed += 1;
+      if (errors.length < 5) errors.push(String((e && e.message) || e));
+    }
+  }
+
+  for (const row of data.configSchemes) {
+    try {
+      apply(schemeUpsert, "site_config_scheme", schemeValues(row), 4, row);
     } catch (e) {
       failed += 1;
       if (errors.length < 5) errors.push(String((e && e.message) || e));

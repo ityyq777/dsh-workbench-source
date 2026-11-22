@@ -41,6 +41,7 @@ function mustThrow(fn, part, msg) {
   throw new Error("ASSERT: " + msg + "（没有抛错）");
 }
 function metaKeys() { return db.prepare("SELECT k,v FROM meta WHERE k LIKE 'config.%' ORDER BY k").all(); }
+function schemeRows() { return db.prepare("SELECT * FROM task_config_scheme ORDER BY id").all(); }
 
 const tags = await load("../packages/addons/tags/lib/index.js", "wb-addon-tags");
 const tasks = await load("../packages/addons/tasks/lib/index.js", "wb-addon-tasks", { tags: true });
@@ -71,17 +72,20 @@ mustThrow(() => tasks.call("tasks.configSet", { values: { "no.such.key": 1 } }),
 mustThrow(() => tasks.call("tasks.configSet", { values: { "ui.listView": "card" } }), "未知配置项", "已移除的 ui.listView 应报未知配置项");
 mustThrow(() => tasks.call("tasks.configSet", { values: { "list.pageSize": 999 } }), "list.pageSize", "越界分页应报错");
 mustThrow(() => tasks.call("tasks.configSet", { values: { "list.pageSize": 24, "nope.key": 1 } }), "nope.key", "整批校验失败应报错");
-assert(metaKeys().length === 0, "失败的批次不能写入任何键");
+assert(metaKeys().length === 0, "失败的批次不能写入任何 meta 键");
+assert(schemeRows().length === 0, "失败的批次不能写入配置方案");
 assert(tasks.call("tasks.configGet").values["list.pageSize"] === 12, "失败批次不能留下部分写入");
 
 // 3. 正常写入与读取
 const set1 = tasks.call("tasks.configSet", { values: { "list.pageSize": 24, "ui.bodyMode": "text" } });
 assert(set1.ok !== false, "configSet 失败");
-assert(metaKeys().length === 2, "应写入两个 meta 键，实际 " + metaKeys().length);
+assert(metaKeys().length === 0, "配置不再写 meta 键");
+assert(schemeRows().length === 1, "应自动新建一个「本机配置」方案，实际 " + schemeRows().length);
+assert(JSON.parse(schemeRows()[0].data)["list.pageSize"] === 24, "方案数据未写入分页配置");
 const g1 = tasks.call("tasks.configGet");
 assert(g1.values["list.pageSize"] === 24 && g1.values["ui.bodyMode"] === "text", "覆盖值未生效");
 assert(g1.overrides["list.pageSize"] === 24, "overrides 未标记修改项");
-assert(db.prepare("SELECT COUNT(*) AS n FROM sync_change_log").get().n === 0, "配置写入不能进 sync_change_log");
+assert(db.prepare("SELECT COUNT(*) AS n FROM sync_change_log").get().n > 0, "配置方案写入应进 sync_change_log 以便同步");
 
 // 4. 恢复默认
 tasks.call("tasks.configReset", { ids: ["list.pageSize"] });
@@ -182,11 +186,26 @@ storage.call("storage.configReset", {});
 assert(storage.call("storage.configGet").values["list.pageSize"] === 16, "物品配置重置未恢复默认");
 storage.call("storage.configSet", { values: { "ui.confirmDelete": false } });
 
-// 10. meta 键名规范
-const keys = metaKeys().map((r) => r.k);
-assert(keys.every((k) => /^config\.(tasks|tags|sites|storage)\.[a-z]/.test(k)), "meta 键前缀不规范：" + keys.join(","));
-assert(keys.length >= 6, "meta 配置键数量异常：" + keys.length);
+// 10. 配置方案：新建/切换/删除，以及「不使用方案」
+const createdScheme = tasks.call("tasks.configSchemeCreate", { name: "工作模式", from: "current" });
+assert(createdScheme.state.scheme && createdScheme.state.scheme.name === "工作模式", "新建方案后应切换过去");
+assert(createdScheme.state.schemes.length === 2, "方案列表应有两个方案");
+const renamed = tasks.call("tasks.configSchemeRename", { id: createdScheme.state.scheme.id, name: "工作模式 2" });
+assert(renamed.state.scheme.name === "工作模式 2", "方案改名未生效");
+const defaultScheme = tasks.call("tasks.configSchemeCreate", { name: "只读默认", from: "default" });
+assert(defaultScheme.state.scheme.id !== createdScheme.state.scheme.id, "新建方案应切换当前方案");
+assert(defaultScheme.state.values["list.pageSize"] === 12, "从默认值新建方案不应带走旧方案配置");
+const back = tasks.call("tasks.configSchemeActivate", { id: createdScheme.state.scheme.id });
+assert(back.state.scheme.id === createdScheme.state.scheme.id, "切换方案失败");
+assert(back.state.values["list.pageSize"] === 12, "切回方案后应恢复该方案的配置");
+const none = tasks.call("tasks.configSchemeActivate", {});
+assert(none.state.scheme === null, "不传 id 应回到「不使用方案」");
+assert(none.state.values["list.pageSize"] === 12, "不使用方案时应使用插件默认值");
+tasks.call("tasks.configSchemeActivate", { id: createdScheme.state.scheme.id });
+const removed = tasks.call("tasks.configSchemeDelete", { id: createdScheme.state.scheme.id });
+assert(removed.state.scheme === null, "删除当前方案后应回到不使用方案");
+assert(removed.state.schemes.every(function (x) { return x.id !== createdScheme.state.scheme.id; }), "删除后方案列表不应再出现该方案");
 
+console.log("CONFIG TEST PASS", { schemes: db.prepare("SELECT COUNT(*) AS n FROM task_config_scheme").get().n, events: events.length });
 db.close();
 rmSync(dir, { recursive: true, force: true });
-console.log("CONFIG TEST PASS", { keys: keys.length, events: events.length });
