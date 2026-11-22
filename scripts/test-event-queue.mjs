@@ -1,6 +1,6 @@
 /**
  * 宿主事件队列自测：不启动 DSH，直接建临时库 + 注入假的 invoke。
- * 覆盖：订阅校验（必须本域 + 仅 plugin 来源）、push 立即返回、成功投递、
+ * 覆盖：订阅校验（必须本域已注册 + 仅 plugin 来源）、push 立即返回、成功投递、
  * 失败退避重试与死信、无订阅事件收尾、通配订阅与 plugin 来源。
  */
 import { mkdtempSync, rmSync } from "node:fs";
@@ -61,10 +61,12 @@ async function main() {
   });
   queue.start();
 
-  // 订阅校验：本域前缀、已注册、origins 只能 ["plugin"]
+  // 订阅校验：必须本域已注册（宿主传本域 action 表）、origins 只能 ["plugin"]
+  const taskAction = { origins: ["plugin"] };
+  const taskActions = new Map([["wb-addon-tasks.onEvent", taskAction]]);
   mustThrow(
-    () => queue.subscribe("wb-addon-tasks", "task.created", "tasks.onEvent", { origins: ["plugin"] }),
-    "必须属于本域",
+    () => queue.subscribe("wb-addon-tasks", "task.created", "tasks.onEvent", { origins: ["plugin"] }, new Map()),
+    "不属于本域",
     "跨域 action",
   );
   mustThrow(
@@ -83,9 +85,7 @@ async function main() {
     "未声明 origins",
   );
 
-  const unsubscribe = queue.subscribe("wb-addon-tasks", "task.created", "wb-addon-tasks.onEvent", {
-    origins: ["plugin"],
-  });
+  const unsubscribe = queue.subscribe("wb-addon-tasks", "task.created", "wb-addon-tasks.onEvent", taskAction, taskActions);
   assert(row("SELECT COUNT(*) AS n FROM host_event_subscription").n === 1, "订阅应写入 host_event_subscription");
 
   // 成功投递：消费者拿到事件字段与 deliveryId，来源固定 plugin

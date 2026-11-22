@@ -77,8 +77,10 @@ pnpm test:native && pnpm test:tags && pnpm test:sites
   这样推送过来的消息不会被界面或 agent 顺手消费/伪造。
 - 消费 action 的入参由宿主固定为 `{ eventId, deliveryId, type, source, payload, createdAt }`，
   schema 里按事件体声明（至少 `eventId`/`type`/`payload`），并在描述里写清是队列投递。
+- 归属校验：`action` 用本插件自己的 action 名（如 `message.onMailSynced`，不需要域名前缀），
+  宿主用本域 action 表查 def；查不到或 `origins` 不符就抛错，所以别的域的 action 订阅不进来。
 - 注册顺序：同一个 `setup(api)` 里先 `api.action("域.onEvent", {...})`，再
-  `api.events.subscribe("xxx.created", "域.onEvent")`；宿主按当前已注册的 action 校验来源声明。
+  `api.events.subscribe("xxx.created", "域.onEvent")`。
 - push 与消费必须解耦：`push` 里不要等下游返回值，也不要把下游异常重新抛给业务写路径；
   投递失败由队列自己重试/进死信（`host_event_delivery.last_error`），可在宿主数据页查看。
 

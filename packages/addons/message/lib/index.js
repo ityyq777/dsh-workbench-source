@@ -17,6 +17,7 @@ const ADDON_VERSION = createRequire(import.meta.url)("../package.json").version;
 import { configValues, registerConfigActions } from "./infra/config.js";
 import { registerDataActions } from "./infra/data.js";
 import { pruneMessages, registerMessageActions } from "./domain/messages.js";
+import { registerEventConsumers } from "./domain/events.js";
 
 export const inject = ["workbench"];
 
@@ -67,6 +68,8 @@ export function setup(api) {
   registerConfigActions(api);
   registerDataActions(api);
   registerActionSchemaAction(api, actionDefs, "wb-addon-message");
+  // 邮件新信提醒不再由邮件插件直调 message.send，改成订阅宿主事件队列。
+  registerEventConsumers(api);
   // 启动时先按保留策略清一次，避免长期不开工作台后积压。
   try {
     const pruned = pruneMessages(api.db, configValues(api.db), now());

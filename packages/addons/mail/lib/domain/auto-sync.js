@@ -4,7 +4,8 @@
  * 三件事：
  * 1. 调度：定时循环（默认，每账户独立到期）或 IMAP IDLE（服务器推 EXISTS）。
  * 2. 闸门：每一轮都先问 `vault.status`，保险箱锁着就整轮跳过——绝不为后台同步缓存明文密码。
- * 3. 通知：真正插入了新信才发 `mail.synced` 事件；装了消息插件再推一条消息中心提醒。
+ * 3. 通知：真正插入了新信才发 `mail.synced` 广播；再往宿主事件队列推一条 mail.messages-synced，
+ *    由订阅方（消息插件）自己消费，本插件不判断谁装了、也不等消费结果。
  *
  * 设计见 `docs/邮件自动同步设计.md`。
  */
@@ -97,7 +98,10 @@ export function createAutoSync({ db, engine, api, log }) {
       inserted: res.inserted,
       exists: res.exists,
     });
-    if (!cfg.notify || typeof api.hasDomain !== "function" || !api.hasDomain("wb-addon-message")) return;
+    // 通知走宿主事件队列：mail 只管把「哪些新信到了」推出去，不关心谁在消费，
+    // 也不判断消息插件装没装——没有订阅者时队列会把事件直接落 done。
+    if (!cfg.notify) return;
+    if (!api.events || typeof api.events.push !== "function") return;
     let rows = [];
     try {
       rows = db
@@ -109,26 +113,24 @@ export function createAutoSync({ db, engine, api, log }) {
       rows = [];
     }
     const latest = rows[0];
-    const title = "新邮件（" + (acc.name || acc.email) + "）：" + (latest?.subject || "（无主题）");
-    const body = rows
-      .map((r) => (r.from_name || r.from_addr || "未知发件人") + " · " + (r.subject || "（无主题）"))
-      .join("\n");
     try {
-      await api.call(
-        "message.send",
-        {
-          title: title.slice(0, 120),
-          body: body.slice(0, 3000),
-          level: "info",
-          source: "mail",
-          audience: "user",
-          // 同一批新信只提醒一次：uid 最大的那封变了才会生成新键。
-          dedupeKey: "mail:new:" + acc.id + ":" + (latest?.uid || res.exists || 0),
-          meta: { accountId: acc.id, inserted: res.inserted },
-        },
-      );
+      api.events.push("mail.messages-synced", {
+        accountId: acc.id,
+        accountName: acc.name || acc.email,
+        mailbox: res.mailbox,
+        inserted: res.inserted,
+        exists: res.exists,
+        // 同一批新信只提醒一次：uid 最大的那封变了才会生成新键。
+        latestUid: latest?.uid || res.exists || 0,
+        messages: rows.map((r) => ({
+          subject: r.subject || "",
+          fromName: r.from_name || "",
+          fromAddr: r.from_addr || "",
+          uid: r.uid,
+        })),
+      });
     } catch (error) {
-      log("mail: 推送到消息中心失败", message(error));
+      log("mail: 投递新邮件事件失败", message(error));
     }
   }
 

@@ -85,9 +85,9 @@ const ITEMS = [
   },
   {
     id: "autosync.notify", group: "autosync", type: "bool", surface: "ui", apply: "background", default: true,
-    zh: "新邮件通知到消息中心", en: "Notify new mail in messages",
-    hintZh: "装了消息插件时，自动抓到的新邮件会在消息中心留一条提醒（同一批新信只提醒一次）。",
-    hintEn: "When the messages add-on is installed, each batch of new mail leaves one notice there.",
+    zh: "新邮件通知（推事件给订阅方）", en: "Publish new mail events for subscribers",
+    hintZh: "自动抓到的新邮件会推一条事件进宿主事件队列，订阅了该事件的消息插件会留一条提醒（同一批新信只提醒一次）。",
+    hintEn: "Each batch of new mail is pushed onto the host event queue; any subscriber (e.g. the messages add-on) turns it into one notice.",
   },
   {
     id: "debug.fetch", group: "debug", type: "bool", surface: "ui", apply: "mount", default: false,

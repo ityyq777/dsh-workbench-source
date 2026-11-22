@@ -6,7 +6,7 @@
  *    `setTimeout(drain, 0).unref()` 调度后台分发，**从不 await 消费者**；
  *    消费者的慢、抛错、域未加载都不会冒泡回 push 方。
  *  - 订阅是登记式：插件在 setup 里 `api.events.subscribe(type, action)`，
- *    消费 action 必须是本域已注册、且 `origins` 只允许 plugin 的 action；
+ *    消费 action 必须是本域已注册（宿主用本域 action 表查 def）、且 `origins` 只允许 plugin 的 action；
  *    宿主以固定 plugin 来源 invoke，ui/agent 调不到它。
  *  - 投递独立成行，单条失败只改自己的状态：指数退避重试，超过上限进 dead
  *    并保留 last_error；同一条事件的其他投递互不影响。
@@ -159,12 +159,22 @@ export function createEventQueue(options: EventQueueOptions) {
     return { id, deliveries: targets.length };
   }
 
-  function subscribe(domain: string, type: string, action: string, def?: DomainActionDef | null): () => void {
+  function subscribe(
+    domain: string,
+    type: string,
+    action: string,
+    def?: DomainActionDef | null,
+    domainActions?: Map<string, DomainActionDef>,
+  ): () => void {
     const name = String(type ?? "").trim();
     if (name !== "*" && !TYPE_RE.test(name)) throw new Error("非法事件类型（或使用 \"*\" 订阅全部）：" + name);
     if (!ACTION_RE.test(String(action ?? ""))) throw new Error("非法消费 action 名（应形如 tasks.onEvent）：" + action);
-    if (!action.startsWith(domain + ".")) throw new Error("消费 action 必须属于本域（" + domain + "." + "…）：" + action);
+    // 归属校验：action 名不带域名前缀（插件里本来就叫 message.send 这种），
+    // 所以由宿主传入「本域 action 表」，表里查到的 def 必须就是传进来的那个。
     if (!def) throw new Error("消费 action 未注册：" + action);
+    if (domainActions && domainActions.get(action) !== def) {
+      throw new Error("消费 action 不属于本域（" + domain + " 的 action 表里没有它）：" + action);
+    }
     const origins = Array.isArray(def.origins) ? def.origins : [];
     if (origins.length !== 1 || origins[0] !== "plugin") {
       throw new Error(
