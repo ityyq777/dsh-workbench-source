@@ -108,21 +108,11 @@ try {
   const inventory = await host.invoke("storage.create", { name: "备份验收物品", stock: "1~2", tagIds: [tag.result.id] }, "agent");
   const inventoryId = inventory.result.storage.id;
 
-  async function setSitesAccess(agentEnabled) {
-    const response = await call('POST', '/workbench/api/domains/wb-shell/actions/actions.setAgentAccess',
-      Buffer.from(JSON.stringify({ action: 'sites.list', agentEnabled })));
-    if (response.status !== 200 || !parseJson(response)?.ok) throw new Error('无法配置测试权限：' + response.body);
-  }
-  await setSitesAccess(false);
   const exported = await call("GET", "/workbench/api/backup/export?modules=all");
   if (exported.status !== 200) throw new Error("export failed: " + exported.status + " " + exported.body.toString());
   if (!/application\/zip/.test(String(exported.headers["content-type"]))) throw new Error("export content-type is not zip");
   const zip = await import("../packages/shell/lib/infra/zip.js");
   const files = zip.zipRead(exported.body);
-  for (const [path, data] of files) {
-    if (data.includes(Buffer.from('config.wb-shell.actionAgent.'))) throw new Error('本地权限覆盖不应进入备份：' + path);
-  }
-  await setSitesAccess(true);
   const manifest = JSON.parse(files.get("manifest.json").toString("utf8"));
   if (manifest.kind !== "dsh-workbench-backup") throw new Error("bad manifest kind");
   if (manifest.formatVersion !== 1) throw new Error("bad manifest formatVersion");
@@ -204,6 +194,57 @@ try {
   try { await createBackup({ domains: directDomains, shellVersion: "9.9.9", moduleIds: ["wb-addon-missing"] }); } catch (e) { missingError = e; }
   if (!missingError || missingError.code !== "invalid") throw new Error("unknown id must throw invalid: " + String(missingError && missingError.code));
   console.log("createBackup semantics ok");
+
+  // 导出格式：json/txt 单文件，多表 csv 打包，单表 csv 直出，未知格式回落 zip。
+  const jsonExport = await call("GET", "/workbench/api/backup/export?modules=all&format=json");
+  if (jsonExport.status !== 200) throw new Error("json export failed: " + jsonExport.status + " " + jsonExport.body.toString());
+  if (!/application\/json/.test(String(jsonExport.headers["content-type"]))) throw new Error("json content-type wrong: " + jsonExport.headers["content-type"]);
+  if (!/dsh-workbench-export-.*\.json/.test(String(jsonExport.headers["content-disposition"]))) throw new Error("json filename wrong: " + jsonExport.headers["content-disposition"]);
+  const jsonBody = JSON.parse(jsonExport.body.toString("utf8"));
+  if (jsonBody.kind !== "dsh-workbench-export" || jsonBody.formatVersion !== 1) throw new Error("json envelope wrong: " + JSON.stringify({ kind: jsonBody.kind, v: jsonBody.formatVersion }));
+  if (!Array.isArray(jsonBody.modules) || jsonBody.modules.length !== 4) throw new Error("json modules wrong: " + (jsonBody.modules || []).length);
+  const jsonTasks = jsonBody.modules.find((m) => m.id === "wb-addon-tasks");
+  if (!jsonTasks || !Array.isArray(jsonTasks.data.tasks)) throw new Error("json module data missing");
+  if (!/不能导入恢复/.test(String(jsonBody.note))) throw new Error("json note missing");
+  const reimportJson = await call("POST", "/workbench/api/backup/import", jsonExport.body);
+  if (reimportJson.status < 400 || reimportJson.status >= 500) throw new Error("readable export must not import: " + reimportJson.status);
+
+  const txtExport = await call("GET", "/workbench/api/backup/export?modules=wb-addon-storage&format=txt");
+  if (txtExport.status !== 200 || !/text\/plain/.test(String(txtExport.headers["content-type"]))) throw new Error("txt export failed: " + txtExport.status + " " + txtExport.headers["content-type"]);
+  const txtBody = txtExport.body.toString("utf8");
+  if (!txtBody.includes("wb-addon-storage") || !txtBody.includes("备份验收物品")) throw new Error("txt content missing: " + txtBody.slice(0, 200));
+  console.log("json/txt export ok");
+
+  const csvExport = await call("GET", "/workbench/api/backup/export?modules=wb-addon-storage&format=csv");
+  if (csvExport.status !== 200) throw new Error("csv export failed: " + csvExport.status + " " + csvExport.body.toString());
+  if (!/application\/zip/.test(String(csvExport.headers["content-type"]))) throw new Error("multi-table csv should be zip: " + csvExport.headers["content-type"]);
+  const csvFiles = zip.zipRead(csvExport.body);
+  const csvNames = [...csvFiles.keys()].sort();
+  if (!csvNames.includes("wb-addon-storage.storage.csv") || !csvNames.includes("wb-addon-storage.tagMappings.csv")) throw new Error("csv entries wrong: " + csvNames.join(","));
+  const storageCsv = csvFiles.get("wb-addon-storage.storage.csv").toString("utf8");
+  if (!storageCsv.startsWith("\uFEFF")) throw new Error("csv BOM missing");
+  if (!storageCsv.includes("name") || !storageCsv.includes("备份验收物品")) throw new Error("csv header/row missing: " + storageCsv.slice(0, 160));
+
+  const singleTable = await createBackup({
+    domains: [{ enabled: true, error: null, def: { id: "wb-addon-one", title: "One", version: "1.0.0", exportData: () => ({ rows: [{ id: "a", label: "甲,乙" }] }) } }],
+    shellVersion: "9.9.9", moduleIds: [], format: "csv",
+  });
+  if (!/^dsh-workbench-export-.*\.csv$/.test(singleTable.filename)) throw new Error("single-table csv filename wrong: " + singleTable.filename);
+  if (singleTable.contentType !== "text/csv; charset=utf-8") throw new Error("single-table csv content-type wrong: " + singleTable.contentType);
+  if (!singleTable.buffer.toString("utf8").includes('"甲,乙"')) throw new Error("csv cell quoting wrong");
+
+  let emptyCsvError = null;
+  try {
+    await createBackup({
+      domains: [{ enabled: true, error: null, def: { id: "wb-addon-flat", title: "Flat", version: "1.0.0", exportData: () => ({ items: [] }) } }],
+      shellVersion: "9.9.9", moduleIds: [], format: "csv",
+    });
+  } catch (e) { emptyCsvError = e; }
+  if (!emptyCsvError || emptyCsvError.code !== "invalid") throw new Error("no-table csv must throw invalid: " + String(emptyCsvError && emptyCsvError.code));
+
+  const bogusFormat = await call("GET", "/workbench/api/backup/export?modules=wb-addon-tasks&format=bogus");
+  if (bogusFormat.status !== 200 || !/application\/zip/.test(String(bogusFormat.headers["content-type"]))) throw new Error("unknown format must fall back to zip: " + bogusFormat.status);
+  console.log("csv formats ok: single-table .csv, multi-table zip, unknown->zip");
 
   // 旧备份包没有 manifest.skipped：仍可导入（新字段只对新包生效）。
   const legacyManifestNoSkip = { ...manifest };

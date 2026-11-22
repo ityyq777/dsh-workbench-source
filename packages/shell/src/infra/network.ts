@@ -2,7 +2,7 @@ import { actionErrorText } from "../actions/action-output.js";
 import { randomUUID } from "node:crypto";
 import { getSyncStateText, setSyncStateText } from "@wb/core";
 import { SyncEngine, SyncHttpError, listConflicts, resolveConflict, type SyncTransport, type SyncDomain } from "../sync/sync.js";
-import { BackupError, createBackup, importBackup, normalizeImportPolicy } from "./backup.js";
+import { BackupError, createBackup, importBackup, normalizeBackupFormat, normalizeImportPolicy } from "./backup.js";
 import type { Subscriber } from "../types/host-types.js";
 import { publicCategories } from "./categories.js";
 export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionModeOf, setSessionMode, audit, backupDomains, actionNames, invoke, log, schemaSnapshot, applyCloudConfig, publicCloudConfig }: any) {
@@ -324,10 +324,12 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
               if (p === "/backup/export" && m === "GET") {
                 const raw = url.searchParams.get("modules");
                 const ids = raw && raw !== "all" ? raw.split(",").map((x) => x.trim()).filter(Boolean) : null;
+                // format 缺省 zip（可回导）；json/csv/txt 是只读导出，MIME 由导出侧给出。
+                const format = normalizeBackupFormat(url.searchParams.get("format"));
                 try {
-                  const backup = await createBackup({ domains: backupDomains(), shellVersion: SHELL_VERSION, moduleIds: ids });
+                  const backup = await createBackup({ domains: backupDomains(), shellVersion: SHELL_VERSION, moduleIds: ids, format });
                   res.writeHead(200, {
-                    "content-type": "application/zip",
+                    "content-type": backup.contentType,
                     "content-disposition": "attachment; filename=\"" + backup.filename + "\"",
                     "content-length": backup.buffer.length,
                     "cache-control": "no-store",

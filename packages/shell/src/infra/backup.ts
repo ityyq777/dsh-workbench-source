@@ -5,6 +5,9 @@
 import { createHash } from "node:crypto";
 import type { DomainDataContext, DomainDef, DomainImportPolicy, DomainImportReport } from "@wb/sdk";
 import { zipCreate, zipRead } from "./zip.js";
+import { backupStamp, buildReadableExport, exportTablesOf, normalizeBackupFormat, type BackupExportModule } from "./backup-export.js";
+
+export { normalizeBackupFormat } from "./backup-export.js";
 
 export const BACKUP_FORMAT_VERSION = 1;
 
@@ -82,11 +85,6 @@ function sha256(buf: Buffer): string {
   return createHash("sha256").update(buf).digest("hex");
 }
 
-function stamp(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, "0");
-  return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + "-" + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
-}
-
 function contextOf(manifest: BackupManifest): DomainDataContext {
   return {
     shellVersion: manifest.shellVersion,
@@ -146,11 +144,28 @@ function validateManifest(value: any): BackupManifest {
  * moduleIds 为空（含 `all`）＝全量导出：跳过没有 exportData 的域，并在 manifest.skipped 注明；
  * 显式列表＝调用方指定：未知模块或不可导出模块都拒绝，不静默丢数据。
  */
+export interface BackupExportResult {
+  filename: string;
+  buffer: Buffer;
+  /** 响应头 content-type；多表 CSV 会打包成 zip，所以由导出侧决定而不是路由写死。 */
+  contentType: string;
+  manifest: BackupManifest;
+}
+
+/**
+ * 导出选中的业务模块；任一模块失败则整体失败，避免产出缺数据的备份。
+ *
+ * moduleIds 为空（含 `all`）＝全量导出：跳过没有 exportData 的域，并在 manifest.skipped 注明；
+ * 显式列表＝调用方指定：未知模块或不可导出模块都拒绝，不静默丢数据。
+ * format 默认 zip（唯一可回导的形态）；json/csv/txt 是只读导出，见 backup-export.ts。
+ */
 export async function createBackup(opts: {
   domains: BackupDomain[];
   shellVersion: string;
   moduleIds?: string[] | null;
-}): Promise<{ filename: string; buffer: Buffer; manifest: BackupManifest }> {
+  /** 导出形态；非法值按 zip 处理，保持旧调用方行为不变。 */
+  format?: unknown;
+}): Promise<BackupExportResult> {
   const asked = (opts.moduleIds ?? []).filter((id) => id && id !== "all");
   const wanted = asked.length ? new Set(asked) : null;
   const known = new Map(opts.domains.map((d) => [d.def.id, d] as const));
@@ -174,7 +189,9 @@ export async function createBackup(opts: {
   const exportable = wanted ? selected : selected.filter((d) => typeof d.def.exportData === "function");
   if (!exportable.length) throw new BackupError("没有可导出的模块");
 
-  const exportedAt = new Date().toISOString();
+  const format = normalizeBackupFormat(opts.format);
+  const now = new Date();
+  const exportedAt = now.toISOString();
   const shellVersion = opts.shellVersion;
   const manifestBase = {
     kind: "dsh-workbench-backup" as const,
@@ -182,6 +199,7 @@ export async function createBackup(opts: {
     shellVersion,
     exportedAt,
   };
+  const entries: BackupExportModule[] = [];
   const modules: BackupManifestModule[] = [];
   const files: { name: string; data: Buffer }[] = [];
   for (const rec of exportable) {
@@ -196,7 +214,9 @@ export async function createBackup(opts: {
     if (!text) throw new BackupError("模块「" + def.title + "」没有可导出的数据", "export");
     const buf = Buffer.from(text, "utf8");
     const file = "modules/" + def.id + ".json";
-    files.push({ name: file, data: buf });
+    // 只有 zip 需要模块文件；manifest 仍按同一份数据生成，便于两种回执保持一致。
+    if (format === "zip") files.push({ name: file, data: buf });
+    entries.push({ id: def.id, title: def.title, version: def.version, data });
     modules.push({
       id: def.id,
       title: def.title,
@@ -207,9 +227,18 @@ export async function createBackup(opts: {
     });
   }
   const manifest: BackupManifest = skipped.length ? { ...manifestBase, modules, skipped } : { ...manifestBase, modules };
+  if (format !== "zip") {
+    // 表都没有时明确报错：产出只有表头的空文件比报错更难排查。
+    if (format === "csv" && !entries.some((m) => exportTablesOf(m.data).length)) {
+      throw new BackupError("选中的模块没有可导出的表格数据", "invalid");
+    }
+    return {
+      ...buildReadableExport({ format, modules: entries, shellVersion, formatVersion: BACKUP_FORMAT_VERSION, exportedAt: now }),
+      manifest,
+    };
+  }
   files.unshift({ name: "manifest.json", data: Buffer.from(JSON.stringify(manifest, null, 2), "utf8") });
-  const now = new Date();
-  return { filename: "dsh-workbench-backup-" + stamp(now) + ".zip", buffer: zipCreate(files), manifest };
+  return { filename: "dsh-workbench-backup-" + backupStamp(now) + ".zip", buffer: zipCreate(files), contentType: "application/zip", manifest };
 }
 
 /** 按已安装域的依赖稳定排序；每轮选择清单中最早的可执行模块。 */
