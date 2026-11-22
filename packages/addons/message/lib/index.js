@@ -140,6 +140,12 @@ export function apply(ctx) {
         version: ADDON_VERSION,
         category: "comm",
         tables: ["message"],
+        // 事件授权清单：只订阅邮件同步事件，没有对外发布的事件。
+        events: {
+          subscriptions: [
+            { type: "mail.messages-synced", description: "邮件自动同步拉到新信后生成一条站内消息" },
+          ],
+        },
         // 只在本机保存：显式声明不同步任何表（不写 sync 时宿主默认按行同步）。
         // 只同步配置方案表，业务数据仍只在本机。
         sync: { tables: [{ name: "message_config_scheme", mode: "row" }] },

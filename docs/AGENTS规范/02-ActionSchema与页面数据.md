@@ -69,6 +69,20 @@ pnpm test:native && pnpm test:tags && pnpm test:sites
 
 声明必须 ⊇ 执行期 guard：`execute` 里写着 `only(ctx, ["ui", "plugin"])` 却在 `origins` 里只声明 `["ui"]`，那条 guard 的分支永远调不通（2026-11-21 的教训：`vault.lease` 声明缺 plugin，邮件同步报「不允许 plugin 来源调用」）。跨插件的后台调用（如邮件取保险箱凭据）走的就是 plugin 来源，后台专用动作要显式声明 `["plugin"]`。`node scripts/test-origin-decls.mjs` 会静态比对两者，已挂进 `pnpm test:native`。
 
+### 事件队列：先声明授权，再发布/订阅
+
+队列是白名单制：`DomainDef.events` 就是插件交给宿主的授权清单，**声明本身有约束力**，
+不是展示文案。
+
+- `events.publishes` 里列出的类型才允许 `api.events.push`，否则抛错「事件未声明，不允许发布」；
+  宿主自己的 `host.events.push` 不受限。
+- `events.subscriptions` 里列出的类型才允许 `api.events.subscribe`（连 `*` 也要显式声明），
+  否则抛错「事件未声明，不允许订阅」。声明了却没订阅是允许的（条件分支），宿主页面会标
+  「声明但未登记」。
+- 声明项写 `{ type, description }`：`description` 用一句话说清**何时发、载荷大概长什么样**，
+  宿主「事件队列」页的「插件」页签按这份清单对账。
+- 不要为「先写着」而声明用不到的类型：它等于给该插件开放了发布/接收该事件的权限。
+
 ### 事件队列的消费 action：只能声明 `["plugin"]`
 
 宿主事件队列（`api.events.subscribe(type, action)`）要求消费 action **只允许插件后台调用**：

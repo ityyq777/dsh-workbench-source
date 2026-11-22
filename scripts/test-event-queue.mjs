@@ -1,7 +1,7 @@
 /**
  * 宿主事件队列自测：不启动 DSH，直接建临时库 + 注入假的 invoke。
- * 覆盖：订阅校验（必须本域已注册 + 仅 plugin 来源）、push 立即返回、成功投递、
- * 失败退避重试与死信、无订阅事件收尾、通配订阅与 plugin 来源。
+ * 覆盖：发布/订阅的声明授权、订阅校验（必须本域已注册 + 仅 plugin 来源）、push 立即返回、
+ * 成功投递、失败退避重试与死信、无订阅事件收尾、通配订阅与 plugin 来源。
  */
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -62,30 +62,48 @@ async function main() {
   queue.start();
 
   // 订阅校验：必须本域已注册（宿主传本域 action 表）、origins 只能 ["plugin"]
+  // 声明即授权：没在这两份清单里的类型推不出去、也订不上。
+  const TASK_PUB = [{ type: "task.created" }];
+  const TASK_SUBS = [{ type: "task.created" }];
+  const SITE_PUB = [{ type: "site.visited" }];
+  const MAIL_PUB = [{ type: "mail.received" }];
+  const AUTO_SUBS = [{ type: "*" }];
   const taskAction = { origins: ["plugin"] };
   const taskActions = new Map([["wb-addon-tasks.onEvent", taskAction]]);
   mustThrow(
-    () => queue.subscribe("wb-addon-tasks", "task.created", "tasks.onEvent", { origins: ["plugin"] }, new Map()),
+    () => queue.subscribe("wb-addon-tasks", "task.created", "tasks.onEvent", { origins: ["plugin"] }, new Map(), TASK_SUBS),
     "不属于本域",
     "跨域 action",
   );
   mustThrow(
-    () => queue.subscribe("wb-addon-tasks", "task.created", "wb-addon-tasks.onEvent", undefined),
+    () => queue.subscribe("wb-addon-tasks", "task.created", "wb-addon-tasks.onEvent", undefined, undefined, TASK_SUBS),
     "未注册",
     "未注册 action",
   );
   mustThrow(
-    () => queue.subscribe("wb-addon-tasks", "task.created", "wb-addon-tasks.onEvent", { origins: ["ui"] }),
+    () => queue.subscribe("wb-addon-tasks", "task.created", "wb-addon-tasks.onEvent", { origins: ["ui"] }, undefined, TASK_SUBS),
     "origins: [\"plugin\"]",
     "ui-only action",
   );
   mustThrow(
-    () => queue.subscribe("wb-addon-tasks", "task.created", "wb-addon-tasks.onEvent", {}),
+    () => queue.subscribe("wb-addon-tasks", "task.created", "wb-addon-tasks.onEvent", {}, undefined, TASK_SUBS),
     "origins: [\"plugin\"]",
     "未声明 origins",
   );
 
-  const unsubscribe = queue.subscribe("wb-addon-tasks", "task.created", "wb-addon-tasks.onEvent", taskAction, taskActions);
+  // 未声明的类型：发布与订阅都要拒绝，且报错要说清去哪个声明里补。
+  mustThrow(
+    () => queue.push("task.undeclared", {}, "wb-addon-tasks", TASK_PUB),
+    "未声明",
+    "未声明的事件不许发布",
+  );
+  mustThrow(
+    () => queue.subscribe("wb-addon-tasks", "task.deleted", "wb-addon-tasks.onEvent", taskAction, taskActions, TASK_SUBS),
+    "未声明",
+    "未声明的事件不许订阅",
+  );
+
+  const unsubscribe = queue.subscribe("wb-addon-tasks", "task.created", "wb-addon-tasks.onEvent", taskAction, taskActions, TASK_SUBS);
   assert(row("SELECT COUNT(*) AS n FROM host_event_subscription").n === 1, "订阅应写入 host_event_subscription");
 
   // 成功投递：消费者拿到事件字段与 deliveryId，来源固定 plugin
@@ -93,7 +111,7 @@ async function main() {
   handler = async (_action, args) => {
     received.push(args);
   };
-  const pushed = queue.push("task.created", { id: "t1" }, "wb-addon-tasks");
+  const pushed = queue.push("task.created", { id: "t1" }, "wb-addon-tasks", TASK_PUB);
   assert(pushed.deliveries === 1, "应生成一条投递");
   assert(row("SELECT status FROM host_event WHERE id = ?", pushed.id).status === "queued", "push 后事件应为 queued");
   await waitFor(() => row("SELECT status FROM host_event_delivery WHERE event_id = ?", pushed.id).status === "done", "成功投递");
@@ -108,7 +126,7 @@ async function main() {
     await sleep(250);
   };
   const before = Date.now();
-  const slow = queue.push("task.created", { id: "t2" }, "wb-addon-tasks");
+  const slow = queue.push("task.created", { id: "t2" }, "wb-addon-tasks", TASK_PUB);
   const elapsed = Date.now() - before;
   assert(elapsed < 80, "push 不应等待消费者（耗时 " + elapsed + "ms）");
   await waitFor(() => row("SELECT status FROM host_event_delivery WHERE event_id = ?", slow.id).status === "done", "慢消费者");
@@ -119,7 +137,7 @@ async function main() {
   };
   let failedPush = null;
   try {
-    failedPush = queue.push("task.created", { id: "t3" }, "wb-addon-tasks");
+    failedPush = queue.push("task.created", { id: "t3" }, "wb-addon-tasks", TASK_PUB);
   } catch (error) {
     throw new Error("消费者失败不应冒泡到 push 方：" + error.message);
   }
@@ -130,23 +148,23 @@ async function main() {
   assert(row("SELECT status FROM host_event WHERE id = ?", failedPush.id).status === "dead", "全部投递失败后事件应为 dead");
 
   // 无订阅者：事件直接 done，不残留 queued
-  const orphan = queue.push("site.visited", { id: "s1" }, "wb-addon-sites");
+  const orphan = queue.push("site.visited", { id: "s1" }, "wb-addon-sites", SITE_PUB);
   assert(orphan.deliveries === 0, "无订阅者时不应生成投递");
   assert(row("SELECT status FROM host_event WHERE id = ?", orphan.id).status === "done", "无订阅事件应直接 done");
 
   // 通配订阅：任何类型都能收到
   let wildcardHits = 0;
-  queue.subscribe("wb-addon-automation", "*", "wb-addon-automation.onEvent", { origins: ["plugin"] });
+  queue.subscribe("wb-addon-automation", "*", "wb-addon-automation.onEvent", { origins: ["plugin"] }, undefined, AUTO_SUBS);
   handler = async (action) => {
     if (action === "wb-addon-automation.onEvent") wildcardHits += 1;
   };
-  queue.push("mail.received", { id: "m1" }, "wb-addon-mail");
+  queue.push("mail.received", { id: "m1" }, "wb-addon-mail", MAIL_PUB);
   await waitFor(() => wildcardHits === 1, "通配订阅投递");
 
   // 取消订阅后不再生成投递
   unsubscribe();
   assert(row("SELECT COUNT(*) AS n FROM host_event_subscription WHERE action = 'wb-addon-tasks.onEvent'").n === 0, "取消订阅应删行");
-  const afterUnsub = queue.push("task.created", { id: "t4" }, "wb-addon-tasks");
+  const afterUnsub = queue.push("task.created", { id: "t4" }, "wb-addon-tasks", TASK_PUB);
   const ownDeliveries = row(
     "SELECT COUNT(*) AS n FROM host_event_delivery WHERE event_id = ? AND domain = 'wb-addon-tasks'",
     afterUnsub.id,

@@ -98,7 +98,9 @@ function queuePage(deps) {
   var events = useLoader(React, api, "wb.eventList", { status: filter || undefined, page: page, pageSize: PAGE_SIZE }, [filter, page]);
   var deliveries = useLoader(React, api, "wb.eventDeliveryList", { status: filter || undefined, page: page, pageSize: PAGE_SIZE }, [filter, page]);
   var subs = useLoader(React, api, "wb.eventSubscriptionList", {}, []);
-  var active = tab === "events" ? events : tab === "deliveries" ? deliveries : subs;
+  var domainsView = useLoader(React, api, "wb.eventDomains", {}, []);
+  var active =
+    tab === "events" ? events : tab === "deliveries" ? deliveries : tab === "domains" ? domainsView : subs;
 
   React.useEffect(function () {
     setFilter("");
@@ -109,6 +111,7 @@ function queuePage(deps) {
     overview.reload();
     if (tab === "subscriptions") subs.reload();
     else if (tab === "deliveries") deliveries.reload();
+    else if (tab === "domains") domainsView.reload();
     else events.reload();
   }
 
@@ -140,6 +143,7 @@ function queuePage(deps) {
 
   var stats = overview.state.data || { events: {}, deliveries: {}, subscriptions: 0 };
   var tabs = [
+    ["domains", t("queue_tab_domains")],
     ["events", t("queue_tab_events")],
     ["deliveries", t("queue_tab_deliveries")],
     ["subscriptions", t("queue_tab_subscriptions")],
@@ -186,7 +190,44 @@ function queuePage(deps) {
   if (active.state.error) body.push(jsx.jsx("div", { className: "wbq-note err", children: active.state.error }));
 
   var rows = (active.state.data && active.state.data.items) || [];
-  if (tab === "subscriptions") {
+  if (tab === "domains") {
+    var list = (active.state.data && active.state.data.domains) || [];
+    body.push(list.length
+      ? jsx.jsx("div", { className: "wbq-domains", children: list.map(function (d) {
+          var pub = d.publishes || [];
+          var lis = d.listens || [];
+          return jsx.jsxs("div", { key: d.domain, className: "wbq-domain", children: [
+            jsx.jsxs("div", { className: "wbq-domain-head", children: [
+              jsx.jsx("b", { children: d.title }),
+              jsx.jsx("code", { className: "wbq-muted", children: d.domain }),
+              d.error ? jsx.jsx("span", { className: "wbq-status s-dead", children: t("queue_domain_error") }) : null,
+            ] }),
+            jsx.jsxs("div", { className: "wbq-domain-row", children: [
+              jsx.jsx("span", { className: "wbq-domain-label", children: t("queue_domain_publishes") }),
+              pub.length
+                ? jsx.jsx("div", { className: "wbq-chips", children: pub.map(function (p) {
+                    return jsx.jsxs("span", { key: p.type, className: "wbq-chip", title: p.description || "", children: [
+                      jsx.jsx("code", { children: p.type }),
+                      jsx.jsx("span", { className: "wbq-muted", children: t("queue_sent") + " " + String(p.sent || 0) }),
+                    ] });
+                  }) })
+                : jsx.jsx("span", { className: "wbq-muted", children: t("queue_no_publish") }),
+            ] }),
+            jsx.jsxs("div", { className: "wbq-domain-row", children: [
+              jsx.jsx("span", { className: "wbq-domain-label", children: t("queue_domain_listens") }),
+              lis.length
+                ? jsx.jsx("div", { className: "wbq-chips", children: lis.map(function (l) {
+                    return jsx.jsxs("span", { key: l.type, className: "wbq-chip" + (l.registered ? "" : " off"), title: l.description || "", children: [
+                      jsx.jsx("code", { children: l.type }),
+                      jsx.jsx("span", { className: "wbq-muted", children: l.registered ? (l.actions || []).join(", ") : t("queue_not_registered") }),
+                    ] });
+                  }) })
+                : jsx.jsx("span", { className: "wbq-muted", children: t("queue_no_listen") }),
+            ] }),
+          ] }, d.domain);
+        }) })
+      : jsx.jsx("div", { className: "wbq-empty", children: t("queue_empty") }));
+  } else if (tab === "subscriptions") {
     body.push(rows.length
       ? jsx.jsx("div", { className: "wbq-table-wrap", children: jsx.jsxs("table", { className: "wbq-table", children: [
           jsx.jsx("thead", { children: jsx.jsx("tr", { children: [
@@ -258,7 +299,7 @@ function queuePage(deps) {
   }
 
   var meta = (tab === "subscriptions" ? subs : tab === "deliveries" ? deliveries : events).state;
-  var paging = meta.data && meta.data.pages ? meta.data : null;
+  var paging = (tab === "events" || tab === "deliveries") && meta.data && meta.data.pages ? meta.data : null;
   if (paging) {
     body.push(jsx.jsx("div", { className: "wbq-pager", children: [
       jsx.jsx("button", { type: "button", className: "wb-btn ghost", disabled: page <= 1, onClick: function () { setPage(page - 1); }, children: t("queue_prev") }),

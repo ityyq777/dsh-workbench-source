@@ -66,12 +66,18 @@ export function apply(ctx) {
     category: "comm",
     // mail_draft 含私有未发正文，不加入宿主通用表清单或同步回退。
     tables: ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"],
-    // 「事件」页的发布清单；订阅方（如消息插件）用 plugin-only action 消费。
+    // 事件授权清单：没在这里声明的类型既推不出去也订不上（宿主「事件队列」页按它对账）。
     events: {
       publishes: [
         {
           type: "mail.messages-synced",
           description: "自动同步拉到新邮件后推送：账户、邮箱、新增数量与该批邮件的主题/发件人摘要",
+        },
+      ],
+      subscriptions: [
+        {
+          type: "vault.unlocked",
+          description: "保险箱解锁成功后立刻补一轮收件（不等自己的定时器）",
         },
       ],
     },

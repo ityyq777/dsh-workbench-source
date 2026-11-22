@@ -81,7 +81,10 @@ export interface EventQueueStats {
   deliveries: Record<string, number>;
 }
 
-/** 插件在域定义里声明「我会推哪些事件」，用于工作台的「事件」页展示。 */
+/**
+ * 事件声明：插件在 DomainDef.events 里主动告诉宿主「我会发布 / 我会监听哪些事件」。
+ * 这是授权清单而不是展示文案——没声明的类型推不出去、也订阅不上。
+ */
 export interface DomainEventDecl {
   /** 事件类型，如 mail.messages-synced */
   type: string;
@@ -89,9 +92,10 @@ export interface DomainEventDecl {
   description?: string;
 }
 
-/** 事件页数据：声明 + 真实运行统计（订阅来自队列登记表，不是声明）。 */
+/** 域事件的声明与运行对账（宿主「事件队列」页的插件一栏用）。 */
 export interface DomainEventsInfo {
   domain: string;
+  /** 声明发布的类型 + 实际发送统计 */
   publishes: {
     type: string;
     description?: string;
@@ -99,6 +103,14 @@ export interface DomainEventsInfo {
     lastAt?: number;
     lastStatus?: string;
   }[];
+  /** 声明监听的类型；registered=false 表示声明了但这次没真正 subscribe（例如条件不满足） */
+  listens: {
+    type: string;
+    description?: string;
+    registered: boolean;
+    actions: string[];
+  }[];
+  /** 队列登记表里的真实订阅（含调用量与最近错误） */
   subscriptions: {
     type: string;
     action: string;
@@ -361,8 +373,12 @@ export interface DomainDef {
   version: string;
   /** 声明贡献的表（备份与文档用；建表仍由业务插件负责） */
   tables?: string[];
-  /** 声明本插件会推哪些事件；「事件」页据此列出「我发布哪些事件」 */
-  events?: { publishes?: DomainEventDecl[] };
+  /**
+   * 事件授权清单：`publishes` 里的类型才允许 api.events.push，
+   * `subscriptions` 里的类型才允许 api.events.subscribe（"*" 也要显式声明）。
+   * 宿主「事件队列」页按这份清单对账，未声明的推送与订阅直接报错。
+   */
+  events?: { publishes?: DomainEventDecl[]; subscriptions?: DomainEventDecl[] };
   /** 同步声明：mode=row 行级 LWW；mode=tree 必须实现 reconcile，整表覆盖 */
   sync?: DomainSyncDef;
   /** UI 视图贡献点：客户端模块注册同名 view 后出现在工作台首页 */

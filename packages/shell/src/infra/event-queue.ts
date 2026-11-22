@@ -5,6 +5,8 @@
  *  - push 只做一次落库（host_event + 按订阅生成 host_event_delivery），然后
  *    `setTimeout(drain, 0).unref()` 调度后台分发，**从不 await 消费者**；
  *    消费者的慢、抛错、域未加载都不会冒泡回 push 方。
+ *  - 发布与订阅都要先授权：DomainDef.events.publishes / subscriptions 里声明过的类型
+ *    才允许 push / subscribe，未声明直接报错（声明本身就是给宿主的清单）。
  *  - 订阅是登记式：插件在 setup 里 `api.events.subscribe(type, action)`，
  *    消费 action 必须是本域已注册（宿主用本域 action 表查 def）、且 `origins` 只允许 plugin 的 action；
  *    宿主以固定 plugin 来源 invoke，ui/agent 调不到它。
@@ -124,9 +126,21 @@ export function createEventQueue(options: EventQueueOptions) {
    * 推一条事件：只落库并调度一次后台 drain，立即返回。
    * 没有订阅者时事件直接标记 done，避免长期停留在 queued。
    */
-  function push(type: string, payload: unknown, source: string): { id: string; deliveries: number } {
+  function push(
+    type: string,
+    payload: unknown,
+    source: string,
+    declared?: DomainEventDecl[],
+  ): { id: string; deliveries: number } {
     const name = String(type ?? "").trim();
     if (!TYPE_RE.test(name)) throw new Error("非法事件类型（小写字母开头，允许数字/._-，最长 80）：" + name);
+    // 发布授权：宿主自己不受限，业务域必须先在 DomainDef.events.publishes 里声明。
+    const from = String(source || "host");
+    if (from !== "host" && !(declared || []).some((item) => item && item.type === name)) {
+      throw new Error(
+        "事件未声明，不允许发布：" + name + "（先在 " + from + " 的 DomainDef.events.publishes 里声明）",
+      );
+    }
     let body = "null";
     if (payload !== undefined) {
       try {
@@ -165,9 +179,16 @@ export function createEventQueue(options: EventQueueOptions) {
     action: string,
     def?: DomainActionDef | null,
     domainActions?: Map<string, DomainActionDef>,
+    declared?: DomainEventDecl[],
   ): () => void {
     const name = String(type ?? "").trim();
     if (name !== "*" && !TYPE_RE.test(name)) throw new Error("非法事件类型（或使用 \"*\" 订阅全部）：" + name);
+    // 监听授权：与发布对称，未在 DomainDef.events.subscriptions 声明的类型订阅不上。
+    if (!(declared || []).some((item) => item && item.type === name)) {
+      throw new Error(
+        "事件未声明，不允许订阅：" + name + "（先在 " + domain + " 的 DomainDef.events.subscriptions 里声明）",
+      );
+    }
     if (!ACTION_RE.test(String(action ?? ""))) throw new Error("非法消费 action 名（应形如 tasks.onEvent）：" + action);
     // 归属校验：action 名不带域名前缀（插件里本来就叫 message.send 这种），
     // 所以由宿主传入「本域 action 表」，表里查到的 def 必须就是传进来的那个。
@@ -396,11 +417,11 @@ export function createEventQueue(options: EventQueueOptions) {
   }
 
   /**
-   * 「事件」页的数据：声明会推什么 + 真实运行统计。
+   * 事件授权清单与运行对账：声明会推/会收什么 + 真实统计（宿主「事件队列」页的「插件」页签用）。
    * 订阅一律取自队列登记表（谁真订了就是谁），不要求插件再声明一遍，避免两处失真。
    */
-  function describe(domain: string, decls?: DomainEventDecl[]): DomainEventsInfo {
-    const publishes = (decls || []).map((decl) => {
+  function describe(domain: string, events?: { publishes?: DomainEventDecl[]; subscriptions?: DomainEventDecl[] }): DomainEventsInfo {
+    const publishes = (events?.publishes || []).map((decl) => {
       const row = db
         .prepare("SELECT COUNT(*) AS n, MAX(created_at) AS lastAt FROM host_event WHERE source = ? AND type = ?")
         .get(domain, decl.type) as { n: number; lastAt: number | null } | undefined;
@@ -440,7 +461,16 @@ export function createEventQueue(options: EventQueueOptions) {
         lastError: err?.last_error || undefined,
       };
     });
-    return { domain, publishes, subscriptions };
+    const listens = (events?.subscriptions || []).map((decl) => {
+      const hits = subscriptions.filter((sub) => sub.type === decl.type);
+      return {
+        type: decl.type,
+        description: decl.description,
+        registered: hits.length > 0,
+        actions: hits.map((hit) => hit.action),
+      };
+    });
+    return { domain, publishes, listens, subscriptions };
   }
 
   return { push, subscribe, start, stop, drain, stats, describe };

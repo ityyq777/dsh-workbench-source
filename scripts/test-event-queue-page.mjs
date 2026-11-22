@@ -47,13 +47,19 @@ try {
   shell.apply(fakeCtx);
   if (!host) throw new Error("workbench service not provided");
 
+  let probeApi = null;
   host.registerDomain({
     id: "wb-addon-queue-probe",
     title: "队列探针",
     version: "0.0.0-test",
     tables: [],
     views: [],
+    events: {
+      publishes: [{ type: "probe.ping", description: "探针自己发的节拍" }],
+      subscriptions: [{ type: "probe.tick", description: "宿主推的节拍" }],
+    },
     setup(api) {
+      probeApi = api;
       api.action("probe.onTick", {
         origins: ["plugin"],
         execute: (args) => ({ ok: true, eventId: args.eventId }),
@@ -90,6 +96,28 @@ try {
 
   const subs = (await host.invoke("wb.eventSubscriptionList", {})).result;
   assert(subs.items.some((x) => x.action === "probe.onTick"), "订阅清单应来自登记表");
+
+  // 插件授权清单：声明的发布与监听都要露出来，未声明的推送与订阅直接报错。
+  const domains = (await host.invoke("wb.eventDomains", {})).result.domains;
+  const probe = domains.find((d) => d.domain === "wb-addon-queue-probe");
+  assert(probe, "插件清单应包含探针域");
+  assert(probe.publishes.some((p) => p.type === "probe.ping"), "应列出声明的发布事件");
+  assert(probe.listens.some((l) => l.type === "probe.tick" && l.registered && l.actions.includes("probe.onTick")), "应列出声明并已登记的监听");
+  assert(probe.subscriptions.some((x) => x.action === "probe.onTick"), "应带真实订阅统计");
+  let deniedPush = null;
+  try {
+    probeApi.events.push("probe.undeclared", {});
+  } catch (e) {
+    deniedPush = e;
+  }
+  assert(deniedPush && String(deniedPush.message).includes("未声明"), "未声明的事件不许发布");
+  let deniedSub = null;
+  try {
+    probeApi.events.subscribe("probe.other", "probe.onTick");
+  } catch (e) {
+    deniedSub = e;
+  }
+  assert(deniedSub && String(deniedSub.message).includes("未声明"), "未声明的事件不许订阅");
 
   // 2. 造一条死信投递，重投后应立刻派发成功。
   const db = new DatabaseSync(join(home, "workbench.db"));

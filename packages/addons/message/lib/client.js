@@ -5461,7 +5461,7 @@ var require_inject_styles = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-message",
-    version: "0.2.1",
+    version: "0.2.2",
     icon: ICONS["message-square"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: Stats },

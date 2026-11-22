@@ -129,7 +129,7 @@ function listSubscriptions(db: any) {
 }
 
 /** 重投：把一条终态投递退回队列；事件本身若已 dead 也拉回 queued。 */
-function replayDelivery(db: any, queueKick: { fn: (() => void) | null }, args: any) {
+function replayDelivery(db: any, queueRef: { value: any }, args: any) {
   const id = String(args.deliveryId || "");
   if (!id) throw new Error("缺少 deliveryId");
   const row = db
@@ -153,7 +153,8 @@ function replayDelivery(db: any, queueKick: { fn: (() => void) | null }, args: a
     }
     throw e;
   }
-  if (queueKick.fn) queueKick.fn();
+  const queue = queueRef.value;
+  if (queue && typeof queue.drain === "function") void queue.drain();
   return { ok: true, deliveryId: id, eventId: row.event_id };
 }
 
@@ -185,8 +186,34 @@ function cleanupEvents(db: any, args: any) {
   return { deleted: total, olderThanDays: keepDays };
 }
 
+/** 插件一栏：每个域声明的发布/监听事件 + 运行对账（未声明的推不出去，所以清单就是全貌）。 */
+function domainsPayload(domains: Map<string, any>, queueRef: { value: any }) {
+  const queue = queueRef.value;
+  if (!queue || typeof queue.describe !== "function") return { domains: [] };
+  const items = [...domains.values()]
+    .filter((rec) => rec && rec.def && rec.def.id)
+    .map((rec) => {
+      const info = queue.describe(rec.def.id, rec.def.events);
+      return {
+        domain: rec.def.id,
+        title: rec.def.title || rec.def.id,
+        description: rec.def.description || "",
+        publishes: info.publishes,
+        listens: info.listens,
+        subscriptions: info.subscriptions,
+        error: rec.error || "",
+      };
+    })
+    .sort((a, b) => String(a.title).localeCompare(String(b.title), "zh"));
+  return { domains: items };
+}
+
 /** 把事件队列的读/运维 action 并进元 action 表。 */
-export function createHostEventActions(db: any, queueKick: { fn: (() => void) | null }): Map<string, any> {
+export function createHostEventActions(
+  db: any,
+  queueRef: { value: any },
+  domains: Map<string, any>,
+): Map<string, any> {
   return new Map([
     [
       "wb.eventOverview",
@@ -254,6 +281,27 @@ export function createHostEventActions(db: any, queueKick: { fn: (() => void) | 
       },
     ],
     [
+      "wb.eventDomains",
+      {
+        description:
+          "按插件列出事件授权清单与运行对账：声明发布的类型及实发统计、声明监听的类型与是否已登记、真实订阅与投递计数。",
+        input: { type: "object", properties: {} },
+        examples: [{}],
+        execute: () => domainsPayload(domains, queueRef),
+        render: (r: any) =>
+          r.domains
+            .map(
+              (d: any) =>
+                d.title +
+                "：" +
+                (d.publishes.map((p: any) => "发布 " + p.type).join("、") || "无发布") +
+                " / " +
+                (d.listens.map((l: any) => "监听 " + l.type + (l.registered ? "" : "(未登记)")).join("、") || "无监听"),
+            )
+            .join("\n"),
+      },
+    ],
+    [
       "wb.eventReplay",
       {
         description:
@@ -265,7 +313,7 @@ export function createHostEventActions(db: any, queueKick: { fn: (() => void) | 
         },
         origins: ["ui", "plugin"],
         examples: [{ deliveryId: "00000000-0000-0000-0000-000000000000" }],
-        execute: (args: any) => replayDelivery(db, queueKick, args || {}),
+        execute: (args: any) => replayDelivery(db, queueRef, args || {}),
         render: (r: any) => "已重新排队：" + r.deliveryId,
       },
     ],

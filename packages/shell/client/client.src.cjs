@@ -14,9 +14,6 @@ var SystemPages = require("./system-pages.cjs");
 var HostPages = require("./host-pages.cjs");
 // 宿主「事件队列」页：队列三张表的运行视图 + 重投/清理。
 var QueuePage = require("./event-queue-page.cjs");
-// 共享「事件」页：发布声明来自各域 DomainDef.events，订阅取自队列登记表（见 packages/addons/lib/events-view.cjs）。
-var createEventsView = require("../../addons/lib/events-view.cjs");
-var EventsView = createEventsView().EventsView;
 // 跨插件界面插槽：目录（白名单）+ 注册表（纯逻辑）。贡献变更要通知页面重渲染。
 var slotCatalog = require("./slot-catalog.cjs");
 var slotRegistry = require("./slot-registry.cjs")(slotCatalog, function () { notifyStore(); });
@@ -418,10 +415,6 @@ function WorkbenchPage(props) {
   var clientViews = mod && Array.isArray(mod.views) ? mod.views : [];
   var manifestViews = currentAddon && Array.isArray(currentAddon.views) ? currentAddon.views : [];
   var viewList = clientViews.length ? clientViews : manifestViews;
-  // 每个插件都自动带一页「事件」：插件自己声明了 id=events 的视图时以插件为准，不重复挂。
-  if (currentAddon && !viewList.some(function (v) { return v && v.id === "events"; })) {
-    viewList = viewList.concat([{ id: "events", title: { zh: "事件", en: "Events" }, component: EventsView }]);
-  }
   var wantedView = route.indexOf("addon:") === 0 ? (route.split(":")[2] || "") : "";
   var activeView = null;
   viewList.forEach(function (v) { if (v.id === wantedView) activeView = v; });

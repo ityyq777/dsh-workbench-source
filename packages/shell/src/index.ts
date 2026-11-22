@@ -57,7 +57,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.11.0";
+export const SHELL_VERSION = "0.12.0";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -228,9 +228,9 @@ export function apply(ctx: any): void {
   const sessionScope: { value: any } = { value: null };
   const agentRun = createAgentRun({ getSessionController: () => sessionScope.value });
 
-  // 事件队列的 drain 要在队列创建之后才存在：先给 action 层一个可写的踢动句柄，
-  // 「事件队列」页重投后靠它立刻尝试派发，而不是等下一轮补扫。
-  const queueKick: { fn: (() => void) | null } = { fn: null };
+  // 队列实例要在 createActions 之后才建（分发要用固定 plugin 来源的 invoke）：
+  // 先给 action 层一个可写持有者，「事件队列」页读授权清单与重投都从这里取。
+  const queueRef: { value: any } = { value: null };
   const { invoke, actionNames, installTool, schemaSnapshot } = createActions({
     domains,
     SHELL_VERSION,
@@ -241,15 +241,13 @@ export function apply(ctx: any): void {
     db: state.db,
     search,
     extraMetaActions: [["host.agentRun", agentRun]],
-    queueKick,
+    queueRef,
   });
 
   // 宿主事件队列：push 写库即返回，订阅方的消费 action 由后台 drain 异步分发。
   // 必须在 createActions 之后建，因为分发要用它固定 plugin 来源的 invoke。
   const eventQueue = createEventQueue({ db: state.db, invoke, log });
-  queueKick.fn = () => {
-    void eventQueue.drain();
-  };
+  queueRef.value = eventQueue;
   const hostEvents = {
     push: (type: string, payload?: unknown) => eventQueue.push(type, payload, "host"),
     stats: () => eventQueue.stats(),
@@ -312,9 +310,18 @@ export function apply(ctx: any): void {
       registerSearchProvider,
       emit: (event: string, data?: unknown) => emit("domain-event", { domainId: def.id, event, data: data ?? null }),
       events: {
-        push: (type: string, payload?: unknown) => eventQueue.push(type, payload, def.id),
+        // 发布与订阅都以 DomainDef.events 的声明为授权清单：没声明直接报错。
+        push: (type: string, payload?: unknown) =>
+          eventQueue.push(type, payload, def.id, def.events?.publishes),
         subscribe: (type: string, action: string) =>
-          eventQueue.subscribe(def.id, type, action, rec.actions.get(action), rec.actions),
+          eventQueue.subscribe(
+            def.id,
+            type,
+            action,
+            rec.actions.get(action),
+            rec.actions,
+            def.events?.subscriptions,
+          ),
         stats: () => eventQueue.stats(),
       },
       now: () => clock.now(),
@@ -343,17 +350,6 @@ export function apply(ctx: any): void {
     } catch (e) {
       rec.error = String((e && (e as Error).message) || e);
       log("业务域初始化失败", def.id, e);
-    }
-
-    // 每个域自动带一个「事件」读取口：发布声明来自 DomainDef.events，
-    // 订阅与投递统计取自队列登记表，插件不必再手写一遍。
-    if (!rec.actions.has(def.id + ".eventsInfo")) {
-      registerAction(rec, def.id + ".eventsInfo", {
-        description: "查看本插件发布与订阅的事件（工作台「事件」页的数据源）",
-        input: { type: "object", properties: {} },
-        origins: ["ui", "plugin"],
-        execute: () => eventQueue.describe(def.id, def.events?.publishes),
-      });
     }
 
     emit("domains-changed", listDomains());

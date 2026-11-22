@@ -32,12 +32,20 @@ var require_locale = __commonJS({
         tab_config: "\u914D\u7F6E",
         config_desc: "\u5BBF\u4E3B\u7684\u672C\u673A\u914D\u7F6E\uFF1A\u5BA1\u8BA1\u8BB0\u5F55\u8303\u56F4\u4E0E\u4FDD\u7559\u5929\u6570\uFF1B\u53EA\u5B58\u672C\u673A\uFF0C\u4E0D\u540C\u6B65\u3001\u4E0D\u8FDB\u5907\u4EFD",
         tab_queue: "\u4E8B\u4EF6\u961F\u5217",
-        queue_desc: "\u5BBF\u4E3B\u4E8B\u4EF6\u961F\u5217\u7684\u8FD0\u884C\u89C6\u56FE\uFF1A\u4E8B\u4EF6\u3001\u6309\u8BA2\u9605\u62C6\u51FA\u7684\u6295\u9012\u3001\u8BA2\u9605\u767B\u8BB0\u8868\uFF1B\u5931\u8D25\u6295\u9012\u53EF\u91CD\u6295\uFF0C\u5386\u53F2\u4E8B\u4EF6\u53EF\u6E05\u7406",
+        queue_desc: "\u5BBF\u4E3B\u4E8B\u4EF6\u961F\u5217\u7684\u8FD0\u884C\u89C6\u56FE\uFF1A\u5404\u63D2\u4EF6\u58F0\u660E\u4F1A\u53D1\u5E03/\u76D1\u542C\u54EA\u4E9B\u4E8B\u4EF6\u3001\u4E8B\u4EF6\u4E0E\u6309\u8BA2\u9605\u62C6\u51FA\u7684\u6295\u9012\uFF1B\u5931\u8D25\u6295\u9012\u53EF\u91CD\u6295\uFF0C\u5386\u53F2\u4E8B\u4EF6\u53EF\u6E05\u7406",
         queue_queued: "\u6392\u961F",
         queue_dead: "\u6B7B\u4FE1",
         queue_pending: "\u5F85\u6295\u9012",
         queue_done: "\u5DF2\u5B8C\u6210",
         queue_subscriptions: "\u8BA2\u9605",
+        queue_tab_domains: "\u63D2\u4EF6",
+        queue_domain_publishes: "\u53D1\u5E03",
+        queue_domain_listens: "\u76D1\u542C",
+        queue_sent: "\u5DF2\u53D1",
+        queue_not_registered: "\u58F0\u660E\u4F46\u672A\u767B\u8BB0",
+        queue_no_publish: "\u4E0D\u53D1\u5E03\u4E8B\u4EF6",
+        queue_no_listen: "\u4E0D\u76D1\u542C\u4E8B\u4EF6",
+        queue_domain_error: "\u521D\u59CB\u5316\u5931\u8D25",
         queue_tab_events: "\u4E8B\u4EF6",
         queue_tab_deliveries: "\u6295\u9012",
         queue_tab_subscriptions: "\u8BA2\u9605",
@@ -334,12 +342,20 @@ var require_locale = __commonJS({
         tab_config: "Settings",
         config_desc: "Host settings stored on this machine: what the audit ledger records and how long it is kept; never synced or backed up",
         tab_queue: "Event queue",
-        queue_desc: "Runtime view of the host event queue: events, per-subscription deliveries and the subscription registry; failed deliveries can be replayed and finished events cleaned up",
+        queue_desc: "Runtime view of the host event queue: which events each plugin declares to publish or listen to, plus events and per-subscription deliveries; failed deliveries can be replayed and finished events cleaned up",
         queue_queued: "Queued",
         queue_dead: "Dead",
         queue_pending: "Pending",
         queue_done: "Done",
         queue_subscriptions: "Subs",
+        queue_tab_domains: "Plugins",
+        queue_domain_publishes: "Publishes",
+        queue_domain_listens: "Listens",
+        queue_sent: "sent",
+        queue_not_registered: "declared, not registered",
+        queue_no_publish: "Publishes nothing",
+        queue_no_listen: "Listens to nothing",
+        queue_domain_error: "setup failed",
         queue_tab_events: "Events",
         queue_tab_deliveries: "Deliveries",
         queue_tab_subscriptions: "Subscriptions",
@@ -1292,6 +1308,14 @@ var require_styles = __commonJS({
       ".wbq-tabs .wb-btn.on{background:color-mix(in oklab,var(--wb-accent) 14%,var(--wb-card));color:var(--wb-accent);font-weight:600}",
       ".wbq-select{min-height:32px;padding:4px 10px;border-radius:8px;border:1px solid var(--wb-line);background:var(--wb-card);color:inherit;font:inherit;font-size:12.5px}",
       ".wbq-toolbar .wb-btn.danger{margin-left:auto}",
+      ".wbq-domains{display:flex;flex-direction:column;gap:10px}",
+      ".wbq-domain{border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card);padding:12px 14px;display:flex;flex-direction:column;gap:8px}",
+      ".wbq-domain-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}",
+      ".wbq-domain-row{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}",
+      ".wbq-domain-label{flex:none;width:44px;font-size:11.5px;font-weight:600;color:var(--wb-muted);padding-top:2px}",
+      ".wbq-chips{display:flex;flex-wrap:wrap;gap:6px}",
+      ".wbq-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;border:1px solid var(--wb-line);background:color-mix(in oklab,currentColor 3%,transparent);font-size:11.5px}",
+      ".wbq-chip.off{opacity:.6;border-style:dashed}",
       ".wbq-table-wrap{overflow:auto;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card)}",
       ".wbq-table{width:100%;border-collapse:collapse;font-size:12.5px}",
       ".wbq-table th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--wb-muted);padding:9px 10px;border-bottom:1px solid var(--wb-line);white-space:nowrap;background:color-mix(in oklab,currentColor 3%,transparent)}",
@@ -3619,7 +3643,8 @@ var require_event_queue_page = __commonJS({
       var events = useLoader(React, api, "wb.eventList", { status: filter || void 0, page, pageSize: PAGE_SIZE }, [filter, page]);
       var deliveries = useLoader(React, api, "wb.eventDeliveryList", { status: filter || void 0, page, pageSize: PAGE_SIZE }, [filter, page]);
       var subs = useLoader(React, api, "wb.eventSubscriptionList", {}, []);
-      var active = tab === "events" ? events : tab === "deliveries" ? deliveries : subs;
+      var domainsView = useLoader(React, api, "wb.eventDomains", {}, []);
+      var active = tab === "events" ? events : tab === "deliveries" ? deliveries : tab === "domains" ? domainsView : subs;
       React.useEffect(function() {
         setFilter("");
         setPage(1);
@@ -3628,6 +3653,7 @@ var require_event_queue_page = __commonJS({
         overview.reload();
         if (tab === "subscriptions") subs.reload();
         else if (tab === "deliveries") deliveries.reload();
+        else if (tab === "domains") domainsView.reload();
         else events.reload();
       }
       function replay(delivery) {
@@ -3650,6 +3676,7 @@ var require_event_queue_page = __commonJS({
       }
       var stats = overview.state.data || { events: {}, deliveries: {}, subscriptions: 0 };
       var tabs = [
+        ["domains", t("queue_tab_domains")],
         ["events", t("queue_tab_events")],
         ["deliveries", t("queue_tab_deliveries")],
         ["subscriptions", t("queue_tab_subscriptions")]
@@ -3697,7 +3724,38 @@ var require_event_queue_page = __commonJS({
       if (note) body.push(jsx2.jsx("div", { className: "wbq-note", children: note }));
       if (active.state.error) body.push(jsx2.jsx("div", { className: "wbq-note err", children: active.state.error }));
       var rows = active.state.data && active.state.data.items || [];
-      if (tab === "subscriptions") {
+      if (tab === "domains") {
+        var list = active.state.data && active.state.data.domains || [];
+        body.push(list.length ? jsx2.jsx("div", { className: "wbq-domains", children: list.map(function(d) {
+          var pub = d.publishes || [];
+          var lis = d.listens || [];
+          return jsx2.jsxs("div", { key: d.domain, className: "wbq-domain", children: [
+            jsx2.jsxs("div", { className: "wbq-domain-head", children: [
+              jsx2.jsx("b", { children: d.title }),
+              jsx2.jsx("code", { className: "wbq-muted", children: d.domain }),
+              d.error ? jsx2.jsx("span", { className: "wbq-status s-dead", children: t("queue_domain_error") }) : null
+            ] }),
+            jsx2.jsxs("div", { className: "wbq-domain-row", children: [
+              jsx2.jsx("span", { className: "wbq-domain-label", children: t("queue_domain_publishes") }),
+              pub.length ? jsx2.jsx("div", { className: "wbq-chips", children: pub.map(function(p) {
+                return jsx2.jsxs("span", { key: p.type, className: "wbq-chip", title: p.description || "", children: [
+                  jsx2.jsx("code", { children: p.type }),
+                  jsx2.jsx("span", { className: "wbq-muted", children: t("queue_sent") + " " + String(p.sent || 0) })
+                ] });
+              }) }) : jsx2.jsx("span", { className: "wbq-muted", children: t("queue_no_publish") })
+            ] }),
+            jsx2.jsxs("div", { className: "wbq-domain-row", children: [
+              jsx2.jsx("span", { className: "wbq-domain-label", children: t("queue_domain_listens") }),
+              lis.length ? jsx2.jsx("div", { className: "wbq-chips", children: lis.map(function(l) {
+                return jsx2.jsxs("span", { key: l.type, className: "wbq-chip" + (l.registered ? "" : " off"), title: l.description || "", children: [
+                  jsx2.jsx("code", { children: l.type }),
+                  jsx2.jsx("span", { className: "wbq-muted", children: l.registered ? (l.actions || []).join(", ") : t("queue_not_registered") })
+                ] });
+              }) }) : jsx2.jsx("span", { className: "wbq-muted", children: t("queue_no_listen") })
+            ] })
+          ] }, d.domain);
+        }) }) : jsx2.jsx("div", { className: "wbq-empty", children: t("queue_empty") }));
+      } else if (tab === "subscriptions") {
         body.push(rows.length ? jsx2.jsx("div", { className: "wbq-table-wrap", children: jsx2.jsxs("table", { className: "wbq-table", children: [
           jsx2.jsx("thead", { children: jsx2.jsx("tr", { children: [
             jsx2.jsx("th", { children: t("queue_domain") }),
@@ -3762,7 +3820,7 @@ var require_event_queue_page = __commonJS({
         ] }) }) : jsx2.jsx("div", { className: "wbq-empty", children: t("queue_empty") }));
       }
       var meta = (tab === "subscriptions" ? subs : tab === "deliveries" ? deliveries : events).state;
-      var paging = meta.data && meta.data.pages ? meta.data : null;
+      var paging = (tab === "events" || tab === "deliveries") && meta.data && meta.data.pages ? meta.data : null;
       if (paging) {
         body.push(jsx2.jsx("div", { className: "wbq-pager", children: [
           jsx2.jsx("button", { type: "button", className: "wb-btn ghost", disabled: page <= 1, onClick: function() {
@@ -3783,336 +3841,6 @@ var require_event_queue_page = __commonJS({
       ] });
     }
     module2.exports = { queuePage };
-  }
-});
-
-// packages/addons/lib/client-common.cjs
-var require_client_common = __commonJS({
-  "packages/addons/lib/client-common.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = function createCommon(prefix) {
-      var p = String(prefix || "wb");
-      function unwrap(r) {
-        if (r && r.ok === false) {
-          var error = new Error(r.error || r.message || "\u64CD\u4F5C\u5931\u8D25");
-          if (r.code !== void 0) error.code = r.code;
-          error.payload = r;
-          throw error;
-        }
-        return r && r.result !== void 0 ? r.result : r;
-      }
-      function call(api, action, args) {
-        return Promise.resolve(api.call(action, args || {})).then(unwrap);
-      }
-      function errText(e) {
-        if (!e) return "\u64CD\u4F5C\u5931\u8D25";
-        if (typeof e === "string") return e;
-        return e.message || e.error || String(e);
-      }
-      function fmtTime(ts, lang) {
-        if (!ts) return "\u2014";
-        try {
-          return new Date(ts).toLocaleString(lang === "en" ? "en-US" : "zh-CN", { hour12: false });
-        } catch (e) {
-          return String(ts);
-        }
-      }
-      function Btn(props) {
-        var h2 = props.h;
-        return h2(
-          "button",
-          {
-            type: props.type || "button",
-            className: p + "-btn" + (props.kind ? " " + props.kind : ""),
-            disabled: props.disabled,
-            onClick: props.onClick,
-            title: props.title
-          },
-          props.children
-        );
-      }
-      function Field(props) {
-        var h2 = props.h;
-        return h2(
-          "label",
-          { className: p + "-field" },
-          h2("span", { className: p + "-label" }, props.label),
-          props.children,
-          props.hint ? h2("span", { className: p + "-hint" }, props.hint) : null
-        );
-      }
-      function Notice(props) {
-        var h2 = props.h;
-        if (!props.text) return null;
-        return h2("div", { className: p + "-notice " + (props.kind || "info") }, props.text);
-      }
-      function Empty(props) {
-        var h2 = props.h;
-        return h2("div", { className: p + "-empty" }, props.text || "\u6682\u65E0\u6570\u636E");
-      }
-      function Pill(props) {
-        var h2 = props.h;
-        return h2("span", { className: p + "-pill " + (props.kind || "") }, props.children);
-      }
-      function Json(props) {
-        var h2 = props.h;
-        var text;
-        try {
-          text = JSON.stringify(props.value, null, 2);
-        } catch (e) {
-          text = String(props.value);
-        }
-        return h2("pre", { className: p + "-json" }, text);
-      }
-      function useLoad(React, api, action, args, deps) {
-        var s = React.useState({ loading: true, data: null, error: "" });
-        var tick = React.useState(0);
-        var refresh = function() {
-          tick[1](tick[0] + 1);
-        };
-        React.useEffect(
-          function() {
-            var alive = true;
-            s[1]({ loading: true, data: null, error: "" });
-            call(api, action, args).then(function(data) {
-              if (alive) s[1]({ loading: false, data, error: "" });
-            }).catch(function(e) {
-              if (alive) s[1]({ loading: false, data: null, error: errText(e) });
-            });
-            return function() {
-              alive = false;
-            };
-          },
-          (deps || []).concat([tick[0]])
-        );
-        return { loading: s[0].loading, data: s[0].data, error: s[0].error, refresh };
-      }
-      return {
-        unwrap,
-        call,
-        errText,
-        fmtTime,
-        Switch: require_switch().Switch,
-        switchStyles: require_switch().styles,
-        NumberField: require_number_field().NumberField,
-        numberFieldStyles: require_number_field().styles,
-        validateNumber: require_number_field().validateNumber,
-        Btn,
-        Field,
-        Notice,
-        Empty,
-        Pill,
-        Json,
-        useLoad
-      };
-    };
-  }
-});
-
-// packages/addons/lib/inject-styles.cjs
-var require_inject_styles = __commonJS({
-  "packages/addons/lib/inject-styles.cjs"(exports2, module2) {
-    "use strict";
-    function toCss(value) {
-      var v = typeof value === "function" ? value() : value;
-      if (Array.isArray(v)) return v.filter(Boolean).join("\n");
-      if (v === null || v === void 0) return "";
-      return String(v);
-    }
-    module2.exports = function injectStyles(options) {
-      var opts = options || {};
-      var css = toCss(opts.css);
-      if (typeof document === "undefined" || !document.head) return "";
-      var id = opts.id;
-      var old = id ? document.getElementById(id) : null;
-      if (old) {
-        if (old.textContent !== css) old.textContent = css;
-        return css;
-      }
-      var style = document.createElement("style");
-      if (id) style.id = id;
-      if (opts.addon) style.setAttribute("data-wb-addon", opts.addon);
-      style.textContent = css;
-      document.head.appendChild(style);
-      return css;
-    };
-    module2.exports.toCss = toCss;
-  }
-});
-
-// packages/addons/lib/events-view.cjs
-var require_events_view = __commonJS({
-  "packages/addons/lib/events-view.cjs"(exports2, module2) {
-    "use strict";
-    var React = require("react");
-    var h2 = React.createElement;
-    var createCommon = require_client_common();
-    var injectStyles = require_inject_styles();
-    var C = createCommon("wbev");
-    var COPY = {
-      zh: {
-        head: "\u4E8B\u4EF6",
-        hint: "\u8FD0\u884C\u65F6\u6570\u636E \xB7 \u6765\u81EA\u5BBF\u4E3B\u4E8B\u4EF6\u961F\u5217",
-        refresh: "\u5237\u65B0",
-        publishTitle: "\u53D1\u5E03\u7684\u4E8B\u4EF6",
-        publishHint: "\u672C\u63D2\u4EF6\u901A\u8FC7 api.events.push \u63A8\u51FA\uFF0C\u8BA2\u9605\u65B9\u5404\u81EA\u6D88\u8D39",
-        subTitle: "\u8BA2\u9605\u7684\u4E8B\u4EF6",
-        subHint: "\u672C\u63D2\u4EF6\u767B\u8BB0\u8BA2\u9605\uFF0C\u5E76\u7531 plugin-only \u7684\u6D88\u8D39 action \u5904\u7406",
-        noPublish: "\u672C\u63D2\u4EF6\u4E0D\u53D1\u5E03\u4E8B\u4EF6",
-        noPublishHint: "\u5728 DomainDef.events.publishes \u91CC\u58F0\u660E\u540E\u4F1A\u51FA\u73B0\u5728\u8FD9\u91CC",
-        noSub: "\u8FD8\u6CA1\u6709\u8BA2\u9605\u4EFB\u4F55\u4E8B\u4EF6",
-        noSubHint: "\u5728 setup \u91CC\u8C03\u7528 api.events.subscribe(type, action) \u540E\u4F1A\u51FA\u73B0\u5728\u8FD9\u91CC",
-        sent: function(n) {
-          return "\u5DF2\u53D1 " + n + " \u6B21";
-        },
-        lastAt: "\u6700\u8FD1",
-        never: "\u8FD8\u6CA1\u53D1\u8FC7",
-        status: "\u72B6\u6001",
-        consumer: "\u6D88\u8D39 action",
-        done: function(n) {
-          return "\u6210\u529F " + n;
-        },
-        pending: function(n) {
-          return "\u5F85\u6295\u9012 " + n;
-        },
-        dead: function(n) {
-          return "\u6B7B\u4FE1 " + n;
-        },
-        lastError: "\u6700\u8FD1\u9519\u8BEF",
-        loading: "\u8F7D\u5165\u4E2D\u2026",
-        failed: "\u8BFB\u53D6\u4E8B\u4EF6\u4FE1\u606F\u5931\u8D25",
-        domain: "\u57DF"
-      },
-      en: {
-        head: "Events",
-        hint: "Live data from the host event queue",
-        refresh: "Refresh",
-        publishTitle: "Published events",
-        publishHint: "Pushed via api.events.push; each subscriber consumes on its own",
-        subTitle: "Subscribed events",
-        subHint: "Registered by this addon and handled by a plugin-only action",
-        noPublish: "This addon publishes no events",
-        noPublishHint: "Declared in DomainDef.events.publishes",
-        noSub: "No event subscriptions yet",
-        noSubHint: "Call api.events.subscribe(type, action) during setup",
-        sent: function(n) {
-          return n + " sent";
-        },
-        lastAt: "Last",
-        never: "never sent",
-        status: "Status",
-        consumer: "Consumer action",
-        done: function(n) {
-          return n + " done";
-        },
-        pending: function(n) {
-          return n + " pending";
-        },
-        dead: function(n) {
-          return n + " dead";
-        },
-        lastError: "Last error",
-        loading: "Loading\u2026",
-        failed: "Failed to load event info",
-        domain: "Domain"
-      }
-    };
-    var STYLES = [
-      ".wbev-page{display:flex;flex-direction:column;gap:14px;width:100%}",
-      ".wbev-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}",
-      ".wbev-title{font-size:16px;font-weight:680;color:var(--wb-text)}",
-      ".wbev-sub{font-size:12px;color:var(--wb-muted);margin-top:2px}",
-      ".wbev-head .wbev-spacer{flex:1 1 auto}",
-      ".wbev-card{background:var(--wb-card);border:1px solid var(--wb-border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}",
-      ".wbev-card-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}",
-      ".wbev-card-title{font-size:13px;font-weight:640;color:var(--wb-text)}",
-      ".wbev-card-hint{font-size:12px;color:var(--wb-muted)}",
-      ".wbev-row{display:flex;flex-direction:column;gap:4px;padding:8px 0;border-top:1px solid var(--wb-line)}",
-      ".wbev-row:first-of-type{border-top:none;padding-top:0}",
-      ".wbev-row-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
-      ".wbev-type{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--wb-text);background:var(--wb-surface);border:1px solid var(--wb-line);border-radius:6px;padding:1px 6px}",
-      ".wbev-desc{font-size:12px;color:var(--wb-muted)}",
-      ".wbev-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--wb-muted)}",
-      ".wbev-ok{color:var(--wb-ok)}",
-      ".wbev-warn{color:var(--wb-warn)}",
-      ".wbev-danger{color:var(--wb-danger)}",
-      ".wbev-empty{font-size:12px;color:var(--wb-muted);padding:6px 0}",
-      ".wbev-err{font-size:12px;color:var(--wb-danger)}"
-    ].join("\n");
-    function createEventsView2(options) {
-      var opts = options || {};
-      injectStyles({ id: "wb-events-view-style", css: STYLES });
-      function EventsView2(props) {
-        var lang = props.lang === "en" ? "en" : "zh";
-        var t = COPY[lang];
-        var domain = opts.domain || props.addonId;
-        var load = C.useLoad(React, props.api, domain + ".eventsInfo", {}, [domain]);
-        var data = load.data || { publishes: [], subscriptions: [] };
-        function rowOfPublish(item) {
-          return h2("div", { className: "wbev-row", key: "pub:" + item.type }, [
-            h2("div", { className: "wbev-row-top" }, [
-              h2("code", { key: "type", className: "wbev-type" }, item.type),
-              h2("span", { key: "desc", className: "wbev-desc" }, item.description || "")
-            ]),
-            h2("div", { className: "wbev-meta" }, [
-              h2("span", { key: "sent" }, t.sent(item.sent || 0)),
-              h2("span", { key: "last" }, item.lastAt ? t.lastAt + " \xB7 " + C.fmtTime(item.lastAt, lang) : t.never),
-              item.lastStatus ? h2(
-                "span",
-                {
-                  key: "status",
-                  className: item.lastStatus === "done" ? "wbev-ok" : item.lastStatus === "dead" ? "wbev-danger" : "wbev-warn"
-                },
-                item.lastStatus
-              ) : null
-            ])
-          ]);
-        }
-        function rowOfSub(item) {
-          var dead = Number(item.dead || 0) > 0;
-          return h2("div", { className: "wbev-row", key: "sub:" + item.type + ":" + item.action }, [
-            h2("div", { className: "wbev-row-top" }, [h2("code", { key: "type", className: "wbev-type" }, item.type)]),
-            h2("div", { className: "wbev-meta" }, [
-              h2("span", { key: "label" }, t.consumer + "\uFF1A"),
-              h2("code", { key: "action", className: "wbev-type" }, item.action)
-            ]),
-            h2("div", { className: "wbev-meta" }, [
-              h2("span", { key: "done", className: "wbev-ok" }, t.done(item.done || 0)),
-              item.pending ? h2("span", { key: "pending", className: "wbev-warn" }, t.pending(item.pending)) : null,
-              dead ? h2("span", { key: "dead", className: "wbev-danger" }, t.dead(item.dead)) : null
-            ]),
-            item.lastError ? h2("div", { className: "wbev-danger wbev-desc" }, t.lastError + "\uFF1A" + item.lastError) : null
-          ]);
-        }
-        function card(title, hint, rows, emptyText, emptyHint, key) {
-          return h2("div", { key, className: "wbev-card" }, [
-            h2("div", { key: "head", className: "wbev-card-head" }, [
-              h2("div", { key: "title", className: "wbev-card-title" }, title),
-              h2("div", { key: "hint", className: "wbev-card-hint" }, hint)
-            ]),
-            rows.length ? rows : h2("div", { key: "empty", className: "wbev-empty" }, [h2("div", { key: "text" }, emptyText), h2("div", { key: "hint" }, emptyHint)])
-          ]);
-        }
-        return h2("div", { className: "wbev-page" }, [
-          h2("div", { key: "head", className: "wbev-head" }, [
-            h2("div", { key: "titles" }, [
-              h2("div", { key: "title", className: "wbev-title" }, t.head),
-              h2("div", { key: "hint", className: "wbev-sub" }, t.hint)
-            ]),
-            h2("div", { key: "spacer", className: "wbev-spacer" }),
-            h2("div", { key: "refresh" }, C.Btn({ h: h2, onClick: load.refresh, title: t.refresh }, t.refresh))
-          ]),
-          load.error ? h2("div", { key: "err", className: "wbev-err" }, t.failed + "\uFF1A" + load.error) : load.loading ? h2("div", { key: "loading", className: "wbev-empty" }, t.loading) : h2("div", { key: "body", className: "wbev-page" }, [
-            card(t.publishTitle, t.publishHint, (data.publishes || []).map(rowOfPublish), t.noPublish, t.noPublishHint, "publish"),
-            card(t.subTitle, t.subHint, (data.subscriptions || []).map(rowOfSub), t.noSub, t.noSubHint, "subscribe")
-          ])
-        ]);
-      }
-      return { EventsView: EventsView2, styles: STYLES };
-    }
-    module2.exports = createEventsView2;
-    module2.exports.createEventsView = createEventsView2;
-    module2.exports.styles = STYLES;
   }
 });
 
@@ -5605,8 +5333,6 @@ var addonNav = require_addon_nav()();
 var SystemPages = require_system_pages();
 var HostPages = require_host_pages();
 var QueuePage = require_event_queue_page();
-var createEventsView = require_events_view();
-var EventsView = createEventsView().EventsView;
 var slotCatalog = require_slot_catalog();
 var slotRegistry = require_slot_registry()(slotCatalog, function() {
   notifyStore();
@@ -6096,11 +5822,6 @@ function WorkbenchPage(props) {
   var clientViews = mod && Array.isArray(mod.views) ? mod.views : [];
   var manifestViews = currentAddon && Array.isArray(currentAddon.views) ? currentAddon.views : [];
   var viewList = clientViews.length ? clientViews : manifestViews;
-  if (currentAddon && !viewList.some(function(v) {
-    return v && v.id === "events";
-  })) {
-    viewList = viewList.concat([{ id: "events", title: { zh: "\u4E8B\u4EF6", en: "Events" }, component: EventsView }]);
-  }
   var wantedView = route.indexOf("addon:") === 0 ? route.split(":")[2] || "" : "";
   var activeView = null;
   viewList.forEach(function(v) {
