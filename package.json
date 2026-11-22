@@ -69,6 +69,7 @@
     "test:host-data": "node scripts/test-host-data.mjs",
     "test:host-pages": "node scripts/test-host-pages.mjs",
     "test:event-queue": "node scripts/test-event-queue.mjs",
+    "test:event-queue-page": "node scripts/test-event-queue-page.mjs",
     "test:mail-message-queue": "node scripts/test-mail-message-queue.mjs",
     "test:mail-vault-kick": "node scripts/test-mail-vault-kick.mjs",
     "test:events-view": "node scripts/test-events-view.mjs",

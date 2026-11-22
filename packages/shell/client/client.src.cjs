@@ -12,6 +12,8 @@ var addonNav = require("./addon-nav.cjs")();
 // 共享 Action 页：宿主自己的「Agent 权限」页复用它，数据源是 actions.list（宿主 action 不属于任何业务域）。
 var SystemPages = require("./system-pages.cjs");
 var HostPages = require("./host-pages.cjs");
+// 宿主「事件队列」页：队列三张表的运行视图 + 重投/清理。
+var QueuePage = require("./event-queue-page.cjs");
 // 共享「事件」页：发布声明来自各域 DomainDef.events，订阅取自队列登记表（见 packages/addons/lib/events-view.cjs）。
 var createEventsView = require("../../addons/lib/events-view.cjs");
 var EventsView = createEventsView().EventsView;
@@ -501,6 +503,9 @@ function WorkbenchPage(props) {
     return jsx.jsxs("div", { className: "wb-root", children: [
       jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_audit"), t("audit_desc")), jsx.jsx(AuditTab, { t: t })] }),
     ] });
+  }
+  if (route === "queue") {
+    return QueuePage.queuePage({ jsx: jsx, React: react, api: api, lang: lang, t: t, head: pageHead });
   }
   if (route === "data") {
     return HostPages.dataPage({ jsx: jsx, api: api, lang: lang, t: t, head: pageHead });

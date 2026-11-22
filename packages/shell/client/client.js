@@ -31,6 +31,38 @@ var require_locale = __commonJS({
         data_desc: "\u6D4F\u89C8\u5BBF\u4E3B\u81EA\u5DF1\u7EF4\u62A4\u7684\u5E73\u53F0\u8868\uFF08meta\u3001\u540C\u6B65\u65E5\u5FD7/\u6B7B\u4FE1/\u6C34\u4F4D\u3001\u4F1A\u8BDD\u8BB0\u5F55\u6A21\u5F0F\u3001\u5BA1\u8BA1\u65E5\u5FD7\uFF09\uFF1A\u53EA\u8BFB\u3001\u53EF\u641C\u7D22\u3001\u53EF\u5206\u9875",
         tab_config: "\u914D\u7F6E",
         config_desc: "\u5BBF\u4E3B\u7684\u672C\u673A\u914D\u7F6E\uFF1A\u5BA1\u8BA1\u8BB0\u5F55\u8303\u56F4\u4E0E\u4FDD\u7559\u5929\u6570\uFF1B\u53EA\u5B58\u672C\u673A\uFF0C\u4E0D\u540C\u6B65\u3001\u4E0D\u8FDB\u5907\u4EFD",
+        tab_queue: "\u4E8B\u4EF6\u961F\u5217",
+        queue_desc: "\u5BBF\u4E3B\u4E8B\u4EF6\u961F\u5217\u7684\u8FD0\u884C\u89C6\u56FE\uFF1A\u4E8B\u4EF6\u3001\u6309\u8BA2\u9605\u62C6\u51FA\u7684\u6295\u9012\u3001\u8BA2\u9605\u767B\u8BB0\u8868\uFF1B\u5931\u8D25\u6295\u9012\u53EF\u91CD\u6295\uFF0C\u5386\u53F2\u4E8B\u4EF6\u53EF\u6E05\u7406",
+        queue_queued: "\u6392\u961F",
+        queue_dead: "\u6B7B\u4FE1",
+        queue_pending: "\u5F85\u6295\u9012",
+        queue_done: "\u5DF2\u5B8C\u6210",
+        queue_subscriptions: "\u8BA2\u9605",
+        queue_tab_events: "\u4E8B\u4EF6",
+        queue_tab_deliveries: "\u6295\u9012",
+        queue_tab_subscriptions: "\u8BA2\u9605",
+        queue_all_status: "\u5168\u90E8\u72B6\u6001",
+        queue_refresh: "\u5237\u65B0",
+        queue_cleanup: "\u6E05\u7406\u5386\u53F2",
+        queue_replay: "\u91CD\u6295",
+        queue_empty: "\u961F\u5217\u91CC\u8FD8\u6CA1\u6709\u8BB0\u5F55",
+        queue_loading: "\u8BFB\u53D6\u4E2D\u2026",
+        queue_prev: "\u4E0A\u4E00\u9875",
+        queue_next: "\u4E0B\u4E00\u9875",
+        queue_status: "\u72B6\u6001",
+        queue_domain: "\u8BA2\u9605\u65B9",
+        queue_event_type: "\u4E8B\u4EF6\u7C7B\u578B",
+        queue_action: "\u6D88\u8D39 action",
+        queue_source: "\u63A8\u9001\u65B9",
+        queue_created: "\u521B\u5EFA\u65F6\u95F4",
+        queue_payload: "\u8F7D\u8377",
+        queue_attempts: "\u5C1D\u8BD5",
+        queue_next_at: "\u4E0B\u6B21\u91CD\u8BD5",
+        queue_last_error: "\u6700\u8FD1\u9519\u8BEF",
+        queue_replay_confirm: "\u91CD\u6295\u8FD9\u6761\u6295\u9012\uFF1F\u5C1D\u8BD5\u6B21\u6570\u4F1A\u6E05\u96F6\uFF0C\u961F\u5217\u4F1A\u7ACB\u523B\u518D\u6D3E\u53D1\u4E00\u6B21\u3002",
+        queue_replay_ok: "\u5DF2\u91CD\u65B0\u6392\u961F",
+        queue_cleanup_confirm: "\u6E05\u7406 7 \u5929\u524D\u5DF2\u7EC8\u7ED3\uFF08\u5B8C\u6210/\u6B7B\u4FE1\uFF09\u7684\u4E8B\u4EF6\u53CA\u5176\u6295\u9012\uFF1F",
+        queue_cleanup_ok: "\u5DF2\u6E05\u7406",
         loading: "\u8BFB\u53D6\u4E2D\u2026",
         reset_default: "\u6062\u590D\u9ED8\u8BA4",
         sync_progress: "\u540C\u6B65\u8FDB\u5EA6",
@@ -301,6 +333,38 @@ var require_locale = __commonJS({
         data_desc: "Browse the platform tables the host itself owns (meta, sync log/dead letters/state, session modes, audit log): read-only, searchable, paged",
         tab_config: "Settings",
         config_desc: "Host settings stored on this machine: what the audit ledger records and how long it is kept; never synced or backed up",
+        tab_queue: "Event queue",
+        queue_desc: "Runtime view of the host event queue: events, per-subscription deliveries and the subscription registry; failed deliveries can be replayed and finished events cleaned up",
+        queue_queued: "Queued",
+        queue_dead: "Dead",
+        queue_pending: "Pending",
+        queue_done: "Done",
+        queue_subscriptions: "Subs",
+        queue_tab_events: "Events",
+        queue_tab_deliveries: "Deliveries",
+        queue_tab_subscriptions: "Subscriptions",
+        queue_all_status: "All statuses",
+        queue_refresh: "Refresh",
+        queue_cleanup: "Clean up",
+        queue_replay: "Replay",
+        queue_empty: "Nothing in the queue yet",
+        queue_loading: "Loading\u2026",
+        queue_prev: "Prev",
+        queue_next: "Next",
+        queue_status: "Status",
+        queue_domain: "Subscriber",
+        queue_event_type: "Event type",
+        queue_action: "Consuming action",
+        queue_source: "Source",
+        queue_created: "Created",
+        queue_payload: "Payload",
+        queue_attempts: "Attempts",
+        queue_next_at: "Next try",
+        queue_last_error: "Last error",
+        queue_replay_confirm: "Replay this delivery? Attempts reset to zero and the queue dispatches again right away.",
+        queue_replay_ok: "Re-queued",
+        queue_cleanup_confirm: "Delete finished (done/dead) events and their deliveries older than 7 days?",
+        queue_cleanup_ok: "Deleted",
         loading: "Loading\u2026",
         reset_default: "Reset to default",
         sync_progress: "Sync progress",
@@ -1218,6 +1282,33 @@ var require_styles = __commonJS({
       ".wb-sync-tables li.fail{color:var(--wb-danger,inherit)}",
       ".wb-sync-table-name{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}",
       ".wb-sync-table-state{margin-left:auto;opacity:.8;overflow-wrap:anywhere}",
+      ".wbq{display:flex;flex-direction:column;gap:12px;padding:4px 0 24px;box-sizing:border-box}",
+      ".wbq-stats{display:flex;flex-wrap:wrap;gap:8px}",
+      ".wbq-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--wb-line);background:var(--wb-card);font-size:12px;line-height:1.4}",
+      ".wbq-pill-label{color:var(--wb-muted)}",
+      ".wbq-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+      ".wbq-tabs{display:inline-flex;gap:4px;padding:3px;border:1px solid var(--wb-line);border-radius:10px;background:var(--wb-card)}",
+      ".wbq-tabs .wb-btn{border:0;background:transparent;padding:5px 12px;border-radius:8px}",
+      ".wbq-tabs .wb-btn.on{background:color-mix(in oklab,var(--wb-accent) 14%,var(--wb-card));color:var(--wb-accent);font-weight:600}",
+      ".wbq-select{min-height:32px;padding:4px 10px;border-radius:8px;border:1px solid var(--wb-line);background:var(--wb-card);color:inherit;font:inherit;font-size:12.5px}",
+      ".wbq-toolbar .wb-btn.danger{margin-left:auto}",
+      ".wbq-table-wrap{overflow:auto;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card)}",
+      ".wbq-table{width:100%;border-collapse:collapse;font-size:12.5px}",
+      ".wbq-table th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--wb-muted);padding:9px 10px;border-bottom:1px solid var(--wb-line);white-space:nowrap;background:color-mix(in oklab,currentColor 3%,transparent)}",
+      ".wbq-table td{padding:9px 10px;border-bottom:1px solid var(--wb-line);vertical-align:top;overflow-wrap:anywhere}",
+      ".wbq-table tr:last-child td{border-bottom:0}",
+      ".wbq-table code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}",
+      ".wbq-status{display:inline-block;padding:1px 8px;border-radius:999px;border:1px solid var(--wb-line);font-size:11px;line-height:1.6;white-space:nowrap}",
+      ".wbq-status.s-done{color:var(--wb-ok);border-color:color-mix(in oklab,var(--wb-ok) 40%,var(--wb-line))}",
+      ".wbq-status.s-dead{color:var(--wb-danger);border-color:color-mix(in oklab,var(--wb-danger) 40%,var(--wb-line))}",
+      ".wbq-status.s-running,.wbq-status.s-pending{color:var(--wb-warn);border-color:color-mix(in oklab,var(--wb-warn) 40%,var(--wb-line))}",
+      ".wbq-payload{max-width:520px;opacity:.85}",
+      ".wbq-err{max-width:320px;font-size:11.5px;color:var(--wb-muted)}",
+      ".wbq-empty{padding:34px 18px;border:1px dashed var(--wb-line);border-radius:12px;text-align:center;color:var(--wb-muted);font-size:12.5px}",
+      ".wbq-note{padding:8px 12px;border-radius:8px;border:1px solid color-mix(in oklab,var(--wb-accent) 26%,var(--wb-line));background:color-mix(in oklab,var(--wb-accent) 6%,var(--wb-card));font-size:12.5px}",
+      ".wbq-note.err{border-color:color-mix(in oklab,var(--wb-danger) 30%,var(--wb-line));background:color-mix(in oklab,var(--wb-danger) 7%,var(--wb-card));color:var(--wb-danger)}",
+      ".wbq-pager{display:flex;align-items:center;gap:10px;font-size:12px}",
+      ".wbq-muted{color:var(--wb-muted);font-size:12px}",
       ".wb-toast{position:sticky;bottom:12px;align-self:center;padding:7px 14px;border-radius:999px;border:1px solid var(--wb-line);background:var(--wb-surface);font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.12)}"
     ].join("\n");
     module2.exports = CSS2 + "\n" + SW.styles.join("\n") + "\n" + NF.styles.join("\n");
@@ -2213,6 +2304,7 @@ var require_system_pages = __commonJS({
       return [
         card("agent", "agent", t("tab_agent"), t("agent_desc")),
         card("agentList", "agent", t("tab_agent_list"), t("agent_list_desc")),
+        card("queue", "\u961F", t("tab_queue"), t("queue_desc")),
         card("data", "\u6570", t("tab_data"), t("data_desc")),
         card("config", "\u914D", t("tab_config"), t("config_desc")),
         card("backup", "backup", t("tab_backup"), t("backup_desc")),
@@ -3437,6 +3529,260 @@ var require_host_pages = __commonJS({
       return configBody(deps, { state, busy, toast, onSave: save, onReset: reset });
     }
     module2.exports = { dataPage, configPage, configBody, DataView: HostDataView, HOST_TABLES };
+  }
+});
+
+// packages/shell/client/event-queue-page.cjs
+var require_event_queue_page = __commonJS({
+  "packages/shell/client/event-queue-page.cjs"(exports2, module2) {
+    "use strict";
+    var PAGE_SIZE = 50;
+    var STATUS_LABEL = {
+      queued: "\u6392\u961F\u4E2D",
+      pending: "\u5F85\u6295\u9012",
+      running: "\u6267\u884C\u4E2D",
+      done: "\u5DF2\u5B8C\u6210",
+      dead: "\u6B7B\u4FE1"
+    };
+    var STATUS_LABEL_EN = {
+      queued: "queued",
+      pending: "pending",
+      running: "running",
+      done: "done",
+      dead: "dead"
+    };
+    function statusText(lang, status) {
+      var table = lang === "en" ? STATUS_LABEL_EN : STATUS_LABEL;
+      return table[status] || status;
+    }
+    function timeText(value) {
+      var n = Number(value);
+      if (!n) return "\u2014";
+      var d = new Date(n);
+      if (Number.isNaN(d.getTime())) return "\u2014";
+      var pad = function(x) {
+        return x < 10 ? "0" + x : String(x);
+      };
+      return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+    }
+    function useLoader(React, api, action, args, deps) {
+      var state = React.useState({ loading: true, error: "", data: null });
+      var value = state[0];
+      var set = state[1];
+      var tick = React.useState(0);
+      var bump = tick[1];
+      React.useEffect(function() {
+        var alive = true;
+        set(function(prev) {
+          return { loading: true, error: prev.error, data: prev.data };
+        });
+        api.post("/domains/wb-shell/actions/" + encodeURIComponent(action), args || {}).then(function(data) {
+          if (alive) set({ loading: false, error: "", data });
+        }).catch(function(e) {
+          if (alive) set({ loading: false, error: String(e && e.message || e), data: null });
+        });
+        return function() {
+          alive = false;
+        };
+      }, deps.concat([tick[0]]));
+      return { state: value, reload: function() {
+        bump(function(n) {
+          return n + 1;
+        });
+      } };
+    }
+    function statPill(jsx2, label, value) {
+      return jsx2.jsxs("span", { key: label, className: "wbq-pill", children: [
+        jsx2.jsx("span", { className: "wbq-pill-label", children: label }),
+        jsx2.jsx("b", { children: String(value || 0) })
+      ] });
+    }
+    function queuePage(deps) {
+      var jsx2 = deps.jsx;
+      var React = deps.React;
+      var api = deps.api;
+      var t = deps.t;
+      var lang = deps.lang;
+      var tabState = React.useState("events");
+      var tab = tabState[0];
+      var setTab = tabState[1];
+      var filterState = React.useState("");
+      var filter = filterState[0];
+      var setFilter = filterState[1];
+      var pageState = React.useState(1);
+      var page = pageState[0];
+      var setPage = pageState[1];
+      var noteState = React.useState("");
+      var note = noteState[0];
+      var setNote = noteState[1];
+      var overview = useLoader(React, api, "wb.eventOverview", {}, []);
+      var events = useLoader(React, api, "wb.eventList", { status: filter || void 0, page, pageSize: PAGE_SIZE }, [filter, page]);
+      var deliveries = useLoader(React, api, "wb.eventDeliveryList", { status: filter || void 0, page, pageSize: PAGE_SIZE }, [filter, page]);
+      var subs = useLoader(React, api, "wb.eventSubscriptionList", {}, []);
+      var active = tab === "events" ? events : tab === "deliveries" ? deliveries : subs;
+      React.useEffect(function() {
+        setFilter("");
+        setPage(1);
+      }, [tab]);
+      function reload() {
+        overview.reload();
+        if (tab === "subscriptions") subs.reload();
+        else if (tab === "deliveries") deliveries.reload();
+        else events.reload();
+      }
+      function replay(delivery) {
+        if (!window.confirm(t("queue_replay_confirm"))) return;
+        api.post("/domains/wb-shell/actions/wb.eventReplay", { deliveryId: delivery.id }).then(function() {
+          setNote(t("queue_replay_ok"));
+          reload();
+        }).catch(function(e) {
+          setNote(String(e && e.message || e));
+        });
+      }
+      function cleanup() {
+        if (!window.confirm(t("queue_cleanup_confirm"))) return;
+        api.post("/domains/wb-shell/actions/wb.eventCleanup", { olderThanDays: 7 }).then(function(r) {
+          setNote(t("queue_cleanup_ok") + " " + String(r && r.deleted || 0));
+          reload();
+        }).catch(function(e) {
+          setNote(String(e && e.message || e));
+        });
+      }
+      var stats = overview.state.data || { events: {}, deliveries: {}, subscriptions: 0 };
+      var tabs = [
+        ["events", t("queue_tab_events")],
+        ["deliveries", t("queue_tab_deliveries")],
+        ["subscriptions", t("queue_tab_subscriptions")]
+      ];
+      var filters = tab === "events" ? ["queued", "done", "dead"] : tab === "deliveries" ? ["pending", "running", "done", "dead"] : [];
+      var body = [];
+      body.push(
+        jsx2.jsx("div", { className: "wbq-stats", children: [
+          statPill(jsx2, t("queue_queued"), stats.events.queued),
+          statPill(jsx2, t("queue_dead"), (stats.events.dead || 0) + (stats.deliveries.dead || 0)),
+          statPill(jsx2, t("queue_pending"), stats.deliveries.pending),
+          statPill(jsx2, t("queue_done"), stats.events.done),
+          statPill(jsx2, t("queue_subscriptions"), stats.subscriptions)
+        ] })
+      );
+      body.push(
+        jsx2.jsx("div", { className: "wbq-toolbar", children: [
+          jsx2.jsx("div", { className: "wbq-tabs", children: tabs.map(function(item) {
+            return jsx2.jsx(
+              "button",
+              { key: item[0], type: "button", className: "wb-btn ghost" + (tab === item[0] ? " on" : ""), onClick: function() {
+                setTab(item[0]);
+              } },
+              item[1]
+            );
+          }) }),
+          filters.length ? jsx2.jsx("select", {
+            key: "filter",
+            className: "wbq-select",
+            value: filter,
+            onChange: function(e) {
+              setFilter(e.target.value);
+              setPage(1);
+            },
+            children: [jsx2.jsx("option", { key: "all", value: "", children: t("queue_all_status") })].concat(
+              filters.map(function(s) {
+                return jsx2.jsx("option", { key: s, value: s, children: statusText(lang, s) });
+              })
+            )
+          }) : null,
+          jsx2.jsx("button", { key: "refresh", type: "button", className: "wb-btn ghost", onClick: reload, children: t("queue_refresh") }),
+          tab === "events" || tab === "deliveries" ? jsx2.jsx("button", { key: "cleanup", type: "button", className: "wb-btn danger", onClick: cleanup, children: t("queue_cleanup") }) : null
+        ] })
+      );
+      if (note) body.push(jsx2.jsx("div", { className: "wbq-note", children: note }));
+      if (active.state.error) body.push(jsx2.jsx("div", { className: "wbq-note err", children: active.state.error }));
+      var rows = active.state.data && active.state.data.items || [];
+      if (tab === "subscriptions") {
+        body.push(rows.length ? jsx2.jsx("div", { className: "wbq-table-wrap", children: jsx2.jsxs("table", { className: "wbq-table", children: [
+          jsx2.jsx("thead", { children: jsx2.jsx("tr", { children: [
+            jsx2.jsx("th", { children: t("queue_domain") }),
+            jsx2.jsx("th", { children: t("queue_event_type") }),
+            jsx2.jsx("th", { children: t("queue_action") }),
+            jsx2.jsx("th", { children: t("queue_created") })
+          ] }) }),
+          jsx2.jsx("tbody", { children: rows.map(function(r, i) {
+            return jsx2.jsxs("tr", { children: [
+              jsx2.jsx("td", { children: r.domain }),
+              jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.type }) }),
+              jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.action }) }),
+              jsx2.jsx("td", { children: timeText(r.created_at) })
+            ] }, i);
+          }) })
+        ] }) }) : jsx2.jsx("div", { className: "wbq-empty", children: t("queue_empty") }));
+      } else if (tab === "deliveries") {
+        body.push(rows.length ? jsx2.jsx("div", { className: "wbq-table-wrap", children: jsx2.jsxs("table", { className: "wbq-table", children: [
+          jsx2.jsx("thead", { children: jsx2.jsx("tr", { children: [
+            jsx2.jsx("th", { children: t("queue_event_type") }),
+            jsx2.jsx("th", { children: t("queue_domain") }),
+            jsx2.jsx("th", { children: t("queue_action") }),
+            jsx2.jsx("th", { children: t("queue_status") }),
+            jsx2.jsx("th", { children: t("queue_attempts") }),
+            jsx2.jsx("th", { children: t("queue_next_at") }),
+            jsx2.jsx("th", { children: t("queue_last_error") }),
+            jsx2.jsx("th", { children: "" })
+          ] }) }),
+          jsx2.jsx("tbody", { children: rows.map(function(r, i) {
+            return jsx2.jsxs("tr", { children: [
+              jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.event_type || "\u2014" }) }),
+              jsx2.jsx("td", { children: r.domain }),
+              jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.action }) }),
+              jsx2.jsx("td", { children: jsx2.jsx("span", { className: "wbq-status s-" + r.status, children: statusText(lang, r.status) }) }),
+              jsx2.jsx("td", { children: String(r.attempts || 0) }),
+              jsx2.jsx("td", { children: r.status === "done" ? "\u2014" : timeText(r.next_at) }),
+              jsx2.jsx("td", { className: "wbq-err", children: r.last_error || "\u2014" }),
+              jsx2.jsx("td", { children: r.status === "dead" || r.status === "pending" && r.last_error ? jsx2.jsx("button", { type: "button", className: "wb-btn ghost", onClick: function() {
+                replay(r);
+              }, children: t("queue_replay") }) : null })
+            ] }, i);
+          }) })
+        ] }) }) : jsx2.jsx("div", { className: "wbq-empty", children: t("queue_empty") }));
+      } else {
+        body.push(rows.length ? jsx2.jsx("div", { className: "wbq-table-wrap", children: jsx2.jsxs("table", { className: "wbq-table", children: [
+          jsx2.jsx("thead", { children: jsx2.jsx("tr", { children: [
+            jsx2.jsx("th", { children: t("queue_event_type") }),
+            jsx2.jsx("th", { children: t("queue_source") }),
+            jsx2.jsx("th", { children: t("queue_status") }),
+            jsx2.jsx("th", { children: t("queue_created") }),
+            jsx2.jsx("th", { children: t("queue_payload") })
+          ] }) }),
+          jsx2.jsx("tbody", { children: rows.map(function(r, i) {
+            return jsx2.jsxs("tr", { children: [
+              jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.type }) }),
+              jsx2.jsx("td", { children: r.source }),
+              jsx2.jsx("td", { children: jsx2.jsx("span", { className: "wbq-status s-" + r.status, children: statusText(lang, r.status) }) }),
+              jsx2.jsx("td", { children: timeText(r.created_at) }),
+              jsx2.jsx("td", { className: "wbq-payload", children: jsx2.jsx("code", { children: r.payload || "" }) })
+            ] }, i);
+          }) })
+        ] }) }) : jsx2.jsx("div", { className: "wbq-empty", children: t("queue_empty") }));
+      }
+      var meta = (tab === "subscriptions" ? subs : tab === "deliveries" ? deliveries : events).state;
+      var paging = meta.data && meta.data.pages ? meta.data : null;
+      if (paging) {
+        body.push(jsx2.jsx("div", { className: "wbq-pager", children: [
+          jsx2.jsx("button", { type: "button", className: "wb-btn ghost", disabled: page <= 1, onClick: function() {
+            setPage(page - 1);
+          }, children: t("queue_prev") }),
+          jsx2.jsx("span", { className: "wbq-muted", children: page + " / " + paging.pages + " \xB7 " + paging.total }),
+          jsx2.jsx("button", { type: "button", className: "wb-btn ghost", disabled: page >= paging.pages, onClick: function() {
+            setPage(page + 1);
+          }, children: t("queue_next") })
+        ] }));
+      }
+      if (active.state.loading) body.push(jsx2.jsx("div", { className: "wbq-muted", children: t("queue_loading") }));
+      return jsx2.jsxs("div", { className: "wb-root", children: [
+        jsx2.jsxs("div", { className: "wb-inner wb-wide", children: [
+          deps.head(t("tab_queue"), t("queue_desc")) || null,
+          jsx2.jsx("div", { className: "wbq", children: body })
+        ] })
+      ] });
+    }
+    module2.exports = { queuePage };
   }
 });
 
@@ -5258,6 +5604,7 @@ var createPanellistIcon = require_panellist_icon();
 var addonNav = require_addon_nav()();
 var SystemPages = require_system_pages();
 var HostPages = require_host_pages();
+var QueuePage = require_event_queue_page();
 var createEventsView = require_events_view();
 var EventsView = createEventsView().EventsView;
 var slotCatalog = require_slot_catalog();
@@ -5852,6 +6199,9 @@ function WorkbenchPage(props) {
     return jsx.jsxs("div", { className: "wb-root", children: [
       jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_audit"), t("audit_desc")), jsx.jsx(AuditTab, { t })] })
     ] });
+  }
+  if (route === "queue") {
+    return QueuePage.queuePage({ jsx, React: react, api, lang, t, head: pageHead });
   }
   if (route === "data") {
     return HostPages.dataPage({ jsx, api, lang, t, head: pageHead });

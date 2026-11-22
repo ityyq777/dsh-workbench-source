@@ -155,6 +155,7 @@ function manageCards(deps) {
   return [
     card("agent", "agent", t("tab_agent"), t("agent_desc")),
     card("agentList", "agent", t("tab_agent_list"), t("agent_list_desc")),
+    card("queue", "队", t("tab_queue"), t("queue_desc")),
     card("data", "数", t("tab_data"), t("data_desc")),
     card("config", "配", t("tab_config"), t("config_desc")),
     card("backup", "backup", t("tab_backup"), t("backup_desc")),

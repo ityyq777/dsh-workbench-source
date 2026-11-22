@@ -57,7 +57,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.10.13";
+export const SHELL_VERSION = "0.11.0";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -228,6 +228,9 @@ export function apply(ctx: any): void {
   const sessionScope: { value: any } = { value: null };
   const agentRun = createAgentRun({ getSessionController: () => sessionScope.value });
 
+  // 事件队列的 drain 要在队列创建之后才存在：先给 action 层一个可写的踢动句柄，
+  // 「事件队列」页重投后靠它立刻尝试派发，而不是等下一轮补扫。
+  const queueKick: { fn: (() => void) | null } = { fn: null };
   const { invoke, actionNames, installTool, schemaSnapshot } = createActions({
     domains,
     SHELL_VERSION,
@@ -238,11 +241,15 @@ export function apply(ctx: any): void {
     db: state.db,
     search,
     extraMetaActions: [["host.agentRun", agentRun]],
+    queueKick,
   });
 
   // 宿主事件队列：push 写库即返回，订阅方的消费 action 由后台 drain 异步分发。
   // 必须在 createActions 之后建，因为分发要用它固定 plugin 来源的 invoke。
   const eventQueue = createEventQueue({ db: state.db, invoke, log });
+  queueKick.fn = () => {
+    void eventQueue.drain();
+  };
   const hostEvents = {
     push: (type: string, payload?: unknown) => eventQueue.push(type, payload, "host"),
     stats: () => eventQueue.stats(),

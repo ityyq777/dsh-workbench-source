@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbench",
-  "version": "0.10.13",
+  "version": "0.11.0",
   "type": "module",
   "main": "lib/index.js",
   "scripts": {
