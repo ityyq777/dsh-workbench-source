@@ -215,7 +215,12 @@ input.props.onChange({ target: { value: "" } });
 tree = m.rerender();
 assert.equal(findAll(tree, (n) => n.type === "mark").length, 0, "清空搜索后不应残留 mark");
 const selects = findAll(tree, (n) => n.type === "select");
-assert.equal(selects.length, 2, "应有必填筛选与类型筛选两个下拉");
+// 工具栏三个下拉：必填筛选、参数类型、允许来源（来源筛选靠 actions.setActionOrigins 的 origins 生效）。
+assert.equal(selects.length, 3, "应有必填筛选、参数类型与允许来源三个下拉");
+assert.ok(
+  findAll(tree, (n) => n.type === "select" && n.props["data-origin-filter"] !== undefined).length === 1,
+  "来源筛选下拉应带 data-origin-filter 标记",
+);
 selects[0].props.onChange({ target: { value: "required" } });
 tree = m.rerender();
 assert.match(text(tree), /1 \/ 2 个 action/, "仅必填筛选命中 tasks.list");
@@ -268,6 +273,36 @@ assert.match(text(tree), /Actions/);
 assert.match(text(tree), /read-only/);
 assert.match(text(tree), /2 \/ 2 actions/);
 assert.match(text(tree), /No parameters/);
+
+// ── 窄屏样式契约：≤760px 参数表换成带语义类名的字段网格，不能退回无标签的竖向堆叠 ──
+// 参数单元格带 pname/ptype/pneed/pextra/pdesc 类名，样式靠它们把五列压成
+// 「名称 类型 必填」一行 + 约束行 + 说明行；回归时任一环丢了都会在这里失败。
+const cellClasses = findAll(tree, (n) => n.type === "td").map((n) => String(n.props.className || ""));
+["wbt-as-pname", "wbt-as-ptype", "wbt-as-pneed", "wbt-as-pextra", "wbt-as-pdesc"].forEach((name) => {
+  assert.ok(cellClasses.some((cls) => cls.split(/\s+/).includes(name)), "参数单元格应带 " + name);
+});
+
+const styleFactory = require(STYLE_SRC);
+const styleEls = [];
+const registry = {};
+globalThis.document = {
+  getElementById: (id) => registry[id] || null,
+  createElement: () => {
+    const el = { id: "", textContent: "", attrs: {}, setAttribute(key, value) { this.attrs[key] = value; } };
+    styleEls.push(el);
+    return el;
+  },
+  head: { appendChild: (el) => { registry[el.id] = el; } },
+};
+styleFactory("wbt", "wb-addon-tasks")();
+delete globalThis.document;
+const css = styleEls[0].textContent;
+assert.match(css, /@media\(max-width:760px\)/, "应有窄屏断点");
+assert.match(css, /grid-template-areas:"name type need"/, "窄屏参数行应按名称/类型/必填排成一行");
+assert.ok(!/\.wbt-as-table td\{display:block;border-top:0/.test(css), "不能退回丢掉列名的纯竖向堆叠");
+["pname", "ptype", "pneed", "pextra", "pdesc"].forEach((name) => {
+  assert.ok(css.includes(".wbt-as-" + name + "{"), "窄屏样式应覆盖 .wbt-as-" + name);
+});
 
 // 视图只导出组件与域常量，不暴露任何写入口
 const view = loadFactory(createReact().React)({ domain: "tasks", prefix: "wbt" });

@@ -391,13 +391,16 @@ module.exports = function createActionSchemaView(options) {
 
     function paramRow(row) {
       var extra = extraText(row.schema, t);
+      // 每格带语义类名：宽屏靠表格列，窄屏由样式改成「参数卡片」网格，
+      // 名称 / 类型 / 必填挤一行、约束与说明各占整行，避免五列压成一条竖排文本。
       return h("tr", { key: row.name },
-        h("td", { className: P + "-mono" }, Highlight.hit(row.name, kw)),
-        h("td", { className: P + "-mono" }, Highlight.hit(row.type, kw)),
-        h("td", { className: row.required ? P + "-req" : P + "-opt" }, row.required ? t.required : t.optional),
+        h("td", { className: P + "-mono " + P + "-pname" }, Highlight.hit(row.name, kw)),
+        h("td", { className: P + "-mono " + P + "-ptype" }, Highlight.hit(row.type, kw)),
+        h("td", { className: row.required ? P + "-req " + P + "-pneed" : P + "-opt " + P + "-pneed" },
+          row.required ? t.required : t.optional),
         // extra（默认 / 枚举 / 约束）不在过滤 haystack 里，因此也不高亮，保持「显示即命中」口径。
-        h("td", { className: P + "-mono" }, extra),
-        h("td", null, Highlight.hit(row.description, kw)));
+        h("td", { className: P + "-mono " + P + "-pextra" }, extra),
+        h("td", { className: P + "-pdesc" }, Highlight.hit(row.description, kw)));
     }
 
     // 允许来源多选（原生 checkbox）：声明是上界，不在声明里的来源直接 disabled。
