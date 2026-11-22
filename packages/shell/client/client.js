@@ -71,6 +71,25 @@ var require_locale = __commonJS({
         queue_replay_ok: "\u5DF2\u91CD\u65B0\u6392\u961F",
         queue_cleanup_confirm: "\u6E05\u7406 7 \u5929\u524D\u5DF2\u7EC8\u7ED3\uFF08\u5B8C\u6210/\u6B7B\u4FE1\uFF09\u7684\u4E8B\u4EF6\u53CA\u5176\u6295\u9012\uFF1F",
         queue_cleanup_ok: "\u5DF2\u6E05\u7406",
+        queue_health_idle: "\u961F\u5217\u7A7A\u95F2",
+        queue_health_busy: "\u6B63\u5728\u6D3E\u53D1",
+        queue_health_dead: "\u6709\u6B7B\u4FE1\u5F85\u5904\u7406",
+        queue_health_idle_hint: "\u6CA1\u6709\u6392\u961F\u4E2D\u6216\u5F85\u6295\u9012\u7684\u4E8B\u4EF6",
+        queue_health_busy_hint: "\u6709\u4E8B\u4EF6\u5728\u6392\u961F\u6216\u7B49\u5F85\u6295\u9012\uFF0C\u5BBF\u4E3B\u6B63\u5728\u540E\u53F0\u63A8\u8FDB",
+        queue_health_dead_hint: "\u6B7B\u4FE1\u4E0D\u4F1A\u81EA\u52A8\u91CD\u8BD5\uFF0C\u9700\u8981\u4EBA\u5DE5\u91CD\u6295",
+        queue_types: "\u4E8B\u4EF6\u7C7B\u578B\u5206\u5E03",
+        queue_recent: "\u6700\u8FD1\u4E8B\u4EF6",
+        queue_no_types: "\u8FD8\u6CA1\u6709\u4EFB\u4F55\u4E8B\u4EF6\u7C7B\u578B",
+        queue_total_events: "\u5171 {n} \u6761",
+        queue_empty_hint: "\u4E8B\u4EF6\u88AB\u63A8\u5165\u540E\u4F1A\u7ACB\u523B\u51FA\u73B0\u5728\u8FD9\u91CC",
+        queue_empty_domains: "\u6CA1\u6709\u5DF2\u6CE8\u518C\u7684\u63D2\u4EF6\u57DF",
+        queue_empty_events: "\u5F53\u524D\u7B5B\u9009\u4E0B\u6CA1\u6709\u4E8B\u4EF6",
+        queue_empty_deliveries: "\u5F53\u524D\u7B5B\u9009\u4E0B\u6CA1\u6709\u6295\u9012",
+        queue_empty_subs: "\u8FD8\u6CA1\u6709\u63D2\u4EF6\u767B\u8BB0\u8BA2\u9605",
+        queue_ago_just: "\u521A\u521A",
+        queue_ago_min: "{n} \u5206\u949F\u524D",
+        queue_ago_hour: "{n} \u5C0F\u65F6\u524D",
+        queue_ago_day: "{n} \u5929\u524D",
         loading: "\u8BFB\u53D6\u4E2D\u2026",
         reset_default: "\u6062\u590D\u9ED8\u8BA4",
         sync_progress: "\u540C\u6B65\u8FDB\u5EA6",
@@ -381,6 +400,25 @@ var require_locale = __commonJS({
         queue_replay_ok: "Re-queued",
         queue_cleanup_confirm: "Delete finished (done/dead) events and their deliveries older than 7 days?",
         queue_cleanup_ok: "Deleted",
+        queue_health_idle: "Queue idle",
+        queue_health_busy: "Dispatching",
+        queue_health_dead: "Dead letters need attention",
+        queue_health_idle_hint: "Nothing queued or waiting for delivery",
+        queue_health_busy_hint: "Events are queued or waiting; the host is working through them",
+        queue_health_dead_hint: "Dead letters are never retried automatically; replay them by hand",
+        queue_types: "Event types",
+        queue_recent: "Recent events",
+        queue_no_types: "No event types yet",
+        queue_total_events: "{n} total",
+        queue_empty_hint: "Events show up here the moment they are pushed",
+        queue_empty_domains: "No plugin domain registered",
+        queue_empty_events: "No events for this filter",
+        queue_empty_deliveries: "No deliveries for this filter",
+        queue_empty_subs: "No plugin subscribed yet",
+        queue_ago_just: "just now",
+        queue_ago_min: "{n} min ago",
+        queue_ago_hour: "{n} h ago",
+        queue_ago_day: "{n} d ago",
         loading: "Loading\u2026",
         reset_default: "Reset to default",
         sync_progress: "Sync progress",
@@ -1298,40 +1336,95 @@ var require_styles = __commonJS({
       ".wb-sync-tables li.fail{color:var(--wb-danger,inherit)}",
       ".wb-sync-table-name{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}",
       ".wb-sync-table-state{margin-left:auto;opacity:.8;overflow-wrap:anywhere}",
-      ".wbq{display:flex;flex-direction:column;gap:12px;padding:4px 0 24px;box-sizing:border-box}",
-      ".wbq-stats{display:flex;flex-wrap:wrap;gap:8px}",
-      ".wbq-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--wb-line);background:var(--wb-card);font-size:12px;line-height:1.4}",
-      ".wbq-pill-label{color:var(--wb-muted)}",
-      ".wbq-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
-      ".wbq-tabs{display:inline-flex;gap:4px;padding:3px;border:1px solid var(--wb-line);border-radius:10px;background:var(--wb-card)}",
-      ".wbq-tabs .wb-btn{border:0;background:transparent;padding:5px 12px;border-radius:8px}",
-      ".wbq-tabs .wb-btn.on{background:color-mix(in oklab,var(--wb-accent) 14%,var(--wb-card));color:var(--wb-accent);font-weight:600}",
-      ".wbq-select{min-height:32px;padding:4px 10px;border-radius:8px;border:1px solid var(--wb-line);background:var(--wb-card);color:inherit;font:inherit;font-size:12.5px}",
-      ".wbq-toolbar .wb-btn.danger{margin-left:auto}",
-      ".wbq-domains{display:flex;flex-direction:column;gap:10px}",
-      ".wbq-domain{border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card);padding:12px 14px;display:flex;flex-direction:column;gap:8px}",
-      ".wbq-domain-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}",
-      ".wbq-domain-row{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}",
-      ".wbq-domain-label{flex:none;width:44px;font-size:11.5px;font-weight:600;color:var(--wb-muted);padding-top:2px}",
-      ".wbq-chips{display:flex;flex-wrap:wrap;gap:6px}",
-      ".wbq-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;border:1px solid var(--wb-line);background:color-mix(in oklab,currentColor 3%,transparent);font-size:11.5px}",
-      ".wbq-chip.off{opacity:.6;border-style:dashed}",
-      ".wbq-table-wrap{overflow:auto;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card)}",
-      ".wbq-table{width:100%;border-collapse:collapse;font-size:12.5px}",
-      ".wbq-table th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--wb-muted);padding:9px 10px;border-bottom:1px solid var(--wb-line);white-space:nowrap;background:color-mix(in oklab,currentColor 3%,transparent)}",
-      ".wbq-table td{padding:9px 10px;border-bottom:1px solid var(--wb-line);vertical-align:top;overflow-wrap:anywhere}",
-      ".wbq-table tr:last-child td{border-bottom:0}",
+      ".wbq{display:flex;flex-direction:column;gap:14px;padding:4px 0 24px;box-sizing:border-box}",
+      ".wbq-hero{display:flex;flex-direction:column;gap:14px;padding:14px 16px;border:1px solid var(--wb-line);border-radius:14px;background:var(--wb-card)}",
+      ".wbq-hero-top{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;justify-content:space-between}",
+      ".wbq-health{display:flex;align-items:center;gap:10px;min-width:0}",
+      ".wbq-health-text{display:flex;flex-direction:column;gap:2px;font-size:13px;min-width:0}",
+      ".wbq-dot{flex:none;width:10px;height:10px;border-radius:50%;background:var(--wb-muted);box-shadow:0 0 0 4px color-mix(in oklab,var(--wb-muted) 18%,transparent)}",
+      ".wbq-dot.h-idle{background:var(--wb-ok);box-shadow:0 0 0 4px color-mix(in oklab,var(--wb-ok) 18%,transparent)}",
+      ".wbq-dot.h-busy{background:var(--wb-warn);box-shadow:0 0 0 4px color-mix(in oklab,var(--wb-warn) 18%,transparent)}",
+      ".wbq-dot.h-dead{background:var(--wb-danger);box-shadow:0 0 0 4px color-mix(in oklab,var(--wb-danger) 20%,transparent)}",
+      ".wbq-hero-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto}",
+      ".wbq-hero-actions .wb-btn{padding:5px 12px;font-size:12px}",
+      ".wbq-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px}",
+      ".wbq-metric{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--wb-line);border-radius:10px;background:color-mix(in oklab,currentColor 2.5%,transparent);min-width:0}",
+      ".wbq-metric-label{font-size:11.5px;color:var(--wb-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".wbq-metric-value{font-size:21px;line-height:1.25;font-variant-numeric:tabular-nums;font-weight:650}",
+      ".wbq-metric.t-ok .wbq-metric-value{color:var(--wb-ok)}",
+      ".wbq-metric.t-warn .wbq-metric-value{color:var(--wb-warn)}",
+      ".wbq-metric.t-danger .wbq-metric-value{color:var(--wb-danger)}",
+      ".wbq-insight{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px}",
+      ".wbq-panel{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card);min-width:0}",
+      ".wbq-panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:12.5px}",
+      ".wbq-bars{display:flex;flex-direction:column;gap:8px}",
+      ".wbq-bar-row{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(50px,1.6fr) 34px;align-items:center;gap:10px}",
+      ".wbq-bar-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;color:var(--wb-muted)}",
+      ".wbq-bar-track{display:block;height:6px;border-radius:999px;background:color-mix(in oklab,var(--wb-accent) 12%,var(--wb-line));overflow:hidden}",
+      ".wbq-bar-fill{display:block;height:100%;border-radius:999px;background:var(--wb-accent);transition:width .3s ease}",
+      ".wbq-bar-count{text-align:right;font-size:11.5px;font-variant-numeric:tabular-nums}",
+      ".wbq-bar-total{font-size:11px;color:var(--wb-muted);text-align:right}",
+      ".wbq-recent{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}",
+      ".wbq-recent-item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px}",
+      ".wbq-recent-type{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px}",
+      ".wbq-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between}",
+      ".wbq-tabs{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--wb-line);border-radius:10px;background:var(--wb-card)}",
+      ".wbq-tab{appearance:none;border:0;background:transparent;color:var(--wb-muted);font:inherit;font-size:12.5px;padding:5px 12px;border-radius:8px;cursor:pointer;transition:background .12s ease,color .12s ease}",
+      ".wbq-tab:hover{color:inherit;background:color-mix(in oklab,currentColor 5%,transparent)}",
+      ".wbq-tab.on{background:color-mix(in oklab,var(--wb-accent) 14%,var(--wb-card));color:var(--wb-accent);font-weight:600}",
+      ".wbq-filters{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}",
+      ".wbq-filter{appearance:none;border:1px solid var(--wb-line);background:var(--wb-card);color:var(--wb-muted);font:inherit;font-size:11.5px;padding:4px 10px;border-radius:999px;cursor:pointer;transition:border-color .12s ease,color .12s ease,background .12s ease}",
+      ".wbq-filter:hover{color:inherit}",
+      ".wbq-filter.on{color:inherit;border-color:color-mix(in oklab,var(--wb-accent) 45%,var(--wb-line));background:color-mix(in oklab,var(--wb-accent) 10%,var(--wb-card));font-weight:600}",
+      ".wbq-filter.s-dead.on,.wbq-badge.s-dead{color:var(--wb-danger)}",
+      ".wbq-filter.s-pending.on,.wbq-filter.s-running.on,.wbq-badge.s-pending,.wbq-badge.s-running{color:var(--wb-warn)}",
+      ".wbq-filter.s-done.on,.wbq-badge.s-done{color:var(--wb-ok)}",
+      ".wbq-filter.s-queued.on,.wbq-badge.s-queued{color:var(--wb-accent)}",
+      ".wbq-badge{display:inline-flex;align-items:center;gap:6px;padding:1px 9px;border-radius:999px;border:1px solid currentColor;font-size:11px;line-height:1.7;white-space:nowrap;background:color-mix(in oklab,currentColor 6%,transparent)}",
+      ".wbq-badge-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}",
+      ".wbq-table-wrap{overflow:auto;max-height:62vh;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card)}",
+      ".wbq-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px}",
+      ".wbq-table thead th{position:sticky;top:0;z-index:1;text-align:left;font-size:11px;font-weight:600;letter-spacing:.03em;color:var(--wb-muted);padding:9px 10px;border-bottom:1px solid var(--wb-line);white-space:nowrap;background:color-mix(in oklab,var(--wb-card) 82%,var(--wb-surface,#0e1116));backdrop-filter:blur(4px)}",
+      ".wbq-table tbody td{padding:9px 10px;border-bottom:1px solid var(--wb-line);vertical-align:middle;overflow-wrap:anywhere}",
+      ".wbq-table tbody tr:last-child td{border-bottom:0}",
+      ".wbq-table tbody tr:nth-child(even) td{background:color-mix(in oklab,currentColor 1.8%,transparent)}",
+      ".wbq-table tbody tr:hover td{background:color-mix(in oklab,var(--wb-accent) 6%,transparent)}",
+      ".wbq-table tbody tr.is-dead td{background:color-mix(in oklab,var(--wb-danger) 5%,transparent)}",
+      ".wbq-table tbody tr.is-dead td:first-child{box-shadow:inset 3px 0 0 var(--wb-danger)}",
       ".wbq-table code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}",
-      ".wbq-status{display:inline-block;padding:1px 8px;border-radius:999px;border:1px solid var(--wb-line);font-size:11px;line-height:1.6;white-space:nowrap}",
-      ".wbq-status.s-done{color:var(--wb-ok);border-color:color-mix(in oklab,var(--wb-ok) 40%,var(--wb-line))}",
-      ".wbq-status.s-dead{color:var(--wb-danger);border-color:color-mix(in oklab,var(--wb-danger) 40%,var(--wb-line))}",
-      ".wbq-status.s-running,.wbq-status.s-pending{color:var(--wb-warn);border-color:color-mix(in oklab,var(--wb-warn) 40%,var(--wb-line))}",
-      ".wbq-payload{max-width:520px;opacity:.85}",
+      ".wbq-cell-strong{font-weight:600}",
+      ".wbq-cell-time{color:var(--wb-muted);white-space:nowrap;font-variant-numeric:tabular-nums}",
+      ".wbq-cell-num{text-align:right;font-variant-numeric:tabular-nums;color:var(--wb-muted)}",
+      ".wbq-cell-action{text-align:right;white-space:nowrap}",
+      ".wbq-replay{padding:2px 10px;font-size:11.5px}",
+      ".wbq-payload{max-width:520px}",
+      ".wbq-payload code{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--wb-muted)}",
       ".wbq-err{max-width:320px;font-size:11.5px;color:var(--wb-muted)}",
-      ".wbq-empty{padding:34px 18px;border:1px dashed var(--wb-line);border-radius:12px;text-align:center;color:var(--wb-muted);font-size:12.5px}",
+      ".wbq-domains{display:flex;flex-direction:column;gap:10px}",
+      ".wbq-domain{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card)}",
+      ".wbq-domain.has-error{border-color:color-mix(in oklab,var(--wb-danger) 40%,var(--wb-line))}",
+      ".wbq-domain-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}",
+      ".wbq-domain-title{font-size:13px}",
+      ".wbq-domain-id{font-size:11px;color:var(--wb-muted)}",
+      ".wbq-domain-row{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}",
+      ".wbq-domain-label{flex:none;width:44px;font-size:11.5px;font-weight:600;color:var(--wb-muted);padding-top:3px}",
+      ".wbq-chips{display:flex;flex-wrap:wrap;gap:6px}",
+      ".wbq-chip{display:inline-flex;align-items:center;gap:8px;padding:3px 10px;border-radius:999px;border:1px solid var(--wb-line);background:color-mix(in oklab,currentColor 3%,transparent);font-size:11.5px}",
+      ".wbq-chip.off{opacity:.62;border-style:dashed}",
+      ".wbq-chip-meta{font-style:normal;font-size:11px;color:var(--wb-muted)}",
+      ".wbq-loading{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card)}",
+      ".wbq-loading-row{display:flex;gap:12px}",
+      ".wbq-loading-bar{flex:1;height:14px;border-radius:6px;background:linear-gradient(90deg,color-mix(in oklab,currentColor 4%,transparent),color-mix(in oklab,currentColor 9%,transparent),color-mix(in oklab,currentColor 4%,transparent));background-size:200% 100%;animation:wbq-shimmer 1.4s ease-in-out infinite}",
+      "@keyframes wbq-shimmer{0%{background-position:180% 0}100%{background-position:-80% 0}}",
+      ".wbq-empty{display:flex;flex-direction:column;align-items:center;gap:6px;padding:36px 18px;border:1px dashed var(--wb-line);border-radius:12px;text-align:center;color:var(--wb-muted);font-size:12.5px;background:var(--wb-card)}",
+      ".wbq-empty b{font-size:13px;color:inherit}",
+      ".wbq-empty-mark{width:26px;height:26px;border-radius:50%;border:1px dashed color-mix(in oklab,currentColor 40%,transparent)}",
+      ".wbq-empty-hint{font-size:11.5px;opacity:.85}",
+      ".wbq-hint{color:var(--wb-muted);font-size:11.5px}",
       ".wbq-note{padding:8px 12px;border-radius:8px;border:1px solid color-mix(in oklab,var(--wb-accent) 26%,var(--wb-line));background:color-mix(in oklab,var(--wb-accent) 6%,var(--wb-card));font-size:12.5px}",
       ".wbq-note.err{border-color:color-mix(in oklab,var(--wb-danger) 30%,var(--wb-line));background:color-mix(in oklab,var(--wb-danger) 7%,var(--wb-card));color:var(--wb-danger)}",
       ".wbq-pager{display:flex;align-items:center;gap:10px;font-size:12px}",
+      ".wbq-pager .wb-btn{padding:4px 10px;font-size:12px}",
       ".wbq-muted{color:var(--wb-muted);font-size:12px}",
       ".wb-toast{position:sticky;bottom:12px;align-self:center;padding:7px 14px;border-radius:999px;border:1px solid var(--wb-line);background:var(--wb-surface);font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.12)}"
     ].join("\n");
@@ -3582,15 +3675,27 @@ var require_event_queue_page = __commonJS({
       var table = lang === "en" ? STATUS_LABEL_EN : STATUS_LABEL;
       return table[status] || status;
     }
+    function pad2(x) {
+      return x < 10 ? "0" + x : String(x);
+    }
     function timeText(value) {
       var n = Number(value);
       if (!n) return "\u2014";
       var d = new Date(n);
       if (Number.isNaN(d.getTime())) return "\u2014";
-      var pad = function(x) {
-        return x < 10 ? "0" + x : String(x);
-      };
-      return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+      return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds());
+    }
+    function agoText(t, value, now) {
+      var ts = Number(value);
+      if (!ts) return "\u2014";
+      var diff = Math.max(0, Number(now || Date.now()) - ts);
+      var minute = 6e4;
+      var hour = 36e5;
+      var day = 864e5;
+      if (diff < minute) return t("queue_ago_just");
+      if (diff < hour) return t("queue_ago_min").replace("{n}", String(Math.floor(diff / minute)));
+      if (diff < day) return t("queue_ago_hour").replace("{n}", String(Math.floor(diff / hour)));
+      return t("queue_ago_day").replace("{n}", String(Math.floor(diff / day)));
     }
     function readResult(res) {
       if (res && res.ok === false) throw new Error(String(res.error || "\u8BF7\u6C42\u5931\u8D25"));
@@ -3623,11 +3728,61 @@ var require_event_queue_page = __commonJS({
         });
       } };
     }
-    function statPill(jsx2, label, value) {
-      return jsx2.jsxs("span", { key: label, className: "wbq-pill", children: [
-        jsx2.jsx("span", { className: "wbq-pill-label", children: label }),
-        jsx2.jsx("b", { children: String(value || 0) })
+    function metricTile(jsx2, label, value, tone) {
+      return jsx2.jsxs("div", { key: label, className: "wbq-metric" + (tone ? " t-" + tone : ""), children: [
+        jsx2.jsx("span", { className: "wbq-metric-label", children: label }),
+        jsx2.jsx("b", { className: "wbq-metric-value", children: String(value || 0) })
       ] });
+    }
+    function statusBadge(jsx2, lang, status) {
+      return jsx2.jsxs("span", { className: "wbq-badge s-" + status, children: [
+        jsx2.jsx("i", { className: "wbq-badge-dot", "aria-hidden": "true" }),
+        statusText(lang, status)
+      ] });
+    }
+    function typeBars(jsx2, t, types) {
+      if (!types.length) return jsx2.jsx("div", { className: "wbq-hint", children: t("queue_no_types") });
+      var max = Math.max.apply(null, types.map(function(x) {
+        return Number(x.count) || 0;
+      })) || 1;
+      return jsx2.jsx("div", { className: "wbq-bars", children: types.slice(0, 6).map(function(item) {
+        var count = Number(item.count) || 0;
+        var pct = Math.max(4, Math.round(count / max * 100));
+        return jsx2.jsxs("div", { key: item.type, className: "wbq-bar-row", children: [
+          jsx2.jsx("code", { className: "wbq-bar-name", title: item.type, children: item.type }),
+          jsx2.jsx("span", { className: "wbq-bar-track", children: jsx2.jsx("i", { className: "wbq-bar-fill", style: { width: pct + "%" } }) }),
+          jsx2.jsx("b", { className: "wbq-bar-count", children: String(count) })
+        ] }, item.type);
+      }) });
+    }
+    function panel(jsx2, title, extra, body) {
+      return jsx2.jsxs("section", { className: "wbq-panel", children: [
+        jsx2.jsxs("header", { className: "wbq-panel-head", children: [
+          jsx2.jsx("b", { children: title }),
+          extra ? jsx2.jsx("span", { className: "wbq-muted", children: extra }) : null
+        ] }),
+        body
+      ] });
+    }
+    function tableWrap(jsx2, head, rows) {
+      return jsx2.jsx("div", { className: "wbq-table-wrap", children: jsx2.jsxs("table", { className: "wbq-table", children: [
+        jsx2.jsx("thead", { children: jsx2.jsx("tr", { children: head }) }),
+        jsx2.jsx("tbody", { children: rows })
+      ] }) });
+    }
+    function emptyState(jsx2, t, hint) {
+      return jsx2.jsxs("div", { className: "wbq-empty", children: [
+        jsx2.jsx("span", { className: "wbq-empty-mark", "aria-hidden": "true" }),
+        jsx2.jsx("b", { children: t("queue_empty") }),
+        jsx2.jsx("span", { className: "wbq-empty-hint", children: hint || t("queue_empty_hint") })
+      ] });
+    }
+    function loadingRows(jsx2, t, cols) {
+      return jsx2.jsx("div", { className: "wbq-loading", role: "status", "aria-label": t("queue_loading"), children: [0, 1, 2].map(function(i) {
+        return jsx2.jsx("div", { key: i, className: "wbq-loading-row", "aria-hidden": "true", children: [0, 1, 2, Math.max(1, cols - 3)].map(function(c) {
+          return jsx2.jsx("span", { key: c, className: "wbq-loading-bar" });
+        }) });
+      }) });
     }
     function queuePage(deps) {
       var jsx2 = deps.jsx;
@@ -3696,147 +3851,192 @@ var require_event_queue_page = __commonJS({
         var n = bucket[key];
         return typeof n === "number" ? n : 0;
       };
+      var queued = countOf(eventCounts, "queued");
+      var pending = countOf(deliveryCounts, "pending") + countOf(deliveryCounts, "running");
+      var done = countOf(eventCounts, "done");
+      var dead = countOf(eventCounts, "dead") + countOf(deliveryCounts, "dead");
+      var subscriptions = typeof stats.subscriptions === "number" ? stats.subscriptions : 0;
+      var types = Array.isArray(stats.types) ? stats.types : [];
+      var typeTotal = types.reduce(function(sum, item) {
+        return sum + (Number(item.count) || 0);
+      }, 0);
+      var health = dead > 0 ? "dead" : queued + pending > 0 ? "busy" : "idle";
+      var healthText = health === "dead" ? t("queue_health_dead") : health === "busy" ? t("queue_health_busy") : t("queue_health_idle");
+      var healthHint = health === "dead" ? t("queue_health_dead_hint") : health === "busy" ? t("queue_health_busy_hint") : t("queue_health_idle_hint");
       var body = [];
       body.push(
-        jsx2.jsx("div", { className: "wbq-stats", children: [
-          statPill(jsx2, t("queue_queued"), countOf(eventCounts, "queued")),
-          statPill(jsx2, t("queue_dead"), countOf(eventCounts, "dead") + countOf(deliveryCounts, "dead")),
-          statPill(jsx2, t("queue_pending"), countOf(deliveryCounts, "pending")),
-          statPill(jsx2, t("queue_done"), countOf(eventCounts, "done")),
-          statPill(jsx2, t("queue_subscriptions"), typeof stats.subscriptions === "number" ? stats.subscriptions : 0)
+        jsx2.jsxs("section", { className: "wbq-hero", children: [
+          jsx2.jsxs("div", { className: "wbq-hero-top", children: [
+            jsx2.jsxs("div", { className: "wbq-health", children: [
+              jsx2.jsx("span", { className: "wbq-dot h-" + health, "aria-hidden": "true" }),
+              jsx2.jsxs("div", { className: "wbq-health-text", children: [
+                jsx2.jsx("b", { children: healthText }),
+                jsx2.jsx("span", { className: "wbq-muted", children: healthHint })
+              ] })
+            ] }),
+            jsx2.jsxs("div", { className: "wbq-hero-actions", children: [
+              jsx2.jsx("button", { type: "button", className: "wb-btn ghost", onClick: reload, children: t("queue_refresh") }),
+              tab === "events" || tab === "deliveries" ? jsx2.jsx("button", { type: "button", className: "wb-btn danger", onClick: cleanup, children: t("queue_cleanup") }) : null
+            ] })
+          ] }),
+          jsx2.jsxs("div", { className: "wbq-stats", children: [
+            metricTile(jsx2, t("queue_queued"), queued, queued ? "warn" : ""),
+            metricTile(jsx2, t("queue_pending"), pending, pending ? "warn" : ""),
+            metricTile(jsx2, t("queue_done"), done, "ok"),
+            metricTile(jsx2, t("queue_dead"), dead, dead ? "danger" : ""),
+            metricTile(jsx2, t("queue_subscriptions"), subscriptions, "")
+          ] })
+        ] })
+      );
+      var recent = (events.state.data && events.state.data.items || []).slice(0, 4);
+      var now = Date.now();
+      body.push(
+        jsx2.jsxs("div", { className: "wbq-insight", children: [
+          panel(jsx2, t("queue_types"), typeTotal ? t("queue_total_events").replace("{n}", String(typeTotal)) : "", typeBars(jsx2, t, types)),
+          panel(
+            jsx2,
+            t("queue_recent"),
+            recent.length ? t("queue_total_events").replace("{n}", String(recent.length)) : "",
+            recent.length ? jsx2.jsx("ul", { className: "wbq-recent", children: recent.map(function(r, i) {
+              return jsx2.jsxs("li", { key: i, className: "wbq-recent-item", children: [
+                jsx2.jsx("code", { className: "wbq-recent-type", title: r.type, children: r.type }),
+                statusBadge(jsx2, lang, r.status),
+                jsx2.jsx("time", { className: "wbq-muted", title: timeText(r.created_at), children: agoText(t, r.created_at, now) })
+              ] });
+            }) }) : jsx2.jsx("div", { className: "wbq-hint", children: t("queue_empty") })
+          )
         ] })
       );
       body.push(
-        jsx2.jsx("div", { className: "wbq-toolbar", children: [
-          jsx2.jsx("div", { className: "wbq-tabs", children: tabs.map(function(item) {
-            return jsx2.jsx(
-              "button",
-              { key: item[0], type: "button", className: "wb-btn ghost" + (tab === item[0] ? " on" : ""), onClick: function() {
+        jsx2.jsxs("div", { className: "wbq-toolbar", children: [
+          jsx2.jsx("div", { className: "wbq-tabs", role: "tablist", children: tabs.map(function(item) {
+            return jsx2.jsx("button", {
+              key: item[0],
+              type: "button",
+              role: "tab",
+              "aria-selected": tab === item[0],
+              className: "wbq-tab" + (tab === item[0] ? " on" : ""),
+              onClick: function() {
                 setTab(item[0]);
-              } },
-              item[1]
-            );
+              },
+              children: item[1]
+            });
           }) }),
-          filters.length ? jsx2.jsx("select", {
-            key: "filter",
-            className: "wbq-select",
-            value: filter,
-            onChange: function(e) {
-              setFilter(e.target.value);
-              setPage(1);
-            },
-            children: [jsx2.jsx("option", { key: "all", value: "", children: t("queue_all_status") })].concat(
-              filters.map(function(s) {
-                return jsx2.jsx("option", { key: s, value: s, children: statusText(lang, s) });
-              })
-            )
-          }) : null,
-          jsx2.jsx("button", { key: "refresh", type: "button", className: "wb-btn ghost", onClick: reload, children: t("queue_refresh") }),
-          tab === "events" || tab === "deliveries" ? jsx2.jsx("button", { key: "cleanup", type: "button", className: "wb-btn danger", onClick: cleanup, children: t("queue_cleanup") }) : null
+          filters.length ? jsx2.jsx("div", { className: "wbq-filters", children: [""].concat(filters).map(function(s) {
+            var label = s ? statusText(lang, s) : t("queue_all_status");
+            var on = filter === s;
+            return jsx2.jsx("button", {
+              key: s || "all",
+              type: "button",
+              className: "wbq-filter" + (on ? " on" : "") + (s ? " s-" + s : ""),
+              "aria-pressed": on,
+              onClick: function() {
+                setFilter(s);
+                setPage(1);
+              },
+              children: label
+            });
+          }) }) : null
         ] })
       );
-      if (note) body.push(jsx2.jsx("div", { className: "wbq-note", children: note }));
-      if (active.state.error) body.push(jsx2.jsx("div", { className: "wbq-note err", children: active.state.error }));
+      if (note) body.push(jsx2.jsx("div", { className: "wbq-note", role: "status", children: note }));
+      if (active.state.error) body.push(jsx2.jsx("div", { className: "wbq-note err", role: "alert", children: active.state.error }));
       var rows = active.state.data && active.state.data.items || [];
+      var showing = active.state.loading && !rows.length;
       if (tab === "domains") {
         var list = active.state.data && active.state.data.domains || [];
-        body.push(list.length ? jsx2.jsx("div", { className: "wbq-domains", children: list.map(function(d) {
+        if (showing) body.push(loadingRows(jsx2, t, 2));
+        else body.push(list.length ? jsx2.jsx("div", { className: "wbq-domains", children: list.map(function(d) {
           var pub = d.publishes || [];
           var lis = d.listens || [];
-          return jsx2.jsxs("div", { key: d.domain, className: "wbq-domain", children: [
-            jsx2.jsxs("div", { className: "wbq-domain-head", children: [
-              jsx2.jsx("b", { children: d.title }),
-              jsx2.jsx("code", { className: "wbq-muted", children: d.domain }),
-              d.error ? jsx2.jsx("span", { className: "wbq-status s-dead", children: t("queue_domain_error") }) : null
+          return jsx2.jsxs("article", { key: d.domain, className: "wbq-domain" + (d.error ? " has-error" : ""), children: [
+            jsx2.jsxs("header", { className: "wbq-domain-head", children: [
+              jsx2.jsx("b", { className: "wbq-domain-title", children: d.title }),
+              jsx2.jsx("code", { className: "wbq-domain-id", children: d.domain }),
+              d.error ? jsx2.jsx("span", { className: "wbq-badge s-dead", children: t("queue_domain_error") }) : null
             ] }),
             jsx2.jsxs("div", { className: "wbq-domain-row", children: [
               jsx2.jsx("span", { className: "wbq-domain-label", children: t("queue_domain_publishes") }),
               pub.length ? jsx2.jsx("div", { className: "wbq-chips", children: pub.map(function(p) {
                 return jsx2.jsxs("span", { key: p.type, className: "wbq-chip", title: p.description || "", children: [
                   jsx2.jsx("code", { children: p.type }),
-                  jsx2.jsx("span", { className: "wbq-muted", children: t("queue_sent") + " " + String(p.sent || 0) })
+                  jsx2.jsx("em", { className: "wbq-chip-meta", children: t("queue_sent") + " " + String(p.sent || 0) })
                 ] });
-              }) }) : jsx2.jsx("span", { className: "wbq-muted", children: t("queue_no_publish") })
+              }) }) : jsx2.jsx("span", { className: "wbq-hint", children: t("queue_no_publish") })
             ] }),
             jsx2.jsxs("div", { className: "wbq-domain-row", children: [
               jsx2.jsx("span", { className: "wbq-domain-label", children: t("queue_domain_listens") }),
               lis.length ? jsx2.jsx("div", { className: "wbq-chips", children: lis.map(function(l) {
                 return jsx2.jsxs("span", { key: l.type, className: "wbq-chip" + (l.registered ? "" : " off"), title: l.description || "", children: [
                   jsx2.jsx("code", { children: l.type }),
-                  jsx2.jsx("span", { className: "wbq-muted", children: l.registered ? (l.actions || []).join(", ") : t("queue_not_registered") })
+                  jsx2.jsx("em", { className: "wbq-chip-meta", children: l.registered ? (l.actions || []).join(", ") : t("queue_not_registered") })
                 ] });
-              }) }) : jsx2.jsx("span", { className: "wbq-muted", children: t("queue_no_listen") })
+              }) }) : jsx2.jsx("span", { className: "wbq-hint", children: t("queue_no_listen") })
             ] })
           ] }, d.domain);
-        }) }) : jsx2.jsx("div", { className: "wbq-empty", children: t("queue_empty") }));
+        }) }) : emptyState(jsx2, t, t("queue_empty_domains")));
       } else if (tab === "subscriptions") {
-        body.push(rows.length ? jsx2.jsx("div", { className: "wbq-table-wrap", children: jsx2.jsxs("table", { className: "wbq-table", children: [
-          jsx2.jsx("thead", { children: jsx2.jsx("tr", { children: [
-            jsx2.jsx("th", { children: t("queue_domain") }),
-            jsx2.jsx("th", { children: t("queue_event_type") }),
-            jsx2.jsx("th", { children: t("queue_action") }),
-            jsx2.jsx("th", { children: t("queue_created") })
-          ] }) }),
-          jsx2.jsx("tbody", { children: rows.map(function(r, i) {
-            return jsx2.jsxs("tr", { children: [
-              jsx2.jsx("td", { children: r.domain }),
-              jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.type }) }),
-              jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.action }) }),
-              jsx2.jsx("td", { children: timeText(r.created_at) })
-            ] }, i);
-          }) })
-        ] }) }) : jsx2.jsx("div", { className: "wbq-empty", children: t("queue_empty") }));
+        if (showing) body.push(loadingRows(jsx2, t, 4));
+        else body.push(rows.length ? tableWrap(jsx2, [
+          jsx2.jsx("th", { key: "d", children: t("queue_domain") }),
+          jsx2.jsx("th", { key: "t", children: t("queue_event_type") }),
+          jsx2.jsx("th", { key: "a", children: t("queue_action") }),
+          jsx2.jsx("th", { key: "c", children: t("queue_created") })
+        ], rows.map(function(r, i) {
+          return jsx2.jsxs("tr", { children: [
+            jsx2.jsx("td", { className: "wbq-cell-strong", children: r.domain }),
+            jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.type }) }),
+            jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.action }) }),
+            jsx2.jsx("td", { className: "wbq-cell-time", title: timeText(r.created_at), children: timeText(r.created_at) })
+          ] }, i);
+        })) : emptyState(jsx2, t, t("queue_empty_subs")));
       } else if (tab === "deliveries") {
-        body.push(rows.length ? jsx2.jsx("div", { className: "wbq-table-wrap", children: jsx2.jsxs("table", { className: "wbq-table", children: [
-          jsx2.jsx("thead", { children: jsx2.jsx("tr", { children: [
-            jsx2.jsx("th", { children: t("queue_event_type") }),
-            jsx2.jsx("th", { children: t("queue_domain") }),
-            jsx2.jsx("th", { children: t("queue_action") }),
-            jsx2.jsx("th", { children: t("queue_status") }),
-            jsx2.jsx("th", { children: t("queue_attempts") }),
-            jsx2.jsx("th", { children: t("queue_next_at") }),
-            jsx2.jsx("th", { children: t("queue_last_error") }),
-            jsx2.jsx("th", { children: "" })
-          ] }) }),
-          jsx2.jsx("tbody", { children: rows.map(function(r, i) {
-            return jsx2.jsxs("tr", { children: [
-              jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.event_type || "\u2014" }) }),
-              jsx2.jsx("td", { children: r.domain }),
-              jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.action }) }),
-              jsx2.jsx("td", { children: jsx2.jsx("span", { className: "wbq-status s-" + r.status, children: statusText(lang, r.status) }) }),
-              jsx2.jsx("td", { children: String(r.attempts || 0) }),
-              jsx2.jsx("td", { children: r.status === "done" ? "\u2014" : timeText(r.next_at) }),
-              jsx2.jsx("td", { className: "wbq-err", children: r.last_error || "\u2014" }),
-              jsx2.jsx("td", { children: r.status === "dead" || r.status === "pending" && r.last_error ? jsx2.jsx("button", { type: "button", className: "wb-btn ghost", onClick: function() {
-                replay(r);
-              }, children: t("queue_replay") }) : null })
-            ] }, i);
-          }) })
-        ] }) }) : jsx2.jsx("div", { className: "wbq-empty", children: t("queue_empty") }));
+        if (showing) body.push(loadingRows(jsx2, t, 8));
+        else body.push(rows.length ? tableWrap(jsx2, [
+          jsx2.jsx("th", { key: "t", children: t("queue_event_type") }),
+          jsx2.jsx("th", { key: "d", children: t("queue_domain") }),
+          jsx2.jsx("th", { key: "a", children: t("queue_action") }),
+          jsx2.jsx("th", { key: "s", children: t("queue_status") }),
+          jsx2.jsx("th", { key: "n", children: t("queue_attempts") }),
+          jsx2.jsx("th", { key: "x", children: t("queue_next_at") }),
+          jsx2.jsx("th", { key: "e", children: t("queue_last_error") }),
+          jsx2.jsx("th", { key: "o", children: "" })
+        ], rows.map(function(r, i) {
+          return jsx2.jsxs("tr", { className: r.status === "dead" ? "is-dead" : "", children: [
+            jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.event_type || "\u2014" }) }),
+            jsx2.jsx("td", { className: "wbq-cell-strong", children: r.domain }),
+            jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.action }) }),
+            jsx2.jsx("td", { children: statusBadge(jsx2, lang, r.status) }),
+            jsx2.jsx("td", { className: "wbq-cell-num", children: String(r.attempts || 0) }),
+            jsx2.jsx("td", { className: "wbq-cell-time", children: r.status === "done" ? "\u2014" : timeText(r.next_at) }),
+            jsx2.jsx("td", { className: "wbq-err", children: r.last_error || "\u2014" }),
+            jsx2.jsx("td", { className: "wbq-cell-action", children: r.status === "dead" || r.status === "pending" && r.last_error ? jsx2.jsx("button", { type: "button", className: "wb-btn ghost wbq-replay", onClick: function() {
+              replay(r);
+            }, children: t("queue_replay") }) : null })
+          ] }, i);
+        })) : emptyState(jsx2, t, t("queue_empty_deliveries")));
       } else {
-        body.push(rows.length ? jsx2.jsx("div", { className: "wbq-table-wrap", children: jsx2.jsxs("table", { className: "wbq-table", children: [
-          jsx2.jsx("thead", { children: jsx2.jsx("tr", { children: [
-            jsx2.jsx("th", { children: t("queue_event_type") }),
-            jsx2.jsx("th", { children: t("queue_source") }),
-            jsx2.jsx("th", { children: t("queue_status") }),
-            jsx2.jsx("th", { children: t("queue_created") }),
-            jsx2.jsx("th", { children: t("queue_payload") })
-          ] }) }),
-          jsx2.jsx("tbody", { children: rows.map(function(r, i) {
-            return jsx2.jsxs("tr", { children: [
-              jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.type }) }),
-              jsx2.jsx("td", { children: r.source }),
-              jsx2.jsx("td", { children: jsx2.jsx("span", { className: "wbq-status s-" + r.status, children: statusText(lang, r.status) }) }),
-              jsx2.jsx("td", { children: timeText(r.created_at) }),
-              jsx2.jsx("td", { className: "wbq-payload", children: jsx2.jsx("code", { children: r.payload || "" }) })
-            ] }, i);
-          }) })
-        ] }) }) : jsx2.jsx("div", { className: "wbq-empty", children: t("queue_empty") }));
+        if (showing) body.push(loadingRows(jsx2, t, 5));
+        else body.push(rows.length ? tableWrap(jsx2, [
+          jsx2.jsx("th", { key: "t", children: t("queue_event_type") }),
+          jsx2.jsx("th", { key: "s", children: t("queue_source") }),
+          jsx2.jsx("th", { key: "st", children: t("queue_status") }),
+          jsx2.jsx("th", { key: "c", children: t("queue_created") }),
+          jsx2.jsx("th", { key: "p", children: t("queue_payload") })
+        ], rows.map(function(r, i) {
+          return jsx2.jsxs("tr", { children: [
+            jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.type }) }),
+            jsx2.jsx("td", { className: "wbq-cell-strong", children: r.source }),
+            jsx2.jsx("td", { children: statusBadge(jsx2, lang, r.status) }),
+            jsx2.jsx("td", { className: "wbq-cell-time", title: timeText(r.created_at), children: agoText(t, r.created_at, now) }),
+            jsx2.jsx("td", { className: "wbq-payload", children: jsx2.jsx("code", { title: r.payload || "", children: r.payload || "\u2014" }) })
+          ] }, i);
+        })) : emptyState(jsx2, t, t("queue_empty_events")));
       }
       var meta = (tab === "subscriptions" ? subs : tab === "deliveries" ? deliveries : events).state;
       var paging = (tab === "events" || tab === "deliveries") && meta.data && meta.data.pages ? meta.data : null;
       if (paging) {
-        body.push(jsx2.jsx("div", { className: "wbq-pager", children: [
+        body.push(jsx2.jsxs("div", { className: "wbq-pager", children: [
           jsx2.jsx("button", { type: "button", className: "wb-btn ghost", disabled: page <= 1, onClick: function() {
             setPage(page - 1);
           }, children: t("queue_prev") }),
@@ -3846,7 +4046,6 @@ var require_event_queue_page = __commonJS({
           }, children: t("queue_next") })
         ] }));
       }
-      if (active.state.loading) body.push(jsx2.jsx("div", { className: "wbq-muted", children: t("queue_loading") }));
       return jsx2.jsxs("div", { className: "wb-root", children: [
         jsx2.jsxs("div", { className: "wb-inner wb-wide", children: [
           deps.head(t("tab_queue"), t("queue_desc")) || null,
@@ -3857,7 +4056,7 @@ var require_event_queue_page = __commonJS({
     function QueueView(props) {
       return queuePage(props);
     }
-    module2.exports = { queuePage, QueueView, readResult };
+    module2.exports = { queuePage, QueueView, readResult, agoText, statusText };
   }
 });
 

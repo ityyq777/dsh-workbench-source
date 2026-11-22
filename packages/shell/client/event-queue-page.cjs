@@ -6,6 +6,9 @@
  * wb-shell 域下的 wb.event* 元 action（见 packages/shell/src/actions/host-events.ts）。
  * 这页只做三件事：看事件、看投递与订阅、对失败的投递重投或清理历史。
  * 不提供「手工造事件」：那会让队列变成绕过业务逻辑的旁路。
+ *
+ * 版式：顶部健康条 + 指标块（排队/待投递/已完成/死信/订阅），中间「类型分布 + 最近事件」
+ * 两块速览，下面才是可切换的明细表。所有颜色走主题 token，浅色与深色都要能看。
  */
 var PAGE_SIZE = 50;
 
@@ -30,15 +33,30 @@ function statusText(lang, status) {
   return table[status] || status;
 }
 
+function pad2(x) {
+  return x < 10 ? "0" + x : String(x);
+}
+
 function timeText(value) {
   var n = Number(value);
   if (!n) return "—";
   var d = new Date(n);
   if (Number.isNaN(d.getTime())) return "—";
-  var pad = function (x) {
-    return x < 10 ? "0" + x : String(x);
-  };
-  return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+  return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds());
+}
+
+/** 「3 分钟前」这类相对时间：运维看队列，相对时间比绝对时间更容易判断新旧。 */
+function agoText(t, value, now) {
+  var ts = Number(value);
+  if (!ts) return "—";
+  var diff = Math.max(0, Number(now || Date.now()) - ts);
+  var minute = 60000;
+  var hour = 3600000;
+  var day = 86400000;
+  if (diff < minute) return t("queue_ago_just");
+  if (diff < hour) return t("queue_ago_min").replace("{n}", String(Math.floor(diff / minute)));
+  if (diff < day) return t("queue_ago_hour").replace("{n}", String(Math.floor(diff / hour)));
+  return t("queue_ago_day").replace("{n}", String(Math.floor(diff / day)));
 }
 
 // 宿主的 action 路由回的是 { ok, result, text }，页面必须先取 result 再读字段。
@@ -76,11 +94,66 @@ function useLoader(React, api, action, args, deps) {
   return { state: value, reload: function () { bump(function (n) { return n + 1; }); } };
 }
 
-function statPill(jsx, label, value) {
-  return jsx.jsxs("span", { key: label, className: "wbq-pill", children: [
-    jsx.jsx("span", { className: "wbq-pill-label", children: label }),
-    jsx.jsx("b", { children: String(value || 0) }),
+function metricTile(jsx, label, value, tone) {
+  return jsx.jsxs("div", { key: label, className: "wbq-metric" + (tone ? " t-" + tone : ""), children: [
+    jsx.jsx("span", { className: "wbq-metric-label", children: label }),
+    jsx.jsx("b", { className: "wbq-metric-value", children: String(value || 0) }),
   ] });
+}
+
+/** 状态徽标：小圆点 + 文案，比纯文字更能在表格里一眼分辨。 */
+function statusBadge(jsx, lang, status) {
+  return jsx.jsxs("span", { className: "wbq-badge s-" + status, children: [
+    jsx.jsx("i", { className: "wbq-badge-dot", "aria-hidden": "true" }),
+    statusText(lang, status),
+  ] });
+}
+
+function typeBars(jsx, t, types) {
+  if (!types.length) return jsx.jsx("div", { className: "wbq-hint", children: t("queue_no_types") });
+  var max = Math.max.apply(null, types.map(function (x) { return Number(x.count) || 0 })) || 1;
+  return jsx.jsx("div", { className: "wbq-bars", children: types.slice(0, 6).map(function (item) {
+    var count = Number(item.count) || 0;
+    var pct = Math.max(4, Math.round((count / max) * 100));
+    return jsx.jsxs("div", { key: item.type, className: "wbq-bar-row", children: [
+      jsx.jsx("code", { className: "wbq-bar-name", title: item.type, children: item.type }),
+      jsx.jsx("span", { className: "wbq-bar-track", children: jsx.jsx("i", { className: "wbq-bar-fill", style: { width: pct + "%" } }) }),
+      jsx.jsx("b", { className: "wbq-bar-count", children: String(count) }),
+    ] }, item.type);
+  }) });
+}
+
+function panel(jsx, title, extra, body) {
+  return jsx.jsxs("section", { className: "wbq-panel", children: [
+    jsx.jsxs("header", { className: "wbq-panel-head", children: [
+      jsx.jsx("b", { children: title }),
+      extra ? jsx.jsx("span", { className: "wbq-muted", children: extra }) : null,
+    ] }),
+    body,
+  ] });
+}
+
+function tableWrap(jsx, head, rows) {
+  return jsx.jsx("div", { className: "wbq-table-wrap", children: jsx.jsxs("table", { className: "wbq-table", children: [
+    jsx.jsx("thead", { children: jsx.jsx("tr", { children: head }) }),
+    jsx.jsx("tbody", { children: rows }),
+  ] }) });
+}
+
+function emptyState(jsx, t, hint) {
+  return jsx.jsxs("div", { className: "wbq-empty", children: [
+    jsx.jsx("span", { className: "wbq-empty-mark", "aria-hidden": "true" }),
+    jsx.jsx("b", { children: t("queue_empty") }),
+    jsx.jsx("span", { className: "wbq-empty-hint", children: hint || t("queue_empty_hint") }),
+  ] });
+}
+
+function loadingRows(jsx, t, cols) {
+  return jsx.jsx("div", { className: "wbq-loading", role: "status", "aria-label": t("queue_loading"), children: [0, 1, 2].map(function (i) {
+    return jsx.jsx("div", { key: i, className: "wbq-loading-row", "aria-hidden": "true", children: [0, 1, 2, Math.max(1, cols - 3)].map(function (c) {
+      return jsx.jsx("span", { key: c, className: "wbq-loading-bar" });
+    }) });
+  }) });
 }
 
 function queuePage(deps) {
@@ -168,57 +241,119 @@ function queuePage(deps) {
     var n = bucket[key];
     return typeof n === "number" ? n : 0;
   };
+  var queued = countOf(eventCounts, "queued");
+  var pending = countOf(deliveryCounts, "pending") + countOf(deliveryCounts, "running");
+  var done = countOf(eventCounts, "done");
+  var dead = countOf(eventCounts, "dead") + countOf(deliveryCounts, "dead");
+  var subscriptions = typeof stats.subscriptions === "number" ? stats.subscriptions : 0;
+
+  var types = Array.isArray(stats.types) ? stats.types : [];
+  var typeTotal = types.reduce(function (sum, item) { return sum + (Number(item.count) || 0); }, 0);
+  var health = dead > 0 ? "dead" : queued + pending > 0 ? "busy" : "idle";
+  var healthText = health === "dead" ? t("queue_health_dead") : health === "busy" ? t("queue_health_busy") : t("queue_health_idle");
+  var healthHint = health === "dead" ? t("queue_health_dead_hint") : health === "busy" ? t("queue_health_busy_hint") : t("queue_health_idle_hint");
+
   var body = [];
+
+  // 1. 健康条 + 指标块。
   body.push(
-    jsx.jsx("div", { className: "wbq-stats", children: [
-      statPill(jsx, t("queue_queued"), countOf(eventCounts, "queued")),
-      statPill(jsx, t("queue_dead"), countOf(eventCounts, "dead") + countOf(deliveryCounts, "dead")),
-      statPill(jsx, t("queue_pending"), countOf(deliveryCounts, "pending")),
-      statPill(jsx, t("queue_done"), countOf(eventCounts, "done")),
-      statPill(jsx, t("queue_subscriptions"), typeof stats.subscriptions === "number" ? stats.subscriptions : 0),
+    jsx.jsxs("section", { className: "wbq-hero", children: [
+      jsx.jsxs("div", { className: "wbq-hero-top", children: [
+        jsx.jsxs("div", { className: "wbq-health", children: [
+          jsx.jsx("span", { className: "wbq-dot h-" + health, "aria-hidden": "true" }),
+          jsx.jsxs("div", { className: "wbq-health-text", children: [
+            jsx.jsx("b", { children: healthText }),
+            jsx.jsx("span", { className: "wbq-muted", children: healthHint }),
+          ] }),
+        ] }),
+        jsx.jsxs("div", { className: "wbq-hero-actions", children: [
+          jsx.jsx("button", { type: "button", className: "wb-btn ghost", onClick: reload, children: t("queue_refresh") }),
+          tab === "events" || tab === "deliveries"
+            ? jsx.jsx("button", { type: "button", className: "wb-btn danger", onClick: cleanup, children: t("queue_cleanup") })
+            : null,
+        ] }),
+      ] }),
+      jsx.jsxs("div", { className: "wbq-stats", children: [
+        metricTile(jsx, t("queue_queued"), queued, queued ? "warn" : ""),
+        metricTile(jsx, t("queue_pending"), pending, pending ? "warn" : ""),
+        metricTile(jsx, t("queue_done"), done, "ok"),
+        metricTile(jsx, t("queue_dead"), dead, dead ? "danger" : ""),
+        metricTile(jsx, t("queue_subscriptions"), subscriptions, ""),
+      ] }),
     ] }),
   );
+
+  // 2. 速览：类型分布 + 最近事件。
+  var recent = ((events.state.data && events.state.data.items) || []).slice(0, 4);
+  var now = Date.now();
   body.push(
-    jsx.jsx("div", { className: "wbq-toolbar", children: [
-      jsx.jsx("div", { className: "wbq-tabs", children: tabs.map(function (item) {
-        return jsx.jsx(
-          "button",
-          { key: item[0], type: "button", className: "wb-btn ghost" + (tab === item[0] ? " on" : ""), onClick: function () { setTab(item[0]); } },
-          item[1],
-        );
+    jsx.jsxs("div", { className: "wbq-insight", children: [
+      panel(jsx, t("queue_types"), typeTotal ? t("queue_total_events").replace("{n}", String(typeTotal)) : "", typeBars(jsx, t, types)),
+      panel(
+        jsx,
+        t("queue_recent"),
+        recent.length ? t("queue_total_events").replace("{n}", String(recent.length)) : "",
+        recent.length
+          ? jsx.jsx("ul", { className: "wbq-recent", children: recent.map(function (r, i) {
+              return jsx.jsxs("li", { key: i, className: "wbq-recent-item", children: [
+                jsx.jsx("code", { className: "wbq-recent-type", title: r.type, children: r.type }),
+                statusBadge(jsx, lang, r.status),
+                jsx.jsx("time", { className: "wbq-muted", title: timeText(r.created_at), children: agoText(t, r.created_at, now) }),
+              ] });
+            }) })
+          : jsx.jsx("div", { className: "wbq-hint", children: t("queue_empty") }),
+      ),
+    ] }),
+  );
+
+  // 3. 工具栏：页签 + 状态过滤（用分段小按钮，比下拉更容易扫）。
+  body.push(
+    jsx.jsxs("div", { className: "wbq-toolbar", children: [
+      jsx.jsx("div", { className: "wbq-tabs", role: "tablist", children: tabs.map(function (item) {
+        return jsx.jsx("button", {
+          key: item[0],
+          type: "button",
+          role: "tab",
+          "aria-selected": tab === item[0],
+          className: "wbq-tab" + (tab === item[0] ? " on" : ""),
+          onClick: function () { setTab(item[0]); },
+          children: item[1],
+        });
       }) }),
       filters.length
-        ? jsx.jsx("select", {
-            key: "filter",
-            className: "wbq-select",
-            value: filter,
-            onChange: function (e) { setFilter(e.target.value); setPage(1); },
-            children: [jsx.jsx("option", { key: "all", value: "", children: t("queue_all_status") })].concat(
-              filters.map(function (s) { return jsx.jsx("option", { key: s, value: s, children: statusText(lang, s) }); }),
-            ),
-          })
-        : null,
-      jsx.jsx("button", { key: "refresh", type: "button", className: "wb-btn ghost", onClick: reload, children: t("queue_refresh") }),
-      tab === "events" || tab === "deliveries"
-        ? jsx.jsx("button", { key: "cleanup", type: "button", className: "wb-btn danger", onClick: cleanup, children: t("queue_cleanup") })
+        ? jsx.jsx("div", { className: "wbq-filters", children: [""].concat(filters).map(function (s) {
+            var label = s ? statusText(lang, s) : t("queue_all_status");
+            var on = filter === s;
+            return jsx.jsx("button", {
+              key: s || "all",
+              type: "button",
+              className: "wbq-filter" + (on ? " on" : "") + (s ? " s-" + s : ""),
+              "aria-pressed": on,
+              onClick: function () { setFilter(s); setPage(1); },
+              children: label,
+            });
+          }) })
         : null,
     ] }),
   );
-  if (note) body.push(jsx.jsx("div", { className: "wbq-note", children: note }));
-  if (active.state.error) body.push(jsx.jsx("div", { className: "wbq-note err", children: active.state.error }));
+  if (note) body.push(jsx.jsx("div", { className: "wbq-note", role: "status", children: note }));
+  if (active.state.error) body.push(jsx.jsx("div", { className: "wbq-note err", role: "alert", children: active.state.error }));
 
   var rows = (active.state.data && active.state.data.items) || [];
+  var showing = active.state.loading && !rows.length;
+
   if (tab === "domains") {
     var list = (active.state.data && active.state.data.domains) || [];
-    body.push(list.length
+    if (showing) body.push(loadingRows(jsx, t, 2));
+    else body.push(list.length
       ? jsx.jsx("div", { className: "wbq-domains", children: list.map(function (d) {
           var pub = d.publishes || [];
           var lis = d.listens || [];
-          return jsx.jsxs("div", { key: d.domain, className: "wbq-domain", children: [
-            jsx.jsxs("div", { className: "wbq-domain-head", children: [
-              jsx.jsx("b", { children: d.title }),
-              jsx.jsx("code", { className: "wbq-muted", children: d.domain }),
-              d.error ? jsx.jsx("span", { className: "wbq-status s-dead", children: t("queue_domain_error") }) : null,
+          return jsx.jsxs("article", { key: d.domain, className: "wbq-domain" + (d.error ? " has-error" : ""), children: [
+            jsx.jsxs("header", { className: "wbq-domain-head", children: [
+              jsx.jsx("b", { className: "wbq-domain-title", children: d.title }),
+              jsx.jsx("code", { className: "wbq-domain-id", children: d.domain }),
+              d.error ? jsx.jsx("span", { className: "wbq-badge s-dead", children: t("queue_domain_error") }) : null,
             ] }),
             jsx.jsxs("div", { className: "wbq-domain-row", children: [
               jsx.jsx("span", { className: "wbq-domain-label", children: t("queue_domain_publishes") }),
@@ -226,10 +361,10 @@ function queuePage(deps) {
                 ? jsx.jsx("div", { className: "wbq-chips", children: pub.map(function (p) {
                     return jsx.jsxs("span", { key: p.type, className: "wbq-chip", title: p.description || "", children: [
                       jsx.jsx("code", { children: p.type }),
-                      jsx.jsx("span", { className: "wbq-muted", children: t("queue_sent") + " " + String(p.sent || 0) }),
+                      jsx.jsx("em", { className: "wbq-chip-meta", children: t("queue_sent") + " " + String(p.sent || 0) }),
                     ] });
                   }) })
-                : jsx.jsx("span", { className: "wbq-muted", children: t("queue_no_publish") }),
+                : jsx.jsx("span", { className: "wbq-hint", children: t("queue_no_publish") }),
             ] }),
             jsx.jsxs("div", { className: "wbq-domain-row", children: [
               jsx.jsx("span", { className: "wbq-domain-label", children: t("queue_domain_listens") }),
@@ -237,95 +372,88 @@ function queuePage(deps) {
                 ? jsx.jsx("div", { className: "wbq-chips", children: lis.map(function (l) {
                     return jsx.jsxs("span", { key: l.type, className: "wbq-chip" + (l.registered ? "" : " off"), title: l.description || "", children: [
                       jsx.jsx("code", { children: l.type }),
-                      jsx.jsx("span", { className: "wbq-muted", children: l.registered ? (l.actions || []).join(", ") : t("queue_not_registered") }),
+                      jsx.jsx("em", { className: "wbq-chip-meta", children: l.registered ? (l.actions || []).join(", ") : t("queue_not_registered") }),
                     ] });
                   }) })
-                : jsx.jsx("span", { className: "wbq-muted", children: t("queue_no_listen") }),
+                : jsx.jsx("span", { className: "wbq-hint", children: t("queue_no_listen") }),
             ] }),
           ] }, d.domain);
         }) })
-      : jsx.jsx("div", { className: "wbq-empty", children: t("queue_empty") }));
+      : emptyState(jsx, t, t("queue_empty_domains")));
   } else if (tab === "subscriptions") {
-    body.push(rows.length
-      ? jsx.jsx("div", { className: "wbq-table-wrap", children: jsx.jsxs("table", { className: "wbq-table", children: [
-          jsx.jsx("thead", { children: jsx.jsx("tr", { children: [
-            jsx.jsx("th", { children: t("queue_domain") }),
-            jsx.jsx("th", { children: t("queue_event_type") }),
-            jsx.jsx("th", { children: t("queue_action") }),
-            jsx.jsx("th", { children: t("queue_created") }),
-          ] }) }),
-          jsx.jsx("tbody", { children: rows.map(function (r, i) {
-            return jsx.jsxs("tr", { children: [
-              jsx.jsx("td", { children: r.domain }),
-              jsx.jsx("td", { children: jsx.jsx("code", { children: r.type }) }),
-              jsx.jsx("td", { children: jsx.jsx("code", { children: r.action }) }),
-              jsx.jsx("td", { children: timeText(r.created_at) }),
-            ] }, i);
-          }) }),
-        ] }) })
-      : jsx.jsx("div", { className: "wbq-empty", children: t("queue_empty") }));
+    if (showing) body.push(loadingRows(jsx, t, 4));
+    else body.push(rows.length
+      ? tableWrap(jsx, [
+          jsx.jsx("th", { key: "d", children: t("queue_domain") }),
+          jsx.jsx("th", { key: "t", children: t("queue_event_type") }),
+          jsx.jsx("th", { key: "a", children: t("queue_action") }),
+          jsx.jsx("th", { key: "c", children: t("queue_created") }),
+        ], rows.map(function (r, i) {
+          return jsx.jsxs("tr", { children: [
+            jsx.jsx("td", { className: "wbq-cell-strong", children: r.domain }),
+            jsx.jsx("td", { children: jsx.jsx("code", { children: r.type }) }),
+            jsx.jsx("td", { children: jsx.jsx("code", { children: r.action }) }),
+            jsx.jsx("td", { className: "wbq-cell-time", title: timeText(r.created_at), children: timeText(r.created_at) }),
+          ] }, i);
+        }))
+      : emptyState(jsx, t, t("queue_empty_subs")));
   } else if (tab === "deliveries") {
-    body.push(rows.length
-      ? jsx.jsx("div", { className: "wbq-table-wrap", children: jsx.jsxs("table", { className: "wbq-table", children: [
-          jsx.jsx("thead", { children: jsx.jsx("tr", { children: [
-            jsx.jsx("th", { children: t("queue_event_type") }),
-            jsx.jsx("th", { children: t("queue_domain") }),
-            jsx.jsx("th", { children: t("queue_action") }),
-            jsx.jsx("th", { children: t("queue_status") }),
-            jsx.jsx("th", { children: t("queue_attempts") }),
-            jsx.jsx("th", { children: t("queue_next_at") }),
-            jsx.jsx("th", { children: t("queue_last_error") }),
-            jsx.jsx("th", { children: "" }),
-          ] }) }),
-          jsx.jsx("tbody", { children: rows.map(function (r, i) {
-            return jsx.jsxs("tr", { children: [
-              jsx.jsx("td", { children: jsx.jsx("code", { children: r.event_type || "—" }) }),
-              jsx.jsx("td", { children: r.domain }),
-              jsx.jsx("td", { children: jsx.jsx("code", { children: r.action }) }),
-              jsx.jsx("td", { children: jsx.jsx("span", { className: "wbq-status s-" + r.status, children: statusText(lang, r.status) }) }),
-              jsx.jsx("td", { children: String(r.attempts || 0) }),
-              jsx.jsx("td", { children: r.status === "done" ? "—" : timeText(r.next_at) }),
-              jsx.jsx("td", { className: "wbq-err", children: r.last_error || "—" }),
-              jsx.jsx("td", { children: r.status === "dead" || (r.status === "pending" && r.last_error)
-                ? jsx.jsx("button", { type: "button", className: "wb-btn ghost", onClick: function () { replay(r); }, children: t("queue_replay") })
-                : null }),
-            ] }, i);
-          }) }),
-        ] }) })
-      : jsx.jsx("div", { className: "wbq-empty", children: t("queue_empty") }));
+    if (showing) body.push(loadingRows(jsx, t, 8));
+    else body.push(rows.length
+      ? tableWrap(jsx, [
+          jsx.jsx("th", { key: "t", children: t("queue_event_type") }),
+          jsx.jsx("th", { key: "d", children: t("queue_domain") }),
+          jsx.jsx("th", { key: "a", children: t("queue_action") }),
+          jsx.jsx("th", { key: "s", children: t("queue_status") }),
+          jsx.jsx("th", { key: "n", children: t("queue_attempts") }),
+          jsx.jsx("th", { key: "x", children: t("queue_next_at") }),
+          jsx.jsx("th", { key: "e", children: t("queue_last_error") }),
+          jsx.jsx("th", { key: "o", children: "" }),
+        ], rows.map(function (r, i) {
+          return jsx.jsxs("tr", { className: r.status === "dead" ? "is-dead" : "", children: [
+            jsx.jsx("td", { children: jsx.jsx("code", { children: r.event_type || "—" }) }),
+            jsx.jsx("td", { className: "wbq-cell-strong", children: r.domain }),
+            jsx.jsx("td", { children: jsx.jsx("code", { children: r.action }) }),
+            jsx.jsx("td", { children: statusBadge(jsx, lang, r.status) }),
+            jsx.jsx("td", { className: "wbq-cell-num", children: String(r.attempts || 0) }),
+            jsx.jsx("td", { className: "wbq-cell-time", children: r.status === "done" ? "—" : timeText(r.next_at) }),
+            jsx.jsx("td", { className: "wbq-err", children: r.last_error || "—" }),
+            jsx.jsx("td", { className: "wbq-cell-action", children: r.status === "dead" || (r.status === "pending" && r.last_error)
+              ? jsx.jsx("button", { type: "button", className: "wb-btn ghost wbq-replay", onClick: function () { replay(r); }, children: t("queue_replay") })
+              : null }),
+          ] }, i);
+        }))
+      : emptyState(jsx, t, t("queue_empty_deliveries")));
   } else {
-    body.push(rows.length
-      ? jsx.jsx("div", { className: "wbq-table-wrap", children: jsx.jsxs("table", { className: "wbq-table", children: [
-          jsx.jsx("thead", { children: jsx.jsx("tr", { children: [
-            jsx.jsx("th", { children: t("queue_event_type") }),
-            jsx.jsx("th", { children: t("queue_source") }),
-            jsx.jsx("th", { children: t("queue_status") }),
-            jsx.jsx("th", { children: t("queue_created") }),
-            jsx.jsx("th", { children: t("queue_payload") }),
-          ] }) }),
-          jsx.jsx("tbody", { children: rows.map(function (r, i) {
-            return jsx.jsxs("tr", { children: [
-              jsx.jsx("td", { children: jsx.jsx("code", { children: r.type }) }),
-              jsx.jsx("td", { children: r.source }),
-              jsx.jsx("td", { children: jsx.jsx("span", { className: "wbq-status s-" + r.status, children: statusText(lang, r.status) }) }),
-              jsx.jsx("td", { children: timeText(r.created_at) }),
-              jsx.jsx("td", { className: "wbq-payload", children: jsx.jsx("code", { children: r.payload || "" }) }),
-            ] }, i);
-          }) }),
-        ] }) })
-      : jsx.jsx("div", { className: "wbq-empty", children: t("queue_empty") }));
+    if (showing) body.push(loadingRows(jsx, t, 5));
+    else body.push(rows.length
+      ? tableWrap(jsx, [
+          jsx.jsx("th", { key: "t", children: t("queue_event_type") }),
+          jsx.jsx("th", { key: "s", children: t("queue_source") }),
+          jsx.jsx("th", { key: "st", children: t("queue_status") }),
+          jsx.jsx("th", { key: "c", children: t("queue_created") }),
+          jsx.jsx("th", { key: "p", children: t("queue_payload") }),
+        ], rows.map(function (r, i) {
+          return jsx.jsxs("tr", { children: [
+            jsx.jsx("td", { children: jsx.jsx("code", { children: r.type }) }),
+            jsx.jsx("td", { className: "wbq-cell-strong", children: r.source }),
+            jsx.jsx("td", { children: statusBadge(jsx, lang, r.status) }),
+            jsx.jsx("td", { className: "wbq-cell-time", title: timeText(r.created_at), children: agoText(t, r.created_at, now) }),
+            jsx.jsx("td", { className: "wbq-payload", children: jsx.jsx("code", { title: r.payload || "", children: r.payload || "—" }) }),
+          ] }, i);
+        }))
+      : emptyState(jsx, t, t("queue_empty_events")));
   }
 
   var meta = (tab === "subscriptions" ? subs : tab === "deliveries" ? deliveries : events).state;
   var paging = (tab === "events" || tab === "deliveries") && meta.data && meta.data.pages ? meta.data : null;
   if (paging) {
-    body.push(jsx.jsx("div", { className: "wbq-pager", children: [
+    body.push(jsx.jsxs("div", { className: "wbq-pager", children: [
       jsx.jsx("button", { type: "button", className: "wb-btn ghost", disabled: page <= 1, onClick: function () { setPage(page - 1); }, children: t("queue_prev") }),
       jsx.jsx("span", { className: "wbq-muted", children: page + " / " + paging.pages + " · " + paging.total }),
       jsx.jsx("button", { type: "button", className: "wb-btn ghost", disabled: page >= paging.pages, onClick: function () { setPage(page + 1); }, children: t("queue_next") }),
     ] }));
   }
-  if (active.state.loading) body.push(jsx.jsx("div", { className: "wbq-muted", children: t("queue_loading") }));
 
   return jsx.jsxs("div", { className: "wb-root", children: [
     jsx.jsxs("div", { className: "wb-inner wb-wide", children: [
@@ -344,4 +472,4 @@ function QueueView(props) {
   return queuePage(props);
 }
 
-module.exports = { queuePage: queuePage, QueueView: QueueView, readResult: readResult };
+module.exports = { queuePage: queuePage, QueueView: QueueView, readResult: readResult, agoText: agoText, statusText: statusText };
