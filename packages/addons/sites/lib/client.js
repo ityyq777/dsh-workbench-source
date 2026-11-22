@@ -5974,6 +5974,8 @@ var require_styles = __commonJS({
       ".wbs-formfoot{display:flex;align-items:center;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--wbs-line)}",
       ".wbs-formerr{color:var(--dsw-alias-state-error-primary,#b5392f);font-size:12px;flex:1;min-width:0}",
       ".wbs-note{font-size:11px;color:var(--wbs-muted);line-height:1.6}",
+      /* 窄屏：站点表只留勾选、站点、操作三列，标签与创建/更新时间下放到展开行。 */
+      "@media(max-width:600px){.wbs-table{min-width:0;table-layout:auto}.wbs-table colgroup{display:none}.wbs-c-tags,.wbs-c-create,.wbs-c-update{display:none}.wbs-table th,.wbs-table td{padding-left:8px;padding-right:8px}.wbs-site-desc{white-space:normal;overflow-wrap:anywhere}.wbs-actions{flex-wrap:wrap;gap:4px}}",
       "@media(max-width:860px){.wbs-body{flex-direction:column}.wbs-tree{width:100%;max-height:220px}.wbs-table{min-width:760px}.wbs-root{min-height:0}}",
       "@media(max-width:600px){.wbs-head h2{font-size:18px}.wbs-linkrow{grid-template-columns:1fr 1fr}.wbs-modal{padding:14px}}"
     ].concat(require_stepper().styles, require_staged_dialog().styles).concat(require_filter_checklist_styles()).concat(require_client_base_styles().secretFieldStyles).concat([require_date_picker_styles()("wbs")]).concat(require_switch().styles).join("\n");
@@ -8366,11 +8368,11 @@ var staged = require_staged_dialog();
                   null,
                   h2("th", null, h2("input", { type: "checkbox", checked: allSelected, onChange: toggleAll, "aria-label": "\u5168\u9009" })),
                   h2("th", null, text(lang, "siteCol")),
-                  tagsVisible ? h2("th", null, text(lang, "tagCol")) : null,
-                  h2("th", { className: "wbs-th-sort" + (sortCol === "create_time" ? " on" : ""), onClick: function() {
+                  tagsVisible ? h2("th", { className: "wbs-c-tags" }, text(lang, "tagCol")) : null,
+                  h2("th", { className: "wbs-th-sort wbs-c-create" + (sortCol === "create_time" ? " on" : ""), onClick: function() {
                     sortBy("create_time");
                   } }, h2("span", { className: "wbs-th-label" }, text(lang, "createTime"), sortIcon("create_time"))),
-                  h2("th", { className: "wbs-th-sort" + (sortCol === "update_time" ? " on" : ""), onClick: function() {
+                  h2("th", { className: "wbs-th-sort wbs-c-update" + (sortCol === "update_time" ? " on" : ""), onClick: function() {
                     sortBy("update_time");
                   } }, h2("span", { className: "wbs-th-label" }, text(lang, "updateTime"), sortIcon("update_time"))),
                   h2("th", null, text(lang, "actions"))
@@ -8405,11 +8407,11 @@ var staged = require_staged_dialog();
                       s.description ? h2("div", { className: "wbs-site-desc" }, s.description) : h2("div", { className: "wbs-site-desc wbs-muted" }, text(lang, "noDesc")),
                       s.defaultLink ? h2("a", { className: "wbs-site-link", href: s.defaultLink, target: "_blank", rel: "noreferrer noopener", title: s.defaultLink }, h2(Icon2, { name: "link", size: 11 }), h2("span", null, s.defaultLink)) : h2("div", { className: "wbs-site-desc wbs-muted" }, text(lang, "noLink"))
                     ),
-                    tagsVisible ? h2("td", null, s.tags && s.tags.length ? s.tags.map(function(t) {
+                    tagsVisible ? h2("td", { className: "wbs-c-tags" }, s.tags && s.tags.length ? s.tags.map(function(t) {
                       return h2("span", { className: "wbs-chip", key: t.id }, t.name);
                     }) : h2("span", { className: "wbs-muted" }, "\u2014")) : null,
-                    h2("td", { className: "wbs-muted" }, s.createTime || "\u2014"),
-                    h2("td", { className: "wbs-muted" }, s.updateTime || "\u2014"),
+                    h2("td", { className: "wbs-muted wbs-c-create" }, s.createTime || "\u2014"),
+                    h2("td", { className: "wbs-muted wbs-c-update" }, s.updateTime || "\u2014"),
                     h2(
                       "td",
                       null,
@@ -8535,7 +8537,7 @@ var staged = require_staged_dialog();
   injectCss();
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.12.14",
+    version: "1.12.15",
     icon: icons.ICONS["globe"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },

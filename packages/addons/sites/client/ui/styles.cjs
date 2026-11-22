@@ -151,6 +151,12 @@ module.exports = [
     ".wbs-formfoot{display:flex;align-items:center;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--wbs-line)}",
     ".wbs-formerr{color:var(--dsw-alias-state-error-primary,#b5392f);font-size:12px;flex:1;min-width:0}",
     ".wbs-note{font-size:11px;color:var(--wbs-muted);line-height:1.6}",
+    /* 窄屏：站点表只留勾选、站点、操作三列，标签与创建/更新时间下放到展开行。 */
+    "@media(max-width:600px){.wbs-table{min-width:0;table-layout:auto}.wbs-table colgroup{display:none}"
+      + ".wbs-c-tags,.wbs-c-create,.wbs-c-update{display:none}"
+      + ".wbs-table th,.wbs-table td{padding-left:8px;padding-right:8px}"
+      + ".wbs-site-desc{white-space:normal;overflow-wrap:anywhere}"
+      + ".wbs-actions{flex-wrap:wrap;gap:4px}}",
     "@media(max-width:860px){.wbs-body{flex-direction:column}.wbs-tree{width:100%;max-height:220px}.wbs-table{min-width:760px}.wbs-root{min-height:0}}",
     "@media(max-width:600px){.wbs-head h2{font-size:18px}.wbs-linkrow{grid-template-columns:1fr 1fr}.wbs-modal{padding:14px}}"
 ].concat(require("../../../lib/stepper.cjs").styles, require("../../../lib/staged-dialog.cjs").styles).concat(require("../../../lib/filter-checklist-styles.cjs")).concat(require("../../../lib/client-base-styles.cjs").secretFieldStyles).concat([require("../../../lib/date-picker-styles.cjs")("wbs")]).concat(require("../../../lib/switch.cjs").styles).join("\n");

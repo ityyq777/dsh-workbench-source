@@ -880,9 +880,9 @@ var staged = require("../../lib/staged-dialog.cjs");
                 h("tr", null,
                   h("th", null, h("input", { type: "checkbox", checked: allSelected, onChange: toggleAll, "aria-label": "全选" })),
                   h("th", null, text(lang, "siteCol")),
-                  tagsVisible ? h("th", null, text(lang, "tagCol")) : null,
-                  h("th", { className: "wbs-th-sort" + (sortCol === "create_time" ? " on" : ""), onClick: function () { sortBy("create_time"); } }, h("span", { className: "wbs-th-label" }, text(lang, "createTime"), sortIcon("create_time"))),
-                  h("th", { className: "wbs-th-sort" + (sortCol === "update_time" ? " on" : ""), onClick: function () { sortBy("update_time"); } }, h("span", { className: "wbs-th-label" }, text(lang, "updateTime"), sortIcon("update_time"))),
+                  tagsVisible ? h("th", { className: "wbs-c-tags" }, text(lang, "tagCol")) : null,
+                  h("th", { className: "wbs-th-sort wbs-c-create" + (sortCol === "create_time" ? " on" : ""), onClick: function () { sortBy("create_time"); } }, h("span", { className: "wbs-th-label" }, text(lang, "createTime"), sortIcon("create_time"))),
+                  h("th", { className: "wbs-th-sort wbs-c-update" + (sortCol === "update_time" ? " on" : ""), onClick: function () { sortBy("update_time"); } }, h("span", { className: "wbs-th-label" }, text(lang, "updateTime"), sortIcon("update_time"))),
                   h("th", null, text(lang, "actions")),
                 ),
               ),
@@ -903,11 +903,11 @@ var staged = require("../../lib/staged-dialog.cjs");
                       s.description ? h("div", { className: "wbs-site-desc" }, s.description) : h("div", { className: "wbs-site-desc wbs-muted" }, text(lang, "noDesc")),
                       s.defaultLink ? h("a", { className: "wbs-site-link", href: s.defaultLink, target: "_blank", rel: "noreferrer noopener", title: s.defaultLink }, h(Icon, { name: "link", size: 11 }), h("span", null, s.defaultLink)) : h("div", { className: "wbs-site-desc wbs-muted" }, text(lang, "noLink")),
                     ),
-                    tagsVisible ? h("td", null, s.tags && s.tags.length ? s.tags.map(function (t) {
+                    tagsVisible ? h("td", { className: "wbs-c-tags" }, s.tags && s.tags.length ? s.tags.map(function (t) {
                       return h("span", { className: "wbs-chip", key: t.id }, t.name);
                     }) : h("span", { className: "wbs-muted" }, "—")) : null,
-                    h("td", { className: "wbs-muted" }, s.createTime || "—"),
-                    h("td", { className: "wbs-muted" }, s.updateTime || "—"),
+                    h("td", { className: "wbs-muted wbs-c-create" }, s.createTime || "—"),
+                    h("td", { className: "wbs-muted wbs-c-update" }, s.updateTime || "—"),
                     h("td", null,
                       h("div", { className: "wbs-actions" },
                         h("button", { className: "wbs-btn sm", title: text(lang, "links"), onClick: function () { setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "links" ? null : { id: s.id, type: "links" }); } }, h(Icon, { name: "link", size: 12 }), text(lang, "links") + " " + (s.siteLinks ? s.siteLinks.length : 0)),
@@ -992,7 +992,7 @@ var staged = require("../../lib/staged-dialog.cjs");
 
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.12.14",
+    version: "1.12.15",
     icon: icons.ICONS["globe"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.SitesStatsView },
