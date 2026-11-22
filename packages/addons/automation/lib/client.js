@@ -1634,6 +1634,37 @@ var require_styles = __commonJS({
   }
 });
 
+// packages/addons/lib/inject-styles.cjs
+var require_inject_styles = __commonJS({
+  "packages/addons/lib/inject-styles.cjs"(exports2, module2) {
+    "use strict";
+    function toCss(value) {
+      var v = typeof value === "function" ? value() : value;
+      if (Array.isArray(v)) return v.filter(Boolean).join("\n");
+      if (v === null || v === void 0) return "";
+      return String(v);
+    }
+    module2.exports = function injectStyles(options) {
+      var opts = options || {};
+      var css = toCss(opts.css);
+      if (typeof document === "undefined" || !document.head) return "";
+      var id = opts.id;
+      var old = id ? document.getElementById(id) : null;
+      if (old) {
+        if (old.textContent !== css) old.textContent = css;
+        return css;
+      }
+      var style = document.createElement("style");
+      if (id) style.id = id;
+      if (opts.addon) style.setAttribute("data-wb-addon", opts.addon);
+      style.textContent = css;
+      document.head.appendChild(style);
+      return css;
+    };
+    module2.exports.toCss = toCss;
+  }
+});
+
 // packages/addons/lib/client-common.cjs
 var require_client_common = __commonJS({
   "packages/addons/lib/client-common.cjs"(exports2, module2) {
@@ -7181,18 +7212,14 @@ var GLYPHS = require_icons2().ICONS;
       });
     };
   }
+  var injectStyles = require_inject_styles();
   function ensureStyles() {
-    if (typeof document === "undefined" || !document.head) return;
-    if (document.getElementById("wb-automation-style")) return;
-    var style = document.createElement("style");
-    style.id = "wb-automation-style";
-    style.textContent = CSS;
-    document.head.appendChild(style);
+    injectStyles({ id: "wb-automation-style", css: CSS, addon: "wb-addon-automation" });
   }
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-automation",
-    version: "0.4.6",
+    version: "0.4.7",
     icon: GLYPHS["zap"],
     views: [
       { id: "stats", icon: tabIcon("activity"), title: { zh: "\u6982\u89C8", en: "Overview" }, component: withProps(require_stats(), "\u6982\u89C8") },

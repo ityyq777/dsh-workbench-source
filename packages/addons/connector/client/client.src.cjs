@@ -34,19 +34,16 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
       return h(Inner, { api: props.api, lang: props.lang === "en" ? "en" : "zh", h: h, React: React, title: title });
     };
   }
+  // 样式模块可能返回数组（基础样式层），交给共享注入器规范化，避免逗号拼接成非法 CSS。
+  var injectStyles = require("../../lib/inject-styles.cjs");
   function ensureStyles() {
-    if (typeof document === "undefined" || !document.head) return;
-    if (document.getElementById("wb-connector-style")) return;
-    var style = document.createElement("style");
-    style.id = "wb-connector-style";
-    style.textContent = CSS;
-    document.head.appendChild(style);
+    injectStyles({ id: "wb-connector-style", css: CSS, addon: "wb-addon-connector" });
   }
   ensureStyles();
 
   host.registerAddon({
     id: "wb-addon-connector",
-    version: "0.1.9",
+    version: "0.1.10",
     icon: GLYPHS["rss"],
     views: [
       { id: "stats", icon: tabIcon("activity"), title: { zh: "概览", en: "Overview" }, component: withProps(require("./views/stats.cjs"), "概览") },

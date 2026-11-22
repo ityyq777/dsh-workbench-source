@@ -1627,6 +1627,37 @@ var require_lock_gate = __commonJS({
   }
 });
 
+// packages/addons/lib/inject-styles.cjs
+var require_inject_styles = __commonJS({
+  "packages/addons/lib/inject-styles.cjs"(exports2, module2) {
+    "use strict";
+    function toCss(value) {
+      var v = typeof value === "function" ? value() : value;
+      if (Array.isArray(v)) return v.filter(Boolean).join("\n");
+      if (v === null || v === void 0) return "";
+      return String(v);
+    }
+    module2.exports = function injectStyles(options) {
+      var opts = options || {};
+      var css = toCss(opts.css);
+      if (typeof document === "undefined" || !document.head) return "";
+      var id = opts.id;
+      var old = id ? document.getElementById(id) : null;
+      if (old) {
+        if (old.textContent !== css) old.textContent = css;
+        return css;
+      }
+      var style = document.createElement("style");
+      if (id) style.id = id;
+      if (opts.addon) style.setAttribute("data-wb-addon", opts.addon);
+      style.textContent = css;
+      document.head.appendChild(style);
+      return css;
+    };
+    module2.exports.toCss = toCss;
+  }
+});
+
 // packages/addons/mail/client/views/slot-back-to-message.cjs
 var require_slot_back_to_message = __commonJS({
   "packages/addons/mail/client/views/slot-back-to-message.cjs"(exports2, module2) {
@@ -7453,16 +7484,11 @@ var GLYPHS = require_icons2().ICONS;
   function gated(Inner, title) {
     return Gate.gate(withProps(Inner, title), h, React, C);
   }
-  if (typeof document !== "undefined" && document.head && !document.getElementById("wb-mail-style")) {
-    var s = document.createElement("style");
-    s.id = "wb-mail-style";
-    s.textContent = CSS;
-    document.head.appendChild(s);
-  }
+  require_inject_styles()({ id: "wb-mail-style", css: CSS, addon: "wb-addon-mail" });
   var slotBackToMessage = require_slot_back_to_message()({ React, h, C, Icon: Icon2 });
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.6.3",
+    version: "0.6.4",
     icon: GLYPHS["mail"],
     slots: [{ slot: "item.actions", id: "mail.back-to-message", order: 100, component: slotBackToMessage }],
     views: [

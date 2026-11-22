@@ -591,7 +591,50 @@ var require_client_base_styles = __commonJS({
 var require_styles = __commonJS({
   "packages/addons/contacts/client/ui/styles.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = require_client_base_styles()("wbct");
+    var BASE = require_client_base_styles()("wbct");
+    var OWN = `
+/* \u7A84\u5C4F\uFF1A\u8054\u7CFB\u65B9\u5F0F\u5217\u53EF\u6362\u884C\uFF0C\u7EC4\u7EC7/\u5206\u7EC4/\u66F4\u65B0\u65F6\u95F4\u6309\u5217\u88C1\u526A\uFF0C\u64CD\u4F5C\u6309\u94AE\u6362\u884C\u4E0D\u6491\u5BBD\u3002 */
+@media (max-width:600px) {
+  /* \u57FA\u7840\u8868\u683C\u662F width:max-content\uFF0C\u7A84\u5C4F\u4E09\u5217\u8981\u538B\u56DE 100%\uFF0C\u5426\u5219\u64CD\u4F5C\u5217\u88AB\u63A8\u5230\u5C4F\u5E55\u5916\u3002 */
+  .wbct-table { width: 100%; min-width: 0; }
+  .wbct-c-org, .wbct-c-groups, .wbct-c-updated { display: none; }
+  .wbct-table th, .wbct-table td { padding-left: 8px; padding-right: 8px; }
+  .wbct-c-contact .wbct-muted { overflow-wrap: anywhere; }
+  .wbct-row { flex-wrap: wrap; gap: 4px; }
+}
+`;
+    module2.exports = (Array.isArray(BASE) ? BASE.join("\n") : String(BASE)) + OWN;
+  }
+});
+
+// packages/addons/lib/inject-styles.cjs
+var require_inject_styles = __commonJS({
+  "packages/addons/lib/inject-styles.cjs"(exports2, module2) {
+    "use strict";
+    function toCss(value) {
+      var v = typeof value === "function" ? value() : value;
+      if (Array.isArray(v)) return v.filter(Boolean).join("\n");
+      if (v === null || v === void 0) return "";
+      return String(v);
+    }
+    module2.exports = function injectStyles(options) {
+      var opts = options || {};
+      var css = toCss(opts.css);
+      if (typeof document === "undefined" || !document.head) return "";
+      var id = opts.id;
+      var old = id ? document.getElementById(id) : null;
+      if (old) {
+        if (old.textContent !== css) old.textContent = css;
+        return css;
+      }
+      var style = document.createElement("style");
+      if (id) style.id = id;
+      if (opts.addon) style.setAttribute("data-wb-addon", opts.addon);
+      style.textContent = css;
+      document.head.appendChild(style);
+      return css;
+    };
+    module2.exports.toCss = toCss;
   }
 });
 
@@ -1063,22 +1106,23 @@ var require_contacts = __commonJS({
         h("div", { className: "wbct-table-wrap" }, h(
           "table",
           { className: "wbct-table" },
-          h("thead", null, h("tr", null, ["\u59D3\u540D", "\u7EC4\u7EC7 / \u804C\u4F4D", "\u8054\u7CFB\u65B9\u5F0F", "\u5206\u7EC4", "\u66F4\u65B0\u65F6\u95F4", "\u64CD\u4F5C"].map(function(x) {
-            return h("th", { key: x }, x);
+          // 窄屏按列裁剪：组织/职位、分组、更新时间三列在 ≤600px 隐藏，只留姓名/联系方式/操作。
+          h("thead", null, h("tr", null, [["\u59D3\u540D", ""], ["\u7EC4\u7EC7 / \u804C\u4F4D", "wbct-c-org"], ["\u8054\u7CFB\u65B9\u5F0F", "wbct-c-contact"], ["\u5206\u7EC4", "wbct-c-groups"], ["\u66F4\u65B0\u65F6\u95F4", "wbct-c-updated"], ["\u64CD\u4F5C", ""]].map(function(x) {
+            return h("th", { key: x[0], className: x[1] || void 0 }, x[0]);
           }))),
           h("tbody", null, rows.map(function(c) {
             return h(
               "tr",
               { key: c.id },
               h("td", null, h("b", null, c.name)),
-              h("td", null, [c.org, c.title].filter(Boolean).join(" / ") || "\u2014"),
-              h("td", null, h("div", { className: "wbct-muted" }, (c.fields || []).map(function(x) {
+              h("td", { className: "wbct-c-org" }, [c.org, c.title].filter(Boolean).join(" / ") || "\u2014"),
+              h("td", { className: "wbct-c-contact" }, h("div", { className: "wbct-muted" }, (c.fields || []).map(function(x) {
                 return x.kind + ": " + x.value;
               }).join("\uFF1B") || "\u2014")),
-              h("td", null, (c.groups || []).map(function(g) {
+              h("td", { className: "wbct-c-groups" }, (c.groups || []).map(function(g) {
                 return h(C.Pill, { h, key: g.id }, g.name);
               })),
-              h("td", null, C.fmtTime(c.updatedAt, props.lang)),
+              h("td", { className: "wbct-c-updated" }, C.fmtTime(c.updatedAt, props.lang)),
               h("td", null, h(
                 "div",
                 { className: "wbct-row" },
@@ -3235,18 +3279,14 @@ var GLYPHS = require_icons2().ICONS;
       return h(Inner, { api: props.api, lang: props.lang === "en" ? "en" : "zh", h, React, title });
     };
   }
+  var injectStyles = require_inject_styles();
   function ensureStyles() {
-    if (typeof document === "undefined" || !document.head) return;
-    if (document.getElementById("wb-contacts-style")) return;
-    var style = document.createElement("style");
-    style.id = "wb-contacts-style";
-    style.textContent = CSS;
-    document.head.appendChild(style);
+    injectStyles({ id: "wb-contacts-style", css: CSS, addon: "wb-addon-contacts" });
   }
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-contacts",
-    version: "0.1.8",
+    version: "0.1.9",
     icon: GLYPHS["users"],
     views: [
       { id: "contacts", icon: tabIcon("users"), title: { zh: "\u8054\u7CFB\u4EBA", en: "Contacts" }, component: withProps(require_contacts(), "\u8054\u7CFB\u4EBA") },

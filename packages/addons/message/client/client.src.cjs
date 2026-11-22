@@ -47,20 +47,17 @@
   var Stats = withCopy(StatsView, null);
   var Config = withCopy(configView.ConfigView, null);
 
+  // 样式模块可能返回数组（基础样式层），统一交给共享注入器规范化，避免逗号拼接成非法 CSS。
+  var injectStyles = require("../../lib/inject-styles.cjs");
   function ensureStyles() {
-    if (typeof document === "undefined" || !document.head) return;
-    if (document.getElementById("wb-message-style")) return;
-    var style = document.createElement("style");
-    style.id = "wb-message-style";
-    style.textContent = CSS;
-    document.head.appendChild(style);
+    injectStyles({ id: "wb-message-style", css: CSS, addon: "wb-addon-message" });
   }
 
   ensureStyles();
 
   host.registerAddon({
     id: "wb-addon-message",
-    version: "0.1.11",
+    version: "0.1.12",
     icon: ICONS["message-square"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: Stats },

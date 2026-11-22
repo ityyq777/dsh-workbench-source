@@ -38,6 +38,7 @@ const SHARED = {
   'lib/action-schema-view.cjs': 'Action 页',
   'lib/stepper.cjs': '步骤条',
   'lib/staged-dialog.cjs': '分阶段对话框外壳',
+  'lib/inject-styles.cjs': '样式注入（数组/字符串规范化）',
 };
 
 // 允许保留自研对话框的四处，理由写在 docs/AGENTS规范/04-UI规范.md「控件复用审计」里。
@@ -96,6 +97,22 @@ for (const plugin of PLUGINS) {
       for (const m of s.text.matchAll(/(?:ICONS|GLYPHS)\[["']([\w-]+)["']\]/g)) {
         if (!keys.has(m[1])) problems.push(s.rel + '：引用了图标表里不存在的键 "' + m[1] + '"');
       }
+    }
+  }
+
+  // 样式注入：样式模块常常返回数组（基础样式层就是数组），直接 `style.textContent = CSS`
+  // 会被隐式 toString 成逗号拼接的非法 CSS，整张样式表只剩第一条规则——界面看起来"完全没样式"。
+  // 允许三种写法：走 lib/inject-styles.cjs；赋值前显式 join；用 Array.isArray 归一化。
+  for (const s of sources) {
+    const assignsCss = /textContent\s*=\s*[A-Za-z_$][\w$]*\s*;/.test(s.text);
+    if (!assignsCss) continue;
+    const normalized =
+      s.text.includes('lib/inject-styles.cjs') ||
+      /\.join\(/.test(s.text) ||
+      /Array\.isArray/.test(s.text) ||
+      /require\([^)]*\)\s*\+\s*"\\n"/.test(s.text);
+    if (!normalized) {
+      problems.push(s.rel + '：把样式字符串直接赋给 textContent，数组会被拼成非法 CSS；请改用 lib/inject-styles.cjs');
     }
   }
 

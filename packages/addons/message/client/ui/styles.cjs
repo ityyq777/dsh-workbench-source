@@ -63,4 +63,6 @@ module.exports = [
   ".wbm-time{width:86px;border:1px solid var(--wbm-line);border-radius:7px;background:transparent;color:inherit;padding:4px 6px;font-size:12px}",
   ".wbm-multis{display:flex;gap:6px;flex-wrap:wrap}",
   "@media (max-width:760px){.wbm-toolbar{gap:6px}.wbm-input{max-width:none}.wbm-bar{grid-template-columns:70px 1fr 38px}}",
+  // 窄屏：搜索框独占一行、统计与批量按钮分两段，避免缩成一条窄缝。
+  "@media (max-width:600px){.wbm-toolbar{gap:6px 8px}.wbm-toolbar .wbm-input{flex:1 1 100%;width:100%}.wbm-toolbar .wbm-select{flex:1 1 auto;min-width:0}.wbm-sumbox{flex:1 1 100%;font-size:12px}.wbm-toolbar .wbm-grow{display:none}}",
 ].concat(SW.styles).concat(NF.styles).join("");

@@ -60,18 +60,15 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
       });
     };
   }
+  // 样式模块可能返回数组（基础样式层），统一交给共享注入器规范化，避免逗号拼接成非法 CSS。
+  var injectStyles = require("../../lib/inject-styles.cjs");
   function ensureStyles() {
-    if (typeof document === "undefined" || !document.head) return;
-    if (document.getElementById("wb-automation-style")) return;
-    var style = document.createElement("style");
-    style.id = "wb-automation-style";
-    style.textContent = CSS;
-    document.head.appendChild(style);
+    injectStyles({ id: "wb-automation-style", css: CSS, addon: "wb-addon-automation" });
   }
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-automation",
-    version: "0.4.6",
+    version: "0.4.7",
     icon: GLYPHS["zap"],
     views: [
       { id: "stats", icon: tabIcon("activity"), title: { zh: "概览", en: "Overview" }, component: withProps(require("./views/stats.cjs"), "概览") },

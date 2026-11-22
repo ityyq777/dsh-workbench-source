@@ -47,20 +47,17 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
     };
   }
 
+  // 样式模块可能返回数组（基础样式层），统一交给共享注入器规范化，避免逗号拼接成非法 CSS。
+  var injectStyles = require("../../lib/inject-styles.cjs");
   function ensureStyles() {
-    if (typeof document === "undefined" || !document.head) return;
-    if (document.getElementById("wb-vault-style")) return;
-    var style = document.createElement("style");
-    style.id = "wb-vault-style";
-    style.textContent = CSS;
-    document.head.appendChild(style);
+    injectStyles({ id: "wb-vault-style", css: CSS, addon: "wb-addon-vault" });
   }
 
   ensureStyles();
 
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.4.6",
+    version: "0.4.7",
     icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "保险箱", en: "Vault" }, component: withProps(require("./views/status.cjs"), "保险箱") },

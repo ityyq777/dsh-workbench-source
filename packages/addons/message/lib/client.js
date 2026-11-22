@@ -1504,7 +1504,9 @@ var require_styles = __commonJS({
       ".wbm-note{font-size:11.5px;opacity:.62;line-height:1.5}",
       ".wbm-time{width:86px;border:1px solid var(--wbm-line);border-radius:7px;background:transparent;color:inherit;padding:4px 6px;font-size:12px}",
       ".wbm-multis{display:flex;gap:6px;flex-wrap:wrap}",
-      "@media (max-width:760px){.wbm-toolbar{gap:6px}.wbm-input{max-width:none}.wbm-bar{grid-template-columns:70px 1fr 38px}}"
+      "@media (max-width:760px){.wbm-toolbar{gap:6px}.wbm-input{max-width:none}.wbm-bar{grid-template-columns:70px 1fr 38px}}",
+      // 窄屏：搜索框独占一行、统计与批量按钮分两段，避免缩成一条窄缝。
+      "@media (max-width:600px){.wbm-toolbar{gap:6px 8px}.wbm-toolbar .wbm-input{flex:1 1 100%;width:100%}.wbm-toolbar .wbm-select{flex:1 1 auto;min-width:0}.wbm-sumbox{flex:1 1 100%;font-size:12px}.wbm-toolbar .wbm-grow{display:none}}"
     ].concat(SW.styles).concat(NF.styles).join("");
   }
 });
@@ -5059,6 +5061,37 @@ var require_mount = __commonJS({
   }
 });
 
+// packages/addons/lib/inject-styles.cjs
+var require_inject_styles = __commonJS({
+  "packages/addons/lib/inject-styles.cjs"(exports2, module2) {
+    "use strict";
+    function toCss(value) {
+      var v = typeof value === "function" ? value() : value;
+      if (Array.isArray(v)) return v.filter(Boolean).join("\n");
+      if (v === null || v === void 0) return "";
+      return String(v);
+    }
+    module2.exports = function injectStyles(options) {
+      var opts = options || {};
+      var css = toCss(opts.css);
+      if (typeof document === "undefined" || !document.head) return "";
+      var id = opts.id;
+      var old = id ? document.getElementById(id) : null;
+      if (old) {
+        if (old.textContent !== css) old.textContent = css;
+        return css;
+      }
+      var style = document.createElement("style");
+      if (id) style.id = id;
+      if (opts.addon) style.setAttribute("data-wb-addon", opts.addon);
+      style.textContent = css;
+      document.head.appendChild(style);
+      return css;
+    };
+    module2.exports.toCss = toCss;
+  }
+});
+
 // packages/addons/message/client/client.src.cjs
 (function() {
   var root = typeof window !== "undefined" ? window : null;
@@ -5099,18 +5132,14 @@ var require_mount = __commonJS({
   var Inbox2 = withCopy(InboxView, null);
   var Stats = withCopy(StatsView, null);
   var Config = withCopy(configView.ConfigView, null);
+  var injectStyles = require_inject_styles();
   function ensureStyles() {
-    if (typeof document === "undefined" || !document.head) return;
-    if (document.getElementById("wb-message-style")) return;
-    var style = document.createElement("style");
-    style.id = "wb-message-style";
-    style.textContent = CSS;
-    document.head.appendChild(style);
+    injectStyles({ id: "wb-message-style", css: CSS, addon: "wb-addon-message" });
   }
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-message",
-    version: "0.1.11",
+    version: "0.1.12",
     icon: ICONS["message-square"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: Stats },

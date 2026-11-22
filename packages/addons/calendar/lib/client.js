@@ -786,6 +786,37 @@ var require_styles = __commonJS({
   }
 });
 
+// packages/addons/lib/inject-styles.cjs
+var require_inject_styles = __commonJS({
+  "packages/addons/lib/inject-styles.cjs"(exports2, module2) {
+    "use strict";
+    function toCss(value) {
+      var v = typeof value === "function" ? value() : value;
+      if (Array.isArray(v)) return v.filter(Boolean).join("\n");
+      if (v === null || v === void 0) return "";
+      return String(v);
+    }
+    module2.exports = function injectStyles(options) {
+      var opts = options || {};
+      var css = toCss(opts.css);
+      if (typeof document === "undefined" || !document.head) return "";
+      var id = opts.id;
+      var old = id ? document.getElementById(id) : null;
+      if (old) {
+        if (old.textContent !== css) old.textContent = css;
+        return css;
+      }
+      var style = document.createElement("style");
+      if (id) style.id = id;
+      if (opts.addon) style.setAttribute("data-wb-addon", opts.addon);
+      style.textContent = css;
+      document.head.appendChild(style);
+      return css;
+    };
+    module2.exports.toCss = toCss;
+  }
+});
+
 // packages/addons/lib/switch.cjs
 var require_switch = __commonJS({
   "packages/addons/lib/switch.cjs"(exports2, module2) {
@@ -3123,18 +3154,14 @@ var GLYPHS = require_icons2().ICONS;
       return h(Inner, { api: props.api, lang: props.lang === "en" ? "en" : "zh", h, React, title });
     };
   }
+  var injectStyles = require_inject_styles();
   function ensureStyles() {
-    if (typeof document === "undefined" || !document.head) return;
-    if (document.getElementById("wb-calendar-style")) return;
-    var style = document.createElement("style");
-    style.id = "wb-calendar-style";
-    style.textContent = CSS;
-    document.head.appendChild(style);
+    injectStyles({ id: "wb-calendar-style", css: CSS, addon: "wb-addon-calendar" });
   }
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-calendar",
-    version: "0.1.9",
+    version: "0.1.10",
     icon: GLYPHS["calendar-days"],
     views: [
       { id: "events", icon: tabIcon("calendar"), title: { zh: "\u65E5\u7A0B", en: "Agenda" }, component: withProps(require_events(), "\u65E5\u7A0B") },

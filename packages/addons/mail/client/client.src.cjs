@@ -14,11 +14,12 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
   // 邮件数据视图统一过保险箱门禁：锁定期间不挂载视图，切页与轮询都拿不到任何邮件字段。
   var C = require("./ui/common.cjs"); var Gate = require("./ui/lock-gate.cjs");
   function gated(Inner, title) { return Gate.gate(withProps(Inner, title), h, React, C); }
-  if (typeof document !== "undefined" && document.head && !document.getElementById("wb-mail-style")) { var s = document.createElement("style"); s.id = "wb-mail-style"; s.textContent = CSS; document.head.appendChild(s); }
+  // 样式模块可能返回数组，交给共享注入器规范化，避免逗号拼接成非法 CSS。
+  require("../../lib/inject-styles.cjs")({ id: "wb-mail-style", css: CSS, addon: "wb-addon-mail" });
   // 贡献声明写在 registerAddon 里：卸载邮件时宿主按 addonId 一起撤销。
   // 「原邮件」回链由邮件自己提供——任务只给描述原文，不解析任何来源标记。
   var slotBackToMessage = require("./views/slot-back-to-message.cjs")({ React: React, h: h, C: C, Icon: Icon });
-  host.registerAddon({ id: "wb-addon-mail", version: "0.6.3",
+  host.registerAddon({ id: "wb-addon-mail", version: "0.6.4",
     icon: GLYPHS["mail"],
     slots: [{ slot: "item.actions", id: "mail.back-to-message", order: 100, component: slotBackToMessage }],
     views: [
