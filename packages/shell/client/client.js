@@ -2178,7 +2178,11 @@ var require_cloud_settings = __commonJS({
         function test() {
           setTesting(true);
           setProbe(null);
-          api.post("/cloud/test").then(function(r) {
+          setMsg("");
+          var probeMode = draftMode || cfg && cfg.mode || "shared";
+          var body = { mode: probeMode };
+          if (probeMode === "private") body.private = { url: form.url, secret: form.secret, deviceName: form.deviceName };
+          api.post("/cloud/test", body).then(function(r) {
             setTesting(false);
             setProbe(r || { reachable: false });
           });
@@ -2243,7 +2247,7 @@ var require_cloud_settings = __commonJS({
               probe.server_name ? " \xB7 " + t("cloud_server") + " " + probe.server_name : "",
               " \xB7 " + (probe.latency_ms != null ? probe.latency_ms + "ms" : "")
             ] }) : jsx2.jsx("div", { children: t("cloud_test_fail") + (probe.error ? " \xB7 " + probe.error : "") }),
-            probe.reachable ? jsx2.jsx("div", { children: probe.authorized ? t("cloud_auth_ok") + (probe.devices && probe.devices.length ? " \xB7 " + t("cloud_devices_count") + " " + probe.devices.length : "") : t("cloud_auth_bad") }) : null
+            probe.reachable ? jsx2.jsx("div", { children: probe.unauthorized ? t("cloud_auth_bad") : probe.authorized ? t("cloud_auth_ok") + (probe.devices && probe.devices.length ? " \xB7 " + t("cloud_devices_count") + " " + probe.devices.length : "") : t("cloud_auth_bad") }) : null
           ] }) : null
         ] });
       }

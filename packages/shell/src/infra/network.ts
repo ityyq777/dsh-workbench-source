@@ -5,6 +5,7 @@ import { SyncEngine, SyncHttpError, listConflicts, resolveConflict, type SyncTra
 import { BackupError, createBackup, importBackup, normalizeBackupFormat, normalizeImportPolicy } from "./backup.js";
 import type { Subscriber } from "../types/host-types.js";
 import { publicCategories } from "./categories.js";
+import { normalizeUrl } from "./cloud-config.js";
 export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionModeOf, setSessionMode, audit, backupDomains, actionNames, invoke, log, schemaSnapshot, applyCloudConfig, publicCloudConfig }: any) {
   /** 云端 fetch 封装（带 access token；401 时尝试 refresh 一次）。 */
   async function cloudFetch(path: string, init?: RequestInit & { json?: unknown }, retry = true): Promise<any> {
@@ -449,25 +450,61 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
                 }
               }
               if (p === "/cloud/test" && m === "POST") {
+                // 允许带草稿配置：设置页点“测试连接”时还没保存，必须按输入框里的地址与密钥探测，
+                // 否则测的永远是上一次保存的地址。缺省才回落到已保存配置。
+                const draft: any = await bodyOf().catch(() => ({}));
+                const draftPrivate = (draft && draft.private) || {};
+                let baseUrl = state.cloudUrl;
+                let token = state.creds ? state.creds.accessToken : "";
+                let probeMode = state.cloudConfig.mode;
+                if (draft && (draft.mode === "private" || draft.mode === "shared" || draft.mode === "none")) {
+                  probeMode = draft.mode;
+                }
+                if (typeof draftPrivate.url === "string" && draftPrivate.url.trim()) {
+                  try {
+                    baseUrl = normalizeUrl(draftPrivate.url);
+                  } catch (e) {
+                    return send(200, {
+                      ok: true,
+                      reachable: false,
+                      status: 0,
+                      error: actionErrorText(e),
+                      mode: probeMode,
+                      base_url: draftPrivate.url,
+                    });
+                  }
+                }
+                if (typeof draftPrivate.secret === "string" && draftPrivate.secret.trim()) {
+                  token = draftPrivate.secret.trim();
+                } else if (probeMode === "private" && !token) {
+                  token = state.cloudConfig.private.secret;
+                }
+                const reasonOf = (e: unknown) => {
+                  const err: any = e;
+                  const cause = err && err.cause ? err.cause : null;
+                  const detail = (cause && (cause.code || cause.message)) || (err && err.message) || String(e);
+                  return String(detail);
+                };
                 const controller = new AbortController();
                 const timer = setTimeout(() => controller.abort(), 3_000);
                 const started = Date.now();
                 let health: Record<string, unknown>;
                 try {
-                  const res = await fetch(state.cloudUrl + "/v1/health", { signal: controller.signal });
+                  const res = await fetch(baseUrl + "/v1/health", { signal: controller.signal });
                   health = { reachable: res.ok, status: res.status, ...(res.ok ? await res.json() : {}) };
                 } catch (e) {
-                  health = { reachable: false, status: 0, error: String((e && (e as Error).message) || e) };
+                  health = { reachable: false, status: 0, error: reasonOf(e) };
                 } finally {
                   clearTimeout(timer);
                 }
                 let account: any = null;
-                if (state.creds) {
+                if (token) {
                   try {
-                    const res = await fetch(state.cloudUrl + "/v1/me", {
-                      headers: { authorization: "Bearer " + state.creds.accessToken },
+                    const res = await fetch(baseUrl + "/v1/me", {
+                      headers: { authorization: "Bearer " + token },
                     });
                     if (res.ok) account = await res.json();
+                    else if (res.status === 401) account = { unauthorized: true };
                   } catch {
                     account = null;
                   }
@@ -475,11 +512,13 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
                 return send(200, {
                   ok: true,
                   ...health,
+                  base_url: baseUrl,
                   latency_ms: Date.now() - started,
-                  authorized: Boolean(account),
-                  user: account ? account.user : null,
-                  devices: account && Array.isArray(account.devices) ? account.devices : [],
-                  mode: state.cloudConfig.mode,
+                  authorized: Boolean(account && !account.unauthorized),
+                  unauthorized: Boolean(account && account.unauthorized),
+                  user: account && !account.unauthorized ? account.user : null,
+                  devices: account && !account.unauthorized && Array.isArray(account.devices) ? account.devices : [],
+                  mode: probeMode,
                 });
               }
               if (p === "/account" && m === "GET") {

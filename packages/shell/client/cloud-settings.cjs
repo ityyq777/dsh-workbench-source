@@ -55,10 +55,15 @@ module.exports = function createCloudSettings(react, jsx) {
       });
     }
 
+    // 探测设置卡里当前的草稿值（还没保存也能先测连通性）。
     function test() {
       setTesting(true);
       setProbe(null);
-      api.post("/cloud/test").then(function (r) {
+      setMsg("");
+      var probeMode = draftMode || (cfg && cfg.mode) || "shared";
+      var body = { mode: probeMode };
+      if (probeMode === "private") body.private = { url: form.url, secret: form.secret, deviceName: form.deviceName };
+      api.post("/cloud/test", body).then(function (r) {
         setTesting(false);
         setProbe(r || { reachable: false });
       });
@@ -118,9 +123,11 @@ module.exports = function createCloudSettings(react, jsx) {
             ] })
           : jsx.jsx("div", { children: t("cloud_test_fail") + (probe.error ? " · " + probe.error : "") }),
         probe.reachable
-          ? jsx.jsx("div", { children: probe.authorized
-              ? t("cloud_auth_ok") + (probe.devices && probe.devices.length ? " · " + t("cloud_devices_count") + " " + probe.devices.length : "")
-              : t("cloud_auth_bad") })
+          ? jsx.jsx("div", { children: probe.unauthorized
+              ? t("cloud_auth_bad")
+              : probe.authorized
+                ? t("cloud_auth_ok") + (probe.devices && probe.devices.length ? " · " + t("cloud_devices_count") + " " + probe.devices.length : "")
+                : t("cloud_auth_bad") })
           : null,
       ] }) : null,
     ] });
