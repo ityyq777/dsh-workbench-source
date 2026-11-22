@@ -201,6 +201,25 @@ try {
   assert(html.includes("wbq-tabs"), "应渲染页签");
   assert(!html.includes("React error"), "不应出现 React 报错");
 
+  // 5. 宿主 action 路由回的是 { ok, result }，页面必须取 result 再用；
+  //    直接把整包当数据用，空/非空都会显示成空表（曾经的「队列还是空的」）。
+  const { readResult } = await import("../packages/shell/client/event-queue-page.cjs");
+  assert(
+    JSON.stringify(readResult({ ok: true, result: { events: { done: 7 } } })) === JSON.stringify({ events: { done: 7 } }),
+    "readResult 应取出 result",
+  );
+  assert(readResult({ events: { done: 1 } }).events.done === 1, "没有 result 包络时原样返回");
+  let badEnvelope = null;
+  try {
+    readResult({ ok: false, error: "业务插件未注册该 action：wb.eventOverview" });
+  } catch (e) {
+    badEnvelope = e;
+  }
+  assert(badEnvelope && String(badEnvelope.message).includes("未注册"), "ok:false 应抛错而不是当数据用");
+
+  const queuePageSrc = readFileSync(new URL("../packages/shell/client/event-queue-page.cjs", import.meta.url), "utf8");
+  assert(/\.then\(readResult\)/.test(queuePageSrc), "队列页的请求必须经 readResult 解包");
+
   // 路由必须渲染组件外壳而不是直接调用页面函数，否则页面 hooks 会挂到
   // WorkbenchPage 的 hook 链上，切路由时 React 抛 #310（曾经的线上白屏）。
   const clientSrc = readFileSync(new URL("../packages/shell/client/client.src.cjs", import.meta.url), "utf8");

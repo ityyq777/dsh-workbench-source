@@ -41,6 +41,14 @@ function timeText(value) {
   return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
 }
 
+// 宿主的 action 路由回的是 { ok, result, text }，页面必须先取 result 再读字段。
+// 直接把整包当数据用，stats.events 就是 undefined，页面会崩在 stats.events.queued 上。
+function readResult(res) {
+  if (res && res.ok === false) throw new Error(String(res.error || "请求失败"));
+  if (res && res.result !== undefined) return res.result;
+  return res;
+}
+
 function useLoader(React, api, action, args, deps) {
   var state = React.useState({ loading: true, error: "", data: null });
   var value = state[0];
@@ -54,6 +62,7 @@ function useLoader(React, api, action, args, deps) {
     });
     api
       .post("/domains/wb-shell/actions/" + encodeURIComponent(action), args || {})
+      .then(readResult)
       .then(function (data) {
         if (alive) set({ loading: false, error: "", data: data });
       })
@@ -119,6 +128,7 @@ function queuePage(deps) {
     if (!window.confirm(t("queue_replay_confirm"))) return;
     api
       .post("/domains/wb-shell/actions/wb.eventReplay", { deliveryId: delivery.id })
+      .then(readResult)
       .then(function () {
         setNote(t("queue_replay_ok"));
         reload();
@@ -132,6 +142,7 @@ function queuePage(deps) {
     if (!window.confirm(t("queue_cleanup_confirm"))) return;
     api
       .post("/domains/wb-shell/actions/wb.eventCleanup", { olderThanDays: 7 })
+      .then(readResult)
       .then(function (r) {
         setNote(t("queue_cleanup_ok") + " " + String((r && r.deleted) || 0));
         reload();
@@ -333,4 +344,4 @@ function QueueView(props) {
   return queuePage(props);
 }
 
-module.exports = { queuePage: queuePage, QueueView: QueueView };
+module.exports = { queuePage: queuePage, QueueView: QueueView, readResult: readResult };

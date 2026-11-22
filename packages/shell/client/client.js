@@ -3592,6 +3592,11 @@ var require_event_queue_page = __commonJS({
       };
       return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
     }
+    function readResult(res) {
+      if (res && res.ok === false) throw new Error(String(res.error || "\u8BF7\u6C42\u5931\u8D25"));
+      if (res && res.result !== void 0) return res.result;
+      return res;
+    }
     function useLoader(React, api, action, args, deps) {
       var state = React.useState({ loading: true, error: "", data: null });
       var value = state[0];
@@ -3603,7 +3608,7 @@ var require_event_queue_page = __commonJS({
         set(function(prev) {
           return { loading: true, error: prev.error, data: prev.data };
         });
-        api.post("/domains/wb-shell/actions/" + encodeURIComponent(action), args || {}).then(function(data) {
+        api.post("/domains/wb-shell/actions/" + encodeURIComponent(action), args || {}).then(readResult).then(function(data) {
           if (alive) set({ loading: false, error: "", data });
         }).catch(function(e) {
           if (alive) set({ loading: false, error: String(e && e.message || e), data: null });
@@ -3661,7 +3666,7 @@ var require_event_queue_page = __commonJS({
       }
       function replay(delivery) {
         if (!window.confirm(t("queue_replay_confirm"))) return;
-        api.post("/domains/wb-shell/actions/wb.eventReplay", { deliveryId: delivery.id }).then(function() {
+        api.post("/domains/wb-shell/actions/wb.eventReplay", { deliveryId: delivery.id }).then(readResult).then(function() {
           setNote(t("queue_replay_ok"));
           reload();
         }).catch(function(e) {
@@ -3670,7 +3675,7 @@ var require_event_queue_page = __commonJS({
       }
       function cleanup() {
         if (!window.confirm(t("queue_cleanup_confirm"))) return;
-        api.post("/domains/wb-shell/actions/wb.eventCleanup", { olderThanDays: 7 }).then(function(r) {
+        api.post("/domains/wb-shell/actions/wb.eventCleanup", { olderThanDays: 7 }).then(readResult).then(function(r) {
           setNote(t("queue_cleanup_ok") + " " + String(r && r.deleted || 0));
           reload();
         }).catch(function(e) {
@@ -3852,7 +3857,7 @@ var require_event_queue_page = __commonJS({
     function QueueView(props) {
       return queuePage(props);
     }
-    module2.exports = { queuePage, QueueView };
+    module2.exports = { queuePage, QueueView, readResult };
   }
 });
 
