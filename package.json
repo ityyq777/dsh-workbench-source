@@ -107,7 +107,8 @@
     "verify:install-order": "node scripts/verify-install-order.mjs",
     "cloud-private:stop": "node cloud-private/bin/wb-private-cloud.mjs stop",
     "cloud-private:status": "node cloud-private/bin/wb-private-cloud.mjs status",
-    "cloud-private:logs": "node cloud-private/bin/wb-private-cloud.mjs logs -f"
+    "cloud-private:logs": "node cloud-private/bin/wb-private-cloud.mjs logs -f",
+    "audit:version": "node scripts/audit-addon-version.mjs"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.72.1",

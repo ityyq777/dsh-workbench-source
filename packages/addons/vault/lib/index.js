@@ -9,6 +9,10 @@
  * 0.3.5：修复「保存凭据后列表不新增」——客户端 unwrap 对 ok:false 抛错、锁定态在凭据页提示并可内联解锁、写成功后无条件刷新列表。
  */
 import { ensureSchema, bindClock } from "./db/db.js";
+import { createRequire } from "node:module";
+
+// 版本号只认 package.json：首页插件卡读的就是这里注册的 version。
+const ADDON_VERSION = createRequire(import.meta.url)("../package.json").version;
 import { createVault } from "./domain/vault.js";
 import { createGroups } from "./domain/groups.js";
 import { registerVaultActions } from "./domain/actions.js";
@@ -31,7 +35,7 @@ export function createDomain(host) {
     id: "wb-addon-vault",
     title: "凭据保险箱",
     description: "集中保存密码、授权码与 token；按分组授权给业务模块，加密落库、密文可同步。",
-    version: "0.4.2",
+    version: ADDON_VERSION,
     category: "assets",
     tables: [
       "vault_header",

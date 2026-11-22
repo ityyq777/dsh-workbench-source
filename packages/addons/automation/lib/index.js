@@ -6,6 +6,10 @@
  */
 
 import { bindClock, ensureSchema } from "./db/db.js";
+import { createRequire } from "node:module";
+
+// 版本号只认 package.json：首页插件卡读的就是这里注册的 version。
+const ADDON_VERSION = createRequire(import.meta.url)("../package.json").version;
 import { createAutomation } from "./domain/rules.js";
 import { registerActions } from "./domain/actions.js";
 
@@ -41,7 +45,7 @@ export function apply(ctx) {
         id: "wb-addon-automation",
         title: "自动化",
         description: "两种执行方式：按时间/域事件调用白名单 action（确定性、不耗 token），或交给宿主「自动化任务」在会话里由 AI 执行",
-        version: "0.4.3",
+        version: ADDON_VERSION,
         category: "auto",
         tables: ["automation_rule", "automation_run", "automation_meta"],
         // 规则可随备份迁移；运行记录只在本机，因此不参与云同步。

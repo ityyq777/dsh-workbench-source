@@ -4,6 +4,7 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
 // 凭据保险箱客户端：首页 / 凭据 / 分组与关联 / 设置 / 数据 / Action 六个视图。
 // 只调用本插件注册的 vault.* action。
 (function () {
+  // 版本号只认 package.json，避免 package.json / 客户端注册 / 服务端注册三处漂移。
   var root = typeof window !== "undefined" ? window : null;
   var host = root && root.__WB_HOST__;
   if (!host || !host.react) {
@@ -57,7 +58,7 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
 
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.4.10",
+    version: __ADDON_VERSION__,
     icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "保险箱", en: "Vault" }, component: withProps(require("./views/status.cjs"), "保险箱") },

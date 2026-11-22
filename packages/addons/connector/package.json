@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbench-connector",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "个人工作台连接器：RSS/Webhook 内容接入，来源定义可同步、凭据本机",
   "type": "module",
   "main": "lib/index.js",
@@ -14,7 +14,7 @@
     "addon": {
       "id": "wb-addon-connector",
       "title": "连接器",
-      "version": "0.1.12",
+      "version": "0.1.13",
       "minShell": "0.8.0",
       "tables": [
         "connector_source",

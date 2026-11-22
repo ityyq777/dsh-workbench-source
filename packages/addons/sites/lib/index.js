@@ -7,6 +7,10 @@
  */
 
 import { bindClock, ensureSchema } from "./db/db.js";
+import { createRequire } from "node:module";
+
+// 版本号只认 package.json：首页插件卡读的就是这里注册的 version。
+const ADDON_VERSION = createRequire(import.meta.url)("../package.json").version;
 import { ensureSiteTagSource } from "./domain/sites-mappings.js";
 import { exportSitesData, importSitesData } from "./infra/backup.js";
 import { siteSync } from "./infra/sync.js";
@@ -100,7 +104,7 @@ export function apply(ctx) {
         id: "wb-addon-sites",
         title: "站点",
         description: "站点收藏：目录树、链接与标签（标签需安装标签插件）；含统计/记录/配置/数据四个视图",
-        version: "1.12.11",
+        version: ADDON_VERSION,
         category: "assets",
         tables: ["site", "site_node", "site_node_mapping", "tag_mapping", "site_account", "site_account_external"],
         sync: siteSync,

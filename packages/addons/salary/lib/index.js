@@ -1,5 +1,9 @@
 /** wb-addon-salary：按日期记录日结/月结工资、收入项、扣款项与实发统计。 */
 import { bindClock, ensureSchema } from "./db/db.js";
+import { createRequire } from "node:module";
+
+// 版本号只认 package.json：首页插件卡读的就是这里注册的 version。
+const ADDON_VERSION = createRequire(import.meta.url)("../package.json").version;
 import { createSalary } from "./domain/salary.js";
 import { registerSalaryActions } from "./domain/actions.js";
 
@@ -28,7 +32,7 @@ export function apply(ctx) {
     id: "wb-addon-salary",
     title: "工资",
     description: "按日期记录日结/月结工资：用工类型、收入项、税前扣款、社保公积金、个税与实发",
-    version: "0.4.5",
+    version: ADDON_VERSION,
     category: "finance",
     tables: ["salary_record"],
     sync: { tables: [] },

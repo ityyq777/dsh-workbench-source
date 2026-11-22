@@ -12,6 +12,10 @@
  */
 
 import { bindClock, ensureSchema } from "./db/db.js";
+import { createRequire } from "node:module";
+
+// 版本号只认 package.json：首页插件卡读的就是这里注册的 version。
+const ADDON_VERSION = createRequire(import.meta.url)("../package.json").version;
 import { DOMAIN, loadConfig } from "./config.js";
 import { createPlayer } from "./player.js";
 import { createSupervisor } from "./desktop/supervisor.js";
@@ -110,7 +114,7 @@ export function apply(ctx) {
         title: "弹幕",
         description:
           "把自建弹幕轮播在整个 DSH 界面，并可叠加到整个桌面；单一宿主调度、SSE 与 Electron helper 双投递，含弹幕库/配置/数据/Action 四个视图",
-        version: "0.2.6",
+        version: ADDON_VERSION,
         category: "comm",
         tables: TABLES,
         sync: { tables: [] },

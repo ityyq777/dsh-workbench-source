@@ -58,6 +58,8 @@ for (const name of ADDONS) {
     external: ["react"],
     legalComments: "none",
     logLevel: "warning",
+    // 版本号由构建注入，客户端注册、服务端注册都只认 package.json，不再手写字面量。
+    define: { __ADDON_VERSION__: JSON.stringify(pkg.version) },
     banner: { js: banner.js },
     footer: { js: footer.js },
   });

@@ -5,6 +5,10 @@
  */
 
 import { bindClock, ensureSchema } from "./db/db.js";
+import { createRequire } from "node:module";
+
+// 版本号只认 package.json：首页插件卡读的就是这里注册的 version。
+const ADDON_VERSION = createRequire(import.meta.url)("../package.json").version;
 import { exportTagsData, importTagsData } from "./infra/backup.js";
 import { tagSync } from "./infra/sync.js";
 import { registerTagActions } from "./domain/tags.js";
@@ -90,7 +94,7 @@ export function apply(ctx) {
         id: "wb-addon-tags",
         title: "标签",
         description: "创建与管理标签，为站点等业务提供标签归类；含统计/记录/配置/数据四个视图",
-        version: "1.7.7",
+        version: ADDON_VERSION,
         category: "work",
         tables: ["tag", "tag_mapping"],
         sync: tagSync,

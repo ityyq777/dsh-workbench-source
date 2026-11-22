@@ -1,5 +1,9 @@
 /** wb-addon-contacts：本地联系人、分组与 vCard 导入导出。 */
 import { bindClock, ensureSchema } from "./db/db.js";
+import { createRequire } from "node:module";
+
+// 版本号只认 package.json：首页插件卡读的就是这里注册的 version。
+const ADDON_VERSION = createRequire(import.meta.url)("../package.json").version;
 import { createContacts } from "./domain/contacts.js";
 import { registerContactActions } from "./domain/actions.js";
 
@@ -24,7 +28,7 @@ export function apply(ctx) {
     id: "wb-addon-contacts",
     title: "联系人",
     description: "本地联系人、分组、多值字段与 vCard 导入导出；支持跨域搜索",
-    version: "0.1.6",
+    version: ADDON_VERSION,
     category: "comm",
     tables: ["contact", "contact_group", "contact_field", "contact_group_member"],
     sync: { tables: [] },

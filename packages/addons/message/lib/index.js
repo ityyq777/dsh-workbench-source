@@ -10,6 +10,10 @@
  */
 
 import { bindClock, ensureSchema, now, rowMessage } from "./db/db.js";
+import { createRequire } from "node:module";
+
+// 版本号只认 package.json：首页插件卡读的就是这里注册的 version。
+const ADDON_VERSION = createRequire(import.meta.url)("../package.json").version;
 import { configValues, registerConfigActions } from "./infra/config.js";
 import { registerDataActions } from "./infra/data.js";
 import { pruneMessages, registerMessageActions } from "./domain/messages.js";
@@ -82,7 +86,7 @@ export function apply(ctx) {
         id: "wb-addon-message",
         title: "消息",
         description: "统一消息入口：子插件与 agent 都能发消息，含未读计数、提示音与保留期清理；含统计、收件箱、配置、数据与 Action 五个视图",
-        version: "0.1.9",
+        version: ADDON_VERSION,
         category: "comm",
         tables: ["message"],
         // 只在本机保存：显式声明不同步任何表（不写 sync 时宿主默认按行同步）。

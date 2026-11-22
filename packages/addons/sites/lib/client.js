@@ -8561,7 +8561,7 @@ var staged = require_staged_dialog();
   injectCss();
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.12.18",
+    version: "1.12.19",
     icon: icons.ICONS["globe"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },

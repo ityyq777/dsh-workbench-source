@@ -10,6 +10,7 @@
   }
   var limits = require('../shared/tree/limits.cjs');
   var React = require("react");
+  // 客户端注册的版本号同样只认 package.json，避免与 package.json / 服务端注册三处漂移。
   var h = React.createElement;
   var TagFilter = require("./ui/tagfilter.cjs");
   var WorkspaceFilter = require("./ui/workspacefilter.cjs");
@@ -380,7 +381,7 @@
 
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.45",
+    version: __ADDON_VERSION__,
     icon: ICONS["list-checks"],
     // 贡献声明写在 registerAddon 里：卸载任务插件时宿主按 addonId 一起撤销，
     // 不会在邮件里留一个渲染即报错的孤儿按钮。

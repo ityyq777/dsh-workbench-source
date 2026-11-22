@@ -1,5 +1,9 @@
 /** wb-addon-mail：邮箱账户、文件夹、本地邮件、SMTP 发信与 IMAP 抓信。 */
 import { bindClock, ensureSchema } from "./db/db.js";
+import { createRequire } from "node:module";
+
+// 版本号只认 package.json：首页插件卡读的就是这里注册的 version。
+const ADDON_VERSION = createRequire(import.meta.url)("../package.json").version;
 import { createMail } from "./domain/mail.js";
 import { registerMailActions } from "./domain/actions.js";
 import { createAutoSync, registerAutoSyncActions } from "./domain/auto-sync.js";
@@ -48,7 +52,7 @@ export function apply(ctx) {
     id: "wb-addon-mail",
     title: "邮件",
     description: "安全 IMAP 收信与文件夹同步，按需读正文、下载附件，保存本地草稿并通过 SMTP 回复或转发。",
-    version: "0.6.0",
+    version: ADDON_VERSION,
     category: "comm",
     // mail_draft 含私有未发正文，不加入宿主通用表清单或同步回退。
     tables: ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"],

@@ -3,6 +3,10 @@
  * 只有来源定义参与云同步；cursor、secret_id、条目与运行记录都留在本机。
  */
 import { ensureSchema, bindClock } from "./db/db.js";
+import { createRequire } from "node:module";
+
+// 版本号只认 package.json：首页插件卡读的就是这里注册的 version。
+const ADDON_VERSION = createRequire(import.meta.url)("../package.json").version;
 import { createConnector } from "./domain/connector.js";
 import { registerConnectorActions } from "./domain/actions.js";
 
@@ -23,7 +27,7 @@ export function createDomain(host) {
     id: "wb-addon-connector",
     title: "连接器",
     description: "把 RSS、Webhook 等外部内容接进工作台；来源定义可同步，凭据与本机状态不出机器。",
-    version: "0.1.7",
+    version: ADDON_VERSION,
     category: "auto",
     tables: ["connector_source", "connector_source_state", "connector_item", "connector_run"],
     sync: {

@@ -3,6 +3,10 @@
  * 搜索命中字段（名称/品牌/位置/备注）用共享 highlight 高亮（1.5.5）。
  */
 import { bindClock, ensureSchema } from "./db/db.js";
+import { createRequire } from "node:module";
+
+// 版本号只认 package.json：首页插件卡读的就是这里注册的 version。
+const ADDON_VERSION = createRequire(import.meta.url)("../package.json").version;
 import { ensureStorageTagSource } from "./domain/tags.js";
 import { registerStorageActions } from "./domain/storage.js";
 import { registerConfigActions } from "./infra/config.js";
@@ -67,7 +71,7 @@ export function apply(ctx) {
         id: "wb-addon-storage",
         title: "储物",
         description: "储物：记录物品名称、品牌、单位、库存文本、存放位置、图片URL、备注与可选标签",
-        version: "1.5.13",
+        version: ADDON_VERSION,
         category: "assets",
         tables: ["storage"],
         sync: storageSync,

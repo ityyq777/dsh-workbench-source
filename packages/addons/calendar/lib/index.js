@@ -1,5 +1,9 @@
 /** wb-addon-calendar：本地日历、事件、参与人与提醒。 */
 import { bindClock, ensureSchema } from "./db/db.js";
+import { createRequire } from "node:module";
+
+// 版本号只认 package.json：首页插件卡读的就是这里注册的 version。
+const ADDON_VERSION = createRequire(import.meta.url)("../package.json").version;
 import { createCalendar } from "./domain/calendar.js";
 import { registerCalendarActions } from "./domain/actions.js";
 
@@ -24,7 +28,7 @@ export function apply(ctx) {
     id: "wb-addon-calendar",
     title: "日历",
     description: "本地日历、事件、参与人、提醒；RRULE 只存原文，提醒复用消息插件",
-    version: "0.1.7",
+    version: ADDON_VERSION,
     category: "work",
     tables: ["calendar", "calendar_event", "calendar_attendee", "calendar_reminder"],
     sync: { tables: [] },

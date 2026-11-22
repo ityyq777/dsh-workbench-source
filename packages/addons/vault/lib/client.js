@@ -6979,7 +6979,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.4.10",
+    version: "0.4.11",
     icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },
