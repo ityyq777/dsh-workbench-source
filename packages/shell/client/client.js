@@ -3288,84 +3288,30 @@ var require_host_pages = __commonJS({
         }
       };
     }
-    function dataPage(deps) {
+    function pageShell(deps, title, desc, body) {
       var jsx2 = deps.jsx;
-      var api = deps.api;
-      var lang = deps.lang;
-      var head = deps.head;
-      var t = deps.t;
       return jsx2.jsxs("div", { className: "wb-root", children: [
         jsx2.jsxs("div", { className: "wb-inner wb-wide", children: [
-          head(t("tab_data"), t("data_desc")),
-          jsx2.jsx(HostDataView, { api: hostApi(api), lang })
+          deps.head(title, desc),
+          body
         ] })
       ] });
     }
-    function configPage(deps) {
+    function dataPage(deps) {
       var jsx2 = deps.jsx;
-      var React = deps.React;
-      var api = deps.api;
+      return pageShell(
+        deps,
+        deps.t("tab_data"),
+        deps.t("data_desc"),
+        jsx2.jsx(HostDataView, { api: hostApi(deps.api), lang: deps.lang })
+      );
+    }
+    function configBody(deps, view) {
+      var jsx2 = deps.jsx;
       var t = deps.t;
-      var head = deps.head;
       var h2 = deps.React.createElement;
-      var stateS = React.useState({ ready: false, items: [], values: {}, overrides: {}, error: "" });
-      var state = stateS[0], setState = stateS[1];
-      var busyS = React.useState(false);
-      var busy = busyS[0], setBusy = busyS[1];
-      var toastS = React.useState("");
-      var toast = toastS[0], setToast = toastS[1];
-      var host = hostApi(api);
-      function load() {
-        Promise.resolve(host.call("wb.configGet")).then(function(r) {
-          var body2 = r && r.result !== void 0 ? r.result : r;
-          if (r && r.ok === false) throw new Error(r && r.error || "\u8BFB\u53D6\u914D\u7F6E\u5931\u8D25");
-          if (!body2 || !body2.values) throw new Error("\u8BFB\u53D6\u914D\u7F6E\u5931\u8D25");
-          setState({ ready: true, items: body2.items || [], values: body2.values, overrides: body2.overrides || {}, error: "" });
-        }).catch(function(e) {
-          setState({ ready: true, items: [], values: {}, overrides: {}, error: String(e && e.message || e) });
-        });
-      }
-      React.useEffect(function() {
-        load();
-      }, []);
-      function save(id, value) {
-        setBusy(true);
-        var patch = {};
-        patch[id] = value;
-        Promise.resolve(host.call("wb.configSet", { values: patch })).then(function(r) {
-          if (r && r.ok === false) throw new Error(r && r.error || "\u4FDD\u5B58\u5931\u8D25");
-          var body2 = r && r.result !== void 0 ? r.result : r;
-          setState(function(prev) {
-            return Object.assign({}, prev, { values: body2.values, overrides: body2.overrides });
-          });
-          setToast("\u5DF2\u4FDD\u5B58\uFF1A" + id);
-          setTimeout(function() {
-            setToast("");
-          }, 1600);
-        }).catch(function(e) {
-          setToast("\u4FDD\u5B58\u5931\u8D25\uFF1A" + String(e && e.message || e));
-        }).then(function() {
-          setBusy(false);
-        });
-      }
-      function reset(id) {
-        setBusy(true);
-        Promise.resolve(host.call("wb.configReset", { ids: [id] })).then(function(r) {
-          if (r && r.ok === false) throw new Error(r && r.error || "\u91CD\u7F6E\u5931\u8D25");
-          var body2 = r && r.result !== void 0 ? r.result : r;
-          setState(function(prev) {
-            return Object.assign({}, prev, { values: body2.values, overrides: body2.overrides });
-          });
-          setToast("\u5DF2\u6062\u590D\u9ED8\u8BA4\uFF1A" + id);
-          setTimeout(function() {
-            setToast("");
-          }, 1600);
-        }).catch(function(e) {
-          setToast("\u91CD\u7F6E\u5931\u8D25\uFF1A" + String(e && e.message || e));
-        }).then(function() {
-          setBusy(false);
-        });
-      }
+      var state = view.state;
+      var busy = view.busy;
       var body;
       if (state.error) body = jsx2.jsx("div", { className: "wb-err", children: state.error });
       else if (!state.ready) body = jsx2.jsx("div", { className: "wb-msg", children: t("loading") });
@@ -3390,7 +3336,7 @@ var require_host_pages = __commonJS({
                   disabled: busy,
                   label: item.label,
                   onChange: function(next) {
-                    save(item.id, !!next);
+                    view.onSave(item.id, !!next);
                   }
                 });
               } else {
@@ -3405,7 +3351,7 @@ var require_host_pages = __commonJS({
                   disabled: busy,
                   label: item.label,
                   onCommit: function(next) {
-                    save(item.id, next);
+                    view.onSave(item.id, next);
                   }
                 });
               }
@@ -3417,7 +3363,7 @@ var require_host_pages = __commonJS({
                 jsx2.jsxs("div", { className: "wbh-config-ctl", children: [
                   control,
                   overridden ? jsx2.jsx("button", { type: "button", className: "wb-link", disabled: busy, onClick: function() {
-                    reset(item.id);
+                    view.onReset(item.id);
                   }, children: t("reset_default") }) : null
                 ] })
               ] }, item.id);
@@ -3425,15 +3371,72 @@ var require_host_pages = __commonJS({
           ] }, group);
         });
       }
-      return jsx2.jsxs("div", { className: "wb-root", children: [
-        jsx2.jsxs("div", { className: "wb-inner wb-wide", children: [
-          head(t("tab_config"), t("config_desc")),
-          body,
-          toast ? jsx2.jsx("div", { className: "wb-toast", children: toast }) : null
-        ] })
-      ] });
+      return pageShell(deps, t("tab_config"), t("config_desc"), [
+        body,
+        view.toast ? jsx2.jsx("div", { className: "wb-toast", children: view.toast }) : null
+      ]);
     }
-    module2.exports = { dataPage, configPage };
+    function configPage(deps) {
+      var React = deps.React;
+      var api = deps.api;
+      var stateS = React.useState({ ready: false, items: [], values: {}, overrides: {}, error: "" });
+      var state = stateS[0], setState = stateS[1];
+      var busyS = React.useState(false);
+      var busy = busyS[0], setBusy = busyS[1];
+      var toastS = React.useState("");
+      var toast = toastS[0], setToast = toastS[1];
+      var host = hostApi(api);
+      React.useEffect(function() {
+        Promise.resolve(host.call("wb.configGet")).then(function(r) {
+          var body = r && r.result !== void 0 ? r.result : r;
+          if (r && r.ok === false) throw new Error(r && r.error || "\u8BFB\u53D6\u914D\u7F6E\u5931\u8D25");
+          if (!body || !body.values) throw new Error("\u8BFB\u53D6\u914D\u7F6E\u5931\u8D25");
+          setState({ ready: true, items: body.items || [], values: body.values, overrides: body.overrides || {}, error: "" });
+        }).catch(function(e) {
+          setState({ ready: true, items: [], values: {}, overrides: {}, error: String(e && e.message || e) });
+        });
+      }, []);
+      function save(id, value) {
+        setBusy(true);
+        var patch = {};
+        patch[id] = value;
+        Promise.resolve(host.call("wb.configSet", { values: patch })).then(function(r) {
+          if (r && r.ok === false) throw new Error(r && r.error || "\u4FDD\u5B58\u5931\u8D25");
+          var body = r && r.result !== void 0 ? r.result : r;
+          setState(function(prev) {
+            return Object.assign({}, prev, { values: body.values, overrides: body.overrides });
+          });
+          setToast("\u5DF2\u4FDD\u5B58\uFF1A" + id);
+          setTimeout(function() {
+            setToast("");
+          }, 1600);
+        }).catch(function(e) {
+          setToast("\u4FDD\u5B58\u5931\u8D25\uFF1A" + String(e && e.message || e));
+        }).then(function() {
+          setBusy(false);
+        });
+      }
+      function reset(id) {
+        setBusy(true);
+        Promise.resolve(host.call("wb.configReset", { ids: [id] })).then(function(r) {
+          if (r && r.ok === false) throw new Error(r && r.error || "\u91CD\u7F6E\u5931\u8D25");
+          var body = r && r.result !== void 0 ? r.result : r;
+          setState(function(prev) {
+            return Object.assign({}, prev, { values: body.values, overrides: body.overrides });
+          });
+          setToast("\u5DF2\u6062\u590D\u9ED8\u8BA4\uFF1A" + id);
+          setTimeout(function() {
+            setToast("");
+          }, 1600);
+        }).catch(function(e) {
+          setToast("\u91CD\u7F6E\u5931\u8D25\uFF1A" + String(e && e.message || e));
+        }).then(function() {
+          setBusy(false);
+        });
+      }
+      return configBody(deps, { state, busy, toast, onSave: save, onReset: reset });
+    }
+    module2.exports = { dataPage, configPage, configBody, DataView: HostDataView, HOST_TABLES };
   }
 });
 
