@@ -1229,7 +1229,7 @@ var require_styles = __commonJS({
         /* 深色：卡片底色更贴近主题表面 */
         "@media (prefers-color-scheme:dark){.wbdm-kpi,.wbdm-card,.wbdm-status-cell{background:var(--wb-surface,#16181d)}}",
         /* 窄屏：配置行从「标签 + 控件」两列改成上下单列，输入框不再固定 280px 宽。 */
-        "@media (max-width:600px){.wbdm-crow{grid-template-columns:minmax(0,1fr);gap:8px;padding:10px 0}.wbdm-ctl{flex-wrap:wrap}.wbdm-input,.wbdm-select{max-width:none;width:100%}.wbdm-crow .wbctl-num .wbctl-num-input{width:100%}.wbdm-preview{margin:10px 12px 0}.wbdm-page-title{font-size:16px}}"
+        "@media (max-width:600px){.wbdm-crow{grid-template-columns:minmax(0,1fr);gap:8px;padding:10px 0}.wbdm-ctl{flex-wrap:wrap}.wbdm-input,.wbdm-select{max-width:none;width:100%}.wbdm-crow .wbctl-num .wbctl-num-input{width:100%}.wbdm-preview{margin:10px 12px 0}.wbdm-page-title{font-size:16px}.wbdm-card-h{flex-direction:column;align-items:stretch;gap:6px}.wbdm-card-t,.wbdm-card-s{white-space:nowrap}.wbdm-card-action{width:100%;white-space:nowrap;padding-left:10px;padding-right:10px}.wbdm-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.wbdm-kpi{min-width:0;padding:7px 8px}.wbdm-kpi-n{font-size:17px}.wbdm-status{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.wbdm-status-cell{padding:7px 8px}.wbdm-status-k{font-size:10px}}"
       ];
     }
     module2.exports = function styles2() {
@@ -5154,7 +5154,7 @@ function definition(host) {
   var tab = makeTab(host.react);
   return {
     id: ADDON_ID,
-    version: "0.2.8",
+    version: "0.2.9",
     icon: tab("megaphone"),
     views: [
       {

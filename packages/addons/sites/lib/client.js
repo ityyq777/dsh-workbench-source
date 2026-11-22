@@ -5976,7 +5976,7 @@ var require_styles = __commonJS({
       ".wbs-note{font-size:11px;color:var(--wbs-muted);line-height:1.6}",
       /* 窄屏：站点表只留勾选、站点、操作三列，标签与创建/更新时间下放到展开行。 */
       "@media(max-width:600px){.wbs-table{min-width:0;table-layout:auto}.wbs-table colgroup{display:none}.wbs-c-tags,.wbs-c-create,.wbs-c-update{display:none}.wbs-table th,.wbs-table td{padding-left:8px;padding-right:8px}.wbs-site-desc{white-space:normal;overflow-wrap:anywhere}.wbs-actions{flex-wrap:wrap;gap:4px}}",
-      "@media(max-width:860px){.wbs-body{flex-direction:column}.wbs-tree{width:100%;max-height:220px}.wbs-table{min-width:760px}.wbs-root{min-height:0}}",
+      "@media(max-width:860px){.wbs-body{flex-direction:column}.wbs-tree{width:100%;box-sizing:border-box;max-height:220px}.wbs-main{min-width:0;width:100%}.wbs-root{min-height:0}}",
       "@media(max-width:600px){.wbs-head h2{font-size:18px}.wbs-linkrow{grid-template-columns:1fr 1fr}.wbs-modal{padding:14px}}"
     ].concat(require_stepper().styles, require_staged_dialog().styles).concat(require_filter_checklist_styles()).concat(require_client_base_styles().secretFieldStyles).concat([require_date_picker_styles()("wbs")]).concat(require_switch().styles).join("\n");
   }
@@ -8537,7 +8537,7 @@ var staged = require_staged_dialog();
   injectCss();
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.12.15",
+    version: "1.12.16",
     icon: icons.ICONS["globe"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },

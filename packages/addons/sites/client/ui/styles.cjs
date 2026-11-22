@@ -157,6 +157,6 @@ module.exports = [
       + ".wbs-table th,.wbs-table td{padding-left:8px;padding-right:8px}"
       + ".wbs-site-desc{white-space:normal;overflow-wrap:anywhere}"
       + ".wbs-actions{flex-wrap:wrap;gap:4px}}",
-    "@media(max-width:860px){.wbs-body{flex-direction:column}.wbs-tree{width:100%;max-height:220px}.wbs-table{min-width:760px}.wbs-root{min-height:0}}",
+    "@media(max-width:860px){.wbs-body{flex-direction:column}.wbs-tree{width:100%;box-sizing:border-box;max-height:220px}.wbs-main{min-width:0;width:100%}.wbs-root{min-height:0}}",
     "@media(max-width:600px){.wbs-head h2{font-size:18px}.wbs-linkrow{grid-template-columns:1fr 1fr}.wbs-modal{padding:14px}}"
 ].concat(require("../../../lib/stepper.cjs").styles, require("../../../lib/staged-dialog.cjs").styles).concat(require("../../../lib/filter-checklist-styles.cjs")).concat(require("../../../lib/client-base-styles.cjs").secretFieldStyles).concat([require("../../../lib/date-picker-styles.cjs")("wbs")]).concat(require("../../../lib/switch.cjs").styles).join("\n");

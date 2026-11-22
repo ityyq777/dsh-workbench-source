@@ -112,6 +112,11 @@ window.__WB_HOST__ = {
 (async function () {
   var hostApi = ${JSON.stringify(fixtures)};
   var api = {
+    // 有的视图会订阅宿主事件（api.subscribe），预览里给个不触发的空实现。
+    subscribe: function () { return function () {}; },
+    unsubscribe: function () {},
+    on: function () { return function () {}; },
+    emit: function () {},
     call: function (action, args) {
       var v = hostApi[action];
       if (typeof v === "function") v = v(args);
@@ -138,7 +143,22 @@ window.__WB_HOST__ = {
     React: React, ReactDOM: ReactDOM, h: React.createElement, api: api, lang: ${JSON.stringify(lang)},
     active: true, theme: ${JSON.stringify(theme)},
   };
-  ReactDOM.createRoot(document.getElementById("stage")).render(React.createElement(view.component, props));
+  // 套一层宿主外壳（.wb-root > .wb-immersive > .wb-immersive-main > .wb-inner），
+  // 这样截到的是带页面内边距的真实效果，而不是贴边渲染的假象。
+  var frame = React.createElement(
+    "div",
+    { className: "wb-root" },
+    React.createElement(
+      "div",
+      { className: "wb-immersive" },
+      React.createElement(
+        "div",
+        { className: "wb-immersive-main" },
+        React.createElement("div", { className: "wb-inner wb-wide" }, React.createElement(view.component, props)),
+      ),
+    ),
+  );
+  ReactDOM.createRoot(document.getElementById("stage")).render(frame);
 })();
 </script>
 </body></html>`;

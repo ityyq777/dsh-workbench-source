@@ -150,7 +150,17 @@ function pageStyles() {
     "@media (max-width:600px){.wbdm-crow{grid-template-columns:minmax(0,1fr);gap:8px;padding:10px 0}"
       + ".wbdm-ctl{flex-wrap:wrap}.wbdm-input,.wbdm-select{max-width:none;width:100%}"
       + ".wbdm-crow .wbctl-num .wbctl-num-input{width:100%}"
-      + ".wbdm-preview{margin:10px 12px 0}.wbdm-page-title{font-size:16px}}",
+      + ".wbdm-preview{margin:10px 12px 0}.wbdm-page-title{font-size:16px}"
+      // 卡片头：标题与按钮都不再被压成竖排 / 两行
+      + ".wbdm-card-h{flex-direction:column;align-items:stretch;gap:6px}"
+      + ".wbdm-card-t,.wbdm-card-s{white-space:nowrap}"
+      + ".wbdm-card-action{width:100%;white-space:nowrap;padding-left:10px;padding-right:10px}"
+      // KPI 三张卡排一行，避免 2+1 的参差
+      + ".wbdm-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}"
+      + ".wbdm-kpi{min-width:0;padding:7px 8px}"
+      + ".wbdm-kpi-n{font-size:17px}"
+      + ".wbdm-status{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}"
+      + ".wbdm-status-cell{padding:7px 8px}.wbdm-status-k{font-size:10px}}",
   ];
 }
 
