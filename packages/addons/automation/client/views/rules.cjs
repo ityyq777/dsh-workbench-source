@@ -165,7 +165,7 @@ function EmptyCard(props) {
     h("div", { className: "wba-inline" },
       props.noActions
         ? h(C.Btn, { h: h, kind: "primary", onClick: props.onSettings }, t("rules.empty.noActionCta"))
-        : h(C.Btn, { h: h, kind: "primary", onClick: props.onNew }, icons.label("plus", t("common.create")))),
+        : h(C.Btn, { h: h, kind: "primary", onClick: props.onNew }, icons.label("plus", t("common.createShort"), { short: true }))),
     h("p", { className: "wba-empty-body" }, props.noActions ? t("rules.empty.noActionHint") : t("rules.empty.backup")));
 }
 
@@ -388,7 +388,7 @@ module.exports = function RulesView(props) {
         h("p", { className: "wba-sub" }, t("rules.subtitle"))),
       h("div", { className: "wba-row" },
         h(C.Btn, { h: h, onClick: reload }, t("common.refresh")),
-        h(C.Btn, { h: h, kind: "primary", onClick: openNew }, icons.label("plus", t("common.create"))))),
+        h(C.Btn, { h: h, kind: "primary", onClick: openNew }, icons.label("plus", t("common.createShort"), { short: true })))),
     h(C.Notice, { h: h, text: msgS[0], kind: "info" }),
     h(RulesBody, {
       h: h,

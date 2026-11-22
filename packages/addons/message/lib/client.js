@@ -43,15 +43,18 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var require_icon_label = __commonJS({
   "packages/addons/lib/icon-label.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = function iconLabel(h, Icon2, text) {
+    var VISUALLY_HIDDEN = "position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap";
+    module2.exports = function iconLabel(h, Icon2, text, options) {
+      var opts = options || {};
+      var cls = "wb-icon-label" + (opts.short ? " wb-icon-label-short" : "") + (Icon2 ? "" : " wb-icon-label-fallback");
       return h(
         "span",
-        { className: "wb-icon-label" + (Icon2 ? "" : " wb-icon-label-fallback") },
+        { className: cls, title: typeof text === "string" ? text : void 0 },
         Icon2 ? h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }) : null,
         h("span", { className: "wb-icon-label-text" }, text)
       );
     };
-    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}@media(max-width:760px){button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{display:none}}";
+    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{" + VISUALLY_HIDDEN + "}button .wb-icon-label.wb-icon-label-short .wb-icon-label-text{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal}";
   }
 });
 
@@ -78,10 +81,10 @@ var require_icons = __commonJS({
         return h(C, attrs);
       }
       var set = { ICONS, Icon: Icon2 };
-      set.label = function(name, text) {
+      set.label = function(name, text, options2) {
         return require_icon_label()(h, function NamedIcon(props) {
           return h(Icon2, Object.assign({ name }, props));
-        }, text);
+        }, text, options2);
       };
       if (opts.tabIcon) {
         set.tabIcon = function(name) {
@@ -1100,7 +1103,7 @@ var require_copy = __commonJS({
         loadFail: "\u6D88\u606F\u52A0\u8F7D\u5931\u8D25",
         retry: "\u91CD\u8BD5",
         empty: "\u8FD8\u6CA1\u6709\u6D88\u606F\u3002\u5B50\u63D2\u4EF6\u6216 agent \u8C03\u7528 message.send \u540E\u4F1A\u51FA\u73B0\u5728\u8FD9\u91CC\u3002",
-        unreadOnly: "\u53EA\u770B\u672A\u8BFB",
+        unreadOnly: "\u672A\u8BFB",
         searchPlaceholder: "\u641C\u7D22\u6807\u9898\u6216\u6B63\u6587",
         noMatch: "\u6CA1\u6709\u5339\u914D\u7684\u6D88\u606F",
         markAll: "\u5168\u90E8\u5DF2\u8BFB",
@@ -1158,7 +1161,7 @@ var require_copy = __commonJS({
         loadFail: "Failed to load messages",
         retry: "Retry",
         empty: "No messages yet. Plugins or agents calling message.send will show up here.",
-        unreadOnly: "Unread only",
+        unreadOnly: "Unread",
         searchPlaceholder: "Search title or body",
         noMatch: "No matching messages",
         markAll: "Mark all read",
@@ -1473,6 +1476,7 @@ var require_styles = __commonJS({
       ".wbm-grow{flex:1;min-width:0}",
       ".wbm-input{flex:1;min-width:140px;max-width:280px;border:1px solid var(--wbm-line);border-radius:8px;background:transparent;color:inherit;padding:6px 9px;font-size:12.5px}",
       ".wbm-select{border:1px solid var(--wbm-line);border-radius:8px;background:transparent;color:inherit;padding:5px 8px;font-size:12.5px}",
+      ".wbm-btn .wb-icon-label-text{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.wbm-btn .wb-icon-label.wb-icon-label-short .wb-icon-label-text{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal}",
       ".wbm-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--wbm-line);background:transparent;color:inherit;border-radius:8px;padding:5px 10px;font-size:12.5px;cursor:pointer}",
       ".wbm-btn:hover{border-color:color-mix(in oklab,var(--wbm-accent) 45%,var(--wbm-line))}",
       ".wbm-btn.primary{background:var(--wbm-accent);border-color:var(--wbm-accent);color:var(--dsw-alias-label-primary-inverted,#fff);font-weight:600}",
@@ -1527,7 +1531,7 @@ var require_styles = __commonJS({
       ".wbm-multis{display:flex;gap:6px;flex-wrap:wrap}",
       "@media (max-width:760px){.wbm-toolbar{gap:6px}.wbm-input{max-width:none}.wbm-bar{grid-template-columns:70px 1fr 38px}}",
       // 窄屏：搜索框独占一行、统计与批量按钮分两段，避免缩成一条窄缝。
-      "@media (max-width:600px){.wbm-toolbar{gap:6px 8px}.wbm-toolbar .wbm-input{flex:1 1 100%;width:100%}.wbm-toolbar .wbm-select{flex:1 1 auto;min-width:0}.wbm-sumbox{flex:1 1 100%;font-size:12px}.wbm-toolbar .wbm-grow{display:none}/* \u6536\u4EF6\u7BB1\u7B5B\u9009\u6761\uFF1A\u7A84\u5C4F\u4E24\u5217\u6805\u683C\uFF0C\u641C\u7D22/\u7EDF\u8BA1\u5404\u5360\u6574\u884C\uFF0C\u4E24\u4E2A\u6309\u94AE\u5404\u5360\u4E00\u5217 */.wbm-toolbar-inbox{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:8px}.wbm-toolbar-inbox .wbm-input,.wbm-toolbar-inbox .wbm-sumbox{grid-column:1/-1;flex:none;width:100%}.wbm-toolbar-inbox .wbm-select{width:100%}.wbm-toolbar-inbox .wbm-btn{width:100%;justify-content:center}.wbm-btn{white-space:nowrap}.wbm-btn .wb-icon-label-text{display:none}}"
+      "@media (max-width:600px){.wbm-toolbar{gap:6px 8px}.wbm-toolbar .wbm-input{flex:1 1 100%;width:100%}.wbm-toolbar .wbm-select{flex:1 1 auto;min-width:0}.wbm-sumbox{flex:1 1 100%;font-size:12px}.wbm-toolbar .wbm-grow{display:none}/* \u6536\u4EF6\u7BB1\u7B5B\u9009\u6761\uFF1A\u7A84\u5C4F\u4E24\u5217\u6805\u683C\uFF0C\u641C\u7D22/\u7EDF\u8BA1\u5404\u5360\u6574\u884C\uFF0C\u4E24\u4E2A\u6309\u94AE\u5404\u5360\u4E00\u5217 */.wbm-toolbar-inbox{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:8px}.wbm-toolbar-inbox .wbm-input,.wbm-toolbar-inbox .wbm-sumbox{grid-column:1/-1;flex:none;width:100%}.wbm-toolbar-inbox .wbm-select{width:100%}.wbm-toolbar-inbox .wbm-btn{width:100%;justify-content:center}.wbm-btn{white-space:nowrap}}"
     ].concat(SW.styles).concat(NF.styles).join("");
   }
 });
@@ -2290,7 +2294,7 @@ var require_inbox = __commonJS({
             h("span", { className: "wbm-sumbox" }, h("span", null, fmt(t.total, { n: total })), h("span", null, fmt(t.unreadCount, { n: unread }))),
             h(
               "button",
-              { type: "button", className: "wbm-btn", disabled: !unread, onClick: function() {
+              { type: "button", className: "wbm-btn", disabled: !unread, title: t.markAll, "aria-label": t.markAll, onClick: function() {
                 mark(null, true);
               } },
               icon(props, "check-check"),
@@ -2304,7 +2308,7 @@ var require_inbox = __commonJS({
                 });
               } },
               icon(props, "refresh"),
-              h("span", { className: "wb-icon-label-text" }, t.retry)
+              h("span", null, t.retry)
             )
           ),
           error ? h("div", { className: "wbm-err", role: "alert" }, h("span", null, error), h("button", { type: "button", className: "wbm-btn", onClick: function() {
@@ -5160,7 +5164,7 @@ var require_inject_styles = __commonJS({
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-message",
-    version: "0.1.14",
+    version: "0.1.15",
     icon: ICONS["message-square"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: Stats },

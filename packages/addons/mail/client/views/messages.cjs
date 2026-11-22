@@ -1,5 +1,6 @@
 "use strict";
-var GLYPHS = require("../ui/icons.cjs").ICONS;
+var ML = require("../ui/icons.cjs");
+var GLYPHS = ML.ICONS;
 
 var C = require("../ui/common.cjs");
 var Attachments = require("../ui/attachments.cjs");
@@ -517,14 +518,14 @@ function Inbox(props) {
                 },
               }),
             ),
-            h(C.Btn, { h: h, type: "submit" }, iconLabel(h, Search, "搜索")),
-            button("在服务器搜索", searchServer, !canRemote || !folder[0] || !search[0].trim() || !!server[0]?.loading, undefined, Search),
-            server[0] && button("返回本地列表", function () { clearServer(); close(); }),
+            h(C.Btn, { h: h, type: "submit" }, iconLabel(h, Search, "搜索", { short: true })),
+            h(C.Btn, { h: h, title: "在服务器搜索", "aria-label": "在服务器搜索", disabled: !canRemote || !folder[0] || !search[0].trim() || !!server[0]?.loading, onClick: searchServer }, ML.label("server", "在服务器搜索")),
+            server[0] && h(C.Btn, { h: h, title: "返回本地列表", "aria-label": "返回本地列表", onClick: function () { clearServer(); close(); } }, ML.label("arrow-left", "返回", { short: true })),
           ),
           h(SW.Switch, {
             h: h,
             checked: unseen[0],
-            label: "只看未读",
+            label: "未读",
             onChange: function (next) {
               unseen[1](next);
               reset();

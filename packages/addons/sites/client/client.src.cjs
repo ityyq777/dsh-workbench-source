@@ -992,7 +992,7 @@ var staged = require("../../lib/staged-dialog.cjs");
 
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.12.17",
+    version: "1.12.18",
     icon: icons.ICONS["globe"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.SitesStatsView },

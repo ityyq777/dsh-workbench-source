@@ -10,6 +10,7 @@ module.exports = [
   ".wbm-grow{flex:1;min-width:0}",
   ".wbm-input{flex:1;min-width:140px;max-width:280px;border:1px solid var(--wbm-line);border-radius:8px;background:transparent;color:inherit;padding:6px 9px;font-size:12.5px}",
   ".wbm-select{border:1px solid var(--wbm-line);border-radius:8px;background:transparent;color:inherit;padding:5px 8px;font-size:12.5px}",
+  ".wbm-btn .wb-icon-label-text{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.wbm-btn .wb-icon-label.wb-icon-label-short .wb-icon-label-text{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal}",
   ".wbm-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--wbm-line);background:transparent;color:inherit;border-radius:8px;padding:5px 10px;font-size:12.5px;cursor:pointer}",
   ".wbm-btn:hover{border-color:color-mix(in oklab,var(--wbm-accent) 45%,var(--wbm-line))}",
   ".wbm-btn.primary{background:var(--wbm-accent);border-color:var(--wbm-accent);color:var(--dsw-alias-label-primary-inverted,#fff);font-weight:600}",
@@ -64,5 +65,5 @@ module.exports = [
   ".wbm-multis{display:flex;gap:6px;flex-wrap:wrap}",
   "@media (max-width:760px){.wbm-toolbar{gap:6px}.wbm-input{max-width:none}.wbm-bar{grid-template-columns:70px 1fr 38px}}",
   // 窄屏：搜索框独占一行、统计与批量按钮分两段，避免缩成一条窄缝。
-  "@media (max-width:600px){.wbm-toolbar{gap:6px 8px}.wbm-toolbar .wbm-input{flex:1 1 100%;width:100%}.wbm-toolbar .wbm-select{flex:1 1 auto;min-width:0}.wbm-sumbox{flex:1 1 100%;font-size:12px}.wbm-toolbar .wbm-grow{display:none}/* 收件箱筛选条：窄屏两列栅格，搜索/统计各占整行，两个按钮各占一列 */.wbm-toolbar-inbox{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:8px}.wbm-toolbar-inbox .wbm-input,.wbm-toolbar-inbox .wbm-sumbox{grid-column:1/-1;flex:none;width:100%}.wbm-toolbar-inbox .wbm-select{width:100%}.wbm-toolbar-inbox .wbm-btn{width:100%;justify-content:center}.wbm-btn{white-space:nowrap}.wbm-btn .wb-icon-label-text{display:none}}",
+  "@media (max-width:600px){.wbm-toolbar{gap:6px 8px}.wbm-toolbar .wbm-input{flex:1 1 100%;width:100%}.wbm-toolbar .wbm-select{flex:1 1 auto;min-width:0}.wbm-sumbox{flex:1 1 100%;font-size:12px}.wbm-toolbar .wbm-grow{display:none}/* 收件箱筛选条：窄屏两列栅格，搜索/统计各占整行，两个按钮各占一列 */.wbm-toolbar-inbox{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:8px}.wbm-toolbar-inbox .wbm-input,.wbm-toolbar-inbox .wbm-sumbox{grid-column:1/-1;flex:none;width:100%}.wbm-toolbar-inbox .wbm-select{width:100%}.wbm-toolbar-inbox .wbm-btn{width:100%;justify-content:center}.wbm-btn{white-space:nowrap}}",
 ].concat(SW.styles).concat(NF.styles).join("");

@@ -3391,15 +3391,18 @@ var require_data = __commonJS({
 var require_icon_label = __commonJS({
   "packages/addons/lib/icon-label.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = function iconLabel(h2, Icon2, text) {
+    var VISUALLY_HIDDEN = "position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap";
+    module2.exports = function iconLabel(h2, Icon2, text, options) {
+      var opts = options || {};
+      var cls = "wb-icon-label" + (opts.short ? " wb-icon-label-short" : "") + (Icon2 ? "" : " wb-icon-label-fallback");
       return h2(
         "span",
-        { className: "wb-icon-label" + (Icon2 ? "" : " wb-icon-label-fallback") },
+        { className: cls, title: typeof text === "string" ? text : void 0 },
         Icon2 ? h2(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }) : null,
         h2("span", { className: "wb-icon-label-text" }, text)
       );
     };
-    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}@media(max-width:760px){button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{display:none}}";
+    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{" + VISUALLY_HIDDEN + "}button .wb-icon-label.wb-icon-label-short .wb-icon-label-text{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal}";
   }
 });
 
@@ -3426,10 +3429,10 @@ var require_icons = __commonJS({
         return h2(C, attrs);
       }
       var set = { ICONS, Icon: Icon2 };
-      set.label = function(name, text) {
+      set.label = function(name, text, options2) {
         return require_icon_label()(h2, function NamedIcon(props) {
           return h2(Icon2, Object.assign({ name }, props));
-        }, text);
+        }, text, options2);
       };
       if (opts.tabIcon) {
         set.tabIcon = function(name) {
@@ -4957,6 +4960,8 @@ var h = React.createElement;
     ".wbg-input{border:1px solid var(--wbg-line);background:transparent;color:inherit;border-radius:8px;padding:7px 10px;font-size:13px;outline:none;min-width:0}",
     ".wbg-input:focus{border-color:var(--wbg-accent)}",
     ".wbg-search{width:240px;max-width:46vw}",
+    ".wbg-btn .wb-icon-label-text{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}",
+    ".wbg-btn .wb-icon-label.wb-icon-label-short .wb-icon-label-text{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal}",
     ".wbg-btn{border:1px solid var(--wbg-line);background:var(--wbg-surface);color:inherit;border-radius:8px;padding:7px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;line-height:1.3;display:inline-flex;align-items:center;gap:5px}",
     ".wbg-svg{display:block;flex:none}",
     ".wbg-btn:hover{border-color:var(--wbg-accent)}",
@@ -4985,7 +4990,7 @@ var h = React.createElement;
     ".wbg-batch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;border:1px solid color-mix(in oklab,var(--wbg-accent) 35%,transparent);background:color-mix(in oklab,var(--wbg-accent) 7%,transparent);border-radius:9px;padding:7px 10px}",
     ".wbg-hint{font-size:11.5px;opacity:.55;line-height:1.5}",
     ".wbg-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:820;background:var(--dsw-alias-toast-bg,rgba(20,20,20,.88));color:var(--dsw-alias-toast-label,#fff);border-radius:9px;padding:9px 14px;font-size:12.5px;box-shadow:0 8px 24px rgba(0,0,0,.18);pointer-events:none}",
-    "@media (max-width:760px){.wbg-search{width:100%;max-width:none}.wbg-toolbar .wbg-grow{display:none}.wbg-time{display:none}.wbg-row{padding:9px 10px}.wbg-ops .wbg-btn{padding:6px 8px}.wbg-btn .wb-icon-label-text{display:none}}",
+    "@media (max-width:760px){.wbg-search{width:100%;max-width:none}.wbg-toolbar .wbg-grow{display:none}.wbg-time{display:none}.wbg-row{padding:9px 10px}.wbg-ops .wbg-btn{padding:6px 8px}}",
     require_date_picker_styles()("wbg"),
     require_switch().styles
   ].join("\n");
@@ -5317,8 +5322,8 @@ var h = React.createElement;
               if (e.key === "Enter") applySearch();
             }
           }),
-          h2("button", { type: "button", className: "wbg-btn", onClick: applySearch }, h2(Icon2, { name: "search", size: 13 }), h2("span", { className: "wb-icon-label-text" }, t.find)),
-          text || query ? h2("button", { type: "button", className: "wbg-btn ghost", onClick: clearSearch }, h2(Icon2, { name: "x", size: 13 }), t.clear) : null,
+          h2("button", { type: "button", className: "wbg-btn", title: t.find, "aria-label": t.find, onClick: applySearch }, h2(Icon2, { name: "search", size: 13 }), h2("span", { className: "wb-icon-label-text" }, t.find)),
+          text || query ? h2("button", { type: "button", className: "wbg-btn ghost", title: t.clear, "aria-label": t.clear, onClick: clearSearch }, h2(Icon2, { name: "x", size: 13 }), t.clear) : null,
           h2("button", {
             type: "button",
             className: "wbg-btn ghost",
@@ -5332,6 +5337,8 @@ var h = React.createElement;
           h2("button", {
             type: "button",
             className: "wbg-btn primary",
+            title: creating ? t.cancel : t.create,
+            "aria-label": creating ? t.cancel : t.create,
             onClick: function() {
               setCreating(!creating);
               setFormError("");
@@ -5504,7 +5511,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.7.10",
+    version: "1.7.11",
     icon: ICONS.tag,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },

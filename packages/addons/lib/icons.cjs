@@ -39,10 +39,10 @@ function create(prefix, glyphs, options) {
 
   var set = { ICONS: ICONS, Icon: Icon };
   // 图标 + 文字的按钮内容：按钮里包着一层 .wb-icon-label，窄屏由共享样式收成纯图标按钮。
-  set.label = function (name, text) {
+  set.label = function (name, text, options) {
     return require("./icon-label.cjs")(h, function NamedIcon(props) {
       return h(Icon, Object.assign({ name: name }, props));
-    }, text);
+    }, text, options);
   };
   if (opts.tabIcon) {
     // 视图标签页标题左侧图标：与各插件标题图标同语义、同尺寸。

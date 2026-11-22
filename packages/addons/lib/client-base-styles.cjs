@@ -57,12 +57,15 @@ module.exports = function baseStyles(prefix) {
       // Button 组件（lib/button.cjs）已经给这类按钮加了 aria-label/title，去掉文字不失可访问性。
       + s + "-btn." + s + "-icon-text ." + s + "-btn-label{display:none}"
       + s + "-btn." + s + "-icon-text{padding-left:8px;padding-right:8px}"
-      // 走 iconLabel() 塞进按钮的「图标 + 文字」同样收成图标按钮（消息工具栏、自动化规则条等）。
-      + "button .wb-icon-label-text{display:none}"
       // 基础表格在窄屏改成「按内容宽度 + 外层横向滚动」，避免多列表格被压成一列两个字。
       + s + "-table-wrap{overflow-x:auto;max-width:100%}"
       + s + "-table{width:max-content;min-width:100%}"
       + "}"
+      // 图标按钮只留图标：iconLabel 塞进按钮的「图标 + 长文案」在桌面端同样会把按钮撑成两行，
+      // 图标已经表达含义；要保留文字就用 {short:true} 把标签缩到一两个字。
+      // 图标别名漏配时的 wb-icon-label-fallback（只剩文字）不受影响，否则按钮会变空。
+      + "button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}"
+      + "button .wb-icon-label.wb-icon-label-short .wb-icon-label-text{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal}"
       // 手机宽度：再压一档内边距，横向零浪费。
       + "@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}"
       + s + "-card{padding:10px}"

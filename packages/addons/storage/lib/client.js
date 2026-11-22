@@ -1144,7 +1144,7 @@ var require_styles = __commonJS({
 @container storage (min-width:1280px){.wbi-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){.wbi-card{transition:none}.wbi-card:hover{transform:none}}
 .wbi-root{--line:var(--wb-border)}.wbi-svg{display:inline-block;vertical-align:middle;flex:none}.wbi-root h2,.wbi-root h3,.wbi-inline{display:inline-flex;align-items:center;gap:var(--wb-space-sm)}.wbi-metazone .wbi-inline{margin-right:10px}
-.wbi-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:var(--wb-radius-sm);transition:background var(--wb-motion),color var(--wb-motion)}.wbi-card{border-radius:var(--wb-radius-card);padding:var(--wb-space-md);gap:var(--wb-space-sm)}.wbi-grid{gap:var(--wb-space-md)}.wbi-icon-only{width:32px;height:32px;min-width:32px;padding:0}.wbi-empty .wbi-svg{display:block;margin:0 auto 14px}.wbi-image{position:relative;min-width:80px;min-height:60px}.wbi-image>.wbi-svg{position:absolute;inset:0;margin:auto}.wbi-image img{position:relative}
+.wbi-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:var(--wb-radius-sm);transition:background var(--wb-motion),color var(--wb-motion)}.wbi-card{border-radius:var(--wb-radius-card);padding:var(--wb-space-md);gap:var(--wb-space-sm)}.wbi-grid{gap:var(--wb-space-md)}.wbi-icon-only{width:32px;height:32px;min-width:32px;padding:0}.wbi-btn.wbi-icon-text .wbi-btn-label{display:none}.wbi-btn.wbi-icon-text{padding-left:8px;padding-right:8px}.wbi-empty .wbi-svg{display:block;margin:0 auto 14px}.wbi-image{position:relative;min-width:80px;min-height:60px}.wbi-image>.wbi-svg{position:absolute;inset:0;margin:auto}.wbi-image img{position:relative}
 .wbi-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.wbi-skeleton{margin:18px 0}.wbi-sk{height:16px;border-radius:var(--wb-radius-sm);background:color-mix(in oklab,currentColor 9%,transparent);animation:wbi-pulse 1.4s ease-in-out infinite}.wbi-sk:nth-child(2){height:48px}.wbi-sk:last-child{width:60%}@keyframes wbi-pulse{50%{opacity:.45}}
 .wbi-cfg-group{border-radius:var(--wb-radius-card)!important}.wbi-cfg{gap:var(--wb-space-md)!important}.wbi-cfg-head h2{display:flex;gap:var(--wb-space-sm);align-items:center}
 /* \u7A84\u5C4F KPI \u4E00\u884C\u4E09\u5F20\uFF0C\u907F\u514D 2+1 \u7684\u53C2\u5DEE\u6392\u5E03\u3002 */
@@ -1160,15 +1160,18 @@ var require_styles = __commonJS({
 var require_icon_label = __commonJS({
   "packages/addons/lib/icon-label.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = function iconLabel(h2, Icon3, text) {
+    var VISUALLY_HIDDEN = "position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap";
+    module2.exports = function iconLabel(h2, Icon3, text, options) {
+      var opts = options || {};
+      var cls = "wb-icon-label" + (opts.short ? " wb-icon-label-short" : "") + (Icon3 ? "" : " wb-icon-label-fallback");
       return h2(
         "span",
-        { className: "wb-icon-label" + (Icon3 ? "" : " wb-icon-label-fallback") },
+        { className: cls, title: typeof text === "string" ? text : void 0 },
         Icon3 ? h2(Icon3, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }) : null,
         h2("span", { className: "wb-icon-label-text" }, text)
       );
     };
-    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}@media(max-width:760px){button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{display:none}}";
+    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{" + VISUALLY_HIDDEN + "}button .wb-icon-label.wb-icon-label-short .wb-icon-label-text{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal}";
   }
 });
 
@@ -1195,10 +1198,10 @@ var require_icons = __commonJS({
         return h2(C, attrs);
       }
       var set = { ICONS, Icon: Icon3 };
-      set.label = function(name, text) {
+      set.label = function(name, text, options2) {
         return require_icon_label()(h2, function NamedIcon(props) {
           return h2(Icon3, Object.assign({ name }, props));
-        }, text);
+        }, text, options2);
       };
       if (opts.tabIcon) {
         set.tabIcon = function(name) {
@@ -6369,7 +6372,7 @@ if (host) {
   h = require("react").createElement, icons = require_icons2(), Icon2 = icons.Icon, GLYPHS = icons.ICONS;
   host.registerAddon({
     id: "wb-addon-storage",
-    version: "1.5.17",
+    version: "1.5.18",
     icon: GLYPHS["stock"],
     views: [
       { id: "stats", icon: tabIcon2("chart"), title: { zh: "\u7EDF\u8BA1", en: "Statistics" }, component: require_stats().Stats },

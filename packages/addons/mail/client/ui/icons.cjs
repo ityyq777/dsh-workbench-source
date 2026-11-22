@@ -19,6 +19,8 @@ var set = icons.create("wbml", {
   "reply-all": require("lucide-react/icons/reply-all").default,
   "search": require("lucide-react/icons/search").default,
   "square-check": require("lucide-react/icons/square-check").default,
+  "server": require("lucide-react/icons/server").default,
+  "arrow-left": require("lucide-react/icons/arrow-left").default,
   "check-check": require("lucide-react/icons/check-check").default,
   "sliders": require("lucide-react/icons/sliders").default,
   "send": require("lucide-react/icons/send").default,

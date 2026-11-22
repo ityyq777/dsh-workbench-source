@@ -6886,15 +6886,18 @@ var require_copy = __commonJS({
 var require_icon_label = __commonJS({
   "packages/addons/lib/icon-label.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = function iconLabel(h, Icon2, text) {
+    var VISUALLY_HIDDEN = "position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap";
+    module2.exports = function iconLabel(h, Icon2, text, options) {
+      var opts = options || {};
+      var cls = "wb-icon-label" + (opts.short ? " wb-icon-label-short" : "") + (Icon2 ? "" : " wb-icon-label-fallback");
       return h(
         "span",
-        { className: "wb-icon-label" + (Icon2 ? "" : " wb-icon-label-fallback") },
+        { className: cls, title: typeof text === "string" ? text : void 0 },
         Icon2 ? h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }) : null,
         h("span", { className: "wb-icon-label-text" }, text)
       );
     };
-    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}@media(max-width:760px){button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{display:none}}";
+    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{" + VISUALLY_HIDDEN + "}button .wb-icon-label.wb-icon-label-short .wb-icon-label-text{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal}";
   }
 });
 
@@ -6921,10 +6924,10 @@ var require_icons = __commonJS({
         return h(C, attrs);
       }
       var set = { ICONS, Icon: Icon2 };
-      set.label = function(name, text) {
+      set.label = function(name, text, options2) {
         return require_icon_label()(h, function NamedIcon(props) {
           return h(Icon2, Object.assign({ name }, props));
-        }, text);
+        }, text, options2);
       };
       if (opts.tabIcon) {
         set.tabIcon = function(name) {

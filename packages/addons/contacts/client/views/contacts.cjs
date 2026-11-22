@@ -36,7 +36,7 @@ module.exports = function ContactsView(props) {
   function toggleGroup(id) { var cur = f.groups || []; set("groups", cur.indexOf(id) >= 0 ? cur.filter(function (x) { return x !== id; }) : cur.concat([id])); }
   return h("div", { className: "wbct-wrap" },
     h("div", { className: "wbct-head" }, h("h2", null, "联系人"), h("div", { className: "wbct-row" },
-      h(C.Btn, { h: h, kind: "primary", onClick: function () { form[1](empty()); msg[1](""); } }, icons.label("user-plus", "新建联系人")),
+      h(C.Btn, { h: h, kind: "primary", onClick: function () { form[1](empty()); msg[1](""); } }, icons.label("user-plus", "新建", { short: true })),
       h(C.Btn, { h: h, onClick: list.refresh }, "刷新"))),
     h(C.Notice, { h: h, text: msg[0] }),
     h(C.Field, { h: h, label: "搜索" }, h("input", { className: "wbct-input", value: q[0], placeholder: "姓名 / 组织 / 邮箱 / 电话", onChange: function (e) { q[1](e.target.value); } })),

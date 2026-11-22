@@ -196,7 +196,7 @@ module.exports = function (deps) {
         h("span", { className: "wbm-sumbox" }, h("span", null, fmt(t.total, { n: total })), h("span", null, fmt(t.unreadCount, { n: unread }))),
         h(
           "button",
-          { type: "button", className: "wbm-btn", disabled: !unread, onClick: function () { mark(null, true); } },
+          { type: "button", className: "wbm-btn", disabled: !unread, title: t.markAll, "aria-label": t.markAll, onClick: function () { mark(null, true); } },
           icon(props, "check-check"),
           h("span", { className: "wb-icon-label-text" }, t.markAll),
         ),
@@ -204,7 +204,7 @@ module.exports = function (deps) {
           "button",
           { type: "button", className: "wbm-btn", onClick: function () { setTick(function (x) { return x + 1; }); } },
           icon(props, "refresh"),
-          h("span", { className: "wb-icon-label-text" }, t.retry),
+          h("span", null, t.retry),
         ),
       ),
       error

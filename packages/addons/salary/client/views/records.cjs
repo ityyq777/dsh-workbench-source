@@ -407,7 +407,7 @@ module.exports = function Records(props) {
         filter.year || filter.cycle || filter.employmentType
           ? h(C.Btn, { h: h, onClick: function () { setFilter({ year: "", cycle: "", employmentType: "" }); } }, "清除筛选")
           : null,
-        h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, salaryIcons.label("plus", "记一笔"))));
+        h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, salaryIcons.label("plus", "记账", { short: true }))));
   } else {
     body = h("div", { className: "wbsal-months" }, periods.map(function (period) {
       var rows = groups[period];
@@ -443,7 +443,7 @@ module.exports = function Records(props) {
         h("option", { value: "" }, "全部"), F.EMPLOYMENT_TYPES.slice(1).map(function (t) { return h("option", { key: t.value, value: t.value }, t.label); }))),
       h("div", { className: "wbsal-toolbar-end" },
         h("span", { className: "wbsal-toolbar-count" }, "共 ", h("b", null, total), " 笔"),
-        h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, salaryIcons.label("plus", "记一笔")))),
+        h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, salaryIcons.label("plus", "记账", { short: true })))),
     h(C.Notice, { h: h, kind: msg && msg.kind, text: msg && !form ? msg.text : "" }),
     body,
     form ? renderModal() : null);

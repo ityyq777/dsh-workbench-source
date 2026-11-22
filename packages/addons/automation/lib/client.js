@@ -43,15 +43,18 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var require_icon_label = __commonJS({
   "packages/addons/lib/icon-label.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = function iconLabel(h, Icon2, text) {
+    var VISUALLY_HIDDEN = "position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap";
+    module2.exports = function iconLabel(h, Icon2, text, options) {
+      var opts = options || {};
+      var cls = "wb-icon-label" + (opts.short ? " wb-icon-label-short" : "") + (Icon2 ? "" : " wb-icon-label-fallback");
       return h(
         "span",
-        { className: "wb-icon-label" + (Icon2 ? "" : " wb-icon-label-fallback") },
+        { className: cls, title: typeof text === "string" ? text : void 0 },
         Icon2 ? h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }) : null,
         h("span", { className: "wb-icon-label-text" }, text)
       );
     };
-    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}@media(max-width:760px){button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{display:none}}";
+    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{" + VISUALLY_HIDDEN + "}button .wb-icon-label.wb-icon-label-short .wb-icon-label-text{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal}";
   }
 });
 
@@ -78,10 +81,10 @@ var require_icons = __commonJS({
         return h(C, attrs);
       }
       var set = { ICONS, Icon: Icon2 };
-      set.label = function(name, text) {
+      set.label = function(name, text, options2) {
         return require_icon_label()(h, function NamedIcon(props) {
           return h(Icon2, Object.assign({ name }, props));
-        }, text);
+        }, text, options2);
       };
       if (opts.tabIcon) {
         set.tabIcon = function(name) {
@@ -1543,7 +1546,7 @@ var require_client_base_styles = __commonJS({
         s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}",
         // 窄屏：页面容器不再自带左右内边距（宿主的 .wb-immersive-main 已经给过），
         // 卡片与栅格收紧，把宽度尽量留给内容——窄屏下两侧留白比桌面更影响可读性。
-        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}" + s + "-btn." + s + "-icon-text ." + s + "-btn-label{display:none}" + s + "-btn." + s + "-icon-text{padding-left:8px;padding-right:8px}button .wb-icon-label-text{display:none}" + s + "-table-wrap{overflow-x:auto;max-width:100%}" + s + "-table{width:max-content;min-width:100%}}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
+        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}" + s + "-btn." + s + "-icon-text ." + s + "-btn-label{display:none}" + s + "-btn." + s + "-icon-text{padding-left:8px;padding-right:8px}" + s + "-table-wrap{overflow-x:auto;max-width:100%}" + s + "-table{width:max-content;min-width:100%}}button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}button .wb-icon-label.wb-icon-label-short .wb-icon-label-text{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
       ]);
     };
     module2.exports.secretFieldStyles = SECRET_FIELD;
@@ -1861,6 +1864,7 @@ var require_copy = __commonJS({
         "common.delete": "\u5220\u9664",
         "common.edit": "\u7F16\u8F91",
         "common.create": "\u65B0\u5EFA\u89C4\u5219",
+        "common.createShort": "\u65B0\u5EFA",
         "common.run": "\u7ACB\u5373\u8FD0\u884C",
         "common.enable": "\u542F\u7528",
         "common.disable": "\u505C\u7528",
@@ -2107,6 +2111,7 @@ var require_copy = __commonJS({
         "common.delete": "Delete",
         "common.edit": "Edit",
         "common.create": "New rule",
+        "common.createShort": "New",
         "common.run": "Run now",
         "common.enable": "Enable",
         "common.disable": "Disable",
@@ -2467,7 +2472,7 @@ var require_stats = __commonJS({
             } }, t("common.refresh")),
             h(C.Btn, { h, kind: "primary", onClick: function() {
               if (props.onNavigate) props.onNavigate("rules", { new: true });
-            } }, require_icons2().label("plus", t("common.create")))
+            } }, require_icons2().label("plus", t("common.createShort"), { short: true }))
           )
         ),
         stats.error ? h(C.Notice, { h, kind: "error", text: stats.error }) : null,
@@ -4318,7 +4323,7 @@ var require_rules = __commonJS({
         h(
           "div",
           { className: "wba-inline" },
-          props.noActions ? h(C.Btn, { h, kind: "primary", onClick: props.onSettings }, t("rules.empty.noActionCta")) : h(C.Btn, { h, kind: "primary", onClick: props.onNew }, icons.label("plus", t("common.create")))
+          props.noActions ? h(C.Btn, { h, kind: "primary", onClick: props.onSettings }, t("rules.empty.noActionCta")) : h(C.Btn, { h, kind: "primary", onClick: props.onNew }, icons.label("plus", t("common.createShort"), { short: true }))
         ),
         h("p", { className: "wba-empty-body" }, props.noActions ? t("rules.empty.noActionHint") : t("rules.empty.backup"))
       );
@@ -4619,7 +4624,7 @@ var require_rules = __commonJS({
             "div",
             { className: "wba-row" },
             h(C.Btn, { h, onClick: reload }, t("common.refresh")),
-            h(C.Btn, { h, kind: "primary", onClick: openNew }, icons.label("plus", t("common.create")))
+            h(C.Btn, { h, kind: "primary", onClick: openNew }, icons.label("plus", t("common.createShort"), { short: true }))
           )
         ),
         h(C.Notice, { h, text: msgS[0], kind: "info" }),
@@ -7267,7 +7272,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-automation",
-    version: "0.4.9",
+    version: "0.4.10",
     icon: GLYPHS["zap"],
     views: [
       { id: "stats", icon: tabIcon("activity"), title: { zh: "\u6982\u89C8", en: "Overview" }, component: withProps(require_stats(), "\u6982\u89C8") },

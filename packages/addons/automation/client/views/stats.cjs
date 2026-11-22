@@ -70,7 +70,7 @@ module.exports = function StatsView(props) {
         h("p", { className: "wba-sub" }, t("stats.subtitle"))),
       h("div", { className: "wba-row" },
         h(C.Btn, { h: h, onClick: function () { stats.refresh(); opts.refresh(); } }, t("common.refresh")),
-        h(C.Btn, { h: h, kind: "primary", onClick: function () { if (props.onNavigate) props.onNavigate("rules", { new: true }); } }, require("../ui/icons.cjs").label("plus", t("common.create"))))),
+        h(C.Btn, { h: h, kind: "primary", onClick: function () { if (props.onNavigate) props.onNavigate("rules", { new: true }); } }, require("../ui/icons.cjs").label("plus", t("common.createShort"), { short: true })))),
     stats.error ? h(C.Notice, { h: h, kind: "error", text: stats.error }) : null,
     s.staleCount ? h(C.Notice, { h: h, kind: "warn", text: t("stats.staleWarning", { n: s.staleCount }) }) : null,
     stats.loading

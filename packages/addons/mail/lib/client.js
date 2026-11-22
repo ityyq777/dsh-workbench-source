@@ -43,15 +43,18 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var require_icon_label = __commonJS({
   "packages/addons/lib/icon-label.cjs"(exports2, module2) {
     "use strict";
-    module2.exports = function iconLabel(h, Icon2, text) {
+    var VISUALLY_HIDDEN = "position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap";
+    module2.exports = function iconLabel(h, Icon2, text, options) {
+      var opts = options || {};
+      var cls = "wb-icon-label" + (opts.short ? " wb-icon-label-short" : "") + (Icon2 ? "" : " wb-icon-label-fallback");
       return h(
         "span",
-        { className: "wb-icon-label" + (Icon2 ? "" : " wb-icon-label-fallback") },
+        { className: cls, title: typeof text === "string" ? text : void 0 },
         Icon2 ? h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }) : null,
         h("span", { className: "wb-icon-label-text" }, text)
       );
     };
-    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}@media(max-width:760px){button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{display:none}}";
+    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{" + VISUALLY_HIDDEN + "}button .wb-icon-label.wb-icon-label-short .wb-icon-label-text{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal}";
   }
 });
 
@@ -78,10 +81,10 @@ var require_icons = __commonJS({
         return h(C, attrs);
       }
       var set = { ICONS, Icon: Icon2 };
-      set.label = function(name, text) {
+      set.label = function(name, text, options2) {
         return require_icon_label()(h, function NamedIcon(props) {
           return h(Icon2, Object.assign({ name }, props));
-        }, text);
+        }, text, options2);
       };
       if (opts.tabIcon) {
         set.tabIcon = function(name) {
@@ -791,17 +794,65 @@ var init_square_check = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/server.mjs
+var server_exports = {};
+__export(server_exports, {
+  __iconData: () => __iconData17,
+  default: () => Server
+});
+var __iconData17, Server;
+var init_server = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/server.mjs"() {
+    init_createLucideIcon();
+    __iconData17 = {
+      name: "server",
+      size: 24,
+      node: [
+        ["rect", { width: "20", height: "8", x: "2", y: "2", rx: "2", ry: "2", key: "ngkwjq" }],
+        ["rect", { width: "20", height: "8", x: "2", y: "14", rx: "2", ry: "2", key: "iecqi9" }],
+        ["line", { x1: "6", x2: "6.01", y1: "6", y2: "6", key: "16zg32" }],
+        ["line", { x1: "6", x2: "6.01", y1: "18", y2: "18", key: "nzw8ys" }]
+      ]
+    };
+    __iconData17.node;
+    Server = createLucideIcon(__iconData17);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/arrow-left.mjs
+var arrow_left_exports = {};
+__export(arrow_left_exports, {
+  __iconData: () => __iconData18,
+  default: () => ArrowLeft
+});
+var __iconData18, ArrowLeft;
+var init_arrow_left = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/arrow-left.mjs"() {
+    init_createLucideIcon();
+    __iconData18 = {
+      name: "arrow-left",
+      size: 24,
+      node: [
+        ["path", { d: "m12 19-7-7 7-7", key: "1l729n" }],
+        ["path", { d: "M19 12H5", key: "x3x0zl" }]
+      ]
+    };
+    __iconData18.node;
+    ArrowLeft = createLucideIcon(__iconData18);
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/check-check.mjs
 var check_check_exports = {};
 __export(check_check_exports, {
-  __iconData: () => __iconData17,
+  __iconData: () => __iconData19,
   default: () => CheckCheck
 });
-var __iconData17, CheckCheck;
+var __iconData19, CheckCheck;
 var init_check_check = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/check-check.mjs"() {
     init_createLucideIcon();
-    __iconData17 = {
+    __iconData19 = {
       name: "check-check",
       size: 24,
       node: [
@@ -809,17 +860,17 @@ var init_check_check = __esm({
         ["path", { d: "m22 10-7.5 7.5L13 16", key: "ke71qq" }]
       ]
     };
-    __iconData17.node;
-    CheckCheck = createLucideIcon(__iconData17);
+    __iconData19.node;
+    CheckCheck = createLucideIcon(__iconData19);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-vertical.mjs
-var __iconData18, SlidersVertical;
+var __iconData20, SlidersVertical;
 var init_sliders_vertical = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-vertical.mjs"() {
     init_createLucideIcon();
-    __iconData18 = {
+    __iconData20 = {
       name: "sliders-vertical",
       size: 24,
       node: [
@@ -835,8 +886,8 @@ var init_sliders_vertical = __esm({
       ],
       aliases: ["sliders"]
     };
-    __iconData18.node;
-    SlidersVertical = createLucideIcon(__iconData18);
+    __iconData20.node;
+    SlidersVertical = createLucideIcon(__iconData20);
   }
 });
 
@@ -854,14 +905,14 @@ var init_sliders = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/send.mjs
 var send_exports = {};
 __export(send_exports, {
-  __iconData: () => __iconData19,
+  __iconData: () => __iconData21,
   default: () => Send
 });
-var __iconData19, Send;
+var __iconData21, Send;
 var init_send = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/send.mjs"() {
     init_createLucideIcon();
-    __iconData19 = {
+    __iconData21 = {
       name: "send",
       size: 24,
       node: [
@@ -875,17 +926,17 @@ var init_send = __esm({
         ["path", { d: "m21.854 2.147-10.94 10.939", key: "12cjpa" }]
       ]
     };
-    __iconData19.node;
-    Send = createLucideIcon(__iconData19);
+    __iconData21.node;
+    Send = createLucideIcon(__iconData21);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
-var __iconData20, Trash;
+var __iconData22, Trash;
 var init_trash = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
     init_createLucideIcon();
-    __iconData20 = {
+    __iconData22 = {
       name: "trash",
       size: 24,
       node: [
@@ -897,8 +948,8 @@ var init_trash = __esm({
       ],
       aliases: ["trash-2"]
     };
-    __iconData20.node;
-    Trash = createLucideIcon(__iconData20);
+    __iconData22.node;
+    Trash = createLucideIcon(__iconData22);
   }
 });
 
@@ -916,14 +967,14 @@ var init_trash_2 = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/users.mjs
 var users_exports = {};
 __export(users_exports, {
-  __iconData: () => __iconData21,
+  __iconData: () => __iconData23,
   default: () => Users
 });
-var __iconData21, Users;
+var __iconData23, Users;
 var init_users = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/users.mjs"() {
     init_createLucideIcon();
-    __iconData21 = {
+    __iconData23 = {
       name: "users",
       size: 24,
       node: [
@@ -933,8 +984,8 @@ var init_users = __esm({
         ["circle", { cx: "9", cy: "7", r: "4", key: "nufk8" }]
       ]
     };
-    __iconData21.node;
-    Users = createLucideIcon(__iconData21);
+    __iconData23.node;
+    Users = createLucideIcon(__iconData23);
   }
 });
 
@@ -960,6 +1011,8 @@ var require_icons2 = __commonJS({
       "reply-all": (init_reply_all(), __toCommonJS(reply_all_exports)).default,
       "search": (init_search(), __toCommonJS(search_exports)).default,
       "square-check": (init_square_check(), __toCommonJS(square_check_exports)).default,
+      "server": (init_server(), __toCommonJS(server_exports)).default,
+      "arrow-left": (init_arrow_left(), __toCommonJS(arrow_left_exports)).default,
       "check-check": (init_check_check(), __toCommonJS(check_check_exports)).default,
       "sliders": (init_sliders(), __toCommonJS(sliders_exports)).default,
       "send": (init_send(), __toCommonJS(send_exports)).default,
@@ -1261,7 +1314,7 @@ var require_client_base_styles = __commonJS({
         s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}",
         // 窄屏：页面容器不再自带左右内边距（宿主的 .wb-immersive-main 已经给过），
         // 卡片与栅格收紧，把宽度尽量留给内容——窄屏下两侧留白比桌面更影响可读性。
-        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}" + s + "-btn." + s + "-icon-text ." + s + "-btn-label{display:none}" + s + "-btn." + s + "-icon-text{padding-left:8px;padding-right:8px}button .wb-icon-label-text{display:none}" + s + "-table-wrap{overflow-x:auto;max-width:100%}" + s + "-table{width:max-content;min-width:100%}}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
+        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}" + s + "-btn." + s + "-icon-text ." + s + "-btn-label{display:none}" + s + "-btn." + s + "-icon-text{padding-left:8px;padding-right:8px}" + s + "-table-wrap{overflow-x:auto;max-width:100%}" + s + "-table{width:max-content;min-width:100%}}button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}button .wb-icon-label.wb-icon-label-short .wb-icon-label-text{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
       ]);
     };
     module2.exports.secretFieldStyles = SECRET_FIELD;
@@ -3322,7 +3375,8 @@ var require_folder_shortcuts = __commonJS({
 var require_messages = __commonJS({
   "packages/addons/mail/client/views/messages.cjs"(exports2, module2) {
     "use strict";
-    var GLYPHS2 = require_icons2().ICONS;
+    var ML = require_icons2();
+    var GLYPHS2 = ML.ICONS;
     var C = require_common();
     var Attachments = require_attachments();
     var ReplyTools = require_reply_tools();
@@ -3809,17 +3863,17 @@ var require_messages = __commonJS({
                     }
                   })
                 ),
-                h(C.Btn, { h, type: "submit" }, iconLabel(h, Search2, "\u641C\u7D22")),
-                button("\u5728\u670D\u52A1\u5668\u641C\u7D22", searchServer, !canRemote || !folder[0] || !search[0].trim() || !!server[0]?.loading, void 0, Search2),
-                server[0] && button("\u8FD4\u56DE\u672C\u5730\u5217\u8868", function() {
+                h(C.Btn, { h, type: "submit" }, iconLabel(h, Search2, "\u641C\u7D22", { short: true })),
+                h(C.Btn, { h, title: "\u5728\u670D\u52A1\u5668\u641C\u7D22", "aria-label": "\u5728\u670D\u52A1\u5668\u641C\u7D22", disabled: !canRemote || !folder[0] || !search[0].trim() || !!server[0]?.loading, onClick: searchServer }, ML.label("server", "\u5728\u670D\u52A1\u5668\u641C\u7D22")),
+                server[0] && h(C.Btn, { h, title: "\u8FD4\u56DE\u672C\u5730\u5217\u8868", "aria-label": "\u8FD4\u56DE\u672C\u5730\u5217\u8868", onClick: function() {
                   clearServer();
                   close();
-                })
+                } }, ML.label("arrow-left", "\u8FD4\u56DE", { short: true }))
               ),
               h(SW.Switch, {
                 h,
                 checked: unseen[0],
-                label: "\u53EA\u770B\u672A\u8BFB",
+                label: "\u672A\u8BFB",
                 onChange: function(next2) {
                   unseen[1](next2);
                   reset();
@@ -5339,14 +5393,14 @@ var require_account_card = __commonJS({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs
 var eye_exports = {};
 __export(eye_exports, {
-  __iconData: () => __iconData22,
+  __iconData: () => __iconData24,
   default: () => Eye
 });
-var __iconData22, Eye;
+var __iconData24, Eye;
 var init_eye = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs"() {
     init_createLucideIcon();
-    __iconData22 = {
+    __iconData24 = {
       name: "eye",
       size: 24,
       node: [
@@ -5360,22 +5414,22 @@ var init_eye = __esm({
         ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
       ]
     };
-    __iconData22.node;
-    Eye = createLucideIcon(__iconData22);
+    __iconData24.node;
+    Eye = createLucideIcon(__iconData24);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs
 var eye_off_exports = {};
 __export(eye_off_exports, {
-  __iconData: () => __iconData23,
+  __iconData: () => __iconData25,
   default: () => EyeOff
 });
-var __iconData23, EyeOff;
+var __iconData25, EyeOff;
 var init_eye_off = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs"() {
     init_createLucideIcon();
-    __iconData23 = {
+    __iconData25 = {
       name: "eye-off",
       size: 24,
       node: [
@@ -5397,8 +5451,8 @@ var init_eye_off = __esm({
         ["path", { d: "m2 2 20 20", key: "1ooewy" }]
       ]
     };
-    __iconData23.node;
-    EyeOff = createLucideIcon(__iconData23);
+    __iconData25.node;
+    EyeOff = createLucideIcon(__iconData25);
   }
 });
 
@@ -7545,7 +7599,7 @@ var GLYPHS = require_icons2().ICONS;
   var slotBackToMessage = require_slot_back_to_message()({ React, h, C, Icon: Icon2 });
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.6.6",
+    version: "0.6.7",
     icon: GLYPHS["mail"],
     slots: [{ slot: "item.actions", id: "mail.back-to-message", order: 100, component: slotBackToMessage }],
     views: [
