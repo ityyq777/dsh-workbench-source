@@ -12,19 +12,32 @@ var createDataView = require("../../addons/lib/data-view.cjs");
 var SW = require("../../addons/lib/switch.cjs");
 var NF = require("../../addons/lib/number-field.cjs");
 
-var HOST_TABLES = ["meta", "sync_change_log", "conflict_shadow", "sync_dead_letter", "sync_state", "session_mode", "audit_log"];
+var HOST_TABLES = [
+  "meta",
+  "sync_change_log",
+  "conflict_shadow",
+  "sync_dead_letter",
+  "sync_state",
+  "session_mode",
+  "audit_log",
+  "host_event",
+  "host_event_delivery",
+  "host_event_subscription",
+];
 
 /** 数据页只读本地配置档位；宿主的「数据」视图不需要落一份展示配置。 */
 function useHostDisplayConfig() {
   return { values: { "data.pageSize": 50, "data.showSystemColumns": false, "data.includeDeleted": false }, ready: true };
 }
 
+// createDataView 返回的是 { DataView }，这里取组件本身；直接拿工厂返回值当组件会触发
+// React #130（元素类型是对象），整页白屏。
 var HostDataView = createDataView({
   domain: "wb",
   prefix: "wbh",
   tables: HOST_TABLES,
   useConfig: useHostDisplayConfig,
-});
+}).DataView;
 
 function hostApi(api) {
   return {

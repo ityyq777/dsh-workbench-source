@@ -67,6 +67,7 @@
     "test:number-field": "node --test packages/addons/lib/number-field.test.cjs",
     "test:config": "node scripts/test-config.mjs",
     "test:host-data": "node scripts/test-host-data.mjs",
+    "test:host-pages": "node scripts/test-host-pages.mjs",
     "test:event-queue": "node scripts/test-event-queue.mjs",
     "test:data": "node scripts/test-data.mjs",
     "test:data-ui": "node scripts/test-data-ui.mjs",

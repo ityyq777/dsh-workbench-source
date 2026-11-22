@@ -3260,7 +3260,18 @@ var require_host_pages = __commonJS({
     var createDataView = require_data_view();
     var SW = require_switch();
     var NF = require_number_field();
-    var HOST_TABLES = ["meta", "sync_change_log", "conflict_shadow", "sync_dead_letter", "sync_state", "session_mode", "audit_log"];
+    var HOST_TABLES = [
+      "meta",
+      "sync_change_log",
+      "conflict_shadow",
+      "sync_dead_letter",
+      "sync_state",
+      "session_mode",
+      "audit_log",
+      "host_event",
+      "host_event_delivery",
+      "host_event_subscription"
+    ];
     function useHostDisplayConfig() {
       return { values: { "data.pageSize": 50, "data.showSystemColumns": false, "data.includeDeleted": false }, ready: true };
     }
@@ -3269,7 +3280,7 @@ var require_host_pages = __commonJS({
       prefix: "wbh",
       tables: HOST_TABLES,
       useConfig: useHostDisplayConfig
-    });
+    }).DataView;
     function hostApi(api) {
       return {
         call: function(action, args) {
