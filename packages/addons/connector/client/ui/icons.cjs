@@ -12,4 +12,4 @@ var set = icons.create("wbc", {
   "sliders-horizontal": require("lucide-react/icons/sliders-horizontal").default,
 });
 
-module.exports = { ICONS: set.ICONS, Icon: set.Icon };
+module.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label };

@@ -53,6 +53,12 @@ module.exports = function baseStyles(prefix) {
       + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}"
       + s + "-form{grid-template-columns:minmax(0,1fr)}"
       + s + "-title{font-size:15px}"
+      // 图标 + 文字按钮在窄屏收成图标按钮：中文标签很容易被挤成两行（「返回首页」「同步最新邮件」）。
+      // Button 组件（lib/button.cjs）已经给这类按钮加了 aria-label/title，去掉文字不失可访问性。
+      + s + "-btn." + s + "-icon-text ." + s + "-btn-label{display:none}"
+      + s + "-btn." + s + "-icon-text{padding-left:8px;padding-right:8px}"
+      // 走 iconLabel() 塞进按钮的「图标 + 文字」同样收成图标按钮（消息工具栏、自动化规则条等）。
+      + "button .wb-icon-label-text{display:none}"
       // 基础表格在窄屏改成「按内容宽度 + 外层横向滚动」，避免多列表格被压成一列两个字。
       + s + "-table-wrap{overflow-x:auto;max-width:100%}"
       + s + "-table{width:max-content;min-width:100%}"

@@ -36,4 +36,4 @@ var set = icons.create("wbi", {
   reset: require("lucide-react/icons/rotate-ccw").default,
 }, { fallback: "box", focusable: true, sizeOf: sizeOf });
 
-module.exports = { ICONS: set.ICONS, Icon: set.Icon };
+module.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label };

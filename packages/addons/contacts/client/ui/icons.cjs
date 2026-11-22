@@ -9,6 +9,7 @@ var set = icons.create("wbct", {
   "sliders-horizontal": require("lucide-react/icons/sliders-horizontal").default,
   "upload": require("lucide-react/icons/upload").default,
   "users": require("lucide-react/icons/users").default,
+  "user-plus": require("lucide-react/icons/user-plus").default,
 });
 
-module.exports = { ICONS: set.ICONS, Icon: set.Icon };
+module.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label };

@@ -206,6 +206,17 @@ window.__WB_HOST__ = {
     React.createElement(
       "div",
       { className: "wb-immersive" },
+      // 顶栏带宿主「返回首页」按钮：窄屏应只留箭头（.wb-back-label 隐藏），用来截图核对。
+      React.createElement(
+        "div",
+        { className: "wb-immersive-bar" },
+        React.createElement(
+          "button",
+          { type: "button", className: "wb-back", "aria-label": "返回首页", title: "返回首页" },
+          React.createElement("span", { className: "wb-back-icon", "aria-hidden": "true" }, "←"),
+          React.createElement("span", { className: "wb-back-label" }, "返回首页"),
+        ),
+      ),
       React.createElement(
         "div",
         { className: "wb-immersive-main" },

@@ -4,10 +4,11 @@ var icons = require("../../../lib/icons.cjs");
 
 var set = icons.create("wbca", {
   "calendar": require("lucide-react/icons/calendar").default,
+  "calendar-plus": require("lucide-react/icons/calendar-plus").default,
   "calendar-days": require("lucide-react/icons/calendar-days").default,
   "database": require("lucide-react/icons/database").default,
   "list": require("lucide-react/icons/list").default,
   "sliders-horizontal": require("lucide-react/icons/sliders-horizontal").default,
 });
 
-module.exports = { ICONS: set.ICONS, Icon: set.Icon };
+module.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label };

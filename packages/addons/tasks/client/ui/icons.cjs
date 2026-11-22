@@ -41,4 +41,4 @@ var set = icons.create("wbt", {
   // 「原邮件」回链：从邮件建出来的任务要能跳回去看一眼原文。
 }, {});
 
-module.exports = { ICONS: set.ICONS, Icon: set.Icon };
+module.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label };

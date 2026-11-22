@@ -36,4 +36,4 @@ var set = icons.create("wbs", {
   copy: require("lucide-react/icons/copy").default,
 }, { classNameAppend: true, tabIcon: true });
 
-module.exports = { ICONS: set.ICONS, Icon: set.Icon, tabIcon: set.tabIcon };
+module.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label, tabIcon: set.tabIcon };

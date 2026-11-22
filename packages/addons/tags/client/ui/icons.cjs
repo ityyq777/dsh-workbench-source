@@ -18,4 +18,4 @@ var set = icons.create("wbg", {
   tag: require("lucide-react/icons/tag").default,
 }, { tabIcon: true });
 
-module.exports = { ICONS: set.ICONS, Icon: set.Icon, tabIcon: set.tabIcon };
+module.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label, tabIcon: set.tabIcon };

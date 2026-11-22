@@ -39,6 +39,22 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// packages/addons/lib/icon-label.cjs
+var require_icon_label = __commonJS({
+  "packages/addons/lib/icon-label.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function iconLabel(h, Icon2, text) {
+      return h(
+        "span",
+        { className: "wb-icon-label" + (Icon2 ? "" : " wb-icon-label-fallback") },
+        Icon2 ? h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }) : null,
+        h("span", { className: "wb-icon-label-text" }, text)
+      );
+    };
+    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}@media(max-width:760px){button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{display:none}}";
+  }
+});
+
 // packages/addons/lib/icons.cjs
 var require_icons = __commonJS({
   "packages/addons/lib/icons.cjs"(exports2, module2) {
@@ -62,6 +78,11 @@ var require_icons = __commonJS({
         return h(C, attrs);
       }
       var set = { ICONS, Icon: Icon2 };
+      set.label = function(name, text) {
+        return require_icon_label()(h, function NamedIcon(props) {
+          return h(Icon2, Object.assign({ name }, props));
+        }, text);
+      };
       if (opts.tabIcon) {
         set.tabIcon = function(name) {
           return function TabIcon() {
@@ -746,12 +767,59 @@ var init_search = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/square-check.mjs
+var square_check_exports = {};
+__export(square_check_exports, {
+  __iconData: () => __iconData16,
+  default: () => SquareCheck
+});
+var __iconData16, SquareCheck;
+var init_square_check = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/square-check.mjs"() {
+    init_createLucideIcon();
+    __iconData16 = {
+      name: "square-check",
+      size: 24,
+      node: [
+        ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", key: "afitv7" }],
+        ["path", { d: "m16 9-5.5 5.5L8 12", key: "xofnsj" }]
+      ],
+      aliases: ["check-square-2"]
+    };
+    __iconData16.node;
+    SquareCheck = createLucideIcon(__iconData16);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/check-check.mjs
+var check_check_exports = {};
+__export(check_check_exports, {
+  __iconData: () => __iconData17,
+  default: () => CheckCheck
+});
+var __iconData17, CheckCheck;
+var init_check_check = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/check-check.mjs"() {
+    init_createLucideIcon();
+    __iconData17 = {
+      name: "check-check",
+      size: 24,
+      node: [
+        ["path", { d: "M18 6 7 17l-5-5", key: "116fxf" }],
+        ["path", { d: "m22 10-7.5 7.5L13 16", key: "ke71qq" }]
+      ]
+    };
+    __iconData17.node;
+    CheckCheck = createLucideIcon(__iconData17);
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-vertical.mjs
-var __iconData16, SlidersVertical;
+var __iconData18, SlidersVertical;
 var init_sliders_vertical = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-vertical.mjs"() {
     init_createLucideIcon();
-    __iconData16 = {
+    __iconData18 = {
       name: "sliders-vertical",
       size: 24,
       node: [
@@ -767,8 +835,8 @@ var init_sliders_vertical = __esm({
       ],
       aliases: ["sliders"]
     };
-    __iconData16.node;
-    SlidersVertical = createLucideIcon(__iconData16);
+    __iconData18.node;
+    SlidersVertical = createLucideIcon(__iconData18);
   }
 });
 
@@ -786,14 +854,14 @@ var init_sliders = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/send.mjs
 var send_exports = {};
 __export(send_exports, {
-  __iconData: () => __iconData17,
+  __iconData: () => __iconData19,
   default: () => Send
 });
-var __iconData17, Send;
+var __iconData19, Send;
 var init_send = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/send.mjs"() {
     init_createLucideIcon();
-    __iconData17 = {
+    __iconData19 = {
       name: "send",
       size: 24,
       node: [
@@ -807,17 +875,17 @@ var init_send = __esm({
         ["path", { d: "m21.854 2.147-10.94 10.939", key: "12cjpa" }]
       ]
     };
-    __iconData17.node;
-    Send = createLucideIcon(__iconData17);
+    __iconData19.node;
+    Send = createLucideIcon(__iconData19);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
-var __iconData18, Trash;
+var __iconData20, Trash;
 var init_trash = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
     init_createLucideIcon();
-    __iconData18 = {
+    __iconData20 = {
       name: "trash",
       size: 24,
       node: [
@@ -829,8 +897,8 @@ var init_trash = __esm({
       ],
       aliases: ["trash-2"]
     };
-    __iconData18.node;
-    Trash = createLucideIcon(__iconData18);
+    __iconData20.node;
+    Trash = createLucideIcon(__iconData20);
   }
 });
 
@@ -848,14 +916,14 @@ var init_trash_2 = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/users.mjs
 var users_exports = {};
 __export(users_exports, {
-  __iconData: () => __iconData19,
+  __iconData: () => __iconData21,
   default: () => Users
 });
-var __iconData19, Users;
+var __iconData21, Users;
 var init_users = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/users.mjs"() {
     init_createLucideIcon();
-    __iconData19 = {
+    __iconData21 = {
       name: "users",
       size: 24,
       node: [
@@ -865,8 +933,8 @@ var init_users = __esm({
         ["circle", { cx: "9", cy: "7", r: "4", key: "nufk8" }]
       ]
     };
-    __iconData19.node;
-    Users = createLucideIcon(__iconData19);
+    __iconData21.node;
+    Users = createLucideIcon(__iconData21);
   }
 });
 
@@ -891,12 +959,14 @@ var require_icons2 = __commonJS({
       "reply": (init_reply(), __toCommonJS(reply_exports)).default,
       "reply-all": (init_reply_all(), __toCommonJS(reply_all_exports)).default,
       "search": (init_search(), __toCommonJS(search_exports)).default,
+      "square-check": (init_square_check(), __toCommonJS(square_check_exports)).default,
+      "check-check": (init_check_check(), __toCommonJS(check_check_exports)).default,
       "sliders": (init_sliders(), __toCommonJS(sliders_exports)).default,
       "send": (init_send(), __toCommonJS(send_exports)).default,
       "trash-2": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
       "users": (init_users(), __toCommonJS(users_exports)).default
     });
-    module2.exports = { ICONS: set.ICONS, Icon: set.Icon };
+    module2.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label };
   }
 });
 
@@ -905,7 +975,7 @@ var require_switch = __commonJS({
   "packages/addons/lib/switch.cjs"(exports2, module2) {
     "use strict";
     var SWITCH_STYLES = [
-      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
+      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
       ".wbctl-switch-track{position:relative;display:inline-flex;align-items:center;box-sizing:border-box;width:34px;height:20px;padding:2px;border-radius:999px;background:color-mix(in oklab,currentColor 22%,transparent);transition:background .16s ease;flex:none}",
       ".wbctl-switch-knob{display:block;width:16px;height:16px;border-radius:50%;background:var(--wb-card,#fff);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .16s ease}",
       ".wbctl-switch[aria-checked=true]{color:var(--wb-accent,#2563eb)}",
@@ -1191,7 +1261,7 @@ var require_client_base_styles = __commonJS({
         s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}",
         // 窄屏：页面容器不再自带左右内边距（宿主的 .wb-immersive-main 已经给过），
         // 卡片与栅格收紧，把宽度尽量留给内容——窄屏下两侧留白比桌面更影响可读性。
-        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}" + s + "-table-wrap{overflow-x:auto;max-width:100%}" + s + "-table{width:max-content;min-width:100%}}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
+        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}" + s + "-btn." + s + "-icon-text ." + s + "-btn-label{display:none}" + s + "-btn." + s + "-icon-text{padding-left:8px;padding-right:8px}button .wb-icon-label-text{display:none}" + s + "-table-wrap{overflow-x:auto;max-width:100%}" + s + "-table{width:max-content;min-width:100%}}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
       ]);
     };
     module2.exports.secretFieldStyles = SECRET_FIELD;
@@ -1296,22 +1366,6 @@ var require_vault_lock = __commonJS({
       return lock;
     }
     module2.exports = { create, POLL_MS };
-  }
-});
-
-// packages/addons/lib/icon-label.cjs
-var require_icon_label = __commonJS({
-  "packages/addons/lib/icon-label.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = function iconLabel(h, Icon2, text) {
-      return h(
-        "span",
-        { className: "wb-icon-label" },
-        Icon2 ? h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }) : null,
-        h("span", null, text)
-      );
-    };
-    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}";
   }
 });
 
@@ -3058,6 +3112,7 @@ var require_bulk = __commonJS({
   "packages/addons/mail/client/views/bulk.cjs"(exports2, module2) {
     "use strict";
     var C = require_common();
+    var icons = require_icons2();
     var labels = { trash: "\u79FB\u5165\u5E9F\u7EB8\u7BD3", read: "\u6807\u4E3A\u5DF2\u8BFB" };
     var remote = (m) => Boolean(m?.id && m.accountId && m.mailbox && m.uid > 0 && m.uidValidity > 0);
     var unread = (m) => !/\\Seen\b/i.test(String(m.flags || ""));
@@ -3158,17 +3213,17 @@ var require_bulk = __commonJS({
           redraw();
         }, state.running)
       ] : [
-        button(state.selecting ? "\u9000\u51FA\u9009\u62E9" : "\u9009\u62E9\u90AE\u4EF6", () => {
+        h(C.Btn, { h, disabled: blocked || !available.length, onClick: () => {
           state.selecting = !state.selecting;
           state.checked.clear();
           redraw();
-        }, blocked || !available.length),
+        } }, icons.label("square-check", state.selecting ? "\u9000\u51FA\u9009\u62E9" : "\u9009\u62E9\u90AE\u4EF6")),
         state.selecting && button(selected.length && selected.length === available.length ? "\u6E05\u9664\u9009\u62E9" : "\u672C\u9875\u5168\u9009", () => {
           state.checked = selected.length === available.length ? /* @__PURE__ */ new Set() : new Set(available.map((m) => m.id));
           redraw();
         }, blocked || !available.length),
-        state.selecting && button(`\u9009\u4E2D\u90AE\u4EF6\u79FB\u5165\u5E9F\u7EB8\u7BD3\uFF08${selected.length}\uFF09`, () => prepare("trash"), blocked || !selected.length),
-        button("\u672C\u9875\u5168\u90E8\u6807\u4E3A\u5DF2\u8BFB", () => prepare("read"), blocked || !available.some(unread)),
+        state.selecting && h(C.Btn, { h, disabled: blocked || !selected.length, onClick: () => prepare("trash") }, icons.label("trash-2", `\u79FB\u5165\u5E9F\u7EB8\u7BD3\uFF08${selected.length}\uFF09`)),
+        h(C.Btn, { h, disabled: blocked || !available.some(unread), onClick: () => prepare("read") }, icons.label("check-check", "\u5168\u90E8\u6807\u4E3A\u5DF2\u8BFB")),
         state.selecting && items.length > available.length && h("span", null, "\u672C\u5730\u526F\u672C\u6216\u8FDC\u7AEF\u8EAB\u4EFD\u672A\u786E\u8BA4\u7684\u90AE\u4EF6\u4E0D\u53EF\u9009\u62E9")
       ];
       function wrapRow(m, row) {
@@ -5284,14 +5339,14 @@ var require_account_card = __commonJS({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs
 var eye_exports = {};
 __export(eye_exports, {
-  __iconData: () => __iconData20,
+  __iconData: () => __iconData22,
   default: () => Eye
 });
-var __iconData20, Eye;
+var __iconData22, Eye;
 var init_eye = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs"() {
     init_createLucideIcon();
-    __iconData20 = {
+    __iconData22 = {
       name: "eye",
       size: 24,
       node: [
@@ -5305,22 +5360,22 @@ var init_eye = __esm({
         ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
       ]
     };
-    __iconData20.node;
-    Eye = createLucideIcon(__iconData20);
+    __iconData22.node;
+    Eye = createLucideIcon(__iconData22);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs
 var eye_off_exports = {};
 __export(eye_off_exports, {
-  __iconData: () => __iconData21,
+  __iconData: () => __iconData23,
   default: () => EyeOff
 });
-var __iconData21, EyeOff;
+var __iconData23, EyeOff;
 var init_eye_off = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs"() {
     init_createLucideIcon();
-    __iconData21 = {
+    __iconData23 = {
       name: "eye-off",
       size: 24,
       node: [
@@ -5342,8 +5397,8 @@ var init_eye_off = __esm({
         ["path", { d: "m2 2 20 20", key: "1ooewy" }]
       ]
     };
-    __iconData21.node;
-    EyeOff = createLucideIcon(__iconData21);
+    __iconData23.node;
+    EyeOff = createLucideIcon(__iconData23);
   }
 });
 
@@ -7490,7 +7545,7 @@ var GLYPHS = require_icons2().ICONS;
   var slotBackToMessage = require_slot_back_to_message()({ React, h, C, Icon: Icon2 });
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.6.5",
+    version: "0.6.6",
     icon: GLYPHS["mail"],
     slots: [{ slot: "item.actions", id: "mail.back-to-message", order: 100, component: slotBackToMessage }],
     views: [

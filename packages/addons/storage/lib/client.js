@@ -1156,6 +1156,22 @@ var require_styles = __commonJS({
   }
 });
 
+// packages/addons/lib/icon-label.cjs
+var require_icon_label = __commonJS({
+  "packages/addons/lib/icon-label.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function iconLabel(h2, Icon3, text) {
+      return h2(
+        "span",
+        { className: "wb-icon-label" + (Icon3 ? "" : " wb-icon-label-fallback") },
+        Icon3 ? h2(Icon3, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }) : null,
+        h2("span", { className: "wb-icon-label-text" }, text)
+      );
+    };
+    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}@media(max-width:760px){button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{display:none}}";
+  }
+});
+
 // packages/addons/lib/icons.cjs
 var require_icons = __commonJS({
   "packages/addons/lib/icons.cjs"(exports2, module2) {
@@ -1179,6 +1195,11 @@ var require_icons = __commonJS({
         return h2(C, attrs);
       }
       var set = { ICONS, Icon: Icon3 };
+      set.label = function(name, text) {
+        return require_icon_label()(h2, function NamedIcon(props) {
+          return h2(Icon3, Object.assign({ name }, props));
+        }, text);
+      };
       if (opts.tabIcon) {
         set.tabIcon = function(name) {
           return function TabIcon() {
@@ -1892,7 +1913,7 @@ var require_icons2 = __commonJS({
       table: (init_table(), __toCommonJS(table_exports)).default,
       reset: (init_rotate_ccw(), __toCommonJS(rotate_ccw_exports)).default
     }, { fallback: "box", focusable: true, sizeOf });
-    module2.exports = { ICONS: set.ICONS, Icon: set.Icon };
+    module2.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label };
   }
 });
 
@@ -3798,7 +3819,7 @@ var require_switch = __commonJS({
   "packages/addons/lib/switch.cjs"(exports2, module2) {
     "use strict";
     var SWITCH_STYLES = [
-      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
+      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
       ".wbctl-switch-track{position:relative;display:inline-flex;align-items:center;box-sizing:border-box;width:34px;height:20px;padding:2px;border-radius:999px;background:color-mix(in oklab,currentColor 22%,transparent);transition:background .16s ease;flex:none}",
       ".wbctl-switch-knob{display:block;width:16px;height:16px;border-radius:50%;background:var(--wb-card,#fff);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .16s ease}",
       ".wbctl-switch[aria-checked=true]{color:var(--wb-accent,#2563eb)}",

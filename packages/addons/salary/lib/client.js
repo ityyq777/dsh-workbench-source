@@ -39,6 +39,22 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// packages/addons/lib/icon-label.cjs
+var require_icon_label = __commonJS({
+  "packages/addons/lib/icon-label.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function iconLabel(h, Icon2, text) {
+      return h(
+        "span",
+        { className: "wb-icon-label" + (Icon2 ? "" : " wb-icon-label-fallback") },
+        Icon2 ? h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }) : null,
+        h("span", { className: "wb-icon-label-text" }, text)
+      );
+    };
+    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}@media(max-width:760px){button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{display:none}}";
+  }
+});
+
 // packages/addons/lib/icons.cjs
 var require_icons = __commonJS({
   "packages/addons/lib/icons.cjs"(exports2, module2) {
@@ -62,6 +78,11 @@ var require_icons = __commonJS({
         return h(C, attrs);
       }
       var set = { ICONS, Icon: Icon2 };
+      set.label = function(name, text) {
+        return require_icon_label()(h, function NamedIcon(props) {
+          return h(Icon2, Object.assign({ name }, props));
+        }, text);
+      };
       if (opts.tabIcon) {
         set.tabIcon = function(name) {
           return function TabIcon() {
@@ -469,6 +490,29 @@ var init_wallet = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/plus.mjs
+var plus_exports = {};
+__export(plus_exports, {
+  __iconData: () => __iconData5,
+  default: () => Plus
+});
+var __iconData5, Plus;
+var init_plus = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/plus.mjs"() {
+    init_createLucideIcon();
+    __iconData5 = {
+      name: "plus",
+      size: 24,
+      node: [
+        ["path", { d: "M5 12h14", key: "1ays0h" }],
+        ["path", { d: "M12 5v14", key: "s699le" }]
+      ]
+    };
+    __iconData5.node;
+    Plus = createLucideIcon(__iconData5);
+  }
+});
+
 // packages/addons/salary/client/ui/icons.cjs
 var require_icons2 = __commonJS({
   "packages/addons/salary/client/ui/icons.cjs"(exports2, module2) {
@@ -478,9 +522,10 @@ var require_icons2 = __commonJS({
       "chart-column": (init_chart_column(), __toCommonJS(chart_column_exports)).default,
       "database": (init_database(), __toCommonJS(database_exports)).default,
       "list": (init_list(), __toCommonJS(list_exports)).default,
-      "wallet": (init_wallet(), __toCommonJS(wallet_exports)).default
+      "wallet": (init_wallet(), __toCommonJS(wallet_exports)).default,
+      "plus": (init_plus(), __toCommonJS(plus_exports)).default
     });
-    module2.exports = { ICONS: set.ICONS, Icon: set.Icon };
+    module2.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label };
   }
 });
 
@@ -526,7 +571,7 @@ var require_client_base_styles = __commonJS({
         s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}",
         // 窄屏：页面容器不再自带左右内边距（宿主的 .wb-immersive-main 已经给过），
         // 卡片与栅格收紧，把宽度尽量留给内容——窄屏下两侧留白比桌面更影响可读性。
-        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}" + s + "-table-wrap{overflow-x:auto;max-width:100%}" + s + "-table{width:max-content;min-width:100%}}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
+        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}" + s + "-btn." + s + "-icon-text ." + s + "-btn-label{display:none}" + s + "-btn." + s + "-icon-text{padding-left:8px;padding-right:8px}button .wb-icon-label-text{display:none}" + s + "-table-wrap{overflow-x:auto;max-width:100%}" + s + "-table{width:max-content;min-width:100%}}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
       ]);
     };
     module2.exports.secretFieldStyles = SECRET_FIELD;
@@ -1462,7 +1507,7 @@ var require_switch = __commonJS({
   "packages/addons/lib/switch.cjs"(exports2, module2) {
     "use strict";
     var SWITCH_STYLES = [
-      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
+      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
       ".wbctl-switch-track{position:relative;display:inline-flex;align-items:center;box-sizing:border-box;width:34px;height:20px;padding:2px;border-radius:999px;background:color-mix(in oklab,currentColor 22%,transparent);transition:background .16s ease;flex:none}",
       ".wbctl-switch-knob{display:block;width:16px;height:16px;border-radius:50%;background:var(--wb-card,#fff);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .16s ease}",
       ".wbctl-switch[aria-checked=true]{color:var(--wb-accent,#2563eb)}",
@@ -3537,6 +3582,7 @@ var require_records = __commonJS({
     "use strict";
     var staged = require_staged_dialog();
     var salaryCommon = require_common();
+    var salaryIcons = require_icons2();
     var NF = require_number_field();
     var FormDialog = staged.createStagedDialog({
       maskClass: "wbsal-mask",
@@ -4054,7 +4100,7 @@ var require_records = __commonJS({
             filter.year || filter.cycle || filter.employmentType ? h(C.Btn, { h, onClick: function() {
               setFilter({ year: "", cycle: "", employmentType: "" });
             } }, "\u6E05\u9664\u7B5B\u9009") : null,
-            h(C.Btn, { h, kind: "primary", onClick: openCreate }, "\uFF0B \u8BB0\u4E00\u7B14")
+            h(C.Btn, { h, kind: "primary", onClick: openCreate }, salaryIcons.label("plus", "\u8BB0\u4E00\u7B14"))
           )
         );
       } else {
@@ -4139,7 +4185,7 @@ var require_records = __commonJS({
             "div",
             { className: "wbsal-toolbar-end" },
             h("span", { className: "wbsal-toolbar-count" }, "\u5171 ", h("b", null, total), " \u7B14"),
-            h(C.Btn, { h, kind: "primary", onClick: openCreate }, "\uFF0B \u8BB0\u4E00\u7B14")
+            h(C.Btn, { h, kind: "primary", onClick: openCreate }, salaryIcons.label("plus", "\u8BB0\u4E00\u7B14"))
           )
         ),
         h(C.Notice, { h, kind: msg && msg.kind, text: msg && !form ? msg.text : "" }),
@@ -6108,7 +6154,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-salary",
-    version: "0.4.8",
+    version: "0.4.9",
     icon: GLYPHS["wallet"],
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: withProps(require_stats(), "\u7EDF\u8BA1") },

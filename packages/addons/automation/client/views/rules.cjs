@@ -1,6 +1,7 @@
 "use strict";
 /** 规则页：页头、过滤条、空态卡、表格与编辑器接线。 */
 var C = require("../ui/common.cjs");
+var icons = require("../ui/icons.cjs");
 var copy = require("../ui/copy.cjs");
 var trig = require("./trigger-fields.cjs");
 var atiming = require("./agent-timing.cjs");
@@ -164,7 +165,7 @@ function EmptyCard(props) {
     h("div", { className: "wba-inline" },
       props.noActions
         ? h(C.Btn, { h: h, kind: "primary", onClick: props.onSettings }, t("rules.empty.noActionCta"))
-        : h(C.Btn, { h: h, kind: "primary", onClick: props.onNew }, t("common.create"))),
+        : h(C.Btn, { h: h, kind: "primary", onClick: props.onNew }, icons.label("plus", t("common.create")))),
     h("p", { className: "wba-empty-body" }, props.noActions ? t("rules.empty.noActionHint") : t("rules.empty.backup")));
 }
 
@@ -387,7 +388,7 @@ module.exports = function RulesView(props) {
         h("p", { className: "wba-sub" }, t("rules.subtitle"))),
       h("div", { className: "wba-row" },
         h(C.Btn, { h: h, onClick: reload }, t("common.refresh")),
-        h(C.Btn, { h: h, kind: "primary", onClick: openNew }, t("common.create")))),
+        h(C.Btn, { h: h, kind: "primary", onClick: openNew }, icons.label("plus", t("common.create"))))),
     h(C.Notice, { h: h, text: msgS[0], kind: "info" }),
     h(RulesBody, {
       h: h,

@@ -198,13 +198,13 @@ module.exports = function (deps) {
           "button",
           { type: "button", className: "wbm-btn", disabled: !unread, onClick: function () { mark(null, true); } },
           icon(props, "check-check"),
-          h("span", null, t.markAll),
+          h("span", { className: "wb-icon-label-text" }, t.markAll),
         ),
         h(
           "button",
           { type: "button", className: "wbm-btn", onClick: function () { setTick(function (x) { return x + 1; }); } },
           icon(props, "refresh"),
-          h("span", null, t.retry),
+          h("span", { className: "wb-icon-label-text" }, t.retry),
         ),
       ),
       error

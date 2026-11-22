@@ -437,7 +437,7 @@ function WorkbenchPage(props) {
   function pageHead(title, desc) {
     return jsx.jsxs("div", { className: "wb-page-head", children: [
       jsx.jsx("div", { className: "wb-page-top", children: [
-        jsx.jsx("button", { className: "wb-back", onClick: function () { go("home"); }, children: "← " + t("back_home") }),
+        jsx.jsx("button", { className: "wb-back", type: "button", "aria-label": t("back_home"), title: t("back_home"), onClick: function () { go("home"); }, children: [jsx.jsx("span", { className: "wb-back-icon", "aria-hidden": "true", children: "←" }),jsx.jsx("span", { className: "wb-back-label", children: t("back_home") }),] }),
       ] }),
       jsx.jsxs("div", { className: "wb-page-title", children: [
         jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(route, title) }),
@@ -494,7 +494,7 @@ function WorkbenchPage(props) {
       jsx.jsxs("div", { className: "wb-immersive-bar", children: [
         jsx.jsxs("div", { className: "wb-immersive-left", children: [
           jsx.jsx("span", { className: "wb-immersive-icon", children: cardIcon(currentAddon.id, addonTitle) }),
-          jsx.jsx("button", { className: "wb-back", onClick: function () { go("home"); }, children: "← " + t("back_home") }),
+          jsx.jsx("button", { className: "wb-back", type: "button", "aria-label": t("back_home"), title: t("back_home"), onClick: function () { go("home"); }, children: [jsx.jsx("span", { className: "wb-back-icon", "aria-hidden": "true", children: "←" }),jsx.jsx("span", { className: "wb-back-label", children: t("back_home") }),] }),
           jsx.jsx(ViewTabs, { views: viewList, activeView: activeView, addonId: currentAddon.id, lang: lang, go: go }),
         ] }),
         jsx.jsxs("div", { className: "wb-immersive-title", children: [

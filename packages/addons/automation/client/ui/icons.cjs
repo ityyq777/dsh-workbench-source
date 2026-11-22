@@ -20,6 +20,7 @@ var set = icons.create("wba", {
   "layers": require("lucide-react/icons/layers").default,
   "list": require("lucide-react/icons/list").default,
   "pencil": require("lucide-react/icons/pencil").default,
+  "plus": require("lucide-react/icons/plus").default,
   "play": require("lucide-react/icons/play").default,
   "power": require("lucide-react/icons/power").default,
   "power-off": require("lucide-react/icons/power-off").default,
@@ -33,4 +34,4 @@ var set = icons.create("wba", {
   "zap": require("lucide-react/icons/zap").default,
 });
 
-module.exports = { ICONS: set.ICONS, Icon: set.Icon };
+module.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label };

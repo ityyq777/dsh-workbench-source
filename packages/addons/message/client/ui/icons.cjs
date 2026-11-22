@@ -30,4 +30,4 @@ var set = icons.create("wbg", {
   "message-square": require("lucide-react/icons/message-square").default,
 }, { fallback: "info", tabIcon: true });
 
-module.exports = { ICONS: set.ICONS, Icon: set.Icon, tabIcon: set.tabIcon };
+module.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label, tabIcon: set.tabIcon };

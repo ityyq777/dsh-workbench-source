@@ -4,6 +4,7 @@ var NF = require("../../../lib/number-field.cjs");
 module.exports = function Events(props) {
   var h = props.h, React = props.React, api = props.api, lang = props.lang;
   var C = require("../ui/common.cjs");
+  var icons = require("../ui/icons.cjs");
   var now = Date.now();
   var load = C.useLoad(React, api, "calendar.eventsBetween", { from: now - 86400000, to: now + 14 * 86400000, limit: 200 }, []);
   var st = React.useState({ open: false, title: "", start: "", duration: 60, location: "", attendees: "" });
@@ -33,7 +34,7 @@ module.exports = function Events(props) {
     (groups[k] = groups[k] || []).push(ev);
   });
   return h("div", { className: "wbca-page" },
-    h("div", { className: "wbca-head" }, h("div", null, h("h2", null, "日程"), h("p", { className: "wbca-sub" }, "近 14 天；提醒通过消息插件发送")), h(C.Btn, { h: h, kind: "primary", onClick: openForm }, "新建事件")),
+    h("div", { className: "wbca-head" }, h("div", null, h("h2", null, "日程"), h("p", { className: "wbca-sub" }, "近 14 天；提醒通过消息插件发送")), h(C.Btn, { h: h, kind: "primary", onClick: openForm }, icons.label("calendar-plus", "新建事件"))),
     h(C.Notice, { h: h, text: msg[0] && msg[0].text, kind: msg[0] && msg[0].kind }),
     form.open ? h("div", { className: "wbca-card" },
       h(C.Field, { h: h, label: "标题" }, h("input", { className: "wbca-input", value: form.title, onChange: function (e) { set("title", e.target.value); } })),

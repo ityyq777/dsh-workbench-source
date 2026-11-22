@@ -39,6 +39,22 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// packages/addons/lib/icon-label.cjs
+var require_icon_label = __commonJS({
+  "packages/addons/lib/icon-label.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function iconLabel(h, Icon2, text) {
+      return h(
+        "span",
+        { className: "wb-icon-label" + (Icon2 ? "" : " wb-icon-label-fallback") },
+        Icon2 ? h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }) : null,
+        h("span", { className: "wb-icon-label-text" }, text)
+      );
+    };
+    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}@media(max-width:760px){button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{display:none}}";
+  }
+});
+
 // packages/addons/lib/icons.cjs
 var require_icons = __commonJS({
   "packages/addons/lib/icons.cjs"(exports2, module2) {
@@ -62,6 +78,11 @@ var require_icons = __commonJS({
         return h(C, attrs);
       }
       var set = { ICONS, Icon: Icon2 };
+      set.label = function(name, text) {
+        return require_icon_label()(h, function NamedIcon(props) {
+          return h(Icon2, Object.assign({ name }, props));
+        }, text);
+      };
       if (opts.tabIcon) {
         set.tabIcon = function(name) {
           return function TabIcon() {
@@ -870,17 +891,40 @@ var init_pencil = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/plus.mjs
+var plus_exports = {};
+__export(plus_exports, {
+  __iconData: () => __iconData18,
+  default: () => Plus
+});
+var __iconData18, Plus;
+var init_plus = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/plus.mjs"() {
+    init_createLucideIcon();
+    __iconData18 = {
+      name: "plus",
+      size: 24,
+      node: [
+        ["path", { d: "M5 12h14", key: "1ays0h" }],
+        ["path", { d: "M12 5v14", key: "s699le" }]
+      ]
+    };
+    __iconData18.node;
+    Plus = createLucideIcon(__iconData18);
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/play.mjs
 var play_exports = {};
 __export(play_exports, {
-  __iconData: () => __iconData18,
+  __iconData: () => __iconData19,
   default: () => Play
 });
-var __iconData18, Play;
+var __iconData19, Play;
 var init_play = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/play.mjs"() {
     init_createLucideIcon();
-    __iconData18 = {
+    __iconData19 = {
       name: "play",
       size: 24,
       node: [
@@ -893,22 +937,22 @@ var init_play = __esm({
         ]
       ]
     };
-    __iconData18.node;
-    Play = createLucideIcon(__iconData18);
+    __iconData19.node;
+    Play = createLucideIcon(__iconData19);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power.mjs
 var power_exports = {};
 __export(power_exports, {
-  __iconData: () => __iconData19,
+  __iconData: () => __iconData20,
   default: () => Power
 });
-var __iconData19, Power;
+var __iconData20, Power;
 var init_power = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power.mjs"() {
     init_createLucideIcon();
-    __iconData19 = {
+    __iconData20 = {
       name: "power",
       size: 24,
       node: [
@@ -916,22 +960,22 @@ var init_power = __esm({
         ["path", { d: "M18.4 6.6a9 9 0 1 1-12.77.04", key: "obofu9" }]
       ]
     };
-    __iconData19.node;
-    Power = createLucideIcon(__iconData19);
+    __iconData20.node;
+    Power = createLucideIcon(__iconData20);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power-off.mjs
 var power_off_exports = {};
 __export(power_off_exports, {
-  __iconData: () => __iconData20,
+  __iconData: () => __iconData21,
   default: () => PowerOff
 });
-var __iconData20, PowerOff;
+var __iconData21, PowerOff;
 var init_power_off = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power-off.mjs"() {
     init_createLucideIcon();
-    __iconData20 = {
+    __iconData21 = {
       name: "power-off",
       size: 24,
       node: [
@@ -941,22 +985,22 @@ var init_power_off = __esm({
         ["path", { d: "m2 2 20 20", key: "1ooewy" }]
       ]
     };
-    __iconData20.node;
-    PowerOff = createLucideIcon(__iconData20);
+    __iconData21.node;
+    PowerOff = createLucideIcon(__iconData21);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/radio.mjs
 var radio_exports = {};
 __export(radio_exports, {
-  __iconData: () => __iconData21,
+  __iconData: () => __iconData22,
   default: () => Radio
 });
-var __iconData21, Radio;
+var __iconData22, Radio;
 var init_radio = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/radio.mjs"() {
     init_createLucideIcon();
-    __iconData21 = {
+    __iconData22 = {
       name: "radio",
       size: 24,
       node: [
@@ -967,22 +1011,22 @@ var init_radio = __esm({
         ["circle", { cx: "12", cy: "12", r: "2", key: "1c9p78" }]
       ]
     };
-    __iconData21.node;
-    Radio = createLucideIcon(__iconData21);
+    __iconData22.node;
+    Radio = createLucideIcon(__iconData22);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs
 var shield_check_exports = {};
 __export(shield_check_exports, {
-  __iconData: () => __iconData22,
+  __iconData: () => __iconData23,
   default: () => ShieldCheck
 });
-var __iconData22, ShieldCheck;
+var __iconData23, ShieldCheck;
 var init_shield_check = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs"() {
     init_createLucideIcon();
-    __iconData22 = {
+    __iconData23 = {
       name: "shield-check",
       size: 24,
       node: [
@@ -996,22 +1040,22 @@ var init_shield_check = __esm({
         ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
       ]
     };
-    __iconData22.node;
-    ShieldCheck = createLucideIcon(__iconData22);
+    __iconData23.node;
+    ShieldCheck = createLucideIcon(__iconData23);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/skip-forward.mjs
 var skip_forward_exports = {};
 __export(skip_forward_exports, {
-  __iconData: () => __iconData23,
+  __iconData: () => __iconData24,
   default: () => SkipForward
 });
-var __iconData23, SkipForward;
+var __iconData24, SkipForward;
 var init_skip_forward = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/skip-forward.mjs"() {
     init_createLucideIcon();
-    __iconData23 = {
+    __iconData24 = {
       name: "skip-forward",
       size: 24,
       node: [
@@ -1025,22 +1069,22 @@ var init_skip_forward = __esm({
         ]
       ]
     };
-    __iconData23.node;
-    SkipForward = createLucideIcon(__iconData23);
+    __iconData24.node;
+    SkipForward = createLucideIcon(__iconData24);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs
 var sliders_horizontal_exports = {};
 __export(sliders_horizontal_exports, {
-  __iconData: () => __iconData24,
+  __iconData: () => __iconData25,
   default: () => SlidersHorizontal
 });
-var __iconData24, SlidersHorizontal;
+var __iconData25, SlidersHorizontal;
 var init_sliders_horizontal = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs"() {
     init_createLucideIcon();
-    __iconData24 = {
+    __iconData25 = {
       name: "sliders-horizontal",
       size: 24,
       node: [
@@ -1055,22 +1099,22 @@ var init_sliders_horizontal = __esm({
         ["path", { d: "M8 12H3", key: "a7s4jb" }]
       ]
     };
-    __iconData24.node;
-    SlidersHorizontal = createLucideIcon(__iconData24);
+    __iconData25.node;
+    SlidersHorizontal = createLucideIcon(__iconData25);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/timer.mjs
 var timer_exports = {};
 __export(timer_exports, {
-  __iconData: () => __iconData25,
+  __iconData: () => __iconData26,
   default: () => Timer
 });
-var __iconData25, Timer;
+var __iconData26, Timer;
 var init_timer = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/timer.mjs"() {
     init_createLucideIcon();
-    __iconData25 = {
+    __iconData26 = {
       name: "timer",
       size: 24,
       node: [
@@ -1079,17 +1123,17 @@ var init_timer = __esm({
         ["circle", { cx: "12", cy: "14", r: "8", key: "1e1u0o" }]
       ]
     };
-    __iconData25.node;
-    Timer = createLucideIcon(__iconData25);
+    __iconData26.node;
+    Timer = createLucideIcon(__iconData26);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
-var __iconData26, Trash;
+var __iconData27, Trash;
 var init_trash = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
     init_createLucideIcon();
-    __iconData26 = {
+    __iconData27 = {
       name: "trash",
       size: 24,
       node: [
@@ -1101,8 +1145,8 @@ var init_trash = __esm({
       ],
       aliases: ["trash-2"]
     };
-    __iconData26.node;
-    Trash = createLucideIcon(__iconData26);
+    __iconData27.node;
+    Trash = createLucideIcon(__iconData27);
   }
 });
 
@@ -1120,14 +1164,14 @@ var init_trash_2 = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs
 var x_exports = {};
 __export(x_exports, {
-  __iconData: () => __iconData27,
+  __iconData: () => __iconData28,
   default: () => X
 });
-var __iconData27, X;
+var __iconData28, X;
 var init_x = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs"() {
     init_createLucideIcon();
-    __iconData27 = {
+    __iconData28 = {
       name: "x",
       size: 24,
       node: [
@@ -1135,22 +1179,22 @@ var init_x = __esm({
         ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
       ]
     };
-    __iconData27.node;
-    X = createLucideIcon(__iconData27);
+    __iconData28.node;
+    X = createLucideIcon(__iconData28);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/zap.mjs
 var zap_exports = {};
 __export(zap_exports, {
-  __iconData: () => __iconData28,
+  __iconData: () => __iconData29,
   default: () => Zap
 });
-var __iconData28, Zap;
+var __iconData29, Zap;
 var init_zap = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/zap.mjs"() {
     init_createLucideIcon();
-    __iconData28 = {
+    __iconData29 = {
       name: "zap",
       size: 24,
       node: [
@@ -1163,8 +1207,8 @@ var init_zap = __esm({
         ]
       ]
     };
-    __iconData28.node;
-    Zap = createLucideIcon(__iconData28);
+    __iconData29.node;
+    Zap = createLucideIcon(__iconData29);
   }
 });
 
@@ -1191,6 +1235,7 @@ var require_icons2 = __commonJS({
       "layers": (init_layers(), __toCommonJS(layers_exports)).default,
       "list": (init_list(), __toCommonJS(list_exports)).default,
       "pencil": (init_pencil(), __toCommonJS(pencil_exports)).default,
+      "plus": (init_plus(), __toCommonJS(plus_exports)).default,
       "play": (init_play(), __toCommonJS(play_exports)).default,
       "power": (init_power(), __toCommonJS(power_exports)).default,
       "power-off": (init_power_off(), __toCommonJS(power_off_exports)).default,
@@ -1203,7 +1248,7 @@ var require_icons2 = __commonJS({
       "x": (init_x(), __toCommonJS(x_exports)).default,
       "zap": (init_zap(), __toCommonJS(zap_exports)).default
     });
-    module2.exports = { ICONS: set.ICONS, Icon: set.Icon };
+    module2.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label };
   }
 });
 
@@ -1212,7 +1257,7 @@ var require_switch = __commonJS({
   "packages/addons/lib/switch.cjs"(exports2, module2) {
     "use strict";
     var SWITCH_STYLES = [
-      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
+      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
       ".wbctl-switch-track{position:relative;display:inline-flex;align-items:center;box-sizing:border-box;width:34px;height:20px;padding:2px;border-radius:999px;background:color-mix(in oklab,currentColor 22%,transparent);transition:background .16s ease;flex:none}",
       ".wbctl-switch-knob{display:block;width:16px;height:16px;border-radius:50%;background:var(--wb-card,#fff);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .16s ease}",
       ".wbctl-switch[aria-checked=true]{color:var(--wb-accent,#2563eb)}",
@@ -1498,7 +1543,7 @@ var require_client_base_styles = __commonJS({
         s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}",
         // 窄屏：页面容器不再自带左右内边距（宿主的 .wb-immersive-main 已经给过），
         // 卡片与栅格收紧，把宽度尽量留给内容——窄屏下两侧留白比桌面更影响可读性。
-        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}" + s + "-table-wrap{overflow-x:auto;max-width:100%}" + s + "-table{width:max-content;min-width:100%}}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
+        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}" + s + "-btn." + s + "-icon-text ." + s + "-btn-label{display:none}" + s + "-btn." + s + "-icon-text{padding-left:8px;padding-right:8px}button .wb-icon-label-text{display:none}" + s + "-table-wrap{overflow-x:auto;max-width:100%}" + s + "-table{width:max-content;min-width:100%}}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
       ]);
     };
     module2.exports.secretFieldStyles = SECRET_FIELD;
@@ -2422,7 +2467,7 @@ var require_stats = __commonJS({
             } }, t("common.refresh")),
             h(C.Btn, { h, kind: "primary", onClick: function() {
               if (props.onNavigate) props.onNavigate("rules", { new: true });
-            } }, t("common.create"))
+            } }, require_icons2().label("plus", t("common.create")))
           )
         ),
         stats.error ? h(C.Notice, { h, kind: "error", text: stats.error }) : null,
@@ -4119,6 +4164,7 @@ var require_rules = __commonJS({
   "packages/addons/automation/client/views/rules.cjs"(exports2, module2) {
     "use strict";
     var C = require_common();
+    var icons = require_icons2();
     var copy = require_copy();
     var trig = require_trigger_fields();
     var atiming = require_agent_timing();
@@ -4272,7 +4318,7 @@ var require_rules = __commonJS({
         h(
           "div",
           { className: "wba-inline" },
-          props.noActions ? h(C.Btn, { h, kind: "primary", onClick: props.onSettings }, t("rules.empty.noActionCta")) : h(C.Btn, { h, kind: "primary", onClick: props.onNew }, t("common.create"))
+          props.noActions ? h(C.Btn, { h, kind: "primary", onClick: props.onSettings }, t("rules.empty.noActionCta")) : h(C.Btn, { h, kind: "primary", onClick: props.onNew }, icons.label("plus", t("common.create")))
         ),
         h("p", { className: "wba-empty-body" }, props.noActions ? t("rules.empty.noActionHint") : t("rules.empty.backup"))
       );
@@ -4573,7 +4619,7 @@ var require_rules = __commonJS({
             "div",
             { className: "wba-row" },
             h(C.Btn, { h, onClick: reload }, t("common.refresh")),
-            h(C.Btn, { h, kind: "primary", onClick: openNew }, t("common.create"))
+            h(C.Btn, { h, kind: "primary", onClick: openNew }, icons.label("plus", t("common.create")))
           )
         ),
         h(C.Notice, { h, text: msgS[0], kind: "info" }),
@@ -7221,7 +7267,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-automation",
-    version: "0.4.8",
+    version: "0.4.9",
     icon: GLYPHS["zap"],
     views: [
       { id: "stats", icon: tabIcon("activity"), title: { zh: "\u6982\u89C8", en: "Overview" }, component: withProps(require_stats(), "\u6982\u89C8") },

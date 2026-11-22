@@ -39,6 +39,22 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// packages/addons/lib/icon-label.cjs
+var require_icon_label = __commonJS({
+  "packages/addons/lib/icon-label.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function iconLabel(h, Icon2, text) {
+      return h(
+        "span",
+        { className: "wb-icon-label" + (Icon2 ? "" : " wb-icon-label-fallback") },
+        Icon2 ? h(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }) : null,
+        h("span", { className: "wb-icon-label-text" }, text)
+      );
+    };
+    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}@media(max-width:760px){button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{display:none}}";
+  }
+});
+
 // packages/addons/lib/icons.cjs
 var require_icons = __commonJS({
   "packages/addons/lib/icons.cjs"(exports2, module2) {
@@ -62,6 +78,11 @@ var require_icons = __commonJS({
         return h(C, attrs);
       }
       var set = { ICONS, Icon: Icon2 };
+      set.label = function(name, text) {
+        return require_icon_label()(h, function NamedIcon(props) {
+          return h(Icon2, Object.assign({ name }, props));
+        }, text);
+      };
       if (opts.tabIcon) {
         set.tabIcon = function(name) {
           return function TabIcon() {
@@ -388,17 +409,44 @@ var init_calendar = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/calendar-plus.mjs
+var calendar_plus_exports = {};
+__export(calendar_plus_exports, {
+  __iconData: () => __iconData2,
+  default: () => CalendarPlus
+});
+var __iconData2, CalendarPlus;
+var init_calendar_plus = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/calendar-plus.mjs"() {
+    init_createLucideIcon();
+    __iconData2 = {
+      name: "calendar-plus",
+      size: 24,
+      node: [
+        ["path", { d: "M16 18h6", key: "987eiv" }],
+        ["path", { d: "M16 2v3", key: "otl347" }],
+        ["path", { d: "M19 15v6", key: "10aioa" }],
+        ["path", { d: "M21 11.5V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h8.3", key: "jgwkxf" }],
+        ["path", { d: "M3 9h18", key: "1pudct" }],
+        ["path", { d: "M8 2v3", key: "1ioesn" }]
+      ]
+    };
+    __iconData2.node;
+    CalendarPlus = createLucideIcon(__iconData2);
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/calendar-days.mjs
 var calendar_days_exports = {};
 __export(calendar_days_exports, {
-  __iconData: () => __iconData2,
+  __iconData: () => __iconData3,
   default: () => CalendarDays
 });
-var __iconData2, CalendarDays;
+var __iconData3, CalendarDays;
 var init_calendar_days = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/calendar-days.mjs"() {
     init_createLucideIcon();
-    __iconData2 = {
+    __iconData3 = {
       name: "calendar-days",
       size: 24,
       node: [
@@ -414,22 +462,22 @@ var init_calendar_days = __esm({
         ["path", { d: "M16 17h.01", key: "ql8jdd" }]
       ]
     };
-    __iconData2.node;
-    CalendarDays = createLucideIcon(__iconData2);
+    __iconData3.node;
+    CalendarDays = createLucideIcon(__iconData3);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs
 var database_exports = {};
 __export(database_exports, {
-  __iconData: () => __iconData3,
+  __iconData: () => __iconData4,
   default: () => Database
 });
-var __iconData3, Database;
+var __iconData4, Database;
 var init_database = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs"() {
     init_createLucideIcon();
-    __iconData3 = {
+    __iconData4 = {
       name: "database",
       size: 24,
       node: [
@@ -438,22 +486,22 @@ var init_database = __esm({
         ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
       ]
     };
-    __iconData3.node;
-    Database = createLucideIcon(__iconData3);
+    __iconData4.node;
+    Database = createLucideIcon(__iconData4);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs
 var list_exports = {};
 __export(list_exports, {
-  __iconData: () => __iconData4,
+  __iconData: () => __iconData5,
   default: () => List
 });
-var __iconData4, List;
+var __iconData5, List;
 var init_list = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs"() {
     init_createLucideIcon();
-    __iconData4 = {
+    __iconData5 = {
       name: "list",
       size: 24,
       node: [
@@ -465,22 +513,22 @@ var init_list = __esm({
         ["path", { d: "M8 19h13", key: "m83p4d" }]
       ]
     };
-    __iconData4.node;
-    List = createLucideIcon(__iconData4);
+    __iconData5.node;
+    List = createLucideIcon(__iconData5);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs
 var sliders_horizontal_exports = {};
 __export(sliders_horizontal_exports, {
-  __iconData: () => __iconData5,
+  __iconData: () => __iconData6,
   default: () => SlidersHorizontal
 });
-var __iconData5, SlidersHorizontal;
+var __iconData6, SlidersHorizontal;
 var init_sliders_horizontal = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs"() {
     init_createLucideIcon();
-    __iconData5 = {
+    __iconData6 = {
       name: "sliders-horizontal",
       size: 24,
       node: [
@@ -495,8 +543,8 @@ var init_sliders_horizontal = __esm({
         ["path", { d: "M8 12H3", key: "a7s4jb" }]
       ]
     };
-    __iconData5.node;
-    SlidersHorizontal = createLucideIcon(__iconData5);
+    __iconData6.node;
+    SlidersHorizontal = createLucideIcon(__iconData6);
   }
 });
 
@@ -507,12 +555,13 @@ var require_icons2 = __commonJS({
     var icons = require_icons();
     var set = icons.create("wbca", {
       "calendar": (init_calendar(), __toCommonJS(calendar_exports)).default,
+      "calendar-plus": (init_calendar_plus(), __toCommonJS(calendar_plus_exports)).default,
       "calendar-days": (init_calendar_days(), __toCommonJS(calendar_days_exports)).default,
       "database": (init_database(), __toCommonJS(database_exports)).default,
       "list": (init_list(), __toCommonJS(list_exports)).default,
       "sliders-horizontal": (init_sliders_horizontal(), __toCommonJS(sliders_horizontal_exports)).default
     });
-    module2.exports = { ICONS: set.ICONS, Icon: set.Icon };
+    module2.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label };
   }
 });
 
@@ -558,7 +607,7 @@ var require_client_base_styles = __commonJS({
         s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}",
         // 窄屏：页面容器不再自带左右内边距（宿主的 .wb-immersive-main 已经给过），
         // 卡片与栅格收紧，把宽度尽量留给内容——窄屏下两侧留白比桌面更影响可读性。
-        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}" + s + "-table-wrap{overflow-x:auto;max-width:100%}" + s + "-table{width:max-content;min-width:100%}}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
+        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}" + s + "-btn." + s + "-icon-text ." + s + "-btn-label{display:none}" + s + "-btn." + s + "-icon-text{padding-left:8px;padding-right:8px}button .wb-icon-label-text{display:none}" + s + "-table-wrap{overflow-x:auto;max-width:100%}" + s + "-table{width:max-content;min-width:100%}}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
       ]);
     };
     module2.exports.secretFieldStyles = SECRET_FIELD;
@@ -822,7 +871,7 @@ var require_switch = __commonJS({
   "packages/addons/lib/switch.cjs"(exports2, module2) {
     "use strict";
     var SWITCH_STYLES = [
-      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
+      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
       ".wbctl-switch-track{position:relative;display:inline-flex;align-items:center;box-sizing:border-box;width:34px;height:20px;padding:2px;border-radius:999px;background:color-mix(in oklab,currentColor 22%,transparent);transition:background .16s ease;flex:none}",
       ".wbctl-switch-knob{display:block;width:16px;height:16px;border-radius:50%;background:var(--wb-card,#fff);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .16s ease}",
       ".wbctl-switch[aria-checked=true]{color:var(--wb-accent,#2563eb)}",
@@ -1007,6 +1056,7 @@ var require_events = __commonJS({
     module2.exports = function Events(props) {
       var h = props.h, React = props.React, api = props.api, lang = props.lang;
       var C = require_common();
+      var icons = require_icons2();
       var now = Date.now();
       var load = C.useLoad(React, api, "calendar.eventsBetween", { from: now - 864e5, to: now + 14 * 864e5, limit: 200 }, []);
       var st = React.useState({ open: false, title: "", start: "", duration: 60, location: "", attendees: "" });
@@ -1065,7 +1115,7 @@ var require_events = __commonJS({
       return h(
         "div",
         { className: "wbca-page" },
-        h("div", { className: "wbca-head" }, h("div", null, h("h2", null, "\u65E5\u7A0B"), h("p", { className: "wbca-sub" }, "\u8FD1 14 \u5929\uFF1B\u63D0\u9192\u901A\u8FC7\u6D88\u606F\u63D2\u4EF6\u53D1\u9001")), h(C.Btn, { h, kind: "primary", onClick: openForm }, "\u65B0\u5EFA\u4E8B\u4EF6")),
+        h("div", { className: "wbca-head" }, h("div", null, h("h2", null, "\u65E5\u7A0B"), h("p", { className: "wbca-sub" }, "\u8FD1 14 \u5929\uFF1B\u63D0\u9192\u901A\u8FC7\u6D88\u606F\u63D2\u4EF6\u53D1\u9001")), h(C.Btn, { h, kind: "primary", onClick: openForm }, icons.label("calendar-plus", "\u65B0\u5EFA\u4E8B\u4EF6"))),
         h(C.Notice, { h, text: msg[0] && msg[0].text, kind: msg[0] && msg[0].kind }),
         form.open ? h(
           "div",
@@ -3161,7 +3211,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-calendar",
-    version: "0.1.10",
+    version: "0.1.11",
     icon: GLYPHS["calendar-days"],
     views: [
       { id: "events", icon: tabIcon("calendar"), title: { zh: "\u65E5\u7A0B", en: "Agenda" }, component: withProps(require_events(), "\u65E5\u7A0B") },

@@ -1,5 +1,6 @@
 "use strict";
 const C = require("../ui/common.cjs");
+const icons = require("../ui/icons.cjs");
 const labels = { trash: "移入废纸篓", read: "标为已读" };
 const remote = m => Boolean(m?.id && m.accountId && m.mailbox && m.uid > 0 && m.uidValidity > 0);
 const unread = m => !/\\Seen\b/i.test(String(m.flags || ""));
@@ -87,12 +88,12 @@ function useBulk({ React, h, api, items, scope, accounts, blocked, refresh }) {
     button(state.running ? "正在处理…" : "确认" + labels[plan.kind], run, blocked || state.running),
     button("取消", () => { state.plan = null; redraw(); }, state.running),
   ] : [
-    button(state.selecting ? "退出选择" : "选择邮件", () => { state.selecting = !state.selecting; state.checked.clear(); redraw(); }, blocked || !available.length),
+    h(C.Btn, { h: h, disabled: blocked || !available.length, onClick: () => { state.selecting = !state.selecting; state.checked.clear(); redraw(); } }, icons.label("square-check", state.selecting ? "退出选择" : "选择邮件")),
     state.selecting && button(selected.length && selected.length === available.length ? "清除选择" : "本页全选", () => {
       state.checked = selected.length === available.length ? new Set() : new Set(available.map(m => m.id)); redraw();
     }, blocked || !available.length),
-    state.selecting && button(`选中邮件移入废纸篓（${selected.length}）`, () => prepare("trash"), blocked || !selected.length),
-    button("本页全部标为已读", () => prepare("read"), blocked || !available.some(unread)),
+    state.selecting && h(C.Btn, { h: h, disabled: blocked || !selected.length, onClick: () => prepare("trash") }, icons.label("trash-2", `移入废纸篓（${selected.length}）`)),
+    h(C.Btn, { h: h, disabled: blocked || !available.some(unread), onClick: () => prepare("read") }, icons.label("check-check", "全部标为已读")),
     state.selecting && items.length > available.length && h("span", null, "本地副本或远端身份未确认的邮件不可选择"),
   ];
   function wrapRow(m, row) {

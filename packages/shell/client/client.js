@@ -512,7 +512,7 @@ var require_switch = __commonJS({
   "packages/addons/lib/switch.cjs"(exports2, module2) {
     "use strict";
     var SWITCH_STYLES = [
-      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
+      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
       ".wbctl-switch-track{position:relative;display:inline-flex;align-items:center;box-sizing:border-box;width:34px;height:20px;padding:2px;border-radius:999px;background:color-mix(in oklab,currentColor 22%,transparent);transition:background .16s ease;flex:none}",
       ".wbctl-switch-knob{display:block;width:16px;height:16px;border-radius:50%;background:var(--wb-card,#fff);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .16s ease}",
       ".wbctl-switch[aria-checked=true]{color:var(--wb-accent,#2563eb)}",
@@ -631,6 +631,8 @@ var require_styles = __commonJS({
       ".wb-page-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
       ".wb-back{border:1px solid var(--wb-line);background:transparent;color:inherit;border-radius:8px;padding:6px 11px;cursor:pointer;font:inherit;font-size:12px;opacity:.75;display:inline-flex;align-items:center;gap:5px}",
       ".wb-back:hover{opacity:1;border-color:var(--dsw-alias-brand-primary,#11a89b)}",
+      // 「返回首页」拆成图标 + 文字两段：窄屏只留箭头图标，避免四个字被挤成两行。
+      ".wb-back-icon{display:inline-flex;align-items:center;justify-content:center;line-height:1}",
       ".wb-page-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
       ".wb-page-title h2{margin:0;font-size:19px;font-weight:650;letter-spacing:.2px}",
       ".wb-page-desc{font-size:12px;opacity:.6;line-height:1.5}",
@@ -905,7 +907,7 @@ var require_styles = __commonJS({
       ".wb-root .wb-immersive-bar .wb-tab{flex:0 0 auto;min-width:0;justify-content:center;text-align:center;padding:6px 10px}",
       // 窄屏收口：上面这些 .wb-root 前缀的规则优先级高于文件开头的 @media，必须放到最后覆盖，
       // 否则窄屏仍在用桌面内边距。窄屏两侧留白直接从 22px 降到 10px，插件页容器不再自带左右边距。
-      "@media (max-width:760px){.wb-root .wb-immersive-main{padding:10px 10px 16px}.wb-root .wb-immersive-bar{padding:calc(8px + var(--dsh-frame-top-clearance,0px)) 12px 8px}.wb-root :is(.wbc-wrap,.wbv,.wba-wrap,.wbct-wrap,.wbca-wrap,.wbm-wrap,.wbml-wrap,.wbm-page,.wbml-page){padding:0 0 16px}.wb-root .wb-inner{gap:12px}.wb-root .wb-immersive-main>.wb-inner{gap:12px}}",
+      "@media (max-width:760px){.wb-root .wb-immersive-main{padding:10px 10px 16px}.wb-root .wb-immersive-bar{padding:calc(8px + var(--dsh-frame-top-clearance,0px)) 12px 8px}.wb-back{padding:0;width:30px;height:30px;justify-content:center;gap:0;flex:0 0 auto}.wb-back-label{display:none}.wb-root :is(.wbc-wrap,.wbv,.wba-wrap,.wbct-wrap,.wbca-wrap,.wbm-wrap,.wbml-wrap,.wbm-page,.wbml-page){padding:0 0 16px}.wb-root .wb-inner{gap:12px}.wb-root .wb-immersive-main>.wb-inner{gap:12px}}",
       "@media (max-width:420px){.wb-root .wb-immersive-main{padding:8px 8px 12px}.wb-root .wb-immersive-bar{padding:calc(6px + var(--dsh-frame-top-clearance,0px)) 10px 6px}}"
     ].join("\n");
     module2.exports = CSS2 + "\n" + SW.styles.join("\n");
@@ -3765,9 +3767,9 @@ function WorkbenchPage(props) {
   function pageHead(title, desc) {
     return jsx.jsxs("div", { className: "wb-page-head", children: [
       jsx.jsx("div", { className: "wb-page-top", children: [
-        jsx.jsx("button", { className: "wb-back", onClick: function() {
+        jsx.jsx("button", { className: "wb-back", type: "button", "aria-label": t("back_home"), title: t("back_home"), onClick: function() {
           go("home");
-        }, children: "\u2190 " + t("back_home") })
+        }, children: [jsx.jsx("span", { className: "wb-back-icon", "aria-hidden": "true", children: "\u2190" }), jsx.jsx("span", { className: "wb-back-label", children: t("back_home") })] })
       ] }),
       jsx.jsxs("div", { className: "wb-page-title", children: [
         jsx.jsx("span", { className: "wb-home-icon", children: cardIcon(route, title) }),
@@ -3827,9 +3829,9 @@ function WorkbenchPage(props) {
       jsx.jsxs("div", { className: "wb-immersive-bar", children: [
         jsx.jsxs("div", { className: "wb-immersive-left", children: [
           jsx.jsx("span", { className: "wb-immersive-icon", children: cardIcon(currentAddon.id, addonTitle) }),
-          jsx.jsx("button", { className: "wb-back", onClick: function() {
+          jsx.jsx("button", { className: "wb-back", type: "button", "aria-label": t("back_home"), title: t("back_home"), onClick: function() {
             go("home");
-          }, children: "\u2190 " + t("back_home") }),
+          }, children: [jsx.jsx("span", { className: "wb-back-icon", "aria-hidden": "true", children: "\u2190" }), jsx.jsx("span", { className: "wb-back-label", children: t("back_home") })] }),
           jsx.jsx(ViewTabs, { views: viewList, activeView, addonId: currentAddon.id, lang, go })
         ] }),
         jsx.jsxs("div", { className: "wb-immersive-title", children: [

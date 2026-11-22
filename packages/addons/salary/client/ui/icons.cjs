@@ -7,6 +7,7 @@ var set = icons.create("wbsal", {
   "database": require("lucide-react/icons/database").default,
   "list": require("lucide-react/icons/list").default,
   "wallet": require("lucide-react/icons/wallet").default,
+  "plus": require("lucide-react/icons/plus").default,
 });
 
-module.exports = { ICONS: set.ICONS, Icon: set.Icon };
+module.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label };

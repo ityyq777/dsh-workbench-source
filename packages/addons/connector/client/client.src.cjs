@@ -43,7 +43,7 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
 
   host.registerAddon({
     id: "wb-addon-connector",
-    version: "0.1.10",
+    version: "0.1.11",
     icon: GLYPHS["rss"],
     views: [
       { id: "stats", icon: tabIcon("activity"), title: { zh: "概览", en: "Overview" }, component: withProps(require("./views/stats.cjs"), "概览") },

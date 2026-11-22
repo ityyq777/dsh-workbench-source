@@ -22,4 +22,4 @@ var set = icons.create("wbv", {
   "x": require("lucide-react/icons/x").default,
 });
 
-module.exports = { ICONS: set.ICONS, Icon: set.Icon };
+module.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label };

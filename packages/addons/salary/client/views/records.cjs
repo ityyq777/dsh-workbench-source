@@ -5,6 +5,7 @@
  */
 var staged = require("../../../lib/staged-dialog.cjs");
 var salaryCommon = require("../ui/common.cjs");
+var salaryIcons = require("../ui/icons.cjs");
 // 金额输入统一走校验型控件：键入不被改写，非法只红字提示并禁止保存。
 var NF = require("../../../lib/number-field.cjs");
 // 记一笔/编辑工资改为分三步：基础信息 → 金额明细 → 汇总确认。
@@ -406,7 +407,7 @@ module.exports = function Records(props) {
         filter.year || filter.cycle || filter.employmentType
           ? h(C.Btn, { h: h, onClick: function () { setFilter({ year: "", cycle: "", employmentType: "" }); } }, "清除筛选")
           : null,
-        h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, "＋ 记一笔")));
+        h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, salaryIcons.label("plus", "记一笔"))));
   } else {
     body = h("div", { className: "wbsal-months" }, periods.map(function (period) {
       var rows = groups[period];
@@ -442,7 +443,7 @@ module.exports = function Records(props) {
         h("option", { value: "" }, "全部"), F.EMPLOYMENT_TYPES.slice(1).map(function (t) { return h("option", { key: t.value, value: t.value }, t.label); }))),
       h("div", { className: "wbsal-toolbar-end" },
         h("span", { className: "wbsal-toolbar-count" }, "共 ", h("b", null, total), " 笔"),
-        h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, "＋ 记一笔"))),
+        h(C.Btn, { h: h, kind: "primary", onClick: openCreate }, salaryIcons.label("plus", "记一笔")))),
     h(C.Notice, { h: h, kind: msg && msg.kind, text: msg && !form ? msg.text : "" }),
     body,
     form ? renderModal() : null);

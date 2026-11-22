@@ -1137,7 +1137,7 @@ var require_switch = __commonJS({
   "packages/addons/lib/switch.cjs"(exports2, module2) {
     "use strict";
     var SWITCH_STYLES = [
-      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
+      ".wbctl-switch{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;min-height:24px;padding:2px;border:0;background:transparent;font:inherit;font-size:12px;color:var(--wb-muted,#6b7280);cursor:pointer;user-select:none;border-radius:999px}",
       ".wbctl-switch-track{position:relative;display:inline-flex;align-items:center;box-sizing:border-box;width:34px;height:20px;padding:2px;border-radius:999px;background:color-mix(in oklab,currentColor 22%,transparent);transition:background .16s ease;flex:none}",
       ".wbctl-switch-knob{display:block;width:16px;height:16px;border-radius:50%;background:var(--wb-card,#fff);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .16s ease}",
       ".wbctl-switch[aria-checked=true]{color:var(--wb-accent,#2563eb)}",
@@ -3387,6 +3387,22 @@ var require_data = __commonJS({
   }
 });
 
+// packages/addons/lib/icon-label.cjs
+var require_icon_label = __commonJS({
+  "packages/addons/lib/icon-label.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function iconLabel(h2, Icon2, text) {
+      return h2(
+        "span",
+        { className: "wb-icon-label" + (Icon2 ? "" : " wb-icon-label-fallback") },
+        Icon2 ? h2(Icon2, { size: 14, strokeWidth: 2, "aria-hidden": true, focusable: false }) : null,
+        h2("span", { className: "wb-icon-label-text" }, text)
+      );
+    };
+    module2.exports.styles = ".wb-icon-label{display:inline-flex;align-items:center;gap:5px;max-width:100%;vertical-align:middle;text-align:start}.wb-icon-label>svg{flex:none}.wb-icon-label>span{min-width:0;overflow-wrap:anywhere}@media(max-width:760px){button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{display:none}}";
+  }
+});
+
 // packages/addons/lib/icons.cjs
 var require_icons = __commonJS({
   "packages/addons/lib/icons.cjs"(exports2, module2) {
@@ -3410,6 +3426,11 @@ var require_icons = __commonJS({
         return h2(C, attrs);
       }
       var set = { ICONS, Icon: Icon2 };
+      set.label = function(name, text) {
+        return require_icon_label()(h2, function NamedIcon(props) {
+          return h2(Icon2, Object.assign({ name }, props));
+        }, text);
+      };
       if (opts.tabIcon) {
         set.tabIcon = function(name) {
           return function TabIcon() {
@@ -4073,7 +4094,7 @@ var require_icons2 = __commonJS({
       "code-2": (init_code_xml(), __toCommonJS(code_xml_exports)).default,
       tag: (init_tag(), __toCommonJS(tag_exports)).default
     }, { tabIcon: true });
-    module2.exports = { ICONS: set.ICONS, Icon: set.Icon, tabIcon: set.tabIcon };
+    module2.exports = { ICONS: set.ICONS, Icon: set.Icon, label: set.label, tabIcon: set.tabIcon };
   }
 });
 
@@ -4964,7 +4985,7 @@ var h = React.createElement;
     ".wbg-batch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;border:1px solid color-mix(in oklab,var(--wbg-accent) 35%,transparent);background:color-mix(in oklab,var(--wbg-accent) 7%,transparent);border-radius:9px;padding:7px 10px}",
     ".wbg-hint{font-size:11.5px;opacity:.55;line-height:1.5}",
     ".wbg-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:820;background:var(--dsw-alias-toast-bg,rgba(20,20,20,.88));color:var(--dsw-alias-toast-label,#fff);border-radius:9px;padding:9px 14px;font-size:12.5px;box-shadow:0 8px 24px rgba(0,0,0,.18);pointer-events:none}",
-    "@media (max-width:760px){.wbg-search{width:100%;max-width:none}.wbg-toolbar .wbg-grow{display:none}.wbg-time{display:none}.wbg-row{padding:9px 10px}.wbg-ops .wbg-btn{padding:6px 8px}}",
+    "@media (max-width:760px){.wbg-search{width:100%;max-width:none}.wbg-toolbar .wbg-grow{display:none}.wbg-time{display:none}.wbg-row{padding:9px 10px}.wbg-ops .wbg-btn{padding:6px 8px}.wbg-btn .wb-icon-label-text{display:none}}",
     require_date_picker_styles()("wbg"),
     require_switch().styles
   ].join("\n");
@@ -5296,7 +5317,7 @@ var h = React.createElement;
               if (e.key === "Enter") applySearch();
             }
           }),
-          h2("button", { type: "button", className: "wbg-btn", onClick: applySearch }, h2(Icon2, { name: "search", size: 13 }), t.find),
+          h2("button", { type: "button", className: "wbg-btn", onClick: applySearch }, h2(Icon2, { name: "search", size: 13 }), h2("span", { className: "wb-icon-label-text" }, t.find)),
           text || query ? h2("button", { type: "button", className: "wbg-btn ghost", onClick: clearSearch }, h2(Icon2, { name: "x", size: 13 }), t.clear) : null,
           h2("button", {
             type: "button",
@@ -5307,7 +5328,7 @@ var h = React.createElement;
             onClick: function() {
               if (refreshRef.current) refreshRef.current();
             }
-          }, h2(Icon2, { name: "refresh", size: 13 }), t.refresh),
+          }, h2(Icon2, { name: "refresh", size: 13 }), h2("span", { className: "wb-icon-label-text" }, t.refresh)),
           h2("button", {
             type: "button",
             className: "wbg-btn primary",
@@ -5315,7 +5336,7 @@ var h = React.createElement;
               setCreating(!creating);
               setFormError("");
             }
-          }, h2(Icon2, { name: creating ? "x" : "plus", size: 13 }), creating ? t.cancel : t.create)
+          }, h2(Icon2, { name: creating ? "x" : "plus", size: 13 }), h2("span", { className: "wb-icon-label-text" }, creating ? t.cancel : t.create))
         )
       ),
       creating ? h2(
@@ -5483,7 +5504,7 @@ var h = React.createElement;
   }
   host.registerAddon({
     id: "wb-addon-tags",
-    version: "1.7.9",
+    version: "1.7.10",
     icon: ICONS.tag,
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.TagsStatsView },
