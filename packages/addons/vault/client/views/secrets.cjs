@@ -309,7 +309,7 @@ module.exports = function SecretsView(props) {
     h(P.PageHead, {
       h: h,
       title: "凭据库",
-      sub: "凭据按「集合与账号」组织：一条凭据可以进多个集合，一个集合可以标一个账号、挂到多个分组。明文只在本机解锁后可见。",
+      sub: "凭据按「集合」组织：一条凭据可以进多个集合，一个集合可以挂到多个分组。明文只在本机解锁后可见。",
       actions: [
         h(C.Btn, { h: h, key: "refresh", onClick: load }, iconLabel(h, Refresh, "刷新")),
         locked ? h(C.Btn, { h: h, key: "unlock", kind: "primary", onClick: function () { askUnlock(""); } }, iconLabel(h, Unlock, "解锁")) : null,
@@ -320,7 +320,7 @@ module.exports = function SecretsView(props) {
       h(P.Input, {
         h: h,
         className: "wbv-search",
-        placeholder: "搜索名称、备注或集合与账号",
+        placeholder: "搜索名称、备注或集合",
         "aria-label": "搜索凭据",
         value: qS[0],
         onChange: function (e) { qS[1](e.target.value); },

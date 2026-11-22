@@ -3090,7 +3090,7 @@ var require_secrets = __commonJS({
         h(P.PageHead, {
           h,
           title: "\u51ED\u636E\u5E93",
-          sub: "\u51ED\u636E\u6309\u300C\u96C6\u5408\u4E0E\u8D26\u53F7\u300D\u7EC4\u7EC7\uFF1A\u4E00\u6761\u51ED\u636E\u53EF\u4EE5\u8FDB\u591A\u4E2A\u96C6\u5408\uFF0C\u4E00\u4E2A\u96C6\u5408\u53EF\u4EE5\u6807\u4E00\u4E2A\u8D26\u53F7\u3001\u6302\u5230\u591A\u4E2A\u5206\u7EC4\u3002\u660E\u6587\u53EA\u5728\u672C\u673A\u89E3\u9501\u540E\u53EF\u89C1\u3002",
+          sub: "\u51ED\u636E\u6309\u300C\u96C6\u5408\u300D\u7EC4\u7EC7\uFF1A\u4E00\u6761\u51ED\u636E\u53EF\u4EE5\u8FDB\u591A\u4E2A\u96C6\u5408\uFF0C\u4E00\u4E2A\u96C6\u5408\u53EF\u4EE5\u6302\u5230\u591A\u4E2A\u5206\u7EC4\u3002\u660E\u6587\u53EA\u5728\u672C\u673A\u89E3\u9501\u540E\u53EF\u89C1\u3002",
           actions: [
             h(C.Btn, { h, key: "refresh", onClick: load }, iconLabel(h, Refresh, "\u5237\u65B0")),
             locked ? h(C.Btn, { h, key: "unlock", kind: "primary", onClick: function() {
@@ -3105,7 +3105,7 @@ var require_secrets = __commonJS({
           h(P.Input, {
             h,
             className: "wbv-search",
-            placeholder: "\u641C\u7D22\u540D\u79F0\u3001\u5907\u6CE8\u6216\u96C6\u5408\u4E0E\u8D26\u53F7",
+            placeholder: "\u641C\u7D22\u540D\u79F0\u3001\u5907\u6CE8\u6216\u96C6\u5408",
             "aria-label": "\u641C\u7D22\u51ED\u636E",
             value: qS[0],
             onChange: function(e) {
@@ -3829,10 +3829,17 @@ var require_sets = __commonJS({
         if (!guard.ready) return;
         inflight.seq += 1;
         if (guard.locked) {
+          listS[1]({ loading: false, items: [], error: "" });
+          secretsS[1]([]);
+          groupsS[1]([]);
+          activeS[1](null);
+          detailS[1]({ setId: "", secrets: [], groups: [], error: "" });
+          qS[1]("");
           draftS[1](null);
           pickS[1]([]);
           delS[1](null);
           msgS[1]("");
+          return;
         }
         load();
       }, [guard.ready, guard.locked]);
@@ -3983,12 +3990,7 @@ var require_sets = __commonJS({
         return !inSet[s.id];
       });
       if (!guard.ready) return h("div", { className: "wbv" }, h(C.Empty, { h, text: "\u6B63\u5728\u8BFB\u53D6\u4FDD\u9669\u7BB1\u72B6\u6001\u2026" }));
-      var readOnly = guard.locked;
-      var lockNote = readOnly ? h(C.Notice, {
-        h,
-        kind: "warn",
-        text: "\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A\uFF1A\u96C6\u5408\u4E0E\u51ED\u636E\u540D\u7167\u5E38\u53EF\u89C1\uFF1B\u65B0\u5EFA\u3001\u7F16\u8F91\u3001\u52A0\u5165\u51ED\u636E\u4E0E\u660E\u6587\u5F55\u5165\u9700\u5148\u5230\u300C\u4FDD\u9669\u7BB1\u300D\u9875\u89E3\u9501\u3002"
-      }) : null;
+      if (guard.locked) return h(Lock2.Panel, { h, C, lang, error: guard.error });
       var active = activeS[0];
       var secretColumns = [
         { key: "name", label: "\u540D\u79F0" },
@@ -4005,10 +4007,9 @@ var require_sets = __commonJS({
           sub: "\u96C6\u5408\u53EA\u88C5\u51ED\u636E\uFF1A\u4E00\u4E2A\u96C6\u5408\u53EF\u6302\u591A\u4E2A\u5206\u7EC4\u3001\u88C5\u591A\u6761\u51ED\u636E\uFF1B\u8D26\u53F7\u672C\u8EAB\u662F\u4E00\u6761 kind=account \u7684\u51ED\u636E\uFF0C\u5220\u9664\u96C6\u5408\u53EA\u65AD\u5173\u8054\uFF0C\u4E0D\u5220\u51ED\u636E\u3002",
           actions: [
             h(C.Btn, { h, key: "refresh", onClick: load }, "\u5237\u65B0"),
-            h(C.Btn, { h, key: "create", kind: "primary", disabled: readOnly, onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408")
+            h(C.Btn, { h, key: "create", kind: "primary", onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408")
           ]
         }),
-        lockNote,
         h(
           P.Toolbar,
           { h },
@@ -4037,7 +4038,7 @@ var require_sets = __commonJS({
               icon: Layers2,
               title: qS[0] ? "\u6CA1\u6709\u5339\u914D\u7684\u96C6\u5408" : "\u8FD8\u6CA1\u6709\u96C6\u5408",
               hint: qS[0] ? "\u6362\u4E2A\u5173\u952E\u8BCD\u8BD5\u8BD5\u3002" : "\u65B0\u5EFA\u4E00\u4E2A\u540E\uFF0C\u53EF\u4EE5\u628A\u51ED\u636E\u548C\u5206\u7EC4\u90FD\u6302\u8FDB\u6765\u3002"
-            }, h(C.Btn, { h, kind: "primary", disabled: readOnly, onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408")) : items.map(function(set) {
+            }, h(C.Btn, { h, kind: "primary", onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408")) : items.map(function(set) {
               var on = active && active.id === set.id;
               return h(
                 "button",
@@ -4078,10 +4079,10 @@ var require_sets = __commonJS({
                 h(
                   "div",
                   { className: "wbv-card-actions" },
-                  h(C.Btn, { h, disabled: readOnly, onClick: function() {
+                  h(C.Btn, { h, onClick: function() {
                     startEdit(active);
                   } }, "\u7F16\u8F91"),
-                  h(C.Btn, { h, kind: "danger", disabled: readOnly, onClick: function() {
+                  h(C.Btn, { h, kind: "danger", onClick: function() {
                     removeSet(active);
                   } }, "\u5220\u9664\u96C6\u5408")
                 )
@@ -4108,7 +4109,7 @@ var require_sets = __commonJS({
                     h("td", null, h(
                       "div",
                       { className: "wbv-actions" },
-                      h(C.Btn, { h, kind: "ghost", disabled: readOnly, onClick: function() {
+                      h(C.Btn, { h, kind: "ghost", onClick: function() {
                         detach(s.id);
                       } }, "\u79FB\u51FA")
                     ))
@@ -4116,7 +4117,7 @@ var require_sets = __commonJS({
                 }
               }),
               h("div", { className: "wbv-card-title", style: { marginTop: "14px" } }, "\u52A0\u5165\u51ED\u636E"),
-              readOnly ? h("div", { className: "wbv-muted" }, "\u89E3\u9501\u540E\u53EF\u628A\u51ED\u636E\u52A0\u5165\u8FD9\u4E2A\u96C6\u5408\u3002") : h(
+              h(
                 "div",
                 { className: "wbv-row" },
                 h(SearchPicker, {
@@ -4167,7 +4168,7 @@ var require_sets = __commonJS({
                   return h(
                     "label",
                     { key: g.id, className: "wbv-chip", style: { cursor: "pointer" } },
-                    h("input", { type: "checkbox", checked: on, disabled: busyS[0] || readOnly, onChange: function(e) {
+                    h("input", { type: "checkbox", checked: on, disabled: busyS[0], onChange: function(e) {
                       toggleGroup(g.id, e.target.checked);
                     } }),
                     h("span", null, g.name)
@@ -4497,7 +4498,7 @@ var require_groups = __commonJS({
               return !ok;
             }).length;
             createS[1](null);
-            msgS[1](failed ? "\u5206\u7EC4\u5DF2\u521B\u5EFA\uFF0C" + failed + " \u4E2A\u96C6\u5408\u4E0E\u8D26\u53F7\u6302\u8F7D\u5931\u8D25\uFF0C\u53EF\u5728\u300C\u67E5\u770B\u5173\u8054\u300D\u91CC\u8865\u6302" : "");
+            msgS[1](failed ? "\u5206\u7EC4\u5DF2\u521B\u5EFA\uFF0C" + failed + " \u4E2A\u96C6\u5408\u6302\u8F7D\u5931\u8D25\uFF0C\u53EF\u5728\u300C\u67E5\u770B\u5173\u8054\u300D\u91CC\u8865\u6302" : "");
             load();
           });
         }).catch(function(e) {
@@ -4566,7 +4567,7 @@ var require_groups = __commonJS({
       var columns = [
         { key: "name", label: "\u5206\u7EC4" },
         { key: "description", label: "\u63CF\u8FF0" },
-        { key: "sets", label: "\u96C6\u5408\u4E0E\u8D26\u53F7" },
+        { key: "sets", label: "\u96C6\u5408" },
         { key: "secrets", label: "\u51ED\u636E", align: "right" },
         { key: "bindings", label: "\u5173\u8054\u5BF9\u8C61", align: "right" },
         { key: "ops", label: "\u64CD\u4F5C", align: "right" }
@@ -4580,7 +4581,7 @@ var require_groups = __commonJS({
           h("td", null, row.description || "\u2014"),
           h("td", null, sets.length ? h("div", { className: "wbv-chips" }, sets.map(function(set) {
             return h("span", { key: set.id, className: "wbv-chip" }, set.name);
-          })) : h("span", { className: "wbv-muted" }, "\u672A\u6302\u96C6\u5408\u4E0E\u8D26\u53F7")),
+          })) : h("span", { className: "wbv-muted" }, "\u672A\u6302\u96C6\u5408")),
           h("td", { className: "wbv-right" }, row.secretCount || 0),
           h("td", { className: "wbv-right" }, row.bindingCount || 0),
           h("td", null, h(
@@ -4660,7 +4661,7 @@ var require_groups = __commonJS({
             ),
             h(
               C.Field,
-              { h, label: "\u96C6\u5408\u4E0E\u8D26\u53F7\uFF08\u53EF\u591A\u9009\uFF09", hint: "\u52FE\u9009\u7684\u96C6\u5408\u4F1A\u4E00\u5E76\u6302\u5230\u8FD9\u4E2A\u5206\u7EC4" },
+              { h, label: "\u96C6\u5408\uFF08\u53EF\u591A\u9009\uFF09", hint: "\u52FE\u9009\u7684\u96C6\u5408\u4F1A\u4E00\u5E76\u6302\u5230\u8FD9\u4E2A\u5206\u7EC4" },
               h(FilterChecklist, {
                 items: pickS[0].rows.slice(0, pickS[0].page * PICK_PAGE).map(function(set) {
                   return { id: set.id, name: set.name, meta: (set.secretCount || 0) + " \u6761" };
@@ -4669,7 +4670,7 @@ var require_groups = __commonJS({
                 onToggle: toggleCreateSet,
                 query: pickS[0].q,
                 onQuery: pickQuery,
-                title: "\u5168\u90E8\u96C6\u5408\u4E0E\u8D26\u53F7",
+                title: "\u5168\u90E8\u96C6\u5408",
                 total: pickS[0].rows.length,
                 selectedText: "\u5DF2\u9009",
                 clearText: "\u6E05\u7A7A",
@@ -4678,8 +4679,8 @@ var require_groups = __commonJS({
                 loading: pickS[0].loading,
                 hasMore: pickS[0].page * PICK_PAGE < pickS[0].rows.length,
                 onLoadMore: pickMore,
-                emptyText: "\u8FD8\u6CA1\u6709\u96C6\u5408\u4E0E\u8D26\u53F7\uFF0C\u53EF\u5148\u5EFA\u7EC4\uFF0C\u518D\u5230\u300C\u96C6\u5408\u4E0E\u8D26\u53F7\u300D\u9875\u65B0\u5EFA",
-                noMatchText: "\u6CA1\u6709\u5339\u914D\u7684\u96C6\u5408\u4E0E\u8D26\u53F7",
+                emptyText: "\u8FD8\u6CA1\u6709\u96C6\u5408\uFF0C\u53EF\u5148\u5EFA\u7EC4\uFF0C\u518D\u5230\u300C\u96C6\u5408\u300D\u9875\u65B0\u5EFA",
+                noMatchText: "\u6CA1\u6709\u5339\u914D\u7684\u96C6\u5408",
                 noMoreText: pickS[0].rows.length > PICK_PAGE ? "\u6CA1\u6709\u66F4\u591A" : "",
                 loadingText: "\u52A0\u8F7D\u4E2D\u2026",
                 disabled: createS[0].busy,
@@ -4760,7 +4761,7 @@ var require_groups = __commonJS({
                 h("span", null, set.name),
                 h("span", { className: "wbv-muted" }, " \xB7 " + (set.secretCount || 0) + " \u6761")
               );
-            }) : h("span", { className: "wbv-muted" }, "\u8FD8\u6CA1\u6709\u96C6\u5408\u4E0E\u8D26\u53F7")),
+            }) : h("span", { className: "wbv-muted" }, "\u8FD8\u6CA1\u6709\u96C6\u5408")),
             openS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u4E2D\u2026" }) : openS[0].error ? h(C.Notice, { h, kind: "error", text: openS[0].error }) : openS[0].items.length === 0 ? h(P.EmptyState, { h, title: "\u8FD8\u6CA1\u6709\u6A21\u5757\u5173\u8054\u5230\u8FD9\u4E2A\u5206\u7EC4", hint: "\u5173\u8054\u7531\u4E1A\u52A1\u6A21\u5757\u901A\u8FC7 vault.bind \u6CE8\u518C\uFF0C\u8FD9\u91CC\u53EA\u8BFB\u3002" }) : h(P.DataTable, {
               h,
               label: "\u5173\u8054\u5BF9\u8C61",
@@ -6145,8 +6146,10 @@ var require_data_view = __commonJS({
 var require_data = __commonJS({
   "packages/addons/vault/client/views/data.cjs"(exports2, module2) {
     "use strict";
+    var C = require_common();
+    var Lock2 = require_lock();
     var legacy = require_legacy_data()("vault", { paged: true });
-    module2.exports = require_data_view()({
+    var Inner = require_data_view()({
       domain: "vault",
       prefix: "wbv",
       tables: ["vault_secret", "vault_group", "vault_set", "vault_group_set", "vault_set_secret", "vault_binding"],
@@ -6156,6 +6159,13 @@ var require_data = __commonJS({
       tablesLoader: legacy.tablesLoader,
       query: legacy.query
     }).DataView;
+    module2.exports = function VaultDataView(props) {
+      var h = props.h;
+      var guard = Lock2.use({ api: props.api, C, React: props.React });
+      if (!guard.ready) return h("div", { className: "wbv" }, h(C.Empty, { h, text: "\u6B63\u5728\u8BFB\u53D6\u4FDD\u9669\u7BB1\u72B6\u6001\u2026" }));
+      if (guard.locked) return h(Lock2.Panel, { h, C, lang: props.lang, error: guard.error });
+      return h(Inner, props);
+    };
   }
 });
 
@@ -7006,12 +7016,12 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.6.0",
+    version: "0.6.1",
     icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },
       { id: "secrets", icon: tabIcon("key"), title: { zh: "\u51ED\u636E", en: "Secrets" }, component: withProps(require_secrets(), "\u51ED\u636E") },
-      { id: "sets", icon: tabIcon("layers"), title: { zh: "\u96C6\u5408\u4E0E\u8D26\u53F7", en: "Sets & Accounts" }, component: withProps(require_sets(), "\u96C6\u5408\u4E0E\u8D26\u53F7") },
+      { id: "sets", icon: tabIcon("layers"), title: { zh: "\u96C6\u5408", en: "Sets" }, component: withProps(require_sets(), "\u96C6\u5408") },
       { id: "groups", icon: tabIcon("folder"), title: { zh: "\u5206\u7EC4\u4E0E\u5173\u8054", en: "Groups" }, component: withProps(require_groups(), "\u5206\u7EC4\u4E0E\u5173\u8054") },
       { id: "config", icon: tabIcon("sliders"), title: { zh: "\u8BBE\u7F6E", en: "Settings" }, component: withProps(require_config(), "\u8BBE\u7F6E") },
       { id: "data", icon: tabIcon("database"), title: { zh: "\u6570\u636E", en: "Data" }, component: withProps(require_data(), "\u6570\u636E") },

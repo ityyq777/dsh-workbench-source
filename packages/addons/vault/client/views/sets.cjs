@@ -1,11 +1,10 @@
 "use strict";
 /**
- * 集合与账号页：集合可复用（挂多个分组、装多条凭据），并可标一个账号；
+ * 集合页：集合可复用（挂多个分组、装多条凭据）；
  * 集合不再区分类型，条目只按 id 区分；账号本身是一条 kind=account 的凭据；
  * 弹窗里可顺手勾选已有凭据，或直接填名称/类型/明文新建一条，保存集合时一并挂上。
- * 锁定时本页不再整页让位：集合名、账号、凭据名与类型都是明文元数据（vault.setList /
- * vault.setGet / vault.secretList 都不需要 DEK），照常只读展示；新建、编辑、加入、移出、
- * 挂靠分组与明文录入一律等解锁，因为那些动作才需要 DEK 或会改动数据。
+ * 锁定态整页让位：集合名、描述与凭据名同样是业务信息，未解锁时不渲染列表/详情，
+ * 也不向服务端发列表请求；解锁后自动重载。
  * 凭据选择用共享的 lib/search-picker.cjs（关键字搜索 + 多选），替换原来的原生下拉与一长条复选框。
  * 页面骨架与弹层外壳分别来自 ui/page.cjs、ui/dialog.cjs。
  */
@@ -43,7 +42,7 @@ module.exports = function SetsView(props) {
   var inflight = React.useState({ seq: 0 })[0];
 
   function load() {
-    // 锁定时照常取数：三个接口都只返回明文元数据，不解 DEK，所以列表与详情不该跟着消失。
+    // 只在解锁态调用：锁定后不再请求集合/凭据/分组列表。
     var seq = (inflight.seq += 1);
     listS[1](function (old) { return Object.assign({}, old, { loading: true }); });
     Promise.all([
@@ -62,16 +61,23 @@ module.exports = function SetsView(props) {
     });
   }
 
-  // 锁定时只丢掉「带明文或待提交」的临时状态（弹窗草稿、待加入凭据、删除确认），
-  // 列表与详情保留只读；解锁后自动重载刷新。
+  // 锁定态整页让位：清空集合/详情/凭据/分组与全部临时状态，作废在途响应；
+  // 解锁后自动重载。
   React.useEffect(function () {
     if (!guard.ready) return;
     inflight.seq += 1;
     if (guard.locked) {
+      listS[1]({ loading: false, items: [], error: "" });
+      secretsS[1]([]);
+      groupsS[1]([]);
+      activeS[1](null);
+      detailS[1]({ setId: "", secrets: [], groups: [], error: "" });
+      qS[1]("");
       draftS[1](null);
       pickS[1]([]);
       delS[1](null);
       msgS[1]("");
+      return;
     }
     load();
   }, [guard.ready, guard.locked]);
@@ -217,16 +223,7 @@ module.exports = function SetsView(props) {
 
   if (!guard.ready) return h("div", { className: "wbv" }, h(C.Empty, { h: h, text: "正在读取保险箱状态…" }));
 
-  // 锁定只读：集合名、描述、凭据名与类型都不需要 DEK，照常展示；
-  // 新建/编辑/加入/移出/挂靠与明文录入全部挡在解锁之后。
-  var readOnly = guard.locked;
-  var lockNote = readOnly
-    ? h(C.Notice, {
-        h: h,
-        kind: "warn",
-        text: "保险箱已锁定：集合与凭据名照常可见；新建、编辑、加入凭据与明文录入需先到「保险箱」页解锁。",
-      })
-    : null;
+  if (guard.locked) return h(Lock.Panel, { h: h, C: C, lang: lang, error: guard.error });
 
   var active = activeS[0];
   var secretColumns = [
@@ -243,10 +240,9 @@ module.exports = function SetsView(props) {
       sub: "集合只装凭据：一个集合可挂多个分组、装多条凭据；账号本身是一条 kind=account 的凭据，删除集合只断关联，不删凭据。",
       actions: [
         h(C.Btn, { h: h, key: "refresh", onClick: load }, "刷新"),
-        h(C.Btn, { h: h, key: "create", kind: "primary", disabled: readOnly, onClick: startCreate }, "新建集合"),
+        h(C.Btn, { h: h, key: "create", kind: "primary", onClick: startCreate }, "新建集合"),
       ],
     }),
-    lockNote,
     h(P.Toolbar, { h: h },
       h(P.Input, {
         h: h,
@@ -270,7 +266,7 @@ module.exports = function SetsView(props) {
                 icon: Layers,
                 title: qS[0] ? "没有匹配的集合" : "还没有集合",
                 hint: qS[0] ? "换个关键词试试。" : "新建一个后，可以把凭据和分组都挂进来。",
-              }, h(C.Btn, { h: h, kind: "primary", disabled: readOnly, onClick: startCreate }, "新建集合"))
+              }, h(C.Btn, { h: h, kind: "primary", onClick: startCreate }, "新建集合"))
             : items.map(function (set) {
                 var on = active && active.id === set.id;
                 return h("button", {
@@ -296,8 +292,8 @@ module.exports = function SetsView(props) {
               h("div", { className: "wbv-card-head" },
                 h("h3", { className: "wbv-card-title" }, active.name),
                 h("div", { className: "wbv-card-actions" },
-                  h(C.Btn, { h: h, disabled: readOnly, onClick: function () { startEdit(active); } }, "编辑"),
-                  h(C.Btn, { h: h, kind: "danger", disabled: readOnly, onClick: function () { removeSet(active); } }, "删除集合"))),
+                  h(C.Btn, { h: h, onClick: function () { startEdit(active); } }, "编辑"),
+                  h(C.Btn, { h: h, kind: "danger", onClick: function () { removeSet(active); } }, "删除集合"))),
               h("div", { className: "wbv-muted", style: { marginBottom: "10px" } },
                 active.description || "未填写描述"),
               detail.error ? h(C.Notice, { h: h, kind: "error", text: detail.error }) : null,
@@ -315,13 +311,11 @@ module.exports = function SetsView(props) {
                         h("td", null, h("span", { className: "wbv-pill" }, K.kindsText(K.kindsOf(s)))),
                         h("td", null, C.fmtTime(s.updatedAt, lang)),
                         h("td", null, h("div", { className: "wbv-actions" },
-                          h(C.Btn, { h: h, kind: "ghost", disabled: readOnly, onClick: function () { detach(s.id); } }, "移出"))));
+                          h(C.Btn, { h: h, kind: "ghost", onClick: function () { detach(s.id); } }, "移出"))));
                     },
                   }),
               h("div", { className: "wbv-card-title", style: { marginTop: "14px" } }, "加入凭据"),
-              readOnly
-                ? h("div", { className: "wbv-muted" }, "解锁后可把凭据加入这个集合。")
-                : h("div", { className: "wbv-row" },
+              h("div", { className: "wbv-row" },
                     h(SearchPicker, {
                       h: h,
                       React: React,
@@ -362,7 +356,7 @@ module.exports = function SetsView(props) {
                   groupsS[0].map(function (g) {
                     var on = detail.groups.indexOf(g.id) >= 0;
                     return h("label", { key: g.id, className: "wbv-chip", style: { cursor: "pointer" } },
-                      h("input", { type: "checkbox", checked: on, disabled: busyS[0] || readOnly, onChange: function (e) { toggleGroup(g.id, e.target.checked); } }),
+                      h("input", { type: "checkbox", checked: on, disabled: busyS[0], onChange: function (e) { toggleGroup(g.id, e.target.checked); } }),
                       h("span", null, g.name));
                   }))))),
 

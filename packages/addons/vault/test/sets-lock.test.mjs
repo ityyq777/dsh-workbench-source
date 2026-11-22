@@ -1,9 +1,9 @@
 /**
- * 集合与账号页的锁定态与凭据选择回归。
+ * 集合页的锁定态与凭据选择回归。
  *
  * 覆盖：
- * - 锁定时不再整页让位：集合名、集合内凭据名照常展示，账号来自密文因而显示「已加密」提示；
- * - 锁定时写操作全部禁用（新建/编辑/删除/移出），详情里「加入凭据」退化成一句解锁提示；
+ * - 锁定态整页让位：不渲染集合/凭据/分组信息，也不发列表与详情请求，只留锁定提示卡；
+ * - 解锁后正常渲染集合列表、凭据名与操作入口；
  * - 解锁后「加入凭据」是共享 SearchPicker（关键字搜索 + 多选 + chip 回显），不再是原生下拉；
  * - 弹窗里的凭据选择同样是 SearchPicker。
  */
@@ -143,19 +143,18 @@ async function settle(view) {
 
 const ITEMS = {
   sets: [
-    { id: "set_1", name: "工作邮箱", type: "account", account: "ops@example.com", description: "主号", color: "", groupIds: ["grp_1"], secretCount: 2 },
+    { id: "set_1", name: "工作邮箱", description: "主号", color: "", groupIds: ["grp_1"], secretCount: 2 },
   ],
   secrets: [
-    { id: "sec_1", name: "邮箱密码", kind: "password", updatedAt: 1700000000000 },
-    { id: "sec_2", name: "备用手机号", kind: "phone", updatedAt: 1700000000000 },
+    { id: "sec_1", name: "邮箱密码", kinds: ["password"], updatedAt: 1700000000000 },
+    { id: "sec_2", name: "备用手机号", kinds: ["phone"], updatedAt: 1700000000000 },
   ],
   groups: [{ id: "grp_1", name: "公司" }],
 };
 
 function makeApi(locked) {
   const calls = [];
-  // 0.5.0 起账号是密文：锁定态服务端只回空串 + accountLocked 标记。
-  const sets = locked ? ITEMS.sets.map((set) => Object.assign({}, set, { account: "", accountLocked: true })) : ITEMS.sets;
+  const sets = ITEMS.sets;
   return {
     calls,
     call(action, args) {
@@ -172,32 +171,21 @@ function makeApi(locked) {
   };
 }
 
-test("锁定态：集合与凭据名照常可见，写操作全禁用，加入凭据退化成解锁提示", async () => {
+test("锁定态：整页让位，不渲染集合/凭据信息也不发列表请求", async () => {
   const api = makeApi(true);
   const view = mountSets(api);
   const tree = await settle(view);
 
   const body = texts(tree);
-  assert.match(body, /工作邮箱/, "锁定时集合名仍应可见");
-  assert.doesNotMatch(body, /账号已加密/, "集合账号字段已下线");
-  assert.match(body, /保险箱已锁定/, "应给出只读说明");
-  assert.ok(api.calls.some((c) => c.action === "vault.setList"), "锁定时仍应请求集合列表（该接口不碰密钥）");
+  assert.match(body, /保险箱已锁定/, "应只给锁定提示卡");
+  assert.doesNotMatch(body, /工作邮箱/, "锁定时不得渲染集合名");
+  assert.doesNotMatch(body, /邮箱密码/, "锁定时不得渲染凭据名");
+  assert.equal(byClass(tree, "wbv-split").length, 0, "锁定时不应渲染列表/详情分栏");
+  assert.equal(buttonByText(tree, "新建集合"), null, "锁定时不渲染新建入口");
+  assert.equal(buttonByText(tree, "刷新"), null, "锁定时不渲染刷新入口");
 
-  // 打开集合详情：凭据名来自 vault.setGet，同样不需要 DEK
-  const row = byClass(tree, "wbv-item")[0];
-  assert.ok(row, "应渲染集合行");
-  row.props.onClick();
-  await flush();
-  const detail = view.paint();
-  assert.match(texts(detail), /邮箱密码/, "锁定时集合内凭据名仍应可见");
-  assert.match(texts(detail), /解锁后可把凭据加入这个集合/, "锁定态不出现凭据选择器");
-  assert.equal(byClass(detail, "wbv-picker").length, 0, "锁定态不应渲染凭据选择器");
-
-  for (const label of ["新建集合", "编辑", "删除集合", "移出"]) {
-    const btn = buttonByText(detail, label);
-    assert.ok(btn, `应存在「${label}」按钮`);
-    assert.equal(btn.props.disabled, true, `锁定时「${label}」应禁用`);
-  }
+  const listCalls = api.calls.filter((c) => ["vault.setList", "vault.setGet", "vault.secretList", "vault.groupList"].indexOf(c.action) >= 0);
+  assert.deepEqual(listCalls, [], "锁定时不应请求任何列表/详情接口");
 });
 
 test("解锁态：加入凭据用共享选择器，搜索后勾选并回显 chip", async () => {

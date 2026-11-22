@@ -131,7 +131,7 @@ test("分组页：建组走弹窗，顶部不再有内联建组表单", () => {
   assert.doesNotMatch(src, /className: "wbv-modal-box"/);
   assert.match(src, /require\("\.\.\/ui\/dialog\.cjs"\)/);
   assert.match(src, /h\(Dialog, \{/);
-  assert.match(src, /label: "集合与账号（可多选）"/);
+  assert.match(src, /label: "集合（可多选）"/);
   assert.match(src, /kind: "primary", onClick: openCreate/);
 });
 
@@ -139,7 +139,7 @@ test("分组页：集合选择器复用共享清单，搜索走后端、本地�
   const src = fs.readFileSync(path.join(dir, "views/groups.cjs"), "utf8");
   assert.match(src, /require\("\.\.\/\.\.\/\.\.\/lib\/filter-checklist\.cjs"\)/);
   assert.match(src, /h\(FilterChecklist, \{/);
-  assert.match(src, /title: "全部集合与账号"/);
+  assert.match(src, /title: "全部集合"/);
   assert.match(src, /searchPlaceholder: "搜索集合名、账号或描述"/);
   assert.match(src, /"vault\.setList", pickQ \? \{ q: pickQ \} : \{\}/);
   assert.match(src, /var PICK_PAGE = 20;/);
@@ -159,7 +159,7 @@ test("分组页：创建时先 groupCreate 再逐个 groupAttachSet，Esc 可关
   assert.doesNotMatch(src, /window\.addEventListener\("keydown"/);
   assert.match(src, /closeOnEscape: !createS\[0\]\.busy/);
   assert.match(src, /if \(createS\[0\] && createS\[0\]\.busy\) return;/);
-  assert.match(src, /个集合与账号挂载失败/);
+  assert.match(src, /个集合挂载失败/);
 });
 
 test("集合页：不再选集合类型/填账号，凭据类型改为多选", () => {

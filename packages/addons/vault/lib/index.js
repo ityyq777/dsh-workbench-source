@@ -9,6 +9,7 @@
  * 0.3.5：修复「保存凭据后列表不新增」——客户端 unwrap 对 ok:false 抛错、锁定态在凭据页提示并可内联解锁、写成功后无条件刷新列表。
  * 0.5.0：集合账号也加密——vault_set.account 改成 DEK 加密的 `va1:` 密文（AAD 绑定集合 id），本地库、同步与备份里都不再有登录名明文；锁定态读不到账号，写入账号需先解锁；schema_version 4 → 5 在解锁后迁移。
  * 0.6.0：账号本身也是一种凭据（kind=account），类型从 vault_secret.kind 单列拆到 vault_secret_kind 关联表，一条凭据可同时有多种类型；集合不再区分账号/普通，存量集合账号在解锁后转成 kind=account 的凭据；AAD 只绑 id 与名称，改类型不再重加密。
+ * 0.6.1：标签页「集合与账号」改名「集合」；「集合」与「数据」页在锁定态整页让位（只留锁定提示卡，不渲染集合/凭据/表清单，也不发起列表与取数请求）。
  */
 import { ensureSchema, bindClock } from "./db/db.js";
 import { createRequire } from "node:module";
@@ -143,6 +144,7 @@ export function createDomain(host) {
         "旧版分组的直属凭据在首次解锁时迁移进「<组名> · 默认」集合；站点专属类型收口为通用类型。",
         "0.5.0 起集合账号曾用 DEK 加密在 vault_set.account；0.6.0 起该列取消，存量账号在解锁后转成 kind=account 的凭据。",
         "0.6.0 起类型存在 vault_secret_kind 关联表，一条凭据可多类型；AAD 只绑 id 与名称，改类型/归属不重加密，改名称才重加密；schema_version 升到 6 时在解锁后自动迁移，两端插件都升到 0.6.0 才能正确读写。",
+        "0.6.1 起界面上标签页只叫「集合」；「集合」与「数据」页在保险箱未解锁时不显示任何集合、凭据或表数据，只显示锁定提示卡。",
       ],
     },
     setup(api) {
