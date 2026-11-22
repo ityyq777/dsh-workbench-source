@@ -81,6 +81,35 @@ export interface EventQueueStats {
   deliveries: Record<string, number>;
 }
 
+/** 插件在域定义里声明「我会推哪些事件」，用于工作台的「事件」页展示。 */
+export interface DomainEventDecl {
+  /** 事件类型，如 mail.messages-synced */
+  type: string;
+  /** 一句话说明这条事件什么时候发、载荷大概长什么样 */
+  description?: string;
+}
+
+/** 事件页数据：声明 + 真实运行统计（订阅来自队列登记表，不是声明）。 */
+export interface DomainEventsInfo {
+  domain: string;
+  publishes: {
+    type: string;
+    description?: string;
+    sent: number;
+    lastAt?: number;
+    lastStatus?: string;
+  }[];
+  subscriptions: {
+    type: string;
+    action: string;
+    createdAt: number;
+    done: number;
+    dead: number;
+    pending: number;
+    lastError?: string;
+  }[];
+}
+
 export interface DomainActionDef<I = Record<string, unknown>, O = unknown> {
   description?: string;
   /** JSON Schema（给 Workbench tool / 文档用） */
@@ -332,6 +361,8 @@ export interface DomainDef {
   version: string;
   /** 声明贡献的表（备份与文档用；建表仍由业务插件负责） */
   tables?: string[];
+  /** 声明本插件会推哪些事件；「事件」页据此列出「我发布哪些事件」 */
+  events?: { publishes?: DomainEventDecl[] };
   /** 同步声明：mode=row 行级 LWW；mode=tree 必须实现 reconcile，整表覆盖 */
   sync?: DomainSyncDef;
   /** UI 视图贡献点：客户端模块注册同名 view 后出现在工作台首页 */

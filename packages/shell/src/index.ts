@@ -57,7 +57,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.10.12";
+export const SHELL_VERSION = "0.10.13";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -336,6 +336,17 @@ export function apply(ctx: any): void {
     } catch (e) {
       rec.error = String((e && (e as Error).message) || e);
       log("业务域初始化失败", def.id, e);
+    }
+
+    // 每个域自动带一个「事件」读取口：发布声明来自 DomainDef.events，
+    // 订阅与投递统计取自队列登记表，插件不必再手写一遍。
+    if (!rec.actions.has(def.id + ".eventsInfo")) {
+      registerAction(rec, def.id + ".eventsInfo", {
+        description: "查看本插件发布与订阅的事件（工作台「事件」页的数据源）",
+        input: { type: "object", properties: {} },
+        origins: ["ui", "plugin"],
+        execute: () => eventQueue.describe(def.id, def.events?.publishes),
+      });
     }
 
     emit("domains-changed", listDomains());

@@ -71,6 +71,7 @@
     "test:event-queue": "node scripts/test-event-queue.mjs",
     "test:mail-message-queue": "node scripts/test-mail-message-queue.mjs",
     "test:mail-vault-kick": "node scripts/test-mail-vault-kick.mjs",
+    "test:events-view": "node scripts/test-events-view.mjs",
     "test:data": "node scripts/test-data.mjs",
     "test:data-ui": "node scripts/test-data-ui.mjs",
     "test:nodeps": "node scripts/test-nodeps.mjs",

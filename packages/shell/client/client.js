@@ -3440,6 +3440,336 @@ var require_host_pages = __commonJS({
   }
 });
 
+// packages/addons/lib/client-common.cjs
+var require_client_common = __commonJS({
+  "packages/addons/lib/client-common.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function createCommon(prefix) {
+      var p = String(prefix || "wb");
+      function unwrap(r) {
+        if (r && r.ok === false) {
+          var error = new Error(r.error || r.message || "\u64CD\u4F5C\u5931\u8D25");
+          if (r.code !== void 0) error.code = r.code;
+          error.payload = r;
+          throw error;
+        }
+        return r && r.result !== void 0 ? r.result : r;
+      }
+      function call(api, action, args) {
+        return Promise.resolve(api.call(action, args || {})).then(unwrap);
+      }
+      function errText(e) {
+        if (!e) return "\u64CD\u4F5C\u5931\u8D25";
+        if (typeof e === "string") return e;
+        return e.message || e.error || String(e);
+      }
+      function fmtTime(ts, lang) {
+        if (!ts) return "\u2014";
+        try {
+          return new Date(ts).toLocaleString(lang === "en" ? "en-US" : "zh-CN", { hour12: false });
+        } catch (e) {
+          return String(ts);
+        }
+      }
+      function Btn(props) {
+        var h2 = props.h;
+        return h2(
+          "button",
+          {
+            type: props.type || "button",
+            className: p + "-btn" + (props.kind ? " " + props.kind : ""),
+            disabled: props.disabled,
+            onClick: props.onClick,
+            title: props.title
+          },
+          props.children
+        );
+      }
+      function Field(props) {
+        var h2 = props.h;
+        return h2(
+          "label",
+          { className: p + "-field" },
+          h2("span", { className: p + "-label" }, props.label),
+          props.children,
+          props.hint ? h2("span", { className: p + "-hint" }, props.hint) : null
+        );
+      }
+      function Notice(props) {
+        var h2 = props.h;
+        if (!props.text) return null;
+        return h2("div", { className: p + "-notice " + (props.kind || "info") }, props.text);
+      }
+      function Empty(props) {
+        var h2 = props.h;
+        return h2("div", { className: p + "-empty" }, props.text || "\u6682\u65E0\u6570\u636E");
+      }
+      function Pill(props) {
+        var h2 = props.h;
+        return h2("span", { className: p + "-pill " + (props.kind || "") }, props.children);
+      }
+      function Json(props) {
+        var h2 = props.h;
+        var text;
+        try {
+          text = JSON.stringify(props.value, null, 2);
+        } catch (e) {
+          text = String(props.value);
+        }
+        return h2("pre", { className: p + "-json" }, text);
+      }
+      function useLoad(React, api, action, args, deps) {
+        var s = React.useState({ loading: true, data: null, error: "" });
+        var tick = React.useState(0);
+        var refresh = function() {
+          tick[1](tick[0] + 1);
+        };
+        React.useEffect(
+          function() {
+            var alive = true;
+            s[1]({ loading: true, data: null, error: "" });
+            call(api, action, args).then(function(data) {
+              if (alive) s[1]({ loading: false, data, error: "" });
+            }).catch(function(e) {
+              if (alive) s[1]({ loading: false, data: null, error: errText(e) });
+            });
+            return function() {
+              alive = false;
+            };
+          },
+          (deps || []).concat([tick[0]])
+        );
+        return { loading: s[0].loading, data: s[0].data, error: s[0].error, refresh };
+      }
+      return {
+        unwrap,
+        call,
+        errText,
+        fmtTime,
+        Switch: require_switch().Switch,
+        switchStyles: require_switch().styles,
+        NumberField: require_number_field().NumberField,
+        numberFieldStyles: require_number_field().styles,
+        validateNumber: require_number_field().validateNumber,
+        Btn,
+        Field,
+        Notice,
+        Empty,
+        Pill,
+        Json,
+        useLoad
+      };
+    };
+  }
+});
+
+// packages/addons/lib/inject-styles.cjs
+var require_inject_styles = __commonJS({
+  "packages/addons/lib/inject-styles.cjs"(exports2, module2) {
+    "use strict";
+    function toCss(value) {
+      var v = typeof value === "function" ? value() : value;
+      if (Array.isArray(v)) return v.filter(Boolean).join("\n");
+      if (v === null || v === void 0) return "";
+      return String(v);
+    }
+    module2.exports = function injectStyles(options) {
+      var opts = options || {};
+      var css = toCss(opts.css);
+      if (typeof document === "undefined" || !document.head) return "";
+      var id = opts.id;
+      var old = id ? document.getElementById(id) : null;
+      if (old) {
+        if (old.textContent !== css) old.textContent = css;
+        return css;
+      }
+      var style = document.createElement("style");
+      if (id) style.id = id;
+      if (opts.addon) style.setAttribute("data-wb-addon", opts.addon);
+      style.textContent = css;
+      document.head.appendChild(style);
+      return css;
+    };
+    module2.exports.toCss = toCss;
+  }
+});
+
+// packages/addons/lib/events-view.cjs
+var require_events_view = __commonJS({
+  "packages/addons/lib/events-view.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h2 = React.createElement;
+    var createCommon = require_client_common();
+    var injectStyles = require_inject_styles();
+    var C = createCommon("wbev");
+    var COPY = {
+      zh: {
+        head: "\u4E8B\u4EF6",
+        hint: "\u8FD0\u884C\u65F6\u6570\u636E \xB7 \u6765\u81EA\u5BBF\u4E3B\u4E8B\u4EF6\u961F\u5217",
+        refresh: "\u5237\u65B0",
+        publishTitle: "\u53D1\u5E03\u7684\u4E8B\u4EF6",
+        publishHint: "\u672C\u63D2\u4EF6\u901A\u8FC7 api.events.push \u63A8\u51FA\uFF0C\u8BA2\u9605\u65B9\u5404\u81EA\u6D88\u8D39",
+        subTitle: "\u8BA2\u9605\u7684\u4E8B\u4EF6",
+        subHint: "\u672C\u63D2\u4EF6\u767B\u8BB0\u8BA2\u9605\uFF0C\u5E76\u7531 plugin-only \u7684\u6D88\u8D39 action \u5904\u7406",
+        noPublish: "\u672C\u63D2\u4EF6\u4E0D\u53D1\u5E03\u4E8B\u4EF6",
+        noPublishHint: "\u5728 DomainDef.events.publishes \u91CC\u58F0\u660E\u540E\u4F1A\u51FA\u73B0\u5728\u8FD9\u91CC",
+        noSub: "\u8FD8\u6CA1\u6709\u8BA2\u9605\u4EFB\u4F55\u4E8B\u4EF6",
+        noSubHint: "\u5728 setup \u91CC\u8C03\u7528 api.events.subscribe(type, action) \u540E\u4F1A\u51FA\u73B0\u5728\u8FD9\u91CC",
+        sent: function(n) {
+          return "\u5DF2\u53D1 " + n + " \u6B21";
+        },
+        lastAt: "\u6700\u8FD1",
+        never: "\u8FD8\u6CA1\u53D1\u8FC7",
+        status: "\u72B6\u6001",
+        consumer: "\u6D88\u8D39 action",
+        done: function(n) {
+          return "\u6210\u529F " + n;
+        },
+        pending: function(n) {
+          return "\u5F85\u6295\u9012 " + n;
+        },
+        dead: function(n) {
+          return "\u6B7B\u4FE1 " + n;
+        },
+        lastError: "\u6700\u8FD1\u9519\u8BEF",
+        loading: "\u8F7D\u5165\u4E2D\u2026",
+        failed: "\u8BFB\u53D6\u4E8B\u4EF6\u4FE1\u606F\u5931\u8D25",
+        domain: "\u57DF"
+      },
+      en: {
+        head: "Events",
+        hint: "Live data from the host event queue",
+        refresh: "Refresh",
+        publishTitle: "Published events",
+        publishHint: "Pushed via api.events.push; each subscriber consumes on its own",
+        subTitle: "Subscribed events",
+        subHint: "Registered by this addon and handled by a plugin-only action",
+        noPublish: "This addon publishes no events",
+        noPublishHint: "Declared in DomainDef.events.publishes",
+        noSub: "No event subscriptions yet",
+        noSubHint: "Call api.events.subscribe(type, action) during setup",
+        sent: function(n) {
+          return n + " sent";
+        },
+        lastAt: "Last",
+        never: "never sent",
+        status: "Status",
+        consumer: "Consumer action",
+        done: function(n) {
+          return n + " done";
+        },
+        pending: function(n) {
+          return n + " pending";
+        },
+        dead: function(n) {
+          return n + " dead";
+        },
+        lastError: "Last error",
+        loading: "Loading\u2026",
+        failed: "Failed to load event info",
+        domain: "Domain"
+      }
+    };
+    var STYLES = [
+      ".wbev-page{display:flex;flex-direction:column;gap:14px;width:100%}",
+      ".wbev-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}",
+      ".wbev-title{font-size:16px;font-weight:680;color:var(--wb-text)}",
+      ".wbev-sub{font-size:12px;color:var(--wb-muted);margin-top:2px}",
+      ".wbev-head .wbev-spacer{flex:1 1 auto}",
+      ".wbev-card{background:var(--wb-card);border:1px solid var(--wb-border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}",
+      ".wbev-card-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}",
+      ".wbev-card-title{font-size:13px;font-weight:640;color:var(--wb-text)}",
+      ".wbev-card-hint{font-size:12px;color:var(--wb-muted)}",
+      ".wbev-row{display:flex;flex-direction:column;gap:4px;padding:8px 0;border-top:1px solid var(--wb-line)}",
+      ".wbev-row:first-of-type{border-top:none;padding-top:0}",
+      ".wbev-row-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
+      ".wbev-type{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--wb-text);background:var(--wb-surface);border:1px solid var(--wb-line);border-radius:6px;padding:1px 6px}",
+      ".wbev-desc{font-size:12px;color:var(--wb-muted)}",
+      ".wbev-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--wb-muted)}",
+      ".wbev-ok{color:var(--wb-ok)}",
+      ".wbev-warn{color:var(--wb-warn)}",
+      ".wbev-danger{color:var(--wb-danger)}",
+      ".wbev-empty{font-size:12px;color:var(--wb-muted);padding:6px 0}",
+      ".wbev-err{font-size:12px;color:var(--wb-danger)}"
+    ].join("\n");
+    function createEventsView2(options) {
+      var opts = options || {};
+      injectStyles({ id: "wb-events-view-style", css: STYLES });
+      function EventsView2(props) {
+        var lang = props.lang === "en" ? "en" : "zh";
+        var t = COPY[lang];
+        var domain = opts.domain || props.addonId;
+        var load = C.useLoad(React, props.api, domain + ".eventsInfo", {}, [domain]);
+        var data = load.data || { publishes: [], subscriptions: [] };
+        function rowOfPublish(item) {
+          return h2("div", { className: "wbev-row", key: "pub:" + item.type }, [
+            h2("div", { className: "wbev-row-top" }, [
+              h2("code", { key: "type", className: "wbev-type" }, item.type),
+              h2("span", { key: "desc", className: "wbev-desc" }, item.description || "")
+            ]),
+            h2("div", { className: "wbev-meta" }, [
+              h2("span", { key: "sent" }, t.sent(item.sent || 0)),
+              h2("span", { key: "last" }, item.lastAt ? t.lastAt + " \xB7 " + C.fmtTime(item.lastAt, lang) : t.never),
+              item.lastStatus ? h2(
+                "span",
+                {
+                  key: "status",
+                  className: item.lastStatus === "done" ? "wbev-ok" : item.lastStatus === "dead" ? "wbev-danger" : "wbev-warn"
+                },
+                item.lastStatus
+              ) : null
+            ])
+          ]);
+        }
+        function rowOfSub(item) {
+          var dead = Number(item.dead || 0) > 0;
+          return h2("div", { className: "wbev-row", key: "sub:" + item.type + ":" + item.action }, [
+            h2("div", { className: "wbev-row-top" }, [h2("code", { key: "type", className: "wbev-type" }, item.type)]),
+            h2("div", { className: "wbev-meta" }, [
+              h2("span", { key: "label" }, t.consumer + "\uFF1A"),
+              h2("code", { key: "action", className: "wbev-type" }, item.action)
+            ]),
+            h2("div", { className: "wbev-meta" }, [
+              h2("span", { key: "done", className: "wbev-ok" }, t.done(item.done || 0)),
+              item.pending ? h2("span", { key: "pending", className: "wbev-warn" }, t.pending(item.pending)) : null,
+              dead ? h2("span", { key: "dead", className: "wbev-danger" }, t.dead(item.dead)) : null
+            ]),
+            item.lastError ? h2("div", { className: "wbev-danger wbev-desc" }, t.lastError + "\uFF1A" + item.lastError) : null
+          ]);
+        }
+        function card(title, hint, rows, emptyText, emptyHint, key) {
+          return h2("div", { key, className: "wbev-card" }, [
+            h2("div", { key: "head", className: "wbev-card-head" }, [
+              h2("div", { key: "title", className: "wbev-card-title" }, title),
+              h2("div", { key: "hint", className: "wbev-card-hint" }, hint)
+            ]),
+            rows.length ? rows : h2("div", { key: "empty", className: "wbev-empty" }, [h2("div", { key: "text" }, emptyText), h2("div", { key: "hint" }, emptyHint)])
+          ]);
+        }
+        return h2("div", { className: "wbev-page" }, [
+          h2("div", { key: "head", className: "wbev-head" }, [
+            h2("div", { key: "titles" }, [
+              h2("div", { key: "title", className: "wbev-title" }, t.head),
+              h2("div", { key: "hint", className: "wbev-sub" }, t.hint)
+            ]),
+            h2("div", { key: "spacer", className: "wbev-spacer" }),
+            h2("div", { key: "refresh" }, C.Btn({ h: h2, onClick: load.refresh, title: t.refresh }, t.refresh))
+          ]),
+          load.error ? h2("div", { key: "err", className: "wbev-err" }, t.failed + "\uFF1A" + load.error) : load.loading ? h2("div", { key: "loading", className: "wbev-empty" }, t.loading) : h2("div", { key: "body", className: "wbev-page" }, [
+            card(t.publishTitle, t.publishHint, (data.publishes || []).map(rowOfPublish), t.noPublish, t.noPublishHint, "publish"),
+            card(t.subTitle, t.subHint, (data.subscriptions || []).map(rowOfSub), t.noSub, t.noSubHint, "subscribe")
+          ])
+        ]);
+      }
+      return { EventsView: EventsView2, styles: STYLES };
+    }
+    module2.exports = createEventsView2;
+    module2.exports.createEventsView = createEventsView2;
+    module2.exports.styles = STYLES;
+  }
+});
+
 // packages/shell/client/slot-catalog.cjs
 var require_slot_catalog = __commonJS({
   "packages/shell/client/slot-catalog.cjs"(exports2, module2) {
@@ -4928,6 +5258,8 @@ var createPanellistIcon = require_panellist_icon();
 var addonNav = require_addon_nav()();
 var SystemPages = require_system_pages();
 var HostPages = require_host_pages();
+var createEventsView = require_events_view();
+var EventsView = createEventsView().EventsView;
 var slotCatalog = require_slot_catalog();
 var slotRegistry = require_slot_registry()(slotCatalog, function() {
   notifyStore();
@@ -5417,6 +5749,11 @@ function WorkbenchPage(props) {
   var clientViews = mod && Array.isArray(mod.views) ? mod.views : [];
   var manifestViews = currentAddon && Array.isArray(currentAddon.views) ? currentAddon.views : [];
   var viewList = clientViews.length ? clientViews : manifestViews;
+  if (currentAddon && !viewList.some(function(v) {
+    return v && v.id === "events";
+  })) {
+    viewList = viewList.concat([{ id: "events", title: { zh: "\u4E8B\u4EF6", en: "Events" }, component: EventsView }]);
+  }
   var wantedView = route.indexOf("addon:") === 0 ? route.split(":")[2] || "" : "";
   var activeView = null;
   viewList.forEach(function(v) {

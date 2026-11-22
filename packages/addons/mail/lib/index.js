@@ -66,6 +66,15 @@ export function apply(ctx) {
     category: "comm",
     // mail_draft 含私有未发正文，不加入宿主通用表清单或同步回退。
     tables: ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"],
+    // 「事件」页的发布清单；订阅方（如消息插件）用 plugin-only action 消费。
+    events: {
+      publishes: [
+        {
+          type: "mail.messages-synced",
+          description: "自动同步拉到新邮件后推送：账户、邮箱、新增数量与该批邮件的主题/发件人摘要",
+        },
+      ],
+    },
     // 只同步配置方案表，业务数据仍只在本机。
         sync: { tables: [{ name: "mail_config_scheme", mode: "row" }] },
     // 提供落点：邮件详情动作条渲染 item.actions，别的插件可以把按钮挂进来。

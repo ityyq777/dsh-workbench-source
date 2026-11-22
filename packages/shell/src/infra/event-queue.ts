@@ -13,7 +13,7 @@
  *  - 进程重启后未完成的投递会由 start() 继续，running 超过阈值的视为失联并重排。
  */
 import { randomUUID } from "node:crypto";
-import type { ActionOrigin, DomainActionDef, EventQueueStats } from "@wb/sdk";
+import type { ActionOrigin, DomainActionDef, DomainEventDecl, DomainEventsInfo, EventQueueStats } from "@wb/sdk";
 
 /** 事件类型：小写开头，允许点/下划线/短横线，如 task.created、mail.received。 */
 const TYPE_RE = /^[a-z][a-z0-9_.-]{0,79}$/i;
@@ -395,7 +395,55 @@ export function createEventQueue(options: EventQueueOptions) {
     }
   }
 
-  return { push, subscribe, start, stop, drain, stats };
+  /**
+   * 「事件」页的数据：声明会推什么 + 真实运行统计。
+   * 订阅一律取自队列登记表（谁真订了就是谁），不要求插件再声明一遍，避免两处失真。
+   */
+  function describe(domain: string, decls?: DomainEventDecl[]): DomainEventsInfo {
+    const publishes = (decls || []).map((decl) => {
+      const row = db
+        .prepare("SELECT COUNT(*) AS n, MAX(created_at) AS lastAt FROM host_event WHERE source = ? AND type = ?")
+        .get(domain, decl.type) as { n: number; lastAt: number | null } | undefined;
+      const latest = db
+        .prepare("SELECT status FROM host_event WHERE source = ? AND type = ? ORDER BY created_at DESC LIMIT 1")
+        .get(domain, decl.type) as { status: string } | undefined;
+      return {
+        type: decl.type,
+        description: decl.description,
+        sent: row?.n ?? 0,
+        lastAt: row?.lastAt ?? undefined,
+        lastStatus: latest?.status,
+      };
+    });
+    const subs = db
+      .prepare("SELECT type, action, created_at FROM host_event_subscription WHERE domain = ? ORDER BY created_at")
+      .all(domain) as { type: string; action: string; created_at: number }[];
+    const countByStatus = db.prepare(
+      "SELECT status, COUNT(*) AS n FROM host_event_delivery WHERE domain = ? AND action = ? GROUP BY status",
+    );
+    const lastErrorOf = db.prepare(
+      "SELECT last_error FROM host_event_delivery WHERE domain = ? AND action = ? AND last_error <> '' ORDER BY updated_at DESC LIMIT 1",
+    );
+    const subscriptions = subs.map((row) => {
+      const counts: Record<string, number> = {};
+      for (const hit of countByStatus.all(domain, row.action) as { status: string; n: number }[]) {
+        counts[hit.status] = hit.n;
+      }
+      const err = lastErrorOf.get(domain, row.action) as { last_error: string } | undefined;
+      return {
+        type: row.type,
+        action: row.action,
+        createdAt: row.created_at,
+        done: counts.done ?? 0,
+        dead: counts.dead ?? 0,
+        pending: counts.pending ?? 0,
+        lastError: err?.last_error || undefined,
+      };
+    });
+    return { domain, publishes, subscriptions };
+  }
+
+  return { push, subscribe, start, stop, drain, stats, describe };
 }
 
 export type EventQueue = ReturnType<typeof createEventQueue>;

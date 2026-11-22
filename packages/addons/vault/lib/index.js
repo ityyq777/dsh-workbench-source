@@ -55,6 +55,12 @@ export function createDomain(host) {
       "vault_subject_type",
       "vault_secret_usage",
     ],
+    // 「事件」页的发布清单：解锁成功后通知订阅方（邮件插件据此立刻同步一轮）。
+    events: {
+      publishes: [
+        { type: "vault.unlocked", description: "保险箱解锁成功：只需知道「刚解开」的插件订阅它，载荷带 at 时间戳" },
+      ],
+    },
     sync: {
       tables: [
         { name: "vault_header", mode: "row", uniqueKeys: [["id"]], uniquePolicy: "lww" },
