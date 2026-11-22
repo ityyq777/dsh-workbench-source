@@ -3685,14 +3685,20 @@ var require_event_queue_page = __commonJS({
         ["subscriptions", t("queue_tab_subscriptions")]
       ];
       var filters = tab === "events" ? ["queued", "done", "dead"] : tab === "deliveries" ? ["pending", "running", "done", "dead"] : [];
+      var eventCounts = stats.events || {};
+      var deliveryCounts = stats.deliveries || {};
+      var countOf = function(bucket, key) {
+        var n = bucket[key];
+        return typeof n === "number" ? n : 0;
+      };
       var body = [];
       body.push(
         jsx2.jsx("div", { className: "wbq-stats", children: [
-          statPill(jsx2, t("queue_queued"), stats.events.queued),
-          statPill(jsx2, t("queue_dead"), (stats.events.dead || 0) + (stats.deliveries.dead || 0)),
-          statPill(jsx2, t("queue_pending"), stats.deliveries.pending),
-          statPill(jsx2, t("queue_done"), stats.events.done),
-          statPill(jsx2, t("queue_subscriptions"), stats.subscriptions)
+          statPill(jsx2, t("queue_queued"), countOf(eventCounts, "queued")),
+          statPill(jsx2, t("queue_dead"), countOf(eventCounts, "dead") + countOf(deliveryCounts, "dead")),
+          statPill(jsx2, t("queue_pending"), countOf(deliveryCounts, "pending")),
+          statPill(jsx2, t("queue_done"), countOf(eventCounts, "done")),
+          statPill(jsx2, t("queue_subscriptions"), typeof stats.subscriptions === "number" ? stats.subscriptions : 0)
         ] })
       );
       body.push(

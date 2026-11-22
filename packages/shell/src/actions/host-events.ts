@@ -48,12 +48,19 @@ function whereOf(filters: Array<[string, unknown]>, allowed: string[]): { sql: s
   return { sql: parts.length ? " WHERE " + parts.join(" AND ") : "", params };
 }
 
+const EVENT_STATUSES = ["queued", "done", "dead"];
+const DELIVERY_STATUSES = ["pending", "running", "done", "dead"];
+
 function overview(db: any) {
+  // 每个状态先落 0 再累加：空队列时不能只返回空对象，
+  // 否则页面读 stats.events.queued 会拿到 undefined 而整页崩掉。
   const events: Record<string, number> = {};
+  for (const status of EVENT_STATUSES) events[status] = 0;
   for (const row of db.prepare("SELECT status, COUNT(*) AS n FROM host_event GROUP BY status").all() as any[]) {
     events[row.status] = row.n;
   }
   const deliveries: Record<string, number> = {};
+  for (const status of DELIVERY_STATUSES) deliveries[status] = 0;
   for (const row of db
     .prepare("SELECT status, COUNT(*) AS n FROM host_event_delivery GROUP BY status")
     .all() as any[]) {

@@ -150,14 +150,21 @@ function queuePage(deps) {
   ];
   var filters = tab === "events" ? ["queued", "done", "dead"] : tab === "deliveries" ? ["pending", "running", "done", "dead"] : [];
 
+  // 旧宿主的总览只返回出现过的状态键，这里统一兜底成 0，别让空队列把整页读崩。
+  var eventCounts = stats.events || {};
+  var deliveryCounts = stats.deliveries || {};
+  var countOf = function (bucket, key) {
+    var n = bucket[key];
+    return typeof n === "number" ? n : 0;
+  };
   var body = [];
   body.push(
     jsx.jsx("div", { className: "wbq-stats", children: [
-      statPill(jsx, t("queue_queued"), stats.events.queued),
-      statPill(jsx, t("queue_dead"), (stats.events.dead || 0) + (stats.deliveries.dead || 0)),
-      statPill(jsx, t("queue_pending"), stats.deliveries.pending),
-      statPill(jsx, t("queue_done"), stats.events.done),
-      statPill(jsx, t("queue_subscriptions"), stats.subscriptions),
+      statPill(jsx, t("queue_queued"), countOf(eventCounts, "queued")),
+      statPill(jsx, t("queue_dead"), countOf(eventCounts, "dead") + countOf(deliveryCounts, "dead")),
+      statPill(jsx, t("queue_pending"), countOf(deliveryCounts, "pending")),
+      statPill(jsx, t("queue_done"), countOf(eventCounts, "done")),
+      statPill(jsx, t("queue_subscriptions"), typeof stats.subscriptions === "number" ? stats.subscriptions : 0),
     ] }),
   );
   body.push(

@@ -68,6 +68,17 @@ try {
     },
   });
 
+  // 0. 空队列：总览必须把每个状态都给成 0。
+  // 曾经这里只返回出现过的状态键，页面读 stats.events.queued 拿到 undefined，
+  // 点开「事件队列」整页崩掉（Cannot read properties of undefined (reading 'queued')）。
+  const emptyOverview = (await host.invoke("wb.eventOverview", {})).result;
+  for (const key of ["queued", "done", "dead"]) {
+    assert(emptyOverview.events[key] === 0, "空队列时事件 " + key + " 应为 0，实际 " + JSON.stringify(emptyOverview.events));
+  }
+  for (const key of ["pending", "running", "done", "dead"]) {
+    assert(emptyOverview.deliveries[key] === 0, "空队列时投递 " + key + " 应为 0，实际 " + JSON.stringify(emptyOverview.deliveries));
+  }
+
   // 1. 推两条：一条被消费，一条无订阅者直接 done。
   host.events.push("probe.tick", { n: 1 });
   host.events.push("probe.orphan", { n: 2 });
