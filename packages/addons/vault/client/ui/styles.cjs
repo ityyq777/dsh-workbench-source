@@ -165,7 +165,7 @@ module.exports = [
   "@media (max-width:600px){.wbv-c-kind,.wbv-c-sets,.wbv-c-used{display:none}"
     + ".wbv-table th,.wbv-table td{padding:8px 9px}"
     + ".wbv-table td{overflow-wrap:anywhere}"
-    + ".wbv-actions{flex-wrap:wrap;gap:2px}"
+    + ".wbv-table .wbv-actions{flex-wrap:nowrap;gap:0}.wbv-table .wbv-actions .wbv-btn{padding-left:6px;padding-right:6px;white-space:nowrap;font-size:12px}/* 名称列可以换行，但不要因为操作列变宽被挤成竖排 */.wbv-cell-main{overflow-wrap:anywhere;min-width:88px}"
     + ".wbv-toolbar>.wbv-search{flex:1 1 100%;width:100%}"
     + ".wbv-form-grid{grid-template-columns:minmax(0,1fr)}"
     + ".wbv-stats{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}",

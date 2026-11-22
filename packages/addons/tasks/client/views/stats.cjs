@@ -389,8 +389,8 @@ function TasksStatsBody(props) {
           rows: (data.rankings && data.rankings.tables) || [], lang: lang,
           columns: [
             rankingName(t, lang, props.onNavigate, "table"),
-            { key: "total", label: t.colTotal, num: true },
-            { key: "open", label: t.colOpen, num: true },
+            { key: "total", label: t.colTotal, num: true, className: "wbt-c-total" },
+            { key: "open", label: t.colOpen, num: true, className: "wbt-c-open" },
             { key: "overdue", label: t.colOverdue, num: true },
             { key: "completion", label: t.colRate, num: true, render: function (r) { return ch.pct(r.completion); } },
           ],
@@ -402,8 +402,8 @@ function TasksStatsBody(props) {
           rows: (data.rankings && data.rankings.groups) || [], lang: lang,
           columns: [
             rankingName(t, lang, props.onNavigate, "group"),
-            { key: "total", label: t.colTotal, num: true },
-            { key: "open", label: t.colOpen, num: true },
+            { key: "total", label: t.colTotal, num: true, className: "wbt-c-total" },
+            { key: "open", label: t.colOpen, num: true, className: "wbt-c-open" },
             { key: "overdue", label: t.colOverdue, num: true },
             { key: "completion", label: t.colRate, num: true, render: function (r) { return ch.pct(r.completion); } },
           ],
@@ -420,8 +420,9 @@ function TasksStatsBody(props) {
           rows: wsRows, lang: lang, empty: t.noWorkspacesEmpty,
           columns: [
             rankingName(t, lang, props.onNavigate, "workspace"),
-            { key: "total", label: t.colTotal, num: true },
-            { key: "open", label: t.colOpen, num: true },
+            // 窄屏按列裁剪：≤600px 只留「名称 / 逾期 / 完成率」，总数与已开启收进 逾期 的语义里。
+            { key: "total", label: t.colTotal, num: true, className: "wbt-c-total" },
+            { key: "open", label: t.colOpen, num: true, className: "wbt-c-open" },
             { key: "overdue", label: t.colOverdue, num: true },
             { key: "completion", label: t.colRate, num: true, render: function (r) { return ch.pct(r.completion); } },
           ],

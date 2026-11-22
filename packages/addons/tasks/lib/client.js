@@ -2068,6 +2068,8 @@ var require_charts = __commonJS({
         ".@-tlegend-item:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
         ".@-dot-off{width:8px;height:8px;border-radius:50%;border:1px solid;flex:0 0 auto}",
         ".@-table-scroll{max-width:100%;overflow-x:auto}.@-table{width:100%;border-collapse:collapse;font-size:12px}",
+        // 窄屏按列裁剪：统计页的两张排行/明细表在 390px 只保留主列与关键数值列。
+        "@media (max-width:600px){.@-table .wbt-c-total,.@-table .wbt-c-open,.@-table .wbt-c-difficulty,.@-table .wbt-c-tabletitle{display:none}.@-table th,.@-table td{padding-left:6px;padding-right:6px}.@-table .wbt-table-link{white-space:normal;text-align:left}}",
         ".@-table th{text-align:left;font-weight:500;color:var(--dsw-alias-label-tertiary,#8f959e);padding:6px 8px;border-bottom:1px solid var(--dsw-alias-border-l2,#e5e6eb);white-space:nowrap}",
         ".@-table td{padding:7px 8px;border-bottom:1px solid var(--dsw-alias-border-l1,#f2f3f5);color:var(--dsw-alias-label-secondary,#646a73);vertical-align:top}",
         ".@-table tr:last-child td{border-bottom:0}",
@@ -2356,11 +2358,13 @@ var require_charts = __commonJS({
           "table",
           { className: prefix + "-table" },
           h("thead", null, h("tr", null, cols.map(function(c) {
-            return h("th", { key: c.key, className: c.num ? prefix + "-num" : "" }, c.label);
+            var cls = [c.num ? prefix + "-num" : "", c.className || ""].filter(Boolean).join(" ");
+            return h("th", { key: c.key, className: cls || void 0 }, c.label);
           }))),
           h("tbody", null, rows.map(function(row, ri) {
             return h("tr", { key: row.id || row.key || ri }, cols.map(function(c) {
-              return h("td", { key: c.key, className: c.num ? prefix + "-num" : "" }, c.render ? c.render(row) : row[c.key]);
+              var cls = [c.num ? prefix + "-num" : "", c.className || ""].filter(Boolean).join(" ");
+              return h("td", { key: c.key, className: cls || void 0 }, c.render ? c.render(row) : row[c.key]);
             }));
           }))
         ));
@@ -3255,7 +3259,7 @@ var require_recent_columns = __commonJS({
       var en = lang === "en";
       return [
         { key: "title", label: t.colTitle, render: taskTitle(lang, onNavigate) },
-        { key: "difficulty", label: en ? "Difficulty" : "\u96BE\u5EA6", render: function(row) {
+        { key: "difficulty", label: en ? "Difficulty" : "\u96BE\u5EA6", className: "wbt-c-difficulty", render: function(row) {
           var n = Number(row.difficulty);
           if (!(n > 0)) return "\u2014";
           var bounded = Math.min(5, n), full = Math.floor(bounded), half = bounded - full >= 0.5;
@@ -3266,7 +3270,7 @@ var require_recent_columns = __commonJS({
             " " + n
           );
         } },
-        { key: "tableTitle", label: t.colTable, render: function(row) {
+        { key: "tableTitle", label: t.colTable, className: "wbt-c-tabletitle", render: function(row) {
           if (row.tableDeleted || !row.tableId) return h("span", { title: en ? "Task table deleted; cannot open" : "\u4EFB\u52A1\u8868\u5DF2\u5220\u9664\uFF0C\u65E0\u6CD5\u6253\u5F00" }, row.tableTitle || (en ? "Deleted task table" : "\u5DF2\u5220\u9664\u4EFB\u52A1\u8868"));
           if (typeof onNavigate !== "function") return row.tableTitle;
           return h("button", {
@@ -4552,8 +4556,8 @@ var require_stats = __commonJS({
               lang,
               columns: [
                 rankingName(t, lang, props.onNavigate, "table"),
-                { key: "total", label: t.colTotal, num: true },
-                { key: "open", label: t.colOpen, num: true },
+                { key: "total", label: t.colTotal, num: true, className: "wbt-c-total" },
+                { key: "open", label: t.colOpen, num: true, className: "wbt-c-open" },
                 { key: "overdue", label: t.colOverdue, num: true },
                 { key: "completion", label: t.colRate, num: true, render: function(r) {
                   return ch.pct(r.completion);
@@ -4571,8 +4575,8 @@ var require_stats = __commonJS({
               lang,
               columns: [
                 rankingName(t, lang, props.onNavigate, "group"),
-                { key: "total", label: t.colTotal, num: true },
-                { key: "open", label: t.colOpen, num: true },
+                { key: "total", label: t.colTotal, num: true, className: "wbt-c-total" },
+                { key: "open", label: t.colOpen, num: true, className: "wbt-c-open" },
                 { key: "overdue", label: t.colOverdue, num: true },
                 { key: "completion", label: t.colRate, num: true, render: function(r) {
                   return ch.pct(r.completion);
@@ -4596,8 +4600,9 @@ var require_stats = __commonJS({
               empty: t.noWorkspacesEmpty,
               columns: [
                 rankingName(t, lang, props.onNavigate, "workspace"),
-                { key: "total", label: t.colTotal, num: true },
-                { key: "open", label: t.colOpen, num: true },
+                // 窄屏按列裁剪：≤600px 只留「名称 / 逾期 / 完成率」，总数与已开启收进 逾期 的语义里。
+                { key: "total", label: t.colTotal, num: true, className: "wbt-c-total" },
+                { key: "open", label: t.colOpen, num: true, className: "wbt-c-open" },
                 { key: "overdue", label: t.colOverdue, num: true },
                 { key: "completion", label: t.colRate, num: true, render: function(r) {
                   return ch.pct(r.completion);
@@ -14882,7 +14887,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.2.44",
+    version: "5.2.45",
     icon: ICONS["list-checks"],
     // 贡献声明写在 registerAddon 里：卸载任务插件时宿主按 addonId 一起撤销，
     // 不会在邮件里留一个渲染即报错的孤儿按钮。

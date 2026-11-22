@@ -65,12 +65,61 @@ const FIXTURES = {
     "connector.sourceList": { items: [{ id: "s1", name: "本地目录", kind: "fs", enabled: true }, { id: "s2", name: "Webhook", kind: "http", enabled: false }] },
     "connector.itemList": { items: [{ id: "i1", sourceId: "s1", title: "设计稿备份", size: 2400000, updatedAt: 1795300000000 }, { id: "i2", sourceId: "s2", title: "周报推送", size: 1200, updatedAt: 1795200000000 }] },
   },
+  vault: {
+    // 只关心布局，给一个已解锁状态与三条凭据即可。
+    "vault.status": { locked: false, initialized: true },
+    "vault.setList": { items: [{ id: "set1", name: "生产环境" }, { id: "set2", name: "个人" }] },
+    "vault.secretList": { items: [
+      { id: "k1", name: "GitHub Token", kind: "token", setIds: ["set1"], meta: JSON.stringify({ note: "CI 拉取私有仓库" }), lastUsedAt: 1795300000000 },
+      { id: "k2", name: "数据库密码", kind: "password", setIds: ["set1", "set2"], meta: JSON.stringify({ note: "只读账号，季度轮换" }) },
+      { id: "k3", name: "个人 API Key", kind: "apikey", setIds: [], meta: "{}" },
+    ] },
+  },
+  salary: {
+    "salary.status": {},
+    "salary.recordList": { items: [
+      { id: "r1", payDate: "2026-11-15", incomePeriod: "2026-11", cycle: "monthly", employmentType: "regular", netPay: 12800, grossPay: 16000, incomeTax: 320, note: "" },
+      { id: "r2", payDate: "2026-10-15", incomePeriod: "2026-10", cycle: "monthly", employmentType: "regular", netPay: 12400, grossPay: 16000, incomeTax: 300, note: "含季度奖金" },
+      { id: "r3", payDate: "2026-09-20", incomePeriod: "2026-09", cycle: "daily", employmentType: "probation", netPay: 5200, grossPay: 6800, incomeTax: 90, note: "试用期按日结" },
+    ], total: 3 },
+  },
+  mail: {
+    "mail.configGet": { values: {} },
+    "mail.accountList": { items: [{ id: "a1", name: "工作邮箱", address: "me@example.com", email: "me@example.com" }] },
+    "mail.mailboxList": { items: [
+      { name: "INBOX", label: "收件箱", total: 3, unread: 1 },
+      { name: "Sent", label: "已发送", total: 2, unread: 0 },
+    ] },
+    "mail.messageList": { items: [
+      { id: "m1", accountId: "a1", mailbox: "INBOX", uid: 1, subject: "周会纪要：Q4 排期与人力分配", from: "li.na@example.com", fromName: "李娜", date: "2026-11-20", unread: true, snippet: "附件是本周排期，麻烦周四前确认。" },
+      { id: "m2", accountId: "a1", mailbox: "INBOX", uid: 2, subject: "Design review notes for the narrow layout pass", from: "wang.qiang@example.com", fromName: "王强", date: "2026-11-19", unread: false, snippet: "See the attached screenshots for 320px behaviour." },
+      { id: "m3", accountId: "a1", mailbox: "INBOX", uid: 3, subject: "账单：十一月云服务费用", from: "billing@example.com", fromName: "云服务账单", date: "2026-11-18", unread: false, snippet: "共计 ¥128.40，将在 11-25 自动扣款。" },
+    ], nextCursor: null },
+  },
+  storage: {
+    // 统计页只用到计数与最近更新；库存是文字，不做求和。
+    "storage.stats": { total: 3, tagged: 2, withImages: 1, recent: [
+      { id: "i1", name: "螺丝刀套装", stock: "2", unit: "套" },
+      { id: "i2", name: "A4 打印纸", stock: "500", unit: "张" },
+      { id: "i3", name: "Type-C 数据线", stock: "3", unit: "根" },
+    ] },
+    "storage.list": { items: [
+      { id: "i1", name: "螺丝刀套装", stock: "2", unit: "套", tags: ["工具"], createTime: "2026-11-01" },
+      { id: "i2", name: "A4 打印纸", stock: "500", unit: "张", tags: ["耗材"], createTime: "2026-11-05" },
+      { id: "i3", name: "Type-C 数据线", stock: "3", unit: "根", tags: [], createTime: "2026-11-10" },
+    ] },
+    "storage.capabilities": { kinds: ["item", "tag"] },
+    "storage.configGet": { values: {} },
+  },
   calendar: {
     "calendar.list": { items: [{ id: "e1", title: "周会", startAt: 1795300000000, endAt: 1795303600000, allDay: false, location: "会议室 A" }, { id: "e2", title: "体检", startAt: 1795386400000, endAt: 1795386400000, allDay: true }] },
   },
 };
 
-const fixtures = FIXTURES[plugin] || {};
+// 邮件等页面会先查保险箱状态；默认给“已解锁”，各插件自带同名 fixture 时以自带为准。
+const fixtures = Object.assign({ "vault.status": { locked: false, initialized: true } }, FIXTURES[plugin] || {});
+// storage 等插件的 ui.call 走 {ok, result} 信封，预览按插件名决定是否补外壳。
+const envelope = new Set(["storage"]).has(plugin);
 
 const css = path.join(ROOT, "packages/shell/client/styles.cjs");
 const shellCss = (() => {
@@ -111,6 +160,8 @@ window.__WB_HOST__ = {
 <script>
 (async function () {
   var hostApi = ${JSON.stringify(fixtures)};
+  // 少数插件的 ui.call 走 {ok, result} 信封（如 storage 的 wbi），预览按插件名补齐外壳。
+  var envelope = ${JSON.stringify(envelope)};
   var api = {
     // 有的视图会订阅宿主事件（api.subscribe），预览里给个不触发的空实现。
     subscribe: function () { return function () {}; },
@@ -123,9 +174,9 @@ window.__WB_HOST__ = {
       if (v === undefined) {
         // 预览缺数据时记一行日志，便于用 err.mjs 查出这个视图到底要哪些 action。
         console.log("[fixture-missing] " + action + " " + JSON.stringify(args || null));
-        return Promise.resolve({});
+        v = {};
       }
-      return Promise.resolve(v);
+      return Promise.resolve(envelope ? { ok: true, result: v } : v);
     },
   };
   var loader = window.__ModuleLoader__;

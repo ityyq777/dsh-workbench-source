@@ -1613,7 +1613,7 @@ var require_styles = __commonJS({
       /* ---------- 窄屏 ---------- */
       "@media (max-width:900px){.wbv-split{grid-template-columns:1fr}.wbv-head{flex-direction:column;align-items:stretch}.wbv-head-actions{justify-content:flex-start}.wbv-toolbar>.wbv-search{flex:1 1 100%;width:100%}}",
       /* 窄屏：凭据/集合表只保留主列与操作列，类型、所属集合、最近使用下放到详情。 */
-      "@media (max-width:600px){.wbv-c-kind,.wbv-c-sets,.wbv-c-used{display:none}.wbv-table th,.wbv-table td{padding:8px 9px}.wbv-table td{overflow-wrap:anywhere}.wbv-actions{flex-wrap:wrap;gap:2px}.wbv-toolbar>.wbv-search{flex:1 1 100%;width:100%}.wbv-form-grid{grid-template-columns:minmax(0,1fr)}.wbv-stats{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
+      "@media (max-width:600px){.wbv-c-kind,.wbv-c-sets,.wbv-c-used{display:none}.wbv-table th,.wbv-table td{padding:8px 9px}.wbv-table td{overflow-wrap:anywhere}.wbv-table .wbv-actions{flex-wrap:nowrap;gap:0}.wbv-table .wbv-actions .wbv-btn{padding-left:6px;padding-right:6px;white-space:nowrap;font-size:12px}/* \u540D\u79F0\u5217\u53EF\u4EE5\u6362\u884C\uFF0C\u4F46\u4E0D\u8981\u56E0\u4E3A\u64CD\u4F5C\u5217\u53D8\u5BBD\u88AB\u6324\u6210\u7AD6\u6392 */.wbv-cell-main{overflow-wrap:anywhere;min-width:88px}.wbv-toolbar>.wbv-search{flex:1 1 100%;width:100%}.wbv-form-grid{grid-template-columns:minmax(0,1fr)}.wbv-stats{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
     ].concat(require_stepper().styles, require_staged_dialog().styles).concat(require_vault_lock().create({ prefix: "wbv" }).styles()).concat(require_filter_checklist_styles()).concat(require_client_base_styles().secretFieldStyles, require_icon_label().styles);
   }
 });
@@ -6971,7 +6971,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.4.7",
+    version: "0.4.8",
     icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },

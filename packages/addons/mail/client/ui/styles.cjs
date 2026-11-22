@@ -150,4 +150,12 @@ module.exports = require("../../../lib/client-base-styles.cjs")("wbml").concat(r
   ".wbml-cfg-ctl{display:flex;align-items:center;justify-content:flex-end;gap:8px}",
   ".wbml-toast{position:sticky;bottom:8px;justify-self:start;font-size:12px;padding:6px 12px;border-radius:999px;border:1px solid var(--wb-line,#e5e7eb);background:var(--wb-card,#fff);box-shadow:0 6px 18px rgba(0,0,0,.08)}",
   "@media(max-width:760px){.wbml-cfg-row{grid-template-columns:1fr}.wbml-cfg-ctl{justify-content:flex-start}.wbml-cfg-group{padding:4px 10px}}",
+  // 窄屏：同步按钮与搜索各自成行，提示文字单独一行，避免按钮被挤成半截。
+  "@media (max-width:600px){.wbml-body-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:stretch}"
+    + ".wbml-body-tools>.wbml-muted{grid-column:1/-1;font-size:12px;line-height:1.5}"
+    + ".wbml-body-tools>.wbml-btn{width:100%;justify-content:center}"
+    + ".wbml-search{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:end}"
+    + ".wbml-search .wbml-field{grid-column:1/-1;min-width:0}"
+    + ".wbml-search .wbml-input{width:100%}"
+    + ".wbml-search>.wbml-btn{width:100%;justify-content:center}}",
 ]).concat(SW.styles).concat(NF.styles).concat(require("../../../lib/icon-label.cjs").styles).join("\n");

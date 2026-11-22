@@ -57,7 +57,7 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
 
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.4.7",
+    version: "0.4.8",
     icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "保险箱", en: "Vault" }, component: withProps(require("./views/status.cjs"), "保险箱") },

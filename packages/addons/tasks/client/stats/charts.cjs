@@ -117,6 +117,10 @@ function css(prefix) {
     ".@-tlegend-item:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
     ".@-dot-off{width:8px;height:8px;border-radius:50%;border:1px solid;flex:0 0 auto}",
     ".@-table-scroll{max-width:100%;overflow-x:auto}.@-table{width:100%;border-collapse:collapse;font-size:12px}",
+    // 窄屏按列裁剪：统计页的两张排行/明细表在 390px 只保留主列与关键数值列。
+    "@media (max-width:600px){.@-table .wbt-c-total,.@-table .wbt-c-open,.@-table .wbt-c-difficulty,.@-table .wbt-c-tabletitle{display:none}"
+      + ".@-table th,.@-table td{padding-left:6px;padding-right:6px}"
+      + ".@-table .wbt-table-link{white-space:normal;text-align:left}}",
     ".@-table th{text-align:left;font-weight:500;color:var(--dsw-alias-label-tertiary,#8f959e);padding:6px 8px;border-bottom:1px solid var(--dsw-alias-border-l2,#e5e6eb);white-space:nowrap}",
     ".@-table td{padding:7px 8px;border-bottom:1px solid var(--dsw-alias-border-l1,#f2f3f5);color:var(--dsw-alias-label-secondary,#646a73);vertical-align:top}",
     ".@-table tr:last-child td{border-bottom:0}",
@@ -350,10 +354,15 @@ function makeCharts(prefix) {
     if (props.missing) return h(Missing, { text: props.missingText });
     if (!rows.length) return h("div", { className: prefix + "-empty" }, props.empty || "暂无数据");
     return h("div", { className: prefix + "-table-scroll", tabIndex: 0, role: "region", "aria-label": props.lang === "en" ? "Data table" : "数据表格" }, h("table", { className: prefix + "-table" },
-      h("thead", null, h("tr", null, cols.map(function (c) { return h("th", { key: c.key, className: c.num ? prefix + "-num" : "" }, c.label); }))),
+      h("thead", null, h("tr", null, cols.map(function (c) {
+        // 列级 className 供窄屏按列裁剪使用（与保险箱 DataTable 同一约定）。
+        var cls = [c.num ? prefix + "-num" : "", c.className || ""].filter(Boolean).join(" ");
+        return h("th", { key: c.key, className: cls || undefined }, c.label);
+      }))),
       h("tbody", null, rows.map(function (row, ri) {
         return h("tr", { key: row.id || row.key || ri }, cols.map(function (c) {
-          return h("td", { key: c.key, className: c.num ? prefix + "-num" : "" }, c.render ? c.render(row) : row[c.key]);
+          var cls = [c.num ? prefix + "-num" : "", c.className || ""].filter(Boolean).join(" ");
+          return h("td", { key: c.key, className: cls || undefined }, c.render ? c.render(row) : row[c.key]);
         }));
       })),
     ));
