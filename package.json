@@ -8,7 +8,7 @@
     "build:clients": "node scripts/build-addon-clients.mjs",
     "cloud:update": "git submodule update --remote --merge cloud",
     "cloud:build": "mvn -f cloud/pom.xml -DskipTests package",
-    "cloud-private:start": "node cloud-private/src/index.js",
+    "cloud-private:start": "node cloud-private/bin/wb-private-cloud.mjs start",
     "cloud-private:test": "node --test cloud-private/test/*.test.mjs",
     "dist:shell": "node scripts/dist-shell.mjs",
     "test:native": "node scripts/test-native.mjs && node scripts/test-agent-access.mjs && node scripts/test-origin-decls.mjs",
@@ -104,7 +104,10 @@
     "test:message-float": "node scripts/test-message-float.mjs",
     "test:workbench-navigation": "node scripts/test-workbench-navigation.mjs",
     "test:market": "node scripts/test-market-conflict.mjs",
-    "verify:install-order": "node scripts/verify-install-order.mjs"
+    "verify:install-order": "node scripts/verify-install-order.mjs",
+    "cloud-private:stop": "node cloud-private/bin/wb-private-cloud.mjs stop",
+    "cloud-private:status": "node cloud-private/bin/wb-private-cloud.mjs status",
+    "cloud-private:logs": "node cloud-private/bin/wb-private-cloud.mjs logs -f"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.72.1",
