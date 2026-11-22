@@ -595,6 +595,18 @@ var exports_ = {
   apply: function (ctx) {
     try {
       ensureCss();
+      // 手机 / 内置 WebView 打开工作台时，如果宿主页面没声明视口，浏览器会按 980px 排版再缩小，
+      // 媒体查询全部落在桌面档——表现就是「手机上两侧留白很大、控件比例怪」。这里兜底补一条。
+      try {
+        var head = document.head || document.getElementsByTagName("head")[0];
+        if (head && !document.querySelector('meta[name="viewport"]')) {
+          var vp = document.createElement("meta");
+          vp.setAttribute("name", "viewport");
+          vp.setAttribute("content", "width=device-width, initial-scale=1, viewport-fit=cover");
+          head.insertBefore(vp, head.firstChild);
+        }
+      }
+      catch (e) { /* 非浏览器环境直接跳过 */ }
       addonNav.setLayout(ctx && ctx.layout);
       ctx.effect(function () { return function () { addonNav.setLayout(null); }; }, "wb-layout-api");
       var PanellistIcon = createPanellistIcon(h);

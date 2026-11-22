@@ -134,6 +134,7 @@ const shellCss = (() => {
 })();
 
 const page = (theme, lang, width) => `<!doctype html><html lang="${lang}"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${plugin} preview</title>
 <style>${shellCss}
 html,body{margin:0;padding:0}

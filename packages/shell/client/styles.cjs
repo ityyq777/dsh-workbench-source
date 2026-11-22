@@ -211,7 +211,13 @@ var CSS = [
   ".wb-search-empty{padding:12px;font-size:12px;opacity:.65;text-align:center}",
   // ── 统一 UI 设计系统：所有业务插件共享的 token 与基础件 ──
   // 插件各自写过 --wb-border/--wb-accent 等变量但没有宿主兜底，导致大量 #2563eb、#fff 硬编码在深色模式下失效。
-  ".wb-root{--wb-border:var(--wb-line);--wb-card:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-layer-2,#fff));--wb-surface:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-layer-2,#fff));--wb-accent:var(--dsw-alias-brand-primary,#11a89b);--wb-muted:var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 58%,transparent));--wb-ok:var(--dsw-alias-state-success-primary,#18a058);--wb-warn:var(--dsw-alias-state-warn-primary,var(--dsw-alias-state-warning-primary,#d48806));--wb-danger:var(--dsw-alias-state-error-primary,#e5484d);--wb-radius-card:14px;--wb-space-md:14px}",
+  ".wb-root{--wb-border:var(--wb-line);--wb-card:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-layer-2,color-mix(in oklab,currentColor 6%,transparent)));--wb-surface:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-layer-2,color-mix(in oklab,currentColor 6%,transparent)));--wb-accent:var(--dsw-alias-brand-primary,#11a89b);--wb-muted:var(--dsw-alias-label-secondary,color-mix(in oklab,currentColor 58%,transparent));--wb-ok:var(--dsw-alias-state-success-primary,#18a058);--wb-warn:var(--dsw-alias-state-warn-primary,var(--dsw-alias-state-warning-primary,#d48806));--wb-danger:var(--dsw-alias-state-error-primary,#e5484d);--wb-radius-card:14px;--wb-space-md:14px;-webkit-text-size-adjust:100%;text-size-adjust:100%}",
+  // Android Chrome / WebView 的「文字自动放大（font boosting）」会把 em 尺寸的表单控件一起放大，
+  // 真机上就出现「复选框巨大、按钮文字撑成两行」。这里在文档层关掉，插件视图内部无需再管。
+  "html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}",
+  // 手机端浏览器/WebView 的原生复选框没走插件样式时会撑成大块白框，这里统一收口。
+  ".wb-root input[type=checkbox],.wb-root input[type=radio]{width:14px;height:14px;margin:0;accent-color:var(--wb-accent,#11a89b);vertical-align:middle}",
+  ".wb-root input,.wb-root select,.wb-root textarea,.wb-root button{max-width:100%;font-family:inherit}",
   ".wb-root *{scrollbar-width:thin;scrollbar-color:color-mix(in oklab,currentColor 22%,transparent) transparent}",
   ".wb-root ::-webkit-scrollbar{width:10px;height:10px}.wb-root ::-webkit-scrollbar-thumb{background:color-mix(in oklab,currentColor 18%,transparent);border-radius:999px;border:2px solid transparent;background-clip:padding-box}",
   ".wb-root :is(.wbc-wrap,.wbv,.wba-wrap,.wbct-wrap,.wbca-wrap,.wbm-wrap,.wbml-wrap,.wbm-page,.wbml-page){width:100%;max-width:none;margin:0;padding:0;gap:16px;box-sizing:border-box}",
@@ -350,6 +356,11 @@ var CSS = [
   // 否则窄屏仍在用桌面内边距。窄屏两侧留白直接从 22px 降到 10px，插件页容器不再自带左右边距。
   "@media (max-width:760px){.wb-root .wb-immersive-main{padding:10px 10px 16px}.wb-root .wb-immersive-bar{padding:calc(8px + var(--dsh-frame-top-clearance,0px)) 12px 8px}.wb-back{padding:0;width:30px;height:30px;justify-content:center;gap:0;flex:0 0 auto}.wb-root :is(.wbc-wrap,.wbv,.wba-wrap,.wbct-wrap,.wbca-wrap,.wbm-wrap,.wbml-wrap,.wbm-page,.wbml-page){padding:0 0 16px}.wb-root .wb-inner{gap:12px}.wb-root .wb-immersive-main>.wb-inner{gap:12px}}",
   "@media (max-width:420px){.wb-root .wb-immersive-main{padding:8px 8px 12px}.wb-root .wb-immersive-bar{padding:calc(6px + var(--dsh-frame-top-clearance,0px)) 10px 6px}}",
+  // 触屏设备（手机 / 平板 / App 内置 WebView）不一定按 390 这类窄宽度上报视口，
+  // 有的会把页面按 ~980px 布局再缩小，媒体查询就落在桌面档。用 pointer:coarse 兜一层：
+  // 只要没有精确指针，就按窄屏的留白处理，避免手机上又出现桌面端 24px 的两侧留白。
+  "@media (pointer:coarse){.wb-root .wb-immersive-main{padding:10px 10px 16px}.wb-root .wb-immersive-bar{padding:calc(8px + var(--dsh-frame-top-clearance,0px)) 12px 8px}.wb-root :is(.wbc-wrap,.wbv,.wba-wrap,.wbct-wrap,.wbca-wrap,.wbm-wrap,.wbml-wrap,.wbm-page,.wbml-page){padding:0 0 16px}.wb-root .wb-inner{gap:12px}.wb-root input[type=checkbox],.wb-root input[type=radio]{width:16px;height:16px}}",
+  "@media (pointer:coarse) and (max-width:520px){.wb-root .wb-immersive-main{padding:8px 8px 12px}.wb-root .wb-inner{gap:10px}}",
 ].join("\n");
 // 共享开关样式追加在宿主样式末尾：ensureCss() 是唯一注入点，重复追加无害。
 module.exports = CSS + "\n" + SW.styles.join("\n");
