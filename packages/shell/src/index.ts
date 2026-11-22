@@ -57,7 +57,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.12.4";
+export const SHELL_VERSION = "0.13.0";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -313,15 +313,19 @@ export function apply(ctx: any): void {
         // 发布与订阅都以 DomainDef.events 的声明为授权清单：没声明直接报错。
         push: (type: string, payload?: unknown) =>
           eventQueue.push(type, payload, def.id, def.events?.publishes),
-        subscribe: (type: string, action: string) =>
-          eventQueue.subscribe(
+        // 订阅不用指定 action：宿主统一投到本域唯一的 `<前缀>.onEvent`，插件按事件的
+        // type 自己分派。前缀不等同于 domain id（wb-addon-message → message.onEvent），
+        // 所以从本域 action 表里找出那个 onEvent。
+        subscribe: (type: string) => {
+          const hit = [...rec.actions.entries()].find(([name]) => name.endsWith(".onEvent"));
+          return eventQueue.subscribe(
             def.id,
             type,
-            action,
-            rec.actions.get(action),
-            rec.actions,
             def.events?.subscriptions,
-          ),
+            hit ? hit[1] : null,
+            hit ? hit[0] : undefined,
+          );
+        },
         stats: () => eventQueue.stats(),
       },
       now: () => clock.now(),

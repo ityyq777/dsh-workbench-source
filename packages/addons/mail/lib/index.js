@@ -27,7 +27,8 @@ export function setup(api) {
   // 保险箱解锁后立刻同步一轮：订阅保险箱推的事件，别等自己的定时器。
   if (api.events && typeof api.events.subscribe === "function") {
     try {
-      api.events.subscribe("vault.unlocked", "mail.onVaultUnlocked");
+      // 消费入口固定是 mail.onEvent：宿主投递时带 type，插件自己分派。
+      api.events.subscribe("vault.unlocked");
     } catch (error) {
       api.log("mail: 订阅保险箱解锁事件失败", String((error && error.message) || error));
     }

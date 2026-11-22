@@ -59,8 +59,9 @@ try {
   assert(Number(stats.subscriptions) >= 1, "消息插件应已订阅至少一个事件");
 
   const schema = (await host.invoke("message.actionSchema", {})).result;
-  const entry = schema.actions.find((a) => a.name === "message.onMailSynced");
-  assert(entry, "消费 action 应出现在 Action 清单里");
+  const entry = schema.actions.find((a) => a.name === "message.onEvent");
+  assert(entry, "消费入口 message.onEvent 应出现在 Action 清单里");
+  assert(!schema.actions.some((a) => a.name === "message.onMailSynced"), "不应再为单一事件保留专用 action");
   assert(
     Array.isArray(entry.origins) && entry.origins.length === 1 && entry.origins[0] === "plugin",
     "消费 action 的 origins 必须恰好是 [\"plugin\"]，实际：" + JSON.stringify(entry.origins),

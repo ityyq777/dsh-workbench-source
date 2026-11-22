@@ -69,24 +69,19 @@ async function main() {
   const MAIL_PUB = [{ type: "mail.received" }];
   const AUTO_SUBS = [{ type: "*" }];
   const taskAction = { origins: ["plugin"] };
-  const taskActions = new Map([["wb-addon-tasks.onEvent", taskAction]]);
+  // 消费入口固定是 <domain>.onEvent：不在签名里传 action，插件不按事件各开一个入口。
   mustThrow(
-    () => queue.subscribe("wb-addon-tasks", "task.created", "tasks.onEvent", { origins: ["plugin"] }, new Map(), TASK_SUBS),
-    "不属于本域",
-    "跨域 action",
+    () => queue.subscribe("wb-addon-tasks", "task.created", TASK_SUBS, undefined),
+    "onEvent",
+    "域里没有 onEvent 入口",
   );
   mustThrow(
-    () => queue.subscribe("wb-addon-tasks", "task.created", "wb-addon-tasks.onEvent", undefined, undefined, TASK_SUBS),
-    "未注册",
-    "未注册 action",
-  );
-  mustThrow(
-    () => queue.subscribe("wb-addon-tasks", "task.created", "wb-addon-tasks.onEvent", { origins: ["ui"] }, undefined, TASK_SUBS),
+    () => queue.subscribe("wb-addon-tasks", "task.created", TASK_SUBS, { origins: ["ui"] }),
     "origins: [\"plugin\"]",
     "ui-only action",
   );
   mustThrow(
-    () => queue.subscribe("wb-addon-tasks", "task.created", "wb-addon-tasks.onEvent", {}, undefined, TASK_SUBS),
+    () => queue.subscribe("wb-addon-tasks", "task.created", TASK_SUBS, {}),
     "origins: [\"plugin\"]",
     "未声明 origins",
   );
@@ -98,12 +93,12 @@ async function main() {
     "未声明的事件不许发布",
   );
   mustThrow(
-    () => queue.subscribe("wb-addon-tasks", "task.deleted", "wb-addon-tasks.onEvent", taskAction, taskActions, TASK_SUBS),
+    () => queue.subscribe("wb-addon-tasks", "task.deleted", TASK_SUBS, taskAction),
     "未声明",
     "未声明的事件不许订阅",
   );
 
-  const unsubscribe = queue.subscribe("wb-addon-tasks", "task.created", "wb-addon-tasks.onEvent", taskAction, taskActions, TASK_SUBS);
+  const unsubscribe = queue.subscribe("wb-addon-tasks", "task.created", TASK_SUBS, taskAction);
   assert(row("SELECT COUNT(*) AS n FROM host_event_subscription").n === 1, "订阅应写入 host_event_subscription");
 
   // 成功投递：消费者拿到事件字段与 deliveryId，来源固定 plugin
@@ -154,7 +149,7 @@ async function main() {
 
   // 通配订阅：任何类型都能收到
   let wildcardHits = 0;
-  queue.subscribe("wb-addon-automation", "*", "wb-addon-automation.onEvent", { origins: ["plugin"] }, undefined, AUTO_SUBS);
+  queue.subscribe("wb-addon-automation", "*", AUTO_SUBS, { origins: ["plugin"] });
   handler = async (action) => {
     if (action === "wb-addon-automation.onEvent") wildcardHits += 1;
   };

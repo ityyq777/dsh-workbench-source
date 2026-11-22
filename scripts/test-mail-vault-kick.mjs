@@ -1,6 +1,6 @@
 /**
  * 保险箱解锁 → 邮件即时同步（不启动 DSH、不连 IMAP）：
- * 1. 邮件插件注册 plugin-only 的 mail.onVaultUnlocked 并订阅 vault.unlocked；
+ * 1. 邮件插件注册 plugin-only 的 mail.onEvent（统一事件入口）并订阅 vault.unlocked；
  * 2. 事件到达后消费 action 被执行、能读到返回体，且没有账户时不打服务器；
  * 3. 保险箱侧在解锁成功后推事件（静态断言；真口令路径由保险箱自己的测试覆盖）。
  */
@@ -51,8 +51,9 @@ try {
 
   // 1. 消费 action 存在、只允许插件来源。
   const schema = (await host.invoke("mail.actionSchema", {})).result;
-  const entry = schema.actions.find((a) => a.name === "mail.onVaultUnlocked");
-  assert(entry, "邮件应注册 mail.onVaultUnlocked");
+  const entry = schema.actions.find((a) => a.name === "mail.onEvent");
+  assert(entry, "邮件应注册统一事件入口 mail.onEvent");
+  assert(!schema.actions.some((a) => a.name === "mail.onVaultUnlocked"), "不应再为解锁事件保留专用 action");
   assert(
     Array.isArray(entry.origins) && entry.origins.length === 1 && entry.origins[0] === "plugin",
     "消费 action 的 origins 必须恰好是 [\"plugin\"]，实际：" + JSON.stringify(entry.origins),

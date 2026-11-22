@@ -320,19 +320,30 @@ export function createAutoSync({ db, engine, api, log }) {
  * 刻意不给任何写操作——开关和间隔都走 mail.configSet，避免两套配置入口。
  */
 export function registerAutoSyncActions(api, autoSync) {
-  api.action("mail.onVaultUnlocked", {
+  api.action("mail.onEvent", {
     // 只允许插件来源：由宿主事件队列投递，agent/界面调不到。
     origins: ["plugin"],
     description:
-      "内部消费 action（由宿主事件队列投递）：保险箱解锁后立刻同步一轮收件箱，不必等定时器。正在同步时跳过。",
+      "内部事件入口（由宿主事件队列投递，不是给 agent/界面用的）：宿主把本插件订阅的所有事件都投到这里，按 args.type 分派。当前处理 vault.unlocked——保险箱解锁后立刻同步一轮收件箱，不必等定时器；正在同步或仍锁着时跳过。",
     input: {
       type: "object",
       properties: {
         eventId: { type: "string", description: "宿主事件 id（记进日志便于溯源）" },
+        type: { type: "string", description: "事件类型，例如 vault.unlocked" },
       },
     },
-    execute: (args) => autoSync.syncNow("vault-unlocked:" + String((args && args.eventId) || "")).then((r) => Object.assign({ ok: true }, r)),
-    render: (r) => (r && r.skipped ? "跳过即时同步（" + r.reason + "）" : "已即时同步：" + (r.accounts || 0) + " 个账户，新信 " + (r.inserted || 0) + " 封"),
+    execute: (args) => {
+      const type = String((args && args.type) || "");
+      if (type !== "vault.unlocked") return { ok: true, handled: false, type, ignored: true };
+      return autoSync
+        .syncNow("vault-unlocked:" + String((args && args.eventId) || ""))
+        .then((r) => Object.assign({ ok: true, handled: true, type }, r));
+    },
+    render: (r) => {
+      if (!r || r.ignored) return "已忽略未处理的事件";
+      if (r.skipped) return "跳过即时同步（" + r.reason + "）";
+      return "已即时同步：" + (r.accounts || 0) + " 个账户，新信 " + (r.inserted || 0) + " 封";
+    },
   });
 
   api.action("mail.autoSyncStatus", {

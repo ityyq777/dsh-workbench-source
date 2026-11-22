@@ -176,10 +176,9 @@ export function createEventQueue(options: EventQueueOptions) {
   function subscribe(
     domain: string,
     type: string,
-    action: string,
-    def?: DomainActionDef | null,
-    domainActions?: Map<string, DomainActionDef>,
     declared?: DomainEventDecl[],
+    def?: DomainActionDef | null,
+    actionName?: string,
   ): () => void {
     const name = String(type ?? "").trim();
     if (name !== "*" && !TYPE_RE.test(name)) throw new Error("非法事件类型（或使用 \"*\" 订阅全部）：" + name);
@@ -189,13 +188,12 @@ export function createEventQueue(options: EventQueueOptions) {
         "事件未声明，不允许订阅：" + name + "（先在 " + domain + " 的 DomainDef.events.subscriptions 里声明）",
       );
     }
-    if (!ACTION_RE.test(String(action ?? ""))) throw new Error("非法消费 action 名（应形如 tasks.onEvent）：" + action);
-    // 归属校验：action 名不带域名前缀（插件里本来就叫 message.send 这种），
-    // 所以由宿主传入「本域 action 表」，表里查到的 def 必须就是传进来的那个。
-    if (!def) throw new Error("消费 action 未注册：" + action);
-    if (domainActions && domainActions.get(action) !== def) {
-      throw new Error("消费 action 不属于本域（" + domain + " 的 action 表里没有它）：" + action);
-    }
+    // 消费入口是每个域唯一的 `<前缀>.onEvent`（前缀由插件自己的 action 命名决定，
+    // 例如 domain id 是 wb-addon-message、action 叫 message.onEvent）。插件不按事件
+    // 类型各开一个 action，而是拿到 type 自己分派，新增一种订阅不用再改 action 清单。
+    const action = String(actionName || domain + ".onEvent");
+    if (!ACTION_RE.test(action)) throw new Error("非法消费 action 名（应形如 tasks.onEvent）：" + action);
+    if (!def) throw new Error("消费 action 未注册：" + action + "（域内必须提供 onEvent 作为统一事件入口）");
     const origins = Array.isArray(def.origins) ? def.origins : [];
     if (origins.length !== 1 || origins[0] !== "plugin") {
       throw new Error(

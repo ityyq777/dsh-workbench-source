@@ -90,6 +90,8 @@ var require_locale = __commonJS({
         queue_ago_min: "{n} \u5206\u949F\u524D",
         queue_ago_hour: "{n} \u5C0F\u65F6\u524D",
         queue_ago_day: "{n} \u5929\u524D",
+        queue_auto: "\u81EA\u52A8\u5237\u65B0",
+        queue_updated_at: "\u66F4\u65B0\u4E8E {t}",
         loading: "\u8BFB\u53D6\u4E2D\u2026",
         reset_default: "\u6062\u590D\u9ED8\u8BA4",
         sync_progress: "\u540C\u6B65\u8FDB\u5EA6",
@@ -419,6 +421,8 @@ var require_locale = __commonJS({
         queue_ago_min: "{n} min ago",
         queue_ago_hour: "{n} h ago",
         queue_ago_day: "{n} d ago",
+        queue_auto: "Auto refresh",
+        queue_updated_at: "updated {t}",
         loading: "Loading\u2026",
         reset_default: "Reset to default",
         sync_progress: "Sync progress",
@@ -1336,8 +1340,9 @@ var require_styles = __commonJS({
       ".wb-sync-tables li.fail{color:var(--wb-danger,inherit)}",
       ".wb-sync-table-name{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}",
       ".wb-sync-table-state{margin-left:auto;opacity:.8;overflow-wrap:anywhere}",
-      ".wbq{display:flex;flex-direction:column;gap:14px;padding:4px 0 24px;box-sizing:border-box}",
-      ".wbq-hero{display:flex;flex-direction:column;gap:14px;padding:14px 16px;border:1px solid var(--wb-line);border-radius:14px;background:var(--wb-card)}",
+      ".wb-inner.wb-queue{max-width:none;gap:14px}",
+      ".wbq{display:flex;flex-direction:column;gap:14px;padding:4px 0 24px;box-sizing:border-box;min-width:0}",
+      ".wbq-hero{display:flex;flex-direction:column;gap:14px;padding:14px 16px;border:1px solid var(--wb-line);border-radius:14px;background:var(--wb-card);backdrop-filter:blur(14px) saturate(1.1);min-width:0}",
       ".wbq-hero-top{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;justify-content:space-between}",
       ".wbq-health{display:flex;align-items:center;gap:10px;min-width:0}",
       ".wbq-health-text{display:flex;flex-direction:column;gap:2px;font-size:13px;min-width:0}",
@@ -1355,7 +1360,7 @@ var require_styles = __commonJS({
       ".wbq-metric.t-warn .wbq-metric-value{color:var(--wb-warn)}",
       ".wbq-metric.t-danger .wbq-metric-value{color:var(--wb-danger)}",
       ".wbq-insight{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px}",
-      ".wbq-panel{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card);min-width:0}",
+      ".wbq-panel{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card);backdrop-filter:blur(14px) saturate(1.1);min-width:0}",
       ".wbq-panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:12.5px}",
       ".wbq-bars{display:flex;flex-direction:column;gap:8px}",
       ".wbq-bar-row{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(50px,1.6fr) 34px;align-items:center;gap:10px}",
@@ -1367,12 +1372,12 @@ var require_styles = __commonJS({
       ".wbq-recent{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}",
       ".wbq-recent-item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px}",
       ".wbq-recent-type{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px}",
-      ".wbq-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between}",
-      ".wbq-tabs{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--wb-line);border-radius:10px;background:var(--wb-card)}",
+      ".wbq-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between;min-width:0}",
+      ".wbq-tabs{display:inline-flex;flex:0 0 auto;gap:2px;padding:3px;border:1px solid var(--wb-line);border-radius:10px;background:var(--wb-card);backdrop-filter:blur(14px)}",
       ".wbq-tab{appearance:none;border:0;background:transparent;color:var(--wb-muted);font:inherit;font-size:12.5px;padding:5px 12px;border-radius:8px;cursor:pointer;transition:background .12s ease,color .12s ease}",
       ".wbq-tab:hover{color:inherit;background:color-mix(in oklab,currentColor 5%,transparent)}",
       ".wbq-tab.on{background:color-mix(in oklab,var(--wb-accent) 14%,var(--wb-card));color:var(--wb-accent);font-weight:600}",
-      ".wbq-filters{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}",
+      ".wbq-filters{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;flex:1 1 auto;min-width:0}",
       ".wbq-filter{appearance:none;border:1px solid var(--wb-line);background:var(--wb-card);color:var(--wb-muted);font:inherit;font-size:11.5px;padding:4px 10px;border-radius:999px;cursor:pointer;transition:border-color .12s ease,color .12s ease,background .12s ease}",
       ".wbq-filter:hover{color:inherit}",
       ".wbq-filter.on{color:inherit;border-color:color-mix(in oklab,var(--wb-accent) 45%,var(--wb-line));background:color-mix(in oklab,var(--wb-accent) 10%,var(--wb-card));font-weight:600}",
@@ -1382,10 +1387,10 @@ var require_styles = __commonJS({
       ".wbq-filter.s-queued.on,.wbq-badge.s-queued{color:var(--wb-accent)}",
       ".wbq-badge{display:inline-flex;align-items:center;gap:6px;padding:1px 9px;border-radius:999px;border:1px solid currentColor;font-size:11px;line-height:1.7;white-space:nowrap;background:color-mix(in oklab,currentColor 6%,transparent)}",
       ".wbq-badge-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}",
-      ".wbq-table-wrap{overflow:auto;max-height:62vh;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card)}",
+      ".wbq-table-wrap{overflow:auto;max-height:62vh;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card);backdrop-filter:blur(14px) saturate(1.1);min-width:0}",
       ".wbq-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px}",
       ".wbq-table thead th{position:sticky;top:0;z-index:1;text-align:left;font-size:11px;font-weight:600;letter-spacing:.03em;color:var(--wb-muted);padding:9px 10px;border-bottom:1px solid var(--wb-line);white-space:nowrap;background:color-mix(in oklab,var(--wb-card) 82%,var(--wb-surface,#0e1116));backdrop-filter:blur(4px)}",
-      ".wbq-table tbody td{padding:9px 10px;border-bottom:1px solid var(--wb-line);vertical-align:middle;overflow-wrap:anywhere}",
+      ".wbq-table tbody td{padding:8px 10px;border-bottom:1px solid color-mix(in oklab,var(--wb-line) 65%,transparent);vertical-align:middle;overflow-wrap:anywhere}",
       ".wbq-table tbody tr:last-child td{border-bottom:0}",
       ".wbq-table tbody tr:nth-child(even) td{background:color-mix(in oklab,currentColor 1.8%,transparent)}",
       ".wbq-table tbody tr:hover td{background:color-mix(in oklab,var(--wb-accent) 6%,transparent)}",
@@ -1393,6 +1398,7 @@ var require_styles = __commonJS({
       ".wbq-table tbody tr.is-dead td:first-child{box-shadow:inset 3px 0 0 var(--wb-danger)}",
       ".wbq-table code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}",
       ".wbq-cell-strong{font-weight:600}",
+      ".wbq-table tbody td:first-child code{font-size:12px;color:color-mix(in oklab,currentColor 88%,transparent)}",
       ".wbq-cell-time{color:var(--wb-muted);white-space:nowrap;font-variant-numeric:tabular-nums}",
       ".wbq-cell-num{text-align:right;font-variant-numeric:tabular-nums;color:var(--wb-muted)}",
       ".wbq-cell-action{text-align:right;white-space:nowrap}",
@@ -1401,7 +1407,7 @@ var require_styles = __commonJS({
       ".wbq-payload code{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--wb-muted)}",
       ".wbq-err{max-width:320px;font-size:11.5px;color:var(--wb-muted)}",
       ".wbq-domains{display:flex;flex-direction:column;gap:10px}",
-      ".wbq-domain{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card)}",
+      ".wbq-domain{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card);backdrop-filter:blur(14px) saturate(1.1)}",
       ".wbq-domain.has-error{border-color:color-mix(in oklab,var(--wb-danger) 40%,var(--wb-line))}",
       ".wbq-domain-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}",
       ".wbq-domain-title{font-size:13px}",
@@ -1412,11 +1418,11 @@ var require_styles = __commonJS({
       ".wbq-chip{display:inline-flex;align-items:center;gap:8px;padding:3px 10px;border-radius:999px;border:1px solid var(--wb-line);background:color-mix(in oklab,currentColor 3%,transparent);font-size:11.5px}",
       ".wbq-chip.off{opacity:.62;border-style:dashed}",
       ".wbq-chip-meta{font-style:normal;font-size:11px;color:var(--wb-muted)}",
-      ".wbq-loading{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card)}",
+      ".wbq-loading{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card);backdrop-filter:blur(14px)}",
       ".wbq-loading-row{display:flex;gap:12px}",
       ".wbq-loading-bar{flex:1;height:14px;border-radius:6px;background:linear-gradient(90deg,color-mix(in oklab,currentColor 4%,transparent),color-mix(in oklab,currentColor 9%,transparent),color-mix(in oklab,currentColor 4%,transparent));background-size:200% 100%;animation:wbq-shimmer 1.4s ease-in-out infinite}",
       "@keyframes wbq-shimmer{0%{background-position:180% 0}100%{background-position:-80% 0}}",
-      ".wbq-empty{display:flex;flex-direction:column;align-items:center;gap:6px;padding:36px 18px;border:1px dashed var(--wb-line);border-radius:12px;text-align:center;color:var(--wb-muted);font-size:12.5px;background:var(--wb-card)}",
+      ".wbq-empty{display:flex;flex-direction:column;align-items:center;gap:6px;padding:36px 18px;border:1px dashed var(--wb-line);border-radius:12px;text-align:center;color:var(--wb-muted);font-size:12.5px;background:var(--wb-card);backdrop-filter:blur(14px)}",
       ".wbq-empty b{font-size:13px;color:inherit}",
       ".wbq-empty-mark{width:26px;height:26px;border-radius:50%;border:1px dashed color-mix(in oklab,currentColor 40%,transparent)}",
       ".wbq-empty-hint{font-size:11.5px;opacity:.85}",
@@ -1426,6 +1432,7 @@ var require_styles = __commonJS({
       ".wbq-pager{display:flex;align-items:center;gap:10px;font-size:12px}",
       ".wbq-pager .wb-btn{padding:4px 10px;font-size:12px}",
       ".wbq-muted{color:var(--wb-muted);font-size:12px}",
+      ".wbq-updated{font-size:11.5px;color:var(--wb-muted);font-variant-numeric:tabular-nums;white-space:nowrap}",
       ".wb-toast{position:sticky;bottom:12px;align-self:center;padding:7px 14px;border-radius:999px;border:1px solid var(--wb-line);background:var(--wb-surface);font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.12)}"
     ].join("\n");
     module2.exports = CSS2 + "\n" + SW.styles.join("\n") + "\n" + NF.styles.join("\n");
@@ -3685,6 +3692,11 @@ var require_event_queue_page = __commonJS({
       if (Number.isNaN(d.getTime())) return "\u2014";
       return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds());
     }
+    function clockText(value) {
+      var d = new Date(Number(value) || 0);
+      if (Number.isNaN(d.getTime())) return "\u2014";
+      return pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds());
+    }
     function agoText(t, value, now) {
       var ts = Number(value);
       if (!ts) return "\u2014";
@@ -3802,6 +3814,12 @@ var require_event_queue_page = __commonJS({
       var noteState = React.useState("");
       var note = noteState[0];
       var setNote = noteState[1];
+      var autoState = React.useState(false);
+      var auto = autoState[0];
+      var setAuto = autoState[1];
+      var clockState = React.useState(0);
+      var updatedAt = clockState[0];
+      var setUpdatedAt = clockState[1];
       var overview = useLoader(React, api, "wb.eventOverview", {}, []);
       var events = useLoader(React, api, "wb.eventList", { status: filter || void 0, page, pageSize: PAGE_SIZE }, [filter, page]);
       var deliveries = useLoader(React, api, "wb.eventDeliveryList", { status: filter || void 0, page, pageSize: PAGE_SIZE }, [filter, page]);
@@ -3812,6 +3830,19 @@ var require_event_queue_page = __commonJS({
         setFilter("");
         setPage(1);
       }, [tab]);
+      React.useEffect(function() {
+        if (!auto) return void 0;
+        var timer = setInterval(function() {
+          overview.reload();
+          active.reload();
+        }, 5e3);
+        return function() {
+          clearInterval(timer);
+        };
+      }, [auto, tab]);
+      React.useEffect(function() {
+        if (!active.state.loading && !active.state.error) setUpdatedAt(Date.now());
+      }, [active.state.loading, active.state.error]);
       function reload() {
         overview.reload();
         if (tab === "subscriptions") subs.reload();
@@ -3875,6 +3906,16 @@ var require_event_queue_page = __commonJS({
               ] })
             ] }),
             jsx2.jsxs("div", { className: "wbq-hero-actions", children: [
+              updatedAt ? jsx2.jsx("span", { className: "wbq-updated", children: t("queue_updated_at").replace("{t}", clockText(updatedAt)) }) : null,
+              jsx2.jsx("button", {
+                type: "button",
+                className: "wbq-filter" + (auto ? " on" : ""),
+                "aria-pressed": auto,
+                onClick: function() {
+                  setAuto(!auto);
+                },
+                children: t("queue_auto")
+              }),
               jsx2.jsx("button", { type: "button", className: "wb-btn ghost", onClick: reload, children: t("queue_refresh") }),
               tab === "events" || tab === "deliveries" ? jsx2.jsx("button", { type: "button", className: "wb-btn danger", onClick: cleanup, children: t("queue_cleanup") }) : null
             ] })
@@ -4056,7 +4097,7 @@ var require_event_queue_page = __commonJS({
     function QueueView(props) {
       return queuePage(props);
     }
-    module2.exports = { queuePage, QueueView, readResult, agoText, statusText };
+    module2.exports = { queuePage, QueueView, readResult, agoText, clockText, statusText };
   }
 });
 

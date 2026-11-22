@@ -61,10 +61,14 @@ export interface DomainEventBus {
   /** 推一条事件：同步落库后立刻返回，不等任何订阅方执行。 */
   push(type: string, payload?: unknown): { id: string; deliveries: number };
   /**
-   * 订阅事件类型（"*" 表示全部）。action 必须是本域已注册的 action，
-   * 且 `origins` 只能声明 ["plugin"]；否则立即抛错说明原因。
+   * 订阅事件类型（"*" 表示全部），返回退订函数。
+   *
+   * 消费入口固定是本域的 `<domain>.onEvent`：插件不必为每种事件各开一个 action，
+   * 宿主投递时把 `type` 一起带进来，由插件自己分派。`onEvent` 必须已注册且
+   * `origins` 恰好是 ["plugin"]，类型也必须先在 `DomainDef.events.subscriptions`
+   * 里声明，否则订阅立即抛错。
    */
-  subscribe(type: string, action: string): () => void;
+  subscribe(type: string): () => void;
   /** 队列现状（事件/投递/订阅计数），给诊断与测试用。 */
   stats(): EventQueueStats;
 }

@@ -83,18 +83,24 @@ pnpm test:native && pnpm test:tags && pnpm test:sites
   宿主「事件队列」页的「插件」页签按这份清单对账。
 - 不要为「先写着」而声明用不到的类型：它等于给该插件开放了发布/接收该事件的权限。
 
-### 事件队列的消费 action：只能声明 `["plugin"]`
+### 事件队列的消费入口：一个域只开 `onEvent`
 
-宿主事件队列（`api.events.subscribe(type, action)`）要求消费 action **只允许插件后台调用**：
+宿主事件队列的订阅是 `api.events.subscribe(type)`——**不传 action**。规矩是：
 
-- `origins` 必须恰好是 `["plugin"]`，省略或包含 `ui`/`agent`/`sync` 时 `subscribe` 直接抛错；
-  这样推送过来的消息不会被界面或 agent 顺手消费/伪造。
-- 消费 action 的入参由宿主固定为 `{ eventId, deliveryId, type, source, payload, createdAt }`，
-  schema 里按事件体声明（至少 `eventId`/`type`/`payload`），并在描述里写清是队列投递。
-- 归属校验：`action` 用本插件自己的 action 名（如 `message.onMailSynced`，不需要域名前缀），
-  宿主用本域 action 表查 def；查不到或 `origins` 不符就抛错，所以别的域的 action 订阅不进来。
-- 注册顺序：同一个 `setup(api)` 里先 `api.action("域.onEvent", {...})`，再
-  `api.events.subscribe("xxx.created", "域.onEvent")`。
+- 每个域只注册**一个**消费入口，名字形如 `<插件 action 前缀>.onEvent`（`message.onEvent`、
+  `mail.onEvent`；前缀不必等于 domain id）。宿主把所有订阅到的事件都投到这一个 action，
+  插件拿 `args.type` 自己分派——不要为每种事件各开一个 action，否则每加一条订阅就要改
+  action 清单、文档与数据页。
+- `onEvent` 的 `origins` 必须恰好是 `["plugin"]`，省略或包含 `ui`/`agent`/`sync` 时
+  `subscribe` 直接抛错；这样事件不会被界面或 agent 顺手消费/伪造。
+- 入参由宿主固定为 `{ eventId, deliveryId, type, source, payload, createdAt }`，
+  schema 里按事件体声明（至少 `eventId`/`type`/`payload`），描述里写清是队列投递、
+  以及当前处理哪些 `type`。
+- 归属校验：宿主在本域 action 表里找 `*.onEvent`；找不到或 `origins` 不符就抛错，
+  所以别的域的入口订阅不进来。一个域注册多个 `*.onEvent` 时取第一个，别这么写。
+- 注册顺序：同一个 `setup(api)` 里先 `api.action("xxx.onEvent", {...})`，再
+  `api.events.subscribe("xxx.created")`。
+- 分派时对未知 `type` 返回 `{ ok: true, handled: false }` 并记一行日志，别静默吞掉。
 - push 与消费必须解耦：`push` 里不要等下游返回值，也不要把下游异常重新抛给业务写路径；
   投递失败由队列自己重试/进死信（`host_event_delivery.last_error`），可在宿主数据页查看。
 

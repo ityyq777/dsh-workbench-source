@@ -60,11 +60,12 @@ try {
     },
     setup(api) {
       probeApi = api;
-      api.action("probe.onTick", {
+      // 消费入口统一叫 probe.onEvent：宿主把订阅到的类型都投到这里，插件按 type 分派。
+      api.action("probe.onEvent", {
         origins: ["plugin"],
-        execute: (args) => ({ ok: true, eventId: args.eventId }),
+        execute: (args) => ({ ok: true, type: args.type }),
       });
-      api.events.subscribe("probe.tick", "probe.onTick");
+      api.events.subscribe("probe.tick");
     },
   });
 
@@ -103,18 +104,18 @@ try {
   const deliveries = (await host.invoke("wb.eventDeliveryList", { status: "done" })).result;
   assert(deliveries.total === 1, "按状态过滤投递应命中一条");
   assert(deliveries.items[0].event_type === "probe.tick", "投递应 join 出事件类型");
-  assert(deliveries.items[0].action === "probe.onTick", "投递应带消费 action");
+  assert(deliveries.items[0].action === "probe.onEvent", "投递应带消费 action");
 
   const subs = (await host.invoke("wb.eventSubscriptionList", {})).result;
-  assert(subs.items.some((x) => x.action === "probe.onTick"), "订阅清单应来自登记表");
+  assert(subs.items.some((x) => x.action === "probe.onEvent"), "订阅清单应来自登记表");
 
   // 插件授权清单：声明的发布与监听都要露出来，未声明的推送与订阅直接报错。
   const domains = (await host.invoke("wb.eventDomains", {})).result.domains;
   const probe = domains.find((d) => d.domain === "wb-addon-queue-probe");
   assert(probe, "插件清单应包含探针域");
   assert(probe.publishes.some((p) => p.type === "probe.ping"), "应列出声明的发布事件");
-  assert(probe.listens.some((l) => l.type === "probe.tick" && l.registered && l.actions.includes("probe.onTick")), "应列出声明并已登记的监听");
-  assert(probe.subscriptions.some((x) => x.action === "probe.onTick"), "应带真实订阅统计");
+  assert(probe.listens.some((l) => l.type === "probe.tick" && l.registered && l.actions.includes("probe.onEvent")), "应列出声明并已登记的监听");
+  assert(probe.subscriptions.some((x) => x.action === "probe.onEvent"), "应带真实订阅统计");
   let deniedPush = null;
   try {
     probeApi.events.push("probe.undeclared", {});
@@ -124,7 +125,7 @@ try {
   assert(deniedPush && String(deniedPush.message).includes("未声明"), "未声明的事件不许发布");
   let deniedSub = null;
   try {
-    probeApi.events.subscribe("probe.other", "probe.onTick");
+    probeApi.events.subscribe("probe.other");
   } catch (e) {
     deniedSub = e;
   }
@@ -140,7 +141,7 @@ try {
   );
   db.prepare(
     "INSERT INTO host_event_delivery (id, event_id, domain, action, status, attempts, next_at, last_error, updated_at) VALUES (?,?,?,?,?,?,?,?,?)",
-  ).run(deliveryId, eventId, "wb-addon-queue-probe", "probe.onTick", "dead", 5, now, "模拟失败", now);
+  ).run(deliveryId, eventId, "wb-addon-queue-probe", "probe.onEvent", "dead", 5, now, "模拟失败", now);
   db.close();
 
   const replay = (await host.invoke("wb.eventReplay", { deliveryId })).result;
@@ -161,7 +162,7 @@ try {
   );
   db2.prepare(
     "INSERT INTO host_event_delivery (id, event_id, domain, action, status, attempts, next_at, last_error, updated_at) VALUES (?,?,?,?,?,?,?,?,?)",
-  ).run("old-delivery", "old-event", "wb-addon-queue-probe", "probe.onTick", "done", 1, now, "", now);
+  ).run("old-delivery", "old-event", "wb-addon-queue-probe", "probe.onEvent", "done", 1, now, "", now);
   db2.close();
 
   const cleaned = (await host.invoke("wb.eventCleanup", { olderThanDays: 7 })).result;

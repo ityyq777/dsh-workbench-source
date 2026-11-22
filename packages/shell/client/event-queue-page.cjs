@@ -45,6 +45,13 @@ function timeText(value) {
   return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds());
 }
 
+/** 只要时分秒：自动刷新开着时，用户看的是「这一眼是不是新的」。 */
+function clockText(value) {
+  var d = new Date(Number(value) || 0);
+  if (Number.isNaN(d.getTime())) return "—";
+  return pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds());
+}
+
 /** 「3 分钟前」这类相对时间：运维看队列，相对时间比绝对时间更容易判断新旧。 */
 function agoText(t, value, now) {
   var ts = Number(value);
@@ -175,6 +182,12 @@ function queuePage(deps) {
   var noteState = React.useState("");
   var note = noteState[0];
   var setNote = noteState[1];
+  var autoState = React.useState(false);
+  var auto = autoState[0];
+  var setAuto = autoState[1];
+  var clockState = React.useState(0);
+  var updatedAt = clockState[0];
+  var setUpdatedAt = clockState[1];
 
   var overview = useLoader(React, api, "wb.eventOverview", {}, []);
   var events = useLoader(React, api, "wb.eventList", { status: filter || undefined, page: page, pageSize: PAGE_SIZE }, [filter, page]);
@@ -188,6 +201,23 @@ function queuePage(deps) {
     setFilter("");
     setPage(1);
   }, [tab]);
+
+  // 队列是活的：运维盯着排障时希望它自己动，而不是每看一次点一次刷新。
+  // 默认关闭，避免无谓轮询；开启后每 5 秒重取总览与当前页签。
+  React.useEffect(function () {
+    if (!auto) return undefined;
+    var timer = setInterval(function () {
+      overview.reload();
+      active.reload();
+    }, 5000);
+    return function () {
+      clearInterval(timer);
+    };
+  }, [auto, tab]);
+
+  React.useEffect(function () {
+    if (!active.state.loading && !active.state.error) setUpdatedAt(Date.now());
+  }, [active.state.loading, active.state.error]);
 
   function reload() {
     overview.reload();
@@ -267,6 +297,16 @@ function queuePage(deps) {
           ] }),
         ] }),
         jsx.jsxs("div", { className: "wbq-hero-actions", children: [
+          updatedAt
+            ? jsx.jsx("span", { className: "wbq-updated", children: t("queue_updated_at").replace("{t}", clockText(updatedAt)) })
+            : null,
+          jsx.jsx("button", {
+            type: "button",
+            className: "wbq-filter" + (auto ? " on" : ""),
+            "aria-pressed": auto,
+            onClick: function () { setAuto(!auto); },
+            children: t("queue_auto"),
+          }),
           jsx.jsx("button", { type: "button", className: "wb-btn ghost", onClick: reload, children: t("queue_refresh") }),
           tab === "events" || tab === "deliveries"
             ? jsx.jsx("button", { type: "button", className: "wb-btn danger", onClick: cleanup, children: t("queue_cleanup") })
@@ -472,4 +512,4 @@ function QueueView(props) {
   return queuePage(props);
 }
 
-module.exports = { queuePage: queuePage, QueueView: QueueView, readResult: readResult, agoText: agoText, statusText: statusText };
+module.exports = { queuePage: queuePage, QueueView: QueueView, readResult: readResult, agoText: agoText, clockText: clockText, statusText: statusText };
