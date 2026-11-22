@@ -467,10 +467,6 @@ function WorkbenchPage(props) {
       ] }),
       jsx.jsx("div", { className: "wb-home-title", children: title }),
       jsx.jsx("div", { className: "wb-home-desc", children: desc }),
-      jsx.jsxs("div", { className: "wb-home-foot", children: [
-        jsx.jsx("span", { children: "" }),
-        jsx.jsx("b", { children: t("open") + " →" }),
-      ] }),
     ] }, key);
   }
 
