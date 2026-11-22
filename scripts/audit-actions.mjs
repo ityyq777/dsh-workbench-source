@@ -108,8 +108,15 @@ function versions(addon) {
     ["lib/client.js", join(dir, "lib/client.js")],
   ]) {
     if (!existsSync(p)) continue;
-    const m = read(p).match(/version:\s*"([^"]+)"/);
-    entries.push([label, m ? m[1] : "(未找到)"]);
+    const text = read(p);
+    // 客户端入口在构建时注入版本（version: __ADDON_VERSION__），源码里不写死版本号。
+    if (/version:\s*__ADDON_VERSION__/.test(text)) {
+      entries.push([label, pkg.version]);
+      continue;
+    }
+    const m = text.match(/version:\s*"([^"]+)"/);
+    // 服务端入口从 package.json 读版本（ADDON_VERSION），源码里没有字面量就跳过。
+    if (m) entries.push([label, m[1]]);
   }
   if (new Set(entries.map(([, v]) => v)).size > 1) {
     problems.push(`${addon}: 版本号不一致 → ` + entries.map(([l, v]) => `${l}=${v}`).join("，"));

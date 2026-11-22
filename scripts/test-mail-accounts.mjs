@@ -116,17 +116,17 @@ const form = renderToStaticMarkup(h(AccountForm, {
 }));
 assert.ok(form.includes('imap.qq.com:993'), '默认 QQ 预设直接填好 IMAP 主机，且摘要里看得见');
 assert.ok(form.includes('smtp.qq.com:465'), '默认 QQ 预设直接填好 SMTP 主机，且摘要里看得见');
-assert.ok(form.includes('账号集合'), '账户表单第一步是选账号集合');
-assert.ok(form.includes('先选一个账号集合'), '表单提示先选集合、账号自动带出');
+assert.ok(form.includes('保险箱集合'), '账户表单第一步是选保险箱集合');
+assert.ok(form.includes('先选一个集合'), '表单提示先选集合、账号自动带出');
 assert.equal(/placeholder="you@example\.com"/.test(form), false, '不再让用户手填整条地址');
 assert.equal(form.includes('wbml-addr'), false, '不再有「本地部分 + 域名」的拆分输入');
-assert.ok(form.includes('请先选择账号集合'), '未选集合时提示并禁用保存');
+assert.ok(form.includes('请先选择集合'), '未选集合时提示并禁用保存');
 
 const SetPicker = require('../packages/addons/mail/client/ui/set-picker.cjs');
 const setPicker = renderToStaticMarkup(h(SetPicker, {
   h, React, C, api: { call: async () => ({ items: [] }) }, lang: 'zh', vault: 'ready', value: '', onChange: () => {},
 }));
-assert.ok(setPicker.includes('选择账号集合'), '集合选择器未选时显示占位文案');
+assert.ok(setPicker.includes('选择集合（含账号凭据）'), '集合选择器未选时显示占位文案');
 assert.ok(setPicker.includes('aria-haspopup="listbox"'), '集合选择器声明为下拉入口');
 
 const setPickerLocked = renderToStaticMarkup(h(SetPicker, {

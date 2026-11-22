@@ -14,7 +14,7 @@ const { createVault } = await import("../lib/domain/vault.js");
 const { createGroups } = await import("../lib/domain/groups.js");
 const { createSets } = await import("../lib/domain/sets.js");
 const { registerVaultActions } = await import("../lib/domain/actions.js");
-const { KDF_DEFAULT, deriveKey, isSealedAccount, open, seal, secretAad } = await import("../lib/infra/crypto.js");
+const { KDF_DEFAULT, deriveKey, legacySecretAad, sealAccount, open, seal, secretAad } = await import("../lib/infra/crypto.js");
 
 function makeVault() {
   const db = new DatabaseSync(":memory:");
@@ -40,11 +40,11 @@ test("A 模式初始化、加密落库、解锁/失败锁", () => {
   assert.equal(st.initialized, true);
   assert.equal(st.locked, false);
   assert.equal(st.unlockMode, "A");
-  assert.equal(st.schemaVersion, 5);
+  assert.equal(st.schemaVersion, 6);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_header").get().n, 1);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_device").get().n, 1);
 
-  run("vault.secretCreate", { name: "rss", kind: "password", secret: "s3cret-value", meta: { username: "me" } });
+  run("vault.secretCreate", { name: "rss", kinds: ["password"], secret: "s3cret-value", meta: { username: "me" } });
   const row = db.prepare("SELECT * FROM vault_secret").get();
   assert.ok(row.ciphertext.startsWith("v1:"));
   assert.ok(!row.ciphertext.includes("s3cret-value"));
@@ -75,7 +75,7 @@ test("B 模式 device key 自动解锁，reveal 仍要口令", () => {
   assert.equal(existsSync(keyPath), true);
   assert.equal(statSync(keyPath).mode & 0o777, 0o600);
 
-  run("vault.secretCreate", { name: "imap", kind: "app_password", secret: "app-pass" });
+  run("vault.secretCreate", { name: "imap", kinds: ["app_password"], secret: "app-pass" });
   run("vault.lock");
   assert.equal(run("vault.status").locked, false, "B 模式 status 应自动解锁");
   const id = run("vault.secretList").items[0].id;
@@ -86,7 +86,7 @@ test("B 模式 device key 自动解锁，reveal 仍要口令", () => {
 test("plugin lease 可用，ui/agent 不可用；改口令后可解锁", () => {
   const { run, vault } = makeVault();
   run("vault.setup", { passphrase: PASS, mode: "A" });
-  run("vault.secretCreate", { name: "token1", kind: "token", secret: "tok-123" });
+  run("vault.secretCreate", { name: "token1", kinds: ["token"], secret: "tok-123" });
   const id = run("vault.secretList").items[0].id;
   assert.equal(run("vault.lease", { id, purpose: "test" }, "plugin").secret, "tok-123");
   assert.throws(() => run("vault.lease", { id }, "ui"), /不允许 ui/);
@@ -109,12 +109,12 @@ test("分组、关联与按组可见凭据", () => {
 
   const secId = run("vault.secretCreate", {
     name: "sspai-basic",
-    kind: "password",
+    kinds: ["password"],
     secret: "pw-1",
     groupId,
     meta: { username: "me" },
   }).id;
-  run("vault.secretCreate", { name: "imap", kind: "app_password", secret: "pw-2", groupId: otherId });
+  run("vault.secretCreate", { name: "imap", kinds: ["app_password"], secret: "pw-2", groupId: otherId });
   assert.equal(run("vault.secretList", { groupId }).items.length, 1);
   assert.equal(run("vault.groupList").items.length, 2);
   const sspai = run("vault.groupList").items.find((g) => g.id === groupId);
@@ -167,7 +167,7 @@ test("plugin 写入受绑定约束：按 setName 建集合、按 name 幂等写�
   const base = { subjectType: "site", subjectId: "site_1", setName: "acc_1" };
   const name = "acc_1 · 密码";
   const meta = { siteId: "site_1", accountId: "acc_1", field: "password" };
-  const created = run("vault.pluginSecretUpsert", { ...base, name, kind: "password", secret: "pw-a", meta }, "plugin");
+  const created = run("vault.pluginSecretUpsert", { ...base, name, kinds: ["password"], secret: "pw-a", meta }, "plugin");
   assert.equal(created.created, true);
   const row = db.prepare("SELECT * FROM vault_secret WHERE id = ?").get(created.id);
   assert.ok(row.ciphertext.startsWith("v1:"));
@@ -183,7 +183,7 @@ test("plugin 写入受绑定约束：按 setName 建集合、按 name 幂等写�
   assert.deepEqual(visible.items[0].meta, meta);
   assert.equal(visible.items[0].setId, created.setId, "subject 侧应能拿到集合 id");
 
-  const updated = run("vault.pluginSecretUpsert", { ...base, name, kind: "password", secret: "pw-b", meta }, "plugin");
+  const updated = run("vault.pluginSecretUpsert", { ...base, name, kinds: ["password"], secret: "pw-b", meta }, "plugin");
   assert.equal(updated.created, false);
   assert.equal(updated.id, created.id);
   assert.equal(run("vault.secretReveal", { id: created.id }).secret, "pw-b");
@@ -232,8 +232,8 @@ test("集合 action：增删改、挂载/摘除与权限", () => {
   assert.equal(run("vault.setList", { groupId: g1 }).items.length, 1);
   assert.deepEqual(run("vault.setGet", { id: set.id }).groupIds.sort(), [g1, g2].sort());
 
-  const phoneA = run("vault.secretCreate", { name: "手机号 A", kind: "phone", secret: "13800000001", setId: set.id });
-  const phoneB = run("vault.secretCreate", { name: "手机号 B", kind: "phone", secret: "13800000002", setId: set.id });
+  const phoneA = run("vault.secretCreate", { name: "手机号 A", kinds: ["phone"], secret: "13800000001", setId: set.id });
+  const phoneB = run("vault.secretCreate", { name: "手机号 B", kinds: ["phone"], secret: "13800000002", setId: set.id });
   assert.equal(run("vault.setGet", { id: set.id }).secrets.length, 2, "同一集合可放两条 phone");
   run("vault.setAttachSecret", { setId: setB, secretId: phoneA.id });
   assert.equal(run("vault.setAttachSecret", { setId: setB, secretId: phoneA.id }).existing, true, "重复挂载幂等");
@@ -256,7 +256,7 @@ test("集合 action：增删改、挂载/摘除与权限", () => {
   assert.ok(Array.isArray(run("vault.setList", {}, "plugin").items), "集合读取对 plugin 开放");
 });
 
-test("plugin 写入带账号：setAccount 建账号集合，pluginSetAccount 改账号", () => {
+test("plugin 写入多类型：按 name 幂等、kinds 原样回读，账号只是普通凭据类型", () => {
   const { run } = makeVault();
   run("vault.setup", { passphrase: PASS, mode: "A" });
   const groupId = run("vault.groupCreate", { name: "邮件账户" }).id;
@@ -266,25 +266,32 @@ test("plugin 写入带账号：setAccount 建账号集合，pluginSetAccount 改
   const base = { subjectType: "mail", subjectId: "mb_1", setName: "me@example.com" };
   const created = run(
     "vault.pluginSecretUpsert",
-    { ...base, setAccount: "me@example.com", name: "me@example.com · 密码", kind: "app_password", secret: "pw", meta: { field: "password" } },
+    { ...base, name: "me@example.com · 密码", kinds: ["app_password"], secret: "pw", meta: { field: "password" } },
     "plugin",
   );
   const set = run("vault.pluginSetGet", base, "plugin").set;
   assert.equal(set.id, created.setId);
-  assert.equal(set.account, "me@example.com");
-  assert.equal(set.type, "account");
 
-  const renamed = run("vault.pluginSetAccount", { ...base, account: "alias@example.com" }, "plugin");
-  assert.equal(renamed.set.account, "alias@example.com");
-  assert.equal(run("vault.pluginSetGet", base, "plugin").set.type, "account");
-  const cleared = run("vault.pluginSetAccount", { ...base, account: "" }, "plugin");
-  assert.equal(cleared.set.type, "common");
-
-  assert.throws(
-    () => run("vault.pluginSetAccount", { ...base, subjectId: "mb_missing", account: "x" }, "plugin"),
-    /未绑定任何凭据组/,
+  const again = run(
+    "vault.pluginSecretUpsert",
+    { ...base, name: "me@example.com · 密码", kinds: ["app_password", "other"], secret: "pw2" },
+    "plugin",
   );
-  assert.throws(() => run("vault.pluginSetAccount", { ...base, account: "y" }, "ui"), /不允许 ui/);
+  assert.equal(again.updated, true);
+  const listed = run("vault.secretList", { setId: set.id }).items;
+  assert.equal(listed.length, 1);
+  assert.deepEqual(listed[0].kinds, ["app_password", "other"], "类型按 KINDS 顺序回读");
+
+  // 账号与密码可以并存于同一条凭据
+  const merged = run(
+    "vault.pluginSecretUpsert",
+    { ...base, name: "组合凭据", kinds: ["password", "account"], secret: "me@example.com" },
+    "plugin",
+  );
+  assert.deepEqual(run("vault.secretList", { setId: set.id }).items.find((x) => x.id === merged.id).kinds, ["password", "account"]);
+
+  // 集合不再维护账号，pluginSetAccount 已下线
+  assert.equal(run("vault.pluginSetGet", base, "plugin").set.account, undefined);
 });
 
 test("并发改口令：LWW + 提示", () => {
@@ -357,27 +364,28 @@ test("0.1.0 的 vault_meta 迁移到 header/device/usage", () => {
   assert.equal(run("vault.secretReveal", { id: "sec_old" }).secret, "old-secret");
 });
 
-const KINDS = ["password", "phone", "id_card", "token", "app_password", "api_key", "other"];
+const KINDS = ["password", "account", "phone", "id_card", "token", "app_password", "api_key", "other"];
 const clientKinds = createRequire(import.meta.url)("../client/ui/kinds.cjs");
 
-test("kind 契约：schema、能力清单与界面标签三处同口径 7 种", async () => {
+test("kinds 契约：schema、能力清单与界面标签三处同口径 8 种", async () => {
   const { createDomain } = await import("../lib/index.js");
-  const kindField = createDomain().capability.fields.find((f) => f.name === "kind");
-  assert.match(kindField.type, /\bphone\b/);
-  assert.match(kindField.type, /\bid_card\b/);
-  assert.doesNotMatch(kindField.type, /site-account/);
+  const field = createDomain().capability.fields.find((f) => f.name === "kinds");
+  assert.match(field.type + " " + field.description, /\baccount\b/);
+  assert.match(field.type + " " + field.description, /\bid_card\b/);
+  assert.doesNotMatch(field.type + " " + field.description, /site-account/);
 
   const { actions } = makeVault();
-  for (const name of ["vault.secretList", "vault.secretCreate", "vault.secretUpdate", "vault.pluginSecretUpsert"]) {
-    assert.deepEqual(actions.get(name).input.properties.kind.enum, KINDS, name + " 的 kind 枚举必须覆盖 7 种");
+  for (const name of ["vault.secretCreate", "vault.secretUpdate", "vault.pluginSecretUpsert"]) {
+    assert.deepEqual(actions.get(name).input.properties.kinds.items.enum, KINDS, name + " 的 kinds 枚举");
   }
+  assert.deepEqual(actions.get("vault.secretList").input.properties.kind.enum, KINDS);
 
   assert.deepEqual(Object.keys(clientKinds.KIND_LABEL), KINDS);
+  assert.equal(clientKinds.KIND_LABEL.account, "账号");
   assert.equal(clientKinds.KIND_LABEL.phone, "手机号");
-  assert.equal(clientKinds.KIND_LABEL.id_card, "身份证号");
   assert.deepEqual(clientKinds.CREATABLE_KINDS, KINDS);
-  assert.deepEqual(clientKinds.kindOptions("site-account"), ["site-account"].concat(KINDS), "历史类型只读保留");
-  assert.deepEqual(clientKinds.kindOptions("password"), KINDS);
+  assert.deepEqual(clientKinds.kindsOf({ kind: "phone" }), ["phone"], "旧单值兜底");
+  assert.deepEqual(clientKinds.kindsText(["account", "password"]), "账号 / 密码");
 });
 
 test("集合层：一条凭据进多个集合、一个集合挂多个分组、删除只断关联", () => {
@@ -385,7 +393,7 @@ test("集合层：一条凭据进多个集合、一个集合挂多个分组、�
   run("vault.setup", { passphrase: PASS, mode: "A" });
   const g1 = run("vault.groupCreate", { name: "组一" }).id;
   const g2 = run("vault.groupCreate", { name: "组二" }).id;
-  const created = run("vault.secretCreate", { name: "共用密码", kind: "password", secret: "shared-pw", groupId: g1 });
+  const created = run("vault.secretCreate", { name: "共用密码", kinds: ["password"], secret: "shared-pw", groupId: g1 });
   assert.ok(created.setId, "按分组写入应自动落进默认集合");
 
   // 直接建集合 + 关联，P1 没有 action，走 domain 层
@@ -431,48 +439,42 @@ test("0.3.x → 0.4.0：启动补 account 列并把 schema_version 升到 4", ()
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_set").get().n, 0);
 });
 
-test("集合与账号：账号可空、可重复，条目按 id 区分，类型与搜索过滤生效", () => {
+test("集合：不再区分类型，账号只是一条 kind=account 的凭据", () => {
   const { run } = makeVault();
   run("vault.setup", { passphrase: PASS, mode: "A" });
 
-  const a = run("vault.setCreate", { name: "工作邮箱 A", account: "ops@example.com" });
-  const b = run("vault.setCreate", { name: "工作邮箱 B", account: "ops@example.com" });
-  const c = run("vault.setCreate", { name: "临时归档" });
-  assert.notEqual(a.id, b.id, "账号重复的集合仍是两条独立条目");
-  assert.equal(a.account, "ops@example.com");
-  assert.equal(a.type, "account");
-  assert.equal(b.type, "account");
-  assert.equal(c.account, "");
-  assert.equal(c.type, "common");
+  const a = run("vault.setCreate", { name: "工作邮箱 A" });
+  const b = run("vault.setCreate", { name: "工作邮箱 B" });
+  const c = run("vault.setCreate", { name: "临时归档", description: "旧账号记在描述里" });
+  assert.notEqual(a.id, b.id);
+  assert.equal(a.account, undefined, "集合不再有账号字段");
+  assert.equal(a.type, undefined, "集合不再区分类型");
 
   assert.equal(run("vault.setList", {}).items.length, 3);
-  const byAccount = run("vault.setList", { q: "ops@example.com" });
-  assert.deepEqual(byAccount.items.map((item) => item.id).sort(), [a.id, b.id].sort());
-  assert.deepEqual(run("vault.setList", { type: "account" }).items.map((item) => item.id).sort(), [a.id, b.id].sort());
-  assert.deepEqual(run("vault.setList", { type: "common" }).items.map((item) => item.id), [c.id]);
+  assert.deepEqual(run("vault.setList", { q: "工作邮箱" }).items.map((i) => i.id).sort(), [a.id, b.id].sort());
+  assert.deepEqual(run("vault.setList", { q: "描述" }).items.map((i) => i.id), [c.id]);
 
-  // 账号可改可清空，类型跟着推导变化
-  assert.equal(run("vault.setUpdate", { id: b.id, account: "" }).type, "common");
-  const back = run("vault.setUpdate", { id: b.id, account: "team@example.com" });
-  assert.equal(back.type, "account");
-  assert.equal(back.account, "team@example.com");
-  assert.equal(run("vault.setGet", { id: b.id }).account, "team@example.com");
+  // 账号凭据挂进集合，凭据列表能按类型筛到
+  const acc = run("vault.secretCreate", { name: "邮箱账号", kinds: ["account"], secret: "ops@example.com", setId: a.id });
+  assert.deepEqual(acc.kinds, ["account"]);
+  assert.equal(run("vault.secretList", { kind: "account" }).items.length, 1);
+  assert.deepEqual(run("vault.setGet", { id: a.id }).secrets.map((x) => [x.name, x.kinds]), [["邮箱账号", ["account"]]]);
 
-  assert.throws(() => run("vault.setCreate", { name: "超长账号", account: "x".repeat(101) }), /账号最多 100 字/);
-  assert.throws(() => run("vault.setCreate", { name: "工作邮箱 A", account: "other@example.com" }), /已有同名集合/);
+  assert.throws(() => run("vault.setCreate", { name: "工作邮箱 A" }), /已有同名集合/);
+  assert.throws(() => run("vault.setCreate", { name: "x".repeat(101) }), /最多 100 字/);
 });
 
 test("新建/编辑集合时一并处理凭据：勾已有的一条、填明文新建一条，保存后都挂上", () => {
   const { run } = makeVault();
   run("vault.setup", { passphrase: PASS, mode: "A" });
-  const existing = run("vault.secretCreate", { name: "旧授权码", kind: "app_password", secret: "old-code" });
+  const existing = run("vault.secretCreate", { name: "旧授权码", kinds: ["app_password"], secret: "old-code" });
 
   const created = run("vault.setCreate", {
     name: "工作邮箱 · 凭据",
     account: "ops@example.com",
     secrets: [
       { id: existing.id },
-      { name: "新授权码", kind: "app_password", secret: "new-code" },
+      { name: "新授权码", kinds: ["app_password"], secret: "new-code" },
     ],
   });
   assert.equal(created.secrets.length, 2, "保存集合时一并挂上两条凭据");
@@ -483,14 +485,14 @@ test("新建/编辑集合时一并处理凭据：勾已有的一条、填明文�
   // 编辑集合时追加：同名新凭据按名称幂等（更新后挂上），不会多出一条
   const updated = run("vault.setUpdate", {
     id: created.id,
-    secrets: [{ name: "新授权码", kind: "app_password", secret: "rotated" }],
+    secrets: [{ name: "新授权码", kinds: ["app_password"], secret: "rotated" }],
   });
   assert.equal(updated.secrets.length, 1);
   assert.equal(run("vault.setGet", { id: created.id }).secrets.length, 2);
 
   assert.throws(() => run("vault.setCreate", { name: "坏集合", secrets: [{ id: "nope" }] }), /凭据不存在/);
   assert.throws(
-    () => run("vault.setCreate", { name: "坏集合2", secrets: [{ name: "空值", kind: "other", secret: "" }] }),
+    () => run("vault.setCreate", { name: "坏集合2", secrets: [{ name: "空值", kinds: ["other"], secret: "" }] }),
     /新建凭据「空值」失败/,
   );
 });
@@ -505,7 +507,8 @@ test("0.2.x → 0.3.0 迁移：分组直属凭据收进默认集合，site-accou
   const dek = open(kek, head.wrapped_dek, "vault:dek");
   const ts = Date.now();
 
-  // 还原成 0.2.x 形态：补回 group_id 列并写三行站点专属凭据
+  // 还原成 0.2.x 形态：补回 kind/group_id 两列并写三行站点专属凭据
+  db.exec("ALTER TABLE vault_secret ADD COLUMN kind TEXT NOT NULL DEFAULT 'other'");
   db.exec("ALTER TABLE vault_secret ADD COLUMN group_id TEXT");
   headerSet(db, { schema_version: 2 });
   const rows = [
@@ -517,30 +520,27 @@ test("0.2.x → 0.3.0 迁移：分组直属凭据收进默认集合，site-accou
     db.prepare(
       "INSERT INTO vault_secret(id, name, kind, group_id, meta, ciphertext, created_at, updated_at, rev) " +
         "VALUES(?, ?, 'site-account', ?, '{}', ?, ?, ?, 1)",
-    ).run(id, name, groupId, seal(dek, plain, secretAad(id, name, "site-account")), ts, ts);
+    ).run(id, name, groupId, seal(dek, plain, legacySecretAad(id, name, "site-account")), ts, ts);
   }
 
   vault.lock();
   const res = run("vault.unlock", { passphrase: PASS });
   assert.match(String(res.notice || ""), /集合与账号/);
-  assert.equal(headerGet(db).schema_version, 5);
-  assert.equal(
-    db.prepare("SELECT COUNT(*) AS n FROM pragma_table_info('vault_secret') WHERE name = 'group_id'").get().n,
-    0,
-    "迁移后应删掉 group_id 列",
-  );
+  assert.match(String(res.notice || ""), /凭据类型拆表/);
+  assert.equal(headerGet(db).schema_version, 6);
+  assert.equal(hasColumn(db, "vault_secret", "group_id"), false, "迁移后应删掉 group_id 列");
+  assert.equal(hasColumn(db, "vault_secret", "kind"), false, "0.6.0 起类型拆到 vault_secret_kind");
 
   const items = run("vault.secretList").items;
   assert.equal(items.length, 3);
-  assert.ok(items.every((item) => item.kind !== "site-account"));
   assert.deepEqual(
     new Set(items.map((item) => item.name)),
     new Set(["acc_1 · 密码", "acc_1 · 手机号", "acc_1 · 身份证号"]),
   );
-  const kinds = Object.fromEntries(items.map((item) => [item.name, item.kind]));
-  assert.equal(kinds["acc_1 · 密码"], "password");
-  assert.equal(kinds["acc_1 · 手机号"], "phone");
-  assert.equal(kinds["acc_1 · 身份证号"], "id_card");
+  const kinds = Object.fromEntries(items.map((item) => [item.name, item.kinds]));
+  assert.deepEqual(kinds["acc_1 · 密码"], ["password"]);
+  assert.deepEqual(kinds["acc_1 · 手机号"], ["phone"]);
+  assert.deepEqual(kinds["acc_1 · 身份证号"], ["id_card"]);
   for (const [id, , plain] of rows) assert.equal(run("vault.secretReveal", { id }).secret, plain);
 
   const sets = createSets({ db });
@@ -559,30 +559,23 @@ test("0.2.x → 0.3.0 迁移：分组直属凭据收进默认集合，site-accou
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_set").get().n, before);
 });
 
-test("迁移失败整批回滚，schema_version 保持 2", async () => {
+test("迁移失败整批回滚，schema_version 停在迁移前", async () => {
   const { db, run, vault } = makeVault();
   run("vault.setup", { passphrase: PASS, mode: "A" });
-  const groupId = run("vault.groupCreate", { name: "组三" }).id;
-  const head = headerGet(db);
-  const kek = deriveKey(PASS, head.salt, JSON.parse(head.kdf));
-  const dek = open(kek, head.wrapped_dek, "vault:dek");
-  db.exec("ALTER TABLE vault_secret ADD COLUMN group_id TEXT");
-  headerSet(db, { schema_version: 2 });
-  // 密文与 AAD 不匹配：迁移时解密失败应走兜底而不是抛错；这里构造真的异常（集合名超长）
+  const secret = run("vault.secretCreate", { name: "会被卡住的凭据", kinds: ["password"], secret: "pw" });
+  // 还原成 0.5.x：类型还没拆表，header 停在 5；预先塞一行同 (secret_id, kind) 的类型行，
+  // 迁移回填时撞唯一索引，事务回滚。
+  db.prepare("DELETE FROM vault_secret_kind WHERE secret_id = ?").run(secret.id);
   db.prepare(
-    "INSERT INTO vault_secret(id, name, kind, group_id, meta, ciphertext, created_at, updated_at, rev) " +
-      "VALUES('sec_bad', ?, 'site-account', ?, '{}', ?, ?, ?, 1)",
-  ).run(
-    "site.site_1." + "x".repeat(120) + ".password",
-    groupId,
-    seal(dek, "pw", secretAad("sec_bad", "site.site_1." + "x".repeat(120) + ".password", "site-account")),
-    Date.now(),
-    Date.now(),
-  );
+    "INSERT INTO vault_secret_kind(id, secret_id, kind, created_at, updated_at, rev) VALUES('sk_dup', ?, 'other', ?, ?, 1)",
+  ).run(secret.id, Date.now(), Date.now());
+  headerSet(db, { schema_version: 5 });
+
   vault.lock();
   const res = run("vault.unlock", { passphrase: PASS });
   assert.match(String(res.notice || ""), /升级失败，已回滚/);
-  assert.equal(headerGet(db).schema_version, 2);
+  assert.equal(headerGet(db).schema_version, 5);
+  assert.equal(run("vault.secretReveal", { id: secret.id }).secret, "pw", "回滚后密文仍可读");
 });
 
 test("两设备同步：复制同步表后集合、关联与凭据一致", () => {
@@ -603,7 +596,7 @@ test("两设备同步：复制同步表后集合、关联与凭据一致", () =>
   a.run("vault.groupAttachSet", { groupId, setId });
   a.run("vault.subjectRegister", { type: "site", title: "站点" }, "plugin");
   a.run("vault.bind", { subjectType: "site", subjectId: "site_9", groupId }, "plugin");
-  const secret = a.run("vault.secretCreate", { name: "同步密码", kind: "password", secret: "pw-sync", setId });
+  const secret = a.run("vault.secretCreate", { name: "同步密码", kinds: ["password"], secret: "pw-sync", setId });
 
   // 设备 B：先建空库，再把 A 的同步表整表拷过去（等价宿主同步后的状态）
   const b = makeVault();
@@ -638,11 +631,11 @@ test("凭据列表关键字搜索：名称与备注都能命中，不再报 SQL 
   run("vault.setup", { passphrase: PASS, mode: "A" });
   run("vault.secretCreate", {
     name: "ID_CARD",
-    kind: "id_card",
+    kinds: ["id_card"],
     secret: "110101199001011234",
     meta: { note: "身份证" },
   });
-  run("vault.secretCreate", { name: "rss-token", kind: "token", secret: "tok-abc", meta: { note: "阅读器" } });
+  run("vault.secretCreate", { name: "rss-token", kinds: ["token"], secret: "tok-abc", meta: { note: "阅读器" } });
 
   assert.deepEqual(
     run("vault.secretList", { q: "ID_CAR" }, "agent").items.map((i) => i.name),
@@ -661,10 +654,10 @@ test("凭据列表关键字搜索：名称与备注都能命中，不再报 SQL 
 test("锁定后集合与凭据元数据仍可读，只有明文与写操作要解锁", () => {
   const { run, vault } = makeVault();
   run("vault.setup", { passphrase: PASS, mode: "A" });
-  const set = run("vault.setCreate", { name: "工作邮箱", account: "ops@example.com" });
+  const set = run("vault.setCreate", { name: "工作邮箱" });
   run("vault.secretCreate", {
     name: "邮箱密码",
-    kind: "password",
+    kinds: ["password", "account"],
     secret: "p@ssw0rd",
     setId: set.id,
   });
@@ -672,106 +665,94 @@ test("锁定后集合与凭据元数据仍可读，只有明文与写操作要�
   vault.lock();
   assert.equal(run("vault.status").locked, true);
 
-  // 集合与凭据名是明文元数据，锁定时照样能列出；0.5.0 起账号是密文，锁定态读不到。
+  // 集合名、凭据名与类型都是明文元数据，锁定时照样能列出
   const sets = run("vault.setList", {}).items;
   assert.equal(sets.length, 1);
   assert.equal(sets[0].name, "工作邮箱");
-  assert.equal(sets[0].account, "");
-  assert.equal(sets[0].accountLocked, true);
   assert.equal(sets[0].secretCount, 1);
 
   const detail = run("vault.setGet", { id: set.id });
   assert.equal(detail.secrets.length, 1);
   assert.equal(detail.secrets[0].name, "邮箱密码");
+  assert.deepEqual(detail.secrets[0].kinds, ["password", "account"]);
 
   const secrets = run("vault.secretList", {}).items;
   assert.equal(secrets.length, 1);
-  assert.equal(secrets[0].kind, "password");
+  assert.deepEqual(secrets[0].kinds, ["password", "account"]);
   assert.equal(secrets[0].secret, undefined, "列表不应带明文");
 
-  // 明文、新建与改密文仍然必须解锁。
   assert.throws(() => run("vault.secretReveal", { id: secrets[0].id }), /锁定/);
-  assert.throws(
-    () => run("vault.secretCreate", { name: "另一条", kind: "password", secret: "x" }),
-    /锁定/,
-  );
+  assert.throws(() => run("vault.secretCreate", { name: "另一条", kinds: ["password"], secret: "x" }), /锁定/);
 });
 
-test("集合账号加密落库：库里只有 va1: 密文，解锁后可读、可搜、可改", () => {
+test("凭据多类型：一条凭据可属于多个类型，改类型不重加密、改名才重加密", () => {
   const { db, run } = makeVault();
   run("vault.setup", { passphrase: PASS, mode: "A" });
-  const set = run("vault.setCreate", { name: "工作邮箱", account: "ops@example.com" });
-  const row = db.prepare("SELECT * FROM vault_set WHERE id = ?").get(set.id);
-  assert.ok(isSealedAccount(row.account), "账号列应是 va1: 密文");
-  assert.ok(!row.account.includes("ops@example.com"));
-  assert.ok(!JSON.stringify(row).includes("ops@example.com"), "整行都不该出现明文账号");
 
-  assert.equal(set.account, "ops@example.com");
-  assert.equal(set.accountLocked, false);
-  assert.equal(run("vault.setGet", { id: set.id }).account, "ops@example.com");
-  assert.equal(run("vault.setList", { q: "ops@" }).items.length, 1, "账号搜索走解密后内存匹配");
-  assert.equal(run("vault.setList", { type: "account" }).items.length, 1);
+  const created = run("vault.secretCreate", { name: "邮箱", kinds: ["password", "account"], secret: "ops@example.com" });
+  assert.deepEqual(created.kinds, ["password", "account"], "按 KINDS 固定顺序回读");
+  const before = db.prepare("SELECT ciphertext FROM vault_secret WHERE id = ?").get(created.id).ciphertext;
 
-  // 改名不重加密（account 未传时保留原密文），账号照常解密
-  run("vault.setUpdate", { id: set.id, name: "工作邮箱 2" });
-  assert.equal(run("vault.setGet", { id: set.id }).account, "ops@example.com");
+  assert.equal(run("vault.secretList", { kind: "account" }).items.length, 1, "任一所含类型命中");
+  assert.equal(run("vault.secretList", { kind: "password" }).items.length, 1);
+  assert.equal(run("vault.secretList", { kind: "token" }).items.length, 0);
 
-  // 换账号重新加密
-  run("vault.setUpdate", { id: set.id, account: "ops2@example.com" });
-  const row2 = db.prepare("SELECT account FROM vault_set WHERE id = ?").get(set.id);
-  assert.ok(isSealedAccount(row2.account));
-  assert.ok(!row2.account.includes("ops2@example.com"));
-  assert.equal(run("vault.setGet", { id: set.id }).account, "ops2@example.com");
+  // 只改类型：密文不动，避免无谓重加密
+  run("vault.secretUpdate", { id: created.id, kinds: ["account"] });
+  const afterKind = db.prepare("SELECT ciphertext FROM vault_secret WHERE id = ?").get(created.id).ciphertext;
+  assert.equal(afterKind, before);
+  assert.deepEqual(run("vault.secretList", { q: "邮箱" }).items.find((x) => x.id === created.id).kinds, ["account"]);
+  assert.equal(run("vault.secretReveal", { id: created.id }).secret, "ops@example.com");
 
-  // 改为普通集合：账号列清空，类型回到 common
-  run("vault.setUpdate", { id: set.id, account: "" });
-  assert.equal(db.prepare("SELECT account FROM vault_set WHERE id = ?").get(set.id).account, "");
-  assert.equal(run("vault.setGet", { id: set.id }).type, "common");
+  // 改名要重封装（AAD 绑 name），改完仍可读
+  run("vault.secretUpdate", { id: created.id, name: "邮箱（新）" });
+  const afterName = db.prepare("SELECT ciphertext FROM vault_secret WHERE id = ?").get(created.id).ciphertext;
+  assert.notEqual(afterName, before);
+  assert.equal(run("vault.secretReveal", { id: created.id }).secret, "ops@example.com");
+
+  assert.throws(() => run("vault.secretCreate", { name: "空类型", kinds: [], secret: "x" }), /至少要有一个类型/);
+  assert.throws(() => run("vault.secretCreate", { name: "坏类型", kinds: ["site-account"], secret: "x" }), /kinds 只能是/);
 });
 
-test("集合账号锁定态：读不到账号、写账号报锁定，普通集合不受影响", () => {
+test("5.x → 6.0 迁移：单值类型拆表、旧 AAD 重封装、集合账号转成账号凭据", () => {
   const { db, run, vault } = makeVault();
   run("vault.setup", { passphrase: PASS, mode: "A" });
-  const set = run("vault.setCreate", { name: "工作邮箱", account: "ops@example.com" });
-  vault.lock();
+  const set = run("vault.setCreate", { name: "工作邮箱" });
+  const secret = run("vault.secretCreate", { name: "邮箱密码", kinds: ["password"], secret: "pw-old", setId: set.id });
 
-  const item = run("vault.setList").items[0];
-  assert.equal(item.account, "");
-  assert.equal(item.accountLocked, true);
-  assert.equal(item.type, "account", "类型仍按密文列是否为空推导");
-  assert.equal(run("vault.setGet", { id: set.id }).account, "");
-
-  assert.throws(() => run("vault.setCreate", { name: "新号", account: "a@b.c" }), /锁定/);
-  assert.throws(() => run("vault.setUpdate", { id: set.id, account: "x@y.z" }), /锁定/);
-  assert.throws(() => run("vault.setUpdate", { id: set.id, account: "" }), /锁定/, "清空已有账号也要解锁");
-
-  // 只有普通集合（空账号）在锁定态仍能建：不需要 DEK
-  const plain = run("vault.setCreate", { name: "临时归档" });
-  assert.equal(plain.account, "");
-  assert.equal(plain.type, "common");
-  assert.equal(plain.accountLocked, false);
-  const raw = db.prepare("SELECT account FROM vault_set WHERE id = ?").get(set.id).account;
-  assert.ok(raw.startsWith("va1:"), "锁定态写入失败不应破坏原密文");
-});
-
-test("0.4.x → 0.5.0：解锁时把明文集合账号加密并升到 schema 5", () => {
-  const { db, run, vault } = makeVault();
-  run("vault.setup", { passphrase: PASS, mode: "A" });
-  const set = run("vault.setCreate", { name: "工作邮箱", account: "ops@example.com" });
-  // 还原成 0.4.x 形态：账号退回明文，header 停在 4
-  db.prepare("UPDATE vault_set SET account = ? WHERE id = ?").run("ops@example.com", set.id);
-  headerSet(db, { schema_version: 4 });
+  // 还原成 0.5.x：类型回到单值列、密文用旧 AAD（含类型）、集合重新有明文账号列
+  const head = headerGet(db);
+  const kek = deriveKey(PASS, head.salt, JSON.parse(head.kdf));
+  const dek = open(kek, head.wrapped_dek, "vault:dek");
+  db.prepare("DELETE FROM vault_secret_kind").run();
+  db.exec("ALTER TABLE vault_secret ADD COLUMN kind TEXT NOT NULL DEFAULT 'password'");
+  db.prepare("UPDATE vault_secret SET ciphertext = ?, kind = 'password' WHERE id = ?").run(
+    seal(dek, "pw-old", legacySecretAad(secret.id, "邮箱密码", "password")),
+    secret.id,
+  );
+  db.exec("ALTER TABLE vault_set ADD COLUMN account TEXT NOT NULL DEFAULT ''");
+  db.prepare("UPDATE vault_set SET account = ? WHERE id = ?").run(sealAccount(dek, "ops@example.com", set.id), set.id);
+  headerSet(db, { schema_version: 5 });
 
   vault.lock();
   const res = run("vault.unlock", { passphrase: PASS });
-  assert.match(String(res.notice || ""), /账号加密/);
-  assert.equal(headerGet(db).schema_version, 5);
-  const row = db.prepare("SELECT account FROM vault_set WHERE id = ?").get(set.id);
-  assert.ok(row.account.startsWith("va1:"));
-  assert.equal(run("vault.setGet", { id: set.id }).account, "ops@example.com");
+  assert.match(String(res.notice || ""), /凭据类型拆表/);
+  assert.equal(headerGet(db).schema_version, 6);
+  assert.equal(hasColumn(db, "vault_secret", "kind"), false);
+  assert.equal(hasColumn(db, "vault_set", "account"), false);
 
-  // 幂等：已经到 5 的库再次解锁不再提示迁移
+  // 旧密文换成新 AAD 后仍可读；类型回到关联表
+  assert.equal(run("vault.secretReveal", { id: secret.id }).secret, "pw-old");
+  assert.deepEqual(run("vault.secretList", { q: "邮箱密码" }).items.find((x) => x.id === secret.id).kinds, ["password"]);
+
+  // 集合账号转成 kind=account 的凭据，挂在原集合里
+  const accounts = run("vault.secretList", { kind: "account" }).items;
+  assert.equal(accounts.length, 1);
+  assert.equal(accounts[0].name, "工作邮箱 · 账号");
+  assert.equal(run("vault.secretReveal", { id: accounts[0].id }).secret, "ops@example.com");
+  assert.ok(run("vault.setGet", { id: set.id }).secrets.some((x) => x.id === accounts[0].id));
+
+  // 幂等：再解锁不再提示迁移
   vault.lock();
-  const again = run("vault.unlock", { passphrase: PASS });
-  assert.equal(String(again.notice || ""), "");
+  assert.equal(String(run("vault.unlock", { passphrase: PASS }).notice || ""), "");
 });

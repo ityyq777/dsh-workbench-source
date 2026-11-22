@@ -22,7 +22,7 @@ import {
   NODE_MAPPING_TABLE,
 } from "../db/db.js";
 import { statsReport, renderStats } from "../stats/stats.js";
-import { assertNoAccounts, assertBindableUnused } from "./accounts.js";
+import { unbindSite } from "../infra/vault-link.js";
 import { configValues } from "../infra/config.js";
 import { replaceDirMappings, replaceTagMappings } from "./sites-mappings.js";
 
@@ -136,19 +136,11 @@ function siteDirsOf(db, siteId) {
   return out;
 }
 
-function countAccountsOf(db, siteId) {
-  const row = db
-    .prepare("SELECT COUNT(*) AS n FROM site_account WHERE site_id=? AND deleted_at IS NULL")
-    .get(String(siteId));
-  return Number(row ? row.n : 0);
-}
-
 function enrichSite(db, row, tagsAvailable) {
   const site = rowSite(row);
   site.tags = siteTagsOf(db, site.id, tagsAvailable);
   site.tagIds = site.tags.map(function (t) { return t.id; });
   site.dirs = siteDirsOf(db, site.id);
-  site.accountCount = countAccountsOf(db, site.id);
   return site;
 }
 
@@ -312,7 +304,6 @@ function updateSite(db, args, origin, api, tagsAvailable) {
   const bindable = args.bindable === undefined
     ? Number(existing.bindable) === 0 ? 0 : 1
     : (args.bindable === 0 || args.bindable === "0" || args.bindable === false ? 0 : 1);
-  if (Number(existing.bindable) === 1 && bindable === 0) assertBindableUnused(db, id);
   const ts = now();
   tx(db, function () {
     db.prepare(
@@ -333,11 +324,11 @@ function updateSite(db, args, origin, api, tagsAvailable) {
   return { site: enrichSite(db, db.prepare("SELECT * FROM " + SITE_TABLE + " WHERE id=?").get(id), tagsAvailable) };
 }
 
-function deleteSite(db, args, origin, api) {
+async function deleteSite(db, args, origin, api) {
   const id = idOf(args.id !== undefined ? args.id : args.siteId);
   const existing = db.prepare("SELECT * FROM " + SITE_TABLE + " WHERE id=? AND deleted_at IS NULL").get(id);
   if (!existing) return { ok: true, deleted: false, missing: true };
-  assertNoAccounts(db, id);
+  // 账号概念已下线：站点删除后保险箱里的映射由 vault 侧清理（见 deleteSite 收尾）。
   const ts = now();
   let removedNodeMappings = 0;
   let removedTagMappings = 0;
@@ -364,7 +355,15 @@ function deleteSite(db, args, origin, api) {
     }
   });
   api.emit("sites-changed", { id: id, op: "delete" });
-  return { ok: true, deleted: true, removedNodeMappings: removedNodeMappings, removedTagMappings: removedTagMappings };
+  // 映射表归凭据保险箱：站点删掉后顺手清掉 subject 引用，未装保险箱时静默跳过。
+  const purged = await unbindSite(id);
+  return {
+    ok: true,
+    deleted: true,
+    removedNodeMappings: removedNodeMappings,
+    removedTagMappings: removedTagMappings,
+    removedBindings: Number(purged && purged.removed ? purged.removed : 0),
+  };
 }
 
 function searchTags(db, args, tagsAvailable) {
@@ -488,12 +487,14 @@ export function registerSiteActions(api) {
   });
 
   action("sites.delete", {
-    description: "软删站点，并清理它的目录映射与标签映射",
+    description: "软删站点，并清理它的目录映射、标签映射与保险箱分组绑定",
     input: { type: "object", properties: { id: { type: ["string", "number"] } } },
     execute: function (args, ctx) { return deleteSite(db, args || {}, ctx.origin, api); },
     render: function (r) {
       if (!r || !r.deleted) return "站点不存在或已删除";
-      return "已删除站点，清理目录映射 " + r.removedNodeMappings + " 条、标签映射 " + r.removedTagMappings + " 条";
+      const bindings = Number(r.removedBindings || 0);
+      return "已删除站点，清理目录映射 " + r.removedNodeMappings + " 条、标签映射 " + r.removedTagMappings + " 条" +
+        (bindings ? "、凭据分组绑定 " + bindings + " 条" : "");
     },
   });
 

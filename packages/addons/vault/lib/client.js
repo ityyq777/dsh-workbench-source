@@ -2722,6 +2722,7 @@ var require_kinds = __commonJS({
     "use strict";
     var KIND_LABEL = {
       password: "\u5BC6\u7801",
+      account: "\u8D26\u53F7",
       phone: "\u624B\u673A\u53F7",
       id_card: "\u8EAB\u4EFD\u8BC1\u53F7",
       token: "Token",
@@ -2729,11 +2730,51 @@ var require_kinds = __commonJS({
       api_key: "API Key",
       other: "\u5176\u5B83"
     };
-    var CREATABLE_KINDS = ["password", "phone", "id_card", "token", "app_password", "api_key", "other"];
-    function kindOptions(current) {
-      return current && CREATABLE_KINDS.indexOf(current) === -1 ? [current].concat(CREATABLE_KINDS) : CREATABLE_KINDS;
+    var CREATABLE_KINDS = ["password", "account", "phone", "id_card", "token", "app_password", "api_key", "other"];
+    function kindsOf(row) {
+      if (row && Array.isArray(row.kinds) && row.kinds.length) return row.kinds.slice();
+      if (row && row.kind) return [row.kind];
+      return [];
     }
-    module2.exports = { KIND_LABEL, CREATABLE_KINDS, kindOptions };
+    function kindsText(list) {
+      var arr = Array.isArray(list) ? list : list ? [list] : [];
+      if (!arr.length) return KIND_LABEL.other;
+      return arr.map(function(kind) {
+        return KIND_LABEL[kind] || kind;
+      }).join(" / ");
+    }
+    function toggleKind(list, kind) {
+      var arr = (list || []).slice();
+      var at = arr.indexOf(kind);
+      if (at >= 0) arr.splice(at, 1);
+      else arr.push(kind);
+      return arr;
+    }
+    function kindChecks(hh, selected, onToggle, label) {
+      var picked = selected || [];
+      return hh("div", { className: "wbv-check-list", role: "group", "aria-label": label || "\u51ED\u636E\u7C7B\u578B\uFF08\u53EF\u591A\u9009\uFF09" }, CREATABLE_KINDS.map(function(kind) {
+        return hh(
+          "label",
+          { key: kind, className: "wbv-check" },
+          hh("input", {
+            type: "checkbox",
+            checked: picked.indexOf(kind) >= 0,
+            onChange: function() {
+              onToggle(kind);
+            }
+          }),
+          hh("span", null, KIND_LABEL[kind] || kind)
+        );
+      }));
+    }
+    module2.exports = {
+      KIND_LABEL,
+      CREATABLE_KINDS,
+      kindsOf,
+      kindsText,
+      toggleKind,
+      kindChecks
+    };
   }
 });
 
@@ -2843,7 +2884,7 @@ var require_secrets = __commonJS({
         formS[1]({
           id: row.id,
           name: row.name,
-          kind: row.kind,
+          kinds: K.kindsOf(row),
           secret: "",
           setIds: (row.setIds || []).slice(),
           note: noteOf(meta)
@@ -2898,7 +2939,7 @@ var require_secrets = __commonJS({
         var picked = f.setIds || [];
         var payload = {
           name: f.name.trim(),
-          kind: f.kind,
+          kinds: f.kinds,
           meta
         };
         if (f.secret) payload.secret = f.secret;
@@ -3024,7 +3065,7 @@ var require_secrets = __commonJS({
           "tr",
           { key: row.id },
           h("td", null, h("div", { className: "wbv-cell-main" }, row.name), h("div", { className: "wbv-cell-sub" }, row.id)),
-          h("td", { className: "wbv-c-kind" }, h("span", { className: "wbv-pill" }, KIND_LABEL[row.kind] || row.kind)),
+          h("td", { className: "wbv-c-kind" }, h("span", { className: "wbv-pill" }, K.kindsText(K.kindsOf(row)))),
           h("td", { className: "wbv-c-sets" }, chips.length ? h("div", { className: "wbv-chips" }, chips) : h("span", { className: "wbv-muted" }, "\u672A\u52A0\u5165\u96C6\u5408")),
           h("td", null, noteOf(meta) || "\u2014"),
           h("td", { className: "wbv-c-used" }, C.fmtTime(row.lastUsedAt, lang)),
@@ -3134,21 +3175,16 @@ var require_secrets = __commonJS({
                   ),
                   hh(
                     C.Field,
-                    { h: hh, label: "\u7C7B\u578B" },
-                    hh(P.Select, {
-                      h: hh,
-                      value: formS[0].kind,
-                      onChange: function(e) {
-                        formS[1](Object.assign({}, formS[0], { kind: e.target.value }));
-                      }
-                    }, K.CREATABLE_KINDS.map(function(k) {
-                      return hh("option", { key: k, value: k }, KIND_LABEL[k]);
-                    }))
+                    { h: hh, label: "\u7C7B\u578B\uFF08\u53EF\u591A\u9009\uFF09", hint: "\u81F3\u5C11\u4E00\u4E2A\uFF1B\u540C\u4E00\u6761\u51ED\u636E\u53EF\u540C\u65F6\u662F\u8D26\u53F7\u4E0E\u5BC6\u7801" },
+                    K.kindChecks(hh, formS[0].kinds, function(kind) {
+                      formS[1](Object.assign({}, formS[0], { kinds: K.toggleKind(formS[0].kinds, kind) }));
+                    })
                   )
                 );
               },
               validate: function() {
-                return formS[0].name.trim() ? "" : "\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A";
+                if (!formS[0].name.trim()) return "\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A";
+                return (formS[0].kinds || []).length ? "" : "\u7C7B\u578B\u81F3\u5C11\u8981\u9009\u4E00\u4E2A";
               }
             },
             {
@@ -3337,7 +3373,7 @@ var require_secrets = __commonJS({
       return [meta.username, meta.url].filter(Boolean).join(" \xB7 ");
     }
     function emptyForm() {
-      return { id: "", name: "", kind: "password", secret: "", setIds: [], note: "" };
+      return { id: "", name: "", kinds: ["password"], secret: "", setIds: [], note: "" };
     }
     module2.exports.noteOf = noteOf;
   }
@@ -3760,11 +3796,10 @@ var require_sets = __commonJS({
       var activeS = React.useState(null);
       var detailS = React.useState({ setId: "", secrets: [], groups: [], error: "" });
       var qS = React.useState("");
-      var typeS = React.useState("");
       var msgS = React.useState("");
       var busyS = React.useState(false);
       var draftS = React.useState(null);
-      var nsD = React.useState({ name: "", kind: "password", secret: "" });
+      var nsD = React.useState({ name: "", kinds: ["password"], secret: "" });
       var pickS = React.useState([]);
       var delS = React.useState(null);
       var guard = Lock2.use({ api, C, React });
@@ -3775,7 +3810,7 @@ var require_sets = __commonJS({
           return Object.assign({}, old, { loading: true });
         });
         Promise.all([
-          C.call(api, "vault.setList", { q: qS[0], type: typeS[0] || void 0 }),
+          C.call(api, "vault.setList", { q: qS[0] }),
           C.call(api, "vault.secretList", {}),
           C.call(api, "vault.groupList", {})
         ]).then(function(r) {
@@ -3818,22 +3853,20 @@ var require_sets = __commonJS({
         });
       }
       function startCreate() {
-        draftS[1]({ name: "", type: "common", account: "", description: "", color: "", secretIds: [], newSecrets: [] });
-        nsD[1]({ name: "", kind: "password", secret: "" });
+        draftS[1]({ name: "", description: "", color: "", secretIds: [], newSecrets: [] });
+        nsD[1]({ name: "", kinds: ["password"], secret: "" });
         msgS[1]("");
       }
       function startEdit(set) {
         draftS[1]({
           id: set.id,
           name: set.name,
-          type: set.type === "account" ? "account" : "common",
-          account: set.account || "",
           description: set.description || "",
           color: set.color || "",
           secretIds: [],
           newSecrets: []
         });
-        nsD[1]({ name: "", kind: "password", secret: "" });
+        nsD[1]({ name: "", kinds: ["password"], secret: "" });
         msgS[1]("");
       }
       function addNewSecret() {
@@ -3841,17 +3874,15 @@ var require_sets = __commonJS({
         var name = String(row.name || "").trim();
         if (!name) return msgS[1]("\u65B0\u51ED\u636E\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A");
         if (!String(row.secret || "")) return msgS[1]("\u65B0\u51ED\u636E\u9700\u8981\u586B\u5199\u660E\u6587");
-        var list = (draftS[0].newSecrets || []).concat([{ name, kind: row.kind || "other", secret: String(row.secret) }]);
+        if (!(row.kinds || []).length) return msgS[1]("\u65B0\u51ED\u636E\u81F3\u5C11\u8981\u9009\u4E00\u4E2A\u7C7B\u578B");
+        var list = (draftS[0].newSecrets || []).concat([{ name, kinds: row.kinds.slice(), secret: String(row.secret) }]);
         draftS[1](Object.assign({}, draftS[0], { newSecrets: list }));
-        nsD[1]({ name: "", kind: "password", secret: "" });
+        nsD[1]({ name: "", kinds: ["password"], secret: "" });
         msgS[1]("");
       }
       function saveDraft() {
         var d = draftS[0];
         if (!d || !String(d.name || "").trim()) return msgS[1]("\u96C6\u5408\u540D\u4E0D\u80FD\u4E3A\u7A7A");
-        var isAccount = d.type === "account";
-        var account = isAccount ? String(d.account || "").trim() : "";
-        if (isAccount && !account) return msgS[1]("\u8D26\u53F7\u96C6\u5408\u9700\u8981\u586B\u5199\u8D26\u53F7\uFF1B\u8D26\u53F7\u7559\u7A7A\u8BF7\u6539\u9009\u666E\u901A\u96C6\u5408");
         busyS[1](true);
         msgS[1]("");
         var secrets = [];
@@ -3860,11 +3891,10 @@ var require_sets = __commonJS({
         });
         (d.newSecrets || []).forEach(function(s) {
           if (!String(s.name || "").trim() || !String(s.secret || "")) return;
-          secrets.push({ name: String(s.name).trim(), kind: s.kind || "other", secret: String(s.secret) });
+          secrets.push({ name: String(s.name).trim(), kinds: s.kinds || ["other"], secret: String(s.secret) });
         });
         var body = {
           name: String(d.name).trim(),
-          account,
           description: d.description || "",
           color: d.color || ""
         };
@@ -3939,14 +3969,10 @@ var require_sets = __commonJS({
           msgS[1](C.errText(e));
         });
       }
-      function accountText(set, withPrefix) {
-        var label = set.accountLocked ? "\u8D26\u53F7\u5DF2\u52A0\u5BC6 \xB7 \u89E3\u9501\u540E\u53EF\u89C1" : set.account ? "\u8D26\u53F7 " + set.account : "\u672A\u586B\u8D26\u53F7";
-        return withPrefix ? label : label.replace(/^账号\s*/, "");
-      }
       var items = listS[0].items.filter(function(set) {
         var q = qS[0].trim();
         if (!q) return true;
-        return (set.name || "").indexOf(q) >= 0 || (set.account || "").indexOf(q) >= 0 || (set.description || "").indexOf(q) >= 0;
+        return (set.name || "").indexOf(q) >= 0 || (set.description || "").indexOf(q) >= 0;
       });
       var detail = detailS[0];
       var inSet = {};
@@ -3961,7 +3987,7 @@ var require_sets = __commonJS({
       var lockNote = readOnly ? h(C.Notice, {
         h,
         kind: "warn",
-        text: "\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A\uFF1A\u96C6\u5408\u3001\u8D26\u53F7\u4E0E\u51ED\u636E\u540D\u7167\u5E38\u53EF\u89C1\uFF1B\u65B0\u5EFA\u3001\u7F16\u8F91\u3001\u52A0\u5165\u51ED\u636E\u4E0E\u660E\u6587\u5F55\u5165\u9700\u5148\u5230\u300C\u4FDD\u9669\u7BB1\u300D\u9875\u89E3\u9501\u3002"
+        text: "\u4FDD\u9669\u7BB1\u5DF2\u9501\u5B9A\uFF1A\u96C6\u5408\u4E0E\u51ED\u636E\u540D\u7167\u5E38\u53EF\u89C1\uFF1B\u65B0\u5EFA\u3001\u7F16\u8F91\u3001\u52A0\u5165\u51ED\u636E\u4E0E\u660E\u6587\u5F55\u5165\u9700\u5148\u5230\u300C\u4FDD\u9669\u7BB1\u300D\u9875\u89E3\u9501\u3002"
       }) : null;
       var active = activeS[0];
       var secretColumns = [
@@ -3975,11 +4001,11 @@ var require_sets = __commonJS({
         { className: "wbv" },
         h(P.PageHead, {
           h,
-          title: "\u96C6\u5408\u4E0E\u8D26\u53F7",
-          sub: "\u4E00\u4E2A\u96C6\u5408\u53EF\u4EE5\u6807\u4E00\u4E2A\u8D26\u53F7\uFF08\u53EF\u91CD\u590D\u3001\u53EF\u7559\u7A7A\uFF09\uFF0C\u5E76\u6302\u5230\u591A\u4E2A\u5206\u7EC4\u3001\u88C5\u591A\u6761\u51ED\u636E\uFF1B\u5220\u9664\u96C6\u5408\u53EA\u65AD\u5173\u8054\uFF0C\u4E0D\u5220\u51ED\u636E\u3002",
+          title: "\u96C6\u5408",
+          sub: "\u96C6\u5408\u53EA\u88C5\u51ED\u636E\uFF1A\u4E00\u4E2A\u96C6\u5408\u53EF\u6302\u591A\u4E2A\u5206\u7EC4\u3001\u88C5\u591A\u6761\u51ED\u636E\uFF1B\u8D26\u53F7\u672C\u8EAB\u662F\u4E00\u6761 kind=account \u7684\u51ED\u636E\uFF0C\u5220\u9664\u96C6\u5408\u53EA\u65AD\u5173\u8054\uFF0C\u4E0D\u5220\u51ED\u636E\u3002",
           actions: [
             h(C.Btn, { h, key: "refresh", onClick: load }, "\u5237\u65B0"),
-            h(C.Btn, { h, key: "create", kind: "primary", disabled: readOnly, onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408\u4E0E\u8D26\u53F7")
+            h(C.Btn, { h, key: "create", kind: "primary", disabled: readOnly, onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408")
           ]
         }),
         lockNote,
@@ -3989,28 +4015,13 @@ var require_sets = __commonJS({
           h(P.Input, {
             h,
             className: "wbv-search",
-            placeholder: "\u641C\u7D22\u96C6\u5408\u540D\u3001\u8D26\u53F7\u6216\u63CF\u8FF0",
-            "aria-label": "\u641C\u7D22\u96C6\u5408\u4E0E\u8D26\u53F7",
+            placeholder: "\u641C\u7D22\u96C6\u5408\u540D\u6216\u63CF\u8FF0",
+            "aria-label": "\u641C\u7D22\u96C6\u5408",
             value: qS[0],
             onChange: function(e) {
               qS[1](e.target.value);
             }
           }),
-          h(
-            P.Select,
-            {
-              h,
-              "aria-label": "\u6309\u96C6\u5408\u7C7B\u578B\u7B5B\u9009",
-              value: typeS[0],
-              onChange: function(e) {
-                typeS[1](e.target.value);
-                load();
-              }
-            },
-            h("option", { value: "" }, "\u5168\u90E8\u7C7B\u578B"),
-            h("option", { value: "account" }, "\u8D26\u53F7\u96C6\u5408"),
-            h("option", { value: "common" }, "\u666E\u901A\u96C6\u5408")
-          ),
           h("span", { className: "wbv-toolbar-tail" }),
           h("span", { className: "wbv-muted" }, listS[0].loading ? "\u8BFB\u53D6\u4E2D\u2026" : items.length + " \u4E2A\u96C6\u5408")
         ),
@@ -4024,9 +4035,9 @@ var require_sets = __commonJS({
             listS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u96C6\u5408\u2026" }) : items.length === 0 ? h(P.EmptyState, {
               h,
               icon: Layers2,
-              title: qS[0] || typeS[0] ? "\u6CA1\u6709\u5339\u914D\u7684\u96C6\u5408\u4E0E\u8D26\u53F7" : "\u8FD8\u6CA1\u6709\u96C6\u5408\u4E0E\u8D26\u53F7",
-              hint: qS[0] || typeS[0] ? "\u6362\u4E2A\u5173\u952E\u8BCD\u6216\u7C7B\u578B\u8BD5\u8BD5\u3002" : "\u65B0\u5EFA\u4E00\u4E2A\u540E\uFF0C\u53EF\u4EE5\u628A\u8D26\u53F7\u3001\u51ED\u636E\u548C\u5206\u7EC4\u90FD\u6302\u8FDB\u6765\u3002"
-            }, h(C.Btn, { h, kind: "primary", disabled: readOnly, onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408\u4E0E\u8D26\u53F7")) : items.map(function(set) {
+              title: qS[0] ? "\u6CA1\u6709\u5339\u914D\u7684\u96C6\u5408" : "\u8FD8\u6CA1\u6709\u96C6\u5408",
+              hint: qS[0] ? "\u6362\u4E2A\u5173\u952E\u8BCD\u8BD5\u8BD5\u3002" : "\u65B0\u5EFA\u4E00\u4E2A\u540E\uFF0C\u53EF\u4EE5\u628A\u51ED\u636E\u548C\u5206\u7EC4\u90FD\u6302\u8FDB\u6765\u3002"
+            }, h(C.Btn, { h, kind: "primary", disabled: readOnly, onClick: startCreate }, "\u65B0\u5EFA\u96C6\u5408")) : items.map(function(set) {
               var on = active && active.id === set.id;
               return h(
                 "button",
@@ -4043,14 +4054,13 @@ var require_sets = __commonJS({
                   { className: "wbv-item-top" },
                   h("span", { className: "wbv-dot", style: set.color ? { background: set.color } : null }),
                   h("span", { className: "wbv-item-title" }, set.name),
-                  h("span", { className: "wbv-pill" }, set.type === "account" ? "\u8D26\u53F7\u96C6\u5408" : "\u666E\u901A\u96C6\u5408"),
                   h("span", { className: "wbv-grow" }),
                   h("span", { className: "wbv-pill" }, (set.secretCount || 0) + " \u6761")
                 ),
                 h(
                   "div",
                   { className: "wbv-item-sub" },
-                  accountText(set, true) + " \xB7 " + (set.description || "\u2014") + " \xB7 " + (set.groupIds || []).length + " \u4E2A\u5206\u7EC4"
+                  (set.description || "\u2014") + " \xB7 " + (set.groupIds || []).length + " \u4E2A\u5206\u7EC4"
                 )
               );
             })
@@ -4079,7 +4089,7 @@ var require_sets = __commonJS({
               h(
                 "div",
                 { className: "wbv-muted", style: { marginBottom: "10px" } },
-                (active.type === "account" ? "\u8D26\u53F7\u96C6\u5408" : "\u666E\u901A\u96C6\u5408") + " \xB7 \u8D26\u53F7\uFF1A" + accountText(active, false)
+                active.description || "\u672A\u586B\u5199\u63CF\u8FF0"
               ),
               detail.error ? h(C.Notice, { h, kind: "error", text: detail.error }) : null,
               h("div", { className: "wbv-label" }, "\u96C6\u5408\u5185\u51ED\u636E"),
@@ -4093,7 +4103,7 @@ var require_sets = __commonJS({
                     "tr",
                     { key: s.id },
                     h("td", null, h("div", { className: "wbv-cell-main" }, s.name)),
-                    h("td", null, h("span", { className: "wbv-pill" }, K.KIND_LABEL[s.kind] || s.kind)),
+                    h("td", null, h("span", { className: "wbv-pill" }, K.kindsText(K.kindsOf(s)))),
                     h("td", null, C.fmtTime(s.updatedAt, lang)),
                     h("td", null, h(
                       "div",
@@ -4116,7 +4126,7 @@ var require_sets = __commonJS({
                   label: "\u51ED\u636E",
                   title: "\u53EF\u52A0\u5165\u7684\u51ED\u636E",
                   items: candidates.map(function(s) {
-                    return { id: s.id, name: s.name, meta: K.KIND_LABEL[s.kind] || s.kind };
+                    return { id: s.id, name: s.name, meta: K.kindsText(K.kindsOf(s)) };
                   }),
                   selected: pickS[0],
                   onChange: function(ids) {
@@ -4172,7 +4182,7 @@ var require_sets = __commonJS({
           {
             h,
             React,
-            title: draftS[0].id ? "\u7F16\u8F91\u96C6\u5408\u4E0E\u8D26\u53F7" : "\u65B0\u5EFA\u96C6\u5408\u4E0E\u8D26\u53F7",
+            title: draftS[0].id ? "\u7F16\u8F91\u96C6\u5408" : "\u65B0\u5EFA\u96C6\u5408",
             titleId: "wbv-set-form-title",
             busy: busyS[0],
             onClose: busyS[0] ? null : function() {
@@ -4198,36 +4208,6 @@ var require_sets = __commonJS({
                 }
               })
             ),
-            h(
-              C.Field,
-              { h, label: "\u96C6\u5408\u7C7B\u578B", hint: "\u8D26\u53F7\u96C6\u5408\u53EF\u6807\u4E00\u4E2A\u8D26\u53F7\uFF1B\u666E\u901A\u96C6\u5408\u4E0D\u7ED1\u5B9A\u8D26\u53F7" },
-              h(
-                P.Select,
-                {
-                  h,
-                  "aria-label": "\u9009\u62E9\u96C6\u5408\u7C7B\u578B",
-                  value: draftS[0].type,
-                  onChange: function(e) {
-                    var type = e.target.value === "account" ? "account" : "common";
-                    draftS[1](Object.assign({}, draftS[0], { type, account: type === "common" ? "" : draftS[0].account }));
-                  }
-                },
-                h("option", { value: "account" }, "\u8D26\u53F7\u96C6\u5408"),
-                h("option", { value: "common" }, "\u666E\u901A\u96C6\u5408")
-              )
-            ),
-            draftS[0].type === "account" ? h(
-              C.Field,
-              { h, label: "\u8D26\u53F7", hint: "\u53EF\u91CD\u590D\uFF0C\u4E0D\u540C\u6761\u76EE\u53EA\u6309 id \u533A\u5206\uFF1B\u4E00\u4E2A\u96C6\u5408\u53EA\u6807\u4E00\u4E2A\u8D26\u53F7" },
-              h(P.Input, {
-                h,
-                value: draftS[0].account,
-                placeholder: "\u5982 ops@example.com",
-                onChange: function(e) {
-                  draftS[1](Object.assign({}, draftS[0], { account: e.target.value }));
-                }
-              })
-            ) : null,
             h(
               C.Field,
               { h, label: "\u63CF\u8FF0" },
@@ -4309,16 +4289,9 @@ var require_sets = __commonJS({
                   nsD[1](Object.assign({}, nsD[0], { name: e.target.value }));
                 }
               }),
-              h(P.Select, {
-                h,
-                "aria-label": "\u65B0\u51ED\u636E\u7C7B\u578B",
-                value: nsD[0].kind,
-                onChange: function(e) {
-                  nsD[1](Object.assign({}, nsD[0], { kind: e.target.value }));
-                }
-              }, K.kindOptions("").map(function(kind) {
-                return h("option", { key: kind, value: kind }, K.KIND_LABEL[kind] || kind);
-              })),
+              K.kindChecks(h, nsD[0].kinds, function(kind) {
+                nsD[1](Object.assign({}, nsD[0], { kinds: K.toggleKind(nsD[0].kinds, kind) }));
+              }, "\u65B0\u51ED\u636E\u7C7B\u578B"),
               h(P.Input, {
                 h,
                 type: "password",
@@ -4334,7 +4307,7 @@ var require_sets = __commonJS({
               return h(
                 "span",
                 { className: "wbv-chip", key: index },
-                h("span", null, sec.name + " \xB7 " + (K.KIND_LABEL[sec.kind] || sec.kind)),
+                h("span", null, sec.name + " \xB7 " + K.kindsText(sec.kinds)),
                 h("button", {
                   type: "button",
                   className: "wbv-btn ghost",
@@ -6281,6 +6254,10 @@ var require_action_schema_style = __commonJS({
         "." + P + "-copy:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
         "." + P + " details>summary{cursor:pointer;font-size:11.5px;color:var(--dsw-alias-label-secondary,inherit);width:max-content}",
         "." + P + " details>summary:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
+        // 参数折叠面板：折叠时只留一行「参数 · 必填 n」，展开后与表格之间留一点气口。
+        "." + P + "-params{min-width:0}",
+        "." + P + "-params>summary{user-select:none;max-width:100%}",
+        "." + P + "-params[open]>summary{margin-bottom:6px}",
         "." + P + "-empty{padding:24px;text-align:center;border:1px dashed var(--wb-border,#e3e5e9);border-radius:10px;color:var(--dsw-alias-label-tertiary,inherit)}",
         "." + P + "-error{padding:12px;border:1px solid var(--dsw-alias-state-error-primary,#d9534f);border-radius:10px;color:var(--dsw-alias-state-error-primary,#d9534f);display:flex;gap:10px;align-items:center;flex-wrap:wrap;overflow-wrap:anywhere}",
         "." + P + "-toast{position:sticky;bottom:8px;align-self:flex-start;border-radius:999px;padding:3px 10px;background:var(--dsw-alias-bg-skeleton,#f2f3f5);font-size:11.5px;max-width:100%}",
@@ -6360,6 +6337,10 @@ var require_action_schema_view = __commonJS({
         paramCount: function(n) {
           return n + " \u4E2A\u53C2\u6570";
         },
+        params: "\u53C2\u6570",
+        requiredCount: function(n) {
+          return "\u5FC5\u586B " + n;
+        },
         examples: "\u793A\u4F8B",
         noExamples: "\u65E0\u793A\u4F8B",
         copy: "\u590D\u5236",
@@ -6422,6 +6403,10 @@ var require_action_schema_view = __commonJS({
         noParams: "No parameters",
         paramCount: function(n) {
           return n + " params";
+        },
+        params: "Parameters",
+        requiredCount: function(n) {
+          return n + " required";
         },
         examples: "Examples",
         noExamples: "No examples",
@@ -6561,6 +6546,8 @@ var require_action_schema_view = __commonJS({
         var toast = toastState[0], setToast = toastState[1];
         var savingState = React.useState("");
         var saving = savingState[0], setSaving = savingState[1];
+        var foldsState = React.useState({});
+        var folds = foldsState[0], setFolds = foldsState[1];
         React.useEffect(function() {
           injectCss();
         }, []);
@@ -6660,6 +6647,15 @@ var require_action_schema_view = __commonJS({
           }
           Promise.resolve(api.call("actions.setActionOrigins", { action: name, origins: next })).then(done, fail);
         }
+        function paramsOpen(action) {
+          if (Object.prototype.hasOwnProperty.call(folds, action.name)) return folds[action.name] === true;
+          return Boolean(String(query || "").trim()) || reqMode !== "all" || Boolean(typePick);
+        }
+        function resetFolds() {
+          setFolds(function(prev) {
+            return Object.keys(prev).length ? {} : prev;
+          });
+        }
         var all = snap && Array.isArray(snap.actions) ? snap.actions.filter(function(a) {
           return a && a.domain === DOMAIN;
         }) : [];
@@ -6756,6 +6752,10 @@ var require_action_schema_view = __commonJS({
         }
         function card(action) {
           var rows = paramRows(action);
+          var required = rows.filter(function(row) {
+            return row.required;
+          }).length;
+          var open = paramsOpen(action);
           var examples = Array.isArray(action.examples) ? action.examples : [];
           return h(
             "div",
@@ -6776,18 +6776,38 @@ var require_action_schema_view = __commonJS({
             ),
             action.description ? h("p", { className: P + "-desc" }, Highlight.hit(action.description, kw)) : null,
             rows.length ? h(
-              "table",
-              { className: P + "-table" },
-              h("thead", null, h(
-                "tr",
-                null,
-                h("th", null, t.colName),
-                h("th", null, t.colType),
-                h("th", null, t.colReq),
-                h("th", null, t.colExtra),
-                h("th", null, t.colDesc)
-              )),
-              h("tbody", null, rows.map(paramRow))
+              "details",
+              {
+                className: P + "-params",
+                "data-params-fold": action.name,
+                open,
+                // 原生 details 自带键盘与无障碍语义，这里只记下用户的开合；
+                // 筛选变化引起的程序性开合也会触发 toggle，记下的值与当次默认一致，随后由 resetFolds 清掉。
+                onToggle: function(e) {
+                  var next = !!(e && e.currentTarget && e.currentTarget.open);
+                  setFolds(function(prev) {
+                    if (prev[action.name] === next) return prev;
+                    var out = Object.assign({}, prev);
+                    out[action.name] = next;
+                    return out;
+                  });
+                }
+              },
+              h("summary", null, t.params + (required ? " \xB7 " + t.requiredCount(required) : "")),
+              h(
+                "table",
+                { className: P + "-table" },
+                h("thead", null, h(
+                  "tr",
+                  null,
+                  h("th", null, t.colName),
+                  h("th", null, t.colType),
+                  h("th", null, t.colReq),
+                  h("th", null, t.colExtra),
+                  h("th", null, t.colDesc)
+                )),
+                h("tbody", null, rows.map(paramRow))
+              )
             ) : h("div", { className: P + "-none" }, t.noParams),
             h(
               "div",
@@ -6864,6 +6884,7 @@ var require_action_schema_view = __commonJS({
                 "aria-label": t.search,
                 onChange: function(e) {
                   setQuery(e.target.value);
+                  resetFolds();
                 }
               })
             ),
@@ -6875,6 +6896,7 @@ var require_action_schema_view = __commonJS({
                 "select",
                 { value: reqMode, "aria-label": t.filterReq, onChange: function(e) {
                   setReqMode(e.target.value);
+                  resetFolds();
                 } },
                 h("option", { value: "all" }, t.all),
                 h("option", { value: "required" }, t.onlyRequired),
@@ -6889,6 +6911,7 @@ var require_action_schema_view = __commonJS({
                 "select",
                 { value: typePick, "aria-label": t.filterType, onChange: function(e) {
                   setTypePick(e.target.value);
+                  resetFolds();
                 } },
                 h("option", { value: "" }, t.allTypes),
                 typeOptions.map(function(name) {
@@ -6983,7 +7006,7 @@ var GLYPHS = require_icons2().ICONS;
   ensureStyles();
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.5.0",
+    version: "0.6.0",
     icon: GLYPHS["shield-check"],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },

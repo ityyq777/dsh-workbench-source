@@ -110,7 +110,7 @@ module.exports = function SecretsView(props) {
     formS[1]({
       id: row.id,
       name: row.name,
-      kind: row.kind,
+      kinds: K.kindsOf(row),
       secret: "",
       setIds: (row.setIds || []).slice(),
       note: noteOf(meta),
@@ -178,7 +178,7 @@ module.exports = function SecretsView(props) {
     // create 的 payload 里不能出现 id 键：schema 是 additionalProperties:false，多带一个键就会被拒。
     var payload = {
       name: f.name.trim(),
-      kind: f.kind,
+      kinds: f.kinds,
       meta: meta,
     };
     if (f.secret) payload.secret = f.secret;
@@ -295,7 +295,7 @@ module.exports = function SecretsView(props) {
     });
     return h("tr", { key: row.id },
       h("td", null, h("div", { className: "wbv-cell-main" }, row.name), h("div", { className: "wbv-cell-sub" }, row.id)),
-      h("td", { className: "wbv-c-kind" }, h("span", { className: "wbv-pill" }, KIND_LABEL[row.kind] || row.kind)),
+      h("td", { className: "wbv-c-kind" }, h("span", { className: "wbv-pill" }, K.kindsText(K.kindsOf(row)))),
       h("td", { className: "wbv-c-sets" }, chips.length ? h("div", { className: "wbv-chips" }, chips) : h("span", { className: "wbv-muted" }, "未加入集合")),
       h("td", null, noteOf(meta) || "—"),
       h("td", { className: "wbv-c-used" }, C.fmtTime(row.lastUsedAt, lang)),
@@ -373,14 +373,15 @@ module.exports = function SecretsView(props) {
                   placeholder: "如 工作邮箱 / GitHub",
                   onChange: function (e) { formS[1](Object.assign({}, formS[0], { name: e.target.value })); },
                 })),
-              hh(C.Field, { h: hh, label: "类型" },
-                hh(P.Select, {
-                  h: hh,
-                  value: formS[0].kind,
-                  onChange: function (e) { formS[1](Object.assign({}, formS[0], { kind: e.target.value })); },
-                }, K.CREATABLE_KINDS.map(function (k) { return hh("option", { key: k, value: k }, KIND_LABEL[k]); }))));
+              hh(C.Field, { h: hh, label: "类型（可多选）", hint: "至少一个；同一条凭据可同时是账号与密码" },
+                K.kindChecks(hh, formS[0].kinds, function (kind) {
+                  formS[1](Object.assign({}, formS[0], { kinds: K.toggleKind(formS[0].kinds, kind) }));
+                })));
           },
-          validate: function () { return formS[0].name.trim() ? "" : "名称不能为空"; },
+          validate: function () {
+            if (!formS[0].name.trim()) return "名称不能为空";
+            return (formS[0].kinds || []).length ? "" : "类型至少要选一个";
+          },
         },
         {
           key: "secret", label: "明文", hint: formS[0].id ? "留空不轮换" : "必填",
@@ -504,7 +505,7 @@ function noteOf(meta) {
 }
 
 function emptyForm() {
-  return { id: "", name: "", kind: "password", secret: "", setIds: [], note: "" };
+  return { id: "", name: "", kinds: ["password"], secret: "", setIds: [], note: "" };
 }
 
 module.exports.noteOf = noteOf;

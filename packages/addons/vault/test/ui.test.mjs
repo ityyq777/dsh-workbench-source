@@ -62,7 +62,7 @@ test("明文框的眼睛是 type=button，不会提交表单", () => {
   assert.match(src, /input\.focus\(\)/);
 });
 
-test("小眼睛只有一份实现：vault 私有版本已删除，vault 与 sites 都引用共享控件", () => {
+test("小眼睛只有一份实现：vault 私有版本已删除，凭据页与主口令框都引用共享控件", () => {
   assert.equal(fs.existsSync(path.join(dir, "ui/secret-field.cjs")), false);
   const vaultFiles = ["views/secrets.cjs", "views/status.cjs", "ui/ask-passphrase.cjs"];
   for (const f of vaultFiles) {
@@ -70,9 +70,8 @@ test("小眼睛只有一份实现：vault 私有版本已删除，vault 与 site
     assert.match(src, /lib\/secret-field\.cjs/, `${f} 未引用共享控件`);
     assert.doesNotMatch(src, /type:\s*"password"/, `${f} 仍有裸密码框`);
   }
-  const sitesModal = fs.readFileSync(path.join(process.cwd(), "packages/addons/sites/client/ui/accounts-modal.cjs"), "utf8");
-  assert.match(sitesModal, /lib\/secret-field\.cjs/);
-  assert.doesNotMatch(sitesModal, /type:\s*"password"/);
+  // 站点侧账号实体已下线，对应的账号弹窗不应再存在
+  assert.equal(fs.existsSync(path.join(process.cwd(), "packages/addons/sites/client/ui/accounts-modal.cjs")), false);
 });
 
 test("主口令弹层有输入框、取消与确认，且不依赖 window.prompt", () => {
@@ -163,15 +162,18 @@ test("分组页：创建时先 groupCreate 再逐个 groupAttachSet，Esc 可关
   assert.match(src, /个集合与账号挂载失败/);
 });
 
-test("集合页：新建/编辑先选类型，只有账号集合才出现账号输入", () => {
-  const src = fs.readFileSync(path.join(dir, "views/sets.cjs"), "utf8");
-  assert.match(src, /label: "集合类型"/);
-  assert.match(src, /"option", \{ value: "account" \}, "账号集合"/);
-  assert.match(src, /"option", \{ value: "common" \}, "普通集合"/);
-  // 账号输入只在账号集合时渲染，普通集合保存时账号清空
-  assert.match(src, /draftS\[0\]\.type === "account"/);
-  assert.match(src, /account: type === "common" \? "" : draftS\[0\]\.account/);
-  assert.match(src, /账号集合需要填写账号；账号留空请改选普通集合/);
+test("集合页：不再选集合类型/填账号，凭据类型改为多选", () => {
+  const sets = fs.readFileSync(path.join(dir, "views/sets.cjs"), "utf8");
+  assert.doesNotMatch(sets, /集合类型/, "集合不再区分类型");
+  assert.doesNotMatch(sets, /accountText|draftS\[0\]\.account/, "集合不再有账号字段");
+  assert.match(sets, /K\.kindChecks/);
+  assert.match(sets, /kinds: \["password"\]/);
+
+  const secrets = fs.readFileSync(path.join(dir, "views/secrets.cjs"), "utf8");
+  assert.match(secrets, /类型（可多选）/);
+  assert.match(secrets, /K\.kindChecks/);
+  assert.match(secrets, /类型至少要选一个/);
+  assert.match(secrets, /kinds: K\.kindsOf\(row\)/);
 });
 
 test("集合页：新建/编辑弹窗里可勾已有凭据，也可填明文新建一条随集合保存", () => {
@@ -397,7 +399,7 @@ test("保存成功后弹窗关闭、列表出现新凭据；失败时保留弹�
       calls.push({ action: action, args: args });
       if (action === "vault.secretCreate") {
         if (created) return Promise.resolve({ ok: false, error: "保险箱已锁定，请先解锁" });
-        created = { id: "sec_1", name: args.name, kind: args.kind, meta: JSON.stringify(args.meta || {}), setIds: [] };
+        created = { id: "sec_1", name: args.name, kinds: args.kinds, meta: JSON.stringify(args.meta || {}), setIds: [] };
         return Promise.resolve({ ok: true, result: { id: "sec_1", ok: true, setId: null } });
       }
       if (action === "vault.secretList") {
@@ -437,7 +439,7 @@ test("保存成功后弹窗关闭、列表出现新凭据；失败时保留弹�
   assert.ok(create, "应该真的调用了 secretCreate");
   assert.equal("id" in create.args, false, "create 参数不能带 id 键");
   assert.equal(create.args.name, "ID_CARD");
-  assert.equal(create.args.kind, "password");
+  assert.deepEqual(create.args.kinds, ["password"]);
   // 成功：弹窗关闭 + 列表里出现这条
   assert.doesNotMatch(texts(tree), /保存中…/);
   assert.match(texts(tree), /ID_CARD/);

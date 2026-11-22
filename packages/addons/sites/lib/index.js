@@ -2,6 +2,8 @@
  * 站点业务插件（DSH 原生插件）。
  * 业务全部本地；云端只备份数据。标签能力通过 host.hasDomain 探测。
  * 1.12.3：统计页自定义日期范围改用共享 DatePicker（lib/date-picker.cjs），删除插件内复制的区间控件。
+ * 1.13.0：站点不再维护账号实体：删除 site_account / site_account_external 与 sites.accounts.*，
+ *         只保留 sites.vaultGroups 查询关联的凭据分组；账号、登录名与凭据统一放在保险箱。
  * 1.12.2：账号弹窗的口令/确认口令改用共享明文切换控件（lib/secret-field.cjs），与保险箱同一套小眼睛。
  * 1.12.1：站点标签筛选列表体改用共享 filter-checklist。
  */
@@ -17,7 +19,7 @@ import { siteSync } from "./infra/sync.js";
 import { registerSiteTreeActions } from "./tree/tree.js";
 import { registerOverviewAction } from "./stats/overview.js";
 import { registerSiteActions } from "./domain/sites.js";
-import { registerAccountActions } from "./domain/accounts.js";
+import { registerVaultGroupActions } from "./domain/vault-groups.js";
 import { registerConfigActions } from "./infra/config.js";
 import { registerDataActions } from "./infra/data.js";
 import { bindVault } from "./infra/vault-link.js";
@@ -76,7 +78,7 @@ export function setup(api) {
   registerSiteTreeActions(api);
   registerOverviewAction(api);
   registerSiteActions(api);
-  registerAccountActions(api);
+  registerVaultGroupActions(api);
   registerConfigActions(api);
   registerDataActions(api);
   registerActionSchemaAction(api, actionDefs, "wb-addon-sites");
@@ -106,7 +108,7 @@ export function apply(ctx) {
         description: "站点收藏：目录树、链接与标签（标签需安装标签插件）；含统计/记录/配置/数据四个视图",
         version: ADDON_VERSION,
         category: "assets",
-        tables: ["site", "site_node", "site_node_mapping", "tag_mapping", "site_account", "site_account_external"],
+        tables: ["site", "site_node", "site_node_mapping", "tag_mapping"],
         sync: siteSync,
         views: [
           { id: "stats", title: { zh: "统计", en: "Stats" } },

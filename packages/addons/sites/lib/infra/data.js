@@ -16,8 +16,6 @@ const TABLES = [
   { name: "site", zh: "站点", en: "Sites" },
   { name: "site_node", zh: "站点目录", en: "Site folders" },
   { name: "site_node_mapping", zh: "目录关联", en: "Folder mappings" },
-  { name: "site_account", zh: "站点账号", en: "Site accounts" },
-  { name: "site_account_external", zh: "账号外联", en: "Account links" },
 ];
 
 const COLUMN_LABELS = {
@@ -37,17 +35,7 @@ const COLUMN_LABELS = {
   updated_at: { zh: "更新时间", en: "Updated at" },
   deleted_at: { zh: "删除时间", en: "Deleted at" },
   rev: { zh: "版本号", en: "Rev" },
-  account_key: { zh: "标识", en: "Key" },
-  account: { zh: "登录名", en: "Account" },
-  remark: { zh: "备注", en: "Remark" },
-  native_account_id: { zh: "引用方账号", en: "Native account" },
-  external_account_id: { zh: "被引用账号", en: "External account" },
 };
-
-/** 数据页：敏感字段已移入保险箱，site_account 不再有这三列。 */
-function maskRow(row) {
-  return row;
-}
 
 const SYSTEM_COLUMNS = new Set(["rev", "created_at", "updated_at", "deleted_at"]);
 const PAGE_SIZES = [10, 25, 50, 100, 200];
@@ -286,7 +274,7 @@ export function registerDataActions(api) {
     const stmt = db.prepare(
       "SELECT * FROM " + table.name + whereSql + " ORDER BY " + sort + " " + order.toUpperCase() + " LIMIT ? OFFSET ?",
     );
-    const rows = stmt.all.apply(stmt, params.concat([pageSize, offset])).map(toPlain).map(maskRow);
+    const rows = stmt.all.apply(stmt, params.concat([pageSize, offset])).map(toPlain);
     const ended = (typeof performance !== "undefined" && performance.now ? performance.now() : Date.now());
 
     return {

@@ -47,15 +47,23 @@ export function open(key, payload, aad = "") {
   return Buffer.concat([decipher.update(ct), decipher.final()]);
 }
 
-export function secretAad(id, name, kind) {
+/**
+ * 凭据密文的 AAD：只绑 id 与名称。
+ * 0.6.0 起类型不再是单值，也不参与 AAD——改类型只动 vault_secret_kind，不重加密；
+ * 而改名称仍会重加密，因为 AAD 里有 name。
+ */
+export function secretAad(id, name) {
+  return "vault:" + String(id) + ":" + String(name);
+}
+
+/** 0.5.x 及以前的 AAD（含单值 kind），只在 5 → 6 迁移里用来解开旧密文。 */
+export function legacySecretAad(id, name, kind) {
   return "vault:" + String(id) + ":" + String(name) + ":" + String(kind);
 }
 
 /**
- * 集合账号（vault_set.account）：0.5.0 起与凭据一样用 DEK 加密落库，
- * 云端与本地库都不再出现登录名/邮箱明文。
- * 空账号仍存空串——集合类型（账号集合 / 普通集合）靠它是否为空推导。
- * 前缀独立于 `v1:`，旧明文字段即便以 "v1:" 开头也不会被误判成密文。
+ * 集合账号密文（vault_set.account，0.5.0 引入，0.6.0 起下线）：
+ * 6.0 的迁移要把存量账号转成 kind=account 的凭据，这里只保留解旧值的能力。
  */
 export const ACCOUNT_PREFIX = "va1:";
 

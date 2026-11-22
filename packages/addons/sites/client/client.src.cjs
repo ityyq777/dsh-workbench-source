@@ -431,7 +431,7 @@ var staged = require("../../lib/staged-dialog.cjs");
     );
   }
 
-  var AccountModal = require("./ui/accounts-modal.cjs")({
+  var VaultGroupsModal = require("./ui/vault-groups-modal.cjs")({
     h: h, React: React, useState: useState, useEffect: useEffect,
     Modal: Modal, Icon: Icon, text: text, callApi: callApi, errText: errText,
   });
@@ -912,7 +912,7 @@ var staged = require("../../lib/staged-dialog.cjs");
                       h("div", { className: "wbs-actions" },
                         h("button", { className: "wbs-btn sm", title: text(lang, "links"), onClick: function () { setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "links" ? null : { id: s.id, type: "links" }); } }, h(Icon, { name: "link", size: 12 }), text(lang, "links") + " " + (s.siteLinks ? s.siteLinks.length : 0)),
                         h("button", { className: "wbs-btn sm", title: text(lang, "dirs"), onClick: function () { setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "dirs" ? null : { id: s.id, type: "dirs" }); } }, h(Icon, { name: "folder", size: 12 }), text(lang, "dirs") + " " + (s.dirs ? s.dirs.length : 0)),
-                        h("button", { className: "wbs-btn sm", title: text(lang, "accounts"), onClick: function () { setAccSite(s); } }, h(Icon, { name: "key", size: 12 }), text(lang, "accounts") + " " + (s.accountCount || 0)),
+                        h("button", { className: "wbs-btn sm", title: text(lang, "vaultGroups"), onClick: function () { setAccSite(s); } }, h(Icon, { name: "key", size: 12 }), text(lang, "vaultGroups")),
                         h("button", { className: "wbs-btn sm icononly", title: text(lang, "edit"), onClick: function () { openEdit(s); } }, h(Icon, { name: "edit", size: 13 })),
                         h("button", { className: "wbs-btn sm danger icononly", title: text(lang, "del"), onClick: function () { if (cfgConfirm) setDeleting(s); else removeSite(s); } }, h(Icon, { name: "trash", size: 13 })),
                       ),
@@ -970,12 +970,11 @@ var staged = require("../../lib/staged-dialog.cjs");
         onClose: function () { setDirDlg(null); },
         onDone: onDirDone,
       }) : null,
-      accSite ? h(AccountModal, {
+      accSite ? h(VaultGroupsModal, {
         api: api,
         lang: lang,
         site: accSite,
         onClose: function () { setAccSite(null); },
-        onChanged: function () { setTick(function (x) { return x + 1; }); },
       }) : null,
       deleting ? h(DeleteSiteModal, {
         api: api,

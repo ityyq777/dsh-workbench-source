@@ -135,8 +135,8 @@ assert(call("sites.get", { id: siteId }) !== null, "site kept after node delete"
 r = call("sites.list", { nodeId: workId });
 assert(r.total === 0, "deleted node not listed");
 
-// 删除站点
-r = call("sites.delete", { id: siteId });
+// 删除站点（会顺带清理保险箱分组绑定，因此是异步接口）
+r = await call("sites.delete", { id: siteId });
 assert(r.deleted === true, "delete site");
 assert(call("sites.list", {}).total === 0, "deleted site hidden");
 const siteRow = db.prepare("SELECT * FROM site WHERE id=?").get(siteId);
@@ -173,177 +173,83 @@ tagAddon = true;
 r = call("sites.capabilities");
 assert(r.tags === true, "capabilities.tags back after tags addon enabled");
 
-// 账号与保险箱（1.11.0：敏感字段整体交给 vault，站点不再有敏感列）
-let accErr = null;
-r = await call("vault.status", {});
-assert(r.initialized === false && r.locked === true, "vault starts uninitialized");
+// 1.13.0：站点下线账号实体，只保留「查关联的凭据分组」
+assert(!defs["sites.accounts.list"] && !defs["sites.accounts.create"], "accounts actions removed");
+assert(defs["sites.vaultGroups"], "sites.vaultGroups registered");
+assert(
+  db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('site_account','site_account_external')").all().length === 0,
+  "account tables dropped",
+);
 
-accErr = null;
-try { await call("sites.accounts.create", { siteId: siteId, accountKey: "k1", password: "p1" }); } catch (e) { accErr = e; }
-assert(accErr && accErr.message.indexOf("站点不存在") >= 0, "account on deleted site: " + (accErr && accErr.message));
-
-r = call("sites.create", { siteName: "账号站点A", dirIds: [lifeId], bindable: 1 });
+r = call("sites.create", { siteName: "分组站点A", dirIds: [lifeId] });
 const accSiteA = r.site.id;
-r = call("sites.create", { siteName: "账号站点B", dirIds: [lifeId], bindable: 1 });
+r = call("sites.create", { siteName: "分组站点B", dirIds: [lifeId] });
 const accSiteB = r.site.id;
 
+r = call("sites.list", { text: "分组站点A" });
+assert(r.records[0].accountCount === undefined, "list no longer reports accountCount");
+
+let accErr = null;
+try { await call("sites.vaultGroups", {}); } catch (e) { accErr = e; }
+assert(accErr && accErr.message.indexOf("siteId") >= 0, "siteId required");
 accErr = null;
-try { await call("sites.accounts.create", { siteId: accSiteA, accountKey: "k1", password: "secret-1" }); } catch (e) { accErr = e; }
-assert(accErr && accErr.message.indexOf("主口令") >= 0, "sensitive without vault setup rejected: " + (accErr && accErr.message));
+try { await call("sites.vaultGroups", { siteId: "missing-site" }); } catch (e) { accErr = e; }
+assert(accErr && accErr.message.indexOf("站点不存在") >= 0, "missing site rejected");
 
-r = await call("vault.setup", { passphrase: "test-passphrase-123", mode: "A" });
-assert(r.ok === true && r.cloudSync === true && r.unlockMode === "A", "vault setup ok");
-r = await call("vault.unlock", { passphrase: "test-passphrase-123" });
-assert(r.ok !== false, "vault unlock ok");
+r = await call("sites.vaultGroups", { siteId: accSiteA });
+assert(r.installed === true && r.items.length === 0, "no groups bound yet");
 
-accErr = null;
-try { await call("sites.accounts.create", { siteId: accSiteA, accountKey: "k1", password: "secret-1" }); } catch (e) { accErr = e; }
-assert(accErr && accErr.message.indexOf("尚未关联凭据组") >= 0, "sensitive without group binding rejected: " + (accErr && accErr.message));
-assert(db.prepare("SELECT COUNT(*) AS n FROM site_account WHERE account_key='k1'").get().n === 0, "failed sensitive write leaves no half account");
-
-r = await call("vault.groupCreate", { name: "站点账号 · 账号站点A" });
-const groupA = r.id;
-await call("vault.bind", { subjectType: "site", subjectId: accSiteA, groupId: groupA });
-r = await call("vault.bindingsOf", { subjectType: "site", subjectId: accSiteA });
-assert(r.items.length === 1 && r.items[0].groupId === groupA, "site bound to group");
-
-r = await call("sites.accounts.create", {
-  siteId: accSiteA, accountKey: "prod-admin", account: "admin",
-  password: "secret-1", phoneNumber: "13800138000", identityCard: "110101199001011234", remark: "生产入口",
-});
-const accA1 = r.id;
-assert(r.accountKey === "prod-admin", "account created");
-const rawRow = db.prepare("SELECT * FROM site_account WHERE id=?").get(accA1);
-assert(!("password" in rawRow) && !("phone_number" in rawRow), "site_account has no sensitive columns");
-const secretsA1 = db.prepare("SELECT * FROM vault_secret WHERE deleted_at IS NULL AND name LIKE ?").all(accA1 + " · %");
-assert(secretsA1.length === 3, "three secrets stored in vault");
-assert(
-  secretsA1.map(function (x) { return x.kind; }).sort().join(",") === "id_card,password,phone",
-  "account secrets use general kinds",
-);
-const vaultSetId = db.prepare("SELECT vault_set_id FROM site_account WHERE id=?").get(accA1).vault_set_id;
-const accountSet = db.prepare("SELECT * FROM vault_set WHERE id=?").get(vaultSetId);
-assert(accountSet && accountSet.name === accA1, "account backed by a set named after accountId");
-assert(
-  String(accountSet.account).indexOf("va1:") === 0 && String(accountSet.account).indexOf("admin") < 0,
-  "set account stored as ciphertext",
-);
-assert((await call("vault.setGet", { id: vaultSetId })).account === "admin", "set account decrypts to site login name");
-assert(
-  db.prepare("SELECT COUNT(*) AS n FROM vault_set_secret WHERE set_id=? AND deleted_at IS NULL").get(vaultSetId).n === 3,
-  "account set holds three secrets",
-);
-assert(secretsA1.every(function (x) { return String(x.ciphertext).indexOf("v1:") === 0; }), "secrets encrypted");
-assert(!secretsA1.some(function (x) { return String(x.ciphertext).indexOf("secret-1") >= 0; }), "no plaintext in ciphertext");
-
-accErr = null;
-try { await call("sites.accounts.create", { siteId: accSiteA, accountKey: "prod-admin" }); } catch (e) { accErr = e; }
-assert(accErr && accErr.message.indexOf("已存在相同标识") >= 0, "duplicate accountKey rejected");
-accErr = null;
-try { await call("sites.accounts.create", { siteId: accSiteA, accountKey: "  " }); } catch (e) { accErr = e; }
-assert(accErr && accErr.message.indexOf("不能为空") >= 0, "blank accountKey rejected");
-
-r = await call("sites.accounts.list", { siteId: accSiteA });
-assert(r.total === 1, "account listed");
-assert(r.accounts[0].password === undefined, "list never returns password");
-assert(r.accounts[0].phoneNumber === "已保存", "list never returns phone plaintext");
-assert(r.accounts[0].hasPassword && r.accounts[0].hasPhone && r.accounts[0].hasIdentity, "list reports has flags");
-assert(r.accounts[0].vaultSetId === vaultSetId && r.accounts[0].vaultInvalid === false, "list reports serving set");
-
-r = await defs["sites.accounts.get"].execute({ id: accA1 }, { origin: "cloud" });
-assert(r.masked === true && r.secretIds === undefined, "agent get stays masked");
-assert(r.account.password === undefined && r.account.phoneNumber === "已保存", "agent never gets plaintext");
-r = await call("sites.accounts.get", { id: accA1 });
-assert(r.masked === true && r.secretIds && r.secretIds.password, "ui get returns secret ids");
-r = await call("vault.secretReveal", { id: r.secretIds.password });
-assert(r.secret === "secret-1", "reveal through vault");
-
-// 站点列表带账号数
-r = call("sites.list", { text: "账号站点A" });
-assert(r.records[0].accountCount === 1, "accountCount on list rows");
-
-// 站点 B：同站点账号归一组
-r = await call("vault.groupCreate", { name: "站点账号 · 账号站点B" });
-const groupB = r.id;
-await call("vault.bind", { subjectType: "site", subjectId: accSiteB, groupId: groupB });
-r = await call("sites.accounts.create", { siteId: accSiteB, accountKey: "b-admin", account: "badmin", password: "secret-2" });
-const accB1 = r.id;
-r = call("sites.accounts.link", { nativeAccountId: accA1, externalAccountId: accB1 });
-const relId = r.relationId;
-assert(relId, "link created");
-r = call("sites.accounts.link", { nativeAccountId: accA1, externalAccountId: accB1 });
-assert(r.relationId === relId, "link idempotent");
-accErr = null;
-try { call("sites.accounts.link", { nativeAccountId: accA1, externalAccountId: accA1 }); } catch (e) { accErr = e; }
-assert(accErr && accErr.message.indexOf("自己") >= 0, "self link rejected");
-r = await call("sites.accounts.create", { siteId: accSiteA, accountKey: "local-2" });
-accErr = null;
-try { call("sites.accounts.link", { nativeAccountId: accA1, externalAccountId: r.id }); } catch (e) { accErr = e; }
-assert(accErr && accErr.message.indexOf("同一站点") >= 0, "same-site link rejected");
-
-r = await call("sites.accounts.list", { siteId: accSiteA });
-const withExt = r.accounts.filter(function (a) { return a.id === accA1; })[0];
-assert(withExt.externals.length === 1 && withExt.externals[0].siteName === "账号站点B", "externals listed");
-
-r = call("sites.accounts.cascade", { excludeSiteId: accSiteA });
-assert(r.groups.every(function (g) { return g.siteId !== accSiteA; }), "cascade excludes current site");
-assert(r.groups.some(function (g) { return g.siteId === accSiteB; }), "cascade includes bindable site");
-
-accErr = null;
-try { call("sites.update", { id: accSiteB, bindable: 0 }); } catch (e) { accErr = e; }
-assert(accErr && accErr.message.indexOf("外联") >= 0, "bindable guard: " + (accErr && accErr.message));
-
-accErr = null;
-try { call("sites.delete", { id: accSiteA }); } catch (e) { accErr = e; }
-assert(accErr && accErr.message.indexOf("账号") >= 0, "delete site guard: " + (accErr && accErr.message));
-
-r = call("sites.accounts.unlink", { nativeAccountId: accA1, externalAccountId: accB1 });
-assert(r.deleted === true, "unlink ok");
-r = call("sites.update", { id: accSiteB, bindable: 0 });
-assert(r.site.bindable === 0, "bindable off after unlink");
-call("sites.update", { id: accSiteB, bindable: 1 });
-
-// 锁箱后敏感字段写入被拒
-await call("vault.lock", {});
-r = await call("vault.status", {});
-assert(r.locked === true, "locked");
-accErr = null;
-try { await call("sites.accounts.create", { siteId: accSiteA, accountKey: "locked-1", password: "x" }); } catch (e) { accErr = e; }
-assert(accErr && accErr.message.indexOf("保险箱") >= 0, "locked vault rejects sensitive write");
-accErr = null;
-try { await call("vault.unlock", { passphrase: "wrong-passphrase" }); } catch (e) { accErr = e; }
-assert(accErr !== null, "wrong passphrase rejected");
+await call("vault.setup", { passphrase: "test-passphrase-123", mode: "A" });
 await call("vault.unlock", { passphrase: "test-passphrase-123" });
 
-// 改口令：旧密文仍可读
-r = await call("vault.changePassphrase", { oldPassphrase: "test-passphrase-123", newPassphrase: "new-passphrase-456" });
-assert(r.ok !== false, "change passphrase ok");
-r = await call("sites.accounts.get", { id: accA1 });
-r = await call("vault.secretReveal", { id: r.secretIds.password });
-assert(r.secret === "secret-1", "passphrase change keeps data readable");
+r = await call("vault.groupCreate", { name: "分组站点A · 主账号" });
+const groupA = r.id;
+await call("vault.bind", { subjectType: "site", subjectId: accSiteA, groupId: groupA });
+r = await call("vault.groupCreate", { name: "分组站点A · 备账号" });
+const groupA2 = r.id;
+await call("vault.bind", { subjectType: "site", subjectId: accSiteA, groupId: groupA2 });
 
-// 数据页：敏感列已不在表里
-r = call("sites.dataQuery", { table: "site_account", pageSize: 50 });
-const dataRow = r.rows.filter(function (x) { return x.id === accA1; })[0];
-assert(dataRow && !("password" in dataRow) && !("phone_number" in dataRow), "data page has no sensitive columns");
+r = await call("sites.vaultGroups", { siteId: accSiteA });
+assert(r.items.length === 2, "one site can link multiple groups: " + r.items.length);
+assert(r.items.some(function (g) { return g.id === groupA && g.name === "分组站点A · 主账号"; }), "group name returned");
+assert(r.items.every(function (g) { return g.secretCount === 0; }), "secretCount starts at zero");
+
+await call("vault.secretCreate", { name: "分组站点A · 主账号 · 密码", kind: "password", secret: "s1", groupId: groupA });
+r = await call("sites.vaultGroups", { siteId: accSiteA });
+const withSecrets = r.items.filter(function (g) { return g.id === groupA; })[0];
+assert(withSecrets && withSecrets.secretCount === 1, "secretCount reflects group secrets");
+
+await call("vault.unbind", { subjectType: "site", subjectId: accSiteA, groupId: groupA2 });
+r = await call("sites.vaultGroups", { siteId: accSiteA });
+assert(r.items.length === 1 && r.items[0].id === groupA, "unbind reflected on site side");
+
+// 锁箱只影响明文，分组名与凭据数本来就只读，查询不受影响
+await call("vault.lock", {});
+r = await call("sites.vaultGroups", { siteId: accSiteA });
+assert(r.items.length === 1, "group query works while vault locked");
+await call("vault.unlock", { passphrase: "test-passphrase-123" });
+
+await call("vault.bind", { subjectType: "site", subjectId: accSiteB, groupId: groupA });
+r = await call("sites.vaultGroups", { siteId: accSiteB });
+assert(r.items.length === 1 && r.items[0].id === groupA, "second site can share the same group");
+
+// 删站点：软删 + 清掉保险箱里的 subject 绑定（分组本身保留）
+r = await call("sites.delete", { id: accSiteB });
+assert(r.deleted === true && r.removedBindings === 1, "delete site purges bindings: " + (r && r.removedBindings));
+assert(
+  db.prepare("SELECT COUNT(*) AS n FROM vault_binding WHERE subject_type='site' AND subject_id=?").get(accSiteB).n === 0,
+  "binding rows purged",
+);
+accErr = null;
+try { await call("sites.vaultGroups", { siteId: accSiteB }); } catch (e) { accErr = e; }
+assert(accErr && accErr.message.indexOf("站点不存在") >= 0, "deleted site has no groups query");
+
+// 数据页：账号表已下线
 const dataTables = call("sites.dataTables", {});
-assert(dataTables.tables.some(function (t) { return t.name === "site_account"; }), "dataTables has site_account");
-
-// 集合被删：账号详情/列表标注「凭据集合已失效」
-await call("vault.setDelete", { id: vaultSetId });
-r = await call("sites.accounts.list", { siteId: accSiteA });
-const broken = r.accounts.filter(function (a) { return a.id === accA1; })[0];
-assert(broken.vaultInvalid === true, "deleted set marks account invalid");
-r = await call("sites.accounts.get", { id: accA1 });
-assert(r.account.vaultInvalid === true, "account detail shows invalid set");
-
-// 删除账号：双向清外联 + 尽力清理凭据
-call("sites.accounts.link", { nativeAccountId: accA1, externalAccountId: accB1 });
-r = await call("sites.accounts.delete", { id: accB1 });
-assert(r.deleted === true && r.clearedRelations >= 1, "delete account clears relations");
-assert(db.prepare("SELECT COUNT(*) AS n FROM site_account_external WHERE deleted_at IS NULL").get().n === 0, "no live relations left");
-const leftLive = db.prepare("SELECT COUNT(*) AS n FROM vault_secret WHERE deleted_at IS NULL AND name LIKE ?").get(accB1 + " · %");
-assert(leftLive.n === 0, "account secrets soft deleted");
+assert(!dataTables.tables.some(function (t) { return t.name === "site_account"; }), "dataTables no site_account");
+accErr = null;
+try { call("sites.dataQuery", { table: "site_account", pageSize: 50 }); } catch (e) { accErr = e; }
+assert(accErr && accErr.message.indexOf("未知数据表") >= 0, "dataQuery rejects removed table: " + (accErr && accErr.message));
 
 // 校验
 let err = null;

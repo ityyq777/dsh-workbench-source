@@ -1,12 +1,12 @@
 "use strict";
 /**
- * 账号集合选择器：从保险箱「集合与账号」里挑一个账号集合。
+ * 集合选择器：邮箱账户绑一个保险箱集合，集合里需要有类型为「账号」的凭据。
  *
- * 0.6.0 起邮箱账户不再手填地址：先选一个账号集合（vault.setList({type:"account"})），
- * 邮箱地址由集合上的 account 带出，授权码再从同一个集合里的凭据里选。
+ * 0.6.0 起集合不再有账号字段，账号是一条 kind=account 的凭据；邮箱地址由
+ * mail.accountSetPreview 在选中集合后带出，授权码再从同一集合里的凭据里选。
  * 只读保险箱既有接口，不改它的契约；保险箱没装时退化成说明文案。
- * 集合名与账号都是明文元数据（vault.setList 不要求解锁），所以锁定态照常可选，
- * 只有集合里的凭据（明文）才需要解锁——那是 SecretPicker 的事。
+ * 集合名是明文元数据（vault.setList 不要求解锁），锁定态照常可选，
+ * 只有账号/授权码明文才需要解锁。
  */
 var FilterChecklist = require("../../../lib/filter-checklist.cjs");
 
@@ -37,9 +37,9 @@ module.exports = function SetPicker(props) {
     var value = String(props.value || "");
 
     function call(query) {
-        return C.call(api, "vault.setList", { type: "account", q: query || "" }).then(function (r) {
+        return C.call(api, "vault.setList", { q: query || "" }).then(function (r) {
             var items = (r && Array.isArray(r.items) ? r.items : []).map(function (x) {
-                return { id: x.id, name: x.name, account: x.account || "", type: x.type || "account" };
+                return { id: x.id, name: x.name, secretCount: x.secretCount || 0 };
             });
             return items;
         });
@@ -76,7 +76,7 @@ module.exports = function SetPicker(props) {
         return function () { alive = false; };
     }, [vault, canRead]);
 
-    // 展开面板时按关键字取数：服务端 setList 的 q 会匹配集合名与账号。
+    // 展开面板时按关键字取数：服务端 setList 的 q 匹配集合名。
     React.useEffect(function () {
         if (!open) return;
         var alive = true;
@@ -128,15 +128,15 @@ module.exports = function SetPicker(props) {
     var picked = knownS[0][value] || null;
     var missing = !!value && !picked && !loadS[0];
     var label = !value
-        ? t(lang, "选择账号集合", "Choose an account set")
+        ? t(lang, "选择集合（含账号凭据）", "Choose a set with an account")
         : picked
-            ? picked.name + (picked.account ? " · @" + picked.account : "")
+            ? picked.name + (picked.secretCount ? " · " + picked.secretCount + " 条凭据" : "")
             : t(lang, "集合 " + value.slice(0, 8), "Set " + value.slice(0, 8));
 
     if (vault === "missing") {
         return h("div", { className: "wbml-picker" },
             h("div", { className: "wbml-picker-note", role: "status" },
-                t(lang, "没有检测到凭据保险箱，无法选择账号集合。安装并初始化保险箱后刷新本页。",
+                t(lang, "没有检测到凭据保险箱，无法选择集合。安装并初始化保险箱后刷新本页。",
                     "No vault plugin detected. Install and initialise the vault, then reload.")));
     }
     if (vault === "loading") {
@@ -176,30 +176,30 @@ module.exports = function SetPicker(props) {
                 t(lang, "原账号集合已失效，请重新选择", "The bound account set is gone — pick another one"))
             : null,
         open
-            ? h("div", { className: "wbml-picker-panel", role: "listbox", "aria-label": t(lang, "选择账号集合", "Choose an account set") },
+            ? h("div", { className: "wbml-picker-panel", role: "listbox", "aria-label": t(lang, "选择集合（含账号凭据）", "Choose a set with an account") },
                 h(FilterChecklist, {
                     mode: "single",
                     items: rows.map(function (x) {
-                        return { id: x.id, name: x.name, meta: x.account ? "@" + x.account : t(lang, "未填账号", "No account") };
+                        return { id: x.id, name: x.name, meta: t(lang, x.secretCount + " 条凭据", x.secretCount + " credentials") };
                     }),
                     selected: value ? [value] : [],
                     onPick: pick,
                     query: qS[0],
                     onQuery: function (v) { qS[1](v); },
-                    title: t(lang, "账号集合", "Account sets"),
+                    title: t(lang, "凭据集合", "Credential sets"),
                     total: rows.length,
-                    searchPlaceholder: t(lang, "搜索集合名或账号", "Search by set name or account"),
-                    groupLabel: t(lang, "账号集合", "Account sets"),
+                    searchPlaceholder: t(lang, "搜索集合名", "Search set name"),
+                    groupLabel: t(lang, "凭据集合", "Credential sets"),
                     loading: loadS[0],
                     emptyText: emptyText,
-                    noMatchText: t(lang, "没有匹配的账号集合", "No matching account set"),
+                    noMatchText: t(lang, "没有匹配的集合", "No matching set"),
                     loadingText: t(lang, "加载中…", "Loading…"),
                     disabled: disabled,
                 }),
                 errS[0] ? h(C.Notice, { h: h, kind: "error", text: errS[0] }) : null,
                 !rows.length && !loadS[0]
                     ? h("div", { className: "wbml-picker-empty" },
-                        h("span", null, t(lang, "还没有账号集合，去保险箱新建一个并填上账号", "No account sets yet — create one in the vault and fill in its account")),
+                        h("span", null, t(lang, "还没有集合，去保险箱新建一个并放入一条「账号」类型的凭据", "No sets yet — create one in the vault and add an account credential")),
                         h("button", { type: "button", className: "wbml-btn", onClick: goVault },
                             t(lang, "去保险箱", "Open vault")))
                     : null)

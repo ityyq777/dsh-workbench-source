@@ -4293,9 +4293,9 @@ var require_set_picker = __commonJS({
       var rows = rowsS[0];
       var value = String(props.value || "");
       function call(query) {
-        return C.call(api, "vault.setList", { type: "account", q: query || "" }).then(function(r) {
+        return C.call(api, "vault.setList", { q: query || "" }).then(function(r) {
           var items = (r && Array.isArray(r.items) ? r.items : []).map(function(x) {
-            return { id: x.id, name: x.name, account: x.account || "", type: x.type || "account" };
+            return { id: x.id, name: x.name, secretCount: x.secretCount || 0 };
           });
           return items;
         });
@@ -4373,7 +4373,7 @@ var require_set_picker = __commonJS({
       }, [open]);
       var picked = knownS[0][value] || null;
       var missing = !!value && !picked && !loadS[0];
-      var label = !value ? t(lang, "\u9009\u62E9\u8D26\u53F7\u96C6\u5408", "Choose an account set") : picked ? picked.name + (picked.account ? " \xB7 @" + picked.account : "") : t(lang, "\u96C6\u5408 " + value.slice(0, 8), "Set " + value.slice(0, 8));
+      var label = !value ? t(lang, "\u9009\u62E9\u96C6\u5408\uFF08\u542B\u8D26\u53F7\u51ED\u636E\uFF09", "Choose a set with an account") : picked ? picked.name + (picked.secretCount ? " \xB7 " + picked.secretCount + " \u6761\u51ED\u636E" : "") : t(lang, "\u96C6\u5408 " + value.slice(0, 8), "Set " + value.slice(0, 8));
       if (vault === "missing") {
         return h(
           "div",
@@ -4383,7 +4383,7 @@ var require_set_picker = __commonJS({
             { className: "wbml-picker-note", role: "status" },
             t(
               lang,
-              "\u6CA1\u6709\u68C0\u6D4B\u5230\u51ED\u636E\u4FDD\u9669\u7BB1\uFF0C\u65E0\u6CD5\u9009\u62E9\u8D26\u53F7\u96C6\u5408\u3002\u5B89\u88C5\u5E76\u521D\u59CB\u5316\u4FDD\u9669\u7BB1\u540E\u5237\u65B0\u672C\u9875\u3002",
+              "\u6CA1\u6709\u68C0\u6D4B\u5230\u51ED\u636E\u4FDD\u9669\u7BB1\uFF0C\u65E0\u6CD5\u9009\u62E9\u96C6\u5408\u3002\u5B89\u88C5\u5E76\u521D\u59CB\u5316\u4FDD\u9669\u7BB1\u540E\u5237\u65B0\u672C\u9875\u3002",
               "No vault plugin detected. Install and initialise the vault, then reload."
             )
           )
@@ -4434,11 +4434,11 @@ var require_set_picker = __commonJS({
         ) : null,
         open ? h(
           "div",
-          { className: "wbml-picker-panel", role: "listbox", "aria-label": t(lang, "\u9009\u62E9\u8D26\u53F7\u96C6\u5408", "Choose an account set") },
+          { className: "wbml-picker-panel", role: "listbox", "aria-label": t(lang, "\u9009\u62E9\u96C6\u5408\uFF08\u542B\u8D26\u53F7\u51ED\u636E\uFF09", "Choose a set with an account") },
           h(FilterChecklist, {
             mode: "single",
             items: rows.map(function(x) {
-              return { id: x.id, name: x.name, meta: x.account ? "@" + x.account : t(lang, "\u672A\u586B\u8D26\u53F7", "No account") };
+              return { id: x.id, name: x.name, meta: t(lang, x.secretCount + " \u6761\u51ED\u636E", x.secretCount + " credentials") };
             }),
             selected: value ? [value] : [],
             onPick: pick,
@@ -4446,13 +4446,13 @@ var require_set_picker = __commonJS({
             onQuery: function(v) {
               qS[1](v);
             },
-            title: t(lang, "\u8D26\u53F7\u96C6\u5408", "Account sets"),
+            title: t(lang, "\u51ED\u636E\u96C6\u5408", "Credential sets"),
             total: rows.length,
-            searchPlaceholder: t(lang, "\u641C\u7D22\u96C6\u5408\u540D\u6216\u8D26\u53F7", "Search by set name or account"),
-            groupLabel: t(lang, "\u8D26\u53F7\u96C6\u5408", "Account sets"),
+            searchPlaceholder: t(lang, "\u641C\u7D22\u96C6\u5408\u540D", "Search set name"),
+            groupLabel: t(lang, "\u51ED\u636E\u96C6\u5408", "Credential sets"),
             loading: loadS[0],
             emptyText,
-            noMatchText: t(lang, "\u6CA1\u6709\u5339\u914D\u7684\u8D26\u53F7\u96C6\u5408", "No matching account set"),
+            noMatchText: t(lang, "\u6CA1\u6709\u5339\u914D\u7684\u96C6\u5408", "No matching set"),
             loadingText: t(lang, "\u52A0\u8F7D\u4E2D\u2026", "Loading\u2026"),
             disabled
           }),
@@ -4460,7 +4460,7 @@ var require_set_picker = __commonJS({
           !rows.length && !loadS[0] ? h(
             "div",
             { className: "wbml-picker-empty" },
-            h("span", null, t(lang, "\u8FD8\u6CA1\u6709\u8D26\u53F7\u96C6\u5408\uFF0C\u53BB\u4FDD\u9669\u7BB1\u65B0\u5EFA\u4E00\u4E2A\u5E76\u586B\u4E0A\u8D26\u53F7", "No account sets yet \u2014 create one in the vault and fill in its account")),
+            h("span", null, t(lang, "\u8FD8\u6CA1\u6709\u96C6\u5408\uFF0C\u53BB\u4FDD\u9669\u7BB1\u65B0\u5EFA\u4E00\u4E2A\u5E76\u653E\u5165\u4E00\u6761\u300C\u8D26\u53F7\u300D\u7C7B\u578B\u7684\u51ED\u636E", "No sets yet \u2014 create one in the vault and add an account credential")),
             h(
               "button",
               { type: "button", className: "wbml-btn", onClick: goVault },
@@ -5007,16 +5007,19 @@ var require_account_form = __commonJS({
         setProbe(null);
         applyPreset(id, f.email);
       }
-      function onPickSet(id, set) {
-        var address = String(set && set.account || "").trim();
+      function onPickSet(id) {
         touchedS[1](true);
         setProbe(null);
-        var patch = { accountSetId: id, secretId: "", secretName: "" };
-        if (address) {
+        setErr("");
+        upd({ accountSetId: id, secretId: "", secretName: "", email: "", provider: "other", advanced: true });
+        C.call(api, "mail.accountSetPreview", { accountSetId: id }).then(function(r2) {
+          var address = String(r2 && r2.email || "").trim();
+          if (!address) return;
           var hit = util.detect(providers, address);
           var p = hit ? util.presetFor(providers, hit.id, address) : null;
-          patch.email = address;
+          var patch = { email: address };
           if (p) {
+            setProbe(null);
             patch.provider = hit.id;
             patch.imapHost = p.imapHost;
             patch.imapPort = p.imapPort;
@@ -5025,17 +5028,19 @@ var require_account_form = __commonJS({
             patch.smtpPort = p.smtpPort;
             patch.smtpTls = p.smtpTls;
             patch.advanced = false;
+            portS[1]({ imap: true, smtp: true });
           } else {
             patch.provider = "other";
             patch.advanced = true;
           }
-          portS[1]({ imap: true, smtp: true });
-        }
-        upd(patch);
+          upd(patch);
+        }).catch(function(e) {
+          setErr(C.errText(e));
+        });
       }
       function validate() {
-        if (!String(f.accountSetId || "").trim()) return t(lang, "\u8BF7\u5148\u9009\u62E9\u8D26\u53F7\u96C6\u5408\uFF08\u4FDD\u9669\u7BB1\u300C\u96C6\u5408\u4E0E\u8D26\u53F7\u300D\uFF09", "Pick an account set in the vault first");
-        if (!/^\S+@\S+\.\S+$/.test(String(f.email || "").trim())) return t(lang, "\u6240\u9009\u8D26\u53F7\u96C6\u5408\u6CA1\u6709\u53EF\u7528\u7684\u90AE\u7BB1\u8D26\u53F7\uFF0C\u8BF7\u5148\u5230\u4FDD\u9669\u7BB1\u586B\u5199", "The selected account set has no usable email account");
+        if (!String(f.accountSetId || "").trim()) return t(lang, "\u8BF7\u5148\u9009\u62E9\u4FDD\u9669\u7BB1\u91CC\u7684\u96C6\u5408\uFF08\u91CC\u9762\u8981\u6709\u300C\u8D26\u53F7\u300D\u7C7B\u578B\u7684\u51ED\u636E\uFF09", "Pick a vault set that holds an account credential first");
+        if (!/^\S+@\S+\.\S+$/.test(String(f.email || "").trim())) return t(lang, "\u6240\u9009\u96C6\u5408\u6CA1\u6709\u53EF\u7528\u7684\u90AE\u7BB1\u8D26\u53F7\uFF0C\u8BF7\u786E\u8BA4\u96C6\u5408\u91CC\u6709\u7C7B\u578B\u4E3A\u300C\u8D26\u53F7\u300D\u7684\u51ED\u636E\u4E14\u5185\u5BB9\u50CF\u90AE\u7BB1", "The selected set has no usable email account");
         if (!String(f.name || "").trim()) return t(lang, "\u8BF7\u586B\u5199\u8D26\u6237\u540D\u79F0", "Enter an account name");
         if (!String(f.imapHost || "").trim()) return t(lang, "\u8BF7\u586B\u5199 IMAP \u670D\u52A1\u5668", "Enter the IMAP server");
         if (!String(f.secretId || "").trim()) {
@@ -5220,11 +5225,11 @@ var require_account_form = __commonJS({
           h("button", { type: "button", className: "wbml-icon-btn", onClick: props.onCancel, title: t(lang, "\u5173\u95ED", "Close") }, "\xD7")
         ),
         h(require_provider_chips(), { h, lang, providers, value: f.provider, onPick }),
-        !f.accountSetId && editing ? h("p", { className: "wbml-hint-line" }, t(lang, "\u8FD9\u4E2A\u8D26\u6237\u662F\u65E7\u7248\u8D26\u6237\uFF0C\u8FD8\u6CA1\u6709\u7ED1\u5B9A\u8D26\u53F7\u96C6\u5408\uFF1B\u4FDD\u5B58\u524D\u8BF7\u5148\u9009\u62E9\u4E00\u4E2A\u3002", "This legacy account has no account set yet \u2014 pick one before saving.")) : null,
+        !f.accountSetId && editing ? h("p", { className: "wbml-hint-line" }, t(lang, "\u8FD9\u4E2A\u8D26\u6237\u662F\u65E7\u7248\u8D26\u6237\uFF0C\u8FD8\u6CA1\u6709\u7ED1\u5B9A\u4FDD\u9669\u7BB1\u96C6\u5408\uFF1B\u4FDD\u5B58\u524D\u8BF7\u5148\u9009\u62E9\u4E00\u4E2A\u3002", "This legacy account has no account set yet \u2014 pick one before saving.")) : null,
         h(
           "div",
           { className: "wbml-acct-grid" },
-          field(t(lang, "\u8D26\u53F7\u96C6\u5408", "Account set"), h(SetPicker, {
+          field(t(lang, "\u4FDD\u9669\u7BB1\u96C6\u5408", "Vault set"), h(SetPicker, {
             h,
             C,
             api,
@@ -5234,7 +5239,7 @@ var require_account_form = __commonJS({
             value: f.accountSetId,
             disabled: busy.save,
             onChange: onPickSet
-          }), t(lang, "\u5148\u9009\u4E00\u4E2A\u8D26\u53F7\u96C6\u5408\uFF1B\u90AE\u7BB1\u5730\u5740\u7531\u5B83\u4E0A\u9762\u7684\u8D26\u53F7\u81EA\u52A8\u5E26\u51FA\u3002", "Pick an account set; the email address comes from its account.")),
+          }), t(lang, "\u5148\u9009\u4E00\u4E2A\u96C6\u5408\uFF1B\u90AE\u7BB1\u5730\u5740\u7531\u96C6\u5408\u91CC\u7C7B\u578B\u4E3A\u300C\u8D26\u53F7\u300D\u7684\u51ED\u636E\u81EA\u52A8\u5E26\u51FA\u3002", "Pick an account set; the email address comes from its account.")),
           field(t(lang, "\u8D26\u6237\u540D\u79F0", "Account name"), textInput("name", { placeholder: t(lang, "\u4F8B\u5982 \u5DE5\u4F5C\u90AE\u7BB1", "e.g. Work mail") }))
         ),
         field(
@@ -5244,9 +5249,9 @@ var require_account_form = __commonJS({
             type: "text",
             value: f.email,
             readOnly: true,
-            placeholder: t(lang, "\u9009\u62E9\u8D26\u53F7\u96C6\u5408\u540E\u81EA\u52A8\u586B\u5165", "Filled after picking an account set")
+            placeholder: t(lang, "\u9009\u62E9\u96C6\u5408\u540E\u81EA\u52A8\u586B\u5165", "Filled after picking a set")
           }),
-          f.accountSetId ? t(lang, "\u8D26\u53F7\u6765\u81EA\u6240\u9009\u96C6\u5408\uFF0C\u8981\u6539\u5730\u5740\u8BF7\u53BB\u4FDD\u9669\u7BB1\u6539\u96C6\u5408\u8D26\u53F7\u3002", "The address comes from the selected set \u2014 change the set account in the vault.") : null
+          f.accountSetId ? t(lang, "\u5730\u5740\u6765\u81EA\u6240\u9009\u96C6\u5408\u91CC\u7C7B\u578B\u4E3A\u300C\u8D26\u53F7\u300D\u7684\u51ED\u636E\uFF0C\u8981\u6539\u8BF7\u53BB\u4FDD\u9669\u7BB1\u6539\u90A3\u6761\u51ED\u636E\u3002", "The address comes from the account credential in the selected set \u2014 edit that credential in the vault.") : null
         ),
         f.accountSetId ? field(
           t(lang, "\u6388\u6743\u7801\uFF08\u96C6\u5408\u5185\u51ED\u636E\uFF09", "App password (in this set)"),
@@ -5267,7 +5272,7 @@ var require_account_form = __commonJS({
           }),
           t(
             lang,
-            "\u53EA\u5217\u8FD9\u4E2A\u8D26\u53F7\u96C6\u5408\u91CC\u7684\u51ED\u636E\uFF1B\u5148\u628A\u6388\u6743\u7801\u653E\u8FDB\u8FD9\u4E2A\u96C6\u5408\u3002",
+            "\u53EA\u5217\u8FD9\u4E2A\u96C6\u5408\u91CC\u7684\u51ED\u636E\uFF1B\u5148\u628A\u6388\u6743\u7801\u653E\u8FDB\u8FD9\u4E2A\u96C6\u5408\u3002",
             "Only credentials in this set are listed here."
           )
         ) : field(
@@ -5320,7 +5325,7 @@ var require_account_form = __commonJS({
         probeS[0] ? h(C.Notice, { h, text: probeText, kind: probeS[0].ok ? "ok" : "warn" }) : null,
         errS[0] ? h(C.Notice, { h, text: errS[0], kind: "warn" }) : null,
         noticeS[0] ? h(C.Notice, { h, text: noticeS[0], kind: "ok" }) : null,
-        !f.accountSetId ? h("p", { className: "wbml-hint-line" }, t(lang, "\u8BF7\u5148\u9009\u62E9\u8D26\u53F7\u96C6\u5408\uFF0C\u672A\u9009\u65F6\u4E0D\u80FD\u4FDD\u5B58\u3002", "Pick an account set before saving.")) : !f.secretId ? h("p", { className: "wbml-hint-line" }, t(lang, "\u8BF7\u4ECE\u6240\u9009\u96C6\u5408\u91CC\u9009\u4E00\u6761\u6388\u6743\u7801\uFF0C\u672A\u9009\u65F6\u4E0D\u80FD\u4FDD\u5B58\u3002", "Pick a credential from the selected set before saving.")) : null,
+        !f.accountSetId ? h("p", { className: "wbml-hint-line" }, t(lang, "\u8BF7\u5148\u9009\u62E9\u96C6\u5408\uFF0C\u672A\u9009\u65F6\u4E0D\u80FD\u4FDD\u5B58\u3002", "Pick an account set before saving.")) : !f.secretId ? h("p", { className: "wbml-hint-line" }, t(lang, "\u8BF7\u4ECE\u6240\u9009\u96C6\u5408\u91CC\u9009\u4E00\u6761\u6388\u6743\u7801\uFF0C\u672A\u9009\u65F6\u4E0D\u80FD\u4FDD\u5B58\u3002", "Pick a credential from the selected set before saving.")) : null,
         h(
           "div",
           { className: "wbml-acct-foot" },
@@ -6911,6 +6916,10 @@ var require_action_schema_style = __commonJS({
         "." + P + "-copy:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
         "." + P + " details>summary{cursor:pointer;font-size:11.5px;color:var(--dsw-alias-label-secondary,inherit);width:max-content}",
         "." + P + " details>summary:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
+        // 参数折叠面板：折叠时只留一行「参数 · 必填 n」，展开后与表格之间留一点气口。
+        "." + P + "-params{min-width:0}",
+        "." + P + "-params>summary{user-select:none;max-width:100%}",
+        "." + P + "-params[open]>summary{margin-bottom:6px}",
         "." + P + "-empty{padding:24px;text-align:center;border:1px dashed var(--wb-border,#e3e5e9);border-radius:10px;color:var(--dsw-alias-label-tertiary,inherit)}",
         "." + P + "-error{padding:12px;border:1px solid var(--dsw-alias-state-error-primary,#d9534f);border-radius:10px;color:var(--dsw-alias-state-error-primary,#d9534f);display:flex;gap:10px;align-items:center;flex-wrap:wrap;overflow-wrap:anywhere}",
         "." + P + "-toast{position:sticky;bottom:8px;align-self:flex-start;border-radius:999px;padding:3px 10px;background:var(--dsw-alias-bg-skeleton,#f2f3f5);font-size:11.5px;max-width:100%}",
@@ -6990,6 +6999,10 @@ var require_action_schema_view = __commonJS({
         paramCount: function(n) {
           return n + " \u4E2A\u53C2\u6570";
         },
+        params: "\u53C2\u6570",
+        requiredCount: function(n) {
+          return "\u5FC5\u586B " + n;
+        },
         examples: "\u793A\u4F8B",
         noExamples: "\u65E0\u793A\u4F8B",
         copy: "\u590D\u5236",
@@ -7052,6 +7065,10 @@ var require_action_schema_view = __commonJS({
         noParams: "No parameters",
         paramCount: function(n) {
           return n + " params";
+        },
+        params: "Parameters",
+        requiredCount: function(n) {
+          return n + " required";
         },
         examples: "Examples",
         noExamples: "No examples",
@@ -7191,6 +7208,8 @@ var require_action_schema_view = __commonJS({
         var toast = toastState[0], setToast = toastState[1];
         var savingState = React.useState("");
         var saving = savingState[0], setSaving = savingState[1];
+        var foldsState = React.useState({});
+        var folds = foldsState[0], setFolds = foldsState[1];
         React.useEffect(function() {
           injectCss();
         }, []);
@@ -7290,6 +7309,15 @@ var require_action_schema_view = __commonJS({
           }
           Promise.resolve(api.call("actions.setActionOrigins", { action: name, origins: next })).then(done, fail);
         }
+        function paramsOpen(action) {
+          if (Object.prototype.hasOwnProperty.call(folds, action.name)) return folds[action.name] === true;
+          return Boolean(String(query || "").trim()) || reqMode !== "all" || Boolean(typePick);
+        }
+        function resetFolds() {
+          setFolds(function(prev) {
+            return Object.keys(prev).length ? {} : prev;
+          });
+        }
         var all = snap && Array.isArray(snap.actions) ? snap.actions.filter(function(a) {
           return a && a.domain === DOMAIN;
         }) : [];
@@ -7386,6 +7414,10 @@ var require_action_schema_view = __commonJS({
         }
         function card(action) {
           var rows = paramRows(action);
+          var required = rows.filter(function(row) {
+            return row.required;
+          }).length;
+          var open = paramsOpen(action);
           var examples = Array.isArray(action.examples) ? action.examples : [];
           return h(
             "div",
@@ -7406,18 +7438,38 @@ var require_action_schema_view = __commonJS({
             ),
             action.description ? h("p", { className: P + "-desc" }, Highlight.hit(action.description, kw)) : null,
             rows.length ? h(
-              "table",
-              { className: P + "-table" },
-              h("thead", null, h(
-                "tr",
-                null,
-                h("th", null, t.colName),
-                h("th", null, t.colType),
-                h("th", null, t.colReq),
-                h("th", null, t.colExtra),
-                h("th", null, t.colDesc)
-              )),
-              h("tbody", null, rows.map(paramRow))
+              "details",
+              {
+                className: P + "-params",
+                "data-params-fold": action.name,
+                open,
+                // 原生 details 自带键盘与无障碍语义，这里只记下用户的开合；
+                // 筛选变化引起的程序性开合也会触发 toggle，记下的值与当次默认一致，随后由 resetFolds 清掉。
+                onToggle: function(e) {
+                  var next = !!(e && e.currentTarget && e.currentTarget.open);
+                  setFolds(function(prev) {
+                    if (prev[action.name] === next) return prev;
+                    var out = Object.assign({}, prev);
+                    out[action.name] = next;
+                    return out;
+                  });
+                }
+              },
+              h("summary", null, t.params + (required ? " \xB7 " + t.requiredCount(required) : "")),
+              h(
+                "table",
+                { className: P + "-table" },
+                h("thead", null, h(
+                  "tr",
+                  null,
+                  h("th", null, t.colName),
+                  h("th", null, t.colType),
+                  h("th", null, t.colReq),
+                  h("th", null, t.colExtra),
+                  h("th", null, t.colDesc)
+                )),
+                h("tbody", null, rows.map(paramRow))
+              )
             ) : h("div", { className: P + "-none" }, t.noParams),
             h(
               "div",
@@ -7494,6 +7546,7 @@ var require_action_schema_view = __commonJS({
                 "aria-label": t.search,
                 onChange: function(e) {
                   setQuery(e.target.value);
+                  resetFolds();
                 }
               })
             ),
@@ -7505,6 +7558,7 @@ var require_action_schema_view = __commonJS({
                 "select",
                 { value: reqMode, "aria-label": t.filterReq, onChange: function(e) {
                   setReqMode(e.target.value);
+                  resetFolds();
                 } },
                 h("option", { value: "all" }, t.all),
                 h("option", { value: "required" }, t.onlyRequired),
@@ -7519,6 +7573,7 @@ var require_action_schema_view = __commonJS({
                 "select",
                 { value: typePick, "aria-label": t.filterType, onChange: function(e) {
                   setTypePick(e.target.value);
+                  resetFolds();
                 } },
                 h("option", { value: "" }, t.allTypes),
                 typeOptions.map(function(name) {
@@ -7599,7 +7654,7 @@ var GLYPHS = require_icons2().ICONS;
   var slotBackToMessage = require_slot_back_to_message()({ React, h, C, Icon: Icon2 });
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.6.8",
+    version: "0.7.0",
     icon: GLYPHS["mail"],
     slots: [{ slot: "item.actions", id: "mail.back-to-message", order: 100, component: slotBackToMessage }],
     views: [

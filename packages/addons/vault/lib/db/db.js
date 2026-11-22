@@ -17,10 +17,11 @@ export const VAULT_META_LEGACY = "vault_meta_legacy";
 
 /**
  * 0.3.0 起：集合层（set）与两张多对多关联表；schema_version 3。
- * 0.4.0 起：集合加可选 account 列（账号集合 / 普通集合由它是否为空区分）；schema_version 4。
- * 0.5.0 起：account 非空值改为 DEK 加密的 `va1:` 密文；schema_version 5（解锁后迁移）。
+ * 0.4.0 起：集合加可选 account 列；0.5.0 起该列改为密文；二者都已在 0.6.0 下线。
+ * 0.6.0 起：凭据类型改为多值（vault_secret_kind），集合不再区分账号/普通；schema_version 6。
+ *           vault_secret 去掉单值 kind 列、vault_set 去掉 account 列，都需要 DEK 在解锁后迁移。
  */
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 export const VAULT_DDL = [
   "CREATE TABLE IF NOT EXISTS vault_header (" +
@@ -61,7 +62,6 @@ export const VAULT_DDL = [
   "CREATE TABLE IF NOT EXISTS vault_secret (" +
     "id TEXT PRIMARY KEY," +
     "name TEXT NOT NULL," +
-    "kind TEXT NOT NULL," +
     "meta TEXT NOT NULL DEFAULT '{}'," +
     "ciphertext TEXT NOT NULL," +
     "created_at INTEGER NOT NULL," +
@@ -70,11 +70,20 @@ export const VAULT_DDL = [
     "rev INTEGER NOT NULL DEFAULT 1" +
     ");",
   "CREATE UNIQUE INDEX IF NOT EXISTS uk_vault_secret_name ON vault_secret(name) WHERE deleted_at IS NULL;",
-  "CREATE INDEX IF NOT EXISTS idx_vault_secret_kind ON vault_secret(deleted_at, kind);",
+  "CREATE TABLE IF NOT EXISTS vault_secret_kind (" +
+    "id TEXT PRIMARY KEY," +
+    "secret_id TEXT NOT NULL," +
+    "kind TEXT NOT NULL," +
+    "created_at INTEGER NOT NULL," +
+    "updated_at INTEGER NOT NULL," +
+    "deleted_at INTEGER," +
+    "rev INTEGER NOT NULL DEFAULT 1" +
+    ");",
+  "CREATE UNIQUE INDEX IF NOT EXISTS uk_vault_secret_kind ON vault_secret_kind(secret_id, kind) WHERE deleted_at IS NULL;",
+  "CREATE INDEX IF NOT EXISTS idx_vault_secret_kind_secret ON vault_secret_kind(secret_id);",
   "CREATE TABLE IF NOT EXISTS vault_set (" +
     "id TEXT PRIMARY KEY," +
     "name TEXT NOT NULL," +
-    "account TEXT NOT NULL DEFAULT ''," +
     "description TEXT NOT NULL DEFAULT ''," +
     "color TEXT," +
     "created_at INTEGER NOT NULL," +
@@ -180,13 +189,14 @@ export function ensureSchema(db) {
  * 4 → 5 需要 DEK 才能把明文账号加密，因此不在启动时升版本，交给解锁后的账号迁移。
  */
 export function migrateV4(db) {
-  if (tableExists(db, "vault_set") && !hasColumn(db, "vault_set", "account")) {
-    db.exec("ALTER TABLE vault_set ADD COLUMN account TEXT NOT NULL DEFAULT ''");
-  }
   const head = headerGet(db);
   if (!head) return;
   const version = Number(head.schema_version || 0);
-  if (version >= 3 && version < 4) headerSet(db, { schema_version: 4 });
+  if (version < 3 || version >= 4) return;
+  if (tableExists(db, "vault_set") && !hasColumn(db, "vault_set", "account")) {
+    db.exec("ALTER TABLE vault_set ADD COLUMN account TEXT NOT NULL DEFAULT ''");
+  }
+  headerSet(db, { schema_version: 4 });
 }
 
 /**
@@ -350,7 +360,7 @@ export function secretRow(row, usage = {}) {
   return {
     id: row.id,
     name: row.name,
-    kind: row.kind,
+    kinds: Array.isArray(row.kinds) ? row.kinds : [],
     meta: row.meta || "{}",
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -361,13 +371,9 @@ export function secretRow(row, usage = {}) {
 
 export function setRow(row) {
   if (!row) return null;
-  const account = String(row.account || "");
   return {
     id: row.id,
     name: row.name,
-    account,
-    // 账号集合 / 普通集合由 account 是否为空推导，不存冗余列。
-    type: account ? "account" : "common",
     description: row.description || "",
     color: row.color || null,
     createdAt: row.created_at,

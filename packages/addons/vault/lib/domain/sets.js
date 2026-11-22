@@ -4,7 +4,7 @@
  * 关联表只存引用，增删关系不触发重加密（AAD 不含归属）。
  */
 import { groupSetRow, newId, now, setRow, setSecretRow, tx } from "../db/db.js";
-import { isSealedAccount, openAccount, sealAccount } from "../infra/crypto.js";
+import { kindsMap } from "./kinds.js";
 
 function assertSetName(name) {
   const value = String(name || "").trim();
@@ -12,61 +12,10 @@ function assertSetName(name) {
   return value;
 }
 
-/** 账号可空、可重复：留空即普通集合，有值即账号集合；身份仍由集合 id 承担。 */
-function assertSetAccount(account) {
-  const value = String(account == null ? "" : account).trim();
-  if (value.length > 100) throw new Error("集合账号最多 100 字");
-  return value;
-}
-
-export function createSets({ db, getDek = () => null }) {
-  function dekOrNull() {
-    return typeof getDek === "function" ? getDek() : null;
-  }
-
-  /**
-   * 账号列读写（0.5.0 起）：非空值一律 DEK 加密成 `va1:` 密文，空串保持空串，
-   * 「账号集合 / 普通集合」仍按原始列是否为空推导。
-   * 锁定态读返回空串并标 accountLocked（界面已有锁定提示）；解密失败同样按锁定处理，
-   * 单个坏行不会拖垮整个列表，写操作则要求先解锁。
-   */
-  function decryptAccount(row) {
-    const raw = String(row.account || "");
-    if (!raw) return { value: "", locked: false };
-    if (!isSealedAccount(raw)) return { value: raw, locked: false };
-    const dek = dekOrNull();
-    if (!dek) return { value: "", locked: true };
-    try {
-      return { value: openAccount(dek, raw, row.id), locked: false };
-    } catch {
-      return { value: "", locked: true };
-    }
-  }
-
-  /** 明文账号 → 落库值；非空账号必须能拿到 DEK。 */
-  function encryptAccount(setId, value) {
-    const account = assertSetAccount(value);
-    if (!account) return "";
-    const dek = dekOrNull();
-    if (!dek) throw new Error("保险箱已锁定，无法保存集合账号，请先解锁");
-    return sealAccount(dek, account, setId);
-  }
-
-  /** 账号列已经是密文时，任何改动（包括清空）都要求先解锁，避免锁定态误删账号。 */
-  function assertAccountUnlocked(row) {
-    if (isSealedAccount(row.account) && !dekOrNull()) {
-      throw new Error("保险箱已锁定，无法更新集合账号，请先解锁");
-    }
-  }
-
-  /** 集合行 → 对外对象：账号解密，但类型仍按加密前的列是否为空判断。 */
+export function createSets({ db }) {
+  /** 集合行 → 对外对象。0.6.0 起集合不再区分账号/普通，也没有账号字段。 */
   function setView(row) {
-    if (!row) return null;
-    const account = decryptAccount(row);
-    const view = setRow({ ...row, account: account.value });
-    view.type = String(row.account || "") ? "account" : "common";
-    view.accountLocked = account.locked;
-    return view;
+    return row ? setRow(row) : null;
   }
 
   function setOrThrow(id) {
@@ -97,12 +46,11 @@ export function createSets({ db, getDek = () => null }) {
     const id = newId("set");
     try {
       db.prepare(
-        "INSERT INTO vault_set(id, name, account, description, color, created_at, updated_at, rev) " +
-          "VALUES(?, ?, ?, ?, ?, ?, ?, 1)",
+        "INSERT INTO vault_set(id, name, description, color, created_at, updated_at, rev) " +
+          "VALUES(?, ?, ?, ?, ?, ?, 1)",
       ).run(
         id,
         value,
-        encryptAccount(id, extra.account),
         String(extra.description || ""),
         extra.color ? String(extra.color) : null,
         ts,
@@ -230,11 +178,13 @@ export function createSets({ db, getDek = () => null }) {
   }
 
   function listSets(args = {}) {
-    const q = String(args.q || "").trim().toLowerCase();
+    const q = String(args.q || "").trim();
     const where = ["s.deleted_at IS NULL"];
     const params = [];
-    if (args.type === "account") where.push("s.account <> ''");
-    else if (args.type === "common") where.push("s.account = ''");
+    if (q) {
+      where.push("(s.name LIKE ? OR s.description LIKE ?)");
+      params.push("%" + q + "%", "%" + q + "%");
+    }
     let join = "";
     if (args.groupId) {
       join =
@@ -251,11 +201,7 @@ export function createSets({ db, getDek = () => null }) {
       secretCount: secretCountOfSet(row.id),
       groupIds: groupsOfSet(row.id),
     }));
-    // 账号是密文，SQL 的 LIKE 匹配不到；集合量级小，解锁后在内存里统一过滤。
-    const filtered = q
-      ? items.filter((item) => [item.name, item.account, item.description].join("\n").toLowerCase().includes(q))
-      : items;
-    return { items: filtered };
+    return { items };
   }
 
   function createSet(args = {}) {
@@ -264,12 +210,11 @@ export function createSets({ db, getDek = () => null }) {
     const ts = now();
     const id = newId("set");
     db.prepare(
-      "INSERT INTO vault_set(id, name, account, description, color, created_at, updated_at, rev) " +
-        "VALUES(?, ?, ?, ?, ?, ?, ?, 1)",
+      "INSERT INTO vault_set(id, name, description, color, created_at, updated_at, rev) " +
+        "VALUES(?, ?, ?, ?, ?, ?, 1)",
     ).run(
       id,
       name,
-      encryptAccount(id, args.account),
       String(args.description || "").slice(0, 500),
       args.color ? String(args.color) : null,
       ts,
@@ -282,37 +227,11 @@ export function createSets({ db, getDek = () => null }) {
     const row = setOrThrow(args.id);
     const name = args.name == null ? row.name : assertSetName(args.name);
     if (name !== row.name && findSetByName(name)) throw new Error("已有同名集合：" + name);
-    // 未传 account 时保留原密文，不因改名而重加密；传了就先过锁定检查再加密。
-    let account = String(row.account || "");
-    if (args.account !== undefined) {
-      assertAccountUnlocked(row);
-      account = encryptAccount(row.id, args.account);
-    }
     const description = args.description == null ? row.description : String(args.description).slice(0, 500);
     const color = args.color === undefined ? row.color : args.color ? String(args.color) : null;
     db.prepare(
-      "UPDATE vault_set SET name = ?, account = ?, description = ?, color = ?, updated_at = ?, rev = rev + 1 WHERE id = ?",
-    ).run(name, account, description, color, now(), row.id);
-    return setView(db.prepare("SELECT * FROM vault_set WHERE id = ?").get(row.id));
-  }
-
-  /** 只改集合的账号展示值（站点账号改名时同步），不动名称/描述/颜色。 */
-  function updateSetAccount(setId, account) {
-    const row = setOrThrow(setId);
-    const plain = assertSetAccount(account);
-    assertAccountUnlocked(row);
-    const current = String(row.account || "");
-    if (!plain) {
-      if (current !== "") {
-        db.prepare("UPDATE vault_set SET account = '', updated_at = ?, rev = rev + 1 WHERE id = ?").run(now(), row.id);
-      }
-    } else if (decryptAccount(row).value !== plain) {
-      db.prepare("UPDATE vault_set SET account = ?, updated_at = ?, rev = rev + 1 WHERE id = ?").run(
-        encryptAccount(row.id, plain),
-        now(),
-        row.id,
-      );
-    }
+      "UPDATE vault_set SET name = ?, description = ?, color = ?, updated_at = ?, rev = rev + 1 WHERE id = ?",
+    ).run(name, description, color, now(), row.id);
     return setView(db.prepare("SELECT * FROM vault_set WHERE id = ?").get(row.id));
   }
 
@@ -370,10 +289,12 @@ export function createSets({ db, getDek = () => null }) {
 
   function getSet(args = {}) {
     const row = setOrThrow(args.id);
-    const secrets = secretsOfSet(row.id).map((item) => ({
+    const items = secretsOfSet(row.id);
+    const kindIndex = kindsMap(db, items.map((item) => item.id));
+    const secrets = items.map((item) => ({
       id: item.id,
       name: item.name,
-      kind: item.kind,
+      kinds: kindIndex.get(String(item.id)) || [],
       updatedAt: item.updated_at,
     }));
     return { ...setView(row), groupIds: groupsOfSet(row.id), secrets };
@@ -394,7 +315,6 @@ export function createSets({ db, getDek = () => null }) {
     listSets,
     createSet,
     updateSet,
-    updateSetAccount,
     deleteSet,
     detachSecretEverywhere,
     relinkGroup,

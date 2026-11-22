@@ -8,6 +8,7 @@
  * 0.3.6：口令输入框统一用共享的明文切换控件（lib/secret-field.cjs），初始化页主/确认口令、解锁页与口令弹层都能点小眼睛看明文，各自独立切换。
  * 0.3.5：修复「保存凭据后列表不新增」——客户端 unwrap 对 ok:false 抛错、锁定态在凭据页提示并可内联解锁、写成功后无条件刷新列表。
  * 0.5.0：集合账号也加密——vault_set.account 改成 DEK 加密的 `va1:` 密文（AAD 绑定集合 id），本地库、同步与备份里都不再有登录名明文；锁定态读不到账号，写入账号需先解锁；schema_version 4 → 5 在解锁后迁移。
+ * 0.6.0：账号本身也是一种凭据（kind=account），类型从 vault_secret.kind 单列拆到 vault_secret_kind 关联表，一条凭据可同时有多种类型；集合不再区分账号/普通，存量集合账号在解锁后转成 kind=account 的凭据；AAD 只绑 id 与名称，改类型不再重加密。
  */
 import { ensureSchema, bindClock } from "./db/db.js";
 import { createRequire } from "node:module";
@@ -44,6 +45,7 @@ export function createDomain(host) {
       "vault_group",
       "vault_secret",
       "vault_set",
+      "vault_secret_kind",
       "vault_group_set",
       "vault_set_secret",
       "vault_binding",
@@ -64,6 +66,12 @@ export function createDomain(host) {
         { name: "vault_subject_type", mode: "row", uniqueKeys: [["id"], ["type"]], uniquePolicy: "lww-tombstone" },
         { name: "vault_set", mode: "row", uniqueKeys: [["id"], ["name"]], uniquePolicy: "lww-tombstone" },
         {
+          name: "vault_secret_kind",
+          mode: "row",
+          uniqueKeys: [["id"], ["secret_id", "kind"]],
+          uniquePolicy: "lww-tombstone",
+        },
+        {
           name: "vault_group_set",
           mode: "row",
           uniqueKeys: [["id"], ["group_id", "set_id"]],
@@ -80,7 +88,7 @@ export function createDomain(host) {
     views: [
       { id: "status", title: "保险箱", icon: "shield" },
       { id: "secrets", title: "凭据", icon: "key" },
-      { id: "sets", title: "集合与账号", icon: "layers" },
+      { id: "sets", title: "集合", icon: "layers" },
       { id: "groups", title: "分组与关联", icon: "folder" },
       { id: "config", title: "设置", icon: "sliders" },
       { id: "data", title: "数据", icon: "database" },
@@ -88,14 +96,14 @@ export function createDomain(host) {
     ],
     capability: {
       summary:
-        "保存连接器/站点需要的密码、手机号、证件号与 token；分组挂集合，集合可标一个账号（可重复、可留空）再装凭据，明文只向 UI 或 plugin 租约暴露。",
+        "保存连接器/站点需要的密码、手机号、证件号与 token；分组挂集合，集合只装凭据，账号本身也是一条凭据（kind=account），一条凭据可同时有多种类型，明文只向 UI 或 plugin 租约暴露。",
       records: [
         {
           kind: "set",
           table: "vault_set",
-          title: "集合与账号",
+          title: "集合",
           description:
-            "凭据容器，可标一个账号（可重复、可留空）：有账号的是账号集合，留空的是普通集合，条目只按 id 区分；一个集合能挂到多个分组，也能装多条凭据，删除只断关联。",
+            "凭据容器，一个集合能挂到多个分组，也能装多条凭据，删除只断关联；不再区分账号/普通集合，账号作为 kind=account 的凭据放入集合。",
           when: ["同一个业务账号要复用多条凭据", "一份凭据要给多个分组使用"],
           primaryAction: "vault.setList",
         },
@@ -103,7 +111,7 @@ export function createDomain(host) {
           kind: "secret",
           table: "vault_secret",
           title: "凭据",
-          description: "一条加密凭据（密码/手机号/证件号/token），可加入多个集合，列表只显示名称与备注。",
+          description: "一条加密凭据（密码/账号/手机号/证件号/token），可同时有多个类型，可加入多个集合，列表只显示名称、类型与备注。",
           when: ["需要保存邮箱密码或授权码", "连接器要绑定一个 token", "想在 agent 面前隐藏明文"],
           primaryAction: "vault.secretCreate",
         },
@@ -119,13 +127,12 @@ export function createDomain(host) {
       fields: [
         { name: "name", type: "string", description: "唯一名称" },
         {
-          name: "kind",
-          type: "password|phone|id_card|token|app_password|api_key|other",
-          description: "凭据类型；密码/手机号/证件号/Token/授权码/API Key/其它",
+          name: "kinds",
+          type: "string[]",
+          description: "凭据类型，至少一个，可多选：password/account/phone/id_card/token/app_password/api_key/other（account=账号/登录名）",
         },
         { name: "groupId", type: "string", description: "所属分组，可空；写入时自动挂到该组的默认集合" },
         { name: "setId", type: "string", description: "直接指定所属集合，优先于 groupId" },
-        { name: "account", type: "string", description: "集合上的账号，加密落库，可空、可重复；留空即普通集合" },
         { name: "meta", type: "object", description: "非敏感备注（用户名、URL、过期提醒）" },
       ],
       notFor: ["浏览器密码自动填充", "跨设备同步明文", "给 agent 读取明文"],
@@ -134,8 +141,8 @@ export function createDomain(host) {
         "同步上去的是 KDF 参数与密文，云端没有口令也解不开；换机重新输入口令即可解锁。",
         "备份仍不导出密文，换机靠同步或重新录入。",
         "旧版分组的直属凭据在首次解锁时迁移进「<组名> · 默认」集合；站点专属类型收口为通用类型。",
-        "0.4.0 起集合带可空账号：有账号的是账号集合，留空的是普通集合；账号允许重复，条目身份只由集合 id 承担。",
-        "0.5.0 起集合账号用 DEK 加密落库（va1: 密文，AAD 绑定集合 id）：本地库与云端都看不到登录名明文；未解锁时读到的账号为空（accountLocked 为 true），新增或修改账号必须先解锁；schema_version 升到 5 时在解锁后自动加密存量账号，两端插件都升到 0.5.0 才能正确读写。",
+        "0.5.0 起集合账号曾用 DEK 加密在 vault_set.account；0.6.0 起该列取消，存量账号在解锁后转成 kind=account 的凭据。",
+        "0.6.0 起类型存在 vault_secret_kind 关联表，一条凭据可多类型；AAD 只绑 id 与名称，改类型/归属不重加密，改名称才重加密；schema_version 升到 6 时在解锁后自动迁移，两端插件都升到 0.6.0 才能正确读写。",
       ],
     },
     setup(api) {

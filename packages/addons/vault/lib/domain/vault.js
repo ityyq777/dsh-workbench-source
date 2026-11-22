@@ -28,8 +28,9 @@ import {
   usageMap,
 } from "../db/db.js";
 import { createSets } from "./sets.js";
-import { migrateAccountsToV5, migrateToV3 } from "./migrate.js";
-import { assertKind, assertMeta, assertSecretName } from "./secret-input.js";
+import { migrateAccountsToV5, migrateToV3, migrateToV6 } from "./migrate.js";
+import { assertKinds, assertMeta, assertSecretName } from "./secret-input.js";
+import { attachKinds, kindsMap, kindsOf, replaceKinds } from "./kinds.js";
 
 const MODES = new Set(["A", "B", "C"]);
 const SYNC_NOTE =
@@ -137,7 +138,10 @@ export function createVault({ db, log = () => {} }) {
     }
   }
 
-  /** 解锁后检查 schema_version：2 → 3 搬家、4 → 5 加密集合账号；失败回滚停在原版本。 */
+  /**
+   * 解锁后检查 schema_version：2 → 3 搬家、4 → 5 加密集合账号、5 → 6 类型拆表
+   * 并把集合账号转成凭据；失败回滚停在原版本。
+   */
   function runMigration() {
     const head = headerGet(db);
     if (!head || Number(head.schema_version || 0) >= SCHEMA_VERSION) return "";
@@ -149,6 +153,8 @@ export function createVault({ db, log = () => {} }) {
       }
       const accounts = migrateAccountsToV5({ db, dek: state.dek, log });
       if (accounts.migrated) notes.push("账号加密");
+      const kinds = migrateToV6({ db, dek: state.dek, log });
+      if (kinds.migrated) notes.push("凭据类型拆表");
       return notes.length ? "保险箱已升级（schema " + SCHEMA_VERSION + "）：" + notes.join("、") + "。" : "";
     } catch (error) {
       log("保险箱迁移失败，已回滚", String(error && error.message));
@@ -281,7 +287,7 @@ export function createVault({ db, log = () => {} }) {
       params.push("%" + q + "%", "%" + q + "%");
     }
     if (kind) {
-      where.push("s.kind = ?");
+      where.push("EXISTS (SELECT 1 FROM vault_secret_kind sk WHERE sk.secret_id = s.id AND sk.kind = ? AND sk.deleted_at IS NULL)");
       params.push(kind);
     }
     const setId = args.setId == null ? "" : String(args.setId);
@@ -303,9 +309,11 @@ export function createVault({ db, log = () => {} }) {
       )
       .all(...params);
     const usage = usageMap(db);
+    const kindIndex = kindsMap(db, rows.map((row) => row.id));
     return {
       items: rows.map((row) => ({
         ...secretRow(row, usage),
+        kinds: kindIndex.get(String(row.id)) || [],
         meta: parseJson(row.meta, {}),
         setIds: sets.setIdsOfSecret(row.id),
       })),
@@ -315,7 +323,7 @@ export function createVault({ db, log = () => {} }) {
   function createSecret(args = {}) {
     const dek = requireUnlocked();
     const name = assertSecretName(args.name);
-    const kind = assertKind(args.kind);
+    const kinds = assertKinds(args.kinds != null ? args.kinds : args.kind);
     const secret = String(args.secret ?? "");
     if (!secret) throw new Error("secret 不能为空");
     const meta = assertMeta(args.meta);
@@ -323,7 +331,7 @@ export function createVault({ db, log = () => {} }) {
     if (!groupExists(groupId)) throw new Error("分组不存在：" + groupId);
     const id = newId("sec");
     const ts = now();
-    const ciphertext = seal(dek, secret, secretAad(id, name, kind));
+    const ciphertext = seal(dek, secret, secretAad(id, name));
     let setRow = null;
     if (args.setId) {
       const wanted = db.prepare("SELECT * FROM vault_set WHERE id = ? AND deleted_at IS NULL").get(String(args.setId));
@@ -334,16 +342,17 @@ export function createVault({ db, log = () => {} }) {
     }
     try {
       db.prepare(
-        "INSERT INTO vault_secret(id, name, kind, meta, ciphertext, created_at, updated_at, rev) " +
-          "VALUES(?, ?, ?, ?, ?, ?, ?, 1)",
-      ).run(id, name, kind, meta, ciphertext, ts, ts);
+        "INSERT INTO vault_secret(id, name, meta, ciphertext, created_at, updated_at, rev) " +
+          "VALUES(?, ?, ?, ?, ?, ?, 1)",
+      ).run(id, name, meta, ciphertext, ts, ts);
+      attachKinds(db, id, kinds, ts);
     } catch (error) {
       const msg = String(error && error.message);
       if (msg.includes("UNIQUE")) throw new Error("已有同名 secret：" + name);
       throw error;
     }
     if (setRow) sets.linkSecret(setRow.id, id);
-    return { id, ok: true, setId: setRow ? setRow.id : null };
+    return { id, ok: true, kinds: kindsOf(db, id), setId: setRow ? setRow.id : null };
   }
 
   function updateSecret(args = {}) {
@@ -352,21 +361,23 @@ export function createVault({ db, log = () => {} }) {
     const row = db.prepare("SELECT * FROM vault_secret WHERE id = ? AND deleted_at IS NULL").get(id);
     if (!row) throw new Error("secret 不存在：" + id);
     const name = args.name == null ? row.name : assertSecretName(args.name);
-    const kind = args.kind == null ? row.kind : assertKind(args.kind);
+    const kinds = args.kinds == null && args.kind == null ? kindsOf(db, id) : assertKinds(args.kinds != null ? args.kinds : args.kind);
     const meta = args.meta == null ? row.meta : assertMeta(args.meta);
     let ciphertext = row.ciphertext;
     if (args.secret != null && String(args.secret) !== "") {
-      ciphertext = seal(dek, String(args.secret), secretAad(id, name, kind));
-    } else if (name !== row.name || kind !== row.kind) {
-      const plain = open(dek, row.ciphertext, secretAad(id, row.name, row.kind));
-      ciphertext = seal(dek, plain, secretAad(id, name, kind));
+      ciphertext = seal(dek, String(args.secret), secretAad(id, name));
+    } else if (name !== row.name) {
+      // 类型不参与 AAD：改名要重加密，改类型只重写 vault_secret_kind。
+      const plain = open(dek, row.ciphertext, secretAad(id, row.name));
+      ciphertext = seal(dek, plain, secretAad(id, name));
     }
     const ts = now();
     try {
       db.prepare(
-        "UPDATE vault_secret SET name = ?, kind = ?, meta = ?, ciphertext = ?, updated_at = ?, rev = rev + 1 " +
+        "UPDATE vault_secret SET name = ?, meta = ?, ciphertext = ?, updated_at = ?, rev = rev + 1 " +
           "WHERE id = ?",
-      ).run(name, kind, meta, ciphertext, ts, id);
+      ).run(name, meta, ciphertext, ts, id);
+      replaceKinds(db, id, kinds, ts);
     } catch (error) {
       const msg = String(error && error.message);
       if (msg.includes("UNIQUE")) throw new Error("已有同名 secret：" + name);
@@ -405,9 +416,9 @@ export function createVault({ db, log = () => {} }) {
     }
     const row = db.prepare("SELECT * FROM vault_secret WHERE id = ? AND deleted_at IS NULL").get(id);
     if (!row) throw new Error("secret 不存在：" + id);
-    const secret = open(dek, row.ciphertext, secretAad(row.id, row.name, row.kind)).toString("utf8");
+    const secret = open(dek, row.ciphertext, secretAad(row.id, row.name)).toString("utf8");
     touchUsage(db, id);
-    return { secret, id: row.id, name: row.name, kind: row.kind };
+    return { secret, id: row.id, name: row.name, kinds: kindsOf(db, row.id) };
   }
 
   function lease(args = {}) {
@@ -424,13 +435,13 @@ export function createVault({ db, log = () => {} }) {
     const ttl = Math.max(30, Math.min(300, Number(args.ttlSeconds) || 60));
     const row = db.prepare("SELECT * FROM vault_secret WHERE id = ? AND deleted_at IS NULL").get(id);
     if (!row) throw new Error("secret 不存在：" + id);
-    const secret = open(dek, row.ciphertext, secretAad(row.id, row.name, row.kind)).toString("utf8");
+    const secret = open(dek, row.ciphertext, secretAad(row.id, row.name)).toString("utf8");
     touchUsage(db, id);
     return {
       secret,
       id: row.id,
       name: row.name,
-      kind: row.kind,
+      kinds: kindsOf(db, row.id),
       setId: sets.setIdsOfSecret(row.id)[0] || null,
       expiresAt: now() + ttl * 1000,
       purpose: String(args.purpose || ""),
@@ -511,7 +522,7 @@ export function createVault({ db, log = () => {} }) {
   function writeSecretToSet(args = {}) {
     const dek = requireUnlocked();
     const name = assertSecretName(args.name);
-    const kind = assertKind(args.kind || "other");
+    const kinds = assertKinds(args.kinds != null ? args.kinds : args.kind || "other");
     const secret = String(args.secret ?? "");
     if (!secret) throw new Error("secret 不能为空");
     const meta = assertMeta(args.meta);
@@ -523,19 +534,21 @@ export function createVault({ db, log = () => {} }) {
     const row = db.prepare("SELECT * FROM vault_secret WHERE name = ? AND deleted_at IS NULL").get(name);
     const ts = now();
     if (row) {
-      const ciphertext = seal(dek, secret, secretAad(row.id, name, kind));
+      const ciphertext = seal(dek, secret, secretAad(row.id, name));
       db.prepare(
-        "UPDATE vault_secret SET kind = ?, meta = ?, ciphertext = ?, updated_at = ?, rev = rev + 1 WHERE id = ?",
-      ).run(kind, meta, ciphertext, ts, row.id);
+        "UPDATE vault_secret SET meta = ?, ciphertext = ?, updated_at = ?, rev = rev + 1 WHERE id = ?",
+      ).run(meta, ciphertext, ts, row.id);
+      replaceKinds(db, row.id, kinds, ts);
       sets.linkSecret(setId, row.id);
       return { id: row.id, setId, created: false, updated: true };
     }
     const id = newId("sec");
-    const ciphertext = seal(dek, secret, secretAad(id, name, kind));
+    const ciphertext = seal(dek, secret, secretAad(id, name));
     db.prepare(
-      "INSERT INTO vault_secret(id, name, kind, meta, ciphertext, created_at, updated_at, rev) " +
-        "VALUES(?, ?, ?, ?, ?, ?, ?, 1)",
-    ).run(id, name, kind, meta, ciphertext, ts, ts);
+      "INSERT INTO vault_secret(id, name, meta, ciphertext, created_at, updated_at, rev) " +
+        "VALUES(?, ?, ?, ?, ?, ?, 1)",
+    ).run(id, name, meta, ciphertext, ts, ts);
+    attachKinds(db, id, kinds, ts);
     sets.linkSecret(setId, id);
     return { id, setId, created: true, updated: false };
   }

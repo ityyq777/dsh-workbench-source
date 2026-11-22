@@ -171,17 +171,21 @@ module.exports = function AccountForm(props) {
     applyPreset(id, f.email);
   }
 
-  // 选中账号集合：邮箱地址由集合账号带出，服务商主机按域名推导；换集合时清掉旧凭据。
-  function onPickSet(id, set) {
-    var address = String((set && set.account) || "").trim();
+  // 选中集合：账号取自集合里 kind=account 的凭据，由服务端租约读回后带出邮箱，
+  // 再按域名推导服务商主机；换集合时清掉旧凭据与旧地址。
+  function onPickSet(id) {
     touchedS[1](true);
     setProbe(null);
-    var patch = { accountSetId: id, secretId: "", secretName: "" };
-    if (address) {
+    setErr("");
+    upd({ accountSetId: id, secretId: "", secretName: "", email: "", provider: "other", advanced: true });
+    C.call(api, "mail.accountSetPreview", { accountSetId: id }).then(function (r) {
+      var address = String((r && r.email) || "").trim();
+      if (!address) return;
       var hit = util.detect(providers, address);
       var p = hit ? util.presetFor(providers, hit.id, address) : null;
-      patch.email = address;
+      var patch = { email: address };
       if (p) {
+        setProbe(null);
         patch.provider = hit.id;
         patch.imapHost = p.imapHost;
         patch.imapPort = p.imapPort;
@@ -190,18 +194,20 @@ module.exports = function AccountForm(props) {
         patch.smtpPort = p.smtpPort;
         patch.smtpTls = p.smtpTls;
         patch.advanced = false;
+        portS[1]({ imap: true, smtp: true });
       } else {
         patch.provider = "other";
         patch.advanced = true;
       }
-      portS[1]({ imap: true, smtp: true });
-    }
-    upd(patch);
+      upd(patch);
+    }).catch(function (e) {
+      setErr(C.errText(e));
+    });
   }
 
   function validate() {
-    if (!String(f.accountSetId || "").trim()) return t(lang, "请先选择账号集合（保险箱「集合与账号」）", "Pick an account set in the vault first");
-    if (!/^\S+@\S+\.\S+$/.test(String(f.email || "").trim())) return t(lang, "所选账号集合没有可用的邮箱账号，请先到保险箱填写", "The selected account set has no usable email account");
+    if (!String(f.accountSetId || "").trim()) return t(lang, "请先选择保险箱里的集合（里面要有「账号」类型的凭据）", "Pick a vault set that holds an account credential first");
+    if (!/^\S+@\S+\.\S+$/.test(String(f.email || "").trim())) return t(lang, "所选集合没有可用的邮箱账号，请确认集合里有类型为「账号」的凭据且内容像邮箱", "The selected set has no usable email account");
     if (!String(f.name || "").trim()) return t(lang, "请填写账户名称", "Enter an account name");
     if (!String(f.imapHost || "").trim()) return t(lang, "请填写 IMAP 服务器", "Enter the IMAP server");
     if (!String(f.secretId || "").trim()) {
@@ -398,10 +404,10 @@ module.exports = function AccountForm(props) {
     ),
     h(require("./provider-chips.cjs"), { h: h, lang: lang, providers: providers, value: f.provider, onPick: onPick }),
     !f.accountSetId && editing
-      ? h("p", { className: "wbml-hint-line" }, t(lang, "这个账户是旧版账户，还没有绑定账号集合；保存前请先选择一个。", "This legacy account has no account set yet — pick one before saving."))
+      ? h("p", { className: "wbml-hint-line" }, t(lang, "这个账户是旧版账户，还没有绑定保险箱集合；保存前请先选择一个。", "This legacy account has no account set yet — pick one before saving."))
       : null,
     h("div", { className: "wbml-acct-grid" },
-      field(t(lang, "账号集合", "Account set"), h(SetPicker, {
+      field(t(lang, "保险箱集合", "Vault set"), h(SetPicker, {
         h: h,
         C: C,
         api: api,
@@ -411,7 +417,7 @@ module.exports = function AccountForm(props) {
         value: f.accountSetId,
         disabled: busy.save,
         onChange: onPickSet,
-      }), t(lang, "先选一个账号集合；邮箱地址由它上面的账号自动带出。", "Pick an account set; the email address comes from its account.")),
+      }), t(lang, "先选一个集合；邮箱地址由集合里类型为「账号」的凭据自动带出。", "Pick an account set; the email address comes from its account.")),
       field(t(lang, "账户名称", "Account name"), textInput("name", { placeholder: t(lang, "例如 工作邮箱", "e.g. Work mail") })),
     ),
     field(t(lang, "邮箱账号（自动带出）", "Email account (auto)"),
@@ -420,10 +426,10 @@ module.exports = function AccountForm(props) {
         type: "text",
         value: f.email,
         readOnly: true,
-        placeholder: t(lang, "选择账号集合后自动填入", "Filled after picking an account set"),
+        placeholder: t(lang, "选择集合后自动填入", "Filled after picking a set"),
       }),
       f.accountSetId
-        ? t(lang, "账号来自所选集合，要改地址请去保险箱改集合账号。", "The address comes from the selected set — change the set account in the vault.")
+        ? t(lang, "地址来自所选集合里类型为「账号」的凭据，要改请去保险箱改那条凭据。", "The address comes from the account credential in the selected set — edit that credential in the vault.")
         : null),
     f.accountSetId
       ? field(
@@ -443,7 +449,7 @@ module.exports = function AccountForm(props) {
               setProbe(null);
             },
           }),
-          t(lang, "只列这个账号集合里的凭据；先把授权码放进这个集合。",
+          t(lang, "只列这个集合里的凭据；先把授权码放进这个集合。",
             "Only credentials in this set are listed here."),
         )
       : field(
@@ -481,7 +487,7 @@ module.exports = function AccountForm(props) {
     errS[0] ? h(C.Notice, { h: h, text: errS[0], kind: "warn" }) : null,
     noticeS[0] ? h(C.Notice, { h: h, text: noticeS[0], kind: "ok" }) : null,
     !f.accountSetId
-      ? h("p", { className: "wbml-hint-line" }, t(lang, "请先选择账号集合，未选时不能保存。", "Pick an account set before saving."))
+      ? h("p", { className: "wbml-hint-line" }, t(lang, "请先选择集合，未选时不能保存。", "Pick an account set before saving."))
       : !f.secretId
         ? h("p", { className: "wbml-hint-line" }, t(lang, "请从所选集合里选一条授权码，未选时不能保存。", "Pick a credential from the selected set before saving."))
         : null,

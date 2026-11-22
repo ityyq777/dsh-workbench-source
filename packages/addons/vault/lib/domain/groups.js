@@ -4,6 +4,7 @@
  */
 import { bindingRow, groupRow, newId, now, tx } from "../db/db.js";
 import { createSets } from "./sets.js";
+import { kindsMap } from "./kinds.js";
 
 function parseJson(value, fallback) {
   try {
@@ -274,11 +275,12 @@ export function createGroups({ db }) {
           "AND gs.group_id = b.group_id ORDER BY s.name COLLATE NOCASE",
       )
       .all(subjectType, subjectId);
+    const kindIndex = kindsMap(db, rows.map((row) => row.id));
     return {
       items: rows.map((row) => ({
         id: row.id,
         name: row.name,
-        kind: row.kind,
+        kinds: kindIndex.get(String(row.id)) || [],
         setId: row.set_id || null,
         meta: parseJson(row.meta, {}),
       })),

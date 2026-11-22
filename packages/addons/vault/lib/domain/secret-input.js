@@ -2,7 +2,7 @@
  * 凭据输入的通用校验：类型、名称、非敏感元数据。
  * 抽出来是为了让 vault.js 保持在 600 行预算内，也是 schema 与实现同口径的单一来源。
  */
-export const KINDS = ["password", "phone", "id_card", "token", "app_password", "api_key", "other"];
+export const KINDS = ["password", "account", "phone", "id_card", "token", "app_password", "api_key", "other"];
 export const KIND_SET = new Set(KINDS);
 
 const META_BAD = /(pass(word|wd)?|pwd|token|secret|api[_-]?key|private[_-]?key|credential)/i;
@@ -17,6 +17,24 @@ export function assertKind(kind) {
   const value = String(kind || "other");
   if (!KIND_SET.has(value)) throw new Error("kind 必须是 " + KINDS.join("/"));
   return value;
+}
+
+/** 多类型：至少一个，去重后按 KINDS 的固定顺序排列，保证展示与 AAD 之外的判断稳定。 */
+export function canonicalKinds(input) {
+  const raw = Array.isArray(input) ? input : input == null ? [] : [input];
+  const seen = new Set();
+  for (const item of raw) {
+    const value = String(item || "").trim();
+    if (!value) continue;
+    if (!KIND_SET.has(value)) throw new Error("kinds 只能是 " + KINDS.join("/"));
+    seen.add(value);
+  }
+  if (!seen.size) throw new Error("kinds 至少要有一个类型");
+  return KINDS.filter((k) => seen.has(k));
+}
+
+export function assertKinds(input) {
+  return canonicalKinds(input);
 }
 
 export function assertMeta(meta) {

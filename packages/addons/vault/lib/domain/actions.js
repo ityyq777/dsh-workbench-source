@@ -104,12 +104,12 @@ export function registerVaultActions(api, vault, groups) {
   });
 
   api.action("vault.secretList", {
-    description: "只读：列出凭据名称/类型/集合归属/备注/最近使用时间，永远不含明文。",
+    description: "只读：列出凭据名称/类型集合/集合归属/备注/最近使用时间，永远不含明文；kind 命中多类型凭据的任一类型。",
     input: {
       type: "object",
       properties: {
         q: { type: "string", description: "按名称或备注模糊搜索" },
-        kind: { type: "string", enum: KINDS },
+        kind: { type: "string", enum: KINDS, description: "按类型过滤：多类型凭据只要包含该类型即命中" },
         groupId: { type: "string", description: "只看某个分组（经集合关联）" },
         setId: { type: "string", description: "只看某个凭据集合" },
       },
@@ -128,16 +128,20 @@ export function registerVaultActions(api, vault, groups) {
       type: "object",
       properties: {
         name: { type: "string", description: "唯一名称，1–100 字" },
-        kind: { type: "string", enum: KINDS },
+        kinds: {
+          type: "array",
+          items: { type: "string", enum: KINDS },
+          description: "凭据类型，至少一个，可多选（如 account + password）；按固定顺序落库",
+        },
         secret: { type: "string", description: "明文密码/token，不会落审计" },
         meta: { type: "object", description: "非敏感备注：用户名、URL、过期提醒" },
         groupId: { type: "string", description: "所属分组，可空；写入时自动挂到该组的默认集合" },
         setId: { type: "string", description: "直接指定凭据集合，优先于 groupId" },
       },
-      required: ["name", "kind", "secret"],
+      required: ["name", "kinds", "secret"],
       additionalProperties: false,
     },
-    examples: [{ name: "sspai-basic", kind: "password", secret: "app-password", meta: { username: "me" } }],
+    examples: [{ name: "sspai-basic", kinds: ["account", "password"], secret: "app-password", meta: { username: "me" } }],
     execute: (args, ctx) => {
       only(ctx, ["ui"], "vault.secretCreate");
       return vault.createSecret(args);
@@ -146,13 +150,17 @@ export function registerVaultActions(api, vault, groups) {
 
   api.action("vault.secretUpdate", {
     origins: ["ui"],
-    description: "更新名称/类型/备注或轮换明文；改名称或类型会重加密，改归属不会。",
+    description: "更新名称/类型/备注或轮换明文；改名称会重加密，改类型与归属不会。",
     input: {
       type: "object",
       properties: {
         id: { type: "string" },
         name: { type: "string" },
-        kind: { type: "string", enum: KINDS },
+        kinds: {
+          type: "array",
+          items: { type: "string", enum: KINDS },
+          description: "替换整组类型，至少一个；不传表示不改",
+        },
         secret: { type: "string", description: "留空表示不轮换" },
         meta: { type: "object" },
         groupId: { type: "string", description: "再挂到某个分组的默认集合（不改动已有集合）" },
@@ -437,7 +445,7 @@ export function registerVaultActions(api, vault, groups) {
         schemaVersion: status.schemaVersion,
         passphraseRev: status.passphraseRev,
         cloudSync: true,
-        tables: ["vault_header", "vault_secret", "vault_group", "vault_binding", "vault_subject_type"],
+        tables: ["vault_header", "vault_secret", "vault_secret_kind", "vault_group", "vault_binding", "vault_subject_type", "vault_set_secret", "vault_group_set", "vault_set"],
         localOnly: ["vault_device", "vault_secret_usage"],
         pending: null,
         conflicts: null,
@@ -456,7 +464,7 @@ export function registerVaultActions(api, vault, groups) {
         tables: [
           {
             name: "vault_secret",
-            columns: ["id", "name", "kind", "meta", "ciphertext", "created_at", "updated_at", "deleted_at", "rev"],
+            columns: ["id", "name", "meta", "ciphertext", "created_at", "updated_at", "deleted_at", "rev"],
           },
           { name: "vault_group", columns: ["id", "name", "description", "color", "created_at", "updated_at"] },
           {
@@ -464,11 +472,14 @@ export function registerVaultActions(api, vault, groups) {
             columns: ["id", "subject_type", "subject_id", "group_id", "created_at", "updated_at"],
           },
           {
+            name: "vault_secret_kind",
+            columns: ["id", "secret_id", "kind", "created_at", "updated_at", "deleted_at", "rev"],
+          },
+          {
             name: "vault_set",
             columns: [
               "id",
               "name",
-              "account",
               "description",
               "color",
               "created_at",
@@ -492,13 +503,21 @@ export function registerVaultActions(api, vault, groups) {
 
   api.action("vault.dataQuery", {
     origins: ["ui"],
-    description: "只读：数据页查询；密文列（含集合账号）一律掩码。",
+    description: "只读：数据页查询；密文列一律掩码。",
     input: {
       type: "object",
       properties: {
         table: {
           type: "string",
-          enum: ["vault_secret", "vault_group", "vault_binding", "vault_set", "vault_group_set", "vault_set_secret"],
+          enum: [
+            "vault_secret",
+            "vault_secret_kind",
+            "vault_group",
+            "vault_binding",
+            "vault_set",
+            "vault_group_set",
+            "vault_set_secret",
+          ],
         },
         limit: { type: "number", description: "默认 50，上限 200" },
         offset: { type: "number", description: "默认 0" },
@@ -514,7 +533,7 @@ export function registerVaultActions(api, vault, groups) {
       if (table === "vault_secret") {
         const rows = api.db
           .prepare(
-            "SELECT id, name, kind, meta, ciphertext, created_at, updated_at, deleted_at, rev " +
+            "SELECT id, name, meta, ciphertext, created_at, updated_at, deleted_at, rev " +
               "FROM vault_secret ORDER BY updated_at DESC LIMIT ? OFFSET ?",
           )
           .all(limit, offset);
@@ -526,6 +545,7 @@ export function registerVaultActions(api, vault, groups) {
         };
       }
       const safe = {
+        vault_secret_kind: "vault_secret_kind",
         vault_group: "vault_group",
         vault_binding: "vault_binding",
         vault_set: "vault_set",
@@ -536,15 +556,6 @@ export function registerVaultActions(api, vault, groups) {
       const rows = api.db
         .prepare("SELECT * FROM " + safe + " ORDER BY updated_at DESC LIMIT ? OFFSET ?")
         .all(limit, offset);
-      // 集合账号 0.5.0 起是密文：数据页只看得到掩码，与 vault_secret.ciphertext 一致。
-      if (table === "vault_set") {
-        return {
-          table,
-          rows: rows.map((row) => ({ ...row, account: String(row.account || "") ? "***" : "" })),
-          limit,
-          offset,
-        };
-      }
       return { table, rows, limit, offset };
     },
   });

@@ -5519,7 +5519,7 @@ var require_data = __commonJS({
     module2.exports = require_data_view()({
       domain: "sites",
       prefix: "wbs",
-      tables: ["site", "site_node", "site_node_mapping", "site_account", "site_account_external"],
+      tables: ["site", "site_node", "site_node_mapping"],
       useConfig: require_config().useConfig
     });
   }
@@ -5610,23 +5610,14 @@ var require_copy = __commonJS({
         saved: "\u5DF2\u4FDD\u5B58",
         deleted: "\u5DF2\u5220\u9664",
         moved: "\u5DF2\u79FB\u52A8",
-        accounts: "\u8D26\u53F7",
-        accountsTitle: "\u7AD9\u70B9\u8D26\u53F7 \xB7 {name}",
-        accountsSub: "\u654F\u611F\u5B57\u6BB5\u53EA\u4FDD\u5B58\u5728\u672C\u673A\uFF0C\u5E76\u5728\u5199\u5E93\u524D\u52A0\u5BC6\uFF1B\u4E91\u7AEF\u540C\u6B65\u7684\u662F\u5BC6\u6587\u3002",
-        accountKey: "\u6807\u8BC6",
-        loginName: "\u767B\u5F55\u540D",
-        password: "\u5BC6\u7801",
-        phone: "\u624B\u673A\u53F7",
-        identity: "\u8EAB\u4EFD\u8BC1",
-        remark: "\u5907\u6CE8",
-        reveal: "\u663E\u5F62",
-        copied: "\u5DF2\u590D\u5236",
-        addAccount: "\u65B0\u589E\u8D26\u53F7",
-        editAccount: "\u7F16\u8F91\u8D26\u53F7",
-        externalPick: "\u9009\u62E9\u8981\u5916\u8054\u7684\u8D26\u53F7",
-        externalAdd: "\u6DFB\u52A0\u5916\u8054",
-        unlink: "\u89E3\u9664\u5916\u8054",
-        accountEmpty: "\u8FD9\u4E2A\u7AD9\u70B9\u8FD8\u6CA1\u6709\u8D26\u53F7",
+        vaultGroups: "\u51ED\u636E\u5206\u7EC4",
+        vaultGroupsTitle: "\u5173\u8054\u7684\u51ED\u636E\u5206\u7EC4 \xB7 {name}",
+        vaultGroupsSub: "\u5206\u7EC4\u4E0E\u51ED\u636E\u90FD\u653E\u5728\u51ED\u636E\u4FDD\u9669\u7BB1\u91CC\uFF1B\u7ED1\u5B9A\u3001\u89E3\u7ED1\u4E0E\u6539\u53E3\u4EE4\u8BF7\u5728\u4FDD\u9669\u7BB1\u9875\u7684\u300C\u5206\u7EC4\u300D\u91CC\u64CD\u4F5C\u3002",
+        vaultGroupsEmpty: "\u8FD9\u4E2A\u7AD9\u70B9\u8FD8\u6CA1\u6709\u5173\u8054\u51ED\u636E\u5206\u7EC4\u3002",
+        vaultGroupsNoVault: "\u672A\u5B89\u88C5\u51ED\u636E\u4FDD\u9669\u7BB1\uFF1A\u88C5\u597D\u540E\u53EF\u4EE5\u5728\u4FDD\u9669\u7BB1\u7684\u5206\u7EC4\u91CC\u628A\u672C\u7AD9\u70B9\u5173\u8054\u8FDB\u6765\u3002",
+        vaultGroupsHint: "\u6620\u5C04\u7531\u51ED\u636E\u4FDD\u9669\u7BB1\u7EF4\u62A4\uFF0C\u7AD9\u70B9\u53EA\u8BFB",
+        groupName: "\u5206\u7EC4",
+        groupSecrets: "\u51ED\u636E\u6570",
         close: "\u5173\u95ED",
         sensitiveHint: "\u5BC6\u7801/\u624B\u673A\u53F7/\u8EAB\u4EFD\u8BC1\u5199\u5E93\u524D\u52A0\u5BC6\uFF0C\u4EC5\u5728\u754C\u9762\u89E3\u9501\u4FDD\u9669\u7BB1\u540E\u53EF\u67E5\u770B\u4E0E\u590D\u5236\u3002",
         vaultInvalid: "\u51ED\u636E\u96C6\u5408\u5DF2\u5931\u6548\uFF08\u96C6\u5408\u88AB\u5220\u9664\uFF09\uFF0C\u4FDD\u5B58\u4EFB\u4E00\u654F\u611F\u5B57\u6BB5\u5373\u53EF\u91CD\u5EFA\u3002",
@@ -5723,23 +5714,14 @@ var require_copy = __commonJS({
         saved: "Saved",
         deleted: "Deleted",
         moved: "Moved",
-        accounts: "Accounts",
-        accountsTitle: "Site accounts \xB7 {name}",
-        accountsSub: "Sensitive fields stay on this machine and are encrypted before writing; the cloud only receives ciphertext.",
-        accountKey: "Key",
-        loginName: "Login",
-        password: "Password",
-        phone: "Phone",
-        identity: "ID card",
-        remark: "Remark",
-        reveal: "Reveal",
-        copied: "Copied",
-        addAccount: "New account",
-        editAccount: "Edit account",
-        externalPick: "Pick an account to link",
-        externalAdd: "Add link",
-        unlink: "Unlink",
-        accountEmpty: "No accounts yet",
+        vaultGroups: "Credential groups",
+        vaultGroupsTitle: "Linked credential groups \xB7 {name}",
+        vaultGroupsSub: "Groups and credentials live in the vault; bind, unbind and rotate passphrases on the vault's Groups page.",
+        vaultGroupsEmpty: "No credential group linked to this site yet.",
+        vaultGroupsNoVault: "Vault add-on is not installed; install it and link this site from a vault group.",
+        vaultGroupsHint: "Mapping is owned by the vault; sites are read-only",
+        groupName: "Group",
+        groupSecrets: "Secrets",
         close: "Close",
         sensitiveHint: "Password / phone / ID card are encrypted before writing and can only be read after unlocking the vault.",
         vaultInvalid: "The credential set is gone (deleted); saving any sensitive field rebuilds it.",
@@ -6006,73 +5988,10 @@ var require_styles = __commonJS({
   }
 });
 
-// packages/addons/lib/secret-field.cjs
-var require_secret_field = __commonJS({
-  "packages/addons/lib/secret-field.cjs"(exports2, module2) {
-    "use strict";
-    var Eye2 = (init_eye(), __toCommonJS(eye_exports)).default;
-    var EyeOff2 = (init_eye_off(), __toCommonJS(eye_off_exports)).default;
-    function SecretField(props) {
-      var h2 = props.h;
-      var show = Boolean(props.show);
-      var label = show ? props.hideLabel || "\u9690\u85CF\u660E\u6587" : props.showLabel || "\u663E\u793A\u660E\u6587";
-      var Ico = show ? EyeOff2 : Eye2;
-      function toggle(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var box = e.currentTarget && e.currentTarget.parentNode;
-        if (props.onToggle) props.onToggle();
-        var input = box && box.querySelector ? box.querySelector("input") : null;
-        if (!input || !input.focus) return;
-        input.focus();
-        var end = String(input.value == null ? "" : input.value).length;
-        if (input.setSelectionRange) {
-          try {
-            input.setSelectionRange(end, end);
-          } catch (err) {
-          }
-        }
-      }
-      return h2(
-        "div",
-        { className: "wb-secret-field" + (props.className ? " " + props.className : "") },
-        h2("input", {
-          type: show ? "text" : "password",
-          className: props.inputClassName || void 0,
-          id: props.id || void 0,
-          name: props.name || void 0,
-          autoComplete: props.autoComplete || "new-password",
-          autoFocus: props.autoFocus ? true : void 0,
-          spellCheck: false,
-          disabled: props.disabled ? true : void 0,
-          "aria-label": props.ariaLabel || void 0,
-          value: props.value == null ? "" : props.value,
-          placeholder: props.placeholder || void 0,
-          onChange: function(e) {
-            if (props.onChange) props.onChange(e.target.value);
-          },
-          onKeyDown: props.onKeyDown || void 0
-        }),
-        h2("button", {
-          type: "button",
-          className: "wb-eye",
-          title: label,
-          "aria-label": label,
-          "aria-pressed": show ? "true" : "false",
-          tabIndex: props.disabled ? -1 : void 0,
-          onClick: toggle
-        }, h2(Ico, { size: 15, strokeWidth: 2, "aria-hidden": "true" }))
-      );
-    }
-    module2.exports = SecretField;
-  }
-});
-
-// packages/addons/sites/client/ui/accounts-modal.cjs
-var require_accounts_modal = __commonJS({
-  "packages/addons/sites/client/ui/accounts-modal.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = function createAccountsModal(deps) {
+// packages/addons/sites/client/ui/vault-groups-modal.cjs
+var require_vault_groups_modal = __commonJS({
+  "packages/addons/sites/client/ui/vault-groups-modal.cjs"(exports2, module2) {
+    module2.exports = function createVaultGroupsModal(deps) {
       var h2 = deps.h;
       var React2 = deps.React;
       var useState = deps.useState;
@@ -6082,463 +6001,63 @@ var require_accounts_modal = __commonJS({
       var text = deps.text;
       var callApi = deps.callApi;
       var errText = deps.errText;
-      var SecretField = require_secret_field();
-      function AccountModal(props) {
+      function VaultGroupsModal(props) {
         var api = props.api;
         var lang = props.lang || "zh";
         var site = props.site;
-        var [accounts, setAccounts] = useState([]);
-        var [vault, setVault] = useState({});
-        var [loading, setLoading] = useState(true);
-        var [error, setError] = useState("");
-        var [busy, setBusy] = useState(false);
-        var [draft, setDraft] = useState(null);
-        var [pass, setPass] = useState("");
-        var [pass2, setPass2] = useState("");
-        var [cascade, setCascade] = useState([]);
-        var [pickKey, setPickKey] = useState("");
-        var [pendingDelete, setPendingDelete] = useState("");
-        var [shown, setShown] = useState({});
-        var [binding, setBinding] = useState(null);
-        var [vaultPassShow, setVaultPassShow] = useState(false);
-        var [vaultPass2Show, setVaultPass2Show] = useState(false);
-        var [draftPassShow, setDraftPassShow] = useState(false);
-        function mapVault(st) {
-          var r = st || {};
-          var idle = Number(r.idleTimeoutSec) > 0 ? Math.round(Number(r.idleTimeoutSec) / 60) : 15;
-          return {
-            installed: true,
-            enabled: Boolean(r.initialized),
-            unlocked: !r.locked,
-            locked: Boolean(r.locked),
-            unlockMode: r.unlockMode,
-            idleMinutes: idle,
-            remainingMs: r.locked ? 0 : idle * 60 * 1e3
-          };
-        }
-        function reload() {
-          setLoading(true);
-          return Promise.all([
-            callApi(api, "sites.accounts.list", { siteId: site.id }),
-            callApi(api, "vault.status", {}),
-            callApi(api, "vault.bindingsOf", { subjectType: "site", subjectId: site.id })
-          ]).then(function(out) {
-            setAccounts(out[0].accounts || []);
-            setVault(mapVault(out[1]));
-            setBinding(out[2] && out[2].items && out[2].items[0] || null);
-            setError("");
-          }).catch(function(e) {
-            setError(errText(e));
-          }).finally(function() {
-            setLoading(false);
-          });
-        }
-        function loadCascade() {
-          callApi(api, "sites.accounts.cascade", { excludeSiteId: site.id }).then(function(r) {
-            var list = [];
-            (r.groups || []).forEach(function(g) {
-              g.accounts.forEach(function(a) {
-                list.push({ id: a.id, label: g.siteName + " \xB7 " + a.accountKey });
-              });
-            });
-            setCascade(list);
-          }).catch(function() {
-            setCascade([]);
-          });
-        }
+        var [state, setState] = useState({ loading: true, installed: true, items: [], error: "" });
         useEffect(function() {
-          reload();
-          loadCascade();
-        }, [site.id]);
-        function guard(fn) {
-          setBusy(true);
-          setError("");
-          return Promise.resolve().then(fn).catch(function(e) {
-            setError(errText(e));
-          }).finally(function() {
-            setBusy(false);
+          var alive = true;
+          callApi(api, "sites.vaultGroups", { siteId: site.id }).then(function(r) {
+            if (!alive) return;
+            setState({ loading: false, installed: r && r.installed !== false, items: r && r.items || [], error: "" });
+          }).catch(function(e) {
+            if (!alive) return;
+            setState({ loading: false, installed: true, items: [], error: errText(e) });
           });
-        }
-        function submitVault() {
-          if (!pass || pass.length < 12) {
-            setError(text(lang, "passTooShort"));
-            return;
-          }
-          if (!vault.enabled && pass !== pass2) {
-            setError(text(lang, "passMismatch"));
-            return;
-          }
-          guard(function() {
-            var req = vault.enabled ? callApi(api, "vault.unlock", { passphrase: pass }) : callApi(api, "vault.setup", { passphrase: pass, mode: "A" });
-            return req.then(function() {
-              setPass("");
-              setPass2("");
-              return reload();
-            });
-          });
-        }
-        function lockVault() {
-          guard(function() {
-            return callApi(api, "vault.lock", {}).then(function() {
-              setShown({});
-              return reload();
-            });
-          });
-        }
-        function bindGroup() {
-          guard(function() {
-            return callApi(api, "vault.groupCreate", { name: "\u7AD9\u70B9\u8D26\u53F7 \xB7 " + (site.siteName || site.id) }).then(function(g) {
-              return callApi(api, "vault.bind", { subjectType: "site", subjectId: site.id, groupId: g.id });
-            }).then(function() {
-              return reload();
-            });
-          });
-        }
-        function saveDraft() {
-          var body = {
-            accountKey: draft.accountKey,
-            account: draft.account,
-            remark: draft.remark
+          return function() {
+            alive = false;
           };
-          if (draft.password) body.password = draft.password;
-          if (draft.phoneNumber) body.phoneNumber = draft.phoneNumber;
-          if (draft.identityCard) body.identityCard = draft.identityCard;
-          guard(function() {
-            var req = draft.id ? callApi(api, "sites.accounts.update", Object.assign({ id: draft.id }, body)) : callApi(api, "sites.accounts.create", Object.assign({ siteId: site.id }, body));
-            return req.then(function() {
-              setDraft(null);
-              props.onChanged && props.onChanged();
-              return reload();
-            });
-          });
-        }
-        function removeAccount(id) {
-          guard(function() {
-            return callApi(api, "sites.accounts.delete", { id }).then(function() {
-              setPendingDelete("");
-              props.onChanged && props.onChanged();
-              return reload();
-            });
-          });
-        }
-        function reveal(acc) {
-          guard(function() {
-            return callApi(api, "sites.accounts.get", { id: acc.id }).then(function(r) {
-              var ids = r.secretIds || {};
-              var jobs = [["password", "password"], ["phone", "phoneNumber"], ["identity", "identityCard"]].filter(function(pair) {
-                return ids[pair[0]];
-              }).map(function(pair) {
-                return callApi(api, "vault.secretReveal", { id: ids[pair[0]] }).then(function(res) {
-                  var v = {};
-                  v[pair[1]] = res && res.secret !== void 0 ? res.secret : "";
-                  return v;
-                }).catch(function() {
-                  return null;
-                });
-              });
-              return Promise.all(jobs).then(function(list) {
-                var out = {};
-                list.forEach(function(v) {
-                  if (v) Object.assign(out, v);
-                });
-                setShown(function(prev) {
-                  var next = Object.assign({}, prev);
-                  next[acc.id] = out;
-                  return next;
-                });
-              });
-            });
-          });
-        }
-        function copyText(value) {
-          if (!value) return;
-          try {
-            navigator.clipboard.writeText(value);
-            if (typeof showToast === "function") showToast(text(lang, "copied"));
-          } catch (e) {
-            setError(String(e && e.message || e));
-          }
-        }
-        function linkExternal(acc) {
-          if (!pickKey) return;
-          guard(function() {
-            return callApi(api, "sites.accounts.link", { nativeAccountId: acc.id, externalAccountId: pickKey }).then(function() {
-              setPickKey("");
-              return reload();
-            });
-          });
-        }
-        function unlink(acc, rel) {
-          guard(function() {
-            return callApi(api, "sites.accounts.unlink", { nativeAccountId: acc.id, externalAccountId: rel.accountId }).then(function() {
-              return reload();
-            });
-          });
-        }
-        function renderVaultBar() {
-          if (!vault.enabled) {
-            return h2(
-              "div",
-              { className: "wbs-vaultbar" },
-              h2("div", { className: "wbs-vault-hint" }, text(lang, "vaultNotSet")),
-              h2(
-                "div",
-                { className: "wbs-vault-form" },
-                h2(SecretField, {
-                  h: h2,
-                  inputClassName: "wbs-input",
-                  autoComplete: "new-password",
-                  ariaLabel: text(lang, "passphrase"),
-                  placeholder: text(lang, "passphrase"),
-                  showLabel: text(lang, "showPlain"),
-                  hideLabel: text(lang, "hidePlain"),
-                  value: pass,
-                  show: vaultPassShow,
-                  onChange: setPass,
-                  onToggle: function() {
-                    setVaultPassShow(!vaultPassShow);
-                  }
-                }),
-                h2(SecretField, {
-                  h: h2,
-                  inputClassName: "wbs-input",
-                  autoComplete: "new-password",
-                  ariaLabel: text(lang, "passphraseAgain"),
-                  placeholder: text(lang, "passphraseAgain"),
-                  showLabel: text(lang, "showPlain"),
-                  hideLabel: text(lang, "hidePlain"),
-                  value: pass2,
-                  show: vaultPass2Show,
-                  onChange: setPass2,
-                  onToggle: function() {
-                    setVaultPass2Show(!vaultPass2Show);
-                  }
-                }),
-                h2("button", { className: "wbs-btn", disabled: busy, onClick: submitVault }, text(lang, "vaultSetup"))
-              )
-            );
-          }
-          if (!vault.unlocked) {
-            return h2(
-              "div",
-              { className: "wbs-vaultbar locked" },
-              h2("div", { className: "wbs-vault-hint" }, text(lang, "vaultLocked")),
-              h2(
-                "div",
-                { className: "wbs-vault-form" },
-                h2(SecretField, {
-                  h: h2,
-                  inputClassName: "wbs-input",
-                  autoComplete: "current-password",
-                  ariaLabel: text(lang, "passphrase"),
-                  placeholder: text(lang, "passphrase"),
-                  showLabel: text(lang, "showPlain"),
-                  hideLabel: text(lang, "hidePlain"),
-                  value: pass,
-                  show: vaultPassShow,
-                  onChange: setPass,
-                  onToggle: function() {
-                    setVaultPassShow(!vaultPassShow);
-                  }
-                }),
-                h2("button", { className: "wbs-btn", disabled: busy, onClick: submitVault }, text(lang, "vaultUnlock"))
-              )
-            );
-          }
-          return h2(
-            "div",
-            { className: "wbs-vaultbar unlocked" },
-            h2("div", { className: "wbs-vault-hint" }, text(lang, "vaultUnlocked", { min: vault.idleMinutes || 15 })),
-            h2("div", { className: "wbs-grow" }),
-            binding ? h2("span", { className: "wbs-chip" }, "\u51ED\u636E\u7EC4\uFF1A" + (binding.groupName || binding.groupId)) : h2(
-              React2.Fragment,
-              null,
-              h2("span", { className: "wbs-vault-hint" }, "\u672C\u7AD9\u70B9\u5C1A\u672A\u5173\u8054\u51ED\u636E\u7EC4"),
-              h2("button", { className: "wbs-btn sm", disabled: busy, onClick: bindGroup }, h2(Icon2, { name: "plus", size: 12 }), "\u521B\u5EFA\u5E76\u5173\u8054")
-            ),
-            h2("button", { className: "wbs-btn sm", disabled: busy, onClick: lockVault }, h2(Icon2, { name: "lock", size: 12 }), text(lang, "vaultLock"))
-          );
-        }
-        function renderDraft() {
-          var d = draft;
-          function setField(key, v) {
-            setDraft(function(prev) {
-              var next = Object.assign({}, prev);
-              next[key] = v;
-              return next;
-            });
-          }
-          function field(key, label, type, ph) {
-            var input = type === "password" ? h2(SecretField, {
-              h: h2,
-              inputClassName: "wbs-input",
-              autoComplete: "new-password",
-              ariaLabel: label,
-              placeholder: ph || "",
-              showLabel: text(lang, "showPlain"),
-              hideLabel: text(lang, "hidePlain"),
-              value: d[key] || "",
-              show: draftPassShow,
-              onChange: function(v) {
-                setField(key, v);
-              },
-              onToggle: function() {
-                setDraftPassShow(!draftPassShow);
-              }
-            }) : h2("input", {
-              className: "wbs-input",
-              type: type || "text",
-              placeholder: ph || "",
-              value: d[key] || "",
-              onChange: function(e) {
-                setField(key, e.target.value);
-              }
-            });
-            return h2(
-              React2.Fragment,
-              null,
-              h2("label", { className: "wbs-label" }, label),
-              input
-            );
-          }
-          return h2(
-            "div",
-            { className: "wbs-accdraft" },
-            h2("div", { className: "wbs-accdraft-title" }, d.id ? text(lang, "editAccount") : text(lang, "addAccount")),
-            field("accountKey", text(lang, "accountKey") + " *", "text", "prod-admin"),
-            field("account", text(lang, "loginName")),
-            field("password", text(lang, "password"), "password"),
-            field("phoneNumber", text(lang, "phone")),
-            field("identityCard", text(lang, "identity")),
-            field("remark", text(lang, "remark")),
-            h2("div", { className: "wbs-vault-hint" }, text(lang, "sensitiveHint")),
-            h2(
-              "div",
-              { className: "wbs-formfoot" },
-              h2("div", { className: "wbs-grow" }),
-              h2("button", { className: "wbs-btn", disabled: busy, onClick: function() {
-                setDraft(null);
-              } }, text(lang, "cancel")),
-              h2("button", { className: "wbs-btn primary", disabled: busy, onClick: saveDraft }, text(lang, "save"))
-            )
-          );
-        }
+        }, [site.id]);
         return h2(
           Modal,
-          { "aria-label": text(lang, "accountsTitle", { name: site.siteName }), onClose: props.onClose },
+          { "aria-label": text(lang, "vaultGroupsTitle", { name: site.siteName || site.id }), onClose: props.onClose },
           h2(
             "div",
             { className: "wbs-modal-title" },
             h2(Icon2, { name: "key", size: 15 }),
-            text(lang, "accountsTitle", { name: site.siteName }),
+            text(lang, "vaultGroupsTitle", { name: site.siteName || site.id }),
             h2("button", { type: "button", className: "wbs-mini wbs-modal-x", title: text(lang, "cancel"), onClick: props.onClose }, h2(Icon2, { name: "x", size: 15 }))
           ),
-          h2("div", { className: "wbs-modal-sub" }, text(lang, "accountsSub")),
-          renderVaultBar(),
-          error ? h2("div", { className: "wbs-error" }, error) : null,
-          draft ? renderDraft() : h2(
-            React2.Fragment,
-            null,
-            loading ? h2("div", { className: "wbs-loading" }, text(lang, "loading")) : null,
-            !loading && !accounts.length ? h2("div", { className: "wbs-acc-empty" }, text(lang, "accountEmpty")) : null,
-            !loading ? accounts.map(function(acc) {
-              var plain = shown[acc.id] || null;
+          h2("div", { className: "wbs-modal-sub" }, text(lang, "vaultGroupsSub")),
+          state.error ? h2("div", { className: "wbs-error" }, state.error) : null,
+          state.loading ? h2("div", { className: "wbs-muted" }, text(lang, "loading")) : !state.installed ? h2("div", { className: "wbs-muted" }, text(lang, "vaultGroupsNoVault")) : !state.items.length ? h2("div", { className: "wbs-muted" }, text(lang, "vaultGroupsEmpty")) : h2(
+            "table",
+            { className: "wbs-subtable" },
+            h2("thead", null, h2(
+              "tr",
+              null,
+              h2("th", null, text(lang, "groupName")),
+              h2("th", null, text(lang, "groupSecrets"))
+            )),
+            h2("tbody", null, state.items.map(function(g) {
               return h2(
-                "div",
-                { className: "wbs-accrow", key: acc.id },
-                h2(
-                  "div",
-                  { className: "wbs-accrow-head" },
-                  h2("b", null, acc.accountKey || "\u2014"),
-                  acc.account ? h2("span", { className: "wbs-acc-login" }, acc.account) : null,
-                  h2("div", { className: "wbs-grow" }),
-                  h2("button", { className: "wbs-btn sm icononly", title: text(lang, "edit"), onClick: function() {
-                    setDraft({ id: acc.id, accountKey: acc.accountKey, account: acc.account, remark: acc.remark, password: "", phoneNumber: "", identityCard: "" });
-                  } }, h2(Icon2, { name: "edit", size: 12 })),
-                  pendingDelete === acc.id ? h2(
-                    React2.Fragment,
-                    null,
-                    h2("button", { className: "wbs-btn sm danger", disabled: busy, onClick: function() {
-                      removeAccount(acc.id);
-                    } }, text(lang, "confirm")),
-                    h2("button", { className: "wbs-btn sm", onClick: function() {
-                      setPendingDelete("");
-                    } }, text(lang, "cancel"))
-                  ) : h2("button", { className: "wbs-btn sm danger icononly", title: text(lang, "del"), onClick: function() {
-                    setPendingDelete(acc.id);
-                  } }, h2(Icon2, { name: "trash", size: 12 }))
-                ),
-                acc.vaultInvalid ? h2("div", { className: "wbs-error" }, text(lang, "vaultInvalid")) : null,
-                h2(
-                  "div",
-                  { className: "wbs-accrow-fields" },
-                  h2(
-                    "div",
-                    null,
-                    h2("i", null, text(lang, "password")),
-                    h2("span", null, plain ? plain.password || "\u2014" : acc.hasPassword ? "\u2022\u2022\u2022\u2022\u2022\u2022" : "\u2014"),
-                    acc.hasPassword ? h2("button", { className: "wbs-mini", title: text(lang, "reveal"), onClick: function() {
-                      if (plain) {
-                        setShown(function(prev) {
-                          var next = Object.assign({}, prev);
-                          delete next[acc.id];
-                          return next;
-                        });
-                      } else {
-                        reveal(acc);
-                      }
-                    } }, h2(Icon2, { name: plain ? "eye-off" : "eye", size: 11 })) : null,
-                    acc.hasPassword ? h2("button", { className: "wbs-mini", title: text(lang, "copy"), onClick: function() {
-                      if (plain) copyText(plain.password);
-                      else reveal(acc);
-                    } }, h2(Icon2, { name: "copy", size: 11 })) : null
-                  ),
-                  h2("div", null, h2("i", null, text(lang, "phone")), h2("span", null, plain ? plain.phoneNumber || "\u2014" : acc.phoneNumber || "\u2014")),
-                  h2("div", null, h2("i", null, text(lang, "identity")), h2("span", null, plain ? plain.identityCard || "\u2014" : acc.identityCard || "\u2014")),
-                  acc.remark ? h2("div", { className: "wbs-acc-remark" }, h2("i", null, text(lang, "remark")), h2("span", null, acc.remark)) : null
-                ),
-                h2(
-                  "div",
-                  { className: "wbs-accrow-ext" },
-                  (acc.externals || []).map(function(rel) {
-                    return h2(
-                      "span",
-                      { className: "wbs-chip", key: rel.relationId },
-                      rel.siteName + " \xB7 " + rel.accountKey,
-                      h2("button", { className: "wbs-mini", title: text(lang, "unlink"), onClick: function() {
-                        unlink(acc, rel);
-                      } }, h2(Icon2, { name: "x", size: 10 }))
-                    );
-                  }),
-                  h2(
-                    "select",
-                    { className: "wbs-select wbs-acc-extsel", value: pickKey, onChange: function(e) {
-                      setPickKey(e.target.value);
-                    } },
-                    h2("option", { value: "" }, text(lang, "externalPick")),
-                    cascade.map(function(o) {
-                      return h2("option", { key: o.id, value: o.id }, o.label);
-                    })
-                  ),
-                  h2("button", { className: "wbs-btn sm", disabled: !pickKey || busy, onClick: function() {
-                    linkExternal(acc);
-                  } }, text(lang, "externalAdd"))
-                )
+                "tr",
+                { key: g.id },
+                h2("td", null, g.name || g.id),
+                h2("td", { className: "wbs-muted" }, String(g.secretCount || 0))
               );
-            }) : null,
-            !loading ? h2(
-              "div",
-              { className: "wbs-formfoot" },
-              h2("button", { className: "wbs-btn primary", disabled: busy, onClick: function() {
-                setDraft({ id: "", accountKey: "", account: "", password: "", phoneNumber: "", identityCard: "", remark: "" });
-              } }, h2(Icon2, { name: "plus", size: 12 }), text(lang, "addAccount")),
-              h2("div", { className: "wbs-grow" }),
-              h2("button", { className: "wbs-btn", onClick: props.onClose }, text(lang, "close"))
-            ) : null
+            }))
+          ),
+          h2(
+            "div",
+            { className: "wbs-formfoot" },
+            h2("div", { className: "wbs-grow" }, h2("span", { className: "wbs-muted" }, text(lang, "vaultGroupsHint"))),
+            h2("button", { className: "wbs-btn", onClick: props.onClose }, text(lang, "close"))
           )
         );
       }
-      return AccountModal;
+      return VaultGroupsModal;
     };
   }
 });
@@ -6638,6 +6157,10 @@ var require_action_schema_style = __commonJS({
         "." + P + "-copy:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
         "." + P + " details>summary{cursor:pointer;font-size:11.5px;color:var(--dsw-alias-label-secondary,inherit);width:max-content}",
         "." + P + " details>summary:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
+        // 参数折叠面板：折叠时只留一行「参数 · 必填 n」，展开后与表格之间留一点气口。
+        "." + P + "-params{min-width:0}",
+        "." + P + "-params>summary{user-select:none;max-width:100%}",
+        "." + P + "-params[open]>summary{margin-bottom:6px}",
         "." + P + "-empty{padding:24px;text-align:center;border:1px dashed var(--wb-border,#e3e5e9);border-radius:10px;color:var(--dsw-alias-label-tertiary,inherit)}",
         "." + P + "-error{padding:12px;border:1px solid var(--dsw-alias-state-error-primary,#d9534f);border-radius:10px;color:var(--dsw-alias-state-error-primary,#d9534f);display:flex;gap:10px;align-items:center;flex-wrap:wrap;overflow-wrap:anywhere}",
         "." + P + "-toast{position:sticky;bottom:8px;align-self:flex-start;border-radius:999px;padding:3px 10px;background:var(--dsw-alias-bg-skeleton,#f2f3f5);font-size:11.5px;max-width:100%}",
@@ -6717,6 +6240,10 @@ var require_action_schema_view = __commonJS({
         paramCount: function(n) {
           return n + " \u4E2A\u53C2\u6570";
         },
+        params: "\u53C2\u6570",
+        requiredCount: function(n) {
+          return "\u5FC5\u586B " + n;
+        },
         examples: "\u793A\u4F8B",
         noExamples: "\u65E0\u793A\u4F8B",
         copy: "\u590D\u5236",
@@ -6779,6 +6306,10 @@ var require_action_schema_view = __commonJS({
         noParams: "No parameters",
         paramCount: function(n) {
           return n + " params";
+        },
+        params: "Parameters",
+        requiredCount: function(n) {
+          return n + " required";
         },
         examples: "Examples",
         noExamples: "No examples",
@@ -6918,6 +6449,8 @@ var require_action_schema_view = __commonJS({
         var toast = toastState[0], setToast = toastState[1];
         var savingState = React2.useState("");
         var saving = savingState[0], setSaving = savingState[1];
+        var foldsState = React2.useState({});
+        var folds = foldsState[0], setFolds = foldsState[1];
         React2.useEffect(function() {
           injectCss();
         }, []);
@@ -7017,6 +6550,15 @@ var require_action_schema_view = __commonJS({
           }
           Promise.resolve(api.call("actions.setActionOrigins", { action: name, origins: next })).then(done, fail);
         }
+        function paramsOpen(action) {
+          if (Object.prototype.hasOwnProperty.call(folds, action.name)) return folds[action.name] === true;
+          return Boolean(String(query || "").trim()) || reqMode !== "all" || Boolean(typePick);
+        }
+        function resetFolds() {
+          setFolds(function(prev) {
+            return Object.keys(prev).length ? {} : prev;
+          });
+        }
         var all = snap && Array.isArray(snap.actions) ? snap.actions.filter(function(a) {
           return a && a.domain === DOMAIN;
         }) : [];
@@ -7113,6 +6655,10 @@ var require_action_schema_view = __commonJS({
         }
         function card(action) {
           var rows = paramRows(action);
+          var required = rows.filter(function(row) {
+            return row.required;
+          }).length;
+          var open = paramsOpen(action);
           var examples = Array.isArray(action.examples) ? action.examples : [];
           return h2(
             "div",
@@ -7133,18 +6679,38 @@ var require_action_schema_view = __commonJS({
             ),
             action.description ? h2("p", { className: P + "-desc" }, Highlight.hit(action.description, kw)) : null,
             rows.length ? h2(
-              "table",
-              { className: P + "-table" },
-              h2("thead", null, h2(
-                "tr",
-                null,
-                h2("th", null, t.colName),
-                h2("th", null, t.colType),
-                h2("th", null, t.colReq),
-                h2("th", null, t.colExtra),
-                h2("th", null, t.colDesc)
-              )),
-              h2("tbody", null, rows.map(paramRow))
+              "details",
+              {
+                className: P + "-params",
+                "data-params-fold": action.name,
+                open,
+                // 原生 details 自带键盘与无障碍语义，这里只记下用户的开合；
+                // 筛选变化引起的程序性开合也会触发 toggle，记下的值与当次默认一致，随后由 resetFolds 清掉。
+                onToggle: function(e) {
+                  var next = !!(e && e.currentTarget && e.currentTarget.open);
+                  setFolds(function(prev) {
+                    if (prev[action.name] === next) return prev;
+                    var out = Object.assign({}, prev);
+                    out[action.name] = next;
+                    return out;
+                  });
+                }
+              },
+              h2("summary", null, t.params + (required ? " \xB7 " + t.requiredCount(required) : "")),
+              h2(
+                "table",
+                { className: P + "-table" },
+                h2("thead", null, h2(
+                  "tr",
+                  null,
+                  h2("th", null, t.colName),
+                  h2("th", null, t.colType),
+                  h2("th", null, t.colReq),
+                  h2("th", null, t.colExtra),
+                  h2("th", null, t.colDesc)
+                )),
+                h2("tbody", null, rows.map(paramRow))
+              )
             ) : h2("div", { className: P + "-none" }, t.noParams),
             h2(
               "div",
@@ -7221,6 +6787,7 @@ var require_action_schema_view = __commonJS({
                 "aria-label": t.search,
                 onChange: function(e) {
                   setQuery(e.target.value);
+                  resetFolds();
                 }
               })
             ),
@@ -7232,6 +6799,7 @@ var require_action_schema_view = __commonJS({
                 "select",
                 { value: reqMode, "aria-label": t.filterReq, onChange: function(e) {
                   setReqMode(e.target.value);
+                  resetFolds();
                 } },
                 h2("option", { value: "all" }, t.all),
                 h2("option", { value: "required" }, t.onlyRequired),
@@ -7246,6 +6814,7 @@ var require_action_schema_view = __commonJS({
                 "select",
                 { value: typePick, "aria-label": t.filterType, onChange: function(e) {
                   setTypePick(e.target.value);
+                  resetFolds();
                 } },
                 h2("option", { value: "" }, t.allTypes),
                 typeOptions.map(function(name) {
@@ -7805,7 +7374,7 @@ var staged = require_staged_dialog();
       )
     );
   }
-  var AccountModal = require_accounts_modal()({
+  var VaultGroupsModal = require_vault_groups_modal()({
     h: h2,
     React: React2,
     useState,
@@ -7912,7 +7481,7 @@ var staged = require_staged_dialog();
     var [toast, setToast] = useState(null);
     var dragRef = useRef("");
     var tagKey = tagFilter.slice().sort().join(",");
-    function showToast2(msg, kind) {
+    function showToast(msg, kind) {
       setToast({ msg, kind: kind || "" });
     }
     useEffect(function() {
@@ -7940,7 +7509,7 @@ var staged = require_staged_dialog();
           setKids(map);
         });
       }).catch(function(e) {
-        showToast2(text(lang, "loadFail", { msg: errText(e) }), "err");
+        showToast(text(lang, "loadFail", { msg: errText(e) }), "err");
       });
     }
     function loadChildren(id) {
@@ -8038,14 +7607,14 @@ var staged = require_staged_dialog();
         setCurrent({ id, path: rows });
         setPage(1);
       }).catch(function(e) {
-        showToast2(text(lang, "opFail", { msg: errText(e) }), "err");
+        showToast(text(lang, "opFail", { msg: errText(e) }), "err");
       });
     }
     function toggleNode(node) {
       var open = !!expanded[node.id];
       if (!open && !Object.prototype.hasOwnProperty.call(kidsRef.current, node.id)) {
         loadChildren(node.id).catch(function(e) {
-          showToast2(errText(e), "err");
+          showToast(errText(e), "err");
         });
       }
       setExpanded(function(prev) {
@@ -8063,13 +7632,13 @@ var staged = require_staged_dialog();
       if (!sourceId || sourceId === target.id) return;
       var moveType = expanded[target.id] ? 0 : 2;
       callApi(api, "siteNodes.move", { sourceId, targetId: target.id, moveType }).then(function() {
-        showToast2(text(lang, "moved"));
+        showToast(text(lang, "moved"));
         refreshTree();
         setTick(function(x) {
           return x + 1;
         });
       }).catch(function(e2) {
-        showToast2(text(lang, "opFail", { msg: errText(e2) }), "err");
+        showToast(text(lang, "opFail", { msg: errText(e2) }), "err");
       });
     }
     function renderNode(node, depth) {
@@ -8133,7 +7702,7 @@ var staged = require_staged_dialog();
     }
     function onSaved() {
       setEditing(null);
-      showToast2(text(lang, "saved"));
+      showToast(text(lang, "saved"));
       setTick(function(x) {
         return x + 1;
       });
@@ -8163,7 +7732,7 @@ var staged = require_staged_dialog();
     }
     function onSiteDeleted() {
       setDeleting(null);
-      showToast2(text(lang, "deleted"));
+      showToast(text(lang, "deleted"));
       setTick(function(x) {
         return x + 1;
       });
@@ -8206,7 +7775,7 @@ var staged = require_staged_dialog();
       callApi(api, "sites.delete", { id: site.id }).then(function() {
         onSiteDeleted();
       }).catch(function(e) {
-        showToast2(text(lang, "opFail", { msg: errText(e) }), "err");
+        showToast(text(lang, "opFail", { msg: errText(e) }), "err");
       });
     }
     function deleteSelected() {
@@ -8224,9 +7793,9 @@ var staged = require_staged_dialog();
           return x + 1;
         });
         refreshTree();
-        showToast2(text(lang, "deleted"));
+        showToast(text(lang, "deleted"));
       }).catch(function(e) {
-        showToast2(text(lang, "opFail", { msg: errText(e) }), "err");
+        showToast(text(lang, "opFail", { msg: errText(e) }), "err");
       });
     }
     function sortBy(col) {
@@ -8448,9 +8017,9 @@ var staged = require_staged_dialog();
                         h2("button", { className: "wbs-btn sm", title: text(lang, "dirs"), onClick: function() {
                           setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "dirs" ? null : { id: s.id, type: "dirs" });
                         } }, h2(Icon2, { name: "folder", size: 12 }), text(lang, "dirs") + " " + (s.dirs ? s.dirs.length : 0)),
-                        h2("button", { className: "wbs-btn sm", title: text(lang, "accounts"), onClick: function() {
+                        h2("button", { className: "wbs-btn sm", title: text(lang, "vaultGroups"), onClick: function() {
                           setAccSite(s);
-                        } }, h2(Icon2, { name: "key", size: 12 }), text(lang, "accounts") + " " + (s.accountCount || 0)),
+                        } }, h2(Icon2, { name: "key", size: 12 }), text(lang, "vaultGroups")),
                         h2("button", { className: "wbs-btn sm icononly", title: text(lang, "edit"), onClick: function() {
                           openEdit(s);
                         } }, h2(Icon2, { name: "edit", size: 13 })),
@@ -8533,17 +8102,12 @@ var staged = require_staged_dialog();
         },
         onDone: onDirDone
       }) : null,
-      accSite ? h2(AccountModal, {
+      accSite ? h2(VaultGroupsModal, {
         api,
         lang,
         site: accSite,
         onClose: function() {
           setAccSite(null);
-        },
-        onChanged: function() {
-          setTick(function(x) {
-            return x + 1;
-          });
         }
       }) : null,
       deleting ? h2(DeleteSiteModal, {
@@ -8561,7 +8125,7 @@ var staged = require_staged_dialog();
   injectCss();
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.12.19",
+    version: "1.13.0",
     icon: icons.ICONS["globe"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },

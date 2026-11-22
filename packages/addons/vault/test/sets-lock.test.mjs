@@ -179,9 +179,9 @@ test("锁定态：集合与凭据名照常可见，写操作全禁用，加入�
 
   const body = texts(tree);
   assert.match(body, /工作邮箱/, "锁定时集合名仍应可见");
-  assert.match(body, /账号已加密 · 解锁后可见/, "锁定时账号是密文，应提示解锁后可见");
+  assert.doesNotMatch(body, /账号已加密/, "集合账号字段已下线");
   assert.match(body, /保险箱已锁定/, "应给出只读说明");
-  assert.ok(api.calls.some((c) => c.action === "vault.setList"), "锁定时仍应请求集合列表（该接口可调，只是账号为空）");
+  assert.ok(api.calls.some((c) => c.action === "vault.setList"), "锁定时仍应请求集合列表（该接口不碰密钥）");
 
   // 打开集合详情：凭据名来自 vault.setGet，同样不需要 DEK
   const row = byClass(tree, "wbv-item")[0];
@@ -193,7 +193,7 @@ test("锁定态：集合与凭据名照常可见，写操作全禁用，加入�
   assert.match(texts(detail), /解锁后可把凭据加入这个集合/, "锁定态不出现凭据选择器");
   assert.equal(byClass(detail, "wbv-picker").length, 0, "锁定态不应渲染凭据选择器");
 
-  for (const label of ["新建集合与账号", "编辑", "删除集合", "移出"]) {
+  for (const label of ["新建集合", "编辑", "删除集合", "移出"]) {
     const btn = buttonByText(detail, label);
     assert.ok(btn, `应存在「${label}」按钮`);
     assert.equal(btn.props.disabled, true, `锁定时「${label}」应禁用`);
@@ -206,7 +206,7 @@ test("解锁态：加入凭据用共享选择器，搜索后勾选并回显 chip
   let tree = await settle(view);
 
   assert.doesNotMatch(texts(tree), /保险箱已锁定/, "解锁后不应出现锁定说明");
-  assert.notEqual(buttonByText(tree, "新建集合与账号").props.disabled, true, "解锁后新建可用");
+  assert.notEqual(buttonByText(tree, "新建集合").props.disabled, true, "解锁后新建可用");
 
   byClass(tree, "wbv-item")[0].props.onClick();
   await flush();
@@ -248,7 +248,7 @@ test("解锁态：弹窗里的凭据选择同样是共享选择器", async () =>
   const view = mountSets(api);
   await settle(view);
 
-  buttonByText(view.paint(), "新建集合与账号").props.onClick();
+  buttonByText(view.paint(), "新建集合").props.onClick();
   const tree = view.paint();
   const pickers = byClass(tree, "wbv-picker");
   assert.equal(pickers.length, 1, "弹窗里应有一个共享选择器");

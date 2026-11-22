@@ -58,7 +58,7 @@ for (const [name, mod, expected] of [
   ["tasks", tasks, ["task", "task_timeline", "task_timeline_link", "task_workspace", "task_workspace_link", "task_node"]],
   ["tags", tags, ["tag", "tag_mapping"]],
   ["storage", storage, ["storage"]],
-  ["sites", sites, ["site", "site_node", "site_node_mapping", "site_account", "site_account_external"]],
+  ["sites", sites, ["site", "site_node", "site_node_mapping"]],
 ]) {
   const payload = mod.call(name + ".dataTables");
   assert(payload.domain === name, name + " domain 不符");
@@ -93,8 +93,8 @@ for (const [name, mod, expected] of [
   assert(plain.stats === undefined, "未传 stats 时不应附带统计（保持响应体轻量）");
   assert(plain.count === taskTb.count, "带统计时行数与常规清单不一致");
   const sitesIndex = sites.call("sites.dataTables", { stats: true });
-  const acct = sitesIndex.tables.find(function (t) { return t.name === "site_account"; });
-  assert(acct && acct.stats && acct.stats.indexes.length >= 1, "站点账号表未给出索引信息");
+  const nodeTb = sitesIndex.tables.find(function (t) { return t.name === "site_node"; });
+  assert(nodeTb && nodeTb.stats && nodeTb.stats.indexes.length >= 1, "站点目录表未给出索引信息");
 }
 
 const fixtureTableId = tasks.call("taskNodes.create", { parentId: "1", type: "1", name: "数据回归任务表" }).node.id;
