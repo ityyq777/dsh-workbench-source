@@ -24,6 +24,14 @@ export function setup(api) {
   registerConfigActions(api);
   autoSync = createAutoSync({ db: api.db, engine, api, log: api.log });
   registerAutoSyncActions(api, autoSync);
+  // 保险箱解锁后立刻同步一轮：订阅保险箱推的事件，别等自己的定时器。
+  if (api.events && typeof api.events.subscribe === "function") {
+    try {
+      api.events.subscribe("vault.unlocked", "mail.onVaultUnlocked");
+    } catch (error) {
+      api.log("mail: 订阅保险箱解锁事件失败", String((error && error.message) || error));
+    }
+  }
   // 改开关、方式或间隔后立刻重新排期：不必重启宿主，也不必等下一轮。
   onConfigChange(() => autoSync.restart());
   autoSync.start();

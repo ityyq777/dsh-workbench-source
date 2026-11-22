@@ -222,6 +222,32 @@ export function createAutoSync({ db, engine, api, log }) {
     })();
   }
 
+  /**
+   * 立刻同步一轮（不等下一个到期时间）。
+   *
+   * 触发场景：保险箱刚被解锁——这时候才拿得到密码，早点同步比等定时器体感好。
+   * 正在跑就跳过，保证同一时刻只有一轮在打服务器。
+   */
+  async function syncNow(reason) {
+    if (status.busy) return { skipped: true, reason: "busy" };
+    const cfg = config();
+    if (!cfg.enabled) return { skipped: true, reason: "disabled" };
+    if (await vaultLocked()) return { skipped: true, reason: "locked" };
+    status.busy = true;
+    let inserted = 0;
+    try {
+      const list = accounts();
+      for (const acc of list) {
+        await runAccount(acc, cfg);
+        inserted += Number(stateOf(acc.id).lastInserted) || 0;
+      }
+      log("mail: 触发即时同步（" + String(reason || "manual") + "），账户 " + list.length + " 个，新信 " + inserted + " 封");
+      return { accounts: list.length, inserted: inserted };
+    } finally {
+      status.busy = false;
+    }
+  }
+
   function start() {
     restart();
   }
@@ -286,7 +312,7 @@ export function createAutoSync({ db, engine, api, log }) {
       }),
     };
   }
-  return { start, stop, restart, statusReport, syncNew };
+  return { start, stop, restart, statusReport, syncNew, syncNow };
 }
 
 /**
@@ -294,6 +320,21 @@ export function createAutoSync({ db, engine, api, log }) {
  * 刻意不给任何写操作——开关和间隔都走 mail.configSet，避免两套配置入口。
  */
 export function registerAutoSyncActions(api, autoSync) {
+  api.action("mail.onVaultUnlocked", {
+    // 只允许插件来源：由宿主事件队列投递，agent/界面调不到。
+    origins: ["plugin"],
+    description:
+      "内部消费 action（由宿主事件队列投递）：保险箱解锁后立刻同步一轮收件箱，不必等定时器。正在同步时跳过。",
+    input: {
+      type: "object",
+      properties: {
+        eventId: { type: "string", description: "宿主事件 id（记进日志便于溯源）" },
+      },
+    },
+    execute: (args) => autoSync.syncNow("vault-unlocked:" + String((args && args.eventId) || "")).then((r) => Object.assign({ ok: true }, r)),
+    render: (r) => (r && r.skipped ? "跳过即时同步（" + r.reason + "）" : "已即时同步：" + (r.accounts || 0) + " 个账户，新信 " + (r.inserted || 0) + " 封"),
+  });
+
   api.action("mail.autoSyncStatus", {
     description: "只读：邮件自动同步的开关、方式、上次成功时间与每账户状态（受保险箱锁定影响时 counted 在 skippedLocked）",
     input: { type: "object", properties: {}, additionalProperties: false },

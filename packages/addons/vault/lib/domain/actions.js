@@ -53,7 +53,17 @@ export function registerVaultActions(api, vault, groups) {
     },
     execute: (args, ctx) => {
       only(ctx, ["ui"], "vault.unlock");
-      return vault.unlock(args);
+      const result = vault.unlock(args);
+      // 解锁成功后推一条事件：订阅方（如邮件插件）可以立刻同步一次，
+      // 不必等自己的定时器。推送失败不影响解锁本身。
+      if (api.events && typeof api.events.push === "function") {
+        try {
+          api.events.push("vault.unlocked", { at: Date.now() });
+        } catch (error) {
+          api.log("vault: 推解锁事件失败", String((error && error.message) || error));
+        }
+      }
+      return result;
     },
   });
 
