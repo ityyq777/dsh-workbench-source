@@ -129,4 +129,45 @@ assert(
   "ConfigView 应能作为组件类型交给 jsx 渲染",
 );
 
-console.log("HOST PAGES TEST PASS：结构检查 + 真 React 渲染（加载/就绪/错误态）");
+// 两个方案重开备份页：默认勾选与导出请求使用同一组模块和格式。
+const addons = ["one", "two"].map((id) => ({ id, title: id, backup: { export: true } }));
+const backupTab = require("../packages/shell/client/backup-tab.cjs")(reactStub(), fakeJsx).BackupTab;
+const previousFetch = globalThis.fetch;
+const urls = [];
+globalThis.fetch = async (url) => { urls.push(url); return { ok: false, status: 400, json: async () => ({}) }; };
+try {
+  for (const [ids, fmt, included] of [[null, "zip", ["one", "two"]], [["two", "absent"], "json", ["two"]], [[], "csv", []]]) {
+    const beforeOpen = urls.length;
+    const tree = backupTab({ addons, t: deps.t, preferences: { "backup.moduleIds": ids, "backup.exportFormat": fmt } });
+    const checks = [], radios = [];
+    let run;
+    walk(tree, (n) => {
+      if (n.type === "input" && n.props.type === "checkbox") checks.push(n.props.checked);
+      if (n.props?.role === "radio") radios.push(n.props["aria-checked"]);
+      if (n.type === "button" && n.props.onClick?.name === "doExport") run = n.props;
+    });
+    assert.equal(urls.length, beforeOpen, "打开页面不自动导出");
+    assert.deepEqual(checks, addons.map((a) => included.includes(a.id)));
+    assert.deepEqual(radios, ["zip", "json", "csv", "txt"].map((f) => f === fmt));
+    if (included.length) {
+      run.onClick();
+      assert.equal(urls.at(-1), `/workbench/api/backup/export?modules=${included.join(",")}&format=${fmt}`);
+    } else {
+      run.onClick();
+      assert.equal(urls.length, beforeOpen, "未选择模块时不能提交导出");
+    }
+  }
+} finally { globalThis.fetch = previousFetch; }
+
+// 账号与同步页打开后按方案读取列表；登录、同步与冲突裁决都是写操作，不能随方案自动执行。
+const calls = [];
+const syncApi = { get: async (path) => { calls.push(path); return path === "/account" ? { logged_in: true } : { ok: true }; }, post() { throw new Error("打开页面时发生写入"); } };
+const hooks = { ...reactStub(), useEffect: (fn) => fn() };
+const accountTab = require("../packages/shell/client/system-tabs.cjs")(hooks, fakeJsx, () => syncApi).AccountTab;
+for (const limit of [7, 20, 100]) {
+  accountTab({ t: deps.t, preferences: limit === 20 ? {} : { "cloud.conflictLimit": limit } });
+  await Promise.resolve();
+  assert.ok(calls.includes("/sync/conflicts?limit=" + limit));
+}
+assert.ok(configHtml.includes("wbh-cfg-schemes"), "配置页应复用共享方案条");
+console.log("HOST PAGES TEST PASS：页面渲染、方案条、备份勾选与实际导出参数、云端冲突查询和手工边界");

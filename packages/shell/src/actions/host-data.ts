@@ -7,6 +7,8 @@
  */
 import { setAuditMeta } from "../infra/audit.js";
 
+import { activeScheme, atomic, loadStore, preferenceItems, preferenceValue, saveStore, schemeActions, writableScheme } from "./backup-schemes.js";
+
 const DOMAIN = "wb";
 const PAGE_SIZES = [10, 25, 50, 100, 200];
 const MAX_SEARCH = 100;
@@ -199,9 +201,14 @@ function configState(db: any): any {
     values[item.id] = read.value;
     if (read.overridden) overrides[item.id] = read.value;
   }
+  const store = loadStore(db);
+  const current = activeScheme(store);
+  for (const item of preferenceItems) values[item.id] = item.default;
+  Object.assign(values, current?.overrides);
+  Object.assign(overrides, current?.overrides);
   return {
     domain: DOMAIN,
-    items: CONFIG_ITEMS.map((item) => ({
+    items: [...CONFIG_ITEMS.map((item) => ({
       id: item.id,
       type: item.type,
       group: item.group,
@@ -211,8 +218,10 @@ function configState(db: any): any {
       min: item.min,
       max: item.max,
       step: item.step,
-    })),
-    groups: [{ id: "审计", label: "审计" }],
+    })), ...preferenceItems],
+    groups: ["审计", "数据备份", "云端"].map(id => ({ id, label: id })),
+    scheme: current ? { id: current.id, name: current.name } : null,
+    schemes: store.schemes.map(({ id, name }) => ({ id, name })),
     values,
     overrides,
     disclaimer: "这里只改本机 meta，不影响子插件配置与云端同步内容。",
@@ -241,42 +250,48 @@ function writeValues(db: any, values: unknown): any {
   const entries = Object.entries(values as Record<string, unknown>);
   if (!entries.length) throw new Error("没有要保存的配置项");
   const changed: Array<{ id: string; value: unknown }> = [];
-  // 手写事务：宿主的 db 可能是 node:sqlite 适配器（没有 better-sqlite3 的 transaction 助手）。
-  db.exec("BEGIN IMMEDIATE");
-  try {
+  return atomic(db, () => {
+    const store = loadStore(db);
+    let preferencesChanged = false;
     for (const [id, raw] of entries) {
       const item = CONFIG_BY_ID.get(id);
-      if (!item) throw new Error("未知宿主配置项：" + id);
-      const value = coerceValue(item, raw);
-      setAuditMeta(db, id, item.type === "boolean" ? (value ? "1" : "0") : String(value));
-      changed.push({ id, value });
+      if (item) {
+        const value = coerceValue(item, raw);
+        setAuditMeta(db, id, item.type === "boolean" ? (value ? "1" : "0") : String(value));
+        changed.push({ id, value });
+      } else {
+        if (!preferenceItems.some(item => item.id === id)) throw new Error("未知宿主配置项：" + id);
+        const value = preferenceValue(id, raw);
+        writableScheme(store).overrides[id] = value;
+        preferencesChanged = true;
+        changed.push({ id, value });
+      }
     }
-    db.exec("COMMIT");
-  } catch (e) {
-    try {
-      db.exec("ROLLBACK");
-    } catch {
-      /* ignore */
-    }
-    throw e;
-  }
-  return Object.assign(configState(db), { changed });
+    if (preferencesChanged) saveStore(db, store);
+    return Object.assign(configState(db), { changed });
+  });
 }
 
 function resetValues(db: any, ids: unknown): any {
-  const list = Array.isArray(ids) && ids.length ? ids.map(String) : CONFIG_ITEMS.map((item) => item.id);
-  const reset: string[] = [];
-  for (const id of list) {
-    if (!CONFIG_BY_ID.has(id)) throw new Error("未知宿主配置项：" + id);
-    db.prepare("DELETE FROM meta WHERE k = ?").run(id);
-    reset.push(id);
-  }
-  return Object.assign(configState(db), { reset });
+  if (ids !== undefined && !Array.isArray(ids)) throw new Error("ids 必须是数组");
+  const reset = Array.isArray(ids) && ids.length ? ids.map(String) : [...CONFIG_ITEMS, ...preferenceItems].map(item => item.id);
+  return atomic(db, () => {
+    const store = loadStore(db);
+    const scheme = activeScheme(store);
+    for (const id of reset) {
+      if (CONFIG_BY_ID.has(id)) db.prepare("DELETE FROM meta WHERE k = ?").run(id);
+      else if (!preferenceItems.some(item => item.id === id)) throw new Error("未知宿主配置项：" + id);
+      else if (scheme) delete scheme.overrides[id];
+    }
+    if (scheme) saveStore(db, store);
+    return Object.assign(configState(db), { reset });
+  });
 }
 
 /** 把宿主的数据/配置 action 并进元 action 表（wb-shell 域，不进备份）。 */
 export function createHostDataActions(db: any): Map<string, any> {
-  return new Map([
+  return new Map<string, any>([
+    ...schemeActions(db, () => configState(db)),
     [
       "wb.dataTables",
       {
@@ -316,7 +331,7 @@ export function createHostDataActions(db: any): Map<string, any> {
     [
       "wb.configGet",
       {
-        description: "读取宿主本机配置（审计是否记录只读 action、审计保留天数）与默认值。",
+        description: "读取全局审计设置、本机备份与云端显示偏好、方案列表和当前方案。",
         input: { type: "object", properties: {} },
         examples: [{}],
         execute: () => configState(db),
@@ -326,14 +341,21 @@ export function createHostDataActions(db: any): Map<string, any> {
     [
       "wb.configSet",
       {
-        description: "保存一项或多项宿主本机配置（白名单校验、整批原子），只写本机 meta，不同步也不进备份。",
+        description: "保存一项或多项宿主本机配置（整批原子）。审计项保持全局，备份与云端显示偏好写入当前方案，无方案时自动创建本机配置。",
         input: {
           type: "object",
           properties: {
             values: {
               type: "object",
               description: "要保存的配置项，键为配置 id、值为新值",
-              additionalProperties: true,
+              properties: {
+                "audit.recordReads": { description: "全局审计开关，支持布尔值与旧开关文本" },
+                "audit.retentionDays": { description: "全局审计保留天数，7–3650" },
+                "backup.exportFormat": { type: "string", enum: ["zip", "json", "csv", "txt"] },
+                "backup.moduleIds": { type: ["array", "null"], maxItems: 256, items: { type: "string", pattern: "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$" }, description: "null 动态全选，空数组不预选" },
+                "cloud.conflictLimit": { type: "integer", minimum: 1, maximum: 100 },
+              },
+              additionalProperties: false,
             },
           },
           required: ["values"],

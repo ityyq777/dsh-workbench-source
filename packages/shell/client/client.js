@@ -30,7 +30,7 @@ var require_locale = __commonJS({
         tab_data: "\u6570\u636E",
         data_desc: "\u6D4F\u89C8\u5BBF\u4E3B\u81EA\u5DF1\u7EF4\u62A4\u7684\u5E73\u53F0\u8868\uFF08meta\u3001\u540C\u6B65\u65E5\u5FD7/\u6B7B\u4FE1/\u6C34\u4F4D\u3001\u4F1A\u8BDD\u8BB0\u5F55\u6A21\u5F0F\u3001\u5BA1\u8BA1\u65E5\u5FD7\uFF09\uFF1A\u53EA\u8BFB\u3001\u53EF\u641C\u7D22\u3001\u53EF\u5206\u9875",
         tab_config: "\u914D\u7F6E",
-        config_desc: "\u5BBF\u4E3B\u7684\u672C\u673A\u914D\u7F6E\uFF1A\u5BA1\u8BA1\u8BB0\u5F55\u8303\u56F4\u4E0E\u4FDD\u7559\u5929\u6570\uFF1B\u53EA\u5B58\u672C\u673A\uFF0C\u4E0D\u540C\u6B65\u3001\u4E0D\u8FDB\u5907\u4EFD",
+        config_desc: "\u6309\u65B9\u6848\u7BA1\u7406\u5907\u4EFD\u504F\u597D\u3002\u5BA1\u8BA1\u8BBE\u7F6E\u5BF9\u672C\u673A\u6240\u6709\u65B9\u6848\u751F\u6548\u3002",
         tab_queue: "\u4E8B\u4EF6\u961F\u5217",
         queue_desc: "\u5BBF\u4E3B\u4E8B\u4EF6\u961F\u5217\u7684\u8FD0\u884C\u89C6\u56FE\uFF1A\u5404\u63D2\u4EF6\u58F0\u660E\u4F1A\u53D1\u5E03/\u76D1\u542C\u54EA\u4E9B\u4E8B\u4EF6\u3001\u4E8B\u4EF6\u4E0E\u6309\u8BA2\u9605\u62C6\u51FA\u7684\u6295\u9012\uFF1B\u5931\u8D25\u6295\u9012\u53EF\u91CD\u6295\uFF0C\u5386\u53F2\u4E8B\u4EF6\u53EF\u6E05\u7406",
         queue_queued: "\u6392\u961F",
@@ -92,6 +92,17 @@ var require_locale = __commonJS({
         queue_ago_day: "{n} \u5929\u524D",
         queue_auto: "\u81EA\u52A8\u5237\u65B0",
         queue_updated_at: "\u66F4\u65B0\u4E8E {t}",
+        config_scheme_none: "\u4E0D\u4F7F\u7528\u65B9\u6848\uFF08\u5BBF\u4E3B\u9ED8\u8BA4\u503C\uFF09",
+        config_scheme_default: "\u4FEE\u6539\u5907\u4EFD\u504F\u597D\u4F1A\u521B\u5EFA\u672C\u673A\u65B9\u6848\u3002",
+        config_scheme_local: "\u5907\u4EFD\u504F\u597D\u65B9\u6848\u4EC5\u4FDD\u5B58\u5728\u672C\u673A\u3002",
+        config_scheme_delete: "\u5220\u9664\u5F53\u524D\u65B9\u6848\u5E76\u4F7F\u7528\u9ED8\u8BA4\u5907\u4EFD\u504F\u597D\uFF1F",
+        config_scheme_from_default: "\u4ECE\u5BBF\u4E3B\u9ED8\u8BA4\u503C\u5F00\u59CB",
+        config_modules: "\u9ED8\u8BA4\u5BFC\u51FA\u6A21\u5757",
+        config_dynamic_all: "\u81EA\u52A8\u9009\u62E9\u5168\u90E8\u53EF\u5BFC\u51FA\u6A21\u5757\uFF08\u542B\u4EE5\u540E\u65B0\u589E\uFF09",
+        config_format: "\u9ED8\u8BA4\u5BFC\u51FA\u683C\u5F0F",
+        config_read_error: "\u65E0\u6CD5\u8BFB\u53D6\u914D\u7F6E",
+        config_saved: "\u5DF2\u4FDD\u5B58",
+        config_fallback: "\u8BFB\u53D6\u5907\u4EFD\u504F\u597D\u5931\u8D25\uFF0C\u672C\u6B21\u4F7F\u7528\u9ED8\u8BA4\u503C\u3002",
         loading: "\u8BFB\u53D6\u4E2D\u2026",
         reset_default: "\u6062\u590D\u9ED8\u8BA4",
         sync_progress: "\u540C\u6B65\u8FDB\u5EA6",
@@ -210,6 +221,8 @@ var require_locale = __commonJS({
         agent_list_col_desc: "\u8BF4\u660E",
         agent_list_col_origins: "\u751F\u6548\u6765\u6E90",
         agent_list_narrow: "\u58F0\u660E\u4E0A\u754C",
+        agent_list_invalid: "\u65E0\u6CD5\u8BFB\u53D6\u6743\u9650\u6E05\u5355\uFF1A\u5BBF\u4E3B\u672A\u8FD4\u56DE\u5B8C\u6574\u7684 action \u6765\u6E90\u4FE1\u606F",
+        agent_list_no_match: "\u6CA1\u6709\u7B26\u5408\u5F53\u524D\u7B5B\u9009\u6761\u4EF6\u7684 action",
         agent_list_empty: "\u6CA1\u6709\u5BF9 agent \u5F00\u653E\u7684 action",
         agent_list_loading: "\u8BFB\u53D6\u4E2D\u2026",
         agent_desc: "\u9010\u4E2A action \u9009\u62E9\u5141\u8BB8\u7684\u8C03\u7528\u6765\u6E90\uFF08\u754C\u9762 / \u63D2\u4EF6 / agent / \u540C\u6B65\uFF09\uFF1B\u8BBE\u7F6E\u53EA\u5B58\u672C\u673A\u3001\u7ACB\u5373\u751F\u6548\uFF0C\u4E0D\u8FDB\u5907\u4EFD\u4E0E\u4E91\u540C\u6B65",
@@ -361,7 +374,7 @@ var require_locale = __commonJS({
         tab_data: "Data",
         data_desc: "Browse the platform tables the host itself owns (meta, sync log/dead letters/state, session modes, audit log): read-only, searchable, paged",
         tab_config: "Settings",
-        config_desc: "Host settings stored on this machine: what the audit ledger records and how long it is kept; never synced or backed up",
+        config_desc: "Manage backup preferences in schemes. Audit settings apply to every scheme on this device.",
         tab_queue: "Event queue",
         queue_desc: "Runtime view of the host event queue: which events each plugin declares to publish or listen to, plus events and per-subscription deliveries; failed deliveries can be replayed and finished events cleaned up",
         queue_queued: "Queued",
@@ -423,6 +436,17 @@ var require_locale = __commonJS({
         queue_ago_day: "{n} d ago",
         queue_auto: "Auto refresh",
         queue_updated_at: "updated {t}",
+        config_scheme_none: "No scheme (host defaults)",
+        config_scheme_default: "Editing backup preferences creates a local scheme.",
+        config_scheme_local: "Backup preference schemes are stored on this device.",
+        config_scheme_delete: "Delete the active scheme and use the default backup preferences?",
+        config_scheme_from_default: "Start from host defaults",
+        config_modules: "Default export modules",
+        config_dynamic_all: "Select all exportable modules, including future ones",
+        config_format: "Default export format",
+        config_read_error: "Could not read configuration",
+        config_saved: "Saved",
+        config_fallback: "Could not read backup preferences. Using defaults for this visit.",
         loading: "Loading\u2026",
         reset_default: "Reset to default",
         sync_progress: "Sync progress",
@@ -540,6 +564,8 @@ var require_locale = __commonJS({
         agent_list_col_desc: "Description",
         agent_list_col_origins: "Effective origins",
         agent_list_narrow: "declared upper bound",
+        agent_list_invalid: "Cannot read the permission list: the host returned incomplete action origins",
+        agent_list_no_match: "No actions match the current filters",
         agent_list_empty: "No action is open to the agent",
         agent_list_loading: "Loading\u2026",
         agent_desc: "Pick which origins may call each action (UI / plugin / agent / sync); settings stay on this machine, apply immediately, and are never backed up or synced",
@@ -935,12 +961,177 @@ var require_number_field = __commonJS({
   }
 });
 
+// packages/addons/lib/config-scheme-bar.cjs
+var require_config_scheme_bar = __commonJS({
+  "packages/addons/lib/config-scheme-bar.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h2 = React.createElement;
+    var COPY = {
+      zh: {
+        title: "\u914D\u7F6E\u65B9\u6848",
+        none: "\u4E0D\u4F7F\u7528\u65B9\u6848\uFF08\u63D2\u4EF6\u9ED8\u8BA4\u914D\u7F6E\uFF09",
+        create: "\u65B0\u5EFA\u65B9\u6848",
+        rename: "\u91CD\u547D\u540D",
+        remove: "\u5220\u9664",
+        namePlaceholder: "\u65B9\u6848\u540D\u79F0",
+        ok: "\u786E\u5B9A",
+        cancel: "\u53D6\u6D88",
+        current: "\u5F53\u524D\u65B9\u6848",
+        defaultHint: "\u672A\u9009\u62E9\u65B9\u6848\u65F6\u4F7F\u7528\u63D2\u4EF6\u9ED8\u8BA4\u914D\u7F6E\uFF1B\u4FEE\u6539\u4EFB\u610F\u8BBE\u7F6E\u4F1A\u81EA\u52A8\u65B0\u5EFA\u300C\u672C\u673A\u914D\u7F6E\u300D\u65B9\u6848\u3002",
+        syncedHint: "\u65B9\u6848\u4F1A\u968F\u4E91\u7AEF\u540C\u6B65\u4E0E\u5907\u4EFD\u4E00\u8D77\u8D70\uFF1B\u5F53\u524D\u9009\u4E2D\u54EA\u4E2A\u65B9\u6848\u53EA\u4FDD\u5B58\u5728\u672C\u673A\u3002",
+        confirmDelete: "\u5220\u9664\u5F53\u524D\u65B9\u6848\u540E\u4F1A\u56DE\u5230\u63D2\u4EF6\u9ED8\u8BA4\u914D\u7F6E\uFF0C\u786E\u5B9A\u5220\u9664\uFF1F",
+        createTitle: "\u65B0\u5EFA\u914D\u7F6E\u65B9\u6848",
+        renameTitle: "\u91CD\u547D\u540D\u914D\u7F6E\u65B9\u6848",
+        fromCurrent: "\u4ECE\u5F53\u524D\u65B9\u6848\u590D\u5236",
+        fromDefault: "\u4ECE\u63D2\u4EF6\u9ED8\u8BA4\u5F00\u59CB"
+      },
+      en: {
+        title: "Config scheme",
+        none: "No scheme (plugin defaults)",
+        create: "New scheme",
+        rename: "Rename",
+        remove: "Delete",
+        namePlaceholder: "Scheme name",
+        ok: "OK",
+        cancel: "Cancel",
+        current: "Active scheme",
+        defaultHint: 'With no scheme selected the plugin defaults apply. Editing any setting creates a local "My config" scheme automatically.',
+        syncedHint: "Schemes sync to the cloud and travel with backups; which scheme this device uses stays local.",
+        confirmDelete: "Deleting the active scheme returns to plugin defaults. Delete it?",
+        createTitle: "New config scheme",
+        renameTitle: "Rename config scheme",
+        fromCurrent: "Copy active scheme",
+        fromDefault: "Start from plugin defaults"
+      }
+    };
+    var styles = [
+      ".__P__-cfg-schemes{display:flex;flex-direction:column;gap:10px;padding:13px 16px;border:1px solid var(--cfg-line);border-radius:12px;background:var(--cfg-surface)}",
+      ".__P__-cfg-schemes-main{display:flex;align-items:center;gap:10px;flex-wrap:wrap}",
+      ".__P__-cfg-schemes-label{font-size:12.5px;font-weight:660;white-space:nowrap}",
+      ".__P__-cfg-schemes-select{border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:9px;padding:7px 11px;font:inherit;font-size:13px;line-height:1.4;outline:none;min-width:190px;max-width:100%}",
+      ".__P__-cfg-schemes-select:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
+      ".__P__-cfg-schemes-actions{display:flex;gap:7px;flex-wrap:wrap}",
+      ".__P__-cfg-sbtn{appearance:none;border:1px solid var(--cfg-line);background:transparent;color:inherit;border-radius:8px;padding:5px 11px;font:inherit;font-size:12px;line-height:1.5;cursor:pointer;transition:background .12s ease,border-color .12s ease}",
+      ".__P__-cfg-sbtn:hover:not(:disabled){background:var(--cfg-hover);border-color:color-mix(in oklab,currentColor 28%,var(--cfg-line))}",
+      ".__P__-cfg-sbtn:disabled{opacity:.5;cursor:default}",
+      ".__P__-cfg-sbtn.danger{color:var(--dsw-alias-state-error-primary,inherit)}",
+      ".__P__-cfg-schemes-form{display:flex;align-items:center;gap:7px;flex-wrap:wrap}",
+      ".__P__-cfg-schemes-input{flex:1 1 180px;min-width:120px;border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:8px;padding:6px 10px;font:inherit;font-size:13px;outline:none}",
+      ".__P__-cfg-schemes-input:focus{border-color:var(--dsw-alias-brand-primary,currentColor)}",
+      ".__P__-cfg-schemes-hint{font-size:11.5px;color:var(--cfg-muted);line-height:1.6}"
+    ];
+    function SchemeBar(props) {
+      var lang = props.lang === "en" ? "en" : "zh";
+      var c = props.copy ? Object.assign({}, COPY[lang], props.copy) : COPY[lang];
+      var prefix = props.prefix || "wb";
+      var cls = function(suffix) {
+        return "." + prefix + "-cfg-" + suffix;
+      };
+      var schemes = Array.isArray(props.schemes) ? props.schemes : [];
+      var activeId = props.activeId || "";
+      var busy = Boolean(props.busy);
+      var [editing, setEditing] = React.useState(null);
+      var [name, setName] = React.useState("");
+      var [from, setFrom] = React.useState("current");
+      function begin(mode) {
+        var current = schemes.filter(function(s) {
+          return s.id === activeId;
+        })[0];
+        setName(mode === "rename" && current ? current.name : "");
+        setFrom(current ? "current" : "default");
+        setEditing(mode);
+      }
+      function submit(event) {
+        if (event && event.preventDefault) event.preventDefault();
+        var value = String(name || "").trim();
+        if (!value || busy) return;
+        if (editing === "rename") props.onRename(activeId, value);
+        else props.onCreate(value, from);
+        setEditing(null);
+        setName("");
+      }
+      function remove() {
+        if (typeof window !== "undefined" && window.confirm && !window.confirm(c.confirmDelete)) return;
+        props.onDelete(activeId);
+      }
+      return h2(
+        "div",
+        { className: prefix + "-cfg-schemes" },
+        h2(
+          "div",
+          { className: prefix + "-cfg-schemes-main" },
+          h2("span", { className: prefix + "-cfg-schemes-label" }, c.title),
+          h2(
+            "select",
+            {
+              className: prefix + "-cfg-schemes-select",
+              value: activeId,
+              disabled: busy,
+              onChange: function(event) {
+                props.onActivate(event.target.value || null);
+              },
+              "aria-label": c.title
+            },
+            h2("option", { value: "" }, c.none),
+            schemes.map(function(s) {
+              return h2("option", { key: s.id, value: s.id }, s.name);
+            })
+          ),
+          h2("span", { className: prefix + "-cfg-schemes-hint" }, activeId ? c.current : "")
+        ),
+        editing ? h2(
+          "form",
+          { className: prefix + "-cfg-schemes-form", onSubmit: submit },
+          h2("span", { className: prefix + "-cfg-schemes-label" }, editing === "rename" ? c.renameTitle : c.createTitle),
+          h2("input", {
+            className: prefix + "-cfg-schemes-input",
+            value: name,
+            placeholder: c.namePlaceholder,
+            maxLength: 64,
+            autoFocus: true,
+            disabled: busy,
+            onChange: function(event) {
+              setName(event.target.value);
+            }
+          }),
+          editing === "create" && activeId ? h2(
+            "select",
+            { className: prefix + "-cfg-schemes-select", value: from, disabled: busy, onChange: function(event) {
+              setFrom(event.target.value);
+            }, "aria-label": c.createTitle },
+            h2("option", { value: "current" }, c.fromCurrent),
+            h2("option", { value: "default" }, c.fromDefault)
+          ) : null,
+          h2("button", { className: prefix + "-cfg-sbtn", type: "submit", disabled: busy || !String(name || "").trim() }, c.ok),
+          h2("button", { className: prefix + "-cfg-sbtn", type: "button", disabled: busy, onClick: function() {
+            setEditing(null);
+          } }, c.cancel)
+        ) : h2(
+          "div",
+          { className: prefix + "-cfg-schemes-actions" },
+          h2("button", { className: prefix + "-cfg-sbtn", type: "button", disabled: busy, onClick: function() {
+            begin("create");
+          } }, c.create),
+          activeId ? h2("button", { className: prefix + "-cfg-sbtn", type: "button", disabled: busy, onClick: function() {
+            begin("rename");
+          } }, c.rename) : null,
+          activeId ? h2("button", { className: prefix + "-cfg-sbtn danger", type: "button", disabled: busy, onClick: remove }, c.remove) : null
+        ),
+        h2("div", { className: prefix + "-cfg-schemes-hint" }, activeId ? c.syncedHint : c.defaultHint)
+      );
+    }
+    module2.exports = { SchemeBar, styles, COPY };
+  }
+});
+
 // packages/shell/client/styles.cjs
 var require_styles = __commonJS({
   "packages/shell/client/styles.cjs"(exports2, module2) {
     "use strict";
     var SW = require_switch();
     var NF = require_number_field();
+    var schemeStyles = require_config_scheme_bar().styles.join("\n").replace(/__P__/g, "wbh");
     var CSS2 = [
       ".wb-root{--wb-line:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wb-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));display:flex;flex-direction:column;height:100%;box-sizing:border-box;overflow:auto;color:inherit;font-size:13px;background:var(--dsw-alias-bg-base,var(--dsw-alias-bg-layer-2,color-mix(in oklab,currentColor 4%,transparent)));padding:24px 28px}",
       ".wb-inner{display:flex;flex-direction:column;gap:16px;width:100%;max-width:1040px;margin:0 auto}",
@@ -1433,9 +1624,11 @@ var require_styles = __commonJS({
       ".wbq-pager .wb-btn{padding:4px 10px;font-size:12px}",
       ".wbq-muted{color:var(--wb-muted);font-size:12px}",
       ".wbq-updated{font-size:11.5px;color:var(--wb-muted);font-variant-numeric:tabular-nums;white-space:nowrap}",
+      ".wbh-cfg-schemes{--cfg-line:var(--wb-line);--cfg-surface:var(--wb-surface);--cfg-muted:var(--wb-muted);--cfg-hover:var(--wb-card)}",
+      ".wbh-modules{display:flex;flex-wrap:wrap;gap:8px;border:1px solid var(--wb-line);min-width:0}.wbh-modules label{display:inline-flex;align-items:center;gap:4px}",
       ".wb-toast{position:sticky;bottom:12px;align-self:center;padding:7px 14px;border-radius:999px;border:1px solid var(--wb-line);background:var(--wb-surface);font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.12)}"
     ].join("\n");
-    module2.exports = CSS2 + "\n" + SW.styles.join("\n") + "\n" + NF.styles.join("\n");
+    module2.exports = CSS2 + "\n" + schemeStyles + "\n" + SW.styles.join("\n") + "\n" + NF.styles.join("\n");
   }
 });
 
@@ -1503,6 +1696,129 @@ var require_addon_nav = __commonJS({
           pending = null;
           return false;
         }
+      };
+    };
+  }
+});
+
+// packages/addons/lib/client-common.cjs
+var require_client_common = __commonJS({
+  "packages/addons/lib/client-common.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function createCommon(prefix) {
+      var p = String(prefix || "wb");
+      function unwrap(r) {
+        if (r && r.ok === false) {
+          var error = new Error(r.error || r.message || "\u64CD\u4F5C\u5931\u8D25");
+          if (r.code !== void 0) error.code = r.code;
+          error.payload = r;
+          throw error;
+        }
+        return r && r.result !== void 0 ? r.result : r;
+      }
+      function call(api, action, args) {
+        return Promise.resolve(api.call(action, args || {})).then(unwrap);
+      }
+      function errText(e) {
+        if (!e) return "\u64CD\u4F5C\u5931\u8D25";
+        if (typeof e === "string") return e;
+        return e.message || e.error || String(e);
+      }
+      function fmtTime(ts, lang) {
+        if (!ts) return "\u2014";
+        try {
+          return new Date(ts).toLocaleString(lang === "en" ? "en-US" : "zh-CN", { hour12: false });
+        } catch (e) {
+          return String(ts);
+        }
+      }
+      function Btn(props) {
+        var h2 = props.h;
+        return h2(
+          "button",
+          {
+            type: props.type || "button",
+            className: p + "-btn" + (props.kind ? " " + props.kind : ""),
+            disabled: props.disabled,
+            onClick: props.onClick,
+            title: props.title
+          },
+          props.children
+        );
+      }
+      function Field(props) {
+        var h2 = props.h;
+        return h2(
+          "label",
+          { className: p + "-field" },
+          h2("span", { className: p + "-label" }, props.label),
+          props.children,
+          props.hint ? h2("span", { className: p + "-hint" }, props.hint) : null
+        );
+      }
+      function Notice(props) {
+        var h2 = props.h;
+        if (!props.text) return null;
+        return h2("div", { className: p + "-notice " + (props.kind || "info") }, props.text);
+      }
+      function Empty(props) {
+        var h2 = props.h;
+        return h2("div", { className: p + "-empty" }, props.text || "\u6682\u65E0\u6570\u636E");
+      }
+      function Pill(props) {
+        var h2 = props.h;
+        return h2("span", { className: p + "-pill " + (props.kind || "") }, props.children);
+      }
+      function Json(props) {
+        var h2 = props.h;
+        var text;
+        try {
+          text = JSON.stringify(props.value, null, 2);
+        } catch (e) {
+          text = String(props.value);
+        }
+        return h2("pre", { className: p + "-json" }, text);
+      }
+      function useLoad(React, api, action, args, deps) {
+        var s = React.useState({ loading: true, data: null, error: "" });
+        var tick = React.useState(0);
+        var refresh = function() {
+          tick[1](tick[0] + 1);
+        };
+        React.useEffect(
+          function() {
+            var alive = true;
+            s[1]({ loading: true, data: null, error: "" });
+            call(api, action, args).then(function(data) {
+              if (alive) s[1]({ loading: false, data, error: "" });
+            }).catch(function(e) {
+              if (alive) s[1]({ loading: false, data: null, error: errText(e) });
+            });
+            return function() {
+              alive = false;
+            };
+          },
+          (deps || []).concat([tick[0]])
+        );
+        return { loading: s[0].loading, data: s[0].data, error: s[0].error, refresh };
+      }
+      return {
+        unwrap,
+        call,
+        errText,
+        fmtTime,
+        Switch: require_switch().Switch,
+        switchStyles: require_switch().styles,
+        NumberField: require_number_field().NumberField,
+        numberFieldStyles: require_number_field().styles,
+        validateNumber: require_number_field().validateNumber,
+        Btn,
+        Field,
+        Notice,
+        Empty,
+        Pill,
+        Json,
+        useLoad
       };
     };
   }
@@ -2297,6 +2613,7 @@ var require_action_schema_view = __commonJS({
 var require_system_pages = __commonJS({
   "packages/shell/client/system-pages.cjs"(exports2, module2) {
     "use strict";
+    var common = require_client_common()("wb");
     var createActionSchemaView = require_action_schema_view();
     function agentAccessPage(deps) {
       var jsx2 = deps.jsx;
@@ -2336,11 +2653,14 @@ var require_system_pages = __commonJS({
         var domainPick = domainState[0], setDomainPick = domainState[1];
         React.useEffect(function() {
           var alive = true;
-          hostApi.call("actions.list", {}).then(function(result) {
+          common.call(hostApi, "actions.list", { detail: true }).then(function(result) {
             if (!alive) return;
-            var list = result && Array.isArray(result.actions) ? result.actions : [];
+            var list = result && result.actions;
+            if (!Array.isArray(list) || list.some(function(a) {
+              return !a || !a.name || !a.domain || !Array.isArray(a.origins);
+            })) throw new Error(t("agent_list_invalid"));
             setSnap({ loading: false, error: "", actions: list });
-          }, function(error) {
+          }).catch(function(error) {
             if (!alive) return;
             setSnap({ loading: false, error: error && error.message || String(error), actions: [] });
           });
@@ -2363,7 +2683,7 @@ var require_system_pages = __commonJS({
           var text = [a.name, a.domain, a.description].join(" ").toLowerCase();
           return text.indexOf(q.trim().toLowerCase()) >= 0;
         });
-        var head = jsx2.jsx("div", { className: "wb-audit-summary", role: "status", "aria-live": "polite", children: [
+        var head = !snap.loading && !snap.error && jsx2.jsx("div", { className: "wb-audit-summary", role: "status", "aria-live": "polite", children: [
           jsx2.jsx("span", { children: t("agent_list_count").replace("{n}", String(rows.length)).replace("{all}", String(opened.length)).replace("{d}", String(domains.length)) }),
           jsx2.jsx("span", { className: "wb-audit-dim", children: t("agent_list_readonly") })
         ] });
@@ -2389,7 +2709,7 @@ var require_system_pages = __commonJS({
         var body;
         if (snap.loading) body = jsx2.jsx("div", { className: "wb-msg", role: "status", children: t("agent_list_loading") });
         else if (snap.error) body = jsx2.jsx("div", { className: "wb-err", role: "alert", children: snap.error });
-        else if (!rows.length) body = jsx2.jsx("div", { className: "wb-msg wb-empty-cta", children: t("agent_list_empty") });
+        else if (!rows.length) body = jsx2.jsx("div", { className: "wb-msg wb-empty-cta", children: t(opened.length ? "agent_list_no_match" : "agent_list_empty") });
         else {
           body = jsx2.jsx("div", { style: { overflowX: "auto" }, children: jsx2.jsxs("table", { className: "wb-audit-table", "data-agent-list": "1", children: [
             jsx2.jsx("thead", { children: jsx2.jsx("tr", { children: [
@@ -3474,6 +3794,7 @@ var require_host_pages = __commonJS({
   "packages/shell/client/host-pages.cjs"(exports2, module2) {
     "use strict";
     var createDataView = require_data_view();
+    var schemes = require_config_scheme_bar();
     var SW = require_switch();
     var NF = require_number_field();
     var HOST_TABLES = [
@@ -3503,6 +3824,66 @@ var require_host_pages = __commonJS({
           return api.post("/domains/wb-shell/actions/" + encodeURIComponent(action), args || {});
         }
       };
+    }
+    async function configAction(api, action, args, t) {
+      var reply = await hostApi(api).call(action, args);
+      var body = reply && reply.result !== void 0 ? reply.result : reply;
+      if (!body || !body.values || reply.ok === false) throw new Error(reply && reply.error || t("config_read_error"));
+      return Object.assign({ ready: true, items: [], overrides: {}, schemes: [] }, body);
+    }
+    function PreferenceView(props) {
+      var React = props.React;
+      var state = React.useState(null), prefs = state[0], setPrefs = state[1];
+      React.useEffect(function() {
+        var active = true;
+        configAction(props.api, "wb.configGet", {}, props.t).then(function(data) {
+          if (active) setPrefs({ values: data.values });
+        }).catch(function(e) {
+          if (active) setPrefs({ values: {}, error: String(e.message || e) });
+        });
+        return function() {
+          active = false;
+        };
+      }, []);
+      if (!prefs) return React.createElement("div", { className: "wb-msg" }, props.t("loading"));
+      return React.createElement(
+        React.Fragment,
+        null,
+        prefs.error && React.createElement("div", { className: "wb-err", role: "alert" }, props.t("config_fallback") + " " + prefs.error),
+        React.createElement(props.component, Object.assign({}, props, { preferences: prefs.values }))
+      );
+    }
+    function moduleControl(h2, deps, view, item) {
+      var ids = view.state.values[item.id];
+      var all = !Array.isArray(ids);
+      var modules = (deps.addons || []).filter(function(a) {
+        return a.backup && a.backup.export;
+      });
+      function save(next) {
+        view.onSave(item.id, next);
+      }
+      return h2(
+        "fieldset",
+        { className: "wbh-modules", disabled: view.busy },
+        h2("legend", null, deps.t("config_modules")),
+        h2("label", null, h2("input", { type: "checkbox", checked: all, onChange: function(e) {
+          save(e.target.checked ? null : modules.map(function(a) {
+            return a.id;
+          }));
+        } }), deps.t("config_dynamic_all")),
+        modules.map(function(a) {
+          return h2("label", { key: a.id }, h2("input", {
+            type: "checkbox",
+            checked: all || ids.includes(a.id),
+            disabled: all,
+            onChange: function(e) {
+              save(e.target.checked ? ids.concat(a.id) : ids.filter(function(id) {
+                return id !== a.id;
+              }));
+            }
+          }), a.title || a.id);
+        })
+      );
     }
     function pageShell(deps, title, desc, body) {
       var jsx2 = deps.jsx;
@@ -3545,7 +3926,25 @@ var require_host_pages = __commonJS({
             }).map(function(item) {
               var overridden = state.overrides[item.id] !== void 0;
               var control;
-              if (item.type === "boolean") {
+              if (item.id === "backup.moduleIds") {
+                control = moduleControl(h2, deps, view, item);
+              } else if (item.id === "backup.exportFormat") {
+                control = h2(
+                  "select",
+                  {
+                    className: "wb-input",
+                    value: state.values[item.id],
+                    disabled: busy,
+                    "aria-label": t("config_format"),
+                    onChange: function(e) {
+                      view.onSave(item.id, e.target.value);
+                    }
+                  },
+                  ["zip", "json", "csv", "txt"].map(function(fmt) {
+                    return h2("option", { key: fmt, value: fmt }, t("backup_fmt_" + fmt));
+                  })
+                );
+              } else if (item.type === "boolean") {
                 control = jsx2.jsx(SW.Switch, {
                   h: h2,
                   checked: state.values[item.id] === true,
@@ -3588,6 +3987,32 @@ var require_host_pages = __commonJS({
         });
       }
       return pageShell(deps, t("tab_config"), t("config_desc"), [
+        state.ready && !state.error ? jsx2.jsx(schemes.SchemeBar, {
+          prefix: "wbh",
+          lang: deps.lang,
+          schemes: state.schemes,
+          activeId: state.scheme && state.scheme.id,
+          busy,
+          copy: {
+            none: t("config_scheme_none"),
+            defaultHint: t("config_scheme_default"),
+            syncedHint: t("config_scheme_local"),
+            confirmDelete: t("config_scheme_delete"),
+            fromDefault: t("config_scheme_from_default")
+          },
+          onCreate: function(name, from) {
+            view.onScheme("Create", { name, from });
+          },
+          onRename: function(id, name) {
+            view.onScheme("Rename", { id, name });
+          },
+          onDelete: function(id) {
+            view.onScheme("Delete", { id });
+          },
+          onActivate: function(id) {
+            view.onScheme("Activate", { id });
+          }
+        }, "schemes") : null,
         body,
         view.toast ? jsx2.jsx("div", { className: "wb-toast", children: view.toast }) : null
       ]);
@@ -3601,61 +4026,47 @@ var require_host_pages = __commonJS({
       var busy = busyS[0], setBusy = busyS[1];
       var toastS = React.useState("");
       var toast = toastS[0], setToast = toastS[1];
-      var host = hostApi(api);
       React.useEffect(function() {
-        Promise.resolve(host.call("wb.configGet")).then(function(r) {
-          var body = r && r.result !== void 0 ? r.result : r;
-          if (r && r.ok === false) throw new Error(r && r.error || "\u8BFB\u53D6\u914D\u7F6E\u5931\u8D25");
-          if (!body || !body.values) throw new Error("\u8BFB\u53D6\u914D\u7F6E\u5931\u8D25");
-          setState({ ready: true, items: body.items || [], values: body.values, overrides: body.overrides || {}, error: "" });
+        var active = true;
+        configAction(api, "wb.configGet", {}, deps.t).then(function(data) {
+          if (active) setState(data);
         }).catch(function(e) {
-          setState({ ready: true, items: [], values: {}, overrides: {}, error: String(e && e.message || e) });
+          if (active) setState({ ready: true, error: String(e.message || e) });
         });
+        return function() {
+          active = false;
+        };
       }, []);
-      function save(id, value) {
+      async function mutate(action, args) {
         setBusy(true);
-        var patch = {};
-        patch[id] = value;
-        Promise.resolve(host.call("wb.configSet", { values: patch })).then(function(r) {
-          if (r && r.ok === false) throw new Error(r && r.error || "\u4FDD\u5B58\u5931\u8D25");
-          var body = r && r.result !== void 0 ? r.result : r;
-          setState(function(prev) {
-            return Object.assign({}, prev, { values: body.values, overrides: body.overrides });
-          });
-          setToast("\u5DF2\u4FDD\u5B58\uFF1A" + id);
-          setTimeout(function() {
-            setToast("");
-          }, 1600);
-        }).catch(function(e) {
-          setToast("\u4FDD\u5B58\u5931\u8D25\uFF1A" + String(e && e.message || e));
-        }).then(function() {
+        try {
+          setState(await configAction(api, action, args, deps.t));
+          setToast(deps.t("config_saved"));
+        } catch (e) {
+          setToast(String(e.message || e));
+        } finally {
           setBusy(false);
-        });
+        }
       }
-      function reset(id) {
-        setBusy(true);
-        Promise.resolve(host.call("wb.configReset", { ids: [id] })).then(function(r) {
-          if (r && r.ok === false) throw new Error(r && r.error || "\u91CD\u7F6E\u5931\u8D25");
-          var body = r && r.result !== void 0 ? r.result : r;
-          setState(function(prev) {
-            return Object.assign({}, prev, { values: body.values, overrides: body.overrides });
-          });
-          setToast("\u5DF2\u6062\u590D\u9ED8\u8BA4\uFF1A" + id);
-          setTimeout(function() {
-            setToast("");
-          }, 1600);
-        }).catch(function(e) {
-          setToast("\u91CD\u7F6E\u5931\u8D25\uFF1A" + String(e && e.message || e));
-        }).then(function() {
-          setBusy(false);
-        });
-      }
-      return configBody(deps, { state, busy, toast, onSave: save, onReset: reset });
+      return configBody(deps, {
+        state,
+        busy,
+        toast,
+        onSave: function(id, value) {
+          return mutate("wb.configSet", { values: { [id]: value } });
+        },
+        onReset: function(id) {
+          return mutate("wb.configReset", { ids: [id] });
+        },
+        onScheme: function(verb, args) {
+          return mutate("wb.configScheme" + verb, args);
+        }
+      });
     }
     function ConfigView(props) {
       return configPage(props);
     }
-    module2.exports = { dataPage, configPage, configBody, ConfigView, DataView: HostDataView, HOST_TABLES };
+    module2.exports = { PreferenceView, dataPage, configPage, configBody, ConfigView, DataView: HostDataView, HOST_TABLES };
   }
 });
 
@@ -4534,9 +4945,8 @@ var require_backup_tab = __commonJS({
         var exportable = addons.filter(function(a) {
           return a && a.backup && a.backup.export;
         });
-        var idsKey = exportable.map(function(a) {
-          return a.id;
-        }).join(",");
+        var preferences = props.preferences || {};
+        var preferredIds = preferences["backup.moduleIds"];
         var stSel = react2.useState({});
         var selected = stSel[0];
         var setSelected = stSel[1];
@@ -4558,7 +4968,7 @@ var require_backup_tab = __commonJS({
         var stOpen = react2.useState({});
         var openConfig = stOpen[0];
         var setOpenConfig = stOpen[1];
-        var stFormat = react2.useState("zip");
+        var stFormat = react2.useState(preferences["backup.exportFormat"] || "zip");
         var format = stFormat[0];
         var setFormat = stFormat[1];
         var stDrag = react2.useState(false);
@@ -4574,29 +4984,17 @@ var require_backup_tab = __commonJS({
         var clearDone = stClearDone[0];
         var setClearDone = stClearDone[1];
         var fileRef = react2.useRef(null);
-        react2.useEffect(function() {
-          setSelected(function(prev) {
-            var next = {};
-            var changed = false;
-            exportable.forEach(function(a) {
-              next[a.id] = true;
-              if (!prev[a.id]) changed = true;
-            });
-            Object.keys(prev).forEach(function(id) {
-              if (!exportable.some(function(a) {
-                return a.id === id;
-              })) changed = true;
-            });
-            return changed ? next : prev;
-          });
-        }, [idsKey]);
+        function isSelected(id) {
+          if (Object.hasOwn(selected, id)) return selected[id];
+          return !Array.isArray(preferredIds) || preferredIds.includes(id);
+        }
         var chosen = exportable.filter(function(a) {
-          return selected[a.id];
+          return isSelected(a.id);
         });
         var allSelected = exportable.length > 0 && chosen.length === exportable.length;
         function toggle(id) {
           var next = Object.assign({}, selected);
-          next[id] = !next[id];
+          next[id] = !isSelected(id);
           setSelected(next);
         }
         function selectAll(flag) {
@@ -4797,7 +5195,7 @@ var require_backup_tab = __commonJS({
               ] }),
               exportable.length ? jsx2.jsx("div", { className: "wb-backup-list", children: exportable.map(function(a) {
                 var open = !!openConfig[a.id];
-                var sel = !!selected[a.id];
+                var sel = isSelected(a.id);
                 var tables = a.tables || [];
                 return jsx2.jsxs("div", { className: "wb-backup-item" + (sel ? " on" : ""), children: [
                   jsx2.jsxs("div", { className: "wb-backup-row" + (open ? " open" : ""), children: [
@@ -4879,6 +5277,16 @@ var require_backup_tab = __commonJS({
               ] }),
               jsx2.jsxs("section", { className: "wb-card wb-backup-panel", children: [
                 jsx2.jsx("div", { className: "wb-sec", children: jsx2.jsx("h3", { children: t("backup_import_title") }) }),
+                jsx2.jsxs("p", { className: "wb-backup-note", children: [
+                  t("backup_dup_policy"),
+                  " \xB7 ",
+                  policyLabel("newest"),
+                  exportable.filter(function(a) {
+                    return policyOf(a.id) !== "newest";
+                  }).map(function(a) {
+                    return jsx2.jsx("span", { children: " \xB7 " + (a.title || a.id) + "\uFF1A" + policyLabel(policyOf(a.id)) }, a.id);
+                  })
+                ] }),
                 jsx2.jsxs("label", {
                   className: "wb-backup-drop" + (dragging ? " drag" : ""),
                   onDragOver: function(ev) {
@@ -5054,7 +5462,7 @@ var require_system_tabs = __commonJS({
           api.get("/sync/status").then(function(r) {
             if (r && r.ok) setSyncStatus(r);
           });
-          api.get("/sync/conflicts?limit=20").then(function(r) {
+          api.get("/sync/conflicts?limit=" + ((props.preferences || {})["cloud.conflictLimit"] || 20)).then(function(r) {
             setConflicts(r && Array.isArray(r.conflicts) ? r.conflicts : []);
           });
         }
@@ -6170,7 +6578,7 @@ function WorkbenchPage(props) {
   if (route === "agentList") return SystemPages.agentListPage({ jsx, React: react, t, lang, api, head: pageHead });
   if (route === "backup") {
     return jsx.jsxs("div", { className: "wb-root", children: [
-      jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_backup"), t("backup_desc")), jsx.jsx(BackupTab, { t, lang, addons })] })
+      jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_backup"), t("backup_desc")), jsx.jsx(HostPages.PreferenceView, { React: react, component: BackupTab, api, t, lang, addons }, "backup")] })
     ] });
   }
   if (route === "audit") {
@@ -6185,11 +6593,11 @@ function WorkbenchPage(props) {
     return HostPages.dataPage({ jsx, api, lang, t, head: pageHead });
   }
   if (route === "config") {
-    return jsx.jsx(HostPages.ConfigView, { jsx, React: react, api, lang, t, head: pageHead });
+    return jsx.jsx(HostPages.ConfigView, { addons, jsx, React: react, api, lang, t, head: pageHead });
   }
   if (route === "account") {
     return jsx.jsxs("div", { className: "wb-root", children: [
-      jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_account"), t("account_desc")), jsx.jsx(AccountTab, { t })] })
+      jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_account"), t("account_desc")), jsx.jsx(HostPages.PreferenceView, { React: react, component: AccountTab, api, t }, "account")] })
     ] });
   }
   if (currentAddon) {

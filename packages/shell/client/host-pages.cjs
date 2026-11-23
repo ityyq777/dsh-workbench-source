@@ -9,6 +9,7 @@
  * 不另写一套表格和表单。
  */
 var createDataView = require("../../addons/lib/data-view.cjs");
+var schemes = require("../../addons/lib/config-scheme-bar.cjs");
 var SW = require("../../addons/lib/switch.cjs");
 var NF = require("../../addons/lib/number-field.cjs");
 
@@ -45,6 +46,48 @@ function hostApi(api) {
       return api.post("/domains/wb-shell/actions/" + encodeURIComponent(action), args || {});
     },
   };
+}
+
+async function configAction(api, action, args, t) {
+  var reply = await hostApi(api).call(action, args);
+  var body = reply && reply.result !== undefined ? reply.result : reply;
+  if (!body || !body.values || reply.ok === false) throw new Error((reply && reply.error) || t("config_read_error"));
+  return Object.assign({ ready: true, items: [], overrides: {}, schemes: [] }, body);
+}
+
+// 在打开页面时读取一次方案；本次操作的手工调整保留在页面内。
+function PreferenceView(props) {
+  var React = props.React;
+  var state = React.useState(null), prefs = state[0], setPrefs = state[1];
+  React.useEffect(function () {
+    var active = true;
+    configAction(props.api, "wb.configGet", {}, props.t).then(function (data) {
+      if (active) setPrefs({ values: data.values });
+    }).catch(function (e) {
+      if (active) setPrefs({ values: {}, error: String(e.message || e) });
+    });
+    return function () { active = false; };
+  }, []);
+  if (!prefs) return React.createElement("div", { className: "wb-msg" }, props.t("loading"));
+  return React.createElement(React.Fragment, null,
+    prefs.error && React.createElement("div", { className: "wb-err", role: "alert" }, props.t("config_fallback") + " " + prefs.error),
+    React.createElement(props.component, Object.assign({}, props, { preferences: prefs.values })));
+}
+
+function moduleControl(h, deps, view, item) {
+  var ids = view.state.values[item.id];
+  var all = !Array.isArray(ids);
+  var modules = (deps.addons || []).filter(function (a) { return a.backup && a.backup.export; });
+  function save(next) { view.onSave(item.id, next); }
+  return h("fieldset", { className: "wbh-modules", disabled: view.busy },
+    h("legend", null, deps.t("config_modules")),
+    h("label", null, h("input", { type: "checkbox", checked: all, onChange: function (e) {
+      save(e.target.checked ? null : modules.map(function (a) { return a.id; }));
+    } }), deps.t("config_dynamic_all")),
+    modules.map(function (a) { return h("label", { key: a.id }, h("input", {
+      type: "checkbox", checked: all || ids.includes(a.id), disabled: all,
+      onChange: function (e) { save(e.target.checked ? ids.concat(a.id) : ids.filter(function (id) { return id !== a.id; })); },
+    }), a.title || a.id); }));
 }
 
 function pageShell(deps, title, desc, body) {
@@ -93,7 +136,13 @@ function configBody(deps, view) {
         state.items.filter(function (item) { return (item.group || "通用") === group; }).map(function (item) {
           var overridden = state.overrides[item.id] !== undefined;
           var control;
-          if (item.type === "boolean") {
+          if (item.id === "backup.moduleIds") {
+            control = moduleControl(h, deps, view, item);
+          } else if (item.id === "backup.exportFormat") {
+            control = h("select", { className: "wb-input", value: state.values[item.id], disabled: busy,
+              "aria-label": t("config_format"), onChange: function (e) { view.onSave(item.id, e.target.value); } },
+              ["zip", "json", "csv", "txt"].map(function (fmt) { return h("option", { key: fmt, value: fmt }, t("backup_fmt_" + fmt)); }));
+          } else if (item.type === "boolean") {
             control = jsx.jsx(SW.Switch, {
               h: h,
               checked: state.values[item.id] === true,
@@ -133,6 +182,15 @@ function configBody(deps, view) {
   }
 
   return pageShell(deps, t("tab_config"), t("config_desc"), [
+    state.ready && !state.error ? jsx.jsx(schemes.SchemeBar, {
+      prefix: "wbh", lang: deps.lang, schemes: state.schemes, activeId: state.scheme && state.scheme.id, busy: busy,
+      copy: { none: t("config_scheme_none"), defaultHint: t("config_scheme_default"), syncedHint: t("config_scheme_local"),
+        confirmDelete: t("config_scheme_delete"), fromDefault: t("config_scheme_from_default") },
+      onCreate: function (name, from) { view.onScheme("Create", { name: name, from: from }); },
+      onRename: function (id, name) { view.onScheme("Rename", { id: id, name: name }); },
+      onDelete: function (id) { view.onScheme("Delete", { id: id }); },
+      onActivate: function (id) { view.onScheme("Activate", { id: id }); },
+    }, "schemes") : null,
     body,
     view.toast ? jsx.jsx("div", { className: "wb-toast", children: view.toast }) : null,
   ]);
@@ -147,56 +205,29 @@ function configPage(deps) {
   var busy = busyS[0], setBusy = busyS[1];
   var toastS = React.useState("");
   var toast = toastS[0], setToast = toastS[1];
-  var host = hostApi(api);
-
   React.useEffect(function () {
-    Promise.resolve(host.call("wb.configGet"))
-      .then(function (r) {
-        var body = r && r.result !== undefined ? r.result : r;
-        if (r && r.ok === false) throw new Error((r && r.error) || "读取配置失败");
-        if (!body || !body.values) throw new Error("读取配置失败");
-        setState({ ready: true, items: body.items || [], values: body.values, overrides: body.overrides || {}, error: "" });
-      })
-      .catch(function (e) {
-        setState({ ready: true, items: [], values: {}, overrides: {}, error: String((e && e.message) || e) });
-      });
+    var active = true;
+    configAction(api, "wb.configGet", {}, deps.t).then(function (data) {
+      if (active) setState(data);
+    }).catch(function (e) {
+      if (active) setState({ ready: true, error: String(e.message || e) });
+    });
+    return function () { active = false; };
   }, []);
 
-  function save(id, value) {
+  async function mutate(action, args) {
     setBusy(true);
-    var patch = {};
-    patch[id] = value;
-    Promise.resolve(host.call("wb.configSet", { values: patch }))
-      .then(function (r) {
-        if (r && r.ok === false) throw new Error((r && r.error) || "保存失败");
-        var body = r && r.result !== undefined ? r.result : r;
-        setState(function (prev) {
-          return Object.assign({}, prev, { values: body.values, overrides: body.overrides });
-        });
-        setToast("已保存：" + id);
-        setTimeout(function () { setToast(""); }, 1600);
-      })
-      .catch(function (e) { setToast("保存失败：" + String((e && e.message) || e)); })
-      .then(function () { setBusy(false); });
+    try {
+      setState(await configAction(api, action, args, deps.t));
+      setToast(deps.t("config_saved"));
+    } catch (e) { setToast(String(e.message || e)); }
+    finally { setBusy(false); }
   }
-
-  function reset(id) {
-    setBusy(true);
-    Promise.resolve(host.call("wb.configReset", { ids: [id] }))
-      .then(function (r) {
-        if (r && r.ok === false) throw new Error((r && r.error) || "重置失败");
-        var body = r && r.result !== undefined ? r.result : r;
-        setState(function (prev) {
-          return Object.assign({}, prev, { values: body.values, overrides: body.overrides });
-        });
-        setToast("已恢复默认：" + id);
-        setTimeout(function () { setToast(""); }, 1600);
-      })
-      .catch(function (e) { setToast("重置失败：" + String((e && e.message) || e)); })
-      .then(function () { setBusy(false); });
-  }
-
-  return configBody(deps, { state: state, busy: busy, toast: toast, onSave: save, onReset: reset });
+  return configBody(deps, { state: state, busy: busy, toast: toast,
+    onSave: function (id, value) { return mutate("wb.configSet", { values: { [id]: value } }); },
+    onReset: function (id) { return mutate("wb.configReset", { ids: [id] }); },
+    onScheme: function (verb, args) { return mutate("wb.configScheme" + verb, args); },
+  });
 }
 
 /**
@@ -207,4 +238,4 @@ function ConfigView(props) {
   return configPage(props);
 }
 
-module.exports = { dataPage: dataPage, configPage: configPage, configBody: configBody, ConfigView: ConfigView, DataView: HostDataView, HOST_TABLES: HOST_TABLES };
+module.exports = { PreferenceView: PreferenceView, dataPage: dataPage, configPage: configPage, configBody: configBody, ConfigView: ConfigView, DataView: HostDataView, HOST_TABLES: HOST_TABLES };

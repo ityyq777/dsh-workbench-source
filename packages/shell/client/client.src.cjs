@@ -489,7 +489,7 @@ function WorkbenchPage(props) {
   if (route === "agentList") return SystemPages.agentListPage({ jsx: jsx, React: react, t: t, lang: lang, api: api, head: pageHead });
   if (route === "backup") {
     return jsx.jsxs("div", { className: "wb-root", children: [
-      jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_backup"), t("backup_desc")), jsx.jsx(BackupTab, { t: t, lang: lang, addons: addons })] }),
+      jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_backup"), t("backup_desc")), jsx.jsx(HostPages.PreferenceView, { React: react, component: BackupTab, api: api, t: t, lang: lang, addons: addons }, "backup")] }),
     ] });
   }
   if (route === "audit") {
@@ -504,11 +504,11 @@ function WorkbenchPage(props) {
     return HostPages.dataPage({ jsx: jsx, api: api, lang: lang, t: t, head: pageHead });
   }
   if (route === "config") {
-    return jsx.jsx(HostPages.ConfigView, { jsx: jsx, React: react, api: api, lang: lang, t: t, head: pageHead });
+    return jsx.jsx(HostPages.ConfigView, { addons: addons, jsx: jsx, React: react, api: api, lang: lang, t: t, head: pageHead });
   }
   if (route === "account") {
     return jsx.jsxs("div", { className: "wb-root", children: [
-      jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_account"), t("account_desc")), jsx.jsx(AccountTab, { t: t })] }),
+      jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_account"), t("account_desc")), jsx.jsx(HostPages.PreferenceView, { React: react, component: AccountTab, api: api, t: t }, "account")] }),
     ] });
   }
   if (currentAddon) {

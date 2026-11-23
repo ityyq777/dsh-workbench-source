@@ -4128,7 +4128,7 @@ var require_config_scheme_bar = __commonJS({
     ];
     function SchemeBar(props) {
       var lang = props.lang === "en" ? "en" : "zh";
-      var c = COPY[lang];
+      var c = props.copy ? Object.assign({}, COPY[lang], props.copy) : COPY[lang];
       var prefix = props.prefix || "wb";
       var cls = function(suffix) {
         return "." + prefix + "-cfg-" + suffix;

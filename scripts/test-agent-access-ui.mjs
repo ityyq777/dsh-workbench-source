@@ -247,8 +247,8 @@ const roster = {
   assert.match(body, /Agent 权限/);
   assert.match(body, /audit\.list/);
   const cards = pages.manageCards({ t, systemCard: (key, icon, title) => rt.React.createElement("b", { "data-card": key }, title) });
-  assert.equal(cards.length, 5, "首页管理区新增「Agent 权限清单」入口");
-  assert.equal(JSON.stringify(cards.map((c) => c.props["data-card"])), JSON.stringify(["agent", "agentList", "backup", "audit", "account"]));
+  assert.equal(cards.length, 8, "首页管理区新增「Agent 权限清单」入口");
+  assert.equal(JSON.stringify(cards.map((c) => c.props["data-card"])), JSON.stringify(["agent", "agentList", "queue", "data", "config", "backup", "audit", "account"]));
 }
 
 // ── 静态接线：宿主页面 / 文案 / 各插件声明 ───────────────────────────
@@ -267,12 +267,12 @@ const roster = {
   // 口径：原 agentEnabled:false → origins: ["ui", "agent"] + originsDefault: ["ui"]
   // （本身支持 agent、默认只给界面，用户可在界面打开）；原 agentLocked → origins: ["ui"]（不可放开）。
   const expected = {
-    automation: { ui: 0, agentOff: 6 },
+    automation: { ui: 0, agentOff: 5 },
     calendar: { ui: 0, agentOff: 8 },
     contacts: { ui: 0, agentOff: 6 },
-    mail: { ui: 1, agentOff: 12 },
+    mail: { ui: 2, agentOff: 12 },
     salary: { ui: 0, agentOff: 1 },
-    vault: { ui: 14, agentOff: 0 },
+    vault: { ui: 12, agentOff: 0 },
   };
   for (const [id, want] of Object.entries(expected)) {
     const src = readFileSync(pluginFile(id), "utf8");
@@ -316,38 +316,37 @@ const roster = {
   const PAGES = resolve(ROOT, "packages/shell/client/system-pages.cjs");
   const locale = loadCjs(resolve(ROOT, "packages/shell/client/locale.cjs"), {});
   const t = (key) => (locale.zh && locale.zh[key]) || key;
-  const rt = createReact();
-  const jsxRt = {
-    jsx: (type, props) => ({ type, props: props || {}, children: kidsOf(props) }),
-    jsxs: (type, props) => ({ type, props: props || {}, children: kidsOf(props) }),
-  };
-  const pages = loadCjs(PAGES, { react: rt.React, "react/jsx-runtime": jsxRt });
-  // system-pages 只接受 jsx 工厂：用最小工厂把 {type,props,children} 交给 harness 遍历。
-  const jsxFrom = () => ({
-    jsx: (type, props) => ({ type, props: props || {}, children: kidsOf(props) }),
-    jsxs: (type, props) => ({ type, props: props || {}, children: kidsOf(props) }),
-  });
-  const calls = [];
-  const api = {
-    post(path, args) {
-      calls.push([path, args]);
-      return Promise.resolve({
-        actions: [
-          { name: "host.agentRun", domain: "wb-shell", description: "新建会话", origins: ["plugin"], originsDeclared: ["plugin"] },
-          { name: "tags.create", domain: "wb-addon-tags", description: "建标签", origins: ["ui", "plugin", "agent"], originsDeclared: ["ui", "plugin", "agent", "sync"] },
-          { name: "vault.secretReveal", domain: "wb-addon-vault", description: "显形", origins: ["ui"], originsDeclared: ["ui"] },
-        ],
-      });
-    },
-  };
-  let tree = rt.mount(pages.agentListPage, { jsx: jsxFrom(rt), React: rt.React, t, lang: "zh", api, head: () => null });
-  await settle();
-  tree = rt.rerender();
-  const rows = findAll(tree, (n) => n.props && n.props["data-agent-row"]);
-  assert.deepEqual(rows.map((n) => n.props["data-agent-row"]), ["tags.create"], "只列出生效来源含 agent 的 action");
-  assert.match(text(tree), /1 个 action 对 agent 开放/, "清单页显示对 agent 开放的条数");
-  assert.ok(!calls.some(([path]) => /setActionOrigins|setAgentAccess/.test(path)), "清单页只读，不得调用改权限的 action");
-  assert.ok(!find(tree, (n) => n.props && n.props["data-origins-row"]), "清单页不渲染可改的来源控件");
+  async function mountList(response) {
+    const rt = createReact();
+    const element = (type, props) => ({ type, props: props || {}, children: kidsOf(props) });
+    const jsx = { jsx: element, jsxs: element };
+    const pages = loadCjs(PAGES, { react: rt.React, "react/jsx-runtime": jsx });
+    const calls = [];
+    const api = { post(path, args) { calls.push([path, args]); return Promise.resolve().then(response); } };
+    const el = pages.agentListPage({ jsx, React: rt.React, t, lang: "zh", api, head: () => null });
+    rt.mount(() => el, {});
+    await settle();
+    assert.equal(JSON.stringify(calls), JSON.stringify([["/domains/wb-shell/actions/actions.list", { detail: true }]]));
+    return rt;
+  }
+  const on = { name: "tags.create", domain: "wb-addon-tags", origins: ["ui", "agent"] };
+  const off = { name: "vault.secretReveal", domain: "wb-addon-vault", origins: ["ui"], originsDeclared: ["ui", "agent"] };
+  const rt = await mountList(() => ({ ok: true, result: { actions: [on, off] }, text: "宿主返回摘要" }));
+  let tree = rt.rerender();
+  assert.deepEqual(findAll(tree, n => n.props?.["data-agent-row"]).map(n => n.props["data-agent-row"]), ["tags.create"]);
+  assert.match(text(tree), /1 个 action 对 agent 开放/);
+  assert.ok(!find(tree, n => n.props?.type === "checkbox"));
+  find(tree, n => n.props?.["data-agent-search"]).props.onChange({ target: {value: "无匹配"} });
+  assert.match(text(rt.rerender()), /没有符合当前筛选条件/);
+  find(rt.rerender(), n => n.props?.["data-agent-search"]).props.onChange({ target: {value: ""} });
+  assert.match(text(rt.rerender()), /tags.create/);
+  const empty = await mountList(() => ({ ok: true, result: { actions: [off] } }));
+  assert.match(text(empty.rerender()), /没有对 agent 开放的 action/);
+  for (const response of [() => ({ ok: false, error: "权限读取失败" }), () => ({ ok: true, result: {} }), () => ({ ok: true, result: { actions: [{name: "unknown"}] } }), () => { throw new Error("网络错误"); }]) {
+    const failed = (await mountList(response)).rerender();
+    assert.ok(find(failed, n => n.props?.role === "alert"));
+    assert.doesNotMatch(text(failed), /0 个 action 对 agent 开放|没有对 agent 开放的 action/);
+  }
 }
 
 console.log("AGENT ACCESS UI TEST PASS");

@@ -3,6 +3,7 @@
 // 布尔开关控件（wbctl-*）与业务插件共用 lib/switch.cjs，避免宿主再写一套私有开关样式。
 var SW = require("../../addons/lib/switch.cjs");
 var NF = require("../../addons/lib/number-field.cjs");
+var schemeStyles = require("../../addons/lib/config-scheme-bar.cjs").styles.join("\n").replace(/__P__/g, "wbh");
 var CSS = [
   ".wb-root{--wb-line:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wb-surface:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));display:flex;flex-direction:column;height:100%;box-sizing:border-box;overflow:auto;color:inherit;font-size:13px;background:var(--dsw-alias-bg-base,var(--dsw-alias-bg-layer-2,color-mix(in oklab,currentColor 4%,transparent)));padding:24px 28px}",
   ".wb-inner{display:flex;flex-direction:column;gap:16px;width:100%;max-width:1040px;margin:0 auto}",
@@ -495,7 +496,9 @@ var CSS = [
   ".wbq-pager .wb-btn{padding:4px 10px;font-size:12px}",
   ".wbq-muted{color:var(--wb-muted);font-size:12px}",
   ".wbq-updated{font-size:11.5px;color:var(--wb-muted);font-variant-numeric:tabular-nums;white-space:nowrap}",
+  ".wbh-cfg-schemes{--cfg-line:var(--wb-line);--cfg-surface:var(--wb-surface);--cfg-muted:var(--wb-muted);--cfg-hover:var(--wb-card)}",
+  ".wbh-modules{display:flex;flex-wrap:wrap;gap:8px;border:1px solid var(--wb-line);min-width:0}.wbh-modules label{display:inline-flex;align-items:center;gap:4px}",
   ".wb-toast{position:sticky;bottom:12px;align-self:center;padding:7px 14px;border-radius:999px;border:1px solid var(--wb-line);background:var(--wb-surface);font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.12)}",
 ].join("\n");
 // 共享开关样式追加在宿主样式末尾：ensureCss() 是唯一注入点，重复追加无害。
-module.exports = CSS + "\n" + SW.styles.join("\n") + "\n" + NF.styles.join("\n");
+module.exports = CSS + "\n" + schemeStyles + "\n" + SW.styles.join("\n") + "\n" + NF.styles.join("\n");

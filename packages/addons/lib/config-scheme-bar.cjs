@@ -63,7 +63,7 @@ var styles = [
 
 function SchemeBar(props) {
   var lang = props.lang === "en" ? "en" : "zh";
-  var c = COPY[lang];
+  var c = props.copy ? Object.assign({}, COPY[lang], props.copy) : COPY[lang];
   var prefix = props.prefix || "wb";
   var cls = function (suffix) { return "." + prefix + "-cfg-" + suffix; };
   var schemes = Array.isArray(props.schemes) ? props.schemes : [];

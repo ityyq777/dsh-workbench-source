@@ -34,7 +34,8 @@ module.exports = function createBackupTab(react, jsx) {
     var t = props.t;
     var addons = props.addons || [];
     var exportable = addons.filter(function (a) { return a && a.backup && a.backup.export; });
-    var idsKey = exportable.map(function (a) { return a.id; }).join(",");
+    var preferences = props.preferences || {};
+    var preferredIds = preferences["backup.moduleIds"];
     var stSel = react.useState({}); var selected = stSel[0]; var setSelected = stSel[1];
     var stBusy = react.useState(""); var busy = stBusy[0]; var setBusy = stBusy[1];
     var stMsg = react.useState(null); var msg = stMsg[0]; var setMsg = stMsg[1];
@@ -42,33 +43,22 @@ module.exports = function createBackupTab(react, jsx) {
     var stExported = react.useState(null); var exported = stExported[0]; var setExported = stExported[1];
     var stPolicies = react.useState({}); var policies = stPolicies[0]; var setPolicies = stPolicies[1];
     var stOpen = react.useState({}); var openConfig = stOpen[0]; var setOpenConfig = stOpen[1];
-    var stFormat = react.useState("zip"); var format = stFormat[0]; var setFormat = stFormat[1];
+    var stFormat = react.useState(preferences["backup.exportFormat"] || "zip"); var format = stFormat[0]; var setFormat = stFormat[1];
     var stDrag = react.useState(false); var dragging = stDrag[0]; var setDragging = stDrag[1];
     var stClearPhrase = react.useState(""); var clearPhrase = stClearPhrase[0]; var setClearPhrase = stClearPhrase[1];
     var stClearMsg = react.useState(null); var clearMsg = stClearMsg[0]; var setClearMsg = stClearMsg[1];
     var stClearDone = react.useState(null); var clearDone = stClearDone[0]; var setClearDone = stClearDone[1];
     var fileRef = react.useRef(null);
 
-    react.useEffect(function () {
-      setSelected(function (prev) {
-        var next = {};
-        var changed = false;
-        exportable.forEach(function (a) {
-          next[a.id] = true;
-          if (!prev[a.id]) changed = true;
-        });
-        Object.keys(prev).forEach(function (id) {
-          if (!exportable.some(function (a) { return a.id === id; })) changed = true;
-        });
-        return changed ? next : prev;
-      });
-    }, [idsKey]);
-
-    var chosen = exportable.filter(function (a) { return selected[a.id]; });
+    function isSelected(id) {
+      if (Object.hasOwn(selected, id)) return selected[id];
+      return !Array.isArray(preferredIds) || preferredIds.includes(id);
+    }
+    var chosen = exportable.filter(function (a) { return isSelected(a.id); });
     var allSelected = exportable.length > 0 && chosen.length === exportable.length;
     function toggle(id) {
       var next = Object.assign({}, selected);
-      next[id] = !next[id];
+      next[id] = !isSelected(id);
       setSelected(next);
     }
     function selectAll(flag) {
@@ -238,7 +228,7 @@ module.exports = function createBackupTab(react, jsx) {
           exportable.length
             ? jsx.jsx("div", { className: "wb-backup-list", children: exportable.map(function (a) {
                 var open = !!openConfig[a.id];
-                var sel = !!selected[a.id];
+                var sel = isSelected(a.id);
                 var tables = a.tables || [];
                 return jsx.jsxs("div", { className: "wb-backup-item" + (sel ? " on" : ""), children: [
                   jsx.jsxs("div", { className: "wb-backup-row" + (open ? " open" : ""), children: [
@@ -316,6 +306,12 @@ module.exports = function createBackupTab(react, jsx) {
           ] }),
           jsx.jsxs("section", { className: "wb-card wb-backup-panel", children: [
             jsx.jsx("div", { className: "wb-sec", children: jsx.jsx("h3", { children: t("backup_import_title") }) }),
+            jsx.jsxs("p", { className: "wb-backup-note", children: [
+              t("backup_dup_policy"), " · ", policyLabel("newest"),
+              exportable.filter(function (a) { return policyOf(a.id) !== "newest"; }).map(function (a) {
+                return jsx.jsx("span", { children: " · " + (a.title || a.id) + "：" + policyLabel(policyOf(a.id)) }, a.id);
+              }),
+            ] }),
             jsx.jsxs("label", {
               className: "wb-backup-drop" + (dragging ? " drag" : ""),
               onDragOver: function (ev) { ev.preventDefault(); setDragging(true); },

@@ -10,6 +10,7 @@
  *
  * 单独成文件是为了让 client.src.cjs 守住单文件 600 行红线，别把挂载逻辑再塞回去。
  */
+var common = require("../../addons/lib/client-common.cjs")("wb");
 var createActionSchemaView = require("../../addons/lib/action-schema-view.cjs");
 
 /**
@@ -62,11 +63,12 @@ function agentListPage(deps) {
 
     React.useEffect(function () {
       var alive = true;
-      hostApi.call("actions.list", {}).then(function (result) {
+      common.call(hostApi, "actions.list", { detail: true }).then(function (result) {
         if (!alive) return;
-        var list = (result && Array.isArray(result.actions)) ? result.actions : [];
+        var list = result && result.actions;
+        if (!Array.isArray(list) || list.some(function (a) { return !a || !a.name || !a.domain || !Array.isArray(a.origins); })) throw new Error(t("agent_list_invalid"));
         setSnap({ loading: false, error: "", actions: list });
-      }, function (error) {
+      }).catch(function (error) {
         if (!alive) return;
         setSnap({ loading: false, error: (error && error.message) || String(error), actions: [] });
       });
@@ -88,7 +90,7 @@ function agentListPage(deps) {
       return text.indexOf(q.trim().toLowerCase()) >= 0;
     });
 
-    var head = jsx.jsx("div", { className: "wb-audit-summary", role: "status", "aria-live": "polite", children: [
+    var head = !snap.loading && !snap.error && jsx.jsx("div", { className: "wb-audit-summary", role: "status", "aria-live": "polite", children: [
       jsx.jsx("span", { children: t("agent_list_count").replace("{n}", String(rows.length)).replace("{all}", String(opened.length)).replace("{d}", String(domains.length)) }),
       jsx.jsx("span", { className: "wb-audit-dim", children: t("agent_list_readonly") }),
     ] });
@@ -110,7 +112,7 @@ function agentListPage(deps) {
     var body;
     if (snap.loading) body = jsx.jsx("div", { className: "wb-msg", role: "status", children: t("agent_list_loading") });
     else if (snap.error) body = jsx.jsx("div", { className: "wb-err", role: "alert", children: snap.error });
-    else if (!rows.length) body = jsx.jsx("div", { className: "wb-msg wb-empty-cta", children: t("agent_list_empty") });
+    else if (!rows.length) body = jsx.jsx("div", { className: "wb-msg wb-empty-cta", children: t(opened.length ? "agent_list_no_match" : "agent_list_empty") });
     else {
       body = jsx.jsx("div", { style: { overflowX: "auto" }, children: jsx.jsxs("table", { className: "wb-audit-table", "data-agent-list": "1", children: [
         jsx.jsx("thead", { children: jsx.jsx("tr", { children: [

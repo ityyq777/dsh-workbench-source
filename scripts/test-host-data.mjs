@@ -107,6 +107,12 @@ try {
   config = (await uiCall("wb.configGet", {})).payload.result;
   assert(Number(config.values["audit.retentionDays"]) === 180 && !config.overrides["audit.retentionDays"], "恢复默认后应回到默认值");
 
+  const { verifyBackupSchemes } = await import("./test-host-backup-schemes.mjs");
+  await verifyBackupSchemes(async (action, args) => {
+    const { payload } = await uiCall(action, args);
+    if (!payload?.result) throw new Error(payload?.error || payload?.text || action);
+    return payload.result;
+  });
   console.log("HOST DATA TEST PASS", { tables: names.length });
   // 宿主注册了同步定时器，事件循环不会自己空转退出
   process.exit(0);

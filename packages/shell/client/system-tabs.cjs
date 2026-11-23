@@ -19,7 +19,7 @@ function AccountTab(props) {
   var st8 = react.useState(""); var pickedMode = st8[0]; var setPickedMode = st8[1];
   function refreshSync() {
     api.get("/sync/status").then(function (r) { if (r && r.ok) setSyncStatus(r); });
-    api.get("/sync/conflicts?limit=20").then(function (r) { setConflicts(r && Array.isArray(r.conflicts) ? r.conflicts : []); });
+    api.get("/sync/conflicts?limit=" + ((props.preferences || {})["cloud.conflictLimit"] || 20)).then(function (r) { setConflicts(r && Array.isArray(r.conflicts) ? r.conflicts : []); });
   }
   function refresh() {
     api.get("/account").then(function (r) {
