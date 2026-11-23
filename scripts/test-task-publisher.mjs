@@ -3,6 +3,8 @@
  * 纯内存假对象，不连数据库。
  */
 import assert from "node:assert/strict";
+import { apply } from "../packages/addons/tasks/lib/index.js";
+import { PUBLISHER_INSTRUCTIONS } from "../packages/addons/tasks/lib/publisher/brief.js";
 import { buildPublisherBrief, MAX_REQUIREMENT_LENGTH } from "../packages/addons/tasks/lib/publisher/brief.js";
 import { registerPublisherCommand, PUBLISHER_USAGE, PUBLISHER_COMMAND } from "../packages/addons/tasks/lib/publisher/command.js";
 
@@ -32,8 +34,8 @@ function fakeCommands() {
   };
 }
 
-function fakeCtx(commands) {
-  return { get: (name) => (name === "commands" ? commands : undefined) };
+function fakeCtx(commands, bindMessageRole = () => () => {}) {
+  return { workbench: { bindMessageRole }, get: (name) => (name === "commands" ? commands : undefined) };
 }
 
 function fakeAgent(sessionId) {
@@ -46,6 +48,30 @@ function fakeAgent(sessionId) {
     },
   };
 }
+
+check("真实插件注册角色及职责边界", () => {
+  let domain;
+  apply({ effect: (register) => register(), workbench: { registerDomain: (value) => { domain = value; } } });
+  const [publisher, executor] = domain.roles;
+  assert.equal(publisher.id, "publisher");
+  assert.equal(executor.id, "executor");
+  assert.equal(publisher.instructions, PUBLISHER_INSTRUCTIONS);
+  assert.ok(publisher.actions.includes("tasks.create"));
+  assert.ok(!publisher.actions.includes("tasks.update"));
+  assert.ok(executor.actions.includes("tasks.update"));
+  assert.ok(!executor.actions.includes("tasks.create"));
+  assert.match(executor.instructions, /询问进度时只读/);
+});
+
+check("角色绑定失败不投递", () => {
+  const commands = fakeCommands();
+  registerPublisherCommand(fakeCtx(commands, () => { throw new Error("角色已卸载"); }));
+  const agent = fakeAgent();
+  const result = commands.defs.get(PUBLISHER_COMMAND).handler({ agent, rawInput: "发布" });
+  assert.equal(result.kind, "error");
+  assert.match(result.text, /角色已卸载/);
+  assert.deepEqual(agent.calls, []);
+});
 
 // 1) brief 必含：原话逐字、五步 SOP、输出格式、边界、sessionId
 check("brief 结构完整", () => {
@@ -82,7 +108,7 @@ check("brief 结构完整", () => {
   }
   assert.ok(brief.includes("非代码") === false || brief.includes("只有需求明确是代码改动时才看仓库"));
   assert.ok(brief.includes("sessionId: s-abc"));
-  assert.ok(brief.includes('用 "dsh-session:" 前缀拼接上面的 sessionId'));
+  assert.ok(brief.includes('重试沿用原键，后续独立需求另用新键'));
   // 回归：正文里不能出现 dsh-session: 紧跟裸 id 的串，会被 DSH 当会话引用 URI 解析
   assert.equal(/dsh-session:[A-Za-z0-9_-]+/u.test(brief), false, "brief 不得包含裸 dsh-session 引用");
   assert.ok(brief.includes("2026-11-10T03:00:00.000Z"));
@@ -139,7 +165,7 @@ check("brief 结构完整", () => {
 check("brief 兜底", () => {
   const brief = buildPublisherBrief({ requirement: "  x  " });
   assert.ok(brief.includes("sessionId: unknown"));
-  assert.ok(brief.includes('用 "dsh-session:" 前缀拼接上面的 sessionId'));
+  assert.ok(brief.includes('重试沿用原键，后续独立需求另用新键'));
   assert.equal(/dsh-session:[A-Za-z0-9_-]+/u.test(brief), false);
 });
 
@@ -189,7 +215,7 @@ check("正常发布引导", () => {
   const agent = fakeAgent("sess-9");
   const result = def.handler({ agent, rawInput: "给时间线页加状态过滤" });
   assert.equal(result.kind, "success");
-  assert.match(result.text, /已把发布引导送入下一轮/);
+  assert.match(result.text, /本次需求已交给任务发布者/);
   assert.equal(agent.calls.length, 1);
   const msg = agent.calls[0];
   assert.equal(msg.role, "user");
@@ -198,7 +224,7 @@ check("正常发布引导", () => {
   assert.equal(msg.content.length, 1);
   assert.equal(msg.content[0].type, "text");
   assert.ok(msg.content[0].text.includes("给时间线页加状态过滤"));
-  assert.ok(msg.content[0].text.includes("## 发布 SOP"));
+  assert.equal(msg.content[0].text, "给时间线页加状态过滤", "角色规则只由宿主注入");
 });
 
 // 5) 附件在文本之前，顺序保持

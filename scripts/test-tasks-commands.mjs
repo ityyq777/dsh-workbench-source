@@ -114,7 +114,8 @@ function fakeCommands() {
 }
 
 const commands = fakeCommands();
-const cleanup = registerPublisherCommand({ get: (name) => (name === "commands" ? commands : undefined) });
+const bindings = [];
+const cleanup = registerPublisherCommand({ workbench: { bindMessageRole(...args) { bindings.push(args); return () => bindings.pop(); } }, get: (name) => (name === "commands" ? commands : undefined) });
 assert.equal(commands.registered.length, TASK_COMMANDS.length, "目录里每条命令都应注册");
 for (const [i, def] of commands.registered.entries()) {
   const entry = TASK_COMMANDS[i];
@@ -150,12 +151,13 @@ assert.equal(sent[0].content[1].type, "file");
 assert.equal(sent[0].content[2].type, "text");
 const brief = sent[0].content[2].text;
 assert.ok(brief.includes("记录页加筛选快捷按钮"), "正文应带用户原话");
-assert.ok(brief.includes("session-abc"), "正文应带会话 id");
-assert.ok(brief.includes("C. 归属"), "正文应是 brief.js 生成的发布 SOP");
+assert.equal(brief, "  记录页加筛选快捷按钮  ", "用户原话和前后空格应原样保留");
+assert.deepEqual(bindings, [["session-abc", sent[0].id, "wb-addon-tasks/publisher"]]);
 
-const failing = def.handler({ agent: { followup: () => { throw new Error("boom"); } }, rawInput: "x" });
+const failing = def.handler({ agent: { session: agent.session, followup: () => { throw new Error("boom"); } }, rawInput: "x" });
 assert.equal(failing.kind, "error");
 assert.ok(failing.text.includes("boom"));
+assert.equal(bindings.length, 1, "投递失败必须撤销对应的一次性绑定");
 
 cleanup();
 assert.equal(commands.disposed.length, TASK_COMMANDS.length, "清理函数应逐条释放注册");

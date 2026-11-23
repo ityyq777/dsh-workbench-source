@@ -1,5 +1,5 @@
 /**
- * 任务插件注册的斜杠命令：把「用户原话 + 各自 SOP」送进下一轮模型。
+ * 任务插件注册的斜杠命令：把用户原话、附件交给单次绑定角色的下一轮。
  * 命令本身不建任务、不写业务数据；无 commands 服务（ACP/无 UI）时静默跳过。
  *
  * 命令的元信息与正文生成函数都在 catalog.js：这里只做注册循环，
@@ -17,7 +17,7 @@ function newMessageId() {
   return "msg-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
 }
 
-/** 取当前会话 id；拿不到时用 unknown，仅用于 dedupeKey 提示。 */
+/** 取当前会话 id；用于绑定命令生成的消息。 */
 function sessionIdOf(agent) {
   return String((agent && agent.session && agent.session.id) || (agent && agent.id) || "");
 }
@@ -40,8 +40,8 @@ export function registerPublisherCommand(ctx) {
       // 正文由 followup 带入模型历史，命令日志里不再重复记一遍。
       recordInput: false,
       handler: ({ agent, rawInput, attachments } = {}) => {
-        const requirement = typeof rawInput === "string" ? rawInput.trim() : "";
-        if (requirement.length === 0) {
+        const requirement = typeof rawInput === "string" ? rawInput : "";
+        if (!requirement.trim()) {
           return { kind: "success", text: usageText(entry, "zh") };
         }
         const limit = entry.limit;
@@ -56,18 +56,19 @@ export function registerPublisherCommand(ctx) {
         if (!agent || typeof agent.followup !== "function") {
           return { kind: "error", text: "当前会话无法接收下一轮消息，" + entry.title.zh + "引导没有送出。" };
         }
-        const brief = entry.buildBrief({
-          requirement,
-          sessionId: sessionIdOf(agent),
-          now: new Date(),
-        });
-        const extra = Array.isArray(attachments) ? attachments : [];
-        const content = extra.length > 0
-          ? [...extra, { type: "text", text: brief }]
-          : [{ type: "text", text: brief }];
+        const host = ctx.workbench;
+        const sessionId = sessionIdOf(agent);
+        if (!sessionId || typeof host?.bindMessageRole !== "function") {
+          return { kind: "error", text: "当前会话无法绑定单次发布角色，请检查工作台宿主版本和会话状态。" };
+        }
+        const id = newMessageId();
+        const content = [...(Array.isArray(attachments) ? attachments : []), { type: "text", text: requirement }];
+        let cancel;
         try {
-          agent.followup({ id: newMessageId(), role: "user", content, source: { kind: "user" } });
+          cancel = host.bindMessageRole(sessionId, id, entry.roleId);
+          agent.followup({ id, role: "user", content, source: { kind: "user" } });
         } catch (error) {
+          cancel?.();
           const message = error && error.message ? error.message : String(error);
           return { kind: "error", text: entry.title.zh + "引导送入失败：" + message };
         }

@@ -19,6 +19,7 @@ export const TEMPLATE_PLACEHOLDERS = {
 export const TASK_COMMANDS = [
   {
     name: "wb-task-publisher",
+    roleId: "wb-addon-tasks/publisher",
     title: { zh: "发布任务", en: "Publish task" },
     summary: {
       zh: "按调研、润色、归属、时间线、标签、查重的固定流程发布任务",
@@ -40,12 +41,12 @@ export const TASK_COMMANDS = [
       { text: "/wb-task-publisher 修复配置页重置按钮不生效（附复现步骤）" },
     ],
     sentText: {
-      zh: "已把发布引导送入下一轮：先调研现状，再润色、判归属与时间线、自由联想标签、查重，缺任务表/时间线/工作区会自行补齐，最后发布并在回执说明标签与自建内容。",
-      en: "Publisher guidance sent to the next turn: research, polish, ownership, timeline, tags, dedupe — missing tables, timelines or workspaces are created without asking — then publish, listing tags and anything it created.",
+      zh: "本次需求已交给任务发布者。需要连续发布时，可在输入框选择该角色。",
+      en: "Sent this request to the task publisher. Select the role in the composer for continued use.",
     },
     notes: {
-      zh: "命令会把你的原话与发布 SOP 送入下一轮模型：先调研现状，再润色、判归属与时间线、自由联想标签（未知名字自动创建）、查重，缺任务表 / 时间线 / 工作区时会自行补齐、不再追着你确认，并在回执里列出全部标签（新建的单独标出）与「本次自建」内容。可以在需求后附截图或文档。",
-      en: "The command sends your words plus the publishing SOP into the next model turn: research the current state, polish, decide ownership and timeline, invent tags freely (unknown names are created automatically), check for duplicates, missing tables, timelines or workspaces are created without asking and listed in the receipt along with the final tags. Screenshots or docs can be attached.",
+      zh: "仅本次请求使用任务发布者。可附截图或文档，宿主会为本轮加载下方工作规则。",
+      en: "Uses the task publisher for this request only. Screenshots and documents are supported. The host loads the workflow below for this turn.",
     },
     buildBrief: (options) => buildPublisherBrief(options),
   },

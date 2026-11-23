@@ -31,6 +31,7 @@ import { registerOverviewAction } from "./stats/overview.js";
 import { registerConfigActions } from "./infra/config.js";
 import { registerDataActions } from "./infra/data.js";
 import { registerPublisherCommand } from "./publisher/command.js";
+import { TASK_ROLES } from "./publisher/roles.js";
 import { commandCatalog } from "./publisher/catalog.js";
 
 export const inject = ["workbench"];
@@ -136,6 +137,7 @@ export function apply(ctx) {
         description: "任务树 + 统计/记录/时间线/配置/数据五个视图：紧急/已关闭/已开启/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
         version: ADDON_VERSION,
         category: "work",
+        roles: TASK_ROLES,
         tables: ["task", "task_node", "task_timeline", "task_timeline_link", "task_workspace", "task_workspace_link"],
         sync: taskSync,
         // 贡献声明：任务往「条目操作」插槽里挂「从邮件建任务」。
@@ -167,7 +169,7 @@ export function apply(ctx) {
               ],
               primaryAction: "tasks.create",
               keyArgs: ["tableId", "tablePath", "createMissing", "pathDescriptions", "title", "description", "priority", "difficulty", "targetDate", "tags", "tagIds", "dedupeKey"],
-              dedupe: "同 dedupeKey 的未删除任务会被复用；自动记录建议使用稳定键，如 dsh-session:<id>。",
+              dedupe: "同 dedupeKey 的未删除任务会被复用；自动记录建议使用稳定键，如 dsh-session:<会话>:<需求标识>:<条目序号>。",
               relations: [
                 { kind: "taskNode", via: "tableId", description: "先调用 taskNodes.overview 查看全文描述、类型、路径与子树计数，再用 tasks.create 的 tableId 选表；group/root_group 只能装子节点，table 才能直接放任务。创建必须显式tableId或tablePath且互斥；无默认表。优先tasks.capabilities/resolveTable核对职责；新路径授权后用createMissing+pathDescriptions。" },
                 { kind: "tag", via: "tags / tagIds", description: "用标签做主题归类（工作/生活/学习/开发 已是标签）；传标签名会自动建。" },
@@ -215,7 +217,7 @@ export function apply(ctx) {
             { name: "type", type: "0|1|2|3|4", description: "仅 tasks.update 使用：0=改状态 1=改优先级 2=改标题 3=改描述 4=改感受；这是“更新模式”，不是任务类型（任务没有类型字段，用标签表达）" },
             { name: "review", type: "string", description: "完成后的感受/复盘自由文本，通常随完成一起写入" },
             { name: "range / from / to", type: "7d|30d|90d|365d|all / YYYY-MM-DD", description: "仅统计类 action：range 是快捷区间（缺省 30d），from+to 手动区间是闭区间 [from,to]，两端都含；同时传时以 from/to 为准" },
-            { name: "dedupeKey", type: "string", description: "去重键：同键的未删除任务会被复用而不是新建，自动记录建议用 dsh-session:<id>" },
+            { name: "dedupeKey", type: "string", description: "去重键：同键的未删除任务会被复用而不是新建，自动记录建议用 dsh-session:<会话>:<需求标识>:<条目序号>" },
             { name: "source / timelineId / timelineKey / restartKey", type: "0|1|2 / string", description: "来源：0=无时间线普通任务；1=加入手动创建的有效时间线，需要timelineId（timelineKey为deprecated兼容别名）；2=重启，需restartKey且原任务已有有效归属，自动继承同一线；无归属先手动建线并关联，失败零写。重启固定开启、优先级1–10缺省1。" },
           ],
           notFor: ["不要用它保存聊天记录、日志或临时笔记"],
