@@ -56,23 +56,13 @@ CREATE TABLE IF NOT EXISTS sync_state (
   k TEXT PRIMARY KEY, v TEXT NOT NULL
 );
 
--- 会话级记录模式：只影响本机当前会话，不参与同步/备份。
-CREATE TABLE IF NOT EXISTS session_mode (
-  session_id TEXT PRIMARY KEY,
-  enabled INTEGER NOT NULL DEFAULT 0,
-  updated_at INTEGER NOT NULL
-);
-
--- 角色与收尾选项共享会话配置，旧表保留作降级兼容。
+-- 会话只保存所选工作台角色，状态仅在本机生效。
 CREATE TABLE IF NOT EXISTS session_role (
   session_id TEXT PRIMARY KEY,
   role_id TEXT,
   role_version TEXT,
-  enabled INTEGER NOT NULL DEFAULT 0,
   updated_at INTEGER NOT NULL
 );
-INSERT OR IGNORE INTO session_role(session_id, enabled, updated_at)
-SELECT session_id, enabled, updated_at FROM session_mode;
 
 -- 命令选定的角色仅适用于对应消息，排队消息在进程恢复后仍可核对。
 CREATE TABLE IF NOT EXISTS session_message_role (

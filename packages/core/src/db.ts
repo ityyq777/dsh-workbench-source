@@ -28,6 +28,12 @@ function migrateLocalDb(db: DatabaseSync): void {
     if (!hasColumn(db, "conflict_shadow", "local_updated_at")) {
       db.exec("ALTER TABLE conflict_shadow ADD COLUMN local_updated_at INTEGER");
     }
+    // 旧记录开关退出。仅在检测到过渡版本的列时删除无角色偏好，保留已选角色及其版本。
+    if (hasColumn(db, "session_role", "enabled")) {
+      db.exec("DELETE FROM session_role WHERE role_id IS NULL");
+      db.exec("ALTER TABLE session_role DROP COLUMN enabled");
+    }
+    db.exec("DROP TABLE IF EXISTS session_mode");
     db.exec("COMMIT");
   } catch (e) {
     try {
