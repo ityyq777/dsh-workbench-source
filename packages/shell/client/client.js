@@ -21,6 +21,16 @@ var require_locale = __commonJS({
     "use strict";
     var LOCALE2 = {
       zh: {
+        role_title: "\u5DE5\u4F5C\u53F0\u89D2\u8272",
+        role_none: "\u4E0D\u4F7F\u7528\u5DE5\u4F5C\u53F0\u89D2\u8272",
+        role_none_desc: "\u6CBF\u7528\u5F53\u524D DSH \u4F1A\u8BDD\u8BBE\u7F6E",
+        role_missing: "\u89D2\u8272\u5DF2\u4E0D\u53EF\u7528\uFF0C\u8BF7\u91CD\u65B0\u9009\u62E9",
+        role_record: "\u6536\u5C3E\u65F6\u8BB0\u5F55\u4EA4\u4ED8\u7269",
+        role_next: "\u9009\u62E9\u5C06\u4ECE\u4E0B\u4E00\u8F6E\u5BF9\u8BDD\u751F\u6548\u3002",
+        role_close: "\u5173\u95ED",
+        role_retry: "\u91CD\u8BD5",
+        role_error: "\u65E0\u6CD5\u8BFB\u53D6\u6216\u4FDD\u5B58\u4F1A\u8BDD\u8BBE\u7F6E",
+        role_loading: "\u8BFB\u53D6\u4E2D\u2026",
         nav: "\u5DE5\u4F5C\u53F0",
         title: "\u5DE5\u4F5C\u53F0",
         tagline: "\u79BB\u7EBF\u4F18\u5148 \xB7 \u4E1A\u52A1\u63D2\u4EF6\u7531 DSH \u5B89\u88C5",
@@ -365,6 +375,16 @@ var require_locale = __commonJS({
         record_failed_short: "\u8BB0\u5F55\u5931\u8D25"
       },
       en: {
+        role_title: "Workbench role",
+        role_none: "No workbench role",
+        role_none_desc: "Use the current DSH session settings",
+        role_missing: "Role unavailable. Choose another role.",
+        role_record: "Record deliverables at the end of the turn",
+        role_next: "Changes apply to the next turn.",
+        role_close: "Close",
+        role_retry: "Retry",
+        role_error: "Could not read or save session settings",
+        role_loading: "Loading\u2026",
         nav: "Workbench",
         title: "Workbench",
         tagline: "Offline-first \xB7 addons installed by DSH",
@@ -1125,8 +1145,26 @@ var require_config_scheme_bar = __commonJS({
   }
 });
 
-// packages/shell/client/styles.cjs
+// packages/shell/client/conversation/styles.cjs
 var require_styles = __commonJS({
+  "packages/shell/client/conversation/styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = `
+.wb-role-trigger,.wb-role-mask{--wb-line:var(--dsw-alias-border-l2);--wb-card:var(--dsw-alias-bg-layer-1,Canvas);--wb-surface:var(--dsw-alias-bg-layer-2,Canvas);--wb-accent:var(--dsw-alias-brand-primary,Highlight);--wb-muted:var(--dsw-alias-label-tertiary,GrayText);--wb-danger:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-label-primary,CanvasText)}
+.wb-role-trigger,.wb-role-btn{font:inherit;color:inherit;border:1px solid var(--wb-line);cursor:pointer;background:var(--wb-card);border-radius:8px;padding:6px 10px}
+.wb-role-trigger{height:28px;max-width:min(32vw,16em);text-overflow:ellipsis;overflow:hidden;white-space:nowrap;border-radius:999px;font-size:12px;padding:0 9px}
+.wb-role-trigger:hover,.wb-role-btn:hover:not(:disabled),.wb-role-btn[aria-pressed=true]{border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 10%,var(--wb-card))}
+.wb-role-trigger:focus-visible,.wb-role-btn:focus-visible,.wb-role-dialog .wbctl-switch:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
+.wb-role-btn:disabled{opacity:.5;cursor:wait}
+.wb-role-mask{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:12px;background:color-mix(in oklab,var(--dsw-alias-label-primary,CanvasText) 22%,transparent)}
+.wb-role-dialog{display:grid;gap:8px;padding:16px;box-sizing:border-box;width:min(100%,24rem);max-height:80dvh;overflow:auto;background:var(--wb-card);border:1px solid var(--wb-line);border-radius:12px;box-shadow:0 8px 32px color-mix(in oklab,var(--wb-muted) 24%,transparent)}
+.wb-role-dialog small{display:block;color:var(--wb-muted)}.wb-role-dialog .wb-role-btn[aria-pressed]{display:grid;gap:3px;text-align:start}.wb-role-dialog [role=alert]{color:var(--wb-danger)}
+`;
+  }
+});
+
+// packages/shell/client/styles.cjs
+var require_styles2 = __commonJS({
   "packages/shell/client/styles.cjs"(exports2, module2) {
     "use strict";
     var SW = require_switch();
@@ -1332,14 +1370,7 @@ var require_styles = __commonJS({
       ".wb-conflict-main{min-width:0;display:flex;flex-direction:column;gap:2px}",
       ".wb-conflict-meta{font-size:11px;opacity:.55;word-break:break-word}",
       ".wb-conflict-actions{display:flex;gap:6px;flex:none}",
-      ".wb-record-pill{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid var(--wb-line,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent)));border-radius:999px;background:color-mix(in oklab,currentColor 3%,transparent);color:inherit;cursor:pointer;font:inherit;font-size:12px;line-height:1;opacity:.62;white-space:nowrap;transition:opacity .15s ease,border-color .15s ease,background .15s ease}",
-      ".wb-record-pill:hover{opacity:.95;border-color:color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 35%,var(--wb-line,var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent))))}",
-      ".wb-record-pill.on{opacity:1;border-color:color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 45%,transparent);background:color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 10%,transparent)}",
-      ".wb-record-pill:disabled{opacity:.4;cursor:default}",
-      ".wb-record-pill.err{opacity:1;border-color:var(--dsw-alias-state-error-primary,#e5484d);color:var(--dsw-alias-state-error-primary,#e5484d)}",
-      ".wb-record-pill.err .wb-record-dot{background:currentColor;opacity:1}",
-      ".wb-record-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.5;flex:none}",
-      ".wb-record-pill.on .wb-record-dot{background:var(--dsw-alias-brand-primary,#11a89b);opacity:1;box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,#11a89b) 18%,transparent)}",
+      require_styles(),
       ".wb-search-wrap{position:relative;display:flex;flex-direction:column;gap:6px}",
       ".wb-search-bar{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--wb-line);border-radius:10px;background:var(--wb-surface)}",
       ".wb-search-bar:focus-within{border-color:var(--dsw-alias-brand-primary,#11a89b)}",
@@ -4673,6 +4704,542 @@ var require_slot_registry = __commonJS({
   }
 });
 
+// node_modules/.pnpm/react-dom@19.2.0_react@19.2.0/node_modules/react-dom/cjs/react-dom.development.js
+var require_react_dom_development = __commonJS({
+  "node_modules/.pnpm/react-dom@19.2.0_react@19.2.0/node_modules/react-dom/cjs/react-dom.development.js"(exports2) {
+    "use strict";
+    (function() {
+      function noop() {
+      }
+      function testStringCoercion(value) {
+        return "" + value;
+      }
+      function createPortal$1(children, containerInfo, implementation) {
+        var key = 3 < arguments.length && void 0 !== arguments[3] ? arguments[3] : null;
+        try {
+          testStringCoercion(key);
+          var JSCompiler_inline_result = false;
+        } catch (e) {
+          JSCompiler_inline_result = true;
+        }
+        JSCompiler_inline_result && (console.error(
+          "The provided key is an unsupported type %s. This value must be coerced to a string before using it here.",
+          "function" === typeof Symbol && Symbol.toStringTag && key[Symbol.toStringTag] || key.constructor.name || "Object"
+        ), testStringCoercion(key));
+        return {
+          $$typeof: REACT_PORTAL_TYPE,
+          key: null == key ? null : "" + key,
+          children,
+          containerInfo,
+          implementation
+        };
+      }
+      function getCrossOriginStringAs(as, input) {
+        if ("font" === as) return "";
+        if ("string" === typeof input)
+          return "use-credentials" === input ? input : "";
+      }
+      function getValueDescriptorExpectingObjectForWarning(thing) {
+        return null === thing ? "`null`" : void 0 === thing ? "`undefined`" : "" === thing ? "an empty string" : 'something with type "' + typeof thing + '"';
+      }
+      function getValueDescriptorExpectingEnumForWarning(thing) {
+        return null === thing ? "`null`" : void 0 === thing ? "`undefined`" : "" === thing ? "an empty string" : "string" === typeof thing ? JSON.stringify(thing) : "number" === typeof thing ? "`" + thing + "`" : 'something with type "' + typeof thing + '"';
+      }
+      function resolveDispatcher() {
+        var dispatcher = ReactSharedInternals.H;
+        null === dispatcher && console.error(
+          "Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:\n1. You might have mismatching versions of React and the renderer (such as React DOM)\n2. You might be breaking the Rules of Hooks\n3. You might have more than one copy of React in the same app\nSee https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem."
+        );
+        return dispatcher;
+      }
+      "undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ && "function" === typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart && __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(Error());
+      var React = require("react"), Internals = {
+        d: {
+          f: noop,
+          r: function() {
+            throw Error(
+              "Invalid form element. requestFormReset must be passed a form that was rendered by React."
+            );
+          },
+          D: noop,
+          C: noop,
+          L: noop,
+          m: noop,
+          X: noop,
+          S: noop,
+          M: noop
+        },
+        p: 0,
+        findDOMNode: null
+      }, REACT_PORTAL_TYPE = /* @__PURE__ */ Symbol.for("react.portal"), ReactSharedInternals = React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
+      "function" === typeof Map && null != Map.prototype && "function" === typeof Map.prototype.forEach && "function" === typeof Set && null != Set.prototype && "function" === typeof Set.prototype.clear && "function" === typeof Set.prototype.forEach || console.error(
+        "React depends on Map and Set built-in types. Make sure that you load a polyfill in older browsers. https://reactjs.org/link/react-polyfills"
+      );
+      exports2.__DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE = Internals;
+      exports2.createPortal = function(children, container) {
+        var key = 2 < arguments.length && void 0 !== arguments[2] ? arguments[2] : null;
+        if (!container || 1 !== container.nodeType && 9 !== container.nodeType && 11 !== container.nodeType)
+          throw Error("Target container is not a DOM element.");
+        return createPortal$1(children, container, null, key);
+      };
+      exports2.flushSync = function(fn) {
+        var previousTransition = ReactSharedInternals.T, previousUpdatePriority = Internals.p;
+        try {
+          if (ReactSharedInternals.T = null, Internals.p = 2, fn)
+            return fn();
+        } finally {
+          ReactSharedInternals.T = previousTransition, Internals.p = previousUpdatePriority, Internals.d.f() && console.error(
+            "flushSync was called from inside a lifecycle method. React cannot flush when React is already rendering. Consider moving this call to a scheduler task or micro task."
+          );
+        }
+      };
+      exports2.preconnect = function(href, options) {
+        "string" === typeof href && href ? null != options && "object" !== typeof options ? console.error(
+          "ReactDOM.preconnect(): Expected the `options` argument (second) to be an object but encountered %s instead. The only supported option at this time is `crossOrigin` which accepts a string.",
+          getValueDescriptorExpectingEnumForWarning(options)
+        ) : null != options && "string" !== typeof options.crossOrigin && console.error(
+          "ReactDOM.preconnect(): Expected the `crossOrigin` option (second argument) to be a string but encountered %s instead. Try removing this option or passing a string value instead.",
+          getValueDescriptorExpectingObjectForWarning(options.crossOrigin)
+        ) : console.error(
+          "ReactDOM.preconnect(): Expected the `href` argument (first) to be a non-empty string but encountered %s instead.",
+          getValueDescriptorExpectingObjectForWarning(href)
+        );
+        "string" === typeof href && (options ? (options = options.crossOrigin, options = "string" === typeof options ? "use-credentials" === options ? options : "" : void 0) : options = null, Internals.d.C(href, options));
+      };
+      exports2.prefetchDNS = function(href) {
+        if ("string" !== typeof href || !href)
+          console.error(
+            "ReactDOM.prefetchDNS(): Expected the `href` argument (first) to be a non-empty string but encountered %s instead.",
+            getValueDescriptorExpectingObjectForWarning(href)
+          );
+        else if (1 < arguments.length) {
+          var options = arguments[1];
+          "object" === typeof options && options.hasOwnProperty("crossOrigin") ? console.error(
+            "ReactDOM.prefetchDNS(): Expected only one argument, `href`, but encountered %s as a second argument instead. This argument is reserved for future options and is currently disallowed. It looks like the you are attempting to set a crossOrigin property for this DNS lookup hint. Browsers do not perform DNS queries using CORS and setting this attribute on the resource hint has no effect. Try calling ReactDOM.prefetchDNS() with just a single string argument, `href`.",
+            getValueDescriptorExpectingEnumForWarning(options)
+          ) : console.error(
+            "ReactDOM.prefetchDNS(): Expected only one argument, `href`, but encountered %s as a second argument instead. This argument is reserved for future options and is currently disallowed. Try calling ReactDOM.prefetchDNS() with just a single string argument, `href`.",
+            getValueDescriptorExpectingEnumForWarning(options)
+          );
+        }
+        "string" === typeof href && Internals.d.D(href);
+      };
+      exports2.preinit = function(href, options) {
+        "string" === typeof href && href ? null == options || "object" !== typeof options ? console.error(
+          "ReactDOM.preinit(): Expected the `options` argument (second) to be an object with an `as` property describing the type of resource to be preinitialized but encountered %s instead.",
+          getValueDescriptorExpectingEnumForWarning(options)
+        ) : "style" !== options.as && "script" !== options.as && console.error(
+          'ReactDOM.preinit(): Expected the `as` property in the `options` argument (second) to contain a valid value describing the type of resource to be preinitialized but encountered %s instead. Valid values for `as` are "style" and "script".',
+          getValueDescriptorExpectingEnumForWarning(options.as)
+        ) : console.error(
+          "ReactDOM.preinit(): Expected the `href` argument (first) to be a non-empty string but encountered %s instead.",
+          getValueDescriptorExpectingObjectForWarning(href)
+        );
+        if ("string" === typeof href && options && "string" === typeof options.as) {
+          var as = options.as, crossOrigin = getCrossOriginStringAs(as, options.crossOrigin), integrity = "string" === typeof options.integrity ? options.integrity : void 0, fetchPriority = "string" === typeof options.fetchPriority ? options.fetchPriority : void 0;
+          "style" === as ? Internals.d.S(
+            href,
+            "string" === typeof options.precedence ? options.precedence : void 0,
+            {
+              crossOrigin,
+              integrity,
+              fetchPriority
+            }
+          ) : "script" === as && Internals.d.X(href, {
+            crossOrigin,
+            integrity,
+            fetchPriority,
+            nonce: "string" === typeof options.nonce ? options.nonce : void 0
+          });
+        }
+      };
+      exports2.preinitModule = function(href, options) {
+        var encountered = "";
+        "string" === typeof href && href || (encountered += " The `href` argument encountered was " + getValueDescriptorExpectingObjectForWarning(href) + ".");
+        void 0 !== options && "object" !== typeof options ? encountered += " The `options` argument encountered was " + getValueDescriptorExpectingObjectForWarning(options) + "." : options && "as" in options && "script" !== options.as && (encountered += " The `as` option encountered was " + getValueDescriptorExpectingEnumForWarning(options.as) + ".");
+        if (encountered)
+          console.error(
+            "ReactDOM.preinitModule(): Expected up to two arguments, a non-empty `href` string and, optionally, an `options` object with a valid `as` property.%s",
+            encountered
+          );
+        else
+          switch (encountered = options && "string" === typeof options.as ? options.as : "script", encountered) {
+            case "script":
+              break;
+            default:
+              encountered = getValueDescriptorExpectingEnumForWarning(encountered), console.error(
+                'ReactDOM.preinitModule(): Currently the only supported "as" type for this function is "script" but received "%s" instead. This warning was generated for `href` "%s". In the future other module types will be supported, aligning with the import-attributes proposal. Learn more here: (https://github.com/tc39/proposal-import-attributes)',
+                encountered,
+                href
+              );
+          }
+        if ("string" === typeof href)
+          if ("object" === typeof options && null !== options) {
+            if (null == options.as || "script" === options.as)
+              encountered = getCrossOriginStringAs(
+                options.as,
+                options.crossOrigin
+              ), Internals.d.M(href, {
+                crossOrigin: encountered,
+                integrity: "string" === typeof options.integrity ? options.integrity : void 0,
+                nonce: "string" === typeof options.nonce ? options.nonce : void 0
+              });
+          } else null == options && Internals.d.M(href);
+      };
+      exports2.preload = function(href, options) {
+        var encountered = "";
+        "string" === typeof href && href || (encountered += " The `href` argument encountered was " + getValueDescriptorExpectingObjectForWarning(href) + ".");
+        null == options || "object" !== typeof options ? encountered += " The `options` argument encountered was " + getValueDescriptorExpectingObjectForWarning(options) + "." : "string" === typeof options.as && options.as || (encountered += " The `as` option encountered was " + getValueDescriptorExpectingObjectForWarning(options.as) + ".");
+        encountered && console.error(
+          'ReactDOM.preload(): Expected two arguments, a non-empty `href` string and an `options` object with an `as` property valid for a `<link rel="preload" as="..." />` tag.%s',
+          encountered
+        );
+        if ("string" === typeof href && "object" === typeof options && null !== options && "string" === typeof options.as) {
+          encountered = options.as;
+          var crossOrigin = getCrossOriginStringAs(
+            encountered,
+            options.crossOrigin
+          );
+          Internals.d.L(href, encountered, {
+            crossOrigin,
+            integrity: "string" === typeof options.integrity ? options.integrity : void 0,
+            nonce: "string" === typeof options.nonce ? options.nonce : void 0,
+            type: "string" === typeof options.type ? options.type : void 0,
+            fetchPriority: "string" === typeof options.fetchPriority ? options.fetchPriority : void 0,
+            referrerPolicy: "string" === typeof options.referrerPolicy ? options.referrerPolicy : void 0,
+            imageSrcSet: "string" === typeof options.imageSrcSet ? options.imageSrcSet : void 0,
+            imageSizes: "string" === typeof options.imageSizes ? options.imageSizes : void 0,
+            media: "string" === typeof options.media ? options.media : void 0
+          });
+        }
+      };
+      exports2.preloadModule = function(href, options) {
+        var encountered = "";
+        "string" === typeof href && href || (encountered += " The `href` argument encountered was " + getValueDescriptorExpectingObjectForWarning(href) + ".");
+        void 0 !== options && "object" !== typeof options ? encountered += " The `options` argument encountered was " + getValueDescriptorExpectingObjectForWarning(options) + "." : options && "as" in options && "string" !== typeof options.as && (encountered += " The `as` option encountered was " + getValueDescriptorExpectingObjectForWarning(options.as) + ".");
+        encountered && console.error(
+          'ReactDOM.preloadModule(): Expected two arguments, a non-empty `href` string and, optionally, an `options` object with an `as` property valid for a `<link rel="modulepreload" as="..." />` tag.%s',
+          encountered
+        );
+        "string" === typeof href && (options ? (encountered = getCrossOriginStringAs(
+          options.as,
+          options.crossOrigin
+        ), Internals.d.m(href, {
+          as: "string" === typeof options.as && "script" !== options.as ? options.as : void 0,
+          crossOrigin: encountered,
+          integrity: "string" === typeof options.integrity ? options.integrity : void 0
+        })) : Internals.d.m(href));
+      };
+      exports2.requestFormReset = function(form) {
+        Internals.d.r(form);
+      };
+      exports2.unstable_batchedUpdates = function(fn, a) {
+        return fn(a);
+      };
+      exports2.useFormState = function(action, initialState, permalink) {
+        return resolveDispatcher().useFormState(action, initialState, permalink);
+      };
+      exports2.useFormStatus = function() {
+        return resolveDispatcher().useHostTransitionStatus();
+      };
+      exports2.version = "19.2.0";
+      "undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ && "function" === typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStop && __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStop(Error());
+    })();
+  }
+});
+
+// node_modules/.pnpm/react-dom@19.2.0_react@19.2.0/node_modules/react-dom/index.js
+var require_react_dom = __commonJS({
+  "node_modules/.pnpm/react-dom@19.2.0_react@19.2.0/node_modules/react-dom/index.js"(exports2, module2) {
+    "use strict";
+    if (false) {
+      checkDCE();
+      module2.exports = null;
+    } else {
+      module2.exports = require_react_dom_development();
+    }
+  }
+});
+
+// packages/addons/lib/button.cjs
+var require_button = __commonJS({
+  "packages/addons/lib/button.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h2 = React.createElement;
+    module2.exports = function createButton(options) {
+      var opts = options || {};
+      var prefix = opts.prefix;
+      var Icon = opts.Icon;
+      function Button(props) {
+        var attrs = Object.assign({ type: "button", className: prefix + "-btn" }, props);
+        delete attrs.icon;
+        delete attrs.iconOnly;
+        if (props.icon) {
+          attrs["aria-label"] = props["aria-label"] || props.children;
+          attrs.title = props.title || attrs["aria-label"];
+          attrs.className += props.iconOnly ? " " + prefix + "-icon-only" : " " + prefix + "-icon-text";
+        }
+        return h2(
+          "button",
+          attrs,
+          props.icon ? h2(Icon, { name: props.icon }) : null,
+          props.iconOnly ? null : props.icon ? h2("span", { className: prefix + "-btn-label" }, props.children) : props.children
+        );
+      }
+      return Button;
+    };
+  }
+});
+
+// packages/addons/lib/overlay.cjs
+var require_overlay = __commonJS({
+  "packages/addons/lib/overlay.cjs"(exports2, module2) {
+    "use strict";
+    var defaultReact = require("react");
+    var FOCUSABLE = "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]";
+    module2.exports = function createOverlay(options) {
+      var opts = options || {};
+      var React = opts.React || defaultReact;
+      var h2 = React.createElement;
+      var tag = opts.tag || "section";
+      var maskClass = opts.maskClass;
+      var dialogClass = opts.dialogClass;
+      var dialogClassOf = opts.dialogClassOf || function() {
+        return "";
+      };
+      var ariaLabelOf = opts.ariaLabelOf || function(props) {
+        return props["aria-label"] || props.title;
+      };
+      var ariaLabelledByOf = opts.ariaLabelledByOf || function() {
+        return null;
+      };
+      var header = opts.header || null;
+      var closeOnEscape = opts.closeOnEscape || function() {
+        return true;
+      };
+      var closeOnMask = opts.closeOnMask || function() {
+        return true;
+      };
+      var extraKeyDown = opts.onKeyDown || null;
+      var autoFocusDialog = opts.autoFocusDialog !== false;
+      var focusableSelector = opts.focusableSelector || FOCUSABLE;
+      function Modal(props) {
+        var R = props.React || React;
+        var ref = R.useRef(null);
+        R.useEffect(function() {
+          var previous = typeof document !== "undefined" ? document.activeElement : null;
+          var focusIt = props.autoFocus !== void 0 ? props.autoFocus : autoFocusDialog;
+          if (focusIt && ref.current) ref.current.focus();
+          return function() {
+            if (previous && previous.isConnected) previous.focus();
+          };
+        }, []);
+        function onKeyDown(e) {
+          if (extraKeyDown && extraKeyDown(e, props, ref)) return;
+          if (e.key === "Escape") {
+            if (!(props.closeOnEscape !== void 0 ? props.closeOnEscape : closeOnEscape(props))) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (props.onClose) props.onClose();
+            return;
+          }
+          if (e.key !== "Tab" || !ref.current) return;
+          var els = ref.current.querySelectorAll(focusableSelector);
+          if (!els.length) {
+            e.preventDefault();
+            return;
+          }
+          var first = els[0];
+          var last = els[els.length - 1];
+          if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) {
+            e.preventDefault();
+            last.focus();
+          }
+          if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+        var labelledBy = ariaLabelledByOf(props);
+        return h2(
+          "div",
+          {
+            className: maskClass,
+            onMouseDown: function(e) {
+              var allowed = props.closeOnMask !== void 0 ? props.closeOnMask : closeOnMask(props);
+              if (e.target === e.currentTarget && props.onClose && allowed) props.onClose();
+            }
+          },
+          h2(
+            tag,
+            {
+              className: dialogClass + dialogClassOf(props),
+              role: "dialog",
+              "aria-modal": true,
+              "aria-label": labelledBy ? null : ariaLabelOf(props),
+              "aria-labelledby": labelledBy || null,
+              ref,
+              tabIndex: -1,
+              onKeyDown
+            },
+            header ? header(props) : null,
+            props.children
+          )
+        );
+      }
+      return Modal;
+    };
+  }
+});
+
+// packages/shell/client/conversation/session-role.cjs
+var require_session_role = __commonJS({
+  "packages/shell/client/conversation/session-role.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var { createPortal } = require_react_dom();
+    var h2 = React.createElement;
+    var Button = require_button()({ prefix: "wb-role" });
+    var { Switch } = require_switch();
+    var Dialog = require_overlay()({ maskClass: "wb-role-mask", dialogClass: "wb-role-dialog" });
+    var endpoint = "/workbench/api/session-role";
+    var listeners2 = /* @__PURE__ */ new Set();
+    function attachStream(stream2) {
+      function refresh(event) {
+        try {
+          const sid = JSON.parse(event.data).sessionId;
+          if (sid) listeners2.forEach((listener) => listener(sid));
+        } catch (error) {
+          console.warn(error);
+        }
+      }
+      stream2.addEventListener("session-role", refresh);
+      stream2.addEventListener("record-mode", refresh);
+      function refreshAll() {
+        listeners2.forEach((listener) => listener(null));
+      }
+      stream2.addEventListener("domains-changed", refreshAll);
+      stream2.addEventListener("open", refreshAll);
+    }
+    async function request(sid, patch) {
+      const response = patch ? await fetch(endpoint, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sessionId: sid, ...patch })
+      }) : await fetch(endpoint + "?sessionId=" + encodeURIComponent(sid));
+      const data = await response.json();
+      if (!response.ok || data.ok === false || data.sessionId !== sid) throw new Error(data.error || "HTTP " + response.status);
+      return data;
+    }
+    function SessionRole({ sessionId: sid, t, ensureStream: ensureStream2 }) {
+      const [state, setState] = React.useState(null);
+      const [open, setOpen] = React.useState(false);
+      const [busy, setBusy] = React.useState(false);
+      const [error, setError] = React.useState("");
+      const generation = React.useRef(0);
+      const saving = React.useRef(false);
+      const alive = React.useRef(false);
+      const refresh = React.useCallback(async () => {
+        const current = ++generation.current;
+        try {
+          const result = await request(sid);
+          if (alive.current && current === generation.current) {
+            setState(result);
+            setError("");
+          }
+        } catch (e) {
+          if (alive.current && current === generation.current) setError(String(e.message || e));
+        }
+      }, [sid]);
+      React.useEffect(() => {
+        if (!sid) return;
+        alive.current = true;
+        const listener = (changed) => {
+          if (!changed || changed === sid) refresh();
+        };
+        listeners2.add(listener);
+        ensureStream2();
+        refresh();
+        return () => {
+          alive.current = false;
+          generation.current++;
+          listeners2.delete(listener);
+        };
+      }, [sid, refresh, ensureStream2]);
+      async function save(patch) {
+        if (saving.current || !state) return;
+        saving.current = true;
+        ++generation.current;
+        setBusy(true);
+        setError("");
+        try {
+          const result = await request(sid, patch);
+          if (alive.current) {
+            ++generation.current;
+            setState((previous) => ({ ...previous, ...result }));
+            setOpen(false);
+            refresh();
+          }
+        } catch (e) {
+          if (alive.current) setError(String(e.message || e));
+        } finally {
+          saving.current = false;
+          if (alive.current) setBusy(false);
+        }
+      }
+      if (!sid) return null;
+      const roles = state?.roles || [];
+      const selected = roles.find((r) => r.id === state?.roleId);
+      const missing = state?.roleId && !selected;
+      const label = selected?.name || t(missing ? "role_missing" : "role_none");
+      const choices = [{ id: null, name: t("role_none"), description: t("role_none_desc") }, ...roles];
+      return h2(
+        React.Fragment,
+        null,
+        h2(
+          Button,
+          {
+            className: "wb-role-trigger",
+            "aria-haspopup": "dialog",
+            "aria-expanded": open,
+            title: t("role_title"),
+            onClick: () => {
+              setOpen(true);
+              refresh();
+            }
+          },
+          state ? label : t("role_title"),
+          state?.enabled ? " \xB7 " + t("record_on") : ""
+        ),
+        open && createPortal(h2(
+          Dialog,
+          { title: t("role_title"), onClose: () => setOpen(false), closeOnEscape: !busy, closeOnMask: !busy },
+          h2("strong", null, t("role_title")),
+          h2("small", null, t("role_next")),
+          missing && h2("small", { role: "status" }, t("role_missing")),
+          error && h2("div", { role: "alert" }, t("role_error") + " \xB7 " + error, " ", h2(Button, { disabled: busy, onClick: refresh }, t("role_retry"))),
+          !state && !error && h2("small", { role: "status" }, t("role_loading")),
+          choices.map((r) => h2(
+            Button,
+            {
+              key: r.id || "",
+              disabled: busy || !state,
+              "aria-pressed": !!state && state.roleId === r.id,
+              onClick: () => state.roleId === r.id ? setOpen(false) : save({ roleId: r.id })
+            },
+            h2("b", null, r.name),
+            h2("small", null, [r.domain, r.description].filter(Boolean).join(" \xB7 "))
+          )),
+          h2(Switch, { h: h2, label: t("role_record"), checked: !!state?.enabled, disabled: busy || !state, onChange: (enabled) => save({ enabled }) }),
+          h2(Button, { disabled: busy, onClick: () => setOpen(false) }, t("role_close"))
+        ), document.body)
+      );
+    }
+    module2.exports = { SessionRole, attachStream };
+  }
+});
+
 // packages/shell/client/slot-outlet.cjs
 var require_slot_outlet = __commonJS({
   "packages/shell/client/slot-outlet.cjs"(exports2, module2) {
@@ -5992,7 +6559,7 @@ var jsx = require("react/jsx-runtime");
 var h = react.createElement;
 var NS = "workbench";
 var LOCALE = require_locale();
-var CSS = require_styles();
+var CSS = require_styles2();
 var createPanellistIcon = require_panellist_icon();
 var addonNav = require_addon_nav()();
 var SystemPages = require_system_pages();
@@ -6008,21 +6575,9 @@ var apiCache = /* @__PURE__ */ new Map();
 var addonState = { addons: [], categories: null, loaded: false, shellVersion: "" };
 var storeListeners = /* @__PURE__ */ new Set();
 var cloudStatusListeners = /* @__PURE__ */ new Set();
-var recordModes = {};
-var recordListeners = /* @__PURE__ */ new Set();
+var sessionRole = require_session_role();
 var stream = null;
 var lastAddonError = null;
-function setRecordMode(sessionId, enabled) {
-  if (!sessionId) return;
-  recordModes[sessionId] = !!enabled;
-  recordListeners.forEach(function(fn) {
-    try {
-      fn(sessionId, !!enabled);
-    } catch (e) {
-      console.error(e);
-    }
-  });
-}
 function notifyStore() {
   storeListeners.forEach(function(fn) {
     try {
@@ -6160,14 +6715,7 @@ function ensureStream() {
       console.warn(err);
     }
   });
-  stream.addEventListener("record-mode", function(e) {
-    try {
-      var payload = JSON.parse(e.data);
-      if (payload && payload.sessionId) setRecordMode(payload.sessionId, payload.enabled);
-    } catch (err) {
-      console.warn(err);
-    }
-  });
+  sessionRole.attachStream(stream);
   stream.addEventListener("sync-done", notifyCloudStatus);
   stream.addEventListener("sync-status", notifyCloudStatus);
   stream.addEventListener("account-changed", notifyCloudStatus);
@@ -6642,77 +7190,6 @@ function WorkbenchPage(props) {
     ] })
   ] });
 }
-var RecordToggle = function(props) {
-  var sid = props && props.sessionId;
-  var st = react.useState(false);
-  var on = st[0];
-  var setOn = st[1];
-  var bst = react.useState(false);
-  var busy = bst[0];
-  var setBusy = bst[1];
-  var est = react.useState("");
-  var err = est[0];
-  var setErr = est[1];
-  var t = props && props.t;
-  react.useEffect(function() {
-    if (!sid) return;
-    var fn = function(changed, value) {
-      if (changed === sid) setOn(!!value);
-    };
-    recordListeners.add(fn);
-    ensureStream();
-    fetch("/workbench/api/record?sessionId=" + encodeURIComponent(sid)).then(function(r) {
-      return r.json();
-    }).then(function(j) {
-      if (j && j.ok) setRecordMode(sid, !!j.enabled);
-    }).catch(function() {
-    });
-    return function() {
-      recordListeners.delete(fn);
-    };
-  }, [sid]);
-  function toggle() {
-    if (!sid || busy) return;
-    setBusy(true);
-    setErr("");
-    fetch("/workbench/api/record", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ sessionId: sid, enabled: !on })
-    }).then(function(r) {
-      return r.json();
-    }).then(function(j) {
-      if (!j || !j.ok) throw new Error(j && j.error || "request failed");
-      setRecordMode(sid, !!j.enabled);
-    }).catch(function(e) {
-      var msg = String(e && e.message || e);
-      setErr(msg);
-      try {
-        console.warn("[dsh-workbench] record toggle failed:", msg);
-      } catch (_) {
-      }
-    }).then(function() {
-      setBusy(false);
-    });
-  }
-  if (!sid) return null;
-  var label = busy ? t("record_busy") : err ? t("record_failed_short") : on ? t("record_on") : t("record_off");
-  var title = err ? t("record_error") + ": " + err : on ? t("record_on_title") : t("record_off_title");
-  return h(
-    "button",
-    {
-      type: "button",
-      className: "wb-record-pill" + (on ? " on" : "") + (err ? " err" : ""),
-      onClick: toggle,
-      disabled: busy,
-      title,
-      "aria-label": t("record_label") + ": " + label,
-      "aria-pressed": on ? "true" : "false"
-    },
-    h("span", { className: "wb-record-dot" }),
-    h("span", { className: "wb-record-label", children: label })
-  );
-};
 var exports_ = {
   name: NS,
   // layout：跨页跳转需要把工作台面板切到前台（见 __WB_HOST__.navigateAddon 的第 2 条分支）。
@@ -6780,11 +7257,11 @@ var exports_ = {
       });
       ctx.slots.inject("conversation.input.left", function() {
         return ctx.slots.register(
-          { name: "conversation.input.left", id: NS + "-record", order: 40, label: function() {
-            return t("record_label");
+          { name: "conversation.input.left", id: NS + "-role", order: 40, label: function() {
+            return t("role_title");
           } },
           function(props) {
-            return h(RecordToggle, { sessionId: props && props.sessionId, t });
+            return h(sessionRole.SessionRole, { key: props.sessionId, sessionId: props.sessionId, t, ensureStream });
           }
         );
       });
