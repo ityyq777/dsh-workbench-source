@@ -57,6 +57,12 @@ CREATE TABLE IF NOT EXISTS sync_state (
 );
 
 -- 会话只保存所选工作台角色，状态仅在本机生效。
+CREATE TABLE IF NOT EXISTS user_role (
+  id TEXT PRIMARY KEY,
+  version TEXT NOT NULL,
+  definition TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS session_role (
   session_id TEXT PRIMARY KEY,
   role_id TEXT,

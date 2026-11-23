@@ -279,6 +279,15 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
                 return send(200, { ok: true, domains: listDomains(), categories: publicCategories(), shellVersion: SHELL_VERSION });
               }
 
+              if (p === "/role-catalog" && (m === "GET" || m === "POST")) {
+                try {
+                  const result = m === "GET" ? {roles: sessionRoles.catalog.list()} : sessionRoles.catalog.mutate(JSON.parse((await rawBodyOf(256 * 1024)).toString()));
+                  return send(200, {ok: true, ...result});
+                } catch (error) {
+                  return send(400, {ok: false, error: error instanceof Error ? error.message : String(error)});
+                }
+              }
+
               if (p === "/session-role" && (m === "GET" || m === "POST")) {
                 try {
                   const body = m === "POST" ? await bodyOf() : undefined;

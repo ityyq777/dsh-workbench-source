@@ -1,3 +1,4 @@
+import { createRoleCatalog } from "./catalog.js";
 import type { DatabaseSync } from "node:sqlite";
 import type { RegisteredDomain } from "../types/host-types.js";
 
@@ -15,16 +16,11 @@ export function createSessionRoles(db: DatabaseSync, domains: Map<string, Regist
     const row = select.get(sid);
     return { roleId: row?.role_id as string || null, version: row?.role_version as string || null };
   }
-  function resolve(id: string | null) {
-    if (!id) return;
-    const [domainId, localId] = id.split("/");
-    const domain = domains.get(domainId);
-    if (domain?.error !== null) return;
-    return domain.def.roles?.find(r => r.id === localId && domainId + "/" + r.id === id);
-  }
+  const catalog = createRoleCatalog(db, domains, emit);
+  const resolve = catalog.resolve;
   function info(sid: string) {
     const cfg = config(sid);
-    const roles = [...domains.values()].filter(rec => !rec.error).flatMap(rec => (rec.def.roles ?? []).map(r => ({ id: rec.def.id + "/" + r.id, domain: rec.def.id, name: r.name, description: r.description, version: r.version })));
+    const roles = catalog.list().map(({ id, domain, name, description, version, source }) => ({ id, domain, name, description, version, source }));
     return { sessionId: sid, ...cfg, unavailable: !!cfg.roleId && resolve(cfg.roleId)?.version !== cfg.version, roles };
   }
   function patch(sid: string, body: { roleId: string | null; sessionId?: string }) {
@@ -65,7 +61,10 @@ export function createSessionRoles(db: DatabaseSync, domains: Map<string, Regist
     else if (!current.once && selectMessage.get(current.sid,mid)) turns.set(agent,capture(agent,turn,mid));
   }
   function snapshot(agent: any) { return (agent && turns.get(agent)) ?? capture(agent,0,""); }
-  function available(s: Snapshot) { return !!s.role && s.role === resolve(s.roleId) && s.version === s.role.version; }
+  function available(s: Snapshot) {
+    const live = resolve(s.roleId);
+    return !!s.role && !!live && s.version === live.version && (catalog.isUser(s.roleId) || s.role === live);
+  }
   function prompt(agent: any) {
     if (!agent) return "";
     const s: Snapshot = snapshot(agent);
@@ -78,6 +77,6 @@ export function createSessionRoles(db: DatabaseSync, domains: Map<string, Regist
     }
     return text.join("\n");
   }
-  return { info, patch, claim, snapshot, available, prompt, bindMessageRole,
+  return { catalog, info, patch, claim, snapshot, available, prompt, bindMessageRole,
     discard: ({agent,message}: any) => { if(agent?.session?.id && message?.id) removeMessage.run(agent.session.id,message.id); } };
 }
