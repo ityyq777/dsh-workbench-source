@@ -11,6 +11,9 @@
  *   export function apply(ctx) { ctx.workbench.registerDomain({...}); }
  */
 
+import type { DomainRoleDef } from "./roles.js";
+export { parseDomainRoles, type DomainRoleDef } from "./roles.js";
+
 export interface DomainViewTitle {
   zh: string;
   en?: string;
@@ -406,6 +409,8 @@ export interface DomainDef {
   category?: string;
   /** 能力清单：声明本域记录什么、首选 action；缺省时宿主回退到 description + action 列表 */
   capability?: DomainCapability;
+  /** 可选的会话角色清单，完整标识由域 id 和本地角色 id 组成。 */
+  roles?: DomainRoleDef[];
   /** 业务插件自己的建表/注册逻辑；宿主调用并保存返回值作为清理函数 */
   setup?(api: DomainSetupApi): void | (() => void) | Promise<void | (() => void)>;
   /** 导出本插件的业务数据；返回可 JSON 序列化的对象，由宿主写入压缩包。 */
@@ -420,6 +425,8 @@ export interface DomainDef {
 export interface WorkbenchHost {
   readonly db: any;
   readonly shellVersion: string;
+  /** 为指定用户消息绑定一次角色，返回的函数可在派发失败时撤销绑定。 */
+  bindMessageRole(sessionId: string, messageId: string, roleId: string): () => void;
   /** 注册业务域；重复 id 会被拒绝。返回注销函数。 */
   registerDomain(def: DomainDef): () => void;
   hasDomain(id: string): boolean;
