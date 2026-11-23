@@ -1,10 +1,10 @@
 // 宿主静态文案。
 var LOCALE = {
   zh: {
-    role_title: "工作台角色", role_none: "不使用工作台角色", role_none_desc: "沿用当前 DSH 会话设置", role_missing: "角色已不可用，请重新选择", role_record: "收尾时记录交付物", role_next: "选择将从下一轮对话生效。", role_close: "关闭", role_retry: "重试", role_error: "无法读取或保存会话设置", role_loading: "读取中…",
+    role_title: "工作台角色", role_none: "不使用工作台角色", role_none_desc: "沿用当前 DSH 会话设置", role_missing: "角色已不可用，请重新选择", role_next: "选择将从下一轮对话生效。", role_close: "关闭", role_retry: "重试", role_error: "无法读取或保存会话设置", role_loading: "读取中…",
     nav: "工作台", title: "工作台", tagline: "离线优先 · 业务插件由 DSH 安装",
     tab_account: "账号与同步", tab_addons: "子插件", tab_backup: "数据备份",
-    tab_data: "数据", data_desc: "浏览宿主自己维护的平台表（meta、同步日志/死信/水位、会话记录模式、审计日志）：只读、可搜索、可分页",
+    tab_data: "数据", data_desc: "浏览宿主自己维护的平台表（meta、同步日志/死信/水位、会话角色、审计日志）：只读、可搜索、可分页",
     tab_config: "配置", config_desc: "按方案管理备份偏好。审计设置对本机所有方案生效。",
     tab_queue: "事件队列", queue_desc: "宿主事件队列的运行视图：各插件声明会发布/监听哪些事件、事件与按订阅拆出的投递；失败投递可重投，历史事件可清理",
     queue_queued: "排队", queue_dead: "死信", queue_pending: "待投递", queue_done: "已完成", queue_subscriptions: "订阅",
@@ -166,15 +166,12 @@ var LOCALE = {
     cloud_auth_ok: "访问密钥有效", cloud_auth_bad: "已连接，但访问密钥无效",
     cloud_server: "服务端", cloud_devices_count: "设备数",
     cloud_shared_hint: "共享云端请使用下面的账号登录",
-    record_label: "记录模式", record_on: "记录中", record_off: "记录",
-    record_on_title: "本会话记录模式已开启，点击关闭", record_off_title: "开启后把完成的可交付内容记到工作台（仅本会话）",
-    record_busy: "切换中", record_error: "切换失败", record_failed_short: "记录失败",
   },
   en: {
-    role_title: "Workbench role", role_none: "No workbench role", role_none_desc: "Use the current DSH session settings", role_missing: "Role unavailable. Choose another role.", role_record: "Record deliverables at the end of the turn", role_next: "Changes apply to the next turn.", role_close: "Close", role_retry: "Retry", role_error: "Could not read or save session settings", role_loading: "Loading…",
+    role_title: "Workbench role", role_none: "No workbench role", role_none_desc: "Use the current DSH session settings", role_missing: "Role unavailable. Choose another role.", role_next: "Changes apply to the next turn.", role_close: "Close", role_retry: "Retry", role_error: "Could not read or save session settings", role_loading: "Loading…",
     nav: "Workbench", title: "Workbench", tagline: "Offline-first · addons installed by DSH",
     tab_account: "Account & Sync", tab_addons: "Addons", tab_backup: "Data backup",
-    tab_data: "Data", data_desc: "Browse the platform tables the host itself owns (meta, sync log/dead letters/state, session modes, audit log): read-only, searchable, paged",
+    tab_data: "Data", data_desc: "Browse the platform tables the host itself owns (meta, sync log/dead letters/state, session roles, audit log): read-only, searchable, paged",
     tab_config: "Settings", config_desc: "Manage backup preferences in schemes. Audit settings apply to every scheme on this device.",
     tab_queue: "Event queue", queue_desc: "Runtime view of the host event queue: which events each plugin declares to publish or listen to, plus events and per-subscription deliveries; failed deliveries can be replayed and finished events cleaned up",
     queue_queued: "Queued", queue_dead: "Dead", queue_pending: "Pending", queue_done: "Done", queue_subscriptions: "Subs",
@@ -335,9 +332,6 @@ var LOCALE = {
     cloud_auth_ok: "Secret accepted", cloud_auth_bad: "Reachable, but the secret is rejected",
     cloud_server: "Server", cloud_devices_count: "Devices",
     cloud_shared_hint: "Use the account login below for the shared cloud",
-    record_label: "Record mode", record_on: "Recording", record_off: "Record",
-    record_on_title: "Record mode is on for this session; click to turn it off", record_off_title: "Record finished deliverables to the workbench (this session only)",
-    record_busy: "Switching", record_error: "Switch failed", record_failed_short: "Failed",
   },
 };
 module.exports = LOCALE;

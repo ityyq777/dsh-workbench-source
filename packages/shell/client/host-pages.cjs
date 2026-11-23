@@ -19,7 +19,7 @@ var HOST_TABLES = [
   "conflict_shadow",
   "sync_dead_letter",
   "sync_state",
-  "session_mode",
+  "session_role",
   "audit_log",
   "host_event",
   "host_event_delivery",
