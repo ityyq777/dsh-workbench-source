@@ -12,7 +12,9 @@ import { homedir } from "node:os";
 import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { openDb, setSyncStateText } from "@wb/core";
-import type { DatabaseSync } from "node:sqlite";
+import { parseDomainRoles } from "@wb/sdk";
+import { createSessionRoles } from "./session/roles.js";
+import { RECORD_COMMAND_HELP } from "./session/record.js";
 import type {
   DomainActionDef,
   DomainDef,
@@ -57,7 +59,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.14.0";
+export const SHELL_VERSION = "0.15.0";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -82,61 +84,6 @@ function saveCreds(creds: WbState["creds"] | null): void {
 
 /** SSE 订阅者集合（UI 实时刷新）。 */
 type Subscriber = (event: string, data: unknown) => void;
-
-/** 会话记录模式：只影响当前会话，不参与同步/备份。 */
-function sessionModeOf(db: DatabaseSync, sessionId: string): boolean {
-  try {
-    const row = db.prepare("SELECT enabled FROM session_mode WHERE session_id = ?").get(sessionId) as { enabled?: number } | undefined;
-    return !!row && Number(row.enabled) === 1;
-  } catch {
-    return false;
-  }
-}
-
-function setSessionMode(db: DatabaseSync, sessionId: string, enabled: boolean, now: number): void {
-  db.prepare(
-    "INSERT INTO session_mode(session_id, enabled, updated_at) VALUES(?, ?, ?) " +
-      "ON CONFLICT(session_id) DO UPDATE SET enabled = excluded.enabled, updated_at = excluded.updated_at",
-  ).run(sessionId, enabled ? 1 : 0, now);
-}
-
-const RECORD_COMMAND_HELP = [
-  "用法：/record on|off|status",
-  "",
-  "/record on      开启本会话的记录模式",
-  "/record off     关闭本会话的记录模式",
-  "/record status  查看当前状态",
-  "",
-  "记录模式下，我只把完成的可交付内容记成任务、站点或标签；",
-  "不记录聊天、日志、临时笔记、密钥和本地地址。",
-].join("\n");
-
-function recordPrompt(sessionId: string): string {
-  return [
-    "## 个人工作台账：记录模式",
-    "",
-    "本会话已开启记录模式。完成本轮主要任务后，如果产生了可复用的交付物，请顺手记到个人工作台；这只是收尾动作，不能打断或改变主任务。",
-    "",
-    "记录流程：",
-    "1. 先调用 Workbench，action 为 capabilities.list；需要某个域的字段细节时用 capabilities.get，再按需 actions.help。",
-    "2. 只记录同时满足 when 且不满足 notFor 的内容；没有命中就不写，不要为了有记录而凑数。",
-    "3. 用对应 records[].primaryAction 写入，不要猜 action 名。任务创建前先 tasks.capabilities / tasks.resolveTable，明确选择 tableId 或 tablePath；capabilities.get 中的有效显式映射优先，不按第一项自动选。",
-    "4. 写入前查重：任务先 tasks.list（titleKey），站点先 sites.list，标签先 tags.list / tags.search。已存在就复用并补关联，不重复创建。",
-    "5. 只新增，不修改、不删除工作台已有数据。",
-    "6. 任务回执必须保留完整目录路径、表名和任务 id，并提示可纠正归属；多条可简洁合并，但不能省略归属。失败只提示一次，不得当成成功，不阻塞主任务。",
-    "7. plan mode 下不要写入。",
-    "",
-    "记录边界：",
-    "- 任务：已完成的可交付项，或明确的下一步；不记纯问答、一次性查询、模糊想法。",
-    "- 站点：以后还会访问的外部站点；排除 localhost、127.0.0.1、内网地址、临时页、搜索结果页。",
-    "- 标签：可复用的主题分类；不记一次性描述、状态词、日期。",
-    "- 不记录聊天内容、日志、临时笔记、token/密钥/密码，以及用户明确拒绝记录的内容。",
-    "- 模式只作用于当前会话，不自动传给子 agent。",
-    "",
-    "去重键：任务用 dsh-session:" + sessionId + ":<稳定 slug>，每个条目一个键，不要整个会话共用一个键。",
-    "当前会话：" + sessionId,
-  ].join("\n");
-}
 
 export function apply(ctx: any): void {
   // 云端类型先于同步：私人云端用配置里的密钥合成凭据，共享云端沿用登录令牌。
@@ -173,6 +120,9 @@ export function apply(ctx: any): void {
       }
     }
   };
+  const sessionRoles = createSessionRoles(state.db, domains, emit);
+  ctx.on?.("agent/inbox/claimed", sessionRoles.claim);
+  ctx.on?.("agent/inbox/discarded", sessionRoles.discard);
   const log = (...args: unknown[]) => console.warn("[dsh-workbench]", ...args);
 
   // ── 跨域搜索：插件注册 provider，宿主只聚合，不读业务表 ──
@@ -240,6 +190,7 @@ export function apply(ctx: any): void {
     emit,
     db: state.db,
     search,
+    sessionRoles,
     extraMetaActions: [["host.agentRun", agentRun]],
     queueRef,
   });
@@ -276,6 +227,7 @@ export function apply(ctx: any): void {
     } else if (category.status === "unknown") {
       log("业务域声明了未知栏目 id，已归入兜底栏目", def.id, category.declared, "→", FALLBACK_CATEGORY_ID);
     }
+    def = { ...def, roles: parseDomainRoles(def.id, def.roles) };
     const rec: RegisteredDomain = { def, category: category.id, actions: new Map(), hooks: new Map(), error: null, dispose: null };
     domains.set(def.id, rec);
 
@@ -383,6 +335,7 @@ export function apply(ctx: any): void {
     db: state.db,
     shellVersion: SHELL_VERSION,
     registerDomain,
+    bindMessageRole: sessionRoles.bindMessageRole,
     hasDomain: (id: string) => domains.has(id),
     listDomains,
     call: (action: string, args?: Record<string, unknown>) => invoke(action, args ?? {}, "plugin"),
@@ -452,8 +405,7 @@ export function apply(ctx: any): void {
       name: "workbench:record-mode",
       order,
       text: (context: any) => {
-        const sid = String(context?.agent?.session?.id ?? context?.agent?.id ?? "");
-        return sid && sessionModeOf(state.db, sid) ? recordPrompt(sid) : "";
+        return sessionRoles.prompt(context?.agent);
       },
     });
     trackOn(scope, dispose);
@@ -472,8 +424,7 @@ export function apply(ctx: any): void {
         const arg = String(rawInput ?? "").trim().toLowerCase();
         if (arg === "on" || arg === "off") {
           const enabled = arg === "on";
-          setSessionMode(state.db, sid, enabled, clock.now());
-          emit("record-mode", { sessionId: sid, enabled });
+          sessionRoles.patch(sid, { enabled });
           return {
             kind: "success",
             text: enabled
@@ -482,7 +433,7 @@ export function apply(ctx: any): void {
           };
         }
         if (arg === "status") {
-          const enabled = sessionModeOf(state.db, sid);
+          const enabled = sessionRoles.info(sid).enabled;
           return {
             kind: "success",
             text: enabled
@@ -541,7 +492,7 @@ export function apply(ctx: any): void {
     return { ...result, files, cloud: publicCloudConfig(next) };
   }
 
-  const { runSync } = installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionModeOf, setSessionMode, audit, backupDomains, actionNames, invoke, log, schemaSnapshot, applyCloudConfig, publicCloudConfig, clearAllData });
+  const { runSync } = installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionRoles, audit, backupDomains, actionNames, invoke, log, schemaSnapshot, applyCloudConfig, publicCloudConfig, clearAllData });
   runSyncHolder = runSync;
   installTool(ctx);
 

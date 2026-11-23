@@ -1,3 +1,4 @@
+import { sessionKey } from "../session/roles.js";
 import { actionErrorText } from "../actions/action-output.js";
 import { randomUUID } from "node:crypto";
 import { getSyncStateText, setSyncStateText } from "@wb/core";
@@ -7,7 +8,7 @@ import type { Subscriber } from "../types/host-types.js";
 import { publicCategories } from "./categories.js";
 import { normalizeUrl } from "./cloud-config.js";
 import { CLEAR_CONFIRM } from "./data-clear.js";
-export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionModeOf, setSessionMode, audit, backupDomains, actionNames, invoke, log, schemaSnapshot, applyCloudConfig, publicCloudConfig, clearAllData }: any) {
+export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, subscribers, listDomains, SHELL_VERSION, sessionRoles, audit, backupDomains, actionNames, invoke, log, schemaSnapshot, applyCloudConfig, publicCloudConfig, clearAllData }: any) {
   /** 云端 fetch 封装（带 access token；401 时尝试 refresh 一次）。 */
   async function cloudFetch(path: string, init?: RequestInit & { json?: unknown }, retry = true): Promise<any> {
     const headers: Record<string, string> = {
@@ -278,21 +279,15 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
                 return send(200, { ok: true, domains: listDomains(), categories: publicCategories(), shellVersion: SHELL_VERSION });
               }
 
-              if (p === "/record" && m === "GET") {
-                const sid = String(url.searchParams.get("sessionId") ?? "").trim();
-                if (!sid) return send(400, { ok: false, error: "缺少 sessionId" });
-                return send(200, { ok: true, sessionId: sid, enabled: sessionModeOf(state.db, sid) });
-              }
-
-              if (p === "/record" && m === "POST") {
-                const body = await bodyOf();
-                const sid = String(body?.sessionId ?? "").trim();
-                if (!sid || sid.length > 200) return send(400, { ok: false, error: "sessionId 不合法" });
-                if (typeof body?.enabled !== "boolean") return send(400, { ok: false, error: "enabled 必须是布尔值" });
-                const enabled = body.enabled === true;
-                setSessionMode(state.db, sid, enabled, clock.now());
-                emit("record-mode", { sessionId: sid, enabled });
-                return send(200, { ok: true, sessionId: sid, enabled });
+              if ((p === "/record" || p === "/session-role") && (m === "GET" || m === "POST")) {
+                try {
+                  const body = m === "POST" ? await bodyOf() : undefined;
+                  const sid = sessionKey(m === "GET" ? url.searchParams.get("sessionId") : body?.sessionId);
+                  const cfg = m === "GET" ? sessionRoles.info(sid) : sessionRoles.patch(sid, p === "/record" ? { enabled: body.enabled } : body);
+                  return send(200, p === "/record" ? { ok: true, sessionId: sid, enabled: cfg.enabled } : { ok: true, ...cfg });
+                } catch (error) {
+                  return send(400, { ok: false, error: error instanceof Error ? error.message : String(error) });
+                }
               }
 
               if (p === "/audit" && m === "GET") {

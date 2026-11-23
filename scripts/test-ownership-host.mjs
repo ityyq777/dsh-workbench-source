@@ -14,7 +14,7 @@ const ctx = {
   effect(fn) { const cleanup = fn(); if (typeof cleanup === "function") cleanups.push(cleanup); },
 };
 const call = (action, args = {}) => host.invoke(action, args, "agent");
-const text = async (action, args = {}) => (await tool.execute({ action, args })).text;
+const text = async (action, args = {}) => (await tool.execute({ action, args }, { agent: { session: { id: "fixture" } } })).text;
 try {
   const shell = await import("../packages/shell/lib/index.js");
   const packageVersion = JSON.parse(readFileSync(new URL("../packages/shell/package.json", import.meta.url), "utf8")).version;
@@ -31,7 +31,7 @@ try {
   const cap = async (domain = "storage") => (await call("capabilities.get", { domain })).result.capability.taskOwnership;
   assert.equal((await cap()).status, "unconfigured");
   assert.match(await text("capabilities.get", { domain: "storage" }), /storage.create/);
-  assert.match(await text("capabilities.get", { domain: "storage" }), /tasks.create/);
+  assert.doesNotMatch(await text("capabilities.get", { domain: "storage" }), /tasks.create/, "未安装任务域时不应推荐不可调用的动作");
   assert.match(await text("capabilities.setTaskTarget", { domain: "storage", tableId: "x" }), /TASKS_UNAVAILABLE/);
   assert.equal((await cap()).configured, false);
   (await import("../packages/addons/tasks/lib/index.js")).apply({ workbench: host, effect: ctx.effect });

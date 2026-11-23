@@ -61,7 +61,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
   }
 
   /** 取业务域的能力清单；未声明时回退到域描述，保留 action 列表供 agent 自行判断。 */
-  function capabilityOf(rec: RegisteredDomain) {
+  function capabilityOf(rec: RegisteredDomain, origin: string) {
     const declared = rec.def.capability;
     if (!declared) {
       return {
@@ -98,6 +98,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
       } else if (!rec.actions.has(primaryAction)) {
         warnings.push(kind + "：primaryAction 未注册：" + primaryAction);
       }
+      if (origin === "agent" && (!rec.actions.has(primaryAction) || !agentVisible(primaryAction, rec.actions.get(primaryAction)))) continue;
       records.push({
         kind,
         title: String((raw as any).title ?? kind),
@@ -159,7 +160,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
     const kind = args.kind === undefined || args.kind === null ? "" : String(args.kind).trim();
     const out: any[] = [];
     for (const rec of domains.values()) {
-      const cap = capabilityOf(rec);
+      const cap = capabilityOf(rec, origin);
       if (kind && !cap.records.some((r: any) => r.kind === kind)) continue;
       const slots = slotInfo(rec);
       for (const row of slots.contributes) {
@@ -189,7 +190,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
           description: r.description,
           primaryAction: r.primaryAction,
         })),
-        taskOwnership: await taskTargets.get(rec),
+        taskOwnership: await taskTargets.get(rec, origin),
         slots,
         warnings: cap.warnings,
       });
@@ -244,7 +245,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
     if (!name) throw new Error("缺少 domain；先用 capabilities.list 查看可用业务域");
     const rec = findDomain(name);
     if (!rec) throw new Error("没有该业务域：" + name + "；先用 capabilities.list 查看");
-    const cap = capabilityOf(rec);
+    const cap = capabilityOf(rec, origin);
     return {
       shellVersion: SHELL_VERSION,
       domain: {
@@ -257,7 +258,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
       },
       capability: {
         summary: cap.summary,
-        taskOwnership: await taskTargets.get(rec),
+        taskOwnership: await taskTargets.get(rec, origin),
         records: cap.records,
         notFor: cap.notFor,
         notes: cap.notes,

@@ -63,6 +63,26 @@ CREATE TABLE IF NOT EXISTS session_mode (
   updated_at INTEGER NOT NULL
 );
 
+-- 角色与收尾选项共享会话配置，旧表保留作降级兼容。
+CREATE TABLE IF NOT EXISTS session_role (
+  session_id TEXT PRIMARY KEY,
+  role_id TEXT,
+  role_version TEXT,
+  enabled INTEGER NOT NULL DEFAULT 0,
+  updated_at INTEGER NOT NULL
+);
+INSERT OR IGNORE INTO session_role(session_id, enabled, updated_at)
+SELECT session_id, enabled, updated_at FROM session_mode;
+
+-- 命令选定的角色仅适用于对应消息，排队消息在进程恢复后仍可核对。
+CREATE TABLE IF NOT EXISTS session_message_role (
+  session_id TEXT NOT NULL,
+  message_id TEXT NOT NULL,
+  role_id TEXT NOT NULL,
+  role_version TEXT NOT NULL,
+  PRIMARY KEY(session_id, message_id)
+);
+
 -- 宿主事件队列：push 方只写一行就返回，订阅方的消费 action 由后台 drain 异步分发。
 -- 三张表都是平台表，业务插件不建、也不参与云同步。
 CREATE TABLE IF NOT EXISTS host_event (

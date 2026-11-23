@@ -24,7 +24,7 @@ function boot() {
   async function call(name, args = {}, origin = 'agent') {
     if (origin === 'plugin') return (await host.invoke(name, args)).result;
     if (origin === 'agent') {
-      const { text } = await tool.execute({ action: name, args });
+      const { text } = await tool.execute({ action: name, args }, { agent: { session: { id: "fixture" } } });
       if (text.startsWith('错误')) throw new Error(text);
       return text;
     }
@@ -84,7 +84,7 @@ try {
   // 默认声明里没有 sync：想放开同步同样越界。
   await assert.rejects(env.call(setter, { action, origins: ['ui', 'sync'] }, 'ui'), /不支持/);
   assert.ok(isDenied(await denied(env.call(action, { name: '不应创建' }))));
-  assert.match((await env.tool.execute({ action, args: { name: '工具也不应创建' } })).text, /ACTION_ORIGIN_DENIED/);
+  assert.match((await env.tool.execute({ action, args: { name: '工具也不应创建' } }, { agent: { session: { id: "fixture" } } })).text, /ACTION_ORIGIN_DENIED/);
 
   // 4) 权限不可自授：agent 改不了任何 action 的来源；来源设置自身的数组被钉死为 ui。
   await assert.rejects(set(['ui', 'agent'], action, 'agent'));

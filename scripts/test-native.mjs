@@ -115,14 +115,14 @@ try {
   const fixtureTableId = (await call("taskNodes.create", { parentId: "1", type: "1", name: "原生回归任务表" })).result.node.id;
 
   // ── 2. Workbench 工具：args 合并 + 假字段告警 ──
-  const viaArgs = await toolDef.execute({ action: "tasks.create", args: { tableId: fixtureTableId, title: "嵌套参数任务", priority: 4 } });
+  const viaArgs = await toolDef.execute({ action: "tasks.create", args: { tableId: fixtureTableId, title: "嵌套参数任务", priority: 4 } }, { agent: { session: { id: "fixture" } } });
   assert(viaArgs.text.includes("嵌套参数任务"), "args 嵌套参数未生效：" + viaArgs.text);
-  const trap = await toolDef.execute({ action: "tasks.create", args: { tableId: fixtureTableId, title: "假字段任务" }, due_at: 1700000000, assignee: "me", parentId: "1" });
+  const trap = await toolDef.execute({ action: "tasks.create", args: { tableId: fixtureTableId, title: "假字段任务" }, due_at: 1700000000, assignee: "me", parentId: "1" }, { agent: { session: { id: "fixture" } } });
   assert(trap.text.startsWith("⚠"), "假字段未告警：" + trap.text);
   assert(trap.text.includes("due_at") && trap.text.includes("assignee") && trap.text.includes("parentId"), "假字段告警不完整：" + trap.text);
   const trapList = await call("tasks.list", { titleKey: "假字段任务" });
   assert(trapList.result.records.length === 1, "假字段任务未创建成功");
-  const conflict = await toolDef.execute({ action: "tasks.create", args: { tableId: fixtureTableId, title: "A" }, title: "B" });
+  const conflict = await toolDef.execute({ action: "tasks.create", args: { tableId: fixtureTableId, title: "A" }, title: "B" }, { agent: { session: { id: "fixture" } } });
   assert(conflict.text.includes("错误"), "args 与顶层冲突未报错");
 
   // ── 3. 基础 CRUD ──

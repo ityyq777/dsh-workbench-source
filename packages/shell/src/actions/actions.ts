@@ -1,5 +1,6 @@
 import type { ActionOrigin, DomainActionDef } from "@wb/sdk";
-import { actionErrorText } from "./action-output.js";
+import { installWorkbenchTools } from "../session/tool.js";
+import { createToolPolicy } from "../session/tool-policy.js";
 import { renderActionHelp, renderActionList, renderAuditList, renderAuditRecord, renderAuditStats } from "./action-render.js";
 import { createTaskTargets } from "./task-targets.js";
 import { createCapabilities } from "./capabilities.js";
@@ -17,10 +18,11 @@ export function createActions({
   db,
   search,
   extraMetaActions,
-  queueRef,
+  queueRef, sessionRoles,
 }: any) {
   /** 宿主内置的元 action 归属域（不参与备份，也不是业务插件）。 */
   const META_DOMAIN = "wb-shell";
+  const policy = createToolPolicy(sessionRoles, domains);
 
   /** 允许来源开关（多选）：声明默认值 + 本机 meta 覆盖，同样只在本机生效。 */
   // 权限设置自身钉死为 ui：它改的是别人的权限数组，自己不能被改宽。
@@ -29,7 +31,7 @@ export function createActions({
   /** 权限开关拦下的错误：都要进审计，且即使 action 属于「默认不记」的类别也不例外。 */
   function isPolicyDenied(error: unknown): boolean {
     const code = String((error as { code?: unknown } | null)?.code ?? "");
-    return code === "ACTION_AGENT_DISABLED" || code === "ACTION_UI_ONLY" || code === "ACTION_ORIGIN_DENIED";
+    return code === "ACTION_ROLE_DENIED" || code === "ACTION_AGENT_DISABLED" || code === "ACTION_UI_ONLY" || code === "ACTION_ORIGIN_DENIED";
   }
 
   /** 来源不在允许集合里时的结构化错误：调用方据此知道自己是被权限挡下的，而不是参数错。 */
@@ -53,7 +55,7 @@ export function createActions({
 
   /** agent 视角下某个 action 是否可见/可调：来源数组里必须有 agent（ui 恒看全量）。 */
   function agentVisible(name: string, def?: DomainActionDef | null): boolean {
-    return originAccess.allows(name, def, "agent");
+    return policy.allows(name) && originAccess.allows(name, def, "agent");
   }
 
   /** 分发前拦截：来源不在该 action 的允许集合里就拒绝（未知 action 仍走原来的报错）。 */
@@ -206,9 +208,10 @@ export function createActions({
       "）",
   });
 
-  /** 旧版 Workbench 顶层 schema 里的“通用字段”，多数 action 并不接受。 */
-  const TRAP_FIELDS = ["due_at", "note", "tags", "tagIds", "dirIds", "parentId", "deadline", "start_at", "assignee", "limit"];
-const taskTargets = createTaskTargets(db, domains, invoke);
+  const taskTargets = createTaskTargets(db, domains, invoke, (name) => {
+    const found = findActionDef(name);
+    return !!found && agentVisible(name, found.def);
+  });
 META_ACTIONS.set("capabilities.setTaskTarget", taskTargets.setAction);
 const { capabilityListMeta, renderCapabilityList, capabilityGetMeta, renderCapability } = createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTargets, agentVisible });
   function findActionDef(name: string): { def: DomainActionDef; domainId: string } | null {
@@ -417,6 +420,7 @@ const { capabilityListMeta, renderCapabilityList, capabilityGetMeta, renderCapab
     // 入口一处拦截：agent 调不到被本机关闭的 action（含永久锁死的开关自身）；
     // ui/sync/plugin 的语义完全不变。拦截失败同样会进 invoke() 的审计。
     // 来源白名单：只有 origins 里列出的来源能调（agent 的来源同时决定它能否看见该 action）。
+    if (origin === "agent") policy.check(action);
     assertOriginAllowed(action, origin);
     if (action === "capabilities.list") {
       const result = await capabilityListMeta(args, origin);
@@ -490,92 +494,10 @@ const { capabilityListMeta, renderCapabilityList, capabilityGetMeta, renderCapab
       ...result,
       actions:
         origin === "agent"
-          ? actions.filter((entry: any) => !Array.isArray(entry.origins) || entry.origins.includes("agent"))
+          ? actions.filter((entry: any) => policy.allows(entry.name) && Array.isArray(entry.origins) && entry.origins.includes("agent"))
           : actions,
     };
   }
-function installTool(ctx: any) {
-  // ── Agent 工具：Workbench（单工具多 action，action 由已注册业务域动态提供）──
-  ctx.tools?.register({
-    name: "Workbench",
-    timeoutMs: 60_000,
-    description:
-      "个人工作台。action 由已安装业务插件提供（tasks.* / taskNodes.* / tags.* / sites.* / siteTags.* / siteNodes.*），" +
-      "宿主另提供 capabilities.list / capabilities.get 查看各插件记录什么、任务归属显式配置及首选 action；capabilities.setTaskTarget 配置 domain→tableId。" +
-      "物品用 storage.create，开发工作用 tasks.create；创建任务前用 tasks.capabilities / tasks.resolveTable 明确目标，不能默认第一张表。" +
-      "actions.list / actions.help 用于自举：先 actions.list 看有哪些 action，再 actions.help 看真实字段。" +
-      "审计留痕可直接查 audit.list / audit.get / audit.stats（本机行为账本：谁在何时调了什么、成功与否，参数已脱敏）。" +
-      "入参统一放进 args；不要再按旧版顶层字段（due_at / tags / parentId 等）猜参数。" +
-      "被本机在 Action 页关闭 agent 访问的 action 不会出现在 actions.list 中，直接调用返回 ACTION_AGENT_DISABLED（界面仍可正常使用）；" +
-      "安装或卸载业务插件请使用 DSH 的插件管理，不在本工具里做。",
-    parameters: {
-      type: "object",
-      properties: {
-        action: {
-          type: "string",
-          description: "action 名，如 capabilities.list / capabilities.get / actions.list / tasks.list / tasks.create / tags.create / sites.list",
-        },
-        args: {
-          type: "object",
-          description: "该 action 的入参对象；字段名与类型以 actions.help 的返回为准",
-          additionalProperties: true,
-        },
-      },
-      required: ["action"],
-      // 兼容旧调用：未放进 args 的顶层字段仍会被采纳（但会按 action 的真实 schema 校验并提示被忽略项）
-      additionalProperties: true,
-    },
-    output: {
-      schema: { type: "object", properties: { text: { type: "string" } } },
-      render: (_a: unknown, v: { text: string }) => [{ type: "text" as const, text: v.text }],
-    },
-    execute: async (args: any) => {
-      const raw = String(args.action || "");
-      try {
-        if (!raw) return { text: "错误：缺少 action（先调用 actions.list）" };
-        // 兼容旧工具调用：无命名空间的 list/create/... 映射到 tasks.*
-        const action = raw.indexOf(".") >= 0 ? raw : "tasks." + raw;
-        const flat: Record<string, unknown> = { ...args };
-        delete flat.action;
-        const nested = flat.args;
-        delete flat.args;
-
-        const payload: Record<string, unknown> = {};
-        if (nested && typeof nested === "object" && !Array.isArray(nested)) {
-          Object.assign(payload, nested as Record<string, unknown>);
-        }
-        for (const [key, value] of Object.entries(flat)) {
-          if (Object.prototype.hasOwnProperty.call(payload, key) && JSON.stringify(payload[key]) !== JSON.stringify(value)) {
-            return { text: "错误：参数 " + key + " 同时出现在 args 和顶层且值不同，请只传一处" };
-          }
-          payload[key] = value;
-        }
-
-        // 旧版 Workbench schema 里有一批“看起来通用、实际没人接”的字段：若该 action 的
-        // 真实 schema 不声明它们，就明确提示已忽略，而不是静默丢参。
-        const known = new Set<string>();
-        const found = findActionDef(action);
-        if (found) for (const key of Object.keys(actionParams(found.def).props)) known.add(key);
-        const ignored: string[] = [];
-        for (const key of TRAP_FIELDS) {
-          if (Object.prototype.hasOwnProperty.call(payload, key) && !known.has(key)) {
-            ignored.push(key + "=" + JSON.stringify(payload[key]));
-            delete payload[key];
-          }
-        }
-
-        const r = await invoke(action, payload, "agent");
-        const warning = ignored.length
-          ? "⚠ " + action + " 不接受这些参数，已忽略：\n  " + ignored.join("\n  ") +
-            "\n（真实字段名以 actions.help 为准）\n\n"
-          : "";
-        return { text: warning + r.text };
-      } catch (e) {
-        return { text: "错误：" + actionErrorText(e) };
-      }
-    },
-  });
-}
 /**
  * 只读 schema 快照：给 /workbench/api/schema 的 Action 页调试用。
  * 与 actions.list(detail=true) 同源（同一份 actionEntry + 注册表），额外带上每个 action 的示例；
@@ -626,5 +548,9 @@ function schemaSnapshot(domain?: string) {
     execute: () => ({ domains: search.list() }),
   });
 
+  const installTool = (ctx: any) => {
+    ctx.inject?.(["planMode"], (scope: any) => policy.setPlan(scope.planMode));
+    installWorkbenchTools(ctx, { findActionDef, actionParams, invoke, policy, sessionRoles });
+  };
   return { invoke, actionNames, installTool, schemaSnapshot };
 }

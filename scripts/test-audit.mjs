@@ -37,7 +37,7 @@ function assert(cond, message) {
 /** 真实 agent 入口：走宿主注册的工具，origin 由宿主内部固定为 agent。 */
 async function agentCall(action, args) {
   if (!tool) throw new Error("宿主没有注册 Workbench 工具");
-  return (await tool.execute({ action, args: args || {} })).text;
+  return (await tool.execute({ action, args: args || {} }, { agent: { session: { id: "fixture" } } })).text;
 }
 
 /** 真实 ui 入口：走网络层 action 路由，origin 固定为 ui。 */

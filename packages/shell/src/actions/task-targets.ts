@@ -8,32 +8,35 @@ type Invoke = (action: string, args: Record<string, unknown>, origin: ActionOrig
 const PREFIX = "capability.taskTarget:";
 
 /** Environment-local explicit mapping. No task schema or business rows are written here. */
-export function createTaskTargets(db: DatabaseSync, domains: Map<string, RegisteredDomain>, invoke: Invoke) {
+export function createTaskTargets(db: DatabaseSync, domains: Map<string, RegisteredDomain>, invoke: Invoke, agentVisible: (action: string) => boolean) {
   function domainOf(raw: unknown): RegisteredDomain {
     const name = String(raw ?? "").trim();
     const domain = domains.get(name) || domains.get("wb-addon-" + name);
     if (!domain) throw new Error("DOMAIN_NOT_FOUND：没有该业务域；先调用 capabilities.list");
     return domain;
   }
-  async function target(tableId: string) {
+  async function target(tableId: string, origin: ActionOrigin) {
     const tasks = domains.get("wb-addon-tasks");
     if (!tasks || tasks.error || !tasks.actions.has("tasks.capabilities")) throw new Error("TASKS_UNAVAILABLE：任务发现能力不可用");
-    const { result } = await invoke("tasks.capabilities", { tableId }, "agent");
+    const { result } = await invoke("tasks.capabilities", { tableId }, origin);
     const table = result?.tables?.find((t: any) => String(t.id) === tableId);
     if (!table || !table.tablePath || !Array.isArray(table.pathSegments) || !table.pathSegments.length) {
       throw new Error("TABLE_NOT_FOUND：目标表不存在或路径无效");
     }
     return table;
   }
-  async function get(rec: RegisteredDomain) {
+  async function get(rec: RegisteredDomain, origin: ActionOrigin) {
+    // 在读取本地映射之前检查发现权限，防止间接暴露目标表或触发额外工具调用。
+    if (origin === "agent" && !agentVisible("tasks.capabilities")) return null;
     const guidance = rec.def.capability?.taskOwnership;
     const tableId = getSyncStateText(db, PREFIX + rec.def.id) || null;
     const nextActions = [{ action: "tasks.resolveTable", args: { query: guidance?.query || rec.def.title } }];
+    if (origin === "agent" && !agentVisible("tasks.resolveTable")) nextActions.length = 0;
     const base = { boundary: guidance?.boundary || "业务记录使用本域 action；开发/修复工作项使用 tasks.create。一次性问答与临时查询不建任务。", nextActions,
-      configureAction: "capabilities.setTaskTarget", domain: rec.def.id };
+      configureAction: origin !== "agent" || agentVisible("capabilities.setTaskTarget") ? "capabilities.setTaskTarget" : null, domain: rec.def.id };
     if (!tableId) return { ...base, configured: false, status: "unconfigured", message: "未配置任务归属；先 resolve 候选，由用户明确选择后配置。", tableId: null };
     try {
-      const table = await target(tableId);
+      const table = await target(tableId, origin);
       return { ...base, configured: true, status: "configured", tableId, path: table.path, tablePath: table.tablePath,
         pathSegments: table.pathSegments, description: table.description, message: "显式配置优先；创建任务仍须传 tableId。" };
     } catch (error) {
@@ -48,15 +51,15 @@ export function createTaskTargets(db: DatabaseSync, domains: Map<string, Registe
       tableId: { type: ["string", "number", "null"], description: "tasks.capabilities/resolveTable 返回且经明确选择的目标表 id；null 清除配置" },
     }, required: ["domain", "tableId"] },
     examples: [{ domain: "storage", tableId: null }],
-    async execute(args) {
+    async execute(args, { origin }) {
       const rec = domainOf(args.domain);
       if (!Object.prototype.hasOwnProperty.call(args, "tableId")) throw new Error("TABLE_REQUIRED：必须显式提供 tableId；清除用 null");
       if (args.tableId !== null) {
         if (!["string", "number"].includes(typeof args.tableId) || !String(args.tableId).trim()) throw new Error("INVALID_TABLE_ID：tableId 必须是非空 string/number，清除用 null");
-        await target(String(args.tableId).trim());
+        await target(String(args.tableId).trim(), origin);
       }
       setSyncStateText(db, PREFIX + rec.def.id, args.tableId === null ? "" : String(args.tableId).trim());
-      return get(rec);
+      return (await get(rec, origin)) ?? { domain: rec.def.id, message: "任务归属配置已保存。" };
     },
     render: (result) => renderTaskTarget(result),
   };
@@ -64,10 +67,10 @@ export function createTaskTargets(db: DatabaseSync, domains: Map<string, Registe
 }
 
 export function renderTaskTarget(value: any): string {
-  const lines = ["任务归属指引：" + value.boundary, value.message];
+  const lines = value.boundary ? ["任务归属指引：" + value.boundary, value.message] : [value.message];
   if (value.configured) lines.push("目标：" + (value.pathSegments || []).map((p: any) => p.name).join(" / ") + "（tableId=" + value.tableId + "）；职责：" + (value.description || "未填写"));
   if (value.reason) lines.push("原因：" + value.reason);
   for (const action of value.nextActions || []) lines.push("下一步：Workbench(" + JSON.stringify(action) + ")");
-  lines.push("配置入口：capabilities.setTaskTarget({domain:" + JSON.stringify(value.domain) + ",tableId:<明确选择的表id>})；null 可清除。");
+  if (value.configureAction) lines.push("配置入口：capabilities.setTaskTarget({domain:" + JSON.stringify(value.domain) + ",tableId:<明确选择的表id>})；null 可清除。");
   return lines.join("\n");
 }
