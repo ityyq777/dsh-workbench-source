@@ -2,7 +2,7 @@
  * 产出 packages/shell-dist：dsh plugin add file: 可直接安装。
  * 内联 core 与 SDK 的运行时产物，保证安装后无需解析工作区依赖。
  */
-import { cpSync, readFileSync, writeFileSync, rmSync, mkdirSync, readdirSync } from "node:fs";
+import { cpSync, readFileSync, writeFileSync, rmSync, mkdirSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 
 const root = join(import.meta.dirname, "..");
@@ -11,12 +11,17 @@ rmSync(out, { recursive: true, force: true });
 mkdirSync(join(out, "lib"), { recursive: true });
 mkdirSync(join(out, "client"), { recursive: true });
 
-// 整体复制宿主编译产物（addons.js / tar.js / sync.js / index.js 一个都别漏），core 内联为 lib/core
-cpSync(join(root, "packages", "shell", "lib"), join(out, "lib"), { recursive: true });
-cpSync(join(root, "packages", "core", "lib"), join(out, "lib", "core"), { recursive: true });
-
-// 角色注册使用 SDK 的运行时校验，独立安装时需一并带入。
-cpSync(join(root, "packages", "sdk", "lib"), join(out, "lib", "sdk"), { recursive: true });
+// 增量编译可能留下已删除模块的输出。发行包只收录当前源码对应的产物。
+for (const pkg of ["shell", "core", "sdk"]) {
+  const base = join(root, "packages", pkg);
+  const lib = join(base, "lib");
+  const dest = pkg === "shell" ? join(out, "lib") : join(out, "lib", pkg);
+  cpSync(lib, dest, { recursive: true, filter(path) {
+    const rel = relative(lib, path);
+    if (!/\.(?:js|d\.ts)(?:\.map)?$/.test(rel)) return true;
+    return existsSync(join(base, "src", rel.replace(/\.(?:d\.ts|js)(?:\.map)?$/, ".ts")));
+  } });
+}
 
 function inlinePackages(dir) {
   for (const name of readdirSync(dir, { withFileTypes: true })) {
