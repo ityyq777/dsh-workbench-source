@@ -498,7 +498,7 @@ function WorkbenchPage(props) {
   }
   if (route === "account") {
     return jsx.jsxs("div", { className: "wb-root", children: [
-      jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_account"), t("account_desc")), jsx.jsx(HostPages.PreferenceView, { React: react, component: AccountTab, api: api, t: t }, "account")] }),
+      jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_account"), t("account_desc")), jsx.jsx(HostPages.PreferenceView, { React: react, component: AccountTab, api: api, t: t, openConfig: function () { go("config"); } }, "account")] }),
     ] });
   }
   if (currentAddon) {

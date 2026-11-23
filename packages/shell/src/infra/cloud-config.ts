@@ -77,7 +77,7 @@ function readPrivate(input: Partial<PrivateCloud> | undefined, previous: Private
 
 function emptyConfig(sharedUrl: string): CloudConfig {
   return {
-    mode: "shared",
+    mode: "none",
     sharedUrl,
     private: { url: "", secret: "", deviceId: newDeviceId(), deviceName: "DSH Web" },
   };
@@ -85,13 +85,13 @@ function emptyConfig(sharedUrl: string): CloudConfig {
 
 /**
  * 读取云端配置。旧版本没有该文件：只要登录过共享云端就按 shared 迁移，
- * 否则仍按 shared 处理，保持账号页原样，不惊动既有用户。
+ * 其余情况默认仅本机使用。配置文件损坏时也回到仅本机，以免误连云端。
  */
 export function loadCloudConfig(home: string, sharedUrl: string, legacyCreds: CloudCreds | null): CloudConfig {
   const fallback = emptyConfig(sharedUrl);
   const file = join(home, CLOUD_CONFIG_FILE);
   if (!existsSync(file)) {
-    return { ...fallback, mode: legacyCreds ? "shared" : "shared" };
+    return { ...fallback, mode: legacyCreds ? "shared" : fallback.mode };
   }
   let raw: Partial<CloudConfig> = {};
   try {
@@ -99,7 +99,7 @@ export function loadCloudConfig(home: string, sharedUrl: string, legacyCreds: Cl
   } catch {
     raw = {};
   }
-  const mode = isCloudMode(raw.mode) ? raw.mode : "shared";
+  const mode = isCloudMode(raw.mode) ? raw.mode : fallback.mode;
   let configSharedUrl = fallback.sharedUrl;
   try {
     if (raw.sharedUrl) configSharedUrl = normalizeUrl(raw.sharedUrl);

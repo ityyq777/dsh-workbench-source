@@ -480,13 +480,15 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
                 // 否则测的永远是上一次保存的地址。缺省才回落到已保存配置。
                 const draft: any = await bodyOf().catch(() => ({}));
                 const draftPrivate = (draft && draft.private) || {};
-                let baseUrl = state.cloudUrl;
-                let token = state.creds ? state.creds.accessToken : "";
+                let baseUrl = state.cloudConfig.sharedUrl;
+                let token = "";
                 let probeMode = state.cloudConfig.mode;
                 if (draft && (draft.mode === "private" || draft.mode === "shared" || draft.mode === "none")) {
                   probeMode = draft.mode;
                 }
-                if (typeof draftPrivate.url === "string" && draftPrivate.url.trim()) {
+                if (probeMode === "none") return send(200, { ok: true, reachable: false, status: 0, mode: "none" });
+                if (probeMode === "private") baseUrl = state.cloudConfig.private.url;
+                if (probeMode === "private" && typeof draftPrivate.url === "string" && draftPrivate.url.trim()) {
                   try {
                     baseUrl = normalizeUrl(draftPrivate.url);
                   } catch (e) {
@@ -500,10 +502,12 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
                     });
                   }
                 }
-                if (typeof draftPrivate.secret === "string" && draftPrivate.secret.trim()) {
+                if (probeMode === "private" && typeof draftPrivate.secret === "string" && draftPrivate.secret.trim()) {
                   token = draftPrivate.secret.trim();
-                } else if (probeMode === "private" && !token) {
+                } else if (probeMode === "private" && baseUrl === state.cloudConfig.private.url) {
                   token = state.cloudConfig.private.secret;
+                } else if (probeMode === "shared" && state.cloudConfig.mode === "shared") {
+                  token = state.creds?.accessToken || "";
                 }
                 const reasonOf = (e: unknown) => {
                   const err: any = e;

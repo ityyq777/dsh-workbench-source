@@ -58,7 +58,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.16.0";
+export const SHELL_VERSION = "0.16.1";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -66,7 +66,9 @@ const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
 
 function loadCreds(): WbState["creds"] {
   try {
-    return JSON.parse(readFileSync(join(WB_HOME, "cloud-creds.json"), "utf8"));
+    const creds = JSON.parse(readFileSync(join(WB_HOME, "cloud-creds.json"), "utf8"));
+    if (![creds?.accessToken, creds?.userId, creds?.deviceId].every(v => typeof v === "string" && v.trim())) return null;
+    return creds;
   } catch {
     return null;
   }
@@ -437,7 +439,7 @@ export function apply(ctx: any): void {
   /**
    * 清空本机数据：业务表、插件配置、同步游标与云端连接全部重置到初始状态。
    * 只删行不删表，业务域持有的是同一个 DatabaseSync 句柄，清空后仍可继续写入；
-   * 云端连接文件删除后回到默认「共享云端 + 未登录」，后台同步循环因 creds 为空自动停摆。
+   * 云端连接文件删除后回到默认「仅本机」，后台同步循环因 creds 为空自动停摆。
    */
   function clearAllData(): Record<string, unknown> {
     const result = clearDatabase(state.db);

@@ -1,9 +1,9 @@
 // 云端类型设置卡：私人云端（服务端地址 + 访问密钥）与共享云端（账号登录）的入口。
 // 保存后由宿主写入 cloud-config.json 并重建同步凭据，切换类型会清空本机同步游标。
-module.exports = function createCloudSettings(react, jsx) {
-  var MODES = ["none", "private", "shared"];
+var MODES = ["none", "private", "shared"];
 
-  function CloudSettings(props) {
+module.exports = function CloudSettings(props) {
+    var react = props.React, jsx = props.jsx;
     var t = props.t;
     var api = props.api;
     var st = react.useState(null); var cfg = st[0]; var setCfg = st[1];
@@ -16,16 +16,15 @@ module.exports = function createCloudSettings(react, jsx) {
 
     function load() {
       api.get("/cloud/config").then(function (r) {
-        if (!r || !r.ok) return;
+        if (!r || !r.ok) throw new Error((r && r.error) || t("config_read_error"));
         setCfg(r);
-        setDraftMode(r.mode || "shared");
-        if (props.onModeChange) props.onModeChange(r.mode || "shared");
+        setDraftMode(r.mode || "none");
         setForm({
           url: (r.private && r.private.url) || "",
           secret: "",
           deviceName: (r.private && r.private.device_name) || "",
         });
-      });
+      }).catch(function (e) { setMsg(String(e.message || e)); });
     }
     react.useEffect(function () { load(); }, []);
 
@@ -44,15 +43,13 @@ module.exports = function createCloudSettings(react, jsx) {
         }
         setCfg(r);
         setDraftMode(r.mode || draftMode);
-        if (props.onModeChange) props.onModeChange(r.mode || draftMode);
         setForm({
           url: (r.private && r.private.url) || "",
           secret: "",
           deviceName: (r.private && r.private.device_name) || "",
         });
         setMsg(t("cloud_saved"));
-        if (props.onChanged) props.onChanged();
-      });
+      }).catch(function (e) { setSaving(false); setMsg(String(e.message || e)); });
     }
 
     // 探测设置卡里当前的草稿值（还没保存也能先测连通性）。
@@ -60,16 +57,16 @@ module.exports = function createCloudSettings(react, jsx) {
       setTesting(true);
       setProbe(null);
       setMsg("");
-      var probeMode = draftMode || (cfg && cfg.mode) || "shared";
+      var probeMode = draftMode || (cfg && cfg.mode) || "none";
       var body = { mode: probeMode };
       if (probeMode === "private") body.private = { url: form.url, secret: form.secret, deviceName: form.deviceName };
       api.post("/cloud/test", body).then(function (r) {
         setTesting(false);
         setProbe(r || { reachable: false });
-      });
+      }).catch(function (e) { setTesting(false); setMsg(String(e.message || e)); });
     }
 
-    var mode = draftMode || (cfg && cfg.mode) || "shared";
+    var mode = draftMode || (cfg && cfg.mode) || "none";
     var hasSecret = Boolean(cfg && cfg.private && cfg.private.has_secret);
     var hintKey = "cloud_mode_" + mode + "_hint";
 
@@ -80,9 +77,10 @@ module.exports = function createCloudSettings(react, jsx) {
       ] }),
       jsx.jsx("div", { className: "wb-tabs", children: MODES.map(function (m) {
         return jsx.jsx("button", {
-          key: m,
+          disabled: !cfg || saving || testing,
+          "aria-pressed": mode === m,
           className: "wb-tab" + (mode === m ? " on" : ""),
-          onClick: function () { setDraftMode(m); setMsg(""); if (props.onModeChange) props.onModeChange(m); },
+          onClick: function () { setDraftMode(m); setMsg(""); setProbe(null); },
           children: t("cloud_mode_" + m),
         }, m);
       }) }),
@@ -110,8 +108,8 @@ module.exports = function createCloudSettings(react, jsx) {
       ] }) : null,
       mode === "shared" ? jsx.jsx("div", { className: "wb-hint", style: { marginTop: 8 }, children: t("cloud_shared_hint") }) : null,
       jsx.jsxs("div", { className: "wb-form", style: { marginTop: 10 }, children: [
-        jsx.jsx("button", { className: "wb-btn", disabled: saving, onClick: save, children: saving ? t("cloud_saving") : t("cloud_save") }),
-        jsx.jsx("button", { className: "wb-btn ghost", disabled: testing, onClick: test, children: testing ? t("cloud_testing") : t("cloud_test") }),
+        jsx.jsx("button", { className: "wb-btn", disabled: !cfg || saving || testing, onClick: save, children: saving ? t("cloud_saving") : t("cloud_save") }),
+        jsx.jsx("button", { className: "wb-btn ghost", disabled: !cfg || saving || testing || mode === "none", onClick: test, children: testing ? t("cloud_testing") : t("cloud_test") }),
       ] }),
       msg ? jsx.jsx("div", { className: "wb-msg", style: { marginTop: 8 }, children: msg }) : null,
       probe ? jsx.jsxs("div", { className: "wb-hint", style: { marginTop: 8 }, children: [
@@ -131,7 +129,4 @@ module.exports = function createCloudSettings(react, jsx) {
           : null,
       ] }) : null,
     ] });
-  }
-
-  return { CloudSettings: CloudSettings };
 };

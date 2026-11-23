@@ -3,7 +3,6 @@ var SW = require("../../addons/lib/switch.cjs");
 
 // 管理页面组件；注入既有宿主依赖，无顶层副作用或循环依赖。
 module.exports = function createSystemTabs(react, jsx, useApi) {
-var CloudSettings = require("./cloud-settings.cjs")(react, jsx).CloudSettings;
 // 备份页单独成文件：格式选择、拖拽导入、结果回执已经把这块撑得比其它系统页大。
 var BackupTab = require("./backup-tab.cjs")(react, jsx).BackupTab;
 function AccountTab(props) {
@@ -15,8 +14,6 @@ function AccountTab(props) {
   var st4 = react.useState(false); var syncing = st4[0]; var setSyncing = st4[1];
   var st5 = react.useState(null); var syncStatus = st5[0]; var setSyncStatus = st5[1];
   var st6 = react.useState([]); var conflicts = st6[0]; var setConflicts = st6[1];
-  // 设置卡里刚点选的云端类型（未保存也立即生效），避免账号区还停留在旧的“共享云端”形态。
-  var st8 = react.useState(""); var pickedMode = st8[0]; var setPickedMode = st8[1];
   function refreshSync() {
     api.get("/sync/status").then(function (r) { if (r && r.ok) setSyncStatus(r); });
     api.get("/sync/conflicts?limit=" + ((props.preferences || {})["cloud.conflictLimit"] || 20)).then(function (r) { setConflicts(r && Array.isArray(r.conflicts) ? r.conflicts : []); });
@@ -24,18 +21,18 @@ function AccountTab(props) {
   function refresh() {
     api.get("/account").then(function (r) {
       setMe(r);
-      if (r && r.logged_in) refreshSync();
+      if (r && r.logged_in && (r.mode === "shared" || r.mode === "private")) refreshSync();
     });
   }
   react.useEffect(function () { refresh(); }, []);
   react.useEffect(function () {
-    if (!me || !me.logged_in) return undefined;
+    if (!me || !me.logged_in || !["shared", "private"].includes(me.mode)) return undefined;
     var es = new EventSource("/workbench/api/events");
     function onSync() { refreshSync(); }
     es.addEventListener("sync-done", onSync);
     es.addEventListener("sync-status", onSync);
     return function () { es.close(); };
-  }, [me && me.logged_in]);
+  }, [me && me.logged_in, me && me.mode]);
   function submit() {
     api.post("/account/login", { email: form.email, password: form.password, signup: form.signup }).then(function (r) {
       setMsg(r.ok ? "" : (r.error || "failed"));
@@ -49,10 +46,12 @@ function AccountTab(props) {
     });
   }
   if (!me) return jsx.jsx("div", { className: "wb-card", children: jsx.jsx("span", { className: "wb-msg", children: "…" }) });
-  var savedMode = (me && me.mode) || "shared";
-  var mode = pickedMode || savedMode;
-  var settingsCard = jsx.jsx(CloudSettings, { t: t, api: api, onChanged: refresh, onModeChange: setPickedMode });
-  if (!me.logged_in) {
+  var mode = me.mode || "none";
+  var settingsCard = jsx.jsxs("div", { className: "wb-card wb-sec", children: [
+    jsx.jsx("span", { children: t("cloud_settings") + " · " + t("cloud_mode_" + mode) }),
+    jsx.jsx("button", { type: "button", className: "wb-btn ghost", onClick: props.openConfig, children: t("cloud_open_config") }),
+  ] });
+  if (mode === "none" || !me.logged_in) {
     // 只有共享云端才需要账号登录；私人云端与仅本机模式不出现登录表单。
     if (mode !== "shared") return jsx.jsx("div", { className: "wb-stack", children: settingsCard });
     return jsx.jsxs("div", { className: "wb-stack", children: [
@@ -62,7 +61,7 @@ function AccountTab(props) {
         jsx.jsxs("div", { className: "wb-form", children: [
           jsx.jsx("input", { className: "wb-input", placeholder: t("email"), value: form.email, onChange: function (e) { setForm(Object.assign({}, form, { email: e.target.value })); } }),
           jsx.jsx("input", { className: "wb-input", type: "password", placeholder: t("password"), value: form.password, onChange: function (e) { setForm(Object.assign({}, form, { password: e.target.value })); }, onKeyDown: function (e) { if (e.key === "Enter") submit(); } }),
-          jsx.jsx(SW.Switch, { h: jsx.jsx, checked: !!form.signup, label: t("signup"), onChange: function (next) { setForm(Object.assign({}, form, { signup: next })); } }),
+          jsx.jsx(SW.Switch, { h: react.createElement, checked: !!form.signup, label: t("signup"), onChange: function (next) { setForm(Object.assign({}, form, { signup: next })); } }),
           jsx.jsx("button", { className: "wb-btn", onClick: submit, children: form.signup ? t("signup") : t("login") }),
         ] }),
         msg ? jsx.jsx("div", { className: "wb-err", style: { marginTop: 8 }, children: msg }) : null,

@@ -161,13 +161,56 @@ try {
 
 // 账号与同步页打开后按方案读取列表；登录、同步与冲突裁决都是写操作，不能随方案自动执行。
 const calls = [];
-const syncApi = { get: async (path) => { calls.push(path); return path === "/account" ? { logged_in: true } : { ok: true }; }, post() { throw new Error("打开页面时发生写入"); } };
+const syncApi = { get: async (path) => { calls.push(path); return path === "/account" ? { logged_in: true, mode: "shared" } : { ok: true }; }, post() { throw new Error("打开页面时发生写入"); } };
 const hooks = { ...reactStub(), useEffect: (fn) => fn() };
 const accountTab = require("../packages/shell/client/system-tabs.cjs")(hooks, fakeJsx, () => syncApi).AccountTab;
 for (const limit of [7, 20, 100]) {
   accountTab({ t: deps.t, preferences: limit === 20 ? {} : { "cloud.conflictLimit": limit } });
   await Promise.resolve();
   assert.ok(calls.includes("/sync/conflicts?limit=" + limit));
+}
+// 配置卡读取已保存模式，选择草稿不写入；只有保存按钮提交连接参数。
+const CloudSettings = require("../packages/shell/client/cloud-settings.cjs");
+assert.ok(configHtml.includes('cloud_settings'), "配置页必须挂载云端类型编辑器");
+function mountHooks() {
+  const state = [];
+  let cursor = 0, first = true;
+  const react = { ...reactStub(), useState(initial) {
+    const slot = cursor++;
+    if (!(slot in state)) state[slot] = initial;
+    return [state[slot], next => { state[slot] = typeof next === 'function' ? next(state[slot]) : next; }];
+  }, useEffect(fn) { if (first) fn(); } };
+  return { react, render(fn) { cursor = 0; const tree = fn(); first = false; return tree; } };
+}
+function elements(tree, match) { const hits = []; walk(tree, n => { if (match(n)) hits.push(n.props); }); return hits; }
+for (const saved of [undefined, 'none', 'private', 'shared']) {
+  const mode = saved || 'none', mount = mountHooks(), writes = [];
+  const api = { get: async () => ({ ok: true, mode: saved, private: { url: 'https://test.invalid', has_secret: true } }),
+    post: async (url, body) => { writes.push({ url, body }); return { ok: true, mode: body.mode }; } };
+  const render = () => mount.render(() => CloudSettings({ ...deps, api, React: mount.react }));
+  const first = render();
+  assert.ok(elements(first, n => n.props?.children === 'cloud_save')[0].disabled);
+  await Promise.resolve();
+  const loaded = render();
+  assert.equal(elements(loaded, n => n.props?.['aria-pressed'] === true)[0].children, 'cloud_mode_' + mode);
+  elements(loaded, n => n.props?.children === 'cloud_mode_private')[0].onClick();
+  const draft = render();
+  assert.equal(elements(draft, n => n.props?.type === 'password')[0].value, '');
+  assert.deepEqual(writes, []);
+  elements(draft, n => n.props?.children === 'cloud_save')[0].onClick();
+  assert.deepEqual(writes, [{ url: '/cloud/config', body: { mode: 'private', private: { url: 'https://test.invalid', secret: '', deviceName: '' } } }]);
+}
+for (const [mode, logged] of [['none', false], ['private', true], ['shared', false], ['shared', true]]) {
+  const mount = mountHooks();
+  const api = { get: async path => path === '/account' ? { ok: true, mode, logged_in: logged } : { ok: true }, post() { throw new Error('打开账号页不能发起写入'); } };
+  const tab = require('../packages/shell/client/system-tabs.cjs')(mount.react, fakeJsx, () => api).AccountTab;
+  let jumped = false;
+  const render = () => mount.render(() => tab({ t: deps.t, openConfig() { jumped = true; } }));
+  render(); await Promise.resolve(); const page = render();
+  assert.equal(elements(page, n => n.type === CloudSettings).length, 0);
+  elements(page, n => n.props?.children === 'cloud_open_config')[0].onClick(); assert.ok(jumped);
+  for (const [name, visible] of [['login', mode === 'shared' && !logged], ['sync_now', logged], ['logout', mode === 'shared' && logged]])
+    assert.equal(elements(page, n => n.type === 'button' && n.props.children === name).length, Number(visible));
 }
 assert.ok(configHtml.includes("wbh-cfg-schemes"), "配置页应复用共享方案条");
 console.log("HOST PAGES TEST PASS：页面渲染、方案条、备份勾选与实际导出参数、云端冲突查询和手工边界");

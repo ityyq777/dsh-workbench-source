@@ -9,6 +9,7 @@
  * 不另写一套表格和表单。
  */
 var createDataView = require("../../addons/lib/data-view.cjs");
+var CloudSettings = require("./cloud-settings.cjs");
 var schemes = require("../../addons/lib/config-scheme-bar.cjs");
 var SW = require("../../addons/lib/switch.cjs");
 var NF = require("../../addons/lib/number-field.cjs");
@@ -192,6 +193,7 @@ function configBody(deps, view) {
       onActivate: function (id) { view.onScheme("Activate", { id: id }); },
     }, "schemes") : null,
     body,
+    jsx.jsx(CloudSettings, { React: deps.React, jsx: jsx, api: deps.api, t: t }, "cloud"),
     view.toast ? jsx.jsx("div", { className: "wb-toast", children: view.toast }) : null,
   ]);
 }

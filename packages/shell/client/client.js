@@ -340,6 +340,7 @@ var require_locale = __commonJS({
         cloud_sync_failed_hint: "\u4E91\u7AEF\u53EF\u8FDE\u63A5\uFF0C\u4F46\u4E0A\u6B21\u540C\u6B65\u672A\u5B8C\u5168\u6210\u529F",
         cloud_open: "\u6253\u5F00\u8D26\u53F7\u4E0E\u540C\u6B65",
         cloud_settings: "\u4E91\u7AEF\u7C7B\u578B",
+        cloud_open_config: "\u524D\u5F80\u914D\u7F6E",
         cloud_mode_none: "\u4EC5\u672C\u673A",
         cloud_mode_private: "\u79C1\u4EBA\u4E91\u7AEF",
         cloud_mode_shared: "\u5171\u4EAB\u4E91\u7AEF",
@@ -353,7 +354,7 @@ var require_locale = __commonJS({
         cloud_device_label: "\u672C\u8BBE\u5907\u540D\u79F0\uFF08\u4FBF\u4E8E\u5728\u8BBE\u5907\u5217\u8868\u91CC\u533A\u5206\uFF09",
         cloud_save: "\u4FDD\u5B58",
         cloud_saving: "\u4FDD\u5B58\u4E2D\u2026",
-        cloud_saved: "\u5DF2\u4FDD\u5B58\uFF0C\u6B63\u5728\u9996\u6B21\u540C\u6B65",
+        cloud_saved: "\u5DF2\u4FDD\u5B58\u4E91\u7AEF\u8BBE\u7F6E",
         cloud_save_failed: "\u4FDD\u5B58\u5931\u8D25",
         cloud_test: "\u6D4B\u8BD5\u8FDE\u63A5",
         cloud_testing: "\u6D4B\u8BD5\u4E2D\u2026",
@@ -363,7 +364,7 @@ var require_locale = __commonJS({
         cloud_auth_bad: "\u5DF2\u8FDE\u63A5\uFF0C\u4F46\u8BBF\u95EE\u5BC6\u94A5\u65E0\u6548",
         cloud_server: "\u670D\u52A1\u7AEF",
         cloud_devices_count: "\u8BBE\u5907\u6570",
-        cloud_shared_hint: "\u5171\u4EAB\u4E91\u7AEF\u8BF7\u4F7F\u7528\u4E0B\u9762\u7684\u8D26\u53F7\u767B\u5F55"
+        cloud_shared_hint: "\u5171\u4EAB\u4E91\u7AEF\u8BF7\u524D\u5F80\u300C\u8D26\u53F7\u4E0E\u540C\u6B65\u300D\u767B\u5F55"
       },
       en: {
         role_title: "Workbench role",
@@ -684,6 +685,7 @@ var require_locale = __commonJS({
         cloud_sync_failed_hint: "Cloud is reachable but the last sync did not fully succeed",
         cloud_open: "Open Account & Sync",
         cloud_settings: "Cloud type",
+        cloud_open_config: "Open settings",
         cloud_mode_none: "Local only",
         cloud_mode_private: "Private cloud",
         cloud_mode_shared: "Shared cloud",
@@ -707,7 +709,7 @@ var require_locale = __commonJS({
         cloud_auth_bad: "Reachable, but the secret is rejected",
         cloud_server: "Server",
         cloud_devices_count: "Devices",
-        cloud_shared_hint: "Use the account login below for the shared cloud"
+        cloud_shared_hint: "Sign in to the shared cloud in Account & sync"
       }
     };
     module2.exports = LOCALE2;
@@ -3802,11 +3804,168 @@ var require_data_view = __commonJS({
   }
 });
 
+// packages/shell/client/cloud-settings.cjs
+var require_cloud_settings = __commonJS({
+  "packages/shell/client/cloud-settings.cjs"(exports2, module2) {
+    "use strict";
+    var MODES = ["none", "private", "shared"];
+    module2.exports = function CloudSettings(props) {
+      var react2 = props.React, jsx2 = props.jsx;
+      var t = props.t;
+      var api = props.api;
+      var st = react2.useState(null);
+      var cfg = st[0];
+      var setCfg = st[1];
+      var st2 = react2.useState("");
+      var draftMode = st2[0];
+      var setDraftMode = st2[1];
+      var st3 = react2.useState({ url: "", secret: "", deviceName: "" });
+      var form = st3[0];
+      var setForm = st3[1];
+      var st4 = react2.useState(false);
+      var saving = st4[0];
+      var setSaving = st4[1];
+      var st5 = react2.useState(false);
+      var testing = st5[0];
+      var setTesting = st5[1];
+      var st6 = react2.useState("");
+      var msg = st6[0];
+      var setMsg = st6[1];
+      var st7 = react2.useState(null);
+      var probe = st7[0];
+      var setProbe = st7[1];
+      function load() {
+        api.get("/cloud/config").then(function(r) {
+          if (!r || !r.ok) throw new Error(r && r.error || t("config_read_error"));
+          setCfg(r);
+          setDraftMode(r.mode || "none");
+          setForm({
+            url: r.private && r.private.url || "",
+            secret: "",
+            deviceName: r.private && r.private.device_name || ""
+          });
+        }).catch(function(e) {
+          setMsg(String(e.message || e));
+        });
+      }
+      react2.useEffect(function() {
+        load();
+      }, []);
+      function save() {
+        setSaving(true);
+        setMsg("");
+        var body = { mode: draftMode };
+        if (draftMode === "private") {
+          body.private = { url: form.url, secret: form.secret, deviceName: form.deviceName };
+        }
+        api.post("/cloud/config", body).then(function(r) {
+          setSaving(false);
+          if (!r || !r.ok) {
+            setMsg(r && r.error || t("cloud_save_failed"));
+            return;
+          }
+          setCfg(r);
+          setDraftMode(r.mode || draftMode);
+          setForm({
+            url: r.private && r.private.url || "",
+            secret: "",
+            deviceName: r.private && r.private.device_name || ""
+          });
+          setMsg(t("cloud_saved"));
+        }).catch(function(e) {
+          setSaving(false);
+          setMsg(String(e.message || e));
+        });
+      }
+      function test() {
+        setTesting(true);
+        setProbe(null);
+        setMsg("");
+        var probeMode = draftMode || cfg && cfg.mode || "none";
+        var body = { mode: probeMode };
+        if (probeMode === "private") body.private = { url: form.url, secret: form.secret, deviceName: form.deviceName };
+        api.post("/cloud/test", body).then(function(r) {
+          setTesting(false);
+          setProbe(r || { reachable: false });
+        }).catch(function(e) {
+          setTesting(false);
+          setMsg(String(e.message || e));
+        });
+      }
+      var mode = draftMode || cfg && cfg.mode || "none";
+      var hasSecret = Boolean(cfg && cfg.private && cfg.private.has_secret);
+      var hintKey = "cloud_mode_" + mode + "_hint";
+      return jsx2.jsxs("div", { className: "wb-card", children: [
+        jsx2.jsxs("div", { className: "wb-sec", children: [
+          jsx2.jsx("h3", { children: t("cloud_settings") }),
+          jsx2.jsx("span", { className: "wb-hint", children: t("cloud_switch_hint") })
+        ] }),
+        jsx2.jsx("div", { className: "wb-tabs", children: MODES.map(function(m) {
+          return jsx2.jsx("button", {
+            disabled: !cfg || saving || testing,
+            "aria-pressed": mode === m,
+            className: "wb-tab" + (mode === m ? " on" : ""),
+            onClick: function() {
+              setDraftMode(m);
+              setMsg("");
+              setProbe(null);
+            },
+            children: t("cloud_mode_" + m)
+          }, m);
+        }) }),
+        jsx2.jsx("div", { className: "wb-hint", style: { marginTop: 6 }, children: t(hintKey) }),
+        mode === "private" ? jsx2.jsxs("div", { className: "wb-form", style: { marginTop: 10 }, children: [
+          jsx2.jsx("input", {
+            className: "wb-input",
+            placeholder: t("cloud_url_ph"),
+            value: form.url,
+            onChange: function(e) {
+              setForm(Object.assign({}, form, { url: e.target.value }));
+            }
+          }),
+          jsx2.jsx("input", {
+            className: "wb-input",
+            type: "password",
+            placeholder: hasSecret ? t("cloud_secret_keep") : t("cloud_secret_ph"),
+            value: form.secret,
+            onChange: function(e) {
+              setForm(Object.assign({}, form, { secret: e.target.value }));
+            }
+          }),
+          jsx2.jsx("input", {
+            className: "wb-input",
+            placeholder: t("cloud_device_label"),
+            value: form.deviceName,
+            onChange: function(e) {
+              setForm(Object.assign({}, form, { deviceName: e.target.value }));
+            }
+          })
+        ] }) : null,
+        mode === "shared" ? jsx2.jsx("div", { className: "wb-hint", style: { marginTop: 8 }, children: t("cloud_shared_hint") }) : null,
+        jsx2.jsxs("div", { className: "wb-form", style: { marginTop: 10 }, children: [
+          jsx2.jsx("button", { className: "wb-btn", disabled: !cfg || saving || testing, onClick: save, children: saving ? t("cloud_saving") : t("cloud_save") }),
+          jsx2.jsx("button", { className: "wb-btn ghost", disabled: !cfg || saving || testing || mode === "none", onClick: test, children: testing ? t("cloud_testing") : t("cloud_test") })
+        ] }),
+        msg ? jsx2.jsx("div", { className: "wb-msg", style: { marginTop: 8 }, children: msg }) : null,
+        probe ? jsx2.jsxs("div", { className: "wb-hint", style: { marginTop: 8 }, children: [
+          probe.reachable ? jsx2.jsxs("div", { children: [
+            t("cloud_ok"),
+            probe.server_name ? " \xB7 " + t("cloud_server") + " " + probe.server_name : "",
+            " \xB7 " + (probe.latency_ms != null ? probe.latency_ms + "ms" : "")
+          ] }) : jsx2.jsx("div", { children: t("cloud_test_fail") + (probe.error ? " \xB7 " + probe.error : "") }),
+          probe.reachable ? jsx2.jsx("div", { children: probe.unauthorized ? t("cloud_auth_bad") : probe.authorized ? t("cloud_auth_ok") + (probe.devices && probe.devices.length ? " \xB7 " + t("cloud_devices_count") + " " + probe.devices.length : "") : t("cloud_auth_bad") }) : null
+        ] }) : null
+      ] });
+    };
+  }
+});
+
 // packages/shell/client/host-pages.cjs
 var require_host_pages = __commonJS({
   "packages/shell/client/host-pages.cjs"(exports2, module2) {
     "use strict";
     var createDataView = require_data_view();
+    var CloudSettings = require_cloud_settings();
     var schemes = require_config_scheme_bar();
     var SW = require_switch();
     var NF = require_number_field();
@@ -4027,6 +4186,7 @@ var require_host_pages = __commonJS({
           }
         }, "schemes") : null,
         body,
+        jsx2.jsx(CloudSettings, { React: deps.React, jsx: jsx2, api: deps.api, t }, "cloud"),
         view.toast ? jsx2.jsx("div", { className: "wb-toast", children: view.toast }) : null
       ]);
     }
@@ -5301,158 +5461,6 @@ var require_slot_outlet = __commonJS({
   }
 });
 
-// packages/shell/client/cloud-settings.cjs
-var require_cloud_settings = __commonJS({
-  "packages/shell/client/cloud-settings.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = function createCloudSettings(react2, jsx2) {
-      var MODES = ["none", "private", "shared"];
-      function CloudSettings(props) {
-        var t = props.t;
-        var api = props.api;
-        var st = react2.useState(null);
-        var cfg = st[0];
-        var setCfg = st[1];
-        var st2 = react2.useState("");
-        var draftMode = st2[0];
-        var setDraftMode = st2[1];
-        var st3 = react2.useState({ url: "", secret: "", deviceName: "" });
-        var form = st3[0];
-        var setForm = st3[1];
-        var st4 = react2.useState(false);
-        var saving = st4[0];
-        var setSaving = st4[1];
-        var st5 = react2.useState(false);
-        var testing = st5[0];
-        var setTesting = st5[1];
-        var st6 = react2.useState("");
-        var msg = st6[0];
-        var setMsg = st6[1];
-        var st7 = react2.useState(null);
-        var probe = st7[0];
-        var setProbe = st7[1];
-        function load() {
-          api.get("/cloud/config").then(function(r) {
-            if (!r || !r.ok) return;
-            setCfg(r);
-            setDraftMode(r.mode || "shared");
-            if (props.onModeChange) props.onModeChange(r.mode || "shared");
-            setForm({
-              url: r.private && r.private.url || "",
-              secret: "",
-              deviceName: r.private && r.private.device_name || ""
-            });
-          });
-        }
-        react2.useEffect(function() {
-          load();
-        }, []);
-        function save() {
-          setSaving(true);
-          setMsg("");
-          var body = { mode: draftMode };
-          if (draftMode === "private") {
-            body.private = { url: form.url, secret: form.secret, deviceName: form.deviceName };
-          }
-          api.post("/cloud/config", body).then(function(r) {
-            setSaving(false);
-            if (!r || !r.ok) {
-              setMsg(r && r.error || t("cloud_save_failed"));
-              return;
-            }
-            setCfg(r);
-            setDraftMode(r.mode || draftMode);
-            if (props.onModeChange) props.onModeChange(r.mode || draftMode);
-            setForm({
-              url: r.private && r.private.url || "",
-              secret: "",
-              deviceName: r.private && r.private.device_name || ""
-            });
-            setMsg(t("cloud_saved"));
-            if (props.onChanged) props.onChanged();
-          });
-        }
-        function test() {
-          setTesting(true);
-          setProbe(null);
-          setMsg("");
-          var probeMode = draftMode || cfg && cfg.mode || "shared";
-          var body = { mode: probeMode };
-          if (probeMode === "private") body.private = { url: form.url, secret: form.secret, deviceName: form.deviceName };
-          api.post("/cloud/test", body).then(function(r) {
-            setTesting(false);
-            setProbe(r || { reachable: false });
-          });
-        }
-        var mode = draftMode || cfg && cfg.mode || "shared";
-        var hasSecret = Boolean(cfg && cfg.private && cfg.private.has_secret);
-        var hintKey = "cloud_mode_" + mode + "_hint";
-        return jsx2.jsxs("div", { className: "wb-card", children: [
-          jsx2.jsxs("div", { className: "wb-sec", children: [
-            jsx2.jsx("h3", { children: t("cloud_settings") }),
-            jsx2.jsx("span", { className: "wb-hint", children: t("cloud_switch_hint") })
-          ] }),
-          jsx2.jsx("div", { className: "wb-tabs", children: MODES.map(function(m) {
-            return jsx2.jsx("button", {
-              key: m,
-              className: "wb-tab" + (mode === m ? " on" : ""),
-              onClick: function() {
-                setDraftMode(m);
-                setMsg("");
-                if (props.onModeChange) props.onModeChange(m);
-              },
-              children: t("cloud_mode_" + m)
-            }, m);
-          }) }),
-          jsx2.jsx("div", { className: "wb-hint", style: { marginTop: 6 }, children: t(hintKey) }),
-          mode === "private" ? jsx2.jsxs("div", { className: "wb-form", style: { marginTop: 10 }, children: [
-            jsx2.jsx("input", {
-              className: "wb-input",
-              placeholder: t("cloud_url_ph"),
-              value: form.url,
-              onChange: function(e) {
-                setForm(Object.assign({}, form, { url: e.target.value }));
-              }
-            }),
-            jsx2.jsx("input", {
-              className: "wb-input",
-              type: "password",
-              placeholder: hasSecret ? t("cloud_secret_keep") : t("cloud_secret_ph"),
-              value: form.secret,
-              onChange: function(e) {
-                setForm(Object.assign({}, form, { secret: e.target.value }));
-              }
-            }),
-            jsx2.jsx("input", {
-              className: "wb-input",
-              placeholder: t("cloud_device_label"),
-              value: form.deviceName,
-              onChange: function(e) {
-                setForm(Object.assign({}, form, { deviceName: e.target.value }));
-              }
-            })
-          ] }) : null,
-          mode === "shared" ? jsx2.jsx("div", { className: "wb-hint", style: { marginTop: 8 }, children: t("cloud_shared_hint") }) : null,
-          jsx2.jsxs("div", { className: "wb-form", style: { marginTop: 10 }, children: [
-            jsx2.jsx("button", { className: "wb-btn", disabled: saving, onClick: save, children: saving ? t("cloud_saving") : t("cloud_save") }),
-            jsx2.jsx("button", { className: "wb-btn ghost", disabled: testing, onClick: test, children: testing ? t("cloud_testing") : t("cloud_test") })
-          ] }),
-          msg ? jsx2.jsx("div", { className: "wb-msg", style: { marginTop: 8 }, children: msg }) : null,
-          probe ? jsx2.jsxs("div", { className: "wb-hint", style: { marginTop: 8 }, children: [
-            probe.reachable ? jsx2.jsxs("div", { children: [
-              t("cloud_ok"),
-              probe.server_name ? " \xB7 " + t("cloud_server") + " " + probe.server_name : "",
-              " \xB7 " + (probe.latency_ms != null ? probe.latency_ms + "ms" : "")
-            ] }) : jsx2.jsx("div", { children: t("cloud_test_fail") + (probe.error ? " \xB7 " + probe.error : "") }),
-            probe.reachable ? jsx2.jsx("div", { children: probe.unauthorized ? t("cloud_auth_bad") : probe.authorized ? t("cloud_auth_ok") + (probe.devices && probe.devices.length ? " \xB7 " + t("cloud_devices_count") + " " + probe.devices.length : "") : t("cloud_auth_bad") }) : null
-          ] }) : null
-        ] });
-      }
-      return { CloudSettings };
-    };
-  }
-});
-
 // packages/shell/client/backup-tab.cjs
 var require_backup_tab = __commonJS({
   "packages/shell/client/backup-tab.cjs"(exports2, module2) {
@@ -5977,7 +5985,6 @@ var require_system_tabs = __commonJS({
     "use strict";
     var SW = require_switch();
     module2.exports = function createSystemTabs(react2, jsx2, useApi2) {
-      var CloudSettings = require_cloud_settings()(react2, jsx2).CloudSettings;
       var BackupTab2 = require_backup_tab()(react2, jsx2).BackupTab;
       function AccountTab2(props) {
         var t = props.t;
@@ -6000,9 +6007,6 @@ var require_system_tabs = __commonJS({
         var st6 = react2.useState([]);
         var conflicts = st6[0];
         var setConflicts = st6[1];
-        var st8 = react2.useState("");
-        var pickedMode = st8[0];
-        var setPickedMode = st8[1];
         function refreshSync() {
           api.get("/sync/status").then(function(r) {
             if (r && r.ok) setSyncStatus(r);
@@ -6014,14 +6018,14 @@ var require_system_tabs = __commonJS({
         function refresh() {
           api.get("/account").then(function(r) {
             setMe(r);
-            if (r && r.logged_in) refreshSync();
+            if (r && r.logged_in && (r.mode === "shared" || r.mode === "private")) refreshSync();
           });
         }
         react2.useEffect(function() {
           refresh();
         }, []);
         react2.useEffect(function() {
-          if (!me || !me.logged_in) return void 0;
+          if (!me || !me.logged_in || !["shared", "private"].includes(me.mode)) return void 0;
           var es = new EventSource("/workbench/api/events");
           function onSync() {
             refreshSync();
@@ -6031,7 +6035,7 @@ var require_system_tabs = __commonJS({
           return function() {
             es.close();
           };
-        }, [me && me.logged_in]);
+        }, [me && me.logged_in, me && me.mode]);
         function submit() {
           api.post("/account/login", { email: form.email, password: form.password, signup: form.signup }).then(function(r) {
             setMsg(r.ok ? "" : r.error || "failed");
@@ -6045,10 +6049,12 @@ var require_system_tabs = __commonJS({
           });
         }
         if (!me) return jsx2.jsx("div", { className: "wb-card", children: jsx2.jsx("span", { className: "wb-msg", children: "\u2026" }) });
-        var savedMode = me && me.mode || "shared";
-        var mode = pickedMode || savedMode;
-        var settingsCard = jsx2.jsx(CloudSettings, { t, api, onChanged: refresh, onModeChange: setPickedMode });
-        if (!me.logged_in) {
+        var mode = me.mode || "none";
+        var settingsCard = jsx2.jsxs("div", { className: "wb-card wb-sec", children: [
+          jsx2.jsx("span", { children: t("cloud_settings") + " \xB7 " + t("cloud_mode_" + mode) }),
+          jsx2.jsx("button", { type: "button", className: "wb-btn ghost", onClick: props.openConfig, children: t("cloud_open_config") })
+        ] });
+        if (mode === "none" || !me.logged_in) {
           if (mode !== "shared") return jsx2.jsx("div", { className: "wb-stack", children: settingsCard });
           return jsx2.jsxs("div", { className: "wb-stack", children: [
             settingsCard,
@@ -6063,7 +6069,7 @@ var require_system_tabs = __commonJS({
                 }, onKeyDown: function(e) {
                   if (e.key === "Enter") submit();
                 } }),
-                jsx2.jsx(SW.Switch, { h: jsx2.jsx, checked: !!form.signup, label: t("signup"), onChange: function(next) {
+                jsx2.jsx(SW.Switch, { h: react2.createElement, checked: !!form.signup, label: t("signup"), onChange: function(next) {
                   setForm(Object.assign({}, form, { signup: next }));
                 } }),
                 jsx2.jsx("button", { className: "wb-btn", onClick: submit, children: form.signup ? t("signup") : t("login") })
@@ -7123,7 +7129,9 @@ function WorkbenchPage(props) {
   }
   if (route === "account") {
     return jsx.jsxs("div", { className: "wb-root", children: [
-      jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_account"), t("account_desc")), jsx.jsx(HostPages.PreferenceView, { React: react, component: AccountTab, api, t }, "account")] })
+      jsx.jsxs("div", { className: "wb-inner wb-wide", children: [pageHead(t("tab_account"), t("account_desc")), jsx.jsx(HostPages.PreferenceView, { React: react, component: AccountTab, api, t, openConfig: function() {
+        go("config");
+      } }, "account")] })
     ] });
   }
   if (currentAddon) {

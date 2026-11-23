@@ -9,7 +9,7 @@
 | `cloud/`         | 共享云端 | Java 21 + Spring Boot +  PostgreSQL | https://github.com/ityyq777/dsh-workbench-cloud                  |
 | `cloud-private/` | 私人云端 | Node.js + node:sqlite + 本地文件 | https://github.com/ityyq777/dsh-workbench-private-cloud          |
 
-宿主插件在「账号与同步」页选择云端类型（仅本机 / 私人云端 / 共享云端）。私人云端由
+宿主插件在「配置」页选择云端类型（仅本机 / 私人云端 / 共享云端）。私人云端由
 本机填写服务端地址与访问密钥，凭据不落 cloud-creds.json；共享云端仍走账号登录。
 两种云端实现同一套协议 v2（`/v1/auth/*` 之外的 `/v1/sync/*` 与 `/v1/files/*` 语义一致），
 切换云端会清空本机同步游标并重新全量同步，业务数据不动。

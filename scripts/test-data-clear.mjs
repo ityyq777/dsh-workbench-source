@@ -4,7 +4,7 @@
  * 覆盖：
  *  - 确认词不对时返回 400，数据原样保留
  *  - 清空业务表、插件配置、同步元数据与云端连接文件
- *  - 清空后回到「共享云端 + 未登录」，同一 DatabaseSync 句柄还能继续写入
+ *  - 清空后回到「仅本机 + 未登录」，同一 DatabaseSync 句柄还能继续写入
  *  - 重复清空幂等
  */
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -13,7 +13,7 @@ import { join } from "node:path";
 
 const home = mkdtempSync(join(tmpdir(), "wb-clear-"));
 process.env.WB_HOME = home;
-// 预置一份私人云端配置与凭据：清空后必须回到默认共享云端且未登录。
+// 预置一份私人云端配置与凭据：清空后必须回到默认仅本机且未登录。
 writeFileSync(join(home, "cloud-config.json"), JSON.stringify({ mode: "private", private: { url: "http://127.0.0.1:8792", secret: "secret-0123456789abcdef", deviceId: "shell-clear", deviceName: "DSH Web" } }));
 writeFileSync(join(home, "cloud-creds.json"), JSON.stringify({ accessToken: "secret-0123456789abcdef", refreshToken: "", userId: "private-owner", deviceId: "shell-clear" }));
 
@@ -127,11 +127,11 @@ try {
   }
   console.log("全表清空 ok:", tables.length, "张表");
 
-  // 4) 回到共享云端 + 未登录，同步凭据已清空。
+  // 4) 回到仅本机 + 未登录，同步凭据已清空。
   const account = await call("GET", "/workbench/api/account");
   if (account.json.logged_in !== false) throw new Error("清空后仍显示已登录");
   const cloud = await call("GET", "/workbench/api/cloud/config");
-  if (cloud.json.mode !== "shared") throw new Error("清空后云端模式不是 shared：" + cloud.json.mode);
+  if (cloud.json.mode !== "none") throw new Error("清空后云端模式不是 none：" + cloud.json.mode);
   if (cloud.json.logged_in !== false) throw new Error("清空后云端配置仍带凭据");
   console.log("云端连接已重置 ok:", cloud.json.mode, JSON.stringify(cloud.json.private));
 
