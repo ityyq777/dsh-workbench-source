@@ -25,16 +25,11 @@ var apiCache = new Map();
 var addonState = { addons: [], categories: null, loaded: false, shellVersion: "" };
 var storeListeners = new Set();
 var cloudStatusListeners = new Set();
-var recordModes = {};         // sessionId -> enabled
-var recordListeners = new Set();
+var sessionRole = require("./conversation/session-role.cjs");
 var stream = null;
 var lastAddonError = null;
 
-function setRecordMode(sessionId, enabled) {
-  if (!sessionId) return;
-  recordModes[sessionId] = !!enabled;
-  recordListeners.forEach(function (fn) { try { fn(sessionId, !!enabled); } catch (e) { console.error(e); } });
-}
+
 
 function notifyStore() {
   storeListeners.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } });
@@ -131,12 +126,7 @@ function ensureStream() {
   stream.addEventListener("domain-event", function (e) {
     try { broadcast(JSON.parse(e.data)); } catch (err) { console.warn(err); }
   });
-  stream.addEventListener("record-mode", function (e) {
-    try {
-      var payload = JSON.parse(e.data);
-      if (payload && payload.sessionId) setRecordMode(payload.sessionId, payload.enabled);
-    } catch (err) { console.warn(err); }
-  });
+  sessionRole.attachStream(stream);
   stream.addEventListener("sync-done", notifyCloudStatus);
   // 同步过程中每一步都要让顶栏与账号页立即动起来，而不是等 15s 轮询。
   stream.addEventListener("sync-status", notifyCloudStatus);
@@ -559,58 +549,7 @@ function WorkbenchPage(props) {
   ] });
 }
 
-var RecordToggle = function (props) {
-  var sid = props && props.sessionId;
-  var st = react.useState(false); var on = st[0]; var setOn = st[1];
-  var bst = react.useState(false); var busy = bst[0]; var setBusy = bst[1];
-  var est = react.useState(""); var err = est[0]; var setErr = est[1];
-  var t = props && props.t;
 
-  react.useEffect(function () {
-    if (!sid) return;
-    var fn = function (changed, value) { if (changed === sid) setOn(!!value); };
-    recordListeners.add(fn);
-    ensureStream();
-    fetch("/workbench/api/record?sessionId=" + encodeURIComponent(sid))
-      .then(function (r) { return r.json(); })
-      .then(function (j) { if (j && j.ok) setRecordMode(sid, !!j.enabled); })
-      .catch(function () { /* 宿主不可达时保持关闭态，不打扰输入 */ });
-    return function () { recordListeners.delete(fn); };
-  }, [sid]);
-
-  function toggle() {
-    if (!sid || busy) return;
-    setBusy(true); setErr("");
-    fetch("/workbench/api/record", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ sessionId: sid, enabled: !on }),
-    })
-      .then(function (r) { return r.json(); })
-      .then(function (j) {
-        if (!j || !j.ok) throw new Error((j && j.error) || "request failed");
-        setRecordMode(sid, !!j.enabled);
-      })
-      .catch(function (e) { var msg = String((e && e.message) || e); setErr(msg); try { console.warn("[dsh-workbench] record toggle failed:", msg); } catch (_) {} })
-      .then(function () { setBusy(false); });
-  }
-
-  if (!sid) return null;
-  var label = busy ? t("record_busy") : err ? t("record_failed_short") : on ? t("record_on") : t("record_off");
-  var title = err ? t("record_error") + ": " + err : on ? t("record_on_title") : t("record_off_title");
-  return h("button", {
-    type: "button",
-    className: "wb-record-pill" + (on ? " on" : "") + (err ? " err" : ""),
-    onClick: toggle,
-    disabled: busy,
-    title: title,
-    "aria-label": t("record_label") + ": " + label,
-    "aria-pressed": on ? "true" : "false",
-  },
-    h("span", { className: "wb-record-dot" }),
-    h("span", { className: "wb-record-label", children: label })
-  );
-};
 
 var exports_ = {
   name: NS,
@@ -656,8 +595,8 @@ var exports_ = {
       });
       ctx.slots.inject("conversation.input.left", function () {
         return ctx.slots.register(
-          { name: "conversation.input.left", id: NS + "-record", order: 40, label: function () { return t("record_label"); } },
-          function (props) { return h(RecordToggle, { sessionId: props && props.sessionId, t: t }); }
+          { name: "conversation.input.left", id: NS + "-role", order: 40, label: function () { return t("role_title"); } },
+          function (props) { return h(sessionRole.SessionRole, { key: props.sessionId, sessionId: props.sessionId, t: t, ensureStream: ensureStream }); }
         );
       });
     } catch (e) { console.error("[dsh-workbench] apply crashed:", e, e && e.stack); throw e; }

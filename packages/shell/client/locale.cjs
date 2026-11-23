@@ -1,6 +1,7 @@
 // 宿主静态文案。
 var LOCALE = {
   zh: {
+    role_title: "工作台角色", role_none: "不使用工作台角色", role_none_desc: "沿用当前 DSH 会话设置", role_missing: "角色已不可用，请重新选择", role_record: "收尾时记录交付物", role_next: "选择将从下一轮对话生效。", role_close: "关闭", role_retry: "重试", role_error: "无法读取或保存会话设置", role_loading: "读取中…",
     nav: "工作台", title: "工作台", tagline: "离线优先 · 业务插件由 DSH 安装",
     tab_account: "账号与同步", tab_addons: "子插件", tab_backup: "数据备份",
     tab_data: "数据", data_desc: "浏览宿主自己维护的平台表（meta、同步日志/死信/水位、会话记录模式、审计日志）：只读、可搜索、可分页",
@@ -170,6 +171,7 @@ var LOCALE = {
     record_busy: "切换中", record_error: "切换失败", record_failed_short: "记录失败",
   },
   en: {
+    role_title: "Workbench role", role_none: "No workbench role", role_none_desc: "Use the current DSH session settings", role_missing: "Role unavailable. Choose another role.", role_record: "Record deliverables at the end of the turn", role_next: "Changes apply to the next turn.", role_close: "Close", role_retry: "Retry", role_error: "Could not read or save session settings", role_loading: "Loading…",
     nav: "Workbench", title: "Workbench", tagline: "Offline-first · addons installed by DSH",
     tab_account: "Account & Sync", tab_addons: "Addons", tab_backup: "Data backup",
     tab_data: "Data", data_desc: "Browse the platform tables the host itself owns (meta, sync log/dead letters/state, session modes, audit log): read-only, searchable, paged",
