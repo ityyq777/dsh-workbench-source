@@ -21,6 +21,8 @@ var require_locale = __commonJS({
     "use strict";
     var LOCALE2 = {
       zh: {
+        tab_roles: "\u89D2\u8272\u7BA1\u7406",
+        roles_desc: "\u67E5\u770B\u63D2\u4EF6\u89D2\u8272\uFF0C\u521B\u5EFA\u548C\u7EF4\u62A4\u81EA\u5DF1\u7684\u4F1A\u8BDD\u89D2\u8272",
         role_title: "\u5DE5\u4F5C\u53F0\u89D2\u8272",
         role_none: "\u4E0D\u4F7F\u7528\u5DE5\u4F5C\u53F0\u89D2\u8272",
         role_none_desc: "\u6CBF\u7528\u5F53\u524D DSH \u4F1A\u8BDD\u8BBE\u7F6E",
@@ -367,6 +369,8 @@ var require_locale = __commonJS({
         cloud_shared_hint: "\u5171\u4EAB\u4E91\u7AEF\u8BF7\u524D\u5F80\u300C\u8D26\u53F7\u4E0E\u540C\u6B65\u300D\u767B\u5F55"
       },
       en: {
+        tab_roles: "Role management",
+        roles_desc: "Browse plugin roles and manage your own session roles",
         role_title: "Workbench role",
         role_none: "No workbench role",
         role_none_desc: "Use the current DSH session settings",
@@ -2761,6 +2765,7 @@ var require_system_pages = __commonJS({
       var t = deps.t;
       var card = deps.systemCard;
       return [
+        card("roles", "agent", t("tab_roles"), t("roles_desc")),
         card("agent", "agent", t("tab_agent"), t("agent_desc")),
         card("agentList", "agent", t("tab_agent_list"), t("agent_list_desc")),
         card("queue", "\u961F", t("tab_queue"), t("queue_desc")),
@@ -5259,6 +5264,7 @@ var require_session_role = __commonJS({
       function refreshAll() {
         listeners2.forEach((listener) => listener(null));
       }
+      stream2.addEventListener("role-catalog", refreshAll);
       stream2.addEventListener("domains-changed", refreshAll);
       stream2.addEventListener("open", refreshAll);
     }
@@ -6537,6 +6543,154 @@ var require_view_outlet = __commonJS({
   }
 });
 
+// packages/shell/client/conversation/catalog.cjs
+var require_catalog = __commonJS({
+  "packages/shell/client/conversation/catalog.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h2 = React.createElement;
+    var { Btn, Field, Notice, Empty, unwrap } = require_client_common()("wb");
+    var endpoint = "/role-catalog";
+    function catalogRows(response) {
+      const value = unwrap(response);
+      if (!Array.isArray(value?.roles)) throw new Error("Invalid role catalog");
+      return value.roles;
+    }
+    function fieldsOf(role) {
+      return { name: role?.name || "", description: role?.description || "", instructions: role?.instructions || "", actions: (role?.actions || []).join("\n") };
+    }
+    function editorPayload(mode, values, id) {
+      const actions = [...new Set(values.actions.split(/[\s,，]+/).filter(Boolean))];
+      return { op: mode, ...id ? { id } : {}, name: values.name.trim(), description: values.description.trim(), instructions: values.instructions.trim(), actions };
+    }
+    function RoleCatalog({ api, lang, head }) {
+      const tr = (zh, en) => lang === "en" ? en : zh;
+      const [roles, setRoles] = React.useState(null);
+      const [draft, setDraft] = React.useState(null);
+      const [pendingDelete, setDelete] = React.useState(null);
+      const [error, setError] = React.useState("");
+      const [busy, setBusy] = React.useState(false);
+      const lock = React.useRef(false), sequence = React.useRef(0);
+      async function refresh() {
+        const req = ++sequence.current;
+        try {
+          const rows = catalogRows(await api.get(endpoint));
+          if (req === sequence.current) {
+            setRoles(rows);
+            setError("");
+          }
+        } catch (e) {
+          if (req === sequence.current) setError(e.message);
+        }
+      }
+      React.useEffect(() => {
+        refresh();
+        const stream2 = new EventSource("/workbench/api/events");
+        for (const event of ["role-catalog", "domains-changed", "open"]) stream2.addEventListener(event, refresh);
+        return () => {
+          ++sequence.current;
+          stream2.close();
+        };
+      }, []);
+      async function mutate(payload) {
+        if (lock.current) return;
+        lock.current = true;
+        setBusy(true);
+        setError("");
+        try {
+          const rows = catalogRows(await api.post(endpoint, payload));
+          ++sequence.current;
+          setRoles(rows);
+          setDraft(null);
+          setDelete(null);
+        } catch (e) {
+          setError(e.message);
+        } finally {
+          lock.current = false;
+          setBusy(false);
+        }
+      }
+      function button(label, onClick, disabled = false) {
+        return h2(Btn, { h: h2, onClick, disabled: busy || disabled }, label);
+      }
+      function begin(mode, role) {
+        setDraft({ mode, id: role?.id, ...fieldsOf(role) });
+        setDelete(null);
+        setError("");
+      }
+      function field(key, label, rows) {
+        return h2(Field, { h: h2, label }, h2(rows ? "textarea" : "input", {
+          name: key,
+          rows,
+          className: "wb-input",
+          value: draft[key],
+          disabled: busy,
+          onChange: (e) => setDraft({ ...draft, [key]: e.target.value })
+        }));
+      }
+      const labels = { create: tr("\u65B0\u5EFA\u89D2\u8272", "New role"), update: tr("\u7F16\u8F91\u89D2\u8272", "Edit role") };
+      function editor() {
+        return h2(
+          "section",
+          { className: "wb-card wb-stack" },
+          h2("strong", null, labels[draft.mode]),
+          field("name", tr("\u540D\u79F0", "Name")),
+          field("description", tr("\u804C\u8D23\u7B80\u4ECB", "Description")),
+          field("instructions", tr("\u89D2\u8272\u6307\u4EE4", "Instructions"), 8),
+          field("actions", tr("\u5141\u8BB8\u7684\u5DE5\u4F5C\u53F0\u52A8\u4F5C\uFF08\u6BCF\u884C\u4E00\u4E2A\uFF09", "Allowed actions (one per line)"), 4),
+          h2(
+            "div",
+            { className: "wb-sec" },
+            button(tr("\u4FDD\u5B58", "Save"), () => mutate(editorPayload(draft.mode, draft, draft.id)), !draft.name.trim() || !draft.instructions.trim()),
+            button(tr("\u53D6\u6D88", "Cancel"), () => setDraft(null))
+          )
+        );
+      }
+      function card(role) {
+        const editable = role.source === "user";
+        return h2(
+          "article",
+          { key: role.id, className: "wb-card wb-stack" },
+          h2("strong", null, role.name),
+          h2("small", { className: "wb-msg" }, (editable ? tr("\u81EA\u5B9A\u4E49\u89D2\u8272", "Custom role") : role.domain) + " \xB7 " + role.id + " \xB7 v" + role.version),
+          h2("span", null, role.description),
+          h2(
+            "details",
+            null,
+            h2("summary", null, tr("\u67E5\u770B\u6307\u4EE4\u4E0E\u52A8\u4F5C", "View instructions and actions")),
+            h2("p", { style: { whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, role.instructions),
+            h2("code", { style: { overflowWrap: "anywhere" } }, role.actions.join(", ") || tr("\u672A\u9009\u62E9\u52A8\u4F5C", "No actions"))
+          ),
+          h2(
+            "div",
+            { className: "wb-sec" },
+            button(tr("\u590D\u5236\u4E3A\u65B0\u89D2\u8272", "Duplicate as a new role"), () => mutate({ op: "copy", id: role.id }), !!draft),
+            editable && button(tr("\u7F16\u8F91", "Edit"), () => begin("update", role), !!draft),
+            editable && button(tr("\u5220\u9664", "Delete"), () => setDelete(role.id), !!draft)
+          ),
+          pendingDelete === role.id && h2(
+            "div",
+            { className: "wb-sec" },
+            tr("\u786E\u5B9A\u5220\u9664\u6B64\u89D2\u8272\uFF1F", "Delete this role?"),
+            button(tr("\u786E\u8BA4\u5220\u9664", "Confirm deletion"), () => mutate({ op: "delete", id: role.id })),
+            button(tr("\u53D6\u6D88", "Cancel"), () => setDelete(null))
+          )
+        );
+      }
+      return h2("div", { className: "wb-root" }, h2(
+        "div",
+        { className: "wb-inner wb-wide wb-stack" },
+        head(tr("\u89D2\u8272\u7BA1\u7406", "Role management"), tr("\u67E5\u770B\u63D2\u4EF6\u89D2\u8272\uFF0C\u521B\u5EFA\u548C\u7EF4\u62A4\u81EA\u5DF1\u7684\u4F1A\u8BDD\u89D2\u8272", "Browse plugin roles and manage your own session roles")),
+        h2("div", { className: "wb-sec" }, button(labels.create, () => begin("create"), !!draft)),
+        error && h2("div", { role: "alert" }, h2(Notice, { h: h2, kind: "error", text: error }), button(tr("\u91CD\u65B0\u52A0\u8F7D", "Reload"), refresh)),
+        draft && editor(),
+        roles === null ? h2(Notice, { h: h2, text: tr("\u6B63\u5728\u8BFB\u53D6\u89D2\u8272\u2026", "Loading roles\u2026") }) : roles.length ? roles.map(card) : h2(Empty, { h: h2, text: tr("\u6682\u65E0\u89D2\u8272", "No roles") })
+      ));
+    }
+    module2.exports = RoleCatalog;
+  }
+});
+
 // packages/shell/client/client.src.cjs
 var react = require("react");
 var jsx = require("react/jsx-runtime");
@@ -7106,6 +7260,7 @@ function WorkbenchPage(props) {
       jsx.jsx("div", { className: "wb-home-desc", children: desc })
     ] }, key);
   }
+  if (route === "roles") return h(require_catalog(), { api, lang, head: pageHead });
   if (route === "agent") return SystemPages.agentAccessPage({ jsx, t, lang, api, head: pageHead });
   if (route === "agentList") return SystemPages.agentListPage({ jsx, React: react, t, lang, api, head: pageHead });
   if (route === "backup") {
