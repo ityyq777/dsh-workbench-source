@@ -475,6 +475,7 @@ function WorkbenchPage(props) {
     ] }, key);
   }
 
+  if (route === "roles") return h(require("./conversation/catalog.cjs"), { api: api, lang: lang, head: pageHead });
   if (route === "agent") return SystemPages.agentAccessPage({ jsx: jsx, t: t, lang: lang, api: api, head: pageHead });
   if (route === "agentList") return SystemPages.agentListPage({ jsx: jsx, React: react, t: t, lang: lang, api: api, head: pageHead });
   if (route === "backup") {

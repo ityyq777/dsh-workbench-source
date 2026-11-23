@@ -17,6 +17,7 @@ function attachStream(stream) {
   }
   stream.addEventListener("session-role", refresh);
   function refreshAll() { listeners.forEach((listener) => listener(null)); }
+  stream.addEventListener("role-catalog", refreshAll);
   stream.addEventListener("domains-changed", refreshAll);
   stream.addEventListener("open", refreshAll);
 }

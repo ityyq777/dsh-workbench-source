@@ -1,0 +1,36 @@
+// 角色目录交互回归，沿用仓库的组件测试渲染器。
+import assert from "node:assert/strict";
+import Module, { createRequire } from "node:module";
+import { React, createRenderer, all, textOf } from "../../../../scripts/helpers/test-react.mjs";
+const load = Module._load;
+Module._load = function (name, ...args) { return name === "react" ? React : load.call(this, name, ...args); };
+const View = createRequire(import.meta.url)("./catalog.cjs");
+Module._load = load;
+const events = {};
+globalThis.EventSource = class { addEventListener(key, fn) { events[key] = fn; } };
+const original = { id: "tasks/publisher", source: "plugin", domain: "tasks", name: "发布者", description: "整理需求", instructions: "先澄清", version: "1", actions: ["tasks.list"] };
+let roles = [original];
+const ops = [];
+const api = { get: async (p) => { assert.equal(p, "/role-catalog"); return { ok: true, roles }; },
+  post: async (p, args) => { assert.equal(p, "/role-catalog"); ops.push(args);
+    const source = roles.find((r) => r.id === args.id);
+    if (args.op === "create" || args.op === "copy") roles = [...roles, { ...(source || args), id: "user/" + ops.length, source: "user" }];
+    if (args.op === "update") roles = roles.map((r) => r === source ? { ...r, ...args } : r);
+    if (args.op === "delete") roles = roles.filter((r) => r !== source);
+    return { ok: true, roles }; } };
+const paint = createRenderer();
+const tree = () => all(paint(View, { api, lang: "zh", head: () => null }));
+const buttons = (label) => tree().filter((n) => n.type === "button" && textOf(n) === label);
+const click = async (label, i = 0) => { const b = buttons(label)[i]; assert.ok(b); assert.ok(!b.props.disabled); await b.props.onClick(); };
+const field = (name, value) => tree().find((n) => n.props?.name === name).props.onChange({ target: { value } });
+tree(); await new Promise((resolve) => setImmediate(resolve));
+assert.equal(buttons("编辑").length, 0); assert.equal(buttons("删除").length, 0);
+assert.ok(tree().some((n) => n.type === "details" && textOf(n).includes(original.instructions)));
+await click("复制为新角色"); await click("复制为新角色", 1);
+assert.deepEqual(ops.slice(0, 2), [{ op: "copy", id: "tasks/publisher" }, { op: "copy", id: "user/1" }]);
+await click("新建角色"); field("name", "归档"); field("description", "整理条目"); field("instructions", "先核对来源"); field("actions", "tasks.list,tasks.list"); await click("保存");
+assert.deepEqual(ops.at(-1), { op: "create", name: "归档", description: "整理条目", instructions: "先核对来源", actions: ["tasks.list"] });
+await click("编辑"); field("name", "副本改名"); await click("保存"); assert.equal(ops.at(-1).id, "user/1"); assert.equal(original.name, "发布者");
+await click("删除"); await click("确认删除"); assert.deepEqual(ops.at(-1), { op: "delete", id: "user/1" });
+assert.equal(typeof events["role-catalog"], "function");
+console.log("角色管理交互通过：查看、两类复制、新建、编辑、删除确认及目录联动");

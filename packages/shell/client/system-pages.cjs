@@ -155,6 +155,7 @@ function manageCards(deps) {
   var t = deps.t;
   var card = deps.systemCard;
   return [
+    card("roles", "agent", t("tab_roles"), t("roles_desc")),
     card("agent", "agent", t("tab_agent"), t("agent_desc")),
     card("agentList", "agent", t("tab_agent_list"), t("agent_list_desc")),
     card("queue", "队", t("tab_queue"), t("queue_desc")),

@@ -47,7 +47,7 @@ assert.equal(textOf(trigger()), "发布者");
 state.roles[0].name = "发布助手";
 events["session-role"]({ data: JSON.stringify({ sessionId: "first" }) }); await tick();
 assert.equal(textOf(trigger()), "发布助手");
-assert.deepEqual(Object.keys(events).sort(), ["domains-changed", "open", "session-role"]);
+assert.deepEqual(Object.keys(events).sort(), ["domains-changed", "open", "role-catalog", "session-role"]);
 open(); await tick(); failed = true;
 await button("role_none").props.onClick();
 assert.ok(tree().some((node) => node.props?.role === "alert"));
