@@ -23,7 +23,7 @@ const TABLES = [
   { name: "conflict_shadow", label: "冲突留档", sort: "id", desc: "LWW 输方版本留档" },
   { name: "sync_dead_letter", label: "同步死信", sort: "id", desc: "单行/单表连续失败" },
   { name: "sync_state", label: "同步水位", sort: "k", desc: "水位、时钟、最后状态" },
-  { name: "session_mode", label: "会话记录模式", sort: "session_id", desc: "只影响本机当前会话" },
+  { name: "session_role", label: "会话角色", sort: "session_id", desc: "只影响本机当前会话" },
   { name: "audit_log", label: "审计日志", sort: "id", desc: "action 调用账本" },
   { name: "host_event", label: "事件队列", sort: "created_at", desc: "push 进来的事件（queued/done/dead）" },
   { name: "host_event_delivery", label: "事件投递", sort: "updated_at", desc: "按订阅拆出的投递：pending/running/done/dead" },
