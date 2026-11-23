@@ -25,7 +25,6 @@ var require_locale = __commonJS({
         role_none: "\u4E0D\u4F7F\u7528\u5DE5\u4F5C\u53F0\u89D2\u8272",
         role_none_desc: "\u6CBF\u7528\u5F53\u524D DSH \u4F1A\u8BDD\u8BBE\u7F6E",
         role_missing: "\u89D2\u8272\u5DF2\u4E0D\u53EF\u7528\uFF0C\u8BF7\u91CD\u65B0\u9009\u62E9",
-        role_record: "\u6536\u5C3E\u65F6\u8BB0\u5F55\u4EA4\u4ED8\u7269",
         role_next: "\u9009\u62E9\u5C06\u4ECE\u4E0B\u4E00\u8F6E\u5BF9\u8BDD\u751F\u6548\u3002",
         role_close: "\u5173\u95ED",
         role_retry: "\u91CD\u8BD5",
@@ -38,7 +37,7 @@ var require_locale = __commonJS({
         tab_addons: "\u5B50\u63D2\u4EF6",
         tab_backup: "\u6570\u636E\u5907\u4EFD",
         tab_data: "\u6570\u636E",
-        data_desc: "\u6D4F\u89C8\u5BBF\u4E3B\u81EA\u5DF1\u7EF4\u62A4\u7684\u5E73\u53F0\u8868\uFF08meta\u3001\u540C\u6B65\u65E5\u5FD7/\u6B7B\u4FE1/\u6C34\u4F4D\u3001\u4F1A\u8BDD\u8BB0\u5F55\u6A21\u5F0F\u3001\u5BA1\u8BA1\u65E5\u5FD7\uFF09\uFF1A\u53EA\u8BFB\u3001\u53EF\u641C\u7D22\u3001\u53EF\u5206\u9875",
+        data_desc: "\u6D4F\u89C8\u5BBF\u4E3B\u81EA\u5DF1\u7EF4\u62A4\u7684\u5E73\u53F0\u8868\uFF08meta\u3001\u540C\u6B65\u65E5\u5FD7/\u6B7B\u4FE1/\u6C34\u4F4D\u3001\u4F1A\u8BDD\u89D2\u8272\u3001\u5BA1\u8BA1\u65E5\u5FD7\uFF09\uFF1A\u53EA\u8BFB\u3001\u53EF\u641C\u7D22\u3001\u53EF\u5206\u9875",
         tab_config: "\u914D\u7F6E",
         config_desc: "\u6309\u65B9\u6848\u7BA1\u7406\u5907\u4EFD\u504F\u597D\u3002\u5BA1\u8BA1\u8BBE\u7F6E\u5BF9\u672C\u673A\u6240\u6709\u65B9\u6848\u751F\u6548\u3002",
         tab_queue: "\u4E8B\u4EF6\u961F\u5217",
@@ -364,22 +363,13 @@ var require_locale = __commonJS({
         cloud_auth_bad: "\u5DF2\u8FDE\u63A5\uFF0C\u4F46\u8BBF\u95EE\u5BC6\u94A5\u65E0\u6548",
         cloud_server: "\u670D\u52A1\u7AEF",
         cloud_devices_count: "\u8BBE\u5907\u6570",
-        cloud_shared_hint: "\u5171\u4EAB\u4E91\u7AEF\u8BF7\u4F7F\u7528\u4E0B\u9762\u7684\u8D26\u53F7\u767B\u5F55",
-        record_label: "\u8BB0\u5F55\u6A21\u5F0F",
-        record_on: "\u8BB0\u5F55\u4E2D",
-        record_off: "\u8BB0\u5F55",
-        record_on_title: "\u672C\u4F1A\u8BDD\u8BB0\u5F55\u6A21\u5F0F\u5DF2\u5F00\u542F\uFF0C\u70B9\u51FB\u5173\u95ED",
-        record_off_title: "\u5F00\u542F\u540E\u628A\u5B8C\u6210\u7684\u53EF\u4EA4\u4ED8\u5185\u5BB9\u8BB0\u5230\u5DE5\u4F5C\u53F0\uFF08\u4EC5\u672C\u4F1A\u8BDD\uFF09",
-        record_busy: "\u5207\u6362\u4E2D",
-        record_error: "\u5207\u6362\u5931\u8D25",
-        record_failed_short: "\u8BB0\u5F55\u5931\u8D25"
+        cloud_shared_hint: "\u5171\u4EAB\u4E91\u7AEF\u8BF7\u4F7F\u7528\u4E0B\u9762\u7684\u8D26\u53F7\u767B\u5F55"
       },
       en: {
         role_title: "Workbench role",
         role_none: "No workbench role",
         role_none_desc: "Use the current DSH session settings",
         role_missing: "Role unavailable. Choose another role.",
-        role_record: "Record deliverables at the end of the turn",
         role_next: "Changes apply to the next turn.",
         role_close: "Close",
         role_retry: "Retry",
@@ -392,7 +382,7 @@ var require_locale = __commonJS({
         tab_addons: "Addons",
         tab_backup: "Data backup",
         tab_data: "Data",
-        data_desc: "Browse the platform tables the host itself owns (meta, sync log/dead letters/state, session modes, audit log): read-only, searchable, paged",
+        data_desc: "Browse the platform tables the host itself owns (meta, sync log/dead letters/state, session roles, audit log): read-only, searchable, paged",
         tab_config: "Settings",
         config_desc: "Manage backup preferences in schemes. Audit settings apply to every scheme on this device.",
         tab_queue: "Event queue",
@@ -717,15 +707,7 @@ var require_locale = __commonJS({
         cloud_auth_bad: "Reachable, but the secret is rejected",
         cloud_server: "Server",
         cloud_devices_count: "Devices",
-        cloud_shared_hint: "Use the account login below for the shared cloud",
-        record_label: "Record mode",
-        record_on: "Recording",
-        record_off: "Record",
-        record_on_title: "Record mode is on for this session; click to turn it off",
-        record_off_title: "Record finished deliverables to the workbench (this session only)",
-        record_busy: "Switching",
-        record_error: "Switch failed",
-        record_failed_short: "Failed"
+        cloud_shared_hint: "Use the account login below for the shared cloud"
       }
     };
     module2.exports = LOCALE2;
@@ -1154,7 +1136,7 @@ var require_styles = __commonJS({
 .wb-role-trigger,.wb-role-btn{font:inherit;color:inherit;border:1px solid var(--wb-line);cursor:pointer;background:var(--wb-card);border-radius:8px;padding:6px 10px}
 .wb-role-trigger{height:28px;max-width:min(32vw,16em);text-overflow:ellipsis;overflow:hidden;white-space:nowrap;border-radius:999px;font-size:12px;padding:0 9px}
 .wb-role-trigger:hover,.wb-role-btn:hover:not(:disabled),.wb-role-btn[aria-pressed=true]{border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 10%,var(--wb-card))}
-.wb-role-trigger:focus-visible,.wb-role-btn:focus-visible,.wb-role-dialog .wbctl-switch:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
+.wb-role-trigger:focus-visible,.wb-role-btn:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
 .wb-role-btn:disabled{opacity:.5;cursor:wait}
 .wb-role-mask{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:12px;background:color-mix(in oklab,var(--dsw-alias-label-primary,CanvasText) 22%,transparent)}
 .wb-role-dialog{display:grid;gap:8px;padding:16px;box-sizing:border-box;width:min(100%,24rem);max-height:80dvh;overflow:auto;background:var(--wb-card);border:1px solid var(--wb-line);border-radius:12px;box-shadow:0 8px 32px color-mix(in oklab,var(--wb-muted) 24%,transparent)}
@@ -3834,7 +3816,7 @@ var require_host_pages = __commonJS({
       "conflict_shadow",
       "sync_dead_letter",
       "sync_state",
-      "session_mode",
+      "session_role",
       "audit_log",
       "host_event",
       "host_event_delivery",
@@ -5101,7 +5083,6 @@ var require_session_role = __commonJS({
     var { createPortal } = require_react_dom();
     var h2 = React.createElement;
     var Button = require_button()({ prefix: "wb-role" });
-    var { Switch } = require_switch();
     var Dialog = require_overlay()({ maskClass: "wb-role-mask", dialogClass: "wb-role-dialog" });
     var endpoint = "/workbench/api/session-role";
     var listeners2 = /* @__PURE__ */ new Set();
@@ -5115,7 +5096,6 @@ var require_session_role = __commonJS({
         }
       }
       stream2.addEventListener("session-role", refresh);
-      stream2.addEventListener("record-mode", refresh);
       function refreshAll() {
         listeners2.forEach((listener) => listener(null));
       }
@@ -5209,8 +5189,7 @@ var require_session_role = __commonJS({
               refresh();
             }
           },
-          state ? label : t("role_title"),
-          state?.enabled ? " \xB7 " + t("record_on") : ""
+          state ? label : t("role_title")
         ),
         open && createPortal(h2(
           Dialog,
@@ -5231,7 +5210,6 @@ var require_session_role = __commonJS({
             h2("b", null, r.name),
             h2("small", null, [r.domain, r.description].filter(Boolean).join(" \xB7 "))
           )),
-          h2(Switch, { h: h2, label: t("role_record"), checked: !!state?.enabled, disabled: busy || !state, onChange: (enabled) => save({ enabled }) }),
           h2(Button, { disabled: busy, onClick: () => setOpen(false) }, t("role_close"))
         ), document.body)
       );
