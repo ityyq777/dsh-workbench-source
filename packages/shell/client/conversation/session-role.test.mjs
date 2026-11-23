@@ -1,4 +1,4 @@
-// 渲染真实选择器，通过按钮、旧事件和网络失败验证会话局部状态。
+// 渲染真实选择器，通过按钮、角色事件和网络失败验证会话局部状态。
 import assert from "node:assert/strict";
 import Module, { createRequire } from "node:module";
 import { React, createRenderer, all, textOf } from "../../../../scripts/helpers/test-react.mjs";
@@ -12,7 +12,7 @@ Module._load = function (name, parent, main) {
 const { SessionRole, attachStream } = require("./session-role.cjs");
 Module._load = load;
 globalThis.document = { body: {} };
-const state = { sessionId: "first", enabled: false, roleId: null, roles: [{ id: "tasks/publish", name: "发布者", domain: "tasks", description: "整理任务" }] };
+const state = { sessionId: "first", roleId: null, roles: [{ id: "tasks/publish", name: "发布者", domain: "tasks", description: "整理任务" }] };
 const writes = [];
 let failed = false;
 globalThis.fetch = async (url, init) => {
@@ -44,16 +44,13 @@ open(); await tick();
 await button("发布者").props.onClick(); await tick();
 assert.deepEqual(writes.at(-1), { sessionId: "first", roleId: "tasks/publish" });
 assert.equal(textOf(trigger()), "发布者");
-open(); await tick();
-button("role_record").props.onClick({ preventDefault() {} }); await tick();
-assert.deepEqual(writes.at(-1), { sessionId: "first", enabled: true });
-assert.equal(textOf(trigger()), "发布者 · record_on");
-state.enabled = false;
-events["record-mode"]({ data: JSON.stringify({ sessionId: "first" }) }); await tick();
-assert.equal(textOf(trigger()), "发布者");
+state.roles[0].name = "发布助手";
+events["session-role"]({ data: JSON.stringify({ sessionId: "first" }) }); await tick();
+assert.equal(textOf(trigger()), "发布助手");
+assert.deepEqual(Object.keys(events).sort(), ["domains-changed", "open", "session-role"]);
 open(); await tick(); failed = true;
 await button("role_none").props.onClick();
 assert.ok(tree().some((node) => node.props?.role === "alert"));
 failed = false; await button("role_none").props.onClick(); await tick();
 assert.equal(textOf(trigger()), "role_none");
-console.log("会话角色选择器交互通过：默认只读、绑定真实会话、独立记录、旧事件、失败重试和取消角色");
+console.log("会话角色选择器交互通过：默认只读、绑定真实会话、角色事件、失败重试和取消角色");

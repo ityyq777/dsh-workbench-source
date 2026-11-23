@@ -4,7 +4,6 @@ const React = require("react");
 const { createPortal } = require("react-dom");
 const h = React.createElement;
 const Button = require("../../../addons/lib/button.cjs")({ prefix: "wb-role" });
-const { Switch } = require("../../../addons/lib/switch.cjs");
 const Dialog = require("../../../addons/lib/overlay.cjs")({ maskClass: "wb-role-mask", dialogClass: "wb-role-dialog" });
 const endpoint = "/workbench/api/session-role";
 const listeners = new Set();
@@ -17,7 +16,6 @@ function attachStream(stream) {
     } catch (error) { console.warn(error); }
   }
   stream.addEventListener("session-role", refresh);
-  stream.addEventListener("record-mode", refresh);
   function refreshAll() { listeners.forEach((listener) => listener(null)); }
   stream.addEventListener("domains-changed", refreshAll);
   stream.addEventListener("open", refreshAll);
@@ -89,7 +87,7 @@ function SessionRole({ sessionId: sid, t, ensureStream }) {
   return h(React.Fragment, null,
     h(Button, { className: "wb-role-trigger", "aria-haspopup": "dialog", "aria-expanded": open,
       title: t("role_title"), onClick: () => { setOpen(true); refresh(); } },
-      state ? label : t("role_title"), state?.enabled ? " · " + t("record_on") : ""),
+      state ? label : t("role_title")),
     open && createPortal(h(Dialog, { title: t("role_title"), onClose: () => setOpen(false), closeOnEscape: !busy, closeOnMask: !busy },
       h("strong", null, t("role_title")), h("small", null, t("role_next")),
       missing && h("small", { role: "status" }, t("role_missing")),
@@ -98,7 +96,6 @@ function SessionRole({ sessionId: sid, t, ensureStream }) {
       choices.map((r) => h(Button, { key: r.id || "", disabled: busy || !state, "aria-pressed": !!state && state.roleId === r.id,
         onClick: () => state.roleId === r.id ? setOpen(false) : save({ roleId: r.id }) },
         h("b", null, r.name), h("small", null, [r.domain, r.description].filter(Boolean).join(" · ")))),
-      h(Switch, { h, label: t("role_record"), checked: !!state?.enabled, disabled: busy || !state, onChange: (enabled) => save({ enabled }) }),
       h(Button, { disabled: busy, onClick: () => setOpen(false) }, t("role_close"))
     ), document.body)
   );
