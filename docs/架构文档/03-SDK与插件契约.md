@@ -38,4 +38,4 @@ flowchart LR
     V --> D["更新版本、minShell 和开发文档"]
 ```
 
-SDK 0.5.0 移除了 `subscribe` 的 action 参数。这个变更同时涉及宿主在本域寻找 `*.onEvent`、邮件和消息插件各自的分派函数，以及插件所需的最低宿主版本。审查类似改动时，至少跟踪一个实际发布者和一个实际订阅者。只看接口签名无法验证事件是否落到了正确的域。[事件机制](06-事件队列.md) · [邮件到消息的集成测试](../../scripts/test-mail-message-queue.mjs) · [Core 基础](02-Core与本地存储.md) · [架构入口](../ARCHITECTUR.md)
+SDK 0.5.0 移除了 `subscribe` 的 action 参数。这个变更同时涉及宿主在本域寻找 `*.onEvent`、邮件和消息插件各自的分派函数，以及插件所需的最低宿主版本。审查类似改动时，至少跟踪一个实际发布者和一个实际订阅者。只看接口签名无法验证事件是否落到了正确的域。[事件机制](06-事件队列.md) · [邮件到消息的集成测试](../../scripts/test-mail-message-queue.mjs) · [Core 基础](02-Core与本地存储.md) · [架构入口](../ARCHITECTURE.md)

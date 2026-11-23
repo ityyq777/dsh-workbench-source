@@ -193,4 +193,4 @@ pnpm test:audit                       # 审计采集与脱敏
 
 ---
 
-[SDK 契约](../../packages/sdk/src/index.ts) · [分发实现](../../packages/shell/src/actions/actions.ts) · [共享 Action 页](../../packages/addons/lib/action-schema-view.cjs) · [回到架构入口](../ARCHITECTUR.md)
+[SDK 契约](../../packages/sdk/src/index.ts) · [分发实现](../../packages/shell/src/actions/actions.ts) · [共享 Action 页](../../packages/addons/lib/action-schema-view.cjs) · [回到架构入口](../ARCHITECTURE.md)
