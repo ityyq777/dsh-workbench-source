@@ -22,7 +22,7 @@ export function createActions({
 }: any) {
   /** 宿主内置的元 action 归属域（不参与备份，也不是业务插件）。 */
   const META_DOMAIN = "wb-shell";
-  const policy = createToolPolicy(sessionRoles, domains);
+  const policy = createToolPolicy(sessionRoles);
 
   /** 允许来源开关（多选）：声明默认值 + 本机 meta 覆盖，同样只在本机生效。 */
   // 权限设置自身钉死为 ui：它改的是别人的权限数组，自己不能被改宽。
@@ -550,7 +550,7 @@ function schemaSnapshot(domain?: string) {
 
   const installTool = (ctx: any) => {
     ctx.inject?.(["planMode"], (scope: any) => policy.setPlan(scope.planMode));
-    installWorkbenchTools(ctx, { findActionDef, actionParams, invoke, policy, sessionRoles });
+    installWorkbenchTools(ctx, { findActionDef, actionParams, invoke, policy });
   };
   return { invoke, actionNames, installTool, schemaSnapshot };
 }

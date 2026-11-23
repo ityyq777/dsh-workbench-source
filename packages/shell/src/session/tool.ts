@@ -1,12 +1,11 @@
 import { actionErrorText } from "../actions/action-output.js";
-export function installWorkbenchTools(ctx: any, { findActionDef, actionParams, invoke, policy, sessionRoles }: any) {
+export function installWorkbenchTools(ctx: any, { findActionDef, actionParams, invoke, policy }: any) {
   const TRAP_FIELDS = ["due_at", "note", "tags", "tagIds", "dirIds", "parentId", "deadline", "start_at", "assignee", "limit"];
-  function definition(record: boolean) {
   // ── Agent 工具：Workbench（单工具多 action，action 由已注册业务域动态提供）──
-  return {
-    name: record ? "WorkbenchRecord" : "Workbench",
+  ctx.tools?.register({
+    name: "Workbench",
     timeoutMs: 60_000,
-    description: record ? "收尾记录可复用交付物。仅允许查询、已声明的新增与关联动作。" :
+    description:
       "个人工作台。action 由已安装业务插件提供（tasks.* / taskNodes.* / tags.* / sites.* / siteTags.* / siteNodes.*），" +
       "宿主另提供 capabilities.list / capabilities.get 查看各插件记录什么、任务归属显式配置及首选 action；capabilities.setTaskTarget 配置 domain→tableId。" +
       "物品用 storage.create，开发工作用 tasks.create；创建任务前用 tasks.capabilities / tasks.resolveTable 明确目标，不能默认第一张表。" +
@@ -71,7 +70,7 @@ export function installWorkbenchTools(ctx: any, { findActionDef, actionParams, i
           }
         }
 
-        const r = await policy.run(exec,record,() => invoke(action, payload, "agent"));
+        const r = await policy.run(exec,() => invoke(action, payload, "agent"));
         const warning = ignored.length
           ? "⚠ " + action + " 不接受这些参数，已忽略：\n  " + ignored.join("\n  ") +
             "\n（真实字段名以 actions.help 为准）\n\n"
@@ -81,8 +80,5 @@ export function installWorkbenchTools(ctx: any, { findActionDef, actionParams, i
         return { text: "错误：" + actionErrorText(e) };
       }
     },
-  };
-  }
-  ctx.tools?.register(definition(true), { when: ({ agent }: any) => sessionRoles.snapshot(agent).enabled });
-  ctx.tools?.register(definition(false));
+  });
 }

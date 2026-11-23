@@ -1,15 +1,11 @@
-/** 通过宿主公开入口验证迁移、轮次、双工具权限和单次命令角色。 */
+/** 通过宿主公开入口验证角色选择、轮次、工具权限和单次命令角色。 */
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { DatabaseSync } from "node:sqlite";
 import { Readable } from "node:stream";
 const dir = mkdtempSync(join(tmpdir(), "wb-role-host-"));
 process.env.WB_HOME = dir;
-const old = new DatabaseSync(join(dir, "workbench.db"));
-old.exec("CREATE TABLE session_mode(session_id TEXT PRIMARY KEY,enabled INTEGER,updated_at INTEGER); INSERT INTO session_mode VALUES('old',1,1)");
-old.close();
 const cleanups = [], events = new Map(), tools = new Map();
 let route, section, host, plan = false;
 const ctx = {
@@ -38,26 +34,24 @@ try {
     capability:{records:[{kind:"示例",primaryAction:"example.create"}]},
     setup(api) { for (const name of ["example.read","example.update","example.create"]) api.action(name,{description:name,execute:()=>name}); }};
   const unload = host.registerDomain(fixture);
-  assert.equal((await http("GET","session-role?sessionId=old")).enabled,true);
+  assert.equal("enabled" in await http("GET","session-role?sessionId=main"),false);
   assert.equal(section.text({agent}),"");
-  assert.equal(tools.get("WorkbenchRecord").opt.when({agent}),false);
+  assert.equal(tools.has("WorkbenchRecord"),false);
   const patch = body => http("POST","session-role",{sessionId:"main", ...body});
   assert.equal((await patch({roleId:"unknown"})).status,400);
-  assert.equal((await patch({roleId:"wb-addon-example/reader", enabled:true})).status,200);
+  assert.equal((await patch({roleId:"wb-addon-example/reader"})).status,200);
+  assert.equal((await patch({roleId:null,enabled:true})).status,400);
   claim("first",1);
   assert.match(section.text({agent}),/只读示例/);
   assert.match(section.text({agent}),/first/);
-  assert.equal(tools.get("WorkbenchRecord").opt.when({agent}),true);
   assert.match(await invoke("Workbench","example.update",{sessionId:"other"}),/ACTION_ROLE_DENIED/);
   assert.doesNotMatch(await invoke("Workbench","actions.list"),/example.update/);
   assert.match(await invoke("Workbench","actions.help",{action:"example.update"}),/错误/);
   assert.match(await invoke("Workbench","example.read"),/example.read/);
-  assert.match(await invoke("WorkbenchRecord","example.update"),/ACTION_ROLE_DENIED/);
-  assert.equal(await invoke("WorkbenchRecord","example.create"),'"example.create"');
   plan = true;
-  assert.match(await invoke("WorkbenchRecord","example.create"),/ACTION_ROLE_DENIED/);
+  assert.match(await invoke("Workbench","example.read"),/ACTION_ROLE_DENIED/);
   plan = false;
-  await patch({roleId:null, enabled:false});
+  await patch({roleId:null});
   assert.match(section.text({agent}),/只读示例/);
   assert.equal(section.text({agent:{session:{id:"child"}}}),"");
   claim("second",2);
@@ -75,7 +69,5 @@ try {
   unload();
   assert.equal((await http("GET","session-role?sessionId=main")).unavailable,true);
   assert.match(await invoke("Workbench","example.read"),/ACTION_ROLE_DENIED/);
-  assert.equal((await http("POST","record",{sessionId:"old",enabled:false})).enabled,false);
-  assert.equal((await http("GET","session-role?sessionId=old")).enabled,false);
-  console.log("通过：记录迁移、目录、轮次隔离、工具披露、执行约束、命令单次角色与卸载失效");
+  console.log("通过：旧入口退役、目录、轮次隔离、执行约束、命令单次角色与卸载失效");
 } finally { for (const dispose of cleanups.reverse()) dispose(); rmSync(dir,{recursive:true,force:true}); }

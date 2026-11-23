@@ -279,12 +279,12 @@ export function installNetwork({ ctx, state, saveCreds, clock, domains, emit, su
                 return send(200, { ok: true, domains: listDomains(), categories: publicCategories(), shellVersion: SHELL_VERSION });
               }
 
-              if ((p === "/record" || p === "/session-role") && (m === "GET" || m === "POST")) {
+              if (p === "/session-role" && (m === "GET" || m === "POST")) {
                 try {
                   const body = m === "POST" ? await bodyOf() : undefined;
                   const sid = sessionKey(m === "GET" ? url.searchParams.get("sessionId") : body?.sessionId);
-                  const cfg = m === "GET" ? sessionRoles.info(sid) : sessionRoles.patch(sid, p === "/record" ? { enabled: body.enabled } : body);
-                  return send(200, p === "/record" ? { ok: true, sessionId: sid, enabled: cfg.enabled } : { ok: true, ...cfg });
+                  const cfg = m === "GET" ? sessionRoles.info(sid) : sessionRoles.patch(sid, body);
+                  return send(200, { ok: true, ...cfg });
                 } catch (error) {
                   return send(400, { ok: false, error: error instanceof Error ? error.message : String(error) });
                 }

@@ -14,7 +14,6 @@ import { join } from "node:path";
 import { openDb, setSyncStateText } from "@wb/core";
 import { parseDomainRoles } from "@wb/sdk";
 import { createSessionRoles } from "./session/roles.js";
-import { RECORD_COMMAND_HELP } from "./session/record.js";
 import type {
   DomainActionDef,
   DomainDef,
@@ -59,7 +58,7 @@ const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
 /** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.15.0";
+export const SHELL_VERSION = "0.16.0";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -366,7 +365,7 @@ export function apply(ctx: any): void {
     "wb-event-queue",
   );
 
-  // ── 会话记录模式：命令开关 + 动态 prompt section + 客户端 HTTP 状态 ──
+  // ── 会话角色：按当前轮次组装系统提示 ──
   const trackOn = (scope: any, dispose: unknown) => {
     if (typeof dispose === "function" && typeof scope.effect === "function") scope.effect(() => dispose);
   };
@@ -382,7 +381,7 @@ export function apply(ctx: any): void {
     try {
       fn(ctx);
     } catch (e) {
-      log("安装会话记录模式失败", deps.join(","), e);
+      log("安装会话服务失败", deps.join(","), e);
     }
   };
 
@@ -402,7 +401,7 @@ export function apply(ctx: any): void {
       /* 老版本没有命名 order 时退回 510 */
     }
     const dispose = sp.section({
-      name: "workbench:record-mode",
+      name: "workbench:session-role",
       order,
       text: (context: any) => {
         return sessionRoles.prompt(context?.agent);
@@ -410,44 +409,6 @@ export function apply(ctx: any): void {
     });
     trackOn(scope, dispose);
   });
-
-  installService(["commands"], (scope) => {
-    const commands = scope.commands;
-    if (!commands || typeof commands.register !== "function") return;
-    const dispose = commands.register({
-      name: "record",
-      description: "开启或关闭本会话的个人工作台记录模式",
-      input: { hint: "[on|off|status]" },
-      handler: ({ agent, rawInput }: any) => {
-        const sid = String(agent?.session?.id ?? agent?.id ?? "");
-        if (!sid) return { kind: "error", text: "无法确定当前会话，记录模式没有变化。" };
-        const arg = String(rawInput ?? "").trim().toLowerCase();
-        if (arg === "on" || arg === "off") {
-          const enabled = arg === "on";
-          sessionRoles.patch(sid, { enabled });
-          return {
-            kind: "success",
-            text: enabled
-              ? "记录模式已开启（仅本会话）。后续我只把完成的可交付内容记到工作台，不记聊天、日志、密钥和本地地址。"
-              : "记录模式已关闭。之后只有你明确说“记一下”时，我才会写入工作台。",
-          };
-        }
-        if (arg === "status") {
-          const enabled = sessionRoles.info(sid).enabled;
-          return {
-            kind: "success",
-            text: enabled
-              ? "记录模式：已开启（仅本会话）。\n只记录完成的可交付项；不记聊天、日志、临时笔记、密钥和本地地址。关闭用 /record off。"
-              : "记录模式：未开启。\n开启用 /record on；开启后我只记录完成的可交付内容。",
-          };
-        }
-        return { kind: "success", text: RECORD_COMMAND_HELP };
-      },
-    });
-    trackOn(scope, dispose);
-  });
-
-
 
   // 切换云端后要立刻首轮同步，但 runSync 由 installNetwork 返回，用占位函数打破循环引用。
   let runSyncHolder: (() => Promise<unknown>) | null = null;
