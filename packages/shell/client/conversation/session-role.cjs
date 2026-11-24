@@ -4,7 +4,16 @@ const React = require("react");
 const { createPortal } = require("react-dom");
 const h = React.createElement;
 const Button = require("../../../addons/lib/button.cjs")({ prefix: "wb-role" });
-const Dialog = require("../../../addons/lib/overlay.cjs")({ maskClass: "wb-role-mask", dialogClass: "wb-role-dialog" });
+const { Icon } = require("./icons.cjs");
+// 标题只由浮层外壳渲染一次：内容区不再写 h("strong")，副标题 role_next 也归外壳，
+// 避免「标题出现两遍、字号各说各话」。
+const Dialog = require("../../../addons/lib/overlay.cjs")({
+  maskClass: "wb-role-mask",
+  dialogClass: "wb-role-dialog",
+  header: (props) => h("div", { className: "wb-role-head" },
+    h("h2", { className: "wb-role-title" }, props.title),
+    props.subtitle ? h("p", { className: "wb-role-sub" }, props.subtitle) : null),
+});
 const endpoint = "/workbench/api/session-role";
 const listeners = new Set();
 
@@ -166,10 +175,11 @@ function SessionRole({ sessionId: sid, t, ensureStream }) {
   const label = selected?.name || t(missing ? "role_missing" : "role_none");
   const tokens = tokensOf(query);
   const matched = filterRoles(roles, query);
-  // 「不使用工作台角色」是取消选择的出口：永远置顶，且不参与关键词过滤，
-  // 否则用户搜到一半就没了退出路径。
-  const choices = [{ id: null, name: t("role_none"), description: t("role_none_desc") }, ...matched];
+  // 「不使用工作台角色」已移出列表：它不受关键词过滤影响，作为列表下方的退出项常驻，
+  // 搜索时也不会把用户的退出路径滤掉。
   const searching = tokens.length > 0;
+  // 读取中（state 为空）时任何一项都不算选中，避免加载瞬间就点亮「不使用工作台角色」。
+  const current = state ? state.roleId ?? null : undefined;
 
   function clearQuery() {
     setQuery("");
@@ -218,34 +228,63 @@ function SessionRole({ sessionId: sid, t, ensureStream }) {
       : part.text);
   }
 
+  // 选项左侧图标区分来源：插件声明的角色是 bot，用户自建的是 user。
+  function glyphOf(role) {
+    return role.source === "user" ? "user" : "bot";
+  }
+
+  // 一条角色卡片：左图标、右侧名称 + 「域 / 说明」两行、选中时右侧打勾。
+  function optionRow(role) {
+    const on = !!state && current === role.id;
+    return h(Button, { key: role.id, className: "wb-role-option",
+      disabled: busy || !state, "aria-pressed": on,
+      onKeyDown: onItemKeyDown,
+      onClick: () => (on ? setOpen(false) : save({ roleId: role.id })) },
+      h("span", { className: "wb-role-option-icon", "aria-hidden": "true" },
+        h(Icon, { name: glyphOf(role), size: 14 })),
+      h("span", { className: "wb-role-option-text" },
+        h("span", { className: "wb-role-option-name" }, marked(role.name)),
+        // 域与说明拆成两个元素：说明较长时才能各自换行，也不再依赖「·」拼串。
+        (role.domain || role.description) && h("span", { className: "wb-role-option-meta" },
+          role.domain ? h("span", { className: "wb-role-option-domain" }, marked(role.domain)) : null,
+          role.description ? h("span", { className: "wb-role-option-desc" }, marked(role.description)) : null)),
+      h("span", { className: "wb-role-option-check", "aria-hidden": "true" },
+        on ? h(Icon, { name: "check", size: 14, strokeWidth: 2.5 }) : null));
+  }
+
   return h(React.Fragment, null,
     h(Button, { className: "wb-role-trigger", "aria-haspopup": "dialog", "aria-expanded": open,
       title: t("role_title"), onClick: () => { setOpen(true); refresh(); } },
       state ? label : t("role_title")),
-    open && createPortal(h(Dialog, { title: t("role_title"), onClose: () => { setQuery(""); setOpen(false); }, closeOnEscape: !busy, closeOnMask: !busy, autoFocus: false },
-      h("strong", null, t("role_title")), h("small", null, t("role_next")),
-      missing && h("small", { role: "status" }, t("role_missing")),
-      error && h("div", { role: "alert" }, t("role_error") + " · " + error, " ", h(Button, { disabled: busy, onClick: refresh }, t("role_retry"))),
-      !state && !error && h("small", { role: "status" }, t("role_loading")),
+    open && createPortal(h(Dialog, { title: t("role_title"), subtitle: t("role_next"),
+      onClose: () => { setQuery(""); setOpen(false); }, closeOnEscape: !busy, closeOnMask: !busy, autoFocus: false },
+      error && h("div", { className: "wb-role-error", role: "alert" },
+        t("role_error") + " · " + error, " ",
+        h(Button, { className: "wb-role-retry", disabled: busy, onClick: refresh }, t("role_retry"))),
+      missing && h("p", { className: "wb-role-note", role: "status" }, t("role_missing")),
       h("input", { ref: searchRef, className: "wb-role-search", type: "search", value: query, autoFocus: true,
         "aria-label": t("role_search"), placeholder: t("role_search"),
         onChange: (event) => setQuery(event.target.value), onKeyDown: onSearchKeyDown }),
       searching && h("small", { className: "wb-role-count", role: "status" },
         fill(t("role_search_count"), { shown: matched.length, total: roles.length })),
+      !state && !error && h("p", { className: "wb-role-note", role: "status" }, t("role_loading")),
       h("div", { ref: listRef, className: "wb-role-list", role: "group", "aria-label": t("role_title") },
-        choices.map((r) => {
-          const meta = [r.domain, r.description].filter(Boolean).join(" · ");
-          return h(Button, { key: r.id || "", className: "wb-role-option",
-            disabled: busy || !state, "aria-pressed": !!state && state.roleId === r.id,
-            onKeyDown: onItemKeyDown,
-            onClick: () => state.roleId === r.id ? setOpen(false) : save({ roleId: r.id }) },
-            h("b", null, marked(r.name)),
-            meta ? h("small", null, marked(meta)) : null);
-        })),
+        matched.map(optionRow)),
       searching && !matched.length && h("div", { className: "wb-role-empty", role: "status" },
         h("span", null, t("role_search_empty")), " ",
         h(Button, { className: "wb-role-clear", onClick: clearQuery }, t("role_search_clear"))),
-      h(Button, { disabled: busy, onClick: () => { setQuery(""); setOpen(false); } }, t("role_close"))
+      // 分隔线之后是退出项：不参与过滤、不混在角色列表里，语义更像「取消选择」。
+      h("hr", { className: "wb-role-sep" }),
+      h(Button, { className: "wb-role-none", disabled: busy || !state,
+        "aria-pressed": !!state && current === null,
+        onClick: () => (!!state && current === null ? setOpen(false) : save({ roleId: null })) },
+        h("span", { className: "wb-role-none-icon", "aria-hidden": "true" }, h(Icon, { name: "x-circle", size: 14 })),
+        h("span", { className: "wb-role-none-name" }, t("role_none")),
+        h("small", { className: "wb-role-none-desc" }, t("role_none_desc"))),
+      h("div", { className: "wb-role-foot" },
+        h("span", { className: "wb-role-hint" }, t("role_hint")),
+        h(Button, { className: "wb-role-close", disabled: busy,
+          onClick: () => { setQuery(""); setOpen(false); } }, t("role_close")))
     ), document.body)
   );
 }

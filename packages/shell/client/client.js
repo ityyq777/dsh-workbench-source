@@ -621,6 +621,7 @@ var require_locale2 = __commonJS({
         role_search_clear: "\u6E05\u7A7A\u641C\u7D22",
         role_search_empty: "\u6CA1\u6709\u5339\u914D\u7684\u89D2\u8272",
         role_search_count: "\u5339\u914D {shown} / \u5171 {total} \u4E2A\u89D2\u8272",
+        role_hint: "\u2191\u2193 \u9009\u62E9 \xB7 Enter \u786E\u8BA4 \xB7 Esc \u5173\u95ED",
         nav: "\u5DE5\u4F5C\u53F0",
         title: "\u5DE5\u4F5C\u53F0",
         tagline: "\u79BB\u7EBF\u4F18\u5148 \xB7 \u4E1A\u52A1\u63D2\u4EF6\u7531 DSH \u5B89\u88C5",
@@ -981,6 +982,7 @@ var require_locale2 = __commonJS({
         role_search_clear: "Clear search",
         role_search_empty: "No matching roles",
         role_search_count: "{shown} of {total} roles match",
+        role_hint: "\u2191\u2193 select \xB7 Enter confirm \xB7 Esc close",
         nav: "Workbench",
         title: "Workbench",
         tagline: "Offline-first \xB7 addons installed by DSH",
@@ -1802,23 +1804,59 @@ var require_styles = __commonJS({
 .wb-role-trigger,.wb-role-mask{--wb-line:var(--dsw-alias-border-l2);--wb-card:var(--dsw-alias-bg-layer-1,Canvas);--wb-surface:var(--dsw-alias-bg-layer-2,Canvas);--wb-accent:var(--dsw-alias-brand-primary,Highlight);--wb-muted:var(--dsw-alias-label-tertiary,GrayText);--wb-danger:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-label-primary,CanvasText)}
 .wb-role-trigger,.wb-role-btn{font:inherit;color:inherit;border:1px solid var(--wb-line);cursor:pointer;background:var(--wb-card);border-radius:8px;padding:6px 10px}
 .wb-role-trigger{height:28px;max-width:min(32vw,16em);text-overflow:ellipsis;overflow:hidden;white-space:nowrap;border-radius:999px;font-size:12px;padding:0 9px}
-.wb-role-trigger:hover,.wb-role-btn:hover:not(:disabled),.wb-role-btn[aria-pressed=true]{border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 10%,var(--wb-card))}
+.wb-role-trigger:hover{border-color:var(--wb-accent)}
 .wb-role-trigger:focus-visible,.wb-role-btn:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
-.wb-role-btn:disabled{opacity:.5;cursor:wait}
+.wb-role-btn:disabled,.wb-role-option:disabled,.wb-role-none:disabled,.wb-role-close:disabled{opacity:.5;cursor:wait}
 .wb-role-mask{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:12px;background:color-mix(in oklab,var(--dsw-alias-label-primary,CanvasText) 22%,transparent)}
-.wb-role-dialog{display:grid;gap:8px;padding:16px;box-sizing:border-box;width:min(100%,24rem);max-height:80dvh;overflow:auto;background:var(--wb-card);border:1px solid var(--wb-line);border-radius:12px;box-shadow:0 8px 32px color-mix(in oklab,var(--wb-muted) 24%,transparent)}
-.wb-role-dialog small{display:block;color:var(--wb-muted)}.wb-role-dialog .wb-role-btn[aria-pressed]{display:grid;gap:3px;text-align:start}.wb-role-dialog [role=alert]{color:var(--wb-danger)}
-.wb-role-search{box-sizing:border-box;width:100%;font:inherit;font-size:13px;color:inherit;background:var(--wb-surface);border:1px solid var(--wb-line);border-radius:8px;padding:7px 10px;outline:none}
-.wb-role-search:focus{border-color:var(--wb-accent);box-shadow:0 0 0 2px color-mix(in oklab,var(--wb-accent) 22%,transparent)}
+.wb-role-dialog{display:flex;flex-direction:column;gap:12px;padding:16px;box-sizing:border-box;width:min(100%,26rem);max-height:86dvh;overflow:auto;background:var(--wb-card);border:1px solid var(--wb-line);border-radius:12px;box-shadow:0 8px 32px color-mix(in oklab,var(--wb-muted) 24%,transparent)}
+.wb-role-head{display:flex;flex-direction:column;gap:4px}
+.wb-role-title{margin:0;font-size:14px;font-weight:600;line-height:1.4}
+.wb-role-sub{margin:0;font-size:11.5px;line-height:1.5;color:var(--wb-muted)}
+.wb-role-note{margin:0;font-size:11.5px;line-height:1.5;color:var(--wb-muted)}
+.wb-role-error{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;line-height:1.5;color:var(--wb-danger)}
+.wb-role-retry{font:inherit;font-size:11.5px;padding:2px 8px;border:1px solid currentColor;border-radius:6px;background:transparent;color:inherit;cursor:pointer}
+.wb-role-retry:hover:not(:disabled){background:color-mix(in oklab,currentColor 10%,transparent)}
+.wb-role-search{box-sizing:border-box;width:100%;font:inherit;font-size:13px;color:inherit;background:var(--wb-surface);border:1px solid var(--wb-line);border-radius:10px;padding:8px 10px;outline:none}
+.wb-role-search:focus{border-color:var(--wb-accent)}
 .wb-role-search::placeholder{color:var(--wb-muted)}
-.wb-role-count{font-variant-numeric:tabular-nums}
-.wb-role-list{display:grid;gap:6px;max-height:min(52dvh,26rem);overflow:auto;overscroll-behavior:contain}
+.wb-role-count{font-size:11.5px;color:var(--wb-muted);font-variant-numeric:tabular-nums}
+.wb-role-list{display:flex;flex-direction:column;gap:8px;max-height:min(52dvh,24rem);overflow:auto;overscroll-behavior:contain}
+.wb-role-option{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:start;gap:10px;box-sizing:border-box;width:100%;text-align:start;padding:9px 10px;border-radius:10px;border:1px solid var(--wb-line);background:var(--wb-card);font:inherit;color:inherit;cursor:pointer}
+.wb-role-option:hover:not(:disabled){background:var(--wb-surface)}
+.wb-role-option[aria-pressed=true]{border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 8%,var(--wb-card));box-shadow:inset 2px 0 0 var(--wb-accent)}
+.wb-role-option[aria-pressed=true]:hover:not(:disabled){background:color-mix(in oklab,var(--wb-accent) 12%,var(--wb-card))}
+.wb-role-option:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
+.wb-role-option-icon{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:color-mix(in oklab,var(--wb-muted) 14%,transparent);color:var(--wb-muted)}
+.wb-role-option[aria-pressed=true] .wb-role-option-icon{background:color-mix(in oklab,var(--wb-accent) 16%,transparent);color:var(--wb-accent)}
+.wb-role-option-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.wb-role-option-name{font-size:13.5px;font-weight:500;line-height:1.4;overflow-wrap:anywhere}
+.wb-role-option-meta{display:flex;flex-wrap:wrap;gap:2px 8px;font-size:11.5px;line-height:1.45;color:var(--wb-muted)}
+.wb-role-option-domain{opacity:.9}
+.wb-role-option-desc{overflow-wrap:anywhere}
+.wb-role-option-check{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;color:var(--wb-accent)}
 .wb-role-mark{background:color-mix(in oklab,var(--wb-accent) 24%,transparent);color:inherit;border-radius:3px;padding:0 1px}
 .wb-role-empty{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--wb-muted);font-size:12px}
 .wb-role-clear{border:1px solid var(--wb-line);background:var(--wb-card);color:inherit;font:inherit;font-size:12px;border-radius:8px;padding:3px 8px;cursor:pointer}
 .wb-role-clear:hover{border-color:var(--wb-accent)}
 .wb-role-clear:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
-@media (max-width:480px){.wb-role-dialog{width:100%;max-height:88dvh}}
+.wb-role-sep{height:1px;margin:0;border:0;background:var(--wb-line)}
+.wb-role-none{display:flex;align-items:center;gap:8px;flex-wrap:wrap;box-sizing:border-box;width:100%;text-align:start;padding:8px 10px;border-radius:10px;border:1px dashed var(--wb-line);background:transparent;color:var(--wb-muted);font:inherit;font-size:12px;cursor:pointer}
+.wb-role-none:hover:not(:disabled){background:var(--wb-surface);color:inherit}
+.wb-role-none[aria-pressed=true]{border-style:solid;border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 8%,var(--wb-card));color:inherit;box-shadow:inset 2px 0 0 var(--wb-accent)}
+.wb-role-none:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
+.wb-role-none-icon{display:inline-flex;align-items:center}
+.wb-role-none-name{font-weight:500}
+.wb-role-none-desc{font-size:11px;font-weight:400;color:var(--wb-muted)}
+.wb-role-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.wb-role-hint{font-size:11px;color:var(--wb-muted)}
+.wb-role-close{font:inherit;font-size:12px;padding:4px 10px;border:1px solid var(--wb-line);border-radius:8px;background:transparent;color:var(--wb-muted);cursor:pointer;margin-inline-start:auto}
+.wb-role-close:hover:not(:disabled){border-color:var(--wb-accent);color:inherit}
+.wb-role-close:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
+@media (max-width:480px){
+  .wb-role-dialog{width:100%;max-height:92dvh;padding:14px;gap:10px}
+  .wb-role-list{max-height:60dvh}
+  .wb-role-option{padding:8px 9px}
+}
 `;
     var ROLES_BASE = require_client_base_styles()("wbr").join("\n");
     module2.exports += "\n" + ROLES_BASE + `
@@ -10434,6 +10472,94 @@ var require_button = __commonJS({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/check.mjs
+var check_exports = {};
+__export(check_exports, {
+  __iconData: () => __iconData31,
+  default: () => Check
+});
+var __iconData31, Check;
+var init_check = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/check.mjs"() {
+    init_createLucideIcon();
+    __iconData31 = {
+      name: "check",
+      size: 24,
+      node: [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]]
+    };
+    __iconData31.node;
+    Check = createLucideIcon(__iconData31);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/user.mjs
+var user_exports = {};
+__export(user_exports, {
+  __iconData: () => __iconData32,
+  default: () => User
+});
+var __iconData32, User;
+var init_user = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/user.mjs"() {
+    init_createLucideIcon();
+    __iconData32 = {
+      name: "user",
+      size: 24,
+      node: [
+        ["path", { d: "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2", key: "975kel" }],
+        ["circle", { cx: "12", cy: "7", r: "4", key: "17ys0d" }]
+      ]
+    };
+    __iconData32.node;
+    User = createLucideIcon(__iconData32);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/circle-x.mjs
+var __iconData33, CircleX;
+var init_circle_x = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/circle-x.mjs"() {
+    init_createLucideIcon();
+    __iconData33 = {
+      name: "circle-x",
+      size: 24,
+      node: [
+        ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+        ["path", { d: "m15 9-6 6", key: "1uzhvr" }],
+        ["path", { d: "m9 9 6 6", key: "z0biqf" }]
+      ],
+      aliases: ["x-circle"]
+    };
+    __iconData33.node;
+    CircleX = createLucideIcon(__iconData33);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x-circle.mjs
+var x_circle_exports = {};
+__export(x_circle_exports, {
+  default: () => CircleX
+});
+var init_x_circle = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x-circle.mjs"() {
+    init_circle_x();
+  }
+});
+
+// packages/shell/client/conversation/icons.cjs
+var require_icons2 = __commonJS({
+  "packages/shell/client/conversation/icons.cjs"(exports2, module2) {
+    "use strict";
+    var iconsLib = require_icons();
+    module2.exports = iconsLib.create("wb-role", {
+      "check": (init_check(), __toCommonJS(check_exports)).default,
+      "bot": (init_bot(), __toCommonJS(bot_exports)).default,
+      "user": (init_user(), __toCommonJS(user_exports)).default,
+      "x-circle": (init_x_circle(), __toCommonJS(x_circle_exports)).default
+    }, { fallback: "bot", classNameAppend: true });
+  }
+});
+
 // packages/shell/client/conversation/session-role.cjs
 var require_session_role = __commonJS({
   "packages/shell/client/conversation/session-role.cjs"(exports2, module2) {
@@ -10442,7 +10568,17 @@ var require_session_role = __commonJS({
     var { createPortal } = require_react_dom();
     var h2 = React.createElement;
     var Button = require_button()({ prefix: "wb-role" });
-    var Dialog = require_overlay()({ maskClass: "wb-role-mask", dialogClass: "wb-role-dialog" });
+    var { Icon: Icon2 } = require_icons2();
+    var Dialog = require_overlay()({
+      maskClass: "wb-role-mask",
+      dialogClass: "wb-role-dialog",
+      header: (props) => h2(
+        "div",
+        { className: "wb-role-head" },
+        h2("h2", { className: "wb-role-title" }, props.title),
+        props.subtitle ? h2("p", { className: "wb-role-sub" }, props.subtitle) : null
+      )
+    });
     var endpoint = "/workbench/api/session-role";
     var listeners2 = /* @__PURE__ */ new Set();
     var TOKEN_SPLIT = /\s+/;
@@ -10538,15 +10674,15 @@ var require_session_role = __commonJS({
       const searchRef = React.useRef(null);
       const listRef = React.useRef(null);
       const refresh = React.useCallback(async () => {
-        const current = ++generation.current;
+        const current2 = ++generation.current;
         try {
           const result = await request(sid);
-          if (alive.current && current === generation.current) {
+          if (alive.current && current2 === generation.current) {
             setState(result);
             setError("");
           }
         } catch (e) {
-          if (alive.current && current === generation.current) setError(String(e.message || e));
+          if (alive.current && current2 === generation.current) setError(String(e.message || e));
         }
       }, [sid]);
       React.useEffect(() => {
@@ -10593,8 +10729,8 @@ var require_session_role = __commonJS({
       const label = selected?.name || t(missing ? "role_missing" : "role_none");
       const tokens = tokensOf(query);
       const matched = filterRoles(roles, query);
-      const choices = [{ id: null, name: t("role_none"), description: t("role_none_desc") }, ...matched];
       const searching = tokens.length > 0;
+      const current = state ? state.roleId ?? null : void 0;
       function clearQuery() {
         setQuery("");
         if (searchRef.current && searchRef.current.focus) searchRef.current.focus();
@@ -10659,6 +10795,45 @@ var require_session_role = __commonJS({
       function marked(value) {
         return splitHits(value, tokens).map((part, index) => part.hit ? h2("mark", { key: "m" + index, className: "wb-role-mark" }, part.text) : part.text);
       }
+      function glyphOf(role) {
+        return role.source === "user" ? "user" : "bot";
+      }
+      function optionRow(role) {
+        const on = !!state && current === role.id;
+        return h2(
+          Button,
+          {
+            key: role.id,
+            className: "wb-role-option",
+            disabled: busy || !state,
+            "aria-pressed": on,
+            onKeyDown: onItemKeyDown,
+            onClick: () => on ? setOpen(false) : save({ roleId: role.id })
+          },
+          h2(
+            "span",
+            { className: "wb-role-option-icon", "aria-hidden": "true" },
+            h2(Icon2, { name: glyphOf(role), size: 14 })
+          ),
+          h2(
+            "span",
+            { className: "wb-role-option-text" },
+            h2("span", { className: "wb-role-option-name" }, marked(role.name)),
+            // 域与说明拆成两个元素：说明较长时才能各自换行，也不再依赖「·」拼串。
+            (role.domain || role.description) && h2(
+              "span",
+              { className: "wb-role-option-meta" },
+              role.domain ? h2("span", { className: "wb-role-option-domain" }, marked(role.domain)) : null,
+              role.description ? h2("span", { className: "wb-role-option-desc" }, marked(role.description)) : null
+            )
+          ),
+          h2(
+            "span",
+            { className: "wb-role-option-check", "aria-hidden": "true" },
+            on ? h2(Icon2, { name: "check", size: 14, strokeWidth: 2.5 }) : null
+          )
+        );
+      }
       return h2(
         React.Fragment,
         null,
@@ -10678,15 +10853,25 @@ var require_session_role = __commonJS({
         ),
         open && createPortal(h2(
           Dialog,
-          { title: t("role_title"), onClose: () => {
-            setQuery("");
-            setOpen(false);
-          }, closeOnEscape: !busy, closeOnMask: !busy, autoFocus: false },
-          h2("strong", null, t("role_title")),
-          h2("small", null, t("role_next")),
-          missing && h2("small", { role: "status" }, t("role_missing")),
-          error && h2("div", { role: "alert" }, t("role_error") + " \xB7 " + error, " ", h2(Button, { disabled: busy, onClick: refresh }, t("role_retry"))),
-          !state && !error && h2("small", { role: "status" }, t("role_loading")),
+          {
+            title: t("role_title"),
+            subtitle: t("role_next"),
+            onClose: () => {
+              setQuery("");
+              setOpen(false);
+            },
+            closeOnEscape: !busy,
+            closeOnMask: !busy,
+            autoFocus: false
+          },
+          error && h2(
+            "div",
+            { className: "wb-role-error", role: "alert" },
+            t("role_error") + " \xB7 " + error,
+            " ",
+            h2(Button, { className: "wb-role-retry", disabled: busy, onClick: refresh }, t("role_retry"))
+          ),
+          missing && h2("p", { className: "wb-role-note", role: "status" }, t("role_missing")),
           h2("input", {
             ref: searchRef,
             className: "wb-role-search",
@@ -10703,25 +10888,11 @@ var require_session_role = __commonJS({
             { className: "wb-role-count", role: "status" },
             fill(t("role_search_count"), { shown: matched.length, total: roles.length })
           ),
+          !state && !error && h2("p", { className: "wb-role-note", role: "status" }, t("role_loading")),
           h2(
             "div",
             { ref: listRef, className: "wb-role-list", role: "group", "aria-label": t("role_title") },
-            choices.map((r) => {
-              const meta = [r.domain, r.description].filter(Boolean).join(" \xB7 ");
-              return h2(
-                Button,
-                {
-                  key: r.id || "",
-                  className: "wb-role-option",
-                  disabled: busy || !state,
-                  "aria-pressed": !!state && state.roleId === r.id,
-                  onKeyDown: onItemKeyDown,
-                  onClick: () => state.roleId === r.id ? setOpen(false) : save({ roleId: r.id })
-                },
-                h2("b", null, marked(r.name)),
-                meta ? h2("small", null, marked(meta)) : null
-              );
-            })
+            matched.map(optionRow)
           ),
           searching && !matched.length && h2(
             "div",
@@ -10730,10 +10901,33 @@ var require_session_role = __commonJS({
             " ",
             h2(Button, { className: "wb-role-clear", onClick: clearQuery }, t("role_search_clear"))
           ),
-          h2(Button, { disabled: busy, onClick: () => {
-            setQuery("");
-            setOpen(false);
-          } }, t("role_close"))
+          // 分隔线之后是退出项：不参与过滤、不混在角色列表里，语义更像「取消选择」。
+          h2("hr", { className: "wb-role-sep" }),
+          h2(
+            Button,
+            {
+              className: "wb-role-none",
+              disabled: busy || !state,
+              "aria-pressed": !!state && current === null,
+              onClick: () => !!state && current === null ? setOpen(false) : save({ roleId: null })
+            },
+            h2("span", { className: "wb-role-none-icon", "aria-hidden": "true" }, h2(Icon2, { name: "x-circle", size: 14 })),
+            h2("span", { className: "wb-role-none-name" }, t("role_none")),
+            h2("small", { className: "wb-role-none-desc" }, t("role_none_desc"))
+          ),
+          h2(
+            "div",
+            { className: "wb-role-foot" },
+            h2("span", { className: "wb-role-hint" }, t("role_hint")),
+            h2(Button, {
+              className: "wb-role-close",
+              disabled: busy,
+              onClick: () => {
+                setQuery("");
+                setOpen(false);
+              }
+            }, t("role_close"))
+          )
         ), document.body)
       );
     }
@@ -12066,11 +12260,11 @@ var require_body_copy = __commonJS({
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-xml.mjs
-var __iconData31, CodeXml;
+var __iconData34, CodeXml;
 var init_code_xml = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-xml.mjs"() {
     init_createLucideIcon();
-    __iconData31 = {
+    __iconData34 = {
       name: "code-xml",
       size: 24,
       node: [
@@ -12080,8 +12274,8 @@ var init_code_xml = __esm({
       ],
       aliases: ["code-2"]
     };
-    __iconData31.node;
-    CodeXml = createLucideIcon(__iconData31);
+    __iconData34.node;
+    CodeXml = createLucideIcon(__iconData34);
   }
 });
 
@@ -12099,14 +12293,14 @@ var init_code_2 = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pilcrow.mjs
 var pilcrow_exports = {};
 __export(pilcrow_exports, {
-  __iconData: () => __iconData32,
+  __iconData: () => __iconData35,
   default: () => Pilcrow
 });
-var __iconData32, Pilcrow;
+var __iconData35, Pilcrow;
 var init_pilcrow = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pilcrow.mjs"() {
     init_createLucideIcon();
-    __iconData32 = {
+    __iconData35 = {
       name: "pilcrow",
       size: 24,
       node: [
@@ -12115,8 +12309,8 @@ var init_pilcrow = __esm({
         ["path", { d: "M19 4H9.5a4.5 4.5 0 0 0 0 9H13", key: "sh4n9v" }]
       ]
     };
-    __iconData32.node;
-    Pilcrow = createLucideIcon(__iconData32);
+    __iconData35.node;
+    Pilcrow = createLucideIcon(__iconData35);
   }
 });
 

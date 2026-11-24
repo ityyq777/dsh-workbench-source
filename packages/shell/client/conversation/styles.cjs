@@ -3,23 +3,59 @@ module.exports = `
 .wb-role-trigger,.wb-role-mask{--wb-line:var(--dsw-alias-border-l2);--wb-card:var(--dsw-alias-bg-layer-1,Canvas);--wb-surface:var(--dsw-alias-bg-layer-2,Canvas);--wb-accent:var(--dsw-alias-brand-primary,Highlight);--wb-muted:var(--dsw-alias-label-tertiary,GrayText);--wb-danger:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-label-primary,CanvasText)}
 .wb-role-trigger,.wb-role-btn{font:inherit;color:inherit;border:1px solid var(--wb-line);cursor:pointer;background:var(--wb-card);border-radius:8px;padding:6px 10px}
 .wb-role-trigger{height:28px;max-width:min(32vw,16em);text-overflow:ellipsis;overflow:hidden;white-space:nowrap;border-radius:999px;font-size:12px;padding:0 9px}
-.wb-role-trigger:hover,.wb-role-btn:hover:not(:disabled),.wb-role-btn[aria-pressed=true]{border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 10%,var(--wb-card))}
+.wb-role-trigger:hover{border-color:var(--wb-accent)}
 .wb-role-trigger:focus-visible,.wb-role-btn:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
-.wb-role-btn:disabled{opacity:.5;cursor:wait}
+.wb-role-btn:disabled,.wb-role-option:disabled,.wb-role-none:disabled,.wb-role-close:disabled{opacity:.5;cursor:wait}
 .wb-role-mask{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:12px;background:color-mix(in oklab,var(--dsw-alias-label-primary,CanvasText) 22%,transparent)}
-.wb-role-dialog{display:grid;gap:8px;padding:16px;box-sizing:border-box;width:min(100%,24rem);max-height:80dvh;overflow:auto;background:var(--wb-card);border:1px solid var(--wb-line);border-radius:12px;box-shadow:0 8px 32px color-mix(in oklab,var(--wb-muted) 24%,transparent)}
-.wb-role-dialog small{display:block;color:var(--wb-muted)}.wb-role-dialog .wb-role-btn[aria-pressed]{display:grid;gap:3px;text-align:start}.wb-role-dialog [role=alert]{color:var(--wb-danger)}
-.wb-role-search{box-sizing:border-box;width:100%;font:inherit;font-size:13px;color:inherit;background:var(--wb-surface);border:1px solid var(--wb-line);border-radius:8px;padding:7px 10px;outline:none}
-.wb-role-search:focus{border-color:var(--wb-accent);box-shadow:0 0 0 2px color-mix(in oklab,var(--wb-accent) 22%,transparent)}
+.wb-role-dialog{display:flex;flex-direction:column;gap:12px;padding:16px;box-sizing:border-box;width:min(100%,26rem);max-height:86dvh;overflow:auto;background:var(--wb-card);border:1px solid var(--wb-line);border-radius:12px;box-shadow:0 8px 32px color-mix(in oklab,var(--wb-muted) 24%,transparent)}
+.wb-role-head{display:flex;flex-direction:column;gap:4px}
+.wb-role-title{margin:0;font-size:14px;font-weight:600;line-height:1.4}
+.wb-role-sub{margin:0;font-size:11.5px;line-height:1.5;color:var(--wb-muted)}
+.wb-role-note{margin:0;font-size:11.5px;line-height:1.5;color:var(--wb-muted)}
+.wb-role-error{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;line-height:1.5;color:var(--wb-danger)}
+.wb-role-retry{font:inherit;font-size:11.5px;padding:2px 8px;border:1px solid currentColor;border-radius:6px;background:transparent;color:inherit;cursor:pointer}
+.wb-role-retry:hover:not(:disabled){background:color-mix(in oklab,currentColor 10%,transparent)}
+.wb-role-search{box-sizing:border-box;width:100%;font:inherit;font-size:13px;color:inherit;background:var(--wb-surface);border:1px solid var(--wb-line);border-radius:10px;padding:8px 10px;outline:none}
+.wb-role-search:focus{border-color:var(--wb-accent)}
 .wb-role-search::placeholder{color:var(--wb-muted)}
-.wb-role-count{font-variant-numeric:tabular-nums}
-.wb-role-list{display:grid;gap:6px;max-height:min(52dvh,26rem);overflow:auto;overscroll-behavior:contain}
+.wb-role-count{font-size:11.5px;color:var(--wb-muted);font-variant-numeric:tabular-nums}
+.wb-role-list{display:flex;flex-direction:column;gap:8px;max-height:min(52dvh,24rem);overflow:auto;overscroll-behavior:contain}
+.wb-role-option{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:start;gap:10px;box-sizing:border-box;width:100%;text-align:start;padding:9px 10px;border-radius:10px;border:1px solid var(--wb-line);background:var(--wb-card);font:inherit;color:inherit;cursor:pointer}
+.wb-role-option:hover:not(:disabled){background:var(--wb-surface)}
+.wb-role-option[aria-pressed=true]{border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 8%,var(--wb-card));box-shadow:inset 2px 0 0 var(--wb-accent)}
+.wb-role-option[aria-pressed=true]:hover:not(:disabled){background:color-mix(in oklab,var(--wb-accent) 12%,var(--wb-card))}
+.wb-role-option:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
+.wb-role-option-icon{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:color-mix(in oklab,var(--wb-muted) 14%,transparent);color:var(--wb-muted)}
+.wb-role-option[aria-pressed=true] .wb-role-option-icon{background:color-mix(in oklab,var(--wb-accent) 16%,transparent);color:var(--wb-accent)}
+.wb-role-option-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.wb-role-option-name{font-size:13.5px;font-weight:500;line-height:1.4;overflow-wrap:anywhere}
+.wb-role-option-meta{display:flex;flex-wrap:wrap;gap:2px 8px;font-size:11.5px;line-height:1.45;color:var(--wb-muted)}
+.wb-role-option-domain{opacity:.9}
+.wb-role-option-desc{overflow-wrap:anywhere}
+.wb-role-option-check{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;color:var(--wb-accent)}
 .wb-role-mark{background:color-mix(in oklab,var(--wb-accent) 24%,transparent);color:inherit;border-radius:3px;padding:0 1px}
 .wb-role-empty{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--wb-muted);font-size:12px}
 .wb-role-clear{border:1px solid var(--wb-line);background:var(--wb-card);color:inherit;font:inherit;font-size:12px;border-radius:8px;padding:3px 8px;cursor:pointer}
 .wb-role-clear:hover{border-color:var(--wb-accent)}
 .wb-role-clear:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
-@media (max-width:480px){.wb-role-dialog{width:100%;max-height:88dvh}}
+.wb-role-sep{height:1px;margin:0;border:0;background:var(--wb-line)}
+.wb-role-none{display:flex;align-items:center;gap:8px;flex-wrap:wrap;box-sizing:border-box;width:100%;text-align:start;padding:8px 10px;border-radius:10px;border:1px dashed var(--wb-line);background:transparent;color:var(--wb-muted);font:inherit;font-size:12px;cursor:pointer}
+.wb-role-none:hover:not(:disabled){background:var(--wb-surface);color:inherit}
+.wb-role-none[aria-pressed=true]{border-style:solid;border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 8%,var(--wb-card));color:inherit;box-shadow:inset 2px 0 0 var(--wb-accent)}
+.wb-role-none:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
+.wb-role-none-icon{display:inline-flex;align-items:center}
+.wb-role-none-name{font-weight:500}
+.wb-role-none-desc{font-size:11px;font-weight:400;color:var(--wb-muted)}
+.wb-role-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.wb-role-hint{font-size:11px;color:var(--wb-muted)}
+.wb-role-close{font:inherit;font-size:12px;padding:4px 10px;border:1px solid var(--wb-line);border-radius:8px;background:transparent;color:var(--wb-muted);cursor:pointer;margin-inline-start:auto}
+.wb-role-close:hover:not(:disabled){border-color:var(--wb-accent);color:inherit}
+.wb-role-close:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
+@media (max-width:480px){
+  .wb-role-dialog{width:100%;max-height:92dvh;padding:14px;gap:10px}
+  .wb-role-list{max-height:60dvh}
+  .wb-role-option{padding:8px 9px}
+}
 `;
 
 // 角色管理页：共享控件用 wbr 前缀，基础样式从 addons/lib 生成，页面布局只用主题 token。

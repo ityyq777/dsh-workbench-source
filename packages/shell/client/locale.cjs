@@ -2,7 +2,7 @@
 var LOCALE = {
   zh: {
     tab_roles: "角色管理", roles_desc: "查看插件角色，创建和维护自己的会话角色",
-    role_title: "工作台角色", role_none: "不使用工作台角色", role_none_desc: "沿用当前 DSH 会话设置", role_missing: "角色已不可用，请重新选择", role_next: "选择将从下一轮对话生效。", role_close: "关闭", role_retry: "重试", role_error: "无法读取或保存会话设置", role_loading: "读取中…", role_search: "搜索角色（名称、域、说明或动作）", role_search_clear: "清空搜索", role_search_empty: "没有匹配的角色", role_search_count: "匹配 {shown} / 共 {total} 个角色",
+    role_title: "工作台角色", role_none: "不使用工作台角色", role_none_desc: "沿用当前 DSH 会话设置", role_missing: "角色已不可用，请重新选择", role_next: "选择将从下一轮对话生效。", role_close: "关闭", role_retry: "重试", role_error: "无法读取或保存会话设置", role_loading: "读取中…", role_search: "搜索角色（名称、域、说明或动作）", role_search_clear: "清空搜索", role_search_empty: "没有匹配的角色", role_search_count: "匹配 {shown} / 共 {total} 个角色", role_hint: "↑↓ 选择 · Enter 确认 · Esc 关闭",
     nav: "工作台", title: "工作台", tagline: "离线优先 · 业务插件由 DSH 安装",
     tab_account: "账号与同步", tab_addons: "子插件", tab_backup: "数据备份",
     tab_automation: "自动化", automation_desc: "用 action 或 AI 规则按计划、按事件执行任务：管理规则、运行记录与设置",
@@ -173,7 +173,7 @@ var LOCALE = {
   },
   en: {
     tab_roles: "Role management", roles_desc: "Browse plugin roles and manage your own session roles",
-    role_title: "Workbench role", role_none: "No workbench role", role_none_desc: "Use the current DSH session settings", role_missing: "Role unavailable. Choose another role.", role_next: "Changes apply to the next turn.", role_close: "Close", role_retry: "Retry", role_error: "Could not read or save session settings", role_loading: "Loading…", role_search: "Search roles (name, domain, description or action)", role_search_clear: "Clear search", role_search_empty: "No matching roles", role_search_count: "{shown} of {total} roles match",
+    role_title: "Workbench role", role_none: "No workbench role", role_none_desc: "Use the current DSH session settings", role_missing: "Role unavailable. Choose another role.", role_next: "Changes apply to the next turn.", role_close: "Close", role_retry: "Retry", role_error: "Could not read or save session settings", role_loading: "Loading…", role_search: "Search roles (name, domain, description or action)", role_search_clear: "Clear search", role_search_empty: "No matching roles", role_search_count: "{shown} of {total} roles match", role_hint: "↑↓ select · Enter confirm · Esc close",
     nav: "Workbench", title: "Workbench", tagline: "Offline-first · addons installed by DSH",
     tab_account: "Account & Sync", tab_addons: "Addons", tab_backup: "Data backup",
     tab_automation: "Automation", automation_desc: "Run actions or AI rules on a schedule or event: manage rules, run history and settings",

@@ -32,6 +32,7 @@ const dict = {
   role_retry: "重试", role_error: "无法读取或保存会话设置", role_loading: "读取中…",
   role_search: "搜索角色", role_search_clear: "清空搜索", role_search_empty: "没有匹配的角色",
   role_search_count: "匹配 {shown} / 共 {total} 个角色",
+  role_hint: "↑↓ 选择 · Enter 确认 · Esc 关闭",
 };
 const t = (key) => dict[key] || key;
 
@@ -55,6 +56,9 @@ const buttons = (tree) => all(tree).filter((n) => n.type === "button");
 const byText = (tree, label) => buttons(tree).find((n) => textOf(n).includes(label));
 const search = (tree) => all(tree).find((n) => n.type === "input" && n.props.type === "search");
 const count = (tree) => all(tree).find((n) => klass(n).split(/\s+/).includes("wb-role-count"));
+const hasClass = (node, name) => klass(node).split(/\s+/).includes(name);
+const byClass = (tree, name) => all(tree).find((n) => hasClass(n, name));
+const optionOf = (tree, label) => buttons(tree).find((n) => hasClass(n, "wb-role-option") && textOf(n).includes(label));
 
 // 组件用 Fragment 同时挂触发按钮与 portal，测试里包一层容器便于遍历。
 const wrap = (tree) => (Array.isArray(tree) ? { type: "div", props: {}, children: tree } : tree);
@@ -168,4 +172,60 @@ test("splitHits 合并重叠命中区间，多关键词不重复包裹", () => {
   ]);
   assert.deepEqual(Picker.splitHits("abc", []), [{ text: "abc", hit: false }]);
   assert.deepEqual(Picker.tokensOf("  发布   任务 "), ["发布", "任务"]);
+});
+
+test("标题只由浮层外壳渲染一次，role_next 是副标题，错误单独成行", async () => {
+  const { paint } = await mount();
+  const tree = paint();
+  assert.equal(all(tree).filter((n) => hasClass(n, "wb-role-title")).length, 1, "标题只应出现一次");
+  assert.equal(all(tree).filter((n) => n.type === "strong").length, 0, "内容区不应再手写 strong 标题");
+  assert.equal(textOf(byClass(tree, "wb-role-sub")), "选择将从下一轮对话生效。");
+});
+
+test("选项是卡片行：左侧来源图标、右侧名称与拆开的域/说明两行，选中时打勾", async () => {
+  roleId = "tasks/publisher";
+  const { paint } = await mount();
+  const tree = paint();
+  const option = optionOf(tree, "任务发布者");
+  assert.ok(option, "应有角色选项卡片");
+  assert.equal(option.props["aria-pressed"], true, "当前角色应选中");
+  assert.ok(byClass(option, "wb-role-option-icon"), "左侧应有来源图标");
+  assert.equal(textOf(byClass(option, "wb-role-option-name")), "任务发布者");
+  const meta = byClass(option, "wb-role-option-meta");
+  assert.ok(meta, "副行应存在");
+  assert.equal(textOf(byClass(meta, "wb-role-option-domain")), "wb-addon-tasks", "域应单独成元素");
+  assert.equal(textOf(byClass(meta, "wb-role-option-desc")), "整理需求并发布任务", "说明应单独成元素");
+  assert.equal(textOf(meta).includes("·"), false, "域与说明不再用「·」拼串");
+  assert.ok((byClass(option, "wb-role-option-check").children || []).length > 0, "选中项应显示勾选图标");
+  const unselected = optionOf(tree, "归档员");
+  assert.equal((byClass(unselected, "wb-role-option-check").children || []).length, 0, "未选中项不显示勾选");
+  roleId = null;
+});
+
+test("「不使用工作台角色」在列表之外、1px 分隔线之后，且不受关键词过滤", async () => {
+  const { paint } = await mount();
+  search(paint()).props.onChange({ target: { value: "发布" } });
+  const tree = paint();
+  const exit = byClass(tree, "wb-role-none");
+  assert.ok(exit, "退出项应常驻");
+  assert.equal(textOf(exit).includes("不使用工作台角色"), true);
+  assert.equal(hasClass(byClass(tree, "wb-role-list"), "wb-role-list"), true);
+  assert.equal(all(byClass(tree, "wb-role-list")).some((n) => hasClass(n, "wb-role-none")), false, "退出项不应在列表里");
+  const nodes = all(tree);
+  const sepAt = nodes.findIndex((n) => n.type === "hr" && hasClass(n, "wb-role-sep"));
+  const exitAt = nodes.findIndex((n) => hasClass(n, "wb-role-none") && n.type === "button");
+  assert.ok(sepAt >= 0, "列表下方应有 1px 分隔线");
+  assert.ok(exitAt > sepAt, "退出项应在分隔线之后");
+});
+
+test("底部是键盘提示行与右对小号关闭按钮", async () => {
+  const { paint } = await mount();
+  const tree = paint();
+  const foot = byClass(tree, "wb-role-foot");
+  assert.ok(foot, "底部应有操作行");
+  assert.equal(textOf(byClass(tree, "wb-role-hint")), "↑↓ 选择 · Enter 确认 · Esc 关闭");
+  const close = byClass(tree, "wb-role-close");
+  assert.ok(close, "应有小号关闭按钮");
+  assert.equal(textOf(close), "关闭");
+  assert.equal(all(foot).includes(close), true, "关闭按钮应与提示行同处底部");
 });
